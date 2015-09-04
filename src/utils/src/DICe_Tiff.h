@@ -1,7 +1,7 @@
 // @HEADER
 // ************************************************************************
 //
-//               Digital Image Correlation Engine (DICe)
+//               Digital Image Correlation Engine (DICE)
 //                 Copyright (2014) Sandia Corporation
 //
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -34,49 +34,35 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact:
-//              Dan Turner   (danielzturner@gmail.com)
+// Questions? Contact:  Dan Turner (dzturne@sandia.gov)
 //
 // ************************************************************************
 // @HEADER
 
-#include <DICe_Image.h>
+#ifndef DICE_TIFF_H
+#define DICE_TIFF_H
 
-#include <Teuchos_RCP.hpp>
-#include <Teuchos_oblackholestream.hpp>
-#include <iostream>
+#include <DICe.h>
 
-int main(int argc, char *argv[]) {
+#include <string>
 
-  // initialize kokkos
-  Kokkos::initialize(argc, argv);
+namespace DICe{
 
-  // only print output if args are given (for testing the output is quiet)
-  size_t iprint     = argc - 1;
-  size_t errorFlag  = 0;
-  Teuchos::RCP<std::ostream> outStream;
-  Teuchos::oblackholestream bhs; // outputs nothing
-  if (iprint > 0)
-    outStream = Teuchos::rcp(&std::cout, false);
-  else
-    outStream = Teuchos::rcp(&bhs, false);
+void read_image_dimensions(const std::string & file_name,
+  size_t & width,
+  size_t & height);
 
-  *outStream << "--- Begin test ---" << std::endl;
+/// Read an image into the host memory
+void read_image(const std::string & file_name,
+  intensity_host_view_t intensities);
 
-  // create an image from file:
-  DICe::Image img("./images/ImageA.tif");
+// TODO write a function that reads into the device memory directly
 
-  *outStream << "--- End test ---" << std::endl;
-
-  // finalize kokkos
-  Kokkos::finalize();
-
-  if (errorFlag != 0)
-    std::cout << "End Result: TEST FAILED\n";
-  else
-    std::cout << "End Result: TEST PASSED\n";
-
-  return 0;
+void write_image(const std::string & file_name,
+  const size_t width,
+  const size_t height,
+  intensity_host_view_t intensities);
 
 }
 
+#endif

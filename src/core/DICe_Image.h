@@ -40,43 +40,58 @@
 // ************************************************************************
 // @HEADER
 
-#include <DICe_Image.h>
+#ifndef DICE_IMAGE_H
+#define DICE_IMAGE_H
 
-#include <Teuchos_RCP.hpp>
-#include <Teuchos_oblackholestream.hpp>
-#include <iostream>
+#include <DICe.h>
 
-int main(int argc, char *argv[]) {
+#include <Teuchos_ParameterList.hpp>
 
-  // initialize kokkos
-  Kokkos::initialize(argc, argv);
+/*!
+ *  \namespace DICe
+ *  @{
+ */
+/// generic DICe classes and functions
+namespace DICe {
 
-  // only print output if args are given (for testing the output is quiet)
-  size_t iprint     = argc - 1;
-  size_t errorFlag  = 0;
-  Teuchos::RCP<std::ostream> outStream;
-  Teuchos::oblackholestream bhs; // outputs nothing
-  if (iprint > 0)
-    outStream = Teuchos::rcp(&std::cout, false);
-  else
-    outStream = Teuchos::rcp(&bhs, false);
+/// Note: the coordinates are from the top left corner (positive right for x and positive down for y)
 
-  *outStream << "--- Begin test ---" << std::endl;
+class DICECORE_LIB_DLL_EXPORT
+Image {
+public:
+  // TODO constructor by array
+  // TODO constructor from cine
+  // TODO constructor from other image
+  // TODO constructor from ASCII file
 
-  // create an image from file:
-  DICe::Image img("./images/ImageA.tif");
+  /// Constructor that takes a tiff file as an argument
+  Image(const std::string & fileName,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
-  *outStream << "--- End test ---" << std::endl;
+  /// intensity access is always in GLOBAL image coordinates
 
-  // finalize kokkos
-  Kokkos::finalize();
 
-  if (errorFlag != 0)
-    std::cout << "End Result: TEST FAILED\n";
-  else
-    std::cout << "End Result: TEST PASSED\n";
+  /// Virtual destructor
+  virtual ~Image(){};
+private:
+  /// host pixel container
+  intensity_host_view_t intensities_host_;
+  /// device pixel container
+  intensity_device_view_t intensities_dev_;
+  /// offsets are used to convert to global image coordinates
+  /// (the pixel container may be a subset of a larger image)
+  size_t offset_x_;
+  /// offsets are used to convert to global image coordinates
+  /// (the pixel container may be a subset of a larger image)
+  size_t offset_y_;
+  /// pixel container width_
+  size_t width_;
+  /// pixel container height_
+  size_t height_;
+};
 
-  return 0;
+}// End DICe Namespace
 
-}
+/*! @} End of Doxygen namespace*/
 
+#endif

@@ -1,9 +1,23 @@
 cmake_minimum_required(VERSION 2.8)
-MESSAGE("\nConfiguring DICe...\n")
+MESSAGE("\nConfiguring DICe utils...\n")
 
-MESSAGE(STATUS "Using Trilinos installed in: ${DICE_TRILINOS_DIR}")
-MESSAGE(STATUS "DICE_UTILS_CXX_COMPILER: ${DICE_UTILS_CXX_COMPILER}")
-MESSAGE(STATUS "DICE_UTILS_C_COMPILER: ${DICE_UTILS_C_COMPILER}")
+# Check up front for trilnos dir
+IF (NOT DEFINED DICE_UTILS_CXX_COMPILER)
+  MESSAGE(FATAL_ERROR "\nDICe Error: cmake must define DICE_UTILS_CXX_COMPILER")
+ENDIF()
+IF (NOT DEFINED DICE_UTILS_C_COMPILER)
+  MESSAGE(FATAL_ERROR "\nDICe Error: cmake must define DICE_UTILS_C_COMPILER")
+ENDIF()
+SET(CMAKE_CXX_COMPILER ${DICE_UTILS_CXX_COMPILER} )
+SET(CMAKE_C_COMPILER ${DICE_UTILS_C_COMPILER} )
+
+PROJECT(DICe_utils)
+
+# Check up front for trilnos dir
+IF (NOT DEFINED DICE_TRILINOS_DIR)
+  MESSAGE(FATAL_ERROR "\nDICe Error: cmake must define DICE_TRILINOS_DIR:
+  (-D DICE_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
+ENDIF()
 
 # If this is a windows build CLAPACK is required. Find package for
 # clapack is automatically enabled by setting the CLAPACK_DIR variable
@@ -26,9 +40,9 @@ IF(WIN32)
 ENDIF(WIN32)
 
 IF(BUILD_SHARED_LIBS)
-  MESSAGE(STATUS "BUILD_SHARED_LIBS is set to ON")
+MESSAGE("BUILD_SHARED_LIBS is set to ON")
 ELSE(BUILD_SHARED_LIBS)
-  MESSAGE(STATUS "BUILD_SHARED_LIBS is set to OFF")
+MESSAGE("BUILD_SHARED_LIBS is set to OFF")
 ENDIF(BUILD_SHARED_LIBS)
 
 # Get Trilinos as one entity
@@ -54,68 +68,9 @@ MESSAGE("   Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
 MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("End of Trilinos details\n")
 
-SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
-SET(CMAKE_C_COMPILER ${Trilinos_C_COMPILER} )
-SET(CMAKE_VERBOSE_MAKEFILE OFF)
-
 SET(DICE_MPI_EXEC ${Trilinos_MPI_EXEC})
 
-# End of setup and error checking
-#  NOTE: PROJECT command checks for compilers, so this statement
-#        is moved AFTER setting CMAKE_CXX_COMPILER opton
-
-PROJECT(DICe)
-
-include(ExternalProject)
-MESSAGE(STATUS "Building DICe_utils from ${CMAKE_CURRENT_SOURCE_DIR}")
-ExternalProject_Add(DICe_utils
-  PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/src/utils
-  DOWNLOAD_COMMAND ""
-  UPDATE_COMMAND ""
-  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/utils
-  BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/build
-  CMAKE_CACHE_ARGS -DDICE_UTILS_CXX_COMPILER:STRING=${DICE_UTILS_CXX_COMPILER} -DDICE_UTILS_C_COMPILER:STRING=${DICE_UTILS_C_COMPILER} -DDICE_TRILINOS_DIR:STRING=${DICE_TRILINOS_DIR} -DCMAKE_INSTALL_PREFIX:FILEPATH=${CMAKE_INSTALL_PREFIX}
-  )
-
-
-# MPI check -- defaults to TRUE
-MESSAGE(STATUS "Checking if MPI is enabled in Trilinos:")
-LIST(FIND Trilinos_TPL_LIST MPI MPI_List_ID)
-IF (MPI_List_ID GREATER -1)
-  MESSAGE(STATUS "Checking if MPI is enabled in Trilinos: MPI ENABLED")
-  SET(DICE_MPI TRUE)
-  ADD_DEFINITIONS(-DDICE_MPI)
-  MESSAGE(STATUS "Using DICE_MPI_EXEC:${DICE_MPI_EXEC}")
-ELSE()
-  MESSAGE(STATUS "Checking if MPI is enabled in Trilinos: MPI NOT ENABLED")
-  SET(DICE_MPI FALSE)
-ENDIF()
-
-SET(DICE_TRILINOS_HEADERS
-    ${Trilinos_INCLUDE_DIRS}
-    ${Trilinos_TPL_INCLUDE_DIRS}
-  )
-
-SET(DICE_TRILINOS_LIB_DIRS
-    ${Trilinos_LIBRARY_DIRS}
-    ${Trilinos_TPL_LIBRARY_DIRS}
-  )
-
-link_directories(${DICE_TRILINOS_LIB_DIRS} ${TIFF_DIR} ${CMAKE_INSTALL_PREFIX}/lib)
-
-SET(DICE_HEADER_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/core
-  ${TIFF_DIR}
-  )
-
-
-SET(DICE_LIBRARIES
-    ${DICE_LIBRARIES}
-    teuchoscore
-    teuchosnumerics
-    teuchoscomm
-    teuchosparameterlist
- )
+SET(CMAKE_VERBOSE_MAKEFILE OFF)
 
 # WINDOWS CMake has a bug for find_package() for clapack
 # f2clibs have to be added manually here
@@ -125,11 +80,10 @@ ENDIF()
 
 # FIND BOOST
 IF(WIN32)
-  find_package(Boost 1.46.0) # find_package for boost works a little dif for Windows
+  find_package(Boost 1.46.0) # find_package for boost works a little dif for Windows 
 ELSE()
-  find_package(Boost 1.46.0 COMPONENTS program_options system filesystem)
+  find_package(Boost 1.46.0 COMPONENTS program_options system filesystem) 
 ENDIF()
-
 
 SET(DICE_BOOST FALSE)
 if (Boost_FOUND)
@@ -150,11 +104,21 @@ else (Boost_FOUND)
   MESSAGE(FATAL_ERROR "BOOST is required, but not found")
 endif (Boost_FOUND)
 
-IF(DICE_DISABLE_BOOST_FILESYSTEM)
-  ADD_DEFINITIONS(-DDICE_DISABLE_BOOST_FILESYSTEM)
-  MESSAGE(STATUS "BOOST Filesystem has been disabled, output will be written to current execution directory")
-ENDIF()
+SET(DICE_TRILINOS_HEADERS
+    ${Trilinos_INCLUDE_DIRS}
+    ${Trilinos_TPL_INCLUDE_DIRS}
+  )
 
+SET(DICE_TRILINOS_LIB_DIRS
+    ${Trilinos_LIBRARY_DIRS}
+    ${Trilinos_TPL_LIBRARY_DIRS}
+  )
+
+link_directories(${TIFF_DIR})
+SET(DICE_HEADER_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${TIFF_DIR}
+  )
 
 # if debug messages are turned on:
 IF(DICE_DEBUG_MSG)
@@ -179,11 +143,18 @@ IF( ${CXX11Found} GREATER -1 )
   MESSAGE(STATUS "c++11 was enabled in Trilinos so enabling it here. (Found flag at position ${CXX11Found})")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++11")
 ENDIF()
-MESSAGE(STATUS "Trilinos CMAKE_CXX_FLAGS: ${Trilinos_CXX_COMPILER_FLAGS}")
-MESSAGE(STATUS "Trilnos CMAKE_C_FLAGS: ${Trilinos_C_COMPILER_FLAGS}")
-MESSAGE(STATUS "DICe CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
-MESSAGE(STATUS "DICe CMAKE_C_FLAGS: ${CMAKE_C_FLAGS}")
+MESSAGE(STATUS "CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
+MESSAGE(STATUS "CMAKE_C_FLAGS ${CMAKE_C_FLAGS}")
 
 add_subdirectory(src)
-add_subdirectory(tests)
+
+# set(DICe_UTILS_VERSION 1.0)
+# set(CPACK_PACKAGE_VERSION_MAJOR 1)
+# set(CPACK_PACKAGE_VERSION_MINOR 0)
+# include(CPack)
+# export(TARGETS diceutils FILE dice_utils-targets.cmake)
+# configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dice_utils-config-version.cmake.in
+#   ${CMAKE_CURRENT_BINARY_DIR}/dice_utils-config-version.cmake @ONLY)
+# configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dice_utils-config.cmake.in
+#   ${CMAKE_CURRENT_BINARY_DIR}/dice_utils-config.cmake @ONLY)
 

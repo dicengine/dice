@@ -1,7 +1,7 @@
 // @HEADER
 // ************************************************************************
 //
-//               Digital Image Correlation Engine (DICe)
+//               Digital Image Correlation Engine (DICE)
 //                 Copyright (2014) Sandia Corporation
 //
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -34,49 +34,61 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact:
-//              Dan Turner   (danielzturner@gmail.com)
+// Questions? Contact:  Dan Turner (dzturne@sandia.gov)
 //
 // ************************************************************************
 // @HEADER
 
-#include <DICe_Image.h>
+#include <cassert>
 
-#include <Teuchos_RCP.hpp>
-#include <Teuchos_oblackholestream.hpp>
-#include <iostream>
+#include <DICe_Tiff.h>
 
-int main(int argc, char *argv[]) {
+#include <boost/gil/gil_all.hpp>
+#include <boost/gil/extension/io/tiff_dynamic_io.hpp>
 
-  // initialize kokkos
-  Kokkos::initialize(argc, argv);
 
-  // only print output if args are given (for testing the output is quiet)
-  size_t iprint     = argc - 1;
-  size_t errorFlag  = 0;
-  Teuchos::RCP<std::ostream> outStream;
-  Teuchos::oblackholestream bhs; // outputs nothing
-  if (iprint > 0)
-    outStream = Teuchos::rcp(&std::cout, false);
-  else
-    outStream = Teuchos::rcp(&bhs, false);
+namespace DICe{
 
-  *outStream << "--- Begin test ---" << std::endl;
-
-  // create an image from file:
-  DICe::Image img("./images/ImageA.tif");
-
-  *outStream << "--- End test ---" << std::endl;
-
-  // finalize kokkos
-  Kokkos::finalize();
-
-  if (errorFlag != 0)
-    std::cout << "End Result: TEST FAILED\n";
-  else
-    std::cout << "End Result: TEST PASSED\n";
-
-  return 0;
-
+void read_image_dimensions(const std::string & file_name,
+  size_t & width,
+  size_t & height){
+  boost::gil::point2<std::ptrdiff_t> pt = boost::gil::tiff_read_dimensions(file_name);
+  width = pt.x;
+  height = pt.y;
 }
 
+void read_image(const std::string & file_name,
+  intensity_host_view_t intensities){
+  assert(file_name!="");
+  boost::gil::gray8_image_t img;
+  boost::gil::tiff_read_and_convert_image(file_name.c_str(),img);
+  const size_t width = img.width();
+  const size_t height = img.height();
+  boost::gil::gray8c_view_t img_view = boost::gil::const_view(img);
+  for (size_t y=0; y<height; ++y) {
+    boost::gil::gray8c_view_t::x_iterator src_it = img_view.row_begin(y);
+    for (size_t x=0; x<width;++x){
+      intensities(x,y) = src_it[x];
+    }
+  }
+}
+
+
+void write_image(const std::string & file_name,
+  const size_t width,
+  const size_t height,
+  intensity_host_view_t intensities){
+  assert(file_name!="");
+  boost::gil::gray8_image_t img(width,height);
+  boost::gil::gray8_view_t img_view = boost::gil::view(img);
+  for (size_t y=0; y<height; ++y) {
+    boost::gil::gray8_view_t::x_iterator src_it = img_view.row_begin(y);
+    for (size_t x=0; x<width;++x){
+      src_it[x] = (boost::gil::gray8_pixel_t)(intensities(x,y));
+    }
+  }
+  boost::gil::tiff_write_view(file_name.c_str(), img_view);
+}
+
+
+} // end namespace miniDICE

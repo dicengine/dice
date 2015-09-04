@@ -40,43 +40,41 @@
 // ************************************************************************
 // @HEADER
 
-#include <DICe_Image.h>
+#ifndef DICE_H
+#define DICE_H
 
-#include <Teuchos_RCP.hpp>
-#include <Teuchos_oblackholestream.hpp>
-#include <iostream>
+#define DICE_PI 3.14159265358979323846
+#define DICE_TWOPI 6.28318530717958647692
 
-int main(int argc, char *argv[]) {
+#if (defined(WIN32) || defined(WIN64))
+#  if defined(DICECORE_LIB_EXPORTS_MODE)
+#    define DICECORE_LIB_DLL_EXPORT __declspec(dllexport)
+#  else
+#    define DICECORE_LIB_DLL_EXPORT __declspec(dllimport)
+#  endif
+#else
+#  define DICECORE_LIB_DLL_EXPORT
+#endif
 
-  // initialize kokkos
-  Kokkos::initialize(argc, argv);
+// debugging macros:
+#ifdef DICE_DEBUG_MSG
+#  define DEBUG_MSG(x) do { std::cout << "[DICe_DEBUG]: " << x << std::endl; } while (0)
+#else
+#  define DEBUG_MSG(x) do {} while (0)
+#endif
 
-  // only print output if args are given (for testing the output is quiet)
-  size_t iprint     = argc - 1;
-  size_t errorFlag  = 0;
-  Teuchos::RCP<std::ostream> outStream;
-  Teuchos::oblackholestream bhs; // outputs nothing
-  if (iprint > 0)
-    outStream = Teuchos::rcp(&std::cout, false);
-  else
-    outStream = Teuchos::rcp(&bhs, false);
+#include <Kokkos_Core.hpp>
 
-  *outStream << "--- Begin test ---" << std::endl;
+// basic types
 
-  // create an image from file:
-  DICe::Image img("./images/ImageA.tif");
+typedef float intensity_t;
+typedef double scalar_t;
 
-  *outStream << "--- End test ---" << std::endl;
+// kokkos view types
 
-  // finalize kokkos
-  Kokkos::finalize();
+// 2 dimensional array for the device
+typedef Kokkos::View<intensity_t **> intensity_device_view_t;
+// host mirrors
+typedef intensity_device_view_t::HostMirror intensity_host_view_t;
 
-  if (errorFlag != 0)
-    std::cout << "End Result: TEST FAILED\n";
-  else
-    std::cout << "End Result: TEST PASSED\n";
-
-  return 0;
-
-}
-
+#endif

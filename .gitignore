@@ -1,0 +1,6 @@
+*~
+build
+.cproject
+.project
+*-stamp*
+src/utils/tmp

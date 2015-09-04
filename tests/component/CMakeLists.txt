@@ -5,4 +5,4 @@ include_directories (
 )
 
 add_executable(DICe_TestImage DICe_TestImage.cpp)
-target_link_libraries(DICe_TestImage ${DICE_LIBRARIES})
+target_link_libraries(DICe_TestImage ${DICE_LIBRARIES} dicecore diceutils)

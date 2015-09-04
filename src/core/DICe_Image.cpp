@@ -34,49 +34,34 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact:
+// Questions? Contact lead developer:
 //              Dan Turner   (danielzturner@gmail.com)
 //
 // ************************************************************************
 // @HEADER
 
 #include <DICe_Image.h>
+#include <DICe_Tiff.h>
 
-#include <Teuchos_RCP.hpp>
-#include <Teuchos_oblackholestream.hpp>
-#include <iostream>
+#include <cassert>
 
-int main(int argc, char *argv[]) {
-
-  // initialize kokkos
-  Kokkos::initialize(argc, argv);
-
-  // only print output if args are given (for testing the output is quiet)
-  size_t iprint     = argc - 1;
-  size_t errorFlag  = 0;
-  Teuchos::RCP<std::ostream> outStream;
-  Teuchos::oblackholestream bhs; // outputs nothing
-  if (iprint > 0)
-    outStream = Teuchos::rcp(&std::cout, false);
-  else
-    outStream = Teuchos::rcp(&bhs, false);
-
-  *outStream << "--- Begin test ---" << std::endl;
-
-  // create an image from file:
-  DICe::Image img("./images/ImageA.tif");
-
-  *outStream << "--- End test ---" << std::endl;
-
-  // finalize kokkos
-  Kokkos::finalize();
-
-  if (errorFlag != 0)
-    std::cout << "End Result: TEST FAILED\n";
-  else
-    std::cout << "End Result: TEST PASSED\n";
-
-  return 0;
-
+namespace DICe {
+Image::Image(const std::string & file_name,
+  const Teuchos::RCP<Teuchos::ParameterList> & params):
+  offset_x_(0),
+  offset_y_(0)
+{
+  // get the image dims
+  read_image_dimensions(file_name,width_,height_);
+  assert(width_>0);
+  assert(height_>0);
+  // initialize the pixel containers
+  intensities_dev_ = intensity_device_view_t("intensities_dev",width_,height_);
+  intensities_host_ = intensity_host_view_t(intensities_dev_);
+  // read in the image
+  read_image(file_name,intensities_host_);
+  // copy the image to the device (no-op for OpenMP)
+  Kokkos::deep_copy(intensities_dev_,intensities_host_);
 }
 
+}// End DICe Namespace
