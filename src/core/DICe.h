@@ -65,16 +65,22 @@
 
 #include <Kokkos_Core.hpp>
 
-// basic types
+namespace DICe{
 
+/// basic types
+
+/// image intensity type
 typedef float intensity_t;
+/// generic scalar type
 typedef double scalar_t;
 
-// kokkos view types
+/// kokkos view types
 
-// 2 dimensional array for the device
+/// 2 dimensional array of intensity values for the device
 typedef Kokkos::View<intensity_t **> intensity_device_view_t;
-// host mirrors
+/// host mirrors of the intensity value arrays
 typedef intensity_device_view_t::HostMirror intensity_host_view_t;
+
+} // end DICe namespace
 
 #endif
