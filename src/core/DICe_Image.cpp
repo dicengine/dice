@@ -57,7 +57,7 @@ Image::Image(const std::string & file_name,
   assert(height_>0);
   // initialize the pixel containers
   intensities_dev_ = intensity_device_view_t("intensities_dev",width_,height_);
-  intensities_host_ = intensity_host_view_t(intensities_dev_);
+  intensities_host_ = Kokkos::create_mirror_view(intensities_dev_);
   // read in the image
   read_image(file_name,intensities_host_);
   // copy the image to the device (no-op for OpenMP)

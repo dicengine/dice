@@ -74,12 +74,36 @@ ExternalProject_Add(DICe_utils
   UPDATE_COMMAND ""
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/utils
   BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/build
-  CMAKE_CACHE_ARGS -DDICE_UTILS_CXX_COMPILER:STRING=${DICE_UTILS_CXX_COMPILER} -DDICE_UTILS_C_COMPILER:STRING=${DICE_UTILS_C_COMPILER} -DDICE_TRILINOS_DIR:STRING=${DICE_TRILINOS_DIR} -DCMAKE_INSTALL_PREFIX:FILEPATH=${CMAKE_INSTALL_PREFIX}
+  CMAKE_CACHE_ARGS -DDICE_UTILS_CXX_COMPILER:STRING=${DICE_UTILS_CXX_COMPILER} -DDICE_UTILS_C_COMPILER:STRING=${DICE_UTILS_C_COMPILER} -DDICE_TRILINOS_DIR:STRING=${DICE_TRILINOS_DIR} -DCMAKE_INSTALL_PREFIX:FILEPATH=${CMAKE_INSTALL_PREFIX} -DBOOST_ROOT:STRING=${BOOST_ROOT} -DTIFF_DIR:STRING=${TIFF_DIR} -DDICE_DEBUG_MSG:BOOL=${DICE_DEBUG_MSG}
   )
 
+# check if there exists a utilities pre-build module file to load/unload modules prior to building
+
+MESSAGE(STATUS "Searching ${CMAKE_CURRENT_BINARY_DIR} for a pre-build module command file named dice_util_module_commands.sh")
+if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/dice_util_module_commands.sh")
+   MESSAGE(STATUS "Found pre-build module command file: ${CMAKE_CURRENT_BINARY_DIR}/dice_util_module_commands.sh")
+   ExternalProject_Add_Step(DICe_utils load_dice_util_modules
+     COMMAND ${CMAKE_CURRENT_BINARY_DIR}/dice_util_module_commands.sh
+     DEPENDERS build
+   )
+else()
+   MESSAGE(STATUS "Did not find pre-build module command file: ${CMAKE_CURRENT_BINARY_DIR}/dice_util_module_commands.sh, modules will not be changed")
+endif()
+
+# check if there exists a pre-build module file to load/unload modules prior to building
+
+MESSAGE(STATUS "Searching ${CMAKE_CURRENT_BINARY_DIR} for a pre-build module command file named dice_module_commands.sh")
+if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/dice_module_commands.sh")
+   MESSAGE(STATUS "Found pre-build module command file: ${CMAKE_CURRENT_BINARY_DIR}/dice_module_commands.sh")
+   ExternalProject_Add_Step(DICe_utils load_dice_modules
+     COMMAND ${CMAKE_CURRENT_BINARY_DIR}/dice_module_commands.sh
+     DEPENDEES install
+   )
+else()
+   MESSAGE(STATUS "Did not find pre-build module command file: ${CMAKE_CURRENT_BINARY_DIR}/dice_module_commands.sh, modules will not be changed")
+endif()
 
 # MPI check -- defaults to TRUE
-MESSAGE(STATUS "Checking if MPI is enabled in Trilinos:")
 LIST(FIND Trilinos_TPL_LIST MPI MPI_List_ID)
 IF (MPI_List_ID GREATER -1)
   MESSAGE(STATUS "Checking if MPI is enabled in Trilinos: MPI ENABLED")
@@ -115,6 +139,7 @@ SET(DICE_LIBRARIES
     teuchosnumerics
     teuchoscomm
     teuchosparameterlist
+    kokkoscore
  )
 
 # WINDOWS CMake has a bug for find_package() for clapack
