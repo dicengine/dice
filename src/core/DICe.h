@@ -72,7 +72,7 @@ namespace DICe{
 /// image intensity type
 typedef float intensity_t;
 /// generic scalar type
-typedef double scalar_t;
+typedef float scalar_t;
 
 /// kokkos view types
 
@@ -80,6 +80,25 @@ typedef double scalar_t;
 typedef Kokkos::View<intensity_t **> intensity_device_view_t;
 /// host mirrors of the intensity value arrays
 typedef intensity_device_view_t::HostMirror intensity_host_view_t;
+
+/// 1 dimensional array of scalar values for the device
+typedef Kokkos::View<scalar_t *> scalar_device_view_1d_t;
+/// host mirrors of the scalar value arrays
+typedef scalar_device_view_1d_t::HostMirror scalar_host_view_1d_t;
+
+/// 2 dimensional array of scalar values for the device
+typedef Kokkos::View<scalar_t **> scalar_device_view_2d_t;
+/// host mirrors of the scalar value arrays
+typedef scalar_device_view_2d_t::HostMirror scalar_host_view_2d_t;
+
+
+
+/// parameters (all lower case)
+
+/// String parameter name
+const char* const compute_image_gradients = "compute_image_gradients";
+
+
 
 } // end DICe namespace
 

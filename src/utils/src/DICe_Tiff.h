@@ -48,17 +48,42 @@
 
 namespace DICe{
 
-void read_image_dimensions(const std::string & file_name,
+/// read the image dimensions
+/// \param file_name the tiff file name
+/// \param width [out] returned as the width of the image
+/// \param height [out] returned as the height of the image
+void read_tiff_image_dimensions(const std::string & file_name,
   size_t & width,
   size_t & height);
 
 /// Read an image into the host memory
-void read_image(const std::string & file_name,
+/// \param file_name the name of the tiff file
+/// \param intensities [out] populated with the pixel intensity values
+void read_tiff_image(const std::string & file_name,
+  intensity_host_view_t intensities);
+
+/// Read an image into the host memory
+/// \param file_name the name of the tiff file
+/// \param offset_x the upper left corner x-coordinate in global image coordinates
+/// \param offset_y the upper left corner y-coordinate in global image coordinates
+/// \param width width of the portion of the image to read (must be smaller than the global image width)
+/// \param height height of the portion of the image to read (must be smaller than the global image height)
+/// \param intensities [out] populated with the image intensities
+void read_tiff_image(const std::string & file_name,
+  size_t offset_x,
+  size_t offset_y,
+  size_t width,
+  size_t height,
   intensity_host_view_t intensities);
 
 // TODO write a function that reads into the device memory directly
 
-void write_image(const std::string & file_name,
+/// write an image to disk
+/// \param file_name the name of the tiff file
+/// \param width the width of the image to write
+/// \param height the height of the image
+/// \param intensities assumed to be an array of size width x height
+void write_tiff_image(const std::string & file_name,
   const size_t width,
   const size_t height,
   intensity_host_view_t intensities);

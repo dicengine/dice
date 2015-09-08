@@ -40,11 +40,16 @@
 // ************************************************************************
 // @HEADER
 
+#include <DICe.h>
 #include <DICe_Image.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
+#include <Teuchos_ParameterList.hpp>
+
 #include <iostream>
+
+using namespace DICe;
 
 int main(int argc, char *argv[]) {
 
@@ -64,7 +69,95 @@ int main(int argc, char *argv[]) {
   *outStream << "--- Begin test ---" << std::endl;
 
   // create an image from file:
-  DICe::Image img("./images/ImageA.tif");
+  *outStream << "creating an image from a tiff file " << std::endl;
+  Image img("./images/ImageA.tif");
+  img.write("outImageA.tif");
+  if(img.width()!=2048){
+    *outStream << "Error, the image width is not correct" << std::endl;
+    errorFlag +=1;
+  }
+  if(img.height()!=589){
+    *outStream << "Error, the image height is not correct" << std::endl;
+    errorFlag +=1;
+  }
+
+  // capture a portion of an image from file
+  *outStream << "creating an image from a portion of a tiff file " << std::endl;
+  Image sub_img("./images/ImageA.tif",100,100,300,200);
+  sub_img.write("outSubImageA.tif");
+  if(sub_img.width()!=300){
+    *outStream << "Error, the sub image width is not correct" << std::endl;
+    errorFlag +=1;
+  }
+  if(sub_img.height()!=200){
+    *outStream << "Error, the sub image height is not correct" << std::endl;
+    errorFlag +=1;
+  }
+  // the pixel values from the sub image should line up with the image above, if given the right coordinates
+  for(size_t y=0;y<1;++y){//sub_img.height();++y){
+    for(size_t x=0;x<1;++x){//<sub_img.width();++i){
+      if(sub_img(x,y)!=img(x+sub_img.offset_x(),y+sub_img.offset_y())){
+        *outStream << "Error, the intensities for the sub image do not match the global image" << std::endl;
+        errorFlag+=1;
+      }
+    }
+  }
+
+  // create an image from an array
+  *outStream << "creating an image from an array" << std::endl;
+  const size_t array_w = 10;
+  const size_t array_h = 10;
+  scalar_t * intensities = new scalar_t[array_w*array_h];
+  scalar_t * gx = new scalar_t[array_w*array_h];
+  scalar_t * gy = new scalar_t[array_w*array_h];
+  // populate the intensities with a sin/cos function
+  for(size_t y=0;y<array_h;++y){
+    for(size_t x=0;x<array_w;++x){
+      intensities[y*array_w+x] = 255*std::cos(x/(4*DICE_PI))*std::sin(y/(4*DICE_PI));
+      gx[y*array_w+x] = -255*(1/(4*DICE_PI))*std::sin(x/(4*DICE_PI))*std::sin(y/(4*DICE_PI));
+      gy[y*array_w+x] = 255*(1/(4*DICE_PI))*std::cos(x/(4*DICE_PI))*std::cos(y/(4*DICE_PI));
+    }
+  }
+  Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
+  params->set(DICe::compute_image_gradients,true);
+  Image array_img(intensities,array_w,array_h,params);
+  bool intensity_value_error = false;
+  bool grad_x_error = false;
+  bool grad_y_error = false;
+  scalar_t grad_tol = 1.0E-3;
+  for(size_t y=2;y<array_h-2;++y){
+    for(size_t x=2;x<array_w-2;++x){
+      if(intensities[y*array_w+x] != array_img(x,y))
+        intensity_value_error = true;
+      // TODO check grad x
+      if(std::abs(gx[y*array_w+x] - array_img.grad_x(x,y)) > grad_tol)
+        grad_x_error = true;
+      if(std::abs(gy[y*array_w+x] - array_img.grad_y(x,y)) > grad_tol)
+        grad_y_error = true;
+    }
+  }
+  if(intensity_value_error){
+    *outStream << "Error, the intensity values are wrong" << std::endl;
+    errorFlag++;
+  }
+  if(grad_x_error){
+    *outStream << "Error, the x-gradient values are wrong" << std::endl;
+    errorFlag++;
+  }
+  if(grad_y_error){
+    *outStream << "Error, the y-gradient values are wrong" << std::endl;
+    errorFlag++;
+  }
+
+  delete[] intensities;
+  delete[] gx;
+  delete[] gy;
+
+
+
+  // TODO  create an image from a Teuchos arrayRCP
+
+
 
   *outStream << "--- End test ---" << std::endl;
 

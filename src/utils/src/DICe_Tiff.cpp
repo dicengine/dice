@@ -49,7 +49,7 @@
 
 namespace DICe{
 
-void read_image_dimensions(const std::string & file_name,
+void read_tiff_image_dimensions(const std::string & file_name,
   size_t & width,
   size_t & height){
   boost::gil::point2<std::ptrdiff_t> pt = boost::gil::tiff_read_dimensions(file_name);
@@ -57,7 +57,7 @@ void read_image_dimensions(const std::string & file_name,
   height = pt.y;
 }
 
-void read_image(const std::string & file_name,
+void read_tiff_image(const std::string & file_name,
   intensity_host_view_t intensities){
   assert(file_name!="");
   boost::gil::gray8_image_t img;
@@ -68,13 +68,37 @@ void read_image(const std::string & file_name,
   for (size_t y=0; y<height; ++y) {
     boost::gil::gray8c_view_t::x_iterator src_it = img_view.row_begin(y);
     for (size_t x=0; x<width;++x){
-      intensities(x,y) = src_it[x];
+      intensities(y,x) = src_it[x];
     }
   }
 }
 
+void read_tiff_image(const std::string & file_name,
+  size_t offset_x,
+  size_t offset_y,
+  size_t width,
+  size_t height,
+  intensity_host_view_t intensities){
+  assert(offset_x>=0);
+  assert(offset_y>=0);
+  assert(file_name!="");
+  boost::gil::gray8_image_t img;
+  boost::gil::tiff_read_and_convert_image(file_name.c_str(),img);
+  const size_t img_width = img.width();
+  const size_t img_height = img.height();
+  assert(width+offset_x < img_width);
+  assert(height+offset_y< img_height);
 
-void write_image(const std::string & file_name,
+  boost::gil::gray8c_view_t img_view = boost::gil::const_view(img);
+  for (size_t y=offset_y; y<offset_y+height; ++y) {
+    boost::gil::gray8c_view_t::x_iterator src_it = img_view.row_begin(y);
+    for (size_t x=offset_x; x<offset_x+width;++x){
+      intensities(y-offset_y,x-offset_x) = src_it[x];
+    }
+  }
+}
+
+void write_tiff_image(const std::string & file_name,
   const size_t width,
   const size_t height,
   intensity_host_view_t intensities){
@@ -84,7 +108,7 @@ void write_image(const std::string & file_name,
   for (size_t y=0; y<height; ++y) {
     boost::gil::gray8_view_t::x_iterator src_it = img_view.row_begin(y);
     for (size_t x=0; x<width;++x){
-      src_it[x] = (boost::gil::gray8_pixel_t)(intensities(x,y));
+      src_it[x] = (boost::gil::gray8_pixel_t)(intensities(y,x));
     }
   }
   boost::gil::tiff_write_view(file_name.c_str(), img_view);
