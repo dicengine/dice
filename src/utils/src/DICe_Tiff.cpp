@@ -79,8 +79,6 @@ void read_tiff_image(const std::string & file_name,
   size_t width,
   size_t height,
   intensity_host_view_t intensities){
-  assert(offset_x>=0);
-  assert(offset_y>=0);
   assert(file_name!="");
   boost::gil::gray8_image_t img;
   boost::gil::tiff_read_and_convert_image(file_name.c_str(),img);
