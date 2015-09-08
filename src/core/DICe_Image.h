@@ -44,6 +44,7 @@
 #define DICE_IMAGE_H
 
 #include <DICe.h>
+#include <DICe_KokkosTypes.h>
 
 #include <Teuchos_ParameterList.hpp>
 
@@ -113,16 +114,16 @@ public:
   void write(const std::string & file_name);
 
   /// returns the width of the image
-  const size_t width()const{return width_;}
+  size_t width()const{return width_;}
 
   /// return the height of the image
-  const size_t height()const{return height_;}
+  size_t height()const{return height_;}
 
   /// returns the offset x coordinate
-  const size_t offset_x()const{return offset_x_;}
+  size_t offset_x()const{return offset_x_;}
 
   /// returns the offset y coordinate
-  const size_t offset_y()const{return offset_y_;}
+  size_t offset_y()const{return offset_y_;}
 
   /// intensity accessors:
   /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
@@ -147,10 +148,10 @@ public:
   void compute_gradients();
 
   /// returns true if the gradients have been computed
-  const bool has_gradients()const{return has_gradients_;}
+  bool has_gradients()const{return has_gradients_;}
 
   /// returns the number of pixels in the image
-  const size_t num_pixels()const{return width_*height_;}
+  size_t num_pixels()const{return width_*height_;}
 
   /// virtual destructor
   virtual ~Image(){};

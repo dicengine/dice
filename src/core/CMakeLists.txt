@@ -5,6 +5,7 @@ SET(DICE_SOURCES
 
 SET(DICE_HEADERS
   DICe.h
+  DICe_KokkosTypes.h
   DICe_Image.h
   )
 

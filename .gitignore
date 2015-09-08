@@ -4,3 +4,4 @@ build
 .project
 *-stamp*
 src/utils/tmp
+.DS_Store

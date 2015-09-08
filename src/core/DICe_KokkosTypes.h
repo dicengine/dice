@@ -1,7 +1,7 @@
 // @HEADER
 // ************************************************************************
 //
-//               Digital Image Correlation Engine (DICE)
+//               Digital Image Correlation Engine (DICe)
 //                 Copyright (2014) Sandia Corporation
 //
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -34,60 +34,36 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact:  Dan Turner (dzturne@sandia.gov)
+// Questions? Contact:
+//              Dan Turner   (danielzturner@gmail.com)
 //
 // ************************************************************************
 // @HEADER
 
-#ifndef DICE_TIFF_H
-#define DICE_TIFF_H
+#ifndef DICE_KOKKOSTYPES_H
+#define DICE_KOKKOSTYPES_H
 
-#include <DICe.h>
-
-#include <string>
+#include <Kokkos_Core.hpp>
 
 namespace DICe{
 
-/// read the image dimensions
-/// \param file_name the tiff file name
-/// \param width [out] returned as the width of the image
-/// \param height [out] returned as the height of the image
-void read_tiff_image_dimensions(const std::string & file_name,
-  size_t & width,
-  size_t & height);
+/// kokkos view types
 
-/// Read an image into the host memory
-/// \param file_name the name of the tiff file
-/// \param intensities [out] populated with the pixel intensity values
-void read_tiff_image(const std::string & file_name,
-  intensity_t * intensities);
+/// 2 dimensional array of intensity values for the device
+typedef Kokkos::View<intensity_t **> intensity_device_view_t;
+/// host mirrors of the intensity value arrays
+typedef intensity_device_view_t::HostMirror intensity_host_view_t;
 
-/// Read an image into the host memory
-/// \param file_name the name of the tiff file
-/// \param offset_x the upper left corner x-coordinate in global image coordinates
-/// \param offset_y the upper left corner y-coordinate in global image coordinates
-/// \param width width of the portion of the image to read (must be smaller than the global image width)
-/// \param height height of the portion of the image to read (must be smaller than the global image height)
-/// \param intensities [out] populated with the image intensities
-void read_tiff_image(const std::string & file_name,
-  size_t offset_x,
-  size_t offset_y,
-  size_t width,
-  size_t height,
-  intensity_t * intensities);
+/// 1 dimensional array of scalar values for the device
+typedef Kokkos::View<scalar_t *> scalar_device_view_1d_t;
+/// host mirrors of the scalar value arrays
+typedef scalar_device_view_1d_t::HostMirror scalar_host_view_1d_t;
 
-// TODO write a function that reads into the device memory directly
+/// 2 dimensional array of scalar values for the device
+typedef Kokkos::View<scalar_t **> scalar_device_view_2d_t;
+/// host mirrors of the scalar value arrays
+typedef scalar_device_view_2d_t::HostMirror scalar_host_view_2d_t;
 
-/// write an image to disk
-/// \param file_name the name of the tiff file
-/// \param width the width of the image to write
-/// \param height the height of the image
-/// \param intensities assumed to be an array of size width x height
-void write_tiff_image(const std::string & file_name,
-  const size_t width,
-  const size_t height,
-  intensity_t * intensities);
-
-}
+} // end DICe namespace
 
 #endif

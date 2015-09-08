@@ -63,8 +63,6 @@
 #  define DEBUG_MSG(x) do {} while (0)
 #endif
 
-#include <Kokkos_Core.hpp>
-
 namespace DICe{
 
 /// basic types
@@ -73,25 +71,6 @@ namespace DICe{
 typedef float intensity_t;
 /// generic scalar type
 typedef float scalar_t;
-
-/// kokkos view types
-
-/// 2 dimensional array of intensity values for the device
-typedef Kokkos::View<intensity_t **> intensity_device_view_t;
-/// host mirrors of the intensity value arrays
-typedef intensity_device_view_t::HostMirror intensity_host_view_t;
-
-/// 1 dimensional array of scalar values for the device
-typedef Kokkos::View<scalar_t *> scalar_device_view_1d_t;
-/// host mirrors of the scalar value arrays
-typedef scalar_device_view_1d_t::HostMirror scalar_host_view_1d_t;
-
-/// 2 dimensional array of scalar values for the device
-typedef Kokkos::View<scalar_t **> scalar_device_view_2d_t;
-/// host mirrors of the scalar value arrays
-typedef scalar_device_view_2d_t::HostMirror scalar_host_view_2d_t;
-
-
 
 /// parameters (all lower case)
 

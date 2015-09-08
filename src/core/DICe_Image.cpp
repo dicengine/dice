@@ -65,7 +65,7 @@ Image::Image(const std::string & file_name,
   grad_x_host_ = Kokkos::create_mirror_view(grad_x_dev_);
   grad_y_host_ = Kokkos::create_mirror_view(grad_y_dev_);
   // read in the image
-  read_tiff_image(file_name,intensities_host_);
+  read_tiff_image(file_name,intensities_host_.ptr_on_device());
   // copy the image to the device (no-op for OpenMP)
   Kokkos::deep_copy(intensities_dev_,intensities_host_);
   const bool compute_image_gradients = params!=Teuchos::null ?
@@ -86,8 +86,6 @@ Image::Image(const std::string & file_name,
   height_(height),
   has_gradients_(false)
 {
-  assert(offset_x>=0);
-  assert(offset_y>=0);
   // get the image dims
   size_t img_width = 0;
   size_t img_height = 0;
@@ -102,7 +100,7 @@ Image::Image(const std::string & file_name,
   grad_x_host_ = Kokkos::create_mirror_view(grad_x_dev_);
   grad_y_host_ = Kokkos::create_mirror_view(grad_y_dev_);
   // read in the image
-  read_tiff_image(file_name,offset_x,offset_y,width_,height_,intensities_host_);
+  read_tiff_image(file_name,offset_x,offset_y,width_,height_,intensities_host_.ptr_on_device());
   // copy the image to the device (no-op for OpenMP)
   Kokkos::deep_copy(intensities_dev_,intensities_host_);
   const bool compute_image_gradients = params!=Teuchos::null ?
@@ -141,49 +139,101 @@ Image::Image(scalar_t * intensities,
 
 void
 Image::write(const std::string & file_name){
-  write_tiff_image(file_name,width_,height_,intensities_host_);
+  write_tiff_image(file_name,width_,height_,intensities_host_.ptr_on_device());
 }
+
+struct Image_Gradient_Functor {
+  intensity_device_view_t intensities_;
+  scalar_device_view_2d_t grad_x_;
+  scalar_device_view_2d_t grad_y_;
+  size_t width_;
+  size_t height_;
+  const scalar_t c1;
+  const scalar_t c2;
+  Image_Gradient_Functor(const size_t width,
+    const size_t height,
+    intensity_device_view_t intensities,
+    scalar_device_view_2d_t grad_x,
+    scalar_device_view_2d_t grad_y):
+      width_(width),
+      height_(height),
+      intensities_(intensities),
+      grad_x_(grad_x),
+      grad_y_(grad_y),
+      c1(1.0/12.0),
+      c2(-8.0/12.0){}
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const size_t pixel_index) const {
+    const size_t y = pixel_index / width_;
+    const size_t x = pixel_index - y*width_;
+    /// check if this pixel is near the left edge
+    if(x<2){
+      grad_x_(y,x) = intensities_(y,x+1) - intensities_(y,x);
+    }
+    /// check if this pixel is near the right edge
+    else if(x>=width_-2){
+      grad_x_(y,x) = intensities_(y,x) - intensities_(y,x-1);
+    }
+    else{
+      grad_x_(y,x) = c1*intensities_(y,x-2) + c2*intensities_(y,x-1) - c2*intensities_(y,x+1) - c1*intensities_(y,x+2);
+    }
+    /// check if this pixel is near the top edge
+    if(y<2){
+      grad_y_(y,x) = intensities_(y+1,x) - intensities_(y,x);
+    }
+    /// check if this pixel is near the bottom edge
+    else if(y>=height_-2){
+      grad_y_(y,x) = intensities_(y,x) - intensities_(y-1,x);
+    }
+    else{
+      grad_y_(y,x) = c1*intensities_(y-2,x) + c2*intensities_(y-1,x) - c2*intensities_(y+1,x) -c1*intensities_(y+2,x);
+    }
+  }
+};
 
 void
 Image::compute_gradients(){
-  // coefficients used to compute image gradients
-  // five point finite difference stencil:
-  static scalar_t c1 = 1.0/12.0;
-  static scalar_t c2 = -8.0/12.0;
-  static scalar_t c4 = -c2;
-  static scalar_t c5 = -c1;
-
-  // lambda for computing the gradients
-  const unsigned int team_size = 256;
-  const unsigned int num_teams = height_;
-
-  // TODO make the image intensity array random access
-  // TODO better FD along the edges
-  Kokkos::parallel_for(num_pixels(),
-    KOKKOS_LAMBDA (const size_t i) {
-    // get the x and y coordinates of this point
-    const size_t y = i / width_;
-    const size_t x = i - y*width_;
-    /// check if this pixel is near the edges
-    if(x<2){
-      grad_x_dev_(y,x) = intensities_dev_(y,x+1) - intensities_dev_(y,x);
-    }
-    else if(x>=width_-2){
-      grad_x_dev_(y,x) = intensities_dev_(y,x) - intensities_dev_(y,x-1);
-    }
-    else{
-      grad_x_dev_(y,x) = c1*intensities_dev_(y,x-2) + c2*intensities_dev_(y,x-1) + c4*intensities_dev_(y,x+1) + c5*intensities_dev_(y,x+2);
-    }
-    if(y<2){
-      grad_y_dev_(y,x) = intensities_dev_(y+1,x) - intensities_dev_(y,x);
-    }
-    else if(y>=height_-2){
-      grad_y_dev_(y,x) = intensities_dev_(y,x) - intensities_dev_(y-1,x);
-    }
-    else{
-      grad_y_dev_(y,x) = c1*intensities_dev_(y-2,x) + c2*intensities_dev_(y-1,x) + c4*intensities_dev_(y+1,x) + c5*intensities_dev_(y+2,x);
-    }
-  });
+  Image_Gradient_Functor igf(width_,height_,intensities_dev_,grad_x_dev_,grad_y_dev_);
+  Kokkos::parallel_for(num_pixels(),igf);
+//
+//  // coefficients used to compute image gradients
+//  // five point finite difference stencil:
+//  const scalar_t c1 = 1.0/12.0;
+//  const scalar_t c2 = -8.0/12.0;
+//  const scalar_t c4 = -c2;
+//  const scalar_t c5 = -c1;
+//
+//  // lambda for computing the gradients
+//  // TODO make the image intensity array random access
+//  // TODO better FD along the edges
+//  Kokkos::parallel_for(num_pixels(),
+//    KOKKOS_LAMBDA (const size_t i) {
+//    // get the x and y coordinates of this point
+//    const size_t y = i / width_;
+//    const size_t x = i - y*width_;
+//    /// check if this pixel is near the left edge
+//    if(x<2){
+//      grad_x_dev_(y,x) = intensities_dev_(y,x+1) - intensities_dev_(y,x);
+//    }
+//    /// check if this pixel is near the right edge
+//    else if(x>=width_-2){
+//      grad_x_dev_(y,x) = intensities_dev_(y,x) - intensities_dev_(y,x-1);
+//    }
+//    else{
+//      grad_x_dev_(y,x) = c1*intensities_dev_(y,x-2) + c2*intensities_dev_(y,x-1) + c4*intensities_dev_(y,x+1) + c5*intensities_dev_(y,x+2);
+//    }
+//    /// check if this pixel is near the top edge
+//    if(y<2){
+//      grad_y_dev_(y,x) = intensities_dev_(y+1,x) - intensities_dev_(y,x);
+//    }
+//    /// check if this pixel is near the bottom edge
+//    else if(y>=height_-2){
+//      grad_y_dev_(y,x) = intensities_dev_(y,x) - intensities_dev_(y-1,x);
+//    }
+//    else{
+//      grad_y_dev_(y,x) = c1*intensities_dev_(y-2,x) + c2*intensities_dev_(y-1,x) + c4*intensities_dev_(y+1,x) + c5*intensities_dev_(y+2,x);
+//    }
+//  });
   Kokkos::deep_copy(intensities_host_,intensities_dev_);
 
   has_gradients_ = true;
