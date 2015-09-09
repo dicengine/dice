@@ -103,7 +103,7 @@ public:
   /// \param width the width of the image
   /// \param height the height of the image
   /// \param params image parameters
-  Image(scalar_t * intensities,
+  Image(intensity_t * intensities,
     const size_t width,
     const size_t height,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
@@ -130,19 +130,19 @@ public:
   /// y is row, x is column
   /// \param x image coordinate x
   /// \param y image coordinate y
-  const intensity_t& operator()(const size_t x, const size_t y) const {return intensities_host_(y,x);}
+  const intensity_t& operator()(const size_t x, const size_t y) const {return intensities_.h_view(y,x);}
 
   /// gradient accessors:
   /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
   /// y is row, x is column
   /// \param x image coordinate x
   /// \param y image coordinate y
-  const scalar_t& grad_x(const size_t x, const size_t y) const {return grad_x_host_(y,x);}
+  const scalar_t& grad_x(const size_t x, const size_t y) const {return grad_x_.h_view(y,x);}
 
   /// gradient accessor for y
   /// \param x image coordinate x
   /// \param y image coordinate y
-  const scalar_t& grad_y(const size_t x, const size_t y) const {return grad_y_host_(y,x);}
+  const scalar_t& grad_y(const size_t x, const size_t y) const {return grad_y_.h_view(y,x);}
 
   /// compute the image gradients
   void compute_gradients();
@@ -166,18 +166,12 @@ private:
   size_t width_;
   /// pixel container height_
   size_t height_;
-  /// host pixel container
-  intensity_host_view_t intensities_host_;
-  /// device pixel container
-  intensity_device_view_t intensities_dev_;
-  /// host image gradient x container
-  scalar_host_view_2d_t grad_x_host_;
-  /// device image gradient x container
-  scalar_device_view_2d_t grad_x_dev_;
-  /// host image gradient y container
-  scalar_host_view_2d_t grad_y_host_;
-  /// device image gradient y container
-  scalar_device_view_2d_t grad_y_dev_;
+  /// pixel container
+  intensity_2d_t intensities_;
+  /// image gradient x container
+  scalar_2d_t grad_x_;
+  /// image gradient y container
+  scalar_2d_t grad_y_;
   /// flag that the gradients have been computed
   bool has_gradients_;
 };

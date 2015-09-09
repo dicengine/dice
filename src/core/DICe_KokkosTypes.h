@@ -44,25 +44,28 @@
 #define DICE_KOKKOSTYPES_H
 
 #include <Kokkos_Core.hpp>
+#include <Kokkos_DualView.hpp>
+
+#include <DICe.h>
 
 namespace DICe{
 
 /// kokkos view types
 
+typedef Kokkos::DefaultExecutionSpace execution_space;
+typedef Kokkos::HostSpace host_space;
+
 /// 2 dimensional array of intensity values for the device
-typedef Kokkos::View<intensity_t **> intensity_device_view_t;
+typedef Kokkos::View<intensity_t **, Kokkos::MemoryTraits<Kokkos::RandomAccess> > intensity_device_view_t;
 /// host mirrors of the intensity value arrays
 typedef intensity_device_view_t::HostMirror intensity_host_view_t;
 
-/// 1 dimensional array of scalar values for the device
-typedef Kokkos::View<scalar_t *> scalar_device_view_1d_t;
-/// host mirrors of the scalar value arrays
-typedef scalar_device_view_1d_t::HostMirror scalar_host_view_1d_t;
+/// 2 dimensional dual view of intensity type values
+// TODO make this memory random access
+typedef Kokkos::DualView<intensity_t **,Kokkos::MemoryTraits<Kokkos::RandomAccess> >  intensity_2d_t;
 
-/// 2 dimensional array of scalar values for the device
-typedef Kokkos::View<scalar_t **> scalar_device_view_2d_t;
-/// host mirrors of the scalar value arrays
-typedef scalar_device_view_2d_t::HostMirror scalar_host_view_2d_t;
+/// 2 dimensional dual view of scalar type values
+typedef Kokkos::DualView<scalar_t **>  scalar_2d_t;
 
 } // end DICe namespace
 

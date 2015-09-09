@@ -106,7 +106,7 @@ void write_tiff_image(const std::string & file_name,
   for (size_t y=0; y<height; ++y) {
     boost::gil::gray8_view_t::x_iterator src_it = img_view.row_begin(y);
     for (size_t x=0; x<width;++x){
-      src_it[x] = (boost::gil::gray8_pixel_t)(intensities[y*width+x]);
+      src_it[x] = (boost::gil::gray8_pixel_t)(intensities[y*width + x]);
     }
   }
   boost::gil::tiff_write_view(file_name.c_str(), img_view);
