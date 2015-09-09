@@ -62,7 +62,7 @@ Image::Image(const std::string & file_name,
   grad_x_ = scalar_2d_t("grad_x",height_,width_);
   grad_y_ = scalar_2d_t("grad_y",height_,width_);
   // read in the image
-  read_tiff_image(file_name,intensities_.h_view.ptr_on_device());
+  read_tiff_image(file_name,intensities_.h_view.ptr_on_device(),default_is_layout_right());
   // copy the image to the device (no-op for OpenMP)
   intensities_.modify<host_space>(); // The template is where the modification took place
   intensities_.sync<execution_space>(); // The template is what needs to be synced
@@ -95,7 +95,7 @@ Image::Image(const std::string & file_name,
   grad_x_ = scalar_2d_t("grad_x",height_,width_);
   grad_y_ = scalar_2d_t("grad_y",height_,width_);
   // read in the image
-  read_tiff_image(file_name,offset_x,offset_y,width_,height_,intensities_.h_view.ptr_on_device());
+  read_tiff_image(file_name,offset_x,offset_y,width_,height_,intensities_.h_view.ptr_on_device(),default_is_layout_right());
   // copy the image to the device (no-op for OpenMP)
   intensities_.modify<host_space>(); // The template is where the modification took place
   intensities_.sync<execution_space>(); // The template is what needs to be synced
@@ -118,9 +118,22 @@ Image::Image(intensity_t * intensities,
   assert(width_>0);
   assert(height_>0);
   // initialize the pixel containers
-  intensity_device_view_t intensities_dev(intensities,height_,width_);
-  intensity_device_view_t::HostMirror intensities_host(intensities_dev);
-  intensities_ = intensity_2d_t(intensities_dev,intensities_host);
+  // if the default layout is LayoutRight, then no permutation is necessary
+  if(default_is_layout_right()){
+    intensity_device_view_t intensities_dev(intensities,height_,width_);
+    intensity_host_view_t intensities_host  = Kokkos::create_mirror_view(intensities_dev);
+    intensities_ = intensity_2d_t(intensities_dev,intensities_host);
+  }
+  // else the data has to be copied to coalesce with the default layout
+  else{
+    assert(default_is_layout_left());
+    intensities_ = intensity_2d_t("intensities",height_,width_);
+    for(size_t y=0;y<height_;++y){
+      for(size_t x=0;x<width_;++x){
+        intensities_.h_view(y,x) = intensities[y*width_+x];
+      }
+    }
+  }
   grad_x_ = scalar_2d_t("grad_x",height_,width_);
   grad_y_ = scalar_2d_t("grad_y",height_,width_);
   // assumes that the host array passed in to the constructor is already populated
@@ -135,7 +148,7 @@ Image::Image(intensity_t * intensities,
 
 void
 Image::write(const std::string & file_name){
-  write_tiff_image(file_name,width_,height_,intensities_.h_view.ptr_on_device());
+  write_tiff_image(file_name,width_,height_,intensities_.h_view.ptr_on_device(),default_is_layout_right());
 }
 
 //struct Image_Gradient_Functor {
@@ -231,6 +244,8 @@ Image::compute_gradients(){
 //    }
 //  });
  // Kokkos::deep_copy(intensities_host_,intensities_dev_);
+
+  // TODO sync
 
   has_gradients_ = true;
 }

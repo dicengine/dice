@@ -60,7 +60,8 @@ void read_tiff_image_dimensions(const std::string & file_name,
 /// \param file_name the name of the tiff file
 /// \param intensities [out] populated with the pixel intensity values
 void read_tiff_image(const std::string & file_name,
-  intensity_t * intensities);
+  intensity_t * intensities,
+  const bool is_layout_right = true);
 
 /// Read an image into the host memory
 /// \param file_name the name of the tiff file
@@ -74,7 +75,8 @@ void read_tiff_image(const std::string & file_name,
   size_t offset_y,
   size_t width,
   size_t height,
-  intensity_t * intensities);
+  intensity_t * intensities,
+  const bool is_layout_right = true);
 
 // TODO write a function that reads into the device memory directly
 
@@ -86,7 +88,8 @@ void read_tiff_image(const std::string & file_name,
 void write_tiff_image(const std::string & file_name,
   const size_t width,
   const size_t height,
-  intensity_t * intensities);
+  intensity_t * intensities,
+  const bool is_layout_right = true);
 
 }
 

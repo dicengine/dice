@@ -99,6 +99,7 @@ public:
   //
 
   /// constrtuctor that takes an array as input
+  /// note: assumes the input array is always stored LayoutRight or "row major"
   /// \param intensities pre-allocated array of intensity values
   /// \param width the width of the image
   /// \param height the height of the image
@@ -124,6 +125,18 @@ public:
 
   /// returns the offset y coordinate
   size_t offset_y()const{return offset_y_;}
+
+  /// returns true if the data layout is LayoutRight
+  bool default_is_layout_right()const{
+    return Kokkos::Impl::is_same< intensity_2d_t::array_layout ,
+        Kokkos::LayoutRight >::value;
+  }
+
+  /// returns true if the data layout is LayoutRight
+  bool default_is_layout_left()const{
+    return Kokkos::Impl::is_same< intensity_2d_t::array_layout ,
+        Kokkos::LayoutLeft >::value;
+  }
 
   /// intensity accessors:
   /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
