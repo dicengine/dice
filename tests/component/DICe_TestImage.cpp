@@ -132,11 +132,11 @@ int main(int argc, char *argv[]) {
     for(size_t x=2;x<array_w-2;++x){
       if(intensities[y*array_w+x] != array_img(x,y))
         intensity_value_error = true;
-      // TODO check grad x
-      //if(std::abs(gx[y*array_w+x] - array_img.grad_x(x,y)) > grad_tol)
-      //  grad_x_error = true;
-      //if(std::abs(gy[y*array_w+x] - array_img.grad_y(x,y)) > grad_tol)
-      //  grad_y_error = true;
+      //std::cout << " grad x " << gx[y*array_w+x] << " computed " << array_img.grad_x(x,y) << std::endl;
+      if(std::abs(gx[y*array_w+x] - array_img.grad_x(x,y)) > grad_tol)
+        grad_x_error = true;
+      if(std::abs(gy[y*array_w+x] - array_img.grad_y(x,y)) > grad_tol)
+        grad_y_error = true;
     }
   }
   if(intensity_value_error){
@@ -151,16 +151,13 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, the y-gradient values are wrong" << std::endl;
     errorFlag++;
   }
+  *outStream << "image gradients have been checked" << std::endl;
 
   delete[] intensities;
   delete[] gx;
   delete[] gy;
 
-
-
   // TODO  create an image from a Teuchos arrayRCP
-
-
 
   *outStream << "--- End test ---" << std::endl;
 

@@ -52,7 +52,7 @@ namespace DICe{
 
 /// kokkos view types
 
-typedef Kokkos::DefaultExecutionSpace execution_space;
+typedef Kokkos::DefaultExecutionSpace device_space;
 typedef Kokkos::HostSpace host_space;
 
 /// 2 dimensional array of intensity values for the device
@@ -61,7 +61,6 @@ typedef Kokkos::View<intensity_t **, Kokkos::MemoryTraits<Kokkos::RandomAccess> 
 typedef intensity_device_view_t::HostMirror intensity_host_view_t;
 
 /// 2 dimensional dual view of intensity type values
-// TODO make this memory random access
 typedef Kokkos::DualView<intensity_t **,Kokkos::MemoryTraits<Kokkos::RandomAccess> >  intensity_2d_t;
 
 /// 2 dimensional dual view of scalar type values

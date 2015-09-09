@@ -110,6 +110,9 @@ public:
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
 
+  /// default constructor tasks
+  void default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
   /// write the image to tiff file
   /// \param file_name the name of the file to write to
   void write(const std::string & file_name);
@@ -125,18 +128,6 @@ public:
 
   /// returns the offset y coordinate
   size_t offset_y()const{return offset_y_;}
-
-  /// returns true if the data layout is LayoutRight
-  bool default_is_layout_right()const{
-    return Kokkos::Impl::is_same< intensity_2d_t::array_layout ,
-        Kokkos::LayoutRight >::value;
-  }
-
-  /// returns true if the data layout is LayoutRight
-  bool default_is_layout_left()const{
-    return Kokkos::Impl::is_same< intensity_2d_t::array_layout ,
-        Kokkos::LayoutLeft >::value;
-  }
 
   /// intensity accessors:
   /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
@@ -168,6 +159,28 @@ public:
 
   /// virtual destructor
   virtual ~Image(){};
+
+  //
+  // Kokkos related stuff below:
+  //
+
+  /// returns true if the data layout is LayoutRight
+  bool default_is_layout_right()const{
+    return Kokkos::Impl::is_same< intensity_2d_t::array_layout ,
+        Kokkos::LayoutRight >::value;
+  }
+
+  /// returns true if the data layout is LayoutRight
+  bool default_is_layout_left()const{
+    return Kokkos::Impl::is_same< intensity_2d_t::array_layout ,
+        Kokkos::LayoutLeft >::value;
+  }
+
+  /// compute the image gradient using a flat algorithm (no hierarchical parallelism)
+  struct Grad_Flat_Tag {};
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const Grad_Flat_Tag &, const size_t pixel_index)const;
+
 private:
   /// offsets are used to convert to global image coordinates
   /// (the pixel container may be a subset of a larger image)
@@ -187,6 +200,10 @@ private:
   scalar_2d_t grad_y_;
   /// flag that the gradients have been computed
   bool has_gradients_;
+  /// coeff used in computing gradients
+  scalar_t grad_c1_;
+  /// coeff used in computing gradients
+  scalar_t grad_c2_;
 };
 
 }// End DICe Namespace

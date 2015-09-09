@@ -59,17 +59,12 @@ Image::Image(const std::string & file_name,
   assert(height_>0);
   // initialize the pixel containers
   intensities_ = intensity_2d_t("intensities",height_,width_);
-  grad_x_ = scalar_2d_t("grad_x",height_,width_);
-  grad_y_ = scalar_2d_t("grad_y",height_,width_);
   // read in the image
-  read_tiff_image(file_name,intensities_.h_view.ptr_on_device(),default_is_layout_right());
+  read_tiff_image(file_name,
+    intensities_.h_view.ptr_on_device(),
+    default_is_layout_right());
   // copy the image to the device (no-op for OpenMP)
-  intensities_.modify<host_space>(); // The template is where the modification took place
-  intensities_.sync<execution_space>(); // The template is what needs to be synced
-  const bool compute_image_gradients = params!=Teuchos::null ?
-      params->get<bool>(DICe::compute_image_gradients,false) : false;
-  if(compute_image_gradients)
-    compute_gradients();
+  default_constructor_tasks(params);
 }
 
 Image::Image(const std::string & file_name,
@@ -92,17 +87,14 @@ Image::Image(const std::string & file_name,
   assert(height_>0&&offset_y_+height_<img_height);
   // initialize the pixel containers
   intensities_ = intensity_2d_t("intensities",height_,width_);
-  grad_x_ = scalar_2d_t("grad_x",height_,width_);
-  grad_y_ = scalar_2d_t("grad_y",height_,width_);
   // read in the image
-  read_tiff_image(file_name,offset_x,offset_y,width_,height_,intensities_.h_view.ptr_on_device(),default_is_layout_right());
+  read_tiff_image(file_name,
+    offset_x,offset_y,
+    width_,height_,
+    intensities_.h_view.ptr_on_device(),
+    default_is_layout_right());
   // copy the image to the device (no-op for OpenMP)
-  intensities_.modify<host_space>(); // The template is where the modification took place
-  intensities_.sync<execution_space>(); // The template is what needs to be synced
-  const bool compute_image_gradients = params!=Teuchos::null ?
-      params->get<bool>(DICe::compute_image_gradients,false) : false;
-  if(compute_image_gradients)
-    compute_gradients();
+  default_constructor_tasks(params);
 }
 
 Image::Image(intensity_t * intensities,
@@ -134,12 +126,19 @@ Image::Image(intensity_t * intensities,
       }
     }
   }
+  default_constructor_tasks(params);
+}
+
+void
+Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params){
   grad_x_ = scalar_2d_t("grad_x",height_,width_);
   grad_y_ = scalar_2d_t("grad_y",height_,width_);
-  // assumes that the host array passed in to the constructor is already populated
   // copy the image to the device (no-op for OpenMP)
   intensities_.modify<host_space>(); // The template is where the modification took place
-  intensities_.sync<execution_space>(); // The template is what needs to be synced
+  intensities_.sync<device_space>(); // The template is what needs to be synced
+  // image gradient coefficients
+  grad_c1_ = 1.0/12.0;
+  grad_c2_ = -8.0/12.0;
   const bool compute_image_gradients = params!=Teuchos::null ?
       params->get<bool>(DICe::compute_image_gradients,false) : false;
   if(compute_image_gradients)
@@ -151,104 +150,46 @@ Image::write(const std::string & file_name){
   write_tiff_image(file_name,width_,height_,intensities_.h_view.ptr_on_device(),default_is_layout_right());
 }
 
-//struct Image_Gradient_Functor {
-//  intensity_device_view_t intensities_;
-//  scalar_device_view_2d_t grad_x_;
-//  scalar_device_view_2d_t grad_y_;
-//  size_t width_;
-//  size_t height_;
-//  const scalar_t c1;
-//  const scalar_t c2;
-//  Image_Gradient_Functor(const size_t width,
-//    const size_t height,
-//    intensity_device_view_t intensities,
-//    scalar_device_view_2d_t grad_x,
-//    scalar_device_view_2d_t grad_y):
-//      width_(width),
-//      height_(height),
-//      intensities_(intensities),
-//      grad_x_(grad_x),
-//      grad_y_(grad_y),
-//      c1(1.0/12.0),
-//      c2(-8.0/12.0){}
-//  KOKKOS_INLINE_FUNCTION
-//  void operator()(const size_t pixel_index) const {
-//    const size_t y = pixel_index / width_;
-//    const size_t x = pixel_index - y*width_;
-//    /// check if this pixel is near the left edge
-//    if(x<2){
-//      grad_x_(y,x) = intensities_(y,x+1) - intensities_(y,x);
-//    }
-//    /// check if this pixel is near the right edge
-//    else if(x>=width_-2){
-//      grad_x_(y,x) = intensities_(y,x) - intensities_(y,x-1);
-//    }
-//    else{
-//      grad_x_(y,x) = c1*intensities_(y,x-2) + c2*intensities_(y,x-1) - c2*intensities_(y,x+1) - c1*intensities_(y,x+2);
-//    }
-//    /// check if this pixel is near the top edge
-//    if(y<2){
-//      grad_y_(y,x) = intensities_(y+1,x) - intensities_(y,x);
-//    }
-//    /// check if this pixel is near the bottom edge
-//    else if(y>=height_-2){
-//      grad_y_(y,x) = intensities_(y,x) - intensities_(y-1,x);
-//    }
-//    else{
-//      grad_y_(y,x) = c1*intensities_(y-2,x) + c2*intensities_(y-1,x) - c2*intensities_(y+1,x) -c1*intensities_(y+2,x);
-//    }
-//  }
-//};
+KOKKOS_INLINE_FUNCTION
+void
+Image::operator()(const Grad_Flat_Tag &, const size_t pixel_index)const{
+  const size_t y = pixel_index / width_;
+  const size_t x = pixel_index - y*width_;
+  const scalar_t grad_c1_ = 1.0/12.0;
+  const scalar_t grad_c2_ = -8/12.0;
+  if(x<2){
+    grad_x_.d_view(y,x) = intensities_.d_view(y,x+1) - intensities_.d_view(y,x);
+  }
+  /// check if this pixel is near the right edge
+  else if(x>=width_-2){
+    grad_x_.d_view(y,x) = intensities_.d_view(y,x) - intensities_.d_view(y,x-1);
+  }
+  else{
+    grad_x_.d_view(y,x) = grad_c1_*intensities_.d_view(y,x-2) + grad_c2_*intensities_.d_view(y,x-1)
+        - grad_c2_*intensities_.d_view(y,x+1) - grad_c1_*intensities_.d_view(y,x+2);
+  }
+  /// check if this pixel is near the top edge
+  if(y<2){
+    grad_y_.d_view(y,x) = intensities_.d_view(y+1,x) - intensities_.d_view(y,x);
+  }
+  /// check if this pixel is near the bottom edge
+  else if(y>=height_-2){
+    grad_y_.d_view(y,x) = intensities_.d_view(y,x) - intensities_.d_view(y-1,x);
+  }
+  else{
+    grad_y_.d_view(y,x) = grad_c1_*intensities_.d_view(y-2,x) + grad_c2_*intensities_.d_view(y-1,x)
+        - grad_c2_*intensities_.d_view(y+1,x) - grad_c1_*intensities_.d_view(y+2,x);
+  }
+}
 
 void
 Image::compute_gradients(){
-//  Image_Gradient_Functor igf(width_,height_,intensities_dev_,grad_x_dev_,grad_y_dev_);
-//  Kokkos::parallel_for(num_pixels(),igf);
-////
-//  // coefficients used to compute image gradients
-//  // five point finite difference stencil:
-//  const scalar_t c1 = 1.0/12.0;
-//  const scalar_t c2 = -8.0/12.0;
-//  const scalar_t c4 = -c2;
-//  const scalar_t c5 = -c1;
-//
-//  // lambda for computing the gradients
-//  // TODO make the image intensity array random access
-//  // TODO better FD along the edges
-//  Kokkos::parallel_for(num_pixels(),
-//    KOKKOS_LAMBDA (const size_t i) {
-//    // get the x and y coordinates of this point
-//    const size_t y = i / width_;
-//    const size_t x = i - y*width_;
-//    /// check if this pixel is near the left edge
-//    if(x<2){
-//      grad_x_dev_(y,x) = intensities_dev_(y,x+1) - intensities_dev_(y,x);
-//    }
-//    /// check if this pixel is near the right edge
-//    else if(x>=width_-2){
-//      grad_x_dev_(y,x) = intensities_dev_(y,x) - intensities_dev_(y,x-1);
-//    }
-//    else{
-//      grad_x_dev_(y,x) = c1*intensities_dev_(y,x-2) + c2*intensities_dev_(y,x-1) + c4*intensities_dev_(y,x+1) + c5*intensities_dev_(y,x+2);
-//    }
-//    /// check if this pixel is near the top edge
-//    if(y<2){
-//      grad_y_dev_(y,x) = intensities_dev_(y+1,x) - intensities_dev_(y,x);
-//    }
-//    /// check if this pixel is near the bottom edge
-//    else if(y>=height_-2){
-//      grad_y_dev_(y,x) = intensities_dev_(y,x) - intensities_dev_(y-1,x);
-//    }
-//    else{
-//      grad_y_dev_(y,x) = c1*intensities_dev_(y-2,x) + c2*intensities_dev_(y-1,x) + c4*intensities_dev_(y+1,x) + c5*intensities_dev_(y+2,x);
-//    }
-//  });
- // Kokkos::deep_copy(intensities_host_,intensities_dev_);
-
-  // TODO sync
-
+  Kokkos::parallel_for(Kokkos::RangePolicy<Grad_Flat_Tag>(0,num_pixels()),*this);
+  grad_x_.modify<device_space>();
+  grad_x_.sync<host_space>();
+  grad_y_.modify<device_space>();
+  grad_y_.sync<host_space>();
   has_gradients_ = true;
 }
-
 
 }// End DICe Namespace
