@@ -141,8 +141,12 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
   grad_c2_ = -8.0/12.0;
   const bool compute_image_gradients = params!=Teuchos::null ?
       params->get<bool>(DICe::compute_image_gradients,false) : false;
+  const bool image_grad_use_hierarchical_parallelism = params!=Teuchos::null ?
+      params->get<bool>(DICe::image_grad_use_hierarchical_parallelism,false) : false;
+  const int image_grad_team_size = params!=Teuchos::null ?
+      params->get<int>(DICe::image_grad_team_size,256) : 256;
   if(compute_image_gradients)
-    compute_gradients();
+    compute_gradients(image_grad_use_hierarchical_parallelism,image_grad_team_size);
 }
 
 void
@@ -182,9 +186,47 @@ Image::operator()(const Grad_Flat_Tag &, const size_t pixel_index)const{
   }
 }
 
+KOKKOS_INLINE_FUNCTION
 void
-Image::compute_gradients(){
-  Kokkos::parallel_for(Kokkos::RangePolicy<Grad_Flat_Tag>(0,num_pixels()),*this);
+Image::operator()(const Grad_Tag &, const member_type team_member)const{
+  const size_t row = team_member.league_rank();
+  Kokkos::parallel_for(Kokkos::TeamThreadRange(team_member, width_),
+    [=] (const size_t j){
+    if(j<2){
+      grad_x_.d_view(row,j) = intensities_.d_view(row,j+1) - intensities_.d_view(row,j);
+    }
+    /// check if this pixel is near the right edge
+    else if(j>=width_-2){
+      grad_x_.d_view(row,j) = intensities_.d_view(row,j) - intensities_.d_view(row,j-1);
+    }
+    else{
+      grad_x_.d_view(row,j) = grad_c1_*intensities_.d_view(row,j-2) + grad_c2_*intensities_.d_view(row,j-1)
+          - grad_c2_*intensities_.d_view(row,j+1) - grad_c1_*intensities_.d_view(row,j+2);
+    }
+    /// check if this pixel is near the top edge
+    if(row<2){
+      grad_y_.d_view(row,j) = intensities_.d_view(row+1,j) - intensities_.d_view(row,j);
+    }
+    /// check if this pixel is near the bottom edge
+    else if(row>=height_-2){
+      grad_y_.d_view(row,j) = intensities_.d_view(row,j) - intensities_.d_view(row-1,j);
+    }
+    else{
+      grad_y_.d_view(row,j) = grad_c1_*intensities_.d_view(row-2,j) + grad_c2_*intensities_.d_view(row-1,j)
+          - grad_c2_*intensities_.d_view(row+1,j) - grad_c1_*intensities_.d_view(row+2,j);
+    }
+  });
+}
+
+
+void
+Image::compute_gradients(const bool use_hierarchical_parallelism, const size_t team_size){
+
+  // Flat gradients:
+  if(use_hierarchical_parallelism)
+    Kokkos::parallel_for(Kokkos::RangePolicy<Grad_Flat_Tag>(0,num_pixels()),*this);
+  else   // Hierarchical gradients:
+    Kokkos::parallel_for(Kokkos::TeamPolicy<Grad_Tag>(width_,team_size),*this);
   grad_x_.modify<device_space>();
   grad_x_.sync<host_space>();
   grad_y_.modify<device_space>();

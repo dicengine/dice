@@ -76,8 +76,10 @@ typedef float scalar_t;
 
 /// String parameter name
 const char* const compute_image_gradients = "compute_image_gradients";
-
-
+/// String parameter name
+const char* const image_grad_use_hierarchical_parallelism = "image_grad_use_hierarchical_parallelism";
+/// String parameter name
+const char* const image_grad_team_size = "image_grad_team_size";
 
 } // end DICe namespace
 

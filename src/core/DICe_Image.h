@@ -118,44 +118,63 @@ public:
   void write(const std::string & file_name);
 
   /// returns the width of the image
-  size_t width()const{return width_;}
+  size_t width()const{
+    return width_;
+  }
 
   /// return the height of the image
-  size_t height()const{return height_;}
+  size_t height()const{
+    return height_;
+  }
 
   /// returns the offset x coordinate
-  size_t offset_x()const{return offset_x_;}
+  size_t offset_x()const{
+    return offset_x_;
+  }
 
   /// returns the offset y coordinate
-  size_t offset_y()const{return offset_y_;}
+  size_t offset_y()const{
+    return offset_y_;
+  }
 
   /// intensity accessors:
   /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
   /// y is row, x is column
   /// \param x image coordinate x
   /// \param y image coordinate y
-  const intensity_t& operator()(const size_t x, const size_t y) const {return intensities_.h_view(y,x);}
+  const intensity_t& operator()(const size_t x, const size_t y) const {
+    return intensities_.h_view(y,x);
+  }
 
   /// gradient accessors:
   /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
   /// y is row, x is column
   /// \param x image coordinate x
   /// \param y image coordinate y
-  const scalar_t& grad_x(const size_t x, const size_t y) const {return grad_x_.h_view(y,x);}
+  const scalar_t& grad_x(const size_t x, const size_t y) const {
+    return grad_x_.h_view(y,x);
+  }
 
   /// gradient accessor for y
   /// \param x image coordinate x
   /// \param y image coordinate y
-  const scalar_t& grad_y(const size_t x, const size_t y) const {return grad_y_.h_view(y,x);}
+  const scalar_t& grad_y(const size_t x, const size_t y) const {
+    return grad_y_.h_view(y,x);
+  }
 
   /// compute the image gradients
-  void compute_gradients();
+  void compute_gradients(const bool use_hierarchical_parallelism=false,
+    const size_t team_size=256);
 
   /// returns true if the gradients have been computed
-  bool has_gradients()const{return has_gradients_;}
+  bool has_gradients()const{
+    return has_gradients_;
+  }
 
   /// returns the number of pixels in the image
-  size_t num_pixels()const{return width_*height_;}
+  size_t num_pixels()const{
+    return width_*height_;
+  }
 
   /// virtual destructor
   virtual ~Image(){};
@@ -176,10 +195,16 @@ public:
         Kokkos::LayoutLeft >::value;
   }
 
-  /// compute the image gradient using a flat algorithm (no hierarchical parallelism)
+  /// Tag
   struct Grad_Flat_Tag {};
+  /// Tag
+  struct Grad_Tag {};
+  /// compute the image gradient using a flat algorithm (no hierarchical parallelism)
   KOKKOS_INLINE_FUNCTION
   void operator()(const Grad_Flat_Tag &, const size_t pixel_index)const;
+  /// compute the image gradient using a heirarchical algorithm
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const Grad_Tag &, const member_type team_member)const;
 
 private:
   /// offsets are used to convert to global image coordinates

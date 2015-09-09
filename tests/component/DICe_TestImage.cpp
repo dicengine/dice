@@ -144,14 +144,37 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   if(grad_x_error){
-    *outStream << "Error, the x-gradient values are wrong" << std::endl;
+    *outStream << "Error, the flat x-gradient values are wrong" << std::endl;
     errorFlag++;
   }
   if(grad_y_error){
-    *outStream << "Error, the y-gradient values are wrong" << std::endl;
+    *outStream << "Error, the flat y-gradient values are wrong" << std::endl;
     errorFlag++;
   }
-  *outStream << "image gradients have been checked" << std::endl;
+  *outStream << "flat image gradients have been checked" << std::endl;
+
+  grad_x_error = false;
+  grad_y_error = false;
+  // check the hierarchical gradients:
+  const size_t team_size = 256;
+  array_img.compute_gradients(true,team_size);
+  for(size_t y=2;y<array_h-2;++y){
+    for(size_t x=2;x<array_w-2;++x){
+      if(std::abs(gx[y*array_w+x] - array_img.grad_x(x,y)) > grad_tol)
+        grad_x_error = true;
+      if(std::abs(gy[y*array_w+x] - array_img.grad_y(x,y)) > grad_tol)
+        grad_y_error = true;
+    }
+  }
+  if(grad_x_error){
+    *outStream << "Error, hierarchical x-gradient values are wrong" << std::endl;
+    errorFlag++;
+  }
+  if(grad_y_error){
+    *outStream << "Error, the hierarchical y-gradient values are wrong" << std::endl;
+    errorFlag++;
+  }
+  *outStream << "hierarchical image gradients have been checked" << std::endl;
 
   delete[] intensities;
   delete[] gx;

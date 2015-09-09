@@ -66,6 +66,9 @@ typedef Kokkos::DualView<intensity_t **,Kokkos::MemoryTraits<Kokkos::RandomAcces
 /// 2 dimensional dual view of scalar type values
 typedef Kokkos::DualView<scalar_t **>  scalar_2d_t;
 
+/// member type
+typedef typename Kokkos::TeamPolicy<device_space>::member_type member_type;
+
 } // end DICe namespace
 
 #endif
