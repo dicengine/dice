@@ -159,6 +159,7 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
       params->get<int>(DICe::gauss_filter_team_size,256) : 256;
   gauss_filter_mask_size_ = params!=Teuchos::null ?
       params->get<int>(DICe::gauss_filter_mask_size,7) : 7;
+  gauss_filter_half_mask_ = gauss_filter_mask_size_/2+1;
   if(gauss_filter_image){
     gauss_filter(gauss_filter_use_hierarchical_parallelism,gauss_filter_team_size);
   }
@@ -252,18 +253,37 @@ void
 Image::operator()(const Gauss_Flat_Tag &, const size_t pixel_index)const{
   const size_t y = pixel_index / width_;
   const size_t x = pixel_index - y*width_;
-  const size_t half_mask = gauss_filter_mask_size_/2 + 1;
-  if(x>=half_mask&&x<width_-half_mask&&y>=half_mask&&y<height_-half_mask){
+  if(x>=gauss_filter_half_mask_&&x<width_-gauss_filter_half_mask_&&y>=gauss_filter_half_mask_&&y<height_-gauss_filter_half_mask_){
     intensity_t value = 0.0;
     for(size_t i=0;i<gauss_filter_mask_size_;++i){
       for(size_t j=0;j<gauss_filter_mask_size_;++j){
         // assumes intensity values have already been deep copied into intensities_temp_
-        value += gauss_filter_coeffs_[i][j]*intensities_temp_(y+(j-half_mask),x+(i-half_mask));
+        value += gauss_filter_coeffs_[i][j]*intensities_temp_(y+(j-gauss_filter_half_mask_),x+(i-gauss_filter_half_mask_));
       } //j
     } //i
     intensities_.d_view(y,x) = value;
   }
 }
+
+KOKKOS_INLINE_FUNCTION
+void
+Image::operator()(const Gauss_Tag &, const member_type team_member)const{
+  const size_t row = team_member.league_rank();
+  Kokkos::parallel_for(Kokkos::TeamThreadRange(team_member, width_),
+    [=] (const size_t col){
+    if(col>=gauss_filter_half_mask_&&col<width_-gauss_filter_half_mask_&&row>=gauss_filter_half_mask_&&row<height_-gauss_filter_half_mask_){
+      intensity_t value = 0.0;
+      for(size_t i=0;i<gauss_filter_mask_size_;++i){
+        for(size_t j=0;j<gauss_filter_mask_size_;++j){
+          // assumes intensity values have already been deep copied into intensities_temp_
+          value += gauss_filter_coeffs_[i][j]*intensities_temp_(row+(j-gauss_filter_half_mask_),col+(i-gauss_filter_half_mask_));
+        } //j
+      } //i
+      intensities_.d_view(row,col) = value;
+    }
+  });
+}
+
 
 void
 Image::gauss_filter(const bool use_hierarchical_parallelism,
@@ -312,8 +332,8 @@ Image::gauss_filter(const bool use_hierarchical_parallelism,
   // deep copy the intesity array to the device temporary container
   Kokkos::deep_copy(intensities_temp_,intensities_.d_view);
   // Flat gradients:
-  if(use_hierarchical_parallelism){}
-    //Kokkos::parallel_for(Kokkos::TeamPolicy<Grauss_Tag>(width_,team_size),*this);
+  if(use_hierarchical_parallelism)
+    Kokkos::parallel_for(Kokkos::TeamPolicy<Gauss_Tag>(width_,team_size),*this);
   else   // Hierarchical filtering:
     Kokkos::parallel_for(Kokkos::RangePolicy<Gauss_Flat_Tag>(0,num_pixels()),*this);
   // copy the intensity array back to the host

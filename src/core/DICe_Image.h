@@ -201,11 +201,11 @@ public:
 
   /// tag
   struct Grad_Flat_Tag {};
-  /// tag
-  struct Grad_Tag {};
   /// compute the image gradient using a flat algorithm (no hierarchical parallelism)
   KOKKOS_INLINE_FUNCTION
   void operator()(const Grad_Flat_Tag &, const size_t pixel_index)const;
+  /// tag
+  struct Grad_Tag {};
   /// compute the image gradient using a heirarchical algorithm
   KOKKOS_INLINE_FUNCTION
   void operator()(const Grad_Tag &, const member_type team_member)const;
@@ -215,6 +215,11 @@ public:
   /// Gauss filter the image
   KOKKOS_INLINE_FUNCTION
   void operator()(const Gauss_Flat_Tag &, const size_t pixel_index)const;
+  /// tag
+  struct Gauss_Tag{};
+  /// Gauss filter the image
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const Gauss_Tag &, const member_type team_member)const;
 
 private:
   /// offsets are used to convert to global image coordinates
@@ -245,6 +250,8 @@ private:
   scalar_t gauss_filter_coeffs_[13][13]; // 13 is the maximum size for the filter window
   /// Gauss filter mask size
   size_t gauss_filter_mask_size_;
+  /// half the gauss filter mask size
+  size_t gauss_filter_half_mask_;
 };
 
 }// End DICe Namespace
