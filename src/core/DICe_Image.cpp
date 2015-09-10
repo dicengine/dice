@@ -136,6 +136,10 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
   // copy the image to the device (no-op for OpenMP)
   intensities_.modify<host_space>(); // The template is where the modification took place
   intensities_.sync<device_space>(); // The template is what needs to be synced
+
+  // create a temp container for the pixel intensities
+  intensities_temp_ = intensity_device_view_t("intensities_temp",height_,width_);
+
   // image gradient coefficients
   grad_c1_ = 1.0/12.0;
   grad_c2_ = -8.0/12.0;
@@ -147,10 +151,21 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
       params->get<int>(DICe::image_grad_team_size,256) : 256;
   if(compute_image_gradients)
     compute_gradients(image_grad_use_hierarchical_parallelism,image_grad_team_size);
+  const bool gauss_filter_image = params!=Teuchos::null ?
+      params->get<bool>(DICe::gauss_filter_image,false) : false;
+  const bool gauss_filter_use_hierarchical_parallelism = params!=Teuchos::null ?
+      params->get<bool>(DICe::gauss_filter_use_hierarchical_parallelism,false) : false;
+  const int gauss_filter_team_size = params!=Teuchos::null ?
+      params->get<int>(DICe::gauss_filter_team_size,256) : 256;
+  gauss_filter_mask_size_ = params!=Teuchos::null ?
+      params->get<int>(DICe::gauss_filter_mask_size,7) : 7;
+  if(gauss_filter_image){
+    gauss_filter(gauss_filter_use_hierarchical_parallelism,gauss_filter_team_size);
+  }
 }
 
 void
-Image::write(const std::string & file_name){
+Image::write_tif(const std::string & file_name){
   write_tiff_image(file_name,width_,height_,intensities_.h_view.ptr_on_device(),default_is_layout_right());
 }
 
@@ -159,8 +174,6 @@ void
 Image::operator()(const Grad_Flat_Tag &, const size_t pixel_index)const{
   const size_t y = pixel_index / width_;
   const size_t x = pixel_index - y*width_;
-  const scalar_t grad_c1_ = 1.0/12.0;
-  const scalar_t grad_c2_ = -8/12.0;
   if(x<2){
     grad_x_.d_view(y,x) = intensities_.d_view(y,x+1) - intensities_.d_view(y,x);
   }
@@ -191,29 +204,29 @@ void
 Image::operator()(const Grad_Tag &, const member_type team_member)const{
   const size_t row = team_member.league_rank();
   Kokkos::parallel_for(Kokkos::TeamThreadRange(team_member, width_),
-    [=] (const size_t j){
-    if(j<2){
-      grad_x_.d_view(row,j) = intensities_.d_view(row,j+1) - intensities_.d_view(row,j);
+    [=] (const size_t col){
+    if(col<2){
+      grad_x_.d_view(row,col) = intensities_.d_view(row,col+1) - intensities_.d_view(row,col);
     }
     /// check if this pixel is near the right edge
-    else if(j>=width_-2){
-      grad_x_.d_view(row,j) = intensities_.d_view(row,j) - intensities_.d_view(row,j-1);
+    else if(col>=width_-2){
+      grad_x_.d_view(row,col) = intensities_.d_view(row,col) - intensities_.d_view(row,col-1);
     }
     else{
-      grad_x_.d_view(row,j) = grad_c1_*intensities_.d_view(row,j-2) + grad_c2_*intensities_.d_view(row,j-1)
-          - grad_c2_*intensities_.d_view(row,j+1) - grad_c1_*intensities_.d_view(row,j+2);
+      grad_x_.d_view(row,col) = grad_c1_*intensities_.d_view(row,col-2) + grad_c2_*intensities_.d_view(row,col-1)
+          - grad_c2_*intensities_.d_view(row,col+1) - grad_c1_*intensities_.d_view(row,col+2);
     }
     /// check if this pixel is near the top edge
     if(row<2){
-      grad_y_.d_view(row,j) = intensities_.d_view(row+1,j) - intensities_.d_view(row,j);
+      grad_y_.d_view(row,col) = intensities_.d_view(row+1,col) - intensities_.d_view(row,col);
     }
     /// check if this pixel is near the bottom edge
     else if(row>=height_-2){
-      grad_y_.d_view(row,j) = intensities_.d_view(row,j) - intensities_.d_view(row-1,j);
+      grad_y_.d_view(row,col) = intensities_.d_view(row,col) - intensities_.d_view(row-1,col);
     }
     else{
-      grad_y_.d_view(row,j) = grad_c1_*intensities_.d_view(row-2,j) + grad_c2_*intensities_.d_view(row-1,j)
-          - grad_c2_*intensities_.d_view(row+1,j) - grad_c1_*intensities_.d_view(row+2,j);
+      grad_y_.d_view(row,col) = grad_c1_*intensities_.d_view(row-2,col) + grad_c2_*intensities_.d_view(row-1,col)
+          - grad_c2_*intensities_.d_view(row+1,col) - grad_c1_*intensities_.d_view(row+2,col);
     }
   });
 }
@@ -224,14 +237,88 @@ Image::compute_gradients(const bool use_hierarchical_parallelism, const size_t t
 
   // Flat gradients:
   if(use_hierarchical_parallelism)
-    Kokkos::parallel_for(Kokkos::RangePolicy<Grad_Flat_Tag>(0,num_pixels()),*this);
-  else   // Hierarchical gradients:
     Kokkos::parallel_for(Kokkos::TeamPolicy<Grad_Tag>(width_,team_size),*this);
+  else   // Hierarchical gradients:
+    Kokkos::parallel_for(Kokkos::RangePolicy<Grad_Flat_Tag>(0,num_pixels()),*this);
   grad_x_.modify<device_space>();
   grad_x_.sync<host_space>();
   grad_y_.modify<device_space>();
   grad_y_.sync<host_space>();
   has_gradients_ = true;
+}
+
+KOKKOS_INLINE_FUNCTION
+void
+Image::operator()(const Gauss_Flat_Tag &, const size_t pixel_index)const{
+  const size_t y = pixel_index / width_;
+  const size_t x = pixel_index - y*width_;
+  const size_t half_mask = gauss_filter_mask_size_/2 + 1;
+  if(x>=half_mask&&x<width_-half_mask&&y>=half_mask&&y<height_-half_mask){
+    intensity_t value = 0.0;
+    for(size_t i=0;i<gauss_filter_mask_size_;++i){
+      for(size_t j=0;j<gauss_filter_mask_size_;++j){
+        // assumes intensity values have already been deep copied into intensities_temp_
+        value += gauss_filter_coeffs_[i][j]*intensities_temp_(y+(j-half_mask),x+(i-half_mask));
+      } //j
+    } //i
+    intensities_.d_view(y,x) = value;
+  }
+}
+
+void
+Image::gauss_filter(const bool use_hierarchical_parallelism,
+  const size_t team_size){
+
+  std::vector<scalar_t> coeffs(13,0.0);
+
+  // make sure the mask size is appropriate
+  if(gauss_filter_mask_size_==5){
+    coeffs[0] = 0.0014;coeffs[1] = 0.1574;coeffs[2] = 0.62825;
+    coeffs[3] = 0.1574;coeffs[4] = 0.0014;
+  }
+  else if (gauss_filter_mask_size_==7){
+    coeffs[0] = 0.0060;coeffs[1] = 0.0606;coeffs[2] = 0.2418;
+    coeffs[3] = 0.3831;coeffs[4] = 0.2418;coeffs[5] = 0.0606;
+    coeffs[6] = 0.0060;
+  }
+  else if (gauss_filter_mask_size_==9){
+    coeffs[0] = 0.0007;coeffs[1] = 0.0108;coeffs[2] = 0.0748;
+    coeffs[3] = 0.2384;coeffs[4] = 0.3505;coeffs[5] = 0.2384;
+    coeffs[6] = 0.0748;coeffs[7] = 0.0108;coeffs[8] = 0.0007;
+  }
+  else if (gauss_filter_mask_size_==11){
+    coeffs[0] = 0.0001;coeffs[1] = 0.0017;coeffs[2] = 0.0168;
+    coeffs[3] = 0.0870;coeffs[4] = 0.2328;coeffs[5] = 0.3231;
+    coeffs[6] = 0.2328;coeffs[7] = 0.0870;coeffs[8] = 0.0168;
+    coeffs[9] = 0.0017;coeffs[10] = 0.0001;
+  }
+  else if (gauss_filter_mask_size_==13){
+    coeffs[0] = 0.0001;coeffs[1] = 0.0012;coeffs[2] = 0.0085;
+    coeffs[3] = 0.0380;coeffs[4] = 0.1109;coeffs[5] = 0.2108;
+    coeffs[6] = 0.2611;coeffs[7] = 0.2108;coeffs[8] = 0.1109;
+    coeffs[9] = 0.0380;coeffs[10] = 0.0085;coeffs[11] = 0.0012;
+    coeffs[12] = 0.0001;
+  }
+  else{
+    assert(false && "Error, the Gauss filter mask size is invalid (options include 5,7,9,11,13)");
+  }
+
+  for(size_t j=0;j<gauss_filter_mask_size_;++j){
+    for(size_t i=0;i<gauss_filter_mask_size_;++i){
+      gauss_filter_coeffs_[i][j] = coeffs[i]*coeffs[j];
+    }
+  }
+
+  // deep copy the intesity array to the device temporary container
+  Kokkos::deep_copy(intensities_temp_,intensities_.d_view);
+  // Flat gradients:
+  if(use_hierarchical_parallelism){}
+    //Kokkos::parallel_for(Kokkos::TeamPolicy<Grauss_Tag>(width_,team_size),*this);
+  else   // Hierarchical filtering:
+    Kokkos::parallel_for(Kokkos::RangePolicy<Gauss_Flat_Tag>(0,num_pixels()),*this);
+  // copy the intensity array back to the host
+  intensities_.modify<device_space>();
+  intensities_.sync<host_space>();
 }
 
 }// End DICe Namespace

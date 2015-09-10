@@ -80,6 +80,14 @@ const char* const compute_image_gradients = "compute_image_gradients";
 const char* const image_grad_use_hierarchical_parallelism = "image_grad_use_hierarchical_parallelism";
 /// String parameter name
 const char* const image_grad_team_size = "image_grad_team_size";
+/// String parameter name
+const char* const gauss_filter_image = "gauss_filter_image";
+/// String parameter name
+const char* const gauss_filter_use_hierarchical_parallelism = "gauss_filter_use_hierarchical_parallelism";
+/// String parameter name
+const char* const gauss_filter_team_size = "gauss_filter_team_size";
+/// String parameter name
+const char* const gauss_filter_mask_size = "gauss_filter_mask_size";
 
 } // end DICe namespace
 

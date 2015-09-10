@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
   // create an image from file:
   *outStream << "creating an image from a tiff file " << std::endl;
   Image img("./images/ImageA.tif");
-  img.write("outImageA.tif");
+  img.write_tif("outImageA.tif");
   if(img.width()!=2048){
     *outStream << "Error, the image width is not correct" << std::endl;
     errorFlag +=1;
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
   // capture a portion of an image from file
   *outStream << "creating an image from a portion of a tiff file " << std::endl;
   Image sub_img("./images/ImageA.tif",100,100,300,200);
-  sub_img.write("outSubImageA.tif");
+  sub_img.write_tif("outSubImageA.tif");
   if(sub_img.width()!=300){
     *outStream << "Error, the sub image width is not correct" << std::endl;
     errorFlag +=1;
@@ -180,7 +180,43 @@ int main(int argc, char *argv[]) {
   delete[] gx;
   delete[] gy;
 
-  // TODO  create an image from a Teuchos arrayRCP
+  // test filtering an image:
+
+  *outStream << "creating gauss filtered image filter size 5: outFilter5.tif " << std::endl;
+  Teuchos::RCP<Teuchos::ParameterList> filter_5_params = rcp(new Teuchos::ParameterList());
+  filter_5_params->set(DICe::gauss_filter_image,true);
+  filter_5_params->set(DICe::gauss_filter_mask_size,5);
+  Image filter_5_img("./images/ImageA.tif",filter_5_params);
+  filter_5_img.write_tif("outFilter5.tif");
+
+  *outStream << "creating gauss filtered image filter size 7: outFilter7.tif " << std::endl;
+  Teuchos::RCP<Teuchos::ParameterList> filter_7_params = rcp(new Teuchos::ParameterList());
+  filter_7_params->set(DICe::gauss_filter_image,true);
+  filter_7_params->set(DICe::gauss_filter_mask_size,7);
+  Image filter_7_img("./images/ImageA.tif",filter_7_params);
+  filter_7_img.write_tif("outFilter7.tif");
+
+  *outStream << "creating gauss filtered image filter size 9: outFilter9.tif " << std::endl;
+  Teuchos::RCP<Teuchos::ParameterList> filter_9_params = rcp(new Teuchos::ParameterList());
+  filter_9_params->set(DICe::gauss_filter_image,true);
+  filter_9_params->set(DICe::gauss_filter_mask_size,9);
+  Image filter_9_img("./images/ImageA.tif",filter_9_params);
+  filter_9_img.write_tif("outFilter9.tif");
+
+  *outStream << "creating gauss filtered image filter size 11: outFilter11.tif " << std::endl;
+  Teuchos::RCP<Teuchos::ParameterList> filter_11_params = rcp(new Teuchos::ParameterList());
+  filter_11_params->set(DICe::gauss_filter_image,true);
+  filter_11_params->set(DICe::gauss_filter_mask_size,11);
+  Image filter_11_img("./images/ImageA.tif",filter_11_params);
+  filter_11_img.write_tif("outFilter11.tif");
+
+  *outStream << "creating gauss filtered image filter size 13: outFilter13.tif " << std::endl;
+  Teuchos::RCP<Teuchos::ParameterList> filter_13_params = rcp(new Teuchos::ParameterList());
+  filter_13_params->set(DICe::gauss_filter_image,true);
+  filter_13_params->set(DICe::gauss_filter_mask_size,13);
+  Image filter_13_img("./images/ImageA.tif",filter_13_params);
+  filter_13_img.write_tif("outFilter13.tif");
+
 
   *outStream << "--- End test ---" << std::endl;
 

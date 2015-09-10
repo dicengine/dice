@@ -113,9 +113,12 @@ public:
   /// default constructor tasks
   void default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
+  /// virtual destructor
+  virtual ~Image(){};
+
   /// write the image to tiff file
   /// \param file_name the name of the file to write to
-  void write(const std::string & file_name);
+  void write_tif(const std::string & file_name);
 
   /// returns the width of the image
   size_t width()const{
@@ -125,6 +128,11 @@ public:
   /// return the height of the image
   size_t height()const{
     return height_;
+  }
+
+  /// returns the number of pixels in the image
+  size_t num_pixels()const{
+    return width_*height_;
   }
 
   /// returns the offset x coordinate
@@ -171,13 +179,9 @@ public:
     return has_gradients_;
   }
 
-  /// returns the number of pixels in the image
-  size_t num_pixels()const{
-    return width_*height_;
-  }
-
-  /// virtual destructor
-  virtual ~Image(){};
+  /// filter the image using a 7 point gauss filter
+  void gauss_filter(const bool use_hierarchical_parallelism=false,
+    const size_t team_size=256);
 
   //
   // Kokkos related stuff below:
@@ -195,9 +199,9 @@ public:
         Kokkos::LayoutLeft >::value;
   }
 
-  /// Tag
+  /// tag
   struct Grad_Flat_Tag {};
-  /// Tag
+  /// tag
   struct Grad_Tag {};
   /// compute the image gradient using a flat algorithm (no hierarchical parallelism)
   KOKKOS_INLINE_FUNCTION
@@ -205,6 +209,12 @@ public:
   /// compute the image gradient using a heirarchical algorithm
   KOKKOS_INLINE_FUNCTION
   void operator()(const Grad_Tag &, const member_type team_member)const;
+
+  /// tag
+  struct Gauss_Flat_Tag{};
+  /// Gauss filter the image
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const Gauss_Flat_Tag &, const size_t pixel_index)const;
 
 private:
   /// offsets are used to convert to global image coordinates
@@ -219,6 +229,8 @@ private:
   size_t height_;
   /// pixel container
   intensity_2d_t intensities_;
+  /// device intensity work array
+  intensity_device_view_t intensities_temp_;
   /// image gradient x container
   scalar_2d_t grad_x_;
   /// image gradient y container
@@ -229,6 +241,10 @@ private:
   scalar_t grad_c1_;
   /// coeff used in computing gradients
   scalar_t grad_c2_;
+  /// Gauss filter coefficients
+  scalar_t gauss_filter_coeffs_[13][13]; // 13 is the maximum size for the filter window
+  /// Gauss filter mask size
+  size_t gauss_filter_mask_size_;
 };
 
 }// End DICe Namespace
