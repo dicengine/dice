@@ -65,11 +65,6 @@ namespace DICe {
 class DICECORE_LIB_DLL_EXPORT
 Image {
 public:
-  // TODO constructor by array
-  // TODO constructor from cine
-  // TODO constructor from other image
-  // TODO constructor from ASCII file
-
   //
   // tiff image constructors
   //
@@ -95,7 +90,7 @@ public:
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   //
-  // pre allocated array images
+  // pre allocated array image
   //
 
   /// constrtuctor that takes an array as input
@@ -109,6 +104,28 @@ public:
     const size_t height,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
+  //
+  // Teuchos::ArrayRCP image
+  //
+
+  /// constructor that takes a Teuchos::ArrayRCP as input
+  /// note: assumes the input array is always stored LayoutRight or "row major"
+  /// \param width image width
+  /// \param height image height
+  /// \param intensities image intensity values
+  /// \param params optional image parameters
+  Image(const size_t width,
+    const size_t height,
+    Teuchos::ArrayRCP<intensity_t> intensities,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
+  // TODO ASCII text file constructor
+
+  // TODO copy constructor (shallow and deep versions)
+
+  /// perform initialization of an image from an array
+  /// \param intensities the array of intensity values
+  void initialize_array_image(intensity_t * intensities);
 
   /// default constructor tasks
   void default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);

@@ -124,6 +124,11 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
   params->set(DICe::compute_image_gradients,true);
   Image array_img(intensities,array_w,array_h,params);
+
+  *outStream << "creating an image from an array RCP" << std::endl;
+  Teuchos::ArrayRCP<intensity_t> intensityRCP(intensities,0,array_w*array_h,false);
+  Image rcp_img(array_w,array_h,intensityRCP);
+
   bool intensity_value_error = false;
   bool grad_x_error = false;
   bool grad_y_error = false;
@@ -176,9 +181,23 @@ int main(int argc, char *argv[]) {
   }
   *outStream << "hierarchical image gradients have been checked" << std::endl;
 
+  // create an image with a teuchos array and compare the values
+  bool rcp_error = false;
+  for(size_t y=0;y<array_h;++y){
+    for(size_t x=0;x<array_w;++x){
+      if(rcp_img(x,y) != array_img(x,y))
+        rcp_error = true;
+    }
+  }
+  if(rcp_error){
+    *outStream << "Error, the rcp image was not created correctly" << std::endl;
+    errorFlag++;
+  }
+
   delete[] intensities;
   delete[] gx;
   delete[] gy;
+
 
   // test filtering an image:
 
@@ -238,7 +257,10 @@ int main(int argc, char *argv[]) {
   }
   *outStream << "hierarchical image filter has been checked" << std::endl;
 
+
   *outStream << "--- End test ---" << std::endl;
+
+
 
   // finalize kokkos
   Kokkos::finalize();

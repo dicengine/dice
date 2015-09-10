@@ -107,6 +107,26 @@ Image::Image(intensity_t * intensities,
   offset_y_(0),
   has_gradients_(false)
 {
+  initialize_array_image(intensities);
+  default_constructor_tasks(params);
+}
+
+Image::Image(const size_t width,
+  const size_t height,
+  Teuchos::ArrayRCP<intensity_t> intensities,
+  const Teuchos::RCP<Teuchos::ParameterList> & params):
+  width_(width),
+  height_(height),
+  offset_x_(0),
+  offset_y_(0),
+  has_gradients_(false)
+{
+  initialize_array_image(intensities.getRawPtr());
+  default_constructor_tasks(params);
+}
+
+void
+Image::initialize_array_image(intensity_t * intensities){
   assert(width_>0);
   assert(height_>0);
   // initialize the pixel containers
@@ -126,7 +146,6 @@ Image::Image(intensity_t * intensities,
       }
     }
   }
-  default_constructor_tasks(params);
 }
 
 void
