@@ -40,8 +40,8 @@
 // ************************************************************************
 // @HEADER
 
-#ifndef DICE_KOKKOSTYPES_H
-#define DICE_KOKKOSTYPES_H
+#ifndef DICE_KOKKOS_H
+#define DICE_KOKKOS_H
 
 #include <Kokkos_Core.hpp>
 #include <Kokkos_DualView.hpp>
@@ -60,14 +60,35 @@ typedef Kokkos::View<intensity_t **, Kokkos::MemoryTraits<Kokkos::RandomAccess> 
 /// host mirrors of the intensity value arrays
 typedef intensity_device_view_t::HostMirror intensity_host_view_t;
 
+/// 1 dimensional array of (subset) intensity values for the device
+// note this is not random access on purpose
+typedef Kokkos::View<intensity_t *> intensity_device_view_1d_t;
+
+/// 1 dimensional dual view of intensity type values
+typedef Kokkos::DualView<intensity_t *,Kokkos::MemoryTraits<Kokkos::RandomAccess> >  intensity_1d_t;
+
 /// 2 dimensional dual view of intensity type values
 typedef Kokkos::DualView<intensity_t **,Kokkos::MemoryTraits<Kokkos::RandomAccess> >  intensity_2d_t;
 
 /// 2 dimensional dual view of scalar type values
 typedef Kokkos::DualView<scalar_t **>  scalar_2d_t;
 
+/// 2 dimensional array of intensity values for the device
+typedef Kokkos::View<size_t *> size_1d_device_view_t;
+/// host mirrors of the intensity value arrays
+typedef size_1d_device_view_t::HostMirror size_1d_host_view_t;
+
+/// 1 dimensional dual view of size type values
+typedef Kokkos::DualView<size_t *>  size_1d_t;
+
 /// member type
 typedef typename Kokkos::TeamPolicy<device_space>::member_type member_type;
+
+/// returns true if the data layout is LayoutRight
+bool default_is_layout_right();
+
+/// returns true if the data layout is LayoutRight
+bool default_is_layout_left();
 
 } // end DICe namespace
 

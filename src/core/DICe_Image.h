@@ -44,7 +44,7 @@
 #define DICE_IMAGE_H
 
 #include <DICe.h>
-#include <DICe_KokkosTypes.h>
+#include <DICe_Kokkos.h>
 
 #include <Teuchos_ParameterList.hpp>
 
@@ -171,6 +171,11 @@ public:
     return intensities_.h_view(y,x);
   }
 
+  /// returns the view of the intensity values
+  intensity_2d_t intensities()const{
+    return intensities_;
+  }
+
   /// gradient accessors:
   /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
   /// y is row, x is column
@@ -201,20 +206,8 @@ public:
     const size_t team_size=256);
 
   //
-  // Kokkos related stuff below:
+  // Kokkos functors:
   //
-
-  /// returns true if the data layout is LayoutRight
-  bool default_is_layout_right()const{
-    return Kokkos::Impl::is_same< intensity_2d_t::array_layout ,
-        Kokkos::LayoutRight >::value;
-  }
-
-  /// returns true if the data layout is LayoutRight
-  bool default_is_layout_left()const{
-    return Kokkos::Impl::is_same< intensity_2d_t::array_layout ,
-        Kokkos::LayoutLeft >::value;
-  }
 
   /// tag
   struct Grad_Flat_Tag {};

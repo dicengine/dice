@@ -40,71 +40,20 @@
 // ************************************************************************
 // @HEADER
 
-#ifndef DICE_H
-#define DICE_H
+#include <DICe_Kokkos.h>
 
-#define DICE_PI 3.14159265358979323846
-#define DICE_TWOPI 6.28318530717958647692
+namespace DICe {
 
-#if (defined(WIN32) || defined(WIN64))
-#  if defined(DICECORE_LIB_EXPORTS_MODE)
-#    define DICECORE_LIB_DLL_EXPORT __declspec(dllexport)
-#  else
-#    define DICECORE_LIB_DLL_EXPORT __declspec(dllimport)
-#  endif
-#else
-#  define DICECORE_LIB_DLL_EXPORT
-#endif
+/// returns true if the data layout is LayoutRight
+bool default_is_layout_right(){
+  return Kokkos::Impl::is_same< intensity_2d_t::array_layout ,
+      Kokkos::LayoutRight >::value;
+}
 
-// debugging macros:
-#ifdef DICE_DEBUG_MSG
-#  define DEBUG_MSG(x) do { std::cout << "[DICe_DEBUG]: " << x << std::endl; } while (0)
-#else
-#  define DEBUG_MSG(x) do {} while (0)
-#endif
+/// returns true if the data layout is LayoutRight
+bool default_is_layout_left(){
+  return Kokkos::Impl::is_same< intensity_2d_t::array_layout ,
+      Kokkos::LayoutLeft >::value;
+}
 
-namespace DICe{
-
-/// basic types
-
-/// image intensity type
-typedef float intensity_t;
-/// generic scalar type
-typedef float scalar_t;
-
-/// parameters (all lower case)
-
-/// String parameter name
-const char* const compute_image_gradients = "compute_image_gradients";
-/// String parameter name
-const char* const image_grad_use_hierarchical_parallelism = "image_grad_use_hierarchical_parallelism";
-/// String parameter name
-const char* const image_grad_team_size = "image_grad_team_size";
-/// String parameter name
-const char* const gauss_filter_image = "gauss_filter_image";
-/// String parameter name
-const char* const gauss_filter_use_hierarchical_parallelism = "gauss_filter_use_hierarchical_parallelism";
-/// String parameter name
-const char* const gauss_filter_team_size = "gauss_filter_team_size";
-/// String parameter name
-const char* const gauss_filter_mask_size = "gauss_filter_mask_size";
-
-/// enums:
-enum Subset_Init_Mode{
-  FILL_REF_INTENSITIES=0,
-  FILL_DEF_INTENSITIES,
-  // *** DO NOT PUT NEW ENUMS BELOW THIS ONE ***
-  // (this is used for striding and converting enums to strings)
-  MAX_SUBSET_INIT_MODE,
-  NO_SUCH_SUBSET_INIT_MODE,
-};
-/// string names for enums above
-static const char * subsetInitModeStrings[] = {
-  "FILL_REF_INTENSITIES",
-  "FILL_DEF_INTENSITIES"
-};
-
-
-} // end DICe namespace
-
-#endif
+}// End DICe Namespace

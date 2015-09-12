@@ -1,12 +1,15 @@
 
 SET(DICE_SOURCES
+  DICe_Kokkos.cpp
   DICe_Image.cpp
+  DICe_Subset.cpp
   )
 
 SET(DICE_HEADERS
   DICe.h
-  DICe_KokkosTypes.h
+  DICe_Kokkos.h
   DICe_Image.h
+  DICe_Subset.h
   )
 
 include_directories (

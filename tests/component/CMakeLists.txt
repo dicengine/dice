@@ -6,3 +6,6 @@ include_directories (
 
 add_executable(DICe_TestImage DICe_TestImage.cpp)
 target_link_libraries(DICe_TestImage ${DICE_LIBRARIES} dicecore diceutils)
+
+add_executable(DICe_TestSubset DICe_TestSubset.cpp)
+target_link_libraries(DICe_TestSubset ${DICE_LIBRARIES} dicecore diceutils)
