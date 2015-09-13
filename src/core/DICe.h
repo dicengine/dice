@@ -104,6 +104,20 @@ static const char * subsetInitModeStrings[] = {
   "FILL_DEF_INTENSITIES"
 };
 
+enum Interpolation_Method{
+  BILINEAR=0,
+  KEYS_FOURTH_ORDER,
+  // *** DO NOT PUT NEW ENUMS BELOW THIS ONE ***
+  // (this is used for striding and converting enums to strings)
+  MAX_INTERPOLATION_METHOD,
+  NO_SUCH_INTERPOLATION_METHOD,
+};
+/// string names for enums above
+static const char * interpolationMethodStrings[] = {
+  "BILINEAR",
+  "KEYS_FOURTH_ORDER"
+};
+
 
 } // end DICe namespace
 

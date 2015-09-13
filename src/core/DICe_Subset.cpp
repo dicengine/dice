@@ -194,6 +194,7 @@ Subset::write_tif(const std::string & file_name,
 void
 Subset::initialize(Teuchos::RCP<Image> image,
   Teuchos::RCP<Def_Map> map,
+  const Interpolation_Method interp,
   const Subset_Init_Mode init_mode){
   const Subset_Init_Functor init_functor(this,image.getRawPtr(),map,init_mode);
   // assume if the map is null, use the no_map_tag in the parrel for call of the functor
@@ -201,7 +202,13 @@ Subset::initialize(Teuchos::RCP<Image> image,
     Kokkos::parallel_for(Kokkos::RangePolicy<Subset_Init_Functor::No_Map_Tag>(0,num_pixels_),init_functor);
   }
   else{
-    Kokkos::parallel_for(Kokkos::RangePolicy<Subset_Init_Functor::Map_Bilinear_Tag>(0,num_pixels_),init_functor);
+    if(interp==BILINEAR)
+      Kokkos::parallel_for(Kokkos::RangePolicy<Subset_Init_Functor::Map_Bilinear_Tag>(0,num_pixels_),init_functor);
+    else if(interp==KEYS_FOURTH_ORDER)
+      Kokkos::parallel_for(Kokkos::RangePolicy<Subset_Init_Functor::Map_Keys_Tag>(0,num_pixels_),init_functor);
+    else{
+      assert(false&&"Error, unknown interpolation method requested");
+    }
   }
   // now sync up the intensities:
   if(init_mode==FILL_REF_INTENSITIES){
@@ -215,7 +222,7 @@ Subset::initialize(Teuchos::RCP<Image> image,
 }
 
 // functor to populate the values of a subset
-// by using the mapping
+// by using the mapping and bilinear interpolation
 KOKKOS_INLINE_FUNCTION
 void
 Subset_Init_Functor::operator()(const Map_Bilinear_Tag&, const size_t pixel_index)const{
@@ -245,6 +252,84 @@ Subset_Init_Functor::operator()(const Map_Bilinear_Tag&, const size_t pixel_inde
     subset_intensities_(pixel_index) = 0;
   }
 }
+
+// functor to populate the values of a subset
+// by using the mapping and Keys fourth-order interpolation
+KOKKOS_INLINE_FUNCTION
+void
+Subset_Init_Functor::operator()(const Map_Keys_Tag&, const size_t pixel_index)const{
+
+  // map the point to the def
+  // have to cast x_ and y_ to scalar type since the result could be negative
+  const scalar_t dx = (scalar_t)(x_(pixel_index)) - cx_;
+  const scalar_t dy = (scalar_t)(y_(pixel_index)) - cy_;
+  const scalar_t Dx = (1.0+ex_)*dx + g_*dy;
+  const scalar_t Dy = (1.0+ey_)*dy + g_*dx;
+  // mapped location
+  scalar_t mapped_x = cos_t_*Dx - sin_t_*Dy + u_ + cx_;
+  scalar_t mapped_y = sin_t_*Dx + cos_t_*Dy + v_ + cy_;
+  // check that the mapped location is inside the image...
+  if(mapped_x>=0&&mapped_x<image_w_-2&&mapped_y>=0&&mapped_y<image_h_-2){
+
+    // determine the current pixel the coordinates fall in:
+    size_t px = (size_t)mapped_x;
+    if(mapped_x - px >= 0.5) px++;
+    size_t py = (size_t)mapped_y;
+    if(mapped_y - py >= 0.5) py++;
+
+    // check if the location is close enough to the pixel location
+    // to not need interpolation
+    if((mapped_x - px)<tol_&&(mapped_y-py<tol_)){
+      subset_intensities_(pixel_index) = image_intensities_(py,px);
+    }
+    else{
+      intensity_t intensity_value = 0.0;
+      // convolve all the pixels within + and - pixels of the point in question
+      scalar_t dx=0.0, dy=0.0;
+      scalar_t dx2=0.0, dx3=0.0;
+      scalar_t dy2=0.0, dy3=0.0;
+      scalar_t f0x=0.0, f0y=0.0;
+      for(size_t y=py-3;y<=py+3;++y){
+        dy = std::abs(mapped_y - y);
+        dy2=dy*dy;
+        dy3=dy2*dy;
+        f0y = 0.0;
+        if(dy <= 1.0){
+          f0y = 1.3333333333*dy3 - 2.3333333333*dy2 + 1.0;
+        }
+        else if(dy <= 2.0){
+          f0y = -0.5833333333*dy3 + 3.0*dy2 - 4.9166666666*dy + 2.5;
+        }
+        else if(dy <= 3.0){
+          f0y = 0.0833333333*dy3 - 0.6666666666*dy2 + 1.75*dy - 1.5;
+        }
+        for(size_t x=px-3;x<=px+3;++x){
+          // compute the f's of x and y
+          dx = std::abs(mapped_x - x);
+          dx2=dx*dx;
+          dx3=dx2*dx;
+          f0x = 0.0;
+          if(dx <= 1.0){
+            f0x = 1.3333333333*dx3 - 2.3333333333*dx2 + 1.0;
+          }
+          else if(dx <= 2.0){
+            f0x = -0.5833333333*dx3 + 3.0*dx2 - 4.9166666666*dx + 2.5;
+          }
+          else if(dx <= 3.0){
+            f0x = 0.0833333333*dx3 - 0.6666666666*dx2 + 1.75*dx - 1.5;
+          }
+          intensity_value += image_intensities_(y,x)*f0x*f0y;
+        }
+      }
+      subset_intensities_(pixel_index) = intensity_value;
+    }
+  }
+  else{
+    // out of bounds pixels are black
+    subset_intensities_(pixel_index) = 0;
+  }
+}
+
 // functor to populate the values of a subset
 // without using the mapping
 KOKKOS_INLINE_FUNCTION

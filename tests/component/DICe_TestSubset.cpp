@@ -146,14 +146,16 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   // initialize the deformed values
+  *outStream << "constructing a simple deformed subset" << std::endl;
   Teuchos::RCP<Def_Map> map = Teuchos::rcp (new Def_Map());
   map->u_ = 5;
   map->v_ = 10;
-  square.initialize(image,map,FILL_DEF_INTENSITIES);
+  square.initialize(image,map,BILINEAR,FILL_DEF_INTENSITIES);
   square.write_tif("squareSubsetRef.tif",false);
   square.write_tif("squareSubsetDef.tif",true);
   square.write_subset_on_image("squareSubsetMapped.tif",image,map);
   // check simple motion intensity values
+  *outStream << "checking the bilinear interpolation" << std::endl;
   bool def_values_error = false;
   for(size_t i=0;i<square.num_pixels();++i){
     if(square.def_intensities(i)!=(*image)(square.x(i)+map->u_,square.y(i)+map->v_))
@@ -161,6 +163,20 @@ int main(int argc, char *argv[]) {
   }
   if(def_values_error){
     *outStream << "Error, the def intensity values for the initialized square subset are wrong" << std::endl;
+    errorFlag++;
+  }
+  *outStream << "checking the keys fourth order interpolant" << std::endl;
+  map->u_ = 15;
+  map->v_ = 12;
+  square.initialize(image,map,KEYS_FOURTH_ORDER,FILL_DEF_INTENSITIES);
+  square.write_tif("squareSubsetDefKeys.tif",true);
+  bool keys_values_error = false;
+  for(size_t i=0;i<square.num_pixels();++i){
+    if(square.def_intensities(i)!=(*image)(square.x(i)+map->u_,square.y(i)+map->v_))
+      keys_values_error = true;
+  }
+  if(keys_values_error){
+    *outStream << "Error, the def intensity values for the keys initialized square subset are wrong" << std::endl;
     errorFlag++;
   }
 

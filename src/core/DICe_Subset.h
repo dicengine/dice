@@ -173,6 +173,7 @@ public:
   /// \param init_mode the initialization mode (put the values in the ref or def intensities)
   void initialize(Teuchos::RCP<Image> image,
     Teuchos::RCP<Def_Map> map=Teuchos::null,
+    const Interpolation_Method interp=KEYS_FOURTH_ORDER,
     const Subset_Init_Mode init_mode=FILL_REF_INTENSITIES);
 
   /// write the subset intensity values to a tif file
@@ -236,6 +237,8 @@ struct Subset_Init_Functor{
   size_t image_w_;
   /// height of the image
   size_t image_h_;
+  /// tolerance
+  scalar_t tol_;
   // note all of the views below are only the device views
   // the host views are not necessary
   /// 2d view of image intensities
@@ -256,7 +259,8 @@ struct Subset_Init_Functor{
       t_(0.0),
       ex_(0.0),
       ey_(0.0),
-      g_(0.0){
+      g_(0.0),
+      tol_(0.00001){
     if(map!=Teuchos::null){
       u_ = map->u_;
       v_ = map->v_;
@@ -286,10 +290,16 @@ struct Subset_Init_Functor{
   }
   /// tag
   struct Map_Bilinear_Tag {};
-  /// functor to perform a mapping to initial coordinates to get
-  /// the deformed location
+  /// functor to perform a mapping on the initial coordinates to get
+  /// the deformed pixel intensity using bilinear interpolation
   KOKKOS_INLINE_FUNCTION
   void operator()(const Map_Bilinear_Tag &, const size_t pixel_index)const;
+  /// tag
+  struct Map_Keys_Tag {};
+  /// functor to perform a mapping on the initial coordinates to get
+  /// the deformed pixel intensity using Keys 4th-order interpolation
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const Map_Keys_Tag &, const size_t pixel_index)const;
   /// tag
   struct No_Map_Tag {};
   /// functor to perform direct access of image pixel values without mapping
