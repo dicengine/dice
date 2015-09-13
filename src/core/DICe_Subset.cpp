@@ -59,12 +59,12 @@ Subset::Subset(size_t cx,
   assert(x.size()==y.size());
 
   // initialize the coordinate views
-  size_1d_device_view_t x_dev(x.getRawPtr(),num_pixels_);
-  size_1d_host_view_t x_host  = Kokkos::create_mirror_view(x_dev);
-  x_ = size_1d_t(x_dev,x_host);
-  size_1d_device_view_t y_dev(y.getRawPtr(),num_pixels_);
-  size_1d_host_view_t y_host  = Kokkos::create_mirror_view(y_dev);
-  y_ = size_1d_t(y_dev,y_host);
+  pixel_coord_device_view_1d x_dev(x.getRawPtr(),num_pixels_);
+  pixel_coord_host_view_1d x_host  = Kokkos::create_mirror_view(x_dev);
+  x_ = pixel_coord_dual_view_1d(x_dev,x_host);
+  pixel_coord_device_view_1d y_dev(y.getRawPtr(),num_pixels_);
+  pixel_coord_host_view_1d y_host  = Kokkos::create_mirror_view(y_dev);
+  y_ = pixel_coord_dual_view_1d(y_dev,y_host);
   // copy the x and y coords image to the device (no-op for OpenMP)
   // once the x and y views are synced
   // this information does not need to change for the life of the subset
@@ -75,8 +75,8 @@ Subset::Subset(size_t cx,
 
   // initialize the pixel containers
   // the values will get populated later
-  ref_intensities_ = intensity_1d_t("ref_intensities",num_pixels_);
-  def_intensities_ = intensity_1d_t("def_intensities",num_pixels_);
+  ref_intensities_ = intensity_dual_view_1d("ref_intensities",num_pixels_);
+  def_intensities_ = intensity_dual_view_1d("def_intensities",num_pixels_);
 
 }
 
@@ -96,8 +96,8 @@ Subset::Subset(const size_t cx,
   assert(num_pixels_>0);
 
   // initialize the coordinate views
-  x_ = size_1d_t("x",num_pixels_);
-  y_ = size_1d_t("y",num_pixels_);
+  x_ = pixel_coord_dual_view_1d("x",num_pixels_);
+  y_ = pixel_coord_dual_view_1d("y",num_pixels_);
   size_t index = 0;
   for(size_t y=cy_-half_height;y<=cy_+half_height;++y){
     for(size_t x=cx_-half_width;x<=cx_+half_width;++x){
@@ -116,8 +116,52 @@ Subset::Subset(const size_t cx,
 
   // initialize the pixel container
   // the values will get populated later
-  ref_intensities_ = intensity_1d_t("ref_intensities",num_pixels_);
-  def_intensities_ = intensity_1d_t("def_intensities",num_pixels_);
+  ref_intensities_ = intensity_dual_view_1d("ref_intensities",num_pixels_);
+  def_intensities_ = intensity_dual_view_1d("def_intensities",num_pixels_);
+}
+
+void
+Subset::write_subset_on_image(const std::string & file_name,
+  Teuchos::RCP<Image> image,
+  Teuchos::RCP<Def_Map> map){
+  //create a square image that fits the extents of the subet
+  const size_t w = image->width();
+  const size_t h = image->height();
+  intensity_t * intensities = new intensity_t[w*h];
+  for(size_t y=0;y<h;++y){
+    for(size_t x=0;x<w;++x){
+      intensities[y*w+x] = image->intensities().h_view(y,x);
+    }
+  }
+  if(map!=Teuchos::null){
+    scalar_t dx=0.0,dy=0.0;
+    scalar_t Dx=0.0,Dy=0.0;
+    scalar_t mapped_x=0.0,mapped_y=0.0;
+    size_t px=0,py=0;
+    for(size_t i=0;i<num_pixels_;++i){
+      // compute the deformed shape:
+      // need to cast the x_ and y_ values since the resulting value could be negative
+      dx = (scalar_t)(x_.h_view(i)) - cx_;
+      dy = (scalar_t)(y_.h_view(i)) - cy_;
+      Dx = (1.0+map->ex_)*dx + map->g_*dy;
+      Dy = (1.0+map->ey_)*dy + map->g_*dx;
+      // mapped location
+      mapped_x = std::cos(map->t_)*Dx - std::sin(map->t_)*Dy + map->u_ + cx_;
+      mapped_y = std::sin(map->t_)*Dx + std::cos(map->t_)*Dy + map->v_ + cy_;
+      // get the nearest pixel location:
+      px = (size_t)mapped_x;
+      if(mapped_x - (size_t)mapped_x >= 0.5) px++;
+      py = (size_t)mapped_y;
+      if(mapped_y - (size_t)mapped_y >= 0.5) py++;
+      intensities[py*w+px] = 255;
+    }
+  }
+  else{ // write the original shape of the subset
+    for(size_t i=0;i<num_pixels_;++i)
+      intensities[y_.h_view(i)*w+x_.h_view(i)] = 255;
+  }
+  write_tiff_image(file_name,w,h,intensities,true);
+  delete[] intensities;
 }
 
 void
@@ -175,10 +219,10 @@ Subset::initialize(Teuchos::RCP<Image> image,
 KOKKOS_INLINE_FUNCTION
 void
 Subset_Init_Functor::operator()(const Map_Bilinear_Tag&, const size_t pixel_index)const{
-  subset_intensities_(pixel_index) = 1.0;
   // map the point to the def
-  const scalar_t dx = x_(pixel_index) - cx_;
-  const scalar_t dy = y_(pixel_index) - cy_;
+  // have to cast x_ and y_ to scalar type since the result could be negative
+  const scalar_t dx = (scalar_t)(x_(pixel_index)) - cx_;
+  const scalar_t dy = (scalar_t)(y_(pixel_index)) - cy_;
   const scalar_t Dx = (1.0+ex_)*dx + g_*dy;
   const scalar_t Dy = (1.0+ey_)*dy + g_*dx;
   // mapped location
@@ -186,16 +230,15 @@ Subset_Init_Functor::operator()(const Map_Bilinear_Tag&, const size_t pixel_inde
   scalar_t mapped_y = sin_t_*Dx + cos_t_*Dy + v_ + cy_;
   // check that the mapped location is inside the image...
   if(mapped_x>=0&&mapped_x<image_w_-2&&mapped_y>=0&&mapped_y<image_h_-2){
-
     size_t x1 = (size_t)mapped_x;
     size_t x2 = x1+1;
-    size_t y2 = (size_t)mapped_y;
-    size_t y1  = y2+1;
+    size_t y1 = (size_t)mapped_y;
+    size_t y2  = y1+1;
     subset_intensities_(pixel_index) =
-        (-image_intensities_(x1,y1)*(x2-mapped_x)*(y2-mapped_y)
-         -image_intensities_(x2,y1)*(mapped_x-x1)*(y2-mapped_y)
-         -image_intensities_(x1,y2)*(x2-mapped_x)*(mapped_y-y1)
-         -image_intensities_(x2,y2)*(mapped_x-x1)*(mapped_y-y1));
+        (image_intensities_(y1,x1)*(x2-mapped_x)*(y2-mapped_y)
+         +image_intensities_(y1,x2)*(mapped_x-x1)*(y2-mapped_y)
+         +image_intensities_(y2,x2)*(mapped_x-x1)*(mapped_y-y1)
+         +image_intensities_(y2,x1)*(x2-mapped_x)*(mapped_y-y1));
   }
   else{
     // out of bounds pixels are black

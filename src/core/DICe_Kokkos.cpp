@@ -46,13 +46,13 @@ namespace DICe {
 
 /// returns true if the data layout is LayoutRight
 bool default_is_layout_right(){
-  return Kokkos::Impl::is_same< intensity_2d_t::array_layout ,
+  return Kokkos::Impl::is_same< intensity_dual_view_2d::array_layout ,
       Kokkos::LayoutRight >::value;
 }
 
 /// returns true if the data layout is LayoutRight
 bool default_is_layout_left(){
-  return Kokkos::Impl::is_same< intensity_2d_t::array_layout ,
+  return Kokkos::Impl::is_same< intensity_dual_view_2d::array_layout ,
       Kokkos::LayoutLeft >::value;
 }
 

@@ -147,18 +147,26 @@ int main(int argc, char *argv[]) {
   }
   // initialize the deformed values
   Teuchos::RCP<Def_Map> map = Teuchos::rcp (new Def_Map());
-  map->u_ = 200;
-  map->v_ = 50;
+  map->u_ = 5;
+  map->v_ = 10;
   square.initialize(image,map,FILL_DEF_INTENSITIES);
   square.write_tif("squareSubsetRef.tif",false);
   square.write_tif("squareSubsetDef.tif",true);
-  // TODO check simple motion intensity values
+  square.write_subset_on_image("squareSubsetMapped.tif",image,map);
+  // check simple motion intensity values
+  bool def_values_error = false;
+  for(size_t i=0;i<square.num_pixels();++i){
+    if(square.def_intensities(i)!=(*image)(square.x(i)+map->u_,square.y(i)+map->v_))
+      def_values_error = true;
+  }
+  if(def_values_error){
+    *outStream << "Error, the def intensity values for the initialized square subset are wrong" << std::endl;
+    errorFlag++;
+  }
 
   // TODO come up with a complex map and check the values
-  // TODO check the def values
+
   // TODO try changing the ref values (compare between ref and def to test)
-
-
 
   *outStream << "--- End test ---" << std::endl;
 

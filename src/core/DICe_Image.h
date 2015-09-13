@@ -172,7 +172,7 @@ public:
   }
 
   /// returns the view of the intensity values
-  intensity_2d_t intensities()const{
+  intensity_dual_view_2d intensities()const{
     return intensities_;
   }
 
@@ -243,13 +243,13 @@ private:
   /// pixel container height_
   size_t height_;
   /// pixel container
-  intensity_2d_t intensities_;
+  intensity_dual_view_2d intensities_;
   /// device intensity work array
-  intensity_device_view_t intensities_temp_;
+  intensity_device_view_2d intensities_temp_;
   /// image gradient x container
-  scalar_2d_t grad_x_;
+  scalar_dual_view_2d grad_x_;
   /// image gradient y container
-  scalar_2d_t grad_y_;
+  scalar_dual_view_2d grad_y_;
   /// flag that the gradients have been computed
   bool has_gradients_;
   /// coeff used in computing gradients

@@ -64,6 +64,13 @@ struct Def_Map{
   scalar_t ex_;
   scalar_t ey_;
   scalar_t g_;
+  Def_Map():
+  u_(0.0),
+  v_(0.0),
+  t_(0.0),
+  ex_(0.0),
+  ey_(0.0),
+  g_(0.0){}
 };
 
 /// \class DICe::Subset
@@ -115,12 +122,12 @@ public:
   }
 
   /// x coordinate view accessor
-  size_1d_t x()const{
+  pixel_coord_dual_view_1d x()const{
     return x_;
   }
 
   /// y coordinate view accessor
-   size_1d_t y()const{
+   pixel_coord_dual_view_1d y()const{
     return y_;
   }
 
@@ -151,12 +158,12 @@ public:
   }
 
   /// ref intensities device view accessor
-  intensity_1d_t ref_intensities()const{
+  intensity_dual_view_1d ref_intensities()const{
     return ref_intensities_;
   }
 
   /// ref intensities device view accessor
-  intensity_1d_t def_intensities()const{
+  intensity_dual_view_1d def_intensities()const{
     return def_intensities_;
   }
 
@@ -174,21 +181,29 @@ public:
   void write_tif(const std::string & file_name,
     const bool use_def_intensities=false);
 
+  /// draw the subset over an image
+  /// \param file_name the name of the tif file to write
+  /// \param image pointer to the image to use as the background
+  /// \param deform_subset deform the subset on the image (rather than its original shape)
+  void write_subset_on_image(const std::string & file_name,
+    Teuchos::RCP<Image> image,
+    Teuchos::RCP<Def_Map> map=Teuchos::null);
+
 private:
   /// number of pixels in the subset
   size_t num_pixels_;
   /// pixel container
-  intensity_1d_t ref_intensities_;
+  intensity_dual_view_1d ref_intensities_;
   /// pixel container
-  intensity_1d_t def_intensities_;
+  intensity_dual_view_1d def_intensities_;
   /// centroid location x
   size_t cx_; // assumed to be the middle of the pixel
   /// centroid location y
   size_t cy_; // assumed to be the middle of the pixel
   /// initial x position of the pixels in the reference image
-  size_1d_t x_;
+  pixel_coord_dual_view_1d x_;
   /// initial x position of the pixels in the reference image
-  size_1d_t y_;
+  pixel_coord_dual_view_1d y_;
 
 };
 
@@ -224,13 +239,13 @@ struct Subset_Init_Functor{
   // note all of the views below are only the device views
   // the host views are not necessary
   /// 2d view of image intensities
-  intensity_device_view_t image_intensities_;
+  intensity_device_view_2d image_intensities_;
   /// 1d view of the subset intensities
-  intensity_device_view_1d_t subset_intensities_;
+  intensity_device_view_1d subset_intensities_;
   /// view of x coordinates
-  size_1d_device_view_t x_;
+  pixel_coord_device_view_1d x_;
   /// view of y coordinates
-  size_1d_device_view_t y_;
+  pixel_coord_device_view_1d y_;
   /// constructor
   Subset_Init_Functor(Subset * subset,
     Image * image,

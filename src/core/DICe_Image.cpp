@@ -58,7 +58,7 @@ Image::Image(const std::string & file_name,
   assert(width_>0);
   assert(height_>0);
   // initialize the pixel containers
-  intensities_ = intensity_2d_t("intensities",height_,width_);
+  intensities_ = intensity_dual_view_2d("intensities",height_,width_);
   // read in the image
   read_tiff_image(file_name,
     intensities_.h_view.ptr_on_device(),
@@ -86,7 +86,7 @@ Image::Image(const std::string & file_name,
   assert(width_>0&&offset_x_+width_<img_width);
   assert(height_>0&&offset_y_+height_<img_height);
   // initialize the pixel containers
-  intensities_ = intensity_2d_t("intensities",height_,width_);
+  intensities_ = intensity_dual_view_2d("intensities",height_,width_);
   // read in the image
   read_tiff_image(file_name,
     offset_x,offset_y,
@@ -132,14 +132,14 @@ Image::initialize_array_image(intensity_t * intensities){
   // initialize the pixel containers
   // if the default layout is LayoutRight, then no permutation is necessary
   if(default_is_layout_right()){
-    intensity_device_view_t intensities_dev(intensities,height_,width_);
-    intensity_host_view_t intensities_host  = Kokkos::create_mirror_view(intensities_dev);
-    intensities_ = intensity_2d_t(intensities_dev,intensities_host);
+    intensity_device_view_2d intensities_dev(intensities,height_,width_);
+    intensity_host_view_2d intensities_host  = Kokkos::create_mirror_view(intensities_dev);
+    intensities_ = intensity_dual_view_2d(intensities_dev,intensities_host);
   }
   // else the data has to be copied to coalesce with the default layout
   else{
     assert(default_is_layout_left());
-    intensities_ = intensity_2d_t("intensities",height_,width_);
+    intensities_ = intensity_dual_view_2d("intensities",height_,width_);
     for(size_t y=0;y<height_;++y){
       for(size_t x=0;x<width_;++x){
         intensities_.h_view(y,x) = intensities[y*width_+x];
@@ -150,14 +150,14 @@ Image::initialize_array_image(intensity_t * intensities){
 
 void
 Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params){
-  grad_x_ = scalar_2d_t("grad_x",height_,width_);
-  grad_y_ = scalar_2d_t("grad_y",height_,width_);
+  grad_x_ = scalar_dual_view_2d("grad_x",height_,width_);
+  grad_y_ = scalar_dual_view_2d("grad_y",height_,width_);
   // copy the image to the device (no-op for OpenMP)
   intensities_.modify<host_space>(); // The template is where the modification took place
   intensities_.sync<device_space>(); // The template is what needs to be synced
 
   // create a temp container for the pixel intensities
-  intensities_temp_ = intensity_device_view_t("intensities_temp",height_,width_);
+  intensities_temp_ = intensity_device_view_2d("intensities_temp",height_,width_);
 
   // image gradient coefficients
   grad_c1_ = 1.0/12.0;
