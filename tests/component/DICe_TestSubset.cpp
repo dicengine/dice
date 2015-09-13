@@ -60,6 +60,7 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   size_t iprint     = argc - 1;
   size_t errorFlag  = 0;
+  scalar_t errorTol = 1.0E-4;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -150,7 +151,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Def_Map> map = Teuchos::rcp (new Def_Map());
   map->u_ = 5;
   map->v_ = 10;
-  square.initialize(image,map,BILINEAR,FILL_DEF_INTENSITIES);
+  square.initialize(image,map,BILINEAR,DEF_INTENSITIES);
   square.write_tif("squareSubsetRef.tif",false);
   square.write_tif("squareSubsetDef.tif",true);
   square.write_subset_on_image("squareSubsetMapped.tif",image,map);
@@ -168,7 +169,7 @@ int main(int argc, char *argv[]) {
   *outStream << "checking the keys fourth order interpolant" << std::endl;
   map->u_ = 15;
   map->v_ = 12;
-  square.initialize(image,map,KEYS_FOURTH_ORDER,FILL_DEF_INTENSITIES);
+  square.initialize(image,map,KEYS_FOURTH_ORDER,DEF_INTENSITIES);
   square.write_tif("squareSubsetDefKeys.tif",true);
   bool keys_values_error = false;
   for(size_t i=0;i<square.num_pixels();++i){
@@ -179,10 +180,30 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, the def intensity values for the keys initialized square subset are wrong" << std::endl;
     errorFlag++;
   }
+  *outStream << "checking the mean value of the reference intensities" << std::endl;
+  scalar_t ref_mean = 0.0;
+  for(size_t i=0;i<square.num_pixels();++i){
+    ref_mean += square.ref_intensities(i);
+  }
+  ref_mean/=square.num_pixels();
+  scalar_t func_ref_mean = square.mean(REF_INTENSITIES);
+  if(std::abs(func_ref_mean - ref_mean)>errorTol){
+    *outStream << "Error, the reference mean is not correct" << std::endl;
+    errorFlag++;
+  }
+  *outStream << "checking the mean value of the deformed intensities" << std::endl;
+  scalar_t def_mean = 0.0;
+  for(size_t i=0;i<square.num_pixels();++i){
+    def_mean += square.def_intensities(i);
+  }
+  def_mean/=square.num_pixels();
+  scalar_t func_def_mean = square.mean(DEF_INTENSITIES);
+  if(std::abs(func_def_mean - def_mean)>errorTol){
+    *outStream << "Error, the deformed mean is not correct" << std::endl;
+    errorFlag++;
+  }
 
   // TODO come up with a complex map and check the values
-
-  // TODO try changing the ref values (compare between ref and def to test)
 
   *outStream << "--- End test ---" << std::endl;
 

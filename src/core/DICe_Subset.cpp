@@ -191,12 +191,39 @@ Subset::write_tif(const std::string & file_name,
   delete[] intensities;
 }
 
+KOKKOS_INLINE_FUNCTION
+void
+Subset::operator()(const Ref_Mean_Tag &,
+  const size_t pixel_index,
+  scalar_t & mean)const{
+  mean += ref_intensities_.d_view(pixel_index);
+}
+
+KOKKOS_INLINE_FUNCTION
+void
+Subset::operator()(const Def_Mean_Tag &,
+  const size_t pixel_index,
+  scalar_t & mean)const{
+  mean += def_intensities_.d_view(pixel_index);
+}
+
+scalar_t
+Subset::mean(const Subset_View_Target target){
+  scalar_t mean = 0.0;
+  if(target==REF_INTENSITIES){
+    Kokkos::parallel_reduce(Kokkos::RangePolicy<Ref_Mean_Tag>(0,num_pixels_),*this,mean);
+  }else{
+    Kokkos::parallel_reduce(Kokkos::RangePolicy<Def_Mean_Tag>(0,num_pixels_),*this,mean);
+  }
+  return mean/num_pixels_;
+}
+
 void
 Subset::initialize(Teuchos::RCP<Image> image,
   Teuchos::RCP<Def_Map> map,
   const Interpolation_Method interp,
-  const Subset_Init_Mode init_mode){
-  const Subset_Init_Functor init_functor(this,image.getRawPtr(),map,init_mode);
+  const Subset_View_Target target){
+  const Subset_Init_Functor init_functor(this,image.getRawPtr(),map,target);
   // assume if the map is null, use the no_map_tag in the parrel for call of the functor
   if(map==Teuchos::null){
     Kokkos::parallel_for(Kokkos::RangePolicy<Subset_Init_Functor::No_Map_Tag>(0,num_pixels_),init_functor);
@@ -211,7 +238,7 @@ Subset::initialize(Teuchos::RCP<Image> image,
     }
   }
   // now sync up the intensities:
-  if(init_mode==FILL_REF_INTENSITIES){
+  if(target==REF_INTENSITIES){
     ref_intensities_.modify<device_space>();
     ref_intensities_.sync<host_space>();
   }

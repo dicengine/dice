@@ -90,13 +90,13 @@ const char* const gauss_filter_team_size = "gauss_filter_team_size";
 const char* const gauss_filter_mask_size = "gauss_filter_mask_size";
 
 /// enums:
-enum Subset_Init_Mode{
-  FILL_REF_INTENSITIES=0,
-  FILL_DEF_INTENSITIES,
+enum Subset_View_Target{
+  REF_INTENSITIES=0,
+  DEF_INTENSITIES,
   // *** DO NOT PUT NEW ENUMS BELOW THIS ONE ***
   // (this is used for striding and converting enums to strings)
-  MAX_SUBSET_INIT_MODE,
-  NO_SUCH_SUBSET_INIT_MODE,
+  MAX_SUBSET_VIEW_TARGET,
+  NO_SUCH_SUBSET_VIEW_TARGET,
 };
 /// string names for enums above
 static const char * subsetInitModeStrings[] = {

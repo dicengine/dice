@@ -170,11 +170,11 @@ public:
   /// initialization method:
   /// \param image the image to get the intensity values from
   /// \param map the deformation map (optional)
-  /// \param init_mode the initialization mode (put the values in the ref or def intensities)
+  /// \param target the initialization mode (put the values in the ref or def intensities)
   void initialize(Teuchos::RCP<Image> image,
     Teuchos::RCP<Def_Map> map=Teuchos::null,
     const Interpolation_Method interp=KEYS_FOURTH_ORDER,
-    const Subset_Init_Mode init_mode=FILL_REF_INTENSITIES);
+    const Subset_View_Target target=REF_INTENSITIES);
 
   /// write the subset intensity values to a tif file
   /// \param file_name the name of the tif file to write
@@ -189,6 +189,25 @@ public:
   void write_subset_on_image(const std::string & file_name,
     Teuchos::RCP<Image> image,
     Teuchos::RCP<Def_Map> map=Teuchos::null);
+
+  /// tag
+  struct Ref_Mean_Tag {};
+  /// compute the mean intensity value for this subset's ref intensities
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const Ref_Mean_Tag &,
+    const size_t pixel_index,
+    scalar_t & mean)const;
+  /// tag
+  struct Def_Mean_Tag {};
+  /// compute the mean intensity value for this subset's ref intensities
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const Def_Mean_Tag &,
+    const size_t pixel_index,
+    scalar_t & mean)const;
+
+  /// returns the mean intensity value
+  /// \param target either the reference or deformed intensity values
+  scalar_t mean(const Subset_View_Target target);
 
 private:
   /// number of pixels in the subset
@@ -207,8 +226,6 @@ private:
   pixel_coord_dual_view_1d y_;
 
 };
-
-// TODO who does the syncing??
 
 /// subset intensity value initialization functor
 struct Subset_Init_Functor{
@@ -253,7 +270,7 @@ struct Subset_Init_Functor{
   Subset_Init_Functor(Subset * subset,
     Image * image,
     Teuchos::RCP<Def_Map> map=Teuchos::null,
-    const Subset_Init_Mode init_mode=FILL_REF_INTENSITIES):
+    const Subset_View_Target target=REF_INTENSITIES):
       u_(0.0),
       v_(0.0),
       t_(0.0),
@@ -274,7 +291,7 @@ struct Subset_Init_Functor{
     // get the image intensities
     image_intensities_ = image->intensities().d_view;
     // get a view of the subset intensities
-    if(init_mode==FILL_REF_INTENSITIES){
+    if(target==REF_INTENSITIES){
       subset_intensities_ = subset->ref_intensities().d_view;
     }
     else{
@@ -305,7 +322,6 @@ struct Subset_Init_Functor{
   /// functor to perform direct access of image pixel values without mapping
   KOKKOS_INLINE_FUNCTION
   void operator()(const No_Map_Tag &, const size_t pixel_index)const;
-  // TODO expand the tags above to have a bilinear interpolant and a keys fourth as options
 };
 
 }// End DICe Namespace
