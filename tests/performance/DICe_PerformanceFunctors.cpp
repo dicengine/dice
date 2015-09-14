@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
   Kokkos::initialize(argc, argv);
 
   // only print output if args are given (for testing the output is quiet)
-  size_t iprint     = argc - 1;
+  size_t iprint = argc>1 ? std::atoi(argv[1]) : 0;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -72,6 +72,13 @@ int main(int argc, char *argv[]) {
     outStream = Teuchos::rcp(&bhs, false);
 
   *outStream << "--- Begin performance test ---" << std::endl;
+
+  // optional argument for the number of thread teams:
+  int num_thread_teams = -1;
+  if(argc>2) num_thread_teams = std::atoi(argv[2]);
+  *outStream << "number of thread teams:   " << num_thread_teams << " (-1 means thread teams not used)" << std::endl;
+  const bool use_hierarchical = num_thread_teams > 0;
+  *outStream << "hierarchical parallelism: " << use_hierarchical << std::endl;
 
   // create a vector of image sizes to use
   const size_t num_img_sizes = 5;
@@ -84,8 +91,8 @@ int main(int argc, char *argv[]) {
 
   // read the image dimensions from file:
   read_tiff_image_dimensions(file_name,width,height);
-  *outStream << "master image dims:     " << width << " x " << height << std::endl;
-  *outStream << "number of image sizes: " << num_img_sizes << std::endl;
+  *outStream << "master image dims:        " << width << " x " << height << std::endl;
+  *outStream << "number of image sizes:    " << num_img_sizes << std::endl;
   const size_t w_step = width/num_img_sizes;
   const size_t h_step = height/num_img_sizes;
   for(size_t i=0;i<num_img_sizes;++i){
@@ -120,7 +127,7 @@ int main(int argc, char *argv[]) {
 
   // num timing samples loop
   for(size_t time_sample=0;time_sample<num_time_samples;++time_sample){
-    *outStream << "%%% time sample " << time_sample << std::endl;
+    *outStream << "\n%%% time sample " << time_sample << std::endl;
     // image size loop:
     for(size_t size_it=0;size_it<num_img_sizes;++size_it){
       const size_t w_it = widths[size_it];
@@ -144,9 +151,16 @@ int main(int argc, char *argv[]) {
       *outStream << "computing the image gradient" << std::endl;
       cpu_timer grad_timer;
       {
-        grad_timer.start();
-        img->compute_gradients();
-        grad_timer.stop();
+        if(use_hierarchical){
+          grad_timer.start();
+          img->compute_gradients(true,num_thread_teams);
+          grad_timer.stop();
+        }
+        else{
+          grad_timer.start();
+          img->compute_gradients();
+          grad_timer.stop();
+        }
       }
       *outStream << "** grad time" << grad_timer.format();
       grad_times[size_it] += ((scalar_t)(grad_timer.elapsed().wall)/1000000000)/num_time_samples;
@@ -155,9 +169,16 @@ int main(int argc, char *argv[]) {
       *outStream << "computing convolution filter" << std::endl;
       cpu_timer filter_timer;
       {
-        filter_timer.start();
-        img->gauss_filter();
-        filter_timer.stop();
+        if(use_hierarchical){
+          filter_timer.start();
+          img->gauss_filter(true,num_thread_teams);
+          filter_timer.stop();
+        }
+        else{
+          filter_timer.start();
+          img->gauss_filter();
+          filter_timer.stop();
+        }
       }
       *outStream << "** filter time" << filter_timer.format();
       filter_times[size_it] += ((scalar_t)(filter_timer.elapsed().wall)/1000000000)/num_time_samples;

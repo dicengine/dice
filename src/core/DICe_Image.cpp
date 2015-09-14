@@ -256,9 +256,10 @@ void
 Image::compute_gradients(const bool use_hierarchical_parallelism, const size_t team_size){
 
   // Flat gradients:
-  if(use_hierarchical_parallelism)
-    Kokkos::parallel_for(Kokkos::TeamPolicy<Grad_Tag>(width_,team_size),*this);
-  else   // Hierarchical gradients:
+  if(use_hierarchical_parallelism){
+    Kokkos::parallel_for(Kokkos::TeamPolicy<Grad_Tag>(height_,team_size),*this);
+  }
+  else
     Kokkos::parallel_for(Kokkos::RangePolicy<Grad_Flat_Tag>(0,num_pixels()),*this);
   grad_x_.modify<device_space>();
   grad_x_.sync<host_space>();
@@ -352,7 +353,7 @@ Image::gauss_filter(const bool use_hierarchical_parallelism,
   Kokkos::deep_copy(intensities_temp_,intensities_.d_view);
   // Flat gradients:
   if(use_hierarchical_parallelism)
-    Kokkos::parallel_for(Kokkos::TeamPolicy<Gauss_Tag>(width_,team_size),*this);
+    Kokkos::parallel_for(Kokkos::TeamPolicy<Gauss_Tag>(height_,team_size),*this);
   else   // Hierarchical filtering:
     Kokkos::parallel_for(Kokkos::RangePolicy<Gauss_Flat_Tag>(0,num_pixels()),*this);
   // copy the intensity array back to the host
