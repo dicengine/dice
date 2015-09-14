@@ -172,9 +172,9 @@ public:
   /// \param map the deformation map (optional)
   /// \param target the initialization mode (put the values in the ref or def intensities)
   void initialize(Teuchos::RCP<Image> image,
+    const Subset_View_Target target=REF_INTENSITIES,
     Teuchos::RCP<Def_Map> map=Teuchos::null,
-    const Interpolation_Method interp=KEYS_FOURTH_ORDER,
-    const Subset_View_Target target=REF_INTENSITIES);
+    const Interpolation_Method interp=KEYS_FOURTH_ORDER);
 
   /// write the subset intensity values to a tif file
   /// \param file_name the name of the tif file to write
@@ -190,24 +190,18 @@ public:
     Teuchos::RCP<Image> image,
     Teuchos::RCP<Def_Map> map=Teuchos::null);
 
-  /// tag
-  struct Ref_Mean_Tag {};
-  /// compute the mean intensity value for this subset's ref intensities
-  KOKKOS_INLINE_FUNCTION
-  void operator()(const Ref_Mean_Tag &,
-    const size_t pixel_index,
-    scalar_t & mean)const;
-  /// tag
-  struct Def_Mean_Tag {};
-  /// compute the mean intensity value for this subset's ref intensities
-  KOKKOS_INLINE_FUNCTION
-  void operator()(const Def_Mean_Tag &,
-    const size_t pixel_index,
-    scalar_t & mean)const;
-
   /// returns the mean intensity value
   /// \param target either the reference or deformed intensity values
   scalar_t mean(const Subset_View_Target target);
+
+  /// returns the mean intensity value
+  /// \param target either the reference or deformed intensity values
+  /// \param sum [output] returns the reduction value of the intensities minus the mean
+  scalar_t mean(const Subset_View_Target target,
+    scalar_t & sum);
+
+  /// returns the ZNSSD gamma correlation value between the reference and deformed subsets
+  scalar_t gamma();
 
 private:
   /// number of pixels in the subset
@@ -226,6 +220,76 @@ private:
   pixel_coord_dual_view_1d y_;
 
 };
+
+/// mean value functor
+struct Intensity_Sum_Functor{
+  /// pointer to the intensity values on the device
+  intensity_device_view_1d intensities_;
+  /// constructor
+  /// \param intensities the image intensity values
+  Intensity_Sum_Functor(intensity_device_view_1d intensities):
+    intensities_(intensities){};
+  /// operator
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const size_t pixel_index, scalar_t & mean)const{
+    mean += intensities_(pixel_index);
+  }
+};
+
+struct Intensity_Sum_Minus_Mean_Functor{
+  /// pointer to the intensity values on the device
+  intensity_device_view_1d intensities_;
+  /// mean value
+  scalar_t mean_;
+  /// constructor
+  /// \param intensities the image intensity values
+  Intensity_Sum_Minus_Mean_Functor(intensity_device_view_1d intensities,
+    scalar_t & mean):
+    intensities_(intensities),
+    mean_(mean){};
+  /// operator
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const size_t pixel_index, scalar_t & sum)const{
+    sum += (intensities_(pixel_index)-mean_)*(intensities_(pixel_index)-mean_);
+  }
+};
+
+
+/// znssd gamma functor
+struct ZNSSD_Gamma_Functor{
+  /// reference image intensities
+  intensity_device_view_1d ref_intensities_;
+  /// deformed image intensities
+  intensity_device_view_1d def_intensities_;
+  /// mean reference intensity value
+  scalar_t mean_r_;
+  /// mean deformed intensity value
+  scalar_t mean_d_;
+  /// sum of the reference intensity values minus the mean
+  scalar_t mean_sum_r_;
+  /// sum of the deformed intensity values minus the mean
+  scalar_t mean_sum_d_;
+  /// constructor
+  /// \param
+  ZNSSD_Gamma_Functor(intensity_device_view_1d ref_intensities,
+    intensity_device_view_1d def_intensities,
+    const scalar_t & mean_r,
+    const scalar_t & mean_d,
+    const scalar_t & mean_sum_r,
+    const scalar_t & mean_sum_d):
+      ref_intensities_(ref_intensities),
+      def_intensities_(def_intensities),
+      mean_r_(mean_r),
+      mean_d_(mean_d),
+      mean_sum_r_(mean_sum_r),
+      mean_sum_d_(mean_sum_d){}
+  /// operator
+  void operator()(const size_t pixel_index, scalar_t & gamma) const{
+    scalar_t value =  (def_intensities_(pixel_index)-mean_d_)/mean_sum_d_ - (ref_intensities_(pixel_index)-mean_r_)/mean_sum_r_;
+    gamma += value*value;
+  }
+};
+
 
 /// subset intensity value initialization functor
 struct Subset_Init_Functor{

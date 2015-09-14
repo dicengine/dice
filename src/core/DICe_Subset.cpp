@@ -191,38 +191,63 @@ Subset::write_tif(const std::string & file_name,
   delete[] intensities;
 }
 
-KOKKOS_INLINE_FUNCTION
-void
-Subset::operator()(const Ref_Mean_Tag &,
-  const size_t pixel_index,
-  scalar_t & mean)const{
-  mean += ref_intensities_.d_view(pixel_index);
-}
-
-KOKKOS_INLINE_FUNCTION
-void
-Subset::operator()(const Def_Mean_Tag &,
-  const size_t pixel_index,
-  scalar_t & mean)const{
-  mean += def_intensities_.d_view(pixel_index);
-}
-
 scalar_t
 Subset::mean(const Subset_View_Target target){
   scalar_t mean = 0.0;
   if(target==REF_INTENSITIES){
-    Kokkos::parallel_reduce(Kokkos::RangePolicy<Ref_Mean_Tag>(0,num_pixels_),*this,mean);
+    Intensity_Sum_Functor sum_func(ref_intensities_.d_view);
+    Kokkos::parallel_reduce(num_pixels_,sum_func,mean);
   }else{
-    Kokkos::parallel_reduce(Kokkos::RangePolicy<Def_Mean_Tag>(0,num_pixels_),*this,mean);
+    Intensity_Sum_Functor sum_func(def_intensities_.d_view);
+    Kokkos::parallel_reduce(num_pixels_,sum_func,mean);
   }
   return mean/num_pixels_;
 }
 
+scalar_t
+Subset::mean(const Subset_View_Target target,
+  scalar_t & sum){
+  scalar_t mean = 0.0;
+  if(target==REF_INTENSITIES){
+    Intensity_Sum_Functor sum_func(ref_intensities_.d_view);
+    Kokkos::parallel_reduce(num_pixels_,sum_func,mean);
+  }else{
+    Intensity_Sum_Functor sum_func(def_intensities_.d_view);
+    Kokkos::parallel_reduce(num_pixels_,sum_func,mean);
+  }
+  mean/=num_pixels_;
+  sum = 0.0;
+  if(target==REF_INTENSITIES){
+    Intensity_Sum_Minus_Mean_Functor sum_minus_mean_func(ref_intensities_.d_view,mean);
+    Kokkos::parallel_reduce(num_pixels_,sum_minus_mean_func,sum);
+  }else{
+    Intensity_Sum_Minus_Mean_Functor sum_minus_mean_func(def_intensities_.d_view,mean);
+    Kokkos::parallel_reduce(num_pixels_,sum_minus_mean_func,sum);
+  }
+  sum = std::sqrt(sum);
+  return mean;
+}
+
+scalar_t
+Subset::gamma(){
+  scalar_t mean_sum_ref = 0.0;
+  const scalar_t mean_ref = mean(REF_INTENSITIES,mean_sum_ref);
+  scalar_t mean_sum_def = 0.0;
+  const scalar_t mean_def = mean(DEF_INTENSITIES,mean_sum_def);
+  scalar_t gamma = 0.0;
+  ZNSSD_Gamma_Functor gamma_func(ref_intensities_.d_view,
+     def_intensities_.d_view,
+     mean_ref,mean_def,
+     mean_sum_ref,mean_sum_def);
+  Kokkos::parallel_reduce(num_pixels_,gamma_func,gamma);
+  return gamma;
+}
+
 void
 Subset::initialize(Teuchos::RCP<Image> image,
+  const Subset_View_Target target,
   Teuchos::RCP<Def_Map> map,
-  const Interpolation_Method interp,
-  const Subset_View_Target target){
+  const Interpolation_Method interp){
   const Subset_Init_Functor init_functor(this,image.getRawPtr(),map,target);
   // assume if the map is null, use the no_map_tag in the parrel for call of the functor
   if(map==Teuchos::null){
