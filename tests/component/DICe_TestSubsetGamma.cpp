@@ -77,7 +77,6 @@ int main(int argc, char *argv[]) {
   const size_t img_height = 199;
   const size_t num_stripes = 10;
   const size_t stripe_width = 20;//img_width/num_stripes;
-  const size_t size = img_width * img_height;
   Teuchos::ArrayRCP<intensity_t> intensities(img_width*img_height,0.0);
   for(size_t y=0;y<img_height;++y){
     for(size_t stripe=0;stripe<=num_stripes/2;++stripe){
@@ -101,7 +100,6 @@ int main(int argc, char *argv[]) {
       for(size_t stripe=0;stripe<=num_stripes/2;++stripe){
         for(size_t x=stripe*(2*stripe_width) - shift*2;x<stripe*(2*stripe_width)+stripe_width - shift*2;++x){
           if(x>=img_width)continue;
-          if(x<0)continue;
           intensitiesShift[y*img_width+x] = 255.0;
         }
       }

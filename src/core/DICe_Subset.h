@@ -284,6 +284,7 @@ struct ZNSSD_Gamma_Functor{
       mean_sum_r_(mean_sum_r),
       mean_sum_d_(mean_sum_d){}
   /// operator
+  KOKKOS_INLINE_FUNCTION
   void operator()(const size_t pixel_index, scalar_t & gamma) const{
     scalar_t value =  (def_intensities_(pixel_index)-mean_d_)/mean_sum_d_ - (ref_intensities_(pixel_index)-mean_r_)/mean_sum_r_;
     gamma += value*value;
