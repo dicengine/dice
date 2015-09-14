@@ -22,3 +22,16 @@ FILE ( GLOB img_files "${CMAKE_CURRENT_SOURCE_DIR}/component/images/*.*")
 FOREACH ( img_file ${img_files} )
     FILE(COPY ${img_file} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/component/images/ )
 ENDFOREACH ( )
+
+add_subdirectory(performance)
+
+#  Performance Tests:
+#  Tests the performance of DICe algorithms on the given architecture
+#  These are not run as part of the regression or component tests with ctest 
+#
+
+# copy the image files to the build dir
+FILE ( GLOB img_files "${CMAKE_CURRENT_SOURCE_DIR}/performance/images/*.*")
+FOREACH ( img_file ${img_files} )
+    FILE(COPY ${img_file} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/performance/images/ )
+ENDFOREACH ( )
