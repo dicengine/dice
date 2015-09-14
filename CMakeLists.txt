@@ -191,8 +191,8 @@ ENDIF(DICE_DEBUG_MSG)
 
 # don't use compiler flags from Trilinos, instead set them manually
 # but pick up openmp if Trilinos was compiled with it:
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -g -O3")
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -g")
+# SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -g")
+# SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -g")
 STRING(FIND ${Trilinos_CXX_COMPILER_FLAGS} "openmp" OpenMPFound)
 IF( ${OpenMPFound} GREATER -1 )
   MESSAGE(STATUS "OpenMP was enabled in Trilinos so enabling it here. (Found flag at position ${OpenMPFound})")
