@@ -25,7 +25,7 @@ IF(WIN32)
 ENDIF()
 
 add_library(dicecore ${DICE_SOURCES} ${DICE_HEADERS} ${TIFF_DEF})
-target_link_libraries(dicecore ${Boost_LIBRARIES})
+target_link_libraries(dicecore ${Boost_LIBRARIES} ${DICE_LIBRARIES})
 target_compile_definitions(dicecore PRIVATE -D DICECORE_LIB_EXPORTS_MODE)
 
 install(FILES ${DICE_HEADERS}
