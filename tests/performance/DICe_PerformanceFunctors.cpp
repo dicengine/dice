@@ -102,7 +102,6 @@ int main(int argc, char *argv[]) {
 
   Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
   params->set(DICe::gauss_filter_mask_size,13);
-  Teuchos::RCP<Image> img;
   Teuchos::RCP<Def_Map> map = Teuchos::rcp(new Def_Map());
   map->u_ = 1.25; // TODO randomize deformation map
   map->v_ = -1.456; // needs to remain inside the current image
@@ -136,6 +135,7 @@ int main(int argc, char *argv[]) {
       *outStream << "image size: " << w_it << " x " << h_it << std::endl;
       if(time_sample==0) sizes[size_it] = w_it*h_it;
 
+      Teuchos::RCP<Image> img;
       // read image
       *outStream << "reading the image" << std::endl;
       cpu_timer read_timer;
