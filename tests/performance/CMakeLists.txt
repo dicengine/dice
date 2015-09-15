@@ -7,4 +7,4 @@ include_directories (
 )
 
 add_executable(DICe_PerformanceFunctors DICe_PerformanceFunctors.cpp)
-target_link_libraries(DICe_PerformanceFunctors ${DICE_LIBRARIES} dicecore diceutils)
+target_link_libraries(DICe_PerformanceFunctors ${DICE_LIBRARIES} dicecore diceutils boost_timer)

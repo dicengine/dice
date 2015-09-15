@@ -27,6 +27,7 @@ ENDIF()
 add_library(dicecore ${DICE_SOURCES} ${DICE_HEADERS} ${TIFF_DEF})
 target_link_libraries(dicecore ${Boost_LIBRARIES})
 target_compile_definitions(dicecore PRIVATE -D DICECORE_LIB_EXPORTS_MODE)
+
 install(FILES ${DICE_HEADERS}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include
 )
