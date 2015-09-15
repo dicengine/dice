@@ -2,18 +2,6 @@ cmake_minimum_required(VERSION 2.8)
 MESSAGE("\nConfiguring DICe utils...\n")
 
 # Check up front for trilnos dir
-IF (NOT DEFINED DICE_UTILS_CXX_COMPILER)
-  MESSAGE(FATAL_ERROR "\nDICe Error: cmake must define DICE_UTILS_CXX_COMPILER")
-ENDIF()
-IF (NOT DEFINED DICE_UTILS_C_COMPILER)
-  MESSAGE(FATAL_ERROR "\nDICe Error: cmake must define DICE_UTILS_C_COMPILER")
-ENDIF()
-SET(CMAKE_CXX_COMPILER ${DICE_UTILS_CXX_COMPILER} )
-SET(CMAKE_C_COMPILER ${DICE_UTILS_C_COMPILER} )
-
-PROJECT(DICe_utils)
-
-# Check up front for trilnos dir
 IF (NOT DEFINED DICE_TRILINOS_DIR)
   MESSAGE(FATAL_ERROR "\nDICe Error: cmake must define DICE_TRILINOS_DIR:
   (-D DICE_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
@@ -68,9 +56,13 @@ MESSAGE("   Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
 MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("End of Trilinos details\n")
 
+SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
+SET(CMAKE_C_COMPILER ${Trilinos_C_COMPILER} )
+SET(CMAKE_VERBOSE_MAKEFILE OFF)
+
 SET(DICE_MPI_EXEC ${Trilinos_MPI_EXEC})
 
-SET(CMAKE_VERBOSE_MAKEFILE OFF)
+PROJECT(DICe_utils)
 
 # WINDOWS CMake has a bug for find_package() for clapack
 # f2clibs have to be added manually here
