@@ -248,7 +248,7 @@ Subset::initialize(Teuchos::RCP<Image> image,
   const Subset_View_Target target,
   Teuchos::RCP<Def_Map> map,
   const Interpolation_Method interp){
-  const Subset_Init_Functor init_functor(this,image.getRawPtr(),map,target);
+  const Subset_Init_Functor init_functor(this,image,map,target);
   // assume if the map is null, use the no_map_tag in the parrel for call of the functor
   if(map==Teuchos::null){
     Kokkos::parallel_for(Kokkos::RangePolicy<Subset_Init_Functor::No_Map_Tag>(0,num_pixels_),init_functor);

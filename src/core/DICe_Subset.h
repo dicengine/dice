@@ -333,7 +333,7 @@ struct Subset_Init_Functor{
   pixel_coord_device_view_1d y_;
   /// constructor
   Subset_Init_Functor(Subset * subset,
-    Image * image,
+    Teuchos::RCP<Image> image,
     Teuchos::RCP<Def_Map> map=Teuchos::null,
     const Subset_View_Target target=REF_INTENSITIES):
       u_(0.0),
