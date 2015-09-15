@@ -3,5 +3,4 @@ build*
 .cproject
 .project
 *-stamp*
-src/utils/tmp
 .DS_Store
