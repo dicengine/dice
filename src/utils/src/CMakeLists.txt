@@ -32,7 +32,7 @@ add_library(
 )
 
 target_link_libraries(diceutils ${DICE_UTILS_LIBRARIES} ${Boost_LIBRARIES})
-target_compile_definitions(diceutils PRIVATE -D DICEUTILS_LIB_EXPORTS_MODE)
+target_compile_definitions(diceutils PRIVATE -D DICE_LIB_EXPORTS_MODE)
 
 install(FILES ${DICE_UTILS_HEADERS}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include
