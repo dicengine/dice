@@ -126,7 +126,7 @@ ENDIF()
 IF(WIN32)
   find_package(Boost 1.46.0) # find_package for boost works a little dif for Windows
 ELSE()
-  find_package(Boost 1.46.0 COMPONENTS program_options system filesystem)
+  find_package(Boost 1.46.0 COMPONENTS program_options system filesystem timer)
 ENDIF()
 
 
