@@ -49,6 +49,7 @@
 
 namespace DICe{
 
+DICEUTILS_LIB_DLL_EXPORT
 void read_tiff_image_dimensions(const std::string & file_name,
   size_t & width,
   size_t & height){
@@ -57,6 +58,7 @@ void read_tiff_image_dimensions(const std::string & file_name,
   height = pt.y;
 }
 
+DICEUTILS_LIB_DLL_EXPORT
 void read_tiff_image(const std::string & file_name,
   intensity_t * intensities,
   const bool is_layout_right){
@@ -79,6 +81,7 @@ void read_tiff_image(const std::string & file_name,
   }
 }
 
+DICEUTILS_LIB_DLL_EXPORT
 void read_tiff_image(const std::string & file_name,
   size_t offset_x,
   size_t offset_y,
@@ -108,6 +111,7 @@ void read_tiff_image(const std::string & file_name,
   }
 }
 
+DICEUTILS_LIB_DLL_EXPORT
 void write_tiff_image(const std::string & file_name,
   const size_t width,
   const size_t height,

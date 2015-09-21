@@ -52,8 +52,14 @@
 #  else
 #    define DICECORE_LIB_DLL_EXPORT __declspec(dllimport)
 #  endif
+#  if defined(DICEUTILS_LIB_EXPORTS_MODE)
+#    define DICEUTILS_LIB_DLL_EXPORT __declspec(dllexport)
+#  else
+#    define DICEUTILS_LIB_DLL_EXPORT __declspec(dllimport)
+#  endif
 #else
 #  define DICECORE_LIB_DLL_EXPORT
+#  define DICEUTILS_LIB_DLL_EXPORT
 #endif
 
 // debugging macros:

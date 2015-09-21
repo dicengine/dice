@@ -73,7 +73,7 @@ ExternalProject_Add(DICe_utils
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/utils
   BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/utils_build
   TMP_DIR ${CMAKE_CURRENT_BINARY_DIR}/utils_tmp
-  CMAKE_CACHE_ARGS -DDICE_TRILINOS_DIR:STRING=${DICE_TRILINOS_DIR} -DCMAKE_INSTALL_PREFIX:FILEPATH=${CMAKE_INSTALL_PREFIX} -DBOOST_ROOT:STRING=${BOOST_ROOT} -DTIFF_DIR:STRING=${TIFF_DIR} -DDICE_DEBUG_MSG:BOOL=${DICE_DEBUG_MSG}
+  CMAKE_CACHE_ARGS -DDICE_TRILINOS_DIR:STRING=${DICE_TRILINOS_DIR} -DCMAKE_INSTALL_PREFIX:FILEPATH=${CMAKE_INSTALL_PREFIX} -DBOOST_ROOT:STRING=${BOOST_ROOT} -DTIFF_DIR:STRING=${TIFF_DIR} -DDICE_DEBUG_MSG:BOOL=${DICE_DEBUG_MSG} -DCLAPACK_DIR:FILEPATH=${CLAPACK_DIR}
   )
 
 # MPI check -- defaults to TRUE
@@ -103,6 +103,7 @@ link_directories(${DICE_TRILINOS_LIB_DIRS} ${TIFF_DIR} ${CMAKE_INSTALL_PREFIX}/l
 SET(DICE_HEADER_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}/src/core
   ${TIFF_DIR}
+  ${TIFF_DIR}/../include
   )
 
 
@@ -162,23 +163,27 @@ ELSE(DICE_DEBUG_MSG)
   MESSAGE(STATUS "Debugging messages are OFF")
 ENDIF(DICE_DEBUG_MSG)
 
-# don't use compiler flags from Trilinos, instead set them manually
+# Windows: use Trilinos compiler flags
+# Linux: don't use compiler flags from Trilinos, instead set them manually
 # but pick up openmp if Trilinos was compiled with it:
-# SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -g")
-# SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -g")
-STRING(FIND ${Trilinos_CXX_COMPILER_FLAGS} "openmp" OpenMPFound)
-IF( ${OpenMPFound} GREATER -1 )
-  MESSAGE(STATUS "OpenMP was enabled in Trilinos so enabling it here. (Found flag at position ${OpenMPFound})")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fopenmp")
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fopenmp")
-ENDIF()
-STRING(FIND ${Trilinos_CXX_COMPILER_FLAGS} "c++11" CXX11Found)
-IF( ${CXX11Found} GREATER -1 )
-  MESSAGE(STATUS "c++11 was enabled in Trilinos so enabling it here. (Found flag at position ${CXX11Found})")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++11")
-ELSE()
-  MESSAGE(FATAL_ERROR "c++11 must be enabled for DICe and Trilinos")
-ENDIF()
+if(WIN32)
+  SET(CMAKE_CXX_FLAGS ${Trilinos_CXX_COMPILER_FLAGS})
+  SET(CMAKE_C_FLAGS ${Trilinos_C_COMPILER_FLAGS}) 
+Else()
+  STRING(FIND ${Trilinos_CXX_COMPILER_FLAGS} "openmp" OpenMPFound)
+  IF( ${OpenMPFound} GREATER -1 )
+    MESSAGE(STATUS "OpenMP was enabled in Trilinos so enabling it here. (Found flag at position ${OpenMPFound})")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fopenmp")
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fopenmp")
+  ENDIF()
+  STRING(FIND ${Trilinos_CXX_COMPILER_FLAGS} "c++11" CXX11Found)
+  IF( ${CXX11Found} GREATER -1 )
+    MESSAGE(STATUS "c++11 was enabled in Trilinos so enabling it here. (Found flag at position ${CXX11Found})")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++11")
+  ELSE()
+    MESSAGE(FATAL_ERROR "c++11 must be enabled for DICe and Trilinos")
+  ENDIF()
+endif()
 MESSAGE(STATUS "Trilinos CMAKE_CXX_FLAGS: ${Trilinos_CXX_COMPILER_FLAGS}")
 MESSAGE(STATUS "Trilnos CMAKE_C_FLAGS: ${Trilinos_C_COMPILER_FLAGS}")
 MESSAGE(STATUS "DICe CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")

@@ -18,10 +18,11 @@ include_directories(
 link_directories (
     ${TIFF_LIB_DIR}
 )
-
-SET(DICE_UTILS_LIBRARIES
-   tiff
-)
+IF(WIN32)
+  SET(DICE_UTILS_LIBRARIES libtiff)
+else()
+  SET(DICE_UTILS_LIBRARIES tiff)
+endif()
 
 # Specify target & source files to compile it from
 add_library(
@@ -31,6 +32,7 @@ add_library(
 )
 
 target_link_libraries(diceutils ${DICE_UTILS_LIBRARIES} ${Boost_LIBRARIES})
+target_compile_definitions(diceutils PRIVATE -D DICEUTILS_LIB_EXPORTS_MODE)
 
 install(FILES ${DICE_UTILS_HEADERS}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include
@@ -39,3 +41,5 @@ install(FILES ${DICE_UTILS_HEADERS}
 install(TARGETS diceutils
   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
+
+

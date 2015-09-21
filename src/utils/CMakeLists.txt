@@ -109,6 +109,7 @@ SET(DICE_TRILINOS_LIB_DIRS
 link_directories(${TIFF_DIR})
 SET(DICE_HEADER_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${TIFF_DIR}
   ${TIFF_DIR}/../include/
   )
 
