@@ -79,7 +79,7 @@ struct Def_Map{
 /// corrdinates of each pixel (this allows for arbitrary shape) and containers for pixel
 /// intensity values.
 
-class DICECORE_LIB_DLL_EXPORT
+class DICE_LIB_DLL_EXPORT
 Subset {
 public:
 

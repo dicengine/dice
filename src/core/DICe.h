@@ -46,20 +46,14 @@
 #define DICE_PI 3.14159265358979323846
 #define DICE_TWOPI 6.28318530717958647692
 
-#if (defined(WIN32) || defined(WIN64))
-#  if defined(DICECORE_LIB_EXPORTS_MODE)
-#    define DICECORE_LIB_DLL_EXPORT __declspec(dllexport)
+#if defined(WIN32)
+#  if defined(DICE_LIB_EXPORTS_MODE)
+#    define DICE_LIB_DLL_EXPORT __declspec(dllexport)
 #  else
-#    define DICECORE_LIB_DLL_EXPORT __declspec(dllimport)
-#  endif
-#  if defined(DICEUTILS_LIB_EXPORTS_MODE)
-#    define DICEUTILS_LIB_DLL_EXPORT __declspec(dllexport)
-#  else
-#    define DICEUTILS_LIB_DLL_EXPORT __declspec(dllimport)
+#    define DICE_LIB_DLL_EXPORT __declspec(dllimport)
 #  endif
 #else
-#  define DICECORE_LIB_DLL_EXPORT
-#  define DICEUTILS_LIB_DLL_EXPORT
+#  define DICE_LIB_DLL_EXPORT
 #endif
 
 // debugging macros:

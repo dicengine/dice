@@ -62,7 +62,7 @@ namespace DICe {
 /// into the intensity values, accessing the first value in the array is via the indicies (0,0) even if
 /// the first pixel is not in the upper left corner of the global image from which the poriton was taken
 
-class DICECORE_LIB_DLL_EXPORT
+class DICE_LIB_DLL_EXPORT
 Image {
 public:
   //

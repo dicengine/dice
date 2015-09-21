@@ -52,7 +52,7 @@ namespace DICe{
 /// \param file_name the tiff file name
 /// \param width [out] returned as the width of the image
 /// \param height [out] returned as the height of the image
-DICEUTILS_LIB_DLL_EXPORT
+DICE_LIB_DLL_EXPORT
 void read_tiff_image_dimensions(const std::string & file_name,
   size_t & width,
   size_t & height);
@@ -60,7 +60,7 @@ void read_tiff_image_dimensions(const std::string & file_name,
 /// Read an image into the host memory
 /// \param file_name the name of the tiff file
 /// \param intensities [out] populated with the pixel intensity values
-DICEUTILS_LIB_DLL_EXPORT
+DICE_LIB_DLL_EXPORT
 void read_tiff_image(const std::string & file_name,
   intensity_t * intensities,
   const bool is_layout_right = true);
@@ -72,7 +72,7 @@ void read_tiff_image(const std::string & file_name,
 /// \param width width of the portion of the image to read (must be smaller than the global image width)
 /// \param height height of the portion of the image to read (must be smaller than the global image height)
 /// \param intensities [out] populated with the image intensities
-DICEUTILS_LIB_DLL_EXPORT
+DICE_LIB_DLL_EXPORT
 void read_tiff_image(const std::string & file_name,
   size_t offset_x,
   size_t offset_y,
@@ -88,7 +88,7 @@ void read_tiff_image(const std::string & file_name,
 /// \param width the width of the image to write
 /// \param height the height of the image
 /// \param intensities assumed to be an array of size width x height
-DICEUTILS_LIB_DLL_EXPORT
+DICE_LIB_DLL_EXPORT
 void write_tiff_image(const std::string & file_name,
   const size_t width,
   const size_t height,
