@@ -22,8 +22,8 @@ include_directories(${Boost_INCLUDE_DIRS} COMPONENTS gil program_options REQUIRE
 MESSAGE(STATUS "Boost_INCLUDE_DIRS:${Boost_INCLUDE_DIRS}")
 
 add_library(dicecore ${DICE_SOURCES} ${DICE_HEADERS})
-target_link_libraries(dicecore ${Boost_LIBRARIES} ${DICE_LIBRARIES})
-target_compile_definitions(dicecore PRIVATE -D DICECORE_LIB_EXPORTS_MODE)
+target_link_libraries(dicecore ${Boost_LIBRARIES} ${DICE_LIBRARIES} diceutils)
+target_compile_definitions(dicecore PRIVATE -D DICE_LIB_EXPORTS_MODE)
 
 install(FILES ${DICE_HEADERS}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include
