@@ -50,7 +50,7 @@
 namespace DICe{
 
 DICE_LIB_DLL_EXPORT
-void read_tiff_image_dimensions(const std::string & file_name,
+void read_tiff_image_dimensions(const char * file_name,
   size_t & width,
   size_t & height){
   boost::gil::point2<std::ptrdiff_t> pt = boost::gil::tiff_read_dimensions(file_name);
@@ -59,7 +59,7 @@ void read_tiff_image_dimensions(const std::string & file_name,
 }
 
 DICE_LIB_DLL_EXPORT
-void read_tiff_image(const std::string & file_name,
+void read_tiff_image(const char * file_name,
   intensity_t * intensities,
   const bool is_layout_right){
   assert(file_name!="");
@@ -82,7 +82,7 @@ void read_tiff_image(const std::string & file_name,
 }
 
 DICE_LIB_DLL_EXPORT
-void read_tiff_image(const std::string & file_name,
+void read_tiff_image(const char * file_name,
   size_t offset_x,
   size_t offset_y,
   size_t width,
@@ -112,7 +112,7 @@ void read_tiff_image(const std::string & file_name,
 }
 
 DICE_LIB_DLL_EXPORT
-void write_tiff_image(const std::string & file_name,
+void write_tiff_image(const char * file_name,
   const size_t width,
   const size_t height,
   intensity_t * intensities,
