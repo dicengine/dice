@@ -72,7 +72,7 @@ public:
   /// constructor that reads in a whole tiff file
   /// \param file_name the name of the tiff file
   /// \param params image parameters
-  Image(const char * file_name,
+  Image(const std::string & file_name,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// constructor that stores only a portion of a tiff file given by the offset and dims
@@ -82,7 +82,7 @@ public:
   /// \param width x-dim of the image (offset_x + width must be < the global image width)
   /// \param height y-dim of the image (offset_y + height must be < the global image height)
   /// \param params image parameters
-  Image(const char * file_name,
+  Image(const std::string & file_name,
     const size_t offset_x,
     const size_t offset_y,
     const size_t width,
