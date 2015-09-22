@@ -160,7 +160,7 @@ Subset::write_subset_on_image(const std::string & file_name,
     for(size_t i=0;i<num_pixels_;++i)
       intensities[y_.h_view(i)*w+x_.h_view(i)] = 255;
   }
-  write_tiff_image(file_name,w,h,intensities,true);
+  write_tiff_image(file_name.c_str(),w,h,intensities,true);
   delete[] intensities;
 }
 
@@ -187,7 +187,7 @@ Subset::write_tif(const std::string & file_name,
   for(size_t i=0;i<num_pixels_;++i)
     intensities[(y_.h_view(i)-min_y)*w+(x_.h_view(i)-min_x)] = use_def_intensities ?
         def_intensities_.h_view(i) : ref_intensities_.h_view(i);
-  write_tiff_image(file_name,w,h,intensities,true);
+  write_tiff_image(file_name.c_str(),w,h,intensities,true);
   delete[] intensities;
 }
 

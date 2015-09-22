@@ -47,7 +47,7 @@
 
 namespace DICe {
 
-Image::Image(const std::string & file_name,
+Image::Image(const char * file_name,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
   offset_x_(0),
   offset_y_(0),
@@ -67,7 +67,7 @@ Image::Image(const std::string & file_name,
   default_constructor_tasks(params);
 }
 
-Image::Image(const std::string & file_name,
+Image::Image(const char * file_name,
   const size_t offset_x,
   const size_t offset_y,
   const size_t width,
@@ -186,7 +186,7 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
 
 void
 Image::write_tif(const std::string & file_name){
-  write_tiff_image(file_name,width_,height_,intensities_.h_view.ptr_on_device(),default_is_layout_right());
+  write_tiff_image(file_name.c_str(),width_,height_,intensities_.h_view.ptr_on_device(),default_is_layout_right());
 }
 
 KOKKOS_INLINE_FUNCTION
