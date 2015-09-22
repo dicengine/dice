@@ -18,11 +18,7 @@ include_directories(
 link_directories (
     ${TIFF_LIB_DIR}
 )
-IF(WIN32)
-  SET(DICE_UTILS_LIBRARIES libtiff)
-else()
-  SET(DICE_UTILS_LIBRARIES tiff)
-endif()
+SET(DICE_UTILS_LIBRARIES tiff)
 
 # Specify target & source files to compile it from
 add_library(
