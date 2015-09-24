@@ -158,7 +158,7 @@ Cine_Reader::get_image(const size_t frame_index, const Teuchos::RCP<Teuchos::Par
 
     // unpack the 10 bit image data from the array
     size_t max_chunk = cine_header_->bitmap_header_.biSizeImage / 5; // 5 bytes per chunk
-    uint16_t two_byte;
+    uint16_t two_byte = 0;
     size_t loc = 0;
     size_t pixel_index = 0;
     for (size_t chunk=0;chunk<max_chunk;++chunk){
