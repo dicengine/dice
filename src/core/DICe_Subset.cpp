@@ -165,7 +165,7 @@ Subset::write_subset_on_image(const std::string & file_name,
 }
 
 void
-Subset::write_tif(const std::string & file_name,
+Subset::write_tiff(const std::string & file_name,
   const bool use_def_intensities){
   // determine the extents of the subset and the offsets
   size_t max_x = 0;

@@ -179,7 +179,7 @@ public:
   /// write the subset intensity values to a tif file
   /// \param file_name the name of the tif file to write
   /// \param use_def_intensities use the deformed intensities rather than the reference
-  void write_tif(const std::string & file_name,
+  void write_tiff(const std::string & file_name,
     const bool use_def_intensities=false);
 
   /// draw the subset over an image

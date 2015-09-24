@@ -42,6 +42,7 @@
 
 #include <DICe_Image.h>
 #include <DICe_Tiff.h>
+#include <DICe_Rawi.h>
 
 #include <cassert>
 
@@ -53,16 +54,32 @@ Image::Image(const char * file_name,
   offset_y_(0),
   has_gradients_(false)
 {
-  // get the image dims
-  read_tiff_image_dimensions(file_name,width_,height_);
-  assert(width_>0);
-  assert(height_>0);
-  // initialize the pixel containers
-  intensities_ = intensity_dual_view_2d("intensities",height_,width_);
-  // read in the image
-  read_tiff_image(file_name,
-    intensities_.h_view.ptr_on_device(),
-    default_is_layout_right());
+  const std::string string_file_name(file_name);
+  const std::string rawi(".rawi");
+  bool is_rawi = string_file_name.find(rawi)!=std::string::npos;
+
+  if(is_rawi){
+    read_rawi_image_dimensions(file_name,width_,height_);
+    assert(width_>0);
+    assert(height_>0);
+    intensities_ = intensity_dual_view_2d("intensities",height_,width_);
+    read_rawi_image(file_name,
+      intensities_.h_view.ptr_on_device(),
+      default_is_layout_right());
+  }
+  // assumes that it is a tiff image as default
+  else {
+    // get the image dims
+    read_tiff_image_dimensions(file_name,width_,height_);
+    assert(width_>0);
+    assert(height_>0);
+    // initialize the pixel containers
+    intensities_ = intensity_dual_view_2d("intensities",height_,width_);
+    // read in the image
+    read_tiff_image(file_name,
+      intensities_.h_view.ptr_on_device(),
+      default_is_layout_right());
+  }
   // copy the image to the device (no-op for OpenMP)
   default_constructor_tasks(params);
 }
@@ -79,6 +96,11 @@ Image::Image(const char * file_name,
   height_(height),
   has_gradients_(false)
 {
+  const std::string string_file_name(file_name);
+  const std::string rawi(".rawi");
+  bool is_rawi = string_file_name.find(rawi)!=std::string::npos;
+  assert(!is_rawi && "Error: .rawi files not yet supported for reading only a poriton of the image.");
+
   // get the image dims
   size_t img_width = 0;
   size_t img_height = 0;
@@ -185,8 +207,13 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
 }
 
 void
-Image::write_tif(const std::string & file_name){
+Image::write_tiff(const std::string & file_name){
   write_tiff_image(file_name.c_str(),width_,height_,intensities_.h_view.ptr_on_device(),default_is_layout_right());
+}
+
+void
+Image::write_rawi(const std::string & file_name){
+  write_rawi_image(file_name.c_str(),width_,height_,intensities_.h_view.ptr_on_device(),default_is_layout_right());
 }
 
 KOKKOS_INLINE_FUNCTION

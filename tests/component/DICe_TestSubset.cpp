@@ -152,8 +152,8 @@ int main(int argc, char *argv[]) {
   map->u_ = 5;
   map->v_ = 10;
   square.initialize(image,DEF_INTENSITIES,map,BILINEAR);
-  square.write_tif("squareSubsetRef.tif",false);
-  square.write_tif("squareSubsetDef.tif",true);
+  square.write_tiff("squareSubsetRef.tif",false);
+  square.write_tiff("squareSubsetDef.tif",true);
   square.write_subset_on_image("squareSubsetMapped.tif",image,map);
   // check simple motion intensity values
   *outStream << "checking the bilinear interpolation" << std::endl;
@@ -170,7 +170,7 @@ int main(int argc, char *argv[]) {
   map->u_ = 15;
   map->v_ = 12;
   square.initialize(image,DEF_INTENSITIES,map,KEYS_FOURTH_ORDER);
-  square.write_tif("squareSubsetDefKeys.tif",true);
+  square.write_tiff("squareSubsetDefKeys.tif",true);
   bool keys_values_error = false;
   for(size_t i=0;i<square.num_pixels();++i){
     if(square.def_intensities(i)!=(*image)(square.x(i)+map->u_,square.y(i)+map->v_))

@@ -1,9 +1,11 @@
 SET(DICE_UTILS_SOURCES
   DICe_Tiff.cpp
+  DICe_Rawi.cpp
 )
 
 SET(DICE_UTILS_HEADERS
   DICe_Tiff.h
+  DICe_Rawi.h
 )
 
 include_directories(

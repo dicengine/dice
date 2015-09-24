@@ -12,3 +12,9 @@ target_link_libraries(DICe_TestSubset ${DICE_LIBRARIES} dicecore diceutils)
 
 add_executable(DICe_TestSubsetGamma DICe_TestSubsetGamma.cpp)
 target_link_libraries(DICe_TestSubsetGamma ${DICE_LIBRARIES} dicecore diceutils)
+
+add_executable(DICe_TestCine DICe_TestCine.cpp)
+target_link_libraries(DICe_TestCine ${DICE_LIBRARIES} dicecore diceutils dicecine)
+
+add_executable(DICe_TestRawi DICe_TestRawi.cpp)
+target_link_libraries(DICe_TestRawi ${DICE_LIBRARIES} dicecore diceutils)

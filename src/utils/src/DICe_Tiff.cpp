@@ -124,15 +124,15 @@ void write_tiff_image(const char * file_name,
     boost::gil::gray8_view_t::x_iterator src_it = img_view.row_begin(y);
     if(is_layout_right)
       for (size_t x=0; x<width;++x){
-        src_it[x] = (boost::gil::gray8_pixel_t)(intensities[y*width + x]);
+        src_it[x] = (boost::gil::gray8_pixel_t)(std::floor(intensities[y*width + x]));
       }
     else
       for (size_t x=0; x<width;++x){
-        src_it[x] = (boost::gil::gray8_pixel_t)(intensities[x*height+y]);
+        src_it[x] = (boost::gil::gray8_pixel_t)(std::floor(intensities[x*height+y]));
       }
   }
   boost::gil::tiff_write_view(file_name, img_view);
 }
 
 
-} // end namespace miniDICE
+} // end namespace DICe
