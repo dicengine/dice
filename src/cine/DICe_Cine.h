@@ -48,11 +48,6 @@
 #include <cassert>
 #include <iostream>
 
-#ifdef DICE_BOOST
-  #include <boost/gil/gil_all.hpp>
-  #include <boost/gil/extension/io/tiff_dynamic_io.hpp>
-#endif
-
 #include <Teuchos_RCP.hpp>
 
 namespace DICe {
