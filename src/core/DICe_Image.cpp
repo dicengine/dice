@@ -141,6 +141,7 @@ Image::Image(const size_t width,
   height_(height),
   offset_x_(0),
   offset_y_(0),
+  intensity_rcp_(intensities),
   has_gradients_(false)
 {
   initialize_array_image(intensities.getRawPtr());

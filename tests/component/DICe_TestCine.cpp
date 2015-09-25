@@ -69,77 +69,69 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- Begin test ---" << std::endl;
 
-  *outStream << "reading a packed cine file " << std::endl;
-  DICe::cine::Cine_Reader cine_reader("./images/CinePacked.cine",outStream.getRawPtr());
-  if(cine_reader.num_images()!=6){ // there are six images in this file
-    *outStream << "Error, the number of images is not correct, should be 6 is " << cine_reader.num_images() << std::endl;
-    errorFlag++;
-  }
-  if(cine_reader.image_height()!=128){
-    *outStream << "Error, the image height is not correct. Should be 128 and is" << cine_reader.image_height() << std::endl;
-    errorFlag++;
-  }
-  if(cine_reader.image_width()!=256){
-    *outStream << "Error, the image width is not correct. Should be 256 and is " << cine_reader.image_width() << std::endl;
-    errorFlag++;
-  }
+  std::vector<std::string> cine_files;
+  cine_files.push_back("packed_12bpp");
+  cine_files.push_back("packed_raw_12bpp");
+  cine_files.push_back("phantom_v12_raw_16bpp");
+  cine_files.push_back("phantom_v1610");
+  cine_files.push_back("phantom_v1610_16bpp");
+  cine_files.push_back("phantom_v1610_raw");
+  cine_files.push_back("phantom_v1610_raw_16bpp");
+  cine_files.push_back("phantom_v2511_raw_16bpp");
+  cine_files.push_back("phantom_v611_raw_16bpp");
+  cine_files.push_back("phantom_v7_raw_16bpp");
+  cine_files.push_back("phantom_v9_raw_16bpp");
 
-  *outStream << "checked basic image dimensions" << std::endl;
+  // all of these cine files should be dimensions 128 x 256 and have 6 frames each
 
-  *outStream << "reading images from .rawi files to compare to the cine" << std::endl;
+  for(size_t i=0;i<cine_files.size();++i){
+    std::stringstream full_name;
+    full_name << "./images/" << cine_files[i] << ".cine";
+    *outStream << "testing cine file: " << full_name.str() << std::endl;
 
-  for(size_t i=0;i<cine_reader.num_images();++i){
-    *outStream << "testing image " << i << std::endl;
-    Teuchos::RCP<Image> cine_img = cine_reader.get_image(i);
-    std::cout << " first 20 from cine " << std::endl;
-    for(size_t j=0;j<20;++j)
-      std::cout << j << " " << cine_img->intensities().h_view.ptr_on_device()[j] << std::endl;
-    std::stringstream name;
-    std::stringstream outname;
-    outname << "Cine" << i << ".rawi";
-    //cine_img->write_rawi(outname.str());
-    name << "Cine" << i << ".rawi";
-    Image cine_img_exact(name.str().c_str());
-    std::cout << " first 20 from rawi" << std::endl;
-    for(size_t j=0;j<20;++j)
-      std::cout << j << " " << cine_img_exact.intensities().h_view.ptr_on_device()[j] << std::endl;
-
-    bool intensity_value_error = false;
-    for(size_t j=0;j<cine_reader.image_height()*cine_reader.image_width();++j){
-      if(cine_img_exact.intensities().h_view.ptr_on_device()[j]!=cine_img->intensities().h_view.ptr_on_device()[j]){
-        intensity_value_error = true;
-        std::cout << " j " << j << " expected " << cine_img_exact.intensities().h_view.ptr_on_device()[j] << " actual " << cine_img->intensities().h_view.ptr_on_device()[j] << std::endl;
-      }
-    }
-//    for(size_t y=0;y<cine_reader.image_height();++y){
-//      for(size_t x=0;x<cine_reader.image_width();++x){
-//        if((*cine_img)(x,y)!=cine_img_exact(x,y)){
-//          std::cout << x << " " << y << " actual " << (*cine_img)(x,y) << " exptected " << cine_img_exact(x,y) << std::endl;
-//          intensity_value_error=true;
-//        }
-//      }
-//    }
-    if(intensity_value_error){
-      *outStream << "Error, image " << i << ", the intensity values for the packed cine file are not correct" << std::endl;
+    DICe::cine::Cine_Reader cine_reader(full_name.str(),outStream.getRawPtr());
+    if(cine_reader.num_frames()!=6){
+      *outStream << "Error, the number of frames is not correct, should be 6 is " << cine_reader.num_frames() << std::endl;
       errorFlag++;
     }
-  }
+    if(cine_reader.height()!=128){
+      *outStream << "Error, the image height is not correct. Should be 128 and is" << cine_reader.height() << std::endl;
+      errorFlag++;
+    }
+    if(cine_reader.width()!=256){
+      *outStream << "Error, the image width is not correct. Should be 256 and is " << cine_reader.width() << std::endl;
+      errorFlag++;
+    }
+    *outStream << "image dimensions have been checked" << std::endl;
 
-//
-//  *outStream << "reading a raw packed cine file" << std::endl;
-//  DICe::cine::Cine_Reader raw_cine_reader("./images/CineRawPacked.cine",outStream.getRawPtr());
-//  if(raw_cine_reader.num_images()!=6){ // there are six images in this file
-//    *outStream << "Error, the number of images is not correct, should be 6 is " << raw_cine_reader.num_images() << std::endl;
-//    errorFlag++;
-//  }
-//  if(raw_cine_reader.image_height()!=128){
-//    *outStream << "Error, the image height is not correct. Should be 128 and is" << raw_cine_reader.image_height() << std::endl;
-//    errorFlag++;
-//  }
-//  if(raw_cine_reader.image_width()!=256){
-//    *outStream << "Error, the image width is not correct. Should be 256 and is " << raw_cine_reader.image_width() << std::endl;
-//    errorFlag++;
-//  }
+    for(size_t frame=0;frame<cine_reader.num_frames();++frame){
+      *outStream << "testing frame " << frame << std::endl;
+      Teuchos::RCP<Image> cine_img = cine_reader.get_frame(frame);
+      std::stringstream name;
+      //std::stringstream outname;
+      //std::stringstream tiffname;
+      //outname << cine_files[i] << "_" << frame << ".rawi";
+      //tiffname << cine_files[i] << "_" << frame << ".tiff";
+      //cine_img->write_rawi(outname.str());
+      //cine_img->write_tiff(tiffname.str());
+      name << "./images/" << cine_files[i]<< "_" << frame << ".rawi";
+      Image cine_img_exact(name.str().c_str());
+      bool intensity_value_error = false;
+      for(size_t y=0;y<cine_reader.height();++y){
+        for(size_t x=0;x<cine_reader.width();++x){
+          if((*cine_img)(x,y)!=cine_img_exact(x,y)){
+            //std::cout << x << " " << y << " actual " << (*cine_img)(x,y) << " exptected " << cine_img_exact(x,y) << std::endl;
+            intensity_value_error=true;
+          }
+        }
+      }
+      if(intensity_value_error){
+        *outStream << "Error, image " << i << ", the intensity values are not correct" << std::endl;
+        errorFlag++;
+      }
+      *outStream << "intensity values have been checked" << std::endl;
+    }
+  }
 
   *outStream << "--- End test ---" << std::endl;
 

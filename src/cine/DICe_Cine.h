@@ -124,14 +124,18 @@ public:
   /// \param file_name The name of the cine file
   /// \param header The header information for the cine file
   /// \param bitmap_header The header containing all the information about the images
-  Cine_Header(const std::string & file_name, const cine_file_header & header, const bitmap_info_header & bitmap_header):
+  Cine_Header(const std::string & file_name,
+    const cine_file_header & header,
+    const bitmap_info_header & bitmap_header):
   header_(header),
   bitmap_header_(bitmap_header),
   file_name_(file_name){
     image_offsets_ = new int64_t[header_.ImageCount];
   };
   /// default destructor
-  virtual ~Cine_Header(){delete[] image_offsets_;};
+  virtual ~Cine_Header(){
+    delete[] image_offsets_;
+  };
   /// cine file header
   cine_file_header header_;
   /// bitmap information
@@ -143,7 +147,8 @@ public:
 };
 /// function that reads the header information from the cine file
 Teuchos::RCP<Cine_Header>
-read_cine_headers(const char *file, std::ostream * out_stream = NULL);
+read_cine_headers(const char *file,
+  std::ostream * out_stream = NULL);
 
 /// \class DICe::cine::Cine_reader
 /// \brief A helper class the reads in cine files from disk and provides some methods
@@ -154,24 +159,34 @@ public:
   /// \brief default constructor
   /// \param file_name the name of the cine file
   /// \param out_stream (optional) output stream
-  Cine_Reader(const std::string & file_name, std::ostream * out_stream = NULL);
+  Cine_Reader(const std::string & file_name,
+    std::ostream * out_stream = NULL);
   /// default destructor
   virtual ~Cine_Reader(){};
   /// \brief get an image from the cine file
   /// \param frame_index the index of the frame to get
   /// \param params (optional) image parameter, such as compute_gradients, etc.
-  Teuchos::RCP<Image> get_image(const size_t frame_index, const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+  Teuchos::RCP<Image> get_frame(const size_t frame_index,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
   /// returns the number of images in the cine file
-  const size_t num_images()const{return cine_header_->header_.ImageCount;}
+  const size_t num_frames()const{
+    return cine_header_->header_.ImageCount;
+  }
   /// returns the image width
-  const size_t image_width()const{return cine_header_->bitmap_header_.biWidth;}
+  const size_t width()const{
+    return cine_header_->bitmap_header_.biWidth;
+  }
   /// return the image height
-  const size_t image_height()const{return cine_header_->bitmap_header_.biHeight;}
+  const size_t height()const{
+    return cine_header_->bitmap_header_.biHeight;
+  }
 private:
   /// pointer to the cine file header information
   Teuchos::RCP<Cine_Header> cine_header_;
   /// pointer to the output stream
   std::ostream * out_stream_;
+  /// flag to prevent warnings from appearing multiple times for each frame
+  bool bit_12_warning_;
 };
 
 }// end cine namespace

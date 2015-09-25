@@ -45,6 +45,8 @@
 
 #include <DICe_Rawi.h>
 
+#include <Teuchos_TestForException.hpp>
+
 namespace DICe{
 
 DICE_LIB_DLL_EXPORT
@@ -54,8 +56,7 @@ void read_rawi_image_dimensions(const char * file_name,
 
   std::ifstream rawi_file (file_name, std::ifstream::in | std::ifstream::binary);
   if (rawi_file.fail()){
-      std::cout << "ERROR: Cannot open the file..." << std::endl;
-      assert(false);
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"ERROR: Can't open the file: " + (std::string)file_name);
   }
   // read the file details
   uint32_t w = 0;
@@ -76,32 +77,29 @@ void read_rawi_image(const char * file_name,
 
   std::ifstream rawi_file (file_name, std::ifstream::in | std::ifstream::binary);
   if (!rawi_file.is_open()){
-      std::cout << "ERROR: Cannot open the file..." << std::endl;
-      assert(false);
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"ERROR: Can't open the file: " + (std::string)file_name);
   }
   // read the file details
   uint32_t w = 0;
   uint32_t h = 0;
   uint32_t num_bytes = 0;
-  rawi_file.read(reinterpret_cast<char*>(&w), sizeof(w));
-  rawi_file.read(reinterpret_cast<char*>(&h), sizeof(h));
-  rawi_file.read(reinterpret_cast<char*>(&num_bytes), sizeof(num_bytes));
+  rawi_file.read(reinterpret_cast<char*>(&w), sizeof(uint32_t));
+  rawi_file.read(reinterpret_cast<char*>(&h), sizeof(uint32_t));
+  rawi_file.read(reinterpret_cast<char*>(&num_bytes), sizeof(uint32_t));
   // check that the byte size of the intensity values in the file is compatible with the current
   // size used to store intensity_t values
   if(num_bytes!=sizeof(intensity_t)){
-    assert(false);
-    std::cout << "***Warning: reading .rawi file that was saved using a different basic " << std::endl <<
-                 "            type for intensity_t (float vs. double). Some loss of precision may occur." << std::endl;
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Can't open file because it was saved using a different basic type for intensity_t: " + (std::string)file_name);
   }
   // read the image data:
   for (size_t y=0; y<h; ++y) {
     if(is_layout_right)
       for (size_t x=0; x<w;++x){
-        rawi_file.read(reinterpret_cast<char*>(&intensities[y*w+x]),num_bytes);
+        rawi_file.read(reinterpret_cast<char*>(&intensities[y*w+x]),sizeof(intensity_t));
       }
     else // otherwise assume layout left
       for (size_t x=0; x<w;++x){
-        rawi_file.read(reinterpret_cast<char*>(&intensities[x*h+y]),num_bytes);
+        rawi_file.read(reinterpret_cast<char*>(&intensities[x*h+y]),sizeof(intensity_t));
       }
   }
   rawi_file.close();
@@ -124,13 +122,12 @@ void write_rawi_image(const char * file_name,
   //create a new file:
   std::ofstream rawi_file (file_name, std::ofstream::out | std::ofstream::binary);
   if (!rawi_file.is_open()){
-      std::cout << "ERROR: Cannot open the file..." << file_name << std::endl;
-      assert(false);
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"ERROR: Can't open the file: " + (std::string)file_name);
   }
   // write the file details
-  rawi_file.write(reinterpret_cast<char*>(&w), sizeof(w));
-  rawi_file.write(reinterpret_cast<char*>(&h), sizeof(h));
-  rawi_file.write(reinterpret_cast<char*>(&num_bytes), sizeof(num_bytes));
+  rawi_file.write(reinterpret_cast<char*>(&w), sizeof(uint32_t));
+  rawi_file.write(reinterpret_cast<char*>(&h), sizeof(uint32_t));
+  rawi_file.write(reinterpret_cast<char*>(&num_bytes), sizeof(uint32_t));
 
   // write the image data:
   for (size_t y=0; y<height; ++y) {

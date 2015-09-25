@@ -81,13 +81,16 @@ const static uint16_t LinLUT[1024] =
  4064,4095,4095,4095,4095,4095,4095,4095,4095,4095 };
 
 Cine_Reader::Cine_Reader(const std::string & file_name, std::ostream * out_stream):
-  out_stream_(out_stream)
+  out_stream_(out_stream),
+  bit_12_warning_(false)
 {
   cine_header_ = read_cine_headers(file_name.c_str(),out_stream);
 }
 
+// If you're reading these comments, prepare yourself for the nonsense that is the .cine file format.
+// Take a deep breath, read up on bit-shifting and get ready for hair pulling...
 Teuchos::RCP<Image>
-Cine_Reader::get_image(const size_t frame_index, const Teuchos::RCP<Teuchos::ParameterList> & params){
+Cine_Reader::get_frame(const size_t frame_index, const Teuchos::RCP<Teuchos::ParameterList> & params){
   // get the offset from the header info:
   assert(cine_header_->header_.ImageCount > frame_index);
   assert(frame_index >= 0);
@@ -105,8 +108,7 @@ Cine_Reader::get_image(const size_t frame_index, const Teuchos::RCP<Teuchos::Par
   if(out_stream_) *out_stream_ << "read_cine_frame(): image dimensions: " << img_width << " " << img_height << std::endl;
   std::ifstream cine_file (cine_header_->file_name_.c_str(), std::ios::in | std::ios::binary);
   if (cine_file.fail()){
-      std::cout << "ERROR: Cannot open the file..." << std::endl;
-      assert(false);
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Can't open the file: " + cine_header_->file_name_);
   }
   // factor of 8 to convert bytes to bits
   size_t bit_depth = (cine_header_->bitmap_header_.biSizeImage * 8) / (img_width * img_height);
@@ -120,7 +122,7 @@ Cine_Reader::get_image(const size_t frame_index, const Teuchos::RCP<Teuchos::Par
 
   // read the annotation size
   uint32_t annotation_size;
-  cine_file.read(reinterpret_cast<char*>(&annotation_size), sizeof(annotation_size));
+  cine_file.read(reinterpret_cast<char*>(&annotation_size), sizeof(uint32_t));
   // skip over the annotation
   uint32_t annotation_skip = begin + annotation_size;
   cine_file.seekg(annotation_skip);
@@ -133,7 +135,7 @@ Cine_Reader::get_image(const size_t frame_index, const Teuchos::RCP<Teuchos::Par
     uint8_t pixel_intensity;
     for(size_t y=0;y<img_height;++y){
       for(size_t x=0;x<img_width;++x){
-        cine_file.read(reinterpret_cast<char*>(&pixel_intensity),sizeof(pixel_intensity));
+        cine_file.read(reinterpret_cast<char*>(&pixel_intensity),sizeof(uint8_t));
         intensities[(img_height - y - 1)*img_width + x] = (intensity_t)pixel_intensity;
       }
     }
@@ -142,20 +144,37 @@ Cine_Reader::get_image(const size_t frame_index, const Teuchos::RCP<Teuchos::Par
     // again, no unpacking needed since the bit depth lines up with 2 bytes in memory
     // but the images are stored bottom up, not top down!
     uint16_t pixel_intensity;
+    uint16_t max_intens = 0;
     for(size_t y=0;y<img_height;++y){
       for(size_t x=0;x<img_width;++x){
-        cine_file.read(reinterpret_cast<char*>(&pixel_intensity),sizeof(pixel_intensity));
-        converted_intensity = static_cast<intensity_t>(pixel_intensity) * (255.0/65535.0); // the range in the double storage is always in terms of 8bit range values.
+        cine_file.read(reinterpret_cast<char*>(&pixel_intensity),sizeof(uint16_t));
+        if(pixel_intensity > max_intens) max_intens = pixel_intensity;
+        // the range in the image array storage is always in terms of the 8bit value range (0-255)
+        converted_intensity = static_cast<intensity_t>(pixel_intensity) * (255.0/65535.0);
         intensities[(img_height - y - 1)*img_width + x] = converted_intensity;
+      }
+    }
+    // check to make sure the image is not 12bit stored as 16bit image:
+    // if so, scale the numbers as if 12bit
+    if(max_intens < 4096){
+      if(out_stream_ && !bit_12_warning_){
+        *out_stream_ << "*** Warning, .cine image: " << cine_header_->file_name_  << std::endl <<
+                        "             was detected to be 12bit depth, but stored and denoted in the header as 16bit." << std::endl <<
+                        "             The actual intensity value range is 0 to 4095, not 0 to 65535 as denoted in the header." << std::endl;
+        bit_12_warning_ = true;
+      }
+      for(size_t i=0;i<img_height*img_width;++i){
+        intensities[i] *= (65535.0/4095.0);
       }
     }
   }
   else if (bit_depth==10){
     size_t array_size = cine_header_->bitmap_header_.biSizeImage;
     uint16_t compressed_image[array_size]; // reading 8 bits at a time into a 16 bit data array
-    for(size_t i=0;i<array_size;++i)
+    for(size_t i=0;i<array_size;++i){
+      compressed_image[i] = 0;
       cine_file.read(reinterpret_cast<char*>(&compressed_image[i]),sizeof(uint8_t));
-
+    }
     // unpack the 10 bit image data from the array
     size_t max_chunk = cine_header_->bitmap_header_.biSizeImage / 5; // 5 bytes per chunk
     uint16_t two_byte = 0;
@@ -164,7 +183,7 @@ Cine_Reader::get_image(const size_t frame_index, const Teuchos::RCP<Teuchos::Par
     for (size_t chunk=0;chunk<max_chunk;++chunk){
       for (size_t i=0;i<4;++i){
         // create the single 16 bit combo
-        two_byte = (compressed_image[loc+1] << 8) | (compressed_image[loc]); // endian swap the second byte and or it with the first
+        two_byte = (compressed_image[loc+1] << 8) | (compressed_image[loc]); // endian swap the second byte then or it with the first
         endian_swap(two_byte);
         // shift the 10 bits to the right side of the 16 bit data type;
         two_byte = two_byte >> (6 - (i*2));
@@ -200,8 +219,7 @@ read_cine_headers(const char *file, std::ostream * out_stream){
 
   std::ifstream cine_file (file, std::ios::in | std::ios::binary);
   if (cine_file.fail()){
-      std::cout << "ERROR: Cannot open the file..." << std::endl;
-      assert(false);
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"ERROR: Can't open the file: " + (std::string)file);
   }
 
   // CINE HEADER

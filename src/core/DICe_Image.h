@@ -249,6 +249,8 @@ private:
   size_t height_;
   /// pixel container
   intensity_dual_view_2d intensities_;
+  /// rcp to the intensity array (used to ensure it doesn't get deallocated)
+  Teuchos::ArrayRCP<intensity_t> intensity_rcp_;
   /// device intensity work array
   intensity_device_view_2d intensities_temp_;
   /// image gradient x container
