@@ -92,8 +92,8 @@ Cine_Reader::Cine_Reader(const std::string & file_name, std::ostream * out_strea
 Teuchos::RCP<Image>
 Cine_Reader::get_frame(const size_t frame_index, const Teuchos::RCP<Teuchos::ParameterList> & params){
   // get the offset from the header info:
-  assert(cine_header_->header_.ImageCount > frame_index);
-  assert(frame_index >= 0);
+  TEUCHOS_TEST_FOR_EXCEPTION(frame_index < 0 || frame_index >= cine_header_->header_.ImageCount,std::invalid_argument,
+    "Error, frame index " << frame_index << " is out of the frame range (0,"  << (cine_header_->header_.ImageCount-1) << ")");
   assert(cine_header_->image_offsets_[frame_index] >= 0);
 
   size_t img_width = cine_header_->bitmap_header_.biWidth;

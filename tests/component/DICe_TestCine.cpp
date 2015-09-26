@@ -133,8 +133,8 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // test that the wrong cine type (for example color images thows an exception)
   *outStream << "testing invalid cine file for an exception" << std::endl;
+
   bool exception_thrown = false;
   try{
     DICe::cine::Cine_Reader cine_reader("./images/invalid_color.cine",outStream.getRawPtr());
@@ -145,6 +145,21 @@ int main(int argc, char *argv[]) {
   }
   if(!exception_thrown){
     *outStream << "Error, an exception should have been thrown for the compressed color cine file: invalid_color.cine" << std::endl;
+    errorFlag++;
+  }
+
+  *outStream << "testing that invalid frame index throws an exception" << std::endl;
+  exception_thrown = false;
+  try{
+    DICe::cine::Cine_Reader cine_reader("./images/packed_12bpp.cine",outStream.getRawPtr());
+    Teuchos::RCP<Image> cine_img = cine_reader.get_frame(1000);
+  }
+  catch(const std::exception &e){
+    exception_thrown=true;
+    *outStream << "exception thrown as expected." << std::endl;
+  }
+  if(!exception_thrown){
+    *outStream << "Error, an exception should have been thrown for an invalid frame index" << std::endl;
     errorFlag++;
   }
 
