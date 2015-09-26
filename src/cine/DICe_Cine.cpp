@@ -248,7 +248,7 @@ read_cine_headers(const char *file, std::ostream * out_stream){
   assert(test_size == header.Headersize);
   cine_file.read(reinterpret_cast<char*>(&header.Compression), sizeof(header.Compression));
   if(out_stream) *out_stream << "header compression:   " << header.Compression << std::endl;
-  assert(header.Compression==0 && "DICe Error: decompressing cine files has not yet been implemented.");
+  TEUCHOS_TEST_FOR_EXCEPTION(header.Compression!=0,std::runtime_error,"DICe Error: compressed or color .cine files are not supported.");
   cine_file.read(reinterpret_cast<char*>(&header.Version), sizeof(header.Version));
   if(out_stream) *out_stream << "header version:       " << header.Version << std::endl;
   cine_file.read(reinterpret_cast<char*>(&header.FirstMovieImage), sizeof(header.FirstMovieImage));
@@ -267,7 +267,7 @@ read_cine_headers(const char *file, std::ostream * out_stream){
   cine_file.read(reinterpret_cast<char*>(&header.OffImageOffsets), sizeof(header.OffImageOffsets));
   if(out_stream) *out_stream << "offset image offsets: " << header.OffImageOffsets << std::endl;
   cine_file.read(reinterpret_cast<char*>(&header.TriggerTime), sizeof(header.TriggerTime));
-  if(out_stream) *out_stream << "trigger time:         " << header.TriggerTime << std::endl;
+  //if(out_stream) *out_stream << "trigger time:         " << header.TriggerTime << std::endl;
 
   // BITMAP HEADER
 

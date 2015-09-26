@@ -59,6 +59,15 @@ inline void endian_swap(uint16_t& x){
   x = (x>>8) | (x<<8);
 }
 
+/// Fractions
+typedef uint32_t FRACTIONS, *PFRACTIONS;
+/// Structure to hold the trigger time
+typedef struct tagTIME64
+{
+    FRACTIONS fractions;
+    uint32_t seconds;
+} TIME64, *PTIME64;
+
 /// Structure to hold the cine file header information
 struct cine_file_header{
   /// Type
@@ -84,7 +93,7 @@ struct cine_file_header{
   /// Offset to image offsets
   uint32_t OffImageOffsets;
   /// trigger time
-  time_t TriggerTime;
+  TIME64 TriggerTime;
 };
 
 /// Structure to hold the image information
