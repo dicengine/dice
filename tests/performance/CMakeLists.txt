@@ -8,3 +8,6 @@ include_directories (
 
 add_executable(DICe_PerformanceFunctors DICe_PerformanceFunctors.cpp)
 target_link_libraries(DICe_PerformanceFunctors ${DICE_LIBRARIES} dicecore diceutils)
+
+add_executable(DICe_PerformanceCine DICe_PerformanceCine.cpp)
+target_link_libraries(DICe_PerformanceCine ${DICE_LIBRARIES} dicecore diceutils dicecine)
