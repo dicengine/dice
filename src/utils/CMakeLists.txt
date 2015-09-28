@@ -116,6 +116,14 @@ ELSE(DICE_DEBUG_MSG)
   MESSAGE(STATUS "Debugging messages are OFF")
 ENDIF(DICE_DEBUG_MSG)
 
+# base data type:
+if(DICE_USE_DOUBLE)
+  ADD_DEFINITIONS(-DDICE_USE_DOUBLE)
+  MESSAGE(STATUS "Image intensity and scalar type will be: DOUBLE")
+else()
+  MESSAGE(STATUS "Image intensity and scalar type will be: FLOAT (default)")
+endif()
+
 # Windows: use Trilinos compiler flags
 # Linux: don't use compiler flags from Trilinos, instead set them manually
 # but pick up openmp if Trilinos was compiled with it:

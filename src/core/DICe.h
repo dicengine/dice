@@ -67,11 +67,17 @@ namespace DICe{
 
 /// basic types
 
-/// image intensity type
-typedef float intensity_t;
-/// generic scalar type
-typedef float scalar_t;
-
+#ifdef DICE_USE_DOUBLE
+  /// image intensity type
+  typedef double intensity_t;
+  /// generic scalar type
+  typedef double scalar_t;
+#else
+  /// image intensity type
+  typedef float intensity_t;
+  /// generic scalar type
+  typedef float scalar_t;
+#endif
 /// parameters (all lower case)
 
 /// String parameter name

@@ -110,11 +110,15 @@ int main(int argc, char *argv[]) {
       std::stringstream name;
       //std::stringstream outname;
       //std::stringstream tiffname;
-      //outname << cine_files[i] << "_" << frame << ".rawi";
+      //outname << cine_files[i] << "_d_" << frame << ".rawi";
       //tiffname << cine_files[i] << "_" << frame << ".tiff";
       //cine_img->write_rawi(outname.str());
       //cine_img->write_tiff(tiffname.str());
+#ifdef DICE_USE_DOUBLE
+      name << "./images/" << cine_files[i]<< "_d_" << frame << ".rawi";
+#else
       name << "./images/" << cine_files[i]<< "_" << frame << ".rawi";
+#endif
       Image cine_img_exact(name.str().c_str());
       bool intensity_value_error = false;
       for(size_t y=0;y<cine_reader.height();++y){
