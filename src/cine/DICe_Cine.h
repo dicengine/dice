@@ -176,6 +176,14 @@ public:
   /// \param frame_index the index of the frame to get
   /// \param params (optional) image parameter, such as compute_gradients, etc.
   Teuchos::RCP<Image> get_frame(const size_t frame_index,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null){
+    std::vector<Teuchos::RCP<Image> > frame_vec = get_frames(frame_index,frame_index);
+    return frame_vec[0];
+  }
+  /// \brief get a set of images from a cine file using buffers and threading
+  /// \param frame_index the index of the frame to get
+  /// \param params (optional) image parameter, such as compute_gradients, etc.
+  std::vector<Teuchos::RCP<Image> > get_frames(const size_t frame_index_start, const size_t frame_index_end,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
   /// returns the number of images in the cine file
   const size_t num_frames()const{
