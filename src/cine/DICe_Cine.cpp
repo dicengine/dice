@@ -185,7 +185,6 @@ Cine_Reader::get_frames(const size_t frame_index_start, const size_t frame_index
 
     // read in the pixels
     if(bit_depth==8){
-      assert(false);
       // get to the start of the frame in the buffer
       size_t buff_start_index = frame*(frame_p_header_size) + header_offset_8;
       for(size_t y=0;y<img_height;++y){
@@ -196,7 +195,6 @@ Cine_Reader::get_frames(const size_t frame_index_start, const size_t frame_index
       }
     }
     else if (bit_depth==16){
-      assert(false);
       size_t buff_start_index = frame*(frame_p_header_size) + header_offset_16;
       // the images are stored bottom up, not top down!
       uint16_t pixel_intensity;
@@ -258,7 +256,7 @@ Cine_Reader::get_frames(const size_t frame_index_start, const size_t frame_index
       }
     }
     else {
-      assert(false && "Error: invalid bit depth (or this bit-depth has not been implemented.");
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument, "Error: invalid bit depth (or this bit-depth has not been implemented.");
     }
     frame_rcps[frame] = Teuchos::rcp(new Image(img_width,img_height,intensities,params));
   } // end frame

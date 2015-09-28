@@ -259,7 +259,8 @@ Subset::initialize(Teuchos::RCP<Image> image,
     else if(interp==KEYS_FOURTH_ORDER)
       Kokkos::parallel_for(Kokkos::RangePolicy<Subset_Init_Functor::Map_Keys_Tag>(0,num_pixels_),init_functor);
     else{
-      assert(false&&"Error, unknown interpolation method requested");
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,
+        "Error, unknown interpolation method requested");
     }
   }
   // now sync up the intensities:

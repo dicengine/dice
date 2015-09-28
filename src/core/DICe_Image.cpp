@@ -99,7 +99,8 @@ Image::Image(const char * file_name,
   const std::string string_file_name(file_name);
   const std::string rawi(".rawi");
   bool is_rawi = string_file_name.find(rawi)!=std::string::npos;
-  assert(!is_rawi && "Error: .rawi files not yet supported for reading only a poriton of the image.");
+  TEUCHOS_TEST_FOR_EXCEPTION(is_rawi,std::invalid_argument,
+    "Error: .rawi files not yet supported for reading only a poriton of the image.");
 
   // get the image dims
   size_t img_width = 0;
@@ -368,7 +369,8 @@ Image::gauss_filter(const bool use_hierarchical_parallelism,
     coeffs[12] = 0.0001;
   }
   else{
-    assert(false && "Error, the Gauss filter mask size is invalid (options include 5,7,9,11,13)");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,
+      "Error, the Gauss filter mask size is invalid (options include 5,7,9,11,13)");
   }
 
   for(size_t j=0;j<gauss_filter_mask_size_;++j){
