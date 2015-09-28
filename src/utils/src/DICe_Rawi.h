@@ -47,6 +47,7 @@
 #include <string>
 
 namespace DICe{
+namespace utils{
 
 /// Raw Intensity Format (.rawi), allows saving decimal numbers
 /// as well as negative numbers, neither of which are enabled for
@@ -87,6 +88,7 @@ void write_rawi_image(const char * file_name,
   intensity_t * intensities,
   const bool is_layout_right = true);
 
-}
+} // end namespace utils
+} // end namespace DICe
 
 #endif

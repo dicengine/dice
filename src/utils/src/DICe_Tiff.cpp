@@ -48,6 +48,7 @@
 
 
 namespace DICe{
+namespace utils{
 
 DICE_LIB_DLL_EXPORT
 void read_tiff_image_dimensions(const char * file_name,
@@ -134,5 +135,5 @@ void write_tiff_image(const char * file_name,
   boost::gil::tiff_write_view(file_name, img_view);
 }
 
-
+} // end namespace utils
 } // end namespace DICe

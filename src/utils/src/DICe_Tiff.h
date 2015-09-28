@@ -47,6 +47,7 @@
 #include <string>
 
 namespace DICe{
+namespace utils{
 
 /// read the image dimensions
 /// \param file_name the tiff file name
@@ -95,6 +96,7 @@ void write_tiff_image(const char * file_name,
   intensity_t * intensities,
   const bool is_layout_right = true);
 
-}
+} // end namespace utils
+} // end namespace DICe
 
 #endif

@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
   const std::string file_name = "./images/UberImage.tif";
 
   // read the image dimensions from file:
-  read_tiff_image_dimensions(file_name.c_str(),width,height);
+  utils::read_tiff_image_dimensions(file_name.c_str(),width,height);
   *outStream << "master image dims:        " << width << " x " << height << std::endl;
   *outStream << "number of image sizes:    " << num_img_sizes << std::endl;
   const size_t w_step = width/num_img_sizes;

@@ -59,24 +59,24 @@ Image::Image(const char * file_name,
   bool is_rawi = string_file_name.find(rawi)!=std::string::npos;
 
   if(is_rawi){
-    read_rawi_image_dimensions(file_name,width_,height_);
+    utils::read_rawi_image_dimensions(file_name,width_,height_);
     assert(width_>0);
     assert(height_>0);
     intensities_ = intensity_dual_view_2d("intensities",height_,width_);
-    read_rawi_image(file_name,
+    utils::read_rawi_image(file_name,
       intensities_.h_view.ptr_on_device(),
       default_is_layout_right());
   }
   // assumes that it is a tiff image as default
   else {
     // get the image dims
-    read_tiff_image_dimensions(file_name,width_,height_);
+    utils::read_tiff_image_dimensions(file_name,width_,height_);
     assert(width_>0);
     assert(height_>0);
     // initialize the pixel containers
     intensities_ = intensity_dual_view_2d("intensities",height_,width_);
     // read in the image
-    read_tiff_image(file_name,
+    utils::read_tiff_image(file_name,
       intensities_.h_view.ptr_on_device(),
       default_is_layout_right());
   }
@@ -104,13 +104,13 @@ Image::Image(const char * file_name,
   // get the image dims
   size_t img_width = 0;
   size_t img_height = 0;
-  read_tiff_image_dimensions(file_name,img_width,img_height);
+  utils::read_tiff_image_dimensions(file_name,img_width,img_height);
   assert(width_>0&&offset_x_+width_<img_width);
   assert(height_>0&&offset_y_+height_<img_height);
   // initialize the pixel containers
   intensities_ = intensity_dual_view_2d("intensities",height_,width_);
   // read in the image
-  read_tiff_image(file_name,
+  utils::read_tiff_image(file_name,
     offset_x,offset_y,
     width_,height_,
     intensities_.h_view.ptr_on_device(),
@@ -209,12 +209,12 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
 
 void
 Image::write_tiff(const std::string & file_name){
-  write_tiff_image(file_name.c_str(),width_,height_,intensities_.h_view.ptr_on_device(),default_is_layout_right());
+  utils::write_tiff_image(file_name.c_str(),width_,height_,intensities_.h_view.ptr_on_device(),default_is_layout_right());
 }
 
 void
 Image::write_rawi(const std::string & file_name){
-  write_rawi_image(file_name.c_str(),width_,height_,intensities_.h_view.ptr_on_device(),default_is_layout_right());
+  utils::write_rawi_image(file_name.c_str(),width_,height_,intensities_.h_view.ptr_on_device(),default_is_layout_right());
 }
 
 KOKKOS_INLINE_FUNCTION

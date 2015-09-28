@@ -48,6 +48,7 @@
 #include <Teuchos_TestForException.hpp>
 
 namespace DICe{
+namespace utils{
 
 DICE_LIB_DLL_EXPORT
 void read_rawi_image_dimensions(const char * file_name,
@@ -144,4 +145,5 @@ void write_rawi_image(const char * file_name,
   rawi_file.close();
 }
 
+} // end namespace utils
 } // end namespace DICe
