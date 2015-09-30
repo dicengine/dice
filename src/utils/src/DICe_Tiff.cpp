@@ -52,8 +52,8 @@ namespace utils{
 
 DICE_LIB_DLL_EXPORT
 void read_tiff_image_dimensions(const char * file_name,
-  size_t & width,
-  size_t & height){
+  int_t & width,
+  int_t & height){
   boost::gil::point2<std::ptrdiff_t> pt = boost::gil::tiff_read_dimensions(file_name);
   width = pt.x;
   height = pt.y;
@@ -66,17 +66,17 @@ void read_tiff_image(const char * file_name,
   assert(file_name!="");
   boost::gil::gray8_image_t img;
   boost::gil::tiff_read_and_convert_image(file_name,img);
-  const size_t width = img.width();
-  const size_t height = img.height();
+  const int_t width = img.width();
+  const int_t height = img.height();
   boost::gil::gray8c_view_t img_view = boost::gil::const_view(img);
-  for (size_t y=0; y<height; ++y) {
+  for (int_t y=0; y<height; ++y) {
     boost::gil::gray8c_view_t::x_iterator src_it = img_view.row_begin(y);
     if(is_layout_right)
-      for (size_t x=0; x<width;++x){
+      for (int_t x=0; x<width;++x){
         intensities[y*width+x] = src_it[x];
       }
     else // otherwise assume LayoutLeft
-      for (size_t x=0; x<width;++x){
+      for (int_t x=0; x<width;++x){
         intensities[x*height+y] = src_it[x];
       }
   }
@@ -84,29 +84,29 @@ void read_tiff_image(const char * file_name,
 
 DICE_LIB_DLL_EXPORT
 void read_tiff_image(const char * file_name,
-  size_t offset_x,
-  size_t offset_y,
-  size_t width,
-  size_t height,
+  int_t offset_x,
+  int_t offset_y,
+  int_t width,
+  int_t height,
   intensity_t * intensities,
   const bool is_layout_right){
   assert(file_name!="");
   boost::gil::gray8_image_t img;
   boost::gil::tiff_read_and_convert_image(file_name,img);
-  const size_t img_width = img.width();
-  const size_t img_height = img.height();
+  const int_t img_width = img.width();
+  const int_t img_height = img.height();
   assert(width+offset_x < img_width);
   assert(height+offset_y< img_height);
 
   boost::gil::gray8c_view_t img_view = boost::gil::const_view(img);
-  for (size_t y=offset_y; y<offset_y+height; ++y) {
+  for (int_t y=offset_y; y<offset_y+height; ++y) {
     boost::gil::gray8c_view_t::x_iterator src_it = img_view.row_begin(y);
     if(is_layout_right)
-      for (size_t x=offset_x; x<offset_x+width;++x){
+      for (int_t x=offset_x; x<offset_x+width;++x){
         intensities[(y-offset_y)*width + x-offset_x] = src_it[x];
       }
     else // otherwise assume layout left
-      for (size_t x=offset_x; x<offset_x+width;++x){
+      for (int_t x=offset_x; x<offset_x+width;++x){
         intensities[(x-offset_x)*height+y-offset_y] = src_it[x];
       }
   }
@@ -114,21 +114,21 @@ void read_tiff_image(const char * file_name,
 
 DICE_LIB_DLL_EXPORT
 void write_tiff_image(const char * file_name,
-  const size_t width,
-  const size_t height,
+  const int_t width,
+  const int_t height,
   intensity_t * intensities,
   const bool is_layout_right){
   assert(file_name!="");
   boost::gil::gray8_image_t img(width,height);
   boost::gil::gray8_view_t img_view = boost::gil::view(img);
-  for (size_t y=0; y<height; ++y) {
+  for (int_t y=0; y<height; ++y) {
     boost::gil::gray8_view_t::x_iterator src_it = img_view.row_begin(y);
     if(is_layout_right)
-      for (size_t x=0; x<width;++x){
+      for (int_t x=0; x<width;++x){
         src_it[x] = (boost::gil::gray8_pixel_t)(std::floor(intensities[y*width + x]));
       }
     else
-      for (size_t x=0; x<width;++x){
+      for (int_t x=0; x<width;++x){
         src_it[x] = (boost::gil::gray8_pixel_t)(std::floor(intensities[x*height+y]));
       }
   }

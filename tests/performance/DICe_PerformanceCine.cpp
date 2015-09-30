@@ -81,8 +81,8 @@ int main(int argc, char *argv[]) {
 
   cine::Cine_Reader cine(cine_file.c_str());//,outStream.getRawPtr());
 
-  size_t chunk_size = std::atoi(argv[2]);
-  size_t num_chunks = cine.num_frames() / chunk_size;
+  int_t chunk_size = std::atoi(argv[2]);
+  int_t num_chunks = cine.num_frames() / chunk_size;
   if(cine.num_frames()%chunk_size!=0) num_chunks++;
   *outStream << "chunk size:        " << chunk_size << std::endl;
   *outStream << "number of chunks:  " << num_chunks << std::endl;
@@ -94,14 +94,14 @@ int main(int argc, char *argv[]) {
   cpu_timer thread_timer;
   {
     thread_timer.start();
-    size_t frame_start = 0;
-    size_t frame_end = 0;
-    for(size_t chunk = 0; chunk < num_chunks; ++chunk){
-    //size_t chunk = 0;
+    int_t frame_start = 0;
+    int_t frame_end = 0;
+    for(int_t chunk = 0; chunk < num_chunks; ++chunk){
+    //int_t chunk = 0;
       frame_start = chunk_size*chunk;
       frame_end = chunk_size*(chunk+1) - 1;
       std::vector<Teuchos::RCP<Image> > frame_rcps = cine.get_frames(frame_start,frame_end);
-      //for(size_t f=0;f<frame_rcps.size();++f){
+      //for(int_t f=0;f<frame_rcps.size();++f){
       //  std::stringstream name;
       //  name << "./frame_images/frame_" << f << ".tif";
       //  frame_rcps[f]->write_tiff(name.str());

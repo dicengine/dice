@@ -58,8 +58,8 @@ int main(int argc, char *argv[]) {
   Kokkos::initialize(argc, argv);
 
   // only print output if args are given (for testing the output is quiet)
-  size_t iprint     = argc - 1;
-  size_t errorFlag  = 0;
+  int_t iprint     = argc - 1;
+  int_t errorFlag  = 0;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
 
   // all of these cine files should be dimensions 128 x 256 and have 6 frames each
 
-  for(size_t i=0;i<cine_files.size();++i){
+  for(int_t i=0;i<cine_files.size();++i){
     std::stringstream full_name;
     full_name << "./images/" << cine_files[i] << ".cine";
     *outStream << "testing cine file: " << full_name.str() << std::endl;
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
     }
     *outStream << "image dimensions have been checked" << std::endl;
 
-    for(size_t frame=0;frame<cine_reader.num_frames();++frame){
+    for(int_t frame=0;frame<cine_reader.num_frames();++frame){
       *outStream << "testing frame " << frame << std::endl;
       Teuchos::RCP<Image> cine_img = cine_reader.get_frame(frame);
       std::stringstream name;
@@ -121,8 +121,8 @@ int main(int argc, char *argv[]) {
 #endif
       Image cine_img_exact(name.str().c_str());
       bool intensity_value_error = false;
-      for(size_t y=0;y<cine_reader.height();++y){
-        for(size_t x=0;x<cine_reader.width();++x){
+      for(int_t y=0;y<cine_reader.height();++y){
+        for(int_t x=0;x<cine_reader.width();++x){
           if((*cine_img)(x,y)!=cine_img_exact(x,y)){
             //std::cout << x << " " << y << " actual " << (*cine_img)(x,y) << " exptected " << cine_img_exact(x,y) << std::endl;
             intensity_value_error=true;

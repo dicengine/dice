@@ -85,10 +85,10 @@ Image::Image(const char * file_name,
 }
 
 Image::Image(const char * file_name,
-  const size_t offset_x,
-  const size_t offset_y,
-  const size_t width,
-  const size_t height,
+  const int_t offset_x,
+  const int_t offset_y,
+  const int_t width,
+  const int_t height,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
   offset_x_(offset_x),
   offset_y_(offset_y),
@@ -103,8 +103,8 @@ Image::Image(const char * file_name,
     "Error: .rawi files not yet supported for reading only a poriton of the image.");
 
   // get the image dims
-  size_t img_width = 0;
-  size_t img_height = 0;
+  int_t img_width = 0;
+  int_t img_height = 0;
   utils::read_tiff_image_dimensions(file_name,img_width,img_height);
   assert(width_>0&&offset_x_+width_<img_width);
   assert(height_>0&&offset_y_+height_<img_height);
@@ -121,8 +121,8 @@ Image::Image(const char * file_name,
 }
 
 Image::Image(intensity_t * intensities,
-  const size_t width,
-  const size_t height,
+  const int_t width,
+  const int_t height,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
   width_(width),
   height_(height),
@@ -134,8 +134,8 @@ Image::Image(intensity_t * intensities,
   default_constructor_tasks(params);
 }
 
-Image::Image(const size_t width,
-  const size_t height,
+Image::Image(const int_t width,
+  const int_t height,
   Teuchos::ArrayRCP<intensity_t> intensities,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
   width_(width),
@@ -164,8 +164,8 @@ Image::initialize_array_image(intensity_t * intensities){
   else{
     assert(default_is_layout_left());
     intensities_ = intensity_dual_view_2d("intensities",height_,width_);
-    for(size_t y=0;y<height_;++y){
-      for(size_t x=0;x<width_;++x){
+    for(int_t y=0;y<height_;++y){
+      for(int_t x=0;x<width_;++x){
         intensities_.h_view(y,x) = intensities[y*width_+x];
       }
     }
@@ -211,7 +211,7 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
 Teuchos::ArrayRCP<intensity_t>
 Image::intensity_array()const{
   Teuchos::ArrayRCP<intensity_t> array(width_*height_);
-  for(size_t i=0;i<width_*height_;++i)
+  for(int_t i=0;i<width_*height_;++i)
     array[i] = intensities_.h_view.ptr_on_device()[i];
   return array;
 }
@@ -240,9 +240,9 @@ Image::write_rawi(const std::string & file_name){
 
 KOKKOS_INLINE_FUNCTION
 void
-Image::operator()(const Grad_Flat_Tag &, const size_t pixel_index)const{
-  const size_t y = pixel_index / width_;
-  const size_t x = pixel_index - y*width_;
+Image::operator()(const Grad_Flat_Tag &, const int_t pixel_index)const{
+  const int_t y = pixel_index / width_;
+  const int_t x = pixel_index - y*width_;
   if(x<2){
     grad_x_.d_view(y,x) = intensities_.d_view(y,x+1) - intensities_.d_view(y,x);
   }
@@ -271,9 +271,9 @@ Image::operator()(const Grad_Flat_Tag &, const size_t pixel_index)const{
 KOKKOS_INLINE_FUNCTION
 void
 Image::operator()(const Grad_Tag &, const member_type team_member)const{
-  const size_t row = team_member.league_rank();
+  const int_t row = team_member.league_rank();
   Kokkos::parallel_for(Kokkos::TeamThreadRange(team_member, width_),
-    [=] (const size_t col){
+    [=] (const int_t col){
     if(col<2){
       grad_x_.d_view(row,col) = intensities_.d_view(row,col+1) - intensities_.d_view(row,col);
     }
@@ -302,7 +302,7 @@ Image::operator()(const Grad_Tag &, const member_type team_member)const{
 
 
 void
-Image::compute_gradients(const bool use_hierarchical_parallelism, const size_t team_size){
+Image::compute_gradients(const bool use_hierarchical_parallelism, const int_t team_size){
 
   // Flat gradients:
   if(use_hierarchical_parallelism){
@@ -319,13 +319,13 @@ Image::compute_gradients(const bool use_hierarchical_parallelism, const size_t t
 
 KOKKOS_INLINE_FUNCTION
 void
-Image::operator()(const Gauss_Flat_Tag &, const size_t pixel_index)const{
-  const size_t y = pixel_index / width_;
-  const size_t x = pixel_index - y*width_;
+Image::operator()(const Gauss_Flat_Tag &, const int_t pixel_index)const{
+  const int_t y = pixel_index / width_;
+  const int_t x = pixel_index - y*width_;
   if(x>=gauss_filter_half_mask_&&x<width_-gauss_filter_half_mask_&&y>=gauss_filter_half_mask_&&y<height_-gauss_filter_half_mask_){
     intensity_t value = 0.0;
-    for(size_t i=0;i<gauss_filter_mask_size_;++i){
-      for(size_t j=0;j<gauss_filter_mask_size_;++j){
+    for(int_t i=0;i<gauss_filter_mask_size_;++i){
+      for(int_t j=0;j<gauss_filter_mask_size_;++j){
         // assumes intensity values have already been deep copied into intensities_temp_
         value += gauss_filter_coeffs_[i][j]*intensities_temp_(y+(j-gauss_filter_half_mask_),x+(i-gauss_filter_half_mask_));
       } //j
@@ -337,13 +337,13 @@ Image::operator()(const Gauss_Flat_Tag &, const size_t pixel_index)const{
 KOKKOS_INLINE_FUNCTION
 void
 Image::operator()(const Gauss_Tag &, const member_type team_member)const{
-  const size_t row = team_member.league_rank();
+  const int_t row = team_member.league_rank();
   Kokkos::parallel_for(Kokkos::TeamThreadRange(team_member, width_),
-    [=] (const size_t col){
+    [=] (const int_t col){
     if(col>=gauss_filter_half_mask_&&col<width_-gauss_filter_half_mask_&&row>=gauss_filter_half_mask_&&row<height_-gauss_filter_half_mask_){
       intensity_t value = 0.0;
-      for(size_t i=0;i<gauss_filter_mask_size_;++i){
-        for(size_t j=0;j<gauss_filter_mask_size_;++j){
+      for(int_t i=0;i<gauss_filter_mask_size_;++i){
+        for(int_t j=0;j<gauss_filter_mask_size_;++j){
           // assumes intensity values have already been deep copied into intensities_temp_
           value += gauss_filter_coeffs_[i][j]*intensities_temp_(row+(j-gauss_filter_half_mask_),col+(i-gauss_filter_half_mask_));
         } //j
@@ -356,7 +356,7 @@ Image::operator()(const Gauss_Tag &, const member_type team_member)const{
 
 void
 Image::gauss_filter(const bool use_hierarchical_parallelism,
-  const size_t team_size){
+  const int_t team_size){
 
   std::vector<scalar_t> coeffs(13,0.0);
 
@@ -393,8 +393,8 @@ Image::gauss_filter(const bool use_hierarchical_parallelism,
       "Error, the Gauss filter mask size is invalid (options include 5,7,9,11,13)");
   }
 
-  for(size_t j=0;j<gauss_filter_mask_size_;++j){
-    for(size_t i=0;i<gauss_filter_mask_size_;++i){
+  for(int_t j=0;j<gauss_filter_mask_size_;++j){
+    for(int_t i=0;i<gauss_filter_mask_size_;++i){
       gauss_filter_coeffs_[i][j] = coeffs[i]*coeffs[j];
     }
   }

@@ -75,12 +75,12 @@ public:
   /// \param cx Optional x centroid of the map
   /// \param cy Optional y centroid of the map
   /// \param skin_factor Optional padding added to the outside of the shape to make it larger or smaller
-  virtual std::set<std::pair<integer_t,integer_t> > get_owned_pixels(Teuchos::RCP<Def_Map> map=Teuchos::null,
-    const integer_t cx=0,
-    const integer_t cy=0,
+  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<Def_Map> map=Teuchos::null,
+    const int_t cx=0,
+    const int_t cy=0,
     const scalar_t skin_factor=1.0)const{
     assert(false && "  DICe ERROR: Base class implementation of this method should not be called.");
-    std::set<std::pair<integer_t,integer_t> > nullSet;
+    std::set<std::pair<int_t,int_t> > nullSet;
     return nullSet;
   }
 
@@ -94,10 +94,10 @@ public:
   /// \param origin_y global image y-coordinate of origin for the x_coords and y_coords arguments above
   // TODO This is a little awkward and could be done more elegantly
   virtual void deactivate_pixels(Teuchos::ArrayRCP<bool> & pixel_flags,
-    Teuchos::ArrayRCP<integer_t> x_coords,
-    Teuchos::ArrayRCP<integer_t> y_coords,
-    const integer_t origin_x,
-    const integer_t origin_y) const{
+    Teuchos::ArrayRCP<int_t> x_coords,
+    Teuchos::ArrayRCP<int_t> y_coords,
+    const int_t origin_x,
+    const int_t origin_y) const{
     assert(false && "  DICe ERROR: Base class implementation of this method should not be called.");
   }
 
@@ -109,8 +109,8 @@ public:
   /// \param cy y-coordinate of the origin of the deformation mapping
   virtual void draw(Teuchos::RCP<Image> & layer_0_image,
     Teuchos::RCP<Def_Map> map=Teuchos::null,
-    const integer_t cx=0,
-    const integer_t cy=0)const{
+    const int_t cx=0,
+    const int_t cy=0)const{
     assert(false && "  DICe ERROR: Base class implementation of this method should not be called.");
   }
 };
@@ -135,46 +135,46 @@ public:
   /// \brief Constructor that takes the vertices as arguements
   /// \param coords_x A vector of integer valued global x-coordinates for the polygon vertices
   /// \param coords_y A vector of integer valued global y-coordinates for the polygon vertices
-  Polygon(std::vector<integer_t> & coords_x,
-    std::vector<integer_t> & coords_y);
+  Polygon(std::vector<int_t> & coords_x,
+    std::vector<int_t> & coords_y);
 
   virtual ~Polygon(){};
 
   /// See base class documentation
   // NOTE: The pair is (y,x) not (x,y) so that the ordering in the set will match loops over y then x
-  virtual std::set<std::pair<integer_t,integer_t> > get_owned_pixels(Teuchos::RCP<Def_Map> map=Teuchos::null,
-    const integer_t cx=0,
-    const integer_t cy=0,
+  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<Def_Map> map=Teuchos::null,
+    const int_t cx=0,
+    const int_t cy=0,
     const scalar_t skin_factor=1.0)const;
 
   /// See base class documentation
   virtual void deactivate_pixels(Teuchos::ArrayRCP<bool> & pixel_flags,
-    Teuchos::ArrayRCP<integer_t> x_coords,
-    Teuchos::ArrayRCP<integer_t> y_coords,
-    const integer_t origin_x,
-    const integer_t origin_y) const;
+    Teuchos::ArrayRCP<int_t> x_coords,
+    Teuchos::ArrayRCP<int_t> y_coords,
+    const int_t origin_x,
+    const int_t origin_y) const;
 
   /// See base class documentation
   virtual void draw(Teuchos::RCP<Image> & layer_0_image,
     Teuchos::RCP<Def_Map> map=Teuchos::null,
-    const integer_t cx=0,
-    const integer_t cy=0)const;
+    const int_t cx=0,
+    const int_t cy=0)const;
 
 private:
   /// vector storing the integer vertex global x-coordinates
-  std::vector<integer_t> vertex_coordinates_x_;
+  std::vector<int_t> vertex_coordinates_x_;
   /// vector storing the integer vertex global y-coordinates
-  std::vector<integer_t> vertex_coordinates_y_;
+  std::vector<int_t> vertex_coordinates_y_;
   /// Number of vertices
-  integer_t num_vertices_;
+  int_t num_vertices_;
   /// Minimum x global coordinate of all the vertices
-  integer_t min_x_;
+  int_t min_x_;
   /// Maximum x global coordinate of all the vertices
-  integer_t max_x_;
+  int_t max_x_;
   /// Minimum y global coordinate of all the vertices
-  integer_t min_y_;
+  int_t min_y_;
   /// Maximum y global coordinate of all the vertices
-  integer_t max_y_;
+  int_t max_y_;
 };
 
 /// \brief Return the angle between two vectors on a plane
@@ -202,24 +202,24 @@ public:
   /// \param centroid_x integer valued global x-coordinate for the center of the circle
   /// \param centroid_y integer valued global y-coordinate for the center of the circle
   /// \param radius Radius of the circle
-  Circle(const integer_t centroid_x,
-    const integer_t centroid_y,
+  Circle(const int_t centroid_x,
+    const int_t centroid_y,
     const scalar_t & radius);
 
   virtual ~Circle(){};
 
   /// See base class documentation
-  virtual std::set<std::pair<integer_t,integer_t> > get_owned_pixels(Teuchos::RCP<Def_Map> map=Teuchos::null,
-    const integer_t cx=0,
-    const integer_t cy=0,
+  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<Def_Map> map=Teuchos::null,
+    const int_t cx=0,
+    const int_t cy=0,
     const scalar_t skin_factor=1.0)const;
 
   /// See base class documentation
   virtual void deactivate_pixels(Teuchos::ArrayRCP<bool> & pixel_flags,
-    Teuchos::ArrayRCP<integer_t> x_coords,
-    Teuchos::ArrayRCP<integer_t> y_coords,
-    const integer_t origin_x,
-    const integer_t origin_y) const;
+    Teuchos::ArrayRCP<int_t> x_coords,
+    Teuchos::ArrayRCP<int_t> y_coords,
+    const int_t origin_x,
+    const int_t origin_y) const;
 
   /// See base class documentation
   virtual void draw(Teuchos::RCP<Image> & layer_0_image,
@@ -227,21 +227,21 @@ public:
 
 private:
   /// Center of the circle global x-coordinate
-  integer_t centroid_x_;
+  int_t centroid_x_;
   /// Center of the circle global y-coordinate
-  integer_t centroid_y_;
+  int_t centroid_y_;
   /// Radius of the circle
   scalar_t radius_;
   /// Radius of the circle squared
   scalar_t radius2_;
   /// Minimum x global coordinate of the circle
-  integer_t min_x_;
+  int_t min_x_;
   /// Maximum x global coordinate of the circle
-  integer_t max_x_;
+  int_t max_x_;
   /// Minimum y global coordinate of the circle
-  integer_t min_y_;
+  int_t min_y_;
   /// Maximum y global coordinate of the circle
-  integer_t max_y_;
+  int_t max_y_;
 };
 
 
@@ -256,25 +256,25 @@ public:
   /// \param centroid_y integer valued global y-coordinate for the center
   /// \param width integer valued width of the rectangle
   /// \param height integer valued height of the rectangle
-  Rectangle(const integer_t centroid_x,
-    const integer_t centroid_y,
-    const integer_t width,
-    const integer_t height);
+  Rectangle(const int_t centroid_x,
+    const int_t centroid_y,
+    const int_t width,
+    const int_t height);
 
   virtual ~Rectangle(){};
 
   /// See base class documentation
-  virtual std::set<std::pair<integer_t,integer_t> > get_owned_pixels(Teuchos::RCP<Def_Map> map=Teuchos::null,
-    const integer_t cx=0,
-    const integer_t cy=0,
+  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<Def_Map> map=Teuchos::null,
+    const int_t cx=0,
+    const int_t cy=0,
     const scalar_t skin_factor=1.0)const;
 
   /// See base class documentation
   virtual void deactivate_pixels(Teuchos::ArrayRCP<bool> & pixel_flags,
-    Teuchos::ArrayRCP<integer_t> x_coords,
-    Teuchos::ArrayRCP<integer_t> y_coords,
-    const integer_t origin_x,
-    const integer_t origin_y) const;
+    Teuchos::ArrayRCP<int_t> x_coords,
+    Teuchos::ArrayRCP<int_t> y_coords,
+    const int_t origin_x,
+    const int_t origin_y) const;
 
   /// See base class documentation
   virtual void draw(Teuchos::RCP<Image> & layer_0_image,
@@ -282,17 +282,17 @@ public:
 
 private:
   /// Center global x-coordinate
-  integer_t centroid_x_;
+  int_t centroid_x_;
   /// Center global y-coordinate
-  integer_t centroid_y_;
+  int_t centroid_y_;
   /// Width of the rectangle
-  integer_t width_;
+  int_t width_;
   /// Height of the rectangle
-  integer_t height_;
+  int_t height_;
   /// Origin is the upper left corner (needed if the rectangle is of an even dimension)
-  integer_t origin_x_;
+  int_t origin_x_;
   /// Origin is the upper left corner
-  integer_t origin_y_;
+  int_t origin_y_;
 };
 
 /// A vector that stores a collection of pointers to shapes, used as a way to associate shapes into a larger object.

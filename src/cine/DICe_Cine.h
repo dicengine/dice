@@ -175,7 +175,7 @@ public:
   /// \brief get an image from the cine file
   /// \param frame_index the index of the frame to get
   /// \param params (optional) image parameter, such as compute_gradients, etc.
-  Teuchos::RCP<Image> get_frame(const size_t frame_index,
+  Teuchos::RCP<Image> get_frame(const int_t frame_index,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null){
     std::vector<Teuchos::RCP<Image> > frame_vec = get_frames(frame_index,frame_index,params);
     return frame_vec[0];
@@ -183,18 +183,18 @@ public:
   /// \brief get a set of images from a cine file using buffers and threading
   /// \param frame_index the index of the frame to get
   /// \param params (optional) image parameter, such as compute_gradients, etc.
-  std::vector<Teuchos::RCP<Image> > get_frames(const size_t frame_index_start, const size_t frame_index_end,
+  std::vector<Teuchos::RCP<Image> > get_frames(const int_t frame_index_start, const int_t frame_index_end,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
   /// returns the number of images in the cine file
-  const size_t num_frames()const{
+  const int_t num_frames()const{
     return cine_header_->header_.ImageCount;
   }
   /// returns the image width
-  const size_t width()const{
+  const int_t width()const{
     return cine_header_->bitmap_header_.biWidth;
   }
   /// return the image height
-  const size_t height()const{
+  const int_t height()const{
     return cine_header_->bitmap_header_.biHeight;
   }
 private:

@@ -58,8 +58,8 @@ int main(int argc, char *argv[]) {
   Kokkos::initialize(argc, argv);
 
   // only print output if args are given (for testing the output is quiet)
-  size_t iprint     = argc - 1;
-  size_t errorFlag  = 0;
+  int_t iprint     = argc - 1;
+  int_t errorFlag  = 0;
   scalar_t errorTol = 1.0E-3;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
@@ -72,10 +72,10 @@ int main(int argc, char *argv[]) {
 
   // create a subset by centroid, width and height
   *outStream << "creating a subset from cx, cy, width and height " << std::endl;
-  size_t cx = 125;
-  size_t cy = 250;
-  size_t w = 13;
-  size_t h = 19;
+  int_t cx = 125;
+  int_t cy = 250;
+  int_t w = 13;
+  int_t h = 19;
   Subset square(cx,cy,w,h);
   if(square.num_pixels()!=w*h){
     *outStream << "Error, the square subset is not the right size. "
@@ -95,10 +95,10 @@ int main(int argc, char *argv[]) {
 
   // create a subset by array
   *outStream << "creating a subset by array" << std::endl;
-  const size_t num_pts = 48;
-  Teuchos::ArrayRCP<size_t> x_coords(num_pts,0);
-  Teuchos::ArrayRCP<size_t> y_coords(num_pts,0);
-  for(size_t i=0;i<num_pts;++i){
+  const int_t num_pts = 48;
+  Teuchos::ArrayRCP<int_t> x_coords(num_pts,0);
+  Teuchos::ArrayRCP<int_t> y_coords(num_pts,0);
+  for(int_t i=0;i<num_pts;++i){
     x_coords[i] = i*2 +4; // random point locations
     y_coords[i] = 42+i;
   }
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
   }
   bool x_coord_error = false;
   bool y_coord_error = false;
-  for(size_t i=0;i<num_pts;++i){
+  for(int_t i=0;i<num_pts;++i){
     if(array.x(i)!=x_coords[i])
       x_coord_error = true;
     if(array.y(i)!=y_coords[i])
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
   square.initialize(image);
   // test the subset ref values:
   bool ref_values_error = false;
-  for(size_t i=0;i<square.num_pixels();++i){
+  for(int_t i=0;i<square.num_pixels();++i){
     //std::cout << "subset: " << square.ref_intensities(i) << " img: " << (*image)(square.x(i),square.y(i)) << std::endl;
     if(square.ref_intensities(i)!=(*image)(square.x(i),square.y(i))){
       ref_values_error = true;
@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
   // check simple motion intensity values
   *outStream << "checking the bilinear interpolation" << std::endl;
   bool def_values_error = false;
-  for(size_t i=0;i<square.num_pixels();++i){
+  for(int_t i=0;i<square.num_pixels();++i){
     if(square.def_intensities(i)!=(*image)(square.x(i)+map->u_,square.y(i)+map->v_))
       def_values_error = true;
   }
@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
   square.initialize(image,DEF_INTENSITIES,map,KEYS_FOURTH_ORDER);
   square.write_tiff("squareSubsetDefKeys.tif",true);
   bool keys_values_error = false;
-  for(size_t i=0;i<square.num_pixels();++i){
+  for(int_t i=0;i<square.num_pixels();++i){
     if(square.def_intensities(i)!=(*image)(square.x(i)+map->u_,square.y(i)+map->v_))
       keys_values_error = true;
   }
@@ -183,11 +183,11 @@ int main(int argc, char *argv[]) {
   *outStream << "checking the mean value of the reference intensities" << std::endl;
   scalar_t ref_mean = 0.0;
   scalar_t ref_sum = 0.0;
-  for(size_t i=0;i<square.num_pixels();++i){
+  for(int_t i=0;i<square.num_pixels();++i){
     ref_mean += square.ref_intensities(i);
   }
   ref_mean/=square.num_pixels();
-  for(size_t i=0;i<square.num_pixels();++i){
+  for(int_t i=0;i<square.num_pixels();++i){
     ref_sum += (square.ref_intensities(i)-ref_mean)*(square.ref_intensities(i)-ref_mean);
   }
   ref_sum = std::sqrt(ref_sum);
@@ -204,11 +204,11 @@ int main(int argc, char *argv[]) {
   *outStream << "checking the mean value of the deformed intensities" << std::endl;
   scalar_t def_mean = 0.0;
   scalar_t def_sum = 0.0;
-  for(size_t i=0;i<square.num_pixels();++i){
+  for(int_t i=0;i<square.num_pixels();++i){
     def_mean += square.def_intensities(i);
   }
   def_mean/=square.num_pixels();
-  for(size_t i=0;i<square.num_pixels();++i){
+  for(int_t i=0;i<square.num_pixels();++i){
     def_sum += (square.def_intensities(i)-def_mean)*(square.def_intensities(i)-def_mean);
   }
   def_sum = std::sqrt(def_sum);

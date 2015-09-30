@@ -57,8 +57,8 @@ int main(int argc, char *argv[]) {
   Kokkos::initialize(argc, argv);
 
   // only print output if args are given (for testing the output is quiet)
-  size_t iprint     = argc - 1;
-  size_t errorFlag  = 0;
+  int_t iprint     = argc - 1;
+  int_t errorFlag  = 0;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -95,8 +95,8 @@ int main(int argc, char *argv[]) {
   }
   // the pixel values from the sub image should line up with the image above, if given the right coordinates
   bool intensity_match_error = false;
-  for(size_t y=0;y<sub_img.height();++y){
-    for(size_t x=0;x<sub_img.width();++x){
+  for(int_t y=0;y<sub_img.height();++y){
+    for(int_t x=0;x<sub_img.width();++x){
       if(sub_img(x,y)!=img(x+sub_img.offset_x(),y+sub_img.offset_y()))
         intensity_match_error = true;
     }
@@ -108,14 +108,14 @@ int main(int argc, char *argv[]) {
 
   // create an image from an array
   *outStream << "creating an image from an array" << std::endl;
-  const size_t array_w = 30;
-  const size_t array_h = 20;
+  const int_t array_w = 30;
+  const int_t array_h = 20;
   intensity_t * intensities = new intensity_t[array_w*array_h];
   scalar_t * gx = new scalar_t[array_w*array_h];
   scalar_t * gy = new scalar_t[array_w*array_h];
   // populate the intensities with a sin/cos function
-  for(size_t y=0;y<array_h;++y){
-    for(size_t x=0;x<array_w;++x){
+  for(int_t y=0;y<array_h;++y){
+    for(int_t x=0;x<array_w;++x){
       intensities[y*array_w+x] = 255*std::cos(x/(4*DICE_PI))*std::sin(y/(4*DICE_PI));
       gx[y*array_w+x] = -255*(1/(4*DICE_PI))*std::sin(x/(4*DICE_PI))*std::sin(y/(4*DICE_PI));
       gy[y*array_w+x] = 255*(1/(4*DICE_PI))*std::cos(x/(4*DICE_PI))*std::cos(y/(4*DICE_PI));
@@ -133,8 +133,8 @@ int main(int argc, char *argv[]) {
   bool grad_x_error = false;
   bool grad_y_error = false;
   scalar_t grad_tol = 1.0E-3;
-  for(size_t y=2;y<array_h-2;++y){
-    for(size_t x=2;x<array_w-2;++x){
+  for(int_t y=2;y<array_h-2;++y){
+    for(int_t x=2;x<array_w-2;++x){
       if(intensities[y*array_w+x] != array_img(x,y))
         intensity_value_error = true;
       //std::cout << " grad x " << gx[y*array_w+x] << " computed " << array_img.grad_x(x,y) << std::endl;
@@ -161,10 +161,10 @@ int main(int argc, char *argv[]) {
   grad_x_error = false;
   grad_y_error = false;
   // check the hierarchical gradients:
-  const size_t team_size = 256;
+  const int_t team_size = 256;
   array_img.compute_gradients(true,team_size);
-  for(size_t y=2;y<array_h-2;++y){
-    for(size_t x=2;x<array_w-2;++x){
+  for(int_t y=2;y<array_h-2;++y){
+    for(int_t x=2;x<array_w-2;++x){
       if(std::abs(gx[y*array_w+x] - array_img.grad_x(x,y)) > grad_tol)
         grad_x_error = true;
       if(std::abs(gy[y*array_w+x] - array_img.grad_y(x,y)) > grad_tol)
@@ -183,8 +183,8 @@ int main(int argc, char *argv[]) {
 
   // create an image with a teuchos array and compare the values
   bool rcp_error = false;
-  for(size_t y=0;y<array_h;++y){
-    for(size_t x=0;x<array_w;++x){
+  for(int_t y=0;y<array_h;++y){
+    for(int_t x=0;x<array_w;++x){
       if(rcp_img(x,y) != array_img(x,y))
         rcp_error = true;
     }
@@ -245,8 +245,8 @@ int main(int argc, char *argv[]) {
   Image filter_h_img("./images/ImageA.tif",filter_h_params);
 
   bool filter_error = false;
-  for(size_t y=0;y<filter_h_img.height();++y){
-    for(size_t x=0;x<filter_h_img.width();++x){
+  for(int_t y=0;y<filter_h_img.height();++y){
+    for(int_t x=0;x<filter_h_img.width();++x){
       if(std::abs(filter_h_img(x,y) - filter_13_img(x,y)) > grad_tol)
         filter_error = true;
     }

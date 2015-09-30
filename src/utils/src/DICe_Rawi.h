@@ -59,8 +59,8 @@ namespace utils{
 /// \param height [out] returned as the height of the image
 DICE_LIB_DLL_EXPORT
 void read_rawi_image_dimensions(const char * file_name,
-  size_t & width,
-  size_t & height);
+  int_t & width,
+  int_t & height);
 
 /// Read an image into the host memory
 /// \param file_name the name of the .rawi file
@@ -83,8 +83,8 @@ void read_rawi_image(const char * file_name,
 /// \param intensities assumed to be an array of size width x height
 DICE_LIB_DLL_EXPORT
 void write_rawi_image(const char * file_name,
-  const size_t width,
-  const size_t height,
+  const int_t width,
+  const int_t height,
   intensity_t * intensities,
   const bool is_layout_right = true);
 

@@ -52,8 +52,8 @@ namespace utils{
 
 DICE_LIB_DLL_EXPORT
 void read_rawi_image_dimensions(const char * file_name,
-  size_t & width,
-  size_t & height){
+  int_t & width,
+  int_t & height){
 
   std::ifstream rawi_file (file_name, std::ifstream::in | std::ifstream::binary);
   if (rawi_file.fail()){
@@ -93,13 +93,13 @@ void read_rawi_image(const char * file_name,
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Can't open file because it was saved using a different basic type for intensity_t: " + (std::string)file_name);
   }
   // read the image data:
-  for (size_t y=0; y<h; ++y) {
+  for (int_t y=0; y<h; ++y) {
     if(is_layout_right)
-      for (size_t x=0; x<w;++x){
+      for (int_t x=0; x<w;++x){
         rawi_file.read(reinterpret_cast<char*>(&intensities[y*w+x]),sizeof(intensity_t));
       }
     else // otherwise assume layout left
-      for (size_t x=0; x<w;++x){
+      for (int_t x=0; x<w;++x){
         rawi_file.read(reinterpret_cast<char*>(&intensities[x*h+y]),sizeof(intensity_t));
       }
   }
@@ -108,8 +108,8 @@ void read_rawi_image(const char * file_name,
 
 DICE_LIB_DLL_EXPORT
 void write_rawi_image(const char * file_name,
-  const size_t width,
-  const size_t height,
+  const int_t width,
+  const int_t height,
   intensity_t * intensities,
   const bool is_layout_right){
   assert(file_name!="");
@@ -131,14 +131,14 @@ void write_rawi_image(const char * file_name,
   rawi_file.write(reinterpret_cast<char*>(&num_bytes), sizeof(uint32_t));
 
   // write the image data:
-  for (size_t y=0; y<height; ++y) {
+  for (int_t y=0; y<height; ++y) {
     if(is_layout_right){
-      for (size_t x=0; x<width;++x){
+      for (int_t x=0; x<width;++x){
         rawi_file.write(reinterpret_cast<char*>(&intensities[y*width + x]),sizeof(intensity_t));
       }
     }
     else // otherwise assume layout left
-      for (size_t x=0; x<width;++x){
+      for (int_t x=0; x<width;++x){
         rawi_file.write(reinterpret_cast<char*>(&intensities[x*height+y]),sizeof(intensity_t));
       }
   }

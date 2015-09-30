@@ -76,12 +76,12 @@ typedef Kokkos::DualView<intensity_t **,Kokkos::MemoryTraits<Kokkos::RandomAcces
 typedef Kokkos::DualView<scalar_t **>  scalar_dual_view_2d;
 
 /// 2 dimensional array of pixel coordinate values for the device
-typedef Kokkos::View<size_t *> pixel_coord_device_view_1d;
+typedef Kokkos::View<int_t *> pixel_coord_device_view_1d;
 /// host mirrors of the intensity value arrays
 typedef pixel_coord_device_view_1d::HostMirror pixel_coord_host_view_1d;
 
 /// 1 dimensional dual view of size type values
-typedef Kokkos::DualView<size_t *>  pixel_coord_dual_view_1d;
+typedef Kokkos::DualView<int_t *>  pixel_coord_dual_view_1d;
 
 /// member type
 typedef typename Kokkos::TeamPolicy<device_space>::member_type member_type;

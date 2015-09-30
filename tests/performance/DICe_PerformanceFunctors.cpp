@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
   Kokkos::initialize(argc, argv);
 
   // only print output if args are given (for testing the output is quiet)
-  size_t iprint = argc>1 ? std::atoi(argv[1]) : 0;
+  int_t iprint = argc>1 ? std::atoi(argv[1]) : 0;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -81,21 +81,21 @@ int main(int argc, char *argv[]) {
   *outStream << "hierarchical parallelism: " << use_hierarchical << std::endl;
 
   // create a vector of image sizes to use
-  const size_t num_img_sizes = 5;
-  const size_t num_time_samples = 5;
-  size_t width = 0;
-  size_t height = 0;
-  std::vector<size_t> widths(num_img_sizes,0);
-  std::vector<size_t> heights(num_img_sizes,0);
+  const int_t num_img_sizes = 5;
+  const int_t num_time_samples = 5;
+  int_t width = 0;
+  int_t height = 0;
+  std::vector<int_t> widths(num_img_sizes,0);
+  std::vector<int_t> heights(num_img_sizes,0);
   const std::string file_name = "./images/UberImage.tif";
 
   // read the image dimensions from file:
   utils::read_tiff_image_dimensions(file_name.c_str(),width,height);
   *outStream << "master image dims:        " << width << " x " << height << std::endl;
   *outStream << "number of image sizes:    " << num_img_sizes << std::endl;
-  const size_t w_step = width/num_img_sizes;
-  const size_t h_step = height/num_img_sizes;
-  for(size_t i=0;i<num_img_sizes;++i){
+  const int_t w_step = width/num_img_sizes;
+  const int_t h_step = height/num_img_sizes;
+  for(int_t i=0;i<num_img_sizes;++i){
     widths[i] = (i+1)*w_step;
     heights[i] = (i+1)*h_step;
   }
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
   map->ey_ = 0.001;
   map->g_ = 0.0;
   Teuchos::RCP<Subset> subset;
-  const size_t subset_edge_buffer = 10; // must be larger than the deformations above
+  const int_t subset_edge_buffer = 10; // must be larger than the deformations above
 
   std::vector<scalar_t> sizes(num_img_sizes,0.0);
   std::vector<scalar_t> read_times(num_img_sizes,0.0);
@@ -125,12 +125,12 @@ int main(int argc, char *argv[]) {
 
 
   // num timing samples loop
-  for(size_t time_sample=0;time_sample<num_time_samples;++time_sample){
+  for(int_t time_sample=0;time_sample<num_time_samples;++time_sample){
     *outStream << "\n%%% time sample " << time_sample << std::endl;
     // image size loop:
-    for(size_t size_it=0;size_it<num_img_sizes;++size_it){
-      const size_t w_it = widths[size_it];
-      const size_t h_it = heights[size_it];
+    for(int_t size_it=0;size_it<num_img_sizes;++size_it){
+      const int_t w_it = widths[size_it];
+      const int_t h_it = heights[size_it];
       *outStream << "---------------------------------------------------------------------------" << std::endl;
       *outStream << "image size: " << w_it << " x " << h_it << std::endl;
       if(time_sample==0) sizes[size_it] = w_it*h_it;
@@ -264,7 +264,7 @@ int main(int argc, char *argv[]) {
       std::setw(15) << "mean" <<
       std::setw(15) << "correlation" <<
       std::endl;
-  for(size_t i=0;i<num_img_sizes;++i){
+  for(int_t i=0;i<num_img_sizes;++i){
     *outStream << std::setw(15) <<
         sizes[i] << std::setw(15) <<
         read_times[i] << std::setw(15) <<

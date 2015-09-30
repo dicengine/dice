@@ -58,8 +58,8 @@ int main(int argc, char *argv[]) {
   Kokkos::initialize(argc, argv);
 
   // only print output if args are given (for testing the output is quiet)
-  size_t iprint     = argc - 1;
-  size_t errorFlag  = 0;
+  int_t iprint     = argc - 1;
+  int_t errorFlag  = 0;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -70,12 +70,12 @@ int main(int argc, char *argv[]) {
   *outStream << "--- Begin test ---" << std::endl;
 
   *outStream << "creating an image to test" << std::endl;
-  const size_t array_w = 50;
-  const size_t array_h = 20;
+  const int_t array_w = 50;
+  const int_t array_h = 20;
   intensity_t * intensities = new intensity_t[array_w*array_h];
   // populate the intensities with a sin/cos function
-  for(size_t y=0;y<array_h;++y){
-    for(size_t x=0;x<array_w;++x){
+  for(int_t y=0;y<array_h;++y){
+    for(int_t x=0;x<array_w;++x){
       intensities[y*array_w+x] = 255*std::cos(x/(4*DICE_PI))*std::sin(y/(4*DICE_PI));
     }
   }
@@ -96,8 +96,8 @@ int main(int argc, char *argv[]) {
   }
   *outStream << "checked the image dimensions" << std::endl;
   bool intensity_value_error = false;
-  for(size_t y=0;y<array_h;++y){
-    for(size_t x=0;x<array_w;++x){
+  for(int_t y=0;y<array_h;++y){
+    for(int_t x=0;x<array_w;++x){
       if(rawi_img(x,y)!=array_img(x,y))
         intensity_value_error = true;
     }

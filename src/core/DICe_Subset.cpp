@@ -47,10 +47,10 @@
 
 namespace DICe {
 
-Subset::Subset(size_t cx,
-  size_t cy,
-  Teuchos::ArrayRCP<size_t> x,
-  Teuchos::ArrayRCP<size_t> y):
+Subset::Subset(int_t cx,
+  int_t cy,
+  Teuchos::ArrayRCP<int_t> x,
+  Teuchos::ArrayRCP<int_t> y):
   num_pixels_(x.size()),
   cx_(cx),
   cy_(cy)
@@ -80,17 +80,17 @@ Subset::Subset(size_t cx,
 
 }
 
-Subset::Subset(const size_t cx,
-  const size_t cy,
-  const size_t width,
-  const size_t height):
+Subset::Subset(const int_t cx,
+  const int_t cy,
+  const int_t width,
+  const int_t height):
  cx_(cx),
  cy_(cy)
 {
   assert(width>0);
   assert(height>0);
-  const size_t half_width = width/2;
-  const size_t half_height = height/2;
+  const int_t half_width = width/2;
+  const int_t half_height = height/2;
   // if the width and height arguments are not odd, the next larges odd size is used:
   num_pixels_ = (2*half_width+1)*(2*half_height+1);
   assert(num_pixels_>0);
@@ -98,9 +98,9 @@ Subset::Subset(const size_t cx,
   // initialize the coordinate views
   x_ = pixel_coord_dual_view_1d("x",num_pixels_);
   y_ = pixel_coord_dual_view_1d("y",num_pixels_);
-  size_t index = 0;
-  for(size_t y=cy_-half_height;y<=cy_+half_height;++y){
-    for(size_t x=cx_-half_width;x<=cx_+half_width;++x){
+  int_t index = 0;
+  for(int_t y=cy_-half_height;y<=cy_+half_height;++y){
+    for(int_t x=cx_-half_width;x<=cx_+half_width;++x){
       x_.h_view(index) = x;
       y_.h_view(index) = y;
       index++;
@@ -125,11 +125,11 @@ Subset::write_subset_on_image(const std::string & file_name,
   Teuchos::RCP<Image> image,
   Teuchos::RCP<Def_Map> map){
   //create a square image that fits the extents of the subet
-  const size_t w = image->width();
-  const size_t h = image->height();
+  const int_t w = image->width();
+  const int_t h = image->height();
   intensity_t * intensities = new intensity_t[w*h];
-  for(size_t y=0;y<h;++y){
-    for(size_t x=0;x<w;++x){
+  for(int_t y=0;y<h;++y){
+    for(int_t x=0;x<w;++x){
       intensities[y*w+x] = image->intensities().h_view(y,x);
     }
   }
@@ -137,8 +137,8 @@ Subset::write_subset_on_image(const std::string & file_name,
     scalar_t dx=0.0,dy=0.0;
     scalar_t Dx=0.0,Dy=0.0;
     scalar_t mapped_x=0.0,mapped_y=0.0;
-    size_t px=0,py=0;
-    for(size_t i=0;i<num_pixels_;++i){
+    int_t px=0,py=0;
+    for(int_t i=0;i<num_pixels_;++i){
       // compute the deformed shape:
       // need to cast the x_ and y_ values since the resulting value could be negative
       dx = (scalar_t)(x_.h_view(i)) - cx_;
@@ -149,15 +149,15 @@ Subset::write_subset_on_image(const std::string & file_name,
       mapped_x = std::cos(map->t_)*Dx - std::sin(map->t_)*Dy + map->u_ + cx_;
       mapped_y = std::sin(map->t_)*Dx + std::cos(map->t_)*Dy + map->v_ + cy_;
       // get the nearest pixel location:
-      px = (size_t)mapped_x;
-      if(mapped_x - (size_t)mapped_x >= 0.5) px++;
-      py = (size_t)mapped_y;
-      if(mapped_y - (size_t)mapped_y >= 0.5) py++;
+      px = (int_t)mapped_x;
+      if(mapped_x - (int_t)mapped_x >= 0.5) px++;
+      py = (int_t)mapped_y;
+      if(mapped_y - (int_t)mapped_y >= 0.5) py++;
       intensities[py*w+px] = 255;
     }
   }
   else{ // write the original shape of the subset
-    for(size_t i=0;i<num_pixels_;++i)
+    for(int_t i=0;i<num_pixels_;++i)
       intensities[y_.h_view(i)*w+x_.h_view(i)] = 255;
   }
   utils::write_tiff_image(file_name.c_str(),w,h,intensities,true);
@@ -168,23 +168,23 @@ void
 Subset::write_tiff(const std::string & file_name,
   const bool use_def_intensities){
   // determine the extents of the subset and the offsets
-  size_t max_x = 0;
-  size_t min_x = x_.h_view(0);
-  size_t max_y = 0;
-  size_t min_y = y_.h_view(0);
-  for(size_t i=0;i<num_pixels_;++i){
+  int_t max_x = 0;
+  int_t min_x = x_.h_view(0);
+  int_t max_y = 0;
+  int_t min_y = y_.h_view(0);
+  for(int_t i=0;i<num_pixels_;++i){
     if(x_.h_view(i) > max_x) max_x = x_.h_view(i);
     if(x_.h_view(i) < min_x) min_x = x_.h_view(i);
     if(y_.h_view(i) > max_y) max_y = y_.h_view(i);
     if(y_.h_view(i) < min_y) min_y = y_.h_view(i);
   }
   //create a square image that fits the extents of the subet
-  const size_t w = max_x - min_x + 1;
-  const size_t h = max_y - min_y + 1;
+  const int_t w = max_x - min_x + 1;
+  const int_t h = max_y - min_y + 1;
   intensity_t * intensities = new intensity_t[w*h];
-  for(size_t i=0;i<w*h;++i)
+  for(int_t i=0;i<w*h;++i)
     intensities[i] = 0.0;
-  for(size_t i=0;i<num_pixels_;++i)
+  for(int_t i=0;i<num_pixels_;++i)
     intensities[(y_.h_view(i)-min_y)*w+(x_.h_view(i)-min_x)] = use_def_intensities ?
         def_intensities_.h_view(i) : ref_intensities_.h_view(i);
   utils::write_tiff_image(file_name.c_str(),w,h,intensities,true);
@@ -278,7 +278,8 @@ Subset::initialize(Teuchos::RCP<Image> image,
 // by using the mapping and bilinear interpolation
 KOKKOS_INLINE_FUNCTION
 void
-Subset_Init_Functor::operator()(const Map_Bilinear_Tag&, const size_t pixel_index)const{
+Subset_Init_Functor::operator()(const Map_Bilinear_Tag&,
+  const int_t pixel_index)const{
   // map the point to the def
   // have to cast x_ and y_ to scalar type since the result could be negative
   const scalar_t dx = (scalar_t)(x_(pixel_index)) - cx_;
@@ -290,10 +291,10 @@ Subset_Init_Functor::operator()(const Map_Bilinear_Tag&, const size_t pixel_inde
   scalar_t mapped_y = sin_t_*Dx + cos_t_*Dy + v_ + cy_;
   // check that the mapped location is inside the image...
   if(mapped_x>=0&&mapped_x<image_w_-2&&mapped_y>=0&&mapped_y<image_h_-2){
-    size_t x1 = (size_t)mapped_x;
-    size_t x2 = x1+1;
-    size_t y1 = (size_t)mapped_y;
-    size_t y2  = y1+1;
+    int_t x1 = (int_t)mapped_x;
+    int_t x2 = x1+1;
+    int_t y1 = (int_t)mapped_y;
+    int_t y2  = y1+1;
     subset_intensities_(pixel_index) =
         (image_intensities_(y1,x1)*(x2-mapped_x)*(y2-mapped_y)
          +image_intensities_(y1,x2)*(mapped_x-x1)*(y2-mapped_y)
@@ -310,7 +311,8 @@ Subset_Init_Functor::operator()(const Map_Bilinear_Tag&, const size_t pixel_inde
 // by using the mapping and Keys fourth-order interpolation
 KOKKOS_INLINE_FUNCTION
 void
-Subset_Init_Functor::operator()(const Map_Keys_Tag&, const size_t pixel_index)const{
+Subset_Init_Functor::operator()(const Map_Keys_Tag&,
+  const int_t pixel_index)const{
 
   // map the point to the def
   // have to cast x_ and y_ to scalar type since the result could be negative
@@ -325,9 +327,9 @@ Subset_Init_Functor::operator()(const Map_Keys_Tag&, const size_t pixel_index)co
   if(mapped_x>=0&&mapped_x<image_w_-2&&mapped_y>=0&&mapped_y<image_h_-2){
 
     // determine the current pixel the coordinates fall in:
-    size_t px = (size_t)mapped_x;
+    int_t px = (int_t)mapped_x;
     if(mapped_x - px >= 0.5) px++;
-    size_t py = (size_t)mapped_y;
+    int_t py = (int_t)mapped_y;
     if(mapped_y - py >= 0.5) py++;
 
     // check if the location is close enough to the pixel location
@@ -342,7 +344,7 @@ Subset_Init_Functor::operator()(const Map_Keys_Tag&, const size_t pixel_index)co
       scalar_t dx2=0.0, dx3=0.0;
       scalar_t dy2=0.0, dy3=0.0;
       scalar_t f0x=0.0, f0y=0.0;
-      for(size_t y=py-3;y<=py+3;++y){
+      for(int_t y=py-3;y<=py+3;++y){
         dy = std::abs(mapped_y - y);
         dy2=dy*dy;
         dy3=dy2*dy;
@@ -356,7 +358,7 @@ Subset_Init_Functor::operator()(const Map_Keys_Tag&, const size_t pixel_index)co
         else if(dy <= 3.0){
           f0y = 0.0833333333*dy3 - 0.6666666666*dy2 + 1.75*dy - 1.5;
         }
-        for(size_t x=px-3;x<=px+3;++x){
+        for(int_t x=px-3;x<=px+3;++x){
           // compute the f's of x and y
           dx = std::abs(mapped_x - x);
           dx2=dx*dx;
@@ -387,7 +389,8 @@ Subset_Init_Functor::operator()(const Map_Keys_Tag&, const size_t pixel_index)co
 // without using the mapping
 KOKKOS_INLINE_FUNCTION
 void
-Subset_Init_Functor::operator()(const No_Map_Tag&, const size_t pixel_index)const{
+Subset_Init_Functor::operator()(const No_Map_Tag&,
+  const int_t pixel_index)const{
   subset_intensities_(pixel_index) = image_intensities_(y_(pixel_index),x_(pixel_index));
 }
 

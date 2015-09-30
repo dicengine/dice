@@ -83,10 +83,10 @@ public:
   /// \param height y-dim of the image (offset_y + height must be < the global image height)
   /// \param params image parameters
   Image(const char * file_name,
-    const size_t offset_x,
-    const size_t offset_y,
-    const size_t width,
-    const size_t height,
+    const int_t offset_x,
+    const int_t offset_y,
+    const int_t width,
+    const int_t height,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   //
@@ -100,8 +100,8 @@ public:
   /// \param height the height of the image
   /// \param params image parameters
   Image(intensity_t * intensities,
-    const size_t width,
-    const size_t height,
+    const int_t width,
+    const int_t height,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   //
@@ -114,8 +114,8 @@ public:
   /// \param height image height
   /// \param intensities image intensity values
   /// \param params optional image parameters
-  Image(const size_t width,
-    const size_t height,
+  Image(const int_t width,
+    const int_t height,
     Teuchos::ArrayRCP<intensity_t> intensities,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
@@ -143,27 +143,27 @@ public:
   void write_rawi(const std::string & file_name);
 
   /// returns the width of the image
-  size_t width()const{
+  int_t width()const{
     return width_;
   }
 
   /// return the height of the image
-  size_t height()const{
+  int_t height()const{
     return height_;
   }
 
   /// returns the number of pixels in the image
-  size_t num_pixels()const{
+  int_t num_pixels()const{
     return width_*height_;
   }
 
   /// returns the offset x coordinate
-  size_t offset_x()const{
+  int_t offset_x()const{
     return offset_x_;
   }
 
   /// returns the offset y coordinate
-  size_t offset_y()const{
+  int_t offset_y()const{
     return offset_y_;
   }
 
@@ -172,7 +172,7 @@ public:
   /// y is row, x is column
   /// \param x image coordinate x
   /// \param y image coordinate y
-  const intensity_t& operator()(const size_t x, const size_t y) const {
+  const intensity_t& operator()(const int_t x, const int_t y) const {
     return intensities_.h_view(y,x);
   }
 
@@ -193,20 +193,20 @@ public:
   /// y is row, x is column
   /// \param x image coordinate x
   /// \param y image coordinate y
-  const scalar_t& grad_x(const size_t x, const size_t y) const {
+  const scalar_t& grad_x(const int_t x, const int_t y) const {
     return grad_x_.h_view(y,x);
   }
 
   /// gradient accessor for y
   /// \param x image coordinate x
   /// \param y image coordinate y
-  const scalar_t& grad_y(const size_t x, const size_t y) const {
+  const scalar_t& grad_y(const int_t x, const int_t y) const {
     return grad_y_.h_view(y,x);
   }
 
   /// compute the image gradients
   void compute_gradients(const bool use_hierarchical_parallelism=false,
-    const size_t team_size=256);
+    const int_t team_size=256);
 
   /// returns true if the gradients have been computed
   bool has_gradients()const{
@@ -215,7 +215,7 @@ public:
 
   /// filter the image using a 7 point gauss filter
   void gauss_filter(const bool use_hierarchical_parallelism=false,
-    const size_t team_size=256);
+    const int_t team_size=256);
 
   //
   // Kokkos functors:
@@ -225,7 +225,7 @@ public:
   struct Grad_Flat_Tag {};
   /// compute the image gradient using a flat algorithm (no hierarchical parallelism)
   KOKKOS_INLINE_FUNCTION
-  void operator()(const Grad_Flat_Tag &, const size_t pixel_index)const;
+  void operator()(const Grad_Flat_Tag &, const int_t pixel_index)const;
   /// tag
   struct Grad_Tag {};
   /// compute the image gradient using a heirarchical algorithm
@@ -236,7 +236,7 @@ public:
   struct Gauss_Flat_Tag{};
   /// Gauss filter the image
   KOKKOS_INLINE_FUNCTION
-  void operator()(const Gauss_Flat_Tag &, const size_t pixel_index)const;
+  void operator()(const Gauss_Flat_Tag &, const int_t pixel_index)const;
   /// tag
   struct Gauss_Tag{};
   /// Gauss filter the image
@@ -246,14 +246,14 @@ public:
 private:
   /// offsets are used to convert to global image coordinates
   /// (the pixel container may be a subset of a larger image)
-  size_t offset_x_;
+  int_t offset_x_;
   /// offsets are used to convert to global image coordinates
   /// (the pixel container may be a subset of a larger image)
-  size_t offset_y_;
+  int_t offset_y_;
   /// pixel container width_
-  size_t width_;
+  int_t width_;
   /// pixel container height_
-  size_t height_;
+  int_t height_;
   /// pixel container
   intensity_dual_view_2d intensities_;
   /// rcp to the intensity array (used to ensure it doesn't get deallocated)
@@ -273,9 +273,9 @@ private:
   /// Gauss filter coefficients
   scalar_t gauss_filter_coeffs_[13][13]; // 13 is the maximum size for the filter window
   /// Gauss filter mask size
-  size_t gauss_filter_mask_size_;
+  int_t gauss_filter_mask_size_;
   /// half the gauss filter mask size
-  size_t gauss_filter_half_mask_;
+  int_t gauss_filter_half_mask_;
 };
 
 }// End DICe Namespace

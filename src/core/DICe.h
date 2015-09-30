@@ -79,7 +79,7 @@ namespace DICe{
   typedef float scalar_t;
 #endif
 
-typedef long int integer_t;
+typedef long int int_t;
 
 /// deformation map
 struct Def_Map{

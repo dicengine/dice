@@ -71,36 +71,36 @@ public:
   /// \param cy centroid y pixel location
   /// \param x array of x coordinates
   /// \param y array of y coordinates
-  Subset(size_t cx,
-    size_t cy,
-    Teuchos::ArrayRCP<size_t> x,
-    Teuchos::ArrayRCP<size_t> y);
+  Subset(int_t cx,
+    int_t cy,
+    Teuchos::ArrayRCP<int_t> x,
+    Teuchos::ArrayRCP<int_t> y);
 
   /// constructor that takes a centroid and dims as arguments
   /// \param cx centroid x pixel location
   /// \param cy centroid y pixel location
   /// \param width width of the centroid (should be an odd number, otherwise the next larger odd number is used)
   /// \param height height of the centroid (should be an odd number, otherwise the next larger odd numer is used)
-  Subset(const size_t cx,
-    const size_t cy,
-    const size_t width,
-    const size_t height);
+  Subset(const int_t cx,
+    const int_t cy,
+    const int_t width,
+    const int_t height);
 
   /// virtual destructor
   virtual ~Subset(){};
 
   /// returns the number of pixels in the subset
-  size_t num_pixels()const{
+  int_t num_pixels()const{
     return num_pixels_;
   }
 
   /// returns the centroid x pixel location
-  size_t centroid_x()const{
+  int_t centroid_x()const{
     return cx_;
   }
 
   /// returns the centroid y pixel location
-  size_t centroid_y()const{
+  int_t centroid_y()const{
     return cy_;
   }
 
@@ -117,26 +117,26 @@ public:
   /// x coordinate accessor
   /// \param pixel_index the pixel id
   /// note there is no bounds checking on the index
-  const size_t& x(const size_t pixel_index)const{
+  const int_t& x(const int_t pixel_index)const{
     return x_.h_view(pixel_index);
   }
 
   /// y coordinate accessor
   /// \param pixel_index the pixel id
   /// note there is no bounds checking on the index
-  const size_t& y(const size_t pixel_index)const{
+  const int_t& y(const int_t pixel_index)const{
     return y_.h_view(pixel_index);
   }
 
   /// ref intensities accessor
   /// \param pixel_index the pixel id
-  const intensity_t& ref_intensities(const size_t pixel_index)const{
+  const intensity_t& ref_intensities(const int_t pixel_index)const{
     return ref_intensities_.h_view(pixel_index);
   }
 
   /// ref intensities accessor
   /// \param pixel_index the pixel id
-  const intensity_t& def_intensities(const size_t pixel_index)const{
+  const intensity_t& def_intensities(const int_t pixel_index)const{
     return def_intensities_.h_view(pixel_index);
   }
 
@@ -188,15 +188,15 @@ public:
 
 private:
   /// number of pixels in the subset
-  size_t num_pixels_;
+  int_t num_pixels_;
   /// pixel container
   intensity_dual_view_1d ref_intensities_;
   /// pixel container
   intensity_dual_view_1d def_intensities_;
   /// centroid location x
-  size_t cx_; // assumed to be the middle of the pixel
+  int_t cx_; // assumed to be the middle of the pixel
   /// centroid location y
-  size_t cy_; // assumed to be the middle of the pixel
+  int_t cy_; // assumed to be the middle of the pixel
   /// initial x position of the pixels in the reference image
   pixel_coord_dual_view_1d x_;
   /// initial x position of the pixels in the reference image
@@ -214,7 +214,7 @@ struct Intensity_Sum_Functor{
     intensities_(intensities){};
   /// operator
   KOKKOS_INLINE_FUNCTION
-  void operator()(const size_t pixel_index, scalar_t & mean)const{
+  void operator()(const int_t pixel_index, scalar_t & mean)const{
     mean += intensities_(pixel_index);
   }
 };
@@ -232,7 +232,7 @@ struct Intensity_Sum_Minus_Mean_Functor{
     mean_(mean){};
   /// operator
   KOKKOS_INLINE_FUNCTION
-  void operator()(const size_t pixel_index, scalar_t & sum)const{
+  void operator()(const int_t pixel_index, scalar_t & sum)const{
     sum += (intensities_(pixel_index)-mean_)*(intensities_(pixel_index)-mean_);
   }
 };
@@ -268,7 +268,7 @@ struct ZNSSD_Gamma_Functor{
       mean_sum_d_(mean_sum_d){}
   /// operator
   KOKKOS_INLINE_FUNCTION
-  void operator()(const size_t pixel_index, scalar_t & gamma) const{
+  void operator()(const int_t pixel_index, scalar_t & gamma) const{
     scalar_t value =  (def_intensities_(pixel_index)-mean_d_)/mean_sum_d_ - (ref_intensities_(pixel_index)-mean_r_)/mean_sum_r_;
     gamma += value*value;
   }
@@ -295,13 +295,13 @@ struct Subset_Init_Functor{
   /// sin theta
   scalar_t sin_t_;
   /// x centroid of the deformation
-  size_t cx_;
+  int_t cx_;
   /// y centroid of the deformation
-  size_t cy_;
+  int_t cy_;
   /// width of the image
-  size_t image_w_;
+  int_t image_w_;
   /// height of the image
-  size_t image_h_;
+  int_t image_h_;
   /// tolerance
   scalar_t tol_;
   // note all of the views below are only the device views
@@ -358,18 +358,18 @@ struct Subset_Init_Functor{
   /// functor to perform a mapping on the initial coordinates to get
   /// the deformed pixel intensity using bilinear interpolation
   KOKKOS_INLINE_FUNCTION
-  void operator()(const Map_Bilinear_Tag &, const size_t pixel_index)const;
+  void operator()(const Map_Bilinear_Tag &, const int_t pixel_index)const;
   /// tag
   struct Map_Keys_Tag {};
   /// functor to perform a mapping on the initial coordinates to get
   /// the deformed pixel intensity using Keys 4th-order interpolation
   KOKKOS_INLINE_FUNCTION
-  void operator()(const Map_Keys_Tag &, const size_t pixel_index)const;
+  void operator()(const Map_Keys_Tag &, const int_t pixel_index)const;
   /// tag
   struct No_Map_Tag {};
   /// functor to perform direct access of image pixel values without mapping
   KOKKOS_INLINE_FUNCTION
-  void operator()(const No_Map_Tag &, const size_t pixel_index)const;
+  void operator()(const No_Map_Tag &, const int_t pixel_index)const;
 };
 
 }// End DICe Namespace
