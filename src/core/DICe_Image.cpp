@@ -208,6 +208,26 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
   }
 }
 
+Teuchos::ArrayRCP<intensity_t>
+Image::intensity_array()const{
+  Teuchos::ArrayRCP<intensity_t> array(width_*height_);
+  for(size_t i=0;i<width_*height_;++i)
+    array[i] = intensities_.h_view.ptr_on_device()[i];
+  return array;
+}
+
+void
+Image::replace_intensities(Teuchos::ArrayRCP<intensity_t> intensities){
+  assert(intensities.size()==width_*height_);
+  // automatically re-compute the image gradients:
+  Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
+  params->set(DICe::compute_image_gradients,true);
+  initialize_array_image(intensities.getRawPtr());
+  intensities_.modify<host_space>(); // The template is where the modification took place
+  intensities_.sync<device_space>(); // The template is what needs to be synced
+  default_constructor_tasks(params);
+}
+
 void
 Image::write_tiff(const std::string & file_name){
   utils::write_tiff_image(file_name.c_str(),width_,height_,intensities_.h_view.ptr_on_device(),default_is_layout_right());

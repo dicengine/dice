@@ -3,6 +3,7 @@ SET(DICE_SOURCES
   DICe_Kokkos.cpp
   DICe_Image.cpp
   DICe_Subset.cpp
+  DICe_Shape.cpp
   )
 
 SET(DICE_HEADERS
@@ -10,6 +11,7 @@ SET(DICE_HEADERS
   DICe_Kokkos.h
   DICe_Image.h
   DICe_Subset.h
+  DICe_Shape.h
   )
 
 include_directories (

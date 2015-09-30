@@ -181,6 +181,13 @@ public:
     return intensities_;
   }
 
+  /// returns a copy of the intenisity values as an array
+  Teuchos::ArrayRCP<intensity_t> intensity_array()const;
+
+  /// replaces the intensity values of the image
+  /// \param intensities the new intensity value array
+  void replace_intensities(Teuchos::ArrayRCP<intensity_t> intensities);
+
   /// gradient accessors:
   /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
   /// y is row, x is column

@@ -18,3 +18,6 @@ target_link_libraries(DICe_TestCine ${DICE_LIBRARIES} dicecore diceutils dicecin
 
 add_executable(DICe_TestRawi DICe_TestRawi.cpp)
 target_link_libraries(DICe_TestRawi ${DICE_LIBRARIES} dicecore diceutils)
+
+add_executable(DICe_TestShape DICe_TestShape.cpp)
+target_link_libraries(DICe_TestShape ${DICE_LIBRARIES} dicecore diceutils)

@@ -56,23 +56,6 @@
 /// generic DICe classes and functions
 namespace DICe {
 
-/// deformation map
-struct Def_Map{
-  scalar_t u_;
-  scalar_t v_;
-  scalar_t t_;
-  scalar_t ex_;
-  scalar_t ey_;
-  scalar_t g_;
-  Def_Map():
-  u_(0.0),
-  v_(0.0),
-  t_(0.0),
-  ex_(0.0),
-  ey_(0.0),
-  g_(0.0){}
-};
-
 /// \class DICe::Subset
 /// Subsets are used to store temporary collections of pixels for comparison between the
 /// reference and deformed images. The data that is stored by a subset is a list of x and y

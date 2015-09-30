@@ -78,6 +78,26 @@ namespace DICe{
   /// generic scalar type
   typedef float scalar_t;
 #endif
+
+typedef long int integer_t;
+
+/// deformation map
+struct Def_Map{
+  scalar_t u_;
+  scalar_t v_;
+  scalar_t t_;
+  scalar_t ex_;
+  scalar_t ey_;
+  scalar_t g_;
+  Def_Map():
+    u_(0.0),
+    v_(0.0),
+    t_(0.0),
+    ex_(0.0),
+    ey_(0.0),
+    g_(0.0){}
+};
+
 /// parameters (all lower case)
 
 /// String parameter name
