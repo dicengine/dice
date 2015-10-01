@@ -67,6 +67,8 @@
 // includes fields below from 0 to (DICE_DEFORMATION_SIZE-1)
 #define DICE_DEFORMATION_SIZE 12
 
+#include <string>
+
 namespace DICe{
 
 /// basic types
@@ -806,7 +808,7 @@ const Correlation_Parameter compute_image_gradients_param(compute_image_gradient
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 42;
+const int_t num_valid_correlation_params = 43;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,

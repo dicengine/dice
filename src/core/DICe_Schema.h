@@ -110,8 +110,8 @@ public:
   /// \param params Correlation parameters
   Schema(const int_t img_width,
     const int_t img_height,
-    const Teuchos::ArrayRCP<const intensity_t> refRCP,
-    const Teuchos::ArrayRCP<const intensity_t> defRCP,
+    const Teuchos::ArrayRCP<intensity_t> refRCP,
+    const Teuchos::ArrayRCP<intensity_t> defRCP,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// \brief Constructor that takes already instantiated images as inputs
@@ -251,10 +251,7 @@ public:
 
   /// Returns the size of the strain window in pixels for the selected post_processor
   /// \param post_processor_index The index of the post processor to get the window size for
-  const int_t strain_window_size(const int_t post_processor_index)const{
-    assert(post_processors_.size()>post_processor_index);
-    return post_processors_[post_processor_index]->strain_window_size();
-  }
+  const int_t strain_window_size(const int_t post_processor_index)const;
 
   /// Returns the size of a square subset
   ///

@@ -52,11 +52,11 @@ Image::Image(const char * file_name,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
   offset_x_(0),
   offset_y_(0),
-  has_gradients_(false)
+  has_gradients_(false),
+  file_name_(file_name)
 {
-  const std::string string_file_name(file_name);
   const std::string rawi(".rawi");
-  bool is_rawi = string_file_name.find(rawi)!=std::string::npos;
+  bool is_rawi = file_name_.find(rawi)!=std::string::npos;
 
   if(is_rawi){
     utils::read_rawi_image_dimensions(file_name,width_,height_);
@@ -94,11 +94,11 @@ Image::Image(const char * file_name,
   offset_y_(offset_y),
   width_(width),
   height_(height),
-  has_gradients_(false)
+  has_gradients_(false),
+  file_name_(file_name)
 {
-  const std::string string_file_name(file_name);
   const std::string rawi(".rawi");
-  bool is_rawi = string_file_name.find(rawi)!=std::string::npos;
+  bool is_rawi = file_name_.find(rawi)!=std::string::npos;
   TEUCHOS_TEST_FOR_EXCEPTION(is_rawi,std::invalid_argument,
     "Error: .rawi files not yet supported for reading only a poriton of the image.");
 
@@ -128,7 +128,8 @@ Image::Image(intensity_t * intensities,
   height_(height),
   offset_x_(0),
   offset_y_(0),
-  has_gradients_(false)
+  has_gradients_(false),
+  file_name_("(from raw array)")
 {
   initialize_array_image(intensities);
   default_constructor_tasks(params);
@@ -143,7 +144,8 @@ Image::Image(const int_t width,
   offset_x_(0),
   offset_y_(0),
   intensity_rcp_(intensities),
-  has_gradients_(false)
+  has_gradients_(false),
+  file_name_("(from array)")
 {
   initialize_array_image(intensities.getRawPtr());
   default_constructor_tasks(params);

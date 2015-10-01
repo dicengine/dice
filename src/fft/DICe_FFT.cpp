@@ -255,8 +255,13 @@ image_fft(Teuchos::RCP<Image> image,
 
   real = Teuchos::ArrayRCP<scalar_t> (w*h,0.0);
   complex = Teuchos::ArrayRCP<scalar_t> (w*h,0.0);
-  for(int_t i=0;i<w*h;++i)
-    real[i] = (*image)(i);
+  for(int_t y=0;y<h;++y){
+    for(int_t x=0;x<w;++x){
+      real[y*w+x] = (*image)(x,y);
+    }
+  }
+//  for(int_t i=0;i<w*h;++i)
+//    real[i] = (*image)(i);
 
   kiss_fft_cpx * img_row = new kiss_fft_cpx[w];
   kiss_fft_cpx * img_col = new kiss_fft_cpx[h];

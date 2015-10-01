@@ -217,6 +217,11 @@ public:
   void gauss_filter(const bool use_hierarchical_parallelism=false,
     const int_t team_size=256);
 
+  /// returns the name of the file if available
+  std::string file_name()const{
+    return file_name_;
+  }
+
   //
   // Kokkos functors:
   //
@@ -276,6 +281,8 @@ private:
   int_t gauss_filter_mask_size_;
   /// half the gauss filter mask size
   int_t gauss_filter_half_mask_;
+  /// name of the file that was the source of this image
+  std::string file_name_;
 };
 
 }// End DICe Namespace

@@ -89,18 +89,18 @@ public:
     // create the refSubset as member data
     // check to see if the schema has multishapes:
     if((*this->schema_->conformal_subset_defs()).find(this->correlation_point_global_id_)!=(*this->schema_->conformal_subset_defs()).end()){
-      ref_subset_ = Teuchos::rcp(new Subset(static_cast<int_t>(local_field_value(COORDINATE_X)),
+      subset_ = Teuchos::rcp(new Subset(static_cast<int_t>(local_field_value(COORDINATE_X)),
         static_cast<int_t>(local_field_value(COORDINATE_Y)),
-        (*this->schema_->conformal_subset_defs()).find(this->correlation_point_global_id_)->second,this->schema_->ref_img()));
+        (*this->schema_->conformal_subset_defs()).find(this->correlation_point_global_id_)->second));
     }
     // otherwise build up the subsets from x/y and w/h:
     else{
       assert(schema_->subset_dim()>0);
-      ref_subset_ = Teuchos::rcp(new Subset(static_cast<int_t>(local_field_value(COORDINATE_X)),
+      subset_ = Teuchos::rcp(new Subset(static_cast<int_t>(local_field_value(COORDINATE_X)),
         static_cast<int_t>(local_field_value(COORDINATE_Y)),
-        schema_->subset_dim(),schema_->subset_dim(),this->schema_->ref_img()));
+        schema_->subset_dim(),schema_->subset_dim()));
     }
-    def_subset_ = Teuchos::rcp(new Subset(ref_subset_));
+    subset_->initialize(this->schema_->ref_img());
 }
 
   virtual ~Objective(){}
@@ -173,14 +173,9 @@ public:
   const scalar_t& local_field_value_nm1(const Field_Name name)const{
     return this->schema_->local_field_value_nm1(this->correlation_point_global_id_,name);}
 
-  /// Returns a pointer to the deformed subset
-  Teuchos::RCP<Subset> get_def_subset()const{
-    return def_subset_;
-  }
-
-  /// Returns a pointer to the reference subset
-  Teuchos::RCP<Subset> get_ref_subset()const{
-    return ref_subset_;
+  /// Returns a pointer to the subset
+  Teuchos::RCP<Subset> subset()const{
+    return subset_;
   }
 
   /// Returns the global id of the current correlation point
@@ -194,10 +189,8 @@ protected:
   Schema * schema_;
   /// Correlation point global id
   const int_t correlation_point_global_id_;
-  /// Pointer to the reference subset
-  Teuchos::RCP<Subset> ref_subset_;
-  /// Pointer to the deformed subset
-  Teuchos::RCP<Subset> def_subset_;
+  /// Pointer to the subset
+  Teuchos::RCP<Subset> subset_;
   /// Degree of freedom map. For most objectives, not all displacemen, rotation, etc. parameters are needed. This stores the index
   /// of only the degrees of freedom used in the current objective. The index maps the degree of freedom to the full set from DICe.h
   std::vector<Field_Name> dof_map_;

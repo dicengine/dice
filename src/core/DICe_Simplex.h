@@ -46,7 +46,6 @@
 #include <DICe.h>
 #include <DICe_Objective.h>
 
-
 namespace DICe {
 
 /// \class DICe::Simplex

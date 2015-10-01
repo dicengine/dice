@@ -213,21 +213,22 @@ VSG_Strain_Post_Processor::execute(){
   double *WORK = new double[LWORK];
   double *GWORK = new double[10*N];
   int *IWORK = new int[LWORK];
-  Teuchos::LAPACK<int_t,scalar_t> lapack;
+  // FIXME, LAPACK does not allow templating on long int or scalar_t...must use int and double
+  Teuchos::LAPACK<int,double> lapack;
 
   int_t num_neigh = 0;
   int_t neigh_id = 0;
   for(int_t subset=0;subset<data_num_points_;++subset){
     DEBUG_MSG("Processing subset " << subset << " of " << data_num_points_);
     num_neigh = num_neigh_[subset];
-    Teuchos::ArrayRCP<scalar_t> u_x(num_neigh,0.0);
-    Teuchos::ArrayRCP<scalar_t> u_y(num_neigh,0.0);
-    Teuchos::ArrayRCP<scalar_t> X_t_u_x(N,0.0);
-    Teuchos::ArrayRCP<scalar_t> X_t_u_y(N,0.0);
-    Teuchos::ArrayRCP<scalar_t> coeffs_x(N,0.0);
-    Teuchos::ArrayRCP<scalar_t> coeffs_y(N,0.0);
-    Teuchos::SerialDenseMatrix<int_t,scalar_t> X_t(N,num_neigh, true);
-    Teuchos::SerialDenseMatrix<int_t,scalar_t> X_t_X(N,N,true);
+    Teuchos::ArrayRCP<double> u_x(num_neigh,0.0);
+    Teuchos::ArrayRCP<double> u_y(num_neigh,0.0);
+    Teuchos::ArrayRCP<double> X_t_u_x(N,0.0);
+    Teuchos::ArrayRCP<double> X_t_u_y(N,0.0);
+    Teuchos::ArrayRCP<double> coeffs_x(N,0.0);
+    Teuchos::ArrayRCP<double> coeffs_y(N,0.0);
+    Teuchos::SerialDenseMatrix<int_t,double> X_t(N,num_neigh, true);
+    Teuchos::SerialDenseMatrix<int_t,double> X_t_X(N,N,true);
 
     // gather the displacements of the neighbors
     for(int_t j=0;j<num_neigh;++j){
@@ -255,18 +256,18 @@ VSG_Strain_Post_Processor::execute(){
     // Invert X^T*X
     // TODO: remove for performance?
     // compute the 1-norm of H:
-    std::vector<scalar_t> colTotals(X_t_X.numCols(),0.0);
+    std::vector<double> colTotals(X_t_X.numCols(),0.0);
     for(int_t i=0;i<X_t_X.numCols();++i){
       for(int_t j=0;j<X_t_X.numRows();++j){
         colTotals[i]+=std::abs(X_t_X(j,i));
       }
     }
-    scalar_t anorm = 0.0;
+    double anorm = 0.0;
     for(int_t i=0;i<X_t_X.numCols();++i){
       if(colTotals[i] > anorm) anorm = colTotals[i];
     }
     DEBUG_MSG("Subset " << subset << " anorm " << anorm);
-    scalar_t rcond=0.0; // reciporical condition number
+    double rcond=0.0; // reciporical condition number
     try
     {
       lapack.GETRF(X_t_X.numRows(),X_t_X.numCols(),X_t_X.values(),X_t_X.numRows(),IPIV,&INFO);
@@ -308,10 +309,10 @@ VSG_Strain_Post_Processor::execute(){
     }
 
     // update the field values
-    const scalar_t dudx = coeffs_x[1];
-    const scalar_t dudy = coeffs_x[2];
-    const scalar_t dvdx = coeffs_y[1];
-    const scalar_t dvdy = coeffs_y[2];
+    const double dudx = coeffs_x[1];
+    const double dudy = coeffs_x[2];
+    const double dvdx = coeffs_y[1];
+    const double dvdy = coeffs_y[2];
     field_value(subset,vsg_dudx) = dudx;
     field_value(subset,vsg_dudy) = dudy;
     field_value(subset,vsg_dvdx) = dvdx;

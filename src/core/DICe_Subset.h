@@ -44,6 +44,7 @@
 #define DICE_SUBSET_H
 
 #include <DICe.h>
+#include <DICe_Shape.h>
 #include <DICe_Image.h>
 #include <DICe_Kokkos.h>
 
@@ -85,6 +86,14 @@ public:
     const int_t cy,
     const int_t width,
     const int_t height);
+
+  /// constructor that takes a conformal subset def as the input
+  /// \param cx centroid x pixel location
+  /// \param cy centroid y pixel location
+  /// \param subset_def the definition of the subset areas
+  Subset(const int_t cx,
+    const int_t cy,
+    const Conformal_Area_Def & subset_def);
 
   /// virtual destructor
   virtual ~Subset(){};

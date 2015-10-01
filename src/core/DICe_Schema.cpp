@@ -77,11 +77,11 @@ Schema::Schema(const std::string & refName,
   // (the compute_image_gradients param is used by the image constructor)
   imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_);
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
-  ref_img_ = Teuchos::rcp( new Image(refName,imgParams));
-  prev_img_ = Teuchos::rcp( new Image(refName,imgParams));
+  ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
+  prev_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   // (the compute_image_gradients param is used by the image constructor)
   imgParams->set(DICe::compute_image_gradients,compute_def_gradients_);
-  def_img_ = Teuchos::rcp( new Image(defName,imgParams));
+  def_img_ = Teuchos::rcp( new Image(defName.c_str(),imgParams));
 
   const int_t width = ref_img_->width();
   const int_t height = ref_img_->height();
@@ -92,8 +92,8 @@ Schema::Schema(const std::string & refName,
 
 Schema::Schema(const int_t img_width,
   const int_t img_height,
-  const Teuchos::ArrayRCP<const intensity_t> refRCP,
-  const Teuchos::ArrayRCP<const intensity_t> defRCP,
+  const Teuchos::ArrayRCP<intensity_t> refRCP,
+  const Teuchos::ArrayRCP<intensity_t> defRCP,
   const Teuchos::RCP<Teuchos::ParameterList> & params)
 {
   default_constructor_tasks(params);
@@ -139,7 +139,7 @@ Schema::Schema(Teuchos::RCP<Image> ref_img,
 void
 Schema::set_def_image(const std::string & defName){ // TODO add option to pass params here
   DEBUG_MSG("Schema: Resetting the deformed image");
-  def_img_ = Teuchos::rcp( new Image(defName));
+  def_img_ = Teuchos::rcp( new Image(defName.c_str()));
 }
 
 void
@@ -161,7 +161,7 @@ Schema::set_def_image(const int_t img_width,
 void
 Schema::set_ref_image(const std::string & refName){ // TODO add option to pass params here
   DEBUG_MSG("Schema:  Resetting the reference image");
-  ref_img_ = Teuchos::rcp( new Image(refName));
+  ref_img_ = Teuchos::rcp( new Image(refName.c_str()));
 }
 
 void
@@ -1046,380 +1046,383 @@ Schema::execute_correlation(){
 
 void
 Schema::subset_evolution_routine(Teuchos::RCP<Objective> obj){
-  const int_t subset_gid = obj->correlation_point_global_id();
-  const int_t proc_id = comm_->get_rank();
-  // turn on objective regularization to deal with pixels getting turned on and off
-  DEBUG_MSG("Subset " << subset_gid << " turing on objective regularization automatically, regardless of if it's off in the user input");
-  use_objective_regularization_ = true;
-
-  assert(get_local_id(subset_gid)!=-1 && "Error: subset id is not local to this process.");
-  DEBUG_MSG("[PROC " << proc_id << "] SUBSET " << subset_gid << " (" << local_field_value(subset_gid,DICe::COORDINATE_X) <<
-    "," << local_field_value(subset_gid,DICe::COORDINATE_Y) << ")");
-
-  // determine if the subset is a blocker and if so, force it to use simplex method:
-  // also force simplex if it is a blocked subset (not enough speckles to use grad-based method)
-  bool is_blocked = false;
-  bool is_a_blocker = false;
-  scalar_t override_tol = -1.0;
-  if(obstructing_subset_ids_->find(subset_gid)!=obstructing_subset_ids_->end()){
-    if(obstructing_subset_ids_->find(subset_gid)->second.size()>0){
-      is_blocked = true;
-      DEBUG_MSG("[PROC " << proc_id << "] SUBSET " << subset_gid << " is a blocker or blocked subset, forcing simplex method for this subset.");
-    }
-  }
-  typename std::map<int_t,std::vector<int_t> >::iterator blk_it = obstructing_subset_ids_->begin();
-  typename std::map<int_t,std::vector<int_t> >::iterator blk_end = obstructing_subset_ids_->end();
-  for(;blk_it!=blk_end;++blk_it){
-    std::vector<int_t> * obst_ids = &blk_it->second;
-    for(int_t i=0;i<obst_ids->size();++i){
-      if((*obst_ids)[i]==subset_gid){
-        is_a_blocker = true;
-        DEBUG_MSG("[PROC " << proc_id << "] SUBSET " << subset_gid << " is a blocking subset, forcing simplex method for this subset.");
-        override_tol = 0.001; // TODO move this to the input file
-      }
-    }
-  }
-
-  Teuchos::RCP<std::vector<scalar_t> > deformation = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-  const scalar_t prev_u = local_field_value(subset_gid,DICe::DISPLACEMENT_X);
-  const scalar_t prev_v = local_field_value(subset_gid,DICe::DISPLACEMENT_Y);
-  const scalar_t prev_t = local_field_value(subset_gid,DICe::ROTATION_Z);
-
-  bool search_to_initialize = false;
-  // check if the previous step failed
-  if(local_field_value(subset_gid,SIGMA) == -1.0){
-
-    local_field_value(subset_gid,SIGMA) = -1.0;
-    local_field_value(subset_gid,MATCH) = -1.0;
-    local_field_value(subset_gid,GAMMA) = -1.0;
-    local_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(INITIALIZE_FAILED);
-    local_field_value(subset_gid,ITERATIONS) = 0;
-    return;
-//    // search first rather than project initial guess:
-//    search_to_initialize = true;
+//  const int_t subset_gid = obj->correlation_point_global_id();
+//  const int_t proc_id = comm_->get_rank();
+//  // turn on objective regularization to deal with pixels getting turned on and off
+//  DEBUG_MSG("Subset " << subset_gid << " turing on objective regularization automatically, regardless of if it's off in the user input");
+//  use_objective_regularization_ = true;
 //
-//    for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i) (*deformation)[i] = 0.0;
-//    (*deformation)[DICe::DISPLACEMENT_X] = prev_u;
-//    (*deformation)[DICe::DISPLACEMENT_Y] = prev_v;
-//    (*deformation)[DICe::ROTATION_Z] = prev_t;
-//    Real init_gamma = 1000.0;
-//    obj->search(deformation, 1, init_gamma);
-//    DEBUG_MSG("Subset " << subset_gid << " initialization gamma " << init_gamma);
-//    if(init_gamma > 0.6){
-//      assert(false);
-//      local_field_value(subset_gid,SIGMA) = -1.0;
-//      local_field_value(subset_gid,MATCH) = -1.0;
-//      local_field_value(subset_gid,GAMMA) = -1.0;
-//      local_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(INITIALIZE_FAILED);
-//      local_field_value(subset_gid,ITERATIONS) = 0;
-//      return;
+//  assert(get_local_id(subset_gid)!=-1 && "Error: subset id is not local to this process.");
+//  DEBUG_MSG("[PROC " << proc_id << "] SUBSET " << subset_gid << " (" << local_field_value(subset_gid,DICe::COORDINATE_X) <<
+//    "," << local_field_value(subset_gid,DICe::COORDINATE_Y) << ")");
+//
+//  // determine if the subset is a blocker and if so, force it to use simplex method:
+//  // also force simplex if it is a blocked subset (not enough speckles to use grad-based method)
+//  bool is_blocked = false;
+//  bool is_a_blocker = false;
+//  scalar_t override_tol = -1.0;
+//  if(obstructing_subset_ids_->find(subset_gid)!=obstructing_subset_ids_->end()){
+//    if(obstructing_subset_ids_->find(subset_gid)->second.size()>0){
+//      is_blocked = true;
+//      DEBUG_MSG("[PROC " << proc_id << "] SUBSET " << subset_gid << " is a blocker or blocked subset, forcing simplex method for this subset.");
+//    }
+//  }
+//  typename std::map<int_t,std::vector<int_t> >::iterator blk_it = obstructing_subset_ids_->begin();
+//  typename std::map<int_t,std::vector<int_t> >::iterator blk_end = obstructing_subset_ids_->end();
+//  for(;blk_it!=blk_end;++blk_it){
+//    std::vector<int_t> * obst_ids = &blk_it->second;
+//    for(int_t i=0;i<obst_ids->size();++i){
+//      if((*obst_ids)[i]==subset_gid){
+//        is_a_blocker = true;
+//        DEBUG_MSG("[PROC " << proc_id << "] SUBSET " << subset_gid << " is a blocking subset, forcing simplex method for this subset.");
+//        override_tol = 0.001; // TODO move this to the input file
+//      }
+//    }
+//  }
+//
+//  Teuchos::RCP<std::vector<scalar_t> > deformation = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+//  const scalar_t prev_u = local_field_value(subset_gid,DICe::DISPLACEMENT_X);
+//  const scalar_t prev_v = local_field_value(subset_gid,DICe::DISPLACEMENT_Y);
+//  const scalar_t prev_t = local_field_value(subset_gid,DICe::ROTATION_Z);
+//
+//  bool search_to_initialize = false;
+//  // check if the previous step failed
+//  if(local_field_value(subset_gid,SIGMA) == -1.0){
+//
+//    local_field_value(subset_gid,SIGMA) = -1.0;
+//    local_field_value(subset_gid,MATCH) = -1.0;
+//    local_field_value(subset_gid,GAMMA) = -1.0;
+//    local_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(INITIALIZE_FAILED);
+//    local_field_value(subset_gid,ITERATIONS) = 0;
+//    return;
+////    // search first rather than project initial guess:
+////    search_to_initialize = true;
+////
+////    for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i) (*deformation)[i] = 0.0;
+////    (*deformation)[DICe::DISPLACEMENT_X] = prev_u;
+////    (*deformation)[DICe::DISPLACEMENT_Y] = prev_v;
+////    (*deformation)[DICe::ROTATION_Z] = prev_t;
+////    Real init_gamma = 1000.0;
+////    obj->search(deformation, 1, init_gamma);
+////    DEBUG_MSG("Subset " << subset_gid << " initialization gamma " << init_gamma);
+////    if(init_gamma > 0.6){
+////      assert(false);
+////      local_field_value(subset_gid,SIGMA) = -1.0;
+////      local_field_value(subset_gid,MATCH) = -1.0;
+////      local_field_value(subset_gid,GAMMA) = -1.0;
+////      local_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(INITIALIZE_FAILED);
+////      local_field_value(subset_gid,ITERATIONS) = 0;
+////      return;
+////    }
+////    else{
+////      DEBUG_MSG("Subset " << subset_gid << " resetting the active flags");
+////      obj->get_ref_subset()->reset_is_deactivated_this_step();
+////      // initialize the def subset with the new deformation:
+////      obj->get_def_subset()->initialize(deformation,interpolation_method_,def_img_);
+////    }
+//  }
+//
+//  Status_Flag corr_status = CORRELATION_FAILED;
+//  int_t num_global_iterations = 0;
+//  int_t num_iterations = 0;
+//
+//  const int_t max_global_iterations = max_evolution_iterations_;
+//
+//  Teuchos::ArrayRCP<bool> old_is_active(obj->get_ref_subset()->num_pixels());
+//  Teuchos::ArrayRCP<bool> old_is_deactivated_this_step(obj->get_ref_subset()->num_pixels());
+//
+//  scalar_t ls_x = 0.0, ls_y=0.0, ls_t=0.0;
+//  // least squares fit of the previous displacements (goes back up to ten steps to fit if available)
+//  obj->get_ref_subset()->predict_next_step(ls_x,ls_y,ls_t);
+//  DEBUG_MSG("Subset " << subset_gid << " multistep prediction u " << ls_x << " v " << ls_y << " theta " << ls_t);
+//  // grab the previous solution
+//  if(!search_to_initialize){
+//    if(projection_method_==MULTISTEP){
+//      (*deformation)[DICe::DISPLACEMENT_X] = ls_x;
+//      (*deformation)[DICe::DISPLACEMENT_Y] = ls_y;
+//      (*deformation)[DICe::ROTATION_Z] = ls_t;
+//    }
+//    else if(projection_method_==DISPLACEMENT_BASED){
+//      (*deformation)[DICe::DISPLACEMENT_X] = prev_u;
+//      (*deformation)[DICe::DISPLACEMENT_Y] = prev_v;
+//      (*deformation)[DICe::ROTATION_Z] = prev_t;
+//    }
+//    else
+//      assert(false && "Invalid projection method for Schema::subset_evolution_routine()");
+//  }
+//
+//  DEBUG_MSG("Subset " << subset_gid << " init. with values: u " << (*deformation)[DICe::DISPLACEMENT_X]
+//         << " v " << (*deformation)[DICe::DISPLACEMENT_Y]
+//         << " theta " << (*deformation)[DICe::ROTATION_Z]
+//         << " e_x " << (*deformation)[DICe::NORMAL_STRAIN_X]
+//         << " e_y " << (*deformation)[DICe::NORMAL_STRAIN_Y]
+//         << " g_xy " << (*deformation)[DICe::SHEAR_STRAIN_XY]);
+//
+//  // keep track of the last iterative solution to see if it converged
+//  scalar_t global_it_u = 0.0;
+//  scalar_t global_it_v = 0.0;
+//  scalar_t global_it_t = 0.0;
+//
+//  // GLOBAL LOOP
+//
+//  int_t global_it = 0;
+//  bool gamma_pass = true;
+//  bool max_iterations_pass = true;
+//  bool hard_restart = false;
+//  bool inner_convergence_pass = false;
+//  for(;global_it<max_global_iterations;++global_it){
+//    DEBUG_MSG("Subset " << subset_gid << " ** Global iteration: " << global_it << " **");
+//
+//    // SET ACTIVE FLAGS
+//
+//    // make a copy of all the active flags to see if any change
+//    DEBUG_MSG("Subset " << subset_gid << " -> making a copy of active flags");
+//    for(int_t i=0;i<obj->get_ref_subset()->num_pixels();++i){
+//      old_is_active[i] = obj->get_ref_subset()->is_active(i);
+//      old_is_deactivated_this_step[i] = obj->get_ref_subset()->is_deactivated_this_step(i);
+//    }
+//    DEBUG_MSG("Subset " << subset_gid << " -> resetting the active flags");
+//    obj->get_ref_subset()->reset_is_deactivated_this_step();
+//    DEBUG_MSG("Subset " << subset_gid << " -> obstruction test");
+//    obj->get_ref_subset()->turn_off_obstructed_pixels(deformation);
+//    // TEST FOR CHANGES TO THE ACTIVE PIXELS
+//
+//    DEBUG_MSG("Subset " << subset_gid << " -> testing for active flag changes since last step");
+//    bool test_failed = false;
+//    for(int_t i=0;i<obj->get_ref_subset()->num_pixels();++i){
+//      if(old_is_active[i] != obj->get_ref_subset()->is_active(i)){
+//        test_failed = true;
+//      }
+//      if(old_is_deactivated_this_step[i] != obj->get_ref_subset()->is_deactivated_this_step(i)){
+//        test_failed = true;
+//      }
+//    }
+//    //////////////////////////////////
+//    if((!test_failed||inner_convergence_pass)&&global_it>=1&&gamma_pass&&max_iterations_pass){
+//      DEBUG_MSG("Subset " << subset_gid << " ***** EVOLUTION LOOP CONVERGED *****");
+//      break;
+//    }
+//    //////////////////////////////////
+//    if(global_it>=1) DEBUG_MSG("Subset " << subset_gid << " -> active flags for some pixels have changed since last iteration");
+//
+//    // SOLVE
+//
+//    DEBUG_MSG("Subset " << subset_gid << " -> attempting to solve");
+//    num_iterations = -1;
+//
+//    try{
+//      if(optimization_method_==SIMPLEX || is_a_blocker || is_blocked){
+//       corr_status = obj->computeUpdateRobust(deformation,num_iterations,override_tol);
+//      }
+//      else if(optimization_method_==GRADIENT_BASED || optimization_method_==GRADIENT_BASED_THEN_SIMPLEX){
+//        corr_status = obj->computeUpdateFast(deformation,num_iterations);
+//      }
+//      else
+//        assert(false && "Invalid optimization method for Schema::subset_evolution_routine()"
+//            " (valid methods are: GRADIENT_BASED, SIMPLEX or GRADIENT_BASED_THEN_SIMPLEX"
+//            "the simplex methods and mixed methods haven't been implemented for this routine");
+//    }
+//    catch (std::logic_error &err) { //a non-graceful exception occurred
+//      corr_status = CORRELATION_FAILED_BY_EXCEPTION;
+//    };
+//    max_iterations_pass = corr_status!=MAX_ITERATIONS_REACHED;
+//    DEBUG_MSG("Subset " << subset_gid << " corr_status " << corr_status);
+//
+//    // TEST FOR CONVERGENCE OF U V THETA (this prevents flip-flopping between two close values, important for image blur case):
+//
+//    if(std::abs(global_it_u - (*deformation)[DISPLACEMENT_X])<0.1 &&
+//        std::abs(global_it_v - (*deformation)[DISPLACEMENT_Y])<0.1 &&
+//        std::abs(global_it_t - (*deformation)[ROTATION_Z])<0.05){
+//      DEBUG_MSG("Subset " << subset_gid << " ** convergence of evolution loop detected.");
+//      inner_convergence_pass = true;
+//    }
+//    global_it_u = (*deformation)[DISPLACEMENT_X];
+//    global_it_v = (*deformation)[DISPLACEMENT_Y];
+//    global_it_t = (*deformation)[ROTATION_Z];
+//
+//    // TEST ON GAMMA
+//
+//    const scalar_t gamma = obj->gamma(deformation);
+//    DEBUG_MSG("Subset " << subset_gid << " evolution iteration GAMMA " << gamma);
+//    if(gamma >=0.8){ // detecting decorrelation
+//      DEBUG_MSG("Subset " << subset_gid << " ** gamma failed.");
+//      gamma_pass = false;
 //    }
 //    else{
+//      gamma_pass = true;
+//    }
+//
+//    // test for jump failure (too high displacement or rotation from last step due to subset getting lost)
+//    bool jump_pass = true;
+//    const scalar_t diffX = ((*deformation)[DISPLACEMENT_X] - prev_u);
+//    const scalar_t diffY = ((*deformation)[DISPLACEMENT_Y] - prev_v);
+//    const scalar_t diffT = ((*deformation)[ROTATION_Z] - prev_t);
+//    DEBUG_MSG("Subset " << subset_gid << " DIFF X " << diffX << " DIFF Y " << diffY << " DIFF T " << diffT);
+//    if(std::abs(diffX) > disp_jump_tol_ || std::abs(diffY) > disp_jump_tol_ || std::abs(diffT) > theta_jump_tol_)
+//      jump_pass = false;
+//    DEBUG_MSG("Subset " << subset_gid << " jump pass: " << jump_pass);
+//
+//    DEBUG_MSG("Subset " << subset_gid << " ** End of global iteration: " << global_it << " **");
+//    DEBUG_MSG("Subset " << subset_gid << " gamma pass: " << gamma_pass << " max_iterations_pass " <<
+//      max_iterations_pass << " jump pass " << jump_pass <<
+//      " hard restart " << hard_restart << " inner_convrgence_pass " << inner_convergence_pass);
+//
+//    // catch complete failures due to max iterations reached or if gamma is still failing at the end of the evolution iteration loop
+//    if(!hard_restart && global_it==max_global_iterations-1 && (!gamma_pass || !max_iterations_pass || !jump_pass)){
+//      hard_restart = true;
+//      DEBUG_MSG("Subset " << subset_gid << " Gamma still failing after max iterations, "
+//          "conducting localized search around the last converged solution and re-initializing:");
+//      for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i) (*deformation)[i] = 0.0;
+//      (*deformation)[DICe::DISPLACEMENT_X] = prev_u;
+//      (*deformation)[DICe::DISPLACEMENT_Y] = prev_v;
+//      (*deformation)[DICe::ROTATION_Z] = prev_t;
+//      scalar_t init_gamma = 1000.0;
+//      obj->search(deformation, 1, init_gamma);
 //      DEBUG_MSG("Subset " << subset_gid << " resetting the active flags");
 //      obj->get_ref_subset()->reset_is_deactivated_this_step();
 //      // initialize the def subset with the new deformation:
 //      obj->get_def_subset()->initialize(deformation,interpolation_method_,def_img_);
+//      global_it = -1;
 //    }
-  }
-
-  Status_Flag corr_status = CORRELATION_FAILED;
-  int_t num_global_iterations = 0;
-  int_t num_iterations = 0;
-
-  const int_t max_global_iterations = max_evolution_iterations_;
-
-  Teuchos::ArrayRCP<bool> old_is_active(obj->get_ref_subset()->num_pixels());
-  Teuchos::ArrayRCP<bool> old_is_deactivated_this_step(obj->get_ref_subset()->num_pixels());
-
-  scalar_t ls_x = 0.0, ls_y=0.0, ls_t=0.0;
-  // least squares fit of the previous displacements (goes back up to ten steps to fit if available)
-  obj->get_ref_subset()->predict_next_step(ls_x,ls_y,ls_t);
-  DEBUG_MSG("Subset " << subset_gid << " multistep prediction u " << ls_x << " v " << ls_y << " theta " << ls_t);
-  // grab the previous solution
-  if(!search_to_initialize){
-    if(projection_method_==MULTISTEP){
-      (*deformation)[DICe::DISPLACEMENT_X] = ls_x;
-      (*deformation)[DICe::DISPLACEMENT_Y] = ls_y;
-      (*deformation)[DICe::ROTATION_Z] = ls_t;
-    }
-    else if(projection_method_==DISPLACEMENT_BASED){
-      (*deformation)[DICe::DISPLACEMENT_X] = prev_u;
-      (*deformation)[DICe::DISPLACEMENT_Y] = prev_v;
-      (*deformation)[DICe::ROTATION_Z] = prev_t;
-    }
-    else
-      assert(false && "Invalid projection method for Schema::subset_evolution_routine()");
-  }
-
-  DEBUG_MSG("Subset " << subset_gid << " init. with values: u " << (*deformation)[DICe::DISPLACEMENT_X]
-         << " v " << (*deformation)[DICe::DISPLACEMENT_Y]
-         << " theta " << (*deformation)[DICe::ROTATION_Z]
-         << " e_x " << (*deformation)[DICe::NORMAL_STRAIN_X]
-         << " e_y " << (*deformation)[DICe::NORMAL_STRAIN_Y]
-         << " g_xy " << (*deformation)[DICe::SHEAR_STRAIN_XY]);
-
-  // keep track of the last iterative solution to see if it converged
-  scalar_t global_it_u = 0.0;
-  scalar_t global_it_v = 0.0;
-  scalar_t global_it_t = 0.0;
-
-  // GLOBAL LOOP
-
-  int_t global_it = 0;
-  bool gamma_pass = true;
-  bool max_iterations_pass = true;
-  bool hard_restart = false;
-  bool inner_convergence_pass = false;
-  for(;global_it<max_global_iterations;++global_it){
-    DEBUG_MSG("Subset " << subset_gid << " ** Global iteration: " << global_it << " **");
-
-    // SET ACTIVE FLAGS
-
-    // make a copy of all the active flags to see if any change
-    DEBUG_MSG("Subset " << subset_gid << " -> making a copy of active flags");
-    for(int_t i=0;i<obj->get_ref_subset()->num_pixels();++i){
-      old_is_active[i] = obj->get_ref_subset()->is_active(i);
-      old_is_deactivated_this_step[i] = obj->get_ref_subset()->is_deactivated_this_step(i);
-    }
-    DEBUG_MSG("Subset " << subset_gid << " -> resetting the active flags");
-    obj->get_ref_subset()->reset_is_deactivated_this_step();
-    DEBUG_MSG("Subset " << subset_gid << " -> obstruction test");
-    obj->get_ref_subset()->turn_off_obstructed_pixels(deformation);
-    // TEST FOR CHANGES TO THE ACTIVE PIXELS
-
-    DEBUG_MSG("Subset " << subset_gid << " -> testing for active flag changes since last step");
-    bool test_failed = false;
-    for(int_t i=0;i<obj->get_ref_subset()->num_pixels();++i){
-      if(old_is_active[i] != obj->get_ref_subset()->is_active(i)){
-        test_failed = true;
-      }
-      if(old_is_deactivated_this_step[i] != obj->get_ref_subset()->is_deactivated_this_step(i)){
-        test_failed = true;
-      }
-    }
-    //////////////////////////////////
-    if((!test_failed||inner_convergence_pass)&&global_it>=1&&gamma_pass&&max_iterations_pass){
-      DEBUG_MSG("Subset " << subset_gid << " ***** EVOLUTION LOOP CONVERGED *****");
-      break;
-    }
-    //////////////////////////////////
-    if(global_it>=1) DEBUG_MSG("Subset " << subset_gid << " -> active flags for some pixels have changed since last iteration");
-
-    // SOLVE
-
-    DEBUG_MSG("Subset " << subset_gid << " -> attempting to solve");
-    num_iterations = -1;
-
-    try{
-      if(optimization_method_==SIMPLEX || is_a_blocker || is_blocked){
-       corr_status = obj->computeUpdateRobust(deformation,num_iterations,override_tol);
-      }
-      else if(optimization_method_==GRADIENT_BASED || optimization_method_==GRADIENT_BASED_THEN_SIMPLEX){
-        corr_status = obj->computeUpdateFast(deformation,num_iterations);
-      }
-      else
-        assert(false && "Invalid optimization method for Schema::subset_evolution_routine()"
-            " (valid methods are: GRADIENT_BASED, SIMPLEX or GRADIENT_BASED_THEN_SIMPLEX"
-            "the simplex methods and mixed methods haven't been implemented for this routine");
-    }
-    catch (std::logic_error &err) { //a non-graceful exception occurred
-      corr_status = CORRELATION_FAILED_BY_EXCEPTION;
-    };
-    max_iterations_pass = corr_status!=MAX_ITERATIONS_REACHED;
-    DEBUG_MSG("Subset " << subset_gid << " corr_status " << corr_status);
-
-    // TEST FOR CONVERGENCE OF U V THETA (this prevents flip-flopping between two close values, important for image blur case):
-
-    if(std::abs(global_it_u - (*deformation)[DISPLACEMENT_X])<0.1 &&
-        std::abs(global_it_v - (*deformation)[DISPLACEMENT_Y])<0.1 &&
-        std::abs(global_it_t - (*deformation)[ROTATION_Z])<0.05){
-      DEBUG_MSG("Subset " << subset_gid << " ** convergence of evolution loop detected.");
-      inner_convergence_pass = true;
-    }
-    global_it_u = (*deformation)[DISPLACEMENT_X];
-    global_it_v = (*deformation)[DISPLACEMENT_Y];
-    global_it_t = (*deformation)[ROTATION_Z];
-
-    // TEST ON GAMMA
-
-    const scalar_t gamma = obj->gamma(deformation);
-    DEBUG_MSG("Subset " << subset_gid << " evolution iteration GAMMA " << gamma);
-    if(gamma >=0.8){ // detecting decorrelation
-      DEBUG_MSG("Subset " << subset_gid << " ** gamma failed.");
-      gamma_pass = false;
-    }
-    else{
-      gamma_pass = true;
-    }
-
-    // test for jump failure (too high displacement or rotation from last step due to subset getting lost)
-    bool jump_pass = true;
-    const scalar_t diffX = ((*deformation)[DISPLACEMENT_X] - prev_u);
-    const scalar_t diffY = ((*deformation)[DISPLACEMENT_Y] - prev_v);
-    const scalar_t diffT = ((*deformation)[ROTATION_Z] - prev_t);
-    DEBUG_MSG("Subset " << subset_gid << " DIFF X " << diffX << " DIFF Y " << diffY << " DIFF T " << diffT);
-    if(std::abs(diffX) > disp_jump_tol_ || std::abs(diffY) > disp_jump_tol_ || std::abs(diffT) > theta_jump_tol_)
-      jump_pass = false;
-    DEBUG_MSG("Subset " << subset_gid << " jump pass: " << jump_pass);
-
-    DEBUG_MSG("Subset " << subset_gid << " ** End of global iteration: " << global_it << " **");
-    DEBUG_MSG("Subset " << subset_gid << " gamma pass: " << gamma_pass << " max_iterations_pass " <<
-      max_iterations_pass << " jump pass " << jump_pass <<
-      " hard restart " << hard_restart << " inner_convrgence_pass " << inner_convergence_pass);
-
-    // catch complete failures due to max iterations reached or if gamma is still failing at the end of the evolution iteration loop
-    if(!hard_restart && global_it==max_global_iterations-1 && (!gamma_pass || !max_iterations_pass || !jump_pass)){
-      hard_restart = true;
-      DEBUG_MSG("Subset " << subset_gid << " Gamma still failing after max iterations, "
-          "conducting localized search around the last converged solution and re-initializing:");
-      for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i) (*deformation)[i] = 0.0;
-      (*deformation)[DICe::DISPLACEMENT_X] = prev_u;
-      (*deformation)[DICe::DISPLACEMENT_Y] = prev_v;
-      (*deformation)[DICe::ROTATION_Z] = prev_t;
-      scalar_t init_gamma = 1000.0;
-      obj->search(deformation, 1, init_gamma);
-      DEBUG_MSG("Subset " << subset_gid << " resetting the active flags");
-      obj->get_ref_subset()->reset_is_deactivated_this_step();
-      // initialize the def subset with the new deformation:
-      obj->get_def_subset()->initialize(deformation,interpolation_method_,def_img_);
-      global_it = -1;
-    }
-  }  // END GLOBAL LOOP
-
-  if(global_it>=max_global_iterations){
-    DEBUG_MSG("Subset " << subset_gid << " **** WARNING: max global iterations (" << max_global_iterations <<
-      ") reached for evolution loop for subset " << subset_gid << " global iteration " << global_it);
-
-    if(optimization_method_==GRADIENT_BASED_THEN_SIMPLEX){
-      DEBUG_MSG("Subset " << subset_gid << " Searching then switching to simplex method and moving on ");
-      for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i) (*deformation)[i] = 0.0;
-      (*deformation)[DICe::DISPLACEMENT_X] = prev_u;
-      (*deformation)[DICe::DISPLACEMENT_Y] = prev_v;
-      (*deformation)[DICe::ROTATION_Z] = prev_t;
-      scalar_t init_gamma = 1000.0;
-      const Status_Flag search_flag = obj->search(deformation, 1, init_gamma);
-      const bool init_gamma_fail = init_gamma > 0.8;
-      bool simplex_failed = true;
-      if(search_flag==SEARCH_SUCCESSFUL){
-        corr_status = obj->computeUpdateRobust(deformation,num_iterations);
-        simplex_failed = corr_status==CORRELATION_FAILED;
-      }
-      if(init_gamma_fail||simplex_failed){
-        local_field_value(subset_gid,SIGMA) = -1.0;
-        local_field_value(subset_gid,MATCH) = -1.0;
-        local_field_value(subset_gid,GAMMA) = -1.0;
-        local_field_value(subset_gid,DISPLACEMENT_X) = (*deformation)[DICe::DISPLACEMENT_X];
-        local_field_value(subset_gid,DISPLACEMENT_Y) = (*deformation)[DICe::DISPLACEMENT_Y];
-        local_field_value(subset_gid,ROTATION_Z) = (*deformation)[DICe::ROTATION_Z];
-        local_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(MAX_GLOBAL_ITERATIONS_REACHED_IN_EVOLUTION_LOOP);
-        local_field_value(subset_gid,ITERATIONS) = num_iterations;
-        return;
-      }
-    }
-    else{
-      local_field_value(subset_gid,SIGMA) = -1.0;
-      local_field_value(subset_gid,MATCH) = -1.0;
-      local_field_value(subset_gid,GAMMA) = -1.0;
-      local_field_value(subset_gid,DISPLACEMENT_X) = (*deformation)[DICe::DISPLACEMENT_X];
-      local_field_value(subset_gid,DISPLACEMENT_Y) = (*deformation)[DICe::DISPLACEMENT_Y];
-      local_field_value(subset_gid,ROTATION_Z) = (*deformation)[DICe::ROTATION_Z];
-      local_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(MAX_GLOBAL_ITERATIONS_REACHED_IN_EVOLUTION_LOOP);
-      local_field_value(subset_gid,ITERATIONS) = num_iterations;
-      return;
-    }
-  }
-  // SUCCESS
-
-  const scalar_t gamma = obj->gamma(deformation);
-  DEBUG_MSG("Subset " << subset_gid << " solution gamma " << gamma);
-  const scalar_t sigma = obj->sigma(deformation);
-
-  DEBUG_MSG("Subset " << subset_gid << " saving previous fields for u v and theta");
-  obj->get_ref_subset()->save_previous_fields(image_frame_,(*deformation)[DISPLACEMENT_X],
-    (*deformation)[DISPLACEMENT_Y],(*deformation)[DICe::ROTATION_Z]);
-
-  // test if the prediction has started to diverge:
-  DEBUG_MSG("Subset " << subset_gid << " detecting prediction divergence");
-  obj->get_ref_subset()->detect_prediction_divergence((*deformation)[DISPLACEMENT_X],
-    (*deformation)[DISPLACEMENT_Y],(*deformation)[DICe::ROTATION_Z],ls_x,ls_y,ls_t);
-
-  // TODO this may not be necessary
-  save_off_fields(subset_gid);
-
-  //obj->get_ref_subset()->save_converged_def_subset(obj->get_def_subset());
-
-  local_field_value(subset_gid,DISPLACEMENT_X) = (*deformation)[DISPLACEMENT_X];
-  local_field_value(subset_gid,DISPLACEMENT_Y) = (*deformation)[DISPLACEMENT_Y];
-  local_field_value(subset_gid,NORMAL_STRAIN_X) = (*deformation)[NORMAL_STRAIN_X];
-  local_field_value(subset_gid,NORMAL_STRAIN_Y) = (*deformation)[NORMAL_STRAIN_Y];
-  local_field_value(subset_gid,SHEAR_STRAIN_XY) = (*deformation)[SHEAR_STRAIN_XY];
-  local_field_value(subset_gid,ROTATION_Z) = (*deformation)[DICe::ROTATION_Z];
-  local_field_value(subset_gid,SIGMA) = sigma;
-  local_field_value(subset_gid,MATCH) = 0.0; // 0 means data is successful
-  local_field_value(subset_gid,GAMMA) = gamma;
-  local_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(corr_status);
-  local_field_value(subset_gid,ITERATIONS) = num_iterations;
-
-  if(output_deformed_subset_intensity_images_){
-#ifndef DICE_DISABLE_BOOST_FILESYSTEM
-    DEBUG_MSG("[PROC " << proc_id << "] Attempting to create directory : ./deformed_subset_intensities/");
-    std::string dirStr = "./deformed_subset_intensities/";
-    boost::filesystem::path dir(dirStr);
-    if(boost::filesystem::create_directory(dir)) {
-      DEBUG_MSG("[PROC " << proc_id << "] Directory successfully created");
-    }
-    int_t num_zeros = 0;
-    if(num_image_frames_>0){
-      int_t num_digits_total = 0;
-      int_t num_digits_image = 0;
-      int_t decrement_total = num_image_frames_;
-      int_t decrement_image = image_frame_;
-      while (decrement_total){decrement_total /= 10; num_digits_total++;}
-      if(image_frame_==0) num_digits_image = 1;
-      else
-        while (decrement_image){decrement_image /= 10; num_digits_image++;}
-      num_zeros = num_digits_total - num_digits_image;
-    }
-    std::stringstream ss;
-    ss << dirStr << "deformedSubset_" << subset_gid << "_";
-    for(int_t i=0;i<num_zeros;++i)
-      ss << "0";
-    ss << image_frame_;
-    obj->get_def_subset()->write(ss.str());
-#endif
-  }
-  if(output_evolved_subset_images_){
-#ifndef DICE_DISABLE_BOOST_FILESYSTEM
-    DEBUG_MSG("[PROC " << proc_id << "] Attempting to create directory : ./evolved_subsets/");
-    std::string dirStr = "./evolved_subsets/";
-    boost::filesystem::path dir(dirStr);
-    if(boost::filesystem::create_directory(dir)) {
-      DEBUG_MSG("[PROC " << proc_id << "[ Directory successfully created");
-    }
-    int_t num_zeros = 0;
-    if(num_image_frames_>0){
-      int_t num_digits_total = 0;
-      int_t num_digits_image = 0;
-      int_t decrement_total = num_image_frames_;
-      int_t decrement_image = image_frame_;
-      while (decrement_total){decrement_total /= 10; num_digits_total++;}
-      if(image_frame_==0) num_digits_image = 1;
-      else
-        while (decrement_image){decrement_image /= 10; num_digits_image++;}
-      num_zeros = num_digits_total - num_digits_image;
-    }
-    std::stringstream ss;
-    ss << dirStr << "evolvedSubset_" << subset_gid << "_";
-    for(int_t i=0;i<num_zeros;++i)
-      ss << "0";
-    ss << image_frame_;
-    obj->get_ref_subset()->write(ss.str());
-#endif
-  }
+//  }  // END GLOBAL LOOP
+//
+//  if(global_it>=max_global_iterations){
+//    DEBUG_MSG("Subset " << subset_gid << " **** WARNING: max global iterations (" << max_global_iterations <<
+//      ") reached for evolution loop for subset " << subset_gid << " global iteration " << global_it);
+//
+//    if(optimization_method_==GRADIENT_BASED_THEN_SIMPLEX){
+//      DEBUG_MSG("Subset " << subset_gid << " Searching then switching to simplex method and moving on ");
+//      for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i) (*deformation)[i] = 0.0;
+//      (*deformation)[DICe::DISPLACEMENT_X] = prev_u;
+//      (*deformation)[DICe::DISPLACEMENT_Y] = prev_v;
+//      (*deformation)[DICe::ROTATION_Z] = prev_t;
+//      scalar_t init_gamma = 1000.0;
+//      const Status_Flag search_flag = obj->search(deformation, 1, init_gamma);
+//      const bool init_gamma_fail = init_gamma > 0.8;
+//      bool simplex_failed = true;
+//      if(search_flag==SEARCH_SUCCESSFUL){
+//        corr_status = obj->computeUpdateRobust(deformation,num_iterations);
+//        simplex_failed = corr_status==CORRELATION_FAILED;
+//      }
+//      if(init_gamma_fail||simplex_failed){
+//        local_field_value(subset_gid,SIGMA) = -1.0;
+//        local_field_value(subset_gid,MATCH) = -1.0;
+//        local_field_value(subset_gid,GAMMA) = -1.0;
+//        local_field_value(subset_gid,DISPLACEMENT_X) = (*deformation)[DICe::DISPLACEMENT_X];
+//        local_field_value(subset_gid,DISPLACEMENT_Y) = (*deformation)[DICe::DISPLACEMENT_Y];
+//        local_field_value(subset_gid,ROTATION_Z) = (*deformation)[DICe::ROTATION_Z];
+//        local_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(MAX_GLOBAL_ITERATIONS_REACHED_IN_EVOLUTION_LOOP);
+//        local_field_value(subset_gid,ITERATIONS) = num_iterations;
+//        return;
+//      }
+//    }
+//    else{
+//      local_field_value(subset_gid,SIGMA) = -1.0;
+//      local_field_value(subset_gid,MATCH) = -1.0;
+//      local_field_value(subset_gid,GAMMA) = -1.0;
+//      local_field_value(subset_gid,DISPLACEMENT_X) = (*deformation)[DICe::DISPLACEMENT_X];
+//      local_field_value(subset_gid,DISPLACEMENT_Y) = (*deformation)[DICe::DISPLACEMENT_Y];
+//      local_field_value(subset_gid,ROTATION_Z) = (*deformation)[DICe::ROTATION_Z];
+//      local_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(MAX_GLOBAL_ITERATIONS_REACHED_IN_EVOLUTION_LOOP);
+//      local_field_value(subset_gid,ITERATIONS) = num_iterations;
+//      return;
+//    }
+//  }
+//  // SUCCESS
+//
+//  const scalar_t gamma = obj->gamma(deformation);
+//  DEBUG_MSG("Subset " << subset_gid << " solution gamma " << gamma);
+//  const scalar_t sigma = obj->sigma(deformation);
+//
+//  DEBUG_MSG("Subset " << subset_gid << " saving previous fields for u v and theta");
+//  obj->get_ref_subset()->save_previous_fields(image_frame_,(*deformation)[DISPLACEMENT_X],
+//    (*deformation)[DISPLACEMENT_Y],(*deformation)[DICe::ROTATION_Z]);
+//
+//  // test if the prediction has started to diverge:
+//  DEBUG_MSG("Subset " << subset_gid << " detecting prediction divergence");
+//  obj->get_ref_subset()->detect_prediction_divergence((*deformation)[DISPLACEMENT_X],
+//    (*deformation)[DISPLACEMENT_Y],(*deformation)[DICe::ROTATION_Z],ls_x,ls_y,ls_t);
+//
+//  // TODO this may not be necessary
+//  save_off_fields(subset_gid);
+//
+//  //obj->get_ref_subset()->save_converged_def_subset(obj->get_def_subset());
+//
+//  local_field_value(subset_gid,DISPLACEMENT_X) = (*deformation)[DISPLACEMENT_X];
+//  local_field_value(subset_gid,DISPLACEMENT_Y) = (*deformation)[DISPLACEMENT_Y];
+//  local_field_value(subset_gid,NORMAL_STRAIN_X) = (*deformation)[NORMAL_STRAIN_X];
+//  local_field_value(subset_gid,NORMAL_STRAIN_Y) = (*deformation)[NORMAL_STRAIN_Y];
+//  local_field_value(subset_gid,SHEAR_STRAIN_XY) = (*deformation)[SHEAR_STRAIN_XY];
+//  local_field_value(subset_gid,ROTATION_Z) = (*deformation)[DICe::ROTATION_Z];
+//  local_field_value(subset_gid,SIGMA) = sigma;
+//  local_field_value(subset_gid,MATCH) = 0.0; // 0 means data is successful
+//  local_field_value(subset_gid,GAMMA) = gamma;
+//  local_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(corr_status);
+//  local_field_value(subset_gid,ITERATIONS) = num_iterations;
+//
+//  if(output_deformed_subset_intensity_images_){
+//#ifndef DICE_DISABLE_BOOST_FILESYSTEM
+//    DEBUG_MSG("[PROC " << proc_id << "] Attempting to create directory : ./deformed_subset_intensities/");
+//    std::string dirStr = "./deformed_subset_intensities/";
+//    boost::filesystem::path dir(dirStr);
+//    if(boost::filesystem::create_directory(dir)) {
+//      DEBUG_MSG("[PROC " << proc_id << "] Directory successfully created");
+//    }
+//    int_t num_zeros = 0;
+//    if(num_image_frames_>0){
+//      int_t num_digits_total = 0;
+//      int_t num_digits_image = 0;
+//      int_t decrement_total = num_image_frames_;
+//      int_t decrement_image = image_frame_;
+//      while (decrement_total){decrement_total /= 10; num_digits_total++;}
+//      if(image_frame_==0) num_digits_image = 1;
+//      else
+//        while (decrement_image){decrement_image /= 10; num_digits_image++;}
+//      num_zeros = num_digits_total - num_digits_image;
+//    }
+//    std::stringstream ss;
+//    ss << dirStr << "deformedSubset_" << subset_gid << "_";
+//    for(int_t i=0;i<num_zeros;++i)
+//      ss << "0";
+//    ss << image_frame_;
+//    obj->get_def_subset()->write_tiff(ss.str());
+//#endif
+//  }
+//  if(output_evolved_subset_images_){
+//#ifndef DICE_DISABLE_BOOST_FILESYSTEM
+//    DEBUG_MSG("[PROC " << proc_id << "] Attempting to create directory : ./evolved_subsets/");
+//    std::string dirStr = "./evolved_subsets/";
+//    boost::filesystem::path dir(dirStr);
+//    if(boost::filesystem::create_directory(dir)) {
+//      DEBUG_MSG("[PROC " << proc_id << "[ Directory successfully created");
+//    }
+//    int_t num_zeros = 0;
+//    if(num_image_frames_>0){
+//      int_t num_digits_total = 0;
+//      int_t num_digits_image = 0;
+//      int_t decrement_total = num_image_frames_;
+//      int_t decrement_image = image_frame_;
+//      while (decrement_total){decrement_total /= 10; num_digits_total++;}
+//      if(image_frame_==0) num_digits_image = 1;
+//      else
+//        while (decrement_image){decrement_image /= 10; num_digits_image++;}
+//      num_zeros = num_digits_total - num_digits_image;
+//    }
+//    std::stringstream ss;
+//    ss << dirStr << "evolvedSubset_" << subset_gid << "_";
+//    for(int_t i=0;i<num_zeros;++i)
+//      ss << "0";
+//    ss << image_frame_;
+//    obj->get_ref_subset()->write_tiff(ss.str());
+//#endif
+//  }
 }
 
 void
 Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
+
+  TEUCHOS_TEST_FOR_EXCEPTION(use_subset_evolution_,std::runtime_error,
+    "use_subset_evolution is not allowed for the generic correlation routine");
 
   const int_t subset_gid = obj->correlation_point_global_id();
   const int_t proc_id = comm_->get_rank();
@@ -1435,7 +1438,8 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
 
   // INITIALIZATION
   // The first subset uses the solution in the field values as the initial guess
-  if(initialization_method_==DICe::USE_FIELD_VALUES || (initialization_method_==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && image_frame_>0)){
+  if(initialization_method_==DICe::USE_FIELD_VALUES ||
+      (initialization_method_==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && image_frame_>0)){
     try{
       init_status = obj->initialize_from_previous_frame(deformation);
     }
@@ -1464,7 +1468,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     try{
       init_status = obj->initialize_from_neighbor(deformation);
     }
-    catch(std::logic_error err){ // a non-graceful exception occurred
+    catch(std::logic_error &err){ // a non-graceful exception occurred
       local_field_value(subset_gid,SIGMA) = -1.0;
       local_field_value(subset_gid,MATCH) = -1.0;
       local_field_value(subset_gid,GAMMA) = -1.0;
@@ -1487,13 +1491,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     return;
   }
 
-  // EVOLVE THE SUBSETS BASED ON OBSTRUCTIONS, ETC
-
-  // evolve the subset if it has fallen behind an obstruction:
-  if(use_subset_evolution_){
-    DEBUG_MSG("[PROC " << proc_id <<"] Checking subset " << subset_gid << " to see if any pixels are now obstructed");
-    obj->get_ref_subset()->turn_off_obstructed_pixels(deformation);
-  }
+  // TODO EVOLVE THE SUBSETS BASED ON OBSTRUCTIONS, ETC
 
   // CORRELATE
 
@@ -1600,11 +1598,6 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   local_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(init_status);
   local_field_value(subset_gid,ITERATIONS) = num_iterations;
 
-  if(use_subset_evolution_&&image_frame_>1){
-    DEBUG_MSG("[PROC " << proc_id << "] Evolving subset " << subset_gid << " using newly exposed pixels for intensity values");
-    obj->get_ref_subset()->turn_on_previously_obstructed_pixels(obj->get_def_subset());
-  }
-
   if(output_deformed_subset_intensity_images_){
 #ifndef DICE_DISABLE_BOOST_FILESYSTEM
     DEBUG_MSG("[PROC " << proc_id << "] Attempting to create directory : ./deformed_subset_intensities/");
@@ -1630,7 +1623,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     for(int_t i=0;i<num_zeros;++i)
       ss << "0";
     ss << image_frame_;
-    obj->get_def_subset()->write(ss.str());
+    obj->subset()->write_tiff(ss.str(),true);
 #endif
   }
   if(output_evolved_subset_images_){
@@ -1658,7 +1651,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     for(int_t i=0;i<num_zeros;++i)
       ss << "0";
     ss << image_frame_;
-    obj->get_ref_subset()->write(ss.str());
+    obj->subset()->write_tiff(ss.str());
 #endif
   }
 }
@@ -1731,7 +1724,7 @@ Schema::write_control_points_image(const std::string & fileName,
   Teuchos::RCP<Image> new_img = Teuchos::rcp(new Image(width,height,intensities));
 
   // write the image:
-  new_img->write(fileName);
+  new_img->write_tiff(fileName);
 }
 
 void
@@ -1855,186 +1848,193 @@ Schema::print_fields(const std::string & fileName){
 
 void
 Schema::check_for_blocking_subsets(const int_t subset_global_id){
-  if(obstructing_subset_ids_==Teuchos::null) return;
-  if(obstructing_subset_ids_->find(subset_global_id)==obstructing_subset_ids_->end()) return;
-
-  const int_t subset_local_id = get_local_id(subset_global_id);
-
-  // get a pointer to the member data in the subset that will store the list of blocked pixels
-  std::set<std::pair<int_t,int_t> > & blocked_pixels = *obj_vec_[subset_local_id]->get_ref_subset()->pixels_blocked_by_other_subsets();
-  blocked_pixels.clear();
-  // get the list of subsets that block this one
-  std::vector<int_t> * obst_ids = &obstructing_subset_ids_->find(subset_global_id)->second;
-  // iterate over all the blocking subsets
-  for(int_t si=0;si<obst_ids->size();++si){
-    int_t global_ss = (*obst_ids)[si];
-    int_t local_ss = get_local_id(global_ss);
-    assert(local_ss>=0);
-    scalar_t u     = local_field_value(global_ss,DICe::DISPLACEMENT_X);
-    scalar_t v     = local_field_value(global_ss,DICe::DISPLACEMENT_Y);
-    scalar_t theta = local_field_value(global_ss,DICe::ROTATION_Z);
-    scalar_t dudx  = local_field_value(global_ss,DICe::NORMAL_STRAIN_X);
-    scalar_t dvdy  = local_field_value(global_ss,DICe::NORMAL_STRAIN_Y);
-    scalar_t gxy   = local_field_value(global_ss,DICe::SHEAR_STRAIN_XY);
-    scalar_t dx=0.0,dy=0.0;
-    scalar_t X=0.0,Y=0.0;
-    int_t cx=0,cy=0;
-    // iterate over all the pixels in the reference blocking subset and compute the current position
-    for(int_t px=0;px<obj_vec_[local_ss]->get_ref_subset()->num_pixels();++px){
-      dx = (1.0+dudx)*obj_vec_[local_ss]->get_ref_subset()->x(px) + gxy*obj_vec_[local_ss]->get_ref_subset()->y(px);
-      dy = (1.0+dvdy)*obj_vec_[local_ss]->get_ref_subset()->y(px) + gxy*obj_vec_[local_ss]->get_ref_subset()->x(px);
-      X = std::cos(theta)*dx - std::sin(theta)*dy + u            + obj_vec_[local_ss]->get_ref_subset()->origin_x();
-      Y = std::sin(theta)*dx + std::cos(theta)*dy + v            + obj_vec_[local_ss]->get_ref_subset()->origin_y();
-      cx = (int_t)X;
-      if(X - (int_t)X >= 0.5) cx++;
-      cy = (int_t)Y;
-      if(Y - (int_t)Y >= 0.5) cy++;
-      // insert a few pixels on each side of the centroid pixel:
-      for(int_t i=-obstruction_buffer_size_;i<=obstruction_buffer_size_;++i){
-        for(int_t j=-obstruction_buffer_size_;j<=obstruction_buffer_size_;++j){
-          // add these pixels to the list
-          blocked_pixels.insert(std::pair<int_t,int_t>(cy+j,cx+i));
-        }
-      } // loop over region surrounding the pixels in question
-    } // loop over blocking subset pixels
-  } // blocking subsets loop
+//  if(obstructing_subset_ids_==Teuchos::null) return;
+//  if(obstructing_subset_ids_->find(subset_global_id)==obstructing_subset_ids_->end()) return;
+//
+//  const int_t subset_local_id = get_local_id(subset_global_id);
+//
+//  // get a pointer to the member data in the subset that will store the list of blocked pixels
+//  std::set<std::pair<int_t,int_t> > & blocked_pixels = *obj_vec_[subset_local_id]->get_ref_subset()->pixels_blocked_by_other_subsets();
+//  blocked_pixels.clear();
+//  // get the list of subsets that block this one
+//  std::vector<int_t> * obst_ids = &obstructing_subset_ids_->find(subset_global_id)->second;
+//  // iterate over all the blocking subsets
+//  for(int_t si=0;si<obst_ids->size();++si){
+//    int_t global_ss = (*obst_ids)[si];
+//    int_t local_ss = get_local_id(global_ss);
+//    assert(local_ss>=0);
+//    scalar_t u     = local_field_value(global_ss,DICe::DISPLACEMENT_X);
+//    scalar_t v     = local_field_value(global_ss,DICe::DISPLACEMENT_Y);
+//    scalar_t theta = local_field_value(global_ss,DICe::ROTATION_Z);
+//    scalar_t dudx  = local_field_value(global_ss,DICe::NORMAL_STRAIN_X);
+//    scalar_t dvdy  = local_field_value(global_ss,DICe::NORMAL_STRAIN_Y);
+//    scalar_t gxy   = local_field_value(global_ss,DICe::SHEAR_STRAIN_XY);
+//    scalar_t dx=0.0,dy=0.0;
+//    scalar_t X=0.0,Y=0.0;
+//    int_t cx=0,cy=0;
+//    // iterate over all the pixels in the reference blocking subset and compute the current position
+//    for(int_t px=0;px<obj_vec_[local_ss]->get_ref_subset()->num_pixels();++px){
+//      dx = (1.0+dudx)*obj_vec_[local_ss]->get_ref_subset()->x(px) + gxy*obj_vec_[local_ss]->get_ref_subset()->y(px);
+//      dy = (1.0+dvdy)*obj_vec_[local_ss]->get_ref_subset()->y(px) + gxy*obj_vec_[local_ss]->get_ref_subset()->x(px);
+//      X = std::cos(theta)*dx - std::sin(theta)*dy + u            + obj_vec_[local_ss]->get_ref_subset()->centroid_x();
+//      Y = std::sin(theta)*dx + std::cos(theta)*dy + v            + obj_vec_[local_ss]->get_ref_subset()->centroid_y();
+//      cx = (int_t)X;
+//      if(X - (int_t)X >= 0.5) cx++;
+//      cy = (int_t)Y;
+//      if(Y - (int_t)Y >= 0.5) cy++;
+//      // insert a few pixels on each side of the centroid pixel:
+//      for(int_t i=-obstruction_buffer_size_;i<=obstruction_buffer_size_;++i){
+//        for(int_t j=-obstruction_buffer_size_;j<=obstruction_buffer_size_;++j){
+//          // add these pixels to the list
+//          blocked_pixels.insert(std::pair<int_t,int_t>(cy+j,cx+i));
+//        }
+//      } // loop over region surrounding the pixels in question
+//    } // loop over blocking subset pixels
+//  } // blocking subsets loop
 }
 
 void
 Schema::check_for_blocking_subsets_new(const int_t subset_global_id){
-  if(obstructing_subset_ids_==Teuchos::null) return;
-  if(obstructing_subset_ids_->find(subset_global_id)==obstructing_subset_ids_->end()) return;
-  if(obstructing_subset_ids_->find(subset_global_id)->second.size()==0) return;
-
-  const int_t subset_local_id = get_local_id(subset_global_id);
-
-  // turn off pixels in subset 0 that are blocked by 1 and 2
-  // get a pointer to the member data in the subset that will store the list of blocked pixels
-  std::set<std::pair<int_t,int_t> > & blocked_pixels = *obj_vec_[subset_local_id]->get_ref_subset()->pixels_blocked_by_other_subsets();
-  blocked_pixels.clear();
-
-  // get the list of subsets that block this one
-  std::vector<int_t> * obst_ids = &obstructing_subset_ids_->find(subset_global_id)->second;
-  // iterate over all the blocking subsets
-  for(int_t si=0;si<obst_ids->size();++si){
-    int_t global_ss = (*obst_ids)[si];
-    int_t local_ss = get_local_id(global_ss);
-    assert(local_ss>=0);
-    int_t cx = obj_vec_[local_ss]->get_ref_subset()->origin_x();
-    int_t cy = obj_vec_[local_ss]->get_ref_subset()->origin_y();
-    Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-    (*def)[DICe::DISPLACEMENT_X]  = local_field_value(global_ss,DICe::DISPLACEMENT_X);
-    (*def)[DICe::DISPLACEMENT_Y]  = local_field_value(global_ss,DICe::DISPLACEMENT_Y);
-    (*def)[DICe::ROTATION_Z]      = local_field_value(global_ss,DICe::ROTATION_Z);
-    (*def)[DICe::NORMAL_STRAIN_X] = local_field_value(global_ss,DICe::NORMAL_STRAIN_X);
-    (*def)[DICe::NORMAL_STRAIN_Y] = local_field_value(global_ss,DICe::NORMAL_STRAIN_Y);
-    (*def)[DICe::SHEAR_STRAIN_XY] = local_field_value(global_ss,DICe::SHEAR_STRAIN_XY);
-    std::set<std::pair<int_t,int_t> > subset_pixels = obj_vec_[local_ss]->get_ref_subset()->get_deformed_shapes(def,cx,cy,obstruction_skin_factor_);
-    blocked_pixels.insert(subset_pixels.begin(),subset_pixels.end());
-  } // blocking subsets loop
+//  if(obstructing_subset_ids_==Teuchos::null) return;
+//  if(obstructing_subset_ids_->find(subset_global_id)==obstructing_subset_ids_->end()) return;
+//  if(obstructing_subset_ids_->find(subset_global_id)->second.size()==0) return;
+//
+//  const int_t subset_local_id = get_local_id(subset_global_id);
+//
+//  // turn off pixels in subset 0 that are blocked by 1 and 2
+//  // get a pointer to the member data in the subset that will store the list of blocked pixels
+//  std::set<std::pair<int_t,int_t> > & blocked_pixels = *obj_vec_[subset_local_id]->get_ref_subset()->pixels_blocked_by_other_subsets();
+//  blocked_pixels.clear();
+//
+//  // get the list of subsets that block this one
+//  std::vector<int_t> * obst_ids = &obstructing_subset_ids_->find(subset_global_id)->second;
+//  // iterate over all the blocking subsets
+//  for(int_t si=0;si<obst_ids->size();++si){
+//    int_t global_ss = (*obst_ids)[si];
+//    int_t local_ss = get_local_id(global_ss);
+//    assert(local_ss>=0);
+//    int_t cx = obj_vec_[local_ss]->get_ref_subset()->centroid_x();
+//    int_t cy = obj_vec_[local_ss]->get_ref_subset()->centroid_y();
+//    Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+//    (*def)[DICe::DISPLACEMENT_X]  = local_field_value(global_ss,DICe::DISPLACEMENT_X);
+//    (*def)[DICe::DISPLACEMENT_Y]  = local_field_value(global_ss,DICe::DISPLACEMENT_Y);
+//    (*def)[DICe::ROTATION_Z]      = local_field_value(global_ss,DICe::ROTATION_Z);
+//    (*def)[DICe::NORMAL_STRAIN_X] = local_field_value(global_ss,DICe::NORMAL_STRAIN_X);
+//    (*def)[DICe::NORMAL_STRAIN_Y] = local_field_value(global_ss,DICe::NORMAL_STRAIN_Y);
+//    (*def)[DICe::SHEAR_STRAIN_XY] = local_field_value(global_ss,DICe::SHEAR_STRAIN_XY);
+//    std::set<std::pair<int_t,int_t> > subset_pixels = obj_vec_[local_ss]->get_ref_subset()->get_deformed_shapes(def,cx,cy,obstruction_skin_factor_);
+//    blocked_pixels.insert(subset_pixels.begin(),subset_pixels.end());
+//  } // blocking subsets loop
 }
 
 void
 Schema::write_deformed_subsets_image(){
-#ifndef DICE_DISABLE_BOOST_FILESYSTEM
-  if(obj_vec_.empty()) return;
-  // if the subset_images folder does not exist, create it
-  // TODO allow user to specify where this goes
-  // If the dir is already there this step becomes a no-op
-  DEBUG_MSG("Attempting to create directory : ./deformed_subsets/");
-  std::string dirStr = "./deformed_subsets/";
-  boost::filesystem::path dir(dirStr);
-  if(boost::filesystem::create_directory(dir)) {
-    DEBUG_MSG("Directory successfully created");
-  }
+//#ifndef DICE_DISABLE_BOOST_FILESYSTEM
+//  if(obj_vec_.empty()) return;
+//  // if the subset_images folder does not exist, create it
+//  // TODO allow user to specify where this goes
+//  // If the dir is already there this step becomes a no-op
+//  DEBUG_MSG("Attempting to create directory : ./deformed_subsets/");
+//  std::string dirStr = "./deformed_subsets/";
+//  boost::filesystem::path dir(dirStr);
+//  if(boost::filesystem::create_directory(dir)) {
+//    DEBUG_MSG("Directory successfully created");
+//  }
+//
+//  int_t num_zeros = 0;
+//  if(num_image_frames_>0){
+//    int_t num_digits_total = 0;
+//    int_t num_digits_image = 0;
+//    int_t decrement_total = num_image_frames_;
+//    int_t decrement_image = image_frame_;
+//    while (decrement_total){decrement_total /= 10; num_digits_total++;}
+//    if(image_frame_==0) num_digits_image = 1;
+//    else
+//      while (decrement_image){decrement_image /= 10; num_digits_image++;}
+//    num_zeros = num_digits_total - num_digits_image;
+//  }
+//  const int_t proc_id = comm_->get_rank();
+//  std::stringstream ss;
+//  ss << dirStr << "def_subsets_p_" << proc_id << "_";
+//  for(int_t i=0;i<num_zeros;++i)
+//    ss << "0";
+//  ss << image_frame_;
+//
+//  // construct a copy of the base image to use as layer 0 for the output;
+//
+//  const int_t w = def_img_->width();
+//  const int_t h = def_img_->height();
+//
+//  Teuchos::ArrayRCP<scalar_t> intensities(w*h,0.0);
+//  for(int_t i=0;i<w*h;++i)
+//    intensities[i] = def_img_->intensities()[i];
+//
+//  int_t x=0,y=0;
+//  int_t ox=0,oy=0;
+//  int_t dx=0,dy=0;
+//  scalar_t X=0.0,Y=0.0;
+//
+//  // create output for each subset
+//  //for(int_t subset=0;subset<1;++subset){
+//  for(int_t subset=0;subset<obj_vec_.size();++subset){
+//    const int_t gid = obj_vec_[subset]->correlation_point_global_id();
+//    //if(gid==1) continue;
+//    // get the deformation vector for each subset
+//    const scalar_t u     = local_field_value(gid,DICe::DISPLACEMENT_X);
+//    const scalar_t v     = local_field_value(gid,DICe::DISPLACEMENT_Y);
+//    const scalar_t theta = local_field_value(gid,DICe::ROTATION_Z);
+//    const scalar_t dudx  = local_field_value(gid,DICe::NORMAL_STRAIN_X);
+//    const scalar_t dvdy  = local_field_value(gid,DICe::NORMAL_STRAIN_Y);
+//    const scalar_t gxy   = local_field_value(gid,DICe::SHEAR_STRAIN_XY);
+//
+//    DEBUG_MSG("Write deformed subset " << gid << " u " << u << " v " << v << " theta " << theta << " dudx " << dudx << " dvdy " << dvdy << " gxy " << gxy);
+//
+//    Teuchos::RCP<DICe::Subset> ref_subset = obj_vec_[subset]->get_ref_subset();
+//
+//    ox = ref_subset->centroid_x();
+//    oy = ref_subset->centroid_y();
+//
+//    // loop over each pixel in the subset
+//    for(int_t px=0;px<ref_subset->num_pixels();++px){
+//      x = ref_subset->x(px);
+//      y = ref_subset->y(px);
+//      // stretch and shear the coordinate
+//      dx = (1.0+dudx)*x + gxy*y;
+//      dy = (1.0+dvdy)*y + gxy*x;
+//      // Rotation                             // translation // convert to global coordinates
+//      X = std::cos(theta)*dx - std::sin(theta)*dy + u            + ox;
+//      Y = std::sin(theta)*dx + std::cos(theta)*dy + v            + oy;
+//      X = static_cast<int_t>(X);
+//      Y = static_cast<int_t>(Y);
+//      if(X>=0&&X<w&&Y>=0&&Y<h){
+//        if(!ref_subset->is_active(px)){
+//          intensities[Y*w+X] = 75;
+//        }
+//        else{
+//          // color shows correlation quality
+//          intensities[Y*w+X] = ref_subset->per_pixel_gamma(px)*85000;
+//        }
+//        // trun all deactivated pixels white
+//        if(ref_subset->is_deactivated_this_step(px)){
+//          intensities[Y*w+X] = 255;
+//        }
+//      }
+//    } // pixel loop
+//
+//  } // subset loop
+//
+//  Teuchos::RCP<Image> layer_0_image = Teuchos::rcp(new Image(w,h,intensities));
+//  layer_0_image->write_tiff(ss.str());
+//#else
+//  DEBUG_MSG("Warning, write_deformed_image() was called, but Boost::filesystem is not enabled making this a no-op.");
+//#endif
+}
 
-  int_t num_zeros = 0;
-  if(num_image_frames_>0){
-    int_t num_digits_total = 0;
-    int_t num_digits_image = 0;
-    int_t decrement_total = num_image_frames_;
-    int_t decrement_image = image_frame_;
-    while (decrement_total){decrement_total /= 10; num_digits_total++;}
-    if(image_frame_==0) num_digits_image = 1;
-    else
-      while (decrement_image){decrement_image /= 10; num_digits_image++;}
-    num_zeros = num_digits_total - num_digits_image;
-  }
-  const int_t proc_id = comm_->get_rank();
-  std::stringstream ss;
-  ss << dirStr << "def_subsets_p_" << proc_id << "_";
-  for(int_t i=0;i<num_zeros;++i)
-    ss << "0";
-  ss << image_frame_;
 
-  // construct a copy of the base image to use as layer 0 for the output;
-
-  const int_t w = def_img_->width();
-  const int_t h = def_img_->height();
-
-  Teuchos::ArrayRCP<scalar_t> intensities(w*h,0.0);
-  for(int_t i=0;i<w*h;++i)
-    intensities[i] = def_img_->intensities()[i];
-
-  int_t x=0,y=0;
-  int_t ox=0,oy=0;
-  int_t dx=0,dy=0;
-  scalar_t X=0.0,Y=0.0;
-
-  // create output for each subset
-  //for(int_t subset=0;subset<1;++subset){
-  for(int_t subset=0;subset<obj_vec_.size();++subset){
-    const int_t gid = obj_vec_[subset]->correlation_point_global_id();
-    //if(gid==1) continue;
-    // get the deformation vector for each subset
-    const scalar_t u     = local_field_value(gid,DICe::DISPLACEMENT_X);
-    const scalar_t v     = local_field_value(gid,DICe::DISPLACEMENT_Y);
-    const scalar_t theta = local_field_value(gid,DICe::ROTATION_Z);
-    const scalar_t dudx  = local_field_value(gid,DICe::NORMAL_STRAIN_X);
-    const scalar_t dvdy  = local_field_value(gid,DICe::NORMAL_STRAIN_Y);
-    const scalar_t gxy   = local_field_value(gid,DICe::SHEAR_STRAIN_XY);
-
-    DEBUG_MSG("Write deformed subset " << gid << " u " << u << " v " << v << " theta " << theta << " dudx " << dudx << " dvdy " << dvdy << " gxy " << gxy);
-
-    Teuchos::RCP<DICe::Subset> ref_subset = obj_vec_[subset]->get_ref_subset();
-
-    ox = ref_subset->origin_x();
-    oy = ref_subset->origin_y();
-
-    // loop over each pixel in the subset
-    for(int_t px=0;px<ref_subset->num_pixels();++px){
-      x = ref_subset->x(px);
-      y = ref_subset->y(px);
-      // stretch and shear the coordinate
-      dx = (1.0+dudx)*x + gxy*y;
-      dy = (1.0+dvdy)*y + gxy*x;
-      // Rotation                             // translation // convert to global coordinates
-      X = std::cos(theta)*dx - std::sin(theta)*dy + u            + ox;
-      Y = std::sin(theta)*dx + std::cos(theta)*dy + v            + oy;
-      X = static_cast<int_t>(X);
-      Y = static_cast<int_t>(Y);
-      if(X>=0&&X<w&&Y>=0&&Y<h){
-        if(!ref_subset->is_active(px)){
-          intensities[Y*w+X] = 75;
-        }
-        else{
-          // color shows correlation quality
-          intensities[Y*w+X] = ref_subset->per_pixel_gamma(px)*85000;
-        }
-        // trun all deactivated pixels white
-        if(ref_subset->is_deactivated_this_step(px)){
-          intensities[Y*w+X] = 255;
-        }
-      }
-    } // pixel loop
-
-  } // subset loop
-
-  Teuchos::RCP<Image> layer_0_image = Teuchos::rcp(new Image(w,h,intensities));
-  layer_0_image->write(ss.str());
-#else
-  DEBUG_MSG("Warning, write_deformed_image() was called, but Boost::filesystem is not enabled making this a no-op.");
-#endif
+const int_t
+Schema::strain_window_size(const int_t post_processor_index)const{
+  assert(post_processors_.size()>post_processor_index);
+    return post_processors_[post_processor_index]->strain_window_size();
 }
 
 Output_Spec::Output_Spec(Schema * schema,

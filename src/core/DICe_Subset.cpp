@@ -120,6 +120,54 @@ Subset::Subset(const int_t cx,
   def_intensities_ = intensity_dual_view_1d("def_intensities",num_pixels_);
 }
 
+Subset::Subset(const int_t cx,
+  const int_t cy,
+  const Conformal_Area_Def & subset_def):
+  cx_(cx),
+  cy_(cy)
+{
+  assert(subset_def.has_boundary());
+  std::set<std::pair<int_t,int_t> > coords;
+  for(int_t i=0;i<subset_def.boundary()->size();++i){
+    std::set<std::pair<int_t,int_t> > shapeCoords = (*subset_def.boundary())[i]->get_owned_pixels();
+    coords.insert(shapeCoords.begin(),shapeCoords.end());
+  }
+  // at this point all the coordinate pairs are in the set
+  num_pixels_ = coords.size();
+
+  // resize the storage arrays now that the num_pixels is known
+  x_ = pixel_coord_dual_view_1d("x",num_pixels_);
+  y_ = pixel_coord_dual_view_1d("y",num_pixels_);
+  int_t index = 0;
+  // NOTE: the pairs are (y,x) not (x,y) so that the ordering is correct in the set
+  typename std::set<std::pair<int_t,int_t> >::iterator set_it = coords.begin();
+  for( ; set_it!=coords.end();++set_it){
+    x_.h_view(index) = set_it->second;
+    y_.h_view(index) = set_it->first;
+    index++;
+  }
+  x_.modify<host_space>();
+  y_.modify<host_space>();
+  x_.sync<device_space>();
+  y_.sync<device_space>();
+
+  // TODO TODO TODO
+
+  // now set the inactive bit for the second set of multishapes if they exist.
+//  if(subset_def.has_excluded_area()){
+//    for(Size i=0;i<subset_def.excluded_area()->size();++i){
+//      (*subset_def.excluded_area())[i]->deactivate_pixels(is_active_,local_coord_x_,local_coord_y_,origin_x_,origin_y_);
+//    }
+//  }
+//
+//  if(subset_def.has_obstructed_area()){
+//    for(Size i=0;i<subset_def.obstructed_area()->size();++i){
+//      std::set<std::pair<Size,Size> > obstructedArea = (*subset_def.obstructed_area())[i]->get_owned_pixels();
+//      obstructed_coords_.insert(obstructedArea.begin(),obstructedArea.end());
+//    }
+//  }
+}
+
 void
 Subset::write_subset_on_image(const std::string & file_name,
   Teuchos::RCP<Image> image,
@@ -256,7 +304,7 @@ Subset::initialize(Teuchos::RCP<Image> image,
   else{
     if(interp==BILINEAR)
       Kokkos::parallel_for(Kokkos::RangePolicy<Subset_Init_Functor::Map_Bilinear_Tag>(0,num_pixels_),init_functor);
-    else if(interp==KEYS_FOURTH_ORDER)
+    else if(interp==KEYS_FOURTH)
       Kokkos::parallel_for(Kokkos::RangePolicy<Subset_Init_Functor::Map_Keys_Tag>(0,num_pixels_),init_functor);
     else{
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,

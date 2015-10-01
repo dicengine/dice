@@ -71,9 +71,9 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   std::string & banner,
   const Analysis_Type analysis_type){
 
-  int_t proc_rank = 0;
+  int proc_rank = 0;
 #ifdef HAVE_MPI
-  int_t mpi_is_initialized = 0;
+  int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
     MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
@@ -278,9 +278,9 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> read_physics_params(const std::string & paramFileName){
 
-  int_t proc_rank = 0;
+  int proc_rank = 0;
 #ifdef HAVE_MPI
-  int_t mpi_is_initialized = 0;
+  int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
     MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
@@ -312,9 +312,9 @@ Teuchos::RCP<Teuchos::ParameterList> read_physics_params(const std::string & par
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> read_correlation_params(const std::string & paramFileName){
 
-  int_t proc_rank = 0;
+  int proc_rank = 0;
 #ifdef HAVE_MPI
-  int_t mpi_is_initialized = 0;
+  int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
     MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
@@ -372,9 +372,9 @@ Teuchos::RCP<Teuchos::ParameterList> read_correlation_params(const std::string &
 
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Circle> read_circle(std::fstream &dataFile){
-  int_t proc_rank = 0;
+  int proc_rank = 0;
 #ifdef HAVE_MPI
-  int_t mpi_is_initialized = 0;
+  int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
     MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
@@ -383,7 +383,7 @@ Teuchos::RCP<Circle> read_circle(std::fstream &dataFile){
   if(proc_rank==0) DEBUG_MSG("Reading a circle");
   int_t cx = -1;
   int_t cy = -1;
-  Real radius = -1.0;
+  scalar_t radius = -1.0;
   while(!dataFile.eof()){
     Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile);
     if(tokens.size()==0) continue; // comment or blank line
@@ -414,9 +414,9 @@ Teuchos::RCP<Circle> read_circle(std::fstream &dataFile){
 
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::Rectangle> read_rectangle(std::fstream &dataFile){
-  int_t proc_rank = 0;
+  int proc_rank = 0;
 #ifdef HAVE_MPI
-  int_t mpi_is_initialized = 0;
+  int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
     MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
@@ -508,9 +508,9 @@ Teuchos::RCP<DICe::Rectangle> read_rectangle(std::fstream &dataFile){
 
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::Polygon> read_polygon(std::fstream &dataFile){
-  int_t proc_rank = 0;
+  int proc_rank = 0;
 #ifdef HAVE_MPI
-  int_t mpi_is_initialized = 0;
+  int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
     MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
@@ -560,15 +560,15 @@ multi_shape read_shapes(std::fstream & dataFile){
     assert(shape_tokens.size()>=2);
     assert(shape_tokens[0]==parser_begin);
     if(shape_tokens[1]==parser_circle){
-      Teuchos::RCP<DICe::Circle<scalar_t,int_t> > shape = read_circle(dataFile);
+      Teuchos::RCP<DICe::Circle> shape = read_circle(dataFile);
       multi_shape.push_back(shape);
     }
     else if(shape_tokens[1]==parser_polygon){
-      Teuchos::RCP<DICe::Polygon<scalar_t,int_t> > shape = read_polygon(dataFile);
+      Teuchos::RCP<DICe::Polygon> shape = read_polygon(dataFile);
       multi_shape.push_back(shape);
     }
     else if(shape_tokens[1]==parser_rectangle){
-      Teuchos::RCP<DICe::Rectangle<scalar_t,int_t> > shape = read_rectangle(dataFile);
+      Teuchos::RCP<DICe::Rectangle> shape = read_rectangle(dataFile);
       multi_shape.push_back(shape);
     }
     else{
@@ -633,9 +633,9 @@ DICE_LIB_DLL_EXPORT
 const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileName,
   const int_t width,
   const int_t height){
-  int_t proc_rank = 0;
+  int proc_rank = 0;
 #ifdef HAVE_MPI
-  int_t mpi_is_initialized = 0;
+  int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
     MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
@@ -841,13 +841,6 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              subset_id = atoi(block_tokens[1].c_str());
              if(proc_rank==0) DEBUG_MSG("Conformal subset id: " << subset_id);
            }
-           // AUTO OBSTRUCTION DETECTION FACTOR
-           else if(block_tokens[0]==auto_obstruction_detection_factor){
-             assert(block_tokens.size()>=2);
-             assert(is_number(block_tokens[1]));
-             auto_detection_factor = strtod(block_tokens[1].c_str(),NULL);
-             if(proc_rank==0) DEBUG_MSG("Automatic obstruction detection factor: " << auto_detection_factor);
-           }
            // SEEDS
            else if(block_tokens[1]==parser_seed){
              assert(has_seed==false && "Error, only one seed allowed per conformal subset");
@@ -986,9 +979,9 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
 
 DICE_LIB_DLL_EXPORT
 const std::vector<std::string> decypher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params){
-  int_t proc_rank = 0;
+  int proc_rank = 0;
 #ifdef HAVE_MPI
-  int_t mpi_is_initialized = 0;
+  int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
     MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
@@ -1118,9 +1111,9 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
   Teuchos::RCP<Teuchos::ParameterList> params,
   const int_t width, const int_t height,
   Teuchos::RCP<DICe::Subset_File_Info> subset_file_info){
-  int_t proc_rank = 0;
+  int proc_rank = 0;
 #ifdef HAVE_MPI
-  int_t mpi_is_initialized = 0;
+  int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
     MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
@@ -1159,7 +1152,7 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
   }
   if(roi_defs==Teuchos::null){ // wasn't populated above so create a dummy roi with the whole image:
     if(proc_rank==0) DEBUG_MSG("Creating dummy ROI of the entire image");
-    Teuchos::RCP<DICe::Rectangle<scalar_t,int_t> > rect = Teuchos::rcp(new DICe::Rectangle<scalar_t,int_t>(width/2,height/2,width,height));
+    Teuchos::RCP<DICe::Rectangle> rect = Teuchos::rcp(new DICe::Rectangle(width/2,height/2,width,height));
     DICe::multi_shape boundary_multi_shape;
     boundary_multi_shape.push_back(rect);
     DICe::Conformal_Area_Def conformal_area_def(boundary_multi_shape);
@@ -1296,9 +1289,9 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
 
 DICE_LIB_DLL_EXPORT
 void generate_template_input_files(const std::string & file_prefix){
-  int_t proc_rank = 0;
+  int proc_rank = 0;
 #ifdef HAVE_MPI
-  int_t mpi_is_initialized = 0;
+  int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
     MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);

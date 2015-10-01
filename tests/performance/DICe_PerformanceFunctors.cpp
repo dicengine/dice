@@ -220,7 +220,7 @@ int main(int argc, char *argv[]) {
       cpu_timer subset_init_def_keys_timer;
       {
         subset_init_def_keys_timer.start();
-        subset->initialize(img,DEF_INTENSITIES,map,KEYS_FOURTH_ORDER);
+        subset->initialize(img,DEF_INTENSITIES,map,KEYS_FOURTH);
         subset_init_def_keys_timer.stop();
       }
       *outStream <<"** subset init def Keys time" << subset_init_def_keys_timer.format();

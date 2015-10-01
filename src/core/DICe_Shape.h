@@ -135,7 +135,7 @@ public:
   /// \brief Constructor that takes the vertices as arguements
   /// \param coords_x A vector of integer valued global x-coordinates for the polygon vertices
   /// \param coords_y A vector of integer valued global y-coordinates for the polygon vertices
-  Polygon(const std::vector<int_t> & coords_x,
+  Polygon(std::vector<int_t> & coords_x,
     std::vector<int_t> & coords_y);
 
   virtual ~Polygon(){};

@@ -84,9 +84,11 @@ public:
     const int_t correlation_point_global_id):
     Objective(schema,correlation_point_global_id){
     // check that at least one of the shape functions is in use:
-    assert(this->schema_->translation_enabled() || this->schema_->rotation_enabled() || this->schema_->normal_strain_enabled() || this->schema_->shear_strain_enabled());
-    assert(ref_subset_!=Teuchos::null);
-    assert(def_subset_!=Teuchos::null);
+    assert(this->schema_->translation_enabled() ||
+      this->schema_->rotation_enabled() ||
+      this->schema_->normal_strain_enabled() ||
+      this->schema_->shear_strain_enabled());
+    assert(subset_!=Teuchos::null);
     // populate the dof map since not all deformation dofs are used
     if(this->schema_->translation_enabled()){
       this->dof_map_.push_back(DISPLACEMENT_X);
@@ -149,13 +151,8 @@ public:
   using Objective::dof_map;
 
   /// See base class documentation
-  using Objective::ref_subset_;
-
-  /// See base class documentation
-  using Objective::def_subset_;
+  using Objective::subset_;
 };
-
-
 
 }// End DICe Namespace
 

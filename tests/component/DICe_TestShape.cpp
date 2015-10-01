@@ -110,10 +110,10 @@ int main(int argc, char *argv[]) {
     std::set<std::pair<int_t,int_t> > def_owned_pixels = poly1->get_owned_pixels(def,cx,cy);
     std::set<std::pair<int_t,int_t> >::iterator def_set_it = def_owned_pixels.begin();
     for(ref_set_it = ref_owned_pixels.begin();ref_set_it!=ref_owned_pixels.end();++ref_set_it){
-      if(def_owned_pixels.find(std::pair<int_t,int_t>(ref_set_it->first+def->v_,ref_set_it->second+def->u_))==def_owned_pixels.end()){
+      if(def_owned_pixels.find(std::pair<int_t,int_t>(ref_set_it->first+(*def)[DISPLACEMENT_Y],ref_set_it->second+(*def)[DISPLACEMENT_X]))==def_owned_pixels.end()){
         *outStream << "Error, owned pixels are not right for the deformed image" << std::endl;
         *outStream << "    Point was not found (ref) " << ref_set_it->second << " " << ref_set_it->first <<
-            " (def) " << ref_set_it->second + def->u_ << " " << ref_set_it->first + def->v_ << std::endl;
+            " (def) " << ref_set_it->second + (*def)[DISPLACEMENT_X] << " " << ref_set_it->first + (*def)[DISPLACEMENT_Y] << std::endl;
         errorFlag++;
       }
     }
@@ -145,12 +145,12 @@ int main(int argc, char *argv[]) {
       large_skin_intensities[large_skin_set_it->first*imgW + large_skin_set_it->second] = 255;
     }
     for(int_t i=0;i<shape_coords_x.size();++i){
-      if(large_skin_owned_pixels.find(std::pair<int_t,int_t>((int_t)((shape_coords_y[i]-cy)*large_skin_factor*0.9 + cy) + def->v_,
-        (int_t)((shape_coords_x[i]-cx)*large_skin_factor*0.9 + cx) + def->u_))==large_skin_owned_pixels.end()){
+      if(large_skin_owned_pixels.find(std::pair<int_t,int_t>((int_t)((shape_coords_y[i]-cy)*large_skin_factor*0.9 + cy) + (*def)[DISPLACEMENT_Y],
+        (int_t)((shape_coords_x[i]-cx)*large_skin_factor*0.9 + cx) + (*def)[DISPLACEMENT_X]))==large_skin_owned_pixels.end()){
         *outStream << "Error, large skin owned pixels are not right" << std::endl;
         *outStream << "    Point was not found (ref) " << shape_coords_x[i] << " " << shape_coords_y[i] <<
-            " (def) " << (int_t)((shape_coords_x[i]-cx)*large_skin_factor*0.9 + cx) + def->u_ <<
-            " " << (int_t)((shape_coords_y[i]-cy)*large_skin_factor*0.9 + cy) + def->v_ << std::endl;
+            " (def) " << (int_t)((shape_coords_x[i]-cx)*large_skin_factor*0.9 + cx) + (*def)[DISPLACEMENT_X] <<
+            " " << (int_t)((shape_coords_y[i]-cy)*large_skin_factor*0.9 + cy) + (*def)[DISPLACEMENT_Y] << std::endl;
         errorFlag++;
       }
     }

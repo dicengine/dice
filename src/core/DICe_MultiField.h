@@ -40,8 +40,8 @@
 // ************************************************************************
 // @HEADER
 
-#ifndef DICE_MULTIFIELDTPETRA_H
-#define DICE_MULTIFIELDTPETRA_H
+#ifndef DICE_MULTIFIELD_H
+#define DICE_MULTIFIELD_H
 
 #include <DICe.h>
 
@@ -53,16 +53,16 @@
 
 #include <Teuchos_DefaultSerialComm.hpp>
 
-typedef Tpetra::Map<int_t> map_type;
-typedef Tpetra::MultiVector<scalar_t> vec_type;
-typedef Tpetra::Export<int_t> export_type;
-typedef Tpetra::Import<int_t> import_type;
+namespace DICe {
+
+typedef Tpetra::Map<int_t,int_t> map_type;
+typedef Tpetra::MultiVector<scalar_t,int_t,int_t> vec_type;
+typedef Tpetra::Export<int_t,int_t> export_type;
+typedef Tpetra::Import<int_t,int_t> import_type;
 typedef Tpetra::CrsMatrix<scalar_t,int_t,int_t> matrix_type;
 typedef Tpetra::Operator<scalar_t,int_t> operator_type;
-typedef typename Tpetra::MultiVector<scalar_t>::dual_view_type::host_mirror_space host_device_type;
-typedef typename Tpetra::MultiVector<scalar_t>::dual_view_type::t_host host_view_type;
-
-namespace DICe {
+typedef typename Tpetra::MultiVector<scalar_t,int_t,int_t>::dual_view_type::host_mirror_space host_device_type;
+typedef typename Tpetra::MultiVector<scalar_t,int_t,int_t>::dual_view_type::t_host host_view_type;
 
 /// \class DICe::MultiField_Comm
 /// \brief MPI Communicator
@@ -72,7 +72,7 @@ public:
   /// Default constructor with no arguments
   MultiField_Comm(){
 #ifdef HAVE_MPI
-    int_t mpi_is_initialized = 0;
+    int mpi_is_initialized = 0;
     MPI_Initialized(&mpi_is_initialized);
     if(mpi_is_initialized)
       comm_ = Tpetra::DefaultPlatform::getDefaultPlatform().getComm ();
@@ -83,12 +83,12 @@ public:
 #endif
   }
   /// Returns the current processor id
-  const int_t get_rank()const{
+  const int get_rank()const{
     return comm_->getRank();
   }
 
   /// Returns the number of processors
-  const int_t get_size()const{
+  const int get_size()const{
     return comm_->getSize();
   }
 
@@ -110,9 +110,9 @@ public:
   /// \param num_elements the global number of elements
   /// \param index_base either 0 or 1
   /// \param comm the MPI communicator
-  MultiField_Map(const int_t num_elements,
+  MultiField_Map(const size_t num_elements,
     const int_t index_base,
-    MultiField_Comm<int_t> & comm){
+    MultiField_Comm & comm){
     map_ = Teuchos::rcp(new map_type(num_elements, index_base, comm.get()));
   }
 
@@ -121,7 +121,7 @@ public:
   /// \param elements the array of global element ids
   /// \param index_base either 0 or 1
   /// \param comm MPI communicator
-  MultiField_Map(const int_t num_elements,
+  MultiField_Map(const size_t num_elements,
     Teuchos::ArrayView<const int_t> elements,
     const int_t index_base,
     MultiField_Comm & comm){
@@ -132,8 +132,8 @@ public:
   /// \param num_local_elements the local number of elements
   /// \param index_base either 0 or 1
   /// \param comm the MPI communicator
-  MultiField_Map(const int_t num_elements,
-    const int_t num_local_elements,
+  MultiField_Map(const size_t num_elements,
+    const size_t num_local_elements,
     const int_t index_base,
     MultiField_Comm & comm){
     map_ = Teuchos::rcp(new map_type(num_elements, num_local_elements, index_base, comm.get()));
@@ -150,13 +150,13 @@ public:
   /// \brief Return the local id for the given global id.
   /// Returns -1 if the global id is not on the processor
   /// \param global_id the global id of the element
-  const int_t get_local_element(const int_t global_id)const{
+  const int_t get_local_element(const int global_id)const{
     return map_->getLocalElement(global_id);
   }
 
   /// \brief Return the global id for the given local id.
   /// \param local_id the local id of the element
-  const int_t get_global_element(const int_t local_id)const{
+  const int get_global_element(const int_t local_id)const{
     return map_->getGlobalElement(local_id);
   }
 
@@ -261,12 +261,12 @@ public:
     tpetra_mv_ = Teuchos::rcp(new vec_type(map->get(),num_fields,zero_values));
   }
 
-  /// \brief copy constructor
-  /// \param multifield the multifield to copy
-  MultiField(Teuchos::RCP<MultiField> multifield){
-    map_ = multifield->get_map();
-    tpetra_mv_ = Teuchos::rcp(new vec_type(multifield->get()));
-  }
+//  /// \brief copy constructor
+//  /// \param multifield the multifield to copy
+//  MultiField(Teuchos::RCP<MultiField> multifield){
+//    map_ = multifield->get_map();
+//    tpetra_mv_ = Teuchos::rcp(new vec_type(multifield->get()));
+//  }
 
   /// Destructor
   virtual ~MultiField(){};
