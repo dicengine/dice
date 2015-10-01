@@ -137,7 +137,7 @@ Polygon::deactivate_pixels(Teuchos::ArrayRCP<bool> & pixel_flags,
 
 // NOTE: The pair is (y,x) not (x,y) so that the ordering in the set will match loops over y then x
 std::set<std::pair<int_t,int_t> >
-Polygon::get_owned_pixels(Teuchos::RCP<Def_Map> map,
+Polygon::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation,
   const int_t cx,
   const int_t cy,
   const scalar_t skin_factor)const{
@@ -149,13 +149,13 @@ Polygon::get_owned_pixels(Teuchos::RCP<Def_Map> map,
   int_t max_x = max_x_;
   int_t max_y = max_y_;
 
-  if(map!=Teuchos::null){
-    scalar_t u     = map->u_;
-    scalar_t v     = map->v_;
-    scalar_t theta = map->t_;
-    scalar_t dudx  = map->ex_;
-    scalar_t dvdy  = map->ey_;
-    scalar_t gxy   = map->g_;
+  if(deformation!=Teuchos::null){
+    scalar_t u     = (*deformation)[DICe::DISPLACEMENT_X];
+    scalar_t v     = (*deformation)[DICe::DISPLACEMENT_Y];
+    scalar_t theta = (*deformation)[DICe::ROTATION_Z];
+    scalar_t dudx  = (*deformation)[DICe::NORMAL_STRAIN_X];
+    scalar_t dvdy  = (*deformation)[DICe::NORMAL_STRAIN_Y];
+    scalar_t gxy   = (*deformation)[DICe::SHEAR_STRAIN_XY];
     scalar_t dx=0.0,dy=0.0;
     scalar_t X=0.0,Y=0.0;
     int_t new_x=0,new_y=0;
@@ -234,7 +234,7 @@ Polygon::get_owned_pixels(Teuchos::RCP<Def_Map> map,
 
 void
 Polygon::draw(Teuchos::RCP<Image> & layer_0_image,
-  Teuchos::RCP<Def_Map> map,
+  Teuchos::RCP<const std::vector<scalar_t> > deformation,
   const int_t cx,
   const int_t cy)const{
 
@@ -249,13 +249,14 @@ Polygon::draw(Teuchos::RCP<Image> & layer_0_image,
   }
 
   scalar_t u=0.0,v=0.0,theta=0.0,dudx=0.0,dvdy=0.0,gxy=0.0;
-  if(map!=Teuchos::null){
-    u     = map->u_;
-    v     = map->v_;
-    theta = map->t_;
-    dudx  = map->ex_;
-    dvdy  = map->ey_;
-    gxy   = map->g_;
+  if(deformation!=Teuchos::null){
+    assert(deformation->size()==DICE_DEFORMATION_SIZE);
+    u     = (*deformation)[DICe::DISPLACEMENT_X];
+    v     = (*deformation)[DICe::DISPLACEMENT_Y];
+    theta = (*deformation)[DICe::ROTATION_Z];
+    dudx  = (*deformation)[DICe::NORMAL_STRAIN_X];
+    dvdy  = (*deformation)[DICe::NORMAL_STRAIN_Y];
+    gxy   = (*deformation)[DICe::SHEAR_STRAIN_XY];
   }
 
   std::vector<int_t> new_vertices_x(vertex_coordinates_x_.size());
@@ -384,11 +385,11 @@ Circle::deactivate_pixels(Teuchos::ArrayRCP<bool> & pixel_flags,
 
 // NOTE: The pair is (y,x) not (x,y) so that the ordering in the set will match loops over y then x
 std::set<std::pair<int_t,int_t> >
-Circle::get_owned_pixels(Teuchos::RCP<Def_Map> map,
+Circle::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation,
   const int_t cx,
   const int_t cy,
   const scalar_t skin_factor)const{
-  TEUCHOS_TEST_FOR_EXCEPTION(map!=Teuchos::null,std::runtime_error,"Error, circle deformation has not been implemented yet");
+  TEUCHOS_TEST_FOR_EXCEPTION(deformation!=Teuchos::null,std::runtime_error,"Error, circle deformation has not been implemented yet");
   std::set<std::pair<int_t,int_t> > coordSet;
 
   scalar_t dx=0,dy=0;
@@ -408,7 +409,7 @@ Circle::get_owned_pixels(Teuchos::RCP<Def_Map> map,
 
 void
 Circle::draw(Teuchos::RCP<Image> & layer_0_image,
-  Teuchos::RCP<Def_Map> map)const{
+  Teuchos::RCP<const std::vector<scalar_t> > deformation)const{
 
   const int_t img_width = layer_0_image->width();
   const int_t img_height = layer_0_image->height();
@@ -421,13 +422,14 @@ Circle::draw(Teuchos::RCP<Image> & layer_0_image,
   }
 
   scalar_t u=0.0,v=0.0,theta=0.0,dudx=0.0,dvdy=0.0,gxy=0.0;
-  if(map!=Teuchos::null){
-    u     = map->u_;
-    v     = map->v_;
-    theta = map->t_;
-    dudx  = map->ex_;
-    dvdy  = map->ey_;
-    gxy   = map->g_;
+  if(deformation!=Teuchos::null){
+    assert(deformation->size()==DICE_DEFORMATION_SIZE);
+    u     = (*deformation)[DICe::DISPLACEMENT_X];
+    v     = (*deformation)[DICe::DISPLACEMENT_Y];
+    theta = (*deformation)[DICe::ROTATION_Z];
+    dudx  = (*deformation)[DICe::NORMAL_STRAIN_X];
+    dvdy  = (*deformation)[DICe::NORMAL_STRAIN_Y];
+    gxy   = (*deformation)[DICe::SHEAR_STRAIN_XY];
   }
   // construct a set of eight points on the perimeter
   std::vector<scalar_t> initialX(8);
@@ -517,24 +519,24 @@ Rectangle::deactivate_pixels(Teuchos::ArrayRCP<bool> & pixel_flags,
 
 // NOTE: The pair is (y,x) not (x,y) so that the ordering in the set will match loops over y then x
 std::set<std::pair<int_t,int_t> >
-Rectangle::get_owned_pixels(Teuchos::RCP<Def_Map> map,
+Rectangle::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation,
   const int_t cx,
   const int_t cy,
   const scalar_t skin_factor)const{
 
   std::set<std::pair<int_t,int_t> > coordSet;
 
-  if(map!=Teuchos::null){
+  if(deformation!=Teuchos::null){
     int_t min_x = 0;
     int_t min_y = 0;
     int_t max_x = 0;
     int_t max_y = 0;
-    scalar_t u     = map->u_;
-    scalar_t v     = map->v_;
-    scalar_t theta = map->t_;
-    scalar_t dudx  = map->ex_;
-    scalar_t dvdy  = map->ey_;
-    scalar_t gxy   = map->g_;
+    scalar_t u     = (*deformation)[DICe::DISPLACEMENT_X];
+    scalar_t v     = (*deformation)[DICe::DISPLACEMENT_Y];
+    scalar_t theta = (*deformation)[DICe::ROTATION_Z];
+    scalar_t dudx  = (*deformation)[DICe::NORMAL_STRAIN_X];
+    scalar_t dvdy  = (*deformation)[DICe::NORMAL_STRAIN_Y];
+    scalar_t gxy   = (*deformation)[DICe::SHEAR_STRAIN_XY];
     scalar_t dx=0.0,dy=0.0;
     scalar_t X=0.0,Y=0.0;
     int_t new_x=0,new_y=0;
@@ -634,7 +636,7 @@ Rectangle::get_owned_pixels(Teuchos::RCP<Def_Map> map,
 }
 
 void Rectangle::draw(Teuchos::RCP<Image> & layer_0_image,
-  Teuchos::RCP<Def_Map> map)const{
+  Teuchos::RCP<const std::vector<scalar_t> > deformation)const{
 
   const int_t img_width = layer_0_image->width();
   const int_t img_height = layer_0_image->height();
@@ -647,13 +649,14 @@ void Rectangle::draw(Teuchos::RCP<Image> & layer_0_image,
   }
 
   scalar_t u=0.0,v=0.0,theta=0.0,dudx=0.0,dvdy=0.0,gxy=0.0;
-  if(map!=Teuchos::null){
-    u     = map->u_;
-    v     = map->v_;
-    theta = map->t_;
-    dudx  = map->ex_;
-    dvdy  = map->ey_;
-    gxy   = map->g_;
+  if(deformation!=Teuchos::null){
+    assert(deformation->size()==DICE_DEFORMATION_SIZE);
+    u     = (*deformation)[DICe::DISPLACEMENT_X];
+    v     = (*deformation)[DICe::DISPLACEMENT_Y];
+    theta = (*deformation)[DICe::ROTATION_Z];
+    dudx  = (*deformation)[DICe::NORMAL_STRAIN_X];
+    dvdy  = (*deformation)[DICe::NORMAL_STRAIN_Y];
+    gxy   = (*deformation)[DICe::SHEAR_STRAIN_XY];
   }
   const int_t num_vertices = 5;
   std::vector<int_t> new_vertices_x(num_vertices);

@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
   *outStream << "checking the keys fourth order interpolant" << std::endl;
   map->u_ = 15;
   map->v_ = 12;
-  square.initialize(image,DEF_INTENSITIES,map,KEYS_FOURTH_ORDER);
+  square.initialize(image,DEF_INTENSITIES,map,KEYS_FOURTH);
   square.write_tiff("squareSubsetDefKeys.tif",true);
   bool keys_values_error = false;
   for(int_t i=0;i<square.num_pixels();++i){

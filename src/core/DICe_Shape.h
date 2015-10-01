@@ -75,7 +75,7 @@ public:
   /// \param cx Optional x centroid of the map
   /// \param cy Optional y centroid of the map
   /// \param skin_factor Optional padding added to the outside of the shape to make it larger or smaller
-  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<Def_Map> map=Teuchos::null,
+  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
     const int_t cx=0,
     const int_t cy=0,
     const scalar_t skin_factor=1.0)const{
@@ -108,7 +108,7 @@ public:
   /// \param cx x-coordiante of the origin of the deformation mapping
   /// \param cy y-coordinate of the origin of the deformation mapping
   virtual void draw(Teuchos::RCP<Image> & layer_0_image,
-    Teuchos::RCP<Def_Map> map=Teuchos::null,
+    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
     const int_t cx=0,
     const int_t cy=0)const{
     assert(false && "  DICe ERROR: Base class implementation of this method should not be called.");
@@ -135,14 +135,14 @@ public:
   /// \brief Constructor that takes the vertices as arguements
   /// \param coords_x A vector of integer valued global x-coordinates for the polygon vertices
   /// \param coords_y A vector of integer valued global y-coordinates for the polygon vertices
-  Polygon(std::vector<int_t> & coords_x,
+  Polygon(const std::vector<int_t> & coords_x,
     std::vector<int_t> & coords_y);
 
   virtual ~Polygon(){};
 
   /// See base class documentation
   // NOTE: The pair is (y,x) not (x,y) so that the ordering in the set will match loops over y then x
-  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<Def_Map> map=Teuchos::null,
+  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
     const int_t cx=0,
     const int_t cy=0,
     const scalar_t skin_factor=1.0)const;
@@ -156,7 +156,7 @@ public:
 
   /// See base class documentation
   virtual void draw(Teuchos::RCP<Image> & layer_0_image,
-    Teuchos::RCP<Def_Map> map=Teuchos::null,
+    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
     const int_t cx=0,
     const int_t cy=0)const;
 
@@ -209,7 +209,7 @@ public:
   virtual ~Circle(){};
 
   /// See base class documentation
-  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<Def_Map> map=Teuchos::null,
+  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
     const int_t cx=0,
     const int_t cy=0,
     const scalar_t skin_factor=1.0)const;
@@ -223,7 +223,7 @@ public:
 
   /// See base class documentation
   virtual void draw(Teuchos::RCP<Image> & layer_0_image,
-    Teuchos::RCP<Def_Map> map=Teuchos::null)const;
+    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null)const;
 
 private:
   /// Center of the circle global x-coordinate
@@ -264,7 +264,7 @@ public:
   virtual ~Rectangle(){};
 
   /// See base class documentation
-  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<Def_Map> map=Teuchos::null,
+  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
     const int_t cx=0,
     const int_t cy=0,
     const scalar_t skin_factor=1.0)const;
@@ -278,7 +278,7 @@ public:
 
   /// See base class documentation
   virtual void draw(Teuchos::RCP<Image> & layer_0_image,
-    Teuchos::RCP<Def_Map> map=Teuchos::null)const;
+    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null)const;
 
 private:
   /// Center global x-coordinate

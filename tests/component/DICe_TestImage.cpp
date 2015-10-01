@@ -203,42 +203,42 @@ int main(int argc, char *argv[]) {
 
   *outStream << "creating gauss filtered image filter size 5: outFilter5.tif " << std::endl;
   Teuchos::RCP<Teuchos::ParameterList> filter_5_params = rcp(new Teuchos::ParameterList());
-  filter_5_params->set(DICe::gauss_filter_image,true);
+  filter_5_params->set(DICe::gauss_filter_images,true);
   filter_5_params->set(DICe::gauss_filter_mask_size,5);
   Image filter_5_img("./images/ImageA.tif",filter_5_params);
   filter_5_img.write_tiff("outFilter5.tif");
 
   *outStream << "creating gauss filtered image filter size 7: outFilter7.tif " << std::endl;
   Teuchos::RCP<Teuchos::ParameterList> filter_7_params = rcp(new Teuchos::ParameterList());
-  filter_7_params->set(DICe::gauss_filter_image,true);
+  filter_7_params->set(DICe::gauss_filter_images,true);
   filter_7_params->set(DICe::gauss_filter_mask_size,7);
   Image filter_7_img("./images/ImageA.tif",filter_7_params);
   filter_7_img.write_tiff("outFilter7.tif");
 
   *outStream << "creating gauss filtered image filter size 9: outFilter9.tif " << std::endl;
   Teuchos::RCP<Teuchos::ParameterList> filter_9_params = rcp(new Teuchos::ParameterList());
-  filter_9_params->set(DICe::gauss_filter_image,true);
+  filter_9_params->set(DICe::gauss_filter_images,true);
   filter_9_params->set(DICe::gauss_filter_mask_size,9);
   Image filter_9_img("./images/ImageA.tif",filter_9_params);
   filter_9_img.write_tiff("outFilter9.tif");
 
   *outStream << "creating gauss filtered image filter size 11: outFilter11.tif " << std::endl;
   Teuchos::RCP<Teuchos::ParameterList> filter_11_params = rcp(new Teuchos::ParameterList());
-  filter_11_params->set(DICe::gauss_filter_image,true);
+  filter_11_params->set(DICe::gauss_filter_images,true);
   filter_11_params->set(DICe::gauss_filter_mask_size,11);
   Image filter_11_img("./images/ImageA.tif",filter_11_params);
   filter_11_img.write_tiff("outFilter11.tif");
 
   *outStream << "creating gauss filtered image filter size 13: outFilter13.tif " << std::endl;
   Teuchos::RCP<Teuchos::ParameterList> filter_13_params = rcp(new Teuchos::ParameterList());
-  filter_13_params->set(DICe::gauss_filter_image,true);
+  filter_13_params->set(DICe::gauss_filter_images,true);
   filter_13_params->set(DICe::gauss_filter_mask_size,13);
   Image filter_13_img("./images/ImageA.tif",filter_13_params);
   filter_13_img.write_tiff("outFilter13.tif");
 
   *outStream << "creating gauss filtered image filter size 13 (with hierarchical parallelism) to compare to flat filter functor" << std::endl;
   Teuchos::RCP<Teuchos::ParameterList> filter_h_params = rcp(new Teuchos::ParameterList());
-  filter_h_params->set(DICe::gauss_filter_image,true);
+  filter_h_params->set(DICe::gauss_filter_images,true);
   filter_h_params->set(DICe::gauss_filter_use_hierarchical_parallelism,true);
   filter_h_params->set(DICe::gauss_filter_team_size,256);
   filter_h_params->set(DICe::gauss_filter_mask_size,13);

@@ -1,0 +1,1506 @@
+// @HEADER
+// ************************************************************************
+//
+//               Digital Image Correlation Engine (DICe)
+//                 Copyright (2014) Sandia Corporation
+//
+// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+// license for use of this work by or on behalf of the U.S. Government.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact:
+//              Dan Turner   (danielzturner@gmail.com)
+//
+// ************************************************************************
+// @HEADER
+
+#include <DICe_Parser.h>
+#include <DICe_ParameterUtilities.h>
+#include <DICe.h>
+
+#include <Teuchos_oblackholestream.hpp>
+#include <Teuchos_XMLParameterListHelpers.hpp>
+
+#ifndef DICE_DISABLE_BOOST_FILESYSTEM
+  #include <boost/filesystem.hpp>
+#endif
+  #include <boost/program_options.hpp>
+namespace po = boost::program_options;
+
+#include <iostream>
+#include <fstream>
+#include <cctype>
+#include <string>
+
+#ifdef HAVE_MPI
+#  include <mpi.h>
+#endif
+
+namespace DICe {
+
+DICE_LIB_DLL_EXPORT
+Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
+  char *argv[],
+  Teuchos::RCP<std::ostream> & outStream,
+  std::string & banner,
+  const Analysis_Type analysis_type){
+
+  int_t proc_rank = 0;
+#ifdef HAVE_MPI
+  int_t mpi_is_initialized = 0;
+  MPI_Initialized(&mpi_is_initialized);
+  if(mpi_is_initialized)
+    MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
+#endif
+
+  // Declare the supported options.
+  po::options_description desc("Allowed options");
+
+  if(analysis_type==LOCAL_DIC){
+    desc.add_options()("help,h", "produce help message")
+               ("verbose,v","Output log to screen")
+               ("timing,t","Print timing statistics to screen")
+               ("input,i",po::value<std::string>(),"XML input file name <filename>.xml")
+               ("generate,g",po::value<std::string>()->implicit_value("dice"),"Create XML input file templates")
+               ;
+  }
+  else{
+    desc.add_options()("help,h", "produce help message")
+               ("verbose,v","Output log to screen")
+               ("timing,t","Print timing statistics to screen")
+               ("input,i",po::value<std::string>(),"XML input file name <filename>.xml")
+               ;
+  }
+
+   // Parse the command line options
+   po::variables_map vm;
+   // TODO add graceful exception catching for unrecognized options
+   // currently the executable crashes with a malloc error that is a little
+   // misleading
+   po::store(po::parse_command_line(argc, argv, desc), vm);
+   po::notify(vm);
+
+   Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
+   outStream = Teuchos::rcp(&std::cout, false);
+   // Print info to screen
+   if(!vm.count("verbose") || proc_rank!=0){
+     outStream = bhs;
+   }
+
+   // Handle help requests
+   if(vm.count("help")){
+     std::cout << banner;
+     std::cout << desc << std::endl;
+     exit(0);
+   }
+
+   // Generate input file templates and exit
+   if(vm.count("generate")){
+     if(analysis_type!=LOCAL_DIC){
+       std::cout << "Generate option is not enabled for this analysis type" << std::endl;
+       exit(0);
+     }
+     std::string templatePrefix = vm["generate"].as<std::string>();
+     if(proc_rank==0) DEBUG_MSG("Generating input file templates using prefix: " << templatePrefix);
+     generate_template_input_files(templatePrefix);
+     exit(0);
+   }
+
+   std::string input_file;
+   if(vm.count("input")){
+     input_file = vm["input"].as<std::string>();
+   }
+   else{
+     std::cout << "Error: The XML input file must be specified on the command line with -i <filename>.xml" << std::endl;
+     std::cout << "       (To generate template input files, specify -g [file_prefix] on the command line)" << std::endl;
+     exit(1);
+   }
+   if(proc_rank==0) DEBUG_MSG("Using input file: " << input_file);
+
+   Teuchos::RCP<Teuchos::ParameterList> inputParams = Teuchos::rcp( new Teuchos::ParameterList() );
+   Teuchos::Ptr<Teuchos::ParameterList> inputParamsPtr(inputParams.get());
+   Teuchos::updateParametersFromXmlFile(input_file, inputParamsPtr);
+   assert(inputParams!=Teuchos::null);
+
+   // Print timing statistics?
+   if(vm.count("timing")){
+     inputParams->set(DICe::print_timing,true);
+   }
+
+   // Test the input values
+   std::vector<std::pair<std::string,std::string> > required_params;
+   required_params.push_back(std::pair<std::string,std::string>(DICe::image_folder,"string"));
+   if(analysis_type==GLOBAL_DIC){
+     required_params.push_back(std::pair<std::string,std::string>(DICe::output_folder,"string"));
+     required_params.push_back(std::pair<std::string,std::string>(DICe::mesh_size,"int"));
+     required_params.push_back(std::pair<std::string,std::string>(DICe::image_edge_buffer_size,"int"));
+   }
+   if(analysis_type==LOCAL_DIC){
+     required_params.push_back(std::pair<std::string,std::string>(DICe::output_folder,"string"));
+   }
+   if(analysis_type==CONSTRAINED_OPT){
+     required_params.push_back(std::pair<std::string,std::string>(DICe::output_folder,"string"));
+     required_params.push_back(std::pair<std::string,std::string>(DICe::mesh_file,"string"));
+     required_params.push_back(std::pair<std::string,std::string>(DICe::mesh_output_file,"string"));
+   }
+   if(analysis_type==INTEGRATED_DIC){
+     required_params.push_back(std::pair<std::string,std::string>(DICe::time_force_file,"string"));
+     required_params.push_back(std::pair<std::string,std::string>(DICe::mesh_file,"string"));
+     required_params.push_back(std::pair<std::string,std::string>(DICe::mesh_output_file,"string"));
+     required_params.push_back(std::pair<std::string,std::string>(DICe::output_folder,"string"));
+     required_params.push_back(std::pair<std::string,std::string>(DICe::physics_parameters_file,"string"));
+   }
+
+   // make sure that a subset file was defined:
+   bool required_param_missing = false;
+   for(int_t i=0;i<required_params.size();++i){
+     if(!inputParams->isParameter(required_params[i].first)){
+       std::cout << "Error: The parameter " << required_params[i].first << " of type " <<
+           required_params[i].second << " must be defined in " << input_file << std::endl;
+       std::cout << "<Parameter name=\"" << required_params[i].first << "\" type=\"" <<
+           required_params[i].second << "\" value=\"<value>\" />" << std::endl;
+       required_param_missing = true;
+     }
+   }
+   // require either the step_size or subset_file
+   if(analysis_type==LOCAL_DIC){
+     if(!inputParams->isParameter(DICe::subset_file)&&!inputParams->isParameter(DICe::step_size)){
+       std::cout << "Error: The parameter " << DICe::subset_file << " of type string or " <<
+           DICe::step_size << " of type int must be defined in " << input_file << std::endl;
+       required_param_missing = true;
+     }
+   }
+   else{
+     if(inputParams->isParameter(DICe::subset_file)||inputParams->isParameter(DICe::step_size)){
+       std::cout << "Error: The parameter " << DICe::subset_file << " of type string or " <<
+           DICe::step_size << " of type int are not valid params for this DIC analysis type: " <<
+           input_file << std::endl;
+       required_param_missing = true;
+     }
+   }
+
+   if(!inputParams->isParameter(DICe::reference_image_index)&&!inputParams->isParameter(DICe::reference_image)&&!inputParams->isParameter(DICe::cine_file)){
+     std::cout << "Error: Either the parameter " << DICe:: reference_image_index << " or " <<
+         DICe::reference_image << " or " << DICe::cine_file << " needs to be specified in " << input_file << std::endl;
+     required_param_missing = true;
+   }
+   // specifying a simple two image correlation
+   if(inputParams->isParameter(DICe::reference_image)){
+     if(inputParams->isParameter(DICe::num_images)){
+       std::cout << "Error: The parameter " << DICe::num_images <<
+           " cannot be specified for a simple two image correlation (denoted by using the reference_image param) in " << input_file << std::endl;
+       required_param_missing = true;
+     }
+     if(inputParams->isParameter(DICe::num_file_suffix_digits)){
+       std::cout << "Error: The parameter " << DICe::num_file_suffix_digits <<
+           " cannot be specified for a simple two image correlation (denoted by using the reference_image param) in " << input_file << std::endl;
+       required_param_missing = true;
+     }
+     if(inputParams->isParameter(DICe::image_file_extension)){
+       std::cout << "Error: The parameter " << DICe::image_file_extension <<
+           " cannot be specified for a simple two image correlation (denoted by using the reference_image param) in " << input_file << std::endl;
+       required_param_missing = true;
+     }
+     if(inputParams->isParameter(DICe::image_file_prefix)){
+       std::cout << "Error: The parameter " << DICe::image_file_prefix <<
+           " cannot be specified for a simple two image correlation (denoted by using the reference_image param) in " << input_file << std::endl;
+       required_param_missing = true;
+     }
+   }
+   // specifying image sequence
+   if((inputParams->isParameter(DICe::reference_image_index)&&inputParams->isParameter(DICe::reference_image))||
+       (inputParams->isParameter(DICe::reference_image_index)&&inputParams->isParameter(DICe::deformed_images))){
+     std::cout << "Error: Cannot specify both " << DICe:: reference_image_index <<
+         " and (" << DICe::reference_image << " or " << DICe::deformed_images << ") in " << input_file << std::endl;
+     required_param_missing = true;
+   }
+   if(inputParams->isParameter(DICe::reference_image_index)){
+     if(!inputParams->isParameter(DICe::num_images)){
+       std::cout << "Error: The parameter " << DICe::num_images << " of type int must be defined in " << input_file << std::endl;
+       required_param_missing = true;
+     }
+     if(!inputParams->isParameter(DICe::num_file_suffix_digits)){
+       std::cout << "Error: The parameter " << DICe::num_file_suffix_digits << " of type int must be defined in " << input_file << std::endl;
+       required_param_missing = true;
+     }
+     if(!inputParams->isParameter(DICe::image_file_extension)){
+       std::cout << "Error: The parameter " << DICe::image_file_extension << " of string must be defined in " << input_file << std::endl;
+       required_param_missing = true;
+     }
+     if(!inputParams->isParameter(DICe::image_file_prefix)){
+       std::cout << "Error: The parameter " << DICe::image_file_prefix << " of string must be defined in " << input_file << std::endl;
+       required_param_missing = true;
+     }
+   }
+
+   if(required_param_missing) exit(1);
+
+   // create the output folder if it does not exist
+#ifdef DICE_DISABLE_BOOST_FILESYSTEM
+   std::cout << "** WARNING: Boost filesystem has been disabled so files will be output to current execution directory " << std::endl;
+#else
+   std::string output_folder = inputParams->get<std::string>(DICe::output_folder);
+   if(proc_rank==0) DEBUG_MSG("Attempting to create directory : " << output_folder);
+   boost::filesystem::path dir(output_folder);
+   if(boost::filesystem::create_directory(dir)) {
+     if(proc_rank==0) DEBUG_MSG("Directory " << output_folder << " was successfully created");
+   }
+#endif
+   return inputParams;
+}
+
+DICE_LIB_DLL_EXPORT
+Teuchos::RCP<Teuchos::ParameterList> read_physics_params(const std::string & paramFileName){
+
+  int_t proc_rank = 0;
+#ifdef HAVE_MPI
+  int_t mpi_is_initialized = 0;
+  MPI_Initialized(&mpi_is_initialized);
+  if(mpi_is_initialized)
+    MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
+#endif
+
+  if(proc_rank==0) DEBUG_MSG("Parsing physics parameters from file: " << paramFileName);
+  Teuchos::RCP<Teuchos::ParameterList> stringParams = Teuchos::rcp( new Teuchos::ParameterList() );
+  Teuchos::Ptr<Teuchos::ParameterList> stringParamsPtr(stringParams.get());
+  Teuchos::updateParametersFromXmlFile(paramFileName, stringParamsPtr);
+  assert(stringParams!=Teuchos::null);
+
+
+  // The string params are what as given by the user. These are string values because things like correlation method
+  // are not recognized by the xml parser. Only the string values need to be converted into DICe types.
+  Teuchos::RCP<Teuchos::ParameterList> diceParams = Teuchos::rcp( new Teuchos::ParameterList() );
+  // iterate through the params and copy over all non-string types:
+  for(Teuchos::ParameterList::ConstIterator it=stringParams->begin();it!=stringParams->end();++it){
+    std::string paramName = it->first;
+    if(proc_rank==0) DEBUG_MSG("Found user specified physics parameter: " << paramName);
+    stringToLower(paramName); // string parameter names are lower case
+    //assert(!DICe::is_string_param(paramName));
+    //if(proc_rank==0) DEBUG_MSG("Not a string parameter, so passing without translating");
+    diceParams->setEntry(it->first,it->second);
+  }
+  return diceParams;
+}
+
+
+DICE_LIB_DLL_EXPORT
+Teuchos::RCP<Teuchos::ParameterList> read_correlation_params(const std::string & paramFileName){
+
+  int_t proc_rank = 0;
+#ifdef HAVE_MPI
+  int_t mpi_is_initialized = 0;
+  MPI_Initialized(&mpi_is_initialized);
+  if(mpi_is_initialized)
+    MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
+#endif
+
+  if(proc_rank==0) DEBUG_MSG("Parsing correlation parameters from file: " << paramFileName);
+  Teuchos::RCP<Teuchos::ParameterList> stringParams = Teuchos::rcp( new Teuchos::ParameterList() );
+  Teuchos::Ptr<Teuchos::ParameterList> stringParamsPtr(stringParams.get());
+  Teuchos::updateParametersFromXmlFile(paramFileName, stringParamsPtr);
+  assert(stringParams!=Teuchos::null);
+
+  // The string params are what as given by the user. These are string values because things like correlation method
+  // are not recognized by the xml parser. Only the string values need to be converted into DICe types.
+  Teuchos::RCP<Teuchos::ParameterList> diceParams = Teuchos::rcp( new Teuchos::ParameterList() );
+  // iterate through the params and copy over all non-string types:
+  for(Teuchos::ParameterList::ConstIterator it=stringParams->begin();it!=stringParams->end();++it){
+    std::string paramName = it->first;
+    if(proc_rank==0) DEBUG_MSG("Found user specified correlation parameter: " << paramName);
+    stringToLower(paramName); // string parameter names are lower case
+    if(DICe::is_string_param(paramName)){
+      if(proc_rank==0) DEBUG_MSG("This is a string parameter so it may need to be translated");
+      // make sure it's one of the valid entries below:
+      if(paramName == DICe::correlation_routine){
+        diceParams->set(DICe::correlation_routine,DICe::string_to_correlation_routine(
+          stringParams->get<std::string>(it->first)));
+      }
+      else if(paramName == DICe::interpolation_method){
+        diceParams->set(DICe::interpolation_method,DICe::string_to_interpolation_method(
+          stringParams->get<std::string>(it->first)));
+      }
+      else if(paramName == DICe::optimization_method){
+        diceParams->set(DICe::optimization_method,DICe::string_to_optimization_method(
+          stringParams->get<std::string>(it->first)));
+      }
+      else if(paramName == DICe::projection_method){
+        diceParams->set(DICe::projection_method,DICe::string_to_projection_method(
+          stringParams->get<std::string>(it->first)));
+      }
+      else if(paramName == DICe::initialization_method){
+        diceParams->set(DICe::initialization_method,DICe::string_to_initialization_method(
+          stringParams->get<std::string>(it->first)));
+      }
+      else{
+        if(proc_rank==0) DEBUG_MSG("Not a string parameter that needs to be translated");
+        diceParams->setEntry(it->first,it->second);
+      }
+    }
+    else{
+      if(proc_rank==0) DEBUG_MSG("Not a string parameter, so passing without translating");
+     diceParams->setEntry(it->first,it->second);
+    }
+  }
+  return diceParams;
+}
+
+DICE_LIB_DLL_EXPORT
+Teuchos::RCP<Circle> read_circle(std::fstream &dataFile){
+  int_t proc_rank = 0;
+#ifdef HAVE_MPI
+  int_t mpi_is_initialized = 0;
+  MPI_Initialized(&mpi_is_initialized);
+  if(mpi_is_initialized)
+    MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
+#endif
+
+  if(proc_rank==0) DEBUG_MSG("Reading a circle");
+  int_t cx = -1;
+  int_t cy = -1;
+  Real radius = -1.0;
+  while(!dataFile.eof()){
+    Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile);
+    if(tokens.size()==0) continue; // comment or blank line
+    if(tokens[0]==parser_end) break;
+    else if(tokens[0]==parser_center){
+      if(tokens.size()<3){std::cout << "Error, not enough values to define circle center point " << std::endl; assert(false);}
+      assert(is_number(tokens[1]) && is_number(tokens[2]));
+      cx = atoi(tokens[1].c_str());
+      cy = atoi(tokens[2].c_str());
+    }
+    else if(tokens[0]==parser_radius){
+      if(tokens.size()<2){std::cout << "Error, not enough values to define circle radius " << std::endl; assert(false);}
+      assert(is_number(tokens[1]));
+      radius = strtod(tokens[1].c_str(),NULL);
+    }
+    else{
+      std::cout << "Error, invalid token in circle definition " << tokens[0] << std::endl;
+      assert(false);
+    }
+  }
+  assert(radius!=-1.0);
+  assert(cx!=-1);
+  assert(cy!=-1);
+  if(proc_rank==0) DEBUG_MSG("Creating a circle with center " << cx << " " << cy << " and radius " << radius);
+  Teuchos::RCP<DICe::Circle> shape = Teuchos::rcp(new DICe::Circle(cx,cy,radius));
+  return shape;
+}
+
+DICE_LIB_DLL_EXPORT
+Teuchos::RCP<DICe::Rectangle> read_rectangle(std::fstream &dataFile){
+  int_t proc_rank = 0;
+#ifdef HAVE_MPI
+  int_t mpi_is_initialized = 0;
+  MPI_Initialized(&mpi_is_initialized);
+  if(mpi_is_initialized)
+    MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
+#endif
+
+  if(proc_rank==0) DEBUG_MSG("Reading a rectangle");
+  int_t cx = -1;
+  int_t cy = -1;
+  int_t width = -1.0;
+  int_t height = -1.0;
+  int_t upper_left_x = -1;
+  int_t upper_left_y = -1;
+  int_t lower_right_x = -1;
+  int_t lower_right_y = -1;
+  bool has_upper_left_lower_right = false;
+  while(!dataFile.eof()){
+    Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile);
+    if(tokens.size()==0) continue; // comment or blank line
+    if(tokens[0]==parser_end) break;
+    if(tokens[0]==parser_center||tokens[0]==parser_width||tokens[0]==parser_height){
+      if(tokens[0]==parser_center){
+        if(tokens.size()<3){std::cout << "Error, not enough values to define circle center point " << std::endl; assert(false);}
+        assert(is_number(tokens[1]) && is_number(tokens[2]));
+        cx = atoi(tokens[1].c_str());
+        cy = atoi(tokens[2].c_str());
+      }
+      else if(tokens[0]==parser_width){
+        if(tokens.size()<2){std::cout << "Error, not enough values to define the width " << std::endl; assert(false);}
+        assert(is_number(tokens[1]));
+        width = strtod(tokens[1].c_str(),NULL);
+      }
+      else if(tokens[0]==parser_height){
+        if(tokens.size()<2){std::cout << "Error, not enough values to define the height " << std::endl; assert(false);}
+        assert(is_number(tokens[1]));
+        height = strtod(tokens[1].c_str(),NULL);
+      }
+      else{
+        std::cout << "Error, invalid token in rectangle definition by center, width, height " << tokens[0] << std::endl;
+        assert(false);
+      }
+    }
+    else if(tokens[0]==parser_upper_left||tokens[0]==parser_lower_right){
+      if(tokens[0]==parser_upper_left){
+        if(tokens.size()<3){std::cout << "Error, not enough values to define rectangle upper left " << std::endl; assert(false);}
+        assert(is_number(tokens[1]) && is_number(tokens[2]));
+        has_upper_left_lower_right = true;
+        upper_left_x = atoi(tokens[1].c_str());
+        upper_left_y = atoi(tokens[2].c_str());
+      }
+      else if(tokens[0]==parser_lower_right){
+        if(tokens.size()<3){std::cout << "Error, not enough values to define rectangle lower right " << std::endl; assert(false);}
+        assert(is_number(tokens[1]) && is_number(tokens[2]));
+        has_upper_left_lower_right = true;
+        lower_right_x = atoi(tokens[1].c_str());
+        lower_right_y = atoi(tokens[2].c_str());
+      }
+      else{
+        std::cout << "Error, invalid token in rectangle definition by upper left, lower right " << tokens[0] << std::endl;
+        assert(false);
+      }
+    }
+    else{
+      std::cout << "Error, invalid token in rectangle definition " << tokens[0] << std::endl;
+      assert(false);
+    }
+  }
+  if(has_upper_left_lower_right){
+    if(proc_rank==0) DEBUG_MSG("Rectangle has upper left_x " << upper_left_x << " upper_left_y " << upper_left_y <<
+      " lower_right_x " << lower_right_x << " lower_right_y " << lower_right_y);
+    assert(upper_left_x >=0);
+    assert(upper_left_y >=0);
+    assert(lower_right_x >=0);
+    assert(lower_right_y >=0);
+    assert(lower_right_x > upper_left_x && "Error: Rectangle inverted or zero width");
+    assert(lower_right_y > upper_left_y && "Error: Rectangle inverted or zero height");
+    width = lower_right_x - upper_left_x;
+    height = lower_right_y - upper_left_y;
+    cx = width/2 + upper_left_x;
+    cy = height/2 + upper_left_y;
+  }
+  assert(width>0);
+  assert(height>0);
+  assert(cx>0);
+  assert(cy>0);
+  if(proc_rank==0) DEBUG_MSG("Creating a rectangle with center " << cx << " " << cy << " width " << width << " height " << height);
+  Teuchos::RCP<DICe::Rectangle> shape = Teuchos::rcp(new DICe::Rectangle(cx,cy,width,height));
+  return shape;
+}
+
+DICE_LIB_DLL_EXPORT
+Teuchos::RCP<DICe::Polygon> read_polygon(std::fstream &dataFile){
+  int_t proc_rank = 0;
+#ifdef HAVE_MPI
+  int_t mpi_is_initialized = 0;
+  MPI_Initialized(&mpi_is_initialized);
+  if(mpi_is_initialized)
+    MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
+#endif
+
+  if(proc_rank==0) DEBUG_MSG("Reading a Polygon");
+  std::vector<int_t> vertices_x;
+  std::vector<int_t> vertices_y;
+  while(!dataFile.eof()){
+    Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile);
+    if(tokens.size()==0) continue; // comment or blank line
+    if(tokens[0]==parser_end) break;
+    assert(tokens.size()>=2);
+    // only other valid option is BEGIN VERTICES
+    assert(tokens[0]==parser_begin);
+    assert(tokens[1]==parser_vertices);
+    // read the vertices
+    while(!dataFile.eof()){
+      Teuchos::ArrayRCP<std::string> vertex_tokens = tokenize_line(dataFile);
+      if(vertex_tokens.size()==0)continue;
+      if(vertex_tokens[0]==parser_end) break;
+      assert(vertex_tokens.size()>=2);
+      assert(is_number(vertex_tokens[0]));
+      assert(is_number(vertex_tokens[1]));
+      vertices_x.push_back(atoi(vertex_tokens[0].c_str()));
+      vertices_y.push_back(atoi(vertex_tokens[1].c_str()));
+    }
+  }
+  assert(!vertices_x.empty());
+  assert(!vertices_y.empty());
+  assert(vertices_x.size()==vertices_y.size());
+  if(proc_rank==0) DEBUG_MSG("Creating a polygon with " << vertices_x.size() << " vertices");
+  for(int_t i=0;i<vertices_x.size();++i){
+    if(proc_rank==0) DEBUG_MSG("vx " << vertices_x[i] << " vy " << vertices_y[i] );
+  }
+  Teuchos::RCP<DICe::Polygon> shape = Teuchos::rcp(new DICe::Polygon(vertices_x,vertices_y));
+  return shape;
+}
+
+DICE_LIB_DLL_EXPORT
+multi_shape read_shapes(std::fstream & dataFile){
+  DICe::multi_shape multi_shape;
+  while(!dataFile.eof()){
+    Teuchos::ArrayRCP<std::string> shape_tokens = tokenize_line(dataFile);
+    if(shape_tokens.size()==0)continue;
+    if(shape_tokens[0]==parser_end) break;
+    assert(shape_tokens.size()>=2);
+    assert(shape_tokens[0]==parser_begin);
+    if(shape_tokens[1]==parser_circle){
+      Teuchos::RCP<DICe::Circle<scalar_t,int_t> > shape = read_circle(dataFile);
+      multi_shape.push_back(shape);
+    }
+    else if(shape_tokens[1]==parser_polygon){
+      Teuchos::RCP<DICe::Polygon<scalar_t,int_t> > shape = read_polygon(dataFile);
+      multi_shape.push_back(shape);
+    }
+    else if(shape_tokens[1]==parser_rectangle){
+      Teuchos::RCP<DICe::Rectangle<scalar_t,int_t> > shape = read_rectangle(dataFile);
+      multi_shape.push_back(shape);
+    }
+    else{
+      std::cout << "Error, unrecognized shape : " << shape_tokens[1] << std::endl;
+      assert(false);
+    }
+  }
+  assert(multi_shape.size()>0);
+  return multi_shape;
+}
+
+
+DICE_LIB_DLL_EXPORT
+Teuchos::ArrayRCP<std::string> tokenize_line(std::fstream &dataFile,
+  const std::string & delim){
+  static int_t MAX_CHARS_PER_LINE = 512;
+  static int_t MAX_TOKENS_PER_LINE = 20;
+  static std::string DELIMITER = delim;
+
+  Teuchos::ArrayRCP<std::string> tokens(MAX_TOKENS_PER_LINE,"");
+
+  // read an entire line into memory
+  char * buf = new char[MAX_CHARS_PER_LINE];
+  dataFile.getline(buf, MAX_CHARS_PER_LINE);
+
+  // parse the line into blank-delimited tokens
+  int_t n = 0; // a for-loop index
+
+  // parse the line
+  char * token;
+  token = strtok(buf, DELIMITER.c_str());
+  tokens[0] = token ? token : ""; // first token
+  stringToUpper(tokens[0]);
+  if (tokens[0] != "" && tokens[0]!=parser_comment_char) // zero if line is blank or starts with a comment char
+  {
+    for (n = 1; n < MAX_TOKENS_PER_LINE; n++)
+    {
+      token = strtok(0, DELIMITER.c_str());
+      tokens[n] = token ? token : ""; // subsequent tokens
+      if (tokens[n]=="") break; // no more tokens
+      stringToUpper(tokens[n]); // convert the string to upper case
+    }
+  }
+  tokens.resize(n);
+  delete [] buf;
+
+  return tokens;
+
+}
+
+DICE_LIB_DLL_EXPORT
+const bool is_number(const std::string& s)
+{
+  std::string::const_iterator it = s.begin();
+  while (it != s.end() && (std::isdigit(*it) || *it=='+' || *it=='-' || *it=='e' || *it=='E' || *it=='.'))
+    ++it;
+  return !s.empty() && it == s.end();
+}
+
+
+DICE_LIB_DLL_EXPORT
+const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileName,
+  const int_t width,
+  const int_t height){
+  int_t proc_rank = 0;
+#ifdef HAVE_MPI
+  int_t mpi_is_initialized = 0;
+  MPI_Initialized(&mpi_is_initialized);
+  if(mpi_is_initialized)
+    MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
+#endif
+
+  // here is where the subset defs are read and parsed
+  Teuchos::RCP<Subset_File_Info> info = Teuchos::rcp(new Subset_File_Info());
+  // NOTE: assumes 2D coordinates
+  const int_t dim = 2;
+  std::fstream dataFile(fileName.c_str(), std::ios_base::in);
+  assert(dataFile.good());
+
+  if(proc_rank==0) DEBUG_MSG("Reading the subset file " << fileName);
+
+  bool coordinates_defined = false;
+  bool conformal_subset_defined = false;
+  bool roi_defined = false;
+  int_t num_roi = 0;
+
+  // read each line of the file
+   while (!dataFile.eof())
+   {
+     Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile);
+     if(tokens.size()==0) continue;
+     for (int i = 0; i < tokens.size(); i++)
+       if(proc_rank==0) DEBUG_MSG("Tokens[" << i << "] = " << tokens[i]);
+     if(tokens.size()<2){
+       std::cout << "Error reading subset file, invalid entry: " << fileName << " "  << std::endl;
+       for (int i = 0; i < tokens.size(); i++)
+         std::cout << "Tokens[" << i << "] = " << tokens[i] << std::endl;
+       std::cout << std::endl;
+       assert(false);
+     }
+     if(tokens[0]==parser_begin){ // An input block is being defined
+       if(tokens[1]==parser_subset_coordinates){
+         if(proc_rank==0) DEBUG_MSG("Reading coordinates from subset file");
+         coordinates_defined = true;
+         // read more lines until parser end is reached
+         while(!dataFile.eof()){
+           Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile);
+           if(block_tokens.size()==0) continue; // blank line or comment
+           else if(block_tokens[0]==parser_end) break; // end of the list
+           else if(is_number(block_tokens[0])){ // set of coordinates
+             if(block_tokens.size()<2){std::cout << "Error: invalid coordinate (not enough values)" << fileName << " "  << std::endl; assert(false);}
+             info->data_vector->push_back(std::atoi(block_tokens[0].c_str()));
+             if(block_tokens[1]==parser_comment_char){std::cout << "Error: invalid coordinate (not enough values)" << fileName << " "  << std::endl; assert(false);}
+             info->data_vector->push_back(std::atoi(block_tokens[1].c_str()));
+             info->neighbor_vector->push_back(-1); // neighbor_id
+           }
+           else{ // or error
+             std::cout << "Error parsing subset coordinates: " << fileName << " "  << block_tokens[0] << std::endl;
+             assert(false);
+           }
+         } // while loop
+         // check for valid coordinates
+         assert(info->data_vector->size()>=2);
+         assert(info->data_vector->size()/2==info->neighbor_vector->size());
+         assert(info->data_vector->size()%2==0);
+         for(int_t i=0;i<info->data_vector->size()/dim;++i){
+           if((*info->data_vector)[i*dim]<0||(*info->data_vector)[i*dim]>=width){
+             std::cout << "Error: invalid subset coordinate in " << fileName << " x: "  << (*info->data_vector)[i*dim] << std::endl;
+             assert(false);
+           }
+           if((*info->data_vector)[i*dim+1]<0||(*info->data_vector)[i*dim+1]>=height){
+             std::cout << "Error: invalid subset coordinate in " << fileName << " y: "  << (*info->data_vector)[i*dim+1] << std::endl;
+             assert(false);
+           }
+           if(proc_rank==0) DEBUG_MSG("Subset coord: (" << (*info->data_vector)[i*dim] << "," << (*info->data_vector)[i*dim+1] << ")");
+         }
+       }
+       else if(tokens[1]==parser_region_of_interest){
+         if(proc_rank==0) DEBUG_MSG("Reading region of interest");
+         DICe::multi_shape boundary_multi_shape;
+         DICe::multi_shape excluded_multi_shape;
+         info->type=REGION_OF_INTEREST_INFO;
+         roi_defined = true;
+         while(!dataFile.eof()){
+           Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile);
+           if(block_tokens.size()==0) continue; // blank line or comment
+           else if(block_tokens[0]==parser_end) break; // end of the defs
+           // SHAPES
+           else if(block_tokens[0]==parser_begin){
+             assert(block_tokens.size()>=2);
+             if(block_tokens[1]==parser_boundary){
+               if(proc_rank==0) DEBUG_MSG("Reading boundary def");
+               boundary_multi_shape = read_shapes(dataFile);
+               if(boundary_multi_shape.size()<=0){
+                 std::cout << "Error: cannot define a boundary with zero shapes " << fileName << std::endl;
+                 assert(false);
+               }
+             }
+             else if(block_tokens[1]==parser_excluded){
+               if(proc_rank==0) DEBUG_MSG("Reading excluded def");
+               excluded_multi_shape = read_shapes(dataFile);
+               if(excluded_multi_shape.size()<=0){
+                 std::cout << "Error: cannot define an exclusion with zero shapes " << fileName << std::endl;
+                 assert(false);
+               }
+             }
+             else if(block_tokens[1]==parser_seed){
+               bool has_location = false;
+               bool has_disp_values = false;
+               int_t seed_loc_x = -1;
+               int_t seed_loc_y = -1;
+               scalar_t seed_disp_x = 0.0;
+               scalar_t seed_disp_y = 0.0;
+               scalar_t seed_normal_strain_x = 0.0;
+               scalar_t seed_normal_strain_y = 0.0;
+               scalar_t seed_shear_strain = 0.0;
+               scalar_t seed_rotation = 0.0;
+               if(proc_rank==0) DEBUG_MSG("Reading seed information");
+               while(!dataFile.eof()){
+                 Teuchos::ArrayRCP<std::string> seed_tokens = tokenize_line(dataFile);
+                 if(seed_tokens.size()==0) continue; // blank line or comment
+                 else if(seed_tokens[0]==parser_end) break; // end of the defs
+                 else if(seed_tokens[0]==parser_location){
+                   assert(seed_tokens.size()>2 && "DICe Error, not enough values specified for seed location (x and y are needed)." );
+                   assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                   seed_loc_x = atoi(seed_tokens[1].c_str());
+                   seed_loc_y = atoi(seed_tokens[2].c_str());
+                   if(proc_rank==0) DEBUG_MSG("Seed location " << seed_loc_x << " " << seed_loc_y);
+                   has_location = true;
+                   info->size_map->insert(std::pair<int_t,std::pair<int_t,int_t> >(num_roi,std::pair<int_t,int_t>(seed_loc_x,seed_loc_y)));
+                 }
+                 else if(seed_tokens[0]==parser_displacement){
+                   assert(seed_tokens.size()>2 && "DICe Error, not enough values specified for seed displacement (x and y are needed)." );
+                   assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                   seed_disp_x = strtod(seed_tokens[1].c_str(),NULL);
+                   seed_disp_y = strtod(seed_tokens[2].c_str(),NULL);
+                   if(proc_rank==0) DEBUG_MSG("Seed displacement " << seed_disp_x << " " << seed_disp_y);
+                   has_disp_values = true;
+                   info->displacement_map->insert(std::pair<int_t,std::pair<scalar_t,scalar_t> >(num_roi,std::pair<scalar_t,scalar_t>(seed_disp_x,seed_disp_y)));
+                 }
+                 else if(seed_tokens[0]==parser_normal_strain){
+                   assert(seed_tokens.size()>2 && "DICe Error, not enough values specified for seed normal_strain (x and y are needed)." );
+                   assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                   seed_normal_strain_x = strtod(seed_tokens[1].c_str(),NULL);
+                   seed_normal_strain_y = strtod(seed_tokens[2].c_str(),NULL);
+                   if(proc_rank==0) DEBUG_MSG("Seed normal strain " << seed_normal_strain_x << " " << seed_normal_strain_y);
+                   info->normal_strain_map->insert(std::pair<int_t,std::pair<scalar_t,scalar_t> >(num_roi,std::pair<scalar_t,scalar_t>(seed_normal_strain_x,seed_normal_strain_y)));
+                 }
+                 else if(seed_tokens[0]==parser_shear_strain){
+                   assert(seed_tokens.size()>1 && "DICe Error, not enough values specified for seed shear_strain." );
+                   assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                   seed_shear_strain = strtod(seed_tokens[1].c_str(),NULL);
+                   if(proc_rank==0) DEBUG_MSG("Seed shear strain " << seed_shear_strain);
+                   info->shear_strain_map->insert(std::pair<int_t,scalar_t>(num_roi,seed_shear_strain));
+                 }
+                 else if(seed_tokens[0]==parser_rotation){
+                   assert(seed_tokens.size()>1 && "DICe Error, not enough values specified for seed rotation." );
+                   assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                   seed_rotation = strtod(seed_tokens[1].c_str(),NULL);
+                   if(proc_rank==0) DEBUG_MSG("Seed rotation " << seed_rotation);
+                   info->rotation_map->insert(std::pair<int_t,scalar_t>(num_roi,seed_rotation));
+                 }
+                 else{
+                   std::cout << "Error, unrecognized command in seed block " << tokens[0] << std::endl;
+                   assert(false);
+                 }
+               }
+               assert(has_location && "DICe Error, seed must have location specified");
+               assert(has_disp_values && "DICe Error, seed must have displacement guess specified");
+             }
+             else{
+               std::cout << " Error parsing subset file " << fileName << " "  << block_tokens[1] << std::endl;
+               assert(false);
+             }
+           }
+           // ERROR
+           else{ // or error
+             std::cout << "Error in parsing conformal subset def, unkown block command: " << block_tokens[0] << std::endl;
+             assert(false);
+           }
+         } // while loop
+         DICe::Conformal_Area_Def conformal_area_def(boundary_multi_shape,excluded_multi_shape);
+         info->conformal_area_defs->insert(std::pair<int_t,DICe::Conformal_Area_Def>(num_roi,conformal_area_def));
+         num_roi++;
+       }
+       else if(tokens[1]==parser_conformal_subset){
+         int_t subset_id = -1;
+         scalar_t auto_detection_factor = -1.0;
+         bool has_seed = false;
+         scalar_t seed_disp_x = 0.0;
+         scalar_t seed_disp_y = 0.0;
+         scalar_t seed_normal_strain_x = 0.0;
+         scalar_t seed_normal_strain_y = 0.0;
+         scalar_t seed_shear_strain = 0.0;
+         scalar_t seed_rotation = 0.0;
+         std::vector<int_t> blocking_ids;
+         DICe::multi_shape boundary_multi_shape;
+         DICe::multi_shape excluded_multi_shape;
+         DICe::multi_shape obstructed_multi_shape;
+         if(proc_rank==0) DEBUG_MSG("Reading conformal subset def");
+         conformal_subset_defined = true;
+         while(!dataFile.eof()){
+           Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile);
+           if(block_tokens.size()==0) continue; // blank line or comment
+           else if(block_tokens[0]==parser_end) break; // end of the defs
+           // SUBSET ID
+           else if(block_tokens[0]==parser_subset_id){
+             assert(block_tokens.size()>=2);
+             assert(is_number(block_tokens[1]));
+             subset_id = atoi(block_tokens[1].c_str());
+             if(proc_rank==0) DEBUG_MSG("Conformal subset id: " << subset_id);
+           }
+           // AUTO OBSTRUCTION DETECTION FACTOR
+           else if(block_tokens[0]==auto_obstruction_detection_factor){
+             assert(block_tokens.size()>=2);
+             assert(is_number(block_tokens[1]));
+             auto_detection_factor = strtod(block_tokens[1].c_str(),NULL);
+             if(proc_rank==0) DEBUG_MSG("Automatic obstruction detection factor: " << auto_detection_factor);
+           }
+           // SEEDS
+           else if(block_tokens[1]==parser_seed){
+             assert(has_seed==false && "Error, only one seed allowed per conformal subset");
+             bool has_disp_values = false;
+             has_seed = true;
+             if(proc_rank==0) DEBUG_MSG("Reading seed information for conformal subset");
+             while(!dataFile.eof()){
+               Teuchos::ArrayRCP<std::string> seed_tokens = tokenize_line(dataFile);
+               if(seed_tokens.size()==0) continue; // blank line or comment
+               else if(seed_tokens[0]==parser_end) break; // end of the defs
+               else if(seed_tokens[0]==parser_location){
+                 std::cout << "Error, location cannot be specified for a seed in a conformal subset, the location is the subset centroid automatically" << std::endl;
+                 assert(false);
+               }
+               else if(seed_tokens[0]==parser_displacement){
+                 assert(seed_tokens.size()>2 && "DICe Error, not enough values specified for seed displacement (x and y are needed)." );
+                 assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                 seed_disp_x = strtod(seed_tokens[1].c_str(),NULL);
+                 seed_disp_y = strtod(seed_tokens[2].c_str(),NULL);
+                 if(proc_rank==0) DEBUG_MSG("Seed displacement " << seed_disp_x << " " << seed_disp_y);
+                 has_disp_values = true;
+               }
+               else if(seed_tokens[0]==parser_normal_strain){
+                 assert(seed_tokens.size()>2 && "DICe Error, not enough values specified for seed normal strain (x and y are needed)." );
+                 assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                 seed_normal_strain_x = strtod(seed_tokens[1].c_str(),NULL);
+                 seed_normal_strain_y = strtod(seed_tokens[2].c_str(),NULL);
+                 if(proc_rank==0) DEBUG_MSG("Seed Normal Strain " << seed_normal_strain_x << " " << seed_normal_strain_y);
+               }
+               else if(seed_tokens[0]==parser_shear_strain){
+                 assert(seed_tokens.size()>1 && "DICe Error, a value must be specified for shear strain." );
+                 assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                 seed_shear_strain = strtod(seed_tokens[1].c_str(),NULL);
+                 if(proc_rank==0) DEBUG_MSG("Seed Shear Strain " << seed_shear_strain);
+               }
+               else if(seed_tokens[0]==parser_rotation){
+                 assert(seed_tokens.size()>1 && "DICe Error, a value must be specified for rotation." );
+                 assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                 seed_rotation = strtod(seed_tokens[1].c_str(),NULL);
+                 if(proc_rank==0) DEBUG_MSG("Seed Rotation " << seed_rotation);
+               }
+               else{
+                 std::cout << "Error, unrecognized command in seed block " << tokens[0] << std::endl;
+                 assert(false);
+               }
+             }
+             assert(has_disp_values && "DICe Error, seed must have at least a displacement guess specified");
+           }
+           // SHAPES
+           else if(block_tokens[0]==parser_begin){
+             assert(block_tokens.size()>=2);
+             if(block_tokens[1]==parser_boundary){
+               if(proc_rank==0) DEBUG_MSG("Reading boundary def");
+               boundary_multi_shape = read_shapes(dataFile);
+               if(boundary_multi_shape.size()<=0){
+                 std::cout << "Error: cannot define a boundary with zero shapes " << fileName << std::endl;
+                 assert(false);
+               }
+             }
+             else if(block_tokens[1]==parser_excluded){
+               if(proc_rank==0) DEBUG_MSG("Reading excluded def");
+               excluded_multi_shape = read_shapes(dataFile);
+               if(excluded_multi_shape.size()<=0){
+                 std::cout << "Error: cannot define an exclusion with zero shapes " << fileName << std::endl;
+                 assert(false);
+               }
+             }
+             else if(block_tokens[1]==parser_obstructed){
+               if(proc_rank==0) DEBUG_MSG("Reading obstructed def");
+               obstructed_multi_shape = read_shapes(dataFile);
+               if(obstructed_multi_shape.size()<=0){
+                 std::cout << "Error: cannot define an obstruction with zero shapes " << fileName << std::endl;
+                 assert(false);
+               }
+             }
+             else if(block_tokens[1]==parser_blocking_subsets){
+               if(proc_rank==0) DEBUG_MSG("Reading blocking subsets");
+               while(!dataFile.eof()){
+                 Teuchos::ArrayRCP<std::string> id_tokens = tokenize_line(dataFile);
+                 if(id_tokens.size()==0) continue;
+                 if(id_tokens[0]==parser_end) break;
+                 assert(is_number(id_tokens[0]));
+                 blocking_ids.push_back(atoi(id_tokens[0].c_str()));
+               }
+               for(int_t i=0;i<blocking_ids.size();++i)
+                 if(proc_rank==0) DEBUG_MSG("Subset is blocked by " << blocking_ids[i]);
+             }
+             else{
+               std::cout << " Error parsing subset file " << fileName << " "  << block_tokens[1] << std::endl;
+               assert(false);
+             }
+           }
+           // ERROR
+           else{ // or error
+             std::cout << "Error in parsing conformal subset def, unkown block command: " << block_tokens[0] << std::endl;
+             assert(false);
+           }
+         } // while loop
+         // put the multishapes into a subset def:
+         const int_t b_size = boundary_multi_shape.size();
+         const int_t e_size = excluded_multi_shape.size();
+         const int_t o_size = obstructed_multi_shape.size();
+         if(proc_rank==0) DEBUG_MSG("Adding " << b_size << " shape(s) to the boundary def ");
+         if(proc_rank==0) DEBUG_MSG("Adding " << e_size << " shape(s) to the exclusion def ");
+         if(proc_rank==0) DEBUG_MSG("Adding " << o_size << " shape(s) to the obstruction def ");
+         DICe::Conformal_Area_Def conformal_area_def(boundary_multi_shape,excluded_multi_shape,obstructed_multi_shape);
+         if(subset_id<0){
+           std::cout << "Error, invalid subset id for conformal subset (or subset id was not defined with \"SUBSET_ID <id>\"): " << subset_id << std::endl;
+         }
+         info->conformal_area_defs->insert(std::pair<int_t,DICe::Conformal_Area_Def>(subset_id,conformal_area_def));
+         info->data_map->insert(std::pair<int_t,std::vector<int_t> >(subset_id,blocking_ids));
+         info->auto_obstruction_detection_factors_map->insert(std::pair<int_t,scalar_t >(subset_id,auto_detection_factor));
+         if(has_seed){
+           info->seed_subset_ids->insert(std::pair<int_t,int_t>(subset_id,subset_id)); // treating each conformal subset as an roi TODO fix this awkwardness
+           info->displacement_map->insert(std::pair<int_t,std::pair<scalar_t,scalar_t> >(subset_id,std::pair<scalar_t,scalar_t>(seed_disp_x,seed_disp_y)));
+           info->normal_strain_map->insert(std::pair<int_t,std::pair<scalar_t,scalar_t> >(subset_id,std::pair<scalar_t,scalar_t>(seed_normal_strain_x,seed_normal_strain_y)));
+           info->shear_strain_map->insert(std::pair<int_t,scalar_t>(subset_id,seed_shear_strain));
+           info->rotation_map->insert(std::pair<int_t,scalar_t>(subset_id,seed_rotation));
+         }
+       }  // end conformal subset def
+       else{
+         std::cout << "Error: Unkown block command in " << fileName << std::endl;
+         std::cout << "       " << tokens[1] << std::endl;
+         assert(false);
+       }
+     }
+   }
+  dataFile.close();
+  if(roi_defined){
+    assert(!coordinates_defined && !conformal_subset_defined && "DICe Error, if a region of interest in defined, the coordinates"
+        " cannot be specified, nor can conformal subset definitions.");
+  }
+
+  return info;
+}
+
+DICE_LIB_DLL_EXPORT
+const std::vector<std::string> decypher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params){
+  int_t proc_rank = 0;
+#ifdef HAVE_MPI
+  int_t mpi_is_initialized = 0;
+  MPI_Initialized(&mpi_is_initialized);
+  if(mpi_is_initialized)
+    MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
+#endif
+
+  // The reference image will be the first image in the vector, the rest are the deformed
+  std::vector<std::string> images;
+
+  assert(params->isParameter(DICe::image_folder));
+  std::string folder = params->get<std::string>(DICe::image_folder);
+  // Requires that the user add the appropriate slash or backslash as denoted in the template file creator
+  if(proc_rank==0) DEBUG_MSG("Image folder prefix: " << folder );
+
+  // User specified a ref and def image alone (not a sequence)
+  if(params->isParameter(DICe::reference_image)){
+    std::string ref_file_name = params->get<std::string>(DICe::reference_image);
+    std::stringstream ref_name;
+    ref_name << folder << ref_file_name;
+    images.push_back(ref_name.str());
+    assert(params->isParameter(DICe::deformed_images));
+    // create a sublist of the deformed images:
+    Teuchos::ParameterList def_image_sublist = params->sublist(DICe::deformed_images);
+    // iterate the sublis and add the params to the output params:
+    for(Teuchos::ParameterList::ConstIterator it=def_image_sublist.begin();it!=def_image_sublist.end();++it){
+      const bool active = def_image_sublist.get<bool>(it->first);
+      if(active){
+        std::stringstream def_name;
+        def_name << folder << it->first;
+        images.push_back(def_name.str());
+      }
+    }
+  }
+  else if(params->isParameter(DICe::cine_file)){
+    // flag that this analysis is a cine file
+    // the first two strings will be "cine_file"
+    // TODO do this more elegantly
+    images.push_back(DICe::cine_file);
+    images.push_back(DICe::cine_file);
+  }
+  // User specified an image sequence:
+  else{
+    assert(params->isParameter(DICe::reference_image_index));
+    // pull the parameters out
+    assert(params->isParameter(DICe::num_images));
+    const int_t numImages = params->get<int_t>(DICe::num_images);
+    assert(numImages>0);
+    assert(params->isParameter(DICe::image_file_prefix));
+    const std::string prefix = params->get<std::string>(DICe::image_file_prefix);
+    assert(params->isParameter(DICe::image_file_extension));
+    const std::string fileType = params->get<std::string>(DICe::image_file_extension);
+    assert(params->isParameter(DICe::num_file_suffix_digits));
+    const int_t digits = params->get<int_t>(DICe::num_file_suffix_digits);
+    assert(digits>0);
+    assert(params->isParameter(DICe::reference_image_index));
+    const int_t refId = params->get<int_t>(DICe::reference_image_index);
+
+    // determine the reference image
+    int_t number = refId;
+    int_t refDig = 0;
+    if(refId==0)
+      refDig = 1;
+    else{
+      while (number) {number /= 10; refDig++;}
+    }
+    std::stringstream ref_name;
+    ref_name << folder << prefix;
+    if(digits > 1){
+      for(int_t i=0;i<digits - refDig;++i) ref_name << "0";
+    }
+    ref_name << refId << fileType;
+    images.push_back(ref_name.str());
+
+    // determine the deformed images
+    for(int_t i=0;i<numImages;++i){
+      std::stringstream def_name;
+      def_name << folder << prefix;
+      int_t tmpNum = refId+i+1;
+      int_t defDig = 0;
+      while (tmpNum) {tmpNum /= 10; defDig++;}
+      for(int_t j=0;j<digits - defDig;++j) def_name << "0";
+      def_name << refId+i+1 << fileType;
+      images.push_back(def_name.str());
+    }
+  }
+  assert(images.size()>1);
+  return images;
+}
+
+DICE_LIB_DLL_EXPORT
+const bool valid_correlation_point(const int_t x_coord,
+  const int_t y_coord,
+  const int_t width,
+  const int_t height,
+  const int_t subset_size,
+  std::set<std::pair<int_t,int_t> > & coords,
+  std::set<std::pair<int_t,int_t> > & excluded_coords){
+
+  // need to check if the point is interior to the image by at least one subset_size
+  if(x_coord<subset_size-1) return false;
+  if(x_coord>width-subset_size) return false;
+  if(y_coord<subset_size-1) return false;
+  if(y_coord>height-subset_size) return false;
+
+  // only the centroid has to be inside the ROI
+  if(coords.find(std::pair<int_t,int_t>(y_coord,x_coord))==coords.end()) return false;
+
+  static std::vector<int_t> corners_x(4);
+  static std::vector<int_t> corners_y(4);
+  corners_x[0] = x_coord - subset_size/2;  corners_y[0] = y_coord - subset_size/2;
+  corners_x[1] = corners_x[0]+subset_size; corners_y[1] = corners_y[0];
+  corners_x[2] = corners_x[0]+subset_size; corners_y[2] = corners_y[0] + subset_size;
+  corners_x[3] = corners_x[0];             corners_y[3] = corners_y[0] + subset_size;
+  // check four points to see if any of the corners fall in an excluded region
+  bool all_corners_in = true;
+  for(int_t i=0;i<4;++i){
+    if(excluded_coords.find(std::pair<int_t,int_t>(corners_y[i],corners_x[i]))!=excluded_coords.end())
+      all_corners_in = false;
+  }
+  return all_corners_in;
+
+}
+
+DICE_LIB_DLL_EXPORT
+void
+create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_points,
+  std::vector<int_t> & neighbor_ids,
+  Teuchos::RCP<Teuchos::ParameterList> params,
+  const int_t width, const int_t height,
+  Teuchos::RCP<DICe::Subset_File_Info> subset_file_info){
+  int_t proc_rank = 0;
+#ifdef HAVE_MPI
+  int_t mpi_is_initialized = 0;
+  MPI_Initialized(&mpi_is_initialized);
+  if(mpi_is_initialized)
+    MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
+#endif
+
+  if(proc_rank==0) DEBUG_MSG("Creating a grid of regular correlation points");
+  // note: assumes two dimensional
+  assert(params->isParameter(DICe::step_size));
+  const int_t step_size = params->get<int_t>(DICe::step_size);
+  const int_t step_size_div_2 = step_size/2;
+  // set up the control points
+  assert(step_size > 0 && "  DICe ERROR: step size is <= 0");
+  assert(params->isParameter(DICe::subset_size));
+  const int_t subset_size = params->get<int_t>(DICe::subset_size);
+  const int_t subset_size_div_2 = subset_size/2;
+  correlation_points.clear();
+  neighbor_ids.clear();
+
+  int_t numROI = 1;
+  bool seed_was_specified = false;
+  Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > roi_defs;
+  if(subset_file_info!=Teuchos::null){
+    if(subset_file_info->conformal_area_defs!=Teuchos::null){
+      if(proc_rank==0) DEBUG_MSG("Using ROIs from a subset file");
+      roi_defs = subset_file_info->conformal_area_defs;
+      numROI = roi_defs->size();
+      seed_was_specified = subset_file_info->size_map->size() > 0;
+      if(seed_was_specified){
+        assert(subset_file_info->size_map->size()==subset_file_info->displacement_map->size() &&
+          "Error the number of displacement guesses and seed locations must be the same");
+      }
+    }
+    else{
+      if(proc_rank==0) DEBUG_MSG("Subset file exists, but has no ROIs");
+    }
+  }
+  if(roi_defs==Teuchos::null){ // wasn't populated above so create a dummy roi with the whole image:
+    if(proc_rank==0) DEBUG_MSG("Creating dummy ROI of the entire image");
+    Teuchos::RCP<DICe::Rectangle<scalar_t,int_t> > rect = Teuchos::rcp(new DICe::Rectangle<scalar_t,int_t>(width/2,height/2,width,height));
+    DICe::multi_shape boundary_multi_shape;
+    boundary_multi_shape.push_back(rect);
+    DICe::Conformal_Area_Def conformal_area_def(boundary_multi_shape);
+    roi_defs = Teuchos::rcp(new std::map<int_t,DICe::Conformal_Area_Def> ());
+    roi_defs->insert(std::pair<int_t,DICe::Conformal_Area_Def>(0,conformal_area_def));
+  }
+
+  if(proc_rank==0) DEBUG_MSG("create_regular_grid_of_correlation_points() has " << numROI <<  " ROI(s)");
+
+  // if no ROI is specified, the whole image is the ROI
+
+  int_t current_subset_id = 0;
+
+  std::map<int_t,DICe::Conformal_Area_Def>::iterator map_it=roi_defs->begin();
+  for(;map_it!=roi_defs->end();++map_it){
+
+    std::set<std::pair<int_t,int_t> > coords;
+    std::set<std::pair<int_t,int_t> > excluded_coords;
+    // collect the coords of all the boundary shapes
+    for(int_t i=0;i<map_it->second.boundary()->size();++i){
+      std::set<std::pair<int_t,int_t> > shapeCoords = (*map_it->second.boundary())[i]->get_owned_pixels();
+      coords.insert(shapeCoords.begin(),shapeCoords.end());
+    }
+    // collect the coords of all the exclusions
+    if(map_it->second.has_excluded_area()){
+      for(int_t i=0;i<map_it->second.excluded_area()->size();++i){
+        std::set<std::pair<int_t,int_t> > shapeCoords = (*map_it->second.excluded_area())[i]->get_owned_pixels();
+        excluded_coords.insert(shapeCoords.begin(),shapeCoords.end());
+      }
+    }
+    int_t num_rows = 0;
+    int_t num_cols = 0;
+    int_t seed_row = 0;
+    int_t seed_col = 0;
+    int_t x_coord = subset_size-1;
+    int_t y_coord = subset_size-1;
+    int_t seed_location_x = 0;
+    int_t seed_location_y = 0;
+    int_t seed_subset_id = -1;
+
+    bool this_roi_has_seed = false;
+    if(seed_was_specified){
+      if(subset_file_info->size_map->find(map_it->first)!=subset_file_info->size_map->end()){
+        seed_location_x = subset_file_info->size_map->find(map_it->first)->second.first;
+        seed_location_y = subset_file_info->size_map->find(map_it->first)->second.second;
+        if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " seed x: " << seed_location_x << " seed_y: " << seed_location_y);
+        this_roi_has_seed = true;
+      }
+    }
+    while(x_coord < width - subset_size) {
+      if(x_coord + step_size/2 < seed_location_x) seed_col++;
+      x_coord+=step_size;
+      num_cols++;
+    }
+    while(y_coord < height - subset_size) {
+      if(y_coord + step_size/2 < seed_location_y) seed_row++;
+      y_coord+=step_size;
+      num_rows++;
+    }
+    if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " has " << num_rows << " rows and " << num_cols << " cols, seed row " << seed_row << " seed col " << seed_col);
+    //if(seed_was_specified&&this_roi_has_seed){
+      x_coord = subset_size-1 + seed_col*step_size;
+      y_coord = subset_size-1 + seed_row*step_size;
+    if(valid_correlation_point(x_coord,y_coord,width,height,subset_size,coords,excluded_coords)){
+      //&&
+      //  "DICe Error, closest correlation point to the seed location is outside the region of interest or the image boundary"
+      //  " minus one subset size");
+      correlation_points.push_back(x_coord);
+      correlation_points.push_back(y_coord);
+      //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding seed correlation point " << x_coord << " " << y_coord);
+      if(seed_was_specified&&this_roi_has_seed){
+        seed_subset_id = current_subset_id;
+        subset_file_info->seed_subset_ids->insert(std::pair<int_t,int_t>(seed_subset_id,map_it->first));
+      }
+      neighbor_ids.push_back(-1); // seed point cannot have a neighbor
+      current_subset_id++;
+    }
+
+    // snake right from seed
+    const int_t right_start_subset_id = current_subset_id;
+    int_t direction = 1; // sign needs to be flipped if the seed row is the first row
+    int_t row = seed_row;
+    int_t col = seed_col;
+    while(row>=0&&row<num_rows){
+      if((direction==1&&row+1>=num_rows)||(direction==-1&&row-1<0)){
+        direction *= -1;
+        col++;
+      }else{
+        row += direction;
+      }
+      if(col>=num_cols)break;
+      x_coord = subset_size - 1 + col*step_size;
+      y_coord = subset_size - 1 + row*step_size;
+      if(valid_correlation_point(x_coord,y_coord,width,height,subset_size,coords,excluded_coords)){
+        correlation_points.push_back(x_coord);
+        correlation_points.push_back(y_coord);
+        //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding snake right correlation point " << x_coord << " " << y_coord);
+        if(current_subset_id==right_start_subset_id)
+          neighbor_ids.push_back(seed_subset_id);
+        else
+          neighbor_ids.push_back(current_subset_id - 1);
+        current_subset_id++;
+      }  // end valid point
+    }  // end snake right
+    // snake left from seed
+    const int_t left_start_subset_id = current_subset_id;
+    direction = -1;
+    row = seed_row;
+    col = seed_col;
+    while(row>=0&&row<num_rows){
+      if((direction==1&&row+1>=num_rows)||(direction==-1&&row-1<0)){
+        direction *= -1;
+        col--;
+      }
+      else{
+        row += direction;
+      }
+      if(col<0)break;
+      x_coord = subset_size - 1 + col*step_size;
+      y_coord = subset_size - 1 + row*step_size;
+      if(valid_correlation_point(x_coord,y_coord,width,height,subset_size,coords,excluded_coords)){
+        correlation_points.push_back(x_coord);
+        correlation_points.push_back(y_coord);
+        //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding snake left correlation point " << x_coord << " " << y_coord);
+        if(current_subset_id==left_start_subset_id)
+          neighbor_ids.push_back(seed_subset_id);
+        else
+          neighbor_ids.push_back(current_subset_id-1);
+        current_subset_id++;
+      }  // valid point
+    }  // end snake left
+  }  // conformal area map
+}
+
+DICE_LIB_DLL_EXPORT
+void generate_template_input_files(const std::string & file_prefix){
+  int_t proc_rank = 0;
+#ifdef HAVE_MPI
+  int_t mpi_is_initialized = 0;
+  MPI_Initialized(&mpi_is_initialized);
+  if(mpi_is_initialized)
+    MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
+#endif
+
+  if(proc_rank==0) DEBUG_MSG("generate_template_input_files() was called.");
+  std::stringstream fileNameInput;
+  fileNameInput << file_prefix << "_input.xml";
+  const std::string inputFile = fileNameInput.str();
+  std::stringstream fileNameParams;
+  fileNameParams << file_prefix << "_params.xml";
+  const std::string paramsFile = fileNameParams.str();
+  if(proc_rank==0) DEBUG_MSG("Input file: " << fileNameInput.str() << " Params file: " << fileNameParams.str());
+
+  // clear the files if they exist
+  initialize_xml_file(fileNameInput.str());
+  initialize_xml_file(fileNameParams.str());
+
+  // write the input file parameters:
+
+  write_xml_comment(inputFile,"Note: this template assumes local DIC algorithm to be used");
+  write_xml_string_param(inputFile,DICe::output_folder,"<path>",false);
+  write_xml_comment(inputFile,"Note: the output folder needs the trailing slash \"/\" or backslash \"\\\"");
+  write_xml_string_param(inputFile,DICe::output_prefix,"<prefix>",true);
+  write_xml_comment(inputFile,"Optional prefix to use in the output file name (default is \"DICe_solution\"");
+  write_xml_string_param(inputFile,DICe::image_folder,"<path>",false);
+  write_xml_comment(inputFile,"Note: the image folder needs the trailing slash \"/\" or backslash \"\\\"");
+  write_xml_string_param(inputFile,DICe::correlation_parameters_file,paramsFile,true);
+  write_xml_comment(inputFile,"The user can set specific correlation parameters in the file above");
+  write_xml_comment(inputFile,"These parameters are activated by uncommenting the correlation_parameters_file option");
+  write_xml_string_param(inputFile,DICe::physics_parameters_file,paramsFile,true);
+  write_xml_comment(inputFile,"The user can set specific parameters for the physics involved if integrated DIC is used (experimental and not default)");
+  write_xml_comment(inputFile,"These parameters are activated by uncommenting the physics_parameters_file option and if the dice_integrated executable is used");
+  write_xml_size_param(inputFile,DICe::subset_size,"<value>",false);
+  write_xml_size_param(inputFile,DICe::step_size,"<value>",false);
+  write_xml_comment(inputFile,"Note: if a subset file is used to below to specify subset centroids, this option should not be used");
+  write_xml_bool_param(inputFile,DICe::separate_output_file_for_each_subset,"false",false);
+  write_xml_comment(inputFile,"Write a separate output file for each subset with all frames in that file (default is to write one file per frame with all subsets)");
+  write_xml_string_param(inputFile,DICe::subset_file,"<path>");
+  write_xml_comment(inputFile,"Optional file to specify the coordinates of the subset centroids (cannot be used with step_size param)");
+  write_xml_comment(inputFile,"The subset file should be space separated (no commas) with one integer value for the number of subsets on the first line");
+  write_xml_comment(inputFile,"and a set of global x and y coordinates for each subset centroid, one point per line.");
+  write_xml_comment(inputFile,"There are two ways to specify the deformed images, first by listing them or by providing tokens to create a file sequence (see below)");
+  write_xml_string_param(inputFile,DICe::reference_image,"<file_name>",false);
+  write_xml_comment(inputFile,"If the images are not grayscale, they will be automatically converted to 8-bit grayscale.");
+  write_xml_param_list_open(inputFile,DICe::deformed_images,false);
+  write_xml_bool_param(inputFile,"<file_name>","true",false);
+  write_xml_param_list_close(inputFile,false);
+  write_xml_comment(inputFile,"The correlation evaluation order of the deformed image files will be according the order in the list above.");
+  write_xml_comment(inputFile,"The boolean value activates or deactivates the image.");
+  write_xml_comment(inputFile,"");
+  write_xml_comment(inputFile,"Consider instead an image sequence of files named with the pattern Image_0001.tif, Image_0002.tif, ..., Image_1000.tif");
+  write_xml_comment(inputFile,"For an image sequence, remove the two options above (reference_image and deformed_image) and use the following:");
+  write_xml_size_param(inputFile,DICe::reference_image_index,"<value>");
+  write_xml_comment(inputFile,"The index of the file to use as the reference image (no preceeding zeros). For the example above this would be \"1\" if the first image should be used");
+  write_xml_size_param(inputFile,DICe::num_images);
+  write_xml_comment(inputFile,"The number of images in the sequence to analyze. For the example above this would be 1000");
+  write_xml_size_param(inputFile,DICe::num_file_suffix_digits);
+  write_xml_comment(inputFile,"The number of digits in the file suffix. For the example above this would be 4");
+  write_xml_string_param(inputFile,DICe::image_file_extension);
+  write_xml_comment(inputFile,"The file extension type. For the example above this would be \".tif\" (Currently, only .tif or .tiff files are allowed.)");
+  write_xml_string_param(inputFile,DICe::image_file_prefix);
+  write_xml_comment(inputFile,"The tag at the front of the file names. For the example above this would be \"Image_\"");
+
+  // write the correlation parameters
+
+  write_xml_comment(paramsFile,"Uncomment lines below that begin with \"<Parameter name=...\"\n to specify that parameter. Otherwise, default values will be used");
+  for(int_t i=0;i<DICe::num_valid_correlation_params;++i){
+    if(valid_correlation_params[i].expose_to_user_ == false) continue;
+    // write comment with all possible options
+    if(valid_correlation_params[i].type_==STRING_PARAM){
+      write_xml_comment(paramsFile,"");
+      write_xml_string_param(paramsFile,valid_correlation_params[i].name_);
+      write_xml_comment(paramsFile,valid_correlation_params[i].desc_);
+      write_xml_comment(paramsFile,"Possible options include:");
+      const char ** possibleValues = valid_correlation_params[i].stringNamePtr_;
+      for(int_t j=0;j<valid_correlation_params[i].size_;++j){
+        write_xml_comment(paramsFile,possibleValues[j]);
+      }
+    }
+    else if(valid_correlation_params[i].type_==REAL_PARAM){
+      write_xml_comment(paramsFile,"");
+      write_xml_real_param(paramsFile,valid_correlation_params[i].name_);
+      write_xml_comment(paramsFile,valid_correlation_params[i].desc_);
+    }
+    else if(valid_correlation_params[i].type_==SIZE_PARAM){
+      write_xml_comment(paramsFile,"");
+      write_xml_size_param(paramsFile,valid_correlation_params[i].name_);
+      write_xml_comment(paramsFile,valid_correlation_params[i].desc_);
+    }
+    else if(valid_correlation_params[i].type_==BOOL_PARAM){
+      write_xml_comment(paramsFile,"");
+      write_xml_bool_param(paramsFile,valid_correlation_params[i].name_);
+      write_xml_comment(paramsFile,valid_correlation_params[i].desc_);
+    }
+    else{
+      assert(false && "Error: Unknown parameter type");
+    }
+  }
+  // Write a sample output spec
+  write_xml_comment(paramsFile,"");
+  write_xml_comment(paramsFile,"");
+  write_xml_comment(paramsFile,"Uncomment the ParameterList below to request specific fields in the output files.");
+  write_xml_comment(paramsFile,"The integer value for each field name represents the column order in the data output.");
+  write_xml_param_list_open(paramsFile,DICe::output_spec);
+  for(int_t i=0;i<MAX_FIELD_NAME;++i){
+    std::stringstream iToStr;
+    iToStr << i;
+    write_xml_size_param(paramsFile,fieldNameStrings[i],iToStr.str());
+  }
+  write_xml_param_list_close(paramsFile);
+
+  finalize_xml_file(fileNameInput.str());
+  finalize_xml_file(fileNameParams.str());
+}
+
+DICE_LIB_DLL_EXPORT
+void initialize_xml_file(const std::string & file_name){
+  std::ofstream file;
+  file.open(file_name.c_str());
+  file << "<ParameterList>" << std::endl;
+  file.close();
+}
+
+DICE_LIB_DLL_EXPORT
+void finalize_xml_file(const std::string & file_name){
+  std::ofstream file;
+  file.open(file_name.c_str(),std::ios::app);
+  file << "</ParameterList>" << std::endl;
+  file.close();
+}
+
+DICE_LIB_DLL_EXPORT
+void write_xml_comment(const std::string & file_name, const std::string & comment){
+  std::ofstream file;
+  file.open(file_name.c_str(),std::ios::app);
+  file << "<!-- " << comment << " -->" << std::endl;
+  file.close();
+}
+
+DICE_LIB_DLL_EXPORT
+void write_xml_param_list_open(const std::string & file_name, const std::string & name, const bool commented){
+  std::ofstream file;
+  file.open(file_name.c_str(),std::ios::app);
+  if(commented){
+    file << "<!-- ";
+  }
+  file << "<ParameterList name=\"" << name << "\">";
+  if(commented)
+    file << "-->";
+  file << std::endl;
+  file.close();
+}
+
+DICE_LIB_DLL_EXPORT
+void write_xml_param_list_close(const std::string & file_name, const bool commented){
+  std::ofstream file;
+  file.open(file_name.c_str(),std::ios::app);
+  if(commented){
+    file << "<!-- ";
+  }
+  file << "</ParameterList>";
+  if(commented)
+    file << "-->";
+  file << std::endl;
+  file.close();
+}
+
+DICE_LIB_DLL_EXPORT
+void write_xml_param(const std::string & file_name, const std::string & name, const std::string & type, const std::string & value,
+  const bool commented){
+  std::ofstream file;
+  file.open(file_name.c_str(),std::ios::app);
+  if(commented){
+    file << "<!-- ";
+  }
+  file << "<Parameter name=\"" << name << "\" type=\""<< type << "\" value=\"" << value << "\" />  ";
+  if(commented)
+    file << "-->";
+  file << std::endl;
+  file.close();
+}
+
+DICE_LIB_DLL_EXPORT
+void write_xml_string_param(const std::string & file_name, const std::string & name, const std::string & value,
+  const bool commented){
+  write_xml_param(file_name,name,"string",value,commented);
+}
+DICE_LIB_DLL_EXPORT
+void write_xml_real_param(const std::string & file_name, const std::string & name, const std::string & value,
+  const bool commented){
+  write_xml_param(file_name,name,"double",value,commented);
+}
+DICE_LIB_DLL_EXPORT
+void write_xml_size_param(const std::string & file_name, const std::string & name, const std::string & value,
+  const bool commented){
+  write_xml_param(file_name,name,"int",value,commented);
+}
+DICE_LIB_DLL_EXPORT
+void write_xml_bool_param(const std::string & file_name, const std::string & name, const std::string & value,
+  const bool commented){
+  write_xml_param(file_name,name,"bool",value,commented);
+}
+
+}// End DICe Namespace

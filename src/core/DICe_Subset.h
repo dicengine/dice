@@ -157,7 +157,7 @@ public:
   void initialize(Teuchos::RCP<Image> image,
     const Subset_View_Target target=REF_INTENSITIES,
     Teuchos::RCP<Def_Map> map=Teuchos::null,
-    const Interpolation_Method interp=KEYS_FOURTH_ORDER);
+    const Interpolation_Method interp=KEYS_FOURTH);
 
   /// write the subset intensity values to a tif file
   /// \param file_name the name of the tif file to write

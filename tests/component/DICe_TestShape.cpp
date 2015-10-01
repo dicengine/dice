@@ -104,9 +104,9 @@ int main(int argc, char *argv[]) {
     DICe::Image ref_image(imgW,imgW,ref_intensities);
     ref_image.write_tiff("shape_ref.tif");
     *outStream << "creating a deformation map" << std::endl;
-    Teuchos::RCP<Def_Map> def = Teuchos::rcp(new Def_Map());
-    def->u_ = 25;
-    def->v_ = -30;
+    Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+    (*def)[DISPLACEMENT_X] = 25;
+    (*def)[DISPLACEMENT_Y] = -30;
     std::set<std::pair<int_t,int_t> > def_owned_pixels = poly1->get_owned_pixels(def,cx,cy);
     std::set<std::pair<int_t,int_t> >::iterator def_set_it = def_owned_pixels.begin();
     for(ref_set_it = ref_owned_pixels.begin();ref_set_it!=ref_owned_pixels.end();++ref_set_it){

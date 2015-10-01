@@ -195,7 +195,7 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
   if(compute_image_gradients)
     compute_gradients(image_grad_use_hierarchical_parallelism,image_grad_team_size);
   const bool gauss_filter_image = params!=Teuchos::null ?
-      params->get<bool>(DICe::gauss_filter_image,false) : false;
+      params->get<bool>(DICe::gauss_filter_images,false) : false;
   const bool gauss_filter_use_hierarchical_parallelism = params!=Teuchos::null ?
       params->get<bool>(DICe::gauss_filter_use_hierarchical_parallelism,false) : false;
   const int gauss_filter_team_size = params!=Teuchos::null ?

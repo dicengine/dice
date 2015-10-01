@@ -124,6 +124,7 @@ SET(DICE_LIBRARIES
     teuchoscomm
     teuchosparameterlist
     kokkoscore
+    tpetra
  )
 
 # WINDOWS CMake has a bug for find_package() for clapack
