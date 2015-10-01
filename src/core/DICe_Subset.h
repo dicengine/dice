@@ -195,6 +195,9 @@ public:
   /// returns the ZNSSD gamma correlation value between the reference and deformed subsets
   scalar_t gamma();
 
+  /// reset the is_active bool for each pixel to true;
+  void reset_is_active();
+
 private:
   /// number of pixels in the subset
   int_t num_pixels_;
@@ -202,6 +205,8 @@ private:
   intensity_dual_view_1d ref_intensities_;
   /// pixel container
   intensity_dual_view_1d def_intensities_;
+  /// pixels can be deactivated by obstructions
+  bool_dual_view_1d is_active_;
   /// centroid location x
   int_t cx_; // assumed to be the middle of the pixel
   /// centroid location y

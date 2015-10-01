@@ -223,8 +223,63 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   *outStream << "the mean values and mean sum values have been checked" << std::endl;
+  // TODO come up with a complex mapping and check the values
 
-  // TODO come up with a complex map and check the values
+  *outStream << "creating a conformal subset" << std::endl;
+  std::vector<int_t> shape_1_x(5);
+  std::vector<int_t> shape_1_y(5);
+  shape_1_x[0] = 940; shape_1_y[0] = 422;
+  shape_1_x[1] = 951; shape_1_y[1] = 399;
+  shape_1_x[2] = 964; shape_1_y[2] = 413;
+  shape_1_x[3] = 980; shape_1_y[3] = 413;
+  shape_1_x[4] = 959; shape_1_y[4] = 432;
+  Teuchos::RCP<DICe::Polygon> poly1 = Teuchos::rcp(new DICe::Polygon(shape_1_x,shape_1_y));
+  std::vector<int_t> shape_2_x(4);
+  std::vector<int_t> shape_2_y(4);
+  shape_2_x[0] = 982;  shape_2_y[0] = 428;
+  shape_2_x[1] = 1000; shape_2_y[1] = 428;
+  shape_2_x[2] = 991;  shape_2_y[2] = 456;
+  shape_2_x[3] = 978;  shape_2_y[3] = 445;
+  Teuchos::RCP<DICe::Polygon> poly2 = Teuchos::rcp(new DICe::Polygon(shape_2_x,shape_2_y));
+  DICe::multi_shape boundary;
+  boundary.push_back(poly1);
+  boundary.push_back(poly2);
+
+  // create an area that is deactivated in the subset:
+  Teuchos::RCP<DICe::Rectangle> rect = Teuchos::rcp(new DICe::Rectangle(955,423,11,7));
+  DICe::multi_shape excluded;
+  excluded.push_back(rect);
+
+  DICe::Conformal_Area_Def subset_def(boundary,excluded);
+  int_t ccx = 974;
+  int_t ccy = 428;
+  Subset conformal_subset(ccx,ccy,subset_def);
+  conformal_subset.initialize(image);
+  conformal_subset.write_tiff("conformal.tiff");
+  // read in the image that was just created and compare to a gold copy:
+  Image conf_img("./conformal.tiff");
+  Image conf_img_exact("./images/conformal.tiff");
+  //conformal_subset.write_subset_on_image("ConformalOnImage.tiff",image);
+  // compare the sizes and intensity values
+  if(conf_img.width()!=conf_img_exact.width() || conf_img.height()!=conf_img_exact.height()){
+    *outStream << "Error, the number of pixels in the conformal subset image is not correct." << std::endl;
+    errorFlag++;
+  }
+  bool intensity_error = false;
+  for(int_t y=0;y<conf_img.height();++y){
+    for(int_t x=0;x<conf_img.width();++x){
+      if(conf_img(x,y) != conf_img_exact(x,y)){
+        intensity_error = true;
+      }
+    }
+  }
+  if(intensity_error){
+    *outStream << "Error, the conformal subset's intensity values are not correct." << std::endl;
+    errorFlag++;
+  }
+  *outStream << "Conformal subset intensity values have been checked." << std::endl;
+
+
 
   *outStream << "--- End test ---" << std::endl;
 

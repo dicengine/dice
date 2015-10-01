@@ -77,7 +77,8 @@ Subset::Subset(int_t cx,
   // the values will get populated later
   ref_intensities_ = intensity_dual_view_1d("ref_intensities",num_pixels_);
   def_intensities_ = intensity_dual_view_1d("def_intensities",num_pixels_);
-
+  is_active_ = bool_dual_view_1d("is_active",num_pixels_);
+  reset_is_active();
 }
 
 Subset::Subset(const int_t cx,
@@ -118,6 +119,8 @@ Subset::Subset(const int_t cx,
   // the values will get populated later
   ref_intensities_ = intensity_dual_view_1d("ref_intensities",num_pixels_);
   def_intensities_ = intensity_dual_view_1d("def_intensities",num_pixels_);
+  is_active_ = bool_dual_view_1d("is_active",num_pixels_);
+  reset_is_active();
 }
 
 Subset::Subset(const int_t cx,
@@ -151,14 +154,25 @@ Subset::Subset(const int_t cx,
   x_.sync<device_space>();
   y_.sync<device_space>();
 
-  // TODO TODO TODO
+  // initialize the pixel container
+  // the values will get populated later
+  ref_intensities_ = intensity_dual_view_1d("ref_intensities",num_pixels_);
+  def_intensities_ = intensity_dual_view_1d("def_intensities",num_pixels_);
+  is_active_ = bool_dual_view_1d("is_active",num_pixels_);
+  reset_is_active();
 
   // now set the inactive bit for the second set of multishapes if they exist.
-//  if(subset_def.has_excluded_area()){
-//    for(Size i=0;i<subset_def.excluded_area()->size();++i){
-//      (*subset_def.excluded_area())[i]->deactivate_pixels(is_active_,local_coord_x_,local_coord_y_,origin_x_,origin_y_);
-//    }
-//  }
+  if(subset_def.has_excluded_area()){
+    for(int_t i=0;i<subset_def.excluded_area()->size();++i){
+      (*subset_def.excluded_area())[i]->deactivate_pixels(num_pixels_,is_active_.h_view.ptr_on_device(),
+        x_.h_view.ptr_on_device(),y_.h_view.ptr_on_device());
+    }
+  }
+  is_active_.modify<host_space>();
+  is_active_.sync<device_space>();
+
+
+  // TODO TODO TODO
 //
 //  if(subset_def.has_obstructed_area()){
 //    for(Size i=0;i<subset_def.obstructed_area()->size();++i){
@@ -166,6 +180,14 @@ Subset::Subset(const int_t cx,
 //      obstructed_coords_.insert(obstructedArea.begin(),obstructedArea.end());
 //    }
 //  }
+}
+
+void
+Subset::reset_is_active(){
+  for(int_t i=0;i<num_pixels_;++i)
+    is_active_.h_view(i) = true;
+  is_active_.modify<host_space>();
+  is_active_.sync<device_space>();
 }
 
 void
@@ -232,9 +254,15 @@ Subset::write_tiff(const std::string & file_name,
   intensity_t * intensities = new intensity_t[w*h];
   for(int_t i=0;i<w*h;++i)
     intensities[i] = 0.0;
-  for(int_t i=0;i<num_pixels_;++i)
-    intensities[(y_.h_view(i)-min_y)*w+(x_.h_view(i)-min_x)] = use_def_intensities ?
-        def_intensities_.h_view(i) : ref_intensities_.h_view(i);
+  for(int_t i=0;i<num_pixels_;++i){
+    if(!is_active_.h_view(i)){
+      intensities[(y_.h_view(i)-min_y)*w+(x_.h_view(i)-min_x)] = 100; // color the inactive areas gray
+    }
+    else{
+      intensities[(y_.h_view(i)-min_y)*w+(x_.h_view(i)-min_x)] = use_def_intensities ?
+          def_intensities_.h_view(i) : ref_intensities_.h_view(i);
+    }
+  }
   utils::write_tiff_image(file_name.c_str(),w,h,intensities,true);
   delete[] intensities;
 }

@@ -102,21 +102,17 @@ angle_2d(const scalar_t & x1,
 }
 
 void
-Polygon::deactivate_pixels(Teuchos::ArrayRCP<bool> & pixel_flags,
-  Teuchos::ArrayRCP<int_t> x_coords,
-  Teuchos::ArrayRCP<int_t> y_coords,
-  const int_t origin_x,
-  const int_t origin_y) const{
-
-  assert(x_coords.size()==y_coords.size());
-  assert(pixel_flags.size()==x_coords.size());
+Polygon::deactivate_pixels(const int_t size,
+  bool * pixel_flags,
+  int_t * x_coords,
+  int_t * y_coords) const{
 
   int x=0,y=0;
   int dx1=0,dx2=0,dy1=0,dy2=0;
   scalar_t angle=0.0;
-  for(int_t j=0;j<x_coords.size();++j){
-    x = x_coords[j] + origin_x;
-    y = y_coords[j] + origin_y;
+  for(int_t j=0;j<size;++j){
+    x = x_coords[j];
+    y = y_coords[j];
     angle=0.0;
     for (int_t i=0;i<num_vertices_;i++) {
       // get the two end points of the polygon side and construct
@@ -361,20 +357,16 @@ Circle::Circle(const int_t centroid_x,
 }
 
 void
-Circle::deactivate_pixels(Teuchos::ArrayRCP<bool> & pixel_flags,
-  Teuchos::ArrayRCP<int_t> x_coords,
-  Teuchos::ArrayRCP<int_t> y_coords,
-  const int_t origin_x,
-  const int_t origin_y) const{
-
-  assert(x_coords.size()==y_coords.size());
-  assert(pixel_flags.size()==x_coords.size());
+Circle::deactivate_pixels(const int_t size,
+  bool * pixel_flags,
+  int_t * x_coords,
+  int_t * y_coords) const{
 
   int x=0,y=0;
   int dx=0,dy=0;
-  for(int_t j=0;j<x_coords.size();++j){
-    x = x_coords[j] + origin_x;
-    y = y_coords[j] + origin_y;
+  for(int_t j=0;j<size;++j){
+    x = x_coords[j];
+    y = y_coords[j];
     dx = (x - centroid_x_)*(x - centroid_x_);
     dy = (y - centroid_y_)*(y - centroid_y_);
     if(dx + dy <= radius2_){
@@ -498,22 +490,19 @@ Rectangle::Rectangle(const int_t centroid_x,
 }
 
 void
-Rectangle::deactivate_pixels(Teuchos::ArrayRCP<bool> & pixel_flags,
-  Teuchos::ArrayRCP<int_t> x_coords,
-  Teuchos::ArrayRCP<int_t> y_coords,
-  const int_t origin_x,
-  const int_t origin_y) const{
-
-  assert(x_coords.size()==y_coords.size());
-  assert(pixel_flags.size()==x_coords.size());
+Rectangle::deactivate_pixels(const int_t size,
+  bool * pixel_flags,
+  int_t * x_coords,
+  int_t * y_coords) const{
 
   int x=0,y=0;
   int dx=0,dy=0;
-  for(int_t j=0;j<x_coords.size();++j){
-    x = x_coords[j] + origin_x;
-    y = y_coords[j] + origin_y;
-    if(x >= origin_x_ && x < origin_x_ + width_ && y >= origin_y_ && y < origin_y_  + height_)
+  for(int_t j=0;j<size;++j){
+    x = x_coords[j];
+    y = y_coords[j];
+    if(x >= origin_x_ && x < origin_x_ + width_ && y >= origin_y_ && y < origin_y_  + height_){
       pixel_flags[j] = false;
+    }
   }
 }
 

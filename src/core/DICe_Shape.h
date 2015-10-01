@@ -88,16 +88,16 @@ public:
   /// Mostly called in the construction of a conformal subset to turn off interior regions to the subset.
   /// \param pixel_flags [out] An array of bools true means the pixel is still active false means that
   /// the pixel falls inside the shape and deactivated (should be of same size as x_coords and y_coords)
+  /// \param size number of elements in the arrays (all arrays should be the same size)
   /// \param x_coords Array of local x-coordinates for each pixel in reference to the origin_x and origin_y param (should be of same size as pixel_flags and y_coords)
   /// \param y_coords Array of local y-coordinates for each pixel in reference to the origin_x and origin_y param (should be of same size as pixel_flags and x_coords)
   /// \param origin_x global image x-coordinate of origin for the x_coords and y_coords arguments above
   /// \param origin_y global image y-coordinate of origin for the x_coords and y_coords arguments above
   // TODO This is a little awkward and could be done more elegantly
-  virtual void deactivate_pixels(Teuchos::ArrayRCP<bool> & pixel_flags,
-    Teuchos::ArrayRCP<int_t> x_coords,
-    Teuchos::ArrayRCP<int_t> y_coords,
-    const int_t origin_x,
-    const int_t origin_y) const{
+  virtual void deactivate_pixels(const int_t size,
+    bool * pixel_flags,
+    int_t * x_coords,
+    int_t * y_coords) const{
     assert(false && "  DICe ERROR: Base class implementation of this method should not be called.");
   }
 
@@ -148,11 +148,10 @@ public:
     const scalar_t skin_factor=1.0)const;
 
   /// See base class documentation
-  virtual void deactivate_pixels(Teuchos::ArrayRCP<bool> & pixel_flags,
-    Teuchos::ArrayRCP<int_t> x_coords,
-    Teuchos::ArrayRCP<int_t> y_coords,
-    const int_t origin_x,
-    const int_t origin_y) const;
+  virtual void deactivate_pixels(const int_t size,
+    bool * pixel_flags,
+    int_t * x_coords,
+    int_t * y_coords) const;
 
   /// See base class documentation
   virtual void draw(Teuchos::RCP<Image> & layer_0_image,
@@ -215,11 +214,10 @@ public:
     const scalar_t skin_factor=1.0)const;
 
   /// See base class documentation
-  virtual void deactivate_pixels(Teuchos::ArrayRCP<bool> & pixel_flags,
-    Teuchos::ArrayRCP<int_t> x_coords,
-    Teuchos::ArrayRCP<int_t> y_coords,
-    const int_t origin_x,
-    const int_t origin_y) const;
+  virtual void deactivate_pixels(const int_t size,
+    bool * pixel_flags,
+    int_t * x_coords,
+    int_t * y_coords) const;
 
   /// See base class documentation
   virtual void draw(Teuchos::RCP<Image> & layer_0_image,
@@ -270,11 +268,10 @@ public:
     const scalar_t skin_factor=1.0)const;
 
   /// See base class documentation
-  virtual void deactivate_pixels(Teuchos::ArrayRCP<bool> & pixel_flags,
-    Teuchos::ArrayRCP<int_t> x_coords,
-    Teuchos::ArrayRCP<int_t> y_coords,
-    const int_t origin_x,
-    const int_t origin_y) const;
+  virtual void deactivate_pixels(const int_t size,
+    bool * pixel_flags,
+    int_t * x_coords,
+    int_t * y_coords) const;
 
   /// See base class documentation
   virtual void draw(Teuchos::RCP<Image> & layer_0_image,

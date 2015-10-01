@@ -72,6 +72,9 @@ typedef Kokkos::DualView<intensity_t *,Kokkos::MemoryTraits<Kokkos::RandomAccess
 /// 2 dimensional dual view of intensity type values
 typedef Kokkos::DualView<intensity_t **,Kokkos::MemoryTraits<Kokkos::RandomAccess> >  intensity_dual_view_2d;
 
+/// 1 dimensional dual view of bool type values
+typedef Kokkos::DualView<bool *,Kokkos::MemoryTraits<Kokkos::RandomAccess> >  bool_dual_view_1d;
+
 /// 2 dimensional dual view of scalar type values
 typedef Kokkos::DualView<scalar_t **>  scalar_dual_view_2d;
 
