@@ -67,24 +67,55 @@ complex_divide(kiss_fft_cpx * lhs,
 /// \param real [out] the real part of the FFT
 /// \param complex [out] the imaginary part of the FFT
 /// \param inverse 1 if this should be an inverse FFT (back to time domain)
+/// \param hamming_filter true if a hamming filter should be applied to the image
 DICE_LIB_DLL_EXPORT
 void
 image_fft(Teuchos::RCP<Image> image,
   Teuchos::ArrayRCP<scalar_t> & real,
   Teuchos::ArrayRCP<scalar_t> & complex,
-  int_t inverse = 0);
+  int_t inverse = 0,
+  bool hamming_filter=true);
 
-/// Phase correlate two images
+/// compute the image fft and return an image with
+/// intensity values as the magnitude of the FFT values
+/// note: the fft values are scaled and the log is taken,
+/// so taking the inverse fft of an fft image is not the original image
+/// \param image the image to take the FFT of
+/// \param hamming_filter true if a hamming filter should be applied to the image
+/// \param apply_log true if the log of the values should be taken
+/// \param scale_factor used if the log is applied i = scale_factor*log(i+1)
+/// \param shift true if the quandrants of the fft image should be swapped
+DICE_LIB_DLL_EXPORT
+Teuchos::RCP<Image>
+image_fft(Teuchos::RCP<Image> image,
+  bool hamming_filter=true,
+  bool apply_log=true,
+  scalar_t scale_factor=100.0,
+  bool shift=true);
+
+/// Phase correlate two images,
+/// If the images have been polar transformed, then set the
+/// convert_to_r_theta flag to true, in that case theta is positive counter-clockwise
 /// \param image_a the left image to correlate
 /// \param image_b the right image to correlate
-/// \u_x [out] displacement x
-/// \u_y [out] displacement y
+/// \param u_x [out] displacement x
+/// \param u_y [out] displacement y
+/// \param convert_to_r_theta true if the images are polar transforms and
+/// the correlation is for radius and angle of rotation
 DICE_LIB_DLL_EXPORT
 void
 phase_correlate_x_y(Teuchos::RCP<Image> image_a,
   Teuchos::RCP<Image> image_b,
   scalar_t & u_x,
-  scalar_t & u_y);
+  scalar_t & u_y,
+  bool convert_to_r_theta=false);
+
+/// 2D polar transformation of an image
+/// returns a new image that is the polar transform of the input image
+/// \param image the input image
+DICE_LIB_DLL_EXPORT
+Teuchos::RCP<Image>
+polar_transform(Teuchos::RCP<Image> image);
 
 /// 2 dimensional FFT of an array
 /// \param w width

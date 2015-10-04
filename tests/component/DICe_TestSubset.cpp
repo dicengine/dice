@@ -255,10 +255,11 @@ int main(int argc, char *argv[]) {
   int_t ccy = 428;
   Subset conformal_subset(ccx,ccy,subset_def);
   conformal_subset.initialize(image);
-  conformal_subset.write_tiff("conformal.tiff");
+  conformal_subset.write_tiff("conformal.tif");
   // read in the image that was just created and compare to a gold copy:
-  Image conf_img("./conformal.tiff");
-  Image conf_img_exact("./images/conformal.tiff");
+  Image conf_img("./conformal.tif");
+  conf_img.write_rawi("conformal.rawi");
+  Image conf_img_exact("./images/conformal.rawi");
   //conformal_subset.write_subset_on_image("ConformalOnImage.tiff",image);
   // compare the sizes and intensity values
   if(conf_img.width()!=conf_img_exact.width() || conf_img.height()!=conf_img_exact.height()){

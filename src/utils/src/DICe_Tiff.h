@@ -84,7 +84,9 @@ void read_tiff_image(const char * file_name,
 
 // TODO write a function that reads into the device memory directly
 
-/// write an image to disk
+/// write an image to disk (always output as an 8-bit grayscale image)
+/// for more precise output, for example to read the intensity values in
+/// later with the same precision, use the .rawi format (see DICe::rawi)
 /// \param file_name the name of the tiff file
 /// \param width the width of the image to write
 /// \param height the height of the image

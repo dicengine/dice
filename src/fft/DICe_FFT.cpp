@@ -127,7 +127,8 @@ void
 phase_correlate_x_y(Teuchos::RCP<Image> image_a,
   Teuchos::RCP<Image> image_b,
   scalar_t & u_x,
-  scalar_t & u_y){
+  scalar_t & u_y,
+  bool convert_to_r_theta){
 
   const int_t w = image_a->width();
   const int_t h = image_a->height();
@@ -136,35 +137,13 @@ phase_correlate_x_y(Teuchos::RCP<Image> image_a,
   assert(w>8);
   assert(h>8);
 
-  // x hamming filter
-  Teuchos::ArrayRCP<scalar_t> x_ham(w,0.0);
-  Teuchos::ArrayRCP<scalar_t> y_ham(h,0.0);
-  for(int_t i=0;i<w;++i){
-    x_ham[i] = 0.54 - 0.46*std::cos(DICE_TWOPI*i/(w-1));
-  }
-  for(int_t i=0;i<h;++i){
-    y_ham[i] = 0.54 - 0.46*std::cos(DICE_TWOPI*i/(h-1));
-  }
-
-  Teuchos::ArrayRCP<scalar_t> ham_a_intens(w*h,0.0);
-  Teuchos::ArrayRCP<scalar_t> ham_b_intens(w*h,0.0);
-  for(int_t y=0;y<h;++y){
-    for(int_t x=0;x<w;++x){
-      ham_a_intens[y*w+x] = (*image_a)(x,y)*x_ham[x]*y_ham[y];
-      ham_b_intens[y*w+x] = (*image_b)(x,y)*x_ham[x]*y_ham[y];
-    }
-  }
-
-  Teuchos::RCP<DICe::Image> image_ham_a = Teuchos::rcp(new DICe::Image(w,h,ham_a_intens));
-  Teuchos::RCP<DICe::Image> image_ham_b = Teuchos::rcp(new DICe::Image(w,h,ham_b_intens));
-
   // fft of image a
   Teuchos::ArrayRCP<scalar_t> a_r,a_i;
-  DICe::image_fft(image_ham_a,a_r,a_i,0);
+  DICe::image_fft(image_a,a_r,a_i,0);
 
   // fft of image b
   Teuchos::ArrayRCP<scalar_t> b_r,b_i;
-  DICe::image_fft(image_ham_b,b_r,b_i,0);
+  DICe::image_fft(image_b,b_r,b_i,0);
 
   // conjugate of image b
   for(int_t i=0;i<w*h;++i)
@@ -191,47 +170,70 @@ phase_correlate_x_y(Teuchos::RCP<Image> image_a,
 //  std::cout << " FFTRN " << std::endl;
 //  for(size_t i=0;i<h;++i){
 //    for(size_t j=0;j<w;++j){
-//      std::cout << FFTRN_r[i*w+j] << "+"<< FFTRN_i[i*w+j] << "j " ;
+//      std::cout << FFTRN_r[i*w+j] << "+"<< FFTRN_i[i*w+j] << "j " << std::endl;
 //    }
 //    std::cout << std::endl;
 //  }
-  // find min and max of result
+
+  // find max of result
   scalar_t max_real = 0.0;
+  // find the max of all pixels aside from (0,0)
+  scalar_t next_real = 0.0;
   u_x = 0.0;
   u_y = 0.0;
+  scalar_t next_x = 0;
+  scalar_t next_y = 0;
   scalar_t max_complex = 0.0;
 
+  scalar_t test_real = 0.0;
+  scalar_t test_complex = 0.0;
   for(int_t y=0;y<h;++y){
     for(int_t x=0;x<w;++x){
-      if(std::abs(FFTRN_r[y*w+x]) > max_real){
-        max_real = std::abs(FFTRN_r[y*w+x]);
+      test_real = std::abs(FFTRN_r[y*w+x]);
+      test_complex = std::abs(FFTRN_i[y*w+x]);
+      if(test_real > max_real){
+        max_real = test_real;
         u_x = x;
         u_y = y;
       }
-      if(std::abs(FFTRN_i[y*w+x]) > max_complex){
-        max_complex = std::abs(FFTRN_i[y*w+x]);
+      if(test_complex > max_complex){
+        max_complex = test_complex;
+      }
+      if(x==0&&y==0) continue;
+      if(test_real > next_real){
+        next_real = test_real;
+        next_x = x;
+        next_y = y;
       }
     }
   }
-  //std::cout << " max real " << max_real << " u_x " << u_x << " u_y " << u_y << " max_complex  " << max_complex << std::endl;
+  //std::cout << " max real " << max_real << " u_x " << u_x << " u_y " << u_y << " max_complex  " <<
+  //max_complex << " next_real " << next_real << " nx " << next_x << " ny " << next_y << std::endl;
   assert(max_complex <= 1.0E-6);
+  // deal with aliasing (which causes a false peak at 0,0)
+  // TODO find a better approach to this using pre-whitening, etc.
+  if(u_x!=next_x&&next_x>1)
+    u_x = next_x;
+  if(u_y!=next_y&&next_y>1)
+    u_y = next_y;
 
   // convert back to image coordinates
-  if(u_x > w/2)
+  if(u_x >= w/2)
     u_x = w - u_x;
   else
     u_x = -u_x;
 
-  if(u_y > h/2)
+  if(u_y >= h/2)
     u_y = h - u_y;
   else
     u_y = -u_y;
 
-//  if(u_x >= w || u_y >= h){ // assume the correlation failed
-//    u_x = 0;
-//    u_y = 0;
-//  }
-
+  if(convert_to_r_theta){
+    const scalar_t t_size = DICE_TWOPI / w;
+    const scalar_t r_size = std::sqrt((0.5*w)*(0.5*w) + (0.5*h)*(0.5*h)) / h;
+    u_x *= t_size; // u_x is actually radius
+    u_y *= r_size; //u_y is theta
+  }
 //  // draw FFT image
 //  Teuchos::ArrayRCP<scalar_t> out_intens(w*h,0.0);
 //  // scale from 0 to 255;
@@ -239,8 +241,121 @@ phase_correlate_x_y(Teuchos::RCP<Image> image_a,
 //  for(int_t i=0;i<w*h;++i){
 //    out_intens[i] = std::abs(FFTRN_r[i]) * factor;
 //  }
-//  DICe::Image<scalar_t,int_t> out_image(w,h,out_intens);
-//  out_image.write("out_image");
+//  Image out_image(w,h,out_intens);
+//  out_image.write_tiff("FFT_out_image.tif");
+}
+
+DICE_LIB_DLL_EXPORT
+Teuchos::RCP<Image>
+polar_transform(Teuchos::RCP<Image> image){
+  const int_t w = image->width();
+  const int_t h = image->height();
+  assert(w>0);
+  assert(h>0);
+  // whatever is passed in for the output array RPC, it gets written over
+  Teuchos::ArrayRCP<intensity_t> output = Teuchos::ArrayRCP<intensity_t> (w*h,0.0);
+  const scalar_t t_size = DICE_TWOPI / w;
+  const scalar_t r_size = std::sqrt((0.5*w)*(0.5*w) + (0.5*h)*(0.5*h)) / h;
+  for(int_t y=0;y<h;++y){
+    scalar_t r = (y+0.5)*r_size;
+    for(int_t x=0;x<w;++x){
+      scalar_t t = (x+0.5)*t_size;
+      // convert r,t into x and y coordinates
+      scalar_t X = 0.5*w + r*std::cos(t);
+      scalar_t Y = 0.5*h + r*std::sin(t);
+      if(X>=0&&X<w-2&&Y>=0&&Y<h-2){
+        // BILINEAR INTERPOLATION
+        // interpolate the image at those points:
+        int_t x1 = (int_t)X;
+        int_t x2 = x1+1;
+        int_t y1 = (int_t)Y;
+        int_t y2  = y1+1;
+        output[y*w+x] =
+            ((*image)(x1,y1)*(x2-X)*(y2-Y)
+                +(*image)(x2,y1)*(X-x1)*(y2-Y)
+                +(*image)(x2,y2)*(X-x1)*(Y-y1)
+                +(*image)(x2,y1)*(x2-X)*(Y-y1));
+      }
+      else{
+        output[y*w+x] = 0;
+      }
+    } // x loop
+  } // y loop
+  Teuchos::RCP<Image> out_image = Teuchos::rcp(new Image(w,h,output));
+  return out_image;
+}
+
+DICE_LIB_DLL_EXPORT
+Teuchos::RCP<Image>
+image_fft(Teuchos::RCP<Image> image,
+  bool hamming_filter,
+  bool apply_log,
+  scalar_t scale_factor,
+  bool shift){
+
+  const int_t w = image->width();
+  const int_t h = image->height();
+  assert(w>0);
+  assert(h>0);
+  Teuchos::ArrayRCP<intensity_t> real;
+  Teuchos::ArrayRCP<intensity_t> complex;
+  // for now, disallow the use of the inverse fft
+  image_fft(image,real,complex,0,hamming_filter);
+  assert(real.size()==w*h);
+  assert(complex.size()==w*h);
+  scalar_t max_mag = 0.0;
+  scalar_t min_mag = 1.0E12;
+  Teuchos::ArrayRCP<intensity_t> mag(w*h,0.0);
+  for(size_t i=0;i<w*h;++i){
+    mag[i] = std::sqrt(real[i]*real[i] + complex[i]*complex[i]);
+    if(apply_log)
+      mag[i] = scale_factor*std::log(mag[i]+1);
+    if(mag[i]<min_mag) min_mag = mag[i];
+    if(mag[i]>max_mag) max_mag = mag[i];
+  }
+
+  // scale the image to fit in 8-bit output range
+  assert(max_mag - min_mag > 0);
+  scalar_t factor = 255.0/(max_mag - min_mag);
+  for(size_t i=0;i<w*h;++i)
+    mag[i] = (mag[i]-min_mag)*factor;
+
+  if(shift){
+    // now shift the quadrants:
+    Teuchos::ArrayRCP<intensity_t> mag_shift(w*h,0.0);
+    int_t w_2 = w/2;
+    int_t h_2 = h/2;
+    int_t xp=0,yp=0;
+    for(int_t y=0;y<h;++y){
+      for(int_t x=0;x<w;++x){
+        if(x<w_2){
+          if(y<h_2){
+            xp = x + w_2;
+            yp = y + h_2;
+          }
+          else{
+            xp = x + w_2;
+            yp = y - h_2;
+          }
+        }
+        else{
+          if(y<h/2){
+            xp = x - w_2;
+            yp = y + h_2;
+          }
+          else{
+            xp = x - w_2;
+            yp = y - h_2;
+          }
+        }
+        mag_shift[yp*w+xp] = mag[y*w+x];
+      } // x loop
+    } // y loop
+    return Teuchos::rcp(new Image(w,h,mag_shift));
+  }
+  else{
+    return Teuchos::rcp(new Image(w,h,mag));
+  }
 }
 
 DICE_LIB_DLL_EXPORT
@@ -248,20 +363,36 @@ void
 image_fft(Teuchos::RCP<Image> image,
   Teuchos::ArrayRCP<scalar_t> & real,
   Teuchos::ArrayRCP<scalar_t> & complex,
-  int_t inverse){
+  int_t inverse,
+  bool hamming_filter){
 
   const int_t w = image->width();
   const int_t h = image->height();
-
   real = Teuchos::ArrayRCP<scalar_t> (w*h,0.0);
   complex = Teuchos::ArrayRCP<scalar_t> (w*h,0.0);
-  for(int_t y=0;y<h;++y){
-    for(int_t x=0;x<w;++x){
-      real[y*w+x] = (*image)(x,y);
+
+  if(hamming_filter){
+    Teuchos::ArrayRCP<scalar_t> x_ham(w,0.0);
+    Teuchos::ArrayRCP<scalar_t> y_ham(h,0.0);
+    for(int_t i=0;i<w;++i){
+      x_ham[i] = 0.54 - 0.46*std::cos(DICE_TWOPI*i/(w-1));
+    }
+    for(int_t i=0;i<h;++i){
+      y_ham[i] = 0.54 - 0.46*std::cos(DICE_TWOPI*i/(h-1));
+    }
+    for(int_t y=0;y<h;++y){
+      for(int_t x=0;x<w;++x){
+        real[y*w+x] = (*image)(x,y)*x_ham[x]*y_ham[y];
+      }
     }
   }
-//  for(int_t i=0;i<w*h;++i)
-//    real[i] = (*image)(i);
+  else{
+    for(int_t y=0;y<h;++y){
+      for(int_t x=0;x<w;++x){
+        real[y*w+x] = (*image)(x,y);
+      }
+    }
+  }
 
   kiss_fft_cpx * img_row = new kiss_fft_cpx[w];
   kiss_fft_cpx * img_col = new kiss_fft_cpx[h];

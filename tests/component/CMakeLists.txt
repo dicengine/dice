@@ -21,3 +21,6 @@ target_link_libraries(DICe_TestRawi ${DICE_LIBRARIES} dicecore diceutils)
 
 add_executable(DICe_TestShape DICe_TestShape.cpp)
 target_link_libraries(DICe_TestShape ${DICE_LIBRARIES} dicecore diceutils)
+
+add_executable(DICe_TestFFT DICe_TestFFT.cpp)
+target_link_libraries(DICe_TestFFT ${DICE_LIBRARIES} dicecore diceutils dicefft)

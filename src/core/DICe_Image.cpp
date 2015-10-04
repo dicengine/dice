@@ -218,6 +218,20 @@ Image::intensity_array()const{
   return array;
 }
 
+// TODO make this into a functor
+scalar_t
+Image::diff(Teuchos::RCP<Image> rhs) const{
+  if(rhs->width()!=width_||rhs->height()!=height_)
+    return -1.0;
+  scalar_t diff = 0.0;
+  scalar_t diff_ = 0.0;
+  for(size_t i=0;i<width_*height_;++i){
+    diff_ = intensities_.h_view.ptr_on_device()[i] - rhs->intensities().h_view.ptr_on_device()[i];
+    diff += diff_*diff_;
+  }
+  return std::sqrt(diff);
+}
+
 void
 Image::replace_intensities(Teuchos::ArrayRCP<intensity_t> intensities){
   assert(intensities.size()==width_*height_);

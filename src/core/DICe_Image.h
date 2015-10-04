@@ -222,6 +222,9 @@ public:
     return file_name_;
   }
 
+  /// returns the difference of two images:
+  scalar_t diff(Teuchos::RCP<Image> rhs)const;
+
   //
   // Kokkos functors:
   //
