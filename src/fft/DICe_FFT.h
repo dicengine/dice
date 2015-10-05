@@ -73,8 +73,8 @@ void
 image_fft(Teuchos::RCP<Image> image,
   Teuchos::ArrayRCP<scalar_t> & real,
   Teuchos::ArrayRCP<scalar_t> & complex,
-  int_t inverse = 0,
-  bool hamming_filter=true);
+  const int_t inverse = 0,
+  const bool hamming_filter=true);
 
 /// compute the image fft and return an image with
 /// intensity values as the magnitude of the FFT values
@@ -88,10 +88,10 @@ image_fft(Teuchos::RCP<Image> image,
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Image>
 image_fft(Teuchos::RCP<Image> image,
-  bool hamming_filter=true,
-  bool apply_log=true,
-  scalar_t scale_factor=100.0,
-  bool shift=true);
+  const bool hamming_filter=true,
+  const bool apply_log=true,
+  const scalar_t scale_factor=100.0,
+  const bool shift=true);
 
 /// Phase correlate two images,
 /// If the images have been polar transformed, then set the
@@ -108,7 +108,7 @@ phase_correlate_x_y(Teuchos::RCP<Image> image_a,
   Teuchos::RCP<Image> image_b,
   scalar_t & u_x,
   scalar_t & u_y,
-  bool convert_to_r_theta=false);
+  const bool convert_to_r_theta=false);
 
 /// 2D polar transformation of an image
 /// returns a new image that is the polar transform of the input image
@@ -125,11 +125,11 @@ polar_transform(Teuchos::RCP<Image> image);
 /// \inverse 1 if the FFT should be to the time domain
 DICE_LIB_DLL_EXPORT
 void
-array_2d_fft_in_place(int_t w,
-  int_t h,
+array_2d_fft_in_place(const int_t w,
+  const int_t h,
   Teuchos::ArrayRCP<scalar_t> & real,
   Teuchos::ArrayRCP<scalar_t> & complex,
-  int_t inverse = 0);
+  const int_t inverse = 0);
 
 /// multiply two complex numbers
 /// \param result_r [out] the real result

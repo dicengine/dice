@@ -128,7 +128,7 @@ phase_correlate_x_y(Teuchos::RCP<Image> image_a,
   Teuchos::RCP<Image> image_b,
   scalar_t & u_x,
   scalar_t & u_y,
-  bool convert_to_r_theta){
+  const bool convert_to_r_theta){
 
   const int_t w = image_a->width();
   const int_t h = image_a->height();
@@ -249,27 +249,35 @@ DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Image>
 polar_transform(Teuchos::RCP<Image> image){
   const int_t w = image->width();
+  const scalar_t w_2 = 0.5*w;
   const int_t h = image->height();
+  const scalar_t h_2 = 0.5*h;
   assert(w>0);
   assert(h>0);
   // whatever is passed in for the output array RPC, it gets written over
   Teuchos::ArrayRCP<intensity_t> output = Teuchos::ArrayRCP<intensity_t> (w*h,0.0);
   const scalar_t t_size = DICE_TWOPI / w;
-  const scalar_t r_size = std::sqrt((0.5*w)*(0.5*w) + (0.5*h)*(0.5*h)) / h;
+  const scalar_t r_size = std::sqrt(w_2*w_2 + h_2*h_2)/h;
+  int_t x1 = 0;
+  int_t x2 = 0;
+  int_t y1 = 0;
+  int_t y2 = 0;
+  scalar_t r = 0.0;
+  scalar_t t = 0.0;
   for(int_t y=0;y<h;++y){
-    scalar_t r = (y+0.5)*r_size;
+    r = (y+0.5)*r_size;
     for(int_t x=0;x<w;++x){
-      scalar_t t = (x+0.5)*t_size;
+      t = (x+0.5)*t_size;
       // convert r,t into x and y coordinates
       scalar_t X = 0.5*w + r*std::cos(t);
       scalar_t Y = 0.5*h + r*std::sin(t);
       if(X>=0&&X<w-2&&Y>=0&&Y<h-2){
         // BILINEAR INTERPOLATION
         // interpolate the image at those points:
-        int_t x1 = (int_t)X;
-        int_t x2 = x1+1;
-        int_t y1 = (int_t)Y;
-        int_t y2  = y1+1;
+        x1 = (int_t)X;
+        x2 = x1+1;
+        y1 = (int_t)Y;
+        y2  = y1+1;
         output[y*w+x] =
             ((*image)(x1,y1)*(x2-X)*(y2-Y)
                 +(*image)(x2,y1)*(X-x1)*(y2-Y)
@@ -288,10 +296,10 @@ polar_transform(Teuchos::RCP<Image> image){
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Image>
 image_fft(Teuchos::RCP<Image> image,
-  bool hamming_filter,
-  bool apply_log,
-  scalar_t scale_factor,
-  bool shift){
+  const bool hamming_filter,
+  const bool apply_log,
+  const scalar_t scale_factor,
+  const bool shift){
 
   const int_t w = image->width();
   const int_t h = image->height();
@@ -363,8 +371,8 @@ void
 image_fft(Teuchos::RCP<Image> image,
   Teuchos::ArrayRCP<scalar_t> & real,
   Teuchos::ArrayRCP<scalar_t> & complex,
-  int_t inverse,
-  bool hamming_filter){
+  const int_t inverse,
+  const bool hamming_filter){
 
   const int_t w = image->width();
   const int_t h = image->height();
@@ -438,11 +446,11 @@ image_fft(Teuchos::RCP<Image> image,
 
 DICE_LIB_DLL_EXPORT
 void
-array_2d_fft_in_place(int_t w,
-  int_t h,
+array_2d_fft_in_place(const int_t w,
+  const int_t h,
   Teuchos::ArrayRCP<scalar_t> & real,
   Teuchos::ArrayRCP<scalar_t> & complex,
-  int_t inverse){
+  const int_t inverse){
 
   kiss_fft_cpx * img_row = new kiss_fft_cpx[w];
   kiss_fft_cpx * img_col = new kiss_fft_cpx[h];
