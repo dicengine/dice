@@ -54,6 +54,7 @@ Image::Image(const char * file_name,
   offset_x_(0),
   offset_y_(0),
   has_gradients_(false),
+  intensity_rcp_(Teuchos::null),
   file_name_(file_name)
 {
   const std::string rawi(".rawi");
@@ -95,6 +96,7 @@ Image::Image(const char * file_name,
   offset_y_(offset_y),
   width_(width),
   height_(height),
+  intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   file_name_(file_name)
 {
@@ -129,6 +131,7 @@ Image::Image(intensity_t * intensities,
   height_(height),
   offset_x_(0),
   offset_y_(0),
+  intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   file_name_("(from raw array)")
 {
@@ -151,6 +154,28 @@ Image::Image(const int_t width,
   initialize_array_image(intensities.getRawPtr());
   default_constructor_tasks(params);
 }
+
+Image::Image(const int_t width,
+  const int_t height):
+  width_(width),
+  height_(height),
+  offset_x_(0),
+  offset_y_(0),
+  intensity_rcp_(Teuchos::null),
+  has_gradients_(false),
+  file_name_("(from array)")
+{
+  assert(height_>0);
+  assert(width_>0);
+  intensities_ = intensity_dual_view_2d("intensities",height_,width_);
+  for(int_t y=0;y<height_;++y){
+    for(int_t x=0;x<width_;++x){
+      intensities_.h_view(y,x) = 0.0;
+    }
+  }
+  default_constructor_tasks(Teuchos::null);
+}
+
 
 void
 Image::initialize_array_image(intensity_t * intensities){
@@ -216,7 +241,6 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
   Kokkos::parallel_for(Kokkos::RangePolicy<Init_Mask_Tag>(0,num_pixels()),*this);
   mask_.modify<device_space>();
   mask_.sync<host_space>();
-
 }
 
 Teuchos::ArrayRCP<intensity_t>
@@ -261,6 +285,79 @@ Image::write_tiff(const std::string & file_name){
 void
 Image::write_rawi(const std::string & file_name){
   utils::write_rawi_image(file_name.c_str(),width_,height_,intensities_.h_view.ptr_on_device(),default_is_layout_right());
+}
+
+KOKKOS_INLINE_FUNCTION
+void
+Transform_Functor::operator()(const int_t pixel_index) const{
+  // determine the x and y coordinates of this pixel
+  // after taking out the displacements
+  const int_t y = pixel_index / width_;
+  const int_t x = pixel_index - y*width_;
+  // recall that cx_ and cy_ are in the transformed coordinates
+  const scalar_t dx = x - cx_;
+  const scalar_t dy = y - cy_;
+  const scalar_t mapped_x = cost_*dx - sint_*dy - u_ + cx_;
+  const scalar_t mapped_y = sint_*dx + cost_*dy - v_ + cy_;
+  // check that the mapped location is inside the image...
+  if(mapped_x>=3&&mapped_x<width_-4&&mapped_y>=3&&mapped_y<height_-2){
+    // determine the current pixel the coordinates fall in:
+    int_t px = (int_t)mapped_x;
+    if(mapped_x - px >= 0.5) px++;
+    int_t py = (int_t)mapped_y;
+    if(mapped_y - py >= 0.5) py++;
+
+    // check if the location is close enough to the pixel location
+    // to not need interpolation
+    if((mapped_x - px)<tol_&&(mapped_y-py<tol_)){
+      intensities_to_(y,x) = intensities_from_(py,px);
+    }
+    else{
+      intensity_t intensity_value = 0.0;
+      // convolve all the pixels within + and - pixels of the point in question
+      scalar_t dx=0.0, dy=0.0;
+      scalar_t dx2=0.0, dx3=0.0;
+      scalar_t dy2=0.0, dy3=0.0;
+      scalar_t f0x=0.0, f0y=0.0;
+      for(int_t j=py-3;j<=py+3;++j){
+        dy = std::abs(mapped_y - j);
+        dy2=dy*dy;
+        dy3=dy2*dy;
+        f0y = 0.0;
+        if(dy <= 1.0){
+          f0y = 1.3333333333*dy3 - 2.3333333333*dy2 + 1.0;
+        }
+        else if(dy <= 2.0){
+          f0y = -0.5833333333*dy3 + 3.0*dy2 - 4.9166666666*dy + 2.5;
+        }
+        else if(dy <= 3.0){
+          f0y = 0.0833333333*dy3 - 0.6666666666*dy2 + 1.75*dy - 1.5;
+        }
+        for(int_t i=px-3;i<=px+3;++i){
+          // compute the f's of x and y
+          dx = std::abs(mapped_x - i);
+          dx2=dx*dx;
+          dx3=dx2*dx;
+          f0x = 0.0;
+          if(dx <= 1.0){
+            f0x = 1.3333333333*dx3 - 2.3333333333*dx2 + 1.0;
+          }
+          else if(dx <= 2.0){
+            f0x = -0.5833333333*dx3 + 3.0*dx2 - 4.9166666666*dx + 2.5;
+          }
+          else if(dx <= 3.0){
+            f0x = 0.0833333333*dx3 - 0.6666666666*dx2 + 1.75*dx - 1.5;
+          }
+          intensity_value += intensities_from_(j,i)*f0x*f0y;
+        }
+      }
+      intensities_to_(y,x) = intensity_value;
+    }
+  }
+  else{
+    // out of bounds pixels are black
+    intensities_to_(y,x) = 0;
+  }
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -434,6 +531,23 @@ Image::apply_mask(const Conformal_Area_Def & area_def,
   mask_.modify<device_space>();
   mask_.sync<host_space>();
 }
+
+Teuchos::RCP<Image>
+Image::apply_transformation(const int_t cx,
+  const int_t cy,
+  const scalar_t & u,
+  const scalar_t & v,
+  const scalar_t & theta) const{
+  Teuchos::RCP<Image> result = Teuchos::rcp(new Image(width_,height_));
+  Transform_Functor trans_functor(intensities_.d_view,result->intensities().d_view,width_,height_,
+    cx,cy,u,v,theta);
+  Kokkos::parallel_for(width_*height_,trans_functor);
+  // sync up the new image
+  result->intensities().modify<device_space>();
+  result->intensities().sync<host_space>();
+  return result;
+}
+
 
 Mask_Smoothing_Functor::Mask_Smoothing_Functor(scalar_dual_view_2d mask,
   const int_t width,

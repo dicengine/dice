@@ -229,6 +229,23 @@ int main(int argc, char *argv[]) {
   delete[] gx;
   delete[] gy;
 
+  // test image transform:
+  *outStream << "testing an image transform" << std::endl;
+  Image baboon("./images/baboon.rawi");
+  const int_t cx = 100;
+  const int_t cy = 100;
+  const scalar_t u = 25.0;
+  const scalar_t v = -15.2;
+  const scalar_t theta = 22.8*DICE_PI/180.0;
+  Teuchos::RCP<Image> trans_baboon = baboon.apply_transformation(cx,cy,u,v,theta);
+  //trans_baboon->write_rawi("baboon_trans.rawi");
+  Teuchos::RCP<Image> trans_baboon_exact = Teuchos::rcp(new Image("./images/baboon_trans.rawi"));
+  const scalar_t diff_trans_baboon = trans_baboon->diff(trans_baboon_exact);
+  if(diff_trans_baboon > mask_tol){
+    *outStream << "Error, the transformed image does not have the right intensities" << std::endl;
+    errorFlag++;
+  }
+  *outStream << "the transformation method for an image has been checked" << std::endl;
 
   // test filtering an image:
 

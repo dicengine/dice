@@ -400,7 +400,7 @@ Subset_Init_Functor::operator()(const Map_Keys_Tag&,
   scalar_t mapped_x = cos_t_*Dx - sin_t_*Dy + u_ + cx_;
   scalar_t mapped_y = sin_t_*Dx + cos_t_*Dy + v_ + cy_;
   // check that the mapped location is inside the image...
-  if(mapped_x>=0&&mapped_x<image_w_-2&&mapped_y>=0&&mapped_y<image_h_-2){
+  if(mapped_x>=3&&mapped_x<image_w_-4&&mapped_y>=3&&mapped_y<image_h_-4){
 
     // determine the current pixel the coordinates fall in:
     int_t px = (int_t)mapped_x;

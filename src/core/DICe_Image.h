@@ -123,6 +123,14 @@ public:
     Teuchos::ArrayRCP<intensity_t> intensities,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
+  /// constructor that creates a zero image
+  /// \param width the width of the image
+  /// \param height the height of the image
+  /// no params allowed since the intensity values are all zeros so gradients
+  /// or filters would not make sense
+  Image(const int_t width,
+    const int_t height);
+
   // TODO ASCII text file constructor
 
   // TODO copy constructor (shallow and deep versions)
@@ -227,6 +235,18 @@ public:
   /// \param smooth_edges smooths the edges of the mask to avoid high freq. content
   void apply_mask(const Conformal_Area_Def & area_def,
     const bool smooth_edges=true);
+
+  /// apply a transformation to this image to create another image
+  /// \param cx centroid of mapping in the current image
+  /// \param cy centroid of mapping in the current image
+  /// \param u displacement in x
+  /// \param v displacement in y
+  /// \param theta angle of rotation
+  Teuchos::RCP<Image> apply_transformation(const int_t cx,
+    const int_t cy,
+    const scalar_t & u,
+    const scalar_t & v,
+    const scalar_t & theta) const;
 
   /// compute the image gradients
   void compute_gradients(const bool use_hierarchical_parallelism=false,
@@ -371,7 +391,65 @@ struct Mask_Smoothing_Functor{
 };
 
 
-
+/// image transformation functor
+/// given parameters theta, u, and v, transform the given image
+/// uses the keys interpolant (TODO add other interpolants)
+struct Transform_Functor{
+  /// pointer to the intensity dual view
+  intensity_device_view_2d intensities_from_;
+  /// pointer to the intensity dual view
+  intensity_device_view_2d intensities_to_;
+  /// centroid in x (note this is the transformed centroid)
+  scalar_t cx_;
+  /// centroid in y (node this is the transformed centroid)
+  scalar_t cy_;
+  /// width of the image
+  int_t width_;
+  /// height of the image
+  int_t height_;
+  /// rotation angle
+  scalar_t t_;
+  /// displacement x;
+  scalar_t u_;
+  /// displacement y;
+  scalar_t v_;
+  /// cosine of theta
+  scalar_t cost_;
+  /// sin of theta
+  scalar_t sint_;
+  /// tolerance
+  scalar_t tol_;
+  /// constructor
+  /// \param intensities_from pointer to the intensity array to be transformed
+  /// \param intensities_to pointer to the result intensity array
+  /// \param cx centroid in x
+  /// \param cy centroid in y
+  Transform_Functor(intensity_device_view_2d intensities_from,
+    intensity_device_view_2d intensities_to,
+    const int_t width,
+    const int_t height,
+    const int_t cx,
+    const int_t cy,
+    const scalar_t & u,
+    const scalar_t & v,
+    const scalar_t & theta):
+    intensities_from_(intensities_from),
+    intensities_to_(intensities_to),
+    cx_(cx + u),
+    cy_(cy + v),
+    width_(width),
+    height_(height),
+    u_(u),
+    v_(v),
+    t_(theta),
+    tol_(0.00001){
+    cost_ = std::cos(-1.0*t_);
+    sint_ = std::sin(-1.0*t_);
+  };
+  /// operator
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int_t pixel_index)const;
+};
 
 }// End DICe Namespace
 
