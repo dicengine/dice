@@ -42,6 +42,7 @@
 
 #include <DICe.h>
 #include <DICe_Image.h>
+#include <DICe_Shape.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -80,6 +81,36 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, the image height is not correct" << std::endl;
     errorFlag +=1;
   }
+
+  // test the mask values for an image:
+  *outStream << "testing image mask" << std::endl;
+  // create a mask using a simple rectangle
+  Teuchos::RCP<DICe::Rectangle> rect1 = Teuchos::rcp(new DICe::Rectangle(1024,294,400,200));
+  Teuchos::RCP<DICe::Rectangle> rect2 = Teuchos::rcp(new DICe::Rectangle(1024,294,100,50));
+  DICe::multi_shape boundary;
+  boundary.push_back(rect1);
+  DICe::multi_shape excluded;
+  excluded.push_back(rect2);
+  DICe::Conformal_Area_Def area_def(boundary,excluded);
+  img.apply_mask(area_def,true);
+
+  // create an image of the mask
+  Teuchos::ArrayRCP<intensity_t> mask_values(img.height()*img.width(),0.0);
+  for(size_t y=0;y<img.height();++y)
+    for(size_t x=0;x<img.width();++x)
+      mask_values[y*img.width()+x] = img.mask(x,y);
+  Image mask(img.width(),img.height(),mask_values);
+  //mask_img.write_rawi("mask.rawi");
+  // compare with the saved mask file
+  Teuchos::RCP<Image> mask_exact = Teuchos::rcp(new Image("./images/mask.rawi"));
+  const scalar_t mask_diff = mask.diff(mask_exact);
+  *outStream << "mask value diff: " << mask_diff << std::endl;
+  const scalar_t mask_tol = 1.0E-5;
+  if(mask_diff > mask_tol){
+    *outStream << "Error, mask values not correct" << std::endl;
+    errorFlag++;
+  }
+  *outStream << "image mask values have been checked" << std::endl;
 
   // capture a portion of an image from file
   *outStream << "creating an image from a portion of a tiff file " << std::endl;

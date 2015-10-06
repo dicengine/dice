@@ -78,6 +78,10 @@ typedef Kokkos::DualView<bool *,Kokkos::MemoryTraits<Kokkos::RandomAccess> >  bo
 /// 2 dimensional dual view of scalar type values
 typedef Kokkos::DualView<scalar_t **>  scalar_dual_view_2d;
 
+/// 2 dimensional array of scalar values for the device
+// note this is not random access on purpose
+typedef Kokkos::View<scalar_t **> scalar_device_view_2d;
+
 /// 2 dimensional array of pixel coordinate values for the device
 typedef Kokkos::View<int_t *> pixel_coord_device_view_1d;
 /// host mirrors of the intensity value arrays

@@ -55,6 +55,10 @@
 /// generic DICe classes and functions
 namespace DICe {
 
+/// forward declaration of the conformal_area_def
+class Conformal_Area_Def;
+
+
 /// \class DICe::Image
 /// A container class to hold the pixel intensity information and provide some basic methods
 /// Note: the coordinates are from the top left corner (positive right for x and positive down for y)
@@ -193,16 +197,36 @@ public:
   /// y is row, x is column
   /// \param x image coordinate x
   /// \param y image coordinate y
-  const scalar_t& grad_x(const int_t x, const int_t y) const {
+  const scalar_t& grad_x(const int_t x,
+    const int_t y) const {
     return grad_x_.h_view(y,x);
   }
 
   /// gradient accessor for y
   /// \param x image coordinate x
   /// \param y image coordinate y
-  const scalar_t& grad_y(const int_t x, const int_t y) const {
+  const scalar_t& grad_y(const int_t x,
+    const int_t y) const {
     return grad_y_.h_view(y,x);
   }
+
+  /// mask value accessor
+  /// \param x image coordinate x
+  /// \param y image coordinate y
+  const scalar_t& mask(const int_t x,
+    const int_t y) const {
+    return mask_.h_view(y,x);
+  }
+
+  /// apply a mask to the image
+  /// For the area_def, the boundary defines the outer edge of the region for which the
+  /// mask will be set to 1.0. For the excluded region within the boundary, the mask
+  /// will be set to 0.0
+  /// mask values will be 1.0 for excluded regions.
+  /// \param area_def defines the shape of the mask and what is included/excluded
+  /// \param smooth_edges smooths the edges of the mask to avoid high freq. content
+  void apply_mask(const Conformal_Area_Def & area_def,
+    const bool smooth_edges=true);
 
   /// compute the image gradients
   void compute_gradients(const bool use_hierarchical_parallelism=false,
@@ -228,6 +252,12 @@ public:
   //
   // Kokkos functors:
   //
+
+  /// tag
+  struct Init_Mask_Tag {};
+  /// initialize a scalar dual view
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const Init_Mask_Tag &, const int_t pixel_index) const;
 
   /// tag
   struct Grad_Flat_Tag {};
@@ -268,6 +298,8 @@ private:
   Teuchos::ArrayRCP<intensity_t> intensity_rcp_;
   /// device intensity work array
   intensity_device_view_2d intensities_temp_;
+  /// mask coefficients
+  scalar_dual_view_2d mask_;
   /// image gradient x container
   scalar_dual_view_2d grad_x_;
   /// image gradient y container
@@ -287,6 +319,59 @@ private:
   /// name of the file that was the source of this image
   std::string file_name_;
 };
+
+/// image mask initialization functor
+/// note, the number of pixels is the size of the x and y arrays, not the image
+struct Mask_Init_Functor{
+  /// pointer to the mask dual view
+  scalar_device_view_2d mask_;
+  /// pointer to the array of x values to enable (mask = 1.0)
+  pixel_coord_device_view_1d x_;
+  /// pointer to the array of y values to enable (mask = 1.0)
+  pixel_coord_device_view_1d y_;
+  /// all other pixels will set to mask = 0.0
+  /// constructor
+  /// \param mask pointer to the mask array on the device
+  /// \param x pointer to the array of x coordinates on the device
+  /// \param y pointer to the array of y coordinates on the device
+  Mask_Init_Functor(scalar_device_view_2d mask,
+    pixel_coord_device_view_1d x,
+    pixel_coord_device_view_1d y):
+    mask_(mask),
+    x_(x),
+    y_(y){};
+  /// operator
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int_t pixel_index)const{
+    mask_(y_(pixel_index),x_(pixel_index)) = 1.0;
+  }
+};
+
+/// image mask initialization functor
+/// note, the number of pixels is the size the image
+struct Mask_Smoothing_Functor{
+  /// pointer to the mask dual view
+  scalar_dual_view_2d mask_;
+  /// pointer to a temporary copy of the mask field prior to smoothing
+  scalar_device_view_2d mask_tmp_;
+  /// width of the image
+  int_t width_;
+  /// height of the image
+  int_t height_;
+  /// gauss filter coefficients
+  scalar_t gauss_filter_coeffs_[5][5];
+  /// constructor
+  /// \param mask pointer to the mask array on the device
+  Mask_Smoothing_Functor(scalar_dual_view_2d mask,
+    const int_t width,
+    const int_t height);
+  /// operator
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int_t pixel_index)const;
+};
+
+
+
 
 }// End DICe Namespace
 

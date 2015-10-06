@@ -43,6 +43,7 @@
 #include <DICe_Image.h>
 #include <DICe_Tiff.h>
 #include <DICe_Rawi.h>
+#include <DICe_Shape.h>
 
 #include <cassert>
 
@@ -208,6 +209,14 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
   if(gauss_filter_image){
     gauss_filter(gauss_filter_use_hierarchical_parallelism,gauss_filter_team_size);
   }
+
+  // create the image mask arrays
+  mask_ = scalar_dual_view_2d("mask",height_,width_);
+  // initialize the image mask arrays
+  Kokkos::parallel_for(Kokkos::RangePolicy<Init_Mask_Tag>(0,num_pixels()),*this);
+  mask_.modify<device_space>();
+  mask_.sync<host_space>();
+
 }
 
 Teuchos::ArrayRCP<intensity_t>
@@ -282,6 +291,14 @@ Image::operator()(const Grad_Flat_Tag &, const int_t pixel_index)const{
     grad_y_.d_view(y,x) = grad_c1_*intensities_.d_view(y-2,x) + grad_c2_*intensities_.d_view(y-1,x)
         - grad_c2_*intensities_.d_view(y+1,x) - grad_c1_*intensities_.d_view(y+2,x);
   }
+}
+
+KOKKOS_INLINE_FUNCTION
+void
+Image::operator()(const Init_Mask_Tag &, const int_t pixel_index)const{
+  const int_t y = pixel_index / width_;
+  const int_t x = pixel_index - y*width_;
+  mask_.d_view(y,x) = 0.0;
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -369,6 +386,94 @@ Image::operator()(const Gauss_Tag &, const member_type team_member)const{
   });
 }
 
+
+void
+Image::apply_mask(const Conformal_Area_Def & area_def,
+  const bool smooth_edges){
+  assert(area_def.has_boundary());
+  std::set<std::pair<int_t,int_t> > coords;
+  for(int_t i=0;i<area_def.boundary()->size();++i){
+    std::set<std::pair<int_t,int_t> > shapeCoords = (*area_def.boundary())[i]->get_owned_pixels();
+    coords.insert(shapeCoords.begin(),shapeCoords.end());
+  }
+  // now remove any excluded regions:
+  // now set the inactive bit for the second set of multishapes if they exist.
+  if(area_def.has_excluded_area()){
+    for(int_t i=0;i<area_def.excluded_area()->size();++i){
+      std::set<std::pair<int_t,int_t> > removeCoords = (*area_def.excluded_area())[i]->get_owned_pixels();
+      typename std::set<std::pair<int_t,int_t> >::iterator it = removeCoords.begin();
+      for(;it!=removeCoords.end();++it){
+        if(coords.find(*it)!=coords.end())
+          coords.erase(*it);
+      } // end removeCoords loop
+    } // end excluded_area loop
+  } // end has excluded area
+  // at this point all the coordinate pairs are in the set
+  const int_t num_area_pixels = coords.size();
+  // resize the storage arrays now that the num_pixels is known
+  pixel_coord_device_view_1d x("x",num_area_pixels);
+  pixel_coord_device_view_1d y("y",num_area_pixels);
+  int_t index = 0;
+  // NOTE: the pairs are (y,x) not (x,y) so that the ordering is correct in the set
+  typename std::set<std::pair<int_t,int_t> >::iterator set_it = coords.begin();
+  for( ; set_it!=coords.end();++set_it){
+    x(index) = set_it->second;
+    y(index) = set_it->first;
+    //std::cout << " creating mask for pixel " << set_it->second << " " << set_it->first << std::endl;
+    index++;
+  }
+  Mask_Init_Functor init_functor(mask_.d_view,x,y);
+  Kokkos::parallel_for(num_area_pixels,init_functor);
+  //mask_.modify<device_space>();
+  //mask_.sync<host_space>();
+  if(smooth_edges){
+    // smooth the edges of the mask:
+    Mask_Smoothing_Functor smoother(mask_,width_,height_);
+    Kokkos::parallel_for(width_*height_,smoother);
+  }
+  mask_.modify<device_space>();
+  mask_.sync<host_space>();
+}
+
+Mask_Smoothing_Functor::Mask_Smoothing_Functor(scalar_dual_view_2d mask,
+  const int_t width,
+  const int_t height):
+  mask_(mask),
+  width_(width),
+  height_(height){
+  // create the device array to hold a copy of the mask values
+  mask_tmp_ = scalar_device_view_2d("mask_tmp",height_,width_);
+  Kokkos::deep_copy(mask_tmp_,mask_.d_view);
+  // set up the coefficients:
+  std::vector<scalar_t> coeffs(5,0.0);
+  coeffs[0] = 0.0014;coeffs[1] = 0.1574;coeffs[2] = 0.62825;
+  coeffs[3] = 0.1574;coeffs[4] = 0.0014;
+  for(int_t j=0;j<5;++j){
+    for(int_t i=0;i<5;++i){
+      gauss_filter_coeffs_[i][j] = coeffs[i]*coeffs[j];
+    }
+  }
+};
+
+/// operator
+KOKKOS_INLINE_FUNCTION
+void
+Mask_Smoothing_Functor::operator()(const int_t pixel_index)const{
+  const int_t y = pixel_index / width_;
+  const int_t x = pixel_index - y*width_;
+    if(x>=2&&x<width_-2&&y>=2&&y<height_-2){ // 2 is half the gauss_mask size
+      scalar_t value = 0.0;
+      for(int_t i=0;i<5;++i){
+        for(int_t j=0;j<5;++j){
+          // assumes intensity values have already been deep copied into mask_tmp_
+          value += gauss_filter_coeffs_[i][j]*mask_tmp_(y+(j-2),x+(i-2));
+        } //j
+      } //i
+      mask_.d_view(y,x) = value;
+    }else{
+      mask_.d_view(y,x) = mask_tmp_(y,x);
+    }
+}
 
 void
 Image::gauss_filter(const bool use_hierarchical_parallelism,
