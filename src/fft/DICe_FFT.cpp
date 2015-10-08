@@ -128,7 +128,8 @@ phase_correlate_x_y(Teuchos::RCP<Image> image_a,
   Teuchos::RCP<Image> image_b,
   scalar_t & u_x,
   scalar_t & u_y,
-  const bool convert_to_r_theta){
+  const bool convert_to_r_theta,
+  const bool use_symmetry){
 
   const int_t w = image_a->width();
   const int_t h = image_a->height();
@@ -187,7 +188,9 @@ phase_correlate_x_y(Teuchos::RCP<Image> image_a,
 
   scalar_t test_real = 0.0;
   scalar_t test_complex = 0.0;
-  for(int_t y=0;y<h;++y){
+  //int_t max_y = use_symmetry ? 1 : h;
+  int_t max_y = h;
+  for(int_t y=0;y<max_y;++y){
     for(int_t x=0;x<w;++x){
       test_real = std::abs(FFTRN_r[y*w+x]);
       test_complex = std::abs(FFTRN_i[y*w+x]);
@@ -229,66 +232,189 @@ phase_correlate_x_y(Teuchos::RCP<Image> image_a,
     u_y = -u_y;
 
   if(convert_to_r_theta){
-    const scalar_t t_size = DICE_TWOPI / w;
+    //const scalar_t t_size = use_symmetry ? DICE_PI/w : DICE_TWOPI/w;
+    const scalar_t t_size = DICE_TWOPI/w;
     const scalar_t r_size = std::sqrt((0.5*w)*(0.5*w) + (0.5*h)*(0.5*h)) / h;
     u_x *= t_size; // u_x is actually radius
     u_y *= r_size; //u_y is theta
   }
 //  // draw FFT image
-//  Teuchos::ArrayRCP<scalar_t> out_intens(w*h,0.0);
-//  // scale from 0 to 255;
-//  const scalar_t factor = 255.0 / max_real;
-//  for(int_t i=0;i<w*h;++i){
-//    out_intens[i] = std::abs(FFTRN_r[i]) * factor;
-//  }
-//  Image out_image(w,h,out_intens);
-//  out_image.write_tiff("FFT_out_image.tif");
+  Teuchos::ArrayRCP<scalar_t> out_intens(w*h,0.0);
+  // scale from 0 to 255;
+  const scalar_t factor = 255.0 / max_real;
+  for(int_t i=0;i<w*h;++i){
+    out_intens[i] = std::abs(FFTRN_r[i]) * factor;
+  }
+  Image out_image(w,h,out_intens);
+  std::stringstream name;
+  name << "FFT_out_" << image_a->file_name() << ".tif";
+  out_image.write_tiff(name.str());
 }
 
 DICE_LIB_DLL_EXPORT
+void
+phase_correlate_row(Teuchos::RCP<Image> image_a,
+  Teuchos::RCP<Image> image_b,
+  const int_t row_id,
+  scalar_t & u,
+  const bool convert_to_theta){
+
+  assert(image_a->width()==image_b->width());
+  assert(image_a->height()==image_b->height());
+  int_t w = image_a->width();
+
+  // compute the hamming filter
+  Teuchos::ArrayRCP<scalar_t> x_ham(w,0.0);
+  for(int_t i=0;i<w;++i)
+    x_ham[i] = 0.54 - 0.46*std::cos(DICE_TWOPI*i/(w-1));
+
+  // compute th fft of image a's row
+  Teuchos::ArrayRCP<scalar_t> a_real(w,0.0), a_complex(w,0.0);
+  kiss_fft_cpx * img_row = new kiss_fft_cpx[w];
+  kiss_fft_cfg cfg_ffx = kiss_fft_alloc(w,0,0,0);
+  // fft the rows
+  for(int_t x=0;x<w;++x){
+    img_row[x].r=(*image_a)(x,row_id)*x_ham[x];
+    img_row[x].i=0;
+  }
+  kiss_fft(cfg_ffx,img_row,img_row);
+  for(int_t x=0;x<w;++x){
+    a_real[x] = img_row[x].r;
+    a_complex[x] = img_row[x].i;
+  }
+  // compute the fft of b's row:
+  Teuchos::ArrayRCP<scalar_t> b_real(w,0.0), b_complex(w,0.0);
+  for(int_t x=0;x<w;++x){
+    img_row[x].r=(*image_b)(x,row_id)*x_ham[x];
+    img_row[x].i=0;
+  }
+  kiss_fft(cfg_ffx,img_row,img_row);
+  for(int_t x=0;x<w;++x){
+    b_real[x] = img_row[x].r;
+    b_complex[x] = img_row[x].i;
+  }
+  free(cfg_ffx);
+
+
+  // conjugate of image b
+  for(int_t i=0;i<w;++i)
+    b_complex[i] = -b_complex[i];
+
+  // FFTR = FFT1 .* FFT2
+  Teuchos::ArrayRCP<scalar_t> FFTR_r(w,0.0), FFTR_i(w,0.0);
+  for(int_t i=0;i<w;++i)
+    complex_multiply(FFTR_r[i],FFTR_i[i],a_real[i],a_complex[i],b_real[i],b_complex[i]);
+
+  // compute abs(FFTR)
+  Teuchos::ArrayRCP<scalar_t> FFTR_abs(w,0.0);
+  for(int_t i=0;i<w;++i)
+    complex_abs(FFTR_abs[i],FFTR_r[i],FFTR_i[i]);
+
+  //FFTRN = FFTR / (abs(FT1 .* FFT2))
+  Teuchos::ArrayRCP<scalar_t> FFTRN_r(w,0.0), FFTRN_i(w,0.0),zero(w,0.0);
+  for(int_t i=0;i<w;++i)
+    complex_divide(FFTRN_r[i],FFTRN_i[i],FFTR_r[i],FFTR_i[i],FFTR_abs[i],zero[i]);
+
+  kiss_fft_cfg cfg_ffxi = kiss_fft_alloc(w,1,0,0);
+  // fft the rows
+  for(int_t x=0;x<w;++x){
+    img_row[x].r=FFTRN_r[x];
+    img_row[x].i=FFTRN_i[x];
+  }
+  kiss_fft(cfg_ffxi,img_row,img_row);
+  for(int_t x=0;x<w;++x){
+    FFTRN_r[x] = img_row[x].r;
+    FFTRN_i[x] = img_row[x].i;
+  }
+  free(cfg_ffxi);
+  delete[] img_row;
+
+  // find the max and convert to theta if necessary
+  u = 0;
+  scalar_t max_value = 0.0;
+  scalar_t value = 0.0;
+  for(size_t i=0;i<w;++i){
+    value = std::abs(FFTRN_r[i]);
+    if(value > max_value){
+      max_value = value;
+      u = i;
+    }
+  }
+  if(convert_to_theta){
+    u *= DICE_TWOPI/w;
+  }
+}
+
+
+// TODO address why we're using 2pi for the range on theta when the angle
+// is only determined up to +/- pi (should we be preventing ambiguity here?)
+
+DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Image>
-polar_transform(Teuchos::RCP<Image> image){
+polar_transform(Teuchos::RCP<Image> image,
+  bool high_pass_filter,
+  bool use_symmetry){
   const int_t w = image->width();
   const scalar_t w_2 = 0.5*w;
   const int_t h = image->height();
+  //const int_t h_sym = h*2;
   const scalar_t h_2 = 0.5*h;
+
   assert(w>0);
   assert(h>0);
   // whatever is passed in for the output array RPC, it gets written over
+  //Teuchos::ArrayRCP<intensity_t> output = use_symmetry ?
+  //    Teuchos::ArrayRCP<intensity_t> (w*h_sym,0.0):
+  //    Teuchos::ArrayRCP<intensity_t> (w*h,0.0);
   Teuchos::ArrayRCP<intensity_t> output = Teuchos::ArrayRCP<intensity_t> (w*h,0.0);
-  const scalar_t t_size = DICE_TWOPI / w;
-  const scalar_t r_size = std::sqrt(w_2*w_2 + h_2*h_2)/h;
+  //const scalar_t t_size = use_symmetry ? DICE_PI/w : DICE_TWOPI/w;
+  const scalar_t t_size = DICE_TWOPI/w;
+  //const scalar_t r_size = high_pass_filter ? 0.25*w/h_sym : std::sqrt(w_2*w_2 + h_2*h_2)/h;
+  const scalar_t r_size = high_pass_filter ? 0.25*w/h : std::sqrt(w_2*w_2 + h_2*h_2)/h;
   int_t x1 = 0;
   int_t x2 = 0;
   int_t y1 = 0;
   int_t y2 = 0;
+  //int_t y_size = use_symmetry ? h_sym : h;
+  int_t y_size = h;
+
+  //std::cout << " x will range from 0 to " << w << " and y from 0 to " << y_size << std::endl;
+  //std::cout << " rsize " << r_size << " tsize " << t_size << std::endl;
   scalar_t r = 0.0;
   scalar_t t = 0.0;
-  for(int_t y=0;y<h;++y){
+  for(int_t y=0;y<y_size;++y){
     r = (y+0.5)*r_size;
     for(int_t x=0;x<w;++x){
       t = (x+0.5)*t_size;
       // convert r,t into x and y coordinates
       scalar_t X = 0.5*w + r*std::cos(t);
-      scalar_t Y = 0.5*h + r*std::sin(t);
+      //scalar_t Y = use_symmetry ? h-1-r*std::sin(t) : h_2 + r*std::sin(t);
+      scalar_t Y = h_2 + r*std::sin(t);
+      x1 = (int_t)X;
+      y1 = (int_t)Y;
+      //std::cout << "x " << x << " y " << y << " r " << r << " t " << t << " X " << X << " Y " << Y << std::endl;
       if(X>=0&&X<w-2&&Y>=0&&Y<h-2){
         // BILINEAR INTERPOLATION
         // interpolate the image at those points:
-        x1 = (int_t)X;
         x2 = x1+1;
-        y1 = (int_t)Y;
-        y2  = y1+1;
+        y2 = y1+1;
         output[y*w+x] =
             ((*image)(x1,y1)*(x2-X)*(y2-Y)
                 +(*image)(x2,y1)*(X-x1)*(y2-Y)
                 +(*image)(x2,y2)*(X-x1)*(Y-y1)
                 +(*image)(x2,y1)*(x2-X)*(Y-y1));
       }
+      else if(X>=0&&X<w&&Y>=0&&Y<h){
+        output[y*w+x] = (*image)(x1,y1);
+      }
       else{
         output[y*w+x] = 0;
       }
     } // x loop
   } // y loop
+//  Teuchos::RCP<Image> out_image = use_symmetry ?
+//      Teuchos::rcp(new Image(w,h_sym,output)):
+//      Teuchos::rcp(new Image(w,h,output));
   Teuchos::RCP<Image> out_image = Teuchos::rcp(new Image(w,h,output));
   return out_image;
 }
@@ -299,10 +425,20 @@ image_fft(Teuchos::RCP<Image> image,
   const bool hamming_filter,
   const bool apply_log,
   const scalar_t scale_factor,
-  const bool shift){
+  bool shift,
+  const bool high_pass_filter,
+  const bool use_symmetry){
+
+  // NOTE: if the high_pass_filter is used,
+  // the fft values are automatically shifted:
+  if(high_pass_filter)
+    shift = true;
 
   const int_t w = image->width();
   const int_t h = image->height();
+  const int_t w_2 = w/2;
+  const int_t h_2 = h/2;
+  const int_t w_4 = w/4;
   assert(w>0);
   assert(h>0);
   Teuchos::ArrayRCP<intensity_t> real;
@@ -313,57 +449,137 @@ image_fft(Teuchos::RCP<Image> image,
   assert(complex.size()==w*h);
   scalar_t max_mag = 0.0;
   scalar_t min_mag = 1.0E12;
-  Teuchos::ArrayRCP<intensity_t> mag(w*h,0.0);
-  for(size_t i=0;i<w*h;++i){
-    mag[i] = std::sqrt(real[i]*real[i] + complex[i]*complex[i]);
-    if(apply_log)
-      mag[i] = scale_factor*std::log(mag[i]+1);
-    if(mag[i]<min_mag) min_mag = mag[i];
-    if(mag[i]>max_mag) max_mag = mag[i];
-  }
 
-  // scale the image to fit in 8-bit output range
-  assert(max_mag - min_mag > 0);
-  scalar_t factor = 255.0/(max_mag - min_mag);
-  for(size_t i=0;i<w*h;++i)
-    mag[i] = (mag[i]-min_mag)*factor;
+  // emploit the symmetry in the FFT:
+  // in this case, the return image will be half as tall
+//  if(use_symmetry){
+//    Teuchos::ArrayRCP<intensity_t> mag(w*h_2,0.0);
+//    int_t index = 0;
+//    for(size_t j=0;j<h_2;++j){
+//      for(size_t i=0;i<w;++i){
+//        mag[index] = std::sqrt(real[index]*real[index] + complex[index]*complex[index]);
+//        if(apply_log)
+//          mag[index] = scale_factor*std::log(mag[index]+1);
+//        if(mag[index]<min_mag) min_mag = mag[index];
+//        if(mag[index]>max_mag) max_mag = mag[index];
+//        index++;
+//      } // end i
+//    } // end j
+//    // scale the image to fit in 8-bit output range
+//    assert(max_mag - min_mag > 0);
+//    const scalar_t factor = 255.0/(max_mag - min_mag);
+//    for(size_t i=0;i<w*h_2;++i)
+//      mag[i] = (mag[i]-min_mag)*factor;
+//
+//    if(shift){
+//      // now shift the quadrants:
+//      Teuchos::ArrayRCP<intensity_t> mag_shift(w*h_2,0.0);
+//      int_t xp=0,yp=0;
+//      for(int_t y=0;y<h_2;++y){
+//        yp = h_2 - 1 - y;
+//        for(int_t x=0;x<w;++x){
+//          if(x<w_2){
+//            xp = x + w_2;
+//          }
+//          else{
+//            xp = x - w_2;
+//          }
+//          mag_shift[yp*w+xp] = mag[y*w+x];
+//        } // x loop
+//      } // y loop
+//      if(high_pass_filter){
+//        // compute the radius from the center:
+//        scalar_t rad = 0.0;
+//        int_t dx=0,dy=0;
+//        for(int_t y=0;y<h_2;++y){
+//          dy = h_2 - 1 - y;
+//          for(int_t x=0;x<w;++x){
+//            dx = x - w_2;
+//            rad = std::sqrt(dx*dx + dy*dy);
+//            if(rad > w_4)
+//              mag_shift[y*w+x] = 0.0;
+//            else
+//              mag_shift[y*w+x] *= std::cos(DICE_PI*dx/w_2)*std::cos(DICE_PI*dy/w_2);
+//          } // x loop
+//        } // y loop
+//      }
+//      return Teuchos::rcp(new Image(w,h_2,mag_shift));
+//    }
+//    else{
+//      return Teuchos::rcp(new Image(w,h_2,mag));
+//    }
+//  }
+//  // no use of symmetry case:
+//  // the return image is the same size as the input
+//  else{
+    Teuchos::ArrayRCP<intensity_t> mag(w*h,0.0);
+    for(size_t i=0;i<w*h;++i){
+      mag[i] = std::sqrt(real[i]*real[i] + complex[i]*complex[i]);
+      if(apply_log)
+        mag[i] = scale_factor*std::log(mag[i]+1);
+      if(mag[i]<min_mag) min_mag = mag[i];
+      if(mag[i]>max_mag) max_mag = mag[i];
+    }
 
-  if(shift){
-    // now shift the quadrants:
-    Teuchos::ArrayRCP<intensity_t> mag_shift(w*h,0.0);
-    int_t w_2 = w/2;
-    int_t h_2 = h/2;
-    int_t xp=0,yp=0;
-    for(int_t y=0;y<h;++y){
-      for(int_t x=0;x<w;++x){
-        if(x<w_2){
-          if(y<h_2){
-            xp = x + w_2;
-            yp = y + h_2;
+    // scale the image to fit in 8-bit output range
+    assert(max_mag - min_mag > 0);
+    scalar_t factor = 255.0/(max_mag - min_mag);
+    for(size_t i=0;i<w*h;++i)
+      mag[i] = (mag[i]-min_mag)*factor;
+
+    if(shift){
+      // now shift the quadrants:
+      Teuchos::ArrayRCP<intensity_t> mag_shift(w*h,0.0);
+      int_t xp=0,yp=0;
+      for(int_t y=0;y<h;++y){
+        for(int_t x=0;x<w;++x){
+          if(x<w_2){
+            if(y<h_2){
+              xp = x + w_2;
+              yp = y + h_2;
+            }
+            else{
+              xp = x + w_2;
+              yp = y - h_2;
+            }
           }
           else{
-            xp = x + w_2;
-            yp = y - h_2;
+            if(y<h/2){
+              xp = x - w_2;
+              yp = y + h_2;
+            }
+            else{
+              xp = x - w_2;
+              yp = y - h_2;
+            }
           }
-        }
-        else{
-          if(y<h/2){
-            xp = x - w_2;
-            yp = y + h_2;
-          }
-          else{
-            xp = x - w_2;
-            yp = y - h_2;
-          }
-        }
-        mag_shift[yp*w+xp] = mag[y*w+x];
-      } // x loop
-    } // y loop
-    return Teuchos::rcp(new Image(w,h,mag_shift));
-  }
-  else{
-    return Teuchos::rcp(new Image(w,h,mag));
-  }
+          mag_shift[yp*w+xp] = mag[y*w+x];
+        } // x loop
+      } // y loop
+      if(high_pass_filter){
+        // compute the radius from the center:
+        scalar_t rad = 0.0;
+        int_t dx=0,dy=0;
+        for(int_t y=0;y<h;++y){
+          dy = y - h_2;
+          for(int_t x=0;x<w;++x){
+            dx = x - w_2;
+            rad = std::sqrt(dx*dx + dy*dy);
+            if(rad > w_4)
+              mag_shift[y*w+x] = 0.0;
+            else
+              mag_shift[y*w+x] *= std::cos(DICE_PI*dx/w_2)*std::cos(DICE_PI*dy/w_2);
+          } // x loop
+        } // y loop
+      }
+
+      return Teuchos::rcp(new Image(w,h,mag_shift));
+    }
+    else{
+      return Teuchos::rcp(new Image(w,h,mag));
+    }
+//  }
+
 }
 
 DICE_LIB_DLL_EXPORT

@@ -483,9 +483,20 @@ Image::operator()(const Gauss_Tag &, const member_type team_member)const{
   });
 }
 
-
 void
 Image::apply_mask(const Conformal_Area_Def & area_def,
+  const bool smooth_edges){
+  // first create the mask:
+  create_mask(area_def,smooth_edges);
+  // then apply it to the image intensity values
+  Mask_Apply_Functor apply_functor(intensities_.d_view,mask_.d_view,width_);
+  Kokkos::parallel_for(width_*height_,apply_functor);
+  intensities_.modify<device_space>();
+  intensities_.sync<host_space>();
+}
+
+void
+Image::create_mask(const Conformal_Area_Def & area_def,
   const bool smooth_edges){
   assert(area_def.has_boundary());
   std::set<std::pair<int_t,int_t> > coords;

@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
   DICe::multi_shape excluded;
   excluded.push_back(rect2);
   DICe::Conformal_Area_Def area_def(boundary,excluded);
-  img.apply_mask(area_def,true);
+  img.create_mask(area_def,true);
 
   // create an image of the mask
   Teuchos::ArrayRCP<intensity_t> mask_values(img.height()*img.width(),0.0);

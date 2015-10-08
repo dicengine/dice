@@ -54,6 +54,7 @@ DICE_LIB_DLL_EXPORT
 void read_tiff_image_dimensions(const char * file_name,
   int_t & width,
   int_t & height){
+  TIFFSetWarningHandler(NULL);
   boost::gil::point2<std::ptrdiff_t> pt = boost::gil::tiff_read_dimensions(file_name);
   width = pt.x;
   height = pt.y;
@@ -64,6 +65,7 @@ void read_tiff_image(const char * file_name,
   intensity_t * intensities,
   const bool is_layout_right){
   assert(file_name!="");
+  TIFFSetWarningHandler(NULL);
   boost::gil::gray8_image_t img;
   boost::gil::tiff_read_and_convert_image(file_name,img);
   const int_t width = img.width();
@@ -91,6 +93,7 @@ void read_tiff_image(const char * file_name,
   intensity_t * intensities,
   const bool is_layout_right){
   assert(file_name!="");
+  TIFFSetWarningHandler(NULL);
   boost::gil::gray8_image_t img;
   boost::gil::tiff_read_and_convert_image(file_name,img);
   const int_t img_width = img.width();

@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
   *outStream << "testing the fft of an image" << std::endl;
   // compute the fft of the baboon image:
   Teuchos::RCP<Image> baboon_fft = image_fft(baboon);
-  baboon_fft->write_tiff("baboon0.tif");
+  //baboon_fft->write_tiff("baboon0.tif");
   Teuchos::RCP<Image> baboon_fft_test = Teuchos::rcp(new Image("./images/baboon_fft.rawi"));
   const scalar_t diff_fft = baboon_fft->diff(baboon_fft_test);
   *outStream << "fft image diff: " << diff_fft << std::endl;
@@ -93,6 +93,53 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, the fft of the intensity values is not correct" << std::endl;
     errorFlag++;
   }
+
+  *outStream << "testing the use of symmetry in the fft" << std::endl;
+  Teuchos::RCP<Image> baboon_sym = image_fft(baboon,true,true,100.0,true,false,true);
+  *outStream << "baboon fft sym dims: " << baboon_sym->width() << " x " << baboon_sym->height() << std::endl;
+  if(baboon_sym->width()!=baboon->width()){
+    *outStream << "Error, the width of the symmetric fft is not correct" << std::endl;
+     errorFlag++;
+  }
+  if(baboon_sym->height()!=baboon->height()/2){
+    *outStream << "Error, the height of the symmetric fft is not correct" << std::endl;
+     errorFlag++;
+  }
+  //baboon_sym->write_tiff("baboon_sym.tif");
+  //baboon_sym->write_rawi("baboon_sym.rawi");
+  Teuchos::RCP<Image> baboon_sym_exact = Teuchos::rcp(new Image("./images/baboon_sym.rawi"));
+  const scalar_t sym_diff = baboon_sym->diff(baboon_sym_exact);
+  if(sym_diff > errorTol){
+    *outStream << "Error, the values of the symmetric fft are not correct" << std::endl;
+    errorFlag++;
+  }
+
+  *outStream << "done testing symmetric fft" << std::endl;
+
+  *outStream << "testing the fft high pass filter" << std::endl;
+  Teuchos::RCP<Image> baboon_high_sym = image_fft(baboon,true,true,100.0,true,true,true);
+  *outStream << "baboon fft high pass sym dims: " << baboon_high_sym->width() << " x " << baboon_high_sym->height() << std::endl;
+  //baboon_high_sym->write_tiff("baboon_high_sym.tif");
+  //baboon_high_sym->write_rawi("baboon_high_sym.rawi");
+  Teuchos::RCP<Image> baboon_high_sym_exact = Teuchos::rcp(new Image("./images/baboon_high_sym.rawi"));
+  const scalar_t sym_high_diff = baboon_high_sym->diff(baboon_high_sym_exact);
+  if(sym_high_diff > errorTol){
+    *outStream << "Error, the values of the symmetric high pass fft are not correct" << std::endl;
+    errorFlag++;
+  }
+
+  *outStream << "testing the fft high pass filter without symmetry" << std::endl;
+  Teuchos::RCP<Image> baboon_high = image_fft(baboon,true,true,100.0,true,true,false);
+  *outStream << "baboon fft high pass dims: " << baboon_high->width() << " x " << baboon_high->height() << std::endl;
+  //baboon_high->write_rawi("baboon_high.rawi");
+  Teuchos::RCP<Image> baboon_high_exact = Teuchos::rcp(new Image("./images/baboon_high.rawi"));
+  const scalar_t high_diff = baboon_high->diff(baboon_high_exact);
+  if(high_diff > errorTol){
+    *outStream << "Error, the values of the high pass fft are not correct" << std::endl;
+    errorFlag++;
+  }
+
+  *outStream << "done testing high pass filter" << std::endl;
 
   *outStream << "testing the fft cross correlation of a rotated image (counter-clockwise 30 deg)" << std::endl;
   Teuchos::RCP<Image> baboon_rot = Teuchos::rcp(new Image("./images/baboon_rotCC30.rawi"));
@@ -119,7 +166,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Image> baboon_rot45 = Teuchos::rcp(new Image("./images/baboon_rotC45.rawi"));
   // take the fft of the rotated image
   Teuchos::RCP<Image> baboon_rot45_fft = image_fft(baboon_rot45);
-  baboon_rot45_fft->write_tiff("baboon_45.tif");
+  //baboon_rot45_fft->write_tiff("baboon_45.tif");
  // take the polar transform of the original and rotated images:
   Teuchos::RCP<Image> baboon_rot45_pol = polar_transform(baboon_rot45_fft);
   // fft correlate the two polar fft images:

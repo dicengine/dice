@@ -226,7 +226,17 @@ public:
     return mask_.h_view(y,x);
   }
 
-  /// apply a mask to the image
+  /// create the image mask field, but don't apply it to the image
+  /// For the area_def, the boundary defines the outer edge of the region for which the
+  /// mask will be set to 1.0. For the excluded region within the boundary, the mask
+  /// will be set to 0.0
+  /// mask values will be 1.0 for excluded regions.
+  /// \param area_def defines the shape of the mask and what is included/excluded
+  /// \param smooth_edges smooths the edges of the mask to avoid high freq. content
+  void create_mask(const Conformal_Area_Def & area_def,
+    const bool smooth_edges=true);
+
+  /// creates the image mask and then applies it to the intensity values
   /// For the area_def, the boundary defines the outer edge of the region for which the
   /// mask will be set to 1.0. For the excluded region within the boundary, the mask
   /// will be set to 0.0
@@ -264,6 +274,12 @@ public:
   /// returns the name of the file if available
   std::string file_name()const{
     return file_name_;
+  }
+
+  /// set the filename for the image
+  /// \param file_name the string name to use
+  void set_file_name(std::string & file_name){
+    file_name_ = file_name;
   }
 
   /// returns the difference of two images:
@@ -388,6 +404,33 @@ struct Mask_Smoothing_Functor{
   /// operator
   KOKKOS_INLINE_FUNCTION
   void operator()(const int_t pixel_index)const;
+};
+
+
+/// image mask apply functor
+struct Mask_Apply_Functor{
+  /// pointer to the intensity values
+  intensity_device_view_2d intensities_;
+  /// pointer to the mask dual view
+  scalar_device_view_2d mask_;
+  /// image width
+  int_t width_;
+  /// constructor
+  /// \param intensities pointer to the intensity array on the device
+  /// \param mask pointer to the mask array on the device
+  Mask_Apply_Functor(intensity_device_view_2d intensities,
+    scalar_device_view_2d mask,
+    int_t width):
+    intensities_(intensities),
+    mask_(mask),
+    width_(width){};
+  /// operator
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int_t pixel_index)const{
+    const int_t y = pixel_index / width_;
+    const int_t x = pixel_index - y*width_;
+    intensities_(y,x) = mask_(y,x)*intensities_(y,x);
+  }
 };
 
 
