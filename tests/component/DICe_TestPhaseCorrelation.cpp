@@ -91,20 +91,48 @@ int main(int argc, char *argv[]) {
   // read the reference image
   Teuchos::RCP<Image> ref = Teuchos::rcp(new Image("./images/pc_ref.tif"));
   ref->apply_mask(area_def);
-  ref->write_tiff("pc_ref_mask.tif");
+  //ref->write_tiff("pc_ref_mask.tif");
   *outStream << "fft of reference image" << std::endl;
-  Teuchos::RCP<Image> ref_fft = image_fft(ref,true,true,100.0,true,true,false);
-  ref_fft->write_tiff("ref_fft.tif");
+  Teuchos::RCP<Image> ref_fft = image_fft(ref,true,true,100.0,true,true);
+  //ref_fft->write_tiff("ref_fft.tif");
   *outStream << "polar transform of reference fft image" << std::endl;
-  Teuchos::RCP<Image> ref_pol = polar_transform(ref_fft,true,false);
-  ref_pol->write_tiff("ref_polar.tif");
+  Teuchos::RCP<Image> ref_pol = polar_transform(ref_fft,true);
+  //ref_pol->write_tiff("ref_polar.tif");
   int_t h_2 = ref_pol->height()/2;
   int_t h_4 = ref_pol->height()/4;
+  int_t w_2 = ref_pol->width()/2;
 
-  // TODO create a vector with the correct solution
+  // vector with the correct solution for rotations
+  std::vector<scalar_t> exact_rot(12);
+  exact_rot[0]  =  0.0;
+  exact_rot[1]  =  30.0;
+  exact_rot[2]  =  60.0;
+  exact_rot[3]  =  90.0;
+  exact_rot[4]  =  120.0;
+  exact_rot[5]  =  150.0;
+  exact_rot[6]  = -180.0;
+  exact_rot[7]  = -150.0;
+  exact_rot[8]  = -120.0;
+  exact_rot[9]  = -90.0;
+  exact_rot[10] = -60.0;
+  exact_rot[11] = -30.0;
+  std::vector<scalar_t> exact_ux(12);
+  std::vector<scalar_t> exact_uy(12);
+  exact_ux[0]  =   9; exact_uy[0]  = -12;
+  exact_ux[1]  =   2; exact_uy[1]  =  -2;
+  exact_ux[2]  =  12; exact_uy[2]  = -10;
+  exact_ux[3]  =  10; exact_uy[3]  = -12;
+  exact_ux[4]  =   1; exact_uy[4]  = -39;
+  exact_ux[5]  =  -8; exact_uy[5]  = -38;
+  exact_ux[6]  = -17; exact_uy[6]  = -34;
+  exact_ux[7]  = -33; exact_uy[7]  = -11;
+  exact_ux[8]  = -21; exact_uy[8]  =  -5;
+  exact_ux[9]  = -13; exact_uy[9]  =  -1;
+  exact_ux[10] = -11; exact_uy[10] =  10;
+  exact_ux[11] =   8; exact_uy[11] =  14;
 
   // cycle through the pc_ images
-  for(int_t i=0;i<12;++i){ // 12
+  for(int_t i=0;i<12;++i){
     std::stringstream name;
     name << "./images/pc_0";
     if(i<10)
@@ -113,36 +141,72 @@ int main(int argc, char *argv[]) {
       name << i << ".tif";
     *outStream << "processing image: " << name.str() << std::endl;
     Teuchos::RCP<Image> img = Teuchos::rcp(new Image(name.str().c_str()));
+    //img->write_tiff("img0.tif");
     //*outStream << "  fft of image" << std::endl;
-    Teuchos::RCP<Image> img_fft = image_fft(img,true,true,100.0,true,true,false);
-    std::stringstream fftName;
-    fftName << "img_fft_" << i << ".tif";
-    img_fft->write_tiff(fftName.str());
+    Teuchos::RCP<Image> img_fft = image_fft(img,true,true,100.0,true,true);
+    //std::stringstream fftName;
+    //fftName << "img_fft_" << i << ".tif";
+    //img_fft->write_tiff(fftName.str());
     //*outStream << "  polar transform of fft" << std::endl;
-    Teuchos::RCP<Image> img_pol = polar_transform(img_fft,true,false);
-    std::stringstream polar_name_ss;
-    polar_name_ss << "_" << i;
-    std::string polar_name = polar_name_ss.str();
-    img_pol->set_file_name(polar_name);
-    polar_name_ss << ".tif";
-    img_pol->write_tiff(polar_name_ss.str());
+    Teuchos::RCP<Image> img_pol = polar_transform(img_fft,true);
+    //std::stringstream polar_name_ss;
+    //polar_name_ss << "_" << i;
+    //std::string polar_name = polar_name_ss.str();
+    //img_pol->set_file_name(polar_name);
+    //polar_name_ss << ".tif";
+    //img_pol->write_tiff(polar_name_ss.str());
     //*outStream << "  phase correlating angle" << std::endl;
 
     // phase correlate
     scalar_t theta = 0.0;
     phase_correlate_row(img_pol,ref_pol,h_2,theta,true);
     scalar_t theta_orig = theta;
-    theta *= -180.0/DICE_PI;
-    if (theta > 180) theta = -360 + theta;
-    if (theta < -180) theta = 360 + theta;
-    scalar_t angle2 = (theta < 0) ? theta + 180 : theta - 180;
-    *outStream << "***orig: " << theta_orig <<  " theta " << theta << " " << angle2 << std::endl;
+    theta *= -1.0;
+    if (theta > DICE_PI) theta = -DICE_TWOPI + theta;
+    if (theta < -DICE_PI) theta = DICE_TWOPI + theta;
+    const scalar_t theta_180 = (theta < 0) ? theta + DICE_PI : theta - DICE_PI;
+    //*outStream << "***orig: " << theta_orig <<  " theta: " << theta*180.0/DICE_PI << " theta_180: " << theta_180*180.0/DICE_PI << std::endl;
 
-    // fft correlate the two polar fft images:
-    //scalar_t r = 0.0;
-    //scalar_t t = 0.0;
-    //phase_correlate_x_y(img_pol,ref_pol,t,r,true);
-    //*outStream << "  radius: " << r << " theta: " << t << std::endl;
+    // transform the image by the computed rotation angle
+    Teuchos::RCP<Image> rot_ref_0 = ref->apply_transformation(w_2,h_2,0,0,theta);
+    Teuchos::RCP<Image> rot_ref_180 = ref->apply_transformation(w_2,h_2,0,0,theta_180);
+    //std::stringstream transName0;
+    //transName0 << "trans0_" << i << ".tif";
+    //std::stringstream transName180;
+    //transName180 << "trans180_" << i << ".tif";
+    //rot_ref_0->write_tiff(transName0.str());
+    //rot_ref_180->write_tiff(transName180.str());
+
+    // phase correlate the rotated images
+    scalar_t u_x0 = 0.0;
+    scalar_t u_y0 = 0.0;
+    const scalar_t test_0 = phase_correlate_x_y(rot_ref_0,img,u_x0,u_y0);
+    scalar_t u_x180 = 0.0;
+    scalar_t u_y180 = 0.0;
+    const scalar_t test_180 = phase_correlate_x_y(rot_ref_180,img,u_x180,u_y180);
+    scalar_t final_theta = theta;
+    scalar_t final_ux = u_x0;
+    scalar_t final_uy = u_y0;
+    if(test_180>test_0){
+      final_theta = theta_180;
+      final_ux = u_x180;
+      final_uy = u_y180;
+    }
+    *outStream << "theta: " << final_theta*180.0/DICE_PI << " ux: " << final_ux << " uy: " << final_uy << std::endl;
+    scalar_t angle_tol = 1.0; // 1 degree of error for the angle is accepted
+    if(std::abs(final_theta*180/DICE_PI - exact_rot[i]) > angle_tol){
+      *outStream << "Error, the angle for phase correlation of image " << i << " is not correct" << std::endl;
+      errorFlag++;
+    }
+    scalar_t disp_tol = 1.0; // 1 degree of error for the angle is accepted
+    if(std::abs(final_ux - exact_ux[i]) > disp_tol){
+      *outStream << "Error, the x-displacement for phase correlation of image " << i << " is not correct" << std::endl;
+      errorFlag++;
+    }
+    if(std::abs(final_uy - exact_uy[i]) > disp_tol){
+      *outStream << "Error, the y-displacement for phase correlation of image " << i << " is not correct" << std::endl;
+      errorFlag++;
+    }
   }
 
   *outStream << "--- End test ---" << std::endl;

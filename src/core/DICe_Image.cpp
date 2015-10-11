@@ -300,7 +300,7 @@ Transform_Functor::operator()(const int_t pixel_index) const{
   const scalar_t mapped_x = cost_*dx - sint_*dy - u_ + cx_;
   const scalar_t mapped_y = sint_*dx + cost_*dy - v_ + cy_;
   // check that the mapped location is inside the image...
-  if(mapped_x>=3&&mapped_x<width_-4&&mapped_y>=3&&mapped_y<height_-2){
+  if(mapped_x>=3&&mapped_x<width_-4&&mapped_y>=3&&mapped_y<height_-4){
     // determine the current pixel the coordinates fall in:
     int_t px = (int_t)mapped_x;
     if(mapped_x - px >= 0.5) px++;
@@ -527,7 +527,6 @@ Image::create_mask(const Conformal_Area_Def & area_def,
   for( ; set_it!=coords.end();++set_it){
     x(index) = set_it->second;
     y(index) = set_it->first;
-    //std::cout << " creating mask for pixel " << set_it->second << " " << set_it->first << std::endl;
     index++;
   }
   Mask_Init_Functor init_functor(mask_.d_view,x,y);

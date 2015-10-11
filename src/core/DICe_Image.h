@@ -486,8 +486,8 @@ struct Transform_Functor{
     v_(v),
     t_(theta),
     tol_(0.00001){
-    cost_ = std::cos(-1.0*t_);
-    sint_ = std::sin(-1.0*t_);
+    cost_ = std::cos(t_);
+    sint_ = std::sin(t_);
   };
   /// operator
   KOKKOS_INLINE_FUNCTION

@@ -92,12 +92,12 @@ image_fft(Teuchos::RCP<Image> image,
   const bool apply_log=true,
   const scalar_t scale_factor=100.0,
   bool shift=true,
-  const bool high_pass_filter=false,
-  const bool use_symmetry=false);
+  const bool high_pass_filter=false);
 
 /// Phase correlate two images,
 /// If the images have been polar transformed, then set the
 /// convert_to_r_theta flag to true, in that case theta is positive counter-clockwise
+/// the return value is the peak magnitude value from the fft cross-correlation
 /// \param image_a the left image to correlate
 /// \param image_b the right image to correlate
 /// \param u_x [out] displacement x
@@ -105,13 +105,12 @@ image_fft(Teuchos::RCP<Image> image,
 /// \param convert_to_r_theta true if the images are polar transforms and
 /// the correlation is for radius and angle of rotation
 DICE_LIB_DLL_EXPORT
-void
+scalar_t
 phase_correlate_x_y(Teuchos::RCP<Image> image_a,
   Teuchos::RCP<Image> image_b,
   scalar_t & u_x,
   scalar_t & u_y,
-  const bool convert_to_r_theta=false,
-  const bool use_symmetry=false);
+  const bool convert_to_r_theta=false);
 
 /// Phase correlate a single row from two images
 /// \param image_a the first image
@@ -133,13 +132,11 @@ phase_correlate_row(Teuchos::RCP<Image> image_a,
 /// \param image the input image
 /// \param high_pass_filter true if the radius of the polar transform
 /// should be limited to w/4 since the rest of the image would be zero from filtering
-/// \param use_symmetry if symmetry is used only half of the input image is given
 /// so the output image will be twice as tall as the input
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Image>
 polar_transform(Teuchos::RCP<Image> image,
-  const bool high_pass_filter = false,
-  const bool use_symmetry = false);
+  const bool high_pass_filter = false);
 
 /// 2 dimensional FFT of an array
 /// \param w width
