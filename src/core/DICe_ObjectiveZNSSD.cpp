@@ -57,164 +57,20 @@ namespace DICe {
 const scalar_t
 Objective_ZNSSD::gamma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
 
-//  assert(deformation->size()==DICE_DEFORMATION_SIZE);
-//  try{
-//    subset_->
-////    def_subset_->initialize(deformation,this->schema_->interpolation_method(),this->schema_->def_img());
-//  }
-//  catch (std::logic_error err) {
-//    return -1.0;
-//  }
-//
-//  const bool normalize_gamma = this->schema_->normalize_gamma_with_active_pixels();
-//  const bool update_pixels_each_it = this->schema_->use_subset_evolution() && this->schema_->update_obstructed_pixels_each_iteration();
-//  if(update_pixels_each_it){
-//    ref_subset_->turn_off_obstructed_pixels(deformation);
-//  }
-//
-//  bool turn_off_outlier_pixels = false;
-//  const scalar_t low_factor = 10.0;
-//
-//  Teuchos::ArrayRCP<bool> is_active = ref_subset_->is_active();
-//  Teuchos::ArrayRCP<bool> is_deactivated_this_step = ref_subset_->is_deactivated_this_step();
-//
-
-
-  // assume that the ref intensities are populated
-  // TODO set up the def intensities
-  // call subset gamma
-
-  scalar_t gamma = 0.0;
-//
-//  // Normalized gamma
-//  int_t num_active_pixels = 0;
-//  if(this->schema_->use_objective_normalization()){
-//    scalar_t sumF = 0.0;
-//    scalar_t sumG = 0.0;
-//    const scalar_t meanF = ref_subset_->mean_intensity(sumF);
-//    const scalar_t meanG = def_subset_->mean_intensity(sumG);
-//    assert(sumG!=0);
-//    assert(sumF!=0);
-//    scalar_t value = 0.0;
-//    scalar_t diffValue = 0.0;
-//    //      Real norm_value = 5.0/sumG;
-//    //      Real cuttoff = 15.0/sumG;
-//    for(int_t i=0;i<def_subset_->num_pixels();++i){
-//      ref_subset_->per_pixel_gamma(i) = 0.0;
-//      if(!is_active[i]||is_deactivated_this_step[i])continue;
-//      value = ((*def_subset_)(i)-meanG)/sumG - ((*ref_subset_)(i)-meanF)/sumF;
-//      num_active_pixels++;
-//      //        if(std::abs(value) > cuttoff) value = 5.0/sumG;
-//      //        else value *= (1.0/norm_value);
-//      gamma += value*value;
-//      ref_subset_->per_pixel_gamma(i) = value*value;
-//    }
-//  }
-//  // SSD gamma
-//  else{
-//    scalar_t value = 0.0;
-//    for(int_t i=0;i<def_subset_->num_pixels();++i){
-//      if(!is_active[i]||is_deactivated_this_step[i])continue;
-//      num_active_pixels++;
-//      value = (*def_subset_)(i)-(*ref_subset_)(i);
-//      gamma += value*value;
-//      ref_subset_->per_pixel_gamma(i) = value*value;
-//    }
-//  }
-//  if(normalize_gamma){
-//    assert(num_active_pixels>0);
-//    return gamma/num_active_pixels;
-//  }
-//  else
-    return gamma;
+  assert(deformation->size()==DICE_DEFORMATION_SIZE);
+  try{
+    subset_->initialize(this->schema_->def_img(),DEF_INTENSITIES,deformation,this->schema_->interpolation_method());
+  }
+  catch (std::logic_error & err) {
+    return -1.0;
+  }
+  return subset_->gamma();
 }
 
 const scalar_t
 Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
-//
-//  // if the gradients don't exist or the optimization method is SIMPLEX based return 0.0;
-//  if(!ref_subset_->src_image()->has_gradients()||this->schema_->optimization_method()==DICe::SIMPLEX) return 0.0;
-//
-//  assert(deformation->size()==DICE_DEFORMATION_SIZE);
-//
-//  Teuchos::ArrayRCP<bool> is_active = ref_subset_->is_active();
-//  Teuchos::ArrayRCP<bool> is_deactivated_this_step = ref_subset_->is_deactivated_this_step();
-//
-//  int_t N = 2;
-//  int *IPIV = new int[N+1];
-//  double *EIGS = new double[N+1];
-//  int LWORK = N*N;
-//  int QWORK = 3*N;
-//  int INFO = 0;
-//  double *WORK = new double[LWORK];
-//  double *SWORK = new double[QWORK];
-//  Teuchos::LAPACK<int_t,scalar_t> lapack;
-//  assert(N==2);
-//
-//  // Initialize storage:
-//  Teuchos::SerialDenseMatrix<int_t,scalar_t> H(N,N, true);
-//
-//  Teuchos::ArrayRCP<scalar_t> gradGx = ref_subset_->gradient_x();
-//  Teuchos::ArrayRCP<scalar_t> gradGy = ref_subset_->gradient_y();
-//
-//  // update the deformed image with the new deformation:
-//  try{
-//    def_subset_->initialize(deformation,this->schema_->interpolation_method(),this->schema_->def_img());
-//  }
-//  catch (std::logic_error err) {return -1.0;}
-//
-//  const bool use_normalization = this->schema_->use_objective_normalization();
-//  const scalar_t meanF = ref_subset_->mean_intensity();
-//  const scalar_t meanG = def_subset_->mean_intensity();
-//
-//  scalar_t Gx=0.0,Gy=0.0,GmF=0.0;
-//  for(int_t index=0;index<def_subset_->num_pixels();++index){
-//    // skip the deactivated pixels
-//    if(!is_active[index]||is_deactivated_this_step[index])continue;
-//    if(use_normalization){
-//      GmF = ((*def_subset_)(index) - meanG) - ((*ref_subset_)(index) - meanF);
-//    }
-//    else{
-//      GmF = (*def_subset_)(index) - (*ref_subset_)(index);
-//    }
-//    Gx = gradGx[index];
-//    Gy = gradGy[index];
-//    H(0,0) += Gx*Gx;
-//    H(1,0) += Gy*Gx;
-//    H(0,1) += Gx*Gy;
-//    H(1,1) += Gy*Gy;
-//  }
-//  // clear temp storage
-//  for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
-//  for(int_t i=0;i<QWORK;++i) SWORK[i] = 0.0;
-//  for(int_t i=0;i<N+1;++i) {IPIV[i] = 0; EIGS[i] = 0.0;}
-//  try{
-//    lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
-//  }
-//  catch(std::exception &e){DEBUG_MSG( e.what() << '\n'); return -1.0;}
-//  for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
-//  try{
-//    lapack.GETRI(N,H.values(),N,IPIV,WORK,LWORK,&INFO);
-//  }
-//  catch(std::exception &e){DEBUG_MSG( e.what() << '\n'); return -1.0;}
-//
-//  // now compute the eigenvalues for H^-1 as an estimate of sigma:
-//  lapack.SYEV('N','U',N,H.values(),N,EIGS,SWORK,QWORK,&INFO);
-//  DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " Eigenvalues of H^-1: " << EIGS[0] << " " << EIGS[1]);
-//  const scalar_t maxEig = std::max(EIGS[0],EIGS[1]);
-//
-//  // 95% confidence interval
-//  const scalar_t sigma = 2.0*std::sqrt(maxEig*5.991);
-//  DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " sigma: " << sigma);
-//
-//  // clean up storage for lapack:
-//  delete [] WORK;
-//  delete [] SWORK;
-//  delete [] IPIV;
-//  delete [] EIGS;
-
-  scalar_t sigma = 0.0; // TODO TODO TODO remove this
-  return sigma;
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, this method has not been implemented yet.");
+  return -1.0;
 }
 
 const Status_Flag
@@ -339,7 +195,7 @@ Objective_ZNSSD::search_step(Teuchos::RCP<std::vector<scalar_t> > & deformation,
   const int_t window_size,
   const scalar_t step_size,
   scalar_t & return_value) {
-
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method has not been implemented.");
 //  assert(deformation->size()==DICE_DEFORMATION_SIZE);
 //  Teuchos::RCP<std::vector<scalar_t> > trial_def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
 //  // temp subset for use in turning off pixels that are obstructed or fail the intensity deviation test:
@@ -386,6 +242,7 @@ const Status_Flag
 Objective_ZNSSD::search(Teuchos::RCP<std::vector<scalar_t> > & deformation,
   const int_t precision_level,
   scalar_t & return_value) {
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method has not been implemented.");
 //  DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " conducting localized SEARCH to initialize around point u " <<
 //    (*deformation)[DISPLACEMENT_X] << " v " << (*deformation)[DISPLACEMENT_Y] <<
 //    " theta " << (*deformation)[ROTATION_Z]);
@@ -471,6 +328,7 @@ Objective_ZNSSD::computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & defo
 const Status_Flag
 Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
   int_t & num_iterations){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method has not been implemented.");
 //  assert(deformation->size()==DICE_DEFORMATION_SIZE);
 //
 //  // catch the case where the initial gamma is good enough:
@@ -775,6 +633,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
 //    return MAX_ITERATIONS_REACHED;
 //  }
 //  else return CORRELATION_SUCCESSFUL;
+  return CORRELATION_SUCCESSFUL;
 }
 
 }// End DICe Namespace

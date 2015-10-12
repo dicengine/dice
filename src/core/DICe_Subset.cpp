@@ -313,6 +313,7 @@ Subset::mean(const Subset_View_Target target,
 
 scalar_t
 Subset::gamma(){
+  // TODO turn off obstructed pixels
   scalar_t mean_sum_ref = 0.0;
   const scalar_t mean_ref = mean(REF_INTENSITIES,mean_sum_ref);
   scalar_t mean_sum_def = 0.0;
