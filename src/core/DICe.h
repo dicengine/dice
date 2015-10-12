@@ -87,23 +87,6 @@ namespace DICe{
 
 typedef long int int_t;
 
-/// deformation map
-struct Def_Map{
-  scalar_t u_;
-  scalar_t v_;
-  scalar_t t_;
-  scalar_t ex_;
-  scalar_t ey_;
-  scalar_t g_;
-  Def_Map():
-    u_(0.0),
-    v_(0.0),
-    t_(0.0),
-    ex_(0.0),
-    ey_(0.0),
-    g_(0.0){}
-};
-
 /// parameters (all lower case)
 
 /// String parameter names using globals to prevent misspelling in the parameter lists:

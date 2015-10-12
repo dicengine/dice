@@ -56,10 +56,11 @@ namespace DICe {
 
 const scalar_t
 Objective_ZNSSD::gamma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
-//
+
 //  assert(deformation->size()==DICE_DEFORMATION_SIZE);
 //  try{
-//    def_subset_->initialize(deformation,this->schema_->interpolation_method(),this->schema_->def_img());
+//    subset_->
+////    def_subset_->initialize(deformation,this->schema_->interpolation_method(),this->schema_->def_img());
 //  }
 //  catch (std::logic_error err) {
 //    return -1.0;
@@ -77,6 +78,12 @@ Objective_ZNSSD::gamma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
 //  Teuchos::ArrayRCP<bool> is_active = ref_subset_->is_active();
 //  Teuchos::ArrayRCP<bool> is_deactivated_this_step = ref_subset_->is_deactivated_this_step();
 //
+
+
+  // assume that the ref intensities are populated
+  // TODO set up the def intensities
+  // call subset gamma
+
   scalar_t gamma = 0.0;
 //
 //  // Normalized gamma

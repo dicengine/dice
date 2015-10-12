@@ -148,9 +148,9 @@ int main(int argc, char *argv[]) {
   }
   // initialize the deformed values
   *outStream << "constructing a simple deformed subset" << std::endl;
-  Teuchos::RCP<Def_Map> map = Teuchos::rcp (new Def_Map());
-  map->u_ = 5;
-  map->v_ = 10;
+  Teuchos::RCP<std::vector<scalar_t> > map = Teuchos::rcp (new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+  (*map)[DISPLACEMENT_X] = 5;
+  (*map)[DISPLACEMENT_Y] = 10;
   square.initialize(image,DEF_INTENSITIES,map,BILINEAR);
   square.write_tiff("squareSubsetRef.tif",false);
   square.write_tiff("squareSubsetDef.tif",true);
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
   *outStream << "checking the bilinear interpolation" << std::endl;
   bool def_values_error = false;
   for(int_t i=0;i<square.num_pixels();++i){
-    if(square.def_intensities(i)!=(*image)(square.x(i)+map->u_,square.y(i)+map->v_))
+    if(square.def_intensities(i)!=(*image)(square.x(i)+(*map)[DISPLACEMENT_X],square.y(i)+(*map)[DISPLACEMENT_Y]))
       def_values_error = true;
   }
   if(def_values_error){
@@ -167,13 +167,13 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   *outStream << "checking the keys fourth order interpolant" << std::endl;
-  map->u_ = 15;
-  map->v_ = 12;
+  (*map)[DISPLACEMENT_X] = 15;
+  (*map)[DISPLACEMENT_Y] = 12;
   square.initialize(image,DEF_INTENSITIES,map,KEYS_FOURTH);
   square.write_tiff("squareSubsetDefKeys.tif",true);
   bool keys_values_error = false;
   for(int_t i=0;i<square.num_pixels();++i){
-    if(square.def_intensities(i)!=(*image)(square.x(i)+map->u_,square.y(i)+map->v_))
+    if(square.def_intensities(i)!=(*image)(square.x(i)+(*map)[DISPLACEMENT_X],square.y(i)+(*map)[DISPLACEMENT_Y]))
       keys_values_error = true;
   }
   if(keys_values_error){

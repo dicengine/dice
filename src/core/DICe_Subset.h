@@ -161,11 +161,11 @@ public:
 
   /// initialization method:
   /// \param image the image to get the intensity values from
-  /// \param map the deformation map (optional)
+  /// \param deformation the deformation map (optional)
   /// \param target the initialization mode (put the values in the ref or def intensities)
   void initialize(Teuchos::RCP<Image> image,
     const Subset_View_Target target=REF_INTENSITIES,
-    Teuchos::RCP<Def_Map> map=Teuchos::null,
+    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
     const Interpolation_Method interp=KEYS_FOURTH);
 
   /// write the subset intensity values to a tif file
@@ -177,10 +177,10 @@ public:
   /// draw the subset over an image
   /// \param file_name the name of the tif file to write
   /// \param image pointer to the image to use as the background
-  /// \param deform_subset deform the subset on the image (rather than its original shape)
+  /// \param deformation deform the subset on the image (rather than its original shape)
   void write_subset_on_image(const std::string & file_name,
     Teuchos::RCP<Image> image,
-    Teuchos::RCP<Def_Map> map=Teuchos::null);
+    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null);
 
   /// returns the mean intensity value
   /// \param target either the reference or deformed intensity values
@@ -331,7 +331,7 @@ struct Subset_Init_Functor{
   /// constructor
   Subset_Init_Functor(Subset * subset,
     Teuchos::RCP<Image> image,
-    Teuchos::RCP<Def_Map> map=Teuchos::null,
+    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
     const Subset_View_Target target=REF_INTENSITIES):
       u_(0.0),
       v_(0.0),
@@ -340,13 +340,13 @@ struct Subset_Init_Functor{
       ey_(0.0),
       g_(0.0),
       tol_(0.00001){
-    if(map!=Teuchos::null){
-      u_ = map->u_;
-      v_ = map->v_;
-      t_ = map->t_;
-      ex_ = map->ex_;
-      ey_ = map->ey_;
-      g_ = map->g_;
+    if(deformation!=Teuchos::null){
+      u_ = (*deformation)[DISPLACEMENT_X];
+      v_ = (*deformation)[DISPLACEMENT_Y];
+      t_ = (*deformation)[ROTATION_Z];
+      ex_ = (*deformation)[NORMAL_STRAIN_X];
+      ey_ = (*deformation)[NORMAL_STRAIN_Y];
+      g_ = (*deformation)[SHEAR_STRAIN_XY];
     }
     cos_t_ = std::cos(t_);
     sin_t_ = std::sin(t_);

@@ -193,17 +193,24 @@ Subset::reset_is_active(){
 void
 Subset::write_subset_on_image(const std::string & file_name,
   Teuchos::RCP<Image> image,
-  Teuchos::RCP<Def_Map> map){
+  Teuchos::RCP<const std::vector<scalar_t> > deformation){
   //create a square image that fits the extents of the subet
   const int_t w = image->width();
   const int_t h = image->height();
+  const scalar_t u = (*deformation)[DISPLACEMENT_X];
+  const scalar_t v = (*deformation)[DISPLACEMENT_Y];
+  const scalar_t t = (*deformation)[ROTATION_Z];
+  const scalar_t ex = (*deformation)[NORMAL_STRAIN_X];
+  const scalar_t ey = (*deformation)[NORMAL_STRAIN_Y];
+  const scalar_t g = (*deformation)[SHEAR_STRAIN_XY];
+
   intensity_t * intensities = new intensity_t[w*h];
   for(int_t y=0;y<h;++y){
     for(int_t x=0;x<w;++x){
       intensities[y*w+x] = image->intensities().h_view(y,x);
     }
   }
-  if(map!=Teuchos::null){
+  if(deformation!=Teuchos::null){
     scalar_t dx=0.0,dy=0.0;
     scalar_t Dx=0.0,Dy=0.0;
     scalar_t mapped_x=0.0,mapped_y=0.0;
@@ -213,11 +220,11 @@ Subset::write_subset_on_image(const std::string & file_name,
       // need to cast the x_ and y_ values since the resulting value could be negative
       dx = (scalar_t)(x_.h_view(i)) - cx_;
       dy = (scalar_t)(y_.h_view(i)) - cy_;
-      Dx = (1.0+map->ex_)*dx + map->g_*dy;
-      Dy = (1.0+map->ey_)*dy + map->g_*dx;
+      Dx = (1.0+ex)*dx + g*dy;
+      Dy = (1.0+ey)*dy + g*dx;
       // mapped location
-      mapped_x = std::cos(map->t_)*Dx - std::sin(map->t_)*Dy + map->u_ + cx_;
-      mapped_y = std::sin(map->t_)*Dx + std::cos(map->t_)*Dy + map->v_ + cy_;
+      mapped_x = std::cos(t)*Dx - std::sin(t)*Dy + u + cx_;
+      mapped_y = std::sin(t)*Dx + std::cos(t)*Dy + v + cy_;
       // get the nearest pixel location:
       px = (int_t)mapped_x;
       if(mapped_x - (int_t)mapped_x >= 0.5) px++;
@@ -322,11 +329,11 @@ Subset::gamma(){
 void
 Subset::initialize(Teuchos::RCP<Image> image,
   const Subset_View_Target target,
-  Teuchos::RCP<Def_Map> map,
+  Teuchos::RCP<const std::vector<scalar_t> > deformation,
   const Interpolation_Method interp){
-  const Subset_Init_Functor init_functor(this,image,map,target);
+  const Subset_Init_Functor init_functor(this,image,deformation,target);
   // assume if the map is null, use the no_map_tag in the parrel for call of the functor
-  if(map==Teuchos::null){
+  if(deformation==Teuchos::null){
     Kokkos::parallel_for(Kokkos::RangePolicy<Subset_Init_Functor::No_Map_Tag>(0,num_pixels_),init_functor);
   }
   else{
