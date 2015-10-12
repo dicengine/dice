@@ -85,7 +85,7 @@ namespace DICe{
   typedef float scalar_t;
 #endif
 
-typedef long int int_t;
+typedef int int_t;
 
 /// parameters (all lower case)
 

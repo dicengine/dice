@@ -115,7 +115,7 @@ Cine_Reader::get_frames(const int_t frame_index_start, const int_t frame_index_e
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Can't open the file: " + cine_header_->file_name_);
   }
   cine_file.seekg(0, std::ios::end);
-  int_t file_size = cine_file.tellg();
+  long long int file_size = cine_file.tellg(); // using long long here because the file may be huge
   int_t num_frames = frame_end - frame_start + 1;
 
   // factor of 8 to convert bytes to bits
@@ -128,7 +128,7 @@ Cine_Reader::get_frames(const int_t frame_index_start, const int_t frame_index_e
   const int64_t end = frame_end == file_num_frames - 1 ? file_size :
       cine_header_->image_offsets_[frame_end+1];
   assert(begin < file_size && end <= file_size);
-  const int_t buffer_size = end - begin;
+  const long long int buffer_size = end - begin;
   const int_t frame_p_header_size = buffer_size / num_frames;
   assert(buffer_size % num_frames = 0);
   const int_t header_size = frame_p_header_size - frame_size; // could be different for each frame
@@ -186,7 +186,7 @@ Cine_Reader::get_frames(const int_t frame_index_start, const int_t frame_index_e
     // read in the pixels
     if(bit_depth==8){
       // get to the start of the frame in the buffer
-      int_t buff_start_index = frame*(frame_p_header_size) + header_offset_8;
+      long long int buff_start_index = frame*(frame_p_header_size) + header_offset_8;
       for(int_t y=0;y<img_height;++y){
         for(int_t x=0;x<img_width;++x){
           // the images are stored bottom up, not top down!
@@ -195,7 +195,7 @@ Cine_Reader::get_frames(const int_t frame_index_start, const int_t frame_index_e
       }
     }
     else if (bit_depth==16){
-      int_t buff_start_index = frame*(frame_p_header_size) + header_offset_16;
+      long long int buff_start_index = frame*(frame_p_header_size) + header_offset_16;
       // the images are stored bottom up, not top down!
       uint16_t pixel_intensity;
       uint16_t max_intens = 0;
@@ -223,7 +223,7 @@ Cine_Reader::get_frames(const int_t frame_index_start, const int_t frame_index_e
       }
     }
     else if (bit_depth==10){
-      int_t buff_start_index = frame*(frame_p_header_size) + header_offset_8;
+      long long int buff_start_index = frame*(frame_p_header_size) + header_offset_8;
       for(int_t i=0;i<frame_size;++i){
         intensities_16[i] = 0;
         intensities_16[i] = buff_ptr_8[buff_start_index + i];
@@ -274,7 +274,7 @@ read_cine_headers(const char *file, std::ostream * out_stream){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"ERROR: Can't open the file: " + (std::string)file);
   }
   cine_file.seekg(0, std::ios::end);
-  int_t file_size = cine_file.tellg();
+  long long int file_size = cine_file.tellg();
   cine_file.seekg(0, std::ios::beg);
 
   // CINE HEADER
