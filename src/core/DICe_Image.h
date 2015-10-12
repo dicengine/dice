@@ -123,6 +123,10 @@ public:
     Teuchos::ArrayRCP<intensity_t> intensities,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
+  //
+  // Empty (zero) image
+  //
+
   /// constructor that creates a zero image
   /// \param width the width of the image
   /// \param height the height of the image
@@ -131,9 +135,22 @@ public:
   Image(const int_t width,
     const int_t height);
 
-  // TODO ASCII text file constructor
+  //
+  // Sub portion of another image constructor (deep copy constructor for default args)
+  //
 
-  // TODO copy constructor (shallow and deep versions)
+  /// constructor that takes another image and dims of a sub portion
+  /// note: no params arg because the parent image's are copied
+  /// \param img the image to copy
+  /// \param offset_x the upper left corner x-coord in image coordinates
+  /// \param offset_y the upper left corner y-coord in image coordinates
+  /// \param width the width of the sub image
+  /// \param height the height of the sub image
+  Image(Teuchos::RCP<Image> img,
+    const int_t offset_x = 0,
+    const int_t offset_y = 0,
+    const int_t width = -1,
+    const int_t height = -1);
 
   /// perform initialization of an image from an array
   /// \param intensities the array of intensity values
@@ -218,6 +235,21 @@ public:
     return grad_y_.h_view(y,x);
   }
 
+  /// gradient x dual view accessor
+  scalar_dual_view_2d grad_x()const{
+    return grad_x_;
+  }
+
+  /// gradient y dual view accessor
+  scalar_dual_view_2d grad_y()const{
+    return grad_y_;
+  }
+
+  /// mask dual view accessor
+  scalar_dual_view_2d mask() const{
+    return mask_;
+  }
+
   /// mask value accessor
   /// \param x image coordinate x
   /// \param y image coordinate y
@@ -284,6 +316,13 @@ public:
 
   /// returns the difference of two images:
   scalar_t diff(Teuchos::RCP<Image> rhs)const;
+
+  /// returns the size of the gauss filter mask
+  int_t gauss_filter_mask_size()const{
+    return gauss_filter_mask_size_;
+  }
+
+
 
   //
   // Kokkos functors:
@@ -450,12 +489,12 @@ struct Transform_Functor{
   int_t width_;
   /// height of the image
   int_t height_;
-  /// rotation angle
-  scalar_t t_;
   /// displacement x;
   scalar_t u_;
   /// displacement y;
   scalar_t v_;
+  /// rotation angle
+  scalar_t t_;
   /// cosine of theta
   scalar_t cost_;
   /// sin of theta

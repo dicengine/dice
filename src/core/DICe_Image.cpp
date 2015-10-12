@@ -176,6 +176,72 @@ Image::Image(const int_t width,
   default_constructor_tasks(Teuchos::null);
 }
 
+Image::Image(Teuchos::RCP<Image> img,
+  const int_t offset_x,
+  const int_t offset_y,
+  const int_t width,
+  const int_t height):
+  offset_x_(offset_x),
+  offset_y_(offset_y),
+  width_(width),
+  height_(height),
+  intensity_rcp_(Teuchos::null),
+  has_gradients_(img->has_gradients()),
+  file_name_(img->file_name())
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(offset_x_<0,std::invalid_argument,"Error, offset_x_ cannot be negative.");
+  TEUCHOS_TEST_FOR_EXCEPTION(offset_y_<0,std::invalid_argument,"Error, offset_x_ cannot be negative.");
+  if(width_==-1)
+    width_ = img->width();
+  if(height_==-1)
+    height_ = img->height();
+  assert(width_>0);
+  assert(height_>0);
+
+  const int_t src_width = img->width();
+  const int_t src_height = img->height();
+
+  // initialize the pixel containers
+  intensities_ = intensity_dual_view_2d("intensities",height_,width_);
+  intensities_temp_ = intensity_device_view_2d("intensities_temp",height_,width_);
+  grad_x_ = scalar_dual_view_2d("grad_x",height_,width_);
+  grad_y_ = scalar_dual_view_2d("grad_y",height_,width_);
+  mask_ = scalar_dual_view_2d("mask",height_,width_);
+
+  // deep copy values over
+  int_t src_y=0, src_x=0;
+  for(int_t y=0;y<height_;++y){
+    src_y = y + offset_y_;
+    for(int_t x=0;x<width_;++x){
+      src_x = x + offset_x_;
+      if(src_x>=0&&src_x<src_width&&src_y>=0&&src_y<src_height){
+        intensities_.h_view(y,x) = img->intensities().h_view(src_y,src_x);
+        grad_x_.h_view(y,x) = img->grad_x().h_view(src_y,src_x);
+        grad_y_.h_view(y,x) = img->grad_y().h_view(src_y,src_x);
+        mask_.h_view(y,x) = img->mask().h_view(src_y,src_x);
+      }
+      else{
+        intensities_.h_view(y,x) = 0.0;
+        grad_x_.h_view(y,x) = 0.0;
+        grad_y_.h_view(y,x) = 0.0;
+        mask_.h_view(y,x) = 1.0;
+      }
+    }
+  }
+  intensities_.modify<host_space>();
+  intensities_.sync<device_space>();
+  grad_x_.modify<host_space>();
+  grad_x_.sync<device_space>();
+  grad_y_.modify<host_space>();
+  grad_y_.sync<device_space>();
+  mask_.modify<host_space>();
+  mask_.sync<device_space>();
+
+  grad_c1_ = 1.0/12.0;
+  grad_c2_ = -8.0/12.0;
+  gauss_filter_mask_size_ = img->gauss_filter_mask_size();
+  gauss_filter_half_mask_ = gauss_filter_mask_size_/2+1;
+}
 
 void
 Image::initialize_array_image(intensity_t * intensities){

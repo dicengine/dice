@@ -71,13 +71,13 @@ int main(int argc, char *argv[]) {
 
   // create an image from file:
   *outStream << "creating an image from a tiff file " << std::endl;
-  Image img("./images/ImageA.tif");
-  img.write_tiff("outImageA.tif");
-  if(img.width()!=2048){
+  Teuchos::RCP<Image> img = Teuchos::rcp(new Image("./images/ImageA.tif"));
+  img->write_tiff("outImageA.tif");
+  if(img->width()!=2048){
     *outStream << "Error, the image width is not correct" << std::endl;
     errorFlag +=1;
   }
-  if(img.height()!=589){
+  if(img->height()!=589){
     *outStream << "Error, the image height is not correct" << std::endl;
     errorFlag +=1;
   }
@@ -92,15 +92,15 @@ int main(int argc, char *argv[]) {
   DICe::multi_shape excluded;
   excluded.push_back(rect2);
   DICe::Conformal_Area_Def area_def(boundary,excluded);
-  img.create_mask(area_def,true);
+  img->create_mask(area_def,true);
 
   // create an image of the mask
-  Teuchos::ArrayRCP<intensity_t> mask_values(img.height()*img.width(),0.0);
-  for(size_t y=0;y<img.height();++y)
-    for(size_t x=0;x<img.width();++x)
-      mask_values[y*img.width()+x] = img.mask(x,y);
-  Image mask(img.width(),img.height(),mask_values);
-  //mask_img.write_rawi("mask.rawi");
+  Teuchos::ArrayRCP<intensity_t> mask_values(img->height()*img->width(),0.0);
+  for(size_t y=0;y<img->height();++y)
+    for(size_t x=0;x<img->width();++x)
+      mask_values[y*img->width()+x] = img->mask(x,y);
+  Image mask(img->width(),img->height(),mask_values);
+  //mask_img->write_rawi("mask.rawi");
   // compare with the saved mask file
   Teuchos::RCP<Image> mask_exact = Teuchos::rcp(new Image("./images/mask.rawi"));
   const scalar_t mask_diff = mask.diff(mask_exact);
@@ -128,13 +128,24 @@ int main(int argc, char *argv[]) {
   bool intensity_match_error = false;
   for(int_t y=0;y<sub_img.height();++y){
     for(int_t x=0;x<sub_img.width();++x){
-      if(sub_img(x,y)!=img(x+sub_img.offset_x(),y+sub_img.offset_y()))
+      if(sub_img(x,y)!=(*img)(x+sub_img.offset_x(),y+sub_img.offset_y()))
         intensity_match_error = true;
     }
   }
   if(intensity_match_error){
     *outStream << "Error, the intensities for the sub image do not match the global image" << std::endl;
     errorFlag+=1;
+  }
+
+  *outStream << "creating a sub-image" << std::endl;
+  // purposefully making the image extend beyond the bounds of the input image
+  Teuchos::RCP<Image> portion = Teuchos::rcp(new Image(img,img->width()/2,img->height()/2,img->width(),img->height()));
+  //portion->write_rawi("portion.rawi");
+  Teuchos::RCP<Image> portion_exact = Teuchos::rcp(new Image("./images/portion.rawi"));
+  scalar_t portion_diff = portion_exact->diff(portion);
+  if(portion_diff > mask_tol){
+    *outStream << "Error, the portion image is not correct" << std::endl;
+    errorFlag++;
   }
 
   // create an image from an array
