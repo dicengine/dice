@@ -324,8 +324,6 @@ const static char * targetFieldDescriptorStrings[] = {
 enum Analysis_Type {
   LOCAL_DIC=0,
   GLOBAL_DIC,
-  CONSTRAINED_OPT,
-  INTEGRATED_DIC,
   // DON'T ADD ANY BELOW THIS
   MAX_ANALYSIS_TYPE,
   NO_SUCH_ANALYSIS_TYPE

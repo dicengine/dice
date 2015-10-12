@@ -124,21 +124,6 @@ void sl_default_params(Teuchos::ParameterList * defaultParams);
 DICE_LIB_DLL_EXPORT
 void dice_default_params(Teuchos::ParameterList *  defaultParams);
 
-/// \brief Sets the default correlation parameters for the global method
-/// \param defaultParams returned ParameterList with the default params set
-DICE_LIB_DLL_EXPORT
-void global_default_params(Teuchos::ParameterList *  defaultParams);
-
-/// \brief Sets the default correlation parameters for the constrained optimization method
-/// \param defaultParams returned ParameterList with the default params set
-DICE_LIB_DLL_EXPORT
-void constrained_opt_default_params(Teuchos::ParameterList *  defaultParams);
-
-/// \brief Sets the default correlation parameters for the integrated DIC
-/// \param defaultParams returned ParameterList with the default params set
-DICE_LIB_DLL_EXPORT
-void integrated_default_params(Teuchos::ParameterList *  defaultParams);
-
 }// DICe namespace
 
 #endif

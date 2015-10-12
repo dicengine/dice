@@ -207,10 +207,6 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   if(params!=Teuchos::null){
     if(params->get<bool>(DICe::use_global_dic,false))
       analysis_type_=GLOBAL_DIC;
-    if(params->get<bool>(DICe::use_constrained_opt_dic,false))
-      analysis_type_=CONSTRAINED_OPT;
-    if(params->get<bool>(DICe::use_integrated_dic,false))
-      analysis_type_=INTEGRATED_DIC;
     // TODO make sure only one of these is active
   }
 
@@ -218,50 +214,13 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   Teuchos::RCP<Teuchos::ParameterList> diceParams = Teuchos::rcp( new Teuchos::ParameterList("Schema_Correlation_Parameters") );
 
   if(analysis_type_==GLOBAL_DIC){
-    global_default_params(diceParams.getRawPtr());
-    if(proc_rank == 0) DEBUG_MSG("Initializing schema params with global default parameters");
-    if(params!=Teuchos::null){
-      // check that all the parameters are valid:
-      // this should catch the case that the user misspelled one of the parameters:
-      bool allParamsValid = true;
-      for(Teuchos::ParameterList::ConstIterator it=params->begin();it!=params->end();++it){
-        bool paramValid = false;
-        for(int_t j=0;j<DICe::num_valid_global_correlation_params;++j){
-          if(it->first==valid_global_correlation_params[j].name_){
-            diceParams->setEntry(it->first,it->second); // overwrite the default value with argument param specified values
-            paramValid = true;
-          }
-        }
-        // catch post processor entries
-        for(int_t j=0;j<DICe::num_valid_post_processor_params;++j){
-          if(it->first==valid_post_processor_params[j]){
-            diceParams->setEntry(it->first,it->second); // overwrite the default value with argument param specified values
-            paramValid = true;
-          }
-        }
-        if(!paramValid){
-          allParamsValid = false;
-          if(proc_rank == 0) std::cout << "Error: Invalid parameter: " << it->first << std::endl;
-        }
-      }
-      if(!allParamsValid){
-        if(proc_rank == 0) std::cout << "NOTE: valid parameters include: " << std::endl;
-        for(int_t j=0;j<DICe::num_valid_global_correlation_params;++j){
-          if(proc_rank == 0) std::cout << valid_global_correlation_params[j].name_ << std::endl;
-        }
-        for(int_t j=0;j<DICe::num_valid_post_processor_params;++j){
-          if(proc_rank == 0) std::cout << valid_post_processor_params[j] << std::endl;
-        }
-      }
-      TEUCHOS_TEST_FOR_EXCEPTION(!allParamsValid,std::invalid_argument,"Invalid parameter");
-    }
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"Global DIC is not enabled");
   }
   else if(analysis_type_==LOCAL_DIC){
     bool use_sl_defaults = false;
     if(params!=Teuchos::null){
       use_sl_defaults = params->get<bool>(DICe::use_sl_default_params,false);
     }
-
     // First set all of the params to their defaults in case the user does not specify them:
     if(use_sl_defaults){
       sl_default_params(diceParams.getRawPtr());
@@ -271,7 +230,6 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
       dice_default_params(diceParams.getRawPtr());
       if(proc_rank == 0) DEBUG_MSG("Initializing schema params with DICe default parameters");
     }
-
     // Overwrite any params that are specified by the params argument
     if(params!=Teuchos::null){
       // check that all the parameters are valid:
@@ -301,84 +259,6 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
         if(proc_rank == 0) std::cout << "NOTE: valid parameters include: " << std::endl;
         for(int_t j=0;j<DICe::num_valid_correlation_params;++j){
           if(proc_rank == 0) std::cout << valid_correlation_params[j].name_ << std::endl;
-        }
-        for(int_t j=0;j<DICe::num_valid_post_processor_params;++j){
-          if(proc_rank == 0) std::cout << valid_post_processor_params[j] << std::endl;
-        }
-      }
-      TEUCHOS_TEST_FOR_EXCEPTION(!allParamsValid,std::invalid_argument,"Invalid parameter");
-    }
-  }
-  else if(analysis_type_==INTEGRATED_DIC){
-    integrated_default_params(diceParams.getRawPtr());
-    if(proc_rank == 0) DEBUG_MSG("Initializing schema params with integrated DIC default parameters");
-    if(params!=Teuchos::null){
-      // check that all the parameters are valid:
-      // this should catch the case that the user misspelled one of the parameters:
-      bool allParamsValid = true;
-      for(Teuchos::ParameterList::ConstIterator it=params->begin();it!=params->end();++it){
-        bool paramValid = false;
-        for(int_t j=0;j<DICe::num_valid_integrated_correlation_params;++j){
-          if(it->first==valid_integrated_correlation_params[j].name_){
-            diceParams->setEntry(it->first,it->second); // overwrite the default value with argument param specified values
-            paramValid = true;
-          }
-        }
-        // catch post processor entries
-        for(int_t j=0;j<DICe::num_valid_post_processor_params;++j){
-          if(it->first==valid_post_processor_params[j]){
-            diceParams->setEntry(it->first,it->second); // overwrite the default value with argument param specified values
-            paramValid = true;
-          }
-        }
-        if(!paramValid){
-          allParamsValid = false;
-          if(proc_rank == 0) std::cout << "Error: Invalid parameter: " << it->first << std::endl;
-        }
-      }
-      if(!allParamsValid){
-        if(proc_rank == 0) std::cout << "NOTE: valid parameters include: " << std::endl;
-        for(int_t j=0;j<DICe::num_valid_integrated_correlation_params;++j){
-          if(proc_rank == 0) std::cout << valid_integrated_correlation_params[j].name_ << std::endl;
-        }
-        for(int_t j=0;j<DICe::num_valid_post_processor_params;++j){
-          if(proc_rank == 0) std::cout << valid_post_processor_params[j] << std::endl;
-        }
-      }
-      TEUCHOS_TEST_FOR_EXCEPTION(!allParamsValid,std::invalid_argument,"Invalid parameter");
-    }
-  }
-  else if(analysis_type_==CONSTRAINED_OPT){
-    constrained_opt_default_params(diceParams.getRawPtr());
-    if(proc_rank == 0) DEBUG_MSG("Initializing schema params with constrained optimization default parameters");
-    if(params!=Teuchos::null){
-      // check that all the parameters are valid:
-      // this should catch the case that the user misspelled one of the parameters:
-      bool allParamsValid = true;
-      for(Teuchos::ParameterList::ConstIterator it=params->begin();it!=params->end();++it){
-        bool paramValid = false;
-        for(int_t j=0;j<DICe::num_valid_constrained_opt_correlation_params;++j){
-          if(it->first==valid_constrained_opt_correlation_params[j].name_){
-            diceParams->setEntry(it->first,it->second); // overwrite the default value with argument param specified values
-            paramValid = true;
-          }
-        }
-        // catch post processor entries
-        for(int_t j=0;j<DICe::num_valid_post_processor_params;++j){
-          if(it->first==valid_post_processor_params[j]){
-            diceParams->setEntry(it->first,it->second); // overwrite the default value with argument param specified values
-            paramValid = true;
-          }
-        }
-        if(!paramValid){
-          allParamsValid = false;
-          if(proc_rank == 0) std::cout << "Error: Invalid parameter: " << it->first << std::endl;
-        }
-      }
-      if(!allParamsValid){
-        if(proc_rank == 0) std::cout << "NOTE: valid parameters include: " << std::endl;
-        for(int_t j=0;j<DICe::num_valid_constrained_opt_correlation_params;++j){
-          if(proc_rank == 0) std::cout << valid_constrained_opt_correlation_params[j].name_ << std::endl;
         }
         for(int_t j=0;j<DICe::num_valid_post_processor_params;++j){
           if(proc_rank == 0) std::cout << valid_post_processor_params[j] << std::endl;
@@ -534,7 +414,6 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   const bool omit_row_id = diceParams->get<bool>(DICe::omit_output_row_id,false);
   output_spec_ = Teuchos::rcp(new DICe::Output_Spec(this,omit_row_id,outputParams,delimiter));
   has_output_spec_ = true;
-
 }
 
 void

@@ -164,18 +164,6 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
    if(analysis_type==LOCAL_DIC){
      required_params.push_back(std::pair<std::string,std::string>(DICe::output_folder,"string"));
    }
-   if(analysis_type==CONSTRAINED_OPT){
-     required_params.push_back(std::pair<std::string,std::string>(DICe::output_folder,"string"));
-     required_params.push_back(std::pair<std::string,std::string>(DICe::mesh_file,"string"));
-     required_params.push_back(std::pair<std::string,std::string>(DICe::mesh_output_file,"string"));
-   }
-   if(analysis_type==INTEGRATED_DIC){
-     required_params.push_back(std::pair<std::string,std::string>(DICe::time_force_file,"string"));
-     required_params.push_back(std::pair<std::string,std::string>(DICe::mesh_file,"string"));
-     required_params.push_back(std::pair<std::string,std::string>(DICe::mesh_output_file,"string"));
-     required_params.push_back(std::pair<std::string,std::string>(DICe::output_folder,"string"));
-     required_params.push_back(std::pair<std::string,std::string>(DICe::physics_parameters_file,"string"));
-   }
 
    // make sure that a subset file was defined:
    bool required_param_missing = false;
