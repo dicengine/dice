@@ -112,9 +112,6 @@ const Optimization_Method string_to_optimization_method(std::string & in);
 DICE_LIB_DLL_EXPORT
 const bool is_string_param(const std::string & in);
 
-
-}// DICe namespace
-
 /// \brief Returns a pointer to a ParameterList with default params specified
 /// \param defaultParams Pointer to the ParameterList to be returned
 ///
@@ -141,5 +138,7 @@ void constrained_opt_default_params(Teuchos::ParameterList *  defaultParams);
 /// \param defaultParams returned ParameterList with the default params set
 DICE_LIB_DLL_EXPORT
 void integrated_default_params(Teuchos::ParameterList *  defaultParams);
+
+}// DICe namespace
 
 #endif

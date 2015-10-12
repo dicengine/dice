@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
   schemaVec.push_back(schemaImage);   //2
 
   for(int_t i=0;i<schemaVec.size();++i){
-    *outStream << "---> TESTING SCHEMA " << i << std::endl;
+    *outStream << "testing schema " << i << " params" << std::endl;
     if(schemaVec[i]->img_width()!=imgRef->width()){
       *outStream << "Error, image width is not right" << std::endl;
       errorFlag++;
@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> badParams = rcp(new Teuchos::ParameterList());
   badParams->set("this_should_not_work",true);
   // this param should only be available internally and should also throw an error
-  badParams->set(DICe::tolerance,0.01);
+  badParams->set(DICe::tolerance,(scalar_t)0.01);
   bool exception_thrown_as_it_should = false;
   try{
     Teuchos::RCP<DICe::Schema> schemaTextBadParams = Teuchos::rcp(new DICe::Schema(imgRef,imgDef,badParams));
