@@ -263,6 +263,8 @@ public:
   /// mask will be set to 1.0. For the excluded region within the boundary, the mask
   /// will be set to 0.0
   /// mask values will be 1.0 for excluded regions.
+  /// note: mask coordinates are always global, if the image is a portion of a larger
+  /// image, the offsets will be applied to the coordinates to align the mask
   /// \param area_def defines the shape of the mask and what is included/excluded
   /// \param smooth_edges smooths the edges of the mask to avoid high freq. content
   void create_mask(const Conformal_Area_Def & area_def,
@@ -273,10 +275,17 @@ public:
   /// mask will be set to 1.0. For the excluded region within the boundary, the mask
   /// will be set to 0.0
   /// mask values will be 1.0 for excluded regions.
+  /// note: mask coordinates are always global, if the image is a portion of a larger
+  /// image, the offsets will be applied to the coordinates to align the mask
   /// \param area_def defines the shape of the mask and what is included/excluded
   /// \param smooth_edges smooths the edges of the mask to avoid high freq. content
   void apply_mask(const Conformal_Area_Def & area_def,
     const bool smooth_edges=true);
+
+  /// apply the mask field to the image and sync up the arrays between device and host
+  /// assumes that the mask field is already populated
+  /// \param smooth_edges use Gaussian smoothing along the edges
+  void apply_mask(const bool smooth_edges);
 
   /// apply a transformation to this image to create another image
   /// \param cx centroid of mapping in the current image

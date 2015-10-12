@@ -562,6 +562,25 @@ Image::apply_mask(const Conformal_Area_Def & area_def,
 }
 
 void
+Image::apply_mask(const bool smooth_edges){
+  // make sure the mask is synced from host to device
+  mask_.modify<host_space>();
+  mask_.sync<device_space>();
+  if(smooth_edges){
+    // smooth the edges of the mask:
+    Mask_Smoothing_Functor smoother(mask_,width_,height_);
+    Kokkos::parallel_for(width_*height_,smoother);
+  }
+  // then apply it to the image intensity values
+  Mask_Apply_Functor apply_functor(intensities_.d_view,mask_.d_view,width_);
+  Kokkos::parallel_for(width_*height_,apply_functor);
+  mask_.modify<device_space>();
+  mask_.sync<host_space>();
+  intensities_.modify<device_space>();
+  intensities_.sync<host_space>();
+}
+
+void
 Image::create_mask(const Conformal_Area_Def & area_def,
   const bool smooth_edges){
   assert(area_def.has_boundary());
@@ -591,8 +610,8 @@ Image::create_mask(const Conformal_Area_Def & area_def,
   // NOTE: the pairs are (y,x) not (x,y) so that the ordering is correct in the set
   typename std::set<std::pair<int_t,int_t> >::iterator set_it = coords.begin();
   for( ; set_it!=coords.end();++set_it){
-    x(index) = set_it->second;
-    y(index) = set_it->first;
+    x(index) = set_it->second - offset_x_;
+    y(index) = set_it->first - offset_y_;
     index++;
   }
   Mask_Init_Functor init_functor(mask_.d_view,x,y);
