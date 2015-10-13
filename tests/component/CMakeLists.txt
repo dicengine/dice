@@ -28,8 +28,8 @@ target_link_libraries(DICe_TestFFT ${DICE_LIBRARIES} dicecore diceutils dicefft)
 add_executable(DICe_TestPhaseCorrelation DICe_TestPhaseCorrelation.cpp)
 target_link_libraries(DICe_TestPhaseCorrelation ${DICE_LIBRARIES} dicecore diceutils dicefft)
 
-#add_executable(DICe_TestObjective DICe_TestObjective.cpp)
-#target_link_libraries(DICe_TestObjective ${DICE_LIBRARIES} dicecore diceutils dicefft)
+add_executable(DICe_TestObjective DICe_TestObjective.cpp)
+target_link_libraries(DICe_TestObjective ${DICE_LIBRARIES} dicecore diceutils dicefft)
 
 add_executable(DICe_TestSchema DICe_TestSchema.cpp)
 target_link_libraries(DICe_TestSchema ${DICE_LIBRARIES} dicecore diceutils dicefft)

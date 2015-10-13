@@ -359,8 +359,6 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- End test ---" << std::endl;
 
-
-
   // finalize kokkos
   Kokkos::finalize();
 

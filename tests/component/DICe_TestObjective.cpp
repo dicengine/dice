@@ -40,24 +40,29 @@
 // ************************************************************************
 // @HEADER
 
-/*! \file  DICe_Test_Objective.cpp
+/*! \file  DICe_TestObjective.cpp
     \brief Testing of objective class construction and gamma methods
     actual correlation methods are tested in a separate test, not here
 */
 
 #include <DICe_Schema.h>
 #include <DICe_ObjectiveZNSSD.h>
-#include <DICe_Types.h>
+#include <DICe.h>
 
 #include <Teuchos_oblackholestream.hpp>
 #include <Teuchos_GlobalMPISession.hpp>
 
 #include <iostream>
 
+using namespace DICe;
+
 int main(int argc, char *argv[]) {
 
+  // initialize kokkos
+  Kokkos::initialize(argc, argv);
+
   // only print output if args are given (for testing the output is quiet)
-  SizeT iprint     = argc - 1;
+  int_t iprint     = argc - 1;
   // for serial, the global MPI session is a no-op, but in parallel
   // ensures that MPI_Init is called (needed by the schema)
   Teuchos::GlobalMPISession mpi_session(&argc, &argv, NULL);
@@ -68,127 +73,76 @@ int main(int argc, char *argv[]) {
   else
     outStream = Teuchos::rcp(&bhs, false);
 
-  SizeT errorFlag  = 0;
-
-  RealT errtol  = 5.0E-2;
-  RealT errtolSoft = 1.0E7; // gamma values for SSD are large
+  int_t errorFlag  = 0;
+  scalar_t errtol  = 5.0E-2;
+  scalar_t errtolSoft = 1.0E7; // gamma values for SSD are large
   // TODO find a better way to check this
 
-  try {
+  *outStream << "--- Begin test ---" << std::endl;
 
-    *outStream << "---> CREATING STRIPES IMAGES " << std::endl;
-    // create an image with black and white stripes:
-    const SizeT img_width = 199;
-    const SizeT img_height = 199;
-    const SizeT num_stripes = 10;
-    const SizeT stripe_width = 20;//img_width/num_stripes;
-    const SizeT size = img_width * img_height;
-    Teuchos::ArrayRCP<RealT> intensities(img_width*img_height,0.0);
-    for(SizeT y=0;y<img_height;++y){
-      for(SizeT stripe=0;stripe<=num_stripes/2;++stripe){
-        for(SizeT x=stripe*(2*stripe_width);x<stripe*(2*stripe_width)+stripe_width;++x){
-          if(x>=img_width)continue;
-          intensities[y*img_width+x] = 255.0;
-        }
+  *outStream << "creating stripes images " << std::endl;
+  // create an image with black and white stripes:
+  const int_t img_width = 199;
+  const int_t img_height = 199;
+  const int_t num_stripes = 10;
+  const int_t stripe_width = 20;//img_width/num_stripes;
+  const int_t size = img_width * img_height;
+  Teuchos::ArrayRCP<intensity_t> intensities(img_width*img_height,0.0);
+  for(int_t y=0;y<img_height;++y){
+    for(int_t stripe=0;stripe<=num_stripes/2;++stripe){
+      for(int_t x=stripe*(2*stripe_width);x<stripe*(2*stripe_width)+stripe_width;++x){
+        if(x>=img_width)continue;
+        intensities[y*img_width+x] = 255.0;
       }
-    }
-    Teuchos::RCP<DICe::Image<RealT,SizeT> > refImg = Teuchos::rcp(new DICe::Image<RealT,SizeT> (img_width,img_height,intensities));
-    *outStream << "---> REFERENCE IMAGE OF STRIPES HAS BEEN CREATED SUCCESSFULLY\n";
-
-    // testing objective gamma:
-
-    Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
-    params->set(DICe::correlation_method, DICe::ZNSSD);
-    // dummy deformation vector to pass to objective
-    Teuchos::RCP<std::vector<RealT> > deformation = Teuchos::rcp(new std::vector<RealT>(DICE_DEFORMATION_SIZE,0.0));
-
-    *outStream << "---> TESTING OBJECTIVE GAMMA WITH OBJECTIVE NORMALIZATION (using ZNSSD not SSD)" << std::endl;
-
-    // track the correlation gamma for various pixel shifts:
-    // no shift should result in gamma = 0.0 and when the images are opposite gamma should = 4.0
-    for(SizeT shift=0;shift<11;shift++){
-      *outStream << "---> PROCESSING SHIFT " << shift*2 << "\n";
-      Teuchos::ArrayRCP<RealT> intensitiesShift(img_width*img_height,0.0);
-      for(SizeT y=0;y<img_height;++y){
-        for(SizeT stripe=0;stripe<=num_stripes/2;++stripe){
-          for(SizeT x=stripe*(2*stripe_width) - shift*2;x<stripe*(2*stripe_width)+stripe_width - shift*2;++x){
-            if(x>=img_width)continue;
-            if(x<0)continue;
-            intensitiesShift[y*img_width+x] = 255.0;
-          }
-        }
-      }
-      Teuchos::RCP<DICe::Image<RealT,SizeT> > defImg = Teuchos::rcp(new DICe::Image<RealT,SizeT> (img_width,img_height,intensitiesShift));
-      // create a temp schema:
-      DICe::Schema<RealT,SizeT> * schema = new DICe::Schema<RealT,SizeT>(img_width,img_height,intensities,intensitiesShift);
-      schema->initialize(1,99);
-      schema->field_value(0,DICe::COORDINATE_X) = 100;
-      schema->field_value(0,DICe::COORDINATE_Y) = 100;
-      schema->set_params(params);
-      schema->sync_fields_all_to_dist(); // distribute the fields across processors if necessary
-      if(!schema->use_objective_normalization()){
-        *outStream << "---> POSSIBLE ERROR ABOVE!: Objective normalization should be active.\n";
-        errorFlag++;
-      }
-      // create an objective:
-      Teuchos::RCP<DICe::Objective_ZNSSD<RealT> > obj = Teuchos::rcp(new DICe::Objective_ZNSSD<RealT>(schema,0));
-      // evaluate the correlation value:
-      const RealT gamma =  obj->gamma(deformation);
-      *outStream << "---> GAMMA VALUE: " << gamma << std::endl;
-      if(std::abs(gamma - shift*0.4)>errtol){
-        *outStream << "---> POSSIBLE ERROR ABOVE!  gamma is not " << shift*0.4 << " value=" << gamma << "\n";
-        errorFlag++;
-      }
-      delete schema;
-    }
-
-    *outStream << "---> TESTING OBJECTIVE GAMMA WITHOUT OBJECTIVE NORMALIZATION (using SSD not ZNSSD)" << std::endl;
-
-    params->set(DICe::correlation_method, DICe::SSD);
-
-    const RealT gammaExactStep = 6.43748e+07;
-    // track the correlation gamma for various pixel shifts:
-    // no shift should result in gamma = 0.0 and when the images are opposite gamma should = 4.0
-    for(SizeT shift=0;shift<11;shift++){
-      *outStream << "---> PROCESSING SHIFT " << shift*2 << "\n";
-      Teuchos::ArrayRCP<RealT> intensitiesShift(img_width*img_height,0.0);
-      for(SizeT y=0;y<img_height;++y){
-        for(SizeT stripe=0;stripe<=num_stripes/2;++stripe){
-          for(SizeT x=stripe*(2*stripe_width) - shift*2;x<stripe*(2*stripe_width)+stripe_width - shift*2;++x){
-            if(x>=img_width)continue;
-            if(x<0)continue;
-            intensitiesShift[y*img_width+x] = 255.0;
-          }
-        }
-      }
-      Teuchos::RCP<DICe::Image<RealT,SizeT> > defImg = Teuchos::rcp(new DICe::Image<RealT,SizeT> (img_width,img_height,intensitiesShift));
-      // create a temp schema:
-      DICe::Schema<RealT,SizeT> * schema = new DICe::Schema<RealT,SizeT>(img_width,img_height,intensities,intensitiesShift);
-      schema->initialize(1,99);
-      schema->field_value(0,DICe::COORDINATE_X) = 100;
-      schema->field_value(0,DICe::COORDINATE_Y) = 100;
-      schema->set_params(params);
-      schema->sync_fields_all_to_dist(); // distribute the fields across processors if necessary
-      if(schema->use_objective_normalization()){
-        *outStream << "---> POSSIBLE ERROR ABOVE!: Objective normalization should not be active.\n";
-        errorFlag++;
-      }
-      // create an objective:
-      Teuchos::RCP<DICe::Objective_ZNSSD<RealT> > obj = Teuchos::rcp(new DICe::Objective_ZNSSD<RealT>(schema,0));
-      // evaluate the correlation value:
-      const RealT gamma =  obj->gamma(deformation);
-      *outStream << "---> GAMMA VALUE: " << gamma << std::endl;
-      if(std::abs(gamma - gammaExactStep*shift)>errtolSoft){
-        *outStream << "---> POSSIBLE ERROR ABOVE!  gamma is not " << gammaExactStep*shift << " value=" << gamma << "\n";
-        errorFlag++;
-      }
-      delete schema;
     }
   }
-  catch (std::logic_error err) {
-    *outStream << err.what() << "\n";
-    errorFlag = -1000;
-  }; // end try
+  Teuchos::RCP<DICe::Image> refImg = Teuchos::rcp(new DICe::Image(img_width,img_height,intensities));
+  *outStream << "reference striped image created successfuly\n";
+
+  // testing objective gamma:
+
+  // dummy deformation vector to pass to objective
+  Teuchos::RCP<std::vector<scalar_t> > deformation = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+
+  *outStream << "testing ZNSSD correlation" << std::endl;
+
+  // track the correlation gamma for various pixel shifts:
+  // no shift should result in gamma = 0.0 and when the images are opposite gamma should = 4.0
+  for(int_t shift=0;shift<11;shift++){
+    *outStream << "processing shift: " << shift*2 << "\n";
+    Teuchos::ArrayRCP<intensity_t> intensitiesShift(img_width*img_height,0.0);
+    for(int_t y=0;y<img_height;++y){
+      for(int_t stripe=0;stripe<=num_stripes/2;++stripe){
+        for(int_t x=stripe*(2*stripe_width) - shift*2;x<stripe*(2*stripe_width)+stripe_width - shift*2;++x){
+          if(x>=img_width)continue;
+          if(x<0)continue;
+          intensitiesShift[y*img_width+x] = 255.0;
+        }
+      }
+    }
+    Teuchos::RCP<DICe::Image> defImg = Teuchos::rcp(new DICe::Image(img_width,img_height,intensitiesShift));
+    // create a temp schema:
+    DICe::Schema * schema = new DICe::Schema(img_width,img_height,intensities,intensitiesShift);
+    schema->initialize(1,99);
+    schema->field_value(0,DICe::COORDINATE_X) = 100;
+    schema->field_value(0,DICe::COORDINATE_Y) = 100;
+    schema->sync_fields_all_to_dist(); // distribute the fields across processors if necessary
+    // create an objective:
+    Teuchos::RCP<DICe::Objective_ZNSSD> obj = Teuchos::rcp(new DICe::Objective_ZNSSD(schema,0));
+    // evaluate the correlation value:
+    const scalar_t gamma =  obj->gamma(deformation);
+    *outStream << "gamma value: " << gamma << std::endl;
+    if(std::abs(gamma - shift*0.4)>errtol){
+      *outStream << "Error, gamma is not " << shift*0.4 << " value=" << gamma << "\n";
+      errorFlag++;
+    }
+    delete schema;
+  }
+
+  *outStream << "--- End test ---" << std::endl;
+
+  // finalize kokkos
+  Kokkos::finalize();
 
   if (errorFlag != 0)
     std::cout << "End Result: TEST FAILED\n";
