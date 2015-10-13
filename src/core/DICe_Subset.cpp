@@ -472,13 +472,13 @@ Subset_Init_Functor::operator()(const Map_Keys_Tag&,
         dy3=dy2*dy;
         f0y = 0.0;
         if(dy <= 1.0){
-          f0y = 1.3333333333*dy3 - 2.3333333333*dy2 + 1.0;
+          f0y = 4.0/3.0*dy3 - 7.0/3.0*dy2 + 1.0;
         }
         else if(dy <= 2.0){
-          f0y = -0.5833333333*dy3 + 3.0*dy2 - 4.9166666666*dy + 2.5;
+          f0y = -7.0/12.0*dy3 + 3.0*dy2 - 59.0/12.0*dy + 15.0/6.0;
         }
         else if(dy <= 3.0){
-          f0y = 0.0833333333*dy3 - 0.6666666666*dy2 + 1.75*dy - 1.5;
+          f0y = 1.0/12.0*dy3 - 2.0/3.0*dy2 + 21.0/12.0*dy - 3.0/2.0;
         }
         for(int_t x=px-3;x<=px+3;++x){
           // compute the f's of x and y
@@ -487,13 +487,13 @@ Subset_Init_Functor::operator()(const Map_Keys_Tag&,
           dx3=dx2*dx;
           f0x = 0.0;
           if(dx <= 1.0){
-            f0x = 1.3333333333*dx3 - 2.3333333333*dx2 + 1.0;
+            f0x = 4.0/3.0*dx3 - 7.0/3.0*dx2 + 1.0;
           }
           else if(dx <= 2.0){
-            f0x = -0.5833333333*dx3 + 3.0*dx2 - 4.9166666666*dx + 2.5;
+            f0x = -7.0/12.0*dx3 + 3.0*dx2 - 59.0/12.0*dx + 15.0/6.0;
           }
           else if(dx <= 3.0){
-            f0x = 0.0833333333*dx3 - 0.6666666666*dx2 + 1.75*dx - 1.5;
+            f0x = 1.0/12.0*dx3 - 2.0/3.0*dx2 + 21.0/12.0*dx - 3.0/2.0;
           }
           intensity_value += image_intensities_(y,x)*f0x*f0y;
         }

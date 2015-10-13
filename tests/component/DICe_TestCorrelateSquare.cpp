@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<DICe::Schema> schemaMultiple = Teuchos::rcp(new DICe::Schema("./images/refSpeckled.tif","./images/defSpeckled.tif",params));
   schemaMultiple->initialize(multiple_step_size_x,multiple_step_size_y,multiple_subset_size);
   schemaMultiple->execute_correlation();
-  schemaMultiple->write_control_points_image("schemaMultipleControlPoints");
+  schemaMultiple->write_control_points_image("schemaMultipleControlPoints.tif");
 
   *outStream << "multiple square subsets results: " << std::endl;
 
