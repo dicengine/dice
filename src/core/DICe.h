@@ -526,7 +526,7 @@ const static char * statusFlagStrings[] = {
 enum Correlation_Parameter_Type{
   STRING_PARAM=0,
   PARAM_PARAM, // parameter that is another parameter list
-  REAL_PARAM,
+  SCALAR_PARAM,
   SIZE_PARAM,
   BOOL_PARAM
 };
@@ -568,6 +568,31 @@ struct Correlation_Parameter {
 };
 
 /// Correlation parameter and properties
+const Correlation_Parameter image_grad_use_hierarchical_parallelism_param(image_grad_use_hierarchical_parallelism,
+  BOOL_PARAM,
+  true,
+  "True if higherarchical parallelism should be used when computing image gradients (parallel in x and y)");
+/// Correlation parameter and properties
+const Correlation_Parameter image_grad_team_size_param(image_grad_team_size,
+  SIZE_PARAM,
+  true,
+  "The team size to use for thread teams when computing image gradients.");
+/// Correlation parameter and properties
+const Correlation_Parameter gauss_filter_use_hierarchical_parallelism_param(gauss_filter_use_hierarchical_parallelism,
+  BOOL_PARAM,
+  true,
+  "True if higherarchical parallelism should be used when computing image Gaussian filter (parallel in x and y)");
+/// Correlation parameter and properties
+const Correlation_Parameter gauss_filter_team_size_param(gauss_filter_team_size,
+  SIZE_PARAM,
+  true,
+  "The team size to use for thread teams when computing Gaussian filter.");
+/// Correlation parameter and properties
+const Correlation_Parameter gauss_filter_mask_size_param(gauss_filter_mask_size,
+  SIZE_PARAM,
+  true,
+  "The size in pixels of the Gaussian filter (3, 5, 7, 9, 11, or 13).");
+/// Correlation parameter and properties
 const Correlation_Parameter obstruction_buffer_size_param(obstruction_buffer_size,
   SIZE_PARAM,
   true,
@@ -580,7 +605,7 @@ const Correlation_Parameter pixel_integration_order_param(pixel_integration_orde
 
 /// Correlation parameter and properties
 const Correlation_Parameter obstruction_skin_factor_param(obstruction_skin_factor,
-  REAL_PARAM,
+  SCALAR_PARAM,
   true,
   "Stretches the obstruction subsets to make them larger (factor > 1.0) or smaller (factor < 1.0) than they actually are.");
 
@@ -594,6 +619,8 @@ const Correlation_Parameter omit_output_row_id_param(omit_output_row_id,
   BOOL_PARAM,
   true,
   "True if the row id should be omitted from the output (column zero is skipped)");
+
+
 /// Correlation parameter and properties
 const Correlation_Parameter output_spec_param(output_spec,
   STRING_PARAM,
@@ -656,7 +683,7 @@ const Correlation_Parameter enable_shear_strain_param(enable_shear_strain,
   "Enables the shear strain shape function defree of freedom (gamma_xy = gamma_yx)");
 /// Correlation parameter and properties
 const Correlation_Parameter search_window_size_factor_param(search_window_size_factor,
-  REAL_PARAM,
+  SCALAR_PARAM,
   true,
   "Determines how large the search window is compared to a subset");
 /// Correlation parameter and properties
@@ -671,36 +698,36 @@ const Correlation_Parameter max_solver_iterations_fast_param(max_solver_iteratio
 /// Correlation parameter and properties
 const Correlation_Parameter max_solver_iterations_robust_param(max_solver_iterations_robust,SIZE_PARAM);
 /// Correlation parameter and properties
-const Correlation_Parameter fast_solver_tolerance_param(fast_solver_tolerance,REAL_PARAM);
+const Correlation_Parameter fast_solver_tolerance_param(fast_solver_tolerance,SCALAR_PARAM);
 /// Correlation parameter and properties
-const Correlation_Parameter robust_solver_tolerance_param(robust_solver_tolerance,REAL_PARAM);
+const Correlation_Parameter robust_solver_tolerance_param(robust_solver_tolerance,SCALAR_PARAM);
 /// Correlation parameter and properties
-const Correlation_Parameter skip_solve_gamma_threshold_param(skip_solve_gamma_threshold,REAL_PARAM,true,
+const Correlation_Parameter skip_solve_gamma_threshold_param(skip_solve_gamma_threshold,SCALAR_PARAM,true,
   "If the gamma evaluation for the initial deformation guess is below this value, the solve is skipped because"
   " the match is already good enough");
 /// Correlation parameter and properties
 const Correlation_Parameter pixel_size_in_mm_param(pixel_size_in_mm,
-  REAL_PARAM,
+  SCALAR_PARAM,
   true,
   "The spatial size of one pixel (1 pixel is equivalent to ? mm");
 /// Correlation parameter and properties
 const Correlation_Parameter disp_jump_tol_param(disp_jump_tol,
-  REAL_PARAM,
+  SCALAR_PARAM,
   true,
   "Displacement solutions greater than this from the previous frame will be rejected as unsuccessful");
 /// Correlation parameter and properties
 const Correlation_Parameter theta_jump_tol_param(theta_jump_tol,
-  REAL_PARAM,
+  SCALAR_PARAM,
   true,
   "Rotation solutions greater than this from the previous frame will be rejected as unsuccessful");
 /// Correlation parameter and properties
 const Correlation_Parameter robust_delta_disp_param(robust_delta_disp,
-  REAL_PARAM,
+  SCALAR_PARAM,
   true,
   "Variation on initial displacement guess used to construct simplex");
 /// Correlation parameter and properties
 const Correlation_Parameter robust_delta_theta_param(robust_delta_theta,
-  REAL_PARAM,
+  SCALAR_PARAM,
   true,
   "Variation on initial rotation guess used to construct simplex");
 /// Correlation parameter and properties
@@ -789,7 +816,7 @@ const Correlation_Parameter compute_image_gradients_param(compute_image_gradient
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 43;
+const int_t num_valid_correlation_params = 48;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -834,7 +861,12 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   use_integrated_dic_param,
   use_hvm_stabilization_param,
   use_objective_regularization_param,
-  pixel_integration_order_param
+  pixel_integration_order_param,
+  image_grad_use_hierarchical_parallelism_param,
+  image_grad_team_size_param,
+  gauss_filter_use_hierarchical_parallelism_param,
+  gauss_filter_team_size_param,
+  gauss_filter_mask_size_param
 };
 
 // TODO don't forget to update this when adding a new one

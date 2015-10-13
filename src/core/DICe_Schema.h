@@ -215,7 +215,7 @@ public:
   }
 
   /// Returns the robust solver convergence tolerance
-  const int_t robust_solver_tolerance()const{
+  const scalar_t robust_solver_tolerance()const{
     return robust_solver_tolerance_;
   }
 

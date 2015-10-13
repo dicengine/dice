@@ -1360,7 +1360,7 @@ void generate_template_input_files(const std::string & file_prefix){
         write_xml_comment(paramsFile,possibleValues[j]);
       }
     }
-    else if(valid_correlation_params[i].type_==REAL_PARAM){
+    else if(valid_correlation_params[i].type_==SCALAR_PARAM){
       write_xml_comment(paramsFile,"");
       write_xml_real_param(paramsFile,valid_correlation_params[i].name_);
       write_xml_comment(paramsFile,valid_correlation_params[i].desc_);

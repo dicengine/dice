@@ -383,6 +383,7 @@ Objective_ZNSSD::computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & defo
   params->set(DICe::max_iterations,  this->schema_->max_solver_iterations_robust());
   params->set(DICe::tolerance, this->schema_->robust_solver_tolerance());
   DICe::Simplex simplex(this,params);
+
   Teuchos::RCP<std::vector<scalar_t> > deltas = Teuchos::rcp(new std::vector<scalar_t>(num_dofs(),0.0));
   for(int_t i=0;i<num_dofs();++i){
     if(i<2) (*deltas)[i] = this->schema_->robust_delta_disp();

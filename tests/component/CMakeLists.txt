@@ -42,3 +42,9 @@ target_link_libraries(DICe_TestTensor ${DICE_LIBRARIES} dicecore diceutils dicef
 
 add_executable(DICe_TestCorrelateSquare DICe_TestCorrelateSquare.cpp)
 target_link_libraries(DICe_TestCorrelateSquare ${DICE_LIBRARIES} dicecore diceutils dicefft)
+
+add_executable(DICe_TestCorrelateConformal DICe_TestCorrelateConformal.cpp)
+target_link_libraries(DICe_TestCorrelateConformal ${DICE_LIBRARIES} dicecore diceutils dicefft)
+
+add_executable(DICe_TestCorrelateParams DICe_TestCorrelateParams.cpp)
+target_link_libraries(DICe_TestCorrelateParams ${DICE_LIBRARIES} dicecore diceutils dicefft)
