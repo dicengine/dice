@@ -137,6 +137,31 @@ public:
     return y_.h_view(pixel_index);
   }
 
+  /// gradient x accessor
+  /// \param pixel_index the pixel id
+  /// note there is no bounds checking
+  const scalar_t& grad_x(const int_t pixel_index)const{
+    return grad_x_.h_view(pixel_index);
+  }
+
+  /// gradient y accessor
+  /// \param pixel_index the pixel id
+  /// note there is no bounds checking
+  const scalar_t& grad_y(const int_t pixel_index)const{
+    return grad_y_.h_view(pixel_index);
+  }
+
+  /// returns true if the gradients have been computed
+  bool has_gradients()const{
+    return has_gradients_;
+  }
+
+  /// returns a copy of the gradient x values as an array
+  Teuchos::ArrayRCP<scalar_t> grad_x_array()const;
+
+  /// returns a copy of the gradient x values as an array
+  Teuchos::ArrayRCP<scalar_t> grad_y_array()const;
+
   /// ref intensities accessor
   /// \param pixel_index the pixel id
   const intensity_t& ref_intensities(const int_t pixel_index)const{
@@ -205,6 +230,10 @@ private:
   intensity_dual_view_1d ref_intensities_;
   /// pixel container
   intensity_dual_view_1d def_intensities_;
+  /// container for grad_x
+  scalar_dual_view_1d grad_x_;
+  /// container for grad_y
+  scalar_dual_view_1d grad_y_;
   /// pixels can be deactivated by obstructions
   bool_dual_view_1d is_active_;
   /// centroid location x
@@ -215,6 +244,8 @@ private:
   pixel_coord_dual_view_1d x_;
   /// initial x position of the pixels in the reference image
   pixel_coord_dual_view_1d y_;
+  /// true if the gradient values are populated
+  bool has_gradients_;
 
 };
 

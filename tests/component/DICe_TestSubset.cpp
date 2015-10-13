@@ -280,7 +280,54 @@ int main(int argc, char *argv[]) {
   }
   *outStream << "Conformal subset intensity values have been checked." << std::endl;
 
-
+  // test the subset gradient methods:
+  *outStream << "creating an image from an array" << std::endl;
+  const int_t array_w = 30;
+  const int_t array_h = 20;
+  intensity_t * intensities = new intensity_t[array_w*array_h];
+  scalar_t * gx = new scalar_t[array_w*array_h];
+  scalar_t * gy = new scalar_t[array_w*array_h];
+  // populate the intensities with a sin/cos function
+  for(int_t y=0;y<array_h;++y){
+    for(int_t x=0;x<array_w;++x){
+      intensities[y*array_w+x] = 255*std::cos(x/(4*DICE_PI))*std::sin(y/(4*DICE_PI));
+      gx[y*array_w+x] = -255*(1/(4*DICE_PI))*std::sin(x/(4*DICE_PI))*std::sin(y/(4*DICE_PI));
+      gy[y*array_w+x] = 255*(1/(4*DICE_PI))*std::cos(x/(4*DICE_PI))*std::cos(y/(4*DICE_PI));
+    }
+  }
+  Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
+  params->set(DICe::compute_image_gradients,true);
+  Teuchos::RCP<Image> array_img = Teuchos::rcp(new Image(intensities,array_w,array_h,params));
+  *outStream << "creating a conformal subset" << std::endl;
+  std::vector<int_t> shape_3_x(4);
+  std::vector<int_t> shape_3_y(4);
+  shape_3_x[0] = 0;                    shape_3_y[0] = 0;
+  shape_3_x[1] = array_img->width()-1; shape_3_y[1] = 0;
+  shape_3_x[2] = array_img->width()-1; shape_3_y[2] = array_img->height()-1;
+  shape_3_x[3] = 0;                    shape_3_y[3] = array_img->height()-1;
+  Teuchos::RCP<DICe::Polygon> poly3 = Teuchos::rcp(new DICe::Polygon(shape_3_x,shape_3_y));
+  DICe::multi_shape boundary2;
+  boundary2.push_back(poly3);
+  DICe::Conformal_Area_Def subset_def2(boundary2);
+  Subset subset_grad(array_img->width()/2,array_img->height()/2,subset_def2);
+  *outStream << "subset created" << std::endl;
+  // initialize the subset with the image above
+  subset_grad.initialize(array_img,REF_INTENSITIES);
+  *outStream << "testing the subset gradient values" << std::endl;
+  bool grad_error = false;
+  for(int_t i=0;i<subset_grad.num_pixels();++i){
+    //std::cout << "subset " << subset_grad.grad_x(i) << " " << subset_grad.grad_y(i) <<
+    //    " image " << array_img->grad_x(subset_grad.x(i),subset_grad.y(i)) << " " <<
+    //array_img->grad_y(subset_grad.x(i),subset_grad.y(i)) << std::endl;
+    if(subset_grad.grad_x(i)!=array_img->grad_x(subset_grad.x(i),subset_grad.y(i))||
+        subset_grad.grad_y(i)!=array_img->grad_y(subset_grad.x(i),subset_grad.y(i)))
+      grad_error = true;
+  }
+  if(grad_error){
+    *outStream << "Error, the gradient values are not correct" << std::endl;
+    errorFlag++;
+  }
+  *outStream << "gradient values have been tested" << std::endl;
 
   *outStream << "--- End test ---" << std::endl;
 

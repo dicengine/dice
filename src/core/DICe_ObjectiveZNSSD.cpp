@@ -329,8 +329,8 @@ const Status_Flag
 Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
   int_t & num_iterations){
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method has not been implemented.");
-//  assert(deformation->size()==DICE_DEFORMATION_SIZE);
-//
+  assert(deformation->size()==DICE_DEFORMATION_SIZE);
+
 //  // catch the case where the initial gamma is good enough:
 //  const scalar_t initial_gamma = gamma(deformation);
 //  if(initial_gamma < this->schema_->skip_solve_gamma_threshold()){
@@ -338,39 +338,38 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
 //    num_iterations = 0;
 //    return CORRELATION_SUCCESSFUL;
 //  }
-//
-//  int_t N = 6; // [ u_x u_y theta dudx dvdy gxy ]
-//  scalar_t solve_tol_disp = this->schema_->fast_solver_tolerance();
-//  scalar_t solve_tol_theta = this->schema_->fast_solver_tolerance();
-//  const int_t max_solve_its = this->schema_->max_solver_iterations_fast();
-//  int *IPIV = new int[N+1];
-//  int LWORK = N*N;
-//  int INFO = 0;
-//  double *WORK = new double[LWORK];
-//  double *GWORK = new double[10*N];
-//  int *IWORK = new int[LWORK];
-//  Teuchos::LAPACK<int_t,scalar_t> lapack;
-//  assert(N==6 && "  DICe ERROR: this DIC method is currently only approprate for 6 variables.");
-//
-//  const bool use_normalization = this->schema_->use_objective_normalization();
-//  DEBUG_MSG("Use Objective Normalization: " << use_normalization);
-//
+
+  int_t N = 6; // [ u_x u_y theta dudx dvdy gxy ]
+  scalar_t solve_tol_disp = this->schema_->fast_solver_tolerance();
+  scalar_t solve_tol_theta = this->schema_->fast_solver_tolerance();
+  const int_t max_solve_its = this->schema_->max_solver_iterations_fast();
+  int *IPIV = new int[N+1];
+  int LWORK = N*N;
+  int INFO = 0;
+  double *WORK = new double[LWORK];
+  double *GWORK = new double[10*N];
+  int *IWORK = new int[LWORK];
+  Teuchos::LAPACK<int_t,scalar_t> lapack;
+  assert(N==6 && "  DICe ERROR: this DIC method is currently only approprate for 6 variables.");
+
 //  const bool update_pixels_each_it = this->schema_->use_subset_evolution() && this->schema_->update_obstructed_pixels_each_iteration();
 //  DEBUG_MSG("Update pixels each iteration: " << update_pixels_each_it);
+
+  // Initialize storage:
+  Teuchos::SerialDenseMatrix<int_t,scalar_t> H(N,N, true);
+  Teuchos::ArrayRCP<scalar_t> q(N,0.0);
+  Teuchos::RCP<std::vector<scalar_t> > def_old    = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0)); // save off the previous value to test for convergence
+  Teuchos::RCP<std::vector<scalar_t> > def_update = Teuchos::rcp(new std::vector<scalar_t>(N,0.0)); // save off the previous value to test for convergence
 //
-//  // Initialize storage:
-//  Teuchos::SerialDenseMatrix<int_t,scalar_t> H(N,N, true);
-//  Teuchos::ArrayRCP<scalar_t> q(N,0.0);
-//  Teuchos::RCP<std::vector<scalar_t> > def_old    = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0)); // save off the previous value to test for convergence
-//  Teuchos::RCP<std::vector<scalar_t> > def_update = Teuchos::rcp(new std::vector<scalar_t>(N,0.0)); // save off the previous value to test for convergence
-//  // need the gradient of the deformed image
-//  if(!ref_subset_->src_image()->has_gradients()){
+//  // need the gradient of the ref image
+//  if(!subset_->src_image()->has_gradients()){
 //    ref_subset_->src_image()->compute_gradients();
 //    ref_subset_->copy_gradients_from_src_image();
 //  }
 //  assert(ref_subset_->src_image()->has_gradients());
 //  Teuchos::ArrayRCP<scalar_t> gradGx = ref_subset_->gradient_x();
 //  Teuchos::ArrayRCP<scalar_t> gradGy = ref_subset_->gradient_y();
+//  //const scalar_t meanF = use_normalization ? ref_subset_->mean_intensity() : 0.0;
 //  const scalar_t meanF = use_normalization ? ref_subset_->mean_intensity() : 0.0;
 //  //    // previous solutions if they exist:
 //  const scalar_t prev_u = (*deformation)[DISPLACEMENT_X]; //local_field_value_nm1(DICe::DISPLACEMENT_X); //; // //ref_subset_->previous_disp_x()->empty()? 0.0 : ref_subset_->previous_disp_x()->end()->second;
@@ -633,7 +632,6 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
 //    return MAX_ITERATIONS_REACHED;
 //  }
 //  else return CORRELATION_SUCCESSFUL;
-  return CORRELATION_SUCCESSFUL;
 }
 
 }// End DICe Namespace

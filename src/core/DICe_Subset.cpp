@@ -53,7 +53,8 @@ Subset::Subset(int_t cx,
   Teuchos::ArrayRCP<int_t> y):
   num_pixels_(x.size()),
   cx_(cx),
-  cy_(cy)
+  cy_(cy),
+  has_gradients_(false)
 {
   assert(num_pixels_>0);
   assert(x.size()==y.size());
@@ -77,6 +78,8 @@ Subset::Subset(int_t cx,
   // the values will get populated later
   ref_intensities_ = intensity_dual_view_1d("ref_intensities",num_pixels_);
   def_intensities_ = intensity_dual_view_1d("def_intensities",num_pixels_);
+  grad_x_ = scalar_dual_view_1d("grad_x",num_pixels_);
+  grad_y_ = scalar_dual_view_1d("grad_x",num_pixels_);
   is_active_ = bool_dual_view_1d("is_active",num_pixels_);
   reset_is_active();
 }
@@ -86,7 +89,8 @@ Subset::Subset(const int_t cx,
   const int_t width,
   const int_t height):
  cx_(cx),
- cy_(cy)
+ cy_(cy),
+ has_gradients_(false)
 {
   assert(width>0);
   assert(height>0);
@@ -119,6 +123,8 @@ Subset::Subset(const int_t cx,
   // the values will get populated later
   ref_intensities_ = intensity_dual_view_1d("ref_intensities",num_pixels_);
   def_intensities_ = intensity_dual_view_1d("def_intensities",num_pixels_);
+  grad_x_ = scalar_dual_view_1d("grad_x",num_pixels_);
+  grad_y_ = scalar_dual_view_1d("grad_x",num_pixels_);
   is_active_ = bool_dual_view_1d("is_active",num_pixels_);
   reset_is_active();
 }
@@ -127,7 +133,8 @@ Subset::Subset(const int_t cx,
   const int_t cy,
   const Conformal_Area_Def & subset_def):
   cx_(cx),
-  cy_(cy)
+  cy_(cy),
+  has_gradients_(false)
 {
   assert(subset_def.has_boundary());
   std::set<std::pair<int_t,int_t> > coords;
@@ -158,6 +165,8 @@ Subset::Subset(const int_t cx,
   // the values will get populated later
   ref_intensities_ = intensity_dual_view_1d("ref_intensities",num_pixels_);
   def_intensities_ = intensity_dual_view_1d("def_intensities",num_pixels_);
+  grad_x_ = scalar_dual_view_1d("grad_x",num_pixels_);
+  grad_y_ = scalar_dual_view_1d("grad_x",num_pixels_);
   is_active_ = bool_dual_view_1d("is_active",num_pixels_);
   reset_is_active();
 
@@ -327,6 +336,22 @@ Subset::gamma(){
   return gamma;
 }
 
+Teuchos::ArrayRCP<scalar_t>
+Subset::grad_x_array()const{
+  Teuchos::ArrayRCP<scalar_t> array(num_pixels_,0.0);
+  for(int_t i=0;i<num_pixels_;++i)
+    array[i] = grad_x_.h_view.ptr_on_device()[i];
+  return array;
+}
+
+Teuchos::ArrayRCP<scalar_t>
+Subset::grad_y_array()const{
+  Teuchos::ArrayRCP<scalar_t> array(num_pixels_,0.0);
+  for(int_t i=0;i<num_pixels_;++i)
+    array[i] = grad_y_.h_view.ptr_on_device()[i];
+  return array;
+}
+
 void
 Subset::initialize(Teuchos::RCP<Image> image,
   const Subset_View_Target target,
@@ -351,6 +376,19 @@ Subset::initialize(Teuchos::RCP<Image> image,
   if(target==REF_INTENSITIES){
     ref_intensities_.modify<device_space>();
     ref_intensities_.sync<host_space>();
+    if(image->has_gradients()){
+      // TODO thread this:
+      // copy over the image gradients:
+      for(int_t px=0;px<num_pixels_;++px){
+        grad_x_.h_view(px) = image->grad_x().h_view(y_.h_view(px),x_.h_view(px));
+        grad_y_.h_view(px) = image->grad_y().h_view(y_.h_view(px),x_.h_view(px));
+      }
+      has_gradients_ = true;
+    }
+    grad_x_.modify<host_space>();
+    grad_x_.sync<device_space>();
+    grad_y_.modify<host_space>();
+    grad_y_.sync<device_space>();
   }
   else{
     def_intensities_.modify<device_space>();
