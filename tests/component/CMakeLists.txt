@@ -33,3 +33,6 @@ target_link_libraries(DICe_TestObjective ${DICE_LIBRARIES} dicecore diceutils di
 
 add_executable(DICe_TestSchema DICe_TestSchema.cpp)
 target_link_libraries(DICe_TestSchema ${DICE_LIBRARIES} dicecore diceutils dicefft)
+
+add_executable(DICe_TestParamUtils DICe_TestParamUtils.cpp)
+target_link_libraries(DICe_TestParamUtils ${DICE_LIBRARIES} dicecore diceutils dicefft)
