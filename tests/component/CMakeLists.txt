@@ -36,3 +36,6 @@ target_link_libraries(DICe_TestSchema ${DICE_LIBRARIES} dicecore diceutils dicef
 
 add_executable(DICe_TestParamUtils DICe_TestParamUtils.cpp)
 target_link_libraries(DICe_TestParamUtils ${DICE_LIBRARIES} dicecore diceutils dicefft)
+
+add_executable(DICe_TestTensor DICe_TestTensor.cpp)
+target_link_libraries(DICe_TestTensor ${DICE_LIBRARIES} dicecore diceutils dicefft)

@@ -7,9 +7,9 @@ SET(DICE_SOURCES
   DICe_Simplex.cpp
   DICe_Schema.cpp
   DICe_ObjectiveZNSSD.cpp
-  DICe_ParameterUtilities.cpp
   DICe_Parser.cpp
   DICe_PostProcessor.cpp
+  DICe_ParameterUtilities.cpp
   )
 
 SET(DICE_HEADERS
@@ -26,6 +26,7 @@ SET(DICE_HEADERS
   DICe_ParameterUtilities.h
   DICe_Parser.h
   DICe_PostProcessor.h
+  DICe_Utilities.h
   )
 
 include_directories (
