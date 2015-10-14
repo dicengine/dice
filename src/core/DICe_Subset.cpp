@@ -411,8 +411,9 @@ Subset_Init_Functor::operator()(const Map_Bilinear_Tag&,
   // mapped location
   scalar_t mapped_x = cos_t_*Dx - sin_t_*Dy + u_ + cx_;
   scalar_t mapped_y = sin_t_*Dx + cos_t_*Dy + v_ + cy_;
+
   // check that the mapped location is inside the image...
-  if(mapped_x>=0&&mapped_x<image_w_-2&&mapped_y>=0&&mapped_y<image_h_-2){
+  if(mapped_x>=0&&mapped_x<image_w_-1.5&&mapped_y>=0&&mapped_y<image_h_-1.5){
     int_t x1 = (int_t)mapped_x;
     int_t x2 = x1+1;
     int_t y1 = (int_t)mapped_y;
@@ -445,64 +446,67 @@ Subset_Init_Functor::operator()(const Map_Keys_Tag&,
   // mapped location
   scalar_t mapped_x = cos_t_*Dx - sin_t_*Dy + u_ + cx_;
   scalar_t mapped_y = sin_t_*Dx + cos_t_*Dy + v_ + cy_;
+  // determine the current pixel the coordinates fall in:
+  int_t px = (int_t)mapped_x;
+  if(mapped_x - px >= 0.5) px++;
+  int_t py = (int_t)mapped_y;
+  if(mapped_y - py >= 0.5) py++;
+
   // check that the mapped location is inside the image...
-  if(mapped_x>=3&&mapped_x<image_w_-4&&mapped_y>=3&&mapped_y<image_h_-4){
-
-    // determine the current pixel the coordinates fall in:
-    int_t px = (int_t)mapped_x;
-    if(mapped_x - px >= 0.5) px++;
-    int_t py = (int_t)mapped_y;
-    if(mapped_y - py >= 0.5) py++;
-
-    // check if the location is close enough to the pixel location
-    // to not need interpolation
-    if((mapped_x - px)<tol_&&(mapped_y-py<tol_)){
-      subset_intensities_(pixel_index) = image_intensities_(py,px);
-    }
-    else{
-      intensity_t intensity_value = 0.0;
-      // convolve all the pixels within + and - pixels of the point in question
-      scalar_t dx=0.0, dy=0.0;
-      scalar_t dx2=0.0, dx3=0.0;
-      scalar_t dy2=0.0, dy3=0.0;
-      scalar_t f0x=0.0, f0y=0.0;
-      for(int_t y=py-3;y<=py+3;++y){
-        dy = std::abs(mapped_y - y);
-        dy2=dy*dy;
-        dy3=dy2*dy;
-        f0y = 0.0;
-        if(dy <= 1.0){
-          f0y = 4.0/3.0*dy3 - 7.0/3.0*dy2 + 1.0;
-        }
-        else if(dy <= 2.0){
-          f0y = -7.0/12.0*dy3 + 3.0*dy2 - 59.0/12.0*dy + 15.0/6.0;
-        }
-        else if(dy <= 3.0){
-          f0y = 1.0/12.0*dy3 - 2.0/3.0*dy2 + 21.0/12.0*dy - 3.0/2.0;
-        }
-        for(int_t x=px-3;x<=px+3;++x){
-          // compute the f's of x and y
-          dx = std::abs(mapped_x - x);
-          dx2=dx*dx;
-          dx3=dx2*dx;
-          f0x = 0.0;
-          if(dx <= 1.0){
-            f0x = 4.0/3.0*dx3 - 7.0/3.0*dx2 + 1.0;
-          }
-          else if(dx <= 2.0){
-            f0x = -7.0/12.0*dx3 + 3.0*dx2 - 59.0/12.0*dx + 15.0/6.0;
-          }
-          else if(dx <= 3.0){
-            f0x = 1.0/12.0*dx3 - 2.0/3.0*dx2 + 21.0/12.0*dx - 3.0/2.0;
-          }
-          intensity_value += image_intensities_(y,x)*f0x*f0y;
-        }
+  if(mapped_x>2.5&&mapped_x<image_w_-3.5&&mapped_y>2.5&&mapped_y<image_h_-3.5){
+    intensity_t intensity_value = 0.0;
+    // convolve all the pixels within + and - pixels of the point in question
+    scalar_t dx=0.0, dy=0.0;
+    scalar_t dx2=0.0, dx3=0.0;
+    scalar_t dy2=0.0, dy3=0.0;
+    scalar_t f0x=0.0, f0y=0.0;
+    for(int_t y=py-3;y<=py+3;++y){
+      dy = std::abs(mapped_y - y);
+      dy2=dy*dy;
+      dy3=dy2*dy;
+      f0y = 0.0;
+      if(dy <= 1.0){
+        f0y = 4.0/3.0*dy3 - 7.0/3.0*dy2 + 1.0;
       }
-      subset_intensities_(pixel_index) = intensity_value;
+      else if(dy <= 2.0){
+        f0y = -7.0/12.0*dy3 + 3.0*dy2 - 59.0/12.0*dy + 15.0/6.0;
+      }
+      else if(dy <= 3.0){
+        f0y = 1.0/12.0*dy3 - 2.0/3.0*dy2 + 21.0/12.0*dy - 3.0/2.0;
+      }
+      for(int_t x=px-3;x<=px+3;++x){
+        // compute the f's of x and y
+        dx = std::abs(mapped_x - x);
+        dx2=dx*dx;
+        dx3=dx2*dx;
+        f0x = 0.0;
+        if(dx <= 1.0){
+          f0x = 4.0/3.0*dx3 - 7.0/3.0*dx2 + 1.0;
+        }
+        else if(dx <= 2.0){
+          f0x = -7.0/12.0*dx3 + 3.0*dx2 - 59.0/12.0*dx + 15.0/6.0;
+        }
+        else if(dx <= 3.0){
+          f0x = 1.0/12.0*dx3 - 2.0/3.0*dx2 + 21.0/12.0*dx - 3.0/2.0;
+        }
+        intensity_value += image_intensities_(y,x)*f0x*f0y;
+      }
     }
+    subset_intensities_(pixel_index) = intensity_value;
+  }
+  // bilinear as a fall back near the edges
+  else if(mapped_x>=0&&mapped_x<image_w_-1.5&&mapped_y>=0&&mapped_y<image_h_-1.5){
+    int_t x1 = (int_t)mapped_x;
+    int_t x2 = x1+1;
+    int_t y1 = (int_t)mapped_y;
+    int_t y2  = y1+1;
+    subset_intensities_(pixel_index) =
+        (image_intensities_(y1,x1)*(x2-mapped_x)*(y2-mapped_y)
+         +image_intensities_(y1,x2)*(mapped_x-x1)*(y2-mapped_y)
+         +image_intensities_(y2,x2)*(mapped_x-x1)*(mapped_y-y1)
+         +image_intensities_(y2,x1)*(x2-mapped_x)*(mapped_y-y1));
   }
   else{
-    // out of bounds pixels are black
     subset_intensities_(pixel_index) = 0;
   }
 }
