@@ -22,7 +22,7 @@ SET(DICE_HEADERS
   DICe_Objective.h
   DICe_ObjectiveZNSSD.h
   DICe_Schema.h
-  DICe_Multifield.h
+  DICe_MultiField.h
   DICe_ParameterUtilities.h
   DICe_Parser.h
   DICe_PostProcessor.h
