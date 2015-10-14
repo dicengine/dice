@@ -406,14 +406,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
 
   TEUCHOS_TEST_FOR_EXCEPTION(!subset_->has_gradients(),std::runtime_error,"Error, image gradients have not been computed but are needed here.");
 
-  // TODO
-//  // catch the case where the initial gamma is good enough:
-//  const scalar_t initial_gamma = gamma(deformation);
-//  if(initial_gamma < this->schema_->skip_solve_gamma_threshold()){
-//    DEBUG_MSG("Returning from computeUpdateFast() because initial guess is good enough (gamma < " << this->schema_->skip_solve_gamma_threshold() << ")");
-//    num_iterations = 0;
-//    return CORRELATION_SUCCESSFUL;
-//  }
+  // TODO catch the case where the initial gamma is good enough (possibly do this at the image level, not subset?):
 
   // using type double here a lot because LAPACK doesn't support float.
   int_t N = 6; // [ u_x u_y theta dudx dvdy gxy ]
@@ -437,6 +430,8 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
 
   Teuchos::ArrayRCP<scalar_t> gradGx = subset_->grad_x_array();
   Teuchos::ArrayRCP<scalar_t> gradGy = subset_->grad_y_array();
+  const scalar_t cx = subset_->centroid_x();
+  const scalar_t cy = subset_->centroid_y();
   const scalar_t meanF = subset_->mean(REF_INTENSITIES);
 
   // SOLVER ---------------------------------------------------------
@@ -474,8 +469,8 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
     for(int_t index=0;index<subset_->num_pixels();++index){
       // TODO TODO TODO check for is deactivated this step
       //if(ref_subset_->is_deactivated_this_step(index)||!ref_subset_->is_active(index)) continue;
-      dx = subset_->x(index);
-      dy = subset_->y(index);
+      dx = subset_->x(index) - cx;
+      dy = subset_->y(index) - cy;
       Dx = (1.0+dudx)*(dx) + gxy*(dy);
       Dy = (1.0+dvdy)*(dy) + gxy*(dx);
       GmF = (subset_->def_intensities(index) - meanG) - (subset_->ref_intensities(index) - meanF);

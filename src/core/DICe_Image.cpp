@@ -363,8 +363,10 @@ Transform_Functor::operator()(const int_t pixel_index) const{
   // recall that cx_ and cy_ are in the transformed coordinates
   const scalar_t dx = x - cx_;
   const scalar_t dy = y - cy_;
-  const scalar_t mapped_x = cost_*dx - sint_*dy - u_ + cx_;
-  const scalar_t mapped_y = sint_*dx + cost_*dy - v_ + cy_;
+  const scalar_t Dx = (1.0-ex_)*dx - g_*dy;
+  const scalar_t Dy = (1.0-ey_)*dy - g_*dx;
+  const scalar_t mapped_x = cost_*Dx - sint_*Dy - u_ + cx_;
+  const scalar_t mapped_y = sint_*Dx + cost_*Dy - v_ + cy_;
   // determine the current pixel the coordinates fall in:
   int_t px = (int_t)mapped_x;
   if(mapped_x - px >= 0.5) px++;
@@ -633,12 +635,10 @@ Image::create_mask(const Conformal_Area_Def & area_def,
 Teuchos::RCP<Image>
 Image::apply_transformation(const int_t cx,
   const int_t cy,
-  const scalar_t & u,
-  const scalar_t & v,
-  const scalar_t & theta) const{
+  Teuchos::RCP<const std::vector<scalar_t> > deformation) const{
   Teuchos::RCP<Image> result = Teuchos::rcp(new Image(width_,height_));
   Transform_Functor trans_functor(intensities_.d_view,result->intensities().d_view,width_,height_,
-    cx,cy,u,v,theta);
+    cx,cy,deformation);
   Kokkos::parallel_for(width_*height_,trans_functor);
   // sync up the new image
   result->intensities().modify<device_space>();

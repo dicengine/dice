@@ -248,7 +248,11 @@ int main(int argc, char *argv[]) {
   const scalar_t u = 25.0;
   const scalar_t v = -15.2;
   const scalar_t theta = 22.8*DICE_PI/180.0;
-  Teuchos::RCP<Image> trans_baboon = baboon.apply_transformation(cx,cy,u,v,theta);
+  Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+  (*def)[DISPLACEMENT_X] = u;
+  (*def)[DISPLACEMENT_Y] = v;
+  (*def)[ROTATION_Z] = theta;
+  Teuchos::RCP<Image> trans_baboon = baboon.apply_transformation(cx,cy,def);
   //trans_baboon->write_rawi("baboon_trans.rawi");
   //trans_baboon->write_tiff("baboon_trans.tif");
   Teuchos::RCP<Image> trans_baboon_exact = Teuchos::rcp(new Image("./images/baboon_trans.rawi"));

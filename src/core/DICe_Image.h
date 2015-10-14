@@ -295,9 +295,7 @@ public:
   /// \param theta angle of rotation
   Teuchos::RCP<Image> apply_transformation(const int_t cx,
     const int_t cy,
-    const scalar_t & u,
-    const scalar_t & v,
-    const scalar_t & theta) const;
+    Teuchos::RCP<const std::vector<scalar_t> > deformation) const;
 
   /// compute the image gradients
   void compute_gradients(const bool use_hierarchical_parallelism=false,
@@ -504,6 +502,12 @@ struct Transform_Functor{
   scalar_t v_;
   /// rotation angle
   scalar_t t_;
+  /// normal strain x
+  scalar_t ex_;
+  /// normal strain y
+  scalar_t ey_;
+  /// shear strain xy
+  scalar_t g_;
   /// cosine of theta
   scalar_t cost_;
   /// sin of theta
@@ -515,24 +519,26 @@ struct Transform_Functor{
   /// \param intensities_to pointer to the result intensity array
   /// \param cx centroid in x
   /// \param cy centroid in y
+  /// \param def the deformation map parameters
   Transform_Functor(intensity_device_view_2d intensities_from,
     intensity_device_view_2d intensities_to,
     const int_t width,
     const int_t height,
     const int_t cx,
     const int_t cy,
-    const scalar_t & u,
-    const scalar_t & v,
-    const scalar_t & theta):
+    Teuchos::RCP<const std::vector<scalar_t> > def):
     intensities_from_(intensities_from),
     intensities_to_(intensities_to),
-    cx_(cx + u),
-    cy_(cy + v),
+    cx_(cx + (*def)[DISPLACEMENT_X]),
+    cy_(cy + (*def)[DISPLACEMENT_Y]),
     width_(width),
     height_(height),
-    u_(u),
-    v_(v),
-    t_(theta),
+    u_((*def)[DISPLACEMENT_X]),
+    v_((*def)[DISPLACEMENT_Y]),
+    t_((*def)[ROTATION_Z]),
+    ex_((*def)[NORMAL_STRAIN_X]),
+    ey_((*def)[NORMAL_STRAIN_Y]),
+    g_((*def)[SHEAR_STRAIN_XY]),
     tol_(0.00001){
     cost_ = std::cos(t_);
     sint_ = std::sin(t_);
