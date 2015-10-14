@@ -108,9 +108,7 @@ public:
   /// \param cx x-coordiante of the origin of the deformation mapping
   /// \param cy y-coordinate of the origin of the deformation mapping
   virtual void draw(Teuchos::RCP<Image> & layer_0_image,
-    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
-    const int_t cx=0,
-    const int_t cy=0)const{
+    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null)const{
     assert(false && "  DICe ERROR: Base class implementation of this method should not be called.");
   }
 };
@@ -155,9 +153,7 @@ public:
 
   /// See base class documentation
   virtual void draw(Teuchos::RCP<Image> & layer_0_image,
-    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
-    const int_t cx=0,
-    const int_t cy=0)const;
+    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null)const;
 
 private:
   /// vector storing the integer vertex global x-coordinates
@@ -184,7 +180,7 @@ private:
 /// \param x2 run of vector 2
 /// \param y2 rise of vector 2
 DICE_LIB_DLL_EXPORT
-const scalar_t angle_2d(const scalar_t & x1,
+scalar_t angle_2d(const scalar_t & x1,
   const scalar_t & y1,
   const scalar_t & x2,
   const scalar_t & y2);
@@ -351,17 +347,17 @@ public:
   }
 
   /// Returns true if the boundary has been defined (should be true for a valid Conformal_Area_Def)
-  const bool has_boundary()const{
+  bool has_boundary()const{
     return has_boundary_;
   }
 
   /// Returns true if the Conformal_Area_Def has an internal area initially inactive
-  const bool has_excluded_area()const{
+  bool has_excluded_area()const{
     return has_excluded_area_;
   }
 
   /// Returns true if the Conformal_Area_Def has obstructed areas defined
-  const bool has_obstructed_area()const{
+  bool has_obstructed_area()const{
     return has_obstructed_area_;
   }
 

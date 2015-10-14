@@ -107,39 +107,39 @@ public:
 
   /// \brief Correlation criteria
   /// \param deformation The deformation values for which to evaluate the correlation. These values define the mapping.
-  virtual const scalar_t gamma( Teuchos::RCP<std::vector<scalar_t> > & deformation) const = 0;
+  virtual scalar_t gamma( Teuchos::RCP<std::vector<scalar_t> > & deformation) const = 0;
 
   /// \brief Uncertainty measure for solution
   /// \param deformation The deformation map parameters for the current guess
-  virtual const scalar_t sigma( Teuchos::RCP<std::vector<scalar_t> > & deformation) const = 0;
+  virtual scalar_t sigma( Teuchos::RCP<std::vector<scalar_t> > & deformation) const = 0;
 
   /// \brief Gradient based optimization algorithm
   /// \param deformation [out] The deformation map parameters taken as input as the initial guess and returned as the converged solution
   /// \param num_iterations [out] The number of interations a particular frame took to execute
-  virtual const Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  virtual Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     int_t & num_iterations) = 0;
 
   /// \brief Simplex based optimization algorithm
   /// \param deformation [out] The deformation map parameters taken as input as the initial guess and returned as the converged solution
   /// \param num_iterations [out] The number of interations a particular frame took to execute
-  virtual const Status_Flag computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  virtual Status_Flag computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     int_t & num_iterations,
     const scalar_t & override_tol = -1.0) = 0;
 
   /// \brief Initialize deformation values using the previous frame's solution
   /// \param deformation [out] Returned as the deformation parameters from the previous step.
   /// If the previous step was not successful (the sigma value is -1) this method returns unsuccessfully.
-  virtual const Status_Flag initialize_from_previous_frame(Teuchos::RCP<std::vector<scalar_t> > & deformation) = 0;
+  virtual Status_Flag initialize_from_previous_frame(Teuchos::RCP<std::vector<scalar_t> > & deformation) = 0;
 
   /// \brief Initialize deformation values by searching within a region of the current solution
   /// \param deformation [out] Returned as the deformation parameters found by searching the parameter space.
   /// \param precision_level The number of digits of precision to converge the solution (higher is more precise)
   /// \param return_value The resulting gamma value at the best solution
-  virtual const Status_Flag search(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  virtual Status_Flag search(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     const int_t precision_level,
     scalar_t & return_value) = 0;
 
-  virtual const Status_Flag search_step(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  virtual Status_Flag search_step(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     const int_t window_size,
     const scalar_t step_size,
     scalar_t & return_value) = 0;
@@ -147,16 +147,16 @@ public:
   /// \brief Initialize deformation values by using a neighbors current solution
   /// \param deformation [out] Returned as the deformation parameters taken from a neighboring point's current solution.
   /// If the neighbor's current frame was not successful (the sigma value is -1) this method returns unsuccessfully.
-  virtual const Status_Flag initialize_from_neighbor(Teuchos::RCP<std::vector<scalar_t> > & deformation) = 0;
+  virtual Status_Flag initialize_from_neighbor(Teuchos::RCP<std::vector<scalar_t> > & deformation) = 0;
 
   /// The number of degrees of freedom in the deformation vector
-  const int_t num_dofs()const{
+  int_t num_dofs()const{
     return dof_map_.size();
   }
 
   /// \brief Returns the map of degree of freedom field names (see dof_map_ description below)
   /// \param index The index of the degree of freedom map
-  const Field_Name dof_map(const int_t index)const{
+  Field_Name dof_map(const int_t index)const{
       assert(index<dof_map_.size());
       return dof_map_[index];
   }
@@ -179,7 +179,7 @@ public:
   }
 
   /// Returns the global id of the current correlation point
-  const int_t correlation_point_global_id()const{
+  int_t correlation_point_global_id()const{
     return correlation_point_global_id_;
   }
 

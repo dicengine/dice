@@ -84,7 +84,7 @@ Polygon::Polygon(std::vector<int_t> & coords_x,
   max_y_ = max_y;
 }
 
-const scalar_t
+scalar_t
 angle_2d(const scalar_t & x1,
   const scalar_t & y1,
   const scalar_t & x2,
@@ -107,8 +107,8 @@ Polygon::deactivate_pixels(const int_t size,
   int_t * x_coords,
   int_t * y_coords) const{
 
-  int x=0,y=0;
-  int dx1=0,dx2=0,dy1=0,dy2=0;
+  int_t x=0,y=0;
+  int_t dx1=0,dx2=0,dy1=0,dy2=0;
   scalar_t angle=0.0;
   for(int_t j=0;j<size;++j){
     x = x_coords[j];
@@ -203,7 +203,7 @@ Polygon::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation
 
   std::set<std::pair<int_t,int_t> > coordSet;
 
-  int dx1=0,dx2=0,dy1=0,dy2=0;
+  int_t dx1=0,dx2=0,dy1=0,dy2=0;
   scalar_t angle=0;
   // rip over the points in the extents of the polygon to determine which onese are inside
   for(int_t y=min_y;y<=max_y;++y){
@@ -230,9 +230,7 @@ Polygon::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation
 
 void
 Polygon::draw(Teuchos::RCP<Image> & layer_0_image,
-  Teuchos::RCP<const std::vector<scalar_t> > deformation,
-  const int_t cx,
-  const int_t cy)const{
+  Teuchos::RCP<const std::vector<scalar_t> > deformation)const{
 
   const int_t img_width = layer_0_image->width();
   const int_t img_height = layer_0_image->height();
@@ -258,9 +256,19 @@ Polygon::draw(Teuchos::RCP<Image> & layer_0_image,
   std::vector<int_t> new_vertices_x(vertex_coordinates_x_.size());
   std::vector<int_t> new_vertices_y(vertex_coordinates_y_.size());
 
-  int x=0,y=0,token_size=3;
-  int dx=0,dy=0;
-  int lx=0,ly=0;
+  // find the centroid of the shape
+  scalar_t cx = 0.0;
+  scalar_t cy = 0.0;
+  for(int_t i=0;i<=num_vertices_;++i){
+    cx += vertex_coordinates_x_[i];
+    cy += vertex_coordinates_y_[i];
+  }
+  cx /= num_vertices_;
+  cy /= num_vertices_;
+
+  int_t x=0,y=0,token_size=3;
+  int_t dx=0,dy=0;
+  int_t lx=0,ly=0;
   scalar_t X=0.0, Y=0.0;
   for(int_t i=0;i<=num_vertices_;++i){
     x = vertex_coordinates_x_[i];
@@ -294,7 +302,7 @@ Polygon::draw(Teuchos::RCP<Image> & layer_0_image,
   }
 
   // draw a line between each segment:
-  int xp=0,yp=0,numSteps=0,numPerStep=1,xs=0,ys=0,incrementX=1,incrementY=1;//,start_x=0,start_y=0;
+  int_t xp=0,yp=0,numSteps=0,numPerStep=1,xs=0,ys=0,incrementX=1,incrementY=1;//,start_x=0,start_y=0;
   scalar_t slope=0;
   for(int_t i=0;i<num_vertices_;++i){
     x = new_vertices_x[i];
@@ -362,8 +370,8 @@ Circle::deactivate_pixels(const int_t size,
   int_t * x_coords,
   int_t * y_coords) const{
 
-  int x=0,y=0;
-  int dx=0,dy=0;
+  int_t x=0,y=0;
+  int_t dx=0,dy=0;
   for(int_t j=0;j<size;++j){
     x = x_coords[j];
     y = y_coords[j];
@@ -449,7 +457,7 @@ Circle::draw(Teuchos::RCP<Image> & layer_0_image,
     perimY[i] = (int_t)Y;
   }
   // put a white plus sign at all of the perimeter points:
-  int x=0,y=0,token_size=3;
+  int_t x=0,y=0,token_size=3;
   for(int_t i=0;i<8;++i){
     x = perimX[i];
     y = perimY[i];
@@ -495,8 +503,7 @@ Rectangle::deactivate_pixels(const int_t size,
   int_t * x_coords,
   int_t * y_coords) const{
 
-  int x=0,y=0;
-  int dx=0,dy=0;
+  int_t x=0,y=0;
   for(int_t j=0;j<size;++j){
     x = x_coords[j];
     y = y_coords[j];
@@ -545,8 +552,8 @@ Rectangle::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformati
     vertex_coordinates_y[4] = origin_y_;
 
     for(int_t i=0;i<vertex_coordinates_x.size();++i){
-      int x = vertex_coordinates_x[i];
-      int y = vertex_coordinates_y[i];
+      int_t x = vertex_coordinates_x[i];
+      int_t y = vertex_coordinates_y[i];
       // iterate over all the pixels in the reference blocking subset and compute the current position
       dx = (1.0+dudx)*(x-cx) + gxy*(y-cy);
       dy = (1.0+dvdy)*(y-cy) + gxy*(x-cx);
@@ -589,11 +596,11 @@ Rectangle::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformati
       }
     } // vertex_loop
 
-    int dx1=0,dx2=0,dy1=0,dy2=0;
+    int_t dx1=0,dx2=0,dy1=0,dy2=0;
     scalar_t angle=0;
     // rip over the points in the extents of the polygon to determine which onese are inside
-    for(int y=min_y;y<=max_y;++y){
-      for(int x=min_x;x<=max_x;++x){
+    for(int_t y=min_y;y<=max_y;++y){
+      for(int_t x=min_x;x<=max_x;++x){
         // x and y are the global coordinates of the point to test
         angle=0.0;
         for (int_t i=0;i<4;i++) {
@@ -613,7 +620,6 @@ Rectangle::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformati
     }
   } // has deformation
   else{
-    scalar_t dx=0,dy=0;
     // rip over the points in the extents of the circle to determine which onese are inside
     for(int_t y=0;y<height_;++y){
       for(int_t x=0;x<=width_;++x){
@@ -658,9 +664,9 @@ void Rectangle::draw(Teuchos::RCP<Image> & layer_0_image,
   vertices_x[3] = origin_x_; vertices_y[3] = origin_y_ + height_ -1;
   vertices_x[4] = origin_x_; vertices_y[4] = origin_y_;
 
-  int x=0,y=0,token_size=3;
-  int dx=0,dy=0;
-  int lx=0,ly=0;
+  int_t x=0,y=0,token_size=3;
+  int_t dx=0,dy=0;
+  int_t lx=0,ly=0;
   scalar_t X=0.0, Y=0.0;
   for(int_t i=0;i<=num_vertices;++i){
     x = vertices_x[i];
@@ -694,7 +700,7 @@ void Rectangle::draw(Teuchos::RCP<Image> & layer_0_image,
   }
 
   // draw a line between each segment:
-  int xp=0,yp=0,numSteps=0,numPerStep=1,xs=0,ys=0,incrementX=1,incrementY=1;//,start_x=0,start_y=0;
+  int_t xp=0,yp=0,numSteps=0,numPerStep=1,xs=0,ys=0,incrementX=1,incrementY=1;//,start_x=0,start_y=0;
   scalar_t slope=0;
   for(int_t i=0;i<num_vertices;++i){
     x = new_vertices_x[i];

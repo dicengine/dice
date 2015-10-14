@@ -107,36 +107,36 @@ public:
   virtual ~Objective_ZNSSD(){}
 
   /// See base class documentation
-  virtual const scalar_t gamma( Teuchos::RCP<std::vector<scalar_t> > & deformation)const;
+  virtual scalar_t gamma( Teuchos::RCP<std::vector<scalar_t> > & deformation)const;
 
   /// See base class documentation
-  virtual const scalar_t sigma( Teuchos::RCP<std::vector<scalar_t> > & deformation) const;
+  virtual scalar_t sigma( Teuchos::RCP<std::vector<scalar_t> > & deformation) const;
 
   /// See base class documentation
-  virtual const Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  virtual Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     int_t & num_iterations);
 
   /// See base class documentation
-  virtual const Status_Flag computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  virtual Status_Flag computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     int_t & num_iterations,
     const scalar_t & override_tol = -1.0);
 
   /// See base class documentation
-  virtual const Status_Flag initialize_from_previous_frame(Teuchos::RCP<std::vector<scalar_t> > & deformation);
+  virtual Status_Flag initialize_from_previous_frame(Teuchos::RCP<std::vector<scalar_t> > & deformation);
 
   /// Currently not implemented for this derived class
-  virtual const Status_Flag search(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  virtual Status_Flag search(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     const int_t precision_level,
     scalar_t & return_value);
 
   /// Used to window in on the best displacement initialization
-  virtual const Status_Flag search_step(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  virtual Status_Flag search_step(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     const int_t window_size,
     const scalar_t step_size,
     scalar_t & return_value);
 
   /// See base class documentation
-  virtual const Status_Flag initialize_from_neighbor(Teuchos::RCP<std::vector<scalar_t> > & deformation);
+  virtual Status_Flag initialize_from_neighbor(Teuchos::RCP<std::vector<scalar_t> > & deformation);
 
   /// See base class documentation
   using Objective::local_field_value;

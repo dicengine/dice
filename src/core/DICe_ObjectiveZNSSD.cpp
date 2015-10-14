@@ -54,7 +54,7 @@
 
 namespace DICe {
 
-const scalar_t
+scalar_t
 Objective_ZNSSD::gamma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
 
   assert(deformation->size()==DICE_DEFORMATION_SIZE);
@@ -67,7 +67,7 @@ Objective_ZNSSD::gamma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
   return subset_->gamma();
 }
 
-const scalar_t
+scalar_t
 Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
 
   // if the gradients don't exist or the optimization method is SIMPLEX based return 0.0;
@@ -146,7 +146,7 @@ Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
    return sigma;
 }
 
-const Status_Flag
+Status_Flag
 Objective_ZNSSD::initialize_from_previous_frame(Teuchos::RCP<std::vector<scalar_t> > & deformation){
 
   assert(deformation->size()==DICE_DEFORMATION_SIZE);
@@ -212,7 +212,7 @@ Objective_ZNSSD::initialize_from_previous_frame(Teuchos::RCP<std::vector<scalar_
   return INITIALIZE_FAILED;
 }
 
-const Status_Flag
+Status_Flag
 Objective_ZNSSD::initialize_from_neighbor( Teuchos::RCP<std::vector<scalar_t> > &deformation) {
 
   assert(deformation->size()==DICE_DEFORMATION_SIZE);
@@ -263,7 +263,7 @@ Objective_ZNSSD::initialize_from_neighbor( Teuchos::RCP<std::vector<scalar_t> > 
   return INITIALIZE_FAILED;
 }
 
-const Status_Flag
+Status_Flag
 Objective_ZNSSD::search_step(Teuchos::RCP<std::vector<scalar_t> > & deformation,
   const int_t window_size,
   const scalar_t step_size,
@@ -311,7 +311,7 @@ Objective_ZNSSD::search_step(Teuchos::RCP<std::vector<scalar_t> > & deformation,
   return SEARCH_SUCCESSFUL;
 }
 
-const Status_Flag
+Status_Flag
 Objective_ZNSSD::search(Teuchos::RCP<std::vector<scalar_t> > & deformation,
   const int_t precision_level,
   scalar_t & return_value) {
@@ -371,7 +371,7 @@ Objective_ZNSSD::search(Teuchos::RCP<std::vector<scalar_t> > & deformation,
 //  else return SEARCH_FAILED;
 }
 
-const Status_Flag
+Status_Flag
 Objective_ZNSSD::computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & deformation,
   int_t & num_iterations,
   const scalar_t & override_tol){
@@ -399,7 +399,7 @@ Objective_ZNSSD::computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & defo
   return status_flag;
 }
 
-const Status_Flag
+Status_Flag
 Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
   int_t & num_iterations){
   assert(deformation->size()==DICE_DEFORMATION_SIZE);

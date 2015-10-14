@@ -159,7 +159,7 @@ public:
   }
 
   /// Returns the element size for global DIC (-1 if local DIC)
-  const int_t mesh_size()const{
+  int_t mesh_size()const{
     return mesh_size_;
   }
 
@@ -190,7 +190,7 @@ public:
   void execute_correlation();
 
   /// Returns if the field storage is initilaized
-  const int_t is_initialized()const{
+  int_t is_initialized()const{
     return is_initialized_;
   }
 
@@ -205,59 +205,59 @@ public:
   }
 
   /// Returns the max solver iterations allowed for the fast (gradient based) algorithm
-  const int_t max_solver_iterations_fast()const{
+  int_t max_solver_iterations_fast()const{
     return max_solver_iterations_fast_;
   }
 
   /// Returns the max solver iterations allowed for the robust (simplex) algorithm
-  const int_t max_solver_iterations_robust()const{
+  int_t max_solver_iterations_robust()const{
     return max_solver_iterations_robust_;
   }
 
   /// Returns the robust solver convergence tolerance
-  const scalar_t robust_solver_tolerance()const{
+  scalar_t robust_solver_tolerance()const{
     return robust_solver_tolerance_;
   }
 
   /// Returns the threshold for gamma where the solve will be skipped if gamma < threshold
-  const scalar_t skip_solve_gamma_threshold()const{
+  scalar_t skip_solve_gamma_threshold()const{
     return skip_solve_gamma_threshold_;
   }
 
   /// Returns the fast solver convergence tolerance
-  const scalar_t fast_solver_tolerance()const{
+  scalar_t fast_solver_tolerance()const{
     return fast_solver_tolerance_;
   }
 
   /// Returns the variation applied to the displacement initial guess in the simplex method
-  const scalar_t robust_delta_disp()const{
+  scalar_t robust_delta_disp()const{
     return robust_delta_disp_;
   }
 
   /// Returns the variation applied to the rotation initial guess in the simplex method
-  const scalar_t robust_delta_theta()const{
+  scalar_t robust_delta_theta()const{
     return robust_delta_theta_;
   }
 
   /// Returns the reference and deformed image width
-  const int_t img_width()const{
+  int_t img_width()const{
     return ref_img_->width();
   }
 
   /// Returns the reference and deformed image height
-  const int_t img_height()const{
+  int_t img_height()const{
     return ref_img_->height();
   }
 
   /// Returns the size of the strain window in pixels for the selected post_processor
   /// \param post_processor_index The index of the post processor to get the window size for
-  const int_t strain_window_size(const int_t post_processor_index)const;
+  int_t strain_window_size(const int_t post_processor_index)const;
 
   /// Returns the size of a square subset
   ///
   /// This is called subset_dim to discourage use as a call to subset_size
   /// subset_size does not exist for a conformal subset (there is no notion of width and height for conformal)
-  const int_t subset_dim()const{
+  int_t subset_dim()const{
     return subset_dim_;
   }
 
@@ -270,7 +270,7 @@ public:
   /// Returns the step size in x direction for a square subset
   ///
   /// If this is a conformal analysis or if the subsets are not in a regular grid this returns -1
-  const int_t step_size_x()const{
+  int_t step_size_x()const{
     return step_size_x_;
   }
 
@@ -295,17 +295,17 @@ public:
   /// Returns the step size in y direction for a square subset
   ///
   /// If this is a conformal analysis or if the subsets are not in a regular grid this returns -1
-  const int_t step_size_y()const{
+  int_t step_size_y()const{
     return step_size_y_;
   }
 
   /// Returns the number of correlation points
-  const int_t data_num_points()const{
+  int_t data_num_points()const{
     return data_num_points_;
   }
 
   /// Returns true if the analysis is global DIC
-  const Analysis_Type analysis_type()const{
+  Analysis_Type analysis_type()const{
     return analysis_type_;
   }
 
@@ -418,27 +418,27 @@ public:
   }
 
   /// Returns the correlation routine (see DICe_Types.h for valid values)
-  const Correlation_Routine correlation_routine()const{
+  Correlation_Routine correlation_routine()const{
     return correlation_routine_;
   }
 
   /// Returns the interpolation method (see DICe_Types.h for valid values)
-  const Interpolation_Method interpolation_method()const{
+  Interpolation_Method interpolation_method()const{
     return interpolation_method_;
   }
 
   /// Returns the optimization method (see DICe_Types.h for valid values)
-  const Optimization_Method optimization_method()const{
+  Optimization_Method optimization_method()const{
     return optimization_method_;
   }
 
   /// Returns the initilaization method (see DICe_Types.h for valid values)
-  const Initialization_Method initialization_method()const{
+  Initialization_Method initialization_method()const{
     return initialization_method_;
   }
 
   /// Returns the projection method (see DICe_Types.h for valid values)
-  const Projection_Method projection_method()const{
+  Projection_Method projection_method()const{
     return projection_method_;
   }
 
@@ -526,47 +526,47 @@ public:
 
   // shape function controls:
   /// Returns true if translation shape functions are enabled
-  const bool translation_enabled() const {
+  bool translation_enabled() const {
     return enable_translation_;
   }
 
   /// Returns true if rotation shape functions are enabled
-  const bool rotation_enabled() const {
+  bool rotation_enabled() const {
     return enable_rotation_;
   }
 
   /// Returns true if normal strain shape functions are enabled
-  const bool normal_strain_enabled() const {
+  bool normal_strain_enabled() const {
     return enable_normal_strain_;
   }
 
   /// Returns true if shear strain shape functions are enabled
-  const bool shear_strain_enabled() const {
+  bool shear_strain_enabled() const {
     return enable_shear_strain_;
   }
 
   /// Print images with the deformed shape of the subset:
-  const bool output_deformed_subset_images()const{
+  bool output_deformed_subset_images()const{
     return output_deformed_subset_images_;
   }
 
   /// Print images with the evolved intensity profile
-  const bool output_evolved_subset_images()const{
+  bool output_evolved_subset_images()const{
     return output_evolved_subset_images_;
   }
 
   /// Evolve subsets as more pixels become visible that were previously obstructed
-  const bool use_subset_evolution()const{
+  bool use_subset_evolution()const{
     return use_subset_evolution_;
   }
 
   /// True if the check for obstructed pixels should ocurr at every iteration
-  const bool update_obstructed_pixels_each_iteration()const{
+  bool update_obstructed_pixels_each_iteration()const{
     return update_obstructed_pixels_each_iteration_;
   }
 
   /// True if the gamma values should be normalized by the number of active pixels
-  const bool normalize_gamma_with_active_pixels()const{
+  bool normalize_gamma_with_active_pixels()const{
     return normalize_gamma_with_active_pixels_;
   }
 
@@ -596,12 +596,12 @@ public:
   }
 
   /// Returns the current image frame (Nonzero only if multiple images are included in the sequence)
-  const int_t image_frame()const{
+  int_t image_frame()const{
     return image_frame_;
   }
 
   /// Returns the number of images in the set (-1 if it has not been set)
-  const int_t num_image_frames() const{
+  int_t num_image_frames() const{
     return num_image_frames_;
   }
 
@@ -611,22 +611,22 @@ public:
   }
 
   /// Returns true if the output has a specific order to the fields
-  const bool has_output_spec()const{
+  bool has_output_spec()const{
     return has_output_spec_;
   }
 
   /// Returns the size of the obstruction buffer
-  const int_t obstruction_buffer_size()const{
+  int_t obstruction_buffer_size()const{
     return obstruction_buffer_size_;
   }
 
   /// Returns the size of the obstruction skin
-  const scalar_t obstruction_skin_factor()const{
+  scalar_t obstruction_skin_factor()const{
     return obstruction_skin_factor_;
   }
 
   /// Returns the integration order for each pixel
-  const int_t pixel_integration_order()const{
+  int_t pixel_integration_order()const{
     return pixel_integration_order_;
   }
 
@@ -715,7 +715,7 @@ public:
   }
 
   /// Provide access to the distributed map:
-  const int_t get_local_id(const int_t gid)const{
+  int_t get_local_id(const int_t gid)const{
     if(target_field_descriptor_==DISTRIBUTED)
       return dist_map_->get_local_element(gid);
     else if(target_field_descriptor_==DISTRIBUTED_GROUPED_BY_SEED)

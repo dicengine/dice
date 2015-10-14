@@ -89,7 +89,7 @@ const std::string to_string(Interpolation_Method in){
   return interpolationMethodStrings[in];
 }
 DICE_LIB_DLL_EXPORT
-const Field_Name string_to_field_name(std::string & in){
+Field_Name string_to_field_name(std::string & in){
   // convert the string to uppercase
   stringToUpper(in);
   for(int_t i=0;i<MAX_FIELD_NAME;++i){
@@ -99,7 +99,7 @@ const Field_Name string_to_field_name(std::string & in){
   return NO_SUCH_FIELD_NAME; // prevent no return errors
 }
 DICE_LIB_DLL_EXPORT
-const Correlation_Routine string_to_correlation_routine(std::string & in){
+Correlation_Routine string_to_correlation_routine(std::string & in){
   // convert the string to uppercase
   stringToUpper(in);
   for(int_t i=0;i<MAX_CORRELATION_ROUTINE;++i){
@@ -109,7 +109,7 @@ const Correlation_Routine string_to_correlation_routine(std::string & in){
   return NO_SUCH_CORRELATION_ROUTINE; // prevent no return errors
 }
 DICE_LIB_DLL_EXPORT
-const Projection_Method string_to_projection_method(std::string & in){
+Projection_Method string_to_projection_method(std::string & in){
   // convert the string to uppercase
   stringToUpper(in);
   for(int_t i=0;i<MAX_PROJECTION_METHOD;++i){
@@ -119,7 +119,7 @@ const Projection_Method string_to_projection_method(std::string & in){
   return NO_SUCH_PROJECTION_METHOD; // prevent no return errors
 }
 DICE_LIB_DLL_EXPORT
-const Initialization_Method string_to_initialization_method(std::string & in){
+Initialization_Method string_to_initialization_method(std::string & in){
   // convert the string to uppercase
   stringToUpper(in);
   for(int_t i=0;i<MAX_INITIALIZATION_METHOD;++i){
@@ -129,7 +129,7 @@ const Initialization_Method string_to_initialization_method(std::string & in){
   return NO_SUCH_INITIALIZATION_METHOD; // prevent no return errors
 }
 DICE_LIB_DLL_EXPORT
-const Optimization_Method string_to_optimization_method(std::string & in){
+Optimization_Method string_to_optimization_method(std::string & in){
   // convert the string to uppercase
   stringToUpper(in);
   for(int_t i=0;i<MAX_OPTIMIZATION_METHOD;++i){
@@ -139,7 +139,7 @@ const Optimization_Method string_to_optimization_method(std::string & in){
   return NO_SUCH_OPTIMIZATION_METHOD; // prevent no return errors
 }
 DICE_LIB_DLL_EXPORT
-const Interpolation_Method string_to_interpolation_method(std::string & in){
+Interpolation_Method string_to_interpolation_method(std::string & in){
   // convert the string to uppercase
   stringToUpper(in);
   for(int_t i=0;i<MAX_INTERPOLATION_METHOD;++i){
@@ -151,7 +151,7 @@ const Interpolation_Method string_to_interpolation_method(std::string & in){
 
 /// Determine if the parameter is a string parameter
 DICE_LIB_DLL_EXPORT
-const bool is_string_param(const std::string & in){
+bool is_string_param(const std::string & in){
   // change the string to lower case (string param names are lower)
   std::string lower = in;
   stringToLower(lower);

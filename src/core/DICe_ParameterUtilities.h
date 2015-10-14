@@ -86,31 +86,31 @@ const std::string to_string(Interpolation_Method in);
 
 /// Convert a string to a DICe::Field_Name
 DICE_LIB_DLL_EXPORT
-const Field_Name string_to_field_name(std::string & in);
+Field_Name string_to_field_name(std::string & in);
 
 /// Convert a string to a DICe::Correlation_Routine
 DICE_LIB_DLL_EXPORT
-const Correlation_Routine string_to_correlation_routine(std::string & in);
+Correlation_Routine string_to_correlation_routine(std::string & in);
 
 /// Convert a string to a DICe::Projection_Method
 DICE_LIB_DLL_EXPORT
-const Projection_Method string_to_projection_method(std::string & in);
+Projection_Method string_to_projection_method(std::string & in);
 
 /// Convert a string to a DICe::Initialization_Method
 DICE_LIB_DLL_EXPORT
-const Initialization_Method string_to_initialization_method(std::string & in);
+Initialization_Method string_to_initialization_method(std::string & in);
 
 /// Convert a string to a DICe::Interpolation_Method
 DICE_LIB_DLL_EXPORT
-const Interpolation_Method string_to_interpolation_method(std::string & in);
+Interpolation_Method string_to_interpolation_method(std::string & in);
 
 /// Convert a string to a DICe::Optimization_Method
 DICE_LIB_DLL_EXPORT
-const Optimization_Method string_to_optimization_method(std::string & in);
+Optimization_Method string_to_optimization_method(std::string & in);
 
 /// Determine if the parameter is a string parameter
 DICE_LIB_DLL_EXPORT
-const bool is_string_param(const std::string & in);
+bool is_string_param(const std::string & in);
 
 /// \brief Returns a pointer to a ParameterList with default params specified
 /// \param defaultParams Pointer to the ParameterList to be returned

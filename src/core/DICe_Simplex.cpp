@@ -65,7 +65,7 @@ Simplex::Simplex(const DICe::Objective * const obj,
   assert(num_dim_<=DICE_DEFORMATION_SIZE);
 }
 
-const Status_Flag
+Status_Flag
 Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,
   Teuchos::RCP<std::vector<scalar_t> > & deltas,
   int_t & num_iterations,
@@ -113,7 +113,7 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,
 
   // work variables
 
-  int_t inhi,j;
+  int_t inhi;
   scalar_t ysave;
   int_t nfunk = 0;
   scalar_t * points_column_sums = new scalar_t[num_dim_];

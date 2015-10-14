@@ -181,7 +181,7 @@ public:
   virtual void pre_execution_tasks()=0;
 
   /// Returns the size of the strain window in pixels
-  virtual const int_t strain_window_size()=0;
+  virtual int_t strain_window_size()=0;
 
   /// Read in parameters for this post processor
   virtual void set_params(const Teuchos::RCP<Teuchos::ParameterList> & params)=0;
@@ -231,7 +231,7 @@ public:
   virtual void pre_execution_tasks();
 
   /// See base clase docutmentation
-  virtual const int_t strain_window_size(){
+  virtual int_t strain_window_size(){
     return window_size_;
   }
 
@@ -290,7 +290,7 @@ public:
   virtual void pre_execution_tasks();
 
   /// See base clase docutmentation
-  virtual const int_t strain_window_size(){
+  virtual int_t strain_window_size(){
     return mesh_size_;
   }
 
@@ -342,7 +342,7 @@ public:
   virtual void pre_execution_tasks();
 
   /// See base clase docutmentation
-  virtual const int_t strain_window_size(){return horizon_;}
+  virtual int_t strain_window_size(){return horizon_;}
 
   /// Execute the post processor
   virtual void execute();
@@ -394,7 +394,7 @@ public:
   virtual void set_params(const Teuchos::RCP<Teuchos::ParameterList> & params);
 
   /// See base clase docutmentation
-  virtual const int_t strain_window_size(){
+  virtual int_t strain_window_size(){
     return 6;
   }
 

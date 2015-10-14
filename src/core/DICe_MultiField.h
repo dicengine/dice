@@ -83,12 +83,12 @@ public:
 #endif
   }
   /// Returns the current processor id
-  const int get_rank()const{
+  int get_rank()const{
     return comm_->getRank();
   }
 
   /// Returns the number of processors
-  const int get_size()const{
+  int get_size()const{
     return comm_->getSize();
   }
 
@@ -110,7 +110,7 @@ public:
   /// \param num_elements the global number of elements
   /// \param index_base either 0 or 1
   /// \param comm the MPI communicator
-  MultiField_Map(const size_t num_elements,
+  MultiField_Map(const int_t num_elements,
     const int_t index_base,
     MultiField_Comm & comm){
     map_ = Teuchos::rcp(new map_type(num_elements, index_base, comm.get()));
@@ -121,7 +121,7 @@ public:
   /// \param elements the array of global element ids
   /// \param index_base either 0 or 1
   /// \param comm MPI communicator
-  MultiField_Map(const size_t num_elements,
+  MultiField_Map(const int_t num_elements,
     Teuchos::ArrayView<const int_t> elements,
     const int_t index_base,
     MultiField_Comm & comm){
@@ -132,8 +132,8 @@ public:
   /// \param num_local_elements the local number of elements
   /// \param index_base either 0 or 1
   /// \param comm the MPI communicator
-  MultiField_Map(const size_t num_elements,
-    const size_t num_local_elements,
+  MultiField_Map(const int_t num_elements,
+    const int_t num_local_elements,
     const int_t index_base,
     MultiField_Comm & comm){
     map_ = Teuchos::rcp(new map_type(num_elements, num_local_elements, index_base, comm.get()));
@@ -150,23 +150,23 @@ public:
   /// \brief Return the local id for the given global id.
   /// Returns -1 if the global id is not on the processor
   /// \param global_id the global id of the element
-  const int_t get_local_element(const int global_id)const{
+  int_t get_local_element(const int global_id)const{
     return map_->getLocalElement(global_id);
   }
 
   /// \brief Return the global id for the given local id.
   /// \param local_id the local id of the element
-  const int get_global_element(const int_t local_id)const{
+  int get_global_element(const int_t local_id)const{
     return map_->getGlobalElement(local_id);
   }
 
   /// Returns the total number of global elements
-  const int_t get_num_global_elements()const{
+  int_t get_num_global_elements()const{
     return map_->getGlobalNumElements();
   }
 
   /// Returns the number of local elements
-  const int_t get_num_local_elements()const{
+  int_t get_num_local_elements()const{
     return map_->getNodeNumElements();
   }
 
@@ -176,7 +176,7 @@ public:
   }
 
   /// Returns true if the map is one to one
-  const bool is_one_to_one()const{
+  bool is_one_to_one()const{
     return map_->isOneToOne();
   }
 
@@ -277,7 +277,7 @@ public:
   }
 
   /// Returns the number of fields
-  const int_t get_num_fields()const{
+  int_t get_num_fields()const{
     return tpetra_mv_->getNumVectors();
   }
 
@@ -344,7 +344,7 @@ public:
 
   ///  Compute the 2 norm of the vector
   /// \param field_index The field of which to take the norm
-  const scalar_t norm(const size_t field_index=0){
+  scalar_t norm(const int_t field_index=0){
     return tpetra_mv_->getVector(field_index)->norm2();
   }
 

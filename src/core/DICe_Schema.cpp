@@ -444,7 +444,7 @@ Schema::initialize(const int_t step_size_x,
   initialize(num_pts,subset_size);
   assert(data_num_points_==num_pts);
 
-  int_t gid = 0, x_it=0, y_it=0, x_coord=0, y_coord=0;
+  int_t x_it=0, y_it=0, x_coord=0, y_coord=0;
   for (int_t i=0;i<num_pts;++i)
   {
      y_it = i / numPointsX;
@@ -1910,7 +1910,7 @@ Schema::write_deformed_subsets_image(){
 }
 
 
-const int_t
+int_t
 Schema::strain_window_size(const int_t post_processor_index)const{
   assert(post_processors_.size()>post_processor_index);
     return post_processors_[post_processor_index]->strain_window_size();

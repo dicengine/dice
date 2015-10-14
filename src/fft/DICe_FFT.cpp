@@ -450,7 +450,6 @@ image_fft(Teuchos::RCP<Image> image,
   scalar_t min_mag = 1.0E12;
 
   int_t index = 0;
-  int_t sym_index = 0;
   Teuchos::ArrayRCP<intensity_t> mag(w*h,0.0);
   for(size_t j=0;j<h;++j){
     for(size_t i=0;i<w;++i){

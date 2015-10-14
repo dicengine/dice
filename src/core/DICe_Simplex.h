@@ -78,7 +78,7 @@ public:
   /// \param num_iterations [out] Returns the number of iterations that took place
   /// A return value of MAX_ITERATIONS_REACHED means that convergence did not occur in the allowed number of iterations.
   /// A return value of CORRELATION_SUCCESSFUL means that convergence was obtained for the solution stored in the deformation vector
-  const Status_Flag minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  Status_Flag minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     Teuchos::RCP<std::vector<scalar_t> > & deltas,
     int_t & num_iterations,
     const scalar_t & threshold = 1.0E-10);
