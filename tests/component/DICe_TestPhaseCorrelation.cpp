@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
     // phase correlate
     scalar_t theta = 0.0;
     phase_correlate_row(img_pol,ref_pol,h_2,theta,true);
-    scalar_t theta_orig = theta;
+    //scalar_t theta_orig = theta;
     theta *= -1.0;
     if (theta > DICE_PI) theta = -DICE_TWOPI + theta;
     if (theta < -DICE_PI) theta = DICE_TWOPI + theta;

@@ -186,15 +186,15 @@ public:
   std::vector<Teuchos::RCP<Image> > get_frames(const int_t frame_index_start, const int_t frame_index_end,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
   /// returns the number of images in the cine file
-  const int_t num_frames()const{
+  int_t num_frames()const{
     return cine_header_->header_.ImageCount;
   }
   /// returns the image width
-  const int_t width()const{
+  int_t width()const{
     return cine_header_->bitmap_header_.biWidth;
   }
   /// return the image height
-  const int_t height()const{
+  int_t height()const{
     return cine_header_->bitmap_header_.biHeight;
   }
 private:

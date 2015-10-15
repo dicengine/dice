@@ -76,7 +76,6 @@ int main(int argc, char *argv[]) {
   else
     outStream = Teuchos::rcp(&bhs, false);
   int_t errorFlag  = 0;
-  scalar_t errtol  = 1.0E-2;
 
   *outStream << "--- Begin test ---" << std::endl;
 

@@ -75,8 +75,6 @@ int main(int argc, char *argv[]) {
 
   int_t errorFlag  = 0;
   scalar_t errtol  = 5.0E-2;
-  scalar_t errtolSoft = 1.0E7; // gamma values for SSD are large
-  // TODO find a better way to check this
 
   *outStream << "--- Begin test ---" << std::endl;
 
@@ -86,7 +84,6 @@ int main(int argc, char *argv[]) {
   const int_t img_height = 199;
   const int_t num_stripes = 10;
   const int_t stripe_width = 20;//img_width/num_stripes;
-  const int_t size = img_width * img_height;
   Teuchos::ArrayRCP<intensity_t> intensities(img_width*img_height,0.0);
   for(int_t y=0;y<img_height;++y){
     for(int_t stripe=0;stripe<=num_stripes/2;++stripe){
