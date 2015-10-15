@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
-  scalar_t errorTol = 1.0E-5;
+  scalar_t errorTol = 1.0E-2;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
