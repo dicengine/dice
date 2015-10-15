@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Image> mask_exact = Teuchos::rcp(new Image("./images/mask.rawi"));
   const scalar_t mask_diff = mask.diff(mask_exact);
   *outStream << "mask value diff: " << mask_diff << std::endl;
-  const scalar_t mask_tol = 1.0E-5;
+  const scalar_t mask_tol = 1.0E-2;
   if(mask_diff > mask_tol){
     *outStream << "Error, mask values not correct" << std::endl;
     errorFlag++;
