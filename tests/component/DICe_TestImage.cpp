@@ -258,6 +258,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Image> trans_baboon_exact = Teuchos::rcp(new Image("./images/baboon_trans.rawi"));
   //trans_baboon_exact->write_tiff("baboon_trans_exact.tif");
   const scalar_t diff_trans_baboon = trans_baboon->diff(trans_baboon_exact);
+  *outStream << "image diff trans baboon: " << diff_trans_baboon << std::endl;
   if(diff_trans_baboon > mask_tol){
     *outStream << "Error, the transformed image does not have the right intensities" << std::endl;
     errorFlag++;

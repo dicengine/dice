@@ -62,7 +62,6 @@ void read_rawi_image_dimensions(const char * file_name,
   // read the file details
   uint32_t w = 0;
   uint32_t h = 0;
-  uint32_t num_bytes = 0;
   rawi_file.read(reinterpret_cast<char*>(&w), sizeof(w));
   rawi_file.read(reinterpret_cast<char*>(&h), sizeof(h));
   width = w;

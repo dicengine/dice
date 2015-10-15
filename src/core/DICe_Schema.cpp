@@ -1610,8 +1610,8 @@ void
 Schema::write_output(const std::string & output_folder,
   const std::string & prefix,
   const bool separate_files_per_subset, const Output_File_Type type){
-  assert(analysis_type_!=CONSTRAINED_OPT && "Error, writing output from a schema using constrained optimization is not enabled.");
-  assert(analysis_type_!=INTEGRATED_DIC && "Error, writing output from a schema using integrated DIC is not enabled.");
+//  assert(analysis_type_!=CONSTRAINED_OPT && "Error, writing output from a schema using constrained optimization is not enabled.");
+//  assert(analysis_type_!=INTEGRATED_DIC && "Error, writing output from a schema using integrated DIC is not enabled.");
   int_t my_proc = comm_->get_rank();
   if(my_proc!=0) return;
   int_t proc_size = comm_->get_size();

@@ -126,7 +126,7 @@ Cine_Reader::get_frames(const int_t frame_index_start, const int_t frame_index_e
   assert(begin < file_size && end <= file_size);
   const long long int buffer_size = end - begin;
   const int_t frame_p_header_size = buffer_size / num_frames;
-  assert(buffer_size % num_frames = 0);
+  assert(buffer_size % num_frames == 0);
   const int_t header_size = frame_p_header_size - frame_size; // could be different for each frame
   const int_t header_offset_8 = header_size / sizeof(uint8_t);
   assert(header_size%sizeof(uint8_t)==0);

@@ -328,6 +328,9 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   *outStream << "gradient values have been tested" << std::endl;
+  delete[] intensities;
+  delete[] gx;
+  delete[] gy;
 
   *outStream << "--- End test ---" << std::endl;
 
