@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
     for(int_t y=0;y<img_height;++y){
       for(int_t stripe=0;stripe<=num_stripes/2;++stripe){
         for(int_t x=stripe*(2*stripe_width) - shift*2;x<stripe*(2*stripe_width)+stripe_width - shift*2;++x){
-          if(x>=img_width)continue;
+          if(x>=img_width||x<0)continue;
           intensitiesShift[y*img_width+x] = 255.0;
         }
       }
