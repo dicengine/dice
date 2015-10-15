@@ -230,13 +230,13 @@ int main(int argc, char *argv[]) {
   std::vector<int_t> shape_1_y(5);
   shape_1_x[0] = 940; shape_1_y[0] = 422;
   shape_1_x[1] = 951; shape_1_y[1] = 399;
-  shape_1_x[2] = 964; shape_1_y[2] = 413;
+  shape_1_x[2] = 964; shape_1_y[2] = 410;
   shape_1_x[3] = 980; shape_1_y[3] = 413;
   shape_1_x[4] = 959; shape_1_y[4] = 432;
   Teuchos::RCP<DICe::Polygon> poly1 = Teuchos::rcp(new DICe::Polygon(shape_1_x,shape_1_y));
   std::vector<int_t> shape_2_x(4);
   std::vector<int_t> shape_2_y(4);
-  shape_2_x[0] = 982;  shape_2_y[0] = 428;
+  shape_2_x[0] = 982;  shape_2_y[0] = 426;
   shape_2_x[1] = 1000; shape_2_y[1] = 428;
   shape_2_x[2] = 991;  shape_2_y[2] = 456;
   shape_2_x[3] = 978;  shape_2_y[3] = 445;

@@ -108,7 +108,7 @@ Polygon::deactivate_pixels(const int_t size,
   int_t * y_coords) const{
 
   int_t x=0,y=0;
-  int_t dx1=0,dx2=0,dy1=0,dy2=0;
+  scalar_t dx1=0,dx2=0,dy1=0,dy2=0;
   scalar_t angle=0.0;
   for(int_t j=0;j<size;++j){
     x = x_coords[j];
@@ -163,10 +163,10 @@ Polygon::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation
       dy = (1.0+dvdy)*(y-cy) + gxy*(x-cx);
       X = std::cos(theta)*dx - std::sin(theta)*dy + u + cx;
       Y = std::sin(theta)*dx + std::cos(theta)*dy + v + cy;
-      new_x = (int)X;
-      if(X - (int)X >= 0.5) new_x++;
-      new_y = (int)Y;
-      if(Y - (int)Y >= 0.5) new_y++;
+      new_x = (int_t)X;
+      if(X - (int_t)X >= 0.5) new_x++;
+      new_y = (int_t)Y;
+      if(Y - (int_t)Y >= 0.5) new_y++;
       verts_x[i] = new_x;
       verts_y[i] = new_y;
     }
@@ -203,7 +203,7 @@ Polygon::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation
 
   std::set<std::pair<int_t,int_t> > coordSet;
 
-  int_t dx1=0,dx2=0,dy1=0,dy2=0;
+  scalar_t dx1=0,dx2=0,dy1=0,dy2=0;
   scalar_t angle=0;
   // rip over the points in the extents of the polygon to determine which onese are inside
   for(int_t y=min_y;y<=max_y;++y){
@@ -408,7 +408,7 @@ Rectangle::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformati
       }
     } // vertex_loop
 
-    int_t dx1=0,dx2=0,dy1=0,dy2=0;
+    scalar_t dx1=0,dx2=0,dy1=0,dy2=0;
     scalar_t angle=0;
     // rip over the points in the extents of the polygon to determine which onese are inside
     for(int_t y=min_y;y<=max_y;++y){
