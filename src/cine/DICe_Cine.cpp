@@ -40,17 +40,13 @@
 // ************************************************************************
 // @HEADER
 
+#include <DICe_Cine.h>
+
 #include <fstream>
 #include <stdint.h>
 #include <time.h>
 #include <string>
 #include <sstream>
-
-#include <boost/timer/timer.hpp>
-
-#include <DICe_Cine.h>
-
-using namespace boost::timer;
 
 namespace DICe {
 namespace cine {

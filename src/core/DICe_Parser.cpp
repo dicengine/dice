@@ -608,7 +608,7 @@ Teuchos::ArrayRCP<std::string> tokenize_line(std::fstream &dataFile,
 }
 
 DICE_LIB_DLL_EXPORT
-const bool is_number(const std::string& s)
+bool is_number(const std::string& s)
 {
   std::string::const_iterator it = s.begin();
   while (it != s.end() && (std::isdigit(*it) || *it=='+' || *it=='-' || *it=='e' || *it=='E' || *it=='.'))
@@ -784,8 +784,8 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                    assert(false);
                  }
                }
-               assert(has_location && "DICe Error, seed must have location specified");
-               assert(has_disp_values && "DICe Error, seed must have displacement guess specified");
+               TEUCHOS_TEST_FOR_EXCEPTION(!has_location,std::runtime_error,"DICe Error, seed must have location specified");
+               TEUCHOS_TEST_FOR_EXCEPTION(!has_disp_values,std::runtime_error,"DICe Error, seed must have displacement guess specified");
              }
              else{
                std::cout << " Error parsing subset file " << fileName << " "  << block_tokens[1] << std::endl;
@@ -875,7 +875,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  assert(false);
                }
              }
-             assert(has_disp_values && "DICe Error, seed must have at least a displacement guess specified");
+             TEUCHOS_TEST_FOR_EXCEPTION(!has_disp_values,std::runtime_error,"DICe Error, seed must have at least a displacement guess specified");
            }
            // SHAPES
            else if(block_tokens[0]==parser_begin){
@@ -958,7 +958,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
    }
   dataFile.close();
   if(roi_defined){
-    assert(!coordinates_defined && !conformal_subset_defined && "DICe Error, if a region of interest in defined, the coordinates"
+    TEUCHOS_TEST_FOR_EXCEPTION(coordinates_defined || conformal_subset_defined,std::runtime_error,"DICe Error, if a region of interest in defined, the coordinates"
         " cannot be specified, nor can conformal subset definitions.");
   }
 
@@ -1059,7 +1059,7 @@ const std::vector<std::string> decypher_image_file_names(Teuchos::RCP<Teuchos::P
 }
 
 DICE_LIB_DLL_EXPORT
-const bool valid_correlation_point(const int_t x_coord,
+bool valid_correlation_point(const int_t x_coord,
   const int_t y_coord,
   const int_t width,
   const int_t height,
@@ -1111,12 +1111,10 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
   // note: assumes two dimensional
   assert(params->isParameter(DICe::step_size));
   const int_t step_size = params->get<int_t>(DICe::step_size);
-  const int_t step_size_div_2 = step_size/2;
   // set up the control points
   assert(step_size > 0 && "  DICe ERROR: step size is <= 0");
   assert(params->isParameter(DICe::subset_size));
   const int_t subset_size = params->get<int_t>(DICe::subset_size);
-  const int_t subset_size_div_2 = subset_size/2;
   correlation_points.clear();
   neighbor_ids.clear();
 

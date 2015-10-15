@@ -243,7 +243,7 @@ void create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_
 /// \param coords Set of valid coordinates in the area
 /// \param excluded_coords Set of coordinates that should be excluded
 DICE_LIB_DLL_EXPORT
-const bool valid_correlation_point(const int_t x_coord,
+bool valid_correlation_point(const int_t x_coord,
   const int_t y_coord,
   const int_t width,
   const int_t height,
@@ -349,7 +349,7 @@ void write_xml_bool_param(const std::string & file_name,
 /// \brief Determines if a string is a number
 /// \param s Input string
 DICE_LIB_DLL_EXPORT
-const bool is_number(const std::string& s);
+bool is_number(const std::string& s);
 
 /// Parser string
 const char* const parser_comment_char = "#";

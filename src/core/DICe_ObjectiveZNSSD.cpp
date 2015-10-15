@@ -102,11 +102,10 @@ Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
    const scalar_t meanF = subset_->mean(REF_INTENSITIES);
    const scalar_t meanG = subset_->mean(DEF_INTENSITIES);
 
-   scalar_t Gx=0.0,Gy=0.0,GmF=0.0;
+   scalar_t Gx=0.0,Gy=0.0;
    for(int_t index=0;index<subset_->num_pixels();++index){
      // skip the deactivated pixels
      // TODO if(!is_active[index]||is_deactivated_this_step[index])continue;
-     GmF = (subset_->def_intensities(index) - meanG) - (subset_->ref_intensities(index) - meanF);
      Gx = gradGx[index];
      Gy = gradGy[index];
      H(0,0) += Gx*Gx;
@@ -308,7 +307,6 @@ Objective_ZNSSD::search_step(Teuchos::RCP<std::vector<scalar_t> > & deformation,
 //  return_value = min_gamma;
 //  //if(min_gamma < 0.6) return SEARCH_SUCCESSFUL;
 //  //else return SEARCH_FAILED;
-  return SEARCH_SUCCESSFUL;
 }
 
 Status_Flag
@@ -458,7 +456,6 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
 
     scalar_t dx=0.0,dy=0.0,Dx=0.0,Dy=0.0,delTheta=0.0,delEx=0.0,delEy=0.0,delGxy=0.0;
     scalar_t Gx=0.0,Gy=0.0, GmF=0.0;
-    int_t index=0;
     const scalar_t theta = (*deformation)[DICe::ROTATION_Z];
     const scalar_t dudx = (*deformation)[DICe::NORMAL_STRAIN_X];
     const scalar_t dvdy = (*deformation)[DICe::NORMAL_STRAIN_Y];

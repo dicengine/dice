@@ -100,17 +100,6 @@ public:
     int_t * y_coords) const{
     assert(false && "  DICe ERROR: Base class implementation of this method should not be called.");
   }
-
-  /// \brief For the given image argument, output a tif image with the shape superposed on the image.
-  /// Only enabled if boost is enabled, otherwise this is a no-op.
-  /// \param layer_0_image The underlying image to draw the shape on
-  /// \param deformation An optional vector of displacement, rotation and stretch values to draw the shape in the deformed state
-  /// \param cx x-coordiante of the origin of the deformation mapping
-  /// \param cy y-coordinate of the origin of the deformation mapping
-  virtual void draw(Teuchos::RCP<Image> & layer_0_image,
-    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null)const{
-    assert(false && "  DICe ERROR: Base class implementation of this method should not be called.");
-  }
 };
 
 ///
@@ -150,10 +139,6 @@ public:
     bool * pixel_flags,
     int_t * x_coords,
     int_t * y_coords) const;
-
-  /// See base class documentation
-  virtual void draw(Teuchos::RCP<Image> & layer_0_image,
-    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null)const;
 
 private:
   /// vector storing the integer vertex global x-coordinates
@@ -215,10 +200,6 @@ public:
     int_t * x_coords,
     int_t * y_coords) const;
 
-  /// See base class documentation
-  virtual void draw(Teuchos::RCP<Image> & layer_0_image,
-    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null)const;
-
 private:
   /// Center of the circle global x-coordinate
   int_t centroid_x_;
@@ -268,10 +249,6 @@ public:
     bool * pixel_flags,
     int_t * x_coords,
     int_t * y_coords) const;
-
-  /// See base class documentation
-  virtual void draw(Teuchos::RCP<Image> & layer_0_image,
-    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null)const;
 
 private:
   /// Center global x-coordinate
