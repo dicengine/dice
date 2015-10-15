@@ -126,6 +126,7 @@ int main(int argc, char *argv[]) {
   params->set(DICe::enable_rotation,true);
   params->set(DICe::enable_normal_strain,true);
   params->set(DICe::enable_shear_strain,true);
+  params->set(DICe::fast_solver_tolerance,(scalar_t)1.0E-4);
   Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema(fileRef,fileDef,params));
   schema->initialize(1,-1,subset_defs);
 
