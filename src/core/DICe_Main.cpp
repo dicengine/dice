@@ -295,9 +295,10 @@ int main(int argc, char *argv[]) {
   scalar_t min_time = 1.0E10;
   scalar_t avg_time = 0.0;
   std::string file_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
-  // FIXME this should run from start index to finish index, not from 1 to end!
-  for(int_t image_it=1;image_it<=num_images;++image_it){
-
+  // TODO find a more straightforward way to do the indexing
+  const int_t start_frame = cine_start_index==-1 ? 1 : cine_start_index;
+  const int_t end_frame = cine_end_index==-1 ? num_images : cine_end_index;
+  for(int_t image_it=start_frame;image_it<=end_frame;++image_it){
     if(is_cine){
       const int_t start_index = image_it;
       Teuchos::RCP<DICe::Image> def_image = cine_reader->get_frame(image_it,correlation_params);
