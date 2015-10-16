@@ -857,7 +857,7 @@ Schema::execute_correlation(){
 
   // if requested, do a phase correlation of the images to get the initial guess for u_x and u_y:
   if(initialization_method_==USE_PHASE_CORRELATION){
-    DICe::phase_correlate_x_y(ref_img_,def_img_,phase_cor_u_x_,phase_cor_u_y_);
+    DICe::phase_correlate_x_y(prev_img_,def_img_,phase_cor_u_x_,phase_cor_u_y_);
     DEBUG_MSG(" - phase correlation initial displacements ux: " << phase_cor_u_x_ << " uy: " << phase_cor_u_y_);
   }
 
@@ -894,8 +894,8 @@ Schema::execute_correlation(){
     }
     if(output_deformed_subset_images_)
       write_deformed_subsets_image();
-//    if(correlation_routine_==FAST_PREDICTION_ROUTINE)
-//      prev_img_=def_img_;
+    //if(correlation_routine_==FAST_PREDICTION_ROUTINE)
+    prev_img_=def_img_;
   }
   else
     assert(false && "  DICe ERROR: unknown correlation routine.");
@@ -1332,15 +1332,15 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     };
   }
   else if(initialization_method_==DICe::USE_PHASE_CORRELATION){
-    (*deformation)[0] = phase_cor_u_x_;
-    (*deformation)[1] = phase_cor_u_y_;
-    for(int_t i=2;i<DICE_DEFORMATION_SIZE;++i)
-      (*deformation)[i] = 0.0;
-    const int_t window_size = 12;
-    const scalar_t step_size = 0.1;
-    scalar_t return_gamma = 0.0;
-    init_status = obj->search_step(deformation,window_size,step_size,return_gamma);
-    //init_status = DICe::INITIALIZE_SUCCESSFUL;
+    (*deformation)[0] = phase_cor_u_x_ + local_field_value(subset_gid,DISPLACEMENT_X);
+    (*deformation)[1] = phase_cor_u_y_ + local_field_value(subset_gid,DISPLACEMENT_Y);
+//    for(int_t i=2;i<DICE_DEFORMATION_SIZE;++i)
+//      (*deformation)[i] = 0.0;
+//    const int_t window_size = 6;
+//    const scalar_t step_size = 0.5;
+//    scalar_t return_gamma = 0.0;
+//    init_status = obj->search_step(deformation,window_size,step_size,return_gamma);
+    init_status = DICe::INITIALIZE_SUCCESSFUL;
   }
   // The rest of the subsets use the soluion from the previous subset as the initial guess
   else{
@@ -1405,8 +1405,8 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       if(initialization_method_==DICe::USE_FIELD_VALUES || (initialization_method_==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && image_frame_>0))
         init_status = obj->initialize_from_previous_frame(deformation);
       else if(initialization_method_==DICe::USE_PHASE_CORRELATION){
-        (*deformation)[0] = phase_cor_u_x_;
-        (*deformation)[1] = phase_cor_u_y_;
+        (*deformation)[0] = phase_cor_u_x_ + local_field_value(subset_gid,DISPLACEMENT_X);
+        (*deformation)[1] = phase_cor_u_y_ + local_field_value(subset_gid,DISPLACEMENT_Y);
         for(int_t i=2;i<DICE_DEFORMATION_SIZE;++i)
           (*deformation)[i] = 0.0;
         init_status = DICe::INITIALIZE_SUCCESSFUL;
@@ -1433,8 +1433,8 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       if(initialization_method_==DICe::USE_FIELD_VALUES || (initialization_method_==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && image_frame_>0))
         init_status = obj->initialize_from_previous_frame(deformation);
       else if(initialization_method_==DICe::USE_PHASE_CORRELATION){
-        (*deformation)[0] = phase_cor_u_x_;
-        (*deformation)[1] = phase_cor_u_y_;
+        (*deformation)[0] = phase_cor_u_x_ + local_field_value(subset_gid,DISPLACEMENT_X);
+        (*deformation)[1] = phase_cor_u_y_ + local_field_value(subset_gid,DISPLACEMENT_Y);
         for(int_t i=2;i<DICE_DEFORMATION_SIZE;++i)
           (*deformation)[i] = 0.0;
         init_status = DICe::INITIALIZE_SUCCESSFUL;

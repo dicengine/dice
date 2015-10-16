@@ -267,46 +267,41 @@ Objective_ZNSSD::search_step(Teuchos::RCP<std::vector<scalar_t> > & deformation,
   const int_t window_size,
   const scalar_t step_size,
   scalar_t & return_value) {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method has not been implemented.");
-//  assert(deformation->size()==DICE_DEFORMATION_SIZE);
-//  Teuchos::RCP<std::vector<scalar_t> > trial_def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-//  // temp subset for use in turning off pixels that are obstructed or fail the intensity deviation test:
-//  Teuchos::RCP<DICe::Subset> trial_subset = Teuchos::rcp(new Subset(ref_subset_));
-//
-//  const int_t num_steps = window_size / step_size;
-//
-//  scalar_t disp_x = 0.0;
-//  scalar_t disp_y = 0.0;
-//  scalar_t min_gamma = 4.0;
-//  scalar_t min_x = 0.0, min_y = 0.0;
-//  for(int_t y=-num_steps/2;y<=num_steps/2;++y){
-//    disp_y = (*deformation)[DISPLACEMENT_Y] + y*step_size;
-//    (*trial_def)[DICe::DISPLACEMENT_Y] = disp_y;
-//    for(int_t x=-num_steps/2;x<=num_steps/2;++x){
-//      disp_x = (*deformation)[DISPLACEMENT_X] + x*step_size;
-//      (*trial_def)[DICe::DISPLACEMENT_X] = disp_x;
-//      ref_subset_->reset_is_deactivated_this_step();
-//      ref_subset_->turn_off_obstructed_pixels(trial_def);
-//      trial_subset->initialize(trial_def,this->schema_->interpolation_method(),this->schema_->def_img());
-//      // evaluate gamma for this displacement
-//      const scalar_t gammaTrial = gamma(trial_def);
-//      //std::cout << " Trial x " << disp_x << " trial y " << disp_y << " trial theta " << theta << " trial gamma " << gammaTrial << std::endl;
-//      if(gammaTrial < min_gamma){
-//        //std::cout << " min found!! " << std::endl;
-//        min_gamma = gammaTrial;
-//        min_x = disp_x;
-//        min_y = disp_y;
-//      }
-//    }
-//  }
-//  DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " search step returned best gamma at u " << min_x << " v " << min_y << " gamma " << min_gamma);
-//
-//  // put the values into the deformation vector:
-//  (*deformation)[DISPLACEMENT_X] = min_x;
-//  (*deformation)[DISPLACEMENT_Y] = min_y;
-//  return_value = min_gamma;
-//  //if(min_gamma < 0.6) return SEARCH_SUCCESSFUL;
-//  //else return SEARCH_FAILED;
+  assert(deformation->size()==DICE_DEFORMATION_SIZE);
+  Teuchos::RCP<std::vector<scalar_t> > trial_def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+  const int_t num_steps = window_size / step_size;
+  scalar_t disp_x = 0.0;
+  scalar_t disp_y = 0.0;
+  scalar_t min_gamma = 4.0;
+  scalar_t min_x = 0.0, min_y = 0.0;
+  for(int_t y=-num_steps/2;y<=num_steps/2;++y){
+    disp_y = (*deformation)[DISPLACEMENT_Y] + y*step_size;
+    (*trial_def)[DICe::DISPLACEMENT_Y] = disp_y;
+    for(int_t x=-num_steps/2;x<=num_steps/2;++x){
+      disp_x = (*deformation)[DISPLACEMENT_X] + x*step_size;
+      (*trial_def)[DICe::DISPLACEMENT_X] = disp_x;
+      // TODO turn off deactivated pixels
+      // ref_subset_->reset_is_deactivated_this_step();
+      // ref_subset_->turn_off_obstructed_pixels(trial_def);
+      // evaluate gamma for this displacement
+      const scalar_t gammaTrial = gamma(trial_def);
+      //std::cout << " Trial x " << disp_x << " trial y " << disp_y << " trial theta " << theta << " trial gamma " << gammaTrial << std::endl;
+      if(gammaTrial < min_gamma){
+        //std::cout << " min found!! " << std::endl;
+        min_gamma = gammaTrial;
+        min_x = disp_x;
+        min_y = disp_y;
+      }
+    }
+  }
+  DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " search step returned best gamma at u " << min_x << " v " << min_y << " gamma " << min_gamma);
+
+  // put the values into the deformation vector:
+  (*deformation)[DISPLACEMENT_X] = min_x;
+  (*deformation)[DISPLACEMENT_Y] = min_y;
+  return_value = min_gamma;
+  if(min_gamma < 0.6) return SEARCH_SUCCESSFUL;
+  else return SEARCH_FAILED;
 }
 
 Status_Flag
@@ -431,6 +426,10 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
   const scalar_t cx = subset_->centroid_x();
   const scalar_t cy = subset_->centroid_y();
   const scalar_t meanF = subset_->mean(REF_INTENSITIES);
+  // these are used for regularization below
+  const scalar_t prev_u = (*deformation)[DISPLACEMENT_X];
+  const scalar_t prev_v = (*deformation)[DISPLACEMENT_Y];
+  //const scalar_t prev_theta = (*deformation)[ROTATION_Z];
 
   // SOLVER ---------------------------------------------------------
 
@@ -527,6 +526,18 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
       H(4,5) += delEy*delGxy;
       H(5,5) += delGxy*delGxy;
     }
+
+    if(this->schema_->use_objective_regularization()){
+      // add the penalty terms
+      const scalar_t alpha = 10000.0;
+      q[0] += alpha * ((*deformation)[DICe::DISPLACEMENT_X] - prev_u);
+      q[1] += alpha * ((*deformation)[DICe::DISPLACEMENT_Y] - prev_v);
+      //q[2] += alpha * ((*deformation)[DICe::ROTATION_Z] - prev_theta);
+      H(0,0) += alpha;
+      H(1,1) += alpha;
+      // H(2,2) += alpha;
+    }
+
     // determine the max value in the matrix:
     scalar_t maxH = 0.0;
     for(int_t i=0;i<H.numCols();++i)

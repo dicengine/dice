@@ -524,6 +524,11 @@ public:
   /// \param obj The objective function that holds the ref and def subset along with several methods
   void subset_evolution_routine(Teuchos::RCP<Objective> obj);
 
+  /// Returne true if regularization should be used in the objective evaluation
+  bool use_objective_regularization()const{
+    return use_objective_regularization_;
+  }
+
   // shape function controls:
   /// Returns true if translation shape functions are enabled
   bool translation_enabled() const {
