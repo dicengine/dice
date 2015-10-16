@@ -215,27 +215,27 @@ public:
   }
 
   /// Returns the robust solver convergence tolerance
-  scalar_t robust_solver_tolerance()const{
+  double robust_solver_tolerance()const{
     return robust_solver_tolerance_;
   }
 
   /// Returns the threshold for gamma where the solve will be skipped if gamma < threshold
-  scalar_t skip_solve_gamma_threshold()const{
+  double skip_solve_gamma_threshold()const{
     return skip_solve_gamma_threshold_;
   }
 
   /// Returns the fast solver convergence tolerance
-  scalar_t fast_solver_tolerance()const{
+  double fast_solver_tolerance()const{
     return fast_solver_tolerance_;
   }
 
   /// Returns the variation applied to the displacement initial guess in the simplex method
-  scalar_t robust_delta_disp()const{
+  double robust_delta_disp()const{
     return robust_delta_disp_;
   }
 
   /// Returns the variation applied to the rotation initial guess in the simplex method
-  scalar_t robust_delta_theta()const{
+  double robust_delta_theta()const{
     return robust_delta_theta_;
   }
 
@@ -621,7 +621,7 @@ public:
   }
 
   /// Returns the size of the obstruction skin
-  scalar_t obstruction_skin_factor()const{
+  double obstruction_skin_factor()const{
     return obstruction_skin_factor_;
   }
 
@@ -646,12 +646,12 @@ public:
   }
 
   /// Return the jump tolerance for rotations
-  scalar_t theta_jump_tol()const{
+  double theta_jump_tol()const{
     return theta_jump_tol_;
   }
 
   /// Return the jump tolerance for displacements
-  scalar_t disp_jump_tol()const{
+  double disp_jump_tol()const{
     return disp_jump_tol_;
   }
 
@@ -819,11 +819,11 @@ private:
   /// Maximum solver iterations for computeUpdateRobust() for an objective
   int_t max_solver_iterations_robust_;
   /// Fase solver convergence tolerance
-  scalar_t fast_solver_tolerance_;
+  double fast_solver_tolerance_;
   /// Robust solver convergence tolerance
-  scalar_t robust_solver_tolerance_;
+  double robust_solver_tolerance_;
   /// If gamma is less than this for the initial guess, the solve is skipped
-  scalar_t skip_solve_gamma_threshold_;
+  double skip_solve_gamma_threshold_;
   /// The number of correlation points
   int_t data_num_points_;
   /// Are the output fields and columns specified by the user?
@@ -836,20 +836,20 @@ private:
   int_t num_image_frames_;
   /// Displacement jump tolerance. If the displacement solution is larger than this from the previous frame
   /// it is rejected
-  scalar_t disp_jump_tol_;
+  double disp_jump_tol_;
   /// Theta jump tolerance. If the theta solution is larger than this from the previous frame
   /// it is rejected
-  scalar_t theta_jump_tol_;
+  double theta_jump_tol_;
   /// int_t of the variation to apply to the initial displacement guess used to construct the simplex
-  scalar_t robust_delta_disp_;
+  double robust_delta_disp_;
   /// int_t of the variation to apply to the initial rotation guess used to construct the simplex
-  scalar_t robust_delta_theta_;
+  double robust_delta_theta_;
   /// int_t of the buffer to add around subset obstructions
   int_t obstruction_buffer_size_;
   /// Determines how many subdivisions each pixel is cut into for integration purposes
   int_t pixel_integration_order_;
   /// Factor that increases or decreases the size of obstructions
-  scalar_t obstruction_skin_factor_;
+  double obstruction_skin_factor_;
   /// DICe::Correlation_Routine
   Correlation_Routine correlation_routine_;
   /// DICe::Interpolation_Method

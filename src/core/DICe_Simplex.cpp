@@ -56,7 +56,7 @@ Simplex::Simplex(const DICe::Objective * const obj,
 {
   if(params!=Teuchos::null){
     if(params->isParameter(DICe::max_iterations)) max_iterations_ = params->get<int_t>(DICe::max_iterations);
-    if(params->isParameter(DICe::tolerance)) tolerance_ = params->get<scalar_t>(DICe::tolerance);
+    if(params->isParameter(DICe::tolerance)) tolerance_ = params->get<double>(DICe::tolerance);
   }
   // get num dims from the objective
   assert(obj_);

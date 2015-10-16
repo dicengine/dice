@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> badParams = rcp(new Teuchos::ParameterList());
   badParams->set("this_should_not_work",true);
   // this param should only be available internally and should also throw an error
-  badParams->set(DICe::tolerance,(scalar_t)0.01);
+  badParams->set(DICe::tolerance,0.01);
   bool exception_thrown_as_it_should = false;
   try{
     Teuchos::RCP<DICe::Schema> schemaTextBadParams = Teuchos::rcp(new DICe::Schema(imgRef,imgDef,badParams));

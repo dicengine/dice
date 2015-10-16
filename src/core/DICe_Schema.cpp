@@ -293,7 +293,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   assert(diceParams->isParameter(DICe::max_solver_iterations_fast));
   max_solver_iterations_fast_ = diceParams->get<int_t>(DICe::max_solver_iterations_fast);
   assert(diceParams->isParameter(DICe::fast_solver_tolerance));
-  fast_solver_tolerance_ = diceParams->get<scalar_t>(DICe::fast_solver_tolerance);
+  fast_solver_tolerance_ = diceParams->get<double>(DICe::fast_solver_tolerance);
   // make sure image gradients are on at least for the reference image for any gradient based optimization routine
   assert(diceParams->isParameter(DICe::optimization_method));
   optimization_method_ = diceParams->get<Optimization_Method>(DICe::optimization_method);
@@ -304,17 +304,17 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   assert(diceParams->isParameter(DICe::max_solver_iterations_robust));
   max_solver_iterations_robust_ = diceParams->get<int_t>(DICe::max_solver_iterations_robust);
   assert(diceParams->isParameter(DICe::robust_solver_tolerance));
-  robust_solver_tolerance_ = diceParams->get<scalar_t>(DICe::robust_solver_tolerance);
+  robust_solver_tolerance_ = diceParams->get<double>(DICe::robust_solver_tolerance);
   assert(diceParams->isParameter(DICe::skip_solve_gamma_threshold));
-  skip_solve_gamma_threshold_ = diceParams->get<scalar_t>(DICe::skip_solve_gamma_threshold);
+  skip_solve_gamma_threshold_ = diceParams->get<double>(DICe::skip_solve_gamma_threshold);
   assert(diceParams->isParameter(DICe::disp_jump_tol));
-  disp_jump_tol_ = diceParams->get<scalar_t>(DICe::disp_jump_tol);
+  disp_jump_tol_ = diceParams->get<double>(DICe::disp_jump_tol);
   assert(diceParams->isParameter(DICe::theta_jump_tol));
-  theta_jump_tol_ = diceParams->get<scalar_t>(DICe::theta_jump_tol);
+  theta_jump_tol_ = diceParams->get<double>(DICe::theta_jump_tol);
   assert(diceParams->isParameter(DICe::robust_delta_disp));
-  robust_delta_disp_ = diceParams->get<scalar_t>(DICe::robust_delta_disp);
+  robust_delta_disp_ = diceParams->get<double>(DICe::robust_delta_disp);
   assert(diceParams->isParameter(DICe::robust_delta_theta));
-  robust_delta_theta_ = diceParams->get<scalar_t>(DICe::robust_delta_theta);
+  robust_delta_theta_ = diceParams->get<double>(DICe::robust_delta_theta);
   assert(diceParams->isParameter(DICe::enable_translation));
   enable_translation_ = diceParams->get<bool>(DICe::enable_translation);
   assert(diceParams->isParameter(DICe::enable_rotation));
@@ -336,7 +336,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   assert(diceParams->isParameter(DICe::pixel_integration_order));
   pixel_integration_order_ = diceParams->get<int_t>(DICe::pixel_integration_order);
   assert(diceParams->isParameter(DICe::obstruction_skin_factor));
-  obstruction_skin_factor_ = diceParams->get<scalar_t>(DICe::obstruction_skin_factor);
+  obstruction_skin_factor_ = diceParams->get<double>(DICe::obstruction_skin_factor);
   assert(diceParams->isParameter(DICe::use_objective_regularization));
   use_objective_regularization_ = diceParams->get<bool>(DICe::use_objective_regularization);
   assert(diceParams->isParameter(DICe::update_obstructed_pixels_each_iteration));

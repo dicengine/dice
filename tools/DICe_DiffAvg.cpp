@@ -102,8 +102,8 @@ int main(int argc, char *argv[]) {
   const bool verbose = params->get<bool>("verbose",false);
   if(verbose)
     outStream = Teuchos::rcp(&std::cout, false);
-  const scalar_t rel_tol = params->get<scalar_t>("relative_tolerance",1.0E-6);
-  const scalar_t compare_factor = params->get<scalar_t>("compare_factor",1.0);
+  const double rel_tol = params->get<double>("relative_tolerance",1.0E-6);
+  const double compare_factor = params->get<double>("compare_factor",1.0);
 
   params->print(*outStream);
 

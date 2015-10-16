@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
   params->set(DICe::enable_rotation,true);
   params->set(DICe::enable_normal_strain,true);
   params->set(DICe::enable_shear_strain,true);
-  params->set(DICe::robust_solver_tolerance,(scalar_t)1.0E-4);
+  params->set(DICe::robust_solver_tolerance,1.0E-4);
   Teuchos::RCP<DICe::Schema> schemaSquare = Teuchos::rcp(new DICe::Schema(fileRef,fileDef,params));
   schemaSquare->initialize(1,subset_size); // only one correlation point for this
 

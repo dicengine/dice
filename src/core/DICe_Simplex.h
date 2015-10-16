@@ -89,7 +89,7 @@ private:
   /// The dimension of the simplex (one dim for each free parameter)
   int_t num_dim_;
   /// Convergence tolerance
-  scalar_t tolerance_;
+  double tolerance_;
   /// Numerically small value
   scalar_t tiny_;
   /// Pointer to a DICe::Objective, used to gain access to objective methods like gamma()

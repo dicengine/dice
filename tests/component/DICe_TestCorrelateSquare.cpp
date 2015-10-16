@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
   params->set(DICe::initialization_method,DICe::USE_NEIGHBOR_VALUES);
   params->set(DICe::interpolation_method,DICe::KEYS_FOURTH);
-  params->set(DICe::robust_solver_tolerance,(scalar_t)1.0E-4);
+  params->set(DICe::robust_solver_tolerance,1.0E-4);
 
   const int_t multiple_step_size_x = 101;
   const int_t multiple_step_size_y = 51;
