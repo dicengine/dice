@@ -7,7 +7,7 @@
 #  The output files are diffed with gold copies
 #
 SET(REGRESSION_TESTS
-#  single_speckled_shift
+  single_speckled_shift
   conformal_subset_def
 #  dic_challenge_12
 #  obstructions

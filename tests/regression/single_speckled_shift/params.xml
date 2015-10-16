@@ -1,0 +1,4 @@
+<ParameterList>
+  <Parameter name="inTerpolation_method" type="string" value="keys_fourth" />
+  <Parameter name="optimization_method" type="string" value="gradient_based_then_simplex" />
+</ParameterList>
