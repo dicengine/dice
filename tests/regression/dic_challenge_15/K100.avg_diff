@@ -1,0 +1,13 @@
+<ParameterList>
+  <Parameter name="input_file" type="string" value="./results/dic_challenge_15_1.txt" />  
+  <Parameter name="num_header_rows" type="int" value="21" />
+  <Parameter name="collect_averages_for_unique_values_in_column" type="int" value="1" />    
+  <Parameter name="compute_average_of_column" type="int" value="3" />    
+  <Parameter name="command_file_name" type="string" value="command.csv" />    
+  <Parameter name="command_num_header_rows" type="int" value="0" />    
+  <Parameter name="command_coord_col" type="int" value="0" />    
+  <Parameter name="command_value_col" type="int" value="2" />    
+  <Parameter name="verbose" type="bool" value="true" />    
+  <Parameter name="relative_tolerance" type="double" value="0.45" />    
+  <Parameter name="output_file_name" type="string" value="avg_results_K100.txt" />    
+</ParameterList>

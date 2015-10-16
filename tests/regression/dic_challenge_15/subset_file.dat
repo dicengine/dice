@@ -1,0 +1,28 @@
+# Example with two regions of interest, one for the left side of the 
+# image and one for the right.
+# There's no real reason to split the image up. In this case it's only
+# to exercise the testing of multiple regions of interest
+
+# left side
+BEGIN REGION_OF_INTEREST
+  BEGIN BOUNDARY
+    BEGIN RECTANGLE
+      UPPER_LEFT 0 0
+      LOWER_RIGHT 1000 1000
+    END
+  END
+  BEGIN SEED
+    LOCATION 500 800 # nearest correlation point to these coordinates will be used
+    DISPLACEMENT 0.0 0.001
+  END
+END
+
+# right side
+BEGIN REGION_OF_INTEREST
+  BEGIN BOUNDARY
+    BEGIN RECTANGLE
+      UPPER_LEFT 1000 0
+      LOWER_RIGHT 2000 1000
+    END
+  END
+END

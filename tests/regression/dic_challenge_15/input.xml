@@ -1,0 +1,20 @@
+<ParameterList>
+  <Parameter name="subset_file" type="string" value="./subset_file.dat" />
+  <Parameter name="output_folder" type="string" value="./results/" />  
+  <Parameter name="output_prefix" type="string" value="dic_challenge_15" />
+  <Parameter name="image_folder" type="string" value="./images/" />  
+  <Parameter name="correlation_parameters_file" type="string" value="params.xml" />
+  <Parameter name="subset_size" type="int" value="35" />  
+  <Parameter name="step_size" type="int" value="50" />  
+  <Parameter name="reference_image" type="string" value="Reference.tif" />
+  <ParameterList name="deformed_images">
+    <Parameter name="P200_K50_N2.tif" type="bool" value="true" />
+    <Parameter name="P200_K100_N2.tif" type="bool" value="true" />
+    <Parameter name="P200_K150_N2.tif" type="bool" value="true" />
+    <Parameter name="P200_K200_N2.tif" type="bool" value="true" />
+    <Parameter name="P200_K250_N2.tif" type="bool" value="true" />
+    <Parameter name="P200_K300_N2.tif" type="bool" value="true" />
+    <Parameter name="P200_K350_N2.tif" type="bool" value="true" />
+    <Parameter name="P200_K400_N2.tif" type="bool" value="true" />
+  </ParameterList>
+</ParameterList>
