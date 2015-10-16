@@ -1,0 +1,87 @@
+# white space is not important (you can indent however you like, or not indent at all)
+# while space rules apply to lines as well, blank lines are skipped
+
+# this example has 5 subsets, two are conformal (ids 2 and 3), the rest are square
+
+BEGIN SUBSET_COORDINATES # (required)
+    126 157
+    # comment row for testing
+    125 250
+    397 139 # comment after a number for testing
+
+    # blank row above for testing
+    177 314
+    395 405
+END SUBSET_COORDINATES
+
+# conformal subset defs define the geometry for subsets of arbitrary shape
+# if a conformal subset is not defined, it is assumed to be square and of the subset_size given in the input file
+
+BEGIN CONFORMAL_SUBSET
+
+  SUBSET_ID 2 # required id of the subset
+
+  BEGIN BOUNDARY # defines the outer boundary of the subset
+
+    BEGIN POLYGON
+      BEGIN VERTICES
+        # needs at least 3
+        # polygon points only need to be listed once, the last segment will close the polygon
+        # by connecting the last point with the first
+        307 136
+        352 86
+        426 109
+        421 243
+        372 143 # comment after vertex value for testing
+      END VERTICES
+    END POLYGON
+
+    BEGIN CIRCLE
+      CENTER 362 201
+      RADIUS 45
+    END CIRCLE
+
+    BEGIN POLYGON
+      BEGIN VERTICES
+        359 228
+        455 175
+        437 267 
+      END VERTICES
+    END POLYGON
+ 
+  END BOUNDARY
+
+END CONFORMAL_SUBSET
+
+BEGIN CONFORMAL_SUBSET
+  SUBSET_ID 3
+  BEGIN BOUNDARY
+    BEGIN CIRCLE
+      CENTER 178 352
+      RADIUS 64
+    END CIRCLE
+  END BOUNDARY
+  BEGIN EXCLUDED # (optional) defines internal regions that should initially be excluded because they are blocked
+    BEGIN POLYGON
+      BEGIN VERTICES
+        148 341
+        160 374
+        205 340
+      END VERTICES
+    END POLYGON
+  END EXCLUDED
+  BEGIN OBSTRUCTED # (optional) defines objects that do not move that could obstruct the subset
+    BEGIN POLYGON
+      BEGIN VERTICES
+        130 423
+        252 366
+        266 402
+        148 460
+      END VERTICES
+    END POLYGON
+  END OBSTRUCTED
+  BEGIN BLOCKING_SUBSETS # (optional) list of other subset global ids that could block this one
+    0  # one subset per line
+    4  # the ids are assigned as the order of the subset centroid coordinates vector
+  END BLOCKING_SUBSETS
+END CONFORMAL_SUBSET

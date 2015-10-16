@@ -804,7 +804,6 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
        }
        else if(tokens[1]==parser_conformal_subset){
          int_t subset_id = -1;
-         scalar_t auto_detection_factor = -1.0;
          bool has_seed = false;
          scalar_t seed_disp_x = 0.0;
          scalar_t seed_disp_y = 0.0;
@@ -940,7 +939,6 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          }
          info->conformal_area_defs->insert(std::pair<int_t,DICe::Conformal_Area_Def>(subset_id,conformal_area_def));
          info->data_map->insert(std::pair<int_t,std::vector<int_t> >(subset_id,blocking_ids));
-         info->auto_obstruction_detection_factors_map->insert(std::pair<int_t,scalar_t >(subset_id,auto_detection_factor));
          if(has_seed){
            info->seed_subset_ids->insert(std::pair<int_t,int_t>(subset_id,subset_id)); // treating each conformal subset as an roi TODO fix this awkwardness
            info->displacement_map->insert(std::pair<int_t,std::pair<scalar_t,scalar_t> >(subset_id,std::pair<scalar_t,scalar_t>(seed_disp_x,seed_disp_y)));

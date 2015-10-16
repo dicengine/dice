@@ -1,0 +1,4 @@
+<ParameterList>
+  <Parameter name="correlation_routine" type="string" value="SL_ROUTINE" />
+  <Parameter name="output_deformed_subset_images" type="bool" value="false" />
+</ParameterList>

@@ -197,5 +197,6 @@ MESSAGE(STATUS "DICe CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 MESSAGE(STATUS "DICe CMAKE_C_FLAGS: ${CMAKE_C_FLAGS}")
 
 add_subdirectory(src)
+add_subdirectory(tools)
 add_subdirectory(tests)
 

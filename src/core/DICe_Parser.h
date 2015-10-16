@@ -143,7 +143,6 @@ Subset_File_Info {
     data_vector = Teuchos::rcp(new std::vector<int_t>());
     neighbor_vector = Teuchos::rcp(new std::vector<int_t>());
     data_map = Teuchos::rcp(new std::map<int_t,std::vector<int_t> >());
-    auto_obstruction_detection_factors_map = Teuchos::rcp(new std::map<int_t,scalar_t>());
     size_map = Teuchos::rcp(new std::map<int_t,std::pair<int_t,int_t> >());
     displacement_map = Teuchos::rcp(new std::map<int_t,std::pair<scalar_t,scalar_t> >());
     normal_strain_map = Teuchos::rcp(new std::map<int_t,std::pair<scalar_t,scalar_t> >());
@@ -160,8 +159,6 @@ Subset_File_Info {
   Teuchos::RCP<std::vector<int_t> > neighbor_vector;
   /// Pointer to list of vectors
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > data_map;
-  /// Pointer to list of auto_obstruction_detection_factors
-  Teuchos::RCP<std::map<int_t,scalar_t> > auto_obstruction_detection_factors_map;
   /// Type of information (subset or region of interest)
   Subset_File_Info_Type type;
   /// Pointer to a map of std::pairs of size values

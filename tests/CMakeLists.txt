@@ -23,12 +23,17 @@ FOREACH ( img_file ${img_files} )
     FILE(COPY ${img_file} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/component/images/ )
 ENDFOREACH ( )
 
-add_subdirectory(performance)
+#  Regression Tests:
+#  Test DICe on full dataset analysis
+#  These test use many of the components tested above
+#
+add_subdirectory(regression)
 
 #  Performance Tests:
 #  Tests the performance of DICe algorithms on the given architecture
 #  These are not run as part of the regression or component tests with ctest 
 #
+add_subdirectory(performance)
 
 # copy the image files to the build dir
 FILE ( GLOB img_files "${CMAKE_CURRENT_SOURCE_DIR}/performance/images/*.*")

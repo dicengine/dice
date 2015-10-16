@@ -48,3 +48,13 @@ install(FILES ${DICE_HEADERS}
 install(TARGETS dicecore
   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
+
+#
+# Main standalone executable
+#
+add_executable(dice_main DICe_Main.cpp)
+set_target_properties(dice_main PROPERTIES OUTPUT_NAME "dice")
+target_link_libraries(dice_main ${DICE_LIBRARIES} ${Boost_LIBRARIES} dicecore dicecine)
+target_compile_definitions(dice_main PRIVATE -D DICE_LIB_EXPORTS_MODE)
+
+install(TARGETS dice_main DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
