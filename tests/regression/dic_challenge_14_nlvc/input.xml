@@ -1,0 +1,14 @@
+<ParameterList>
+  <Parameter name="output_folder" type="string" value="./results/" />  
+  <Parameter name="output_prefix" type="string" value="dic_challenge_14" />
+  <Parameter name="image_folder" type="string" value="./images/" />  
+  <Parameter name="correlation_parameters_file" type="string" value="params.xml" />
+  <Parameter name="subset_size" type="int" value="35" />  
+  <Parameter name="step_size" type="int" value="25" />  
+  <Parameter name="reference_image" type="string" value="Sample14 Reference.tif" />
+  <ParameterList name="deformed_images">
+    <Parameter name="Sample14 L1 Amp0.1b.tif" type="bool" value="true" />
+    <Parameter name="Sample14 L3 Amp0.1b.tif" type="bool" value="true" />
+    <Parameter name="Sample14 L5 Amp0.1b.tif" type="bool" value="true" />
+  </ParameterList>
+</ParameterList>

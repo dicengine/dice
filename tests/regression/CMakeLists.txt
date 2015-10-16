@@ -45,7 +45,7 @@ ENDFOREACH ( )
 SET(AVERAGE_DIFF_TESTS
   dic_challenge_5_znssd
   dic_challenge_14_vsg
-  #dic_challenge_14_nlvc
+  dic_challenge_14_nlvc
   #dic_challenge_14_keys4
   #dic_challenge_14_spline
   #dic_challenge_15
