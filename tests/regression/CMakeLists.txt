@@ -9,7 +9,7 @@
 SET(REGRESSION_TESTS
   single_speckled_shift
   conformal_subset_def
-#  dic_challenge_12
+  dic_challenge_12
 #  obstructions
 )
 

@@ -1,0 +1,15 @@
+beGIN REGION_OF_INTEREST
+  BEGIN BOUNDARY
+    BEGIN RECTANGLE
+      Center 195 517
+      Width 313
+      Height 977
+    end RECTANGLE
+  END BOUNDARY
+  BEGIN EXCLUDED
+    BEGIN Circle
+      center 194 543
+      radius 51
+    End
+  END EXCLUDED
+END REGION_OF_INTEREST
