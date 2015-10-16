@@ -1808,105 +1808,104 @@ Schema::check_for_blocking_subsets_new(const int_t subset_global_id){
 
 void
 Schema::write_deformed_subsets_image(){
-//#ifndef DICE_DISABLE_BOOST_FILESYSTEM
-//  if(obj_vec_.empty()) return;
-//  // if the subset_images folder does not exist, create it
-//  // TODO allow user to specify where this goes
-//  // If the dir is already there this step becomes a no-op
-//  DEBUG_MSG("Attempting to create directory : ./deformed_subsets/");
-//  std::string dirStr = "./deformed_subsets/";
-//  boost::filesystem::path dir(dirStr);
-//  if(boost::filesystem::create_directory(dir)) {
-//    DEBUG_MSG("Directory successfully created");
-//  }
-//
-//  int_t num_zeros = 0;
-//  if(num_image_frames_>0){
-//    int_t num_digits_total = 0;
-//    int_t num_digits_image = 0;
-//    int_t decrement_total = num_image_frames_;
-//    int_t decrement_image = image_frame_;
-//    while (decrement_total){decrement_total /= 10; num_digits_total++;}
-//    if(image_frame_==0) num_digits_image = 1;
-//    else
-//      while (decrement_image){decrement_image /= 10; num_digits_image++;}
-//    num_zeros = num_digits_total - num_digits_image;
-//  }
-//  const int_t proc_id = comm_->get_rank();
-//  std::stringstream ss;
-//  ss << dirStr << "def_subsets_p_" << proc_id << "_";
-//  for(int_t i=0;i<num_zeros;++i)
-//    ss << "0";
-//  ss << image_frame_;
-//
-//  // construct a copy of the base image to use as layer 0 for the output;
-//
-//  const int_t w = def_img_->width();
-//  const int_t h = def_img_->height();
-//
-//  Teuchos::ArrayRCP<scalar_t> intensities(w*h,0.0);
-//  for(int_t i=0;i<w*h;++i)
-//    intensities[i] = def_img_->intensities()[i];
-//
-//  int_t x=0,y=0;
-//  int_t ox=0,oy=0;
-//  int_t dx=0,dy=0;
-//  scalar_t X=0.0,Y=0.0;
-//
-//  // create output for each subset
-//  //for(int_t subset=0;subset<1;++subset){
-//  for(int_t subset=0;subset<obj_vec_.size();++subset){
-//    const int_t gid = obj_vec_[subset]->correlation_point_global_id();
-//    //if(gid==1) continue;
-//    // get the deformation vector for each subset
-//    const scalar_t u     = local_field_value(gid,DICe::DISPLACEMENT_X);
-//    const scalar_t v     = local_field_value(gid,DICe::DISPLACEMENT_Y);
-//    const scalar_t theta = local_field_value(gid,DICe::ROTATION_Z);
-//    const scalar_t dudx  = local_field_value(gid,DICe::NORMAL_STRAIN_X);
-//    const scalar_t dvdy  = local_field_value(gid,DICe::NORMAL_STRAIN_Y);
-//    const scalar_t gxy   = local_field_value(gid,DICe::SHEAR_STRAIN_XY);
-//
-//    DEBUG_MSG("Write deformed subset " << gid << " u " << u << " v " << v << " theta " << theta << " dudx " << dudx << " dvdy " << dvdy << " gxy " << gxy);
-//
-//    Teuchos::RCP<DICe::Subset> ref_subset = obj_vec_[subset]->get_ref_subset();
-//
-//    ox = ref_subset->centroid_x();
-//    oy = ref_subset->centroid_y();
-//
-//    // loop over each pixel in the subset
-//    for(int_t px=0;px<ref_subset->num_pixels();++px){
-//      x = ref_subset->x(px);
-//      y = ref_subset->y(px);
-//      // stretch and shear the coordinate
-//      dx = (1.0+dudx)*x + gxy*y;
-//      dy = (1.0+dvdy)*y + gxy*x;
-//      // Rotation                             // translation // convert to global coordinates
-//      X = std::cos(theta)*dx - std::sin(theta)*dy + u            + ox;
-//      Y = std::sin(theta)*dx + std::cos(theta)*dy + v            + oy;
-//      X = static_cast<int_t>(X);
-//      Y = static_cast<int_t>(Y);
-//      if(X>=0&&X<w&&Y>=0&&Y<h){
+#ifndef DICE_DISABLE_BOOST_FILESYSTEM
+  if(obj_vec_.empty()) return;
+  // if the subset_images folder does not exist, create it
+  // TODO allow user to specify where this goes
+  // If the dir is already there this step becomes a no-op
+  DEBUG_MSG("Attempting to create directory : ./deformed_subsets/");
+  std::string dirStr = "./deformed_subsets/";
+  boost::filesystem::path dir(dirStr);
+  if(boost::filesystem::create_directory(dir)) {
+    DEBUG_MSG("Directory successfully created");
+  }
+
+  int_t num_zeros = 0;
+  if(num_image_frames_>0){
+    int_t num_digits_total = 0;
+    int_t num_digits_image = 0;
+    int_t decrement_total = num_image_frames_;
+    int_t decrement_image = image_frame_;
+    while (decrement_total){decrement_total /= 10; num_digits_total++;}
+    if(image_frame_==0) num_digits_image = 1;
+    else
+      while (decrement_image){decrement_image /= 10; num_digits_image++;}
+    num_zeros = num_digits_total - num_digits_image;
+  }
+  const int_t proc_id = comm_->get_rank();
+  std::stringstream ss;
+  ss << dirStr << "def_subsets_p_" << proc_id << "_";
+  for(int_t i=0;i<num_zeros;++i)
+    ss << "0";
+  ss << image_frame_;
+
+  // construct a copy of the base image to use as layer 0 for the output;
+
+  const int_t w = def_img_->width();
+  const int_t h = def_img_->height();
+
+  Teuchos::ArrayRCP<intensity_t> intensities = def_img_->intensity_array();
+
+  int_t x=0,y=0;
+  int_t ox=0,oy=0;
+  int_t dx=0,dy=0;
+  scalar_t X=0.0,Y=0.0;
+
+  // create output for each subset
+  //for(int_t subset=0;subset<1;++subset){
+  for(int_t subset=0;subset<obj_vec_.size();++subset){
+    const int_t gid = obj_vec_[subset]->correlation_point_global_id();
+    //if(gid==1) continue;
+    // get the deformation vector for each subset
+    const scalar_t u     = local_field_value(gid,DICe::DISPLACEMENT_X);
+    const scalar_t v     = local_field_value(gid,DICe::DISPLACEMENT_Y);
+    const scalar_t theta = local_field_value(gid,DICe::ROTATION_Z);
+    const scalar_t dudx  = local_field_value(gid,DICe::NORMAL_STRAIN_X);
+    const scalar_t dvdy  = local_field_value(gid,DICe::NORMAL_STRAIN_Y);
+    const scalar_t gxy   = local_field_value(gid,DICe::SHEAR_STRAIN_XY);
+
+    DEBUG_MSG("Write deformed subset " << gid << " u " << u << " v " << v << " theta " << theta << " dudx " << dudx << " dvdy " << dvdy << " gxy " << gxy);
+
+    Teuchos::RCP<DICe::Subset> ref_subset = obj_vec_[subset]->subset();
+
+    ox = ref_subset->centroid_x();
+    oy = ref_subset->centroid_y();
+
+    // loop over each pixel in the subset
+    for(int_t px=0;px<ref_subset->num_pixels();++px){
+      x = ref_subset->x(px);
+      y = ref_subset->y(px);
+      // stretch and shear the coordinate
+      dx = (1.0+dudx)*x + gxy*y;
+      dy = (1.0+dvdy)*y + gxy*x;
+      // Rotation                             // translation // convert to global coordinates
+      X = std::cos(theta)*dx - std::sin(theta)*dy + u            + ox;
+      Y = std::sin(theta)*dx + std::cos(theta)*dy + v            + oy;
+      X = static_cast<int_t>(X);
+      Y = static_cast<int_t>(Y);
+      // TODO add checks for is deactivated
+      if(X>=0&&X<w&&Y>=0&&Y<h){
 //        if(!ref_subset->is_active(px)){
 //          intensities[Y*w+X] = 75;
 //        }
 //        else{
-//          // color shows correlation quality
-//          intensities[Y*w+X] = ref_subset->per_pixel_gamma(px)*85000;
+          // color shows correlation quality
+          intensities[Y*w+X] = 100;//ref_subset->per_pixel_gamma(px)*85000;
 //        }
-//        // trun all deactivated pixels white
+        // trun all deactivated pixels white
 //        if(ref_subset->is_deactivated_this_step(px)){
 //          intensities[Y*w+X] = 255;
 //        }
-//      }
-//    } // pixel loop
-//
-//  } // subset loop
-//
-//  Teuchos::RCP<Image> layer_0_image = Teuchos::rcp(new Image(w,h,intensities));
-//  layer_0_image->write_tiff(ss.str());
-//#else
-//  DEBUG_MSG("Warning, write_deformed_image() was called, but Boost::filesystem is not enabled making this a no-op.");
-//#endif
+      }
+    } // pixel loop
+
+  } // subset loop
+
+  Teuchos::RCP<Image> layer_0_image = Teuchos::rcp(new Image(w,h,intensities));
+  layer_0_image->write_tiff(ss.str());
+#else
+  DEBUG_MSG("Warning, write_deformed_image() was called, but Boost::filesystem is not enabled making this a no-op.");
+#endif
 }
 
 
