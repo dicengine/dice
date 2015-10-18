@@ -197,6 +197,8 @@ DICE_LIB_DLL_EXPORT void sl_default_params(Teuchos::ParameterList *  defaultPara
   defaultParams->set(DICe::use_objective_regularization,false);
   defaultParams->set(DICe::pixel_integration_order,1);
   defaultParams->set(DICe::skip_solve_gamma_threshold,1.0E-10);
+  defaultParams->set(DICe::rotate_ref_image_180,false);
+  defaultParams->set(DICe::rotate_def_image_180,false);
 }
 
 DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultParams){
@@ -233,6 +235,8 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::use_objective_regularization,false);
   defaultParams->set(DICe::pixel_integration_order,1);
   defaultParams->set(DICe::skip_solve_gamma_threshold,1.0E-10);
+  defaultParams->set(DICe::rotate_ref_image_180,false);
+  defaultParams->set(DICe::rotate_def_image_180,false);
 }
 
 }// End DICe Namespace

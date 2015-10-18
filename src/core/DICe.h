@@ -191,6 +191,10 @@ const char* const normalize_gamma_with_active_pixels = "normalize_gamma_with_act
 const char* const use_objective_regularization = "use_objective_regularization";
 /// String parameter name
 const char* const pixel_integration_order = "pixel_integration_order";
+/// String parameter name
+const char* const rotate_ref_image_180 = "rotate_ref_image_180";
+/// String parameter name
+const char* const rotate_def_image_180 = "rotate_def_image_180";
 
 /// enums:
 enum Subset_View_Target{
@@ -568,6 +572,16 @@ struct Correlation_Parameter {
 };
 
 /// Correlation parameter and properties
+const Correlation_Parameter rotate_ref_image_180_param(rotate_ref_image_180,
+  BOOL_PARAM,
+  true,
+  "True if the reference image should be rotated 180 degrees.");
+/// Correlation parameter and properties
+const Correlation_Parameter rotate_def_image_180_param(rotate_def_image_180,
+  BOOL_PARAM,
+  true,
+  "True if deformed image(s) should be rotated 180 degrees.");
+/// Correlation parameter and properties
 const Correlation_Parameter image_grad_use_hierarchical_parallelism_param(image_grad_use_hierarchical_parallelism,
   BOOL_PARAM,
   true,
@@ -816,7 +830,7 @@ const Correlation_Parameter compute_image_gradients_param(compute_image_gradient
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 48;
+const int_t num_valid_correlation_params = 50;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -866,7 +880,9 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   image_grad_team_size_param,
   gauss_filter_use_hierarchical_parallelism_param,
   gauss_filter_team_size_param,
-  gauss_filter_mask_size_param
+  gauss_filter_mask_size_param,
+  rotate_ref_image_180_param,
+  rotate_def_image_180_param
 };
 
 // TODO don't forget to update this when adding a new one

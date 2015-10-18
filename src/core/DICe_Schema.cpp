@@ -79,10 +79,18 @@ Schema::Schema(const std::string & refName,
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   prev_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
+  Teuchos::RCP<std::vector<scalar_t> > def180 = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+  (*def180)[ROTATION_Z] = DICE_PI;
+  if(rotate_ref_image_180_){
+    ref_img_->apply_transformation(def180,true);
+    prev_img_->apply_transformation(def180,true);
+  }
   // (the compute_image_gradients param is used by the image constructor)
   imgParams->set(DICe::compute_image_gradients,compute_def_gradients_);
   def_img_ = Teuchos::rcp( new Image(defName.c_str(),imgParams));
-
+  if(rotate_def_image_180_){
+    def_img_->apply_transformation(def180,true);
+  }
   const int_t width = ref_img_->width();
   const int_t height = ref_img_->height();
   // require that the images are the same size
@@ -107,10 +115,18 @@ Schema::Schema(const int_t img_width,
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   ref_img_ = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
   prev_img_ = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
+  Teuchos::RCP<std::vector<scalar_t> > def180 = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+  (*def180)[ROTATION_Z] = DICE_PI;
+  if(rotate_ref_image_180_){
+    ref_img_->apply_transformation(def180,true);
+    prev_img_->apply_transformation(def180,true);
+  }
   // (the compute_image_gradients param is used by the image constructor)
   imgParams->set(DICe::compute_image_gradients,compute_def_gradients_);
   def_img_ = Teuchos::rcp( new Image(img_width,img_height,defRCP,imgParams));
-
+  if(rotate_def_image_180_){
+    def_img_->apply_transformation(def180,true);
+  }
   // require that the images are the same size
   assert(!(img_width<=0||img_width!=def_img_->width()) && "  DICe ERROR: Images must be the same width and nonzero.");
   assert(!(img_height<=0||img_height!=def_img_->height()) && "  DICe ERROR: Images must be the same height and nonzero.");
@@ -134,18 +150,37 @@ Schema::Schema(Teuchos::RCP<Image> ref_img,
   ref_img_ = ref_img;
   def_img_ = def_img;
   prev_img_ = ref_img;
+  Teuchos::RCP<std::vector<scalar_t> > def180 = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+  (*def180)[ROTATION_Z] = DICE_PI;
+  if(rotate_ref_image_180_){
+    ref_img_->apply_transformation(def180,true);
+    prev_img_->apply_transformation(def180,true);
+  }
+  if(rotate_def_image_180_){
+    def_img_->apply_transformation(def180,true);
+  }
 }
 
 void
 Schema::set_def_image(const std::string & defName){ // TODO add option to pass params here
   DEBUG_MSG("Schema: Resetting the deformed image");
   def_img_ = Teuchos::rcp( new Image(defName.c_str()));
+  if(rotate_def_image_180_){
+    Teuchos::RCP<std::vector<scalar_t> > def180 = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+    (*def180)[ROTATION_Z] = DICE_PI;
+    def_img_->apply_transformation(def180,true);
+  }
 }
 
 void
 Schema::set_def_image(Teuchos::RCP<Image> img){ // TODO add option to pass params here
   DEBUG_MSG("Schema: Resetting the deformed image");
   def_img_ = img;
+  if(rotate_def_image_180_){
+    Teuchos::RCP<std::vector<scalar_t> > def180 = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+    (*def180)[ROTATION_Z] = DICE_PI;
+    def_img_->apply_transformation(def180,true);
+  }
 }
 
 void
@@ -156,12 +191,22 @@ Schema::set_def_image(const int_t img_width,
   assert(img_width>0);
   assert(img_height>0);
   def_img_ = Teuchos::rcp( new Image(img_width,img_height,defRCP)); // TODO add option to pass params to image here
+  if(rotate_def_image_180_){
+    Teuchos::RCP<std::vector<scalar_t> > def180 = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+    (*def180)[ROTATION_Z] = DICE_PI;
+    def_img_->apply_transformation(def180,true);
+  }
 }
 
 void
 Schema::set_ref_image(const std::string & refName){ // TODO add option to pass params here
   DEBUG_MSG("Schema:  Resetting the reference image");
   ref_img_ = Teuchos::rcp( new Image(refName.c_str()));
+  if(rotate_ref_image_180_){
+    Teuchos::RCP<std::vector<scalar_t> > def180 = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+    (*def180)[ROTATION_Z] = DICE_PI;
+    ref_img_->apply_transformation(def180,true);
+  }
 }
 
 void
@@ -172,6 +217,11 @@ Schema::set_ref_image(const int_t img_width,
   assert(img_width>0);
   assert(img_height>0);
   ref_img_ = Teuchos::rcp( new Image(img_width,img_height,refRCP)); // TODO add option to pass params to image here
+  if(rotate_ref_image_180_){
+    Teuchos::RCP<std::vector<scalar_t> > def180 = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+    (*def180)[ROTATION_Z] = DICE_PI;
+    ref_img_->apply_transformation(def180,true);
+  }
 }
 
 void
@@ -345,6 +395,10 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     DEBUG_MSG("Obstructed pixel information will be updated each iteration.");
   assert(diceParams->isParameter(DICe::normalize_gamma_with_active_pixels));
   normalize_gamma_with_active_pixels_ = diceParams->get<bool>(DICe::normalize_gamma_with_active_pixels);
+  assert(diceParams->isParameter(DICe::rotate_ref_image_180));
+  rotate_ref_image_180_ = diceParams->get<bool>(DICe::rotate_ref_image_180);
+  assert(diceParams->isParameter(DICe::rotate_def_image_180));
+  rotate_def_image_180_ = diceParams->get<bool>(DICe::rotate_def_image_180);
   if(normalize_gamma_with_active_pixels_)
     DEBUG_MSG("Gamma values will be normalized by the number of active pixels.");
 
