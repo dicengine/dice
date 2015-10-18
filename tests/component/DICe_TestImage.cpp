@@ -252,7 +252,7 @@ int main(int argc, char *argv[]) {
   (*def)[DISPLACEMENT_X] = u;
   (*def)[DISPLACEMENT_Y] = v;
   (*def)[ROTATION_Z] = theta;
-  Teuchos::RCP<Image> trans_baboon = baboon.apply_transformation(cx,cy,def);
+  Teuchos::RCP<Image> trans_baboon = baboon.apply_transformation(def,false,cx,cy);
   //trans_baboon->write_rawi("baboon_trans.rawi");
   //trans_baboon->write_tiff("baboon_trans.tif");
   Teuchos::RCP<Image> trans_baboon_exact = Teuchos::rcp(new Image("./images/baboon_trans.rawi"));
@@ -261,6 +261,18 @@ int main(int argc, char *argv[]) {
   *outStream << "image diff trans baboon: " << diff_trans_baboon << std::endl;
   if(diff_trans_baboon > mask_tol){
     *outStream << "Error, the transformed image does not have the right intensities" << std::endl;
+    errorFlag++;
+  }
+
+  *outStream << "testing 180 rotation in place" << std::endl;
+  Teuchos::RCP<std::vector<scalar_t> > in_place_def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+  (*in_place_def)[ROTATION_Z] = DICE_PI;
+  baboon.apply_transformation(in_place_def,true);
+  //baboon.write_rawi("baboon_180.rawi");
+  Teuchos::RCP<Image> baboon_180 = Teuchos::rcp(new Image("baboon_180.rawi"));
+  const scalar_t diff_180 = baboon.diff(baboon_180);
+  if(diff_180 > mask_tol){
+    *outStream << "Error, the 180 degree transformed image does not have the right intensities." << std::endl;
     errorFlag++;
   }
   *outStream << "the transformation method for an image has been checked" << std::endl;

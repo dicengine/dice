@@ -288,14 +288,13 @@ public:
   void apply_mask(const bool smooth_edges);
 
   /// apply a transformation to this image to create another image
-  /// \param cx centroid of mapping in the current image
-  /// \param cy centroid of mapping in the current image
-  /// \param u displacement in x
-  /// \param v displacement in y
-  /// \param theta angle of rotation
-  Teuchos::RCP<Image> apply_transformation(const int_t cx,
-    const int_t cy,
-    Teuchos::RCP<const std::vector<scalar_t> > deformation) const;
+  /// \param deformation the deformation mapping parameters u,v,theta,...
+  /// \param cx centroid of mapping in the current image (used when applying rotation)
+  /// \param cy centroid of mapping in the current image (used when applying rotation)
+  Teuchos::RCP<Image> apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformation,
+    const bool apply_in_place=false,
+    int_t cx=-1,
+    int_t cy=-1);
 
   /// compute the image gradients
   void compute_gradients(const bool use_hierarchical_parallelism=false,
@@ -546,6 +545,13 @@ struct Transform_Functor{
   /// operator
   KOKKOS_INLINE_FUNCTION
   void operator()(const int_t pixel_index)const;
+  /// Tag
+  struct Rot_180_Tag {};
+  /// operator
+  /// if the requested transformation is rotation by 180 degrees,
+  /// its faster to swap the x and y indices
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const Rot_180_Tag&, const int_t pixel_index)const;
 };
 
 }// End DICe Namespace

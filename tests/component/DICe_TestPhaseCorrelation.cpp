@@ -172,8 +172,8 @@ int main(int argc, char *argv[]) {
     (*def)[ROTATION_Z] = theta;
     Teuchos::RCP<std::vector<scalar_t> > def180 = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
     (*def180)[ROTATION_Z] = theta_180;
-    Teuchos::RCP<Image> rot_ref_0 = ref->apply_transformation(w_2,h_2,def);
-    Teuchos::RCP<Image> rot_ref_180 = ref->apply_transformation(w_2,h_2,def180);
+    Teuchos::RCP<Image> rot_ref_0 = ref->apply_transformation(def);
+    Teuchos::RCP<Image> rot_ref_180 = ref->apply_transformation(def180);
     //std::stringstream transName0;
     //transName0 << "trans0_" << i << ".tif";
     //std::stringstream transName180;

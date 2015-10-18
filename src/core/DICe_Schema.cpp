@@ -1837,7 +1837,7 @@ Schema::write_deformed_subsets_image(){
   ss << dirStr << "def_subsets_p_" << proc_id << "_";
   for(int_t i=0;i<num_zeros;++i)
     ss << "0";
-  ss << image_frame_;
+  ss << image_frame_ << ".tif";
 
   // construct a copy of the base image to use as layer 0 for the output;
 
@@ -1873,8 +1873,8 @@ Schema::write_deformed_subsets_image(){
 
     // loop over each pixel in the subset
     for(int_t px=0;px<ref_subset->num_pixels();++px){
-      x = ref_subset->x(px);
-      y = ref_subset->y(px);
+      x = ref_subset->x(px) - ox;
+      y = ref_subset->y(px) - oy;
       // stretch and shear the coordinate
       dx = (1.0+dudx)*x + gxy*y;
       dy = (1.0+dvdy)*y + gxy*x;
