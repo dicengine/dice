@@ -268,7 +268,7 @@ int main(int argc, char *argv[]) {
   (*in_place_def)[ROTATION_Z] = DICE_PI;
   baboon.apply_transformation(in_place_def,true);
   //baboon.write_rawi("baboon_180.rawi");
-  Teuchos::RCP<Image> baboon_180 = Teuchos::rcp(new Image("baboon_180.rawi"));
+  Teuchos::RCP<Image> baboon_180 = Teuchos::rcp(new Image("./images/baboon_180.rawi"));
   const scalar_t diff_180 = baboon.diff(baboon_180);
   if(diff_180 > mask_tol){
     *outStream << "Error, the 180 degree transformed image does not have the right intensities." << std::endl;
