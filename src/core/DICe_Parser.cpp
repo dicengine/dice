@@ -166,7 +166,7 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
 
    // make sure that a subset file was defined:
    bool required_param_missing = false;
-   for(int_t i=0;i<required_params.size();++i){
+   for(size_t i=0;i<required_params.size();++i){
      if(!inputParams->isParameter(required_params[i].first)){
        std::cout << "Error: The parameter " << required_params[i].first << " of type " <<
            required_params[i].second << " must be defined in " << input_file << std::endl;
@@ -530,7 +530,7 @@ Teuchos::RCP<DICe::Polygon> read_polygon(std::fstream &dataFile){
   assert(!vertices_y.empty());
   assert(vertices_x.size()==vertices_y.size());
   if(proc_rank==0) DEBUG_MSG("Creating a polygon with " << vertices_x.size() << " vertices");
-  for(int_t i=0;i<vertices_x.size();++i){
+  for(size_t i=0;i<vertices_x.size();++i){
     if(proc_rank==0) DEBUG_MSG("vx " << vertices_x[i] << " vy " << vertices_y[i] );
   }
   Teuchos::RCP<DICe::Polygon> shape = Teuchos::rcp(new DICe::Polygon(vertices_x,vertices_y));
@@ -681,7 +681,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          assert(info->data_vector->size()>=2);
          assert(info->data_vector->size()/2==info->neighbor_vector->size());
          assert(info->data_vector->size()%2==0);
-         for(int_t i=0;i<info->data_vector->size()/dim;++i){
+         for(int_t i=0;i<(int_t)info->data_vector->size()/dim;++i){
            if((*info->data_vector)[i*dim]<0||(*info->data_vector)[i*dim]>=width){
              std::cout << "Error: invalid subset coordinate in " << fileName << " x: "  << (*info->data_vector)[i*dim] << std::endl;
              assert(false);
@@ -911,7 +911,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  assert(is_number(id_tokens[0]));
                  blocking_ids.push_back(atoi(id_tokens[0].c_str()));
                }
-               for(int_t i=0;i<blocking_ids.size();++i)
+               for(size_t i=0;i<blocking_ids.size();++i)
                  if(proc_rank==0) DEBUG_MSG("Subset is blocked by " << blocking_ids[i]);
              }
              else{
@@ -1155,13 +1155,13 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
     std::set<std::pair<int_t,int_t> > coords;
     std::set<std::pair<int_t,int_t> > excluded_coords;
     // collect the coords of all the boundary shapes
-    for(int_t i=0;i<map_it->second.boundary()->size();++i){
+    for(size_t i=0;i<map_it->second.boundary()->size();++i){
       std::set<std::pair<int_t,int_t> > shapeCoords = (*map_it->second.boundary())[i]->get_owned_pixels();
       coords.insert(shapeCoords.begin(),shapeCoords.end());
     }
     // collect the coords of all the exclusions
     if(map_it->second.has_excluded_area()){
-      for(int_t i=0;i<map_it->second.excluded_area()->size();++i){
+      for(size_t i=0;i<map_it->second.excluded_area()->size();++i){
         std::set<std::pair<int_t,int_t> > shapeCoords = (*map_it->second.excluded_area())[i]->get_owned_pixels();
         excluded_coords.insert(shapeCoords.begin(),shapeCoords.end());
       }
@@ -1383,7 +1383,7 @@ void generate_template_input_files(const std::string & file_prefix){
   for(int_t i=0;i<MAX_FIELD_NAME;++i){
     std::stringstream iToStr;
     iToStr << i;
-    write_xml_size_param(paramsFile,fieldNameStrings[i],iToStr.str());
+    write_xml_size_param(paramsFile,to_string(static_cast<Field_Name>(i)),iToStr.str());
   }
   write_xml_param_list_close(paramsFile);
 

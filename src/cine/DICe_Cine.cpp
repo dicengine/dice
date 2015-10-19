@@ -164,13 +164,8 @@ Cine_Reader::get_frames(const int_t frame_index_start, const int_t frame_index_e
   cine_file.read(buffer,buffer_size);
 
   // cast the buffer to the approprate type (and size of each element)
-  uint8_t * buff_ptr_8;
-  uint16_t * buff_ptr_16;
-  if(bit_depth==8 || bit_depth==10)
-    buff_ptr_8 = reinterpret_cast<uint8_t*>(buffer);
-  else
-    buff_ptr_16 = reinterpret_cast<uint16_t*>(buffer);
-
+  uint8_t * buff_ptr_8 = reinterpret_cast<uint8_t*>(buffer);
+  uint16_t * buff_ptr_16 = reinterpret_cast<uint16_t*>(buffer);
   int_t max_chunk = cine_header_->bitmap_header_.biSizeImage / 5; // 5 bytes per chunk for 10 bit packed
 
   // serial version
@@ -382,7 +377,7 @@ read_cine_headers(const char *file, std::ostream * out_stream){
 
   // read the image offsets:
   cine_file.seekg(header.OffImageOffsets);
-  for (int i=0;i<header.ImageCount;++i){
+  for (size_t i=0;i<header.ImageCount;++i){
     int64_t offset;
     cine_file.read(reinterpret_cast<char*>(&offset), sizeof(offset));
     cine_header->image_offsets_[i] = offset;

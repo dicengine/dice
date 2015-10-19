@@ -167,8 +167,8 @@ phase_correlate_x_y(Teuchos::RCP<Image> image_a,
   array_2d_fft_in_place(w,h,FFTRN_r,FFTRN_i,1);
 
 //  std::cout << " FFTRN " << std::endl;
-//  for(size_t i=0;i<h;++i){
-//    for(size_t j=0;j<w;++j){
+//  for(int_t i=0;i<h;++i){
+//    for(int_t j=0;j<w;++j){
 //      std::cout << FFTRN_r[i*w+j] << "+"<< FFTRN_i[i*w+j] << "j " << std::endl;
 //    }
 //    std::cout << std::endl;
@@ -345,7 +345,7 @@ phase_correlate_row(Teuchos::RCP<Image> image_a,
   u = 0;
   scalar_t max_value = 0.0;
   scalar_t value = 0.0;
-  for(size_t i=0;i<w;++i){
+  for(int_t i=0;i<w;++i){
     value = std::abs(FFTRN_r[i]);
     if(value > max_value){
       max_value = value;
@@ -450,8 +450,8 @@ image_fft(Teuchos::RCP<Image> image,
 
   int_t index = 0;
   Teuchos::ArrayRCP<intensity_t> mag(w*h,0.0);
-  for(size_t j=0;j<h;++j){
-    for(size_t i=0;i<w;++i){
+  for(int_t j=0;j<h;++j){
+    for(int_t i=0;i<w;++i){
       mag[index] = std::sqrt(real[index]*real[index] + complex[index]*complex[index]);
       if(apply_log)
         mag[index] = scale_factor*std::log(mag[index]+1);
@@ -464,7 +464,7 @@ image_fft(Teuchos::RCP<Image> image,
   // scale the image to fit in 8-bit output range
   assert(max_mag - min_mag > 0);
   scalar_t factor = 255.0/(max_mag - min_mag);
-  for(size_t i=0;i<w*h;++i)
+  for(int_t i=0;i<w*h;++i)
     mag[i] = (mag[i]-min_mag)*factor;
 
   if(shift){

@@ -95,8 +95,8 @@ int main(int argc, char *argv[]) {
 
   // create an image of the mask
   Teuchos::ArrayRCP<intensity_t> mask_values(img->height()*img->width(),0.0);
-  for(size_t y=0;y<img->height();++y)
-    for(size_t x=0;x<img->width();++x)
+  for(int_t y=0;y<img->height();++y)
+    for(int_t x=0;x<img->width();++x)
       mask_values[y*img->width()+x] = img->mask(x,y);
   Image mask(img->width(),img->height(),mask_values);
   //mask_img->write_rawi("mask.rawi");

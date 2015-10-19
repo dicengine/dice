@@ -93,8 +93,8 @@ Schema::Schema(const std::string & refName,
   const int_t width = ref_img_->width();
   const int_t height = ref_img_->height();
   // require that the images are the same size
-  assert(width==def_img_->width() && "  DICe ERROR: Images must be the same width.");
-  assert(height==def_img_->height() && "  DICe ERROR: Images must be the same height.");
+  TEUCHOS_TEST_FOR_EXCEPTION(width!=def_img_->width(),std::runtime_error,"  DICe ERROR: Images must be the same width.");
+  TEUCHOS_TEST_FOR_EXCEPTION(height!=def_img_->height(),std::runtime_error,"  DICe ERROR: Images must be the same height.");
 }
 
 Schema::Schema(const int_t img_width,
@@ -529,9 +529,6 @@ Schema::initialize(const int_t num_pts,
   data_num_points_ = num_pts;
   subset_dim_ = subset_size;
 
-  const int_t proc_id = comm_->get_rank();
-  const int_t num_procs = comm_->get_size();
-
   // evenly distributed one-to-one map
   dist_map_ = Teuchos::rcp(new MultiField_Map(data_num_points_,0,*comm_));
 
@@ -573,12 +570,12 @@ Schema::initialize(const int_t num_pts,
     assert(it->first < data_num_points_);
   }
   // ensure that a subset size was specified if not all subsets are conformal:
-  if(analysis_type_==LOCAL_DIC&&conformal_subset_defs_->size()<data_num_points_){
+  if(analysis_type_==LOCAL_DIC&&(int_t)conformal_subset_defs_->size()<data_num_points_){
     assert(subset_size > 0);
   }
 
   // initialize the post processors
-  for(int_t i=0;i<post_processors_.size();++i)
+  for(size_t i=0;i<post_processors_.size();++i)
     post_processors_[i]->initialize();
 
   is_initialized_ = true;
@@ -610,7 +607,7 @@ Schema::create_obstruction_dist_map(){
   typename std::map<int_t,std::vector<int_t> >::iterator map_it = obstructing_subset_ids_->begin();
   for(;map_it!=obstructing_subset_ids_->end();++map_it){
     int_t greatest_subset_id_among_obst = 0;
-    for(int_t j=0;j<map_it->second.size();++j)
+    for(size_t j=0;j<map_it->second.size();++j)
       if(map_it->second[j] > greatest_subset_id_among_obst) greatest_subset_id_among_obst = map_it->second[j];
     earliest_id_can_appear.insert(std::pair<int_t,int_t>(map_it->first,greatest_subset_id_among_obst));
 
@@ -619,7 +616,7 @@ Schema::create_obstruction_dist_map(){
     dependencies.insert(map_it->first);
     eligible_ids.erase(map_it->first);
     // gather for all the dependencies for this subset
-    for(int_t j=0;j<map_it->second.size();++j){
+    for(size_t j=0;j<map_it->second.size();++j){
       dependencies.insert(map_it->second[j]);
       eligible_ids.erase(map_it->second[j]);
     }
@@ -632,13 +629,13 @@ Schema::create_obstruction_dist_map(){
         // if any of the ids are in the current dependency list, add the whole set:
         bool match_found = false;
         if(*dep_it==search_it->first) match_found = true;
-        for(int_t k=0;k<search_it->second.size();++k){
+        for(size_t k=0;k<search_it->second.size();++k){
           if(*dep_it==search_it->second[k]) match_found = true;
         }
         if(match_found){
           dependencies.insert(search_it->first);
           eligible_ids.erase(search_it->first);
-          for(int_t k=0;k<search_it->second.size();++k){
+          for(size_t k=0;k<search_it->second.size();++k){
             dependencies.insert(search_it->second[k]);
             eligible_ids.erase(search_it->second[k]);
           }
@@ -653,7 +650,7 @@ Schema::create_obstruction_dist_map(){
   } // outer obstruction set it
   if(proc_id == 0) DEBUG_MSG("[PROC " << proc_id << "] There are " << obstruction_groups.size() << " obstruction groupings: ");
   std::stringstream ss;
-  for(int_t i=0;i<obstruction_groups.size();++i){
+  for(size_t i=0;i<obstruction_groups.size();++i){
     ss << "[PROC " << proc_id << "] Group: " << i << std::endl;
     typename std::set<int_t>::iterator j = obstruction_groups[i].begin();
     for(;j!=obstruction_groups[i].end();++j){
@@ -669,9 +666,9 @@ Schema::create_obstruction_dist_map(){
   // divy up the obstruction groups among the processors:
   int_t obst_group_gid = 0;
   std::vector<std::set<int_t> > local_subset_ids(num_procs);
-  while(obst_group_gid < obstruction_groups.size()){
+  while(obst_group_gid < (int_t)obstruction_groups.size()){
     for(int_t p_id=0;p_id<num_procs;++p_id){
-      if(obst_group_gid < obstruction_groups.size()){
+      if(obst_group_gid < (int_t)obstruction_groups.size()){
         //if(p_id==proc_id){
         local_subset_ids[p_id].insert(obstruction_groups[obst_group_gid].begin(),obstruction_groups[obst_group_gid].end());
         //}
@@ -685,7 +682,7 @@ Schema::create_obstruction_dist_map(){
     int_t proc_with_fewest_subsets = 0;
     int_t lowest_num_subsets = data_num_points_;
     for(int_t i=0;i<num_procs;++i){
-      if(local_subset_ids[i].size() <= lowest_num_subsets){
+      if((int_t)local_subset_ids[i].size() <= lowest_num_subsets){
         lowest_num_subsets = local_subset_ids[i].size();
         proc_with_fewest_subsets = i;
       }
@@ -719,7 +716,7 @@ Schema::create_obstruction_dist_map(){
   ss.str(std::string());
   ss.clear();
   ss << "[PROC " << proc_id << "] Has the following subset ids: " << std::endl;
-  for(int_t i=0;i<local_ids.size();++i){
+  for(size_t i=0;i<local_ids.size();++i){
     ss << "[PROC " << proc_id << "] " << local_ids[i] <<  std::endl;
   }
   DEBUG_MSG(ss.str());
@@ -752,7 +749,7 @@ Schema::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids){
     if(obstructing_subset_ids_!=Teuchos::null){
       if(obstructing_subset_ids_->size()>0){
         bool print_warning = false;
-        for(int_t i=0;i<neighbor_ids->size();++i){
+        for(size_t i=0;i<neighbor_ids->size();++i){
           if((*neighbor_ids)[i]!=-1) print_warning = true;
         }
         if(print_warning && proc_id==0){
@@ -782,10 +779,10 @@ Schema::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids){
     // divy up the seed_groupings round-robin style:
     int_t group_gid = 0;
     int_t local_total_id_list_size = 0;
-    while(group_gid < seed_groupings.size()){
+    while(group_gid < (int_t)seed_groupings.size()){
       // reverse the order so the subsets are computed from the seed out
       for(int_t p_id=0;p_id<num_procs;++p_id){
-        if(group_gid < seed_groupings.size()){
+        if(group_gid < (int_t)seed_groupings.size()){
           if(p_id==proc_id){
             std::reverse(seed_groupings[group_gid].begin(), seed_groupings[group_gid].end());
             local_seed_groupings.push_back(seed_groupings[group_gid]);
@@ -797,15 +794,15 @@ Schema::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids){
       }
     }
     DEBUG_MSG("[PROC " << proc_id << "] Has " << local_seed_groupings.size() << " local seed grouping(s)");
-    for(int_t i=0;i<local_seed_groupings.size();++i){
+    for(size_t i=0;i<local_seed_groupings.size();++i){
       DEBUG_MSG("[PROC " << proc_id << "] local group id: " << i);
-      for(int_t j=0;j<local_seed_groupings[i].size();++j){
+      for(size_t j=0;j<local_seed_groupings[i].size();++j){
         DEBUG_MSG("[PROC " << proc_id << "] gid: " << local_seed_groupings[i][j] );
       }
     }
     // concat local subset ids:
     local_subset_gids_grouped_by_roi.reserve(local_total_id_list_size);
-    for(int_t i=0;i<local_seed_groupings.size();++i){
+    for(size_t i=0;i<local_seed_groupings.size();++i){
       local_subset_gids_grouped_by_roi.insert( local_subset_gids_grouped_by_roi.end(),
         local_seed_groupings[i].begin(),
         local_seed_groupings[i].end());
@@ -902,7 +899,7 @@ Schema::execute_correlation(){
 
   // Complete the set up activities for the post processors
   if(image_frame_==0){
-    for(int_t i=0;i<post_processors_.size();++i){
+    for(size_t i=0;i<post_processors_.size();++i){
       post_processors_[i]->pre_execution_tasks();
     }
   }
@@ -959,7 +956,7 @@ Schema::execute_correlation(){
   sync_fields_dist_to_all();
 
   if(proc_id==0){
-    for(unsigned subset_index=0;subset_index<data_num_points_;++subset_index){
+    for(int_t subset_index=0;subset_index<data_num_points_;++subset_index){
       DEBUG_MSG("[PROC " << proc_id << "] Subset " << subset_index << " synced-up solution after execute_correlation() done, u: " <<
         field_value(subset_index,DISPLACEMENT_X) << " v: " << field_value(subset_index,DISPLACEMENT_Y)
         << " theta: " << field_value(subset_index,ROTATION_Z) << " gamma: " << field_value(subset_index,GAMMA));
@@ -971,7 +968,7 @@ Schema::execute_correlation(){
   // TODO In the future, this can be parallelized
   // Complete the set up activities for the post processors
   // TODO maybe only processor 0 does this
-  for(int_t i=0;i<post_processors_.size();++i){
+  for(size_t i=0;i<post_processors_.size();++i){
     post_processors_[i]->execute();
   }
   update_image_frame();
@@ -1756,10 +1753,10 @@ Schema::print_fields(const std::string & fileName){
     for(int_t i=0;i<data_num_points_;++i){
       std::cout << "[PROC " << proc_id << "] Control Point ID: " << i << std::endl;
       for(int_t j=0;j<DICe::MAX_FIELD_NAME;++j){
-        std::cout << "[PROC " << proc_id << "]   " << fieldNameStrings[j] <<  " " <<
+        std::cout << "[PROC " << proc_id << "]   " << to_string(static_cast<Field_Name>(j)) <<  " " <<
             field_value(i,static_cast<Field_Name>(j)) << std::endl;
         if(dist_map_->get_local_element(i)!=-1){
-          std::cout << "[PROC " << proc_id << "]   " << fieldNameStrings[j] <<  " (has distributed value)  " <<
+          std::cout << "[PROC " << proc_id << "]   " << to_string(static_cast<Field_Name>(j)) <<  " (has distributed value)  " <<
               local_field_value(i,static_cast<Field_Name>(j)) << std::endl;
         }
       }
@@ -1908,7 +1905,7 @@ Schema::write_deformed_subsets_image(){
 
   // create output for each subset
   //for(int_t subset=0;subset<1;++subset){
-  for(int_t subset=0;subset<obj_vec_.size();++subset){
+  for(size_t subset=0;subset<obj_vec_.size();++subset){
     const int_t gid = obj_vec_[subset]->correlation_point_global_id();
     //if(gid==1) continue;
     // get the deformation vector for each subset
@@ -2018,12 +2015,12 @@ Output_Spec::Output_Spec(Schema * schema,
       int_t post_processor_id = -1;
       bool paramValid = false;
       for(int_t j=0;j<MAX_FIELD_NAME;++j){
-        if(string_field_name==fieldNameStrings[j])
+        if(string_field_name==to_string(static_cast<Field_Name>(j)))
           paramValid = true;
       }
       // see if this field is in one of the post processors instead
-      for(int_t j=0;j<schema_->post_processors()->size();++j){
-        for(int_t k=0;k<(*schema_->post_processors())[j]->field_names()->size();++k){
+      for(int_t j=0;j<(int_t)schema_->post_processors()->size();++j){
+        for(int_t k=0;k<(int_t)(*schema_->post_processors())[j]->field_names()->size();++k){
           if(string_field_name==(*(*schema_->post_processors())[j]->field_names())[k]){
             paramValid = true;
             post_processor_id = j;
@@ -2109,7 +2106,7 @@ Output_Spec::write_header(std::FILE * file,
   fprintf(file,"***\n");
   if(!omit_row_id_)
     fprintf(file,"%s%s",row_id.c_str(),delimiter_.c_str());
-  for(int_t i=0;i<field_names_.size();++i){
+  for(size_t i=0;i<field_names_.size();++i){
     if(i==0)
       fprintf(file,"%s",field_names_[i].c_str());
     else
@@ -2127,7 +2124,7 @@ Output_Spec::write_frame(std::FILE * file,
   if(!omit_row_id_)
     fprintf(file,"%i%s",row_index,delimiter_.c_str());
   assert(field_names_.size()==post_processor_ids_.size());
-  for(int_t i=0;i<field_names_.size();++i)
+  for(size_t i=0;i<field_names_.size();++i)
   {
     // if the field_name is from one of the schema fields, get the information from the schema
     scalar_t value = 0.0;

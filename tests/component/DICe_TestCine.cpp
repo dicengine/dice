@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
 
   // all of these cine files should be dimensions 128 x 256 and have 6 frames each
 
-  for(int_t i=0;i<cine_files.size();++i){
+  for(size_t i=0;i<cine_files.size();++i){
     std::stringstream full_name;
     full_name << "./images/" << cine_files[i] << ".cine";
     *outStream << "testing cine file: " << full_name.str() << std::endl;

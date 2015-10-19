@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
 
   // sort the data according to either x or y:
   std::map<int_t,std::vector<scalar_t> > sortedMap;
-  for(int_t row=0;row<results.size();++row){
+  for(size_t row=0;row<results.size();++row){
     scalar_t coordReal = strtod(results[row][coord_col].c_str(),NULL);
     int_t coord = static_cast<int_t>(coordReal);
     //int_t coord = atoi(results[row][coord_col].c_str());
@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
 
   // sort the data according to either x or y:
   std::map<int_t,scalar_t> commandMap;
-  for(int_t row=0;row<command.size();++row){
+  for(size_t row=0;row<command.size();++row){
     scalar_t coordReal = strtod(command[row][command_coord_col].c_str(),NULL);
     int_t coord = static_cast<int_t>(coordReal);
     //int_t coord = atoi(command[row][command_coord_col].c_str());
@@ -227,7 +227,7 @@ int main(int argc, char *argv[]) {
   scalar_t avg_diff = 0.0;
   std::vector<scalar_t> command_values(coords.size());
   std::vector<scalar_t> diff_values(coords.size());
-  for(int_t i=0;i<avg_values.size();++i){
+  for(size_t i=0;i<avg_values.size();++i){
     if(commandMap.find(coords[i])==commandMap.end()){
       std::cout << " Averaged values for coordinate " << coords[i] << " are in the input, but not in the command file " << std::endl;
       assert(false);
@@ -247,7 +247,7 @@ int main(int argc, char *argv[]) {
   // write averaged output to file:
 
   std::FILE * filePtr = fopen(output_file.c_str(),"w"); // overwrite the file if it exists
-  for(int_t row=0;row<coords.size();++row){
+  for(size_t row=0;row<coords.size();++row){
     fprintf(filePtr,"%i %4.4E %4.4E %4.4E",coords[row],avg_values[row],command_values[row],diff_values[row]);
     fprintf(filePtr,"\n");
   }

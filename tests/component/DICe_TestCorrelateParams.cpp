@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
   colTitles.push_back("Sigma");
   colTitles.push_back("Gamma");
   colTitles.push_back("Flag");
-  for(int_t title=0;title<colTitles.size();++title){
+  for(size_t title=0;title<colTitles.size();++title){
     if((title>11&&title<15)||title>15)
       *outStream << std::setw(12) << colTitles[title];
     else
@@ -144,8 +144,8 @@ int main(int argc, char *argv[]) {
 
   // BEGIN PARAMS LOOP
 
-  for(int_t opt_method=0;opt_method<opt_methods.size();++opt_method){
-    for(int_t interp_method=0;interp_method<interp_methods.size();++interp_method){
+  for(size_t opt_method=0;opt_method<opt_methods.size();++opt_method){
+    for(size_t interp_method=0;interp_method<interp_methods.size();++interp_method){
       // set the parameters
       // change the default values
       params->set(DICe::correlation_routine,DICe::GENERIC_ROUTINE);

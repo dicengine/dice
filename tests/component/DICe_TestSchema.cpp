@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
   schemaVec.push_back(schemaArray);   //1
   schemaVec.push_back(schemaImage);   //2
 
-  for(int_t i=0;i<schemaVec.size();++i){
+  for(size_t i=0;i<schemaVec.size();++i){
     *outStream << "testing schema " << i << " params" << std::endl;
     if(schemaVec[i]->img_width()!=imgRef->width()){
       *outStream << "Error, image width is not right" << std::endl;

@@ -98,8 +98,6 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Image> ref_pol = polar_transform(ref_fft,true);
   //ref_pol->write_tiff("ref_polar.tif");
   int_t h_2 = ref_pol->height()/2;
-  int_t h_4 = ref_pol->height()/4;
-  int_t w_2 = ref_pol->width()/2;
 
   // vector with the correct solution for rotations
   std::vector<scalar_t> exact_rot(12);

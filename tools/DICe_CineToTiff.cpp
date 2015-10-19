@@ -64,9 +64,7 @@ int main(int argc, char *argv[]) {
 
   //Teuchos::oblackholestream bhs; // outputs nothing
   Teuchos::RCP<std::ostream> outStream = Teuchos::rcp(&std::cout, false);
-  int_t errorFlag  = 0;
   std::string delimiter = " ,\r";
-  bool numerical_values_only = false;
 
   if(argc==2){
     std::string help = argv[1];
@@ -113,7 +111,6 @@ int main(int argc, char *argv[]) {
   assert(end_frame<num_images);
   *outStream << "Start frame:    " << start_frame << std::endl;
   *outStream << "End frame:      " << end_frame << std::endl;
-  const int_t num_frames_requested = end_frame - start_frame + 1;
 
   for(int_t i=start_frame;i<=end_frame;++i){
     int_t num_digits_total = 0;

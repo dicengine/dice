@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
     conformal_area_defs = subset_info->conformal_area_defs;
     blocking_subset_ids = subset_info->data_map;
     num_subsets = subset_info->data_vector->size()/dim;
-    if(subset_info->conformal_area_defs->size()<num_subsets){
+    if((int_t)subset_info->conformal_area_defs->size()<num_subsets){
       // Only require this if not all subsets are conformal:
       assert(input_params->isParameter(DICe::subset_size));
       subset_size = input_params->get<int_t>(DICe::subset_size);
@@ -299,7 +299,6 @@ int main(int argc, char *argv[]) {
   const int_t end_frame = cine_end_index==-1 ? num_images : cine_end_index;
   for(int_t image_it=start_frame;image_it<=end_frame;++image_it){
     if(is_cine){
-      const int_t start_index = image_it;
       Teuchos::RCP<DICe::Image> def_image = cine_reader->get_frame(image_it,correlation_params);
       *outStream << "Processing Image: " << image_it << " of " << num_images << std::endl;
       schema->set_def_image(def_image);

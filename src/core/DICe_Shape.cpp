@@ -154,7 +154,7 @@ Polygon::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation
     scalar_t dx=0.0,dy=0.0;
     scalar_t X=0.0,Y=0.0;
     int_t new_x=0,new_y=0;
-    for(int_t i=0;i<vertex_coordinates_x_.size();++i){
+    for(size_t i=0;i<vertex_coordinates_x_.size();++i){
       int_t x = vertex_coordinates_x_[i];
       int_t y = vertex_coordinates_y_[i];
       // iterate over all the pixels in the reference blocking subset and compute the current position
@@ -172,14 +172,14 @@ Polygon::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation
     // compute the geometric centroid of the new vertices:
     int_t centroid_x = 0;
     int_t centroid_y = 0;
-    for(int_t i=0;i<verts_x.size()-1;++i){
+    for(size_t i=0;i<verts_x.size()-1;++i){
       centroid_x+=verts_x[i];
       centroid_y+=verts_y[i];
     }
     centroid_x /= (verts_x.size()-1);
     centroid_y /= (verts_y.size()-1);
     // apply the skin factor
-    for(int_t i=0;i<verts_x.size();++i){
+    for(size_t i=0;i<verts_x.size();++i){
       // add the skin to the new vertex (applied as a stretch in x and y):
       new_x = skin_factor*(verts_x[i] - centroid_x) + centroid_x;
       new_y = skin_factor*(verts_y[i] - centroid_y) + centroid_y;
@@ -362,7 +362,7 @@ Rectangle::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformati
     vertex_coordinates_y[3] = origin_y_ + height_;
     vertex_coordinates_y[4] = origin_y_;
 
-    for(int_t i=0;i<vertex_coordinates_x.size();++i){
+    for(size_t i=0;i<vertex_coordinates_x.size();++i){
       int_t x = vertex_coordinates_x[i];
       int_t y = vertex_coordinates_y[i];
       // iterate over all the pixels in the reference blocking subset and compute the current position
@@ -380,14 +380,14 @@ Rectangle::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformati
     // compute the geometric centroid of the new vertices:
     int_t centroid_x = 0;
     int_t centroid_y = 0;
-    for(int_t i=0;i<verts_x.size()-1;++i){
+    for(size_t i=0;i<verts_x.size()-1;++i){
       centroid_x+=verts_x[i];
       centroid_y+=verts_y[i];
     }
     centroid_x /= (verts_x.size()-1);
     centroid_y /= (verts_y.size()-1);
     // apply the skin factor
-    for(int_t i=0;i<verts_x.size();++i){
+    for(size_t i=0;i<verts_x.size();++i){
       // add the skin to the new vertex (applied as a stretch in x and y):
       new_x = skin_factor*(verts_x[i] - centroid_x) + centroid_x;
       new_y = skin_factor*(verts_y[i] - centroid_y) + centroid_y;

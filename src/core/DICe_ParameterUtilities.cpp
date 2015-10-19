@@ -60,7 +60,69 @@ void stringToLower(std::string &s){
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Field_Name in){
   assert(in < MAX_FIELD_NAME);
+  static const char * fieldNameStrings[] = {
+    "DISPLACEMENT_X",
+    "DISPLACEMENT_Y",
+    "DISPLACEMENT_Z",
+    "ROTATION_X",
+    "ROTATION_Y",
+    "ROTATION_Z",
+    "NORMAL_STRAIN_X",
+    "NORMAL_STRAIN_Y",
+    "NORMAL_STRAIN_Z",
+    "SHEAR_STRAIN_XY",
+    "SHEAR_STRAIN_YZ",
+    "SHEAR_STRAIN_XZ",
+    "COORDINATE_X",
+    "COORDINATE_Y",
+    "COORDINATE_Z",
+    "VAR_X",
+    "VAR_Y",
+    "VAR_Z",
+    "SIGMA",
+    "GAMMA",
+    "MATCH",
+    "ITERATIONS",
+    "STATUS_FLAG",
+    "NEIGHBOR_ID",
+    "CONDITION_NUMBER"
+  };
   return fieldNameStrings[in];
+}
+DICE_LIB_DLL_EXPORT
+const std::string to_string(Status_Flag in){
+  assert(in < MAX_STATUS_FLAG);
+  const static char * statusFlagStrings[] = {
+    "CORRELATION_SUCCESSFUL",
+    "INITIALIZE_USING_PREVIOUS_STEP_SUCCESSFUL",
+    "INITIALIZE_USING_CONNECTED_SUBSET_VALUE_SUCCESSFUL",
+    "INITIALIZE_USING_NEIGHBOR_VALUE_SUCCESSFUL",
+    "INITIALIZE_SUCCESSFUL",
+    "INITIALIZE_FAILED",
+    "SEARCH_SUCCESSFUL",
+    "SEARCH_FAILED",
+    "CORRELATION_FAILED",
+    "SUBSET_CONSTRUCTION_FAILED",
+    "LINEAR_SOLVE_FAILED",
+    "MAX_ITERATIONS_REACHED",
+    "INITIALIZE_FAILED_BY_EXCEPTION",
+    "SEARCH_FAILED_BY_EXCEPTION",
+    "CORRELATION_FAILED_BY_EXCEPTION",
+    "CORRELATION"
+    "_BY_AVERAGING_CONNECTED_VALUES",
+    "JUMP_TOLERANCE_EXCEEDED",
+    "ZERO_HESSIAN_DETERMINANT",
+    "SEARCH_USING_PREVIOUS_STEP_SUCCESSFUL",
+    "LINEARIZED_GAMMA_OUT_OF_BOUNDS",
+    "NAN_IN_HESSIAN_OR_RESIDUAL",
+    "HESSIAN_SINGULAR",
+    "SKIPPED_FRAME_DUE_TO_HIGH_GAMMA",
+    "RESET_REF_SUBSET_DUE_TO_HIGH_GAMMA",
+    "MAX_GLOBAL_ITERATIONS_REACHED_IN_EVOLUTION_LOOP",
+    "FAILURE_DUE_TO_TOO_MANY_RESTARTS",
+    "FRAME_SKIPPED"
+  };
+  return statusFlagStrings[in];
 }
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Correlation_Routine in){
@@ -70,6 +132,11 @@ const std::string to_string(Correlation_Routine in){
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Projection_Method in){
   assert(in < MAX_PROJECTION_METHOD);
+  const static char * projectionMethodStrings[] = {
+    "DISPLACEMENT_BASED",
+    "VELOCITY_BASED",
+    "MULTISTEP"
+  };
   return projectionMethodStrings[in];
 }
 DICE_LIB_DLL_EXPORT
@@ -92,7 +159,7 @@ Field_Name string_to_field_name(std::string & in){
   // convert the string to uppercase
   stringToUpper(in);
   for(int_t i=0;i<MAX_FIELD_NAME;++i){
-    if(fieldNameStrings[i]==in) return static_cast<Field_Name>(i);
+    if(to_string(static_cast<Field_Name>(i))==in) return static_cast<Field_Name>(i);
   }
   std::cout << "Error: Field_Name " << in << " does not exist." << std::endl;
   return NO_SUCH_FIELD_NAME; // prevent no return errors

@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
      if(line_diff){
        errorFlag++;
        *outStream << "< " << line << " (";
-       for(int_t i=0;i<badTokenIds.size();++i){
+       for(size_t i=0;i<badTokenIds.size();++i){
          *outStream << badTokenIds[i] << "[" << badTokenTypes[i] << "] ";
        }
        *outStream  << "): ";
@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
          *outStream << tokensA[i] << " ";
        *outStream << std::endl;
        *outStream << "> " << line << " (";
-       for(int_t i=0;i<badTokenIds.size();++i){
+       for(size_t i=0;i<badTokenIds.size();++i){
          *outStream << badTokenIds[i] << "[" << badTokenTypes[i] << "] ";
        }
        *outStream  << "): ";

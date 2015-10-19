@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
   for(;large_skin_set_it!=large_skin_owned_pixels.end();++large_skin_set_it){
     large_skin_intensities[large_skin_set_it->first*imgW + large_skin_set_it->second] = 255;
   }
-  for(int_t i=0;i<shape_coords_x.size();++i){
+  for(size_t i=0;i<shape_coords_x.size();++i){
     if(large_skin_owned_pixels.find(std::pair<int_t,int_t>((int_t)((shape_coords_y[i]-cy)*large_skin_factor*0.9 + cy) + (*def)[DISPLACEMENT_Y],
       (int_t)((shape_coords_x[i]-cx)*large_skin_factor*0.9 + cx) + (*def)[DISPLACEMENT_X]))==large_skin_owned_pixels.end()){
       *outStream << "Error, large skin owned pixels are not right" << std::endl;

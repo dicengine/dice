@@ -52,8 +52,8 @@ Image::Image(const char * file_name,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
   offset_x_(0),
   offset_y_(0),
-  has_gradients_(false),
   intensity_rcp_(Teuchos::null),
+  has_gradients_(false),
   file_name_(file_name)
 {
   const std::string rawi(".rawi");
@@ -91,10 +91,10 @@ Image::Image(const char * file_name,
   const int_t width,
   const int_t height,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
-  offset_x_(offset_x),
-  offset_y_(offset_y),
   width_(width),
   height_(height),
+  offset_x_(offset_x),
+  offset_y_(offset_y),
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   file_name_(file_name)
@@ -180,10 +180,10 @@ Image::Image(Teuchos::RCP<Image> img,
   const int_t offset_y,
   const int_t width,
   const int_t height):
-  offset_x_(offset_x),
-  offset_y_(offset_y),
   width_(width),
   height_(height),
+  offset_x_(offset_x),
+  offset_y_(offset_y),
   intensity_rcp_(Teuchos::null),
   has_gradients_(img->has_gradients()),
   file_name_(img->file_name())
@@ -323,7 +323,7 @@ Image::diff(Teuchos::RCP<Image> rhs) const{
     return -1.0;
   scalar_t diff = 0.0;
   scalar_t diff_ = 0.0;
-  for(size_t i=0;i<width_*height_;++i){
+  for(int_t i=0;i<width_*height_;++i){
     diff_ = intensities_.h_view.ptr_on_device()[i] - rhs->intensities().h_view.ptr_on_device()[i];
     diff += diff_*diff_;
   }
@@ -599,14 +599,14 @@ Image::create_mask(const Conformal_Area_Def & area_def,
   const bool smooth_edges){
   assert(area_def.has_boundary());
   std::set<std::pair<int_t,int_t> > coords;
-  for(int_t i=0;i<area_def.boundary()->size();++i){
+  for(size_t i=0;i<area_def.boundary()->size();++i){
     std::set<std::pair<int_t,int_t> > shapeCoords = (*area_def.boundary())[i]->get_owned_pixels();
     coords.insert(shapeCoords.begin(),shapeCoords.end());
   }
   // now remove any excluded regions:
   // now set the inactive bit for the second set of multishapes if they exist.
   if(area_def.has_excluded_area()){
-    for(int_t i=0;i<area_def.excluded_area()->size();++i){
+    for(size_t i=0;i<area_def.excluded_area()->size();++i){
       std::set<std::pair<int_t,int_t> > removeCoords = (*area_def.excluded_area())[i]->get_owned_pixels();
       typename std::set<std::pair<int_t,int_t> >::iterator it = removeCoords.begin();
       for(;it!=removeCoords.end();++it){

@@ -60,7 +60,7 @@ Post_Processor::initialize(){
   data_num_points_ = schema_->data_num_points();
   assert(data_num_points_>0);
   std::vector<scalar_t> tmp_vec(data_num_points_,0.0);
-  for(int_t i=0;i<field_names_.size();++i)
+  for(size_t i=0;i<field_names_.size();++i)
     fields_.insert(std::pair<std::string,std::vector<scalar_t> >(field_names_[i],tmp_vec));
 }
 
@@ -76,7 +76,7 @@ VSG_Strain_Post_Processor::VSG_Strain_Post_Processor(Schema * schema,
   field_names_.push_back(vsg_dvdx);
   field_names_.push_back(vsg_dvdy);
   DEBUG_MSG("Enabling post processor VSG_Strain_Post_Processor with associated fields:");
-  for(int_t i=0;i<field_names_.size();++i){
+  for(size_t i=0;i<field_names_.size();++i){
     DEBUG_MSG(field_names_[i]);
   }
   set_params(params);
@@ -353,7 +353,7 @@ Global_Strain_Post_Processor::Global_Strain_Post_Processor(Schema * schema,
   field_names_.push_back(global_dvdx);
   field_names_.push_back(global_dvdy);
   DEBUG_MSG("Enabling post processor Global_Strain_Post_Processor with associated fields:");
-  for(int_t i=0;i<field_names_.size();++i){
+  for(size_t i=0;i<field_names_.size();++i){
     DEBUG_MSG(field_names_[i]);
   }
   set_params(params);
@@ -479,7 +479,7 @@ Keys4_Strain_Post_Processor::Keys4_Strain_Post_Processor(Schema * schema,
   field_names_.push_back(keys4_dvdy);
 
   DEBUG_MSG("Enabling post processor Keys4_Strain_Post_Processor with associated fields:");
-  for(int_t i=0;i<field_names_.size();++i){
+  for(size_t i=0;i<field_names_.size();++i){
     DEBUG_MSG(field_names_[i]);
   }
 
@@ -699,7 +699,7 @@ NLVC_Strain_Post_Processor::NLVC_Strain_Post_Processor(Schema * schema,
   field_names_.push_back(nlvc_integrated_phi_x);
   field_names_.push_back(nlvc_integrated_phi_y);
   DEBUG_MSG("Enabling post processor NLVC_Strain_Post_Processor with associated fields:");
-  for(int_t i=0;i<field_names_.size();++i){
+  for(size_t i=0;i<field_names_.size();++i){
     DEBUG_MSG(field_names_[i]);
   }
   set_params(params);

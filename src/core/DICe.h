@@ -206,15 +206,10 @@ enum Subset_View_Target{
   MAX_SUBSET_VIEW_TARGET,
   NO_SUCH_SUBSET_VIEW_TARGET,
 };
-/// string names for enums above
-static const char * subsetInitModeStrings[] = {
-  "FILL_REF_INTENSITIES",
-  "FILL_DEF_INTENSITIES"
-};
 
 /// Valid names for fields
 enum Field_Name {
-  // *** DON'T FORGET TO ADD A STRING TO THE fieldNameStrings BELOW IN THE SAME ORDER ***
+  // *** DON'T FORGET TO ADD A STRING TO THE to_string(Field_name) function ***
   //
   // *** ALSO UPDATE THE SIZE OF THE DEFORMATION GIVEN IN #define DICE_DEFORMATION_SIZE
   //     IF MORE DEFORMATION FIELDS ARE ADDED
@@ -276,34 +271,6 @@ enum Field_Name {
   NO_SUCH_FIELD_NAME
 };
 
-static const char * fieldNameStrings[] = {
-  "DISPLACEMENT_X",
-  "DISPLACEMENT_Y",
-  "DISPLACEMENT_Z",
-  "ROTATION_X",
-  "ROTATION_Y",
-  "ROTATION_Z",
-  "NORMAL_STRAIN_X",
-  "NORMAL_STRAIN_Y",
-  "NORMAL_STRAIN_Z",
-  "SHEAR_STRAIN_XY",
-  "SHEAR_STRAIN_YZ",
-  "SHEAR_STRAIN_XZ",
-  "COORDINATE_X",
-  "COORDINATE_Y",
-  "COORDINATE_Z",
-  "VAR_X",
-  "VAR_Y",
-  "VAR_Z",
-  "SIGMA",
-  "GAMMA",
-  "MATCH",
-  "ITERATIONS",
-  "STATUS_FLAG",
-  "NEIGHBOR_ID",
-  "CONDITION_NUMBER"
-};
-
 /// Subset_File_Info types
 enum Subset_File_Info_Type {
   SUBSET_INFO=0,
@@ -317,12 +284,6 @@ enum Target_Field_Descriptor {
   DISTRIBUTED,
   DISTRIBUTED_GROUPED_BY_SEED,
   MAX_TARGET_FIELD_DESCRIPTOR
-};
-
-const static char * targetFieldDescriptorStrings[] = {
-  "ALL_OWNED",
-  "DISTRIBUTED",
-  "DISTRIBUTED_GROUPED_BY_SEED"
 };
 
 /// Analysis Type
@@ -431,10 +392,6 @@ enum Output_File_Type {
   NO_SUCH_OUTPUT_FILE_TYPE
 };
 
-const static char * outputFileTypeStrings[] = {
-  "TEXT_FILE"
-};
-
 /// Status flags
 enum Status_Flag{
   // 0
@@ -494,37 +451,6 @@ enum Status_Flag{
   // DON'T ADD ANY BELOW MAX
   MAX_STATUS_FLAG,
   NO_SUCH_STATUS_FLAG
-};
-
-const static char * statusFlagStrings[] = {
-  "CORRELATION_SUCCESSFUL",
-  "INITIALIZE_USING_PREVIOUS_STEP_SUCCESSFUL",
-  "INITIALIZE_USING_CONNECTED_SUBSET_VALUE_SUCCESSFUL",
-  "INITIALIZE_USING_NEIGHBOR_VALUE_SUCCESSFUL",
-  "INITIALIZE_SUCCESSFUL",
-  "INITIALIZE_FAILED",
-  "SEARCH_SUCCESSFUL",
-  "SEARCH_FAILED",
-  "CORRELATION_FAILED",
-  "SUBSET_CONSTRUCTION_FAILED",
-  "LINEAR_SOLVE_FAILED",
-  "MAX_ITERATIONS_REACHED",
-  "INITIALIZE_FAILED_BY_EXCEPTION",
-  "SEARCH_FAILED_BY_EXCEPTION",
-  "CORRELATION_FAILED_BY_EXCEPTION",
-  "CORRELATION"
-  "_BY_AVERAGING_CONNECTED_VALUES",
-  "JUMP_TOLERANCE_EXCEEDED",
-  "ZERO_HESSIAN_DETERMINANT",
-  "SEARCH_USING_PREVIOUS_STEP_SUCCESSFUL",
-  "LINEARIZED_GAMMA_OUT_OF_BOUNDS",
-  "NAN_IN_HESSIAN_OR_RESIDUAL",
-  "HESSIAN_SINGULAR",
-  "SKIPPED_FRAME_DUE_TO_HIGH_GAMMA",
-  "RESET_REF_SUBSET_DUE_TO_HIGH_GAMMA",
-  "MAX_GLOBAL_ITERATIONS_REACHED_IN_EVOLUTION_LOOP",
-  "FAILURE_DUE_TO_TOO_MANY_RESTARTS",
-  "FRAME_SKIPPED"
 };
 
 /// The type of correlation parameter, used for creating template input files

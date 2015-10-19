@@ -361,16 +361,16 @@ public:
   void operator()(const Gauss_Tag &, const member_type team_member)const;
 
 private:
+  /// pixel container width_
+  int_t width_;
+  /// pixel container height_
+  int_t height_;
   /// offsets are used to convert to global image coordinates
   /// (the pixel container may be a subset of a larger image)
   int_t offset_x_;
   /// offsets are used to convert to global image coordinates
   /// (the pixel container may be a subset of a larger image)
   int_t offset_y_;
-  /// pixel container width_
-  int_t width_;
-  /// pixel container height_
-  int_t height_;
   /// pixel container
   intensity_dual_view_2d intensities_;
   /// rcp to the intensity array (used to ensure it doesn't get deallocated)

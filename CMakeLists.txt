@@ -142,17 +142,12 @@ ELSE()
 ENDIF()
 
 
-SET(DICE_BOOST FALSE)
 if (Boost_FOUND)
-  SET(DICE_BOOST TRUE)
-  ADD_DEFINITIONS(-DDICE_BOOST)
-  MESSAGE(STATUS "BOOST is enabled, compiling with -DDICE_BOOST")
   find_library(tiff_lib NAMES tiff PATHS ${TIFF_DIR})
   MESSAGE(STATUS "Using tiff library from: ${tiff_lib}")
   SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${tiff_lib})
   link_directories(${Boost_LIBRARY_DIRS})
 else (Boost_FOUND)
-  SET(DICE_BOOST FALSE)
   MESSAGE(FATAL_ERROR "BOOST is required, but not found")
 endif (Boost_FOUND)
 

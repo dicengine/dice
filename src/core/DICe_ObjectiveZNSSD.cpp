@@ -98,9 +98,6 @@ Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
    }
    catch (std::logic_error & err) {return -1.0;}
 
-   const scalar_t meanF = subset_->mean(REF_INTENSITIES);
-   const scalar_t meanG = subset_->mean(DEF_INTENSITIES);
-
    scalar_t Gx=0.0,Gy=0.0;
    for(int_t index=0;index<subset_->num_pixels();++index){
      // skip the deactivated pixels
@@ -227,7 +224,7 @@ Objective_ZNSSD::initialize_from_neighbor( Teuchos::RCP<std::vector<scalar_t> > 
   // for now require that the neighbor is on this processor
   // TODO enable cross-processor use of neighbor values:
   const int_t neighbor_lid = schema_->get_local_id(neighbor_gid);
-  assert(neighbor_lid>=0 && "Error: Only neighbors on this processor can be used for initialization");
+  TEUCHOS_TEST_FOR_EXCEPTION(neighbor_lid<0,std::runtime_error,"Error: Only neighbors on this processor can be used for initialization");
 
   DEBUG_MSG("Subset " << correlation_point_global_id_ << " will use neighbor values from " << neighbor_gid);
 

@@ -63,6 +63,10 @@ void stringToLower(std::string &s);
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Field_Name in);
 
+/// Convert the status flag to a string
+DICE_LIB_DLL_EXPORT
+const std::string to_string(Status_Flag in);
+
 /// Convert a DICe::Correlation_Routine to string
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Correlation_Routine in);

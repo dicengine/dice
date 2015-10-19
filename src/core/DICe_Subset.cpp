@@ -137,7 +137,7 @@ Subset::Subset(const int_t cx,
 {
   assert(subset_def.has_boundary());
   std::set<std::pair<int_t,int_t> > coords;
-  for(int_t i=0;i<subset_def.boundary()->size();++i){
+  for(size_t i=0;i<subset_def.boundary()->size();++i){
     std::set<std::pair<int_t,int_t> > shapeCoords = (*subset_def.boundary())[i]->get_owned_pixels();
     coords.insert(shapeCoords.begin(),shapeCoords.end());
   }
@@ -171,7 +171,7 @@ Subset::Subset(const int_t cx,
 
   // now set the inactive bit for the second set of multishapes if they exist.
   if(subset_def.has_excluded_area()){
-    for(int_t i=0;i<subset_def.excluded_area()->size();++i){
+    for(size_t i=0;i<subset_def.excluded_area()->size();++i){
       (*subset_def.excluded_area())[i]->deactivate_pixels(num_pixels_,is_active_.h_view.ptr_on_device(),
         x_.h_view.ptr_on_device(),y_.h_view.ptr_on_device());
     }

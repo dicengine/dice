@@ -230,7 +230,7 @@ int main(int argc, char *argv[]) {
       cpu_timer subset_mean_timer;
       {
         subset_mean_timer.start();
-        const scalar_t mean = subset->mean(REF_INTENSITIES);
+        subset->mean(REF_INTENSITIES);
         subset_mean_timer.stop();
       }
       *outStream << "** subset mean intensity time" << subset_mean_timer.format();
@@ -241,7 +241,7 @@ int main(int argc, char *argv[]) {
       cpu_timer corr_timer;
       {
         corr_timer.start();
-        const scalar_t gamma = subset->gamma();
+        subset->gamma();
         corr_timer.stop();
       }
       *outStream << "** correlation time" << corr_timer.format();
