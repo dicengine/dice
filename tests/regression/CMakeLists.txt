@@ -76,7 +76,7 @@ ENDFOREACH ( )
 if(DICE_MPI)
 
   SET(MPI_TESTS
-    #parallel_subsets
+    parallel_subsets
     #parallel_subsets_seed
     parallel_seed_first_step_only
     #parallel_obstruct_depend
