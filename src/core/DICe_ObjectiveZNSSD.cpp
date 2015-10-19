@@ -59,7 +59,7 @@ Objective_ZNSSD::gamma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
 
   assert(deformation->size()==DICE_DEFORMATION_SIZE);
   try{
-    subset_->initialize(this->schema_->def_img(),DEF_INTENSITIES,deformation,this->schema_->interpolation_method());
+    subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation,schema_->interpolation_method());
   }
   catch (std::logic_error & err) {
     return -1.0;
@@ -71,7 +71,7 @@ scalar_t
 Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
 
   // if the gradients don't exist or the optimization method is SIMPLEX based return 0.0;
-   if(!subset_->has_gradients()||this->schema_->optimization_method()==DICe::SIMPLEX) return 0.0;
+   if(!subset_->has_gradients()||schema_->optimization_method()==DICe::SIMPLEX) return 0.0;
 
    assert(deformation->size()==DICE_DEFORMATION_SIZE);
 
@@ -95,7 +95,7 @@ Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
 
    // update the deformed image with the new deformation:
    try{
-     subset_->initialize(this->schema_->def_img(),DEF_INTENSITIES,deformation,this->schema_->interpolation_method());
+     subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation,schema_->interpolation_method());
    }
    catch (std::logic_error & err) {return -1.0;}
 
@@ -129,12 +129,12 @@ Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
 
    // now compute the eigenvalues for H^-1 as an estimate of sigma:
    lapack.SYEV('N','U',N,H.values(),N,EIGS,SWORK,QWORK,&INFO);
-   DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " Eigenvalues of H^-1: " << EIGS[0] << " " << EIGS[1]);
+   DEBUG_MSG("Subset " << correlation_point_global_id_ << " Eigenvalues of H^-1: " << EIGS[0] << " " << EIGS[1]);
    const scalar_t maxEig = std::max(EIGS[0],EIGS[1]);
 
    // 95% confidence interval
    const scalar_t sigma = 2.0*std::sqrt(maxEig*5.991);
-   DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " sigma: " << sigma);
+   DEBUG_MSG("Subset " << correlation_point_global_id_ << " sigma: " << sigma);
 
    // clean up storage for lapack:
    delete [] WORK;
@@ -153,10 +153,10 @@ Objective_ZNSSD::initialize_from_previous_frame(Teuchos::RCP<std::vector<scalar_
   // 1: check if there exists a value from the previous step (image in a series)
   const scalar_t sigma = local_field_value(DICe::SIGMA);
   if(sigma!=-1.0){// && sigma!=0.0)
-    const Projection_Method projection = this->schema_->projection_method();
-    if(this->schema_->translation_enabled()){
-      DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " Translation is enabled.");
-      if(this->schema_->image_frame() > 2 && projection == VELOCITY_BASED){
+    const Projection_Method projection = schema_->projection_method();
+    if(schema_->translation_enabled()){
+      DEBUG_MSG("Subset " << correlation_point_global_id_ << " Translation is enabled.");
+      if(schema_->image_frame() > 2 && projection == VELOCITY_BASED){
         (*deformation)[DICe::DISPLACEMENT_X] = local_field_value(DICe::DISPLACEMENT_X) + (local_field_value(DICe::DISPLACEMENT_X)-local_field_value_nm1(DICe::DISPLACEMENT_X));
         (*deformation)[DICe::DISPLACEMENT_Y] = local_field_value(DICe::DISPLACEMENT_Y) + (local_field_value(DICe::DISPLACEMENT_Y)-local_field_value_nm1(DICe::DISPLACEMENT_Y));
       }
@@ -165,42 +165,42 @@ Objective_ZNSSD::initialize_from_previous_frame(Teuchos::RCP<std::vector<scalar_
         (*deformation)[DICe::DISPLACEMENT_Y] = local_field_value(DICe::DISPLACEMENT_Y);
       }
     }
-    if(this->schema_->rotation_enabled()){
-      DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " Rotation is enabled.");
-      if(this->schema_->image_frame() > 2 && projection == VELOCITY_BASED){
+    if(schema_->rotation_enabled()){
+      DEBUG_MSG("Subset " << correlation_point_global_id_ << " Rotation is enabled.");
+      if(schema_->image_frame() > 2 && projection == VELOCITY_BASED){
         (*deformation)[DICe::ROTATION_Z] = local_field_value(DICe::ROTATION_Z) + (local_field_value(DICe::ROTATION_Z)-local_field_value_nm1(DICe::ROTATION_Z));
       }
       else{
         (*deformation)[DICe::ROTATION_Z] = local_field_value(DICe::ROTATION_Z);
       }
     }
-    if(this->schema_->normal_strain_enabled()){
-      DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " Normal strain is enabled.");
+    if(schema_->normal_strain_enabled()){
+      DEBUG_MSG("Subset " << correlation_point_global_id_ << " Normal strain is enabled.");
       (*deformation)[DICe::NORMAL_STRAIN_X] = local_field_value(DICe::NORMAL_STRAIN_X);
       (*deformation)[DICe::NORMAL_STRAIN_Y] = local_field_value(DICe::NORMAL_STRAIN_Y);
     }
-    if(this->schema_->shear_strain_enabled()){
-      DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " Shear strain is enabled.");
+    if(schema_->shear_strain_enabled()){
+      DEBUG_MSG("Subset " << correlation_point_global_id_ << " Shear strain is enabled.");
       (*deformation)[DICe::SHEAR_STRAIN_XY] = local_field_value(DICe::SHEAR_STRAIN_XY);
     }
 
     DEBUG_MSG("Projection Method: " << projection);
     // TODO Remove this output:
-    DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " solution from prev. step: u " << local_field_value(DICe::DISPLACEMENT_X)
+    DEBUG_MSG("Subset " << correlation_point_global_id_ << " solution from prev. step: u " << local_field_value(DICe::DISPLACEMENT_X)
       << " v " << local_field_value(DICe::DISPLACEMENT_Y)
       << " theta " << local_field_value(DICe::ROTATION_Z)
       << " e_x " << local_field_value(DICe::NORMAL_STRAIN_X)
       << " e_y " << local_field_value(DICe::NORMAL_STRAIN_Y)
       << " g_xy " << local_field_value(DICe::SHEAR_STRAIN_XY));
 
-    DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " solution from nm1 step: u " << local_field_value_nm1(DICe::DISPLACEMENT_X)
+    DEBUG_MSG("Subset " << correlation_point_global_id_ << " solution from nm1 step: u " << local_field_value_nm1(DICe::DISPLACEMENT_X)
       << " v " << local_field_value_nm1(DICe::DISPLACEMENT_Y)
       << " theta " << local_field_value_nm1(DICe::ROTATION_Z)
       << " e_x " << local_field_value_nm1(DICe::NORMAL_STRAIN_X)
       << " e_y " << local_field_value_nm1(DICe::NORMAL_STRAIN_Y)
       << " g_xy " << local_field_value_nm1(DICe::SHEAR_STRAIN_XY));
 
-    DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " init. with values: u " << (*deformation)[DICe::DISPLACEMENT_X]
+    DEBUG_MSG("Subset " << correlation_point_global_id_ << " init. with values: u " << (*deformation)[DICe::DISPLACEMENT_X]
                         << " v " << (*deformation)[DICe::DISPLACEMENT_Y]
                         << " theta " << (*deformation)[DICe::ROTATION_Z]
                         << " e_x " << (*deformation)[DICe::NORMAL_STRAIN_X]
@@ -218,39 +218,39 @@ Objective_ZNSSD::initialize_from_neighbor( Teuchos::RCP<std::vector<scalar_t> > 
 
   // try a neighbor's value of displacement x and y:
   // this doesn't work for the first subset
-  //assert(this->correlation_point_global_id_>0);
+  //assert(correlation_point_global_id_>0);
 
-  const int_t neighbor_gid = local_field_value(DICe::NEIGHBOR_ID);//this->correlation_point_global_id_ - 1;
+  const int_t neighbor_gid = local_field_value(DICe::NEIGHBOR_ID);//correlation_point_global_id_ - 1;
   if(neighbor_gid==-1) // must use previous value instead (could be a seed location)
     return initialize_from_previous_frame(deformation);
   assert(neighbor_gid>=0);
 
   // for now require that the neighbor is on this processor
   // TODO enable cross-processor use of neighbor values:
-  const int_t neighbor_lid = this->schema_->get_local_id(neighbor_gid);
+  const int_t neighbor_lid = schema_->get_local_id(neighbor_gid);
   assert(neighbor_lid>=0 && "Error: Only neighbors on this processor can be used for initialization");
 
-  DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " will use neighbor values from " << neighbor_gid);
+  DEBUG_MSG("Subset " << correlation_point_global_id_ << " will use neighbor values from " << neighbor_gid);
 
-  const scalar_t sigma = this->schema_->local_field_value(neighbor_gid,DICe::SIGMA);
+  const scalar_t sigma = schema_->local_field_value(neighbor_gid,DICe::SIGMA);
   if(sigma!=-1.0){
-    if(this->schema_->translation_enabled()){
-      (*deformation)[DICe::DISPLACEMENT_X] = this->schema_->local_field_value(neighbor_gid,DICe::DISPLACEMENT_X);
-      (*deformation)[DICe::DISPLACEMENT_Y] = this->schema_->local_field_value(neighbor_gid,DICe::DISPLACEMENT_Y);
+    if(schema_->translation_enabled()){
+      (*deformation)[DICe::DISPLACEMENT_X] = schema_->local_field_value(neighbor_gid,DICe::DISPLACEMENT_X);
+      (*deformation)[DICe::DISPLACEMENT_Y] = schema_->local_field_value(neighbor_gid,DICe::DISPLACEMENT_Y);
     }
-    if(this->schema_->rotation_enabled()){
-      (*deformation)[DICe::ROTATION_Z] = this->schema_->local_field_value(neighbor_gid,DICe::ROTATION_Z);
+    if(schema_->rotation_enabled()){
+      (*deformation)[DICe::ROTATION_Z] = schema_->local_field_value(neighbor_gid,DICe::ROTATION_Z);
     }
     // add these later:
-    if(this->schema_->normal_strain_enabled()){
-      (*deformation)[DICe::NORMAL_STRAIN_X] = this->schema_->local_field_value(neighbor_gid,DICe::NORMAL_STRAIN_X);
-      (*deformation)[DICe::NORMAL_STRAIN_Y] = this->schema_->local_field_value(neighbor_gid,DICe::NORMAL_STRAIN_Y);
+    if(schema_->normal_strain_enabled()){
+      (*deformation)[DICe::NORMAL_STRAIN_X] = schema_->local_field_value(neighbor_gid,DICe::NORMAL_STRAIN_X);
+      (*deformation)[DICe::NORMAL_STRAIN_Y] = schema_->local_field_value(neighbor_gid,DICe::NORMAL_STRAIN_Y);
     }
-    if(this->schema_->shear_strain_enabled()){
-      (*deformation)[DICe::SHEAR_STRAIN_XY] = this->schema_->local_field_value(neighbor_gid,DICe::SHEAR_STRAIN_XY);
+    if(schema_->shear_strain_enabled()){
+      (*deformation)[DICe::SHEAR_STRAIN_XY] = schema_->local_field_value(neighbor_gid,DICe::SHEAR_STRAIN_XY);
     }
 
-    DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " init. from neighbor values: u " << (*deformation)[DICe::DISPLACEMENT_X]
+    DEBUG_MSG("Subset " << correlation_point_global_id_ << " init. from neighbor values: u " << (*deformation)[DICe::DISPLACEMENT_X]
                         << " v " << (*deformation)[DICe::DISPLACEMENT_Y]
                         << " theta " << (*deformation)[DICe::ROTATION_Z]
                         << " e_x " << (*deformation)[DICe::NORMAL_STRAIN_X]
@@ -294,7 +294,7 @@ Objective_ZNSSD::search_step(Teuchos::RCP<std::vector<scalar_t> > & deformation,
       }
     }
   }
-  DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " search step returned best gamma at u " << min_x << " v " << min_y << " gamma " << min_gamma);
+  DEBUG_MSG("Subset " << correlation_point_global_id_ << " search step returned best gamma at u " << min_x << " v " << min_y << " gamma " << min_gamma);
 
   // put the values into the deformation vector:
   (*deformation)[DISPLACEMENT_X] = min_x;
@@ -309,15 +309,15 @@ Objective_ZNSSD::search(Teuchos::RCP<std::vector<scalar_t> > & deformation,
   const int_t precision_level,
   scalar_t & return_value) {
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method has not been implemented.");
-//  DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " conducting localized SEARCH to initialize around point u " <<
+//  DEBUG_MSG("Subset " << correlation_point_global_id_ << " conducting localized SEARCH to initialize around point u " <<
 //    (*deformation)[DISPLACEMENT_X] << " v " << (*deformation)[DISPLACEMENT_Y] <<
 //    " theta " << (*deformation)[ROTATION_Z]);
 //
 //  assert(deformation->size()==DICE_DEFORMATION_SIZE);
 //
 //  // get the tolerances
-//  const scalar_t disp_jump = this->schema_->disp_jump_tol();
-//  const scalar_t theta_jump = this->schema_->theta_jump_tol();
+//  const scalar_t disp_jump = schema_->disp_jump_tol();
+//  const scalar_t theta_jump = schema_->theta_jump_tol();
 //  const int_t num_disp_steps = 10; // TODO revisit how many steps to take
 //  const int_t num_theta_steps = 10;
 //  const scalar_t disp_step = disp_jump/num_disp_steps;
@@ -344,7 +344,7 @@ Objective_ZNSSD::search(Teuchos::RCP<std::vector<scalar_t> > & deformation,
 //
 //        ref_subset_->reset_is_deactivated_this_step();
 //        ref_subset_->turn_off_obstructed_pixels(trial_def);
-//        trial_subset->initialize(trial_def,this->schema_->interpolation_method(),this->schema_->def_img());
+//        trial_subset->initialize(trial_def,schema_->interpolation_method(),schema_->def_img());
 //        // evaluate gamma for this displacement
 //        const scalar_t gammaTrial = gamma(trial_def);
 //        //std::cout << " Trial x " << disp_x << " trial y " << disp_y << " trial theta " << theta << " trial gamma " << gammaTrial << std::endl;
@@ -358,7 +358,7 @@ Objective_ZNSSD::search(Teuchos::RCP<std::vector<scalar_t> > & deformation,
 //      }
 //    }
 //  }
-//  DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " localized search returned best gamma at u " << min_x << " v " << min_y << " theta " << min_t << " gamma " << min_gamma);
+//  DEBUG_MSG("Subset " << correlation_point_global_id_ << " localized search returned best gamma at u " << min_x << " v " << min_y << " theta " << min_t << " gamma " << min_gamma);
 //  return_value = min_gamma;
 //  if(min_gamma < 0.6) return SEARCH_SUCCESSFUL;
 //  else return SEARCH_FAILED;
@@ -369,19 +369,19 @@ Objective_ZNSSD::computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & defo
   int_t & num_iterations,
   const scalar_t & override_tol){
 
-  const scalar_t skip_threshold = override_tol==-1 ? this->schema_->skip_solve_gamma_threshold() : override_tol;
+  const scalar_t skip_threshold = override_tol==-1 ? schema_->skip_solve_gamma_threshold() : override_tol;
 
   Status_Flag status_flag;
   Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
-  params->set(DICe::max_iterations,  this->schema_->max_solver_iterations_robust());
-  params->set(DICe::tolerance, this->schema_->robust_solver_tolerance());
+  params->set(DICe::max_iterations,  schema_->max_solver_iterations_robust());
+  params->set(DICe::tolerance, schema_->robust_solver_tolerance());
   DICe::Simplex simplex(this,params);
 
   Teuchos::RCP<std::vector<scalar_t> > deltas = Teuchos::rcp(new std::vector<scalar_t>(num_dofs(),0.0));
   for(int_t i=0;i<num_dofs();++i){
-    if(i<2) (*deltas)[i] = this->schema_->robust_delta_disp();
+    if(i<2) (*deltas)[i] = schema_->robust_delta_disp();
     else
-      (*deltas)[i] = this->schema_->robust_delta_theta();
+      (*deltas)[i] = schema_->robust_delta_theta();
   }
   try{
     status_flag = simplex.minimize(deformation,deltas,num_iterations,skip_threshold);
@@ -403,9 +403,9 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
 
   // using type double here a lot because LAPACK doesn't support float.
   int_t N = 6; // [ u_x u_y theta dudx dvdy gxy ]
-  scalar_t solve_tol_disp = this->schema_->fast_solver_tolerance();
-  scalar_t solve_tol_theta = this->schema_->fast_solver_tolerance();
-  const int_t max_solve_its = this->schema_->max_solver_iterations_fast();
+  scalar_t solve_tol_disp = schema_->fast_solver_tolerance();
+  scalar_t solve_tol_theta = schema_->fast_solver_tolerance();
+  const int_t max_solve_its = schema_->max_solver_iterations_fast();
   int *IPIV = new int[N+1];
   int LWORK = N*N;
   int INFO = 0;
@@ -439,10 +439,10 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
     num_iterations = solve_it;
     // update the deformed image with the new deformation:
     try{
-      subset_->initialize(this->schema_->def_img(),DEF_INTENSITIES,deformation,this->schema_->interpolation_method());
+      subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation,schema_->interpolation_method());
       //#ifdef DICE_DEBUG_MSG
       //    std::stringstream fileName;
-      //    fileName << "defSubset_" << this->correlation_point_global_id_ << "_" << solve_it;
+      //    fileName << "defSubset_" << correlation_point_global_id_ << "_" << solve_it;
       //    def_subset_->write(fileName.str());
       //#endif
     }
@@ -527,9 +527,9 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
       H(5,5) += delGxy*delGxy;
     }
 
-    if(this->schema_->use_objective_regularization()){
+    if(schema_->use_objective_regularization()){
       // add the penalty terms
-      const scalar_t alpha = 10000.0;
+      const scalar_t alpha = schema_->objective_regularization_factor();
       q[0] += alpha * ((*deformation)[DICe::DISPLACEMENT_X] - prev_u);
       q[1] += alpha * ((*deformation)[DICe::DISPLACEMENT_Y] - prev_v);
       //q[2] += alpha * ((*deformation)[DICe::ROTATION_Z] - prev_theta);
@@ -545,7 +545,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
         if(std::abs(H(i,j))>maxH) maxH = std::abs(H(i,j));
 
     // add ones for rows and columns of inactive shape functions
-    if(!this->schema_->translation_enabled()){
+    if(!schema_->translation_enabled()){
       for(int_t i=0;i<N;++i){
         H(0,i) = 0.0; H(1,i) = 0.0;
         H(i,0) = 0.0; H(i,1) = 0.0;
@@ -555,21 +555,21 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
       q[0] = 0.0;
       q[1] = 0.0;
     }
-    if(!this->schema_->rotation_enabled()){
+    if(!schema_->rotation_enabled()){
       for(int_t i=0;i<N;++i){
         H(2,i) = 0.0; H(i,2) = 0.0;
       }
       H(2,2) = 1.0 * maxH;
       q[2] = 0.0;
     }
-    if(!this->schema_->shear_strain_enabled()){
+    if(!schema_->shear_strain_enabled()){
       for(int_t i=0;i<N;++i){
         H(5,i) = 0.0; H(i,5) = 0.0;
       }
       H(5,5) = 1.0 * maxH;
       q[5] = 0.0;
     }
-    if(!this->schema_->normal_strain_enabled()){
+    if(!schema_->normal_strain_enabled()){
       for(int_t i=0;i<N;++i){
         H(3,i) = 0.0; H(4,i) = 0.0;
         H(i,3) = 0.0; H(i,4) = 0.0;
@@ -603,8 +603,8 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
     {
       lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
       lapack.GECON('1',N,H.values(),N,anorm,&rcond,GWORK,IWORK,&INFO);
-      DEBUG_MSG("Subset " << this->correlation_point_global_id_ << "    RCOND(H): "<< rcond);
-      this->schema_->local_field_value(this->correlation_point_global_id_,DICe::CONDITION_NUMBER) = (rcond !=0.0) ? 1.0/rcond : 0.0;
+      DEBUG_MSG("Subset " << correlation_point_global_id_ << "    RCOND(H): "<< rcond);
+      schema_->local_field_value(correlation_point_global_id_,DICe::CONDITION_NUMBER) = (rcond !=0.0) ? 1.0/rcond : 0.0;
       if(rcond < 1.0E-12) return HESSIAN_SINGULAR;
     }
     catch(std::exception &e){
@@ -643,7 +643,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
     (*deformation)[DICe::NORMAL_STRAIN_Y] += (*def_update)[4];
     (*deformation)[DICe::SHEAR_STRAIN_XY] += (*def_update)[5];
 
-    DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " -- iteration: " << solve_it << " u " << (*deformation)[DICe::DISPLACEMENT_X] <<
+    DEBUG_MSG("Subset " << correlation_point_global_id_ << " -- iteration: " << solve_it << " u " << (*deformation)[DICe::DISPLACEMENT_X] <<
       " v " << (*deformation)[DICe::DISPLACEMENT_Y] << " theta " << (*deformation)[DICe::ROTATION_Z] <<
       " ex " << (*deformation)[DICe::NORMAL_STRAIN_X] << " ey " << (*deformation)[DICe::NORMAL_STRAIN_Y] <<
       " gxy " << (*deformation)[DICe::SHEAR_STRAIN_XY] <<
@@ -652,7 +652,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
     if(std::abs((*deformation)[DICe::DISPLACEMENT_X] - (*def_old)[DICe::DISPLACEMENT_X]) < solve_tol_disp
         && std::abs((*deformation)[DICe::DISPLACEMENT_Y] - (*def_old)[DICe::DISPLACEMENT_Y]) < solve_tol_disp
         && std::abs((*deformation)[DICe::ROTATION_Z] - (*def_old)[DICe::ROTATION_Z]) < solve_tol_theta){
-      DEBUG_MSG("Subset " << this->correlation_point_global_id_ << " ** CONVERGED SOLUTION, u " << (*deformation)[DICe::DISPLACEMENT_X] <<
+      DEBUG_MSG("Subset " << correlation_point_global_id_ << " ** CONVERGED SOLUTION, u " << (*deformation)[DICe::DISPLACEMENT_X] <<
         " v " << (*deformation)[DICe::DISPLACEMENT_Y] <<
         " theta " << (*deformation)[DICe::ROTATION_Z]  << " ex " << (*deformation)[DICe::NORMAL_STRAIN_X] <<
         " ey " << (*deformation)[DICe::NORMAL_STRAIN_Y] << " gxy " << (*deformation)[DICe::SHEAR_STRAIN_XY]);

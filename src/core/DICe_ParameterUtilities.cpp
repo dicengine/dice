@@ -195,6 +195,7 @@ DICE_LIB_DLL_EXPORT void sl_default_params(Teuchos::ParameterList *  defaultPara
   defaultParams->set(DICe::update_obstructed_pixels_each_iteration,false);
   defaultParams->set(DICe::normalize_gamma_with_active_pixels,false);
   defaultParams->set(DICe::use_objective_regularization,false);
+  defaultParams->set(DICe::objective_regularization_factor,1000.0);
   defaultParams->set(DICe::pixel_integration_order,1);
   defaultParams->set(DICe::skip_solve_gamma_threshold,1.0E-10);
   defaultParams->set(DICe::rotate_ref_image_180,false);
@@ -233,6 +234,7 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::update_obstructed_pixels_each_iteration,false);
   defaultParams->set(DICe::normalize_gamma_with_active_pixels,false);
   defaultParams->set(DICe::use_objective_regularization,false);
+  defaultParams->set(DICe::objective_regularization_factor,1000.0);
   defaultParams->set(DICe::pixel_integration_order,1);
   defaultParams->set(DICe::skip_solve_gamma_threshold,1.0E-10);
   defaultParams->set(DICe::rotate_ref_image_180,false);

@@ -84,24 +84,24 @@ public:
     const int_t correlation_point_global_id):
     Objective(schema,correlation_point_global_id){
     // check that at least one of the shape functions is in use:
-    assert(this->schema_->translation_enabled() ||
-      this->schema_->rotation_enabled() ||
-      this->schema_->normal_strain_enabled() ||
-      this->schema_->shear_strain_enabled());
+    assert(schema_->translation_enabled() ||
+      schema_->rotation_enabled() ||
+      schema_->normal_strain_enabled() ||
+      schema_->shear_strain_enabled());
     assert(subset_!=Teuchos::null);
     // populate the dof map since not all deformation dofs are used
-    if(this->schema_->translation_enabled()){
-      this->dof_map_.push_back(DISPLACEMENT_X);
-      this->dof_map_.push_back(DISPLACEMENT_Y);
+    if(schema_->translation_enabled()){
+      dof_map_.push_back(DISPLACEMENT_X);
+      dof_map_.push_back(DISPLACEMENT_Y);
     }
-    if(this->schema_->rotation_enabled())
-      this->dof_map_.push_back(ROTATION_Z);
-    if(this->schema_->normal_strain_enabled()){
-      this->dof_map_.push_back(NORMAL_STRAIN_X);
-      this->dof_map_.push_back(NORMAL_STRAIN_Y);
+    if(schema_->rotation_enabled())
+      dof_map_.push_back(ROTATION_Z);
+    if(schema_->normal_strain_enabled()){
+      dof_map_.push_back(NORMAL_STRAIN_X);
+      dof_map_.push_back(NORMAL_STRAIN_Y);
     }
-    if(this->schema_->shear_strain_enabled())
-      this->dof_map_.push_back(SHEAR_STRAIN_XY);
+    if(schema_->shear_strain_enabled())
+      dof_map_.push_back(SHEAR_STRAIN_XY);
   }
 
   virtual ~Objective_ZNSSD(){}

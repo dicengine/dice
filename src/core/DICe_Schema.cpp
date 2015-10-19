@@ -389,6 +389,8 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   obstruction_skin_factor_ = diceParams->get<double>(DICe::obstruction_skin_factor);
   assert(diceParams->isParameter(DICe::use_objective_regularization));
   use_objective_regularization_ = diceParams->get<bool>(DICe::use_objective_regularization);
+  assert(diceParams->isParameter(DICe::objective_regularization_factor));
+  objective_regularization_factor_ = diceParams->get<double>(DICe::objective_regularization_factor);
   assert(diceParams->isParameter(DICe::update_obstructed_pixels_each_iteration));
   update_obstructed_pixels_each_iteration_ = diceParams->get<bool>(DICe::update_obstructed_pixels_each_iteration);
   if(update_obstructed_pixels_each_iteration_)

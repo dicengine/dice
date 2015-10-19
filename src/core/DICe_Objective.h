@@ -88,10 +88,10 @@ public:
     assert(schema_->is_initialized());
     // create the refSubset as member data
     // check to see if the schema has multishapes:
-    if((*this->schema_->conformal_subset_defs()).find(this->correlation_point_global_id_)!=(*this->schema_->conformal_subset_defs()).end()){
+    if((*schema_->conformal_subset_defs()).find(correlation_point_global_id_)!=(*schema_->conformal_subset_defs()).end()){
       subset_ = Teuchos::rcp(new Subset(static_cast<int_t>(local_field_value(COORDINATE_X)),
         static_cast<int_t>(local_field_value(COORDINATE_Y)),
-        (*this->schema_->conformal_subset_defs()).find(this->correlation_point_global_id_)->second));
+        (*schema_->conformal_subset_defs()).find(correlation_point_global_id_)->second));
     }
     // otherwise build up the subsets from x/y and w/h:
     else{
@@ -100,7 +100,7 @@ public:
         static_cast<int_t>(local_field_value(COORDINATE_Y)),
         schema_->subset_dim(),schema_->subset_dim()));
     }
-    subset_->initialize(this->schema_->ref_img());
+    subset_->initialize(schema_->ref_img());
 }
 
   virtual ~Objective(){}
@@ -164,14 +164,14 @@ public:
   /// \brief Returns the current local distributed value of the field specified. These values are stored in the schema
   /// \param name String name of the field (must match a valid enum in DICe.h)
   const scalar_t& local_field_value(const Field_Name name)const{
-    return this->schema_->local_field_value(this->correlation_point_global_id_,name);}
+    return schema_->local_field_value(correlation_point_global_id_,name);}
 
   /// \brief Returns the previous frame's value of the local distributed field specified. These values are stored in the schema.
   ///
   /// The solution at frame n - 1 is only stored for projection_method==VELCOITY_BASED
   /// \param name String name of the field (must match a valid enum in DICe.h)
   const scalar_t& local_field_value_nm1(const Field_Name name)const{
-    return this->schema_->local_field_value_nm1(this->correlation_point_global_id_,name);}
+    return schema_->local_field_value_nm1(correlation_point_global_id_,name);}
 
   /// Returns a pointer to the subset
   Teuchos::RCP<Subset> subset()const{

@@ -190,6 +190,8 @@ const char* const normalize_gamma_with_active_pixels = "normalize_gamma_with_act
 /// String parameter name
 const char* const use_objective_regularization = "use_objective_regularization";
 /// String parameter name
+const char* const objective_regularization_factor = "objective_regularization_factor";
+/// String parameter name
 const char* const pixel_integration_order = "pixel_integration_order";
 /// String parameter name
 const char* const rotate_ref_image_180 = "rotate_ref_image_180";
@@ -696,6 +698,11 @@ const Correlation_Parameter enable_shear_strain_param(enable_shear_strain,
   true,
   "Enables the shear strain shape function defree of freedom (gamma_xy = gamma_yx)");
 /// Correlation parameter and properties
+const Correlation_Parameter objective_regularization_factor_param(objective_regularization_factor,
+  SCALAR_PARAM,
+  true,
+  "The coefficient applied to the regularization term if active");
+/// Correlation parameter and properties
 const Correlation_Parameter search_window_size_factor_param(search_window_size_factor,
   SCALAR_PARAM,
   true,
@@ -830,7 +837,7 @@ const Correlation_Parameter compute_image_gradients_param(compute_image_gradient
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 50;
+const int_t num_valid_correlation_params = 51;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -882,7 +889,8 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   gauss_filter_team_size_param,
   gauss_filter_mask_size_param,
   rotate_ref_image_180_param,
-  rotate_def_image_180_param
+  rotate_def_image_180_param,
+  objective_regularization_factor_param
 };
 
 // TODO don't forget to update this when adding a new one
