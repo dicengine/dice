@@ -1,5 +1,5 @@
 ***
-*** Digital Image Correlation Engine (DICe), Copyright 2014 Sandia Corporation
+*** Digital Image Correlation Engine (DICe), Copyright 2015 Sandia Corporation
 ***
 *** Reference image: ../../component/images/refSpeckled.tif 
 *** Deformed image: ../../component/images/defSpeckled.tif 

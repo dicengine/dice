@@ -1,5 +1,5 @@
 ***
-*** Digital Image Correlation Engine (DICe), Copyright 2014 Sandia Corporation
+*** Digital Image Correlation Engine (DICe), Copyright 2015 Sandia Corporation
 ***
 *** Reference image: ./images/oht_cfrp_00.tiff 
 *** Deformed image: ./images/oht_cfrp_04.tiff 
