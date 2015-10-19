@@ -69,3 +69,45 @@ FOREACH ( test ${AVERAGE_DIFF_TESTS})
     ENDFOREACH ( )
 ENDFOREACH ( )
 
+#
+# MPI parallel tests
+#
+
+if(DICE_MPI)
+
+  SET(MPI_TESTS
+    #parallel_subsets
+    #parallel_subsets_seed
+    parallel_seed_first_step_only
+    #parallel_obstruct_depend
+  )
+  FOREACH ( test ${MPI_TESTS})
+    # Copy over all the test files (input and results)
+    FILE(COPY ${test} DESTINATION . )
+    # create a test
+    ADD_TEST ( NAME "RUN_${test}_n2"
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${test}
+      COMMAND ${DICE_MPI_EXEC} -n 2 ${CMAKE_CURRENT_BINARY_DIR}/../../src/core/dice -i input.xml -v)
+    # Separate test for each output file (could be more elegant way to do this...)
+    ADD_TEST ( NAME "RUN_${test}_n4"
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${test}
+      COMMAND ${DICE_MPI_EXEC} -n 4 ${CMAKE_CURRENT_BINARY_DIR}/../../src/core/dice -i input.xml -v)
+    # Separate test for each output file (could be more elegant way to do this...)
+    # remove the results folder (to clear previous runs)
+    FILE(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/${test}/results)
+    FILE ( GLOB gold_files "${CMAKE_CURRENT_BINARY_DIR}/${test}/gold/*.txt")
+    FOREACH ( gold_file ${gold_files})
+      # get the name of the file without the directory
+      GET_FILENAME_COMPONENT ( trim_name ${gold_file} NAME_WE)
+      ADD_TEST ( NAME "DIFF_${test}_${trim_name}_n2"
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../tools/DICe_Diff ${gold_file} "${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name}.2.txt" -t 1E-4 -v)
+      ADD_TEST ( NAME "DIFF_${test}_${trim_name}_n4"
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../tools/DICe_Diff ${gold_file} "${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name}.4.txt" -t 1E-4 -v)
+      set_tests_properties("DIFF_${test}_${trim_name}_n2" PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
+      set_tests_properties("DIFF_${test}_${trim_name}_n4" PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
+      set_property(TEST "DIFF_${test}_${trim_name}_n2" APPEND PROPERTY DEPENDS "RUN_${test}_n2")
+      set_property(TEST "DIFF_${test}_${trim_name}_n4" APPEND PROPERTY DEPENDS "RUN_${test}_n4")
+    ENDFOREACH ( )
+  ENDFOREACH ( )
+
+endif(DICE_MPI)
