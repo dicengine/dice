@@ -310,7 +310,9 @@ Subset::write_subset_on_image(const std::string & file_name,
       if(mapped_x - (int_t)mapped_x >= 0.5) px++;
       py = (int_t)mapped_y;
       if(mapped_y - (int_t)mapped_y >= 0.5) py++;
-      intensities[py*w+px] = 255;
+      intensities[py*w+px] = !is_active_.h_view(i) ? 255
+          : is_deactivated_this_step_.h_view(i) ?  0
+          : std::abs((def_intensities_.h_view(i) - ref_intensities_.h_view(i))*2);
     }
   }
   else{ // write the original shape of the subset
