@@ -75,6 +75,7 @@ public:
   /// \param deformation [out] Taken as the initial guess for the first iteration and returned as the converged deformation solution at successful completion.
   /// \param deltas The variations on the initial guess used to construct the other simplex points.
   /// \param num_iterations [out] Returns the number of iterations that took place
+  /// \param threshold if the initial evaluation of gamma is below this value, the analysis will be skipped
   /// A return value of MAX_ITERATIONS_REACHED means that convergence did not occur in the allowed number of iterations.
   /// A return value of CORRELATION_SUCCESSFUL means that convergence was obtained for the solution stored in the deformation vector
   Status_Flag minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,

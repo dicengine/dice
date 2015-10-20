@@ -185,8 +185,9 @@ public:
 
   /// initialization method:
   /// \param image the image to get the intensity values from
-  /// \param deformation the deformation map (optional)
   /// \param target the initialization mode (put the values in the ref or def intensities)
+  /// \param deformation the deformation map (optional)
+  /// \param interp interpolation method (optional)
   void initialize(Teuchos::RCP<Image> image,
     const Subset_View_Target target=REF_INTENSITIES,
     Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
@@ -263,6 +264,7 @@ struct Intensity_Sum_Functor{
   }
 };
 
+/// Functor to compute the sum minus the mean (value used in ZNSSD criteria)
 struct Intensity_Sum_Minus_Mean_Functor{
   /// pointer to the intensity values on the device
   intensity_device_view_1d intensities_;
@@ -270,6 +272,7 @@ struct Intensity_Sum_Minus_Mean_Functor{
   scalar_t mean_;
   /// constructor
   /// \param intensities the image intensity values
+  /// \param mean the mean value
   Intensity_Sum_Minus_Mean_Functor(intensity_device_view_1d intensities,
     scalar_t & mean):
     intensities_(intensities),
@@ -297,7 +300,12 @@ struct ZNSSD_Gamma_Functor{
   /// sum of the deformed intensity values minus the mean
   scalar_t mean_sum_d_;
   /// constructor
-  /// \param
+  /// \param ref_intensities pointer to the reference intensities
+  /// \param def_intensities pointer to the deformed intensities
+  /// \param mean_r mean of the reference values
+  /// \param mean_d mean of the deformed intensity values
+  /// \param mean_sum_r sum of values minus the mean for reference intensities
+  /// \param mean_sum_d sum of values minus the mean for reference intensities
   ZNSSD_Gamma_Functor(intensity_device_view_1d ref_intensities,
     intensity_device_view_1d def_intensities,
     const scalar_t & mean_r,

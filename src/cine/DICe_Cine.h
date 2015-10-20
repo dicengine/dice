@@ -63,8 +63,10 @@ typedef uint32_t FRACTIONS, *PFRACTIONS;
 /// Structure to hold the trigger time
 typedef struct tagTIME64
 {
-    FRACTIONS fractions;
-    uint32_t seconds;
+  /// fractions
+  FRACTIONS fractions;
+  /// seconds
+  uint32_t seconds;
 } TIME64, *PTIME64;
 
 /// Structure to hold the cine file header information
@@ -158,7 +160,7 @@ Teuchos::RCP<Cine_Header>
 read_cine_headers(const char *file,
   std::ostream * out_stream = NULL);
 
-/// \class DICe::cine::Cine_reader
+/// \class DICe::cine::Cine_Reader
 /// \brief A helper class the reads in cine files from disk and provides some methods
 /// such as getting a particular frame from the cine file
 class Cine_Reader
@@ -180,7 +182,8 @@ public:
     return frame_vec[0];
   }
   /// \brief get a set of images from a cine file using buffers and threading
-  /// \param frame_index the index of the frame to get
+  /// \param frame_index_start the start index of the frames to get
+  /// \param frame_index_end the end index of the frames to get
   /// \param params (optional) image parameter, such as compute_gradients, etc.
   std::vector<Teuchos::RCP<Image> > get_frames(const int_t frame_index_start, const int_t frame_index_end,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);

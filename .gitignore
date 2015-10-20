@@ -4,3 +4,4 @@ build*
 .project
 *-stamp*
 .DS_Store
+doc/doxygen/html

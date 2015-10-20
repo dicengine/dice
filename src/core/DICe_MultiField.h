@@ -54,13 +54,21 @@
 
 namespace DICe {
 
+/// Tpetra map type
 typedef Tpetra::Map<int_t,int_t> map_type;
+/// Tpetra multivector type
 typedef Tpetra::MultiVector<scalar_t,int_t,int_t> vec_type;
+/// Tpetra export type
 typedef Tpetra::Export<int_t,int_t> export_type;
+/// Tpetra import type
 typedef Tpetra::Import<int_t,int_t> import_type;
+/// Tpetra matrix type
 typedef Tpetra::CrsMatrix<scalar_t,int_t,int_t> matrix_type;
+/// Tpetra operator type
 typedef Tpetra::Operator<scalar_t,int_t> operator_type;
+/// Tpetra host device type
 typedef typename Tpetra::MultiVector<scalar_t,int_t,int_t>::dual_view_type::host_mirror_space host_device_type;
+/// Tpetra host view type
 typedef typename Tpetra::MultiVector<scalar_t,int_t,int_t>::dual_view_type::t_host host_view_type;
 
 /// \class DICe::MultiField_Comm

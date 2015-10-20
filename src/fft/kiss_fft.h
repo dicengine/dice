@@ -48,8 +48,11 @@ extern "C" {
 # endif
 #endif
 
+/// kiss fft cpx
 typedef struct {
+    /// real
     kiss_fft_scalar r;
+    /// complex
     kiss_fft_scalar i;
 }kiss_fft_cpx;
 

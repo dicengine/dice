@@ -918,6 +918,7 @@ private:
   bool rotate_def_image_180_;
   /// Phase correlation initial guess values (only computed if USE_PHASE_CORRELATION is set as the initialization method)
   scalar_t phase_cor_u_x_;
+  /// Phase correlation intial guess
   scalar_t phase_cor_u_y_;
 };
 

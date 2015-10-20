@@ -84,6 +84,7 @@ image_fft(Teuchos::RCP<Image> image,
 /// \param apply_log true if the log of the values should be taken
 /// \param scale_factor used if the log is applied i = scale_factor*log(i+1)
 /// \param shift true if the quandrants of the fft image should be swapped
+/// \param high_pass_filter true if the values should be filtered
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Image>
 image_fft(Teuchos::RCP<Image> image,
@@ -140,9 +141,9 @@ polar_transform(Teuchos::RCP<Image> image,
 /// 2 dimensional FFT of an array
 /// \param w width
 /// \param h height
-/// \real the real array
-/// \complex the imaginary array
-/// \inverse 1 if the FFT should be to the time domain
+/// \param real the real array
+/// \param complex the imaginary array
+/// \param inverse 1 if the FFT should be to the time domain
 DICE_LIB_DLL_EXPORT
 void
 array_2d_fft_in_place(const int_t w,

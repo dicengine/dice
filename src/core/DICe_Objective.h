@@ -121,6 +121,7 @@ public:
   /// \brief Simplex based optimization algorithm
   /// \param deformation [out] The deformation map parameters taken as input as the initial guess and returned as the converged solution
   /// \param num_iterations [out] The number of interations a particular frame took to execute
+  /// \param override_tol set this value if for this particular subset, the tolerance should be changed
   virtual Status_Flag computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     int_t & num_iterations,
     const scalar_t & override_tol = -1.0) = 0;
@@ -138,6 +139,11 @@ public:
     const int_t precision_level,
     scalar_t & return_value) = 0;
 
+  /// \brief Initialize the values by performing a search over a window with a given step
+  /// \param deformation [out] returned with the initial guess
+  /// \param window_size the size of the search window
+  /// \param step_size the increment over which to search the window
+  /// \param return_value the gamma value at the best initial guess
   virtual Status_Flag search_step(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     const int_t window_size,
     const scalar_t step_size,

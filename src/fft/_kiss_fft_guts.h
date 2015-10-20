@@ -25,10 +25,15 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
  4*4*4*2
  */
 
+/// kiss fft state
 struct kiss_fft_state{
+    /// nfft
     int nfft;
+    /// inverse
     int inverse;
+    /// factors
     int factors[2*MAXFACTORS];
+    /// twiddles
     kiss_fft_cpx twiddles[1];
 };
 

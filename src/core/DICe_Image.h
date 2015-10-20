@@ -287,6 +287,8 @@ public:
 
   /// apply a transformation to this image to create another image
   /// \param deformation the deformation mapping parameters u,v,theta,...
+  /// \param apply_in_place true if the mapped intensity values should replace the existing values in the image
+  /// (in this case return is null pointer)
   /// \param cx centroid of mapping in the current image (used when applying rotation)
   /// \param cy centroid of mapping in the current image (used when applying rotation)
   Teuchos::RCP<Image> apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformation,
@@ -441,6 +443,8 @@ struct Mask_Smoothing_Functor{
   scalar_t gauss_filter_coeffs_[5][5];
   /// constructor
   /// \param mask pointer to the mask array on the device
+  /// \param width the width of the image
+  /// \param height the height of the image
   Mask_Smoothing_Functor(scalar_dual_view_2d mask,
     const int_t width,
     const int_t height);
@@ -461,6 +465,7 @@ struct Mask_Apply_Functor{
   /// constructor
   /// \param intensities pointer to the intensity array on the device
   /// \param mask pointer to the mask array on the device
+  /// \param width the image width
   Mask_Apply_Functor(intensity_device_view_2d intensities,
     scalar_device_view_2d mask,
     int_t width):
@@ -514,6 +519,8 @@ struct Transform_Functor{
   /// constructor
   /// \param intensities_from pointer to the intensity array to be transformed
   /// \param intensities_to pointer to the result intensity array
+  /// \param width the width of the image
+  /// \param height the height of the image
   /// \param cx centroid in x
   /// \param cy centroid in y
   /// \param def the deformation map parameters

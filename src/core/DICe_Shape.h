@@ -88,10 +88,9 @@ public:
   /// \param pixel_flags [out] An array of bools true means the pixel is still active false means that
   /// the pixel falls inside the shape and deactivated (should be of same size as x_coords and y_coords)
   /// \param size number of elements in the arrays (all arrays should be the same size)
-  /// \param x_coords Array of local x-coordinates for each pixel in reference to the origin_x and origin_y param (should be of same size as pixel_flags and y_coords)
-  /// \param y_coords Array of local y-coordinates for each pixel in reference to the origin_x and origin_y param (should be of same size as pixel_flags and x_coords)
-  /// \param origin_x global image x-coordinate of origin for the x_coords and y_coords arguments above
-  /// \param origin_y global image y-coordinate of origin for the x_coords and y_coords arguments above
+  /// \param pixel_flags pointer to the array of flags for each pixel
+  /// \param x_coords pointer to the array with the x coordinates of each pixel to test
+  /// \param y_coords pointer to the array with the y coordinates of each pixel to test
   // TODO This is a little awkward and could be done more elegantly
   virtual void deactivate_pixels(const int_t size,
     bool * pixel_flags,
