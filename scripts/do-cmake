@@ -1,0 +1,15 @@
+#!/bin/bash
+
+EXTRA_ARGS=$@
+
+rm -f CMakeCache.txt
+rm -rf CMakeFiles
+
+cmake \
+ -D CMAKE_BUILD_TYPE=RELEASE \
+ -D DICE_TRILINOS_DIR=<path_to_trilinos>/trilinos/build_openmp/install \
+ -D CMAKE_INSTALL_PREFIX:FILEPATH=<path_to_dice>/build_openmp/install \
+ -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+ -D DICE_DEBUG_MSG:BOOL=OFF \
+ -D CMAKE_CXX_FLAGS:STRING="-Wall" \
+ $EXTRA_ARGS ../
