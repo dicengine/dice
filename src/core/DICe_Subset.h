@@ -291,6 +291,8 @@ struct ZNSSD_Gamma_Functor{
   intensity_device_view_1d ref_intensities_;
   /// deformed image intensities
   intensity_device_view_1d def_intensities_;
+  /// active pixel flags
+  bool_device_view_1d is_active_;
   /// mean reference intensity value
   scalar_t mean_r_;
   /// mean deformed intensity value
@@ -308,12 +310,14 @@ struct ZNSSD_Gamma_Functor{
   /// \param mean_sum_d sum of values minus the mean for reference intensities
   ZNSSD_Gamma_Functor(intensity_device_view_1d ref_intensities,
     intensity_device_view_1d def_intensities,
+    bool_device_view_1d is_active,
     const scalar_t & mean_r,
     const scalar_t & mean_d,
     const scalar_t & mean_sum_r,
     const scalar_t & mean_sum_d):
       ref_intensities_(ref_intensities),
       def_intensities_(def_intensities),
+      is_active_(is_active),
       mean_r_(mean_r),
       mean_d_(mean_d),
       mean_sum_r_(mean_sum_r),
@@ -321,8 +325,10 @@ struct ZNSSD_Gamma_Functor{
   /// operator
   KOKKOS_INLINE_FUNCTION
   void operator()(const int_t pixel_index, scalar_t & gamma) const{
-    scalar_t value =  (def_intensities_(pixel_index)-mean_d_)/mean_sum_d_ - (ref_intensities_(pixel_index)-mean_r_)/mean_sum_r_;
-    gamma += value*value;
+    if(is_active_(pixel_index)){
+      scalar_t value =  (def_intensities_(pixel_index)-mean_d_)/mean_sum_d_ - (ref_intensities_(pixel_index)-mean_r_)/mean_sum_r_;
+      gamma += value*value;
+    }
   }
 };
 

@@ -84,8 +84,12 @@ typedef Kokkos::DualView<scalar_t **>  scalar_dual_view_2d;
 // note this is not random access on purpose
 typedef Kokkos::View<scalar_t **> scalar_device_view_2d;
 
-/// 2 dimensional array of pixel coordinate values for the device
+/// 1 dimensional array of pixel coordinate values for the device
 typedef Kokkos::View<int_t *> pixel_coord_device_view_1d;
+
+/// 1 dimensional array of bool values for the device
+typedef Kokkos::View<bool *> bool_device_view_1d;
+
 /// host mirrors of the intensity value arrays
 typedef pixel_coord_device_view_1d::HostMirror pixel_coord_host_view_1d;
 

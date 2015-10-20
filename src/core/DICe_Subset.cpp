@@ -329,6 +329,7 @@ Subset::gamma(){
   scalar_t gamma = 0.0;
   ZNSSD_Gamma_Functor gamma_func(ref_intensities_.d_view,
      def_intensities_.d_view,
+     is_active_.d_view,
      mean_ref,mean_def,
      mean_sum_ref,mean_sum_def);
   Kokkos::parallel_reduce(num_pixels_,gamma_func,gamma);
