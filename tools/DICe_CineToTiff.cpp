@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
     // determine the file name for this subset
     std::stringstream fName;
     fName << prefix << "_";
-    for(int_t i=0;i<num_zeros;++i)
+    for(int_t j=0;j<num_zeros;++j)
       fName << "0";
     fName << i << ".tif";
     Teuchos::RCP<DICe::Image> image = cine_reader->get_frame(i);
