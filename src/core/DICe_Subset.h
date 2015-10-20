@@ -223,6 +223,25 @@ public:
   /// reset the is_active bool for each pixel to true;
   void reset_is_active();
 
+  /// reset the is_deactivated_this_step bool for each pixel to false
+  void reset_is_deactivated_this_step();
+
+  /// \brief EXPERIMENTAL Check the deformed position of the pixel to see if it falls inside an obstruction, if so, turn it off
+  /// \param deformation Deformation to use in determining the current position of all the pixels in the subset
+  ///
+  /// This method uses the specified deformation vector to deform the subset to the current position. It then
+  /// checks to see if any of the deformed pixels fall behind an obstruction. These obstructed pixels
+  /// are turned off by setting the is_deactivated_this_step_[i] flag to true. These flags are reset on every frame.
+  /// When methods like gamma() are called on an objective, these pixels get skipped so they do not contribute to
+  /// the correlation or the optimization routine.
+  void turn_off_obstructed_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation);
+
+  /// \brief Returns true if the given coordinates fall within an obstructed region for this subset
+  /// \param coord_x global x-coordinate
+  /// \param coord_y global y-coordinate
+  bool is_obstructed_pixel(const scalar_t & coord_x,
+    const scalar_t & coord_y)const;
+
 private:
   /// number of pixels in the subset
   int_t num_pixels_;
@@ -234,8 +253,14 @@ private:
   scalar_dual_view_1d grad_x_;
   /// container for grad_y
   scalar_dual_view_1d grad_y_;
-  /// pixels can be deactivated by obstructions
+  /// pixels can be deactivated by obstructions (persistent)
   bool_dual_view_1d is_active_;
+  /// pixels can be deactivated for this frame only
+  bool_dual_view_1d is_deactivated_this_step_;
+  /// \brief EXPERIMENTAL Holds the obstruction coordinates if they exist.
+  /// NOTE: The coordinates are switched for this (i.e. (Y,X)) so that
+  /// the loops over y then x will be more efficient
+  std::set<std::pair<int_t,int_t> > obstructed_coords_;
   /// centroid location x
   int_t cx_; // assumed to be the middle of the pixel
   /// centroid location y
@@ -291,8 +316,10 @@ struct ZNSSD_Gamma_Functor{
   intensity_device_view_1d ref_intensities_;
   /// deformed image intensities
   intensity_device_view_1d def_intensities_;
-  /// active pixel flags
+  /// active pixel flags (persistent)
   bool_device_view_1d is_active_;
+  /// active pixel flags (for current step)
+  bool_device_view_1d is_deactivated_this_step_;
   /// mean reference intensity value
   scalar_t mean_r_;
   /// mean deformed intensity value
@@ -304,6 +331,8 @@ struct ZNSSD_Gamma_Functor{
   /// constructor
   /// \param ref_intensities pointer to the reference intensities
   /// \param def_intensities pointer to the deformed intensities
+  /// \param is_active array of flags of active pixels (persistent)
+  /// \param is_deactivated_this_step array of flags for pixels deactivated this step only
   /// \param mean_r mean of the reference values
   /// \param mean_d mean of the deformed intensity values
   /// \param mean_sum_r sum of values minus the mean for reference intensities
@@ -311,6 +340,7 @@ struct ZNSSD_Gamma_Functor{
   ZNSSD_Gamma_Functor(intensity_device_view_1d ref_intensities,
     intensity_device_view_1d def_intensities,
     bool_device_view_1d is_active,
+    bool_device_view_1d is_deactivated_this_step,
     const scalar_t & mean_r,
     const scalar_t & mean_d,
     const scalar_t & mean_sum_r,
@@ -318,6 +348,7 @@ struct ZNSSD_Gamma_Functor{
       ref_intensities_(ref_intensities),
       def_intensities_(def_intensities),
       is_active_(is_active),
+      is_deactivated_this_step_(is_deactivated_this_step),
       mean_r_(mean_r),
       mean_d_(mean_d),
       mean_sum_r_(mean_sum_r),
@@ -325,7 +356,7 @@ struct ZNSSD_Gamma_Functor{
   /// operator
   KOKKOS_INLINE_FUNCTION
   void operator()(const int_t pixel_index, scalar_t & gamma) const{
-    if(is_active_(pixel_index)){
+    if(is_active_(pixel_index)&!is_deactivated_this_step_(pixel_index)){
       scalar_t value =  (def_intensities_(pixel_index)-mean_d_)/mean_sum_d_ - (ref_intensities_(pixel_index)-mean_r_)/mean_sum_r_;
       gamma += value*value;
     }

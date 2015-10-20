@@ -80,7 +80,9 @@ Subset::Subset(int_t cx,
   grad_x_ = scalar_dual_view_1d("grad_x",num_pixels_);
   grad_y_ = scalar_dual_view_1d("grad_x",num_pixels_);
   is_active_ = bool_dual_view_1d("is_active",num_pixels_);
+  is_deactivated_this_step_ = bool_dual_view_1d("is_deactivated_this_step",num_pixels_);
   reset_is_active();
+  reset_is_deactivated_this_step();
 }
 
 Subset::Subset(const int_t cx,
@@ -126,6 +128,8 @@ Subset::Subset(const int_t cx,
   grad_y_ = scalar_dual_view_1d("grad_x",num_pixels_);
   is_active_ = bool_dual_view_1d("is_active",num_pixels_);
   reset_is_active();
+  is_deactivated_this_step_ = bool_dual_view_1d("is_deactivated_this_step",num_pixels_);
+  reset_is_deactivated_this_step();
 }
 
 Subset::Subset(const int_t cx,
@@ -168,6 +172,8 @@ Subset::Subset(const int_t cx,
   grad_y_ = scalar_dual_view_1d("grad_x",num_pixels_);
   is_active_ = bool_dual_view_1d("is_active",num_pixels_);
   reset_is_active();
+  is_deactivated_this_step_ = bool_dual_view_1d("is_deactivated_this_step",num_pixels_);
+  reset_is_deactivated_this_step();
 
   // now set the inactive bit for the second set of multishapes if they exist.
   if(subset_def.has_excluded_area()){
@@ -179,15 +185,12 @@ Subset::Subset(const int_t cx,
   is_active_.modify<host_space>();
   is_active_.sync<device_space>();
 
-
-  // TODO TODO TODO
-//
-//  if(subset_def.has_obstructed_area()){
-//    for(Size i=0;i<subset_def.obstructed_area()->size();++i){
-//      std::set<std::pair<Size,Size> > obstructedArea = (*subset_def.obstructed_area())[i]->get_owned_pixels();
-//      obstructed_coords_.insert(obstructedArea.begin(),obstructedArea.end());
-//    }
-//  }
+  if(subset_def.has_obstructed_area()){
+    for(size_t i=0;i<subset_def.obstructed_area()->size();++i){
+      std::set<std::pair<int_t,int_t> > obstructedArea = (*subset_def.obstructed_area())[i]->get_owned_pixels();
+      obstructed_coords_.insert(obstructedArea.begin(),obstructedArea.end());
+    }
+  }
 }
 
 void
@@ -196,6 +199,75 @@ Subset::reset_is_active(){
     is_active_.h_view(i) = true;
   is_active_.modify<host_space>();
   is_active_.sync<device_space>();
+}
+
+void
+Subset::reset_is_deactivated_this_step(){
+  for(int_t i=0;i<num_pixels_;++i)
+    is_deactivated_this_step_.h_view(i) = false;
+  is_deactivated_this_step_.modify<host_space>();
+  is_deactivated_this_step_.sync<device_space>();
+}
+
+bool
+Subset::is_obstructed_pixel(const scalar_t & coord_x,
+  const scalar_t & coord_y) const {
+  // determine which pixel the coordinates fall in:
+  int_t c_x = (int_t)coord_x;
+  if(coord_x - (int_t)coord_x >= 0.5) c_x++;
+  int_t c_y = (int_t)coord_y;
+  if(coord_y - (int_t)coord_y >= 0.5) c_y++;
+  // now check if c_x and c_y are obstructed
+  // Note the x and y coordinates are switched because that is how they live in the set
+  // this was done for performance in loops over y then x
+  std::pair<int_t,int_t> point(c_y,c_x);
+  const bool obstructed = obstructed_coords_.find(point)!=obstructed_coords_.end();
+  return obstructed;
+}
+
+void
+Subset::turn_off_obstructed_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation){
+  assert(deformation!=Teuchos::null);
+  const scalar_t u     = (*deformation)[DICe::DISPLACEMENT_X];
+  const scalar_t v     = (*deformation)[DICe::DISPLACEMENT_Y];
+  const scalar_t theta = (*deformation)[DICe::ROTATION_Z];
+  const scalar_t dudx  = (*deformation)[DICe::NORMAL_STRAIN_X];
+  const scalar_t dvdy  = (*deformation)[DICe::NORMAL_STRAIN_Y];
+  const scalar_t gxy   = (*deformation)[DICe::SHEAR_STRAIN_XY];
+  scalar_t Dx=0.0,Dy=0.0;
+  scalar_t dx=0.0, dy=0.0;
+  scalar_t X=0.0,Y=0.0;
+  scalar_t cos_t = std::cos(theta);
+  scalar_t sin_t = std::sin(theta);
+  reset_is_deactivated_this_step();
+  //TODO const bool has_blocks = !pixels_blocked_by_other_subsets_.empty();
+  for(int_t i=0;i<num_pixels_;++i){
+
+    dx = (scalar_t)(x(i)) - cx_;
+    dy = (scalar_t)(y(i)) - cy_;
+    Dx = (1.0+dudx)*dx + gxy*dy;
+    Dy = (1.0+dvdy)*dy + gxy*dx;
+    // mapped location
+    X = cos_t*Dx - sin_t*Dy + u + cx_;
+    Y = sin_t*Dx + cos_t*Dy + v + cy_;
+
+    if(is_obstructed_pixel(X,Y)){
+      is_deactivated_this_step_.h_view(i) = true;
+    }
+    else{
+      is_deactivated_this_step_.h_view(i) = false;
+    }
+    // TODO add pixels blocked by other subsets:
+//    if(has_blocks){
+//      px = ((Size)(X + 0.5) == (Size)(X)) ? (Size)(X) : (Size)(X) + 1;
+//      py = ((Size)(Y + 0.5) == (Size)(Y)) ? (Size)(Y) : (Size)(Y) + 1;
+//      if(pixels_blocked_by_other_subsets_.find(std::pair<Size,Size>(py,px))!=pixels_blocked_by_other_subsets_.end())
+//        //is_active_[i] = false;
+//        is_deactivated_this_step_[i] = true;
+//    }
+  } // pixel loop
+  is_deactivated_this_step_.modify<host_space>();
+  is_deactivated_this_step_.sync<device_space>();
 }
 
 void
@@ -330,6 +402,7 @@ Subset::gamma(){
   ZNSSD_Gamma_Functor gamma_func(ref_intensities_.d_view,
      def_intensities_.d_view,
      is_active_.d_view,
+     is_deactivated_this_step_.d_view,
      mean_ref,mean_def,
      mean_sum_ref,mean_sum_def);
   Kokkos::parallel_reduce(num_pixels_,gamma_func,gamma);
