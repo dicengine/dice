@@ -372,6 +372,10 @@ Subset::initialize(Teuchos::RCP<Image> image,
         "Error, unknown interpolation method requested");
     }
   }
+  // coordinates for points x and y are always in global coordinates
+  // if the input image is a sub-image i.e. it has offsets, then these need to be taken into account
+  const int_t offset_x = image->offset_x();
+  const int_t offset_y = image->offset_y();
   // now sync up the intensities:
   if(target==REF_INTENSITIES){
     ref_intensities_.modify<device_space>();
@@ -380,8 +384,8 @@ Subset::initialize(Teuchos::RCP<Image> image,
       // TODO thread this:
       // copy over the image gradients:
       for(int_t px=0;px<num_pixels_;++px){
-        grad_x_.h_view(px) = image->grad_x().h_view(y_.h_view(px),x_.h_view(px));
-        grad_y_.h_view(px) = image->grad_y().h_view(y_.h_view(px),x_.h_view(px));
+        grad_x_.h_view(px) = image->grad_x().h_view(y_.h_view(px)-offset_y,x_.h_view(px)-offset_x);
+        grad_y_.h_view(px) = image->grad_y().h_view(y_.h_view(px)-offset_y,x_.h_view(px)-offset_x);
       }
       has_gradients_ = true;
     }
@@ -409,8 +413,8 @@ Subset_Init_Functor::operator()(const Map_Bilinear_Tag&,
   const scalar_t Dx = (1.0+ex_)*dx + g_*dy;
   const scalar_t Dy = (1.0+ey_)*dy + g_*dx;
   // mapped location
-  scalar_t mapped_x = cos_t_*Dx - sin_t_*Dy + u_ + cx_;
-  scalar_t mapped_y = sin_t_*Dx + cos_t_*Dy + v_ + cy_;
+  scalar_t mapped_x = cos_t_*Dx - sin_t_*Dy + u_ + cx_ - (scalar_t)offset_x_;
+  scalar_t mapped_y = sin_t_*Dx + cos_t_*Dy + v_ + cy_ - (scalar_t)offset_y_;
 
   // check that the mapped location is inside the image...
   if(mapped_x>=0&&mapped_x<image_w_-1.5&&mapped_y>=0&&mapped_y<image_h_-1.5){
@@ -444,8 +448,8 @@ Subset_Init_Functor::operator()(const Map_Keys_Tag&,
   const scalar_t Dx = (1.0+ex_)*dx + g_*dy;
   const scalar_t Dy = (1.0+ey_)*dy + g_*dx;
   // mapped location
-  scalar_t mapped_x = cos_t_*Dx - sin_t_*Dy + u_ + cx_;
-  scalar_t mapped_y = sin_t_*Dx + cos_t_*Dy + v_ + cy_;
+  scalar_t mapped_x = cos_t_*Dx - sin_t_*Dy + u_ + cx_ - (scalar_t)offset_x_;
+  scalar_t mapped_y = sin_t_*Dx + cos_t_*Dy + v_ + cy_ - (scalar_t)offset_y_;
   // determine the current pixel the coordinates fall in:
   int_t px = (int_t)mapped_x;
   if(mapped_x - px >= 0.5) px++;
@@ -517,7 +521,7 @@ KOKKOS_INLINE_FUNCTION
 void
 Subset_Init_Functor::operator()(const No_Map_Tag&,
   const int_t pixel_index)const{
-  subset_intensities_(pixel_index) = image_intensities_(y_(pixel_index),x_(pixel_index));
+  subset_intensities_(pixel_index) = image_intensities_(y_(pixel_index)-offset_y_,x_(pixel_index)-offset_x_);
 }
 
 

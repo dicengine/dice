@@ -360,6 +360,10 @@ struct Subset_Init_Functor{
   int_t image_w_;
   /// height of the image
   int_t image_h_;
+  /// offset taken from image rcp
+  int_t offset_x_;
+  /// offset taken from image rcp
+  int_t offset_y_;
   /// tolerance
   scalar_t tol_;
   // note all of the views below are only the device views
@@ -383,6 +387,8 @@ struct Subset_Init_Functor{
       ex_(0.0),
       ey_(0.0),
       g_(0.0),
+      offset_x_(image->offset_x()),
+      offset_y_(image->offset_y()),
       tol_(0.00001){
     if(deformation!=Teuchos::null){
       u_ = (*deformation)[DISPLACEMENT_X];
