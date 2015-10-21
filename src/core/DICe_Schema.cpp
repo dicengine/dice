@@ -938,7 +938,7 @@ Schema::execute_correlation(){
     assert(obj_vec_.size()==num_local_subsets);
     // now run the correlations:
     for(int_t subset_index=0;subset_index<num_local_subsets;++subset_index){
-      check_for_blocking_subsets_new(this_proc_subset_global_ids_[subset_index]);
+      check_for_blocking_subsets(this_proc_subset_global_ids_[subset_index]);
       if(correlation_routine_==SUBSET_EVOLUTION_ROUTINE)
         subset_evolution_routine(obj_vec_[subset_index]);
       else
@@ -1779,83 +1779,38 @@ Schema::print_fields(const std::string & fileName){
 
 void
 Schema::check_for_blocking_subsets(const int_t subset_global_id){
-//  if(obstructing_subset_ids_==Teuchos::null) return;
-//  if(obstructing_subset_ids_->find(subset_global_id)==obstructing_subset_ids_->end()) return;
-//
-//  const int_t subset_local_id = get_local_id(subset_global_id);
-//
-//  // get a pointer to the member data in the subset that will store the list of blocked pixels
-//  std::set<std::pair<int_t,int_t> > & blocked_pixels = *obj_vec_[subset_local_id]->get_ref_subset()->pixels_blocked_by_other_subsets();
-//  blocked_pixels.clear();
-//  // get the list of subsets that block this one
-//  std::vector<int_t> * obst_ids = &obstructing_subset_ids_->find(subset_global_id)->second;
-//  // iterate over all the blocking subsets
-//  for(int_t si=0;si<obst_ids->size();++si){
-//    int_t global_ss = (*obst_ids)[si];
-//    int_t local_ss = get_local_id(global_ss);
-//    assert(local_ss>=0);
-//    scalar_t u     = local_field_value(global_ss,DICe::DISPLACEMENT_X);
-//    scalar_t v     = local_field_value(global_ss,DICe::DISPLACEMENT_Y);
-//    scalar_t theta = local_field_value(global_ss,DICe::ROTATION_Z);
-//    scalar_t dudx  = local_field_value(global_ss,DICe::NORMAL_STRAIN_X);
-//    scalar_t dvdy  = local_field_value(global_ss,DICe::NORMAL_STRAIN_Y);
-//    scalar_t gxy   = local_field_value(global_ss,DICe::SHEAR_STRAIN_XY);
-//    scalar_t dx=0.0,dy=0.0;
-//    scalar_t X=0.0,Y=0.0;
-//    int_t cx=0,cy=0;
-//    // iterate over all the pixels in the reference blocking subset and compute the current position
-//    for(int_t px=0;px<obj_vec_[local_ss]->get_ref_subset()->num_pixels();++px){
-//      dx = (1.0+dudx)*obj_vec_[local_ss]->get_ref_subset()->x(px) + gxy*obj_vec_[local_ss]->get_ref_subset()->y(px);
-//      dy = (1.0+dvdy)*obj_vec_[local_ss]->get_ref_subset()->y(px) + gxy*obj_vec_[local_ss]->get_ref_subset()->x(px);
-//      X = std::cos(theta)*dx - std::sin(theta)*dy + u            + obj_vec_[local_ss]->get_ref_subset()->centroid_x();
-//      Y = std::sin(theta)*dx + std::cos(theta)*dy + v            + obj_vec_[local_ss]->get_ref_subset()->centroid_y();
-//      cx = (int_t)X;
-//      if(X - (int_t)X >= 0.5) cx++;
-//      cy = (int_t)Y;
-//      if(Y - (int_t)Y >= 0.5) cy++;
-//      // insert a few pixels on each side of the centroid pixel:
-//      for(int_t i=-obstruction_buffer_size_;i<=obstruction_buffer_size_;++i){
-//        for(int_t j=-obstruction_buffer_size_;j<=obstruction_buffer_size_;++j){
-//          // add these pixels to the list
-//          blocked_pixels.insert(std::pair<int_t,int_t>(cy+j,cx+i));
-//        }
-//      } // loop over region surrounding the pixels in question
-//    } // loop over blocking subset pixels
-//  } // blocking subsets loop
-}
+  if(obstructing_subset_ids_==Teuchos::null) return;
+  if(obstructing_subset_ids_->find(subset_global_id)==obstructing_subset_ids_->end()) return;
+  if(obstructing_subset_ids_->find(subset_global_id)->second.size()==0) return;
 
-void
-Schema::check_for_blocking_subsets_new(const int_t subset_global_id){
-//  if(obstructing_subset_ids_==Teuchos::null) return;
-//  if(obstructing_subset_ids_->find(subset_global_id)==obstructing_subset_ids_->end()) return;
-//  if(obstructing_subset_ids_->find(subset_global_id)->second.size()==0) return;
-//
-//  const int_t subset_local_id = get_local_id(subset_global_id);
-//
-//  // turn off pixels in subset 0 that are blocked by 1 and 2
-//  // get a pointer to the member data in the subset that will store the list of blocked pixels
-//  std::set<std::pair<int_t,int_t> > & blocked_pixels = *obj_vec_[subset_local_id]->get_ref_subset()->pixels_blocked_by_other_subsets();
-//  blocked_pixels.clear();
-//
-//  // get the list of subsets that block this one
-//  std::vector<int_t> * obst_ids = &obstructing_subset_ids_->find(subset_global_id)->second;
-//  // iterate over all the blocking subsets
-//  for(int_t si=0;si<obst_ids->size();++si){
-//    int_t global_ss = (*obst_ids)[si];
-//    int_t local_ss = get_local_id(global_ss);
-//    assert(local_ss>=0);
-//    int_t cx = obj_vec_[local_ss]->get_ref_subset()->centroid_x();
-//    int_t cy = obj_vec_[local_ss]->get_ref_subset()->centroid_y();
-//    Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-//    (*def)[DICe::DISPLACEMENT_X]  = local_field_value(global_ss,DICe::DISPLACEMENT_X);
-//    (*def)[DICe::DISPLACEMENT_Y]  = local_field_value(global_ss,DICe::DISPLACEMENT_Y);
-//    (*def)[DICe::ROTATION_Z]      = local_field_value(global_ss,DICe::ROTATION_Z);
-//    (*def)[DICe::NORMAL_STRAIN_X] = local_field_value(global_ss,DICe::NORMAL_STRAIN_X);
-//    (*def)[DICe::NORMAL_STRAIN_Y] = local_field_value(global_ss,DICe::NORMAL_STRAIN_Y);
-//    (*def)[DICe::SHEAR_STRAIN_XY] = local_field_value(global_ss,DICe::SHEAR_STRAIN_XY);
-//    std::set<std::pair<int_t,int_t> > subset_pixels = obj_vec_[local_ss]->get_ref_subset()->get_deformed_shapes(def,cx,cy,obstruction_skin_factor_);
-//    blocked_pixels.insert(subset_pixels.begin(),subset_pixels.end());
-//  } // blocking subsets loop
+  const int_t subset_local_id = get_local_id(subset_global_id);
+
+  // turn off pixels in subset 0 that are blocked by 1 and 2
+  // get a pointer to the member data in the subset that will store the list of blocked pixels
+  std::set<std::pair<int_t,int_t> > & blocked_pixels =
+      *obj_vec_[subset_local_id]->subset()->pixels_blocked_by_other_subsets();
+  blocked_pixels.clear();
+
+  // get the list of subsets that block this one
+  std::vector<int_t> * obst_ids = &obstructing_subset_ids_->find(subset_global_id)->second;
+  // iterate over all the blocking subsets
+  for(size_t si=0;si<obst_ids->size();++si){
+    int_t global_ss = (*obst_ids)[si];
+    int_t local_ss = get_local_id(global_ss);
+    assert(local_ss>=0);
+    int_t cx = obj_vec_[local_ss]->subset()->centroid_x();
+    int_t cy = obj_vec_[local_ss]->subset()->centroid_y();
+    Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+    (*def)[DICe::DISPLACEMENT_X]  = local_field_value(global_ss,DICe::DISPLACEMENT_X);
+    (*def)[DICe::DISPLACEMENT_Y]  = local_field_value(global_ss,DICe::DISPLACEMENT_Y);
+    (*def)[DICe::ROTATION_Z]      = local_field_value(global_ss,DICe::ROTATION_Z);
+    (*def)[DICe::NORMAL_STRAIN_X] = local_field_value(global_ss,DICe::NORMAL_STRAIN_X);
+    (*def)[DICe::NORMAL_STRAIN_Y] = local_field_value(global_ss,DICe::NORMAL_STRAIN_Y);
+    (*def)[DICe::SHEAR_STRAIN_XY] = local_field_value(global_ss,DICe::SHEAR_STRAIN_XY);
+    std::set<std::pair<int_t,int_t> > subset_pixels =
+        obj_vec_[local_ss]->subset()->deformed_shapes(def,cx,cy,obstruction_skin_factor_);
+    blocked_pixels.insert(subset_pixels.begin(),subset_pixels.end());
+  } // blocking subsets loop
 }
 
 void

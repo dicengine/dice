@@ -53,7 +53,8 @@ Subset::Subset(int_t cx,
   num_pixels_(x.size()),
   cx_(cx),
   cy_(cy),
-  has_gradients_(false)
+  has_gradients_(false),
+  is_conformal_(false)
 {
   assert(num_pixels_>0);
   assert(x.size()==y.size());
@@ -91,7 +92,8 @@ Subset::Subset(const int_t cx,
   const int_t height):
  cx_(cx),
  cy_(cy),
- has_gradients_(false)
+ has_gradients_(false),
+ is_conformal_(false)
 {
   assert(width>0);
   assert(height>0);
@@ -137,7 +139,9 @@ Subset::Subset(const int_t cx,
   const Conformal_Area_Def & subset_def):
   cx_(cx),
   cy_(cy),
-  has_gradients_(false)
+  has_gradients_(false),
+  conformal_subset_def_(subset_def),
+  is_conformal_(true)
 {
   assert(subset_def.has_boundary());
   std::set<std::pair<int_t,int_t> > coords;
@@ -225,6 +229,21 @@ Subset::is_obstructed_pixel(const scalar_t & coord_x,
   return obstructed;
 }
 
+std::set<std::pair<int_t,int_t> >
+Subset::deformed_shapes(Teuchos::RCP<const std::vector<scalar_t> > deformation,
+  const int_t cx,
+  const int_t cy,
+  const scalar_t & skin_factor){
+  std::set<std::pair<int_t,int_t> > coords;
+  if(!is_conformal_) return coords;
+  for(size_t i=0;i<conformal_subset_def_.boundary()->size();++i){
+    std::set<std::pair<int_t,int_t> > shapeCoords =
+        (*conformal_subset_def_.boundary())[i]->get_owned_pixels(deformation,cx,cy,skin_factor);
+    coords.insert(shapeCoords.begin(),shapeCoords.end());
+  }
+  return coords;
+}
+
 void
 Subset::turn_off_obstructed_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation){
   assert(deformation!=Teuchos::null);
@@ -237,10 +256,11 @@ Subset::turn_off_obstructed_pixels(Teuchos::RCP<const std::vector<scalar_t> > de
   scalar_t Dx=0.0,Dy=0.0;
   scalar_t dx=0.0, dy=0.0;
   scalar_t X=0.0,Y=0.0;
+  int_t px=0,py=0;
   scalar_t cos_t = std::cos(theta);
   scalar_t sin_t = std::sin(theta);
   reset_is_deactivated_this_step();
-  //TODO const bool has_blocks = !pixels_blocked_by_other_subsets_.empty();
+  const bool has_blocks = !pixels_blocked_by_other_subsets_.empty();
   for(int_t i=0;i<num_pixels_;++i){
 
     dx = (scalar_t)(x(i)) - cx_;
@@ -257,14 +277,14 @@ Subset::turn_off_obstructed_pixels(Teuchos::RCP<const std::vector<scalar_t> > de
     else{
       is_deactivated_this_step_.h_view(i) = false;
     }
-    // TODO add pixels blocked by other subsets:
-//    if(has_blocks){
-//      px = ((Size)(X + 0.5) == (Size)(X)) ? (Size)(X) : (Size)(X) + 1;
-//      py = ((Size)(Y + 0.5) == (Size)(Y)) ? (Size)(Y) : (Size)(Y) + 1;
-//      if(pixels_blocked_by_other_subsets_.find(std::pair<Size,Size>(py,px))!=pixels_blocked_by_other_subsets_.end())
-//        //is_active_[i] = false;
-//        is_deactivated_this_step_[i] = true;
-//    }
+    // pixels blocked by other subsets:
+    if(has_blocks){
+      px = ((int_t)(X + 0.5) == (int_t)(X)) ? (int_t)(X) : (int_t)(X) + 1;
+      py = ((int_t)(Y + 0.5) == (int_t)(Y)) ? (int_t)(Y) : (int_t)(Y) + 1;
+      if(pixels_blocked_by_other_subsets_.find(std::pair<int_t,int_t>(py,px))
+          !=pixels_blocked_by_other_subsets_.end())
+        is_deactivated_this_step_.h_view(i) = true;
+    }
   } // pixel loop
   is_deactivated_this_step_.modify<host_space>();
   is_deactivated_this_step_.sync<device_space>();

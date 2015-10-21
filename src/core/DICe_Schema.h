@@ -490,13 +490,6 @@ public:
   /// WARNING: This is meant only for the SL_ROUTINE where there are only a few subsets to track
   void check_for_blocking_subsets(const int_t subset_global_id);
 
-  /// \brief See if any of the subsets have crossed each other's paths blocking each other
-  ///
-  /// The potential for two subsets to block each other should have been set by calling
-  /// set_obstructing_subset_ids() on the schema by this point.
-  /// WARNING: This is meant only for the SL_ROUTINE where there are only a few subsets to track
-  void check_for_blocking_subsets_new(const int_t subset_global_id);
-
   /// \brief Orchestration of how the correlation is conducted
   /// \param obj A single DICe::Objective
   ///

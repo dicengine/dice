@@ -67,6 +67,9 @@ Subset {
 public:
 
   /// constructor that takes arrays of the pixel locations as input
+  /// (note this type of subset has not been enabled for obstruction detection,
+  /// only conformal subsets with defined shapes have this enabled. See the
+  /// constructor below with a subset_def argument)
   /// \param cx centroid x pixel location
   /// \param cy centroid y pixel location
   /// \param x array of x coordinates
@@ -77,6 +80,9 @@ public:
     Teuchos::ArrayRCP<int_t> y);
 
   /// constructor that takes a centroid and dims as arguments
+  /// (note this type of subset has not been enabled for obstruction detection,
+  /// only conformal subsets with defined shapes have this enabled. See the
+  /// constructor below with a subset_def argument)
   /// \param cx centroid x pixel location
   /// \param cy centroid y pixel location
   /// \param width width of the centroid (should be an odd number, otherwise the next larger odd number is used)
@@ -226,6 +232,16 @@ public:
   /// reset the is_deactivated_this_step bool for each pixel to false
   void reset_is_deactivated_this_step();
 
+  /// True if the subset is not square and has geometry information in a Conformal_Area_Def
+  bool is_conformal()const{
+    return is_conformal_;
+  }
+
+  /// Returnes a pointer to the subset's Conformal_Area_Def
+  const Conformal_Area_Def * conformal_subset_def()const{
+    return &conformal_subset_def_;
+  }
+
   /// \brief EXPERIMENTAL Check the deformed position of the pixel to see if it falls inside an obstruction, if so, turn it off
   /// \param deformation Deformation to use in determining the current position of all the pixels in the subset
   ///
@@ -236,11 +252,22 @@ public:
   /// the correlation or the optimization routine.
   void turn_off_obstructed_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation);
 
-  /// \brief Returns true if the given coordinates fall within an obstructed region for this subset
+  /// \brief  EXPERIMENTAL Returns true if the given coordinates fall within an obstructed region for this subset
   /// \param coord_x global x-coordinate
   /// \param coord_y global y-coordinate
   bool is_obstructed_pixel(const scalar_t & coord_x,
     const scalar_t & coord_y)const;
+
+  /// \brief EXPERIMENTAL Returns a pointer to the set of pixels currently obstructed by another subset
+  std::set<std::pair<int_t,int_t> > * pixels_blocked_by_other_subsets(){
+    return & pixels_blocked_by_other_subsets_;
+  }
+
+  /// \brief EXPERIMENTAL Return the deformed geometry information for the subset boundary
+  std::set<std::pair<int_t,int_t> > deformed_shapes(Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
+    const int_t cx=0,
+    const int_t cy=0,
+    const scalar_t & skin_factor=1.0);
 
 private:
   /// number of pixels in the subset
@@ -261,6 +288,10 @@ private:
   /// NOTE: The coordinates are switched for this (i.e. (Y,X)) so that
   /// the loops over y then x will be more efficient
   std::set<std::pair<int_t,int_t> > obstructed_coords_;
+  /// \brief EXPERIMENTAL Holds the pixels blocked by other subsets if they exist.
+  /// NOTE: The coordinates are switched for this (i.e. (Y,X)) so that
+  /// the loops over y then x will be more efficient
+  std::set<std::pair<int_t,int_t> > pixels_blocked_by_other_subsets_;
   /// centroid location x
   int_t cx_; // assumed to be the middle of the pixel
   /// centroid location y
@@ -271,6 +302,10 @@ private:
   pixel_coord_dual_view_1d y_;
   /// true if the gradient values are populated
   bool has_gradients_;
+  /// Conformal_Area_Def that defines the subset geometry
+  Conformal_Area_Def conformal_subset_def_;
+  /// The subset is not square
+  bool is_conformal_;
 
 };
 
