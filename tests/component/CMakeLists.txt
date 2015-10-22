@@ -51,3 +51,6 @@ target_link_libraries(DICe_TestCorrelateParams ${DICE_LIBRARIES} dicecore diceut
 
 add_executable(DICe_TestInterpolants DICe_TestInterpolants.cpp)
 target_link_libraries(DICe_TestInterpolants ${DICE_LIBRARIES} dicecore diceutils dicefft)
+
+add_executable(DICe_TestInitializer DICe_TestInitializer.cpp)
+target_link_libraries(DICe_TestInitializer ${DICE_LIBRARIES} dicecore diceutils dicefft)

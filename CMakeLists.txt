@@ -113,6 +113,7 @@ SET(DICE_HEADER_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cine
   ${CMAKE_CURRENT_SOURCE_DIR}/src/fft
   ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/src
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/kdtree
   ${TIFF_DIR}
   ${TIFF_DIR}/../include
   )

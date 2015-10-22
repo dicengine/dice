@@ -10,6 +10,7 @@ SET(DICE_SOURCES
   DICe_Parser.cpp
   DICe_PostProcessor.cpp
   DICe_ParameterUtilities.cpp
+  DICe_Initializer.cpp
   )
 
 SET(DICE_HEADERS
@@ -26,12 +27,12 @@ SET(DICE_HEADERS
   DICe_ParameterUtilities.h
   DICe_Parser.h
   DICe_PostProcessor.h
+  DICe_Initializer.h
   DICe_Utilities.h
   )
 
 include_directories (
     .
-    ../../src/utils/src/
     ${DICE_HEADER_DIRS}
     ${DICE_TRILINOS_HEADERS}
 )
