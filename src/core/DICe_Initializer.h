@@ -43,6 +43,8 @@
 #define DICE_INITIALIZER_H
 
 #include <DICe.h>
+#include <DICe_Image.h>
+#include <DICe_Subset.h>
 
 #include <Teuchos_RCP.hpp>
 
@@ -138,6 +140,53 @@ inline bool operator<(const def_triad& lhs,
 inline bool operator==(const def_triad& lhs,
     const def_triad& rhs);
 
+/// \class DICe::Initializer
+/// \brief A generic class that provides an initial guess for the optimization routines
+/// in a DICe::Objective.
+class DICE_LIB_DLL_EXPORT
+Initializer {
+public:
+  /// base class constructor
+  /// \param def_image pointer to the deformed image being correlated
+  /// \param subset pointer to the subset being initialized
+  Initializer(Teuchos::RCP<Image> def_image,
+    Teuchos::RCP<Subset> subset):
+    def_image_(def_image),
+    subset_(subset){
+  }
+
+  /// virtual destructor
+  virtual ~Initializer(){};
+
+  /// Initialize method called by the objective function to init the optimization with a good first guess.
+  /// The return value is a measure of how good the initial guess is
+  /// \param deformaion [out] the deformation vector returned with the initial guess
+  /// \param u a seed for the x-displacement
+  /// \param v a seed for the y-displacement
+  /// \param t a seed for the rotation
+  virtual scalar_t initial_guess(Teuchos::RCP<std::vector<scalar_t> > deformation,
+    const scalar_t & u,
+    const scalar_t & v,
+    const scalar_t & t){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Base class method should never be called.");
+  };
+
+  /// Initialize method called by the objective function to init the optimization with a good first guess.
+  /// In this case, no seeds are provided for the initial guess
+  /// The return value is a measure of how good the initial guess is
+  /// \param deformaion [out] the deformation vector returned with the initial guess
+  virtual scalar_t initial_guess(Teuchos::RCP<std::vector<scalar_t> > deformation){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Base class method should never be called.");
+  };
+
+protected:
+  /// pointer to the deformed image
+  Teuchos::RCP<Image> def_image_;
+  /// pointer to the subset being initialized
+  Teuchos::RCP<Subset> subset_;
+};
+
+
 /// \class DICe::Path_Initializer
 /// \brief A class that takes a text file as input and produces a unique set of
 /// points to test when initializing a subset. The text file gets filtered down to
@@ -147,10 +196,12 @@ inline bool operator==(const def_triad& lhs,
 /// the nearest point on the path.
 
 class DICE_LIB_DLL_EXPORT
-Path_Initializer {
+Path_Initializer : public Initializer{
 public:
 
   /// constructor
+  /// \param def_image pointer to the deformed image being correlated
+  /// \param subset pointer to the subset being initialized
   /// \param file_name the name of the file to use for input. The input should be in the following
   /// format: ascii text file with values separated by spaces in three columns. The first column
   /// is the x displacement, the second column is y displacement and the third is rotation. If one
@@ -158,7 +209,9 @@ public:
   /// not be any blank lines at the end of the file. TODO create a more robust file reader.
   /// No header should be included in the text file.
   /// \param num_neighbors the k value for the k-closest neighbors to store for each point
-  Path_Initializer(const char * file_name,
+  Path_Initializer(Teuchos::RCP<Image> def_image,
+    Teuchos::RCP<Subset> subset,
+    const char * file_name,
     const size_t num_neighbors=6);
 
   /// virtual destructor
@@ -192,14 +245,25 @@ public:
   /// return the id of the path triad closest to the given point
   /// \param u displacement in x
   /// \param v displacement in y
-  /// \param theta rotation
+  /// \param t rotation
   /// \param id [out] the return id of the closest triad
   /// \param distance [out] the euclidean distance to this point
   void closest_triad(const scalar_t &u,
     const scalar_t &v,
-    const scalar_t &theta,
+    const scalar_t &t,
     size_t id,
     scalar_t & distance_sqr)const;
+
+  /// see base class description
+  /// in this case only the closest k-neighbors will be searched for the best solution
+  virtual scalar_t initial_guess(Teuchos::RCP<std::vector<scalar_t> > deformation,
+    const scalar_t & u,
+    const scalar_t & v,
+    const scalar_t & t);
+
+  /// see base class description
+  /// in this case, the entire set of path triads will be searched for the best solution
+  virtual scalar_t initial_guess(Teuchos::RCP<std::vector<scalar_t> > deformation);
 
 private:
   /// unique triads of deformation params: u, v, and t

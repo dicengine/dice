@@ -65,8 +65,11 @@ inline bool operator==(const def_triad& lhs, const def_triad& rhs){
   return lhs.u_ == rhs.u_ && lhs.v_ == rhs.v_ && lhs.t_ == rhs.t_;
 }
 
-Path_Initializer::Path_Initializer(const char * file_name,
+Path_Initializer::Path_Initializer(Teuchos::RCP<Image> def_image,
+  Teuchos::RCP<Subset> subset,
+  const char * file_name,
   const size_t num_neighbors):
+  Initializer(def_image,subset),
   num_triads_(0),
   num_neighbors_(num_neighbors)
 {
@@ -142,7 +145,7 @@ Path_Initializer::Path_Initializer(const char * file_name,
 void
 Path_Initializer::closest_triad(const scalar_t &u,
   const scalar_t &v,
-  const scalar_t &theta,
+  const scalar_t &t,
   size_t id,
   scalar_t & distance_sqr)const{
 
@@ -151,12 +154,99 @@ Path_Initializer::closest_triad(const scalar_t &u,
   std::vector<scalar_t> out_dist_sqr(num_neighbors_,0.0);
   query_pt[0] = u;
   query_pt[1] = v;
-  query_pt[2] = theta;
+  query_pt[2] = t;
   kd_tree_->knnSearch(&query_pt[0], 1, &ret_index[0], &out_dist_sqr[0]);
   id = ret_index[0];
   distance_sqr = out_dist_sqr[0];
 }
 
+scalar_t
+Path_Initializer::initial_guess(Teuchos::RCP<std::vector<scalar_t> > deformation,
+  const scalar_t & u,
+  const scalar_t & v,
+  const scalar_t & t){
 
+  // find the closes triad in the set:
+  int_t id = -1;
+  scalar_t dist = 0.0;
+  closest_triad(u,v,t,id,dist);
+
+  // iterate over the closest 6 triads to this one to see which one is best:
+  // start with the given guess
+  (*deformation)[DISPLACEMENT_X] = u;
+  (*deformation)[DISPLACEMENT_Y] = v;
+  (*deformation)[ROTATION_Z] = t;
+  // TODO what to do with the rest of the deformation entries (zero them)?
+  subset_->initialize(def_image_,DEF_INTENSITIES,deformation);
+  // assumes that check for blocking subsets has already been performed
+  subset_->turn_off_obstructed_pixels(deformation);
+  // assumes that the reference subset has already been initialized
+  scalar_t gamma = subset_->gamma();
+  scalar_t best_u = u;
+  scalar_t best_v = v;
+  scalar_t best_t = t;
+  scalar_t best_gamma = gamma;
+
+  for(size_t neigh = 0;neigh<num_neighbors_;++neigh){
+    const size_t neigh_id = neighbor(id,neigh);
+    (*deformation)[DISPLACEMENT_X] = point_cloud_->pts[neigh_id].x;
+    (*deformation)[DISPLACEMENT_Y] = point_cloud_->pts[neigh_id].y;
+    (*deformation)[ROTATION_Z] = point_cloud_->pts[neigh_id].z;
+    std::cout << "checking neigh: " << neigh_id << " " << (*deformation)[DISPLACEMENT_X] << " " << (*deformation)[DISPLACEMENT_X] << " " << (*deformation)[ROTATION_Z] << std::endl;
+    // TODO what to do with the rest of the deformation entries (zero them)?
+    subset_->initialize(def_image_,DEF_INTENSITIES,deformation);
+    // assumes that check for blocking subsets has already been performed
+    subset_->turn_off_obstructed_pixels(deformation);
+    // assumes that the reference subset has already been initialized
+    gamma = subset_->gamma();
+    std::cout << "gamma value " << gamma << std::endl;
+    if(gamma < best_gamma){
+      std::cout << " winner" << std::endl;
+      best_gamma = gamma;
+      best_u = (*deformation)[DISPLACEMENT_X];
+      best_v = (*deformation)[DISPLACEMENT_Y];
+      best_t = (*deformation)[ROTATION_Z];
+    }
+  }
+  (*deformation)[DISPLACEMENT_X] = best_u;
+  (*deformation)[DISPLACEMENT_Y] = best_v;
+  (*deformation)[ROTATION_Z] = best_t;
+  return best_gamma;
+}
+
+scalar_t
+Path_Initializer::initial_guess(Teuchos::RCP<std::vector<scalar_t> > deformation){
+  scalar_t gamma = 0.0;
+  scalar_t best_u = 0.0;
+  scalar_t best_v = 0.0;
+  scalar_t best_t = 0.0;
+  scalar_t best_gamma = 100.0;
+
+  // iterate the entire set of triads:
+  for(size_t id = 0;id<num_triads_;++id){
+    (*deformation)[DISPLACEMENT_X] = point_cloud_->pts[id].x;
+    (*deformation)[DISPLACEMENT_Y] = point_cloud_->pts[id].y;
+    (*deformation)[ROTATION_Z] = point_cloud_->pts[id].z;
+    std::cout << "checking triad: " << id << " " << (*deformation)[DISPLACEMENT_X] << " " << (*deformation)[DISPLACEMENT_X] << " " << (*deformation)[ROTATION_Z] << std::endl;
+    // TODO what to do with the rest of the deformation entries (zero them)?
+    subset_->initialize(def_image_,DEF_INTENSITIES,deformation);
+    // assumes that check for blocking subsets has already been performed
+    subset_->turn_off_obstructed_pixels(deformation);
+    // assumes that the reference subset has already been initialized
+    gamma = subset_->gamma();
+    std::cout << "gamma value " << gamma << std::endl;
+    if(gamma < best_gamma){
+      std::cout << " winner" << std::endl;
+      best_gamma = gamma;
+      best_u = (*deformation)[DISPLACEMENT_X];
+      best_v = (*deformation)[DISPLACEMENT_Y];
+      best_t = (*deformation)[ROTATION_Z];
+    }
+  }
+  (*deformation)[DISPLACEMENT_X] = best_u;
+  (*deformation)[DISPLACEMENT_Y] = best_v;
+  (*deformation)[ROTATION_Z] = best_t;
+  return best_gamma;
+}
 
 }// End DICe Namespace
