@@ -251,9 +251,14 @@ int main(int argc, char *argv[]) {
     schema->field_value(i,DICe::COORDINATE_X) = (*subset_centroids)[i*dim + 0];
     schema->field_value(i,DICe::COORDINATE_Y) = (*subset_centroids)[i*dim + 1];
   }
-
   // set the seed value if they exist
   if(subset_info!=Teuchos::null){
+    if(subset_info->path_file_names->size()>0){
+      schema->set_path_file_names(subset_info->path_file_names);
+    }
+    if(subset_info->skip_solve_flags->size()>0){
+      schema->set_skip_solve_flags(subset_info->skip_solve_flags);
+    }
     if(subset_info->seed_subset_ids->size()>0){
       //schema->has_seed(true);
       assert(subset_info->displacement_map->size()>0);

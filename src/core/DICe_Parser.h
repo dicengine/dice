@@ -148,6 +148,8 @@ Subset_File_Info {
     shear_strain_map = Teuchos::rcp(new std::map<int_t,scalar_t>());
     rotation_map = Teuchos::rcp(new std::map<int_t,scalar_t>());
     seed_subset_ids = Teuchos::rcp(new std::map<int_t,int_t>());
+    path_file_names = Teuchos::rcp(new std::map<int_t,std::string>());
+    skip_solve_flags = Teuchos::rcp(new std::map<int_t,bool>());
     type = info_type;
   }
   /// Pointer to map of conformal subset defs (these are used to define conformal subsets)
@@ -172,6 +174,10 @@ Subset_File_Info {
   Teuchos::RCP<std::map<int_t,scalar_t> > rotation_map;
   /// Map that lists the subset ids for each of the seeds (first value is subset_id, second is roi_id)
   Teuchos::RCP<std::map<int_t,int_t> > seed_subset_ids;
+  /// Map that lists the names of the path files for each subset
+  Teuchos::RCP<std::map<int_t,std::string> > path_file_names;
+  /// Map that turns off the solve (initialize only) for certain subsets
+  Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags;
 };
 
 /// \brief Read a list of coordinates for correlation points from file
@@ -189,7 +195,8 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
 /// \param delim Delimiter character
 DICE_LIB_DLL_EXPORT
 Teuchos::ArrayRCP<std::string> tokenize_line(std::fstream &dataFile,
-  const std::string & delim=" ");
+  const std::string & delim=" ",
+  const bool capitalize = true);
 
 /// \brief Read a circle from the input file
 /// \param dataFile fstream file to read line from (assumed to be open)
@@ -391,6 +398,10 @@ const char* const parser_upper_left = "UPPER_LEFT";
 const char* const parser_lower_right = "LOWER_RIGHT";
 /// Parser string
 const char* const parser_seed = "SEED";
+/// Parser string
+const char* const parser_path_file = "PATH_FILE";
+/// Parser string
+const char* const parser_skip_solve = "SKIP_SOLVE";
 /// Parser string
 const char* const parser_location = "LOCATION";
 /// Parser string

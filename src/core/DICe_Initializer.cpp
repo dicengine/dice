@@ -84,7 +84,7 @@ Path_Initializer::Path_Initializer(Teuchos::RCP<Image> def_image,
   while (std::getline(path_file, line)){
     ++num_lines;
   }
-  DEBUG_MSG("number of locations: " << num_lines);
+  DEBUG_MSG("number of triads in the input path file: " << num_lines);
   path_file.clear();
   path_file.seekg(0,std::ios::beg);
 
@@ -96,15 +96,19 @@ Path_Initializer::Path_Initializer(Teuchos::RCP<Image> def_image,
   scalar_t u_tmp=0.0,v_tmp=0.0,t_tmp=0.0;
   for(int_t line=0;line<num_lines;++line){
     path_file >> u_tmp >> v_tmp >> t_tmp;
-    u_tmp = floor((u_tmp*2)+0.5)/2;
-    v_tmp = floor((v_tmp*2)+0.5)/2;
-    t_tmp = floor(t_tmp*100+0.5)/100;
+    if(num_lines > 6){ // if the path file is small, don't filter it to the nearest half pixel, etc.
+      u_tmp = floor((u_tmp*2)+0.5)/2;
+      v_tmp = floor((v_tmp*2)+0.5)/2;
+      t_tmp = floor(t_tmp*100+0.5)/100;
+    }
     def_triad uvt(u_tmp,v_tmp,t_tmp);
     triads_.insert(uvt);
   }
   path_file.close();
   num_triads_ = triads_.size();
+  DEBUG_MSG("number of triads in filtered set: " << num_triads_);
   assert(num_triads_>0);
+  if(num_triads_<num_neighbors_) num_neighbors_ = num_triads_;
 
   DEBUG_MSG("creating the point cloud");
   point_cloud_ = Teuchos::rcp(new Point_Cloud<scalar_t>());
@@ -124,21 +128,16 @@ Path_Initializer::Path_Initializer(Teuchos::RCP<Image> def_image,
   // now set up the neighbor list for each triad:
   neighbors_ = std::vector<size_t>(num_triads_*num_neighbors_,0);
   scalar_t query_pt[3];
-  def_triad t(0,0,0);
   std::vector<size_t> ret_index(num_neighbors_);
   std::vector<scalar_t> out_dist_sqr(num_neighbors_);
-  it = triads_.begin();
-  id = 0;
-  for(;it!=triads_.end();++it){
-    //t = *it;
-    query_pt[0] = (*it).u_;
-    query_pt[1] = (*it).v_;
-    query_pt[2] = (*it).t_;
+  for(size_t id=0;id<num_triads_;++id){
+    query_pt[0] = point_cloud_->pts[id].x;
+    query_pt[1] = point_cloud_->pts[id].y;
+    query_pt[2] = point_cloud_->pts[id].z;
     kd_tree_->knnSearch(&query_pt[0], num_neighbors_, &ret_index[0], &out_dist_sqr[0]);
     for(size_t i=0;i<num_neighbors_;++i){
       neighbors_[id*num_neighbors_ + i] = ret_index[i];
     }
-    id++;
   }
 }
 
@@ -146,7 +145,7 @@ void
 Path_Initializer::closest_triad(const scalar_t &u,
   const scalar_t &v,
   const scalar_t &t,
-  size_t id,
+  size_t &id,
   scalar_t & distance_sqr)const{
 
   scalar_t query_pt[3];
@@ -160,17 +159,28 @@ Path_Initializer::closest_triad(const scalar_t &u,
   distance_sqr = out_dist_sqr[0];
 }
 
+void
+Path_Initializer::write_to_text_file(const std::string & file_name)const{
+  std::ofstream file;
+  file.open(file_name.c_str());
+  for(size_t id = 0;id<num_triads_;++id)
+    file << point_cloud_->pts[id].x << " " << point_cloud_->pts[id].y << " " << point_cloud_->pts[id].z << "\n";
+  file.close();
+}
+
 scalar_t
-Path_Initializer::initial_guess(Teuchos::RCP<std::vector<scalar_t> > deformation,
+Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
+  Teuchos::RCP<std::vector<scalar_t> > deformation,
   const scalar_t & u,
   const scalar_t & v,
   const scalar_t & t){
 
+  DEBUG_MSG("Path_Initializer::initial_guess(deformation,u,v,theta) called");
+  // set the def image
+  def_image_ = def_image;
   // find the closes triad in the set:
-  int_t id = -1;
+  size_t id = 0;
   scalar_t dist = 0.0;
-  closest_triad(u,v,t,id,dist);
-
   // iterate over the closest 6 triads to this one to see which one is best:
   // start with the given guess
   (*deformation)[DISPLACEMENT_X] = u;
@@ -178,10 +188,11 @@ Path_Initializer::initial_guess(Teuchos::RCP<std::vector<scalar_t> > deformation
   (*deformation)[ROTATION_Z] = t;
   // TODO what to do with the rest of the deformation entries (zero them)?
   subset_->initialize(def_image_,DEF_INTENSITIES,deformation);
-  // assumes that check for blocking subsets has already been performed
-  subset_->turn_off_obstructed_pixels(deformation);
   // assumes that the reference subset has already been initialized
   scalar_t gamma = subset_->gamma();
+  DEBUG_MSG("input u: " << u << " v: " << v << " theta: " << t << " gamma: " << gamma);
+  closest_triad(u,v,t,id,dist);
+  DEBUG_MSG("closest triad id: " << id << " distance squared: " << dist);
   scalar_t best_u = u;
   scalar_t best_v = v;
   scalar_t best_t = t;
@@ -189,19 +200,18 @@ Path_Initializer::initial_guess(Teuchos::RCP<std::vector<scalar_t> > deformation
 
   for(size_t neigh = 0;neigh<num_neighbors_;++neigh){
     const size_t neigh_id = neighbor(id,neigh);
+    DEBUG_MSG("neigh id: " << neigh_id);
     (*deformation)[DISPLACEMENT_X] = point_cloud_->pts[neigh_id].x;
     (*deformation)[DISPLACEMENT_Y] = point_cloud_->pts[neigh_id].y;
     (*deformation)[ROTATION_Z] = point_cloud_->pts[neigh_id].z;
-    std::cout << "checking neigh: " << neigh_id << " " << (*deformation)[DISPLACEMENT_X] << " " << (*deformation)[DISPLACEMENT_X] << " " << (*deformation)[ROTATION_Z] << std::endl;
+    DEBUG_MSG("checking triad id: " << neigh_id << " " << (*deformation)[DISPLACEMENT_X] << " " <<
+      (*deformation)[DISPLACEMENT_Y] << " " << (*deformation)[ROTATION_Z]);
     // TODO what to do with the rest of the deformation entries (zero them)?
     subset_->initialize(def_image_,DEF_INTENSITIES,deformation);
-    // assumes that check for blocking subsets has already been performed
-    subset_->turn_off_obstructed_pixels(deformation);
     // assumes that the reference subset has already been initialized
     gamma = subset_->gamma();
-    std::cout << "gamma value " << gamma << std::endl;
+    DEBUG_MSG("gamma value " << gamma);
     if(gamma < best_gamma){
-      std::cout << " winner" << std::endl;
       best_gamma = gamma;
       best_u = (*deformation)[DISPLACEMENT_X];
       best_v = (*deformation)[DISPLACEMENT_Y];
@@ -215,28 +225,34 @@ Path_Initializer::initial_guess(Teuchos::RCP<std::vector<scalar_t> > deformation
 }
 
 scalar_t
-Path_Initializer::initial_guess(Teuchos::RCP<std::vector<scalar_t> > deformation){
+Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
+  Teuchos::RCP<std::vector<scalar_t> > deformation){
+
+  DEBUG_MSG("Path_Initializer::initial_guess(deformation) called");
+
+  // set the def image
+  def_image_ = def_image;
+
   scalar_t gamma = 0.0;
   scalar_t best_u = 0.0;
   scalar_t best_v = 0.0;
   scalar_t best_t = 0.0;
   scalar_t best_gamma = 100.0;
 
+  DEBUG_MSG("Path_Initializer::initial_guess(deformation) point cloud has " << point_cloud_->pts.size() << " points");
   // iterate the entire set of triads:
   for(size_t id = 0;id<num_triads_;++id){
     (*deformation)[DISPLACEMENT_X] = point_cloud_->pts[id].x;
     (*deformation)[DISPLACEMENT_Y] = point_cloud_->pts[id].y;
     (*deformation)[ROTATION_Z] = point_cloud_->pts[id].z;
-    std::cout << "checking triad: " << id << " " << (*deformation)[DISPLACEMENT_X] << " " << (*deformation)[DISPLACEMENT_X] << " " << (*deformation)[ROTATION_Z] << std::endl;
+    DEBUG_MSG("checking triad id: " << id << " " << (*deformation)[DISPLACEMENT_X] << " " <<
+      (*deformation)[DISPLACEMENT_Y] << " " << (*deformation)[ROTATION_Z]);
     // TODO what to do with the rest of the deformation entries (zero them)?
     subset_->initialize(def_image_,DEF_INTENSITIES,deformation);
-    // assumes that check for blocking subsets has already been performed
-    subset_->turn_off_obstructed_pixels(deformation);
     // assumes that the reference subset has already been initialized
     gamma = subset_->gamma();
-    std::cout << "gamma value " << gamma << std::endl;
+    DEBUG_MSG("gamma value " << std::setprecision(6) << gamma);
     if(gamma < best_gamma){
-      std::cout << " winner" << std::endl;
       best_gamma = gamma;
       best_u = (*deformation)[DISPLACEMENT_X];
       best_v = (*deformation)[DISPLACEMENT_Y];

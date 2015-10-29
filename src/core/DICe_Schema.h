@@ -46,6 +46,7 @@
 #include <DICe_Image.h>
 #include <DICe_Shape.h>
 #include <DICe_MultiField.h>
+#include <DICe_Initializer.h>
 
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_SerialDenseMatrix.hpp>
@@ -475,7 +476,8 @@ public:
   /// field values from.
   ///
   /// WARNING: This is meant only for the SL_ROUTINE where there are only a few subsets to track
-  void write_deformed_subsets_image();
+  /// \param use_gamma_as_color colors the pixels according to gamma values for each pixel
+  void write_deformed_subsets_image(const bool use_gamma_as_color=false);
 
   /// \brief Write an image that shows all the subsets current position and shape
   /// field values from.
@@ -657,6 +659,21 @@ public:
     return disp_jump_tol_;
   }
 
+  /// Provide access to the list of path file names:
+  /// \param path_file_names the map of path file names
+  void set_path_file_names(Teuchos::RCP<std::map<int_t,std::string> > path_file_names){
+    DEBUG_MSG("path file names have been set");
+    path_file_names_ = path_file_names;
+  }
+
+  /// Provide access to the list of path file names:
+  /// \param skip_solve_flags the map of skip solve flags
+  void set_skip_solve_flags(Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags){
+    DEBUG_MSG("skip solve flags have been set");
+    skip_solve_flags_ = skip_solve_flags;
+  }
+
+
   /// \brief EXPERIMENTAL sets the layering order of subets
   /// \param id_vec Pointer to map of vectors, each vector contains the ids for that particular subset in the order they will be layered if they cross paths
   ///
@@ -798,6 +815,8 @@ private:
   std::vector<Teuchos::RCP<Post_Processor> > post_processors_;
   /// True if any post_processors have been activated
   bool has_post_processor_;
+  /// pointer to a vector of initializers (used to initialize first guess for optimization routine)
+  std::vector<Teuchos::RCP<Initializer> > opt_initializers_;
   /// For constrained optimiation, this lists the owning element global id for each pixel:
   std::vector<int_t> pixels_owning_element_global_id_;
   /// Connectivity matrix for the global DIC method
@@ -913,6 +932,11 @@ private:
   scalar_t phase_cor_u_x_;
   /// Phase correlation intial guess
   scalar_t phase_cor_u_y_;
+  /// Map to hold the names of the path files for each subset
+  Teuchos::RCP<std::map<int_t,std::string> > path_file_names_;
+  /// Map to hold the flags for skipping solves for particular subsets (initialize only since
+  /// only pixel accuracy may be needed
+  Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags_;
 };
 
 /// \class DICe::Output_Spec

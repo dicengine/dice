@@ -164,7 +164,8 @@ public:
   /// \param u a seed for the x-displacement
   /// \param v a seed for the y-displacement
   /// \param t a seed for the rotation
-  virtual scalar_t initial_guess(Teuchos::RCP<std::vector<scalar_t> > deformation,
+  virtual scalar_t initial_guess(Teuchos::RCP<Image> def_image,
+    Teuchos::RCP<std::vector<scalar_t> > deformation,
     const scalar_t & u,
     const scalar_t & v,
     const scalar_t & t){
@@ -175,7 +176,8 @@ public:
   /// In this case, no seeds are provided for the initial guess
   /// The return value is a measure of how good the initial guess is
   /// \param deformaion [out] the deformation vector returned with the initial guess
-  virtual scalar_t initial_guess(Teuchos::RCP<std::vector<scalar_t> > deformation){
+  virtual scalar_t initial_guess(Teuchos::RCP<Image> def_image,
+    Teuchos::RCP<std::vector<scalar_t> > deformation){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Base class method should never be called.");
   };
 
@@ -251,19 +253,24 @@ public:
   void closest_triad(const scalar_t &u,
     const scalar_t &v,
     const scalar_t &t,
-    size_t id,
+    size_t &id,
     scalar_t & distance_sqr)const;
 
   /// see base class description
   /// in this case only the closest k-neighbors will be searched for the best solution
-  virtual scalar_t initial_guess(Teuchos::RCP<std::vector<scalar_t> > deformation,
+  virtual scalar_t initial_guess(Teuchos::RCP<Image> def_image,
+    Teuchos::RCP<std::vector<scalar_t> > deformation,
     const scalar_t & u,
     const scalar_t & v,
     const scalar_t & t);
 
   /// see base class description
   /// in this case, the entire set of path triads will be searched for the best solution
-  virtual scalar_t initial_guess(Teuchos::RCP<std::vector<scalar_t> > deformation);
+  virtual scalar_t initial_guess(Teuchos::RCP<Image> def_image,
+    Teuchos::RCP<std::vector<scalar_t> > deformation);
+
+  /// write the filtered set of points out to an output file
+  void write_to_text_file(const std::string & file_name)const;
 
 private:
   /// unique triads of deformation params: u, v, and t

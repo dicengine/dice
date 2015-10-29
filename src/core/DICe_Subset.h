@@ -229,6 +229,17 @@ public:
   /// reset the is_active bool for each pixel to true;
   void reset_is_active();
 
+  /// returns true if this pixel is active
+  bool is_active(const int_t pixel_index)const{
+    return is_active_.h_view(pixel_index);
+  }
+
+  /// returns true if this pixel is deactivated for this particular frame
+  bool is_deactivated_this_step(const int_t pixel_index)const{
+    return is_deactivated_this_step_.h_view(pixel_index);
+  }
+
+
   /// reset the is_deactivated_this_step bool for each pixel to false
   void reset_is_deactivated_this_step();
 
@@ -393,6 +404,7 @@ struct ZNSSD_Gamma_Functor{
   void operator()(const int_t pixel_index, scalar_t & gamma) const{
     if(is_active_(pixel_index)&!is_deactivated_this_step_(pixel_index)){
       scalar_t value =  (def_intensities_(pixel_index)-mean_d_)/mean_sum_d_ - (ref_intensities_(pixel_index)-mean_r_)/mean_sum_r_;
+      //printf("%i value: %e %e %e %e %e %e %e\n",pixel_index,value,def_intensities_(pixel_index),mean_d_,mean_sum_d_,ref_intensities_(pixel_index),mean_r_,mean_sum_r_);
       gamma += value*value;
     }
   }

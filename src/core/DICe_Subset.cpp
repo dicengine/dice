@@ -415,11 +415,13 @@ Subset::mean(const Subset_View_Target target,
 
 scalar_t
 Subset::gamma(){
-  // TODO turn off obstructed pixels
+  // assumes obstructed pixels are already turned off
   scalar_t mean_sum_ref = 0.0;
   const scalar_t mean_ref = mean(REF_INTENSITIES,mean_sum_ref);
   scalar_t mean_sum_def = 0.0;
   const scalar_t mean_def = mean(DEF_INTENSITIES,mean_sum_def);
+  TEUCHOS_TEST_FOR_EXCEPTION(mean_sum_ref==0.0||mean_sum_def==0.0,std::runtime_error," invalid mean sum (cannot be 0.0, ZNSSD is then undefined)" <<
+    mean_sum_ref << " " << mean_sum_def);
   scalar_t gamma = 0.0;
   ZNSSD_Gamma_Functor gamma_func(ref_intensities_.d_view,
      def_intensities_.d_view,
@@ -492,6 +494,11 @@ Subset::initialize(Teuchos::RCP<Image> image,
   else{
     def_intensities_.modify<device_space>();
     def_intensities_.sync<host_space>();
+  }
+  // turn off the obstructed pixels if the deformation vector is not null
+  if(deformation!=Teuchos::null){
+    // assumes that the check for obstructions has already been done
+    turn_off_obstructed_pixels(deformation);
   }
 }
 

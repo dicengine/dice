@@ -376,19 +376,18 @@ Teuchos::RCP<Circle> read_circle(std::fstream &dataFile){
     if(tokens.size()==0) continue; // comment or blank line
     if(tokens[0]==parser_end) break;
     else if(tokens[0]==parser_center){
-      if(tokens.size()<3){std::cout << "Error, not enough values to define circle center point " << std::endl; assert(false);}
+      if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define circle center point ");}
       assert(is_number(tokens[1]) && is_number(tokens[2]));
       cx = atoi(tokens[1].c_str());
       cy = atoi(tokens[2].c_str());
     }
     else if(tokens[0]==parser_radius){
-      if(tokens.size()<2){std::cout << "Error, not enough values to define circle radius " << std::endl; assert(false);}
+      if(tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define circle radius ");}
       assert(is_number(tokens[1]));
       radius = strtod(tokens[1].c_str(),NULL);
     }
     else{
-      std::cout << "Error, invalid token in circle definition " << tokens[0] << std::endl;
-      assert(false);
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid token in circle definition " << tokens[0]);
     }
   }
   assert(radius!=-1.0);
@@ -425,49 +424,46 @@ Teuchos::RCP<DICe::Rectangle> read_rectangle(std::fstream &dataFile){
     if(tokens[0]==parser_end) break;
     if(tokens[0]==parser_center||tokens[0]==parser_width||tokens[0]==parser_height){
       if(tokens[0]==parser_center){
-        if(tokens.size()<3){std::cout << "Error, not enough values to define circle center point " << std::endl; assert(false);}
+        if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define circle center point ");}
         assert(is_number(tokens[1]) && is_number(tokens[2]));
         cx = atoi(tokens[1].c_str());
         cy = atoi(tokens[2].c_str());
       }
       else if(tokens[0]==parser_width){
-        if(tokens.size()<2){std::cout << "Error, not enough values to define the width " << std::endl; assert(false);}
+        if(tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define the width ");}
         assert(is_number(tokens[1]));
         width = strtod(tokens[1].c_str(),NULL);
       }
       else if(tokens[0]==parser_height){
-        if(tokens.size()<2){std::cout << "Error, not enough values to define the height " << std::endl; assert(false);}
+        if(tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define the height ");}
         assert(is_number(tokens[1]));
         height = strtod(tokens[1].c_str(),NULL);
       }
       else{
-        std::cout << "Error, invalid token in rectangle definition by center, width, height " << tokens[0] << std::endl;
-        assert(false);
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid token in rectangle definition by center, width, height " << tokens[0]);
       }
     }
     else if(tokens[0]==parser_upper_left||tokens[0]==parser_lower_right){
       if(tokens[0]==parser_upper_left){
-        if(tokens.size()<3){std::cout << "Error, not enough values to define rectangle upper left " << std::endl; assert(false);}
+        if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define rectangle upper left ");}
         assert(is_number(tokens[1]) && is_number(tokens[2]));
         has_upper_left_lower_right = true;
         upper_left_x = atoi(tokens[1].c_str());
         upper_left_y = atoi(tokens[2].c_str());
       }
       else if(tokens[0]==parser_lower_right){
-        if(tokens.size()<3){std::cout << "Error, not enough values to define rectangle lower right " << std::endl; assert(false);}
+        if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define rectangle lower right ");}
         assert(is_number(tokens[1]) && is_number(tokens[2]));
         has_upper_left_lower_right = true;
         lower_right_x = atoi(tokens[1].c_str());
         lower_right_y = atoi(tokens[2].c_str());
       }
       else{
-        std::cout << "Error, invalid token in rectangle definition by upper left, lower right " << tokens[0] << std::endl;
-        assert(false);
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid token in rectangle definition by upper left, lower right " << tokens[0]);
       }
     }
     else{
-      std::cout << "Error, invalid token in rectangle definition " << tokens[0] << std::endl;
-      assert(false);
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid token in rectangle definition " << tokens[0]);
     }
   }
   if(has_upper_left_lower_right){
@@ -559,8 +555,7 @@ multi_shape read_shapes(std::fstream & dataFile){
       multi_shape.push_back(shape);
     }
     else{
-      std::cout << "Error, unrecognized shape : " << shape_tokens[1] << std::endl;
-      assert(false);
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, unrecognized shape : " << shape_tokens[1]);
     }
   }
   assert(multi_shape.size()>0);
@@ -570,7 +565,8 @@ multi_shape read_shapes(std::fstream & dataFile){
 
 DICE_LIB_DLL_EXPORT
 Teuchos::ArrayRCP<std::string> tokenize_line(std::fstream &dataFile,
-  const std::string & delim){
+  const std::string & delim,
+  const bool capitalize){
   static int_t MAX_CHARS_PER_LINE = 512;
   static int_t MAX_TOKENS_PER_LINE = 20;
   static std::string DELIMITER = delim;
@@ -588,15 +584,18 @@ Teuchos::ArrayRCP<std::string> tokenize_line(std::fstream &dataFile,
   char * token;
   token = strtok(buf, DELIMITER.c_str());
   tokens[0] = token ? token : ""; // first token
-  stringToUpper(tokens[0]);
-  if (tokens[0] != "" && tokens[0]!=parser_comment_char) // zero if line is blank or starts with a comment char
+  if(capitalize)
+    stringToUpper(tokens[0]);
+  bool first_char_is_pound = tokens[0].find("#") == 0;
+  if (tokens[0] != "" && tokens[0]!=parser_comment_char && !first_char_is_pound) // zero if line is blank or starts with a comment char
   {
     for (n = 1; n < MAX_TOKENS_PER_LINE; n++)
     {
       token = strtok(0, DELIMITER.c_str());
       tokens[n] = token ? token : ""; // subsequent tokens
       if (tokens[n]=="") break; // no more tokens
-      stringToUpper(tokens[n]); // convert the string to upper case
+      if(capitalize)
+        stringToUpper(tokens[n]); // convert the string to upper case
     }
   }
   tokens.resize(n);
@@ -654,7 +653,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
        for (int i = 0; i < tokens.size(); i++)
          std::cout << "Tokens[" << i << "] = " << tokens[i] << std::endl;
        std::cout << std::endl;
-       assert(false);
+       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
      }
      if(tokens[0]==parser_begin){ // An input block is being defined
        if(tokens[1]==parser_subset_coordinates){
@@ -666,15 +665,14 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            if(block_tokens.size()==0) continue; // blank line or comment
            else if(block_tokens[0]==parser_end) break; // end of the list
            else if(is_number(block_tokens[0])){ // set of coordinates
-             if(block_tokens.size()<2){std::cout << "Error: invalid coordinate (not enough values)" << fileName << " "  << std::endl; assert(false);}
+             if(block_tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid coordinate (not enough values)" << fileName);}
              info->data_vector->push_back(std::atoi(block_tokens[0].c_str()));
-             if(block_tokens[1]==parser_comment_char){std::cout << "Error: invalid coordinate (not enough values)" << fileName << " "  << std::endl; assert(false);}
+             if(block_tokens[1]==parser_comment_char){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid coordinate (not enough values)" << fileName);}
              info->data_vector->push_back(std::atoi(block_tokens[1].c_str()));
              info->neighbor_vector->push_back(-1); // neighbor_id
            }
            else{ // or error
-             std::cout << "Error parsing subset coordinates: " << fileName << " "  << block_tokens[0] << std::endl;
-             assert(false);
+             TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error parsing subset coordinates: " << fileName << " "  << block_tokens[0]);
            }
          } // while loop
          // check for valid coordinates
@@ -683,12 +681,10 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          assert(info->data_vector->size()%2==0);
          for(int_t i=0;i<(int_t)info->data_vector->size()/dim;++i){
            if((*info->data_vector)[i*dim]<0||(*info->data_vector)[i*dim]>=width){
-             std::cout << "Error: invalid subset coordinate in " << fileName << " x: "  << (*info->data_vector)[i*dim] << std::endl;
-             assert(false);
+             TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid subset coordinate in " << fileName << " x: "  << (*info->data_vector)[i*dim]);
            }
            if((*info->data_vector)[i*dim+1]<0||(*info->data_vector)[i*dim+1]>=height){
-             std::cout << "Error: invalid subset coordinate in " << fileName << " y: "  << (*info->data_vector)[i*dim+1] << std::endl;
-             assert(false);
+             TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid subset coordinate in " << fileName << " y: "  << (*info->data_vector)[i*dim+1]);
            }
            if(proc_rank==0) DEBUG_MSG("Subset coord: (" << (*info->data_vector)[i*dim] << "," << (*info->data_vector)[i*dim+1] << ")");
          }
@@ -710,16 +706,14 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                if(proc_rank==0) DEBUG_MSG("Reading boundary def");
                boundary_multi_shape = read_shapes(dataFile);
                if(boundary_multi_shape.size()<=0){
-                 std::cout << "Error: cannot define a boundary with zero shapes " << fileName << std::endl;
-                 assert(false);
+                 TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: cannot define a boundary with zero shapes " << fileName);
                }
              }
              else if(block_tokens[1]==parser_excluded){
                if(proc_rank==0) DEBUG_MSG("Reading excluded def");
                excluded_multi_shape = read_shapes(dataFile);
                if(excluded_multi_shape.size()<=0){
-                 std::cout << "Error: cannot define an exclusion with zero shapes " << fileName << std::endl;
-                 assert(false);
+                 TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: cannot define an exclusion with zero shapes " << fileName);
                }
              }
              else if(block_tokens[1]==parser_seed){
@@ -779,22 +773,19 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                    info->rotation_map->insert(std::pair<int_t,scalar_t>(num_roi,seed_rotation));
                  }
                  else{
-                   std::cout << "Error, unrecognized command in seed block " << tokens[0] << std::endl;
-                   assert(false);
+                   TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, unrecognized command in seed block " << tokens[0]);
                  }
                }
                TEUCHOS_TEST_FOR_EXCEPTION(!has_location,std::runtime_error,"DICe Error, seed must have location specified");
                TEUCHOS_TEST_FOR_EXCEPTION(!has_disp_values,std::runtime_error,"DICe Error, seed must have displacement guess specified");
              }
              else{
-               std::cout << " Error parsing subset file " << fileName << " "  << block_tokens[1] << std::endl;
-               assert(false);
+               TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error," Error parsing subset file " << fileName << " "  << block_tokens[1]);
              }
            }
            // ERROR
            else{ // or error
-             std::cout << "Error in parsing conformal subset def, unkown block command: " << block_tokens[0] << std::endl;
-             assert(false);
+             TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error in parsing conformal subset def, unkown block command: " << block_tokens[0]);
            }
          } // while loop
          DICe::Conformal_Area_Def conformal_area_def(boundary_multi_shape,excluded_multi_shape);
@@ -816,7 +807,11 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          DICe::multi_shape obstructed_multi_shape;
          if(proc_rank==0) DEBUG_MSG("Reading conformal subset def");
          conformal_subset_defined = true;
+         bool has_path_file = false;
+         bool skip_solve = false;
+         std::string path_file_name;
          while(!dataFile.eof()){
+           std::streampos pos = dataFile.tellg();
            Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile);
            if(block_tokens.size()==0) continue; // blank line or comment
            else if(block_tokens[0]==parser_end) break; // end of the defs
@@ -826,6 +821,22 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              assert(is_number(block_tokens[1]));
              subset_id = atoi(block_tokens[1].c_str());
              if(proc_rank==0) DEBUG_MSG("Conformal subset id: " << subset_id);
+           }
+           else if(block_tokens[0]==parser_path_file){
+             /// check if the skip solve token exists at the end
+             if(block_tokens.size()>2){
+               if(block_tokens[2]==parser_skip_solve){
+                 skip_solve = true;
+               }
+             }
+             // need to re-read the line again without conveting to capital case
+             dataFile.seekg(pos, std::ios::beg);
+             Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile," ",false);
+             assert(block_tokens.size()>=2);
+             assert(!is_number(block_tokens[1]));
+             path_file_name = block_tokens[1];
+             if(proc_rank==0) DEBUG_MSG("Path file name: " << path_file_name);
+             has_path_file = true;
            }
            // SEEDS
            else if(block_tokens[1]==parser_seed){
@@ -838,8 +849,8 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                if(seed_tokens.size()==0) continue; // blank line or comment
                else if(seed_tokens[0]==parser_end) break; // end of the defs
                else if(seed_tokens[0]==parser_location){
-                 std::cout << "Error, location cannot be specified for a seed in a conformal subset, the location is the subset centroid automatically" << std::endl;
-                 assert(false);
+                 TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, location cannot be specified for a seed in a conformal subset, "
+                     "the location is the subset centroid automatically");
                }
                else if(seed_tokens[0]==parser_displacement){
                  assert(seed_tokens.size()>2 && "DICe Error, not enough values specified for seed displacement (x and y are needed)." );
@@ -869,8 +880,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  if(proc_rank==0) DEBUG_MSG("Seed Rotation " << seed_rotation);
                }
                else{
-                 std::cout << "Error, unrecognized command in seed block " << tokens[0] << std::endl;
-                 assert(false);
+                 TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, unrecognized command in seed block " << tokens[0]);
                }
              }
              TEUCHOS_TEST_FOR_EXCEPTION(!has_disp_values,std::runtime_error,"DICe Error, seed must have at least a displacement guess specified");
@@ -882,24 +892,21 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                if(proc_rank==0) DEBUG_MSG("Reading boundary def");
                boundary_multi_shape = read_shapes(dataFile);
                if(boundary_multi_shape.size()<=0){
-                 std::cout << "Error: cannot define a boundary with zero shapes " << fileName << std::endl;
-                 assert(false);
+                 TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: cannot define a boundary with zero shapes " << fileName);
                }
              }
              else if(block_tokens[1]==parser_excluded){
                if(proc_rank==0) DEBUG_MSG("Reading excluded def");
                excluded_multi_shape = read_shapes(dataFile);
                if(excluded_multi_shape.size()<=0){
-                 std::cout << "Error: cannot define an exclusion with zero shapes " << fileName << std::endl;
-                 assert(false);
+                 TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: cannot define an exclusion with zero shapes " << fileName);
                }
              }
              else if(block_tokens[1]==parser_obstructed){
                if(proc_rank==0) DEBUG_MSG("Reading obstructed def");
                obstructed_multi_shape = read_shapes(dataFile);
                if(obstructed_multi_shape.size()<=0){
-                 std::cout << "Error: cannot define an obstruction with zero shapes " << fileName << std::endl;
-                 assert(false);
+                 TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: cannot define an obstruction with zero shapes " << fileName);
                }
              }
              else if(block_tokens[1]==parser_blocking_subsets){
@@ -915,14 +922,12 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  if(proc_rank==0) DEBUG_MSG("Subset is blocked by " << blocking_ids[i]);
              }
              else{
-               std::cout << " Error parsing subset file " << fileName << " "  << block_tokens[1] << std::endl;
-               assert(false);
+               TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error," Error parsing subset file " << fileName << " "  << block_tokens[1]);
              }
            }
            // ERROR
            else{ // or error
-             std::cout << "Error in parsing conformal subset def, unkown block command: " << block_tokens[0] << std::endl;
-             assert(false);
+             TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error in parsing conformal subset def, unkown block command: " << block_tokens[0]);
            }
          } // while loop
          // put the multishapes into a subset def:
@@ -945,11 +950,17 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            info->shear_strain_map->insert(std::pair<int_t,scalar_t>(subset_id,seed_shear_strain));
            info->rotation_map->insert(std::pair<int_t,scalar_t>(subset_id,seed_rotation));
          }
+         if(has_path_file){
+           info->path_file_names->insert(std::pair<int_t,std::string>(subset_id,path_file_name));
+         }
+         if(skip_solve){
+           info->skip_solve_flags->insert(std::pair<int_t,bool>(subset_id,true));
+         }
        }  // end conformal subset def
        else{
          std::cout << "Error: Unkown block command in " << fileName << std::endl;
          std::cout << "       " << tokens[1] << std::endl;
-         assert(false);
+         TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
        }
      }
    }
@@ -1371,7 +1382,7 @@ void generate_template_input_files(const std::string & file_prefix){
       write_xml_comment(paramsFile,valid_correlation_params[i].desc_);
     }
     else{
-      assert(false && "Error: Unknown parameter type");
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: Unknown parameter type");
     }
   }
   // Write a sample output spec
