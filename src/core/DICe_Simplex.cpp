@@ -129,6 +129,7 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,
   }
 
   // simplex minimization routine
+  scalar_t old_rtol = 0.0;
   int_t iteration = 0;
   for (iteration=0; iteration < max_iterations_; iteration++) {
     if( iteration >= max_iterations_-1){
@@ -150,7 +151,13 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,
         } else if (gamma_values[i] > gamma_values[inhi] && i != ihi) inhi = i;
     }
     scalar_t rtol = 2.0*std::abs(gamma_values[ihi]-gamma_values[ilo])/(std::abs(gamma_values[ihi]) + std::abs(gamma_values[ilo]) + tiny_);
-    if (rtol < tolerance_) {
+    scalar_t rtol_diff = std::abs(rtol - old_rtol);
+    //DEBUG_MSG("rtol old: " << old_rtol << " rtol " << rtol <<  " rtol diff: " << rtol_diff );
+    old_rtol = rtol;
+    if(rtol_diff < tiny_){
+      DEBUG_MSG("Warning: simplex optimization exiting due to tolerance stagnation");
+    }
+    if (rtol < tolerance_ || rtol_diff < tolerance_) {
       scalar_t dum = gamma_values[0];
       gamma_values[0] = gamma_values[ilo];
       gamma_values[ilo] = dum;
