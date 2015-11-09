@@ -69,8 +69,36 @@ Objective_ZNSSD::gamma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
 scalar_t
 Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
 
-  // if the gradients don't exist or the optimization method is SIMPLEX based return 0.0;
-   if(!subset_->has_gradients()||schema_->optimization_method()==DICe::SIMPLEX) return 0.0;
+  // for the simplex method, use the gradient in gamma to output a sigma value (sqrt(dg_x^2 + dg_y^2 + dg_theta^2):
+  if(schema_->optimization_method()==DICe::SIMPLEX){
+    const scalar_t epsilon = 1.0E-3;
+    std::vector<DICe::Field_Name> fields(3);
+    fields[0] = DISPLACEMENT_X;
+    fields[1] = DISPLACEMENT_Y;
+    fields[2] = ROTATION_Z;
+    std::vector<scalar_t> grad_gamma(3,0.0);
+    Teuchos::RCP<std::vector<scalar_t> > temp_def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE));
+    for(size_t i=0;i<fields.size();++i){
+      // reset def vector
+      for(size_t j=0;j<DICE_DEFORMATION_SIZE;++j)
+        (*temp_def)[j] = (*deformation)[j];
+      // mod the def vector +
+      (*temp_def)[fields[i]] += epsilon;
+      const scalar_t gamma_p = gamma(temp_def);
+      (*temp_def)[fields[i]] -= 2.0*epsilon;
+      const scalar_t gamma_m = gamma(temp_def);
+      grad_gamma[i] = (gamma_p - gamma_m)/(2.0*epsilon);
+    }
+    scalar_t mag_grad_gamma = 0.0;
+    for(size_t i=0;i<grad_gamma.size();++i)
+      mag_grad_gamma += grad_gamma[i]*grad_gamma[i];
+    mag_grad_gamma = std::sqrt(mag_grad_gamma);
+    DEBUG_MSG("Simplex method sigma: " << mag_grad_gamma);
+    return mag_grad_gamma;
+  }
+
+   // if the gradients don't exist:
+   if(!subset_->has_gradients()) return 0.0;
 
    assert(deformation->size()==DICE_DEFORMATION_SIZE);
 
