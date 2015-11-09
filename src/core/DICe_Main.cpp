@@ -46,6 +46,8 @@
 #include <DICe_Cine.h>
 #include <DICe_Tiff.h>
 
+#include <boost/timer.hpp>
+
 #ifdef HAVE_MPI
 #  include <mpi.h>
 #endif
@@ -318,12 +320,12 @@ int main(int argc, char *argv[]) {
     }
 
     { // start the timer
-      //boost::timer t;
+      boost::timer t;
 
       schema->execute_correlation();
 
       // timing info
-      //elapsed_time = t.elapsed();
+      elapsed_time = t.elapsed();
       if(elapsed_time>max_time)max_time = elapsed_time;
       if(elapsed_time<min_time)min_time = elapsed_time;
       total_time += elapsed_time;
@@ -344,13 +346,13 @@ int main(int argc, char *argv[]) {
   // output timing
 
   // print the timing data with or without verbose flag
-  //if(input_params->get<bool>(DICe::print_timing,false)){
-  //  std::cout << "Total time:              " << total_time << std::endl;
-  //  std::cout << "Avgerage time per image: " << avg_time << std::endl;
-  //  std::cout << "Max time per image:      " << max_time << std::endl;
-  //  std::cout << "Min time per image:      " << min_time << std::endl;
-  //}
-  // write the time output to file:
+  if(input_params->get<bool>(DICe::print_timing,false)){
+    std::cout << "Total time:              " << total_time << std::endl;
+    std::cout << "Avgerage time per image: " << avg_time << std::endl;
+    std::cout << "Max time per image:      " << max_time << std::endl;
+    std::cout << "Min time per image:      " << min_time << std::endl;
+  }
+  //  write the time output to file:
   std::stringstream timeFileName;
   timeFileName << output_folder << "timing."<< proc_size << "." << proc_rank << ".txt";
   std::FILE * timeFile = fopen(timeFileName.str().c_str(),"w");
