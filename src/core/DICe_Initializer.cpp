@@ -65,11 +65,10 @@ inline bool operator==(const def_triad& lhs, const def_triad& rhs){
   return lhs.u_ == rhs.u_ && lhs.v_ == rhs.v_ && lhs.t_ == rhs.t_;
 }
 
-Path_Initializer::Path_Initializer(Teuchos::RCP<Image> def_image,
-  Teuchos::RCP<Subset> subset,
+Path_Initializer::Path_Initializer(Teuchos::RCP<Subset> subset,
   const char * file_name,
   const size_t num_neighbors):
-  Initializer(def_image,subset),
+  Initializer(subset),
   num_triads_(0),
   num_neighbors_(num_neighbors)
 {
@@ -176,8 +175,7 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
   const scalar_t & t){
 
   DEBUG_MSG("Path_Initializer::initial_guess(deformation,u,v,theta) called");
-  // set the def image
-  def_image_ = def_image;
+  TEUCHOS_TEST_FOR_EXCEPTION(def_image==Teuchos::null,std::runtime_error,"Error, pointer to deformed image must not be null here.");
   // find the closes triad in the set:
   size_t id = 0;
   scalar_t dist = 0.0;
@@ -187,7 +185,7 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
   (*deformation)[DISPLACEMENT_Y] = v;
   (*deformation)[ROTATION_Z] = t;
   // TODO what to do with the rest of the deformation entries (zero them)?
-  subset_->initialize(def_image_,DEF_INTENSITIES,deformation);
+  subset_->initialize(def_image,DEF_INTENSITIES,deformation);
   // assumes that the reference subset has already been initialized
   scalar_t gamma = subset_->gamma();
   DEBUG_MSG("input u: " << u << " v: " << v << " theta: " << t << " gamma: " << gamma);
@@ -207,7 +205,7 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
     DEBUG_MSG("checking triad id: " << neigh_id << " " << (*deformation)[DISPLACEMENT_X] << " " <<
       (*deformation)[DISPLACEMENT_Y] << " " << (*deformation)[ROTATION_Z]);
     // TODO what to do with the rest of the deformation entries (zero them)?
-    subset_->initialize(def_image_,DEF_INTENSITIES,deformation);
+    subset_->initialize(def_image,DEF_INTENSITIES,deformation);
     // assumes that the reference subset has already been initialized
     gamma = subset_->gamma();
     DEBUG_MSG("gamma value " << gamma);
@@ -229,9 +227,7 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
   Teuchos::RCP<std::vector<scalar_t> > deformation){
 
   DEBUG_MSG("Path_Initializer::initial_guess(deformation) called");
-
-  // set the def image
-  def_image_ = def_image;
+  TEUCHOS_TEST_FOR_EXCEPTION(def_image==Teuchos::null,std::runtime_error,"Error, pointer to deformed image must not be null here.");
 
   scalar_t gamma = 0.0;
   scalar_t best_u = 0.0;
@@ -248,7 +244,7 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
     DEBUG_MSG("checking triad id: " << id << " " << (*deformation)[DISPLACEMENT_X] << " " <<
       (*deformation)[DISPLACEMENT_Y] << " " << (*deformation)[ROTATION_Z]);
     // TODO what to do with the rest of the deformation entries (zero them)?
-    subset_->initialize(def_image_,DEF_INTENSITIES,deformation);
+    subset_->initialize(def_image,DEF_INTENSITIES,deformation);
     // assumes that the reference subset has already been initialized
     gamma = subset_->gamma();
     DEBUG_MSG("gamma value " << std::setprecision(6) << gamma);
@@ -263,6 +259,60 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
   (*deformation)[DISPLACEMENT_Y] = best_v;
   (*deformation)[ROTATION_Z] = best_t;
   return best_gamma;
+}
+
+
+Motion_Test_Initializer::Motion_Test_Initializer(const int_t origin_x,
+  const int_t origin_y,
+  const int_t width,
+  const int_t height,
+  const scalar_t & tol):
+  Initializer(Teuchos::null),
+  origin_x_(origin_x),
+  origin_y_(origin_y),
+  width_(width),
+  height_(height),
+  tol_(tol),
+  prev_img_(Teuchos::null)
+{
+  DEBUG_MSG("Constructor for Motion_Test_Initializer called");
+  DEBUG_MSG("origin_x: " << origin_x_ << " origin_y: " << origin_y_ <<
+    " width: " << width_ << " height: " << height_ << " tol: " << tol_);
+}
+
+bool
+Motion_Test_Initializer::motion_detected(Teuchos::RCP<Image> def_image){
+  static bool motion = true;
+  // test if this is a repeat call for the same frame, but by another subset
+  // if so, return the previous result.
+  static Teuchos::RCP<Image> save_image_ptr=Teuchos::null;
+  if(save_image_ptr == def_image){
+    DEBUG_MSG("Motion_Test_Initializer::motion_detected() repeat call, return value: " << motion);
+    // return last result
+    return motion;
+  }
+  // otherwise save off the last pointer
+  save_image_ptr = def_image;
+
+  // create a window of the deformed image according to the constructor parameters
+  Teuchos::RCP<Image> window_img = Teuchos::rcp(new Image(def_image,origin_x_,origin_y_,width_,height_));
+  // see if the previous image exists, if not return true as default
+  if(prev_img_==Teuchos::null){
+    DEBUG_MSG("Motion_Test_Initializer::motion_detected() first frame call, return value: 1 (automatically).");
+    prev_img_ = window_img; // save off the deformed image as the previous one
+    return true;
+  }
+  //diff the two images and see if the difference is above a threshold
+  const scalar_t diff = window_img->diff(prev_img_);
+  prev_img_ = window_img;
+  DEBUG_MSG("Motion_Test_Initializer::motion_detected() called, result: " << diff << " tol: " << tol_);
+  motion = diff > tol_ ? true : false;
+//  std::fstream out;
+//  out.open("diff_results.txt",std::fstream::app);
+//  out << diff << "\n";
+//  out.close();
+
+  return motion;
 }
 
 }// End DICe Namespace

@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
 
   bool exception_thrown = false;
   try{
-    Path_Initializer bad_path(image,subset,"sample.txt");
+    Path_Initializer bad_path(subset,"sample.txt");
   }
   catch(std::exception &e){
     *outStream << "an exception was thrown as it should have been" << std::endl;
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
   }
   *outStream << "trying a valid file" << std::endl;
   const size_t num_neighbors = 2;
-  Path_Initializer path(image,subset,"sample.path",2);
+  Path_Initializer path(subset,"sample.path",2);
   *outStream << "the path has " << path.num_triads() << " unique points" << std::endl;
   if(path.num_triads()!=3){
     *outStream << "Error, wrong number of triads." << std::endl;

@@ -259,6 +259,9 @@ int main(int argc, char *argv[]) {
     if(subset_info->skip_solve_flags->size()>0){
       schema->set_skip_solve_flags(subset_info->skip_solve_flags);
     }
+    if(subset_info->motion_window_params->size()>0){
+      schema->set_motion_window_params(subset_info->motion_window_params);
+    }
     if(subset_info->seed_subset_ids->size()>0){
       //schema->has_seed(true);
       assert(subset_info->displacement_map->size()>0);
@@ -305,7 +308,7 @@ int main(int argc, char *argv[]) {
   for(int_t image_it=start_frame;image_it<=end_frame;++image_it){
     if(is_cine){
       Teuchos::RCP<DICe::Image> def_image = cine_reader->get_frame(image_it,correlation_params);
-      *outStream << "Processing Image: " << image_it << " of " << num_images << std::endl;
+      *outStream << "Processing Image: " << image_it - start_frame + 1 << " of " << num_images << std::endl;
       schema->set_def_image(def_image);
     }
     else{

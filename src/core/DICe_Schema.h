@@ -47,6 +47,7 @@
 #include <DICe_Shape.h>
 #include <DICe_MultiField.h>
 #include <DICe_Initializer.h>
+#include <DICe_Parser.h>
 
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_SerialDenseMatrix.hpp>
@@ -666,13 +667,19 @@ public:
     path_file_names_ = path_file_names;
   }
 
-  /// Provide access to the list of path file names:
+  /// Provide access to the flags that determine if the solve should be skipped:
   /// \param skip_solve_flags the map of skip solve flags
   void set_skip_solve_flags(Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags){
     DEBUG_MSG("skip solve flags have been set");
     skip_solve_flags_ = skip_solve_flags;
   }
 
+  /// Provide access to the the dimensions of windows around each subset used
+  /// to detect motion between frames
+  void set_motion_window_params(Teuchos::RCP<std::map<int_t,Motion_Window_Params> > motion_window_params){
+    DEBUG_MSG("motion window params have been set");
+    motion_window_params_ = motion_window_params;
+  }
 
   /// \brief EXPERIMENTAL sets the layering order of subets
   /// \param id_vec Pointer to map of vectors, each vector contains the ids for that particular subset in the order they will be layered if they cross paths
@@ -815,8 +822,10 @@ private:
   std::vector<Teuchos::RCP<Post_Processor> > post_processors_;
   /// True if any post_processors have been activated
   bool has_post_processor_;
-  /// pointer to a vector of initializers (used to initialize first guess for optimization routine)
+  /// vector of pointers to initializers (used to initialize first guess for optimization routine)
   std::vector<Teuchos::RCP<Initializer> > opt_initializers_;
+  /// vector of pointers to motion detectors for a specific subset
+  std::vector<Teuchos::RCP<Motion_Test_Initializer> > motion_detectors_;
   /// For constrained optimiation, this lists the owning element global id for each pixel:
   std::vector<int_t> pixels_owning_element_global_id_;
   /// Connectivity matrix for the global DIC method
@@ -937,6 +946,9 @@ private:
   /// Map to hold the flags for skipping solves for particular subsets (initialize only since
   /// only pixel accuracy may be needed
   Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags_;
+  /// Map to hold the flags that determine if the next image should be
+  /// tested for motion before doing the DIC
+  Teuchos::RCP<std::map<int_t,Motion_Window_Params> > motion_window_params_;
 };
 
 /// \class DICe::Output_Spec

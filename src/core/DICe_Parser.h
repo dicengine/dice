@@ -130,6 +130,31 @@ Teuchos::RCP<Teuchos::ParameterList> read_correlation_params(const std::string &
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> read_physics_params(const std::string & paramFileName);
 
+/// struct to hold motion window around a subset to test for movement
+struct
+DICE_LIB_DLL_EXPORT
+Motion_Window_Params {
+  /// constructor
+  Motion_Window_Params():
+  origin_x_(0),
+  origin_y_(0),
+  width_(-1),
+  height_(-1),
+  tol_(0.0),
+  use_subset_id_(-1){};
+  /// upper left corner x coord
+  int_t origin_x_;
+  /// upper left corner y coord
+  int_t origin_y_;
+  /// width
+  int_t width_;
+  /// height
+  int_t height_;
+  /// tolerance for motion detection
+  scalar_t tol_;
+  /// point to another subsets' motion window if multiple subsets share one
+  int_t use_subset_id_;
+};
 
 /// Simple struct for passing info back and forth from read_subset_file:
 struct
@@ -150,6 +175,7 @@ Subset_File_Info {
     seed_subset_ids = Teuchos::rcp(new std::map<int_t,int_t>());
     path_file_names = Teuchos::rcp(new std::map<int_t,std::string>());
     skip_solve_flags = Teuchos::rcp(new std::map<int_t,bool>());
+    motion_window_params = Teuchos::rcp(new std::map<int_t,Motion_Window_Params>());
     type = info_type;
   }
   /// Pointer to map of conformal subset defs (these are used to define conformal subsets)
@@ -178,6 +204,8 @@ Subset_File_Info {
   Teuchos::RCP<std::map<int_t,std::string> > path_file_names;
   /// Map that turns off the solve (initialize only) for certain subsets
   Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags;
+  /// Map that tests each frame for motion before performing DIC optimization
+  Teuchos::RCP<std::map<int_t,Motion_Window_Params> > motion_window_params;
 };
 
 /// \brief Read a list of coordinates for correlation points from file
@@ -402,6 +430,8 @@ const char* const parser_seed = "SEED";
 const char* const parser_path_file = "PATH_FILE";
 /// Parser string
 const char* const parser_skip_solve = "SKIP_SOLVE";
+/// Parser string
+const char* const parser_test_for_motion = "TEST_FOR_MOTION";
 /// Parser string
 const char* const parser_location = "LOCATION";
 /// Parser string

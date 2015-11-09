@@ -121,7 +121,8 @@ const std::string to_string(Status_Flag in){
     "MAX_GLOBAL_ITERATIONS_REACHED_IN_EVOLUTION_LOOP",
     "FAILURE_DUE_TO_TOO_MANY_RESTARTS",
     "FAILURE_DUE_TO_DEVIATION_FROM_PATH",
-    "FRAME_SKIPPED"
+    "FRAME_SKIPPED",
+    "FRAME_SKIPPED_DUE_TO_NO_MOTION"
   };
   return statusFlagStrings[in];
 }

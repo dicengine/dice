@@ -809,6 +809,8 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          conformal_subset_defined = true;
          bool has_path_file = false;
          bool skip_solve = false;
+         Motion_Window_Params motion_window_params;
+         bool test_for_motion = false;
          std::string path_file_name;
          while(!dataFile.eof()){
            std::streampos pos = dataFile.tellg();
@@ -821,6 +823,30 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              assert(is_number(block_tokens[1]));
              subset_id = atoi(block_tokens[1].c_str());
              if(proc_rank==0) DEBUG_MSG("Conformal subset id: " << subset_id);
+           }
+           else if(block_tokens[0]==parser_test_for_motion){
+             test_for_motion = true;
+             if(block_tokens.size()==2){
+               assert(is_number(block_tokens[1]));
+               motion_window_params.use_subset_id_ = atoi(block_tokens[1].c_str());
+               if(proc_rank==0) DEBUG_MSG("Conformal subset will test for motion using the window defined by subset " <<
+                 motion_window_params.use_subset_id_);
+             }
+             else{
+             TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<6,std::invalid_argument,"TEST_FOR_MOTION requires 5 arguments "
+                 "usage: TEST_FOR_MOTION <origin_x> <origin_y> <width> <heigh> <tol>");
+             for(int_t m=1;m<6;++m){TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[m]),std::invalid_argument,
+               "Error, these parameters should be numbers here.");}
+             motion_window_params.origin_x_ = atoi(block_tokens[1].c_str());
+             motion_window_params.origin_y_ = atoi(block_tokens[2].c_str());
+             motion_window_params.width_ = atoi(block_tokens[3].c_str());
+             motion_window_params.height_ = atoi(block_tokens[4].c_str());
+             motion_window_params.tol_ = strtod(block_tokens[5].c_str(),NULL);
+             if(proc_rank==0) DEBUG_MSG("Conformal subset will test for motion with window"
+                 " origin x: " << motion_window_params.origin_x_ << " origin y: " << motion_window_params.origin_y_ <<
+                 " width: " << motion_window_params.width_ << " height: " << motion_window_params.height_ <<
+                 " tolerance: " << motion_window_params.tol_);
+             }
            }
            else if(block_tokens[0]==parser_path_file){
              /// check if the skip solve token exists at the end
@@ -950,12 +976,12 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            info->shear_strain_map->insert(std::pair<int_t,scalar_t>(subset_id,seed_shear_strain));
            info->rotation_map->insert(std::pair<int_t,scalar_t>(subset_id,seed_rotation));
          }
-         if(has_path_file){
+         if(has_path_file)
            info->path_file_names->insert(std::pair<int_t,std::string>(subset_id,path_file_name));
-         }
-         if(skip_solve){
+         if(skip_solve)
            info->skip_solve_flags->insert(std::pair<int_t,bool>(subset_id,true));
-         }
+         if(test_for_motion)
+           info->motion_window_params->insert(std::pair<int_t,Motion_Window_Params>(subset_id,motion_window_params));
        }  // end conformal subset def
        else{
          std::cout << "Error: Unkown block command in " << fileName << std::endl;

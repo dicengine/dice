@@ -149,9 +149,7 @@ public:
   /// base class constructor
   /// \param def_image pointer to the deformed image being correlated
   /// \param subset pointer to the subset being initialized
-  Initializer(Teuchos::RCP<Image> def_image,
-    Teuchos::RCP<Subset> subset):
-    def_image_(def_image),
+  Initializer(Teuchos::RCP<Subset> subset):
     subset_(subset){
   }
 
@@ -182,8 +180,6 @@ public:
   };
 
 protected:
-  /// pointer to the deformed image
-  Teuchos::RCP<Image> def_image_;
   /// pointer to the subset being initialized
   Teuchos::RCP<Subset> subset_;
 };
@@ -202,7 +198,6 @@ Path_Initializer : public Initializer{
 public:
 
   /// constructor
-  /// \param def_image pointer to the deformed image being correlated
   /// \param subset pointer to the subset being initialized
   /// \param file_name the name of the file to use for input. The input should be in the following
   /// format: ascii text file with values separated by spaces in three columns. The first column
@@ -211,8 +206,7 @@ public:
   /// not be any blank lines at the end of the file. TODO create a more robust file reader.
   /// No header should be included in the text file.
   /// \param num_neighbors the k value for the k-closest neighbors to store for each point
-  Path_Initializer(Teuchos::RCP<Image> def_image,
-    Teuchos::RCP<Subset> subset,
+  Path_Initializer(Teuchos::RCP<Subset> subset,
     const char * file_name,
     const size_t num_neighbors=6);
 
@@ -286,6 +280,65 @@ private:
   /// pointer to the point cloud used for the neighbor searching
   Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud_;
 
+};
+
+
+/// \class DICe::Motion_Test_Initializer
+/// \brief tests to see if there has been any motion since the last frame
+/// if not, this frame is skipped.
+class DICE_LIB_DLL_EXPORT
+Motion_Test_Initializer : public Initializer{
+public:
+
+  /// constructor
+  /// \param origin_x the upper left corner x coordinate
+  /// \param origin_y the upper left corner y coordinate
+  /// \param width the width of the window to test
+  /// \param height the height of the window to test
+  /// \param tol determines the threshold for the image diff to register motion
+  Motion_Test_Initializer(const int_t origin_x,
+    const int_t origin_y,
+    const int_t width,
+    const int_t height,
+    const scalar_t & tol);
+
+  /// virtual destructor
+  virtual ~Motion_Test_Initializer(){};
+
+  /// Returns true if motion is detected
+  /// \param def_image pointer to the deformed image
+  bool motion_detected(Teuchos::RCP<Image> def_image);
+
+  /// see base class description
+  /// in this case only the closest k-neighbors will be searched for the best solution
+  virtual scalar_t initial_guess(Teuchos::RCP<Image> def_image,
+    Teuchos::RCP<std::vector<scalar_t> > deformation,
+    const scalar_t & u,
+    const scalar_t & v,
+    const scalar_t & t){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"This method has not been implemented yet.");
+  };
+
+  /// see base class description
+  /// in this case, the entire set of path triads will be searched for the best solution
+  virtual scalar_t initial_guess(Teuchos::RCP<Image> def_image,
+    Teuchos::RCP<std::vector<scalar_t> > deformation){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"This method has not been implemented yet.");
+  };
+
+private:
+  /// x coord of upper left corner of the motion window
+  int_t origin_x_;
+  /// y coord of upper left corner of the motion window
+  int_t origin_y_;
+  /// width of the window
+  int_t width_;
+  /// height of the window
+  int_t height_;
+  /// image diff tolerance (above this means motion is occurring)
+  scalar_t tol_;
+  /// pointer to the previous image
+  Teuchos::RCP<Image> prev_img_;
 };
 
 }// End DICe Namespace

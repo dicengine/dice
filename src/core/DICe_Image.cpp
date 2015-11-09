@@ -317,6 +317,7 @@ Image::intensity_array()const{
 }
 
 // TODO make this into a functor
+// TODO add an option to normalize this by intensity mean
 scalar_t
 Image::diff(Teuchos::RCP<Image> rhs) const{
   if(rhs->width()!=width_||rhs->height()!=height_)

@@ -136,6 +136,19 @@ phase_correlate_x_y(Teuchos::RCP<Image> image_a,
   assert(w>8);
   assert(h>8);
 
+  // test that the images don't have the same intensities, if so return 0,0
+  // This hopefully removes the false 0,0 peak
+  // TODO address this more formally
+  scalar_t diff_tol = 50.0;
+  const scalar_t diff = image_a->diff(image_b);
+  DEBUG_MSG("phase_correlate_x_y(): image diff test result: " << diff);
+  if(diff < diff_tol){
+    DEBUG_MSG("phase_correlate_x_y(): skipping phase correlation because images are the same.");
+    u_x = 0.0;
+    u_y = 0.0;
+    return -1.0;
+  }
+
   // fft of image a
   Teuchos::ArrayRCP<scalar_t> a_r,a_i;
   DICe::image_fft(image_a,a_r,a_i,0);

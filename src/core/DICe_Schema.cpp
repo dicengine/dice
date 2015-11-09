@@ -247,6 +247,7 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   comm_ = Teuchos::rcp(new MultiField_Comm());
   path_file_names_ = Teuchos::rcp(new std::map<int_t,std::string>());
   skip_solve_flags_ = Teuchos::rcp(new std::map<int_t,bool>());
+  motion_window_params_ = Teuchos::rcp(new std::map<int_t,Motion_Window_Params>());
   set_params(params);
 }
 
@@ -584,6 +585,10 @@ Schema::initialize(const int_t num_pts,
   opt_initializers_.resize(data_num_points_);
   for(size_t i=0;i<opt_initializers_.size();++i)
     opt_initializers_[i] = Teuchos::null;
+
+  motion_detectors_.resize(data_num_points_);
+  for(size_t i=0;i<motion_detectors_.size();++i)
+    motion_detectors_[i] = Teuchos::null;
 
   is_initialized_ = true;
 
@@ -991,6 +996,37 @@ Schema::subset_evolution_routine(Teuchos::RCP<Objective> obj){
   DEBUG_MSG("[PROC " << proc_id << "] SUBSET " << subset_gid << " (" << local_field_value(subset_gid,DICe::COORDINATE_X) <<
     "," << local_field_value(subset_gid,DICe::COORDINATE_Y) << ")");
 
+  bool motion_detected = true;
+  if(motion_window_params_->find(subset_gid)!=motion_window_params_->end()){
+    const int_t use_subset_id = motion_window_params_->find(subset_gid)->second.use_subset_id_==-1 ? subset_gid:
+        motion_window_params_->find(subset_gid)->second.use_subset_id_;
+    if(motion_detectors_[use_subset_id]==Teuchos::null){
+      // create the motion detector because it doesn't exist
+      Motion_Window_Params mwp = motion_window_params_->find(use_subset_id)->second;
+      motion_detectors_[use_subset_id] = Teuchos::rcp(new Motion_Test_Initializer(mwp.origin_x_,
+        mwp.origin_y_,
+        mwp.width_,
+        mwp.height_,
+        mwp.tol_));
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(motion_detectors_[use_subset_id]==Teuchos::null,std::runtime_error,
+      "Error, the motion detector should exist here, but it doesn't.");
+    motion_detected = motion_detectors_[use_subset_id]->motion_detected(def_img_);
+    DEBUG_MSG("Subset " << subset_gid << " TEST_FOR_MOTION using window defined for subset " << use_subset_id <<
+      " result " << motion_detected);
+    if(!motion_detected){
+      DEBUG_MSG("Subset " << subset_gid << " skipping frame due to no motion");
+      // only change the match value and the status flag
+      local_field_value(subset_gid,MATCH) = 0.0;
+      local_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(FRAME_SKIPPED_DUE_TO_NO_MOTION);
+      local_field_value(subset_gid,ITERATIONS) = 0;
+      return;
+    }
+  }
+  else{
+    DEBUG_MSG("Subset " << subset_gid << " will not test for motion");
+  }
+
   // turn on objective regularization to deal with pixels getting turned on and off
   //DEBUG_MSG("Subset " << subset_gid << " turing on objective regularization automatically, regardless of if it's off in the user input");
   //use_objective_regularization_ = true;
@@ -1012,19 +1048,19 @@ Schema::subset_evolution_routine(Teuchos::RCP<Objective> obj){
   // TODO how to manage path names for each subset? File naming convention?
   const bool has_path_file = path_file_names_->find(subset_gid)!=path_file_names_->end();
   if(opt_initializers_[subset_gid]==Teuchos::null){
-    const int_t num_neighbors = 6; // number of path neighbors to search while initializing
     if(has_path_file){
+      const int_t num_neighbors = 6; // number of path neighbors to search while initializing
       std::string path_file_name = path_file_names_->find(subset_gid)->second;
       DEBUG_MSG("Using path file " << path_file_name);
       opt_initializers_[subset_gid] =
-          Teuchos::rcp(new Path_Initializer(def_img_,obj->subset(),path_file_name.c_str(),num_neighbors));
+          Teuchos::rcp(new Path_Initializer(obj->subset(),path_file_name.c_str(),num_neighbors));
     }
     else{
       DEBUG_MSG("No path file specified for this subset");
     }
   }
   TEUCHOS_TEST_FOR_EXCEPTION(opt_initializers_[subset_gid]==
-      Teuchos::null&&has_path_file,std::runtime_error,"Initializer not instantiated yet.");
+      Teuchos::null&&has_path_file,std::runtime_error,"Initializer not instantiated yet, but should be.");
 
   scalar_t initial_gamma = 100.0;
   int_t num_iterations = 0;
@@ -1039,6 +1075,7 @@ Schema::subset_evolution_routine(Teuchos::RCP<Objective> obj){
     }
     // use the previous solution TODO move this to another initializer class
     else{
+      DEBUG_MSG("Initializing with preivous solution");
       (*deformation)[DISPLACEMENT_X] = prev_u;
       (*deformation)[DISPLACEMENT_Y] = prev_v;
       (*deformation)[ROTATION_Z] = prev_t;
@@ -2096,7 +2133,7 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
 
   // create output for each subset
   //for(int_t subset=0;subset<1;++subset){
-  for(size_t subset=2;subset<3;++subset){//obj_vec_.size();++subset){
+  for(size_t subset=0;subset<obj_vec_.size();++subset){
     const int_t gid = obj_vec_[subset]->correlation_point_global_id();
     //if(gid==1) continue;
     // get the deformation vector for each subset
@@ -2124,7 +2161,6 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
       TEUCHOS_TEST_FOR_EXCEPTION(mean_sum_ref==0.0||mean_sum_def==0.0,std::runtime_error," invalid mean sum (cannot be 0.0, ZNSSD is then undefined)" <<
         mean_sum_ref << " " << mean_sum_def);
     }
-
     // loop over each pixel in the subset
     scalar_t pixel_gamma = 0.0;
     for(int_t px=0;px<ref_subset->num_pixels();++px){
