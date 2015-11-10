@@ -118,6 +118,7 @@ public:
     return cy_;
   }
 
+#ifdef DICE_KOKKOS
   /// x coordinate view accessor
   pixel_coord_dual_view_1d x()const{
     return x_;
@@ -128,32 +129,59 @@ public:
     return y_;
   }
 
+  /// ref intensities device view accessor
+  intensity_dual_view_1d ref_intensities()const{
+    return ref_intensities_;
+  }
+
+  /// ref intensities device view accessor
+  intensity_dual_view_1d def_intensities()const{
+    return def_intensities_;
+  }
+#endif
+
   /// x coordinate accessor
   /// \param pixel_index the pixel id
   /// note there is no bounds checking on the index
   const int_t& x(const int_t pixel_index)const{
+#ifdef DICE_KOKKOS
     return x_.h_view(pixel_index);
+#else
+    return x_[pixel_index];
+#endif
   }
 
   /// y coordinate accessor
   /// \param pixel_index the pixel id
   /// note there is no bounds checking on the index
   const int_t& y(const int_t pixel_index)const{
+#ifdef DICE_KOKKOS
     return y_.h_view(pixel_index);
+#else
+    return y_[pixel_index];
+#endif
   }
 
   /// gradient x accessor
   /// \param pixel_index the pixel id
   /// note there is no bounds checking
   const scalar_t& grad_x(const int_t pixel_index)const{
+#ifdef DICE_KOKKOS
     return grad_x_.h_view(pixel_index);
+#else
+    return grad_x_[pixel_index];
+#endif
   }
 
   /// gradient y accessor
   /// \param pixel_index the pixel id
   /// note there is no bounds checking
   const scalar_t& grad_y(const int_t pixel_index)const{
+#ifdef DICE_KOKKOS
     return grad_y_.h_view(pixel_index);
+#else
+    return grad_y_[pixel_index];
+#endif
   }
 
   /// returns true if the gradients have been computed
@@ -170,23 +198,21 @@ public:
   /// ref intensities accessor
   /// \param pixel_index the pixel id
   const intensity_t& ref_intensities(const int_t pixel_index)const{
+#ifdef DICE_KOKKOS
     return ref_intensities_.h_view(pixel_index);
+#else
+    return ref_intensities_[pixel_index];
+#endif
   }
 
   /// ref intensities accessor
   /// \param pixel_index the pixel id
   const intensity_t& def_intensities(const int_t pixel_index)const{
+#ifdef DICE_KOKKOS
     return def_intensities_.h_view(pixel_index);
-  }
-
-  /// ref intensities device view accessor
-  intensity_dual_view_1d ref_intensities()const{
-    return ref_intensities_;
-  }
-
-  /// ref intensities device view accessor
-  intensity_dual_view_1d def_intensities()const{
-    return def_intensities_;
+#else
+    return def_intensities_[pixel_index];
+#endif
   }
 
   /// initialization method:
@@ -231,14 +257,21 @@ public:
 
   /// returns true if this pixel is active
   bool is_active(const int_t pixel_index)const{
+#ifdef DICE_KOKKOS
     return is_active_.h_view(pixel_index);
+#else
+    return is_active_[pixel_index];
+#endif
   }
 
   /// returns true if this pixel is deactivated for this particular frame
   bool is_deactivated_this_step(const int_t pixel_index)const{
+#ifdef DICE_KOKKOS
     return is_deactivated_this_step_.h_view(pixel_index);
+#else
+    return is_deactivated_this_step_[pixel_index];
+#endif
   }
-
 
   /// reset the is_deactivated_this_step bool for each pixel to false
   void reset_is_deactivated_this_step();
@@ -283,6 +316,7 @@ public:
 private:
   /// number of pixels in the subset
   int_t num_pixels_;
+#ifdef DICE_KOKKOS
   /// pixel container
   intensity_dual_view_1d ref_intensities_;
   /// pixel container
@@ -295,6 +329,28 @@ private:
   bool_dual_view_1d is_active_;
   /// pixels can be deactivated for this frame only
   bool_dual_view_1d is_deactivated_this_step_;
+  /// initial x position of the pixels in the reference image
+  pixel_coord_dual_view_1d x_;
+  /// initial x position of the pixels in the reference image
+  pixel_coord_dual_view_1d y_;
+#else
+  /// pixel container
+  Teuchos::ArrayRCP<intensity_t> ref_intensities_;
+  /// pixel container
+  Teuchos::ArrayRCP<intensity_t> def_intensities_;
+  /// container for grad_x
+  Teuchos::ArrayRCP<scalar_t> grad_x_;
+  /// container for grad_y
+  Teuchos::ArrayRCP<scalar_t> grad_y_;
+  /// pixels can be deactivated by obstructions (persistent)
+  Teuchos::ArrayRCP<bool> is_active_;
+  /// pixels can be deactivated for this frame only
+  Teuchos::ArrayRCP<bool> is_deactivated_this_step_;
+  /// initial x position of the pixels in the reference image
+  Teuchos::ArrayRCP<int_t> x_;
+  /// initial x position of the pixels in the reference image
+  Teuchos::ArrayRCP<int_t> y_;
+#endif
   /// \brief EXPERIMENTAL Holds the obstruction coordinates if they exist.
   /// NOTE: The coordinates are switched for this (i.e. (Y,X)) so that
   /// the loops over y then x will be more efficient
@@ -307,19 +363,15 @@ private:
   int_t cx_; // assumed to be the middle of the pixel
   /// centroid location y
   int_t cy_; // assumed to be the middle of the pixel
-  /// initial x position of the pixels in the reference image
-  pixel_coord_dual_view_1d x_;
-  /// initial x position of the pixels in the reference image
-  pixel_coord_dual_view_1d y_;
   /// true if the gradient values are populated
   bool has_gradients_;
   /// Conformal_Area_Def that defines the subset geometry
   Conformal_Area_Def conformal_subset_def_;
   /// The subset is not square
   bool is_conformal_;
-
 };
 
+#ifdef DICE_KOKKOS
 /// mean value functor
 struct Intensity_Sum_Functor{
   /// pointer to the intensity values on the device
@@ -409,7 +461,6 @@ struct ZNSSD_Gamma_Functor{
     }
   }
 };
-
 
 /// subset intensity value initialization functor
 struct Subset_Init_Functor{
@@ -513,6 +564,7 @@ struct Subset_Init_Functor{
   KOKKOS_INLINE_FUNCTION
   void operator()(const No_Map_Tag &, const int_t pixel_index)const;
 };
+#endif
 
 }// End DICe Namespace
 
