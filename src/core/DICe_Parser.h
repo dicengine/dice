@@ -117,7 +117,6 @@ DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   char *argv[],
   Teuchos::RCP<std::ostream> & outStream,
-  std::string & banner,
   const Analysis_Type analysis_type=LOCAL_DIC);
 
 /// \brief Read the correlation parameters from a file

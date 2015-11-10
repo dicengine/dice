@@ -124,7 +124,7 @@ public:
   }
 
   /// y coordinate view accessor
-   pixel_coord_dual_view_1d y()const{
+  pixel_coord_dual_view_1d y()const{
     return y_;
   }
 

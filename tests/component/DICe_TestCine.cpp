@@ -39,7 +39,6 @@
 // ************************************************************************
 // @HEADER
 #include <DICe.h>
-#include <DICe_Kokkos.h>
 #include <DICe_Cine.h>
 
 #include <Teuchos_RCP.hpp>
@@ -52,8 +51,7 @@ using namespace DICe;
 
 int main(int argc, char *argv[]) {
 
-  // initialize kokkos
-  Kokkos::initialize(argc, argv);
+  DICe::initialize(argc, argv);
 
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
@@ -167,8 +165,7 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- End test ---" << std::endl;
 
-  // finalize kokkos
-  Kokkos::finalize();
+  DICe::finalize();
 
   if (errorFlag != 0)
     std::cout << "End Result: TEST FAILED\n";

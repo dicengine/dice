@@ -44,7 +44,6 @@
 */
 
 #include <DICe.h>
-#include <DICe_Kokkos.h>
 #include <DICe_Parser.h>
 #include <DICe_Cine.h>
 
@@ -59,8 +58,7 @@ int main(int argc, char *argv[]) {
 
   /// usage ./DICe_CineToTiff <cine_file_name> <start_index> <end_index> <output_prefix>
 
-  // initialize kokkos
-  Kokkos::initialize(argc, argv);
+  DICe::initialize(argc, argv);
 
   //Teuchos::oblackholestream bhs; // outputs nothing
   Teuchos::RCP<std::ostream> outStream = Teuchos::rcp(&std::cout, false);
@@ -84,8 +82,6 @@ int main(int argc, char *argv[]) {
   for(int_t i=0;i<argc;++i){
     DEBUG_MSG(argv[i]);
   }
-
-  *outStream << std::endl << "Digital Image Correlation Engine (DICe), Copyright 2015 Sandia Corporation " << std::endl << std::endl;
   std::string fileName = argv[1];
   *outStream << "Cine file name: " << fileName << std::endl;
   std::string prefix = argv[4];
@@ -132,10 +128,8 @@ int main(int argc, char *argv[]) {
     image->write_tiff(fName.str());
   }
 
-  // finalize kokkos
-  Kokkos::finalize();
+  DICe::finalize();
 
   return 0;
-
 }
 

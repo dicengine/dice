@@ -49,7 +49,6 @@
 #include <DICe.h>
 
 #include <Teuchos_oblackholestream.hpp>
-#include <Teuchos_GlobalMPISession.hpp>
 
 #include <iostream>
 
@@ -57,14 +56,10 @@ using namespace DICe;
 
 int main(int argc, char *argv[]) {
 
-  // initialize kokkos
-  Kokkos::initialize(argc, argv);
+  DICe::initialize(argc, argv);
 
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
-  // for serial, the global MPI session is a no-op, but in parallel
-  // ensures that MPI_Init is called (needed by the schema)
-  Teuchos::GlobalMPISession mpi_session(&argc, &argv, NULL);
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -137,8 +132,7 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- End test ---" << std::endl;
 
-  // finalize kokkos
-  Kokkos::finalize();
+  DICe::finalize();
 
   if (errorFlag != 0)
     std::cout << "End Result: TEST FAILED\n";

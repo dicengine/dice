@@ -45,9 +45,13 @@
 #include <DICe.h>
 #include <DICe_Image.h>
 #include <DICe_Shape.h>
-#include <DICe_MultiField.h>
 #include <DICe_Initializer.h>
 #include <DICe_Parser.h>
+#ifdef DICE_TPETRA
+  #include "DICe_MultiFieldTpetra.h"
+#else
+  #include "DICe_MultiFieldEpetra.h"
+#endif
 
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_SerialDenseMatrix.hpp>
@@ -344,7 +348,7 @@ public:
     const Field_Name name){
     assert(global_id<data_num_points_);
     assert(name<MAX_FIELD_NAME);
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
     if(target_field_descriptor_==DISTRIBUTED){
       assert(distributed_fields_being_modified_ && "Error: Attempting to modify or access a distributed field, but the all-owned"
           " fields have the lock, sync_all_to_dist() must be called first to enable access to the distributed fields.");
@@ -370,7 +374,7 @@ public:
     const Field_Name name){
     assert(global_id<data_num_points_);
     assert(name<MAX_FIELD_NAME);
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
     if(target_field_descriptor_==DISTRIBUTED){
       assert(distributed_fields_being_modified_ && "Error: Attempting to modify or access a distributed field, but the all-owned"
         " fields have the lock, sync_all_to_dist() must be called first to enable access to the distributed fields.");
@@ -393,7 +397,7 @@ public:
   void save_off_fields(const int_t global_id){
     DEBUG_MSG("Saving off solution nm1 for subset (global id) " << global_id);
     for(int_t i=0;i<MAX_FIELD_NAME;++i){
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
       if(target_field_descriptor_==DISTRIBUTED)
         dist_fields_nm1_->global_value(global_id,i) = dist_fields_->global_value(global_id,i);
       else if(target_field_descriptor_==DISTRIBUTED_GROUPED_BY_SEED)
@@ -699,7 +703,7 @@ public:
   /// Copy distributed fields to serial fields
   void sync_fields_dist_to_all(){
     if(target_field_descriptor_==ALL_OWNED) return; // NO-OP
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
     if(target_field_descriptor_==DISTRIBUTED){
       fields_->do_import(*dist_fields_,*importer_);
       fields_nm1_->do_import(*dist_fields_nm1_,*importer_);
@@ -720,7 +724,7 @@ public:
   /// Copy serial fields to distributedsinsert
   void sync_fields_all_to_dist(){
     if(target_field_descriptor_==ALL_OWNED) return; // NO-OP
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
     distributed_fields_being_modified_ = true;
     if(target_field_descriptor_==DISTRIBUTED){
       dist_fields_->do_export(*fields_,*exporter_);
@@ -773,7 +777,7 @@ private:
   imp_rcp seed_importer_;
   /// Pointer to exporter for managing distributed fields grouped by seed
   exp_rcp seed_exporter_;
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
   /// Pointer to a map of vectors that hold the distributed fields.
   /// These are meant to be internal and not exposed to the user via field_values();
   mf_rcp dist_fields_;

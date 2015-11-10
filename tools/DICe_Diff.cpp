@@ -44,7 +44,6 @@
 */
 
 #include <DICe.h>
-#include <DICe_Kokkos.h>
 #include <DICe_Parser.h>
 
 #include <Teuchos_RCP.hpp>
@@ -58,8 +57,7 @@ int main(int argc, char *argv[]) {
 
   /// usage ./DICe_Diff <infileA> <infileB> [-t <tol>] [-v] [-n]
 
-  // initialize kokkos
-  Kokkos::initialize(argc, argv);
+  DICe::initialize(argc, argv);
 
   Teuchos::oblackholestream bhs; // outputs nothing
   Teuchos::RCP<std::ostream> outStream = Teuchos::rcp(&bhs, false);
@@ -82,8 +80,8 @@ int main(int argc, char *argv[]) {
   }
 
   if(argc < 3) {
-      printf("You must provide two files to compare\n");
-      exit(0);
+    printf("You must provide two files to compare\n");
+    exit(0);
   }
 
   DEBUG_MSG("User specified " << argc << " arguments");
@@ -111,7 +109,6 @@ int main(int argc, char *argv[]) {
       assert(false);
     }
   }
-  *outStream << std::endl << "Digital Image Correlation Engine (DICe), Copyright 2015 Sandia Corporation " << std::endl << std::endl;
   std::string fileA = argv[1];
   std::string fileB = argv[2];
   *outStream << "File A: " << fileA << std::endl;
@@ -128,70 +125,69 @@ int main(int argc, char *argv[]) {
 
   // read each line of the file
   int_t line = 0;
-   while (!dataFileA.eof())
-   {
-     bool line_diff = false;
-     std::vector<int_t> badTokenIds;
-     std::vector<std::string> badTokenTypes;
-     if(dataFileB.eof()) {
-       *outStream << "Error, File A has more lines than FileB " << std::endl;
-       errorFlag++;
-       break;
-     }
-     Teuchos::ArrayRCP<std::string> tokensA = DICe::tokenize_line(dataFileA,delimiter);
-     Teuchos::ArrayRCP<std::string> tokensB = DICe::tokenize_line(dataFileB,delimiter);
-     if(tokensA.size()!=tokensB.size()){
-       *outStream << "Error, Different number of tokens per line A:" << tokensA.size() << " B: " << tokensB.size() << std::endl;
-       errorFlag++;
-       break;
-     }
-     for(int_t i=0;i<tokensA.size();++i){
-       // number
-       if(DICe::is_number(tokensA[i])){
-         assert(DICe::is_number(tokensB[i]));
-         scalar_t valA = strtod(tokensA[i].c_str(),NULL);
-         scalar_t valB = strtod(tokensB[i].c_str(),NULL);
-         scalar_t diff = std::abs((valA - valB)/valA);
-         const bool tiny = (std::abs(valA) + std::abs(valB) < 1.0E-8);
-         if(!tiny && diff > relTol){
-           line_diff = true;
-           badTokenIds.push_back(i);
-           badTokenTypes.push_back("n");
-         }
-       }
-       // string
-       else{
-         assert(!DICe::is_number(tokensB[i]));
-         if(tokensA[i]!=tokensB[i] && !numerical_values_only)
-           line_diff = true;
-           badTokenIds.push_back(i);
-           badTokenTypes.push_back("s");
-       }
-     }
-     if(line_diff){
-       errorFlag++;
-       *outStream << "< " << line << " (";
-       for(size_t i=0;i<badTokenIds.size();++i){
-         *outStream << badTokenIds[i] << "[" << badTokenTypes[i] << "] ";
-       }
-       *outStream  << "): ";
-       for(int_t i=0;i<tokensA.size();++i)
-         *outStream << tokensA[i] << " ";
-       *outStream << std::endl;
-       *outStream << "> " << line << " (";
-       for(size_t i=0;i<badTokenIds.size();++i){
-         *outStream << badTokenIds[i] << "[" << badTokenTypes[i] << "] ";
-       }
-       *outStream  << "): ";
-       for(int_t i=0;i<tokensB.size();++i)
-         *outStream << tokensB[i] << " ";
-       *outStream << std::endl;
-     }
-     line++;
-   }
+  while (!dataFileA.eof())
+  {
+    bool line_diff = false;
+    std::vector<int_t> badTokenIds;
+    std::vector<std::string> badTokenTypes;
+    if(dataFileB.eof()) {
+      *outStream << "Error, File A has more lines than FileB " << std::endl;
+      errorFlag++;
+      break;
+    }
+    Teuchos::ArrayRCP<std::string> tokensA = DICe::tokenize_line(dataFileA,delimiter);
+    Teuchos::ArrayRCP<std::string> tokensB = DICe::tokenize_line(dataFileB,delimiter);
+    if(tokensA.size()!=tokensB.size()){
+      *outStream << "Error, Different number of tokens per line A:" << tokensA.size() << " B: " << tokensB.size() << std::endl;
+      errorFlag++;
+      break;
+    }
+    for(int_t i=0;i<tokensA.size();++i){
+      // number
+      if(DICe::is_number(tokensA[i])){
+        assert(DICe::is_number(tokensB[i]));
+        scalar_t valA = strtod(tokensA[i].c_str(),NULL);
+        scalar_t valB = strtod(tokensB[i].c_str(),NULL);
+        scalar_t diff = std::abs((valA - valB)/valA);
+        const bool tiny = (std::abs(valA) + std::abs(valB) < 1.0E-8);
+        if(!tiny && diff > relTol){
+          line_diff = true;
+          badTokenIds.push_back(i);
+          badTokenTypes.push_back("n");
+        }
+      }
+      // string
+      else{
+        assert(!DICe::is_number(tokensB[i]));
+        if(tokensA[i]!=tokensB[i] && !numerical_values_only)
+          line_diff = true;
+        badTokenIds.push_back(i);
+        badTokenTypes.push_back("s");
+      }
+    }
+    if(line_diff){
+      errorFlag++;
+      *outStream << "< " << line << " (";
+      for(size_t i=0;i<badTokenIds.size();++i){
+        *outStream << badTokenIds[i] << "[" << badTokenTypes[i] << "] ";
+      }
+      *outStream  << "): ";
+      for(int_t i=0;i<tokensA.size();++i)
+        *outStream << tokensA[i] << " ";
+      *outStream << std::endl;
+      *outStream << "> " << line << " (";
+      for(size_t i=0;i<badTokenIds.size();++i){
+        *outStream << badTokenIds[i] << "[" << badTokenTypes[i] << "] ";
+      }
+      *outStream  << "): ";
+      for(int_t i=0;i<tokensB.size();++i)
+        *outStream << tokensB[i] << " ";
+      *outStream << std::endl;
+    }
+    line++;
+  }
 
-   // finalize kokkos
-   Kokkos::finalize();
+  DICe::finalize();
 
   if (errorFlag != 0)
     std::cout << "End Result: TEST FAILED\n";

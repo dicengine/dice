@@ -118,16 +118,30 @@ SET(DICE_HEADER_DIRS
   ${TIFF_DIR}/../include
   )
 
-
 SET(DICE_LIBRARIES
     ${DICE_LIBRARIES}
     teuchoscore
     teuchosnumerics
     teuchoscomm
     teuchosparameterlist
+ )
+
+# enable tpetra if chosen:
+IF(DICE_ENABLE_MANYCORE)
+  MESSAGE(STATUS "** MANYCORE enabled (uses Tpetra and Kokkos libraries) **")
+  SET(DICE_LIBRARIES
+    ${DICE_LIBRARIES}
     kokkoscore
     tpetra
- )
+  )
+  ADD_DEFINITIONS(-DDICE_KOKKOS -DDICE_TPETRA)
+ELSE()
+  MESSAGE(STATUS "MANYCORE disabled")
+  SET(DICE_LIBRARIES
+    ${DICE_LIBRARIES}
+    epetra
+  )
+ENDIF()
 
 # WINDOWS CMake has a bug for find_package() for clapack
 # f2clibs have to be added manually here

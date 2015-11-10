@@ -42,7 +42,6 @@
 #include <DICe.h>
 #include <DICe_Image.h>
 #include <DICe_Subset.h>
-#include <DICe_Kokkos.h>
 #include <DICe_Tiff.h>
 
 #include <Teuchos_RCP.hpp>
@@ -58,8 +57,7 @@ using namespace boost::timer;
 
 int main(int argc, char *argv[]) {
 
-  // initialize kokkos
-  Kokkos::initialize(argc, argv);
+  DICe::initialize(argc, argv);
 
   // only print output if args are given (for testing the output is quiet)
   int_t iprint = argc>1 ? std::atoi(argv[1]) : 0;
@@ -281,8 +279,7 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- End performance test ---" << std::endl;
 
-  // finalize kokkos
-  Kokkos::finalize();
+  DICe::finalize();
 
   return 0;
 }

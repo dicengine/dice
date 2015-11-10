@@ -39,8 +39,8 @@
 // ************************************************************************
 // @HEADER
 
-#ifndef DICE_MULTIFIELD_H
-#define DICE_MULTIFIELD_H
+#ifndef DICE_MULTIFIELDTPETRA_H
+#define DICE_MULTIFIELDTPETRA_H
 
 #include <DICe.h>
 
@@ -78,7 +78,7 @@ MultiField_Comm{
 public:
   /// Default constructor with no arguments
   MultiField_Comm(){
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
     int mpi_is_initialized = 0;
     MPI_Initialized(&mpi_is_initialized);
     if(mpi_is_initialized)

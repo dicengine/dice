@@ -626,5 +626,4 @@ Subset_Init_Functor::operator()(const No_Map_Tag&,
   subset_intensities_(pixel_index) = image_intensities_(y_(pixel_index)-offset_y_,x_(pixel_index)-offset_x_);
 }
 
-
 }// End DICe Namespace

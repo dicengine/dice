@@ -40,8 +40,6 @@
 // @HEADER
 
 #include <DICe.h>
-#include <DICe_Kokkos.h>
-
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
 #include <Teuchos_ParameterList.hpp>
@@ -59,8 +57,7 @@ using namespace DICe;
 
 int main(int argc, char *argv[]) {
 
-  // initialize kokkos
-  Kokkos::initialize(argc, argv);
+  DICe::initialize(argc, argv);
 
   Teuchos::oblackholestream bhs; // outputs nothing
   Teuchos::RCP<std::ostream> outStream = Teuchos::rcp(&bhs, false);
@@ -71,7 +68,6 @@ int main(int argc, char *argv[]) {
     std::cout << "Usage: DICe_Diff_Avg <parameters_file> " << std::endl;
     exit(1);
   }
-
 
   const std::string params_file = argv[1];
   Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp( new Teuchos::ParameterList() );
@@ -253,8 +249,7 @@ int main(int argc, char *argv[]) {
   }
   fclose(filePtr);
 
-  // finalize kokkos
-  Kokkos::finalize();
+  DICe::finalize();
 
   if (errorFlag != 0)
     std::cout << "End Result: TEST FAILED\n";

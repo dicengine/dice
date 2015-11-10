@@ -48,7 +48,7 @@
 
 #include <boost/timer.hpp>
 
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
 #  include <mpi.h>
 #endif
 
@@ -56,32 +56,21 @@ using namespace DICe;
 
 int main(int argc, char *argv[]) {
 
+  DICe::initialize(argc,argv);
+
   const int_t dim = 2;         // Assumes 2D images
-
-  std::stringstream banner;
-  banner << "--- Digital Image Correlation Engine (DICe), Copyright 2015 Sandia Corporation ---" << std::endl << std::endl;
-  std::string bannerStr = banner.str();
-
   int_t proc_size = 1;
   int_t proc_rank = 0;
-#ifdef HAVE_MPI
-  MPI_Init (&argc, &argv);
+#ifdef DICE_MPI
   MPI_Comm_size(MPI_COMM_WORLD,&proc_size);
   MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
-  if(proc_rank==0) DEBUG_MSG("Code was compiled with MPI enabled");
-#else
-  DEBUG_MSG("Code was compiled with MPI disabled");
 #endif
-
-  // initialize kokkos
-  Kokkos::initialize(argc, argv);
 
   // Command line options
 
   if(proc_rank==0)  DEBUG_MSG("Parsing command line options");
   Teuchos::RCP<std::ostream> outStream;
-  Teuchos::RCP<Teuchos::ParameterList> input_params = DICe::parse_command_line(argc,argv,outStream,bannerStr);
-  *outStream << banner.str();
+  Teuchos::RCP<Teuchos::ParameterList> input_params = DICe::parse_command_line(argc,argv,outStream);
   *outStream << "Input Parameters: " << std::endl;
   input_params->print(*outStream);
   *outStream << "\n--- Input read successfully ---\n" << std::endl;
@@ -360,12 +349,7 @@ int main(int argc, char *argv[]) {
   fprintf(timeFile,"%4.4E %4.4E %4.4E %4.4E\n",total_time,avg_time,max_time,min_time);
   fclose(timeFile);
 
-#ifdef HAVE_MPI
-  (void) MPI_Finalize ();
-#endif
-
-  // finalize kokkos
-  Kokkos::finalize();
+  DICe::finalize();
 
   return 0;
 }

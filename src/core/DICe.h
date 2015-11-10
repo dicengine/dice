@@ -87,6 +87,15 @@ namespace DICe{
 /// integer type
 typedef int int_t;
 
+/// Initialization function (mpi and kokkos if enabled):
+/// \param argc argument count
+/// \param argv array of argument chars
+void initialize(int argc,
+  char *argv[]);
+
+/// Finalize function (mpi and kokkos if enabled):
+void finalize();
+
 /// parameters (all lower case)
 
 /// String parameter names using globals to prevent misspelling in the parameter lists:

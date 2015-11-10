@@ -1,6 +1,6 @@
 
 SET(DICE_SOURCES
-  DICe_Kokkos.cpp
+  DICe.cpp
   DICe_Image.cpp
   DICe_Subset.cpp
   DICe_Shape.cpp
@@ -15,7 +15,6 @@ SET(DICE_SOURCES
 
 SET(DICE_HEADERS
   DICe.h
-  DICe_Kokkos.h
   DICe_Image.h
   DICe_Subset.h
   DICe_Shape.h
@@ -23,13 +22,29 @@ SET(DICE_HEADERS
   DICe_Objective.h
   DICe_ObjectiveZNSSD.h
   DICe_Schema.h
-  DICe_MultiField.h
   DICe_ParameterUtilities.h
   DICe_Parser.h
   DICe_PostProcessor.h
   DICe_Initializer.h
   DICe_Utilities.h
   )
+
+IF(DICE_ENABLE_MANYCORE)
+  SET(DICE_SOURCES
+    ${DICE_SOURCES}
+    DICe_Kokkos.cpp
+  )
+  SET(DICE_HEADERS
+    ${DICE_HEADERS}
+    DICe_Kokkos.h
+    DICe_MultiFieldTpetra.h
+  )
+ELSE()
+  SET(DICE_HEADERS
+    ${DICE_HEADERS}
+    DICe_MultiFieldEpetra.h
+  )
+ENDIF()
 
 include_directories (
     .

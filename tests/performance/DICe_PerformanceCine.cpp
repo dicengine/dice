@@ -41,8 +41,6 @@
 
 #include <DICe.h>
 #include <DICe_Cine.h>
-#include <DICe_Kokkos.h>
-
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
 #include <Teuchos_ParameterList.hpp>
@@ -61,8 +59,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  // initialize kokkos
-  Kokkos::initialize(argc, argv);
+  DICe::initialize(argc, argv);
 
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
@@ -113,8 +110,7 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- End performance test ---" << std::endl;
 
-  // finalize kokkos
-  Kokkos::finalize();
+  DICe::finalize();
 
   return 0;
 }

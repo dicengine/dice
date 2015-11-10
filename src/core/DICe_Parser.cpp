@@ -57,7 +57,7 @@ namespace po = boost::program_options;
 #include <cctype>
 #include <string>
 
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
 #  include <mpi.h>
 #endif
 
@@ -67,11 +67,10 @@ DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   char *argv[],
   Teuchos::RCP<std::ostream> & outStream,
-  std::string & banner,
   const Analysis_Type analysis_type){
 
   int proc_rank = 0;
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
   int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
@@ -114,7 +113,6 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
 
    // Handle help requests
    if(vm.count("help")){
-     std::cout << banner;
      std::cout << desc << std::endl;
      exit(0);
    }
@@ -266,7 +264,7 @@ DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> read_physics_params(const std::string & paramFileName){
 
   int proc_rank = 0;
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
   int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
@@ -300,7 +298,7 @@ DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> read_correlation_params(const std::string & paramFileName){
 
   int proc_rank = 0;
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
   int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
@@ -360,7 +358,7 @@ Teuchos::RCP<Teuchos::ParameterList> read_correlation_params(const std::string &
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Circle> read_circle(std::fstream &dataFile){
   int proc_rank = 0;
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
   int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
@@ -401,7 +399,7 @@ Teuchos::RCP<Circle> read_circle(std::fstream &dataFile){
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::Rectangle> read_rectangle(std::fstream &dataFile){
   int proc_rank = 0;
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
   int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
@@ -492,7 +490,7 @@ Teuchos::RCP<DICe::Rectangle> read_rectangle(std::fstream &dataFile){
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::Polygon> read_polygon(std::fstream &dataFile){
   int proc_rank = 0;
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
   int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
@@ -620,7 +618,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
   const int_t width,
   const int_t height){
   int proc_rank = 0;
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
   int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
@@ -1002,7 +1000,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
 DICE_LIB_DLL_EXPORT
 const std::vector<std::string> decypher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params){
   int proc_rank = 0;
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
   int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
@@ -1134,7 +1132,7 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
   const int_t width, const int_t height,
   Teuchos::RCP<DICe::Subset_File_Info> subset_file_info){
   int proc_rank = 0;
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
   int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
@@ -1310,7 +1308,7 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
 DICE_LIB_DLL_EXPORT
 void generate_template_input_files(const std::string & file_prefix){
   int proc_rank = 0;
-#ifdef HAVE_MPI
+#ifdef DICE_MPI
   int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)

@@ -46,8 +46,6 @@
 
 #include <DICe_ParameterUtilities.h>
 #include <DICe.h>
-#include <DICe_Kokkos.h>
-
 #include <Teuchos_oblackholestream.hpp>
 #include <Teuchos_RCP.hpp>
 
@@ -55,8 +53,7 @@ using namespace DICe;
 
 int main(int argc, char *argv[]) {
 
-  // initialize kokkos
-  Kokkos::initialize(argc, argv);
+  DICe::initialize(argc, argv);
 
   int_t iprint     = argc - 1;
   Teuchos::RCP<std::ostream> outStream;
@@ -123,8 +120,7 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- End test ---" << std::endl;
 
-  // finalize kokkos
-  Kokkos::finalize();
+  DICe::finalize();
 
   if (errorFlag != 0)
     std::cout << "End Result: TEST FAILED\n";
