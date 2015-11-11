@@ -33,13 +33,19 @@ IF(DICE_ENABLE_MANYCORE)
   SET(DICE_SOURCES
     ${DICE_SOURCES}
     DICe_Kokkos.cpp
+    DICe_SubsetKokkos.cpp
   )
   SET(DICE_HEADERS
     ${DICE_HEADERS}
     DICe_Kokkos.h
     DICe_MultiFieldTpetra.h
+    DICe_SubsetFunctors.h
   )
 ELSE()
+  SET(DICE_SOURCES
+    ${DICE_SOURCES}
+    DICe_SubsetSerial.cpp
+  )
   SET(DICE_HEADERS
     ${DICE_HEADERS}
     DICe_MultiFieldEpetra.h
