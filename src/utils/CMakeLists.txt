@@ -106,14 +106,14 @@ SET(DICE_HEADER_DIRS
 # if debug messages are turned on:
 IF(DICE_DEBUG_MSG)
   MESSAGE(STATUS "Debugging messages are ON")
-  ADD_DEFINITIONS(-DDICE_DEBUG_MSG)
+  ADD_DEFINITIONS(-DDICE_DEBUG_MSG=1)
 ELSE(DICE_DEBUG_MSG)
   MESSAGE(STATUS "Debugging messages are OFF")
 ENDIF(DICE_DEBUG_MSG)
 
 # base data type:
 if(DICE_USE_DOUBLE)
-  ADD_DEFINITIONS(-DDICE_USE_DOUBLE)
+  ADD_DEFINITIONS(-DDICE_USE_DOUBLE=1)
   MESSAGE(STATUS "Image intensity and scalar type will be: DOUBLE")
 else()
   MESSAGE(STATUS "Image intensity and scalar type will be: FLOAT (default)")

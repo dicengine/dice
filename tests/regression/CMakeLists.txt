@@ -28,7 +28,7 @@ FOREACH ( test ${REGRESSION_TESTS})
         # get the name of the file without the directory
         GET_FILENAME_COMPONENT ( trim_name ${gold_file} NAME)
         ADD_TEST ( NAME "DIFF_${test}_${trim_name}" 
-            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../tools/DICe_Diff ${gold_file} ${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name} -t 1E-4 -v)
+            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../tools/DICe_Diff ${gold_file} ${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name} -t 1E-3 -v)
         set_tests_properties("DIFF_${test}_${trim_name}" PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
         set_property(TEST "DIFF_${test}_${trim_name}" APPEND PROPERTY DEPENDS "RUN_${test}")
     ENDFOREACH ( )

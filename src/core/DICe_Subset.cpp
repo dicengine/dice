@@ -59,7 +59,7 @@ Subset::Subset(int_t cx,
   assert(num_pixels_>0);
   assert(x.size()==y.size());
 
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   // initialize the coordinate views
   pixel_coord_device_view_1d x_dev(x.getRawPtr(),num_pixels_);
   pixel_coord_host_view_1d x_host  = Kokkos::create_mirror_view(x_dev);
@@ -114,7 +114,7 @@ Subset::Subset(const int_t cx,
   num_pixels_ = (2*half_width+1)*(2*half_height+1);
   assert(num_pixels_>0);
 
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   // initialize the coordinate views
   x_ = pixel_coord_dual_view_1d("x",num_pixels_);
   y_ = pixel_coord_dual_view_1d("y",num_pixels_);
@@ -182,7 +182,7 @@ Subset::Subset(const int_t cx,
   // at this point all the coordinate pairs are in the set
   num_pixels_ = coords.size();
 
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   // resize the storage arrays now that the num_pixels is known
   x_ = pixel_coord_dual_view_1d("x",num_pixels_);
   y_ = pixel_coord_dual_view_1d("y",num_pixels_);
@@ -230,15 +230,15 @@ Subset::Subset(const int_t cx,
   // now set the inactive bit for the second set of multishapes if they exist.
   if(subset_def.has_excluded_area()){
     for(size_t i=0;i<subset_def.excluded_area()->size();++i){
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
       (*subset_def.excluded_area())[i]->deactivate_pixels(num_pixels_,is_active_.h_view.ptr_on_device(),
         x_.h_view.ptr_on_device(),y_.h_view.ptr_on_device());
 #else
-      (*subset_def.excluded_area())[i]->deactivate_pixels(num_pixels_,is_active_,x_,y_);
+      (*subset_def.excluded_area())[i]->deactivate_pixels(num_pixels_,is_active_.getRawPtr(),x_.getRawPtr(),y_.getRawPtr());
 #endif
     }
   }
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   is_active_.modify<host_space>();
   is_active_.sync<device_space>();
 #endif
@@ -252,7 +252,7 @@ Subset::Subset(const int_t cx,
 
 void
 Subset::reset_is_active(){
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   for(int_t i=0;i<num_pixels_;++i)
     is_active_.h_view(i) = true;
   is_active_.modify<host_space>();
@@ -265,7 +265,7 @@ Subset::reset_is_active(){
 
 void
 Subset::reset_is_deactivated_this_step(){
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   for(int_t i=0;i<num_pixels_;++i)
     is_deactivated_this_step_.h_view(i) = false;
   is_deactivated_this_step_.modify<host_space>();
@@ -335,14 +335,14 @@ Subset::turn_off_obstructed_pixels(Teuchos::RCP<const std::vector<scalar_t> > de
     Y = sin_t*Dx + cos_t*Dy + v + cy_;
 
     if(is_obstructed_pixel(X,Y)){
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
       is_deactivated_this_step_.h_view(i) = true;
 #else
       is_deactivated_this_step_[i] = true;
 #endif
     }
     else{
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
       is_deactivated_this_step_.h_view(i) = false;
 #else
       is_deactivated_this_step_[i] = false;
@@ -352,7 +352,7 @@ Subset::turn_off_obstructed_pixels(Teuchos::RCP<const std::vector<scalar_t> > de
     if(has_blocks){
       px = ((int_t)(X + 0.5) == (int_t)(X)) ? (int_t)(X) : (int_t)(X) + 1;
       py = ((int_t)(Y + 0.5) == (int_t)(Y)) ? (int_t)(Y) : (int_t)(Y) + 1;
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
       if(pixels_blocked_by_other_subsets_.find(std::pair<int_t,int_t>(py,px))
           !=pixels_blocked_by_other_subsets_.end())
         is_deactivated_this_step_.h_view(i) = true;
@@ -363,7 +363,7 @@ Subset::turn_off_obstructed_pixels(Teuchos::RCP<const std::vector<scalar_t> > de
 #endif
     }
   } // pixel loop
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   is_deactivated_this_step_.modify<host_space>();
   is_deactivated_this_step_.sync<device_space>();
 #endif
@@ -386,7 +386,11 @@ Subset::write_subset_on_image(const std::string & file_name,
   intensity_t * intensities = new intensity_t[w*h];
   for(int_t y=0;y<h;++y){
     for(int_t x=0;x<w;++x){
+#if DICE_KOKKOS
       intensities[y*w+x] = image->intensities().h_view(y,x);
+#else
+      intensities[y*w+x] = image->intensity_array()[y*w+x];
+#endif
     }
   }
   if(deformation!=Teuchos::null){
@@ -397,7 +401,7 @@ Subset::write_subset_on_image(const std::string & file_name,
     for(int_t i=0;i<num_pixels_;++i){
       // compute the deformed shape:
       // need to cast the x_ and y_ values since the resulting value could be negative
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
       dx = (scalar_t)(x_.h_view(i)) - cx_;
       dy = (scalar_t)(y_.h_view(i)) - cy_;
 #else
@@ -414,7 +418,7 @@ Subset::write_subset_on_image(const std::string & file_name,
       if(mapped_x - (int_t)mapped_x >= 0.5) px++;
       py = (int_t)mapped_y;
       if(mapped_y - (int_t)mapped_y >= 0.5) py++;
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
       intensities[py*w+px] = !is_active_.h_view(i) ? 255
           : is_deactivated_this_step_.h_view(i) ?  0
           : std::abs((def_intensities_.h_view(i) - ref_intensities_.h_view(i))*2);
@@ -427,7 +431,7 @@ Subset::write_subset_on_image(const std::string & file_name,
   }
   else{ // write the original shape of the subset
     for(int_t i=0;i<num_pixels_;++i)
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
       intensities[y_.h_view(i)*w+x_.h_view(i)] = 255;
 #else
       intensities[y_[i]*w+x_[i]] = 255;
@@ -443,7 +447,7 @@ Subset::write_tiff(const std::string & file_name,
   // determine the extents of the subset and the offsets
   int_t max_x = 0;
   int_t max_y = 0;
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   int_t min_x = x_.h_view(0);
   int_t min_y = y_.h_view(0);
   for(int_t i=0;i<num_pixels_;++i){
@@ -468,7 +472,7 @@ Subset::write_tiff(const std::string & file_name,
   intensity_t * intensities = new intensity_t[w*h];
   for(int_t i=0;i<w*h;++i)
     intensities[i] = 0.0;
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   for(int_t i=0;i<num_pixels_;++i){
     if(!is_active_.h_view(i)){
       intensities[(y_.h_view(i)-min_y)*w+(x_.h_view(i)-min_x)] = 100; // color the inactive areas gray
@@ -497,7 +501,7 @@ Subset::write_tiff(const std::string & file_name,
 scalar_t
 Subset::mean(const Subset_View_Target target){
   scalar_t mean = 0.0;
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   if(target==REF_INTENSITIES){
     Intensity_Sum_Functor sum_func(ref_intensities_.d_view);
     Kokkos::parallel_reduce(num_pixels_,sum_func,mean);
@@ -507,10 +511,10 @@ Subset::mean(const Subset_View_Target target){
   }
 #else
   if(target==REF_INTENSITIES){
-    for(size_t i=0;i<num_pixels_;++i)
+    for(int_t i=0;i<num_pixels_;++i)
       mean += ref_intensities_[i];
   }else{
-    for(size_t i=0;i<num_pixels_;++i)
+    for(int_t i=0;i<num_pixels_;++i)
       mean += def_intensities_[i];
   }
 #endif
@@ -522,7 +526,7 @@ Subset::mean(const Subset_View_Target target,
   scalar_t & sum){
   scalar_t mean_ = mean(target);
   sum = 0.0;
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   if(target==REF_INTENSITIES){
     Intensity_Sum_Minus_Mean_Functor sum_minus_mean_func(ref_intensities_.d_view,mean_);
     Kokkos::parallel_reduce(num_pixels_,sum_minus_mean_func,sum);
@@ -531,11 +535,11 @@ Subset::mean(const Subset_View_Target target,
     Kokkos::parallel_reduce(num_pixels_,sum_minus_mean_func,sum);
   }
 #else
-  if(target==REF_INTENSTITIES){
-    for(size_t i=0;i<num_pixels_;++i)
+  if(target==REF_INTENSITIES){
+    for(int_t i=0;i<num_pixels_;++i)
       sum += (ref_intensities_[i]-mean_)*(ref_intensities_[i]-mean_);
   }else{
-    for(size_t i=0;i<num_pixels_;++i)
+    for(int_t i=0;i<num_pixels_;++i)
       sum += (def_intensities_[i]-mean_)*(def_intensities_[i]-mean_);
   }
 #endif
@@ -553,7 +557,7 @@ Subset::gamma(){
   TEUCHOS_TEST_FOR_EXCEPTION(mean_sum_ref==0.0||mean_sum_def==0.0,std::runtime_error," invalid mean sum (cannot be 0.0, ZNSSD is then undefined)" <<
     mean_sum_ref << " " << mean_sum_def);
   scalar_t gamma = 0.0;
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   ZNSSD_Gamma_Functor gamma_func(ref_intensities_.d_view,
      def_intensities_.d_view,
      is_active_.d_view,
@@ -563,9 +567,9 @@ Subset::gamma(){
   Kokkos::parallel_reduce(num_pixels_,gamma_func,gamma);
 #else
   scalar_t value = 0.0;
-  for(size_t i=0;i<num_pixels_;++i){
+  for(int_t i=0;i<num_pixels_;++i){
     if(is_active_[i]&!is_deactivated_this_step_[i]){
-      value = (def_intensities_[i]-mean_d_)/mean_sum_d_ - (ref_intensities_[i]-mean_r_)/mean_sum_r_;
+      value = (def_intensities_[i]-mean_def)/mean_sum_def - (ref_intensities_[i]-mean_ref)/mean_sum_ref;
       gamma += value*value;
     }
   }
@@ -576,7 +580,7 @@ Subset::gamma(){
 Teuchos::ArrayRCP<scalar_t>
 Subset::grad_x_array()const{
   // note: the Kokkos version returns a copy of the array, the serial version returns the array itself (providing access to modify)
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   Teuchos::ArrayRCP<scalar_t> array(num_pixels_,0.0);
   for(int_t i=0;i<num_pixels_;++i)
     array[i] = grad_x_.h_view.ptr_on_device()[i];
@@ -588,7 +592,7 @@ Subset::grad_x_array()const{
 
 Teuchos::ArrayRCP<scalar_t>
 Subset::grad_y_array()const{
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   Teuchos::ArrayRCP<scalar_t> array(num_pixels_,0.0);
   for(int_t i=0;i<num_pixels_;++i)
     array[i] = grad_y_.h_view.ptr_on_device()[i];
@@ -609,7 +613,7 @@ Subset::initialize(Teuchos::RCP<Image> image,
   const int_t offset_x = image->offset_x();
   const int_t offset_y = image->offset_y();
 
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   const Subset_Init_Functor init_functor(this,image,deformation,target);
   // assume if the map is null, use the no_map_tag in the parrel for call of the functor
   if(deformation==Teuchos::null){
@@ -653,7 +657,7 @@ Subset::initialize(Teuchos::RCP<Image> image,
    Teuchos::ArrayRCP<intensity_t> intensities_ = target==REF_INTENSITIES ? ref_intensities_ : def_intensities_;
    // assume if the map is null, use the no_map_tag in the parrel for call of the functor
    if(deformation==Teuchos::null){
-     for(size_t i=0;i<num_pixels_;++i)
+     for(int_t i=0;i<num_pixels_;++i)
        intensities_[i] = (*image)(x_[i]-offset_x,y_[i]-offset_y);
    }
    else{
@@ -675,7 +679,7 @@ Subset::initialize(Teuchos::RCP<Image> image,
      scalar_t dy2=0.0, dy3=0.0;
      scalar_t f0x=0.0, f0y=0.0;
      scalar_t intensity_value = 0.0;
-     for(size_t i=0;i<num_pixels_;++i){
+     for(int_t i=0;i<num_pixels_;++i){
        dx = (scalar_t)(x_[i]) - cx_;
        dy = (scalar_t)(y_[i]) - cy_;
        Dx = (1.0+ex)*dx + g*dy;
@@ -771,8 +775,8 @@ Subset::initialize(Teuchos::RCP<Image> image,
      if(image->has_gradients()){
        // copy over the image gradients:
        for(int_t px=0;px<num_pixels_;++px){
-         grad_x_[px] = image->grad_x()[y_[px]-offset_y,x_[px]-offset_x];
-         grad_y_[px] = image->grad_y()[y_[px]-offset_y,x_[px]-offset_x];
+         grad_x_[px] = image->grad_x(x_[px]-offset_x,y_[px]-offset_y);
+         grad_y_[px] = image->grad_y(x_[px]-offset_x,y_[px]-offset_y);
        }
        has_gradients_ = true;
      }
@@ -785,7 +789,7 @@ Subset::initialize(Teuchos::RCP<Image> image,
   }
 }
 
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
 // functor to populate the values of a subset
 // by using the mapping and bilinear interpolation
 KOKKOS_INLINE_FUNCTION

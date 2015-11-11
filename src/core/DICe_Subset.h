@@ -45,7 +45,9 @@
 #include <DICe.h>
 #include <DICe_Shape.h>
 #include <DICe_Image.h>
-#include <DICe_Kokkos.h>
+#if DICE_KOKKOS
+  #include <DICe_Kokkos.h>
+#endif
 
 #include <Teuchos_ArrayRCP.hpp>
 
@@ -118,7 +120,7 @@ public:
     return cy_;
   }
 
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   /// x coordinate view accessor
   pixel_coord_dual_view_1d x()const{
     return x_;
@@ -144,7 +146,7 @@ public:
   /// \param pixel_index the pixel id
   /// note there is no bounds checking on the index
   const int_t& x(const int_t pixel_index)const{
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
     return x_.h_view(pixel_index);
 #else
     return x_[pixel_index];
@@ -155,7 +157,7 @@ public:
   /// \param pixel_index the pixel id
   /// note there is no bounds checking on the index
   const int_t& y(const int_t pixel_index)const{
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
     return y_.h_view(pixel_index);
 #else
     return y_[pixel_index];
@@ -166,7 +168,7 @@ public:
   /// \param pixel_index the pixel id
   /// note there is no bounds checking
   const scalar_t& grad_x(const int_t pixel_index)const{
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
     return grad_x_.h_view(pixel_index);
 #else
     return grad_x_[pixel_index];
@@ -177,7 +179,7 @@ public:
   /// \param pixel_index the pixel id
   /// note there is no bounds checking
   const scalar_t& grad_y(const int_t pixel_index)const{
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
     return grad_y_.h_view(pixel_index);
 #else
     return grad_y_[pixel_index];
@@ -198,7 +200,7 @@ public:
   /// ref intensities accessor
   /// \param pixel_index the pixel id
   const intensity_t& ref_intensities(const int_t pixel_index)const{
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
     return ref_intensities_.h_view(pixel_index);
 #else
     return ref_intensities_[pixel_index];
@@ -208,7 +210,7 @@ public:
   /// ref intensities accessor
   /// \param pixel_index the pixel id
   const intensity_t& def_intensities(const int_t pixel_index)const{
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
     return def_intensities_.h_view(pixel_index);
 #else
     return def_intensities_[pixel_index];
@@ -257,7 +259,7 @@ public:
 
   /// returns true if this pixel is active
   bool is_active(const int_t pixel_index)const{
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
     return is_active_.h_view(pixel_index);
 #else
     return is_active_[pixel_index];
@@ -266,7 +268,7 @@ public:
 
   /// returns true if this pixel is deactivated for this particular frame
   bool is_deactivated_this_step(const int_t pixel_index)const{
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
     return is_deactivated_this_step_.h_view(pixel_index);
 #else
     return is_deactivated_this_step_[pixel_index];
@@ -316,7 +318,7 @@ public:
 private:
   /// number of pixels in the subset
   int_t num_pixels_;
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   /// pixel container
   intensity_dual_view_1d ref_intensities_;
   /// pixel container
@@ -371,7 +373,7 @@ private:
   bool is_conformal_;
 };
 
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
 /// mean value functor
 struct Intensity_Sum_Functor{
   /// pointer to the intensity values on the device

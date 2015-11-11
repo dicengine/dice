@@ -42,8 +42,9 @@
 #define DICE_IMAGE_H
 
 #include <DICe.h>
-#include <DICe_Kokkos.h>
-
+#if DICE_KOKKOS
+  #include <DICe_Kokkos.h>
+#endif
 #include <Teuchos_ParameterList.hpp>
 
 /*!
@@ -200,37 +201,31 @@ public:
   /// \param x image coordinate x
   /// \param y image coordinate y
   const intensity_t& operator()(const int_t x, const int_t y) const {
+#if DICE_KOKKOS
     return intensities_.h_view(y,x);
+#else
+    return intensities_[y*width_+x];
+#endif
   }
 
+  /// intensity accessors:
+  /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
+  /// y is row, x is column
+  /// \param i pixel index
+  const intensity_t& operator()(const int_t i) const {
+#if DICE_KOKKOS
+    const int_t y = i / width_;
+    const int_t x = i - y*width_;
+    return intensities_.h_view(y,x);
+#else
+    return intensities_[i];
+#endif
+  }
+
+#if DICE_KOKKOS
   /// returns the view of the intensity values
   intensity_dual_view_2d intensities()const{
     return intensities_;
-  }
-
-  /// returns a copy of the intenisity values as an array
-  Teuchos::ArrayRCP<intensity_t> intensity_array()const;
-
-  /// replaces the intensity values of the image
-  /// \param intensities the new intensity value array
-  void replace_intensities(Teuchos::ArrayRCP<intensity_t> intensities);
-
-  /// gradient accessors:
-  /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
-  /// y is row, x is column
-  /// \param x image coordinate x
-  /// \param y image coordinate y
-  const scalar_t& grad_x(const int_t x,
-    const int_t y) const {
-    return grad_x_.h_view(y,x);
-  }
-
-  /// gradient accessor for y
-  /// \param x image coordinate x
-  /// \param y image coordinate y
-  const scalar_t& grad_y(const int_t x,
-    const int_t y) const {
-    return grad_y_.h_view(y,x);
   }
 
   /// gradient x dual view accessor
@@ -247,13 +242,51 @@ public:
   scalar_dual_view_2d mask() const{
     return mask_;
   }
+#endif
+
+  /// returns a copy of the intenisity values as an array
+  Teuchos::ArrayRCP<intensity_t> intensity_array()const;
+
+  /// replaces the intensity values of the image
+  /// \param intensities the new intensity value array
+  void replace_intensities(Teuchos::ArrayRCP<intensity_t> intensities);
+
+  /// gradient accessors:
+  /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
+  /// y is row, x is column
+  /// \param x image coordinate x
+  /// \param y image coordinate y
+  const scalar_t& grad_x(const int_t x,
+    const int_t y) const {
+#if DICE_KOKKOS
+    return grad_x_.h_view(y,x);
+#else
+    return grad_x_[y*width_+x];
+#endif
+  }
+
+  /// gradient accessor for y
+  /// \param x image coordinate x
+  /// \param y image coordinate y
+  const scalar_t& grad_y(const int_t x,
+    const int_t y) const {
+#if DICE_KOKKOS
+    return grad_y_.h_view(y,x);
+#else
+    return grad_y_[y*width_+x];
+#endif
+  }
 
   /// mask value accessor
   /// \param x image coordinate x
   /// \param y image coordinate y
   const scalar_t& mask(const int_t x,
     const int_t y) const {
+#if DICE_KOKKOS
     return mask_.h_view(y,x);
+#else
+    return mask_[y*width_+x];
+#endif
   }
 
   /// create the image mask field, but don't apply it to the image
@@ -328,12 +361,10 @@ public:
     return gauss_filter_mask_size_;
   }
 
-
-
+#if DICE_KOKKOS
   //
   // Kokkos functors:
   //
-
   /// tag
   struct Init_Mask_Tag {};
   /// initialize a scalar dual view
@@ -361,6 +392,7 @@ public:
   /// Gauss filter the image
   KOKKOS_INLINE_FUNCTION
   void operator()(const Gauss_Tag &, const member_type team_member)const;
+#endif
 
 private:
   /// pixel container width_
@@ -373,10 +405,11 @@ private:
   /// offsets are used to convert to global image coordinates
   /// (the pixel container may be a subset of a larger image)
   int_t offset_y_;
-  /// pixel container
-  intensity_dual_view_2d intensities_;
   /// rcp to the intensity array (used to ensure it doesn't get deallocated)
   Teuchos::ArrayRCP<intensity_t> intensity_rcp_;
+#if DICE_KOKKOS
+  /// pixel container
+  intensity_dual_view_2d intensities_;
   /// device intensity work array
   intensity_device_view_2d intensities_temp_;
   /// mask coefficients
@@ -385,6 +418,18 @@ private:
   scalar_dual_view_2d grad_x_;
   /// image gradient y container
   scalar_dual_view_2d grad_y_;
+#else
+  /// pixel container
+  Teuchos::ArrayRCP<intensity_t> intensities_;
+  /// device intensity work array
+  Teuchos::ArrayRCP<intensity_t> intensities_temp_;
+  /// mask coefficients
+  Teuchos::ArrayRCP<scalar_t> mask_;
+  /// image gradient x container
+  Teuchos::ArrayRCP<scalar_t> grad_x_;
+  /// image gradient y container
+  Teuchos::ArrayRCP<scalar_t> grad_y_;
+#endif
   /// flag that the gradients have been computed
   bool has_gradients_;
   /// coeff used in computing gradients
@@ -401,6 +446,22 @@ private:
   std::string file_name_;
 };
 
+/// free function to apply a transformation to an image intensity array:
+/// \param intensities_from the array where the intensities are taken
+/// \param intensities_to the output array
+/// \param cx the centroid x coordiante
+/// \param cy the centroid y coordinate
+/// \param width the width of the array
+/// \param height the height of the array
+void apply_transform(Teuchos::ArrayRCP<intensity_t> & intensities_from,
+  Teuchos::ArrayRCP<intensity_t> & intensities_to,
+  const int_t cx,
+  const int_t cy,
+  const int_t width,
+  const int_t height,
+  Teuchos::RCP<const std::vector<scalar_t> > deformation);
+
+#if DICE_KOKKOS
 /// image mask initialization functor
 /// note, the number of pixels is the size of the x and y arrays, not the image
 struct Mask_Init_Functor{
@@ -453,7 +514,6 @@ struct Mask_Smoothing_Functor{
   void operator()(const int_t pixel_index)const;
 };
 
-
 /// image mask apply functor
 struct Mask_Apply_Functor{
   /// pointer to the intensity values
@@ -480,7 +540,6 @@ struct Mask_Apply_Functor{
     intensities_(y,x) = mask_(y,x)*intensities_(y,x);
   }
 };
-
 
 /// image transformation functor
 /// given parameters theta, u, and v, transform the given image
@@ -558,7 +617,7 @@ struct Transform_Functor{
   KOKKOS_INLINE_FUNCTION
   void operator()(const Rot_180_Tag&, const int_t pixel_index)const;
 };
-
+#endif
 }// End DICe Namespace
 
 /*! @} End of Doxygen namespace*/

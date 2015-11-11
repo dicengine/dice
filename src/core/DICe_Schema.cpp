@@ -552,7 +552,7 @@ Schema::initialize(const int_t num_pts,
   seed_exporter_ = Teuchos::rcp(new MultiField_Exporter(*all_map_,*seed_dist_map_));
   fields_ = Teuchos::rcp(new MultiField(all_map_,MAX_FIELD_NAME,true));
   fields_nm1_ = Teuchos::rcp(new MultiField(all_map_,MAX_FIELD_NAME,true));
-#ifdef DICE_MPI
+#if DICE_MPI
   dist_fields_ = Teuchos::rcp(new MultiField(dist_map_,MAX_FIELD_NAME,true));
   dist_fields_nm1_ = Teuchos::rcp(new MultiField(dist_map_,MAX_FIELD_NAME,true));
   seed_dist_fields_ = Teuchos::rcp(new MultiField(seed_dist_map_,MAX_FIELD_NAME,true));

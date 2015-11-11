@@ -48,7 +48,7 @@
 
 #include <boost/timer.hpp>
 
-#ifdef DICE_MPI
+#if DICE_MPI
 #  include <mpi.h>
 #endif
 
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
   const int_t dim = 2;         // Assumes 2D images
   int_t proc_size = 1;
   int_t proc_rank = 0;
-#ifdef DICE_MPI
+#if DICE_MPI
   MPI_Comm_size(MPI_COMM_WORLD,&proc_size);
   MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
 #endif

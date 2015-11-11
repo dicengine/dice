@@ -78,7 +78,7 @@ MultiField_Comm{
 public:
   /// Default constructor with no arguments
   MultiField_Comm(){
-#ifdef DICE_MPI
+#if DICE_MPI
     int mpi_is_initialized = 0;
     MPI_Initialized(&mpi_is_initialized);
     if(mpi_is_initialized)

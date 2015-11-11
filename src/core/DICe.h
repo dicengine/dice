@@ -72,7 +72,7 @@ namespace DICe{
 
 /// basic types
 
-#ifdef DICE_USE_DOUBLE
+#if DICE_USE_DOUBLE
   /// image intensity type
   typedef double intensity_t;
   /// generic scalar type

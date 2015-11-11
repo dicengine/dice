@@ -168,14 +168,22 @@ public:
 
   /// \brief Returns the current local distributed value of the field specified. These values are stored in the schema
   /// \param name String name of the field (must match a valid enum in DICe.h)
+#if DICE_TPETRA
   const scalar_t& local_field_value(const Field_Name name)const{
+#else // Epetra does not have a scalar type so have to hard code double here
+    const double& local_field_value(const Field_Name name)const{
+#endif
     return schema_->local_field_value(correlation_point_global_id_,name);}
 
   /// \brief Returns the previous frame's value of the local distributed field specified. These values are stored in the schema.
   ///
   /// The solution at frame n - 1 is only stored for projection_method==VELCOITY_BASED
   /// \param name String name of the field (must match a valid enum in DICe.h)
-  const scalar_t& local_field_value_nm1(const Field_Name name)const{
+#if DICE_TPETRA
+    const scalar_t& local_field_value_nm1(const Field_Name name)const{
+#else // Epetra does not have a scalar type so have to hard code double here
+    const double& local_field_value_nm1(const Field_Name name)const{
+#endif
     return schema_->local_field_value_nm1(correlation_point_global_id_,name);}
 
   /// Returns a pointer to the subset

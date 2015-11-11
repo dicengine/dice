@@ -45,7 +45,7 @@
 #include <DICe.h>
 
 #include <Epetra_ConfigDefs.h>
-#ifdef DICE_MPI
+#if DICE_MPI
 #  include <mpi.h>
 #  include <Epetra_MpiComm.h>
 #  include <Epetra_SerialComm.h>
@@ -70,7 +70,7 @@ public:
   /// Default constructor with no arguments
   MultiField_Comm(){
 
-#ifdef DICE_MPI
+#if DICE_MPI
   int mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
   if(mpi_is_initialized)
@@ -249,7 +249,8 @@ public:
   /// \brief value accessor
   /// \param global_id the global id of the intended element
   /// \param field_index the index of the field to access
-  scalar_t & global_value(const int_t global_id,
+  /// Warning: Epetra does not have a scalar type, its hard coded as double
+  double & global_value(const int_t global_id,
     const int_t field_index=0){
     return (*epetra_mv_)[field_index][epetra_mv_->Map().LID(global_id)];
   }
@@ -257,7 +258,8 @@ public:
   /// \brief value accessor
   /// \param local_id the local id of the intended element
   /// \param field_index the index of the field to access
-  scalar_t & local_value(const int_t local_id,
+  /// Warning: Epetra does not have a scalar type, its hard coded as double
+  double & local_value(const int_t local_id,
     const int_t field_index=0){
     return (*epetra_mv_)[field_index][local_id];
   }
@@ -283,7 +285,7 @@ private:
   /// Pointer to the underlying data type
   Teuchos::RCP<Epetra_MultiVector> epetra_mv_;
   /// Pointer to the underlying map
-  Teuchos::RCP<MultiField_Map<Size> > map_;
+  Teuchos::RCP<MultiField_Map> map_;
 };
 
 }// End DICe Namespace

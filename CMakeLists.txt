@@ -78,7 +78,7 @@ ExternalProject_Add(DICe_utils
 
 # base data type:
 if(DICE_USE_DOUBLE)
-  ADD_DEFINITIONS(-DDICE_USE_DOUBLE)
+  ADD_DEFINITIONS(-DDICE_USE_DOUBLE=1)
   MESSAGE(STATUS "Image intensity and scalar type will be: DOUBLE")
 else()
   MESSAGE(STATUS "Image intensity and scalar type will be: FLOAT (default)")
@@ -89,7 +89,7 @@ LIST(FIND Trilinos_TPL_LIST MPI MPI_List_ID)
 IF (MPI_List_ID GREATER -1)
   MESSAGE(STATUS "Checking if MPI is enabled in Trilinos: MPI ENABLED")
   SET(DICE_MPI TRUE)
-  ADD_DEFINITIONS(-DDICE_MPI)
+  ADD_DEFINITIONS(-DDICE_MPI=1)
   MESSAGE(STATUS "Using DICE_MPI_EXEC:${DICE_MPI_EXEC}")
 ELSE()
   MESSAGE(STATUS "Checking if MPI is enabled in Trilinos: MPI NOT ENABLED")
@@ -134,7 +134,7 @@ IF(DICE_ENABLE_MANYCORE)
     kokkoscore
     tpetra
   )
-  ADD_DEFINITIONS(-DDICE_KOKKOS -DDICE_TPETRA)
+  ADD_DEFINITIONS(-DDICE_KOKKOS=1 -DDICE_TPETRA=1)
 ELSE()
   MESSAGE(STATUS "MANYCORE disabled")
   SET(DICE_LIBRARIES
@@ -167,7 +167,7 @@ else (Boost_FOUND)
 endif (Boost_FOUND)
 
 IF(DICE_DISABLE_BOOST_FILESYSTEM)
-  ADD_DEFINITIONS(-DDICE_DISABLE_BOOST_FILESYSTEM)
+  ADD_DEFINITIONS(-DDICE_DISABLE_BOOST_FILESYSTEM=1)
   MESSAGE(STATUS "BOOST Filesystem has been disabled, output will be written to current execution directory")
 ENDIF()
 
@@ -175,7 +175,7 @@ ENDIF()
 # if debug messages are turned on:
 IF(DICE_DEBUG_MSG)
   MESSAGE(STATUS "Debugging messages are ON")
-  ADD_DEFINITIONS(-DDICE_DEBUG_MSG)
+  ADD_DEFINITIONS(-DDICE_DEBUG_MSG=1)
 ELSE(DICE_DEBUG_MSG)
   MESSAGE(STATUS "Debugging messages are OFF")
 ENDIF(DICE_DEBUG_MSG)

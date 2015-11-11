@@ -43,10 +43,10 @@
 
 #include <iostream>
 
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   #include <Kokkos_Core.hpp>
 #endif
-#ifdef DICE_MPI
+#if DICE_MPI
   #include <mpi.h>
 #endif
 
@@ -59,7 +59,7 @@ void initialize(int argc,
   char *argv[]){
   // initialize mpi
   int proc_rank=0;
-#ifdef DICE_MPI
+#if DICE_MPI
   MPI_Init (&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
   if(proc_rank==0) DEBUG_MSG("Code was compiled with MPI enabled");
@@ -67,7 +67,7 @@ void initialize(int argc,
   DEBUG_MSG("Code was compiled with MPI disabled");
 #endif
   // initialize kokkos
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   Kokkos::initialize(argc, argv);
   DEBUG_MSG("Kokkos has been initialized");
 #endif
@@ -84,11 +84,11 @@ void initialize(int argc,
 /// Finalize function (mpi and kokkos if enabled):
 void finalize(){
   // finalize mpi
-#ifdef DICE_MPI
+#if DICE_MPI
   (void) MPI_Finalize ();
 #endif
   // finalize kokkos
-#ifdef DICE_KOKKOS
+#if DICE_KOKKOS
   Kokkos::finalize();
 #endif
 }
