@@ -32,8 +32,8 @@ SET(DICE_HEADERS
 IF(DICE_ENABLE_MANYCORE)
   SET(DICE_SOURCES
     ${DICE_SOURCES}
-    DICe_Kokkos.cpp
     DICe_SubsetKokkos.cpp
+    DICe_ImageKokkos.cpp
   )
   SET(DICE_HEADERS
     ${DICE_HEADERS}
@@ -45,9 +45,12 @@ ELSE()
   SET(DICE_SOURCES
     ${DICE_SOURCES}
     DICe_SubsetSerial.cpp
+    DICe_ImageSerial.cpp
+    DICe_ImageUtils.cpp
   )
   SET(DICE_HEADERS
     ${DICE_HEADERS}
+    DICe_ImageUtils.h
     DICe_MultiFieldEpetra.h
   )
 ENDIF()

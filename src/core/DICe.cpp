@@ -44,6 +44,7 @@
 #include <iostream>
 
 #if DICE_KOKKOS
+  #include <DICe_Kokkos.h>
   #include <Kokkos_Core.hpp>
 #endif
 #if DICE_MPI
@@ -90,6 +91,16 @@ void finalize(){
   // finalize kokkos
 #if DICE_KOKKOS
   Kokkos::finalize();
+#endif
+}
+
+/// returns true if the data layout is LayoutRight
+bool default_is_layout_right(){
+#if DICE_KOKKOS
+  return Kokkos::Impl::is_same< intensity_dual_view_2d::array_layout ,
+      Kokkos::LayoutRight >::value;
+#else
+  return true; // in all other cases beside CUDA (like serial , it's row-major or layout right)
 #endif
 }
 

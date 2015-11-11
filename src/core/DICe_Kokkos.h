@@ -99,11 +99,6 @@ typedef Kokkos::DualView<int_t *>  pixel_coord_dual_view_1d;
 /// member type
 typedef typename Kokkos::TeamPolicy<device_space>::member_type member_type;
 
-/// returns true if the data layout is LayoutRight
-bool default_is_layout_right();
-
-/// returns true if the data layout is LayoutRight
-bool default_is_layout_left();
 
 } // end DICe namespace
 

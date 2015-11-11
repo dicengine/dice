@@ -38,21 +38,36 @@
 //
 // ************************************************************************
 // @HEADER
+#ifndef DICE_IMAGEUTILS_H
+#define DICE_IMAGEUTILS_H
 
-#include <DICe_Kokkos.h>
+#include <DICe.h>
+#include <Teuchos_ParameterList.hpp>
 
+/*!
+ *  \namespace DICe
+ *  @{
+ */
+/// generic DICe classes and functions
 namespace DICe {
 
-/// returns true if the data layout is LayoutRight
-bool default_is_layout_right(){
-  return Kokkos::Impl::is_same< intensity_dual_view_2d::array_layout ,
-      Kokkos::LayoutRight >::value;
-}
-
-/// returns true if the data layout is LayoutRight
-bool default_is_layout_left(){
-  return Kokkos::Impl::is_same< intensity_dual_view_2d::array_layout ,
-      Kokkos::LayoutLeft >::value;
-}
+/// free function to apply a transformation to an image intensity array:
+/// \param intensities_from the array where the intensities are taken
+/// \param intensities_to the output array
+/// \param cx the centroid x coordiante
+/// \param cy the centroid y coordinate
+/// \param width the width of the array
+/// \param height the height of the array
+void apply_transform(Teuchos::ArrayRCP<intensity_t> & intensities_from,
+  Teuchos::ArrayRCP<intensity_t> & intensities_to,
+  const int_t cx,
+  const int_t cy,
+  const int_t width,
+  const int_t height,
+  Teuchos::RCP<const std::vector<scalar_t> > deformation);
 
 }// End DICe Namespace
+
+/*! @} End of Doxygen namespace*/
+
+#endif

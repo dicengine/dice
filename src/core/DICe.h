@@ -96,6 +96,9 @@ void initialize(int argc,
 /// Finalize function (mpi and kokkos if enabled):
 void finalize();
 
+/// returns true if the data layout is LayoutRight
+bool default_is_layout_right();
+
 /// parameters (all lower case)
 
 /// String parameter names using globals to prevent misspelling in the parameter lists:

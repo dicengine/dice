@@ -73,6 +73,7 @@ void read_tiff_image(const char * file_name,
 /// \param width width of the portion of the image to read (must be smaller than the global image width)
 /// \param height height of the portion of the image to read (must be smaller than the global image height)
 /// \param intensities [out] populated with the image intensities
+/// \param is_layout_right [optional] memory layout is LayoutRight (row-major)
 DICE_LIB_DLL_EXPORT
 void read_tiff_image(const char * file_name,
   int_t offset_x,
@@ -91,6 +92,7 @@ void read_tiff_image(const char * file_name,
 /// \param width the width of the image to write
 /// \param height the height of the image
 /// \param intensities assumed to be an array of size width x height
+/// \param is_layout_right [optional] memory layout is LayoutRight (row-major)
 DICE_LIB_DLL_EXPORT
 void write_tiff_image(const char * file_name,
   const int_t width,

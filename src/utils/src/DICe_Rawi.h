@@ -65,6 +65,7 @@ void read_rawi_image_dimensions(const char * file_name,
 /// Read an image into the host memory
 /// \param file_name the name of the .rawi file
 /// \param intensities [out] populated with the pixel intensity values
+/// \param is_layout_right [optional] memory layout is LayoutRight (row-major)
 DICE_LIB_DLL_EXPORT
 void read_rawi_image(const char * file_name,
   intensity_t * intensities,
@@ -81,6 +82,7 @@ void read_rawi_image(const char * file_name,
 /// \param width the width of the image to write
 /// \param height the height of the image
 /// \param intensities assumed to be an array of size width x height
+/// \param is_layout_right [optional] memory layout is LayoutRight (row-major)
 DICE_LIB_DLL_EXPORT
 void write_rawi_image(const char * file_name,
   const int_t width,
