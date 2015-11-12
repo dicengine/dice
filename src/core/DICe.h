@@ -206,9 +206,17 @@ const char* const objective_regularization_factor = "objective_regularization_fa
 /// String parameter name
 const char* const pixel_integration_order = "pixel_integration_order";
 /// String parameter name
+const char* const rotate_ref_image_90 = "rotate_ref_image_90";
+/// String parameter name
+const char* const rotate_def_image_90 = "rotate_def_image_90";
+/// String parameter name
 const char* const rotate_ref_image_180 = "rotate_ref_image_180";
 /// String parameter name
 const char* const rotate_def_image_180 = "rotate_def_image_180";
+/// String parameter name
+const char* const rotate_ref_image_270 = "rotate_ref_image_270";
+/// String parameter name
+const char* const rotate_def_image_270 = "rotate_def_image_270";
 
 /// enums:
 enum Subset_View_Target{
@@ -470,6 +478,14 @@ enum Status_Flag{
   NO_SUCH_STATUS_FLAG
 };
 
+/// Specific values of rotation used for transformation
+enum Rotation_Value{
+  ZERO_DEGREES=0,
+  NINTY_DEGREES,
+  ONE_HUNDRED_EIGHTY_DEGREES,
+  TWO_HUNDRED_SEVENTY_DEGREES
+};
+
 /// The type of correlation parameter, used for creating template input files
 enum Correlation_Parameter_Type{
   STRING_PARAM=0,
@@ -516,6 +532,16 @@ struct Correlation_Parameter {
 };
 
 /// Correlation parameter and properties
+const Correlation_Parameter rotate_ref_image_90_param(rotate_ref_image_90,
+  BOOL_PARAM,
+  true,
+  "True if the reference image should be rotated 90 degrees.");
+/// Correlation parameter and properties
+const Correlation_Parameter rotate_def_image_90_param(rotate_def_image_90,
+  BOOL_PARAM,
+  true,
+  "True if deformed image(s) should be rotated 90 degrees.");
+/// Correlation parameter and properties
 const Correlation_Parameter rotate_ref_image_180_param(rotate_ref_image_180,
   BOOL_PARAM,
   true,
@@ -525,6 +551,16 @@ const Correlation_Parameter rotate_def_image_180_param(rotate_def_image_180,
   BOOL_PARAM,
   true,
   "True if deformed image(s) should be rotated 180 degrees.");
+/// Correlation parameter and properties
+const Correlation_Parameter rotate_ref_image_270_param(rotate_ref_image_270,
+  BOOL_PARAM,
+  true,
+  "True if the reference image should be rotated 270 degrees.");
+/// Correlation parameter and properties
+const Correlation_Parameter rotate_def_image_270_param(rotate_def_image_270,
+  BOOL_PARAM,
+  true,
+  "True if deformed image(s) should be rotated 270 degrees.");
 /// Correlation parameter and properties
 const Correlation_Parameter image_grad_use_hierarchical_parallelism_param(image_grad_use_hierarchical_parallelism,
   BOOL_PARAM,
@@ -779,7 +815,7 @@ const Correlation_Parameter compute_image_gradients_param(compute_image_gradient
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 51;
+const int_t num_valid_correlation_params = 55;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -830,8 +866,12 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   gauss_filter_use_hierarchical_parallelism_param,
   gauss_filter_team_size_param,
   gauss_filter_mask_size_param,
+  rotate_ref_image_90_param,
+  rotate_def_image_90_param,
   rotate_ref_image_180_param,
   rotate_def_image_180_param,
+  rotate_ref_image_270_param,
+  rotate_def_image_270_param,
   objective_regularization_factor_param
 };
 

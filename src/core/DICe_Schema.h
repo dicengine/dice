@@ -958,9 +958,9 @@ private:
   /// Pointer to the parameters which which this schema was initialized
   Teuchos::RCP<Teuchos::ParameterList> init_params_;
   /// Rotate the reference image by 180 degrees
-  bool rotate_ref_image_180_;
+  Rotation_Value ref_image_rotation_;
   /// Rotate the defomed image by 180 degrees
-  bool rotate_def_image_180_;
+  Rotation_Value def_image_rotation_;
   /// Phase correlation initial guess values (only computed if USE_PHASE_CORRELATION is set as the initialization method)
   scalar_t phase_cor_u_x_;
   /// Phase correlation intial guess

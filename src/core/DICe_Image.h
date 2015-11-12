@@ -271,9 +271,16 @@ public:
   /// \param cx centroid of mapping in the current image (used when applying rotation)
   /// \param cy centroid of mapping in the current image (used when applying rotation)
   Teuchos::RCP<Image> apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformation,
-    const bool apply_in_place=false,
-    int_t cx=-1,
-    int_t cy=-1);
+    const int_t cx,
+    const int_t cy,
+    const bool apply_in_place=false);
+
+  /// apply a rotation to this image to create another image
+  /// in this case, there are only three options 90, 180, and 270 degree rotations
+  /// \param rotation_value enum that defines the rotation
+  /// \param params parameters to apply to the new image
+  Teuchos::RCP<Image> apply_rotation(const Rotation_Value rotation,
+      const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// compute the image gradients
   void compute_gradients(const bool use_hierarchical_parallelism=false,

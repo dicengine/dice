@@ -249,7 +249,7 @@ int main(int argc, char *argv[]) {
   (*def)[DISPLACEMENT_X] = u;
   (*def)[DISPLACEMENT_Y] = v;
   (*def)[ROTATION_Z] = theta;
-  Teuchos::RCP<Image> trans_baboon = baboon.apply_transformation(def,false,cx,cy);
+  Teuchos::RCP<Image> trans_baboon = baboon.apply_transformation(def,cx,cy,false);
   //trans_baboon->write_rawi("baboon_trans.rawi");
   //trans_baboon->write_tiff("baboon_trans.tif");
   Teuchos::RCP<Image> trans_baboon_exact = Teuchos::rcp(new Image("./images/baboon_trans.rawi"));
@@ -262,17 +262,39 @@ int main(int argc, char *argv[]) {
   }
 
   *outStream << "testing 180 rotation in place" << std::endl;
-  Teuchos::RCP<std::vector<scalar_t> > in_place_def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-  (*in_place_def)[ROTATION_Z] = DICE_PI;
-  baboon.apply_transformation(in_place_def,true);
+  Teuchos::RCP<Image> baboon_180 = baboon.apply_rotation(ONE_HUNDRED_EIGHTY_DEGREES);
   //baboon.write_rawi("baboon_180.rawi");
-  Teuchos::RCP<Image> baboon_180 = Teuchos::rcp(new Image("./images/baboon_180.rawi"));
-  const scalar_t diff_180 = baboon.diff(baboon_180);
+  Teuchos::RCP<Image> baboon_180_exact = Teuchos::rcp(new Image("./images/baboon_180.rawi"));
+  const scalar_t diff_180 = baboon_180->diff(baboon_180_exact);
   if(diff_180 > mask_tol){
     *outStream << "Error, the 180 degree transformed image does not have the right intensities." << std::endl;
     errorFlag++;
   }
   *outStream << "the transformation method for an image has been checked" << std::endl;
+
+  // test 90 and 270 degree rotation
+
+  *outStream << "testing 90 and 270 degree rotations" << std::endl;
+  Teuchos::RCP<Image> img_0_deg = Teuchos::rcp(new Image("./images/ImageB.tif"));
+  Teuchos::RCP<Image> img_90_deg = img_0_deg->apply_rotation(NINTY_DEGREES);
+  //img_90_deg->write_tiff("img_90.tif");
+  //img_90_deg->write_rawi("img_90.rawi");
+  Teuchos::RCP<Image> img_270_deg = img_0_deg->apply_rotation(TWO_HUNDRED_SEVENTY_DEGREES);
+  //img_270_deg->write_tiff("img_270.tif");
+  //img_270_deg->write_rawi("img_270.rawi");
+  Teuchos::RCP<Image> img_90_exact = Teuchos::rcp(new Image("./images/img_90.rawi"));
+  const scalar_t diff_90 = img_90_deg->diff(img_90_exact);
+  if(diff_90 > 1.0E-4){
+    *outStream << "Error, the 90 degree transformed image does not have the right intensities." << std::endl;
+    errorFlag++;
+  }
+  Teuchos::RCP<Image> img_270_exact = Teuchos::rcp(new Image("./images/img_270.rawi"));
+  const scalar_t diff_270 = img_270_deg->diff(img_270_exact);
+  if(diff_270 > 1.0E-4){
+    *outStream << "Error, the 270 degree transformed image does not have the right intensities." << std::endl;
+    errorFlag++;
+  }
+  *outStream << "rotations have been tested" << std::endl;
 
   // test filtering an image:
 

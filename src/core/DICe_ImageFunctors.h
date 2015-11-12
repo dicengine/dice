@@ -194,13 +194,6 @@ struct Transform_Functor{
   /// operator
   KOKKOS_INLINE_FUNCTION
   void operator()(const int_t pixel_index)const;
-  /// Tag
-  struct Rot_180_Tag {};
-  /// operator
-  /// if the requested transformation is rotation by 180 degrees,
-  /// its faster to swap the x and y indices
-  KOKKOS_INLINE_FUNCTION
-  void operator()(const Rot_180_Tag&, const int_t pixel_index)const;
 };
 
 }// End DICe Namespace

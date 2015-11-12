@@ -400,48 +400,19 @@ Image::create_mask(const Conformal_Area_Def & area_def,
 
 Teuchos::RCP<Image>
 Image::apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformation,
-  const bool apply_in_place,
-  int_t cx,
-  int_t cy){
-  // detect if this is a simple 180 degree rotation
-  const scalar_t tol = 0.01;
-  const bool is_180 = cx==-1
-      &&cy==-1
-      &&std::abs((*deformation)[DISPLACEMENT_X]) < tol
-      &&std::abs((*deformation)[DISPLACEMENT_Y]) < tol
-      &&std::abs((*deformation)[ROTATION_Z] - DICE_PI) < tol
-      &&std::abs((*deformation)[NORMAL_STRAIN_X]) < tol
-      &&std::abs((*deformation)[NORMAL_STRAIN_Y]) < tol
-      &&std::abs((*deformation)[SHEAR_STRAIN_XY]) < tol;
-  if(cx==-1) cx = width_/2;
-  if(cy==-1) cy = height_/2;
+  const int_t cx,
+  const int_t cy,
+  const bool apply_in_place){
 
   if(apply_in_place){
     for(int_t i=0;i<num_pixels();++i)
       intensities_temp_[i] = intensities_[i];
-    if(is_180){
-      for(int_t y=0;y<height_;++y){
-        for(int_t x=0;x<width_;++x){
-          intensities_[y*width_+x] = intensities_temp_[(height_-1-y)*width_+width_-1-x];
-        }
-      }
-    }else{
-      apply_transform(intensities_temp_,intensities_,cx,cy,width_,height_,deformation);
-    }
+    apply_transform(intensities_temp_,intensities_,cx,cy,width_,height_,deformation);
     return Teuchos::null;
   }
   else{
     Teuchos::ArrayRCP<intensity_t> result_intensities(width_*height_,0.0);
-    if(is_180){
-      for(int_t y=0;y<height_;++y){
-        for(int_t x=0;x<width_;++x){
-          result_intensities[y*width_+x] = intensities_[(height_-1-y)*width_+width_-1-x];
-        }
-      }
-    }
-    else{
-      apply_transform(intensities_,result_intensities,cx,cy,width_,height_,deformation);
-    }
+    apply_transform(intensities_,result_intensities,cx,cy,width_,height_,deformation);
     Teuchos::RCP<Image> result = Teuchos::rcp(new Image(width_,height_,result_intensities));
     return result;
   }

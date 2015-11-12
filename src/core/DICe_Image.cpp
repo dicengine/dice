@@ -121,4 +121,44 @@ Image::write_rawi(const std::string & file_name){
   utils::write_rawi_image(file_name.c_str(),width_,height_,intensity_array().getRawPtr(),default_is_layout_right());
 }
 
+Teuchos::RCP<Image>
+Image::apply_rotation(const Rotation_Value rotation,
+  const Teuchos::RCP<Teuchos::ParameterList> & params){
+  // don't re-filter images that have already been filtered:
+  if(params!=Teuchos::null){
+    params->set(DICe::gauss_filter_images,false);
+  }
+  Teuchos::RCP<Image> result;
+  Teuchos::ArrayRCP<intensity_t> new_intensities(width_*height_,0.0);
+  if(rotation==NINTY_DEGREES){
+    for(int_t y=0;y<height_;++y){
+      for(int_t x=0;x<width_;++x){
+        new_intensities[(width_-1-x)*height_+y] = (*this)(x,y);
+      }
+    }
+    // note the height and width are swapped in the constructor call on purpose due to the transformation
+    result = Teuchos::rcp(new Image(height_,width_,new_intensities,params));
+  }else if(rotation==ONE_HUNDRED_EIGHTY_DEGREES){
+    for(int_t y=0;y<height_;++y){
+      for(int_t x=0;x<width_;++x){
+        new_intensities[y*width_+x] = (*this)(width_-1-x,height_-1-y);
+      }
+    }
+    result = Teuchos::rcp(new Image(width_,height_,new_intensities,params));
+  }else if(rotation==TWO_HUNDRED_SEVENTY_DEGREES){
+    for(int_t y=0;y<height_;++y){
+      for(int_t x=0;x<width_;++x){
+        new_intensities[x*height_+(height_-1-y)] = (*this)(x,y);
+      }
+    }
+    // note the height and width are swapped in the constructor call on purpose due to the transformation
+    result = Teuchos::rcp(new Image(height_,width_,new_intensities,params));
+  }else{
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"Error, unknown rotation requested.");
+  }
+  return result;
+}
+
+
+
 }// End DICe Namespace

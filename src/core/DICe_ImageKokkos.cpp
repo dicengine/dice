@@ -405,21 +405,9 @@ Image::create_mask(const Conformal_Area_Def & area_def,
 
 Teuchos::RCP<Image>
 Image::apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformation,
-  const bool apply_in_place,
-  int_t cx,
-  int_t cy){
-  // detect if this is a simple 180 degree rotation
-  const scalar_t tol = 0.01;
-  const bool is_180 = cx==-1
-      &&cy==-1
-      &&std::abs((*deformation)[DISPLACEMENT_X]) < tol
-      &&std::abs((*deformation)[DISPLACEMENT_Y]) < tol
-      &&std::abs((*deformation)[ROTATION_Z] - DICE_PI) < tol
-      &&std::abs((*deformation)[NORMAL_STRAIN_X]) < tol
-      &&std::abs((*deformation)[NORMAL_STRAIN_Y]) < tol
-      &&std::abs((*deformation)[SHEAR_STRAIN_XY]) < tol;
-  if(cx==-1) cx = width_/2;
-  if(cy==-1) cy = height_/2;
+  const int_t cx,
+  const int_t cy,
+  const bool apply_in_place){
 
   if(apply_in_place){
     // deep copy the intesity array to the device temporary container
@@ -431,11 +419,7 @@ Image::apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformati
       cx,
       cy,
       deformation);
-    if(is_180){
-      Kokkos::parallel_for(Kokkos::RangePolicy<Transform_Functor::Rot_180_Tag>(0,width_*height_),trans_functor);
-    }else{
-      Kokkos::parallel_for(width_*height_,trans_functor);
-    }
+    Kokkos::parallel_for(width_*height_,trans_functor);
     // sync up the new image
     intensities_.modify<device_space>();
     intensities_.sync<host_space>();
@@ -450,12 +434,7 @@ Image::apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformati
       cx,
       cy,
       deformation);
-    if(is_180){
-      Kokkos::parallel_for(Kokkos::RangePolicy<Transform_Functor::Rot_180_Tag>(0,width_*height_),trans_functor);
-    }
-    else{
-      Kokkos::parallel_for(width_*height_,trans_functor);
-    }
+    Kokkos::parallel_for(width_*height_,trans_functor);
     // sync up the new image
     result->intensities().modify<device_space>();
     result->intensities().sync<host_space>();
@@ -618,16 +597,6 @@ Transform_Functor::operator()(const int_t pixel_index) const{
   else{
     intensities_to_(y,x) = 0;
   }
-}
-
-KOKKOS_INLINE_FUNCTION
-void
-Transform_Functor::operator()(const Rot_180_Tag&, const int_t pixel_index) const{
-  // determine the x and y coordinates of this pixel
-  // after taking out the displacements
-  const int_t y = pixel_index / width_;
-  const int_t x = pixel_index - y*width_;
-  intensities_to_(y,x) = intensities_from_(height_-1-y,width_-1-x);
 }
 
 KOKKOS_INLINE_FUNCTION
