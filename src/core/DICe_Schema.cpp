@@ -82,11 +82,11 @@ Schema::Schema(const std::string & refName,
   imgParams->set(DICe::compute_image_gradients,compute_def_gradients_);
   def_img_ = Teuchos::rcp( new Image(defName.c_str(),imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
-    ref_img_->apply_rotation(ref_image_rotation_,imgParams);
-    prev_img_->apply_rotation(ref_image_rotation_,imgParams);
+    ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
+    prev_img_ = prev_img_->apply_rotation(ref_image_rotation_,imgParams);
   }
   if(def_image_rotation_!=ZERO_DEGREES){
-    def_img_->apply_rotation(def_image_rotation_,imgParams);
+    def_img_ = def_img_->apply_rotation(def_image_rotation_,imgParams);
   }
   const int_t width = ref_img_->width();
   const int_t height = ref_img_->height();
@@ -115,11 +115,11 @@ Schema::Schema(const int_t img_width,
   imgParams->set(DICe::compute_image_gradients,compute_def_gradients_);
   def_img_ = Teuchos::rcp( new Image(img_width,img_height,defRCP,imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
-    ref_img_->apply_rotation(ref_image_rotation_,imgParams);
-    prev_img_->apply_rotation(ref_image_rotation_,imgParams);
+    ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
+    prev_img_ = prev_img_->apply_rotation(ref_image_rotation_,imgParams);
   }
   if(def_image_rotation_!=ZERO_DEGREES){
-    def_img_->apply_rotation(def_image_rotation_,imgParams);
+    def_img_ = def_img_->apply_rotation(def_image_rotation_,imgParams);
   }
   // require that the images are the same size
   assert(!(ref_img_->width()<=0||ref_img_->width()!=def_img_->width()) && "  DICe ERROR: Images must be the same width and nonzero.");
@@ -139,11 +139,11 @@ Schema::Schema(Teuchos::RCP<Image> ref_img,
   def_img_ = def_img;
   prev_img_ = ref_img;
   if(ref_image_rotation_!=ZERO_DEGREES){
-    ref_img_->apply_rotation(ref_image_rotation_);
-    prev_img_->apply_rotation(ref_image_rotation_);
+    ref_img_ = ref_img_->apply_rotation(ref_image_rotation_);
+    prev_img_ = prev_img_->apply_rotation(ref_image_rotation_);
   }
   if(def_image_rotation_!=ZERO_DEGREES){
-    def_img_->apply_rotation(def_image_rotation_);
+    def_img_ = def_img_->apply_rotation(def_image_rotation_);
   }
   if(compute_ref_gradients_&&!ref_img_->has_gradients()){
     ref_img_->compute_gradients();
@@ -160,7 +160,7 @@ Schema::set_def_image(const std::string & defName){
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   def_img_ = Teuchos::rcp( new Image(defName.c_str(),imgParams));
   if(def_image_rotation_!=ZERO_DEGREES){
-    def_img_->apply_rotation(def_image_rotation_);
+    def_img_ = def_img_->apply_rotation(def_image_rotation_);
   }
 }
 
@@ -169,7 +169,7 @@ Schema::set_def_image(Teuchos::RCP<Image> img){
   DEBUG_MSG("Schema: Resetting the deformed image");
   def_img_ = img;
   if(def_image_rotation_!=ZERO_DEGREES){
-    def_img_->apply_rotation(def_image_rotation_);
+    def_img_ = def_img_->apply_rotation(def_image_rotation_);
   }
 }
 
@@ -182,7 +182,7 @@ Schema::set_def_image(const int_t img_width,
   assert(img_height>0);
   def_img_ = Teuchos::rcp( new Image(img_width,img_height,defRCP));
   if(def_image_rotation_!=ZERO_DEGREES){
-    def_img_->apply_rotation(def_image_rotation_);
+    def_img_ = def_img_->apply_rotation(def_image_rotation_);
   }
 }
 
@@ -193,7 +193,7 @@ Schema::set_ref_image(const std::string & refName){
   imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
   ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
-    ref_img_->apply_rotation(ref_image_rotation_,imgParams);
+    ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
   }
 }
 
@@ -208,7 +208,7 @@ Schema::set_ref_image(const int_t img_width,
   imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
   ref_img_ = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
-    ref_img_->apply_rotation(ref_image_rotation_,imgParams);
+    ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
   }
 }
 
