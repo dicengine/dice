@@ -68,12 +68,13 @@ int main(int argc, char *argv[]) {
     std::string help = argv[1];
     if(help=="-h"){
       std::cout << " DICe_CineToTiff (exports cine images to tiffs) " << std::endl;
-      std::cout << " Syntax: DICe_CineToTiff <cine_file_name> <start_index (zero based)> <end_index (zero based)> <output_prefix> " << std::endl;
+      std::cout << " Syntax: DICe_CineToTiff <cine_file_name> <start_index (zero based)> "
+          "<end_index (zero based)> <output_prefix> [rotation, (90,180,or270, other values ignored)]" << std::endl;
       exit(0);
     }
   }
 
-  if(argc != 5) {
+  if(argc < 5) {
       printf("four input arguments are required <cine_file_name> <start_index> <end_index> <output_prefix>\n");
       exit(0);
   }
@@ -86,6 +87,12 @@ int main(int argc, char *argv[]) {
   *outStream << "Cine file name: " << fileName << std::endl;
   std::string prefix = argv[4];
   *outStream << "Tiff prefix: " << prefix << std::endl;
+
+  int_t rotation = 0;
+  if(argc > 5){
+    rotation = std::stoi(argv[5]);
+    DEBUG_MSG("User requested image roation by " << rotation << " degrees");
+  }
 
   Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader  =  Teuchos::rcp(new DICe::cine::Cine_Reader(fileName,outStream.getRawPtr()));
 
@@ -125,6 +132,19 @@ int main(int argc, char *argv[]) {
       fName << "0";
     fName << i << ".tif";
     Teuchos::RCP<DICe::Image> image = cine_reader->get_frame(i);
+    if(rotation!=0){
+      if(rotation==90){
+        image = image->apply_rotation(NINTY_DEGREES);
+      }else if(rotation==180){
+        image = image->apply_rotation(ONE_HUNDRED_EIGHTY_DEGREES);
+      }else if(rotation==270){
+        image = image->apply_rotation(TWO_HUNDRED_SEVENTY_DEGREES);
+      }
+      else{
+        if(i==start_frame)
+          std::cout << "WARNING: user requested invalid rotation: " << rotation << " must be 90, 180 or 270. Skipping image rotation" << std::endl;
+      }
+    }
     image->write_tiff(fName.str());
   }
 
