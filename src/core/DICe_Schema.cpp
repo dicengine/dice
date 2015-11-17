@@ -970,7 +970,7 @@ Schema::execute_correlation(){
     for(int_t subset_index=0;subset_index<data_num_points_;++subset_index){
       DEBUG_MSG("[PROC " << proc_id << "] Subset " << subset_index << " synced-up solution after execute_correlation() done, u: " <<
         field_value(subset_index,DISPLACEMENT_X) << " v: " << field_value(subset_index,DISPLACEMENT_Y)
-        << " theta: " << field_value(subset_index,ROTATION_Z) << " gamma: " << field_value(subset_index,GAMMA));
+        << " theta: " << field_value(subset_index,ROTATION_Z) << " sigma: " << field_value(subset_index,SIGMA) << " gamma: " << field_value(subset_index,GAMMA));
     }
   }
 

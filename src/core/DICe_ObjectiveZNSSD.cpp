@@ -71,102 +71,114 @@ Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
 
   // for the simplex method, use the gradient in gamma to output a sigma value (sqrt(dg_x^2 + dg_y^2 + dg_theta^2):
   if(schema_->optimization_method()==DICe::SIMPLEX){
-    const scalar_t epsilon = 1.0E-3;
+    std::vector<scalar_t> epsilon(3);
+    epsilon[0] = 1.0E-1;
+    epsilon[1] = 1.0E-1;
+    epsilon[2] = 1.0E-1;
+    std::vector<scalar_t> factor(3);
+    factor[0] = 1.0E-3;
+    factor[1] = 1.0E-3;
+    factor[2] = 1.0E-1;
     std::vector<DICe::Field_Name> fields(3);
     fields[0] = DISPLACEMENT_X;
     fields[1] = DISPLACEMENT_Y;
     fields[2] = ROTATION_Z;
-    std::vector<scalar_t> grad_gamma(3,0.0);
+    std::vector<scalar_t> dir_sigma(3,0.0);
     Teuchos::RCP<std::vector<scalar_t> > temp_def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE));
     for(size_t i=0;i<fields.size();++i){
+      if(!schema_->rotation_enabled()&&i==2) continue;
       // reset def vector
       for(size_t j=0;j<DICE_DEFORMATION_SIZE;++j)
         (*temp_def)[j] = (*deformation)[j];
+      const scalar_t gamma_0 = gamma(temp_def);
       // mod the def vector +
-      (*temp_def)[fields[i]] += epsilon;
+      (*temp_def)[fields[i]] += epsilon[i];
       const scalar_t gamma_p = gamma(temp_def);
-      (*temp_def)[fields[i]] -= 2.0*epsilon;
+      // mod the def vector -
+      (*temp_def)[fields[i]] -= 2.0*epsilon[i];
       const scalar_t gamma_m = gamma(temp_def);
-      grad_gamma[i] = (gamma_p - gamma_m)/(2.0*epsilon);
+      const scalar_t slope_m = std::abs(epsilon[i] / (gamma_m - gamma_0))*factor[i];
+      const scalar_t slope_p = std::abs(epsilon[i] / (gamma_p - gamma_0))*factor[i];
+      dir_sigma[i] = (slope_m + slope_p)/2.0;
+      //DEBUG_MSG("Simplex method dir_sigma " << i << ": " << std::sqrt(dir_sigma[i]*dir_sigma[i]) << " gamma_p: " << gamma_p << " gamma_m: " << gamma_m);
     }
-    scalar_t mag_grad_gamma = 0.0;
-    for(size_t i=0;i<grad_gamma.size();++i)
-      mag_grad_gamma += grad_gamma[i]*grad_gamma[i];
-    mag_grad_gamma = std::sqrt(mag_grad_gamma);
-    DEBUG_MSG("Simplex method sigma: " << mag_grad_gamma);
-    return mag_grad_gamma;
+    scalar_t mag_dir_sigma = 0.0;
+    for(size_t i=0;i<dir_sigma.size();++i){
+      if(!schema_->rotation_enabled()&&i==2) continue;
+      mag_dir_sigma += dir_sigma[i]*dir_sigma[i];
+    }
+    mag_dir_sigma = std::sqrt(mag_dir_sigma);
+    DEBUG_MSG("Simplex method sigma: " << mag_dir_sigma);
+    return mag_dir_sigma;
   }
 
-   // if the gradients don't exist:
-   if(!subset_->has_gradients()) return 0.0;
+  // if the gradients don't exist:
+  if(!subset_->has_gradients()) return 0.0;
 
-   assert(deformation->size()==DICE_DEFORMATION_SIZE);
+  assert(deformation->size()==DICE_DEFORMATION_SIZE);
+  int_t N = 2;
+  int *IPIV = new int[N+1];
+  double *EIGS = new double[N+1];
+  int LWORK = N*N;
+  int QWORK = 3*N;
+  int INFO = 0;
+  double *WORK = new double[LWORK];
+  double *SWORK = new double[QWORK];
+  Teuchos::LAPACK<int_t,double> lapack;
+  assert(N==2);
 
-   // TODO address is_active
+  // Initialize storage:
+  Teuchos::SerialDenseMatrix<int_t,double> H(N,N, true);
+  Teuchos::ArrayRCP<scalar_t> gradGx = subset_->grad_x_array();
+  Teuchos::ArrayRCP<scalar_t> gradGy = subset_->grad_y_array();
 
-   int_t N = 2;
-   int *IPIV = new int[N+1];
-   double *EIGS = new double[N+1];
-   int LWORK = N*N;
-   int QWORK = 3*N;
-   int INFO = 0;
-   double *WORK = new double[LWORK];
-   double *SWORK = new double[QWORK];
-   Teuchos::LAPACK<int_t,double> lapack;
-   assert(N==2);
+  // update the deformed image with the new deformation:
+  try{
+    subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation,schema_->interpolation_method());
+  }
+  catch (std::logic_error & err) {return -1.0;}
 
-   // Initialize storage:
-   Teuchos::SerialDenseMatrix<int_t,double> H(N,N, true);
-   Teuchos::ArrayRCP<scalar_t> gradGx = subset_->grad_x_array();
-   Teuchos::ArrayRCP<scalar_t> gradGy = subset_->grad_y_array();
+  scalar_t Gx=0.0,Gy=0.0;
+  for(int_t index=0;index<subset_->num_pixels();++index){
+    // skip the deactivated pixels
+    if(!subset_->is_active(index)||subset_->is_deactivated_this_step(index))continue;
+    Gx = gradGx[index];
+    Gy = gradGy[index];
+    H(0,0) += Gx*Gx;
+    H(1,0) += Gy*Gx;
+    H(0,1) += Gx*Gy;
+    H(1,1) += Gy*Gy;
+  }
+  // clear temp storage
+  for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
+  for(int_t i=0;i<QWORK;++i) SWORK[i] = 0.0;
+  for(int_t i=0;i<N+1;++i) {IPIV[i] = 0; EIGS[i] = 0.0;}
+  try{
+    lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
+  }
+  catch(std::exception &e){DEBUG_MSG( e.what() << '\n'); return -1.0;}
+  for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
+  try{
+    lapack.GETRI(N,H.values(),N,IPIV,WORK,LWORK,&INFO);
+  }
+  catch(std::exception &e){DEBUG_MSG( e.what() << '\n'); return -1.0;}
 
-   // update the deformed image with the new deformation:
-   try{
-     subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation,schema_->interpolation_method());
-   }
-   catch (std::logic_error & err) {return -1.0;}
+  // now compute the eigenvalues for H^-1 as an estimate of sigma:
+  lapack.SYEV('N','U',N,H.values(),N,EIGS,SWORK,QWORK,&INFO);
+  DEBUG_MSG("Subset " << correlation_point_global_id_ << " Eigenvalues of H^-1: " << EIGS[0] << " " << EIGS[1]);
+  const scalar_t maxEig = std::max(EIGS[0],EIGS[1]);
 
-   scalar_t Gx=0.0,Gy=0.0;
-   for(int_t index=0;index<subset_->num_pixels();++index){
-     // skip the deactivated pixels
-     // TODO if(!is_active[index]||is_deactivated_this_step[index])continue;
-     Gx = gradGx[index];
-     Gy = gradGy[index];
-     H(0,0) += Gx*Gx;
-     H(1,0) += Gy*Gx;
-     H(0,1) += Gx*Gy;
-     H(1,1) += Gy*Gy;
-   }
-   // clear temp storage
-   for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
-   for(int_t i=0;i<QWORK;++i) SWORK[i] = 0.0;
-   for(int_t i=0;i<N+1;++i) {IPIV[i] = 0; EIGS[i] = 0.0;}
-   try{
-     lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
-   }
-   catch(std::exception &e){DEBUG_MSG( e.what() << '\n'); return -1.0;}
-   for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
-   try{
-     lapack.GETRI(N,H.values(),N,IPIV,WORK,LWORK,&INFO);
-   }
-   catch(std::exception &e){DEBUG_MSG( e.what() << '\n'); return -1.0;}
+  // 95% confidence interval
+  const scalar_t sigma = 2.0*std::sqrt(maxEig*5.991);
+  DEBUG_MSG("Subset " << correlation_point_global_id_ << " sigma: " << sigma);
 
-   // now compute the eigenvalues for H^-1 as an estimate of sigma:
-   lapack.SYEV('N','U',N,H.values(),N,EIGS,SWORK,QWORK,&INFO);
-   DEBUG_MSG("Subset " << correlation_point_global_id_ << " Eigenvalues of H^-1: " << EIGS[0] << " " << EIGS[1]);
-   const scalar_t maxEig = std::max(EIGS[0],EIGS[1]);
+  // clean up storage for lapack:
+  delete [] WORK;
+  delete [] SWORK;
+  delete [] IPIV;
+  delete [] EIGS;
 
-   // 95% confidence interval
-   const scalar_t sigma = 2.0*std::sqrt(maxEig*5.991);
-   DEBUG_MSG("Subset " << correlation_point_global_id_ << " sigma: " << sigma);
-
-   // clean up storage for lapack:
-   delete [] WORK;
-   delete [] SWORK;
-   delete [] IPIV;
-   delete [] EIGS;
-
-   return sigma;
+  return sigma;
 }
 
 Status_Flag
