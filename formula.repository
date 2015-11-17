@@ -1,0 +1,5 @@
+\form#0:$ \gamma = \sum_i (G_i - F_i)^2 $
+\form#1:$ F_i $
+\form#2:$ G_i $
+\form#3:$ \gamma = \sum_i (\frac{G_i - \bar{G}}{\sqrt(\sum_i(G_i - \bar{G})^2)} - \frac{F_i - \bar{F}}{\sqrt(\sum_i(F_i - \bar{F})^2)})^2 $
+\form#4:$ \sum_i T_{ii} $
