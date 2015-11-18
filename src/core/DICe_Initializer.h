@@ -305,6 +305,11 @@ public:
   /// virtual destructor
   virtual ~Motion_Test_Initializer(){};
 
+  /// reset the result flag (should be done at the beginning of each frame)
+  void reset(){
+    motion_state_ = MOTION_NOT_SET;
+  };
+
   /// Returns true if motion is detected
   /// \param def_image pointer to the deformed image
   bool motion_detected(Teuchos::RCP<Image> def_image);
@@ -339,6 +344,9 @@ private:
   scalar_t tol_;
   /// pointer to the previous image
   Teuchos::RCP<Image> prev_img_;
+  /// keep a copy of the result incase another call is
+  /// made for this initializer by another subset
+  Motion_State motion_state_;
 };
 
 }// End DICe Namespace

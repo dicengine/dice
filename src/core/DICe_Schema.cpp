@@ -857,6 +857,13 @@ Schema::execute_correlation(){
 
   int_t num_local_subsets = this_proc_subset_global_ids_.size();
 
+  // reset the motion detectors for each subset if used
+  for(size_t i=0;i<motion_detectors_.size();++i)
+    if(motion_detectors_[i]!=Teuchos::null){
+      DEBUG_MSG("Resetting motion detector: " << i);
+      motion_detectors_[i]->reset();
+    }
+
   // PARALLEL CASE:
   if(num_procs >1){
     // first pass for a USE_FILED_VALUES run sets up the local subset list

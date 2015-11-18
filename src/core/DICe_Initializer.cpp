@@ -273,7 +273,8 @@ Motion_Test_Initializer::Motion_Test_Initializer(const int_t origin_x,
   width_(width),
   height_(height),
   tol_(tol),
-  prev_img_(Teuchos::null)
+  prev_img_(Teuchos::null),
+  motion_state_(MOTION_NOT_SET)
 {
   DEBUG_MSG("Constructor for Motion_Test_Initializer called");
   DEBUG_MSG("origin_x: " << origin_x_ << " origin_y: " << origin_y_ <<
@@ -282,37 +283,30 @@ Motion_Test_Initializer::Motion_Test_Initializer(const int_t origin_x,
 
 bool
 Motion_Test_Initializer::motion_detected(Teuchos::RCP<Image> def_image){
-  static bool motion = true;
   // test if this is a repeat call for the same frame, but by another subset
   // if so, return the previous result.
-  static Teuchos::RCP<Image> save_image_ptr=Teuchos::null;
-  if(save_image_ptr == def_image){
-    DEBUG_MSG("Motion_Test_Initializer::motion_detected() repeat call, return value: " << motion);
+  if(motion_state_!=MOTION_NOT_SET){
+    DEBUG_MSG("Motion_Test_Initializer::motion_detected() repeat call, return value: " << motion_state_);
     // return last result
-    return motion;
+    return motion_state_==MOTION_TRUE ? true: false;
   }
-  // otherwise save off the last pointer
-  save_image_ptr = def_image;
-
-  // create a window of the deformed image according to the constructor parameters
-  Teuchos::RCP<Image> window_img = Teuchos::rcp(new Image(def_image,origin_x_,origin_y_,width_,height_));
-  // see if the previous image exists, if not return true as default
-  if(prev_img_==Teuchos::null){
-    DEBUG_MSG("Motion_Test_Initializer::motion_detected() first frame call, return value: 1 (automatically).");
-    prev_img_ = window_img; // save off the deformed image as the previous one
-    return true;
+  else{
+    // create a window of the deformed image according to the constructor parameters
+    Teuchos::RCP<Image> window_img = Teuchos::rcp(new Image(def_image,origin_x_,origin_y_,width_,height_));
+    // see if the previous image exists, if not return true as default
+    if(prev_img_==Teuchos::null){
+      DEBUG_MSG("Motion_Test_Initializer::motion_detected() first frame call, return value: 1 (automatically).");
+      prev_img_ = window_img; // save off the deformed image as the previous one
+      motion_state_=MOTION_TRUE;
+      return true;
+    }
+    //diff the two images and see if the difference is above a threshold
+    const scalar_t diff = window_img->diff(prev_img_);
+    prev_img_ = window_img;
+    DEBUG_MSG("Motion_Test_Initializer::motion_detected() called, result: " << diff << " tol: " << tol_);
+    motion_state_ = diff > tol_ ? MOTION_TRUE : MOTION_FALSE;
+    return motion_state_==MOTION_TRUE ? true: false;
   }
-  //diff the two images and see if the difference is above a threshold
-  const scalar_t diff = window_img->diff(prev_img_);
-  prev_img_ = window_img;
-  DEBUG_MSG("Motion_Test_Initializer::motion_detected() called, result: " << diff << " tol: " << tol_);
-  motion = diff > tol_ ? true : false;
-//  std::fstream out;
-//  out.open("diff_results.txt",std::fstream::app);
-//  out << diff << "\n";
-//  out.close();
-
-  return motion;
 }
 
 }// End DICe Namespace

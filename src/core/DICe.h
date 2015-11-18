@@ -496,6 +496,13 @@ enum Rotation_Value{
   TWO_HUNDRED_SEVENTY_DEGREES
 };
 
+/// Specifies whether motion is occurring in the frame or not
+enum Motion_State{
+  MOTION_NOT_SET=0,
+  MOTION_TRUE,
+  MOTION_FALSE
+};
+
 /// The type of correlation parameter, used for creating template input files
 enum Correlation_Parameter_Type{
   STRING_PARAM=0,
