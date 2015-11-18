@@ -237,6 +237,9 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   path_file_names_ = Teuchos::rcp(new std::map<int_t,std::string>());
   skip_solve_flags_ = Teuchos::rcp(new std::map<int_t,bool>());
   motion_window_params_ = Teuchos::rcp(new std::map<int_t,Motion_Window_Params>());
+  initial_gamma_threshold_ = -1.0;
+  final_gamma_threshold_ = -1.0;
+  path_distance_threshold_ = -1.0;
   set_params(params);
 }
 
@@ -348,6 +351,12 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   robust_solver_tolerance_ = diceParams->get<double>(DICe::robust_solver_tolerance);
   assert(diceParams->isParameter(DICe::skip_solve_gamma_threshold));
   skip_solve_gamma_threshold_ = diceParams->get<double>(DICe::skip_solve_gamma_threshold);
+  assert(diceParams->isParameter(DICe::initial_gamma_threshold));
+  initial_gamma_threshold_ = diceParams->get<double>(DICe::initial_gamma_threshold);
+  assert(diceParams->isParameter(DICe::final_gamma_threshold));
+  final_gamma_threshold_ = diceParams->get<double>(DICe::final_gamma_threshold);
+  assert(diceParams->isParameter(DICe::path_distance_threshold));
+  path_distance_threshold_ = diceParams->get<double>(DICe::path_distance_threshold);
   assert(diceParams->isParameter(DICe::disp_jump_tol));
   disp_jump_tol_ = diceParams->get<double>(DICe::disp_jump_tol);
   assert(diceParams->isParameter(DICe::theta_jump_tol));
@@ -931,7 +940,7 @@ Schema::execute_correlation(){
     for(int_t subset_index=0;subset_index<num_local_subsets;++subset_index){
       Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,
         this_proc_subset_global_ids_[subset_index]));
-      generic_correlation_routine(obj);
+      new_generic_correlation_routine(obj);
     }
   }
   // In this routine there are usually only a handful of subsets, but thousands of images.
@@ -953,7 +962,7 @@ Schema::execute_correlation(){
       if(correlation_routine_==SUBSET_EVOLUTION_ROUTINE)
         subset_evolution_routine(obj_vec_[subset_index]);
       else
-        generic_correlation_routine(obj_vec_[subset_index]);
+        new_generic_correlation_routine(obj_vec_[subset_index]);
     }
     if(output_deformed_subset_images_)
       write_deformed_subsets_image();
@@ -1446,6 +1455,354 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   local_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(init_status);
   local_field_value(subset_gid,ITERATIONS) = num_iterations;
 
+  if(output_deformed_subset_intensity_images_){
+#ifndef DICE_DISABLE_BOOST_FILESYSTEM
+    DEBUG_MSG("[PROC " << proc_id << "] Attempting to create directory : ./deformed_subset_intensities/");
+    std::string dirStr = "./deformed_subset_intensities/";
+    boost::filesystem::path dir(dirStr);
+    if(boost::filesystem::create_directory(dir)) {
+      DEBUG_MSG("[PROC " << proc_id << "] Directory successfully created");
+    }
+    int_t num_zeros = 0;
+    if(num_image_frames_>0){
+      int_t num_digits_total = 0;
+      int_t num_digits_image = 0;
+      int_t decrement_total = num_image_frames_;
+      int_t decrement_image = image_frame_;
+      while (decrement_total){decrement_total /= 10; num_digits_total++;}
+      if(image_frame_==0) num_digits_image = 1;
+      else
+        while (decrement_image){decrement_image /= 10; num_digits_image++;}
+      num_zeros = num_digits_total - num_digits_image;
+    }
+    std::stringstream ss;
+    ss << dirStr << "deformedSubset_" << subset_gid << "_";
+    for(int_t i=0;i<num_zeros;++i)
+      ss << "0";
+    ss << image_frame_;
+    obj->subset()->write_tiff(ss.str(),true);
+#endif
+  }
+  if(output_evolved_subset_images_){
+#ifndef DICE_DISABLE_BOOST_FILESYSTEM
+    DEBUG_MSG("[PROC " << proc_id << "] Attempting to create directory : ./evolved_subsets/");
+    std::string dirStr = "./evolved_subsets/";
+    boost::filesystem::path dir(dirStr);
+    if(boost::filesystem::create_directory(dir)) {
+      DEBUG_MSG("[PROC " << proc_id << "[ Directory successfully created");
+    }
+    int_t num_zeros = 0;
+    if(num_image_frames_>0){
+      int_t num_digits_total = 0;
+      int_t num_digits_image = 0;
+      int_t decrement_total = num_image_frames_;
+      int_t decrement_image = image_frame_;
+      while (decrement_total){decrement_total /= 10; num_digits_total++;}
+      if(image_frame_==0) num_digits_image = 1;
+      else
+        while (decrement_image){decrement_image /= 10; num_digits_image++;}
+      num_zeros = num_digits_total - num_digits_image;
+    }
+    std::stringstream ss;
+    ss << dirStr << "evolvedSubset_" << subset_gid << "_";
+    for(int_t i=0;i<num_zeros;++i)
+      ss << "0";
+    ss << image_frame_;
+    obj->subset()->write_tiff(ss.str());
+#endif
+  }
+}
+
+bool
+Schema::motion_detected(const int_t subset_gid){
+  if(motion_window_params_->find(subset_gid)!=motion_window_params_->end()){
+    const int_t use_subset_id = motion_window_params_->find(subset_gid)->second.use_subset_id_==-1 ? subset_gid:
+        motion_window_params_->find(subset_gid)->second.use_subset_id_;
+    if(motion_detectors_[use_subset_id]==Teuchos::null){
+      // create the motion detector because it doesn't exist
+      Motion_Window_Params mwp = motion_window_params_->find(use_subset_id)->second;
+      motion_detectors_[use_subset_id] = Teuchos::rcp(new Motion_Test_Initializer(mwp.origin_x_,
+        mwp.origin_y_,
+        mwp.width_,
+        mwp.height_,
+        mwp.tol_));
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(motion_detectors_[use_subset_id]==Teuchos::null,std::runtime_error,
+      "Error, the motion detector should exist here, but it doesn't.");
+    bool motion_det = motion_detectors_[use_subset_id]->motion_detected(def_img_);
+    DEBUG_MSG("Subset " << subset_gid << " TEST_FOR_MOTION using window defined for subset " << use_subset_id <<
+      " result " << motion_det);
+    return motion_det;
+  }
+  else{
+    DEBUG_MSG("Subset " << subset_gid << " will not test for motion");
+    return true;
+  }
+}
+
+void
+Schema::record_failed_step(const int_t subset_gid,
+  const int_t status,
+  const int_t num_iterations){
+  local_field_value(subset_gid,SIGMA) = -1.0;
+  local_field_value(subset_gid,MATCH) = -1.0;
+  local_field_value(subset_gid,GAMMA) = -1.0;
+  local_field_value(subset_gid,STATUS_FLAG) = status;
+  local_field_value(subset_gid,ITERATIONS) = num_iterations;
+}
+
+void
+Schema::record_step(const int_t subset_gid,
+  Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  const scalar_t & sigma,
+  const scalar_t & match,
+  const scalar_t & gamma,
+  const int_t status,
+  const int_t num_iterations){
+  local_field_value(subset_gid,DISPLACEMENT_X) = (*deformation)[DISPLACEMENT_X];
+  local_field_value(subset_gid,DISPLACEMENT_Y) = (*deformation)[DISPLACEMENT_Y];
+  local_field_value(subset_gid,NORMAL_STRAIN_X) = (*deformation)[NORMAL_STRAIN_X];
+  local_field_value(subset_gid,NORMAL_STRAIN_Y) = (*deformation)[NORMAL_STRAIN_Y];
+  local_field_value(subset_gid,SHEAR_STRAIN_XY) = (*deformation)[SHEAR_STRAIN_XY];
+  local_field_value(subset_gid,ROTATION_Z) = (*deformation)[DICe::ROTATION_Z];
+  local_field_value(subset_gid,SIGMA) = sigma;
+  local_field_value(subset_gid,MATCH) = match; // 0 means data is successful
+  local_field_value(subset_gid,GAMMA) = gamma;
+  local_field_value(subset_gid,STATUS_FLAG) = status;
+  local_field_value(subset_gid,ITERATIONS) = num_iterations;
+}
+
+void
+Schema::new_generic_correlation_routine(Teuchos::RCP<Objective> obj){
+
+  const int_t subset_gid = obj->correlation_point_global_id();
+  const int_t proc_id = comm_->get_rank();
+  assert(get_local_id(subset_gid)!=-1 && "Error: subset id is not local to this process.");
+  DEBUG_MSG("[PROC " << proc_id << "] SUBSET " << subset_gid << " (" << local_field_value(subset_gid,DICe::COORDINATE_X) <<
+    "," << local_field_value(subset_gid,DICe::COORDINATE_Y) << ")");
+  //
+  //  test for motion if requested by the user in the subsets.txt file
+  //
+  bool motion = motion_detected(subset_gid);
+  if(!motion){
+    DEBUG_MSG("Subset " << subset_gid << " skipping frame due to no motion");
+    // only change the match value and the status flag
+    local_field_value(subset_gid,MATCH) = 0.0;
+    local_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(FRAME_SKIPPED_DUE_TO_NO_MOTION);
+    local_field_value(subset_gid,ITERATIONS) = 0;
+    return;
+  }
+  //
+  //  check if the user has specified a path file for this subset:
+  //  Path files help with defining an expected trajectory, can be used to initialize
+  //  at any random time in a video sequence or to test if the computed solution is too far
+  //  from the expected path to be valid
+  //
+  const bool has_path_file = path_file_names_->find(subset_gid)!=path_file_names_->end();
+  bool global_path_search_required = local_field_value(subset_gid,SIGMA)==-1.0 || image_frame_==0;
+  if(opt_initializers_[subset_gid]==Teuchos::null){
+    if(has_path_file){
+      const int_t num_neighbors = 6; // number of path neighbors to search while initializing
+      std::string path_file_name = path_file_names_->find(subset_gid)->second;
+      DEBUG_MSG("Subset " << subset_gid << " using path file " << path_file_name);
+      opt_initializers_[subset_gid] =
+          Teuchos::rcp(new Path_Initializer(obj->subset(),path_file_name.c_str(),num_neighbors));
+    }
+    else{
+      DEBUG_MSG("Subset " << subset_gid << " no path file specified for this subset");
+    }
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(opt_initializers_[subset_gid]==
+      Teuchos::null&&has_path_file,std::runtime_error,"Initializer not instantiated yet, but should be.");
+  //
+  //  initialial guess for the subset's solution parameters
+  //
+  Status_Flag init_status = INITIALIZE_SUCCESSFUL;
+  Status_Flag corr_status = CORRELATION_FAILED;
+  int_t num_iterations = -1;
+  scalar_t initial_gamma = 0.0;
+  Teuchos::RCP<std::vector<scalar_t> > deformation = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+  try{
+    // use the path file to get the initial guess
+    if(has_path_file){
+      if(global_path_search_required){
+        initial_gamma = opt_initializers_[subset_gid]->initial_guess(def_img_,deformation);
+      }
+      else{
+        const scalar_t prev_u = local_field_value(subset_gid,DICe::DISPLACEMENT_X);
+        const scalar_t prev_v = local_field_value(subset_gid,DICe::DISPLACEMENT_Y);
+        const scalar_t prev_t = local_field_value(subset_gid,DICe::ROTATION_Z);
+        initial_gamma = opt_initializers_[subset_gid]->initial_guess(def_img_,deformation,prev_u,prev_v,prev_t);
+      }
+    }
+    // use the solution in the field values as the initial guess
+    else if(initialization_method_==DICe::USE_FIELD_VALUES ||
+        (initialization_method_==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && image_frame_>0)){
+      init_status = obj->initialize_from_previous_frame(deformation);
+    }
+    // use phase correlation of the whole image to get the initial guess
+    // (useful when the subset being tracked is on an object translating through the frame)
+    else if(initialization_method_==DICe::USE_PHASE_CORRELATION){
+      (*deformation)[DISPLACEMENT_X] = phase_cor_u_x_ + local_field_value(subset_gid,DISPLACEMENT_X);
+      (*deformation)[DISPLACEMENT_Y] = phase_cor_u_y_ + local_field_value(subset_gid,DISPLACEMENT_Y);
+      (*deformation)[ROTATION_Z] = local_field_value(subset_gid,ROTATION_Z);
+    }
+    // use the solution of a neighboring subset for the intial guess
+    else{
+      init_status = obj->initialize_from_neighbor(deformation);
+    }
+  }
+  catch (std::logic_error &err) { // a non-graceful exception occurred in initialization
+    record_failed_step(subset_gid,static_cast<int_t>(INITIALIZE_FAILED_BY_EXCEPTION),num_iterations);
+    return;
+  };
+  //
+  //  check if initialization was successful
+  //
+  if(init_status==INITIALIZE_FAILED){
+    record_failed_step(subset_gid,static_cast<int_t>(init_status),num_iterations);
+    return;
+  }
+  //
+  //  check if the user rrequested to skip the solve and only initialize (param set in subset file)
+  //
+  // check if the solve should be skipped
+  if(skip_solve_flags_->find(subset_gid)!=skip_solve_flags_->end()){
+    if(skip_solve_flags_->find(subset_gid)->second ==true){
+      DEBUG_MSG("Subset " << subset_gid << " solve will be skipped as requested by user in the subset file");
+      const scalar_t initial_sigma = obj->sigma(deformation);
+      if(initial_gamma==0.0) initial_gamma = obj->gamma(deformation);
+      record_step(subset_gid,deformation,initial_sigma,0.0,initial_gamma,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
+      return;
+    }
+  }
+  //
+  //  if user requested testing the initial value of gamma, do that here
+  //
+  if(initial_gamma_threshold_!=-1.0&&initial_gamma > initial_gamma_threshold_){
+    DEBUG_MSG("Subset " << subset_gid << " initial gamma value FAILS threshold test, gamma: " <<
+      initial_gamma << " (threshold: " << initial_gamma_threshold_ << ")");
+    record_failed_step(subset_gid,static_cast<int_t>(INITIALIZE_FAILED),num_iterations);
+    return;
+  }
+  // TODO how to respond to bad initialization
+  // TODO add a search-based method to initialize if other methods failed
+  //
+  // perform the correlation
+  //
+  if(optimization_method_==DICe::GRADIENT_BASED||optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX){
+    try{
+      corr_status = obj->computeUpdateFast(deformation,num_iterations);
+    }
+    catch (std::logic_error &err) { //a non-graceful exception occurred
+      corr_status = CORRELATION_FAILED_BY_EXCEPTION;
+    };
+  }
+  else if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED){
+    try{
+      corr_status = obj->computeUpdateRobust(deformation,num_iterations);
+    }
+    catch (std::logic_error &err) { //a non-graceful exception occurred
+      corr_status = CORRELATION_FAILED_BY_EXCEPTION;
+    };
+  }
+  if(corr_status!=CORRELATION_SUCCESSFUL){
+    if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::GRADIENT_BASED){
+      record_failed_step(subset_gid,static_cast<int_t>(corr_status),num_iterations);
+      return;
+    }
+    else if(optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX){
+      // try again using simplex
+      if(initialization_method_==DICe::USE_FIELD_VALUES || (initialization_method_==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && image_frame_>0))
+        init_status = obj->initialize_from_previous_frame(deformation);
+      else if(initialization_method_==DICe::USE_PHASE_CORRELATION){
+        (*deformation)[DISPLACEMENT_X] = phase_cor_u_x_ + local_field_value(subset_gid,DISPLACEMENT_X);
+        (*deformation)[DISPLACEMENT_Y] = phase_cor_u_y_ + local_field_value(subset_gid,DISPLACEMENT_Y);
+        (*deformation)[ROTATION_Z] = local_field_value(subset_gid,ROTATION_Z);
+        // TODO clear the other values?
+        init_status = DICe::INITIALIZE_SUCCESSFUL;
+      }
+      else init_status = obj->initialize_from_neighbor(deformation);
+      try{
+        corr_status = obj->computeUpdateRobust(deformation,num_iterations);
+      }
+      catch (std::logic_error &err) { //a non-graceful exception occurred
+        corr_status = CORRELATION_FAILED_BY_EXCEPTION;
+      };
+      if(corr_status!=CORRELATION_SUCCESSFUL){
+        record_failed_step(subset_gid,static_cast<int_t>(corr_status),num_iterations);
+        return;
+      }
+    }
+    else if(optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED){
+      // try again using gradient based
+      if(initialization_method_==DICe::USE_FIELD_VALUES || (initialization_method_==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && image_frame_>0))
+        init_status = obj->initialize_from_previous_frame(deformation);
+      else if(initialization_method_==DICe::USE_PHASE_CORRELATION){
+        (*deformation)[DISPLACEMENT_X] = phase_cor_u_x_ + local_field_value(subset_gid,DISPLACEMENT_X);
+        (*deformation)[DISPLACEMENT_Y] = phase_cor_u_y_ + local_field_value(subset_gid,DISPLACEMENT_Y);
+        (*deformation)[ROTATION_Z] = local_field_value(subset_gid,ROTATION_Z);
+        // TODO clear the other values?
+        init_status = DICe::INITIALIZE_SUCCESSFUL;
+      }
+      else init_status = obj->initialize_from_neighbor(deformation);
+      try{
+        corr_status = obj->computeUpdateFast(deformation,num_iterations);
+      }
+      catch (std::logic_error &err) { //a non-graceful exception occurred
+        corr_status = CORRELATION_FAILED_BY_EXCEPTION;
+      };
+      if(corr_status!=CORRELATION_SUCCESSFUL){
+        record_failed_step(subset_gid,static_cast<int_t>(corr_status),num_iterations);
+        return;
+      }
+    }
+  }
+  //
+  //  test final gamma if user requested
+  //
+  const scalar_t gamma = obj->gamma(deformation);
+  const scalar_t sigma = obj->sigma(deformation);
+  if(final_gamma_threshold_!=-1.0&&gamma > final_gamma_threshold_){
+    DEBUG_MSG("Subset " << subset_gid << " final gamma value FAILS threshold test, gamma: " <<
+      gamma << " (threshold: " << final_gamma_threshold_ << ")");
+    // for the phase correlation initialization method, the initial guess needs to be stored
+    if(initialization_method_==DICe::USE_PHASE_CORRELATION){
+      local_field_value(subset_gid,DISPLACEMENT_X) += phase_cor_u_x_;
+      local_field_value(subset_gid,DISPLACEMENT_Y) += phase_cor_u_y_;
+    }
+    record_failed_step(subset_gid,static_cast<int_t>(FRAME_FAILED_DUE_TO_HIGH_GAMMA),num_iterations);
+    return;
+  }
+  //
+  //  test path distance if user requested
+  //
+  if(path_distance_threshold_!=-1.0&&has_path_file){
+    scalar_t path_distance = 0.0;
+    size_t id = 0;
+    // dynamic cast the pointer to get access to the derived class methods
+    Teuchos::RCP<Path_Initializer> path_initializer =
+        Teuchos::rcp_dynamic_cast<Path_Initializer>(opt_initializers_[subset_gid]);
+    path_initializer->closest_triad((*deformation)[DISPLACEMENT_X],
+      (*deformation)[DISPLACEMENT_Y],(*deformation)[ROTATION_Z],id,path_distance);
+    DEBUG_MSG("Subset " << subset_gid << " path distance: " << path_distance);
+    if(path_distance > path_distance_threshold_)
+    {
+      DEBUG_MSG("Subset " << subset_gid << " path distance value FAILS threshold test, distance from path: " <<
+        path_distance << " (threshold: " << path_distance_threshold_ << ")");
+      record_failed_step(subset_gid,static_cast<int_t>(FRAME_FAILED_DUE_TO_HIGH_PATH_DISTANCE),num_iterations);
+      return;
+    }
+  }
+  // TODO how to respond to failure here? or for initialization?
+  //
+  // SUCCESS
+  //
+  if(projection_method_==VELOCITY_BASED) save_off_fields(subset_gid);
+  record_step(subset_gid,deformation,sigma,0.0,gamma,static_cast<int_t>(init_status),num_iterations);
+  //
+  //  Write debugging images if requested
+  //
   if(output_deformed_subset_intensity_images_){
 #ifndef DICE_DISABLE_BOOST_FILESYSTEM
     DEBUG_MSG("[PROC " << proc_id << "] Attempting to create directory : ./deformed_subset_intensities/");

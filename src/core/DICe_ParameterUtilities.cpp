@@ -117,6 +117,8 @@ const std::string to_string(Status_Flag in){
     "NAN_IN_HESSIAN_OR_RESIDUAL",
     "HESSIAN_SINGULAR",
     "SKIPPED_FRAME_DUE_TO_HIGH_GAMMA",
+    "FRAME_FAILED_DUE_TO_HIGH_GAMMA",
+    "FRAME_FAILED_DUE_TO_HIGH_PATH_DISTANCE",
     "RESET_REF_SUBSET_DUE_TO_HIGH_GAMMA",
     "MAX_GLOBAL_ITERATIONS_REACHED_IN_EVOLUTION_LOOP",
     "FAILURE_DUE_TO_TOO_MANY_RESTARTS",
@@ -266,6 +268,9 @@ DICE_LIB_DLL_EXPORT void sl_default_params(Teuchos::ParameterList *  defaultPara
   defaultParams->set(DICe::objective_regularization_factor,1000.0);
   defaultParams->set(DICe::pixel_integration_order,1);
   defaultParams->set(DICe::skip_solve_gamma_threshold,1.0E-10);
+  defaultParams->set(DICe::initial_gamma_threshold,-1.0);
+  defaultParams->set(DICe::final_gamma_threshold,-1.0);
+  defaultParams->set(DICe::path_distance_threshold,-1.0);
   defaultParams->set(DICe::rotate_ref_image_90,false);
   defaultParams->set(DICe::rotate_def_image_90,false);
   defaultParams->set(DICe::rotate_ref_image_180,false);
@@ -309,6 +314,9 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::objective_regularization_factor,1000.0);
   defaultParams->set(DICe::pixel_integration_order,1);
   defaultParams->set(DICe::skip_solve_gamma_threshold,1.0E-10);
+  defaultParams->set(DICe::initial_gamma_threshold,-1.0);
+  defaultParams->set(DICe::final_gamma_threshold,-1.0);
+  defaultParams->set(DICe::path_distance_threshold,-1.0);
   defaultParams->set(DICe::rotate_ref_image_90,false);
   defaultParams->set(DICe::rotate_def_image_90,false);
   defaultParams->set(DICe::rotate_ref_image_180,false);

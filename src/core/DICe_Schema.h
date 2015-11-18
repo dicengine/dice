@@ -533,6 +533,23 @@ public:
   /// with gradient based then simplex (DICe::GRADIENT_BASED_THEN_SIMPLEX).
   void generic_correlation_routine(Teuchos::RCP<Objective> obj);
 
+  /// \brief Orchestration of how the correlation is conducted
+  /// \param obj A single DICe::Objective
+  ///
+  /// The process is as followa:
+  /// 1. The first subset is correlated based on whatever initial guess
+  /// happens to be in the data array (could have been specified by user or zeros).
+  /// 2. The rest of the subsets use the neighboring subset's solution as an initial guess if the
+  /// initialization method is DICe::USE_NEIGHBOR_VALUES. Otherwise, the initial guess is taken
+  /// from whatever solution is in the field_values (DICe::USE_FIELD_VALUES).
+  ///
+  /// 3. For the optimization, if the method is DICe::SIMPLEX, only the simpex method (computeUpdateRobust()) will be
+  /// used. For the DICe::GRADIENT_BASED method, only the computeUpdateFast() method will be used. The other
+  /// options are first try simplex, then gradient based if it fails (DICe::SIMPLEX_THEN_GRADIENT_BASED) or start
+  /// with gradient based then simplex (DICe::GRADIENT_BASED_THEN_SIMPLEX).
+  void new_generic_correlation_routine(Teuchos::RCP<Objective> obj);
+
+
   /// \brief As an alternative to the generic routine, this routine spends a lot
   /// more time handling various failure cases. It tests for the solution gamma value after each
   /// step to ensure the correlation is still good. It also tests for jumps in the solution values.
@@ -543,7 +560,36 @@ public:
   /// \param obj The objective function that holds the ref and def subset along with several methods
   void subset_evolution_routine(Teuchos::RCP<Objective> obj);
 
-  /// Returne true if regularization should be used in the objective evaluation
+  /// Returns true if the user has requested testing for motion in the frame
+  /// and the motion was detected by diffing pixel values:
+  /// \param subset_gid the global id of the subset to test for motion
+  bool motion_detected(const int_t subset_gid);
+
+  /// Fail the current frame for this subset and move on to the next
+  /// \param subset_gid the global id of the subset
+  /// \param status the reason for failure
+  /// \param num_iterations the number of iterations that took place before failure
+  void record_failed_step(const int_t subset_gid,
+    const int_t status,
+    const int_t num_iterations);
+
+  /// Record the solution in the field arrays
+  /// \param subset_gid the global id of the subset to record
+  /// \param deformation the deformation vector
+  /// \param sigma sigma value
+  /// \param gamma gamma value
+  /// \param status status flag
+  /// \param num_iteration the number of iterations
+  void record_step(const int_t subset_gid,
+    Teuchos::RCP<std::vector<scalar_t> > & deformation,
+    const scalar_t & sigma,
+    const scalar_t & match,
+    const scalar_t & gamma,
+    const int_t status,
+    const int_t num_iterations);
+
+
+  /// Returns true if regularization should be used in the objective evaluation
   bool use_objective_regularization()const{
     return use_objective_regularization_;
   }
@@ -973,6 +1019,12 @@ private:
   /// Map to hold the flags that determine if the next image should be
   /// tested for motion before doing the DIC
   Teuchos::RCP<std::map<int_t,Motion_Window_Params> > motion_window_params_;
+  /// tolerance for initial gamma
+  double initial_gamma_threshold_;
+  /// tolerance for final gamma
+  double final_gamma_threshold_;
+  /// tolerance for max_path_distance
+  double path_distance_threshold_;
 };
 
 /// \class DICe::Output_Spec

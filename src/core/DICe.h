@@ -158,6 +158,12 @@ const char* const max_solver_iterations_robust = "max_solver_iterations_robust";
 /// String parameter name
 const char* const robust_solver_tolerance = "robust_solver_tolerance";
 /// String parameter name
+const char* const initial_gamma_threshold = "initial_gamma_threshold";
+/// String parameter name
+const char* const final_gamma_threshold = "final_gamma_threshold";
+/// String parameter name
+const char* const path_distance_threshold = "path_distance_threshold";
+/// String parameter name
 const char* const skip_solve_gamma_threshold = "skip_solve_gamma_threshold";
 /// String parameter name
 const char* const fast_solver_tolerance = "fast_solver_tolerance";
@@ -462,16 +468,20 @@ enum Status_Flag{
   // 22
   SKIPPED_FRAME_DUE_TO_HIGH_GAMMA,
   // 23
-  RESET_REF_SUBSET_DUE_TO_HIGH_GAMMA,
+  FRAME_FAILED_DUE_TO_HIGH_GAMMA,
   // 24
-  MAX_GLOBAL_ITERATIONS_REACHED_IN_EVOLUTION_LOOP,
+  FRAME_FAILED_DUE_TO_HIGH_PATH_DISTANCE,
   // 25
-  FAILURE_DUE_TO_TOO_MANY_RESTARTS,
+  RESET_REF_SUBSET_DUE_TO_HIGH_GAMMA,
   // 26
-  FAILURE_DUE_TO_DEVIATION_FROM_PATH,
-  // 26
-  FRAME_SKIPPED,
+  MAX_GLOBAL_ITERATIONS_REACHED_IN_EVOLUTION_LOOP,
   // 27
+  FAILURE_DUE_TO_TOO_MANY_RESTARTS,
+  // 28
+  FAILURE_DUE_TO_DEVIATION_FROM_PATH,
+  // 29
+  FRAME_SKIPPED,
+  // 30
   FRAME_SKIPPED_DUE_TO_NO_MOTION,
   // DON'T ADD ANY BELOW MAX
   MAX_STATUS_FLAG,
@@ -705,6 +715,16 @@ const Correlation_Parameter skip_solve_gamma_threshold_param(skip_solve_gamma_th
   "If the gamma evaluation for the initial deformation guess is below this value, the solve is skipped because"
   " the match is already good enough");
 /// Correlation parameter and properties
+const Correlation_Parameter initial_gamma_threshold_param(initial_gamma_threshold,SCALAR_PARAM,true,
+  "If the gamma evaluation for the initial deformation guess is not below this value, initialization will fail");
+/// Correlation parameter and properties
+const Correlation_Parameter final_gamma_threshold_param(final_gamma_threshold,SCALAR_PARAM,true,
+  "If the gamma evaluation for the final deformation guess is not below this value, the step will fail for this subset");
+/// Correlation parameter and properties
+const Correlation_Parameter path_distance_threshold_param(path_distance_threshold,SCALAR_PARAM,true,
+  "If the final deformation solution is farther than this threshold from a segment in the path file"
+  " (which must be specified in the subset file) the step will fail for this subset");
+/// Correlation parameter and properties
 const Correlation_Parameter pixel_size_in_mm_param(pixel_size_in_mm,
   SCALAR_PARAM,
   true,
@@ -815,7 +835,7 @@ const Correlation_Parameter compute_image_gradients_param(compute_image_gradient
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 55;
+const int_t num_valid_correlation_params = 58;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -839,6 +859,9 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   fast_solver_tolerance_param,
   robust_solver_tolerance_param,
   skip_solve_gamma_threshold_param,
+  initial_gamma_threshold_param,
+  final_gamma_threshold_param,
+  path_distance_threshold_param,
   disp_jump_tol_param,
   theta_jump_tol_param,
   robust_delta_disp_param,

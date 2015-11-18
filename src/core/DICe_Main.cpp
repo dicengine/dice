@@ -299,7 +299,7 @@ int main(int argc, char *argv[]) {
   for(int_t image_it=start_frame;image_it<=end_frame;++image_it){
     if(is_cine){
       Teuchos::RCP<DICe::Image> def_image = cine_reader->get_frame(image_it,correlation_params);
-      *outStream << "Processing Image: " << image_it - start_frame + 1 << " of " << num_images << " frame: " << image_it << std::endl;
+      *outStream << "Processing Image: " << image_it - start_frame + 1 << " of " << num_images << " frame id: " << image_it << std::endl;
       schema->set_def_image(def_image);
     }
     else{
