@@ -1067,6 +1067,13 @@ Schema::subset_evolution_routine(Teuchos::RCP<Objective> obj){
       else
         initial_gamma = opt_initializers_[subset_gid]->initial_guess(def_img_,deformation,prev_u,prev_v,prev_t);
     }
+    else if(initialization_method_==DICe::USE_PHASE_CORRELATION){
+      DEBUG_MSG("Initializing with phase correlation");
+      (*deformation)[DISPLACEMENT_X] = phase_cor_u_x_ + local_field_value(subset_gid,DISPLACEMENT_X);
+      (*deformation)[DISPLACEMENT_Y] = phase_cor_u_y_ + local_field_value(subset_gid,DISPLACEMENT_Y);
+      (*deformation)[ROTATION_Z] = prev_t;
+      initial_gamma = 0.0;
+    }
     // use the previous solution TODO move this to another initializer class
     else{
       DEBUG_MSG("Initializing with preivous solution");
@@ -1168,7 +1175,7 @@ Schema::subset_evolution_routine(Teuchos::RCP<Objective> obj){
     }
   }
 
-  // SUCCESS:
+  // SUCCESS
 
   const scalar_t gamma = obj->gamma(deformation);
   const scalar_t sigma = obj->sigma(deformation);
@@ -1277,8 +1284,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     };
   }
   else if(initialization_method_==DICe::USE_PHASE_CORRELATION){
-    (*deformation)[0] = phase_cor_u_x_ + local_field_value(subset_gid,DISPLACEMENT_X);
-    (*deformation)[1] = phase_cor_u_y_ + local_field_value(subset_gid,DISPLACEMENT_Y);
+    (*deformation)[DISPLACEMENT_X] = phase_cor_u_x_ + local_field_value(subset_gid,DISPLACEMENT_X);
+    (*deformation)[DISPLACEMENT_Y] = phase_cor_u_y_ + local_field_value(subset_gid,DISPLACEMENT_Y);
+    (*deformation)[ROTATION_Z] = local_field_value(subset_gid,ROTATION_Z);
 //    for(int_t i=2;i<DICE_DEFORMATION_SIZE;++i)
 //      (*deformation)[i] = 0.0;
 //    const int_t window_size = 6;
@@ -1350,10 +1358,10 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       if(initialization_method_==DICe::USE_FIELD_VALUES || (initialization_method_==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && image_frame_>0))
         init_status = obj->initialize_from_previous_frame(deformation);
       else if(initialization_method_==DICe::USE_PHASE_CORRELATION){
-        (*deformation)[0] = phase_cor_u_x_ + local_field_value(subset_gid,DISPLACEMENT_X);
-        (*deformation)[1] = phase_cor_u_y_ + local_field_value(subset_gid,DISPLACEMENT_Y);
-        for(int_t i=2;i<DICE_DEFORMATION_SIZE;++i)
-          (*deformation)[i] = 0.0;
+        (*deformation)[DISPLACEMENT_X] = phase_cor_u_x_ + local_field_value(subset_gid,DISPLACEMENT_X);
+        (*deformation)[DISPLACEMENT_Y] = phase_cor_u_y_ + local_field_value(subset_gid,DISPLACEMENT_Y);
+        (*deformation)[ROTATION_Z] = local_field_value(subset_gid,ROTATION_Z);
+        // TODO clear the other values?
         init_status = DICe::INITIALIZE_SUCCESSFUL;
       }
       else init_status = obj->initialize_from_neighbor(deformation);
@@ -1378,10 +1386,10 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       if(initialization_method_==DICe::USE_FIELD_VALUES || (initialization_method_==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && image_frame_>0))
         init_status = obj->initialize_from_previous_frame(deformation);
       else if(initialization_method_==DICe::USE_PHASE_CORRELATION){
-        (*deformation)[0] = phase_cor_u_x_ + local_field_value(subset_gid,DISPLACEMENT_X);
-        (*deformation)[1] = phase_cor_u_y_ + local_field_value(subset_gid,DISPLACEMENT_Y);
-        for(int_t i=2;i<DICE_DEFORMATION_SIZE;++i)
-          (*deformation)[i] = 0.0;
+        (*deformation)[DISPLACEMENT_X] = phase_cor_u_x_ + local_field_value(subset_gid,DISPLACEMENT_X);
+        (*deformation)[DISPLACEMENT_Y] = phase_cor_u_y_ + local_field_value(subset_gid,DISPLACEMENT_Y);
+        (*deformation)[ROTATION_Z] = local_field_value(subset_gid,ROTATION_Z);
+        // TODO clear the other values?
         init_status = DICe::INITIALIZE_SUCCESSFUL;
       }
       else init_status = obj->initialize_from_neighbor(deformation);
@@ -1403,10 +1411,26 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     }
   }
 
-  // SUCCESS
-
   const scalar_t gamma = obj->gamma(deformation);
   const scalar_t sigma = obj->sigma(deformation);
+  // TODO test on sigma
+  // catch the case where gamma or sigma is still too high, even though the iterations converged:
+  if(gamma > 0.4 && optimization_method_){
+    DEBUG_MSG("Subset " << subset_gid << " step failing due to high gamma at converged solution: " << gamma << " (tol: gamma < 0.4)");
+    // if phase correlation is used, the displacments need to updated since they are computed from the previous step:
+    if(initialization_method_==DICe::USE_PHASE_CORRELATION){
+      local_field_value(subset_gid,DISPLACEMENT_X) += phase_cor_u_x_;
+      local_field_value(subset_gid,DISPLACEMENT_Y) += phase_cor_u_y_;
+    }
+    local_field_value(subset_gid,SIGMA) = -1.0;
+    local_field_value(subset_gid,MATCH) = -1.0;
+    local_field_value(subset_gid,GAMMA) = -1.0;
+    local_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(corr_status);
+    local_field_value(subset_gid,ITERATIONS) = num_iterations;
+    return;
+  }
+
+  // SUCCESS
 
   if(projection_method_==VELOCITY_BASED) save_off_fields(subset_gid);
 
