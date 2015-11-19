@@ -2134,10 +2134,11 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
 
   Teuchos::ArrayRCP<intensity_t> intensities = def_img_->intensity_array();
 
-  int_t x=0,y=0;
+  scalar_t dx=0,dy=0;
   int_t ox=0,oy=0;
-  int_t dx=0,dy=0;
+  int_t Dx=0,Dy=0;
   scalar_t X=0.0,Y=0.0;
+  int_t px=0,py=0;
 
   // create output for each subset
   //for(int_t subset=0;subset<1;++subset){
@@ -2151,14 +2152,10 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
     const scalar_t dudx  = local_field_value(gid,DICe::NORMAL_STRAIN_X);
     const scalar_t dvdy  = local_field_value(gid,DICe::NORMAL_STRAIN_Y);
     const scalar_t gxy   = local_field_value(gid,DICe::SHEAR_STRAIN_XY);
-
     DEBUG_MSG("Write deformed subset " << gid << " u " << u << " v " << v << " theta " << theta << " dudx " << dudx << " dvdy " << dvdy << " gxy " << gxy);
-
     Teuchos::RCP<DICe::Subset> ref_subset = obj_vec_[subset]->subset();
-
     ox = ref_subset->centroid_x();
     oy = ref_subset->centroid_y();
-
     scalar_t mean_sum_ref = 0.0;
     scalar_t mean_sum_def = 0.0;
     scalar_t mean_ref = 0.0;
@@ -2171,35 +2168,37 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
     }
     // loop over each pixel in the subset
     scalar_t pixel_gamma = 0.0;
-    for(int_t px=0;px<ref_subset->num_pixels();++px){
-      x = ref_subset->x(px) - ox;
-      y = ref_subset->y(px) - oy;
+    for(int_t i=0;i<ref_subset->num_pixels();++i){
+      dx = ref_subset->x(i) - ox;
+      dy = ref_subset->y(i) - oy;
       // stretch and shear the coordinate
-      dx = (1.0+dudx)*x + gxy*y;
-      dy = (1.0+dvdy)*y + gxy*x;
+      Dx = (1.0+dudx)*dx + gxy*dy;
+      Dy = (1.0+dvdy)*dy + gxy*dx;
       //  Rotation                                  // translation // convert to global coordinates
-      X = std::cos(theta)*dx - std::sin(theta)*dy + u            + ox;
-      Y = std::sin(theta)*dx + std::cos(theta)*dy + v            + oy;
-      X = static_cast<int_t>(X);
-      Y = static_cast<int_t>(Y);
-      // TODO add checks for is deactivated
-      if(X>=0&&X<w&&Y>=0&&Y<h){
+      X = std::cos(theta)*Dx - std::sin(theta)*Dy + u            + ox;
+      Y = std::sin(theta)*Dx + std::cos(theta)*Dy + v            + oy;
+      // get the nearest pixel location:
+      px = (int_t)X;
+      if(X - (int_t)X >= 0.5) px++;
+      py = (int_t)Y;
+      if(Y - (int_t)Y >= 0.5) py++;
+      if(px>=0&&px<w&&py>=0&&py<h){
         if(use_gamma_as_color){
-          if(ref_subset->is_active(px)&!ref_subset->is_deactivated_this_step(px)){
-            pixel_gamma =  (ref_subset->def_intensities(px)-mean_def)/mean_sum_def - (ref_subset->ref_intensities(px)-mean_ref)/mean_sum_ref;
-            intensities[Y*w+X] = pixel_gamma*pixel_gamma*10000.0;
+          if(ref_subset->is_active(i)&!ref_subset->is_deactivated_this_step(i)){
+            pixel_gamma =  (ref_subset->def_intensities(i)-mean_def)/mean_sum_def - (ref_subset->ref_intensities(i)-mean_ref)/mean_sum_ref;
+            intensities[py*w+px] = pixel_gamma*pixel_gamma*10000.0;
           }
         }else{
-          if(!ref_subset->is_active(px)){
-            intensities[Y*w+X] = 75;
+          if(!ref_subset->is_active(i)){
+            intensities[py*w+px] = 75;
           }
           else{
             // color shows correlation quality
-            intensities[Y*w+X] = 100;//ref_subset->per_pixel_gamma(px)*85000;
+            intensities[py*w+px] = 100;//ref_subset->per_pixel_gamma(i)*85000;
           }
           // trun all deactivated pixels white
-          if(ref_subset->is_deactivated_this_step(px)){
-            intensities[Y*w+X] = 255;
+          if(ref_subset->is_deactivated_this_step(i)){
+            intensities[py*w+px] = 255;
           }
         } // not use_gamma_as_color
       } // range guard

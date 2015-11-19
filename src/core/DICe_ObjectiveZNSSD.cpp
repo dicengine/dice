@@ -83,6 +83,7 @@ Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
     fields[0] = DISPLACEMENT_X;
     fields[1] = DISPLACEMENT_Y;
     fields[2] = ROTATION_Z;
+    const scalar_t gamma_0 = gamma(deformation);
     std::vector<scalar_t> dir_sigma(3,0.0);
     Teuchos::RCP<std::vector<scalar_t> > temp_def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE));
     for(size_t i=0;i<fields.size();++i){
@@ -90,7 +91,6 @@ Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
       // reset def vector
       for(size_t j=0;j<DICE_DEFORMATION_SIZE;++j)
         (*temp_def)[j] = (*deformation)[j];
-      const scalar_t gamma_0 = gamma(temp_def);
       // mod the def vector +
       (*temp_def)[fields[i]] += epsilon[i];
       const scalar_t gamma_p = gamma(temp_def);
@@ -109,6 +109,9 @@ Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
     }
     mag_dir_sigma = std::sqrt(mag_dir_sigma);
     DEBUG_MSG("Simplex method sigma: " << mag_dir_sigma);
+
+    // re-initialize the subset with the original deformation solution
+    subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation,schema_->interpolation_method());
     return mag_dir_sigma;
   }
 

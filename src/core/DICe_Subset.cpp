@@ -98,7 +98,6 @@ Subset::turn_off_obstructed_pixels(Teuchos::RCP<const std::vector<scalar_t> > de
   reset_is_deactivated_this_step();
   const bool has_blocks = !pixels_blocked_by_other_subsets_.empty();
   for(int_t i=0;i<num_pixels_;++i){
-
     dx = (scalar_t)(x(i)) - cx_;
     dy = (scalar_t)(y(i)) - cy_;
     Dx = (1.0+dudx)*dx + gxy*dy;
@@ -118,8 +117,9 @@ Subset::turn_off_obstructed_pixels(Teuchos::RCP<const std::vector<scalar_t> > de
       px = ((int_t)(X + 0.5) == (int_t)(X)) ? (int_t)(X) : (int_t)(X) + 1;
       py = ((int_t)(Y + 0.5) == (int_t)(Y)) ? (int_t)(Y) : (int_t)(Y) + 1;
       if(pixels_blocked_by_other_subsets_.find(std::pair<int_t,int_t>(py,px))
-          !=pixels_blocked_by_other_subsets_.end())
+          !=pixels_blocked_by_other_subsets_.end()){
         is_deactivated_this_step(i) = true;
+      }
     }
   } // pixel loop
 #if DICE_KOKKOS
@@ -135,13 +135,6 @@ Subset::write_subset_on_image(const std::string & file_name,
   //create a square image that fits the extents of the subet
   const int_t w = image->width();
   const int_t h = image->height();
-  const scalar_t u = (*deformation)[DISPLACEMENT_X];
-  const scalar_t v = (*deformation)[DISPLACEMENT_Y];
-  const scalar_t t = (*deformation)[ROTATION_Z];
-  const scalar_t ex = (*deformation)[NORMAL_STRAIN_X];
-  const scalar_t ey = (*deformation)[NORMAL_STRAIN_Y];
-  const scalar_t g = (*deformation)[SHEAR_STRAIN_XY];
-
   intensity_t * intensities = new intensity_t[w*h];
   for(int_t y=0;y<h;++y){
     for(int_t x=0;x<w;++x){
@@ -149,6 +142,12 @@ Subset::write_subset_on_image(const std::string & file_name,
     }
   }
   if(deformation!=Teuchos::null){
+    const scalar_t u = (*deformation)[DISPLACEMENT_X];
+    const scalar_t v = (*deformation)[DISPLACEMENT_Y];
+    const scalar_t t = (*deformation)[ROTATION_Z];
+    const scalar_t ex = (*deformation)[NORMAL_STRAIN_X];
+    const scalar_t ey = (*deformation)[NORMAL_STRAIN_Y];
+    const scalar_t g = (*deformation)[SHEAR_STRAIN_XY];
     scalar_t dx=0.0,dy=0.0;
     scalar_t Dx=0.0,Dy=0.0;
     scalar_t mapped_x=0.0,mapped_y=0.0;
