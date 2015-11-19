@@ -285,6 +285,7 @@ bool
 Motion_Test_Initializer::motion_detected(Teuchos::RCP<Image> def_image){
   // test if this is a repeat call for the same frame, but by another subset
   // if so, return the previous result.
+  static int id = 0;
   if(motion_state_!=MOTION_NOT_SET){
     DEBUG_MSG("Motion_Test_Initializer::motion_detected() repeat call, return value: " << motion_state_);
     // return last result
@@ -293,6 +294,15 @@ Motion_Test_Initializer::motion_detected(Teuchos::RCP<Image> def_image){
   else{
     // create a window of the deformed image according to the constructor parameters
     Teuchos::RCP<Image> window_img = Teuchos::rcp(new Image(def_image,origin_x_,origin_y_,width_,height_));
+    scalar_t img_mean = window_img->mean();
+    Teuchos::ArrayRCP<intensity_t> filtered(width_*height_,0.0);
+    for(int_t i=0;i<width_*height_;++i){
+      filtered[i] = (*window_img)(i) > img_mean ? 255.0: 0.0;
+    }
+    window_img->replace_intensities(filtered);
+    std::stringstream ss;
+    ss << "window_image_" << id++ << ".tiff";
+    window_img->write_tiff(ss.str());
     // see if the previous image exists, if not return true as default
     if(prev_img_==Teuchos::null){
       DEBUG_MSG("Motion_Test_Initializer::motion_detected() first frame call, return value: 1 (automatically).");
@@ -300,11 +310,17 @@ Motion_Test_Initializer::motion_detected(Teuchos::RCP<Image> def_image){
       motion_state_=MOTION_TRUE;
       return true;
     }
-    //diff the two images and see if the difference is above a threshold
-    const scalar_t diff = window_img->diff(prev_img_);
+    // test for motion
+    // convert the image to black and white
+    scalar_t diff_perc = 0.0;
+    for(int_t i=0;i<width_*height_;++i)
+      if((*window_img)(i)!=(*prev_img_)(i))
+        diff_perc += 1.0;
+    std::cout << " DIFF PERC "  << diff_perc << std::endl;
+    diff_perc /= (width_*height_);
+    DEBUG_MSG("Motion_Test_Initializer::motion_detected() called, % of pixels changing: " << diff_perc << " tol: " << tol_);
     prev_img_ = window_img;
-    DEBUG_MSG("Motion_Test_Initializer::motion_detected() called, result: " << diff << " tol: " << tol_);
-    motion_state_ = diff > tol_ ? MOTION_TRUE : MOTION_FALSE;
+    motion_state_ = diff_perc > tol_ ? MOTION_TRUE : MOTION_FALSE;
     return motion_state_==MOTION_TRUE ? true: false;
   }
 }

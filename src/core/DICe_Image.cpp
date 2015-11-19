@@ -111,6 +111,14 @@ Image::replace_intensities(Teuchos::ArrayRCP<intensity_t> intensities){
   default_constructor_tasks(params);
 }
 
+scalar_t
+Image::mean()const{
+  scalar_t mean_value = 0.0;
+  for(size_t i=0;i<width_*height_;++i)
+    mean_value += (*this)(i);
+  return mean_value / (width_*height_);
+}
+
 void
 Image::write_tiff(const std::string & file_name){
   utils::write_tiff_image(file_name.c_str(),width_,height_,intensity_array().getRawPtr(),default_is_layout_right());

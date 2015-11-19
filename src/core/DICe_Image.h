@@ -195,6 +195,9 @@ public:
     return offset_y_;
   }
 
+  /// returns the mean value of the image
+  scalar_t mean()const;
+
   /// intensity accessors:
   /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
   /// y is row, x is column
