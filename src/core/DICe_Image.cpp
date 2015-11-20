@@ -61,6 +61,7 @@ Image::Image(intensity_t * intensities,
   offset_y_(0),
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
+  has_gauss_filter_(false),
   file_name_("(from raw array)")
 {
   initialize_array_image(intensities);
@@ -77,6 +78,7 @@ Image::Image(const int_t width,
   offset_y_(0),
   intensity_rcp_(intensities),
   has_gradients_(false),
+  has_gauss_filter_(false),
   file_name_("(from array)")
 {
   initialize_array_image(intensities.getRawPtr());

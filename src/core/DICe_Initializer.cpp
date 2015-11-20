@@ -292,7 +292,9 @@ Motion_Test_Initializer::motion_detected(Teuchos::RCP<Image> def_image){
   }
   else{
     // create a window of the deformed image according to the constructor parameters
-    Teuchos::RCP<Image> window_img = Teuchos::rcp(new Image(def_image,origin_x_,origin_y_,width_,height_));
+    Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
+    params->set(DICe::gauss_filter_images,true);
+    Teuchos::RCP<Image> window_img = Teuchos::rcp(new Image(def_image,origin_x_,origin_y_,width_,height_,params));
     // see if the previous image exists, if not return true as default
     if(prev_img_==Teuchos::null){
       DEBUG_MSG("Motion_Test_Initializer::motion_detected() first frame call, return value: 1 (automatically).");
@@ -300,10 +302,27 @@ Motion_Test_Initializer::motion_detected(Teuchos::RCP<Image> def_image){
       motion_state_=MOTION_TRUE;
       return true;
     }
-    //diff the two images and see if the difference is above a threshold
-    const scalar_t diff = window_img->diff(prev_img_);
+    //diff the two images and see if the difference is above the user requested tolerance
+    scalar_t diff = 0.0;
+    if(width_>def_image->gauss_filter_mask_size()/2&&height_>def_image->gauss_filter_mask_size()/2){
+      DEBUG_MSG("Computing diff only inside the filtered portion of the image, excluded borders size: " << def_image->gauss_filter_mask_size()/2+1);
+      // skip the outer edges since they are not filtered
+      for(int_t y=def_image->gauss_filter_mask_size()/2+1;y<height_-(def_image->gauss_filter_mask_size()/2+1);++y){
+        for(int_t x=def_image->gauss_filter_mask_size()/2+1;x<width_-(def_image->gauss_filter_mask_size()/2+1);++x){
+          diff += ((*window_img)(x,y) - (*prev_img_)(x,y))*((*window_img)(x,y) - (*prev_img_)(x,y));
+        }
+      }
+      diff = std::sqrt(diff);
+    }
+    else{
+      diff = window_img->diff(prev_img_);
+    }
     prev_img_ = window_img;
     DEBUG_MSG("Motion_Test_Initializer::motion_detected() called, result: " << diff << " tol: " << tol_);
+    if(tol_==-1.0){ // user has not set a tolerance manually
+      tol_ = diff + 5.0;
+      DEBUG_MSG("Motion_Test_Initializer::motion_detected() setting auto tolerance to: " << tol_);
+    }
     motion_state_ = diff > tol_ ? MOTION_TRUE : MOTION_FALSE;
     return motion_state_==MOTION_TRUE ? true: false;
   }

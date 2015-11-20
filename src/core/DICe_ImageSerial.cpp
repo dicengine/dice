@@ -55,6 +55,7 @@ Image::Image(const char * file_name,
   offset_y_(0),
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
+  has_gauss_filter_(false),
   file_name_(file_name)
 {
   const std::string rawi(".rawi");
@@ -94,6 +95,7 @@ Image::Image(const char * file_name,
   offset_y_(offset_y),
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
+  has_gauss_filter_(false),
   file_name_(file_name)
 {
   const std::string rawi(".rawi");
@@ -125,6 +127,7 @@ Image::Image(const int_t width,
   offset_y_(0),
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
+  has_gauss_filter_(false),
   file_name_("(from array)")
 {
   assert(height_>0);
@@ -137,13 +140,15 @@ Image::Image(Teuchos::RCP<Image> img,
   const int_t offset_x,
   const int_t offset_y,
   const int_t width,
-  const int_t height):
+  const int_t height,
+  const Teuchos::RCP<Teuchos::ParameterList> & params):
   width_(width),
   height_(height),
   offset_x_(offset_x),
   offset_y_(offset_y),
   intensity_rcp_(Teuchos::null),
   has_gradients_(img->has_gradients()),
+  has_gauss_filter_(img->has_gauss_filter()),
   file_name_(img->file_name())
 {
   TEUCHOS_TEST_FOR_EXCEPTION(offset_x_<0,std::invalid_argument,"Error, offset_x_ cannot be negative.");
@@ -187,6 +192,26 @@ Image::Image(Teuchos::RCP<Image> img,
   grad_c2_ = -8.0/12.0;
   gauss_filter_mask_size_ = img->gauss_filter_mask_size();
   gauss_filter_half_mask_ = gauss_filter_mask_size_/2+1;
+  if(params!=Teuchos::null){
+    if(params->isParameter(DICe::gauss_filter_mask_size)){
+      gauss_filter_mask_size_ = params->get<int>(DICe::gauss_filter_mask_size,7);
+      gauss_filter_half_mask_ = gauss_filter_mask_size_/2+1;
+    }
+    if(params->isParameter(DICe::gauss_filter_images)){
+        if(!img->has_gauss_filter()&&params->get<bool>(DICe::gauss_filter_images,false)){
+          // if the image was not filtered, but requested here, filter the image
+          DEBUG_MSG("Image filter requested, but origin image does not have gauss filter, applying gauss filter here");
+          gauss_filter();
+        }
+    }
+    if(params->isParameter(DICe::compute_image_gradients)){
+      if(!img->has_gradients()&&params->get<bool>(DICe::compute_image_gradients,false)){
+        // if gradients have not been computed, but ther are requested here, compute them
+        DEBUG_MSG("Image gradients requested, but origin image does not have gradients, computing them here");
+        compute_gradients();
+      }
+    }
+  }
 }
 
 void
@@ -205,14 +230,6 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
   // image gradient coefficients
   grad_c1_ = 1.0/12.0;
   grad_c2_ = -8.0/12.0;
-  const bool compute_image_gradients = params!=Teuchos::null ?
-      params->get<bool>(DICe::compute_image_gradients,false) : false;
-  const bool image_grad_use_hierarchical_parallelism = params!=Teuchos::null ?
-      params->get<bool>(DICe::image_grad_use_hierarchical_parallelism,false) : false;
-  const int image_grad_team_size = params!=Teuchos::null ?
-      params->get<int>(DICe::image_grad_team_size,256) : 256;
-  if(compute_image_gradients)
-    compute_gradients(image_grad_use_hierarchical_parallelism,image_grad_team_size);
   const bool gauss_filter_image = params!=Teuchos::null ?
       params->get<bool>(DICe::gauss_filter_images,false) : false;
   const bool gauss_filter_use_hierarchical_parallelism = params!=Teuchos::null ?
@@ -225,6 +242,14 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
   if(gauss_filter_image){
     gauss_filter(gauss_filter_use_hierarchical_parallelism,gauss_filter_team_size);
   }
+  const bool compute_image_gradients = params!=Teuchos::null ?
+      params->get<bool>(DICe::compute_image_gradients,false) : false;
+  const bool image_grad_use_hierarchical_parallelism = params!=Teuchos::null ?
+      params->get<bool>(DICe::image_grad_use_hierarchical_parallelism,false) : false;
+  const int image_grad_team_size = params!=Teuchos::null ?
+      params->get<int>(DICe::image_grad_team_size,256) : 256;
+  if(compute_image_gradients)
+    compute_gradients(image_grad_use_hierarchical_parallelism,image_grad_team_size);
   mask_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
 }
 
@@ -480,6 +505,7 @@ Image::gauss_filter(const bool use_hierarchical_parallelism,
       }
     }
   }
+  has_gauss_filter_ = true;
 }
 
 }// End DICe Namespace

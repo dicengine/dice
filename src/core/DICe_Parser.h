@@ -139,7 +139,7 @@ Motion_Window_Params {
   origin_y_(0),
   width_(-1),
   height_(-1),
-  tol_(0.0),
+  tol_(-1.0),
   use_subset_id_(-1){};
   /// upper left corner x coord
   int_t origin_x_;

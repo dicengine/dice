@@ -149,7 +149,8 @@ public:
     const int_t offset_x = 0,
     const int_t offset_y = 0,
     const int_t width = -1,
-    const int_t height = -1);
+    const int_t height = -1,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// perform initialization of an image from an array
   /// \param intensities the array of intensity values
@@ -294,6 +295,11 @@ public:
     return has_gradients_;
   }
 
+  /// returns true if the image has been  gauss filtered
+  bool has_gauss_filter()const{
+    return has_gauss_filter_;
+  }
+
   /// filter the image using a 7 point gauss filter
   void gauss_filter(const bool use_hierarchical_parallelism=false,
     const int_t team_size=256);
@@ -399,6 +405,8 @@ private:
 #endif
   /// flag that the gradients have been computed
   bool has_gradients_;
+  /// flag that the image has been filtered
+  bool has_gauss_filter_;
   /// coeff used in computing gradients
   scalar_t grad_c1_;
   /// coeff used in computing gradients

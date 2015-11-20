@@ -831,15 +831,16 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  motion_window_params.use_subset_id_);
              }
              else{
-             TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<6,std::invalid_argument,"TEST_FOR_MOTION requires 5 arguments "
-                 "usage: TEST_FOR_MOTION <origin_x> <origin_y> <width> <heigh> <tol>");
-             for(int_t m=1;m<6;++m){TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[m]),std::invalid_argument,
+             TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<5,std::invalid_argument,"TEST_FOR_MOTION requires at least 4 arguments \n"
+                 "usage: TEST_FOR_MOTION <origin_x> <origin_y> <width> <heigh> [tol], if tol is not set it will be computed automatically based on the first frame");
+             for(int_t m=1;m<5;++m){TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[m]),std::invalid_argument,
                "Error, these parameters should be numbers here.");}
              motion_window_params.origin_x_ = atoi(block_tokens[1].c_str());
              motion_window_params.origin_y_ = atoi(block_tokens[2].c_str());
              motion_window_params.width_ = atoi(block_tokens[3].c_str());
              motion_window_params.height_ = atoi(block_tokens[4].c_str());
-             motion_window_params.tol_ = strtod(block_tokens[5].c_str(),NULL);
+             if(block_tokens.size()>5)
+               motion_window_params.tol_ = strtod(block_tokens[5].c_str(),NULL);
              if(proc_rank==0) DEBUG_MSG("Conformal subset will test for motion with window"
                  " origin x: " << motion_window_params.origin_x_ << " origin y: " << motion_window_params.origin_y_ <<
                  " width: " << motion_window_params.width_ << " height: " << motion_window_params.height_ <<
