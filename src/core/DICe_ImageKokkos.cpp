@@ -679,7 +679,7 @@ Image::operator()(const Gauss_Flat_Tag &, const int_t pixel_index)const{
     for(int_t i=0;i<gauss_filter_mask_size_;++i){
       for(int_t j=0;j<gauss_filter_mask_size_;++j){
         // assumes intensity values have already been deep copied into intensities_temp_
-        value += gauss_filter_coeffs_[i][j]*intensities_temp_(y+(j-gauss_filter_half_mask_),x+(i-gauss_filter_half_mask_));
+        value += gauss_filter_coeffs_[i][j]*intensities_temp_(y+(j-gauss_filter_half_mask_+1),x+(i-gauss_filter_half_mask_+1));
       } //j
     } //i
     intensities_.d_view(y,x) = value;
@@ -697,7 +697,7 @@ Image::operator()(const Gauss_Tag &, const member_type team_member)const{
       for(int_t i=0;i<gauss_filter_mask_size_;++i){
         for(int_t j=0;j<gauss_filter_mask_size_;++j){
           // assumes intensity values have already been deep copied into intensities_temp_
-          value += gauss_filter_coeffs_[i][j]*intensities_temp_(row+(j-gauss_filter_half_mask_),col+(i-gauss_filter_half_mask_));
+          value += gauss_filter_coeffs_[i][j]*intensities_temp_(row+(j-gauss_filter_half_mask_+1),col+(i-gauss_filter_half_mask_+1));
         } //j
       } //i
       intensities_.d_view(row,col) = value;

@@ -572,7 +572,7 @@ Schema::initialize(const int_t num_pts,
   else
     conformal_subset_defs_ = conformal_subset_defs;
 
-  assert(data_num_points_ >= conformal_subset_defs_->size() && "  DICe ERROR: data is not the right size, "
+  assert(data_num_points_ >= (int_t)conformal_subset_defs_->size() && "  DICe ERROR: data is not the right size, "
       "conformal_subset_defs_.size() is too large for the data array");
   // ensure that the ids in conformal subset defs are valid:
   typename std::map<int_t,Conformal_Area_Def>::iterator it = conformal_subset_defs_->begin();
@@ -783,7 +783,7 @@ Schema::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids){
       }
     }
     std::vector<int_t> local_subset_gids_grouped_by_roi;
-    assert(neighbor_ids->size()==data_num_points_);
+    assert((int_t)neighbor_ids->size()==data_num_points_);
     std::vector<int_t> this_group_gids;
     std::vector<std::vector<int_t> > seed_groupings;
     std::vector<std::vector<int_t> > local_seed_groupings;
@@ -962,7 +962,7 @@ Schema::execute_correlation(){
           this_proc_subset_global_ids_[subset_index])));
       }
     }
-    assert(obj_vec_.size()==num_local_subsets);
+    assert((int_t)obj_vec_.size()==num_local_subsets);
     // now run the correlations:
     for(int_t subset_index=0;subset_index<num_local_subsets;++subset_index){
       check_for_blocking_subsets(this_proc_subset_global_ids_[subset_index]);
@@ -2216,7 +2216,7 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
 
 int_t
 Schema::strain_window_size(const int_t post_processor_index)const{
-  assert(post_processors_.size()>post_processor_index);
+  assert((int_t)post_processors_.size()>post_processor_index);
     return post_processors_[post_processor_index]->strain_window_size();
 }
 
@@ -2385,7 +2385,7 @@ Output_Spec::write_frame(std::FILE * file,
       value = schema_->field_value(field_value_index,string_to_field_name(field_names_[i]));
     // otherwise the field must belong to a post processor
     else{
-      assert(post_processor_ids_[i]>=0 && post_processor_ids_[i] < post_processor_ids_[i]<schema_->post_processors()->size());
+      assert(post_processor_ids_[i]>=0 && post_processor_ids_[i]<(int_t)schema_->post_processors()->size());
       value = (*schema_->post_processors())[post_processor_ids_[i]]->field_value(field_value_index,field_names_[i]);
     }
     if(i==0)

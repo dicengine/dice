@@ -161,7 +161,7 @@ public:
 
   /// \brief Returns the map of degree of freedom field names (see dof_map_ description below)
   /// \param index The index of the degree of freedom map
-  Field_Name dof_map(const int_t index)const{
+  Field_Name dof_map(const size_t index)const{
       assert(index<dof_map_.size());
       return dof_map_[index];
   }

@@ -457,6 +457,10 @@ Image::gauss_filter(const bool use_hierarchical_parallelism,
       "Error, the Gauss filter mask size is invalid (options include 5,7,9,11,13)");
   }
 
+  // copy over the old intensities
+  for(int_t i=0;i<num_pixels();++i)
+    intensities_temp_[i] = intensities_[i];
+
   for(int_t j=0;j<gauss_filter_mask_size_;++j){
     for(int_t i=0;i<gauss_filter_mask_size_;++i){
       gauss_filter_coeffs_[i][j] = coeffs[i]*coeffs[j];
@@ -469,7 +473,7 @@ Image::gauss_filter(const bool use_hierarchical_parallelism,
         for(int_t i=0;i<gauss_filter_mask_size_;++i){
           for(int_t j=0;j<gauss_filter_mask_size_;++j){
             // assumes intensity values have already been deep copied into intensities_temp_
-            value += gauss_filter_coeffs_[i][j]*intensities_temp_[(y+(j-gauss_filter_half_mask_))*width_+x+(i-gauss_filter_half_mask_)];
+            value += gauss_filter_coeffs_[i][j]*intensities_temp_[(y+(j-gauss_filter_half_mask_+1))*width_+x+(i-gauss_filter_half_mask_+1)];
           } //j
         } //i
         intensities_[y*width_+x] = value;

@@ -100,6 +100,7 @@ Image::diff(Teuchos::RCP<Image> rhs) const{
 void
 Image::replace_intensities(Teuchos::ArrayRCP<intensity_t> intensities){
   assert(intensities.size()==width_*height_);
+  intensity_rcp_ = intensities; // copy the pointer so the arrayRCP doesn't get deallocated;
   // automatically re-compute the image gradients:
   Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
   params->set(DICe::compute_image_gradients,true);
@@ -114,7 +115,7 @@ Image::replace_intensities(Teuchos::ArrayRCP<intensity_t> intensities){
 scalar_t
 Image::mean()const{
   scalar_t mean_value = 0.0;
-  for(size_t i=0;i<width_*height_;++i)
+  for(int_t i=0;i<width_*height_;++i)
     mean_value += (*this)(i);
   return mean_value / (width_*height_);
 }

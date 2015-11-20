@@ -308,7 +308,7 @@ read_cine_headers(const char *file, std::ostream * out_stream){
   cine_file.read(reinterpret_cast<char*>(&header.ImageCount), sizeof(header.ImageCount));
   if(out_stream) *out_stream << "header image count:   " << header.ImageCount << std::endl;
   cine_file.read(reinterpret_cast<char*>(&header.OffImageHeader), sizeof(header.OffImageHeader));
-  assert(header.OffImageHeader == test_size);
+  assert((int)header.OffImageHeader == test_size);
   if(out_stream) *out_stream << "offset image header:  " << header.OffImageHeader << std::endl;
   cine_file.read(reinterpret_cast<char*>(&header.OffSetup), sizeof(header.OffSetup));
   if(out_stream) *out_stream << "offset setup:         " << header.OffSetup << std::endl;
@@ -340,7 +340,7 @@ read_cine_headers(const char *file, std::ostream * out_stream){
   header_test_size += sizeof(bitmap_header.biClrUsed);
   header_test_size += sizeof(bitmap_header.biClrImportant);
   //if(out_stream) *out_stream << "test header size:     " << header_test_size << std::endl;
-  assert(header_test_size==bitmap_header.biSize);
+  assert(header_test_size==(int)bitmap_header.biSize);
   cine_file.read(reinterpret_cast<char*>(&bitmap_header.biWidth), sizeof(bitmap_header.biWidth));
   if(out_stream) *out_stream << "bitmap width:         " << bitmap_header.biWidth << std::endl;
   cine_file.read(reinterpret_cast<char*>(&bitmap_header.biHeight), sizeof(bitmap_header.biHeight));

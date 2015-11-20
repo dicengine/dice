@@ -302,36 +302,71 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> filter_5_params = rcp(new Teuchos::ParameterList());
   filter_5_params->set(DICe::gauss_filter_images,true);
   filter_5_params->set(DICe::gauss_filter_mask_size,5);
-  Image filter_5_img("./images/ImageA.tif",filter_5_params);
-  filter_5_img.write_tiff("outFilter5.tif");
+  Teuchos::RCP<Image> filter_5_img = Teuchos::rcp(new Image("./images/ImageB.tif",filter_5_params));
+  //filter_5_img.write_tiff("outFilter5.tif");
+  //filter_5_img.write_rawi("outFilter5.rawi");
+  Teuchos::RCP<Image> filter_5_exact = Teuchos::rcp(new Image("./images/outFilter5.rawi"));
+  const scalar_t diff_5 = filter_5_exact->diff(filter_5_img);
+  if(diff_5 > 1.0E-4){
+    *outStream << "Error, the 5 pixel filter image does not have the right intensities." << std::endl;
+    errorFlag++;
+  }
 
   *outStream << "creating gauss filtered image filter size 7: outFilter7.tif " << std::endl;
   Teuchos::RCP<Teuchos::ParameterList> filter_7_params = rcp(new Teuchos::ParameterList());
   filter_7_params->set(DICe::gauss_filter_images,true);
   filter_7_params->set(DICe::gauss_filter_mask_size,7);
-  Image filter_7_img("./images/ImageA.tif",filter_7_params);
-  filter_7_img.write_tiff("outFilter7.tif");
+  Teuchos::RCP<Image> filter_7_img = Teuchos::rcp(new Image("./images/ImageB.tif",filter_7_params));
+  //filter_7_img.write_tiff("outFilter7.tif");
+  //filter_7_img.write_rawi("outFilter7.rawi");
+  Teuchos::RCP<Image> filter_7_exact = Teuchos::rcp(new Image("./images/outFilter7.rawi"));
+  const scalar_t diff_7 = filter_7_exact->diff(filter_7_img);
+  if(diff_7 > 1.0E-4){
+    *outStream << "Error, the 7 pixel filter image does not have the right intensities." << std::endl;
+    errorFlag++;
+  }
 
   *outStream << "creating gauss filtered image filter size 9: outFilter9.tif " << std::endl;
   Teuchos::RCP<Teuchos::ParameterList> filter_9_params = rcp(new Teuchos::ParameterList());
   filter_9_params->set(DICe::gauss_filter_images,true);
   filter_9_params->set(DICe::gauss_filter_mask_size,9);
-  Image filter_9_img("./images/ImageA.tif",filter_9_params);
-  filter_9_img.write_tiff("outFilter9.tif");
+  Teuchos::RCP<Image> filter_9_img = Teuchos::rcp(new Image("./images/ImageB.tif",filter_9_params));
+  //filter_9_img.write_tiff("outFilter9.tif");
+  //filter_9_img.write_rawi("outFilter9.rawi");
+  Teuchos::RCP<Image> filter_9_exact = Teuchos::rcp(new Image("./images/outFilter9.rawi"));
+  const scalar_t diff_9 = filter_9_exact->diff(filter_9_img);
+  if(diff_9 > 1.0E-4){
+    *outStream << "Error, the 9 pixel filter image does not have the right intensities." << std::endl;
+    errorFlag++;
+  }
 
   *outStream << "creating gauss filtered image filter size 11: outFilter11.tif " << std::endl;
   Teuchos::RCP<Teuchos::ParameterList> filter_11_params = rcp(new Teuchos::ParameterList());
   filter_11_params->set(DICe::gauss_filter_images,true);
   filter_11_params->set(DICe::gauss_filter_mask_size,11);
-  Image filter_11_img("./images/ImageA.tif",filter_11_params);
-  filter_11_img.write_tiff("outFilter11.tif");
+  Teuchos::RCP<Image> filter_11_img = Teuchos::rcp(new Image("./images/ImageB.tif",filter_11_params));
+  //filter_11_img.write_tiff("outFilter11.tif");
+  //filter_11_img.write_rawi("outFilter11.rawi");
+  Teuchos::RCP<Image> filter_11_exact = Teuchos::rcp(new Image("./images/outFilter11.rawi"));
+  const scalar_t diff_11 = filter_11_exact->diff(filter_11_img);
+  if(diff_11 > 1.0E-4){
+    *outStream << "Error, the 11 pixel filter image does not have the right intensities." << std::endl;
+    errorFlag++;
+  }
 
   *outStream << "creating gauss filtered image filter size 13: outFilter13.tif " << std::endl;
   Teuchos::RCP<Teuchos::ParameterList> filter_13_params = rcp(new Teuchos::ParameterList());
   filter_13_params->set(DICe::gauss_filter_images,true);
   filter_13_params->set(DICe::gauss_filter_mask_size,13);
-  Image filter_13_img("./images/ImageA.tif",filter_13_params);
-  filter_13_img.write_tiff("outFilter13.tif");
+  Teuchos::RCP<Image> filter_13_img = Teuchos::rcp(new Image("./images/ImageB.tif",filter_13_params));
+  //filter_13_img.write_tiff("outFilter13.tif");
+  //filter_13_img.write_rawi("outFilter13.rawi");
+  Teuchos::RCP<Image> filter_13_exact = Teuchos::rcp(new Image("./images/outFilter13.rawi"));
+  const scalar_t diff_13 = filter_13_exact->diff(filter_13_img);
+  if(diff_13 > 1.0E-4){
+    *outStream << "Error, the 13 pixel filter image does not have the right intensities." << std::endl;
+    errorFlag++;
+  }
 
   *outStream << "creating gauss filtered image filter size 13 (with hierarchical parallelism) to compare to flat filter functor" << std::endl;
   Teuchos::RCP<Teuchos::ParameterList> filter_h_params = rcp(new Teuchos::ParameterList());
@@ -339,12 +374,12 @@ int main(int argc, char *argv[]) {
   filter_h_params->set(DICe::gauss_filter_use_hierarchical_parallelism,true);
   filter_h_params->set(DICe::gauss_filter_team_size,256);
   filter_h_params->set(DICe::gauss_filter_mask_size,13);
-  Image filter_h_img("./images/ImageA.tif",filter_h_params);
+  Image filter_h_img("./images/ImageB.tif",filter_h_params);
 
   bool filter_error = false;
   for(int_t y=0;y<filter_h_img.height();++y){
     for(int_t x=0;x<filter_h_img.width();++x){
-      if(std::abs(filter_h_img(x,y) - filter_13_img(x,y)) > grad_tol)
+      if(std::abs(filter_h_img(x,y) - (*filter_13_img)(x,y)) > grad_tol)
         filter_error = true;
     }
   }

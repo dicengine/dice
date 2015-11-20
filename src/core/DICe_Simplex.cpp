@@ -71,7 +71,7 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,
   const scalar_t & threshold){
 
   assert(deformation->size()==DICE_DEFORMATION_SIZE);
-  assert(deltas->size()==num_dim_);
+  assert((int_t)deltas->size()==num_dim_);
 
   DEBUG_MSG("Conducting multidimensional simplex minimization");
   DEBUG_MSG("Max iterations: " << max_iterations_ << " tolerance: " << tolerance_);
