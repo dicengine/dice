@@ -956,12 +956,9 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            }
          } // while loop
          // put the multishapes into a subset def:
-         const int_t b_size = boundary_multi_shape.size();
-         const int_t e_size = excluded_multi_shape.size();
-         const int_t o_size = obstructed_multi_shape.size();
-         if(proc_rank==0) DEBUG_MSG("Adding " << b_size << " shape(s) to the boundary def ");
-         if(proc_rank==0) DEBUG_MSG("Adding " << e_size << " shape(s) to the exclusion def ");
-         if(proc_rank==0) DEBUG_MSG("Adding " << o_size << " shape(s) to the obstruction def ");
+         if(proc_rank==0) DEBUG_MSG("Adding " << boundary_multi_shape.size() << " shape(s) to the boundary def ");
+         if(proc_rank==0) DEBUG_MSG("Adding " << excluded_multi_shape.size() << " shape(s) to the exclusion def ");
+         if(proc_rank==0) DEBUG_MSG("Adding " << obstructed_multi_shape.size() << " shape(s) to the obstruction def ");
          DICe::Conformal_Area_Def conformal_area_def(boundary_multi_shape,excluded_multi_shape,obstructed_multi_shape);
          if(subset_id<0){
            std::cout << "Error, invalid subset id for conformal subset (or subset id was not defined with \"SUBSET_ID <id>\"): " << subset_id << std::endl;
@@ -1151,14 +1148,13 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
   correlation_points.clear();
   neighbor_ids.clear();
 
-  int_t numROI = 1;
   bool seed_was_specified = false;
   Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > roi_defs;
   if(subset_file_info!=Teuchos::null){
     if(subset_file_info->conformal_area_defs!=Teuchos::null){
       if(proc_rank==0) DEBUG_MSG("Using ROIs from a subset file");
       roi_defs = subset_file_info->conformal_area_defs;
-      numROI = roi_defs->size();
+      if(proc_rank==0) DEBUG_MSG("create_regular_grid_of_correlation_points(): user requested " << roi_defs->size(); <<  " ROI(s)");
       seed_was_specified = subset_file_info->size_map->size() > 0;
       if(seed_was_specified){
         assert(subset_file_info->size_map->size()==subset_file_info->displacement_map->size() &&
@@ -1166,11 +1162,11 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
       }
     }
     else{
-      if(proc_rank==0) DEBUG_MSG("Subset file exists, but has no ROIs");
+      if(proc_rank==0) DEBUG_MSG("create_regular_grid_of_correlation_points(): subset file exists, but has no ROIs");
     }
   }
   if(roi_defs==Teuchos::null){ // wasn't populated above so create a dummy roi with the whole image:
-    if(proc_rank==0) DEBUG_MSG("Creating dummy ROI of the entire image");
+    if(proc_rank==0) DEBUG_MSG("create_regular_grid_of_correlation_points(): creating dummy ROI of the entire image");
     Teuchos::RCP<DICe::Rectangle> rect = Teuchos::rcp(new DICe::Rectangle(width/2,height/2,width,height));
     DICe::multi_shape boundary_multi_shape;
     boundary_multi_shape.push_back(rect);
@@ -1179,7 +1175,6 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
     roi_defs->insert(std::pair<int_t,DICe::Conformal_Area_Def>(0,conformal_area_def));
   }
 
-  if(proc_rank==0) DEBUG_MSG("create_regular_grid_of_correlation_points() has " << numROI <<  " ROI(s)");
 
   // if no ROI is specified, the whole image is the ROI
 

@@ -1007,8 +1007,7 @@ Schema::subset_evolution_routine(Teuchos::RCP<Objective> obj){
 
   const int_t subset_gid = obj->correlation_point_global_id();
   TEUCHOS_TEST_FOR_EXCEPTION(get_local_id(subset_gid)==-1,std::runtime_error,"Error: subset id is not local to this process.");
-  const int_t proc_id = comm_->get_rank();
-  DEBUG_MSG("[PROC " << proc_id << "] SUBSET " << subset_gid << " (" << local_field_value(subset_gid,DICe::COORDINATE_X) <<
+  DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " (" << local_field_value(subset_gid,DICe::COORDINATE_X) <<
     "," << local_field_value(subset_gid,DICe::COORDINATE_Y) << ")");
 
   bool motion_detected = true;
@@ -1101,7 +1100,7 @@ Schema::subset_evolution_routine(Teuchos::RCP<Objective> obj){
     }
   }
   catch (std::logic_error &err) { // a non-graceful exception occurred
-    DEBUG_MSG("[PROC " << proc_id << "] SUBSET " << subset_gid << " initialization failed by exception.");
+    DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " initialization failed by exception.");
     // TODO make this fail code a function (input status_flag and num_iterations)
     local_field_value(subset_gid,SIGMA) = -1.0;
     local_field_value(subset_gid,MATCH) = -1.0;
@@ -1113,7 +1112,7 @@ Schema::subset_evolution_routine(Teuchos::RCP<Objective> obj){
   // test that initialization was successful:
   // TODO better test here
   const Status_Flag init_status = initial_gamma <= 0.2 ? INITIALIZE_SUCCESSFUL : INITIALIZE_FAILED;
-  DEBUG_MSG("[PROC " << proc_id << "] SUBSET " << subset_gid << " initialization status: " << to_string(init_status));
+  DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " initialization status: " << to_string(init_status));
   // catch failed initialization by gamma TODO add other ways to test initialization
   if(init_status==INITIALIZE_FAILED){
     local_field_value(subset_gid,SIGMA) = -1.0;
@@ -1209,11 +1208,11 @@ Schema::subset_evolution_routine(Teuchos::RCP<Objective> obj){
 
   if(output_deformed_subset_intensity_images_){
 #ifndef DICE_DISABLE_BOOST_FILESYSTEM
-    DEBUG_MSG("[PROC " << proc_id << "] Attempting to create directory : ./deformed_subset_intensities/");
+    DEBUG_MSG("[PROC " << comm_->get_rank() << "] Attempting to create directory : ./deformed_subset_intensities/");
     std::string dirStr = "./deformed_subset_intensities/";
     boost::filesystem::path dir(dirStr);
     if(boost::filesystem::create_directory(dir)) {
-      DEBUG_MSG("[PROC " << proc_id << "] Directory successfully created");
+      DEBUG_MSG("[PROC " << comm_->get_rank() << "] Directory successfully created");
     }
     int_t num_zeros = 0;
     if(num_image_frames_>0){
@@ -1237,11 +1236,11 @@ Schema::subset_evolution_routine(Teuchos::RCP<Objective> obj){
   }
   if(output_evolved_subset_images_){
 #ifndef DICE_DISABLE_BOOST_FILESYSTEM
-    DEBUG_MSG("[PROC " << proc_id << "] Attempting to create directory : ./evolved_subsets/");
+    DEBUG_MSG("[PROC " << comm_->get_rank() << "] Attempting to create directory : ./evolved_subsets/");
     std::string dirStr = "./evolved_subsets/";
     boost::filesystem::path dir(dirStr);
     if(boost::filesystem::create_directory(dir)) {
-      DEBUG_MSG("[PROC " << proc_id << "[ Directory successfully created");
+      DEBUG_MSG("[PROC " << comm_->get_rank() << "[ Directory successfully created");
     }
     int_t num_zeros = 0;
     if(num_image_frames_>0){
@@ -1272,9 +1271,8 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     "use_subset_evolution is not allowed for the generic correlation routine");
 
   const int_t subset_gid = obj->correlation_point_global_id();
-  const int_t proc_id = comm_->get_rank();
   assert(get_local_id(subset_gid)!=-1 && "Error: subset id is not local to this process.");
-  DEBUG_MSG("[PROC " << proc_id << "] SUBSET " << subset_gid << " (" << local_field_value(subset_gid,DICe::COORDINATE_X) <<
+  DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " (" << local_field_value(subset_gid,DICe::COORDINATE_X) <<
     "," << local_field_value(subset_gid,DICe::COORDINATE_Y) << ")");
 
   Status_Flag init_status = INITIALIZE_FAILED;
@@ -1464,11 +1462,11 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
 
   if(output_deformed_subset_intensity_images_){
 #ifndef DICE_DISABLE_BOOST_FILESYSTEM
-    DEBUG_MSG("[PROC " << proc_id << "] Attempting to create directory : ./deformed_subset_intensities/");
+    DEBUG_MSG("[PROC " << comm_->get_rank() << "] Attempting to create directory : ./deformed_subset_intensities/");
     std::string dirStr = "./deformed_subset_intensities/";
     boost::filesystem::path dir(dirStr);
     if(boost::filesystem::create_directory(dir)) {
-      DEBUG_MSG("[PROC " << proc_id << "] Directory successfully created");
+      DEBUG_MSG("[PROC " << comm_->get_rank() << "] Directory successfully created");
     }
     int_t num_zeros = 0;
     if(num_image_frames_>0){
@@ -1492,11 +1490,11 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   }
   if(output_evolved_subset_images_){
 #ifndef DICE_DISABLE_BOOST_FILESYSTEM
-    DEBUG_MSG("[PROC " << proc_id << "] Attempting to create directory : ./evolved_subsets/");
+    DEBUG_MSG("[PROC " << comm_->get_rank() << "] Attempting to create directory : ./evolved_subsets/");
     std::string dirStr = "./evolved_subsets/";
     boost::filesystem::path dir(dirStr);
     if(boost::filesystem::create_directory(dir)) {
-      DEBUG_MSG("[PROC " << proc_id << "[ Directory successfully created");
+      DEBUG_MSG("[PROC " << comm_->get_rank() << "[ Directory successfully created");
     }
     int_t num_zeros = 0;
     if(num_image_frames_>0){
@@ -1583,9 +1581,8 @@ void
 Schema::new_generic_correlation_routine(Teuchos::RCP<Objective> obj){
 
   const int_t subset_gid = obj->correlation_point_global_id();
-  const int_t proc_id = comm_->get_rank();
   assert(get_local_id(subset_gid)!=-1 && "Error: subset id is not local to this process.");
-  DEBUG_MSG("[PROC " << proc_id << "] SUBSET " << subset_gid << " (" << local_field_value(subset_gid,DICe::COORDINATE_X) <<
+  DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " (" << local_field_value(subset_gid,DICe::COORDINATE_X) <<
     "," << local_field_value(subset_gid,DICe::COORDINATE_Y) << ")");
   //
   //  test for motion if requested by the user in the subsets.txt file
@@ -1812,11 +1809,11 @@ Schema::new_generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   if(output_deformed_subset_intensity_images_){
 #ifndef DICE_DISABLE_BOOST_FILESYSTEM
-    DEBUG_MSG("[PROC " << proc_id << "] Attempting to create directory : ./deformed_subset_intensities/");
+    DEBUG_MSG("[PROC " << comm_->get_rank() << "] Attempting to create directory : ./deformed_subset_intensities/");
     std::string dirStr = "./deformed_subset_intensities/";
     boost::filesystem::path dir(dirStr);
     if(boost::filesystem::create_directory(dir)) {
-      DEBUG_MSG("[PROC " << proc_id << "] Directory successfully created");
+      DEBUG_MSG("[PROC " << comm_->get_rank() << "] Directory successfully created");
     }
     int_t num_zeros = 0;
     if(num_image_frames_>0){
@@ -1840,11 +1837,11 @@ Schema::new_generic_correlation_routine(Teuchos::RCP<Objective> obj){
   }
   if(output_evolved_subset_images_){
 #ifndef DICE_DISABLE_BOOST_FILESYSTEM
-    DEBUG_MSG("[PROC " << proc_id << "] Attempting to create directory : ./evolved_subsets/");
+    DEBUG_MSG("[PROC " << comm_->get_rank() << "] Attempting to create directory : ./evolved_subsets/");
     std::string dirStr = "./evolved_subsets/";
     boost::filesystem::path dir(dirStr);
     if(boost::filesystem::create_directory(dir)) {
-      DEBUG_MSG("[PROC " << proc_id << "[ Directory successfully created");
+      DEBUG_MSG("[PROC " << comm_->get_rank() << "[ Directory successfully created");
     }
     int_t num_zeros = 0;
     if(num_image_frames_>0){
