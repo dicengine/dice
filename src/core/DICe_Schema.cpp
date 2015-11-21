@@ -1808,7 +1808,7 @@ Schema::new_generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //  turn on pixels that at the beginning were hidden behind an obstruction
   //
   if(use_subset_evolution_&&image_frame_>1){
-    DEBUG_MSG("[PROC " << proc_id << "] Evolving subset " << subset_gid << " using newly exposed pixels for intensity values");
+    DEBUG_MSG("[PROC " << comm_->get_rank() << "] Evolving subset " << subset_gid << " using newly exposed pixels for intensity values");
     obj->subset()->turn_on_previously_obstructed_pixels();
   }
   //
