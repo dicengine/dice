@@ -1,5 +1,6 @@
 
 SET(DICE_SOURCES
+  DICe_Simplex.cpp
   DICe_Schema.cpp
   DICe_ObjectiveZNSSD.cpp
   DICe_Parser.cpp
@@ -9,6 +10,7 @@ SET(DICE_SOURCES
   )
 
 SET(DICE_HEADERS
+  DICe_Simplex.h
   DICe_Objective.h
   DICe_ObjectiveZNSSD.h
   DICe_Schema.h

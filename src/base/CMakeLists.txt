@@ -4,7 +4,6 @@ SET(DICE_SOURCES
   DICe_Image.cpp
   DICe_Subset.cpp
   DICe_Shape.cpp
-  DICe_Simplex.cpp
   )
 
 SET(DICE_HEADERS
@@ -12,7 +11,6 @@ SET(DICE_HEADERS
   DICe_Image.h
   DICe_Subset.h
   DICe_Shape.h
-  DICe_Simplex.h
   )
 
 IF(DICE_ENABLE_MANYCORE)
