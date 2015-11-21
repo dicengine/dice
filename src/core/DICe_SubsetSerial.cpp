@@ -176,13 +176,13 @@ Subset::grad_y(const int_t pixel_index)const{
   return grad_y_[pixel_index];
 }
 
-const intensity_t&
-Subset::ref_intensities(const int_t pixel_index)const{
+intensity_t&
+Subset::ref_intensities(const int_t pixel_index){
   return ref_intensities_[pixel_index];
 }
 
-const intensity_t&
-Subset::def_intensities(const int_t pixel_index)const{
+intensity_t&
+Subset::def_intensities(const int_t pixel_index){
   return def_intensities_[pixel_index];
 }
 

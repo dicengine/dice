@@ -153,11 +153,11 @@ public:
 
   /// ref intensities accessor
   /// \param pixel_index the pixel id
-  const intensity_t& ref_intensities(const int_t pixel_index)const;
+  intensity_t& ref_intensities(const int_t pixel_index);
 
   /// ref intensities accessor
   /// \param pixel_index the pixel id
-  const intensity_t& def_intensities(const int_t pixel_index)const;
+  intensity_t& def_intensities(const int_t pixel_index);
 
   /// initialization method:
   /// \param image the image to get the intensity values from
@@ -227,6 +227,18 @@ public:
   /// When methods like gamma() are called on an objective, these pixels get skipped so they do not contribute to
   /// the correlation or the optimization routine.
   void turn_off_obstructed_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation);
+
+  /// \brief EXPERIMENTAL See if any pixels that were obstructed to begin with are now in view, if so use the
+  /// newly visible intensity values to reconstruct the subset
+  ///
+  /// Some pixels in the subset may be hidden in the first frame by an obstruction (or another subset that
+  /// sits on top of this one). As the frames progress, these pixels eventually become visible. This method
+  /// can be used to evolve the reference subset intensities by taking the intensity value of the pixel
+  /// when it becomes visible. The location of the pixel in the current frame is not needed because it
+  /// is assumed that the reference and deformed subset intensity arrays are ordered the same. So all that
+  /// needs to be checked is if it was deactivated at frame zero, and is now not deactivated this step,
+  /// that particular pixel can be used.
+  void turn_on_previously_obstructed_pixels();
 
   /// \brief  EXPERIMENTAL Returns true if the given coordinates fall within an obstructed region for this subset
   /// \param coord_x global x-coordinate

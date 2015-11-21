@@ -1805,6 +1805,13 @@ Schema::new_generic_correlation_routine(Teuchos::RCP<Objective> obj){
   if(projection_method_==VELOCITY_BASED) save_off_fields(subset_gid);
   record_step(subset_gid,deformation,sigma,0.0,gamma,static_cast<int_t>(init_status),num_iterations);
   //
+  //  turn on pixels that at the beginning were hidden behind an obstruction
+  //
+  if(use_subset_evolution_&&image_frame_>1){
+    DEBUG_MSG("[PROC " << proc_id << "] Evolving subset " << subset_gid << " using newly exposed pixels for intensity values");
+    obj->subset()->turn_on_previously_obstructed_pixels();
+  }
+  //
   //  Write debugging images if requested
   //
   if(output_deformed_subset_intensity_images_){

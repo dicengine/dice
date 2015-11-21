@@ -63,7 +63,15 @@ Objective_ZNSSD::gamma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
   catch (std::logic_error & err) {
     return -1.0;
   }
-  return subset_->gamma();
+  scalar_t gamma = subset_->gamma();
+  if(schema_->normalize_gamma_with_active_pixels()){
+    int_t num_active_pixels = 0;
+    for(int_t i=0;i<subset_->num_pixels();++i)
+      if(subset_->is_active(i)) num_active_pixels++;
+    if(num_active_pixels > 0)
+      gamma /= num_active_pixels;
+  }
+  return gamma;
 }
 
 scalar_t

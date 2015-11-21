@@ -129,6 +129,21 @@ Subset::turn_off_obstructed_pixels(Teuchos::RCP<const std::vector<scalar_t> > de
 }
 
 void
+Subset::turn_on_previously_obstructed_pixels(){
+  // this assumes that the is_deactivated_this_step_ flags have already been set correctly prior
+  // to calling this method.
+  for(int_t px=0;px<num_pixels_;++px){
+    // it's not obstructed this step, but was inactive to begin with
+    if(!is_deactivated_this_step(px) && !is_active(px)){
+      // take the pixel value from the deformed subset
+      ref_intensities(px) = def_intensities(px);
+      // set the active bit to true
+      is_active(px) = true;
+    }
+  }
+}
+
+void
 Subset::write_subset_on_image(const std::string & file_name,
   Teuchos::RCP<Image> image,
   Teuchos::RCP<const std::vector<scalar_t> > deformation){
