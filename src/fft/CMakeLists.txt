@@ -23,7 +23,7 @@ link_directories (
 )
 
 add_library(dicefft ${FFT_SOURCES} ${FFT_HEADERS})
-target_link_libraries(dicefft ${DICE_LIBRARIES})
+target_link_libraries(dicefft ${DICE_LIBRARIES} dicebase)
 target_compile_definitions(dicefft PRIVATE -D DICE_LIB_EXPORTS_MODE)
 
 install(TARGETS	dicefft
