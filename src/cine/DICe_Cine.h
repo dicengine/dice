@@ -47,6 +47,10 @@
 #include <cassert>
 #include <iostream>
 
+#if defined(WIN32)
+  #include <cstdint>
+#endif
+
 #include <Teuchos_RCP.hpp>
 
 namespace DICe {
