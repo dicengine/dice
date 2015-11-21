@@ -4,53 +4,19 @@ include_directories (
     ${DICE_TRILINOS_HEADERS}
 )
 
-add_executable(DICe_TestImage DICe_TestImage.cpp)
-target_link_libraries(DICe_TestImage ${DICE_LIBRARIES} dicecore diceutils)
+SET(DICE_COMP_LIBS
+  dicebase
+  dicecore
+  diceutils
+  dicefft
+  dicecine
+)
 
-add_executable(DICe_TestSubset DICe_TestSubset.cpp)
-target_link_libraries(DICe_TestSubset ${DICE_LIBRARIES} dicecore diceutils)
-
-add_executable(DICe_TestSubsetGamma DICe_TestSubsetGamma.cpp)
-target_link_libraries(DICe_TestSubsetGamma ${DICE_LIBRARIES} dicecore diceutils)
-
-add_executable(DICe_TestCine DICe_TestCine.cpp)
-target_link_libraries(DICe_TestCine ${DICE_LIBRARIES} dicecore diceutils dicecine)
-
-add_executable(DICe_TestRawi DICe_TestRawi.cpp)
-target_link_libraries(DICe_TestRawi ${DICE_LIBRARIES} dicecore diceutils)
-
-add_executable(DICe_TestShape DICe_TestShape.cpp)
-target_link_libraries(DICe_TestShape ${DICE_LIBRARIES} dicecore diceutils)
-
-add_executable(DICe_TestFFT DICe_TestFFT.cpp)
-target_link_libraries(DICe_TestFFT ${DICE_LIBRARIES} dicecore diceutils dicefft)
-
-add_executable(DICe_TestPhaseCorrelation DICe_TestPhaseCorrelation.cpp)
-target_link_libraries(DICe_TestPhaseCorrelation ${DICE_LIBRARIES} dicecore diceutils dicefft)
-
-add_executable(DICe_TestObjective DICe_TestObjective.cpp)
-target_link_libraries(DICe_TestObjective ${DICE_LIBRARIES} dicecore diceutils dicefft)
-
-add_executable(DICe_TestSchema DICe_TestSchema.cpp)
-target_link_libraries(DICe_TestSchema ${DICE_LIBRARIES} dicecore diceutils dicefft)
-
-add_executable(DICe_TestParamUtils DICe_TestParamUtils.cpp)
-target_link_libraries(DICe_TestParamUtils ${DICE_LIBRARIES} dicecore diceutils dicefft)
-
-add_executable(DICe_TestTensor DICe_TestTensor.cpp)
-target_link_libraries(DICe_TestTensor ${DICE_LIBRARIES} dicecore diceutils dicefft)
-
-add_executable(DICe_TestCorrelateSquare DICe_TestCorrelateSquare.cpp)
-target_link_libraries(DICe_TestCorrelateSquare ${DICE_LIBRARIES} dicecore diceutils dicefft)
-
-add_executable(DICe_TestCorrelateConformal DICe_TestCorrelateConformal.cpp)
-target_link_libraries(DICe_TestCorrelateConformal ${DICE_LIBRARIES} dicecore diceutils dicefft)
-
-add_executable(DICe_TestCorrelateParams DICe_TestCorrelateParams.cpp)
-target_link_libraries(DICe_TestCorrelateParams ${DICE_LIBRARIES} dicecore diceutils dicefft)
-
-add_executable(DICe_TestInterpolants DICe_TestInterpolants.cpp)
-target_link_libraries(DICe_TestInterpolants ${DICE_LIBRARIES} dicecore diceutils dicefft)
-
-add_executable(DICe_TestInitializer DICe_TestInitializer.cpp)
-target_link_libraries(DICe_TestInitializer ${DICE_LIBRARIES} dicecore diceutils dicefft)
+# glob all the cpp files
+FILE ( GLOB test_cpp_files "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+FOREACH ( test_file ${test_cpp_files})
+    # get the name of the test from the cpp filename
+    GET_FILENAME_COMPONENT ( name ${test_file} NAME_WE)
+    add_executable(${name} ${test_file})
+    target_link_libraries(${name} ${DICE_LIBRARIES} ${DICE_COMP_LIBS})
+ENDFOREACH ( )

@@ -14,7 +14,7 @@ include_directories (
 )
 
 add_library(dicecine ${DICE_SOURCES} ${DICE_HEADERS})
-target_link_libraries(dicecine ${Boost_LIBRARIES} ${DICE_LIBRARIES} dicecore)
+target_link_libraries(dicecine ${Boost_LIBRARIES} ${DICE_LIBRARIES} dicebase dicecore)
 target_compile_definitions(dicecine PRIVATE -D DICE_LIB_EXPORTS_MODE)
 
 install(FILES ${DICE_HEADERS}

@@ -6,6 +6,7 @@ include_directories (
 )
 
 SET(DICE_TEST_LIBRARIES
+   dicebase
    dicecore
    dicefft
    dicecine

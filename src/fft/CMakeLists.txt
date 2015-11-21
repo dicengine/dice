@@ -12,6 +12,7 @@ SET(FFT_HEADERS
 
 
 include_directories (
+    ../base
     ../core
     .
     ${DICE_TRILINOS_HEADERS}

@@ -11,6 +11,7 @@ SET(DICE_UTILS_HEADERS
 include_directories(
     .
     ../../core
+    ../../base
     ${DICE_HEADER_DIRS}
     ${Boost_INCLUDE_DIRS}
     ${DICE_TRILINOS_HEADERS}
