@@ -151,9 +151,9 @@ Subset::write_subset_on_image(const std::string & file_name,
   const int_t w = image->width();
   const int_t h = image->height();
   intensity_t * intensities = new intensity_t[w*h];
-  for(int_t y=0;y<h;++y){
-    for(int_t x=0;x<w;++x){
-      intensities[y*w+x] = (*image)(x,y);
+  for(int_t m=0;m<h;++m){
+    for(int_t n=0;n<w;++n){
+      intensities[m*w+n] = (*image)(n,m);
     }
   }
   if(deformation!=Teuchos::null){

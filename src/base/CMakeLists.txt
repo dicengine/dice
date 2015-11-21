@@ -50,7 +50,7 @@ include_directories(${Boost_INCLUDE_DIRS} COMPONENTS gil program_options REQUIRE
 MESSAGE(STATUS "Boost_INCLUDE_DIRS:${Boost_INCLUDE_DIRS}")
 
 add_library(dicebase ${DICE_SOURCES} ${DICE_HEADERS})
-target_link_libraries(dicebase ${Boost_LIBRARIES})
+target_link_libraries(dicebase ${Boost_LIBRARIES} ${DICE_LIBRARIES})
 target_compile_definitions(dicebase PRIVATE -D DICE_LIB_EXPORTS_MODE)
 
 install(FILES ${DICE_HEADERS}
