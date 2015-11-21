@@ -1154,7 +1154,7 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
     if(subset_file_info->conformal_area_defs!=Teuchos::null){
       if(proc_rank==0) DEBUG_MSG("Using ROIs from a subset file");
       roi_defs = subset_file_info->conformal_area_defs;
-      if(proc_rank==0) DEBUG_MSG("create_regular_grid_of_correlation_points(): user requested " << roi_defs->size(); <<  " ROI(s)");
+      if(proc_rank==0) DEBUG_MSG("create_regular_grid_of_correlation_points(): user requested " << roi_defs->size() <<  " ROI(s)");
       seed_was_specified = subset_file_info->size_map->size() > 0;
       if(seed_was_specified){
         assert(subset_file_info->size_map->size()==subset_file_info->displacement_map->size() &&
