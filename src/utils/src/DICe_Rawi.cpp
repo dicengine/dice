@@ -45,8 +45,6 @@
 
 #include <DICe_Rawi.h>
 
-#include <Teuchos_TestForException.hpp>
-
 namespace DICe{
 namespace utils{
 
@@ -57,7 +55,8 @@ void read_rawi_image_dimensions(const char * file_name,
 
   std::ifstream rawi_file (file_name, std::ifstream::in | std::ifstream::binary);
   if (rawi_file.fail()){
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"ERROR: Can't open the file: " + (std::string)file_name);
+    std::cerr << "ERROR: Can't open the file: " + (std::string)file_name << std::endl;
+    exit(1);
   }
   // read the file details
   uint32_t w = 0;
@@ -77,7 +76,8 @@ void read_rawi_image(const char * file_name,
 
   std::ifstream rawi_file (file_name, std::ifstream::in | std::ifstream::binary);
   if (!rawi_file.is_open()){
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"ERROR: Can't open the file: " + (std::string)file_name);
+    std::cerr << "ERROR: Can't open the file: " + (std::string)file_name << std::endl;
+    exit(1);
   }
   // read the file details
   uint32_t w = 0;
@@ -89,7 +89,8 @@ void read_rawi_image(const char * file_name,
   // check that the byte size of the intensity values in the file is compatible with the current
   // size used to store intensity_t values
   if(num_bytes!=sizeof(intensity_t)){
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Can't open file because it was saved using a different basic type for intensity_t: " + (std::string)file_name);
+    std::cerr << "Can't open file because it was saved using a different basic type for intensity_t: " + (std::string)file_name << std::endl;
+    exit(1);
   }
   // read the image data:
   for (int_t y=0; y<h; ++y) {
@@ -122,7 +123,8 @@ void write_rawi_image(const char * file_name,
   //create a new file:
   std::ofstream rawi_file (file_name, std::ofstream::out | std::ofstream::binary);
   if (!rawi_file.is_open()){
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"ERROR: Can't open the file: " + (std::string)file_name);
+    std::cerr << "ERROR: Can't open the file: " + (std::string)file_name << std::endl;
+    exit(1);
   }
   // write the file details
   rawi_file.write(reinterpret_cast<char*>(&w), sizeof(uint32_t));
