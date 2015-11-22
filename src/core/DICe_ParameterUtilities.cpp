@@ -233,8 +233,8 @@ bool is_string_param(const std::string & in){
 }
 
 
-DICE_LIB_DLL_EXPORT void sl_default_params(Teuchos::ParameterList *  defaultParams){
-  defaultParams->set(DICe::correlation_routine,DICe::SL_ROUTINE);
+DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defaultParams){
+  defaultParams->set(DICe::correlation_routine,DICe::TRACKING_ROUTINE);
   defaultParams->set(DICe::max_evolution_iterations,10);
   defaultParams->set(DICe::max_solver_iterations_fast,250);
   defaultParams->set(DICe::max_solver_iterations_robust,1000);

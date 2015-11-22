@@ -500,65 +500,49 @@ public:
   /// \brief Write an image that shows all the subsets current position and shape
   /// field values from.
   ///
-  /// WARNING: This is meant only for the SL_ROUTINE where there are only a few subsets to track
+  /// WARNING: This is meant only for the TRACKING_ROUTINE where there are only a few subsets to track
   /// \param use_gamma_as_color colors the pixels according to gamma values for each pixel
   void write_deformed_subsets_image(const bool use_gamma_as_color=false);
 
   /// \brief Write an image that shows all the subsets current position and shape
   /// field values from.
   ///
-  /// WARNING: This is meant only for the SL_ROUTINE where there are only a few subsets to track
+  /// WARNING: This is meant only for the TRACKING_ROUTINE where there are only a few subsets to track
   void write_deformed_subsets_image_new();
 
   /// \brief See if any of the subsets have crossed each other's paths blocking each other
   ///
   /// The potential for two subsets to block each other should have been set by calling
   /// set_obstructing_subset_ids() on the schema by this point.
-  /// WARNING: This is meant only for the SL_ROUTINE where there are only a few subsets to track
+  /// WARNING: This is meant only for the TRACKING_ROUTINE where there are only a few subsets to track
   void check_for_blocking_subsets(const int_t subset_global_id);
 
-  /// \brief Orchestration of how the correlation is conducted
-  /// \param obj A single DICe::Objective
+  /// \brief Orchestration of how the correlation is conducted.
+  /// A correlation routine involves a number of steps. The first is to initialize a guess
+  /// for the given subset, followed by actually performing the correlation. There are a number of
+  /// checks that happen along the way. The user can request that the initial guess provide a
+  /// matching gamma value that is below a certain threshold. The user can also request that
+  /// the final solution meet certain criteria. There are a coupl different approaches to the
+  /// correlation itself. Using the DICe::GRADIENT_BASED method is similar to most other
+  /// gradient-based techniques wherein the image gradients provided by the speckle pattern
+  /// drive the optimization routine to the solution. The DICe::SIMPLEX method on the other
+  /// hand does not require image gradients. It uses a sophisticated bisection-like technique
+  /// to arrive at the solution.
   ///
-  /// The process is as followa:
-  /// 1. The first subset is correlated based on whatever initial guess
-  /// happens to be in the data array (could have been specified by user or zeros).
-  /// 2. The rest of the subsets use the neighboring subset's solution as an initial guess if the
-  /// initialization method is DICe::USE_NEIGHBOR_VALUES. Otherwise, the initial guess is taken
-  /// from whatever solution is in the field_values (DICe::USE_FIELD_VALUES).
+  /// Another major difference between correlation routine options is denoted by DICe::GENERIC_ROUTINE
+  /// or DICe::TRACKING_ROUTINE. The generic option is intended for full-field displacement cases
+  /// where there are a number of subsets per image, but not necessarily a lot of images. In this case
+  /// the subsets are allocated each image or frame. The tracking case is intended for a handful of
+  /// subsets, but potentially several thousand frames. In this case the subsets are allocated once
+  /// at the beginning and re-used throughout the analysis.
   ///
-  /// 3. For the optimization, if the method is DICe::SIMPLEX, only the simpex method (computeUpdateRobust()) will be
-  /// used. For the DICe::GRADIENT_BASED method, only the computeUpdateFast() method will be used. The other
-  /// options are first try simplex, then gradient based if it fails (DICe::SIMPLEX_THEN_GRADIENT_BASED) or start
-  /// with gradient based then simplex (DICe::GRADIENT_BASED_THEN_SIMPLEX).
+  /// At a number of points in the process, the subset may evolve in the sense that pixels on
+  /// an object that become occluded are switched off. Other pixels that initially were blocked
+  /// and become visible at some point get switched on (this is activated by setting use_subset_evolution
+  /// in the params file).
+  ///
+  /// \param obj A single DICe::Objective that has a DICe::subset as part of its member data
   void generic_correlation_routine(Teuchos::RCP<Objective> obj);
-
-  /// \brief Orchestration of how the correlation is conducted
-  /// \param obj A single DICe::Objective
-  ///
-  /// The process is as followa:
-  /// 1. The first subset is correlated based on whatever initial guess
-  /// happens to be in the data array (could have been specified by user or zeros).
-  /// 2. The rest of the subsets use the neighboring subset's solution as an initial guess if the
-  /// initialization method is DICe::USE_NEIGHBOR_VALUES. Otherwise, the initial guess is taken
-  /// from whatever solution is in the field_values (DICe::USE_FIELD_VALUES).
-  ///
-  /// 3. For the optimization, if the method is DICe::SIMPLEX, only the simpex method (computeUpdateRobust()) will be
-  /// used. For the DICe::GRADIENT_BASED method, only the computeUpdateFast() method will be used. The other
-  /// options are first try simplex, then gradient based if it fails (DICe::SIMPLEX_THEN_GRADIENT_BASED) or start
-  /// with gradient based then simplex (DICe::GRADIENT_BASED_THEN_SIMPLEX).
-  void new_generic_correlation_routine(Teuchos::RCP<Objective> obj);
-
-
-  /// \brief As an alternative to the generic routine, this routine spends a lot
-  /// more time handling various failure cases. It tests for the solution gamma value after each
-  /// step to ensure the correlation is still good. It also tests for jumps in the solution values.
-  /// It uses a 10 step projection method to initialize the solution and checks for errors in the
-  /// predicted vs. computed solution to restart the multistep projection process. In this routine
-  /// obstructions are detected using statistics on the pixel intensity values rather than based on
-  /// obstruction subsets that need to be tracked in the generic correlation routine.
-  /// \param obj The objective function that holds the ref and def subset along with several methods
-  void subset_evolution_routine(Teuchos::RCP<Objective> obj);
 
   /// Returns true if the user has requested testing for motion in the frame
   /// and the motion was detected by diffing pixel values:

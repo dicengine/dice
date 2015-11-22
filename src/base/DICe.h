@@ -203,7 +203,7 @@ const char* const obstruction_buffer_size = "obstruction_buffer_size";
 /// String parameter name
 const char* const obstruction_skin_factor = "obstruction_skin_factor";
 /// String parameter name
-const char* const use_sl_default_params = "use_sl_default_params";
+const char* const use_tracking_default_params = "use_tracking_default_params";
 /// String parameter name
 const char* const update_obstructed_pixels_each_iteration = "update_obstructed_pixels_each_iteration";
 /// String parameter name
@@ -399,8 +399,7 @@ const static char * interpolationMethodStrings[] = {
 /// Can be customized for a particular application
 enum Correlation_Routine {
   GENERIC_ROUTINE=0,
-  SL_ROUTINE,
-  SUBSET_EVOLUTION_ROUTINE,
+  TRACKING_ROUTINE,
   CORRELATION_ROUTINE_NOT_APPLICABLE,
   // DON'T ADD ANY BELOW MAX
   MAX_CORRELATION_ROUTINE,
@@ -409,8 +408,7 @@ enum Correlation_Routine {
 
 const static char * correlationRoutineStrings[] = {
   "GENERIC_ROUTINE",
-  "SL_ROUTINE",
-  "SUBSET_EVOLUTION_ROUTINE",
+  "TRACKING_ROUTINE",
   "CORRELATION_ROUTINE_NOT_APPLICABLE"
 };
 
@@ -763,27 +761,27 @@ const Correlation_Parameter robust_delta_theta_param(robust_delta_theta,
 const Correlation_Parameter output_deformed_subset_images_param(output_deformed_subset_images,
   BOOL_PARAM,
   true,
-  "EXPERIMENTAL Write images that show the deformed position of the subsets (Currently only available for SL_ROUTINE correlation_routine, not GENERIC)");
+  "Write images that show the deformed position of the subsets (Currently only available for TRACKING_ROUTINE correlation_routine, not GENERIC)");
 /// Correlation parameter and properties
 const Correlation_Parameter output_deformed_subset_intensity_images_param(output_deformed_subset_intensity_images,
   BOOL_PARAM,
   true,
-  "EXPERIMENTAL Write images that show the intensity profile of the deformed subsets");
+  "Write images that show the intensity profile of the deformed subsets");
 /// Correlation parameter and properties
 const Correlation_Parameter output_evolved_subset_images_param(output_evolved_subset_images,
   BOOL_PARAM,
   true,
-  "EXPERIMENTAL Write images that show the reference subset as its intensity profile evolves");
+  "Write images that show the reference subset as its intensity profile evolves");
 /// Correlation parameter and properties
 const Correlation_Parameter use_subset_evolution_param(use_subset_evolution,
   BOOL_PARAM,
   true,
-  "EXPERIMENTAL Used to evolve subsets that are initially obscured (Currently only available for SL_ROUTINE correlation routine, not GENERIC)");
+  "Used to evolve subsets that are initially obscured (Currently only available for TRACKING_ROUTINE correlation routine, not GENERIC)");
 /// Correlation parameter and properties
-const Correlation_Parameter use_sl_default_params_param(use_sl_default_params,
+const Correlation_Parameter use_tracking_default_params_param(use_tracking_default_params,
   BOOL_PARAM,
   true,
-  "Use the SL default parameters instead of the typical dice defaults (Not commonly used).");
+  "Use the TRACKING default parameters instead of the GENERIC defaults (Not commonly used).");
 /// Correlation parameter and properties
 const Correlation_Parameter update_obstructed_pixels_each_iteration_param(update_obstructed_pixels_each_iteration,
   BOOL_PARAM,
@@ -885,7 +883,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   omit_output_row_id_param,
   obstruction_buffer_size_param,
   obstruction_skin_factor_param,
-  use_sl_default_params_param,
+  use_tracking_default_params_param,
   update_obstructed_pixels_each_iteration_param,
   normalize_gamma_with_active_pixels_param,
   use_global_dic_param,

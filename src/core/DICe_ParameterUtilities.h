@@ -120,7 +120,7 @@ bool is_string_param(const std::string & in);
 ///
 /// A free function like this is used to prevent having to re-code the defaults everywhere they are used.
 DICE_LIB_DLL_EXPORT
-void sl_default_params(Teuchos::ParameterList * defaultParams);
+void tracking_default_params(Teuchos::ParameterList * defaultParams);
 
 /// \brief Sets the default correlation parameters
 /// \param defaultParams returned ParameterList with the default params set
