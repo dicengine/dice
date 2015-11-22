@@ -56,6 +56,7 @@ namespace DICe {
 /// Initialization function (mpi and kokkos if enabled):
 /// \param argc argument count
 /// \param argv array of argument chars
+DICE_LIB_DLL_EXPORT
 void initialize(int argc,
   char *argv[]){
   // initialize mpi
@@ -83,6 +84,7 @@ void initialize(int argc,
 }
 
 /// Finalize function (mpi and kokkos if enabled):
+DICE_LIB_DLL_EXPORT
 void finalize(){
   // finalize mpi
 #if DICE_MPI
@@ -95,6 +97,7 @@ void finalize(){
 }
 
 /// returns true if the data layout is LayoutRight
+DICE_LIB_DLL_EXPORT
 bool default_is_layout_right(){
 #if DICE_KOKKOS
   return Kokkos::Impl::is_same< intensity_dual_view_2d::array_layout ,

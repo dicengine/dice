@@ -90,13 +90,16 @@ typedef int int_t;
 /// Initialization function (mpi and kokkos if enabled):
 /// \param argc argument count
 /// \param argv array of argument chars
+DICE_LIB_DLL_EXPORT
 void initialize(int argc,
   char *argv[]);
 
 /// Finalize function (mpi and kokkos if enabled):
+DICE_LIB_DLL_EXPORT
 void finalize();
 
 /// returns true if the data layout is LayoutRight
+DICE_LIB_DLL_EXPORT
 bool default_is_layout_right();
 
 /// parameters (all lower case)
