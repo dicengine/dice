@@ -131,7 +131,8 @@ struct bitmap_info_header{
 /// \brief A class to hold header information for cine files.
 /// Always assumes that the cine file has been stored in LayoutRight or row-aligned
 /// in memory
-class Cine_Header
+class DICE_LIB_DLL_EXPORT
+Cine_Header
 {
 public:
   /// \brief default constructor
@@ -167,7 +168,8 @@ read_cine_headers(const char *file,
 /// \class DICe::cine::Cine_Reader
 /// \brief A helper class the reads in cine files from disk and provides some methods
 /// such as getting a particular frame from the cine file
-class Cine_Reader
+class DICE_LIB_DLL_EXPORT
+Cine_Reader
 {
 public:
   /// \brief default constructor
