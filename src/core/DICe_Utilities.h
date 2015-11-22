@@ -55,7 +55,7 @@ namespace DICe {
 /// \brief Small helper class for tensor operations (used mostly in computing strains)
 
 template<class Scalar>
-struct DICE_LIB_DLL_EXPORT
+struct
 Tensor_2D {
 public:
   // All member data is public
@@ -119,7 +119,7 @@ public:
 
   /// \brief Multiplies two tensors
   /// \param other The other tensor to multiply with this one
-const Tensor_2D operator*(const Tensor_2D & other)const{
+  const Tensor_2D operator*(const Tensor_2D & other)const{
     Tensor_2D result;
     result.xx=xx*other.xx+xy*other.yx;
     result.xy=xx*other.xy+xy*other.yy;
