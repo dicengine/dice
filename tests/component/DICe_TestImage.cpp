@@ -256,7 +256,8 @@ int main(int argc, char *argv[]) {
   //trans_baboon_exact->write_tiff("baboon_trans_exact.tif");
   const scalar_t diff_trans_baboon = trans_baboon->diff(trans_baboon_exact);
   *outStream << "image diff trans baboon: " << diff_trans_baboon << std::endl;
-  if(diff_trans_baboon > mask_tol){
+  const scalar_t diff_tol = 0.1;
+  if(diff_trans_baboon > diff_tol){
     *outStream << "Error, the transformed image does not have the right intensities" << std::endl;
     errorFlag++;
   }
@@ -266,7 +267,7 @@ int main(int argc, char *argv[]) {
   //baboon.write_rawi("baboon_180.rawi");
   Teuchos::RCP<Image> baboon_180_exact = Teuchos::rcp(new Image("./images/baboon_180.rawi"));
   const scalar_t diff_180 = baboon_180->diff(baboon_180_exact);
-  if(diff_180 > mask_tol){
+  if(diff_180 > diff_tol){
     *outStream << "Error, the 180 degree transformed image does not have the right intensities." << std::endl;
     errorFlag++;
   }
@@ -307,7 +308,7 @@ int main(int argc, char *argv[]) {
   //filter_5_img.write_rawi("outFilter5.rawi");
   Teuchos::RCP<Image> filter_5_exact = Teuchos::rcp(new Image("./images/outFilter5.rawi"));
   const scalar_t diff_5 = filter_5_exact->diff(filter_5_img);
-  if(diff_5 > 1.0E-4){
+  if(diff_5 > diff_tol){
     *outStream << "Error, the 5 pixel filter image does not have the right intensities." << std::endl;
     errorFlag++;
   }
@@ -321,7 +322,7 @@ int main(int argc, char *argv[]) {
   //filter_7_img.write_rawi("outFilter7.rawi");
   Teuchos::RCP<Image> filter_7_exact = Teuchos::rcp(new Image("./images/outFilter7.rawi"));
   const scalar_t diff_7 = filter_7_exact->diff(filter_7_img);
-  if(diff_7 > 1.0E-4){
+  if(diff_7 > diff_tol){
     *outStream << "Error, the 7 pixel filter image does not have the right intensities." << std::endl;
     errorFlag++;
   }
@@ -335,7 +336,7 @@ int main(int argc, char *argv[]) {
   //filter_9_img.write_rawi("outFilter9.rawi");
   Teuchos::RCP<Image> filter_9_exact = Teuchos::rcp(new Image("./images/outFilter9.rawi"));
   const scalar_t diff_9 = filter_9_exact->diff(filter_9_img);
-  if(diff_9 > 1.0E-4){
+  if(diff_9 > diff_tol){
     *outStream << "Error, the 9 pixel filter image does not have the right intensities." << std::endl;
     errorFlag++;
   }
@@ -349,7 +350,7 @@ int main(int argc, char *argv[]) {
   //filter_11_img.write_rawi("outFilter11.rawi");
   Teuchos::RCP<Image> filter_11_exact = Teuchos::rcp(new Image("./images/outFilter11.rawi"));
   const scalar_t diff_11 = filter_11_exact->diff(filter_11_img);
-  if(diff_11 > 1.0E-4){
+  if(diff_11 > diff_tol){
     *outStream << "Error, the 11 pixel filter image does not have the right intensities." << std::endl;
     errorFlag++;
   }
@@ -363,7 +364,7 @@ int main(int argc, char *argv[]) {
   //filter_13_img.write_rawi("outFilter13.rawi");
   Teuchos::RCP<Image> filter_13_exact = Teuchos::rcp(new Image("./images/outFilter13.rawi"));
   const scalar_t diff_13 = filter_13_exact->diff(filter_13_img);
-  if(diff_13 > 1.0E-4){
+  if(diff_13 > diff_tol){
     *outStream << "Error, the 13 pixel filter image does not have the right intensities." << std::endl;
     errorFlag++;
   }
