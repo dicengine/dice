@@ -24,6 +24,7 @@ IF(DICE_ENABLE_MANYCORE)
     DICe_Kokkos.h
     DICe_MultiFieldTpetra.h
     DICe_SubsetFunctors.h
+    DICe_ImageFunctors.h
   )
 ELSE()
   SET(DICE_SOURCES
