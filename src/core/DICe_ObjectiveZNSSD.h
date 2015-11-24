@@ -121,23 +121,6 @@ public:
     const scalar_t & override_tol = -1.0);
 
   /// See base class documentation
-  virtual Status_Flag initialize_from_previous_frame(Teuchos::RCP<std::vector<scalar_t> > & deformation);
-
-  /// Currently not implemented for this derived class
-  virtual Status_Flag search(Teuchos::RCP<std::vector<scalar_t> > & deformation,
-    const int_t precision_level,
-    scalar_t & return_value);
-
-  /// Used to window in on the best displacement initialization
-  virtual Status_Flag search_step(Teuchos::RCP<std::vector<scalar_t> > & deformation,
-    const int_t window_size,
-    const scalar_t step_size,
-    scalar_t & return_value);
-
-  /// See base class documentation
-  virtual Status_Flag initialize_from_neighbor(Teuchos::RCP<std::vector<scalar_t> > & deformation);
-
-  /// See base class documentation
   using Objective::local_field_value;
 
   /// See base class documentation

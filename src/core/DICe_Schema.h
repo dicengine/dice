@@ -179,10 +179,6 @@ public:
     Teuchos::RCP<std::map<int_t,Conformal_Area_Def> > conformal_subset_defs=Teuchos::null,
     Teuchos::RCP<std::vector<int_t> > neighbor_ids=Teuchos::null);
 
-  /// \brief Initializes the guess for a subset based on a phase correlation of the whole image
-  /// \param deformation the deformation guess
-  void initialize_by_phase_correlation(Teuchos::RCP<std::vector<scalar_t> > & deformation);
-
   /// \brief Simple initialization routine that sets up a regular grid of correlation points throughout the image spaced according to the step sizes
   /// \param step_size_x Spacing of the correlation points in x
   /// \param step_size_y Spacing of the correlation points in y
@@ -207,6 +203,11 @@ public:
   /// Returns a pointer to the deformed DICe::Image
   Teuchos::RCP<Image> def_img()const{
     return def_img_;
+  }
+
+  /// Returns a pointer to the preivous DICe::Image
+  Teuchos::RCP<Image> prev_img()const{
+    return prev_img_;
   }
 
   /// Returns the max solver iterations allowed for the fast (gradient based) algorithm
@@ -467,6 +468,15 @@ public:
     return projection_method_;
   }
 
+  /// set up the initializers
+  void prepare_optimization_initializers();
+
+  /// get an initial guess for the solution
+  /// \param subset_gid the global id of the subset to initialize
+  /// \param deformation [out] vector containing the intial guess
+  Status_Flag initial_guess(const int_t subset_gid,
+    Teuchos::RCP<std::vector<scalar_t> > deformation);
+
   /// set up the distributed map so that it respects dependencies among obstructions
   void create_obstruction_dist_map();
 
@@ -571,7 +581,6 @@ public:
     const scalar_t & gamma,
     const int_t status,
     const int_t num_iterations);
-
 
   /// Returns true if regularization should be used in the objective evaluation
   bool use_objective_regularization()const{
@@ -703,6 +712,11 @@ public:
   Teuchos::SerialDenseMatrix<int_t,int_t> * connectivity(){
     return &connectivity_;
   }
+
+//  std::vector<Teuchos::RCP<Objective> > * obj_vec(){
+//    return &obj_vec_;
+//  }
+
 
   /// Return the jump tolerance for rotations
   double theta_jump_tol()const{
@@ -876,10 +890,10 @@ private:
   std::vector<Teuchos::RCP<Post_Processor> > post_processors_;
   /// True if any post_processors have been activated
   bool has_post_processor_;
-  /// vector of pointers to initializers (used to initialize first guess for optimization routine)
-  std::vector<Teuchos::RCP<Initializer> > opt_initializers_;
+  /// map of pointers to initializers (used to initialize first guess for optimization routine)
+  std::map<int_t,Teuchos::RCP<Initializer> > opt_initializers_;
   /// vector of pointers to motion detectors for a specific subset
-  std::vector<Teuchos::RCP<Motion_Test_Initializer> > motion_detectors_;
+  std::map<int_t,Teuchos::RCP<Motion_Test_Utility> > motion_detectors_;
   /// For constrained optimiation, this lists the owning element global id for each pixel:
   std::vector<int_t> pixels_owning_element_global_id_;
   /// Connectivity matrix for the global DIC method
@@ -991,10 +1005,6 @@ private:
   Rotation_Value ref_image_rotation_;
   /// Rotate the defomed image by 180 degrees
   Rotation_Value def_image_rotation_;
-  /// Phase correlation initial guess values (only computed if USE_PHASE_CORRELATION is set as the initialization method)
-  scalar_t phase_cor_u_x_;
-  /// Phase correlation intial guess
-  scalar_t phase_cor_u_y_;
   /// Map to hold the names of the path files for each subset
   Teuchos::RCP<std::map<int_t,std::string> > path_file_names_;
   /// Map to hold the flags for skipping solves for particular subsets (initialize only since

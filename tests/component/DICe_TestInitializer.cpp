@@ -47,6 +47,8 @@
 #include <DICe_Image.h>
 #include <DICe_Subset.h>
 #include <DICe_Initializer.h>
+#include <DICe_Schema.h>
+#include <DICe_ParameterUtilities.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -64,6 +66,7 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
+  const scalar_t errorTol = 1.0E-4;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -94,7 +97,7 @@ int main(int argc, char *argv[]) {
 
   bool exception_thrown = false;
   try{
-    Path_Initializer bad_path(subset,"sample.txt");
+    Path_Initializer bad_path(NULL,subset,"sample.txt");
   }
   catch(std::exception &e){
     *outStream << "an exception was thrown as it should have been" << std::endl;
@@ -106,7 +109,7 @@ int main(int argc, char *argv[]) {
   }
   *outStream << "trying a valid file" << std::endl;
   const size_t num_neighbors = 2;
-  Path_Initializer path(subset,"sample.path",2);
+  Path_Initializer path(NULL,subset,"sample.path",2);
   *outStream << "the path has " << path.num_triads() << " unique points" << std::endl;
   if(path.num_triads()!=3){
     *outStream << "Error, wrong number of triads." << std::endl;
@@ -168,6 +171,85 @@ int main(int argc, char *argv[]) {
   if(std::abs(dist - 2920.06) > 1.0E-2){
     *outStream << "Error, the distance to this point is wrong" << std::endl;
     errorFlag++;
+  }
+
+  *outStream << "testing the initializers in a schema" << std::endl;
+  const int_t num_subsets = 4;
+  const int_t subset_size = 27;
+  Teuchos::RCP<std::vector<int_t> > neighbor_ids = Teuchos::rcp(new std::vector<int_t>(4,0));
+  (*neighbor_ids)[0] = -1; // subsets 1 2 and 3 all have 0 as their seed neighbor, but 0 has -1 because it is the seed
+  std::vector<int_t> coords_x(num_subsets,0);
+  std::vector<int_t> coords_y(num_subsets,0);
+  coords_x[0] = 151; coords_y[0] = 277;
+  coords_x[1] = 209; coords_y[1] = 269;
+  coords_x[2] = 153; coords_y[2] = 328;
+  coords_x[3] = 211; coords_y[3] = 336;
+  const scalar_t u_exact = 138.0;
+  const scalar_t v_exact = -138.0;
+  // write a simple path file to be used in the examples below:
+  std::ofstream path_file;
+  path_file.open("InitializerTest.path");
+  path_file << u_exact << " " << v_exact << " 0.0\n";
+  path_file.close();
+  Teuchos::RCP<std::map<int_t,std::string> > path_file_names = Teuchos::rcp(new std::map<int_t,std::string>());
+  path_file_names->insert(std::pair<int_t,std::string>(0,"InitializerTest.path")); // use a path file for the first subset
+  Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
+  std::vector<Initialization_Method> init_methods;
+  init_methods.push_back(USE_PHASE_CORRELATION);
+  init_methods.push_back(USE_FIELD_VALUES);
+  init_methods.push_back(INITIALIZATION_METHOD_NOT_APPLICABLE); // use this one for path file test
+  std::vector<Correlation_Routine> corr_routines;
+  corr_routines.push_back(TRACKING_ROUTINE);
+  corr_routines.push_back(GENERIC_ROUTINE);
+
+  for(size_t init_i = 0;init_i<init_methods.size();++init_i){
+    for(size_t corr_i = 0;corr_i<corr_routines.size();++corr_i){
+      *outStream << "testing initializer for combination " << init_i << " " << corr_i << std::endl;
+      // if the init method was set to N/A, then use neighbor values automatically
+      params->set(DICe::initialization_method,init_methods[init_i]==INITIALIZATION_METHOD_NOT_APPLICABLE?USE_NEIGHBOR_VALUES:init_methods[init_i]);
+      params->set(DICe::correlation_routine,corr_routines[corr_i]);
+      Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema("./images/InitRef.tif","./images/InitDef.tif",params));
+      schema->initialize(num_subsets,subset_size,Teuchos::null,neighbor_ids);
+      if(init_methods[init_i]==INITIALIZATION_METHOD_NOT_APPLICABLE)
+        schema->set_path_file_names(path_file_names);
+      for(int_t i=0;i<num_subsets;++i){
+        schema->field_value(i,DICe::COORDINATE_X) = coords_x[i];
+        schema->field_value(i,DICe::COORDINATE_Y) = coords_y[i];
+        if(init_methods[init_i] == USE_FIELD_VALUES){
+          schema->field_value(i,DICe::DISPLACEMENT_X) = u_exact;
+          schema->field_value(i,DICe::DISPLACEMENT_Y) = v_exact;
+        }
+      }
+      bool exception_thrown = false;
+      try{
+         schema->execute_correlation();
+      }
+      catch(std::exception &e){
+        exception_thrown = true;
+      }
+      // an error should have thrown for path files used with generic routine
+      if(init_methods[init_i]==INITIALIZATION_METHOD_NOT_APPLICABLE && corr_routines[corr_i]==GENERIC_ROUTINE){
+        if(!exception_thrown){
+          *outStream << "Error, an exception should have thrown here" << std::endl;
+          errorFlag++;
+        }
+        else{
+          *outStream << "exception thrown as expected" << std::endl;
+        }
+        continue;
+      }
+      //schema->print_fields();
+      for(int_t i=0;i<schema->data_num_points();++i){
+        const scalar_t u = schema->field_value(i,DISPLACEMENT_X);
+        const scalar_t v = schema->field_value(i,DISPLACEMENT_Y);
+        *outStream << i << " u: " << u << " v: " << v << std::endl;
+        if(std::abs(u-u_exact) > errorTol || std::abs(v-v_exact) > errorTol){
+          *outStream << "Error, the displacement values are not correct" << std::endl;
+          errorFlag++;
+        }
+      }
+      *outStream << "output values have been tested for combination " << init_i << " " << corr_i << std::endl;
+    }
   }
 
   *outStream << "--- End test ---" << std::endl;

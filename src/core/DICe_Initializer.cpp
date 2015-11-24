@@ -40,6 +40,8 @@
 // @HEADER
 
 #include <DICe_Initializer.h>
+#include <DICe_Schema.h>
+#include <DICe_FFT.h>
 
 #include <Teuchos_RCP.hpp>
 
@@ -65,10 +67,12 @@ inline bool operator==(const def_triad& lhs, const def_triad& rhs){
   return lhs.u_ == rhs.u_ && lhs.v_ == rhs.v_ && lhs.t_ == rhs.t_;
 }
 
-Path_Initializer::Path_Initializer(Teuchos::RCP<Subset> subset,
+Path_Initializer::Path_Initializer(Schema * schema,
+  Teuchos::RCP<Subset> subset,
   const char * file_name,
   const size_t num_neighbors):
-  Initializer(subset),
+  Initializer(schema),
+  subset_(subset),
   num_triads_(0),
   num_neighbors_(num_neighbors)
 {
@@ -167,6 +171,22 @@ Path_Initializer::write_to_text_file(const std::string & file_name)const{
   file.close();
 }
 
+Status_Flag
+Path_Initializer::initial_guess(const int_t subset_gid,
+  Teuchos::RCP<std::vector<scalar_t> > deformation){
+  bool global_path_search_required = schema_->local_field_value(subset_gid,SIGMA)==-1.0 || schema_->image_frame()==0;
+  if(global_path_search_required){
+    initial_guess(schema_->def_img(),deformation);
+  }
+  else{
+    const scalar_t prev_u = schema_->local_field_value(subset_gid,DICe::DISPLACEMENT_X);
+    const scalar_t prev_v = schema_->local_field_value(subset_gid,DICe::DISPLACEMENT_Y);
+    const scalar_t prev_t = schema_->local_field_value(subset_gid,DICe::ROTATION_Z);
+    initial_guess(schema_->def_img(),deformation,prev_u,prev_v,prev_t);
+  }
+  return INITIALIZE_SUCCESSFUL;
+}
+
 scalar_t
 Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
   Teuchos::RCP<std::vector<scalar_t> > deformation,
@@ -261,13 +281,115 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
   return best_gamma;
 }
 
+Status_Flag
+Phase_Correlation_Initializer::initial_guess(const int_t subset_gid,
+  Teuchos::RCP<std::vector<scalar_t> > deformation){
 
-Motion_Test_Initializer::Motion_Test_Initializer(const int_t origin_x,
+  (*deformation)[DISPLACEMENT_X] = phase_cor_u_x_ + schema_->local_field_value(subset_gid,DISPLACEMENT_X);
+  (*deformation)[DISPLACEMENT_Y] = phase_cor_u_y_ + schema_->local_field_value(subset_gid,DISPLACEMENT_Y);
+  (*deformation)[ROTATION_Z] = schema_->local_field_value(subset_gid,ROTATION_Z);
+  // TODO zero out the rest?
+  return INITIALIZE_SUCCESSFUL;
+};
+
+void
+Phase_Correlation_Initializer::pre_execution_tasks(){
+  DICe::phase_correlate_x_y(schema_->prev_img(),schema_->def_img(),phase_cor_u_x_,phase_cor_u_y_);
+  DEBUG_MSG("Phase_Correlation_Initializer::pre_execution_tasks(): initial displacements ux: " << phase_cor_u_x_ << " uy: " << phase_cor_u_y_);
+}
+
+
+Status_Flag
+Field_Value_Initializer::initial_guess(const int_t subset_gid,
+  Teuchos::RCP<std::vector<scalar_t> > deformation){
+  assert(deformation->size()==DICE_DEFORMATION_SIZE);
+  int_t sid = subset_gid;
+  // logic for using neighbor values
+  if(schema_->initialization_method()==DICe::USE_NEIGHBOR_VALUES ||
+      (schema_->initialization_method()==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && schema_->image_frame()==0)){
+    sid = schema_->local_field_value(subset_gid,DICe::NEIGHBOR_ID);
+  }
+
+  if(sid==-1) // catch case that subset does not have a neighbor
+    sid=subset_gid;
+
+  // make sure the data lives on this processor
+  TEUCHOS_TEST_FOR_EXCEPTION(schema_->get_local_id(sid)<0,std::runtime_error,
+    "Error: Only subset ids on this processor can be used for initialization");
+
+  // 1: check if there exists a value from the previous step (image in a series)
+  const scalar_t sigma = schema_->local_field_value(sid,DICe::SIGMA);
+  if(sigma!=-1.0){// && sigma!=0.0)
+    const Projection_Method projection = schema_->projection_method();
+    if(schema_->translation_enabled()){
+      DEBUG_MSG("Subset " << subset_gid << " Translation is enabled.");
+      if(schema_->image_frame() > 2 && projection == VELOCITY_BASED){
+        (*deformation)[DICe::DISPLACEMENT_X] = schema_->local_field_value(sid,DICe::DISPLACEMENT_X) +
+            (schema_->local_field_value(sid,DICe::DISPLACEMENT_X)-schema_->local_field_value_nm1(sid,DICe::DISPLACEMENT_X));
+        (*deformation)[DICe::DISPLACEMENT_Y] = schema_->local_field_value(sid,DICe::DISPLACEMENT_Y) +
+            (schema_->local_field_value(sid,DICe::DISPLACEMENT_Y)-schema_->local_field_value_nm1(sid,DICe::DISPLACEMENT_Y));
+      }
+      else{
+        (*deformation)[DICe::DISPLACEMENT_X] = schema_->local_field_value(sid,DICe::DISPLACEMENT_X);
+        (*deformation)[DICe::DISPLACEMENT_Y] = schema_->local_field_value(sid,DICe::DISPLACEMENT_Y);
+      }
+    }
+    if(schema_->rotation_enabled()){
+      DEBUG_MSG("Subset " << subset_gid << " Rotation is enabled.");
+      if(schema_->image_frame() > 2 && projection == VELOCITY_BASED){
+        (*deformation)[DICe::ROTATION_Z] = schema_->local_field_value(sid,DICe::ROTATION_Z) +
+            (schema_->local_field_value(sid,DICe::ROTATION_Z)-schema_->local_field_value_nm1(sid,DICe::ROTATION_Z));
+      }
+      else{
+        (*deformation)[DICe::ROTATION_Z] = schema_->local_field_value(sid,DICe::ROTATION_Z);
+      }
+    }
+    if(schema_->normal_strain_enabled()){
+      DEBUG_MSG("Subset " << subset_gid << " Normal strain is enabled.");
+      (*deformation)[DICe::NORMAL_STRAIN_X] = schema_->local_field_value(sid,DICe::NORMAL_STRAIN_X);
+      (*deformation)[DICe::NORMAL_STRAIN_Y] = schema_->local_field_value(sid,DICe::NORMAL_STRAIN_Y);
+    }
+    if(schema_->shear_strain_enabled()){
+      DEBUG_MSG("Subset " << subset_gid << " Shear strain is enabled.");
+      (*deformation)[DICe::SHEAR_STRAIN_XY] = schema_->local_field_value(sid,DICe::SHEAR_STRAIN_XY);
+    }
+
+    if(sid!=subset_gid)
+      DEBUG_MSG("Subset " << subset_gid << " was initialized from the field values of subset " << sid);
+    else{
+      DEBUG_MSG("Projection Method: " << projection);
+      DEBUG_MSG("Subset " << subset_gid << " solution from prev. step: u " << schema_->local_field_value(subset_gid,DICe::DISPLACEMENT_X) <<
+        " v " << schema_->local_field_value(subset_gid,DICe::DISPLACEMENT_Y) <<
+        " theta " << schema_->local_field_value(subset_gid,DICe::ROTATION_Z) <<
+        " e_x " << schema_->local_field_value(subset_gid,DICe::NORMAL_STRAIN_X) <<
+        " e_y " << schema_->local_field_value(subset_gid,DICe::NORMAL_STRAIN_Y) <<
+        " g_xy " << schema_->local_field_value(subset_gid,DICe::SHEAR_STRAIN_XY));
+      DEBUG_MSG("Subset " << subset_gid << " solution from nm1 step: u " << schema_->local_field_value_nm1(subset_gid,DICe::DISPLACEMENT_X) <<
+        " v " << schema_->local_field_value_nm1(subset_gid,DICe::DISPLACEMENT_Y) <<
+        " theta " << schema_->local_field_value_nm1(subset_gid,DICe::ROTATION_Z) <<
+        " e_x " << schema_->local_field_value_nm1(subset_gid,DICe::NORMAL_STRAIN_X) <<
+        " e_y " << schema_->local_field_value_nm1(subset_gid,DICe::NORMAL_STRAIN_Y) <<
+        " g_xy " << schema_->local_field_value_nm1(subset_gid,DICe::SHEAR_STRAIN_XY));
+    }
+    DEBUG_MSG("Subset " << subset_gid << " init. with values: u " << (*deformation)[DICe::DISPLACEMENT_X] <<
+      " v " << (*deformation)[DICe::DISPLACEMENT_Y] <<
+      " theta " << (*deformation)[DICe::ROTATION_Z] <<
+      " e_x " << (*deformation)[DICe::NORMAL_STRAIN_X] <<
+      " e_y " << (*deformation)[DICe::NORMAL_STRAIN_Y] <<
+      " g_xy " << (*deformation)[DICe::SHEAR_STRAIN_XY]);
+    if(sid==subset_gid)
+      return INITIALIZE_USING_PREVIOUS_FRAME_SUCCESSFUL;
+    else
+      return INITIALIZE_USING_NEIGHBOR_VALUE_SUCCESSFUL;
+  }
+  return INITIALIZE_FAILED;
+};
+
+Motion_Test_Utility::Motion_Test_Utility(const int_t origin_x,
   const int_t origin_y,
   const int_t width,
   const int_t height,
   const scalar_t & tol):
-  Initializer(Teuchos::null),
   origin_x_(origin_x),
   origin_y_(origin_y),
   width_(width),
@@ -276,17 +398,17 @@ Motion_Test_Initializer::Motion_Test_Initializer(const int_t origin_x,
   prev_img_(Teuchos::null),
   motion_state_(MOTION_NOT_SET)
 {
-  DEBUG_MSG("Constructor for Motion_Test_Initializer called");
+  DEBUG_MSG("Constructor for Motion_Test_Utility called");
   DEBUG_MSG("origin_x: " << origin_x_ << " origin_y: " << origin_y_ <<
     " width: " << width_ << " height: " << height_ << " tol: " << tol_);
 }
 
 bool
-Motion_Test_Initializer::motion_detected(Teuchos::RCP<Image> def_image){
+Motion_Test_Utility::motion_detected(Teuchos::RCP<Image> def_image){
   // test if this is a repeat call for the same frame, but by another subset
   // if so, return the previous result.
   if(motion_state_!=MOTION_NOT_SET){
-    DEBUG_MSG("Motion_Test_Initializer::motion_detected() repeat call, return value: " << motion_state_);
+    DEBUG_MSG("Motion_Test_Utility::motion_detected() repeat call, return value: " << motion_state_);
     // return last result
     return motion_state_==MOTION_TRUE ? true: false;
   }
@@ -297,7 +419,7 @@ Motion_Test_Initializer::motion_detected(Teuchos::RCP<Image> def_image){
     Teuchos::RCP<Image> window_img = Teuchos::rcp(new Image(def_image,origin_x_,origin_y_,width_,height_,params));
     // see if the previous image exists, if not return true as default
     if(prev_img_==Teuchos::null){
-      DEBUG_MSG("Motion_Test_Initializer::motion_detected() first frame call, return value: 1 (automatically).");
+      DEBUG_MSG("Motion_Test_Utility::motion_detected() first frame call, return value: 1 (automatically).");
       prev_img_ = window_img; // save off the deformed image as the previous one
       motion_state_=MOTION_TRUE;
       return true;
@@ -318,10 +440,10 @@ Motion_Test_Initializer::motion_detected(Teuchos::RCP<Image> def_image){
       diff = window_img->diff(prev_img_);
     }
     prev_img_ = window_img;
-    DEBUG_MSG("Motion_Test_Initializer::motion_detected() called, result: " << diff << " tol: " << tol_);
+    DEBUG_MSG("Motion_Test_Utility::motion_detected() called, result: " << diff << " tol: " << tol_);
     if(tol_==-1.0){ // user has not set a tolerance manually
       tol_ = diff + 5.0;
-      DEBUG_MSG("Motion_Test_Initializer::motion_detected() setting auto tolerance to: " << tol_);
+      DEBUG_MSG("Motion_Test_Utility::motion_detected() setting auto tolerance to: " << tol_);
     }
     motion_state_ = diff > tol_ ? MOTION_TRUE : MOTION_FALSE;
     return motion_state_==MOTION_TRUE ? true: false;

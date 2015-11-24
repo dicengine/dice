@@ -44,7 +44,6 @@
 #include <DICe_ObjectiveZNSSD.h>
 #include <DICe_PostProcessor.h>
 #include <DICe_ParameterUtilities.h>
-#include <DICe_FFT.h>
 
 #include <Teuchos_ArrayRCP.hpp>
 
@@ -231,8 +230,6 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   normalize_gamma_with_active_pixels_ = false;
   gauss_filter_images_ = false;
   init_params_ = params;
-  phase_cor_u_x_ = 0.0;
-  phase_cor_u_y_ = 0.0;
   comm_ = Teuchos::rcp(new MultiField_Comm());
   path_file_names_ = Teuchos::rcp(new std::map<int_t,std::string>());
   skip_solve_flags_ = Teuchos::rcp(new std::map<int_t,bool>());
@@ -589,15 +586,6 @@ Schema::initialize(const int_t num_pts,
   for(size_t i=0;i<post_processors_.size();++i)
     post_processors_[i]->initialize();
 
-  // initialize the optimization initializers (one for each subset)
-  opt_initializers_.resize(data_num_points_);
-  for(size_t i=0;i<opt_initializers_.size();++i)
-    opt_initializers_[i] = Teuchos::null;
-
-  motion_detectors_.resize(data_num_points_);
-  for(size_t i=0;i<motion_detectors_.size();++i)
-    motion_detectors_[i] = Teuchos::null;
-
   is_initialized_ = true;
 
   if(neighbor_ids!=Teuchos::null)
@@ -858,11 +846,11 @@ Schema::execute_correlation(){
   int_t num_local_subsets = this_proc_subset_global_ids_.size();
 
   // reset the motion detectors for each subset if used
-  for(size_t i=0;i<motion_detectors_.size();++i)
-    if(motion_detectors_[i]!=Teuchos::null){
-      DEBUG_MSG("Resetting motion detector: " << i);
-      motion_detectors_[i]->reset();
-    }
+  for(std::map<int_t,Teuchos::RCP<Motion_Test_Utility> >::iterator it = motion_detectors_.begin();
+      it != motion_detectors_.end();++it){
+    DEBUG_MSG("Resetting motion detector: " << it->first);
+    it->second->reset();
+  }
 
   // PARALLEL CASE:
   if(num_procs >1){
@@ -934,16 +922,11 @@ Schema::execute_correlation(){
   // sync the fields:
   sync_fields_all_to_dist();
 
-  // if requested, do a phase correlation of the images to get the initial guess for u_x and u_y:
-  if(initialization_method_==USE_PHASE_CORRELATION){
-    DICe::phase_correlate_x_y(prev_img_,def_img_,phase_cor_u_x_,phase_cor_u_y_);
-    DEBUG_MSG(" - phase correlation initial displacements ux: " << phase_cor_u_x_ << " uy: " << phase_cor_u_y_);
-  }
-
   // The generic routine is typically used when the dataset involves numerous subsets,
   // but only a small number of images. In this case it's more efficient to re-allocate the
   // objectives at every step, since making them static would consume a lot of memory
   if(correlation_routine_==GENERIC_ROUTINE){
+    prepare_optimization_initializers();
     for(int_t subset_index=0;subset_index<num_local_subsets;++subset_index){
       Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,
         this_proc_subset_global_ids_[subset_index]));
@@ -963,7 +946,7 @@ Schema::execute_correlation(){
       }
     }
     assert((int_t)obj_vec_.size()==num_local_subsets);
-    // now run the correlations:
+    prepare_optimization_initializers();
     for(int_t subset_index=0;subset_index<num_local_subsets;++subset_index){
       check_for_blocking_subsets(this_proc_subset_global_ids_[subset_index]);
       generic_correlation_routine(obj_vec_[subset_index]);
@@ -973,7 +956,7 @@ Schema::execute_correlation(){
     prev_img_=def_img_;
   }
   else
-    assert(false && "  DICe ERROR: unknown correlation routine.");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: unknown correlation routine.");
 
   // sync the fields
   sync_fields_dist_to_all();
@@ -997,23 +980,83 @@ Schema::execute_correlation(){
   update_image_frame();
 };
 
+void
+Schema::prepare_optimization_initializers(){
+  // method only needs to be called once, return if the pointers are alread addressed
+  if(opt_initializers_.size()>0){
+    DEBUG_MSG("Repeat call to prepare_optimization_initializers(), calling pre_execution_tasks");
+    for(std::map<int_t,Teuchos::RCP<Initializer> >::iterator opt_it = opt_initializers_.begin();
+        opt_it != opt_initializers_.end();++opt_it){
+      assert(*opt_it!=Teuchos::null);
+      opt_it->second->pre_execution_tasks();
+    }
+    return;
+  }
+
+  // set up the default initializer
+  Teuchos::RCP<Initializer> default_initializer;
+  if(initialization_method_==USE_PHASE_CORRELATION){
+    DEBUG_MSG("Default initializer is phase correlation initializer");
+    default_initializer = Teuchos::rcp(new Phase_Correlation_Initializer(this));
+  }
+  else{ // use field values
+    DEBUG_MSG("Default initializer is field value initializer");
+    default_initializer = Teuchos::rcp(new Field_Value_Initializer(this));
+  }
+
+  // create the optimization initializers (one for each subset for tracking)
+  if(correlation_routine_==TRACKING_ROUTINE){
+    // iterate all the subetsets to see if any have path files associated
+    for(size_t i=0;i<obj_vec_.size();++i){
+      const int_t subset_gid = obj_vec_[i]->correlation_point_global_id();
+      const bool has_path_file = path_file_names_->find(subset_gid)!=path_file_names_->end();
+      if(has_path_file){
+        const int_t num_neighbors = 6; // number of path neighbors to search while initializing
+        std::string path_file_name = path_file_names_->find(subset_gid)->second;
+        DEBUG_MSG("Subset " << subset_gid << " using path file " << path_file_name << " as initializer");
+        opt_initializers_.insert(std::pair<int_t,Teuchos::RCP<Initializer> >(subset_gid,
+          Teuchos::rcp(new Path_Initializer(this,obj_vec_[i]->subset(),path_file_name.c_str(),num_neighbors))));
+      }
+      else{
+        opt_initializers_.insert(std::pair<int_t,Teuchos::RCP<Initializer> >(subset_gid,default_initializer));
+      }
+    } // end obj_vec
+  }
+  // if not tracking routine use one master initializer for all subsets
+  else{
+    // make sure that path files were not requested
+    if(path_file_names_->size()>0){
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"Error, path files cannot be used with the GENERIC_ROUTINE correlation routine");
+    }
+    opt_initializers_.insert(std::pair<int_t,Teuchos::RCP<Initializer> >(0,default_initializer));
+  }
+
+  // call pre-correlation tasks for initializers
+  for(std::map<int_t,Teuchos::RCP<Initializer> >::iterator opt_it = opt_initializers_.begin();
+      opt_it != opt_initializers_.end();++opt_it){
+    opt_it->second->pre_execution_tasks();
+  }
+}
+
 bool
 Schema::motion_detected(const int_t subset_gid){
+  DEBUG_MSG("Schema::motion_detected() called");
   if(motion_window_params_->find(subset_gid)!=motion_window_params_->end()){
     const int_t use_subset_id = motion_window_params_->find(subset_gid)->second.use_subset_id_==-1 ? subset_gid:
         motion_window_params_->find(subset_gid)->second.use_subset_id_;
-    if(motion_detectors_[use_subset_id]==Teuchos::null){
+    DEBUG_MSG("Creating a motion test utility for subset " << subset_gid << " using id " << use_subset_id);
+    if(motion_detectors_.find(use_subset_id)==motion_detectors_.end()){
       // create the motion detector because it doesn't exist
       Motion_Window_Params mwp = motion_window_params_->find(use_subset_id)->second;
-      motion_detectors_[use_subset_id] = Teuchos::rcp(new Motion_Test_Initializer(mwp.origin_x_,
+      motion_detectors_.insert(std::pair<int_t,Teuchos::RCP<Motion_Test_Utility> >(use_subset_id,Teuchos::rcp(new Motion_Test_Utility(mwp.origin_x_,
         mwp.origin_y_,
         mwp.width_,
         mwp.height_,
-        mwp.tol_));
+        mwp.tol_))));
     }
-    TEUCHOS_TEST_FOR_EXCEPTION(motion_detectors_[use_subset_id]==Teuchos::null,std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(motion_detectors_.find(use_subset_id)==motion_detectors_.end(),std::runtime_error,
       "Error, the motion detector should exist here, but it doesn't.");
-    bool motion_det = motion_detectors_[use_subset_id]->motion_detected(def_img_);
+    bool motion_det = motion_detectors_.find(use_subset_id)->second->motion_detected(def_img_);
     DEBUG_MSG("Subset " << subset_gid << " TEST_FOR_MOTION using window defined for subset " << use_subset_id <<
       " result " << motion_det);
     return motion_det;
@@ -1056,6 +1099,20 @@ Schema::record_step(const int_t subset_gid,
   local_field_value(subset_gid,ITERATIONS) = num_iterations;
 }
 
+Status_Flag
+Schema::initial_guess(const int_t subset_gid,
+  Teuchos::RCP<std::vector<scalar_t> > deformation){
+  // for non-tracking routines, there is only the zero-th entry in the initializers map
+  int_t sid = 0;
+  // tracking routine has a different initializer for each subset
+  if(correlation_routine_==TRACKING_ROUTINE){
+    sid = subset_gid;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(opt_initializers_.find(sid)==opt_initializers_.end(),std::runtime_error,
+    "Initializer does not exist, but should here");
+  return opt_initializers_.find(sid)->second->initial_guess(subset_gid,deformation);
+}
+
 void
 Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
 
@@ -1076,64 +1133,15 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     return;
   }
   //
-  //  check if the user has specified a path file for this subset:
-  //  Path files help with defining an expected trajectory, can be used to initialize
-  //  at any random time in a video sequence or to test if the computed solution is too far
-  //  from the expected path to be valid
-  //
-  const bool has_path_file = path_file_names_->find(subset_gid)!=path_file_names_->end();
-  bool global_path_search_required = local_field_value(subset_gid,SIGMA)==-1.0 || image_frame_==0;
-  if(opt_initializers_[subset_gid]==Teuchos::null){
-    if(has_path_file){
-      const int_t num_neighbors = 6; // number of path neighbors to search while initializing
-      std::string path_file_name = path_file_names_->find(subset_gid)->second;
-      DEBUG_MSG("Subset " << subset_gid << " using path file " << path_file_name);
-      opt_initializers_[subset_gid] =
-          Teuchos::rcp(new Path_Initializer(obj->subset(),path_file_name.c_str(),num_neighbors));
-    }
-    else{
-      DEBUG_MSG("Subset " << subset_gid << " no path file specified for this subset");
-    }
-  }
-  TEUCHOS_TEST_FOR_EXCEPTION(opt_initializers_[subset_gid]==
-      Teuchos::null&&has_path_file,std::runtime_error,"Initializer not instantiated yet, but should be.");
-  //
-  //  initialial guess for the subset's solution parameters
+  //  initial guess for the subset's solution parameters
   //
   Status_Flag init_status = INITIALIZE_SUCCESSFUL;
   Status_Flag corr_status = CORRELATION_FAILED;
   int_t num_iterations = -1;
-  scalar_t initial_gamma = 0.0;
   Teuchos::RCP<std::vector<scalar_t> > deformation = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+  const bool has_path_file = path_file_names_->find(subset_gid)!=path_file_names_->end();
   try{
-    // use the path file to get the initial guess
-    if(has_path_file){
-      if(global_path_search_required){
-        initial_gamma = opt_initializers_[subset_gid]->initial_guess(def_img_,deformation);
-      }
-      else{
-        const scalar_t prev_u = local_field_value(subset_gid,DICe::DISPLACEMENT_X);
-        const scalar_t prev_v = local_field_value(subset_gid,DICe::DISPLACEMENT_Y);
-        const scalar_t prev_t = local_field_value(subset_gid,DICe::ROTATION_Z);
-        initial_gamma = opt_initializers_[subset_gid]->initial_guess(def_img_,deformation,prev_u,prev_v,prev_t);
-      }
-    }
-    // use the solution in the field values as the initial guess
-    else if(initialization_method_==DICe::USE_FIELD_VALUES ||
-        (initialization_method_==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && image_frame_>0)){
-      init_status = obj->initialize_from_previous_frame(deformation);
-    }
-    // use phase correlation of the whole image to get the initial guess
-    // (useful when the subset being tracked is on an object translating through the frame)
-    else if(initialization_method_==DICe::USE_PHASE_CORRELATION){
-      (*deformation)[DISPLACEMENT_X] = phase_cor_u_x_ + local_field_value(subset_gid,DISPLACEMENT_X);
-      (*deformation)[DISPLACEMENT_Y] = phase_cor_u_y_ + local_field_value(subset_gid,DISPLACEMENT_Y);
-      (*deformation)[ROTATION_Z] = local_field_value(subset_gid,ROTATION_Z);
-    }
-    // use the solution of a neighboring subset for the intial guess
-    else{
-      init_status = obj->initialize_from_neighbor(deformation);
-    }
+    init_status = initial_guess(subset_gid,deformation);
   }
   catch (std::logic_error &err) { // a non-graceful exception occurred in initialization
     record_failed_step(subset_gid,static_cast<int_t>(INITIALIZE_FAILED_BY_EXCEPTION),num_iterations);
@@ -1154,7 +1162,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     if(skip_solve_flags_->find(subset_gid)->second ==true){
       DEBUG_MSG("Subset " << subset_gid << " solve will be skipped as requested by user in the subset file");
       const scalar_t initial_sigma = obj->sigma(deformation);
-      if(initial_gamma==0.0) initial_gamma = obj->gamma(deformation);
+      const scalar_t initial_gamma = obj->gamma(deformation);
       record_step(subset_gid,deformation,initial_sigma,0.0,initial_gamma,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
       return;
     }
@@ -1162,11 +1170,14 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   //  if user requested testing the initial value of gamma, do that here
   //
-  if(initial_gamma_threshold_!=-1.0&&initial_gamma > initial_gamma_threshold_){
-    DEBUG_MSG("Subset " << subset_gid << " initial gamma value FAILS threshold test, gamma: " <<
-      initial_gamma << " (threshold: " << initial_gamma_threshold_ << ")");
-    record_failed_step(subset_gid,static_cast<int_t>(INITIALIZE_FAILED),num_iterations);
-    return;
+  if(initial_gamma_threshold_!=-1.0){
+    const scalar_t initial_gamma = obj->gamma(deformation);
+    if(initial_gamma > initial_gamma_threshold_){
+      DEBUG_MSG("Subset " << subset_gid << " initial gamma value FAILS threshold test, gamma: " <<
+        initial_gamma << " (threshold: " << initial_gamma_threshold_ << ")");
+      record_failed_step(subset_gid,static_cast<int_t>(INITIALIZE_FAILED),num_iterations);
+      return;
+    }
   }
   // TODO how to respond to bad initialization
   // TODO add a search-based method to initialize if other methods failed
@@ -1196,16 +1207,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     }
     else if(optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX){
       // try again using simplex
-      if(initialization_method_==DICe::USE_FIELD_VALUES || (initialization_method_==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && image_frame_>0))
-        init_status = obj->initialize_from_previous_frame(deformation);
-      else if(initialization_method_==DICe::USE_PHASE_CORRELATION){
-        (*deformation)[DISPLACEMENT_X] = phase_cor_u_x_ + local_field_value(subset_gid,DISPLACEMENT_X);
-        (*deformation)[DISPLACEMENT_Y] = phase_cor_u_y_ + local_field_value(subset_gid,DISPLACEMENT_Y);
-        (*deformation)[ROTATION_Z] = local_field_value(subset_gid,ROTATION_Z);
-        // TODO clear the other values?
-        init_status = DICe::INITIALIZE_SUCCESSFUL;
-      }
-      else init_status = obj->initialize_from_neighbor(deformation);
+      init_status = initial_guess(subset_gid,deformation);
       try{
         corr_status = obj->computeUpdateRobust(deformation,num_iterations);
       }
@@ -1219,16 +1221,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     }
     else if(optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED){
       // try again using gradient based
-      if(initialization_method_==DICe::USE_FIELD_VALUES || (initialization_method_==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && image_frame_>0))
-        init_status = obj->initialize_from_previous_frame(deformation);
-      else if(initialization_method_==DICe::USE_PHASE_CORRELATION){
-        (*deformation)[DISPLACEMENT_X] = phase_cor_u_x_ + local_field_value(subset_gid,DISPLACEMENT_X);
-        (*deformation)[DISPLACEMENT_Y] = phase_cor_u_y_ + local_field_value(subset_gid,DISPLACEMENT_Y);
-        (*deformation)[ROTATION_Z] = local_field_value(subset_gid,ROTATION_Z);
-        // TODO clear the other values?
-        init_status = DICe::INITIALIZE_SUCCESSFUL;
-      }
-      else init_status = obj->initialize_from_neighbor(deformation);
+      init_status = initial_guess(subset_gid,deformation);
       try{
         corr_status = obj->computeUpdateFast(deformation,num_iterations);
       }
@@ -1251,8 +1244,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       gamma << " (threshold: " << final_gamma_threshold_ << ")");
     // for the phase correlation initialization method, the initial guess needs to be stored
     if(initialization_method_==DICe::USE_PHASE_CORRELATION){
-      local_field_value(subset_gid,DISPLACEMENT_X) += phase_cor_u_x_;
-      local_field_value(subset_gid,DISPLACEMENT_Y) += phase_cor_u_y_;
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+//      local_field_value(subset_gid,DISPLACEMENT_X) += phase_cor_u_x_;
+//      local_field_value(subset_gid,DISPLACEMENT_Y) += phase_cor_u_y_;
     }
     record_failed_step(subset_gid,static_cast<int_t>(FRAME_FAILED_DUE_TO_HIGH_GAMMA),num_iterations);
     return;
@@ -1265,7 +1259,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     size_t id = 0;
     // dynamic cast the pointer to get access to the derived class methods
     Teuchos::RCP<Path_Initializer> path_initializer =
-        Teuchos::rcp_dynamic_cast<Path_Initializer>(opt_initializers_[subset_gid]);
+        Teuchos::rcp_dynamic_cast<Path_Initializer>(opt_initializers_.find(subset_gid)->second);
     path_initializer->closest_triad((*deformation)[DISPLACEMENT_X],
       (*deformation)[DISPLACEMENT_Y],(*deformation)[ROTATION_Z],id,path_distance);
     DEBUG_MSG("Subset " << subset_gid << " path distance: " << path_distance);

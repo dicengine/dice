@@ -107,6 +107,8 @@ typedef KDTreeSingleIndexAdaptor<
 /// generic DICe classes and functions
 namespace DICe {
 
+class Schema;
+
 /// Deformation triad to store three parameter values in a set
 struct def_triad
 {
@@ -147,41 +149,30 @@ class DICE_LIB_DLL_EXPORT
 Initializer {
 public:
   /// base class constructor
-  /// \param def_image pointer to the deformed image being correlated
-  /// \param subset pointer to the subset being initialized
-  Initializer(Teuchos::RCP<Subset> subset):
-    subset_(subset){
-  }
+  Initializer(Schema * schema):
+    schema_(schema)
+  {};
 
   /// virtual destructor
   virtual ~Initializer(){};
 
-  /// Initialize method called by the objective function to init the optimization with a good first guess.
-  /// The return value is a measure of how good the initial guess is
-  /// \param deformaion [out] the deformation vector returned with the initial guess
-  /// \param u a seed for the x-displacement
-  /// \param v a seed for the y-displacement
-  /// \param t a seed for the rotation
-  virtual scalar_t initial_guess(Teuchos::RCP<Image> def_image,
-    Teuchos::RCP<std::vector<scalar_t> > deformation,
-    const scalar_t & u,
-    const scalar_t & v,
-    const scalar_t & t){
+  /// Tasks that should be performed before the frame is correlated
+  virtual void pre_execution_tasks(){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Base class method should never be called.");
-  };
+  }
 
-  /// Initialize method called by the objective function to init the optimization with a good first guess.
-  /// In this case, no seeds are provided for the initial guess
-  /// The return value is a measure of how good the initial guess is
+  /// Initialize method, called by the objective function to start the optimization with a good first guess.
+  /// \param subset_gid the global id of the subset being initialized
   /// \param deformaion [out] the deformation vector returned with the initial guess
-  virtual scalar_t initial_guess(Teuchos::RCP<Image> def_image,
+  virtual Status_Flag initial_guess(const int_t subset_gid,
     Teuchos::RCP<std::vector<scalar_t> > deformation){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Base class method should never be called.");
   };
 
 protected:
-  /// pointer to the subset being initialized
-  Teuchos::RCP<Subset> subset_;
+  /// pointer to the schema that created this initializer, used for field access
+  Schema * schema_;
+
 };
 
 
@@ -198,7 +189,8 @@ Path_Initializer : public Initializer{
 public:
 
   /// constructor
-  /// \param subset pointer to the subset being initialized
+  /// \param schema pointer to the parent schema (with all the field info)
+  /// \param subset pointer to a specific subset
   /// \param file_name the name of the file to use for input. The input should be in the following
   /// format: ascii text file with values separated by spaces in three columns. The first column
   /// is the x displacement, the second column is y displacement and the third is rotation. If one
@@ -206,7 +198,8 @@ public:
   /// not be any blank lines at the end of the file. TODO create a more robust file reader.
   /// No header should be included in the text file.
   /// \param num_neighbors the k value for the k-closest neighbors to store for each point
-  Path_Initializer(Teuchos::RCP<Subset> subset,
+  Path_Initializer(Schema * schema,
+    Teuchos::RCP<Subset> subset,
     const char * file_name,
     const size_t num_neighbors=6);
 
@@ -251,22 +244,38 @@ public:
     scalar_t & distance_sqr)const;
 
   /// see base class description
+  virtual void pre_execution_tasks(){// do nothing for path_initializer
+  };
+
+  /// see base class description
+  virtual Status_Flag initial_guess(const int_t subset_gid,
+    Teuchos::RCP<std::vector<scalar_t> > deformation);
+
+  /// Initialize the subset in the vicinity of the previous guess
+  /// \param def_image the deformed image
+  /// \param deformation [out] the deformation vector to initialize
+  /// \param u previous displacemcent x
+  /// \param v previous displacement y
+  /// \param t previous theta
   /// in this case only the closest k-neighbors will be searched for the best solution
-  virtual scalar_t initial_guess(Teuchos::RCP<Image> def_image,
+  scalar_t initial_guess(Teuchos::RCP<Image> def_image,
     Teuchos::RCP<std::vector<scalar_t> > deformation,
     const scalar_t & u,
     const scalar_t & v,
     const scalar_t & t);
 
-  /// see base class description
-  /// in this case, the entire set of path triads will be searched for the best solution
-  virtual scalar_t initial_guess(Teuchos::RCP<Image> def_image,
+  /// Initializer where the entire set of path triads will be searched for the best solution
+  /// \param def_image pointer to the deformed image
+  /// \param deformation [out] the deformation vector
+  scalar_t initial_guess(Teuchos::RCP<Image> def_image,
     Teuchos::RCP<std::vector<scalar_t> > deformation);
 
   /// write the filtered set of points out to an output file
   void write_to_text_file(const std::string & file_name)const;
 
 private:
+  /// pointer to the subset being initialized
+  Teuchos::RCP<Subset> subset_;
   /// unique triads of deformation params: u, v, and t
   std::set<def_triad> triads_;
   /// number of unique triads
@@ -279,31 +288,90 @@ private:
   Teuchos::RCP<my_kd_tree_t> kd_tree_;
   /// pointer to the point cloud used for the neighbor searching
   Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud_;
-
 };
 
-
-/// \class DICe::Motion_Test_Initializer
-/// \brief tests to see if there has been any motion since the last frame
-/// if not, this frame is skipped.
+/// \class DICe::Phase_Correlation_Initializer
+/// \brief A class that computes the phase correlation of the
+/// whole image to get the initial values of displacement in x and y.
+/// This initializer is good for cases where the objects being tracked are
+/// on a larger object that is translating through the frame
 class DICE_LIB_DLL_EXPORT
-Motion_Test_Initializer : public Initializer{
+Phase_Correlation_Initializer : public Initializer{
 public:
 
   /// constructor
-  /// \param origin_x the upper left corner x coordinate
-  /// \param origin_y the upper left corner y coordinate
+  /// \param schema the parent schema
+  Phase_Correlation_Initializer(Schema * schema):
+  Initializer(schema),
+  phase_cor_u_x_(0.0),
+  phase_cor_u_y_(0.0){};
+
+  /// virtual destructor
+  virtual ~Phase_Correlation_Initializer(){};
+
+  /// see base class description
+  virtual void pre_execution_tasks();
+
+  /// see base class description
+  virtual Status_Flag initial_guess(const int_t subset_gid,
+    Teuchos::RCP<std::vector<scalar_t> > deformation);
+
+protected:
+  /// phase correlation displacement x estimate from previous frame
+  scalar_t phase_cor_u_x_;
+  /// phase correlation displacement y estimate from previous frame
+  scalar_t phase_cor_u_y_;
+};
+
+/// \class DICe::Field_Value_Initializer
+/// \brief an initializer that grabs values from the field values
+/// in the schema as the first guess, for example, the last frame's solution
+/// or a neighbor's values
+class DICE_LIB_DLL_EXPORT
+Field_Value_Initializer : public Initializer{
+public:
+
+  /// constructor
+  /// \param schema the parent schema
+  Field_Value_Initializer(Schema * schema):
+  Initializer(schema){};
+
+  /// virtual destructor
+  virtual ~Field_Value_Initializer(){};
+
+  /// see base class description
+  virtual void pre_execution_tasks(){};
+
+  /// see base class description
+  virtual Status_Flag initial_guess(const int_t subset_gid,
+    Teuchos::RCP<std::vector<scalar_t> > deformation);
+};
+
+//
+//  Initialization utilities
+//
+
+
+/// \class DICe::Motion_Test_Utility
+/// \brief tests to see if there has been any motion since the last frame
+/// if not, this frame can be skipped.
+class DICE_LIB_DLL_EXPORT
+Motion_Test_Utility{
+public:
+  /// constructor
+  /// \param origin_x the upper left corner x coordinate of the test window (note: not the centroid)
+  /// \param origin_y the upper left corner y coordinate of the test window (note: not the centroid)
   /// \param width the width of the window to test
   /// \param height the height of the window to test
   /// \param tol determines the threshold for the image diff to register motion
-  Motion_Test_Initializer(const int_t origin_x,
+  Motion_Test_Utility(const int_t origin_x,
     const int_t origin_y,
     const int_t width,
     const int_t height,
     const scalar_t & tol);
 
   /// virtual destructor
-  virtual ~Motion_Test_Initializer(){};
+  ~Motion_Test_Utility(){};
 
   /// reset the result flag (should be done at the beginning of each frame)
   void reset(){
@@ -314,27 +382,10 @@ public:
   /// \param def_image pointer to the deformed image
   bool motion_detected(Teuchos::RCP<Image> def_image);
 
-  /// see base class description
-  /// in this case only the closest k-neighbors will be searched for the best solution
-  virtual scalar_t initial_guess(Teuchos::RCP<Image> def_image,
-    Teuchos::RCP<std::vector<scalar_t> > deformation,
-    const scalar_t & u,
-    const scalar_t & v,
-    const scalar_t & t){
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"This method has not been implemented yet.");
-  };
-
-  /// see base class description
-  /// in this case, the entire set of path triads will be searched for the best solution
-  virtual scalar_t initial_guess(Teuchos::RCP<Image> def_image,
-    Teuchos::RCP<std::vector<scalar_t> > deformation){
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"This method has not been implemented yet.");
-  };
-
 private:
-  /// x coord of upper left corner of the motion window
+  /// x coord of upper left corner of the motion window (not the centroid)
   int_t origin_x_;
-  /// y coord of upper left corner of the motion window
+  /// y coord of upper left corner of the motion window (not the centroid)
   int_t origin_y_;
   /// width of the window
   int_t width_;
@@ -348,6 +399,7 @@ private:
   /// made for this initializer by another subset
   Motion_State motion_state_;
 };
+
 
 }// End DICe Namespace
 

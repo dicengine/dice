@@ -59,7 +59,7 @@ namespace DICe {
 ///
 /// A DICe::Objective contains all the necessary elements of a minimization objective, for example, to minimize the sum
 /// squared difference of the intensity values between a subset taken from the reference and deformed image. The correlation
-/// criteria, gamma, is defined here as well as how the optimzation is seeded with an initial guess. Each objective has a
+/// criteria, gamma, is defined here. Each objective has a
 /// fast and robust method for determining the deformation map that minimizes gamma. The fast method is typically
 /// image gradient based and the robust method is usually simplex based.
 ///
@@ -125,34 +125,6 @@ public:
   virtual Status_Flag computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     int_t & num_iterations,
     const scalar_t & override_tol = -1.0) = 0;
-
-  /// \brief Initialize deformation values using the previous frame's solution
-  /// \param deformation [out] Returned as the deformation parameters from the previous step.
-  /// If the previous step was not successful (the sigma value is -1) this method returns unsuccessfully.
-  virtual Status_Flag initialize_from_previous_frame(Teuchos::RCP<std::vector<scalar_t> > & deformation) = 0;
-
-  /// \brief Initialize deformation values by searching within a region of the current solution
-  /// \param deformation [out] Returned as the deformation parameters found by searching the parameter space.
-  /// \param precision_level The number of digits of precision to converge the solution (higher is more precise)
-  /// \param return_value The resulting gamma value at the best solution
-  virtual Status_Flag search(Teuchos::RCP<std::vector<scalar_t> > & deformation,
-    const int_t precision_level,
-    scalar_t & return_value) = 0;
-
-  /// \brief Initialize the values by performing a search over a window with a given step
-  /// \param deformation [out] returned with the initial guess
-  /// \param window_size the size of the search window
-  /// \param step_size the increment over which to search the window
-  /// \param return_value the gamma value at the best initial guess
-  virtual Status_Flag search_step(Teuchos::RCP<std::vector<scalar_t> > & deformation,
-    const int_t window_size,
-    const scalar_t step_size,
-    scalar_t & return_value) = 0;
-
-  /// \brief Initialize deformation values by using a neighbors current solution
-  /// \param deformation [out] Returned as the deformation parameters taken from a neighboring point's current solution.
-  /// If the neighbor's current frame was not successful (the sigma value is -1) this method returns unsuccessfully.
-  virtual Status_Flag initialize_from_neighbor(Teuchos::RCP<std::vector<scalar_t> > & deformation) = 0;
 
   /// The number of degrees of freedom in the deformation vector
   int_t num_dofs()const{
