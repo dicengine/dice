@@ -40,3 +40,9 @@ FILE ( GLOB img_files "${CMAKE_CURRENT_SOURCE_DIR}/performance/images/*.*")
 FOREACH ( img_file ${img_files} )
     FILE(COPY ${img_file} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/performance/images/ )
 ENDFOREACH ( )
+
+#  Examples:
+#
+#  These tests are used as tutorial examples
+#
+add_subdirectory(examples)

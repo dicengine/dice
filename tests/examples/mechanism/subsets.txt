@@ -1,0 +1,50 @@
+BEGIN SUBSET_COORDINATES
+  266 376
+  319 278
+  303 178
+  280 31 # uses default subset size from input so no conformal def given below for this subset
+END SUBSET_COORDINATES
+
+BEGIN CONFORMAL_SUBSET
+  SUBSET_ID 0
+  BEGIN boundary
+    BEGIN polygon
+      BEGIN VERTICES
+        252 383
+	275 391
+	268 417
+	247 411
+      END VERTICES
+    END polygon
+    BEGIN polygon
+      BEGIN VERTICES
+        262 351
+	274 353
+	277 339
+	264 337
+      END VERTICES
+    END polygon
+  END boundary
+END CONFORMAL_SUBSET
+
+begin conformal_subset
+  subset_id 1
+  begin boundary
+    begin rectangle
+      center 319 278
+      width 31
+      height 21
+    end
+  end
+end
+
+begin conformal_subset
+  subset_id 2
+  begin boundary
+    begin rectangle
+      center 303 178
+      width 9
+      height 9
+    end
+  end
+end

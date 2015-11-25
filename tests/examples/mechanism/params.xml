@@ -1,0 +1,15 @@
+<ParameterList>
+  <Parameter name="use_tracking_default_params" type="bool" value="true" />
+  <Parameter name="optimization_method" type="string" value="simplex" />
+  <Parameter name="output_delimiter" type="string" value="," />
+  <Parameter name="output_deformed_subset_images" type="bool" value="false" />
+  <ParameterList name="output_spec">
+    <Parameter name="COORDINATE_X" type="int" value="0" />
+    <Parameter name="COORDINATE_Y" type="int" value="1" />
+    <Parameter name="DISPLACEMENT_X" type="int" value="2" />
+    <Parameter name="DISPLACEMENT_Y" type="int" value="3" />
+    <Parameter name="ROTATION_Z" type="int" value="4" />
+    <Parameter name="SIGMA" type="int" value="5" />
+    <Parameter name="GAMMA" type="int" value="6" />
+  </ParameterList>
+</ParameterList>
