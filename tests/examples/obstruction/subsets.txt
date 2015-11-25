@@ -1,0 +1,55 @@
+BEGIN SUBSET_COORDINATES
+  100 100
+  154 30
+END SUBSET_COORDINATES
+
+BEGIN CONFORMAL_SUBSET
+  SUBSET_ID 0
+  BEGIN boundary
+    BEGIN polygon
+      BEGIN VERTICES
+        93 11
+	72 98
+	84 120
+	109 123
+	184 88
+	191 83
+	188 77
+	161 90
+	132 94
+	103 67
+	103 19
+	110 9
+	95 8
+      END VERTICES
+    END polygon
+  END boundary
+  begin excluded
+    begin rectangle
+      center 68 96
+      width 15
+      height 41
+    end
+  end
+  begin obstructed
+    begin rectangle
+      center 68 100
+      width 15
+      height 190
+    end
+  end
+  begin blocking_subsets
+    1
+  end
+END CONFORMAL_SUBSET
+
+begin conformal_subset
+  subset_id 1
+  begin boundary
+    begin rectangle
+      center 154 30
+      width 17
+      height 17
+    end
+  end
+end
