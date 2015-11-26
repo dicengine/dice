@@ -62,7 +62,12 @@ struct Point_Cloud
   /// point struct
   struct Point
   {
-    T  x,y,z;
+    /// data x
+    T x;
+    /// data y
+    T y;
+    /// data z
+    T z;
   };
   /// vector of points
   std::vector<Point>  pts;
@@ -163,7 +168,7 @@ public:
 
   /// Initialize method, called by the objective function to start the optimization with a good first guess.
   /// \param subset_gid the global id of the subset being initialized
-  /// \param deformaion [out] the deformation vector returned with the initial guess
+  /// \param deformation [out] the deformation vector returned with the initial guess
   virtual Status_Flag initial_guess(const int_t subset_gid,
     Teuchos::RCP<std::vector<scalar_t> > deformation){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Base class method should never be called.");
@@ -236,7 +241,7 @@ public:
   /// \param v displacement in y
   /// \param t rotation
   /// \param id [out] the return id of the closest triad
-  /// \param distance [out] the euclidean distance to this point
+  /// \param distance_sqr [out] the euclidean distance to this point
   void closest_triad(const scalar_t &u,
     const scalar_t &v,
     const scalar_t &t,

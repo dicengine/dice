@@ -59,7 +59,7 @@
 namespace DICe {
 
 /// \class DICe::Subset
-/// Subsets are used to store temporary collections of pixels for comparison between the
+/// \brief Subsets are used to store temporary collections of pixels for comparison between the
 /// reference and deformed images. The data that is stored by a subset is a list of x and y
 /// corrdinates of each pixel (this allows for arbitrary shape) and containers for pixel
 /// intensity values.

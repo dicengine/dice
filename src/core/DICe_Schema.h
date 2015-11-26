@@ -571,9 +571,10 @@ public:
   /// \param subset_gid the global id of the subset to record
   /// \param deformation the deformation vector
   /// \param sigma sigma value
+  /// \param match match value
   /// \param gamma gamma value
   /// \param status status flag
-  /// \param num_iteration the number of iterations
+  /// \param num_iterations the number of iterations
   void record_step(const int_t subset_gid,
     Teuchos::RCP<std::vector<scalar_t> > & deformation,
     const scalar_t & sigma,

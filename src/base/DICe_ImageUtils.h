@@ -58,6 +58,7 @@ namespace DICe {
 /// \param cy the centroid y coordinate
 /// \param width the width of the array
 /// \param height the height of the array
+/// \param deformation a vector that defines the deformation map parameters
 void apply_transform(Teuchos::ArrayRCP<intensity_t> & intensities_from,
   Teuchos::ArrayRCP<intensity_t> & intensities_to,
   const int_t cx,

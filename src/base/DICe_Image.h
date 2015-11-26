@@ -59,7 +59,7 @@ class Conformal_Area_Def;
 
 
 /// \class DICe::Image
-/// A container class to hold the pixel intensity information and provide some basic methods
+/// \brief A container class to hold the pixel intensity information and provide some basic methods
 /// Note: the coordinates are from the top left corner (positive right for x and positive down for y)
 /// intensity access is always in local coordinates, for example if only a portion of an image is read
 /// into the intensity values, accessing the first value in the array is via the indicies (0,0) even if
@@ -145,6 +145,7 @@ public:
   /// \param offset_y the upper left corner y-coord in image coordinates
   /// \param width the width of the sub image
   /// \param height the height of the sub image
+  /// \param params image parameters (for example compute_gradients, etc.)
   Image(Teuchos::RCP<Image> img,
     const int_t offset_x = 0,
     const int_t offset_y = 0,
@@ -270,10 +271,10 @@ public:
 
   /// apply a transformation to this image to create another image
   /// \param deformation the deformation mapping parameters u,v,theta,...
-  /// \param apply_in_place true if the mapped intensity values should replace the existing values in the image
   /// (in this case return is null pointer)
   /// \param cx centroid of mapping in the current image (used when applying rotation)
   /// \param cy centroid of mapping in the current image (used when applying rotation)
+  /// \param apply_in_place true if the mapped intensity values should replace the existing values in the image
   Teuchos::RCP<Image> apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformation,
     const int_t cx,
     const int_t cy,
@@ -281,7 +282,7 @@ public:
 
   /// apply a rotation to this image to create another image
   /// in this case, there are only three options 90, 180, and 270 degree rotations
-  /// \param rotation_value enum that defines the rotation
+  /// \param rotation enum that defines the rotation
   /// \param params parameters to apply to the new image
   Teuchos::RCP<Image> apply_rotation(const Rotation_Value rotation,
       const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);

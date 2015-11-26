@@ -47,7 +47,7 @@
 
 namespace DICe{
 
-/// image mask initialization functor
+/// \brief image mask initialization functor
 /// note, the number of pixels is the size of the x and y arrays, not the image
 struct Mask_Init_Functor{
   /// pointer to the mask dual view
@@ -74,7 +74,7 @@ struct Mask_Init_Functor{
   }
 };
 
-/// image mask initialization functor
+/// \brief image mask initialization functor
 /// note, the number of pixels is the size the image
 struct Mask_Smoothing_Functor{
   /// pointer to the mask dual view
@@ -99,7 +99,7 @@ struct Mask_Smoothing_Functor{
   void operator()(const int_t pixel_index)const;
 };
 
-/// image mask apply functor
+/// \brief image mask apply functor
 struct Mask_Apply_Functor{
   /// pointer to the intensity values
   intensity_device_view_2d intensities_;
@@ -126,7 +126,7 @@ struct Mask_Apply_Functor{
   }
 };
 
-/// image transformation functor
+/// \brief image transformation functor
 /// given parameters theta, u, and v, transform the given image
 /// uses the keys interpolant (TODO add other interpolants)
 struct Transform_Functor{

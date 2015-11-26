@@ -111,7 +111,6 @@ const char* const separate_output_file_for_each_subset = "separate_output_file_f
 /// \param argc typical argument from main
 /// \param argv typical argument from main
 /// \param outStream [out] The output stream, gets set to cout or blackholeStream depending on command line options
-/// \param banner The code name and copyright info
 /// \param analysis_type Global, Local, Constrained Optimziation, ...
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
@@ -220,6 +219,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
 /// \brief Turns a string read from getline() into tokens
 /// \param dataFile fstream file to read line from (assumed to be open)
 /// \param delim Delimiter character
+/// \param capitalize true if the tokens should be automatically capitalized
 DICE_LIB_DLL_EXPORT
 Teuchos::ArrayRCP<std::string> tokenize_line(std::fstream &dataFile,
   const std::string & delim=" ",
