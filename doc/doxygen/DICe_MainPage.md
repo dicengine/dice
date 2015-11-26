@@ -7,6 +7,8 @@ the U.S. Government retains certain rights in this software.
 
 [User Manual] (#UserManual)
 
+[Tutorial] (DICe_Tutorial.md)
+
 [Obtaining DICe source code] (#DICESource)
 
 [Building DICe] (#BuildingDICE)

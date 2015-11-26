@@ -753,7 +753,7 @@ WARN_LOGFILE           =
 # spaces.
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = DICe_MainPage.md ../../src/core ../../src/utils/src ../../src/fft ../../src/cine
+INPUT                  = DICe_MainPage.md DICe_Tutorial.md ../../src/core ../../src/base ../../src/utils/src ../../src/fft ../../src/cine
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
