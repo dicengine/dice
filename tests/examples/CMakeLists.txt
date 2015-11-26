@@ -2,6 +2,8 @@
 
 SET(EXAMPLES
   mechanism
+  obstruction
+  full_field
 )
 FOREACH ( test ${EXAMPLES})
     # Copy over all the test files (input and results)
@@ -17,9 +19,9 @@ FOREACH ( test ${EXAMPLES})
     FOREACH ( gold_file ${gold_files})
         # get the name of the file without the directory
         GET_FILENAME_COMPONENT ( trim_name ${gold_file} NAME)
-        ADD_TEST ( NAME "DIFF_${test}_${trim_name}" 
+        ADD_TEST ( NAME "DIFF_EXAMPLE_${test}_${trim_name}" 
             COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../tools/DICe_Diff ${gold_file} ${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name} -t 0.05 -v)
-        set_tests_properties("DIFF_${test}_${trim_name}" PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
-        set_property(TEST "DIFF_${test}_${trim_name}" APPEND PROPERTY DEPENDS "RUN_EXAMPLE_${test}")
+        set_tests_properties("DIFF_EXAMPLE_${test}_${trim_name}" PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
+        set_property(TEST "DIFF_EXAMPLE_${test}_${trim_name}" APPEND PROPERTY DEPENDS "RUN_EXAMPLE_${test}")
     ENDFOREACH ( )
 ENDFOREACH ( )

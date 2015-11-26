@@ -1,0 +1,12 @@
+<ParameterList>
+  <Parameter name="subset_file" type="string" value="./subsets.txt" />
+  <Parameter name="subset_size" type="int" value="27" />
+  <Parameter name="step_size" type="int" value="10" />
+  <Parameter name="output_folder" type="string" value="./results/" />
+  <Parameter name="image_folder" type="string" value="./images/" />
+  <Parameter name="reference_image" type="string" value="full_field_ref.tiff"  />
+  <ParameterList name="deformed_images">
+    <Parameter name="full_field_def.tiff" type="bool" value="true"  />   
+  </ParameterList>
+  <Parameter name="correlation_parameters_file" type="string" value="params.xml" /> 
+</ParameterList>
