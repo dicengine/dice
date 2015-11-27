@@ -19,7 +19,7 @@ FOREACH ( test ${REGRESSION_TESTS})
     # create a test
     ADD_TEST ( NAME "RUN_${test}"
          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${test}
-         COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../src/core/dice -i input.xml -v)
+         COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/dice -i input.xml -v)
     # remove the results folder (to clear previous runs)
     FILE(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/${test}/results)
     # Separate test for each output file (could be more elegant way to do this...)
@@ -28,7 +28,7 @@ FOREACH ( test ${REGRESSION_TESTS})
         # get the name of the file without the directory
         GET_FILENAME_COMPONENT ( trim_name ${gold_file} NAME)
         ADD_TEST ( NAME "DIFF_${test}_${trim_name}" 
-            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../tools/DICe_Diff ${gold_file} ${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name} -t 0.05 -v)
+            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/DICe_Diff ${gold_file} ${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name} -t 0.05 -v)
         set_tests_properties("DIFF_${test}_${trim_name}" PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
         set_property(TEST "DIFF_${test}_${trim_name}" APPEND PROPERTY DEPENDS "RUN_${test}")
     ENDFOREACH ( )
@@ -53,7 +53,7 @@ FOREACH ( test ${AVERAGE_DIFF_TESTS})
 # create a test
     ADD_TEST ( NAME "RUN_${test}"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${test}
-        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../src/core/dice -i input.xml -v)
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/dice -i input.xml -v)
     add_subdirectory(${test})
 			      
     # run the verification test for each output created
@@ -63,7 +63,7 @@ FOREACH ( test ${AVERAGE_DIFF_TESTS})
         GET_FILENAME_COMPONENT ( name ${avg_diff_file} NAME_WE)
         add_test(NAME "DIFF_${test}_${name}"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${test}/
-            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../tools/DICe_DiffAvg ${avg_diff_file})
+            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/DICe_DiffAvg ${avg_diff_file})
         set_tests_properties("DIFF_${test}_${name}" PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
         set_property(TEST "DIFF_${test}_${name}" APPEND PROPERTY DEPENDS "RUN_${test}")
     ENDFOREACH ( )
@@ -87,11 +87,11 @@ if(DICE_MPI)
     # create a test
     ADD_TEST ( NAME "RUN_${test}_n2"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${test}
-      COMMAND ${DICE_MPI_EXEC} -n 2 ${CMAKE_CURRENT_BINARY_DIR}/../../src/core/dice -i input.xml -v)
+      COMMAND ${DICE_MPI_EXEC} -n 2 ${CMAKE_CURRENT_BINARY_DIR}/../../bin/dice -i input.xml -v)
     # Separate test for each output file (could be more elegant way to do this...)
     ADD_TEST ( NAME "RUN_${test}_n4"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${test}
-      COMMAND ${DICE_MPI_EXEC} -n 4 ${CMAKE_CURRENT_BINARY_DIR}/../../src/core/dice -i input.xml -v)
+      COMMAND ${DICE_MPI_EXEC} -n 4 ${CMAKE_CURRENT_BINARY_DIR}/../../bin/dice -i input.xml -v)
     # Separate test for each output file (could be more elegant way to do this...)
     # remove the results folder (to clear previous runs)
     FILE(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/${test}/results)
@@ -100,9 +100,9 @@ if(DICE_MPI)
       # get the name of the file without the directory
       GET_FILENAME_COMPONENT ( trim_name ${gold_file} NAME_WE)
       ADD_TEST ( NAME "DIFF_${test}_${trim_name}_n2"
-        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../tools/DICe_Diff ${gold_file} "${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name}.2.txt" -t 1E-4 -v)
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/DICe_Diff ${gold_file} "${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name}.2.txt" -t 1E-4 -v)
       ADD_TEST ( NAME "DIFF_${test}_${trim_name}_n4"
-        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../tools/DICe_Diff ${gold_file} "${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name}.4.txt" -t 1E-4 -v)
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/DICe_Diff ${gold_file} "${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name}.4.txt" -t 1E-4 -v)
       set_tests_properties("DIFF_${test}_${trim_name}_n2" PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
       set_tests_properties("DIFF_${test}_${trim_name}_n4" PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
       set_property(TEST "DIFF_${test}_${trim_name}_n2" APPEND PROPERTY DEPENDS "RUN_${test}_n2")

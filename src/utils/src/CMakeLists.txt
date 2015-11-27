@@ -32,6 +32,12 @@ add_library(
 
 target_link_libraries(diceutils ${DICE_UTILS_LIBRARIES} ${Boost_LIBRARIES})
 target_compile_definitions(diceutils PRIVATE -D DICE_LIB_EXPORTS_MODE)
+MESSAGE(STATUS "diceutils library will be output to location: ${DICE_LIB_INSTALL_PREFIX}")
+set_target_properties(diceutils PROPERTIES
+  LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
+  ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
+  RUNTIME_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/bin"
+)
 
 install(FILES ${DICE_UTILS_HEADERS}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include

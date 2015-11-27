@@ -46,7 +46,7 @@ include_directories (
     ${DICE_TRILINOS_HEADERS}
 )
 include_directories(${Boost_INCLUDE_DIRS} COMPONENTS gil program_options REQUIRED)
-MESSAGE(STATUS "Boost_INCLUDE_DIRS:${Boost_INCLUDE_DIRS}")
+#MESSAGE(STATUS "Boost_INCLUDE_DIRS:${Boost_INCLUDE_DIRS}")
 
 add_library(dicebase ${DICE_SOURCES} ${DICE_HEADERS})
 target_link_libraries(dicebase ${Boost_LIBRARIES} ${DICE_LIBRARIES} diceutils)
@@ -57,4 +57,10 @@ install(FILES ${DICE_HEADERS}
 )
 install(TARGETS dicebase
   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)
+
+set_target_properties(dicebase PROPERTIES
+  LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
+  ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
+  RUNTIME_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/bin"
 )
