@@ -9,9 +9,9 @@ the U.S. Government retains certain rights in this software.
 
 [Tutorial] (DICe_Tutorial.md)
 
-[Obtaining DICe source code] (#DICESource)
+[Obtaining DICe source code] (#DICeSource)
 
-[Building DICe] (#BuildingDICE)
+[Building DICe] (#BuildingDICe)
 
 [Code Design] (#CodeDesign)
 
@@ -27,29 +27,29 @@ computing full-field displacements and strains from sequences of digital images.
 images are typically of a material sample undergoing a characterization
 experiment, but DICe is also useful for other applications (for example, trajectory tracking and 
 object classification). DICe is machine portable (Windows, Linux and Mac) and can be
-effectively deployed on a high performance computing platform (DICe uses MPI parallelism as well as
+effectively deployed on high performance computing platforms (DICe uses MPI parallelism as well as
 threaded on-core parallelism). Capabilities from DICe can
 be invoked through a customized library interface, via source code integration of DICe classes or
-through a standalone executable. 
+through a standalone executable from the command line.
 
 DIC, in general, has become a popular means of determining full-field displacements from digital images,
 it has also become a vital component in material characterization applications that use full-field
 information as part of a parameter inversion process. DIC is also used extensively for constitutive 
-model development and validation as well as physics code validation. DICe intends to enable more seamless integration of DIC in these types of applications by providing a DIC tool that can be directly incorporated in
+model development and validation as well as physics code validation. DICe aims to enable more seamless integration of DIC in these types of applications by providing a DIC tool that can be directly incorporated in
 an external application.
 
-DICe is different than other available DIC codes in the following ways: First, subsets can be of arbitrary shape. This enables
+DICe is different than other DIC codes in the following ways: First, subsets can be of arbitrary shape. This enables
 tracking of oblong objects that otherwise would not be trackable with a square subset. DICe also incudes
 a robust simplex optimization
 method that does not use image gradients (this method is useful for data sets that are impossible to analyze
 with the traditional Lucas-Kanade-type algorithms, for example,  objects without speckles, images with low contrast,
-and small subset sizes < 10 pixels). Lastly, DICe also includes a well-posed global DIC formulation that addresses instabilities
+and small subset sizes < 100 pixels). Lastly, DICe also includes a well-posed global DIC formulation that addresses instabilities
 associated with the saddle-point problem in DIC (This capability will be released later this year).
 
-The DIC engine concept is meant to represent the code's flexibility in terms of using it as 
+The "engine" concept is meant to represent the code's flexibility in terms of using it as 
 a plug-in component in a larger application.
 It is also meant to represent the ease with which
-various algorithms can be hot-swapped to create a customized DIC kernel for a particular
+various algorithms can be interchanged to create a customized DIC kernel for a particular
 application.
 
 Features
@@ -57,7 +57,7 @@ Features
 
 DICe has a number of attractive features, including the following:
 
-- Both local and global DIC algorithms
+- Both local and global DIC algorithms (global yet to be released)
 
 - Conformal subsets of arbitrary shape (for local DIC)
 
@@ -68,11 +68,11 @@ of the compute time
 
 - Zero-normalized sum squared differences (ZNSSD) correlation criteria
 
-- Gradient-based optimization as well as simplex-based (that requires no image gradients)
+- Gradient-based optimization as well as simplex-based (simplex requires no image gradients)
 
 - User specified activation of various shape functions (translation, rotation, normal strain and shearing)
 
-- User specified arrangement of correlation points that can be adaptively refined (for local DIC)
+- User specified arrangement of correlation points that can be adaptively refined
 
 - Robust strain calculation capabilities for treating discontinuities and high strain gradients
 
@@ -165,16 +165,20 @@ Correlation paramters (for example, the interpolation method or how
 the image gradients are computed) can be set in a separate `.xml` file.
 We refer to this file as the correlation parameters file.
 To include user defined correlation parameters, specify the following
-option in the input file
+option in the input file (typically named `input.xml`)
 
     <Parameter name="correlation_parameters_file" type="string" value="<file_name>" />
 
-If a correlation parameter is not specified in this file, the default value is used.
+If a correlation parameter is not specified in this file, the default value is used. The defaults can be found in the file `DICe_ParameterUtilities.cpp`. For the object tracking case a specific set of default parameters can be activated by using the
+
+    <Parameter name="use_tracking_default_params" type="bool" value="true" />
+
+option in the parameters file. This option will set the default parameters to align with an object tracking analysis. Any other parameters that are set in the parameters file will overwrite these defaults.
 
 ### User defined correlation point locations
 
 In many cases, the locations of the correlation points are equally spaced 
-on a grid in the image. The user need not add any options to the input parameters
+on a grid in the image (when computing full-field displacements, not tracking objects). The user need not add any options to the input parameters
 for this default case. In other cases, the user may wish to specify the coordinates
 of the correlation points as well as use conformal subsets that trace objects
 in the image rather than use square subsets. Any combination of square and conformal 
@@ -197,12 +201,12 @@ If a subset file is specified, the `step_size` parameter should not
 be used and will cause an error. The subset locations file should be a text file with the following
 syntax. Comments are denoted by `#` characters. Lines beginning with `#` or blank lines will
 not be parsed. Upper and lower case can be used, the parser will automatically convert all
-text to upper case during parsing. 
+text to upper case during parsing (except when file names are specified, then the case is not changed). 
 
 The first section of the subset file is a mandatory listing of centroid coordinates. The coordinate
 system has its origin at the upper left corner of the image with x positive to the right
 and y positive downward. The coordinate listing should begin with the command `BEGIN SUBSET_COORDINATES` and
-end with `END SUBSET_COORDINATES` and have the x and y coordinates of each subset listed in between.
+end with `END SUBSET_COORDINATES` (or simply `END`, in which case the `SUBSET_COORDINATES` is inferred) and have the x and y coordinates of each subset listed in between.
 For example, if the user would like five subsets with centroids at (126,157), (125,250), (397,139),
 (177,314) and (395,405) this section of the subset file would look like:
 
@@ -218,7 +222,7 @@ For example, if the user would like five subsets with centroids at (126,157), (1
     END SUBSET_COORDINATES
 
 If this is all the content in the subset file, five square subsets will be generated with the centroids as given
-above and a subset size as specified in the input params file.
+above and a `subset_size` as specified in the input params file.
 
 ### Regions of interest and seeding
 
@@ -257,33 +261,53 @@ To seed the solution process, the following command block can be used
       END
     END
 
-If the optional BEGIN_SEED command is used in a REGION_OF_INTEREST block, the correlation points will be 
+A seed gives the values that should be used for the initial guess for a subset. If the optional BEGIN_SEED command is used in a REGION_OF_INTEREST block, the correlation points will be 
 computed in an order that begins with the seed location and branches out to the rest of the domain. The 
 initializiation method for a seeded analysis should be USE_NEIGHBOR_VALUES or USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY.
 Only one seed can be specified for each REGION_OF_INTEREST.
 
+### Shape functions
+
+The user can select which shape functions are used to evaluate the correlation between subsets. By "shape
+functions" we are referring to the parameters used in the mapping of a subset from the reference to
+the deformed frame of reference. There are four sets of shape functions available in DICe: translation, rotation,
+normal strain and shear strain. To manually specify which shape functions should be used, the user can
+add the following options to the correlation parameters file
+
+    <Parameter name="enable_translation" type="bool" value="<true/false>" />
+    <Parameter name="enable_rotation" type="bool" value="<true/false>" />
+    <Parameter name="enable_normal_strain" type="bool" value="<true/false>" />
+    <Parameter name="enable_shear_strain" type="bool" value="<true/false>" />
+
+See DICe::Subset for information on how these parameters are used in constructing a deformed subset.
+
 ### Conformal subsets
 
-**Note: conformal subsets require the the coordinates of the subsets are specified with a SUBSET_COORDINATES
+Conformal subsets are subsets with geometries that correspond to the outline of a particular part or region. For example the yellow and green lines in the image below outline conformal subsets. Both yellow outlines belong to one subset (they do not have to be contiguous).
+
+![](images/Conformal.png)
+@image latex images/Conformal.png
+
+**Note: conformal subsets require that the coordinates of the subsets are specified with a SUBSET_COORDINATES
 block in the subset file as described above. Conformal subsets cannot be used in combination with regions of interest.**
 
 The user may wish to use conformal subsets for some or all of the subsets in an analysis. Conformal subsets can 
-be helpful if the tracked object is of an odd shape. This allows more speckles to be included in the correlation.
+be helpful if the tracked object is of an odd shape. They enable more speckles to be included in the correlation.
 There are also a number of features for conformal subsets that are useful for trajectory tracking. For example,
 there are ways to enable tracking objects that cross each other's path or become partially obscured by
-another object. Conformal subsets can also evolved through an image sequence to build up the intensity profile
+another object. Conformal subsets can also be evolved through an image sequence to build up the intensity profile
 if the object is not fully visible at the start of a sequence.
 
 Conformal subsets
 are created by specifying the geometry using shapes. There are three attributes of a conformal subset
-that can be specified using sets of shapes. The first the `BOUNDARY` of the subset. This represents the outer circumference
+that can be specified using sets of shapes. The first is the `BOUNDARY` of the subset. This represents the outer circumference
 of the subset. The second is the `EXCLUDED` area. This represents any area internal to the subset
 that the user wishes to ignore (see below regarding evolving subsets). Lastly, an `OBSTRUCTED` area can be
 defined. Obstructions are fixed regions in the image in which pixels should be
 deactivated if they fall in this region. For example if the user is tracking a vehicle through the frame,
 and it passed behind a light post, the light post should be defined using an obstructed area.
 
-**Note: For trajectory tracking and evolving subsets, the `SL_ROUTINE` `correlation_routine` should be used.**
+**Note: For trajectory tracking and evolving subsets, the `TRACKING_ROUTINE` `correlation_routine` should be used, as well as the `use_tracking_default_params` option in the parameters file.**
 
 For each conformal subset, the following syntax should be used to define these three sets of shapes. Note, the
 `BOUNDARY` and `SUBSET_ID` are required, but the `EXCLUDED` and `OBSTRUCTED` sections are optional. Continuing with the
@@ -400,14 +424,14 @@ request that these pixels become activated. If the correlation parameter
 is used, after each frame, the pixels in the excluded area are tested to see if they are now visible. If so,
 the pixel intensity value from the deformed image is used to evolve the reference pixel intensity that
 was initially not known. In this way, the subset intensity profile evolves as more regions
-become visible.
+become visible. There is some small error associated with evolving pixel intensities from the reference image using the deformed image, but in some cases, this is the only way to keep tracking an object, for example if all of the originally visible portions become blocked and only the newly exposed portions become visible.
 
-When obstructions or blocking subsets are used, the user can specify the size of the buffer that is constructed 
-surrouding the obstructions, effectively enlarging them. To specify the buffer size use the following option
+When obstructions or blocking subsets are used, the user can specify the size of the skin that is constructed 
+surrouding the obstructions, effectively enlarging them. To specify the skin size use the following option
 
-    <Parameter name="obstruction_buffer_size" type="int" value="<size>"
+    <Parameter name="obstruction_skin_factor" type="double" value="<factor>"
 
-The default value for the buffer size is 3 pixels.
+The default value for the skin factor is 1.0. If a skin factor of 2.0 is used, the obstruction is effectively scaled to twice its size. Typical skin factors are in the range of 1.1 or 1.2. The scaling of blocking subsets is applied with the subset centroid as the origin for the scaling.
 
 The solution values can be seeded for a conformal subset by adding a SEED command block to the CONFORMAL_SUBSET
 command block. For example,
@@ -424,32 +448,80 @@ command block. For example,
 
 Note that the location of the seed is automatically the subset centroid and cannot be specified (as it is in
 a REGION_OF_INTEREST). The displacement guess for a seed is required. All other initial values (shear strain, etc.) are optional.  
-
-The conformal and square subsets from the example above are shown in the image below. Note the subset
+The conformal subsets from the example above are shown in the image below. Note the subset
 shapes, exclusions etc. are simply a random example to illustrate the syntax, not a meaningful
 way to set up an analysis.
 
 ![](images/SubsetDefs.png)
 @image latex images/SubsetDefs.png
 
-### Shape functions
+### Path files
+In the subset input file, for the `TRACKING_ROUTINE`, for conformal subsets, DICe provides the user the ability to define a path file. Path files are used for two purposes. The first is to define an expected trajectory for a part being tracked. The second is to provide a baseline to compare the trajectory with to test for anomalous behavior. For example if the object being tracked should follow a straight line, this can be specified in the path file. The initial guess for the subset associated with this object will be taken from a point on the specified path. Once the position solution is computed it will be tested against the closest point on the path.
 
-The user can select which shape functions are used to evaluate the correlation between subsets. By "shape
-functions" we are referring to the parameters used in the mapping of a subset from the reference to
-the deformed frame of reference. There are four sets of shape functions available in DICe: translation, rotation,
-normal strain and shear strain. To manually specify which shape functions should be used, the user can
-add the following options to the correlation parameters file
+To define a path file, create a text file with three columns (separated by spaces) `u`,`v`, and `theta`. The order of the points does not matter. There should be no header information in the file. Each point represents a valid solution configuration (a point on the object's expected path). This file is read into DICe and filtered for unique sets of values and rounded to the nearest half pixel or tenth of a degree of rotation.
 
-    <Parameter name="enable_translation" type="bool" value="<true/false>" />
-    <Parameter name="enable_rotation" type="bool" value="<true/false>" />
-    <Parameter name="enable_normal_strain" type="bool" value="<true/false>" />
-    <Parameter name="enable_shear_strain" type="bool" value="<true/false>" />
+To use a path for a conformal subset, the syntax is given inside the `CONFORMAL_SUBSET` block as in the example below
 
-See DICe::Subset for information on how these parameters are used in constructing a deformed subset.
+    BEGIN CONFORMAL_SUBSET
+      SUBSET_ID <id>
+      BEGIN BOUNDARY
+         ...
+      END
+      PATH_FILE <dir/filename>
+    END CONFORMAL_SUBSET
+
+To test the computed solution for a subset for each frame in terms of the distance from the path, the user can request the following option in the parameters file:
+
+    <Parameter name="path_distance_threshold" type="double" value="<tolerance>" />
+
+If this option is not specified, the solution will not be compared to the path.
+
+### Motion detection
+
+Also in the subset input file, for the `TRACKING_ROUTINE`, for conformal subsets, the user can request that the correaltion only be performed if there is motion detected in the vicinity of the subset. This can be helpful in speeding up an analyis if the object being tracked sits idle for most of the video and only moves for a small portion of frames. Since there can potentially be several subsets inside of one window, many subsets can share a particular motion test window.
+
+To define a motion test window for a subset the syntax is as follows
+
+    BEGIN CONFORMAL_SUBSET
+      SUBSET_ID <id>
+      BEGIN BOUNDARY
+         ...
+      END
+      TEST_FOR_MOTION <test_window_upper_left_x> <test_window_upper_left_y> <width> <height> [tol]
+    END CONFORMAL_SUBSET
+
+The optional motion tolerance is the total number of intensity counts of the difference between the current and previous image that is used as a threshold for detecting motion. In most cases, this can be automatically computed by DICe without specifying this optional parameter.
+
+If multiple subsets share a window, the window needs only to be defined for one subset as in the example above, the rest of the subsets can simply identify the id of the subset with which to share the motion window. For example if subset 0 defines the window, subsets 1 and 2 can refere to the window of 0 using the following syntax
+
+    BEGIN CONFORMAL_SUBSET
+      SUBSET_ID 0
+      BEGIN BOUNDARY
+         ...
+      END
+      TEST_FOR_MOTION <test_window_upper_left_x> <test_window_upper_left_y> <width> <height> [tol]
+    END CONFORMAL_SUBSET
+
+    BEGIN CONFORMAL_SUBSET
+      SUBSET_ID 1
+      BEGIN BOUNDARY
+         ...
+      END
+      TEST_FOR_MOTION 0 # specifying an integer number here, rather than the window parameters
+                        # implies use this subset id's window
+    END CONFORMAL_SUBSET
+
+    BEGIN CONFORMAL_SUBSET
+      SUBSET_ID 2
+      BEGIN BOUNDARY
+         ...
+      END
+      TEST_FOR_MOTION 0
+    END CONFORMAL_SUBSET
 
 ### Output files
 
-The output produced will be ASCII space delimited text files. The default output is
+The output produced are space delimited text files. The default output is
 one file per deformed image listing the solution variables for each 
 subset. In the default case, the index at the end of the file name refers to the image id or
 frame number. 
@@ -460,7 +532,7 @@ or frame. To do so set the following option in the input file
 
     <Parameter name="separate_output_file_for_each_subset" type="bool" value="true" />
 
-If the separate file for each subset option is employed, the index at the end of the filename
+If the separate file for each subset option is used, the index at the end of the filename
 refers to the subset id.
 
 The file name prefix to use for the output files can be set with the following option
@@ -499,7 +571,7 @@ subsets if they are defined). If the output files are in the default format of
 one output file per image with a listing of subset variables in columns with 
 one subset per row, the following python script can be used to create a two-dimensional
 contour plot. This example also assumes that the output specification has the fields
-in the default order.
+in the default column order `(id,x,y,u,v,...)`.
 
     #Import everything from matplotlib (numpy is accessible via 'np' alias)
     from pylab import *
@@ -507,12 +579,11 @@ in the default order.
     import matplotlib.tri as tri
 
     # skiprows used to skip the header comments
-    DATA = loadtxt("<results_folder>/DICE_solution_<#>.txt",skiprows=21)
+    DATA = loadtxt("<results_folder>/DICe_solution_<#>.txt",skiprows=21)
     X = DATA[:,1]
     Y = DATA[:,2]
     DISP_X = DATA[:,3]
     DISP_Y = DATA[:,4]
-    SIGMA = DATA[:,9]
 
     NUMPTS = len(X)
     NUMPTSX = sqrt(NUMPTS)
@@ -524,10 +595,9 @@ in the default order.
         LINEY.append(Y[i])
         i = i + NUMPTSX
 
-    OUTFILE_DISPLACEMENT_X = "DICEDispX.pdf"
-    OUTFILE_DISPLACEMENT_Y = "DICEDispY.pdf"
-    OUTFILE_SIGMA = "DICECorrSigma.pdf"
-    OUTFILE_LINEY = "DICELineDispY.pdf"
+    OUTFILE_DISPLACEMENT_X = "DICeDispX.pdf"
+    OUTFILE_DISPLACEMENT_Y = "DICeDispY.pdf"
+    OUTFILE_LINEY = "DICeLineDispY.pdf"
 
     triang = tri.Triangulation(X, Y)
 
@@ -564,7 +634,7 @@ A separate plot will be created for each subset.
     import matplotlib.pyplot as plt
 
     NUM_SUBSETS = <number_of_subsets>
-    FILE_PREFIX = "<results_folder>/DICE_solution_"
+    FILE_PREFIX = "<results_folder>/DICe_solution_"
 
     font = {'family' : 'sans-serif',
         'weight' : 'regular',
@@ -584,8 +654,6 @@ A separate plot will be created for each subset.
        DISP_X  = DATA[:,3]
        DISP_Y  = DATA[:,4]
        THETA   = DATA[:,5]
-       SIGMA   = DATA[:,9]
-       FLAG    = DATA[:,10]
 
        fig = figure(figsize=(12,5), dpi=150)
        plot(IMAGE,THETA,'-b')
@@ -616,93 +684,7 @@ The python scripts above are only meant to provide a simple example.
 Obviously, there are many ways python can be used to generate more
 sophisticated plots.
 
-Incorporating DICe in an external application with static linking
------------------------------------------------------------------
-
-To use DICe correlation capabilities in an external application the
-developer need only include the DICe header files and link to `libdicecore`,
-which resides in the `\dice\build\src\` folder.
-
-The following code is a simple `.cpp` file that can be used as a
-template for using DICe in a C++ application. Each line is described in
-the comments above the code line. (Note: this example assumes boost is enabled,
-so that tiff files can be read)
-
-The process of performing a correlation involves three steps, first a DICe::Schema
-must be instantiated by calling its constructor. Then the schema must be initialized
-(which resizes the field arrays, etc.). Lastly, the correlation is exectued.
-
-    #include <DICE_Types.h>
-    #include <DICE_Schema.h>
-
-    int main(int argc, char *argv[]) {
-
-      // set up the correlation parameters
-      Teuchos::RCP<Teuchos::ParameterList> params = 
-          rcp(new Teuchos::ParameterList());
-      params->set("enable_rotation",false);
-      params->set("enable_normal_strain",true);
-      params->set("correlation_method", DICE::SSD);
-      // many other options possible ...
-
-      // create a schema to orchestrate the correlation
-      DICE::Schema<RealT,SizeT> schema("./smoothRef.tif","./smoothDef.tif",params);
-
-      // initialize the schema by setting the spacing of control 
-      // points using a constant width and height
-      const RealT step_size_x = 20.0; // pixels
-      const RealT step_size_y = 20.0; // pixels
-      const RealT subset_size = 15.0; // pixels
-      schema.initialize(step_size_x,step_size_y,subset_size);
-
-      // There are other ways to initialize a schema 
-      // (for example by specifying the number of points and 
-      // then setting the coordinates manually)
-      
-      // perform the correlation
-      schema.execute_correlation();
-      
-      // At any point after initialization, the user can access field values
-      // by calling field_value(subset_id,field_name)
-      // This call enables getting or setting the field value
-      // Setting can be used to initialize values prior to calling execute_correlation()
-      const RealT point_0_disp_x = schema.field_value(0,DICE::DISPLACEMENT_X);
-
-      // write the output files to the given folder
-      schema.write_output("./");
-      
-      // print out an image showing the control points and windows 
-      // (only enabled if boost is, otherwise this is a no-op)
-      schema.write_control_points_image("InitialCPs");
-
-      return 0;
-    }
-
-The solution for each subset is contained in the data structures of the DICe::Schema, to access
-these values, DICe::Schema provides the `field_value(const Size subset_id, const std::string & field_name)`
-method. This method can be used to get or set a field value for a specific subset. Valid field
-names are given in DICe_Types.h.
-
-Using DICe as a dynamically linked library
-------------------------------------------
-
-DICe can also be used in library mode, but a custom interface to the particular
-application for DICe needs to be written first. (An example of a LabView interface
-is in `\dice\lib\DICE_api.cpp`.) Although DICe does not have a standard
-interface, it is simple to write one that meets the needs of a
-particular application.
-
-This library is called `libdice` and resides in the `\dice\build\lib\` folder.
-
-Using DICe as a library involves writing an interface that sets the
-parameters and orders the data from the correlation in the right order
-for the particular application (for the purposes of data exchange). Once
-this interface is compiled as a library, it can be linked and used in an
-external application simply by calling the correlation function exposed
-via the interface.
-
-
-<a name="BuildingDICE"></a>Building DICe
+<a name="BuildingDICe"></a>Building DICe
 =============
 
 Requirements
@@ -710,7 +692,7 @@ Requirements
 
 DICe can be built and run on Mac OS X, Windows, and Linux. The primary
 intended platforms are Mac OS X and Linux, but Windows builds are also
-possible. The prerequisite tools required for installing DICe include
+possible. The prerequisite dependencies required for installing DICe include
 
 -   [CMake] (http://www.cmake.org) 
 
@@ -719,6 +701,8 @@ possible. The prerequisite tools required for installing DICe include
 -   LAPACK or CLAPACK (for Windows, only CLAPACK is supported)
 
 -   [Boost] (http://www.boost.org)
+
+-   [LibTiff] (http://www.remotesensing.org/libtiff/)
 
 CMake
 -----
@@ -738,9 +722,9 @@ Trilinos can be downloaded from http://trilinos.org and build
 instructions can be found on the getting started page. DICe requires
 that Trilinos be built with the following packages enabled:
 
--   Epetra or Tpetra
+-   Epetra or Tpetra (default is Epetra, Tpetra is needed for `MANYCORE`)
 
--   Kokkos
+-   Kokkos (optionally needed for `MANYCORE`)
 
 -   BLAS
 
@@ -748,22 +732,28 @@ that Trilinos be built with the following packages enabled:
 
 -   TeuchosCore
 
+-   TeuchosComm
+
 -   TeuchosParameterList
 
 -   TeuchosNumerics
 
-<a name="DICESource"></a>Obtaining DICe source code
+There are two standard build configurations for DICe, both of which support MPI parallelism. The standard build configuration computes the DIC components like computing image gradients and differencing images in serial. The `MANYCORE` configuration enables threading of all the DIC components. Two build configurations are supported because the `MANYCORE` configuration does not compile properly on Windows due to bugs in both the MSVC and Intel compilers. The compiler issues on Windows for `MANYCORE` are currently being addressed. See the section on Configuration Options for more information about the `MANYCORE` option.
+
+<a name="DICeSource"></a>Obtaining DICe source code
 --------------------------
 
-DICe can be cloned from the following git repository
+The central repository for the source code is on [GitHub](https://github.com/dicengine).
 
-    github.com/dicengine
+DICe can be forked from the following git repository
 
-Please request repository access via the contact information above.
+    https://github.com/dicengine/dice.git
+
+Feel free to send a pull request on GitHub if you add new features to a forked repo of DICe that you would like to see added to the main repo.
 
 ### Setting up your git repository
 
-If this is your first time using git, you will have to set up your
+If this is your first time using git, you will need to set up your
 git configurations. To set your user name and email use
 
     git config --global user.name "Your Name"
@@ -788,7 +778,7 @@ Building DICe
 
 ### Mac OSX or Linux
 
-To build DICEe on Mac OSX or Linux, create a folder in the main directory
+To build DICe on Mac OSX or Linux, create a folder in the main directory
 called build
 
     $ mkdir build 
@@ -803,7 +793,9 @@ scripts folder.
 Edit the script to have the correct path locations. Then build DICe
 
     $ ./do-cmake
-    $ make
+    $ make install
+
+It is important to execute the install target to put all of the dice libraries in one folder. This is helpful when incorporating dice in an external application since all the libraries will be in one place.
 
 ### Windows
 
@@ -826,17 +818,41 @@ folder. The same process for building CLAPACK can be used to build
 Trilinos and eventually DICe. A sample `do-dice-cmake-win.bat` file is
 also included in the repository in the `\dice\scripts` folder.
 
+Tiff
+----
+
+LibTiff must be installed before building DICe. LibTiff is used in the reading of `.tiff` images. There are many ways to install LibTiff, see [here](http://www.remotesensing.org/libtiff/) for more information.
+
 Boost
 -----
 
-Boost is a required dependency.  DICe makes use of the graphics image library in
+Boost is also a required dependency.  DICe makes use of the graphics image library in
 boost. This enables reading standard image formats like `.tiff` files into DICe.
+
+DICe Configuration Options
+--------------------------
+
+The following configuration options can be set in the CMake configuration script for DICe:
+
+    DICE_DEBUG_MSG:BOOL=<ON\OFF> (default is OFF)
+
+This option, when activated, outputs large quantities of debugging information and is useful when setting up a new analysis.
+
+    DICE_USE_DOUBLE:BOOL=<ON\OFF> (default is OFF)
+
+The default data type in DICe is `float`, `double` can be used by activating this option.
+
+    DICE_ENABLE_MANYCORE:BOOL=<ON\OFF> (default is OFF)
+
+Turing on `MANYCORE` will enable threading of the image operations like computing gradients or differencing images. All of the subset and image operations support threading. In some cases, enabling `MANYCORE` speeds up the analysis by up to 50x. If this option is used, special care should be given to the Trilinos build configuration options to tune the threading to the architecture on which DICe is executed. To help with this tuning, a performance test is included in the test folder that times the execution of several DICe operations. The test is located in `dice\tests\performance`.
+
+This option requires Tpetra and Kokkos in Trilinos. Windows not currently supported.
 
 Testing
 -------
 
 To test the installation, from the directory `\dice\build\test` execute
-the command (this assumes that DICe has been built in the `build` directory, otherwise
+this command (this assumes that DICe has been built in the `build` directory, otherwise
 specify the correct path)
 
     $ ctest
@@ -864,13 +880,100 @@ applied numerous times.
 
 -   Results are written to disk
 
-All of the correlation parameters are stored in a `DICE::Schema`, this
+All of the correlation parameters are stored in a `DICe::Schema`, this
 class controls the algorithms, images, and subset locations. The
-`DICE::Schema` also stores the correlation results and all other fields.
-An image is stored as an array in a `DICE::Image`. A copy
-of a portion of the image intensity array is made available through a `DICE::Subset`.
-The bulk of the correlation algorithm resides in a `DICE::Objective`.
+`DICe::Schema` also stores the correlation results and all other fields.
+An image is stored as an array in a `DICe::Image`. A copy
+of a portion of the image intensity array is made available through a `DICe::Subset`.
+The bulk of the correlation algorithm resides in a `DICe::Objective`.
 More details on each of these are provided in the class documentation.
+
+
+Incorporating DICe in an external application with static linking
+-----------------------------------------------------------------
+
+To use DICe capabilities in an external application the
+developer need only include the DICe header files and link to the dice libraries,
+which resides in the `<install-prefix>\lib` folder (make sure to execute the `make install`
+command when building the dice libraries to put all the libraries in the `<install-prefix>\lib` folder.
+
+The following code is a simple `.cpp` file that can be used as a
+template for using DICe in a C++ application. Each line is described in
+the comments above the code line. (Note: this example assumes boost is enabled,
+so that tiff files can be read)
+
+The process of performing a correlation involves three steps, first a DICe::Schema
+must be instantiated by calling its constructor. Then the schema must be initialized
+(which resizes the field arrays, etc.). Lastly, the correlation is exectued.
+
+    #include <DICe.h>
+    #include <DICe_Schema.h>
+
+    int main(int argc, char *argv[]) {
+
+      // set up the correlation parameters
+      Teuchos::RCP<Teuchos::ParameterList> params = 
+          rcp(new Teuchos::ParameterList());
+      params->set("enable_rotation",false);
+      params->set("enable_normal_strain",true);
+      params->set("correlation_method", DICe::SSD);
+      // many other options possible ...
+
+      // create a schema to orchestrate the correlation
+      DICe::Schema<RealT,SizeT> schema("./smoothRef.tif","./smoothDef.tif",params);
+
+      // initialize the schema by setting the spacing of control 
+      // points using a constant width and height
+      const RealT step_size_x = 20.0; // pixels
+      const RealT step_size_y = 20.0; // pixels
+      const RealT subset_size = 15.0; // pixels
+      schema.initialize(step_size_x,step_size_y,subset_size);
+
+      // There are other ways to initialize a schema 
+      // (for example by specifying the number of points and 
+      // then setting the coordinates manually)
+      
+      // perform the correlation
+      schema.execute_correlation();
+      
+      // At any point after initialization, the user can access field values
+      // by calling field_value(subset_id,field_name)
+      // This call enables getting or setting the field value
+      // Setting can be used to initialize values prior to calling execute_correlation()
+      const RealT point_0_disp_x = schema.field_value(0,DICe::DISPLACEMENT_X);
+
+      // write the output files to the given folder
+      schema.write_output("./");
+      
+      // print out an image showing the control points and windows 
+      // (only enabled if boost is, otherwise this is a no-op)
+      schema.write_control_points_image("InitialCPs");
+
+      return 0;
+    }
+
+The solution for each subset is contained in the data structures of the DICe::Schema, to access
+these values, DICe::Schema provides the `field_value(const Size subset_id, const std::string & field_name)`
+method. This method can be used to get or set a field value for a specific subset. Valid field
+names are given in DICe_Types.h.
+
+Using DICe as a dynamically linked library
+------------------------------------------
+
+DICe can also be used in library mode, but a custom interface to the particular
+application for DICe needs to be written first. (An example of a LabView interface
+is in `\dice\lib\DICe_api.cpp`.) Although DICe does not have a standard
+interface, it is simple to write one that meets the needs of a
+particular application.
+
+This library is called `libdice` and resides in the `\dice\build\lib\` folder.
+
+Using DICe as a library involves writing an interface that sets the
+parameters and orders the data from the correlation in the right order
+for the particular application (for the purposes of data exchange). Once
+this interface is compiled as a library, it can be linked and used in an
+external application simply by calling the correlation function exposed
+via the interface.
 
 <a name="Legal"></a>Legal
 =====
