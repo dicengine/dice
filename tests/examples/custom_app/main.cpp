@@ -10,16 +10,6 @@
 
 // See the custom_app example in the tutorial for more information about the code below
 
-// Here are the rules for creating a custom DIC executable:
-//
-// 1. The number of subsets cannot change once a DICe::Schema is initialized.
-//    The locations of subset centroids can change after initialization, but not the number
-// 2. New correlation parameters can be used for an old DICe::Schema by calling the set_params() method
-// 3. The reference or deformed images can be changed after the DICe::Schema is initialized
-//    with a call to set_ref_image() or set_def_image(). These ref and def images should be the same dimensions,
-//    and the new ref or def image cannot change the image dimensions
-
-
 int main(int argc, char *argv[]) {
 
   std::cout << "Begin custom_app example\n";

@@ -13,7 +13,7 @@ the U.S. Government retains certain rights in this software.
 
 [Building DICe] (#BuildingDICe)
 
-[Code Design] (#CodeDesign)
+[Writing a custom DIC application with DICe] (DICe_CustomApplication.md)
 
 [Legal] (#Legal)
 
@@ -862,100 +862,6 @@ Compiling DICe with debug messages
 
 To enable debug messages in DICe, simply set the CMake flag
 `-D DICE_DEBUG_MSG:BOOL=ON` in the `do-cmake` script.
-
-<a name="CodeDesign"></a>Code Design and Workflow
-========================
-
-A basic outline for how DICe performs a correlation is as follows. If
-more than one image is correlated, the basic workflow is the same, just
-applied numerous times.
-
--   The reference and deformed image are read into memory
-
--   The correlation parameters are defined
-
--   Subsets are defined (for the local algorithm)
-
--   The correlation is performed
-
--   Results are written to disk
-
-All of the correlation parameters are stored in a `DICe::Schema`, this
-class controls the algorithms, images, and subset locations. The
-`DICe::Schema` also stores the correlation results and all other fields.
-An image is stored as an array in a `DICe::Image`. A copy
-of a portion of the image intensity array is made available through a `DICe::Subset`.
-The bulk of the correlation algorithm resides in a `DICe::Objective`.
-More details on each of these are provided in the class documentation.
-
-
-Incorporating DICe in an external application with static linking
------------------------------------------------------------------
-
-To use DICe capabilities in an external application the
-developer need only include the DICe header files and link to the dice libraries,
-which resides in the `<install-prefix>\lib` folder (make sure to execute the `make install`
-command when building the dice libraries to put all the libraries in the `<install-prefix>\lib` folder.
-
-The following code is a simple `.cpp` file that can be used as a
-template for using DICe in a C++ application. Each line is described in
-the comments above the code line. (Note: this example assumes boost is enabled,
-so that tiff files can be read)
-
-The process of performing a correlation involves three steps, first a DICe::Schema
-must be instantiated by calling its constructor. Then the schema must be initialized
-(which resizes the field arrays, etc.). Lastly, the correlation is exectued.
-
-    #include <DICe.h>
-    #include <DICe_Schema.h>
-
-    int main(int argc, char *argv[]) {
-
-      // set up the correlation parameters
-      Teuchos::RCP<Teuchos::ParameterList> params = 
-          rcp(new Teuchos::ParameterList());
-      params->set("enable_rotation",false);
-      params->set("enable_normal_strain",true);
-      params->set("correlation_method", DICe::SSD);
-      // many other options possible ...
-
-      // create a schema to orchestrate the correlation
-      DICe::Schema<RealT,SizeT> schema("./smoothRef.tif","./smoothDef.tif",params);
-
-      // initialize the schema by setting the spacing of control 
-      // points using a constant width and height
-      const RealT step_size_x = 20.0; // pixels
-      const RealT step_size_y = 20.0; // pixels
-      const RealT subset_size = 15.0; // pixels
-      schema.initialize(step_size_x,step_size_y,subset_size);
-
-      // There are other ways to initialize a schema 
-      // (for example by specifying the number of points and 
-      // then setting the coordinates manually)
-      
-      // perform the correlation
-      schema.execute_correlation();
-      
-      // At any point after initialization, the user can access field values
-      // by calling field_value(subset_id,field_name)
-      // This call enables getting or setting the field value
-      // Setting can be used to initialize values prior to calling execute_correlation()
-      const RealT point_0_disp_x = schema.field_value(0,DICe::DISPLACEMENT_X);
-
-      // write the output files to the given folder
-      schema.write_output("./");
-      
-      // print out an image showing the control points and windows 
-      // (only enabled if boost is, otherwise this is a no-op)
-      schema.write_control_points_image("InitialCPs");
-
-      return 0;
-    }
-
-The solution for each subset is contained in the data structures of the DICe::Schema, to access
-these values, DICe::Schema provides the `field_value(const Size subset_id, const std::string & field_name)`
-method. This method can be used to get or set a field value for a specific subset. Valid field
-names are given in DICe_Types.h.
 
 Using DICe as a dynamically linked library
 ------------------------------------------
