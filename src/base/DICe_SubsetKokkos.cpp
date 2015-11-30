@@ -59,6 +59,8 @@ Subset::Subset(int_t cx,
 {
   assert(num_pixels_>0);
   assert(x.size()==y.size());
+  TEUCHOS_TEST_FOR_EXCEPTION(cx<0,std::invalid_argument,"Error, cannot have negative coordinates for cx");
+  TEUCHOS_TEST_FOR_EXCEPTION(cy<0,std::invalid_argument,"Error, cannot have negative coordinates for cy");
 
   // initialize the coordinate views
   pixel_coord_device_view_1d x_dev(x.getRawPtr(),num_pixels_);
@@ -97,6 +99,8 @@ Subset::Subset(const int_t cx,
 {
   assert(width>0);
   assert(height>0);
+  TEUCHOS_TEST_FOR_EXCEPTION(cx<0,std::invalid_argument,"Error, cannot have negative coordinates for cx");
+  TEUCHOS_TEST_FOR_EXCEPTION(cy<0,std::invalid_argument,"Error, cannot have negative coordinates for cy");
   const int_t half_width = width/2;
   const int_t half_height = height/2;
   // if the width and height arguments are not odd, the next larges odd size is used:
@@ -142,6 +146,8 @@ Subset::Subset(const int_t cx,
   conformal_subset_def_(subset_def),
   is_conformal_(true)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(cx<0,std::invalid_argument,"Error, cannot have negative coordinates for cx");
+  TEUCHOS_TEST_FOR_EXCEPTION(cy<0,std::invalid_argument,"Error, cannot have negative coordinates for cy");
   assert(subset_def.has_boundary());
   std::set<std::pair<int_t,int_t> > coords;
   for(size_t i=0;i<subset_def.boundary()->size();++i){

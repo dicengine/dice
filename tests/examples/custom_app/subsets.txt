@@ -1,0 +1,10 @@
+# Conformal subsets could be defined below
+# for any of these the points in the SUBSET_COORDINATES list.
+# In this example, we simply have four square subsets
+# with the default subset size instead.
+BEGIN SUBSET_COORDINATES
+  100 100
+  200 200
+  300 300
+  400 400
+END

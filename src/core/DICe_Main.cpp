@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 
   DICe::initialize(argc,argv);
 
-  const int_t dim = 2;         // Assumes 2D images
+  //const int_t dim = 2;         // Assumes 2D images
   int_t proc_size = 1;
   int_t proc_rank = 0;
 #if DICE_MPI
@@ -102,7 +102,6 @@ int main(int argc, char *argv[]) {
   int_t image_height = 0;
   bool is_cine = false;
   Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader;
-  //DICe::cine::Cine_Header cine_header;
   if(image_files[0]==DICe::cine_file){
     is_cine = true;
     // read the file_name from the input_parasm
@@ -147,64 +146,6 @@ int main(int argc, char *argv[]) {
   }
   *outStream << "Image dimensions: " << image_width << " x " << image_height << std::endl;
 
-  // subset locations:
-
-  // if the subset locations are specified in an input file, read them in (else they will be defined later)
-  Teuchos::RCP<std::vector<int_t> > subset_centroids;
-  Teuchos::RCP<std::vector<int_t> > neighbor_ids;
-  Teuchos::RCP<DICe::Subset_File_Info> subset_info;
-  int_t step_size = -1;
-  int_t subset_size = -1;
-  int_t num_subsets = -1;
-  Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
-  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > blocking_subset_ids;
-  const bool has_subset_file = input_params->isParameter(DICe::subset_file);
-  DICe::Subset_File_Info_Type subset_info_type = DICe::SUBSET_INFO;
-  if(has_subset_file){
-    std::string fileName = input_params->get<std::string>(DICe::subset_file);
-    subset_info = DICe::read_subset_file(fileName,image_width,image_height);
-    subset_info_type = subset_info->type;
-  }
-  if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
-    assert(input_params->isParameter(DICe::step_size));
-    step_size = input_params->get<int_t>(DICe::step_size);
-    *outStream << "Correlation point centroids were not specified by the user. \nThey will be evenly distrubed in the region"
-        " of interest with separation (step_size) of " << step_size << " pixels." << std::endl;
-    subset_centroids = Teuchos::rcp(new std::vector<int_t>());
-    neighbor_ids = Teuchos::rcp(new std::vector<int_t>());
-    DICe::create_regular_grid_of_correlation_points(*subset_centroids,*neighbor_ids,input_params,image_width,image_height,subset_info);
-    num_subsets = subset_centroids->size()/dim; // divide by three because the stride is x y neighbor_id
-    assert(neighbor_ids->size()==subset_centroids->size()/2);
-    assert(input_params->isParameter(DICe::subset_size)); // required for all square subsets case
-    subset_size = input_params->get<int_t>(DICe::subset_size);
-  }
-  else{
-    assert(subset_info!=Teuchos::null);
-    subset_centroids = subset_info->data_vector;
-    neighbor_ids = subset_info->neighbor_vector;
-    conformal_area_defs = subset_info->conformal_area_defs;
-    blocking_subset_ids = subset_info->data_map;
-    num_subsets = subset_info->data_vector->size()/dim;
-    if((int_t)subset_info->conformal_area_defs->size()<num_subsets){
-      // Only require this if not all subsets are conformal:
-      assert(input_params->isParameter(DICe::subset_size));
-      subset_size = input_params->get<int_t>(DICe::subset_size);
-    }
-  }
-  assert(subset_centroids->size()>0);
-  assert(num_subsets>0);
-  *outStream << "\n--- Correlation point centroids read sucessfuly ---\n" << std::endl;
-
-  *outStream << "Number of subsets: " << num_subsets << std::endl;
-  for(int_t i=0;i<num_subsets;++i){
-    if(i==10&&num_subsets!=11) *outStream << "..." << std::endl;
-    else if(i>10&&i<num_subsets-1) continue;
-    else
-      *outStream << "Subset: " << i << " global coordinates (" << (*subset_centroids)[i*dim+0] <<
-        "," << (*subset_centroids)[i*dim+1] << ")" << std::endl;
-  }
-  *outStream << std::endl;
-
   // set up output files
   std::string output_folder = input_params->get<std::string>(DICe::output_folder);
   const bool separate_output_file_for_each_subset = input_params->get<bool>(DICe::separate_output_file_for_each_subset,false);
@@ -226,64 +167,21 @@ int main(int argc, char *argv[]) {
     const std::string ref_image_string = image_files[0];
     schema = Teuchos::rcp(new DICe::Schema(ref_image_string,ref_image_string,correlation_params));
   }
-  // set the blocking subset ids if they exist
-  schema->set_obstructing_subset_ids(blocking_subset_ids);
-  // initialize the schema
-  schema->initialize(num_subsets,subset_size,conformal_area_defs,neighbor_ids);
-  schema->set_step_size(step_size); // this is done just so the step_size appears in the output file header (it's not actually used)
+
+  schema->initialize(input_params);
+
+  *outStream << "Number of subsets: " << schema->data_num_points() << std::endl;
+  for(int_t i=0;i<schema->data_num_points();++i){
+    if(i==10&&schema->data_num_points()!=11) *outStream << "..." << std::endl;
+    else if(i>10&&i<schema->data_num_points()-1) continue;
+    else
+      *outStream << "Subset: " << i << " global coordinates (" << schema->field_value(i,COORDINATE_X) <<
+        "," << schema->field_value(i,COORDINATE_Y) << ")" << std::endl;
+  }
+  *outStream << std::endl;
+
   // let the schema know how many images there are in the sequence:
   schema->set_num_image_frames(num_images);
-
-  // populate the fields:
-
-  // set the coordinates for the subsets:
-  // all other values are initiliazed to zero
-  for(int_t i=0;i<num_subsets;++i){
-    schema->field_value(i,DICe::COORDINATE_X) = (*subset_centroids)[i*dim + 0];
-    schema->field_value(i,DICe::COORDINATE_Y) = (*subset_centroids)[i*dim + 1];
-  }
-  // set the seed value if they exist
-  if(subset_info!=Teuchos::null){
-    if(subset_info->path_file_names->size()>0){
-      schema->set_path_file_names(subset_info->path_file_names);
-    }
-    if(subset_info->skip_solve_flags->size()>0){
-      schema->set_skip_solve_flags(subset_info->skip_solve_flags);
-    }
-    if(subset_info->motion_window_params->size()>0){
-      schema->set_motion_window_params(subset_info->motion_window_params);
-    }
-    if(subset_info->seed_subset_ids->size()>0){
-      //schema->has_seed(true);
-      assert(subset_info->displacement_map->size()>0);
-      std::map<int_t,int_t>::iterator it=subset_info->seed_subset_ids->begin();
-      for(;it!=subset_info->seed_subset_ids->end();++it){
-        const int_t subset_id = it->first;
-        const int_t roi_id = it->second;
-        assert(subset_info->displacement_map->find(roi_id)!=subset_info->displacement_map->end());
-        schema->field_value(subset_id,DICe::DISPLACEMENT_X) = subset_info->displacement_map->find(roi_id)->second.first;
-        schema->field_value(subset_id,DICe::DISPLACEMENT_Y) = subset_info->displacement_map->find(roi_id)->second.second;
-        if(proc_rank==0) DEBUG_MSG("Seeding the displacement solution for subset " << subset_id << " with ux: " <<
-          schema->field_value(subset_id,DICe::DISPLACEMENT_X) << " uy: " << schema->field_value(subset_id,DICe::DISPLACEMENT_Y));
-        if(subset_info->normal_strain_map->find(roi_id)!=subset_info->normal_strain_map->end()){
-          schema->field_value(subset_id,DICe::NORMAL_STRAIN_X) = subset_info->normal_strain_map->find(roi_id)->second.first;
-          schema->field_value(subset_id,DICe::NORMAL_STRAIN_Y) = subset_info->normal_strain_map->find(roi_id)->second.second;
-          if(proc_rank==0) DEBUG_MSG("Seeding the normal strain solution for subset " << subset_id << " with ex: " <<
-            schema->field_value(subset_id,DICe::NORMAL_STRAIN_X) << " ey: " << schema->field_value(subset_id,DICe::NORMAL_STRAIN_Y));
-        }
-        if(subset_info->shear_strain_map->find(roi_id)!=subset_info->shear_strain_map->end()){
-          schema->field_value(subset_id,DICe::SHEAR_STRAIN_XY) = subset_info->shear_strain_map->find(roi_id)->second;
-          if(proc_rank==0) DEBUG_MSG("Seeding the shear strain solution for subset " << subset_id << " with gamma_xy: " <<
-            schema->field_value(subset_id,DICe::SHEAR_STRAIN_XY));
-        }
-        if(subset_info->rotation_map->find(roi_id)!=subset_info->rotation_map->end()){
-          schema->field_value(subset_id,DICe::ROTATION_Z) = subset_info->rotation_map->find(roi_id)->second;
-          if(proc_rank==0) DEBUG_MSG("Seeding the rotation solution for subset " << subset_id << " with theta_z: " <<
-            schema->field_value(subset_id,DICe::ROTATION_Z));
-        }
-      }
-    }
-  }
 
   // iterate through the images and perform the correlation:
 

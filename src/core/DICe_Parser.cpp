@@ -664,9 +664,9 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            else if(block_tokens[0]==parser_end) break; // end of the list
            else if(is_number(block_tokens[0])){ // set of coordinates
              if(block_tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid coordinate (not enough values)" << fileName);}
-             info->data_vector->push_back(std::atoi(block_tokens[0].c_str()));
+             info->coordinates_vector->push_back(std::atoi(block_tokens[0].c_str()));
              if(block_tokens[1]==parser_comment_char){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid coordinate (not enough values)" << fileName);}
-             info->data_vector->push_back(std::atoi(block_tokens[1].c_str()));
+             info->coordinates_vector->push_back(std::atoi(block_tokens[1].c_str()));
              info->neighbor_vector->push_back(-1); // neighbor_id
            }
            else{ // or error
@@ -674,17 +674,17 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            }
          } // while loop
          // check for valid coordinates
-         assert(info->data_vector->size()>=2);
-         assert(info->data_vector->size()/2==info->neighbor_vector->size());
-         assert(info->data_vector->size()%2==0);
-         for(int_t i=0;i<(int_t)info->data_vector->size()/dim;++i){
-           if((*info->data_vector)[i*dim]<0||(*info->data_vector)[i*dim]>=width){
-             TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid subset coordinate in " << fileName << " x: "  << (*info->data_vector)[i*dim]);
+         assert(info->coordinates_vector->size()>=2);
+         assert(info->coordinates_vector->size()/2==info->neighbor_vector->size());
+         assert(info->coordinates_vector->size()%2==0);
+         for(int_t i=0;i<(int_t)info->coordinates_vector->size()/dim;++i){
+           if((*info->coordinates_vector)[i*dim]<0||(*info->coordinates_vector)[i*dim]>=width){
+             TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid subset coordinate in " << fileName << " x: "  << (*info->coordinates_vector)[i*dim]);
            }
-           if((*info->data_vector)[i*dim+1]<0||(*info->data_vector)[i*dim+1]>=height){
-             TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid subset coordinate in " << fileName << " y: "  << (*info->data_vector)[i*dim+1]);
+           if((*info->coordinates_vector)[i*dim+1]<0||(*info->coordinates_vector)[i*dim+1]>=height){
+             TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid subset coordinate in " << fileName << " y: "  << (*info->coordinates_vector)[i*dim+1]);
            }
-           if(proc_rank==0) DEBUG_MSG("Subset coord: (" << (*info->data_vector)[i*dim] << "," << (*info->data_vector)[i*dim+1] << ")");
+           if(proc_rank==0) DEBUG_MSG("Subset coord: (" << (*info->coordinates_vector)[i*dim] << "," << (*info->coordinates_vector)[i*dim+1] << ")");
          }
        }
        else if(tokens[1]==parser_region_of_interest){
@@ -964,7 +964,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            std::cout << "Error, invalid subset id for conformal subset (or subset id was not defined with \"SUBSET_ID <id>\"): " << subset_id << std::endl;
          }
          info->conformal_area_defs->insert(std::pair<int_t,DICe::Conformal_Area_Def>(subset_id,conformal_area_def));
-         info->data_map->insert(std::pair<int_t,std::vector<int_t> >(subset_id,blocking_ids));
+         info->coordinates_map->insert(std::pair<int_t,std::vector<int_t> >(subset_id,blocking_ids));
          if(has_seed){
            info->seed_subset_ids->insert(std::pair<int_t,int_t>(subset_id,subset_id)); // treating each conformal subset as an roi TODO fix this awkwardness
            info->displacement_map->insert(std::pair<int_t,std::pair<scalar_t,scalar_t> >(subset_id,std::pair<scalar_t,scalar_t>(seed_disp_x,seed_disp_y)));

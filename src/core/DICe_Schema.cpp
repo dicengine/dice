@@ -45,6 +45,7 @@
 #include <DICe_PostProcessor.h>
 #include <DICe_ParameterUtilities.h>
 
+#include <Teuchos_XMLParameterListHelpers.hpp>
 #include <Teuchos_ArrayRCP.hpp>
 
 #include <ctime>
@@ -63,8 +64,22 @@ namespace DICe {
 
 Schema::Schema(const std::string & refName,
   const std::string & defName,
-  const Teuchos::RCP<Teuchos::ParameterList> & params)
-{
+  const std::string & params_file_name){
+  // create a parameter list from the selected file
+  Teuchos::RCP<Teuchos::ParameterList> params = read_correlation_params(params_file_name);
+  construct_schema(refName,defName,params);
+}
+
+Schema::Schema(const std::string & refName,
+  const std::string & defName,
+  const Teuchos::RCP<Teuchos::ParameterList> & params){
+  construct_schema(refName,defName,params);
+}
+
+void
+Schema::construct_schema(const std::string & refName,
+  const std::string & defName,
+  const Teuchos::RCP<Teuchos::ParameterList> & params){
   default_constructor_tasks(params);
 
   Teuchos::RCP<Teuchos::ParameterList> imgParams;
@@ -98,8 +113,27 @@ Schema::Schema(const int_t img_width,
   const int_t img_height,
   const Teuchos::ArrayRCP<intensity_t> refRCP,
   const Teuchos::ArrayRCP<intensity_t> defRCP,
-  const Teuchos::RCP<Teuchos::ParameterList> & params)
-{
+  const std::string & params_file_name){
+  // create a parameter list from the selected file
+  Teuchos::RCP<Teuchos::ParameterList> params = read_correlation_params(params_file_name);
+  construct_schema(img_width,img_height,refRCP,defRCP,params);
+}
+
+Schema::Schema(const int_t img_width,
+  const int_t img_height,
+  const Teuchos::ArrayRCP<intensity_t> refRCP,
+  const Teuchos::ArrayRCP<intensity_t> defRCP,
+  const Teuchos::RCP<Teuchos::ParameterList> & params){
+  construct_schema(img_width,img_height,refRCP,defRCP,params);
+}
+
+void
+Schema::construct_schema(const int_t img_width,
+  const int_t img_height,
+  const Teuchos::ArrayRCP<intensity_t> refRCP,
+  const Teuchos::ArrayRCP<intensity_t> defRCP,
+  const Teuchos::RCP<Teuchos::ParameterList> & params){
+
   default_constructor_tasks(params);
 
   Teuchos::RCP<Teuchos::ParameterList> imgParams;
@@ -126,6 +160,21 @@ Schema::Schema(const int_t img_width,
 }
 
 Schema::Schema(Teuchos::RCP<Image> ref_img,
+  Teuchos::RCP<Image> def_img,
+  const std::string & params_file_name){
+  // create a parameter list from the selected file
+  Teuchos::RCP<Teuchos::ParameterList> params = read_correlation_params(params_file_name);
+  construct_schema(ref_img,def_img,params);
+}
+
+Schema::Schema(Teuchos::RCP<Image> ref_img,
+  Teuchos::RCP<Image> def_img,
+  const Teuchos::RCP<Teuchos::ParameterList> & params){
+  construct_schema(ref_img,def_img,params);
+}
+
+void
+Schema::construct_schema(Teuchos::RCP<Image> ref_img,
   Teuchos::RCP<Image> def_img,
   const Teuchos::RCP<Teuchos::ParameterList> & params)
 {
@@ -237,6 +286,15 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   initial_gamma_threshold_ = -1.0;
   final_gamma_threshold_ = -1.0;
   path_distance_threshold_ = -1.0;
+  set_params(params);
+}
+
+void
+Schema::set_params(const std::string & params_file_name){
+  // create a parameter list from the selected file
+  Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp( new Teuchos::ParameterList() );
+  Teuchos::Ptr<Teuchos::ParameterList> paramsPtr(params.get());
+  Teuchos::updateParametersFromXmlFile(params_file_name,paramsPtr);
   set_params(params);
 }
 
@@ -517,6 +575,123 @@ Schema::initialize(const int_t step_size_x,
      field_value(i,COORDINATE_X) = x_coord;
      field_value(i,COORDINATE_Y) = y_coord;
   }
+}
+
+void
+Schema::initialize(const std::string & params_file_name){
+  // create a parameter list from the selected file
+  Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp( new Teuchos::ParameterList() );
+  Teuchos::Ptr<Teuchos::ParameterList> paramsPtr(params.get());
+  Teuchos::updateParametersFromXmlFile(params_file_name,paramsPtr);
+  initialize(params);
+}
+
+void
+Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
+  const int_t dim = 2;
+  const int_t proc_rank = comm_->get_rank();
+  // if the subset locations are specified in an input file, read them in (else they will be defined later)
+  Teuchos::RCP<std::vector<int_t> > subset_centroids;
+  Teuchos::RCP<std::vector<int_t> > neighbor_ids;
+  Teuchos::RCP<DICe::Subset_File_Info> subset_info;
+  int_t step_size = -1;
+  int_t subset_size = -1;
+  int_t num_subsets = -1;
+  Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
+  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > blocking_subset_ids;
+  const bool has_subset_file = input_params->isParameter(DICe::subset_file);
+  DICe::Subset_File_Info_Type subset_info_type = DICe::SUBSET_INFO;
+  if(has_subset_file){
+    std::string fileName = input_params->get<std::string>(DICe::subset_file);
+    subset_info = DICe::read_subset_file(fileName,img_width(),img_height());
+    subset_info_type = subset_info->type;
+  }
+  if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
+    assert(input_params->isParameter(DICe::step_size));
+    step_size = input_params->get<int_t>(DICe::step_size);
+    DEBUG_MSG("Correlation point centroids were not specified by the user. \nThey will be evenly distrubed in the region"
+        " of interest with separation (step_size) of " << step_size << " pixels.");
+    subset_centroids = Teuchos::rcp(new std::vector<int_t>());
+    neighbor_ids = Teuchos::rcp(new std::vector<int_t>());
+    DICe::create_regular_grid_of_correlation_points(*subset_centroids,*neighbor_ids,input_params,img_width(),img_height(),subset_info);
+    num_subsets = subset_centroids->size()/dim; // divide by three because the stride is x y neighbor_id
+    assert(neighbor_ids->size()==subset_centroids->size()/2);
+    assert(input_params->isParameter(DICe::subset_size)); // required for all square subsets case
+    subset_size = input_params->get<int_t>(DICe::subset_size);
+  }
+  else{
+    assert(subset_info!=Teuchos::null);
+    subset_centroids = subset_info->coordinates_vector;
+    neighbor_ids = subset_info->neighbor_vector;
+    conformal_area_defs = subset_info->conformal_area_defs;
+    blocking_subset_ids = subset_info->coordinates_map;
+    num_subsets = subset_info->coordinates_vector->size()/dim;
+    if((int_t)subset_info->conformal_area_defs->size()<num_subsets){
+      // Only require this if not all subsets are conformal:
+      assert(input_params->isParameter(DICe::subset_size));
+      subset_size = input_params->get<int_t>(DICe::subset_size);
+    }
+  }
+  assert(subset_centroids->size()>0);
+  assert(num_subsets>0);
+
+  set_step_size(step_size); // this is done just so the step_size appears in the output file header (it's not actually used)
+  // let the schema know how many images there are in the sequence:
+
+  // set the blocking subset ids if they exist
+  set_obstructing_subset_ids(blocking_subset_ids);
+  // initialize the schema
+  initialize(num_subsets,subset_size,conformal_area_defs,neighbor_ids);
+
+  // set the coordinates for the subsets:
+  // all other values are initiliazed to zero
+  for(int_t i=0;i<num_subsets;++i){
+    field_value(i,DICe::COORDINATE_X) = (*subset_centroids)[i*dim + 0];
+    field_value(i,DICe::COORDINATE_Y) = (*subset_centroids)[i*dim + 1];
+  }
+  // set the seed value if they exist
+  if(subset_info!=Teuchos::null){
+    if(subset_info->path_file_names->size()>0){
+      set_path_file_names(subset_info->path_file_names);
+    }
+    if(subset_info->skip_solve_flags->size()>0){
+      set_skip_solve_flags(subset_info->skip_solve_flags);
+    }
+    if(subset_info->motion_window_params->size()>0){
+      set_motion_window_params(subset_info->motion_window_params);
+    }
+    if(subset_info->seed_subset_ids->size()>0){
+      //has_seed(true);
+      assert(subset_info->displacement_map->size()>0);
+      std::map<int_t,int_t>::iterator it=subset_info->seed_subset_ids->begin();
+      for(;it!=subset_info->seed_subset_ids->end();++it){
+        const int_t subset_id = it->first;
+        const int_t roi_id = it->second;
+        assert(subset_info->displacement_map->find(roi_id)!=subset_info->displacement_map->end());
+        field_value(subset_id,DICe::DISPLACEMENT_X) = subset_info->displacement_map->find(roi_id)->second.first;
+        field_value(subset_id,DICe::DISPLACEMENT_Y) = subset_info->displacement_map->find(roi_id)->second.second;
+        if(proc_rank==0) DEBUG_MSG("Seeding the displacement solution for subset " << subset_id << " with ux: " <<
+          field_value(subset_id,DICe::DISPLACEMENT_X) << " uy: " << field_value(subset_id,DICe::DISPLACEMENT_Y));
+        if(subset_info->normal_strain_map->find(roi_id)!=subset_info->normal_strain_map->end()){
+          field_value(subset_id,DICe::NORMAL_STRAIN_X) = subset_info->normal_strain_map->find(roi_id)->second.first;
+          field_value(subset_id,DICe::NORMAL_STRAIN_Y) = subset_info->normal_strain_map->find(roi_id)->second.second;
+          if(proc_rank==0) DEBUG_MSG("Seeding the normal strain solution for subset " << subset_id << " with ex: " <<
+            field_value(subset_id,DICe::NORMAL_STRAIN_X) << " ey: " << field_value(subset_id,DICe::NORMAL_STRAIN_Y));
+        }
+        if(subset_info->shear_strain_map->find(roi_id)!=subset_info->shear_strain_map->end()){
+          field_value(subset_id,DICe::SHEAR_STRAIN_XY) = subset_info->shear_strain_map->find(roi_id)->second;
+          if(proc_rank==0) DEBUG_MSG("Seeding the shear strain solution for subset " << subset_id << " with gamma_xy: " <<
+            field_value(subset_id,DICe::SHEAR_STRAIN_XY));
+        }
+        if(subset_info->rotation_map->find(roi_id)!=subset_info->rotation_map->end()){
+          field_value(subset_id,DICe::ROTATION_Z) = subset_info->rotation_map->find(roi_id)->second;
+          if(proc_rank==0) DEBUG_MSG("Seeding the rotation solution for subset " << subset_id << " with theta_z: " <<
+            field_value(subset_id,DICe::ROTATION_Z));
+        }
+      }
+    }
+  }
+
 }
 
 void

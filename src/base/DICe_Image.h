@@ -59,7 +59,7 @@ class Conformal_Area_Def;
 
 
 /// \class DICe::Image
-/// \brief A container class to hold the pixel intensity information and provide some basic methods
+/// A container class to hold the pixel intensity information and provide some basic methods
 /// Note: the coordinates are from the top left corner (positive right for x and positive down for y)
 /// intensity access is always in local coordinates, for example if only a portion of an image is read
 /// into the intensity values, accessing the first value in the array is via the indicies (0,0) even if

@@ -47,6 +47,8 @@
   #include <DICe_Kokkos.h>
 #endif
 
+#include <Teuchos_ParameterList.hpp>
+
 #include <cassert>
 
 namespace DICe {

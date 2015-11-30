@@ -1,0 +1,4 @@
+<ParameterList>
+  <Parameter name="subset_file" type="string" value="./subsets.txt" />
+  <Parameter name="subset_size" type="int" value="27" />
+</ParameterList>

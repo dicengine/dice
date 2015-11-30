@@ -162,9 +162,9 @@ Subset_File_Info {
   /// \param info_type optional type argument (assumes SUBSET_INFO)
   Subset_File_Info(const Subset_File_Info_Type info_type=SUBSET_INFO){
     conformal_area_defs = Teuchos::rcp(new std::map<int_t,DICe::Conformal_Area_Def>());
-    data_vector = Teuchos::rcp(new std::vector<int_t>());
+    coordinates_vector = Teuchos::rcp(new std::vector<int_t>());
     neighbor_vector = Teuchos::rcp(new std::vector<int_t>());
-    data_map = Teuchos::rcp(new std::map<int_t,std::vector<int_t> >());
+    coordinates_map = Teuchos::rcp(new std::map<int_t,std::vector<int_t> >());
     size_map = Teuchos::rcp(new std::map<int_t,std::pair<int_t,int_t> >());
     displacement_map = Teuchos::rcp(new std::map<int_t,std::pair<scalar_t,scalar_t> >());
     normal_strain_map = Teuchos::rcp(new std::map<int_t,std::pair<scalar_t,scalar_t> >());
@@ -179,11 +179,11 @@ Subset_File_Info {
   /// Pointer to map of conformal subset defs (these are used to define conformal subsets)
   Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
   /// Pointer to the vector of subset centroid coordinates
-  Teuchos::RCP<std::vector<int_t> > data_vector;
+  Teuchos::RCP<std::vector<int_t> > coordinates_vector;
   /// Pointer to the vector of neighbor ids
   Teuchos::RCP<std::vector<int_t> > neighbor_vector;
-  /// Pointer to list of vectors
-  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > data_map;
+  /// Pointer to a map that has the coordinates index for this subset
+  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > coordinates_map;
   /// Type of information (subset or region of interest)
   Subset_File_Info_Type type;
   /// Pointer to a map of std::pairs of size values

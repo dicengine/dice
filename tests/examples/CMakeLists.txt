@@ -30,27 +30,35 @@ FOREACH ( test ${EXAMPLES})
 ENDFOREACH ( )
 
 #
-#  Examples using DICe in an external code by including DICe headers
+#  Examples using DICe in an custom app
 #
 
 # Copy over all the test files (input and results)
-FILE(COPY external_code DESTINATION . )
+FILE(COPY custom_app DESTINATION . )
 # create a test
-ADD_TEST ( NAME RUN_EXAMPLE_external_code
-   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external_code
-   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/external_code/build/main)
-set_tests_properties(RUN_EXAMPLE_external_code PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
+ADD_TEST ( NAME RUN_EXAMPLE_custom_app
+   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/custom_app
+   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/custom_app/build/main)
+set_tests_properties(RUN_EXAMPLE_custom_app PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
 
-# use an external projec to build the external_code example
+# use an external project to build the custom_app example
 
 include(ExternalProject)
-MESSAGE(STATUS "Building external_code_example from ${CMAKE_CURRENT_SOURCE_DIR}")
-ExternalProject_Add(external_code_example
-  PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/external_code
+MESSAGE(STATUS "Building cutsom_app_example from ${CMAKE_CURRENT_SOURCE_DIR}")
+ExternalProject_Add(custom_app_example
+  PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/custom_app
   DOWNLOAD_COMMAND ""
   UPDATE_COMMAND ""
   INSTALL_COMMAND ""
-  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external_code
-  BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/external_code/build
+  BUILD_COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/tests/examples/custom_app/build --clean-first
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/custom_app
+  BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/custom_app/build
   TMP_DIR ${CMAKE_CURRENT_BINARY_DIR}/utils_tmp
-  CMAKE_CACHE_ARGS -DDICE_OUTPUT_PREFIX:STRING=${DICE_OUTPUT_PREFIX})
+  CMAKE_CACHE_ARGS -DDICE_LIB_DIR:STRING=${DICE_OUTPUT_PREFIX}/lib -DDICE_HEADER_DIR:STRING=${DICE_HEADER_DIRS} -DDICE_TRILINOS_DIR:STRING=${DICE_TRILINOS_DIR} -DTIFF_DIR:STRING=${TIFF_DIR})
+
+# force rebuild of custom_app example
+ExternalProject_Add_Step(custom_app_example forcebuild
+  COMMAND ${CMAKE_COMMAND} -E echo "Force rebuild of custom_app_example"
+  DEPENDEES configure
+  DEPENDERS build
+  ALWAYS 1)

@@ -1,0 +1,17 @@
+<ParameterList>
+  <Parameter name="interpolation_method" type="string" value="BILINEAR" />
+  <Parameter name="optimization_method" type="string" value="SIMPLEX" />
+  <Parameter name="enable_translation" type="bool" value="true" />
+  <Parameter name="enable_rotation" type="bool" value="false" />
+  <Parameter name="enable_normal_strain" type="bool" value="true" />
+  <Parameter name="enable_shear_strain" type="bool" value="false" />
+  <Parameter name="output_delimiter" type="string" value="," />
+  <ParameterList name="output_spec">
+    <Parameter name="COORDINATE_X" type="int" value="0" />
+    <Parameter name="COORDINATE_Y" type="int" value="1" />
+    <Parameter name="DISPLACEMENT_X" type="int" value="2" />
+    <Parameter name="DISPLACEMENT_Y" type="int" value="3" />
+    <Parameter name="SIGMA" type="int" value="4" />
+    <Parameter name="GAMMA" type="int" value="5" />
+  </ParameterList>
+</ParameterList>
