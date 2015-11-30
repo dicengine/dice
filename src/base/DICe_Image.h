@@ -47,11 +47,6 @@
 #endif
 #include <Teuchos_ParameterList.hpp>
 
-/*!
- *  \namespace DICe
- *  @{
- */
-/// generic DICe classes and functions
 namespace DICe {
 
 /// forward declaration of the conformal_area_def

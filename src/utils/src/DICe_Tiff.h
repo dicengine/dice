@@ -47,6 +47,11 @@
 #include <string>
 
 namespace DICe{
+/*!
+ *  \namespace DICe::utils
+ *  @{
+ */
+/// utilities that may not build with NVCC so they are separated out into another namespace
 namespace utils{
 
 /// read the image dimensions
@@ -61,6 +66,7 @@ void read_tiff_image_dimensions(const char * file_name,
 /// Read an image into the host memory
 /// \param file_name the name of the tiff file
 /// \param intensities [out] populated with the pixel intensity values
+/// \param is_layout_right true if the arrays are row-major
 DICE_LIB_DLL_EXPORT
 void read_tiff_image(const char * file_name,
   intensity_t * intensities,

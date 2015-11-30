@@ -68,6 +68,11 @@
 
 #include <string>
 
+/*!
+ *  \namespace DICe
+ *  @{
+ */
+/// generic DICe classes and functions
 namespace DICe{
 
 /// basic types

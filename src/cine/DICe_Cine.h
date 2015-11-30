@@ -54,6 +54,11 @@
 #include <Teuchos_RCP.hpp>
 
 namespace DICe {
+/*!
+ *  \namespace DICe::cine
+ *  @{
+ */
+/// cine file format utilities
 namespace cine{
 
 /// \brief function to swap the endianness of a 16bit data type
@@ -63,7 +68,9 @@ inline void endian_swap(uint16_t& x){
 }
 
 /// Fractions
-typedef uint32_t FRACTIONS, *PFRACTIONS;
+typedef uint32_t FRACTIONS;
+/// Pointer to fractions
+typedef uint32_t *PFRACTIONS;
 /// Structure to hold the trigger time
 typedef struct tagTIME64
 {
@@ -71,7 +78,9 @@ typedef struct tagTIME64
   FRACTIONS fractions;
   /// seconds
   uint32_t seconds;
-} TIME64, *PTIME64;
+} TIME64;
+
+
 
 /// Structure to hold the cine file header information
 struct cine_file_header{
