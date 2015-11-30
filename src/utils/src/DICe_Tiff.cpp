@@ -98,8 +98,8 @@ void read_tiff_image(const char * file_name,
   boost::gil::tiff_read_and_convert_image(file_name,img);
   const int_t img_width = img.width();
   const int_t img_height = img.height();
-  assert(width+offset_x < img_width);
-  assert(height+offset_y< img_height);
+  assert(width+offset_x <= img_width);
+  assert(height+offset_y <= img_height);
 
   boost::gil::gray8c_view_t img_view = boost::gil::const_view(img);
   for (int_t y=offset_y; y<offset_y+height; ++y) {

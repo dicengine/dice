@@ -55,31 +55,35 @@
 using namespace DICe;
 using namespace boost::timer;
 
+// Usage DICe_PerformanceFunctors [<num_image_sizes> <num_time_samples> <num_thread_teams>]
+
 int main(int argc, char *argv[]) {
 
   DICe::initialize(argc, argv);
 
   // only print output if args are given (for testing the output is quiet)
-  int_t iprint = argc>1 ? std::atoi(argv[1]) : 0;
-  Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
-  if (iprint > 0)
+  Teuchos::RCP<std::ostream> outStream = Teuchos::rcp(&bhs, false);
+  if(argc>1) // anything but the default cases, writes output to screen
     outStream = Teuchos::rcp(&std::cout, false);
-  else
-    outStream = Teuchos::rcp(&bhs, false);
 
   *outStream << "--- Begin performance test ---" << std::endl;
 
+  // optional argument for the number of image sizes
+  int_t num_img_sizes = 5;
+  if(argc>1) num_img_sizes = std::atoi(argv[1]);
+  int_t num_time_samples = 5;
+  if(argc>2) num_time_samples = std::atoi(argv[2]);
+
   // optional argument for the number of thread teams:
-  int num_thread_teams = -1;
-  if(argc>2) num_thread_teams = std::atoi(argv[2]);
+
+  int_t num_thread_teams = -1;
+  if(argc>3) num_thread_teams = std::atoi(argv[2]);
   *outStream << "number of thread teams:   " << num_thread_teams << " (-1 means thread teams not used)" << std::endl;
   const bool use_hierarchical = num_thread_teams > 0;
   *outStream << "hierarchical parallelism: " << use_hierarchical << std::endl;
 
   // create a vector of image sizes to use
-  const int_t num_img_sizes = 5;
-  const int_t num_time_samples = 5;
   int_t width = 0;
   int_t height = 0;
   std::vector<int_t> widths(num_img_sizes,0);
@@ -276,6 +280,7 @@ int main(int argc, char *argv[]) {
         std::endl;
   }
 
+  std::cout << "End Result: TEST PASSED\n";
 
   *outStream << "--- End performance test ---" << std::endl;
 
