@@ -866,15 +866,16 @@ To enable debug messages in DICe, simply set the CMake flag
 Using DICe as a dynamically linked library
 ------------------------------------------
 
-DICe can also be used in library mode, but a custom interface to the particular
-application for DICe needs to be written first. (An example of a LabView interface
-is in `\dice\lib\DICe_api.cpp`.) Although DICe does not have a standard
-interface, it is simple to write one that meets the needs of a
-particular application.
+DICe can also be used in library mode, whereby an application like LabView can
+call `dice_correlate()` as a function from `libdice`. There are two versions of the
+function call, one that takes an array of subset locations as input, and another
+that uses a subset file to define conformal subsets. If the array of points function
+is used, the subset size is constant.
 
-This library is called `libdice` and resides in the `\dice\build\lib\` folder.
-
-Using DICe as a library involves writing an interface that sets the
+The code for the library is in file `dice/src/api/DICe_api.cpp`. This file can be used as
+a template for developing a more advanced interface. Another option is to write a custom
+DIC application that follows the example [here](DICe_CustomApplication.md). Using DICe as
+a library involves writing an interface that sets the
 parameters and orders the data from the correlation in the right order
 for the particular application (for the purposes of data exchange). Once
 this interface is compiled as a library, it can be linked and used in an

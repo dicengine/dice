@@ -17,3 +17,8 @@ add_subdirectory(cine)
 # FFT utilities
 #
 add_subdirectory(fft)
+
+#
+# Dynamically linked library
+#
+add_subdirectory(api)

@@ -964,7 +964,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            std::cout << "Error, invalid subset id for conformal subset (or subset id was not defined with \"SUBSET_ID <id>\"): " << subset_id << std::endl;
          }
          info->conformal_area_defs->insert(std::pair<int_t,DICe::Conformal_Area_Def>(subset_id,conformal_area_def));
-         info->coordinates_map->insert(std::pair<int_t,std::vector<int_t> >(subset_id,blocking_ids));
+         info->id_sets_map->insert(std::pair<int_t,std::vector<int_t> >(subset_id,blocking_ids));
          if(has_seed){
            info->seed_subset_ids->insert(std::pair<int_t,int_t>(subset_id,subset_id)); // treating each conformal subset as an roi TODO fix this awkwardness
            info->displacement_map->insert(std::pair<int_t,std::pair<scalar_t,scalar_t> >(subset_id,std::pair<scalar_t,scalar_t>(seed_disp_x,seed_disp_y)));

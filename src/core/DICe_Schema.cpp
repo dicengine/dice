@@ -624,7 +624,7 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     subset_centroids = subset_info->coordinates_vector;
     neighbor_ids = subset_info->neighbor_vector;
     conformal_area_defs = subset_info->conformal_area_defs;
-    blocking_subset_ids = subset_info->coordinates_map;
+    blocking_subset_ids = subset_info->id_sets_map;
     num_subsets = subset_info->coordinates_vector->size()/dim;
     if((int_t)subset_info->conformal_area_defs->size()<num_subsets){
       // Only require this if not all subsets are conformal:

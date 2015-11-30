@@ -6,6 +6,8 @@ Introduction
 
 This section of the documentation describes how to write a custom DIC application with DICe. For the example below, all of the steps assume that a Linux operating system is being used. For Windows, the cmake script needs to be modified to produce nmake makefiles, and the appropriate scripts should be exectuted as batch files.
 
+The files for this example are in the folder `dice/examples/custom_app`. The `main.cpp` file provides a simple example to follow when developing a more sophisticated application.
+
 Code Design and Workflow
 ------------------------
 
