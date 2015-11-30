@@ -5,3 +5,4 @@ build*
 *-stamp*
 .DS_Store
 doc/doxygen/html
+doc/doxygen/latex
