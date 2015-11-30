@@ -33,7 +33,7 @@ add_library(dicecore ${DICE_SOURCES} ${DICE_HEADERS})
 target_link_libraries(dicecore ${Boost_LIBRARIES} ${DICE_LIBRARIES} dicebase diceutils dicefft)
 target_compile_definitions(dicecore PRIVATE -D DICE_LIB_EXPORTS_MODE)
 
-install(FILES ${DICE_HEADERS}
+install(FILES ${DICE_HEADERS} ../kdtree/nanoflann.hpp
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include
 )
 install(TARGETS dicecore
