@@ -79,6 +79,9 @@ Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
 
   // for the simplex method, use the gradient in gamma to output a sigma value (sqrt(dg_x^2 + dg_y^2 + dg_theta^2):
   if(schema_->optimization_method()==DICe::SIMPLEX){
+    // for sigma we don't want the gamma values normalized by the number of pixels:
+    const bool original_normalize_flag = schema_->normalize_gamma_with_active_pixels();
+    schema_->set_normalize_gamma_with_active_pixels(false);
     std::vector<scalar_t> epsilon(3);
     epsilon[0] = 1.0E-1;
     epsilon[1] = 1.0E-1;
@@ -117,6 +120,9 @@ Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
     }
     mag_dir_sigma = std::sqrt(mag_dir_sigma);
     DEBUG_MSG("Simplex method sigma: " << mag_dir_sigma);
+
+    // replace the correct normalization flag:
+    schema_->set_normalize_gamma_with_active_pixels(original_normalize_flag);
 
     // re-initialize the subset with the original deformation solution
     subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation,schema_->interpolation_method());

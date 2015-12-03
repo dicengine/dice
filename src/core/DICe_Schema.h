@@ -701,6 +701,12 @@ public:
     return normalize_gamma_with_active_pixels_;
   }
 
+  /// True if the gamma values should be normalized by the number of active pixels
+  /// \param flag true if the gamma values should be normalized by the number of active pixels
+  void set_normalize_gamma_with_active_pixels(const bool flag){
+    normalize_gamma_with_active_pixels_ = flag;
+  }
+
   /// Enable translation shape functions
   void enable_translation(const bool flag){
     enable_translation_ = flag;
