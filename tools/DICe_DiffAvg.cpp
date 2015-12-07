@@ -160,6 +160,7 @@ int main(int argc, char *argv[]) {
   // average the values
   std::vector<int_t> coords;
   std::vector<scalar_t> avg_values;
+  std::vector<scalar_t> std_dev_values;
   std::map<int_t,std::vector<scalar_t> > ::iterator map_it = sortedMap.begin();
   for(;map_it!=sortedMap.end();++map_it){
     int_t num_values = map_it->second.size();
@@ -172,6 +173,21 @@ int main(int argc, char *argv[]) {
     coords.push_back(coord);
     avg_values.push_back(avg_value*compare_factor);
   }
+
+  map_it = sortedMap.begin();
+  int_t v_index = 0;
+  for(;map_it!=sortedMap.end();++map_it){
+    int_t num_values = map_it->second.size();
+    scalar_t std_dev = 0.0;
+    for(int_t i=0;i<num_values;++i){
+      std_dev += (map_it->second[i] - avg_values[v_index])*(map_it->second[i] - avg_values[v_index]);
+    }
+    std_dev /= num_values;
+    std_dev = std::sqrt(std_dev);
+    std_dev_values.push_back(std_dev);
+    v_index++;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(std_dev_values.size()!=avg_values.size(),std::runtime_error,"Error, these two vectors should be the same size.");
 
   // command data
 
@@ -244,7 +260,7 @@ int main(int argc, char *argv[]) {
 
   std::FILE * filePtr = fopen(output_file.c_str(),"w"); // overwrite the file if it exists
   for(size_t row=0;row<coords.size();++row){
-    fprintf(filePtr,"%i %4.4E %4.4E %4.4E",coords[row],avg_values[row],command_values[row],diff_values[row]);
+    fprintf(filePtr,"%i %4.4E %4.4E %4.4E %4.4E",coords[row],avg_values[row],command_values[row],diff_values[row],std_dev_values[row]);
     fprintf(filePtr,"\n");
   }
   fclose(filePtr);
