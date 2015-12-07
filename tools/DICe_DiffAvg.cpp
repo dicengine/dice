@@ -161,6 +161,8 @@ int main(int argc, char *argv[]) {
   std::vector<int_t> coords;
   std::vector<scalar_t> avg_values;
   std::vector<scalar_t> std_dev_values;
+  std::vector<scalar_t> max_values;
+  std::vector<scalar_t> min_values;
   std::map<int_t,std::vector<scalar_t> > ::iterator map_it = sortedMap.begin();
   for(;map_it!=sortedMap.end();++map_it){
     int_t num_values = map_it->second.size();
@@ -179,12 +181,20 @@ int main(int argc, char *argv[]) {
   for(;map_it!=sortedMap.end();++map_it){
     int_t num_values = map_it->second.size();
     scalar_t std_dev = 0.0;
+    scalar_t min_value = map_it->second[0];
+    scalar_t max_value = map_it->second[0];
     for(int_t i=0;i<num_values;++i){
+      if(map_it->second[i] > max_value)
+        max_value = map_it->second[i];
+      if(map_it->second[i] < min_value)
+        min_value = map_it->second[i];
       std_dev += (map_it->second[i] - avg_values[v_index])*(map_it->second[i] - avg_values[v_index]);
     }
     std_dev /= num_values;
     std_dev = std::sqrt(std_dev);
     std_dev_values.push_back(std_dev);
+    max_values.push_back(max_value);
+    min_values.push_back(min_value);
     v_index++;
   }
   TEUCHOS_TEST_FOR_EXCEPTION(std_dev_values.size()!=avg_values.size(),std::runtime_error,"Error, these two vectors should be the same size.");
@@ -260,7 +270,7 @@ int main(int argc, char *argv[]) {
 
   std::FILE * filePtr = fopen(output_file.c_str(),"w"); // overwrite the file if it exists
   for(size_t row=0;row<coords.size();++row){
-    fprintf(filePtr,"%i %4.4E %4.4E %4.4E %4.4E",coords[row],avg_values[row],command_values[row],diff_values[row],std_dev_values[row]);
+    fprintf(filePtr,"%i %4.4E %4.4E %4.4E %4.4E %4.4E %4.4E",coords[row],avg_values[row],command_values[row],diff_values[row],std_dev_values[row],max_values[row],min_values[row]);
     fprintf(filePtr,"\n");
   }
   fclose(filePtr);
