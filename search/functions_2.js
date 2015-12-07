@@ -20,12 +20,13 @@ var searchData=
   ['conformal_5fsubset_5fdef',['conformal_subset_def',['../class_d_i_ce_1_1_subset.html#a106c049a61ca15dd2dcb2ef3598a0731',1,'DICe::Subset']]],
   ['conformal_5fsubset_5fdefs',['conformal_subset_defs',['../class_d_i_ce_1_1_schema.html#a8f92406441f5d28e61daa483de08b33f',1,'DICe::Schema']]],
   ['connectivity',['connectivity',['../class_d_i_ce_1_1_schema.html#a52630fcfd7c8b362a64a76f52c2e54db',1,'DICe::Schema']]],
+  ['construct_5fschema',['construct_schema',['../class_d_i_ce_1_1_schema.html#a2c4448e7c22f7c41ce9db29a465cee72',1,'DICe::Schema::construct_schema(const std::string &amp;refName, const std::string &amp;defName, const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params=Teuchos::null)'],['../class_d_i_ce_1_1_schema.html#abfa6cb96e3e6fecf3223f138ac381e3d',1,'DICe::Schema::construct_schema(const int_t img_width, const int_t img_height, const Teuchos::ArrayRCP&lt; intensity_t &gt; refRCP, const Teuchos::ArrayRCP&lt; intensity_t &gt; defRCP, const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params=Teuchos::null)'],['../class_d_i_ce_1_1_schema.html#a578f4593775da7392a91c18ca0fe3613',1,'DICe::Schema::construct_schema(Teuchos::RCP&lt; Image &gt; ref_img, Teuchos::RCP&lt; Image &gt; def_img, const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params=Teuchos::null)']]],
   ['correlation_5fparameter',['Correlation_Parameter',['../struct_d_i_ce_1_1_correlation___parameter.html#adfe5d65bdf6fe6918b76d86881d7d401',1,'DICe::Correlation_Parameter']]],
   ['correlation_5fpoint_5fglobal_5fid',['correlation_point_global_id',['../class_d_i_ce_1_1_objective.html#a1c86af056f470d4ddbb9f70c8adaa092',1,'DICe::Objective']]],
   ['correlation_5froutine',['correlation_routine',['../class_d_i_ce_1_1_schema.html#a835d2da16ba6d70b3c4e265c7f20727b',1,'DICe::Schema']]],
   ['correlation_5froutine_5fparam',['correlation_routine_param',['../namespace_d_i_ce.html#abbd0af4767950d0cfcefbc8821642063',1,'DICe']]],
   ['create_5fmask',['create_mask',['../class_d_i_ce_1_1_image.html#afa9ee095248b0464789c806c3004ac9b',1,'DICe::Image']]],
   ['create_5fobstruction_5fdist_5fmap',['create_obstruction_dist_map',['../class_d_i_ce_1_1_schema.html#a19f62d03776c65f61d276fd9c56ea6e4',1,'DICe::Schema']]],
-  ['create_5fregular_5fgrid_5fof_5fcorrelation_5fpoints',['create_regular_grid_of_correlation_points',['../namespace_d_i_ce.html#aa9635596957df05f533ca1bda7eb00b2',1,'DICe']]],
+  ['create_5fregular_5fgrid_5fof_5fcorrelation_5fpoints',['create_regular_grid_of_correlation_points',['../namespace_d_i_ce.html#af609778533d99a154eebc6376896c619',1,'DICe']]],
   ['create_5fseed_5fdist_5fmap',['create_seed_dist_map',['../class_d_i_ce_1_1_schema.html#ae41003c38ebb98e159a56fe4c6dc38f2',1,'DICe::Schema']]]
 ];

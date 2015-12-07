@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Digital Image Correlation Engine
-   &#160;<span id="projectnumber">Version of the Day</span>
+   &#160;<span id="projectnumber">Version 1.0</span>
    </div>
    <div id="projectbrief">A modular, high-performance, image correlation tool used to compute full-field displacements and strains from digital images</div>
   </td>
@@ -40,6 +40,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="files.html"><span>Files</span></a></li>
@@ -139,47 +140,50 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;<span class="preprocessor">#include &lt;string&gt;</span></div>
 <div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;</div>
 <div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespace_d_i_ce.html">DICe</a>{</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;<span class="keyword">namespace </span>utils{</div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;</div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;DICE_LIB_DLL_EXPORT</div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;<span class="keywordtype">void</span> read_tiff_image_dimensions(<span class="keyword">const</span> <span class="keywordtype">char</span> * file_name,</div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &amp; width,</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &amp; height);</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;DICE_LIB_DLL_EXPORT</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;<span class="keywordtype">void</span> read_tiff_image(<span class="keyword">const</span> <span class="keywordtype">char</span> * file_name,</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> * intensities,</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;  <span class="keyword">const</span> <span class="keywordtype">bool</span> is_layout_right = <span class="keyword">true</span>);</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;</div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;DICE_LIB_DLL_EXPORT</div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;<span class="keywordtype">void</span> read_tiff_image(<span class="keyword">const</span> <span class="keywordtype">char</span> * file_name,</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> offset_x,</div>
-<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> offset_y,</div>
-<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> width,</div>
-<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> height,</div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> * intensities,</div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;  <span class="keyword">const</span> <span class="keywordtype">bool</span> is_layout_right = <span class="keyword">true</span>);</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;<span class="comment">// TODO write a function that reads into the device memory directly</span></div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;DICE_LIB_DLL_EXPORT</div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;<span class="keywordtype">void</span> write_tiff_image(<span class="keyword">const</span> <span class="keywordtype">char</span> * file_name,</div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> width,</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> height,</div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> * intensities,</div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;  <span class="keyword">const</span> <span class="keywordtype">bool</span> is_layout_right = <span class="keyword">true</span>);</div>
-<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;</div>
-<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;} <span class="comment">// end namespace utils</span></div>
-<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;} <span class="comment">// end namespace DICe</span></div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;</div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="ttc" id="namespace_d_i_ce_html_a138ceb69f1a2f75eea9a7ebed6d3cdef"><div class="ttname"><a href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">DICe::intensity_t</a></div><div class="ttdeci">float intensity_t</div><div class="ttdoc">basic types </div><div class="ttdef"><b>Definition:</b> DICe.h:82</div></div>
-<div class="ttc" id="namespace_d_i_ce_html_a2c6297e4a786e52754918318b31daf75"><div class="ttname"><a href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">DICe::int_t</a></div><div class="ttdeci">int int_t</div><div class="ttdoc">integer type </div><div class="ttdef"><b>Definition:</b> DICe.h:88</div></div>
-<div class="ttc" id="namespace_d_i_ce_html"><div class="ttname"><a href="namespace_d_i_ce.html">DICe</a></div><div class="ttdoc">generic DICe classes and functions </div><div class="ttdef"><b>Definition:</b> DICe.h:71</div></div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;<span class="keyword">namespace </span>utils{</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;</div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;DICE_LIB_DLL_EXPORT</div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespace_d_i_ce_1_1utils.html#abed21b4385aa3bbb55aafc579fbc22c7">read_tiff_image_dimensions</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * file_name,</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &amp; width,</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &amp; height);</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;DICE_LIB_DLL_EXPORT</div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespace_d_i_ce_1_1utils.html#afb38e2bc30d3e5fd806f085c943a4c62">read_tiff_image</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * file_name,</div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> * intensities,</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;  <span class="keyword">const</span> <span class="keywordtype">bool</span> is_layout_right = <span class="keyword">true</span>);</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;</div>
+<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;DICE_LIB_DLL_EXPORT</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespace_d_i_ce_1_1utils.html#afb38e2bc30d3e5fd806f085c943a4c62">read_tiff_image</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * file_name,</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> offset_x,</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> offset_y,</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> width,</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> height,</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> * intensities,</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;  <span class="keyword">const</span> <span class="keywordtype">bool</span> is_layout_right = <span class="keyword">true</span>);</div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;<span class="comment">// TODO write a function that reads into the device memory directly</span></div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;DICE_LIB_DLL_EXPORT</div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespace_d_i_ce_1_1utils.html#a5ee252f301d3b18840290c188eacfea1">write_tiff_image</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * file_name,</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> width,</div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> height,</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> * intensities,</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;  <span class="keyword">const</span> <span class="keywordtype">bool</span> is_layout_right = <span class="keyword">true</span>);</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;</div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;} <span class="comment">// end namespace utils</span></div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;} <span class="comment">// end namespace DICe</span></div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;</div>
+<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="ttc" id="namespace_d_i_ce_1_1utils_html_abed21b4385aa3bbb55aafc579fbc22c7"><div class="ttname"><a href="namespace_d_i_ce_1_1utils.html#abed21b4385aa3bbb55aafc579fbc22c7">DICe::utils::read_tiff_image_dimensions</a></div><div class="ttdeci">DICE_LIB_DLL_EXPORT void read_tiff_image_dimensions(const char *file_name, int_t &amp;width, int_t &amp;height)</div></div>
+<div class="ttc" id="namespace_d_i_ce_1_1utils_html_a5ee252f301d3b18840290c188eacfea1"><div class="ttname"><a href="namespace_d_i_ce_1_1utils.html#a5ee252f301d3b18840290c188eacfea1">DICe::utils::write_tiff_image</a></div><div class="ttdeci">DICE_LIB_DLL_EXPORT void write_tiff_image(const char *file_name, const int_t width, const int_t height, intensity_t *intensities, const bool is_layout_right=true)</div></div>
+<div class="ttc" id="namespace_d_i_ce_1_1utils_html_afb38e2bc30d3e5fd806f085c943a4c62"><div class="ttname"><a href="namespace_d_i_ce_1_1utils.html#afb38e2bc30d3e5fd806f085c943a4c62">DICe::utils::read_tiff_image</a></div><div class="ttdeci">DICE_LIB_DLL_EXPORT void read_tiff_image(const char *file_name, intensity_t *intensities, const bool is_layout_right=true)</div></div>
+<div class="ttc" id="namespace_d_i_ce_html_a138ceb69f1a2f75eea9a7ebed6d3cdef"><div class="ttname"><a href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">DICe::intensity_t</a></div><div class="ttdeci">float intensity_t</div><div class="ttdoc">basic types </div><div class="ttdef"><b>Definition:</b> DICe.h:87</div></div>
+<div class="ttc" id="namespace_d_i_ce_html_a2c6297e4a786e52754918318b31daf75"><div class="ttname"><a href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">DICe::int_t</a></div><div class="ttdeci">int int_t</div><div class="ttdoc">integer type </div><div class="ttdef"><b>Definition:</b> DICe.h:93</div></div>
+<div class="ttc" id="namespace_d_i_ce_html"><div class="ttname"><a href="namespace_d_i_ce.html">DICe</a></div><div class="ttdoc">generic DICe classes and functions </div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 16 2015 19:46:11 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Dec 7 2015 05:56:32 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

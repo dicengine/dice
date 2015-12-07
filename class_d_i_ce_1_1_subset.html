@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Digital Image Correlation Engine
-   &#160;<span id="projectnumber">Version of the Day</span>
+   &#160;<span id="projectnumber">Version 1.0</span>
    </div>
    <div id="projectbrief">A modular, high-performance, image correlation tool used to compute full-field displacements and strains from digital images</div>
   </td>
@@ -40,6 +40,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -98,6 +99,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!--header-->
 <div class="contents">
 
+<p>Subsets are used to store temporary collections of pixels for comparison between the reference and deformed images. The data that is stored by a subset is a list of x and y corrdinates of each pixel (this allows for arbitrary shape) and containers for pixel intensity values.  
+ <a href="class_d_i_ce_1_1_subset.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="_d_i_ce___subset_8h_source.html">DICe_Subset.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -144,10 +148,10 @@ Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbc
 Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_subset.html#aedb6b3d4a32afd7357050d61e2be2aaf">grad_y_array</a> () const </td></tr>
 <tr class="memdesc:aedb6b3d4a32afd7357050d61e2be2aaf"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns a copy of the gradient x values as an array <br /></td></tr>
 <tr class="separator:aedb6b3d4a32afd7357050d61e2be2aaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab7ccea5b7d793a7a480f0407e1a95d1a"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_subset.html#ab7ccea5b7d793a7a480f0407e1a95d1a">ref_intensities</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> pixel_index) const </td></tr>
-<tr class="separator:ab7ccea5b7d793a7a480f0407e1a95d1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac20154d7575fba5dc726bca31b34df59"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_subset.html#ac20154d7575fba5dc726bca31b34df59">def_intensities</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> pixel_index) const </td></tr>
-<tr class="separator:ac20154d7575fba5dc726bca31b34df59"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78a0df5221ec9ccb50ddcda698f36cad"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_subset.html#a78a0df5221ec9ccb50ddcda698f36cad">ref_intensities</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> pixel_index)</td></tr>
+<tr class="separator:a78a0df5221ec9ccb50ddcda698f36cad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab5deb9b004184a06aa8bcf7d0afd64b6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_subset.html#ab5deb9b004184a06aa8bcf7d0afd64b6">def_intensities</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> pixel_index)</td></tr>
+<tr class="separator:ab5deb9b004184a06aa8bcf7d0afd64b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6cbf064b603af90fe836e9c92327475e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_subset.html#a6cbf064b603af90fe836e9c92327475e">initialize</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; image, const <a class="el" href="namespace_d_i_ce.html#aec5301a364e6e1efb9bd0c17177cd072">Subset_View_Target</a> target=REF_INTENSITIES, Teuchos::RCP&lt; const std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; deformation=Teuchos::null, const <a class="el" href="namespace_d_i_ce.html#a6f5cb0968c11707aa2e6d86802eb2938">Interpolation_Method</a> interp=KEYS_FOURTH)</td></tr>
 <tr class="separator:a6cbf064b603af90fe836e9c92327475e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1815e07c98c476a79661315915801149"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_subset.html#a1815e07c98c476a79661315915801149">write_tiff</a> (const std::string &amp;file_name, const bool use_def_intensities=false)</td></tr>
@@ -189,6 +193,9 @@ const <a class="el" href="class_d_i_ce_1_1_conformal___area___def.html">Conforma
 <tr class="memitem:ac52243da9e14e15ff7acb42d22baae89"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_subset.html#ac52243da9e14e15ff7acb42d22baae89">turn_off_obstructed_pixels</a> (Teuchos::RCP&lt; const std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; deformation)</td></tr>
 <tr class="memdesc:ac52243da9e14e15ff7acb42d22baae89"><td class="mdescLeft">&#160;</td><td class="mdescRight">EXPERIMENTAL Check the deformed position of the pixel to see if it falls inside an obstruction, if so, turn it off.  <a href="#ac52243da9e14e15ff7acb42d22baae89">More...</a><br /></td></tr>
 <tr class="separator:ac52243da9e14e15ff7acb42d22baae89"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d0b66384e5e55dced4ec16dc14868aa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_subset.html#a9d0b66384e5e55dced4ec16dc14868aa">turn_on_previously_obstructed_pixels</a> ()</td></tr>
+<tr class="memdesc:a9d0b66384e5e55dced4ec16dc14868aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">EXPERIMENTAL See if any pixels that were obstructed to begin with are now in view, if so use the newly visible intensity values to reconstruct the subset.  <a href="#a9d0b66384e5e55dced4ec16dc14868aa">More...</a><br /></td></tr>
+<tr class="separator:a9d0b66384e5e55dced4ec16dc14868aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a551330454036fe15240b239c7ba8ddef"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_subset.html#a551330454036fe15240b239c7ba8ddef">is_obstructed_pixel</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;coord_x, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;coord_y) const </td></tr>
 <tr class="memdesc:a551330454036fe15240b239c7ba8ddef"><td class="mdescLeft">&#160;</td><td class="mdescRight">EXPERIMENTAL Returns true if the given coordinates fall within an obstructed region for this subset.  <a href="#a551330454036fe15240b239c7ba8ddef">More...</a><br /></td></tr>
 <tr class="separator:a551330454036fe15240b239c7ba8ddef"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -406,16 +413,16 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="ac20154d7575fba5dc726bca31b34df59"></a>
+<a class="anchor" id="ab5deb9b004184a06aa8bcf7d0afd64b6"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">const <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a>&amp; DICe::Subset::def_intensities </td>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a>&amp; DICe::Subset::def_intensities </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
           <td class="paramname"><em>pixel_index</em></td><td>)</td>
-          <td> const</td>
+          <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -609,16 +616,16 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 
 </div>
 </div>
-<a class="anchor" id="ab7ccea5b7d793a7a480f0407e1a95d1a"></a>
+<a class="anchor" id="a78a0df5221ec9ccb50ddcda698f36cad"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">const <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a>&amp; DICe::Subset::ref_intensities </td>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a>&amp; DICe::Subset::ref_intensities </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
           <td class="paramname"><em>pixel_index</em></td><td>)</td>
-          <td> const</td>
+          <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -653,6 +660,24 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
   </dd>
 </dl>
 <p>This method uses the specified deformation vector to deform the subset to the current position. It then checks to see if any of the deformed pixels fall behind an obstruction. These obstructed pixels are turned off by setting the is_deactivated_this_step_[i] flag to true. These flags are reset on every frame. When methods like <a class="el" href="class_d_i_ce_1_1_subset.html#a554bd25ad9409231ad3603fb2399af3e" title="returns the ZNSSD gamma correlation value between the reference and deformed subsets ...">gamma()</a> are called on an objective, these pixels get skipped so they do not contribute to the correlation or the optimization routine. </p>
+
+</div>
+</div>
+<a class="anchor" id="a9d0b66384e5e55dced4ec16dc14868aa"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::Subset::turn_on_previously_obstructed_pixels </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>EXPERIMENTAL See if any pixels that were obstructed to begin with are now in view, if so use the newly visible intensity values to reconstruct the subset. </p>
+<p>Some pixels in the subset may be hidden in the first frame by an obstruction (or another subset that sits on top of this one). As the frames progress, these pixels eventually become visible. This method can be used to evolve the reference subset intensities by taking the intensity value of the pixel when it becomes visible. The location of the pixel in the current frame is not needed because it is assumed that the reference and deformed subset intensity arrays are ordered the same. So all that needs to be checked is if it was deactivated at frame zero, and is now not deactivated this step, that particular pixel can be used. </p>
 
 </div>
 </div>
@@ -776,7 +801,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 16 2015 19:46:11 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Dec 7 2015 05:56:35 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

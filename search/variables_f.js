@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['schema_5f',['schema_',['../class_d_i_ce_1_1_objective.html#adc6e0ac41aec2df93ab938374a074476',1,'DICe::Objective::schema_()'],['../class_d_i_ce_1_1_post___processor.html#af7aefd539384c15d6d791edb540a43f3',1,'DICe::Post_Processor::schema_()'],['../class_d_i_ce_1_1_output___spec.html#a7705e960b4efe602bc38bd762bf831f7',1,'DICe::Output_Spec::schema_()']]],
+  ['schema_5f',['schema_',['../class_d_i_ce_1_1_initializer.html#abbffc5c0209f5c9622946d825263c507',1,'DICe::Initializer::schema_()'],['../class_d_i_ce_1_1_objective.html#adc6e0ac41aec2df93ab938374a074476',1,'DICe::Objective::schema_()'],['../class_d_i_ce_1_1_post___processor.html#af7aefd539384c15d6d791edb540a43f3',1,'DICe::Post_Processor::schema_()'],['../class_d_i_ce_1_1_output___spec.html#a7705e960b4efe602bc38bd762bf831f7',1,'DICe::Output_Spec::schema_()']]],
   ['search_5fwindow_5fsize_5ffactor',['search_window_size_factor',['../namespace_d_i_ce.html#a16166b510034f58361adee80350d46c8',1,'DICe']]],
   ['search_5fwindow_5fskip',['search_window_skip',['../namespace_d_i_ce.html#a797bf656f23e22a723bb5da054d8b49c',1,'DICe']]],
   ['seconds',['seconds',['../struct_d_i_ce_1_1cine_1_1tag_t_i_m_e64.html#a1d11b4057794c417bf02ef0f8cd0b210',1,'DICe::cine::tagTIME64']]],
@@ -26,7 +26,7 @@ var searchData=
   ['strain_5fwindow_5fsize_5f',['strain_window_size_',['../class_d_i_ce_1_1_schema.html#ad3eac75f38eac92eeb6e8507a9494fe9',1,'DICe::Schema']]],
   ['strain_5fwindow_5fsize_5fin_5fpixels',['strain_window_size_in_pixels',['../namespace_d_i_ce.html#a73839d1707b8b4bf8bf2348bbaaa11c1',1,'DICe']]],
   ['stringnameptr_5f',['stringNamePtr_',['../struct_d_i_ce_1_1_correlation___parameter.html#a21bd091284136ab9b05463a0640d5016',1,'DICe::Correlation_Parameter']]],
-  ['subset_5f',['subset_',['../class_d_i_ce_1_1_initializer.html#a898ff2b15ddf529573e7e96724b3abed',1,'DICe::Initializer::subset_()'],['../class_d_i_ce_1_1_objective.html#a2b0fc52b661ad3cf3f5f3558ca6eb9c0',1,'DICe::Objective::subset_()']]],
+  ['subset_5f',['subset_',['../class_d_i_ce_1_1_path___initializer.html#a0ed3b4588eb31c52c9ff9c076a71f601',1,'DICe::Path_Initializer::subset_()'],['../class_d_i_ce_1_1_objective.html#a2b0fc52b661ad3cf3f5f3558ca6eb9c0',1,'DICe::Objective::subset_()']]],
   ['subset_5fdim_5f',['subset_dim_',['../class_d_i_ce_1_1_schema.html#acaa5e8d91a0905830deeec892f6c099d',1,'DICe::Schema']]],
   ['subset_5ffile',['subset_file',['../namespace_d_i_ce.html#aed1a0e37ebd42d3df56de19e4a4d9c14',1,'DICe']]],
   ['subset_5fintensities_5f',['subset_intensities_',['../struct_d_i_ce_1_1_subset___init___functor.html#a1db94cc0425f727236dc81f36198d148',1,'DICe::Subset_Init_Functor']]],

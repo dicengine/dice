@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['u_5f',['u_',['../struct_d_i_ce_1_1_transform___functor.html#afb4b42994ed146c666d26e82f5ce9fad',1,'DICe::Transform_Functor::u_()'],['../struct_d_i_ce_1_1def__triad.html#a0e1bad625fe2673e73b8004781d60eab',1,'DICe::def_triad::u_()'],['../struct_d_i_ce_1_1_subset___init___functor.html#a47d5bb782226203dee857cb782f41b60',1,'DICe::Subset_Init_Functor::u_()']]],
+  ['u_5f',['u_',['../struct_d_i_ce_1_1def__triad.html#a0e1bad625fe2673e73b8004781d60eab',1,'DICe::def_triad::u_()'],['../struct_d_i_ce_1_1_transform___functor.html#afb4b42994ed146c666d26e82f5ce9fad',1,'DICe::Transform_Functor::u_()'],['../struct_d_i_ce_1_1_subset___init___functor.html#a47d5bb782226203dee857cb782f41b60',1,'DICe::Subset_Init_Functor::u_()']]],
   ['update',['update',['../class_d_i_ce_1_1_multi_field.html#a372d7cc869382f043b82bdf6e235b784',1,'DICe::MultiField']]],
   ['update_5fimage_5fframe',['update_image_frame',['../class_d_i_ce_1_1_schema.html#aa11817f39a77a9727d5fb0acc52db777',1,'DICe::Schema']]],
   ['update_5fobstructed_5fpixels_5feach_5fiteration',['update_obstructed_pixels_each_iteration',['../class_d_i_ce_1_1_schema.html#abcb8c24fe905ad60a1fec78d8c2843fd',1,'DICe::Schema::update_obstructed_pixels_each_iteration()'],['../namespace_d_i_ce.html#ac0398001a4adc4db96f29ad685224630',1,'DICe::update_obstructed_pixels_each_iteration()']]],
@@ -18,10 +18,10 @@ var searchData=
   ['use_5fobjective_5fregularization',['use_objective_regularization',['../class_d_i_ce_1_1_schema.html#ac871a70d9881cffa18e72fed06b5c67d',1,'DICe::Schema::use_objective_regularization()'],['../namespace_d_i_ce.html#a737373addc607111e765c5e11a6a6170',1,'DICe::use_objective_regularization()']]],
   ['use_5fobjective_5fregularization_5f',['use_objective_regularization_',['../class_d_i_ce_1_1_schema.html#aeba4854674b2a4f7b3d985bb7aa2efc5',1,'DICe::Schema']]],
   ['use_5fobjective_5fregularization_5fparam',['use_objective_regularization_param',['../namespace_d_i_ce.html#a03d8f22765325c0889b694e21047bd4f',1,'DICe']]],
-  ['use_5fsl_5fdefault_5fparams',['use_sl_default_params',['../namespace_d_i_ce.html#ab397bd92c77adaccf201ba3c5a958fe2',1,'DICe']]],
-  ['use_5fsl_5fdefault_5fparams_5fparam',['use_sl_default_params_param',['../namespace_d_i_ce.html#abdc63a510a45e0940e0f6f16ca802a93',1,'DICe']]],
   ['use_5fsubset_5fevolution',['use_subset_evolution',['../class_d_i_ce_1_1_schema.html#a42321354eae371a127b3db1fd4ec1432',1,'DICe::Schema::use_subset_evolution()'],['../namespace_d_i_ce.html#ae8c184ccb13ac6fd1b75becaf2c0fed6',1,'DICe::use_subset_evolution()']]],
   ['use_5fsubset_5fevolution_5f',['use_subset_evolution_',['../class_d_i_ce_1_1_schema.html#a5fc45146513f36beac3555d9357ab33d',1,'DICe::Schema']]],
-  ['use_5fsubset_5fevolution_5fparam',['use_subset_evolution_param',['../namespace_d_i_ce.html#a43a2bbc98073e3edc0454bf9fddc2746',1,'DICe']]],
-  ['use_5fsubset_5fid_5f',['use_subset_id_',['../struct_d_i_ce_1_1_motion___window___params.html#a82a73ae1b9b15e4fc7497a4792d5310c',1,'DICe::Motion_Window_Params']]]
+  ['use_5fsubset_5fevolution_5fparam',['use_subset_evolution_param',['../namespace_d_i_ce.html#a9ec4cebeab83d7b072d0130c8fbebd1a',1,'DICe']]],
+  ['use_5fsubset_5fid_5f',['use_subset_id_',['../struct_d_i_ce_1_1_motion___window___params.html#a82a73ae1b9b15e4fc7497a4792d5310c',1,'DICe::Motion_Window_Params']]],
+  ['use_5ftracking_5fdefault_5fparams',['use_tracking_default_params',['../namespace_d_i_ce.html#a07516258357c11f76ac6313eae61ab17',1,'DICe']]],
+  ['use_5ftracking_5fdefault_5fparams_5fparam',['use_tracking_default_params_param',['../namespace_d_i_ce.html#aee75982b98f06c874888abcc2d32c368',1,'DICe']]]
 ];

@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Digital Image Correlation Engine
-   &#160;<span id="projectnumber">Version of the Day</span>
+   &#160;<span id="projectnumber">Version 1.0</span>
    </div>
    <div id="projectbrief">A modular, high-performance, image correlation tool used to compute full-field displacements and strains from digital images</div>
   </td>
@@ -40,6 +40,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="files.html"><span>Files</span></a></li>
@@ -145,7 +146,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;</div>
 <div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;</div>
 <div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;<span class="keyword">template</span>&lt;<span class="keyword">class</span> Scalar&gt;</div>
-<div class="line"><a name="l00058"></a><span class="lineno"><a class="line" href="struct_d_i_ce_1_1_tensor__2_d.html">   58</a></span>&#160;<span class="keyword">struct </span>DICE_LIB_DLL_EXPORT</div>
+<div class="line"><a name="l00058"></a><span class="lineno"><a class="line" href="struct_d_i_ce_1_1_tensor__2_d.html">   58</a></span>&#160;<span class="keyword">struct</span></div>
 <div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;<a class="code" href="struct_d_i_ce_1_1_tensor__2_d.html">Tensor_2D</a> {</div>
 <div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;<span class="keyword">public</span>:</div>
 <div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;  <span class="comment">// All member data is public</span></div>
@@ -191,7 +192,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;    result.<a class="code" href="struct_d_i_ce_1_1_tensor__2_d.html#a50303287ce13d131fd04172064ffb663">yy</a> = yy - other.<a class="code" href="struct_d_i_ce_1_1_tensor__2_d.html#a50303287ce13d131fd04172064ffb663">yy</a>;</div>
 <div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;    <span class="keywordflow">return</span> result;}</div>
 <div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;</div>
-<div class="line"><a name="l00122"></a><span class="lineno"><a class="line" href="struct_d_i_ce_1_1_tensor__2_d.html#a16abcc7313fae20c0a274dd36d36d8e1">  122</a></span>&#160;<span class="keyword">const</span> <a class="code" href="struct_d_i_ce_1_1_tensor__2_d.html">Tensor_2D</a> <a class="code" href="struct_d_i_ce_1_1_tensor__2_d.html#a16abcc7313fae20c0a274dd36d36d8e1">operator*</a>(<span class="keyword">const</span> <a class="code" href="struct_d_i_ce_1_1_tensor__2_d.html">Tensor_2D</a> &amp; other)<span class="keyword">const</span>{</div>
+<div class="line"><a name="l00122"></a><span class="lineno"><a class="line" href="struct_d_i_ce_1_1_tensor__2_d.html#a16abcc7313fae20c0a274dd36d36d8e1">  122</a></span>&#160;  <span class="keyword">const</span> <a class="code" href="struct_d_i_ce_1_1_tensor__2_d.html">Tensor_2D</a> <a class="code" href="struct_d_i_ce_1_1_tensor__2_d.html#a16abcc7313fae20c0a274dd36d36d8e1">operator*</a>(<span class="keyword">const</span> <a class="code" href="struct_d_i_ce_1_1_tensor__2_d.html">Tensor_2D</a> &amp; other)<span class="keyword">const</span>{</div>
 <div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;    <a class="code" href="struct_d_i_ce_1_1_tensor__2_d.html">Tensor_2D</a> result;</div>
 <div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;    result.<a class="code" href="struct_d_i_ce_1_1_tensor__2_d.html#a4840d50bb252d7491c8a80773a425db1">xx</a>=xx*other.<a class="code" href="struct_d_i_ce_1_1_tensor__2_d.html#a4840d50bb252d7491c8a80773a425db1">xx</a>+xy*other.<a class="code" href="struct_d_i_ce_1_1_tensor__2_d.html#af17a9d115a46a667e546d60e6605fd6a">yx</a>;</div>
 <div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;    result.<a class="code" href="struct_d_i_ce_1_1_tensor__2_d.html#afacaf7715b43ad30518ee9e6409b51aa">xy</a>=xx*other.<a class="code" href="struct_d_i_ce_1_1_tensor__2_d.html#afacaf7715b43ad30518ee9e6409b51aa">xy</a>+xy*other.<a class="code" href="struct_d_i_ce_1_1_tensor__2_d.html#a50303287ce13d131fd04172064ffb663">yy</a>;</div>
@@ -245,13 +246,13 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="ttc" id="struct_d_i_ce_1_1_tensor__2_d_html_a6e80ca95cce53a2a9215ec0244240016"><div class="ttname"><a href="struct_d_i_ce_1_1_tensor__2_d.html#a6e80ca95cce53a2a9215ec0244240016">DICe::Tensor_2D::trace</a></div><div class="ttdeci">const Scalar trace() const </div><div class="ttdoc">Returns the trace of a tensor . </div><div class="ttdef"><b>Definition:</b> DICe_Utilities.h:162</div></div>
 <div class="ttc" id="struct_d_i_ce_1_1_tensor__2_d_html_ab2ee0d595a56c312ad0a877ab44c977a"><div class="ttname"><a href="struct_d_i_ce_1_1_tensor__2_d.html#ab2ee0d595a56c312ad0a877ab44c977a">DICe::Tensor_2D::operator*</a></div><div class="ttdeci">const Tensor_2D operator*(const Scalar &amp;alpha) const </div><div class="ttdoc">scales this tensor by alpha </div><div class="ttdef"><b>Definition:</b> DICe_Utilities.h:132</div></div>
 <div class="ttc" id="struct_d_i_ce_1_1_tensor__2_d_html_a7fd471f344b69e56abb085c1462a3314"><div class="ttname"><a href="struct_d_i_ce_1_1_tensor__2_d.html#a7fd471f344b69e56abb085c1462a3314">DICe::Tensor_2D::transpose</a></div><div class="ttdeci">const Tensor_2D transpose() const </div><div class="ttdoc">Returns the transpose of this tensor. </div><div class="ttdef"><b>Definition:</b> DICe_Utilities.h:141</div></div>
-<div class="ttc" id="namespace_d_i_ce_html"><div class="ttname"><a href="namespace_d_i_ce.html">DICe</a></div><div class="ttdoc">generic DICe classes and functions </div><div class="ttdef"><b>Definition:</b> DICe.h:71</div></div>
+<div class="ttc" id="namespace_d_i_ce_html"><div class="ttname"><a href="namespace_d_i_ce.html">DICe</a></div><div class="ttdoc">generic DICe classes and functions </div></div>
 <div class="ttc" id="struct_d_i_ce_1_1_tensor__2_d_html_a7ec54c3e1bbd7168f7b7e9035da743a8"><div class="ttname"><a href="struct_d_i_ce_1_1_tensor__2_d.html#a7ec54c3e1bbd7168f7b7e9035da743a8">DICe::Tensor_2D::Tensor_2D</a></div><div class="ttdeci">Tensor_2D(const Scalar &amp;alpha)</div><div class="ttdoc">Constructor that creates an identity tensor scaled by alpha. </div><div class="ttdef"><b>Definition:</b> DICe_Utilities.h:94</div></div>
 <div class="ttc" id="struct_d_i_ce_1_1_tensor__2_d_html_a504ee22ec428b08bf4d11de4a583ca69"><div class="ttname"><a href="struct_d_i_ce_1_1_tensor__2_d.html#a504ee22ec428b08bf4d11de4a583ca69">DICe::Tensor_2D::operator+</a></div><div class="ttdeci">const Tensor_2D operator+(const Tensor_2D &amp;other) const </div><div class="ttdoc">Adds two tensors. </div><div class="ttdef"><b>Definition:</b> DICe_Utilities.h:102</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 16 2015 19:46:11 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Dec 7 2015 05:56:32 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

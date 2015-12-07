@@ -1,6 +1,7 @@
 var searchData=
 [
   ['i',['i',['../structkiss__fft__cpx.html#a1acc702e3b59700a1c1f99dcc39b9839',1,'kiss_fft_cpx']]],
+  ['id_5fsets_5fmap',['id_sets_map',['../struct_d_i_ce_1_1_subset___file___info.html#a567e819b8cade53cf48584831e78fc0c',1,'DICe::Subset_File_Info']]],
   ['image_5fedge_5fbuffer_5fsize',['image_edge_buffer_size',['../namespace_d_i_ce.html#af1e2f7db85cc0b0fa9e4de6b4a0b4330',1,'DICe']]],
   ['image_5ffile_5fextension',['image_file_extension',['../namespace_d_i_ce.html#ab3514c25e61c0f61b4d49ad081e706d8',1,'DICe']]],
   ['image_5ffile_5fprefix',['image_file_prefix',['../namespace_d_i_ce.html#a101c6c13fb3dafa230f6c42333b36de1',1,'DICe']]],
@@ -13,8 +14,10 @@ var searchData=
   ['image_5foffsets_5f',['image_offsets_',['../class_d_i_ce_1_1cine_1_1_cine___header.html#afe9aacfdec5769274e1ff54de6589699',1,'DICe::cine::Cine_Header']]],
   ['image_5fw_5f',['image_w_',['../struct_d_i_ce_1_1_subset___init___functor.html#a4e6f8cf015f63bfb623fe66a4442ad23',1,'DICe::Subset_Init_Functor']]],
   ['imagecount',['ImageCount',['../struct_d_i_ce_1_1cine_1_1cine__file__header.html#a9051cecf3d3e4353f4c8a5ba37cb6da6',1,'DICe::cine::cine_file_header']]],
-  ['importer_5f',['importer_',['../class_d_i_ce_1_1_multi_field___importer.html#aef04896a927b5d122707fb7adae154b9',1,'DICe::MultiField_Importer::importer_()'],['../class_d_i_ce_1_1_multi_field___importer.html#a6c6967bdc7570f371903287eb7b34839',1,'DICe::MultiField_Importer::importer_()'],['../class_d_i_ce_1_1_schema.html#aca255b7ffca10fbdee72e041eaaaa5d5',1,'DICe::Schema::importer_()']]],
+  ['importer_5f',['importer_',['../class_d_i_ce_1_1_schema.html#aca255b7ffca10fbdee72e041eaaaa5d5',1,'DICe::Schema::importer_()'],['../class_d_i_ce_1_1_multi_field___importer.html#aef04896a927b5d122707fb7adae154b9',1,'DICe::MultiField_Importer::importer_()'],['../class_d_i_ce_1_1_multi_field___importer.html#a6c6967bdc7570f371903287eb7b34839',1,'DICe::MultiField_Importer::importer_()']]],
   ['init_5fparams_5f',['init_params_',['../class_d_i_ce_1_1_schema.html#af20c5f311270cf688cc9f2b1802cc260',1,'DICe::Schema']]],
+  ['initial_5fgamma_5fthreshold',['initial_gamma_threshold',['../namespace_d_i_ce.html#a11bf56d9964822640081938884b6da88',1,'DICe']]],
+  ['initial_5fgamma_5fthreshold_5f',['initial_gamma_threshold_',['../class_d_i_ce_1_1_schema.html#ad41e99cab40932ce5445a17090cd2b6b',1,'DICe::Schema']]],
   ['initialization_5fmethod',['initialization_method',['../namespace_d_i_ce.html#a8b2739b25d15b9e8311dd50a115a0f0a',1,'DICe']]],
   ['initialization_5fmethod_5f',['initialization_method_',['../class_d_i_ce_1_1_schema.html#a5ccea4ffc0c06cc8ef4a14ada2999922',1,'DICe::Schema']]],
   ['intensities_5f',['intensities_',['../class_d_i_ce_1_1_image.html#a58933dfcb548a9a9b3ed5a9fcaa14b77',1,'DICe::Image::intensities_()'],['../struct_d_i_ce_1_1_mask___apply___functor.html#af9feddf3875e58908c600e1d4de4c2a0',1,'DICe::Mask_Apply_Functor::intensities_()'],['../struct_d_i_ce_1_1_intensity___sum___functor.html#a1e3584b36e828786614025dfbda207b3',1,'DICe::Intensity_Sum_Functor::intensities_()'],['../struct_d_i_ce_1_1_intensity___sum___minus___mean___functor.html#a66e9cfc95222ff80d3225af0a14618f1',1,'DICe::Intensity_Sum_Minus_Mean_Functor::intensities_()']]],

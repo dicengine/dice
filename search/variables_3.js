@@ -1,8 +1,6 @@
 var searchData=
 [
-  ['data_5fmap',['data_map',['../struct_d_i_ce_1_1_subset___file___info.html#a9f0d8ed732c670645042a9423602e346',1,'DICe::Subset_File_Info']]],
   ['data_5fnum_5fpoints_5f',['data_num_points_',['../class_d_i_ce_1_1_post___processor.html#a2a4417d44543fa928070b5620da7f102',1,'DICe::Post_Processor::data_num_points_()'],['../class_d_i_ce_1_1_schema.html#ab7bb581c57e03e41c395506e78160f41',1,'DICe::Schema::data_num_points_()']]],
-  ['data_5fvector',['data_vector',['../struct_d_i_ce_1_1_subset___file___info.html#ac203bfdb63d94e372b969ab03b4cef27',1,'DICe::Subset_File_Info']]],
   ['def_5fimage_5frotation_5f',['def_image_rotation_',['../class_d_i_ce_1_1_schema.html#a61f3686183d46a4f5a9705e5aac631d9',1,'DICe::Schema']]],
   ['def_5fimg_5f',['def_img_',['../class_d_i_ce_1_1_schema.html#a2ee5bb659157b51b362cfde0eaf52851',1,'DICe::Schema']]],
   ['def_5fintensities_5f',['def_intensities_',['../class_d_i_ce_1_1_subset.html#ab8c6818ddacf93c67796eca3620fe72f',1,'DICe::Subset::def_intensities_()'],['../struct_d_i_ce_1_1_z_n_s_s_d___gamma___functor.html#a8fc6b98f18047a420439663a8ae71b79',1,'DICe::ZNSSD_Gamma_Functor::def_intensities_()']]],

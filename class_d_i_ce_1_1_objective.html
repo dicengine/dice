@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Digital Image Correlation Engine
-   &#160;<span id="projectnumber">Version of the Day</span>
+   &#160;<span id="projectnumber">Version 1.0</span>
    </div>
    <div id="projectbrief">A modular, high-performance, image correlation tool used to compute full-field displacements and strains from digital images</div>
   </td>
@@ -40,6 +40,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -129,25 +130,13 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a44081b2266e75a739f0f40b60dc1f860"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespace_d_i_ce.html#a80e1a88ef6bbd77d318f8b880f6a41f5">Status_Flag</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_objective.html#a44081b2266e75a739f0f40b60dc1f860">computeUpdateRobust</a> (Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;deformation, <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &amp;num_iterations, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;override_tol=-1.0)=0</td></tr>
 <tr class="memdesc:a44081b2266e75a739f0f40b60dc1f860"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="class_d_i_ce_1_1_simplex.html" title="Non-gradient based optimization algorithm class. ">Simplex</a> based optimization algorithm.  <a href="#a44081b2266e75a739f0f40b60dc1f860">More...</a><br /></td></tr>
 <tr class="separator:a44081b2266e75a739f0f40b60dc1f860"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab157910edc1a6866c63d28534481d7da"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespace_d_i_ce.html#a80e1a88ef6bbd77d318f8b880f6a41f5">Status_Flag</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_objective.html#ab157910edc1a6866c63d28534481d7da">initialize_from_previous_frame</a> (Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;deformation)=0</td></tr>
-<tr class="memdesc:ab157910edc1a6866c63d28534481d7da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize deformation values using the previous frame's solution.  <a href="#ab157910edc1a6866c63d28534481d7da">More...</a><br /></td></tr>
-<tr class="separator:ab157910edc1a6866c63d28534481d7da"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af7712b9a879e16892da61c4734c82ef3"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespace_d_i_ce.html#a80e1a88ef6bbd77d318f8b880f6a41f5">Status_Flag</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_objective.html#af7712b9a879e16892da61c4734c82ef3">search</a> (Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;deformation, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> precision_level, <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;return_value)=0</td></tr>
-<tr class="memdesc:af7712b9a879e16892da61c4734c82ef3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize deformation values by searching within a region of the current solution.  <a href="#af7712b9a879e16892da61c4734c82ef3">More...</a><br /></td></tr>
-<tr class="separator:af7712b9a879e16892da61c4734c82ef3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a22ef3c7f5e21e342f98bfce5810200e3"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespace_d_i_ce.html#a80e1a88ef6bbd77d318f8b880f6a41f5">Status_Flag</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_objective.html#a22ef3c7f5e21e342f98bfce5810200e3">search_step</a> (Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;deformation, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> window_size, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> <a class="el" href="namespace_d_i_ce.html#acb63ebb93555384bec1aa34817961210">step_size</a>, <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;return_value)=0</td></tr>
-<tr class="memdesc:a22ef3c7f5e21e342f98bfce5810200e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the values by performing a search over a window with a given step.  <a href="#a22ef3c7f5e21e342f98bfce5810200e3">More...</a><br /></td></tr>
-<tr class="separator:a22ef3c7f5e21e342f98bfce5810200e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af0fa0185bd28d04d640a953a68db296a"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespace_d_i_ce.html#a80e1a88ef6bbd77d318f8b880f6a41f5">Status_Flag</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_objective.html#af0fa0185bd28d04d640a953a68db296a">initialize_from_neighbor</a> (Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;deformation)=0</td></tr>
-<tr class="memdesc:af0fa0185bd28d04d640a953a68db296a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize deformation values by using a neighbors current solution.  <a href="#af0fa0185bd28d04d640a953a68db296a">More...</a><br /></td></tr>
-<tr class="separator:af0fa0185bd28d04d640a953a68db296a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aec05e57775ecfcbfeb2b0daebc4ff335"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aec05e57775ecfcbfeb2b0daebc4ff335"></a>
 <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_objective.html#aec05e57775ecfcbfeb2b0daebc4ff335">num_dofs</a> () const </td></tr>
 <tr class="memdesc:aec05e57775ecfcbfeb2b0daebc4ff335"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of degrees of freedom in the deformation vector. <br /></td></tr>
 <tr class="separator:aec05e57775ecfcbfeb2b0daebc4ff335"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae14876f56251fc59d31638e73a02f2e1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#a1368b5e96039553c36a642785690b95e">Field_Name</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_objective.html#ae14876f56251fc59d31638e73a02f2e1">dof_map</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> index) const </td></tr>
-<tr class="memdesc:ae14876f56251fc59d31638e73a02f2e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the map of degree of freedom field names (see dof_map_ description below)  <a href="#ae14876f56251fc59d31638e73a02f2e1">More...</a><br /></td></tr>
-<tr class="separator:ae14876f56251fc59d31638e73a02f2e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09f6860804811df4aff36bf7847bde03"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#a1368b5e96039553c36a642785690b95e">Field_Name</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_objective.html#a09f6860804811df4aff36bf7847bde03">dof_map</a> (const size_t index) const </td></tr>
+<tr class="memdesc:a09f6860804811df4aff36bf7847bde03"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the map of degree of freedom field names (see dof_map_ description below)  <a href="#a09f6860804811df4aff36bf7847bde03">More...</a><br /></td></tr>
+<tr class="separator:a09f6860804811df4aff36bf7847bde03"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1fd8182d97f3b0d1b7130c1d251f540f"><td class="memItemLeft" align="right" valign="top">const double &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_objective.html#a1fd8182d97f3b0d1b7130c1d251f540f">local_field_value</a> (const <a class="el" href="namespace_d_i_ce.html#a1368b5e96039553c36a642785690b95e">Field_Name</a> name) const </td></tr>
 <tr class="memdesc:a1fd8182d97f3b0d1b7130c1d251f540f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current local distributed value of the field specified. These values are stored in the schema.  <a href="#a1fd8182d97f3b0d1b7130c1d251f540f">More...</a><br /></td></tr>
 <tr class="separator:a1fd8182d97f3b0d1b7130c1d251f540f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -182,9 +171,9 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A container class for the subsets, optimization algorithm and initialization routine used to correlate a single point. </p>
-<p>A <a class="el" href="class_d_i_ce_1_1_objective.html" title="A container class for the subsets, optimization algorithm and initialization routine used to correlat...">DICe::Objective</a> contains all the necessary elements of a minimization objective, for example, to minimize the sum squared difference of the intensity values between a subset taken from the reference and deformed image. The correlation criteria, gamma, is defined here as well as how the optimzation is seeded with an initial guess. Each objective has a fast and robust method for determining the deformation map that minimizes gamma. The fast method is typically image gradient based and the robust method is usually simplex based.</p>
-<p>An objective has, as part of its member data, a reference <a class="el" href="class_d_i_ce_1_1_subset.html">DICe::Subset</a> and a deformed <a class="el" href="class_d_i_ce_1_1_subset.html">DICe::Subset</a>. These subsets represent a small subsection of the image.</p>
-<p>The degrees of freedom for an objective are the elements of the deformation map (displacement, rotation, stretch, etc.). A deformation vector of size DICe_DEFORMATION_SIZE (see <a class="el" href="_d_i_ce_8h_source.html">DICe.h</a> for the ordering of the values) gets initialized in the <a class="el" href="class_d_i_ce_1_1_objective.html#ab157910edc1a6866c63d28534481d7da" title="Initialize deformation values using the previous frame&#39;s solution. ">initialize_from_previous_frame()</a> or <a class="el" href="class_d_i_ce_1_1_objective.html#af7712b9a879e16892da61c4734c82ef3" title="Initialize deformation values by searching within a region of the current solution. ">search()</a> methods of an objective. These values are then passed to the <a class="el" href="class_d_i_ce_1_1_objective.html#a44081b2266e75a739f0f40b60dc1f860" title="Simplex based optimization algorithm. ">computeUpdateRobust()</a> or <a class="el" href="class_d_i_ce_1_1_objective.html#a8c82a4387173a0cff36c21aa34732de2" title="Gradient based optimization algorithm. ">computeUpdateFast()</a> methods which contain the bulk of the optimization algorithm. The <a class="el" href="class_d_i_ce_1_1_objective.html#a8e4b57df974d6e1d486720ba537ccc01" title="Uncertainty measure for solution. ">sigma()</a> function provides a representation of the uncertainty of the solution. </p>
+<p>A <a class="el" href="class_d_i_ce_1_1_objective.html" title="A container class for the subsets, optimization algorithm and initialization routine used to correlat...">DICe::Objective</a> contains all the necessary elements of a minimization objective, for example, to minimize the sum squared difference of the intensity values between a subset taken from the reference and deformed image. The correlation criteria, gamma, is defined here. Each objective has a fast and robust method for determining the deformation map that minimizes gamma. The fast method is typically image gradient based and the robust method is usually simplex based.</p>
+<p>An objective has, as part of its member data, a reference <a class="el" href="class_d_i_ce_1_1_subset.html" title="Subsets are used to store temporary collections of pixels for comparison between the reference and de...">DICe::Subset</a> and a deformed <a class="el" href="class_d_i_ce_1_1_subset.html" title="Subsets are used to store temporary collections of pixels for comparison between the reference and de...">DICe::Subset</a>. These subsets represent a small subsection of the image.</p>
+<p>The degrees of freedom for an objective are the elements of the deformation map (displacement, rotation, stretch, etc.). A deformation vector of size DICe_DEFORMATION_SIZE (see <a class="el" href="_d_i_ce_8h_source.html">DICe.h</a> for the ordering of the values) gets initialized in the initialize_from_previous_frame() or search() methods of an objective. These values are then passed to the <a class="el" href="class_d_i_ce_1_1_objective.html#a44081b2266e75a739f0f40b60dc1f860" title="Simplex based optimization algorithm. ">computeUpdateRobust()</a> or <a class="el" href="class_d_i_ce_1_1_objective.html#a8c82a4387173a0cff36c21aa34732de2" title="Gradient based optimization algorithm. ">computeUpdateFast()</a> methods which contain the bulk of the optimization algorithm. The <a class="el" href="class_d_i_ce_1_1_objective.html#a8e4b57df974d6e1d486720ba537ccc01" title="Uncertainty measure for solution. ">sigma()</a> function provides a representation of the uncertainty of the solution. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="a2a357b890162e8475b1b472e427197ac"></a>
 <div class="memitem">
@@ -327,7 +316,7 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
 
 </div>
 </div>
-<a class="anchor" id="ae14876f56251fc59d31638e73a02f2e1"></a>
+<a class="anchor" id="a09f6860804811df4aff36bf7847bde03"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -337,7 +326,7 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
         <tr>
           <td class="memname"><a class="el" href="namespace_d_i_ce.html#a1368b5e96039553c36a642785690b95e">Field_Name</a> DICe::Objective::dof_map </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramtype">const size_t&#160;</td>
           <td class="paramname"><em>index</em></td><td>)</td>
           <td> const</td>
         </tr>
@@ -390,74 +379,6 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
 </dl>
 
 <p>Implemented in <a class="el" href="class_d_i_ce_1_1_objective___z_n_s_s_d.html#a50b431ff8189ab1fa58ce4fdb2327e77">DICe::Objective_ZNSSD</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="af0fa0185bd28d04d640a953a68db296a"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual <a class="el" href="namespace_d_i_ce.html#a80e1a88ef6bbd77d318f8b880f6a41f5">Status_Flag</a> DICe::Objective::initialize_from_neighbor </td>
-          <td>(</td>
-          <td class="paramtype">Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;&#160;</td>
-          <td class="paramname"><em>deformation</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Initialize deformation values by using a neighbors current solution. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">deformation</td><td>[out] Returned as the deformation parameters taken from a neighboring point's current solution. If the neighbor's current frame was not successful (the sigma value is -1) this method returns unsuccessfully. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p>Implemented in <a class="el" href="class_d_i_ce_1_1_objective___z_n_s_s_d.html#ae4592edf0f33fda3ef908da38518b254">DICe::Objective_ZNSSD</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="ab157910edc1a6866c63d28534481d7da"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual <a class="el" href="namespace_d_i_ce.html#a80e1a88ef6bbd77d318f8b880f6a41f5">Status_Flag</a> DICe::Objective::initialize_from_previous_frame </td>
-          <td>(</td>
-          <td class="paramtype">Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;&#160;</td>
-          <td class="paramname"><em>deformation</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Initialize deformation values using the previous frame's solution. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">deformation</td><td>[out] Returned as the deformation parameters from the previous step. If the previous step was not successful (the sigma value is -1) this method returns unsuccessfully. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p>Implemented in <a class="el" href="class_d_i_ce_1_1_objective___z_n_s_s_d.html#a46711d53be06f37b55dd3a1ec35ca5c8">DICe::Objective_ZNSSD</a>.</p>
 
 </div>
 </div>
@@ -525,117 +446,6 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
 
 </div>
 </div>
-<a class="anchor" id="af7712b9a879e16892da61c4734c82ef3"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual <a class="el" href="namespace_d_i_ce.html#a80e1a88ef6bbd77d318f8b880f6a41f5">Status_Flag</a> DICe::Objective::search </td>
-          <td>(</td>
-          <td class="paramtype">Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;&#160;</td>
-          <td class="paramname"><em>deformation</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
-          <td class="paramname"><em>precision_level</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
-          <td class="paramname"><em>return_value</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Initialize deformation values by searching within a region of the current solution. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">deformation</td><td>[out] Returned as the deformation parameters found by searching the parameter space. </td></tr>
-    <tr><td class="paramname">precision_level</td><td>The number of digits of precision to converge the solution (higher is more precise) </td></tr>
-    <tr><td class="paramname">return_value</td><td>The resulting gamma value at the best solution </td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p>Implemented in <a class="el" href="class_d_i_ce_1_1_objective___z_n_s_s_d.html#afadf682ee4b1dfba3562bce1db654b0d">DICe::Objective_ZNSSD</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="a22ef3c7f5e21e342f98bfce5810200e3"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual <a class="el" href="namespace_d_i_ce.html#a80e1a88ef6bbd77d318f8b880f6a41f5">Status_Flag</a> DICe::Objective::search_step </td>
-          <td>(</td>
-          <td class="paramtype">Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;&#160;</td>
-          <td class="paramname"><em>deformation</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
-          <td class="paramname"><em>window_size</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td>
-          <td class="paramname"><em>step_size</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
-          <td class="paramname"><em>return_value</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Initialize the values by performing a search over a window with a given step. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">deformation</td><td>[out] returned with the initial guess </td></tr>
-    <tr><td class="paramname">window_size</td><td>the size of the search window </td></tr>
-    <tr><td class="paramname">step_size</td><td>the increment over which to search the window </td></tr>
-    <tr><td class="paramname">return_value</td><td>the gamma value at the best initial guess </td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p>Implemented in <a class="el" href="class_d_i_ce_1_1_objective___z_n_s_s_d.html#aff82093470f89b05544d28a3d11ee84a">DICe::Objective_ZNSSD</a>.</p>
-
-</div>
-</div>
 <a class="anchor" id="a8e4b57df974d6e1d486720ba537ccc01"></a>
 <div class="memitem">
 <div class="memproto">
@@ -695,7 +505,7 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 16 2015 19:46:11 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Dec 7 2015 05:56:33 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

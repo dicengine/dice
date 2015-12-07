@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.9.1"/>
-<title>Digital Image Correlation Engine: /Users/dzturne/code/KDICe/src/core/DICe_ImageUtils.h Source File</title>
+<title>Digital Image Correlation Engine: /Users/dzturne/code/KDICe/src/base/DICe_ImageUtils.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Digital Image Correlation Engine
-   &#160;<span id="projectnumber">Version of the Day</span>
+   &#160;<span id="projectnumber">Version 1.0</span>
    </div>
    <div id="projectbrief">A modular, high-performance, image correlation tool used to compute full-field displacements and strains from digital images</div>
   </td>
@@ -40,6 +40,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="files.html"><span>Files</span></a></li>
@@ -82,7 +83,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="dir_aebb8dcc11953d78e620bbef0b9e2183.html">core</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="dir_0af1587c8378955de40f48b4bd1869f0.html">base</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -138,24 +139,24 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;</div>
 <div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespace_d_i_ce.html">DICe</a> {</div>
 <div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespace_d_i_ce.html#af562a0b4fbc06b18608b1809c09945c8">apply_transform</a>(Teuchos::ArrayRCP&lt;intensity_t&gt; &amp; intensities_from,</div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;  Teuchos::ArrayRCP&lt;intensity_t&gt; &amp; intensities_to,</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> cx,</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> cy,</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> width,</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> height,</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;  Teuchos::RCP&lt;<span class="keyword">const</span> std::vector&lt;scalar_t&gt; &gt; deformation);</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;}<span class="comment">// End DICe Namespace</span></div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;</div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespace_d_i_ce.html#af562a0b4fbc06b18608b1809c09945c8">apply_transform</a>(Teuchos::ArrayRCP&lt;intensity_t&gt; &amp; intensities_from,</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;  Teuchos::ArrayRCP&lt;intensity_t&gt; &amp; intensities_to,</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> cx,</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> cy,</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> width,</div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> height,</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;  Teuchos::RCP&lt;<span class="keyword">const</span> std::vector&lt;scalar_t&gt; &gt; deformation);</div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;}<span class="comment">// End DICe Namespace</span></div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="ttc" id="namespace_d_i_ce_html_af562a0b4fbc06b18608b1809c09945c8"><div class="ttname"><a href="namespace_d_i_ce.html#af562a0b4fbc06b18608b1809c09945c8">DICe::apply_transform</a></div><div class="ttdeci">void apply_transform(Teuchos::ArrayRCP&lt; intensity_t &gt; &amp;intensities_from, Teuchos::ArrayRCP&lt; intensity_t &gt; &amp;intensities_to, const int_t cx, const int_t cy, const int_t width, const int_t height, Teuchos::RCP&lt; const std::vector&lt; scalar_t &gt; &gt; deformation)</div></div>
-<div class="ttc" id="namespace_d_i_ce_html_a2c6297e4a786e52754918318b31daf75"><div class="ttname"><a href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">DICe::int_t</a></div><div class="ttdeci">int int_t</div><div class="ttdoc">integer type </div><div class="ttdef"><b>Definition:</b> DICe.h:88</div></div>
-<div class="ttc" id="namespace_d_i_ce_html"><div class="ttname"><a href="namespace_d_i_ce.html">DICe</a></div><div class="ttdoc">generic DICe classes and functions </div><div class="ttdef"><b>Definition:</b> DICe.h:71</div></div>
+<div class="ttc" id="namespace_d_i_ce_html_a2c6297e4a786e52754918318b31daf75"><div class="ttname"><a href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">DICe::int_t</a></div><div class="ttdeci">int int_t</div><div class="ttdoc">integer type </div><div class="ttdef"><b>Definition:</b> DICe.h:93</div></div>
+<div class="ttc" id="namespace_d_i_ce_html"><div class="ttname"><a href="namespace_d_i_ce.html">DICe</a></div><div class="ttdoc">generic DICe classes and functions </div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 16 2015 19:46:11 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Dec 7 2015 05:56:32 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

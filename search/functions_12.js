@@ -10,7 +10,7 @@ var searchData=
   ['use_5fintegrated_5fdic_5fparam',['use_integrated_dic_param',['../namespace_d_i_ce.html#a025a49744062aefba499777524aa4cae',1,'DICe']]],
   ['use_5fobjective_5fregularization',['use_objective_regularization',['../class_d_i_ce_1_1_schema.html#ac871a70d9881cffa18e72fed06b5c67d',1,'DICe::Schema']]],
   ['use_5fobjective_5fregularization_5fparam',['use_objective_regularization_param',['../namespace_d_i_ce.html#a03d8f22765325c0889b694e21047bd4f',1,'DICe']]],
-  ['use_5fsl_5fdefault_5fparams_5fparam',['use_sl_default_params_param',['../namespace_d_i_ce.html#abdc63a510a45e0940e0f6f16ca802a93',1,'DICe']]],
   ['use_5fsubset_5fevolution',['use_subset_evolution',['../class_d_i_ce_1_1_schema.html#a42321354eae371a127b3db1fd4ec1432',1,'DICe::Schema']]],
-  ['use_5fsubset_5fevolution_5fparam',['use_subset_evolution_param',['../namespace_d_i_ce.html#a43a2bbc98073e3edc0454bf9fddc2746',1,'DICe']]]
+  ['use_5fsubset_5fevolution_5fparam',['use_subset_evolution_param',['../namespace_d_i_ce.html#a9ec4cebeab83d7b072d0130c8fbebd1a',1,'DICe']]],
+  ['use_5ftracking_5fdefault_5fparams_5fparam',['use_tracking_default_params_param',['../namespace_d_i_ce.html#aee75982b98f06c874888abcc2d32c368',1,'DICe']]]
 ];

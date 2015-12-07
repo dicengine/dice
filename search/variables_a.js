@@ -25,7 +25,8 @@ var searchData=
   ['mesh_5fsize_5f',['mesh_size_',['../class_d_i_ce_1_1_global___strain___post___processor.html#a0d6273a114840be86d7bd26e4f4c5b60',1,'DICe::Global_Strain_Post_Processor::mesh_size_()'],['../class_d_i_ce_1_1_schema.html#a04128958fb60d0bea8fd5b56e5c9f8da',1,'DICe::Schema::mesh_size_()']]],
   ['min_5fx_5f',['min_x_',['../class_d_i_ce_1_1_polygon.html#a112118ef3baca9073a42a48f202d1c5c',1,'DICe::Polygon::min_x_()'],['../class_d_i_ce_1_1_circle.html#a5e2bedc2705d5afc13f514d38dad551a',1,'DICe::Circle::min_x_()']]],
   ['min_5fy_5f',['min_y_',['../class_d_i_ce_1_1_polygon.html#ab50843938f8484a6a8d522b90cc7e5ec',1,'DICe::Polygon::min_y_()'],['../class_d_i_ce_1_1_circle.html#a385e65c7405bc6d85d0e49b071bffce5',1,'DICe::Circle::min_y_()']]],
-  ['motion_5fdetectors_5f',['motion_detectors_',['../class_d_i_ce_1_1_schema.html#abff969fe1783a5f78b83c7abc490f6d6',1,'DICe::Schema']]],
+  ['motion_5fdetectors_5f',['motion_detectors_',['../class_d_i_ce_1_1_schema.html#a1b5d56a45ce2930e6807cd19db1a65dd',1,'DICe::Schema']]],
+  ['motion_5fstate_5f',['motion_state_',['../class_d_i_ce_1_1_motion___test___utility.html#a17781a4f49edb40c20b86f62ae93a07c',1,'DICe::Motion_Test_Utility']]],
   ['motion_5fwindow_5fparams',['motion_window_params',['../struct_d_i_ce_1_1_subset___file___info.html#aa2b78fc45e86cd74a6fc3e7a1bac5296',1,'DICe::Subset_File_Info']]],
   ['motion_5fwindow_5fparams_5f',['motion_window_params_',['../class_d_i_ce_1_1_schema.html#afe701cbdc2e9a5280ce52d27f1b594fb',1,'DICe::Schema']]]
 ];

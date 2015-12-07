@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Digital Image Correlation Engine
-   &#160;<span id="projectnumber">Version of the Day</span>
+   &#160;<span id="projectnumber">Version 1.0</span>
    </div>
    <div id="projectbrief">A modular, high-performance, image correlation tool used to compute full-field displacements and strains from digital images</div>
   </td>
@@ -40,6 +40,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -114,8 +115,8 @@ Inheritance diagram for DICe::Path_Initializer:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a7937cacefb668f31ed514f7a4a6b8baf"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_path___initializer.html#a7937cacefb668f31ed514f7a4a6b8baf">Path_Initializer</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &gt; subset, const char *file_name, const size_t <a class="el" href="class_d_i_ce_1_1_path___initializer.html#ac943e06901e79f2cea1d7d0327454fb5">num_neighbors</a>=6)</td></tr>
-<tr class="separator:a7937cacefb668f31ed514f7a4a6b8baf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6db1ed1b11dd3c9cfc7681dc0d9b0349"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_path___initializer.html#a6db1ed1b11dd3c9cfc7681dc0d9b0349">Path_Initializer</a> (<a class="el" href="class_d_i_ce_1_1_schema.html">Schema</a> *schema, Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &gt; subset, const char *file_name, const size_t <a class="el" href="class_d_i_ce_1_1_path___initializer.html#ac943e06901e79f2cea1d7d0327454fb5">num_neighbors</a>=6)</td></tr>
+<tr class="separator:a6db1ed1b11dd3c9cfc7681dc0d9b0349"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af1534662173976b7ebe34e4bba922e6e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af1534662173976b7ebe34e4bba922e6e"></a>
 virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_path___initializer.html#af1534662173976b7ebe34e4bba922e6e">~Path_Initializer</a> ()</td></tr>
 <tr class="memdesc:af1534662173976b7ebe34e4bba922e6e"><td class="mdescLeft">&#160;</td><td class="mdescRight">virtual destructor <br /></td></tr>
@@ -136,17 +137,27 @@ size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cl
 <tr class="separator:a2f08556e118e9f90b430e987b79b3012"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8520cc86dd7ce2a43b9b844e1835d179"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_path___initializer.html#a8520cc86dd7ce2a43b9b844e1835d179">closest_triad</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;u, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;v, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;t, size_t &amp;id, <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;distance_sqr) const </td></tr>
 <tr class="separator:a8520cc86dd7ce2a43b9b844e1835d179"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a27b31078de81875bc666110870b4e2e0"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_path___initializer.html#a27b31078de81875bc666110870b4e2e0">initial_guess</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; def_image, Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; deformation, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;u, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;v, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;t)</td></tr>
-<tr class="separator:a27b31078de81875bc666110870b4e2e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7b7fdb17356a21ba863d62d74f55bd77"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_path___initializer.html#a7b7fdb17356a21ba863d62d74f55bd77">initial_guess</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; def_image, Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; deformation)</td></tr>
-<tr class="separator:a7b7fdb17356a21ba863d62d74f55bd77"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac97a17c87191f2626ee8c728c753733d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac97a17c87191f2626ee8c728c753733d"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_path___initializer.html#ac97a17c87191f2626ee8c728c753733d">pre_execution_tasks</a> ()</td></tr>
+<tr class="memdesc:ac97a17c87191f2626ee8c728c753733d"><td class="mdescLeft">&#160;</td><td class="mdescRight">see base class description <br /></td></tr>
+<tr class="separator:ac97a17c87191f2626ee8c728c753733d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a139b14d0f6c130e283e67ffc9f3b2834"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a139b14d0f6c130e283e67ffc9f3b2834"></a>
+virtual <a class="el" href="namespace_d_i_ce.html#a80e1a88ef6bbd77d318f8b880f6a41f5">Status_Flag</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_path___initializer.html#a139b14d0f6c130e283e67ffc9f3b2834">initial_guess</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> subset_gid, Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; deformation)</td></tr>
+<tr class="memdesc:a139b14d0f6c130e283e67ffc9f3b2834"><td class="mdescLeft">&#160;</td><td class="mdescRight">see base class description <br /></td></tr>
+<tr class="separator:a139b14d0f6c130e283e67ffc9f3b2834"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2a5a8f73aec3f3d22c07f2d067a96b4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_path___initializer.html#ad2a5a8f73aec3f3d22c07f2d067a96b4">initial_guess</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; def_image, Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; deformation, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;u, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;v, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;t)</td></tr>
+<tr class="separator:ad2a5a8f73aec3f3d22c07f2d067a96b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a57d872b3716672661d04ce38f8bee3c5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_path___initializer.html#a57d872b3716672661d04ce38f8bee3c5">initial_guess</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; def_image, Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; deformation)</td></tr>
+<tr class="separator:a57d872b3716672661d04ce38f8bee3c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abffaf8b3d7ec0e3625beb384dde2c693"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abffaf8b3d7ec0e3625beb384dde2c693"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_path___initializer.html#abffaf8b3d7ec0e3625beb384dde2c693">write_to_text_file</a> (const std::string &amp;file_name) const </td></tr>
 <tr class="memdesc:abffaf8b3d7ec0e3625beb384dde2c693"><td class="mdescLeft">&#160;</td><td class="mdescRight">write the filtered set of points out to an output file <br /></td></tr>
 <tr class="separator:abffaf8b3d7ec0e3625beb384dde2c693"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_d_i_ce_1_1_initializer"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_d_i_ce_1_1_initializer')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_d_i_ce_1_1_initializer.html">DICe::Initializer</a></td></tr>
-<tr class="memitem:ad932a2ed65bde012a7191d57511dbf24 inherit pub_methods_class_d_i_ce_1_1_initializer"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_initializer.html#ad932a2ed65bde012a7191d57511dbf24">Initializer</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &gt; subset)</td></tr>
-<tr class="separator:ad932a2ed65bde012a7191d57511dbf24 inherit pub_methods_class_d_i_ce_1_1_initializer"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a230fa75e4560337a75b17c8a917bd0c0 inherit pub_methods_class_d_i_ce_1_1_initializer"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a230fa75e4560337a75b17c8a917bd0c0"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_initializer.html#a230fa75e4560337a75b17c8a917bd0c0">Initializer</a> (<a class="el" href="class_d_i_ce_1_1_schema.html">Schema</a> *schema)</td></tr>
+<tr class="memdesc:a230fa75e4560337a75b17c8a917bd0c0 inherit pub_methods_class_d_i_ce_1_1_initializer"><td class="mdescLeft">&#160;</td><td class="mdescRight">base class constructor <br /></td></tr>
+<tr class="separator:a230fa75e4560337a75b17c8a917bd0c0 inherit pub_methods_class_d_i_ce_1_1_initializer"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abcdc040222ae92bef63e73412ed364f6 inherit pub_methods_class_d_i_ce_1_1_initializer"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abcdc040222ae92bef63e73412ed364f6"></a>
 virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_initializer.html#abcdc040222ae92bef63e73412ed364f6">~Initializer</a> ()</td></tr>
 <tr class="memdesc:abcdc040222ae92bef63e73412ed364f6 inherit pub_methods_class_d_i_ce_1_1_initializer"><td class="mdescLeft">&#160;</td><td class="mdescRight">virtual destructor <br /></td></tr>
@@ -154,6 +165,10 @@ virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="c
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
+<tr class="memitem:a0ed3b4588eb31c52c9ff9c076a71f601"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0ed3b4588eb31c52c9ff9c076a71f601"></a>
+Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_path___initializer.html#a0ed3b4588eb31c52c9ff9c076a71f601">subset_</a></td></tr>
+<tr class="memdesc:a0ed3b4588eb31c52c9ff9c076a71f601"><td class="mdescLeft">&#160;</td><td class="mdescRight">pointer to the subset being initialized <br /></td></tr>
+<tr class="separator:a0ed3b4588eb31c52c9ff9c076a71f601"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeead51af4977669e78f000965b915dac"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeead51af4977669e78f000965b915dac"></a>
 std::set&lt; <a class="el" href="struct_d_i_ce_1_1def__triad.html">def_triad</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_path___initializer.html#aeead51af4977669e78f000965b915dac">triads_</a></td></tr>
 <tr class="memdesc:aeead51af4977669e78f000965b915dac"><td class="mdescLeft">&#160;</td><td class="mdescRight">unique triads of deformation params: u, v, and t <br /></td></tr>
@@ -182,21 +197,27 @@ Teuchos::RCP&lt; <a class="el" href="struct_point___cloud.html">Point_Cloud</a>&
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pro_attribs_class_d_i_ce_1_1_initializer"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_d_i_ce_1_1_initializer')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_d_i_ce_1_1_initializer.html">DICe::Initializer</a></td></tr>
-<tr class="memitem:a898ff2b15ddf529573e7e96724b3abed inherit pro_attribs_class_d_i_ce_1_1_initializer"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a898ff2b15ddf529573e7e96724b3abed"></a>
-Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_initializer.html#a898ff2b15ddf529573e7e96724b3abed">subset_</a></td></tr>
-<tr class="memdesc:a898ff2b15ddf529573e7e96724b3abed inherit pro_attribs_class_d_i_ce_1_1_initializer"><td class="mdescLeft">&#160;</td><td class="mdescRight">pointer to the subset being initialized <br /></td></tr>
-<tr class="separator:a898ff2b15ddf529573e7e96724b3abed inherit pro_attribs_class_d_i_ce_1_1_initializer"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abbffc5c0209f5c9622946d825263c507 inherit pro_attribs_class_d_i_ce_1_1_initializer"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abbffc5c0209f5c9622946d825263c507"></a>
+<a class="el" href="class_d_i_ce_1_1_schema.html">Schema</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_initializer.html#abbffc5c0209f5c9622946d825263c507">schema_</a></td></tr>
+<tr class="memdesc:abbffc5c0209f5c9622946d825263c507 inherit pro_attribs_class_d_i_ce_1_1_initializer"><td class="mdescLeft">&#160;</td><td class="mdescRight">pointer to the schema that created this initializer, used for field access <br /></td></tr>
+<tr class="separator:abbffc5c0209f5c9622946d825263c507 inherit pro_attribs_class_d_i_ce_1_1_initializer"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A class that takes a text file as input and produces a unique set of points to test when initializing a subset. The text file gets filtered down to a certain resolution and then duplicate points are removed. This class is useful when the path of a particular subset is pre-defined, for example in a mechanism. This class also provides some basic methods for testing solution values and finding the nearest point on the path. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a class="anchor" id="a7937cacefb668f31ed514f7a4a6b8baf"></a>
+<a class="anchor" id="a6db1ed1b11dd3c9cfc7681dc0d9b0349"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">DICe::Path_Initializer::Path_Initializer </td>
           <td>(</td>
+          <td class="paramtype"><a class="el" href="class_d_i_ce_1_1_schema.html">Schema</a> *&#160;</td>
+          <td class="paramname"><em>schema</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &gt;&#160;</td>
           <td class="paramname"><em>subset</em>, </td>
         </tr>
@@ -221,7 +242,8 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
 </div><div class="memdoc">
 <p>constructor </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">subset</td><td>pointer to the subset being initialized </td></tr>
+    <tr><td class="paramname">schema</td><td>pointer to the parent schema (with all the field info) </td></tr>
+    <tr><td class="paramname">subset</td><td>pointer to a specific subset </td></tr>
     <tr><td class="paramname">file_name</td><td>the name of the file to use for input. The input should be in the following format: ascii text file with values separated by spaces in three columns. The first column is the x displacement, the second column is y displacement and the third is rotation. If one of these columns is not needed, a column of zeros should still be provided. Also, there should not be any blank lines at the end of the file. TODO create a more robust file reader. No header should be included in the text file. </td></tr>
     <tr><td class="paramname">num_neighbors</td><td>the k value for the k-closest neighbors to store for each point </td></tr>
   </table>
@@ -278,22 +300,19 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
     <tr><td class="paramname">v</td><td>displacement in y </td></tr>
     <tr><td class="paramname">t</td><td>rotation </td></tr>
     <tr><td class="paramname">id</td><td>[out] the return id of the closest triad </td></tr>
-    <tr><td class="paramname">distance</td><td>[out] the euclidean distance to this point </td></tr>
+    <tr><td class="paramname">distance_sqr</td><td>[out] the euclidean distance to this point </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a class="anchor" id="a27b31078de81875bc666110870b4e2e0"></a>
+<a class="anchor" id="ad2a5a8f73aec3f3d22c07f2d067a96b4"></a>
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> DICe::Path_Initializer::initial_guess </td>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> DICe::Path_Initializer::initial_guess </td>
           <td>(</td>
           <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td>
           <td class="paramname"><em>def_image</em>, </td>
@@ -328,27 +347,26 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
-<p>see base class description in this case only the closest k-neighbors will be searched for the best solution </p>
-
-<p>Reimplemented from <a class="el" href="class_d_i_ce_1_1_initializer.html#ab19b29479ddcb9ce1183d69e9e23a544">DICe::Initializer</a>.</p>
+<p>Initialize the subset in the vicinity of the previous guess </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">def_image</td><td>the deformed image </td></tr>
+    <tr><td class="paramname">deformation</td><td>[out] the deformation vector to initialize </td></tr>
+    <tr><td class="paramname">u</td><td>previous displacemcent x </td></tr>
+    <tr><td class="paramname">v</td><td>previous displacement y </td></tr>
+    <tr><td class="paramname">t</td><td>previous theta in this case only the closest k-neighbors will be searched for the best solution </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
-<a class="anchor" id="a7b7fdb17356a21ba863d62d74f55bd77"></a>
+<a class="anchor" id="a57d872b3716672661d04ce38f8bee3c5"></a>
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> DICe::Path_Initializer::initial_guess </td>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> DICe::Path_Initializer::initial_guess </td>
           <td>(</td>
           <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td>
           <td class="paramname"><em>def_image</em>, </td>
@@ -365,15 +383,14 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
-<p>see base class description in this case, the entire set of path triads will be searched for the best solution </p>
-
-<p>Reimplemented from <a class="el" href="class_d_i_ce_1_1_initializer.html#ab6ba4539cb553837480aa99b90ee90a5">DICe::Initializer</a>.</p>
+<p><a class="el" href="class_d_i_ce_1_1_initializer.html" title="A generic class that provides an initial guess for the optimization routines in a DICe::Objective...">Initializer</a> where the entire set of path triads will be searched for the best solution </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">def_image</td><td>pointer to the deformed image </td></tr>
+    <tr><td class="paramname">deformation</td><td>[out] the deformation vector </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -421,7 +438,7 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 16 2015 19:46:11 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Dec 7 2015 05:56:34 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

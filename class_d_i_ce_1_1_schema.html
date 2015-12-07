@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Digital Image Correlation Engine
-   &#160;<span id="projectnumber">Version of the Day</span>
+   &#160;<span id="projectnumber">Version 1.0</span>
    </div>
    <div id="projectbrief">A modular, high-performance, image correlation tool used to compute full-field displacements and strains from digital images</div>
   </td>
@@ -40,6 +40,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -132,17 +133,38 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a11456353efba4ba3781b8849c848817d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a11456353efba4ba3781b8849c848817d">Schema</a> (const std::string &amp;refName, const std::string &amp;defName, const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params=Teuchos::null)</td></tr>
 <tr class="memdesc:a11456353efba4ba3781b8849c848817d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor that takes string names of images as inputs.  <a href="#a11456353efba4ba3781b8849c848817d">More...</a><br /></td></tr>
 <tr class="separator:a11456353efba4ba3781b8849c848817d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a61afaeda305fe39569b57981de6a9dc6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a61afaeda305fe39569b57981de6a9dc6">Schema</a> (const std::string &amp;refName, const std::string &amp;defName, const std::string &amp;params_file_name)</td></tr>
+<tr class="memdesc:a61afaeda305fe39569b57981de6a9dc6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor that takes string names of images as inputs.  <a href="#a61afaeda305fe39569b57981de6a9dc6">More...</a><br /></td></tr>
+<tr class="separator:a61afaeda305fe39569b57981de6a9dc6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c4448e7c22f7c41ce9db29a465cee72"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a2c4448e7c22f7c41ce9db29a465cee72">construct_schema</a> (const std::string &amp;refName, const std::string &amp;defName, const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params=Teuchos::null)</td></tr>
+<tr class="memdesc:a2c4448e7c22f7c41ce9db29a465cee72"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper method to enable creating a schema with a parameter list or a file name.  <a href="#a2c4448e7c22f7c41ce9db29a465cee72">More...</a><br /></td></tr>
+<tr class="separator:a2c4448e7c22f7c41ce9db29a465cee72"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a69fbd7787a5d428ef028a6b85dbf0ea5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a69fbd7787a5d428ef028a6b85dbf0ea5">Schema</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#a04be9594fcff96b8e9f1da6d457badc8">img_width</a>, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#a0cdd3b0280909421cd05bba93e0cc4ab">img_height</a>, const Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt; refRCP, const Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt; defRCP, const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params=Teuchos::null)</td></tr>
 <tr class="memdesc:a69fbd7787a5d428ef028a6b85dbf0ea5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor that takes arrays of intensity values as inputs.  <a href="#a69fbd7787a5d428ef028a6b85dbf0ea5">More...</a><br /></td></tr>
 <tr class="separator:a69fbd7787a5d428ef028a6b85dbf0ea5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c98b7093b99c54f2afb1b580c988091"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a6c98b7093b99c54f2afb1b580c988091">Schema</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#a04be9594fcff96b8e9f1da6d457badc8">img_width</a>, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#a0cdd3b0280909421cd05bba93e0cc4ab">img_height</a>, const Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt; refRCP, const Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt; defRCP, const std::string &amp;params_file_name)</td></tr>
+<tr class="memdesc:a6c98b7093b99c54f2afb1b580c988091"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor that takes arrays of intensity values as inputs.  <a href="#a6c98b7093b99c54f2afb1b580c988091">More...</a><br /></td></tr>
+<tr class="separator:a6c98b7093b99c54f2afb1b580c988091"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abfa6cb96e3e6fecf3223f138ac381e3d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#abfa6cb96e3e6fecf3223f138ac381e3d">construct_schema</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#a04be9594fcff96b8e9f1da6d457badc8">img_width</a>, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#a0cdd3b0280909421cd05bba93e0cc4ab">img_height</a>, const Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt; refRCP, const Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt; defRCP, const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params=Teuchos::null)</td></tr>
+<tr class="memdesc:abfa6cb96e3e6fecf3223f138ac381e3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper method to enable creating a schema with a parameter list or a file name.  <a href="#abfa6cb96e3e6fecf3223f138ac381e3d">More...</a><br /></td></tr>
+<tr class="separator:abfa6cb96e3e6fecf3223f138ac381e3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ee95375553872d30a48fa920df2c682"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a3ee95375553872d30a48fa920df2c682">Schema</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; <a class="el" href="class_d_i_ce_1_1_schema.html#ab270ba7e135d69bf21354d87a8f300e3">ref_img</a>, Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; <a class="el" href="class_d_i_ce_1_1_schema.html#a2386a91957578e804c00165d8ecf67be">def_img</a>, const std::string &amp;params_file_name)</td></tr>
+<tr class="memdesc:a3ee95375553872d30a48fa920df2c682"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor that takes already instantiated images as inputs.  <a href="#a3ee95375553872d30a48fa920df2c682">More...</a><br /></td></tr>
+<tr class="separator:a3ee95375553872d30a48fa920df2c682"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeb633d3c3a01235f4b87557867f56c28"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#aeb633d3c3a01235f4b87557867f56c28">Schema</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; <a class="el" href="class_d_i_ce_1_1_schema.html#ab270ba7e135d69bf21354d87a8f300e3">ref_img</a>, Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; <a class="el" href="class_d_i_ce_1_1_schema.html#a2386a91957578e804c00165d8ecf67be">def_img</a>, const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params=Teuchos::null)</td></tr>
 <tr class="memdesc:aeb633d3c3a01235f4b87557867f56c28"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor that takes already instantiated images as inputs.  <a href="#aeb633d3c3a01235f4b87557867f56c28">More...</a><br /></td></tr>
 <tr class="separator:aeb633d3c3a01235f4b87557867f56c28"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a578f4593775da7392a91c18ca0fe3613"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a578f4593775da7392a91c18ca0fe3613">construct_schema</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; <a class="el" href="class_d_i_ce_1_1_schema.html#ab270ba7e135d69bf21354d87a8f300e3">ref_img</a>, Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; <a class="el" href="class_d_i_ce_1_1_schema.html#a2386a91957578e804c00165d8ecf67be">def_img</a>, const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params=Teuchos::null)</td></tr>
+<tr class="memdesc:a578f4593775da7392a91c18ca0fe3613"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper method to enable creating a schema with a parameter list or a file name.  <a href="#a578f4593775da7392a91c18ca0fe3613">More...</a><br /></td></tr>
+<tr class="separator:a578f4593775da7392a91c18ca0fe3613"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7afc099236bc8147b901641de537f1cc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a7afc099236bc8147b901641de537f1cc">default_constructor_tasks</a> (const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params)</td></tr>
 <tr class="memdesc:a7afc099236bc8147b901641de537f1cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the default values for the schema's member data and other initialization tasks.  <a href="#a7afc099236bc8147b901641de537f1cc">More...</a><br /></td></tr>
 <tr class="separator:a7afc099236bc8147b901641de537f1cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a779ad294283d4008dbba01a9747b968c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a779ad294283d4008dbba01a9747b968c">set_params</a> (const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params)</td></tr>
 <tr class="separator:a779ad294283d4008dbba01a9747b968c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50bdb955369ebe2ff26a4a9366792ad7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a50bdb955369ebe2ff26a4a9366792ad7">set_params</a> (const std::string &amp;params_file_name)</td></tr>
+<tr class="memdesc:a50bdb955369ebe2ff26a4a9366792ad7"><td class="mdescLeft">&#160;</td><td class="mdescRight">sets a schema's parameters with the name of a parameters xml file  <a href="#a50bdb955369ebe2ff26a4a9366792ad7">More...</a><br /></td></tr>
+<tr class="separator:a50bdb955369ebe2ff26a4a9366792ad7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a845c3ae6b55c4e139612e13989ad3274"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a845c3ae6b55c4e139612e13989ad3274"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a845c3ae6b55c4e139612e13989ad3274">set_def_image</a> (const std::string &amp;defName)</td></tr>
 <tr class="memdesc:a845c3ae6b55c4e139612e13989ad3274"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replace the deformed image for this <a class="el" href="class_d_i_ce_1_1_schema.html" title="The centralized container for the correlation plan and parameters. ">Schema</a> (only enabled with boost) <br /></td></tr>
@@ -171,12 +193,15 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ac8bf96fa9ab9c40b6090fb1bcfdd1466">mesh_size</a> () const </td></tr>
 <tr class="memdesc:ac8bf96fa9ab9c40b6090fb1bcfdd1466"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the element size for global DIC (-1 if local DIC) <br /></td></tr>
 <tr class="separator:ac8bf96fa9ab9c40b6090fb1bcfdd1466"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a930243155783611de78fd850952c1f17"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a930243155783611de78fd850952c1f17">initialize</a> (const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;input_params)</td></tr>
+<tr class="memdesc:a930243155783611de78fd850952c1f17"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes the data structures for the schema.  <a href="#a930243155783611de78fd850952c1f17">More...</a><br /></td></tr>
+<tr class="separator:a930243155783611de78fd850952c1f17"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3cb7548d2732bbf4b892b8f49a0d1175"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a3cb7548d2732bbf4b892b8f49a0d1175">initialize</a> (const std::string &amp;params_file_name)</td></tr>
+<tr class="memdesc:a3cb7548d2732bbf4b892b8f49a0d1175"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes the data structures for the schema.  <a href="#a3cb7548d2732bbf4b892b8f49a0d1175">More...</a><br /></td></tr>
+<tr class="separator:a3cb7548d2732bbf4b892b8f49a0d1175"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1e7313b3105475a105b2bab52b7e035b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a1e7313b3105475a105b2bab52b7e035b">initialize</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> num_pts, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="namespace_d_i_ce.html#a2cfcc8088186a921bb41696a2f79cccd">subset_size</a>, Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>, <a class="el" href="class_d_i_ce_1_1_conformal___area___def.html">Conformal_Area_Def</a> &gt; &gt; <a class="el" href="class_d_i_ce_1_1_schema.html#a8f92406441f5d28e61daa483de08b33f">conformal_subset_defs</a>=Teuchos::null, Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &gt; &gt; neighbor_ids=Teuchos::null)</td></tr>
 <tr class="memdesc:a1e7313b3105475a105b2bab52b7e035b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes the data structures for the schema.  <a href="#a1e7313b3105475a105b2bab52b7e035b">More...</a><br /></td></tr>
 <tr class="separator:a1e7313b3105475a105b2bab52b7e035b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7ba6a0cabd4a9fb545cc555e0bb0c0eb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a7ba6a0cabd4a9fb545cc555e0bb0c0eb">initialize_by_phase_correlation</a> (Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;deformation)</td></tr>
-<tr class="memdesc:a7ba6a0cabd4a9fb545cc555e0bb0c0eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes the guess for a subset based on a phase correlation of the whole image.  <a href="#a7ba6a0cabd4a9fb545cc555e0bb0c0eb">More...</a><br /></td></tr>
-<tr class="separator:a7ba6a0cabd4a9fb545cc555e0bb0c0eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a75f755069b71d93d447b3680ce3e8f64"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a75f755069b71d93d447b3680ce3e8f64">initialize</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#aa2e862a1c72ac612d18c7ce71dfd41e4">step_size_x</a>, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#a61e909f9ed0cd65d932f64aa68e7378b">step_size_y</a>, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="namespace_d_i_ce.html#a2cfcc8088186a921bb41696a2f79cccd">subset_size</a>)</td></tr>
 <tr class="memdesc:a75f755069b71d93d447b3680ce3e8f64"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simple initialization routine that sets up a regular grid of correlation points throughout the image spaced according to the step sizes.  <a href="#a75f755069b71d93d447b3680ce3e8f64">More...</a><br /></td></tr>
 <tr class="separator:a75f755069b71d93d447b3680ce3e8f64"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -196,6 +221,10 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;
 Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a2386a91957578e804c00165d8ecf67be">def_img</a> () const </td></tr>
 <tr class="memdesc:a2386a91957578e804c00165d8ecf67be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a pointer to the deformed <a class="el" href="class_d_i_ce_1_1_image.html">DICe::Image</a>. <br /></td></tr>
 <tr class="separator:a2386a91957578e804c00165d8ecf67be"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d517c7092179d1dbe46cf5327cf13c0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8d517c7092179d1dbe46cf5327cf13c0"></a>
+Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a8d517c7092179d1dbe46cf5327cf13c0">prev_img</a> () const </td></tr>
+<tr class="memdesc:a8d517c7092179d1dbe46cf5327cf13c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a pointer to the preivous <a class="el" href="class_d_i_ce_1_1_image.html">DICe::Image</a>. <br /></td></tr>
+<tr class="separator:a8d517c7092179d1dbe46cf5327cf13c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afa938867c74a3d1b7145214c78f21a93"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afa938867c74a3d1b7145214c78f21a93"></a>
 <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#afa938867c74a3d1b7145214c78f21a93">max_solver_iterations_fast</a> () const </td></tr>
 <tr class="memdesc:afa938867c74a3d1b7145214c78f21a93"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the max solver iterations allowed for the fast (gradient based) algorithm. <br /></td></tr>
@@ -299,6 +328,12 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
 <a class="el" href="namespace_d_i_ce.html#a1825f42ed4e16298862803148811ef08">Projection_Method</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ab70cacad32e4e887cfb5eb51d11c6b88">projection_method</a> () const </td></tr>
 <tr class="memdesc:ab70cacad32e4e887cfb5eb51d11c6b88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the projection method (see DICe_Types.h for valid values) <br /></td></tr>
 <tr class="separator:ab70cacad32e4e887cfb5eb51d11c6b88"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a711768c0315c088bfe3f91b2468c7a69"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a711768c0315c088bfe3f91b2468c7a69"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a711768c0315c088bfe3f91b2468c7a69">prepare_optimization_initializers</a> ()</td></tr>
+<tr class="memdesc:a711768c0315c088bfe3f91b2468c7a69"><td class="mdescLeft">&#160;</td><td class="mdescRight">set up the initializers <br /></td></tr>
+<tr class="separator:a711768c0315c088bfe3f91b2468c7a69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90ad1f01504a131901327478f15c6cf6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#a80e1a88ef6bbd77d318f8b880f6a41f5">Status_Flag</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a90ad1f01504a131901327478f15c6cf6">initial_guess</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> subset_gid, Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; deformation)</td></tr>
+<tr class="separator:a90ad1f01504a131901327478f15c6cf6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a19f62d03776c65f61d276fd9c56ea6e4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a19f62d03776c65f61d276fd9c56ea6e4"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a19f62d03776c65f61d276fd9c56ea6e4">create_obstruction_dist_map</a> ()</td></tr>
 <tr class="memdesc:a19f62d03776c65f61d276fd9c56ea6e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">set up the distributed map so that it respects dependencies among obstructions <br /></td></tr>
@@ -323,14 +358,17 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memdesc:a6fc1fee072c3846b6e3af48fc8afa079"><td class="mdescLeft">&#160;</td><td class="mdescRight">See if any of the subsets have crossed each other's paths blocking each other.  <a href="#a6fc1fee072c3846b6e3af48fc8afa079">More...</a><br /></td></tr>
 <tr class="separator:a6fc1fee072c3846b6e3af48fc8afa079"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3cb75f9e17b252a8dd624e7766fc2f34"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a3cb75f9e17b252a8dd624e7766fc2f34">generic_correlation_routine</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_objective.html">Objective</a> &gt; obj)</td></tr>
-<tr class="memdesc:a3cb75f9e17b252a8dd624e7766fc2f34"><td class="mdescLeft">&#160;</td><td class="mdescRight">Orchestration of how the correlation is conducted.  <a href="#a3cb75f9e17b252a8dd624e7766fc2f34">More...</a><br /></td></tr>
+<tr class="memdesc:a3cb75f9e17b252a8dd624e7766fc2f34"><td class="mdescLeft">&#160;</td><td class="mdescRight">Orchestration of how the correlation is conducted. A correlation routine involves a number of steps. The first is to initialize a guess for the given subset, followed by actually performing the correlation. There are a number of checks that happen along the way. The user can request that the initial guess provide a matching gamma value that is below a certain threshold. The user can also request that the final solution meet certain criteria. There are a coupl different approaches to the correlation itself. Using the DICe::GRADIENT_BASED method is similar to most other gradient-based techniques wherein the image gradients provided by the speckle pattern drive the optimization routine to the solution. The DICe::SIMPLEX method on the other hand does not require image gradients. It uses a sophisticated bisection-like technique to arrive at the solution.  <a href="#a3cb75f9e17b252a8dd624e7766fc2f34">More...</a><br /></td></tr>
 <tr class="separator:a3cb75f9e17b252a8dd624e7766fc2f34"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1d0740c95e2f12aa5a97b48d67c3975c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a1d0740c95e2f12aa5a97b48d67c3975c">subset_evolution_routine</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_objective.html">Objective</a> &gt; obj)</td></tr>
-<tr class="memdesc:a1d0740c95e2f12aa5a97b48d67c3975c"><td class="mdescLeft">&#160;</td><td class="mdescRight">As an alternative to the generic routine, this routine spends a lot more time handling various failure cases. It tests for the solution gamma value after each step to ensure the correlation is still good. It also tests for jumps in the solution values. It uses a 10 step projection method to initialize the solution and checks for errors in the predicted vs. computed solution to restart the multistep projection process. In this routine obstructions are detected using statistics on the pixel intensity values rather than based on obstruction subsets that need to be tracked in the generic correlation routine.  <a href="#a1d0740c95e2f12aa5a97b48d67c3975c">More...</a><br /></td></tr>
-<tr class="separator:a1d0740c95e2f12aa5a97b48d67c3975c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca6a0aec436adef0f5e81602da4542c9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#aca6a0aec436adef0f5e81602da4542c9">motion_detected</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> subset_gid)</td></tr>
+<tr class="separator:aca6a0aec436adef0f5e81602da4542c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4e8466fe2fb355a88183880567932ff8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a4e8466fe2fb355a88183880567932ff8">record_failed_step</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> subset_gid, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> status, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> num_iterations)</td></tr>
+<tr class="separator:a4e8466fe2fb355a88183880567932ff8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeb94723948255d2d62df0c3ef8feeda2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#aeb94723948255d2d62df0c3ef8feeda2">record_step</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> subset_gid, Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;deformation, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;sigma, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;match, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;gamma, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> status, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> num_iterations)</td></tr>
+<tr class="separator:aeb94723948255d2d62df0c3ef8feeda2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac871a70d9881cffa18e72fed06b5c67d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac871a70d9881cffa18e72fed06b5c67d"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ac871a70d9881cffa18e72fed06b5c67d">use_objective_regularization</a> () const </td></tr>
-<tr class="memdesc:ac871a70d9881cffa18e72fed06b5c67d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returne true if regularization should be used in the objective evaluation. <br /></td></tr>
+<tr class="memdesc:ac871a70d9881cffa18e72fed06b5c67d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if regularization should be used in the objective evaluation. <br /></td></tr>
 <tr class="separator:ac871a70d9881cffa18e72fed06b5c67d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3fc80de1f2fdac73882c0cadb64503e9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3fc80de1f2fdac73882c0cadb64503e9"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a3fc80de1f2fdac73882c0cadb64503e9">translation_enabled</a> () const </td></tr>
@@ -368,6 +406,8 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a299bf888a7e6a5504f00d6e2a3afdfd6">normalize_gamma_with_active_pixels</a> () const </td></tr>
 <tr class="memdesc:a299bf888a7e6a5504f00d6e2a3afdfd6"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if the gamma values should be normalized by the number of active pixels. <br /></td></tr>
 <tr class="separator:a299bf888a7e6a5504f00d6e2a3afdfd6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe5542c2bd9e3970d11e6c27f16fe3d1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#abe5542c2bd9e3970d11e6c27f16fe3d1">set_normalize_gamma_with_active_pixels</a> (const bool flag)</td></tr>
+<tr class="separator:abe5542c2bd9e3970d11e6c27f16fe3d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a679ea84fb54083fbc7c1414ecf4a5830"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a679ea84fb54083fbc7c1414ecf4a5830"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a679ea84fb54083fbc7c1414ecf4a5830">enable_translation</a> (const bool flag)</td></tr>
 <tr class="memdesc:a679ea84fb54083fbc7c1414ecf4a5830"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable translation shape functions. <br /></td></tr>
@@ -544,14 +584,14 @@ std::vector&lt; Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_post___pro
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a9fea098be21a509bfd6fa6e53554a0c3">has_post_processor_</a></td></tr>
 <tr class="memdesc:a9fea098be21a509bfd6fa6e53554a0c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if any post_processors have been activated. <br /></td></tr>
 <tr class="separator:a9fea098be21a509bfd6fa6e53554a0c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa4bc763735c57bc93c8f3d286aa5f5c7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa4bc763735c57bc93c8f3d286aa5f5c7"></a>
-std::vector&lt; Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_initializer.html">Initializer</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#aa4bc763735c57bc93c8f3d286aa5f5c7">opt_initializers_</a></td></tr>
-<tr class="memdesc:aa4bc763735c57bc93c8f3d286aa5f5c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">vector of pointers to initializers (used to initialize first guess for optimization routine) <br /></td></tr>
-<tr class="separator:aa4bc763735c57bc93c8f3d286aa5f5c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abff969fe1783a5f78b83c7abc490f6d6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abff969fe1783a5f78b83c7abc490f6d6"></a>
-std::vector&lt; Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_motion___test___initializer.html">Motion_Test_Initializer</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#abff969fe1783a5f78b83c7abc490f6d6">motion_detectors_</a></td></tr>
-<tr class="memdesc:abff969fe1783a5f78b83c7abc490f6d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">vector of pointers to motion detectors for a specific subset <br /></td></tr>
-<tr class="separator:abff969fe1783a5f78b83c7abc490f6d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96b6e7cd247dda802e256c0ffc8d4b59"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a96b6e7cd247dda802e256c0ffc8d4b59"></a>
+std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>, Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_initializer.html">Initializer</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a96b6e7cd247dda802e256c0ffc8d4b59">opt_initializers_</a></td></tr>
+<tr class="memdesc:a96b6e7cd247dda802e256c0ffc8d4b59"><td class="mdescLeft">&#160;</td><td class="mdescRight">map of pointers to initializers (used to initialize first guess for optimization routine) <br /></td></tr>
+<tr class="separator:a96b6e7cd247dda802e256c0ffc8d4b59"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b5d56a45ce2930e6807cd19db1a65dd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1b5d56a45ce2930e6807cd19db1a65dd"></a>
+std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>, Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_motion___test___utility.html">Motion_Test_Utility</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a1b5d56a45ce2930e6807cd19db1a65dd">motion_detectors_</a></td></tr>
+<tr class="memdesc:a1b5d56a45ce2930e6807cd19db1a65dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">vector of pointers to motion detectors for a specific subset <br /></td></tr>
+<tr class="separator:a1b5d56a45ce2930e6807cd19db1a65dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ddee5e08a84e6a8908bf684176357b5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9ddee5e08a84e6a8908bf684176357b5"></a>
 std::vector&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a9ddee5e08a84e6a8908bf684176357b5">pixels_owning_element_global_id_</a></td></tr>
 <tr class="memdesc:a9ddee5e08a84e6a8908bf684176357b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">For constrained optimiation, this lists the owning element global id for each pixel: <br /></td></tr>
@@ -760,14 +800,6 @@ Teuchos::RCP&lt; Teuchos::ParameterList &gt;&#160;</td><td class="memItemRight" 
 <a class="el" href="namespace_d_i_ce.html#ab06b9b53f802eaa6bcb71be18ae9ec5d">Rotation_Value</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a61f3686183d46a4f5a9705e5aac631d9">def_image_rotation_</a></td></tr>
 <tr class="memdesc:a61f3686183d46a4f5a9705e5aac631d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Rotate the defomed image by 180 degrees. <br /></td></tr>
 <tr class="separator:a61f3686183d46a4f5a9705e5aac631d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a855f7dd653c9f153fbeb8974d2eb30eb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a855f7dd653c9f153fbeb8974d2eb30eb"></a>
-<a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a855f7dd653c9f153fbeb8974d2eb30eb">phase_cor_u_x_</a></td></tr>
-<tr class="memdesc:a855f7dd653c9f153fbeb8974d2eb30eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Phase correlation initial guess values (only computed if USE_PHASE_CORRELATION is set as the initialization method) <br /></td></tr>
-<tr class="separator:a855f7dd653c9f153fbeb8974d2eb30eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a51453c56842d6dcb72c3cca4eb3f9c73"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a51453c56842d6dcb72c3cca4eb3f9c73"></a>
-<a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a51453c56842d6dcb72c3cca4eb3f9c73">phase_cor_u_y_</a></td></tr>
-<tr class="memdesc:a51453c56842d6dcb72c3cca4eb3f9c73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Phase correlation intial guess. <br /></td></tr>
-<tr class="separator:a51453c56842d6dcb72c3cca4eb3f9c73"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9fccfd463977e418a7fdd5124ab3f7a3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9fccfd463977e418a7fdd5124ab3f7a3"></a>
 Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a9fccfd463977e418a7fdd5124ab3f7a3">path_file_names_</a></td></tr>
 <tr class="memdesc:a9fccfd463977e418a7fdd5124ab3f7a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Map to hold the names of the path files for each subset. <br /></td></tr>
@@ -776,6 +808,18 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
 <tr class="separator:aeab7d700b72f249d49005ea8acbc03e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe701cbdc2e9a5280ce52d27f1b594fb"><td class="memItemLeft" align="right" valign="top">Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>, <a class="el" href="struct_d_i_ce_1_1_motion___window___params.html">Motion_Window_Params</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#afe701cbdc2e9a5280ce52d27f1b594fb">motion_window_params_</a></td></tr>
 <tr class="separator:afe701cbdc2e9a5280ce52d27f1b594fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad41e99cab40932ce5445a17090cd2b6b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad41e99cab40932ce5445a17090cd2b6b"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ad41e99cab40932ce5445a17090cd2b6b">initial_gamma_threshold_</a></td></tr>
+<tr class="memdesc:ad41e99cab40932ce5445a17090cd2b6b"><td class="mdescLeft">&#160;</td><td class="mdescRight">tolerance for initial gamma <br /></td></tr>
+<tr class="separator:ad41e99cab40932ce5445a17090cd2b6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add779b3fdb55ab528032cb4240087cdc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="add779b3fdb55ab528032cb4240087cdc"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#add779b3fdb55ab528032cb4240087cdc">final_gamma_threshold_</a></td></tr>
+<tr class="memdesc:add779b3fdb55ab528032cb4240087cdc"><td class="mdescLeft">&#160;</td><td class="mdescRight">tolerance for final gamma <br /></td></tr>
+<tr class="separator:add779b3fdb55ab528032cb4240087cdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a95a5a0c2db529d63ad25eebe349f5d54"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a95a5a0c2db529d63ad25eebe349f5d54"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a95a5a0c2db529d63ad25eebe349f5d54">path_distance_threshold_</a></td></tr>
+<tr class="memdesc:a95a5a0c2db529d63ad25eebe349f5d54"><td class="mdescLeft">&#160;</td><td class="mdescRight">tolerance for max_path_distance <br /></td></tr>
+<tr class="separator:a95a5a0c2db529d63ad25eebe349f5d54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>The centralized container for the correlation plan and parameters. </p>
@@ -818,11 +862,52 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
   <table class="params">
     <tr><td class="paramname">refName</td><td>String name of reference image </td></tr>
     <tr><td class="paramname">defName</td><td>String name of deformed image </td></tr>
-    <tr><td class="paramname">params</td><td>Correlation parameters</td></tr>
+    <tr><td class="paramname">params</td><td>Correlation parameters </td></tr>
   </table>
   </dd>
 </dl>
-<p>NOTE: Only enabled if boost is enabled </p>
+
+</div>
+</div>
+<a class="anchor" id="a61afaeda305fe39569b57981de6a9dc6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">DICe::Schema::Schema </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>refName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>defName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>params_file_name</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Constructor that takes string names of images as inputs. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">refName</td><td>String name of reference image </td></tr>
+    <tr><td class="paramname">defName</td><td>String name of deformed image </td></tr>
+    <tr><td class="paramname">params_file_name</td><td>File name of the parameters file </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -876,6 +961,104 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
     <tr><td class="paramname">refRCP</td><td>Array of intensity values for the reference image </td></tr>
     <tr><td class="paramname">defRCP</td><td>Array of intensity values for deformed image </td></tr>
     <tr><td class="paramname">params</td><td>Correlation parameters </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a6c98b7093b99c54f2afb1b580c988091"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">DICe::Schema::Schema </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>img_width</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>img_height</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt;&#160;</td>
+          <td class="paramname"><em>refRCP</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt;&#160;</td>
+          <td class="paramname"><em>defRCP</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>params_file_name</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Constructor that takes arrays of intensity values as inputs. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">img_width</td><td><a class="el" href="class_d_i_ce_1_1_image.html">Image</a> width (must be the same for the reference and deformed images) </td></tr>
+    <tr><td class="paramname">img_height</td><td><a class="el" href="class_d_i_ce_1_1_image.html">Image</a> height (must be the same for the reference and deformed images) </td></tr>
+    <tr><td class="paramname">refRCP</td><td>Array of intensity values for the reference image </td></tr>
+    <tr><td class="paramname">defRCP</td><td>Array of intensity values for deformed image </td></tr>
+    <tr><td class="paramname">params_file_name</td><td>File name of parameters file </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a3ee95375553872d30a48fa920df2c682"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">DICe::Schema::Schema </td>
+          <td>(</td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td>
+          <td class="paramname"><em>ref_img</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td>
+          <td class="paramname"><em>def_img</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>params_file_name</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Constructor that takes already instantiated images as inputs. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ref_img</td><td>Reference <a class="el" href="class_d_i_ce_1_1_image.html">DICe::Image</a> </td></tr>
+    <tr><td class="paramname">def_img</td><td>Deformed <a class="el" href="class_d_i_ce_1_1_image.html">DICe::Image</a> </td></tr>
+    <tr><td class="paramname">params_file_name</td><td>File name of parameters file </td></tr>
   </table>
   </dd>
 </dl>
@@ -940,7 +1123,147 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
 </div><div class="memdoc">
 
 <p>See if any of the subsets have crossed each other's paths blocking each other. </p>
-<p>The potential for two subsets to block each other should have been set by calling <a class="el" href="class_d_i_ce_1_1_schema.html#a49c67ef28e4ff35f043d47085b261fdf" title="EXPERIMENTAL sets the layering order of subets. ">set_obstructing_subset_ids()</a> on the schema by this point. WARNING: This is meant only for the SL_ROUTINE where there are only a few subsets to track </p>
+<p>The potential for two subsets to block each other should have been set by calling <a class="el" href="class_d_i_ce_1_1_schema.html#a49c67ef28e4ff35f043d47085b261fdf" title="EXPERIMENTAL sets the layering order of subets. ">set_obstructing_subset_ids()</a> on the schema by this point. WARNING: This is meant only for the TRACKING_ROUTINE where there are only a few subsets to track </p>
+
+</div>
+</div>
+<a class="anchor" id="a2c4448e7c22f7c41ce9db29a465cee72"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::Schema::construct_schema </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>refName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>defName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;&#160;</td>
+          <td class="paramname"><em>params</em> = <code>Teuchos::null</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Helper method to enable creating a schema with a parameter list or a file name. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">refName</td><td>String name of reference image </td></tr>
+    <tr><td class="paramname">defName</td><td>String name of deformed image </td></tr>
+    <tr><td class="paramname">params</td><td>Correlation parameters </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="abfa6cb96e3e6fecf3223f138ac381e3d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::Schema::construct_schema </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>img_width</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>img_height</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt;&#160;</td>
+          <td class="paramname"><em>refRCP</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt;&#160;</td>
+          <td class="paramname"><em>defRCP</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;&#160;</td>
+          <td class="paramname"><em>params</em> = <code>Teuchos::null</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Helper method to enable creating a schema with a parameter list or a file name. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">img_width</td><td><a class="el" href="class_d_i_ce_1_1_image.html">Image</a> width (must be the same for the reference and deformed images) </td></tr>
+    <tr><td class="paramname">img_height</td><td><a class="el" href="class_d_i_ce_1_1_image.html">Image</a> height (must be the same for the reference and deformed images) </td></tr>
+    <tr><td class="paramname">refRCP</td><td>Array of intensity values for the reference image </td></tr>
+    <tr><td class="paramname">defRCP</td><td>Array of intensity values for deformed image </td></tr>
+    <tr><td class="paramname">params</td><td>Correlation parameters </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a578f4593775da7392a91c18ca0fe3613"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::Schema::construct_schema </td>
+          <td>(</td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td>
+          <td class="paramname"><em>ref_img</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td>
+          <td class="paramname"><em>def_img</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;&#160;</td>
+          <td class="paramname"><em>params</em> = <code>Teuchos::null</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Helper method to enable creating a schema with a parameter list or a file name. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ref_img</td><td>Reference <a class="el" href="class_d_i_ce_1_1_image.html">DICe::Image</a> </td></tr>
+    <tr><td class="paramname">def_img</td><td>Deformed <a class="el" href="class_d_i_ce_1_1_image.html">DICe::Image</a> </td></tr>
+    <tr><td class="paramname">params</td><td>Correlation Parameters </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1068,18 +1391,96 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
       </table>
 </div><div class="memdoc">
 
-<p>Orchestration of how the correlation is conducted. </p>
+<p>Orchestration of how the correlation is conducted. A correlation routine involves a number of steps. The first is to initialize a guess for the given subset, followed by actually performing the correlation. There are a number of checks that happen along the way. The user can request that the initial guess provide a matching gamma value that is below a certain threshold. The user can also request that the final solution meet certain criteria. There are a coupl different approaches to the correlation itself. Using the DICe::GRADIENT_BASED method is similar to most other gradient-based techniques wherein the image gradients provided by the speckle pattern drive the optimization routine to the solution. The DICe::SIMPLEX method on the other hand does not require image gradients. It uses a sophisticated bisection-like technique to arrive at the solution. </p>
+<p>Another major difference between correlation routine options is denoted by DICe::GENERIC_ROUTINE or DICe::TRACKING_ROUTINE. The generic option is intended for full-field displacement cases where there are a number of subsets per image, but not necessarily a lot of images. In this case the subsets are allocated each image or frame. The tracking case is intended for a handful of subsets, but potentially several thousand frames. In this case the subsets are allocated once at the beginning and re-used throughout the analysis.</p>
+<p>At a number of points in the process, the subset may evolve in the sense that pixels on an object that become occluded are switched off. Other pixels that initially were blocked and become visible at some point get switched on (this is activated by setting use_subset_evolution in the params file).</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">obj</td><td>A single <a class="el" href="class_d_i_ce_1_1_objective.html" title="A container class for the subsets, optimization algorithm and initialization routine used to correlat...">DICe::Objective</a></td></tr>
+    <tr><td class="paramname">obj</td><td>A single <a class="el" href="class_d_i_ce_1_1_objective.html" title="A container class for the subsets, optimization algorithm and initialization routine used to correlat...">DICe::Objective</a> that has a DICe::subset as part of its member data </td></tr>
   </table>
   </dd>
 </dl>
-<p>The process is as followa:</p><ol type="1">
-<li>The first subset is correlated based on whatever initial guess happens to be in the data array (could have been specified by user or zeros).</li>
-<li>The rest of the subsets use the neighboring subset's solution as an initial guess if the initialization method is DICe::USE_NEIGHBOR_VALUES. Otherwise, the initial guess is taken from whatever solution is in the field_values (DICe::USE_FIELD_VALUES).</li>
-<li>For the optimization, if the method is DICe::SIMPLEX, only the simpex method (computeUpdateRobust()) will be used. For the DICe::GRADIENT_BASED method, only the computeUpdateFast() method will be used. The other options are first try simplex, then gradient based if it fails (DICe::SIMPLEX_THEN_GRADIENT_BASED) or start with gradient based then simplex (DICe::GRADIENT_BASED_THEN_SIMPLEX). </li>
-</ol>
+
+</div>
+</div>
+<a class="anchor" id="a90ad1f01504a131901327478f15c6cf6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#a80e1a88ef6bbd77d318f8b880f6a41f5">Status_Flag</a> DICe::Schema::initial_guess </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>subset_gid</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt;&#160;</td>
+          <td class="paramname"><em>deformation</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>get an initial guess for the solution </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">subset_gid</td><td>the global id of the subset to initialize </td></tr>
+    <tr><td class="paramname">deformation</td><td>[out] vector containing the intial guess </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a930243155783611de78fd850952c1f17"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::Schema::initialize </td>
+          <td>(</td>
+          <td class="paramtype">const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;&#160;</td>
+          <td class="paramname"><em>input_params</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initializes the data structures for the schema. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">input_params</td><td>pointer to the initialization parameters </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a3cb7548d2732bbf4b892b8f49a0d1175"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::Schema::initialize </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>params_file_name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initializes the data structures for the schema. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">params_file_name</td><td>String name of the parameters file </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1174,30 +1575,6 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
 
 </div>
 </div>
-<a class="anchor" id="a7ba6a0cabd4a9fb545cc555e0bb0c0eb"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void DICe::Schema::initialize_by_phase_correlation </td>
-          <td>(</td>
-          <td class="paramtype">Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;&#160;</td>
-          <td class="paramname"><em>deformation</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Initializes the guess for a subset based on a phase correlation of the whole image. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">deformation</td><td>the deformation guess </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <a class="anchor" id="a852b6c7777507d9fddc349026f13ad46"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1284,6 +1661,28 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
 
 </div>
 </div>
+<a class="anchor" id="aca6a0aec436adef0f5e81602da4542c9"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DICe::Schema::motion_detected </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>subset_gid</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Returns true if the user has requested testing for motion in the frame and the motion was detected by diffing pixel values: </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">subset_gid</td><td>the global id of the subset to test for motion </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a02d6088668fc942f085db541f49f48e3"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1306,6 +1705,114 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
   </dd>
 </dl>
 <p>If fileName is empty, write the fields to the screen. If fielName is not empty, write the fields to a file (appending) </p>
+
+</div>
+</div>
+<a class="anchor" id="a4e8466fe2fb355a88183880567932ff8"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::Schema::record_failed_step </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>subset_gid</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>status</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>num_iterations</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Fail the current frame for this subset and move on to the next </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">subset_gid</td><td>the global id of the subset </td></tr>
+    <tr><td class="paramname">status</td><td>the reason for failure </td></tr>
+    <tr><td class="paramname">num_iterations</td><td>the number of iterations that took place before failure </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="aeb94723948255d2d62df0c3ef8feeda2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::Schema::record_step </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>subset_gid</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;&#160;</td>
+          <td class="paramname"><em>deformation</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>sigma</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>match</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>gamma</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>status</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>num_iterations</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Record the solution in the field arrays </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">subset_gid</td><td>the global id of the subset to record </td></tr>
+    <tr><td class="paramname">deformation</td><td>the deformation vector </td></tr>
+    <tr><td class="paramname">sigma</td><td>sigma value </td></tr>
+    <tr><td class="paramname">match</td><td>match value </td></tr>
+    <tr><td class="paramname">gamma</td><td>gamma value </td></tr>
+    <tr><td class="paramname">status</td><td>status flag </td></tr>
+    <tr><td class="paramname">num_iterations</td><td>the number of iterations </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1366,6 +1873,36 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
 
 </div>
 </div>
+<a class="anchor" id="abe5542c2bd9e3970d11e6c27f16fe3d1"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::Schema::set_normalize_gamma_with_active_pixels </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>flag</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>True if the gamma values should be normalized by the number of active pixels </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">flag</td><td>true if the gamma values should be normalized by the number of active pixels </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a49c67ef28e4ff35f043d47085b261fdf"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1412,7 +1949,36 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If a schema's parameters are changed, <a class="el" href="class_d_i_ce_1_1_schema.html#a779ad294283d4008dbba01a9747b968c">set_params()</a> must be called again any params that aren't set are reset to the default value (so this method can be used with a null params to reset the schema's parameters). </p>
+<p>If a schema's parameters are changed, <a class="el" href="class_d_i_ce_1_1_schema.html#a779ad294283d4008dbba01a9747b968c">set_params()</a> must be called again any params that aren't set are reset to the default value (so this method can be used with a null params to reset the schema's parameters). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">params</td><td>pointer to the prameterlist </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a50bdb955369ebe2ff26a4a9366792ad7"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::Schema::set_params </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>params_file_name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>sets a schema's parameters with the name of a parameters xml file </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">params_file_name</td><td>File name of the paramteres file </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1680,30 +2246,6 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
 
 </div>
 </div>
-<a class="anchor" id="a1d0740c95e2f12aa5a97b48d67c3975c"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void DICe::Schema::subset_evolution_routine </td>
-          <td>(</td>
-          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_objective.html">Objective</a> &gt;&#160;</td>
-          <td class="paramname"><em>obj</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>As an alternative to the generic routine, this routine spends a lot more time handling various failure cases. It tests for the solution gamma value after each step to ensure the correlation is still good. It also tests for jumps in the solution values. It uses a 10 step projection method to initialize the solution and checks for errors in the predicted vs. computed solution to restart the multistep projection process. In this routine obstructions are detected using statistics on the pixel intensity values rather than based on obstruction subsets that need to be tracked in the generic correlation routine. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">obj</td><td>The objective function that holds the ref and def subset along with several methods </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <a class="anchor" id="a3c895e24a1100eda631ea303984c0449"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1762,7 +2304,7 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
 </div><div class="memdoc">
 
 <p>Write an image that shows all the subsets current position and shape field values from. </p>
-<p>WARNING: This is meant only for the SL_ROUTINE where there are only a few subsets to track </p><dl class="params"><dt>Parameters</dt><dd>
+<p>WARNING: This is meant only for the TRACKING_ROUTINE where there are only a few subsets to track </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">use_gamma_as_color</td><td>colors the pixels according to gamma values for each pixel </td></tr>
   </table>
@@ -1785,7 +2327,7 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
 </div><div class="memdoc">
 
 <p>Write an image that shows all the subsets current position and shape field values from. </p>
-<p>WARNING: This is meant only for the SL_ROUTINE where there are only a few subsets to track </p>
+<p>WARNING: This is meant only for the TRACKING_ROUTINE where there are only a few subsets to track </p>
 
 </div>
 </div>
@@ -1969,7 +2511,7 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 16 2015 19:46:11 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Dec 7 2015 05:56:34 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>
