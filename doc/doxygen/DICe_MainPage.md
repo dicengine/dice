@@ -1,5 +1,6 @@
 Copyright 2015 Sandia Corporation.  Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 the U.S. Government retains certain rights in this software.
+SAND number for the information contained in the documentation and tutorials: SAND2015-10606 O
 
 [DICe Home Page] (http://dice.sandia.gov)
 
@@ -17,6 +18,9 @@ the U.S. Government retains certain rights in this software.
 
 [Legal] (#Legal)
 
+Citing %DICe:
+
+DZ Turner, Digital Image Correlation Engine (%DICe) Reference Manual, Sandia Report, SAND2015-10606 O, 2015.
 
 Introduction
 ============
