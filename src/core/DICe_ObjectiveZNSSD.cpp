@@ -258,8 +258,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
     const scalar_t sinTheta = std::sin(theta);
 
     for(int_t index=0;index<subset_->num_pixels();++index){
-      // TODO TODO TODO check for is deactivated this step
-      //if(ref_subset_->is_deactivated_this_step(index)||!ref_subset_->is_active(index)) continue;
+      if(subset_->is_deactivated_this_step(index)||!subset_->is_active(index)) continue;
       dx = subset_->x(index) - cx;
       dy = subset_->y(index) - cy;
       Dx = (1.0+dudx)*(dx) + gxy*(dy);
