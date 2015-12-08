@@ -213,10 +213,19 @@ public:
     return is_conformal_;
   }
 
-  /// Returnes a pointer to the subset's Conformal_Area_Def
+  /// Returns a pointer to the subset's Conformal_Area_Def
   const Conformal_Area_Def * conformal_subset_def()const{
     return &conformal_subset_def_;
   }
+
+  /// \brief Returns an estimate of the noise variance for this subset based on the method
+  /// of J. Immerkr, Fast Noise Variance Estimation, Computer Vision and
+  /// Image Understanding, Vol. 64, No. 2, pp. 300-302, Sep. 1996
+  /// The estimate is computed for a rectangular window that encompases the entire subset if the subset is conformal
+  /// \param image the image for which to estimate the noise for this subset
+  /// \param deformation the current deformation of the subset
+  scalar_t noise_varaiance(Teuchos::RCP<Image> image,
+    Teuchos::RCP<const std::vector<scalar_t> > deformation);
 
   /// \brief EXPERIMENTAL Check the deformed position of the pixel to see if it falls inside an obstruction, if so, turn it off
   /// \param deformation Deformation to use in determining the current position of all the pixels in the subset

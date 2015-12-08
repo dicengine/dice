@@ -228,4 +228,65 @@ Subset::write_tiff(const std::string & file_name,
   delete[] intensities;
 }
 
+scalar_t
+Subset::noise_varaiance(Teuchos::RCP<Image> image,
+  Teuchos::RCP<const std::vector<scalar_t> > deformation){
+
+  // create the mask
+  static scalar_t mask[3][3] = {{1, -2, 1},{-2,4,-2},{1,-2,1}};
+
+  // determine the extents of the subset:
+  int_t min_x = x(0);
+  int_t max_x = x(0);
+  int_t min_y = y(0);
+  int_t max_y = y(0);
+  for(int_t i=0;i<num_pixels();++i){
+    if(x(i) < min_x) min_x = x(i);
+    if(x(i) > max_x) max_x = x(i);
+    if(y(i) < min_y) min_y = y(i);
+    if(y(i) > max_y) max_y = y(i);
+  }
+
+  // move the window to the deformed location using u and v
+  const scalar_t u = (*deformation)[DISPLACEMENT_X];
+  const scalar_t v = (*deformation)[DISPLACEMENT_Y];
+  min_x += u; max_x += u;
+  min_y += v; max_y += v;
+
+  DEBUG_MSG("Subset::noise_variance(): Extents of subset " << min_x << " " << max_x << " " << min_y << " " << max_y);
+  const int_t h = max_y - min_y + 1;
+  const int_t w = max_x - min_x + 1;
+  const int_t img_h = image->height();
+  const int_t img_w = image->width();
+
+  // ensure that the subset falls inside the image
+  if(max_x >= image->width() || min_x < 0 || max_y >= image->height() || min_y < 0){
+    return 1.0;
+  }
+
+  scalar_t variance = 0.0;
+  scalar_t conv_i = 0.0;
+  // convolve and sum the intensities with the mask
+  for(int_t y=min_y; y<max_y;++y){
+    for(int_t x=min_x; x<max_x;++x){
+      // don't convolve the edge pixels
+      if(x<1||x>=img_w-1||y<1||y>=img_h-1){
+        variance += std::abs((*image)(x,y));
+      }
+      else{
+        conv_i = 0.0;
+        for(int_t j=0;j<3;++j){
+          for(int_t i=0;i<3;++i){
+            conv_i += (*image)(x+(i-1),y+(j-1))*mask[i][j];
+          }
+        }
+        variance += std::abs(conv_i);
+      }
+    }
+  }
+   variance *= std::sqrt(0.5*DICE_PI) / (6.0*(w-2)*(h-2));
+   DEBUG_MSG("Subset::noise_variance(): return value " << variance);
+  return variance;
+}
+
 }// End DICe Namespace
