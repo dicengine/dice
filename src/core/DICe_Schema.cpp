@@ -377,7 +377,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
 #endif
 
   gauss_filter_images_ = diceParams->get<bool>(DICe::gauss_filter_images,false);
-  compute_ref_gradients_ = diceParams->get<bool>(DICe::compute_ref_gradients,false);
+  compute_ref_gradients_ = diceParams->get<bool>(DICe::compute_ref_gradients,true);
   compute_def_gradients_ = diceParams->get<bool>(DICe::compute_def_gradients,false);
   if(diceParams->get<bool>(DICe::compute_image_gradients,false)) { // this flag turns them both on
     compute_ref_gradients_ = true;
@@ -448,6 +448,8 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   objective_regularization_factor_ = diceParams->get<double>(DICe::objective_regularization_factor);
   assert(diceParams->isParameter(DICe::update_obstructed_pixels_each_iteration));
   update_obstructed_pixels_each_iteration_ = diceParams->get<bool>(DICe::update_obstructed_pixels_each_iteration);
+  assert(diceParams->isParameter(DICe::output_beta));
+  output_beta_ = diceParams->get<bool>(DICe::output_beta);
   if(update_obstructed_pixels_each_iteration_)
     DEBUG_MSG("Obstructed pixel information will be updated each iteration.");
   assert(diceParams->isParameter(DICe::normalize_gamma_with_active_pixels));
@@ -1140,7 +1142,7 @@ Schema::execute_correlation(){
     for(int_t subset_index=0;subset_index<data_num_points_;++subset_index){
       DEBUG_MSG("[PROC " << proc_id << "] Subset " << subset_index << " synced-up solution after execute_correlation() done, u: " <<
         field_value(subset_index,DISPLACEMENT_X) << " v: " << field_value(subset_index,DISPLACEMENT_Y)
-        << " theta: " << field_value(subset_index,ROTATION_Z) << " sigma: " << field_value(subset_index,SIGMA) << " gamma: " << field_value(subset_index,GAMMA));
+        << " theta: " << field_value(subset_index,ROTATION_Z) << " sigma: " << field_value(subset_index,SIGMA) << " gamma: " << field_value(subset_index,GAMMA) << " beta: " << field_value(subset_index,BETA));
     }
   }
 
@@ -1249,6 +1251,7 @@ Schema::record_failed_step(const int_t subset_gid,
   local_field_value(subset_gid,SIGMA) = -1.0;
   local_field_value(subset_gid,MATCH) = -1.0;
   local_field_value(subset_gid,GAMMA) = -1.0;
+  local_field_value(subset_gid,BETA) = -1.0;
   local_field_value(subset_gid,STATUS_FLAG) = status;
   local_field_value(subset_gid,ITERATIONS) = num_iterations;
 }
@@ -1259,6 +1262,7 @@ Schema::record_step(const int_t subset_gid,
   const scalar_t & sigma,
   const scalar_t & match,
   const scalar_t & gamma,
+  const scalar_t & beta,
   const int_t status,
   const int_t num_iterations){
   local_field_value(subset_gid,DISPLACEMENT_X) = (*deformation)[DISPLACEMENT_X];
@@ -1270,6 +1274,7 @@ Schema::record_step(const int_t subset_gid,
   local_field_value(subset_gid,SIGMA) = sigma;
   local_field_value(subset_gid,MATCH) = match; // 0 means data is successful
   local_field_value(subset_gid,GAMMA) = gamma;
+  local_field_value(subset_gid,BETA) = beta;
   local_field_value(subset_gid,STATUS_FLAG) = status;
   local_field_value(subset_gid,ITERATIONS) = num_iterations;
 }
@@ -1338,7 +1343,8 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       DEBUG_MSG("Subset " << subset_gid << " solve will be skipped as requested by user in the subset file");
       const scalar_t initial_sigma = obj->sigma(deformation);
       const scalar_t initial_gamma = obj->gamma(deformation);
-      record_step(subset_gid,deformation,initial_sigma,0.0,initial_gamma,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
+      const scalar_t initial_beta = output_beta_ ? obj->beta(deformation) : 0.0;
+      record_step(subset_gid,deformation,initial_sigma,0.0,initial_gamma,initial_beta,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
       return;
     }
   }
@@ -1414,6 +1420,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   const scalar_t gamma = obj->gamma(deformation);
   const scalar_t sigma = obj->sigma(deformation);
+  const scalar_t beta = output_beta_ ? obj->beta(deformation) : 0.0;
   if(final_gamma_threshold_!=-1.0&&gamma > final_gamma_threshold_){
     DEBUG_MSG("Subset " << subset_gid << " final gamma value FAILS threshold test, gamma: " <<
       gamma << " (threshold: " << final_gamma_threshold_ << ")");
@@ -1451,7 +1458,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   // SUCCESS
   //
   if(projection_method_==VELOCITY_BASED) save_off_fields(subset_gid);
-  record_step(subset_gid,deformation,sigma,0.0,gamma,static_cast<int_t>(init_status),num_iterations);
+  record_step(subset_gid,deformation,sigma,0.0,gamma,beta,static_cast<int_t>(init_status),num_iterations);
   //
   //  turn on pixels that at the beginning were hidden behind an obstruction
   //

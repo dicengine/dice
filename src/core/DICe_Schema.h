@@ -640,6 +640,7 @@ public:
   /// \param sigma sigma value
   /// \param match match value
   /// \param gamma gamma value
+  /// \param beta beta value
   /// \param status status flag
   /// \param num_iterations the number of iterations
   void record_step(const int_t subset_gid,
@@ -647,6 +648,7 @@ public:
     const scalar_t & sigma,
     const scalar_t & match,
     const scalar_t & gamma,
+    const scalar_t & beta,
     const int_t status,
     const int_t num_iterations);
 
@@ -684,6 +686,11 @@ public:
   /// Print images with the evolved intensity profile
   bool output_evolved_subset_images()const{
     return output_evolved_subset_images_;
+  }
+
+  /// Returns true if the beta parameter is computed by the objective
+  bool output_beta()const{
+    return output_beta_;
   }
 
   /// Evolve subsets as more pixels become visible that were previously obstructed
@@ -1093,6 +1100,8 @@ private:
   double final_gamma_threshold_;
   /// tolerance for max_path_distance
   double path_distance_threshold_;
+  /// true if the beta parameter should be computed by the objective
+  bool output_beta_;
 };
 
 /// \class DICe::Output_Spec

@@ -219,12 +219,12 @@ public:
   }
 
   /// \brief Returns an estimate of the noise variance for this subset based on the method
-  /// of J. Immerkr, Fast Noise Variance Estimation, Computer Vision and
+  /// of J. Immerkaer, Fast Noise Variance Estimation, Computer Vision and
   /// Image Understanding, Vol. 64, No. 2, pp. 300-302, Sep. 1996
   /// The estimate is computed for a rectangular window that encompases the entire subset if the subset is conformal
   /// \param image the image for which to estimate the noise for this subset
   /// \param deformation the current deformation of the subset
-  scalar_t noise_varaiance(Teuchos::RCP<Image> image,
+  scalar_t noise_variance(Teuchos::RCP<Image> image,
     Teuchos::RCP<const std::vector<scalar_t> > deformation);
 
   /// \brief EXPERIMENTAL Check the deformed position of the pixel to see if it falls inside an obstruction, if so, turn it off

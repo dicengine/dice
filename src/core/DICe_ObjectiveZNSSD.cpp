@@ -75,126 +75,86 @@ Objective_ZNSSD::gamma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
 }
 
 scalar_t
+Objective_ZNSSD::beta( Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
+  // for beta we don't want the gamma values normalized by the number of pixels:
+  const bool original_normalize_flag = schema_->normalize_gamma_with_active_pixels();
+  schema_->set_normalize_gamma_with_active_pixels(false);
+  std::vector<scalar_t> epsilon(3);
+  epsilon[0] = 1.0E-1;
+  epsilon[1] = 1.0E-1;
+  epsilon[2] = 1.0E-1;
+  std::vector<scalar_t> factor(3);
+  factor[0] = 1.0E-3;
+  factor[1] = 1.0E-3;
+  factor[2] = 1.0E-1;
+  std::vector<DICe::Field_Name> fields(3);
+  fields[0] = DISPLACEMENT_X;
+  fields[1] = DISPLACEMENT_Y;
+  fields[2] = ROTATION_Z;
+  const scalar_t gamma_0 = gamma(deformation);
+  std::vector<scalar_t> dir_beta(3,0.0);
+  Teuchos::RCP<std::vector<scalar_t> > temp_def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE));
+  for(size_t i=0;i<fields.size();++i){
+    if(!schema_->rotation_enabled()&&i==2) continue;
+    // reset def vector
+    for(size_t j=0;j<DICE_DEFORMATION_SIZE;++j)
+      (*temp_def)[j] = (*deformation)[j];
+    // mod the def vector +
+    (*temp_def)[fields[i]] += epsilon[i];
+    const scalar_t gamma_p = gamma(temp_def);
+    // mod the def vector -
+    (*temp_def)[fields[i]] -= 2.0*epsilon[i];
+    const scalar_t gamma_m = gamma(temp_def);
+
+    if(std::abs(gamma_m - gamma_0)<1.0E-10||std::abs(gamma_p - gamma_0)<1.0E-10){
+      // abort because the slope is so bad that beta is infinite
+      DEBUG_MSG("Objective_ZNSSD::beta(): return value -1.0");
+      // replace the correct normalization flag:
+      schema_->set_normalize_gamma_with_active_pixels(original_normalize_flag);
+      // re-initialize the subset with the original deformation solution
+      subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation,schema_->interpolation_method());
+      return -1.0;
+    }
+    const scalar_t slope_m = std::abs(epsilon[i] / (gamma_m - gamma_0))*factor[i];
+    const scalar_t slope_p = std::abs(epsilon[i] / (gamma_p - gamma_0))*factor[i];
+    dir_beta[i] = (slope_m + slope_p)/2.0;
+    //DEBUG_MSG("Simplex method dir_beta " << i << ": " << std::sqrt(dir_beta[i]*dir_beta[i]) << " gamma_p: " << gamma_p << " gamma_m: " << gamma_m);
+  }
+  scalar_t mag_dir_beta = 0.0;
+  for(size_t i=0;i<dir_beta.size();++i){
+    if(!schema_->rotation_enabled()&&i==2) continue;
+    mag_dir_beta += dir_beta[i]*dir_beta[i];
+  }
+  mag_dir_beta = std::sqrt(mag_dir_beta);
+  DEBUG_MSG("Objective_ZNSSD::beta(): return value " << mag_dir_beta);
+
+  // replace the correct normalization flag:
+  schema_->set_normalize_gamma_with_active_pixels(original_normalize_flag);
+
+  // re-initialize the subset with the original deformation solution
+  subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation,schema_->interpolation_method());
+  return mag_dir_beta;
+}
+
+scalar_t
 Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
-
-  // for the simplex method, use the gradient in gamma to output a sigma value (sqrt(dg_x^2 + dg_y^2 + dg_theta^2):
-  if(schema_->optimization_method()==DICe::SIMPLEX){
-    // for sigma we don't want the gamma values normalized by the number of pixels:
-    const bool original_normalize_flag = schema_->normalize_gamma_with_active_pixels();
-    schema_->set_normalize_gamma_with_active_pixels(false);
-    std::vector<scalar_t> epsilon(3);
-    epsilon[0] = 1.0E-1;
-    epsilon[1] = 1.0E-1;
-    epsilon[2] = 1.0E-1;
-    std::vector<scalar_t> factor(3);
-    factor[0] = 1.0E-3;
-    factor[1] = 1.0E-3;
-    factor[2] = 1.0E-1;
-    std::vector<DICe::Field_Name> fields(3);
-    fields[0] = DISPLACEMENT_X;
-    fields[1] = DISPLACEMENT_Y;
-    fields[2] = ROTATION_Z;
-    const scalar_t gamma_0 = gamma(deformation);
-    std::vector<scalar_t> dir_sigma(3,0.0);
-    Teuchos::RCP<std::vector<scalar_t> > temp_def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE));
-    for(size_t i=0;i<fields.size();++i){
-      if(!schema_->rotation_enabled()&&i==2) continue;
-      // reset def vector
-      for(size_t j=0;j<DICE_DEFORMATION_SIZE;++j)
-        (*temp_def)[j] = (*deformation)[j];
-      // mod the def vector +
-      (*temp_def)[fields[i]] += epsilon[i];
-      const scalar_t gamma_p = gamma(temp_def);
-      // mod the def vector -
-      (*temp_def)[fields[i]] -= 2.0*epsilon[i];
-      const scalar_t gamma_m = gamma(temp_def);
-      const scalar_t slope_m = std::abs(epsilon[i] / (gamma_m - gamma_0))*factor[i];
-      const scalar_t slope_p = std::abs(epsilon[i] / (gamma_p - gamma_0))*factor[i];
-      dir_sigma[i] = (slope_m + slope_p)/2.0;
-      //DEBUG_MSG("Simplex method dir_sigma " << i << ": " << std::sqrt(dir_sigma[i]*dir_sigma[i]) << " gamma_p: " << gamma_p << " gamma_m: " << gamma_m);
-    }
-    scalar_t mag_dir_sigma = 0.0;
-    for(size_t i=0;i<dir_sigma.size();++i){
-      if(!schema_->rotation_enabled()&&i==2) continue;
-      mag_dir_sigma += dir_sigma[i]*dir_sigma[i];
-    }
-    mag_dir_sigma = std::sqrt(mag_dir_sigma);
-    DEBUG_MSG("Simplex method sigma: " << mag_dir_sigma);
-
-    // replace the correct normalization flag:
-    schema_->set_normalize_gamma_with_active_pixels(original_normalize_flag);
-
-    // re-initialize the subset with the original deformation solution
-    subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation,schema_->interpolation_method());
-    return mag_dir_sigma;
-  }
-
   // if the gradients don't exist:
-  if(!subset_->has_gradients()) return 0.0;
+  if(!subset_->has_gradients())
+    return 0.0;
 
-  assert(deformation->size()==DICE_DEFORMATION_SIZE);
-  int_t N = 2;
-  int *IPIV = new int[N+1];
-  double *EIGS = new double[N+1];
-  int LWORK = N*N;
-  int QWORK = 3*N;
-  int INFO = 0;
-  double *WORK = new double[LWORK];
-  double *SWORK = new double[QWORK];
-  Teuchos::LAPACK<int_t,double> lapack;
-  assert(N==2);
-
-  // Initialize storage:
-  Teuchos::SerialDenseMatrix<int_t,double> H(N,N, true);
-  Teuchos::ArrayRCP<scalar_t> gradGx = subset_->grad_x_array();
-  Teuchos::ArrayRCP<scalar_t> gradGy = subset_->grad_y_array();
-
-  // update the deformed image with the new deformation:
-  try{
-    subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation,schema_->interpolation_method());
+  // compute the noise variance of the image:
+  const scalar_t noise_variance = subset_->noise_variance(schema_->def_img(),deformation);
+  // sum up the grads in x and y:
+  scalar_t sum_gx = 0.0;
+  scalar_t sum_gy = 0.0;
+  for(int_t i=0;i<subset_->num_pixels();++i){
+    if(!subset_->is_active(i) || subset_->is_deactivated_this_step(i)) continue;
+    sum_gx += subset_->grad_x(i)*subset_->grad_x(i);
+    sum_gy += subset_->grad_y(i)*subset_->grad_y(i);
   }
-  catch (std::logic_error & err) {return -1.0;}
-
-  scalar_t Gx=0.0,Gy=0.0;
-  for(int_t index=0;index<subset_->num_pixels();++index){
-    // skip the deactivated pixels
-    if(!subset_->is_active(index)||subset_->is_deactivated_this_step(index))continue;
-    Gx = gradGx[index];
-    Gy = gradGy[index];
-    H(0,0) += Gx*Gx;
-    H(1,0) += Gy*Gx;
-    H(0,1) += Gx*Gy;
-    H(1,1) += Gy*Gy;
-  }
-  // clear temp storage
-  for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
-  for(int_t i=0;i<QWORK;++i) SWORK[i] = 0.0;
-  for(int_t i=0;i<N+1;++i) {IPIV[i] = 0; EIGS[i] = 0.0;}
-  try{
-    lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
-  }
-  catch(std::exception &e){DEBUG_MSG( e.what() << '\n'); return -1.0;}
-  for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
-  try{
-    lapack.GETRI(N,H.values(),N,IPIV,WORK,LWORK,&INFO);
-  }
-  catch(std::exception &e){DEBUG_MSG( e.what() << '\n'); return -1.0;}
-
-  // now compute the eigenvalues for H^-1 as an estimate of sigma:
-  lapack.SYEV('N','U',N,H.values(),N,EIGS,SWORK,QWORK,&INFO);
-  DEBUG_MSG("Subset " << correlation_point_global_id_ << " Eigenvalues of H^-1: " << EIGS[0] << " " << EIGS[1]);
-  const scalar_t maxEig = std::max(EIGS[0],EIGS[1]);
-
-  // 95% confidence interval
-  const scalar_t sigma = 2.0*std::sqrt(maxEig*5.991);
-  DEBUG_MSG("Subset " << correlation_point_global_id_ << " sigma: " << sigma);
-
-  // clean up storage for lapack:
-  delete [] WORK;
-  delete [] SWORK;
-  delete [] IPIV;
-  delete [] EIGS;
-
+  const scalar_t sum_grad = sum_gx > sum_gy ? sum_gy : sum_gx;
+  const scalar_t sigma = std::sqrt(2.0*noise_variance*noise_variance / sum_grad);
+  DEBUG_MSG("Objective_ZNSSD::sigma(): Subset " << correlation_point_global_id_ << " sigma: " << sigma);
   return sigma;
 }
 

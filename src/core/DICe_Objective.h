@@ -112,6 +112,10 @@ public:
   /// \param deformation The deformation map parameters for the current guess
   virtual scalar_t sigma( Teuchos::RCP<std::vector<scalar_t> > & deformation) const = 0;
 
+  /// \brief Measure of the slope of the optimization landscape or how deep the minimum well is
+  /// \param deformation The deformation map parameters for the current guess
+  virtual scalar_t beta( Teuchos::RCP<std::vector<scalar_t> > & deformation) const = 0;
+
   /// \brief Gradient based optimization algorithm
   /// \param deformation [out] The deformation map parameters taken as input as the initial guess and returned as the converged solution
   /// \param num_iterations [out] The number of interations a particular frame took to execute

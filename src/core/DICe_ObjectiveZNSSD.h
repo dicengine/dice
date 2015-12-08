@@ -112,6 +112,9 @@ public:
   virtual scalar_t sigma( Teuchos::RCP<std::vector<scalar_t> > & deformation) const;
 
   /// See base class documentation
+  virtual scalar_t beta( Teuchos::RCP<std::vector<scalar_t> > & deformation) const;
+
+  /// See base class documentation
   virtual Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     int_t & num_iterations);
 

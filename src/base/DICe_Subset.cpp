@@ -229,7 +229,7 @@ Subset::write_tiff(const std::string & file_name,
 }
 
 scalar_t
-Subset::noise_varaiance(Teuchos::RCP<Image> image,
+Subset::noise_variance(Teuchos::RCP<Image> image,
   Teuchos::RCP<const std::vector<scalar_t> > deformation){
 
   // create the mask
@@ -284,8 +284,8 @@ Subset::noise_varaiance(Teuchos::RCP<Image> image,
       }
     }
   }
-   variance *= std::sqrt(0.5*DICE_PI) / (6.0*(w-2)*(h-2));
-   DEBUG_MSG("Subset::noise_variance(): return value " << variance);
+  variance *= std::sqrt(0.5*DICE_PI) / (6.0*(w-2)*(h-2));
+  DEBUG_MSG("Subset::noise_variance(): return value " << variance);
   return variance;
 }
 

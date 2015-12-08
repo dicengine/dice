@@ -194,6 +194,8 @@ const char* const output_evolved_subset_images = "output_evolved_subset_images";
 /// String parameter name
 const char* const use_subset_evolution = "use_subset_evolution";
 /// String parameter name
+const char* const output_beta = "output_beta";
+/// String parameter name
 const char* const max_iterations = "max_iterations";
 /// String parameter name
 const char* const tolerance = "tolerance";
@@ -291,14 +293,16 @@ enum Field_Name {
   // 19
   GAMMA,
   // 20
-  MATCH,
+  BETA,
   // 21
-  ITERATIONS,
+  MATCH,
   // 22
-  STATUS_FLAG,
+  ITERATIONS,
   // 23
-  NEIGHBOR_ID,
+  STATUS_FLAG,
   // 24
+  NEIGHBOR_ID,
+  // 25
   CONDITION_NUMBER,
   // *** DO NOT PUT ANY FIELDS UNDER THIS ONE ***
   // (this is how the field stride is automatically set if another field is added)
@@ -783,6 +787,12 @@ const Correlation_Parameter use_subset_evolution_param(use_subset_evolution,
   true,
   "Used to evolve subsets that are initially obscured (Currently only available for TRACKING_ROUTINE correlation routine, not GENERIC)");
 /// Correlation parameter and properties
+const Correlation_Parameter output_beta_param(output_beta,
+  BOOL_PARAM,
+  true,
+  "True if the beta parameter should be computed (still needs to be added to the output spec if it should be included in the output file)"
+  " This parameter measures the distinguishability of a pattern for template matching");
+/// Correlation parameter and properties
 const Correlation_Parameter use_tracking_default_params_param(use_tracking_default_params,
   BOOL_PARAM,
   true,
@@ -848,7 +858,7 @@ const Correlation_Parameter compute_image_gradients_param(compute_image_gradient
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 58;
+const int_t num_valid_correlation_params = 59;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -883,6 +893,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   output_deformed_subset_intensity_images_param,
   output_evolved_subset_images_param,
   use_subset_evolution_param,
+  output_beta_param,
   output_spec_param,
   output_delimiter_param,
   omit_output_row_id_param,
