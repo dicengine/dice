@@ -110,7 +110,9 @@ public:
 
   /// \brief Uncertainty measure for solution
   /// \param deformation The deformation map parameters for the current guess
-  virtual scalar_t sigma( Teuchos::RCP<std::vector<scalar_t> > & deformation) const = 0;
+  /// \param noise_level [out] Returned as the standard deviation estimate of the image noise sigma_g from Sutton et.al.
+  virtual scalar_t sigma( Teuchos::RCP<std::vector<scalar_t> > & deformation,
+    scalar_t & noise_level) const = 0;
 
   /// \brief Measure of the slope of the optimization landscape or how deep the minimum well is
   /// \param deformation The deformation map parameters for the current guess

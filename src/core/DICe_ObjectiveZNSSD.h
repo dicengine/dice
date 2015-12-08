@@ -109,7 +109,8 @@ public:
   virtual scalar_t gamma( Teuchos::RCP<std::vector<scalar_t> > & deformation)const;
 
   /// See base class documentation
-  virtual scalar_t sigma( Teuchos::RCP<std::vector<scalar_t> > & deformation) const;
+  virtual scalar_t sigma( Teuchos::RCP<std::vector<scalar_t> > & deformation,
+    scalar_t & noise_level) const;
 
   /// See base class documentation
   virtual scalar_t beta( Teuchos::RCP<std::vector<scalar_t> > & deformation) const;

@@ -1252,6 +1252,7 @@ Schema::record_failed_step(const int_t subset_gid,
   local_field_value(subset_gid,MATCH) = -1.0;
   local_field_value(subset_gid,GAMMA) = -1.0;
   local_field_value(subset_gid,BETA) = -1.0;
+  local_field_value(subset_gid,NOISE_LEVEL) = -1.0;
   local_field_value(subset_gid,STATUS_FLAG) = status;
   local_field_value(subset_gid,ITERATIONS) = num_iterations;
 }
@@ -1263,6 +1264,7 @@ Schema::record_step(const int_t subset_gid,
   const scalar_t & match,
   const scalar_t & gamma,
   const scalar_t & beta,
+  const scalar_t & noise,
   const int_t status,
   const int_t num_iterations){
   local_field_value(subset_gid,DISPLACEMENT_X) = (*deformation)[DISPLACEMENT_X];
@@ -1275,6 +1277,7 @@ Schema::record_step(const int_t subset_gid,
   local_field_value(subset_gid,MATCH) = match; // 0 means data is successful
   local_field_value(subset_gid,GAMMA) = gamma;
   local_field_value(subset_gid,BETA) = beta;
+  local_field_value(subset_gid,NOISE_LEVEL) = noise;
   local_field_value(subset_gid,STATUS_FLAG) = status;
   local_field_value(subset_gid,ITERATIONS) = num_iterations;
 }
@@ -1341,10 +1344,11 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   if(skip_solve_flags_->find(subset_gid)!=skip_solve_flags_->end()){
     if(skip_solve_flags_->find(subset_gid)->second ==true){
       DEBUG_MSG("Subset " << subset_gid << " solve will be skipped as requested by user in the subset file");
-      const scalar_t initial_sigma = obj->sigma(deformation);
+      scalar_t noise_std_dev = 0.0;
+      const scalar_t initial_sigma = obj->sigma(deformation,noise_std_dev);
       const scalar_t initial_gamma = obj->gamma(deformation);
       const scalar_t initial_beta = output_beta_ ? obj->beta(deformation) : 0.0;
-      record_step(subset_gid,deformation,initial_sigma,0.0,initial_gamma,initial_beta,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
+      record_step(subset_gid,deformation,initial_sigma,0.0,initial_gamma,initial_beta,noise_std_dev,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
       return;
     }
   }
@@ -1418,18 +1422,14 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   //  test final gamma if user requested
   //
+  scalar_t noise_std_dev = 0.0;
   const scalar_t gamma = obj->gamma(deformation);
-  const scalar_t sigma = obj->sigma(deformation);
+  const scalar_t sigma = obj->sigma(deformation,noise_std_dev);
   const scalar_t beta = output_beta_ ? obj->beta(deformation) : 0.0;
   if(final_gamma_threshold_!=-1.0&&gamma > final_gamma_threshold_){
     DEBUG_MSG("Subset " << subset_gid << " final gamma value FAILS threshold test, gamma: " <<
       gamma << " (threshold: " << final_gamma_threshold_ << ")");
-    // for the phase correlation initialization method, the initial guess needs to be stored
-    if(initialization_method_==DICe::USE_PHASE_CORRELATION){
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
-//      local_field_value(subset_gid,DISPLACEMENT_X) += phase_cor_u_x_;
-//      local_field_value(subset_gid,DISPLACEMENT_Y) += phase_cor_u_y_;
-    }
+    // TODO for the phase correlation initialization method, the initial guess needs to be stored
     record_failed_step(subset_gid,static_cast<int_t>(FRAME_FAILED_DUE_TO_HIGH_GAMMA),num_iterations);
     return;
   }
@@ -1458,7 +1458,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   // SUCCESS
   //
   if(projection_method_==VELOCITY_BASED) save_off_fields(subset_gid);
-  record_step(subset_gid,deformation,sigma,0.0,gamma,beta,static_cast<int_t>(init_status),num_iterations);
+  record_step(subset_gid,deformation,sigma,0.0,gamma,beta,noise_std_dev,static_cast<int_t>(init_status),num_iterations);
   //
   //  turn on pixels that at the beginning were hidden behind an obstruction
   //

@@ -295,14 +295,16 @@ enum Field_Name {
   // 20
   BETA,
   // 21
-  MATCH,
+  NOISE_LEVEL, // standard deviation of the noise
   // 22
-  ITERATIONS,
+  MATCH,
   // 23
-  STATUS_FLAG,
+  ITERATIONS,
   // 24
-  NEIGHBOR_ID,
+  STATUS_FLAG,
   // 25
+  NEIGHBOR_ID,
+  // 26
   CONDITION_NUMBER,
   // *** DO NOT PUT ANY FIELDS UNDER THIS ONE ***
   // (this is how the field stride is automatically set if another field is added)

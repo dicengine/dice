@@ -641,6 +641,7 @@ public:
   /// \param match match value
   /// \param gamma gamma value
   /// \param beta beta value
+  /// \param noise noise level value
   /// \param status status flag
   /// \param num_iterations the number of iterations
   void record_step(const int_t subset_gid,
@@ -649,6 +650,7 @@ public:
     const scalar_t & match,
     const scalar_t & gamma,
     const scalar_t & beta,
+    const scalar_t & noise,
     const int_t status,
     const int_t num_iterations);
 

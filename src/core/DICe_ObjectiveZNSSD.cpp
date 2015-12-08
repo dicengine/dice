@@ -75,7 +75,7 @@ Objective_ZNSSD::gamma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
 }
 
 scalar_t
-Objective_ZNSSD::beta( Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
+Objective_ZNSSD::beta(Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
   // for beta we don't want the gamma values normalized by the number of pixels:
   const bool original_normalize_flag = schema_->normalize_gamma_with_active_pixels();
   schema_->set_normalize_gamma_with_active_pixels(false);
@@ -137,13 +137,14 @@ Objective_ZNSSD::beta( Teuchos::RCP<std::vector<scalar_t> > &deformation) const 
 }
 
 scalar_t
-Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
+Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation,
+  scalar_t & noise_level) const {
   // if the gradients don't exist:
   if(!subset_->has_gradients())
     return 0.0;
 
-  // compute the noise variance of the image:
-  const scalar_t noise_variance = subset_->noise_variance(schema_->def_img(),deformation);
+  // compute the noise std dev. of the image:
+  noise_level = subset_->noise_std_dev(schema_->def_img(),deformation);
   // sum up the grads in x and y:
   scalar_t sum_gx = 0.0;
   scalar_t sum_gy = 0.0;
@@ -153,7 +154,7 @@ Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
     sum_gy += subset_->grad_y(i)*subset_->grad_y(i);
   }
   const scalar_t sum_grad = sum_gx > sum_gy ? sum_gy : sum_gx;
-  const scalar_t sigma = std::sqrt(2.0*noise_variance*noise_variance / sum_grad);
+  const scalar_t sigma = std::sqrt(2.0*noise_level*noise_level / sum_grad);
   DEBUG_MSG("Objective_ZNSSD::sigma(): Subset " << correlation_point_global_id_ << " sigma: " << sigma);
   return sigma;
 }

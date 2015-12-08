@@ -229,7 +229,7 @@ Subset::write_tiff(const std::string & file_name,
 }
 
 scalar_t
-Subset::noise_variance(Teuchos::RCP<Image> image,
+Subset::noise_std_dev(Teuchos::RCP<Image> image,
   Teuchos::RCP<const std::vector<scalar_t> > deformation){
 
   // create the mask
@@ -253,7 +253,7 @@ Subset::noise_variance(Teuchos::RCP<Image> image,
   min_x += u; max_x += u;
   min_y += v; max_y += v;
 
-  DEBUG_MSG("Subset::noise_variance(): Extents of subset " << min_x << " " << max_x << " " << min_y << " " << max_y);
+  DEBUG_MSG("Subset::noise_std_dev(): Extents of subset " << min_x << " " << max_x << " " << min_y << " " << max_y);
   const int_t h = max_y - min_y + 1;
   const int_t w = max_x - min_x + 1;
   const int_t img_h = image->height();
@@ -285,7 +285,7 @@ Subset::noise_variance(Teuchos::RCP<Image> image,
     }
   }
   variance *= std::sqrt(0.5*DICE_PI) / (6.0*(w-2)*(h-2));
-  DEBUG_MSG("Subset::noise_variance(): return value " << variance);
+  DEBUG_MSG("Subset::noise_std_dev(): return value " << variance);
   return variance;
 }
 
