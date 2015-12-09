@@ -163,6 +163,10 @@ The file naming convention for timing files is
 <a name="UserManual"></a>User Manual 
 ===============
 
+### Input syntax
+
+Capitalization is disregarded in the input files, all input text is converted to upper-case when read (with the exception of file names in which case the capitalization is preserved). Text files already in the DICe repository should work for Linux or Windows without modification. If this is not the case, you may have the wrong setting in your git repository regarding line endings, see the section on git below. Text files generated on Windows should follow the Windows line ending convention, the same for Linux (or Mac). The xml input files should follow standard xml format. The optional subset file uses the '#' character to start a comment. Everything after the comment character is disregarded.
+
 ### User specified correlation parameters
 
 Correlation paramters (for example, the interpolation method or how
@@ -564,6 +568,46 @@ The delimiter used in the output file can be set in the parameters file with the
 The user can also request that the row id in the output files be omitted with
 
     <Parameter name="omit_output_row_id" type="bool" value="true" />
+
+### Fields
+
+The following fields are available for output:
+
+    DISPLACEMENT_X    // u
+    DISPLACEMENT_Y    // v
+    DISPLACEMENT_Z    // w (used for stereo only)
+    ROTATION_X        // rotation about the x-axis (used for stereo only)
+    ROTATION_Y        // rotation about the y-axis (used for stero only)
+    ROTATION_Z        // (theta) rotation about the z-axis, z is out of the plane
+    NORMAL_STRAIN_X   // stretch in the x direction
+    NORMAL_STRAIN_Y   // stretch in the y direction
+    NORMAL_STRAIN_Z   // stretch in the z direction (used for stero only)
+    SHEAR_STRAIN_XY   // shear strain in the x-y plane
+    SHEAR_STRAIN_YZ   // shear strain in th y-z plane (not currently used)
+    SHEAR_STRAIN_XZ   // shear strain in the x-z plane (not currently used)
+    COORDINATE_X      // x position in space
+    COORDINATE_Y      // y position in space
+    COORDINATE_Z      // z position in space (not currently used)
+    VAR_X             // auxiliary variable
+    VAR_Y             // auxiliary variable
+    VAR_Z             // auxiliary varaible
+    SIGMA             // predicted std. dev. of the displacement solution given std. dev. of image
+                      // noise and interpolation bias, smaller sigma is better
+    GAMMA             // template match quality (value of the cost function),
+                      // smaller gamma is better, 0.0 is perfect match
+    BETA              // sensitivity of the cost function to small perturbations in the displacement solution
+    NOISE_LEVEL       // estimated std. dev. of the image noise
+    MATCH             // 0 means match was found -1 means match failed
+    ITERATIONS        // number of iterations taken by the solution algorithm
+    STATUS_FLAG       // information about the initialization method or error flags on failed steps
+    NEIGHBOR_ID       // the global id of the neighboring subset to use for initialization by neighbor value
+    CONDITION_NUMBER  // quality metric for the psuedoinverse matrix in the gradient-based method
+
+Some of the parameters require activation in the correlation parameters. To output `BETA` the following parameter must be set in the correlation parameters file
+    
+    <Parameter name="output_beta" type="bool" value="true" />
+
+If all zeros are reported for a certain field, for example `SHEAR_STRAIN_XY`, it usually means that particular shape function is not activated in the correlation paramters. The `CONDITION_NUMBER` field is not used in the `SIMPLEX` optimization method so all zeros will be reported for `SIMPLEX`. Values of `-1.0` typically imply failure of some kind. For example if the `NEIGHBOR_ID` field is `-1.0` the subset corresponding to that field value does not have a neighbor. Another example would be if `SIGMA` is `-1.0` it implies that the correlation failed for that particular step.
 
 ### Plotting results with python
 

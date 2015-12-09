@@ -251,61 +251,63 @@ enum Field_Name {
   // *** ALSO UPDATE THE SIZE OF THE DEFORMATION GIVEN IN #define DICE_DEFORMATION_SIZE
   //     IF MORE DEFORMATION FIELDS ARE ADDED
   // 0
-  DISPLACEMENT_X=0,
+  DISPLACEMENT_X=0,  // u
   // 1
-  DISPLACEMENT_Y,
+  DISPLACEMENT_Y,    // v
   // 2
-  DISPLACEMENT_Z,
+  DISPLACEMENT_Z,    // w (used for stereo only)
   // 3
-  ROTATION_X,
+  ROTATION_X,        // rotation about the x-axis (used for stereo only)
   // 4
-  ROTATION_Y,
+  ROTATION_Y,        // rotation about the y-axis (used for stero only)
   // 5
-  ROTATION_Z,
+  ROTATION_Z,        // (theta) rotation about the z-axis, z is out of the plane
   // 6
-  NORMAL_STRAIN_X,
+  NORMAL_STRAIN_X,   // stretch in the x direction
   // 7
-  NORMAL_STRAIN_Y,
+  NORMAL_STRAIN_Y,   // stretch in the y direction
   // 8
-  NORMAL_STRAIN_Z,
+  NORMAL_STRAIN_Z,   // stretch in the z direction (used for stero only)
   // 9
-  SHEAR_STRAIN_XY,
+  SHEAR_STRAIN_XY,   // shear strain in the x-y plane
   // 10
-  SHEAR_STRAIN_YZ,
+  SHEAR_STRAIN_YZ,   // shear strain in th y-z plane (not currently used)
   // 11
-  SHEAR_STRAIN_XZ,
+  SHEAR_STRAIN_XZ,   // shear strain in the x-z plane (not currently used)
   // *** Fields >= DICE_DEFORMATION_SIZE are not part of the deformation state of a subset
   //     but used elsewhere in the schema
   // 12
-  COORDINATE_X,
+  COORDINATE_X,      // x position in space
   // 13
-  COORDINATE_Y,
+  COORDINATE_Y,      // y position in space
   // 14
-  COORDINATE_Z,
+  COORDINATE_Z,      // z position in space (not currently used)
   // 15
-  VAR_X,
+  VAR_X,             // auxiliary variable
   // 16
-  VAR_Y,
+  VAR_Y,             // auxiliary variable
   // 17
-  VAR_Z,
+  VAR_Z,             // auxiliary varaible
   // 18
-  SIGMA,
+  SIGMA,             // predicted std. dev. of the displacement solution given std. dev. of image
+                     // noise and interpolation bias, smaller sigma is better
   // 19
-  GAMMA,
+  GAMMA,             // template match quality (value of the cost function),
+                     // smaller gamma is better, 0.0 is perfect match
   // 20
-  BETA,
+  BETA,              // sensitivity of the cost function to small perturbations in the displacement solution
   // 21
-  NOISE_LEVEL, // standard deviation of the noise
+  NOISE_LEVEL,       // estimated std. dev. of the image noise
   // 22
-  MATCH,
+  MATCH,             // 0 means match was found -1 means match failed
   // 23
-  ITERATIONS,
+  ITERATIONS,        // number of iterations taken by the solution algorithm
   // 24
-  STATUS_FLAG,
+  STATUS_FLAG,       // information about the initialization method or error flags on failed steps
   // 25
-  NEIGHBOR_ID,
+  NEIGHBOR_ID,       // the global id of the neighboring subset to use for initialization by neighbor value
   // 26
-  CONDITION_NUMBER,
+  CONDITION_NUMBER,  // quality metric for the pseudoinverse matrix in the gradient-based method
   // *** DO NOT PUT ANY FIELDS UNDER THIS ONE ***
   // (this is how the field stride is automatically set if another field is added)
   MAX_FIELD_NAME,
