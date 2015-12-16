@@ -510,6 +510,8 @@ To use optical flow as the motion solution, not just as an initializer for `SIMP
 
 The optical flow method in DICe follows the implementation of Matlab for the [Lucas-Kanade](http://www.mathworks.com/help/vision/ref/opticalflow.html#bqi5zaf-1) algorithm. To determine the points to use for optical flow (two are needed to compute the angle of rotation) all of the pixels in the subset are scanned to find the two with the highest gradients that are at least 10 pixels away from each other. If the subset is small, the pixels can be as close as 2 pixels away from each other which lowers the accuracy substantially. As long as these two pixels stay visible throughout the sequence, the positions about which optical flow is calculated do not change. If one of the pixels becomes obstructed during the sequence, new locations are selected from among the visible pixels.
 
+If optical flow is being used as the initialization method and the initialization fails (due to the subset being too small for two optical flow points or the gradient information is not good enough for optical flow), the initialization defaults back to using the field values from the last frame.
+
 ### Motion detection
 
 Also in the subset input file, for the `TRACKING_ROUTINE`, for conformal subsets, the user can request that the correaltion only be performed if there is motion detected in the vicinity of the subset. This can be helpful in speeding up an analyis if the object being tracked sits idle for most of the video and only moves for a small portion of frames. Since there can potentially be several subsets inside of one window, many subsets can share a particular motion test window.
