@@ -124,7 +124,8 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate(scalar_t points[], int_t n_points
     schema.field_value(i,DICe::ROTATION_Z)     = points[i*DICE_API_STRIDE + 4];
     schema.field_value(i,DICe::SIGMA)          = points[i*DICE_API_STRIDE + 5];
     schema.field_value(i,DICe::GAMMA)          = points[i*DICE_API_STRIDE + 6];
-    schema.field_value(i,DICe::STATUS_FLAG)    = points[i*DICE_API_STRIDE + 7];
+    schema.field_value(i,DICe::BETA)           = points[i*DICE_API_STRIDE + 7];
+    schema.field_value(i,DICe::STATUS_FLAG)    = points[i*DICE_API_STRIDE + 8];
   }
 
   schema.execute_correlation();
@@ -137,7 +138,8 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate(scalar_t points[], int_t n_points
     points[i*DICE_API_STRIDE + 4] = schema.field_value(i,DICe::ROTATION_Z);
     points[i*DICE_API_STRIDE + 5] = schema.field_value(i,DICe::SIGMA);
     points[i*DICE_API_STRIDE + 6] = schema.field_value(i,DICe::GAMMA);
-    points[i*DICE_API_STRIDE + 7] = schema.field_value(i,DICe::STATUS_FLAG);
+    points[i*DICE_API_STRIDE + 7] = schema.field_value(i,DICe::BETA);
+    points[i*DICE_API_STRIDE + 8] = schema.field_value(i,DICe::STATUS_FLAG);
   }
 
   return 0;
@@ -244,7 +246,8 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
     schema.field_value(i,DICe::ROTATION_Z)     = points[i*DICE_API_STRIDE + 4];
     schema.field_value(i,DICe::SIGMA)          = points[i*DICE_API_STRIDE + 5];
     schema.field_value(i,DICe::GAMMA)          = points[i*DICE_API_STRIDE + 6];
-    schema.field_value(i,DICe::STATUS_FLAG)    = points[i*DICE_API_STRIDE + 7];
+    schema.field_value(i,DICe::BETA)           = points[i*DICE_API_STRIDE + 7];
+    schema.field_value(i,DICe::STATUS_FLAG)    = points[i*DICE_API_STRIDE + 8];
   }
 
   schema.execute_correlation();
@@ -261,7 +264,8 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
     points[i*DICE_API_STRIDE + 4] = schema.field_value(i,DICe::ROTATION_Z);
     points[i*DICE_API_STRIDE + 5] = schema.field_value(i,DICe::SIGMA);
     points[i*DICE_API_STRIDE + 6] = schema.field_value(i,DICe::GAMMA);
-    points[i*DICE_API_STRIDE + 7] = schema.field_value(i,DICe::STATUS_FLAG);
+    points[i*DICE_API_STRIDE + 7] = schema.field_value(i,DICe::BETA);
+    points[i*DICE_API_STRIDE + 8] = schema.field_value(i,DICe::STATUS_FLAG);
   }
 
   return 0;

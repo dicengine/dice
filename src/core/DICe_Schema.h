@@ -713,11 +713,6 @@ public:
     return skip_all_solves_;
   }
 
-  /// True if the check for obstructed pixels should ocurr at every iteration
-  bool update_obstructed_pixels_each_iteration()const{
-    return update_obstructed_pixels_each_iteration_;
-  }
-
   /// True if the gamma values should be normalized by the number of active pixels
   bool normalize_gamma_with_active_pixels()const{
     return normalize_gamma_with_active_pixels_;
@@ -772,11 +767,6 @@ public:
   /// Returns true if the output has a specific order to the fields
   bool has_output_spec()const{
     return has_output_spec_;
-  }
-
-  /// Returns the size of the obstruction buffer
-  int_t obstruction_buffer_size()const{
-    return obstruction_buffer_size_;
   }
 
   /// Returns the size of the obstruction skin
@@ -1047,8 +1037,6 @@ private:
   double robust_delta_disp_;
   /// int_t of the variation to apply to the initial rotation guess used to construct the simplex
   double robust_delta_theta_;
-  /// int_t of the buffer to add around subset obstructions
-  int_t obstruction_buffer_size_;
   /// Determines how many subdivisions each pixel is cut into for integration purposes
   int_t pixel_integration_order_;
   /// Factor that increases or decreases the size of obstructions
@@ -1092,8 +1080,6 @@ private:
   bool output_evolved_subset_images_;
   /// Use subset evolution (Fill in the reference subset pixels as they become visible in subsequent frames)
   bool use_subset_evolution_;
-  /// True if the check for obstructed pixels should ocurr at every iteration, otherwise it happens once a frame
-  bool update_obstructed_pixels_each_iteration_;
   /// True if the gamma values (match quality) should be normalized with the number of active pixels
   bool normalize_gamma_with_active_pixels_;
   /// True if this anlysis is global DIC and the hvm terms should be used

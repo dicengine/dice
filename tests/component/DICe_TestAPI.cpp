@@ -181,7 +181,7 @@ int main(int argc, char *argv[]) {
         *outStream << "Error, Gamma is not correct for image: " << img << std::endl;
         errorFlag++;
       };
-      if ( std::abs(points[i*DICE_API_STRIDE + 7] - 1) > errtol) {
+      if ( std::abs(points[i*DICE_API_STRIDE + 8] - 1) > errtol) {
         *outStream << "Error, Flag is not correct for image: " << img << std::endl;
         errorFlag++;
       };
@@ -202,7 +202,7 @@ int main(int argc, char *argv[]) {
           " theta " << pointsParams[i*DICE_API_STRIDE + 4] <<
           " sigma " << pointsParams[i*DICE_API_STRIDE + 5] <<
           " gamma " << pointsParams[i*DICE_API_STRIDE + 6] <<
-          " flag " << pointsParams[i*DICE_API_STRIDE + 7] << std::endl;
+          " flag " << pointsParams[i*DICE_API_STRIDE + 8] << std::endl;
       // test the solution
       if ( std::abs(pointsParams[i*DICE_API_STRIDE + 0] - subset_centroids_x[i]) > errtol) {
         *outStream << "Error, Params, coordinate X is not correct for image: " << img << std::endl;
@@ -228,7 +228,7 @@ int main(int argc, char *argv[]) {
         *outStream << "Error, Params, gamma is not correct for image: " << img << std::endl;
         errorFlag++;
       };
-      if ( std::abs(pointsParams[i*DICE_API_STRIDE + 7] - 1) > errtol) {
+      if ( std::abs(pointsParams[i*DICE_API_STRIDE + 8] - 1) > errtol) {
         *outStream << "Error, Params, flag is not correct for image: " << img << std::endl;
         errorFlag++;
       };

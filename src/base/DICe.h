@@ -208,13 +208,9 @@ const char* const output_delimiter = "output_delimiter";
 /// String parameter name
 const char* const omit_output_row_id = "omit_output_row_id";
 /// String parameter name
-const char* const obstruction_buffer_size = "obstruction_buffer_size";
-/// String parameter name
 const char* const obstruction_skin_factor = "obstruction_skin_factor";
 /// String parameter name
 const char* const use_tracking_default_params = "use_tracking_default_params";
-/// String parameter name
-const char* const update_obstructed_pixels_each_iteration = "update_obstructed_pixels_each_iteration";
 /// String parameter name
 const char* const normalize_gamma_with_active_pixels = "normalize_gamma_with_active_pixels";
 /// String parameter name
@@ -622,11 +618,6 @@ const Correlation_Parameter gauss_filter_mask_size_param(gauss_filter_mask_size,
   true,
   "The size in pixels of the Gaussian filter (3, 5, 7, 9, 11, or 13).");
 /// Correlation parameter and properties
-const Correlation_Parameter obstruction_buffer_size_param(obstruction_buffer_size,
-  SIZE_PARAM,
-  true,
-  "Specifies the size of the buffer to add around an obstructing object (essentially makes the obstruction larger).");
-/// Correlation parameter and properties
 const Correlation_Parameter pixel_integration_order_param(pixel_integration_order,
   SIZE_PARAM,
   true,
@@ -811,11 +802,6 @@ const Correlation_Parameter use_tracking_default_params_param(use_tracking_defau
   true,
   "Use the TRACKING default parameters instead of the GENERIC defaults (Not commonly used).");
 /// Correlation parameter and properties
-const Correlation_Parameter update_obstructed_pixels_each_iteration_param(update_obstructed_pixels_each_iteration,
-  BOOL_PARAM,
-  true,
-  "Rather than update the obstructed pixels only at the start of each frame, do so at each iteration in the analysis.");
-/// Correlation parameter and properties
 const Correlation_Parameter normalize_gamma_with_active_pixels_param(normalize_gamma_with_active_pixels,
   BOOL_PARAM,
   true,
@@ -871,7 +857,7 @@ const Correlation_Parameter compute_image_gradients_param(compute_image_gradient
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 60;
+const int_t num_valid_correlation_params = 58;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -911,10 +897,8 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   output_spec_param,
   output_delimiter_param,
   omit_output_row_id_param,
-  obstruction_buffer_size_param,
   obstruction_skin_factor_param,
   use_tracking_default_params_param,
-  update_obstructed_pixels_each_iteration_param,
   normalize_gamma_with_active_pixels_param,
   use_global_dic_param,
   use_constrained_opt_dic_param,

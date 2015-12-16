@@ -244,8 +244,8 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::fast_solver_tolerance,1.0E-4);
   defaultParams->set(DICe::robust_delta_disp,1.0);  // simplex method initial shape is based on these
   defaultParams->set(DICe::robust_delta_theta,0.1); //
-  defaultParams->set(DICe::interpolation_method,DICe::BILINEAR);
-  defaultParams->set(DICe::optimization_method,DICe::GRADIENT_BASED_THEN_SIMPLEX);
+  defaultParams->set(DICe::interpolation_method,DICe::KEYS_FOURTH);
+  defaultParams->set(DICe::optimization_method,DICe::SIMPLEX);
   defaultParams->set(DICe::initialization_method,DICe::USE_FIELD_VALUES);
   defaultParams->set(DICe::projection_method,DICe::DISPLACEMENT_BASED);
   defaultParams->set(DICe::disp_jump_tol,5.0);
@@ -257,15 +257,13 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::output_deformed_subset_images,false);
   defaultParams->set(DICe::output_deformed_subset_intensity_images,false);
   defaultParams->set(DICe::output_evolved_subset_images,false);
-  defaultParams->set(DICe::use_subset_evolution,false);
+  defaultParams->set(DICe::use_subset_evolution,true);
   defaultParams->set(DICe::output_beta,true);
   defaultParams->set(DICe::output_delimiter," ");
   defaultParams->set(DICe::omit_output_row_id,false);
-  defaultParams->set(DICe::obstruction_buffer_size,3);
   defaultParams->set(DICe::obstruction_skin_factor,1.0);
   defaultParams->set(DICe::search_window_size_factor,1.0);
   defaultParams->set(DICe::search_window_skip,0);
-  defaultParams->set(DICe::update_obstructed_pixels_each_iteration,false);
   defaultParams->set(DICe::normalize_gamma_with_active_pixels,false);
   defaultParams->set(DICe::use_objective_regularization,false);
   defaultParams->set(DICe::objective_regularization_factor,1000.0);
@@ -311,9 +309,7 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::output_beta,false);
   defaultParams->set(DICe::output_delimiter," ");
   defaultParams->set(DICe::omit_output_row_id,false);
-  defaultParams->set(DICe::obstruction_buffer_size,3);
   defaultParams->set(DICe::obstruction_skin_factor,1.0);
-  defaultParams->set(DICe::update_obstructed_pixels_each_iteration,false);
   defaultParams->set(DICe::normalize_gamma_with_active_pixels,false);
   defaultParams->set(DICe::use_objective_regularization,false);
   defaultParams->set(DICe::objective_regularization_factor,1000.0);

@@ -63,7 +63,7 @@ extern "C" {
 #endif
 
 /// The stride of the solution vector in the external application
-#define DICE_API_STRIDE 8
+#define DICE_API_STRIDE 9
 
 /// Typedef integer as size type
 typedef int int_t;
@@ -115,11 +115,12 @@ namespace Teuchos{
 ///  u:     the u-displacement of the point
 ///  v:     the v-displacement of the point
 ///  theta: the rotation of the point
-///  sigma: On success, sigma is calculated as 2.0*sqrt(5.991*lambda_1)
-///         where lambda_1 is the larger eigenvalue of the covariance matrix
-///         -1 is returned if the correlation fails.
-/// gamma:  Correlation quality measure (0.0 is perfect correlation, larger numbers are poor correlation)
-/// diagnostic_flags: (see DICe_Types.h for definitions)
+///  sigma: On success: metric used to determine the variation in the displacement (uncertainty) given image noise
+///         and interpolation bias, -1.0 is returned if the correlation fails.
+///  gamma: Correlation quality measure (0.0 is perfect correlation, larger numbers are poor correlation), -1.0 is failed correlation
+///  beta:  Sensitivity of the cost function (lower is better). If beta is high, the correlation criteria cannot judge between nearby solutions,
+///         they all have the same cost function. -1.0 is recorded for failed correlation
+///  diagnostic_flags: (see DICe_Types.h for definitions)
 DICE_LIB_DLL_EXPORT const int_t dice_correlate(scalar_t points[], int_t n_points,
                         int_t subset_size,
                         intensity_t ref_img[], int_t ref_w, int_t ref_h,
@@ -158,14 +159,15 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate(scalar_t points[], int_t n_points
 ///  u:     the u-displacement of the point
 ///  v:     the v-displacement of the point
 ///  theta: the rotation of the point
-///  sigma: On success, sigma is calculated as 2.0*sqrt(5.991*lambda_1)
-///         where lambda_1 is the larger eigenvalue of the covariance matrix
-///         -1 is returned if the correlation fails.
-/// gamma:  Correlation quality measure (0.0 is perfect correlation, larger numbers are poor correlation)
-/// diagnostic_flags: (see DICe_Types.h for definitions)
-/// Note: if the params are changed once this function has been called it will have no effect. The
-/// correlation parameters are set at the first invokation and will remain the same.
-/// Note: no checking is done to ensure that the points array is the right size. This is up to the user.
+///  sigma: On success: metric used to determine the variation in the displacement (uncertainty) given image noise
+///         and interpolation bias, -1.0 is returned if the correlation fails.
+///  gamma: Correlation quality measure (0.0 is perfect correlation, larger numbers are poor correlation), -1.0 is failed correlation
+///  beta:  Sensitivity of the cost function (lower is better). If beta is high, the correlation criteria cannot judge between nearby solutions,
+///         they all have the same cost function. -1.0 is recorded for failed correlation
+///  diagnostic_flags: (see DICe_Types.h for definitions)
+///  Note: if the params are changed once this function has been called it will have no effect. The
+///  correlation parameters are set at the first invokation and will remain the same.
+///  Note: no checking is done to ensure that the points array is the right size. This is up to the user.
 DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
                         intensity_t ref_img[], int_t ref_w, int_t ref_h,
                         intensity_t def_img[], int_t def_w, int_t def_h,

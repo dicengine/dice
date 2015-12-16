@@ -7,7 +7,7 @@
 *** Correlation method: ZNSSD
 *** Interpolation method: KEYS_FOURTH
 *** Image gradient method: FINITE_DIFFERENCE
-*** Optimization method: GRADIENT_BASED_THEN_SIMPLEX
+*** Optimization method: SIMPLEX
 *** Projection method: DISPLACEMENT_BASED
 *** Guess initialization method: USE_OPTICAL_FLOW
 *** Seed location: N/A

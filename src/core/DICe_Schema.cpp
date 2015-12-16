@@ -277,7 +277,6 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   target_field_descriptor_ = ALL_OWNED;
   distributed_fields_being_modified_ = false;
   has_post_processor_ = false;
-  update_obstructed_pixels_each_iteration_ = false;
   normalize_gamma_with_active_pixels_ = false;
   gauss_filter_images_ = false;
   init_params_ = params;
@@ -441,8 +440,6 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   output_evolved_subset_images_ = diceParams->get<bool>(DICe::output_evolved_subset_images);
   assert(diceParams->isParameter(DICe::use_subset_evolution));
   use_subset_evolution_ = diceParams->get<bool>(DICe::use_subset_evolution);
-  assert(diceParams->isParameter(DICe::obstruction_buffer_size));
-  obstruction_buffer_size_ = diceParams->get<int_t>(DICe::obstruction_buffer_size);
   assert(diceParams->isParameter(DICe::pixel_integration_order));
   pixel_integration_order_ = diceParams->get<int_t>(DICe::pixel_integration_order);
   assert(diceParams->isParameter(DICe::obstruction_skin_factor));
@@ -451,12 +448,8 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   use_objective_regularization_ = diceParams->get<bool>(DICe::use_objective_regularization);
   assert(diceParams->isParameter(DICe::objective_regularization_factor));
   objective_regularization_factor_ = diceParams->get<double>(DICe::objective_regularization_factor);
-  assert(diceParams->isParameter(DICe::update_obstructed_pixels_each_iteration));
-  update_obstructed_pixels_each_iteration_ = diceParams->get<bool>(DICe::update_obstructed_pixels_each_iteration);
   assert(diceParams->isParameter(DICe::output_beta));
   output_beta_ = diceParams->get<bool>(DICe::output_beta);
-  if(update_obstructed_pixels_each_iteration_)
-    DEBUG_MSG("Obstructed pixel information will be updated each iteration.");
   assert(diceParams->isParameter(DICe::normalize_gamma_with_active_pixels));
   normalize_gamma_with_active_pixels_ = diceParams->get<bool>(DICe::normalize_gamma_with_active_pixels);
   assert(diceParams->isParameter(DICe::rotate_ref_image_90));
