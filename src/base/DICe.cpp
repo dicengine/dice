@@ -51,6 +51,10 @@
   #include <mpi.h>
 #endif
 
+#ifndef GITSHA1
+  #define GITSHA1 "not available"
+#endif
+
 namespace DICe {
 
 /// Initialization function (mpi and kokkos if enabled):
@@ -80,7 +84,7 @@ void initialize(int argc,
       verbose=true;
   }
   if(verbose && proc_rank==0)
-    std::cout << "\n--- Digital Image Correlation Engine (DICe), Copyright 2015 Sandia Corporation ---\n\n";
+    std::cout << "\n--- Digital Image Correlation Engine (DICe), Version " << VERSION << " (" << GITSHA1 << ") Copyright 2015 Sandia Corporation ---\n\n";
 }
 
 /// Finalize function (mpi and kokkos if enabled):

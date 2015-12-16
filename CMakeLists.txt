@@ -212,6 +212,15 @@ MESSAGE(STATUS "Trilnos CMAKE_C_FLAGS: ${Trilinos_C_COMPILER_FLAGS}")
 MESSAGE(STATUS "DICe CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 MESSAGE(STATUS "DICe CMAKE_C_FLAGS: ${CMAKE_C_FLAGS}")
 
+# Get the git information to put in the header message (to identify the commit corresponding
+# to the executable that was run
+execute_process(
+  COMMAND git describe --abbrev=6 --dirty --always --tags
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_SHA1
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+MESSAGE(STATUS "Git sha1: ${GIT_SHA1}")
+ADD_DEFINITIONS(-DGITSHA1=\"${GIT_SHA1}\")
 
 add_subdirectory(src)
 add_subdirectory(tools)
