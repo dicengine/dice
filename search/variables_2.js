@@ -25,6 +25,10 @@ var searchData=
   ['correlation_5froutine_5f',['correlation_routine_',['../class_d_i_ce_1_1_schema.html#ad132233f45cbde053ab164dd84b9d3f5',1,'DICe::Schema']]],
   ['cos_5ft_5f',['cos_t_',['../struct_d_i_ce_1_1_subset___init___functor.html#acee594d29b920e302e331d2b2765ca0a',1,'DICe::Subset_Init_Functor']]],
   ['cost_5f',['cost_',['../struct_d_i_ce_1_1_transform___functor.html#a61321d2f3c3fd5fa6c168a7171a1bc32',1,'DICe::Transform_Functor']]],
+  ['current_5fpt1_5fx_5f',['current_pt1_x_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a4e05d431baacd2c4d731ba9866c09cd5',1,'DICe::Optical_Flow_Initializer']]],
+  ['current_5fpt1_5fy_5f',['current_pt1_y_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a5991434d2fdc24677a90c1048d61730e',1,'DICe::Optical_Flow_Initializer']]],
+  ['current_5fpt2_5fx_5f',['current_pt2_x_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a62c4df406c323615efec9d13e71bc254',1,'DICe::Optical_Flow_Initializer']]],
+  ['current_5fpt2_5fy_5f',['current_pt2_y_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a01db1493eb0cb7cd15759205960b5e11',1,'DICe::Optical_Flow_Initializer']]],
   ['cx_5f',['cx_',['../struct_d_i_ce_1_1_transform___functor.html#adea50f07737eeb47058af51f45558410',1,'DICe::Transform_Functor::cx_()'],['../class_d_i_ce_1_1_subset.html#adba294c96be239daf6754d693d479986',1,'DICe::Subset::cx_()'],['../struct_d_i_ce_1_1_subset___init___functor.html#a0f0d69d5670371ea7e078ab438fd58fb',1,'DICe::Subset_Init_Functor::cx_()']]],
   ['cy_5f',['cy_',['../struct_d_i_ce_1_1_transform___functor.html#ac8c345af87104f5cd07c0fbf2c14bf87',1,'DICe::Transform_Functor::cy_()'],['../class_d_i_ce_1_1_subset.html#acef045e510db2e5ae643914409177cc7',1,'DICe::Subset::cy_()'],['../struct_d_i_ce_1_1_subset___init___functor.html#a4ad4d09333bc62b1212ae9386879b21f',1,'DICe::Subset_Init_Functor::cy_()']]]
 ];

@@ -1,7 +1,8 @@
 var searchData=
 [
-  ['neighbor',['neighbor',['../class_d_i_ce_1_1_path___initializer.html#a2f08556e118e9f90b430e987b79b3012',1,'DICe::Path_Initializer']]],
+  ['neighbor',['neighbor',['../class_d_i_ce_1_1_path___initializer.html#a2f08556e118e9f90b430e987b79b3012',1,'DICe::Path_Initializer::neighbor()'],['../class_d_i_ce_1_1_optical___flow___initializer.html#a2e31f5a7e2b1f4b455175c9d84272ba0',1,'DICe::Optical_Flow_Initializer::neighbor()']]],
   ['nlvc_5fstrain_5fpost_5fprocessor',['NLVC_Strain_Post_Processor',['../class_d_i_ce_1_1_n_l_v_c___strain___post___processor.html#a32e35783d8624116153be4c73dd6d5bb',1,'DICe::NLVC_Strain_Post_Processor']]],
+  ['noise_5fstd_5fdev',['noise_std_dev',['../class_d_i_ce_1_1_subset.html#ab1cfe50eb34833cb6f78ed43fe9effb4',1,'DICe::Subset']]],
   ['norm',['norm',['../class_d_i_ce_1_1_multi_field.html#aa337aa21e78be47d07e13d4323fdafd5',1,'DICe::MultiField']]],
   ['normal_5fstrain_5fenabled',['normal_strain_enabled',['../class_d_i_ce_1_1_schema.html#aa945b3973bcf5148db41c80a69f709e4',1,'DICe::Schema']]],
   ['normalize_5fgamma_5fwith_5factive_5fpixels',['normalize_gamma_with_active_pixels',['../class_d_i_ce_1_1_schema.html#a299bf888a7e6a5504f00d6e2a3afdfd6',1,'DICe::Schema']]],

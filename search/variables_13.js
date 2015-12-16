@@ -1,5 +1,6 @@
 var searchData=
 [
   ['width_5f',['width_',['../class_d_i_ce_1_1_motion___test___utility.html#a9193e36d5041e8c31a5c70ba6201d271',1,'DICe::Motion_Test_Utility::width_()'],['../struct_d_i_ce_1_1_motion___window___params.html#ab98bdbeb4b1ba8d6df70bdd811705d33',1,'DICe::Motion_Window_Params::width_()'],['../class_d_i_ce_1_1_image.html#a03fba626318b898f0d3ef3dbf85aa9a6',1,'DICe::Image::width_()'],['../struct_d_i_ce_1_1_mask___smoothing___functor.html#ace861b3f6f6250d3e14bb2a5f7220d4b',1,'DICe::Mask_Smoothing_Functor::width_()'],['../struct_d_i_ce_1_1_mask___apply___functor.html#a5dc7ef47d24049da7483deb53350282e',1,'DICe::Mask_Apply_Functor::width_()'],['../struct_d_i_ce_1_1_transform___functor.html#a5c1e0df099f2644f71fc928f7fcf17b8',1,'DICe::Transform_Functor::width_()'],['../class_d_i_ce_1_1_rectangle.html#a7007373622ce7062caef61f217a38968',1,'DICe::Rectangle::width_()']]],
-  ['window_5fsize_5f',['window_size_',['../class_d_i_ce_1_1_v_s_g___strain___post___processor.html#aa5d9757082b1a0b8aaaca66571ca1559',1,'DICe::VSG_Strain_Post_Processor']]]
+  ['window_5fcoeffs_5f',['window_coeffs_',['../class_d_i_ce_1_1_optical___flow___initializer.html#ab158e23165b3c48f1cf9a0d2b1719bc5',1,'DICe::Optical_Flow_Initializer']]],
+  ['window_5fsize_5f',['window_size_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a7456e6df0c40541d286e481da13a93b6',1,'DICe::Optical_Flow_Initializer::window_size_()'],['../class_d_i_ce_1_1_v_s_g___strain___post___processor.html#aa5d9757082b1a0b8aaaca66571ca1559',1,'DICe::VSG_Strain_Post_Processor::window_size_()']]]
 ];

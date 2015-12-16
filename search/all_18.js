@@ -14,6 +14,7 @@ var searchData=
   ['_7emultifield_5fmap',['~MultiField_Map',['../class_d_i_ce_1_1_multi_field___map.html#a869932ea3c520e14a66ddb98cbd0c418',1,'DICe::MultiField_Map::~MultiField_Map()'],['../class_d_i_ce_1_1_multi_field___map.html#a869932ea3c520e14a66ddb98cbd0c418',1,'DICe::MultiField_Map::~MultiField_Map()']]],
   ['_7emultifield_5fmatrix',['~MultiField_Matrix',['../class_d_i_ce_1_1_multi_field___matrix.html#a16ede47171a16564c1df93230cf3d6af',1,'DICe::MultiField_Matrix']]],
   ['_7enlvc_5fstrain_5fpost_5fprocessor',['~NLVC_Strain_Post_Processor',['../class_d_i_ce_1_1_n_l_v_c___strain___post___processor.html#a57b70a4f021f315d2696ee99c0b18d2b',1,'DICe::NLVC_Strain_Post_Processor']]],
+  ['_7eoptical_5fflow_5finitializer',['~Optical_Flow_Initializer',['../class_d_i_ce_1_1_optical___flow___initializer.html#a23297c174f43b0ec8e5014fc20c35ce5',1,'DICe::Optical_Flow_Initializer']]],
   ['_7epath_5finitializer',['~Path_Initializer',['../class_d_i_ce_1_1_path___initializer.html#af1534662173976b7ebe34e4bba922e6e',1,'DICe::Path_Initializer']]],
   ['_7ephase_5fcorrelation_5finitializer',['~Phase_Correlation_Initializer',['../class_d_i_ce_1_1_phase___correlation___initializer.html#a69aa2668810b73b29c314e47f59c362e',1,'DICe::Phase_Correlation_Initializer']]],
   ['_7epost_5fprocessor',['~Post_Processor',['../class_d_i_ce_1_1_post___processor.html#acc999e75d6462afd09ee9c4e47c54b95',1,'DICe::Post_Processor']]],

@@ -46,8 +46,8 @@ var searchData=
   ['connectivity_5f',['connectivity_',['../class_d_i_ce_1_1_schema.html#a6a940e6bc011e5b47cf8fa9f2a5f9c18',1,'DICe::Schema']]],
   ['construct_5fschema',['construct_schema',['../class_d_i_ce_1_1_schema.html#a2c4448e7c22f7c41ce9db29a465cee72',1,'DICe::Schema::construct_schema(const std::string &amp;refName, const std::string &amp;defName, const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params=Teuchos::null)'],['../class_d_i_ce_1_1_schema.html#abfa6cb96e3e6fecf3223f138ac381e3d',1,'DICe::Schema::construct_schema(const int_t img_width, const int_t img_height, const Teuchos::ArrayRCP&lt; intensity_t &gt; refRCP, const Teuchos::ArrayRCP&lt; intensity_t &gt; defRCP, const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params=Teuchos::null)'],['../class_d_i_ce_1_1_schema.html#a578f4593775da7392a91c18ca0fe3613',1,'DICe::Schema::construct_schema(Teuchos::RCP&lt; Image &gt; ref_img, Teuchos::RCP&lt; Image &gt; def_img, const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params=Teuchos::null)']]],
   ['coordinates_5fvector',['coordinates_vector',['../struct_d_i_ce_1_1_subset___file___info.html#abcc0cef94c6a60f1cc2bca3c4ef6ad0b',1,'DICe::Subset_File_Info']]],
-  ['correlation_5fparameter',['Correlation_Parameter',['../struct_d_i_ce_1_1_correlation___parameter.html',1,'DICe']]],
   ['correlation_5fparameter',['Correlation_Parameter',['../struct_d_i_ce_1_1_correlation___parameter.html#adfe5d65bdf6fe6918b76d86881d7d401',1,'DICe::Correlation_Parameter']]],
+  ['correlation_5fparameter',['Correlation_Parameter',['../struct_d_i_ce_1_1_correlation___parameter.html',1,'DICe']]],
   ['correlation_5fparameter_5ftype',['Correlation_Parameter_Type',['../namespace_d_i_ce.html#a0e5e8f3f7fa73237746acdbb3739eb91',1,'DICe']]],
   ['correlation_5fparameters_5ffile',['correlation_parameters_file',['../namespace_d_i_ce.html#ab592f2e703b9223759a84ccbadf217b0',1,'DICe']]],
   ['correlation_5fpoint_5fglobal_5fid',['correlation_point_global_id',['../class_d_i_ce_1_1_objective.html#a1c86af056f470d4ddbb9f70c8adaa092',1,'DICe::Objective']]],
@@ -61,6 +61,10 @@ var searchData=
   ['create_5fobstruction_5fdist_5fmap',['create_obstruction_dist_map',['../class_d_i_ce_1_1_schema.html#a19f62d03776c65f61d276fd9c56ea6e4',1,'DICe::Schema']]],
   ['create_5fregular_5fgrid_5fof_5fcorrelation_5fpoints',['create_regular_grid_of_correlation_points',['../namespace_d_i_ce.html#af609778533d99a154eebc6376896c619',1,'DICe']]],
   ['create_5fseed_5fdist_5fmap',['create_seed_dist_map',['../class_d_i_ce_1_1_schema.html#ae41003c38ebb98e159a56fe4c6dc38f2',1,'DICe::Schema']]],
+  ['current_5fpt1_5fx_5f',['current_pt1_x_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a4e05d431baacd2c4d731ba9866c09cd5',1,'DICe::Optical_Flow_Initializer']]],
+  ['current_5fpt1_5fy_5f',['current_pt1_y_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a5991434d2fdc24677a90c1048d61730e',1,'DICe::Optical_Flow_Initializer']]],
+  ['current_5fpt2_5fx_5f',['current_pt2_x_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a62c4df406c323615efec9d13e71bc254',1,'DICe::Optical_Flow_Initializer']]],
+  ['current_5fpt2_5fy_5f',['current_pt2_y_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a01db1493eb0cb7cd15759205960b5e11',1,'DICe::Optical_Flow_Initializer']]],
   ['cx_5f',['cx_',['../struct_d_i_ce_1_1_transform___functor.html#adea50f07737eeb47058af51f45558410',1,'DICe::Transform_Functor::cx_()'],['../class_d_i_ce_1_1_subset.html#adba294c96be239daf6754d693d479986',1,'DICe::Subset::cx_()'],['../struct_d_i_ce_1_1_subset___init___functor.html#a0f0d69d5670371ea7e078ab438fd58fb',1,'DICe::Subset_Init_Functor::cx_()']]],
   ['cy_5f',['cy_',['../struct_d_i_ce_1_1_transform___functor.html#ac8c345af87104f5cd07c0fbf2c14bf87',1,'DICe::Transform_Functor::cy_()'],['../class_d_i_ce_1_1_subset.html#acef045e510db2e5ae643914409177cc7',1,'DICe::Subset::cy_()'],['../struct_d_i_ce_1_1_subset___init___functor.html#a4ad4d09333bc62b1212ae9386879b21f',1,'DICe::Subset_Init_Functor::cy_()']]]
 ];

@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['mag_5fref_5f',['mag_ref_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a703af6a71d4834069c89816a82804191',1,'DICe::Optical_Flow_Initializer']]],
   ['map_5f',['map_',['../class_d_i_ce_1_1_multi_field___map.html#aa5d44d699d3535963dab24d8caee5e79',1,'DICe::MultiField_Map::map_()'],['../class_d_i_ce_1_1_multi_field.html#a4bbd262bcc9eddb310a454766678f093',1,'DICe::MultiField::map_()'],['../class_d_i_ce_1_1_multi_field___map.html#a82aff930e9736914e80502bdf1566938',1,'DICe::MultiField_Map::map_()']]],
   ['mask_5f',['mask_',['../class_d_i_ce_1_1_image.html#ad2a193f72f9f089753dc48cd6e992022',1,'DICe::Image::mask_()'],['../struct_d_i_ce_1_1_mask___init___functor.html#a9afe8db1115bb02f31c11076c3e47a91',1,'DICe::Mask_Init_Functor::mask_()'],['../struct_d_i_ce_1_1_mask___smoothing___functor.html#a40eafa099f4bff52b221eab1ac4a2818',1,'DICe::Mask_Smoothing_Functor::mask_()'],['../struct_d_i_ce_1_1_mask___apply___functor.html#a039be5e0ac3fc1cdaee4295449b2bcb6',1,'DICe::Mask_Apply_Functor::mask_()']]],
   ['mask_5ftmp_5f',['mask_tmp_',['../struct_d_i_ce_1_1_mask___smoothing___functor.html#a8b621fc7fabea678690c146c356bf7b9',1,'DICe::Mask_Smoothing_Functor']]],

@@ -121,9 +121,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:abb8f8600227811c25b43cbdae4c17b7a"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_objective.html#abb8f8600227811c25b43cbdae4c17b7a">gamma</a> (Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;deformation) const =0</td></tr>
 <tr class="memdesc:abb8f8600227811c25b43cbdae4c17b7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Correlation criteria.  <a href="#abb8f8600227811c25b43cbdae4c17b7a">More...</a><br /></td></tr>
 <tr class="separator:abb8f8600227811c25b43cbdae4c17b7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8e4b57df974d6e1d486720ba537ccc01"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_objective.html#a8e4b57df974d6e1d486720ba537ccc01">sigma</a> (Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;deformation) const =0</td></tr>
-<tr class="memdesc:a8e4b57df974d6e1d486720ba537ccc01"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uncertainty measure for solution.  <a href="#a8e4b57df974d6e1d486720ba537ccc01">More...</a><br /></td></tr>
-<tr class="separator:a8e4b57df974d6e1d486720ba537ccc01"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24f84ec2f4a880719e2ed3b1f66d63f7"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_objective.html#a24f84ec2f4a880719e2ed3b1f66d63f7">sigma</a> (Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;deformation, <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;noise_level) const =0</td></tr>
+<tr class="memdesc:a24f84ec2f4a880719e2ed3b1f66d63f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uncertainty measure for solution.  <a href="#a24f84ec2f4a880719e2ed3b1f66d63f7">More...</a><br /></td></tr>
+<tr class="separator:a24f84ec2f4a880719e2ed3b1f66d63f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1f4ccaf78db74db514b8796304c4005f"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_objective.html#a1f4ccaf78db74db514b8796304c4005f">beta</a> (Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;deformation) const =0</td></tr>
+<tr class="memdesc:a1f4ccaf78db74db514b8796304c4005f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Measure of the slope of the optimization landscape or how deep the minimum well is.  <a href="#a1f4ccaf78db74db514b8796304c4005f">More...</a><br /></td></tr>
+<tr class="separator:a1f4ccaf78db74db514b8796304c4005f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8c82a4387173a0cff36c21aa34732de2"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespace_d_i_ce.html#a80e1a88ef6bbd77d318f8b880f6a41f5">Status_Flag</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_objective.html#a8c82a4387173a0cff36c21aa34732de2">computeUpdateFast</a> (Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;deformation, <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &amp;num_iterations)=0</td></tr>
 <tr class="memdesc:a8c82a4387173a0cff36c21aa34732de2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gradient based optimization algorithm.  <a href="#a8c82a4387173a0cff36c21aa34732de2">More...</a><br /></td></tr>
 <tr class="separator:a8c82a4387173a0cff36c21aa34732de2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -173,7 +176,7 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
 <div class="textblock"><p>A container class for the subsets, optimization algorithm and initialization routine used to correlate a single point. </p>
 <p>A <a class="el" href="class_d_i_ce_1_1_objective.html" title="A container class for the subsets, optimization algorithm and initialization routine used to correlat...">DICe::Objective</a> contains all the necessary elements of a minimization objective, for example, to minimize the sum squared difference of the intensity values between a subset taken from the reference and deformed image. The correlation criteria, gamma, is defined here. Each objective has a fast and robust method for determining the deformation map that minimizes gamma. The fast method is typically image gradient based and the robust method is usually simplex based.</p>
 <p>An objective has, as part of its member data, a reference <a class="el" href="class_d_i_ce_1_1_subset.html" title="Subsets are used to store temporary collections of pixels for comparison between the reference and de...">DICe::Subset</a> and a deformed <a class="el" href="class_d_i_ce_1_1_subset.html" title="Subsets are used to store temporary collections of pixels for comparison between the reference and de...">DICe::Subset</a>. These subsets represent a small subsection of the image.</p>
-<p>The degrees of freedom for an objective are the elements of the deformation map (displacement, rotation, stretch, etc.). A deformation vector of size DICe_DEFORMATION_SIZE (see <a class="el" href="_d_i_ce_8h_source.html">DICe.h</a> for the ordering of the values) gets initialized in the initialize_from_previous_frame() or search() methods of an objective. These values are then passed to the <a class="el" href="class_d_i_ce_1_1_objective.html#a44081b2266e75a739f0f40b60dc1f860" title="Simplex based optimization algorithm. ">computeUpdateRobust()</a> or <a class="el" href="class_d_i_ce_1_1_objective.html#a8c82a4387173a0cff36c21aa34732de2" title="Gradient based optimization algorithm. ">computeUpdateFast()</a> methods which contain the bulk of the optimization algorithm. The <a class="el" href="class_d_i_ce_1_1_objective.html#a8e4b57df974d6e1d486720ba537ccc01" title="Uncertainty measure for solution. ">sigma()</a> function provides a representation of the uncertainty of the solution. </p>
+<p>The degrees of freedom for an objective are the elements of the deformation map (displacement, rotation, stretch, etc.). A deformation vector of size DICe_DEFORMATION_SIZE (see <a class="el" href="_d_i_ce_8h_source.html">DICe.h</a> for the ordering of the values) gets initialized in the initialize_from_previous_frame() or search() methods of an objective. These values are then passed to the <a class="el" href="class_d_i_ce_1_1_objective.html#a44081b2266e75a739f0f40b60dc1f860" title="Simplex based optimization algorithm. ">computeUpdateRobust()</a> or <a class="el" href="class_d_i_ce_1_1_objective.html#a8c82a4387173a0cff36c21aa34732de2" title="Gradient based optimization algorithm. ">computeUpdateFast()</a> methods which contain the bulk of the optimization algorithm. The <a class="el" href="class_d_i_ce_1_1_objective.html#a24f84ec2f4a880719e2ed3b1f66d63f7" title="Uncertainty measure for solution. ">sigma()</a> function provides a representation of the uncertainty of the solution. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="a2a357b890162e8475b1b472e427197ac"></a>
 <div class="memitem">
@@ -219,6 +222,40 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a1f4ccaf78db74db514b8796304c4005f"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> DICe::Objective::beta </td>
+          <td>(</td>
+          <td class="paramtype">Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;&#160;</td>
+          <td class="paramname"><em>deformation</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Measure of the slope of the optimization landscape or how deep the minimum well is. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">deformation</td><td>The deformation map parameters for the current guess </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Implemented in <a class="el" href="class_d_i_ce_1_1_objective___z_n_s_s_d.html#add46a12700d2361a8dd54ff7cc85e644">DICe::Objective_ZNSSD</a>.</p>
+
+</div>
+</div>
 <a class="anchor" id="a8c82a4387173a0cff36c21aa34732de2"></a>
 <div class="memitem">
 <div class="memproto">
@@ -446,7 +483,7 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
 
 </div>
 </div>
-<a class="anchor" id="a8e4b57df974d6e1d486720ba537ccc01"></a>
+<a class="anchor" id="a24f84ec2f4a880719e2ed3b1f66d63f7"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -457,8 +494,18 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
           <td class="memname">virtual <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> DICe::Objective::sigma </td>
           <td>(</td>
           <td class="paramtype">Teuchos::RCP&lt; std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; &amp;&#160;</td>
-          <td class="paramname"><em>deformation</em></td><td>)</td>
-          <td> const</td>
+          <td class="paramname"><em>deformation</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>noise_level</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
         </tr>
       </table>
   </td>
@@ -472,11 +519,12 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">deformation</td><td>The deformation map parameters for the current guess </td></tr>
+    <tr><td class="paramname">noise_level</td><td>[out] Returned as the standard deviation estimate of the image noise sigma_g from Sutton et.al. </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Implemented in <a class="el" href="class_d_i_ce_1_1_objective___z_n_s_s_d.html#ac3df53b886cfa441fb73cdd28fb49536">DICe::Objective_ZNSSD</a>.</p>
+<p>Implemented in <a class="el" href="class_d_i_ce_1_1_objective___z_n_s_s_d.html#a5fd657f1e2efc7fc789a9f2441479430">DICe::Objective_ZNSSD</a>.</p>
 
 </div>
 </div>
@@ -505,7 +553,7 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_subset.html">Subset</a> &g
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Dec 7 2015 07:25:21 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Dec 16 2015 06:08:41 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

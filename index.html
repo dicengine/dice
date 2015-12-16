@@ -134,6 +134,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <p>The solution output from a parallel run will be concatenated into one file, written by process 0. Timing files, on the other hand, are written for each processor individually. The file naming convention for parallel runs is </p><pre class="fragment">&lt;output_file_prefix&gt;_&lt;image_frame&gt;.&lt;num_procs&gt;.txt
 </pre><p>The file naming convention for timing files is </p><pre class="fragment">timing.&lt;num_procs&gt;.&lt;proc_id&gt;.txt
 </pre><h1><a class="anchor" id="UserManual"></a>User Manual </h1>
+<h3>Input syntax</h3>
+<p>Capitalization is disregarded in the input files, all input text is converted to upper-case when read (with the exception of file names in which case the capitalization is preserved). Text files already in the <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> repository should work for Linux or Windows without modification. If this is not the case, you may have the wrong setting in your git repository regarding line endings, see the section on git below. Text files generated on Windows should follow the Windows line ending convention, the same for Linux (or Mac). The xml input files should follow standard xml format. The optional subset file uses the '#' character to start a comment. Everything after the comment character is disregarded.</p>
 <h3>User specified correlation parameters</h3>
 <p>Correlation paramters (for example, the interpolation method or how the image gradients are computed) can be set in a separate <code>.xml</code> file. We refer to this file as the correlation parameters file. To include user defined correlation parameters, specify the following option in the input file (typically named <code>input.xml</code>) </p><pre class="fragment">&lt;Parameter name="correlation_parameters_file" type="string" value="&lt;file_name&gt;" /&gt;
 </pre><p>If a correlation parameter is not specified in this file, the default value is used. The defaults can be found in the file <code>DICe_ParameterUtilities.cpp</code>. For the object tracking case a specific set of default parameters can be activated by using the </p><pre class="fragment">&lt;Parameter name="use_tracking_default_params" type="bool" value="true" /&gt;
@@ -306,10 +308,23 @@ END CONFORMAL_SUBSET
   BEGIN BOUNDARY
      ...
   END
-  PATH_FILE &lt;dir/filename&gt;
+  USE_PATH_FILE &lt;dir/filename&gt;
 END CONFORMAL_SUBSET
 </pre><p>To test the computed solution for a subset for each frame in terms of the distance from the path, the user can request the following option in the parameters file: </p><pre class="fragment">&lt;Parameter name="path_distance_threshold" type="double" value="&lt;tolerance&gt;" /&gt;
 </pre><p>If this option is not specified, the solution will not be compared to the path.</p>
+<h3>Skip solve</h3>
+<p>In a conformal subset definition (inside the <code>BEGIN CONFORMAL_SUBSET</code> and <code>END CONFORMAL_SUBSET</code> keywords) the keyword <code>SKIP_SOLVE</code> can be used to take the initial guess for the solution as the final solution and skip the actual solve. If the user would like to skip the solve for all subsets, the following correlation parameter can be set in the parameters file. </p><pre class="fragment">&lt;Parameter name="skip_all_solves" type="bool" value="true" /&gt;
+</pre><h3>Optical flow</h3>
+<p>If the user has requested the <code>TRACKING_ROUTINE</code> <code>correlation_routine</code>, optical flow can be used as an initializer for the solution or as a tracking method by itself. To use optical flow to determine the initial guess, the keyword <code>USE_OPTICAL_FLOW</code> can be added to the subset file as follows. </p><pre class="fragment">BEGIN CONFORMAL_SUBSET
+  SUBSET_ID &lt;id&gt;
+  BEGIN BOUNDARY
+     ...
+  END
+  USE_OPTICAL_FLOW
+END CONFORMAL_SUBSET
+</pre><p>To use optical flow as the initializer for all subsets, use the following correlation parameter: </p><pre class="fragment">&lt;Parameter name="initialization_method" type="string" value="use_optical_flow" /&gt;
+</pre><p>To use optical flow as the motion solution, not just as an initializer for <code>SIMPLEX</code> or <code>GRADIENT</code> DIC, use one of the methods above to turn on optical flow, but also use a <code>SKIP_SOLVE</code> keyword in the subset file (for a particular subset) or the <code>skip_all_solves</code> correlation parameter to skip the DIC solves and use the optical flow solution as the motion solution.</p>
+<p>The optical flow method in <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> follows the implementation of Matlab for the <a href="http://www.mathworks.com/help/vision/ref/opticalflow.html#bqi5zaf-1">Lucas-Kanade</a> algorithm. To determine the points to use for optical flow (two are needed to compute the angle of rotation) all of the pixels in the subset are scanned to find the two with the highest gradients that are at least 10 pixels away from each other. If the subset is small, the pixels can be as close as 2 pixels away from each other which lowers the accuracy substantially. As long as these two pixels stay visible throughout the sequence, the positions about which optical flow is calculated do not change. If one of the pixels becomes obstructed during the sequence, new locations are selected from among the visible pixels.</p>
 <h3>Motion detection</h3>
 <p>Also in the subset input file, for the <code>TRACKING_ROUTINE</code>, for conformal subsets, the user can request that the correaltion only be performed if there is motion detected in the vicinity of the subset. This can be helpful in speeding up an analyis if the object being tracked sits idle for most of the video and only moves for a small portion of frames. Since there can potentially be several subsets inside of one window, many subsets can share a particular motion test window.</p>
 <p>To define a motion test window for a subset the syntax is as follows </p><pre class="fragment">BEGIN CONFORMAL_SUBSET
@@ -344,7 +359,10 @@ BEGIN CONFORMAL_SUBSET
   END
   TEST_FOR_MOTION 0
 END CONFORMAL_SUBSET
-</pre><h3>Output files</h3>
+</pre><h3>Filtering images</h3>
+<p>To Gauss filter the images add the following option to the parameters file. The default has no filtering. </p><pre class="fragment">  &lt;Parameter name="gauss_filter_images" type="bool" value="true" /&gt;
+</pre><p>When filtering is enabled, the size of the filtering mask is seven pixels by seven pixels. The coefficients of the mask are given in DICe_ImageSerial.cpp or DICe_ImageKokkos.cpp. It is possible to filter images with different window sizes, but so far this is only enabled for the <a class="el" href="class_d_i_ce_1_1_image.html">DICe::Image</a> class. It has not been enabled in the correlation parameters for the executable.</p>
+<h3>Output files</h3>
 <p>The output produced are space delimited text files. The default output is one file per deformed image listing the solution variables for each subset. In the default case, the index at the end of the file name refers to the image id or frame number.</p>
 <p>The user can alternatively request output as a separate file for each subset listing the solution variables for each deformed image or frame. To do so set the following option in the input file </p><pre class="fragment">&lt;Parameter name="separate_output_file_for_each_subset" type="bool" value="true" /&gt;
 </pre><p>If the separate file for each subset option is used, the index at the end of the filename refers to the subset id.</p>
@@ -357,7 +375,45 @@ END CONFORMAL_SUBSET
 </pre><p>The integer value for each field name is the rank in the output order (the order is not assumed from the ordering in the parameter list).</p>
 <p>The delimiter used in the output file can be set in the parameters file with the following option: </p><pre class="fragment">&lt;Parameter name="output_delimiter" type="string" value="&lt;value&gt;" /&gt;
 </pre><p>The user can also request that the row id in the output files be omitted with </p><pre class="fragment">&lt;Parameter name="omit_output_row_id" type="bool" value="true" /&gt;
-</pre><h3>Plotting results with python</h3>
+</pre><h3>Fields</h3>
+<p>The following fields are available for output: </p><pre class="fragment">DISPLACEMENT_X    // u
+DISPLACEMENT_Y    // v
+DISPLACEMENT_Z    // w (used for stereo only)
+ROTATION_X        // rotation about the x-axis (used for stereo only)
+ROTATION_Y        // rotation about the y-axis (used for stero only)
+ROTATION_Z        // (theta) rotation about the z-axis, z is out of the plane
+NORMAL_STRAIN_X   // stretch in the x direction
+NORMAL_STRAIN_Y   // stretch in the y direction
+NORMAL_STRAIN_Z   // stretch in the z direction (used for stero only)
+SHEAR_STRAIN_XY   // shear strain in the x-y plane
+SHEAR_STRAIN_YZ   // shear strain in th y-z plane (not currently used)
+SHEAR_STRAIN_XZ   // shear strain in the x-z plane (not currently used)
+COORDINATE_X      // x position in space
+COORDINATE_Y      // y position in space
+COORDINATE_Z      // z position in space (not currently used)
+VAR_X             // auxiliary variable
+VAR_Y             // auxiliary variable
+VAR_Z             // auxiliary varaible
+SIGMA             // predicted std. dev. of the displacement solution given std. dev. of image
+                  // noise and interpolation bias, smaller sigma is better
+GAMMA             // template match quality (value of the cost function),
+                  // smaller gamma is better, 0.0 is perfect match
+BETA              // sensitivity of the cost function to small perturbations in the displacement solution
+NOISE_LEVEL       // estimated std. dev. of the image noise
+MATCH             // 0 means match was found -1 means match failed
+ITERATIONS        // number of iterations taken by the solution algorithm
+STATUS_FLAG       // information about the initialization method or error flags on failed steps
+NEIGHBOR_ID       // the global id of the neighboring subset to use for initialization by neighbor value
+CONDITION_NUMBER  // quality metric for the psuedoinverse matrix in the gradient-based method
+</pre><p>Some of the parameters require activation in the correlation parameters. To output <code>BETA</code> the following parameter must be set in the correlation parameters file </p><pre class="fragment">&lt;Parameter name="output_beta" type="bool" value="true" /&gt;
+</pre><p>If all zeros are reported for a certain field, for example <code>SHEAR_STRAIN_XY</code>, it usually means that particular shape function is not activated in the correlation paramters. The <code>CONDITION_NUMBER</code> field is not used in the <code>SIMPLEX</code> optimization method so all zeros will be reported for <code>SIMPLEX</code>. Values of <code>-1.0</code> typically imply failure of some kind. For example if the <code>NEIGHBOR_ID</code> field is <code>-1.0</code> the subset corresponding to that field value does not have a neighbor. Another example would be if <code>SIGMA</code> is <code>-1.0</code> it implies that the correlation failed for that particular step.</p>
+<p><b>Coordinate system and positive rotation:</b> Coordinates are measured from the top left corner of the image with <code>x</code> positive to the right and <code>y</code> positive downward. Rotations are positive clockwise (opposite of the right-hand rule).</p>
+<h3>Determining the quality of the solution</h3>
+<p>The following output parameters are useful in estimating the quality of the displacement solution:</p>
+<p>**<code>SIGMA</code>:** (Predicted displacement variation) This variable estimates the predicted variation in the displacement solution given variations in the data due to noise and interpolation bias. <code>SIGMA</code> can be used as an uncertainty metric if the following conditions are met: the displacements are smaller than one pixel in magnitude and the noise level in the images is less than roughly three or four percent. Use <code>SIGMA</code> to determine the confidence in the computed solution. For <code>SIGMA</code> lower values are better and imply lower uncertainty.</p>
+<p>**<code>GAMMA</code>:** (Template matching quality) This variable measures how well the template or subset from the reference image matches the deformed image. <code>GAMMA</code> is the value of the correlation criteria (or objective functional or cost function magnitude). <code>GAMMA</code> provides the user with a way to tell if the subset is still registering on the correct location in the deformed image. For <code>GAMMA</code> lower values are better, 0.0 implies an identical or perfect match between the reference and deformed subset.</p>
+<p>**<code>BETA</code>:** (Sensitivity of the cost function) This variable provides a measure of how sensitive the cost function (or correlation criteria) is to small perturbations in the displacement solution. If the cost function is highly sensitive, it will increase dramatically for even slight errors in the displacement solution. If the cost function is not sensitive, it implies that it cannot differentiate between many potential solutions. Again, for <code>BETA</code> lower values are better. Common sources of high <code>BETA</code> are poor contrast, lack of randomness in the speckle pattern, subset sizes too small, or high image noise levels.</p>
+<h3>Plotting results with python</h3>
 <p>Note: Some extra python modules must be installed to use these python scripts.</p>
 <p>The following python script can be used to plot the results from a <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> output file. (Note: these are not intended for conformal subsets if they are defined). If the output files are in the default format of one output file per image with a listing of subset variables in columns with one subset per row, the following python script can be used to create a two-dimensional contour plot. This example also assumes that the output specification has the fields in the default column order <code>(id,x,y,u,v,...)</code>. </p><pre class="fragment">#Import everything from matplotlib (numpy is accessible via 'np' alias)
 from pylab import *
@@ -545,7 +601,7 @@ $ nmake
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Dec 7 2015 07:25:23 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Dec 16 2015 06:08:43 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

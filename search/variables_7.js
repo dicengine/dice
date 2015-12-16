@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['half_5fwindow_5fsize_5f',['half_window_size_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a98cabeeb0eca1193dfce4925ebddba1f',1,'DICe::Optical_Flow_Initializer']]],
   ['has_5fboundary_5f',['has_boundary_',['../class_d_i_ce_1_1_conformal___area___def.html#a9f29684b455bb082826a92555293668f',1,'DICe::Conformal_Area_Def']]],
   ['has_5fexcluded_5farea_5f',['has_excluded_area_',['../class_d_i_ce_1_1_conformal___area___def.html#af5822c411922c6fb91225ae73e77025b',1,'DICe::Conformal_Area_Def']]],
   ['has_5fgauss_5ffilter_5f',['has_gauss_filter_',['../class_d_i_ce_1_1_image.html#ad6ef7505757853e80cbe826153547319',1,'DICe::Image']]],

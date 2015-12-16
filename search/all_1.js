@@ -1,5 +1,7 @@
 var searchData=
 [
+  ['best_5foptical_5fflow_5fpoint',['best_optical_flow_point',['../class_d_i_ce_1_1_optical___flow___initializer.html#af381dc35d96c2ead4a51a1eff55d6dc5',1,'DICe::Optical_Flow_Initializer']]],
+  ['beta',['beta',['../class_d_i_ce_1_1_objective.html#a1f4ccaf78db74db514b8796304c4005f',1,'DICe::Objective::beta()'],['../class_d_i_ce_1_1_objective___z_n_s_s_d.html#add46a12700d2361a8dd54ff7cc85e644',1,'DICe::Objective_ZNSSD::beta()']]],
   ['bibitcount',['biBitCount',['../struct_d_i_ce_1_1cine_1_1bitmap__info__header.html#a74e311711b7d9380f95fae98fd67d713',1,'DICe::cine::bitmap_info_header']]],
   ['biclrimportant',['biClrImportant',['../struct_d_i_ce_1_1cine_1_1bitmap__info__header.html#a852faa09acd1467d80e324d20543032c',1,'DICe::cine::bitmap_info_header']]],
   ['biclrused',['biClrUsed',['../struct_d_i_ce_1_1cine_1_1bitmap__info__header.html#acf3bc32748ca8a9cd21ee0caaab19c32',1,'DICe::cine::bitmap_info_header']]],

@@ -13,7 +13,7 @@ var searchData=
   ['read_5ftiff_5fimage',['read_tiff_image',['../namespace_d_i_ce_1_1utils.html#afb38e2bc30d3e5fd806f085c943a4c62',1,'DICe::utils::read_tiff_image(const char *file_name, intensity_t *intensities, const bool is_layout_right=true)'],['../namespace_d_i_ce_1_1utils.html#a3ced7594a0c0fbbb301c1220ca5108e3',1,'DICe::utils::read_tiff_image(const char *file_name, int_t offset_x, int_t offset_y, int_t width, int_t height, intensity_t *intensities, const bool is_layout_right=true)']]],
   ['read_5ftiff_5fimage_5fdimensions',['read_tiff_image_dimensions',['../namespace_d_i_ce_1_1utils.html#abed21b4385aa3bbb55aafc579fbc22c7',1,'DICe::utils']]],
   ['record_5ffailed_5fstep',['record_failed_step',['../class_d_i_ce_1_1_schema.html#a4e8466fe2fb355a88183880567932ff8',1,'DICe::Schema']]],
-  ['record_5fstep',['record_step',['../class_d_i_ce_1_1_schema.html#aeb94723948255d2d62df0c3ef8feeda2',1,'DICe::Schema']]],
+  ['record_5fstep',['record_step',['../class_d_i_ce_1_1_schema.html#a5c7c2e12558871c24c866815ac6de8f2',1,'DICe::Schema']]],
   ['rectangle',['Rectangle',['../class_d_i_ce_1_1_rectangle.html#af0fb84cfeb77e0126abb752d61745651',1,'DICe::Rectangle']]],
   ['ref_5fimg',['ref_img',['../class_d_i_ce_1_1_schema.html#ab270ba7e135d69bf21354d87a8f300e3',1,'DICe::Schema']]],
   ['ref_5fintensities',['ref_intensities',['../class_d_i_ce_1_1_subset.html#a78a0df5221ec9ccb50ddcda698f36cad',1,'DICe::Subset']]],
