@@ -271,6 +271,7 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::objective_regularization_factor,1000.0);
   defaultParams->set(DICe::pixel_integration_order,1);
   defaultParams->set(DICe::skip_solve_gamma_threshold,1.0E-10);
+  defaultParams->set(DICe::skip_all_solves,false);
   defaultParams->set(DICe::initial_gamma_threshold,-1.0);
   defaultParams->set(DICe::final_gamma_threshold,-1.0);
   defaultParams->set(DICe::path_distance_threshold,-1.0);
@@ -318,6 +319,7 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::objective_regularization_factor,1000.0);
   defaultParams->set(DICe::pixel_integration_order,1);
   defaultParams->set(DICe::skip_solve_gamma_threshold,1.0E-10);
+  defaultParams->set(DICe::skip_all_solves,false);
   defaultParams->set(DICe::initial_gamma_threshold,-1.0);
   defaultParams->set(DICe::final_gamma_threshold,-1.0);
   defaultParams->set(DICe::path_distance_threshold,-1.0);

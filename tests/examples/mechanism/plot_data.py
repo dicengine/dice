@@ -10,29 +10,93 @@ font = {'family' : 'sans-serif',
         'size'   : 8}
 matplotlib.rc('font', **font)
 
+fig = figure(figsize=(8,8), dpi=150)
 for i in range(0,NUM_SUBSETS):
   FILE = FILE_PREFIX+str(i)+".txt"
-  PDFTHETA = "Results_"+str(i)+".pdf"
-  print(FILE)
   DATA = loadtxt(FILE,delimiter=',',skiprows=21)
   FRAME    = DATA[:,0]
-  X_TILDE  = DATA[:,1]
-  Y_TILDE  = DATA[:,2]
   DISP_X   = DATA[:,3]
   DISP_Y   = DATA[:,4]
-  THETA    = DATA[:,5]
-  SIGMA    = DATA[:,6]
-  GAMMA    = DATA[:,7]
-  fig = figure(figsize=(12,5), dpi=150)
+  subplot(2,2,i+1)
   plot(FRAME,DISP_X,'-b')
   plot(FRAME,DISP_Y,'-r')
-  plot(FRAME,THETA,'-g')
-  fig.set_tight_layout(True)
-  legend(["Displacement X","Displacement Y","Rotation"])
-  xlabel('Image Number')
-  ylabel('Displacement (pixels) or Rotation (Rad)')
   title("Subset ID: "+str(i))
-  savefig(PDFTHETA,dpi=150, format='pdf')
+  if i==0:
+    legend(["$u$","$v$"], loc=2)
+  xlabel('Image Number')
+  ylabel('Displacement (pixels)')
+  fig.set_tight_layout(True)
+  savefig('Disp.pdf',dpi=150, format='pdf')
+
+fig = figure(figsize=(8,8), dpi=150)
+for i in range(0,NUM_SUBSETS):
+  FILE = FILE_PREFIX+str(i)+".txt"
+  DATA = loadtxt(FILE,delimiter=',',skiprows=21)
+  FRAME    = DATA[:,0]
+  THETA    = DATA[:,5]
+  subplot(2,2,i+1)
+  plot(FRAME,THETA,'-g')
+  title("Subset ID: "+str(i))
+  if i==0:
+    legend(["theta"],loc=2)
+  xlabel('Image Number')
+  ylabel('Rotation (Rad)')
+  fig.set_tight_layout(True)
+  savefig('Theta.pdf',dpi=150, format='pdf')
+
+fig = figure(figsize=(8,8), dpi=150)
+for i in range(0,NUM_SUBSETS):
+  FILE = FILE_PREFIX+str(i)+".txt"
+  DATA = loadtxt(FILE,delimiter=',',skiprows=21)
+  FRAME    = SDATA[:,0]
+  GAMMA    = SDATA[:,7]
+  subplot(2,2,i+1)
+  plot(FRAME,GAMMA,'-m')
+  title("Subset ID: "+str(i))
+  if i==0:
+    legend(["Gamma"],loc=2)
+  if i==2:
+    ylim([0,2.0])
+  xlabel('Image Number')
+  ylabel('Gamma (.)')
+  fig.set_tight_layout(True)
+  savefig('Gamma.pdf',dpi=150, format='pdf')
+
+fig = figure(figsize=(8,8), dpi=150)
+for i in range(0,NUM_SUBSETS):
+  FILE = FILE_PREFIX+str(i)+".txt"
+  DATA = loadtxt(FILE,delimiter=',',skiprows=21)
+  FRAME    = DATA[:,0]
+  SIGMA    = DATA[:,6]
+  subplot(2,2,i+1)
+  plot(FRAME,SIGMA,'-c')
+  title("Subset ID: "+str(i))
+  if i==0:
+    legend(["Sigma"],loc=2)
+  if i==2:
+    ylim([0.005,0.015])
+  xlabel('Image Number')
+  ylabel('Sigma (.)')
+  #ylim([0,0.002])
+  fig.set_tight_layout(True)
+  savefig('Sigma.pdf',dpi=150, format='pdf')
+
+fig = figure(figsize=(8,8), dpi=150)
+for i in range(0,NUM_SUBSETS):
+  FILE = FILE_PREFIX+str(i)+".txt"
+  DATA = loadtxt(FILE,delimiter=',',skiprows=21)
+  FRAME    = DATA[:,0]
+  BETA     = DATA[:,8]
+  subplot(2,2,i+1)
+  plot(FRAME,BETA,'-k')
+  title("Subset ID: "+str(i))
+  if i==0:
+    legend(["Beta"],loc=2)
+  xlabel('Image Number')
+  ylabel('Beta (.)')
+  ylim([0,1.0])
+  fig.set_tight_layout(True)
+  savefig('Beta.pdf',dpi=150, format='pdf')
   
 show()    
 

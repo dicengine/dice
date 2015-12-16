@@ -180,8 +180,10 @@ Schema::construct_schema(Teuchos::RCP<Image> ref_img,
 {
   default_constructor_tasks(params);
   if(gauss_filter_images_){
-    ref_img->gauss_filter();
-    def_img->gauss_filter();
+    if(!ref_img->has_gauss_filter()) // the filter may have alread been applied to the image
+      ref_img->gauss_filter();
+    if(!def_img->has_gauss_filter())
+      def_img->gauss_filter();
   }
   ref_img_ = ref_img;
   def_img_ = def_img;
@@ -281,6 +283,7 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   init_params_ = params;
   comm_ = Teuchos::rcp(new MultiField_Comm());
   path_file_names_ = Teuchos::rcp(new std::map<int_t,std::string>());
+  optical_flow_flags_ = Teuchos::rcp(new std::map<int_t,bool>());
   skip_solve_flags_ = Teuchos::rcp(new std::map<int_t,bool>());
   motion_window_params_ = Teuchos::rcp(new std::map<int_t,Motion_Window_Params>());
   initial_gamma_threshold_ = -1.0;
@@ -406,6 +409,8 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   robust_solver_tolerance_ = diceParams->get<double>(DICe::robust_solver_tolerance);
   assert(diceParams->isParameter(DICe::skip_solve_gamma_threshold));
   skip_solve_gamma_threshold_ = diceParams->get<double>(DICe::skip_solve_gamma_threshold);
+  assert(diceParams->isParameter(DICe::skip_all_solves));
+  skip_all_solves_ = diceParams->get<bool>(DICe::skip_all_solves);
   assert(diceParams->isParameter(DICe::initial_gamma_threshold));
   initial_gamma_threshold_ = diceParams->get<double>(DICe::initial_gamma_threshold);
   assert(diceParams->isParameter(DICe::final_gamma_threshold));
@@ -658,6 +663,9 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     }
     if(subset_info->skip_solve_flags->size()>0){
       set_skip_solve_flags(subset_info->skip_solve_flags);
+    }
+    if(subset_info->optical_flow_flags->size()>0){
+      set_optical_flow_flags(subset_info->optical_flow_flags);
     }
     if(subset_info->motion_window_params->size()>0){
       set_motion_window_params(subset_info->motion_window_params);
@@ -1176,6 +1184,11 @@ Schema::prepare_optimization_initializers(){
     DEBUG_MSG("Default initializer is phase correlation initializer");
     default_initializer = Teuchos::rcp(new Phase_Correlation_Initializer(this));
   }
+  else if(initialization_method_==USE_OPTICAL_FLOW){
+    // make syre tga the correlation routine is tracking routine
+    TEUCHOS_TEST_FOR_EXCEPTION(correlation_routine_!=TRACKING_ROUTINE,std::invalid_argument,"Error, USE_OPTICAL_FLOW "
+        "initialization method is only available for the TRACKING_ROUTINE correlation_routine.");
+  }
   else{ // use field values
     DEBUG_MSG("Default initializer is field value initializer");
     default_initializer = Teuchos::rcp(new Field_Value_Initializer(this));
@@ -1187,14 +1200,33 @@ Schema::prepare_optimization_initializers(){
     for(size_t i=0;i<obj_vec_.size();++i){
       const int_t subset_gid = obj_vec_[i]->correlation_point_global_id();
       const bool has_path_file = path_file_names_->find(subset_gid)!=path_file_names_->end();
-      if(has_path_file){
+      if(has_path_file){ // path file will trump optical flow if it exists
         const int_t num_neighbors = 6; // number of path neighbors to search while initializing
         std::string path_file_name = path_file_names_->find(subset_gid)->second;
         DEBUG_MSG("Subset " << subset_gid << " using path file " << path_file_name << " as initializer");
         opt_initializers_.insert(std::pair<int_t,Teuchos::RCP<Initializer> >(subset_gid,
           Teuchos::rcp(new Path_Initializer(this,obj_vec_[i]->subset(),path_file_name.c_str(),num_neighbors))));
       }
+      // optical flow was requested for all subsets
+      else if(initialization_method_==USE_OPTICAL_FLOW){
+        DEBUG_MSG("Subset " << subset_gid << " using optical flow initializer (as requested by general "
+            "initialization_method in correlation params file)");
+        opt_initializers_.insert(std::pair<int_t,Teuchos::RCP<Initializer> >(subset_gid,
+          Teuchos::rcp(new Optical_Flow_Initializer(this,obj_vec_[i]->subset()))));
+      }
+      // optical flow was requested for this subset specfically
+      else if(optical_flow_flags_->find(subset_gid)!=optical_flow_flags_->end()){
+        if(optical_flow_flags_->find(subset_gid)->second ==true){
+          TEUCHOS_TEST_FOR_EXCEPTION(has_path_file,std::runtime_error,"Error, cannot set USE_PATH_FILE and USE_OPTICAL_FLOW "
+              "for the same subset in the subset file");
+          DEBUG_MSG("Subset " << subset_gid << " using optical flow initializer "
+              "(as requested in subset file specifically for this subset)");
+          opt_initializers_.insert(std::pair<int_t,Teuchos::RCP<Initializer> >(subset_gid,
+            Teuchos::rcp(new Optical_Flow_Initializer(this,obj_vec_[i]->subset()))));
+        }
+      }
       else{
+        DEBUG_MSG("Subset " << subset_gid << " using default initializer");
         opt_initializers_.insert(std::pair<int_t,Teuchos::RCP<Initializer> >(subset_gid,default_initializer));
       }
     } // end obj_vec
@@ -1248,6 +1280,7 @@ void
 Schema::record_failed_step(const int_t subset_gid,
   const int_t status,
   const int_t num_iterations){
+  DEBUG_MSG("Subset " << subset_gid << " record failed step");
   local_field_value(subset_gid,SIGMA) = -1.0;
   local_field_value(subset_gid,MATCH) = -1.0;
   local_field_value(subset_gid,GAMMA) = -1.0;
@@ -1267,6 +1300,7 @@ Schema::record_step(const int_t subset_gid,
   const scalar_t & noise,
   const int_t status,
   const int_t num_iterations){
+  DEBUG_MSG("Subset " << subset_gid << " record step");
   local_field_value(subset_gid,DISPLACEMENT_X) = (*deformation)[DISPLACEMENT_X];
   local_field_value(subset_gid,DISPLACEMENT_Y) = (*deformation)[DISPLACEMENT_Y];
   local_field_value(subset_gid,NORMAL_STRAIN_X) = (*deformation)[NORMAL_STRAIN_X];
@@ -1322,7 +1356,6 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   Status_Flag corr_status = CORRELATION_FAILED;
   int_t num_iterations = -1;
   Teuchos::RCP<std::vector<scalar_t> > deformation = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-  const bool has_path_file = path_file_names_->find(subset_gid)!=path_file_names_->end();
   try{
     init_status = initial_guess(subset_gid,deformation);
   }
@@ -1341,14 +1374,29 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //  check if the user rrequested to skip the solve and only initialize (param set in subset file)
   //
   // check if the solve should be skipped
-  if(skip_solve_flags_->find(subset_gid)!=skip_solve_flags_->end()){
-    if(skip_solve_flags_->find(subset_gid)->second ==true){
-      DEBUG_MSG("Subset " << subset_gid << " solve will be skipped as requested by user in the subset file");
+  if(skip_solve_flags_->find(subset_gid)!=skip_solve_flags_->end()||skip_all_solves_){
+    if(skip_solve_flags_->find(subset_gid)->second ==true||skip_all_solves_){
+      if(skip_all_solves_){
+        DEBUG_MSG("Subset " << subset_gid << " skip solve (skip_all_solves parameter was set)");
+      }else{
+        DEBUG_MSG("Subset " << subset_gid << " skip solve (as requested in the subset file via SKIP_SOLVE keyword)");
+      }
       scalar_t noise_std_dev = 0.0;
       const scalar_t initial_sigma = obj->sigma(deformation,noise_std_dev);
       const scalar_t initial_gamma = obj->gamma(deformation);
       const scalar_t initial_beta = output_beta_ ? obj->beta(deformation) : 0.0;
       record_step(subset_gid,deformation,initial_sigma,0.0,initial_gamma,initial_beta,noise_std_dev,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
+      // evolve the subsets and output the images requested as well
+      // turn on pixels that at the beginning were hidden behind an obstruction
+      if(use_subset_evolution_&&image_frame_>1){
+        DEBUG_MSG("[PROC " << comm_->get_rank() << "] Evolving subset " << subset_gid << " using newly exposed pixels for intensity values");
+        obj->subset()->turn_on_previously_obstructed_pixels();
+      }
+      //  Write debugging images if requested
+      if(output_deformed_subset_intensity_images_)
+        write_deformed_subset_intensity_image(obj);
+      if(output_evolved_subset_images_)
+        write_reference_subset_intensity_image(obj);
       return;
     }
   }
@@ -1436,6 +1484,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   //  test path distance if user requested
   //
+  const bool has_path_file = path_file_names_->find(subset_gid)!=path_file_names_->end();
   if(path_distance_threshold_!=-1.0&&has_path_file){
     scalar_t path_distance = 0.0;
     size_t id = 0;
@@ -1469,7 +1518,14 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   //  Write debugging images if requested
   //
-  if(output_deformed_subset_intensity_images_){
+  if(output_deformed_subset_intensity_images_)
+    write_deformed_subset_intensity_image(obj);
+  if(output_evolved_subset_images_)
+    write_reference_subset_intensity_image(obj);
+}
+
+void
+Schema::write_deformed_subset_intensity_image(Teuchos::RCP<Objective> obj){
 #ifndef DICE_DISABLE_BOOST_FILESYSTEM
     DEBUG_MSG("[PROC " << comm_->get_rank() << "] Attempting to create directory : ./deformed_subset_intensities/");
     std::string dirStr = "./deformed_subset_intensities/";
@@ -1490,14 +1546,16 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       num_zeros = num_digits_total - num_digits_image;
     }
     std::stringstream ss;
-    ss << dirStr << "deformedSubset_" << subset_gid << "_";
+    ss << dirStr << "deformedSubset_" << obj->correlation_point_global_id() << "_";
     for(int_t i=0;i<num_zeros;++i)
       ss << "0";
     ss << image_frame_;
     obj->subset()->write_tiff(ss.str(),true);
 #endif
-  }
-  if(output_evolved_subset_images_){
+}
+
+void
+Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
 #ifndef DICE_DISABLE_BOOST_FILESYSTEM
     DEBUG_MSG("[PROC " << comm_->get_rank() << "] Attempting to create directory : ./evolved_subsets/");
     std::string dirStr = "./evolved_subsets/";
@@ -1518,13 +1576,12 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       num_zeros = num_digits_total - num_digits_image;
     }
     std::stringstream ss;
-    ss << dirStr << "evolvedSubset_" << subset_gid << "_";
+    ss << dirStr << "evolvedSubset_" << obj->correlation_point_global_id() << "_";
     for(int_t i=0;i<num_zeros;++i)
       ss << "0";
     ss << image_frame_;
     obj->subset()->write_tiff(ss.str());
 #endif
-  }
 }
 
 // TODO fix this up so that it works with conformal subsets:
@@ -1791,7 +1848,9 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
   const int_t w = def_img_->width();
   const int_t h = def_img_->height();
 
-  Teuchos::ArrayRCP<intensity_t> intensities = def_img_->intensity_array();
+  Teuchos::ArrayRCP<intensity_t> intensities(def_img_->num_pixels(),0.0);
+  for(int_t i=0;i<def_img_->num_pixels();++i)
+    intensities[i] = (*def_img_)(i);
 
   scalar_t dx=0,dy=0;
   int_t ox=0,oy=0;

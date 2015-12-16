@@ -475,7 +475,7 @@ To use a path for a conformal subset, the syntax is given inside the `CONFORMAL_
       BEGIN BOUNDARY
          ...
       END
-      PATH_FILE <dir/filename>
+      USE_PATH_FILE <dir/filename>
     END CONFORMAL_SUBSET
 
 To test the computed solution for a subset for each frame in terms of the distance from the path, the user can request the following option in the parameters file:
@@ -483,6 +483,32 @@ To test the computed solution for a subset for each frame in terms of the distan
     <Parameter name="path_distance_threshold" type="double" value="<tolerance>" />
 
 If this option is not specified, the solution will not be compared to the path.
+
+### Skip solve
+
+In a conformal subset definition (inside the `BEGIN CONFORMAL_SUBSET` and `END CONFORMAL_SUBSET` keywords) the keyword `SKIP_SOLVE` can be used to take the initial guess for the solution as the final solution and skip the actual solve. If the user would like to skip the solve for all subsets, the following correlation parameter can be set in the parameters file.
+
+    <Parameter name="skip_all_solves" type="bool" value="true" />
+
+### Optical flow
+
+If the user has requested the `TRACKING_ROUTINE` `correlation_routine`, optical flow can be used as an initializer for the solution or as a tracking method by itself. To use optical flow to determine the initial guess, the keyword `USE_OPTICAL_FLOW` can be added to the subset file as follows.
+
+    BEGIN CONFORMAL_SUBSET
+      SUBSET_ID <id>
+      BEGIN BOUNDARY
+         ...
+      END
+      USE_OPTICAL_FLOW
+    END CONFORMAL_SUBSET
+
+To use optical flow as the initializer for all subsets, use the following correlation parameter:
+
+    <Parameter name="initialization_method" type="string" value="use_optical_flow" />
+
+To use optical flow as the motion solution, not just as an initializer for `SIMPLEX` or `GRADIENT` DIC, use one of the methods above to turn on optical flow, but also use a `SKIP_SOLVE` keyword in the subset file (for a particular subset)  or the `skip_all_solves` correlation parameter to skip the DIC solves and use the optical flow solution as the motion solution.
+
+The optical flow method in DICe follows the implementation of Matlab for the [Lucas-Kanade](http://www.mathworks.com/help/vision/ref/opticalflow.html#bqi5zaf-1) algorithm. To determine the points to use for optical flow (two are needed to compute the angle of rotation) all of the pixels in the subset are scanned to find the two with the highest gradients that are at least 10 pixels away from each other. If the subset is small, the pixels can be as close as 2 pixels away from each other which lowers the accuracy substantially. As long as these two pixels stay visible throughout the sequence, the positions about which optical flow is calculated do not change. If one of the pixels becomes obstructed during the sequence, new locations are selected from among the visible pixels.
 
 ### Motion detection
 
@@ -526,6 +552,14 @@ If multiple subsets share a window, the window needs only to be defined for one 
       END
       TEST_FOR_MOTION 0
     END CONFORMAL_SUBSET
+
+### Filtering images
+
+To Gauss filter the images add the following option to the parameters file. The default has no filtering.
+
+      <Parameter name="gauss_filter_images" type="bool" value="true" />
+
+When filtering is enabled, the size of the filtering mask is seven pixels by seven pixels. The coefficients of the mask are given in DICe_ImageSerial.cpp or DICe_ImageKokkos.cpp. It is possible to filter images with different window sizes, but so far this is only enabled for the DICe::Image class. It has not been enabled in the correlation parameters for the executable.
 
 ### Output files
 
@@ -608,6 +642,19 @@ Some of the parameters require activation in the correlation parameters. To outp
     <Parameter name="output_beta" type="bool" value="true" />
 
 If all zeros are reported for a certain field, for example `SHEAR_STRAIN_XY`, it usually means that particular shape function is not activated in the correlation paramters. The `CONDITION_NUMBER` field is not used in the `SIMPLEX` optimization method so all zeros will be reported for `SIMPLEX`. Values of `-1.0` typically imply failure of some kind. For example if the `NEIGHBOR_ID` field is `-1.0` the subset corresponding to that field value does not have a neighbor. Another example would be if `SIGMA` is `-1.0` it implies that the correlation failed for that particular step.
+
+**Coordinate system and positive rotation:** Coordinates are measured from the top left corner of the image with `x` positive to the right and `y` positive downward. Rotations are positive clockwise (opposite of the right-hand rule).
+
+### Determining the quality of the solution
+
+The following output parameters are useful in estimating the quality of the displacement solution:
+
+**`SIGMA`:** (Predicted displacement variation) This variable estimates the predicted variation in the displacement solution given variations in the data due to noise and interpolation bias. `SIGMA` can be used as an uncertainty metric if the following conditions are met: the displacements are smaller than one pixel in magnitude and the noise level in the images is less than roughly three or four percent. Use `SIGMA` to determine the confidence in the computed solution. For `SIGMA` lower values are better and imply lower uncertainty.
+
+**`GAMMA`:** (Template matching quality) This variable measures how well the template or subset from the reference image matches the deformed image. `GAMMA` is the value of the correlation criteria (or objective functional or cost function magnitude). `GAMMA` provides the user with a way to tell if the subset is still registering on the correct location in the deformed image. For `GAMMA` lower values are better, 0.0 implies an identical or perfect match between the reference and deformed subset.
+
+**`BETA`:** (Sensitivity of the cost function) This variable provides a measure of how sensitive the cost function (or correlation criteria) is to small perturbations in the displacement solution. If the cost function is highly sensitive, it will increase dramatically for even slight errors in the displacement solution. If the cost function is not sensitive, it implies that it cannot differentiate between many potential solutions. Again, for `BETA` lower values are better. Common sources of high `BETA` are poor contrast, lack of randomness in the speckle pattern, subset sizes too small, or high image noise levels.
+
 
 ### Plotting results with python
 

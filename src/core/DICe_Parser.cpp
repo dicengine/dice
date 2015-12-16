@@ -630,7 +630,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
   // NOTE: assumes 2D coordinates
   const int_t dim = 2;
   std::fstream dataFile(fileName.c_str(), std::ios_base::in);
-  assert(dataFile.good());
+  TEUCHOS_TEST_FOR_EXCEPTION(!dataFile.good(), std::runtime_error, "Error, the subset file does not exist: " << fileName);
 
   if(proc_rank==0) DEBUG_MSG("Reading the subset file " << fileName);
 
@@ -807,6 +807,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          conformal_subset_defined = true;
          bool has_path_file = false;
          bool skip_solve = false;
+         bool use_optical_flow = false;
          Motion_Window_Params motion_window_params;
          bool test_for_motion = false;
          std::string path_file_name;
@@ -847,13 +848,13 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  " tolerance: " << motion_window_params.tol_);
              }
            }
-           else if(block_tokens[0]==parser_path_file){
-             /// check if the skip solve token exists at the end
-             if(block_tokens.size()>2){
-               if(block_tokens[2]==parser_skip_solve){
-                 skip_solve = true;
-               }
-             }
+           else if(block_tokens[0]==parser_skip_solve){
+             skip_solve = true;
+           }
+           else if(block_tokens[0]==parser_use_optical_flow){
+             use_optical_flow = true;
+           }
+           else if(block_tokens[0]==parser_use_path_file){
              // need to re-read the line again without conveting to capital case
              dataFile.seekg(pos, std::ios::beg);
              Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile," ",false);
@@ -974,6 +975,8 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          }
          if(has_path_file)
            info->path_file_names->insert(std::pair<int_t,std::string>(subset_id,path_file_name));
+         if(use_optical_flow)
+           info->optical_flow_flags->insert(std::pair<int_t,bool>(subset_id,true));
          if(skip_solve)
            info->skip_solve_flags->insert(std::pair<int_t,bool>(subset_id,true));
          if(test_for_motion)

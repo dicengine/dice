@@ -3,15 +3,14 @@
 #
 
 SET(EXAMPLES
-  mechanism
-  obstruction
-  full_field
-)
+   mechanism
+   obstruction
+   full_field)
 
 FOREACH ( test ${EXAMPLES})
-    # Copy over all the test files (input and results)
+    # copy all the necessary files over to the build dir
     FILE(COPY ${test} DESTINATION . )
-    # create a test
+    # create a test for each folder (or subfolder)
     ADD_TEST ( NAME "RUN_EXAMPLE_${test}"
          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${test}
          COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/dice -i input.xml -v)

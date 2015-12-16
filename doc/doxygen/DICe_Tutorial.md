@@ -25,7 +25,7 @@ Input Files
 
 The documentation describes how to generate input files for a DICe analysis. There are three files needed (two of which are optional) in addition to the image files or video file. The first is the input xml file, typically named `input.xml`. This file defines the images to analyze and the file locations, the frames to use, and optionally defines a parameters file (typically named `params.xml'). The parameters xml file defines the methods to use during the analysis and the method options. If no parameters file is specified, a set of default parameters is used. The names for each of the files above can be different than the suggested name, as long as the correct file name is referenced. The subset file defines the geometry of conformal subsets. In many cases, the subset file is not needed and the step size and subset size can simply be given in the input file. In other cases, for example when the objects studied have an oblong or odd shape, subsets that map to the edges of the object need to be used.
 
-In each of the examples below, the input files are provided in the example directory. These can be used as a starting point for developing the input files for a more complicated analysis. Gold copies of the results files are also included with each of the examples.
+In each of the examples below, the input files are provided in the example directory. These can be used as a starting point for developing the input files for a more complicated analysis. Gold copies of the results files are also included with each of the examples. These files contain the expected solution for the given example.
 
 To run any of the examples below, simply use a terminal or command line program to `cd` into the example directory and run the dice executable. On Mac the call would be:
 
@@ -39,13 +39,11 @@ The `-v` option turns on verbose output and the `-t` option will print the timin
 
 ### Example 1: Mechanism
 
-The files for this example are in the `mechanism` folder of the `tests/examples/` directory.
-
 This example illustrates how to define conformal subsets and use them to track parts of a mechanism during operation.
 
-The subsets are defined in the file `subsets.txt` and are shown in the image below. In the first section of the file, the coordinates of the centroid for each subset are defined. In this case, there are 4 subsets (ids:0,1,2,3). Notice several things about the subset definitions. The first is that two disconnected shapes are used to define Subset 0. Any number of shapes can be combined into a single subset. The shapes do not have to be contiguous.
+The image data for this example is a `.cine` video file. The `.cine` format is used for high speed video. There are a number of problems with the image data for this example: the speckle pattern is not evenly distributed; the speckles are of poor sizes; the parts in the video move in a jerky fashion; the center wheel has a lot of speckular reflection; some parts are too small for a proper subset; and some parts are of odd shapes, making square subsets difficult. This example is designed to show how to collect motion data, even with a terrible set of images. It is definitately not a good example to follow in terms of the experimental set up.
 
-Another thing to notice is that there is no `conformal_subset` definition for Subset 3. As long as the user has defined a `subset_size` in the `input.xml` file, any subsets that do not have a `conformal_subset` definition will be assigned a square region of the default dimensions.
+The files for this example are in the `mechanism` folder of the `tests/examples/` directory. The subsets are defined in the file `subsets.txt` and are shown in the image below. In the first section of the file, the coordinates of the centroid for each subset are defined. In this case, there are 4 subsets (ids:0,1,2,3). Notice several things about the subset definitions. The first is that two disconnected shapes are used to define Subset 0. Any number of shapes can be combined into a single subset. The shapes do not have to be contiguous. Another thing to notice is that there is no `conformal_subset` definition for Subset 3. As long as the user has defined a `subset_size` in the `input.xml` file, any subsets that do not have a `conformal_subset` definition will be assigned a square region of the default dimensions.
 
 ![](images/MechanismSubsets.png)
 @image latex images/MechanismSubsets.png

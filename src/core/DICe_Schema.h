@@ -574,12 +574,20 @@ public:
     const bool separate_files_per_subset=false,
     const Output_File_Type type = TEXT_FILE);
 
-  /// \brief Write an image that shows all the subsets current position and shape
-  /// field values from.
+  /// \brief Write an image that shows all the subsets' current positions and shapes
+  /// using the current field values
   ///
   /// WARNING: This is meant only for the TRACKING_ROUTINE where there are only a few subsets to track
   /// \param use_gamma_as_color colors the pixels according to gamma values for each pixel
   void write_deformed_subsets_image(const bool use_gamma_as_color=false);
+
+  /// \brief Write an image for each subset that shows the reference intensities for this frame
+  /// \param obj pointer to the objective
+  void write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj);
+
+  /// \brief Write an image for each subset that shows the deformed intensities for this frame
+  /// \param obj pointer to the objective
+  void write_deformed_subset_intensity_image(Teuchos::RCP<Objective> obj);
 
   /// \brief Write an image that shows all the subsets current position and shape
   /// field values from.
@@ -700,6 +708,11 @@ public:
     return use_subset_evolution_;
   }
 
+  /// Returns true if all solves should be skipped
+  bool skip_all_solves() const {
+    return skip_all_solves_;
+  }
+
   /// True if the check for obstructed pixels should ocurr at every iteration
   bool update_obstructed_pixels_each_iteration()const{
     return update_obstructed_pixels_each_iteration_;
@@ -796,11 +809,6 @@ public:
     return &connectivity_;
   }
 
-//  std::vector<Teuchos::RCP<Objective> > * obj_vec(){
-//    return &obj_vec_;
-//  }
-
-
   /// Return the jump tolerance for rotations
   double theta_jump_tol()const{
     return theta_jump_tol_;
@@ -823,6 +831,18 @@ public:
   void set_skip_solve_flags(Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags){
     DEBUG_MSG("skip solve flags have been set");
     skip_solve_flags_ = skip_solve_flags;
+  }
+
+  /// Returns a pointer to the skip solve flags
+  Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags() const {
+    return skip_solve_flags_;
+  }
+
+  /// Provide access to the flags that determine if optical flow should be used as an initializer:
+  /// \param optical_flow_flags the map of optical flow flags
+  void set_optical_flow_flags(Teuchos::RCP<std::map<int_t,bool> > optical_flow_flags){
+    DEBUG_MSG("optical flow flags have been set");
+    optical_flow_flags_ = optical_flow_flags;
   }
 
   /// Provide access to the the dimensions of windows around each subset used
@@ -1005,6 +1025,8 @@ private:
   double robust_solver_tolerance_;
   /// If gamma is less than this for the initial guess, the solve is skipped
   double skip_solve_gamma_threshold_;
+  /// skip the solve for all subsets and just use the initial guess as the solution
+  bool skip_all_solves_;
   /// The number of correlation points
   int_t data_num_points_;
   /// Are the output fields and columns specified by the user?
@@ -1090,6 +1112,8 @@ private:
   Rotation_Value def_image_rotation_;
   /// Map to hold the names of the path files for each subset
   Teuchos::RCP<std::map<int_t,std::string> > path_file_names_;
+  /// Map to optical flow initializers
+  Teuchos::RCP<std::map<int_t,bool> > optical_flow_flags_;
   /// Map to hold the flags for skipping solves for particular subsets (initialize only since
   /// only pixel accuracy may be needed
   Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags_;

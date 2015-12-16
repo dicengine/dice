@@ -44,11 +44,15 @@
 #include <DICe_FFT.h>
 
 #include <Teuchos_RCP.hpp>
+#include <Teuchos_LAPACK.hpp>
+#include <Teuchos_SerialDenseMatrix.hpp>
 
 #include <iostream>
 #include <fstream>
 #include <math.h>
 #include <cassert>
+
+//#include    <boost/filesystem.hpp>
 
 namespace DICe {
 
@@ -385,6 +389,511 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
   return INITIALIZE_FAILED;
 };
 
+
+Optical_Flow_Initializer::Optical_Flow_Initializer(Schema * schema,
+  Teuchos::RCP<Subset> subset):
+  Initializer(schema),
+  subset_(subset),
+  num_neighbors_(20), // number of closest pixels
+  window_size_(13),
+  half_window_size_(7),
+  ref_pt1_x_(0),
+  ref_pt1_y_(0),
+  ref_pt2_x_(0),
+  ref_pt2_y_(0),
+  current_pt1_x_(0.0),
+  current_pt1_y_(0.0),
+  current_pt2_x_(0.0),
+  current_pt2_y_(0.0),
+  reset_locations_(true),
+  delta_1c_x_(0.0),
+  delta_1c_y_(0.0),
+  delta_12_x_(0.0),
+  delta_12_y_(0.0),
+  mag_ref_(0.0),
+  ref_cx_(0.0),
+  ref_cy_(0.0),
+  initial_u_(0.0),
+  initial_v_(0.0),
+  initial_t_(0.0)
+ {
+  DEBUG_MSG("Optical_Flow_Initializer::Optical_Flow_Initializer()");
+  DEBUG_MSG("Optical_Flow_Initializer: creating the point cloud");
+  point_cloud_ = Teuchos::rcp(new Point_Cloud<scalar_t>());
+  point_cloud_->pts.resize(subset_->num_pixels());
+  for(int_t i=0;i<subset_->num_pixels();++i){
+    point_cloud_->pts[i].x = subset_->x(i);
+    point_cloud_->pts[i].y = subset_->y(i);
+    point_cloud_->pts[i].z = 0.0;
+  }
+  DEBUG_MSG("Optical_Flow_Initializer: building the kd-tree");
+  kd_tree_ = Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud_.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+  kd_tree_->buildIndex();
+
+  // now set up the neighbor list for each triad:
+  neighbors_ = std::vector<size_t>(subset_->num_pixels()*num_neighbors_,0);
+  scalar_t query_pt[3];
+  std::vector<size_t> ret_index(num_neighbors_);
+  std::vector<scalar_t> out_dist_sqr(num_neighbors_);
+  for(int_t i=0;i<subset_->num_pixels();++i){
+    query_pt[0] = point_cloud_->pts[i].x;
+    query_pt[1] = point_cloud_->pts[i].y;
+    query_pt[2] = point_cloud_->pts[i].z;
+    kd_tree_->knnSearch(&query_pt[0], num_neighbors_, &ret_index[0], &out_dist_sqr[0]);
+    for(size_t j=0;j<num_neighbors_;++j){
+      neighbors_[i*num_neighbors_ + j] = ret_index[j];
+    }
+  }
+  // create the window coefficients
+  std::vector<scalar_t> coeffs(13,0.0);
+//  coeffs[0] = 0.000; coeffs[1] = 0.0046; coeffs[2] = 0.03255; coeffs[3] = 0.1455; coeffs[4] = 0.42474; coeffs[5] = 0.80735;
+//  coeffs[6] = 1.0;
+//  coeffs[7] = 0.80735; coeffs[8] = 0.42474; coeffs[9] = 0.1455; coeffs[10] = 0.03255; coeffs[11] = 0.0046; coeffs[12] = 0.000;
+  coeffs[0] = 0.51; coeffs[1] = 0.64; coeffs[2] = 0.84; coeffs[3] = 0.91; coeffs[4] = 0.96; coeffs[5] = 0.99;
+  coeffs[6] = 1.0;
+  coeffs[7] = 0.99; coeffs[8] = 0.96; coeffs[9] = 0.91; coeffs[10] = 0.84; coeffs[11] = 0.64; coeffs[12] = 0.51;
+
+  for(int_t j=0;j<window_size_;++j){
+    for(int_t i=0;i<window_size_;++i){
+      window_coeffs_[i][j] = coeffs[i]*coeffs[j];
+    }
+  }
+  ids_[0] = 0;
+  ids_[1] = 0;
+}
+
+bool
+Optical_Flow_Initializer::is_near_deactivated(const int_t pixel_id){
+  // make sure the pixel itself is not deactivated
+  if(subset_->is_deactivated_this_step(pixel_id)||!subset_->is_active(pixel_id)){
+    return true;
+  }
+  // test all of this pixel's neighbors to see if any of them are deactivated:
+  for(size_t neigh = 0;neigh<num_neighbors_;++neigh){
+    const size_t neigh_id = neighbor(pixel_id,neigh);
+    if(subset_->is_deactivated_this_step(neigh_id)||!subset_->is_active(neigh_id)){
+      return true;
+    }
+  }
+  return false;
+}
+
+int_t
+Optical_Flow_Initializer::best_optical_flow_point(scalar_t & best_grad,
+  Teuchos::ArrayRCP<int_t> & def_x,
+  Teuchos::ArrayRCP<int_t> & def_y,
+  Teuchos::ArrayRCP<scalar_t> & gx,
+  Teuchos::ArrayRCP<scalar_t> & gy,
+  std::set<std::pair<int_t,int_t> > & subset_pixels,
+  Teuchos::RCP<std::vector<int_t> > existing_points,
+  const bool allow_close_points){
+
+  //Teuchos::ArrayRCP<intensity_t> colors(subset_->num_pixels(),0.0);
+  // loop over the subset and find the places that are active, with all neighbors active
+  // and highest gradient values
+  int_t pt_id = 0;
+  best_grad = 0.0;
+  scalar_t grad_mag = 0.0;
+  for(int_t i=0;i<subset_->num_pixels();++i){
+    // make sure the pixel is not near a deactivated region
+    if(is_near_deactivated(i)) {
+      //colors[i] = 50.0;
+      continue;
+    }
+
+    // make sure this pixel is not within 10 pixels of existing ids
+    bool close_to_existing = false;
+    if(existing_points!=Teuchos::null){
+      // determine the number of active pixels
+      int_t num_active = 0;
+      for(int_t k=0;k<subset_->num_pixels();++k){
+        if(!subset_->is_deactivated_this_step(k)&&subset_->is_active(k))
+          num_active++;
+      }
+      // for most subsets, keep the distance between the optical flow points at least 10 pixels away
+      // for small subsets make it 2 pixels away
+      // the distance is measured in the reference frame
+      const scalar_t dist_min = (num_active < 100||allow_close_points) ? 4.0 : 100.0;
+      for(size_t k=0;k<existing_points->size();++k){
+        const int_t loc_x = subset_->x((*existing_points)[k]);
+        const int_t loc_y = subset_->y((*existing_points)[k]);
+        const scalar_t dist_sq = (subset_->x(i)-loc_x)*(subset_->x(i)-loc_x) +
+            (subset_->y(i)-loc_y)*(subset_->y(i)-loc_y);
+        if(dist_sq < dist_min){
+          close_to_existing = true;
+          break;
+        }
+      } // existing points loop
+    } // if has existing points
+    if(close_to_existing){
+      //colors[i] = 100.0;
+      continue;
+    }
+    // check that all the neighbors are internal to the subset:
+    bool neighbor_is_out_of_bounds = false;
+    for(int_t m=-3;m<=3;++m){
+      for(int_t n=-3;n<=3;++n){
+        // need to check the deformed location for each pixel
+        std::pair<int_t,int_t> pair(def_y[i]+m,def_x[i]+n);
+        if(subset_pixels.find(pair)==subset_pixels.end()){
+          neighbor_is_out_of_bounds = true;
+          break;
+        }
+      }
+      if(neighbor_is_out_of_bounds) break;
+    }
+    if(neighbor_is_out_of_bounds){
+      //colors[i] = 255.0;
+      continue;
+    }
+    //colors[i] = 200.0;
+    // compare the rest to see which has the best gradient values:
+    grad_mag = gx[i]*gx[i]*gy[i]*gy[i];
+    if(grad_mag > best_grad){
+      best_grad = grad_mag;
+      pt_id = i;
+    }
+  }
+  //colors[pt_id] = 0;
+  //Image img(schema_->ref_img());
+  //static int_t num_images = 0;
+  //for(int_t i=0;i<subset_->num_pixels();++i)
+  //  img.intensity_array()[subset_->y(i)*img.width()+subset_->x(i)] = colors[i];
+  //std::stringstream filename;
+  //filename << "locations_test_" << num_images << ".tif";
+  //img.write_tiff(filename.str());
+  //num_images++;
+
+  // catch the case that no valid pixels exist
+  if(pt_id==0&&best_grad==0.0){
+    DEBUG_MSG("Optical_Flow_Initializer::best_optical_flow_point() FAILURE no valid points exist");
+    return -1;
+  }
+  return pt_id;
+}
+
+Status_Flag
+Optical_Flow_Initializer::set_locations(const int_t subset_gid){
+  DEBUG_MSG("Optical_Flow_Initializer::set_locations() called");
+  static scalar_t grad_coeffs[5] = {-1.0,8.0,0.0,-8.0,1.0};
+  Teuchos::ArrayRCP<scalar_t> gx(subset_->num_pixels(),0.0);
+  Teuchos::ArrayRCP<scalar_t> gy(subset_->num_pixels(),0.0);
+  Teuchos::ArrayRCP<int_t> def_x(subset_->num_pixels(),0);
+  Teuchos::ArrayRCP<int_t> def_y(subset_->num_pixels(),0);
+  const scalar_t u = schema_->field_value(subset_gid,DISPLACEMENT_X);
+  initial_u_ = u;
+  const scalar_t v = schema_->field_value(subset_gid,DISPLACEMENT_Y);
+  initial_v_ = v;
+  const scalar_t t = schema_->field_value(subset_gid,ROTATION_Z);
+  initial_t_ = t;
+  const scalar_t ex = schema_->field_value(subset_gid,NORMAL_STRAIN_X);
+  const scalar_t ey = schema_->field_value(subset_gid,NORMAL_STRAIN_Y);
+  const scalar_t g = schema_->field_value(subset_gid,SHEAR_STRAIN_XY);
+  scalar_t dx=0.0,dy=0.0;
+  scalar_t Dx=0.0,Dy=0.0;
+  scalar_t mapped_x=0.0,mapped_y=0.0;
+  int_t px=0,py=0;
+  const int_t cx = subset_->centroid_x();
+  const int_t cy = subset_->centroid_y();
+  for(int_t i=0;i<subset_->num_pixels();++i){
+    // compute the deformed shape:
+    // need to cast the x_ and y_ values since the resulting value could be negative
+    dx = (scalar_t)(subset_->x(i)) - cx;
+    dy = (scalar_t)(subset_->y(i)) - cy;
+    Dx = (1.0+ex)*dx + g*dy;
+    Dy = (1.0+ey)*dy + g*dx;
+    // mapped location
+    mapped_x = std::cos(t)*Dx - std::sin(t)*Dy + u + cx;
+    mapped_y = std::sin(t)*Dx + std::cos(t)*Dy + v + cy;
+    // get the nearest pixel location:
+    px = (int_t)mapped_x;
+    if(mapped_x - (int_t)mapped_x >= 0.5) px++;
+    py = (int_t)mapped_y;
+    if(mapped_y - (int_t)mapped_y >= 0.5) py++;
+    def_x[i] = px;
+    def_y[i] = py;
+    // get the gradient information from the previous image at the deformed location:
+    for(int_t j=0;j<5;++j){
+      gx[i] += (-1.0/12.0)*grad_coeffs[j]*(*schema_->prev_img())(px-2+j,py);
+      gy[i] += (-1.0/12.0)*grad_coeffs[j]*(*schema_->prev_img())(px,py-2+j);
+    }
+    //std::cout << i << " x " << subset_->x(i) << " " << px << " y " << subset_->y(i) << " " << py <<
+    //    " intens " <<(*schema_->ref_img())(subset_->x(i),subset_->y(i)) << " " << (*schema_->prev_img())(px,py) <<
+    //    " gx " << gx[i] << " " << subset_->grad_x(i) << " gy " << gy[i] << " " << subset_->grad_y(i) << std::endl;
+  }
+  // get the current pixels for this subset, used to check if the OF point is inside the subset
+  Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+  (*def)[DISPLACEMENT_X] = u;
+  (*def)[DISPLACEMENT_Y] = v;
+  (*def)[ROTATION_Z] = t;
+  (*def)[NORMAL_STRAIN_X] = ex;
+  (*def)[NORMAL_STRAIN_Y] = ey;
+  (*def)[SHEAR_STRAIN_XY] = g;
+  std::set<std::pair<int_t,int_t> > subset_pixels = subset_->deformed_shapes(def,cx,cy,1.0);
+  scalar_t best_grad = 0.0;
+  ids_[0] = best_optical_flow_point(best_grad,def_x,def_y,gx,gy,subset_pixels);
+  if(ids_[0] == -1){
+    ref_pt1_x_ = 0; ref_pt1_y_ = 0;
+    ref_pt2_x_ = 0; ref_pt2_y_ = 0;
+    return INITIALIZE_FAILED;
+  }
+  ref_pt1_x_ = def_x[ids_[0]];//subset_->x(ids_[0]);
+  ref_pt1_y_ = def_y[ids_[0]];//subset_->y(ids_[0]);
+  DEBUG_MSG("Optical_Flow_Initializer::set_locations() point 1 id " << ids_[0] << " x " << ref_pt1_x_ << " y " << ref_pt1_y_);
+
+  // find the second best id, but also can't be near the first one:
+  Teuchos::RCP<std::vector<int_t> > existing_points = Teuchos::rcp(new std::vector<int_t>(1,ids_[0]));
+  ids_[1] = best_optical_flow_point(best_grad,def_x,def_y,gx,gy,subset_pixels,existing_points);
+  if(ids_[1] == -1){
+    DEBUG_MSG("Optical_Flow_Initializer::set_locations() could not find good point 2, re-trying with allow_close_points");
+    ids_[1] = best_optical_flow_point(best_grad,def_x,def_y,gx,gy,subset_pixels,existing_points,true);
+  }
+  if(ids_[1] == -1){
+    ref_pt1_x_ = 0; ref_pt1_y_ = 0;
+    ref_pt2_x_ = 0; ref_pt2_y_ = 0;
+    return INITIALIZE_FAILED;
+  }
+  ref_pt2_x_ = def_x[ids_[1]];//subset_->x(ids_[1]);
+  ref_pt2_y_ = def_y[ids_[1]];//subset_->y(ids_[1]);
+  DEBUG_MSG("Optical_Flow_Initializer::set_locations() point 2 id " << ids_[1] << " x " << ref_pt2_x_ << " y " << ref_pt2_y_);
+  reset_locations_ = false;
+  current_pt1_x_ = ref_pt1_x_;
+  current_pt1_y_ = ref_pt1_y_;
+  current_pt2_x_ = ref_pt2_x_;
+  current_pt2_y_ = ref_pt2_y_;
+  ref_cx_ = cx + u;
+  ref_cy_ = cy + v;
+  // vector from point 1 to centroid in the ref config
+  delta_1c_x_ = ref_cx_ - ref_pt1_x_;
+  delta_1c_y_ = ref_cy_ - ref_pt1_y_;
+  // vector from point 1 to point 2 in the ref config
+  delta_12_x_ = ref_pt2_x_ - ref_pt1_x_;
+  delta_12_y_ = ref_pt2_y_ - ref_pt1_y_;
+  mag_ref_  = std::sqrt(delta_12_x_*delta_12_x_ + delta_12_y_*delta_12_y_);
+  return INITIALIZE_SUCCESSFUL;
+}
+
+Status_Flag
+Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
+  Teuchos::RCP<std::vector<scalar_t> > deformation){
+  assert(deformation->size()==DICE_DEFORMATION_SIZE);
+  DEBUG_MSG("Optical_Flow_Initializer::initial_guess() Subset " << subset_gid);
+
+  // determine if the locations need to be reset:
+  DEBUG_MSG("Optical_Flow_Initializer::initial_guess() starting point locations: " << ref_pt1_x_ << " " <<
+    ref_pt1_y_ << " and " << ref_pt2_x_ << " " << ref_pt2_y_ );
+  if(reset_locations_==false){ // only check this if nothing else has requested a restart
+    // check that all the optical flow locations are away from obstructions
+    if(is_near_deactivated(ids_[0])||is_near_deactivated(ids_[1]))
+      reset_locations_=true;
+  }
+
+  if(reset_locations_){
+    Status_Flag location_flag = set_locations(subset_gid);
+    if(location_flag!=INITIALIZE_SUCCESSFUL) {
+      DEBUG_MSG("Optical_Flow_Initializer::initial_guess() set_locations FAILURE, using field values to initialize");
+      (*deformation)[DISPLACEMENT_X] = schema_->field_value(subset_gid,DISPLACEMENT_X);
+      (*deformation)[DISPLACEMENT_Y] = schema_->field_value(subset_gid,DISPLACEMENT_Y);
+      (*deformation)[ROTATION_Z] = schema_->field_value(subset_gid,ROTATION_Z);
+      return INITIALIZE_SUCCESSFUL;
+    }
+  }
+
+  // check if the solve was skipped, if not use the last converged solution for the
+  // new position of the optical flow points
+  bool skip_solve = false;
+  if(schema_->skip_solve_flags()->find(subset_gid)!=schema_->skip_solve_flags()->end()||schema_->skip_all_solves()){
+    if(schema_->skip_solve_flags()->find(subset_gid)->second ==true||schema_->skip_all_solves()){
+      skip_solve = true;
+    }
+  }
+  // reset the current locations of the optical flow points based on the last solution
+  if(!skip_solve){
+    const scalar_t u = schema_->field_value(subset_gid,DISPLACEMENT_X);
+    const scalar_t v = schema_->field_value(subset_gid,DISPLACEMENT_Y);
+    const scalar_t t = schema_->field_value(subset_gid,ROTATION_Z);
+    const scalar_t ex = schema_->field_value(subset_gid,NORMAL_STRAIN_X);
+    const scalar_t ey = schema_->field_value(subset_gid,NORMAL_STRAIN_Y);
+    const scalar_t g = schema_->field_value(subset_gid,SHEAR_STRAIN_XY);
+    scalar_t dx=0.0,dy=0.0;
+    scalar_t Dx=0.0,Dy=0.0;
+    const int_t cx = subset_->centroid_x();
+    const int_t cy = subset_->centroid_y();
+    // compute the deformed shape:
+    dx = (scalar_t)(subset_->x(ids_[0])) - cx;
+    dy = (scalar_t)(subset_->y(ids_[0])) - cy;
+    Dx = (1.0+ex)*dx + g*dy;
+    Dy = (1.0+ey)*dy + g*dx;
+    // mapped location
+    current_pt1_x_ = std::cos(t)*Dx - std::sin(t)*Dy + u + cx;
+    current_pt1_y_ = std::sin(t)*Dx + std::cos(t)*Dy + v + cy;
+    dx = (scalar_t)(subset_->x(ids_[1])) - cx;
+    dy = (scalar_t)(subset_->y(ids_[1])) - cy;
+    Dx = (1.0+ex)*dx + g*dy;
+    Dy = (1.0+ey)*dy + g*dx;
+    // mapped location
+    current_pt2_x_ = std::cos(t)*Dx - std::sin(t)*Dy + u + cx;
+    current_pt2_y_ = std::sin(t)*Dx + std::cos(t)*Dy + v + cy;
+  }
+
+  int_t pt_def_x[2] = {0,0};
+  int_t pt_def_y[2] = {0,0};
+  // find the nearest pixel for the updated location
+  pt_def_x[0] = (int_t)current_pt1_x_;
+  if(current_pt1_x_ - (int_t)(current_pt1_x_) >= 0.5) pt_def_x[0]++;
+  pt_def_y[0] = (int_t)current_pt1_y_;
+  if(current_pt1_y_ - (int_t)(current_pt1_y_) >= 0.5) pt_def_y[0]++;
+  pt_def_x[1] = (int_t)current_pt2_x_;
+  if(current_pt2_x_ - (int_t)(current_pt2_x_) >= 0.5) pt_def_x[1]++;
+  pt_def_y[1] = (int_t)current_pt2_y_;
+  if(current_pt2_y_ - (int_t)(current_pt2_y_) >= 0.5) pt_def_y[1]++;
+  static scalar_t grad_coeffs[5] = {-1.0,8.0,0.0,-8.0,1.0};
+
+  // do the optical flow about these points...
+  const int N = 2;
+  Teuchos::SerialDenseMatrix<int,double> H(N,N, true);
+  Teuchos::ArrayRCP<double> q(N,0.0);
+  int *IPIV = new int[N+1];
+  double *EIGS = new double[N+1];
+  int LWORK = N*N;
+  int QWORK = 3*N;
+  int INFO = 0;
+  double *WORK = new double[LWORK];
+  double *SWORK = new double[QWORK];
+  Teuchos::LAPACK<int,double> lapack;
+
+  scalar_t update_x[2] = {0.0,0.0};
+  scalar_t update_y[2] = {0.0,0.0};
+  for(int_t pt=0;pt<2;++pt){
+    // clear the values of H and q
+    H(0,0) = 0.0;
+    H(1,0) = 0.0;
+    H(0,1) = 0.0;
+    H(1,1) = 0.0;
+    q[0] = 0.0;
+    q[1] = 0.0;
+    scalar_t Ix = 0.0;
+    scalar_t Iy = 0.0;
+    scalar_t It = 0.0;
+    scalar_t w_coeff = 0.0;
+    int_t x=0,y=0;
+    // loop over subset pixels in the deformed location
+    for(int_t j=0;j<window_size_;++j){
+      y = pt_def_y[pt] - half_window_size_ + j;
+      for(int_t i=0;i<window_size_;++i){
+        x = pt_def_x[pt] - half_window_size_ + i;
+        // need to recompute the gradients here because the pixel may be outside the original subset:
+        // get the gradient information from the previous image at the deformed location:
+        Ix = 0.0;
+        Iy = 0.0;
+        for(int_t k=0;k<5;++k){
+          Ix += (-1.0/12.0)*grad_coeffs[k]*(*schema_->prev_img())(x-2+k,y);
+          Iy += (-1.0/12.0)*grad_coeffs[k]*(*schema_->prev_img())(x,y-2+k);
+        }
+        It = (*schema_->def_img())(x,y) - (*schema_->prev_img())(x,y);
+        w_coeff = window_coeffs_[i][j];
+        H(0,0) += Ix*Ix*w_coeff*w_coeff;
+        H(1,0) += Ix*Iy*w_coeff*w_coeff;
+        H(0,1) += Iy*Ix*w_coeff*w_coeff;
+        H(1,1) += Iy*Iy*w_coeff*w_coeff;
+        q[0] += Ix*It*w_coeff*w_coeff;
+        q[1] += Iy*It*w_coeff*w_coeff;
+      }
+    }
+    // do the inversion:
+    for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
+    for(int_t i=0;i<N+1;++i) {IPIV[i] = 0;}
+    lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
+    lapack.GETRI(N,H.values(),N,IPIV,WORK,LWORK,&INFO);
+    // compute u and v
+    update_x[pt] = -H(0,0)*q[0] - H(0,1)*q[1];
+    update_y[pt] = -H(1,0)*q[0] - H(1,1)*q[1];
+    DEBUG_MSG("Optical_Flow_Initializer::initial_guess() displacement for point " << pt << ": " << update_x[pt] << " " << update_y[pt]);
+  }
+
+  delete[] IPIV;
+  delete[] EIGS;
+  delete[] WORK;
+  delete[] SWORK;
+
+  // accumulate the displacements in case solve is skipped
+  current_pt1_x_ += update_x[0];
+  current_pt1_y_ += update_y[0];
+  current_pt2_x_ += update_x[1];
+  current_pt2_y_ += update_y[1];
+  DEBUG_MSG("Optical_Flow_Initializer()::initial_guess() curren position point 1: " << current_pt1_x_ << " " << current_pt1_y_);
+  DEBUG_MSG("Optical_Flow_Initializer()::initial_guess() curren position point 2: " << current_pt2_x_ << " " << current_pt2_y_);
+
+  // work out the trig with the centroid of the subset:
+
+  // vector from point 1 to point 2 in the def config
+  const scalar_t delta_12_x_def = current_pt2_x_ - current_pt1_x_;
+  const scalar_t delta_12_y_def = current_pt2_y_ - current_pt1_y_;
+  const scalar_t mag_def  = std::sqrt(delta_12_x_def*delta_12_x_def + delta_12_y_def*delta_12_y_def);
+  DEBUG_MSG("Optical_Flow_Initializer()::initial_guess() mag_ref " << mag_ref_ << " mag_def " << mag_def);
+
+  // angle between these two vectors:
+  const scalar_t a_dot_b = delta_12_x_*delta_12_x_def + delta_12_y_*delta_12_y_def;
+  if(mag_ref_*mag_def==0.0) return INITIALIZE_FAILED; // FIXME use field_values here?
+  // TODO check that the mag_ref and mag_def are about the same (should be rigid body motion?)
+  scalar_t value = a_dot_b/(mag_ref_*mag_def);
+  if (value < -1.0) value = -1.0 ;
+  else if (value > 1.0) value = 1.0 ;
+  scalar_t theta_12 = 1.0*std::acos(value); // DICe measures theta in the other direction
+  // need to test theta + and theta - to see which one is right:
+  // take the cross poduct, negative cross is negative theta
+  scalar_t cross_prod = delta_12_x_*delta_12_y_def - (delta_12_x_def*delta_12_y_);
+  if(cross_prod < 0.0) theta_12 = -1.0*theta_12;
+
+  const scalar_t cos_t = std::cos(theta_12);
+  const scalar_t sin_t = std::sin(theta_12);
+  const scalar_t new_cx = cos_t*delta_1c_x_ - sin_t*delta_1c_y_ + current_pt1_x_;
+  const scalar_t new_cy = sin_t*delta_1c_x_ + cos_t*delta_1c_y_ + current_pt1_y_;
+  const scalar_t disp_x = new_cx - ref_cx_;
+  const scalar_t disp_y = new_cy - ref_cy_;
+  DEBUG_MSG("Optical_Flow_Initializer::initial_guess() computed u " << disp_x << " v " << disp_y << " theta " << theta_12);
+  if(std::abs(disp_x)>schema_->prev_img()->width() || std::abs(disp_y)>schema_->prev_img()->height() || std::abs(theta_12) > DICE_TWOPI){
+    DEBUG_MSG("Failed initialization due to invalid u, v, or theta.");
+    return INITIALIZE_FAILED;
+  }
+
+  Teuchos::ArrayRCP<intensity_t> output_img(schema_->prev_img()->num_pixels(),0.0);
+  for(int_t j=0;j<schema_->prev_img()->height();++j)
+  {
+    for(int_t i=0;i<schema_->prev_img()->width();++i)
+    {
+      if((i==pt_def_x[0]&&j==pt_def_y[0])||(i==pt_def_x[1]&&j==pt_def_y[1])){
+      //if((i==pt1_x_&&j==pt1_y_)||(i==pt2_x_&&j==pt2_y_)){
+        output_img[j*schema_->prev_img()->width()+i] = 255;
+      }else{
+        output_img[j*schema_->prev_img()->width()+i] = (*schema_->prev_img())(i,j);
+      }
+    }
+  }
+
+//  // uncomment to output images with dots where the optical flow points are
+//  // turn on boost filesystem above...
+//  std::stringstream dirname;
+//  dirname << "./of_imgs_" << subset_gid;
+//  DEBUG_MSG("Attempting to create directory : " << dirname.str());
+//  boost::filesystem::path dir(dirname.str());
+//  if(boost::filesystem::create_directory(dir)) {
+//    DEBUG_MSG("Directory successfully created");
+//  }
+//  Image out(schema_->prev_img()->width(),schema_->prev_img()->height(),output_img);
+//  std::stringstream filename;
+//  filename << "./of_imgs_" << subset_gid << "/img_" << schema_->image_frame() << ".tif";
+//  out.write_tiff(filename.str());
+
+  // Note: these are additive displacements from the previous frame so add them to what's already in the array
+  (*deformation)[DISPLACEMENT_X] = initial_u_ + disp_x;
+  (*deformation)[DISPLACEMENT_Y] = initial_v_ + disp_y;
+  (*deformation)[ROTATION_Z] = initial_t_+ theta_12;
+  // leave the rest alone...
+
+  return INITIALIZE_SUCCESSFUL;
+};
+
 Motion_Test_Utility::Motion_Test_Utility(const int_t origin_x,
   const int_t origin_y,
   const int_t width,
@@ -427,7 +936,8 @@ Motion_Test_Utility::motion_detected(Teuchos::RCP<Image> def_image){
     //diff the two images and see if the difference is above the user requested tolerance
     scalar_t diff = 0.0;
     if(width_>def_image->gauss_filter_mask_size()/2&&height_>def_image->gauss_filter_mask_size()/2){
-      DEBUG_MSG("Computing diff only inside the filtered portion of the image, excluded borders size: " << def_image->gauss_filter_mask_size()/2+1);
+      DEBUG_MSG("Computing diff only inside the filtered portion of the image, excluded borders size: " <<
+        def_image->gauss_filter_mask_size()/2+1);
       // skip the outer edges since they are not filtered
       for(int_t y=def_image->gauss_filter_mask_size()/2+1;y<height_-(def_image->gauss_filter_mask_size()/2+1);++y){
         for(int_t x=def_image->gauss_filter_mask_size()/2+1;x<width_-(def_image->gauss_filter_mask_size()/2+1);++x){

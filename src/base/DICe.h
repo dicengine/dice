@@ -172,6 +172,8 @@ const char* const final_gamma_threshold = "final_gamma_threshold";
 /// String parameter name
 const char* const path_distance_threshold = "path_distance_threshold";
 /// String parameter name
+const char* const skip_all_solves = "skip_all_solves";
+/// String parameter name
 const char* const skip_solve_gamma_threshold = "skip_solve_gamma_threshold";
 /// String parameter name
 const char* const fast_solver_tolerance = "fast_solver_tolerance";
@@ -360,6 +362,7 @@ enum Initialization_Method {
   USE_NEIGHBOR_VALUES,
   USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY,
   USE_PHASE_CORRELATION,
+  USE_OPTICAL_FLOW,
   INITIALIZATION_METHOD_NOT_APPLICABLE,
   // DON'T ADD ANY BELOW MAX
   MAX_INITIALIZATION_METHOD,
@@ -371,6 +374,7 @@ const static char * initializationMethodStrings[] = {
   "USE_NEIGHBOR_VALUES",
   "USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY",
   "USE_PHASE_CORRELATION",
+  "USE_OPTICAL_FLOW",
   "INITIALIZATION_METHOD_NOT_APPLICABLE"
 };
 
@@ -722,7 +726,8 @@ const Correlation_Parameter search_window_skip_param(search_window_skip,
   true,
   "Determines how many pixels to skip while traversing the search window");
 /// Correlation parameter and properties
-const Correlation_Parameter max_evolution_iterations_param(max_evolution_iterations,SIZE_PARAM,true,"Maximum evolution iterations to use (only valid for subset_evolution_routine)");
+const Correlation_Parameter max_evolution_iterations_param(max_evolution_iterations,SIZE_PARAM,true,
+  "Maximum evolution iterations to use (only valid for subset_evolution_routine)");
 /// Correlation parameter and properties
 const Correlation_Parameter max_solver_iterations_fast_param(max_solver_iterations_fast,SIZE_PARAM);
 /// Correlation parameter and properties
@@ -731,6 +736,10 @@ const Correlation_Parameter max_solver_iterations_robust_param(max_solver_iterat
 const Correlation_Parameter fast_solver_tolerance_param(fast_solver_tolerance,SCALAR_PARAM);
 /// Correlation parameter and properties
 const Correlation_Parameter robust_solver_tolerance_param(robust_solver_tolerance,SCALAR_PARAM);
+/// Correlation parameter and properties
+const Correlation_Parameter skip_all_solves_param(skip_all_solves,BOOL_PARAM,true,
+  "This option will use the initial guess for the displacement solution as the solution and skip the solves. "
+  "It can be helpful for testing if the initialization routine is working properly");
 /// Correlation parameter and properties
 const Correlation_Parameter skip_solve_gamma_threshold_param(skip_solve_gamma_threshold,SCALAR_PARAM,true,
   "If the gamma evaluation for the initial deformation guess is below this value, the solve is skipped because"
@@ -862,7 +871,7 @@ const Correlation_Parameter compute_image_gradients_param(compute_image_gradient
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 59;
+const int_t num_valid_correlation_params = 60;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -885,6 +894,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   max_solver_iterations_robust_param,
   fast_solver_tolerance_param,
   robust_solver_tolerance_param,
+  skip_all_solves_param,
   skip_solve_gamma_threshold_param,
   initial_gamma_threshold_param,
   final_gamma_threshold_param,

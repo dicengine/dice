@@ -10,6 +10,7 @@ SET(REGRESSION_TESTS
   single_speckled_shift
   conformal_subset_def
   dic_challenge_12
+  mechanism_optical_flow
 #  obstructions
 )
 

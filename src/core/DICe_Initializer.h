@@ -352,10 +352,137 @@ public:
     Teuchos::RCP<std::vector<scalar_t> > deformation);
 };
 
+/// \class DICe::Optical_Flow_Initializer
+/// \brief an initializer that uses optical flow to predict the next location
+/// of the subset (Lucas-Kanade algorithm). This initializer is only intended for
+/// the TRACKING_ROUTINE correlation routine
+///
+/// Initially, two pixels are selected as the locations for doing optical flow based
+/// the gradient values for each pixel. If one of the pixels become obstructed the locations
+/// need to be reset. The word reference in this class is used to denote the first frame
+/// after the positions have been reset. The displacements and rotations are cumulative
+/// starting with the reference frame. If the positions need to be reset due to
+/// obstructions, the optical flow routine restarts from the new location, which is now
+/// the reference frame.
+class DICE_LIB_DLL_EXPORT
+Optical_Flow_Initializer : public Initializer{
+public:
+
+  /// constructor
+  /// \param schema the parent schema
+  /// \param subset pointer to the subset for this initializer
+  Optical_Flow_Initializer(Schema * schema,
+    Teuchos::RCP<Subset> subset);
+
+  /// virtual destructor
+  virtual ~Optical_Flow_Initializer(){};
+
+  /// see base class description
+  virtual void pre_execution_tasks(){};
+
+  /// see base class description
+  virtual Status_Flag initial_guess(const int_t subset_gid,
+    Teuchos::RCP<std::vector<scalar_t> > deformation);
+
+  /// returns the id of the neighbor pixel
+  /// \param pixel_id the id of the pixel to gather a neighbor for
+  /// \param neighbor_index the index of the neighbor
+  size_t neighbor(const int_t pixel_id,
+    const int_t neighbor_index)const{
+    assert(pixel_id>=0&&pixel_id<subset_->num_pixels());
+    assert(neighbor_index>=0&&neighbor_index<(int_t)num_neighbors_);
+    return neighbors_[pixel_id*num_neighbors_ + neighbor_index];
+  }
+
+  /// determine the best locations in the subset to do optical flow based on the gradients
+  /// \param subset_gid the global id of the subset using this initializer
+  Status_Flag set_locations(const int_t subset_gid);
+
+  /// returns the pixel id of the best location for optical flow
+  /// \param best_grad [out] the gradient metric at the best location for an optical flow point
+  /// \param existing_points the set of global ids for points that are already OF points
+  /// \param def_x array of the deformed x coordinates for the pixels
+  /// \param def_y array of the deformed y coordinates for the pixels
+  /// \param gx the array of x gradient values from the deformed location
+  /// \param gy the array of y gradient values from the deformed location
+  /// \param subset_pixels the current pixels occupied by the subset in the deformed configuration
+  /// \param existing_points vector of the existing optical flow points
+  /// \param allow_close_points enable the point locations to be near each other (usually leads to more error)
+  int_t best_optical_flow_point(scalar_t & best_grad,
+    Teuchos::ArrayRCP<int_t> & def_x,
+    Teuchos::ArrayRCP<int_t> & def_y,
+    Teuchos::ArrayRCP<scalar_t> & gx,
+    Teuchos::ArrayRCP<scalar_t> & gy,
+    std::set<std::pair<int_t,int_t> > & subset_pixels,
+    Teuchos::RCP<std::vector<int_t> > existing_points = Teuchos::null,
+    const bool allow_close_points = false);
+
+  /// returns true if the point is deactivated or neighbors a deactivated pixel
+  /// \param pixel_id the index of the pixel to test
+  bool is_near_deactivated(const int_t pixel_id);
+
+protected:
+  /// pointer to the subset being initialized
+  Teuchos::RCP<Subset> subset_;
+  /// k-closest neighbors for each point in the set of triads
+  size_t num_neighbors_;
+  /// size of the window
+  int_t window_size_;
+  /// half the size of the window
+  int_t half_window_size_;
+  /// a strided array of neighbor ids
+  std::vector<size_t> neighbors_;
+  /// pointer to the kd-tree used for searching
+  Teuchos::RCP<my_kd_tree_t> kd_tree_;
+  /// pointer to the point cloud used for the neighbor searching
+  Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud_;
+  /// Gauss filter coefficients
+  scalar_t window_coeffs_[13][13]; // the optical flow window is 13 pixels wide
+  /// x coord of reference position for optical flow 1
+  int_t ref_pt1_x_;
+  /// y coord of reference position for optical flow 1
+  int_t ref_pt1_y_;
+  /// x coord of reference position for optical flow 2
+  int_t ref_pt2_x_;
+  /// y coord of reference position for optical flow 2
+  int_t ref_pt2_y_;
+  /// x coord of current position for optical flow 1
+  scalar_t current_pt1_x_;
+  /// y coord of current position for optical flow 1
+  scalar_t current_pt1_y_;
+  /// x coord of current position for optical flow 2
+  scalar_t current_pt2_x_;
+  /// y coord of current position for optical flow 2
+  scalar_t current_pt2_y_;
+  /// flag to reset the optical flow positions
+  bool reset_locations_;
+  /// x comp of vector from optical flow position 1 to the centroid
+  scalar_t delta_1c_x_;
+  /// y comp of vector from optical flow position 1 to the centroid
+  scalar_t delta_1c_y_;
+  /// x comp of vector from optical flow position 1 to position 2
+  scalar_t delta_12_x_;
+  /// y comp vector from optical flow position 1 to position 2
+  scalar_t delta_12_y_;
+  /// magnitude of the vector between positions 1 and 2 in the reference frame
+  scalar_t mag_ref_;
+  /// reference centroid x
+  scalar_t ref_cx_;
+  /// reference centroid y
+  scalar_t ref_cy_;
+  /// initial displacement for this sequence
+  scalar_t initial_u_;
+  /// initial displacement for this sequence
+  scalar_t initial_v_;
+  /// initial rotation for this sequence
+  scalar_t initial_t_;
+  /// pixel ids of the optical flow points
+  int_t ids_[2];
+};
+
 //
 //  Initialization utilities
 //
-
 
 /// \class DICe::Motion_Test_Utility
 /// \brief tests to see if there has been any motion since the last frame
