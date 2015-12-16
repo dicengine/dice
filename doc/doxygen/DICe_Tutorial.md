@@ -6,7 +6,7 @@ Introduction
 
 This tutorial walks the user through several simple examples using DICe to do the following
 
-- Track parts inside a mechansm filmed with high speed video
+- Track parts inside a mechanism filmed with high speed video
 
 - Track objects in an image sequence that become obstructed
 
@@ -43,7 +43,9 @@ This example illustrates how to define conformal subsets and use them to track p
 
 The image data for this example is a `.cine` video file. The `.cine` format is used for high speed video. There are a number of problems with the image data for this example: the speckle pattern is not evenly distributed; the speckles are of poor sizes; the parts in the video move in a jerky fashion; the center wheel has a lot of speckular reflection; some parts are too small for a proper subset; and some parts are of odd shapes, making square subsets difficult. This example is designed to show how to collect motion data, even with a terrible set of images. It is definitately not a good example to follow in terms of the experimental set up.
 
-The files for this example are in the `mechanism` folder of the `tests/examples/` directory. The subsets are defined in the file `subsets.txt` and are shown in the image below. In the first section of the file, the coordinates of the centroid for each subset are defined. In this case, there are 4 subsets (ids:0,1,2,3). Notice several things about the subset definitions. The first is that two disconnected shapes are used to define Subset 0. Any number of shapes can be combined into a single subset. The shapes do not have to be contiguous. Another thing to notice is that there is no `conformal_subset` definition for Subset 3. As long as the user has defined a `subset_size` in the `input.xml` file, any subsets that do not have a `conformal_subset` definition will be assigned a square region of the default dimensions.
+The files for this example are in the `mechanism` folder of the `tests/examples/` directory. The subsets are defined in the file `subsets.txt` and are shown in the image below. In the first section of the file, the coordinates of the centroid for each subset are defined. In this case, there are 4 subsets (ids:0,1,2,3). Notice several things about the subset definitions. The first is that two disconnected shapes are used to define Subset 0. Any number of shapes can be combined into a single subset. The shapes do not have to be contiguous. Also notice that the circular subset for subset 2 is only 5 pixels in radius. The results for this subset are less accurate than the rest due to the small subset size, but the u and v displacements can still be tracked relatively accurately. After plotting the results from each subset, the varying levels of confidence in the solution can be determined by comparing `SIGMA`, `GAMMA`, and `BETA` values. See the main documentation for the descriptions of what each of these fields represents.
+
+Conformal subset definitions are not required for every subset. As long as the user has defined a `subset_size` in the `input.xml` file, any subsets that do not have a `conformal_subset` definition will be assigned a square region of the default dimensions.
 
 ![](images/MechanismSubsets.png)
 @image latex images/MechanismSubsets.png

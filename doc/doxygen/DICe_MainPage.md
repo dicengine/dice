@@ -381,6 +381,8 @@ Available shapes include the following and their syntaxes
       LOWER_RIGHT <X> <Y>
     END RECTANGLE
 
+Note: for the `RECTANGLE` shape, if an even size is used for the width or height, the next largest odd number will be used for the size, to split the shape evenly on all sides of the centroid.
+
 Sets of shapes used to define an attribute of a conformal subset can overlap. The pixels inside the overlap will only be included once. An example conformal subset definition that include all three attributes defined is as follows. This subset has a circular
 boundary, a triangular region to be excluded and an obstruction along the bottom edge.
 

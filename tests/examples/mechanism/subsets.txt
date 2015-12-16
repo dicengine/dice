@@ -2,7 +2,7 @@ BEGIN SUBSET_COORDINATES
   266 376
   319 278
   303 178
-  280 31 # uses default subset size from input so no conformal def given below for this subset
+  280 31
 END SUBSET_COORDINATES
 
 BEGIN CONFORMAL_SUBSET
@@ -34,6 +34,16 @@ begin conformal_subset
       center 319 278
       width 31
       height 21
+    end
+  end
+end
+
+begin conformal_subset
+  subset_id 2
+  begin boundary
+    begin circle
+      center 303 178
+      radius 5
     end
   end
 end

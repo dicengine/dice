@@ -13,7 +13,7 @@
 *** Seed location: N/A
 *** Shape functions: Translation (u,v) Rotation (theta) 
 *** Incremental correlation: false
-*** Subset size: 10
+*** Subset size: -1
 *** Step size: x -1 y -1 (-1 implies not regular grid)
 *** Strain window: N/A
 *** Coordinates given with (0,0) as upper left corner of image, x positive right, y positive down

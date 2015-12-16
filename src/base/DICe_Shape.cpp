@@ -433,7 +433,7 @@ Rectangle::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformati
   else{
     // rip over the points in the extents of the circle to determine which onese are inside
     for(int_t y=0;y<height_;++y){
-      for(int_t x=0;x<=width_;++x){
+      for(int_t x=0;x<width_;++x){
         coordSet.insert(std::pair<int_t,int_t>(origin_y_+y,origin_x_+x));
       }
     }

@@ -83,8 +83,8 @@ int main(int argc, char *argv[]) {
   // test the mask values for an image:
   *outStream << "testing image mask" << std::endl;
   // create a mask using a simple rectangle
-  Teuchos::RCP<DICe::Rectangle> rect1 = Teuchos::rcp(new DICe::Rectangle(1024,294,400,200));
-  Teuchos::RCP<DICe::Rectangle> rect2 = Teuchos::rcp(new DICe::Rectangle(1024,294,100,50));
+  Teuchos::RCP<DICe::Rectangle> rect1 = Teuchos::rcp(new DICe::Rectangle(1024,294,401,200));
+  Teuchos::RCP<DICe::Rectangle> rect2 = Teuchos::rcp(new DICe::Rectangle(1024,294,101,50));
   DICe::multi_shape boundary;
   boundary.push_back(rect1);
   DICe::multi_shape excluded;

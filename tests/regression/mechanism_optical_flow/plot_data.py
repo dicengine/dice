@@ -2,7 +2,7 @@
 from pylab import *
 import matplotlib.pyplot as plt
 
-NUM_SUBSETS = 4
+NUM_SUBSETS = 3
 FILE_PREFIX = "./results/DICe_solution_"
 
 font = {'family' : 'sans-serif',
@@ -55,8 +55,6 @@ for i in range(0,NUM_SUBSETS):
   title("Subset ID: "+str(i))
   if i==0:
     legend(["Gamma"],loc=2)
-  if i==2:
-    ylim([0,2.0])
   xlabel('Image Number')
   ylabel('Gamma (.)')
   fig.set_tight_layout(True)
@@ -73,11 +71,8 @@ for i in range(0,NUM_SUBSETS):
   title("Subset ID: "+str(i))
   if i==0:
     legend(["Sigma"],loc=2)
-  if i==2:
-    ylim([0.005,0.015])
   xlabel('Image Number')
   ylabel('Sigma (.)')
-  #ylim([0,0.002])
   fig.set_tight_layout(True)
   savefig('Sigma.pdf',dpi=150, format='pdf')
 
@@ -94,7 +89,6 @@ for i in range(0,NUM_SUBSETS):
     legend(["Beta"],loc=2)
   xlabel('Image Number')
   ylabel('Beta (.)')
-  ylim([0,1.0])
   fig.set_tight_layout(True)
   savefig('Beta.pdf',dpi=150, format='pdf')
   
