@@ -89,6 +89,8 @@ int main(int argc, char *argv[]) {
     DEBUG_MSG(argv[i]);
   }
 
+  std::string masthead = "DIGITAL"; // the masthead line will have a different git sha1 for each file so skip it
+
   // TODO add delimeter option
 
   for(int_t i=3;i<argc;++i){
@@ -137,6 +139,12 @@ int main(int argc, char *argv[]) {
     }
     Teuchos::ArrayRCP<std::string> tokensA = DICe::tokenize_line(dataFileA,delimiter);
     Teuchos::ArrayRCP<std::string> tokensB = DICe::tokenize_line(dataFileB,delimiter);
+    if(tokensA.size()>=2){
+      if(tokensA[1].find(masthead)!=std::string::npos){ // skip the masthead
+        line++;
+        continue;
+      }
+    }
     if(tokensA.size()!=tokensB.size()){
       *outStream << "Error, Different number of tokens per line A:" << tokensA.size() << " B: " << tokensB.size() << std::endl;
       errorFlag++;

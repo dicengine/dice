@@ -51,9 +51,6 @@
   #include <mpi.h>
 #endif
 
-#ifndef GITSHA1
-  #define GITSHA1 "not available"
-#endif
 
 namespace DICe {
 

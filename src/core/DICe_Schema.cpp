@@ -2022,7 +2022,7 @@ Output_Spec::write_header(std::FILE * file,
   const std::string & row_id){
   assert(file);
   fprintf(file,"***\n");
-  fprintf(file,"*** Digital Image Correlation Engine (DICe), Copyright 2015 Sandia Corporation\n");
+  fprintf(file,"*** Digital Image Correlation Engine (DICe), (git sha1: %s) Copyright 2015 Sandia Corporation\n",GITSHA1);
   fprintf(file,"***\n");
   fprintf(file,"*** Reference image: %s \n",schema_->ref_img()->file_name().c_str());
   fprintf(file,"*** Deformed image: %s \n",schema_->def_img()->file_name().c_str());

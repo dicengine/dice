@@ -42,8 +42,6 @@
 #ifndef DICE_H
 #define DICE_H
 
-#define VERSION "1.0"
-
 #define DICE_PI 3.14159265358979323846
 #define DICE_TWOPI 6.28318530717958647692
 
@@ -64,9 +62,14 @@
 #  define DEBUG_MSG(x) do {} while (0)
 #endif
 
+#define VERSION "1.0"
+#ifndef GITSHA1
+  #define GITSHA1 "not available"
+#endif
 // size of the deformation vectors used in the correlation
 // includes fields below from 0 to (DICE_DEFORMATION_SIZE-1)
 #define DICE_DEFORMATION_SIZE 12
+
 
 #include <string>
 
