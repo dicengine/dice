@@ -216,7 +216,7 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
     blocking_subset_ids = subset_info->id_sets_map;
     n_points = subset_info->coordinates_vector->size()/dim; // divide by three because the striding is x, y, neighbor_id
     // this library call requires that all subsets are defined with a conformal subset
-    assert(conformal_area_defs->size()==n_points && "Error there is a mismatch between the number of "
+    assert((int_t)conformal_area_defs->size()==n_points && "Error there is a mismatch between the number of "
         "conformal subsets defined and the number of coordinate sets");
     // copy over the coordinates to the points array:
     for(int_t i=0;i<n_points;++i){

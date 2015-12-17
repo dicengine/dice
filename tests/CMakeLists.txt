@@ -36,7 +36,7 @@ add_subdirectory(performance)
 # only one exectuble from the performance tests folder has an actual test run
 ADD_TEST ( NAME "RUN_PerformanceFunctors"
            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${test}/performance
-	   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/performance/DICe_PerformanceFunctors 1 1 -1)
+           COMMAND ${CMAKE_CURRENT_BINARY_DIR}/performance/DICe_PerformanceFunctors 1 1 -1)
 set_tests_properties(${name} PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
 
 # copy the image files to the build dir

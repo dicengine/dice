@@ -1090,7 +1090,7 @@ private:
   double objective_regularization_factor_;
   /// Solution vector and subsets are initialized
   bool is_initialized_;
-  /// Pointer to the parameters which which this schema was initialized
+  /// Pointer to the parameters whith which this schema was initialized
   Teuchos::RCP<Teuchos::ParameterList> init_params_;
   /// Rotate the reference image by 180 degrees
   Rotation_Value ref_image_rotation_;

@@ -1165,7 +1165,7 @@ Schema::prepare_optimization_initializers(){
     DEBUG_MSG("Repeat call to prepare_optimization_initializers(), calling pre_execution_tasks");
     for(std::map<int_t,Teuchos::RCP<Initializer> >::iterator opt_it = opt_initializers_.begin();
         opt_it != opt_initializers_.end();++opt_it){
-      assert(*opt_it!=Teuchos::null);
+      //assert(*opt_it!=Teuchos::null);
       opt_it->second->pre_execution_tasks();
     }
     return;

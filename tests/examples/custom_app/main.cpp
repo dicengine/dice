@@ -6,7 +6,7 @@
 
 // DICe includes for classes used below:
 #include <DICe.h>
-#include <DIce_Schema.h>
+#include <DICe_Schema.h>
 
 // See the custom_app example in the tutorial for more information about the code below
 

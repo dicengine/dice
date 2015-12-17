@@ -63,7 +63,7 @@ if (Boost_FOUND)
 else (Boost_FOUND)
   MESSAGE(FATAL_ERROR "BOOST is required, but not found")
 endif (Boost_FOUND)
-	  
+
 #
 # Define the location of the dice libraries, DICE_LIB_DIR:
 #
@@ -104,8 +104,8 @@ MESSAGE(STATUS "Using tiff library from: ${tiff_lib}")
 add_executable(main main.cpp)
 # add the dice libraries
 target_link_libraries(main
-  dicebase
   dicecore
+  dicebase
   dicefft
   diceutils
   dicecine

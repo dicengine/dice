@@ -11,17 +11,17 @@ BEGIN CONFORMAL_SUBSET
     BEGIN polygon
       BEGIN VERTICES
         252 383
-	275 391
-	268 417
-	247 411
+        275 391
+        268 417
+        247 411
       END VERTICES
     END polygon
     BEGIN polygon
       BEGIN VERTICES
         262 351
-	274 353
-	277 339
-	264 337
+        274 353
+        277 339
+        264 337
       END VERTICES
     END polygon
   END boundary

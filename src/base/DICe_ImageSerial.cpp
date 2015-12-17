@@ -107,8 +107,8 @@ Image::Image(const char * file_name,
   int_t img_width = 0;
   int_t img_height = 0;
   utils::read_tiff_image_dimensions(file_name,img_width,img_height);
-  assert(width_>0&&offset_x_+width_<img_width);
-  assert(height_>0&&offset_y_+height_<img_height);
+  assert(width_>0&&offset_x_+width_<=img_width);
+  assert(height_>0&&offset_y_+height_<=img_height);
   // initialize the pixel containers
   intensities_ = Teuchos::ArrayRCP<intensity_t>(height_*width_,0.0);
   // read in the image

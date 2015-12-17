@@ -9,18 +9,18 @@ BEGIN CONFORMAL_SUBSET
     BEGIN polygon
       BEGIN VERTICES
         93 11
-	72 98
-	84 120
-	109 123
-	184 88
-	191 83
-	188 77
-	161 90
-	132 94
-	103 67
-	103 19
-	110 9
-	95 8
+        72 98
+        84 120
+        109 123
+        184 88
+        191 83
+        188 77
+        161 90
+        132 94
+        103 67
+        103 19
+        110 9
+        95 8
       END VERTICES
     END polygon
   END boundary

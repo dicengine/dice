@@ -56,7 +56,7 @@ FOREACH ( test ${AVERAGE_DIFF_TESTS})
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${test}
         COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/dice -i input.xml -v)
     add_subdirectory(${test})
-			      
+    
     # run the verification test for each output created
     FILE ( GLOB avg_diff_files "${CMAKE_CURRENT_SOURCE_DIR}/${test}/*.avg_diff")
     FOREACH ( avg_diff_file ${avg_diff_files})
