@@ -36,6 +36,15 @@ MESSAGE("End of Trilinos details\n")
 SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
 SET(CMAKE_C_COMPILER ${Trilinos_C_COMPILER} )
 SET(CMAKE_VERBOSE_MAKEFILE OFF)
+LIST(FIND Trilinos_TPL_LIST MPI MPI_List_ID)
+IF (MPI_List_ID GREATER -1)
+  MESSAGE(STATUS "Checking if MPI is enabled in Trilinos: MPI ENABLED")
+  SET(DICE_MPI TRUE)
+  ADD_DEFINITIONS(-DDICE_MPI=1)
+ELSE()
+  MESSAGE(STATUS "Checking if MPI is enabled in Trilinos: MPI NOT ENABLED")
+  SET(DICE_MPI FALSE)
+ENDIF()
 SET(DICE_TRILINOS_HEADERS
     ${Trilinos_INCLUDE_DIRS}
     ${Trilinos_TPL_INCLUDE_DIRS})
@@ -111,11 +120,21 @@ target_link_libraries(main
   dicecine
   ${tiff_lib})
 # add the other libraries needed
+
 target_link_libraries(main
-  epetra
   teuchoscore
   teuchosnumerics
   teuchoscomm
   teuchosparameterlist
   ${tiff_lib}
   ${Boost_LIBRARIES})
+
+IF(DICE_ENABLE_MANYCORE)
+  target_link_libraries(main
+    tpetra
+    kokkoscore
+  )
+  ADD_DEFINITIONS(-DDICE_KOKKOS=1 -DDICE_TPETRA=1)
+ELSE()
+  target_link_libraries(main epetra)
+ENDIF()

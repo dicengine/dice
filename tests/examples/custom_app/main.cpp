@@ -14,6 +14,10 @@ int main(int argc, char *argv[]) {
 
   std::cout << "Begin custom_app example\n";
   //
+  // STEP 0: initialize threading, etc if it is enabled
+  //
+  DICe::initialize(argc,argv);
+  //
   // STEP 1:
   //
   // Create a DICe::Schema that holds all the correlation parameters, image names, solution results, and
@@ -110,6 +114,9 @@ int main(int argc, char *argv[]) {
       errorFlag++;
     }
   }
+
+  DICe::finalize();
+
   if (errorFlag != 0)
     std::cout << "End Result: TEST FAILED\n";
   else

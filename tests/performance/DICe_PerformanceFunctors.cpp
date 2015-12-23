@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
   // optional argument for the number of thread teams:
 
   int_t num_thread_teams = -1;
-  if(argc>3) num_thread_teams = std::atoi(argv[2]);
+  if(argc>3) num_thread_teams = std::atoi(argv[3]);
   *outStream << "number of thread teams:   " << num_thread_teams << " (-1 means thread teams not used)" << std::endl;
   const bool use_hierarchical = num_thread_teams > 0;
   *outStream << "hierarchical parallelism: " << use_hierarchical << std::endl;
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
       read_times[size_it] += ((scalar_t)(read_timer.elapsed().wall)/1000000000)/num_time_samples;
 
       // gradient
-      *outStream << "computing the image gradient" << std::endl;
+      *outStream << "computing the image gradients" << std::endl;
       cpu_timer grad_timer;
       {
         if(use_hierarchical){

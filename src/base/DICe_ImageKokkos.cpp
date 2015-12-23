@@ -121,11 +121,7 @@ Image::Image(const char * file_name,
     width_,height_,
     intensities_.h_view.ptr_on_device(),
     default_is_layout_right());
-  grad_c1_ = 1.0/12.0;
-  grad_c2_ = -8.0/12.0;
-  gauss_filter_mask_size_ = 7;
-  gauss_filter_half_mask_ = gauss_filter_mask_size_/2+1;
-
+  default_constructor_tasks(params);
 }
 
 
@@ -249,7 +245,7 @@ Image::initialize_array_image(intensity_t * intensities){
   }
   // else the data has to be copied to coalesce with the default layout
   else{
-    assert(default_is_layout_left());
+    assert(!default_is_layout_right());
     intensities_ = intensity_dual_view_2d("intensities",height_,width_);
     for(int_t y=0;y<height_;++y){
       for(int_t x=0;x<width_;++x){

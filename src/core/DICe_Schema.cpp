@@ -775,6 +775,7 @@ Schema::initialize(const int_t num_pts,
 void
 Schema::create_obstruction_dist_map(){
   if(obstructing_subset_ids_==Teuchos::null) return;
+  if(obstructing_subset_ids_->size()==0) return;
 
   const int_t proc_id = comm_->get_rank();
   const int_t num_procs = comm_->get_size();

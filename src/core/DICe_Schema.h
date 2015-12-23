@@ -407,16 +407,22 @@ public:
 #if DICE_TPETRA
   scalar_t & field_value_nm1(const int_t global_id,
     const Field_Name name){
-#else // Epetra is hard coded on double
-  double & field_value_nm1(const int_t global_id,
-    const Field_Name name){
-#endif
     assert(!distributed_fields_being_modified_ && "Error: Attempting to modify or access an all-owned field, but the distributed"
       " fields have the lock, sync_dist_to_all() must be called first to re-enable access to the all-owned fields.");
     assert(global_id<data_num_points_);
     assert(name<MAX_FIELD_NAME);
     return fields_nm1_->global_value(global_id,name);
   }
+#else // Epetra is hard coded on double
+  double & field_value_nm1(const int_t global_id,
+    const Field_Name name){
+    assert(!distributed_fields_being_modified_ && "Error: Attempting to modify or access an all-owned field, but the distributed"
+      " fields have the lock, sync_dist_to_all() must be called first to re-enable access to the all-owned fields.");
+    assert(global_id<data_num_points_);
+    assert(name<MAX_FIELD_NAME);
+    return fields_nm1_->global_value(global_id,name);
+  }
+#endif
 
   /// \brief Return either the distributed field vector value or the all-owned
   /// vector value, depending on the flag argument
