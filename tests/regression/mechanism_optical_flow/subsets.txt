@@ -1,6 +1,5 @@
 BEGIN SUBSET_COORDINATES
   266 376
-  319 278
   280 31
 END SUBSET_COORDINATES
 
@@ -28,17 +27,6 @@ END CONFORMAL_SUBSET
 
 begin conformal_subset
   subset_id 1
-  begin boundary
-    begin rectangle
-      center 319 278
-      width 31
-      height 21
-    end
-  end
-end
-
-begin conformal_subset
-  subset_id 2
   begin boundary
     begin rectangle
       center 280 31

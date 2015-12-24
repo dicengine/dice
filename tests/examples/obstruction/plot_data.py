@@ -18,19 +18,15 @@ for i in range(0,NUM_SUBSETS):
   FRAME    = DATA[:,0]
   X_TILDE  = DATA[:,1]
   Y_TILDE  = DATA[:,2]
-  DISP_X   = DATA[:,3]
-  DISP_Y   = DATA[:,4]
-  THETA    = DATA[:,5]
-  SIGMA    = DATA[:,6]
-  GAMMA    = DATA[:,7]
+  THETA    = DATA[:,3]
+  SIGMA    = DATA[:,4]
+  GAMMA    = DATA[:,5]
   fig = figure(figsize=(12,5), dpi=150)
-  plot(FRAME,DISP_X,'-b')
-  plot(FRAME,DISP_Y,'-r')
   plot(FRAME,THETA,'-g')
   fig.set_tight_layout(True)
-  legend(["Displacement X","Displacement Y","Rotation"])
+  legend(["Rotation"])
   xlabel('Image Number')
-  ylabel('Displacement (pixels) or Rotation (Rad)')
+  ylabel('Rotation (Rad)')
   title("Subset ID: "+str(i))
   savefig(PDFTHETA,dpi=150, format='pdf')
   

@@ -11,7 +11,7 @@ SET(EXAMPLES
 # The differences that come up are negligible, and we still want to test
 # with tight tolerances in serial, but the examples are particulary hard
 # to get the tests to pass with tight tols on other platforms.
-SET(TOL 0.05)
+SET(TOL 0.5)
 IF(DICE_ENABLE_MANYCORE)
   SET(TOL 10.0)
 ENDIF()

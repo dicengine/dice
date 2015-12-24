@@ -7,10 +7,8 @@
   <ParameterList name="output_spec">
     <Parameter name="COORDINATE_X" type="int" value="0" />
     <Parameter name="COORDINATE_Y" type="int" value="1" />
-    <Parameter name="DISPLACEMENT_X" type="int" value="2" />
-    <Parameter name="DISPLACEMENT_Y" type="int" value="3" />
-    <Parameter name="ROTATION_Z" type="int" value="4" />
-    <Parameter name="SIGMA" type="int" value="5" />
-    <Parameter name="GAMMA" type="int" value="6" />
+    <Parameter name="ROTATION_Z" type="int" value="2" />
+    <Parameter name="SIGMA" type="int" value="3" />
+    <Parameter name="GAMMA" type="int" value="4" />
   </ParameterList>
 </ParameterList>
