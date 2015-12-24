@@ -225,7 +225,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
 /// \param capitalize true if the tokens should be automatically capitalized
 DICE_LIB_DLL_EXPORT
 Teuchos::ArrayRCP<std::string> tokenize_line(std::fstream &dataFile,
-  const std::string & delim=" ",
+  const std::string & delim=" \t",
   const bool capitalize = true);
 
 /// \brief Read a circle from the input file
