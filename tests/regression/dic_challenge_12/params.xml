@@ -11,6 +11,7 @@
   <ParameterList name="post_process_vsg_strain">
     <Parameter name="strain_window_size_in_pixels" type="int" value="360"/>
   </ParameterList>
+  <!-- Output spec using the old way where the column index had to be specified -->
   <ParameterList name="output_spec">
     <Parameter name="COORDINATE_X" type="int" value="0" />
     <Parameter name="COORDINATE_Y" type="int" value="1" />

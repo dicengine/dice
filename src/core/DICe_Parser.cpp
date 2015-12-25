@@ -1413,12 +1413,12 @@ void generate_template_input_files(const std::string & file_prefix){
   write_xml_comment(paramsFile,"");
   write_xml_comment(paramsFile,"");
   write_xml_comment(paramsFile,"Uncomment the ParameterList below to request specific fields in the output files.");
-  write_xml_comment(paramsFile,"The integer value for each field name represents the column order in the data output.");
+  write_xml_comment(paramsFile,"The order in the list represents the column order in the data output.");
   write_xml_param_list_open(paramsFile,DICe::output_spec);
   for(int_t i=0;i<MAX_FIELD_NAME;++i){
     std::stringstream iToStr;
     iToStr << i;
-    write_xml_size_param(paramsFile,to_string(static_cast<Field_Name>(i)),iToStr.str());
+    write_xml_bool_param(paramsFile,to_string(static_cast<Field_Name>(i)),"true");
   }
   write_xml_param_list_close(paramsFile);
 

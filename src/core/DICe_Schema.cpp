@@ -525,7 +525,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     // Strip output params sublist out of params
     Teuchos::ParameterList output_sublist = diceParams->sublist(DICe::output_spec);
     outputParams = Teuchos::rcp( new Teuchos::ParameterList());
-    // iterate the sublis and add the params to the output params:
+    // iterate the sublist and add the params to the output params:
     for(Teuchos::ParameterList::ConstIterator it=output_sublist.begin();it!=output_sublist.end();++it){
       outputParams->setEntry(it->first,it->second);
     }
@@ -1966,7 +1966,22 @@ Output_Spec::Output_Spec(Schema * schema,
   }
   else{
     // get the total number of field names
-    const int_t num_names = params->numParams();
+    int_t num_names = 0;
+    // if the names are listed with bool values, count the number of true bools
+    for(Teuchos::ParameterList::ConstIterator it=params->begin();it!=params->end();++it){
+      std::string string_field_name = it->first;
+      if(params->isType<bool>(string_field_name)){
+        if(params->get<bool>(string_field_name,false))
+          num_names++;
+      }
+      else if(params->isType<int_t>(string_field_name)){
+        num_names++;
+      }
+      else{
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"Error, output spec has incorrect syntax.");
+      }
+    }
+    DEBUG_MSG("Output spec has " << num_names << " active fields");
     // get the max index
     field_names_.resize(num_names);
     post_processor_ids_.resize(num_names);
@@ -1974,6 +1989,7 @@ Output_Spec::Output_Spec(Schema * schema,
     std::set<int_t> indices;
 
     // read in the names and indices by iterating the parameter list
+    int_t current_position = 0;
     for(Teuchos::ParameterList::ConstIterator it=params->begin();it!=params->end();++it){
       std::string string_field_name = it->first;
       stringToUpper(string_field_name);
@@ -1996,14 +2012,27 @@ Output_Spec::Output_Spec(Schema * schema,
         std::cout << "Error: invalid field name requested in output spec: " << string_field_name << std::endl;
         assert(false);
       }
-      const int_t field_index = params->get<int_t>(string_field_name);
+      // check if the output spec was specified as integer values or bools
+      int_t field_index = -1;
+      if(params->isType<bool>(string_field_name)){
+        if(params->get<bool>(string_field_name,false)){
+          field_index = current_position;
+          current_position++;
+        }
+        else
+          continue;
+      }
+      else{
+        field_index = params->get<int_t>(string_field_name);
+      }
+      DEBUG_MSG("Adding output field " << string_field_name << " in column " << field_index);
       if(field_index>num_names-1||field_index<0){
         std::cout << "Error: field index in output spec is invalid " << field_index << std::endl;
         assert(false);
       }
       // see if this index exists already
       if(indices.find(field_index)!=indices.end()){
-        std::cout << "Error: same field index assigned to multiple fields in output spec" << field_index << std::endl;
+        std::cout << "Error: same field index assigned to multiple fields in output spec: " << field_index << std::endl;
         assert(false);
       }
       indices.insert(field_index);

@@ -591,13 +591,13 @@ can be added to the correlation parameters. The following is a syntax example th
 three fields in the order `COORDINATE_X`, `COORDINATE_Y`, `DISPLACEMENT_X`:
 
     <ParameterList name="output_spec">
-       <Parameter name="coordinate_x" type="int" value="0" />
-       <Parameter name="coordinate_y" type="int" value="1" />
-       <Parameter name="displacement_x" type="int" value="2" />
+       <Parameter name="coordinate_x" type="bool" value="true" />
+       <Parameter name="coordinate_y" type="bool" value="true" />
+       <Parameter name="displacement_x" type="bool" value="true" />
     </ParameterList>
 
-The integer value for each field name is the rank in the output order (the order is not
-assumed from the ordering in the parameter list).
+The order of the columns in the output file is determined by the ordering in the list of field names.
+If the boolean value is set to `false`, the field will not be output.
 
 The delimiter used in the output file can be set in the parameters file with the following option:
 

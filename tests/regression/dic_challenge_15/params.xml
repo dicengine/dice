@@ -10,15 +10,15 @@
   <Parameter name="omit_output_row_id" type="bool" value="true" />
   
   <ParameterList name="output_spec">
-    <Parameter name="COORDINATE_X" type="int" value="0" />
-    <Parameter name="COORDINATE_Y" type="int" value="1" />
-    <Parameter name="DISPLACEMENT_X" type="int" value="2" />
-    <Parameter name="DISPLACEMENT_Y" type="int" value="3" />
-    <Parameter name="NORMAL_STRAIN_X" type="int" value="4" />
-    <Parameter name="NORMAL_STRAIN_Y" type="int" value="5" />
-    <Parameter name="SHEAR_STRAIN_XY" type="int" value="6" />
-    <Parameter name="GAMMA" type="int" value="7" />
-    <Parameter name="MATCH" type="int" value="8" />
+    <Parameter name="COORDINATE_X" type="bool" value="true" />
+    <Parameter name="COORDINATE_Y" type="bool" value="true" />
+    <Parameter name="DISPLACEMENT_X" type="bool" value="true" />
+    <Parameter name="DISPLACEMENT_Y" type="bool" value="true" />
+    <Parameter name="NORMAL_STRAIN_X" type="bool" value="true" />
+    <Parameter name="NORMAL_STRAIN_Y" type="bool" value="true" />
+    <Parameter name="SHEAR_STRAIN_XY" type="bool" value="true" />
+    <Parameter name="GAMMA" type="bool" value="true" />
+    <Parameter name="MATCH" type="bool" value="true" />
   </ParameterList>
 
 </ParameterList>

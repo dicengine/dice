@@ -7,15 +7,6 @@ SET(EXAMPLES
    obstruction
    full_field)
 
-# Loosen up the tolerances for the manycore builds and the example problems.
-# The differences that come up are negligible, and we still want to test
-# with tight tolerances in serial, but the examples are particulary hard
-# to get the tests to pass with tight tols on other platforms.
-SET(TOL 0.5)
-IF(DICE_ENABLE_MANYCORE)
-  SET(TOL 10.0)
-ENDIF()
-
 FOREACH ( test ${EXAMPLES})
     # copy all the necessary files over to the build dir
     FILE(COPY ${test} DESTINATION . )
@@ -31,7 +22,7 @@ FOREACH ( test ${EXAMPLES})
         # get the name of the file without the directory
         GET_FILENAME_COMPONENT ( trim_name ${gold_file} NAME)
         ADD_TEST ( NAME "DIFF_EXAMPLE_${test}_${trim_name}" 
-            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/DICe_Diff ${gold_file} ${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name} -t ${TOL} -v)
+            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/DICe_Diff ${gold_file} ${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name} -t 1.0 -v)
         set_tests_properties("DIFF_EXAMPLE_${test}_${trim_name}" PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
         set_property(TEST "DIFF_EXAMPLE_${test}_${trim_name}" APPEND PROPERTY DEPENDS "RUN_EXAMPLE_${test}")
     ENDFOREACH ( )
