@@ -159,10 +159,6 @@ const char* const enable_normal_strain = "enable_normal_strain";
 /// String parameter name
 const char* const enable_shear_strain = "enable_shear_strain";
 /// String parameter name
-const char* const search_window_size_factor = "search_window_size_factor";
-/// String parameter name
-const char* const search_window_skip = "search_window_skip";
-/// String parameter name
 const char* const max_evolution_iterations = "max_evolution_iterations";
 /// String parameter name
 const char* const max_solver_iterations_fast = "max_solver_iterations_fast";
@@ -712,16 +708,6 @@ const Correlation_Parameter objective_regularization_factor_param(objective_regu
   true,
   "The coefficient applied to the regularization term if active");
 /// Correlation parameter and properties
-const Correlation_Parameter search_window_size_factor_param(search_window_size_factor,
-  SCALAR_PARAM,
-  true,
-  "Determines how large the search window is compared to a subset");
-/// Correlation parameter and properties
-const Correlation_Parameter search_window_skip_param(search_window_skip,
-  SIZE_PARAM,
-  true,
-  "Determines how many pixels to skip while traversing the search window");
-/// Correlation parameter and properties
 const Correlation_Parameter max_evolution_iterations_param(max_evolution_iterations,SIZE_PARAM,true,
   "Maximum evolution iterations to use (only valid for subset_evolution_routine)");
 /// Correlation parameter and properties
@@ -862,7 +848,7 @@ const Correlation_Parameter compute_image_gradients_param(compute_image_gradient
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 58;
+const int_t num_valid_correlation_params = 56;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -878,8 +864,6 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   enable_rotation_param,
   enable_normal_strain_param,
   enable_shear_strain_param,
-  search_window_size_factor_param,
-  search_window_skip_param,
   max_evolution_iterations_param,
   max_solver_iterations_fast_param,
   max_solver_iterations_robust_param,
