@@ -133,6 +133,10 @@ Subset::Subset(const int_t cx,
     y_[index] = set_it->first;
     index++;
   }
+  // warn the user if the centroid is outside the subset
+  std::pair<int_t,int_t> centroid_pair = std::pair<int_t,int_t>(cy_,cx_);
+  if(coords.find(centroid_pair)==coords.end())
+    std::cout << "*** Warning: centroid " << cx_ << " " << cy_ << " is outside the subset boundary" << std::endl;
   ref_intensities_ = Teuchos::ArrayRCP<intensity_t>(num_pixels_,0.0);
   def_intensities_ = Teuchos::ArrayRCP<intensity_t>(num_pixels_,0.0);
   grad_x_ = Teuchos::ArrayRCP<scalar_t>(num_pixels_,0.0);

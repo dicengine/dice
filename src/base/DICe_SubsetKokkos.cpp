@@ -154,6 +154,10 @@ Subset::Subset(const int_t cx,
     std::set<std::pair<int_t,int_t> > shapeCoords = (*subset_def.boundary())[i]->get_owned_pixels();
     coords.insert(shapeCoords.begin(),shapeCoords.end());
   }
+  // warn the user if the centroid is outside the subset
+  std::pair<int_t,int_t> centroid_pair = std::pair<int_t,int_t>(cy_,cx_);
+  if(coords.find(centroid_pair)==coords.end())
+    std::cout << "*** Warning: centroid " << cx_ << " " << cy_ << " is outside the subset boundary" << std::endl;
   // at this point all the coordinate pairs are in the set
   num_pixels_ = coords.size();
   // resize the storage arrays now that the num_pixels is known
