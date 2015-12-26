@@ -86,7 +86,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <h1>Introduction </h1>
 <p>This tutorial walks the user through several simple examples using <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> to do the following</p>
 <ul>
-<li>Track parts inside a mechansm filmed with high speed video</li>
+<li>Track parts inside a mechanism filmed with high speed video</li>
 <li>Track objects in an image sequence that become obstructed</li>
 <li>Compute strains in an object undergoing deformation</li>
 </ul>
@@ -105,7 +105,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <h3>Example 1: Mechanism</h3>
 <p>This example illustrates how to define conformal subsets and use them to track parts of a mechanism during operation.</p>
 <p>The image data for this example is a <code>.cine</code> video file. The <code>.cine</code> format is used for high speed video. There are a number of problems with the image data for this example: the speckle pattern is not evenly distributed; the speckles are of poor sizes; the parts in the video move in a jerky fashion; the center wheel has a lot of speckular reflection; some parts are too small for a proper subset; and some parts are of odd shapes, making square subsets difficult. This example is designed to show how to collect motion data, even with a terrible set of images. It is definitately not a good example to follow in terms of the experimental set up.</p>
-<p>The files for this example are in the <code>mechanism</code> folder of the <code>tests/examples/</code> directory. The subsets are defined in the file <code>subsets.txt</code> and are shown in the image below. In the first section of the file, the coordinates of the centroid for each subset are defined. In this case, there are 4 subsets (ids:0,1,2,3). Notice several things about the subset definitions. The first is that two disconnected shapes are used to define Subset 0. Any number of shapes can be combined into a single subset. The shapes do not have to be contiguous. Another thing to notice is that there is no <code>conformal_subset</code> definition for Subset 3. As long as the user has defined a <code>subset_size</code> in the <code>input.xml</code> file, any subsets that do not have a <code>conformal_subset</code> definition will be assigned a square region of the default dimensions.</p>
+<p>The files for this example are in the <code>mechanism</code> folder of the <code>tests/examples/</code> directory. The subsets are defined in the file <code>subsets.txt</code> and are shown in the image below. In the first section of the file, the coordinates of the centroid for each subset are defined. In this case, there are 4 subsets (ids:0,1,2,3). Notice several things about the subset definitions. The first is that two disconnected shapes are used to define Subset 0. Any number of shapes can be combined into a single subset. The shapes do not have to be contiguous. Also notice that the circular subset for subset 2 is only 5 pixels in radius. The results for this subset are less accurate than the rest due to the small subset size, but the u and v displacements can still be tracked relatively accurately. After plotting the results from each subset, the varying levels of confidence in the solution can be determined by comparing <code>SIGMA</code>, <code>GAMMA</code>, and <code>BETA</code> values. See the main documentation for the descriptions of what each of these fields represents.</p>
+<p>Conformal subset definitions are not required for every subset. As long as the user has defined a <code>subset_size</code> in the <code>input.xml</code> file, any subsets that do not have a <code>conformal_subset</code> definition will be assigned a square region of the default dimensions.</p>
 <div class="image">
 <img src="MechanismSubsets.png" alt="MechanismSubsets.png"/>
 </div>
@@ -138,7 +139,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Dec 16 2015 06:08:40 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Dec 26 2015 05:14:19 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

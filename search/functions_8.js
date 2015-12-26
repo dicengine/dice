@@ -16,7 +16,7 @@ var searchData=
   ['initialize_5fxml_5ffile',['initialize_xml_file',['../namespace_d_i_ce.html#a464869176eabef7fbb499e09737203fc',1,'DICe']]],
   ['initializer',['Initializer',['../class_d_i_ce_1_1_initializer.html#a230fa75e4560337a75b17c8a917bd0c0',1,'DICe::Initializer']]],
   ['insert_5fglobal_5fvalues',['insert_global_values',['../class_d_i_ce_1_1_multi_field___matrix.html#ab668fb23a0c5fd02a0451def5e9aef7c',1,'DICe::MultiField_Matrix']]],
-  ['intensity_5farray',['intensity_array',['../class_d_i_ce_1_1_image.html#a7bab51963c127b9a2d3c5001083d1a1e',1,'DICe::Image']]],
+  ['intensities',['intensities',['../class_d_i_ce_1_1_image.html#a3a2a58f8111a2b530aa074ca32e7a0eb',1,'DICe::Image']]],
   ['intensity_5fsum_5ffunctor',['Intensity_Sum_Functor',['../struct_d_i_ce_1_1_intensity___sum___functor.html#a0fe481c30864a15edc1f22c8cd7aa2d0',1,'DICe::Intensity_Sum_Functor']]],
   ['intensity_5fsum_5fminus_5fmean_5ffunctor',['Intensity_Sum_Minus_Mean_Functor',['../struct_d_i_ce_1_1_intensity___sum___minus___mean___functor.html#aa3873442db856639b2d8380c2602bd41',1,'DICe::Intensity_Sum_Minus_Mean_Functor']]],
   ['interpolation_5fmethod',['interpolation_method',['../class_d_i_ce_1_1_schema.html#ac6ec9ac019da30b1f6e06e5b245cbb68',1,'DICe::Schema']]],

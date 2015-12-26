@@ -637,9 +637,9 @@ DICE_LIB_DLL_EXPORT bool&#160;</td><td class="memItemRight" valign="bottom"><a c
 <tr class="memitem:ab172b12475920fce67a3ec80f59b74b3"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT const Teuchos::RCP&lt; <a class="el" href="struct_d_i_ce_1_1_subset___file___info.html">Subset_File_Info</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#ab172b12475920fce67a3ec80f59b74b3">read_subset_file</a> (const std::string &amp;fileName, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> width, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> height)</td></tr>
 <tr class="memdesc:ab172b12475920fce67a3ec80f59b74b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a list of coordinates for correlation points from file.  <a href="#ab172b12475920fce67a3ec80f59b74b3">More...</a><br /></td></tr>
 <tr class="separator:ab172b12475920fce67a3ec80f59b74b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0522198896f5d00f4ce32b08c32c95b2"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT Teuchos::ArrayRCP&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a0522198896f5d00f4ce32b08c32c95b2">tokenize_line</a> (std::fstream &amp;dataFile, const std::string &amp;delim=&quot; &quot;, const bool capitalize=true)</td></tr>
-<tr class="memdesc:a0522198896f5d00f4ce32b08c32c95b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Turns a string read from getline() into tokens.  <a href="#a0522198896f5d00f4ce32b08c32c95b2">More...</a><br /></td></tr>
-<tr class="separator:a0522198896f5d00f4ce32b08c32c95b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae8bad67473b3311c5c8c5fe9fc554950"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT Teuchos::ArrayRCP&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#ae8bad67473b3311c5c8c5fe9fc554950">tokenize_line</a> (std::fstream &amp;dataFile, const std::string &amp;delim=&quot; \t&quot;, const bool capitalize=true)</td></tr>
+<tr class="memdesc:ae8bad67473b3311c5c8c5fe9fc554950"><td class="mdescLeft">&#160;</td><td class="mdescRight">Turns a string read from getline() into tokens.  <a href="#ae8bad67473b3311c5c8c5fe9fc554950">More...</a><br /></td></tr>
+<tr class="separator:ae8bad67473b3311c5c8c5fe9fc554950"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a642229bbac28f7473aaa33deadff97df"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_circle.html">DICe::Circle</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a642229bbac28f7473aaa33deadff97df">read_circle</a> (std::fstream &amp;dataFile)</td></tr>
 <tr class="memdesc:a642229bbac28f7473aaa33deadff97df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a circle from the input file.  <a href="#a642229bbac28f7473aaa33deadff97df">More...</a><br /></td></tr>
 <tr class="separator:a642229bbac28f7473aaa33deadff97df"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -751,10 +751,6 @@ const <a class="el" href="struct_d_i_ce_1_1_correlation___parameter.html">Correl
 const <a class="el" href="struct_d_i_ce_1_1_correlation___parameter.html">Correlation_Parameter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a17badf87faa7f0ae4be8cf475ee8a13c">gauss_filter_mask_size_param</a> (<a class="el" href="namespace_d_i_ce.html#ade75459014d9dac0981dd33cc9cb310b">gauss_filter_mask_size</a>, SIZE_PARAM, true,&quot;The size in pixels of the Gaussian filter (3, 5, 7, 9, 11, or 13).&quot;)</td></tr>
 <tr class="memdesc:a17badf87faa7f0ae4be8cf475ee8a13c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Correlation parameter and properties. <br /></td></tr>
 <tr class="separator:a17badf87faa7f0ae4be8cf475ee8a13c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aac48bb7efb1b8ee2e0bfcb98053cd076"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aac48bb7efb1b8ee2e0bfcb98053cd076"></a>
-const <a class="el" href="struct_d_i_ce_1_1_correlation___parameter.html">Correlation_Parameter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#aac48bb7efb1b8ee2e0bfcb98053cd076">obstruction_buffer_size_param</a> (<a class="el" href="namespace_d_i_ce.html#a004f5ccaf5ba74f06997245ca31f6871">obstruction_buffer_size</a>, SIZE_PARAM, true,&quot;Specifies the size of the buffer to add around an obstructing object (essentially makes the obstruction larger).&quot;)</td></tr>
-<tr class="memdesc:aac48bb7efb1b8ee2e0bfcb98053cd076"><td class="mdescLeft">&#160;</td><td class="mdescRight">Correlation parameter and properties. <br /></td></tr>
-<tr class="separator:aac48bb7efb1b8ee2e0bfcb98053cd076"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a502fb1a59fe2749335bf211eb1082e75"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a502fb1a59fe2749335bf211eb1082e75"></a>
 const <a class="el" href="struct_d_i_ce_1_1_correlation___parameter.html">Correlation_Parameter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a502fb1a59fe2749335bf211eb1082e75">pixel_integration_order_param</a> (<a class="el" href="namespace_d_i_ce.html#ac34d87ff51ccc53c290c42c9e0bcd9e7">pixel_integration_order</a>, SIZE_PARAM, true,&quot;Specifies the integration order to use (number of subdivisions for each pixel). Used only in the constrained optimization formulation.&quot;)</td></tr>
 <tr class="memdesc:a502fb1a59fe2749335bf211eb1082e75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Correlation parameter and properties. <br /></td></tr>
@@ -815,14 +811,6 @@ const <a class="el" href="struct_d_i_ce_1_1_correlation___parameter.html">Correl
 const <a class="el" href="struct_d_i_ce_1_1_correlation___parameter.html">Correlation_Parameter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a5ccb8e42a7f948b626f173a3a0e24165">objective_regularization_factor_param</a> (<a class="el" href="namespace_d_i_ce.html#a04c2fe7cfeda485aeb9b8afdb8eeaa8d">objective_regularization_factor</a>, SCALAR_PARAM, true,&quot;The coefficient applied to the regularization term if active&quot;)</td></tr>
 <tr class="memdesc:a5ccb8e42a7f948b626f173a3a0e24165"><td class="mdescLeft">&#160;</td><td class="mdescRight">Correlation parameter and properties. <br /></td></tr>
 <tr class="separator:a5ccb8e42a7f948b626f173a3a0e24165"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afff713c435c4b86a2e8d4bc736852c64"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afff713c435c4b86a2e8d4bc736852c64"></a>
-const <a class="el" href="struct_d_i_ce_1_1_correlation___parameter.html">Correlation_Parameter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#afff713c435c4b86a2e8d4bc736852c64">search_window_size_factor_param</a> (<a class="el" href="namespace_d_i_ce.html#a16166b510034f58361adee80350d46c8">search_window_size_factor</a>, SCALAR_PARAM, true,&quot;Determines how large the search window is compared to a subset&quot;)</td></tr>
-<tr class="memdesc:afff713c435c4b86a2e8d4bc736852c64"><td class="mdescLeft">&#160;</td><td class="mdescRight">Correlation parameter and properties. <br /></td></tr>
-<tr class="separator:afff713c435c4b86a2e8d4bc736852c64"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9e70d8a3e815fa1f6a9a0bf363ddc670"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9e70d8a3e815fa1f6a9a0bf363ddc670"></a>
-const <a class="el" href="struct_d_i_ce_1_1_correlation___parameter.html">Correlation_Parameter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a9e70d8a3e815fa1f6a9a0bf363ddc670">search_window_skip_param</a> (<a class="el" href="namespace_d_i_ce.html#a797bf656f23e22a723bb5da054d8b49c">search_window_skip</a>, SIZE_PARAM, true,&quot;Determines how many pixels to skip while traversing the search window&quot;)</td></tr>
-<tr class="memdesc:a9e70d8a3e815fa1f6a9a0bf363ddc670"><td class="mdescLeft">&#160;</td><td class="mdescRight">Correlation parameter and properties. <br /></td></tr>
-<tr class="separator:a9e70d8a3e815fa1f6a9a0bf363ddc670"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab41e43a44c40bf2d18c22c5cd9306219"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab41e43a44c40bf2d18c22c5cd9306219"></a>
 const <a class="el" href="struct_d_i_ce_1_1_correlation___parameter.html">Correlation_Parameter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#ab41e43a44c40bf2d18c22c5cd9306219">max_evolution_iterations_param</a> (<a class="el" href="namespace_d_i_ce.html#af4f0b20af1da9edfdb1dc4492f3ed052">max_evolution_iterations</a>, SIZE_PARAM, true,&quot;Maximum evolution iterations to use (only valid for subset_evolution_routine)&quot;)</td></tr>
 <tr class="memdesc:ab41e43a44c40bf2d18c22c5cd9306219"><td class="mdescLeft">&#160;</td><td class="mdescRight">Correlation parameter and properties. <br /></td></tr>
@@ -907,10 +895,6 @@ const <a class="el" href="struct_d_i_ce_1_1_correlation___parameter.html">Correl
 const <a class="el" href="struct_d_i_ce_1_1_correlation___parameter.html">Correlation_Parameter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#aee75982b98f06c874888abcc2d32c368">use_tracking_default_params_param</a> (<a class="el" href="namespace_d_i_ce.html#a07516258357c11f76ac6313eae61ab17">use_tracking_default_params</a>, BOOL_PARAM, true,&quot;Use the TRACKING default parameters instead of the GENERIC defaults (Not commonly used).&quot;)</td></tr>
 <tr class="memdesc:aee75982b98f06c874888abcc2d32c368"><td class="mdescLeft">&#160;</td><td class="mdescRight">Correlation parameter and properties. <br /></td></tr>
 <tr class="separator:aee75982b98f06c874888abcc2d32c368"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a83c48438afa1da9f6ebd06fd394008fb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a83c48438afa1da9f6ebd06fd394008fb"></a>
-const <a class="el" href="struct_d_i_ce_1_1_correlation___parameter.html">Correlation_Parameter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a83c48438afa1da9f6ebd06fd394008fb">update_obstructed_pixels_each_iteration_param</a> (<a class="el" href="namespace_d_i_ce.html#ac0398001a4adc4db96f29ad685224630">update_obstructed_pixels_each_iteration</a>, BOOL_PARAM, true,&quot;Rather than update the obstructed pixels only at the start of each frame, do so at each iteration in the analysis.&quot;)</td></tr>
-<tr class="memdesc:a83c48438afa1da9f6ebd06fd394008fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Correlation parameter and properties. <br /></td></tr>
-<tr class="separator:a83c48438afa1da9f6ebd06fd394008fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac8a47f861cdc3aae32928ddda90a299b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac8a47f861cdc3aae32928ddda90a299b"></a>
 const <a class="el" href="struct_d_i_ce_1_1_correlation___parameter.html">Correlation_Parameter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#ac8a47f861cdc3aae32928ddda90a299b">normalize_gamma_with_active_pixels_param</a> (<a class="el" href="namespace_d_i_ce.html#a549ef90b9762fe80ffe6d2e5161a845f">normalize_gamma_with_active_pixels</a>, BOOL_PARAM, true,&quot;True if the computed gamma value (or matching quality) will be normalized by the number of active pixels.&quot;)</td></tr>
 <tr class="memdesc:ac8a47f861cdc3aae32928ddda90a299b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Correlation parameter and properties. <br /></td></tr>
@@ -1461,14 +1445,6 @@ const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="e
 const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a123aed40ce872d09ca86e651c2be3bd8">enable_shear_strain</a> = &quot;enable_shear_strain&quot;</td></tr>
 <tr class="memdesc:a123aed40ce872d09ca86e651c2be3bd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">String parameter name. <br /></td></tr>
 <tr class="separator:a123aed40ce872d09ca86e651c2be3bd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a16166b510034f58361adee80350d46c8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a16166b510034f58361adee80350d46c8"></a>
-const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a16166b510034f58361adee80350d46c8">search_window_size_factor</a> = &quot;search_window_size_factor&quot;</td></tr>
-<tr class="memdesc:a16166b510034f58361adee80350d46c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">String parameter name. <br /></td></tr>
-<tr class="separator:a16166b510034f58361adee80350d46c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a797bf656f23e22a723bb5da054d8b49c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a797bf656f23e22a723bb5da054d8b49c"></a>
-const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a797bf656f23e22a723bb5da054d8b49c">search_window_skip</a> = &quot;search_window_skip&quot;</td></tr>
-<tr class="memdesc:a797bf656f23e22a723bb5da054d8b49c"><td class="mdescLeft">&#160;</td><td class="mdescRight">String parameter name. <br /></td></tr>
-<tr class="separator:a797bf656f23e22a723bb5da054d8b49c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af4f0b20af1da9edfdb1dc4492f3ed052"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af4f0b20af1da9edfdb1dc4492f3ed052"></a>
 const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#af4f0b20af1da9edfdb1dc4492f3ed052">max_evolution_iterations</a> = &quot;max_evolution_iterations&quot;</td></tr>
 <tr class="memdesc:af4f0b20af1da9edfdb1dc4492f3ed052"><td class="mdescLeft">&#160;</td><td class="mdescRight">String parameter name. <br /></td></tr>
@@ -1569,10 +1545,6 @@ const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="e
 const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a4be9af8bb370e6241a060311468c5c47">omit_output_row_id</a> = &quot;omit_output_row_id&quot;</td></tr>
 <tr class="memdesc:a4be9af8bb370e6241a060311468c5c47"><td class="mdescLeft">&#160;</td><td class="mdescRight">String parameter name. <br /></td></tr>
 <tr class="separator:a4be9af8bb370e6241a060311468c5c47"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a004f5ccaf5ba74f06997245ca31f6871"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a004f5ccaf5ba74f06997245ca31f6871"></a>
-const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a004f5ccaf5ba74f06997245ca31f6871">obstruction_buffer_size</a> = &quot;obstruction_buffer_size&quot;</td></tr>
-<tr class="memdesc:a004f5ccaf5ba74f06997245ca31f6871"><td class="mdescLeft">&#160;</td><td class="mdescRight">String parameter name. <br /></td></tr>
-<tr class="separator:a004f5ccaf5ba74f06997245ca31f6871"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaffb7f7c3e9c33211ccd590b5ae3c52f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaffb7f7c3e9c33211ccd590b5ae3c52f"></a>
 const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#aaffb7f7c3e9c33211ccd590b5ae3c52f">obstruction_skin_factor</a> = &quot;obstruction_skin_factor&quot;</td></tr>
 <tr class="memdesc:aaffb7f7c3e9c33211ccd590b5ae3c52f"><td class="mdescLeft">&#160;</td><td class="mdescRight">String parameter name. <br /></td></tr>
@@ -1581,10 +1553,6 @@ const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="e
 const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a07516258357c11f76ac6313eae61ab17">use_tracking_default_params</a> = &quot;use_tracking_default_params&quot;</td></tr>
 <tr class="memdesc:a07516258357c11f76ac6313eae61ab17"><td class="mdescLeft">&#160;</td><td class="mdescRight">String parameter name. <br /></td></tr>
 <tr class="separator:a07516258357c11f76ac6313eae61ab17"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac0398001a4adc4db96f29ad685224630"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac0398001a4adc4db96f29ad685224630"></a>
-const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#ac0398001a4adc4db96f29ad685224630">update_obstructed_pixels_each_iteration</a> = &quot;update_obstructed_pixels_each_iteration&quot;</td></tr>
-<tr class="memdesc:ac0398001a4adc4db96f29ad685224630"><td class="mdescLeft">&#160;</td><td class="mdescRight">String parameter name. <br /></td></tr>
-<tr class="separator:ac0398001a4adc4db96f29ad685224630"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a549ef90b9762fe80ffe6d2e5161a845f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a549ef90b9762fe80ffe6d2e5161a845f"></a>
 const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a549ef90b9762fe80ffe6d2e5161a845f">normalize_gamma_with_active_pixels</a> = &quot;normalize_gamma_with_active_pixels&quot;</td></tr>
 <tr class="memdesc:a549ef90b9762fe80ffe6d2e5161a845f"><td class="mdescLeft">&#160;</td><td class="mdescRight">String parameter name. <br /></td></tr>
@@ -1626,7 +1594,7 @@ const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="e
 <tr class="memdesc:a5037b164d934f280cef76b400f7b1a65"><td class="mdescLeft">&#160;</td><td class="mdescRight">String parameter name. <br /></td></tr>
 <tr class="separator:a5037b164d934f280cef76b400f7b1a65"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aae4a57bb7f4d35bcb7c27305a00e3dff"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aae4a57bb7f4d35bcb7c27305a00e3dff"></a>
-const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#aae4a57bb7f4d35bcb7c27305a00e3dff">num_valid_correlation_params</a> = 60</td></tr>
+const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#aae4a57bb7f4d35bcb7c27305a00e3dff">num_valid_correlation_params</a> = 56</td></tr>
 <tr class="memdesc:aae4a57bb7f4d35bcb7c27305a00e3dff"><td class="mdescLeft">&#160;</td><td class="mdescRight">The total number of valid correlation parameters. <br /></td></tr>
 <tr class="separator:aae4a57bb7f4d35bcb7c27305a00e3dff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab32ae587d77b3525eda47832a8e32708"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab32ae587d77b3525eda47832a8e32708"></a>
@@ -2902,7 +2870,7 @@ const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf7
 
 </div>
 </div>
-<a class="anchor" id="a0522198896f5d00f4ce32b08c32c95b2"></a>
+<a class="anchor" id="ae8bad67473b3311c5c8c5fe9fc554950"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -2916,7 +2884,7 @@ const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf7
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>delim</em> = <code>&quot;&#160;&quot;</code>, </td>
+          <td class="paramname"><em>delim</em> = <code>&quot;&#160;\t&quot;</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -3550,7 +3518,7 @@ const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf7
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Dec 16 2015 06:08:40 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Dec 26 2015 05:14:19 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

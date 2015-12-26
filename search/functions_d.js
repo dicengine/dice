@@ -5,8 +5,6 @@ var searchData=
   ['objective_5fregularization_5ffactor_5fparam',['objective_regularization_factor_param',['../namespace_d_i_ce.html#a5ccb8e42a7f948b626f173a3a0e24165',1,'DICe']]],
   ['objective_5fznssd',['Objective_ZNSSD',['../class_d_i_ce_1_1_objective___z_n_s_s_d.html#a6d801c130b1d6e5b0cc13fa7911d58cf',1,'DICe::Objective_ZNSSD']]],
   ['obstructed_5farea',['obstructed_area',['../class_d_i_ce_1_1_conformal___area___def.html#a71283d67b6d68337b7932e70123dc73c',1,'DICe::Conformal_Area_Def']]],
-  ['obstruction_5fbuffer_5fsize',['obstruction_buffer_size',['../class_d_i_ce_1_1_schema.html#a1becbfebef9c7684db14e053bb6b3626',1,'DICe::Schema']]],
-  ['obstruction_5fbuffer_5fsize_5fparam',['obstruction_buffer_size_param',['../namespace_d_i_ce.html#aac48bb7efb1b8ee2e0bfcb98053cd076',1,'DICe']]],
   ['obstruction_5fskin_5ffactor',['obstruction_skin_factor',['../class_d_i_ce_1_1_schema.html#a42660bf93b2384d8ba58e46218e3e50a',1,'DICe::Schema']]],
   ['obstruction_5fskin_5ffactor_5fparam',['obstruction_skin_factor_param',['../namespace_d_i_ce.html#a7200b2ff21eab033f1c42fa1094db9f4',1,'DICe']]],
   ['offset_5fx',['offset_x',['../class_d_i_ce_1_1_image.html#ab115005186fc6105ec688c4cc11c6820',1,'DICe::Image']]],

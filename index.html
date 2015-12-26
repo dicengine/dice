@@ -250,7 +250,8 @@ BEGIN RECTANGLE
   UPPER_LEFT &lt;X&gt; &lt;Y&gt;
   LOWER_RIGHT &lt;X&gt; &lt;Y&gt;
 END RECTANGLE
-</pre><p>Sets of shapes used to define an attribute of a conformal subset can overlap. The pixels inside the overlap will only be included once. An example conformal subset definition that include all three attributes defined is as follows. This subset has a circular boundary, a triangular region to be excluded and an obstruction along the bottom edge. </p><pre class="fragment">BEGIN CONFORMAL_SUBSET
+</pre><p>Note: for the <code>RECTANGLE</code> shape, if an even size is used for the width or height, the next largest odd number will be used for the size, to split the shape evenly on all sides of the centroid.</p>
+<p>Sets of shapes used to define an attribute of a conformal subset can overlap. The pixels inside the overlap will only be included once. An example conformal subset definition that include all three attributes defined is as follows. This subset has a circular boundary, a triangular region to be excluded and an obstruction along the bottom edge. </p><pre class="fragment">BEGIN CONFORMAL_SUBSET
   SUBSET_ID 3
   BEGIN BOUNDARY
     BEGIN CIRCLE
@@ -325,6 +326,7 @@ END CONFORMAL_SUBSET
 </pre><p>To use optical flow as the initializer for all subsets, use the following correlation parameter: </p><pre class="fragment">&lt;Parameter name="initialization_method" type="string" value="use_optical_flow" /&gt;
 </pre><p>To use optical flow as the motion solution, not just as an initializer for <code>SIMPLEX</code> or <code>GRADIENT</code> DIC, use one of the methods above to turn on optical flow, but also use a <code>SKIP_SOLVE</code> keyword in the subset file (for a particular subset) or the <code>skip_all_solves</code> correlation parameter to skip the DIC solves and use the optical flow solution as the motion solution.</p>
 <p>The optical flow method in <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> follows the implementation of Matlab for the <a href="http://www.mathworks.com/help/vision/ref/opticalflow.html#bqi5zaf-1">Lucas-Kanade</a> algorithm. To determine the points to use for optical flow (two are needed to compute the angle of rotation) all of the pixels in the subset are scanned to find the two with the highest gradients that are at least 10 pixels away from each other. If the subset is small, the pixels can be as close as 2 pixels away from each other which lowers the accuracy substantially. As long as these two pixels stay visible throughout the sequence, the positions about which optical flow is calculated do not change. If one of the pixels becomes obstructed during the sequence, new locations are selected from among the visible pixels.</p>
+<p>If optical flow is being used as the initialization method and the initialization fails (due to the subset being too small for two optical flow points or the gradient information is not good enough for optical flow), the initialization defaults back to using the field values from the last frame.</p>
 <h3>Motion detection</h3>
 <p>Also in the subset input file, for the <code>TRACKING_ROUTINE</code>, for conformal subsets, the user can request that the correaltion only be performed if there is motion detected in the vicinity of the subset. This can be helpful in speeding up an analyis if the object being tracked sits idle for most of the video and only moves for a small portion of frames. Since there can potentially be several subsets inside of one window, many subsets can share a particular motion test window.</p>
 <p>To define a motion test window for a subset the syntax is as follows </p><pre class="fragment">BEGIN CONFORMAL_SUBSET
@@ -368,11 +370,11 @@ END CONFORMAL_SUBSET
 </pre><p>If the separate file for each subset option is used, the index at the end of the filename refers to the subset id.</p>
 <p>The file name prefix to use for the output files can be set with the following option </p><pre class="fragment">&lt;Parameter name="output_prefix" type="string" value="&lt;file_name_prefix&gt;" /&gt;
 </pre><p>The user can also define an output specification to list the fields in a specific order and choose which fields to output. To define the output fields and the order, an <code>output_spec</code> can be added to the correlation parameters. The following is a syntax example that outputs only three fields in the order <code>COORDINATE_X</code>, <code>COORDINATE_Y</code>, <code>DISPLACEMENT_X</code>: </p><pre class="fragment">&lt;ParameterList name="output_spec"&gt;
-   &lt;Parameter name="coordinate_x" type="int" value="0" /&gt;
-   &lt;Parameter name="coordinate_y" type="int" value="1" /&gt;
-   &lt;Parameter name="displacement_x" type="int" value="2" /&gt;
+   &lt;Parameter name="coordinate_x" type="bool" value="true" /&gt;
+   &lt;Parameter name="coordinate_y" type="bool" value="true" /&gt;
+   &lt;Parameter name="displacement_x" type="bool" value="true" /&gt;
 &lt;/ParameterList&gt;
-</pre><p>The integer value for each field name is the rank in the output order (the order is not assumed from the ordering in the parameter list).</p>
+</pre><p>The order of the columns in the output file is determined by the ordering in the list of field names. If the boolean value is set to <code>false</code>, the field will not be output.</p>
 <p>The delimiter used in the output file can be set in the parameters file with the following option: </p><pre class="fragment">&lt;Parameter name="output_delimiter" type="string" value="&lt;value&gt;" /&gt;
 </pre><p>The user can also request that the row id in the output files be omitted with </p><pre class="fragment">&lt;Parameter name="omit_output_row_id" type="bool" value="true" /&gt;
 </pre><h3>Fields</h3>
@@ -601,7 +603,7 @@ $ nmake
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Dec 16 2015 06:08:43 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Dec 26 2015 05:14:23 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>
