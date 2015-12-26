@@ -1592,9 +1592,8 @@ Schema::write_control_points_image(const std::string & fileName,
 
   // first, create new intensities based on the old
   Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
-  Teuchos::ArrayRCP<intensity_t> img_intensity_values = img->intensity_array();
   for (int_t i=0;i<width*height;++i)
-    intensities[i] = img_intensity_values[i];
+    intensities[i] = (*img)(i);
 
   int_t x=0,y=0,xAlt=0,yAlt=0;
   const int_t numLocalControlPts = data_num_points_; //cp_map_->getNodeNumElements();

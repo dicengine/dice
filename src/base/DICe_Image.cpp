@@ -126,12 +126,12 @@ Image::mean()const{
 
 void
 Image::write_tiff(const std::string & file_name){
-  utils::write_tiff_image(file_name.c_str(),width_,height_,intensity_array().getRawPtr(),default_is_layout_right());
+  utils::write_tiff_image(file_name.c_str(),width_,height_,intensities().getRawPtr(),default_is_layout_right());
 }
 
 void
 Image::write_rawi(const std::string & file_name){
-  utils::write_rawi_image(file_name.c_str(),width_,height_,intensity_array().getRawPtr(),default_is_layout_right());
+  utils::write_rawi_image(file_name.c_str(),width_,height_,intensities().getRawPtr(),default_is_layout_right());
 }
 
 Teuchos::RCP<Image>

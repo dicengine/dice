@@ -209,7 +209,7 @@ public:
   const intensity_t& operator()(const int_t i) const;
 
   /// returns a copy of the intenisity values as an array
-  Teuchos::ArrayRCP<intensity_t> intensity_array()const;
+  Teuchos::ArrayRCP<intensity_t> intensities()const;
 
   /// replaces the intensity values of the image
   /// \param intensities the new intensity value array
@@ -346,7 +346,7 @@ public:
   KOKKOS_INLINE_FUNCTION
   void operator()(const Gauss_Tag &, const member_type team_member)const;
   /// returns the view of the intensity values
-  intensity_dual_view_2d intensities()const{
+  intensity_dual_view_2d intensity_dual_view()const{
     return intensities_;
   }
   /// gradient x dual view accessor

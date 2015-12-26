@@ -282,9 +282,7 @@ Image::mask(const int_t x,
 }
 
 Teuchos::ArrayRCP<intensity_t>
-Image::intensity_array()const{
-  // note: in the kokkos version a copy of the intensities is returned while in the serial version
-  // the intensity array itself is returned (therefor giving access to changing it's values...)
+Image::intensities()const{
   return intensities_;
 }
 

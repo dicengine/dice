@@ -82,7 +82,7 @@ Inside the build directory, create a CMake script similar to the example given b
         -D CMAKE_BUILD_TYPE=RELEASE \
         -D DICE_TRILINOS_DIR:FILEPATH=<location_of_trilinos_install> \
         -D DICE_LIB_DIR:FILEPATH=<location_of_dice_installed_libraries> \
-        -D DICE_HEADER_DIR:FILEPATH=<locaiont_of_dice_headers> \
+        -D DICE_HEADER_DIR:FILEPATH=<location_of_dice_headers> \
         -D CMAKE_CXX_FLAGS:STRING="-Wall" \
         ../
 	

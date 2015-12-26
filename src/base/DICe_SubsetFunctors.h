@@ -207,7 +207,7 @@ struct Subset_Init_Functor{
     cos_t_ = std::cos(t_);
     sin_t_ = std::sin(t_);
     // get the image intensities
-    image_intensities_ = image->intensities().d_view;
+    image_intensities_ = image->intensity_dual_view().d_view;
     // get a view of the subset intensities
     if(target==REF_INTENSITIES){
       subset_intensities_ = subset->ref_intensities().d_view;

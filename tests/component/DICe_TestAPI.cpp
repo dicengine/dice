@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
   // correlate on the set of five images that shift the image by one pixel each
   std::string ref_name = "./images/defSyntheticSpeckled0.tif";
   Teuchos::RCP<DICe::Image> refImg = Teuchos::rcp( new DICe::Image(ref_name.c_str()));
-  Teuchos::ArrayRCP<intensity_t> ref_img = refImg->intensity_array();
+  Teuchos::ArrayRCP<intensity_t> ref_img = refImg->intensities();
   const int_t ref_w = refImg->width();
   const int_t ref_h = refImg->height();
 
@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
     *outStream << "correlating image " << ref_name << " WITH " << def_names[img] << std::endl;
 
     Teuchos::RCP<DICe::Image> defImg = Teuchos::rcp( new DICe::Image(def_names[img].c_str()));
-    Teuchos::ArrayRCP<intensity_t> def_img = defImg->intensity_array();
+    Teuchos::ArrayRCP<intensity_t> def_img = defImg->intensities();
 
     // call library using default params
     errorFlag = dice_correlate(points, num_subsets, subset_size,

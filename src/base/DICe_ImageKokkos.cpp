@@ -185,7 +185,7 @@ Image::Image(Teuchos::RCP<Image> img,
     for(int_t x=0;x<width_;++x){
       src_x = x + offset_x_;
       if(src_x>=0&&src_x<src_width&&src_y>=0&&src_y<src_height){
-        intensities_.h_view(y,x) = img->intensities().h_view(src_y,src_x);
+        intensities_.h_view(y,x) = img->intensity_dual_view().h_view(src_y,src_x);
         grad_x_.h_view(y,x) = img->grad_x().h_view(src_y,src_x);
         grad_y_.h_view(y,x) = img->grad_y().h_view(src_y,src_x);
         mask_.h_view(y,x) = img->mask().h_view(src_y,src_x);
@@ -327,12 +327,8 @@ Image::mask(const int_t x,
 }
 
 Teuchos::ArrayRCP<intensity_t>
-Image::intensity_array()const{
-  // note: in the kokkos version a copy of the intensities is returned while in the serial version
-  // the intensity array itself is returned (therefor giving access to changing it's values...)
-  Teuchos::ArrayRCP<intensity_t> array(width_*height_);
-  for(int_t i=0;i<width_*height_;++i)
-    array[i] = intensities_.h_view.ptr_on_device()[i];
+Image::intensities()const{
+  Teuchos::ArrayRCP<intensity_t> array(intensities_.h_view.ptr_on_device(),0,width_*height_,false);
   return array;
 }
 
@@ -454,7 +450,7 @@ Image::apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformati
   else{
     Teuchos::RCP<Image> result = Teuchos::rcp(new Image(width_,height_));
     Transform_Functor trans_functor(intensities_.d_view,
-      result->intensities().d_view,
+      result->intensity_dual_view().d_view,
       width_,
       height_,
       cx,
@@ -462,8 +458,8 @@ Image::apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformati
       deformation);
     Kokkos::parallel_for(width_*height_,trans_functor);
     // sync up the new image
-    result->intensities().modify<device_space>();
-    result->intensities().sync<host_space>();
+    result->intensity_dual_view().modify<device_space>();
+    result->intensity_dual_view().sync<host_space>();
     return result;
   }
 }
