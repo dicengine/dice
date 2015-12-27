@@ -42,6 +42,7 @@
 #include <DICe_Image.h>
 #include <DICe_Tiff.h>
 #include <DICe_Rawi.h>
+#include <DICe_Jpeg.h>
 #include <DICe_Shape.h>
 #include <DICe_ImageFunctors.h>
 
@@ -60,22 +61,37 @@ Image::Image(const char * file_name,
 {
   const std::string rawi(".rawi");
   bool is_rawi = file_name_.find(rawi)!=std::string::npos;
+  const std::string jpg("jpg");
+  const std::string jpeg("jpeg");
+  bool is_jpg = file_name_.find(jpg)!=std::string::npos||file_name_.find(jpeg)!=std::string::npos;
+  const std::string tif("tif");
+  const std::string tiff("tiff");
+  bool is_tif = file_name_.find(tif)!=std::string::npos||file_name_.find(tiff)!=std::string::npos;
 
   if(is_rawi){
     utils::read_rawi_image_dimensions(file_name,width_,height_);
-    assert(width_>0);
-    assert(height_>0);
+    TEUCHOS_TEST_FOR_EXCEPTION(width_<=0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(height_<=0,std::runtime_error,"");
     intensities_ = intensity_dual_view_2d("intensities",height_,width_);
     utils::read_rawi_image(file_name,
       intensities_.h_view.ptr_on_device(),
       default_is_layout_right());
   }
+  else if(is_jpg){
+    utils::read_jpeg_image_dimensions(file_name,width_,height_);
+    TEUCHOS_TEST_FOR_EXCEPTION(width_<=0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(height_<=0,std::runtime_error,"");
+    intensities_ = intensity_dual_view_2d("intensities",height_,width_);
+    utils::read_jpeg_image(file_name,
+      intensities_.h_view.ptr_on_device(),
+      default_is_layout_right());
+  }
   // assumes that it is a tiff image as default
-  else {
+  else if(is_tif){
     // get the image dims
     utils::read_tiff_image_dimensions(file_name,width_,height_);
-    assert(width_>0);
-    assert(height_>0);
+    TEUCHOS_TEST_FOR_EXCEPTION(width_<=0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(height_<=0,std::runtime_error,"");
     // initialize the pixel containers
     intensities_ = intensity_dual_view_2d("intensities",height_,width_);
     // read in the image
@@ -83,6 +99,10 @@ Image::Image(const char * file_name,
       intensities_.h_view.ptr_on_device(),
       default_is_layout_right());
   }
+  else{
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"Error, unsupported image file type");
+  }
+
   // copy the image to the device (no-op for OpenMP)
   default_constructor_tasks(params);
 }
@@ -106,21 +126,45 @@ Image::Image(const char * file_name,
   bool is_rawi = file_name_.find(rawi)!=std::string::npos;
   TEUCHOS_TEST_FOR_EXCEPTION(is_rawi,std::invalid_argument,
     "Error: .rawi files not yet supported for reading only a poriton of the image.");
+  const std::string jpg("jpg");
+  const std::string jpeg("jpeg");
+  bool is_jpg = file_name_.find(jpg)!=std::string::npos||file_name_.find(jpeg)!=std::string::npos;
+  const std::string tif("tif");
+  const std::string tiff("tiff");
+  bool is_tif = file_name_.find(tif)!=std::string::npos||file_name_.find(tiff)!=std::string::npos;
 
   // get the image dims
   int_t img_width = 0;
   int_t img_height = 0;
-  utils::read_tiff_image_dimensions(file_name,img_width,img_height);
-  assert(width_>0&&offset_x_+width_<=img_width);
-  assert(height_>0&&offset_y_+height_<=img_height);
-  // initialize the pixel containers
-  intensities_ = intensity_dual_view_2d("intensities",height_,width_);
-  // read in the image
-  utils::read_tiff_image(file_name,
-    offset_x,offset_y,
-    width_,height_,
-    intensities_.h_view.ptr_on_device(),
-    default_is_layout_right());
+  if(is_tif){
+    utils::read_tiff_image_dimensions(file_name,img_width,img_height);
+    TEUCHOS_TEST_FOR_EXCEPTION(width_<=0||offset_x_+width_>img_width,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(height_<=0||offset_y_+height_>img_height,std::runtime_error,"");
+    // initialize the pixel containers
+    intensities_ = intensity_dual_view_2d("intensities",height_,width_);
+    // read in the image
+    utils::read_tiff_image(file_name,
+      offset_x,offset_y,
+      width_,height_,
+      intensities_.h_view.ptr_on_device(),
+      default_is_layout_right());
+  }
+  else if(is_jpg){
+    utils::read_jpeg_image_dimensions(file_name,img_width,img_height);
+    TEUCHOS_TEST_FOR_EXCEPTION(width_<=0||offset_x_+width_>img_width,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(height_<=0||offset_y_+height_>img_height,std::runtime_error,"");
+    // initialize the pixel containers
+    intensities_ = intensity_dual_view_2d("intensities",height_,width_);
+    // read in the image
+    utils::read_jpeg_image(file_name,
+      offset_x,offset_y,
+      width_,height_,
+      intensities_.h_view.ptr_on_device(),
+      default_is_layout_right());
+  }
+  else{
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"Error, unsupported image file type");
+  }
   default_constructor_tasks(params);
 }
 

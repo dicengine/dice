@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
   // create an image from file:
   *outStream << "creating an image from a tiff file " << std::endl;
   Teuchos::RCP<Image> img = Teuchos::rcp(new Image("./images/ImageA.tif"));
-  img->write_tiff("outImageA.tif");
+  //img->write_tiff("outImageA.tif");
   if(img->width()!=2048){
     *outStream << "Error, the image width is not correct" << std::endl;
     errorFlag +=1;
@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
   // capture a portion of an image from file
   *outStream << "creating an image from a portion of a tiff file " << std::endl;
   Image sub_img("./images/ImageA.tif",100,100,300,200);
-  sub_img.write_tiff("outSubImageA.tif");
+  //sub_img.write_tiff("outSubImageA.tif");
   if(sub_img.width()!=300){
     *outStream << "Error, the sub image width is not correct" << std::endl;
     errorFlag +=1;
@@ -390,21 +390,47 @@ int main(int argc, char *argv[]) {
   }
   *outStream << "hierarchical image filter has been checked" << std::endl;
 
+  // create an image from jpeg file:
+  *outStream << "creating an image from a jpeg file " << std::endl;
+  Teuchos::RCP<Image> img_jpg = Teuchos::rcp(new Image("./images/ImageB.jpg"));
+  //img_jpg->write_jpeg("outImageB.jpg");
+  //img_jpg->write_rawi("outImageB.rawi");
+  if(img_jpg->width()!=240){
+    *outStream << "Error, the jpeg image width is not correct" << std::endl;
+    errorFlag +=1;
+  }
+  if(img_jpg->height()!=161){
+    *outStream << "Error, the jpeg image height is not correct" << std::endl;
+    errorFlag +=1;
+  }
+  Teuchos::RCP<Image> img_jpg_exact = Teuchos::rcp(new Image("./images/JpegImageB.rawi"));
+  const scalar_t diff_jpg = img_jpg_exact->diff(img_jpg);
+  if(diff_jpg > diff_tol){
+    *outStream << "Error, the jpeg image does not have the right intensities." << std::endl;
+    errorFlag++;
+  }
+  *outStream << "creating a sub portion image from a jpeg file " << std::endl;
+  Teuchos::RCP<Image> img_sub_jpg = Teuchos::rcp(new Image("./images/ImageB.jpg",10,15,20,30));
+  //img_sub_jpg->write_jpeg("outImageBSub.jpg");
+  //img_sub_jpg->write_rawi("outImageBSub.rawi");
+  if(img_sub_jpg->width()!=20){
+    *outStream << "Error, the jpeg sub image width is not correct" << std::endl;
+    errorFlag +=1;
+  }
+  if(img_sub_jpg->height()!=30){
+    *outStream << "Error, the jpeg sub image height is not correct" << std::endl;
+    errorFlag +=1;
+  }
+  Teuchos::RCP<Image> img_jpg_sub_exact = Teuchos::rcp(new Image("./images/JpegImageBSub.rawi"));
+  const scalar_t diff_jpg_sub = img_jpg_sub_exact->diff(img_sub_jpg);
+  if(diff_jpg_sub > diff_tol){
+    *outStream << "Error, the jpeg sub image does not have the right intensities." << std::endl;
+    errorFlag++;
+  }
+
   // test that unsupported file formats throw an exception
 
   bool exception_thrown = false;
-  try{
-    DICe::Image jpg("./images/invalid.jpg");
-  }
-  catch (const std::exception &e){
-    exception_thrown = true;
-    *outStream << ".jpg throws an exception as expected" << std::endl;
-  }
-  if(!exception_thrown){
-    *outStream << "Error, an exception should have been thrown for invalid .jpg file format, but was not" << std::endl;
-    errorFlag++;
-  }
-  exception_thrown = false;
   try{
     DICe::Image png("./images/invalid.png");
   }

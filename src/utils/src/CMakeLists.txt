@@ -1,11 +1,13 @@
 SET(DICE_UTILS_SOURCES
   DICe_Tiff.cpp
   DICe_Rawi.cpp
+  DICe_Jpeg.cpp
 )
 
 SET(DICE_UTILS_HEADERS
   DICe_Tiff.h
   DICe_Rawi.h
+  DICe_Jpeg.h
 )
 
 include_directories(
@@ -21,7 +23,7 @@ include_directories(
 link_directories (
     ${TIFF_LIB_DIR}
 )
-SET(DICE_UTILS_LIBRARIES tiff)
+SET(DICE_UTILS_LIBRARIES tiff jpeg)
 
 # Specify target & source files to compile it from
 add_library(

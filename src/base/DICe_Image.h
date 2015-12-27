@@ -162,6 +162,10 @@ public:
   /// \param file_name the name of the file to write to
   void write_tiff(const std::string & file_name);
 
+  /// write the image to jpeg file
+  /// \param file_name the name of the file to write to
+  void write_jpeg(const std::string & file_name);
+
   /// write the image to .rawi format (Raw Intensity)
   /// rather than tiff which will truncate the intensity values to an 8-bit integer value
   /// the rawi format saves the full intesity_t precision value to file

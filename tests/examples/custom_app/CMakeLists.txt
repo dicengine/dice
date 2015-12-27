@@ -118,7 +118,8 @@ target_link_libraries(main
   dicefft
   diceutils
   dicecine
-  ${tiff_lib})
+  ${tiff_lib}
+  jpeg)
 # add the other libraries needed
 
 target_link_libraries(main
