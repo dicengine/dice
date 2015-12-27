@@ -81,7 +81,7 @@ Path_Initializer::Path_Initializer(Schema * schema,
   num_neighbors_(num_neighbors)
 {
   DEBUG_MSG("Constructor for Path_Initializer with file: "  << file_name);
-  assert(num_neighbors_>0);
+  TEUCHOS_TEST_FOR_EXCEPTION(num_neighbors_<=0,std::runtime_error,"");
   // read in the solution file:
   std::string line;
   std::fstream path_file(file_name,std::ios_base::in);
@@ -114,7 +114,7 @@ Path_Initializer::Path_Initializer(Schema * schema,
   path_file.close();
   num_triads_ = triads_.size();
   DEBUG_MSG("number of triads in filtered set: " << num_triads_);
-  assert(num_triads_>0);
+  TEUCHOS_TEST_FOR_EXCEPTION(num_triads_<=0,std::runtime_error,"");
   if(num_triads_<num_neighbors_) num_neighbors_ = num_triads_;
 
   DEBUG_MSG("creating the point cloud");
@@ -306,7 +306,7 @@ Phase_Correlation_Initializer::pre_execution_tasks(){
 Status_Flag
 Field_Value_Initializer::initial_guess(const int_t subset_gid,
   Teuchos::RCP<std::vector<scalar_t> > deformation){
-  assert(deformation->size()==DICE_DEFORMATION_SIZE);
+  TEUCHOS_TEST_FOR_EXCEPTION(deformation->size()!=DICE_DEFORMATION_SIZE,std::runtime_error,"");
   int_t sid = subset_gid;
   // logic for using neighbor values
   if(schema_->initialization_method()==DICe::USE_NEIGHBOR_VALUES ||
@@ -676,7 +676,7 @@ Optical_Flow_Initializer::set_locations(const int_t subset_gid){
 Status_Flag
 Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
   Teuchos::RCP<std::vector<scalar_t> > deformation){
-  assert(deformation->size()==DICE_DEFORMATION_SIZE);
+  TEUCHOS_TEST_FOR_EXCEPTION(deformation->size()!=DICE_DEFORMATION_SIZE,std::runtime_error,"");
   DEBUG_MSG("Optical_Flow_Initializer::initial_guess() Subset " << subset_gid);
 
   // determine if the locations need to be reset:

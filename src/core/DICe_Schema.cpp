@@ -105,8 +105,8 @@ Schema::construct_schema(const std::string & refName,
   const int_t width = ref_img_->width();
   const int_t height = ref_img_->height();
   // require that the images are the same size
-  TEUCHOS_TEST_FOR_EXCEPTION(width!=def_img_->width(),std::runtime_error,"  DICe ERROR: Images must be the same width.");
-  TEUCHOS_TEST_FOR_EXCEPTION(height!=def_img_->height(),std::runtime_error,"  DICe ERROR: Images must be the same height.");
+  TEUCHOS_TEST_FOR_EXCEPTION(width!=def_img_->width(),std::runtime_error,"Error, Images must be the same width.");
+  TEUCHOS_TEST_FOR_EXCEPTION(height!=def_img_->height(),std::runtime_error,"Error, Images must be the same height.");
 }
 
 Schema::Schema(const int_t img_width,
@@ -155,8 +155,10 @@ Schema::construct_schema(const int_t img_width,
     def_img_ = def_img_->apply_rotation(def_image_rotation_,imgParams);
   }
   // require that the images are the same size
-  assert(!(ref_img_->width()<=0||ref_img_->width()!=def_img_->width()) && "  DICe ERROR: Images must be the same width and nonzero.");
-  assert(!(ref_img_->height()<=0||ref_img_->height()!=def_img_->height()) && "  DICe ERROR: Images must be the same height and nonzero.");
+  TEUCHOS_TEST_FOR_EXCEPTION(ref_img_->width()<=0||ref_img_->width()!=def_img_->width(),std::runtime_error,
+    "Error: Images must be the same width and nonzero.");
+  TEUCHOS_TEST_FOR_EXCEPTION(ref_img_->height()<=0||ref_img_->height()!=def_img_->height(),std::runtime_error,
+    "Error: Images must be the same height and nonzero.");
 }
 
 Schema::Schema(Teuchos::RCP<Image> ref_img,
@@ -228,8 +230,8 @@ Schema::set_def_image(const int_t img_width,
   const int_t img_height,
   const Teuchos::ArrayRCP<intensity_t> defRCP){
   DEBUG_MSG("Schema:  Resetting the deformed image");
-  assert(img_width>0);
-  assert(img_height>0);
+  TEUCHOS_TEST_FOR_EXCEPTION(img_width<=0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(img_height<=0,std::runtime_error,"");
   def_img_ = Teuchos::rcp( new Image(img_width,img_height,defRCP));
   if(def_image_rotation_!=ZERO_DEGREES){
     def_img_ = def_img_->apply_rotation(def_image_rotation_);
@@ -252,8 +254,8 @@ Schema::set_ref_image(const int_t img_width,
   const int_t img_height,
   const Teuchos::ArrayRCP<intensity_t> refRCP){
   DEBUG_MSG("Schema:  Resetting the reference image");
-  assert(img_width>0);
-  assert(img_height>0);
+  TEUCHOS_TEST_FOR_EXCEPTION(img_width<=0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(img_height<=0,std::runtime_error,"");
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
   ref_img_ = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
@@ -369,7 +371,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     }
   }
   else{
-    assert(false && "Error, unrecognized analysis_type");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, unrecognized analysis_type");
   }
 #ifdef DICE_DEBUG_MSG
   if(proc_rank == 0) {
@@ -385,79 +387,79 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     compute_ref_gradients_ = true;
     compute_def_gradients_ = true;
   }
-  assert(diceParams->isParameter(DICe::projection_method));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::projection_method),std::runtime_error,"");
   projection_method_ = diceParams->get<Projection_Method>(DICe::projection_method);
-  assert(diceParams->isParameter(DICe::interpolation_method));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::interpolation_method),std::runtime_error,"");
   interpolation_method_ = diceParams->get<Interpolation_Method>(DICe::interpolation_method);
-  assert(diceParams->isParameter(DICe::max_evolution_iterations));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::max_evolution_iterations),std::runtime_error,"");
   max_evolution_iterations_ = diceParams->get<int_t>(DICe::max_evolution_iterations);
-  assert(diceParams->isParameter(DICe::max_solver_iterations_fast));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::max_solver_iterations_fast),std::runtime_error,"");
   max_solver_iterations_fast_ = diceParams->get<int_t>(DICe::max_solver_iterations_fast);
-  assert(diceParams->isParameter(DICe::fast_solver_tolerance));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::fast_solver_tolerance),std::runtime_error,"");
   fast_solver_tolerance_ = diceParams->get<double>(DICe::fast_solver_tolerance);
   // make sure image gradients are on at least for the reference image for any gradient based optimization routine
-  assert(diceParams->isParameter(DICe::optimization_method));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::optimization_method),std::runtime_error,"");
   optimization_method_ = diceParams->get<Optimization_Method>(DICe::optimization_method);
-  assert(diceParams->isParameter(DICe::correlation_routine));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::correlation_routine),std::runtime_error,"");
   correlation_routine_ = diceParams->get<Correlation_Routine>(DICe::correlation_routine);
-  assert(diceParams->isParameter(DICe::initialization_method));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::initialization_method),std::runtime_error,"");
   initialization_method_ = diceParams->get<Initialization_Method>(DICe::initialization_method);
-  assert(diceParams->isParameter(DICe::max_solver_iterations_robust));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::max_solver_iterations_robust),std::runtime_error,"");
   max_solver_iterations_robust_ = diceParams->get<int_t>(DICe::max_solver_iterations_robust);
-  assert(diceParams->isParameter(DICe::robust_solver_tolerance));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::robust_solver_tolerance),std::runtime_error,"");
   robust_solver_tolerance_ = diceParams->get<double>(DICe::robust_solver_tolerance);
-  assert(diceParams->isParameter(DICe::skip_solve_gamma_threshold));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::skip_solve_gamma_threshold),std::runtime_error,"");
   skip_solve_gamma_threshold_ = diceParams->get<double>(DICe::skip_solve_gamma_threshold);
-  assert(diceParams->isParameter(DICe::skip_all_solves));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::skip_all_solves),std::runtime_error,"");
   skip_all_solves_ = diceParams->get<bool>(DICe::skip_all_solves);
-  assert(diceParams->isParameter(DICe::initial_gamma_threshold));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::initial_gamma_threshold),std::runtime_error,"");
   initial_gamma_threshold_ = diceParams->get<double>(DICe::initial_gamma_threshold);
-  assert(diceParams->isParameter(DICe::final_gamma_threshold));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::final_gamma_threshold),std::runtime_error,"");
   final_gamma_threshold_ = diceParams->get<double>(DICe::final_gamma_threshold);
-  assert(diceParams->isParameter(DICe::path_distance_threshold));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::path_distance_threshold),std::runtime_error,"");
   path_distance_threshold_ = diceParams->get<double>(DICe::path_distance_threshold);
-  assert(diceParams->isParameter(DICe::disp_jump_tol));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::disp_jump_tol),std::runtime_error,"");
   disp_jump_tol_ = diceParams->get<double>(DICe::disp_jump_tol);
-  assert(diceParams->isParameter(DICe::theta_jump_tol));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::theta_jump_tol),std::runtime_error,"");
   theta_jump_tol_ = diceParams->get<double>(DICe::theta_jump_tol);
-  assert(diceParams->isParameter(DICe::robust_delta_disp));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::robust_delta_disp),std::runtime_error,"");
   robust_delta_disp_ = diceParams->get<double>(DICe::robust_delta_disp);
-  assert(diceParams->isParameter(DICe::robust_delta_theta));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::robust_delta_theta),std::runtime_error,"");
   robust_delta_theta_ = diceParams->get<double>(DICe::robust_delta_theta);
-  assert(diceParams->isParameter(DICe::enable_translation));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::enable_translation),std::runtime_error,"");
   enable_translation_ = diceParams->get<bool>(DICe::enable_translation);
-  assert(diceParams->isParameter(DICe::enable_rotation));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::enable_rotation),std::runtime_error,"");
   enable_rotation_ = diceParams->get<bool>(DICe::enable_rotation);
-  assert(diceParams->isParameter(DICe::enable_normal_strain));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::enable_normal_strain),std::runtime_error,"");
   enable_normal_strain_ = diceParams->get<bool>(DICe::enable_normal_strain);
-  assert(diceParams->isParameter(DICe::enable_shear_strain));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::enable_shear_strain),std::runtime_error,"");
   enable_shear_strain_ = diceParams->get<bool>(DICe::enable_shear_strain);
-  assert(diceParams->isParameter(DICe::output_deformed_subset_images));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::output_deformed_subset_images),std::runtime_error,"");
   output_deformed_subset_images_ = diceParams->get<bool>(DICe::output_deformed_subset_images);
-  assert(diceParams->isParameter(DICe::output_deformed_subset_intensity_images));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::output_deformed_subset_intensity_images),std::runtime_error,"");
   output_deformed_subset_intensity_images_ = diceParams->get<bool>(DICe::output_deformed_subset_intensity_images);
-  assert(diceParams->isParameter(DICe::output_evolved_subset_images));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::output_evolved_subset_images),std::runtime_error,"");
   output_evolved_subset_images_ = diceParams->get<bool>(DICe::output_evolved_subset_images);
-  assert(diceParams->isParameter(DICe::use_subset_evolution));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::use_subset_evolution),std::runtime_error,"");
   use_subset_evolution_ = diceParams->get<bool>(DICe::use_subset_evolution);
-  assert(diceParams->isParameter(DICe::pixel_integration_order));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::pixel_integration_order),std::runtime_error,"");
   pixel_integration_order_ = diceParams->get<int_t>(DICe::pixel_integration_order);
-  assert(diceParams->isParameter(DICe::obstruction_skin_factor));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::obstruction_skin_factor),std::runtime_error,"");
   obstruction_skin_factor_ = diceParams->get<double>(DICe::obstruction_skin_factor);
-  assert(diceParams->isParameter(DICe::use_objective_regularization));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::use_objective_regularization),std::runtime_error,"");
   use_objective_regularization_ = diceParams->get<bool>(DICe::use_objective_regularization);
-  assert(diceParams->isParameter(DICe::objective_regularization_factor));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::objective_regularization_factor),std::runtime_error,"");
   objective_regularization_factor_ = diceParams->get<double>(DICe::objective_regularization_factor);
-  assert(diceParams->isParameter(DICe::output_beta));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::output_beta),std::runtime_error,"");
   output_beta_ = diceParams->get<bool>(DICe::output_beta);
-  assert(diceParams->isParameter(DICe::normalize_gamma_with_active_pixels));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::normalize_gamma_with_active_pixels),std::runtime_error,"");
   normalize_gamma_with_active_pixels_ = diceParams->get<bool>(DICe::normalize_gamma_with_active_pixels);
-  assert(diceParams->isParameter(DICe::rotate_ref_image_90));
-  assert(diceParams->isParameter(DICe::rotate_ref_image_180));
-  assert(diceParams->isParameter(DICe::rotate_ref_image_270));
-  assert(diceParams->isParameter(DICe::rotate_def_image_90));
-  assert(diceParams->isParameter(DICe::rotate_def_image_180));
-  assert(diceParams->isParameter(DICe::rotate_def_image_270));
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::rotate_ref_image_90),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::rotate_ref_image_180),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::rotate_ref_image_270),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::rotate_def_image_90),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::rotate_def_image_180),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::rotate_def_image_270),std::runtime_error,"");
   // last one read wins here:
   ref_image_rotation_ = ZERO_DEGREES;
   def_image_rotation_ = ZERO_DEGREES;
@@ -471,7 +473,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     DEBUG_MSG("Gamma values will be normalized by the number of active pixels.");
   if(analysis_type_==GLOBAL_DIC){
     compute_ref_gradients_ = true;
-    assert(diceParams->isParameter(DICe::use_hvm_stabilization));
+    TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::use_hvm_stabilization),std::runtime_error,"");
     use_hvm_stabilization_ = diceParams->get<bool>(DICe::use_hvm_stabilization);
   }
   else{
@@ -542,8 +544,8 @@ Schema::initialize(const int_t step_size_x,
   const int_t step_size_y,
   const int_t subset_size){
 
-  assert(!is_initialized_ && "Error: this schema is already initialized.");
-  assert(subset_size>0 && "  Error: width cannot be equal to or less than zero.");
+  TEUCHOS_TEST_FOR_EXCEPTION(is_initialized_,std::runtime_error,"Error: this schema is already initialized.");
+  TEUCHOS_TEST_FOR_EXCEPTION(subset_size<=0,std::runtime_error,"Error: width cannot be equal to or less than zero.");
   step_size_x_ = step_size_x;
   step_size_y_ = step_size_y;
 
@@ -553,12 +555,12 @@ Schema::initialize(const int_t step_size_x,
   const int_t trimmedWidth = img_width - 2*subset_size;
   const int_t trimmedHeight = img_height - 2*subset_size;
   // set up the control points
-  assert(step_size_x > 0 && "  DICe ERROR: step size x is <= 0");
-  assert(step_size_y > 0 && "  DICe ERROR: step size y is <= 0");
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size_x<=0,std::runtime_error,"Error, step size x is <= 0");
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size_y<=0,std::runtime_error,"Error, step size y is <= 0");
   const int_t numPointsX = trimmedWidth  / step_size_x + 1;
   const int_t numPointsY = trimmedHeight / step_size_y + 1;
-  assert(numPointsX > 0 && "  DICe ERROR: numPointsX <= 0.");
-  assert(numPointsY > 0 && "  DICe ERROR: numPointsY <= 0.");
+  TEUCHOS_TEST_FOR_EXCEPTION(numPointsX<=0,std::runtime_error,"Error, numPointsX <= 0.");
+  TEUCHOS_TEST_FOR_EXCEPTION(numPointsY<=0,std::runtime_error,"Error, numPointsY <= 0.");
 
   const int_t num_pts = numPointsX * numPointsY;
 
@@ -607,7 +609,8 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     subset_info_type = subset_info->type;
   }
   if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
-    assert(input_params->isParameter(DICe::step_size));
+    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::step_size),std::runtime_error,
+      "Error, step size has not been specified");
     step_size = input_params->get<int_t>(DICe::step_size);
     DEBUG_MSG("Correlation point centroids were not specified by the user. \nThey will be evenly distrubed in the region"
         " of interest with separation (step_size) of " << step_size << " pixels.");
@@ -616,11 +619,12 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     DICe::create_regular_grid_of_correlation_points(*subset_centroids,*neighbor_ids,input_params,img_width(),img_height(),subset_info);
     num_subsets = subset_centroids->size()/dim; // divide by three because the stride is x y neighbor_id
     assert(neighbor_ids->size()==subset_centroids->size()/2);
-    assert(input_params->isParameter(DICe::subset_size)); // required for all square subsets case
+    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_size),std::runtime_error,
+      "Error, the subset size has not been specified"); // required for all square subsets case
     subset_size = input_params->get<int_t>(DICe::subset_size);
   }
   else{
-    assert(subset_info!=Teuchos::null);
+    TEUCHOS_TEST_FOR_EXCEPTION(subset_info==Teuchos::null,std::runtime_error,"");
     subset_centroids = subset_info->coordinates_vector;
     neighbor_ids = subset_info->neighbor_vector;
     conformal_area_defs = subset_info->conformal_area_defs;
@@ -628,12 +632,13 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     num_subsets = subset_info->coordinates_vector->size()/dim;
     if((int_t)subset_info->conformal_area_defs->size()<num_subsets){
       // Only require this if not all subsets are conformal:
-      assert(input_params->isParameter(DICe::subset_size));
+      TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_size),std::runtime_error,
+        "Error, the subset size has not been specified");
       subset_size = input_params->get<int_t>(DICe::subset_size);
     }
   }
-  assert(subset_centroids->size()>0);
-  assert(num_subsets>0);
+  TEUCHOS_TEST_FOR_EXCEPTION(subset_centroids->size()<=0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(num_subsets<=0,std::runtime_error,"");
 
   set_step_size(step_size); // this is done just so the step_size appears in the output file header (it's not actually used)
   // let the schema know how many images there are in the sequence:
@@ -665,12 +670,13 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     }
     if(subset_info->seed_subset_ids->size()>0){
       //has_seed(true);
-      assert(subset_info->displacement_map->size()>0);
+      TEUCHOS_TEST_FOR_EXCEPTION(subset_info->displacement_map->size()<=0,std::runtime_error,"");
       std::map<int_t,int_t>::iterator it=subset_info->seed_subset_ids->begin();
       for(;it!=subset_info->seed_subset_ids->end();++it){
         const int_t subset_id = it->first;
         const int_t roi_id = it->second;
-        assert(subset_info->displacement_map->find(roi_id)!=subset_info->displacement_map->end());
+        TEUCHOS_TEST_FOR_EXCEPTION(subset_info->displacement_map->find(roi_id)==subset_info->displacement_map->end(),
+          std::runtime_error,"");
         field_value(subset_id,DICe::DISPLACEMENT_X) = subset_info->displacement_map->find(roi_id)->second.first;
         field_value(subset_id,DICe::DISPLACEMENT_Y) = subset_info->displacement_map->find(roi_id)->second.second;
         if(proc_rank==0) DEBUG_MSG("Seeding the displacement solution for subset " << subset_id << " with ux: " <<
@@ -702,8 +708,8 @@ Schema::initialize(const int_t num_pts,
   const int_t subset_size,
   Teuchos::RCP<std::map<int_t,Conformal_Area_Def> > conformal_subset_defs,
   Teuchos::RCP<std::vector<int_t> > neighbor_ids){
-  assert(def_img_->width()==ref_img_->width());
-  assert(def_img_->height()==ref_img_->height());
+  TEUCHOS_TEST_FOR_EXCEPTION(def_img_->width()!=ref_img_->width(),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(def_img_->height()!=ref_img_->height(),std::runtime_error,"");
   if(is_initialized_){
     assert(data_num_points_>0);
     assert(fields_->get_num_fields()==MAX_FIELD_NAME);
@@ -747,8 +753,8 @@ Schema::initialize(const int_t num_pts,
   else
     conformal_subset_defs_ = conformal_subset_defs;
 
-  assert(data_num_points_ >= (int_t)conformal_subset_defs_->size() && "  DICe ERROR: data is not the right size, "
-      "conformal_subset_defs_.size() is too large for the data array");
+  TEUCHOS_TEST_FOR_EXCEPTION(data_num_points_<(int_t)conformal_subset_defs_->size(),std::runtime_error,
+    "Error, data is not the right size, conformal_subset_defs_.size() is too large for the data array");
   // ensure that the ids in conformal subset defs are valid:
   typename std::map<int_t,Conformal_Area_Def>::iterator it = conformal_subset_defs_->begin();
   for( ;it!=conformal_subset_defs_->end();++it){
@@ -757,7 +763,7 @@ Schema::initialize(const int_t num_pts,
   }
   // ensure that a subset size was specified if not all subsets are conformal:
   if(analysis_type_==LOCAL_DIC&&(int_t)conformal_subset_defs_->size()<data_num_points_){
-    assert(subset_size > 0);
+    TEUCHOS_TEST_FOR_EXCEPTION(subset_size<=0,std::runtime_error,"");
   }
 
   // initialize the post processors
@@ -894,7 +900,8 @@ Schema::create_obstruction_dist_map(){
   for(;set_it!=local_subset_ids[proc_id].end();++set_it){
     if(obstructing_subset_ids_->find(*set_it)!=obstructing_subset_ids_->end()){
       if(obstructing_subset_ids_->find(*set_it)->second.size()>0){
-        assert(earliest_id_can_appear.find(*set_it)!=earliest_id_can_appear.end());
+        TEUCHOS_TEST_FOR_EXCEPTION(earliest_id_can_appear.find(*set_it)==earliest_id_can_appear.end(),
+          std::runtime_error,"");
         local_ids.push_back(*set_it);
       }
     }
@@ -911,7 +918,7 @@ Schema::create_obstruction_dist_map(){
   Teuchos::ArrayView<const int_t> lids_grouped_by_obstruction(&local_ids[0],local_ids.size());
   dist_map_ = Teuchos::rcp(new MultiField_Map(data_num_points_,lids_grouped_by_obstruction,0,*comm_));
   //dist_map_->describe();
-  assert(dist_map_->is_one_to_one());
+  TEUCHOS_TEST_FOR_EXCEPTION(!dist_map_->is_one_to_one(),std::runtime_error,"");
 
   // if this is a serial run, the ordering must be changed too
   if(num_procs==1)
@@ -950,7 +957,7 @@ Schema::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids){
       }
     }
     std::vector<int_t> local_subset_gids_grouped_by_roi;
-    assert((int_t)neighbor_ids->size()==data_num_points_);
+    TEUCHOS_TEST_FOR_EXCEPTION((int_t)neighbor_ids->size()!=data_num_points_,std::runtime_error,"");
     std::vector<int_t> this_group_gids;
     std::vector<std::vector<int_t> > seed_groupings;
     std::vector<std::vector<int_t> > local_seed_groupings;
@@ -1068,7 +1075,7 @@ Schema::execute_correlation(){
       }
     }
     else{
-      assert(false && "Error: unknown initialization_method in execute correlation");
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: unknown initialization_method in execute correlation");
     }
   }
 
@@ -1124,7 +1131,7 @@ Schema::execute_correlation(){
           this_proc_subset_global_ids_[subset_index])));
       }
     }
-    assert((int_t)obj_vec_.size()==num_local_subsets);
+    TEUCHOS_TEST_FOR_EXCEPTION((int_t)obj_vec_.size()!=num_local_subsets,std::runtime_error,"");
     prepare_optimization_initializers();
     for(int_t subset_index=0;subset_index<num_local_subsets;++subset_index){
       check_for_blocking_subsets(this_proc_subset_global_ids_[subset_index]);
@@ -1328,7 +1335,8 @@ void
 Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
 
   const int_t subset_gid = obj->correlation_point_global_id();
-  assert(get_local_id(subset_gid)!=-1 && "Error: subset id is not local to this process.");
+  TEUCHOS_TEST_FOR_EXCEPTION(get_local_id(subset_gid)==-1,std::runtime_error,
+    "Error: subset id is not local to this process.");
   DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " (" << local_field_value(subset_gid,DICe::COORDINATE_X) <<
     "," << local_field_value(subset_gid,DICe::COORDINATE_Y) << ")");
   //
@@ -1658,8 +1666,9 @@ Schema::write_output(const std::string & output_folder,
   if(my_proc!=0) return;
   int_t proc_size = comm_->get_size();
 
-  assert(type==TEXT_FILE && "Currently only TEXT_FILE output is implemented");
-  assert(output_spec_!=Teuchos::null);
+  TEUCHOS_TEST_FOR_EXCEPTION(type!=TEXT_FILE,std::invalid_argument,
+    "Currently only TEXT_FILE output is implemented");
+  TEUCHOS_TEST_FOR_EXCEPTION(output_spec_==Teuchos::null,std::runtime_error,"");
 
   if(separate_files_per_subset){
     for(int_t subset=0;subset<data_num_points_;++subset){
@@ -2009,7 +2018,7 @@ Output_Spec::Output_Spec(Schema * schema,
       }
       if(!paramValid){
         std::cout << "Error: invalid field name requested in output spec: " << string_field_name << std::endl;
-        assert(false);
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
       }
       // check if the output spec was specified as integer values or bools
       int_t field_index = -1;
@@ -2027,12 +2036,12 @@ Output_Spec::Output_Spec(Schema * schema,
       DEBUG_MSG("Adding output field " << string_field_name << " in column " << field_index);
       if(field_index>num_names-1||field_index<0){
         std::cout << "Error: field index in output spec is invalid " << field_index << std::endl;
-        assert(false);
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
       }
       // see if this index exists already
       if(indices.find(field_index)!=indices.end()){
         std::cout << "Error: same field index assigned to multiple fields in output spec: " << field_index << std::endl;
-        assert(false);
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
       }
       indices.insert(field_index);
       if(field_index > max_index) max_index = field_index;
@@ -2041,7 +2050,7 @@ Output_Spec::Output_Spec(Schema * schema,
     } // loop over field names in the parameterlist
     if(max_index!=num_names-1){
       std::cout << "Error: The max field index in the output spec is not equal to the number of fields, num_fields " << field_names_.size() << " max_index " << max_index << std::endl;
-      assert(false);
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
     }
   }
 };

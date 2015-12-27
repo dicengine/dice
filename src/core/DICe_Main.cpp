@@ -105,7 +105,8 @@ int main(int argc, char *argv[]) {
   if(image_files[0]==DICe::cine_file){
     is_cine = true;
     // read the file_name from the input_parasm
-    assert(input_params->isParameter(DICe::cine_file));
+    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::cine_file),std::runtime_error,
+      "Error, the file name of the cine file has not been specified");
     std::string cine_file_name = input_params->get<std::string>(DICe::cine_file);
     *outStream << "cine file name: " << cine_file_name << std::endl;
     // add the directory to the name:
@@ -119,7 +120,8 @@ int main(int argc, char *argv[]) {
     image_width = cine_reader->width();
     image_height = cine_reader->height();
     *outStream << "number of frames in cine file: " << num_images << std::endl;
-    assert(input_params->isParameter(DICe::cine_ref_index));
+    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::cine_ref_index),std::runtime_error,
+      "Error, the reference index for the cine file has not been specified");
     cine_ref_index = input_params->get<int_t>(DICe::cine_ref_index);
     *outStream << "cine ref index: " << cine_ref_index << std::endl;
     cine_start_index = input_params->get<int_t>(DICe::cine_start_index,cine_ref_index);
@@ -132,7 +134,7 @@ int main(int argc, char *argv[]) {
   else
   {
     num_images = image_files.size() - 1; // the first file is the reference image
-    assert(num_images>0);
+    TEUCHOS_TEST_FOR_EXCEPTION(num_images<=0,std::runtime_error,"");
     *outStream << "Reference image: " << image_files[0] << std::endl;
     for(int_t i=1;i<=num_images;++i){
       if(i==10&&num_images!=10) *outStream << "..." << std::endl;

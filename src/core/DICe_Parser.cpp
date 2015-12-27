@@ -143,7 +143,7 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
    Teuchos::RCP<Teuchos::ParameterList> inputParams = Teuchos::rcp( new Teuchos::ParameterList() );
    Teuchos::Ptr<Teuchos::ParameterList> inputParamsPtr(inputParams.get());
    Teuchos::updateParametersFromXmlFile(input_file, inputParamsPtr);
-   assert(inputParams!=Teuchos::null);
+   TEUCHOS_TEST_FOR_EXCEPTION(inputParams==Teuchos::null,std::runtime_error,"");
 
    // Print timing statistics?
    if(vm.count("timing")){
@@ -275,7 +275,7 @@ Teuchos::RCP<Teuchos::ParameterList> read_physics_params(const std::string & par
   Teuchos::RCP<Teuchos::ParameterList> stringParams = Teuchos::rcp( new Teuchos::ParameterList() );
   Teuchos::Ptr<Teuchos::ParameterList> stringParamsPtr(stringParams.get());
   Teuchos::updateParametersFromXmlFile(paramFileName, stringParamsPtr);
-  assert(stringParams!=Teuchos::null);
+  TEUCHOS_TEST_FOR_EXCEPTION(stringParams==Teuchos::null,std::runtime_error,"");
 
 
   // The string params are what as given by the user. These are string values because things like correlation method
@@ -286,8 +286,6 @@ Teuchos::RCP<Teuchos::ParameterList> read_physics_params(const std::string & par
     std::string paramName = it->first;
     if(proc_rank==0) DEBUG_MSG("Found user specified physics parameter: " << paramName);
     stringToLower(paramName); // string parameter names are lower case
-    //assert(!DICe::is_string_param(paramName));
-    //if(proc_rank==0) DEBUG_MSG("Not a string parameter, so passing without translating");
     diceParams->setEntry(it->first,it->second);
   }
   return diceParams;
@@ -309,7 +307,7 @@ Teuchos::RCP<Teuchos::ParameterList> read_correlation_params(const std::string &
   Teuchos::RCP<Teuchos::ParameterList> stringParams = Teuchos::rcp( new Teuchos::ParameterList() );
   Teuchos::Ptr<Teuchos::ParameterList> stringParamsPtr(stringParams.get());
   Teuchos::updateParametersFromXmlFile(paramFileName, stringParamsPtr);
-  assert(stringParams!=Teuchos::null);
+  TEUCHOS_TEST_FOR_EXCEPTION(stringParams==Teuchos::null,std::runtime_error,"");
 
   // The string params are what as given by the user. These are string values because things like correlation method
   // are not recognized by the xml parser. Only the string values need to be converted into DICe types.
@@ -375,22 +373,23 @@ Teuchos::RCP<Circle> read_circle(std::fstream &dataFile){
     if(tokens[0]==parser_end) break;
     else if(tokens[0]==parser_center){
       if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define circle center point ");}
-      assert(is_number(tokens[1]) && is_number(tokens[2]));
+      TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]) || !is_number(tokens[2]),std::runtime_error,
+        "Error, both tokens should be a number");
       cx = atoi(tokens[1].c_str());
       cy = atoi(tokens[2].c_str());
     }
     else if(tokens[0]==parser_radius){
       if(tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define circle radius ");}
-      assert(is_number(tokens[1]));
+      TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]),std::runtime_error,"Error, token should be a number");
       radius = strtod(tokens[1].c_str(),NULL);
     }
     else{
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid token in circle definition " << tokens[0]);
     }
   }
-  assert(radius!=-1.0);
-  assert(cx!=-1);
-  assert(cy!=-1);
+  TEUCHOS_TEST_FOR_EXCEPTION(radius==-1.0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(cx==-1,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(cy==-1,std::runtime_error,"");
   if(proc_rank==0) DEBUG_MSG("Creating a circle with center " << cx << " " << cy << " and radius " << radius);
   Teuchos::RCP<DICe::Circle> shape = Teuchos::rcp(new DICe::Circle(cx,cy,radius));
   return shape;
@@ -423,18 +422,19 @@ Teuchos::RCP<DICe::Rectangle> read_rectangle(std::fstream &dataFile){
     if(tokens[0]==parser_center||tokens[0]==parser_width||tokens[0]==parser_height){
       if(tokens[0]==parser_center){
         if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define circle center point ");}
-        assert(is_number(tokens[1]) && is_number(tokens[2]));
+        TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]) || !is_number(tokens[2]),std::runtime_error,
+          "Error, both tokens should be a number");
         cx = atoi(tokens[1].c_str());
         cy = atoi(tokens[2].c_str());
       }
       else if(tokens[0]==parser_width){
         if(tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define the width ");}
-        assert(is_number(tokens[1]));
+        TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]),std::runtime_error,"Error, token should be a number");
         width = strtod(tokens[1].c_str(),NULL);
       }
       else if(tokens[0]==parser_height){
         if(tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define the height ");}
-        assert(is_number(tokens[1]));
+        TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]),std::runtime_error,"Error, token should be a number");
         height = strtod(tokens[1].c_str(),NULL);
       }
       else{
@@ -444,14 +444,16 @@ Teuchos::RCP<DICe::Rectangle> read_rectangle(std::fstream &dataFile){
     else if(tokens[0]==parser_upper_left||tokens[0]==parser_lower_right){
       if(tokens[0]==parser_upper_left){
         if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define rectangle upper left ");}
-        assert(is_number(tokens[1]) && is_number(tokens[2]));
+        TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]) || !is_number(tokens[2]),std::runtime_error,
+          "Error, both tokens should be numbers");
         has_upper_left_lower_right = true;
         upper_left_x = atoi(tokens[1].c_str());
         upper_left_y = atoi(tokens[2].c_str());
       }
       else if(tokens[0]==parser_lower_right){
         if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define rectangle lower right ");}
-        assert(is_number(tokens[1]) && is_number(tokens[2]));
+        TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]) || !is_number(tokens[2]),std::runtime_error,
+          "Error, both tokens should be a number");
         has_upper_left_lower_right = true;
         lower_right_x = atoi(tokens[1].c_str());
         lower_right_y = atoi(tokens[2].c_str());
@@ -467,21 +469,21 @@ Teuchos::RCP<DICe::Rectangle> read_rectangle(std::fstream &dataFile){
   if(has_upper_left_lower_right){
     if(proc_rank==0) DEBUG_MSG("Rectangle has upper left_x " << upper_left_x << " upper_left_y " << upper_left_y <<
       " lower_right_x " << lower_right_x << " lower_right_y " << lower_right_y);
-    assert(upper_left_x >=0);
-    assert(upper_left_y >=0);
-    assert(lower_right_x >=0);
-    assert(lower_right_y >=0);
-    assert(lower_right_x > upper_left_x && "Error: Rectangle inverted or zero width");
-    assert(lower_right_y > upper_left_y && "Error: Rectangle inverted or zero height");
+    TEUCHOS_TEST_FOR_EXCEPTION(upper_left_x <0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(upper_left_y <0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(lower_right_x <0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(lower_right_y <0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(lower_right_x < upper_left_x,std::runtime_error,"Error: Rectangle inverted or zero width");
+    TEUCHOS_TEST_FOR_EXCEPTION(lower_right_y < upper_left_y,std::runtime_error,"Error: Rectangle inverted or zero height");
     width = lower_right_x - upper_left_x;
     height = lower_right_y - upper_left_y;
     cx = width/2 + upper_left_x;
     cy = height/2 + upper_left_y;
   }
-  assert(width>0);
-  assert(height>0);
-  assert(cx>0);
-  assert(cy>0);
+  TEUCHOS_TEST_FOR_EXCEPTION(width<=0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(height<=0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(cx<0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(cy<0,std::runtime_error,"");
   if(proc_rank==0) DEBUG_MSG("Creating a rectangle with center " << cx << " " << cy << " width " << width << " height " << height);
   Teuchos::RCP<DICe::Rectangle> shape = Teuchos::rcp(new DICe::Rectangle(cx,cy,width,height));
   return shape;
@@ -504,26 +506,26 @@ Teuchos::RCP<DICe::Polygon> read_polygon(std::fstream &dataFile){
     Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile);
     if(tokens.size()==0) continue; // comment or blank line
     if(tokens[0]==parser_end) break;
-    assert(tokens.size()>=2);
+    TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()<2,std::runtime_error,"");
     // only other valid option is BEGIN VERTICES
-    assert(tokens[0]==parser_begin);
-    assert(tokens[1]==parser_vertices);
+    TEUCHOS_TEST_FOR_EXCEPTION(tokens[0]!=parser_begin,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(tokens[1]!=parser_vertices,std::runtime_error,"");
     // read the vertices
     while(!dataFile.eof()){
       Teuchos::ArrayRCP<std::string> vertex_tokens = tokenize_line(dataFile);
       if(vertex_tokens.size()==0)continue;
       if(vertex_tokens[0]==parser_end) break;
       std::cout << " TOKEN :" << vertex_tokens[0] << ":" << std::endl;
-      assert(vertex_tokens.size()>=2);
-      assert(is_number(vertex_tokens[0]));
-      assert(is_number(vertex_tokens[1]));
+      TEUCHOS_TEST_FOR_EXCEPTION(vertex_tokens.size()<2,std::runtime_error,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(!is_number(vertex_tokens[0]),std::runtime_error,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(!is_number(vertex_tokens[1]),std::runtime_error,"");
       vertices_x.push_back(atoi(vertex_tokens[0].c_str()));
       vertices_y.push_back(atoi(vertex_tokens[1].c_str()));
     }
   }
-  assert(!vertices_x.empty());
-  assert(!vertices_y.empty());
-  assert(vertices_x.size()==vertices_y.size());
+  TEUCHOS_TEST_FOR_EXCEPTION(vertices_x.empty(),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(vertices_y.empty(),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(vertices_x.size()!=vertices_y.size(),std::runtime_error,"");
   if(proc_rank==0) DEBUG_MSG("Creating a polygon with " << vertices_x.size() << " vertices");
   for(size_t i=0;i<vertices_x.size();++i){
     if(proc_rank==0) DEBUG_MSG("vx " << vertices_x[i] << " vy " << vertices_y[i] );
@@ -539,8 +541,8 @@ multi_shape read_shapes(std::fstream & dataFile){
     Teuchos::ArrayRCP<std::string> shape_tokens = tokenize_line(dataFile);
     if(shape_tokens.size()==0)continue;
     if(shape_tokens[0]==parser_end) break;
-    assert(shape_tokens.size()>=2);
-    assert(shape_tokens[0]==parser_begin);
+    TEUCHOS_TEST_FOR_EXCEPTION(shape_tokens.size()<2,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(shape_tokens[0]!=parser_begin,std::runtime_error,"");
     if(shape_tokens[1]==parser_circle){
       Teuchos::RCP<DICe::Circle> shape = read_circle(dataFile);
       multi_shape.push_back(shape);
@@ -557,7 +559,7 @@ multi_shape read_shapes(std::fstream & dataFile){
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, unrecognized shape : " << shape_tokens[1]);
     }
   }
-  assert(multi_shape.size()>0);
+  TEUCHOS_TEST_FOR_EXCEPTION(multi_shape.size()<=0,std::runtime_error,"");
   return multi_shape;
 }
 
@@ -675,9 +677,9 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            }
          } // while loop
          // check for valid coordinates
-         assert(info->coordinates_vector->size()>=2);
-         assert(info->coordinates_vector->size()/2==info->neighbor_vector->size());
-         assert(info->coordinates_vector->size()%2==0);
+         TEUCHOS_TEST_FOR_EXCEPTION(info->coordinates_vector->size()<2,std::runtime_error,"");
+         TEUCHOS_TEST_FOR_EXCEPTION(info->coordinates_vector->size()/2!=info->neighbor_vector->size(),std::runtime_error,"");
+         TEUCHOS_TEST_FOR_EXCEPTION(info->coordinates_vector->size()%2!=0,std::runtime_error,"");
          for(int_t i=0;i<(int_t)info->coordinates_vector->size()/dim;++i){
            if((*info->coordinates_vector)[i*dim]<0||(*info->coordinates_vector)[i*dim]>=width){
              TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid subset coordinate in " << fileName << " x: "  << (*info->coordinates_vector)[i*dim]);
@@ -700,7 +702,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            else if(block_tokens[0]==parser_end) break; // end of the defs
            // SHAPES
            else if(block_tokens[0]==parser_begin){
-             assert(block_tokens.size()>=2);
+             TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<2,std::runtime_error,"");
              if(block_tokens[1]==parser_boundary){
                if(proc_rank==0) DEBUG_MSG("Reading boundary def");
                boundary_multi_shape = read_shapes(dataFile);
@@ -732,8 +734,8 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  if(seed_tokens.size()==0) continue; // blank line or comment
                  else if(seed_tokens[0]==parser_end) break; // end of the defs
                  else if(seed_tokens[0]==parser_location){
-                   assert(seed_tokens.size()>2 && "DICe Error, not enough values specified for seed location (x and y are needed)." );
-                   assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                   TEUCHOS_TEST_FOR_EXCEPTION(seed_tokens.size()<=2,std::runtime_error,"Error, not enough values specified for seed location (x and y are needed)." );
+                   TEUCHOS_TEST_FOR_EXCEPTION(!is_number(seed_tokens[1]) || !is_number(seed_tokens[2]),std::runtime_error,"");
                    seed_loc_x = atoi(seed_tokens[1].c_str());
                    seed_loc_y = atoi(seed_tokens[2].c_str());
                    if(proc_rank==0) DEBUG_MSG("Seed location " << seed_loc_x << " " << seed_loc_y);
@@ -741,8 +743,10 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                    info->size_map->insert(std::pair<int_t,std::pair<int_t,int_t> >(num_roi,std::pair<int_t,int_t>(seed_loc_x,seed_loc_y)));
                  }
                  else if(seed_tokens[0]==parser_displacement){
-                   assert(seed_tokens.size()>2 && "DICe Error, not enough values specified for seed displacement (x and y are needed)." );
-                   assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                   TEUCHOS_TEST_FOR_EXCEPTION(seed_tokens.size()<=2,std::runtime_error,
+                     "Error, not enough values specified for seed displacement (x and y are needed)." );
+                   TEUCHOS_TEST_FOR_EXCEPTION(!is_number(seed_tokens[1])||!is_number(seed_tokens[2]),
+                     std::runtime_error,"");
                    seed_disp_x = strtod(seed_tokens[1].c_str(),NULL);
                    seed_disp_y = strtod(seed_tokens[2].c_str(),NULL);
                    if(proc_rank==0) DEBUG_MSG("Seed displacement " << seed_disp_x << " " << seed_disp_y);
@@ -750,23 +754,29 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                    info->displacement_map->insert(std::pair<int_t,std::pair<scalar_t,scalar_t> >(num_roi,std::pair<scalar_t,scalar_t>(seed_disp_x,seed_disp_y)));
                  }
                  else if(seed_tokens[0]==parser_normal_strain){
-                   assert(seed_tokens.size()>2 && "DICe Error, not enough values specified for seed normal_strain (x and y are needed)." );
-                   assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                   TEUCHOS_TEST_FOR_EXCEPTION(seed_tokens.size()<=2,std::runtime_error,
+                     "Error, not enough values specified for seed normal_strain (x and y are needed)." );
+                   TEUCHOS_TEST_FOR_EXCEPTION(!is_number(seed_tokens[1])||!is_number(seed_tokens[2]),
+                     std::runtime_error,"");
                    seed_normal_strain_x = strtod(seed_tokens[1].c_str(),NULL);
                    seed_normal_strain_y = strtod(seed_tokens[2].c_str(),NULL);
                    if(proc_rank==0) DEBUG_MSG("Seed normal strain " << seed_normal_strain_x << " " << seed_normal_strain_y);
                    info->normal_strain_map->insert(std::pair<int_t,std::pair<scalar_t,scalar_t> >(num_roi,std::pair<scalar_t,scalar_t>(seed_normal_strain_x,seed_normal_strain_y)));
                  }
                  else if(seed_tokens[0]==parser_shear_strain){
-                   assert(seed_tokens.size()>1 && "DICe Error, not enough values specified for seed shear_strain." );
-                   assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                   TEUCHOS_TEST_FOR_EXCEPTION(seed_tokens.size()<=1,std::runtime_error,
+                     "Error, not enough values specified for seed shear_strain." );
+                   TEUCHOS_TEST_FOR_EXCEPTION(!is_number(seed_tokens[1])||!is_number(seed_tokens[2]),
+                     std::runtime_error,"");
                    seed_shear_strain = strtod(seed_tokens[1].c_str(),NULL);
                    if(proc_rank==0) DEBUG_MSG("Seed shear strain " << seed_shear_strain);
                    info->shear_strain_map->insert(std::pair<int_t,scalar_t>(num_roi,seed_shear_strain));
                  }
                  else if(seed_tokens[0]==parser_rotation){
-                   assert(seed_tokens.size()>1 && "DICe Error, not enough values specified for seed rotation." );
-                   assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                   TEUCHOS_TEST_FOR_EXCEPTION(seed_tokens.size()<=1,std::runtime_error,
+                     "Error, not enough values specified for seed rotation." );
+                   TEUCHOS_TEST_FOR_EXCEPTION(!is_number(seed_tokens[1])||!is_number(seed_tokens[2]),
+                     std::runtime_error,"");
                    seed_rotation = strtod(seed_tokens[1].c_str(),NULL);
                    if(proc_rank==0) DEBUG_MSG("Seed rotation " << seed_rotation);
                    info->rotation_map->insert(std::pair<int_t,scalar_t>(num_roi,seed_rotation));
@@ -775,8 +785,8 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, unrecognized command in seed block " << tokens[0]);
                  }
                }
-               TEUCHOS_TEST_FOR_EXCEPTION(!has_location,std::runtime_error,"DICe Error, seed must have location specified");
-               TEUCHOS_TEST_FOR_EXCEPTION(!has_disp_values,std::runtime_error,"DICe Error, seed must have displacement guess specified");
+               TEUCHOS_TEST_FOR_EXCEPTION(!has_location,std::runtime_error,"Error, seed must have location specified");
+               TEUCHOS_TEST_FOR_EXCEPTION(!has_disp_values,std::runtime_error,"Error, seed must have displacement guess specified");
              }
              else{
                TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error," Error parsing subset file " << fileName << " "  << block_tokens[1]);
@@ -819,15 +829,15 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            else if(block_tokens[0]==parser_end) break; // end of the defs
            // SUBSET ID
            else if(block_tokens[0]==parser_subset_id){
-             assert(block_tokens.size()>=2);
-             assert(is_number(block_tokens[1]));
+             TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<2,std::runtime_error,"");
+             TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[1]),std::runtime_error,"");
              subset_id = atoi(block_tokens[1].c_str());
              if(proc_rank==0) DEBUG_MSG("Conformal subset id: " << subset_id);
            }
            else if(block_tokens[0]==parser_test_for_motion){
              test_for_motion = true;
              if(block_tokens.size()==2){
-               assert(is_number(block_tokens[1]));
+               TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[1]),std::runtime_error,"");
                motion_window_params.use_subset_id_ = atoi(block_tokens[1].c_str());
                if(proc_rank==0) DEBUG_MSG("Conformal subset will test for motion using the window defined by subset " <<
                  motion_window_params.use_subset_id_);
@@ -859,15 +869,16 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              // need to re-read the line again without conveting to capital case
              dataFile.seekg(pos, std::ios::beg);
              Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile," ",false);
-             assert(block_tokens.size()>=2);
-             assert(!is_number(block_tokens[1]));
+             TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<2,std::runtime_error,"");
+             TEUCHOS_TEST_FOR_EXCEPTION(is_number(block_tokens[1]),std::runtime_error,"");
              path_file_name = block_tokens[1];
              if(proc_rank==0) DEBUG_MSG("Path file name: " << path_file_name);
              has_path_file = true;
            }
            // SEEDS
            else if(block_tokens[1]==parser_seed){
-             assert(has_seed==false && "Error, only one seed allowed per conformal subset");
+             TEUCHOS_TEST_FOR_EXCEPTION(has_seed,std::runtime_error,
+               "Error, only one seed allowed per conformal subset");
              bool has_disp_values = false;
              has_seed = true;
              if(proc_rank==0) DEBUG_MSG("Reading seed information for conformal subset");
@@ -880,29 +891,36 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                      "the location is the subset centroid automatically");
                }
                else if(seed_tokens[0]==parser_displacement){
-                 assert(seed_tokens.size()>2 && "DICe Error, not enough values specified for seed displacement (x and y are needed)." );
-                 assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                 TEUCHOS_TEST_FOR_EXCEPTION(seed_tokens.size()<=2,std::runtime_error,
+                   "Error, not enough values specified for seed displacement (x and y are needed)." );
+                 TEUCHOS_TEST_FOR_EXCEPTION(!is_number(seed_tokens[1])||!is_number(seed_tokens[2]),
+                   std::runtime_error,"");
                  seed_disp_x = strtod(seed_tokens[1].c_str(),NULL);
                  seed_disp_y = strtod(seed_tokens[2].c_str(),NULL);
                  if(proc_rank==0) DEBUG_MSG("Seed displacement " << seed_disp_x << " " << seed_disp_y);
                  has_disp_values = true;
                }
                else if(seed_tokens[0]==parser_normal_strain){
-                 assert(seed_tokens.size()>2 && "DICe Error, not enough values specified for seed normal strain (x and y are needed)." );
-                 assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                 TEUCHOS_TEST_FOR_EXCEPTION(seed_tokens.size()<=2,std::runtime_error,
+                   "Error, not enough values specified for seed normal strain (x and y are needed)." );
+                 TEUCHOS_TEST_FOR_EXCEPTION(!is_number(seed_tokens[1])||!is_number(seed_tokens[2]),
+                   std::runtime_error,"");
                  seed_normal_strain_x = strtod(seed_tokens[1].c_str(),NULL);
                  seed_normal_strain_y = strtod(seed_tokens[2].c_str(),NULL);
                  if(proc_rank==0) DEBUG_MSG("Seed Normal Strain " << seed_normal_strain_x << " " << seed_normal_strain_y);
                }
                else if(seed_tokens[0]==parser_shear_strain){
-                 assert(seed_tokens.size()>1 && "DICe Error, a value must be specified for shear strain." );
-                 assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                 TEUCHOS_TEST_FOR_EXCEPTION(seed_tokens.size()<=1,std::runtime_error,
+                   "Error, a value must be specified for shear strain." );
+                 TEUCHOS_TEST_FOR_EXCEPTION(!is_number(seed_tokens[1])||!is_number(seed_tokens[2]),std::runtime_error,"");
                  seed_shear_strain = strtod(seed_tokens[1].c_str(),NULL);
                  if(proc_rank==0) DEBUG_MSG("Seed Shear Strain " << seed_shear_strain);
                }
                else if(seed_tokens[0]==parser_rotation){
-                 assert(seed_tokens.size()>1 && "DICe Error, a value must be specified for rotation." );
-                 assert(is_number(seed_tokens[1]) && is_number(seed_tokens[2]));
+                 TEUCHOS_TEST_FOR_EXCEPTION(seed_tokens.size()<=1,std::runtime_error,
+                   "Error, a value must be specified for rotation." );
+                 TEUCHOS_TEST_FOR_EXCEPTION(!is_number(seed_tokens[1])||!is_number(seed_tokens[2]),
+                   std::runtime_error,"");
                  seed_rotation = strtod(seed_tokens[1].c_str(),NULL);
                  if(proc_rank==0) DEBUG_MSG("Seed Rotation " << seed_rotation);
                }
@@ -910,11 +928,11 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, unrecognized command in seed block " << tokens[0]);
                }
              }
-             TEUCHOS_TEST_FOR_EXCEPTION(!has_disp_values,std::runtime_error,"DICe Error, seed must have at least a displacement guess specified");
+             TEUCHOS_TEST_FOR_EXCEPTION(!has_disp_values,std::runtime_error,"Error, seed must have at least a displacement guess specified");
            }
            // SHAPES
            else if(block_tokens[0]==parser_begin){
-             assert(block_tokens.size()>=2);
+             TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<2,std::runtime_error,"");
              if(block_tokens[1]==parser_boundary){
                if(proc_rank==0) DEBUG_MSG("Reading boundary def");
                boundary_multi_shape = read_shapes(dataFile);
@@ -942,7 +960,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  Teuchos::ArrayRCP<std::string> id_tokens = tokenize_line(dataFile);
                  if(id_tokens.size()==0) continue;
                  if(id_tokens[0]==parser_end) break;
-                 assert(is_number(id_tokens[0]));
+                 TEUCHOS_TEST_FOR_EXCEPTION(!is_number(id_tokens[0]),std::runtime_error,"");
                  blocking_ids.push_back(atoi(id_tokens[0].c_str()));
                }
                for(size_t i=0;i<blocking_ids.size();++i)
@@ -992,7 +1010,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
    }
   dataFile.close();
   if(roi_defined){
-    TEUCHOS_TEST_FOR_EXCEPTION(coordinates_defined || conformal_subset_defined,std::runtime_error,"DICe Error, if a region of interest in defined, the coordinates"
+    TEUCHOS_TEST_FOR_EXCEPTION(coordinates_defined || conformal_subset_defined,std::runtime_error,"Error, if a region of interest in defined, the coordinates"
         " cannot be specified, nor can conformal subset definitions.");
   }
 
@@ -1012,7 +1030,8 @@ const std::vector<std::string> decypher_image_file_names(Teuchos::RCP<Teuchos::P
   // The reference image will be the first image in the vector, the rest are the deformed
   std::vector<std::string> images;
 
-  assert(params->isParameter(DICe::image_folder));
+  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::image_folder),std::runtime_error,
+    "Error, image folder was not specified");
   std::string folder = params->get<std::string>(DICe::image_folder);
   // Requires that the user add the appropriate slash or backslash as denoted in the template file creator
   if(proc_rank==0) DEBUG_MSG("Image folder prefix: " << folder );
@@ -1023,7 +1042,8 @@ const std::vector<std::string> decypher_image_file_names(Teuchos::RCP<Teuchos::P
     std::stringstream ref_name;
     ref_name << folder << ref_file_name;
     images.push_back(ref_name.str());
-    assert(params->isParameter(DICe::deformed_images));
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::deformed_images),std::runtime_error,
+      "Error, the deformed images were not specified");
     // create a sublist of the deformed images:
     Teuchos::ParameterList def_image_sublist = params->sublist(DICe::deformed_images);
     // iterate the sublis and add the params to the output params:
@@ -1045,19 +1065,25 @@ const std::vector<std::string> decypher_image_file_names(Teuchos::RCP<Teuchos::P
   }
   // User specified an image sequence:
   else{
-    assert(params->isParameter(DICe::reference_image_index));
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::reference_image_index),std::runtime_error,
+      "Error, the reference image index was not specified");
     // pull the parameters out
-    assert(params->isParameter(DICe::num_images));
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::num_images),std::runtime_error,
+      "Error, the number of images was not specified");
     const int_t numImages = params->get<int_t>(DICe::num_images);
-    assert(numImages>0);
-    assert(params->isParameter(DICe::image_file_prefix));
+    TEUCHOS_TEST_FOR_EXCEPTION(numImages<=0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::image_file_prefix),std::runtime_error,
+      "Error, the image file prefix was not specified");
     const std::string prefix = params->get<std::string>(DICe::image_file_prefix);
-    assert(params->isParameter(DICe::image_file_extension));
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::image_file_extension),std::runtime_error,
+      "Error, the image file extension was not specified");
     const std::string fileType = params->get<std::string>(DICe::image_file_extension);
-    assert(params->isParameter(DICe::num_file_suffix_digits));
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::num_file_suffix_digits),std::runtime_error,
+      "Error, the number of file suffix digits was not specified");
     const int_t digits = params->get<int_t>(DICe::num_file_suffix_digits);
-    assert(digits>0);
-    assert(params->isParameter(DICe::reference_image_index));
+    TEUCHOS_TEST_FOR_EXCEPTION(digits<=0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::reference_image_index),std::runtime_error,
+      "Error, the reference image index was not specified");
     const int_t refId = params->get<int_t>(DICe::reference_image_index);
 
     // determine the reference image
@@ -1088,7 +1114,7 @@ const std::vector<std::string> decypher_image_file_names(Teuchos::RCP<Teuchos::P
       images.push_back(def_name.str());
     }
   }
-  assert(images.size()>1);
+  TEUCHOS_TEST_FOR_EXCEPTION(images.size()<=1,std::runtime_error,"");
   return images;
 }
 
@@ -1143,11 +1169,13 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
 
   if(proc_rank==0) DEBUG_MSG("Creating a grid of regular correlation points");
   // note: assumes two dimensional
-  assert(params->isParameter(DICe::step_size));
+  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::step_size),std::runtime_error,
+    "Error, the step size was not specified");
   const int_t step_size = params->get<int_t>(DICe::step_size);
   // set up the control points
-  assert(step_size > 0 && "  DICe ERROR: step size is <= 0");
-  assert(params->isParameter(DICe::subset_size));
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size<=0,std::runtime_error,"Error: step size is <= 0");
+  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::subset_size),std::runtime_error,
+    "Error, the subset size was not specified");
   const int_t subset_size = params->get<int_t>(DICe::subset_size);
   correlation_points.clear();
   neighbor_ids.clear();
@@ -1161,8 +1189,8 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
       if(proc_rank==0) DEBUG_MSG("create_regular_grid_of_correlation_points(): user requested " << roi_defs->size() <<  " ROI(s)");
       seed_was_specified = subset_file_info->size_map->size() > 0;
       if(seed_was_specified){
-        assert(subset_file_info->size_map->size()==subset_file_info->displacement_map->size() &&
-          "Error the number of displacement guesses and seed locations must be the same");
+        TEUCHOS_TEST_FOR_EXCEPTION(subset_file_info->size_map->size()!=subset_file_info->displacement_map->size(),
+          std::runtime_error,"Error the number of displacement guesses and seed locations must be the same");
       }
     }
     else{
@@ -1235,9 +1263,6 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
       x_coord = subset_size-1 + seed_col*step_size;
       y_coord = subset_size-1 + seed_row*step_size;
     if(valid_correlation_point(x_coord,y_coord,width,height,subset_size,coords,excluded_coords)){
-      //&&
-      //  "DICe Error, closest correlation point to the seed location is outside the region of interest or the image boundary"
-      //  " minus one subset size");
       correlation_points.push_back(x_coord);
       correlation_points.push_back(y_coord);
       //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding seed correlation point " << x_coord << " " << y_coord);

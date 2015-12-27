@@ -205,7 +205,7 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
   static Teuchos::RCP<std::map<int_t,std::vector<int_t> > > blocking_subset_ids;
   static int_t n_points = -1;
   static int_t dim = 2; // assumes 2D
-  assert(subset_file);
+  TEUCHOS_TEST_FOR_EXCEPTION(!subset_file,std::runtime_error,"");
   if(!initialized){
     DEBUG_MSG("Reading subset information from file: " << subset_file);
     // get the conformal subset defs, blocking subset ids, and coordinates
@@ -216,7 +216,8 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
     blocking_subset_ids = subset_info->id_sets_map;
     n_points = subset_info->coordinates_vector->size()/dim; // divide by three because the striding is x, y, neighbor_id
     // this library call requires that all subsets are defined with a conformal subset
-    assert((int_t)conformal_area_defs->size()==n_points && "Error there is a mismatch between the number of "
+    TEUCHOS_TEST_FOR_EXCEPTION((int_t)conformal_area_defs->size()!=n_points,std::runtime_error,
+      "Error there is a mismatch between the number of "
         "conformal subsets defined and the number of coordinate sets");
     // copy over the coordinates to the points array:
     for(int_t i=0;i<n_points;++i){

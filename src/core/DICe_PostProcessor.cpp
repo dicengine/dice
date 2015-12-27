@@ -88,10 +88,10 @@ VSG_Strain_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList>
   if(!params->isParameter(strain_window_size_in_pixels)){
     std::cout << "Error: The strain window size must be specified in the VSG_Strain_Post_Processor block of the input" << std::endl;
     std::cout << "Please set the parameter \"strain_window_size_in_pixels\" " << std::endl;
-    assert(false);
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
   window_size_ = params->get<int_t>(strain_window_size_in_pixels);
-  assert(window_size_>0);
+  TEUCHOS_TEST_FOR_EXCEPTION(window_size_<=0,std::runtime_error,"Error, window size must be greater than 0");
   DEBUG_MSG("VSG_Strain_Post_Processor strain window size: " << window_size_);
 }
 
@@ -106,8 +106,8 @@ VSG_Strain_Post_Processor::pre_execution_tasks(){
   // get the step size for this analysis
   const int_t step_size_x = schema_->step_size_x();
   const int_t step_size_y = schema_->step_size_y();
-  assert(step_size_x>0 && "Error VSG requires that the step size parameter is used to layout the subsets in x.");
-  assert(step_size_y>0 && "Error VSG requires that the step size parameter is used to layout the subsets in x.");
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size_x<=0,std::runtime_error,"Error VSG requires that the step size parameter is used to layout the subsets in x.");
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size_y<=0,std::runtime_error,"Error VSG requires that the step size parameter is used to layout the subsets in x.");
 
   // find the min/max x and y, these will be used to set up the rows and columns
   int_t min_x = schema_->ref_img()->width();
@@ -182,7 +182,7 @@ VSG_Strain_Post_Processor::pre_execution_tasks(){
         std::cout << "Error: Subset " << subset_gid << " does not have enough subsets inside the strain window: " << window_size_ << std::endl;
         std::cout << "       There aren't enough neighbor points to fit the polynomial. " << std::endl;
         std::cout << "       The input parameter strain_window_size_in_pixels should be increased. " << std::endl;
-        assert(false);
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
       }
     } // col loop
   } // row loop
@@ -274,13 +274,13 @@ VSG_Strain_Post_Processor::execute(){
       DEBUG_MSG("Subset " << subset << " VSG X^T*X RCOND(H): "<< rcond);
       if(rcond < 1.0E-12) {
         std::cout << "Error: The pseudo-inverse of the VSG strain calculation is (or is near) singular." << std::endl;
-        assert(false);
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
       }
     }
     catch(std::exception &e){
       DEBUG_MSG( e.what() << '\n');
       std::cout << "Error: Something went wrong in the condition number calculation" << std::endl;
-      assert(false);
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
     }
     try
     {
@@ -501,8 +501,10 @@ Keys4_Strain_Post_Processor::pre_execution_tasks(){
 
   // get the step size for this analysis
   const int_t step_size = schema_->step_size_x();
-  assert(step_size>0 && "Error Keys4 strain requires that the step size parameter is used to layout the subsets in x and y.");
-  assert(step_size==schema_->step_size_y() && "Error Keys4 strain requires that the grid of subsets is equally spaced in x and y.");
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size<=0,std::runtime_error,
+    "Error Keys4 strain requires that the step size parameter is used to layout the subsets in x and y.");
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size!=schema_->step_size_y(),std::runtime_error,
+    "Error Keys4 strain requires that the grid of subsets is equally spaced in x and y.");
 
   // find the min/max x and y, these will be used to set up the rows and columns
   int_t min_x = schema_->ref_img()->width();
@@ -573,7 +575,7 @@ Keys4_Strain_Post_Processor::pre_execution_tasks(){
       } // j loop
       if(num_neigh_[subset_gid]<3){
         std::cout << "Error: Subset " << subset_gid << " does not have enough subsets inside the strain window for fourth order Keys." << std::endl;
-        assert(false);
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
       }
     } // col loop
   } // row loop
@@ -711,10 +713,11 @@ NLVC_Strain_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList
   if(!params->isParameter(horizon_diameter_in_pixels)){
     std::cout << "Error: The horizon diamter size must be specified in the NLVC_Strain_Post_Processor block of the input" << std::endl;
     std::cout << "Please set the parameter \"horizon_diameter_in_pixels\" " << std::endl;
-    assert(false);
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
   horizon_ = params->get<int_t>(horizon_diameter_in_pixels);
-  assert(horizon_>0);
+  TEUCHOS_TEST_FOR_EXCEPTION(horizon_<=0,std::runtime_error,
+    "Error, horizon must be greater than 0");
   DEBUG_MSG("NLVC_Strain_Post_Processor horizon diameter size: " << horizon_);
 }
 
@@ -731,8 +734,10 @@ NLVC_Strain_Post_Processor::pre_execution_tasks(){
   // get the step size for this analysis
   const int_t step_size_x = schema_->step_size_x();
   const int_t step_size_y = schema_->step_size_y();
-  assert(step_size_x>0 && "Error NLVC strain requires that the step size parameter is used to layout the subsets in x.");
-  assert(step_size_y>0 && "Error NLVC strain requires that the step size parameter is used to layout the subsets in x.");
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size_x<=0,std::runtime_error,
+    "Error NLVC strain requires that the step size parameter is used to layout the subsets in x.");
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size_y<=0,std::runtime_error,
+    "Error NLVC strain requires that the step size parameter is used to layout the subsets in x.");
 
   // find the min/max x and y, these will be used to set up the rows and columns
   int_t min_x = schema_->ref_img()->width();
@@ -806,7 +811,7 @@ NLVC_Strain_Post_Processor::pre_execution_tasks(){
         std::cout << "Error: Subset " << subset_gid << " does not have enough subsets inside the nonlocal horizon: " << horizon_ << std::endl;
         std::cout << "       There aren't enough neighbor points to fit the polynomial. " << std::endl;
         std::cout << "       The input parameter horizon_diameter_in_pixels should be increased. " << std::endl;
-        assert(false);
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
       }
     } // col loop
   } // row loop

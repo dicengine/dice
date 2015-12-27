@@ -83,11 +83,11 @@ public:
     const int_t correlation_point_global_id):
     Objective(schema,correlation_point_global_id){
     // check that at least one of the shape functions is in use:
-    assert(schema_->translation_enabled() ||
-      schema_->rotation_enabled() ||
-      schema_->normal_strain_enabled() ||
-      schema_->shear_strain_enabled());
-    assert(subset_!=Teuchos::null);
+    TEUCHOS_TEST_FOR_EXCEPTION(!schema_->translation_enabled()&&
+      !schema_->rotation_enabled()&&
+      !schema_->normal_strain_enabled()&&
+      !schema_->shear_strain_enabled(),std::runtime_error,"Error, no shape functions are activated");
+    TEUCHOS_TEST_FOR_EXCEPTION(subset_==Teuchos::null,std::runtime_error,"");
     // populate the dof map since not all deformation dofs are used
     if(schema_->translation_enabled()){
       dof_map_.push_back(DISPLACEMENT_X);

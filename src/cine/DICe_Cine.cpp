@@ -94,9 +94,9 @@ Cine_Reader::get_frames(const int_t frame_index_start, const int_t frame_index_e
   int_t frame_end = frame_index_end;
 
   int_t file_num_frames = cine_header_->header_.ImageCount;
-  TEUCHOS_TEST_FOR_EXCEPTION(frame_start < 0,std::invalid_argument,"Error, index start < 0");
-  TEUCHOS_TEST_FOR_EXCEPTION(frame_start >= file_num_frames,std::invalid_argument,"Error, index start > file_num_frames");
-  TEUCHOS_TEST_FOR_EXCEPTION(frame_end < frame_start,std::invalid_argument,"Error, index end < index start");
+  TEUCHOS_TEST_FOR_EXCEPTION(frame_start<0,std::invalid_argument,"Error, index start < 0");
+  TEUCHOS_TEST_FOR_EXCEPTION(frame_start>=file_num_frames,std::invalid_argument,"Error, index start > file_num_frames");
+  TEUCHOS_TEST_FOR_EXCEPTION(frame_end<frame_start,std::invalid_argument,"Error, index end < index start");
   if(frame_end >= file_num_frames)
     frame_end = file_num_frames - 1;
   int_t img_width = cine_header_->bitmap_header_.biWidth;
@@ -114,22 +114,23 @@ Cine_Reader::get_frames(const int_t frame_index_start, const int_t frame_index_e
 
   // factor of 8 to convert bytes to bits
   int_t bit_depth = (cine_header_->bitmap_header_.biSizeImage * 8) / (img_width * img_height);
-  assert(bit_depth==8 || bit_depth==10 || bit_depth==16);
+  TEUCHOS_TEST_FOR_EXCEPTION(bit_depth!=8&&bit_depth!=10&&bit_depth!=16,std::runtime_error,
+    "Error, unrecogized bit depth");
   int_t frame_size = cine_header_->bitmap_header_.biSizeImage;
 
   // size up the buffer and frame chunks
   const int64_t begin = cine_header_->image_offsets_[frame_start];
   const int64_t end = frame_end == file_num_frames - 1 ? file_size :
       cine_header_->image_offsets_[frame_end+1];
-  assert(begin < file_size && end <= file_size);
+  TEUCHOS_TEST_FOR_EXCEPTION(begin>=file_size||end>file_size,std::runtime_error,"");
   const long long int buffer_size = end - begin;
   const int_t frame_p_header_size = buffer_size / num_frames;
-  assert(buffer_size % num_frames == 0);
+  TEUCHOS_TEST_FOR_EXCEPTION(buffer_size%num_frames!=0,std::runtime_error,"");
   const int_t header_size = frame_p_header_size - frame_size; // could be different for each frame
   const int_t header_offset_8 = header_size / sizeof(uint8_t);
-  assert(header_size%sizeof(uint8_t)==0);
+  TEUCHOS_TEST_FOR_EXCEPTION(header_size%sizeof(uint8_t)!=0,std::runtime_error,"");
   const int_t header_offset_16 = header_size / sizeof(uint16_t);
-  assert(header_size%sizeof(uint16_t)==0);
+  TEUCHOS_TEST_FOR_EXCEPTION(header_size%sizeof(uint16_t)!=0,std::runtime_error,"");
 
   if(out_stream_){
     *out_stream_ << "Cine_Reader::get_frames(): cine file name:      " << cine_header_->file_name_ << std::endl;
@@ -233,7 +234,7 @@ Cine_Reader::get_frames(const int_t frame_index_start, const int_t frame_index_e
           //two_byte = two_byte & 0xFFC0; // 16 bits with only the left 10 active;
           // this next step is required because the original signal was companded from 12 bits to 10,
           // now we are expanding it back to 12:
-          assert(two_byte>=0&&two_byte<1024);
+          TEUCHOS_TEST_FOR_EXCEPTION(two_byte<0||two_byte>=1024,std::runtime_error,"");
           two_byte = LinLUT[two_byte];
           // save off the pixel
           converted_intensity = static_cast<intensity_t>(two_byte) * (255.0/4095.0);
@@ -290,7 +291,7 @@ read_cine_headers(const char *file, std::ostream * out_stream){
   test_size += sizeof(header.OffImageOffsets);
   test_size += sizeof(header.TriggerTime);
   if(out_stream) *out_stream << "test size:            " << test_size << std::endl;
-  assert(test_size == header.Headersize);
+  TEUCHOS_TEST_FOR_EXCEPTION(test_size!=header.Headersize,std::runtime_error,"");
   cine_file.read(reinterpret_cast<char*>(&header.Compression), sizeof(header.Compression));
   if(out_stream) *out_stream << "header compression:   " << header.Compression << std::endl;
   TEUCHOS_TEST_FOR_EXCEPTION(header.Compression!=0,std::runtime_error,
@@ -308,7 +309,7 @@ read_cine_headers(const char *file, std::ostream * out_stream){
   cine_file.read(reinterpret_cast<char*>(&header.ImageCount), sizeof(header.ImageCount));
   if(out_stream) *out_stream << "header image count:   " << header.ImageCount << std::endl;
   cine_file.read(reinterpret_cast<char*>(&header.OffImageHeader), sizeof(header.OffImageHeader));
-  assert((int)header.OffImageHeader == test_size);
+  TEUCHOS_TEST_FOR_EXCEPTION((int)header.OffImageHeader!=test_size,std::runtime_error,"");
   if(out_stream) *out_stream << "offset image header:  " << header.OffImageHeader << std::endl;
   cine_file.read(reinterpret_cast<char*>(&header.OffSetup), sizeof(header.OffSetup));
   if(out_stream) *out_stream << "offset setup:         " << header.OffSetup << std::endl;
@@ -340,7 +341,7 @@ read_cine_headers(const char *file, std::ostream * out_stream){
   header_test_size += sizeof(bitmap_header.biClrUsed);
   header_test_size += sizeof(bitmap_header.biClrImportant);
   //if(out_stream) *out_stream << "test header size:     " << header_test_size << std::endl;
-  assert(header_test_size==(int)bitmap_header.biSize);
+  TEUCHOS_TEST_FOR_EXCEPTION(header_test_size!=(int)bitmap_header.biSize,std::runtime_error,"");
   cine_file.read(reinterpret_cast<char*>(&bitmap_header.biWidth), sizeof(bitmap_header.biWidth));
   if(out_stream) *out_stream << "bitmap width:         " << bitmap_header.biWidth << std::endl;
   cine_file.read(reinterpret_cast<char*>(&bitmap_header.biHeight), sizeof(bitmap_header.biHeight));
@@ -353,7 +354,8 @@ read_cine_headers(const char *file, std::ostream * out_stream){
   if(out_stream) *out_stream << "bitmap num planes:    " << bitmap_header.biPlanes << std::endl;
   cine_file.read(reinterpret_cast<char*>(&bitmap_header.biBitCount), sizeof(bitmap_header.biBitCount));
   if(out_stream) *out_stream << "bitmap bit count:     " << bitmap_header.biBitCount << std::endl;
-  assert((bitmap_header.biBitCount==8 || bitmap_header.biBitCount==16) && "Error: only 8 or 16 bits per pixel are supported");
+  TEUCHOS_TEST_FOR_EXCEPTION((bitmap_header.biBitCount!=8&&bitmap_header.biBitCount!=16),
+    std::runtime_error,"Error: only 8 or 16 bits per pixel are supported");
   cine_file.read(reinterpret_cast<char*>(&bitmap_header.biCompression), sizeof(bitmap_header.biCompression));
   if(out_stream) *out_stream << "bitmap compression:   " << bitmap_header.biCompression << std::endl;
   cine_file.read(reinterpret_cast<char*>(&bitmap_header.biSizeImage), sizeof(bitmap_header.biSizeImage));
@@ -366,7 +368,8 @@ read_cine_headers(const char *file, std::ostream * out_stream){
   if(out_stream) *out_stream << "bitmap y pels/meter:  " << bitmap_header.biYPelsPerMeter << std::endl;
   cine_file.read(reinterpret_cast<char*>(&bitmap_header.biClrUsed), sizeof(bitmap_header.biClrUsed));
   if(out_stream) *out_stream << "bitmap colors used:   " << bitmap_header.biClrUsed << std::endl;
-  assert(bitmap_header.biClrUsed == 0 && "Error: cine color files have not been implemented.");
+  TEUCHOS_TEST_FOR_EXCEPTION(bitmap_header.biClrUsed!=0,std::runtime_error,
+    "Error: cine color files have not been implemented.");
   cine_file.read(reinterpret_cast<char*>(&bitmap_header.biClrImportant), sizeof(bitmap_header.biClrImportant));
   if(out_stream) *out_stream << "important colors:     " << bitmap_header.biClrImportant << std::endl;
 
