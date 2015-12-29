@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
   }
   *outStream << "creating the reference output image" << std::endl;
   DICe::Image ref_image(imgW,imgW,ref_intensities);
-  ref_image.write_tiff("shape_ref.tif");
+  ref_image.write("shape_ref.tif");
   *outStream << "creating a deformation map" << std::endl;
   Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
   (*def)[DISPLACEMENT_X] = 25;
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
   }
   *outStream << "creating deformed output image" << std::endl;
   DICe::Image def_image(imgW,imgW,def_intensities);
-  def_image.write_tiff("shape_def.tif");
+  def_image.write("shape_def.tif");
 
   *outStream << "testing deformed shape with larger skin" << std::endl;
   const scalar_t large_skin_factor = 1.5;
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
     }
   }
   DICe::Image large_skin_image(imgW,imgW,large_skin_intensities);
-  large_skin_image.write_tiff("shape_large_skin.tif");
+  large_skin_image.write("shape_large_skin.tif");
 
   *outStream << "testing deformed shape with smaller skin" << std::endl;
   const scalar_t small_skin_factor = 0.75;
@@ -165,7 +165,7 @@ int main(int argc, char *argv[]) {
     small_skin_intensities[small_skin_set_it->first*imgW + small_skin_set_it->second] = 255;
   }
   DICe::Image small_skin_image(imgW,imgW,small_skin_intensities);
-  small_skin_image.write_tiff("shape_small_skin.tif");
+  small_skin_image.write("shape_small_skin.tif");
 
   *outStream << "--- End test ---" << std::endl;
 

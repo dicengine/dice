@@ -789,9 +789,8 @@ sophisticated plots.
 Requirements
 ------------
 
-DICe can be built and run on Mac OS X, Windows, and Linux. The primary
-intended platforms are Mac OS X and Linux, but Windows builds are also
-possible. The prerequisite dependencies required for installing DICe include
+DICe can be built and run on Mac OS X, Windows, and Linux.
+The prerequisite dependencies required for installing DICe include:
 
 -   [CMake] (http://www.cmake.org) 
 
@@ -802,6 +801,13 @@ possible. The prerequisite dependencies required for installing DICe include
 -   [Boost] (http://www.boost.org)
 
 -   [LibTiff] (http://www.remotesensing.org/libtiff/)
+
+Optionally, if jpeg or png files are used for input, the following libraries
+are needed:
+
+-   [LibPng] (http://www.libpng.org/pub/png/libpng.html)
+
+-   [LibJpeg] (http://libjpeg.sourceforge.net/)
 
 CMake
 -----
@@ -886,7 +892,7 @@ Change directory  into the build directory and copy the CMake script from the
 scripts folder.
 
     $ cd build
-    $ cp ../scripts/example-do-cmake ./do-cmake
+    $ cp ../scripts/do-cmake .
     $ chmod +x ./do-cmake
 
 Edit the script to have the correct path locations. Then build DICe
@@ -920,7 +926,12 @@ also included in the repository in the `\dice\scripts` folder.
 Tiff
 ----
 
-LibTiff must be installed before building DICe. LibTiff is used in the reading of `.tiff` images. There are many ways to install LibTiff, see [here](http://www.remotesensing.org/libtiff/) for more information.
+LibTiff must be installed before building DICe. LibTiff is used in the reading of `.tiff` images. There are many ways to install LibTiff, see [here](http://www.remotesensing.org/libtiff/) for more information. If the tiff library is not in the system path, the user can set the `TIFF_DIR` variabe in the `do-cmake` configuration script to help CMake find the library.
+
+Jpeg and Png
+------------
+
+The optional `.jpeg` or `.jpg` and `.png` file formats will automatically be enabled if the jpeg and png libraries are in the system path. Otherwise, the `JPEG_DIR` or `PNG_DIR` variables must be set in the `do-cmake` script in order for CMake to find these libraries.
 
 Boost
 -----

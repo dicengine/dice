@@ -41,7 +41,6 @@
 
 #include <DICe_Subset.h>
 #include <DICe_SubsetFunctors.h>
-#include <DICe_Tiff.h>
 
 #include <cassert>
 

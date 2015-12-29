@@ -79,13 +79,33 @@ ENDIF()
 
 if (Boost_FOUND)
   find_library(tiff_lib NAMES tiff PATHS ${TIFF_DIR})
-  MESSAGE(STATUS "Using tiff library from: ${tiff_lib}")
-  SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${tiff_lib})
+  if(tiff_lib)
+    MESSAGE(STATUS "Tiff file format enabled. Using tiff library from ${tiff_lib}")
+    SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${tiff_lib})
+  else()
+    MESSAGE(FATAL_ERROR "Could not find required tiff library.")
+  endif()
+  find_library(jpeg_lib NAMES jpeg PATHS ${JPEG_DIR})
+  if(jpeg_lib)
+    MESSAGE(STATUS "Jpeg file format enabled. Using jpeg library from ${jpeg_lib}")
+    SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${jpeg_lib})
+    ADD_DEFINITIONS(-DDICE_JPEG=1)
+  else()
+    MESSAGE(STATUS "Could not find jpeg library. Jpeg file format is NOT enabled")
+  endif()
+  find_library(png_lib NAMES png PATHS ${PNG_DIR})
+  if(png_lib)
+    MESSAGE(STATUS "Png file format enabled. Using png library from ${png_lib}")
+    SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${png_lib})
+    ADD_DEFINITIONS(-DDICE_PNG=1)
+  else()
+    MESSAGE("Could not find png library. Png file format is NOT enabled")
+  endif()
   link_directories(${Boost_LIBRARY_DIRS})
 else (Boost_FOUND)
   MESSAGE(FATAL_ERROR "BOOST is required, but not found")
 endif (Boost_FOUND)
-
+                                                                        
 SET(DICE_TRILINOS_HEADERS
     ${Trilinos_INCLUDE_DIRS}
     ${Trilinos_TPL_INCLUDE_DIRS}
@@ -96,11 +116,17 @@ SET(DICE_TRILINOS_LIB_DIRS
     ${Trilinos_TPL_LIBRARY_DIRS}
   )
 
-link_directories(${TIFF_DIR})
+link_directories(${TIFF_DIR}
+  ${JPEG_DIR}
+  ${PNG_DIR})
 SET(DICE_HEADER_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${TIFF_DIR}
+  ${JPEG_DIR}
+  ${PNG_DIR}
   ${TIFF_DIR}/../include/
+  ${JPEG_DIR}/../include/
+  ${PNG_DIR}/../include/
   )
 
 # if debug messages are turned on:

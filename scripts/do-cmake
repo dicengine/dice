@@ -12,5 +12,8 @@ cmake \
  -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
  -D DICE_DEBUG_MSG:BOOL=OFF \
  -D DICE_USE_DOUBLE:BOOL=OFF \
+ -D TIFF_DIR:FILE_PATH=<path_to_libtiff> \
+ -D JPEG_DIR:FILE_PATH=<optional_path_to_libjpeg> \
+ -D PNG_DIR:FILE_PATH=<optional_path_to_libpng> \
  -D CMAKE_CXX_FLAGS:STRING="-Wall" \
  $EXTRA_ARGS ../

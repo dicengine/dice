@@ -1,13 +1,11 @@
 SET(DICE_UTILS_SOURCES
-  DICe_Tiff.cpp
+  DICe_ImageIO.cpp
   DICe_Rawi.cpp
-  DICe_Jpeg.cpp
 )
 
 SET(DICE_UTILS_HEADERS
-  DICe_Tiff.h
+  DICe_ImageIO.h
   DICe_Rawi.h
-  DICe_Jpeg.h
 )
 
 include_directories(

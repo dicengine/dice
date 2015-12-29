@@ -256,7 +256,7 @@ int main(int argc, char *argv[]) {
   conformal_subset.write_tiff("conformal.tif");
   // read in the image that was just created and compare to a gold copy:
   Image conf_img("./conformal.tif");
-  conf_img.write_rawi("conformal.rawi");
+  conf_img.write("conformal.rawi");
   Image conf_img_exact("./images/conformal.rawi");
   //conformal_subset.write_subset_on_image("ConformalOnImage.tiff",image);
   // compare the sizes and intensity values

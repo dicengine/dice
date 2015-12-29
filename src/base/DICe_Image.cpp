@@ -40,9 +40,7 @@
 // @HEADER
 
 #include <DICe_Image.h>
-#include <DICe_Tiff.h>
-#include <DICe_Rawi.h>
-#include <DICe_Jpeg.h>
+#include <DICe_ImageIO.h>
 #include <DICe_Shape.h>
 #if DICE_KOKKOS
   #include <DICe_Kokkos.h>
@@ -126,18 +124,13 @@ Image::mean()const{
 }
 
 void
-Image::write_tiff(const std::string & file_name){
-  utils::write_tiff_image(file_name.c_str(),width_,height_,intensities().getRawPtr(),default_is_layout_right());
-}
-
-void
-Image::write_jpeg(const std::string & file_name){
-  utils::write_jpeg_image(file_name.c_str(),width_,height_,intensities().getRawPtr(),default_is_layout_right());
-}
-
-void
-Image::write_rawi(const std::string & file_name){
-  utils::write_rawi_image(file_name.c_str(),width_,height_,intensities().getRawPtr(),default_is_layout_right());
+Image::write(const std::string & file_name){
+  try{
+    utils::write_image(file_name.c_str(),width_,height_,intensities().getRawPtr(),default_is_layout_right());
+  }
+  catch(std::exception &e){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, write image failure.");
+  }
 }
 
 Teuchos::RCP<Image>

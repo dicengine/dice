@@ -108,8 +108,8 @@ int main(int argc, char *argv[]) {
       //std::stringstream tiffname;
       //outname << cine_files[i] << "_d_" << frame << ".rawi";
       //tiffname << cine_files[i] << "_" << frame << ".tiff";
-      //cine_img->write_rawi(outname.str());
-      //cine_img->write_tiff(tiffname.str());
+      //cine_img->write(outname.str());
+      //cine_img->write(tiffname.str());
 #if DICE_USE_DOUBLE
       name << "./images/" << cine_files[i]<< "_d_" << frame << ".rawi";
 #else

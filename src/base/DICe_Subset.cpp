@@ -40,7 +40,7 @@
 // @HEADER
 
 #include <DICe_Subset.h>
-#include <DICe_Tiff.h>
+#include <DICe_ImageIO.h>
 #if DICE_KOKKOS
   #include <DICe_Kokkos.h>
 #endif
@@ -191,7 +191,7 @@ Subset::write_subset_on_image(const std::string & file_name,
     for(int_t i=0;i<num_pixels_;++i)
       intensities[y(i)*w+x(i)] = 255;
   }
-  utils::write_tiff_image(file_name.c_str(),w,h,intensities,true);
+  utils::write_image(file_name.c_str(),w,h,intensities,true);
   delete[] intensities;
 }
 
@@ -224,7 +224,7 @@ Subset::write_tiff(const std::string & file_name,
           def_intensities(i) : ref_intensities(i);
     }
   }
-  utils::write_tiff_image(file_name.c_str(),w,h,intensities,true);
+  utils::write_image(file_name.c_str(),w,h,intensities,true);
   delete[] intensities;
 }
 

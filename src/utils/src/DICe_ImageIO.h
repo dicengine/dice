@@ -39,8 +39,8 @@
 // ************************************************************************
 // @HEADER
 
-#ifndef DICE_TIFF_H
-#define DICE_TIFF_H
+#ifndef DICE_IMAGEIO_H
+#define DICE_IMAGEIO_H
 
 #include <DICe.h>
 
@@ -51,29 +51,34 @@ namespace DICe{
  *  \namespace DICe::utils
  *  @{
  */
-/// utilities that may not build with NVCC so they are separated out into another namespace
+/// utilities that wont build with NVCC so they are separated out into another namespace
 namespace utils{
 
+/// returns the type of file based on the name
+/// \param file_name the name of the file
+DICE_LIB_DLL_EXPORT
+Image_File_Type image_file_type(const char * file_name);
+
 /// read the image dimensions
-/// \param file_name the tiff file name
+/// \param file_name the name of the file
 /// \param width [out] returned as the width of the image
 /// \param height [out] returned as the height of the image
 DICE_LIB_DLL_EXPORT
-void read_tiff_image_dimensions(const char * file_name,
+void read_image_dimensions(const char * file_name,
   int_t & width,
   int_t & height);
 
 /// Read an image into the host memory
-/// \param file_name the name of the tiff file
+/// \param file_name the name of the file
 /// \param intensities [out] populated with the pixel intensity values
 /// \param is_layout_right true if the arrays are row-major
 DICE_LIB_DLL_EXPORT
-void read_tiff_image(const char * file_name,
+void read_image(const char * file_name,
   intensity_t * intensities,
   const bool is_layout_right = true);
 
 /// Read an image into the host memory
-/// \param file_name the name of the tiff file
+/// \param file_name the name of the file
 /// \param offset_x the upper left corner x-coordinate in global image coordinates
 /// \param offset_y the upper left corner y-coordinate in global image coordinates
 /// \param width width of the portion of the image to read (must be smaller than the global image width)
@@ -81,7 +86,7 @@ void read_tiff_image(const char * file_name,
 /// \param intensities [out] populated with the image intensities
 /// \param is_layout_right [optional] memory layout is LayoutRight (row-major)
 DICE_LIB_DLL_EXPORT
-void read_tiff_image(const char * file_name,
+void read_image(const char * file_name,
   int_t offset_x,
   int_t offset_y,
   int_t width,
@@ -94,13 +99,13 @@ void read_tiff_image(const char * file_name,
 /// write an image to disk (always output as an 8-bit grayscale image)
 /// for more precise output, for example to read the intensity values in
 /// later with the same precision, use the .rawi format (see DICe::rawi)
-/// \param file_name the name of the tiff file
+/// \param file_name the name of the file
 /// \param width the width of the image to write
 /// \param height the height of the image
 /// \param intensities assumed to be an array of size width x height
 /// \param is_layout_right [optional] memory layout is LayoutRight (row-major)
 DICE_LIB_DLL_EXPORT
-void write_tiff_image(const char * file_name,
+void write_image(const char * file_name,
   const int_t width,
   const int_t height,
   intensity_t * intensities,

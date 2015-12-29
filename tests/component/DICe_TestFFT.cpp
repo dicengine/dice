@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
   *outStream << "testing polar transform of an image" << std::endl;
   Teuchos::RCP<Image> baboon = Teuchos::rcp(new Image("./images/baboon.rawi"));
   Teuchos::RCP<Image> polar_baboon = polar_transform(baboon);
-  //polar_baboon->write_rawi("baboon_polar.rawi");
+  //polar_baboon->write("baboon_polar.rawi");
   Teuchos::RCP<Image> polar_baboon_test = Teuchos::rcp(new Image("./images/baboon_polar.rawi"));
   const scalar_t diff_polar = polar_baboon->diff(polar_baboon_test);
   *outStream << "polar image diff: " << diff_polar << std::endl;
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
   *outStream << "testing the fft of an image" << std::endl;
   // compute the fft of the baboon image:
   Teuchos::RCP<Image> baboon_fft = image_fft(baboon);
-  //baboon_fft->write_tiff("baboon0.tif");
+  //baboon_fft->write("baboon0.tif");
   Teuchos::RCP<Image> baboon_fft_test = Teuchos::rcp(new Image("./images/baboon_fft.rawi"));
   const scalar_t diff_fft = baboon_fft->diff(baboon_fft_test);
   *outStream << "fft image diff: " << diff_fft << std::endl;
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
   *outStream << "testing the fft high pass filter without symmetry" << std::endl;
   Teuchos::RCP<Image> baboon_high = image_fft(baboon,true,true,100.0,true,true);
   *outStream << "baboon fft high pass dims: " << baboon_high->width() << " x " << baboon_high->height() << std::endl;
-  //baboon_high->write_rawi("baboon_high.rawi");
+  //baboon_high->write("baboon_high.rawi");
   Teuchos::RCP<Image> baboon_high_exact = Teuchos::rcp(new Image("./images/baboon_high.rawi"));
   const scalar_t high_diff = baboon_high->diff(baboon_high_exact);
   if(high_diff > errorTol){
@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Image> baboon_rot45 = Teuchos::rcp(new Image("./images/baboon_rotC45.rawi"));
   // take the fft of the rotated image
   Teuchos::RCP<Image> baboon_rot45_fft = image_fft(baboon_rot45);
-  //baboon_rot45_fft->write_tiff("baboon_45.tif");
+  //baboon_rot45_fft->write("baboon_45.tif");
  // take the polar transform of the original and rotated images:
   Teuchos::RCP<Image> baboon_rot45_pol = polar_transform(baboon_rot45_fft);
   // fft correlate the two polar fft images:

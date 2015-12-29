@@ -77,7 +77,7 @@ ExternalProject_Add(DICe_utils
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/utils
   BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/utils_build
   TMP_DIR ${CMAKE_CURRENT_BINARY_DIR}/utils_tmp
-  CMAKE_CACHE_ARGS -DDICE_TRILINOS_DIR:STRING=${DICE_TRILINOS_DIR} -DCMAKE_INSTALL_PREFIX:FILEPATH=${CMAKE_INSTALL_PREFIX} -DBOOST_ROOT:STRING=${BOOST_ROOT} -DTIFF_DIR:STRING=${TIFF_DIR} -DDICE_DEBUG_MSG:BOOL=${DICE_DEBUG_MSG} -DCLAPACK_DIR:FILEPATH=${CLAPACK_DIR} -DDICE_USE_DOUBLE:BOOL=${DICE_USE_DOUBLE} -DDICE_OUTPUT_PREFIX:FILEPATH=${DICE_OUTPUT_PREFIX}
+  CMAKE_CACHE_ARGS -DDICE_TRILINOS_DIR:STRING=${DICE_TRILINOS_DIR} -DCMAKE_INSTALL_PREFIX:FILEPATH=${CMAKE_INSTALL_PREFIX} -DBOOST_ROOT:STRING=${BOOST_ROOT} -DTIFF_DIR:STRING=${TIFF_DIR} -DJPEG_DIR:STRING=${JPEG_DIR} -DPNG_DIR:STRING=${PNG_DIR} -DDICE_DEBUG_MSG:BOOL=${DICE_DEBUG_MSG} -DCLAPACK_DIR:FILEPATH=${CLAPACK_DIR} -DDICE_USE_DOUBLE:BOOL=${DICE_USE_DOUBLE} -DDICE_OUTPUT_PREFIX:FILEPATH=${DICE_OUTPUT_PREFIX}
   )
 
 # base data type:
@@ -110,7 +110,11 @@ SET(DICE_TRILINOS_LIB_DIRS
     ${Trilinos_TPL_LIBRARY_DIRS}
   )
 
-link_directories(${DICE_TRILINOS_LIB_DIRS} ${TIFF_DIR} ${CMAKE_INSTALL_PREFIX}/lib)
+link_directories(${DICE_TRILINOS_LIB_DIRS}
+  ${TIFF_DIR}
+  ${JPEG_DIR}
+  ${PNG_DIR}
+  ${CMAKE_INSTALL_PREFIX}/lib)
 
 SET(DICE_HEADER_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}/src/api
@@ -121,7 +125,11 @@ SET(DICE_HEADER_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/src
   ${CMAKE_CURRENT_SOURCE_DIR}/src/kdtree
   ${TIFF_DIR}
+  ${JPEG_DIR}
+  ${PNG_DIR}
   ${TIFF_DIR}/../include
+  ${JPEG_DIR}/../include
+  ${PNG_DIR}/../include
   )
 
 SET(DICE_LIBRARIES
@@ -165,8 +173,28 @@ ENDIF()
 
 if (Boost_FOUND)
   find_library(tiff_lib NAMES tiff PATHS ${TIFF_DIR})
-  MESSAGE(STATUS "Using tiff library from: ${tiff_lib}")
-  SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${tiff_lib} jpeg)
+  if(tiff_lib)
+    MESSAGE(STATUS "Tiff file format enabled. Using tiff library from ${tiff_lib}")
+    SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${tiff_lib})
+  else()
+    MESSAGE(FATAL_ERROR "Could not find required tiff library.")
+  endif()
+  find_library(jpeg_lib NAMES jpeg PATHS ${JPEG_DIR})
+  if(jpeg_lib)
+    MESSAGE(STATUS "Jpeg file format enabled. Using jpeg library from ${jpeg_lib}")
+    SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${jpeg_lib})
+    ADD_DEFINITIONS(-DDICE_JPEG=1)
+  else()
+    MESSAGE(STATUS "Could not find jpeg library. Jpeg file format is NOT enabled")
+  endif()
+  find_library(png_lib NAMES png PATHS ${PNG_DIR})
+  if(png_lib)
+    MESSAGE(STATUS "Png file format enabled. Using png library from ${png_lib}")
+    SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${png_lib})
+    ADD_DEFINITIONS(-DDICE_PNG=1)
+  else()
+    MESSAGE("Could not find png library. Png file format is NOT enabled")
+  endif()
   link_directories(${Boost_LIBRARY_DIRS})
 else (Boost_FOUND)
   MESSAGE(FATAL_ERROR "BOOST is required, but not found")
@@ -176,7 +204,6 @@ IF(DICE_DISABLE_BOOST_FILESYSTEM)
   ADD_DEFINITIONS(-DDICE_DISABLE_BOOST_FILESYSTEM=1)
   MESSAGE(STATUS "BOOST Filesystem has been disabled, output will be written to current execution directory")
 ENDIF()
-
 
 # if debug messages are turned on:
 IF(DICE_DEBUG_MSG)

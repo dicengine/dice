@@ -1653,7 +1653,7 @@ Schema::write_control_points_image(const std::string & fileName,
   Teuchos::RCP<Image> new_img = Teuchos::rcp(new Image(width,height,intensities));
 
   // write the image:
-  new_img->write_tiff(fileName);
+  new_img->write(fileName);
 }
 
 void
@@ -1927,7 +1927,7 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
   } // subset loop
 
   Teuchos::RCP<Image> layer_0_image = Teuchos::rcp(new Image(w,h,intensities));
-  layer_0_image->write_tiff(ss.str());
+  layer_0_image->write(ss.str());
 #else
   DEBUG_MSG("Warning, write_deformed_image() was called, but Boost::filesystem is not enabled making this a no-op.");
 #endif

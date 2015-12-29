@@ -518,6 +518,16 @@ enum Motion_State{
   MOTION_FALSE
 };
 
+/// The type of image file
+enum Image_File_Type{
+  RAWI=0,
+  TIFF,
+  JPEG,
+  PNG,
+  MAX_IMAGE_FILE_TYPE,
+  NO_SUCH_IMAGE_FILE_TYPE
+};
+
 /// The type of correlation parameter, used for creating template input files
 enum Correlation_Parameter_Type{
   STRING_PARAM=0,

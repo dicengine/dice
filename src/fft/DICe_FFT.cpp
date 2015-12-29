@@ -272,7 +272,7 @@ phase_correlate_x_y(Teuchos::RCP<Image> image_a,
 //  Image out_image(w,h,out_intens);
 //  std::stringstream name;
 //  name << "FFT_out_" << image_a->file_name() << ".tif";
-//  out_image.write_tiff(name.str());
+//  out_image.write(name.str());
   return max_real;
 }
 

@@ -41,8 +41,8 @@
 
 #include <DICe.h>
 #include <DICe_Image.h>
+#include <DICe_ImageIO.h>
 #include <DICe_Subset.h>
-#include <DICe_Tiff.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
   const std::string file_name = "./images/UberImage.tif";
 
   // read the image dimensions from file:
-  utils::read_tiff_image_dimensions(file_name.c_str(),width,height);
+  utils::read_image_dimensions(file_name.c_str(),width,height);
   *outStream << "master image dims:        " << width << " x " << height << std::endl;
   *outStream << "number of image sizes:    " << num_img_sizes << std::endl;
   const int_t w_step = width/num_img_sizes;

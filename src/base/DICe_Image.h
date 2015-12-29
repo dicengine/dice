@@ -158,18 +158,13 @@ public:
   /// virtual destructor
   virtual ~Image(){};
 
-  /// write the image to tiff file
+  /// write the image to a file
+  /// (tiff, jpeg, or png, depending on which file extension is used in the name)
+  /// Tiff, jpeg, and png will truncate the intensity values to an 8-bit integer value
+  /// and scale the image so that the histogram is spread over the entire 0-255 range.
+  /// The rawi format saves the full intesity_t precision value to file
   /// \param file_name the name of the file to write to
-  void write_tiff(const std::string & file_name);
-
-  /// write the image to jpeg file
-  /// \param file_name the name of the file to write to
-  void write_jpeg(const std::string & file_name);
-
-  /// write the image to .rawi format (Raw Intensity)
-  /// rather than tiff which will truncate the intensity values to an 8-bit integer value
-  /// the rawi format saves the full intesity_t precision value to file
-  void write_rawi(const std::string & file_name);
+  void write(const std::string & file_name);
 
   /// returns the width of the image
   int_t width()const{

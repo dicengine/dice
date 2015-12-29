@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
           std::cout << "WARNING: user requested invalid rotation: " << rotation << " must be 90, 180 or 270. Skipping image rotation" << std::endl;
       }
     }
-    image->write_tiff(fName.str());
+    image->write(fName.str());
   }
 
   DICe::finalize();

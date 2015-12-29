@@ -42,9 +42,9 @@
 #include <DICe.h>
 #include <DICe_Parser.h>
 #include <DICe_Image.h>
+#include <DICe_ImageIO.h>
 #include <DICe_Schema.h>
 #include <DICe_Cine.h>
-#include <DICe_Tiff.h>
 
 #include <boost/timer.hpp>
 
@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
     }
     *outStream << "\n--- List of images constructed successfuly ---\n" << std::endl;
     // get width and heigh of reference image to use in setting up the subets
-    utils::read_tiff_image_dimensions(image_files[0].c_str(),image_width,image_height);
+    utils::read_image_dimensions(image_files[0].c_str(),image_width,image_height);
   }
   *outStream << "Image dimensions: " << image_width << " x " << image_height << std::endl;
 

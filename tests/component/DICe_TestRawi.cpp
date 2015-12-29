@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
   }
   Image array_img(intensities,array_w,array_h);
   *outStream << "saving the test image to .rawi format" << std::endl;
-  array_img.write_rawi("ArrayImg.rawi");
+  array_img.write("ArrayImg.rawi");
 
   *outStream<< "reading the .rawi file just created" << std::endl;
   Image rawi_img("ArrayImg.rawi");

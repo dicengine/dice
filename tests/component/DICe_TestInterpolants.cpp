@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     }
   }
   Teuchos::RCP<Image> array_img = Teuchos::rcp(new Image(intensities,array_w,array_h));
-  array_img->write_tiff("interp_array_img.tif");
+  array_img->write("interp_array_img.tif");
 
   const int_t cx = array_w/2;
   const int_t cy = array_h/2;

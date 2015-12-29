@@ -40,7 +40,6 @@
 // @HEADER
 
 #include <DICe_Subset.h>
-#include <DICe_Tiff.h>
 
 #include <cassert>
 

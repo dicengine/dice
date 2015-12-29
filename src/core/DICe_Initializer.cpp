@@ -561,7 +561,7 @@ Optical_Flow_Initializer::best_optical_flow_point(scalar_t & best_grad,
   //  img.intensity_array()[subset_->y(i)*img.width()+subset_->x(i)] = colors[i];
   //std::stringstream filename;
   //filename << "locations_test_" << num_images << ".tif";
-  //img.write_tiff(filename.str());
+  //img.write(filename.str());
   //num_images++;
 
   // catch the case that no valid pixels exist
@@ -883,7 +883,7 @@ Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
 //  Image out(schema_->prev_img()->width(),schema_->prev_img()->height(),output_img);
 //  std::stringstream filename;
 //  filename << "./of_imgs_" << subset_gid << "/img_" << schema_->image_frame() << ".tif";
-//  out.write_tiff(filename.str());
+//  out.write(filename.str());
 
   // Note: these are additive displacements from the previous frame so add them to what's already in the array
   (*deformation)[DISPLACEMENT_X] = initial_u_ + disp_x;

@@ -90,13 +90,13 @@ int main(int argc, char *argv[]) {
   // read the reference image
   Teuchos::RCP<Image> ref = Teuchos::rcp(new Image("./images/pc_ref.tif"));
   ref->apply_mask(area_def);
-  //ref->write_tiff("pc_ref_mask.tif");
+  //ref->write("pc_ref_mask.tif");
   *outStream << "fft of reference image" << std::endl;
   Teuchos::RCP<Image> ref_fft = image_fft(ref,true,true,100.0,true,true);
-  //ref_fft->write_tiff("ref_fft.tif");
+  //ref_fft->write("ref_fft.tif");
   *outStream << "polar transform of reference fft image" << std::endl;
   Teuchos::RCP<Image> ref_pol = polar_transform(ref_fft,true);
-  //ref_pol->write_tiff("ref_polar.tif");
+  //ref_pol->write("ref_polar.tif");
   int_t h_2 = ref_pol->height()/2;
 
   // vector with the correct solution for rotations
@@ -138,12 +138,12 @@ int main(int argc, char *argv[]) {
       name << i << ".tif";
     *outStream << "processing image: " << name.str() << std::endl;
     Teuchos::RCP<Image> img = Teuchos::rcp(new Image(name.str().c_str()));
-    //img->write_tiff("img0.tif");
+    //img->write("img0.tif");
     //*outStream << "  fft of image" << std::endl;
     Teuchos::RCP<Image> img_fft = image_fft(img,true,true,100.0,true,true);
     //std::stringstream fftName;
     //fftName << "img_fft_" << i << ".tif";
-    //img_fft->write_tiff(fftName.str());
+    //img_fft->write(fftName.str());
     //*outStream << "  polar transform of fft" << std::endl;
     Teuchos::RCP<Image> img_pol = polar_transform(img_fft,true);
     //std::stringstream polar_name_ss;
@@ -151,7 +151,7 @@ int main(int argc, char *argv[]) {
     //std::string polar_name = polar_name_ss.str();
     //img_pol->set_file_name(polar_name);
     //polar_name_ss << ".tif";
-    //img_pol->write_tiff(polar_name_ss.str());
+    //img_pol->write(polar_name_ss.str());
     //*outStream << "  phase correlating angle" << std::endl;
 
     // phase correlate
@@ -175,8 +175,8 @@ int main(int argc, char *argv[]) {
     //transName0 << "trans0_" << i << ".tif";
     //std::stringstream transName180;
     //transName180 << "trans180_" << i << ".tif";
-    //rot_ref_0->write_tiff(transName0.str());
-    //rot_ref_180->write_tiff(transName180.str());
+    //rot_ref_0->write(transName0.str());
+    //rot_ref_180->write(transName180.str());
 
     // phase correlate the rotated images
     scalar_t u_x0 = 0.0;

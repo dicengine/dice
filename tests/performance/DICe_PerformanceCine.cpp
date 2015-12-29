@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 
   // write out the first image to make sure that the cine read was successful
   //Teuchos::RCP<Image> frame_0 = cine.get_frame(0);
-  //frame_0->write_tiff("cine0.tiff");
+  //frame_0->write("cine0.tiff");
 
   cpu_timer thread_timer;
   {
@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
       //for(int_t f=0;f<frame_rcps.size();++f){
       //  std::stringstream name;
       //  name << "./frame_images/frame_" << f << ".tif";
-      //  frame_rcps[f]->write_tiff(name.str());
+      //  frame_rcps[f]->write(name.str());
       //}
     }
     thread_timer.stop();
