@@ -125,10 +125,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#ad3904320db8b4d56d072cdbaac68b0f2">~Image</a> ()</td></tr>
 <tr class="memdesc:ad3904320db8b4d56d072cdbaac68b0f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">virtual destructor <br /></td></tr>
 <tr class="separator:ad3904320db8b4d56d072cdbaac68b0f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a36ecf65992cd55e5720d76724653e667"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a36ecf65992cd55e5720d76724653e667">write_tiff</a> (const std::string &amp;<a class="el" href="class_d_i_ce_1_1_image.html#a2b7f526b8ce008c84d097e9f035d81cc">file_name</a>)</td></tr>
-<tr class="separator:a36ecf65992cd55e5720d76724653e667"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad40fa1ed7e40ab68256bb739800df993"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#ad40fa1ed7e40ab68256bb739800df993">write_rawi</a> (const std::string &amp;<a class="el" href="class_d_i_ce_1_1_image.html#a2b7f526b8ce008c84d097e9f035d81cc">file_name</a>)</td></tr>
-<tr class="separator:ad40fa1ed7e40ab68256bb739800df993"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaca1a7b5439796ba7bffe79b9c6a1439"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#aaca1a7b5439796ba7bffe79b9c6a1439">write</a> (const std::string &amp;<a class="el" href="class_d_i_ce_1_1_image.html#a2b7f526b8ce008c84d097e9f035d81cc">file_name</a>)</td></tr>
+<tr class="separator:aaca1a7b5439796ba7bffe79b9c6a1439"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1a8ed67bc7027b841fd7f5b17300eb50"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1a8ed67bc7027b841fd7f5b17300eb50"></a>
 <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a1a8ed67bc7027b841fd7f5b17300eb50">width</a> () const </td></tr>
 <tr class="memdesc:a1a8ed67bc7027b841fd7f5b17300eb50"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns the width of the image <br /></td></tr>
@@ -963,12 +961,12 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hre
 
 </div>
 </div>
-<a class="anchor" id="ad40fa1ed7e40ab68256bb739800df993"></a>
+<a class="anchor" id="aaca1a7b5439796ba7bffe79b9c6a1439"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void DICe::Image::write_rawi </td>
+          <td class="memname">void DICe::Image::write </td>
           <td>(</td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>file_name</em></td><td>)</td>
@@ -976,24 +974,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hre
         </tr>
       </table>
 </div><div class="memdoc">
-<p>write the image to .rawi format (Raw Intensity) rather than tiff which will truncate the intensity values to an 8-bit integer value the rawi format saves the full intesity_t precision value to file </p>
-
-</div>
-</div>
-<a class="anchor" id="a36ecf65992cd55e5720d76724653e667"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void DICe::Image::write_tiff </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>file_name</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>write the image to tiff file </p><dl class="params"><dt>Parameters</dt><dd>
+<p>write the image to a file (tiff, jpeg, or png, depending on which file extension is used in the name) Tiff, jpeg, and png will truncate the intensity values to an 8-bit integer value and scale the image so that the histogram is spread over the entire 0-255 range. The rawi format saves the full intesity_t precision value to file </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">file_name</td><td>the name of the file to write to </td></tr>
   </table>
@@ -1048,7 +1029,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hre
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sat Dec 26 2015 05:14:20 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jan 3 2016 05:28:43 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

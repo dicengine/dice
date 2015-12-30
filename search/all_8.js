@@ -9,6 +9,7 @@ var searchData=
   ['image_5ffft',['image_fft',['../namespace_d_i_ce.html#abec7646f8c9de955a9f3e42ccc6bc645',1,'DICe::image_fft(Teuchos::RCP&lt; Image &gt; image, Teuchos::ArrayRCP&lt; scalar_t &gt; &amp;real, Teuchos::ArrayRCP&lt; scalar_t &gt; &amp;complex, const int_t inverse=0, const bool hamming_filter=true)'],['../namespace_d_i_ce.html#a4264ea158c0aa53057b53e2e8e4b4db6',1,'DICe::image_fft(Teuchos::RCP&lt; Image &gt; image, const bool hamming_filter=true, const bool apply_log=true, const scalar_t scale_factor=100.0, bool shift=true, const bool high_pass_filter=false)']]],
   ['image_5ffile_5fextension',['image_file_extension',['../namespace_d_i_ce.html#ab3514c25e61c0f61b4d49ad081e706d8',1,'DICe']]],
   ['image_5ffile_5fprefix',['image_file_prefix',['../namespace_d_i_ce.html#a101c6c13fb3dafa230f6c42333b36de1',1,'DICe']]],
+  ['image_5ffile_5ftype',['Image_File_Type',['../namespace_d_i_ce.html#ac9e56ca8b0324ffc892642104e8fa302',1,'DICe::Image_File_Type()'],['../namespace_d_i_ce_1_1utils.html#ac111da24071199cbb3ebc6dc77a2571e',1,'DICe::utils::image_file_type()']]],
   ['image_5ffolder',['image_folder',['../namespace_d_i_ce.html#ac4080b2a31d8c70fc03b4bca2236e804',1,'DICe']]],
   ['image_5fframe',['image_frame',['../class_d_i_ce_1_1_schema.html#aeeb23d5812d2521c3d161a3eb4aa28fb',1,'DICe::Schema']]],
   ['image_5fframe_5f',['image_frame_',['../class_d_i_ce_1_1_schema.html#a563f682625599d4d927855073eacd1d2',1,'DICe::Schema']]],

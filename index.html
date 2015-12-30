@@ -521,13 +521,18 @@ for i in range(0,NUM_SUBSETS):
 </pre><p>The python scripts above are only meant to provide a simple example. Obviously, there are many ways python can be used to generate more sophisticated plots.</p>
 <h1><a class="anchor" id="BuildingDICe"></a>Building <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> </h1>
 <h2>Requirements </h2>
-<p><a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> can be built and run on Mac OS X, Windows, and Linux. The primary intended platforms are Mac OS X and Linux, but Windows builds are also possible. The prerequisite dependencies required for installing <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> include</p>
+<p><a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> can be built and run on Mac OS X, Windows, and Linux. The prerequisite dependencies required for installing <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> include:</p>
 <ul>
 <li><a href="http://www.cmake.org">CMake</a></li>
 <li><a href="http://trilinos.org">Trilinos</a></li>
 <li>LAPACK or CLAPACK (for Windows, only CLAPACK is supported)</li>
 <li><a href="http://www.boost.org">Boost</a></li>
 <li><a href="http://www.remotesensing.org/libtiff/">LibTiff</a></li>
+</ul>
+<p>Optionally, if jpeg or png files are used for input, the following libraries are needed:</p>
+<ul>
+<li><a href="http://www.libpng.org/pub/png/libpng.html">LibPng</a></li>
+<li><a href="http://libjpeg.sourceforge.net/">LibJpeg</a></li>
 </ul>
 <h2>CMake </h2>
 <p><a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> makes use of CMake for build configuration. Version 2.8 or greater is required. Sample CMake scripts for building Trilinos and <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> are in the folder <code>dice\scripts</code></p>
@@ -560,7 +565,7 @@ git config --global user.email youremail@email.com
 <h3>Mac OSX or Linux</h3>
 <p>To build <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> on Mac OSX or Linux, create a folder in the main directory called build </p><pre class="fragment">$ mkdir build 
 </pre><p>Change directory into the build directory and copy the CMake script from the scripts folder. </p><pre class="fragment">$ cd build
-$ cp ../scripts/example-do-cmake ./do-cmake
+$ cp ../scripts/do-cmake .
 $ chmod +x ./do-cmake
 </pre><p>Edit the script to have the correct path locations. Then build <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> </p><pre class="fragment">$ ./do-cmake
 $ make install
@@ -572,7 +577,9 @@ $ make install
 $ nmake
 </pre><p>Once CLAPACK has built, Trilinos must be built. A sample <code>do-trilinos-cmake-win.bat</code> file is provided in the <code>\dice\scripts</code> folder. The same process for building CLAPACK can be used to build Trilinos and eventually <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a>. A sample <code>do-dice-cmake-win.bat</code> file is also included in the repository in the <code>\dice\scripts</code> folder.</p>
 <h2>Tiff </h2>
-<p>LibTiff must be installed before building <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a>. LibTiff is used in the reading of <code>.tiff</code> images. There are many ways to install LibTiff, see <a href="http://www.remotesensing.org/libtiff/">here</a> for more information.</p>
+<p>LibTiff must be installed before building <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a>. LibTiff is used in the reading of <code>.tiff</code> images. There are many ways to install LibTiff, see <a href="http://www.remotesensing.org/libtiff/">here</a> for more information. If the tiff library is not in the system path, the user can set the <code>TIFF_DIR</code> variabe in the <code>do-cmake</code> configuration script to help CMake find the library.</p>
+<h2>Jpeg and Png </h2>
+<p>The optional <code>.jpeg</code> or <code>.jpg</code> and <code>.png</code> file formats will automatically be enabled if the jpeg and png libraries are in the system path. Otherwise, the <code>JPEG_DIR</code> or <code>PNG_DIR</code> variables must be set in the <code>do-cmake</code> script in order for CMake to find these libraries.</p>
 <h2>Boost </h2>
 <p>Boost is also a required dependency. <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> makes use of the graphics image library in boost. This enables reading standard image formats like <code>.tiff</code> files into <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a>.</p>
 <h2><a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> Configuration Options </h2>
@@ -603,7 +610,7 @@ $ nmake
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sat Dec 26 2015 05:14:23 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jan 3 2016 05:28:45 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>
