@@ -1,4 +1,10 @@
+DICe
+====
+
 DICe is an open source digital image correlation (DIC) tool intended for use as a module in an external application or as a standalone analysis code. Its primary capability is computing full-field displacements and strains from sequences of digital images. These images are typically of a material sample undergoing a characterization experiment, but DICe is also useful for other applications (for example, trajectory tracking). DICe is machine portable (Windows, Linux and Mac) and can be effectively deployed on a high performance computing platform (DICe uses MPI parallelism as well as threaded on-core parallelism). Capabilities from DICe can be invoked through a customized library interface, via source code integration of DICe classes or through a standalone executable.
+
+Features
+--------
 
 DICe is different than other available DIC codes in the following ways:
 
@@ -10,9 +16,13 @@ Lastly, DICe also includes a well-posed global DIC formulation that addresses in
 
 For more information visit: https://dice.sandia.gov
 
-Documentation: http://dicengine.github.io/dice
+Documentation
+-------------
+[http://dicengine.github.io/dice](http://dicengine.github.io/dice)
 
-Tutorials: http://dicengine.github.io/dice/pages.html
+Tutorials
+---------
+[http://dicengine.github.io/dice/pages.html](http://dicengine.github.io/dice/pages.html)
 
 Citing DICe:
 
