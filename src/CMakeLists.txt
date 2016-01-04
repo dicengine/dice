@@ -22,3 +22,7 @@ add_subdirectory(fft)
 # Dynamically linked library
 #
 add_subdirectory(api)
+
+IF(DICE_ENABLE_GLOBAL)
+  add_subdirectory(mesh)
+ENDIF()

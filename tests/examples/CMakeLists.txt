@@ -34,32 +34,37 @@ ENDFOREACH ( )
 #  Examples using DICe in an custom app
 #
 
-# Copy over all the test files (input and results)
-FILE(COPY custom_app DESTINATION . )
-# create a test
-ADD_TEST ( NAME RUN_EXAMPLE_custom_app
-   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/custom_app
-   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/custom_app/build/main)
-set_tests_properties(RUN_EXAMPLE_custom_app PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
+# only enable the custom app for the local DIC for now
+IF(NOT DICE_ENABLE_GLOBAL)
 
-# use an external project to build the custom_app example
+  # Copy over all the test files (input and results)
+  FILE(COPY custom_app DESTINATION . )
+  # create a test
+  ADD_TEST ( NAME RUN_EXAMPLE_custom_app
+     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/custom_app
+     COMMAND ${CMAKE_CURRENT_BINARY_DIR}/custom_app/build/main)
+  set_tests_properties(RUN_EXAMPLE_custom_app PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
 
-include(ExternalProject)
-MESSAGE(STATUS "Building cutsom_app_example from ${CMAKE_CURRENT_SOURCE_DIR}")
-ExternalProject_Add(custom_app_example
-  PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/custom_app
-  DOWNLOAD_COMMAND ""
-  UPDATE_COMMAND ""
-  INSTALL_COMMAND ""
-  BUILD_COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/tests/examples/custom_app/build --clean-first
-  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/custom_app
-  BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/custom_app/build
-  TMP_DIR ${CMAKE_CURRENT_BINARY_DIR}/utils_tmp
-  CMAKE_CACHE_ARGS -DDICE_LIB_DIR:STRING=${DICE_OUTPUT_PREFIX}/lib -DDICE_HEADER_DIR:STRING=${DICE_HEADER_DIRS} -DDICE_TRILINOS_DIR:STRING=${DICE_TRILINOS_DIR} -DTIFF_DIR:STRING=${TIFF_DIR} -DJPEG_DIR:STRING=${JPEG_DIR} -DPNG_DIR:STRING=${PNG_DIR} -DBOOST_ROOT:STRING=${BOOST_ROOT} -DDICE_ENABLE_MANYCORE:BOOL=${DICE_ENABLE_MANYCORE} -DDICE_MPI:BOOL=${DICE_MPI})
+  # use an external project to build the custom_app example
+  
+  include(ExternalProject)
+  MESSAGE(STATUS "Building cutsom_app_example from ${CMAKE_CURRENT_SOURCE_DIR}")
+  ExternalProject_Add(custom_app_example
+    PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/custom_app
+    DOWNLOAD_COMMAND ""
+    UPDATE_COMMAND ""
+    INSTALL_COMMAND ""
+    BUILD_COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/tests/examples/custom_app/build --clean-first
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/custom_app
+    BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/custom_app/build
+    TMP_DIR ${CMAKE_CURRENT_BINARY_DIR}/utils_tmp
+    CMAKE_CACHE_ARGS -DDICE_LIB_DIR:STRING=${DICE_OUTPUT_PREFIX}/lib -DDICE_HEADER_DIR:STRING=${DICE_HEADER_DIRS} -DDICE_TRILINOS_DIR:STRING=${DICE_TRILINOS_DIR} -DTIFF_DIR:STRING=${TIFF_DIR} -DJPEG_DIR:STRING=${JPEG_DIR} -DPNG_DIR:STRING=${PNG_DIR} -DBOOST_ROOT:STRING=${BOOST_ROOT} -DDICE_ENABLE_MANYCORE:BOOL=${DICE_ENABLE_MANYCORE} -DDICE_MPI:BOOL=${DICE_MPI})
 
-# force rebuild of custom_app example
-ExternalProject_Add_Step(custom_app_example forcebuild
-  COMMAND ${CMAKE_COMMAND} -E echo "Force rebuild of custom_app_example"
-  DEPENDEES configure
-  DEPENDERS build
-  ALWAYS 1)
+  # force rebuild of custom_app example
+  ExternalProject_Add_Step(custom_app_example forcebuild
+    COMMAND ${CMAKE_COMMAND} -E echo "Force rebuild of custom_app_example"
+    DEPENDEES configure
+    DEPENDERS build
+    ALWAYS 1)
+
+ENDIF(NOT DICE_ENABLE_GLOBAL)
