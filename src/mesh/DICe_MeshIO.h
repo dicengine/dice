@@ -68,7 +68,7 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   const std::string & output_folder);
 
 /// Create an output file with the face/edge information
-/// /param mesh The mesh to use for this function
+/// \param mesh The mesh to use for this function
 /// \param output_folder The name of the output folder
 void create_face_edge_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   const std::string & output_folder);
@@ -174,7 +174,7 @@ void compute_submesh_obj_from_tri3(
 /// \param face_area [out] The area for this particular face
 /// \param normal [out] Pointer to an array with the normal vector components
 /// \param subtet_centroid [out] Pointer to an array with the centroid of this subelement
-/// \param subtet_edge_centroid [out] Pointer to an array with the centroid of the face
+/// \param subtet_face_centroid [out] Pointer to an array with the centroid of the face
 void compute_submesh_obj_from_tet4(
   Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> node_A,
@@ -243,6 +243,7 @@ scalar_t tetra4_volume(Teuchos::ArrayRCP<const scalar_t> coords_values,
 void create_cell_size_and_radius(Teuchos::RCP<Mesh> mesh);
 
 /// Compute a specific elemnet type size
+/// \param mesh the mesh
 /// \param coords_values Array with the coordinate values
 /// \param element Pointer to the particular element
 void hex8_volume_radius(Teuchos::RCP<Mesh> mesh,
@@ -250,6 +251,7 @@ void hex8_volume_radius(Teuchos::RCP<Mesh> mesh,
   const Teuchos::RCP<DICe::mesh::Element>  element);
 
 /// Compute a specific elemnet type size
+/// \param mesh the mesh
 /// \param coords_values Array with the coordinate values
 /// \param element Pointer to the particular element
 void tetra4_volume_radius(Teuchos::RCP<Mesh> mesh,
@@ -257,6 +259,7 @@ void tetra4_volume_radius(Teuchos::RCP<Mesh> mesh,
   const Teuchos::RCP<DICe::mesh::Element>  element);
 
 /// Compute a specific elemnet type size
+/// \param mesh the mesh
 /// \param coords_values Array with the coordinate values
 /// \param element Pointer to the particular element
 void quad4_area_radius(Teuchos::RCP<Mesh> mesh,
@@ -264,6 +267,7 @@ void quad4_area_radius(Teuchos::RCP<Mesh> mesh,
   const Teuchos::RCP<DICe::mesh::Element> element);
 
 /// Compute a specific elemnet type size
+/// \param mesh the mesh
 /// \param coords_values Array with the coordinate values
 /// \param element Pointer to the particular element
 void tri3_area_radius(Teuchos::RCP<Mesh> mesh,
@@ -271,6 +275,7 @@ void tri3_area_radius(Teuchos::RCP<Mesh> mesh,
   const Teuchos::RCP<DICe::mesh::Element> element);
 
 /// Compute a specific elemnet type size
+/// \param mesh the mesh
 /// \param coords_values Array with the coordinate values
 /// \param element Pointer to the particular element
 void pyramid5_volume_radius(Teuchos::RCP<Mesh> mesh,

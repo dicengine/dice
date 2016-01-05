@@ -1530,6 +1530,7 @@ public:
   /// \param order The gauss integration order
   /// \param locations The natural coordinates listed by point in row and dim in column
   /// \param weights The integration weights for each point
+  /// \param num_points the number of integration points
   virtual void get_natural_integration_points(const int_t order,
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
     Teuchos::ArrayRCP<scalar_t> & weights,
@@ -1630,6 +1631,7 @@ public:
     const scalar_t * point_coords,
     const scalar_t & coefficient);
 
+  /// See base class documentation
   virtual void get_natural_integration_points(const int_t order,
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
     Teuchos::ArrayRCP<scalar_t> & weights,
@@ -1677,6 +1679,7 @@ public:
     const scalar_t * point_coords,
     const scalar_t & coefficient);
 
+  /// See base class documentation
   virtual void get_natural_integration_points(const int_t order,
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
     Teuchos::ArrayRCP<scalar_t> & weights,
@@ -1721,6 +1724,7 @@ public:
     const scalar_t * point_coords,
     const scalar_t & coefficient);
 
+  /// See base class documentation
   virtual void get_natural_integration_points(const int_t order,
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
     Teuchos::ArrayRCP<scalar_t> & weights,
@@ -1836,6 +1840,7 @@ void calc_jacobian(const scalar_t * xcap,
 /// \param inv_jacobian the inverse of the jacobian matrix
 /// \param num_elem_nodes The number of nodes per element
 /// \param dim spatial dimension
+/// \param solid_B [out] the output B vector
 void calc_B(const scalar_t * DN,
   const scalar_t * inv_jacobian,
   int_t num_elem_nodes,

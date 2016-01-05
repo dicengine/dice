@@ -240,7 +240,7 @@ std::string tostring(const field_enums::Entity_Rank & entity_rank)
     return pos->second;
 }
 
-unsigned toindex(const Component comp)
+int_t toindex(const Component comp)
 {
   if(comp == NO_COMP || comp == X_COMP)
     return 0;
@@ -257,14 +257,14 @@ unsigned toindex(const Component comp)
   return -1;
 }
 
-Physics_Term string_to_physics_term(const std::string & input_string_type)
+Physics_Term string_to_physics_term(const std::string & input_string)
 {
   create_string_maps();
-  std::map<std::string,Physics_Term,std::string>::iterator pos=string_physics_term.find(input_string_type);
+  std::map<std::string,Physics_Term,std::string>::iterator pos=string_physics_term.find(input_string);
   if (pos == string_physics_term.end())
   {
     std::stringstream oss;
-    oss << "Unknown physics term: " << input_string_type << std::endl;
+    oss << "Unknown physics term: " << input_string << std::endl;
     oss << "Valid options are: " << std::endl;
     for (std::map<std::string,Physics_Term,std::string >::iterator it = string_physics_term.begin(); it != string_physics_term.end(); ++it)
     {
@@ -276,14 +276,14 @@ Physics_Term string_to_physics_term(const std::string & input_string_type)
 }
 
 
-Component string_to_component(const std::string & input_string_type)
+Component string_to_component(const std::string & input_string)
 {
   create_string_maps();
-  std::map<std::string,Component,std::string>::iterator pos=string_component.find(input_string_type);
+  std::map<std::string,Component,std::string>::iterator pos=string_component.find(input_string);
   if (pos == string_component.end())
   {
     std::stringstream oss;
-    oss << "Unknown component: " << input_string_type << std::endl;
+    oss << "Unknown component: " << input_string << std::endl;
     oss << "Valid options are: " << std::endl;
     for (std::map<std::string,Component,std::string>::iterator it = string_component.begin(); it != string_component.end(); ++it)
     {
@@ -294,7 +294,7 @@ Component string_to_component(const std::string & input_string_type)
   return pos->second;
 }
 
-std::string index_to_component(const unsigned index)
+std::string index_to_component(const int_t index)
 {
   if (index==0)
     return "X";
@@ -306,7 +306,7 @@ std::string index_to_component(const unsigned index)
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"Unknown index");
 }
 
-std::string index_to_component_string(const unsigned index)
+std::string index_to_component_string(const int_t index)
 {
   if (index==0)
     return "_X";
@@ -318,14 +318,14 @@ std::string index_to_component_string(const unsigned index)
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"Unknown index");
 }
 
-Base_Element_Type string_to_base_element_type(const std::string & input_string_type)
+Base_Element_Type string_to_base_element_type(const std::string & input_string)
 {
   create_string_maps();
-  std::map<std::string,Base_Element_Type,std::string>::iterator pos=string_base_element_type.find(input_string_type);
+  std::map<std::string,Base_Element_Type,std::string>::iterator pos=string_base_element_type.find(input_string);
   if (pos == string_base_element_type.end())
   {
     std::stringstream oss;
-    oss << "Unknown base element type: " << input_string_type << std::endl;
+    oss << "Unknown base element type: " << input_string << std::endl;
     oss << "Valid options are: " << std::endl;
     for (std::map<std::string,Base_Element_Type,std::string >::iterator it = string_base_element_type.begin(); it != string_base_element_type.end(); ++it)
     {
@@ -336,14 +336,14 @@ Base_Element_Type string_to_base_element_type(const std::string & input_string_t
   return pos->second;
 }
 
-field_enums::Field_Type string_type_to_field_type(const std::string & input_string_type)
+field_enums::Field_Type string_to_field_type(const std::string & input_string)
 {
   create_string_maps();
-  std::map<std::string,field_enums::Field_Type,std::string>::iterator pos=string_field_type.find(input_string_type);
+  std::map<std::string,field_enums::Field_Type,std::string>::iterator pos=string_field_type.find(input_string);
   if (pos == string_field_type.end())
   {
     std::stringstream oss;
-    oss << "Unknown field type: " << input_string_type << std::endl;
+    oss << "Unknown field type: " << input_string << std::endl;
     oss << "Valid options are: " << std::endl;
     for (std::map<std::string,field_enums::Field_Type,std::string>::iterator it = string_field_type.begin(); it != string_field_type.end(); ++it)
     {
@@ -381,14 +381,14 @@ int_t num_field_names()
   return string_field_name.size();
 }
 
-field_enums::Field_Name string_type_to_field_name(const std::string & input_string_type)
+field_enums::Field_Name string_to_field_name(const std::string & input_string)
 {
   create_string_maps();
-  std::map<std::string,field_enums::Field_Name,std::string >::iterator pos=string_field_name.find(input_string_type);
+  std::map<std::string,field_enums::Field_Name,std::string >::iterator pos=string_field_name.find(input_string);
   if (pos == string_field_name.end())
   {
     std::stringstream oss;
-    oss << "Unknown field name: " << input_string_type << std::endl;
+    oss << "Unknown field name: " << input_string << std::endl;
     oss << "Valid options are: " << std::endl;
     for (std::map<std::string,field_enums::Field_Name,std::string>::iterator it = string_field_name.begin(); it != string_field_name.end(); ++it)
     {
@@ -399,14 +399,14 @@ field_enums::Field_Name string_type_to_field_name(const std::string & input_stri
   return pos->second;
 }
 
-field_enums::Entity_Rank string_to_entity_rank(const std::string & input_string_type)
+field_enums::Entity_Rank string_to_entity_rank(const std::string & input_string)
 {
   create_string_maps();
-  std::map<std::string,field_enums::Entity_Rank,std::string>::iterator pos=string_entity_rank.find(input_string_type);
+  std::map<std::string,field_enums::Entity_Rank,std::string>::iterator pos=string_entity_rank.find(input_string);
   if (pos == string_entity_rank.end())
   {
     std::stringstream oss;
-    oss << "Unknown field rank: " << input_string_type << std::endl;
+    oss << "Unknown field rank: " << input_string << std::endl;
     oss << "Valid options are: " << std::endl;
     for (std::map<std::string,field_enums::Entity_Rank,std::string>::iterator it = string_entity_rank.begin(); it != string_entity_rank.end(); ++it)
     {
