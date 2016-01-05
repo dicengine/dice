@@ -89,10 +89,10 @@ int main(int argc, char *argv[]) {
     *outStream << "Correlation parameters not specified by user" << std::endl;
   }
 
-  // decypher the image file names (note: zero entry is the reference image):
+  // decipher the image file names (note: zero entry is the reference image):
 
   // TODO some error checking to prevent the wrong image type (jpg, text, ...)
-  std::vector<std::string> image_files = DICe::decypher_image_file_names(input_params);
+  std::vector<std::string> image_files = DICe::decipher_image_file_names(input_params);
 
   int_t num_images = 0;
   int_t cine_ref_index = -1;

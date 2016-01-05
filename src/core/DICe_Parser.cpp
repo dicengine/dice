@@ -1018,7 +1018,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
 }
 
 DICE_LIB_DLL_EXPORT
-const std::vector<std::string> decypher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params){
+const std::vector<std::string> decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params){
   int proc_rank = 0;
 #if DICE_MPI
   int mpi_is_initialized = 0;
