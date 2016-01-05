@@ -500,7 +500,8 @@ Mesh::create_face_cell_field_maps(){
       // check if this elem is local to this process:
       if(scalar_elem_dist_map_->get_local_element(elem_gid)<0) continue;
       // add another face if the element is local to this process
-      assert(elem_face_pairs.find(std::pair<int_t,int_t>(elem_gid,side_id))==elem_face_pairs.end() && "Error: Only one side set can be specified per element edge.");
+      TEUCHOS_TEST_FOR_EXCEPTION(elem_face_pairs.find(std::pair<int_t,int_t>(elem_gid,side_id))!=elem_face_pairs.end(),
+        std::runtime_error,"Error: Only one side set can be specified per element edge.");
       elem_face_pairs.insert(std::pair<int_t,int_t>(elem_gid,side_id));
       //num_boundary_faces_this_proc+=2; // each boundary face is split in two
       num_faces_this_proc+=2; // each boundary face is split in two
@@ -870,7 +871,7 @@ CVFEM_Linear_Tri3::get_natural_integration_points(const int_t order,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
   Teuchos::ArrayRCP<scalar_t> & weights,
   int_t & num_points){
-  assert(order > 0 && order <= 5);
+  TEUCHOS_TEST_FOR_EXCEPTION(order < 0 || order > 5,std::runtime_error,"");
 
   const int_t spa_dim = 3;
 
@@ -954,7 +955,7 @@ CVFEM_Linear_Tri3::get_natural_integration_points(const int_t order,
     weights[6] = 0.125939180544827;
   }
   else{
-    assert(false && "Error: invalid pixel integration order.");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid pixel integration order.");
   }
 }
 
@@ -1248,7 +1249,7 @@ bool
 FEM_Linear_Hex8::is_in_element(const scalar_t * nodal_coords,
   const scalar_t * point_coords,
   const scalar_t & coefficient){
-  assert(false && "Method not implemented yet");
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Method not implemented yet");
   return false;
 }
 
@@ -1371,7 +1372,7 @@ bool
 FEM_Linear_Quad4::is_in_element(const scalar_t * nodal_coords,
   const scalar_t * point_coords,
   const scalar_t & coefficient){
-  assert(false && "Method not implemented yet");
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Method not implemented yet");
   return false;
 }
 
@@ -1658,7 +1659,7 @@ void gauss_1D(Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & r,
     w[8][0] =  0.081274388361574;
     break;
   default:
-    assert(false);
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
     break;
   }
 }
@@ -1767,7 +1768,7 @@ void calc_jacobian(const scalar_t * xcap,
 
   if(dim==2){
     J = jacobian[0]*jacobian[3] - jacobian[1]*jacobian[2];
-    assert(J>0.0 && "Error: determinant 0.0 encountered or negative det");
+    TEUCHOS_TEST_FOR_EXCEPTION(J<=0.0,std::runtime_error,"Error: determinant 0.0 encountered or negative det");
     inv_jacobian[0] =  jacobian[3] / J;
     inv_jacobian[1] = -jacobian[1] / J;
     inv_jacobian[2] = -jacobian[2] / J;
@@ -1776,7 +1777,7 @@ void calc_jacobian(const scalar_t * xcap,
   else if(dim==3){
     J =   jacobian[0]*jacobian[4]*jacobian[8] + jacobian[1]*jacobian[5]*jacobian[6] + jacobian[2]*jacobian[3]*jacobian[7]
         - jacobian[6]*jacobian[4]*jacobian[2] - jacobian[7]*jacobian[5]*jacobian[0] - jacobian[8]*jacobian[3]*jacobian[1];
-    assert(J>0.0 && "Error: determinant 0.0 encountered or negative det");
+    TEUCHOS_TEST_FOR_EXCEPTION(J<=0.0,std::runtime_error,"Error: determinant 0.0 encountered or negative det");
     inv_jacobian[0] = ( -jacobian[5]*jacobian[7] + jacobian[4]*jacobian[8]) /  J;
     inv_jacobian[1] = (  jacobian[2]*jacobian[7] - jacobian[1]*jacobian[8]) /  J;
     inv_jacobian[2] = ( -jacobian[2]*jacobian[4] + jacobian[1]*jacobian[5]) /  J;
@@ -1788,7 +1789,7 @@ void calc_jacobian(const scalar_t * xcap,
     inv_jacobian[8] = ( -jacobian[1]*jacobian[3] + jacobian[0]*jacobian[4]) /  J;
   }
   else
-    assert(false);
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
 
 //  std::cout << " J " << J << std::endl;
 //  std::cout << " inv_jacobian " << std::endl;

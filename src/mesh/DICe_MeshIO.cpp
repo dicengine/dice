@@ -62,13 +62,13 @@ Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
     pos_in = serial_input_filename.find(".e");
   }
   if(pos_in==std::string::npos)
-    assert(false && "Error, input mesh files must have the extension .g or .e");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, input mesh files must have the extension .g or .e");
   size_t pos_out = serial_output_filename.find(".g");
   if(pos_out==std::string::npos){
     pos_out = serial_output_filename.find(".e");
   }
   if(pos_out==std::string::npos)
-    assert(false && "Error, output mesh files must have the extension .g or .e");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, output mesh files must have the extension .g or .e");
 
   in_file_base << serial_input_filename;
   out_file_base << serial_output_filename;
@@ -78,7 +78,7 @@ Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
 #ifdef HAVE_MPI
   int_t mpi_is_initialized = 0;
   MPI_Initialized(&mpi_is_initialized);
-  assert(mpi_is_initialized && "Error: if MPI is enabled, MPI must be initialized at this point.");
+  TEUCHOS_TEST_FOR_EXCEPTION(!mpi_is_initialized,std::runtime_error,"Error: if MPI is enabled, MPI must be initialized at this point.");
   MPI_Comm_size(MPI_COMM_WORLD,&num_procs);
   MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);
 #endif
@@ -482,7 +482,7 @@ read_exodus_coordinates(Teuchos::RCP<Mesh> mesh){
   int_t num_dim, num_nodes, num_elem, num_elem_blk, num_node_sets, num_side_sets;
   error_int  = ex_get_init(input_exoid, title, &num_dim, &num_nodes, &num_elem,
     &num_elem_blk, &num_node_sets, &num_side_sets);
-  assert(num_dim==spa_dim);
+  TEUCHOS_TEST_FOR_EXCEPTION(num_dim!=spa_dim,std::runtime_error,"");
 
   Teuchos::RCP<MultiField > initial_coords = mesh->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
   Teuchos::RCP<MultiField > current_coords = mesh->get_overlap_field(field_enums::CURRENT_COORDINATES_FS);
@@ -1399,7 +1399,8 @@ initialize_control_volumes(Teuchos::RCP<Mesh> mesh){
   Teuchos::RCP<DICe::mesh::internal_face_edge_set> internal_face_edge_set = mesh->get_internal_face_edge_set();
   DICe::mesh::side_set_info & ss_info = *mesh->get_side_set_info();
   const int_t num_sets = ss_info.ids.size();
-  assert(num_sets!=0 && "Error: No side sets have been specified in the mesh (all edges of the domain must be part of a side set, and only one side set)");
+  TEUCHOS_TEST_FOR_EXCEPTION(num_sets==0,std::runtime_error,
+    "Error: No side sets have been specified in the mesh (all edges of the domain must be part of a side set, and only one side set)");
   for(int_t id_it=1;id_it<=num_sets;++id_it){
     const int_t set_index = ss_info.get_set_index(id_it);
     const int_t num_sides_this_set = ss_info.num_side_per_set[set_index];
@@ -1436,7 +1437,7 @@ initialize_control_volumes(Teuchos::RCP<Mesh> mesh){
         target_node_2 = connectivity[0];
       }
       else{
-        assert(false && "Error: invalid side ID ");
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid side ID ");
       }
       //std::cout << " target_node_1 gid " << target_node_1->global_id() << " target_node_2 gid " << target_node_2->global_id() << std::endl;
       // create TWO faces, one for each node:
@@ -1471,7 +1472,7 @@ initialize_control_volumes(Teuchos::RCP<Mesh> mesh){
       const scalar_t edge_length = std::sqrt(dx*dx + dy*dy);
       //std::cout << " left centroid " << lcx << " " << lcy << " right centroid " << rcx << " " << rcy << " length " << edge_length << std::endl;
       // normal (same for both sides):
-      assert(edge_length>0.0);
+      TEUCHOS_TEST_FOR_EXCEPTION(edge_length<=0.0,std::runtime_error,"");
       const scalar_t nx = dy/edge_length;
       const scalar_t ny = dx/edge_length;
       //std::cout << " normal " << nx << " " << ny << std::endl;
