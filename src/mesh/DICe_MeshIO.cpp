@@ -443,6 +443,9 @@ Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
 
   mesh->create_face_cell_field_maps();
 
+  // read the coordinates from the mesh file:
+  DICe::mesh::read_exodus_coordinates(mesh);
+
   return mesh;
 }
 
