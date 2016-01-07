@@ -78,7 +78,7 @@ ELSE()
 ENDIF()
 
 if (Boost_FOUND)
-  find_library(tiff_lib NAMES tiff PATHS ${TIFF_DIR})
+  find_library(tiff_lib NAMES tiff PATHS ${TIFF_DIR}/lib)
   if(tiff_lib)
     MESSAGE(STATUS "Tiff file format enabled. Using tiff library from ${tiff_lib}")
     SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${tiff_lib})
@@ -116,17 +116,17 @@ SET(DICE_TRILINOS_LIB_DIRS
     ${Trilinos_TPL_LIBRARY_DIRS}
   )
 
-link_directories(${TIFF_DIR}
-  ${JPEG_DIR}
-  ${PNG_DIR})
+link_directories(${TIFF_DIR}/lib
+  ${JPEG_DIR}/lib
+  ${PNG_DIR}/lib)
 SET(DICE_HEADER_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${TIFF_DIR}
   ${JPEG_DIR}
   ${PNG_DIR}
-  ${TIFF_DIR}/../include/
-  ${JPEG_DIR}/../include/
-  ${PNG_DIR}/../include/
+  ${TIFF_DIR}/include/
+  ${JPEG_DIR}/include/
+  ${PNG_DIR}/include/
   )
 
 # if debug messages are turned on:

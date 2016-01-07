@@ -14,6 +14,7 @@ IF(WIN32)
   FIND_PACKAGE(clapack PATHS ${CLAPACK_DIR})
   IF(clapack_FOUND)
     MESSAGE("\nFound CLAPACK in ${CLAPACK_DIR}")
+    link_directories(${CLAPACK_DIR}/F2CLIBS/libf2c)
   ELSE(clapack_FOUND)
     MESSAGE("\nERROR: could not find CLAPACK in the following directory: ${CLAPACK_DIR}")
   ENDIF(clapack_FOUND)
@@ -111,9 +112,9 @@ SET(DICE_TRILINOS_LIB_DIRS
   )
 
 link_directories(${DICE_TRILINOS_LIB_DIRS}
-  ${TIFF_DIR}
-  ${JPEG_DIR}
-  ${PNG_DIR}
+  ${TIFF_DIR}/lib
+  ${JPEG_DIR}/lib
+  ${PNG_DIR}/lib
   ${CMAKE_INSTALL_PREFIX}/lib)
 
 SET(DICE_HEADER_DIRS
@@ -127,9 +128,9 @@ SET(DICE_HEADER_DIRS
   ${TIFF_DIR}
   ${JPEG_DIR}
   ${PNG_DIR}
-  ${TIFF_DIR}/../include
-  ${JPEG_DIR}/../include
-  ${PNG_DIR}/../include
+  ${TIFF_DIR}/include
+  ${JPEG_DIR}/include
+  ${PNG_DIR}/include
   )
 
 SET(DICE_LIBRARIES
@@ -172,10 +173,13 @@ ENDIF()
 
 
 if (Boost_FOUND)
-  find_library(tiff_lib NAMES tiff PATHS ${TIFF_DIR})
+  find_library(tiff_lib NAMES tiff PATHS ${TIFF_DIR}/lib)
   if(tiff_lib)
     MESSAGE(STATUS "Tiff file format enabled. Using tiff library from ${tiff_lib}")
     SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${tiff_lib})
+    IF(WIN32)
+      FILE(COPY ${TIFF_DIR}/bin/tiff.dll DESTINATION ${DICE_OUTPUT_PREFIX}/bin)
+    ENDIF()
   else()
     MESSAGE(FATAL_ERROR "Could not find required tiff library.")
   endif()

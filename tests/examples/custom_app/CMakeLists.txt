@@ -108,7 +108,7 @@ add_executable(main main.cpp)
 # NOTE: If this example is used as a template, the TIFF_DIR variable should be defined
 # in your do-cmake script with -D TIFF_DIR:STRING="<location>" only if libtiff is not
 # installed in a system path, otherwise it will get picked up by find_package
-find_library(tiff_lib NAMES tiff PATHS ${TIFF_DIR})
+find_library(tiff_lib NAMES tiff PATHS ${TIFF_DIR}/lib)
 if(NOT tiff_lib)
   MESSAGE(FATAL_ERROR "Tiff library is required, but not found")
 else()
@@ -118,7 +118,7 @@ endif()
 # NOTE: If this example is used as a template, the optional JPEG_DIR variable can be defined
 # in your do-cmake script with -D JPEG_DIR:STRING="<location>" only if libjpeg is not
 # installed in a system path, otherwise it will get picked up by find_package
-find_library(jpeg_lib NAMES jpeg PATHS ${JPEG_DIR})
+find_library(jpeg_lib NAMES jpeg PATHS ${JPEG_DIR}/lib)
 if(jpeg_lib)
   ADD_DEFINITIONS(-DDICE_JPEG=1)
   MESSAGE(STATUS "Using jpeg library from: ${jpeg_lib}")
@@ -128,7 +128,7 @@ endif()
 # NOTE: If this example is used as a template, the optional PNG_DIR variable can be defined
 # in your do-cmake script with -D PNG_DIR:STRING="<location>" only if libjpeg is not
 # installed in a system path, otherwise it will get picked up by find_package
-find_library(png_lib NAMES png PATHS ${PNG_DIR})
+find_library(png_lib NAMES png PATHS ${PNG_DIR}/lib)
 if(png_lib)
   ADD_DEFINITIONS(-DDICE_PNG=1)
   MESSAGE(STATUS "Using png library from: ${png_lib}")
