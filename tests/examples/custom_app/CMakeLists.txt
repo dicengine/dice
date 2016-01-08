@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 MESSAGE("\nConfiguring the custom_app example...\n")
 
 PROJECT(custom_app)
+MESSAGE(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 #
 # Define the install location for Trilinos

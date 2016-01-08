@@ -63,6 +63,7 @@ SET(CMAKE_VERBOSE_MAKEFILE OFF)
 SET(DICE_MPI_EXEC ${Trilinos_MPI_EXEC})
 
 PROJECT(DICe_utils)
+MESSAGE(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 # WINDOWS CMake has a bug for find_package() for clapack
 # f2clibs have to be added manually here
