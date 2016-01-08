@@ -119,11 +119,13 @@ the location of the images and results and also the images to use. The
 user can select a correlation of a list of specific images or a sequence of images 
 based on which paramters are specified.
 
-If MPI is enabled ([see below] (#MPINotes)) DICe is run in parallel with
+If MPI is installed and enabled ([see below] (#MPINotes)) DICe can be run in parallel with
 
-    $ mpirun -n <num_procs> dice -i <input_file>
+    $ mpiexec -n <num_procs> dice -i <input_file>
 
 Where `num_procs` specifies the number of processors.
+
+Here is a helpful link for using MS-MPI on windows: [Microsoft MPI] (https://msdn.microsoft.com/en-us/library/windows/desktop/bb524831.aspx). **MPI must be installed to run in parallel**.
 
 ### <a name="MPINotes"></a>Running DICe in parallel with MPI enabled
 
