@@ -365,7 +365,7 @@ Image::create_mask(const Conformal_Area_Def & area_def,
   if(area_def.has_excluded_area()){
     for(size_t i=0;i<area_def.excluded_area()->size();++i){
       std::set<std::pair<int_t,int_t> > removeCoords = (*area_def.excluded_area())[i]->get_owned_pixels();
-      typename std::set<std::pair<int_t,int_t> >::iterator it = removeCoords.begin();
+      std::set<std::pair<int_t,int_t> >::iterator it = removeCoords.begin();
       for(;it!=removeCoords.end();++it){
         if(coords.find(*it)!=coords.end())
           coords.erase(*it);
@@ -373,7 +373,7 @@ Image::create_mask(const Conformal_Area_Def & area_def,
     } // end excluded_area loop
   } // end has excluded area
   // NOTE: the pairs are (y,x) not (x,y) so that the ordering is correct in the set
-  typename std::set<std::pair<int_t,int_t> >::iterator set_it = coords.begin();
+  std::set<std::pair<int_t,int_t> >::iterator set_it = coords.begin();
   for( ; set_it!=coords.end();++set_it){
     mask_[(set_it->first - offset_y_)*width_+set_it->second - offset_x_] = 1.0;
   }

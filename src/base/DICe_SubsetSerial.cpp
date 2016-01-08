@@ -126,7 +126,7 @@ Subset::Subset(const int_t cx,
   y_ = Teuchos::ArrayRCP<int_t>(num_pixels_,0);
   int_t index = 0;
   // NOTE: the pairs are (y,x) not (x,y) so that the ordering is correct in the set
-  typename std::set<std::pair<int_t,int_t> >::iterator set_it = coords.begin();
+  std::set<std::pair<int_t,int_t> >::iterator set_it = coords.begin();
   for( ; set_it!=coords.end();++set_it){
     x_[index] = set_it->second;
     y_[index] = set_it->first;

@@ -87,15 +87,15 @@ Schema {
 public:
 
   /// Multifield RCP
-  typedef typename Teuchos::RCP<MultiField> mf_rcp;
+  typedef Teuchos::RCP<MultiField> mf_rcp;
   /// Map RCP
-  typedef typename Teuchos::RCP<MultiField_Map> map_rcp;
+  typedef Teuchos::RCP<MultiField_Map> map_rcp;
   /// Exporter RCP
-  typedef typename Teuchos::RCP<MultiField_Exporter> exp_rcp;
+  typedef Teuchos::RCP<MultiField_Exporter> exp_rcp;
   /// Importer RCP
-  typedef typename Teuchos::RCP<MultiField_Importer> imp_rcp;
+  typedef Teuchos::RCP<MultiField_Importer> imp_rcp;
   /// Communicator RCP
-  typedef typename Teuchos::RCP<MultiField_Comm> comm_rcp;
+  typedef Teuchos::RCP<MultiField_Comm> comm_rcp;
 
   /// \brief Constructor that takes string names of images as inputs
   /// \param refName String name of reference image
