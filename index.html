@@ -125,8 +125,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <p>To use <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> in standalone mode (assuming the <code>dice</code> executable is built and in the system path), the user simply has to write an input file and invoke <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> with </p><pre class="fragment">$ dice -i &lt;input_file&gt;
 </pre><p>The input file is an <code>.xml</code> formated set of parameters. To generate a template set of input files (which includes the input file and the correaltion paramters file, described below) add the <code>-g</code> option to the <code>dice</code> call. </p><pre class="fragment">$ dice -g [file_prefix]
 </pre><p>Commented notes on all of the paramters in the input files are given with the <code>-g</code> option in the template files. The input file specifies, the location of the images and results and also the images to use. The user can select a correlation of a list of specific images or a sequence of images based on which paramters are specified.</p>
-<p>If MPI is enabled (<a href="#MPINotes">see below</a>) <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> is run in parallel with </p><pre class="fragment">$ mpirun -n &lt;num_procs&gt; dice -i &lt;input_file&gt;
+<p>If MPI is installed and enabled (<a href="#MPINotes">see below</a>) <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> can be run in parallel with </p><pre class="fragment">$ mpiexec -n &lt;num_procs&gt; dice -i &lt;input_file&gt;
 </pre><p>Where <code>num_procs</code> specifies the number of processors.</p>
+<p>Here is a helpful link for using MS-MPI on windows: <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb524831.aspx">Microsoft MPI</a>. <b>MPI must be installed to run in parallel</b>.</p>
 <h3><a class="anchor" id="MPINotes"></a>Running <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> in parallel with MPI enabled</h3>
 <p>To run <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> in parallel with MPI enabled, Trilinos must be installed with MPI enabled by setting the approprate flag in the trilinos CMake script </p><pre class="fragment">-D Trilinos_ENABLE_MPI:BOOL=ON
 </pre><p>When <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> is configured before building, CMake will default to using the same compilers that were used to build Trilinos. Nothing extra has to be done in the <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> CMake scripts to enable MPI parallelism.</p>
@@ -364,6 +365,10 @@ END CONFORMAL_SUBSET
 </pre><h3>Filtering images</h3>
 <p>To Gauss filter the images add the following option to the parameters file. The default has no filtering. </p><pre class="fragment">  &lt;Parameter name="gauss_filter_images" type="bool" value="true" /&gt;
 </pre><p>When filtering is enabled, the size of the filtering mask is seven pixels by seven pixels. The coefficients of the mask are given in DICe_ImageSerial.cpp or DICe_ImageKokkos.cpp. It is possible to filter images with different window sizes, but so far this is only enabled for the <a class="el" href="class_d_i_ce_1_1_image.html">DICe::Image</a> class. It has not been enabled in the correlation parameters for the executable.</p>
+<h3>Detecting initialization or correlation failure</h3>
+<p>To force <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> to abort if the quality of the initialization step or the correlation does not provide a value for <code>gamma</code> that is above a certain threshold, set one or both of the following parameters in the correlation parameters file: </p><pre class="fragment">&lt;Parameter name="initial_gamma_threshold" type="double" value="&lt;tolerance&gt;" /&gt;
+&lt;Parameter name="final_gamma_threshold" type="double" value="&lt;tolerance&gt;" /&gt;
+</pre><p>The <code>initial_gamma_threshold</code> will test the <code>gamma</code> value for the pre-solve, intial guess. The <code>final_gamma_threshold</code> will test the value of <code>gamma</code> post-solve.</p>
 <h3>Output files</h3>
 <p>The output produced are space delimited text files. The default output is one file per deformed image listing the solution variables for each subset. In the default case, the index at the end of the file name refers to the image id or frame number.</p>
 <p>The user can alternatively request output as a separate file for each subset listing the solution variables for each deformed image or frame. To do so set the following option in the input file </p><pre class="fragment">&lt;Parameter name="separate_output_file_for_each_subset" type="bool" value="true" /&gt;
@@ -523,19 +528,19 @@ for i in range(0,NUM_SUBSETS):
 <h2>Requirements </h2>
 <p><a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> can be built and run on Mac OS X, Windows, and Linux. The prerequisite dependencies required for installing <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> include:</p>
 <ul>
-<li><a href="http://www.cmake.org">CMake</a></li>
-<li><a href="http://trilinos.org">Trilinos</a></li>
-<li>LAPACK or CLAPACK (for Windows, only CLAPACK is supported)</li>
-<li><a href="http://www.boost.org">Boost</a></li>
-<li><a href="http://www.remotesensing.org/libtiff/">LibTiff</a></li>
+<li><a href="http://www.cmake.org">CMake</a> Version 2.8 or greater (tested with 3.3.2)</li>
+<li><a href="http://trilinos.org">Trilinos</a> Version 12.0 or greater (tested with 12.2)</li>
+<li>LAPACK or <a href="http://www.netlib.org/clapack/">CLAPACK</a> (for Windows, only CLAPACK is supported Version 3.2.1 or greater)</li>
+<li><a href="http://www.boost.org">Boost</a> Version 1.55 or greater (tested with 1.55.0)</li>
+<li><a href="http://www.remotesensing.org/libtiff/">LibTiff</a> Version 4.0.6 (tested with 4.0.6)</li>
 </ul>
 <p>Optionally, if jpeg or png files are used for input, the following libraries are needed:</p>
 <ul>
-<li><a href="http://www.libpng.org/pub/png/libpng.html">LibPng</a></li>
-<li><a href="http://libjpeg.sourceforge.net/">LibJpeg</a></li>
+<li><a href="http://www.libpng.org/pub/png/libpng.html">LibPng</a> Version 1.6.20</li>
+<li><a href="http://libjpeg.sourceforge.net/">LibJpeg</a> Version 6b</li>
 </ul>
 <h2>CMake </h2>
-<p><a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> makes use of CMake for build configuration. Version 2.8 or greater is required. Sample CMake scripts for building Trilinos and <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> are in the folder <code>dice\scripts</code></p>
+<p><a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> makes use of CMake for build configuration. Sample CMake scripts for building Trilinos and <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> are in the folder <code>dice\scripts</code></p>
 <h2>Installing Trilinos </h2>
 <p>Trilinos contains a set of software packages within an object-oriented software framework used for the solution of large-scale, complex multi-physics engineering and scientific problems. <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> uses some of the packages avaiable in Trilinos and requires that Trilinos be installed.</p>
 <p>Trilinos can be downloaded from <a href="http://trilinos.org">http://trilinos.org</a> and build instructions can be found on the getting started page. <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> requires that Trilinos be built with the following packages enabled:</p>
@@ -610,7 +615,7 @@ $ nmake
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Jan 3 2016 05:28:45 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 8 2016 13:49:33 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

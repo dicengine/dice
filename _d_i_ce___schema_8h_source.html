@@ -167,11 +167,11 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;</div>
 <div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;<span class="keyword">public</span>:</div>
 <div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;</div>
-<div class="line"><a name="l00090"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_schema.html#a85e25768b12cdd3321aaf9906418e730">   90</a></span>&#160;  <span class="keyword">typedef</span> <span class="keyword">typename</span> Teuchos::RCP&lt;MultiField&gt; <a class="code" href="class_d_i_ce_1_1_schema.html#a85e25768b12cdd3321aaf9906418e730">mf_rcp</a>;</div>
-<div class="line"><a name="l00092"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_schema.html#aabf0b9732fbc49228865221c88e9d928">   92</a></span>&#160;  <span class="keyword">typedef</span> <span class="keyword">typename</span> Teuchos::RCP&lt;MultiField_Map&gt; <a class="code" href="class_d_i_ce_1_1_schema.html#aabf0b9732fbc49228865221c88e9d928">map_rcp</a>;</div>
-<div class="line"><a name="l00094"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_schema.html#a876078814d0e74579f1b4867ee303db6">   94</a></span>&#160;  <span class="keyword">typedef</span> <span class="keyword">typename</span> Teuchos::RCP&lt;MultiField_Exporter&gt; <a class="code" href="class_d_i_ce_1_1_schema.html#a876078814d0e74579f1b4867ee303db6">exp_rcp</a>;</div>
-<div class="line"><a name="l00096"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_schema.html#ade0d33fc6c8fd2ddde4416dea5fc57d2">   96</a></span>&#160;  <span class="keyword">typedef</span> <span class="keyword">typename</span> Teuchos::RCP&lt;MultiField_Importer&gt; <a class="code" href="class_d_i_ce_1_1_schema.html#ade0d33fc6c8fd2ddde4416dea5fc57d2">imp_rcp</a>;</div>
-<div class="line"><a name="l00098"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_schema.html#adb9a00b5b0f825070eafdb734631b68b">   98</a></span>&#160;  <span class="keyword">typedef</span> <span class="keyword">typename</span> Teuchos::RCP&lt;MultiField_Comm&gt; <a class="code" href="class_d_i_ce_1_1_schema.html#adb9a00b5b0f825070eafdb734631b68b">comm_rcp</a>;</div>
+<div class="line"><a name="l00090"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_schema.html#a85e25768b12cdd3321aaf9906418e730">   90</a></span>&#160;  <span class="keyword">typedef</span> Teuchos::RCP&lt;MultiField&gt; <a class="code" href="class_d_i_ce_1_1_schema.html#a85e25768b12cdd3321aaf9906418e730">mf_rcp</a>;</div>
+<div class="line"><a name="l00092"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_schema.html#aabf0b9732fbc49228865221c88e9d928">   92</a></span>&#160;  <span class="keyword">typedef</span> Teuchos::RCP&lt;MultiField_Map&gt; <a class="code" href="class_d_i_ce_1_1_schema.html#aabf0b9732fbc49228865221c88e9d928">map_rcp</a>;</div>
+<div class="line"><a name="l00094"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_schema.html#a876078814d0e74579f1b4867ee303db6">   94</a></span>&#160;  <span class="keyword">typedef</span> Teuchos::RCP&lt;MultiField_Exporter&gt; <a class="code" href="class_d_i_ce_1_1_schema.html#a876078814d0e74579f1b4867ee303db6">exp_rcp</a>;</div>
+<div class="line"><a name="l00096"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_schema.html#ade0d33fc6c8fd2ddde4416dea5fc57d2">   96</a></span>&#160;  <span class="keyword">typedef</span> Teuchos::RCP&lt;MultiField_Importer&gt; <a class="code" href="class_d_i_ce_1_1_schema.html#ade0d33fc6c8fd2ddde4416dea5fc57d2">imp_rcp</a>;</div>
+<div class="line"><a name="l00098"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_schema.html#adb9a00b5b0f825070eafdb734631b68b">   98</a></span>&#160;  <span class="keyword">typedef</span> Teuchos::RCP&lt;MultiField_Comm&gt; <a class="code" href="class_d_i_ce_1_1_schema.html#adb9a00b5b0f825070eafdb734631b68b">comm_rcp</a>;</div>
 <div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;</div>
 <div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;  <a class="code" href="class_d_i_ce_1_1_schema.html">Schema</a>(<span class="keyword">const</span> std::string &amp; refName,</div>
 <div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;    <span class="keyword">const</span> std::string &amp; defName,</div>
@@ -1038,7 +1038,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Jan 3 2016 05:28:42 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 8 2016 13:49:30 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>
