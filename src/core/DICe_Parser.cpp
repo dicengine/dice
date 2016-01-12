@@ -515,7 +515,6 @@ Teuchos::RCP<DICe::Polygon> read_polygon(std::fstream &dataFile){
       Teuchos::ArrayRCP<std::string> vertex_tokens = tokenize_line(dataFile);
       if(vertex_tokens.size()==0)continue;
       if(vertex_tokens[0]==parser_end) break;
-      std::cout << " TOKEN :" << vertex_tokens[0] << ":" << std::endl;
       TEUCHOS_TEST_FOR_EXCEPTION(vertex_tokens.size()<2,std::runtime_error,"");
       TEUCHOS_TEST_FOR_EXCEPTION(!is_number(vertex_tokens[0]),std::runtime_error,"");
       TEUCHOS_TEST_FOR_EXCEPTION(!is_number(vertex_tokens[1]),std::runtime_error,"");
