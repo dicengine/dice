@@ -24,6 +24,10 @@ Tutorials
 ---------
 [http://dicengine.github.io/dice/pages.html](http://dicengine.github.io/dice/pages.html)
 
+Releases (and Installers)
+-------------------------
+Windows package installers for DICe can be found [here](https://github.com/dicengine/dice/releases)
+
 Citing DICe:
 
 DZ Turner, Digital Image Correlation Engine (DICe) Reference Manual, Sandia Report, SAND2015-10606 O, 2015
