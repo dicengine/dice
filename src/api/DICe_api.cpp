@@ -63,8 +63,6 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate(scalar_t points[], int_t n_points
   DEBUG_MSG("ref_h                  " << ref_h);
   DEBUG_MSG("def_w                  " << def_w);
   DEBUG_MSG("def_h                  " << def_h);
-  const bool has_input_params = input_params!=0;
-  DEBUG_MSG("input_params specified " << has_input_params);
   DEBUG_MSG("update params          " << update_params);
   DEBUG_MSG("is initialized         " << initialized);
 
@@ -158,8 +156,6 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
   DEBUG_MSG("ref_h                  " << ref_h);
   DEBUG_MSG("def_w                  " << def_w);
   DEBUG_MSG("def_h                  " << def_h);
-  const bool has_input_params = param_file!=0;
-  DEBUG_MSG("input_params specified " << has_input_params);
   DEBUG_MSG("subset file            " << subset_file);
   DEBUG_MSG("write output           " << write_output);
   DEBUG_MSG("is initialized         " << initialized);

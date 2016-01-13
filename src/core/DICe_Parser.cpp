@@ -83,6 +83,7 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   if(analysis_type==LOCAL_DIC){
     desc.add_options()("help,h", "produce help message")
                ("verbose,v","Output log to screen")
+               ("version","Output version information to screen")
                ("timing,t","Print timing statistics to screen")
                ("input,i",po::value<std::string>(),"XML input file name <filename>.xml")
                ("generate,g",po::value<std::string>()->implicit_value("dice"),"Create XML input file templates")
@@ -91,6 +92,7 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   else{
     desc.add_options()("help,h", "produce help message")
                ("verbose,v","Output log to screen")
+               ("version","Output version information to screen")
                ("timing,t","Print timing statistics to screen")
                ("input,i",po::value<std::string>(),"XML input file name <filename>.xml")
                ;
@@ -111,8 +113,15 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
      outStream = bhs;
    }
 
+   // Handle version requests
+   if(vm.count("version")){
+     print_banner();
+     exit(0);
+   }
+
    // Handle help requests
    if(vm.count("help")){
+     print_banner();
      std::cout << desc << std::endl;
      exit(0);
    }

@@ -54,6 +54,30 @@
 
 namespace DICe {
 
+DICE_LIB_DLL_EXPORT
+void print_banner(){
+  std::string mpi_message = "** MPI: disabled";
+#if DICE_MPI
+  mpi_message = "** MPI: enabled";
+#endif
+  std::string kokkos_message = "** Manycore: disabled";
+#if DICE_KOKKOS
+  kokkos_message = "** Manycore: enabled";
+#endif
+  std::string type_message = "** Data type: float";
+#if DICE_USE_DOUBLE
+  type_message = "** Data type: double";
+#endif
+  std::cout << std::endl << "** Digital Image Correlation Engine (DICe)" << std::endl;
+  std::cout << "** " << VERSION << std::endl;
+  std::cout << "** git: " << GITSHA1 << std::endl;
+  std::cout << mpi_message << std::endl;
+  std::cout << kokkos_message << std::endl;
+  std::cout << type_message << std::endl;
+  std::cout << "** Copyright 2015 Sandia Corporation" << std::endl;
+  std::cout << "** Report bugs and feature requests as issues at https://github.com/dicengine/dice" << std::endl << std::endl;
+}
+
 /// Initialization function (mpi and kokkos if enabled):
 /// \param argc argument count
 /// \param argv array of argument chars
@@ -65,9 +89,6 @@ void initialize(int argc,
 #if DICE_MPI
   MPI_Init (&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
-  if(proc_rank==0) DEBUG_MSG("Code was compiled with MPI enabled");
-#else
-  DEBUG_MSG("Code was compiled with MPI disabled");
 #endif
   // initialize kokkos
 #if DICE_KOKKOS
@@ -81,7 +102,7 @@ void initialize(int argc,
       verbose=true;
   }
   if(verbose && proc_rank==0)
-    std::cout << "\n--- Digital Image Correlation Engine (DICe), Version " << VERSION << " (" << GITSHA1 << ") Copyright 2015 Sandia Corporation ---\n\n";
+    print_banner();
 }
 
 /// Finalize function (mpi and kokkos if enabled):
