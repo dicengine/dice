@@ -115,7 +115,8 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
 
    // Handle version requests
    if(vm.count("version")){
-     print_banner();
+     if(proc_rank==0)
+       print_banner();
      exit(0);
    }
 
