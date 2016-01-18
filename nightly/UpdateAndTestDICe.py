@@ -10,7 +10,7 @@ import sys
 
 def update_and_test_dice(logfile, build_type):
 
-    dice_build_dir = DICE_ROOT + "/" + build_type
+    dice_build_dir = DICE_ROOT + build_type
     message = ""
     status = "Passed"
 
@@ -20,7 +20,7 @@ def update_and_test_dice(logfile, build_type):
 
     logfile.write(append_time("\nCleaning DICe " + build_type + " ")+"\n") ; force_write(logfile)
     os.chdir(dice_build_dir)
-    command = ["make", "clean"]
+    command = ["./do-clean"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     force_write(logfile)

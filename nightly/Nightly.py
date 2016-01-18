@@ -36,7 +36,7 @@ if __name__ == "__main__":
     for test_name in DICE_ACTIVE_CONFIGS:
         STAT = float(CURRENT_INDEX)/float(NUM_CONFIGS) * 100.0
         print "[" + str(int(STAT)) +"%] Building DICe configuration: " + test_name
-        result, msg = update_trilinos(logfile, test_name)
+        result, msg = update_and_test_dice(logfile, test_name)
         if result != "Passed":
             status = result
         message += msg + "\n"

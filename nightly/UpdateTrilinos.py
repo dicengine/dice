@@ -9,7 +9,7 @@ from LocalDefinitions import TRILINOS_ROOT
 
 def update_trilinos(logfile, build_type):
 
-    trilinos_build_dir = TRILINOS_ROOT + "/" + build_type
+    trilinos_build_dir = TRILINOS_ROOT + build_type
     message = ""
     status = "Passed"
     
@@ -23,7 +23,7 @@ def update_trilinos(logfile, build_type):
     if os.path.exists(trilinos_build_dir+'/lib'):
         shutil.rmtree(trilinos_build_dir+'/lib')
     os.chdir(trilinos_build_dir)
-    command = ["make", "clean"]
+    command = ["./do-clean"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     force_write(logfile)
@@ -39,7 +39,7 @@ def update_trilinos(logfile, build_type):
 
     logfile.write(append_time("\nUpdating Trilinos")+"\n") ; force_write(logfile)
     os.chdir(TRILINOS_ROOT)
-    command = ["eg", "pull"]
+    command = ["git", "pull"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     force_write(logfile)
