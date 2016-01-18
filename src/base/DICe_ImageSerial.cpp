@@ -414,17 +414,15 @@ Image::apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformati
   const int_t cx,
   const int_t cy,
   const bool apply_in_place){
-
+  Teuchos::RCP<Image> this_img = Teuchos::rcp(this,false);
   if(apply_in_place){
-    for(int_t i=0;i<num_pixels();++i)
-      intensities_temp_[i] = intensities_[i];
-    apply_transform(intensities_temp_,intensities_,cx,cy,width_,height_,deformation);
+    Teuchos::RCP<Image> temp_img = Teuchos::rcp(new Image(this_img));
+    apply_transform(temp_img,this_img,cx,cy,deformation);
     return Teuchos::null;
   }
   else{
-    Teuchos::ArrayRCP<intensity_t> result_intensities(width_*height_,0.0);
-    apply_transform(intensities_,result_intensities,cx,cy,width_,height_,deformation);
-    Teuchos::RCP<Image> result = Teuchos::rcp(new Image(width_,height_,result_intensities));
+    Teuchos::RCP<Image> result = Teuchos::rcp(new Image(width_,height_));
+    apply_transform(this_img,result,cx,cy,deformation);
     return result;
   }
 }

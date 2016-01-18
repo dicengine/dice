@@ -51,21 +51,37 @@
 /// generic DICe classes and functions
 namespace DICe {
 
-/// free function to apply a transformation to an image intensity array:
-/// \param intensities_from the array where the intensities are taken
-/// \param intensities_to the output array
+// forward declaration of DICe::Image
+class Image;
+
+/// free function to apply a transformation to an image:
+/// \param image_in the image where the intensities are taken
+/// \param image_out the output image
 /// \param cx the centroid x coordiante
 /// \param cy the centroid y coordinate
-/// \param width the width of the array
-/// \param height the height of the array
 /// \param deformation a vector that defines the deformation map parameters
-void apply_transform(Teuchos::ArrayRCP<intensity_t> & intensities_from,
-  Teuchos::ArrayRCP<intensity_t> & intensities_to,
+void apply_transform(Teuchos::RCP<Image> image_in,
+  Teuchos::RCP<Image> image_out,
   const int_t cx,
   const int_t cy,
-  const int_t width,
-  const int_t height,
   Teuchos::RCP<const std::vector<scalar_t> > deformation);
+
+/// free function to do bilinear interpolation
+/// \param global_coord_x floating point precision x location in the global image coordinates
+/// \param global_coord_y floating point precision y location in the global image coordinates
+/// \param image the image to interpolate
+intensity_t interpolate_bilinear(const scalar_t & global_x,
+  const scalar_t & global_y,
+  Teuchos::RCP<Image> image);
+
+/// free function to do keys fourth interpolation
+/// \param global_coord_x floating point precision x location in the global image coordinates
+/// \param global_coord_y floating point precision y location in the global image coordinates
+/// \param image the image to interpolate
+intensity_t interpolate_keys_fourth(const scalar_t & global_x,
+  const scalar_t & global_y,
+  Teuchos::RCP<Image> image);
+
 
 }// End DICe Namespace
 
