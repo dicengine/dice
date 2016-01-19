@@ -123,7 +123,7 @@ find_library(jpeg_lib NAMES jpeg PATHS ${JPEG_DIR}/lib)
 if(jpeg_lib)
   ADD_DEFINITIONS(-DDICE_JPEG=1)
   MESSAGE(STATUS "Using jpeg library from: ${jpeg_lib}")
-  target_link_libraries(main jpeg)
+  target_link_libraries(main ${jpeg_lib})
 endif()
 
 # NOTE: If this example is used as a template, the optional PNG_DIR variable can be defined
@@ -133,7 +133,7 @@ find_library(png_lib NAMES png PATHS ${PNG_DIR}/lib)
 if(png_lib)
   ADD_DEFINITIONS(-DDICE_PNG=1)
   MESSAGE(STATUS "Using png library from: ${png_lib}")
-  target_link_libraries(main png)
+  target_link_libraries(main ${png_lib})
 endif()
 
 # add the dice libraries
