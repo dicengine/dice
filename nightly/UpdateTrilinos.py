@@ -9,6 +9,7 @@ from LocalDefinitions import TRILINOS_ROOT
 
 def update_trilinos(logfile, build_type):
 
+
     trilinos_build_dir = TRILINOS_ROOT + build_type
     message = ""
     status = "Passed"
@@ -16,7 +17,7 @@ def update_trilinos(logfile, build_type):
     logfile.write(append_time("Updating Trilinos with build type "+build_type+" ")+"\n") ; force_write(logfile)
 
     # ---- Clean Trilinos ----
-
+    print "    cleaning..."
     logfile.write(append_time("\nCleaning Trilinos")+"\n") ; force_write(logfile)
     if os.path.exists(trilinos_build_dir+'/include'):
         shutil.rmtree(trilinos_build_dir+'/include')
@@ -39,7 +40,7 @@ def update_trilinos(logfile, build_type):
     logfile.write(append_time("\nTrilinos clean complete")+"\n") ; force_write(logfile)
     
     # ---- update Trilinos ----
-
+    print "    git pull..."
     logfile.write(append_time("\nUpdating Trilinos")+"\n") ; force_write(logfile)
     os.chdir(TRILINOS_ROOT)
     command = ["git", "pull"]
@@ -55,14 +56,14 @@ def update_trilinos(logfile, build_type):
     logfile.write(append_time("\nTrilinos update complete")+"\n") ; force_write(logfile)
 
     # ---- Run CMake for Trilinos ----
-
+    print "    configuring..."
     logfile.write(append_time("\nRunning CMake for Trilinos")+"\n") ; force_write(logfile)
     os.chdir(trilinos_build_dir)
     if os.name=='nt':
         command = ["do-cmake.bat"]
     else:
         command = ["./do-cmake"]
-    p = Popen(command, stdout=logfile, stderr=logfile, shell=True, executable='/bin/bash')
+    p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     force_write(logfile)
     msg = "Trilinos " + build_type + " CMake:  Passed\n"
@@ -74,7 +75,7 @@ def update_trilinos(logfile, build_type):
     logfile.write(append_time("\nCMake for Trilinos complete")+"\n") ; force_write(logfile)
 
     # ---- Build and install Trilinos ----
-
+    print "    compiling..."
     logfile.write(append_time("\nBuilding Trilinos")+"\n") ; force_write(logfile)
     os.chdir(trilinos_build_dir)
     if os.name=='nt':

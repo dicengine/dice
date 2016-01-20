@@ -17,7 +17,7 @@ def update_and_test_dice(logfile, build_type):
     logfile.write(append_time("Updating and Testing DICe with build type " + build_type + " ")+"\n") ; force_write(logfile)
 
     # ---- clean DICe ----
-
+    print "    cleaning..."
     logfile.write(append_time("\nCleaning DICe " + build_type + " ")+"\n") ; force_write(logfile)
     os.chdir(dice_build_dir)
     if os.name=='nt':
@@ -36,7 +36,7 @@ def update_and_test_dice(logfile, build_type):
     logfile.write(append_time("\nDICe " + build_type + " clean complete ")+"\n") ; force_write(logfile)
 
     # ---- Update DICe ----
-
+    print "    git pull..."
     logfile.write(append_time("\nUpdating DICe " + build_type + " ")+"\n") ; force_write(logfile)
     os.chdir(DICE_ROOT)
     command = ["git", "pull"]
@@ -52,14 +52,15 @@ def update_and_test_dice(logfile, build_type):
     logfile.write(append_time("\nDICe " + build_type + " update complete ")+"\n") ; force_write(logfile)
 
     # ---- Run CMake for DICe ----
-
+    print "    configuring..."
     logfile.write(append_time("\nRunning CMake for DICe " + build_type + " ")+"\n") ; force_write(logfile)
+    
     os.chdir(dice_build_dir)
     if os.name=='nt':
         command = ["do-cmake.bat"]
     else:
         command = ["./do-cmake"]
-    p = Popen(command, stdout=logfile, stderr=logfile, shell=True, executable='/bin/bash')
+    p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     force_write(logfile)
     msg = "DICe " + build_type + " CMake:  Passed\n"
@@ -71,7 +72,7 @@ def update_and_test_dice(logfile, build_type):
     logfile.write(append_time("\nCMake for DICe " + build_type + " complete ")+"\n") ; force_write(logfile)
 
     # ---- build DICe ----
-
+    print "    compiling..."
     logfile.write(append_time("\nBuilding DICe " + build_type + " ")+"\n") ; force_write(logfile)
     os.chdir(dice_build_dir)
     if os.name=='nt':
@@ -90,7 +91,7 @@ def update_and_test_dice(logfile, build_type):
     logfile.write(append_time("\nDICe " + build_type + " build complete ")+"\n") ; force_write(logfile)
 
     # ---- run DICe tests ----
-
+    print "    testing..."
     logfile.write(append_time("Running DICe " + build_type + " tests ")+"\n") ; force_write(logfile)
     message += "\nDICe " + build_type + " CTest results:\n\n"
     os.chdir(dice_build_dir)

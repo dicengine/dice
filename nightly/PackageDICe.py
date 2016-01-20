@@ -21,7 +21,7 @@ def package_dice(logfile, build_type):
         command = ["do-pkg.bat"]
     else:
         command = ["./do-pkg"]
-    p = Popen(command, stdout=logfile, stderr=logfile, shell=True, executable='/bin/bash')
+    p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     force_write(logfile)
     msg = "DICe " + build_type + " Package:  Passed\n"
