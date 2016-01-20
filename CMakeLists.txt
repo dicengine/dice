@@ -14,6 +14,7 @@ IF(WIN32)
   FIND_PACKAGE(clapack PATHS ${CLAPACK_DIR})
   IF(clapack_FOUND)
     MESSAGE("\nFound CLAPACK in ${CLAPACK_DIR}")
+    link_directories(${CLAPACK_DIR}/F2CLIBS/libf2c)
   ELSE(clapack_FOUND)
     MESSAGE("\nERROR: could not find CLAPACK in the following directory: ${CLAPACK_DIR}")
   ENDIF(clapack_FOUND)
@@ -64,6 +65,7 @@ SET(DICE_MPI_EXEC ${Trilinos_MPI_EXEC})
 
 PROJECT(DICe)
 
+MESSAGE(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 SET(DICE_OUTPUT_PREFIX ${CMAKE_CURRENT_BINARY_DIR})
 MESSAGE(STATUS "The output directory for DICe libraries will be: ${DICE_OUTPUT_PREFIX}/lib")
 MESSAGE(STATUS "If 'make install' is exectued, the libraries will also be copied to: ${CMAKE_INSTALL_PREFIX}/lib")
@@ -77,7 +79,7 @@ ExternalProject_Add(DICe_utils
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/utils
   BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/utils_build
   TMP_DIR ${CMAKE_CURRENT_BINARY_DIR}/utils_tmp
-  CMAKE_CACHE_ARGS -DDICE_TRILINOS_DIR:STRING=${DICE_TRILINOS_DIR} -DCMAKE_INSTALL_PREFIX:FILEPATH=${CMAKE_INSTALL_PREFIX} -DBOOST_ROOT:STRING=${BOOST_ROOT} -DTIFF_DIR:STRING=${TIFF_DIR} -DJPEG_DIR:STRING=${JPEG_DIR} -DPNG_DIR:STRING=${PNG_DIR} -DDICE_DEBUG_MSG:BOOL=${DICE_DEBUG_MSG} -DCLAPACK_DIR:FILEPATH=${CLAPACK_DIR} -DDICE_USE_DOUBLE:BOOL=${DICE_USE_DOUBLE} -DDICE_OUTPUT_PREFIX:FILEPATH=${DICE_OUTPUT_PREFIX}
+  CMAKE_CACHE_ARGS -DDICE_TRILINOS_DIR:STRING=${DICE_TRILINOS_DIR} -DCMAKE_INSTALL_PREFIX:FILEPATH=${CMAKE_INSTALL_PREFIX} -DBOOST_ROOT:STRING=${BOOST_ROOT} -DTIFF_DIR:STRING=${TIFF_DIR} -DJPEG_DIR:STRING=${JPEG_DIR} -DPNG_DIR:STRING=${PNG_DIR} -DDICE_DEBUG_MSG:BOOL=${DICE_DEBUG_MSG} -DCLAPACK_DIR:FILEPATH=${CLAPACK_DIR} -DDICE_USE_DOUBLE:BOOL=${DICE_USE_DOUBLE} -DDICE_OUTPUT_PREFIX:FILEPATH=${DICE_OUTPUT_PREFIX} -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
   )
 
 # base data type:
@@ -111,9 +113,9 @@ SET(DICE_TRILINOS_LIB_DIRS
   )
 
 link_directories(${DICE_TRILINOS_LIB_DIRS}
-  ${TIFF_DIR}
-  ${JPEG_DIR}
-  ${PNG_DIR}
+  ${TIFF_DIR}/lib
+  ${JPEG_DIR}/lib
+  ${PNG_DIR}/lib
   ${CMAKE_INSTALL_PREFIX}/lib)
 
 SET(DICE_HEADER_DIRS
@@ -127,9 +129,9 @@ SET(DICE_HEADER_DIRS
   ${TIFF_DIR}
   ${JPEG_DIR}
   ${PNG_DIR}
-  ${TIFF_DIR}/../include
-  ${JPEG_DIR}/../include
-  ${PNG_DIR}/../include
+  ${TIFF_DIR}/include
+  ${JPEG_DIR}/include
+  ${PNG_DIR}/include
   )
 
 IF(DICE_ENABLE_GLOBAL)
@@ -190,26 +192,35 @@ ENDIF()
 
 
 if (Boost_FOUND)
-  find_library(tiff_lib NAMES tiff PATHS ${TIFF_DIR})
+  find_library(tiff_lib NAMES tiff PATHS ${TIFF_DIR}/lib)
   if(tiff_lib)
     MESSAGE(STATUS "Tiff file format enabled. Using tiff library from ${tiff_lib}")
     SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${tiff_lib})
+    IF(WIN32)
+      FILE(COPY ${TIFF_DIR}/bin/tiff.dll DESTINATION ${DICE_OUTPUT_PREFIX}/bin)
+    ENDIF()
   else()
     MESSAGE(FATAL_ERROR "Could not find required tiff library.")
   endif()
-  find_library(jpeg_lib NAMES jpeg PATHS ${JPEG_DIR})
+  find_library(jpeg_lib NAMES jpeg PATHS ${JPEG_DIR}/lib)
   if(jpeg_lib)
     MESSAGE(STATUS "Jpeg file format enabled. Using jpeg library from ${jpeg_lib}")
     SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${jpeg_lib})
     ADD_DEFINITIONS(-DDICE_JPEG=1)
+    SET(DICE_HAS_JPEG ON)
   else()
     MESSAGE(STATUS "Could not find jpeg library. Jpeg file format is NOT enabled")
   endif()
-  find_library(png_lib NAMES png PATHS ${PNG_DIR})
+  find_library(png_lib NAMES png PATHS ${PNG_DIR}/lib)
   if(png_lib)
     MESSAGE(STATUS "Png file format enabled. Using png library from ${png_lib}")
     SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${png_lib})
+    IF(WIN32)
+      FILE(COPY ${PNG_DIR}/bin/libpng16.dll DESTINATION ${DICE_OUTPUT_PREFIX}/bin)
+      FILE(COPY ${ZLIB_DIR}/bin/zlib.dll DESTINATION ${DICE_OUTPUT_PREFIX}/bin)
+    ENDIF()
     ADD_DEFINITIONS(-DDICE_PNG=1)
+    SET(DICE_HAS_PNG ON)
   else()
     MESSAGE("Could not find png library. Png file format is NOT enabled")
   endif()

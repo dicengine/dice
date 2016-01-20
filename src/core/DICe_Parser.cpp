@@ -83,6 +83,7 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   if(analysis_type==LOCAL_DIC){
     desc.add_options()("help,h", "produce help message")
                ("verbose,v","Output log to screen")
+               ("version","Output version information to screen")
                ("timing,t","Print timing statistics to screen")
                ("input,i",po::value<std::string>(),"XML input file name <filename>.xml")
                ("generate,g",po::value<std::string>()->implicit_value("dice"),"Create XML input file templates")
@@ -91,6 +92,7 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   else{
     desc.add_options()("help,h", "produce help message")
                ("verbose,v","Output log to screen")
+               ("version","Output version information to screen")
                ("timing,t","Print timing statistics to screen")
                ("input,i",po::value<std::string>(),"XML input file name <filename>.xml")
                ;
@@ -111,8 +113,16 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
      outStream = bhs;
    }
 
+   // Handle version requests
+   if(vm.count("version")){
+     if(proc_rank==0)
+       print_banner();
+     exit(0);
+   }
+
    // Handle help requests
    if(vm.count("help")){
+     print_banner();
      std::cout << desc << std::endl;
      exit(0);
    }
@@ -515,7 +525,6 @@ Teuchos::RCP<DICe::Polygon> read_polygon(std::fstream &dataFile){
       Teuchos::ArrayRCP<std::string> vertex_tokens = tokenize_line(dataFile);
       if(vertex_tokens.size()==0)continue;
       if(vertex_tokens[0]==parser_end) break;
-      std::cout << " TOKEN :" << vertex_tokens[0] << ":" << std::endl;
       TEUCHOS_TEST_FOR_EXCEPTION(vertex_tokens.size()<2,std::runtime_error,"");
       TEUCHOS_TEST_FOR_EXCEPTION(!is_number(vertex_tokens[0]),std::runtime_error,"");
       TEUCHOS_TEST_FOR_EXCEPTION(!is_number(vertex_tokens[1]),std::runtime_error,"");
@@ -1018,7 +1027,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
 }
 
 DICE_LIB_DLL_EXPORT
-const std::vector<std::string> decypher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params){
+const std::vector<std::string> decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params){
   int proc_rank = 0;
 #if DICE_MPI
   int mpi_is_initialized = 0;

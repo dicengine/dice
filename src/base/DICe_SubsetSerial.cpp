@@ -40,6 +40,7 @@
 // @HEADER
 
 #include <DICe_Subset.h>
+#include <DICe_ImageUtils.h>
 
 #include <cassert>
 
@@ -126,7 +127,7 @@ Subset::Subset(const int_t cx,
   y_ = Teuchos::ArrayRCP<int_t>(num_pixels_,0);
   int_t index = 0;
   // NOTE: the pairs are (y,x) not (x,y) so that the ordering is correct in the set
-  typename std::set<std::pair<int_t,int_t> >::iterator set_it = coords.begin();
+  std::set<std::pair<int_t,int_t> >::iterator set_it = coords.begin();
   for( ; set_it!=coords.end();++set_it){
     x_[index] = set_it->second;
     y_[index] = set_it->first;
@@ -283,10 +284,7 @@ Subset::initialize(Teuchos::RCP<Image> image,
   // if the input image is a sub-image i.e. it has offsets, then these need to be taken into account
   const int_t offset_x = image->offset_x();
   const int_t offset_y = image->offset_y();
-
-  const int_t image_w = image->width();
-   const int_t image_h = image->height();
-   Teuchos::ArrayRCP<intensity_t> intensities_ = target==REF_INTENSITIES ? ref_intensities_ : def_intensities_;
+  Teuchos::ArrayRCP<intensity_t> intensities_ = target==REF_INTENSITIES ? ref_intensities_ : def_intensities_;
    // assume if the map is null, use the no_map_tag in the parrel for call of the functor
    if(deformation==Teuchos::null){
      for(int_t i=0;i<num_pixels_;++i)
@@ -305,12 +303,7 @@ Subset::initialize(Teuchos::RCP<Image> image,
      scalar_t mapped_x = 0.0;
      scalar_t mapped_y = 0.0;
      scalar_t dx = 0.0,dy=0.0,Dx=0.0,Dy=0.0;
-     int_t x1=0,x2=0,y1=0,y2=0;
      const scalar_t ox=(scalar_t)offset_x,oy=(scalar_t)offset_y;
-     scalar_t dx2=0.0, dx3=0.0;
-     scalar_t dy2=0.0, dy3=0.0;
-     scalar_t f0x=0.0, f0y=0.0;
-     scalar_t intensity_value = 0.0;
      for(int_t i=0;i<num_pixels_;++i){
        dx = (scalar_t)(x_[i]) - cx_;
        dy = (scalar_t)(y_[i]) - cy_;
@@ -320,81 +313,10 @@ Subset::initialize(Teuchos::RCP<Image> image,
        mapped_x = cos_t*Dx - sin_t*Dy + u + cx_ - ox;
        mapped_y = sin_t*Dx + cos_t*Dy + v + cy_ - oy;
        if(interp==BILINEAR){
-         // check that the mapped location is inside the image...
-         if(mapped_x>=0&&mapped_x<image_w-1.5&&mapped_y>=0&&mapped_y<image_h-1.5){
-           x1 = (int_t)mapped_x;
-           x2 = x1+1;
-           y1 = (int_t)mapped_y;
-           y2  = y1+1;
-           intensities_[i] =
-               ((*image)(x1,y1)*(x2-mapped_x)*(y2-mapped_y)
-                   +(*image)(x2,y1)*(mapped_x-x1)*(y2-mapped_y)
-                   +(*image)(x2,y2)*(mapped_x-x1)*(mapped_y-y1)
-                   +(*image)(x1,y2)*(x2-mapped_x)*(mapped_y-y1));
-         }
-         else{
-           // out of bounds pixels are black
-           intensities_[i] = 0;
-         }
+         intensities_[i] = interpolate_bilinear(mapped_x,mapped_y,image);
        }
        else if(interp==KEYS_FOURTH){
-         x1 = (int_t)mapped_x;
-         if(mapped_x - x1 >= 0.5) x1++;
-         y1 = (int_t)mapped_y;
-         if(mapped_y - y1 >= 0.5) y1++;
-         // check that the mapped location is inside the image...
-         if(mapped_x>2.5&&mapped_x<image_w-3.5&&mapped_y>2.5&&mapped_y<image_h-3.5){
-           intensity_value = 0.0;
-           // convolve all the pixels within + and - pixels of the point in question
-           for(int_t y=y1-3;y<=y1+3;++y){
-             dy = std::abs(mapped_y - y);
-             dy2=dy*dy;
-             dy3=dy2*dy;
-             f0y = 0.0;
-             if(dy <= 1.0){
-               f0y = 4.0/3.0*dy3 - 7.0/3.0*dy2 + 1.0;
-             }
-             else if(dy <= 2.0){
-               f0y = -7.0/12.0*dy3 + 3.0*dy2 - 59.0/12.0*dy + 15.0/6.0;
-             }
-             else if(dy <= 3.0){
-               f0y = 1.0/12.0*dy3 - 2.0/3.0*dy2 + 21.0/12.0*dy - 3.0/2.0;
-             }
-             for(int_t x=x1-3;x<=x1+3;++x){
-               // compute the f's of x and y
-               dx = std::abs(mapped_x - x);
-               dx2=dx*dx;
-               dx3=dx2*dx;
-               f0x = 0.0;
-               if(dx <= 1.0){
-                 f0x = 4.0/3.0*dx3 - 7.0/3.0*dx2 + 1.0;
-               }
-               else if(dx <= 2.0){
-                 f0x = -7.0/12.0*dx3 + 3.0*dx2 - 59.0/12.0*dx + 15.0/6.0;
-               }
-               else if(dx <= 3.0){
-                 f0x = 1.0/12.0*dx3 - 2.0/3.0*dx2 + 21.0/12.0*dx - 3.0/2.0;
-               }
-               intensity_value += (*image)(x,y)*f0x*f0y;
-             }
-           }
-           intensities_[i] = intensity_value;
-         }
-         // bilinear as a fall back near the edges
-         else if(mapped_x>=0&&mapped_x<image_w-1.5&&mapped_y>=0&&mapped_y<image_h-1.5){
-           x1 = (int_t)mapped_x;
-           x2 = x1+1;
-           y1 = (int_t)mapped_y;
-           y2  = y1+1;
-           intensities_[i] =
-               ((*image)(x1,y1)*(x2-mapped_x)*(y2-mapped_y)
-                +(*image)(x2,y1)*(mapped_x-x1)*(y2-mapped_y)
-                +(*image)(x2,y2)*(mapped_x-x1)*(mapped_y-y1)
-                +(*image)(x1,y2)*(x2-mapped_x)*(mapped_y-y1));
-         }
-         else{
-           intensities_[i] = 0;
-         }
+         intensities_[i] = interpolate_keys_fourth(mapped_x,mapped_y,image);
        }
        else{
          TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,

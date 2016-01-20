@@ -365,7 +365,7 @@ Image::create_mask(const Conformal_Area_Def & area_def,
   if(area_def.has_excluded_area()){
     for(size_t i=0;i<area_def.excluded_area()->size();++i){
       std::set<std::pair<int_t,int_t> > removeCoords = (*area_def.excluded_area())[i]->get_owned_pixels();
-      typename std::set<std::pair<int_t,int_t> >::iterator it = removeCoords.begin();
+      std::set<std::pair<int_t,int_t> >::iterator it = removeCoords.begin();
       for(;it!=removeCoords.end();++it){
         if(coords.find(*it)!=coords.end())
           coords.erase(*it);
@@ -373,7 +373,7 @@ Image::create_mask(const Conformal_Area_Def & area_def,
     } // end excluded_area loop
   } // end has excluded area
   // NOTE: the pairs are (y,x) not (x,y) so that the ordering is correct in the set
-  typename std::set<std::pair<int_t,int_t> >::iterator set_it = coords.begin();
+  std::set<std::pair<int_t,int_t> >::iterator set_it = coords.begin();
   for( ; set_it!=coords.end();++set_it){
     mask_[(set_it->first - offset_y_)*width_+set_it->second - offset_x_] = 1.0;
   }
@@ -414,17 +414,15 @@ Image::apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformati
   const int_t cx,
   const int_t cy,
   const bool apply_in_place){
-
+  Teuchos::RCP<Image> this_img = Teuchos::rcp(this,false);
   if(apply_in_place){
-    for(int_t i=0;i<num_pixels();++i)
-      intensities_temp_[i] = intensities_[i];
-    apply_transform(intensities_temp_,intensities_,cx,cy,width_,height_,deformation);
+    Teuchos::RCP<Image> temp_img = Teuchos::rcp(new Image(this_img));
+    apply_transform(temp_img,this_img,cx,cy,deformation);
     return Teuchos::null;
   }
   else{
-    Teuchos::ArrayRCP<intensity_t> result_intensities(width_*height_,0.0);
-    apply_transform(intensities_,result_intensities,cx,cy,width_,height_,deformation);
-    Teuchos::RCP<Image> result = Teuchos::rcp(new Image(width_,height_,result_intensities));
+    Teuchos::RCP<Image> result = Teuchos::rcp(new Image(width_,height_));
+    apply_transform(this_img,result,cx,cy,deformation);
     return result;
   }
 }

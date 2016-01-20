@@ -21,7 +21,13 @@ include_directories(
 link_directories (
     ${TIFF_LIB_DIR}
 )
-SET(DICE_UTILS_LIBRARIES tiff jpeg)
+SET(DICE_UTILS_LIBRARIES tiff)
+if(DICE_HAS_JPEG)
+  SET(DICE_UTILS_LIBRARIES ${DICE_UTILS_LIBRARIES} jpeg)
+endif()
+if(DICE_HAS_PNG)
+  SET(DICE_UTILS_LIBRARIES ${DICE_UTILS_LIBRARIES} png)
+endif()
 
 # Specify target & source files to compile it from
 add_library(

@@ -119,11 +119,13 @@ the location of the images and results and also the images to use. The
 user can select a correlation of a list of specific images or a sequence of images 
 based on which paramters are specified.
 
-If MPI is enabled ([see below] (#MPINotes)) DICe is run in parallel with
+If MPI is installed and enabled ([see below] (#MPINotes)) DICe can be run in parallel with
 
-    $ mpirun -n <num_procs> dice -i <input_file>
+    $ mpiexec -n <num_procs> dice -i <input_file>
 
 Where `num_procs` specifies the number of processors.
+
+Here is a helpful link for using MS-MPI on windows: [Microsoft MPI] (https://msdn.microsoft.com/en-us/library/windows/desktop/bb524831.aspx). **MPI must be installed to run in parallel**.
 
 ### <a name="MPINotes"></a>Running DICe in parallel with MPI enabled
 
@@ -565,6 +567,15 @@ To Gauss filter the images add the following option to the parameters file. The 
 
 When filtering is enabled, the size of the filtering mask is seven pixels by seven pixels. The coefficients of the mask are given in DICe_ImageSerial.cpp or DICe_ImageKokkos.cpp. It is possible to filter images with different window sizes, but so far this is only enabled for the DICe::Image class. It has not been enabled in the correlation parameters for the executable.
 
+### Detecting initialization or correlation failure
+
+To force DICe to abort if the quality of the initialization step or the correlation does not provide a value for `gamma` that is above a certain threshold, set one or both of the following parameters in the correlation parameters file:
+
+    <Parameter name="initial_gamma_threshold" type="double" value="<tolerance>" />
+    <Parameter name="final_gamma_threshold" type="double" value="<tolerance>" />
+
+The `initial_gamma_threshold` will test the `gamma` value for the pre-solve, intial guess. The `final_gamma_threshold` will test the value of `gamma` post-solve. 
+
 ### Output files
 
 The output produced are space delimited text files. The default output is
@@ -792,28 +803,28 @@ Requirements
 DICe can be built and run on Mac OS X, Windows, and Linux.
 The prerequisite dependencies required for installing DICe include:
 
--   [CMake] (http://www.cmake.org) 
+-   [CMake] (http://www.cmake.org) Version 2.8 or greater (tested with 3.3.2) 
 
--   [Trilinos] (http://trilinos.org)
+-   [Trilinos] (http://trilinos.org) Version 12.0 or greater (tested with 12.2)
 
--   LAPACK or CLAPACK (for Windows, only CLAPACK is supported)
+-   LAPACK or [CLAPACK] (http://www.netlib.org/clapack/) (for Windows, only CLAPACK is supported Version 3.2.1 or greater) 
 
--   [Boost] (http://www.boost.org)
+-   [Boost] (http://www.boost.org) Version 1.55 or greater (tested with 1.55.0)
 
--   [LibTiff] (http://www.remotesensing.org/libtiff/)
+-   [LibTiff] (http://www.remotesensing.org/libtiff/) Version 4.0.6 (tested with 4.0.6)
 
 Optionally, if jpeg or png files are used for input, the following libraries
 are needed:
 
--   [LibPng] (http://www.libpng.org/pub/png/libpng.html)
+-   [LibPng] (http://www.libpng.org/pub/png/libpng.html) Version 1.6.20
 
--   [LibJpeg] (http://libjpeg.sourceforge.net/)
+-   [LibJpeg] (http://libjpeg.sourceforge.net/) Version 6b
 
 CMake
 -----
 
 DICe makes use of CMake
-for build configuration. Version 2.8 or greater is required. Sample CMake scripts for building Trilinos and
+for build configuration. Sample CMake scripts for building Trilinos and
 DICe are in the folder `dice\scripts`
 
 Installing Trilinos

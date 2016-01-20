@@ -6,3 +6,5 @@ build*
 .DS_Store
 doc/doxygen/html
 doc/doxygen/latex
+LocalDefinitions.py
+*.pyc

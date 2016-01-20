@@ -62,7 +62,7 @@
 #  define DEBUG_MSG(x) do {} while (0)
 #endif
 
-#define VERSION "1.0"
+#define VERSION "v1.0"
 #ifndef GITSHA1
   #define GITSHA1 "not available"
 #endif
@@ -96,6 +96,10 @@ namespace DICe{
 
 /// integer type
 typedef int int_t;
+
+/// Print the executable information banner
+DICE_LIB_DLL_EXPORT
+void print_banner();
 
 /// Initialization function (mpi and kokkos if enabled):
 /// \param argc argument count

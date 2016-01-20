@@ -756,7 +756,7 @@ Schema::initialize(const int_t num_pts,
   TEUCHOS_TEST_FOR_EXCEPTION(data_num_points_<(int_t)conformal_subset_defs_->size(),std::runtime_error,
     "Error, data is not the right size, conformal_subset_defs_.size() is too large for the data array");
   // ensure that the ids in conformal subset defs are valid:
-  typename std::map<int_t,Conformal_Area_Def>::iterator it = conformal_subset_defs_->begin();
+  std::map<int_t,Conformal_Area_Def>::iterator it = conformal_subset_defs_->begin();
   for( ;it!=conformal_subset_defs_->end();++it){
     assert(it->first >= 0);
     assert(it->first < data_num_points_);
@@ -797,7 +797,7 @@ Schema::create_obstruction_dist_map(){
   std::vector<std::set<int_t> > obstruction_groups;
   std::map<int_t,int_t> earliest_id_can_appear;
   std::set<int_t> assigned_to_a_group;
-  typename std::map<int_t,std::vector<int_t> >::iterator map_it = obstructing_subset_ids_->begin();
+  std::map<int_t,std::vector<int_t> >::iterator map_it = obstructing_subset_ids_->begin();
   for(;map_it!=obstructing_subset_ids_->end();++map_it){
     int_t greatest_subset_id_among_obst = 0;
     for(size_t j=0;j<map_it->second.size();++j)
@@ -814,9 +814,9 @@ Schema::create_obstruction_dist_map(){
       eligible_ids.erase(map_it->second[j]);
     }
     // no search all the other obstruction sets for any ids currently in the dependency list
-    typename std::set<int_t>::iterator dep_it = dependencies.begin();
+    std::set<int_t>::iterator dep_it = dependencies.begin();
     for(;dep_it!=dependencies.end();++dep_it){
-      typename std::map<int_t,std::vector<int_t> >::iterator search_it = obstructing_subset_ids_->begin();
+      std::map<int_t,std::vector<int_t> >::iterator search_it = obstructing_subset_ids_->begin();
       for(;search_it!=obstructing_subset_ids_->end();++search_it){
         if(assigned_to_a_group.find(search_it->first)!=assigned_to_a_group.end()) continue;
         // if any of the ids are in the current dependency list, add the whole set:
@@ -845,13 +845,13 @@ Schema::create_obstruction_dist_map(){
   std::stringstream ss;
   for(size_t i=0;i<obstruction_groups.size();++i){
     ss << "[PROC " << proc_id << "] Group: " << i << std::endl;
-    typename std::set<int_t>::iterator j = obstruction_groups[i].begin();
+    std::set<int_t>::iterator j = obstruction_groups[i].begin();
     for(;j!=obstruction_groups[i].end();++j){
       ss << "[PROC " << proc_id << "]   id: " << *j << std::endl;
     }
   }
   ss << "[PROC " << proc_id << "] Eligible ids: " << std::endl;
-  for(typename std::set<int_t>::iterator elig_it=eligible_ids.begin();elig_it!=eligible_ids.end();++elig_it){
+  for(std::set<int_t>::iterator elig_it=eligible_ids.begin();elig_it!=eligible_ids.end();++elig_it){
     ss << "[PROC " << proc_id << "]   " << *elig_it << std::endl;
   }
   if(proc_id == 0) DEBUG_MSG(ss.str());
@@ -871,7 +871,7 @@ Schema::create_obstruction_dist_map(){
     }
   }
   // assign the rest based on who has the least amount of subsets
-  for(typename std::set<int_t>::iterator elig_it = eligible_ids.begin();elig_it!=eligible_ids.end();++elig_it){
+  for(std::set<int_t>::iterator elig_it = eligible_ids.begin();elig_it!=eligible_ids.end();++elig_it){
     int_t proc_with_fewest_subsets = 0;
     int_t lowest_num_subsets = data_num_points_;
     for(int_t i=0;i<num_procs;++i){
@@ -884,7 +884,7 @@ Schema::create_obstruction_dist_map(){
   }
   // order the subset ids so that they respect the dependencies:
   std::vector<int_t> local_ids;
-  typename std::set<int_t>::iterator set_it = local_subset_ids[proc_id].begin();
+  std::set<int_t>::iterator set_it = local_subset_ids[proc_id].begin();
   for(;set_it!=local_subset_ids[proc_id].end();++set_it){
     // not in the list of subsets with blockers
     if(obstructing_subset_ids_->find(*set_it)==obstructing_subset_ids_->end()){

@@ -251,7 +251,7 @@ multi_shape read_shapes(std::fstream & dataFile);
 /// \brief Converts params into string names of all the images in a sequence
 /// \param params Defines the prefix for the image names, number of images, etc.
 DICE_LIB_DLL_EXPORT
-const std::vector<std::string> decypher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params);
+const std::vector<std::string> decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params);
 
 /// \brief Creates a regular square grid of correlation points
 /// \param correlation_points Vector of global point coordinates
