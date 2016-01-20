@@ -113,6 +113,9 @@ correaltion paramters file, described below) add the `-g` option to the `dice` c
 
     $ dice -g [file_prefix]
 
+**The sample files will not be written if the folder permissions are read-only** (as is the
+case if one executes `dice` inside the system install directory).
+
 Commented notes on all of the paramters in the input files are given
 with the `-g` option in the template files. The input file specifies,
 the location of the images and results and also the images to use. The
