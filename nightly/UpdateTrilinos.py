@@ -23,7 +23,10 @@ def update_trilinos(logfile, build_type):
     if os.path.exists(trilinos_build_dir+'/lib'):
         shutil.rmtree(trilinos_build_dir+'/lib')
     os.chdir(trilinos_build_dir)
-    command = ["./do-clean"]
+    if os.name=='nt':
+        command = ["do-clean.bat"]
+    else:
+        command = ["./do-clean"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     force_write(logfile)
@@ -55,7 +58,10 @@ def update_trilinos(logfile, build_type):
 
     logfile.write(append_time("\nRunning CMake for Trilinos")+"\n") ; force_write(logfile)
     os.chdir(trilinos_build_dir)
-    command = ["./do-cmake"]
+    if os.name=='nt':
+        command = ["do-cmake.bat"]
+    else:
+        command = ["./do-cmake"]
     p = Popen(command, stdout=logfile, stderr=logfile, shell=True, executable='/bin/bash')
     return_code = p.wait()
     force_write(logfile)
@@ -71,7 +77,10 @@ def update_trilinos(logfile, build_type):
 
     logfile.write(append_time("\nBuilding Trilinos")+"\n") ; force_write(logfile)
     os.chdir(trilinos_build_dir)
-    command = ["./do-make"]
+    if os.name=='nt':
+        command = ["do-make.bat"]
+    else:
+        command = ["./do-make"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     force_write(logfile)

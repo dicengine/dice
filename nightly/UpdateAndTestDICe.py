@@ -20,7 +20,10 @@ def update_and_test_dice(logfile, build_type):
 
     logfile.write(append_time("\nCleaning DICe " + build_type + " ")+"\n") ; force_write(logfile)
     os.chdir(dice_build_dir)
-    command = ["./do-clean"]
+    if os.name=='nt':
+        command = ["do-clean.bat"]
+    else:
+        command = ["./do-clean"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     force_write(logfile)
@@ -52,7 +55,10 @@ def update_and_test_dice(logfile, build_type):
 
     logfile.write(append_time("\nRunning CMake for DICe " + build_type + " ")+"\n") ; force_write(logfile)
     os.chdir(dice_build_dir)
-    command = ["./do-cmake"]
+    if os.name=='nt':
+        command = ["do-cmake.bat"]
+    else:
+        command = ["./do-cmake"]
     p = Popen(command, stdout=logfile, stderr=logfile, shell=True, executable='/bin/bash')
     return_code = p.wait()
     force_write(logfile)
@@ -68,7 +74,10 @@ def update_and_test_dice(logfile, build_type):
 
     logfile.write(append_time("\nBuilding DICe " + build_type + " ")+"\n") ; force_write(logfile)
     os.chdir(dice_build_dir)
-    command = ["./do-make"]
+    if os.name=='nt':
+        command = ["do-make.bat"]
+    else:
+        command = ["./do-make"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     force_write(logfile)
@@ -85,7 +94,10 @@ def update_and_test_dice(logfile, build_type):
     logfile.write(append_time("Running DICe " + build_type + " tests ")+"\n") ; force_write(logfile)
     message += "\nDICe " + build_type + " CTest results:\n\n"
     os.chdir(dice_build_dir)
-    command = ["./do-test"]
+    if os.name=='nt':
+        command = ["do-test.bat"]
+    else:
+        command = ["./do-test"]
     p = Popen(command, stdout=PIPE, stderr=PIPE)
     return_code = p.wait()
     results = p.communicate()[0]
