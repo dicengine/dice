@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 import string
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 import os
 from Utils import now, append_time, force_write
 from LocalDefinitions import MACHINE_NAME, DICE_ROOT
@@ -63,6 +63,15 @@ def update_and_test_dice(logfile, build_type):
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     force_write(logfile)
+    # try to build 5 times if this is windows
+    # this is to address the lock on manifest files
+    # for exectuables
+    if os.name=='nt':
+        for i in range(0,5):
+            print "      windows build attempt " + str(i)
+            p = Popen(command, stdout=logfile, stderr=logfile)
+            return_code = p.wait()
+            force_write(logfile)
     msg = "DICe " + build_type + " CMake:  Passed\n"
     if return_code != 0:
         msg = "DICe " + build_type + " CMake:  FAILED\n"
@@ -99,11 +108,18 @@ def update_and_test_dice(logfile, build_type):
         command = ["do-test.bat"]
     else:
         command = ["./do-test"]
-    p = Popen(command, stdout=PIPE, stderr=PIPE)
+
+    lines = []
+    p = Popen(command, bufsize=1, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT)
+    for line in iter(p.stdout.readline, ''):
+        #print line,          # print to stdout immediately
+        lines.append(line)   # capture for later
+    p.stdout.close()
     return_code = p.wait()
-    results = p.communicate()[0]
-    message += results
-    logfile.write(results) ; force_write(logfile)
+    for line in lines:
+        message += line #results
+        logfile.write(line)
+    force_write(logfile)
     if return_code != 0:
         status = "FAILED"
     logfile.write(append_time("\nDICe " + build_type + " tests complete ")+"\n") ; force_write(logfile)
