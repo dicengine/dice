@@ -63,15 +63,6 @@ def update_and_test_dice(logfile, build_type):
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     force_write(logfile)
-    # try to build 5 times if this is windows
-    # this is to address the lock on manifest files
-    # for exectuables
-    if os.name=='nt':
-        for i in range(0,5):
-            print "      windows build attempt " + str(i)
-            p = Popen(command, stdout=logfile, stderr=logfile)
-            return_code = p.wait()
-            force_write(logfile)
     msg = "DICe " + build_type + " CMake:  Passed\n"
     if return_code != 0:
         msg = "DICe " + build_type + " CMake:  FAILED\n"
@@ -91,6 +82,15 @@ def update_and_test_dice(logfile, build_type):
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     force_write(logfile)
+    # try to build 5 times if this is windows
+    # this is to address the lock on manifest files
+    # for exectuables
+    if os.name=='nt':
+        for i in range(0,5):
+            print "      windows build attempt " + str(i)
+            p = Popen(command, stdout=logfile, stderr=logfile)
+            return_code = p.wait()
+            force_write(logfile)
     msg = "DICe " + build_type + " build:  Passed\n"
     if return_code != 0:
         msg = "DICe " + build_type + " build:  FAILED\n"
