@@ -1551,7 +1551,7 @@ Schema::write_deformed_subset_intensity_image(Teuchos::RCP<Objective> obj){
     ss << dirStr << "deformedSubset_" << obj->correlation_point_global_id() << "_";
     for(int_t i=0;i<num_zeros;++i)
       ss << "0";
-    ss << image_frame_;
+    ss << image_frame_ << ".tif";
     obj->subset()->write_tiff(ss.str(),true);
 #endif
 }
@@ -1581,7 +1581,7 @@ Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
     ss << dirStr << "evolvedSubset_" << obj->correlation_point_global_id() << "_";
     for(int_t i=0;i<num_zeros;++i)
       ss << "0";
-    ss << image_frame_;
+    ss << image_frame_ << ".tif";
     obj->subset()->write_tiff(ss.str());
 #endif
 }
