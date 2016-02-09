@@ -1473,8 +1473,15 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //  test final gamma if user requested
   //
   scalar_t noise_std_dev = 0.0;
-  const scalar_t gamma = obj->gamma(deformation);
   const scalar_t sigma = obj->sigma(deformation,noise_std_dev);
+  if(sigma < 0.0){
+    DEBUG_MSG("Subset " << subset_gid << " final sigma value FAILS threshold test, sigma: " <<
+      sigma << " (threshold: " << 0.0 << ")");
+    // TODO for the phase correlation initialization method, the initial guess needs to be stored
+    record_failed_step(subset_gid,static_cast<int_t>(FRAME_FAILED_DUE_TO_NEGATIVE_SIGMA),num_iterations);
+    return;
+  }
+  const scalar_t gamma = obj->gamma(deformation);
   const scalar_t beta = output_beta_ ? obj->beta(deformation) : 0.0;
   if(final_gamma_threshold_!=-1.0&&gamma > final_gamma_threshold_){
     DEBUG_MSG("Subset " << subset_gid << " final gamma value FAILS threshold test, gamma: " <<

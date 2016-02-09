@@ -154,7 +154,8 @@ Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation,
     sum_gy += subset_->grad_y(i)*subset_->grad_y(i);
   }
   const scalar_t sum_grad = sum_gx > sum_gy ? sum_gy : sum_gx;
-  const scalar_t sigma = std::sqrt(2.0*noise_level*noise_level / sum_grad);
+  // ensure that sum grad is greater than zero
+  const scalar_t sigma = sum_grad>0.0 ? std::sqrt(2.0*noise_level*noise_level / sum_grad) : -1.0;
   DEBUG_MSG("Objective_ZNSSD::sigma(): Subset " << correlation_point_global_id_ << " sigma: " << sigma);
   return sigma;
 }
