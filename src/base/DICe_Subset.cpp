@@ -228,6 +228,16 @@ Subset::write_tiff(const std::string & file_name,
   delete[] intensities;
 }
 
+int_t
+Subset::num_active_pixels(){
+  int_t num_active = 0;
+  for(int_t i=0;i<num_pixels();++i){
+    if(is_active(i)&&!is_deactivated_this_step(i))
+      num_active++;
+  }
+  return num_active;
+}
+
 scalar_t
 Subset::contrast_std_dev(){
   const scalar_t mean_intensity = mean(DEF_INTENSITIES);

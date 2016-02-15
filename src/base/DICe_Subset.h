@@ -202,6 +202,9 @@ public:
   /// returns true if this pixel is active
   bool & is_active(const int_t pixel_index);
 
+  /// returns the number of active pixels in the subset
+  int_t num_active_pixels();
+
   /// returns true if this pixel is deactivated for this particular frame
   bool & is_deactivated_this_step(const int_t pixel_index);
 
@@ -226,7 +229,6 @@ public:
   /// \param deformation the current deformation of the subset
   scalar_t noise_std_dev(Teuchos::RCP<Image> image,
     Teuchos::RCP<const std::vector<scalar_t> > deformation);
-
 
   /// \brief Returns the std deviation of the image intensity values
   scalar_t contrast_std_dev();

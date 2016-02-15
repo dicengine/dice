@@ -666,6 +666,7 @@ public:
     const scalar_t & beta,
     const scalar_t & noise,
     const scalar_t & contrast,
+    const int_t active_pixels,
     const int_t status,
     const int_t num_iterations);
 

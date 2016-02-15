@@ -84,6 +84,7 @@ const std::string to_string(Field_Name in){
     "BETA",
     "NOISE_LEVEL",
     "CONTRAST_LEVEL",
+    "ACTIVE_PIXELS",
     "MATCH",
     "ITERATIONS",
     "STATUS_FLAG",

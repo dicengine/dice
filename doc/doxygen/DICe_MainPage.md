@@ -649,6 +649,8 @@ The following fields are available for output:
                       // smaller gamma is better, 0.0 is perfect match
     BETA              // sensitivity of the cost function to small perturbations in the displacement solution
     NOISE_LEVEL       // estimated std. dev. of the image noise
+    CONSTRAST_LEVEL   // std. dev. of the subset image intensity values
+    ACTIVE_PIXELS     // number of pixels that are active (not obstructed or deactivated for this step)
     MATCH             // 0 means match was found -1 means match failed
     ITERATIONS        // number of iterations taken by the solution algorithm
     STATUS_FLAG       // information about the initialization method or error flags on failed steps

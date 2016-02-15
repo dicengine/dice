@@ -1292,6 +1292,7 @@ Schema::record_failed_step(const int_t subset_gid,
   local_field_value(subset_gid,BETA) = -1.0;
   local_field_value(subset_gid,NOISE_LEVEL) = -1.0;
   local_field_value(subset_gid,CONTRAST_LEVEL) = -1.0;
+  local_field_value(subset_gid,ACTIVE_PIXELS) = -1.0;
   local_field_value(subset_gid,STATUS_FLAG) = status;
   local_field_value(subset_gid,ITERATIONS) = num_iterations;
 }
@@ -1305,6 +1306,7 @@ Schema::record_step(const int_t subset_gid,
   const scalar_t & beta,
   const scalar_t & noise,
   const scalar_t & contrast,
+  const int_t active_pixels,
   const int_t status,
   const int_t num_iterations){
   DEBUG_MSG("Subset " << subset_gid << " record step");
@@ -1320,6 +1322,7 @@ Schema::record_step(const int_t subset_gid,
   local_field_value(subset_gid,BETA) = beta;
   local_field_value(subset_gid,NOISE_LEVEL) = noise;
   local_field_value(subset_gid,CONTRAST_LEVEL) = contrast;
+  local_field_value(subset_gid,ACTIVE_PIXELS) = active_pixels;
   local_field_value(subset_gid,STATUS_FLAG) = status;
   local_field_value(subset_gid,ITERATIONS) = num_iterations;
 }
@@ -1395,7 +1398,10 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       const scalar_t initial_gamma = obj->gamma(deformation);
       const scalar_t initial_beta = output_beta_ ? obj->beta(deformation) : 0.0;
       const scalar_t contrast = obj->subset()->contrast_std_dev();
-      record_step(subset_gid,deformation,initial_sigma,0.0,initial_gamma,initial_beta,noise_std_dev,contrast,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
+      const int_t active_pixels = obj->subset()->num_active_pixels();
+      record_step(subset_gid,
+        deformation,initial_sigma,0.0,initial_gamma,initial_beta,
+        noise_std_dev,contrast,active_pixels,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
       // evolve the subsets and output the images requested as well
       // turn on pixels that at the beginning were hidden behind an obstruction
       if(use_subset_evolution_&&image_frame_>1){
@@ -1525,7 +1531,10 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   if(projection_method_==VELOCITY_BASED) save_off_fields(subset_gid);
   const scalar_t contrast = obj->subset()->contrast_std_dev();
-  record_step(subset_gid,deformation,sigma,0.0,gamma,beta,noise_std_dev,contrast,static_cast<int_t>(init_status),num_iterations);
+  const int_t active_pixels = obj->subset()->num_active_pixels();
+  record_step(subset_gid,
+    deformation,sigma,0.0,gamma,beta,noise_std_dev,contrast,active_pixels,
+    static_cast<int_t>(init_status),num_iterations);
   //
   //  turn on pixels that at the beginning were hidden behind an obstruction
   //

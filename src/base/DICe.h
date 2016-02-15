@@ -304,14 +304,16 @@ enum Field_Name {
   // 22
   CONTRAST_LEVEL,    // estimated std. dev. of the image intensity values
   // 23
-  MATCH,             // 0 means match was found -1 means match failed
+  ACTIVE_PIXELS,     // number of active pixels for the subset
   // 24
-  ITERATIONS,        // number of iterations taken by the solution algorithm
+  MATCH,             // 0 means match was found -1 means match failed
   // 25
-  STATUS_FLAG,       // information about the initialization method or error flags on failed steps
+  ITERATIONS,        // number of iterations taken by the solution algorithm
   // 26
-  NEIGHBOR_ID,       // the global id of the neighboring subset to use for initialization by neighbor value
+  STATUS_FLAG,       // information about the initialization method or error flags on failed steps
   // 27
+  NEIGHBOR_ID,       // the global id of the neighboring subset to use for initialization by neighbor value
+  // 28
   CONDITION_NUMBER,  // quality metric for the pseudoinverse matrix in the gradient-based method
   // *** DO NOT PUT ANY FIELDS UNDER THIS ONE ***
   // (this is how the field stride is automatically set if another field is added)
