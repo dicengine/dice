@@ -217,14 +217,19 @@ Subset::reset_is_deactivated_this_step(){
 scalar_t
 Subset::mean(const Subset_View_Target target){
   scalar_t mean = 0.0;
+  int_t num_active = num_active_pixels();
   if(target==REF_INTENSITIES){
-    for(int_t i=0;i<num_pixels_;++i)
-      mean += ref_intensities_[i];
+    for(int_t i=0;i<num_pixels_;++i){
+      if(is_active_[i]&!is_deactivated_this_step_[i])
+        mean += ref_intensities_[i];
+    }
   }else{
     for(int_t i=0;i<num_pixels_;++i)
-      mean += def_intensities_[i];
+      if(is_active_[i]&!is_deactivated_this_step_[i]){
+        mean += def_intensities_[i];
+      }
   }
-  return mean/num_pixels_;
+  return mean/num_active;
 }
 
 scalar_t
@@ -233,11 +238,15 @@ Subset::mean(const Subset_View_Target target,
   scalar_t mean_ = mean(target);
   sum = 0.0;
   if(target==REF_INTENSITIES){
-    for(int_t i=0;i<num_pixels_;++i)
-      sum += (ref_intensities_[i]-mean_)*(ref_intensities_[i]-mean_);
+    for(int_t i=0;i<num_pixels_;++i){
+      if(is_active_[i]&!is_deactivated_this_step_[i])
+        sum += (ref_intensities_[i]-mean_)*(ref_intensities_[i]-mean_);
+    }
   }else{
-    for(int_t i=0;i<num_pixels_;++i)
-      sum += (def_intensities_[i]-mean_)*(def_intensities_[i]-mean_);
+    for(int_t i=0;i<num_pixels_;++i){
+      if(is_active_[i]&!is_deactivated_this_step_[i])
+        sum += (def_intensities_[i]-mean_)*(def_intensities_[i]-mean_);
+    }
   }
   sum = std::sqrt(sum);
   return mean_;
