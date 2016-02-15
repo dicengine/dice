@@ -392,7 +392,7 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
 Status_Flag
 Zero_Value_Initializer::initial_guess(const int_t subset_gid,
   Teuchos::RCP<std::vector<scalar_t> > deformation){
-  for(int_t i=0;i<deformation->size();++i)
+  for(size_t i=0;i<deformation->size();++i)
     (*deformation)[i] = 0.0;
   return INITIALIZE_SUCCESSFUL;
 };

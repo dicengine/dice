@@ -227,6 +227,10 @@ public:
   scalar_t noise_std_dev(Teuchos::RCP<Image> image,
     Teuchos::RCP<const std::vector<scalar_t> > deformation);
 
+
+  /// \brief Returns the std deviation of the image intensity values
+  scalar_t contrast_std_dev();
+
   /// \brief EXPERIMENTAL Check the deformed position of the pixel to see if it falls inside an obstruction, if so, turn it off
   /// \param deformation Deformation to use in determining the current position of all the pixels in the subset
   ///

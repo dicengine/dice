@@ -229,6 +229,16 @@ Subset::write_tiff(const std::string & file_name,
 }
 
 scalar_t
+Subset::contrast_std_dev(){
+  const scalar_t mean_intensity = mean(DEF_INTENSITIES);
+  scalar_t std_dev = 0.0;
+  for(int_t i = 0;i<num_pixels();++i)
+    std_dev += (def_intensities(i) - mean_intensity)*(def_intensities(i) - mean_intensity);
+  std_dev = std::sqrt(std_dev/num_pixels());
+  return std_dev;
+}
+
+scalar_t
 Subset::noise_std_dev(Teuchos::RCP<Image> image,
   Teuchos::RCP<const std::vector<scalar_t> > deformation){
 
