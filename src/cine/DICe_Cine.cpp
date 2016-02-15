@@ -132,22 +132,21 @@ Cine_Reader::get_frames(const int_t frame_index_start, const int_t frame_index_e
   const int_t header_offset_16 = header_size / sizeof(uint16_t);
   TEUCHOS_TEST_FOR_EXCEPTION(header_size%sizeof(uint16_t)!=0,std::runtime_error,"");
 
-  if(out_stream_){
-    *out_stream_ << "Cine_Reader::get_frames(): cine file name:      " << cine_header_->file_name_ << std::endl;
-    *out_stream_ << "Cine_Reader::get_frames(): frame start:         " << frame_start << std::endl;
-    *out_stream_ << "Cine_Reader::get_frames(): frame end:           " << frame_end << std::endl;
-    *out_stream_ << "Cine_Reader::get_frames(): file size:           " << file_size << " bytes" << std::endl;
-    *out_stream_ << "Cine_Reader::get_frames(): internal range:      " << frame_start << " to " << frame_end << std::endl;
-    *out_stream_ << "Cine_Reader::get_frames(): image dimensions:    " << img_width << " x " << img_height << std::endl;
-    *out_stream_ << "Cine_Reader::get_frames(): num frames:          " << num_frames << std::endl;
-    *out_stream_ << "Cine_Reader::get_frames(): bit depth:           " << bit_depth << std::endl;
-    *out_stream_ << "Cine_Reader::get_frames(): frame size:          " << frame_size << " bytes" << std::endl;
-    *out_stream_ << "Cine_Reader::get_frames(): frame header size:   " << header_size << " bytes" << std::endl;
-    *out_stream_ << "Cine_Reader::get_frames(): frame + header size: " << frame_p_header_size << " bytes " << std::endl;
-    *out_stream_ << "Cine_Reader::get_frames(): header offset 8:     " << header_offset_8 << std::endl;
-    *out_stream_ << "Cine_Reader::get_frames(): header offset 16:    " << header_offset_16 << std::endl;
-    *out_stream_ << "Cine_Reader::get_frames(): begin " << begin << " end " << end  << " buffer size: " << buffer_size << std::endl;
-  }
+  DEBUG_MSG("Cine_Reader::get_frames(): cine file name:      " << cine_header_->file_name_);
+  DEBUG_MSG("Cine_Reader::get_frames(): frame start:         " << frame_start);
+  DEBUG_MSG("Cine_Reader::get_frames(): frame end:           " << frame_end);
+  DEBUG_MSG("Cine_Reader::get_frames(): file size:           " << file_size << " bytes");
+  DEBUG_MSG("Cine_Reader::get_frames(): internal range:      " << frame_start << " to " << frame_end);
+  DEBUG_MSG("Cine_Reader::get_frames(): image dimensions:    " << img_width << " x " << img_height);
+  DEBUG_MSG("Cine_Reader::get_frames(): num frames:          " << num_frames);
+  DEBUG_MSG("Cine_Reader::get_frames(): bit depth:           " << bit_depth);
+  DEBUG_MSG("Cine_Reader::get_frames(): frame size:          " << frame_size << " bytes");
+  DEBUG_MSG("Cine_Reader::get_frames(): frame header size:   " << header_size << " bytes");
+  DEBUG_MSG("Cine_Reader::get_frames(): frame + header size: " << frame_p_header_size << " bytes ");
+  DEBUG_MSG("Cine_Reader::get_frames(): header offset 8:     " << header_offset_8);
+  DEBUG_MSG("Cine_Reader::get_frames(): header offset 16:    " << header_offset_16);
+  DEBUG_MSG("Cine_Reader::get_frames(): begin " << begin << " end " << end  << " buffer size: " << buffer_size);
+
 
   std::vector<Teuchos::RCP<Image> > frame_rcps(num_frames);
 
