@@ -15,6 +15,6 @@ var searchData=
   ['triads_5f',['triads_',['../class_d_i_ce_1_1_path___initializer.html#aeead51af4977669e78f000965b915dac',1,'DICe::Path_Initializer']]],
   ['triggertime',['TriggerTime',['../struct_d_i_ce_1_1cine_1_1cine__file__header.html#a973b2694f3401cf7d8d82b241e2eeec2',1,'DICe::cine::cine_file_header']]],
   ['twiddles',['twiddles',['../structkiss__fft__state.html#aa7d1cab86ec03a8ecddfe0d91ef0bd20',1,'kiss_fft_state']]],
-  ['type',['Type',['../struct_d_i_ce_1_1cine_1_1cine__file__header.html#a48284e4c0f1befa873fdf4693bd82a32',1,'DICe::cine::cine_file_header::Type()'],['../struct_d_i_ce_1_1_subset___file___info.html#a1b9367df0a3c97493c132301fb52e7c0',1,'DICe::Subset_File_Info::type()']]],
+  ['type',['type',['../struct_d_i_ce_1_1_subset___file___info.html#a1b9367df0a3c97493c132301fb52e7c0',1,'DICe::Subset_File_Info::type()'],['../struct_d_i_ce_1_1cine_1_1cine__file__header.html#a48284e4c0f1befa873fdf4693bd82a32',1,'DICe::cine::cine_file_header::Type()']]],
   ['type_5f',['type_',['../struct_d_i_ce_1_1_correlation___parameter.html#a62c6a2ebe9d39ca05adb48422b5486c8',1,'DICe::Correlation_Parameter']]]
 ];

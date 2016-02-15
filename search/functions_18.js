@@ -20,5 +20,6 @@ var searchData=
   ['_7epost_5fprocessor',['~Post_Processor',['../class_d_i_ce_1_1_post___processor.html#acc999e75d6462afd09ee9c4e47c54b95',1,'DICe::Post_Processor']]],
   ['_7esimplex',['~Simplex',['../class_d_i_ce_1_1_simplex.html#a542c17bc022bea3df57a7979d2f3f2f1',1,'DICe::Simplex']]],
   ['_7esubset',['~Subset',['../class_d_i_ce_1_1_subset.html#ae8bc02716dfc05858a260d618b6f9820',1,'DICe::Subset']]],
-  ['_7evsg_5fstrain_5fpost_5fprocessor',['~VSG_Strain_Post_Processor',['../class_d_i_ce_1_1_v_s_g___strain___post___processor.html#aaeff129a2415f82edeb830356ab56cac',1,'DICe::VSG_Strain_Post_Processor']]]
+  ['_7evsg_5fstrain_5fpost_5fprocessor',['~VSG_Strain_Post_Processor',['../class_d_i_ce_1_1_v_s_g___strain___post___processor.html#aaeff129a2415f82edeb830356ab56cac',1,'DICe::VSG_Strain_Post_Processor']]],
+  ['_7ezero_5fvalue_5finitializer',['~Zero_Value_Initializer',['../class_d_i_ce_1_1_zero___value___initializer.html#a4522393183212e66a5f55eb7a03e8789',1,'DICe::Zero_Value_Initializer']]]
 ];

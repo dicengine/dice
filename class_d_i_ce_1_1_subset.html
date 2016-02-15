@@ -174,6 +174,10 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 bool &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_subset.html#a6db5b2fef77d097906d67eeb7b94de4e">is_active</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> pixel_index)</td></tr>
 <tr class="memdesc:a6db5b2fef77d097906d67eeb7b94de4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns true if this pixel is active <br /></td></tr>
 <tr class="separator:a6db5b2fef77d097906d67eeb7b94de4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a59cd97312c68ecf08334fe1bf33fe251"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a59cd97312c68ecf08334fe1bf33fe251"></a>
+<a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_subset.html#a59cd97312c68ecf08334fe1bf33fe251">num_active_pixels</a> ()</td></tr>
+<tr class="memdesc:a59cd97312c68ecf08334fe1bf33fe251"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns the number of active pixels in the subset <br /></td></tr>
+<tr class="separator:a59cd97312c68ecf08334fe1bf33fe251"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a28f1456edeb36a29e77a07b641c461cb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a28f1456edeb36a29e77a07b641c461cb"></a>
 bool &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_subset.html#a28f1456edeb36a29e77a07b641c461cb">is_deactivated_this_step</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> pixel_index)</td></tr>
 <tr class="memdesc:a28f1456edeb36a29e77a07b641c461cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns true if this pixel is deactivated for this particular frame <br /></td></tr>
@@ -193,6 +197,10 @@ const <a class="el" href="class_d_i_ce_1_1_conformal___area___def.html">Conforma
 <tr class="memitem:ab1cfe50eb34833cb6f78ed43fe9effb4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_subset.html#ab1cfe50eb34833cb6f78ed43fe9effb4">noise_std_dev</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; image, Teuchos::RCP&lt; const std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; deformation)</td></tr>
 <tr class="memdesc:ab1cfe50eb34833cb6f78ed43fe9effb4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns an estimate of the noise standard deviation for this subset based on the method of J. Immerkaer, Fast Noise Variance Estimation, Computer Vision and <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> Understanding, Vol. 64, No. 2, pp. 300-302, Sep. 1996 The estimate is computed for a rectangular window that encompases the entire subset if the subset is conformal.  <a href="#ab1cfe50eb34833cb6f78ed43fe9effb4">More...</a><br /></td></tr>
 <tr class="separator:ab1cfe50eb34833cb6f78ed43fe9effb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad7a27a4bc139578ffa56e2f9c788c44d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad7a27a4bc139578ffa56e2f9c788c44d"></a>
+<a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_subset.html#ad7a27a4bc139578ffa56e2f9c788c44d">contrast_std_dev</a> ()</td></tr>
+<tr class="memdesc:ad7a27a4bc139578ffa56e2f9c788c44d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the std deviation of the image intensity values. <br /></td></tr>
+<tr class="separator:ad7a27a4bc139578ffa56e2f9c788c44d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac52243da9e14e15ff7acb42d22baae89"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_subset.html#ac52243da9e14e15ff7acb42d22baae89">turn_off_obstructed_pixels</a> (Teuchos::RCP&lt; const std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; deformation)</td></tr>
 <tr class="memdesc:ac52243da9e14e15ff7acb42d22baae89"><td class="mdescLeft">&#160;</td><td class="mdescRight">EXPERIMENTAL Check the deformed position of the pixel to see if it falls inside an obstruction, if so, turn it off.  <a href="#ac52243da9e14e15ff7acb42d22baae89">More...</a><br /></td></tr>
 <tr class="separator:ac52243da9e14e15ff7acb42d22baae89"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -839,7 +847,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Jan 8 2016 13:49:33 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Feb 15 2016 12:43:27 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

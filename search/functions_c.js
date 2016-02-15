@@ -7,6 +7,7 @@ var searchData=
   ['normal_5fstrain_5fenabled',['normal_strain_enabled',['../class_d_i_ce_1_1_schema.html#aa945b3973bcf5148db41c80a69f709e4',1,'DICe::Schema']]],
   ['normalize_5fgamma_5fwith_5factive_5fpixels',['normalize_gamma_with_active_pixels',['../class_d_i_ce_1_1_schema.html#a299bf888a7e6a5504f00d6e2a3afdfd6',1,'DICe::Schema']]],
   ['normalize_5fgamma_5fwith_5factive_5fpixels_5fparam',['normalize_gamma_with_active_pixels_param',['../namespace_d_i_ce.html#ac8a47f861cdc3aae32928ddda90a299b',1,'DICe']]],
+  ['num_5factive_5fpixels',['num_active_pixels',['../class_d_i_ce_1_1_subset.html#a59cd97312c68ecf08334fe1bf33fe251',1,'DICe::Subset']]],
   ['num_5fdofs',['num_dofs',['../class_d_i_ce_1_1_objective.html#aec05e57775ecfcbfeb2b0daebc4ff335',1,'DICe::Objective']]],
   ['num_5fframes',['num_frames',['../class_d_i_ce_1_1cine_1_1_cine___reader.html#afb8fc4912da50a347f19e8198c692309',1,'DICe::cine::Cine_Reader']]],
   ['num_5fimage_5fframes',['num_image_frames',['../class_d_i_ce_1_1_schema.html#a027e763c51704b1c956c64321aefffb5',1,'DICe::Schema']]],

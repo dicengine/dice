@@ -124,7 +124,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <h2><a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> standalone use </h2>
 <p>To use <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> in standalone mode (assuming the <code>dice</code> executable is built and in the system path), the user simply has to write an input file and invoke <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> with </p><pre class="fragment">$ dice -i &lt;input_file&gt;
 </pre><p>The input file is an <code>.xml</code> formated set of parameters. To generate a template set of input files (which includes the input file and the correaltion paramters file, described below) add the <code>-g</code> option to the <code>dice</code> call. </p><pre class="fragment">$ dice -g [file_prefix]
-</pre><p>Commented notes on all of the paramters in the input files are given with the <code>-g</code> option in the template files. The input file specifies, the location of the images and results and also the images to use. The user can select a correlation of a list of specific images or a sequence of images based on which paramters are specified.</p>
+</pre><p><b>The sample files will not be written if the folder permissions are read-only</b> (as is the case if one executes <code>dice</code> inside the system install directory).</p>
+<p>Commented notes on all of the paramters in the input files are given with the <code>-g</code> option in the template files. The input file specifies, the location of the images and results and also the images to use. The user can select a correlation of a list of specific images or a sequence of images based on which paramters are specified.</p>
 <p>If MPI is installed and enabled (<a href="#MPINotes">see below</a>) <a class="el" href="namespace_d_i_ce.html" title="generic DICe classes and functions ">DICe</a> can be run in parallel with </p><pre class="fragment">$ mpiexec -n &lt;num_procs&gt; dice -i &lt;input_file&gt;
 </pre><p>Where <code>num_procs</code> specifies the number of processors.</p>
 <p>Here is a helpful link for using MS-MPI on windows: <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb524831.aspx">Microsoft MPI</a>. <b>MPI must be installed to run in parallel</b>.</p>
@@ -407,6 +408,8 @@ GAMMA             // template match quality (value of the cost function),
                   // smaller gamma is better, 0.0 is perfect match
 BETA              // sensitivity of the cost function to small perturbations in the displacement solution
 NOISE_LEVEL       // estimated std. dev. of the image noise
+CONSTRAST_LEVEL   // std. dev. of the subset image intensity values
+ACTIVE_PIXELS     // number of pixels that are active (not obstructed or deactivated for this step)
 MATCH             // 0 means match was found -1 means match failed
 ITERATIONS        // number of iterations taken by the solution algorithm
 STATUS_FLAG       // information about the initialization method or error flags on failed steps
@@ -615,7 +618,7 @@ $ nmake
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Jan 8 2016 13:49:33 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Feb 15 2016 12:43:27 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

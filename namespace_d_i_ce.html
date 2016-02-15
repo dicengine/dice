@@ -232,6 +232,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_v_s_g___strain___post___processor.html">VSG_Strain_Post_Processor</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A specific instance of post processor that computes vurtual strain gauge (VSG) strain.  <a href="class_d_i_ce_1_1_v_s_g___strain___post___processor.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_zero___value___initializer.html">Zero_Value_Initializer</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">an initializer that places zeros in all values  <a href="class_d_i_ce_1_1_zero___value___initializer.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_d_i_ce_1_1_z_n_s_s_d___gamma___functor.html">ZNSSD_Gamma_Functor</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">znssd gamma functor  <a href="struct_d_i_ce_1_1_z_n_s_s_d___gamma___functor.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -386,15 +389,17 @@ Enumerations</h2></td></tr>
 <br />
 &#160;&#160;<b>BETA</b>, 
 <b>NOISE_LEVEL</b>, 
-<b>MATCH</b>, 
+<b>CONTRAST_LEVEL</b>, 
+<b>ACTIVE_PIXELS</b>, 
+<br />
+&#160;&#160;<b>MATCH</b>, 
 <b>ITERATIONS</b>, 
-<br />
-&#160;&#160;<b>STATUS_FLAG</b>, 
+<b>STATUS_FLAG</b>, 
 <b>NEIGHBOR_ID</b>, 
-<b>CONDITION_NUMBER</b>, 
-<b>MAX_FIELD_NAME</b>, 
 <br />
-&#160;&#160;<b>NO_SUCH_FIELD_NAME</b>
+&#160;&#160;<b>CONDITION_NUMBER</b>, 
+<b>MAX_FIELD_NAME</b>, 
+<b>NO_SUCH_FIELD_NAME</b>
 <br />
  }</td></tr>
 <tr class="memdesc:a1368b5e96039553c36a642785690b95e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Valid names for fields. <br /></td></tr>
@@ -435,9 +440,11 @@ Enumerations</h2></td></tr>
 <b>USE_PHASE_CORRELATION</b>, 
 <br />
 &#160;&#160;<b>USE_OPTICAL_FLOW</b>, 
+<b>USE_ZEROS</b>, 
 <b>INITIALIZATION_METHOD_NOT_APPLICABLE</b>, 
 <b>MAX_INITIALIZATION_METHOD</b>, 
-<b>NO_SUCH_INITIALIZATION_METHOD</b>
+<br />
+&#160;&#160;<b>NO_SUCH_INITIALIZATION_METHOD</b>
 <br />
  }</td></tr>
 <tr class="memdesc:a99d433faada808c451d06feceebfd054"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialization method. <br /></td></tr>
@@ -509,17 +516,18 @@ Enumerations</h2></td></tr>
 <b>SKIPPED_FRAME_DUE_TO_HIGH_GAMMA</b>, 
 <b>FRAME_FAILED_DUE_TO_HIGH_GAMMA</b>, 
 <br />
-&#160;&#160;<b>FRAME_FAILED_DUE_TO_HIGH_PATH_DISTANCE</b>, 
+&#160;&#160;<b>FRAME_FAILED_DUE_TO_NEGATIVE_SIGMA</b>, 
+<b>FRAME_FAILED_DUE_TO_HIGH_PATH_DISTANCE</b>, 
 <b>RESET_REF_SUBSET_DUE_TO_HIGH_GAMMA</b>, 
 <b>MAX_GLOBAL_ITERATIONS_REACHED_IN_EVOLUTION_LOOP</b>, 
-<b>FAILURE_DUE_TO_TOO_MANY_RESTARTS</b>, 
 <br />
-&#160;&#160;<b>FAILURE_DUE_TO_DEVIATION_FROM_PATH</b>, 
+&#160;&#160;<b>FAILURE_DUE_TO_TOO_MANY_RESTARTS</b>, 
+<b>FAILURE_DUE_TO_DEVIATION_FROM_PATH</b>, 
 <b>FRAME_SKIPPED</b>, 
 <b>FRAME_SKIPPED_DUE_TO_NO_MOTION</b>, 
-<b>MAX_STATUS_FLAG</b>, 
 <br />
-&#160;&#160;<b>NO_SUCH_STATUS_FLAG</b>
+&#160;&#160;<b>MAX_STATUS_FLAG</b>, 
+<b>NO_SUCH_STATUS_FLAG</b>
 <br />
  }</td></tr>
 <tr class="memdesc:a80e1a88ef6bbd77d318f8b880f6a41f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Status flags. <br /></td></tr>
@@ -709,6 +717,10 @@ DICE_LIB_DLL_EXPORT bool&#160;</td><td class="memItemRight" valign="bottom"><a c
 <tr class="memitem:af81a066093b70f383280933f7046fc89"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#af81a066093b70f383280933f7046fc89">is_number</a> (const std::string &amp;s)</td></tr>
 <tr class="memdesc:af81a066093b70f383280933f7046fc89"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determines if a string is a number.  <a href="#af81a066093b70f383280933f7046fc89">More...</a><br /></td></tr>
 <tr class="separator:af81a066093b70f383280933f7046fc89"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a461d2fa5d382e1747b2474652076deb5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a461d2fa5d382e1747b2474652076deb5"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a461d2fa5d382e1747b2474652076deb5">print_banner</a> ()</td></tr>
+<tr class="memdesc:a461d2fa5d382e1747b2474652076deb5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print the executable information banner. <br /></td></tr>
+<tr class="separator:a461d2fa5d382e1747b2474652076deb5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a00461b66b72f69e1132c6cc2e19d6e59"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a00461b66b72f69e1132c6cc2e19d6e59">initialize</a> (int argc, char *argv[])</td></tr>
 <tr class="separator:a00461b66b72f69e1132c6cc2e19d6e59"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5d63e9888c1386f3f81695f87a80abf4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5d63e9888c1386f3f81695f87a80abf4"></a>
@@ -947,8 +959,12 @@ const <a class="el" href="struct_d_i_ce_1_1_correlation___parameter.html">Correl
 const <a class="el" href="struct_d_i_ce_1_1_correlation___parameter.html">Correlation_Parameter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a4d87fd6fcd6f5a005da72512f3ad5c34">compute_image_gradients_param</a> (<a class="el" href="namespace_d_i_ce.html#a86f710a4bbd793039e4a817b0d78ad0c">compute_image_gradients</a>, BOOL_PARAM, false,&quot;Compute image gradients&quot;)</td></tr>
 <tr class="memdesc:a4d87fd6fcd6f5a005da72512f3ad5c34"><td class="mdescLeft">&#160;</td><td class="mdescRight">Correlation parameter and properties. <br /></td></tr>
 <tr class="separator:a4d87fd6fcd6f5a005da72512f3ad5c34"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af562a0b4fbc06b18608b1809c09945c8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#af562a0b4fbc06b18608b1809c09945c8">apply_transform</a> (Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt; &amp;intensities_from, Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt; &amp;intensities_to, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> cx, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> cy, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> width, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> height, Teuchos::RCP&lt; const std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; deformation)</td></tr>
-<tr class="separator:af562a0b4fbc06b18608b1809c09945c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76b8c6e9a6b46ab9759439ac3ff6f901"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a76b8c6e9a6b46ab9759439ac3ff6f901">apply_transform</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; image_in, Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; image_out, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> cx, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> cy, Teuchos::RCP&lt; const std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; deformation)</td></tr>
+<tr class="separator:a76b8c6e9a6b46ab9759439ac3ff6f901"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c464efc12f6cdd772d9b4a279bd97ef"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a7c464efc12f6cdd772d9b4a279bd97ef">interpolate_bilinear</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;global_x, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;global_y, Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; image)</td></tr>
+<tr class="separator:a7c464efc12f6cdd772d9b4a279bd97ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a70c4f1353be6f2b8d3c5670126fdfb90"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a70c4f1353be6f2b8d3c5670126fdfb90">interpolate_keys_fourth</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;global_x, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;global_y, Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; image)</td></tr>
+<tr class="separator:a70c4f1353be6f2b8d3c5670126fdfb90"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a118c2de6ebfa1d620ebedc0baebee1b7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce.html#a118c2de6ebfa1d620ebedc0baebee1b7">angle_2d</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;x1, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;y1, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;x2, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;y2)</td></tr>
 <tr class="memdesc:a118c2de6ebfa1d620ebedc0baebee1b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the angle between two vectors on a plane The angle is from vector 1 to vector 2, positive anticlockwise The result is between -pi -&gt; pi.  <a href="#a118c2de6ebfa1d620ebedc0baebee1b7">More...</a><br /></td></tr>
 <tr class="separator:a118c2de6ebfa1d620ebedc0baebee1b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1745,21 +1761,21 @@ const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf7
 
 </div>
 </div>
-<a class="anchor" id="af562a0b4fbc06b18608b1809c09945c8"></a>
+<a class="anchor" id="a76b8c6e9a6b46ab9759439ac3ff6f901"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">void DICe::apply_transform </td>
           <td>(</td>
-          <td class="paramtype">Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>intensities_from</em>, </td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td>
+          <td class="paramname"><em>image_in</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>intensities_to</em>, </td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td>
+          <td class="paramname"><em>image_out</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1776,18 +1792,6 @@ const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf7
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
-          <td class="paramname"><em>width</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
-          <td class="paramname"><em>height</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">Teuchos::RCP&lt; const std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt;&#160;</td>
           <td class="paramname"><em>deformation</em>&#160;</td>
         </tr>
@@ -1798,14 +1802,12 @@ const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf7
         </tr>
       </table>
 </div><div class="memdoc">
-<p>free function to apply a transformation to an image intensity array: </p><dl class="params"><dt>Parameters</dt><dd>
+<p>free function to apply a transformation to an image: </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">intensities_from</td><td>the array where the intensities are taken </td></tr>
-    <tr><td class="paramname">intensities_to</td><td>the output array </td></tr>
+    <tr><td class="paramname">image_in</td><td>the image where the intensities are taken </td></tr>
+    <tr><td class="paramname">image_out</td><td>the output image </td></tr>
     <tr><td class="paramname">cx</td><td>the centroid x coordiante </td></tr>
     <tr><td class="paramname">cy</td><td>the centroid y coordinate </td></tr>
-    <tr><td class="paramname">width</td><td>the width of the array </td></tr>
-    <tr><td class="paramname">height</td><td>the height of the array </td></tr>
     <tr><td class="paramname">deformation</td><td>a vector that defines the deformation map parameters </td></tr>
   </table>
   </dd>
@@ -2394,6 +2396,86 @@ const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf7
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">file_name</td><td>The name of the xml file </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a7c464efc12f6cdd772d9b4a279bd97ef"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> DICe::interpolate_bilinear </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>global_x</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>global_y</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td>
+          <td class="paramname"><em>image</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>free function to do bilinear interpolation </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">global_x</td><td>floating point precision x location in the global image coordinates </td></tr>
+    <tr><td class="paramname">global_y</td><td>floating point precision y location in the global image coordinates </td></tr>
+    <tr><td class="paramname">image</td><td>the image to interpolate </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a70c4f1353be6f2b8d3c5670126fdfb90"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> DICe::interpolate_keys_fourth </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>global_x</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>global_y</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td>
+          <td class="paramname"><em>image</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>free function to do keys fourth interpolation </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">global_x</td><td>floating point precision x location in the global image coordinates </td></tr>
+    <tr><td class="paramname">global_y</td><td>floating point precision y location in the global image coordinates </td></tr>
+    <tr><td class="paramname">image</td><td>the image to interpolate </td></tr>
   </table>
   </dd>
 </dl>
@@ -3530,7 +3612,7 @@ const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf7
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Jan 8 2016 13:49:30 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Feb 15 2016 12:43:24 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

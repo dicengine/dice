@@ -29,6 +29,7 @@ var searchData=
   ['normalize_5fgamma_5fwith_5factive_5fpixels',['normalize_gamma_with_active_pixels',['../class_d_i_ce_1_1_schema.html#a299bf888a7e6a5504f00d6e2a3afdfd6',1,'DICe::Schema::normalize_gamma_with_active_pixels()'],['../namespace_d_i_ce.html#a549ef90b9762fe80ffe6d2e5161a845f',1,'DICe::normalize_gamma_with_active_pixels()']]],
   ['normalize_5fgamma_5fwith_5factive_5fpixels_5f',['normalize_gamma_with_active_pixels_',['../class_d_i_ce_1_1_schema.html#ae579c53e15732e80e915f8e1675c4705',1,'DICe::Schema']]],
   ['normalize_5fgamma_5fwith_5factive_5fpixels_5fparam',['normalize_gamma_with_active_pixels_param',['../namespace_d_i_ce.html#ac8a47f861cdc3aae32928ddda90a299b',1,'DICe']]],
+  ['num_5factive_5fpixels',['num_active_pixels',['../class_d_i_ce_1_1_subset.html#a59cd97312c68ecf08334fe1bf33fe251',1,'DICe::Subset']]],
   ['num_5fdim_5f',['num_dim_',['../class_d_i_ce_1_1_simplex.html#a04501548a70c1d062d2fcdcc0f1c5cb1',1,'DICe::Simplex']]],
   ['num_5fdofs',['num_dofs',['../class_d_i_ce_1_1_objective.html#aec05e57775ecfcbfeb2b0daebc4ff335',1,'DICe::Objective']]],
   ['num_5ffile_5fsuffix_5fdigits',['num_file_suffix_digits',['../namespace_d_i_ce.html#ae9354440cf56e1e2662f0570b36756d6',1,'DICe']]],

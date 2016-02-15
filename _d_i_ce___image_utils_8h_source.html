@@ -139,24 +139,38 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;</div>
 <div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespace_d_i_ce.html">DICe</a> {</div>
 <div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;</div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespace_d_i_ce.html#af562a0b4fbc06b18608b1809c09945c8">apply_transform</a>(Teuchos::ArrayRCP&lt;intensity_t&gt; &amp; intensities_from,</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;  Teuchos::ArrayRCP&lt;intensity_t&gt; &amp; intensities_to,</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> cx,</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> cy,</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> width,</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> height,</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;  Teuchos::RCP&lt;<span class="keyword">const</span> std::vector&lt;scalar_t&gt; &gt; deformation);</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;</div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;}<span class="comment">// End DICe Namespace</span></div>
-<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;</div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="ttc" id="namespace_d_i_ce_html_af562a0b4fbc06b18608b1809c09945c8"><div class="ttname"><a href="namespace_d_i_ce.html#af562a0b4fbc06b18608b1809c09945c8">DICe::apply_transform</a></div><div class="ttdeci">void apply_transform(Teuchos::ArrayRCP&lt; intensity_t &gt; &amp;intensities_from, Teuchos::ArrayRCP&lt; intensity_t &gt; &amp;intensities_to, const int_t cx, const int_t cy, const int_t width, const int_t height, Teuchos::RCP&lt; const std::vector&lt; scalar_t &gt; &gt; deformation)</div></div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;<span class="comment">// forward declaration of DICe::Image</span></div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;<span class="keyword">class </span>Image;</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespace_d_i_ce.html#a76b8c6e9a6b46ab9759439ac3ff6f901">apply_transform</a>(Teuchos::RCP&lt;Image&gt; image_in,</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;  Teuchos::RCP&lt;Image&gt; image_out,</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> cx,</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> cy,</div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;  Teuchos::RCP&lt;<span class="keyword">const</span> std::vector&lt;scalar_t&gt; &gt; deformation);</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;<a class="code" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> <a class="code" href="namespace_d_i_ce.html#a7c464efc12f6cdd772d9b4a279bd97ef">interpolate_bilinear</a>(<span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; global_x,</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; global_y,</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;  Teuchos::RCP&lt;Image&gt; image);</div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;</div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;<a class="code" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> <a class="code" href="namespace_d_i_ce.html#a70c4f1353be6f2b8d3c5670126fdfb90">interpolate_keys_fourth</a>(<span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; global_x,</div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; global_y,</div>
+<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;  Teuchos::RCP&lt;Image&gt; image);</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;}<span class="comment">// End DICe Namespace</span></div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="ttc" id="namespace_d_i_ce_html_a76b8c6e9a6b46ab9759439ac3ff6f901"><div class="ttname"><a href="namespace_d_i_ce.html#a76b8c6e9a6b46ab9759439ac3ff6f901">DICe::apply_transform</a></div><div class="ttdeci">void apply_transform(Teuchos::RCP&lt; Image &gt; image_in, Teuchos::RCP&lt; Image &gt; image_out, const int_t cx, const int_t cy, Teuchos::RCP&lt; const std::vector&lt; scalar_t &gt; &gt; deformation)</div></div>
+<div class="ttc" id="namespace_d_i_ce_html_a7c464efc12f6cdd772d9b4a279bd97ef"><div class="ttname"><a href="namespace_d_i_ce.html#a7c464efc12f6cdd772d9b4a279bd97ef">DICe::interpolate_bilinear</a></div><div class="ttdeci">intensity_t interpolate_bilinear(const scalar_t &amp;global_x, const scalar_t &amp;global_y, Teuchos::RCP&lt; Image &gt; image)</div></div>
+<div class="ttc" id="namespace_d_i_ce_html_a138ceb69f1a2f75eea9a7ebed6d3cdef"><div class="ttname"><a href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">DICe::intensity_t</a></div><div class="ttdeci">float intensity_t</div><div class="ttdoc">basic types </div><div class="ttdef"><b>Definition:</b> DICe.h:92</div></div>
+<div class="ttc" id="namespace_d_i_ce_html_ab1a851426cd4fbca5d364c4348d99155"><div class="ttname"><a href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">DICe::scalar_t</a></div><div class="ttdeci">float scalar_t</div><div class="ttdoc">generic scalar type </div><div class="ttdef"><b>Definition:</b> DICe.h:94</div></div>
+<div class="ttc" id="namespace_d_i_ce_html_a70c4f1353be6f2b8d3c5670126fdfb90"><div class="ttname"><a href="namespace_d_i_ce.html#a70c4f1353be6f2b8d3c5670126fdfb90">DICe::interpolate_keys_fourth</a></div><div class="ttdeci">intensity_t interpolate_keys_fourth(const scalar_t &amp;global_x, const scalar_t &amp;global_y, Teuchos::RCP&lt; Image &gt; image)</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_a2c6297e4a786e52754918318b31daf75"><div class="ttname"><a href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">DICe::int_t</a></div><div class="ttdeci">int int_t</div><div class="ttdoc">integer type </div><div class="ttdef"><b>Definition:</b> DICe.h:98</div></div>
 <div class="ttc" id="namespace_d_i_ce_html"><div class="ttname"><a href="namespace_d_i_ce.html">DICe</a></div><div class="ttdoc">generic DICe classes and functions </div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Jan 8 2016 13:49:30 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Feb 15 2016 12:43:24 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>
