@@ -389,6 +389,14 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
   return INITIALIZE_FAILED;
 };
 
+Status_Flag
+Zero_Value_Initializer::initial_guess(const int_t subset_gid,
+  Teuchos::RCP<std::vector<scalar_t> > deformation){
+  for(int_t i=0;i<deformation->size();++i)
+    (*deformation)[i] = 0.0;
+  return INITIALIZE_SUCCESSFUL;
+};
+
 
 Optical_Flow_Initializer::Optical_Flow_Initializer(Schema * schema,
   Teuchos::RCP<Subset> subset):

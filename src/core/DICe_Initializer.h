@@ -352,6 +352,29 @@ public:
     Teuchos::RCP<std::vector<scalar_t> > deformation);
 };
 
+
+/// \class DICe::Zero_Value_Initializer
+/// \brief an initializer that places zeros in all values
+class DICE_LIB_DLL_EXPORT
+Zero_Value_Initializer : public Initializer{
+public:
+
+  /// constructor
+  /// \param schema the parent schema
+  Zero_Value_Initializer(Schema * schema):
+  Initializer(schema){};
+
+  /// virtual destructor
+  virtual ~Zero_Value_Initializer(){};
+
+  /// see base class description
+  virtual void pre_execution_tasks(){};
+
+  /// see base class description
+  virtual Status_Flag initial_guess(const int_t subset_gid,
+    Teuchos::RCP<std::vector<scalar_t> > deformation);
+};
+
 /// \class DICe::Optical_Flow_Initializer
 /// \brief an initializer that uses optical flow to predict the next location
 /// of the subset (Lucas-Kanade algorithm). This initializer is only intended for
