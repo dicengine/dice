@@ -656,6 +656,8 @@ public:
   /// \param gamma gamma value
   /// \param beta beta value
   /// \param noise noise level value
+  /// \param contrast the contrast level value
+  /// \param active_pixels the number of active pixels for this subset
   /// \param status status flag
   /// \param num_iterations the number of iterations
   void record_step(const int_t subset_gid,
