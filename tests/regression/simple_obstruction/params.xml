@@ -1,0 +1,17 @@
+<ParameterList>
+  <Parameter name="use_tracking_default_params" type="bool" value="true" />
+  <Parameter name="normalize_gamma_with_active_pixels" type="bool" value="true" />
+  <ParameterList name="output_spec">
+    <Parameter name="COORDINATE_X" type="bool" value="true" />
+    <Parameter name="COORDINATE_Y" type="bool" value="true" />
+    <Parameter name="DISPLACEMENT_X" type="bool" value="true" />
+    <Parameter name="DISPLACEMENT_Y" type="bool" value="true" />
+    <Parameter name="ROTATION_Z" type="bool" value="true" />
+    <Parameter name="GAMMA" type="bool" value="true" />
+    <Parameter name="BETA" type="bool" value="true" />
+    <Parameter name="SIGMA" type="bool" value="true" />
+    <Parameter name="NOISE_LEVEL" type="bool" value="true" />
+    <Parameter name="CONTRAST_LEVEL" type="bool" value="true" />
+    <Parameter name="ACTIVE_PIXELS" type="bool" value="true" />
+  </ParameterList>
+</ParameterList>

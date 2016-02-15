@@ -1,0 +1,24 @@
+BEGIN SUBSET_COORDINATES
+64 100
+END SUBSET_COORDINATES
+
+BEGIN CONFORMAL_SUBSET
+SUBSET_ID 0
+
+BEGIN boundary
+BEGIN rectangle
+center 64 100
+height 29
+width 75
+end rectangle
+END boundary
+
+begin obstructed
+begin rectangle
+center 149 104
+width 93
+height 109
+end rectangle
+end obstructed
+
+END CONFORMAL_SUBSET
