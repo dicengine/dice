@@ -100,6 +100,7 @@ int main(int argc, char *argv[]) {
   int_t cine_end_index = -1;
   int_t image_width = 0;
   int_t image_height = 0;
+  int_t first_frame_index = 1;
   bool is_cine = false;
   Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader;
   if(image_files[0]==DICe::cine_file){
@@ -119,16 +120,24 @@ int main(int argc, char *argv[]) {
     num_images = cine_reader->num_frames();
     image_width = cine_reader->width();
     image_height = cine_reader->height();
+    first_frame_index = cine_reader->first_image_number();
     *outStream << "number of frames in cine file: " << num_images << std::endl;
-    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::cine_ref_index),std::runtime_error,
-      "Error, the reference index for the cine file has not been specified");
-    cine_ref_index = input_params->get<int_t>(DICe::cine_ref_index);
+    //TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::cine_ref_index),std::runtime_error,
+    //  "Error, the reference index for the cine file has not been specified");
+    cine_ref_index = input_params->get<int_t>(DICe::cine_ref_index,first_frame_index);
     *outStream << "cine ref index: " << cine_ref_index << std::endl;
-    cine_start_index = input_params->get<int_t>(DICe::cine_start_index,cine_ref_index);
+    cine_start_index = input_params->get<int_t>(DICe::cine_start_index,first_frame_index);
     *outStream << "cine start index: " << cine_start_index << std::endl;
-    cine_end_index = input_params->get<int_t>(DICe::cine_end_index,num_images-2);
-    num_images = cine_end_index - cine_start_index + 1;
+    cine_end_index = input_params->get<int_t>(DICe::cine_end_index,first_frame_index + num_images -1);
     *outStream << "cine end index: " << cine_end_index << std::endl;
+    num_images = cine_end_index - cine_start_index + 1;
+    *outStream << "number of frames to analyze: " << num_images << std::endl;
+
+    // convert the cine ref, start and end index to the DICe indexing, not cine indexing
+    cine_start_index = cine_start_index - first_frame_index;
+    cine_ref_index = cine_ref_index - first_frame_index;
+    cine_end_index = cine_end_index - first_frame_index;
+
     *outStream << "\n--- Cine file information read successfuly ---\n" << std::endl;
   }
   else
@@ -170,6 +179,8 @@ int main(int argc, char *argv[]) {
     schema = Teuchos::rcp(new DICe::Schema(ref_image_string,ref_image_string,correlation_params));
   }
 
+  schema->set_first_frame_index(first_frame_index);
+
   schema->initialize(input_params);
 
   *outStream << "Number of subsets: " << schema->data_num_points() << std::endl;
@@ -199,7 +210,7 @@ int main(int argc, char *argv[]) {
   for(int_t image_it=start_frame;image_it<=end_frame;++image_it){
     if(is_cine){
       Teuchos::RCP<DICe::Image> def_image = cine_reader->get_frame(image_it,correlation_params);
-      *outStream << "Processing Image: " << image_it - start_frame + 1 << " of " << num_images << " frame id: " << image_it << std::endl;
+      *outStream << "Processing Image: " << image_it - start_frame + 1 << " of " << num_images << " frame id: " << first_frame_index + image_it << std::endl;
       schema->set_def_image(def_image);
     }
     else{

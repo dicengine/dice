@@ -2,8 +2,6 @@
 <ParameterList>
   <Parameter name="output_folder" type="string" value="./results/" />
   <Parameter name="cine_file" type="string" value="../../examples/mechanism/mechanism.cine" /> 
-  <Parameter name="cine_ref_index" type="int" value="0" /> 
-  <Parameter name="cine_start_index" type="int" value="0" />
   <Parameter name="image_folder" type="string" value="" />  
   <Parameter name="correlation_parameters_file" type="string" value="./params.xml" />
   <Parameter name="subset_file" type="string" value="./subsets.txt" />

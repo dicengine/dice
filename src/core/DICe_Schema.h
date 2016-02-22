@@ -764,6 +764,17 @@ public:
     return image_frame_;
   }
 
+  /// Sets the first frame's index
+  /// \param index the index of the first frame (useful for cine files)
+  void set_first_frame_index(const int_t index){
+    first_frame_index_ = index;
+  }
+
+  /// Returns the offset to the first frame
+  int_t first_frame_index()const{
+    return first_frame_index_;
+  }
+
   /// Returns the number of images in the set (-1 if it has not been set)
   int_t num_image_frames() const{
     return num_image_frames_;
@@ -1035,6 +1046,8 @@ private:
   Teuchos::RCP<DICe::Output_Spec> output_spec_;
   /// Stores current fame number for a sequence of images
   int_t image_frame_;
+  /// Stores the offset to the first image's index (cine files can start with a negative index)
+  int_t first_frame_index_;
   /// Stores the number of images in the sequence
   int_t num_image_frames_;
   /// Displacement jump tolerance. If the displacement solution is larger than this from the previous frame

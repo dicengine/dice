@@ -1407,6 +1407,15 @@ void generate_template_input_files(const std::string & file_prefix){
   write_xml_comment(inputFile,"The file extension type. For the example above this would be \".tif\" (Currently, only .tif or .tiff files are allowed.)");
   write_xml_string_param(inputFile,DICe::image_file_prefix);
   write_xml_comment(inputFile,"The tag at the front of the file names. For the example above this would be \"Image_\"");
+  write_xml_comment(inputFile,"");
+  write_xml_comment(inputFile,"Another option is to read frames from a cine file. In that case, the following parameters are used");
+  write_xml_comment(inputFile,"Note that all of the values for indexing are in terms of the cine file's first frame number (which may be negative due to trigger)");
+  write_xml_comment(inputFile,"For example, if the trigger image number is -100, the ref_index would be -100 as well as the start index");
+  write_xml_comment(inputFile,"The end index would be the trigger index + the number of frames to analyze, the default is the entire video.");
+  write_xml_string_param(inputFile,DICe::cine_file);
+  write_xml_size_param(inputFile,DICe::cine_ref_index);
+  write_xml_size_param(inputFile,DICe::cine_start_index);
+  write_xml_size_param(inputFile,DICe::cine_end_index);
 
   // write the correlation parameters
 

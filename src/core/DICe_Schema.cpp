@@ -272,6 +272,7 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   step_size_y_ = -1;
   mesh_size_ = -1.0;
   image_frame_ = 0;
+  first_frame_index_ = 1;
   num_image_frames_ = -1;
   has_output_spec_ = false;
   is_initialized_ = false;
@@ -1023,7 +1024,7 @@ Schema::execute_correlation(){
 
   DEBUG_MSG("********************");
   std::stringstream progress;
-  progress << "[PROC " << proc_id << " of " << num_procs << "] IMAGE FRAME " << image_frame_;
+  progress << "[PROC " << proc_id << " of " << num_procs << "] IMAGE " << image_frame_ + 1;
   if(num_image_frames_>0)
     progress << " of " << num_image_frames_;
   DEBUG_MSG(progress.str());
@@ -1724,7 +1725,7 @@ Schema::write_output(const std::string & output_folder,
       }
       // append the latest result to the file
       std::FILE * filePtr = fopen(fName.str().c_str(),"a");
-      output_spec_->write_frame(filePtr,image_frame_,subset);
+      output_spec_->write_frame(filePtr,first_frame_index_+image_frame_-1,subset);
       fclose (filePtr);
     } // subset loop
   }

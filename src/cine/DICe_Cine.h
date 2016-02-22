@@ -214,6 +214,10 @@ public:
   int_t height()const{
     return cine_header_->bitmap_header_.biHeight;
   }
+  /// return the offset to the first indexed image (can be negative)
+  int_t first_image_number()const{
+    return cine_header_->header_.FirstImageNo;
+  }
 private:
   /// pointer to the cine file header information
   Teuchos::RCP<Cine_Header> cine_header_;

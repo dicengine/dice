@@ -1,8 +1,12 @@
 <ParameterList>
   <Parameter name="output_folder" type="string" value="./results/" />
-  <Parameter name="cine_file" type="string" value="mechanism.cine" /> 
-  <Parameter name="cine_ref_index" type="int" value="0" /> 
-  <Parameter name="cine_start_index" type="int" value="0" />
+  <Parameter name="cine_file" type="string" value="mechanism.cine" />
+  <!-- in this cine file, the first frame is index 4837, the first
+       several frames were cut out to reduce the file size-->
+  <Parameter name="cine_ref_index" type="int" value="4837" /> 
+  <Parameter name="cine_start_index" type="int" value="4837" />
+  <!-- the last frame happens to be 4930 -->
+  <Parameter name="cine_end_index" type="int" value="4930" />
   <Parameter name="image_folder" type="string" value="./" />  
   <Parameter name="correlation_parameters_file" type="string" value="./params.xml" />
   <Parameter name="subset_file" type="string" value="./subsets.txt" />
