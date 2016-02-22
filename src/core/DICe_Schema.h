@@ -573,11 +573,13 @@ public:
   /// \param prefix Optional string to use as the file prefix
   /// \param separate_files_per_subset Forces the output to be one file per subset listing each frame on a new row.
   /// The default is one file per frame with all subsets listed one per row.
+  /// \param separate_header_file place the run information in another file rather than the header of the results
   /// \param type Type of file to write (currently only TEXT_FILE is implemented)
   // TODO export in exodus format
   void write_output(const std::string & output_folder,
     const std::string & prefix="DICe_solution",
     const bool separate_files_per_subset=false,
+    const bool separate_header_file=false,
     const Output_File_Type type = TEXT_FILE);
 
   /// \brief Write an image that shows all the subsets' current positions and shapes
@@ -1163,6 +1165,10 @@ public:
   /// \param row_id Optional name for the row_id column (typically "FRAME" or "SUBSET_ID")
   void write_header(std::FILE * file,
     const std::string & row_id="");
+
+  /// \brief Writes the run information (interpolants used, etc.)
+  /// \param file Pointer to the output file (must already be open)
+  void write_info(std::FILE * file);
 
   /// \brief Writes the fields for the current frame
   /// \param file Pointer to the output file (must already be open)

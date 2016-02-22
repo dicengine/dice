@@ -106,6 +106,8 @@ const char* const image_file_extension = "image_file_extension";
 const char* const image_file_prefix = "image_file_prefix";
 /// Input parameter
 const char* const separate_output_file_for_each_subset = "separate_output_file_for_each_subset";
+/// Input parameter
+const char* const create_separate_run_info_file = "create_separate_run_info_file";
 
 /// \brief Parses the options set in the command line when dice is invoked
 /// \param argc typical argument from main

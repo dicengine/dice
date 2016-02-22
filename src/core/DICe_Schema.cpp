@@ -1685,7 +1685,9 @@ Schema::write_control_points_image(const std::string & fileName,
 void
 Schema::write_output(const std::string & output_folder,
   const std::string & prefix,
-  const bool separate_files_per_subset, const Output_File_Type type){
+  const bool separate_files_per_subset,
+  const bool separate_header_file,
+  const Output_File_Type type){
 //  assert(analysis_type_!=CONSTRAINED_OPT && "Error, writing output from a schema using constrained optimization is not enabled.");
 //  assert(analysis_type_!=INTEGRATED_DIC && "Error, writing output from a schema using integrated DIC is not enabled.");
   int_t my_proc = comm_->get_rank();
@@ -1695,6 +1697,9 @@ Schema::write_output(const std::string & output_folder,
   TEUCHOS_TEST_FOR_EXCEPTION(type!=TEXT_FILE,std::invalid_argument,
     "Currently only TEXT_FILE output is implemented");
   TEUCHOS_TEST_FOR_EXCEPTION(output_spec_==Teuchos::null,std::runtime_error,"");
+
+  std::stringstream infoName;
+  infoName << output_folder << prefix << ".info";
 
   if(separate_files_per_subset){
     for(int_t subset=0;subset<data_num_points_;++subset){
@@ -1720,6 +1725,14 @@ Schema::write_output(const std::string & output_folder,
       fName << ".txt";
       if(image_frame_==1){
         std::FILE * filePtr = fopen(fName.str().c_str(),"w"); // overwrite the file if it exists
+        if(separate_header_file){
+          std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"w"); // overwrite the file if it exists
+          output_spec_->write_info(infoFilePtr);
+          fclose(infoFilePtr);
+         }
+        else{
+          output_spec_->write_info(filePtr);
+        }
         output_spec_->write_header(filePtr,"FRAME");
         fclose (filePtr);
       }
@@ -1752,7 +1765,16 @@ Schema::write_output(const std::string & output_folder,
       fName << "." << proc_size;
     fName << ".txt";
     std::FILE * filePtr = fopen(fName.str().c_str(),"w");
+    if(separate_header_file){
+      std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"w"); // overwrite the file if it exists
+      output_spec_->write_info(infoFilePtr);
+      fclose(infoFilePtr);
+     }
+    else{
+      output_spec_->write_info(filePtr);
+    }
     output_spec_->write_header(filePtr,"SUBSET_ID");
+
     for(int_t i=0;i<data_num_points_;++i){
       output_spec_->write_frame(filePtr,i,i);
     }
@@ -2082,8 +2104,7 @@ Output_Spec::Output_Spec(Schema * schema,
 };
 
 void
-Output_Spec::write_header(std::FILE * file,
-  const std::string & row_id){
+Output_Spec::write_info(std::FILE * file){
   assert(file);
   fprintf(file,"***\n");
   fprintf(file,"*** Digital Image Correlation Engine (DICe), (git sha1: %s) Copyright 2015 Sandia Corporation\n",GITSHA1);
@@ -2132,6 +2153,12 @@ Output_Spec::write_header(std::FILE * file,
     fprintf(file,"*** Strain window size in pixels: %i (only first strain post-processor is reported)\n",schema_->strain_window_size(0));
   fprintf(file,"*** Coordinates given with (0,0) as upper left corner of image, x positive right, y positive down\n");
   fprintf(file,"***\n");
+}
+
+void
+Output_Spec::write_header(std::FILE * file,
+  const std::string & row_id){
+  assert(file);
   if(!omit_row_id_)
     fprintf(file,"%s%s",row_id.c_str(),delimiter_.c_str());
   for(size_t i=0;i<field_names_.size();++i){

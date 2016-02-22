@@ -1382,6 +1382,8 @@ void generate_template_input_files(const std::string & file_prefix){
   write_xml_comment(inputFile,"Note: if a subset file is used to below to specify subset centroids, this option should not be used");
   write_xml_bool_param(inputFile,DICe::separate_output_file_for_each_subset,"false",false);
   write_xml_comment(inputFile,"Write a separate output file for each subset with all frames in that file (default is to write one file per frame with all subsets)");
+  write_xml_bool_param(inputFile,DICe::create_separate_run_info_file,"false",false);
+  write_xml_comment(inputFile,"Write a separate output file that has the header information rather than place it at the top of the output files");
   write_xml_string_param(inputFile,DICe::subset_file,"<path>");
   write_xml_comment(inputFile,"Optional file to specify the coordinates of the subset centroids (cannot be used with step_size param)");
   write_xml_comment(inputFile,"The subset file should be space separated (no commas) with one integer value for the number of subsets on the first line");

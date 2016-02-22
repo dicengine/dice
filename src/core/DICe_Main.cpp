@@ -133,6 +133,14 @@ int main(int argc, char *argv[]) {
     num_images = cine_end_index - cine_start_index + 1;
     *outStream << "number of frames to analyze: " << num_images << std::endl;
 
+    // sanity checks
+    TEUCHOS_TEST_FOR_EXCEPTION(cine_start_index > cine_end_index,std::invalid_argument,"Error, the cine start index is > the cine end index");
+    TEUCHOS_TEST_FOR_EXCEPTION(cine_start_index < first_frame_index,std::invalid_argument,"Error, the cine start index is < the first frame index");
+    TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index > cine_end_index,std::invalid_argument,"Error, the cine ref index is > the cine end index");
+    TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index < first_frame_index,std::invalid_argument,"Error, the cine ref index is < the first frame index");
+    TEUCHOS_TEST_FOR_EXCEPTION(cine_end_index < cine_start_index,std::invalid_argument,"Error, the cine end index is < the cine start index");
+    TEUCHOS_TEST_FOR_EXCEPTION(cine_end_index < cine_ref_index,std::invalid_argument,"Error, the cine end index is < the ref index");
+
     // convert the cine ref, start and end index to the DICe indexing, not cine indexing
     cine_start_index = cine_start_index - first_frame_index;
     cine_ref_index = cine_ref_index - first_frame_index;
@@ -165,6 +173,10 @@ int main(int argc, char *argv[]) {
   }
   else{
     *outStream << "Output will be written to one file per frame with all subsets included" << std::endl;
+  }
+  const bool separate_header_file = input_params->get<bool>(DICe::create_separate_run_info_file,false);
+  if(separate_header_file){
+    *outStream << "Execution information will be written to a separate file (not placed in the output headers)" << std::endl;
   }
 
   // create a schema:
@@ -232,7 +244,7 @@ int main(int argc, char *argv[]) {
     }
 
     // write the output
-    schema->write_output(output_folder,file_prefix,separate_output_file_for_each_subset);
+    schema->write_output(output_folder,file_prefix,separate_output_file_for_each_subset,separate_header_file);
     //if(subset_info->conformal_area_defs!=Teuchos::null&&image_it==1){
     //  schema->write_control_points_image("RegionOfInterest");
     //}
