@@ -268,7 +268,7 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::output_evolved_subset_images,false);
   defaultParams->set(DICe::use_subset_evolution,true);
   defaultParams->set(DICe::output_beta,true);
-  defaultParams->set(DICe::output_delimiter," ");
+  defaultParams->set(DICe::output_delimiter,",");
   defaultParams->set(DICe::omit_output_row_id,false);
   defaultParams->set(DICe::obstruction_skin_factor,1.0);
   defaultParams->set(DICe::normalize_gamma_with_active_pixels,false);
