@@ -13,11 +13,14 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    qimageroiselector.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    qimageroiselector.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    qimageroiselector.ui
 
 RESOURCES += \
     resources.qrc

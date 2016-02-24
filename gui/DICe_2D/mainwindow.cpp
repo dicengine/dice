@@ -44,6 +44,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <DICe_InputVars.h>
+#include <qimageroiselector.h>
 
 DICe::gui::Input_Vars * DICe::gui::Input_Vars::input_vars_ptr_ = NULL;
 
@@ -70,14 +71,14 @@ void MainWindow::on_refFileButton_clicked()
     
     // display the name of the file in the reference file box
     QString refFileName = refFileInfo.fileName();
+    ui->ROISelector->setImage(refFileInfo);
     ui->refFileLine->setText(refFileName);
-    ui->refFileLabel->setText(refFileInfo.filePath());
     
     // display the image
-    QPixmap pix(refFileInfo.absoluteFilePath());
-    int w = ui->refImageShow->width();
-    int h = ui->refImageShow->height();
-    ui->refImageShow->setPixmap(pix.scaled(w,h,Qt::KeepAspectRatio));
+    //QPixmap pix(refFileInfo.absoluteFilePath());
+    //int w = ui->refImageShow->width();
+    //int h = ui->refImageShow->height();
+    //ui->refImageShow->setPixmap(pix.scaled(w,h,Qt::KeepAspectRatio));
 }
 
 void MainWindow::on_defFileButton_clicked()
