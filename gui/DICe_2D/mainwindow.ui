@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1557</width>
+    <width>1533</width>
     <height>1084</height>
    </rect>
   </property>
@@ -137,41 +137,6 @@
      </attribute>
     </widget>
    </widget>
-   <widget class="QFrame" name="frame">
-    <property name="geometry">
-     <rect>
-      <x>410</x>
-      <y>20</y>
-      <width>1121</width>
-      <height>811</height>
-     </rect>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Sunken</enum>
-    </property>
-    <widget class="QLabel" name="refImageShow">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>10</y>
-       <width>1101</width>
-       <height>791</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="scaledContents">
-      <bool>false</bool>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
-   </widget>
    <widget class="QPushButton" name="pushButton">
     <property name="enabled">
      <bool>false</bool>
@@ -205,9 +170,9 @@
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>980</y>
-      <width>1191</width>
-      <height>51</height>
+      <y>1000</y>
+      <width>1171</width>
+      <height>31</height>
      </rect>
     </property>
     <property name="text">
@@ -219,7 +184,7 @@
      <rect>
       <x>340</x>
       <y>850</y>
-      <width>1201</width>
+      <width>1181</width>
       <height>151</height>
      </rect>
     </property>
@@ -234,18 +199,18 @@
       <rect>
        <x>10</x>
        <y>30</y>
-       <width>1181</width>
+       <width>1161</width>
        <height>111</height>
       </rect>
      </property>
     </widget>
    </widget>
-   <widget class="QGroupBox" name="groupBox_2">
+   <widget class="QGroupBox" name="ROIGroupBox">
     <property name="geometry">
      <rect>
       <x>340</x>
       <y>0</y>
-      <width>1201</width>
+      <width>1181</width>
       <height>851</height>
      </rect>
     </property>
@@ -255,7 +220,7 @@
     <widget class="QLabel" name="refFileLabel">
      <property name="geometry">
       <rect>
-       <x>70</x>
+       <x>50</x>
        <y>830</y>
        <width>1121</width>
        <height>16</height>
@@ -265,6 +230,87 @@
       <string/>
      </property>
     </widget>
+    <widget class="QPushButton" name="ROIBoundaryButton">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>20</y>
+       <width>51</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset resource="resources.qrc">
+       <normaloff>:/images/resources/images/ROI_Boundary.png</normaloff>:/images/resources/images/ROI_Boundary.png</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>35</width>
+       <height>35</height>
+      </size>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="ROIExcludeButton">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>70</y>
+       <width>51</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset resource="resources.qrc">
+       <normaloff>:/images/resources/images/ROI_Excluded.png</normaloff>:/images/resources/images/ROI_Excluded.png</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>35</width>
+       <height>35</height>
+      </size>
+     </property>
+    </widget>
+    <widget class="QFrame" name="ROIFrame">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>20</y>
+       <width>1121</width>
+       <height>811</height>
+      </rect>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
+     </property>
+     <widget class="QLabel" name="refImageShow">
+      <property name="geometry">
+       <rect>
+        <x>8</x>
+        <y>5</y>
+        <width>1111</width>
+        <height>801</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </widget>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -272,7 +318,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1557</width>
+     <width>1533</width>
      <height>22</height>
     </rect>
    </property>
@@ -288,6 +334,8 @@
   <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

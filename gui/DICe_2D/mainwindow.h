@@ -47,25 +47,24 @@
 
 
 namespace Ui {
-class MainWindow;
+    class MainWindow;
 }
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-
+    
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-
-private slots:
+    
+    private slots:
     void on_refFileButton_clicked();
-
+    
     void on_defFileButton_clicked();
-
-
+    
     void on_defListWidget_itemClicked(QListWidgetItem *item);
-
+    
 private:
     Ui::MainWindow *ui;
 };

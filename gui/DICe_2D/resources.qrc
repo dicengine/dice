@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/images">
+        <file>resources/images/ROI_Boundary.png</file>
+        <file>resources/images/ROI_Excluded.png</file>
+    </qresource>
+</RCC>

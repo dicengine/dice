@@ -48,8 +48,8 @@
 DICe::gui::Input_Vars * DICe::gui::Input_Vars::input_vars_ptr_ = NULL;
 
 MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+QMainWindow(parent),
+ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 }
@@ -63,16 +63,16 @@ void MainWindow::on_refFileButton_clicked()
 {
     // open file dialog box to select reference file
     QFileInfo refFileInfo = QFileDialog::getOpenFileName(this,
-         tr("Select reference file"), "/home", tr("Tagged Image File Format (*.tiff *.tif);;Portable Network Graphics (*.png);;Joint Photographic Experts Group (*.jpg *.jpeg)"));
-
+                                                         tr("Select reference file"), "/home", tr("Tagged Image File Format (*.tiff *.tif);;Portable Network Graphics (*.png);;Joint Photographic Experts Group (*.jpg *.jpeg)"));
+    
     // set the reference image in the Input_Vars singleton
     DICe::gui::Input_Vars::instance()->set_ref_file_info(refFileInfo);
-
+    
     // display the name of the file in the reference file box
     QString refFileName = refFileInfo.fileName();
     ui->refFileLine->setText(refFileName);
     ui->refFileLabel->setText(refFileInfo.filePath());
-
+    
     // display the image
     QPixmap pix(refFileInfo.absoluteFilePath());
     int w = ui->refImageShow->width();
@@ -85,13 +85,13 @@ void MainWindow::on_defFileButton_clicked()
     // get a pointer to the file name list in the Input_Vars singleton
     QStringList * list = DICe::gui::Input_Vars::instance()->get_def_file_list();
     list->clear();
-
+    
     // open a file dialog box to select the deformed images
     QFileDialog defDialog(this);
     defDialog.setFileMode(QFileDialog::ExistingFiles);
     QStringList defFileNames = defDialog.getOpenFileNames(this,
-         tr("Select reference file"), "/home", tr("Tagged Image File Format (*.tiff *.tif);;Portable Network Graphics (*.png);;Joint Photographic Experts Group (*.jpg *.jpeg)"));
-
+                                                          tr("Select reference file"), "/home", tr("Tagged Image File Format (*.tiff *.tif);;Portable Network Graphics (*.png);;Joint Photographic Experts Group (*.jpg *.jpeg)"));
+    
     // clear the widget list
     ui->defListWidget->clear();
     // add the names of the files to a list widget
@@ -101,7 +101,7 @@ void MainWindow::on_defFileButton_clicked()
         QString shortDefFileName = currentFile.fileName();
         ui->defListWidget->addItem(shortDefFileName);
     }
-
+    
 }
 
 void MainWindow::on_defListWidget_itemClicked(QListWidgetItem *item)
@@ -111,7 +111,7 @@ void MainWindow::on_defListWidget_itemClicked(QListWidgetItem *item)
     // determine the file name for the clicked item
     QStringList * list = DICe::gui::Input_Vars::instance()->get_def_file_list();
     QFileInfo defFile = list->at(row);
-
+    
     // display the file in the small view below the list
     ui->defFileLabel->setText(defFile.filePath());
     QPixmap pix(defFile.filePath());
