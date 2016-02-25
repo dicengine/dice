@@ -39,61 +39,53 @@
 // ************************************************************************
 // @HEADER
 
-#include "qimageroiselector.h"
-#include "ui_qimageroiselector.h"
-#include "DICe_InputVars.h"
+#ifndef QSELECTIONAREA_H
+#define QSELECTIONAREA_H
 
-QImageROISelector::QImageROISelector(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::QImageROISelector)
+#include <QWidget>
+#include <QImage>
+
+class QSelectionArea : public QWidget
 {
-    ui->setupUi(this);
-}
+    Q_OBJECT
 
-QImageROISelector::~QImageROISelector()
-{
-    delete ui;
-}
+public:
+    QSelectionArea(QWidget *parent = 0);
 
-bool QImageROISelector::addShapesEnabled(){
-    return ui->boundaryPlus->isChecked();
-}
+    bool openImage(const QString &fileName);
 
-bool QImageROISelector::isInSelectionArea(int x, int y)
-{
-    int offset_x = this->x() + ui->selectionArea->x();
-    int offset_y = this->y() + ui->selectionArea->y();
-    int limit_x = offset_x + ui->selectionArea->get_image_width();
-    int limit_y = offset_y + ui->selectionArea->get_image_height();
-    if(x>offset_x && x<limit_x && y>offset_y && y<limit_y)
-        return true;
-    else
-        return false;
-}
+    int get_image_width()const {return image_width;}
+    int get_image_height()const {return image_height;}
 
-void QImageROISelector::setImage(QFileInfo & file)
-{
-    ui->imageFileLabel->setText(file.filePath());
-    ui->selectionArea->openImage(file.filePath());
-}
+    void offsetPoint(QPoint & pt);
+    void resetLocation();
+    bool is_first_point()const{return lastPoint.x()==0&&lastPoint.y()==0;}
+    void drawShapeLine(QPoint & pt);
+    void drawShape(QList<QPoint> & vertices);
+    void resetImage();
 
-void QImageROISelector::drawShapeLine(QPoint &pt)
-{
-    ui->selectionArea->drawShapeLine(pt);
-}
+public slots:
 
-void QImageROISelector::on_boundaryMinus_clicked()
-{
-    // remove the last shape from the set
-    DICe::gui::Input_Vars::instance()->decrement_vertex_vector();
+protected:
+    void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
+    void resizeEvent(QResizeEvent *event) Q_DECL_OVERRIDE;
 
-    // reset the image
-    ui->selectionArea->resetImage();
+private:
+    void drawLineTo(const QPoint &endPoint);
+    void resizeImage(QImage *image, const QSize &newSize);
 
-    // redraw the other shapes
-    for(QList<QList<QPoint> >::iterator it=DICe::gui::Input_Vars::instance()->get_roi_vertex_vectors()->begin();
-        it!=DICe::gui::Input_Vars::instance()->get_roi_vertex_vectors()->end();++it){
-        ui->selectionArea->drawShape(*it);
-    }
+    int myPenWidth;
+    QColor myPenColor;
+    QImage image;
+    double scale_factor;
+    QPoint lastPoint;
+    QPoint originPoint;
+    int image_width;
+    int image_height;
+    QList<QPoint> current_roi_vertices;
+    QWidget * parent_;
+    QString fileName_;
+};
 
-}
+
+#endif // QSELECTIONAREA_H

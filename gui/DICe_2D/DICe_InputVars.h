@@ -43,6 +43,7 @@
 #define DICE_INPUTVARS_H
 
 #include <QFileInfo>
+#include <iostream>
 
 namespace DICe{
 
@@ -77,6 +78,28 @@ public:
     return &def_file_list_;
   }
 
+  /// decrement the last element of the roi vertex vectors
+  void decrement_vertex_vector(){
+      if(roi_vertex_vectors_.size()>0)
+          roi_vertex_vectors_.removeLast();
+  }
+
+  /// append a vector of vertices to the set
+  /// \param vertex_vector a QList containing the points of the vertices
+  void append_vertex_vector(QList<QPoint> vertex_vector){
+      std::cout << "Appending vertex vector ";
+      for(QList<QPoint>::iterator i=vertex_vector.begin();i<vertex_vector.end();++i)
+          std::cout << " " << i->x() << " " << i->y();
+      std::cout << std::endl;
+      roi_vertex_vectors_.append(vertex_vector);
+  }
+
+  /// return a pointer to the roi vertex vectors
+  QList<QList <QPoint> > * get_roi_vertex_vectors(){
+      return & roi_vertex_vectors_;
+  }
+
+
 private:
   /// constructor
   Input_Vars(){};
@@ -89,6 +112,8 @@ private:
   QFileInfo ref_file_info_;
   QStringList def_file_list_;
 
+  /// ROIs
+  QList<QList <QPoint> > roi_vertex_vectors_;
 
   /* ----------------------- */
   /// singleton pointer

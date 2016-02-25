@@ -45,6 +45,7 @@
 #include <QFileInfo>
 #include <DICe_InputVars.h>
 #include <qimageroiselector.h>
+#include <iostream>
 
 DICe::gui::Input_Vars * DICe::gui::Input_Vars::input_vars_ptr_ = NULL;
 
@@ -64,7 +65,8 @@ void MainWindow::on_refFileButton_clicked()
 {
     // open file dialog box to select reference file
     QFileInfo refFileInfo = QFileDialog::getOpenFileName(this,
-                                                         tr("Select reference file"), "/home", tr("Tagged Image File Format (*.tiff *.tif);;Portable Network Graphics (*.png);;Joint Photographic Experts Group (*.jpg *.jpeg)"));
+      tr("Select reference file"), "/home",
+      tr("Tagged Image File Format (*.tiff *.tif);;Portable Network Graphics (*.png);;Joint Photographic Experts Group (*.jpg *.jpeg)"));
     
     // set the reference image in the Input_Vars singleton
     DICe::gui::Input_Vars::instance()->set_ref_file_info(refFileInfo);
@@ -91,7 +93,8 @@ void MainWindow::on_defFileButton_clicked()
     QFileDialog defDialog(this);
     defDialog.setFileMode(QFileDialog::ExistingFiles);
     QStringList defFileNames = defDialog.getOpenFileNames(this,
-                                                          tr("Select reference file"), "/home", tr("Tagged Image File Format (*.tiff *.tif);;Portable Network Graphics (*.png);;Joint Photographic Experts Group (*.jpg *.jpeg)"));
+      tr("Select reference file"), "/home",
+      tr("Tagged Image File Format (*.tiff *.tif);;Portable Network Graphics (*.png);;Joint Photographic Experts Group (*.jpg *.jpeg)"));
     
     // clear the widget list
     ui->defListWidget->clear();
@@ -119,4 +122,20 @@ void MainWindow::on_defListWidget_itemClicked(QListWidgetItem *item)
     int w = ui->defImageShow->width();
     int h = ui->defImageShow->height();
     ui->defImageShow->setPixmap(pix.scaled(w,h,Qt::KeepAspectRatio));
+}
+
+
+
+void MainWindow::mousePressEvent(QMouseEvent *event){
+
+    // check the boundary plus button is pressed
+    if(ui->ROISelector->addShapesEnabled()){
+        // check if inside the reference image:
+        if (ui->ROISelector->isInSelectionArea(event->x(),event->y()))
+        {
+            // draw the points:
+            QPoint pt(event->x(),event->y());
+            ui->ROISelector->drawShapeLine(pt);
+        }
+    }
 }

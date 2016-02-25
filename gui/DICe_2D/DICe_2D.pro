@@ -14,10 +14,12 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    qimageroiselector.cpp
+    qimageroiselector.cpp \
+    qselectoinarea.cpp
 
 HEADERS  += mainwindow.h \
-    qimageroiselector.h
+    qimageroiselector.h \
+    qselectionarea.h
 
 FORMS    += mainwindow.ui \
     qimageroiselector.ui
