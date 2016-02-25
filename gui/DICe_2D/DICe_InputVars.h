@@ -99,6 +99,17 @@ public:
       return & roi_vertex_vectors_;
   }
 
+  void display_roi_vertices(){
+      int shape_it = 0;
+      for(QList<QList<QPoint> >::iterator it=roi_vertex_vectors_.begin();
+          it!=roi_vertex_vectors_.end();++it){
+          std::cout << "Shape " << shape_it;
+          for(QList<QPoint>::iterator cit=it->begin();cit!=it->end();++cit)
+              std::cout << " x " << cit->x() << " y " << cit->y();
+          std::cout << std::endl;
+          shape_it++;
+      }
+  }
 
 private:
   /// constructor

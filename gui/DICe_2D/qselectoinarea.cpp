@@ -156,6 +156,7 @@ void QSelectionArea::drawShapeLine(QPoint & pt)
         DICe::gui::Input_Vars::instance()->append_vertex_vector(current_roi_vertices);
         current_roi_vertices.clear();
         //std::cout << originPoint.x() << " " << originPoint.y() << " " << lastPoint.x() << " " << lastPoint.y() << std::endl;
+        DICe::gui::Input_Vars::instance()->display_roi_vertices();
     }
     else{
         // append the point to the current shape
@@ -163,6 +164,7 @@ void QSelectionArea::drawShapeLine(QPoint & pt)
         lastPoint = pt;
     }
 }
+
 
 void QSelectionArea::drawShape(QList<QPoint> & vertices){
     // iterate the vertices drawling lines between the points

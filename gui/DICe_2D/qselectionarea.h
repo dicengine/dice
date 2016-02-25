@@ -63,6 +63,7 @@ public:
     void drawShapeLine(QPoint & pt);
     void drawShape(QList<QPoint> & vertices);
     void resetImage();
+    void clear_current_roi_vertices(){current_roi_vertices.clear();}
 
 public slots:
 
