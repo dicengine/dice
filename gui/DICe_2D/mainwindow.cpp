@@ -124,9 +124,8 @@ void MainWindow::on_defListWidget_itemClicked(QListWidgetItem *item)
     ui->defImageShow->setPixmap(pix.scaled(w,h,Qt::KeepAspectRatio));
 }
 
-
-
-void MainWindow::mousePressEvent(QMouseEvent *event){
+void MainWindow::mousePressEvent(QMouseEvent *event)
+{
 
     // check the boundary plus button is pressed
     if(ui->ROISelector->addBoundaryEnabled()){
@@ -150,3 +149,19 @@ void MainWindow::mousePressEvent(QMouseEvent *event){
     }
 
 }
+
+void MainWindow::mouseMoveEvent(QMouseEvent *event)
+{
+    // one of the draw buttons must be pressed
+    if(ui->ROISelector->addBoundaryEnabled()||ui->ROISelector->addExcludedEnabled()){
+        // must be in the selection area
+        if(ui->ROISelector->isInSelectionArea(event->x(),event->y())){
+          // must be an active shape being drawn
+          //if()
+          //
+            std::cout << " -- x -- " << QCursor::pos().x() << " -- y -- " << QCursor::pos().y() << std::endl;
+          //
+        }
+    }
+}
+

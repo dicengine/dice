@@ -62,9 +62,11 @@ public:
     bool is_first_point()const{return lastPoint.x()==0&&lastPoint.y()==0;}
     void drawShapeLine(QPoint & pt, bool excluded=false);
     void drawShape(QList<QPoint> & vertices,QColor & color);
+    void drawShapes();
     void resetImage();
     void clear_current_roi_vertices(){current_roi_vertices.clear();}
-    void decrementVertexSet(const bool excluded=false);
+    void decrementVertexSet(const bool excluded=false, const bool refresh_only = false);
+    void setPenColor(const QColor & color){myPenColor = color;}
 
 public slots:
 

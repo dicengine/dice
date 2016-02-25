@@ -10,10 +10,16 @@
     <height>1095</height>
    </rect>
   </property>
+  <property name="mouseTracking">
+   <bool>true</bool>
+  </property>
   <property name="windowTitle">
    <string>Digital Image Correlation Engine (DICe) 2D</string>
   </property>
   <widget class="QWidget" name="centralWidget">
+   <property name="mouseTracking">
+    <bool>true</bool>
+   </property>
    <layout class="QGridLayout" name="gridLayout_2">
     <item row="0" column="0" rowspan="2" colspan="3">
      <layout class="QGridLayout" name="gridLayout">
@@ -150,6 +156,9 @@
           <width>1100</width>
           <height>16777215</height>
          </size>
+        </property>
+        <property name="mouseTracking">
+         <bool>true</bool>
         </property>
        </widget>
       </item>

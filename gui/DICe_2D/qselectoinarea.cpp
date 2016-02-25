@@ -119,26 +119,8 @@ void QSelectionArea::paintEvent(QPaintEvent *event)
     }
 }
 
-void QSelectionArea::decrementVertexSet(const bool excluded)
+void QSelectionArea::drawShapes()
 {
-    // if a shape is in progress, just clear the currnet shape
-    bool shape_in_progress = !is_first_point();
-
-    // reset the image
-    resetImage();
-
-    // reset the points
-    resetLocation();
-    clear_current_roi_vertices();
-
-    if(!shape_in_progress){
-        // remove the last shape from the set
-        if(excluded)
-            DICe::gui::Input_Vars::instance()->decrement_excluded_vertex_vector();
-        else
-            DICe::gui::Input_Vars::instance()->decrement_vertex_vector();
-    }
-
     // redraw the other shapes
     QColor color = Qt::yellow;
     for(QList<QList<QPoint> >::iterator it=DICe::gui::Input_Vars::instance()->get_roi_vertex_vectors()->begin();
@@ -150,6 +132,45 @@ void QSelectionArea::decrementVertexSet(const bool excluded)
         it!=DICe::gui::Input_Vars::instance()->get_roi_excluded_vertex_vectors()->end();++it){
         drawShape(*it,color);
     }
+
+    // draw lines for any segments in the current_roi_vertices list
+    if(current_roi_vertices.size()>1){
+        QPoint prev_point = *current_roi_vertices.begin();
+        for(QList<QPoint>::iterator it=current_roi_vertices.begin();it!=current_roi_vertices.end();++it){
+            if(it==current_roi_vertices.begin()) continue;
+            QPainter painter(&image);
+            painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                                Qt::RoundJoin));
+            painter.drawLine(prev_point, *it);
+            prev_point = *it;
+        }
+    }
+
+
+}
+
+void QSelectionArea::decrementVertexSet(const bool excluded, const bool refresh_only)
+{
+    // if a shape is in progress, just clear the currnet shape
+    bool shape_in_progress = !is_first_point();
+
+    // reset the image
+    resetImage();
+
+    // reset the points
+    resetLocation();
+    clear_current_roi_vertices();
+
+    if(!shape_in_progress&&!refresh_only){
+        // remove the last shape from the set
+        if(excluded)
+            DICe::gui::Input_Vars::instance()->decrement_excluded_vertex_vector();
+        else
+            DICe::gui::Input_Vars::instance()->decrement_vertex_vector();
+    }
+
+    // redraw the other shapes
+    drawShapes();
     //DICe::gui::Input_Vars::instance()->display_roi_vertices();
 }
 

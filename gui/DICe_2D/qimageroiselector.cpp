@@ -84,7 +84,20 @@ void QImageROISelector::setImage(QFileInfo & file)
 
 void QImageROISelector::drawShapeLine(QPoint &pt, bool excluded)
 {
+    QColor color = Qt::yellow;
+    if(excluded) color = Qt::red;
+    ui->selectionArea->setPenColor(color);
     ui->selectionArea->drawShapeLine(pt,excluded);
+}
+
+void QImageROISelector::on_boundaryPlus_clicked()
+{
+    // test if the user is in the process of drawing
+    // another line, if so, delet it
+    if(!ui->selectionArea->is_first_point()){
+        ui->selectionArea->decrementVertexSet(false,true);
+    }
+    ui->excludedPlus->setChecked(false);
 }
 
 void QImageROISelector::on_boundaryMinus_clicked()
@@ -99,11 +112,11 @@ void QImageROISelector::on_excludedMinus_clicked()
 
 void QImageROISelector::on_excludedPlus_clicked()
 {
+    // if the exclude button is checked, abort any shapes in progress
+    if(!ui->selectionArea->is_first_point()){
+        ui->selectionArea->decrementVertexSet(true,true);
+    }
     ui->boundaryPlus->setChecked(false);
 }
 
-void QImageROISelector::on_boundaryPlus_clicked()
-{
-    ui->excludedPlus->setChecked(false);
-}
 
