@@ -62,8 +62,9 @@ public:
 
     void setImage(QFileInfo & file);
     bool isInSelectionArea(int x, int y);
-    void drawShapeLine(QPoint & pt);
-    bool addShapesEnabled();
+    void drawShapeLine(QPoint & pt, bool excluded=false);
+    bool addBoundaryEnabled();
+    bool addExcludedEnabled();
 
 private:
     Ui::QImageROISelector *ui;
@@ -75,6 +76,9 @@ protected:
 
 private slots:
     void on_boundaryMinus_clicked();
+    void on_excludedPlus_clicked();
+    void on_boundaryPlus_clicked();
+    void on_excludedMinus_clicked();
 };
 
 #endif // QIMAGEROISELECTOR_H

@@ -129,7 +129,7 @@ void MainWindow::on_defListWidget_itemClicked(QListWidgetItem *item)
 void MainWindow::mousePressEvent(QMouseEvent *event){
 
     // check the boundary plus button is pressed
-    if(ui->ROISelector->addShapesEnabled()){
+    if(ui->ROISelector->addBoundaryEnabled()){
         // check if inside the reference image:
         if (ui->ROISelector->isInSelectionArea(event->x(),event->y()))
         {
@@ -138,4 +138,15 @@ void MainWindow::mousePressEvent(QMouseEvent *event){
             ui->ROISelector->drawShapeLine(pt);
         }
     }
+    // check the excluded plus button is pressed
+    else if(ui->ROISelector->addExcludedEnabled()){
+        // check if inside the reference image:
+        if (ui->ROISelector->isInSelectionArea(event->x(),event->y()))
+        {
+            // draw the points:
+            QPoint pt(event->x(),event->y());
+            ui->ROISelector->drawShapeLine(pt,true);
+        }
+    }
+
 }

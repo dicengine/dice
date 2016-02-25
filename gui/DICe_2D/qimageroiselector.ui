@@ -69,6 +69,9 @@
       <property name="text">
        <string>e+</string>
       </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
      </widget>
     </item>
     <item>

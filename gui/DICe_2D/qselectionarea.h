@@ -60,10 +60,11 @@ public:
     void offsetPoint(QPoint & pt);
     void resetLocation();
     bool is_first_point()const{return lastPoint.x()==0&&lastPoint.y()==0;}
-    void drawShapeLine(QPoint & pt);
-    void drawShape(QList<QPoint> & vertices);
+    void drawShapeLine(QPoint & pt, bool excluded=false);
+    void drawShape(QList<QPoint> & vertices,QColor & color);
     void resetImage();
     void clear_current_roi_vertices(){current_roi_vertices.clear();}
+    void decrementVertexSet(const bool excluded=false);
 
 public slots:
 
@@ -72,7 +73,7 @@ protected:
     void resizeEvent(QResizeEvent *event) Q_DECL_OVERRIDE;
 
 private:
-    void drawLineTo(const QPoint &endPoint);
+    void drawLineTo(const QPoint &endPoint, QColor & color);
     void resizeImage(QImage *image, const QSize &newSize);
 
     int myPenWidth;

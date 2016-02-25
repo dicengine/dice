@@ -83,6 +83,11 @@ public:
       if(roi_vertex_vectors_.size()>0)
           roi_vertex_vectors_.removeLast();
   }
+  /// decrement the last element of the roi vertex vectors
+  void decrement_excluded_vertex_vector(){
+      if(roi_excluded_vertex_vectors_.size()>0)
+          roi_excluded_vertex_vectors_.removeLast();
+  }
 
   /// append a vector of vertices to the set
   /// \param vertex_vector a QList containing the points of the vertices
@@ -94,9 +99,24 @@ public:
       roi_vertex_vectors_.append(vertex_vector);
   }
 
+  /// append a vector of vertices to the set
+  /// \param vertex_vector a QList containing the points of the vertices
+  void append_excluded_vertex_vector(QList<QPoint> vertex_vector){
+      std::cout << "Appending excluded vertex vector ";
+      for(QList<QPoint>::iterator i=vertex_vector.begin();i<vertex_vector.end();++i)
+          std::cout << " " << i->x() << " " << i->y();
+      std::cout << std::endl;
+      roi_excluded_vertex_vectors_.append(vertex_vector);
+  }
+
   /// return a pointer to the roi vertex vectors
   QList<QList <QPoint> > * get_roi_vertex_vectors(){
       return & roi_vertex_vectors_;
+  }
+
+  /// return a pointer to the roi vertex vectors
+  QList<QList <QPoint> > * get_roi_excluded_vertex_vectors(){
+      return & roi_excluded_vertex_vectors_;
   }
 
   void display_roi_vertices(){
@@ -124,7 +144,11 @@ private:
   QStringList def_file_list_;
 
   /// ROIs
+  ///
+  /// Boundary
   QList<QList <QPoint> > roi_vertex_vectors_;
+  /// Excluded
+  QList<QList <QPoint> > roi_excluded_vertex_vectors_;
 
   /* ----------------------- */
   /// singleton pointer

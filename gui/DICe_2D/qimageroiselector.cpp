@@ -55,9 +55,14 @@ QImageROISelector::~QImageROISelector()
     delete ui;
 }
 
-bool QImageROISelector::addShapesEnabled(){
+bool QImageROISelector::addBoundaryEnabled(){
     return ui->boundaryPlus->isChecked();
 }
+
+bool QImageROISelector::addExcludedEnabled(){
+    return ui->excludedPlus->isChecked();
+}
+
 
 bool QImageROISelector::isInSelectionArea(int x, int y)
 {
@@ -77,37 +82,28 @@ void QImageROISelector::setImage(QFileInfo & file)
     ui->selectionArea->openImage(file.filePath());
 }
 
-void QImageROISelector::drawShapeLine(QPoint &pt)
+void QImageROISelector::drawShapeLine(QPoint &pt, bool excluded)
 {
-    ui->selectionArea->drawShapeLine(pt);
+    ui->selectionArea->drawShapeLine(pt,excluded);
 }
 
 void QImageROISelector::on_boundaryMinus_clicked()
 {
-    std::cout << "beginning " << std::endl;
-    DICe::gui::Input_Vars::instance()->display_roi_vertices();
-
-    // if a shape is in progress, just clear the currnet shape
-    bool shape_in_progress = !ui->selectionArea->is_first_point();
-
-    // reset the image
-    ui->selectionArea->resetImage();
-
-    // reset the points
-    ui->selectionArea->resetLocation();
-    ui->selectionArea->clear_current_roi_vertices();
-
-    if(!shape_in_progress){
-        // remove the last shape from the set
-        DICe::gui::Input_Vars::instance()->decrement_vertex_vector();
-    }
-
-    // redraw the other shapes
-    for(QList<QList<QPoint> >::iterator it=DICe::gui::Input_Vars::instance()->get_roi_vertex_vectors()->begin();
-        it!=DICe::gui::Input_Vars::instance()->get_roi_vertex_vectors()->end();++it){
-        ui->selectionArea->drawShape(*it);
-    }
-
-    std::cout << "end " << std::endl;
-    DICe::gui::Input_Vars::instance()->display_roi_vertices();
+  ui->selectionArea->decrementVertexSet();
 }
+
+void QImageROISelector::on_excludedMinus_clicked()
+{
+    ui->selectionArea->decrementVertexSet(true);
+}
+
+void QImageROISelector::on_excludedPlus_clicked()
+{
+    ui->boundaryPlus->setChecked(false);
+}
+
+void QImageROISelector::on_boundaryPlus_clicked()
+{
+    ui->excludedPlus->setChecked(false);
+}
+

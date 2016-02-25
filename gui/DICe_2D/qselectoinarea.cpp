@@ -119,7 +119,41 @@ void QSelectionArea::paintEvent(QPaintEvent *event)
     }
 }
 
-void QSelectionArea::drawShapeLine(QPoint & pt)
+void QSelectionArea::decrementVertexSet(const bool excluded)
+{
+    // if a shape is in progress, just clear the currnet shape
+    bool shape_in_progress = !is_first_point();
+
+    // reset the image
+    resetImage();
+
+    // reset the points
+    resetLocation();
+    clear_current_roi_vertices();
+
+    if(!shape_in_progress){
+        // remove the last shape from the set
+        if(excluded)
+            DICe::gui::Input_Vars::instance()->decrement_excluded_vertex_vector();
+        else
+            DICe::gui::Input_Vars::instance()->decrement_vertex_vector();
+    }
+
+    // redraw the other shapes
+    QColor color = Qt::yellow;
+    for(QList<QList<QPoint> >::iterator it=DICe::gui::Input_Vars::instance()->get_roi_vertex_vectors()->begin();
+        it!=DICe::gui::Input_Vars::instance()->get_roi_vertex_vectors()->end();++it){
+        drawShape(*it,color);
+    }
+    color = Qt::red;
+    for(QList<QList<QPoint> >::iterator it=DICe::gui::Input_Vars::instance()->get_roi_excluded_vertex_vectors()->begin();
+        it!=DICe::gui::Input_Vars::instance()->get_roi_excluded_vertex_vectors()->end();++it){
+        drawShape(*it,color);
+    }
+    //DICe::gui::Input_Vars::instance()->display_roi_vertices();
+}
+
+void QSelectionArea::drawShapeLine(QPoint & pt,bool excluded)
 {
     // offset the point to account for the location of the image viewer
     offsetPoint(pt);
@@ -145,18 +179,26 @@ void QSelectionArea::drawShapeLine(QPoint & pt)
     }
 
     // draw the line
-    drawLineTo(pt);
-
+    QColor color = Qt::yellow;
+    if(excluded) color = Qt::red;
+    drawLineTo(pt,color);
 
     if(closure){
         std::cout << "reset location! " << std::endl;
         resetLocation();
-        // no need to append the last point to the current vertices because the begining is already in there
-        // append the vertex set to the Input_Vars vector and clear the current shape
-        DICe::gui::Input_Vars::instance()->append_vertex_vector(current_roi_vertices);
+        if(excluded){
+            // no need to append the last point to the current vertices because the begining is already in there
+            // append the vertex set to the Input_Vars vector and clear the current shape
+            DICe::gui::Input_Vars::instance()->append_excluded_vertex_vector(current_roi_vertices);
+        }
+        else{
+            // no need to append the last point to the current vertices because the begining is already in there
+            // append the vertex set to the Input_Vars vector and clear the current shape
+            DICe::gui::Input_Vars::instance()->append_vertex_vector(current_roi_vertices);
+            //std::cout << originPoint.x() << " " << originPoint.y() << " " << lastPoint.x() << " " << lastPoint.y() << std::endl;
+            DICe::gui::Input_Vars::instance()->display_roi_vertices();
+        }
         current_roi_vertices.clear();
-        //std::cout << originPoint.x() << " " << originPoint.y() << " " << lastPoint.x() << " " << lastPoint.y() << std::endl;
-        DICe::gui::Input_Vars::instance()->display_roi_vertices();
     }
     else{
         // append the point to the current shape
@@ -166,7 +208,7 @@ void QSelectionArea::drawShapeLine(QPoint & pt)
 }
 
 
-void QSelectionArea::drawShape(QList<QPoint> & vertices){
+void QSelectionArea::drawShape(QList<QPoint> & vertices, QColor & color){
     // iterate the vertices drawling lines between the points
 
     // append the begin point on the end of the list
@@ -180,7 +222,7 @@ void QSelectionArea::drawShape(QList<QPoint> & vertices){
             continue;
         }
         QPainter painter(&image);
-        painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
+        painter.setPen(QPen(color, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                             Qt::RoundJoin));
         painter.drawLine(prev_point, *it);
         prev_point = *it;
@@ -189,12 +231,12 @@ void QSelectionArea::drawShape(QList<QPoint> & vertices){
 }
 
 
-void QSelectionArea::drawLineTo(const QPoint &endPoint)
+void QSelectionArea::drawLineTo(const QPoint &endPoint, QColor & color)
 {
     // take the offset away from endpoint
     //QPoint offset(endPoint.x() - parent_->x() - x(),endPoint.y() - parent_->y() - y());
     QPainter painter(&image);
-    painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
+    painter.setPen(QPen(color, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
     painter.drawLine(lastPoint, endPoint);
     update();
