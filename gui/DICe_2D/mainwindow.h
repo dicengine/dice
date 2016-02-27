@@ -64,9 +64,6 @@ public:
     void on_defFileButton_clicked();
     
     void on_defListWidget_itemClicked(QListWidgetItem *item);
-    
-    void mousePressEvent(QMouseEvent *event);
-    void mouseMoveEvent(QMouseEvent *event);
 
 private:
     Ui::MainWindow *ui;

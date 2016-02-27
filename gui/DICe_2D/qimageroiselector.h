@@ -60,24 +60,20 @@ public:
     explicit QImageROISelector(QWidget *parent = 0);
     ~QImageROISelector();
 
+    /// sets the image that the ROIs will be drawn on
     void setImage(QFileInfo & file);
-    bool isInSelectionArea(int x, int y);
-    void drawShapeLine(QPoint & pt, bool excluded=false);
-    bool addBoundaryEnabled();
-    bool addExcludedEnabled();
 
 private:
     Ui::QImageROISelector *ui;
-    //QGraphicsScene* imageScene;
-    //QGraphicsPixmapItem* imagePixmapItem;
-
-protected:
-    //void mousePressEvent(QMouseEvent *e) Q_DECL_OVERRIDE;
 
 private slots:
+
     void on_boundaryMinus_clicked();
+
     void on_excludedPlus_clicked();
+
     void on_boundaryPlus_clicked();
+
     void on_excludedMinus_clicked();
 };
 

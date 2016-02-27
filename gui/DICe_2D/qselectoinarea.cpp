@@ -50,12 +50,9 @@ QSelectionArea::QSelectionArea(QWidget *parent)
 {
     setAttribute(Qt::WA_StaticContents);
     myPenWidth = 3;
-    scale_factor = 1.0;
+    scaleFactor = 1.0;
     myPenColor = Qt::yellow;
-    image_width = 0;
-    image_height = 0;
     lastPoint = QPoint(0,0);
-    parent_ = parent;
 }
 
 void QSelectionArea::resizeImage(QImage *image, const QSize &newSize)
@@ -63,34 +60,28 @@ void QSelectionArea::resizeImage(QImage *image, const QSize &newSize)
     if (image->size() == newSize){
         return;
     }
-
-    double scale_factor_x = (double)newSize.width() / (double)image->size().width();
-    double scale_factor_y = (double)newSize.height() / (double)image->size().height();
-    if(scale_factor_x < scale_factor_y)
-        scale_factor = scale_factor_x;
+    double scaleFactorX = (double)newSize.width() / (double)image->size().width();
+    double scaleFactorY = (double)newSize.height() / (double)image->size().height();
+    if(scaleFactorX < scaleFactorY)
+        scaleFactor = scaleFactorX;
     else
-        scale_factor = scale_factor_y;
-    std::cout << "scale factor: " << scale_factor << std::endl;
+        scaleFactor = scaleFactorY;
+    std::cout << "scale factor: " << scaleFactor << std::endl;
 
     QImage scaledImage = image->scaled(newSize.width(),newSize.height(),Qt::KeepAspectRatio);
     scaledImage = scaledImage.convertToFormat(QImage::Format_RGB32);
-    //newImage.fill(qRgb(255, 255, 255));
-    //QPainter painter(&scaledImage);
-    //painter.drawImage(QPoint(0, 0), *image);
     *image = scaledImage;
-    image_width = image->width();
-    image_height = image->height();
 }
 
 void QSelectionArea::resetImage(){
-    if(fileName_!=""){
-        openImage(fileName_);
+    if(imageFileName!=""){
+        openImage(imageFileName);
     }
 }
 
-bool QSelectionArea::openImage(const QString &fileName)
+bool QSelectionArea::openImage(const QString & fileName)
 {
-    fileName_ = fileName;
+    imageFileName = fileName;
     QImage loadedImage;
     if (!loadedImage.load(fileName))
         return false;
@@ -121,47 +112,42 @@ void QSelectionArea::paintEvent(QPaintEvent *event)
 
 void QSelectionArea::drawShapes()
 {
-    // redraw the other shapes
+    // clear and redraw the background image
+    resetImage();
+
+    // redraw the boundary shapes
     QColor color = Qt::yellow;
     for(QList<QList<QPoint> >::iterator it=DICe::gui::Input_Vars::instance()->get_roi_vertex_vectors()->begin();
         it!=DICe::gui::Input_Vars::instance()->get_roi_vertex_vectors()->end();++it){
         drawShape(*it,color);
     }
+    // redraw the excluded shapes
     color = Qt::red;
     for(QList<QList<QPoint> >::iterator it=DICe::gui::Input_Vars::instance()->get_roi_excluded_vertex_vectors()->begin();
         it!=DICe::gui::Input_Vars::instance()->get_roi_excluded_vertex_vectors()->end();++it){
         drawShape(*it,color);
     }
-
-    // draw lines for any segments in the current_roi_vertices list
-    if(current_roi_vertices.size()>1){
-        QPoint prev_point = *current_roi_vertices.begin();
-        for(QList<QPoint>::iterator it=current_roi_vertices.begin();it!=current_roi_vertices.end();++it){
-            if(it==current_roi_vertices.begin()) continue;
-            QPainter painter(&image);
-            painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                                Qt::RoundJoin));
-            painter.drawLine(prev_point, *it);
-            prev_point = *it;
+    // draw lines for any segments for shapes in progress
+    if(currentShapeVertices.size()>1){
+        QPoint prevPoint = *currentShapeVertices.begin();
+        for(QList<QPoint>::iterator it=currentShapeVertices.begin();it!=currentShapeVertices.end();++it){
+            if(it==currentShapeVertices.begin()) continue;
+            drawLine(prevPoint,*it,myPenColor);
+            prevPoint = *it;
         }
     }
-
-
 }
 
-void QSelectionArea::decrementVertexSet(const bool excluded, const bool refresh_only)
+void QSelectionArea::decrementShapeSet(const bool excluded, const bool refreshOnly)
 {
     // if a shape is in progress, just clear the currnet shape
-    bool shape_in_progress = !is_first_point();
-
-    // reset the image
-    resetImage();
+    bool shape_in_progress = shapeInProgress();
 
     // reset the points
-    resetLocation();
-    clear_current_roi_vertices();
+    resetOriginAndLastPt();
+    clearCurrentShapeVertices();
 
-    if(!shape_in_progress&&!refresh_only){
+    if(!shape_in_progress&&!refreshOnly){
         // remove the last shape from the set
         if(excluded)
             DICe::gui::Input_Vars::instance()->decrement_excluded_vertex_vector();
@@ -171,21 +157,17 @@ void QSelectionArea::decrementVertexSet(const bool excluded, const bool refresh_
 
     // redraw the other shapes
     drawShapes();
-    //DICe::gui::Input_Vars::instance()->display_roi_vertices();
 }
 
-void QSelectionArea::drawShapeLine(QPoint & pt,bool excluded)
+void QSelectionArea::updateVertices(QPoint & pt,const bool excluded)
 {
-    // offset the point to account for the location of the image viewer
-    offsetPoint(pt);
-
     // the first point doesn't need a line
-    if(is_first_point()){
+    if(!shapeInProgress()){
         std::cout << "first point!" << std::endl;
         originPoint = pt;
         lastPoint = pt;
         // add the vertex to the current shape
-        current_roi_vertices.append(pt);
+        currentShapeVertices.append(pt);
         return;
     }
 
@@ -195,82 +177,95 @@ void QSelectionArea::drawShapeLine(QPoint & pt,bool excluded)
     bool closure = abs(pt.x() - originPoint.x()) + abs(pt.y() - originPoint.y()) < tol;
 
     if(closure){
-        std::cout << " closure!" << std::endl;
         pt = originPoint;
     }
 
-    // draw the line
-    QColor color = Qt::yellow;
-    if(excluded) color = Qt::red;
-    drawLineTo(pt,color);
-
     if(closure){
-        std::cout << "reset location! " << std::endl;
-        resetLocation();
+        // append the vertex set to the Input_Vars vector before adding the origin so that
+        // the origin is not duplicated in the set
         if(excluded){
-            // no need to append the last point to the current vertices because the begining is already in there
-            // append the vertex set to the Input_Vars vector and clear the current shape
-            DICe::gui::Input_Vars::instance()->append_excluded_vertex_vector(current_roi_vertices);
+            DICe::gui::Input_Vars::instance()->append_excluded_vertex_vector(currentShapeVertices);
         }
         else{
-            // no need to append the last point to the current vertices because the begining is already in there
-            // append the vertex set to the Input_Vars vector and clear the current shape
-            DICe::gui::Input_Vars::instance()->append_vertex_vector(current_roi_vertices);
-            //std::cout << originPoint.x() << " " << originPoint.y() << " " << lastPoint.x() << " " << lastPoint.y() << std::endl;
-            DICe::gui::Input_Vars::instance()->display_roi_vertices();
+            DICe::gui::Input_Vars::instance()->append_vertex_vector(currentShapeVertices);
         }
-        current_roi_vertices.clear();
+        // add the last point now for drawing purposes
+        lastPoint = pt;
+        drawShapes();
+        resetOriginAndLastPt();
+        currentShapeVertices.clear();
     }
     else{
         // append the point to the current shape
-        current_roi_vertices.append(pt);
+        currentShapeVertices.append(pt);
         lastPoint = pt;
+        drawShapes();
     }
 }
 
 
 void QSelectionArea::drawShape(QList<QPoint> & vertices, QColor & color){
-    // iterate the vertices drawling lines between the points
-
     // append the begin point on the end of the list
     QList<QPoint> vertices_ap = vertices;
     vertices_ap.append(*vertices.begin());
 
-    QPoint prev_point;
+    // iterate the vertices drawling lines between the points
+    QPoint prevPoint;
     for(QList<QPoint>::iterator it=vertices_ap.begin();it!=vertices_ap.end();++it){
         if(it==vertices_ap.begin()){
-            prev_point = *it;
+            prevPoint = *it;
             continue;
         }
-        QPainter painter(&image);
-        painter.setPen(QPen(color, myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                            Qt::RoundJoin));
-        painter.drawLine(prev_point, *it);
-        prev_point = *it;
+        drawLine(prevPoint,*it,color);
+        prevPoint = *it;
     }
     update();
 }
 
 
-void QSelectionArea::drawLineTo(const QPoint &endPoint, QColor & color)
+void QSelectionArea::drawLine(const QPoint &fromPoint, const QPoint &endPoint, QColor & color)
 {
-    // take the offset away from endpoint
-    //QPoint offset(endPoint.x() - parent_->x() - x(),endPoint.y() - parent_->y() - y());
     QPainter painter(&image);
     painter.setPen(QPen(color, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
-    painter.drawLine(lastPoint, endPoint);
+    painter.drawLine(fromPoint, endPoint);
     update();
 }
 
-void QSelectionArea::offsetPoint(QPoint & pt)
-{
-    QPoint offset(pt.x() - parent_->x() - x(),pt.y() - parent_->y() - y());
-    pt = offset;
-}
-
-void QSelectionArea::resetLocation()
+void QSelectionArea::resetOriginAndLastPt()
 {
     lastPoint = QPoint(0,0);
     originPoint = QPoint(0,0);
 }
+
+
+void QSelectionArea::mousePressEvent(QMouseEvent *event)
+{
+    // check the boundary plus button is pressed
+    if(addBoundaryEnabled){
+        // draw the points:
+        QColor color = Qt::yellow;
+        setPenColor(color);
+        QPoint pt(event->x(),event->y());
+        updateVertices(pt);
+    }
+    // check the excluded plus button is pressed
+    else if(addExcludedEnabled){
+        // draw the points:
+        QColor color = Qt::red;
+        setPenColor(color);
+        QPoint pt(event->x(),event->y());
+        updateVertices(pt,true);
+    }
+}
+
+void QSelectionArea::mouseMoveEvent(QMouseEvent *event)
+{
+    std::cout << " -- x -- " << QCursor::pos().x() << " -- y -- " << QCursor::pos().y() << std::endl;
+    // one of the draw buttons must be pressed
+    if(addBoundaryEnabled||addExcludedEnabled){
+        std::cout << " -- x -- " << QCursor::pos().x() << " -- y -- " << QCursor::pos().y() << std::endl;
+    }
+}
+
+

@@ -55,68 +55,41 @@ QImageROISelector::~QImageROISelector()
     delete ui;
 }
 
-bool QImageROISelector::addBoundaryEnabled(){
-    return ui->boundaryPlus->isChecked();
-}
-
-bool QImageROISelector::addExcludedEnabled(){
-    return ui->excludedPlus->isChecked();
-}
-
-
-bool QImageROISelector::isInSelectionArea(int x, int y)
-{
-    int offset_x = this->x() + ui->selectionArea->x();
-    int offset_y = this->y() + ui->selectionArea->y();
-    int limit_x = offset_x + ui->selectionArea->get_image_width();
-    int limit_y = offset_y + ui->selectionArea->get_image_height();
-    if(x>offset_x && x<limit_x && y>offset_y && y<limit_y)
-        return true;
-    else
-        return false;
-}
-
 void QImageROISelector::setImage(QFileInfo & file)
 {
     ui->imageFileLabel->setText(file.filePath());
     ui->selectionArea->openImage(file.filePath());
 }
 
-void QImageROISelector::drawShapeLine(QPoint &pt, bool excluded)
-{
-    QColor color = Qt::yellow;
-    if(excluded) color = Qt::red;
-    ui->selectionArea->setPenColor(color);
-    ui->selectionArea->drawShapeLine(pt,excluded);
-}
-
 void QImageROISelector::on_boundaryPlus_clicked()
 {
+    // turn the add boundary tool on or off, depending on the current state swap it
+    ui->selectionArea->setAddBoundaryEnabled(!ui->selectionArea->getAddBoundaryEnabled());
     // test if the user is in the process of drawing
     // another line, if so, delet it
-    if(!ui->selectionArea->is_first_point()){
-        ui->selectionArea->decrementVertexSet(false,true);
-    }
+    ui->selectionArea->decrementShapeSet(false,true);
+    ui->selectionArea->setAddExcludedEnabled(false);
     ui->excludedPlus->setChecked(false);
 }
 
 void QImageROISelector::on_boundaryMinus_clicked()
 {
-  ui->selectionArea->decrementVertexSet();
-}
-
-void QImageROISelector::on_excludedMinus_clicked()
-{
-    ui->selectionArea->decrementVertexSet(true);
+  ui->selectionArea->decrementShapeSet();
 }
 
 void QImageROISelector::on_excludedPlus_clicked()
 {
-    // if the exclude button is checked, abort any shapes in progress
-    if(!ui->selectionArea->is_first_point()){
-        ui->selectionArea->decrementVertexSet(true,true);
-    }
+    // turn the add boundary tool on or off, depending on the current state swap it
+    ui->selectionArea->setAddExcludedEnabled(!ui->selectionArea->getAddExcludedEnabled());
+    // test if the user is in the process of drawing
+    // another line, if so, delet it
+    ui->selectionArea->decrementShapeSet(true,true);
+    ui->selectionArea->setAddBoundaryEnabled(false);
     ui->boundaryPlus->setChecked(false);
 }
 
+void QImageROISelector::on_excludedMinus_clicked()
+{
+    ui->selectionArea->decrementShapeSet(true);
+}
 

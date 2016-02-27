@@ -75,12 +75,6 @@ void MainWindow::on_refFileButton_clicked()
     QString refFileName = refFileInfo.fileName();
     ui->ROISelector->setImage(refFileInfo);
     ui->refFileLine->setText(refFileName);
-    
-    // display the image
-    //QPixmap pix(refFileInfo.absoluteFilePath());
-    //int w = ui->refImageShow->width();
-    //int h = ui->refImageShow->height();
-    //ui->refImageShow->setPixmap(pix.scaled(w,h,Qt::KeepAspectRatio));
 }
 
 void MainWindow::on_defFileButton_clicked()
@@ -123,45 +117,3 @@ void MainWindow::on_defListWidget_itemClicked(QListWidgetItem *item)
     int h = ui->defImageShow->height();
     ui->defImageShow->setPixmap(pix.scaled(w,h,Qt::KeepAspectRatio));
 }
-
-void MainWindow::mousePressEvent(QMouseEvent *event)
-{
-
-    // check the boundary plus button is pressed
-    if(ui->ROISelector->addBoundaryEnabled()){
-        // check if inside the reference image:
-        if (ui->ROISelector->isInSelectionArea(event->x(),event->y()))
-        {
-            // draw the points:
-            QPoint pt(event->x(),event->y());
-            ui->ROISelector->drawShapeLine(pt);
-        }
-    }
-    // check the excluded plus button is pressed
-    else if(ui->ROISelector->addExcludedEnabled()){
-        // check if inside the reference image:
-        if (ui->ROISelector->isInSelectionArea(event->x(),event->y()))
-        {
-            // draw the points:
-            QPoint pt(event->x(),event->y());
-            ui->ROISelector->drawShapeLine(pt,true);
-        }
-    }
-
-}
-
-void MainWindow::mouseMoveEvent(QMouseEvent *event)
-{
-    // one of the draw buttons must be pressed
-    if(ui->ROISelector->addBoundaryEnabled()||ui->ROISelector->addExcludedEnabled()){
-        // must be in the selection area
-        if(ui->ROISelector->isInSelectionArea(event->x(),event->y())){
-          // must be an active shape being drawn
-          //if()
-          //
-            std::cout << " -- x -- " << QCursor::pos().x() << " -- y -- " << QCursor::pos().y() << std::endl;
-          //
-        }
-    }
-}
-
