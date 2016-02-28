@@ -70,13 +70,16 @@ public:
     }
 
     /// update the stored set of vertices
-    void updateVertices(QPoint & pt, const bool excluded=false);
+    void updateVertices(QPoint & pt, const bool excluded=false, const bool forceClosure=false);
 
     /// draw a shape from a set of vertices
     void drawShape(QList<QPoint> & vertices,QColor & color);
 
     /// draw all the shapes stored and lines for ones in progress
     void drawShapes();
+
+    /// draw a polygon that connects the vertices in the current shape being drawn
+    void drawPreviewPolygon(const QPoint & pt);
 
     /// clear the stored vertices for the current shape in progress
     void clearCurrentShapeVertices(){

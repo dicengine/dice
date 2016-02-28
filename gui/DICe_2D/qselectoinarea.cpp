@@ -66,7 +66,7 @@ void QSelectionArea::resizeImage(QImage *image, const QSize &newSize)
         scaleFactor = scaleFactorX;
     else
         scaleFactor = scaleFactorY;
-    std::cout << "scale factor: " << scaleFactor << std::endl;
+    //std::cout << "scale factor: " << scaleFactor << std::endl;
 
     QImage scaledImage = image->scaled(newSize.width(),newSize.height(),Qt::KeepAspectRatio);
     scaledImage = scaledImage.convertToFormat(QImage::Format_RGB32);
@@ -127,15 +127,16 @@ void QSelectionArea::drawShapes()
         it!=DICe::gui::Input_Vars::instance()->get_roi_excluded_vertex_vectors()->end();++it){
         drawShape(*it,color);
     }
+
     // draw lines for any segments for shapes in progress
-    if(currentShapeVertices.size()>1){
-        QPoint prevPoint = *currentShapeVertices.begin();
-        for(QList<QPoint>::iterator it=currentShapeVertices.begin();it!=currentShapeVertices.end();++it){
-            if(it==currentShapeVertices.begin()) continue;
-            drawLine(prevPoint,*it,myPenColor);
-            prevPoint = *it;
-        }
-    }
+    //if(currentShapeVertices.size()>1){
+    //    QPoint prevPoint = *currentShapeVertices.begin();
+    //    for(QList<QPoint>::iterator it=currentShapeVertices.begin();it!=currentShapeVertices.end();++it){
+    //        if(it==currentShapeVertices.begin()) continue;
+    //        drawLine(prevPoint,*it,myPenColor);
+    //        prevPoint = *it;
+    //    }
+    //}
 }
 
 void QSelectionArea::decrementShapeSet(const bool excluded, const bool refreshOnly)
@@ -159,7 +160,7 @@ void QSelectionArea::decrementShapeSet(const bool excluded, const bool refreshOn
     drawShapes();
 }
 
-void QSelectionArea::updateVertices(QPoint & pt,const bool excluded)
+void QSelectionArea::updateVertices(QPoint & pt,const bool excluded, const bool forceClosure)
 {
     // the first point doesn't need a line
     if(!shapeInProgress()){
@@ -174,8 +175,7 @@ void QSelectionArea::updateVertices(QPoint & pt,const bool excluded)
     // if the current point is near the origin of the shape
     // close the polygon
     int tol = 10; // pixels
-    bool closure = abs(pt.x() - originPoint.x()) + abs(pt.y() - originPoint.y()) < tol;
-
+    bool closure = (abs(pt.x() - originPoint.x()) + abs(pt.y() - originPoint.y()) < tol) || forceClosure;
     if(closure){
         pt = originPoint;
     }
@@ -190,8 +190,9 @@ void QSelectionArea::updateVertices(QPoint & pt,const bool excluded)
             DICe::gui::Input_Vars::instance()->append_vertex_vector(currentShapeVertices);
         }
         // add the last point now for drawing purposes
+        // TODO comment this out later
         lastPoint = pt;
-        drawShapes();
+        //drawShapes();
         resetOriginAndLastPt();
         currentShapeVertices.clear();
     }
@@ -199,7 +200,7 @@ void QSelectionArea::updateVertices(QPoint & pt,const bool excluded)
         // append the point to the current shape
         currentShapeVertices.append(pt);
         lastPoint = pt;
-        drawShapes();
+        //drawShapes();
     }
 }
 
@@ -241,13 +242,21 @@ void QSelectionArea::resetOriginAndLastPt()
 
 void QSelectionArea::mousePressEvent(QMouseEvent *event)
 {
+    // if the user presses the right button and there
+    // are already at least three points in the shape
+    // close the shape
+    bool forceClosure = currentShapeVertices.size() > 2 && event->button() == Qt::RightButton;
+
+    // do nothing for other-wise right clicks
+    if(!forceClosure && event->button() == Qt::RightButton) return;
+
     // check the boundary plus button is pressed
     if(addBoundaryEnabled){
         // draw the points:
         QColor color = Qt::yellow;
         setPenColor(color);
         QPoint pt(event->x(),event->y());
-        updateVertices(pt);
+        updateVertices(pt,false,forceClosure);
     }
     // check the excluded plus button is pressed
     else if(addExcludedEnabled){
@@ -255,15 +264,47 @@ void QSelectionArea::mousePressEvent(QMouseEvent *event)
         QColor color = Qt::red;
         setPenColor(color);
         QPoint pt(event->x(),event->y());
-        updateVertices(pt,true);
+        updateVertices(pt,true,forceClosure);
     }
+}
+
+void QSelectionArea::drawPreviewPolygon(const QPoint & pt){
+    // a shape must be in progress
+    if(!shapeInProgress()) return;
+
+    QPainter painter(&image);
+    QPolygon poly;
+    for(QList<QPoint>::iterator it=currentShapeVertices.begin();it!=currentShapeVertices.end();++it){
+        poly << *it;
+    }
+    poly << pt;
+
+    // pen
+    QPen pen(Qt::cyan, 3, Qt::DashLine, Qt::RoundCap, Qt::RoundJoin);
+    painter.setPen(pen);
+
+    // Brush
+    QBrush brush;
+    brush.setColor(Qt::white);
+    // TODO make transparent
+    brush.setStyle(Qt::SolidPattern);
+
+    // Fill polygon
+    QPainterPath path;
+    path.addPolygon(poly);
+
+    // Draw polygon
+    painter.drawPolygon(poly);
+    painter.setOpacity(0.3);
+    painter.fillPath(path, brush);
 }
 
 void QSelectionArea::mouseMoveEvent(QMouseEvent *event)
 {
-    std::cout << " -- x -- " << QCursor::pos().x() << " -- y -- " << QCursor::pos().y() << std::endl;
     // one of the draw buttons must be pressed
     if(addBoundaryEnabled||addExcludedEnabled){
+        drawShapes();
+        drawPreviewPolygon(event->pos());
         std::cout << " -- x -- " << QCursor::pos().x() << " -- y -- " << QCursor::pos().y() << std::endl;
     }
 }
