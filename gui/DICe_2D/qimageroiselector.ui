@@ -62,7 +62,17 @@
          </size>
         </property>
         <property name="text">
-         <string>b+</string>
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="resources.qrc">
+          <normaloff>:/images/resources/images/boundaryPlus.png</normaloff>:/images/resources/images/boundaryPlus.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>35</width>
+          <height>35</height>
+         </size>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -84,7 +94,17 @@
          </size>
         </property>
         <property name="text">
-         <string>b-</string>
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="resources.qrc">
+          <normaloff>:/images/resources/images/boundaryMinus.png</normaloff>:/images/resources/images/boundaryMinus.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>35</width>
+          <height>35</height>
+         </size>
         </property>
        </widget>
       </item>
@@ -103,7 +123,17 @@
          </size>
         </property>
         <property name="text">
-         <string>e+</string>
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="resources.qrc">
+          <normaloff>:/images/resources/images/excludedPlus.png</normaloff>:/images/resources/images/excludedPlus.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>35</width>
+          <height>35</height>
+         </size>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -125,7 +155,17 @@
          </size>
         </property>
         <property name="text">
-         <string>e-</string>
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="resources.qrc">
+          <normaloff>:/images/resources/images/excludedMinus.png</normaloff>:/images/resources/images/excludedMinus.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>35</width>
+          <height>35</height>
+         </size>
         </property>
        </widget>
       </item>
@@ -197,6 +237,8 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

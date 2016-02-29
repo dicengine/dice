@@ -157,7 +157,8 @@ void QSelectionArea::decrementShapeSet(const bool excluded, const bool refreshOn
     }
 
     // redraw the other shapes
-    drawShapes();
+    //drawShapes();
+    drawFinalShapes();
 }
 
 void QSelectionArea::updateVertices(QPoint & pt,const bool excluded, const bool forceClosure)
@@ -268,7 +269,64 @@ void QSelectionArea::mousePressEvent(QMouseEvent *event)
     }
 }
 
-void QSelectionArea::drawPreviewPolygon(const QPoint & pt){
+void QSelectionArea::drawFinalShapes()
+{
+    // clear and redraw the background image
+    resetImage();
+
+    QPainter painter(&image);
+    // Brush
+    QBrush brush;
+    brush.setColor(Qt::green);
+    brush.setStyle(Qt::SolidPattern);
+    // Fill polygon
+    QPainterPath masterPath;
+    masterPath.setFillRule(Qt::WindingFill);
+    painter.setOpacity(0.2);
+    // pen for boundary outlines
+    QPen boundaryPen(Qt::green, 3, Qt::DashLine, Qt::RoundCap, Qt::RoundJoin);
+    // pen for excluded outlines
+    QPen excludedPen(Qt::red, 3, Qt::DashLine, Qt::RoundCap, Qt::RoundJoin);
+
+    // redraw the boundary shapes
+    for(QList<QList<QPoint> >::iterator it=DICe::gui::Input_Vars::instance()->get_roi_vertex_vectors()->begin();
+        it!=DICe::gui::Input_Vars::instance()->get_roi_vertex_vectors()->end();++it){
+        QList<QPoint> vertices = *it;
+        QPolygon poly;
+        for(QList<QPoint>::iterator i=vertices.begin();i!=vertices.end();++i){
+            poly << *i;
+        }
+        QPainterPath path;
+        path.setFillRule(Qt::WindingFill);
+        path.addPolygon(poly);
+        masterPath += path;
+        // draw an outline of the boundary shapes
+        painter.setPen(boundaryPen);
+        painter.drawPolygon(poly);
+    }
+
+    // redraw the excluded shapes
+    for(QList<QList<QPoint> >::iterator it=DICe::gui::Input_Vars::instance()->get_roi_excluded_vertex_vectors()->begin();
+        it!=DICe::gui::Input_Vars::instance()->get_roi_excluded_vertex_vectors()->end();++it){
+        QList<QPoint> vertices = *it;
+        QPolygon poly;
+        for(QList<QPoint>::iterator i=vertices.begin();i!=vertices.end();++i){
+            poly << *i;
+        }
+        QPainterPath path;
+        path.setFillRule(Qt::WindingFill);
+        path.addPolygon(poly);
+        masterPath -= path;
+        // draw the outline of the excluded shapes
+        painter.setPen(excludedPen);
+        painter.drawPolygon(poly);
+    }
+
+    // Draw a filled polygon representing the active ROI area
+    painter.fillPath(masterPath, brush);
+}
+
+void QSelectionArea::drawPreviewPolygon(const QPoint & pt, const QColor & color){
     // a shape must be in progress
     if(!shapeInProgress()) return;
 
@@ -280,13 +338,14 @@ void QSelectionArea::drawPreviewPolygon(const QPoint & pt){
     poly << pt;
 
     // pen
-    QPen pen(Qt::cyan, 3, Qt::DashLine, Qt::RoundCap, Qt::RoundJoin);
+    QPen pen(color, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
     painter.setPen(pen);
+    // opacity
+    painter.setOpacity(0.2);
 
     // Brush
     QBrush brush;
-    brush.setColor(Qt::white);
-    // TODO make transparent
+    brush.setColor(color);
     brush.setStyle(Qt::SolidPattern);
 
     // Fill polygon
@@ -295,7 +354,6 @@ void QSelectionArea::drawPreviewPolygon(const QPoint & pt){
 
     // Draw polygon
     painter.drawPolygon(poly);
-    painter.setOpacity(0.3);
     painter.fillPath(path, brush);
 }
 
@@ -303,9 +361,12 @@ void QSelectionArea::mouseMoveEvent(QMouseEvent *event)
 {
     // one of the draw buttons must be pressed
     if(addBoundaryEnabled||addExcludedEnabled){
-        drawShapes();
-        drawPreviewPolygon(event->pos());
-        std::cout << " -- x -- " << QCursor::pos().x() << " -- y -- " << QCursor::pos().y() << std::endl;
+        //drawShapes();
+        drawFinalShapes();
+        if(addBoundaryEnabled)
+            drawPreviewPolygon(event->pos(),Qt::green);
+        else
+            drawPreviewPolygon(event->pos(),Qt::red);
     }
 }
 

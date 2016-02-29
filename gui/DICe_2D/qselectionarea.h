@@ -78,8 +78,11 @@ public:
     /// draw all the shapes stored and lines for ones in progress
     void drawShapes();
 
+    /// draw the final polygons with portions missing for excluded regions
+    void drawFinalShapes();
+
     /// draw a polygon that connects the vertices in the current shape being drawn
-    void drawPreviewPolygon(const QPoint & pt);
+    void drawPreviewPolygon(const QPoint & pt, const QColor & color);
 
     /// clear the stored vertices for the current shape in progress
     void clearCurrentShapeVertices(){
