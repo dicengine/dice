@@ -119,6 +119,9 @@ public:
     /// mouse move event
     void mouseMoveEvent(QMouseEvent *event);
 
+    /// mouse wheel event
+    void wheelEvent(QWheelEvent *event);
+
 protected:
 
     /// paint event

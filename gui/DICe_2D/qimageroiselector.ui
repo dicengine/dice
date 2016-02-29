@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1077</width>
-    <height>768</height>
+    <width>1403</width>
+    <height>999</height>
    </rect>
   </property>
   <property name="mouseTracking">
@@ -37,8 +37,8 @@
     <rect>
      <x>10</x>
      <y>30</y>
-     <width>1061</width>
-     <height>731</height>
+     <width>1064</width>
+     <height>744</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -187,14 +187,8 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QSelectionArea" name="selectionArea" native="true">
+       <widget class="QScrollArea" name="scrollArea">
         <property name="minimumSize">
-         <size>
-          <width>1000</width>
-          <height>700</height>
-         </size>
-        </property>
-        <property name="maximumSize">
          <size>
           <width>1000</width>
           <height>700</height>
@@ -203,6 +197,47 @@
         <property name="mouseTracking">
          <bool>true</bool>
         </property>
+        <property name="widgetResizable">
+         <bool>true</bool>
+        </property>
+        <widget class="QWidget" name="scrollAreaWidgetContents">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>998</width>
+           <height>698</height>
+          </rect>
+         </property>
+         <property name="mouseTracking">
+          <bool>true</bool>
+         </property>
+         <widget class="QSelectionArea" name="selectionArea" native="true">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>1000</width>
+            <height>700</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>1000</width>
+            <height>700</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>1000</width>
+            <height>700</height>
+           </size>
+          </property>
+          <property name="mouseTracking">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </widget>
        </widget>
       </item>
       <item>

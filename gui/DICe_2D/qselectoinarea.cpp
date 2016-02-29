@@ -240,35 +240,6 @@ void QSelectionArea::resetOriginAndLastPt()
     originPoint = QPoint(0,0);
 }
 
-
-void QSelectionArea::mousePressEvent(QMouseEvent *event)
-{
-    // if the user presses the right button and there
-    // are already at least three points in the shape
-    // close the shape
-    bool forceClosure = currentShapeVertices.size() > 2 && event->button() == Qt::RightButton;
-
-    // do nothing for other-wise right clicks
-    if(!forceClosure && event->button() == Qt::RightButton) return;
-
-    // check the boundary plus button is pressed
-    if(addBoundaryEnabled){
-        // draw the points:
-        QColor color = Qt::yellow;
-        setPenColor(color);
-        QPoint pt(event->x(),event->y());
-        updateVertices(pt,false,forceClosure);
-    }
-    // check the excluded plus button is pressed
-    else if(addExcludedEnabled){
-        // draw the points:
-        QColor color = Qt::red;
-        setPenColor(color);
-        QPoint pt(event->x(),event->y());
-        updateVertices(pt,true,forceClosure);
-    }
-}
-
 void QSelectionArea::drawFinalShapes()
 {
     // clear and redraw the background image
@@ -355,6 +326,70 @@ void QSelectionArea::drawPreviewPolygon(const QPoint & pt, const QColor & color)
     // Draw polygon
     painter.drawPolygon(poly);
     painter.fillPath(path, brush);
+}
+
+void QSelectionArea::wheelEvent(QWheelEvent *event)
+{
+    // TODO return if there is no image
+
+    int numDegrees = event->delta() / 8;
+    int numSteps = numDegrees / 15;
+
+    std::cout << " delta " << event->delta() << " numDegrees " << numDegrees << " numSteps " << numSteps << std::endl;
+
+    double scaleFactor = 1.41;
+    if(event->delta()<0) scaleFactor = 0.71;
+
+    std::cout << scaleFactor << std::endl;
+
+    int minWH = 100;
+    int maxWH = 5000;
+    int w = image.width();
+    int h = image.height();
+    int newW = (int)(w*scaleFactor);
+    int newH = (int)(h*scaleFactor);
+    if(newW < minWH || newH < minWH) return;
+    if(newW > maxWH || newH > maxWH) return;
+
+    std::cout << " newW " << newW << " newH " << newH << std::endl;
+    resizeImage(&image,QSize(newW,newH));
+    update();
+
+
+//    if (event->orientation() == Qt::Horizontal) {
+//        scrollHorizontally(numSteps);
+//    } else {
+//        scrollVertically(numSteps);
+//    }
+//    event->accept();
+}
+
+void QSelectionArea::mousePressEvent(QMouseEvent *event)
+{
+    // if the user presses the right button and there
+    // are already at least three points in the shape
+    // close the shape
+    bool forceClosure = currentShapeVertices.size() > 2 && event->button() == Qt::RightButton;
+
+    // do nothing for other-wise right clicks
+    if(!forceClosure && event->button() == Qt::RightButton) return;
+
+    // check the boundary plus button is pressed
+    if(addBoundaryEnabled){
+        // draw the points:
+        QColor color = Qt::yellow;
+        setPenColor(color);
+        QPoint pt(event->x(),event->y());
+        updateVertices(pt,false,forceClosure);
+    }
+    // check the excluded plus button is pressed
+    else if(addExcludedEnabled){
+        // draw the points:
+        QColor color = Qt::red;
+        setPenColor(color);
+        QPoint pt(event->x(),event->y());
+        updateVertices(pt,true,forceClosure);
+    }
 }
 
 void QSelectionArea::mouseMoveEvent(QMouseEvent *event)
