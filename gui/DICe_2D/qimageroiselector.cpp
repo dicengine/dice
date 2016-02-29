@@ -58,6 +58,7 @@ QImageROISelector::~QImageROISelector()
 void QImageROISelector::setImage(QFileInfo & file)
 {
     ui->imageFileLabel->setText(file.filePath());
+    ui->selectionArea->resetImagePan();
     ui->selectionArea->openImage(file.filePath());
 }
 
@@ -93,3 +94,8 @@ void QImageROISelector::on_excludedMinus_clicked()
     ui->selectionArea->decrementShapeSet(true);
 }
 
+
+void QImageROISelector::on_resetView_clicked()
+{
+    ui->selectionArea->resetView();
+}

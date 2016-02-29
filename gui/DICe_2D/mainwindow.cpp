@@ -68,6 +68,8 @@ void MainWindow::on_refFileButton_clicked()
       tr("Select reference file"), "/home",
       tr("Tagged Image File Format (*.tiff *.tif);;Portable Network Graphics (*.png);;Joint Photographic Experts Group (*.jpg *.jpeg)"));
     
+    if(refFileInfo.fileName()=="") return;
+
     // set the reference image in the Input_Vars singleton
     DICe::gui::Input_Vars::instance()->set_ref_file_info(refFileInfo);
     

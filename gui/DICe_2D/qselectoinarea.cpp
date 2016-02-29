@@ -43,7 +43,6 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include <iostream>
-#include "DICe_InputVars.h"
 
 QSelectionArea::QSelectionArea(QWidget *parent)
     : QWidget(parent)
@@ -53,6 +52,11 @@ QSelectionArea::QSelectionArea(QWidget *parent)
     scaleFactor = 1.0;
     myPenColor = Qt::yellow;
     lastPoint = QPoint(0,0);
+    addBoundaryEnabled = false;
+    addExcludedEnabled = false;
+    panX = 0;
+    panY = 0;
+    panInProgress = false;
 }
 
 void QSelectionArea::resizeImage(QImage *image, const QSize &newSize)
@@ -68,7 +72,7 @@ void QSelectionArea::resizeImage(QImage *image, const QSize &newSize)
         scaleFactor = scaleFactorY;
     //std::cout << "scale factor: " << scaleFactor << std::endl;
 
-    QImage scaledImage = image->scaled(newSize.width(),newSize.height(),Qt::KeepAspectRatio);
+    QImage scaledImage = image->scaled(newSize.width(),newSize.height(),Qt::KeepAspectRatio,Qt::SmoothTransformation);
     scaledImage = scaledImage.convertToFormat(QImage::Format_RGB32);
     *image = scaledImage;
 }
@@ -86,57 +90,15 @@ bool QSelectionArea::openImage(const QString & fileName)
     if (!loadedImage.load(fileName))
         return false;
     QSize newSize = size();
+    // if the scale factor is not zero, scale according to the current scale factor
+    if(scaleFactor!=1.0){
+        QSize scaledSize(loadedImage.width()*scaleFactor,loadedImage.height()*scaleFactor);
+        newSize = scaledSize;
+    }
     resizeImage(&loadedImage, newSize);
-    image = loadedImage;
+    backgroundImage = loadedImage;
     update();
     return true;
-}
-
-void QSelectionArea::resizeEvent(QResizeEvent *event)
-{
-    if(!image.isNull()){
-        resizeImage(&image, QSize(width(), height()));
-        update();
-    }
-    QWidget::resizeEvent(event);
-}
-
-void QSelectionArea::paintEvent(QPaintEvent *event)
-{
-    if(!image.isNull()){
-        QPainter painter(this);
-        QRect dirtyRect = event->rect();
-        painter.drawImage(dirtyRect, image, dirtyRect);
-    }
-}
-
-void QSelectionArea::drawShapes()
-{
-    // clear and redraw the background image
-    resetImage();
-
-    // redraw the boundary shapes
-    QColor color = Qt::yellow;
-    for(QList<QList<QPoint> >::iterator it=DICe::gui::Input_Vars::instance()->get_roi_vertex_vectors()->begin();
-        it!=DICe::gui::Input_Vars::instance()->get_roi_vertex_vectors()->end();++it){
-        drawShape(*it,color);
-    }
-    // redraw the excluded shapes
-    color = Qt::red;
-    for(QList<QList<QPoint> >::iterator it=DICe::gui::Input_Vars::instance()->get_roi_excluded_vertex_vectors()->begin();
-        it!=DICe::gui::Input_Vars::instance()->get_roi_excluded_vertex_vectors()->end();++it){
-        drawShape(*it,color);
-    }
-
-    // draw lines for any segments for shapes in progress
-    //if(currentShapeVertices.size()>1){
-    //    QPoint prevPoint = *currentShapeVertices.begin();
-    //    for(QList<QPoint>::iterator it=currentShapeVertices.begin();it!=currentShapeVertices.end();++it){
-    //        if(it==currentShapeVertices.begin()) continue;
-    //        drawLine(prevPoint,*it,myPenColor);
-    //        prevPoint = *it;
-    //    }
-    //}
 }
 
 void QSelectionArea::decrementShapeSet(const bool excluded, const bool refreshOnly)
@@ -151,18 +113,22 @@ void QSelectionArea::decrementShapeSet(const bool excluded, const bool refreshOn
     if(!shape_in_progress&&!refreshOnly){
         // remove the last shape from the set
         if(excluded)
-            DICe::gui::Input_Vars::instance()->decrement_excluded_vertex_vector();
+            excludedShapes.removeLast();
         else
-            DICe::gui::Input_Vars::instance()->decrement_vertex_vector();
+            boundaryShapes.removeLast();
     }
 
     // redraw the other shapes
     //drawShapes();
-    drawFinalShapes();
+    drawExistingShapes();
 }
 
 void QSelectionArea::updateVertices(QPoint & pt,const bool excluded, const bool forceClosure)
 {
+    std::cout << " pt x " << pt.x() << " pt y " << pt.y() << std::endl;
+    pt = mapToImageCoords(pt);
+    std::cout << " converted x " << pt.x() << " converted y " << pt.y() << std::endl;
+
     // the first point doesn't need a line
     if(!shapeInProgress()){
         std::cout << "first point!" << std::endl;
@@ -175,25 +141,17 @@ void QSelectionArea::updateVertices(QPoint & pt,const bool excluded, const bool 
 
     // if the current point is near the origin of the shape
     // close the polygon
-    int tol = 10; // pixels
+    int tol = 3; // pixels
     bool closure = (abs(pt.x() - originPoint.x()) + abs(pt.y() - originPoint.y()) < tol) || forceClosure;
-    if(closure){
-        pt = originPoint;
-    }
 
     if(closure){
-        // append the vertex set to the Input_Vars vector before adding the origin so that
-        // the origin is not duplicated in the set
+        // append the vertex set to the shapes list
         if(excluded){
-            DICe::gui::Input_Vars::instance()->append_excluded_vertex_vector(currentShapeVertices);
+            excludedShapes.append(currentShapeVertices);
         }
         else{
-            DICe::gui::Input_Vars::instance()->append_vertex_vector(currentShapeVertices);
+            boundaryShapes.append(currentShapeVertices);
         }
-        // add the last point now for drawing purposes
-        // TODO comment this out later
-        lastPoint = pt;
-        //drawShapes();
         resetOriginAndLastPt();
         currentShapeVertices.clear();
     }
@@ -201,37 +159,7 @@ void QSelectionArea::updateVertices(QPoint & pt,const bool excluded, const bool 
         // append the point to the current shape
         currentShapeVertices.append(pt);
         lastPoint = pt;
-        //drawShapes();
     }
-}
-
-
-void QSelectionArea::drawShape(QList<QPoint> & vertices, QColor & color){
-    // append the begin point on the end of the list
-    QList<QPoint> vertices_ap = vertices;
-    vertices_ap.append(*vertices.begin());
-
-    // iterate the vertices drawling lines between the points
-    QPoint prevPoint;
-    for(QList<QPoint>::iterator it=vertices_ap.begin();it!=vertices_ap.end();++it){
-        if(it==vertices_ap.begin()){
-            prevPoint = *it;
-            continue;
-        }
-        drawLine(prevPoint,*it,color);
-        prevPoint = *it;
-    }
-    update();
-}
-
-
-void QSelectionArea::drawLine(const QPoint &fromPoint, const QPoint &endPoint, QColor & color)
-{
-    QPainter painter(&image);
-    painter.setPen(QPen(color, myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                        Qt::RoundJoin));
-    painter.drawLine(fromPoint, endPoint);
-    update();
 }
 
 void QSelectionArea::resetOriginAndLastPt()
@@ -240,12 +168,12 @@ void QSelectionArea::resetOriginAndLastPt()
     originPoint = QPoint(0,0);
 }
 
-void QSelectionArea::drawFinalShapes()
+void QSelectionArea::drawExistingShapes()
 {
     // clear and redraw the background image
     resetImage();
 
-    QPainter painter(&image);
+    QPainter painter(&backgroundImage);
     // Brush
     QBrush brush;
     brush.setColor(Qt::green);
@@ -260,12 +188,13 @@ void QSelectionArea::drawFinalShapes()
     QPen excludedPen(Qt::red, 3, Qt::DashLine, Qt::RoundCap, Qt::RoundJoin);
 
     // redraw the boundary shapes
-    for(QList<QList<QPoint> >::iterator it=DICe::gui::Input_Vars::instance()->get_roi_vertex_vectors()->begin();
-        it!=DICe::gui::Input_Vars::instance()->get_roi_vertex_vectors()->end();++it){
+    for(QList<QList<QPoint> >::iterator it=boundaryShapes.begin();
+        it!=boundaryShapes.end();++it){
         QList<QPoint> vertices = *it;
         QPolygon poly;
         for(QList<QPoint>::iterator i=vertices.begin();i!=vertices.end();++i){
-            poly << *i;
+            QPoint mappedPt = mapToViewerCoords(*i);
+            poly << mappedPt;
         }
         QPainterPath path;
         path.setFillRule(Qt::WindingFill);
@@ -277,12 +206,13 @@ void QSelectionArea::drawFinalShapes()
     }
 
     // redraw the excluded shapes
-    for(QList<QList<QPoint> >::iterator it=DICe::gui::Input_Vars::instance()->get_roi_excluded_vertex_vectors()->begin();
-        it!=DICe::gui::Input_Vars::instance()->get_roi_excluded_vertex_vectors()->end();++it){
+    for(QList<QList<QPoint> >::iterator it=excludedShapes.begin();
+        it!=excludedShapes.end();++it){
         QList<QPoint> vertices = *it;
         QPolygon poly;
         for(QList<QPoint>::iterator i=vertices.begin();i!=vertices.end();++i){
-            poly << *i;
+            QPoint mappedPt = mapToViewerCoords(*i);
+            poly << mappedPt;
         }
         QPainterPath path;
         path.setFillRule(Qt::WindingFill);
@@ -295,18 +225,39 @@ void QSelectionArea::drawFinalShapes()
 
     // Draw a filled polygon representing the active ROI area
     painter.fillPath(masterPath, brush);
+
+}
+
+QPoint QSelectionArea::mapToImageCoords(const QPoint &pt)
+{
+    // prevent div by zero
+    if(scaleFactor==0.0) return pt;
+    int mappedX = int((pt.x() - panX)/scaleFactor);
+    int mappedY = int((pt.y() - panY)/scaleFactor);
+    return QPoint(mappedX,mappedY);
+}
+
+QPoint QSelectionArea::mapToViewerCoords(const QPoint &pt)
+{
+    // no panning here because the panning is taken care of by the image painter
+    int mappedX = int(pt.x()*scaleFactor);
+    int mappedY = int(pt.y()*scaleFactor);
+    return QPoint(mappedX,mappedY);
 }
 
 void QSelectionArea::drawPreviewPolygon(const QPoint & pt, const QColor & color){
     // a shape must be in progress
     if(!shapeInProgress()) return;
 
-    QPainter painter(&image);
+    //std::cout << " previewPoly " << pt.x() << " " << pt.y() << std::endl;
+    QPoint pannedPt(pt.x()-panX,pt.y()-panY);
+
+    QPainter painter(&backgroundImage);
     QPolygon poly;
     for(QList<QPoint>::iterator it=currentShapeVertices.begin();it!=currentShapeVertices.end();++it){
-        poly << *it;
+        poly << mapToViewerCoords(*it);
     }
-    poly << pt;
+    poly << pannedPt;
 
     // pen
     QPen pen(color, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
@@ -328,44 +279,111 @@ void QSelectionArea::drawPreviewPolygon(const QPoint & pt, const QColor & color)
     painter.fillPath(path, brush);
 }
 
+void QSelectionArea::panImage(const QPoint & pt)
+{
+    std::cout << "panning image" << std::endl;
+    // determine the offset from the mouse pos when clicked
+    panX = prevPanX + pt.x() - mousePressX;
+    panY = prevPanY + pt.y() - mousePressY;
+    drawExistingShapes();
+}
+
+void QSelectionArea::resetView()
+{
+    resetImagePan();
+    scaleFactor = 1.0;
+    drawExistingShapes();
+}
+
+//
+// EVENTS
+//
+
+void QSelectionArea::resizeEvent(QResizeEvent *event)
+{
+    if(!backgroundImage.isNull()){
+        resizeImage(&backgroundImage, QSize(width(), height()));
+        update();
+    }
+    QWidget::resizeEvent(event);
+}
+
+void QSelectionArea::paintEvent(QPaintEvent *event)
+{
+
+    if(!backgroundImage.isNull()){
+        QPoint leftTop(event->rect().left(),event->rect().top());
+        QSize size = backgroundImage.size();
+        QRect imageRect(leftTop,size);
+
+        QPainter painter(this);
+        painter.translate(panX,panY);
+        //QRect dirtyRect = event->rect();
+        //painter.drawImage(dirtyRect, backgroundImage, dirtyRect);
+        painter.drawImage(imageRect, backgroundImage, imageRect);
+    }
+}
+
 void QSelectionArea::wheelEvent(QWheelEvent *event)
 {
-    // TODO return if there is no image
+    // return if there is no image
+    if(!activeImage()) return;
 
-    int numDegrees = event->delta() / 8;
-    int numSteps = numDegrees / 15;
+    if(panInProgress) return;
 
-    std::cout << " delta " << event->delta() << " numDegrees " << numDegrees << " numSteps " << numSteps << std::endl;
-
-    double scaleFactor = 1.41;
-    if(event->delta()<0) scaleFactor = 0.71;
-
-    std::cout << scaleFactor << std::endl;
+    double localScaleFactor = 1.41;
+    if(event->delta()<0) localScaleFactor = 0.71;
+    // takes care of wheel scaling and initial scaling to fit in viewer
+    double totalScaleFactor = scaleFactor * localScaleFactor;
 
     int minWH = 100;
     int maxWH = 5000;
-    int w = image.width();
-    int h = image.height();
-    int newW = (int)(w*scaleFactor);
-    int newH = (int)(h*scaleFactor);
+    QImage magImage;
+    if (!magImage.load(imageFileName))
+        return;
+
+    int w = magImage.width();
+    int h = magImage.height();
+    std::cout << "orig size " << w << " " << h << std::endl;
+    int newW = (int)(w*totalScaleFactor);
+    int newH = (int)(h*totalScaleFactor);
     if(newW < minWH || newH < minWH) return;
     if(newW > maxWH || newH > maxWH) return;
-
+    scaleFactor = totalScaleFactor;
     std::cout << " newW " << newW << " newH " << newH << std::endl;
-    resizeImage(&image,QSize(newW,newH));
+    std::cout << "resizing " << std::endl;
+    resizeImage(&magImage,QSize(newW,newH));
+    backgroundImage = magImage;
+    std::cout << "resized " << std::endl;
+    drawExistingShapes();
     update();
+}
 
-
-//    if (event->orientation() == Qt::Horizontal) {
-//        scrollHorizontally(numSteps);
-//    } else {
-//        scrollVertically(numSteps);
-//    }
-//    event->accept();
+void QSelectionArea::mouseReleaseEvent(QMouseEvent *event)
+{
+    setCursor(Qt::ArrowCursor);
+    if(event->button()==Qt::MidButton){
+        panInProgress = false;
+        prevPanX = panX;
+        prevPanY = panY;
+    }
 }
 
 void QSelectionArea::mousePressEvent(QMouseEvent *event)
 {
+    // return if there is no image
+    if(!activeImage()) return;
+
+    // store the location the mouse was pressed
+    mousePressX = event->x();
+    mousePressY = event->y();
+
+    // detect pan request
+    if(event->button()==Qt::MidButton){
+        panInProgress = true;
+        return;
+    }
+
     // if the user presses the right button and there
     // are already at least three points in the shape
     // close the shape
@@ -394,15 +412,28 @@ void QSelectionArea::mousePressEvent(QMouseEvent *event)
 
 void QSelectionArea::mouseMoveEvent(QMouseEvent *event)
 {
+    // return if there is no image
+    if(!activeImage())return;
+
+    // detect if the middle button is pressed (pan request)
+    if(panInProgress){
+        std::cout << " panning from mouse move " << std::endl;
+        // change the pointer to a hand
+        setCursor(Qt::ClosedHandCursor);
+        panImage(event->pos());
+        return;
+    }
+
     // one of the draw buttons must be pressed
     if(addBoundaryEnabled||addExcludedEnabled){
         //drawShapes();
-        drawFinalShapes();
+        drawExistingShapes();
         if(addBoundaryEnabled)
             drawPreviewPolygon(event->pos(),Qt::green);
         else
             drawPreviewPolygon(event->pos(),Qt::red);
     }
+
 }
 
 

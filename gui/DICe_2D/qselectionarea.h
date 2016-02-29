@@ -45,6 +45,17 @@
 #include <QWidget>
 #include <QImage>
 
+/// \class QSelectionArea
+/// \brief This class enables the user to draw a collection of shapes on an image
+/// to be used in creating ROIs, subsets, or regions. There are three basic types of
+/// shapes. The boundary is the outer limit of the region. An exclusion is a portion of
+/// the region to subtract from the region. An obstruction is used to block portions of
+/// an image that may occlude a subset or ROI. Obstructions are usually only used with
+/// subsets.
+///
+/// There are several helper methods that enable the user to zoom and pan the image
+/// for the purpose of drawing the shapes.
+
 class QSelectionArea : public QWidget
 {
     Q_OBJECT
@@ -72,17 +83,17 @@ public:
     /// update the stored set of vertices
     void updateVertices(QPoint & pt, const bool excluded=false, const bool forceClosure=false);
 
-    /// draw a shape from a set of vertices
-    void drawShape(QList<QPoint> & vertices,QColor & color);
-
-    /// draw all the shapes stored and lines for ones in progress
-    void drawShapes();
-
     /// draw the final polygons with portions missing for excluded regions
-    void drawFinalShapes();
+    void drawExistingShapes();
 
     /// draw a polygon that connects the vertices in the current shape being drawn
     void drawPreviewPolygon(const QPoint & pt, const QColor & color);
+
+    /// map coordinates to the image coordinate system
+    QPoint mapToImageCoords(const QPoint & pt);
+
+    /// map coordinates to the current view coordinate system
+    QPoint mapToViewerCoords(const QPoint & pt);
 
     /// clear the stored vertices for the current shape in progress
     void clearCurrentShapeVertices(){
@@ -113,6 +124,28 @@ public:
         return addExcludedEnabled;
     }
 
+    /// returns true if there is an active image
+    bool activeImage(){
+        return !backgroundImage.isNull();
+    }
+
+    /// pan the image
+    void panImage(const QPoint & pt);
+
+    /// reset the pan for the image
+    void resetImagePan(){
+        panX = 0;
+        panY = 0;
+        prevPanX = 0;
+        prevPanY = 0;
+    }
+
+    /// reset the image view, but not the shapes
+    void resetView();
+
+    /// mouse release event
+    void mouseReleaseEvent(QMouseEvent *event);
+
     /// mouse press event
     void mousePressEvent(QMouseEvent *event);
 
@@ -134,40 +167,61 @@ protected:
 private:
 
     /// draw a line from the fromPoint to the endPoint
-    void drawLine(const QPoint &fromPoint, const QPoint &endPoint, QColor & color);
+    //void drawLine(const QPoint &fromPoint, const QPoint &endPoint, QColor & color);
 
     /// resize the image to fit the window with proportional scaling
     void resizeImage(QImage *image, const QSize &newSize);
 
-    /// The width of the pen
+    /// the width of the pen
     int myPenWidth;
 
-    /// The color of the shapes pen
+    /// the color of the shapes pen
     QColor myPenColor;
 
     /// the background image for the display
-    QImage image;
+    QImage backgroundImage;
 
     /// stores the current scale of the image as displayed vs. size in pixels
     double scaleFactor;
 
-    /// Stores the last point that was set by a mousePress event
+    /// stores the last point that was set by a mousePress event
     QPoint lastPoint;
 
-    /// Stores the origin of the shape (first mousePress)
+    /// stores the origin of the shape (first mousePress)
     QPoint originPoint;
 
-    /// The current list of vertices for a shape being drawn
+    /// the current list of vertices for a shape being drawn
     QList<QPoint> currentShapeVertices;
 
-    /// Store the name of the image file in case it needs to be loaded later
+    /// store the name of the image file in case it needs to be loaded later
     QString imageFileName;
 
-    /// Drawing boundary shapes is enabled
+    /// drawing boundary shapes is enabled
     bool addBoundaryEnabled;
 
-    /// Drawing excluded shapes is enabled
+    /// drawing excluded shapes is enabled
     bool addExcludedEnabled;
+
+    /// panning offsets
+    int panX;
+    int panY;
+    int prevPanX;
+    int prevPanY;
+
+    /// track the location that the mouse was pressed
+    int mousePressX;
+    int mousePressY;
+
+    // panning in progress flag
+    bool panInProgress;
+
+    /// Boundary
+    QList<QList <QPoint> > boundaryShapes;
+
+    /// Excluded
+    QList<QList <QPoint> > excludedShapes;
+
+
 };
 
 
