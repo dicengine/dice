@@ -45,7 +45,7 @@
 #include <iostream>
 
 QSelectionArea::QSelectionArea(QWidget *parent)
-    : QWidget(parent)
+    : QFrame(parent)
 {
     setAttribute(Qt::WA_StaticContents);
     myPenWidth = 3;
@@ -57,6 +57,10 @@ QSelectionArea::QSelectionArea(QWidget *parent)
     panX = 0;
     panY = 0;
     panInProgress = false;
+    currentImageX = 0;
+    currentImageY = 0;
+    originalImageHeight = 0;
+    originalImageWidth = 0;
 }
 
 void QSelectionArea::resizeImage(QImage *image, const QSize &newSize)
@@ -89,6 +93,8 @@ bool QSelectionArea::openImage(const QString & fileName)
     QImage loadedImage;
     if (!loadedImage.load(fileName))
         return false;
+    originalImageWidth = loadedImage.width();
+    originalImageHeight = loadedImage.height();
     QSize newSize = size();
     // if the scale factor is not zero, scale according to the current scale factor
     if(scaleFactor!=1.0){
@@ -310,7 +316,7 @@ void QSelectionArea::resizeEvent(QResizeEvent *event)
 
 void QSelectionArea::paintEvent(QPaintEvent *event)
 {
-
+    QFrame::paintEvent(event);
     if(!backgroundImage.isNull()){
         QPoint leftTop(event->rect().left(),event->rect().top());
         QSize size = backgroundImage.size();
@@ -414,6 +420,13 @@ void QSelectionArea::mouseMoveEvent(QMouseEvent *event)
 {
     // return if there is no image
     if(!activeImage())return;
+
+    QPoint currentImageCoords = mapToImageCoords(event->pos());
+    currentImageX = currentImageCoords.x();
+    currentImageY = currentImageCoords.y();
+    if(currentImageX >= 0 && currentImageX <= originalImageWidth && currentImageY >=0 && currentImageY <= originalImageHeight){
+        emit mousePos();
+    }
 
     // detect if the middle button is pressed (pan request)
     if(panInProgress){

@@ -48,6 +48,7 @@ QImageROISelector::QImageROISelector(QWidget *parent) :
     ui(new Ui::QImageROISelector)
 {
     ui->setupUi(this);
+    connect(ui->selectionArea, SIGNAL(mousePos()), this, SLOT(on_selectionAreaMouseMove()));
 }
 
 QImageROISelector::~QImageROISelector()
@@ -98,4 +99,9 @@ void QImageROISelector::on_excludedMinus_clicked()
 void QImageROISelector::on_resetView_clicked()
 {
     ui->selectionArea->resetView();
+}
+
+void QImageROISelector::on_selectionAreaMouseMove()
+{
+    ui->imageCoords->setText(QString("X = %1, Y = %2").arg(ui->selectionArea->getCurrentImageX()).arg(ui->selectionArea->getCurrentImageY()));
 }

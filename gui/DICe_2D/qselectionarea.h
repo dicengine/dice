@@ -42,7 +42,7 @@
 #ifndef QSELECTIONAREA_H
 #define QSELECTIONAREA_H
 
-#include <QWidget>
+#include <QFrame>
 #include <QImage>
 
 /// \class QSelectionArea
@@ -56,7 +56,7 @@
 /// There are several helper methods that enable the user to zoom and pan the image
 /// for the purpose of drawing the shapes.
 
-class QSelectionArea : public QWidget
+class QSelectionArea : public QFrame
 {
     Q_OBJECT
 
@@ -129,6 +129,10 @@ public:
         return !backgroundImage.isNull();
     }
 
+    /// returns the current image coordinates of the cursor
+    int getCurrentImageX(){return currentImageX;}
+    int getCurrentImageY(){return currentImageY;}
+
     /// pan the image
     void panImage(const QPoint & pt);
 
@@ -164,6 +168,9 @@ protected:
     // TODO prevent resize (static drawing window size, what if user changes size while drawing shape?)
     void resizeEvent(QResizeEvent *event) Q_DECL_OVERRIDE;
 
+signals:
+    void mousePos();
+
 private:
 
     /// draw a line from the fromPoint to the endPoint
@@ -171,6 +178,10 @@ private:
 
     /// resize the image to fit the window with proportional scaling
     void resizeImage(QImage *image, const QSize &newSize);
+
+    /// original image size
+    int originalImageWidth;
+    int originalImageHeight;
 
     /// the width of the pen
     int myPenWidth;
@@ -212,7 +223,11 @@ private:
     int mousePressX;
     int mousePressY;
 
-    // panning in progress flag
+    /// current image coordinates
+    int currentImageX;
+    int currentImageY;
+
+    /// panning in progress flag
     bool panInProgress;
 
     /// Boundary
@@ -220,7 +235,6 @@ private:
 
     /// Excluded
     QList<QList <QPoint> > excludedShapes;
-
 
 };
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1078</width>
-    <height>780</height>
+    <width>1526</width>
+    <height>883</height>
    </rect>
   </property>
   <property name="mouseTracking">
@@ -28,6 +28,9 @@
      <height>21</height>
     </rect>
    </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>ROI Selection Tool</string>
    </property>
@@ -35,13 +38,13 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>30</y>
-     <width>1064</width>
-     <height>744</height>
+     <x>11</x>
+     <y>31</y>
+     <width>1081</width>
+     <height>721</height>
     </rect>
    </property>
-   <layout class="QHBoxLayout" name="horizontalLayout">
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="sizeConstraint">
@@ -206,7 +209,7 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QSelectionArea" name="selectionArea" native="true">
+       <widget class="QSelectionArea" name="selectionArea">
         <property name="minimumSize">
          <size>
           <width>1000</width>
@@ -222,26 +225,64 @@
         <property name="mouseTracking">
          <bool>true</bool>
         </property>
+        <property name="frameShape">
+         <enum>QFrame::Box</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Plain</enum>
+        </property>
+        <property name="lineWidth">
+         <number>1</number>
+        </property>
+        <property name="midLineWidth">
+         <number>1</number>
+        </property>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="imageFileLabel">
-        <property name="minimumSize">
-         <size>
-          <width>1000</width>
-          <height>30</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>1000</width>
-          <height>30</height>
-         </size>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QLabel" name="imageFileLabel">
+          <property name="minimumSize">
+           <size>
+            <width>800</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>800</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="imageCoords">
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>150</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>
@@ -251,7 +292,7 @@
  <customwidgets>
   <customwidget>
    <class>QSelectionArea</class>
-   <extends>QWidget</extends>
+   <extends>QFrame</extends>
    <header>qselectionarea.h</header>
    <container>1</container>
   </customwidget>

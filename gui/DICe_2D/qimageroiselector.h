@@ -75,7 +75,10 @@ private slots:
     void on_boundaryPlus_clicked();
 
     void on_excludedMinus_clicked();
+
     void on_resetView_clicked();
+
+    void on_selectionAreaMouseMove();
 };
 
 #endif // QIMAGEROISELECTOR_H
