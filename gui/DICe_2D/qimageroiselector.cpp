@@ -58,9 +58,11 @@ QImageROISelector::~QImageROISelector()
 
 void QImageROISelector::setImage(QFileInfo & file)
 {
+    ui->selectionArea->clearShapesSet();
     ui->imageFileLabel->setText(file.filePath());
     ui->selectionArea->resetImagePan();
     ui->selectionArea->openImage(file.filePath());
+    ui->imageDims->setText(QString("W = %1, H = %2").arg(ui->selectionArea->getOriginalImageWidth()).arg(ui->selectionArea->getOriginalImageHeight()));
 }
 
 void QImageROISelector::on_boundaryPlus_clicked()

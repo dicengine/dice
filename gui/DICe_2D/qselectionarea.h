@@ -97,12 +97,16 @@ public:
 
     /// clear the stored vertices for the current shape in progress
     void clearCurrentShapeVertices(){
-        currentShapeVertices.clear();
+        if(currentShapeVertices.size()>0)
+            currentShapeVertices.clear();
     }
 
     /// reset the shape drawing if a shape is in progress (reresh)
     /// remove the previous shape from the saved set of shapes
     void decrementShapeSet(const bool excluded=false, const bool refreshOnly = false);
+
+    /// clear the saved shapes
+    void clearShapesSet();
 
     /// sets the active de-active flag for drawing boundary shapes
     void setAddBoundaryEnabled(const bool & flag){
@@ -138,11 +142,18 @@ public:
 
     /// reset the pan for the image
     void resetImagePan(){
-        panX = 0;
-        panY = 0;
-        prevPanX = 0;
-        prevPanY = 0;
+        panX = 2;
+        panY = 2;
+        prevPanX = 2;
+        prevPanY = 2;
+        scaleFactor = 1.0;
     }
+
+    /// returns the original width of the current image
+    int getOriginalImageWidth(){return originalImageWidth;}
+
+    /// returns the original height of the current image
+    int getOriginalImageHeight(){return originalImageHeight;}
 
     /// reset the image view, but not the shapes
     void resetView();
@@ -182,6 +193,10 @@ private:
     /// original image size
     int originalImageWidth;
     int originalImageHeight;
+
+    /// current image size
+    int currentImageWidth;
+    int currentImageHeight;
 
     /// the width of the pen
     int myPenWidth;
@@ -235,6 +250,9 @@ private:
 
     /// Excluded
     QList<QList <QPoint> > excludedShapes;
+
+    /// flag that the image has been rescaled by a wheel event
+    bool zoomInProgress;
 
 };
 

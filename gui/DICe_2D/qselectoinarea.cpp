@@ -54,13 +54,18 @@ QSelectionArea::QSelectionArea(QWidget *parent)
     lastPoint = QPoint(0,0);
     addBoundaryEnabled = false;
     addExcludedEnabled = false;
-    panX = 0;
-    panY = 0;
+    panX = 2;
+    panY = 2;
+    prevPanX = 2;
+    prevPanY = 2;
     panInProgress = false;
     currentImageX = 0;
     currentImageY = 0;
     originalImageHeight = 0;
     originalImageWidth = 0;
+    currentImageHeight = 0;
+    currentImageWidth = 0;
+    zoomInProgress = false;
 }
 
 void QSelectionArea::resizeImage(QImage *image, const QSize &newSize)
@@ -74,9 +79,10 @@ void QSelectionArea::resizeImage(QImage *image, const QSize &newSize)
         scaleFactor = scaleFactorX;
     else
         scaleFactor = scaleFactorY;
-    //std::cout << "scale factor: " << scaleFactor << std::endl;
+    currentImageWidth = newSize.width();
+    currentImageHeight = newSize.height();
 
-    QImage scaledImage = image->scaled(newSize.width(),newSize.height(),Qt::KeepAspectRatio,Qt::SmoothTransformation);
+    QImage scaledImage = image->scaled(currentImageWidth,currentImageHeight,Qt::KeepAspectRatio,Qt::SmoothTransformation);
     scaledImage = scaledImage.convertToFormat(QImage::Format_RGB32);
     *image = scaledImage;
 }
@@ -95,10 +101,12 @@ bool QSelectionArea::openImage(const QString & fileName)
         return false;
     originalImageWidth = loadedImage.width();
     originalImageHeight = loadedImage.height();
-    QSize newSize = size();
+    int standardImageWidth = size().width() - 4;
+    int standardImageHeight = size().height() - 4;
+    QSize newSize(standardImageWidth,standardImageHeight);
     // if the scale factor is not zero, scale according to the current scale factor
-    if(scaleFactor!=1.0){
-        QSize scaledSize(loadedImage.width()*scaleFactor,loadedImage.height()*scaleFactor);
+    if(zoomInProgress){
+        QSize scaledSize(currentImageWidth,currentImageHeight);
         newSize = scaledSize;
     }
     resizeImage(&loadedImage, newSize);
@@ -107,8 +115,19 @@ bool QSelectionArea::openImage(const QString & fileName)
     return true;
 }
 
+void QSelectionArea::clearShapesSet()
+{
+    resetOriginAndLastPt();
+    clearCurrentShapeVertices();
+    excludedShapes.clear();
+    boundaryShapes.clear();
+}
+
 void QSelectionArea::decrementShapeSet(const bool excluded, const bool refreshOnly)
 {
+    // return if there is no image
+    if(!activeImage()) return;
+
     // if a shape is in progress, just clear the currnet shape
     bool shape_in_progress = shapeInProgress();
 
@@ -118,10 +137,14 @@ void QSelectionArea::decrementShapeSet(const bool excluded, const bool refreshOn
 
     if(!shape_in_progress&&!refreshOnly){
         // remove the last shape from the set
-        if(excluded)
-            excludedShapes.removeLast();
-        else
-            boundaryShapes.removeLast();
+        if(excluded){
+            if(excludedShapes.size()>0)
+                excludedShapes.removeLast();
+        }
+        else{
+            if(boundaryShapes.size()>0)
+                boundaryShapes.removeLast();
+        }
     }
 
     // redraw the other shapes
@@ -131,13 +154,9 @@ void QSelectionArea::decrementShapeSet(const bool excluded, const bool refreshOn
 
 void QSelectionArea::updateVertices(QPoint & pt,const bool excluded, const bool forceClosure)
 {
-    std::cout << " pt x " << pt.x() << " pt y " << pt.y() << std::endl;
     pt = mapToImageCoords(pt);
-    std::cout << " converted x " << pt.x() << " converted y " << pt.y() << std::endl;
-
     // the first point doesn't need a line
     if(!shapeInProgress()){
-        std::cout << "first point!" << std::endl;
         originPoint = pt;
         lastPoint = pt;
         // add the vertex to the current shape
@@ -178,6 +197,8 @@ void QSelectionArea::drawExistingShapes()
 {
     // clear and redraw the background image
     resetImage();
+
+    if(boundaryShapes.size()==0&&excludedShapes.size()==0) return;
 
     QPainter painter(&backgroundImage);
     // Brush
@@ -255,7 +276,6 @@ void QSelectionArea::drawPreviewPolygon(const QPoint & pt, const QColor & color)
     // a shape must be in progress
     if(!shapeInProgress()) return;
 
-    //std::cout << " previewPoly " << pt.x() << " " << pt.y() << std::endl;
     QPoint pannedPt(pt.x()-panX,pt.y()-panY);
 
     QPainter painter(&backgroundImage);
@@ -287,7 +307,6 @@ void QSelectionArea::drawPreviewPolygon(const QPoint & pt, const QColor & color)
 
 void QSelectionArea::panImage(const QPoint & pt)
 {
-    std::cout << "panning image" << std::endl;
     // determine the offset from the mouse pos when clicked
     panX = prevPanX + pt.x() - mousePressX;
     panY = prevPanY + pt.y() - mousePressY;
@@ -296,6 +315,9 @@ void QSelectionArea::panImage(const QPoint & pt)
 
 void QSelectionArea::resetView()
 {
+    // return if there is no image
+    if(!activeImage()) return;
+    zoomInProgress = false;
     resetImagePan();
     scaleFactor = 1.0;
     drawExistingShapes();
@@ -337,6 +359,8 @@ void QSelectionArea::wheelEvent(QWheelEvent *event)
 
     if(panInProgress) return;
 
+    zoomInProgress = true;
+
     double localScaleFactor = 1.41;
     if(event->delta()<0) localScaleFactor = 0.71;
     // takes care of wheel scaling and initial scaling to fit in viewer
@@ -350,17 +374,13 @@ void QSelectionArea::wheelEvent(QWheelEvent *event)
 
     int w = magImage.width();
     int h = magImage.height();
-    std::cout << "orig size " << w << " " << h << std::endl;
     int newW = (int)(w*totalScaleFactor);
     int newH = (int)(h*totalScaleFactor);
     if(newW < minWH || newH < minWH) return;
     if(newW > maxWH || newH > maxWH) return;
     scaleFactor = totalScaleFactor;
-    std::cout << " newW " << newW << " newH " << newH << std::endl;
-    std::cout << "resizing " << std::endl;
     resizeImage(&magImage,QSize(newW,newH));
     backgroundImage = magImage;
-    std::cout << "resized " << std::endl;
     drawExistingShapes();
     update();
 }
@@ -424,13 +444,12 @@ void QSelectionArea::mouseMoveEvent(QMouseEvent *event)
     QPoint currentImageCoords = mapToImageCoords(event->pos());
     currentImageX = currentImageCoords.x();
     currentImageY = currentImageCoords.y();
-    if(currentImageX >= 0 && currentImageX <= originalImageWidth && currentImageY >=0 && currentImageY <= originalImageHeight){
+    if(currentImageX >= 0 && currentImageX < originalImageWidth && currentImageY >=0 && currentImageY < originalImageHeight){
         emit mousePos();
     }
 
     // detect if the middle button is pressed (pan request)
     if(panInProgress){
-        std::cout << " panning from mouse move " << std::endl;
         // change the pointer to a hand
         setCursor(Qt::ClosedHandCursor);
         panImage(event->pos());
@@ -446,7 +465,4 @@ void QSelectionArea::mouseMoveEvent(QMouseEvent *event)
         else
             drawPreviewPolygon(event->pos(),Qt::red);
     }
-
 }
-
-

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1526</width>
-    <height>883</height>
+    <width>2379</width>
+    <height>881</height>
    </rect>
   </property>
   <property name="mouseTracking">
@@ -40,7 +40,7 @@
     <rect>
      <x>11</x>
      <y>31</y>
-     <width>1081</width>
+     <width>1071</width>
      <height>721</height>
     </rect>
    </property>
@@ -65,11 +65,7 @@
          </size>
         </property>
         <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset resource="resources.qrc">
-          <normaloff>:/images/resources/images/boundaryPlus.png</normaloff>:/images/resources/images/boundaryPlus.png</iconset>
+         <string>+</string>
         </property>
         <property name="iconSize">
          <size>
@@ -97,11 +93,7 @@
          </size>
         </property>
         <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset resource="resources.qrc">
-          <normaloff>:/images/resources/images/boundaryMinus.png</normaloff>:/images/resources/images/boundaryMinus.png</iconset>
+         <string>-</string>
         </property>
         <property name="iconSize">
          <size>
@@ -126,11 +118,7 @@
          </size>
         </property>
         <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset resource="resources.qrc">
-          <normaloff>:/images/resources/images/excludedPlus.png</normaloff>:/images/resources/images/excludedPlus.png</iconset>
+         <string>+</string>
         </property>
         <property name="iconSize">
          <size>
@@ -157,12 +145,11 @@
           <height>50</height>
          </size>
         </property>
-        <property name="text">
-         <string/>
+        <property name="autoFillBackground">
+         <bool>true</bool>
         </property>
-        <property name="icon">
-         <iconset resource="resources.qrc">
-          <normaloff>:/images/resources/images/excludedMinus.png</normaloff>:/images/resources/images/excludedMinus.png</iconset>
+        <property name="text">
+         <string>-</string>
         </property>
         <property name="iconSize">
          <size>
@@ -245,18 +232,49 @@
          <widget class="QLabel" name="imageFileLabel">
           <property name="minimumSize">
            <size>
-            <width>800</width>
+            <width>675</width>
             <height>20</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
-            <width>800</width>
+            <width>675</width>
             <height>20</height>
            </size>
           </property>
+          <property name="frameShape">
+           <enum>QFrame::Panel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Sunken</enum>
+          </property>
           <property name="text">
-           <string/>
+           <string>Reference file name</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="imageDims">
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>150</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::Panel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Sunken</enum>
+          </property>
+          <property name="text">
+           <string>W = 0, H = 0</string>
           </property>
          </widget>
         </item>
@@ -274,11 +292,17 @@
             <height>20</height>
            </size>
           </property>
+          <property name="frameShape">
+           <enum>QFrame::Panel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Sunken</enum>
+          </property>
           <property name="text">
-           <string/>
+           <string>X = 0, Y = 0</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
@@ -297,8 +321,6 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

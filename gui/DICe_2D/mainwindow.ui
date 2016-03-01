@@ -39,7 +39,7 @@
         </property>
         <widget class="QWidget" name="imageSelection">
          <attribute name="title">
-          <string>Image Selection</string>
+          <string>Images</string>
          </attribute>
          <widget class="QWidget" name="layoutWidget">
           <property name="geometry">
@@ -144,7 +144,7 @@
         </widget>
         <widget class="QWidget" name="parameters">
          <attribute name="title">
-          <string>Correlation Parameters</string>
+          <string>Parameters</string>
          </attribute>
         </widget>
        </widget>
