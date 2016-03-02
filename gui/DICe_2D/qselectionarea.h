@@ -89,6 +89,9 @@ public:
     /// draw a polygon that connects the vertices in the current shape being drawn
     void drawPreviewPolygon(const QPoint & pt, const QColor & color);
 
+    /// zoom in or out for the viewer
+    void zoom(const bool out);
+
     /// map coordinates to the image coordinate system
     QPoint mapToImageCoords(const QPoint & pt);
 

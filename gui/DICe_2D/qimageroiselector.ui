@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>2379</width>
-    <height>881</height>
+    <width>1050</width>
+    <height>878</height>
    </rect>
   </property>
   <property name="mouseTracking">
@@ -19,298 +19,345 @@
   <property name="autoFillBackground">
    <bool>false</bool>
   </property>
-  <widget class="QLabel" name="label">
+  <widget class="QGroupBox" name="ROISelectionGroupBox">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>5</y>
-     <width>151</width>
-     <height>21</height>
+     <y>10</y>
+     <width>1001</width>
+     <height>831</height>
     </rect>
    </property>
-   <property name="autoFillBackground">
-    <bool>false</bool>
-   </property>
-   <property name="text">
+   <property name="title">
     <string>ROI Selection Tool</string>
    </property>
-  </widget>
-  <widget class="QWidget" name="layoutWidget">
-   <property name="geometry">
-    <rect>
-     <x>11</x>
-     <y>31</y>
-     <width>1071</width>
-     <height>721</height>
-    </rect>
-   </property>
-   <layout class="QHBoxLayout" name="horizontalLayout_2">
-    <item>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
-      <property name="sizeConstraint">
-       <enum>QLayout::SetDefaultConstraint</enum>
-      </property>
-      <item>
-       <widget class="QPushButton" name="boundaryPlus">
-        <property name="minimumSize">
-         <size>
-          <width>50</width>
-          <height>50</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>50</width>
-          <height>50</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>+</string>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>35</width>
-          <height>35</height>
-         </size>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="boundaryMinus">
-        <property name="minimumSize">
-         <size>
-          <width>50</width>
-          <height>50</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>50</width>
-          <height>50</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>-</string>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>35</width>
-          <height>35</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="excludedPlus">
-        <property name="minimumSize">
-         <size>
-          <width>50</width>
-          <height>50</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>50</width>
-          <height>50</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>+</string>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>35</width>
-          <height>35</height>
-         </size>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="excludedMinus">
-        <property name="minimumSize">
-         <size>
-          <width>50</width>
-          <height>50</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>50</width>
-          <height>50</height>
-         </size>
-        </property>
-        <property name="autoFillBackground">
-         <bool>true</bool>
-        </property>
-        <property name="text">
-         <string>-</string>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>35</width>
-          <height>35</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="resetView">
-        <property name="minimumSize">
-         <size>
-          <width>50</width>
-          <height>50</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>50</width>
-          <height>50</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>RS</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="verticalSpacer">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>40</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <item>
-       <widget class="QSelectionArea" name="selectionArea">
-        <property name="minimumSize">
-         <size>
-          <width>1000</width>
-          <height>700</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>1000</width>
-          <height>700</height>
-         </size>
-        </property>
-        <property name="mouseTracking">
-         <bool>true</bool>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::Box</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Plain</enum>
-        </property>
-        <property name="lineWidth">
-         <number>1</number>
-        </property>
-        <property name="midLineWidth">
-         <number>1</number>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <widget class="QLabel" name="imageFileLabel">
-          <property name="minimumSize">
-           <size>
-            <width>675</width>
-            <height>20</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>675</width>
-            <height>20</height>
-           </size>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::Panel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Sunken</enum>
-          </property>
-          <property name="text">
-           <string>Reference file name</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="imageDims">
-          <property name="minimumSize">
-           <size>
-            <width>150</width>
-            <height>20</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>150</width>
-            <height>20</height>
-           </size>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::Panel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Sunken</enum>
-          </property>
-          <property name="text">
-           <string>W = 0, H = 0</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="imageCoords">
-          <property name="minimumSize">
-           <size>
-            <width>150</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>150</width>
-            <height>20</height>
-           </size>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::Panel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Sunken</enum>
-          </property>
-          <property name="text">
-           <string>X = 0, Y = 0</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </item>
-   </layout>
+   <widget class="QWidget" name="layoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>30</y>
+      <width>1002</width>
+      <height>806</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QPushButton" name="boundaryPlus">
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>+</string>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>35</width>
+           <height>35</height>
+          </size>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="boundaryMinus">
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>-</string>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>35</width>
+           <height>35</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="excludedPlus">
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>+</string>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>35</width>
+           <height>35</height>
+          </size>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="excludedMinus">
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="autoFillBackground">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>-</string>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>35</width>
+           <height>35</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="resetShapes">
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>RS</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="zoomIn">
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Z+</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="zoomOut">
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Z-</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="resetView">
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>RV</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QSelectionArea" name="selectionArea">
+       <property name="minimumSize">
+        <size>
+         <width>1000</width>
+         <height>700</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>1000</width>
+         <height>700</height>
+        </size>
+       </property>
+       <property name="mouseTracking">
+        <bool>true</bool>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Plain</enum>
+       </property>
+       <property name="lineWidth">
+        <number>1</number>
+       </property>
+       <property name="midLineWidth">
+        <number>1</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QLabel" name="imageFileLabel">
+         <property name="minimumSize">
+          <size>
+           <width>675</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>675</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Panel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Sunken</enum>
+         </property>
+         <property name="text">
+          <string>Reference file name</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="imageDims">
+         <property name="minimumSize">
+          <size>
+           <width>150</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>150</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Panel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Sunken</enum>
+         </property>
+         <property name="text">
+          <string>W = 0, H = 0</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="imageCoords">
+         <property name="minimumSize">
+          <size>
+           <width>150</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>150</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Panel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Sunken</enum>
+         </property>
+         <property name="text">
+          <string>X = 0, Y = 0</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </widget>
   </widget>
  </widget>
  <customwidgets>

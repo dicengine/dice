@@ -79,6 +79,9 @@ private slots:
     void on_resetView_clicked();
 
     void on_selectionAreaMouseMove();
+    void on_resetShapes_clicked();
+    void on_zoomIn_clicked();
+    void on_zoomOut_clicked();
 };
 
 #endif // QIMAGEROISELECTOR_H

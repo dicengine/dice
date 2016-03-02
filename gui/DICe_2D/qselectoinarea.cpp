@@ -117,10 +117,12 @@ bool QSelectionArea::openImage(const QString & fileName)
 
 void QSelectionArea::clearShapesSet()
 {
+    if(!activeImage()) return;
     resetOriginAndLastPt();
     clearCurrentShapeVertices();
     excludedShapes.clear();
     boundaryShapes.clear();
+    resetImage();
 }
 
 void QSelectionArea::decrementShapeSet(const bool excluded, const bool refreshOnly)
@@ -352,22 +354,19 @@ void QSelectionArea::paintEvent(QPaintEvent *event)
     }
 }
 
-void QSelectionArea::wheelEvent(QWheelEvent *event)
-{
-    // return if there is no image
-    if(!activeImage()) return;
-
-    if(panInProgress) return;
-
+void QSelectionArea::zoom(const bool out){
     zoomInProgress = true;
 
     double localScaleFactor = 1.41;
-    if(event->delta()<0) localScaleFactor = 0.71;
+    if(out) localScaleFactor = 0.71;
     // takes care of wheel scaling and initial scaling to fit in viewer
     double totalScaleFactor = scaleFactor * localScaleFactor;
 
-    int minWH = 100;
-    int maxWH = 5000;
+    bool heightIsLargerDim = backgroundImage.width() <= backgroundImage.height();
+    int minW = originalImageWidth;
+    int minH = originalImageHeight;
+    int maxWH = 5000; // pixels
+
     QImage magImage;
     if (!magImage.load(imageFileName))
         return;
@@ -376,13 +375,35 @@ void QSelectionArea::wheelEvent(QWheelEvent *event)
     int h = magImage.height();
     int newW = (int)(w*totalScaleFactor);
     int newH = (int)(h*totalScaleFactor);
-    if(newW < minWH || newH < minWH) return;
-    if(newW > maxWH || newH > maxWH) return;
+    if(heightIsLargerDim && newH < minH){
+        std::cout << " returning form newH < minH" << std::endl;
+        return;
+    }
+    else if(newW < minW){
+        std::cout << " returning from newW < min W" << std::endl;
+        return;
+    }
+    //if(newW < minWH || newH < minWH) return;
+    if(newW > maxWH || newH > maxWH){
+        std::cout << " returning from newW > maxWH" << std::endl;
+        return;
+    }
     scaleFactor = totalScaleFactor;
     resizeImage(&magImage,QSize(newW,newH));
     backgroundImage = magImage;
     drawExistingShapes();
     update();
+}
+
+
+void QSelectionArea::wheelEvent(QWheelEvent *event)
+{
+    // return if there is no image
+    if(!activeImage()) return;
+
+    if(panInProgress) return;
+    const bool out = event->delta()<0;
+    zoom(out);
 }
 
 void QSelectionArea::mouseReleaseEvent(QMouseEvent *event)

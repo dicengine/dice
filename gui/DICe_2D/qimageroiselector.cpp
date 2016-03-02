@@ -107,3 +107,22 @@ void QImageROISelector::on_selectionAreaMouseMove()
 {
     ui->imageCoords->setText(QString("X = %1, Y = %2").arg(ui->selectionArea->getCurrentImageX()).arg(ui->selectionArea->getCurrentImageY()));
 }
+
+void QImageROISelector::on_resetShapes_clicked()
+{
+    ui->selectionArea->clearShapesSet();
+}
+
+void QImageROISelector::on_zoomIn_clicked()
+{
+    // return if there is no image
+    if(!ui->selectionArea->activeImage()) return;
+
+    ui->selectionArea->zoom(false);
+}
+
+void QImageROISelector::on_zoomOut_clicked()
+{
+    if(!ui->selectionArea->activeImage())return;
+    ui->selectionArea->zoom(true);
+}
