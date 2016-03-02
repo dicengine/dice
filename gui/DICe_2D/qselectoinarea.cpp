@@ -333,10 +333,7 @@ void QSelectionArea::resetView()
 
 void QSelectionArea::resizeEvent(QResizeEvent *event)
 {
-    if(!backgroundImage.isNull()){
-        resizeImage(&backgroundImage, QSize(width(), height()));
-        update();
-    }
+    resetView();
     QWidget::resizeEvent(event);
 }
 

@@ -10,6 +10,12 @@
     <height>862</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
   <property name="mouseTracking">
    <bool>true</bool>
   </property>
@@ -20,10 +26,16 @@
    <string notr="true">QMainWindow {
 background-color: #303030;
 }
+
+QTabWidget::pane{
+background-color: #252525;
+}
+
 QListWidget {
 background-color: #404040;
 color: white;
 }
+
 QLineEdit {
 background-color: #505050;
 color: white;
@@ -90,12 +102,16 @@ QLabel{
 color: white;
 background-color: #404040;
 }
+
 QGroupBox{
+background-color: #252525;
 color: white;
 }
+
 QSelectionArea{
 background-color: #404040;
 }
+
 QFrame#shapesFrame{
 background-color: #404040;
 }
@@ -108,48 +124,66 @@ background-color: #404040;
    <property name="mouseTracking">
     <bool>true</bool>
    </property>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>13</x>
-      <y>8</y>
-      <width>1301</width>
-      <height>831</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <property name="spacing">
-      <number>-1</number>
-     </property>
-     <item>
-      <widget class="QTabWidget" name="tabWidget">
-       <property name="maximumSize">
-        <size>
-         <width>260</width>
-         <height>900</height>
-        </size>
-       </property>
-       <property name="currentIndex">
-        <number>0</number>
-       </property>
-       <widget class="QWidget" name="images">
-        <attribute name="title">
-         <string>Images</string>
-        </attribute>
-        <widget class="QWidget" name="layoutWidget">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>11</y>
-           <width>231</width>
-           <height>759</height>
-          </rect>
-         </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="1">
+     <widget class="QImageROISelector" name="ROISelector" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>200</width>
+        <height>500</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="images">
+       <attribute name="title">
+        <string>Images</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
          <layout class="QVBoxLayout" name="verticalLayout">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetDefaultConstraint</enum>
+          </property>
           <item>
            <widget class="QLineEdit" name="refFileLine">
             <property name="enabled">
              <bool>false</bool>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
             </property>
             <property name="frame">
              <bool>false</bool>
@@ -158,6 +192,12 @@ background-color: #404040;
           </item>
           <item>
            <widget class="QPushButton" name="refFileButton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -171,11 +211,26 @@ background-color: #404040;
           </item>
           <item>
            <widget class="QListWidget" name="defListWidget">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="focusPolicy">
              <enum>Qt::NoFocus</enum>
             </property>
             <property name="autoFillBackground">
              <bool>false</bool>
+            </property>
+            <property name="resizeMode">
+             <enum>QListView::Adjust</enum>
+            </property>
+            <property name="layoutMode">
+             <enum>QListView::SinglePass</enum>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -228,30 +283,17 @@ background-color: #404040;
            </widget>
           </item>
          </layout>
-        </widget>
-       </widget>
-       <widget class="QWidget" name="parameters">
-        <attribute name="title">
-         <string>Parameters</string>
-        </attribute>
-       </widget>
+        </item>
+       </layout>
       </widget>
-     </item>
-     <item>
-      <widget class="QImageROISelector" name="ROISelector" native="true">
-       <property name="maximumSize">
-        <size>
-         <width>1100</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="mouseTracking">
-        <bool>true</bool>
-       </property>
+      <widget class="QWidget" name="parameters">
+       <attribute name="title">
+        <string>Parameters</string>
+       </attribute>
       </widget>
-     </item>
-    </layout>
-   </widget>
+     </widget>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
