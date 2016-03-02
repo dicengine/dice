@@ -92,6 +92,9 @@ void MainWindow::on_defFileButton_clicked()
       tr("Select reference file"), "/home",
       tr("Tagged Image File Format (*.tiff *.tif);;Portable Network Graphics (*.png);;Joint Photographic Experts Group (*.jpg *.jpeg)"));
     
+
+    if(defFileNames.size()==0) return;
+
     // clear the widget list
     ui->defListWidget->clear();
     // add the names of the files to a list widget
@@ -101,7 +104,10 @@ void MainWindow::on_defFileButton_clicked()
         QString shortDefFileName = currentFile.fileName();
         ui->defListWidget->addItem(shortDefFileName);
     }
-    
+
+    // reset the def image
+    ui->defFileLabel->setText("");
+    ui->defImageShow->clear();
 }
 
 void MainWindow::on_defListWidget_itemClicked(QListWidgetItem *item)

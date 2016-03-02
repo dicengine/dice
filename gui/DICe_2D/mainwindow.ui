@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1314</width>
+    <width>1323</width>
     <height>862</height>
    </rect>
   </property>
@@ -16,11 +16,99 @@
   <property name="windowTitle">
    <string>Digital Image Correlation Engine (DICe) 2D</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QMainWindow {
+background-color: #303030;
+}
+QListWidget {
+background-color: #404040;
+color: white;
+}
+QLineEdit {
+background-color: #505050;
+color: white;
+}
+
+QPushButton{
+padding: 0px;
+background-color: #808080;
+border: 0px;
+border-radius: 5px;
+color: white;
+height: 25px;
+}
+QPushButton:pressed{
+background-color: #505050;
+}
+QPushButton:checked{
+background-color: #505050;
+}
+QPushButton#boundaryPlus{
+font-weight: bold;
+font-size: 18pt;
+background-color: rgb(36, 220, 53);
+}
+QPushButton#boundaryPlus:checked{
+background-color: rgb(0, 128, 0);
+}
+QPushButton#boundaryMinus{
+font-weight: bold;
+font-size: 18pt;
+background-color: rgb(36, 220, 53);
+}
+QPushButton#excludedPlus{
+font-weight: bold;
+font-size: 18pt;
+background-color: rgb(255, 65, 254);
+}
+QPushButton#excludedPlus:checked{
+background-color: rgb(178, 6, 175);
+}
+QPushButton#excludedMinus{
+font-weight: bold;
+font-size: 18pt;
+background-color: rgb(255, 65, 254);
+}
+QPushButton#zoomIn{
+font-weight: bold;
+font-size: 18pt;
+background-color: rgb(21, 171, 255);
+}
+QPushButton#zoomIn:pressed{
+background-color: rgb(23, 85, 122);
+}
+QPushButton#zoomOut{
+font-weight: bold;
+font-size: 18pt;
+background-color: rgb(21, 171, 255);
+}
+QPushButton#zoomOut:pressed{
+background-color: rgb(23, 85, 122);
+}
+
+QLabel{
+color: white;
+background-color: #404040;
+}
+QGroupBox{
+color: white;
+}
+QSelectionArea{
+background-color: #404040;
+}
+QFrame#shapesFrame{
+background-color: #404040;
+}
+QFrame#zoomFrame{
+background-color: #404040;
+}
+</string>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <property name="mouseTracking">
     <bool>true</bool>
    </property>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>13</x>
@@ -30,11 +118,14 @@
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="spacing">
+      <number>-1</number>
+     </property>
      <item>
       <widget class="QTabWidget" name="tabWidget">
        <property name="maximumSize">
         <size>
-         <width>250</width>
+         <width>260</width>
          <height>900</height>
         </size>
        </property>
@@ -45,7 +136,7 @@
         <attribute name="title">
          <string>Images</string>
         </attribute>
-        <widget class="QWidget" name="">
+        <widget class="QWidget" name="layoutWidget">
          <property name="geometry">
           <rect>
            <x>10</x>
@@ -60,6 +151,9 @@
             <property name="enabled">
              <bool>false</bool>
             </property>
+            <property name="frame">
+             <bool>false</bool>
+            </property>
            </widget>
           </item>
           <item>
@@ -67,7 +161,7 @@
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>50</height>
+              <height>30</height>
              </size>
             </property>
             <property name="text">
@@ -80,6 +174,9 @@
             <property name="focusPolicy">
              <enum>Qt::NoFocus</enum>
             </property>
+            <property name="autoFillBackground">
+             <bool>false</bool>
+            </property>
            </widget>
           </item>
           <item>
@@ -87,7 +184,7 @@
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>50</height>
+              <height>30</height>
              </size>
             </property>
             <property name="text">
@@ -96,50 +193,22 @@
            </widget>
           </item>
           <item>
-           <widget class="QFrame" name="defImageShowFrame">
+           <widget class="QLabel" name="defImageShow">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="minimumSize">
              <size>
               <width>0</width>
               <height>150</height>
              </size>
             </property>
-            <property name="frameShape">
-             <enum>QFrame::Panel</enum>
+            <property name="text">
+             <string/>
             </property>
-            <property name="frameShadow">
-             <enum>QFrame::Sunken</enum>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
             </property>
-            <widget class="QLabel" name="defImageShow">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="geometry">
-              <rect>
-               <x>8</x>
-               <y>5</y>
-               <width>200</width>
-               <height>140</height>
-              </rect>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>200</width>
-               <height>140</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>200</width>
-               <height>140</height>
-              </size>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
            </widget>
           </item>
           <item>
@@ -189,7 +258,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1314</width>
+     <width>1323</width>
      <height>22</height>
     </rect>
    </property>

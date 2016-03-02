@@ -210,11 +210,11 @@ void QSelectionArea::drawExistingShapes()
     // Fill polygon
     QPainterPath masterPath;
     masterPath.setFillRule(Qt::WindingFill);
-    painter.setOpacity(0.2);
+    painter.setOpacity(0.5);
     // pen for boundary outlines
     QPen boundaryPen(Qt::green, 3, Qt::DashLine, Qt::RoundCap, Qt::RoundJoin);
     // pen for excluded outlines
-    QPen excludedPen(Qt::red, 3, Qt::DashLine, Qt::RoundCap, Qt::RoundJoin);
+    QPen excludedPen(Qt::magenta, 3, Qt::DashLine, Qt::RoundCap, Qt::RoundJoin);
 
     // redraw the boundary shapes
     for(QList<QList<QPoint> >::iterator it=boundaryShapes.begin();
@@ -233,7 +233,8 @@ void QSelectionArea::drawExistingShapes()
         painter.setPen(boundaryPen);
         painter.drawPolygon(poly);
     }
-
+    // increase opacity for the excluded
+    painter.setOpacity(0.8);
     // redraw the excluded shapes
     for(QList<QList<QPoint> >::iterator it=excludedShapes.begin();
         it!=excludedShapes.end();++it){
@@ -251,6 +252,7 @@ void QSelectionArea::drawExistingShapes()
         painter.setPen(excludedPen);
         painter.drawPolygon(poly);
     }
+    painter.setOpacity(0.5);
 
     // Draw a filled polygon representing the active ROI area
     painter.fillPath(masterPath, brush);
@@ -447,7 +449,7 @@ void QSelectionArea::mousePressEvent(QMouseEvent *event)
     // check the excluded plus button is pressed
     else if(addExcludedEnabled){
         // draw the points:
-        QColor color = Qt::red;
+        QColor color = Qt::magenta;
         setPenColor(color);
         QPoint pt(event->x(),event->y());
         updateVertices(pt,true,forceClosure);
@@ -481,6 +483,6 @@ void QSelectionArea::mouseMoveEvent(QMouseEvent *event)
         if(addBoundaryEnabled)
             drawPreviewPolygon(event->pos(),Qt::green);
         else
-            drawPreviewPolygon(event->pos(),Qt::red);
+            drawPreviewPolygon(event->pos(),Qt::magenta);
     }
 }

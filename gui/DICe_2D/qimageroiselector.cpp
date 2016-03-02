@@ -62,7 +62,7 @@ void QImageROISelector::setImage(QFileInfo & file)
     ui->imageFileLabel->setText(file.filePath());
     ui->selectionArea->resetImagePan();
     ui->selectionArea->openImage(file.filePath());
-    ui->imageDims->setText(QString("W = %1, H = %2").arg(ui->selectionArea->getOriginalImageWidth()).arg(ui->selectionArea->getOriginalImageHeight()));
+    ui->imageDims->setText(QString(" W = %1, H = %2").arg(ui->selectionArea->getOriginalImageWidth()).arg(ui->selectionArea->getOriginalImageHeight()));
 }
 
 void QImageROISelector::on_boundaryPlus_clicked()
@@ -105,7 +105,7 @@ void QImageROISelector::on_resetView_clicked()
 
 void QImageROISelector::on_selectionAreaMouseMove()
 {
-    ui->imageCoords->setText(QString("X = %1, Y = %2").arg(ui->selectionArea->getCurrentImageX()).arg(ui->selectionArea->getCurrentImageY()));
+    ui->imageCoords->setText(QString(" X = %1, Y = %2").arg(ui->selectionArea->getCurrentImageX()).arg(ui->selectionArea->getCurrentImageY()));
 }
 
 void QImageROISelector::on_resetShapes_clicked()
