@@ -376,16 +376,13 @@ void QSelectionArea::zoom(const bool out){
     int newW = (int)(w*totalScaleFactor);
     int newH = (int)(h*totalScaleFactor);
     if(heightIsLargerDim && newH < minH){
-        std::cout << " returning form newH < minH" << std::endl;
         return;
     }
     else if(newW < minW){
-        std::cout << " returning from newW < min W" << std::endl;
         return;
     }
     //if(newW < minWH || newH < minWH) return;
     if(newW > maxWH || newH > maxWH){
-        std::cout << " returning from newW > maxWH" << std::endl;
         return;
     }
     scaleFactor = totalScaleFactor;
