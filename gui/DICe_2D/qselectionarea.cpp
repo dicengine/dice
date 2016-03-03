@@ -66,6 +66,7 @@ QSelectionArea::QSelectionArea(QWidget *parent)
     currentImageHeight = 0;
     currentImageWidth = 0;
     zoomInProgress = false;
+    enableWheelZoom = true;
 }
 
 void QSelectionArea::resizeImage(QImage *image, const QSize &newSize)
@@ -157,6 +158,11 @@ void QSelectionArea::decrementShapeSet(const bool excluded, const bool refreshOn
 void QSelectionArea::updateVertices(QPoint & pt,const bool excluded, const bool forceClosure)
 {
     pt = mapToImageCoords(pt);
+
+    // if the point is outside the image boundary return
+    if(pt.x()<0||pt.x()>=originalImageWidth||pt.y()<0||pt.y()>=originalImageHeight)
+        return;
+
     // the first point doesn't need a line
     if(!shapeInProgress()){
         originPoint = pt;
@@ -210,7 +216,7 @@ void QSelectionArea::drawExistingShapes()
     // Fill polygon
     QPainterPath masterPath;
     masterPath.setFillRule(Qt::WindingFill);
-    painter.setOpacity(0.5);
+    painter.setOpacity(0.4);
     // pen for boundary outlines
     QPen boundaryPen(Qt::green, 3, Qt::DashLine, Qt::RoundCap, Qt::RoundJoin);
     // pen for excluded outlines
@@ -252,7 +258,7 @@ void QSelectionArea::drawExistingShapes()
         painter.setPen(excludedPen);
         painter.drawPolygon(poly);
     }
-    painter.setOpacity(0.5);
+    painter.setOpacity(0.4);
 
     // Draw a filled polygon representing the active ROI area
     painter.fillPath(masterPath, brush);
@@ -293,7 +299,7 @@ void QSelectionArea::drawPreviewPolygon(const QPoint & pt, const QColor & color)
     QPen pen(color, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
     painter.setPen(pen);
     // opacity
-    painter.setOpacity(0.2);
+    painter.setOpacity(0.4);
 
     // Brush
     QBrush brush;
@@ -393,7 +399,10 @@ void QSelectionArea::zoom(const bool out){
 
 
 void QSelectionArea::wheelEvent(QWheelEvent *event)
-{
+{           
+    // return if wheel disabled
+    if(!enableWheelZoom) return;
+
     // return if there is no image
     if(!activeImage()) return;
 

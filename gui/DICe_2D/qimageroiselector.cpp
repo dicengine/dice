@@ -49,6 +49,8 @@ QImageROISelector::QImageROISelector(QWidget *parent) :
 {
     ui->setupUi(this);
     connect(ui->selectionArea, SIGNAL(mousePos()), this, SLOT(on_selectionAreaMouseMove()));
+    // set the state of the wheel zoom to enabled
+    ui->wheelZoom->setCheckState(Qt::Checked);
 }
 
 QImageROISelector::~QImageROISelector()
@@ -125,4 +127,10 @@ void QImageROISelector::on_zoomOut_clicked()
 {
     if(!ui->selectionArea->activeImage())return;
     ui->selectionArea->zoom(true);
+}
+
+void QImageROISelector::on_wheelZoom_clicked()
+{
+    // reverse the state of the enableWheeZoom
+    ui->selectionArea->setEnableWheelZoom(!ui->selectionArea->getEnableWheelZoom());
 }

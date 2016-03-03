@@ -27,12 +27,24 @@
 background-color: #303030;
 }
 
+QComboBox {
+background-color: #404040;
+color: white;
+}
+QListView {
+background-color: #404040;
+}
+
 QTabWidget::pane{
 background-color: #252525;
 }
 
 QListWidget {
 background-color: #404040;
+color: white;
+}
+
+QCheckBox {
 color: white;
 }
 
@@ -58,32 +70,44 @@ background-color: #505050;
 QPushButton#boundaryPlus{
 font-weight: bold;
 font-size: 18pt;
-background-color: rgb(36, 220, 53);
+border-radius: 0px;
+/*background-color: rgb(36, 220, 53);*/
 }
 QPushButton#boundaryPlus:checked{
-background-color: rgb(0, 128, 0);
+background-color: rgb(249, 255, 24);
 }
 QPushButton#boundaryMinus{
 font-weight: bold;
 font-size: 18pt;
-background-color: rgb(36, 220, 53);
+border-radius: 0px;
+/*background-color: rgb(36, 220, 53);*/
 }
 QPushButton#excludedPlus{
 font-weight: bold;
 font-size: 18pt;
-background-color: rgb(255, 65, 254);
+border-radius: 0px;
+/*background-color: rgb(255, 65, 254);*/
 }
 QPushButton#excludedPlus:checked{
-background-color: rgb(178, 6, 175);
+background-color: rgb(249, 255, 24);
 }
 QPushButton#excludedMinus{
 font-weight: bold;
 font-size: 18pt;
-background-color: rgb(255, 65, 254);
+border-radius: 0px;
+/*background-color: rgb(255, 65, 254);*/
+}
+QPushButton#resetShapes{
+/*border-radius: 0px;*/
+background-color: rgb(255, 39, 70);
+}
+QPushButton#resetShapes:pressed{
+background-color: rgb(127, 8, 8);
 }
 QPushButton#zoomIn{
 font-weight: bold;
 font-size: 18pt;
+border-radius: 0px;
 background-color: rgb(21, 171, 255);
 }
 QPushButton#zoomIn:pressed{
@@ -92,9 +116,16 @@ background-color: rgb(23, 85, 122);
 QPushButton#zoomOut{
 font-weight: bold;
 font-size: 18pt;
+border-radius: 0px;
 background-color: rgb(21, 171, 255);
 }
 QPushButton#zoomOut:pressed{
+background-color: rgb(23, 85, 122);
+}
+QPushButton#resetView{
+background-color: rgb(21, 171, 255);
+}
+QPushButton#resetView:pressed{
 background-color: rgb(23, 85, 122);
 }
 
@@ -290,6 +321,171 @@ background-color: #404040;
        <attribute name="title">
         <string>Parameters</string>
        </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <property name="spacing">
+         <number>12</number>
+        </property>
+        <property name="topMargin">
+         <number>40</number>
+        </property>
+        <item>
+         <widget class="QGroupBox" name="groupBox">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>75</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>Optimization method</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <widget class="QComboBox" name="optMethodCombo"/>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox_2">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>75</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>Interpolation method</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_6">
+           <item>
+            <widget class="QComboBox" name="interpMethodCombo"/>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox_3">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>75</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>Initialization method</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_7">
+           <item>
+            <widget class="QComboBox" name="initMethodCombo"/>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox_4">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>200</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>Shape functions</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_8">
+           <item>
+            <widget class="QCheckBox" name="translationCheck">
+             <property name="text">
+              <string>Translation</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="rotationCheck">
+             <property name="text">
+              <string>Rotation</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="normalCheck">
+             <property name="text">
+              <string>Normal Stretch</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="shearCheck">
+             <property name="text">
+              <string>Shear Stretch</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="output">
+       <attribute name="title">
+        <string>Output</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="QCheckBox" name="checkBox_6">
+          <property name="text">
+           <string>Displacement X</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBox_7">
+          <property name="text">
+           <string>Displacement Y</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBox_5">
+          <property name="text">
+           <string>Rotation</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>

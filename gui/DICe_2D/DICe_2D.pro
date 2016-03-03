@@ -15,7 +15,7 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     qimageroiselector.cpp \
-    qselectoinarea.cpp
+    qselectionarea.cpp
 
 HEADERS  += mainwindow.h \
     qimageroiselector.h \

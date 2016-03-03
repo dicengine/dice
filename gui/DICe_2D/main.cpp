@@ -1,4 +1,4 @@
-// @HEADER
+ // @HEADER
 // ************************************************************************
 //
 //               Digital Image Correlation Engine (DICe)

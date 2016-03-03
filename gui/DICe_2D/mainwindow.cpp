@@ -54,6 +54,24 @@ QMainWindow(parent),
 ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    // set up the analysis defaults
+    ui->translationCheck->setChecked(true);
+
+    // add the initialization methods
+    ui->initMethodCombo->addItem("USE_FIELD_VALUES");
+    ui->initMethodCombo->addItem("USE_NEIGHBOR_VALUES");
+    ui->initMethodCombo->addItem("USE_NEIGHBOR_VALUES_FIRST_STEP");
+    ui->initMethodCombo->addItem("USE_PHASE_CORRELATION");
+    ui->initMethodCombo->addItem("USE_OPTICAL_FLOW");
+
+    // add the optimization methods
+    ui->optMethodCombo->addItem("GRADIENT_BASED");
+    ui->optMethodCombo->addItem("SIMPLEX");
+
+    // add the interpolation methods
+    ui->interpMethodCombo->addItem("KEYS_FOURTH");
+    ui->interpMethodCombo->addItem("BILINEAR");
 }
 
 MainWindow::~MainWindow()

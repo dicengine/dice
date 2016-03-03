@@ -121,12 +121,12 @@ public:
         addExcludedEnabled = flag;
     }
 
-    /// returns true if drawing boundary shapes in enabled
+    /// returns true if drawing boundary shapes is enabled
     bool getAddBoundaryEnabled(){
         return addBoundaryEnabled;
     }
 
-    /// returns true if drawing excluded shapes in enabled
+    /// returns true if drawing excluded shapes is enabled
     bool getAddExcludedEnabled(){
         return addExcludedEnabled;
     }
@@ -150,6 +150,16 @@ public:
         prevPanX = 2;
         prevPanY = 2;
         scaleFactor = 1.0;
+    }
+
+    /// change the enable wheel zoom flags
+    void setEnableWheelZoom(const bool flag){
+        enableWheelZoom = flag;
+    }
+
+    /// get the enable wheeml zoo flag
+    bool getEnableWheelZoom(){
+        return enableWheelZoom;
     }
 
     /// returns the original width of the current image
@@ -256,6 +266,9 @@ private:
 
     /// flag that the image has been rescaled by a wheel event
     bool zoomInProgress;
+
+    /// flag to allow wheel zoom (user may want to disable for trackpads)
+    bool enableWheelZoom;
 
 };
 
