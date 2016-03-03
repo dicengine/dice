@@ -62,6 +62,16 @@ public:
     return input_vars_ptr_;
   }
 
+  /// flag if the ref name has been set
+  bool has_ref_file(){
+      return !(ref_file_info_.fileName().size()==0);
+  }
+
+  /// flag if the ref name has been set
+  bool has_def_files(){
+      return def_file_list_.size()>0;
+  }
+
   /// sets the file name for the reference image
   /// \param file_name the file name to set
   void set_ref_file_info(const QFileInfo & file_info){

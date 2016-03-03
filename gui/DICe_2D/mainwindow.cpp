@@ -72,6 +72,15 @@ ui(new Ui::MainWindow)
     // add the interpolation methods
     ui->interpMethodCombo->addItem("KEYS_FOURTH");
     ui->interpMethodCombo->addItem("BILINEAR");
+
+    // set up the step size and subset size
+    ui->subsetSize->setMinimum(10);
+    ui->subsetSize->setMaximum(50);
+    ui->subsetSize->setValue(25);
+    ui->stepSize->setMinimum(1);
+    ui->stepSize->setMaximum(100);
+    ui->stepSize->setValue(15);
+
 }
 
 MainWindow::~MainWindow()
@@ -95,6 +104,12 @@ void MainWindow::on_refFileButton_clicked()
     QString refFileName = refFileInfo.fileName();
     ui->ROISelector->setImage(refFileInfo);
     ui->refFileLine->setText(refFileName);
+
+    // if the deformed images are populated then activate the write and run buttons
+    if(DICe::gui::Input_Vars::instance()->has_def_files()){
+        ui->writeButton->setEnabled(true);
+        ui->runButton->setEnabled(true);
+    }
 }
 
 void MainWindow::on_defFileButton_clicked()
@@ -126,6 +141,13 @@ void MainWindow::on_defFileButton_clicked()
     // reset the def image
     ui->defFileLabel->setText("");
     ui->defImageShow->clear();
+
+    // if the reference image is populated then activate the write and run buttons
+    if(DICe::gui::Input_Vars::instance()->has_ref_file()){
+        ui->writeButton->setEnabled(true);
+        ui->runButton->setEnabled(true);
+    }
+
 }
 
 void MainWindow::on_defListWidget_itemClicked(QListWidgetItem *item)
