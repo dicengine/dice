@@ -1,4 +1,4 @@
-// @HEADER
+ // @HEADER
 // ************************************************************************
 //
 //               Digital Image Correlation Engine (DICe)
@@ -38,35 +38,14 @@
 //
 // ************************************************************************
 // @HEADER
+#include "mainwindow.h"
+#include <QApplication>
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
-
-#include <QMainWindow>
-#include <QListWidgetItem>
-
-
-namespace Ui {
-    class MainWindow;
-}
-
-class MainWindow : public QMainWindow
+int main(int argc, char *argv[])
 {
-    Q_OBJECT
-    
-public:
-    explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
-    
-    private slots:
-    void on_refFileButton_clicked();
-    
-    void on_defFileButton_clicked();
-    
-    void on_defListWidget_itemClicked(QListWidgetItem *item);
+    QApplication a(argc, argv);
+    MainWindow w;
+    w.show();
 
-private:
-    Ui::MainWindow *ui;
-};
-
-#endif // MAINWINDOW_H
+    return a.exec();
+}

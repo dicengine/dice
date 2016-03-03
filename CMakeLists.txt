@@ -263,4 +263,3 @@ ADD_DEFINITIONS(-DGITSHA1=\"${GIT_SHA1}\")
 add_subdirectory(src)
 add_subdirectory(tools)
 add_subdirectory(tests)
-

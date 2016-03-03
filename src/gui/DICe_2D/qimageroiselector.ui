@@ -510,8 +510,8 @@
        <widget class="QSelectionArea" name="selectionArea">
         <property name="minimumSize">
          <size>
-          <width>500</width>
-          <height>500</height>
+          <width>1000</width>
+          <height>800</height>
          </size>
         </property>
         <property name="mouseTracking">

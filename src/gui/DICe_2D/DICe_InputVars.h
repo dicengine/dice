@@ -44,6 +44,7 @@
 
 #include <QFileInfo>
 #include <iostream>
+#include <DICe_Parser.h>
 
 namespace DICe{
 
@@ -129,6 +130,7 @@ public:
       return & roi_excluded_vertex_vectors_;
   }
 
+  /// display the list of roi vertices
   void display_roi_vertices(){
       int shape_it = 0;
       for(QList<QList<QPoint> >::iterator it=roi_vertex_vectors_.begin();
@@ -139,6 +141,65 @@ public:
           std::cout << std::endl;
           shape_it++;
       }
+  }
+
+  /// set the working directory
+  void set_working_dir(const QString & dir){
+      working_dir_ = dir;
+  }
+
+  /// set the subset size
+  void set_subset_size(const int size){
+      subset_size_ = size;
+  }
+
+  /// set the step size
+  void set_step_size(const int size){
+      subset_size_ = size;
+  }
+
+  /// write the input file
+  void write_input_file(){
+      std::stringstream input_file_ss;
+#ifdef WIN32
+      input_file_ss << working_dir_.toStdString() << "\\" << "input.xml";
+#else
+      input_file_ss << working_dir_.toStdString() << "/" << "input.xml";
+ #endif
+      std::string inputFile = input_file_ss.str();
+      std::cout << "DICe::Input_Vars::instance(): writing input xml file: " << inputFile << std::endl;
+      DICe::initialize_xml_file(inputFile);
+
+      DICe::write_xml_comment(inputFile,"Auto generated input file from DICe GUI");
+
+      DICe::write_xml_string_param(inputFile,DICe::output_folder,working_dir_.toStdString(),false);
+      DICe::write_xml_string_param(inputFile,DICe::image_folder,"",false);
+      DICe::write_xml_string_param(inputFile,DICe::correlation_parameters_file,"params.xml",true);
+
+      std::stringstream subsetSizeSS;
+      subsetSizeSS << subset_size_;
+      DICe::write_xml_size_param(inputFile,DICe::subset_size,subsetSizeSS.str(),false);
+      std::stringstream stepSizeSS;
+      stepSizeSS << step_size_;
+      DICe::write_xml_size_param(inputFile,DICe::step_size,stepSizeSS.str(),false);
+
+      DICe::write_xml_bool_param(inputFile,DICe::separate_output_file_for_each_subset,"false",false);
+
+      DICe::write_xml_bool_param(inputFile,DICe::create_separate_run_info_file,"true",false);
+
+      // TODO add subset file later ...
+      //DICe::write_xml_string_param(inputFile,DICe::subset_file,"<path>");
+
+      DICe::write_xml_string_param(inputFile,DICe::reference_image,ref_file_info_.filePath().toStdString(),false);
+
+      DICe::write_xml_param_list_open(inputFile,DICe::deformed_images,false);
+      // create an entry for all def images here:
+      for(QStringList::iterator it=def_file_list_.begin();it!=def_file_list_.end();++it){
+        DICe::write_xml_bool_param(inputFile,it->toStdString(),"true",false);
+      }
+      DICe::write_xml_param_list_close(inputFile,false);
+
+      DICe::finalize_xml_file(inputFile);
   }
 
 private:
@@ -152,6 +213,7 @@ private:
   /// reference image file name
   QFileInfo ref_file_info_;
   QStringList def_file_list_;
+  QString working_dir_;
 
   /// ROIs
   ///
@@ -159,6 +221,12 @@ private:
   QList<QList <QPoint> > roi_vertex_vectors_;
   /// Excluded
   QList<QList <QPoint> > roi_excluded_vertex_vectors_;
+
+  /// subset size
+  int subset_size_;
+
+  /// step size
+  int step_size_;
 
   /* ----------------------- */
   /// singleton pointer

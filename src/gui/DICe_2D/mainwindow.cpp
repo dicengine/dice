@@ -81,6 +81,12 @@ ui(new Ui::MainWindow)
     ui->stepSize->setMaximum(100);
     ui->stepSize->setValue(15);
 
+    // reset the progress bar
+    ui->progressBar->setValue(0);
+
+    // reset the default working directory
+   ui->workingDirLineEdit->setText(".");
+   DICe::gui::Input_Vars::instance()->set_working_dir(QString("."));
 }
 
 MainWindow::~MainWindow()
@@ -164,4 +170,28 @@ void MainWindow::on_defListWidget_itemClicked(QListWidgetItem *item)
     int w = ui->defImageShow->width();
     int h = ui->defImageShow->height();
     ui->defImageShow->setPixmap(pix.scaled(w,h,Qt::KeepAspectRatio));
+}
+
+void MainWindow::on_writeButton_clicked()
+{
+    // set the step size and subset size
+    DICe::gui::Input_Vars::instance()->set_subset_size(ui->subsetSize->value());
+    DICe::gui::Input_Vars::instance()->set_step_size(ui->subsetSize->value());
+
+    DICe::gui::Input_Vars::instance()->write_input_file();
+}
+
+void MainWindow::on_workingDirButton_clicked()
+{
+    // open a file dialog and get the directory
+    QString dir = QFileDialog::getExistingDirectory(this,tr("Open Directory"),"/home",QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+    if(dir=="") return;
+
+    // set the reference image in the Input_Vars singleton
+    DICe::gui::Input_Vars::instance()->set_working_dir(dir);
+
+    // display the name of the file in the reference file box
+    ui->workingDirLineEdit->setText(dir);
+
 }

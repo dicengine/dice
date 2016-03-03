@@ -22,3 +22,10 @@ add_subdirectory(fft)
 # Dynamically linked library
 #
 add_subdirectory(api)
+
+# Check if the GUI is enabled
+MESSAGE(STATUS "DICE_ENABLE_GUI is ${DICE_ENABLE_GUI}" )
+if(DICE_ENABLE_GUI)
+MESSAGE(STATUS "Building the GUI")
+add_subdirectory(gui)
+endif()
