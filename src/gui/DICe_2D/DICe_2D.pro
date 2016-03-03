@@ -19,7 +19,8 @@ SOURCES += main.cpp\
 
 HEADERS  += mainwindow.h \
     qimageroiselector.h \
-    qselectionarea.h
+    qselectionarea.h \
+    qdebugstream.h
 
 FORMS    += mainwindow.ui \
     qimageroiselector.ui

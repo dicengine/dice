@@ -10,6 +10,7 @@ SET(DICE_HEADERS
   mainwindow.h
   qimageroiselector.h
   qselectionarea.h
+  qdebugstream.h
 )
 
 include_directories (

@@ -43,6 +43,11 @@ QTextBrowser{
 background-color: #303030;
 color: white;
 }
+QTextEdit{
+background-color: #303030;
+color: white;
+font: 12pt &quot;Courier&quot;;
+}
 
 QSpinBox {
 color: white;
@@ -212,6 +217,12 @@ background-color: #404040;
     </item>
     <item row="3" column="0">
      <widget class="QGroupBox" name="groupBox_5">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="minimumSize">
        <size>
         <width>0</width>
@@ -625,17 +636,20 @@ background-color: #404040;
     </item>
     <item row="3" column="2">
      <widget class="QGroupBox" name="groupBox_6">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="title">
        <string>Progress</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_10">
        <item>
-        <widget class="QTextBrowser" name="textBrowser">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+        <widget class="QTextEdit" name="consoleEdit">
+         <property name="enabled">
+          <bool>true</bool>
          </property>
          <property name="maximumSize">
           <size>
@@ -643,12 +657,8 @@ background-color: #404040;
            <height>100</height>
           </size>
          </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QProgressBar" name="progressBar">
-         <property name="value">
-          <number>24</number>
+         <property name="readOnly">
+          <bool>true</bool>
          </property>
         </widget>
        </item>

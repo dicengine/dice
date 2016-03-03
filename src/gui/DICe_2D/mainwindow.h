@@ -44,7 +44,7 @@
 
 #include <QMainWindow>
 #include <QListWidgetItem>
-
+#include <qdebugstream.h>
 
 namespace Ui {
     class MainWindow;
@@ -71,6 +71,8 @@ public:
 
 private:
     Ui::MainWindow *ui;
+
+     QDebugStream * qout;
 };
 
 #endif // MAINWINDOW_H

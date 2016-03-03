@@ -82,11 +82,15 @@ ui(new Ui::MainWindow)
     ui->stepSize->setValue(15);
 
     // reset the progress bar
-    ui->progressBar->setValue(0);
+    //ui->progressBar->setValue(0);
 
     // reset the default working directory
-   ui->workingDirLineEdit->setText(".");
-   DICe::gui::Input_Vars::instance()->set_working_dir(QString("."));
+    ui->workingDirLineEdit->setText(".");
+    DICe::gui::Input_Vars::instance()->set_working_dir(QString("."));
+
+    // set up the console output
+    qout = new QDebugStream(std::cout, ui->consoleEdit);
+
 }
 
 MainWindow::~MainWindow()
