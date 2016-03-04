@@ -381,6 +381,18 @@ void write_xml_bool_param(const std::string & file_name,
   const std::string & value="<value>",
   const bool commented=true);
 
+/// \brief Write a boolean valued parameter to file
+/// \param file_name The name of the xml file to write to
+/// \param name The name of the parameter
+/// \param value The string value of the parameter
+/// \param commented Determines if this parameter should be commented out
+DICE_LIB_DLL_EXPORT
+void write_xml_bool_param(const std::string & file_name,
+  const std::string & name,
+  const bool value,
+  const bool commented=true);
+
+
 /// \brief Determines if a string is a number
 /// \param s Input string
 DICE_LIB_DLL_EXPORT

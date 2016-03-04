@@ -39,10 +39,16 @@
 // ************************************************************************
 // @HEADER
 
-#include <DICe_MainDriver.h>
+#ifndef DICE_MAINDRIVER_H
+#define DICE_MAINDRIVER_H
 
-using namespace DICe;
+#include <DICe.h>
 
-int main(int argc, char *argv[]) {
-  return main_driver(argc, argv);
-}
+namespace DICe {
+
+DICE_LIB_DLL_EXPORT
+int main_driver(int argc, char *argv[]);
+
+}// End DICe Namespace
+
+#endif

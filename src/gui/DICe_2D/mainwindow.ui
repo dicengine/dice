@@ -292,7 +292,7 @@ background-color: #404040;
        <bool>false</bool>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="images">
        <attribute name="title">
@@ -522,28 +522,28 @@ background-color: #404040;
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_8">
            <item>
-            <widget class="QCheckBox" name="translationCheck">
+            <widget class="QCheckBox" name="translationShapeCheck">
              <property name="text">
               <string>Translation</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="rotationCheck">
+            <widget class="QCheckBox" name="rotationShapeCheck">
              <property name="text">
               <string>Rotation</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="normalCheck">
+            <widget class="QCheckBox" name="normalShapeCheck">
              <property name="text">
               <string>Normal Stretch</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="shearCheck">
+            <widget class="QCheckBox" name="shearShapeCheck">
              <property name="text">
               <string>Shear Stretch</string>
              </property>
@@ -597,24 +597,156 @@ background-color: #404040;
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
-         <widget class="QCheckBox" name="checkBox_6">
-          <property name="text">
-           <string>Displacement X</string>
+         <widget class="QGroupBox" name="groupBox_10">
+          <property name="title">
+           <string>Coordinates</string>
           </property>
+          <layout class="QVBoxLayout" name="verticalLayout_13">
+           <property name="spacing">
+            <number>12</number>
+           </property>
+           <item>
+            <widget class="QCheckBox" name="xCheck">
+             <property name="text">
+              <string>x</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="yCheck">
+             <property name="text">
+              <string>y</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="checkBox_7">
-          <property name="text">
-           <string>Displacement Y</string>
+         <widget class="QGroupBox" name="groupBox_9">
+          <property name="title">
+           <string>Mapping parameters</string>
           </property>
+          <layout class="QVBoxLayout" name="verticalLayout_2">
+           <property name="spacing">
+            <number>12</number>
+           </property>
+           <item>
+            <widget class="QCheckBox" name="dispXCheck">
+             <property name="text">
+              <string>Displacement x</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="dispYCheck">
+             <property name="text">
+              <string>Displacement y</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="rotationCheck">
+             <property name="text">
+              <string>Rotation</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="normalXCheck">
+             <property name="text">
+              <string>Normal strectch x</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="normalYCheck">
+             <property name="text">
+              <string>Normal stretch y</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="shearCheck">
+             <property name="text">
+              <string>Shear stretch xy</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="checkBox_5">
-          <property name="text">
-           <string>Rotation</string>
+         <widget class="QGroupBox" name="groupBox_11">
+          <property name="title">
+           <string>Diagnostics (smaller is better)</string>
           </property>
+          <layout class="QVBoxLayout" name="verticalLayout_14">
+           <property name="spacing">
+            <number>12</number>
+           </property>
+           <item>
+            <widget class="QCheckBox" name="sigmaCheck">
+             <property name="text">
+              <string>Sigma (displacement uncertainty)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="gammaCheck">
+             <property name="text">
+              <string>Gamma (match quality)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="betaCheck">
+             <property name="text">
+              <string>Beta (Objective sensitivity)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="statusCheck">
+             <property name="text">
+              <string>Status flag</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox_12">
+          <property name="title">
+           <string>Image quality</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_15">
+           <property name="spacing">
+            <number>12</number>
+           </property>
+           <item>
+            <widget class="QCheckBox" name="numActiveCheck">
+             <property name="text">
+              <string>Num active pixels</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="contrastCheck">
+             <property name="text">
+              <string>Contrast level</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="noiseCheck">
+             <property name="text">
+              <string>Noise level</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
         <item>

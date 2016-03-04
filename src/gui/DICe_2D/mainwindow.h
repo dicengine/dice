@@ -69,6 +69,10 @@ public:
 
     void on_workingDirButton_clicked();
 
+    void on_runButton_clicked();
+
+    void writeInputFiles();
+
 private:
     Ui::MainWindow *ui;
 

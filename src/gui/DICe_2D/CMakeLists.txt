@@ -21,11 +21,10 @@ include_directories (
 )
 
 add_library(mainwindow ${DICE_SOURCES})
-target_link_libraries (mainwindow Qt5::Widgets dicecore)
+target_link_libraries (mainwindow Qt5::Widgets dicecore dicemain)
 
 add_executable(dice_gui main.cpp resources.qrc)
 target_link_libraries(dice_gui mainwindow)
-
 
 install(FILES ${DICE_HEADERS}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include

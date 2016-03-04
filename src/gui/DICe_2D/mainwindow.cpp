@@ -43,9 +43,11 @@
 #include "ui_mainwindow.h"
 #include <QFileDialog>
 #include <QFileInfo>
-#include <DICe_InputVars.h>
 #include <qimageroiselector.h>
 #include <iostream>
+
+#include <DICe_InputVars.h>
+#include <DICe_MainDriver.h>
 
 DICe::gui::Input_Vars * DICe::gui::Input_Vars::input_vars_ptr_ = NULL;
 
@@ -56,7 +58,7 @@ ui(new Ui::MainWindow)
     ui->setupUi(this);
 
     // set up the analysis defaults
-    ui->translationCheck->setChecked(true);
+    ui->translationShapeCheck->setChecked(true);
 
     // add the initialization methods
     ui->initMethodCombo->addItem("USE_FIELD_VALUES");
@@ -90,6 +92,16 @@ ui(new Ui::MainWindow)
 
     // set up the console output
     qout = new QDebugStream(std::cout, ui->consoleEdit);
+
+    // set the default output fields
+    ui->xCheck->setChecked(true);
+    ui->yCheck->setChecked(true);
+    ui->dispXCheck->setChecked(true);
+    ui->dispYCheck->setChecked(true);
+    ui->sigmaCheck->setChecked(true);
+    ui->gammaCheck->setChecked(true);
+    ui->betaCheck->setChecked(true);
+    ui->statusCheck->setChecked(true);
 
 }
 
@@ -178,11 +190,7 @@ void MainWindow::on_defListWidget_itemClicked(QListWidgetItem *item)
 
 void MainWindow::on_writeButton_clicked()
 {
-    // set the step size and subset size
-    DICe::gui::Input_Vars::instance()->set_subset_size(ui->subsetSize->value());
-    DICe::gui::Input_Vars::instance()->set_step_size(ui->subsetSize->value());
-
-    DICe::gui::Input_Vars::instance()->write_input_file();
+    writeInputFiles();
 }
 
 void MainWindow::on_workingDirButton_clicked()
@@ -197,5 +205,68 @@ void MainWindow::on_workingDirButton_clicked()
 
     // display the name of the file in the reference file box
     ui->workingDirLineEdit->setText(dir);
+
+}
+
+void MainWindow::writeInputFiles(){
+    // set the parameter values:
+    DICe::gui::Input_Vars::instance()->set_subset_size(ui->subsetSize->value());
+    DICe::gui::Input_Vars::instance()->set_step_size(ui->stepSize->value());
+    DICe::gui::Input_Vars::instance()->set_initialization_method(ui->initMethodCombo->currentText().toStdString());
+    DICe::gui::Input_Vars::instance()->set_optimization_method(ui->optMethodCombo->currentText().toStdString());
+    DICe::gui::Input_Vars::instance()->set_interpolation_method(ui->interpMethodCombo->currentText().toStdString());
+    DICe::gui::Input_Vars::instance()->set_enable_translation(ui->translationShapeCheck->isChecked());
+    DICe::gui::Input_Vars::instance()->set_enable_rotation(ui->rotationShapeCheck->isChecked());
+    DICe::gui::Input_Vars::instance()->set_enable_normal_strain(ui->normalShapeCheck->isChecked());
+    DICe::gui::Input_Vars::instance()->set_enable_shear_strain(ui->shearShapeCheck->isChecked());
+    // output fields
+    std::vector<std::string> output_fields;
+    if(ui->xCheck->isChecked()) output_fields.push_back("COORDINATE_X");
+    if(ui->yCheck->isChecked()) output_fields.push_back("COORDINATE_Y");
+    if(ui->dispXCheck->isChecked()) output_fields.push_back("DISPLACEMENT_X");
+    if(ui->dispYCheck->isChecked()) output_fields.push_back("DISPLACEMENT_Y");
+    if(ui->rotationCheck->isChecked()) output_fields.push_back("ROTATION_Z");
+    if(ui->normalXCheck->isChecked()) output_fields.push_back("NORMAL_STRAIN_X");
+    if(ui->normalYCheck->isChecked()) output_fields.push_back("NORMAL_STRAIN_Y");
+    if(ui->shearCheck->isChecked()) output_fields.push_back("SHEAR_STRAIN_XY");
+    if(ui->noiseCheck->isChecked()) output_fields.push_back("NOISE_LEVEL");
+    if(ui->contrastCheck->isChecked()) output_fields.push_back("CONTRAST_LEVEL");
+    if(ui->sigmaCheck->isChecked()) output_fields.push_back("SIGMA");
+    if(ui->gammaCheck->isChecked()) output_fields.push_back("GAMMA");
+    if(ui->betaCheck->isChecked()) output_fields.push_back("BETA");
+    if(ui->numActiveCheck->isChecked()) output_fields.push_back("ACTIVE_PIXELS");
+    if(ui->statusCheck->isChecked()) output_fields.push_back("STATUS_FLAG");
+    DICe::gui::Input_Vars::instance()->set_output_fields(output_fields);
+
+    DICe::gui::Input_Vars::instance()->write_input_file();
+    DICe::gui::Input_Vars::instance()->write_params_file();
+}
+
+void MainWindow::on_runButton_clicked()
+{
+    writeInputFiles();
+
+    std::string inputFile = DICe::gui::Input_Vars::instance()->input_file_name();
+    std::vector<std::string> s;
+    s.push_back("dice_gui");
+    s.push_back("-i");
+    s.push_back(inputFile);
+    s.push_back("-v");
+    s.push_back("-t");
+    const int argc = s.size();
+    char **args;
+    args = new char *[argc];
+    for (int i = 0; i < argc; ++i ){
+        args[i] = new char[s[i].length() + 1];
+        strcpy( args[i], s[i].c_str());
+    }
+
+    try{
+        DICe::main_driver(argc,args);
+    }catch(std::exception & e){
+        std::cout << "Exception was thrown !!" << e.what() << std::endl;
+    }
+
+    delete[] args;
 
 }

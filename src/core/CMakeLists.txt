@@ -1,4 +1,5 @@
 
+
 SET(DICE_SOURCES
   DICe_Simplex.cpp
   DICe_Schema.cpp
@@ -41,16 +42,27 @@ install(TARGETS dicecore
 )
 
 #
+# Main driver for executable
+#
+add_library(dicemain DICe_MainDriver.cpp)
+target_link_libraries(dicemain ${DICE_LIBRARIES} ${Boost_LIBRARIES} dicebase dicecore dicecine)
+target_compile_definitions(dicemain PRIVATE -D DICE_LIB_EXPORTS_MODE)
+install(TARGETS dicemain
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)
+
+#
 # Main standalone executable
 #
 add_executable(dice_main DICe_Main.cpp)
 set_target_properties(dice_main PROPERTIES OUTPUT_NAME "dice")
-target_link_libraries(dice_main ${DICE_LIBRARIES} ${Boost_LIBRARIES} dicebase dicecore dicecine)
+#target_link_libraries(dice_main ${DICE_LIBRARIES} ${Boost_LIBRARIES} dicebase dicecore dicecine)
+target_link_libraries(dice_main dicemain)
 target_compile_definitions(dice_main PRIVATE -D DICE_LIB_EXPORTS_MODE)
 
 install(TARGETS dice_main DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
-set_target_properties(dicecore dice_main PROPERTIES
+set_target_properties(dicecore dicemain dice_main PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
   ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
   RUNTIME_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/bin"

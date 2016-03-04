@@ -148,6 +148,21 @@ public:
       working_dir_ = dir;
   }
 
+  /// set the inteprolation method
+  void set_interpolation_method(const std::string & method){
+      interp_method_str_ = method;
+  }
+
+  /// set the optimization method
+  void set_optimization_method(const std::string & method){
+      opt_method_str_ = method;
+  }
+
+  /// set the initialization method
+  void set_initialization_method(const std::string & method){
+      init_method_str_ = method;
+  }
+
   /// set the subset size
   void set_subset_size(const int size){
       subset_size_ = size;
@@ -155,18 +170,52 @@ public:
 
   /// set the step size
   void set_step_size(const int size){
-      subset_size_ = size;
+      step_size_ = size;
+  }
+
+  /// set the shape functions
+  void set_enable_translation(const bool flag){
+      enable_translation_ = flag;
+  }
+
+  /// set the shape functions
+  void set_enable_rotation(const bool flag){
+      enable_rotation_ = flag;
+  }
+
+  /// set the shape functions
+  void set_enable_normal_strain(const bool flag){
+      enable_normal_strain_ = flag;
+  }
+
+  /// set the shape functions
+  void set_enable_shear_strain(const bool flag){
+      enable_shear_strain_ = flag;
+  }
+
+  /// return the name of the input file
+  std::string input_file_name(){
+      return inputFile;
+  }
+
+  /// set the output fields
+  void set_output_fields(std::vector<std::string> & vec){
+      output_fields_ = vec;
   }
 
   /// write the input file
   void write_input_file(){
       std::stringstream input_file_ss;
+      std::stringstream params_file_ss;
 #ifdef WIN32
       input_file_ss << working_dir_.toStdString() << "\\" << "input.xml";
+      params_file_ss << working_dir_.toStdString() << "\\" << "params.xml";
 #else
       input_file_ss << working_dir_.toStdString() << "/" << "input.xml";
+      params_file_ss << working_dir_.toStdString() << "/" << "params.xml";
  #endif
-      std::string inputFile = input_file_ss.str();
+      paramsFile = params_file_ss.str();
+      inputFile = input_file_ss.str();
       std::cout << "DICe::Input_Vars::instance(): writing input xml file: " << inputFile << std::endl;
       DICe::initialize_xml_file(inputFile);
 
@@ -174,7 +223,7 @@ public:
 
       DICe::write_xml_string_param(inputFile,DICe::output_folder,working_dir_.toStdString(),false);
       DICe::write_xml_string_param(inputFile,DICe::image_folder,"",false);
-      DICe::write_xml_string_param(inputFile,DICe::correlation_parameters_file,"params.xml",true);
+      DICe::write_xml_string_param(inputFile,DICe::correlation_parameters_file,paramsFile,false);
 
       std::stringstream subsetSizeSS;
       subsetSizeSS << subset_size_;
@@ -202,6 +251,41 @@ public:
       DICe::finalize_xml_file(inputFile);
   }
 
+  /// write the analysis parameters to a file
+  void write_params_file(){
+      std::stringstream params_file_ss;
+#ifdef WIN32
+      params_file_ss << working_dir_.toStdString() << "\\" << "params.xml";
+#else
+      params_file_ss << working_dir_.toStdString() << "/" << "params.xml";
+ #endif
+      paramsFile = params_file_ss.str();
+      std::cout << "DICe::Input_Vars::instance(): writing parameters xml file: " << paramsFile << std::endl;
+      DICe::initialize_xml_file(paramsFile);
+      DICe::write_xml_comment(paramsFile,"Auto generated params file from DICe GUI");
+
+      DICe::write_xml_string_param(paramsFile,DICe::interpolation_method,interp_method_str_,false);
+      DICe::write_xml_string_param(paramsFile,DICe::optimization_method,opt_method_str_,false);
+      DICe::write_xml_string_param(paramsFile,DICe::initialization_method,init_method_str_,false);
+
+      DICe::write_xml_bool_param(paramsFile,DICe::enable_translation,enable_translation_,false);
+      DICe::write_xml_bool_param(paramsFile,DICe::enable_rotation,enable_rotation_,false);
+      DICe::write_xml_bool_param(paramsFile,DICe::enable_normal_strain,enable_normal_strain_,false);
+      DICe::write_xml_bool_param(paramsFile,DICe::enable_shear_strain,enable_shear_strain_,false);
+
+      // set the default delimiter
+      DICe::write_xml_string_param(paramsFile,DICe::output_delimiter,",",false);
+
+      // write the output fields
+      write_xml_param_list_open(paramsFile,DICe::output_spec,false);
+      for(size_t i=0;i<output_fields_.size();++i){
+        write_xml_bool_param(paramsFile,output_fields_[i],"true",false);
+      }
+      write_xml_param_list_close(paramsFile,false);
+
+      DICe::finalize_xml_file(paramsFile);
+  }
+
 private:
   /// constructor
   Input_Vars(){};
@@ -227,6 +311,25 @@ private:
 
   /// step size
   int step_size_;
+
+  /// string parameters
+  std::string interp_method_str_;
+  std::string init_method_str_;
+  std::string opt_method_str_;
+
+  /// bool params
+  bool enable_translation_;
+  bool enable_normal_strain_;
+  bool enable_shear_strain_;
+  bool enable_rotation_;
+
+  /// File names
+  std::string inputFile;
+  std::string paramsFile;
+  std::string subsetFile;
+
+  /// output fields
+  std::vector<std::string> output_fields_;
 
   /* ----------------------- */
   /// singleton pointer
