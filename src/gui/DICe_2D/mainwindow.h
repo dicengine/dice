@@ -73,6 +73,8 @@ public:
 
     void writeInputFiles();
 
+    void on_diceButton_clicked();
+
 private:
     Ui::MainWindow *ui;
 

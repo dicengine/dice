@@ -43,6 +43,7 @@
 #include "ui_mainwindow.h"
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QDesktopServices>
 #include <qimageroiselector.h>
 #include <iostream>
 
@@ -269,4 +270,9 @@ void MainWindow::on_runButton_clicked()
 
     delete[] args;
 
+}
+
+void MainWindow::on_diceButton_clicked()
+{
+    QDesktopServices::openUrl(QUrl("https://github.com/dicengine/dice", QUrl::TolerantMode));
 }

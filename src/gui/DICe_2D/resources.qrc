@@ -6,5 +6,6 @@
         <file>resources/images/excludedMinus.png</file>
         <file>resources/images/zoomPlus.png</file>
         <file>resources/images/zoomMinus.png</file>
+        <file>resources/images/DICe_logo_white-01.png</file>
     </qresource>
 </RCC>
