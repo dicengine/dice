@@ -241,6 +241,7 @@ void MainWindow::writeInputFiles(){
 
     DICe::gui::Input_Vars::instance()->write_input_file();
     DICe::gui::Input_Vars::instance()->write_params_file();
+    DICe::gui::Input_Vars::instance()->write_subset_file();
 }
 
 void MainWindow::on_runButton_clicked()

@@ -43,6 +43,7 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include <iostream>
+#include <DICe_InputVars.h>
 
 QSelectionArea::QSelectionArea(QWidget *parent)
     : QFrame(parent)
@@ -121,8 +122,8 @@ void QSelectionArea::clearShapesSet()
     if(!activeImage()) return;
     resetOriginAndLastPt();
     clearCurrentShapeVertices();
-    excludedShapes.clear();
-    boundaryShapes.clear();
+    DICe::gui::Input_Vars::instance()->excludedShapes()->clear();
+    DICe::gui::Input_Vars::instance()->boundaryShapes()->clear();
     resetImage();
 }
 
@@ -141,12 +142,12 @@ void QSelectionArea::decrementShapeSet(const bool excluded, const bool refreshOn
     if(!shape_in_progress&&!refreshOnly){
         // remove the last shape from the set
         if(excluded){
-            if(excludedShapes.size()>0)
-                excludedShapes.removeLast();
+            if(DICe::gui::Input_Vars::instance()->excludedShapes()->size()>0)
+                DICe::gui::Input_Vars::instance()->excludedShapes()->removeLast();
         }
         else{
-            if(boundaryShapes.size()>0)
-                boundaryShapes.removeLast();
+            if(DICe::gui::Input_Vars::instance()->boundaryShapes()->size()>0)
+                DICe::gui::Input_Vars::instance()->boundaryShapes()->removeLast();
         }
     }
 
@@ -180,10 +181,10 @@ void QSelectionArea::updateVertices(QPoint & pt,const bool excluded, const bool 
     if(closure){
         // append the vertex set to the shapes list
         if(excluded){
-            excludedShapes.append(currentShapeVertices);
+            DICe::gui::Input_Vars::instance()->excludedShapes()->append(currentShapeVertices);
         }
         else{
-            boundaryShapes.append(currentShapeVertices);
+            DICe::gui::Input_Vars::instance()->boundaryShapes()->append(currentShapeVertices);
         }
         resetOriginAndLastPt();
         currentShapeVertices.clear();
@@ -206,7 +207,7 @@ void QSelectionArea::drawExistingShapes()
     // clear and redraw the background image
     resetImage();
 
-    if(boundaryShapes.size()==0&&excludedShapes.size()==0) return;
+    if(DICe::gui::Input_Vars::instance()->boundaryShapes()->size()==0&&DICe::gui::Input_Vars::instance()->excludedShapes()->size()==0) return;
 
     QPainter painter(&backgroundImage);
     // Brush
@@ -223,8 +224,8 @@ void QSelectionArea::drawExistingShapes()
     QPen excludedPen(Qt::magenta, 3, Qt::DashLine, Qt::RoundCap, Qt::RoundJoin);
 
     // redraw the boundary shapes
-    for(QList<QList<QPoint> >::iterator it=boundaryShapes.begin();
-        it!=boundaryShapes.end();++it){
+    for(QList<QList<QPoint> >::iterator it=DICe::gui::Input_Vars::instance()->boundaryShapes()->begin();
+        it!=DICe::gui::Input_Vars::instance()->boundaryShapes()->end();++it){
         QList<QPoint> vertices = *it;
         QPolygon poly;
         for(QList<QPoint>::iterator i=vertices.begin();i!=vertices.end();++i){
@@ -242,8 +243,8 @@ void QSelectionArea::drawExistingShapes()
     // increase opacity for the excluded
     painter.setOpacity(0.8);
     // redraw the excluded shapes
-    for(QList<QList<QPoint> >::iterator it=excludedShapes.begin();
-        it!=excludedShapes.end();++it){
+    for(QList<QList<QPoint> >::iterator it=DICe::gui::Input_Vars::instance()->excludedShapes()->begin();
+        it!=DICe::gui::Input_Vars::instance()->excludedShapes()->end();++it){
         QList<QPoint> vertices = *it;
         QPolygon poly;
         for(QList<QPoint>::iterator i=vertices.begin();i!=vertices.end();++i){

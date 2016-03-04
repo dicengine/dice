@@ -89,58 +89,14 @@ public:
     return &def_file_list_;
   }
 
-  /// decrement the last element of the roi vertex vectors
-  void decrement_vertex_vector(){
-      if(roi_vertex_vectors_.size()>0)
-          roi_vertex_vectors_.removeLast();
-  }
-  /// decrement the last element of the roi vertex vectors
-  void decrement_excluded_vertex_vector(){
-      if(roi_excluded_vertex_vectors_.size()>0)
-          roi_excluded_vertex_vectors_.removeLast();
-  }
-
-  /// append a vector of vertices to the set
-  /// \param vertex_vector a QList containing the points of the vertices
-  void append_vertex_vector(QList<QPoint> vertex_vector){
-      std::cout << "Appending vertex vector ";
-      for(QList<QPoint>::iterator i=vertex_vector.begin();i<vertex_vector.end();++i)
-          std::cout << " " << i->x() << " " << i->y();
-      std::cout << std::endl;
-      roi_vertex_vectors_.append(vertex_vector);
-  }
-
-  /// append a vector of vertices to the set
-  /// \param vertex_vector a QList containing the points of the vertices
-  void append_excluded_vertex_vector(QList<QPoint> vertex_vector){
-      std::cout << "Appending excluded vertex vector ";
-      for(QList<QPoint>::iterator i=vertex_vector.begin();i<vertex_vector.end();++i)
-          std::cout << " " << i->x() << " " << i->y();
-      std::cout << std::endl;
-      roi_excluded_vertex_vectors_.append(vertex_vector);
+  /// return a pointer to the roi vertex vectors
+  QList<QList <QPoint> > * boundaryShapes(){
+      return & boundaryShapes_;
   }
 
   /// return a pointer to the roi vertex vectors
-  QList<QList <QPoint> > * get_roi_vertex_vectors(){
-      return & roi_vertex_vectors_;
-  }
-
-  /// return a pointer to the roi vertex vectors
-  QList<QList <QPoint> > * get_roi_excluded_vertex_vectors(){
-      return & roi_excluded_vertex_vectors_;
-  }
-
-  /// display the list of roi vertices
-  void display_roi_vertices(){
-      int shape_it = 0;
-      for(QList<QList<QPoint> >::iterator it=roi_vertex_vectors_.begin();
-          it!=roi_vertex_vectors_.end();++it){
-          std::cout << "Shape " << shape_it;
-          for(QList<QPoint>::iterator cit=it->begin();cit!=it->end();++cit)
-              std::cout << " x " << cit->x() << " y " << cit->y();
-          std::cout << std::endl;
-          shape_it++;
-      }
+  QList<QList <QPoint> > * excludedShapes(){
+      return & excludedShapes_;
   }
 
   /// set the working directory
@@ -207,21 +163,29 @@ public:
   void write_input_file(){
       std::stringstream input_file_ss;
       std::stringstream params_file_ss;
+      std::stringstream subset_file_ss;
+      std::stringstream working_dir_ss;
 #ifdef WIN32
+      working_dir_ss << working_dir_.toStdString() << "\\results\\";
       input_file_ss << working_dir_.toStdString() << "\\" << "input.xml";
       params_file_ss << working_dir_.toStdString() << "\\" << "params.xml";
+      subset_file_ss << working_dir_.toStdString() << "\\" << "subset_defs.txt";
 #else
+      working_dir_ss << working_dir_.toStdString() << "/results/";
       input_file_ss << working_dir_.toStdString() << "/" << "input.xml";
       params_file_ss << working_dir_.toStdString() << "/" << "params.xml";
- #endif
+      subset_file_ss << working_dir_.toStdString() << "/" << "subset_defs.txt";
+#endif
       paramsFile = params_file_ss.str();
       inputFile = input_file_ss.str();
+      subsetFile = subset_file_ss.str();
+
       std::cout << "DICe::Input_Vars::instance(): writing input xml file: " << inputFile << std::endl;
       DICe::initialize_xml_file(inputFile);
 
       DICe::write_xml_comment(inputFile,"Auto generated input file from DICe GUI");
 
-      DICe::write_xml_string_param(inputFile,DICe::output_folder,working_dir_.toStdString(),false);
+      DICe::write_xml_string_param(inputFile,DICe::output_folder,working_dir_ss.str(),false);
       DICe::write_xml_string_param(inputFile,DICe::image_folder,"",false);
       DICe::write_xml_string_param(inputFile,DICe::correlation_parameters_file,paramsFile,false);
 
@@ -236,8 +200,8 @@ public:
 
       DICe::write_xml_bool_param(inputFile,DICe::create_separate_run_info_file,"true",false);
 
-      // TODO add subset file later ...
-      //DICe::write_xml_string_param(inputFile,DICe::subset_file,"<path>");
+      if(boundaryShapes_.size()>0)
+          DICe::write_xml_string_param(inputFile,DICe::subset_file,subsetFile);
 
       DICe::write_xml_string_param(inputFile,DICe::reference_image,ref_file_info_.filePath().toStdString(),false);
 
@@ -258,7 +222,7 @@ public:
       params_file_ss << working_dir_.toStdString() << "\\" << "params.xml";
 #else
       params_file_ss << working_dir_.toStdString() << "/" << "params.xml";
- #endif
+#endif
       paramsFile = params_file_ss.str();
       std::cout << "DICe::Input_Vars::instance(): writing parameters xml file: " << paramsFile << std::endl;
       DICe::initialize_xml_file(paramsFile);
@@ -268,10 +232,10 @@ public:
       DICe::write_xml_string_param(paramsFile,DICe::optimization_method,opt_method_str_,false);
       DICe::write_xml_string_param(paramsFile,DICe::initialization_method,init_method_str_,false);
 
-      DICe::write_xml_bool_param(paramsFile,DICe::enable_translation,enable_translation_,false);
-      DICe::write_xml_bool_param(paramsFile,DICe::enable_rotation,enable_rotation_,false);
-      DICe::write_xml_bool_param(paramsFile,DICe::enable_normal_strain,enable_normal_strain_,false);
-      DICe::write_xml_bool_param(paramsFile,DICe::enable_shear_strain,enable_shear_strain_,false);
+      DICe::write_xml_bool_literal_param(paramsFile,DICe::enable_translation,enable_translation_,false);
+      DICe::write_xml_bool_literal_param(paramsFile,DICe::enable_rotation,enable_rotation_,false);
+      DICe::write_xml_bool_literal_param(paramsFile,DICe::enable_normal_strain,enable_normal_strain_,false);
+      DICe::write_xml_bool_literal_param(paramsFile,DICe::enable_shear_strain,enable_shear_strain_,false);
 
       // set the default delimiter
       DICe::write_xml_string_param(paramsFile,DICe::output_delimiter,",",false);
@@ -285,6 +249,53 @@ public:
 
       DICe::finalize_xml_file(paramsFile);
   }
+
+  /// write the subset.txt file
+  void write_subset_file(){
+      if(boundaryShapes_.size()<=0) return;
+
+      std::stringstream subset_file_ss;
+#ifdef WIN32
+      subset_file_ss << working_dir_.toStdString() << "\\" << "subset_defs.txt";
+#else
+      subset_file_ss << working_dir_.toStdString() << "/" << "subset_defs.txt";
+#endif
+      subsetFile = subset_file_ss.str();
+      std::cout << "DICe::Input_Vars::instance(): writing subset file: " << subsetFile << std::endl;
+
+      // Write the ROIs to file:
+      std::ofstream file;
+      file.open(subsetFile.c_str());
+      file << "begin region_of_interest" << std::endl;
+      file << "  begin boundary" << std::endl;
+      // write all the boundary shapes
+      for(QList<QList<QPoint> >::iterator it=boundaryShapes_.begin();it!=boundaryShapes_.end();++it){
+          file << "    begin polygon" << std::endl;
+          file << "      begin vertices" << std::endl;
+          for(QList<QPoint>::iterator pit=it->begin();pit!=it->end();++pit){
+              file << pit->x() << " " << pit->y() << std::endl;
+          }
+          file << "      end vertices" << std::endl;
+          file << "    end polygon" << std::endl;
+      }
+      file << "  end boundary" << std::endl;
+      if(excludedShapes_.size()>0){
+          file << "  begin excluded" << std::endl;
+          for(QList<QList<QPoint> >::iterator it=excludedShapes_.begin();it!=excludedShapes_.end();++it){
+              file << "    begin polygon" << std::endl;
+              file << "      begin vertices" << std::endl;
+              for(QList<QPoint>::iterator pit=it->begin();pit!=it->end();++pit){
+                  file << pit->x() << " " << pit->y() << std::endl;
+              }
+              file << "      end vertices" << std::endl;
+              file << "    end polygon" << std::endl;
+          }
+          file << "  end excluded" << std::endl;
+      }
+      file << "end region_of_interest" << std::endl;
+      file.close();
+  }
+
 
 private:
   /// constructor
@@ -302,9 +313,9 @@ private:
   /// ROIs
   ///
   /// Boundary
-  QList<QList <QPoint> > roi_vertex_vectors_;
+  QList<QList <QPoint> > boundaryShapes_;
   /// Excluded
-  QList<QList <QPoint> > roi_excluded_vertex_vectors_;
+  QList<QList <QPoint> > excludedShapes_;
 
   /// subset size
   int subset_size_;

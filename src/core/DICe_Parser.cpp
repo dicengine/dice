@@ -1559,7 +1559,7 @@ void write_xml_bool_param(const std::string & file_name, const std::string & nam
   write_xml_param(file_name,name,"bool",value,commented);
 }
 DICE_LIB_DLL_EXPORT
-void write_xml_bool_param(const std::string & file_name, const std::string & name, const bool value,
+void write_xml_bool_literal_param(const std::string & file_name, const std::string & name, const bool value,
   const bool commented){
     if(value)
         write_xml_param(file_name,name,"bool","true",commented);

@@ -259,10 +259,10 @@ private:
     bool panInProgress;
 
     /// Boundary
-    QList<QList <QPoint> > boundaryShapes;
+    //QList<QList <QPoint> > boundaryShapes;
 
     /// Excluded
-    QList<QList <QPoint> > excludedShapes;
+    //QList<QList <QPoint> > excludedShapes;
 
     /// flag that the image has been rescaled by a wheel event
     bool zoomInProgress;
