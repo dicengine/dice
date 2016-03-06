@@ -201,7 +201,7 @@ public:
       DICe::write_xml_bool_param(inputFile,DICe::create_separate_run_info_file,"true",false);
 
       if(boundaryShapes_.size()>0)
-          DICe::write_xml_string_param(inputFile,DICe::subset_file,subsetFile);
+          DICe::write_xml_string_param(inputFile,DICe::subset_file,subsetFile,false);
 
       DICe::write_xml_string_param(inputFile,DICe::reference_image,ref_file_info_.filePath().toStdString(),false);
 
@@ -266,6 +266,7 @@ public:
       // Write the ROIs to file:
       std::ofstream file;
       file.open(subsetFile.c_str());
+      file << "# Auto generated subset file from DICe GUI" << std::endl;
       file << "begin region_of_interest" << std::endl;
       file << "  begin boundary" << std::endl;
       // write all the boundary shapes
@@ -273,7 +274,7 @@ public:
           file << "    begin polygon" << std::endl;
           file << "      begin vertices" << std::endl;
           for(QList<QPoint>::iterator pit=it->begin();pit!=it->end();++pit){
-              file << pit->x() << " " << pit->y() << std::endl;
+              file << "        " << pit->x() << " " << pit->y() << std::endl;
           }
           file << "      end vertices" << std::endl;
           file << "    end polygon" << std::endl;
@@ -285,7 +286,7 @@ public:
               file << "    begin polygon" << std::endl;
               file << "      begin vertices" << std::endl;
               for(QList<QPoint>::iterator pit=it->begin();pit!=it->end();++pit){
-                  file << pit->x() << " " << pit->y() << std::endl;
+                  file << "        " << pit->x() << " " << pit->y() << std::endl;
               }
               file << "      end vertices" << std::endl;
               file << "    end polygon" << std::endl;

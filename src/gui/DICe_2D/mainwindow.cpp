@@ -210,6 +210,7 @@ void MainWindow::on_workingDirButton_clicked()
 }
 
 void MainWindow::writeInputFiles(){
+    std::cout << "Writing input files..." << std::endl << std::endl;
     // set the parameter values:
     DICe::gui::Input_Vars::instance()->set_subset_size(ui->subsetSize->value());
     DICe::gui::Input_Vars::instance()->set_step_size(ui->stepSize->value());
@@ -247,6 +248,7 @@ void MainWindow::writeInputFiles(){
 void MainWindow::on_runButton_clicked()
 {
     writeInputFiles();
+    std::cout << "Running correlation..." << std::endl << std::endl;
 
     std::string inputFile = DICe::gui::Input_Vars::instance()->input_file_name();
     std::vector<std::string> s;
