@@ -17,12 +17,20 @@ ELSE()
   MESSAGE(FATAL_ERROR "\nERROR: could not find Qt5Widgets in the following directory: ${QT_DIR}")
 ENDIF()
 
+find_package(Qt5PrintSupport PATHS ${QT_DIR})
+IF(Qt5PrintSupport_FOUND)
+  MESSAGE(STATUS "Found Qt5PrintSupport in ${QT_DIR}")
+ELSE()
+  MESSAGE(FATAL_ERROR "\nERROR: could not find Qt5PrintSupport in the following directory: ${QT_DIR}")
+ENDIF()
+
 set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_RELEASE} -fprofile-arcs -ftest-coverage")
 
 # set up a mapping so that the Release configuration for the Qt imported target is
 # used in the COVERAGE CMake configuration.
 set_target_properties(Qt5::Core PROPERTIES MAP_IMPORTED_CONFIG_COVERAGE "RELEASE")
 set_target_properties(Qt5::Widgets PROPERTIES MAP_IMPORTED_CONFIG_COVERAGE "RELEASE")
+set_target_properties(Qt5::PrintSupport PROPERTIES MAP_IMPORTED_CONFIG_COVERAGE "RELEASE")
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)

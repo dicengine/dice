@@ -6,7 +6,7 @@
 
 QT       += core gui
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 
 TARGET = DICe_2D
 TEMPLATE = app
@@ -15,12 +15,14 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     qimageroiselector.cpp \
-    qselectionarea.cpp
+    qselectionarea.cpp \
+    qcustomplot.cpp
 
 HEADERS  += mainwindow.h \
     qimageroiselector.h \
     qselectionarea.h \
-    qdebugstream.h
+    qdebugstream.h \
+    qcustomplot.h
 
 FORMS    += mainwindow.ui \
     qimageroiselector.ui

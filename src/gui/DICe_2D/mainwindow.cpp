@@ -45,6 +45,7 @@
 #include <QFileInfo>
 #include <QDesktopServices>
 #include <qimageroiselector.h>
+#include <qcustomplot.h>
 #include <iostream>
 
 #include <DICe_InputVars.h>

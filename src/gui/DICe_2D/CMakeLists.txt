@@ -2,6 +2,7 @@ SET(DICE_SOURCES
   mainwindow.cpp
   qimageroiselector.cpp
   qselectionarea.cpp
+  qcustomplot.cpp
   resources.qrc
 )
 
@@ -11,6 +12,7 @@ SET(DICE_HEADERS
   qimageroiselector.h
   qselectionarea.h
   qdebugstream.h
+  qcustomplot.h
 )
 
 include_directories (
@@ -21,7 +23,7 @@ include_directories (
 )
 
 add_library(mainwindow ${DICE_SOURCES})
-target_link_libraries (mainwindow Qt5::Widgets dicecore dicemain)
+target_link_libraries (mainwindow Qt5::Widgets Qt5::PrintSupport dicecore dicemain)
 
 add_executable(dice_gui main.cpp resources.qrc)
 target_link_libraries(dice_gui mainwindow)

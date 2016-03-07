@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1323</width>
-    <height>862</height>
+    <width>1245</width>
+    <height>1027</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -212,7 +212,7 @@ background-color: #404040;
     <property name="verticalSpacing">
      <number>25</number>
     </property>
-    <item row="4" column="0">
+    <item row="3" column="0">
      <widget class="QGroupBox" name="groupBox_5">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -265,7 +265,7 @@ background-color: #404040;
       </layout>
      </widget>
     </item>
-    <item row="4" column="2">
+    <item row="3" column="1">
      <widget class="QGroupBox" name="groupBox_6">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -296,8 +296,80 @@ background-color: #404040;
       </layout>
      </widget>
     </item>
-    <item row="1" column="0">
+    <item row="0" column="1" rowspan="2">
      <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="inputPage">
+       <attribute name="title">
+        <string>Input</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_16">
+        <item>
+         <widget class="QImageROISelector" name="ROISelector" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="mouseTracking">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="resultsPage">
+       <attribute name="title">
+        <string>Results</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_17">
+        <item>
+         <widget class="QCustomPlot" name="widget" native="true"/>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QPushButton" name="diceButton">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>75</width>
+        <height>75</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>300</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/images/resources/images/DICe_logo_white-01.png</normaloff>:/images/resources/images/DICe_logo_white-01.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>250</width>
+        <height>75</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QTabWidget" name="inputTab">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
         <horstretch>0</horstretch>
@@ -306,7 +378,7 @@ background-color: #404040;
       </property>
       <property name="minimumSize">
        <size>
-        <width>200</width>
+        <width>250</width>
         <height>500</height>
        </size>
       </property>
@@ -794,48 +866,6 @@ background-color: #404040;
       </widget>
      </widget>
     </item>
-    <item row="0" column="0">
-     <widget class="QPushButton" name="diceButton">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="minimumSize">
-       <size>
-        <width>75</width>
-        <height>75</height>
-       </size>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-      <property name="icon">
-       <iconset resource="resources.qrc">
-        <normaloff>:/images/resources/images/DICe_logo_white-01.png</normaloff>:/images/resources/images/DICe_logo_white-01.png</iconset>
-      </property>
-      <property name="iconSize">
-       <size>
-        <width>250</width>
-        <height>75</height>
-       </size>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="2" rowspan="2">
-     <widget class="QImageROISelector" name="ROISelector" native="true">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="mouseTracking">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -843,7 +873,7 @@ background-color: #404040;
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1323</width>
+     <width>1245</width>
      <height>22</height>
     </rect>
    </property>
@@ -855,6 +885,12 @@ background-color: #404040;
    <class>QImageROISelector</class>
    <extends>QWidget</extends>
    <header>qimageroiselector.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QCustomPlot</class>
+   <extends>QWidget</extends>
+   <header>qcustomplot.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
