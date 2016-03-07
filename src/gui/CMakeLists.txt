@@ -37,4 +37,12 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+# copy over the dll files so that they are in the path for windows
+IF(WIN32)
+  FILE(COPY ${QT_DIR}/bin/Qt5Core.dll DESTINATION ${DICE_OUTPUT_PREFIX}/bin)
+  FILE(COPY ${QT_DIR}/bin/Qt5Gui.dll DESTINATION ${DICE_OUTPUT_PREFIX}/bin)
+  FILE(COPY ${QT_DIR}/bin/Qt5Widgets.dll DESTINATION ${DICE_OUTPUT_PREFIX}/bin)
+  FILE(COPY ${QT_DIR}/bin/Qt5PrintSupport.dll DESTINATION ${DICE_OUTPUT_PREFIX}/bin)
+ENDIF()
+
 add_subdirectory(DICe_2D)
