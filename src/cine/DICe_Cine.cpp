@@ -241,7 +241,7 @@ Cine_Reader::get_frames(const int_t frame_index_start, const int_t frame_index_e
           two_byte = LinLUT[two_byte];
           // save off the pixel
           converted_intensity = static_cast<intensity_t>(two_byte) * (255.0/4095.0);
-          if(converted_intensity==255.0 && pixel_index > 0){
+          if(filter_failed_pixels_ && converted_intensity==255.0 && pixel_index > 0){
             failed_pixels++;
             intensities[pixel_index] = intensities[pixel_index -1];
           }
