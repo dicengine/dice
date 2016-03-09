@@ -155,6 +155,8 @@ const char* const compute_def_gradients = "compute_def_gradients";
 /// String parameter name
 const char* const compute_image_gradients = "compute_image_gradients";
 /// String parameter name
+const char* const filter_failed_cine_pixels = "filter_failed_cine_pixels";
+/// String parameter name
 const char* const enable_translation = "enable_translation";
 /// String parameter name
 const char* const enable_rotation = "enable_rotation";
@@ -867,10 +869,15 @@ const Correlation_Parameter compute_image_gradients_param(compute_image_gradient
   BOOL_PARAM,
   false,
   "Compute image gradients");
+/// Correlation parameter and properties
+const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_pixels,
+  BOOL_PARAM,
+  false,
+  "Filter out any pixels that failed during cine acquisition");
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 56;
+const int_t num_valid_correlation_params = 57;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -928,7 +935,8 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   rotate_def_image_180_param,
   rotate_ref_image_270_param,
   rotate_def_image_270_param,
-  objective_regularization_factor_param
+  objective_regularization_factor_param,
+  filter_failed_cine_pixels_param
 };
 
 // TODO don't forget to update this when adding a new one

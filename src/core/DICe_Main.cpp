@@ -115,7 +115,8 @@ int main(int argc, char *argv[]) {
     cine_name << input_params->get<std::string>(DICe::image_folder) << cine_file_name;
     *outStream << "cine file name: " << cine_name.str() << std::endl;
     // read the cine header info:
-    cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(cine_name.str(),outStream.getRawPtr()));
+    const bool filter_failed_pixels = correlation_params->get<bool>(DICe::filter_failed_cine_pixels,false);
+    cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(cine_name.str(),outStream.getRawPtr(),filter_failed_pixels));
     // read the image data for a frame
     num_images = cine_reader->num_frames();
     image_width = cine_reader->width();

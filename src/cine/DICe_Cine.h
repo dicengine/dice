@@ -185,7 +185,8 @@ public:
   /// \param file_name the name of the cine file
   /// \param out_stream (optional) output stream
   Cine_Reader(const std::string & file_name,
-    std::ostream * out_stream = NULL);
+    std::ostream * out_stream = NULL,
+    const bool filter_failed_pixels=false);
   /// default destructor
   virtual ~Cine_Reader(){};
   /// \brief get an image from the cine file
@@ -225,6 +226,8 @@ private:
   std::ostream * out_stream_;
   /// flag to prevent warnings from appearing multiple times for each frame
   bool bit_12_warning_;
+  /// flag to filter out failed pixels
+  bool filter_failed_pixels_;
 };
 
 }// end cine namespace

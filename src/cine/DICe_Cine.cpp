@@ -78,9 +78,12 @@ const static uint16_t LinLUT[1024] =
  3732,3740, 3749,3757,3765,3773,3781,3789,3798,3806,3814,3822,3830,3839,3847,3855,3863,3872, 3880,3888,3897,3905,3913,3922,3930,3938,3947,3955,3963,3972,3980,3989,3997,4006, 4014,4022,4031,4039,4048,4056,
  4064,4095,4095,4095,4095,4095,4095,4095,4095,4095 };
 
-Cine_Reader::Cine_Reader(const std::string & file_name, std::ostream * out_stream):
+Cine_Reader::Cine_Reader(const std::string & file_name,
+  std::ostream * out_stream,
+  const bool filter_failed_pixels):
   out_stream_(out_stream),
-  bit_12_warning_(false)
+  bit_12_warning_(false),
+  filter_failed_pixels_(filter_failed_pixels)
 {
   cine_header_ = read_cine_headers(file_name.c_str(),out_stream);
 }
@@ -172,6 +175,7 @@ Cine_Reader::get_frames(const int_t frame_index_start, const int_t frame_index_e
   for(int_t frame=0;frame<num_frames;++frame){
     Teuchos::ArrayRCP<intensity_t> intensities  = Teuchos::ArrayRCP<intensity_t>(num_pixels,0.0);
 
+    int_t failed_pixels = 0;
     // read in the pixels
     if(bit_depth==8){
       // get to the start of the frame in the buffer
@@ -201,7 +205,7 @@ Cine_Reader::get_frames(const int_t frame_index_start, const int_t frame_index_e
       // if so, scale the numbers as if 12bit
       if(max_intens < 4096){
         if(out_stream_ && !bit_12_warning_){
-          *out_stream_ << "*** Warning, .cine image: " << cine_header_->file_name_  << std::endl <<
+          *out_stream_ << "*** Warning, .cine file: " << cine_header_->file_name_  << std::endl <<
               "             was detected to be 12bit depth, but stored and denoted in the header as 16bit." << std::endl <<
               "             The actual intensity value range is 0 to 4095, not 0 to 65535 as denoted in the header." << std::endl;
           bit_12_warning_ = true;
@@ -237,7 +241,12 @@ Cine_Reader::get_frames(const int_t frame_index_start, const int_t frame_index_e
           two_byte = LinLUT[two_byte];
           // save off the pixel
           converted_intensity = static_cast<intensity_t>(two_byte) * (255.0/4095.0);
-          intensities[pixel_index] = converted_intensity; // packed bits are stored top down as usual
+          if(converted_intensity==255.0 && pixel_index > 0){
+            failed_pixels++;
+            intensities[pixel_index] = intensities[pixel_index -1];
+          }
+          else
+            intensities[pixel_index] = converted_intensity; // packed bits are stored top down as usual
           pixel_index++;
           loc++;
         }
@@ -248,6 +257,11 @@ Cine_Reader::get_frames(const int_t frame_index_start, const int_t frame_index_e
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument, "Error: invalid bit depth (or this bit-depth has not been implemented.");
     }
     frame_rcps[frame] = Teuchos::rcp(new Image(img_width,img_height,intensities,params));
+    if(failed_pixels>0){
+      *out_stream_ << "*** Warning, this frame of .cine file: " << cine_header_->file_name_ << std::endl <<
+          "             has " << failed_pixels << " failed pixels (>= max intensity value)." << std::endl <<
+          "             The intensity value for these pixels has been replaced with the neighbor value." << std::endl;
+    }
   } // end frame
   delete[] buffer;
   cine_file.close();
