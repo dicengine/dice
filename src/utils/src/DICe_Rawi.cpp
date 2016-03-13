@@ -75,7 +75,6 @@ DICE_LIB_DLL_EXPORT
 void read_rawi_image(const char * file_name,
   intensity_t * intensities,
   const bool is_layout_right){
-  assert(file_name!="");
 
   std::ifstream rawi_file (file_name, std::ifstream::in | std::ifstream::binary);
   if (!rawi_file.is_open()){
@@ -96,13 +95,13 @@ void read_rawi_image(const char * file_name,
     exit(1);
   }
   // read the image data:
-  for (int_t y=0; y<h; ++y) {
+  for (uint32_t y=0; y<h; ++y) {
     if(is_layout_right)
-      for (int_t x=0; x<w;++x){
+      for (uint32_t x=0; x<w;++x){
         rawi_file.read(reinterpret_cast<char*>(&intensities[y*w+x]),sizeof(intensity_t));
       }
     else // otherwise assume layout left
-      for (int_t x=0; x<w;++x){
+      for (uint32_t x=0; x<w;++x){
         rawi_file.read(reinterpret_cast<char*>(&intensities[x*h+y]),sizeof(intensity_t));
       }
   }
@@ -115,7 +114,6 @@ void write_rawi_image(const char * file_name,
   const int_t height,
   intensity_t * intensities,
   const bool is_layout_right){
-  assert(file_name!="");
   assert(width > 0);
   assert(height > 0);
 

@@ -124,7 +124,6 @@ DICE_LIB_DLL_EXPORT
 void read_image(const char * file_name,
   intensity_t * intensities,
   const bool is_layout_right){
-  assert(file_name!="");
   // determine the file type based on the file_name
   Image_File_Type file_type = image_file_type(file_name);
   if(file_type==NO_SUCH_IMAGE_FILE_TYPE){
@@ -179,7 +178,6 @@ void read_image(const char * file_name,
   int_t height,
   intensity_t * intensities,
   const bool is_layout_right){
-  assert(file_name!="");
   // determine the file type based on the file_name
   Image_File_Type file_type = image_file_type(file_name);
   if(file_type==NO_SUCH_IMAGE_FILE_TYPE){
@@ -210,10 +208,8 @@ void read_image(const char * file_name,
       std::cerr << "Error, unrecognized image file type for file: " << file_name << "\n";
       throw std::exception();
     }
-    const int_t img_width = img.width();
-    const int_t img_height = img.height();
-    assert(width+offset_x <= img_width);
-    assert(height+offset_y <= img_height);
+    assert(width+offset_x <= img.width());
+    assert(height+offset_y <= img.height());
     boost::gil::gray8c_view_t img_view = boost::gil::const_view(img);
     for (int_t y=offset_y; y<offset_y+height; ++y) {
       boost::gil::gray8c_view_t::x_iterator src_it = img_view.row_begin(y);
@@ -235,7 +231,6 @@ void write_image(const char * file_name,
   const int_t height,
   intensity_t * intensities,
   const bool is_layout_right){
-  assert(file_name!="");
   // determine the file type based on the file_name
   Image_File_Type file_type = image_file_type(file_name);
   if(file_type==NO_SUCH_IMAGE_FILE_TYPE){
@@ -251,7 +246,7 @@ void write_image(const char * file_name,
     // negative values are shifted to start at zero so all values will be positive
     intensity_t max_intensity = -1.0E10;
     intensity_t min_intensity = 1.0E10;
-    for(size_t i=0; i<width*height; ++i){
+    for(int_t i=0; i<width*height; ++i){
       if(intensities[i] > max_intensity) max_intensity = intensities[i];
       if(intensities[i] < min_intensity) min_intensity = intensities[i];
     }

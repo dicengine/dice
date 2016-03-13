@@ -312,7 +312,7 @@ private:
   /// Window size for the virtual strain gauge (in pixels)
   int_t mesh_size_;
   /// The stride used for the compute vectors
-  int_t vec_stride_;
+  //int_t vec_stride_;
 };
 
 

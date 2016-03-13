@@ -232,12 +232,12 @@ Circle::Circle(const int_t centroid_x,
   const scalar_t & radius):
   centroid_x_(centroid_x),
   centroid_y_(centroid_y),
-  radius_(radius),
+  //radius_(radius),
   radius2_(radius*radius)
 {
   assert(centroid_x_>0);
   assert(centroid_y_>0);
-  assert(radius_>0);
+  //assert(radius_>0);
   min_x_ = centroid_x_ - radius - 1;
   max_x_ = centroid_x_ + radius + 1;
   min_y_ = centroid_y_ - radius - 1;
