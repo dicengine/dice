@@ -15,14 +15,12 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     qimageroiselector.cpp \
-    qselectionarea.cpp \
-    qcustomplot.cpp
+    qselectionarea.cpp
 
 HEADERS  += mainwindow.h \
     qimageroiselector.h \
     qselectionarea.h \
-    qdebugstream.h \
-    qcustomplot.h
+    qdebugstream.h
 
 FORMS    += mainwindow.ui \
     qimageroiselector.ui

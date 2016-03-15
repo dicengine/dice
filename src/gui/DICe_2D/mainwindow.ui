@@ -325,11 +325,7 @@ background-color: #404040;
        <attribute name="title">
         <string>Results</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_17">
-        <item>
-         <widget class="QCustomPlot" name="widget" native="true"/>
-        </item>
-       </layout>
+       <layout class="QVBoxLayout" name="verticalLayout_17"/>
       </widget>
      </widget>
     </item>
@@ -885,12 +881,6 @@ background-color: #404040;
    <class>QImageROISelector</class>
    <extends>QWidget</extends>
    <header>qimageroiselector.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>QCustomPlot</class>
-   <extends>QWidget</extends>
-   <header>qcustomplot.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
