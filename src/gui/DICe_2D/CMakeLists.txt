@@ -16,15 +16,18 @@ SET(DICE_HEADERS
   simpleqtvtk.h
 )
 
+include(${VTK_USE_FILE})
+
 include_directories (
   .
   ${DICE_HEADER_DIRS}
   ${DICE_TRILINOS_HEADERS}
   ${QT_DIR}/include
+  ${VTK_DIR}/include/vtk-7.0
 )
 
 add_executable(dice_gui ${DICE_SOURCES} ${DICE_HEADERS})
-target_link_libraries(dice_gui Qt5::Widgets dicecore dicemain)
+target_link_libraries(dice_gui Qt5::Widgets dicecore dicemain ${VTK_LIBRARIES})
 target_compile_definitions(dice_gui PRIVATE -D DICE_LIB_EXPORTS_MODE)
 
 install(FILES ${DICE_HEADERS}

@@ -37,6 +37,13 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+find_package(VTK REQUIRED PATHS ${VTK_DIR})
+IF(VTK_FOUND)
+  MESSAGE(STATUS "Found VTK in ${VTK_DIR}")
+  ELSE()
+    MESSAGE(FATAL_ERROR "\nERROR: could not find VTK in the following directory: ${VTK_DIR}")
+ENDIF()
+
 # copy over the dll files so that they are in the path for windows
 IF(WIN32)
   FILE(COPY ${QT_DIR}/bin/Qt5Core.dll DESTINATION ${DICE_OUTPUT_PREFIX}/bin)
