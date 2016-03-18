@@ -14,16 +14,14 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    qimageroiselector.cpp \
-    qselectionarea.cpp
+        simpleqtvtk.cpp
 
 HEADERS  += mainwindow.h \
-    qimageroiselector.h \
-    qselectionarea.h \
-    qdebugstream.h
+    qdebugstream.h \
+    simpleqtvtk.h
 
 FORMS    += mainwindow.ui \
-    qimageroiselector.ui
+         simpleqtvtk.ui
 
 RESOURCES += \
     resources.qrc

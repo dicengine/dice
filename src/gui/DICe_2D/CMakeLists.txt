@@ -1,8 +1,6 @@
 SET(DICE_SOURCES
   main.cpp
   mainwindow.cpp
-  qimageroiselector.cpp
-  qselectionarea.cpp
   simpleqtvtk.cpp
   resources.qrc
 )
@@ -10,8 +8,6 @@ SET(DICE_SOURCES
 SET(DICE_HEADERS
   DICe_InputVars.h
   mainwindow.h
-  qimageroiselector.h
-  qselectionarea.h
   qdebugstream.h
   simpleqtvtk.h
 )

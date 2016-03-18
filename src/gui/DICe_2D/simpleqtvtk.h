@@ -43,6 +43,7 @@
 
 #include <QWidget>
 #include <QFileInfo>
+#include <QMessageBox>
 
 #include <vtkSmartPointer.h>
 #include <vtkPolyData.h>
@@ -58,11 +59,249 @@
 #include <vtkColorTransferFunction.h>
 #include <vtkAxesActor.h>
 #include <vtkOrientationMarkerWidget.h>
+#include <vtkCornerAnnotation.h>
+#include <vtkCommand.h>
+#include <vtkPropPicker.h>
+#include <vtkInteractorStyle.h>
+#include <vtkInteractorStyleImage.h>
+#include <vtkRenderWindow.h>
+#include <vtkRendererCollection.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkAssemblyPath.h>
+#include <vtkMath.h>
+#include <vtkObjectFactory.h>
+#include <vtkPolygon.h>
+#include <vtkProperty.h>
+#include <vtkTriangleFilter.h>
+#include <vtkLine.h>
+#include <vtkImageMapToColors.h>
+#include <vtkLookupTable.h>
 
 
 namespace Ui {
 class SimpleQtVTK;
 }
+
+/// \class PolygonMouseInteractorStyle
+/// \brief Enables the user to draw regions ond display regions on the image
+class PolygonMouseInteractorStyle : public vtkInteractorStyleImage
+{
+  public:
+    /// constructor
+    static PolygonMouseInteractorStyle* New();
+    /// constructor
+    PolygonMouseInteractorStyle();
+    /// enable boundary region creation
+    void setBoundaryEnabled(const bool flag);
+    /// enable excluded region creation
+    void setExcludedEnabled(const bool flag);
+    /// set the extents of the background image
+    void setImageExtents(const double & startX, const double & endX,
+                         const double & startY, const double & endY, const double & spacing);
+    /// returns 1 if the three points form a counterclockwise angle, -1 if clockwise, and 0 if colinear
+    int clockwise(const double* a, const double *b, const double*c);
+    /// returns true if the lines ap-aq and bp-bq intersect
+    bool isIntersecting(const double* ap, const double* aq,
+                        const double *bp, const double *bq);
+    /// checks for a valid polygon
+    // 1 is valid polygon, -1 is degenerate points, -2 is co-linear points, -3 is self-intersecting or colinear, -4 too few points
+    int isValidPolygon();
+    /// draws lines that define the existing shapes
+    void drawExistingLines(const bool useExcluded);
+    /// draws lines for a region in progress
+    void drawLines(vtkSmartPointer<vtkPoints> ptSet);
+    /// draws a polygon for a region in progress
+    void drawPolygon(vtkSmartPointer<vtkPoints> ptSet);
+    /// set the extents of the mask image
+    void initializeMaskImage();
+    /// remove all the polygons from storage
+    void clearPolygons();
+    /// reset any regions in progress and redraw existing ones
+    void resetShapesInProgress();
+    /// add all the region actors to the renderer
+    void addActors();
+    /// remove all the region actors from the renderer
+    void removeActors();
+    /// remove the last polygon from the stored set
+    bool decrementPolygon(const bool excluded=false);
+    /// set all the pixels inside active regions to a certain color
+    void markPixelsInPolygon(const double & value, const bool useExcluded=false);
+    /// draw all of the stored polygons
+    void drawExistingPolygons();
+    /// create a list of the polygon vertices
+    void exportVertices(QList<QList<QPoint> > * boundary, QList<QList<QPoint> > * excluded);
+    /// Mouse interactions
+    virtual void OnRightButtonDown();
+    virtual void OnMouseMove();
+    virtual void OnLeftButtonDown();
+private:
+    /// vertices of polygons in progress or being drawn
+    vtkSmartPointer<vtkPoints> currentPoints;
+    /// a copy of the polygon vertices in progress with one vertex added for the mouse position
+    vtkSmartPointer<vtkPoints> currentPointsP1;
+    /// mapper to draw polygons in progress
+    vtkSmartPointer<vtkPolyDataMapper> mapper;
+    /// actor to show polygons in progress
+    vtkSmartPointer<vtkActor> actor;
+    /// mapper to draw lines of polygons in progress
+    vtkSmartPointer<vtkPolyDataMapper> lineMapper;
+    /// actor to display lines for polygons in progress
+    vtkSmartPointer<vtkActor> lineActor;
+    /// mapper to draw lines for excluded polygons
+    vtkSmartPointer<vtkPolyDataMapper> excludedLineMapper;
+    /// actor to display lines for excluded polygons
+    vtkSmartPointer<vtkActor> excludedLineActor;
+    /// mapper to draw lines for boundary polygons
+    vtkSmartPointer<vtkPolyDataMapper> boundaryLineMapper;
+    /// actor to display lines for boundary polygons
+    vtkSmartPointer<vtkActor> boundaryLineActor;
+    /// mapper to draw existing polygons
+    vtkSmartPointer<vtkPolyDataMapper> existingMapper;
+    /// actor to display existing polygons
+    vtkSmartPointer<vtkImageActor> existingActor;
+    /// used for converting mouse coordinates to image coords
+    vtkSmartPointer<vtkCoordinate> coordinate;
+    /// a mask that shows all the existing polygons
+    vtkSmartPointer<vtkImageData> maskImage;
+    /// lookup table for the polygon mask
+    vtkSmartPointer<vtkLookupTable> maskLUT;
+    /// converts the double values in the image to an alpha value
+    vtkSmartPointer<vtkImageMapToColors> mapTransparency;
+    /// storage for boundary vertices
+    std::vector<vtkSmartPointer<vtkPoints> > boundaryPointsVector;
+    /// storage for excluded vertices
+    std::vector<vtkSmartPointer<vtkPoints> > excludedPointsVector;
+    /// start image coord in X
+    double imageStartX;
+    /// start image coord in Y
+    double imageStartY;
+    /// end image coord in X
+    double imageEndX;
+    /// end image coord in Y
+    double imageEndY;
+    /// scale of the image vs. display coords
+    double imageSpacing;
+    /// determines if drawing boundary regions is enabled
+    bool boundaryEnabled;
+    /// determines if drawing excluded regions is enabled
+    bool excludedEnabled;
+};
+
+// The mouse motion callback, to pick the image and recover pixel values
+class vtkImageInteractionCallback : public vtkCommand
+{
+public:
+    static vtkImageInteractionCallback *New(){
+        return new vtkImageInteractionCallback;
+    }
+    vtkImageInteractionCallback(){
+        //this->Viewer     = NULL;
+        this->Image = NULL;
+        this->Actor = NULL;
+        this->Renderer = NULL;
+        this->Interactor = NULL;
+        this->Picker     = NULL;
+        this->Annotation = NULL;
+    }
+    ~vtkImageInteractionCallback(){
+        //this->Viewer     = NULL;
+        this->Image = NULL;
+        this->Actor = NULL;
+        this->Renderer = NULL;
+        this->Interactor = NULL;
+        this->Picker     = NULL;
+        this->Annotation = NULL;
+    }
+    void SetOriginSpacing(const double & originX, const double & originY, const double & spacingX, const double & spacingY){
+        this->ox = originY;
+        this->oy = originX;
+        this->sx = spacingX;
+        this->sy = spacingY;
+    }
+    void SetPointers(vtkPropPicker *picker,
+                     vtkCornerAnnotation *annotation,
+                     vtkRenderWindowInteractor *interactor,
+                     vtkRenderer *renderer,
+                     vtkImageActor *actor,
+                     vtkImageData *image){
+
+        this->Picker = picker;
+        this->Annotation = annotation;
+        this->Interactor = interactor;
+        this->Renderer = renderer;
+        this->Actor = actor;
+        this->Image = image;
+    }
+    virtual void Execute(vtkObject *, unsigned long vtkNotUsed(event), void *){
+        vtkInteractorStyle *style = vtkInteractorStyle::SafeDownCast(
+                    Interactor->GetInteractorStyle());
+
+        // Pick at the mouse location provided by the interactor
+        this->Picker->Pick(Interactor->GetEventPosition()[0],
+                Interactor->GetEventPosition()[1],
+                0.0, Renderer);
+
+        // There could be other props assigned to this picker, so
+        // make sure we picked the image actor
+        vtkAssemblyPath* path = this->Picker->GetPath();
+        bool validPick = false;
+
+        if (path)
+        {
+            vtkCollectionSimpleIterator sit;
+            path->InitTraversal(sit);
+            vtkAssemblyNode *node;
+            for (int i = 0; i < path->GetNumberOfItems() && !validPick; ++i)
+            {
+                node = path->GetNextNode(sit);
+                if (Actor == vtkImageActor::SafeDownCast(node->GetViewProp()))
+                {
+                    validPick = true;
+                }
+            }
+        }
+
+        if (!validPick)
+        {
+            this->Annotation->SetText(0, "(-,-,-)");
+            Interactor->Render();
+            // Pass the event further on
+            style->OnMouseMove();
+            return;
+        }
+
+        // Get the world coordinates of the pick
+        double pos[3];
+        this->Picker->GetPickPosition(pos);
+
+        int image_coordinate[3];
+        image_coordinate[0] = sx==0.0? 0.0 : vtkMath::Round(pos[0]/sx+ox);
+        image_coordinate[1] = sy==0.0? 0.0 : vtkMath::Round(pos[1]/sy+oy);
+        image_coordinate[2] = 0.0;
+
+        std::string message = "(";
+        message += vtkVariant(image_coordinate[0]).ToString();
+        message += ",";
+        message += vtkVariant(image_coordinate[1]).ToString();
+        message += ",";
+        message += vtkVariant(image_coordinate[2]).ToString();
+        message += ")";
+        this->Annotation->SetText( 0, message.c_str() );
+        Interactor->Render();
+        style->OnMouseMove();
+    }
+
+private:
+    vtkImageActor* Actor;
+    vtkRenderer* Renderer;
+    vtkRenderWindowInteractor *Interactor;
+    vtkPropPicker*        Picker;      // Pointer to the picker
+    vtkCornerAnnotation*  Annotation;  // Pointer to the annotation
+    vtkImageData* Image;
+    double ox,oy;
+    double sx,sy;
+};
+
 
 class SimpleQtVTK : public QWidget
 {
@@ -113,11 +352,22 @@ public:
     /// reset the color scale
     void resetColorScale(const int & index);
 
+    /// reset the camera
+    void resetCamera();
+
     /// determine the alpha to use for triangulation
     void estimateTriAlpha();
 
     /// determine the indices of certain fields like coordinates
     void determinePrimaryFieldIndices();
+
+    /// export the vertices from the geometry interface
+    void exportVertices(QList<QList<QPoint> > * boundary, QList<QList<QPoint> > * excluded){
+        style->exportVertices(boundary,excluded);
+    }
+
+    /// setup the viewer for the right mode of interaction
+    void changeInteractionMode(const int mode);
 
 private slots:
     void on_fieldsCombo_currentIndexChanged(int index);
@@ -145,6 +395,22 @@ private slots:
     void on_displaceMeshBox_clicked();
 
     void on_screenShotButton_clicked();
+
+    void on_boundaryPlus_clicked();
+
+    void on_excludedPlus_clicked();
+
+    void on_hideCoordsBox_clicked();
+
+    void on_boundaryMinus_clicked();
+
+    void on_excludedMinus_clicked();
+
+    void on_hideImageBox_clicked();
+
+    void on_resetGeoButton_clicked();
+
+    void on_tabWidget_tabBarClicked(int index);
 
 private:
     Ui::SimpleQtVTK *ui;
@@ -192,6 +458,9 @@ private:
     vtkSmartPointer<vtkAxesActor> axes;
     /// orientation
     vtkSmartPointer<vtkOrientationMarkerWidget> orientationWidget;
+    // interactor style
+    //vtkSmartPointer<vtkInteractorStyleImage> style;
+    vtkSmartPointer<PolygonMouseInteractorStyle> style;
 
     /// field index of x coords
     int XIndex;
@@ -201,7 +470,25 @@ private:
     int dispXIndex;
     /// field index of disp y
     int dispYIndex;
+
+    /// original camera position info
+    double imageOrigin[3];
+    double imageSpacing[3];
+    int imageExtent[6];
+
+    /// window annotations
+    vtkSmartPointer<vtkCornerAnnotation> cornerAnnotation;
+    /// picker
+    vtkSmartPointer<vtkPropPicker> propPicker;
+    /// call back
+    vtkSmartPointer<vtkImageInteractionCallback> callback;
+
+
 };
+
+
+
+
 
 // TODO: need to check for points that are coincident and deal with them
 //       two points may lie in the same place, the triangulation will get rid of one

@@ -296,49 +296,6 @@ background-color: #404040;
       </layout>
      </widget>
     </item>
-    <item row="0" column="1" rowspan="2">
-     <widget class="QTabWidget" name="tabWidget">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="currentIndex">
-       <number>0</number>
-      </property>
-      <widget class="QWidget" name="inputPage">
-       <attribute name="title">
-        <string>Input</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_16">
-        <item>
-         <widget class="QImageROISelector" name="ROISelector" native="true">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="mouseTracking">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="resultsPage">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <attribute name="title">
-        <string>Results</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_17">
-        <item>
-         <widget class="SimpleQtVTK" name="simpleVTKWidget" native="true"/>
-        </item>
-       </layout>
-      </widget>
-     </widget>
-    </item>
     <item row="0" column="0">
      <widget class="QPushButton" name="diceButton">
       <property name="sizePolicy">
@@ -872,6 +829,9 @@ background-color: #404040;
       </widget>
      </widget>
     </item>
+    <item row="0" column="1" rowspan="2">
+     <widget class="SimpleQtVTK" name="simpleQtVTKWidget" native="true"/>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -888,15 +848,9 @@ background-color: #404040;
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>QImageROISelector</class>
-   <extends>QWidget</extends>
-   <header>qimageroiselector.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>SimpleQtVTK</class>
    <extends>QWidget</extends>
-   <header>simpleqtvtk.h</header>
+   <header location="global">simpleqtvtk.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

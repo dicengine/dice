@@ -45,7 +45,6 @@
 #include <QFileInfo>
 #include <QDirIterator>
 #include <QDesktopServices>
-#include <qimageroiselector.h>
 #include <iostream>
 
 #include <DICe_InputVars.h>
@@ -127,7 +126,8 @@ void MainWindow::on_refFileButton_clicked()
     
     // display the name of the file in the reference file box
     QString refFileName = refFileInfo.fileName();
-    ui->ROISelector->setImage(refFileInfo);
+    ui->simpleQtVTKWidget->readImageFile(refFileInfo.filePath().toStdString());
+    //ui->ROISelector->setImage(refFileInfo);
     ui->refFileLine->setText(refFileName);
 
     // if the deformed images are populated then activate the write and run buttons
@@ -276,7 +276,7 @@ void MainWindow::prepResultsViewer()
 
     if(defImageFiles.size()>0){
         try{
-            ui->simpleVTKWidget->setFileNames(resFiles,images);
+            ui->simpleQtVTKWidget->setFileNames(resFiles,images);
         }catch(std::exception & e){
             std::cout << "Exception was thrown !!" << e.what() << std::endl;
         }
