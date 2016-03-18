@@ -157,6 +157,8 @@ void SimpleQtVTK::updateCurrentFile(const int fileIndex, const bool resetAlpha){
     QFileInfo result = resultsFiles[fileIndex];
     readResultsFile(result.fileName().toStdString());
 
+    determinePrimaryFieldIndices();
+
     // estimate alpha:
     if(resetAlpha)
         estimateTriAlpha();
@@ -189,7 +191,6 @@ void SimpleQtVTK::updateCurrentFile(const int fileIndex, const bool resetAlpha){
 }
 
 void SimpleQtVTK::setFileNames(QStringList & resFiles, QStringList & imgFiles){
-
     if(imgFiles.size()!=0 && imgFiles.size()!=resFiles.size()){
         std::cout << "ERROR: results file list and image file list are not the same size but must be." << std::endl;
     }
@@ -204,6 +205,40 @@ void SimpleQtVTK::setFileNames(QStringList & resFiles, QStringList & imgFiles){
         QFileInfo currentFile = *it;
         QString shortFileName = currentFile.fileName();
         ui->fileCombo->addItem(shortFileName);
+    }
+}
+
+
+void SimpleQtVTK::determinePrimaryFieldIndices(){
+    XIndex = -1;
+    YIndex = -1;
+    dispXIndex = -1;
+    dispYIndex = -1;
+
+    // iterate the fields to find coords x
+    for(int i=0;i<fieldNames.size();++i){
+        if(strncmp(fieldData[i]->GetName(),"COORDINATE_X",12)==0)
+            XIndex = i;
+    }
+    for(int i=0;i<fieldNames.size();++i){
+        if(strncmp(fieldData[i]->GetName(),"COORDINATE_Y",12)==0)
+            YIndex = i;
+    }
+    for(int i=0;i<fieldNames.size();++i){
+        if(strncmp(fieldData[i]->GetName(),"DISPLACEMENT_X",14)==0)
+            dispXIndex = i;
+    }
+    for(int i=0;i<fieldNames.size();++i){
+        if(strncmp(fieldData[i]->GetName(),"DISPLACEMENT_Y",14)==0)
+            dispYIndex = i;
+    }
+    if(XIndex==-1||YIndex==-1||dispXIndex==-1||dispYIndex==-1)
+    {
+        std::cout << "ERROR: could not find COORDINATES_X, COORDINATES_Y, DISPLACEMENT_X, or DISPLACEMENT_Y field" << std::endl;
+        std::cout << "Coords X field index: " << XIndex << std::endl;
+        std::cout << "Coords Y field index: " << YIndex << std::endl;
+        std::cout << "Disp X field index: " << dispXIndex << std::endl;
+        std::cout << "Disp Y field index: " << dispYIndex << std::endl;
     }
 }
 
@@ -230,8 +265,6 @@ void SimpleQtVTK::estimateTriAlpha(){
     // assert that the first couple fields are X Y COORDS ...
     if(fieldData.size() < 2)
         std::cout << "ERROR: fieldData.size() < 2, not enough fields to create poly data" << std::endl;
-    if(strncmp(fieldData[0]->GetName(),"COORDINATE_X",12)!=0||strncmp(fieldData[1]->GetName(),"COORDINATE_Y",12)!=0)
-        std::cout << "ERROR: fieldData[0] not COORDINATE_X or fieldData[1] not COORDINATE_Y" << std::endl;
 
     // TODO there's probably a better way to figure out alpha than computing the average distance...
     double dist_x = 0.0;
@@ -244,11 +277,11 @@ void SimpleQtVTK::estimateTriAlpha(){
     double xp = 0.0;
     double yp = 0.0;
     for(int i=0;i<numPoints;++i){
-        x = fieldData[0]->GetValue(i);
-        y = fieldData[1]->GetValue(i);
+        x = fieldData[XIndex]->GetValue(i);
+        y = fieldData[YIndex]->GetValue(i);
         if(i>0){
-            xp = fieldData[0]->GetValue(i-1);
-            yp = fieldData[1]->GetValue(i-1);
+            xp = fieldData[XIndex]->GetValue(i-1);
+            yp = fieldData[YIndex]->GetValue(i-1);
             dist_x = std::sqrt((x-xp)*(x-xp));
             dist_y = std::sqrt((y-yp)*(y-yp));
             //if(dist_x > max_dist) max_dist = dist_x;
@@ -278,25 +311,21 @@ void SimpleQtVTK::createPolyData(){
     // assert that the first couple fields are X Y COORDS ...
     if(fieldData.size() < 2)
         std::cout << "ERROR: fieldData.size() < 2, not enough fields to create poly data" << std::endl;
-    if(strncmp(fieldData[0]->GetName(),"COORDINATE_X",12)!=0||strncmp(fieldData[1]->GetName(),"COORDINATE_Y",12)!=0)
-        std::cout << "ERROR: fieldData[0] not COORDINATE_X or fieldData[1] not COORDINATE_Y" << std::endl;
 
     // if the mesh is to be displaced, check that the next 2 fields are displacement
     if(ui->displaceMeshBox->isChecked()){
         if(fieldData.size() < 4)
             std::cout << "ERROR: fieldData.size() < 4, not enough fields to create poly data" << std::endl;
-        if(strncmp(fieldData[2]->GetName(),"DISPLACEMENT_X",12)!=0||strncmp(fieldData[3]->GetName(),"DISPLACEMENT_Y",12)!=0)
-            std::cout << "ERROR: fieldData[2] not DISPLACEMENT_X or fieldData[3] not DISPLACEMENT_Y" << std::endl;
         for(int i=0;i<numPoints;++i){
-            points->InsertNextPoint(fieldData[0]->GetValue(i)+fieldData[2]->GetValue(i),
-                    fieldData[1]->GetValue(i)+fieldData[3]->GetValue(i),
+            points->InsertNextPoint(fieldData[XIndex]->GetValue(i)+fieldData[dispXIndex]->GetValue(i),
+                    fieldData[YIndex]->GetValue(i)+fieldData[dispYIndex]->GetValue(i),
                     0.01); // small offset to prevent mangling with background image
         }
     }
     else{
         for(int i=0;i<numPoints;++i){
-            points->InsertNextPoint(fieldData[0]->GetValue(i),
-                    fieldData[1]->GetValue(i),0.01); // small offset to prevent mangling with background image
+            points->InsertNextPoint(fieldData[XIndex]->GetValue(i),
+                    fieldData[YIndex]->GetValue(i),0.01); // small offset to prevent mangling with background image
         }
     }
     polyData->Initialize();

@@ -58,6 +58,9 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     
+    /// prep the results viewer
+    void prepResultsViewer();
+
     private slots:
     void on_refFileButton_clicked();
     

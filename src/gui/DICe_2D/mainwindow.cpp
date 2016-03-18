@@ -43,12 +43,14 @@
 #include "ui_mainwindow.h"
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QDirIterator>
 #include <QDesktopServices>
 #include <qimageroiselector.h>
 #include <iostream>
 
 #include <DICe_InputVars.h>
 #include <DICe_MainDriver.h>
+#include <simpleqtvtk.h>
 
 DICe::gui::Input_Vars * DICe::gui::Input_Vars::input_vars_ptr_ = NULL;
 
@@ -115,7 +117,7 @@ void MainWindow::on_refFileButton_clicked()
 {
     // open file dialog box to select reference file
     QFileInfo refFileInfo = QFileDialog::getOpenFileName(this,
-      tr("Select reference file"), "/home",
+      tr("Select reference file"), ".",
       tr("Tagged Image File Format (*.tiff *.tif);;Portable Network Graphics (*.png);;Joint Photographic Experts Group (*.jpg *.jpeg)"));
     
     if(refFileInfo.fileName()=="") return;
@@ -145,7 +147,7 @@ void MainWindow::on_defFileButton_clicked()
     QFileDialog defDialog(this);
     defDialog.setFileMode(QFileDialog::ExistingFiles);
     QStringList defFileNames = defDialog.getOpenFileNames(this,
-      tr("Select reference file"), "/home",
+      tr("Select reference file"), ".",
       tr("Tagged Image File Format (*.tiff *.tif);;Portable Network Graphics (*.png);;Joint Photographic Experts Group (*.jpg *.jpeg)"));
     
 
@@ -197,7 +199,8 @@ void MainWindow::on_writeButton_clicked()
 void MainWindow::on_workingDirButton_clicked()
 {
     // open a file dialog and get the directory
-    QString dir = QFileDialog::getExistingDirectory(this,tr("Open Directory"),"/home",QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    QString dir = QFileDialog::getExistingDirectory(this,tr("Open Directory"),tr("."),
+                      QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
     if(dir=="") return;
 
@@ -245,8 +248,63 @@ void MainWindow::writeInputFiles(){
     DICe::gui::Input_Vars::instance()->write_subset_file();
 }
 
+void MainWindow::prepResultsViewer()
+{
+    QString dir = DICe::gui::Input_Vars::instance()->get_working_dir();
+    std::stringstream working_dir_ss;
+#ifdef WIN32
+    working_dir_ss << dir.toStdString() << "\\results\\";
+#else
+    working_dir_ss << dir.toStdString() << "/results/";
+#endif
+
+    QStringList resFiles;
+    QDirIterator it(QString::fromStdString(working_dir_ss.str()), QStringList() << "DICe_solution_*.txt",
+                   QDir::Files,QDirIterator::Subdirectories);
+    while (it.hasNext()){
+       resFiles.push_back(it.next());
+    }
+//    for(QStringList::iterator sit=resFiles.begin();sit!=resFiles.end();++sit)
+//        std::cout << " FILE " << sit->toStdString() << std::endl;
+
+    // get the image files
+    QStringList defImageFiles = *DICe::gui::Input_Vars::instance()->get_def_file_list();
+
+    QStringList images;
+    for(QStringList::iterator sit=defImageFiles.begin();sit!=defImageFiles.end();++sit)
+        images.push_back(*sit);
+
+    if(defImageFiles.size()>0){
+        try{
+            ui->simpleVTKWidget->setFileNames(resFiles,images);
+        }catch(std::exception & e){
+            std::cout << "Exception was thrown !!" << e.what() << std::endl;
+        }
+    }
+    else{
+        std::cout << "ERROR: there are no deformed images" << std::endl;
+    }
+}
+
 void MainWindow::on_runButton_clicked()
 {
+    std::cout << "Clearing results directory " << std::endl;
+    QString dir = DICe::gui::Input_Vars::instance()->get_working_dir();
+    std::stringstream working_dir_ss;
+#ifdef WIN32
+    working_dir_ss << dir.toStdString() << "\\results\\";
+#else
+    working_dir_ss << dir.toStdString() << "/results/";
+#endif
+    QStringList resFiles;
+    QDirIterator it(QString::fromStdString(working_dir_ss.str()), QStringList() << "*.txt",
+                   QDir::Files,QDirIterator::Subdirectories);
+    while (it.hasNext()){
+        std::cout << "Removing file " << it.next().toStdString() << std::endl;
+        QDir cDir;
+        cDir.remove(it.filePath());
+    }
+
     writeInputFiles();
     std::cout << "Running correlation..." << std::endl << std::endl;
 
@@ -272,6 +330,9 @@ void MainWindow::on_runButton_clicked()
     }
 
     delete[] args;
+
+    // after the run is complete, prepare the results viewer:
+    prepResultsViewer();
 
 }
 

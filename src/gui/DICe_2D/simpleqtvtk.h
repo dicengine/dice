@@ -116,6 +116,9 @@ public:
     /// determine the alpha to use for triangulation
     void estimateTriAlpha();
 
+    /// determine the indices of certain fields like coordinates
+    void determinePrimaryFieldIndices();
+
 private slots:
     void on_fieldsCombo_currentIndexChanged(int index);
 
@@ -189,6 +192,15 @@ private:
     vtkSmartPointer<vtkAxesActor> axes;
     /// orientation
     vtkSmartPointer<vtkOrientationMarkerWidget> orientationWidget;
+
+    /// field index of x coords
+    int XIndex;
+    /// field index of y coords
+    int YIndex;
+    /// field index of disp x
+    int dispXIndex;
+    /// field index of disp y
+    int dispYIndex;
 };
 
 // TODO: need to check for points that are coincident and deal with them

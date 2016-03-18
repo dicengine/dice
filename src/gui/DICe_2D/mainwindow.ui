@@ -298,6 +298,9 @@ background-color: #404040;
     </item>
     <item row="0" column="1" rowspan="2">
      <widget class="QTabWidget" name="tabWidget">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="currentIndex">
        <number>0</number>
       </property>
@@ -322,10 +325,17 @@ background-color: #404040;
        </layout>
       </widget>
       <widget class="QWidget" name="resultsPage">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <attribute name="title">
         <string>Results</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_17"/>
+       <layout class="QVBoxLayout" name="verticalLayout_17">
+        <item>
+         <widget class="SimpleQtVTK" name="simpleVTKWidget" native="true"/>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>
@@ -881,6 +891,12 @@ background-color: #404040;
    <class>QImageROISelector</class>
    <extends>QWidget</extends>
    <header>qimageroiselector.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SimpleQtVTK</class>
+   <extends>QWidget</extends>
+   <header>simpleqtvtk.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

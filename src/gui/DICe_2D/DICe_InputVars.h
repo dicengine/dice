@@ -104,6 +104,11 @@ public:
       working_dir_ = dir;
   }
 
+  /// get the working directory
+  QString get_working_dir(){
+      return working_dir_;
+  }
+
   /// set the inteprolation method
   void set_interpolation_method(const std::string & method){
       interp_method_str_ = method;
