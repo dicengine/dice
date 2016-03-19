@@ -125,10 +125,7 @@ void MainWindow::on_refFileButton_clicked()
     DICe::gui::Input_Vars::instance()->set_ref_file_info(refFileInfo);
     
     // display the name of the file in the reference file box
-    QString refFileName = refFileInfo.fileName();
     ui->simpleQtVTKWidget->readImageFile(refFileInfo.filePath().toStdString());
-    //ui->ROISelector->setImage(refFileInfo);
-    ui->refFileLine->setText(refFileName);
 
     // if the deformed images are populated then activate the write and run buttons
     if(DICe::gui::Input_Vars::instance()->has_def_files()){
@@ -163,9 +160,13 @@ void MainWindow::on_defFileButton_clicked()
         ui->defListWidget->addItem(shortDefFileName);
     }
 
+    // update the picture in the def preview
+    ui->defListWidget->setCurrentRow(0);
+    on_defListWidget_itemClicked(ui->defListWidget->currentItem());
+
     // reset the def image
-    ui->defFileLabel->setText("");
-    ui->defImageShow->clear();
+    //ui->defFileLabel->setText("");
+    //ui->defImageShow->clear();
 
     // if the reference image is populated then activate the write and run buttons
     if(DICe::gui::Input_Vars::instance()->has_ref_file()){
@@ -174,6 +175,8 @@ void MainWindow::on_defFileButton_clicked()
     }
 
 }
+
+
 
 void MainWindow::on_defListWidget_itemClicked(QListWidgetItem *item)
 {

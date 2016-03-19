@@ -69,7 +69,7 @@ color: white;
 }
 
 QPushButton{
-padding: 0px;
+padding: 5px;
 background-color: #808080;
 border: 0px;
 border-radius: 5px;
@@ -114,60 +114,17 @@ QPushButton#runButton:disabled{
 background-color:#505050;
 color: #808080;
 }
-QPushButton#boundaryPlus{
-font-weight: bold;
-font-size: 18pt;
-border-radius: 0px;
-/*background-color: rgb(36, 220, 53);*/
-}
 QPushButton#boundaryPlus:checked{
 background-color: rgb(249, 255, 24);
-}
-QPushButton#boundaryMinus{
-font-weight: bold;
-font-size: 18pt;
-border-radius: 0px;
-/*background-color: rgb(36, 220, 53);*/
-}
-QPushButton#excludedPlus{
-font-weight: bold;
-font-size: 18pt;
-border-radius: 0px;
-/*background-color: rgb(255, 65, 254);*/
 }
 QPushButton#excludedPlus:checked{
 background-color: rgb(249, 255, 24);
 }
-QPushButton#excludedMinus{
-font-weight: bold;
-font-size: 18pt;
-border-radius: 0px;
-/*background-color: rgb(255, 65, 254);*/
+QPushButton#resetGeoButton{
+background-color: rgb(173, 8, 49);
 }
-QPushButton#resetShapes{
-/*border-radius: 0px;*/
-background-color: rgb(255, 39, 70);
-}
-QPushButton#resetShapes:pressed{
-background-color: rgb(127, 8, 8);
-}
-QPushButton#zoomIn{
-font-weight: bold;
-font-size: 18pt;
-border-radius: 0px;
-background-color: rgb(21, 171, 255);
-}
-QPushButton#zoomIn:pressed{
-background-color: rgb(23, 85, 122);
-}
-QPushButton#zoomOut{
-font-weight: bold;
-font-size: 18pt;
-border-radius: 0px;
-background-color: rgb(21, 171, 255);
-}
-QPushButton#zoomOut:pressed{
-background-color: rgb(23, 85, 122);
+QPushButton#resetGeoButton:pressed{
+background-color: rgb(163, 89, 99);
 }
 QPushButton#resetView{
 background-color: rgb(21, 171, 255);
@@ -175,7 +132,6 @@ background-color: rgb(21, 171, 255);
 QPushButton#resetView:pressed{
 background-color: rgb(23, 85, 122);
 }
-
 QLabel{
 color: white;
 background-color: #404040;
@@ -392,22 +348,6 @@ background-color: #404040;
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="refFileLine">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="frame">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QPushButton" name="refFileButton">
           <property name="sizePolicy">
            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
@@ -423,6 +363,19 @@ background-color: #404040;
           </property>
           <property name="text">
            <string>Reference Image</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="defFileButton">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Deformed Images</string>
           </property>
          </widget>
         </item>
@@ -448,19 +401,6 @@ background-color: #404040;
           </property>
           <property name="wordWrap">
            <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="defFileButton">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>30</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Deformed Images</string>
           </property>
          </widget>
         </item>
