@@ -202,7 +202,7 @@ void MainWindow::on_writeButton_clicked()
 void MainWindow::on_workingDirButton_clicked()
 {
     // open a file dialog and get the directory
-    QString dir = QFileDialog::getExistingDirectory(this,tr("Open Directory"),tr("."),
+    QString dir = QFileDialog::getExistingDirectory(this,tr("Open Directory"),".",
                       QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
     if(dir=="") return;
@@ -246,6 +246,8 @@ void MainWindow::writeInputFiles(){
     if(ui->statusCheck->isChecked()) output_fields.push_back("STATUS_FLAG");
     DICe::gui::Input_Vars::instance()->set_output_fields(output_fields);
 
+    // export the vertices from the region defs
+    ui->simpleQtVTKWidget->exportVertices(DICe::gui::Input_Vars::instance()->boundaryShapes(),DICe::gui::Input_Vars::instance()->excludedShapes());
     DICe::gui::Input_Vars::instance()->write_input_file();
     DICe::gui::Input_Vars::instance()->write_params_file();
     DICe::gui::Input_Vars::instance()->write_subset_file();
@@ -260,15 +262,14 @@ void MainWindow::prepResultsViewer()
 #else
     working_dir_ss << dir.toStdString() << "/results/";
 #endif
-
     QStringList resFiles;
     QDirIterator it(QString::fromStdString(working_dir_ss.str()), QStringList() << "DICe_solution_*.txt",
                    QDir::Files,QDirIterator::Subdirectories);
     while (it.hasNext()){
        resFiles.push_back(it.next());
     }
-//    for(QStringList::iterator sit=resFiles.begin();sit!=resFiles.end();++sit)
-//        std::cout << " FILE " << sit->toStdString() << std::endl;
+    //for(QStringList::iterator sit=resFiles.begin();sit!=resFiles.end();++sit)
+    //    std::cout << " FILE " << sit->toStdString() << std::endl;
 
     // get the image files
     QStringList defImageFiles = *DICe::gui::Input_Vars::instance()->get_def_file_list();
@@ -276,6 +277,10 @@ void MainWindow::prepResultsViewer()
     QStringList images;
     for(QStringList::iterator sit=defImageFiles.begin();sit!=defImageFiles.end();++sit)
         images.push_back(*sit);
+
+    //for(QStringList::iterator sit=images.begin();sit!=images.end();++sit)
+    //    std::cout << " Image FILE " << sit->toStdString() << std::endl;
+
 
     if(defImageFiles.size()>0){
         try{

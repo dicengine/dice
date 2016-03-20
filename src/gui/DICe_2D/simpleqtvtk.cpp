@@ -197,7 +197,7 @@ void SimpleQtVTK::updateCurrentFile(const int fileIndex, const bool resetAlpha){
     isInitialized = false;
 
     QFileInfo result = resultsFiles[fileIndex];
-    readResultsFile(result.fileName().toStdString());
+    readResultsFile(result.filePath().toStdString());
     std::stringstream label;
     label << result.filePath().toStdString() << "\n";
     label << "Digital Image Correlation Engine 1.0";
@@ -227,10 +227,11 @@ void SimpleQtVTK::updateCurrentFile(const int fileIndex, const bool resetAlpha){
     // put an image on the viewer:
     if(imageFiles.size()>0){
         QFileInfo image = imageFiles[fileIndex];
-        readImageFile(image.fileName().toStdString());
+        readImageFile(image.filePath().toStdString());
     }
-    renderer->ResetCamera();
-    renderer->SetActiveCamera(NULL);
+    //resetCamera();
+    //renderer->ResetCamera();
+    //renderer->SetActiveCamera(NULL);
     if(ui->vtkWidget->GetRenderWindow()->IsDrawable())
         ui->vtkWidget->GetRenderWindow()->Render();
 }
@@ -388,8 +389,6 @@ void SimpleQtVTK::estimateTriAlpha(){
     ui->triAlphaSpin->setSingleStep((avg_dist*3.0 - avg_dist*0.5) / 5);
     ui->triAlphaSpin->setValue(avg_dist);
 }
-
-
 
 void SimpleQtVTK::createPolyData(){
     vtkSmartPointer<vtkPoints> points =
@@ -807,6 +806,9 @@ void SimpleQtVTK::changeInteractionMode(const int mode){
         ui->excludedPlus->setEnabled(true);
         // turn on the region actors
         style->addActors();
+        // turn off the results actors
+        //renderer->RemoveActor(meshActor);
+        //renderer->RemoveActor(pointActor);
     }
     else if(mode==1){
         ui->definePage->setEnabled(false);
@@ -819,6 +821,9 @@ void SimpleQtVTK::changeInteractionMode(const int mode){
         style->setExcludedEnabled(false);
         // turn off the region actors
         style->removeActors();
+        // add results actors
+        //renderer->AddActor(meshActor);
+        //renderer->AddActor(pointActor);
     }
 }
 
@@ -1155,7 +1160,7 @@ void PolygonMouseInteractorStyle::markPixelsInPolygon(const double & value, cons
         int max_y = (int)(maxY/imageSpacing) + 1;
         if(max_y > (int)(imageEndY/imageSpacing)) max_y = (int)(imageEndY/imageSpacing);
         int width = (int)(imageEndX/imageSpacing)+1;
-        int height = (int)(imageEndY/imageSpacing)+1;
+        //int height = (int)(imageEndY/imageSpacing)+1;
 
         // check if each point in the box is in the shape or not:
         double dx1=0.0,dx2=0.0,dy1=0.0,dy2=0.0;
@@ -1287,7 +1292,6 @@ void PolygonMouseInteractorStyle::OnLeftButtonDown()
             currentPoints->InsertNextPoint(world[0],world[1], -0.01);// offset from 0 in z so that it always displays over image
             currentPointsP1->InsertNextPoint(world[0],world[1], -0.01);// offset from 0 in z so that it always displays over image
         }
-        const int numPoints = currentPoints->GetNumberOfPoints();
         if(boundaryEnabled){
             actor->GetProperty()->SetColor(0.0,1.0,0.0);
         }else{

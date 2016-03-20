@@ -610,6 +610,9 @@ background-color: #404040;
            </property>
            <item>
             <widget class="QCheckBox" name="xCheck">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="text">
               <string>x</string>
              </property>
@@ -617,6 +620,9 @@ background-color: #404040;
            </item>
            <item>
             <widget class="QCheckBox" name="yCheck">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="text">
               <string>y</string>
              </property>
@@ -636,6 +642,9 @@ background-color: #404040;
            </property>
            <item>
             <widget class="QCheckBox" name="dispXCheck">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="text">
               <string>Displacement x</string>
              </property>
@@ -643,6 +652,9 @@ background-color: #404040;
            </item>
            <item>
             <widget class="QCheckBox" name="dispYCheck">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="text">
               <string>Displacement y</string>
              </property>
