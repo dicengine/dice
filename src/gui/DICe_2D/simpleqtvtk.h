@@ -263,7 +263,7 @@ public:
 
         if (!validPick)
         {
-            this->Annotation->SetText(0, "(-,-,-)");
+            this->Annotation->SetText(0, "(-,-)");
             Interactor->Render();
             // Pass the event further on
             style->OnMouseMove();
@@ -283,8 +283,6 @@ public:
         message += vtkVariant(image_coordinate[0]).ToString();
         message += ",";
         message += vtkVariant(image_coordinate[1]).ToString();
-        message += ",";
-        message += vtkVariant(image_coordinate[2]).ToString();
         message += ")";
         this->Annotation->SetText( 0, message.c_str() );
         Interactor->Render();

@@ -166,7 +166,7 @@ void SimpleQtVTK::initializeClassMembers(){
     cornerAnnotation->SetLinearFontScaleFactor(2);
     cornerAnnotation->SetNonlinearFontScaleFactor(1);
     cornerAnnotation->SetMaximumFontSize(20);
-    cornerAnnotation->SetText(0, "(-,-,-)");
+    cornerAnnotation->SetText(0, "(-,-)");
     cornerAnnotation->GetTextProperty()->SetColor(1, 1, 1);
     cornerAnnotation->GetTextProperty()->SetFontFamilyToCourier();
     renderer->AddViewProp(cornerAnnotation);
@@ -370,11 +370,11 @@ void SimpleQtVTK::estimateTriAlpha(){
     double xp = 0.0;
     double yp = 0.0;
     for(int i=0;i<numPoints;++i){
-        x = fieldData[XIndex]->GetValue(i);
-        y = fieldData[YIndex]->GetValue(i);
+        x = fieldData[XIndex]->GetValue(i)*imageSpacing[0];
+        y = fieldData[YIndex]->GetValue(i)*imageSpacing[1];
         if(i>0){
-            xp = fieldData[XIndex]->GetValue(i-1);
-            yp = fieldData[YIndex]->GetValue(i-1);
+            xp = fieldData[XIndex]->GetValue(i-1)*imageSpacing[0];
+            yp = fieldData[YIndex]->GetValue(i-1)*imageSpacing[1];
             dist_x = std::sqrt((x-xp)*(x-xp));
             dist_y = std::sqrt((y-yp)*(y-yp));
             avg_dist += dist_x > dist_y ? dist_x : dist_y;
@@ -403,15 +403,17 @@ void SimpleQtVTK::createPolyData(){
         if(fieldData.size() < 4)
             std::cout << "ERROR: fieldData.size() < 4, not enough fields to create poly data" << std::endl;
         for(int i=0;i<numPoints;++i){
-            points->InsertNextPoint(fieldData[XIndex]->GetValue(i)+fieldData[dispXIndex]->GetValue(i),
-                    fieldData[YIndex]->GetValue(i)+fieldData[dispYIndex]->GetValue(i),
-                    0.01); // small offset to prevent mangling with background image
+            double ptx = fieldData[XIndex]->GetValue(i)+fieldData[dispXIndex]->GetValue(i);
+            ptx*= imageSpacing[0];
+            double pty = fieldData[YIndex]->GetValue(i)+fieldData[dispYIndex]->GetValue(i);
+            pty*=imageSpacing[1];
+            points->InsertNextPoint(ptx,pty,-0.01); // small offset to prevent mangling with background image
         }
     }
     else{
         for(int i=0;i<numPoints;++i){
-            points->InsertNextPoint(fieldData[XIndex]->GetValue(i),
-                    fieldData[YIndex]->GetValue(i),0.01); // small offset to prevent mangling with background image
+            points->InsertNextPoint(fieldData[XIndex]->GetValue(i)*imageSpacing[0],
+                    fieldData[YIndex]->GetValue(i)*imageSpacing[1],-0.01); // small offset to prevent mangling with background image
         }
     }
     polyData->Initialize();
