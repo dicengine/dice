@@ -43,6 +43,7 @@
 #define DICE_CINE_H
 
 #include <DICe_Image.h>
+#include <DICe_Parser.h>
 
 #include <cassert>
 #include <iostream>
@@ -80,7 +81,12 @@ typedef struct tagTIME64
   uint32_t seconds;
 } TIME64;
 
-
+enum Bit_Depth{
+  BIT_DEPTH_8=0,
+  BIT_DEPTH_16,
+  BIT_DEPTH_10_PACKED,
+  NO_SUCH_BIT_DEPTH
+};
 
 /// Structure to hold the cine file header information
 struct cine_file_header{
@@ -153,8 +159,17 @@ public:
     const bitmap_info_header & bitmap_header):
   header_(header),
   bitmap_header_(bitmap_header),
-  file_name_(file_name){
+  file_name_(file_name),
+  bit_depth_(NO_SUCH_BIT_DEPTH){
     image_offsets_ = new int64_t[header_.ImageCount];
+    // set the bit depth of the images
+    int_t bit_depth = (bitmap_header_.biSizeImage * 8) / (bitmap_header_.biWidth * bitmap_header_.biHeight);
+    if(bit_depth==8) bit_depth_=BIT_DEPTH_8;
+    else if (bit_depth==16) bit_depth_=BIT_DEPTH_16;
+    else if (bit_depth==10) bit_depth_=BIT_DEPTH_10_PACKED;
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid bit depth .cine");
+    }
   };
   /// default destructor
   virtual ~Cine_Header(){
@@ -168,6 +183,8 @@ public:
   int64_t * image_offsets_;
   /// the name of the cine file
   std::string file_name_;
+  /// bit depth of the file
+  Bit_Depth bit_depth_;
 };
 /// function that reads the header information from the cine file
 Teuchos::RCP<Cine_Header>
@@ -188,21 +205,61 @@ public:
     std::ostream * out_stream = NULL,
     const bool filter_failed_pixels=false);
   /// default destructor
-  virtual ~Cine_Reader(){};
-  /// \brief get an image from the cine file
-  /// \param frame_index the index of the frame to get
-  /// \param params (optional) image parameter, such as compute_gradients, etc.
+  virtual ~Cine_Reader(){
+    delete[] buffer_;
+  };
+
+  /// \brief create and populate an image from a cine frame
+  /// allows for reading only portions of the image
+  /// \param frame_index the frame number (starting with 0 as first frame, disregard triggger indexing)
+  /// \param convert_to_8_bit_values true if the intensity values should be converted to the range 0-255
+  /// \param motion_window pointer to a set of dimensions to read
+  /// \param params parameters to pass to the image constructor
   Teuchos::RCP<Image> get_frame(const int_t frame_index,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null){
-    std::vector<Teuchos::RCP<Image> > frame_vec = get_frames(frame_index,frame_index,params);
-    return frame_vec[0];
-  }
-  /// \brief get a set of images from a cine file using buffers and threading
-  /// \param frame_index_start the start index of the frames to get
-  /// \param frame_index_end the end index of the frames to get
-  /// \param params (optional) image parameter, such as compute_gradients, etc.
-  std::vector<Teuchos::RCP<Image> > get_frames(const int_t frame_index_start, const int_t frame_index_end,
+    const bool convert_to_8_bit_values = true,
+    const Teuchos::RCP<std::map<int_t,Motion_Window_Params> > & motion_window = Teuchos::null,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
+  /// \brief populate an already allocated image container
+  /// allows for reading only portions of the image
+  /// \param image the image to populate
+  /// \param frame_index the frame number (starting with 0 as first frame, disregard triggger indexing)
+  /// \param convert_to_8_bit_values true if the intensity values should be converted to the range 0-255
+  /// \param motion_window pointer to a set of dimensions to read
+  /// \param params parameters to pass to the image constructor
+  void get_frame(const Teuchos::RCP<Image> & image,
+    const int_t frame_index,
+    const bool convert_to_8_bit_values = true,
+    const Teuchos::RCP<std::map<int_t,Motion_Window_Params> > & motion_window = Teuchos::null,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
+  void get_frame_8_bit(const Teuchos::RCP<Image> & image,
+    const int_t start_x,
+    const int_t end_x,
+    const int_t start_y,
+    const int_t end_y);
+
+  void get_frame_10_bit(const Teuchos::RCP<Image> & image,
+    const int_t start_x,
+    const int_t end_x,
+    const int_t start_y,
+    const int_t end_y,
+    const bool convert_to_8_bit = true);
+
+  void get_frame_16_bit(const Teuchos::RCP<Image> & image,
+    const int_t start_x,
+    const int_t end_x,
+    const int_t start_y,
+    const int_t end_y,
+    const bool convert_to_8_bit = true);
+
+  /// \brief bins the pixels and determines a filter value
+  /// The pixels are separated into 10 bins (0-9). The top bin
+  /// is discarded as too bright. The average of bin 8 is used as the
+  /// filter value. Every pixel above the filter value is replaced with
+  /// it's neighbor value. The filtered values are then converted to 8 bit
+  void initialize_cine_filter(const int_t frame_index);
+
   /// returns the number of images in the cine file
   int_t num_frames()const{
     return cine_header_->header_.ImageCount;
@@ -228,6 +285,22 @@ private:
   bool bit_12_warning_;
   /// flag to filter out failed pixels
   bool filter_failed_pixels_;
+  /// size of the file read buffer
+  long long int buffer_size_;
+  /// buffer for file reading
+  char * buffer_;
+  /// casted pointer to the buffer
+  uint8_t * buff_ptr_8_;
+  /// casted pointer to the buffer
+  uint16_t * buff_ptr_16_;
+  /// file offset
+  long long int header_offset_8_;
+  /// file offset
+  long long int header_offset_16_;
+  /// maximum value of intensity above which the values are filtered by taking nearest neighbor
+  intensity_t filter_value_;
+  /// conversion factor for converting to 8 bit depth
+  intensity_t conversion_factor_;
 };
 
 }// end cine namespace

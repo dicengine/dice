@@ -551,6 +551,32 @@ enum Correlation_Parameter_Type{
   BOOL_PARAM
 };
 
+/// \class DICe::Extents
+/// \brief collection of origin x, y and width and height
+struct Extents {
+  /// constructor
+  /// \param origin_x upper left corner x loc
+  /// \param origin_y upper left corner y loc
+  /// \param width box width
+  /// \param height box height
+  Extents(const int_t origin_x,
+    const int_t origin_y,
+    const int_t width,
+    const int_t height):
+    origin_x_(origin_x),
+    origin_y_(origin_y),
+    width_(width),
+    height_(height){}
+  /// upper left corner x loc
+  int_t origin_x_;
+  /// upper_left corner y loc
+  int_t origin_y_;
+  /// widht
+  int_t width_;
+  /// height
+  int_t height_;
+};
+
 /// \class DICe::Correlation_Parameter
 /// \brief Simple struct to hold information about correlation parameters
 struct Correlation_Parameter {

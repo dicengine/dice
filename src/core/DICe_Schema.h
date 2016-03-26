@@ -97,6 +97,16 @@ public:
   /// Communicator RCP
   typedef Teuchos::RCP<MultiField_Comm> comm_rcp;
 
+  /// \brief Constructor that initializes empty images of the dimensions given
+  /// \param initial_intensity_value the intensity value to fill the initial images with
+  /// \param img_width Image width (must be the same for the reference and deformed images)
+  /// \param img_height Image height (must be the same for the reference and deformed images)
+  /// \param params Correlation parameters
+  Schema(const int_t img_width,
+    const int_t img_height,
+    const intensity_t intitial_intensity_value,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
   /// \brief Constructor that takes string names of images as inputs
   /// \param refName String name of reference image
   /// \param defName String name of deformed image
@@ -113,14 +123,6 @@ public:
     const std::string & defName,
     const std::string & params_file_name);
 
-  /// \brief Helper method to enable creating a schema with a parameter list or a file name
-  /// \param refName String name of reference image
-  /// \param defName String name of deformed image
-  /// \param params Correlation parameters
-  void construct_schema(const std::string & refName,
-    const std::string & defName,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
-
   /// \brief Constructor that takes arrays of intensity values as inputs
   /// \param img_width Image width (must be the same for the reference and deformed images)
   /// \param img_height Image height (must be the same for the reference and deformed images)
@@ -144,18 +146,6 @@ public:
     const Teuchos::ArrayRCP<intensity_t> refRCP,
     const Teuchos::ArrayRCP<intensity_t> defRCP,
     const std::string & params_file_name);
-
-  /// \brief Helper method to enable creating a schema with a parameter list or a file name
-  /// \param img_width Image width (must be the same for the reference and deformed images)
-  /// \param img_height Image height (must be the same for the reference and deformed images)
-  /// \param refRCP Array of intensity values for the reference image
-  /// \param defRCP Array of intensity values for deformed image
-  /// \param params Correlation parameters
-  void construct_schema(const int_t img_width,
-    const int_t img_height,
-    const Teuchos::ArrayRCP<intensity_t> refRCP,
-    const Teuchos::ArrayRCP<intensity_t> defRCP,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// \brief Constructor that takes already instantiated images as inputs
   /// \param ref_img Reference DICe::Image
@@ -171,6 +161,26 @@ public:
   /// \param params Correlation Parameters
   Schema(Teuchos::RCP<Image> ref_img,
     Teuchos::RCP<Image> def_img,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
+  /// \brief Helper method to enable creating a schema with a parameter list or a file name
+  /// \param refName String name of reference image
+  /// \param defName String name of deformed image
+  /// \param params Correlation parameters
+  void construct_schema(const std::string & refName,
+    const std::string & defName,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
+  /// \brief Helper method to enable creating a schema with a parameter list or a file name
+  /// \param img_width Image width (must be the same for the reference and deformed images)
+  /// \param img_height Image height (must be the same for the reference and deformed images)
+  /// \param refRCP Array of intensity values for the reference image
+  /// \param defRCP Array of intensity values for deformed image
+  /// \param params Correlation parameters
+  void construct_schema(const int_t img_width,
+    const int_t img_height,
+    const Teuchos::ArrayRCP<intensity_t> refRCP,
+    const Teuchos::ArrayRCP<intensity_t> defRCP,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// \brief Helper method to enable creating a schema with a parameter list or a file name
@@ -207,6 +217,9 @@ public:
 
   /// Replace the deformed image using an image
   void set_def_image(Teuchos::RCP<Image> img);
+
+  /// Rotate the deformed image if requested
+  void rotate_def_image();
 
   /// Replace the deformed image for this Schema (only enabled with boost)
   void set_ref_image(const std::string & refName);
@@ -863,6 +876,11 @@ public:
   void set_motion_window_params(Teuchos::RCP<std::map<int_t,Motion_Window_Params> > motion_window_params){
     DEBUG_MSG("motion window params have been set");
     motion_window_params_ = motion_window_params;
+  }
+
+  /// returns a pointer to the motion window params of the schema
+  Teuchos::RCP<std::map<int_t,Motion_Window_Params> > motion_window_params(){
+    return motion_window_params_;
   }
 
   /// \brief EXPERIMENTAL sets the layering order of subets

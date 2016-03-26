@@ -131,7 +131,8 @@ int main(int argc, char *argv[]) {
     for(int_t j=0;j<num_zeros;++j)
       fName << "0";
     fName << i << ".tif";
-    Teuchos::RCP<DICe::Image> image = cine_reader->get_frame(i);
+    Teuchos::RCP<DICe::Image> image = Teuchos::rcp (new DICe::Image(cine_reader->width(),cine_reader->height()));
+    cine_reader->get_frame(image,i);
     if(rotation!=0){
       if(rotation==90){
         image = image->apply_rotation(NINTY_DEGREES);

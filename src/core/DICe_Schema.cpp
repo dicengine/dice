@@ -62,6 +62,21 @@
 
 namespace DICe {
 
+Schema::Schema(const int_t img_width,
+  const int_t img_height,
+  const intensity_t initial_intensity_value,
+  const Teuchos::RCP<Teuchos::ParameterList> & params){
+  default_constructor_tasks(params);
+  ref_img_ = Teuchos::rcp( new Image(img_width,img_height,initial_intensity_value));
+  def_img_ = Teuchos::rcp( new Image(img_width,img_height,initial_intensity_value));
+  prev_img_ = Teuchos::rcp( new Image(img_width,img_height,initial_intensity_value));
+  // require that the images are the same size
+  TEUCHOS_TEST_FOR_EXCEPTION(ref_img_->width()<=0||ref_img_->width()!=def_img_->width(),std::runtime_error,
+    "Error: Images must be the same width and nonzero.");
+  TEUCHOS_TEST_FOR_EXCEPTION(ref_img_->height()<=0||ref_img_->height()!=def_img_->height(),std::runtime_error,
+    "Error: Images must be the same height and nonzero.");
+}
+
 Schema::Schema(const std::string & refName,
   const std::string & defName,
   const std::string & params_file_name){
@@ -206,6 +221,13 @@ Schema::construct_schema(Teuchos::RCP<Image> ref_img,
 }
 
 void
+Schema::rotate_def_image(){
+  if(def_image_rotation_!=ZERO_DEGREES){
+    def_img_ = def_img_->apply_rotation(def_image_rotation_);
+  }
+}
+
+void
 Schema::set_def_image(const std::string & defName){
   DEBUG_MSG("Schema: Resetting the deformed image");
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
@@ -328,11 +350,11 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     // First set all of the params to their defaults in case the user does not specify them:
     if(use_tracking_defaults){
       tracking_default_params(diceParams.getRawPtr());
-      if(proc_rank == 0) DEBUG_MSG("Initializing schema params with SL default parameters");
+      if(proc_rank == 0) DEBUG_MSG("Initializing schema params with tracking default parameters");
     }
     else{
       dice_default_params(diceParams.getRawPtr());
-      if(proc_rank == 0) DEBUG_MSG("Initializing schema params with DICe default parameters");
+      if(proc_rank == 0) DEBUG_MSG("Initializing schema params with full-field default parameters");
     }
     // Overwrite any params that are specified by the params argument
     if(params!=Teuchos::null){

@@ -108,7 +108,8 @@ Image::Image(const char * file_name,
 }
 
 Image::Image(const int_t width,
-  const int_t height):
+  const int_t height,
+  const intensity_t intensity):
   width_(width),
   height_(height),
   offset_x_(0),
@@ -120,7 +121,7 @@ Image::Image(const int_t width,
 {
   assert(height_>0);
   assert(width_>0);
-  intensities_ = Teuchos::ArrayRCP<intensity_t>(height_*width_,0.0);
+  intensities_ = Teuchos::ArrayRCP<intensity_t>(height_*width_,intensity);
   default_constructor_tasks(Teuchos::null);
 }
 
@@ -211,34 +212,14 @@ Image::initialize_array_image(intensity_t * intensities){
 
 void
 Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params){
-
   grad_x_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   grad_y_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   intensities_temp_ = Teuchos::ArrayRCP<intensity_t>(height_*width_,0.0);
+  mask_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   // image gradient coefficients
   grad_c1_ = 1.0/12.0;
   grad_c2_ = -8.0/12.0;
-  const bool gauss_filter_image = params!=Teuchos::null ?
-      params->get<bool>(DICe::gauss_filter_images,false) : false;
-  const bool gauss_filter_use_hierarchical_parallelism = params!=Teuchos::null ?
-      params->get<bool>(DICe::gauss_filter_use_hierarchical_parallelism,false) : false;
-  const int gauss_filter_team_size = params!=Teuchos::null ?
-      params->get<int>(DICe::gauss_filter_team_size,256) : 256;
-  gauss_filter_mask_size_ = params!=Teuchos::null ?
-      params->get<int>(DICe::gauss_filter_mask_size,7) : 7;
-  gauss_filter_half_mask_ = gauss_filter_mask_size_/2+1;
-  if(gauss_filter_image){
-    gauss_filter(gauss_filter_use_hierarchical_parallelism,gauss_filter_team_size);
-  }
-  const bool compute_image_gradients = params!=Teuchos::null ?
-      params->get<bool>(DICe::compute_image_gradients,false) : false;
-  const bool image_grad_use_hierarchical_parallelism = params!=Teuchos::null ?
-      params->get<bool>(DICe::image_grad_use_hierarchical_parallelism,false) : false;
-  const int image_grad_team_size = params!=Teuchos::null ?
-      params->get<int>(DICe::image_grad_team_size,256) : 256;
-  if(compute_image_gradients)
-    compute_gradients(image_grad_use_hierarchical_parallelism,image_grad_team_size);
-  mask_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
+  post_allocation_tasks(params);
 }
 
 const intensity_t&

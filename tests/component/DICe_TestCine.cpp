@@ -102,7 +102,8 @@ int main(int argc, char *argv[]) {
 
     for(int_t frame=0;frame<cine_reader.num_frames();++frame){
       *outStream << "testing frame " << frame << std::endl;
-      Teuchos::RCP<Image> cine_img = cine_reader.get_frame(frame);
+      Teuchos::RCP<Image> cine_img = Teuchos::rcp(new Image(cine_reader.width(),cine_reader.height()));
+      cine_reader.get_frame(cine_img,frame);
       std::stringstream name;
       //std::stringstream outname;
       //std::stringstream tiffname;
@@ -119,7 +120,7 @@ int main(int argc, char *argv[]) {
       bool intensity_value_error = false;
       for(int_t y=0;y<cine_reader.height();++y){
         for(int_t x=0;x<cine_reader.width();++x){
-          if((*cine_img)(x,y)!=cine_img_exact(x,y)){
+          if(std::abs((*cine_img)(x,y)-cine_img_exact(x,y)) > 0.05){
             //std::cout << x << " " << y << " actual " << (*cine_img)(x,y) << " exptected " << cine_img_exact(x,y) << std::endl;
             intensity_value_error=true;
           }
@@ -152,7 +153,8 @@ int main(int argc, char *argv[]) {
   exception_thrown = false;
   try{
     DICe::cine::Cine_Reader cine_reader("./images/packed_12bpp.cine",outStream.getRawPtr());
-    Teuchos::RCP<Image> cine_img = cine_reader.get_frame(1000);
+    Teuchos::RCP<Image> cine_img = Teuchos::rcp(new Image(cine_reader.width(),cine_reader.height()));
+    cine_reader.get_frame(cine_img,1000);
   }
   catch(const std::exception &e){
     exception_thrown=true;

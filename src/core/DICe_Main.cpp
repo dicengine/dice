@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<DICe::Schema> schema;
   if(is_cine){
     // read in the reference image from the cine file and create the schema:
-    Teuchos::RCP<DICe::Image> ref_image = cine_reader->get_frame(cine_ref_index,correlation_params);
+    Teuchos::RCP<DICe::Image> ref_image = cine_reader->get_frame(cine_ref_index,true,Teuchos::null,correlation_params);
     schema = Teuchos::rcp(new DICe::Schema(ref_image,ref_image,correlation_params));
   }
   else{
@@ -210,7 +210,6 @@ int main(int argc, char *argv[]) {
   schema->set_num_image_frames(num_images);
 
   // iterate through the images and perform the correlation:
-
   scalar_t total_time = 0.0;
   scalar_t elapsed_time = 0.0;
   scalar_t max_time = 0.0;
@@ -222,8 +221,8 @@ int main(int argc, char *argv[]) {
   const int_t end_frame = cine_end_index==-1 ? num_images : cine_end_index;
   for(int_t image_it=start_frame;image_it<=end_frame;++image_it){
     if(is_cine){
-      Teuchos::RCP<DICe::Image> def_image = cine_reader->get_frame(image_it,correlation_params);
       *outStream << "Processing Image: " << image_it - start_frame + 1 << " of " << num_images << " frame id: " << first_frame_index + image_it << std::endl;
+      Teuchos::RCP<DICe::Image> def_image = cine_reader->get_frame(image_it,true,schema->motion_window_params(),correlation_params);
       schema->set_def_image(def_image);
     }
     else{

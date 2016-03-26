@@ -127,7 +127,8 @@ public:
   /// no params allowed since the intensity values are all zeros so gradients
   /// or filters would not make sense
   Image(const int_t width,
-    const int_t height);
+    const int_t height,
+    const intensity_t intensity=0.0);
 
   //
   // Sub portion of another image constructor (deep copy constructor for default args)
@@ -154,6 +155,9 @@ public:
 
   /// default constructor tasks
   void default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
+  /// post allocation tasks
+  void post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// virtual destructor
   virtual ~Image(){};

@@ -54,8 +54,8 @@ using namespace boost::timer;
 
 int main(int argc, char *argv[]) {
 
-  if(argc!=4){
-    std::cerr << "Usage: DICe_PerformanceCine <cine_file> <chunk_size> <1 or 0>, (1=verbose)" << std::endl;
+  if(argc!=5){
+    std::cerr << "Usage: DICe_PerformanceCine <cine_file> <start_frame> <end_frame> <1 or 0>, (1=verbose)" << std::endl;
     return 1;
   }
 
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   // only print output if args are given (for testing the output is quiet)
-  if (std::atoi(argv[3]) == 1)
+  if (std::atoi(argv[4]) == 1)
     outStream = Teuchos::rcp(&std::cout, false);
   else
     outStream = Teuchos::rcp(&bhs, false);
@@ -77,31 +77,21 @@ int main(int argc, char *argv[]) {
 
   cine::Cine_Reader cine(cine_file.c_str());//,outStream.getRawPtr());
 
-  int_t chunk_size = std::atoi(argv[2]);
-  int_t num_chunks = cine.num_frames() / chunk_size;
-  if(cine.num_frames()%chunk_size!=0) num_chunks++;
-  *outStream << "chunk size:        " << chunk_size << std::endl;
-  *outStream << "number of chunks:  " << num_chunks << std::endl;
+  int_t start_frame = std::atoi(argv[2]);
+  int_t end_frame = std::atoi(argv[3]);
+  *outStream << "start frame:       " << start_frame << std::endl;
+  *outStream << "end frame:         " << end_frame << std::endl;
 
-  // write out the first image to make sure that the cine read was successful
-  //Teuchos::RCP<Image> frame_0 = cine.get_frame(0);
-  //frame_0->write("cine0.tiff");
+  Teuchos::RCP<Image> image = Teuchos::rcp(new Image(cine.width(),cine.height(),0.0));
 
   cpu_timer thread_timer;
   {
     thread_timer.start();
-    int_t frame_start = 0;
-    int_t frame_end = 0;
-    for(int_t chunk = 0; chunk < num_chunks; ++chunk){
-    //int_t chunk = 0;
-      frame_start = chunk_size*chunk;
-      frame_end = chunk_size*(chunk+1) - 1;
-      std::vector<Teuchos::RCP<Image> > frame_rcps = cine.get_frames(frame_start,frame_end);
-      //for(int_t f=0;f<frame_rcps.size();++f){
-      //  std::stringstream name;
-      //  name << "./frame_images/frame_" << f << ".tif";
-      //  frame_rcps[f]->write(name.str());
-      //}
+    for(int_t i = start_frame; i<end_frame; ++i){
+      cine.get_frame(image,i,true);
+      //std::stringstream name;
+      //name << "./frame_images/frame_" << i << ".tif";
+      //image->write(name.str());
     }
     thread_timer.stop();
   }
