@@ -136,24 +136,27 @@ DICE_LIB_DLL_EXPORT
 Motion_Window_Params {
   /// constructor
   Motion_Window_Params():
-  origin_x_(0),
-  origin_y_(0),
-  width_(-1),
-  height_(-1),
+  start_x_(0),
+  start_y_(0),
+  end_x_(0),
+  end_y_(0),
   tol_(-1.0),
-  use_subset_id_(-1){};
+  use_subset_id_(-1),
+  use_motion_detection_(false){};
   /// upper left corner x coord
-  int_t origin_x_;
+  int_t start_x_;
   /// upper left corner y coord
-  int_t origin_y_;
-  /// width
-  int_t width_;
-  /// height
-  int_t height_;
+  int_t start_y_;
+  /// lower right corner x coord
+  int_t end_x_;
+  /// lower right corner y coord
+  int_t end_y_;
   /// tolerance for motion detection
   scalar_t tol_;
   /// point to another subsets' motion window if multiple subsets share one
   int_t use_subset_id_;
+  /// use motion detection
+  bool use_motion_detection_;
 };
 
 /// Simple struct for passing info back and forth from read_subset_file:
@@ -438,6 +441,8 @@ const char* const parser_use_path_file = "USE_PATH_FILE";
 const char* const parser_skip_solve = "SKIP_SOLVE";
 /// Parser string
 const char* const parser_test_for_motion = "TEST_FOR_MOTION";
+/// Parser string
+const char* const parser_motion_window = "MOTION_WINDOW";
 /// Parser string
 const char* const parser_location = "LOCATION";
 /// Parser string

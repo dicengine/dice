@@ -215,10 +215,12 @@ public:
   /// \param convert_to_8_bit_values true if the intensity values should be converted to the range 0-255
   /// \param motion_window pointer to a set of dimensions to read
   /// \param params parameters to pass to the image constructor
+  /// \param prevent_filtering allow user to override the cine readers failed pixels flag
   Teuchos::RCP<Image> get_frame(const int_t frame_index,
     const bool convert_to_8_bit_values = true,
     const Teuchos::RCP<std::map<int_t,Motion_Window_Params> > & motion_window = Teuchos::null,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null,
+    const bool prevent_filtering=false);
 
   /// \brief populate an already allocated image container
   /// allows for reading only portions of the image
@@ -227,31 +229,36 @@ public:
   /// \param convert_to_8_bit_values true if the intensity values should be converted to the range 0-255
   /// \param motion_window pointer to a set of dimensions to read
   /// \param params parameters to pass to the image constructor
+  /// \param prevent_filtering allow user to override the cine readers failed pixels flag
   void get_frame(const Teuchos::RCP<Image> & image,
     const int_t frame_index,
     const bool convert_to_8_bit_values = true,
     const Teuchos::RCP<std::map<int_t,Motion_Window_Params> > & motion_window = Teuchos::null,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null,
+    const bool prevent_filtering=false);
 
   void get_frame_8_bit(const Teuchos::RCP<Image> & image,
     const int_t start_x,
     const int_t end_x,
     const int_t start_y,
-    const int_t end_y);
+    const int_t end_y,
+  const bool filter_failed);
 
   void get_frame_10_bit(const Teuchos::RCP<Image> & image,
     const int_t start_x,
     const int_t end_x,
     const int_t start_y,
     const int_t end_y,
-    const bool convert_to_8_bit = true);
+    const bool convert_to_8_bit = true,
+    const bool filter_failed = false);
 
   void get_frame_16_bit(const Teuchos::RCP<Image> & image,
     const int_t start_x,
     const int_t end_x,
     const int_t start_y,
     const int_t end_y,
-    const bool convert_to_8_bit = true);
+    const bool convert_to_8_bit = true,
+    const bool filter_failed = false);
 
   /// \brief bins the pixels and determines a filter value
   /// The pixels are separated into 10 bins (0-9). The top bin

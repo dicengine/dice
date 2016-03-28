@@ -120,7 +120,7 @@ Cine_Reader::initialize_cine_filter(const int_t frame_index){
   const int_t h = cine_header_->bitmap_header_.biHeight;
 
   Teuchos::RCP<Image> base_img = Teuchos::rcp(new Image(w,h,0.0));
-  get_frame(base_img,frame_index,false);
+  get_frame(base_img,frame_index,false,Teuchos::null,Teuchos::null,true);
   //base_img->write("base_image.tif");
 
   // create a std::vector from the image intensity values
@@ -146,7 +146,8 @@ Cine_Reader::get_frame_8_bit(const Teuchos::RCP<Image> & image,
   const int_t start_x,
   const int_t end_x,
   const int_t start_y,
-  const int_t end_y){
+  const int_t end_y,
+  const bool filter_failed){
   Teuchos::ArrayRCP<intensity_t> intens = image->intensities();
   const int_t w = cine_header_->bitmap_header_.biWidth;
   const int_t h = cine_header_->bitmap_header_.biHeight;
@@ -154,7 +155,7 @@ Cine_Reader::get_frame_8_bit(const Teuchos::RCP<Image> & image,
   for(int_t y=start_y;y<end_y;++y){
     for(int_t x=start_x;x<end_x;++x){
       // the images are stored bottom up, not top down!
-      if(filter_failed_pixels_ && buff_ptr_8_[header_offset_8_+y*w+x] >= filter_value_ && !(x == 0 && y == 0)){
+      if(filter_failed && buff_ptr_8_[header_offset_8_+y*w+x] >= filter_value_ && !(x == 0 && y == 0)){
         failed_pixels++;
         intens[(h-y-1)*w + x] = intens[(h-y-1)*w+x-1];
       }
@@ -165,7 +166,7 @@ Cine_Reader::get_frame_8_bit(const Teuchos::RCP<Image> & image,
 #ifdef DICE_DEBUG_MSG
   if(failed_pixels>0){
     *out_stream_ << "*** Warning, this frame of .cine file: " << cine_header_->file_name_ << std::endl <<
-        "             has " << failed_pixels << " failed pixels (>= max intensity value)." << std::endl <<
+        "             has " << failed_pixels << " failed pixels (" << failed_pixels*100.0/(w*h) << "% of the image)." << std::endl <<
         "             The intensity value for these pixels has been replaced with the neighbor value." << std::endl;
   }
 #endif
@@ -177,7 +178,8 @@ Cine_Reader::get_frame_16_bit(const Teuchos::RCP<Image> & image,
   const int_t end_x,
   const int_t start_y,
   const int_t end_y,
-  const bool convert_to_8_bit){
+  const bool convert_to_8_bit,
+  const bool filter_failed){
   Teuchos::ArrayRCP<intensity_t> intens = image->intensities();
   const int_t w = cine_header_->bitmap_header_.biWidth;
   const int_t h = cine_header_->bitmap_header_.biHeight;
@@ -189,7 +191,7 @@ Cine_Reader::get_frame_16_bit(const Teuchos::RCP<Image> & image,
     for(int_t x=start_x;x<end_x;++x){
       pixel_intensity = buff_ptr_16_[header_offset_16_ + y*w+x];
       if(pixel_intensity > max_intens) max_intens = pixel_intensity;
-      if(filter_failed_pixels_ && pixel_intensity >= filter_value_ && !(x == 0 && y == 0)){
+      if(filter_failed && pixel_intensity >= filter_value_ && !(x == 0 && y == 0)){
         failed_pixels++;
         intens[(h-y-1)*w + x] = intens[(h-y-1)*w+x-1];
       }
@@ -202,7 +204,7 @@ Cine_Reader::get_frame_16_bit(const Teuchos::RCP<Image> & image,
 #ifdef DICE_DEBUG_MSG
   if(failed_pixels>0){
     *out_stream_ << "*** Warning, this frame of .cine file: " << cine_header_->file_name_ << std::endl <<
-        "             has " << failed_pixels << " failed pixels (>= max intensity value)." << std::endl <<
+        "             has " << failed_pixels << " failed pixels (" << failed_pixels*100.0/(w*h) << "% of the image)." << std::endl <<
         "             The intensity value for these pixels has been replaced with the neighbor value." << std::endl;
   }
 #endif
@@ -231,7 +233,8 @@ Cine_Reader::get_frame_10_bit(const Teuchos::RCP<Image> & image,
   const int_t end_x,
   const int_t start_y,
   const int_t end_y,
-  const bool convert_to_8_bit){
+  const bool convert_to_8_bit,
+  const bool filter_failed){
   Teuchos::ArrayRCP<intensity_t> intens = image->intensities();
   int_t max_chunk = cine_header_->bitmap_header_.biSizeImage / 5; // 5 bytes per chunk for 10 bit packed
   const int_t w = cine_header_->bitmap_header_.biWidth;
@@ -262,7 +265,7 @@ Cine_Reader::get_frame_10_bit(const Teuchos::RCP<Image> & image,
         // now we are expanding it back to 12:
         two_byte = LinLUT[two_byte];
         // save off the pixel
-        if(filter_failed_pixels_ && two_byte >= filter_value_ && !(x == 0 && y == 0)){
+        if(filter_failed && two_byte >= filter_value_ && !(x == 0 && y == 0)){
           failed_pixels++;
           intens[y*w+x] = intens[y*w+x-1];
         }
@@ -277,7 +280,8 @@ Cine_Reader::get_frame_10_bit(const Teuchos::RCP<Image> & image,
 #ifdef DICE_DEBUG_MSG
   if(failed_pixels>0){
     *out_stream_ << "*** Warning, this frame of .cine file: " << cine_header_->file_name_ << std::endl <<
-        "             has " << failed_pixels << " failed pixels (>= max intensity value)." << std::endl <<
+        "             has " << failed_pixels << " failed pixels (" <<
+        failed_pixels*100.0/(cine_header_->bitmap_header_.biWidth*cine_header_->bitmap_header_.biHeight) << "% of the image)." << std::endl <<
         "             The intensity value for these pixels has been replaced with the neighbor value." << std::endl;
   }
 #endif
@@ -288,14 +292,15 @@ Teuchos::RCP<Image>
 Cine_Reader::get_frame(const int_t frame_index,
   const bool convert_to_8_bit_values,
   const Teuchos::RCP<std::map<int_t,Motion_Window_Params> > & motion_window,
-  const Teuchos::RCP<Teuchos::ParameterList> & params){
+  const Teuchos::RCP<Teuchos::ParameterList> & params,
+  const bool prevent_filtering){
 
   const int_t img_width = cine_header_->bitmap_header_.biWidth;
   const int_t img_height = cine_header_->bitmap_header_.biHeight;
 
   const intensity_t initial_intensity = 255.0;
   Teuchos::RCP<Image> image = Teuchos::rcp(new Image(img_width,img_height,initial_intensity));
-  get_frame(image,frame_index,convert_to_8_bit_values,motion_window,params);
+  get_frame(image,frame_index,convert_to_8_bit_values,motion_window,params,prevent_filtering);
   return image;
 }
 
@@ -304,7 +309,8 @@ Cine_Reader::get_frame(const Teuchos::RCP<Image> & image,
   const int_t frame_index,
   const bool convert_to_8_bit_values,
   const Teuchos::RCP<std::map<int_t,Motion_Window_Params> > & motion_window,
-  const Teuchos::RCP<Teuchos::ParameterList> & params){
+  const Teuchos::RCP<Teuchos::ParameterList> & params,
+  const bool prevent_filtering){
   TEUCHOS_TEST_FOR_EXCEPTION(frame_index<0||frame_index>=(int_t)cine_header_->header_.ImageCount,std::runtime_error,"Error invalue frame index");
   assert(image->width()>0);
   assert(image->height()>0);
@@ -315,12 +321,6 @@ Cine_Reader::get_frame(const Teuchos::RCP<Image> & image,
   if (cine_file.fail()){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Can't open the file: " + cine_header_->file_name_);
   }
-  // factor of 8 to convert bytes to bits
-  DEBUG_MSG("Cine_Reader::get_frame(): cine file name:      " << cine_header_->file_name_);
-  DEBUG_MSG("Cine_Reader::get_frame(): frame:               " << frame_index);
-  DEBUG_MSG("Cine_Reader::get_frame(): image dimensions:    " << img_width << " x " << img_height);
-  DEBUG_MSG("Cine_Reader::get_frame(): buffer size:         " << buffer_size_);
-
   // position to the first frame in this set:
   const int64_t begin_frame = cine_header_->image_offsets_[frame_index];
   cine_file.seekg(begin_frame);
@@ -329,17 +329,26 @@ Cine_Reader::get_frame(const Teuchos::RCP<Image> & image,
 
   bool empty_mwp = motion_window!=Teuchos::null ? motion_window->size()==0 : false;
 
+  // override the member data flag filter_failed_pixels_ to prevent filtering if requested
+  bool filter_failed_pixels = prevent_filtering ? false : filter_failed_pixels_;
+
+  DEBUG_MSG("Cine_Reader::get_frame(): cine file name:      " << cine_header_->file_name_);
+  DEBUG_MSG("Cine_Reader::get_frame(): frame:               " << frame_index);
+  DEBUG_MSG("Cine_Reader::get_frame(): image dimensions:    " << img_width << " x " << img_height);
+  DEBUG_MSG("Cine_Reader::get_frame(): buffer size:         " << buffer_size_);
+  DEBUG_MSG("Cine_Reader::get_frame(): filter failed pixels " << filter_failed_pixels);
+
   // read the whole image rather than windows
   if(motion_window==Teuchos::null||empty_mwp){
     // read in the pixels
     if(cine_header_->bit_depth_==BIT_DEPTH_8){
-      get_frame_8_bit(image,0,img_width,0,img_height);
+      get_frame_8_bit(image,0,img_width,0,img_height,filter_failed_pixels);
     }
     else if (cine_header_->bit_depth_==BIT_DEPTH_16){
-      get_frame_16_bit(image,0,img_width,0,img_height,convert_to_8_bit_values);
+      get_frame_16_bit(image,0,img_width,0,img_height,convert_to_8_bit_values,filter_failed_pixels);
     }
     else if (cine_header_->bit_depth_==BIT_DEPTH_10_PACKED){
-      get_frame_10_bit(image,0,img_width,0,img_height,convert_to_8_bit_values);
+      get_frame_10_bit(image,0,img_width,0,img_height,convert_to_8_bit_values,filter_failed_pixels);
     }
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument, "Error: invalid bit depth (or this bit-depth has not been implemented.");
@@ -352,26 +361,27 @@ Cine_Reader::get_frame(const Teuchos::RCP<Image> & image,
   assert(motion_window->size()>0);
   std::map<int_t,Motion_Window_Params>::const_iterator it=motion_window->begin();
   for(;it!=motion_window->end();++it){
+    // don't read same extents twice if already read by another subset:
+    if(it->second.use_subset_id_!=-1) continue;
     // get the bounds of the pixel bin
-    const int_t pb_start_x = it->second.origin_x_;
-    const int_t pb_start_y = it->second.origin_y_;
-    const int_t pb_w = it->second.width_;
-    const int_t pb_h = it->second.height_;
-    const int_t pb_end_x = pb_w + pb_start_x;
-    const int_t pb_end_y = pb_h + pb_start_y;
+    const int_t pb_start_x = it->second.start_x_;
+    const int_t pb_start_y = it->second.start_y_;
+    const int_t pb_end_x = it->second.end_x_;
+    const int_t pb_end_y = it->second.end_y_;
+    DEBUG_MSG("Cine_Reader::get_frame(): window extents x_start " << pb_start_x << " x_end " << pb_end_x << " y_start " << pb_start_y << " y_end " << pb_end_y);
     assert(pb_start_x>=0);
     assert(pb_end_x<=img_width);
     assert(pb_start_y>=0);
     assert(pb_end_y<=img_width);
     // read in the pixels
     if(cine_header_->bit_depth_==BIT_DEPTH_8){
-      get_frame_8_bit(image,pb_start_x,pb_end_x,pb_start_y,pb_end_y);
+      get_frame_8_bit(image,pb_start_x,pb_end_x,pb_start_y,pb_end_y,filter_failed_pixels);
     }
     else if (cine_header_->bit_depth_==BIT_DEPTH_16){
-      get_frame_16_bit(image,pb_start_x,pb_end_x,pb_start_y,pb_end_y,convert_to_8_bit_values);
+      get_frame_16_bit(image,pb_start_x,pb_end_x,pb_start_y,pb_end_y,convert_to_8_bit_values,filter_failed_pixels);
     }
     else if (cine_header_->bit_depth_==BIT_DEPTH_10_PACKED){
-      get_frame_10_bit(image,pb_start_x,pb_end_x,pb_start_y,pb_end_y,convert_to_8_bit_values);
+      get_frame_10_bit(image,pb_start_x,pb_end_x,pb_start_y,pb_end_y,convert_to_8_bit_values,filter_failed_pixels);
     } // 10 bit
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument, "Error: invalid bit depth (or this bit-depth has not been implemented.");

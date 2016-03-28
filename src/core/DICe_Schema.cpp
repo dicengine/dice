@@ -1279,16 +1279,18 @@ bool
 Schema::motion_detected(const int_t subset_gid){
   DEBUG_MSG("Schema::motion_detected() called");
   if(motion_window_params_->find(subset_gid)!=motion_window_params_->end()){
+    // if there is no motion detection turned on, always return true (that motion is detected)
+    if(motion_window_params_->find(subset_gid)->second.use_motion_detection_==false) return true;
     const int_t use_subset_id = motion_window_params_->find(subset_gid)->second.use_subset_id_==-1 ? subset_gid:
         motion_window_params_->find(subset_gid)->second.use_subset_id_;
     DEBUG_MSG("Creating a motion test utility for subset " << subset_gid << " using id " << use_subset_id);
     if(motion_detectors_.find(use_subset_id)==motion_detectors_.end()){
       // create the motion detector because it doesn't exist
       Motion_Window_Params mwp = motion_window_params_->find(use_subset_id)->second;
-      motion_detectors_.insert(std::pair<int_t,Teuchos::RCP<Motion_Test_Utility> >(use_subset_id,Teuchos::rcp(new Motion_Test_Utility(mwp.origin_x_,
-        mwp.origin_y_,
-        mwp.width_,
-        mwp.height_,
+      motion_detectors_.insert(std::pair<int_t,Teuchos::RCP<Motion_Test_Utility> >(use_subset_id,Teuchos::rcp(new Motion_Test_Utility(mwp.start_x_,
+        mwp.start_y_,
+        mwp.end_x_,
+        mwp.end_y_,
         mwp.tol_))));
     }
     TEUCHOS_TEST_FOR_EXCEPTION(motion_detectors_.find(use_subset_id)==motion_detectors_.end(),std::runtime_error,

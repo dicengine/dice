@@ -519,30 +519,33 @@ The optical flow method in DICe follows the implementation of Matlab for the [Lu
 
 If optical flow is being used as the initialization method and the initialization fails (due to the subset being too small for two optical flow points or the gradient information is not good enough for optical flow), the initialization defaults back to using the field values from the last frame.
 
-### Motion detection
+### Motion windows
 
-Also in the subset input file, for the `TRACKING_ROUTINE`, for conformal subsets, the user can request that the correaltion only be performed if there is motion detected in the vicinity of the subset. This can be helpful in speeding up an analyis if the object being tracked sits idle for most of the video and only moves for a small portion of frames. Since there can potentially be several subsets inside of one window, many subsets can share a particular motion test window.
-
-To define a motion test window for a subset the syntax is as follows
+For many tracking application (using the 'TRACKING_ROUTINE`, for conformal subsets), only a small portion of the frame is occupied by the object in motion and the user may wish to use only the region around this portion for anlysis. To save time reading frames and computing image filters, a motion window can be defined for the subset. To define a motion window for a subset the syntax is as follows
 
     BEGIN CONFORMAL_SUBSET
       SUBSET_ID <id>
       BEGIN BOUNDARY
          ...
       END
-      TEST_FOR_MOTION <test_window_upper_left_x> <test_window_upper_left_y> <width> <height> [tol]
+      MOTION_WINDOW <window_upper_left_x> <window_upper_left_y> <window_lower_right_x> <window_lower_right_y>  [tol]
     END CONFORMAL_SUBSET
 
-The optional motion tolerance is the total number of intensity counts of the difference between the current and previous image that is used as a threshold for detecting motion. In most cases, this can be automatically computed by DICe without specifying this optional parameter.
+The optional motion tolerance is the total number of intensity counts of the difference between the current and previous image that is used as a threshold for detecting motion. In most cases, this can be automatically computed by DICe without specifying this optional parameter. If motion detection is not used (see below), this tolerance is ignored.
 
-If multiple subsets share a window, the window needs only to be defined for one subset as in the example above, the rest of the subsets can simply identify the id of the subset with which to share the motion window. For example if subset 0 defines the window, subsets 1 and 2 can refere to the window of 0 using the following syntax
+### Motion detection
+
+The user can request that the correaltion only be performed if there is motion detected in the vicinity of the subset. This can be helpful in speeding up an analyis if the object being tracked sits idle for most of the video and only moves for a small portion of frames. To test for motion, the user simply adds the `TEST_FOR_MOTION` keyword to the subset definition. The subset must also have a `MOTION_WINDOW` defined for motion detection.
+
+Since there can potentially be several subsets inside of one window, many subsets can share a particular motion test window. If multiple subsets share a window, the window needs only to be defined for one subset as in the example above, the rest of the subsets can simply identify the id of the subset with which to share the motion window. For example if subset 0 defines the window, subsets 1 and 2 can refere to the window of 0 using the following syntax
 
     BEGIN CONFORMAL_SUBSET
       SUBSET_ID 0
       BEGIN BOUNDARY
          ...
       END
-      TEST_FOR_MOTION <test_window_upper_left_x> <test_window_upper_left_y> <width> <height> [tol]
+      TEST_FOR_MOTION
+      MOTION_WINDOW <test_window_upper_left_x> <test_window_upper_left_y> <width> <height> [tol]
     END CONFORMAL_SUBSET
 
     BEGIN CONFORMAL_SUBSET
@@ -550,7 +553,8 @@ If multiple subsets share a window, the window needs only to be defined for one 
       BEGIN BOUNDARY
          ...
       END
-      TEST_FOR_MOTION 0 # specifying an integer number here, rather than the window parameters
+      TEST_FOR_MOTION
+      MOTION_WINDOW 0 # specifying an integer number here, rather than the window parameters
                         # implies use this subset id's window
     END CONFORMAL_SUBSET
 
@@ -559,7 +563,8 @@ If multiple subsets share a window, the window needs only to be defined for one 
       BEGIN BOUNDARY
          ...
       END
-      TEST_FOR_MOTION 0
+      TEST_FOR_MOTION
+      MOTION_WINDOW 0
     END CONFORMAL_SUBSET
 
 ### Filtering images

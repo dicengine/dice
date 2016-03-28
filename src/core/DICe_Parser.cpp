@@ -830,6 +830,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          bool use_optical_flow = false;
          Motion_Window_Params motion_window_params;
          bool test_for_motion = false;
+         bool has_motion_window = false;
          std::string path_file_name;
          while(!dataFile.eof()){
            std::streampos pos = dataFile.tellg();
@@ -845,6 +846,10 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            }
            else if(block_tokens[0]==parser_test_for_motion){
              test_for_motion = true;
+             motion_window_params.use_motion_detection_ = true;
+           }
+           else if(block_tokens[0]==parser_motion_window){
+             has_motion_window = true;
              if(block_tokens.size()==2){
                TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[1]),std::runtime_error,"");
                motion_window_params.use_subset_id_ = atoi(block_tokens[1].c_str());
@@ -856,15 +861,15 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  "usage: TEST_FOR_MOTION <origin_x> <origin_y> <width> <heigh> [tol], if tol is not set it will be computed automatically based on the first frame");
              for(int_t m=1;m<5;++m){TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[m]),std::invalid_argument,
                "Error, these parameters should be numbers here.");}
-             motion_window_params.origin_x_ = atoi(block_tokens[1].c_str());
-             motion_window_params.origin_y_ = atoi(block_tokens[2].c_str());
-             motion_window_params.width_ = atoi(block_tokens[3].c_str());
-             motion_window_params.height_ = atoi(block_tokens[4].c_str());
+             motion_window_params.start_x_ = atoi(block_tokens[1].c_str());
+             motion_window_params.start_y_ = atoi(block_tokens[2].c_str());
+             motion_window_params.end_x_ = atoi(block_tokens[3].c_str());
+             motion_window_params.end_y_ = atoi(block_tokens[4].c_str());
              if(block_tokens.size()>5)
                motion_window_params.tol_ = strtod(block_tokens[5].c_str(),NULL);
              if(proc_rank==0) DEBUG_MSG("Conformal subset will test for motion with window"
-                 " origin x: " << motion_window_params.origin_x_ << " origin y: " << motion_window_params.origin_y_ <<
-                 " width: " << motion_window_params.width_ << " height: " << motion_window_params.height_ <<
+                 " start x: " << motion_window_params.start_x_ << " start y: " << motion_window_params.start_y_ <<
+                 " end x: " << motion_window_params.end_x_ << " end y: " << motion_window_params.end_y_ <<
                  " tolerance: " << motion_window_params.tol_);
              }
            }
@@ -1007,7 +1012,10 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            info->optical_flow_flags->insert(std::pair<int_t,bool>(subset_id,true));
          if(skip_solve)
            info->skip_solve_flags->insert(std::pair<int_t,bool>(subset_id,true));
-         if(test_for_motion)
+         if(test_for_motion){ // make sure if motion detection is on, there is a corresponding motion window
+           TEUCHOS_TEST_FOR_EXCEPTION(!has_motion_window,std::runtime_error,"Error, cannot test for motion without defining a motion window for subset " << subset_id);
+         }
+         if(has_motion_window)
            info->motion_window_params->insert(std::pair<int_t,Motion_Window_Params>(subset_id,motion_window_params));
        }  // end conformal subset def
        else{
