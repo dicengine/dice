@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ParameterList>
+  <Parameter name="output_folder" type="string" value="./results/" />
+  <Parameter name="cine_file" type="string" value="../../examples/mechanism/mechanism.cine" /> 
+  <Parameter name="image_folder" type="string" value="" />  
+  <Parameter name="correlation_parameters_file" type="string" value="./params.xml" />
+  <Parameter name="subset_file" type="string" value="./subsets.txt" />
+  <Parameter name="separate_output_file_for_each_subset" type="bool" value="true" />
+</ParameterList>

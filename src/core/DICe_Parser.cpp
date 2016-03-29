@@ -56,6 +56,8 @@ namespace po = boost::program_options;
 #include <fstream>
 #include <cctype>
 #include <string>
+#include <algorithm>
+#include <vector>
 
 #if DICE_MPI
 #  include <mpi.h>
@@ -827,6 +829,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          conformal_subset_defined = true;
          bool has_path_file = false;
          bool skip_solve = false;
+         std::vector<int_t> skip_solve_ids;
          bool use_optical_flow = false;
          Motion_Window_Params motion_window_params;
          bool test_for_motion = false;
@@ -874,13 +877,38 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              }
            }
            else if(block_tokens[0]==parser_skip_solve){
+             DEBUG_MSG("Reading skip solve");
              skip_solve = true;
+             // need to re-read the line again without converting to capital case
+             // see if the second argument is a string file_name, if so read the file
+             if(block_tokens.size()==2){
+               if(!is_number(block_tokens[1])){
+                 dataFile.seekg(pos,std::ios::beg);
+                 Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile," ",false);
+                 std::string skip_solves_file_name = block_tokens[1];
+                 if(proc_rank==0) DEBUG_MSG("Skip solves file name: " << skip_solves_file_name);
+                 std::fstream skip_file(skip_solves_file_name.c_str(), std::ios_base::in);
+                 TEUCHOS_TEST_FOR_EXCEPTION(!skip_file.good(),std::runtime_error,"Error invalid skip file");
+                 int_t id = 0;
+                 // TODO add some error checking for one value per line and ensure integer values
+                 while (skip_file >> id)
+                   skip_solve_ids.push_back(id);
+               }
+             }else{
+               // all other numbers are ids to turn solving on or off
+               for(int_t id=1;id<block_tokens.size();++id){
+                 TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[id]),std::runtime_error,"");
+                 skip_solve_ids.push_back(atoi(block_tokens[id].c_str()));
+               }
+             }
+             // sort the vector
+             std::sort(skip_solve_ids.begin(),skip_solve_ids.end());
            }
            else if(block_tokens[0]==parser_use_optical_flow){
              use_optical_flow = true;
            }
            else if(block_tokens[0]==parser_use_path_file){
-             // need to re-read the line again without conveting to capital case
+             // need to re-read the line again without converting to capital case
              dataFile.seekg(pos, std::ios::beg);
              Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile," ",false);
              TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<2,std::runtime_error,"");
@@ -1011,7 +1039,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          if(use_optical_flow)
            info->optical_flow_flags->insert(std::pair<int_t,bool>(subset_id,true));
          if(skip_solve)
-           info->skip_solve_flags->insert(std::pair<int_t,bool>(subset_id,true));
+           info->skip_solve_flags->insert(std::pair<int_t,std::vector<int>>(subset_id,skip_solve_ids));
          if(test_for_motion){ // make sure if motion detection is on, there is a corresponding motion window
            TEUCHOS_TEST_FOR_EXCEPTION(!has_motion_window,std::runtime_error,"Error, cannot test for motion without defining a motion window for subset " << subset_id);
          }

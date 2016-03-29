@@ -854,13 +854,13 @@ public:
 
   /// Provide access to the flags that determine if the solve should be skipped:
   /// \param skip_solve_flags the map of skip solve flags
-  void set_skip_solve_flags(Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags){
+  void set_skip_solve_flags(Teuchos::RCP<std::map<int_t,std::vector<int_t> > > skip_solve_flags){
     DEBUG_MSG("skip solve flags have been set");
     skip_solve_flags_ = skip_solve_flags;
   }
 
   /// Returns a pointer to the skip solve flags
-  Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags() const {
+  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > skip_solve_flags() const {
     return skip_solve_flags_;
   }
 
@@ -1145,7 +1145,7 @@ private:
   Teuchos::RCP<std::map<int_t,bool> > optical_flow_flags_;
   /// Map to hold the flags for skipping solves for particular subsets (initialize only since
   /// only pixel accuracy may be needed
-  Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags_;
+  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > skip_solve_flags_;
   /// Map to hold the flags that determine if the next image should be
   /// tested for motion before doing the DIC
   Teuchos::RCP<std::map<int_t,Motion_Window_Params> > motion_window_params_;
@@ -1211,6 +1211,15 @@ private:
   /// True if the row_id should be omited (first column of output)
   bool omit_row_id_;
 };
+
+/// free function given a std::vector to determine if a frame index should be skipped or not
+/// \param trigger_based_frame_index index of the frame (as referenced to the trigger frame, can be negative)
+/// \param frame_id_vector vector of ids to turn skip solve off and on (first id is where the skipping should begin
+/// evey id after that changes the state of skipping. For example, if values 0 10 23 56 are stored in frame id vector
+/// skipping the solves begins on frame 0, then solves are done from 10 to 23, frames from 23 to 56 will have the
+/// solve skipped and solving will be performed for all frames after 56.
+bool frame_should_be_skipped(const int_t trigger_based_frame_index,
+  std::vector<int_t> & frame_id_vector);
 
 }// End DICe Namespace
 

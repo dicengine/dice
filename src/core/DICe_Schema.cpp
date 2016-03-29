@@ -308,7 +308,7 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   comm_ = Teuchos::rcp(new MultiField_Comm());
   path_file_names_ = Teuchos::rcp(new std::map<int_t,std::string>());
   optical_flow_flags_ = Teuchos::rcp(new std::map<int_t,bool>());
-  skip_solve_flags_ = Teuchos::rcp(new std::map<int_t,bool>());
+  skip_solve_flags_ = Teuchos::rcp(new std::map<int_t,std::vector<int_t> >());
   motion_window_params_ = Teuchos::rcp(new std::map<int_t,Motion_Window_Params>());
   initial_gamma_threshold_ = -1.0;
   final_gamma_threshold_ = -1.0;
@@ -684,6 +684,22 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     }
     if(subset_info->skip_solve_flags->size()>0){
       set_skip_solve_flags(subset_info->skip_solve_flags);
+#ifdef DICE_DEBUG_MSG
+      std::cout << "[DICe_DEBUG]: Schema::initialize(): skip solve flags" << std::endl;
+      std::string on = "ON";
+      std::string off = "OFF";
+      std::string state = "";
+      std::map<int_t,std::vector<int_t> >::const_iterator it=skip_solve_flags_->begin();
+      for(;it!=skip_solve_flags_->end();++it){
+        bool skip_on = false;
+        std::cout << "[DICe_DEBUG]: Schema::initialize(): subset " << it->first << " has the following flags" << std::endl;
+        for(size_t id=0;id<it->second.size();++id){
+          skip_on = !skip_on;
+          state = skip_on ? on : off;
+          std::cout << "[DICe_DEBUG]: Schema::intialize(): at frame " << it->second[id] << " skip solve is " << state << std::endl;
+        }
+      }
+#endif
     }
     if(subset_info->optical_flow_flags->size()>0){
       set_optical_flow_flags(subset_info->optical_flow_flags);
@@ -1412,7 +1428,15 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   // check if the solve should be skipped
   if(skip_solve_flags_->find(subset_gid)!=skip_solve_flags_->end()||skip_all_solves_){
-    if(skip_solve_flags_->find(subset_gid)->second ==true||skip_all_solves_){
+    bool skip_frame = false;
+    if(skip_solve_flags_->find(subset_gid)!=skip_solve_flags_->end()){
+      // determine for this subset id if it should be skipped:
+      const int_t trigger_based_frame = image_frame_ + first_frame_index_;
+      DEBUG_MSG("Subset " << subset_gid << " checking skip solve for trigger based frame id " << trigger_based_frame);
+      skip_frame = frame_should_be_skipped(trigger_based_frame,skip_solve_flags_->find(subset_gid)->second);
+      DEBUG_MSG("Subset " << subset_gid << " frame_should_be_skipped return value: " << skip_frame);
+    }
+    if(skip_frame||skip_all_solves_){
       if(skip_all_solves_){
         DEBUG_MSG("Subset " << subset_gid << " skip solve (skip_all_solves parameter was set)");
       }else{
@@ -2220,6 +2244,23 @@ Output_Spec::write_frame(std::FILE * file,
       fprintf(file,"%s%4.4E",delimiter_.c_str(),value);
   }
   fprintf(file,"\n"); // the space before end of line is important for parsing in the output diff tool
+}
+
+bool frame_should_be_skipped(const int_t trigger_based_frame_index,
+  std::vector<int_t> & frame_id_vector){
+  DEBUG_MSG("frame_should_be_skipped(): vector size " << frame_id_vector.size());
+  if(frame_id_vector.size()==0) return true;
+
+  int_t index = frame_id_vector.size();
+  for(size_t i=0;i<frame_id_vector.size();++i){
+    if(trigger_based_frame_index < frame_id_vector[i]){
+      index = i;
+      break;
+    }
+  }
+  DEBUG_MSG("frame_should_be_skipped(): index " << index);
+  if(index%2==0||index==0) return false;
+  else return true;
 }
 
 }// End DICe Namespace

@@ -178,7 +178,7 @@ Subset_File_Info {
     seed_subset_ids = Teuchos::rcp(new std::map<int_t,int_t>());
     path_file_names = Teuchos::rcp(new std::map<int_t,std::string>());
     optical_flow_flags = Teuchos::rcp(new std::map<int_t,bool>());
-    skip_solve_flags = Teuchos::rcp(new std::map<int_t,bool>());
+    skip_solve_flags = Teuchos::rcp(new std::map<int_t,std::vector<int_t> >());
     motion_window_params = Teuchos::rcp(new std::map<int_t,Motion_Window_Params>());
     type = info_type;
   }
@@ -209,7 +209,7 @@ Subset_File_Info {
   /// Map that turns on optical flow initializer for certain subsets
   Teuchos::RCP<std::map<int_t,bool> > optical_flow_flags;
   /// Map that turns off the solve (initialize only) for certain subsets
-  Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags;
+  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > skip_solve_flags;
   /// Map that tests each frame for motion before performing DIC optimization
   Teuchos::RCP<std::map<int_t,Motion_Window_Params> > motion_window_params;
 };

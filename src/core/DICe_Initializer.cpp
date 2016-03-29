@@ -710,11 +710,14 @@ Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
   // check if the solve was skipped, if not use the last converged solution for the
   // new position of the optical flow points
   bool skip_solve = false;
-  if(schema_->skip_solve_flags()->find(subset_gid)!=schema_->skip_solve_flags()->end()||schema_->skip_all_solves()){
-    if(schema_->skip_solve_flags()->find(subset_gid)->second ==true||schema_->skip_all_solves()){
-      skip_solve = true;
-    }
+
+  if(schema_->skip_solve_flags()->find(subset_gid)!=schema_->skip_solve_flags()->end()){
+    const int_t trigger_based_frame = schema_->image_frame() + schema_->first_frame_index();
+    skip_solve = frame_should_be_skipped(trigger_based_frame,schema_->skip_solve_flags()->find(subset_gid)->second);
   }
+  if(schema_->skip_all_solves())
+    skip_solve = true;
+
   // reset the current locations of the optical flow points based on the last solution
   if(!skip_solve){
     const scalar_t u = schema_->field_value(subset_gid,DISPLACEMENT_X);

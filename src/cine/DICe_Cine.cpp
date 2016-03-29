@@ -148,11 +148,13 @@ Cine_Reader::get_frame_8_bit(const Teuchos::RCP<Image> & image,
   const int_t start_y,
   const int_t end_y,
   const bool filter_failed){
+  DEBUG_MSG("Cine_Reader::get_frame_8_bit: extents x_start " << start_x << " x_end " << end_x <<
+    " y_start " << start_y << " y_end " << end_y << " filter failed " << filter_failed);
   Teuchos::ArrayRCP<intensity_t> intens = image->intensities();
   const int_t w = cine_header_->bitmap_header_.biWidth;
   const int_t h = cine_header_->bitmap_header_.biHeight;
   int_t failed_pixels=0;
-  for(int_t y=start_y;y<end_y;++y){
+  for(int_t y=(h-end_y);y<(h-start_y);++y){
     for(int_t x=start_x;x<end_x;++x){
       // the images are stored bottom up, not top down!
       if(filter_failed && buff_ptr_8_[header_offset_8_+y*w+x] >= filter_value_ && !(x == 0 && y == 0)){
@@ -180,6 +182,8 @@ Cine_Reader::get_frame_16_bit(const Teuchos::RCP<Image> & image,
   const int_t end_y,
   const bool convert_to_8_bit,
   const bool filter_failed){
+  DEBUG_MSG("Cine_Reader::get_frame_16_bit: extents x_start " << start_x << " x_end " << end_x <<
+    " y_start " << start_y << " y_end " << end_y << " convert to 8 bit " << convert_to_8_bit << " filter failed " << filter_failed);
   Teuchos::ArrayRCP<intensity_t> intens = image->intensities();
   const int_t w = cine_header_->bitmap_header_.biWidth;
   const int_t h = cine_header_->bitmap_header_.biHeight;
@@ -187,7 +191,7 @@ Cine_Reader::get_frame_16_bit(const Teuchos::RCP<Image> & image,
   uint16_t pixel_intensity;
   uint16_t max_intens = 0;
   int_t failed_pixels = 0;
-  for(int_t y=start_y;y<end_y;++y){
+  for(int_t y=(h-end_y);y<(h-start_y);++y){
     for(int_t x=start_x;x<end_x;++x){
       pixel_intensity = buff_ptr_16_[header_offset_16_ + y*w+x];
       if(pixel_intensity > max_intens) max_intens = pixel_intensity;
@@ -235,6 +239,8 @@ Cine_Reader::get_frame_10_bit(const Teuchos::RCP<Image> & image,
   const int_t end_y,
   const bool convert_to_8_bit,
   const bool filter_failed){
+  DEBUG_MSG("Cine_Reader::get_frame_10_bit: extents x_start " << start_x << " x_end " << end_x <<
+    " y_start " << start_y << " y_end " << end_y << " convert to 8 bit " << convert_to_8_bit << " filter failed " << filter_failed);
   Teuchos::ArrayRCP<intensity_t> intens = image->intensities();
   int_t max_chunk = cine_header_->bitmap_header_.biSizeImage / 5; // 5 bytes per chunk for 10 bit packed
   const int_t w = cine_header_->bitmap_header_.biWidth;

@@ -1,0 +1,47 @@
+BEGIN SUBSET_COORDINATES
+  266 376
+  280 31
+END SUBSET_COORDINATES
+
+BEGIN CONFORMAL_SUBSET
+  SUBSET_ID 0
+  BEGIN boundary
+    BEGIN polygon
+      BEGIN VERTICES
+        252 383
+        275 391
+        268 417
+        247 411
+      END VERTICES
+    END polygon
+    BEGIN polygon
+      BEGIN VERTICES
+        262 351
+        274 353
+        277 339
+        264 337
+      END VERTICES
+    END polygon
+  END boundary
+  
+MOTION_WINDOW 230 328 299 430
+
+skip_solve subset_0_skips.txt
+
+END CONFORMAL_SUBSET
+
+begin conformal_subset
+  subset_id 1
+  begin boundary
+    begin rectangle
+      center 280 31
+      width 27
+      height 13
+    end
+  end
+
+MOTION_WINDOW 226 17 300 70
+
+skip_SOLVE 4903 4912 4915
+
+end
