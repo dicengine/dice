@@ -5,7 +5,6 @@
   <Parameter name="output_deformed_subset_images" type="bool" value="false" />
   <Parameter name="initialization_method" type="string" value="use_field_values" />
   <Parameter name="gauss_filter_images" type="bool" value="true" />
-  <Parameter name="output_beta" type="bool" value="true" />
   <Parameter name="filter_failed_cine_pixels" type="bool" value="true" />
   <ParameterList name="output_spec">
     <Parameter name="COORDINATE_X" type="bool" value="true" />
@@ -15,6 +14,5 @@
     <Parameter name="ROTATION_Z" type="bool" value="true" />
     <Parameter name="SIGMA" type="bool" value="true" />
     <Parameter name="GAMMA" type="bool" value="true" />
-    <Parameter name="BETA" type="bool" value="true" />
   </ParameterList>
 </ParameterList>
