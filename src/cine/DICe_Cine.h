@@ -237,6 +237,13 @@ public:
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null,
     const bool prevent_filtering=false);
 
+  /// \brief create and populate separate smaller images that represent regions in a cine frame
+  std::vector<Teuchos::RCP<Image> > get_frame(const int_t frame_index,
+    const Teuchos::RCP<std::map<int_t,Motion_Window_Params> > & motion_window,
+    const bool convert_to_8_bit_values = true,
+    const bool prevent_filtering=false,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
   void get_frame_8_bit(const Teuchos::RCP<Image> & image,
     const int_t start_x,
     const int_t end_x,

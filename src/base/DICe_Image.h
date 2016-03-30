@@ -124,11 +124,16 @@ public:
   /// constructor that creates a zero image
   /// \param width the width of the image
   /// \param height the height of the image
+  /// \param intensity value to fill the array with
+  /// \param offset_x offset to upper left corner x coord if this is a subregion of a larger image
+  /// \param offset_y offset to upper left corner y coord if this is a subregion of a larger image
   /// no params allowed since the intensity values are all zeros so gradients
   /// or filters would not make sense
   Image(const int_t width,
     const int_t height,
-    const intensity_t intensity=0.0);
+    const intensity_t intensity=0.0,
+    const int_t offset_x = 0,
+    const int_t offset_y = 0);
 
   //
   // Sub portion of another image constructor (deep copy constructor for default args)

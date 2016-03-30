@@ -165,6 +165,48 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
 
+
+  *outStream << "testing reading a set of motion windows from a cine " << std::endl;
+  Teuchos::RCP<std::map<int_t,Motion_Window_Params> > motion_windows = Teuchos::rcp(new std::map<int_t,Motion_Window_Params>);
+  Motion_Window_Params params_0;
+  params_0.start_x_ = 170;
+  params_0.end_x_ = 208;
+  params_0.start_y_ = 13;
+  params_0.end_y_ = 42;
+  Motion_Window_Params params_1;
+  params_1.use_subset_id_ = 0;
+  Motion_Window_Params params_2;
+  params_2.start_x_ = 196;
+  params_2.end_x_ = 238;
+  params_2.start_y_ = 72;
+  params_2.end_y_ = 95;
+  motion_windows->insert(std::pair<int_t,Motion_Window_Params>(0,params_0));
+  motion_windows->insert(std::pair<int_t,Motion_Window_Params>(1,params_1));
+  motion_windows->insert(std::pair<int_t,Motion_Window_Params>(2,params_2));
+  DICe::cine::Cine_Reader cine_reader("./images/packed_12bpp.cine",outStream.getRawPtr());
+  std::vector<Teuchos::RCP<Image> > image_rcps = cine_reader.get_frame(0,motion_windows,false);
+
+  // output the images
+  for(size_t i=0;i<image_rcps.size();++i){
+    std::stringstream name;
+    name << "motion_window_" << i << ".rawi";
+    Image cine_img_exact(name.str().c_str());
+    bool intensity_value_error = false;
+    for(int_t y=0;y<cine_img_exact.height();++y){
+      for(int_t x=0;x<cine_img_exact.width();++x){
+        if(std::abs((* image_rcps[i])(x,y)-cine_img_exact(x,y)) > 0.05){
+          std::cout << x << " " << y << " actual " << (* image_rcps[i])(x,y) << " exptected " << cine_img_exact(x,y) << std::endl;
+          intensity_value_error=true;
+        }
+      }
+    }
+    if(intensity_value_error){
+      *outStream << "Error, image " << i << ", the intensity values are not correct" << std::endl;
+      errorFlag++;
+    }
+  }
+  *outStream << "motion window values have been checked" << std::endl;
+
   *outStream << "--- End test ---" << std::endl;
 
   DICe::finalize();

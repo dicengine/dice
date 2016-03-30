@@ -109,11 +109,13 @@ Image::Image(const char * file_name,
 
 Image::Image(const int_t width,
   const int_t height,
-  const intensity_t intensity):
+  const intensity_t intensity,
+  const int_t offset_x,
+  const int_t offset_y):
   width_(width),
   height_(height),
-  offset_x_(0),
-  offset_y_(0),
+  offset_x_(offset_x),
+  offset_y_(offset_y),
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   has_gauss_filter_(false),
