@@ -301,6 +301,21 @@ Image::intensities()const{
   return array;
 }
 
+intensity_t
+Image::interpolate_keys_fourth(const scalar_t & global_x, const scalar_t & global_y){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
+}
+
+intensity_t
+Image::interpolate_bilinear(const scalar_t & global_x, const scalar_t & global_y){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
+}
+
+intensity_t
+Image::interpolate_bicubic(const scalar_t & global_x, const scalar_t & global_y){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
+}
+
 void
 Image::compute_gradients(const bool use_hierarchical_parallelism, const int_t team_size){
   // Flat gradients:

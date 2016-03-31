@@ -223,6 +223,21 @@ public:
   /// \param intensities the new intensity value array
   void replace_intensities(Teuchos::ArrayRCP<intensity_t> intensities);
 
+  /// interpolant
+  /// \param global_x global image coordinate x
+  /// \param global_y global image coordinate y
+  intensity_t interpolate_keys_fourth(const scalar_t & global_x, const scalar_t & global_y);
+
+  /// interpolant
+  /// \param global_x global image coordinate x
+  /// \param global_y global image coordinate y
+  intensity_t interpolate_bilinear(const scalar_t & global_x, const scalar_t & global_y);
+
+  /// interpolant
+  /// \param global_x global image coordinate x
+  /// \param global_y global image coordinate y
+  intensity_t interpolate_bicubic(const scalar_t & global_x, const scalar_t & global_y);
+
   /// gradient accessors:
   /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
   /// y is row, x is column
