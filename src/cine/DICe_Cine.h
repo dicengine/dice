@@ -259,6 +259,22 @@ public:
     const bool convert_to_8_bit = true,
     const bool filter_failed = false);
 
+  void get_frame_10_bit_mod(const Teuchos::RCP<Image> & image,
+    const int_t start_x,
+    const int_t end_x,
+    const int_t start_y,
+    const int_t end_y,
+    const bool convert_to_8_bit = true,
+    const bool filter_failed = false);
+
+  Teuchos::RCP<Image>
+  get_frame_10_bit_sub(const int_t frame_index,
+    const int_t start_x,
+    const int_t end_x,
+    const int_t start_y,
+    const int_t end_y);
+
+
   void get_frame_16_bit(const Teuchos::RCP<Image> & image,
     const int_t start_x,
     const int_t end_x,

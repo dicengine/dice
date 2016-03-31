@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
         for(int_t x=subset_start_x;x<subset_end_x;++x){
           coord_x = x + distr(eng)/100.0;
           coord_y = y + distr(eng)/100.0;
-          intensity_t value = interpolate_keys_fourth(coord_x,coord_y,image);
+          interpolate_keys_fourth(coord_x,coord_y,image);
           //std::cout << " x " << coord_x << " y " << coord_y << " " << value << std::endl;
         } // subset x loop
       } // subset y loop
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
     } // frame loop
   }
 
-  std::vector<Teuchos::RCP<Image> > images;
+  //std::vector<Teuchos::RCP<Image> > images;
   Teuchos::RCP<std::map<int_t,Motion_Window_Params> > param_set = Teuchos::rcp(new std::map<int_t,Motion_Window_Params>());
   Motion_Window_Params params;
   params.start_x_ = window_start_x;
@@ -152,7 +152,9 @@ int main(int argc, char *argv[]) {
         read_timer.start();
       else
         read_timer.resume();
-      images = cine.get_frame(i,param_set,true,false,Teuchos::null);
+      //images = cine.get_frame(i,param_set,true,false,Teuchos::null);
+      Teuchos::RCP<Image> image = cine.get_frame_10_bit_sub(i,window_start_x,window_end_x,window_start_y,window_end_y);
+      //image->write("Howdy-yall.tif");
       read_timer.stop();
 
       scalar_t coord_x = 0.0;
@@ -165,7 +167,8 @@ int main(int argc, char *argv[]) {
         for(int_t x=subset_start_x;x<subset_end_x;++x){
           coord_x = x + distr(eng)/100.0;
           coord_y = y + distr(eng)/100.0;
-          intensity_t value = images[0]->interpolate_bicubic(coord_x,coord_y);
+          image->interpolate_bicubic(coord_x,coord_y);
+          //images[0]->interpolate_bicubic(coord_x,coord_y);
           //intensity_t value = images[0]->interpolate_keys_fourth(coord_x,coord_y);
           //std::cout << " x " << coord_x << " y " << coord_y << " " << value << std::endl;
           //intensity_t value = interpolate_keys_fourth(coord_x,coord_y,images[0]);

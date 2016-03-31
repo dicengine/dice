@@ -91,11 +91,15 @@ Cine_Reader::Cine_Reader(const std::string & file_name,
   cine_header_ = read_cine_headers(file_name.c_str(),out_stream);
 
   // set up the file reading buffer:
-  const int64_t begin = cine_header_->image_offsets_[0];
-  const int64_t end = cine_header_->image_offsets_[1];
-  buffer_size_ = end - begin;
-  TEUCHOS_TEST_FOR_EXCEPTION(buffer_size_<=0,std::runtime_error,"Error, invalid buffer size");
-  buffer_ = new char [buffer_size_];
+  if(cine_header_->header_.ImageCount<=1)
+    buffer_size_ = 2*cine_header_->bitmap_header_.biSizeImage;
+  else{
+    const int64_t begin = cine_header_->image_offsets_[0];
+    const int64_t end = cine_header_->image_offsets_[1];
+    buffer_size_ = end - begin;
+    TEUCHOS_TEST_FOR_EXCEPTION(buffer_size_<=0,std::runtime_error,"Error, invalid buffer size");
+    buffer_ = new char [buffer_size_];
+  }
   buff_ptr_8_ = reinterpret_cast<uint8_t*>(buffer_);
   buff_ptr_16_ = reinterpret_cast<uint16_t*>(buffer_);
   header_offset_8_ = (buffer_size_ - cine_header_->bitmap_header_.biSizeImage) / sizeof(uint8_t);
@@ -238,6 +242,132 @@ Cine_Reader::get_frame_16_bit(const Teuchos::RCP<Image> & image,
   }
 }
 
+Teuchos::RCP<Image>
+Cine_Reader::get_frame_10_bit_sub(const int_t frame_index,
+  const int_t start_x,
+  const int_t end_x,
+  const int_t start_y,
+  const int_t end_y){
+
+  const int_t img_w = end_x - start_x + 1;
+  const int_t img_h = end_y - start_y + 1;
+  Teuchos::RCP<Image> image = Teuchos::rcp(new Image(img_w,img_h,0.0,start_x,start_y));
+  const int_t w = cine_header_->bitmap_header_.biWidth;
+
+  /// buffer for sub_image reading
+  assert(w%8==0);
+  const int_t sub_buffer_size = (img_h+1) * w * 10 / 8;
+  char * sub_buffer = new char[sub_buffer_size]; // + 1 to oversize the buffer
+  uint8_t * sub_buff_ptr_8 = reinterpret_cast<uint8_t*>(sub_buffer);
+
+  // open the file
+  std::ifstream cine_file(cine_header_->file_name_.c_str(), std::ios::in | std::ios::binary);
+  if (cine_file.fail()){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Can't open the file: " + cine_header_->file_name_);
+  }
+  // position to the first frame in this set:
+  const int64_t begin_frame = cine_header_->image_offsets_[frame_index] + header_offset_8_ + (start_y * w * 10 / 8);
+  cine_file.seekg(begin_frame);
+  // read the buffer
+  cine_file.read(sub_buffer,sub_buffer_size);
+
+  Teuchos::ArrayRCP<intensity_t> intens = image->intensities();
+  // unpack the 10 bit image data from the array
+  uint16_t intensity_16 = 0.0;
+  uint16_t intensity_16p1 = 0.0;
+  uint16_t two_byte = 0;
+  for(int_t y=0;y<img_h;++y){
+    for(int_t x=start_x;x<=end_x;++x){
+      const int_t slot = (y*w+x)*10/8;
+      const int_t chunk_offset = (y*w+x)%4; // 5 bytes per four pixels
+      // create the single 16 bit combo
+      intensity_16p1 = sub_buff_ptr_8[slot + 1];
+      intensity_16p1 <<= 8; // move the bits over to the beginning of the byte
+      intensity_16 = sub_buff_ptr_8[slot];
+      two_byte = intensity_16 | intensity_16p1;
+      endian_swap(two_byte);
+      // shift the 10 bits to the right side of the 16 bit data type;
+      two_byte = two_byte >> (6 - (chunk_offset*2));
+      // use a mask to zero out the left 6 bits
+      two_byte = two_byte & 0x3FF; // 16 bits with only the right 10 active;
+      // this next step is required because the original signal was companded from 12 bits to 10,
+      // now we are expanding it back to 12:
+      two_byte = LinLUT[two_byte];
+      // save off the pixel
+      intens[y*img_w+(x-start_x)] = two_byte * conversion_factor_;
+    }
+  }
+  cine_file.close();
+  delete[] sub_buffer;
+  return image;
+}
+
+
+
+void
+Cine_Reader::get_frame_10_bit_mod(const Teuchos::RCP<Image> & image,
+  const int_t start_x,
+  const int_t end_x,
+  const int_t start_y,
+  const int_t end_y,
+  const bool convert_to_8_bit,
+  const bool filter_failed){
+  DEBUG_MSG("Cine_Reader::get_frame_10_bit_mod: extents x_start " << start_x << " x_end " << end_x <<
+    " y_start " << start_y << " y_end " << end_y << " convert to 8 bit " << convert_to_8_bit << " filter failed " << filter_failed);
+  Teuchos::ArrayRCP<intensity_t> intens = image->intensities();
+  const int_t offset_x = image->offset_x();
+  const int_t offset_y = image->offset_y();
+  DEBUG_MSG("Cine_Reader::get_frame_10_bit: image offsets x " << offset_x << " y " << offset_y);
+  const int_t img_w = image->width();
+  const int_t w = cine_header_->bitmap_header_.biWidth;
+  // checks to make sure the image dimensions fit inside the frame have been done by get_frame()
+  // unpack the 10 bit image data from the array
+  uint16_t intensity_16 = 0.0;
+  uint16_t intensity_16p1 = 0.0;
+  uint16_t two_byte = 0;
+  int_t failed_pixels = 0;
+  for(int_t y=start_y;y<=end_y;++y){ // x and y here are in terms of sub image local coordinates
+    for(int_t x=start_x;x<=end_x;++x){
+      const int_t slot = (y*w+x)*10/8;
+      const int_t chunk_offset = (y*w+x)%4; // 5 bytes per four pixels
+      // create the single 16 bit combo
+      intensity_16p1 = buff_ptr_8_[header_offset_8_ + slot + 1];
+      intensity_16p1 <<= 8;
+      intensity_16 = buff_ptr_8_[header_offset_8_ + slot];
+      two_byte = intensity_16 | intensity_16p1;
+      endian_swap(two_byte);
+//      two_byte = (intensity_16p1 << 8) | (intensity_16); // endian swap the second byte then or it with the first
+//      endian_swap(two_byte);
+      // shift the 10 bits to the right side of the 16 bit data type;
+      two_byte = two_byte >> (6 - (chunk_offset*2));
+      // use a mask to zero out the left 6 bits
+      two_byte = two_byte & 0x3FF; // 16 bits with only the right 10 active;
+      //two_byte = two_byte & 0xFFC0; // 16 bits with only the left 10 active;
+      // this next step is required because the original signal was companded from 12 bits to 10,
+      // now we are expanding it back to 12:
+      two_byte = LinLUT[two_byte];
+      // save off the pixel
+      //intens[(y-offset_y)*img_w+(x-offset_x)] = static_cast<intensity_t>(two_byte) * conversion_factor_;
+      intens[(y-offset_y)*img_w+(x-offset_x)] = two_byte * conversion_factor_;
+       //      // TODO TODO move these to a separate loop for filtering
+      //      if(filter_failed && two_byte >= filter_value_ && !(x == 0 && y == 0)){
+      //        failed_pixels++;
+      //        intens[y*img_w+x] = intens[y*img_w+x-1];
+      //      }
+      //      else
+      //        intens[y*img_w+x] = convert_to_8_bit ? static_cast<intensity_t>(two_byte) * conversion_factor_: static_cast<intensity_t>(two_byte);
+    }
+  }
+#ifdef DICE_DEBUG_MSG
+  if(failed_pixels>0){
+    *out_stream_ << "*** Warning, this frame of .cine file: " << cine_header_->file_name_ << std::endl <<
+        "             has " << failed_pixels << " failed pixels (" <<
+        failed_pixels*100.0/(cine_header_->bitmap_header_.biWidth*cine_header_->bitmap_header_.biHeight) << "% of the image)." << std::endl <<
+        "             The intensity value for these pixels has been replaced with the neighbor value." << std::endl;
+  }
+#endif
+}
+
 void
 Cine_Reader::get_frame_10_bit(const Teuchos::RCP<Image> & image,
   const int_t start_x,
@@ -365,7 +495,7 @@ Cine_Reader::get_frame(const int_t frame_index,
       get_frame_16_bit(image,pb_start_x,pb_end_x,pb_start_y,pb_end_y,convert_to_8_bit_values,filter_failed_pixels);
     }
     else if (cine_header_->bit_depth_==BIT_DEPTH_10_PACKED){
-      get_frame_10_bit(image,pb_start_x,pb_end_x,pb_start_y,pb_end_y,convert_to_8_bit_values,filter_failed_pixels);
+      get_frame_10_bit_mod(image,pb_start_x,pb_end_x,pb_start_y,pb_end_y,convert_to_8_bit_values,filter_failed_pixels);
     } // 10 bit
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument, "Error: invalid bit depth (or this bit-depth has not been implemented.");
