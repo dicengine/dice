@@ -102,6 +102,7 @@ int main(int argc, char *argv[]) {
   int_t image_height = 0;
   int_t first_frame_index = 1;
   bool is_cine = false;
+  bool filter_failed_pixels = false;
   Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader;
   if(image_files[0]==DICe::cine_file){
     is_cine = true;
@@ -109,13 +110,12 @@ int main(int argc, char *argv[]) {
     TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::cine_file),std::runtime_error,
       "Error, the file name of the cine file has not been specified");
     std::string cine_file_name = input_params->get<std::string>(DICe::cine_file);
-    *outStream << "cine file name: " << cine_file_name << std::endl;
     // add the directory to the name:
     std::stringstream cine_name;
     cine_name << input_params->get<std::string>(DICe::image_folder) << cine_file_name;
     *outStream << "cine file name: " << cine_name.str() << std::endl;
     // read the cine header info:
-    const bool filter_failed_pixels = correlation_params->get<bool>(DICe::filter_failed_cine_pixels,false);
+    filter_failed_pixels = correlation_params->get<bool>(DICe::filter_failed_cine_pixels,false);
     cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(cine_name.str(),outStream.getRawPtr(),filter_failed_pixels));
     // read the image data for a frame
     num_images = cine_reader->num_frames();
@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<DICe::Schema> schema;
   if(is_cine){
     // read in the reference image from the cine file and create the schema:
-    Teuchos::RCP<DICe::Image> ref_image = cine_reader->get_frame(cine_ref_index,true,Teuchos::null,correlation_params);
+    Teuchos::RCP<DICe::Image> ref_image = cine_reader->get_frame(cine_ref_index,true,filter_failed_pixels,correlation_params);
     schema = Teuchos::rcp(new DICe::Schema(ref_image,ref_image,correlation_params));
   }
   else{
@@ -222,7 +222,7 @@ int main(int argc, char *argv[]) {
   for(int_t image_it=start_frame;image_it<=end_frame;++image_it){
     if(is_cine){
       *outStream << "Processing Image: " << image_it - start_frame + 1 << " of " << num_images << " frame id: " << first_frame_index + image_it << std::endl;
-      Teuchos::RCP<DICe::Image> def_image = cine_reader->get_frame(image_it,true,schema->motion_window_params(),correlation_params);
+      Teuchos::RCP<DICe::Image> def_image = cine_reader->get_frame(image_it,true,filter_failed_pixels,correlation_params);
       schema->set_def_image(def_image);
     }
     else{

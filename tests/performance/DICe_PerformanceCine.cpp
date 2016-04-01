@@ -82,13 +82,11 @@ int main(int argc, char *argv[]) {
   *outStream << "start frame:       " << start_frame << std::endl;
   *outStream << "end frame:         " << end_frame << std::endl;
 
-  Teuchos::RCP<Image> image = Teuchos::rcp(new Image(cine.width(),cine.height(),0.0));
-
   cpu_timer thread_timer;
   {
     thread_timer.start();
     for(int_t i = start_frame; i<end_frame; ++i){
-      cine.get_frame(image,i,true);
+      Teuchos::RCP<Image> image = cine.get_frame(i);
       //std::stringstream name;
       //name << "./frame_images/frame_" << i << ".tif";
       //image->write(name.str());

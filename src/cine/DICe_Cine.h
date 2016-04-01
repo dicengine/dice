@@ -205,83 +205,72 @@ public:
     std::ostream * out_stream = NULL,
     const bool filter_failed_pixels=false);
   /// default destructor
-  virtual ~Cine_Reader(){
-    delete[] buffer_;
-  };
+  virtual ~Cine_Reader(){};
 
   /// \brief create and populate an image from a cine frame
   /// allows for reading only portions of the image
   /// \param frame_index the frame number (starting with 0 as first frame, disregard triggger indexing)
-  /// \param convert_to_8_bit_values true if the intensity values should be converted to the range 0-255
-  /// \param motion_window pointer to a set of dimensions to read
-  /// \param params parameters to pass to the image constructor
-  /// \param prevent_filtering allow user to override the cine readers failed pixels flag
+  /// \param start_x upper left corner x image coordinate (inclusive)
+  /// \param end_x lower right corner x image coordinate (inclusive)
+  /// \param start_y upper left corner y image coordinate (inclusive)
+  /// \param end_y lower right corner y image coordinate (inclusive)
+  /// \param convert_to_8_bit true if the values should be converted to the range 0-255
+  /// \param filter_failed_pixels true if the pixel values should be binned and filtered for outliers
+  /// like dead pixels that have the max value
+  /// \param params image parameters (filter image, compute gradients, etc)
   Teuchos::RCP<Image> get_frame(const int_t frame_index,
-    const bool convert_to_8_bit_values = true,
-    const Teuchos::RCP<std::map<int_t,Motion_Window_Params> > & motion_window = Teuchos::null,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null,
-    const bool prevent_filtering=false);
-
-  /// \brief populate an already allocated image container
-  /// allows for reading only portions of the image
-  /// \param image the image to populate
-  /// \param frame_index the frame number (starting with 0 as first frame, disregard triggger indexing)
-  /// \param convert_to_8_bit_values true if the intensity values should be converted to the range 0-255
-  /// \param motion_window pointer to a set of dimensions to read
-  /// \param params parameters to pass to the image constructor
-  /// \param prevent_filtering allow user to override the cine readers failed pixels flag
-  void get_frame(const Teuchos::RCP<Image> & image,
-    const int_t frame_index,
-    const bool convert_to_8_bit_values = true,
-    const Teuchos::RCP<std::map<int_t,Motion_Window_Params> > & motion_window = Teuchos::null,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null,
-    const bool prevent_filtering=false);
-
-  /// \brief create and populate separate smaller images that represent regions in a cine frame
-  std::vector<Teuchos::RCP<Image> > get_frame(const int_t frame_index,
-    const Teuchos::RCP<std::map<int_t,Motion_Window_Params> > & motion_window,
-    const bool convert_to_8_bit_values = true,
-    const bool prevent_filtering=false,
+    const int_t start_x,
+    const int_t start_y,
+    const int_t end_x,
+    const int_t end_y,
+    const bool convert_to_8_bit=true,
+    const bool filter_failed_pixels=false,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
+  /// \brief create and populate an image from a cine frame
+  /// allows for reading only portions of the image
+  /// \param frame_index the frame number (starting with 0 as first frame, disregard triggger indexing)
+  /// \param convert_to_8_bit true if the values should be converted to the range 0-255
+  /// \param filter_failed_pixels true if the pixel values should be binned and filtered for outliers
+  /// like dead pixels that have the max value
+  /// \param params image parameters (filter image, compute gradients, etc)
+  Teuchos::RCP<Image> get_frame(const int_t frame_index,
+    const bool convert_to_8_bit=true,
+    const bool filter_failed_pixels=false,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null){
+    return get_frame(frame_index,0,0,
+      cine_header_->bitmap_header_.biWidth-1,cine_header_->bitmap_header_.biHeight-1,
+      convert_to_8_bit,filter_failed_pixels,params);
+  }
+
+  /// \brief 8 bit frame fetch
+  /// \param image, the image to populate
+  /// \param frame_index the frame to gather
+  /// \param filter_failed_pixels get rid of outlier pixels or failed pixels
   void get_frame_8_bit(const Teuchos::RCP<Image> & image,
-    const int_t start_x,
-    const int_t end_x,
-    const int_t start_y,
-    const int_t end_y,
-  const bool filter_failed);
+    const int_t frame_index,
+  const bool filter_failed_pixels);
 
-  void get_frame_10_bit(const Teuchos::RCP<Image> & image,
-    const int_t start_x,
-    const int_t end_x,
-    const int_t start_y,
-    const int_t end_y,
-    const bool convert_to_8_bit = true,
-    const bool filter_failed = false);
+  /// \brief 10 bit frame fetch
+  /// \param image, the image to populate
+  /// \param frame_index the frame to gather
+  void get_frame_10_bit(Teuchos::RCP<Image> image,
+    const int_t frame_index);
 
-  void get_frame_10_bit_mod(const Teuchos::RCP<Image> & image,
-    const int_t start_x,
-    const int_t end_x,
-    const int_t start_y,
-    const int_t end_y,
-    const bool convert_to_8_bit = true,
-    const bool filter_failed = false);
+  /// \brief 10 bit frame fetch with filtering
+  /// separate function to avoid if statement for each pixel (optimization)
+  /// \param image, the image to populate
+  /// \param frame_index the frame to gather
+  void get_frame_10_bit_filtered(Teuchos::RCP<Image> image,
+    const int_t frame_index);
 
-  Teuchos::RCP<Image>
-  get_frame_10_bit_sub(const int_t frame_index,
-    const int_t start_x,
-    const int_t end_x,
-    const int_t start_y,
-    const int_t end_y);
-
-
+  /// \brief 16 bit frame fetch
+  /// \param image, the image to populate
+  /// \param frame_index the frame to gather
+  /// \param filter_failed_pixels get rid of outlier pixels or failed pixels
   void get_frame_16_bit(const Teuchos::RCP<Image> & image,
-    const int_t start_x,
-    const int_t end_x,
-    const int_t start_y,
-    const int_t end_y,
-    const bool convert_to_8_bit = true,
-    const bool filter_failed = false);
+    const int_t frame_index,
+    const bool filter_failed_pixels);
 
   /// \brief bins the pixels and determines a filter value
   /// The pixels are separated into 10 bins (0-9). The top bin
@@ -315,18 +304,8 @@ private:
   bool bit_12_warning_;
   /// flag to filter out failed pixels
   bool filter_failed_pixels_;
-  /// size of the file read buffer
-  long long int buffer_size_;
-  /// buffer for file reading
-  char * buffer_;
-  /// casted pointer to the buffer
-  uint8_t * buff_ptr_8_;
-  /// casted pointer to the buffer
-  uint16_t * buff_ptr_16_;
   /// file offset
-  long long int header_offset_8_;
-  /// file offset
-  long long int header_offset_16_;
+  long long int header_offset_;
   /// maximum value of intensity above which the values are filtered by taking nearest neighbor
   intensity_t filter_value_;
   /// conversion factor for converting to 8 bit depth
