@@ -1519,18 +1519,33 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   }
   // TODO how to respond to bad initialization
   // TODO add a search-based method to initialize if other methods failed
+  // determine if the subset is a blocker and if so, force it to use simplex method:
+  // also force simplex if it is a blocked subset (not enough speckles to use grad-based method)
+  bool is_blocked = false;
+  bool is_a_blocker = false;
+  if(obstructing_subset_ids_!=Teuchos::null){
+    if(obstructing_subset_ids_->find(subset_gid)!=obstructing_subset_ids_->end()){
+      if(obstructing_subset_ids_->find(subset_gid)->second.size()>0){
+        is_blocked = true;
+        DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " is a blocker or blocked subset, forcing simplex method for this subset.");
+      }
+    }
+    std::map<int_t,std::vector<int_t> >::iterator blk_it = obstructing_subset_ids_->begin();
+    std::map<int_t,std::vector<int_t> >::iterator blk_end = obstructing_subset_ids_->end();
+    for(;blk_it!=blk_end;++blk_it){
+      std::vector<int_t> * obst_ids = &blk_it->second;
+      for(size_t i=0;i<obst_ids->size();++i){
+        if((*obst_ids)[i]==subset_gid){
+          is_a_blocker = true;
+          DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " is a blocking subset, forcing simplex method for this subset.");
+        }
+      }
+    }
+  }
   //
   // perform the correlation
   //
-  if(optimization_method_==DICe::GRADIENT_BASED||optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX){
-    try{
-      corr_status = obj->computeUpdateFast(deformation,num_iterations);
-    }
-    catch (std::logic_error &err) { //a non-graceful exception occurred
-      corr_status = CORRELATION_FAILED_BY_EXCEPTION;
-    };
-  }
-  else if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED){
+  if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED||is_a_blocker||is_blocked){
     try{
       corr_status = obj->computeUpdateRobust(deformation,num_iterations);
     }
@@ -1538,8 +1553,16 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       corr_status = CORRELATION_FAILED_BY_EXCEPTION;
     };
   }
+  else if(optimization_method_==DICe::GRADIENT_BASED||optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX){
+    try{
+      corr_status = obj->computeUpdateFast(deformation,num_iterations);
+    }
+    catch (std::logic_error &err) { //a non-graceful exception occurred
+      corr_status = CORRELATION_FAILED_BY_EXCEPTION;
+    };
+  }
   if(corr_status!=CORRELATION_SUCCESSFUL){
-    if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::GRADIENT_BASED){
+    if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::GRADIENT_BASED||is_a_blocker||is_blocked){
       record_failed_step(subset_gid,static_cast<int_t>(corr_status),num_iterations);
       return;
     }
@@ -1557,7 +1580,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
         return;
       }
     }
-    else if(optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED){
+    else if(optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED||is_a_blocker||is_blocked){
       // try again using gradient based
       init_status = initial_guess(subset_gid,deformation);
       try{
