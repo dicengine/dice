@@ -315,7 +315,7 @@ Cine_Reader::get_frame_10_bit(Teuchos::RCP<Image> image,
   assert(img_h<=cine_header_->bitmap_header_.biHeight);
   const int_t start_x = image->offset_x();
   assert(start_x>=0&&start_x<w);
-  const int_t end_x = start_x + img_w;
+  const int_t end_x = start_x + img_w - 1;
   const int_t start_y = image->offset_y();
   assert(start_y>=0&&start_y<cine_header_->bitmap_header_.biHeight);
   /// buffer for sub_image reading
@@ -323,7 +323,7 @@ Cine_Reader::get_frame_10_bit(Teuchos::RCP<Image> image,
   const int_t sub_buffer_size = (img_h+1) * w * 10 / 8;
   char * sub_buffer = new char[sub_buffer_size]; // + 1 to oversize the buffer
   DEBUG_MSG("Cine_Reader::get_frame_10_bit(): buffer_size: " << sub_buffer_size);
-  DEBUG_MSG("Cine_Reader::get_frame_10_bit(): start_x " << start_x << " end_x " << end_x << " start_y " << start_y << " end_y " << start_y + img_h);
+  DEBUG_MSG("Cine_Reader::get_frame_10_bit(): start_x " << start_x << " end_x " << end_x << " start_y " << start_y << " end_y " << start_y + img_h -1);
   uint8_t * sub_buff_ptr_8 = reinterpret_cast<uint8_t*>(sub_buffer);
   // open the file
   std::ifstream cine_file(cine_header_->file_name_.c_str(), std::ios::in | std::ios::binary);
@@ -376,7 +376,7 @@ Cine_Reader::get_frame_10_bit_filtered(Teuchos::RCP<Image> image,
   assert(img_h<=cine_header_->bitmap_header_.biHeight);
   const int_t start_x = image->offset_x();
   assert(start_x>=0&&start_x<w);
-  const int_t end_x = start_x + img_w;
+  const int_t end_x = start_x + img_w - 1;
   const int_t start_y = image->offset_y();
   assert(start_y>=0&&start_y<cine_header_->bitmap_header_.biHeight);
   /// buffer for sub_image reading
@@ -384,7 +384,7 @@ Cine_Reader::get_frame_10_bit_filtered(Teuchos::RCP<Image> image,
   const int_t sub_buffer_size = (img_h+1) * w * 10 / 8;
   char * sub_buffer = new char[sub_buffer_size]; // + 1 to oversize the buffer
   DEBUG_MSG("Cine_Reader::get_frame_10_bit_filtered(): buffer_size: " << sub_buffer_size);
-  DEBUG_MSG("Cine_Reader::get_frame_10_bit_filtered(): start_x " << start_x << " end_x " << end_x << " start_y " << start_y << " end_y " << start_y + img_h);
+  DEBUG_MSG("Cine_Reader::get_frame_10_bit_filtered(): start_x " << start_x << " end_x " << end_x << " start_y " << start_y << " end_y " << start_y + img_h - 1);
   uint8_t * sub_buff_ptr_8 = reinterpret_cast<uint8_t*>(sub_buffer);
   // open the file
   std::ifstream cine_file(cine_header_->file_name_.c_str(), std::ios::in | std::ios::binary);
@@ -425,7 +425,7 @@ Cine_Reader::get_frame_10_bit_filtered(Teuchos::RCP<Image> image,
         intens[y*img_w+(x-start_x)] = intens[y*img_w+(x-start_x)-1];
       }
       else
-        intens[y*img_w+x] = two_byte * conversion_factor_;
+        intens[y*img_w+(x-start_x)] = two_byte * conversion_factor_;
     }
   }
   cine_file.close();

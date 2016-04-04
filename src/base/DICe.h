@@ -410,6 +410,7 @@ const static char * optimizationMethodStrings[] = {
 /// Interpolation method
 enum Interpolation_Method {
   BILINEAR=0,
+  BICUBIC,
   KEYS_FOURTH,
   // DON'T ADD ANY BELOW MAX
   MAX_INTERPOLATION_METHOD,
@@ -418,6 +419,7 @@ enum Interpolation_Method {
 
 const static char * interpolationMethodStrings[] = {
   "BILINEAR",
+  "BICUBIC",
   "KEYS_FOURTH"
 };
 

@@ -58,7 +58,7 @@ Objective_ZNSSD::gamma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const
 
   assert(deformation->size()==DICE_DEFORMATION_SIZE);
   try{
-    subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation,schema_->interpolation_method());
+    subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,deformation,schema_->interpolation_method());
   }
   catch (std::logic_error & err) {
     return -1.0;
@@ -112,7 +112,7 @@ Objective_ZNSSD::beta(Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
       // replace the correct normalization flag:
       schema_->set_normalize_gamma_with_active_pixels(original_normalize_flag);
       // re-initialize the subset with the original deformation solution
-      subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation,schema_->interpolation_method());
+      subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,deformation,schema_->interpolation_method());
       return -1.0;
     }
     const scalar_t slope_m = std::abs(epsilon[i] / (gamma_m - gamma_0))*factor[i];
@@ -132,7 +132,7 @@ Objective_ZNSSD::beta(Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
   schema_->set_normalize_gamma_with_active_pixels(original_normalize_flag);
 
   // re-initialize the subset with the original deformation solution
-  subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation,schema_->interpolation_method());
+  subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,deformation,schema_->interpolation_method());
   return mag_dir_beta;
 }
 
@@ -144,7 +144,7 @@ Objective_ZNSSD::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation,
     return 0.0;
 
   // compute the noise std dev. of the image:
-  noise_level = subset_->noise_std_dev(schema_->def_img(),deformation);
+  noise_level = subset_->noise_std_dev(schema_->def_img(subset_->sub_image_id()),deformation);
   // sum up the grads in x and y:
   scalar_t sum_gx = 0.0;
   scalar_t sum_gy = 0.0;
@@ -235,7 +235,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
     num_iterations = solve_it;
     // update the deformed image with the new deformation:
     try{
-      subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation,schema_->interpolation_method());
+      subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,deformation,schema_->interpolation_method());
       //#ifdef DICE_DEBUG_MSG
       //    std::stringstream fileName;
       //    fileName << "defSubset_" << correlation_point_global_id_ << "_" << solve_it;

@@ -169,6 +169,11 @@ public:
     return subset_;
   }
 
+  /// Returns the sub image id of the subset
+  int_t sub_image_id()const{
+    return subset_->sub_image_id();
+  }
+
   /// Returns the global id of the current correlation point
   int_t correlation_point_global_id()const{
     return correlation_point_global_id_;

@@ -54,7 +54,8 @@ Subset::Subset(int_t cx,
   cx_(cx),
   cy_(cy),
   has_gradients_(false),
-  is_conformal_(false)
+  is_conformal_(false),
+  sub_image_id_(0)
 {
   assert(num_pixels_>0);
   assert(x.size()==y.size());
@@ -77,7 +78,8 @@ Subset::Subset(const int_t cx,
  cx_(cx),
  cy_(cy),
  has_gradients_(false),
- is_conformal_(false)
+ is_conformal_(false),
+ sub_image_id_(0)
 {
   assert(width>0);
   assert(height>0);
@@ -113,7 +115,8 @@ Subset::Subset(const int_t cx,
   cy_(cy),
   has_gradients_(false),
   conformal_subset_def_(subset_def),
-  is_conformal_(true)
+  is_conformal_(true),
+  sub_image_id_(0)
 {
   assert(subset_def.has_boundary());
   std::set<std::pair<int_t,int_t> > coords;
@@ -323,6 +326,9 @@ Subset::initialize(Teuchos::RCP<Image> image,
        mapped_y = sin_t*Dx + cos_t*Dy + v + cy_ - oy;
        if(interp==BILINEAR){
          intensities_[i] = interpolate_bilinear(mapped_x,mapped_y,image);
+       }
+       else if(interp==BICUBIC){
+         intensities_[i] = image->interpolate_bicubic(mapped_x+ox,mapped_y+oy);
        }
        else if(interp==KEYS_FOURTH){
          intensities_[i] = interpolate_keys_fourth(mapped_x,mapped_y,image);

@@ -208,15 +208,18 @@ public:
   void set_params(const std::string & params_file_name);
 
   /// Replace the deformed image for this Schema (only enabled with boost)
-  void set_def_image(const std::string & defName);
+  void set_def_image(const std::string & defName,
+    const int_t id=0);
 
   /// Replace the deformed image using an intensity array
   void set_def_image(const int_t img_width,
     const int_t img_height,
-    const Teuchos::ArrayRCP<intensity_t> defRCP);
+    const Teuchos::ArrayRCP<intensity_t> defRCP,
+    const int_t id=0);
 
   /// Replace the deformed image using an image
-  void set_def_image(Teuchos::RCP<Image> img);
+  void set_def_image(Teuchos::RCP<Image> img,
+    const int_t id=0);
 
   /// Rotate the deformed image if requested
   void rotate_def_image();
@@ -281,13 +284,15 @@ public:
   }
 
   /// Returns a pointer to the deformed DICe::Image
-  Teuchos::RCP<Image> def_img()const{
-    return def_img_;
+  Teuchos::RCP<Image> def_img(const int_t index=0)const{
+    assert(index>=0&&index<(int_t)def_imgs_.size());
+    return def_imgs_[index];
   }
 
   /// Returns a pointer to the preivous DICe::Image
-  Teuchos::RCP<Image> prev_img()const{
-    return prev_img_;
+  Teuchos::RCP<Image> prev_img(const int_t index=0)const{
+    assert(index>=0&&index<(int_t)prev_imgs_.size());
+    return prev_imgs_[index];
   }
 
   /// Returns the max solver iterations allowed for the fast (gradient based) algorithm
@@ -1017,9 +1022,11 @@ private:
   /// Pointer to reference image
   Teuchos::RCP<Image> ref_img_;
   /// Pointer to deformed image
-  Teuchos::RCP<Image> def_img_;
+  /// vector because there could be multiple sub-images
+  std::vector<Teuchos::RCP<Image> > def_imgs_;
   /// Pointer to previous image
-  Teuchos::RCP<Image> prev_img_;
+  /// vector because there could be multiple sub-images
+  std::vector<Teuchos::RCP<Image> > prev_imgs_;
   /// Vector of pointers to the post processing utilities
   std::vector<Teuchos::RCP<Post_Processor> > post_processors_;
   /// True if any post_processors have been activated

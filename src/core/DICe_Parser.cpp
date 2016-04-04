@@ -652,6 +652,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
   bool conformal_subset_defined = false;
   bool roi_defined = false;
   int_t num_roi = 0;
+  int_t num_motion_windows_defined = 0;
 
   // read each line of the file
    while (!dataFile.eof())
@@ -850,13 +851,14 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            else if(block_tokens[0]==parser_test_for_motion){
              test_for_motion = true;
              motion_window_params.use_motion_detection_ = true;
+             DEBUG_MSG("Conformal subset will test for motion");
            }
            else if(block_tokens[0]==parser_motion_window){
              has_motion_window = true;
              if(block_tokens.size()==2){
                TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[1]),std::runtime_error,"");
                motion_window_params.use_subset_id_ = atoi(block_tokens[1].c_str());
-               if(proc_rank==0) DEBUG_MSG("Conformal subset will test for motion using the window defined by subset " <<
+               if(proc_rank==0) DEBUG_MSG("Conformal subset using the motion window defined by subset " <<
                  motion_window_params.use_subset_id_);
              }
              else{
@@ -868,12 +870,13 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              motion_window_params.start_y_ = atoi(block_tokens[2].c_str());
              motion_window_params.end_x_ = atoi(block_tokens[3].c_str());
              motion_window_params.end_y_ = atoi(block_tokens[4].c_str());
+             motion_window_params.sub_image_id_ = num_motion_windows_defined++;
              if(block_tokens.size()>5)
                motion_window_params.tol_ = strtod(block_tokens[5].c_str(),NULL);
-             if(proc_rank==0) DEBUG_MSG("Conformal subset will test for motion with window"
+             if(proc_rank==0) DEBUG_MSG("Conformal subset motion window"
                  " start x: " << motion_window_params.start_x_ << " start y: " << motion_window_params.start_y_ <<
                  " end x: " << motion_window_params.end_x_ << " end y: " << motion_window_params.end_y_ <<
-                 " tolerance: " << motion_window_params.tol_);
+                 " tolerance: " << motion_window_params.tol_ << " sub_image_id: " << motion_window_params.sub_image_id_);
              }
            }
            else if(block_tokens[0]==parser_skip_solve){
@@ -1057,6 +1060,28 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
   if(roi_defined){
     TEUCHOS_TEST_FOR_EXCEPTION(coordinates_defined || conformal_subset_defined,std::runtime_error,"Error, if a region of interest in defined, the coordinates"
         " cannot be specified, nor can conformal subset definitions.");
+  }
+
+  // now that all the motion windows have been defined, set the sub_image_id for those that use another subsets motion window
+  if(info->motion_window_params->size()>0){
+    info->num_motion_windows = num_motion_windows_defined;
+    std::map<int_t,Motion_Window_Params>::iterator map_it=info->motion_window_params->begin();
+    for(;map_it!=info->motion_window_params->end();++map_it){
+      if(map_it->second.use_subset_id_!=-1){
+        TEUCHOS_TEST_FOR_EXCEPTION(info->motion_window_params->find(map_it->second.use_subset_id_)==info->motion_window_params->end(),
+          std::runtime_error,"Error, invalid subset id for motion window use_subset_id");
+        map_it->second.sub_image_id_ = info->motion_window_params->find(map_it->second.use_subset_id_)->second.sub_image_id_;
+      }
+    }
+    // check that all subsets have a motion window defined:
+    const int_t num_subsets = info->coordinates_vector->size()/dim;
+    for(int_t i=0;i<num_subsets;++i){
+      TEUCHOS_TEST_FOR_EXCEPTION(info->motion_window_params->find(i)==info->motion_window_params->end(),std::runtime_error,
+        "Error, if one motion window is defined, motion windows must be defined for all subsets");
+      DEBUG_MSG("Subset " << i << " points to sub image id " << info->motion_window_params->find(i)->second.sub_image_id_);
+      TEUCHOS_TEST_FOR_EXCEPTION(info->motion_window_params->find(i)->second.sub_image_id_>= num_motion_windows_defined,std::runtime_error,
+        "Error, invalid sub image id");
+    }
   }
 
   return info;

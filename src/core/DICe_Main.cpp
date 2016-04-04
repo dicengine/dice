@@ -196,6 +196,8 @@ int main(int argc, char *argv[]) {
 
   schema->initialize(input_params);
 
+  const bool has_motion_windows = schema->motion_window_params()->size()>0;
+
   *outStream << "Number of subsets: " << schema->data_num_points() << std::endl;
   for(int_t i=0;i<schema->data_num_points();++i){
     if(i==10&&schema->data_num_points()!=11) *outStream << "..." << std::endl;
@@ -222,8 +224,24 @@ int main(int argc, char *argv[]) {
   for(int_t image_it=start_frame;image_it<=end_frame;++image_it){
     if(is_cine){
       *outStream << "Processing Image: " << image_it - start_frame + 1 << " of " << num_images << " frame id: " << first_frame_index + image_it << std::endl;
-      Teuchos::RCP<DICe::Image> def_image = cine_reader->get_frame(image_it,true,filter_failed_pixels,correlation_params);
-      schema->set_def_image(def_image);
+      if(has_motion_windows){
+        std::map<int_t,Motion_Window_Params>::iterator map_it = schema->motion_window_params()->begin();
+        for(;map_it!=schema->motion_window_params()->end();++map_it){
+          if(map_it->second.use_subset_id_!=-1) continue;
+          const int_t sub_image_id = map_it->second.sub_image_id_;
+          DEBUG_MSG("Reading motion window sub_image " << sub_image_id);
+          const int_t start_x = map_it->second.start_x_;
+          const int_t end_x = map_it->second.end_x_;
+          const int_t start_y = map_it->second.start_y_;
+          const int_t end_y = map_it->second.end_y_;
+          Teuchos::RCP<DICe::Image> def_img = cine_reader->get_frame(image_it,start_x,start_y,end_x,end_y,true,filter_failed_pixels,correlation_params);
+          schema->set_def_image(def_img,sub_image_id);
+        }
+      }
+      else{
+        Teuchos::RCP<DICe::Image> def_image = cine_reader->get_frame(image_it,true,filter_failed_pixels,correlation_params);
+        schema->set_def_image(def_image);
+      }
     }
     else{
       const std::string def_image_string = image_files[image_it];

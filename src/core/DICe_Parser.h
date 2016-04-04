@@ -142,7 +142,8 @@ Motion_Window_Params {
   end_y_(0),
   tol_(-1.0),
   use_subset_id_(-1),
-  use_motion_detection_(false){};
+  use_motion_detection_(false),
+  sub_image_id_(-1){};
   /// upper left corner x coord
   int_t start_x_;
   /// upper left corner y coord
@@ -157,6 +158,8 @@ Motion_Window_Params {
   int_t use_subset_id_;
   /// use motion detection
   bool use_motion_detection_;
+  /// this gets set after the window images are created and the id is known
+  int_t sub_image_id_;
 };
 
 /// Simple struct for passing info back and forth from read_subset_file:
@@ -180,6 +183,7 @@ Subset_File_Info {
     optical_flow_flags = Teuchos::rcp(new std::map<int_t,bool>());
     skip_solve_flags = Teuchos::rcp(new std::map<int_t,std::vector<int_t> >());
     motion_window_params = Teuchos::rcp(new std::map<int_t,Motion_Window_Params>());
+    num_motion_windows = 0;
     type = info_type;
   }
   /// Pointer to map of conformal subset defs (these are used to define conformal subsets)
@@ -212,6 +216,8 @@ Subset_File_Info {
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > skip_solve_flags;
   /// Map that tests each frame for motion before performing DIC optimization
   Teuchos::RCP<std::map<int_t,Motion_Window_Params> > motion_window_params;
+  /// number of motion windows
+  int_t num_motion_windows;
 };
 
 /// \brief Read a list of coordinates for correlation points from file

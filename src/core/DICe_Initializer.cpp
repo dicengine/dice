@@ -936,7 +936,11 @@ Motion_Test_Utility::motion_detected(Teuchos::RCP<Image> def_image){
     // create a window of the deformed image according to the constructor parameters
     Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
     params->set(DICe::gauss_filter_images,true);
-    Teuchos::RCP<Image> window_img = Teuchos::rcp(new Image(def_image,origin_x_,origin_y_,width_,height_,params));
+    Teuchos::RCP<Image> window_img;
+    if(def_image->width()!=width_&&def_image->height()!=height_)
+      window_img = Teuchos::rcp(new Image(def_image,origin_x_,origin_y_,width_,height_,params));
+    else
+      window_img = Teuchos::rcp(new Image(def_image,0,0,width_,height_,params));
     // see if the previous image exists, if not return true as default
     if(prev_img_==Teuchos::null){
       DEBUG_MSG("Motion_Test_Utility::motion_detected() first frame call, return value: 1 (automatically).");
