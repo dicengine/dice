@@ -84,8 +84,8 @@ Cine_Reader::Cine_Reader(const std::string & file_name,
   out_stream_(out_stream),
   bit_12_warning_(false),
   filter_failed_pixels_(filter_failed_pixels),
-  filter_value_(255.0),
-  conversion_factor_(1.0)
+  filter_value_(0.0),
+  conversion_factor_(0.0)
 {
   cine_header_ = read_cine_headers(file_name.c_str(),out_stream);
 
@@ -95,16 +95,21 @@ Cine_Reader::Cine_Reader(const std::string & file_name,
   long long int buffer_size = end - begin;
   TEUCHOS_TEST_FOR_EXCEPTION(buffer_size<=0,std::runtime_error,"Error, invalid buffer size");
   header_offset_ = (buffer_size - cine_header_->bitmap_header_.biSizeImage) / sizeof(uint8_t);
-  if(cine_header_->bit_depth_==BIT_DEPTH_16){
-    filter_value_ = 65535.0;
+
+  if(cine_header_->bit_depth_==BIT_DEPTH_8){
+    filter_value_ = filter_failed_pixels_ ?  250.0 : 255.0;
+    conversion_factor_ = 255.0/filter_value_;
+  }
+  else if(cine_header_->bit_depth_==BIT_DEPTH_16){
+    filter_value_ = filter_failed_pixels_ ?  65500.0 : 65535.0;
     conversion_factor_ = 255.0/filter_value_;
   }
   else if(cine_header_->bit_depth_==BIT_DEPTH_10_PACKED){
-    filter_value_ = 4096.0;
+    filter_value_ = filter_failed_pixels_ ? 4090.0 : 4096.0;
     conversion_factor_ = 255.0 / filter_value_;
   }
-  if(filter_failed_pixels_)
-    initialize_cine_filter(0); // set up the filtering based on the 0th frame intensities
+  //if(filter_failed_pixels_) // use this filter to do a binning filter (turned off for now)
+  //  initialize_cine_filter(0); // set up the filtering based on the 0th frame intensities
 }
 
 void
@@ -216,7 +221,7 @@ Cine_Reader::get_frame_8_bit(const Teuchos::RCP<Image> & image,
         intens[(img_h-y-1)*img_w + x-start_x] = intens[(img_h-y-1)*img_w+x-start_x-1];
       }
       else
-        intens[(img_h-y-1)*img_w + x-start_x] = sub_buff_ptr_8[y*w+x];
+        intens[(img_h-y-1)*img_w + x-start_x] = sub_buff_ptr_8[y*w+x]*conversion_factor_;
     }
   }
   delete [] sub_buff_ptr_8;
