@@ -258,36 +258,33 @@ Image::intensities()const{
 }
 
 intensity_t
-Image::interpolate_bilinear(const scalar_t & global_x, const scalar_t & global_y){
-  const scalar_t gx = global_x - offset_x_;
-  const scalar_t gy = global_y - offset_y_;
-  if(gx<0.0||gx>=width_-1.5||gy<0.0||gy>=height_-1.5) return 0.0;
-  const int_t x1 = (int_t)gx;
+Image::interpolate_bilinear(const scalar_t & local_x, const scalar_t & local_y){
+
+  if(local_x<0.0||local_x>=width_-1.5||local_y<0.0||local_y>=height_-1.5) return 0.0;
+  const int_t x1 = (int_t)local_x;
   const int_t x2 = x1+1;
-  const int_t y1 = (int_t)gy;
+  const int_t y1 = (int_t)local_y;
   const int_t y2  = y1+1;
-  return intensities_[y1*width_+x1]*(x2-gx)*(y2-gy)
-      +intensities_[y1*width_+x2]*(gx-x1)*(y2-gy)
-      +intensities_[y2*width_+x2]*(gx-x1)*(gy-y1)
-      +intensities_[y2*width_+x1]*(x2-gx)*(gy-y1);
+  return intensities_[y1*width_+x1]*(x2-local_x)*(y2-local_y)
+      +intensities_[y1*width_+x2]*(local_x-x1)*(y2-local_y)
+      +intensities_[y2*width_+x2]*(local_x-x1)*(local_y-y1)
+      +intensities_[y2*width_+x1]*(x2-local_x)*(local_y-y1);
 }
 
 intensity_t
-Image::interpolate_bicubic(const scalar_t & global_x, const scalar_t & global_y){
-  const scalar_t gx = global_x - offset_x_;
-  const scalar_t gy = global_y - offset_y_;
-  if(gx<1.0||gx>=width_-2.0||gy<1.0||gy>=height_-2.0) return this->interpolate_bilinear(global_x,global_y);
+Image::interpolate_bicubic(const scalar_t & local_x, const scalar_t & local_y){
+  if(local_x<1.0||local_x>=width_-2.0||local_y<1.0||local_y>=height_-2.0) return this->interpolate_bilinear(local_x,local_y);
 
-  const int_t x0  = (int_t)gx;
+  const int_t x0  = (int_t)local_x;
   const int_t x1  = x0+1;
   const int_t x2  = x1+1;
   const int_t xm1 = x0-1;
-  const int_t y0  = (int_t)gy;
+  const int_t y0  = (int_t)local_y;
   const int_t y1 = y0+1;
   const int_t y2 = y1+1;
   const int_t ym1 = y0-1;
-  const scalar_t x = gx - x0;
-  const scalar_t y = gy - y0;
+  const scalar_t x = local_x - x0;
+  const scalar_t y = local_y - y0;
   const scalar_t x_2 = x * x;
   const scalar_t x_3 = x_2 * x;
   const scalar_t y_2 = y * y;
@@ -332,13 +329,11 @@ Image::interpolate_bicubic(const scalar_t & global_x, const scalar_t & global_y)
 }
 
 intensity_t
-Image::interpolate_keys_fourth(const scalar_t & global_x, const scalar_t & global_y){
-  const scalar_t gx = global_x - offset_x_;
-  const scalar_t gy = global_y - offset_y_;
-  int_t x1 = (int_t)gx;
-  int_t y1 = (int_t)gy;
-  if(gx<=2.5||gx>=width_-3.5||gy<=2.5||gy>=height_-3.5)
-    return this->interpolate_bilinear(global_x,global_y);
+Image::interpolate_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
+  int_t x1 = (int_t)local_x;
+  int_t y1 = (int_t)local_y;
+  if(local_x<=2.5||local_x>=width_-3.5||local_y<=2.5||local_y>=height_-3.5)
+    return this->interpolate_bilinear(local_x,local_y);
 
   static scalar_t c1 = 4.0/3.0;
   static scalar_t c2 = - 7.0/3.0;
@@ -350,8 +345,8 @@ Image::interpolate_keys_fourth(const scalar_t & global_x, const scalar_t & globa
   static scalar_t c8 = 21.0/12.0;
   static scalar_t c9 = -3.0/2.0;
 
-  if(gx - x1 >= 0.5) x1++;
-  if(gy - y1 >= 0.5) y1++;
+  if(local_x - x1 >= 0.5) x1++;
+  if(local_y - y1 >= 0.5) y1++;
   // check that the global location is inside the image...
   intensity_t intensity_value = 0.0;
   // convolve all the pixels within + and - pixels of the point in question
@@ -359,7 +354,7 @@ Image::interpolate_keys_fourth(const scalar_t & global_x, const scalar_t & globa
   scalar_t dx=0.0,dx2=0.0,dx3=0.0;
   scalar_t f0x=0.0,f0y=0.0;
   for(int_t y=y1-3;y<=y1+3;++y){
-    dy = std::abs(gy - y);
+    dy = std::abs(local_y - y);
     dy2=dy*dy;
     dy3=dy2*dy;
     f0y = 0.0;
@@ -374,7 +369,7 @@ Image::interpolate_keys_fourth(const scalar_t & global_x, const scalar_t & globa
     }
     for(int_t x=x1-3;x<=x1+3;++x){
       // compute the f's of x and y
-      dx = std::abs(gx - x);
+      dx = std::abs(local_x - x);
       dx2=dx*dx;
       dx3=dx2*dx;
       f0x = 0.0;

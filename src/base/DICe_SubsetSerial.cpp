@@ -325,13 +325,13 @@ Subset::initialize(Teuchos::RCP<Image> image,
        mapped_x = cos_t*Dx - sin_t*Dy + u + cx_ - ox;
        mapped_y = sin_t*Dx + cos_t*Dy + v + cy_ - oy;
        if(interp==BILINEAR){
-         intensities_[i] = interpolate_bilinear(mapped_x,mapped_y,image);
+         intensities_[i] = image->interpolate_bilinear(mapped_x,mapped_y);
        }
        else if(interp==BICUBIC){
-         intensities_[i] = image->interpolate_bicubic(mapped_x+ox,mapped_y+oy);
+         intensities_[i] = image->interpolate_bicubic(mapped_x,mapped_y);
        }
        else if(interp==KEYS_FOURTH){
-         intensities_[i] = interpolate_keys_fourth(mapped_x,mapped_y,image);
+         intensities_[i] = image->interpolate_keys_fourth(mapped_x,mapped_y);
        }
        else{
          TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,

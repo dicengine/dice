@@ -226,17 +226,45 @@ public:
   /// interpolant
   /// \param global_x global image coordinate x
   /// \param global_y global image coordinate y
-  intensity_t interpolate_keys_fourth(const scalar_t & global_x, const scalar_t & global_y);
+  intensity_t interpolate_keys_fourth_global(const scalar_t & global_x,
+    const scalar_t & global_y){
+    return interpolate_keys_fourth(global_x-offset_x_,global_y-offset_y_);
+  }
+
+  /// interpolant
+  /// \param global_x local image coordinate x
+  /// \param global_y local image coordinate y
+  intensity_t interpolate_keys_fourth(const scalar_t & local_x,
+    const scalar_t & local_y);
 
   /// interpolant
   /// \param global_x global image coordinate x
   /// \param global_y global image coordinate y
-  intensity_t interpolate_bilinear(const scalar_t & global_x, const scalar_t & global_y);
+  intensity_t interpolate_bilinear_global(const scalar_t & global_x,
+    const scalar_t & global_y){
+    return interpolate_bilinear(global_x-offset_x_,global_y-offset_y_);
+  }
+
+  /// interpolant
+  /// \param global_x local image coordinate x
+  /// \param global_y local image coordinate y
+  intensity_t interpolate_bilinear(const scalar_t & local_x,
+    const scalar_t & local_y);
 
   /// interpolant
   /// \param global_x global image coordinate x
   /// \param global_y global image coordinate y
-  intensity_t interpolate_bicubic(const scalar_t & global_x, const scalar_t & global_y);
+  intensity_t interpolate_bicubic_global(const scalar_t & global_x,
+    const scalar_t & global_y){
+    return interpolate_bicubic(global_x-offset_x_,global_y-offset_y_);
+  }
+
+  /// interpolant
+  /// \param global_x local image coordinate x
+  /// \param global_y local image coordinate y
+  intensity_t interpolate_bicubic(const scalar_t & local_x,
+    const scalar_t & local_y);
+
 
   /// gradient accessors:
   /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x

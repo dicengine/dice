@@ -730,6 +730,7 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
       set_motion_window_params(subset_info->motion_window_params);
       // change the def image storage to be a vector of motion windows rather than one large image
       def_imgs_.resize(subset_info->num_motion_windows);
+      prev_imgs_.resize(subset_info->num_motion_windows);
     }
     if(subset_info->seed_subset_ids->size()>0){
       //has_seed(true);
