@@ -292,13 +292,13 @@ Image::interpolate_bicubic(const scalar_t & global_x, const scalar_t & global_y)
   const scalar_t x_3 = x_2 * x;
   const scalar_t y_2 = y * y;
   const scalar_t y_3 = y_2 * y;
+  const intensity_t fm10  = intensities_[y0*width_+xm1];
   const intensity_t f00   = intensities_[y0*width_+x0];
   const intensity_t f10   = intensities_[y0*width_+x1];
-  const intensity_t fm10  = intensities_[y0*width_+xm1];
   const intensity_t f20   = intensities_[y0*width_+x2];
-  const intensity_t f11   = intensities_[y1*width_+x1];
-  const intensity_t f01   = intensities_[y1*width_+x0];
   const intensity_t fm11  = intensities_[y1*width_+xm1];
+  const intensity_t f01   = intensities_[y1*width_+x0];
+  const intensity_t f11   = intensities_[y1*width_+x1];
   const intensity_t f21   = intensities_[y1*width_+x2];
   const intensity_t fm12  = intensities_[y2*width_+xm1];
   const intensity_t f02   = intensities_[y2*width_+x0];
