@@ -236,6 +236,9 @@ int main(int argc, char *argv[]) {
           const int_t end_y = map_it->second.end_y_;
           Teuchos::RCP<DICe::Image> def_img = cine_reader->get_frame(image_it,start_x,start_y,end_x,end_y,true,filter_failed_pixels,correlation_params);
           schema->set_def_image(def_img,sub_image_id);
+          if(image_it==start_frame){ // initially populate the previous frame
+            schema->set_prev_image(def_img,sub_image_id);
+          }
         }
       }
       else{

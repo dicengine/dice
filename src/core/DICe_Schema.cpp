@@ -257,13 +257,22 @@ Schema::set_def_image(const std::string & defName,
 void
 Schema::set_def_image(Teuchos::RCP<Image> img,
   const int_t id){
-  DEBUG_MSG("Schema: Resetting the deformed image");
+  DEBUG_MSG("Schema::set_def_image() Resetting the deformed image for sub image id " << id);
   assert(def_imgs_.size()>0);
   assert(id<(int_t)def_imgs_.size());
   def_imgs_[id] = img;
   if(def_image_rotation_!=ZERO_DEGREES){
     def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);
   }
+}
+
+void
+Schema::set_prev_image(Teuchos::RCP<Image> img,
+  const int_t id){
+  DEBUG_MSG("Schema::set_prev_image() Resetting the previous image for sub image id " << id);
+  assert(prev_imgs_.size()>0);
+  assert(id<(int_t)prev_imgs_.size());
+  prev_imgs_[id] = img;
 }
 
 void
@@ -727,6 +736,8 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
       set_optical_flow_flags(subset_info->optical_flow_flags);
     }
     if(subset_info->motion_window_params->size()>0){
+      // make sure not running in parallel (motion window use_subset_id may be off processor) TODO fix this, ex
+
       set_motion_window_params(subset_info->motion_window_params);
       // change the def image storage to be a vector of motion windows rather than one large image
       def_imgs_.resize(subset_info->num_motion_windows);
@@ -1343,16 +1354,11 @@ Schema::motion_detected(const int_t subset_gid){
     if(motion_detectors_.find(use_subset_id)==motion_detectors_.end()){
       // create the motion detector because it doesn't exist
       Motion_Window_Params mwp = motion_window_params_->find(use_subset_id)->second;
-      motion_detectors_.insert(std::pair<int_t,Teuchos::RCP<Motion_Test_Utility> >(use_subset_id,Teuchos::rcp(new Motion_Test_Utility(mwp.start_x_,
-        mwp.start_y_,
-        mwp.end_x_,
-        mwp.end_y_,
-        mwp.tol_))));
+      motion_detectors_.insert(std::pair<int_t,Teuchos::RCP<Motion_Test_Utility> >(use_subset_id,Teuchos::rcp(new Motion_Test_Utility(this,mwp.tol_))));
     }
     TEUCHOS_TEST_FOR_EXCEPTION(motion_detectors_.find(use_subset_id)==motion_detectors_.end(),std::runtime_error,
       "Error, the motion detector should exist here, but it doesn't.");
-
-    bool motion_det = motion_detectors_.find(use_subset_id)->second->motion_detected(def_imgs_[sub_image_id]);
+    bool motion_det = motion_detectors_.find(use_subset_id)->second->motion_detected(sub_image_id);
     DEBUG_MSG("Subset " << subset_gid << " TEST_FOR_MOTION using window defined for subset " << use_subset_id <<
       " result " << motion_det);
     return motion_det;

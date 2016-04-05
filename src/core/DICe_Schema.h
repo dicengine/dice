@@ -207,7 +207,7 @@ public:
   /// \param params_file_name File name of the paramteres file
   void set_params(const std::string & params_file_name);
 
-  /// Replace the deformed image for this Schema (only enabled with boost)
+  /// Replace the deformed image for this Schema
   void set_def_image(const std::string & defName,
     const int_t id=0);
 
@@ -219,6 +219,10 @@ public:
 
   /// Replace the deformed image using an image
   void set_def_image(Teuchos::RCP<Image> img,
+    const int_t id=0);
+
+  /// Replace the previous image using an image
+  void set_prev_image(Teuchos::RCP<Image> img,
     const int_t id=0);
 
   /// Rotate the deformed image if requested
@@ -289,10 +293,20 @@ public:
     return def_imgs_[index];
   }
 
+  /// return a pointer to the def images vector
+  const std::vector<Teuchos::RCP<Image> > * def_imgs()const{
+    return &def_imgs_;
+  }
+
   /// Returns a pointer to the preivous DICe::Image
   Teuchos::RCP<Image> prev_img(const int_t index=0)const{
     assert(index>=0&&index<(int_t)prev_imgs_.size());
     return prev_imgs_[index];
+  }
+
+  /// return a pointer to the def images vector
+  const std::vector<Teuchos::RCP<Image> > * prev_imgs()const{
+    return &prev_imgs_;
   }
 
   /// Returns the max solver iterations allowed for the fast (gradient based) algorithm
