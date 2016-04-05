@@ -296,6 +296,8 @@ Subset::initialize(Teuchos::RCP<Image> image,
   // if the input image is a sub-image i.e. it has offsets, then these need to be taken into account
   const int_t offset_x = image->offset_x();
   const int_t offset_y = image->offset_y();
+  const int_t w = image->width();
+  const int_t h = image->height();
   Teuchos::ArrayRCP<intensity_t> intensities_ = target==REF_INTENSITIES ? ref_intensities_ : def_intensities_;
    // assume if the map is null, use the no_map_tag in the parrel for call of the functor
    if(deformation==Teuchos::null){
@@ -326,14 +328,18 @@ Subset::initialize(Teuchos::RCP<Image> image,
        // mapped location
        mapped_x = cos_t*Dx - sin_t*Dy + u + cx_;
        mapped_y = sin_t*Dx + cos_t*Dy + v + cy_;
-
+       px = ((int_t)(mapped_x + 0.5) == (int_t)(mapped_x)) ? (int_t)(mapped_x) : (int_t)(mapped_x) + 1;
+       py = ((int_t)(mapped_y + 0.5) == (int_t)(mapped_y)) ? (int_t)(mapped_y) : (int_t)(mapped_y) + 1;
+       // out of image bounds
+       if(px<offset_x||px>=offset_x+w||py<offset_y||py>=offset_y+h){
+         is_deactivated_this_step(i) = true;
+         continue;
+       }
        if(is_obstructed_pixel(mapped_x,mapped_y)){
          is_deactivated_this_step(i) = true;
          continue;
        }
        if(has_blocks){
-         px = ((int_t)(mapped_x + 0.5) == (int_t)(mapped_x)) ? (int_t)(mapped_x) : (int_t)(mapped_x) + 1;
-         py = ((int_t)(mapped_y + 0.5) == (int_t)(mapped_y)) ? (int_t)(mapped_y) : (int_t)(mapped_y) + 1;
          if(pixels_blocked_by_other_subsets_.find(std::pair<int_t,int_t>(py,px))
              !=pixels_blocked_by_other_subsets_.end()){
            is_deactivated_this_step(i) = true;
