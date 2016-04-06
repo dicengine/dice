@@ -884,7 +884,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              skip_solve = true;
              // need to re-read the line again without converting to capital case
              // see if the second argument is a string file_name, if so read the file
-             if(block_tokens.size()==2){
+             if(block_tokens.size()>1){
                if(!is_number(block_tokens[1])){
                  dataFile.seekg(pos,std::ios::beg);
                  Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile," ",false);
@@ -897,11 +897,13 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  while (skip_file >> id)
                    skip_solve_ids.push_back(id);
                }
-             }else{
-               // all other numbers are ids to turn solving on or off
-               for(int_t id=1;id<block_tokens.size();++id){
-                 TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[id]),std::runtime_error,"");
-                 skip_solve_ids.push_back(atoi(block_tokens[id].c_str()));
+               else{
+                 // all other numbers are ids to turn solving on or off
+                 for(int_t id=1;id<block_tokens.size();++id){
+                   TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[id]),std::runtime_error,"");
+                   DEBUG_MSG("Skip solve id : " << block_tokens[id]);
+                   skip_solve_ids.push_back(atoi(block_tokens[id].c_str()));
+                 }
                }
              }
              // sort the vector

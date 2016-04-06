@@ -1353,10 +1353,10 @@ Schema::motion_detected(const int_t subset_gid){
     if(motion_window_params_->find(subset_gid)->second.use_motion_detection_==false) return true;
     const int_t use_subset_id = motion_window_params_->find(subset_gid)->second.use_subset_id_==-1 ? subset_gid:
         motion_window_params_->find(subset_gid)->second.use_subset_id_;
-    DEBUG_MSG("Creating a motion test utility for subset " << subset_gid << " using id " << use_subset_id);
     const int_t sub_image_id = motion_window_params_->find(subset_gid)->second.sub_image_id_;
     if(motion_detectors_.find(use_subset_id)==motion_detectors_.end()){
       // create the motion detector because it doesn't exist
+      DEBUG_MSG("Creating a motion test utility for subset " << subset_gid << " using id " << use_subset_id);
       Motion_Window_Params mwp = motion_window_params_->find(use_subset_id)->second;
       motion_detectors_.insert(std::pair<int_t,Teuchos::RCP<Motion_Test_Utility> >(use_subset_id,Teuchos::rcp(new Motion_Test_Utility(this,mwp.tol_))));
     }
@@ -1441,10 +1441,24 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     "Error: subset id is not local to this process.");
   DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " (" << local_field_value(subset_gid,DICe::COORDINATE_X) <<
     "," << local_field_value(subset_gid,DICe::COORDINATE_Y) << ")");
+
+  // check if the solve should be skipped
+  bool skip_frame = false;
+  if(skip_solve_flags_->find(subset_gid)!=skip_solve_flags_->end()||skip_all_solves_){
+    if(skip_solve_flags_->find(subset_gid)!=skip_solve_flags_->end()){
+      // determine for this subset id if it should be skipped:
+      const int_t trigger_based_frame = image_frame_ + first_frame_index_;
+      DEBUG_MSG("Subset " << subset_gid << " checking skip solve for trigger based frame id " << trigger_based_frame);
+      skip_frame = frame_should_be_skipped(trigger_based_frame,skip_solve_flags_->find(subset_gid)->second);
+      DEBUG_MSG("Subset " << subset_gid << " frame_should_be_skipped return value: " << skip_frame);
+    }
+  }
   //
   //  test for motion if requested by the user in the subsets.txt file
   //
-  bool motion = motion_detected(subset_gid);
+  bool motion = true;
+  if(!skip_frame&&!skip_all_solves_)
+    motion = motion_detected(subset_gid);
   if(!motion){
     DEBUG_MSG("Subset " << subset_gid << " skipping frame due to no motion");
     // only change the match value and the status flag
@@ -1477,45 +1491,35 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   //  check if the user rrequested to skip the solve and only initialize (param set in subset file)
   //
-  // check if the solve should be skipped
-  if(skip_solve_flags_->find(subset_gid)!=skip_solve_flags_->end()||skip_all_solves_){
-    bool skip_frame = false;
-    if(skip_solve_flags_->find(subset_gid)!=skip_solve_flags_->end()){
-      // determine for this subset id if it should be skipped:
-      const int_t trigger_based_frame = image_frame_ + first_frame_index_;
-      DEBUG_MSG("Subset " << subset_gid << " checking skip solve for trigger based frame id " << trigger_based_frame);
-      skip_frame = frame_should_be_skipped(trigger_based_frame,skip_solve_flags_->find(subset_gid)->second);
-      DEBUG_MSG("Subset " << subset_gid << " frame_should_be_skipped return value: " << skip_frame);
+  if(skip_frame||skip_all_solves_){
+    if(skip_all_solves_){
+      DEBUG_MSG("Subset " << subset_gid << " skip solve (skip_all_solves parameter was set)");
+    }else{
+      DEBUG_MSG("Subset " << subset_gid << " skip solve (as requested in the subset file via SKIP_SOLVE keyword)");
     }
-    if(skip_frame||skip_all_solves_){
-      if(skip_all_solves_){
-        DEBUG_MSG("Subset " << subset_gid << " skip solve (skip_all_solves parameter was set)");
-      }else{
-        DEBUG_MSG("Subset " << subset_gid << " skip solve (as requested in the subset file via SKIP_SOLVE keyword)");
-      }
-      scalar_t noise_std_dev = 0.0;
-      const scalar_t initial_sigma = obj->sigma(deformation,noise_std_dev);
-      const scalar_t initial_gamma = obj->gamma(deformation);
-      const scalar_t initial_beta = output_beta_ ? obj->beta(deformation) : 0.0;
-      const scalar_t contrast = obj->subset()->contrast_std_dev();
-      const int_t active_pixels = obj->subset()->num_active_pixels();
-      record_step(subset_gid,
-        deformation,initial_sigma,0.0,initial_gamma,initial_beta,
-        noise_std_dev,contrast,active_pixels,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
-      // evolve the subsets and output the images requested as well
-      // turn on pixels that at the beginning were hidden behind an obstruction
-      if(use_subset_evolution_&&image_frame_>1){
-        DEBUG_MSG("[PROC " << comm_->get_rank() << "] Evolving subset " << subset_gid << " using newly exposed pixels for intensity values");
-        obj->subset()->turn_on_previously_obstructed_pixels();
-      }
-      //  Write debugging images if requested
-      if(output_deformed_subset_intensity_images_)
-        write_deformed_subset_intensity_image(obj);
-      if(output_evolved_subset_images_)
-        write_reference_subset_intensity_image(obj);
-      return;
+    scalar_t noise_std_dev = 0.0;
+    const scalar_t initial_sigma = obj->sigma(deformation,noise_std_dev);
+    const scalar_t initial_gamma = obj->gamma(deformation);
+    const scalar_t initial_beta = output_beta_ ? obj->beta(deformation) : 0.0;
+    const scalar_t contrast = obj->subset()->contrast_std_dev();
+    const int_t active_pixels = obj->subset()->num_active_pixels();
+    record_step(subset_gid,
+      deformation,initial_sigma,0.0,initial_gamma,initial_beta,
+      noise_std_dev,contrast,active_pixels,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
+    // evolve the subsets and output the images requested as well
+    // turn on pixels that at the beginning were hidden behind an obstruction
+    if(use_subset_evolution_&&image_frame_>1){
+      DEBUG_MSG("[PROC " << comm_->get_rank() << "] Evolving subset " << subset_gid << " using newly exposed pixels for intensity values");
+      obj->subset()->turn_on_previously_obstructed_pixels();
     }
+    //  Write debugging images if requested
+    if(output_deformed_subset_intensity_images_)
+      write_deformed_subset_intensity_image(obj);
+    if(output_evolved_subset_images_)
+      write_reference_subset_intensity_image(obj);
+    return;
   }
+
   //
   //  if user requested testing the initial value of gamma, do that here
   //
