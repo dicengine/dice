@@ -581,7 +581,7 @@ Image::gauss_filter(const bool use_hierarchical_parallelism,
       "Error, the Gauss filter mask size is invalid (options include 5,7,9,11,13)");
   }
   TEUCHOS_TEST_FOR_EXCEPTION(width_<gauss_filter_mask_size_||height_<gauss_filter_mask_size_,std::runtime_error,
-    "Error, image too small for gauss filtering with mask size " << gauss_filter_mask_size_);
+    "Error, image too small (" << width_ << " x " << height_ << ") for gauss filtering with mask size " << gauss_filter_mask_size_);
 
   // copy over the old intensities
   for(int_t i=0;i<num_pixels();++i)

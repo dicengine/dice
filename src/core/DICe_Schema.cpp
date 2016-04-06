@@ -742,6 +742,10 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
       // change the def image storage to be a vector of motion windows rather than one large image
       def_imgs_.resize(subset_info->num_motion_windows);
       prev_imgs_.resize(subset_info->num_motion_windows);
+      for(int_t i=0;i<subset_info->num_motion_windows;++i){
+        def_imgs_[i] = Teuchos::null;
+        prev_imgs_[i] = Teuchos::null;
+      }
     }
     if(subset_info->seed_subset_ids->size()>0){
       //has_seed(true);
@@ -1350,7 +1354,7 @@ Schema::motion_detected(const int_t subset_gid){
     const int_t use_subset_id = motion_window_params_->find(subset_gid)->second.use_subset_id_==-1 ? subset_gid:
         motion_window_params_->find(subset_gid)->second.use_subset_id_;
     DEBUG_MSG("Creating a motion test utility for subset " << subset_gid << " using id " << use_subset_id);
-    const int_t sub_image_id = obj_vec_[use_subset_id]->sub_image_id();
+    const int_t sub_image_id = motion_window_params_->find(subset_gid)->second.sub_image_id_;
     if(motion_detectors_.find(use_subset_id)==motion_detectors_.end()){
       // create the motion detector because it doesn't exist
       Motion_Window_Params mwp = motion_window_params_->find(use_subset_id)->second;
@@ -1991,7 +1995,6 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
   if(boost::filesystem::create_directory(dir)) {
     DEBUG_MSG("Directory successfully created");
   }
-
   int_t num_zeros = 0;
   if(num_image_frames_>0){
     int_t num_digits_total = 0;
@@ -2019,6 +2022,7 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
   // construct a copy of the base image to use as layer 0 for the output;
   // read each sub image if motion windows are used
   for(int_t sub=0;sub<(int_t)def_imgs_.size();++sub){
+    if(def_imgs_[sub]==Teuchos::null)continue;
     const int_t offset_x = def_imgs_[sub]->offset_x();
     const int_t offset_y = def_imgs_[sub]->offset_y();
     for(int_t y=0;y<def_imgs_[sub]->height();++y){

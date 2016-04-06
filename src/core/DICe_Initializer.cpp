@@ -933,7 +933,7 @@ Motion_Test_Utility::motion_detected(const int_t sub_image_id){
     const int_t half_mask = schema_->def_img(sub_image_id)->gauss_filter_mask_size()/2;
     const int_t w = schema_->def_img(sub_image_id)->width();
     const int_t h = schema_->def_img(sub_image_id)->height();
-    DEBUG_MSG("Motion_Test_Utility::motion_detected(): motion window sub-image-id " << sub_image_id << " width " << w << " height " << h);
+    DEBUG_MSG("Motion_Test_Utility::motion_detected(): motion window sub_image_id " << sub_image_id << " width " << w << " height " << h);
     //diff the two images and see if the difference is above the user requested tolerance
     scalar_t diff = 0.0;
     // skip the outer edges since they are not filtered

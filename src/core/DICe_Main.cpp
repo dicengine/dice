@@ -227,13 +227,16 @@ int main(int argc, char *argv[]) {
       if(has_motion_windows){
         std::map<int_t,Motion_Window_Params>::iterator map_it = schema->motion_window_params()->begin();
         for(;map_it!=schema->motion_window_params()->end();++map_it){
-          if(map_it->second.use_subset_id_!=-1) continue;
+          if(schema->dist_map()->get_local_element(map_it->first)<0) continue;
+          DEBUG_MSG("[PROC " << proc_rank << "] Reading motion window for subset " << map_it->first);
+          if(map_it->second.use_subset_id_!=-1&&schema->dist_map()->get_local_element(map_it->second.use_subset_id_)>=0) continue;
+          const int_t use_subset_id = map_it->second.use_subset_id_!=-1 ? map_it->second.use_subset_id_ : map_it->first;
           const int_t sub_image_id = map_it->second.sub_image_id_;
-          DEBUG_MSG("Reading motion window sub_image " << sub_image_id);
-          const int_t start_x = map_it->second.start_x_;
-          const int_t end_x = map_it->second.end_x_;
-          const int_t start_y = map_it->second.start_y_;
-          const int_t end_y = map_it->second.end_y_;
+          DEBUG_MSG("[PROC " << proc_rank << "] Reading motion window sub_image " << sub_image_id);
+          const int_t start_x = schema->motion_window_params()->find(use_subset_id)->second.start_x_;
+          const int_t end_x = schema->motion_window_params()->find(use_subset_id)->second.end_x_;
+          const int_t start_y = schema->motion_window_params()->find(use_subset_id)->second.start_y_;
+          const int_t end_y = schema->motion_window_params()->find(use_subset_id)->second.end_y_;
           Teuchos::RCP<DICe::Image> def_img = cine_reader->get_frame(image_it,start_x,start_y,end_x,end_y,true,filter_failed_pixels,correlation_params);
           schema->set_def_image(def_img,sub_image_id);
           if(image_it==start_frame){ // initially populate the previous frame

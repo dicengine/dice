@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
   // output the images
   for(size_t i=0;i<image_rcps.size();++i){
     std::stringstream name;
-    name << "motion_window_" << i << ".rawi";
+    name << "./images/motion_window_" << i << ".rawi";
     Image cine_img_exact(name.str().c_str());
     bool intensity_value_error = false;
     for(int_t y=0;y<cine_img_exact.height();++y){
@@ -196,7 +196,7 @@ int main(int argc, char *argv[]) {
   DICe::cine::Cine_Reader cine_reader_8("./images/phantom_v1610.cine",outStream.getRawPtr());
   Teuchos::RCP<Image> image_8 = cine_reader_8.get_frame(5,158,15,196,45,false,false);
   bool intensity_value_error = false;
-  Image img_8_exact("motion_window_8.rawi");
+  Image img_8_exact("./images/motion_window_8.rawi");
   for(int_t y=0;y<image_8->height();++y){
     for(int_t x=0;x<image_8->width();++x){
       if(std::abs((*image_8)(x,y)-img_8_exact(x,y)) > 0.05){
@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
   DICe::cine::Cine_Reader cine_reader_16("./images/phantom_v1610_16bpp.cine",outStream.getRawPtr());
   Teuchos::RCP<Image> image_16 = cine_reader_16.get_frame(5,95,83,128,116,false,false);
   intensity_value_error = false;
-  Image img_16_exact("motion_window_16.rawi");
+  Image img_16_exact("./images/motion_window_16.rawi");
   for(int_t y=0;y<image_16->height();++y){
     for(int_t x=0;x<image_16->width();++x){
       if(std::abs((*image_16)(x,y)-img_16_exact(x,y)) > 0.05){
