@@ -330,8 +330,8 @@ Subset::initialize(Teuchos::RCP<Image> image,
        mapped_y = sin_t*Dx + cos_t*Dy + v + cy_;
        px = ((int_t)(mapped_x + 0.5) == (int_t)(mapped_x)) ? (int_t)(mapped_x) : (int_t)(mapped_x) + 1;
        py = ((int_t)(mapped_y + 0.5) == (int_t)(mapped_y)) ? (int_t)(mapped_y) : (int_t)(mapped_y) + 1;
-       // out of image bounds
-       if(px<offset_x||px>=offset_x+w||py<offset_y||py>=offset_y+h){
+       // out of image bounds ( 4 pixel buffer to ensure enough room to interpolate away from the sub image boundary)
+       if(px<offset_x+4||px>=offset_x+w-4||py<offset_y+4||py>=offset_y+h-4){
          is_deactivated_this_step(i) = true;
          continue;
        }
