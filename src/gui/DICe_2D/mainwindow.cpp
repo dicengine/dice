@@ -48,8 +48,11 @@
 #include <iostream>
 
 #include <DICe_InputVars.h>
-#include <DICe_MainDriver.h>
 #include <simpleqtvtk.h>
+
+#ifndef DICE_EXEC_PATH
+  #error
+#endif
 
 DICe::gui::Input_Vars * DICe::gui::Input_Vars::input_vars_ptr_ = NULL;
 
@@ -95,6 +98,10 @@ ui(new Ui::MainWindow)
     // set up the console output
     qout = new QDebugStream(std::cout, ui->consoleEdit);
 
+    // set up the process that will run DICe
+    diceProcess = new QProcess(this);
+    connect(diceProcess, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
+
     // set the default output fields
     ui->xCheck->setChecked(true);
     ui->yCheck->setChecked(true);
@@ -104,6 +111,8 @@ ui(new Ui::MainWindow)
     ui->gammaCheck->setChecked(true);
     ui->betaCheck->setChecked(true);
     ui->statusCheck->setChecked(true);
+
+    std::cout << "Using DICe from " << DICE_EXEC_PATH << std::endl;
 
 }
 
@@ -294,6 +303,10 @@ void MainWindow::prepResultsViewer()
     }
 }
 
+void MainWindow::readOutput(){
+    ui->consoleEdit->insertPlainText(diceProcess->readAllStandardOutput());
+}
+
 void MainWindow::on_runButton_clicked()
 {
     std::cout << "Clearing results directory " << std::endl;
@@ -316,32 +329,22 @@ void MainWindow::on_runButton_clicked()
     writeInputFiles();
     std::cout << "Running correlation..." << std::endl << std::endl;
 
-    std::string inputFile = DICe::gui::Input_Vars::instance()->input_file_name();
-    std::vector<std::string> s;
-    s.push_back("dice_gui");
-    s.push_back("-i");
-    s.push_back(inputFile);
-    s.push_back("-v");
-    s.push_back("-t");
-    const int argc = s.size();
-    char **args;
-    args = new char *[argc];
-    for (int i = 0; i < argc; ++i ){
-        args[i] = new char[s[i].length() + 1];
-        strcpy( args[i], s[i].c_str());
-    }
+    QString diceExec = DICE_EXEC_PATH;
+    QStringList args;
+    args << "-i" << DICe::gui::Input_Vars::instance()->input_file_name().c_str() << "-v" << "-t";
 
     try{
-        DICe::main_driver(argc,args);
+        diceProcess->start(diceExec,args);
+        diceProcess->waitForFinished();
+        diceProcess->close();
     }catch(std::exception & e){
+        std::cout << "DICe execution FAILED" << std::endl;
         std::cout << "Exception was thrown !!" << e.what() << std::endl;
     }
-
-    delete[] args;
+    std::cout << "DICe execution SUCCESSFUL" << std::endl;
 
     // after the run is complete, prepare the results viewer:
     prepResultsViewer();
-
 }
 
 void MainWindow::on_diceButton_clicked()

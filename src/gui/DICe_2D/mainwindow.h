@@ -45,6 +45,7 @@
 #include <QMainWindow>
 #include <QListWidgetItem>
 #include <qdebugstream.h>
+#include <QProcess>
 
 namespace Ui {
     class MainWindow;
@@ -78,10 +79,14 @@ public:
 
     void on_diceButton_clicked();
 
+    void readOutput();
 private:
     Ui::MainWindow *ui;
 
      QDebugStream * qout;
+
+     QProcess *diceProcess;
+
 };
 
 #endif // MAINWINDOW_H

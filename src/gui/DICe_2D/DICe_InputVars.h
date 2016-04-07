@@ -44,7 +44,8 @@
 
 #include <QFileInfo>
 #include <iostream>
-#include <DICe_Parser.h>
+#include <DICe_XMLUtils.h>
+#include <sstream>
 
 namespace DICe{
 
@@ -190,27 +191,27 @@ public:
 
       DICe::write_xml_comment(inputFile,"Auto generated input file from DICe GUI");
 
-      DICe::write_xml_string_param(inputFile,DICe::output_folder,working_dir_ss.str(),false);
-      DICe::write_xml_string_param(inputFile,DICe::image_folder,"",false);
-      DICe::write_xml_string_param(inputFile,DICe::correlation_parameters_file,paramsFile,false);
+      DICe::write_xml_string_param(inputFile,"output_folder",working_dir_ss.str(),false);
+      DICe::write_xml_string_param(inputFile,"image_folder","",false);
+      DICe::write_xml_string_param(inputFile,"correlation_parameters_file",paramsFile,false);
 
       std::stringstream subsetSizeSS;
       subsetSizeSS << subset_size_;
-      DICe::write_xml_size_param(inputFile,DICe::subset_size,subsetSizeSS.str(),false);
+      DICe::write_xml_size_param(inputFile,"subset_size",subsetSizeSS.str(),false);
       std::stringstream stepSizeSS;
       stepSizeSS << step_size_;
-      DICe::write_xml_size_param(inputFile,DICe::step_size,stepSizeSS.str(),false);
+      DICe::write_xml_size_param(inputFile,"step_size",stepSizeSS.str(),false);
 
-      DICe::write_xml_bool_param(inputFile,DICe::separate_output_file_for_each_subset,"false",false);
+      DICe::write_xml_bool_param(inputFile,"separate_output_file_for_each_subset","false",false);
 
-      DICe::write_xml_bool_param(inputFile,DICe::create_separate_run_info_file,"true",false);
+      DICe::write_xml_bool_param(inputFile,"create_separate_run_info_file","true",false);
 
       if(boundaryShapes_.size()>0)
-          DICe::write_xml_string_param(inputFile,DICe::subset_file,subsetFile,false);
+          DICe::write_xml_string_param(inputFile,"subset_file",subsetFile,false);
 
-      DICe::write_xml_string_param(inputFile,DICe::reference_image,ref_file_info_.filePath().toStdString(),false);
+      DICe::write_xml_string_param(inputFile,"reference_image",ref_file_info_.filePath().toStdString(),false);
 
-      DICe::write_xml_param_list_open(inputFile,DICe::deformed_images,false);
+      DICe::write_xml_param_list_open(inputFile,"deformed_images",false);
       // create an entry for all def images here:
       for(QStringList::iterator it=def_file_list_.begin();it!=def_file_list_.end();++it){
         DICe::write_xml_bool_param(inputFile,it->toStdString(),"true",false);
@@ -233,20 +234,20 @@ public:
       DICe::initialize_xml_file(paramsFile);
       DICe::write_xml_comment(paramsFile,"Auto generated params file from DICe GUI");
 
-      DICe::write_xml_string_param(paramsFile,DICe::interpolation_method,interp_method_str_,false);
-      DICe::write_xml_string_param(paramsFile,DICe::optimization_method,opt_method_str_,false);
-      DICe::write_xml_string_param(paramsFile,DICe::initialization_method,init_method_str_,false);
+      DICe::write_xml_string_param(paramsFile,"interpolation_method",interp_method_str_,false);
+      DICe::write_xml_string_param(paramsFile,"optimization_method",opt_method_str_,false);
+      DICe::write_xml_string_param(paramsFile,"initialization_method",init_method_str_,false);
 
-      DICe::write_xml_bool_literal_param(paramsFile,DICe::enable_translation,enable_translation_,false);
-      DICe::write_xml_bool_literal_param(paramsFile,DICe::enable_rotation,enable_rotation_,false);
-      DICe::write_xml_bool_literal_param(paramsFile,DICe::enable_normal_strain,enable_normal_strain_,false);
-      DICe::write_xml_bool_literal_param(paramsFile,DICe::enable_shear_strain,enable_shear_strain_,false);
+      DICe::write_xml_bool_literal_param(paramsFile,"enable_translation",enable_translation_,false);
+      DICe::write_xml_bool_literal_param(paramsFile,"enable_rotation",enable_rotation_,false);
+      DICe::write_xml_bool_literal_param(paramsFile,"enable_normal_strain",enable_normal_strain_,false);
+      DICe::write_xml_bool_literal_param(paramsFile,"enable_shear_strain",enable_shear_strain_,false);
 
       // set the default delimiter
-      DICe::write_xml_string_param(paramsFile,DICe::output_delimiter,",",false);
+      DICe::write_xml_string_param(paramsFile,"output_delimiter",",",false);
 
       // write the output fields
-      write_xml_param_list_open(paramsFile,DICe::output_spec,false);
+      write_xml_param_list_open(paramsFile,"output_spec",false);
       for(size_t i=0;i<output_fields_.size();++i){
         write_xml_bool_param(paramsFile,output_fields_[i],"true",false);
       }

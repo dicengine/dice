@@ -1,11 +1,12 @@
-SET(DICE_SOURCES
+SET(GUI_SOURCES
   main.cpp
   mainwindow.cpp
   simpleqtvtk.cpp
   resources.qrc
+  ../../core/DICe_XMLUtils.cpp
 )
 
-SET(DICE_HEADERS
+SET(GUI_HEADERS
   DICe_InputVars.h
   mainwindow.h
   qdebugstream.h
@@ -16,17 +17,20 @@ include(${VTK_USE_FILE})
 
 include_directories (
   .
-  ${DICE_HEADER_DIRS}
-  ${DICE_TRILINOS_HEADERS}
   ${QT_DIR}/include
   ${VTK_DIR}/include/vtk-7.0
+  ../../core
 )
 
-add_executable(dice_gui ${DICE_SOURCES} ${DICE_HEADERS})
-target_link_libraries(dice_gui Qt5::Widgets dicecore dicemain ${VTK_LIBRARIES})
-target_compile_definitions(dice_gui PRIVATE -D DICE_LIB_EXPORTS_MODE)
+#  ${DICE_HEADER_DIRS}
+#  ${DICE_TRILINOS_HEADERS}
 
-install(FILES ${DICE_HEADERS}
+add_executable(dice_gui ${GUI_SOURCES} ${GUI_HEADERS})
+#target_link_libraries(dice_gui Qt5::Widgets dicecore dicemain ${VTK_LIBRARIES})
+target_link_libraries(dice_gui Qt5::Widgets ${VTK_LIBRARIES})
+#target_compile_definitions(dice_gui PRIVATE -D DICE_LIB_EXPORTS_MODE)
+
+install(FILES ${GUI_HEADERS}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include
 )
 install(TARGETS dice_gui
@@ -34,7 +38,7 @@ install(TARGETS dice_gui
 )
 
 set_target_properties(dice_gui PROPERTIES
-  LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
-  ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
-  RUNTIME_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/bin"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../lib"
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../lib"
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../bin"
 )

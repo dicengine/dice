@@ -1,5 +1,16 @@
-# find the Qt libraries
+cmake_minimum_required(VERSION 2.8)
+MESSAGE("\nConfiguring DICe GUI...\n")
 
+PROJECT(DICe_GUI)
+
+IF (NOT DEFINED DICE_EXEC_PATH)
+  MESSAGE(FATAL_ERROR "\nDICe Error: DICE_EXEC_PATH must be defined (-D DICE_EXEC_PATH:FILEPATH=<dice_exec_path>)")
+ENDIF()
+
+MESSAGE(STATUS "Using DICe executable from ${DICE_EXEC_PATH}")
+ADD_DEFINITIONS(-DDICE_EXEC_PATH=\"${DICE_EXEC_PATH}\")
+
+# find the Qt libraries
 MESSAGE(STATUS "Searching for Qt in dir: ${QT_DIR}")
 
 find_package(Qt5Core PATHS ${QT_DIR})

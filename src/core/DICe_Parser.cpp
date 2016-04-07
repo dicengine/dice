@@ -40,6 +40,7 @@
 // @HEADER
 
 #include <DICe_Parser.h>
+#include <DICe_XMLUtils.h>
 #include <DICe_ParameterUtilities.h>
 #include <DICe.h>
 
@@ -1469,102 +1470,6 @@ void generate_template_input_files(const std::string & file_prefix){
 
   finalize_xml_file(fileNameInput.str());
   finalize_xml_file(fileNameParams.str());
-}
-
-DICE_LIB_DLL_EXPORT
-void initialize_xml_file(const std::string & file_name){
-  std::ofstream file;
-  file.open(file_name.c_str());
-  file << "<ParameterList>" << std::endl;
-  file.close();
-}
-
-DICE_LIB_DLL_EXPORT
-void finalize_xml_file(const std::string & file_name){
-  std::ofstream file;
-  file.open(file_name.c_str(),std::ios::app);
-  file << "</ParameterList>" << std::endl;
-  file.close();
-}
-
-DICE_LIB_DLL_EXPORT
-void write_xml_comment(const std::string & file_name, const std::string & comment){
-  std::ofstream file;
-  file.open(file_name.c_str(),std::ios::app);
-  file << "<!-- " << comment << " -->" << std::endl;
-  file.close();
-}
-
-DICE_LIB_DLL_EXPORT
-void write_xml_param_list_open(const std::string & file_name, const std::string & name, const bool commented){
-  std::ofstream file;
-  file.open(file_name.c_str(),std::ios::app);
-  if(commented){
-    file << "<!-- ";
-  }
-  file << "<ParameterList name=\"" << name << "\">";
-  if(commented)
-    file << "-->";
-  file << std::endl;
-  file.close();
-}
-
-DICE_LIB_DLL_EXPORT
-void write_xml_param_list_close(const std::string & file_name, const bool commented){
-  std::ofstream file;
-  file.open(file_name.c_str(),std::ios::app);
-  if(commented){
-    file << "<!-- ";
-  }
-  file << "</ParameterList>";
-  if(commented)
-    file << "-->";
-  file << std::endl;
-  file.close();
-}
-
-DICE_LIB_DLL_EXPORT
-void write_xml_param(const std::string & file_name, const std::string & name, const std::string & type, const std::string & value,
-  const bool commented){
-  std::ofstream file;
-  file.open(file_name.c_str(),std::ios::app);
-  if(commented){
-    file << "<!-- ";
-  }
-  file << "<Parameter name=\"" << name << "\" type=\""<< type << "\" value=\"" << value << "\" />  ";
-  if(commented)
-    file << "-->";
-  file << std::endl;
-  file.close();
-}
-
-DICE_LIB_DLL_EXPORT
-void write_xml_string_param(const std::string & file_name, const std::string & name, const std::string & value,
-  const bool commented){
-  write_xml_param(file_name,name,"string",value,commented);
-}
-DICE_LIB_DLL_EXPORT
-void write_xml_real_param(const std::string & file_name, const std::string & name, const std::string & value,
-  const bool commented){
-  write_xml_param(file_name,name,"double",value,commented);
-}
-DICE_LIB_DLL_EXPORT
-void write_xml_size_param(const std::string & file_name, const std::string & name, const std::string & value,
-  const bool commented){
-  write_xml_param(file_name,name,"int",value,commented);
-}
-DICE_LIB_DLL_EXPORT
-void write_xml_bool_param(const std::string & file_name, const std::string & name, const std::string & value,
-  const bool commented){
-  write_xml_param(file_name,name,"bool",value,commented);
-}
-DICE_LIB_DLL_EXPORT
-void write_xml_bool_literal_param(const std::string & file_name, const std::string & name, const bool value,
-  const bool commented){
-    if(value)
-        write_xml_param(file_name,name,"bool","true",commented);
-    else
-        write_xml_param(file_name,name,"bool","false",commented);
 }
 
 }// End DICe Namespace
