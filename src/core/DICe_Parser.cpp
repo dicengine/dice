@@ -823,6 +823,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          scalar_t seed_shear_strain = 0.0;
          scalar_t seed_rotation = 0.0;
          std::vector<int_t> blocking_ids;
+         bool force_simplex = false;
          DICe::multi_shape boundary_multi_shape;
          DICe::multi_shape excluded_multi_shape;
          DICe::multi_shape obstructed_multi_shape;
@@ -911,6 +912,10 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            }
            else if(block_tokens[0]==parser_use_optical_flow){
              use_optical_flow = true;
+           }
+           else if(block_tokens[0]==parser_force_simplex){
+             DEBUG_MSG("Forcing simplex method for this subset");
+             force_simplex = true;
            }
            else if(block_tokens[0]==parser_use_path_file){
              // need to re-read the line again without converting to capital case
@@ -1032,6 +1037,8 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          }
          info->conformal_area_defs->insert(std::pair<int_t,DICe::Conformal_Area_Def>(subset_id,conformal_area_def));
          info->id_sets_map->insert(std::pair<int_t,std::vector<int_t> >(subset_id,blocking_ids));
+         if(force_simplex)
+           info->force_simplex->insert(subset_id);
          if(has_seed){
            info->seed_subset_ids->insert(std::pair<int_t,int_t>(subset_id,subset_id)); // treating each conformal subset as an roi TODO fix this awkwardness
            info->displacement_map->insert(std::pair<int_t,std::pair<scalar_t,scalar_t> >(subset_id,std::pair<scalar_t,scalar_t>(seed_disp_x,seed_disp_y)));

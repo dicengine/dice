@@ -912,6 +912,13 @@ public:
     obstructing_subset_ids_ = id_vec;
   }
 
+  /// \brief forces simplex method for certain subsets
+  /// \param id_vec Pointer to set of ids
+  void set_force_simplex(Teuchos::RCP<std::set<int_t> > ids){
+    if(ids==Teuchos::null)return;
+    force_simplex_ = ids;
+  }
+
   /// Return a pointer to the distribution map
   const map_rcp dist_map()const{
     return dist_map_;
@@ -1130,6 +1137,8 @@ private:
   /// this vector stores a vector of obstructing subset ids that have
   /// the potential to block the subset associated with the outer vector index
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids_;
+  /// force simplex for these ids
+  Teuchos::RCP<std::set<int_t> > force_simplex_;
   /// filter the images using a 7 point gauss filter
   bool gauss_filter_images_;
   /// Compute the reference image gradients

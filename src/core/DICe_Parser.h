@@ -173,6 +173,7 @@ Subset_File_Info {
     coordinates_vector = Teuchos::rcp(new std::vector<int_t>());
     neighbor_vector = Teuchos::rcp(new std::vector<int_t>());
     id_sets_map = Teuchos::rcp(new std::map<int_t,std::vector<int_t> >());
+    force_simplex = Teuchos::rcp(new std::set<int_t>());
     size_map = Teuchos::rcp(new std::map<int_t,std::pair<int_t,int_t> >());
     displacement_map = Teuchos::rcp(new std::map<int_t,std::pair<scalar_t,scalar_t> >());
     normal_strain_map = Teuchos::rcp(new std::map<int_t,std::pair<scalar_t,scalar_t> >());
@@ -194,6 +195,8 @@ Subset_File_Info {
   Teuchos::RCP<std::vector<int_t> > neighbor_vector;
   /// Pointer to a map that has vectos of subset ids (used to denote blocking subsets)
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > id_sets_map;
+  /// Pointer to a set of ids that force simplex method
+  Teuchos::RCP<std::set<int_t> > force_simplex;
   /// Type of information (subset or region of interest)
   Subset_File_Info_Type type;
   /// Pointer to a map of std::pairs of size values
@@ -417,6 +420,8 @@ const char* const parser_excluded = "EXCLUDED";
 const char* const parser_obstructed = "OBSTRUCTED";
 /// Parser string
 const char* const parser_blocking_subsets = "BLOCKING_SUBSETS";
+/// Parser string
+const char* const parser_force_simplex = "FORCE_SIMPLEX";
 /// Parser string
 const char* const parser_polygon = "POLYGON";
 /// Parser string

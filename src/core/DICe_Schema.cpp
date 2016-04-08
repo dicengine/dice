@@ -655,6 +655,7 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
   int_t num_subsets = -1;
   Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > blocking_subset_ids;
+  Teuchos::RCP<std::set<int_t> > force_simplex;
   const bool has_subset_file = input_params->isParameter(DICe::subset_file);
   DICe::Subset_File_Info_Type subset_info_type = DICe::SUBSET_INFO;
   if(has_subset_file){
@@ -683,6 +684,7 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     neighbor_ids = subset_info->neighbor_vector;
     conformal_area_defs = subset_info->conformal_area_defs;
     blocking_subset_ids = subset_info->id_sets_map;
+    force_simplex = subset_info->force_simplex;
     num_subsets = subset_info->coordinates_vector->size()/dim;
     if((int_t)subset_info->conformal_area_defs->size()<num_subsets){
       // Only require this if not all subsets are conformal:
@@ -699,6 +701,8 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
 
   // set the blocking subset ids if they exist
   set_obstructing_subset_ids(blocking_subset_ids);
+  // set the subsets that should force the simplex method
+  set_force_simplex(force_simplex);
   // initialize the schema
   initialize(num_subsets,subset_size,conformal_area_defs,neighbor_ids);
 
@@ -1536,12 +1540,13 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   // TODO add a search-based method to initialize if other methods failed
   // determine if the subset is a blocker and if so, force it to use simplex method:
   // also force simplex if it is a blocked subset (not enough speckles to use grad-based method)
-  bool is_blocked = false;
-  bool is_a_blocker = false;
+  bool force_simplex = false;
+  if(force_simplex_!=Teuchos::null)
+    if(force_simplex_->find(subset_gid)!=force_simplex_->end()) force_simplex=true;
   if(obstructing_subset_ids_!=Teuchos::null){
     if(obstructing_subset_ids_->find(subset_gid)!=obstructing_subset_ids_->end()){
       if(obstructing_subset_ids_->find(subset_gid)->second.size()>0){
-        is_blocked = true;
+        force_simplex = true;
         DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " is a blocker or blocked subset, forcing simplex method for this subset.");
       }
     }
@@ -1551,7 +1556,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       std::vector<int_t> * obst_ids = &blk_it->second;
       for(size_t i=0;i<obst_ids->size();++i){
         if((*obst_ids)[i]==subset_gid){
-          is_a_blocker = true;
+          force_simplex = true;
           DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " is a blocking subset, forcing simplex method for this subset.");
         }
       }
@@ -1560,7 +1565,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   // perform the correlation
   //
-  if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED||is_a_blocker||is_blocked){
+  if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED||force_simplex){
     try{
       corr_status = obj->computeUpdateRobust(deformation,num_iterations);
     }
@@ -1577,7 +1582,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     };
   }
   if(corr_status!=CORRELATION_SUCCESSFUL){
-    if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::GRADIENT_BASED||is_a_blocker||is_blocked){
+    if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::GRADIENT_BASED||force_simplex){
       record_failed_step(subset_gid,static_cast<int_t>(corr_status),num_iterations);
       return;
     }
@@ -1595,7 +1600,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
         return;
       }
     }
-    else if(optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED||is_a_blocker||is_blocked){
+    else if(optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED){
       // try again using gradient based
       init_status = initial_guess(subset_gid,deformation);
       try{
