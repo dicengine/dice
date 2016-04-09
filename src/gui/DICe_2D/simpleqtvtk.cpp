@@ -893,7 +893,16 @@ void SimpleQtVTK::on_hideImageBox_clicked()
 
 void SimpleQtVTK::on_resetGeoButton_clicked()
 {
-    style->clearPolygons();
+    QMessageBox msgBox;
+    msgBox.setText("Reset all shapes");
+    msgBox.setStandardButtons(QMessageBox::Yes);
+    msgBox.addButton(QMessageBox::No);
+    msgBox.setDefaultButton(QMessageBox::No);
+    if(msgBox.exec() == QMessageBox::Yes){
+        style->clearPolygons();
+    }else {
+      // do nothing
+    }
 }
 
 void SimpleQtVTK::on_tabWidget_tabBarClicked(int index)
