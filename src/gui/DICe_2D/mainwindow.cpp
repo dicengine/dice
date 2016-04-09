@@ -129,12 +129,12 @@ void MainWindow::on_refFileButton_clicked()
       tr("Tagged Image File Format (*.tiff *.tif);;Portable Network Graphics (*.png);;Joint Photographic Experts Group (*.jpg *.jpeg)"));
     
     if(refFileInfo.fileName()=="") return;
+    
+    // display the name of the file in the reference file box
+    if(ui->simpleQtVTKWidget->readImageFile(refFileInfo.filePath().toStdString())) return;
 
     // set the reference image in the Input_Vars singleton
     DICe::gui::Input_Vars::instance()->set_ref_file_info(refFileInfo);
-    
-    // display the name of the file in the reference file box
-    ui->simpleQtVTKWidget->readImageFile(refFileInfo.filePath().toStdString());
 
     // if the deformed images are populated then activate the write and run buttons
     if(DICe::gui::Input_Vars::instance()->has_def_files()){
@@ -156,7 +156,6 @@ void MainWindow::on_defFileButton_clicked()
       tr("Select reference file"), ".",
       tr("Tagged Image File Format (*.tiff *.tif);;Portable Network Graphics (*.png);;Joint Photographic Experts Group (*.jpg *.jpeg)"));
     
-
     if(defFileNames.size()==0) return;
 
     // clear the widget list
@@ -173,19 +172,12 @@ void MainWindow::on_defFileButton_clicked()
     ui->defListWidget->setCurrentRow(0);
     on_defListWidget_itemClicked(ui->defListWidget->currentItem());
 
-    // reset the def image
-    //ui->defFileLabel->setText("");
-    //ui->defImageShow->clear();
-
     // if the reference image is populated then activate the write and run buttons
     if(DICe::gui::Input_Vars::instance()->has_ref_file()){
         ui->writeButton->setEnabled(true);
         ui->runButton->setEnabled(true);
     }
-
 }
-
-
 
 void MainWindow::on_defListWidget_itemClicked(QListWidgetItem *item)
 {
@@ -307,7 +299,7 @@ void MainWindow::prepResultsViewer()
 }
 
 void MainWindow::readOutput(){
-    ui->consoleEdit->insertPlainText(diceProcess->readAllStandardOutput());
+    ui->consoleEdit->append(diceProcess->readAllStandardOutput());
 }
 
 void MainWindow::on_runButton_clicked()
@@ -336,15 +328,18 @@ void MainWindow::on_runButton_clicked()
     QStringList args;
     args << "-i" << DICe::gui::Input_Vars::instance()->input_file_name().c_str() << "-v" << "-t";
 
-    try{
-        diceProcess->start(diceExec,args);
-        diceProcess->waitForFinished();
-        diceProcess->close();
-    }catch(std::exception & e){
-        std::cout << "DICe execution FAILED" << std::endl;
-        std::cout << "Exception was thrown !!" << e.what() << std::endl;
+    diceProcess->start(diceExec,args);
+    diceProcess->waitForFinished();
+    diceProcess->close();
+
+    if(diceProcess->exitStatus()||diceProcess->exitCode()){
+        QMessageBox msgBox;
+        msgBox.setText("ERROR: DICe execution failed");
+        msgBox.exec();
+        return;
     }
-    std::cout << "DICe execution SUCCESSFUL" << std::endl;
+    else
+        std::cout << "DICe execution SUCCESSFUL" << std::endl;
 
     // after the run is complete, prepare the results viewer:
     prepResultsViewer();

@@ -53,7 +53,11 @@
 #include <vtkProperty2D.h>
 #include <vtkTextProperty.h>
 #include <vtkTIFFReader.h>
+#include <vtkPNGReader.h>
+#include <vtkJPEGReader.h>
 #include <vtkImageData.h>
+#include <vtkImageFlip.h>
+#include <vtkImageCast.h>
 #include <vtkImageMapper3D.h>
 #include <vtkColorSeries.h>
 #include <vtkCaptionActor2D.h>
@@ -310,38 +314,119 @@ void SimpleQtVTK::resetCamera(){
         ui->vtkWidget->GetRenderWindow()->Render();
 }
 
-void SimpleQtVTK::readImageFile(const std::string & fileName){
+int SimpleQtVTK::readImageFile(const std::string & fileName){
+
     vtkSmartPointer<vtkImageData> imageData;
-    vtkSmartPointer<vtkTIFFReader> tifReader =
-            vtkSmartPointer<vtkTIFFReader>::New();
+    // determine the file extension
+    const std::string tif("tif");
+    const std::string tiff("tiff");
+    const std::string tifCap("TIF");
+    const std::string tiffCap("TIFF");
+    const std::string jpg("jpg");
+    const std::string jpeg("jpeg");
+    const std::string jpgCap("JPG");
+    const std::string jpegCap("JPEG");
+    const std::string png("png");
+    const std::string pngCap("PNG");
+    if(fileName.find(tif)!=std::string::npos||fileName.find(tiff)!=std::string::npos||fileName.find(tifCap)!=std::string::npos||fileName.find(tiffCap)!=std::string::npos){
+        vtkSmartPointer<vtkTIFFReader> reader =
+                vtkSmartPointer<vtkTIFFReader>::New();
+        if( !reader->CanReadFile( fileName.c_str() ) )
+        {
+            std::cout << "Error reading file " << fileName << std::endl;
+            QMessageBox msgBox;
+            msgBox.setText("Error: File read error");
+            msgBox.exec();
+            return 1;
+        }
+        reader->SetFileName ( fileName.c_str() );
+        reader->Update();
+        imageData = reader->GetOutput();
+        imageActor->SetInputData(imageData);
+        imageData->GetOrigin( imageOrigin );
+        imageData->GetSpacing( imageSpacing );
+        imageData->GetExtent( imageExtent );
+    }
+    else if(fileName.find(jpg)!=std::string::npos||fileName.find(jpeg)!=std::string::npos||fileName.find(jpgCap)!=std::string::npos||fileName.find(jpegCap)!=std::string::npos){
+        vtkSmartPointer<vtkJPEGReader> reader =
+                vtkSmartPointer<vtkJPEGReader>::New();
+        if( !reader->CanReadFile( fileName.c_str() ) )
+        {
+            std::cout << "Error reading file " << fileName << std::endl;
+            QMessageBox msgBox;
+            msgBox.setText("Error: File read error");
+            msgBox.exec();
+            return 1;
+        }
+        reader->SetFileName ( fileName.c_str() );
+        reader->Update();
+        imageData = reader->GetOutput();
+        imageData->GetOrigin( imageOrigin );
+        imageData->GetSpacing( imageSpacing );
+        imageData->GetExtent( imageExtent );
+
+        vtkSmartPointer<vtkImageFlip> flipXFilter =
+          vtkSmartPointer<vtkImageFlip>::New();
+        flipXFilter->SetFilteredAxis(1);
+        flipXFilter->SetInputConnection(reader->GetOutputPort());
+        flipXFilter->Update();
+
+        vtkSmartPointer<vtkImageCast> castXFilter =
+          vtkSmartPointer<vtkImageCast>::New();
+        castXFilter->SetOutputScalarTypeToUnsignedChar();
+        castXFilter->SetInputConnection(flipXFilter->GetOutputPort());
+        castXFilter->Update();
+
+        imageActor->SetInputData(castXFilter->GetOutput());
+    }
+    else if(fileName.find(png)!=std::string::npos||fileName.find(pngCap)!=std::string::npos){
+        vtkSmartPointer<vtkPNGReader> reader =
+                vtkSmartPointer<vtkPNGReader>::New();
+        if( !reader->CanReadFile( fileName.c_str() ) )
+        {
+            std::cout << "Error reading file " << fileName << std::endl;
+            QMessageBox msgBox;
+            msgBox.setText("Error: File read error");
+            msgBox.exec();
+            return 1;
+        }
+        reader->SetFileName ( fileName.c_str() );
+        reader->Update();
+        imageData = reader->GetOutput();
+        imageData->GetOrigin( imageOrigin );
+        imageData->GetSpacing( imageSpacing );
+        imageData->GetExtent( imageExtent );
+
+        vtkSmartPointer<vtkImageFlip> flipXFilter =
+          vtkSmartPointer<vtkImageFlip>::New();
+        flipXFilter->SetFilteredAxis(1); // flip y axis
+        flipXFilter->SetInputConnection(reader->GetOutputPort());
+        flipXFilter->Update();
+
+        vtkSmartPointer<vtkImageCast> castXFilter =
+          vtkSmartPointer<vtkImageCast>::New();
+        castXFilter->SetOutputScalarTypeToUnsignedChar();
+        castXFilter->SetInputConnection(flipXFilter->GetOutputPort());
+        castXFilter->Update();
+
+        imageActor->SetInputData(castXFilter->GetOutput());
+    }
+    else{
+        QMessageBox msgBox;
+        msgBox.setText("ERROR: invalid image type");
+        msgBox.exec();
+        return 1;
+    }
     std::stringstream label;
     label << fileName << "\n";
     label << "Digital Image Correlation Engine 1.0";
     cornerAnnotation->SetText(1, label.str().c_str());
-    if( !tifReader->CanReadFile( fileName.c_str() ) )
-    {
-        std::cerr << "Error reading file " << fileName << std::endl;
-    }
-    tifReader->SetFileName ( fileName.c_str() );
-    tifReader->Update();
-    imageData = tifReader->GetOutput();
 
     // Create an image actor to display the image
-    imageActor->SetInputData(imageData);
     renderer->AddActor(imageActor);
 
     // set the focal point to the center of the image
     renderer->ResetCamera();
-    //double posx,posy,posz;
-    //renderer->GetActiveCamera()->GetPosition(posx,posy,posz);
-    //std::cout << "Position: " << posx << " " << posy << " " << posz << std::endl;
-    //double fcx,fcy,fcz;
-    //renderer->GetActiveCamera()->GetFocalPoint(fcx,fcy,fcz);
-    //std::cout << "Focal point: " << fcx << " " << fcy << " " << fcz << std::endl;
-    //renderer->GetActiveCamera()->ParallelProjectionOn();
-    imageData->GetOrigin( imageOrigin );
-    imageData->GetSpacing( imageSpacing );
-    imageData->GetExtent( imageExtent );
 
     // update the polygon interactor data
     style->setImageExtents(imageExtent[0],imageExtent[1],
@@ -360,6 +445,7 @@ void SimpleQtVTK::readImageFile(const std::string & fileName){
     //    std::cout << " extent " << imageExtent[i] << std::endl;
     //}
     resetCamera();
+    return 0;
 }
 
 void SimpleQtVTK::estimateTriAlpha(){

@@ -252,9 +252,14 @@ int main(int argc, char *argv[]){
     else{
       const std::string def_image_string = image_files[image_it];
       *outStream << "Processing Image: " << image_it << " of " << num_images << ", " << def_image_string << std::endl;
-      schema->set_def_image(def_image_string);
+      try{
+        schema->set_def_image(def_image_string);
+      }
+      catch(std::exception & e){
+        std::cout << "Error: " << e.what() << std::endl;
+        exit(EXIT_FAILURE);
+      }
     }
-
     { // start the timer
       boost::timer t;
 

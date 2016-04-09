@@ -316,7 +316,7 @@ public:
     void readResultsFile(const std::string & fileName);
 
     /// read a background image
-    void readImageFile(const std::string & fileName);
+    int readImageFile(const std::string & fileName);
 
     /// initialize the data structures
     void initializeClassMembers();
