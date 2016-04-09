@@ -25,7 +25,7 @@
 // THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THEmessage
 // CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 // EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
 // PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
@@ -238,7 +238,10 @@ void SimpleQtVTK::updateCurrentFile(const int fileIndex, const bool resetAlpha){
 
 void SimpleQtVTK::setFileNames(QStringList & resFiles, QStringList & imgFiles){
     if(imgFiles.size()!=0 && imgFiles.size()!=resFiles.size()){
-        std::cout << "ERROR: results file list and image file list are not the same size but must be." << std::endl;
+        QMessageBox msgBox;
+        msgBox.setText("ERROR: results file list and image file list are not the same size but must be.");
+        msgBox.exec();
+        exit(EXIT_FAILURE);
     }
     resultsFiles.clear();
     imageFiles.clear();
@@ -280,11 +283,14 @@ void SimpleQtVTK::determinePrimaryFieldIndices(){
     }
     if(XIndex==-1||YIndex==-1||dispXIndex==-1||dispYIndex==-1)
     {
-        std::cout << "ERROR: could not find COORDINATES_X, COORDINATES_Y, DISPLACEMENT_X, or DISPLACEMENT_Y field" << std::endl;
         std::cout << "Coords X field index: " << XIndex << std::endl;
         std::cout << "Coords Y field index: " << YIndex << std::endl;
         std::cout << "Disp X field index: " << dispXIndex << std::endl;
         std::cout << "Disp Y field index: " << dispYIndex << std::endl;
+        QMessageBox msgBox;
+        msgBox.setText("ERROR: could not find COORDINATES_X, COORDINATES_Y, DISPLACEMENT_X, or DISPLACEMENT_Y field");
+        msgBox.exec();
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -358,8 +364,12 @@ void SimpleQtVTK::readImageFile(const std::string & fileName){
 
 void SimpleQtVTK::estimateTriAlpha(){
     // assert that the first couple fields are X Y COORDS ...
-    if(fieldData.size() < 2)
-        std::cout << "ERROR: fieldData.size() < 2, not enough fields to create poly data" << std::endl;
+    if(fieldData.size() < 2){
+        QMessageBox msgBox;
+        msgBox.setText("ERROR: fieldData.size() < 2, not enough fields to create poly data");
+        msgBox.exec();
+        exit(EXIT_FAILURE);
+    }
 
     // TODO there's probably a better way to figure out alpha than computing the average distance...
     double dist_x = 0.0;
@@ -395,13 +405,21 @@ void SimpleQtVTK::createPolyData(){
             vtkSmartPointer<vtkPoints>::New();
 
     // assert that the first couple fields are X Y COORDS ...
-    if(fieldData.size() < 2)
-        std::cout << "ERROR: fieldData.size() < 2, not enough fields to create poly data" << std::endl;
+    if(fieldData.size() < 2){
+        QMessageBox msgBox;
+        msgBox.setText("ERROR: fieldData.size() < 2, not enough fields to create poly data");
+        msgBox.exec();
+        exit(EXIT_FAILURE);
+    }
 
     // if the mesh is to be displaced, check that the next 2 fields are displacement
     if(ui->displaceMeshBox->isChecked()){
-        if(fieldData.size() < 4)
-            std::cout << "ERROR: fieldData.size() < 4, not enough fields to create poly data" << std::endl;
+        if(fieldData.size() < 4){
+            QMessageBox msgBox;
+            msgBox.setText("ERROR: fieldData.size() < 4, not enough fields to create poly data");
+            msgBox.exec();
+            exit(EXIT_FAILURE);
+        }
         for(int i=0;i<numPoints;++i){
             double ptx = fieldData[XIndex]->GetValue(i)+fieldData[dispXIndex]->GetValue(i);
             ptx*= imageSpacing[0];
@@ -913,7 +931,10 @@ int PolygonMouseInteractorStyle::clockwise(const double* a, const double *b, con
     double valueDbl = ((b[0]-a[0])*(c[1]-a[1]) - (c[0]-a[0])*(b[1]-a[1]));
     int value = valueDbl>0.0? 1: valueDbl<0.0? -1 : 0;
     if(value!=0&&value!=1&&value!=-1) {
-        std::cout << "ERROR: invalid clockwise vlaue" << std::endl;
+        QMessageBox msgBox;
+        msgBox.setText("ERROR: invalid clockwise vlaue");
+        msgBox.exec();
+        exit(EXIT_FAILURE);
         return 2;
     }
     return value;

@@ -299,7 +299,10 @@ void MainWindow::prepResultsViewer()
         }
     }
     else{
-        std::cout << "ERROR: there are no deformed images" << std::endl;
+        QMessageBox msgBox;
+        msgBox.setText("ERROR: there are no deformed images");
+        msgBox.exec();
+        exit(EXIT_FAILURE);
     }
 }
 
