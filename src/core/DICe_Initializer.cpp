@@ -710,11 +710,14 @@ Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
   // check if the solve was skipped, if not use the last converged solution for the
   // new position of the optical flow points
   bool skip_solve = false;
-  if(schema_->skip_solve_flags()->find(subset_gid)!=schema_->skip_solve_flags()->end()||schema_->skip_all_solves()){
-    if(schema_->skip_solve_flags()->find(subset_gid)->second ==true||schema_->skip_all_solves()){
-      skip_solve = true;
-    }
+
+  if(schema_->skip_solve_flags()->find(subset_gid)!=schema_->skip_solve_flags()->end()){
+    const int_t trigger_based_frame = schema_->image_frame() + schema_->first_frame_index();
+    skip_solve = frame_should_be_skipped(trigger_based_frame,schema_->skip_solve_flags()->find(subset_gid)->second);
   }
+  if(schema_->skip_all_solves())
+    skip_solve = true;
+
   // reset the current locations of the optical flow points based on the last solution
   if(!skip_solve){
     const scalar_t u = schema_->field_value(subset_gid,DISPLACEMENT_X);
@@ -902,26 +905,20 @@ Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
   return INITIALIZE_SUCCESSFUL;
 };
 
-Motion_Test_Utility::Motion_Test_Utility(const int_t origin_x,
-  const int_t origin_y,
-  const int_t width,
-  const int_t height,
+Motion_Test_Utility::Motion_Test_Utility(Schema * schema,
   const scalar_t & tol):
-  origin_x_(origin_x),
-  origin_y_(origin_y),
-  width_(width),
-  height_(height),
+  schema_(schema),
   tol_(tol),
-  prev_img_(Teuchos::null),
   motion_state_(MOTION_NOT_SET)
 {
-  DEBUG_MSG("Constructor for Motion_Test_Utility called");
-  DEBUG_MSG("origin_x: " << origin_x_ << " origin_y: " << origin_y_ <<
-    " width: " << width_ << " height: " << height_ << " tol: " << tol_);
+  DEBUG_MSG("Constructor for Motion_Test_Utility called, tol: " << tol_);
 }
 
 bool
-Motion_Test_Utility::motion_detected(Teuchos::RCP<Image> def_image){
+Motion_Test_Utility::motion_detected(const int_t sub_image_id){
+  // make sure the id is valid
+  TEUCHOS_TEST_FOR_EXCEPTION(sub_image_id<0||sub_image_id>=(int_t)schema_->def_imgs()->size(),
+    std::runtime_error,"Error, ivalid sub_image_id " << sub_image_id);
   // test if this is a repeat call for the same frame, but by another subset
   // if so, return the previous result.
   if(motion_state_!=MOTION_NOT_SET){
@@ -930,36 +927,24 @@ Motion_Test_Utility::motion_detected(Teuchos::RCP<Image> def_image){
     return motion_state_==MOTION_TRUE ? true: false;
   }
   else{
-    // create a window of the deformed image according to the constructor parameters
-    Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
-    params->set(DICe::gauss_filter_images,true);
-    Teuchos::RCP<Image> window_img = Teuchos::rcp(new Image(def_image,origin_x_,origin_y_,width_,height_,params));
-    // see if the previous image exists, if not return true as default
-    if(prev_img_==Teuchos::null){
-      DEBUG_MSG("Motion_Test_Utility::motion_detected() first frame call, return value: 1 (automatically).");
-      prev_img_ = window_img; // save off the deformed image as the previous one
-      motion_state_=MOTION_TRUE;
-      return true;
-    }
+    // make sure that the images are gauss filtered:
+    TEUCHOS_TEST_FOR_EXCEPTION(!schema_->def_img(sub_image_id)->has_gauss_filter(),std::runtime_error,
+      "Error, Gauss filtering required for using motion windows, but gauss filtering is not enabled in the input.");
+    const int_t half_mask = schema_->def_img(sub_image_id)->gauss_filter_mask_size()/2;
+    const int_t w = schema_->def_img(sub_image_id)->width();
+    const int_t h = schema_->def_img(sub_image_id)->height();
+    DEBUG_MSG("Motion_Test_Utility::motion_detected(): motion window sub_image_id " << sub_image_id << " width " << w << " height " << h);
     //diff the two images and see if the difference is above the user requested tolerance
     scalar_t diff = 0.0;
-    if(width_>def_image->gauss_filter_mask_size()/2&&height_>def_image->gauss_filter_mask_size()/2){
-      DEBUG_MSG("Computing diff only inside the filtered portion of the image, excluded borders size: " <<
-        def_image->gauss_filter_mask_size()/2+1);
-      // skip the outer edges since they are not filtered
-      for(int_t y=def_image->gauss_filter_mask_size()/2+1;y<height_-(def_image->gauss_filter_mask_size()/2+1);++y){
-        for(int_t x=def_image->gauss_filter_mask_size()/2+1;x<width_-(def_image->gauss_filter_mask_size()/2+1);++x){
-          diff += ((*window_img)(x,y) - (*prev_img_)(x,y))*((*window_img)(x,y) - (*prev_img_)(x,y));
-        }
+    // skip the outer edges since they are not filtered
+    for(int_t y=half_mask+1;y<h-(half_mask+1);++y){
+      for(int_t x=half_mask+1;x<w-(half_mask+1);++x){
+        diff += ((*schema_->def_img(sub_image_id))(x,y) - (*schema_->prev_img(sub_image_id))(x,y))*((*schema_->def_img(sub_image_id))(x,y) - (*schema_->prev_img(sub_image_id))(x,y));
       }
-      diff = std::sqrt(diff);
     }
-    else{
-      diff = window_img->diff(prev_img_);
-    }
-    prev_img_ = window_img;
-    DEBUG_MSG("Motion_Test_Utility::motion_detected() called, result: " << diff << " tol: " << tol_);
-    if(tol_==-1.0){ // user has not set a tolerance manually
+    diff = std::sqrt(diff);
+    DEBUG_MSG("Motion_Test_Utility::motion_detected() called, img diff: " << diff << " initial tol: " << tol_);
+    if(tol_==-1.0&&diff!=0.0){ // user has not set a tolerance manually
       tol_ = diff + 5.0;
       DEBUG_MSG("Motion_Test_Utility::motion_detected() setting auto tolerance to: " << tol_);
     }

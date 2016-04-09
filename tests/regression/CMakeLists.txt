@@ -11,6 +11,7 @@ SET(REGRESSION_TESTS
   conformal_subset_def
   dic_challenge_12
   mechanism_optical_flow
+  mechanism_skip_solves
   simple_obstruction
 )
 

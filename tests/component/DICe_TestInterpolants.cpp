@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, bilinear interpolation failed simple translation" << std::endl;
     errorFlag++;
   }
-  if(error_keys > 1.0){
+  if(error_keys > 2.0){ // high error in case float is used vs. double
     *outStream << "Error, keys fourth interpolation failed simple translation" << std::endl;
     errorFlag++;
   }

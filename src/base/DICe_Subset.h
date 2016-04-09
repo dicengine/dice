@@ -221,6 +221,16 @@ public:
     return &conformal_subset_def_;
   }
 
+  /// Return the id of the sub-region of a global image to use
+  int_t sub_image_id()const{
+    return sub_image_id_;
+  }
+
+  /// set the sub_image_id
+  void set_sub_image_id(const int_t id){
+    sub_image_id_ = id;
+  }
+
   /// \brief Returns an estimate of the noise standard deviation for this subset based on the method
   /// of J. Immerkaer, Fast Noise Variance Estimation, Computer Vision and
   /// Image Understanding, Vol. 64, No. 2, pp. 300-302, Sep. 1996
@@ -347,6 +357,9 @@ private:
   Conformal_Area_Def conformal_subset_def_;
   /// The subset is not square
   bool is_conformal_;
+  /// if sub regions of the frame are used instead of reading in the whole
+  /// sub image, this sub_image_id defines which region to draw the pixel information from
+  int_t sub_image_id_;
 };
 
 }// End DICe Namespace

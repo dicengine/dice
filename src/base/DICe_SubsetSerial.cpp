@@ -54,7 +54,8 @@ Subset::Subset(int_t cx,
   cx_(cx),
   cy_(cy),
   has_gradients_(false),
-  is_conformal_(false)
+  is_conformal_(false),
+  sub_image_id_(0)
 {
   assert(num_pixels_>0);
   assert(x.size()==y.size());
@@ -77,7 +78,8 @@ Subset::Subset(const int_t cx,
  cx_(cx),
  cy_(cy),
  has_gradients_(false),
- is_conformal_(false)
+ is_conformal_(false),
+ sub_image_id_(0)
 {
   assert(width>0);
   assert(height>0);
@@ -113,7 +115,8 @@ Subset::Subset(const int_t cx,
   cy_(cy),
   has_gradients_(false),
   conformal_subset_def_(subset_def),
-  is_conformal_(true)
+  is_conformal_(true),
+  sub_image_id_(0)
 {
   assert(subset_def.has_boundary());
   std::set<std::pair<int_t,int_t> > coords;
@@ -293,6 +296,8 @@ Subset::initialize(Teuchos::RCP<Image> image,
   // if the input image is a sub-image i.e. it has offsets, then these need to be taken into account
   const int_t offset_x = image->offset_x();
   const int_t offset_y = image->offset_y();
+  const int_t w = image->width();
+  const int_t h = image->height();
   Teuchos::ArrayRCP<intensity_t> intensities_ = target==REF_INTENSITIES ? ref_intensities_ : def_intensities_;
    // assume if the map is null, use the no_map_tag in the parrel for call of the functor
    if(deformation==Teuchos::null){
@@ -300,6 +305,8 @@ Subset::initialize(Teuchos::RCP<Image> image,
        intensities_[i] = (*image)(x_[i]-offset_x,y_[i]-offset_y);
    }
    else{
+     int_t px,py;
+     const bool has_blocks = !pixels_blocked_by_other_subsets_.empty();
      const scalar_t u = (*deformation)[DISPLACEMENT_X];
      const scalar_t v = (*deformation)[DISPLACEMENT_Y];
      const scalar_t t = (*deformation)[ROTATION_Z];
@@ -319,13 +326,36 @@ Subset::initialize(Teuchos::RCP<Image> image,
        Dx = (1.0+ex)*dx + g*dy;
        Dy = (1.0+ey)*dy + g*dx;
        // mapped location
-       mapped_x = cos_t*Dx - sin_t*Dy + u + cx_ - ox;
-       mapped_y = sin_t*Dx + cos_t*Dy + v + cy_ - oy;
+       mapped_x = cos_t*Dx - sin_t*Dy + u + cx_;
+       mapped_y = sin_t*Dx + cos_t*Dy + v + cy_;
+       px = ((int_t)(mapped_x + 0.5) == (int_t)(mapped_x)) ? (int_t)(mapped_x) : (int_t)(mapped_x) + 1;
+       py = ((int_t)(mapped_y + 0.5) == (int_t)(mapped_y)) ? (int_t)(mapped_y) : (int_t)(mapped_y) + 1;
+       // out of image bounds ( 4 pixel buffer to ensure enough room to interpolate away from the sub image boundary)
+       if(px<offset_x+4||px>=offset_x+w-4||py<offset_y+4||py>=offset_y+h-4){
+         is_deactivated_this_step(i) = true;
+         continue;
+       }
+       if(is_obstructed_pixel(mapped_x,mapped_y)){
+         is_deactivated_this_step(i) = true;
+         continue;
+       }
+       if(has_blocks){
+         if(pixels_blocked_by_other_subsets_.find(std::pair<int_t,int_t>(py,px))
+             !=pixels_blocked_by_other_subsets_.end()){
+           is_deactivated_this_step(i) = true;
+           continue;
+         }
+       }
+       // if the code got here, the pixel is not deactivated
+       is_deactivated_this_step(i) = false;
        if(interp==BILINEAR){
-         intensities_[i] = interpolate_bilinear(mapped_x,mapped_y,image);
+         intensities_[i] = image->interpolate_bilinear(mapped_x-ox,mapped_y-oy);
+       }
+       else if(interp==BICUBIC){
+         intensities_[i] = image->interpolate_bicubic(mapped_x-ox,mapped_y-oy);
        }
        else if(interp==KEYS_FOURTH){
-         intensities_[i] = interpolate_keys_fourth(mapped_x,mapped_y,image);
+         intensities_[i] = image->interpolate_keys_fourth(mapped_x-ox,mapped_y-oy);
        }
        else{
          TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,
@@ -344,11 +374,6 @@ Subset::initialize(Teuchos::RCP<Image> image,
        has_gradients_ = true;
      }
    }
-  // turn off the obstructed pixels if the deformation vector is not null
-  if(deformation!=Teuchos::null){
-    // assumes that the check for obstructions has already been done
-    turn_off_obstructed_pixels(deformation);
-  }
 }
 
 }// End DICe Namespace

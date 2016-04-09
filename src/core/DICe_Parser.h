@@ -136,24 +136,30 @@ DICE_LIB_DLL_EXPORT
 Motion_Window_Params {
   /// constructor
   Motion_Window_Params():
-  origin_x_(0),
-  origin_y_(0),
-  width_(-1),
-  height_(-1),
+  start_x_(0),
+  start_y_(0),
+  end_x_(0),
+  end_y_(0),
   tol_(-1.0),
-  use_subset_id_(-1){};
+  use_subset_id_(-1),
+  use_motion_detection_(false),
+  sub_image_id_(-1){};
   /// upper left corner x coord
-  int_t origin_x_;
+  int_t start_x_;
   /// upper left corner y coord
-  int_t origin_y_;
-  /// width
-  int_t width_;
-  /// height
-  int_t height_;
+  int_t start_y_;
+  /// lower right corner x coord
+  int_t end_x_;
+  /// lower right corner y coord
+  int_t end_y_;
   /// tolerance for motion detection
   scalar_t tol_;
   /// point to another subsets' motion window if multiple subsets share one
   int_t use_subset_id_;
+  /// use motion detection
+  bool use_motion_detection_;
+  /// this gets set after the window images are created and the id is known
+  int_t sub_image_id_;
 };
 
 /// Simple struct for passing info back and forth from read_subset_file:
@@ -167,6 +173,7 @@ Subset_File_Info {
     coordinates_vector = Teuchos::rcp(new std::vector<int_t>());
     neighbor_vector = Teuchos::rcp(new std::vector<int_t>());
     id_sets_map = Teuchos::rcp(new std::map<int_t,std::vector<int_t> >());
+    force_simplex = Teuchos::rcp(new std::set<int_t>());
     size_map = Teuchos::rcp(new std::map<int_t,std::pair<int_t,int_t> >());
     displacement_map = Teuchos::rcp(new std::map<int_t,std::pair<scalar_t,scalar_t> >());
     normal_strain_map = Teuchos::rcp(new std::map<int_t,std::pair<scalar_t,scalar_t> >());
@@ -175,8 +182,9 @@ Subset_File_Info {
     seed_subset_ids = Teuchos::rcp(new std::map<int_t,int_t>());
     path_file_names = Teuchos::rcp(new std::map<int_t,std::string>());
     optical_flow_flags = Teuchos::rcp(new std::map<int_t,bool>());
-    skip_solve_flags = Teuchos::rcp(new std::map<int_t,bool>());
+    skip_solve_flags = Teuchos::rcp(new std::map<int_t,std::vector<int_t> >());
     motion_window_params = Teuchos::rcp(new std::map<int_t,Motion_Window_Params>());
+    num_motion_windows = 0;
     type = info_type;
   }
   /// Pointer to map of conformal subset defs (these are used to define conformal subsets)
@@ -187,6 +195,8 @@ Subset_File_Info {
   Teuchos::RCP<std::vector<int_t> > neighbor_vector;
   /// Pointer to a map that has vectos of subset ids (used to denote blocking subsets)
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > id_sets_map;
+  /// Pointer to a set of ids that force simplex method
+  Teuchos::RCP<std::set<int_t> > force_simplex;
   /// Type of information (subset or region of interest)
   Subset_File_Info_Type type;
   /// Pointer to a map of std::pairs of size values
@@ -206,9 +216,11 @@ Subset_File_Info {
   /// Map that turns on optical flow initializer for certain subsets
   Teuchos::RCP<std::map<int_t,bool> > optical_flow_flags;
   /// Map that turns off the solve (initialize only) for certain subsets
-  Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags;
+  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > skip_solve_flags;
   /// Map that tests each frame for motion before performing DIC optimization
   Teuchos::RCP<std::map<int_t,Motion_Window_Params> > motion_window_params;
+  /// number of motion windows
+  int_t num_motion_windows;
 };
 
 /// \brief Read a list of coordinates for correlation points from file
@@ -319,6 +331,8 @@ const char* const parser_obstructed = "OBSTRUCTED";
 /// Parser string
 const char* const parser_blocking_subsets = "BLOCKING_SUBSETS";
 /// Parser string
+const char* const parser_force_simplex = "FORCE_SIMPLEX";
+/// Parser string
 const char* const parser_polygon = "POLYGON";
 /// Parser string
 const char* const parser_circle = "CIRCLE";
@@ -348,6 +362,8 @@ const char* const parser_use_path_file = "USE_PATH_FILE";
 const char* const parser_skip_solve = "SKIP_SOLVE";
 /// Parser string
 const char* const parser_test_for_motion = "TEST_FOR_MOTION";
+/// Parser string
+const char* const parser_motion_window = "MOTION_WINDOW";
 /// Parser string
 const char* const parser_location = "LOCATION";
 /// Parser string

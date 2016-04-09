@@ -150,6 +150,8 @@ Subset::write_subset_on_image(const std::string & file_name,
   //create a square image that fits the extents of the subet
   const int_t w = image->width();
   const int_t h = image->height();
+  const int_t ox = image->offset_x();
+  const int_t oy = image->offset_y();
   intensity_t * intensities = new intensity_t[w*h];
   for(int_t m=0;m<h;++m){
     for(int_t n=0;n<w;++n){
@@ -175,8 +177,8 @@ Subset::write_subset_on_image(const std::string & file_name,
       Dx = (1.0+ex)*dx + g*dy;
       Dy = (1.0+ey)*dy + g*dx;
       // mapped location
-      mapped_x = std::cos(t)*Dx - std::sin(t)*Dy + u + cx_;
-      mapped_y = std::sin(t)*Dx + std::cos(t)*Dy + v + cy_;
+      mapped_x = std::cos(t)*Dx - std::sin(t)*Dy + u + cx_ - ox;
+      mapped_y = std::sin(t)*Dx + std::cos(t)*Dy + v + cy_ - oy;
       // get the nearest pixel location:
       px = (int_t)mapped_x;
       if(mapped_x - (int_t)mapped_x >= 0.5) px++;
@@ -189,7 +191,7 @@ Subset::write_subset_on_image(const std::string & file_name,
   }
   else{ // write the original shape of the subset
     for(int_t i=0;i<num_pixels_;++i)
-      intensities[y(i)*w+x(i)] = 255;
+      intensities[(y(i)-oy)*w+(x(i)-ox)] = 255;
   }
   utils::write_image(file_name.c_str(),w,h,intensities,true);
   delete[] intensities;
@@ -278,9 +280,12 @@ Subset::noise_std_dev(Teuchos::RCP<Image> image,
   const int_t w = max_x - min_x + 1;
   const int_t img_h = image->height();
   const int_t img_w = image->width();
+  const int_t ox = image->offset_x();
+  const int_t oy = image->offset_y();
+  DEBUG_MSG("Subset::noise_std_dev(): Extents of image " << ox << " " << ox + img_w << " " << oy << " " << oy + img_h);
 
   // ensure that the subset falls inside the image
-  if(max_x >= image->width() || min_x < 0 || max_y >= image->height() || min_y < 0){
+  if(max_x >= img_w + ox || min_x < ox || max_y >= img_h + oy || min_y < oy){
     return 1.0;
   }
 
@@ -290,14 +295,14 @@ Subset::noise_std_dev(Teuchos::RCP<Image> image,
   for(int_t y=min_y; y<max_y;++y){
     for(int_t x=min_x; x<max_x;++x){
       // don't convolve the edge pixels
-      if(x<1||x>=img_w-1||y<1||y>=img_h-1){
-        variance += std::abs((*image)(x,y));
+      if(x-ox<1||x-ox>=img_w-1||y-oy<1||y-oy>=img_h-1){
+        variance += std::abs((*image)(x-ox,y-oy));
       }
       else{
         conv_i = 0.0;
         for(int_t j=0;j<3;++j){
           for(int_t i=0;i<3;++i){
-            conv_i += (*image)(x+(i-1),y+(j-1))*mask[i][j];
+            conv_i += (*image)(x-ox+(i-1),y-oy+(j-1))*mask[i][j];
           }
         }
         variance += std::abs(conv_i);

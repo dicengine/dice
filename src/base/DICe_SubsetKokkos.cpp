@@ -54,7 +54,8 @@ Subset::Subset(int_t cx,
   cx_(cx),
   cy_(cy),
   has_gradients_(false),
-  is_conformal_(false)
+  is_conformal_(false),
+  sub_image_id_(0)
 {
   assert(num_pixels_>0);
   assert(x.size()==y.size());
@@ -94,7 +95,8 @@ Subset::Subset(const int_t cx,
  cx_(cx),
  cy_(cy),
  has_gradients_(false),
- is_conformal_(false)
+ is_conformal_(false),
+ sub_image_id_(0)
 {
   assert(width>0);
   assert(height>0);
@@ -143,7 +145,8 @@ Subset::Subset(const int_t cx,
   cy_(cy),
   has_gradients_(false),
   conformal_subset_def_(subset_def),
-  is_conformal_(true)
+  is_conformal_(true),
+  sub_image_id_(0)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(cx<0,std::invalid_argument,"Error, cannot have negative coordinates for cx");
   TEUCHOS_TEST_FOR_EXCEPTION(cy<0,std::invalid_argument,"Error, cannot have negative coordinates for cy");

@@ -86,6 +86,28 @@ Image::Image(const int_t width,
   default_constructor_tasks(params);
 }
 
+/// post allocation tasks
+void
+Image::post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params){
+  gauss_filter_mask_size_ = 7; // default sizes
+  gauss_filter_half_mask_ = 4;
+  if(params==Teuchos::null) return;
+  const bool gauss_filter_image =  params->get<bool>(DICe::gauss_filter_images,false);
+  const bool gauss_filter_use_hierarchical_parallelism = params->get<bool>(DICe::gauss_filter_use_hierarchical_parallelism,false);
+  const int gauss_filter_team_size = params->get<int>(DICe::gauss_filter_team_size,256);
+  gauss_filter_mask_size_ = params->get<int>(DICe::gauss_filter_mask_size,7);
+  gauss_filter_half_mask_ = gauss_filter_mask_size_/2+1;
+  if(gauss_filter_image){
+    gauss_filter(gauss_filter_use_hierarchical_parallelism,gauss_filter_team_size);
+  }
+  const bool compute_image_gradients = params->get<bool>(DICe::compute_image_gradients,false);
+  DEBUG_MSG("Image::post_allocation_tasks(): compute_image_gradients is " << compute_image_gradients);
+  const bool image_grad_use_hierarchical_parallelism = params->get<bool>(DICe::image_grad_use_hierarchical_parallelism,false);
+  const int image_grad_team_size = params->get<int>(DICe::image_grad_team_size,256);
+  if(compute_image_gradients)
+    compute_gradients(image_grad_use_hierarchical_parallelism,image_grad_team_size);
+}
+
 // TODO add an option to normalize this by intensity mean
 scalar_t
 Image::diff(Teuchos::RCP<Image> rhs) const{

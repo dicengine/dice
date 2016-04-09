@@ -101,8 +101,8 @@ int main(int argc, char *argv[]) {
     heights[i] = (i+1)*h_step;
   }
 
-  Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
-  params->set(DICe::gauss_filter_mask_size,13);
+  //Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
+  //params->set(DICe::gauss_filter_mask_size,13);
   Teuchos::RCP<std::vector<scalar_t> > map = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
   (*map)[DISPLACEMENT_X] = 1.25; // TODO randomize deformation map
   (*map)[DISPLACEMENT_Y] = -1.456; // needs to remain inside the current image

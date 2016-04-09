@@ -111,11 +111,14 @@ Image::Image(const char * file_name,
 
 
 Image::Image(const int_t width,
-  const int_t height):
+  const int_t height,
+  const intensity_t intensity,
+  const int_t offset_x,
+  const int_t offset_y):
   width_(width),
   height_(height),
-  offset_x_(0),
-  offset_y_(0),
+  offset_x_(offset_x),
+  offset_y_(offset_y),
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   has_gauss_filter_(false),
@@ -126,7 +129,7 @@ Image::Image(const int_t width,
   intensities_ = intensity_dual_view_2d("intensities",height_,width_);
   for(int_t y=0;y<height_;++y){
     for(int_t x=0;x<width_;++x){
-      intensities_.h_view(y,x) = 0.0;
+      intensities_.h_view(y,x) = intensity;
     }
   }
   default_constructor_tasks(Teuchos::null);
@@ -253,32 +256,13 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
   // image gradient coefficients
   grad_c1_ = 1.0/12.0;
   grad_c2_ = -8.0/12.0;
-  const bool gauss_filter_image = params!=Teuchos::null ?
-      params->get<bool>(DICe::gauss_filter_images,false) : false;
-  const bool gauss_filter_use_hierarchical_parallelism = params!=Teuchos::null ?
-      params->get<bool>(DICe::gauss_filter_use_hierarchical_parallelism,false) : false;
-  const int gauss_filter_team_size = params!=Teuchos::null ?
-      params->get<int>(DICe::gauss_filter_team_size,256) : 256;
-  gauss_filter_mask_size_ = params!=Teuchos::null ?
-      params->get<int>(DICe::gauss_filter_mask_size,7) : 7;
-  gauss_filter_half_mask_ = gauss_filter_mask_size_/2+1;
-  if(gauss_filter_image){
-    gauss_filter(gauss_filter_use_hierarchical_parallelism,gauss_filter_team_size);
-  }
-  const bool compute_image_gradients = params!=Teuchos::null ?
-      params->get<bool>(DICe::compute_image_gradients,false) : false;
-  const bool image_grad_use_hierarchical_parallelism = params!=Teuchos::null ?
-      params->get<bool>(DICe::image_grad_use_hierarchical_parallelism,false) : false;
-  const int image_grad_team_size = params!=Teuchos::null ?
-      params->get<int>(DICe::image_grad_team_size,256) : 256;
-  if(compute_image_gradients)
-    compute_gradients(image_grad_use_hierarchical_parallelism,image_grad_team_size);
   // create the image mask arrays
   mask_ = scalar_dual_view_2d("mask",height_,width_);
   // initialize the image mask arrays
   Kokkos::parallel_for(Kokkos::RangePolicy<Init_Mask_Tag>(0,num_pixels()),*this);
   mask_.modify<device_space>();
   mask_.sync<host_space>();
+  post_allocation_tasks(params);
 }
 
 const intensity_t&
@@ -315,6 +299,32 @@ Teuchos::ArrayRCP<intensity_t>
 Image::intensities()const{
   Teuchos::ArrayRCP<intensity_t> array(intensities_.h_view.ptr_on_device(),0,width_*height_,false);
   return array;
+}
+
+intensity_t
+Image::interpolate_keys_fourth_global(const scalar_t & global_x, const scalar_t & global_y){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
+}
+intensity_t
+Image::interpolate_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
+}
+
+intensity_t
+Image::interpolate_bilinear_global(const scalar_t & global_x, const scalar_t & global_y){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
+}
+intensity_t
+Image::interpolate_bilinear(const scalar_t & local_x, const scalar_t & local_y){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
+}
+intensity_t
+Image::interpolate_bicubic_global(const scalar_t & global_x, const scalar_t & global_y){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
+}
+intensity_t
+Image::interpolate_bicubic(const scalar_t & local_x, const scalar_t & local_y){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
 }
 
 void

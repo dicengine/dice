@@ -57,6 +57,8 @@ namespace po = boost::program_options;
 #include <fstream>
 #include <cctype>
 #include <string>
+#include <algorithm>
+#include <vector>
 
 #if DICE_MPI
 #  include <mpi.h>
@@ -651,6 +653,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
   bool conformal_subset_defined = false;
   bool roi_defined = false;
   int_t num_roi = 0;
+  int_t num_motion_windows_defined = 0;
 
   // read each line of the file
    while (!dataFile.eof())
@@ -821,6 +824,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          scalar_t seed_shear_strain = 0.0;
          scalar_t seed_rotation = 0.0;
          std::vector<int_t> blocking_ids;
+         bool force_simplex = false;
          DICe::multi_shape boundary_multi_shape;
          DICe::multi_shape excluded_multi_shape;
          DICe::multi_shape obstructed_multi_shape;
@@ -828,9 +832,11 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          conformal_subset_defined = true;
          bool has_path_file = false;
          bool skip_solve = false;
+         std::vector<int_t> skip_solve_ids;
          bool use_optical_flow = false;
          Motion_Window_Params motion_window_params;
          bool test_for_motion = false;
+         bool has_motion_window = false;
          std::string path_file_name;
          while(!dataFile.eof()){
            std::streampos pos = dataFile.tellg();
@@ -846,10 +852,15 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            }
            else if(block_tokens[0]==parser_test_for_motion){
              test_for_motion = true;
+             motion_window_params.use_motion_detection_ = true;
+             DEBUG_MSG("Conformal subset will test for motion");
+           }
+           else if(block_tokens[0]==parser_motion_window){
+             has_motion_window = true;
              if(block_tokens.size()==2){
                TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[1]),std::runtime_error,"");
                motion_window_params.use_subset_id_ = atoi(block_tokens[1].c_str());
-               if(proc_rank==0) DEBUG_MSG("Conformal subset will test for motion using the window defined by subset " <<
+               if(proc_rank==0) DEBUG_MSG("Conformal subset using the motion window defined by subset " <<
                  motion_window_params.use_subset_id_);
              }
              else{
@@ -857,26 +868,58 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  "usage: TEST_FOR_MOTION <origin_x> <origin_y> <width> <heigh> [tol], if tol is not set it will be computed automatically based on the first frame");
              for(int_t m=1;m<5;++m){TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[m]),std::invalid_argument,
                "Error, these parameters should be numbers here.");}
-             motion_window_params.origin_x_ = atoi(block_tokens[1].c_str());
-             motion_window_params.origin_y_ = atoi(block_tokens[2].c_str());
-             motion_window_params.width_ = atoi(block_tokens[3].c_str());
-             motion_window_params.height_ = atoi(block_tokens[4].c_str());
+             motion_window_params.start_x_ = atoi(block_tokens[1].c_str());
+             motion_window_params.start_y_ = atoi(block_tokens[2].c_str());
+             motion_window_params.end_x_ = atoi(block_tokens[3].c_str());
+             motion_window_params.end_y_ = atoi(block_tokens[4].c_str());
+             motion_window_params.sub_image_id_ = num_motion_windows_defined++;
              if(block_tokens.size()>5)
                motion_window_params.tol_ = strtod(block_tokens[5].c_str(),NULL);
-             if(proc_rank==0) DEBUG_MSG("Conformal subset will test for motion with window"
-                 " origin x: " << motion_window_params.origin_x_ << " origin y: " << motion_window_params.origin_y_ <<
-                 " width: " << motion_window_params.width_ << " height: " << motion_window_params.height_ <<
-                 " tolerance: " << motion_window_params.tol_);
+             if(proc_rank==0) DEBUG_MSG("Conformal subset motion window"
+                 " start x: " << motion_window_params.start_x_ << " start y: " << motion_window_params.start_y_ <<
+                 " end x: " << motion_window_params.end_x_ << " end y: " << motion_window_params.end_y_ <<
+                 " tolerance: " << motion_window_params.tol_ << " sub_image_id: " << motion_window_params.sub_image_id_);
              }
            }
            else if(block_tokens[0]==parser_skip_solve){
+             DEBUG_MSG("Reading skip solve");
              skip_solve = true;
+             // need to re-read the line again without converting to capital case
+             // see if the second argument is a string file_name, if so read the file
+             if(block_tokens.size()>1){
+               if(!is_number(block_tokens[1])){
+                 dataFile.seekg(pos,std::ios::beg);
+                 Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile," ",false);
+                 std::string skip_solves_file_name = block_tokens[1];
+                 if(proc_rank==0) DEBUG_MSG("Skip solves file name: " << skip_solves_file_name);
+                 std::fstream skip_file(skip_solves_file_name.c_str(), std::ios_base::in);
+                 TEUCHOS_TEST_FOR_EXCEPTION(!skip_file.good(),std::runtime_error,"Error invalid skip file");
+                 int_t id = 0;
+                 // TODO add some error checking for one value per line and ensure integer values
+                 while (skip_file >> id)
+                   skip_solve_ids.push_back(id);
+               }
+               else{
+                 // all other numbers are ids to turn solving on or off
+                 for(int_t id=1;id<block_tokens.size();++id){
+                   TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[id]),std::runtime_error,"");
+                   DEBUG_MSG("Skip solve id : " << block_tokens[id]);
+                   skip_solve_ids.push_back(atoi(block_tokens[id].c_str()));
+                 }
+               }
+             }
+             // sort the vector
+             std::sort(skip_solve_ids.begin(),skip_solve_ids.end());
            }
            else if(block_tokens[0]==parser_use_optical_flow){
              use_optical_flow = true;
            }
+           else if(block_tokens[0]==parser_force_simplex){
+             DEBUG_MSG("Forcing simplex method for this subset");
+             force_simplex = true;
+           }
            else if(block_tokens[0]==parser_use_path_file){
-             // need to re-read the line again without conveting to capital case
+             // need to re-read the line again without converting to capital case
              dataFile.seekg(pos, std::ios::beg);
              Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile," ",false);
              TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<2,std::runtime_error,"");
@@ -995,6 +1038,8 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          }
          info->conformal_area_defs->insert(std::pair<int_t,DICe::Conformal_Area_Def>(subset_id,conformal_area_def));
          info->id_sets_map->insert(std::pair<int_t,std::vector<int_t> >(subset_id,blocking_ids));
+         if(force_simplex)
+           info->force_simplex->insert(subset_id);
          if(has_seed){
            info->seed_subset_ids->insert(std::pair<int_t,int_t>(subset_id,subset_id)); // treating each conformal subset as an roi TODO fix this awkwardness
            info->displacement_map->insert(std::pair<int_t,std::pair<scalar_t,scalar_t> >(subset_id,std::pair<scalar_t,scalar_t>(seed_disp_x,seed_disp_y)));
@@ -1007,8 +1052,11 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          if(use_optical_flow)
            info->optical_flow_flags->insert(std::pair<int_t,bool>(subset_id,true));
          if(skip_solve)
-           info->skip_solve_flags->insert(std::pair<int_t,bool>(subset_id,true));
-         if(test_for_motion)
+           info->skip_solve_flags->insert(std::pair<int_t,std::vector<int>>(subset_id,skip_solve_ids));
+         if(test_for_motion){ // make sure if motion detection is on, there is a corresponding motion window
+           TEUCHOS_TEST_FOR_EXCEPTION(!has_motion_window,std::runtime_error,"Error, cannot test for motion without defining a motion window for subset " << subset_id);
+         }
+         if(has_motion_window)
            info->motion_window_params->insert(std::pair<int_t,Motion_Window_Params>(subset_id,motion_window_params));
        }  // end conformal subset def
        else{
@@ -1022,6 +1070,28 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
   if(roi_defined){
     TEUCHOS_TEST_FOR_EXCEPTION(coordinates_defined || conformal_subset_defined,std::runtime_error,"Error, if a region of interest in defined, the coordinates"
         " cannot be specified, nor can conformal subset definitions.");
+  }
+
+  // now that all the motion windows have been defined, set the sub_image_id for those that use another subsets motion window
+  if(info->motion_window_params->size()>0){
+    info->num_motion_windows = num_motion_windows_defined;
+    std::map<int_t,Motion_Window_Params>::iterator map_it=info->motion_window_params->begin();
+    for(;map_it!=info->motion_window_params->end();++map_it){
+      if(map_it->second.use_subset_id_!=-1){
+        TEUCHOS_TEST_FOR_EXCEPTION(info->motion_window_params->find(map_it->second.use_subset_id_)==info->motion_window_params->end(),
+          std::runtime_error,"Error, invalid subset id for motion window use_subset_id");
+        map_it->second.sub_image_id_ = info->motion_window_params->find(map_it->second.use_subset_id_)->second.sub_image_id_;
+      }
+    }
+    // check that all subsets have a motion window defined:
+    const int_t num_subsets = info->coordinates_vector->size()/dim;
+    for(int_t i=0;i<num_subsets;++i){
+      TEUCHOS_TEST_FOR_EXCEPTION(info->motion_window_params->find(i)==info->motion_window_params->end(),std::runtime_error,
+        "Error, if one motion window is defined, motion windows must be defined for all subsets");
+      DEBUG_MSG("Subset " << i << " points to sub image id " << info->motion_window_params->find(i)->second.sub_image_id_);
+      TEUCHOS_TEST_FOR_EXCEPTION(info->motion_window_params->find(i)->second.sub_image_id_>= num_motion_windows_defined,std::runtime_error,
+        "Error, invalid sub image id");
+    }
   }
 
   return info;

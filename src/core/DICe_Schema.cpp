@@ -62,6 +62,23 @@
 
 namespace DICe {
 
+Schema::Schema(const int_t img_width,
+  const int_t img_height,
+  const intensity_t initial_intensity_value,
+  const Teuchos::RCP<Teuchos::ParameterList> & params){
+  default_constructor_tasks(params);
+  ref_img_ = Teuchos::rcp( new Image(img_width,img_height,initial_intensity_value));
+  Teuchos::RCP<Image> def_img = Teuchos::rcp( new Image(img_width,img_height,initial_intensity_value));
+  def_imgs_.push_back(def_img);
+  Teuchos::RCP<Image> prev_img = Teuchos::rcp( new Image(img_width,img_height,initial_intensity_value));
+  prev_imgs_.push_back(prev_img);
+  // require that the images are the same size
+  TEUCHOS_TEST_FOR_EXCEPTION(ref_img_->width()<=0||ref_img_->width()!=def_imgs_[0]->width(),std::runtime_error,
+    "Error: Images must be the same width and nonzero.");
+  TEUCHOS_TEST_FOR_EXCEPTION(ref_img_->height()<=0||ref_img_->height()!=def_imgs_[0]->height(),std::runtime_error,
+    "Error: Images must be the same height and nonzero.");
+}
+
 Schema::Schema(const std::string & refName,
   const std::string & defName,
   const std::string & params_file_name){
@@ -91,22 +108,26 @@ Schema::construct_schema(const std::string & refName,
   imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_);
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
-  prev_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
+  Teuchos::RCP<Image> prev_img = Teuchos::rcp( new Image(refName.c_str(),imgParams));
+  if(prev_imgs_.size()==0) prev_imgs_.push_back(prev_img);
+  else prev_imgs_[0] = prev_img;
   // (the compute_image_gradients param is used by the image constructor)
   imgParams->set(DICe::compute_image_gradients,compute_def_gradients_);
-  def_img_ = Teuchos::rcp( new Image(defName.c_str(),imgParams));
+  Teuchos::RCP<Image> def_img = Teuchos::rcp( new Image(defName.c_str(),imgParams));
+  if(def_imgs_.size()==0) def_imgs_.push_back(def_img);
+  else def_imgs_[0] = def_img;
   if(ref_image_rotation_!=ZERO_DEGREES){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
-    prev_img_ = prev_img_->apply_rotation(ref_image_rotation_,imgParams);
+    prev_imgs_[0] = prev_imgs_[0]->apply_rotation(ref_image_rotation_,imgParams);
   }
   if(def_image_rotation_!=ZERO_DEGREES){
-    def_img_ = def_img_->apply_rotation(def_image_rotation_,imgParams);
+    def_imgs_[0] = def_imgs_[0]->apply_rotation(def_image_rotation_,imgParams);
   }
   const int_t width = ref_img_->width();
   const int_t height = ref_img_->height();
   // require that the images are the same size
-  TEUCHOS_TEST_FOR_EXCEPTION(width!=def_img_->width(),std::runtime_error,"Error, Images must be the same width.");
-  TEUCHOS_TEST_FOR_EXCEPTION(height!=def_img_->height(),std::runtime_error,"Error, Images must be the same height.");
+  TEUCHOS_TEST_FOR_EXCEPTION(width!=def_imgs_[0]->width(),std::runtime_error,"Error, Images must be the same width.");
+  TEUCHOS_TEST_FOR_EXCEPTION(height!=def_imgs_[0]->height(),std::runtime_error,"Error, Images must be the same height.");
 }
 
 Schema::Schema(const int_t img_width,
@@ -144,20 +165,24 @@ Schema::construct_schema(const int_t img_width,
   imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_);
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   ref_img_ = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
-  prev_img_ = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
+  Teuchos::RCP<Image> prev_img = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
+  if(prev_imgs_.size()==0) prev_imgs_.push_back(prev_img);
+  else prev_imgs_[0] = prev_img;
   imgParams->set(DICe::compute_image_gradients,compute_def_gradients_);
-  def_img_ = Teuchos::rcp( new Image(img_width,img_height,defRCP,imgParams));
+  Teuchos::RCP<Image> def_img = Teuchos::rcp( new Image(img_width,img_height,defRCP,imgParams));
+  if(def_imgs_.size()==0) def_imgs_.push_back(def_img);
+  else def_imgs_[0] = def_img;
   if(ref_image_rotation_!=ZERO_DEGREES){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
-    prev_img_ = prev_img_->apply_rotation(ref_image_rotation_,imgParams);
+    prev_imgs_[0] = prev_imgs_[0]->apply_rotation(ref_image_rotation_,imgParams);
   }
   if(def_image_rotation_!=ZERO_DEGREES){
-    def_img_ = def_img_->apply_rotation(def_image_rotation_,imgParams);
+    def_imgs_[0] = def_imgs_[0]->apply_rotation(def_image_rotation_,imgParams);
   }
   // require that the images are the same size
-  TEUCHOS_TEST_FOR_EXCEPTION(ref_img_->width()<=0||ref_img_->width()!=def_img_->width(),std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(ref_img_->width()<=0||ref_img_->width()!=def_imgs_[0]->width(),std::runtime_error,
     "Error: Images must be the same width and nonzero.");
-  TEUCHOS_TEST_FOR_EXCEPTION(ref_img_->height()<=0||ref_img_->height()!=def_img_->height(),std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(ref_img_->height()<=0||ref_img_->height()!=def_imgs_[0]->height(),std::runtime_error,
     "Error: Images must be the same height and nonzero.");
 }
 
@@ -188,53 +213,81 @@ Schema::construct_schema(Teuchos::RCP<Image> ref_img,
       def_img->gauss_filter();
   }
   ref_img_ = ref_img;
-  def_img_ = def_img;
-  prev_img_ = ref_img;
+  if(def_imgs_.size()==0) def_imgs_.push_back(def_img);
+  else def_imgs_[0] = def_img;
+  if(prev_imgs_.size()==0) prev_imgs_.push_back(ref_img);
+  else prev_imgs_[0] = ref_img;
   if(ref_image_rotation_!=ZERO_DEGREES){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_);
-    prev_img_ = prev_img_->apply_rotation(ref_image_rotation_);
+    prev_imgs_[0] = prev_imgs_[0]->apply_rotation(ref_image_rotation_);
   }
   if(def_image_rotation_!=ZERO_DEGREES){
-    def_img_ = def_img_->apply_rotation(def_image_rotation_);
+    def_imgs_[0] = def_imgs_[0]->apply_rotation(def_image_rotation_);
   }
   if(compute_ref_gradients_&&!ref_img_->has_gradients()){
     ref_img_->compute_gradients();
   }
-  if(compute_def_gradients_&&!def_img_->has_gradients()){
-    def_img_->compute_gradients();
+  if(compute_def_gradients_&&!def_imgs_[0]->has_gradients()){
+    def_imgs_[0]->compute_gradients();
   }
 }
 
 void
-Schema::set_def_image(const std::string & defName){
+Schema::rotate_def_image(){
+  if(def_image_rotation_!=ZERO_DEGREES){
+    for(size_t i=0;i<def_imgs_.size();++i)
+      def_imgs_[i] = def_imgs_[i]->apply_rotation(def_image_rotation_);
+  }
+}
+
+void
+Schema::set_def_image(const std::string & defName,
+  const int_t id){
   DEBUG_MSG("Schema: Resetting the deformed image");
+  assert(def_imgs_.size()>0);
+  assert(id<(int_t)def_imgs_.size());
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
-  def_img_ = Teuchos::rcp( new Image(defName.c_str(),imgParams));
+  def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
   if(def_image_rotation_!=ZERO_DEGREES){
-    def_img_ = def_img_->apply_rotation(def_image_rotation_);
+    def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);
   }
 }
 
 void
-Schema::set_def_image(Teuchos::RCP<Image> img){
-  DEBUG_MSG("Schema: Resetting the deformed image");
-  def_img_ = img;
+Schema::set_def_image(Teuchos::RCP<Image> img,
+  const int_t id){
+  DEBUG_MSG("Schema::set_def_image() Resetting the deformed image for sub image id " << id);
+  assert(def_imgs_.size()>0);
+  assert(id<(int_t)def_imgs_.size());
+  def_imgs_[id] = img;
   if(def_image_rotation_!=ZERO_DEGREES){
-    def_img_ = def_img_->apply_rotation(def_image_rotation_);
+    def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);
   }
+}
+
+void
+Schema::set_prev_image(Teuchos::RCP<Image> img,
+  const int_t id){
+  DEBUG_MSG("Schema::set_prev_image() Resetting the previous image for sub image id " << id);
+  assert(prev_imgs_.size()>0);
+  assert(id<(int_t)prev_imgs_.size());
+  prev_imgs_[id] = img;
 }
 
 void
 Schema::set_def_image(const int_t img_width,
   const int_t img_height,
-  const Teuchos::ArrayRCP<intensity_t> defRCP){
+  const Teuchos::ArrayRCP<intensity_t> defRCP,
+  const int_t id){
   DEBUG_MSG("Schema:  Resetting the deformed image");
+  assert(def_imgs_.size()>0);
+  assert(id<(int_t)def_imgs_.size());
   TEUCHOS_TEST_FOR_EXCEPTION(img_width<=0,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(img_height<=0,std::runtime_error,"");
-  def_img_ = Teuchos::rcp( new Image(img_width,img_height,defRCP));
+  def_imgs_[id] = Teuchos::rcp( new Image(img_width,img_height,defRCP));
   if(def_image_rotation_!=ZERO_DEGREES){
-    def_img_ = def_img_->apply_rotation(def_image_rotation_);
+    def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);
   }
 }
 
@@ -286,7 +339,7 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   comm_ = Teuchos::rcp(new MultiField_Comm());
   path_file_names_ = Teuchos::rcp(new std::map<int_t,std::string>());
   optical_flow_flags_ = Teuchos::rcp(new std::map<int_t,bool>());
-  skip_solve_flags_ = Teuchos::rcp(new std::map<int_t,bool>());
+  skip_solve_flags_ = Teuchos::rcp(new std::map<int_t,std::vector<int_t> >());
   motion_window_params_ = Teuchos::rcp(new std::map<int_t,Motion_Window_Params>());
   initial_gamma_threshold_ = -1.0;
   final_gamma_threshold_ = -1.0;
@@ -328,11 +381,11 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     // First set all of the params to their defaults in case the user does not specify them:
     if(use_tracking_defaults){
       tracking_default_params(diceParams.getRawPtr());
-      if(proc_rank == 0) DEBUG_MSG("Initializing schema params with SL default parameters");
+      if(proc_rank == 0) DEBUG_MSG("Initializing schema params with tracking default parameters");
     }
     else{
       dice_default_params(diceParams.getRawPtr());
-      if(proc_rank == 0) DEBUG_MSG("Initializing schema params with DICe default parameters");
+      if(proc_rank == 0) DEBUG_MSG("Initializing schema params with full-field default parameters");
     }
     // Overwrite any params that are specified by the params argument
     if(params!=Teuchos::null){
@@ -602,6 +655,7 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
   int_t num_subsets = -1;
   Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > blocking_subset_ids;
+  Teuchos::RCP<std::set<int_t> > force_simplex;
   const bool has_subset_file = input_params->isParameter(DICe::subset_file);
   DICe::Subset_File_Info_Type subset_info_type = DICe::SUBSET_INFO;
   if(has_subset_file){
@@ -630,6 +684,7 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     neighbor_ids = subset_info->neighbor_vector;
     conformal_area_defs = subset_info->conformal_area_defs;
     blocking_subset_ids = subset_info->id_sets_map;
+    force_simplex = subset_info->force_simplex;
     num_subsets = subset_info->coordinates_vector->size()/dim;
     if((int_t)subset_info->conformal_area_defs->size()<num_subsets){
       // Only require this if not all subsets are conformal:
@@ -646,6 +701,8 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
 
   // set the blocking subset ids if they exist
   set_obstructing_subset_ids(blocking_subset_ids);
+  // set the subsets that should force the simplex method
+  set_force_simplex(force_simplex);
   // initialize the schema
   initialize(num_subsets,subset_size,conformal_area_defs,neighbor_ids);
 
@@ -662,12 +719,37 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     }
     if(subset_info->skip_solve_flags->size()>0){
       set_skip_solve_flags(subset_info->skip_solve_flags);
+#ifdef DICE_DEBUG_MSG
+      std::cout << "[DICe_DEBUG]: Schema::initialize(): skip solve flags" << std::endl;
+      std::string on = "ON";
+      std::string off = "OFF";
+      std::string state = "";
+      std::map<int_t,std::vector<int_t> >::const_iterator it=skip_solve_flags_->begin();
+      for(;it!=skip_solve_flags_->end();++it){
+        bool skip_on = false;
+        std::cout << "[DICe_DEBUG]: Schema::initialize(): subset " << it->first << " has the following flags" << std::endl;
+        for(size_t id=0;id<it->second.size();++id){
+          skip_on = !skip_on;
+          state = skip_on ? on : off;
+          std::cout << "[DICe_DEBUG]: Schema::intialize(): at frame " << it->second[id] << " skip solve is " << state << std::endl;
+        }
+      }
+#endif
     }
     if(subset_info->optical_flow_flags->size()>0){
       set_optical_flow_flags(subset_info->optical_flow_flags);
     }
     if(subset_info->motion_window_params->size()>0){
+      // make sure not running in parallel (motion window use_subset_id may be off processor) TODO fix this, ex
+
       set_motion_window_params(subset_info->motion_window_params);
+      // change the def image storage to be a vector of motion windows rather than one large image
+      def_imgs_.resize(subset_info->num_motion_windows);
+      prev_imgs_.resize(subset_info->num_motion_windows);
+      for(int_t i=0;i<subset_info->num_motion_windows;++i){
+        def_imgs_[i] = Teuchos::null;
+        prev_imgs_[i] = Teuchos::null;
+      }
     }
     if(subset_info->seed_subset_ids->size()>0){
       //has_seed(true);
@@ -709,8 +791,9 @@ Schema::initialize(const int_t num_pts,
   const int_t subset_size,
   Teuchos::RCP<std::map<int_t,Conformal_Area_Def> > conformal_subset_defs,
   Teuchos::RCP<std::vector<int_t> > neighbor_ids){
-  TEUCHOS_TEST_FOR_EXCEPTION(def_img_->width()!=ref_img_->width(),std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(def_img_->height()!=ref_img_->height(),std::runtime_error,"");
+  assert(def_imgs_.size()>0);
+  TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[0]->width()!=ref_img_->width(),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[0]->height()!=ref_img_->height(),std::runtime_error,"");
   if(is_initialized_){
     assert(data_num_points_>0);
     assert(fields_->get_num_fields()==MAX_FIELD_NAME);
@@ -1113,6 +1196,9 @@ Schema::execute_correlation(){
   // but only a small number of images. In this case it's more efficient to re-allocate the
   // objectives at every step, since making them static would consume a lot of memory
   if(correlation_routine_==GENERIC_ROUTINE){
+    // make sure that motion windows are not used
+    TEUCHOS_TEST_FOR_EXCEPTION(motion_window_params_->size()!=0,std::runtime_error,
+      "Error, motion windows are intended only for the TRACKING_ROUTINE");
     prepare_optimization_initializers();
     for(int_t subset_index=0;subset_index<num_local_subsets;++subset_index){
       Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,
@@ -1127,9 +1213,18 @@ Schema::execute_correlation(){
     // construct the static objectives if they haven't already been constructed
     if(obj_vec_.empty()){
       for(int_t subset_index=0;subset_index<num_local_subsets;++subset_index){
-        DEBUG_MSG("[PROC " << proc_id << "] Adding objective to obj_vec_ " << this_proc_subset_global_ids_[subset_index]);
+        const int_t subset_gid = this_proc_subset_global_ids_[subset_index];
+        DEBUG_MSG("[PROC " << proc_id << "] Adding objective to obj_vec_ " << subset_gid);
         obj_vec_.push_back(Teuchos::rcp(new Objective_ZNSSD(this,
-          this_proc_subset_global_ids_[subset_index])));
+          subset_gid)));
+        // set the sub_image id for each subset:
+        if(motion_window_params_->find(subset_gid)!=motion_window_params_->end()){
+          const int_t use_subset_id = motion_window_params_->find(subset_gid)->second.use_subset_id_;
+          const int_t sub_image_id = use_subset_id ==-1 ? motion_window_params_->find(subset_gid)->second.sub_image_id_:
+              motion_window_params_->find(use_subset_id)->second.sub_image_id_;
+          DEBUG_MSG("[PROC " << proc_id << "] setting the sub_image id for subset " << subset_gid << " to " << sub_image_id);
+          obj_vec_[subset_index]->subset()->set_sub_image_id(sub_image_id);
+        }
       }
     }
     TEUCHOS_TEST_FOR_EXCEPTION((int_t)obj_vec_.size()!=num_local_subsets,std::runtime_error,"");
@@ -1140,7 +1235,8 @@ Schema::execute_correlation(){
     }
     if(output_deformed_subset_images_)
       write_deformed_subsets_image();
-    prev_img_=def_img_;
+    for(size_t i=0;i<prev_imgs_.size();++i)
+      prev_imgs_[i]=def_imgs_[i];
   }
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: unknown correlation routine.");
@@ -1257,21 +1353,20 @@ bool
 Schema::motion_detected(const int_t subset_gid){
   DEBUG_MSG("Schema::motion_detected() called");
   if(motion_window_params_->find(subset_gid)!=motion_window_params_->end()){
+    // if there is no motion detection turned on, always return true (that motion is detected)
+    if(motion_window_params_->find(subset_gid)->second.use_motion_detection_==false) return true;
     const int_t use_subset_id = motion_window_params_->find(subset_gid)->second.use_subset_id_==-1 ? subset_gid:
         motion_window_params_->find(subset_gid)->second.use_subset_id_;
-    DEBUG_MSG("Creating a motion test utility for subset " << subset_gid << " using id " << use_subset_id);
+    const int_t sub_image_id = motion_window_params_->find(subset_gid)->second.sub_image_id_;
     if(motion_detectors_.find(use_subset_id)==motion_detectors_.end()){
       // create the motion detector because it doesn't exist
+      DEBUG_MSG("Creating a motion test utility for subset " << subset_gid << " using id " << use_subset_id);
       Motion_Window_Params mwp = motion_window_params_->find(use_subset_id)->second;
-      motion_detectors_.insert(std::pair<int_t,Teuchos::RCP<Motion_Test_Utility> >(use_subset_id,Teuchos::rcp(new Motion_Test_Utility(mwp.origin_x_,
-        mwp.origin_y_,
-        mwp.width_,
-        mwp.height_,
-        mwp.tol_))));
+      motion_detectors_.insert(std::pair<int_t,Teuchos::RCP<Motion_Test_Utility> >(use_subset_id,Teuchos::rcp(new Motion_Test_Utility(this,mwp.tol_))));
     }
     TEUCHOS_TEST_FOR_EXCEPTION(motion_detectors_.find(use_subset_id)==motion_detectors_.end(),std::runtime_error,
       "Error, the motion detector should exist here, but it doesn't.");
-    bool motion_det = motion_detectors_.find(use_subset_id)->second->motion_detected(def_img_);
+    bool motion_det = motion_detectors_.find(use_subset_id)->second->motion_detected(sub_image_id);
     DEBUG_MSG("Subset " << subset_gid << " TEST_FOR_MOTION using window defined for subset " << use_subset_id <<
       " result " << motion_det);
     return motion_det;
@@ -1350,10 +1445,24 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     "Error: subset id is not local to this process.");
   DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " (" << local_field_value(subset_gid,DICe::COORDINATE_X) <<
     "," << local_field_value(subset_gid,DICe::COORDINATE_Y) << ")");
+
+  // check if the solve should be skipped
+  bool skip_frame = false;
+  if(skip_solve_flags_->find(subset_gid)!=skip_solve_flags_->end()||skip_all_solves_){
+    if(skip_solve_flags_->find(subset_gid)!=skip_solve_flags_->end()){
+      // determine for this subset id if it should be skipped:
+      const int_t trigger_based_frame = image_frame_ + first_frame_index_;
+      DEBUG_MSG("Subset " << subset_gid << " checking skip solve for trigger based frame id " << trigger_based_frame);
+      skip_frame = frame_should_be_skipped(trigger_based_frame,skip_solve_flags_->find(subset_gid)->second);
+      DEBUG_MSG("Subset " << subset_gid << " frame_should_be_skipped return value: " << skip_frame);
+    }
+  }
   //
   //  test for motion if requested by the user in the subsets.txt file
   //
-  bool motion = motion_detected(subset_gid);
+  bool motion = true;
+  if(!skip_frame&&!skip_all_solves_)
+    motion = motion_detected(subset_gid);
   if(!motion){
     DEBUG_MSG("Subset " << subset_gid << " skipping frame due to no motion");
     // only change the match value and the status flag
@@ -1386,37 +1495,35 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   //  check if the user rrequested to skip the solve and only initialize (param set in subset file)
   //
-  // check if the solve should be skipped
-  if(skip_solve_flags_->find(subset_gid)!=skip_solve_flags_->end()||skip_all_solves_){
-    if(skip_solve_flags_->find(subset_gid)->second ==true||skip_all_solves_){
-      if(skip_all_solves_){
-        DEBUG_MSG("Subset " << subset_gid << " skip solve (skip_all_solves parameter was set)");
-      }else{
-        DEBUG_MSG("Subset " << subset_gid << " skip solve (as requested in the subset file via SKIP_SOLVE keyword)");
-      }
-      scalar_t noise_std_dev = 0.0;
-      const scalar_t initial_sigma = obj->sigma(deformation,noise_std_dev);
-      const scalar_t initial_gamma = obj->gamma(deformation);
-      const scalar_t initial_beta = output_beta_ ? obj->beta(deformation) : 0.0;
-      const scalar_t contrast = obj->subset()->contrast_std_dev();
-      const int_t active_pixels = obj->subset()->num_active_pixels();
-      record_step(subset_gid,
-        deformation,initial_sigma,0.0,initial_gamma,initial_beta,
-        noise_std_dev,contrast,active_pixels,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
-      // evolve the subsets and output the images requested as well
-      // turn on pixels that at the beginning were hidden behind an obstruction
-      if(use_subset_evolution_&&image_frame_>1){
-        DEBUG_MSG("[PROC " << comm_->get_rank() << "] Evolving subset " << subset_gid << " using newly exposed pixels for intensity values");
-        obj->subset()->turn_on_previously_obstructed_pixels();
-      }
-      //  Write debugging images if requested
-      if(output_deformed_subset_intensity_images_)
-        write_deformed_subset_intensity_image(obj);
-      if(output_evolved_subset_images_)
-        write_reference_subset_intensity_image(obj);
-      return;
+  if(skip_frame||skip_all_solves_){
+    if(skip_all_solves_){
+      DEBUG_MSG("Subset " << subset_gid << " skip solve (skip_all_solves parameter was set)");
+    }else{
+      DEBUG_MSG("Subset " << subset_gid << " skip solve (as requested in the subset file via SKIP_SOLVE keyword)");
     }
+    scalar_t noise_std_dev = 0.0;
+    const scalar_t initial_sigma = obj->sigma(deformation,noise_std_dev);
+    const scalar_t initial_gamma = obj->gamma(deformation);
+    const scalar_t initial_beta = output_beta_ ? obj->beta(deformation) : 0.0;
+    const scalar_t contrast = obj->subset()->contrast_std_dev();
+    const int_t active_pixels = obj->subset()->num_active_pixels();
+    record_step(subset_gid,
+      deformation,initial_sigma,0.0,initial_gamma,initial_beta,
+      noise_std_dev,contrast,active_pixels,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
+    // evolve the subsets and output the images requested as well
+    // turn on pixels that at the beginning were hidden behind an obstruction
+    if(use_subset_evolution_&&image_frame_>1){
+      DEBUG_MSG("[PROC " << comm_->get_rank() << "] Evolving subset " << subset_gid << " using newly exposed pixels for intensity values");
+      obj->subset()->turn_on_previously_obstructed_pixels();
+    }
+    //  Write debugging images if requested
+    if(output_deformed_subset_intensity_images_)
+      write_deformed_subset_intensity_image(obj);
+    if(output_evolved_subset_images_)
+      write_reference_subset_intensity_image(obj);
+    return;
   }
+
   //
   //  if user requested testing the initial value of gamma, do that here
   //
@@ -1431,18 +1538,34 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   }
   // TODO how to respond to bad initialization
   // TODO add a search-based method to initialize if other methods failed
+  // determine if the subset is a blocker and if so, force it to use simplex method:
+  // also force simplex if it is a blocked subset (not enough speckles to use grad-based method)
+  bool force_simplex = false;
+  if(force_simplex_!=Teuchos::null)
+    if(force_simplex_->find(subset_gid)!=force_simplex_->end()) force_simplex=true;
+  if(obstructing_subset_ids_!=Teuchos::null){
+    if(obstructing_subset_ids_->find(subset_gid)!=obstructing_subset_ids_->end()){
+      if(obstructing_subset_ids_->find(subset_gid)->second.size()>0){
+        force_simplex = true;
+        DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " is a blocker or blocked subset, forcing simplex method for this subset.");
+      }
+    }
+    std::map<int_t,std::vector<int_t> >::iterator blk_it = obstructing_subset_ids_->begin();
+    std::map<int_t,std::vector<int_t> >::iterator blk_end = obstructing_subset_ids_->end();
+    for(;blk_it!=blk_end;++blk_it){
+      std::vector<int_t> * obst_ids = &blk_it->second;
+      for(size_t i=0;i<obst_ids->size();++i){
+        if((*obst_ids)[i]==subset_gid){
+          force_simplex = true;
+          DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " is a blocking subset, forcing simplex method for this subset.");
+        }
+      }
+    }
+  }
   //
   // perform the correlation
   //
-  if(optimization_method_==DICe::GRADIENT_BASED||optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX){
-    try{
-      corr_status = obj->computeUpdateFast(deformation,num_iterations);
-    }
-    catch (std::logic_error &err) { //a non-graceful exception occurred
-      corr_status = CORRELATION_FAILED_BY_EXCEPTION;
-    };
-  }
-  else if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED){
+  if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED||force_simplex){
     try{
       corr_status = obj->computeUpdateRobust(deformation,num_iterations);
     }
@@ -1450,8 +1573,16 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       corr_status = CORRELATION_FAILED_BY_EXCEPTION;
     };
   }
+  else if(optimization_method_==DICe::GRADIENT_BASED||optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX){
+    try{
+      corr_status = obj->computeUpdateFast(deformation,num_iterations);
+    }
+    catch (std::logic_error &err) { //a non-graceful exception occurred
+      corr_status = CORRELATION_FAILED_BY_EXCEPTION;
+    };
+  }
   if(corr_status!=CORRELATION_SUCCESSFUL){
-    if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::GRADIENT_BASED){
+    if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::GRADIENT_BASED||force_simplex){
       record_failed_step(subset_gid,static_cast<int_t>(corr_status),num_iterations);
       return;
     }
@@ -1619,7 +1750,7 @@ Schema::write_control_points_image(const std::string & fileName,
   const bool use_one_point){
 
   assert(subset_dim_>0);
-  Teuchos::RCP<Image> img = (use_def_image) ? def_img_ : ref_img_;
+  Teuchos::RCP<Image> img = (use_def_image) ? def_imgs_[0] : ref_img_;
 
   const int_t width = img->width();
   const int_t height = img->height();
@@ -1873,7 +2004,6 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
   if(boost::filesystem::create_directory(dir)) {
     DEBUG_MSG("Directory successfully created");
   }
-
   int_t num_zeros = 0;
   if(num_image_frames_>0){
     int_t num_digits_total = 0;
@@ -1893,14 +2023,23 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
     ss << "0";
   ss << image_frame_ << ".tif";
 
+  const int_t w = ref_img_->width();
+  const int_t h = ref_img_->height();
+
+  Teuchos::ArrayRCP<intensity_t> intensities(w*h,0.0);
+
   // construct a copy of the base image to use as layer 0 for the output;
-
-  const int_t w = def_img_->width();
-  const int_t h = def_img_->height();
-
-  Teuchos::ArrayRCP<intensity_t> intensities(def_img_->num_pixels(),0.0);
-  for(int_t i=0;i<def_img_->num_pixels();++i)
-    intensities[i] = (*def_img_)(i);
+  // read each sub image if motion windows are used
+  for(int_t sub=0;sub<(int_t)def_imgs_.size();++sub){
+    if(def_imgs_[sub]==Teuchos::null)continue;
+    const int_t offset_x = def_imgs_[sub]->offset_x();
+    const int_t offset_y = def_imgs_[sub]->offset_y();
+    for(int_t y=0;y<def_imgs_[sub]->height();++y){
+      for(int_t x=0;x<def_imgs_[sub]->width();++x){
+        intensities[(y+offset_y)*w + x + offset_x] = (*def_imgs_[sub])(x,y);
+      }
+    }
+  }
 
   scalar_t dx=0,dy=0;
   int_t ox=0,oy=0;
@@ -1912,6 +2051,7 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
   //for(int_t subset=0;subset<1;++subset){
   for(size_t subset=0;subset<obj_vec_.size();++subset){
     const int_t gid = obj_vec_[subset]->correlation_point_global_id();
+
     //if(gid==1) continue;
     // get the deformation vector for each subset
     const scalar_t u     = local_field_value(gid,DICe::DISPLACEMENT_X);
@@ -1950,6 +2090,7 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
       if(X - (int_t)X >= 0.5) px++;
       py = (int_t)Y;
       if(Y - (int_t)Y >= 0.5) py++;
+      // offset the pixel locations by the sub image offsets
       if(px>=0&&px<w&&py>=0&&py<h){
         if(use_gamma_as_color){
           if(ref_subset->is_active(i)&!ref_subset->is_deactivated_this_step(i)){
@@ -2110,7 +2251,7 @@ Output_Spec::write_info(std::FILE * file){
   fprintf(file,"*** Digital Image Correlation Engine (DICe), (git sha1: %s) Copyright 2015 Sandia Corporation\n",GITSHA1);
   fprintf(file,"***\n");
   fprintf(file,"*** Reference image: %s \n",schema_->ref_img()->file_name().c_str());
-  fprintf(file,"*** Deformed image: %s \n",schema_->def_img()->file_name().c_str());
+  fprintf(file,"*** Deformed image: %s \n",schema_->def_img(0)->file_name().c_str());
   if(schema_->analysis_type()==GLOBAL_DIC){
     fprintf(file,"*** DIC method : global \n");
   }
@@ -2196,6 +2337,23 @@ Output_Spec::write_frame(std::FILE * file,
       fprintf(file,"%s%4.4E",delimiter_.c_str(),value);
   }
   fprintf(file,"\n"); // the space before end of line is important for parsing in the output diff tool
+}
+
+bool frame_should_be_skipped(const int_t trigger_based_frame_index,
+  std::vector<int_t> & frame_id_vector){
+  DEBUG_MSG("frame_should_be_skipped(): vector size " << frame_id_vector.size());
+  if(frame_id_vector.size()==0) return true;
+
+  int_t index = frame_id_vector.size();
+  for(size_t i=0;i<frame_id_vector.size();++i){
+    if(trigger_based_frame_index < frame_id_vector[i]){
+      index = i;
+      break;
+    }
+  }
+  DEBUG_MSG("frame_should_be_skipped(): index " << index);
+  if(index%2==0||index==0) return false;
+  else return true;
 }
 
 }// End DICe Namespace

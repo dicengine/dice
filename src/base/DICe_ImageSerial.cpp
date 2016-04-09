@@ -108,11 +108,14 @@ Image::Image(const char * file_name,
 }
 
 Image::Image(const int_t width,
-  const int_t height):
+  const int_t height,
+  const intensity_t intensity,
+  const int_t offset_x,
+  const int_t offset_y):
   width_(width),
   height_(height),
-  offset_x_(0),
-  offset_y_(0),
+  offset_x_(offset_x),
+  offset_y_(offset_y),
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   has_gauss_filter_(false),
@@ -120,7 +123,7 @@ Image::Image(const int_t width,
 {
   assert(height_>0);
   assert(width_>0);
-  intensities_ = Teuchos::ArrayRCP<intensity_t>(height_*width_,0.0);
+  intensities_ = Teuchos::ArrayRCP<intensity_t>(height_*width_,intensity);
   default_constructor_tasks(Teuchos::null);
 }
 
@@ -211,34 +214,14 @@ Image::initialize_array_image(intensity_t * intensities){
 
 void
 Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params){
-
   grad_x_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   grad_y_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   intensities_temp_ = Teuchos::ArrayRCP<intensity_t>(height_*width_,0.0);
+  mask_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   // image gradient coefficients
   grad_c1_ = 1.0/12.0;
   grad_c2_ = -8.0/12.0;
-  const bool gauss_filter_image = params!=Teuchos::null ?
-      params->get<bool>(DICe::gauss_filter_images,false) : false;
-  const bool gauss_filter_use_hierarchical_parallelism = params!=Teuchos::null ?
-      params->get<bool>(DICe::gauss_filter_use_hierarchical_parallelism,false) : false;
-  const int gauss_filter_team_size = params!=Teuchos::null ?
-      params->get<int>(DICe::gauss_filter_team_size,256) : 256;
-  gauss_filter_mask_size_ = params!=Teuchos::null ?
-      params->get<int>(DICe::gauss_filter_mask_size,7) : 7;
-  gauss_filter_half_mask_ = gauss_filter_mask_size_/2+1;
-  if(gauss_filter_image){
-    gauss_filter(gauss_filter_use_hierarchical_parallelism,gauss_filter_team_size);
-  }
-  const bool compute_image_gradients = params!=Teuchos::null ?
-      params->get<bool>(DICe::compute_image_gradients,false) : false;
-  const bool image_grad_use_hierarchical_parallelism = params!=Teuchos::null ?
-      params->get<bool>(DICe::image_grad_use_hierarchical_parallelism,false) : false;
-  const int image_grad_team_size = params!=Teuchos::null ?
-      params->get<int>(DICe::image_grad_team_size,256) : 256;
-  if(compute_image_gradients)
-    compute_gradients(image_grad_use_hierarchical_parallelism,image_grad_team_size);
-  mask_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
+  post_allocation_tasks(params);
 }
 
 const intensity_t&
@@ -273,6 +256,138 @@ Teuchos::ArrayRCP<intensity_t>
 Image::intensities()const{
   return intensities_;
 }
+
+intensity_t
+Image::interpolate_bilinear(const scalar_t & local_x, const scalar_t & local_y){
+
+  if(local_x<0.0||local_x>=width_-1.5||local_y<0.0||local_y>=height_-1.5) return 0.0;
+  const int_t x1 = (int_t)local_x;
+  const int_t x2 = x1+1;
+  const int_t y1 = (int_t)local_y;
+  const int_t y2  = y1+1;
+  return intensities_[y1*width_+x1]*(x2-local_x)*(y2-local_y)
+      +intensities_[y1*width_+x2]*(local_x-x1)*(y2-local_y)
+      +intensities_[y2*width_+x2]*(local_x-x1)*(local_y-y1)
+      +intensities_[y2*width_+x1]*(x2-local_x)*(local_y-y1);
+}
+
+intensity_t
+Image::interpolate_bicubic(const scalar_t & local_x, const scalar_t & local_y){
+  if(local_x<1.0||local_x>=width_-2.0||local_y<1.0||local_y>=height_-2.0) return this->interpolate_bilinear(local_x,local_y);
+
+  const int_t x0  = (int_t)local_x;
+  const int_t x1  = x0+1;
+  const int_t x2  = x1+1;
+  const int_t xm1 = x0-1;
+  const int_t y0  = (int_t)local_y;
+  const int_t y1 = y0+1;
+  const int_t y2 = y1+1;
+  const int_t ym1 = y0-1;
+  const scalar_t x = local_x - x0;
+  const scalar_t y = local_y - y0;
+  const scalar_t x_2 = x * x;
+  const scalar_t x_3 = x_2 * x;
+  const scalar_t y_2 = y * y;
+  const scalar_t y_3 = y_2 * y;
+  const intensity_t fm10  = intensities_[y0*width_+xm1];
+  const intensity_t f00   = intensities_[y0*width_+x0];
+  const intensity_t f10   = intensities_[y0*width_+x1];
+  const intensity_t f20   = intensities_[y0*width_+x2];
+  const intensity_t fm11  = intensities_[y1*width_+xm1];
+  const intensity_t f01   = intensities_[y1*width_+x0];
+  const intensity_t f11   = intensities_[y1*width_+x1];
+  const intensity_t f21   = intensities_[y1*width_+x2];
+  const intensity_t fm12  = intensities_[y2*width_+xm1];
+  const intensity_t f02   = intensities_[y2*width_+x0];
+  const intensity_t f12   = intensities_[y2*width_+x1];
+  const intensity_t f22   = intensities_[y2*width_+x2];
+  const intensity_t fm1m1 = intensities_[ym1*width_+xm1];
+  const intensity_t f0m1  = intensities_[ym1*width_+x0];
+  const intensity_t f1m1  = intensities_[ym1*width_+x1];
+  const intensity_t f2m1  = intensities_[ym1*width_+x2];
+#ifdef DICE_USE_DOUBLE
+  return f00 + (-0.5*f0m1 + .5*f01)*y + (f0m1 - 2.5*f00 + 2*f01 - .5*f02)*y_2 + (-0.5*f0m1 + 1.5*f00 - 1.5*f01 + .5*f02)*y_3
+      + ((-0.5*fm10 + .5*f10) + (0.25*fm1m1 - .25*fm11 - .25*f1m1 + .25*f11)*y + (-0.5*fm1m1 + 1.25*fm10 - fm11 + .25*fm12 +
+          0.5*f1m1 - 1.25*f10 + f11 - .25*f12)*y_2 + (0.25*fm1m1 - .75*fm10 + .75*fm11 - .25*fm12 - .25*f1m1 + .75*f10 - .75*f11 + .25*f12)*y_3) * x
+      +((fm10 - 2.5*f00 + 2*f10 - .5*f20) + (-0.5*fm1m1 + .5*fm11 + 1.25*f0m1 - 1.25*f01 - f1m1 + f11 + .25*f2m1 - .25*f21)*y + (fm1m1 - 2.5*fm10 + 2*fm11
+          - .5*fm12 - 2.5*f0m1 + 6.25*f00 - 5*f01 + 1.25*f02 + 2*f1m1 - 5*f10 + 4*f11 - f12 - .5*f2m1 + 1.25*f20 - f21 + .25*f22)*y_2 +
+          (-0.5*fm1m1 + 1.5*fm10 - 1.5*fm11 + .5*fm12 + 1.25*f0m1 - 3.75*f00 + 3.75*f01 - 1.25*f02 - f1m1 + 3*f10 - 3*f11 + f12 + .25*f2m1 - .75*f20 + .75*f21 - .25*f22)*y_3)*x_2
+      +((-.5*fm10 + 1.5*f00 - 1.5*f10 + .5*f20) + (0.25*fm1m1 - .25*fm11 - .75*f0m1 + .75*f01 + .75*f1m1 - .75*f11 - .25*f2m1 + .25*f21)*y +
+          (-.5*fm1m1 + 1.25*fm10 - fm11 + .25*fm12 + 1.5*f0m1 - 3.75*f00 + 3*f01 - .75*f02 - 1.5*f1m1 + 3.75*f10 - 3*f11 + .75*f12 + .5*f2m1 - 1.25*f20 + f21 - .25*f22)*y_2
+          + (0.25*fm1m1 - .75*fm10 + .75*fm11 - .25*fm12 - .75*f0m1 + 2.25*f00 - 2.25*f01 + .75*f02 + .75*f1m1 - 2.25*f10 + 2.25*f11 - .75*f12 - .25*f2m1 + .75*f20 - .75*f21 + .25*f22)*y_3)*x_3;
+#else
+  return f00 + (-0.5f*f0m1 + .5f*f01)*y + (f0m1 - 2.5f*f00 + 2.0f*f01 - .5f*f02)*y_2 + (-0.5f*f0m1 + 1.5f*f00 - 1.5f*f01 + .5f*f02)*y_3
+      + ((-0.5f*fm10 + .5f*f10) + (0.25f*fm1m1 - .25f*fm11 - .25f*f1m1 + .25f*f11)*y + (-0.5f*fm1m1 + 1.25f*fm10 - fm11 + .25f*fm12 +
+          0.5f*f1m1 - 1.25f*f10 + f11 - .25f*f12)*y_2 + (0.25f*fm1m1 - .75f*fm10 + .75f*fm11 - .25f*fm12 - .25f*f1m1 + .75f*f10 - .75f*f11 + .25f*f12)*y_3) * x
+      +((fm10 - 2.5f*f00 + 2.0f*f10 - .5f*f20) + (-0.5f*fm1m1 + .5f*fm11 + 1.25f*f0m1 - 1.25f*f01 - f1m1 + f11 + .25f*f2m1 - .25f*f21)*y + (fm1m1 - 2.5f*fm10 + 2.0f*fm11
+          - .5f*fm12 - 2.5f*f0m1 + 6.25f*f00 - 5.0f*f01 + 1.25f*f02 + 2.0f*f1m1 - 5.0f*f10 + 4.0f*f11 - f12 - .5f*f2m1 + 1.25f*f20 - f21 + .25f*f22)*y_2 +
+          (-0.5f*fm1m1 + 1.5f*fm10 - 1.5f*fm11 + .5f*fm12 + 1.25f*f0m1 - 3.75f*f00 + 3.75f*f01 - 1.25f*f02 - f1m1 + 3.0f*f10 - 3.0f*f11 + f12 + .25f*f2m1 - .75f*f20 + .75f*f21 - .25f*f22)*y_3)*x_2
+      +((-.5f*fm10 + 1.5f*f00 - 1.5f*f10 + .5f*f20) + (0.25f*fm1m1 - .25f*fm11 - .75f*f0m1 + .75f*f01 + .75f*f1m1 - .75f*f11 - .25f*f2m1 + .25f*f21)*y +
+          (-.5f*fm1m1 + 1.25f*fm10 - fm11 + .25f*fm12 + 1.5f*f0m1 - 3.75f*f00 + 3.0f*f01 - .75f*f02 - 1.5f*f1m1 + 3.75f*f10 - 3.0f*f11 + .75f*f12 + .5f*f2m1 - 1.25f*f20 + f21 - .25f*f22)*y_2
+          + (0.25f*fm1m1 - .75f*fm10 + .75f*fm11 - .25f*fm12 - .75f*f0m1 + 2.25f*f00 - 2.25f*f01 + .75f*f02 + .75f*f1m1 - 2.25f*f10 + 2.25f*f11 - .75f*f12 - .25f*f2m1 + .75f*f20 - .75f*f21 + .25f*f22)*y_3)*x_3;
+#endif
+}
+
+intensity_t
+Image::interpolate_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
+  int_t x1 = (int_t)local_x;
+  int_t y1 = (int_t)local_y;
+  if(local_x<=2.5||local_x>=width_-3.5||local_y<=2.5||local_y>=height_-3.5)
+    return this->interpolate_bilinear(local_x,local_y);
+
+  static scalar_t c1 = 4.0/3.0;
+  static scalar_t c2 = - 7.0/3.0;
+  static scalar_t c3 = -7.0/12.0;
+  static scalar_t c4 = - 59.0/12.0;
+  static scalar_t c5 = 15.0/6.0;
+  static scalar_t c6 = 1.0/12.0;
+  static scalar_t c7 = - 2.0/3.0;
+  static scalar_t c8 = 21.0/12.0;
+  static scalar_t c9 = -3.0/2.0;
+
+  if(local_x - x1 >= 0.5) x1++;
+  if(local_y - y1 >= 0.5) y1++;
+  // check that the global location is inside the image...
+  intensity_t intensity_value = 0.0;
+  // convolve all the pixels within + and - pixels of the point in question
+  scalar_t dy=0.0,dy2=0.0,dy3=0.0;
+  scalar_t dx=0.0,dx2=0.0,dx3=0.0;
+  scalar_t f0x=0.0,f0y=0.0;
+  for(int_t y=y1-3;y<=y1+3;++y){
+    dy = std::abs(local_y - y);
+    dy2=dy*dy;
+    dy3=dy2*dy;
+    f0y = 0.0;
+    if(dy <= 1.0){
+      f0y = c1*dy3 +c2*dy2 + 1.0;
+    }
+    else if(dy <= 2.0){
+      f0y = c3*dy3 + 3.0*dy2 +c4*dy + c5;
+    }
+    else if(dy <= 3.0){
+      f0y = c6*dy3 +c7*dy2 + c8*dy +c9;
+    }
+    for(int_t x=x1-3;x<=x1+3;++x){
+      // compute the f's of x and y
+      dx = std::abs(local_x - x);
+      dx2=dx*dx;
+      dx3=dx2*dx;
+      f0x = 0.0;
+      if(dx <= 1.0){
+        f0x = c1*dx3 +c2*dx2 + 1.0;
+      }
+      else if(dx <= 2.0){
+        f0x = c3*dx3 + 3.0*dx2 +c4*dx + c5;
+      }
+      else if(dx <= 3.0){
+        f0x = c6*dx3 +c7*dx2 + c8*dx +c9;
+      }
+      intensity_value += intensities_[y*width_+x]*f0x*f0y;
+    }
+  }
+  return intensity_value;
+}
+
 
 void
 Image::compute_gradients(const bool use_hierarchical_parallelism, const int_t team_size){
@@ -465,6 +580,8 @@ Image::gauss_filter(const bool use_hierarchical_parallelism,
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,
       "Error, the Gauss filter mask size is invalid (options include 5,7,9,11,13)");
   }
+  TEUCHOS_TEST_FOR_EXCEPTION(width_<gauss_filter_mask_size_||height_<gauss_filter_mask_size_,std::runtime_error,
+    "Error, image too small (" << width_ << " x " << height_ << ") for gauss filtering with mask size " << gauss_filter_mask_size_);
 
   // copy over the old intensities
   for(int_t i=0;i<num_pixels();++i)

@@ -66,23 +66,6 @@ void apply_transform(Teuchos::RCP<Image> image_in,
   const int_t cy,
   Teuchos::RCP<const std::vector<scalar_t> > deformation);
 
-/// free function to do bilinear interpolation
-/// \param global_x floating point precision x location in the global image coordinates
-/// \param global_y floating point precision y location in the global image coordinates
-/// \param image the image to interpolate
-intensity_t interpolate_bilinear(const scalar_t & global_x,
-  const scalar_t & global_y,
-  Teuchos::RCP<Image> image);
-
-/// free function to do keys fourth interpolation
-/// \param global_x floating point precision x location in the global image coordinates
-/// \param global_y floating point precision y location in the global image coordinates
-/// \param image the image to interpolate
-intensity_t interpolate_keys_fourth(const scalar_t & global_x,
-  const scalar_t & global_y,
-  Teuchos::RCP<Image> image);
-
-
 }// End DICe Namespace
 
 /*! @} End of Doxygen namespace*/

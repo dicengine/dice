@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
   square.write_tiff("squareSubsetDefKeys.tif",true);
   bool keys_values_error = false;
   for(int_t i=0;i<square.num_pixels();++i){
-    if(square.def_intensities(i)!=(*image)(square.x(i)+(*map)[DISPLACEMENT_X],square.y(i)+(*map)[DISPLACEMENT_Y]))
+    if(std::abs(square.def_intensities(i)-(*image)(square.x(i)+(*map)[DISPLACEMENT_X],square.y(i)+(*map)[DISPLACEMENT_Y]))>0.001)
       keys_values_error = true;
   }
   if(keys_values_error){
