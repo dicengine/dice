@@ -114,11 +114,34 @@ QPushButton#runButton:disabled{
 background-color:#505050;
 color: #808080;
 }
+QPushButton#screenShotButton{
+background-color:#489ff9;
+}
+QPushButton#resetViewButton{
+background-color:#489ff9;
+}
+QPushButton#resetScaleButton{
+background-color:#489ff9;
+}
+QPushButton#boundaryPlus{
+background-color:#1ec5c5;
+}
+QPushButton#boundaryMinus{
+color:#efefef;
+background-color:#168282;
+}
+QPushButton#excludedPlus{
+background-color:#794a9d;
+}
+QPushButton#excludedMinus{
+color:#efefef;
+background-color:#4b2e61;
+}
 QPushButton#boundaryPlus:checked{
-background-color: rgb(249, 255, 24);
+border: 1px solid yellow;
 }
 QPushButton#excludedPlus:checked{
-background-color: rgb(249, 255, 24);
+border: 1px solid yellow;
 }
 QPushButton#resetGeoButton{
 background-color: rgb(173, 8, 49);
@@ -134,7 +157,7 @@ background-color: rgb(23, 85, 122);
 }
 QLabel{
 color: white;
-background-color: #404040;
+background-color: #252525;
 }
 
 QGroupBox{
@@ -183,7 +206,7 @@ background-color: #404040;
        </size>
       </property>
       <property name="title">
-       <string>Actions</string>
+       <string>ACTIONS</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_9">
        <item>
@@ -230,7 +253,7 @@ background-color: #404040;
        </sizepolicy>
       </property>
       <property name="title">
-       <string>Progress</string>
+       <string>PROGRESS</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_10">
        <item>
@@ -319,6 +342,19 @@ background-color: #404040;
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
+         <widget class="QPushButton" name="workingDirButton">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Working Directory</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QLineEdit" name="workingDirLineEdit">
           <property name="enabled">
            <bool>false</bool>
@@ -331,19 +367,6 @@ background-color: #404040;
           </property>
           <property name="frame">
            <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="workingDirButton">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>30</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Working Directory</string>
           </property>
          </widget>
         </item>
@@ -599,10 +622,16 @@ background-color: #404040;
         <string>Output</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_3">
+        <property name="spacing">
+         <number>40</number>
+        </property>
+        <property name="topMargin">
+         <number>25</number>
+        </property>
         <item>
          <widget class="QGroupBox" name="groupBox_10">
           <property name="title">
-           <string>Coordinates</string>
+           <string>COORDINATES</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_13">
            <property name="spacing">
@@ -634,7 +663,7 @@ background-color: #404040;
         <item>
          <widget class="QGroupBox" name="groupBox_9">
           <property name="title">
-           <string>Mapping parameters</string>
+           <string>MAPPING PARAMETERS</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_2">
            <property name="spacing">
@@ -694,7 +723,7 @@ background-color: #404040;
         <item>
          <widget class="QGroupBox" name="groupBox_11">
           <property name="title">
-           <string>Diagnostics (smaller is better)</string>
+           <string>DIAGNOSTICS (smaller is better)</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_14">
            <property name="spacing">
@@ -734,7 +763,7 @@ background-color: #404040;
         <item>
          <widget class="QGroupBox" name="groupBox_12">
           <property name="title">
-           <string>Image quality</string>
+           <string>IMAGE QUALITY</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_15">
            <property name="spacing">

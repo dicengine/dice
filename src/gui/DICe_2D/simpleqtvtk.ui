@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1369</width>
-    <height>951</height>
+    <height>954</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,20 +23,13 @@
       </sizepolicy>
      </property>
      <property name="title">
-      <string>View control</string>
+      <string>VIEW CONTROL</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
-      <item row="3" column="0">
-       <widget class="QCheckBox" name="printColorBox">
+      <item row="3" column="1">
+       <widget class="QCheckBox" name="hideImageBox">
         <property name="text">
-         <string>Use print colors</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QPushButton" name="resetViewButton">
-        <property name="text">
-         <string>Reset view</string>
+         <string>Hide image</string>
         </property>
        </widget>
       </item>
@@ -47,10 +40,10 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="label_5">
+      <item row="0" column="0">
+       <widget class="QPushButton" name="resetViewButton">
         <property name="text">
-         <string>Press 'r' to reset contrast</string>
+         <string>Reset view</string>
         </property>
        </widget>
       </item>
@@ -61,10 +54,23 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
-       <widget class="QCheckBox" name="hideImageBox">
+      <item row="0" column="1">
+       <widget class="QCheckBox" name="printColorBox">
         <property name="text">
-         <string>Hide image</string>
+         <string>Use print colors</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Press 'r' to reset contrast</string>
         </property>
        </widget>
       </item>
@@ -103,7 +109,27 @@
        <string>Region Selection</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_4">
-       <item row="0" column="5">
+       <item row="0" column="1">
+        <widget class="QPushButton" name="boundaryPlus">
+         <property name="text">
+          <string>Add included region</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QPushButton" name="boundaryMinus">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string>Remove last include</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="7">
         <spacer name="horizontalSpacer">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -117,23 +143,6 @@
         </spacer>
        </item>
        <item row="1" column="2">
-        <widget class="QPushButton" name="resetGeoButton">
-         <property name="text">
-          <string>Reset regions</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QPushButton" name="excludedPlus">
-         <property name="text">
-          <string>Add excluded region</string>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
         <widget class="QPushButton" name="excludedMinus">
          <property name="enabled">
           <bool>true</bool>
@@ -143,44 +152,36 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="0">
-        <widget class="QPushButton" name="boundaryPlus">
+       <item row="0" column="2">
+        <widget class="QPushButton" name="excludedPlus">
          <property name="text">
-          <string>Add included region</string>
+          <string>Add excluded region</string>
          </property>
          <property name="checkable">
           <bool>true</bool>
          </property>
         </widget>
        </item>
-       <item row="1" column="0">
-        <widget class="QPushButton" name="boundaryMinus">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
+       <item row="0" column="3" rowspan="2">
+        <widget class="QLabel" name="label_7">
          <property name="text">
-          <string>Remove last include</string>
+          <string>Instructions:
+Left click to set vertex
+Right click to complete region</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
-       <item row="0" column="6" rowspan="2">
-        <widget class="QGroupBox" name="groupBox_2">
-         <property name="title">
-          <string>Instructions</string>
+       <item row="1" column="8">
+        <widget class="QPushButton" name="resetGeoButton">
+         <property name="text">
+          <string>Reset regions</string>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout">
-          <item>
-           <widget class="QLabel" name="label_7">
-            <property name="text">
-             <string>Left click to set vertex
-Right click to complete region</string>
-            </property>
-            <property name="wordWrap">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-         </layout>
         </widget>
        </item>
       </layout>
@@ -193,41 +194,20 @@ Right click to complete region</string>
        <string>Results</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="1" column="8">
-        <widget class="QCheckBox" name="showAxesBox">
+       <item row="1" column="7">
+        <widget class="QLabel" name="label_2">
          <property name="text">
-          <string>Show axes</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="6">
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>Opacity</string>
+          <string>Tri alpha</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
-       <item row="0" column="8">
-        <widget class="QCheckBox" name="displaceMeshBox">
-         <property name="text">
-          <string>Displace mesh</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="5">
+       <item row="1" column="6">
         <widget class="QDoubleSpinBox" name="triAlphaSpin"/>
        </item>
-       <item row="1" column="4">
-        <widget class="QPushButton" name="resetScaleButton">
-         <property name="text">
-          <string>Reset scale</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="5">
+       <item row="0" column="6">
         <widget class="QDoubleSpinBox" name="opacitySpin"/>
        </item>
        <item row="1" column="1">
@@ -256,6 +236,78 @@ Right click to complete region</string>
          </property>
         </widget>
        </item>
+       <item row="0" column="0">
+        <widget class="QComboBox" name="fileCombo">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>250</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>300</width>
+           <height>16777215</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="4">
+        <widget class="QPushButton" name="resetScaleButton">
+         <property name="text">
+          <string>Reset scale</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QCheckBox" name="autoScaleBox">
+         <property name="text">
+          <string>Auto scale</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QCheckBox" name="showPointsBox">
+         <property name="text">
+          <string>Show points</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QComboBox" name="fieldsCombo">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>250</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>300</width>
+           <height>16777215</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QCheckBox" name="showScaleBox">
+         <property name="text">
+          <string>Show scale</string>
+         </property>
+        </widget>
+       </item>
        <item row="0" column="1">
         <widget class="QLabel" name="label_3">
          <property name="minimumSize">
@@ -275,73 +327,34 @@ Right click to complete region</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="7">
-        <widget class="QCheckBox" name="autoTriAlphaBox">
+       <item row="0" column="7">
+        <widget class="QLabel" name="label">
          <property name="text">
-          <string>Auto tri alpha</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="6">
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>Tri alpha</string>
+          <string>Opacity</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
-       <item row="0" column="3">
-        <widget class="QCheckBox" name="autoScaleBox">
+       <item row="0" column="4">
+        <widget class="QCheckBox" name="displaceMeshBox">
          <property name="text">
-          <string>Auto scale</string>
+          <string>Displace mesh</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="0">
-        <widget class="QComboBox" name="fileCombo">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>250</width>
-           <height>0</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QComboBox" name="fieldsCombo">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>250</width>
-           <height>0</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="2">
-        <widget class="QCheckBox" name="showPointsBox">
+       <item row="0" column="5">
+        <widget class="QCheckBox" name="showAxesBox">
          <property name="text">
-          <string>Show points</string>
+          <string>Show axes</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="2">
-        <widget class="QCheckBox" name="showScaleBox">
+       <item row="1" column="5">
+        <widget class="QCheckBox" name="autoTriAlphaBox">
          <property name="text">
-          <string>Show scale</string>
+          <string>Auto tri alpha</string>
          </property>
         </widget>
        </item>

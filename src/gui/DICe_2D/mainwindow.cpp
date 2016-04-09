@@ -78,6 +78,7 @@ ui(new Ui::MainWindow)
 
     // add the interpolation methods
     ui->interpMethodCombo->addItem("KEYS_FOURTH");
+    ui->interpMethodCombo->addItem("BICUBIC");
     ui->interpMethodCombo->addItem("BILINEAR");
 
     // set up the step size and subset size

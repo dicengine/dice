@@ -948,12 +948,12 @@ PolygonMouseInteractorStyle::PolygonMouseInteractorStyle(){
     lineActor->GetProperty()->SetLineWidth(2);
     boundaryLineMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
     boundaryLineActor = vtkSmartPointer<vtkActor>::New();
-    boundaryLineActor->GetProperty()->SetColor(0.0,1.0,0.0);
+    boundaryLineActor->GetProperty()->SetColor(0.0,1.0,1.0);
     boundaryLineActor->GetProperty()->SetLineWidth(2);
     // TODO make the lines dashed
     excludedLineMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
     excludedLineActor = vtkSmartPointer<vtkActor>::New();
-    excludedLineActor->GetProperty()->SetColor(1.0,0.0,0.0);
+    excludedLineActor->GetProperty()->SetColor(0.30,0.18,0.38);
     excludedLineActor->GetProperty()->SetOpacity(0.5);
     excludedLineActor->GetProperty()->SetLineWidth(2);
     coordinate = vtkSmartPointer<vtkCoordinate>::New();
@@ -965,7 +965,7 @@ PolygonMouseInteractorStyle::PolygonMouseInteractorStyle(){
     maskLUT->SetNumberOfTableValues(2);
     maskLUT->SetRange(0.0,1.0);
     maskLUT->SetTableValue( 0, 0.0, 0.0, 0.0, 0.0 ); //label 0 is transparent
-    maskLUT->SetTableValue( 1, 0.0, 1.0, 0.0, 0.5 ); //label 1 is opaque and green
+    maskLUT->SetTableValue( 1, 0.0, 1.0, 1.0, 0.5 ); //label 1 is opaque and green
     maskLUT->Build();
     mapTransparency = vtkSmartPointer<vtkImageMapToColors>::New();
     mapTransparency->SetLookupTable(maskLUT);
@@ -1338,9 +1338,9 @@ void PolygonMouseInteractorStyle::drawPolygon(vtkSmartPointer<vtkPoints> ptSet){
     const int numPoints = ptSet->GetNumberOfPoints();
     if(numPoints < 3) return;
     if(boundaryEnabled){
-        actor->GetProperty()->SetColor(0.0,1.0,0.0);
+        actor->GetProperty()->SetColor(0.0,1.0,1.0);
     }else{
-        actor->GetProperty()->SetColor(1.0,0.0,0.0);
+        actor->GetProperty()->SetColor(0.30,0.18,0.38);
     }
     vtkSmartPointer<vtkPolygon> polygon = vtkSmartPointer<vtkPolygon>::New();
     vtkSmartPointer<vtkCellArray> polygons = vtkSmartPointer<vtkCellArray>::New();
@@ -1402,9 +1402,9 @@ void PolygonMouseInteractorStyle::OnLeftButtonDown()
             currentPointsP1->InsertNextPoint(world[0],world[1], -0.01);// offset from 0 in z so that it always displays over image
         }
         if(boundaryEnabled){
-            actor->GetProperty()->SetColor(0.0,1.0,0.0);
+            actor->GetProperty()->SetColor(0.0,1.0,1.0);
         }else{
-            actor->GetProperty()->SetColor(1.0,0.0,0.0);
+            actor->GetProperty()->SetColor(0.30,0.18,0.38);
         }
     }
     else{
