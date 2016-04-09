@@ -297,6 +297,10 @@ void MainWindow::prepResultsViewer()
         msgBox.exec();
         exit(EXIT_FAILURE);
     }
+
+    // switch the active tab to results
+    ui->simpleQtVTKWidget->changeInteractionMode(1);
+
 }
 
 void MainWindow::readOutput(){

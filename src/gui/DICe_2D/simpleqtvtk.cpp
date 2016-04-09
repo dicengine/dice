@@ -226,7 +226,7 @@ void SimpleQtVTK::updateCurrentFile(const int fileIndex, const bool resetAlpha){
         renderField(ui->fieldsCombo->currentIndex());
     // start with the first non-coordinate field (index 2, 0 is x 1 is y)
     else
-        ui->fieldsCombo->setCurrentIndex(2);
+        ui->fieldsCombo->setCurrentIndex(3);
 
     // put an image on the viewer:
     if(imageFiles.size()>0){
@@ -238,6 +238,9 @@ void SimpleQtVTK::updateCurrentFile(const int fileIndex, const bool resetAlpha){
     //renderer->SetActiveCamera(NULL);
     if(ui->vtkWidget->GetRenderWindow()->IsDrawable())
         ui->vtkWidget->GetRenderWindow()->Render();
+
+    // enable the results widget
+    ui->tabWidget->setTabEnabled(1,true);
 }
 
 void SimpleQtVTK::setFileNames(QStringList & resFiles, QStringList & imgFiles){
@@ -435,15 +438,6 @@ int SimpleQtVTK::readImageFile(const std::string & fileName){
     // update the dynamic coords display variables
     callback->SetOriginSpacing(imageOrigin[0],imageOrigin[1],imageSpacing[0],imageSpacing[1]);
 
-    //for(int i=0;i<3;++i){
-    //    std::cout << " origin " << imageOrigin[i] << std::endl;
-    //}
-    //for(int i=0;i<3;++i){
-    //    std::cout << " spacing " << imageSpacing[i] << std::endl;
-    //}
-    //for(int i=0;i<6;++i){
-    //    std::cout << " extent " << imageExtent[i] << std::endl;
-    //}
     resetCamera();
     return 0;
 }
@@ -911,35 +905,44 @@ void SimpleQtVTK::on_tabWidget_tabBarClicked(int index)
 }
 
 void SimpleQtVTK::changeInteractionMode(const int mode){
-    std::cout << " I was clicked " << mode << std::endl;
     style->resetShapesInProgress();
+
+    // set the tab in case this was called from an external ui
+    ui->tabWidget->setCurrentIndex(mode);
+
     if(mode==0) // region selection mode
     {
-        ui->definePage->setEnabled(true);
-        ui->visualizePage->setEnabled(false);
         ui->boundaryPlus->setEnabled(true);
         ui->excludedPlus->setEnabled(true);
         // turn on the region actors
         style->addActors();
         // turn off the results actors
-        //renderer->RemoveActor(meshActor);
-        //renderer->RemoveActor(pointActor);
+        if(isInitialized){
+            renderer->RemoveActor(meshActor);
+            renderer->RemoveActor(pointActor);
+            renderer->RemoveActor(scalarBar);
+        }
     }
     else if(mode==1){
-        ui->definePage->setEnabled(false);
-        ui->visualizePage->setEnabled(true);
         ui->boundaryPlus->setChecked(false);
         ui->excludedPlus->setChecked(false);
         ui->boundaryPlus->setEnabled(false);
         ui->excludedPlus->setEnabled(false);
-        style->setBoundaryEnabled(false);
-        style->setExcludedEnabled(false);
+        //style->setBoundaryEnabled(false);
+        //style->setExcludedEnabled(false);
         // turn off the region actors
         style->removeActors();
         // add results actors
-        //renderer->AddActor(meshActor);
-        //renderer->AddActor(pointActor);
+        if(isInitialized){
+            renderer->AddActor(meshActor);
+            if(ui->showPointsBox->isChecked())
+                renderer->AddActor2D(pointActor);
+            if(ui->showScaleBox->isChecked())
+                renderer->AddActor2D(scalarBar);
+        }
     }
+    if(ui->vtkWidget->GetRenderWindow()->IsDrawable())
+        ui->vtkWidget->GetRenderWindow()->Render();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -983,6 +986,7 @@ PolygonMouseInteractorStyle::PolygonMouseInteractorStyle(){
     imageStartY = 0.0;
     imageEndX = 0.0;
     imageEndY = 0.0;
+    imageSpacing = 0.0;
     boundaryEnabled = false;
     excludedEnabled = false;
 }
