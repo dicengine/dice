@@ -426,7 +426,8 @@ int SimpleQtVTK::readImageFile(const std::string & fileName){
     cornerAnnotation->SetText(1, label.str().c_str());
 
     // Create an image actor to display the image
-    renderer->AddActor(imageActor);
+    if(!ui->hideImageBox->isChecked())
+        renderer->AddActor(imageActor);
 
     // set the focal point to the center of the image
     renderer->ResetCamera();
@@ -505,13 +506,13 @@ void SimpleQtVTK::createPolyData(){
             ptx*= imageSpacing[0];
             double pty = fieldData[YIndex]->GetValue(i)+fieldData[dispYIndex]->GetValue(i);
             pty*=imageSpacing[1];
-            points->InsertNextPoint(ptx,pty,-0.01); // small offset to prevent mangling with background image
+            points->InsertNextPoint(ptx,pty,-0.05); // small offset to prevent mangling with background image
         }
     }
     else{
         for(int i=0;i<numPoints;++i){
             points->InsertNextPoint(fieldData[XIndex]->GetValue(i)*imageSpacing[0],
-                    fieldData[YIndex]->GetValue(i)*imageSpacing[1],-0.01); // small offset to prevent mangling with background image
+                    fieldData[YIndex]->GetValue(i)*imageSpacing[1],-0.05); // small offset to prevent mangling with background image
         }
     }
     polyData->Initialize();
@@ -928,8 +929,8 @@ void SimpleQtVTK::changeInteractionMode(const int mode){
         ui->excludedPlus->setChecked(false);
         ui->boundaryPlus->setEnabled(false);
         ui->excludedPlus->setEnabled(false);
-        //style->setBoundaryEnabled(false);
-        //style->setExcludedEnabled(false);
+        style->setBoundaryEnabled(false);
+        style->setExcludedEnabled(false);
         // turn off the region actors
         style->removeActors();
         // add results actors
@@ -1391,7 +1392,7 @@ void PolygonMouseInteractorStyle::OnMouseMove()
         coordinate->SetValue(x,y,0);
         double* world = coordinate->GetComputedWorldValue(this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
         //std::cout << "World coordinate: " << world[0] << ", " << world[1] << ", " << world[2] << std::endl;
-        currentPointsP1->InsertNextPoint(world[0],world[1], -0.01); // offset from 0 in z so that it always displays over image
+        currentPointsP1->InsertNextPoint(world[0],world[1], -0.05); // offset from 0 in z so that it always displays over image
         drawLines(currentPointsP1);
         drawPolygon(currentPointsP1);
     }
@@ -1411,8 +1412,8 @@ void PolygonMouseInteractorStyle::OnLeftButtonDown()
         //std::cout << "World coordinate: " << world[0] << ", " << world[1] << ", " << world[2] << std::endl;
         if(world[0]>imageStartX && world[0]<imageEndX && world[1] > imageStartY && world[1] < imageEndY){
             // round the points
-            currentPoints->InsertNextPoint(world[0],world[1], -0.01);// offset from 0 in z so that it always displays over image
-            currentPointsP1->InsertNextPoint(world[0],world[1], -0.01);// offset from 0 in z so that it always displays over image
+            currentPoints->InsertNextPoint(world[0],world[1], -0.05);// offset from 0 in z so that it always displays over image
+            currentPointsP1->InsertNextPoint(world[0],world[1], -0.05);// offset from 0 in z so that it always displays over image
         }
         if(boundaryEnabled){
             actor->GetProperty()->SetColor(0.0,1.0,1.0);
