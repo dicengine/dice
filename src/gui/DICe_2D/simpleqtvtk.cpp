@@ -718,6 +718,7 @@ void SimpleQtVTK::on_showScaleBox_clicked()
 
 void SimpleQtVTK::on_fileCombo_currentIndexChanged(int index)
 {
+    if(ui->fileCombo->count()==0)return;
     updateCurrentFile(index,ui->autoTriAlphaBox->isChecked());
 }
 

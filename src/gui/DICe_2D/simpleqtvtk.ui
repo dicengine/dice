@@ -170,7 +170,8 @@
          <property name="text">
           <string>Instructions:
 Left click to set vertex
-Right click to complete region</string>
+Right click to complete region
+Default is include all image</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>

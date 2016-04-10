@@ -250,6 +250,12 @@ void MainWindow::writeInputFiles(){
 
     // export the vertices from the region defs
     ui->simpleQtVTKWidget->exportVertices(DICe::gui::Input_Vars::instance()->boundaryShapes(),DICe::gui::Input_Vars::instance()->excludedShapes());
+    if(DICe::gui::Input_Vars::instance()->boundaryShapes()->size()==0&&
+            DICe::gui::Input_Vars::instance()->excludedShapes()->size()!=0){
+        QMessageBox msgBox;
+        msgBox.setText("Warning: there are excluded regions defined,\nbut no included regions. Excluded regions will be ignored.");
+        msgBox.exec();
+    }
     DICe::gui::Input_Vars::instance()->write_input_file();
     DICe::gui::Input_Vars::instance()->write_params_file();
     DICe::gui::Input_Vars::instance()->write_subset_file();
@@ -283,7 +289,6 @@ void MainWindow::prepResultsViewer()
     //for(QStringList::iterator sit=images.begin();sit!=images.end();++sit)
     //    std::cout << " Image FILE " << sit->toStdString() << std::endl;
 
-
     if(defImageFiles.size()>0){
         try{
             ui->simpleQtVTKWidget->setFileNames(resFiles,images);
@@ -297,10 +302,8 @@ void MainWindow::prepResultsViewer()
         msgBox.exec();
         exit(EXIT_FAILURE);
     }
-
     // switch the active tab to results
     ui->simpleQtVTKWidget->changeInteractionMode(1);
-
 }
 
 void MainWindow::readOutput(){
@@ -333,6 +336,7 @@ void MainWindow::on_runButton_clicked()
     QStringList args;
     args << "-i" << DICe::gui::Input_Vars::instance()->input_file_name().c_str() << "-v" << "-t";
 
+//    diceProcess->reset();
     diceProcess->start(diceExec,args);
     diceProcess->waitForFinished();
     diceProcess->close();
