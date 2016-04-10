@@ -965,8 +965,8 @@ PolygonMouseInteractorStyle::PolygonMouseInteractorStyle(){
     // TODO make the lines dashed
     excludedLineMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
     excludedLineActor = vtkSmartPointer<vtkActor>::New();
-    excludedLineActor->GetProperty()->SetColor(0.30,0.18,0.38);
-    excludedLineActor->GetProperty()->SetOpacity(0.5);
+    excludedLineActor->GetProperty()->SetColor(1.0,0.25,1.0);
+    excludedLineActor->GetProperty()->SetOpacity(1.0);
     excludedLineActor->GetProperty()->SetLineWidth(2);
     coordinate = vtkSmartPointer<vtkCoordinate>::New();
     coordinate->SetCoordinateSystemToDisplay();

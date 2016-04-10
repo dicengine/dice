@@ -125,7 +125,7 @@
           <bool>true</bool>
          </property>
          <property name="text">
-          <string>Remove last include</string>
+          <string>Remove last</string>
          </property>
         </widget>
        </item>
@@ -148,7 +148,7 @@
           <bool>true</bool>
          </property>
          <property name="text">
-          <string>Remove last exclude</string>
+          <string>Remove last</string>
          </property>
         </widget>
        </item>

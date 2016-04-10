@@ -70,7 +70,7 @@ color: white;
 
 QPushButton{
 padding: 5px;
-background-color: #808080;
+background-color: #489ff9;/*#808080;*/
 border: 0px;
 border-radius: 5px;
 color: white;
@@ -81,10 +81,10 @@ QPushButton:hover:!pressed
   border: 1px solid yellow;
 }
 QPushButton:pressed{
-background-color: #505050;
+background-color: #3b83cd;/*#505050;*/
 }
 QPushButton:checked{
-background-color: #505050;
+background-color: #3b83cd;
 }
 QPushButton#diceButton{
 background-color: #101010;
@@ -114,7 +114,7 @@ QPushButton#runButton:disabled{
 background-color:#505050;
 color: #808080;
 }
-QPushButton#screenShotButton{
+/*QPushButton#screenShotButton{
 background-color:#489ff9;
 }
 QPushButton#resetViewButton{
@@ -122,7 +122,7 @@ background-color:#489ff9;
 }
 QPushButton#resetScaleButton{
 background-color:#489ff9;
-}
+}*/
 QPushButton#boundaryPlus{
 background-color:#1ec5c5;
 }
@@ -131,17 +131,17 @@ color:#efefef;
 background-color:#168282;
 }
 QPushButton#excludedPlus{
-background-color:#794a9d;
+background-color:#fc4bfc;
 }
 QPushButton#excludedMinus{
 color:#efefef;
-background-color:#4b2e61;
+background-color:#9d349d;
 }
 QPushButton#boundaryPlus:checked{
-border: 1px solid yellow;
+border: 2px solid yellow;
 }
 QPushButton#excludedPlus:checked{
-border: 1px solid yellow;
+border: 2px solid yellow;
 }
 QPushButton#resetGeoButton{
 background-color: rgb(173, 8, 49);
