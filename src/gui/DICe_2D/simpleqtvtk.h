@@ -330,9 +330,6 @@ public:
     /// create a triangulation of the data points
     void triangulate();
 
-    /// clear the polygon data
-    void resetWidget();
-
     /// render a field on the triangulation
     /// ** this should only be called by the fieldsCombo change slot
     void renderField(const int index);
@@ -374,6 +371,8 @@ public:
     void changeInteractionMode(const int mode);
 
     void importVertices(QList<QList<QPoint> > & boundary, QList<QList<QPoint> > & excluded);
+
+    void disableResultsTab();
 
 private slots:
     void on_fieldsCombo_currentIndexChanged(int index);

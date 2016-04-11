@@ -244,6 +244,10 @@ void SimpleQtVTK::updateCurrentFile(const int fileIndex, const bool resetAlpha){
     ui->tabWidget->setTabEnabled(1,true);
 }
 
+void SimpleQtVTK::disableResultsTab(){
+    ui->tabWidget->setTabEnabled(1,false);
+}
+
 void SimpleQtVTK::setFileNames(QStringList & resFiles, QStringList & imgFiles){
     if(imgFiles.size()!=0 && imgFiles.size()!=resFiles.size()){
         QMessageBox msgBox;
@@ -356,6 +360,7 @@ int SimpleQtVTK::readImageFile(const std::string & fileName,
         imageData->GetExtent( imageExtent );
     }
     else if(fileName.find(jpg)!=std::string::npos||fileName.find(jpeg)!=std::string::npos||fileName.find(jpgCap)!=std::string::npos||fileName.find(jpegCap)!=std::string::npos){
+
         vtkSmartPointer<vtkJPEGReader> reader =
                 vtkSmartPointer<vtkJPEGReader>::New();
         if( !reader->CanReadFile( fileName.c_str() ) )
@@ -425,6 +430,7 @@ int SimpleQtVTK::readImageFile(const std::string & fileName,
         msgBox.exec();
         return 1;
     }
+
     std::stringstream label;
     label << fileName << "\n";
     label << "Digital Image Correlation Engine 1.0";
@@ -446,30 +452,6 @@ int SimpleQtVTK::readImageFile(const std::string & fileName,
 
     resetCamera();
     return 0;
-}
-
-void SimpleQtVTK::resetWidget(){
-    style->clearPolygons();
-    renderer->RemoveActor(imageActor);
-    if(isInitialized){
-        style->resetShapesInProgress();
-        renderer->RemoveActor(meshActor);
-        renderer->RemoveActor(pointActor);
-        renderer->RemoveActor(scalarBar);
-    }
-    isInitialized = false;
-    ui->boundaryPlus->setChecked(false);
-    ui->excludedPlus->setChecked(false);
-    style->setBoundaryEnabled(false);
-    style->setExcludedEnabled(false);
-    ui->boundaryPlus->setEnabled(true);
-    ui->excludedPlus->setEnabled(true);
-    cornerAnnotation->SetText(1, "Digital Image Correlation Engine 1.0");
-    // set the tab in case this was called from an external ui
-    ui->tabWidget->setCurrentIndex(0);
-    ui->tabWidget->setTabEnabled(1,false);
-    if(ui->vtkWidget->GetRenderWindow()->IsDrawable())
-        ui->vtkWidget->GetRenderWindow()->Render();
 }
 
 void SimpleQtVTK::estimateTriAlpha(){
@@ -1274,6 +1256,8 @@ void PolygonMouseInteractorStyle::drawLines(vtkSmartPointer<vtkPoints> ptSet){
 }
 
 void PolygonMouseInteractorStyle::initializeMaskImage(){
+    // reset the mask image
+    maskImage = vtkSmartPointer<vtkImageData>::New();
     int bounds[6];
     bounds[0] = 0;
     bounds[1] = (int)(imageEndX/imageSpacing);
@@ -1285,6 +1269,7 @@ void PolygonMouseInteractorStyle::initializeMaskImage(){
     spacing[0] = imageSpacing;
     spacing[1] = imageSpacing;
     spacing[2] = imageSpacing;
+
     maskImage->SetSpacing(spacing);
     // compute dimensions
     maskImage->SetExtent(bounds);

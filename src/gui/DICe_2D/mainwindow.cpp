@@ -133,6 +133,8 @@ ui(new Ui::MainWindow)
 
     this->resetDefaults();
 
+    ui->simpleQtVTKWidget->disableResultsTab();
+
     // reset the default working directory
     ui->workingDirLabel->setText(".");
     DICe::gui::Input_Vars::instance()->set_working_dir(QString("."));
@@ -152,9 +154,6 @@ ui(new Ui::MainWindow)
 
     // set up the load working dir action
     connect(ui->actionLoad_working_dir, SIGNAL(triggered()), this, SLOT(loadWorkingDir()));
-
-    // set up the new action
-    connect(ui->actionNew, SIGNAL(triggered()), this, SLOT(newAnalysis()));
 
     std::cout << "Using DICe from " << DICE_EXEC_PATH << std::endl;
 }
@@ -207,41 +206,6 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::newAnalysis(){
-
-    // open the working directory dialog
-    QString dir = QFileDialog::getExistingDirectory(this,tr("Set the new working directory"),".",
-                      QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
-
-    if(dir=="") return;
-
-    // set the reference image in the Input_Vars singleton
-    DICe::gui::Input_Vars::instance()->set_working_dir(dir);
-
-    // display the name of the file in the reference file box
-    ui->workingDirLabel->setText(dir);
-
-    this->resetDefaults();
-
-    // deactivate the run button and write inputs
-    ui->runButton->setEnabled(false);
-    ui->actionExport_input_files->setEnabled(false);
-
-    // clear the shapes
-    ui->simpleQtVTKWidget->resetWidget();
-
-    ui->defListWidget->clear();
-
-    // get a pointer to the file name list in the Input_Vars singleton
-    QStringList * list = DICe::gui::Input_Vars::instance()->get_def_file_list();
-    list->clear();
-
-    ui->defFileLabel->setText("");
-    ui->defImageShow->clear();
-
-    ui->consoleEdit->clear();
-}
-
 void MainWindow::on_refFileButton_clicked()
 {
     // open file dialog box to select reference file
@@ -256,6 +220,9 @@ void MainWindow::on_refFileButton_clicked()
 
     // set the reference image in the Input_Vars singleton
     DICe::gui::Input_Vars::instance()->set_ref_file_info(refFileInfo);
+
+    ui->simpleQtVTKWidget->changeInteractionMode(0);
+    ui->simpleQtVTKWidget->disableResultsTab();
 
     // if the deformed images are populated then activate the write and run buttons
     if(DICe::gui::Input_Vars::instance()->has_def_files()){
@@ -829,7 +796,7 @@ void MainWindow::on_runButton_clicked()
     // check if file exists and if yes: Is it really a file and no directory?
     if (checkFile.exists() && checkFile.isFile()) {
         QMessageBox msgBox;
-        msgBox.setText("Found existing input or results files\nin the working directory. Overwrite and continue?");
+        msgBox.setText("Found existing input or results files\nin the working directory.\n\nOverwrite and continue?");
         msgBox.setStandardButtons(QMessageBox::Yes);
         msgBox.addButton(QMessageBox::No);
         msgBox.setDefaultButton(QMessageBox::Yes);

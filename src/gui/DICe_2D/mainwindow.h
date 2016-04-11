@@ -65,8 +65,6 @@ public:
     private slots:
     void resetDefaults();
 
-    void newAnalysis();
-
     void on_refFileButton_clicked();
     
     void on_defFileButton_clicked();

@@ -819,7 +819,6 @@ background-color: #404040;
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionNew"/>
     <addaction name="actionExport_input_files"/>
     <addaction name="actionLoad_working_dir"/>
    </widget>
