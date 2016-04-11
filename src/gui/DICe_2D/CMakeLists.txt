@@ -26,9 +26,7 @@ include_directories (
 #  ${DICE_TRILINOS_HEADERS}
 
 add_executable(dice_gui ${GUI_SOURCES} ${GUI_HEADERS})
-#target_link_libraries(dice_gui Qt5::Widgets dicecore dicemain ${VTK_LIBRARIES})
-target_link_libraries(dice_gui Qt5::Widgets ${VTK_LIBRARIES})
-#target_compile_definitions(dice_gui PRIVATE -D DICE_LIB_EXPORTS_MODE)
+target_link_libraries(dice_gui Qt5::Widgets ${VTK_LIBRARIES} ${TRILINOS_LIBRARIES})
 
 install(FILES ${GUI_HEADERS}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include

@@ -130,6 +130,8 @@ class PolygonMouseInteractorStyle : public vtkInteractorStyleImage
     void drawExistingPolygons();
     /// create a list of the polygon vertices
     void exportVertices(QList<QList<QPoint> > * boundary, QList<QList<QPoint> > * excluded);
+    /// import a list of vertices
+    void importVertices(QList<QList<QPoint> > & boundary, QList<QList<QPoint> > & excluded);
     /// Mouse interactions
     virtual void OnRightButtonDown();
     virtual void OnMouseMove();
@@ -316,7 +318,8 @@ public:
     void readResultsFile(const std::string & fileName);
 
     /// read a background image
-    int readImageFile(const std::string & fileName);
+    int readImageFile(const std::string & fileName,
+                      const bool clearPolygons=false);
 
     /// initialize the data structures
     void initializeClassMembers();
@@ -366,6 +369,8 @@ public:
 
     /// setup the viewer for the right mode of interaction
     void changeInteractionMode(const int mode);
+
+    void importVertices(QList<QList<QPoint> > & boundary, QList<QList<QPoint> > & excluded);
 
 private slots:
     void on_fieldsCombo_currentIndexChanged(int index);

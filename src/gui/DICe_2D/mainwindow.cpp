@@ -49,12 +49,81 @@
 
 #include <DICe_InputVars.h>
 #include <simpleqtvtk.h>
+#include <Teuchos_XMLParameterListHelpers.hpp>
 
 #ifndef DICE_EXEC_PATH
   #error
 #endif
 
 DICe::gui::Input_Vars * DICe::gui::Input_Vars::input_vars_ptr_ = NULL;
+
+void stringToUpper(std::string & string){
+    std::transform(string.begin(), string.end(),string.begin(), ::toupper);
+}
+
+// free function to tokenize a file line
+std::vector<std::string> tokenize_line(std::fstream &dataFile,
+                                       const std::string & delim,
+                                       const bool capitalize){
+    static int MAX_CHARS_PER_LINE = 512;
+    static int MAX_TOKENS_PER_LINE = 20;
+    static std::string DELIMITER = delim;
+    std::vector<std::string> tokens(MAX_TOKENS_PER_LINE);
+
+    // read an entire line into memory
+    char * buf = new char[MAX_CHARS_PER_LINE];
+    dataFile.getline(buf, MAX_CHARS_PER_LINE);
+
+    // parse the line into blank-delimited tokens
+    int n = 0; // a for-loop index
+
+    // parse the line
+    char * token;
+    token = strtok(buf, DELIMITER.c_str());
+    tokens[0] = token ? token : ""; // first token
+    if(capitalize)
+        stringToUpper(tokens[0]);
+    bool first_char_is_pound = tokens[0].find("#") == 0;
+    if (tokens[0] != "" && tokens[0]!="#" && !first_char_is_pound){ // zero if line is blank or starts with a comment char
+        for (n = 1; n < MAX_TOKENS_PER_LINE; n++){
+            token = strtok(0, DELIMITER.c_str());
+            tokens[n] = token ? token : ""; // subsequent tokens
+            if (tokens[n]=="") break; // no more tokens
+            if(capitalize)
+                stringToUpper(tokens[n]);
+        }
+    }
+    tokens.resize(n);
+    delete [] buf;
+    return tokens;
+}
+
+QList<QList<QPoint> > readShapes(std::fstream &dataFile){
+    QList<QList<QPoint> > shapes;
+    while(!dataFile.eof()){
+      std::vector<std::string> shape_tokens = tokenize_line(dataFile);
+      if(shape_tokens.size()==0)continue;
+      if(shape_tokens[0]=="END") break;
+      else if(shape_tokens[1]=="POLYGON"){
+          QList<QPoint> pts;
+          while(!dataFile.eof()){
+            std::vector<std::string> tokens = tokenize_line(dataFile);
+            if(tokens.size()==0) continue; // comment or blank line
+            if(tokens[0]=="END") break;
+            // read the vertices
+            while(!dataFile.eof()){
+              std::vector<std::string> vertex_tokens = tokenize_line(dataFile);
+              if(vertex_tokens.size()==0)continue;
+              if(vertex_tokens[0]=="END") break;
+              QPoint pt(atoi(vertex_tokens[0].c_str()),atoi(vertex_tokens[1].c_str()));
+              pts.append(pt);
+            }
+          }
+          shapes.append(pts);
+      }
+    }
+    return shapes;
+}
 
 MainWindow::MainWindow(QWidget *parent) :
 QMainWindow(parent),
@@ -109,6 +178,9 @@ ui(new Ui::MainWindow)
     // set up the web page launcher
     connect(ui->actionAbout_DICe, SIGNAL(triggered()), this, SLOT(launchDICePage()));
 
+    // set up the load working dir action
+    connect(ui->actionLoad_working_dir, SIGNAL(triggered()), this, SLOT(loadWorkingDir()));
+
     // set the default output fields
     ui->xCheck->setChecked(true);
     ui->yCheck->setChecked(true);
@@ -138,7 +210,7 @@ void MainWindow::on_refFileButton_clicked()
     if(refFileInfo.fileName()=="") return;
     
     // display the name of the file in the reference file box
-    if(ui->simpleQtVTKWidget->readImageFile(refFileInfo.filePath().toStdString())) return;
+    if(ui->simpleQtVTKWidget->readImageFile(refFileInfo.filePath().toStdString(),true)) return;
 
     // set the reference image in the Input_Vars singleton
     DICe::gui::Input_Vars::instance()->set_ref_file_info(refFileInfo);
@@ -220,6 +292,352 @@ void MainWindow::on_workingDirButton_clicked()
 
 void MainWindow::launchDICePage(){
     QDesktopServices::openUrl(QUrl("https://github.com/dicengine/dice", QUrl::TolerantMode));
+}
+
+void MainWindow::loadWorkingDir(){
+    QMessageBox msgBox;
+    msgBox.setText("Input and results files will be imported\n"
+                   "from the selected directory\n"
+                   "to the current working directory.\n\n"
+                   "Warning: Importing will clear existing data!\n\nContinue?");
+    msgBox.setStandardButtons(QMessageBox::Yes);
+    msgBox.addButton(QMessageBox::No);
+    msgBox.setDefaultButton(QMessageBox::Yes);
+    if(msgBox.exec() == QMessageBox::No){
+        return;
+    }
+
+    // open a file dialog to select the directory:
+    QString dir = QFileDialog::getExistingDirectory(this,tr("Open Directory"),".",
+                      QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+    if(dir=="") return;
+
+    // if there are existing files in the dir ask if they should be over-written:
+    QString inputFile = dir;
+    QString paramsFile = dir;
+    QString subsetFile = dir;
+    QString resultsDir = dir;
+    QString currentWorkingDir = DICe::gui::Input_Vars::instance()->get_working_dir();
+    QString currentResultsDir = currentWorkingDir;
+    bool foundInput = false;
+    bool foundParams = false;
+    bool foundSubset = false;
+    bool foundResults = false;
+#ifdef WIN32
+    inputFile +=  "\\input.xml";
+    paramsFile +=  "\\params.xml";
+    subsetFile +=  "\\subset_defs.txt";
+    resultsDir += "\\results";
+    currentWorkingDir += "\\";
+    currentResultsDir += "\\results\\";
+#else
+    inputFile +=  "/input.xml";
+    paramsFile +=  "/params.xml";
+    subsetFile +=  "/subset_defs.txt";
+    resultsDir += "/results";
+    currentWorkingDir += "/";
+    currentResultsDir += "/results/";
+#endif
+    QFileInfo checkFile(inputFile);
+    // check if file exists and if yes: Is it really a file and not a directory?
+    if (checkFile.exists() && checkFile.isFile()) {
+        foundInput = true;
+    }
+    checkFile = paramsFile;
+    // check if file exists and if yes: Is it really a file and not a directory?
+    if (checkFile.exists() && checkFile.isFile()) {
+        foundParams = true;
+    }
+    checkFile = subsetFile;
+    // check if file exists and if yes: Is it really a file and not a directory?
+    if (checkFile.exists() && checkFile.isFile()) {
+        foundSubset = true;
+    }
+    //std::cout << " found input: " << foundInput << " params " << foundParams << " subset " << foundSubset << std::endl;
+
+    if(!foundInput){
+        QMessageBox msgBox;
+        msgBox.setText("Unable to inport working directory because\nthe input.xml file is missing.");
+        msgBox.exec();
+        return;
+    }
+    checkFile = resultsDir;
+    // check if dir exists and if yes: Is it really a dir and not a file?
+    if (checkFile.exists() && !checkFile.isFile()) {
+        foundResults = true;
+    }
+
+    Teuchos::RCP<Teuchos::ParameterList> stringParams = Teuchos::rcp( new Teuchos::ParameterList() );
+    Teuchos::Ptr<Teuchos::ParameterList> stringParamsPtr(stringParams.get());
+    Teuchos::updateParametersFromXmlFile(inputFile.toStdString(), stringParamsPtr);
+    bool inputValid = true;
+    if(!stringParams->isParameter("step_size")){
+        std::cout << "Error: input.xml missing step_size parameter" << std::endl;
+        inputValid = false;
+    }
+    if(!stringParams->isParameter("subset_size")){
+        std::cout << "Error: input.xml missing subset_size parameter" << std::endl;
+        inputValid = false;
+    }
+    if(!stringParams->isParameter("reference_image")){
+        std::cout << "Error: input.xml missing reference_image parameter" << std::endl;
+        inputValid = false;
+    }
+    if(!stringParams->isParameter("deformed_images")){
+        std::cout << "Error: input.xml missing deformed_images parameter" << std::endl;
+        inputValid = false;
+    }
+    if(stringParamsPtr==Teuchos::null||!inputValid){
+        QMessageBox msgBox;
+        msgBox.setText("Error: reading input.xml failed!");
+        msgBox.exec();
+        return;
+    }
+
+    // ensure that if the input requests a subset file that it exists
+    const bool hasSubsetFile = stringParams->isParameter("subset_file");
+    if(hasSubsetFile&&(!foundSubset)){
+        QMessageBox msgBox;
+        msgBox.setText("Error: subset file required, but could not find subset_defs.txt file!");
+        msgBox.exec();
+        return;
+    }
+
+    // check the deformed images:
+    Teuchos::ParameterList def_image_sublist = stringParams->sublist("deformed_images");
+    if(def_image_sublist.numParams()<=0){
+        QMessageBox msgBox;
+        msgBox.setText("Error: list of deformed images is of size 0");
+        msgBox.exec();
+        return;
+    }
+    for(Teuchos::ParameterList::ConstIterator it=def_image_sublist.begin();it!=def_image_sublist.end();++it){
+      const bool active = def_image_sublist.get<bool>(it->first);
+      if(active){
+          QFileInfo currentFile = QString::fromStdString(it->first);
+          if(!(currentFile.exists() && currentFile.isFile())){
+              QMessageBox msgBox;
+              msgBox.setText("Invalid deformed image: " + currentFile.filePath());
+              msgBox.exec();
+              return;
+          }
+      }
+    }
+    QFileInfo inputInfo = inputFile;
+    QFile::copy(inputInfo.filePath(),currentWorkingDir+inputInfo.fileName());
+
+    // read the subset file:
+    QList<QList<QPoint> > boundaryShapes;
+    QList<QList<QPoint> > excludedShapes;
+    if(hasSubsetFile){
+        QFileInfo subsetInfo = subsetFile;
+        QFile::copy(subsetInfo.filePath(),currentWorkingDir+subsetInfo.fileName());
+
+        bool hasROIDef = false;
+        bool subsetError = false;
+        std::fstream dataFile(subsetFile.toStdString().c_str(), std::ios_base::in);
+        while(!dataFile.eof()){
+            std::vector<std::string> tokens = tokenize_line(dataFile);
+            if(tokens.size()==0)continue;
+            if(tokens.size()<2){
+                subsetError=true;
+                break;
+            }
+            if(tokens[0]=="BEGIN"){
+                if(tokens[1]=="REGION_OF_INTEREST"){
+                    hasROIDef = true;
+                    // now read boundary or excluded regions
+                    while(!dataFile.eof()){
+                        std::vector<std::string> block_tokens = tokenize_line(dataFile);
+                        if(block_tokens.size()==0)continue;
+                        else if(block_tokens[0]=="END") break;
+                        else if(block_tokens[0]=="BEGIN"){
+                            if(block_tokens.size()<2){
+                                std::cout << "invalid block token size " << block_tokens.size() << std::endl;
+                                dataFile.close();
+                                return;
+                            }
+                            if(block_tokens[1]=="BOUNDARY"){
+                                boundaryShapes = readShapes(dataFile);
+                                // TODO push the shapes back on the vtkwidget storage
+                            }
+                            else if(block_tokens[1]=="EXCLUDED"){
+                                excludedShapes = readShapes(dataFile);
+                            }
+                            else{
+                                std::cout << "invalid block token " << block_tokens[1] << std::endl;
+                                dataFile.close();
+                                return;
+                            }
+                        } // begin
+                        else{
+                            std::cout << "invalid block token " << block_tokens[0] << std::endl;
+                            dataFile.close();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        dataFile.close();
+        if(!hasROIDef||subsetError){
+            QMessageBox msgBox;
+            msgBox.setText("Invalid subset_defs.txt file: ");
+            msgBox.exec();
+            return;
+        }
+    }
+
+
+    // load the reference image:
+    // display the name of the file in the reference file box
+    QFileInfo refFileInfo = QString::fromStdString(stringParams->get<std::string>("reference_image",""));
+    if(ui->simpleQtVTKWidget->readImageFile(refFileInfo.filePath().toStdString(),true)){
+        QMessageBox msgBox;
+        msgBox.setText("Error: could not read the reference image: " + refFileInfo.filePath());
+        msgBox.exec();
+        return;
+    }
+    // set the reference image in the Input_Vars singleton
+    DICe::gui::Input_Vars::instance()->set_ref_file_info(refFileInfo);
+
+    // Import the deformed images:
+    QStringList * list = DICe::gui::Input_Vars::instance()->get_def_file_list();
+    list->clear();
+    ui->defListWidget->clear();
+    for(Teuchos::ParameterList::ConstIterator it=def_image_sublist.begin();it!=def_image_sublist.end();++it){
+      const bool active = def_image_sublist.get<bool>(it->first);
+      if(active){
+          list->append(QString::fromStdString(it->first));
+          QFileInfo currentFile = QString::fromStdString(it->first);
+          QString shortDefFileName = currentFile.fileName();
+          ui->defListWidget->addItem(shortDefFileName);
+      }
+    }
+    // update the picture in the def preview
+    ui->defListWidget->setCurrentRow(0);
+    on_defListWidget_itemClicked(ui->defListWidget->currentItem());
+
+    // import the shapes
+    if(hasSubsetFile){
+        // import shapes (boundaryShapes,excludedShapes);
+        ui->simpleQtVTKWidget->importVertices(boundaryShapes,excludedShapes);
+    }
+
+
+    // import information:
+    const int subsetSize = stringParams->get<int>("subset_size");
+    ui->subsetSize->setValue(subsetSize);
+    const int stepSize = stringParams->get<int>("step_size");
+    ui->stepSize->setValue(stepSize);
+
+    // import the parameters if they exist:
+    if(foundParams){
+        QFileInfo paramsInfo = paramsFile;
+        QFile::copy(paramsInfo.filePath(),currentWorkingDir+paramsInfo.fileName());
+
+        Teuchos::RCP<Teuchos::ParameterList> corrParams = Teuchos::rcp( new Teuchos::ParameterList() );
+        Teuchos::Ptr<Teuchos::ParameterList> corrParamsPtr(corrParams.get());
+        Teuchos::updateParametersFromXmlFile(paramsFile.toStdString(), corrParamsPtr);
+        if(corrParams->isParameter("interpolation_method")){
+            std::string value = corrParams->get<std::string>("interpolation_method");
+            stringToUpper(value);
+            int id = ui->interpMethodCombo->findText(QString::fromStdString(value));
+            if(id!=-1)
+                ui->interpMethodCombo->setCurrentIndex(id);
+        }
+        if(corrParams->isParameter("optimization_method")){
+            std::string value = corrParams->get<std::string>("optimization_method");
+            stringToUpper(value);
+            int id = ui->optMethodCombo->findText(QString::fromStdString(value));
+            if(id!=-1)
+                ui->optMethodCombo->setCurrentIndex(id);
+        }
+        if(corrParams->isParameter("initialization_method")){
+            std::string value = corrParams->get<std::string>("initialization_method");
+            stringToUpper(value);
+            int id = ui->initMethodCombo->findText(QString::fromStdString(value));
+            if(id!=-1)
+                ui->initMethodCombo->setCurrentIndex(id);
+        }
+        ui->translationShapeCheck->setChecked(corrParams->get<bool>("enable_translation",false));
+        ui->normalShapeCheck->setChecked(corrParams->get<bool>("enable_normal_strain",false));
+        ui->rotationShapeCheck->setChecked(corrParams->get<bool>("enable_rotation",false));
+        ui->shearShapeCheck->setChecked(corrParams->get<bool>("enable_shear_strain",false));
+
+        // read the output spec
+        if(corrParams->isParameter("output_spec")){
+            ui->rotationCheck->setChecked(false);
+            ui->normalXCheck->setChecked(false);
+            ui->normalYCheck->setChecked(false);
+            ui->shearCheck->setChecked(false);
+            ui->sigmaCheck->setChecked(false);
+            ui->gammaCheck->setChecked(false);
+            ui->betaCheck->setChecked(false);
+            ui->statusCheck->setChecked(false);
+            ui->numActiveCheck->setChecked(false);
+            ui->contrastCheck->setChecked(false);
+            ui->noiseCheck->setChecked(false);
+            Teuchos::ParameterList output_field_sublist = corrParams->sublist("output_spec");
+            for(Teuchos::ParameterList::ConstIterator it=output_field_sublist.begin();it!=output_field_sublist.end();++it){
+                const bool active = output_field_sublist.get<bool>(it->first);
+                if(active){
+                    std::string field = it->first;
+                    stringToUpper(field);
+
+                    if(field=="ROTATION_Z")
+                        ui->rotationCheck->setChecked(true);
+                    else if(field=="NORMAL_STRAIN_X")
+                        ui->normalXCheck->setChecked(true);
+                    else if(field=="NORMAL_STRAIN_Y")
+                        ui->normalYCheck->setChecked(true);
+                    else if(field=="SHEAR_STRAIN_XY")
+                        ui->shearCheck->setChecked(true);
+                    else if(field=="SIGMA")
+                        ui->sigmaCheck->setChecked(true);
+                    else if(field=="GAMMA")
+                        ui->gammaCheck->setChecked(true);
+                    else if(field=="BETA")
+                        ui->betaCheck->setChecked(true);
+                    else if(field=="STATUS_FLAG")
+                        ui->statusCheck->setChecked(true);
+                    else if(field=="NUM_ACTIVE_PIXELS")
+                        ui->numActiveCheck->setChecked(true);
+                    else if(field=="CONTRAST_LEVEL")
+                        ui->contrastCheck->setChecked(true);
+                    else if(field=="NOISE_LEVEL")
+                        ui->noiseCheck->setChecked(true);
+                }
+            }
+        }
+    }
+
+    // activate the run/write buttons
+    ui->actionExport_input_files->setEnabled(true);
+    ui->runButton->setEnabled(true);
+
+    // copy results files if they exist:
+    if(foundResults){
+        // create the working directory
+        std::cout << "checking " << currentResultsDir.toStdString() << std::endl;
+        if(!QDir(currentResultsDir).exists()){
+            std::cout << "creating " << currentResultsDir.toStdString() << std::endl;
+             QDir().mkdir(currentResultsDir);
+        }
+
+        // copy files to this working directory
+        QStringList resFiles;
+        QDirIterator it(resultsDir, QStringList() << "*.txt",
+                       QDir::Files,QDirIterator::Subdirectories);
+        while (it.hasNext()){
+            std::cout << "Copying file " << it.next().toStdString() << std::endl;
+            QFile::copy(it.filePath(),currentResultsDir+it.fileName());
+        }
+        // load the results viewer
+        prepResultsViewer();
+    }
+
 }
 
 void MainWindow::exportInputFiles(){
@@ -330,7 +748,6 @@ void MainWindow::prepResultsViewer()
     QStringList images;
     for(QStringList::iterator sit=defImageFiles.begin();sit!=defImageFiles.end();++sit)
         images.push_back(*sit);
-
     //for(QStringList::iterator sit=images.begin();sit!=images.end();++sit)
     //    std::cout << " Image FILE " << sit->toStdString() << std::endl;
 
@@ -347,6 +764,7 @@ void MainWindow::prepResultsViewer()
         msgBox.exec();
         exit(EXIT_FAILURE);
     }
+
     // switch the active tab to results
     ui->simpleQtVTKWidget->changeInteractionMode(1);
 }

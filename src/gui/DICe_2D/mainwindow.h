@@ -81,6 +81,8 @@ public:
 
     void exportInputFiles();
 
+    void loadWorkingDir();
+
     void launchDICePage();
 private:
     Ui::MainWindow *ui;
@@ -90,5 +92,12 @@ private:
      QProcess *diceProcess;
 
 };
+
+// free function to tokenize a file line
+std::vector<std::string> tokenize_line(std::fstream &dataFile,
+                                       const std::string & delim=" \t",
+                                       const bool capitalize=true);
+QList<QList<QPoint> > readShapes(std::fstream &dataFile);
+void stringToUpper(std::string & string);
 
 #endif // MAINWINDOW_H

@@ -318,7 +318,11 @@ void SimpleQtVTK::resetCamera(){
         ui->vtkWidget->GetRenderWindow()->Render();
 }
 
-int SimpleQtVTK::readImageFile(const std::string & fileName){
+int SimpleQtVTK::readImageFile(const std::string & fileName,
+                               const bool clearPolygons){
+
+    // clear the shapes polygons
+    if(clearPolygons)style->clearPolygons();
 
     vtkSmartPointer<vtkImageData> imageData;
     // determine the file extension
@@ -879,10 +883,12 @@ void SimpleQtVTK::on_excludedMinus_clicked()
 void SimpleQtVTK::on_hideImageBox_clicked()
 {
     if(ui->hideImageBox->isChecked()){
-        renderer->RemoveActor(imageActor);
+        if(isInitialized)
+            renderer->RemoveActor(imageActor);
     }
     else{
-        renderer->AddActor(imageActor);
+        if(isInitialized)
+            renderer->AddActor(imageActor);
     }
     if(ui->vtkWidget->GetRenderWindow()->IsDrawable())
         ui->vtkWidget->GetRenderWindow()->Render();
@@ -947,6 +953,12 @@ void SimpleQtVTK::changeInteractionMode(const int mode){
     if(ui->vtkWidget->GetRenderWindow()->IsDrawable())
         ui->vtkWidget->GetRenderWindow()->Render();
 }
+
+void SimpleQtVTK::importVertices(QList<QList<QPoint> > & boundary, QList<QList<QPoint> > & excluded){
+    style->importVertices(boundary,excluded);
+
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1456,4 +1468,35 @@ void PolygonMouseInteractorStyle::exportVertices(QList<QList<QPoint> > * boundar
         excluded->append(polygon);
     }
 }
+
+void PolygonMouseInteractorStyle::importVertices(QList<QList<QPoint> > & boundary, QList<QList<QPoint> > & excluded){
+    if(imageSpacing==0.0) return;
+    boundaryPointsVector.clear();
+    boundaryPointsVector.resize(boundary.count());
+    excludedPointsVector.clear();
+    excludedPointsVector.resize(excluded.count());
+
+    int boundaryIndex = 0;
+    for(QList<QList<QPoint> >::iterator it=boundary.begin();it!=boundary.end();++it){
+        vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+        for(QList<QPoint>::iterator pit=it->begin();pit!=it->end();++pit){
+            points->InsertNextPoint(pit->x()*imageSpacing,pit->y()*imageSpacing, -0.05);// offset from 0 in z so that it always displays over image
+        }
+        boundaryPointsVector[boundaryIndex] = vtkSmartPointer<vtkPoints>::New();
+        boundaryPointsVector[boundaryIndex]->DeepCopy(points);
+        boundaryIndex++;
+    }
+    int excludedIndex = 0;
+    for(QList<QList<QPoint> >::iterator it=excluded.begin();it!=excluded.end();++it){
+        vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+        for(QList<QPoint>::iterator pit=it->begin();pit!=it->end();++pit){
+            points->InsertNextPoint(pit->x()*imageSpacing,pit->y()*imageSpacing, -0.05);// offset from 0 in z so that it always displays over image
+        }
+        excludedPointsVector[excludedIndex] = vtkSmartPointer<vtkPoints>::New();
+        excludedPointsVector[excludedIndex]->DeepCopy(points);
+        excludedIndex++;
+    }
+    drawExistingPolygons();
+}
+
 

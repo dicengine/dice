@@ -29,7 +29,7 @@ background-color: #303030;
 QMenuBar {
 color: white;
 background-color: #202020;
-min-width: 100px;
+min-width: 50px;
 }
 QMenuBar::item {
 spacing: 5px;
@@ -800,7 +800,7 @@ background-color: #404040;
    </property>
    <property name="minimumSize">
     <size>
-     <width>100</width>
+     <width>50</width>
      <height>0</height>
     </size>
    </property>
@@ -820,6 +820,7 @@ background-color: #404040;
      <string>File</string>
     </property>
     <addaction name="actionExport_input_files"/>
+    <addaction name="actionLoad_working_dir"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -841,6 +842,11 @@ background-color: #404040;
   <action name="actionAbout_DICe">
    <property name="text">
     <string>About DICe...</string>
+   </property>
+  </action>
+  <action name="actionLoad_working_dir">
+   <property name="text">
+    <string>Import working dir...</string>
    </property>
   </action>
  </widget>

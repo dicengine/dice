@@ -1,7 +1,42 @@
 cmake_minimum_required(VERSION 2.8)
 MESSAGE("\nConfiguring DICe GUI...\n")
 
+IF (NOT DEFINED DICE_TRILINOS_DIR)
+  MESSAGE(FATAL_ERROR "\nDICe Error: DICE_TRILINOS_DIR must be defined (-D DICE_TRILINOS_DIR:FILEPATH=<trilinos-install-path>)")
+ENDIF()
+MESSAGE(STATUS "Using Trilinos installed in: ${DICE_TRILINOS_DIR}")
+
+# Get Trilinos as one entity
+# set(TRILINOS_DIR CACHE PATH "Path to Trilinos directory")
+SET(CMAKE_PREFIX_PATH ${DICE_TRILINOS_DIR} ${CMAKE_PREFIX_PATH})
+FIND_PACKAGE(Trilinos PATHS ${DICE_TRILINOS_DIR}/lib/cmake/Trilinos)
+
+IF(NOT Trilinos_FOUND)
+  MESSAGE(FATAL_ERROR "Could not find Trilinos!")
+  ENDIF()
+
+MESSAGE("\nFound Trilinos!  Here are the details: ")
+MESSAGE("   Trilinos_DIR = ${Trilinos_DIR}")
+MESSAGE("   Trilinos_VERSION = ${Trilinos_VERSION}")
+MESSAGE("   Trilinos_PACKAGE_LIST = ${Trilinos_PACKAGE_LIST}")
+MESSAGE("   Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
+MESSAGE("   Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
+MESSAGE("   Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
+MESSAGE("   Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
+MESSAGE("   Trilinos_TPL_INCLUDE_DIRS = ${Trilinos_TPL_INCLUDE_DIRS}")
+MESSAGE("   Trilinos_TPL_LIBRARIES = ${Trilinos_TPL_LIBRARIES}")
+MESSAGE("   Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
+MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
+MESSAGE("End of Trilinos details\n")
+
 PROJECT(DICe_GUI)
+
+link_directories(${Trilinos_LIBRARY_DIRS})
+include_directories(${Trilinos_INCLUDE_DIRS})
+SET(TRILINOS_LIBRARIES
+  teuchoscore
+  teuchosparameterlist
+)
 
 IF (NOT DEFINED DICE_EXEC_PATH)
   MESSAGE(FATAL_ERROR "\nDICe Error: DICE_EXEC_PATH must be defined (-D DICE_EXEC_PATH:FILEPATH=<dice_exec_path>)")
