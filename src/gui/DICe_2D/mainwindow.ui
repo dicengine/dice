@@ -248,6 +248,9 @@ background-color: #404040;
     </item>
     <item row="0" column="0">
      <widget class="QPushButton" name="diceButton">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
         <horstretch>0</horstretch>
@@ -818,7 +821,14 @@ background-color: #404040;
     </property>
     <addaction name="actionExport_input_files"/>
    </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout_DICe"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuHelp"/>
   </widget>
   <action name="actionExport_input_files">
    <property name="enabled">
@@ -826,6 +836,11 @@ background-color: #404040;
    </property>
    <property name="text">
     <string>Export input files...</string>
+   </property>
+  </action>
+  <action name="actionAbout_DICe">
+   <property name="text">
+    <string>About DICe...</string>
    </property>
   </action>
  </widget>

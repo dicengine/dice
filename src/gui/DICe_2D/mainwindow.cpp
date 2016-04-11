@@ -106,6 +106,9 @@ ui(new Ui::MainWindow)
     // set up the export files action
     connect(ui->actionExport_input_files, SIGNAL(triggered()), this, SLOT(exportInputFiles()));
 
+    // set up the web page launcher
+    connect(ui->actionAbout_DICe, SIGNAL(triggered()), this, SLOT(launchDICePage()));
+
     // set the default output fields
     ui->xCheck->setChecked(true);
     ui->yCheck->setChecked(true);
@@ -213,6 +216,10 @@ void MainWindow::on_workingDirButton_clicked()
     // display the name of the file in the reference file box
     ui->workingDirLineEdit->setText(dir);
 
+}
+
+void MainWindow::launchDICePage(){
+    QDesktopServices::openUrl(QUrl("https://github.com/dicengine/dice", QUrl::TolerantMode));
 }
 
 void MainWindow::exportInputFiles(){

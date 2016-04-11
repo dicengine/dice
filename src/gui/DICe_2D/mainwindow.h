@@ -80,6 +80,8 @@ public:
     void readOutput();
 
     void exportInputFiles();
+
+    void launchDICePage();
 private:
     Ui::MainWindow *ui;
 
