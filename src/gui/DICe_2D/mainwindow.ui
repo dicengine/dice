@@ -32,12 +32,12 @@ background-color: #202020;
 min-width: 100px;
 }
 QMenuBar::item {
-spacing: 5px; /* spacing between menu bar items */
+spacing: 5px;
 padding: 4px;
 background: transparent;
 border-radius: 4px;
 }
-QMenuBar::item:selected { /* when selected using mouse or keyboard */
+QMenuBar::item:selected {
 background: #a8a8a8;
 }
 QMenuBar::item:pressed {
@@ -79,7 +79,7 @@ color: white;
 }
 QPushButton{
 padding: 5px;
-background-color: #489ff9;/*#808080;*/
+background-color: #808080; /*489ff9*/
 border: 0px;
 border-radius: 5px;
 color: white;
@@ -90,7 +90,7 @@ QPushButton:hover:!pressed
   border: 1px solid yellow;
 }
 QPushButton:pressed{
-background-color: #3b83cd;/*#505050;*/
+background-color: #505050;/*#3b83cd*/;
 }
 QPushButton:checked{
 background-color: #3b83cd;
@@ -825,7 +825,7 @@ background-color: #404040;
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Export input files to working dir</string>
+    <string>Export input files...</string>
    </property>
   </action>
  </widget>

@@ -104,7 +104,7 @@ ui(new Ui::MainWindow)
     connect(diceProcess, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
 
     // set up the export files action
-    connect(ui->actionExport_input_files, SIGNAL(triggered()), this, SLOT(writeInputFiles()));
+    connect(ui->actionExport_input_files, SIGNAL(triggered()), this, SLOT(exportInputFiles()));
 
     // set the default output fields
     ui->xCheck->setChecked(true);
@@ -215,6 +215,46 @@ void MainWindow::on_workingDirButton_clicked()
 
 }
 
+void MainWindow::exportInputFiles(){
+    // save off the existing working directory
+    QString existingDir = DICe::gui::Input_Vars::instance()->get_working_dir();
+
+    // open a file dialog to select the directory:
+    QString dir = QFileDialog::getExistingDirectory(this,tr("Open Directory"),".",
+                      QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+    if(dir=="") return;
+
+    // if there are existing files in the dir ask if they should be over-written:
+    QString inputFile = dir;
+#ifdef WIN32
+    inputFile +=  "\\input.xml";
+#else
+    inputFile += "/input.xml";
+#endif
+    QFileInfo checkFile(inputFile);
+    // check if file exists and if yes: Is it really a file and no directory?
+    if (checkFile.exists() && checkFile.isFile()) {
+        QMessageBox msgBox;
+        msgBox.setText("Found existing input files in this directory.\nOverwrite?");
+        msgBox.setStandardButtons(QMessageBox::Yes);
+        msgBox.addButton(QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::Yes);
+        if(msgBox.exec() == QMessageBox::No){
+            return;
+        }
+    }
+
+    // set the reference image in the Input_Vars singleton
+    DICe::gui::Input_Vars::instance()->set_working_dir(dir);
+
+    // write the files
+    writeInputFiles();
+
+    // set the reference image in the Input_Vars singleton
+    DICe::gui::Input_Vars::instance()->set_working_dir(existingDir);
+}
+
 void MainWindow::writeInputFiles(){
     std::cout << "Writing input files..." << std::endl << std::endl;
     // set the parameter values:
@@ -309,8 +349,31 @@ void MainWindow::readOutput(){
 }
 
 void MainWindow::on_runButton_clicked()
-{
-    std::cout << "Clearing results directory " << std::endl;
+{    
+    // check for existing input for results files
+    // if there are existing files in the dir ask if they should be over-written:
+    QString inputFile = DICe::gui::Input_Vars::instance()->get_working_dir();
+#ifdef WIN32
+    inputFile +=  "\\input.xml";
+#else
+    inputFile += "/input.xml";
+#endif
+    QFileInfo checkFile(inputFile);
+    // check if file exists and if yes: Is it really a file and no directory?
+    if (checkFile.exists() && checkFile.isFile()) {
+        QMessageBox msgBox;
+        msgBox.setText("Found existing input or results files\nin the working directory. Overwrite and continue?");
+        msgBox.setStandardButtons(QMessageBox::Yes);
+        msgBox.addButton(QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::Yes);
+        if(msgBox.exec() == QMessageBox::No){
+            return;
+        }
+    }
+
+    // write intput files, abort if write fails
+    writeInputFiles();
+
     QString dir = DICe::gui::Input_Vars::instance()->get_working_dir();
     std::stringstream working_dir_ss;
 #ifdef WIN32
@@ -318,6 +381,7 @@ void MainWindow::on_runButton_clicked()
 #else
     working_dir_ss << dir.toStdString() << "/results/";
 #endif
+    std::cout << "Clearing results directory " << std::endl;
     QStringList resFiles;
     QDirIterator it(QString::fromStdString(working_dir_ss.str()), QStringList() << "*.txt",
                    QDir::Files,QDirIterator::Subdirectories);
@@ -326,8 +390,6 @@ void MainWindow::on_runButton_clicked()
         QDir cDir;
         cDir.remove(it.filePath());
     }
-
-    writeInputFiles();
     std::cout << "Running correlation..." << std::endl << std::endl;
 
     QString diceExec = DICE_EXEC_PATH;

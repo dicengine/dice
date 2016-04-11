@@ -78,6 +78,8 @@ public:
     void on_diceButton_clicked();
 
     void readOutput();
+
+    void exportInputFiles();
 private:
     Ui::MainWindow *ui;
 
