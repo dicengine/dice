@@ -26,7 +26,23 @@
    <string notr="true">QMainWindow {
 background-color: #303030;
 }
-
+QMenuBar {
+color: white;
+background-color: #202020;
+min-width: 100px;
+}
+QMenuBar::item {
+spacing: 5px; /* spacing between menu bar items */
+padding: 4px;
+background: transparent;
+border-radius: 4px;
+}
+QMenuBar::item:selected { /* when selected using mouse or keyboard */
+background: #a8a8a8;
+}
+QMenuBar::item:pressed {
+background: #888888;
+}
 QComboBox {
 background-color: #404040;
 color: white;
@@ -34,11 +50,9 @@ color: white;
 QListView {
 background-color: #404040;
 }
-
 QTabWidget::pane{
 background-color: #252525;
 }
-
 QTextBrowser{
 background-color: #303030;
 color: white;
@@ -48,26 +62,21 @@ background-color: #303030;
 color: white;
 font: 12pt &quot;Courier&quot;;
 }
-
 QSpinBox {
 color: white;
 background-color: #404040;
 }
-
 QListWidget {
 background-color: #404040;
 color: white;
 }
-
 QCheckBox {
 color: white;
 }
-
 QLineEdit {
 background-color: #505050;
 color: white;
 }
-
 QPushButton{
 padding: 5px;
 background-color: #489ff9;/*#808080;*/
@@ -92,16 +101,6 @@ background-color: #101010;
 QPushButton#diceButton:pressed{
 background-color: #202020;
 }
-QPushButton#writeButton{
-background-color: rgb(37, 137, 26);
-}
-QPushButton#writeButton:pressed{
-background-color: rgb(6, 106, 7);
-}
-QPushButton#writeButton:disabled{
-background-color:#505050;
-color: #808080;
-}
 QPushButton#runButton{
 font-weight: bold;
 background-color: rgb(0, 255, 11);
@@ -114,15 +113,6 @@ QPushButton#runButton:disabled{
 background-color:#505050;
 color: #808080;
 }
-/*QPushButton#screenShotButton{
-background-color:#489ff9;
-}
-QPushButton#resetViewButton{
-background-color:#489ff9;
-}
-QPushButton#resetScaleButton{
-background-color:#489ff9;
-}*/
 QPushButton#boundaryPlus{
 background-color:#1ec5c5;
 }
@@ -159,16 +149,13 @@ QLabel{
 color: white;
 background-color: #252525;
 }
-
 QGroupBox{
 background-color: #252525;
 color: white;
 }
-
 QSelectionArea{
 background-color: #404040;
 }
-
 QFrame#shapesFrame{
 background-color: #404040;
 }
@@ -183,7 +170,7 @@ background-color: #404040;
    </property>
    <layout class="QGridLayout" name="gridLayout">
     <property name="topMargin">
-     <number>20</number>
+     <number>10</number>
     </property>
     <property name="horizontalSpacing">
      <number>10</number>
@@ -209,22 +196,6 @@ background-color: #404040;
        <string>ACTIONS</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_9">
-       <item>
-        <widget class="QPushButton" name="writeButton">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Write input files</string>
-         </property>
-        </widget>
-       </item>
        <item>
         <widget class="QPushButton" name="runButton">
          <property name="enabled">
@@ -821,10 +792,42 @@ background-color: #404040;
      <x>0</x>
      <y>0</y>
      <width>1245</width>
-     <height>22</height>
+     <height>28</height>
     </rect>
    </property>
+   <property name="minimumSize">
+    <size>
+     <width>100</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>16</pointsize>
+    </font>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+   <property name="nativeMenuBar">
+    <bool>false</bool>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionExport_input_files"/>
+   </widget>
+   <addaction name="menuFile"/>
   </widget>
+  <action name="actionExport_input_files">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Export input files to working dir</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>

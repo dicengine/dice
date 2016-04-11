@@ -103,6 +103,9 @@ ui(new Ui::MainWindow)
     diceProcess = new QProcess(this);
     connect(diceProcess, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
 
+    // set up the export files action
+    connect(ui->actionExport_input_files, SIGNAL(triggered()), this, SLOT(writeInputFiles()));
+
     // set the default output fields
     ui->xCheck->setChecked(true);
     ui->yCheck->setChecked(true);
@@ -139,7 +142,7 @@ void MainWindow::on_refFileButton_clicked()
 
     // if the deformed images are populated then activate the write and run buttons
     if(DICe::gui::Input_Vars::instance()->has_def_files()){
-        ui->writeButton->setEnabled(true);
+        ui->actionExport_input_files->setEnabled(true);
         ui->runButton->setEnabled(true);
     }
 }
@@ -175,7 +178,7 @@ void MainWindow::on_defFileButton_clicked()
 
     // if the reference image is populated then activate the write and run buttons
     if(DICe::gui::Input_Vars::instance()->has_ref_file()){
-        ui->writeButton->setEnabled(true);
+        ui->actionExport_input_files->setEnabled(true);
         ui->runButton->setEnabled(true);
     }
 }
@@ -194,11 +197,6 @@ void MainWindow::on_defListWidget_itemClicked(QListWidgetItem *item)
     int w = ui->defImageShow->width();
     int h = ui->defImageShow->height();
     ui->defImageShow->setPixmap(pix.scaled(w,h,Qt::KeepAspectRatio));
-}
-
-void MainWindow::on_writeButton_clicked()
-{
-    writeInputFiles();
 }
 
 void MainWindow::on_workingDirButton_clicked()

@@ -69,8 +69,6 @@ public:
     
     void on_defListWidget_itemClicked(QListWidgetItem *item);
 
-    void on_writeButton_clicked();
-
     void on_workingDirButton_clicked();
 
     void on_runButton_clicked();

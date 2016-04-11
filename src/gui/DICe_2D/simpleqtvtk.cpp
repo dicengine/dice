@@ -171,6 +171,7 @@ void SimpleQtVTK::initializeClassMembers(){
     cornerAnnotation->SetNonlinearFontScaleFactor(1);
     cornerAnnotation->SetMaximumFontSize(20);
     cornerAnnotation->SetText(0, "(-,-)");
+    cornerAnnotation->SetText(1, "Digital Image Correlation Engine 1.0");
     cornerAnnotation->GetTextProperty()->SetColor(1, 1, 1);
     cornerAnnotation->GetTextProperty()->SetFontFamilyToCourier();
     renderer->AddViewProp(cornerAnnotation);
