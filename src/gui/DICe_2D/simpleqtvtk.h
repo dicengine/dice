@@ -330,6 +330,9 @@ public:
     /// create a triangulation of the data points
     void triangulate();
 
+    /// clear the polygon data
+    void resetWidget();
+
     /// render a field on the triangulation
     /// ** this should only be called by the fieldsCombo change slot
     void renderField(const int index);

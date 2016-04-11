@@ -131,6 +131,35 @@ ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
+    this->resetDefaults();
+
+    // reset the default working directory
+    ui->workingDirLabel->setText(".");
+    DICe::gui::Input_Vars::instance()->set_working_dir(QString("."));
+
+    // set up the console output
+    qout = new QDebugStream(std::cout, ui->consoleEdit);
+
+    // set up the process that will run DICe
+    diceProcess = new QProcess(this);
+    connect(diceProcess, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
+
+    // set up the export files action
+    connect(ui->actionExport_input_files, SIGNAL(triggered()), this, SLOT(exportInputFiles()));
+
+    // set up the web page launcher
+    connect(ui->actionAbout_DICe, SIGNAL(triggered()), this, SLOT(launchDICePage()));
+
+    // set up the load working dir action
+    connect(ui->actionLoad_working_dir, SIGNAL(triggered()), this, SLOT(loadWorkingDir()));
+
+    // set up the new action
+    connect(ui->actionNew, SIGNAL(triggered()), this, SLOT(newAnalysis()));
+
+    std::cout << "Using DICe from " << DICE_EXEC_PATH << std::endl;
+}
+
+void MainWindow::resetDefaults(){
     // set up the analysis defaults
     ui->translationShapeCheck->setChecked(true);
 
@@ -161,26 +190,6 @@ ui(new Ui::MainWindow)
     // reset the progress bar
     //ui->progressBar->setValue(0);
 
-    // reset the default working directory
-    ui->workingDirLineEdit->setText(".");
-    DICe::gui::Input_Vars::instance()->set_working_dir(QString("."));
-
-    // set up the console output
-    qout = new QDebugStream(std::cout, ui->consoleEdit);
-
-    // set up the process that will run DICe
-    diceProcess = new QProcess(this);
-    connect(diceProcess, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
-
-    // set up the export files action
-    connect(ui->actionExport_input_files, SIGNAL(triggered()), this, SLOT(exportInputFiles()));
-
-    // set up the web page launcher
-    connect(ui->actionAbout_DICe, SIGNAL(triggered()), this, SLOT(launchDICePage()));
-
-    // set up the load working dir action
-    connect(ui->actionLoad_working_dir, SIGNAL(triggered()), this, SLOT(loadWorkingDir()));
-
     // set the default output fields
     ui->xCheck->setChecked(true);
     ui->yCheck->setChecked(true);
@@ -190,14 +199,47 @@ ui(new Ui::MainWindow)
     ui->gammaCheck->setChecked(true);
     ui->betaCheck->setChecked(true);
     ui->statusCheck->setChecked(true);
-
-    std::cout << "Using DICe from " << DICE_EXEC_PATH << std::endl;
-
 }
+
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::newAnalysis(){
+
+    // open the working directory dialog
+    QString dir = QFileDialog::getExistingDirectory(this,tr("Set the new working directory"),".",
+                      QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+    if(dir=="") return;
+
+    // set the reference image in the Input_Vars singleton
+    DICe::gui::Input_Vars::instance()->set_working_dir(dir);
+
+    // display the name of the file in the reference file box
+    ui->workingDirLabel->setText(dir);
+
+    this->resetDefaults();
+
+    // deactivate the run button and write inputs
+    ui->runButton->setEnabled(false);
+    ui->actionExport_input_files->setEnabled(false);
+
+    // clear the shapes
+    ui->simpleQtVTKWidget->resetWidget();
+
+    ui->defListWidget->clear();
+
+    // get a pointer to the file name list in the Input_Vars singleton
+    QStringList * list = DICe::gui::Input_Vars::instance()->get_def_file_list();
+    list->clear();
+
+    ui->defFileLabel->setText("");
+    ui->defImageShow->clear();
+
+    ui->consoleEdit->clear();
 }
 
 void MainWindow::on_refFileButton_clicked()
@@ -286,7 +328,7 @@ void MainWindow::on_workingDirButton_clicked()
     DICe::gui::Input_Vars::instance()->set_working_dir(dir);
 
     // display the name of the file in the reference file box
-    ui->workingDirLineEdit->setText(dir);
+    ui->workingDirLabel->setText(dir);
 
 }
 

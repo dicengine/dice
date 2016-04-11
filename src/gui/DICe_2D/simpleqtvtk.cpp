@@ -448,6 +448,30 @@ int SimpleQtVTK::readImageFile(const std::string & fileName,
     return 0;
 }
 
+void SimpleQtVTK::resetWidget(){
+    style->clearPolygons();
+    renderer->RemoveActor(imageActor);
+    if(isInitialized){
+        style->resetShapesInProgress();
+        renderer->RemoveActor(meshActor);
+        renderer->RemoveActor(pointActor);
+        renderer->RemoveActor(scalarBar);
+    }
+    isInitialized = false;
+    ui->boundaryPlus->setChecked(false);
+    ui->excludedPlus->setChecked(false);
+    style->setBoundaryEnabled(false);
+    style->setExcludedEnabled(false);
+    ui->boundaryPlus->setEnabled(true);
+    ui->excludedPlus->setEnabled(true);
+    cornerAnnotation->SetText(1, "Digital Image Correlation Engine 1.0");
+    // set the tab in case this was called from an external ui
+    ui->tabWidget->setCurrentIndex(0);
+    ui->tabWidget->setTabEnabled(1,false);
+    if(ui->vtkWidget->GetRenderWindow()->IsDrawable())
+        ui->vtkWidget->GetRenderWindow()->Render();
+}
+
 void SimpleQtVTK::estimateTriAlpha(){
     // assert that the first couple fields are X Y COORDS ...
     if(fieldData.size() < 2){

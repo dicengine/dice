@@ -329,18 +329,18 @@ background-color: #404040;
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="workingDirLineEdit">
-          <property name="enabled">
-           <bool>false</bool>
+         <widget class="QLabel" name="workingDirLabel">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>20</height>
+           </size>
           </property>
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
+          <property name="text">
+           <string/>
           </property>
-          <property name="frame">
-           <bool>false</bool>
+          <property name="wordWrap">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -819,6 +819,7 @@ background-color: #404040;
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionNew"/>
     <addaction name="actionExport_input_files"/>
     <addaction name="actionLoad_working_dir"/>
    </widget>
@@ -847,6 +848,11 @@ background-color: #404040;
   <action name="actionLoad_working_dir">
    <property name="text">
     <string>Import working dir...</string>
+   </property>
+  </action>
+  <action name="actionNew">
+   <property name="text">
+    <string>New...</string>
    </property>
   </action>
  </widget>
