@@ -262,7 +262,8 @@ Subset::gamma(){
   const scalar_t mean_ref = mean(REF_INTENSITIES,mean_sum_ref);
   scalar_t mean_sum_def = 0.0;
   const scalar_t mean_def = mean(DEF_INTENSITIES,mean_sum_def);
-  TEUCHOS_TEST_FOR_EXCEPTION(mean_sum_ref==0.0||mean_sum_def==0.0,std::runtime_error," invalid mean sum (cannot be 0.0, ZNSSD is then undefined)" <<
+  TEUCHOS_TEST_FOR_EXCEPTION(mean_sum_ref==0.0||mean_sum_def==0.0,std::runtime_error," invalid mean sum (cannot be 0.0, ZNSSD is then undefined).\n"
+      "This may be caused by a subset that has no active pixels (or all pixels are obstructed)" <<
     mean_sum_ref << " " << mean_sum_def);
   scalar_t gamma = 0.0;
   scalar_t value = 0.0;
