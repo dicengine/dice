@@ -521,7 +521,7 @@ If optical flow is being used as the initialization method and the initializatio
 
 ### Motion windows
 
-For many tracking application (using the 'TRACKING_ROUTINE`, for conformal subsets), only a small portion of the frame is occupied by the object in motion and the user may wish to use only the region around this portion for anlysis. To save time reading frames and computing image filters, a motion window can be defined for the subset. To define a motion window for a subset the syntax is as follows
+For many tracking application (using the `TRACKING_ROUTINE`, for conformal subsets), only a small portion of the frame is occupied by the object in motion and the user may wish to use only the region around this portion for anlysis. To save time reading frames and computing image filters, a motion window can be defined for the subset. To define a motion window for a subset the syntax is as follows
 
     BEGIN CONFORMAL_SUBSET
       SUBSET_ID <id>
@@ -566,6 +566,14 @@ Since there can potentially be several subsets inside of one window, many subset
       TEST_FOR_MOTION
       MOTION_WINDOW 0
     END CONFORMAL_SUBSET
+
+### Skip solves for a particular conformal subset
+
+If the user would like to turn tracking on or off for certain conformal subsets at different points in the analysis, the `SKIP_SOLVE` keyword can be added to the subset definition. The `SKIP_SOLVE` keyword is useful when a subset is in motion for only a portion of the video sequence. The syntax for this keyword is the keyword followed by a set of id numbers that represent frame ids. The first number turns tracking off and subsequent ids turn tracking on or off in an alternating fashion. In the following example, the user would like to only track the subset for frames 1000 to 2000 and then from 2500 to 3000 and stop tracking for the rest of the video.
+
+    SKIP_SOLVE 0 1000 2000 2500 3000
+
+The user can also specify this keyword followed by a file name that contains the ids in text form, with one frame id per line.
 
 ### Filtering images
 
