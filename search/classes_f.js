@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['zero_5fvalue_5finitializer',['Zero_Value_Initializer',['../class_d_i_ce_1_1_zero___value___initializer.html',1,'DICe']]],
-  ['znssd_5fgamma_5ffunctor',['ZNSSD_Gamma_Functor',['../struct_d_i_ce_1_1_z_n_s_s_d___gamma___functor.html',1,'DICe']]]
+  ['vsg_5fstrain_5fpost_5fprocessor',['VSG_Strain_Post_Processor',['../class_d_i_ce_1_1_v_s_g___strain___post___processor.html',1,'DICe']]]
 ];

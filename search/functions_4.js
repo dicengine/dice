@@ -11,5 +11,6 @@ var searchData=
   ['endian_5fswap',['endian_swap',['../namespace_d_i_ce_1_1cine.html#a9f4f02fc942d25bdaa31c963e15b9d4a',1,'DICe::cine']]],
   ['excluded_5farea',['excluded_area',['../class_d_i_ce_1_1_conformal___area___def.html#a8dd83685bef0dd28d6ce515fdc218390',1,'DICe::Conformal_Area_Def']]],
   ['execute',['execute',['../class_d_i_ce_1_1_post___processor.html#a23c8adc045bc7c219000927cd37a02da',1,'DICe::Post_Processor::execute()'],['../class_d_i_ce_1_1_v_s_g___strain___post___processor.html#afbe4597c7eaaa3666e1988be4d85fa15',1,'DICe::VSG_Strain_Post_Processor::execute()'],['../class_d_i_ce_1_1_global___strain___post___processor.html#a0f0c8b88052b0282d9cfc28c6fe5fe48',1,'DICe::Global_Strain_Post_Processor::execute()'],['../class_d_i_ce_1_1_n_l_v_c___strain___post___processor.html#ae45aaf87416ae85a3b086df0308d126e',1,'DICe::NLVC_Strain_Post_Processor::execute()'],['../class_d_i_ce_1_1_keys4___strain___post___processor.html#ad9ff81d2fd3a668f3afece23333aa301',1,'DICe::Keys4_Strain_Post_Processor::execute()']]],
-  ['execute_5fcorrelation',['execute_correlation',['../class_d_i_ce_1_1_schema.html#a9adc1fdda69239debf3d390303fea84f',1,'DICe::Schema']]]
+  ['execute_5fcorrelation',['execute_correlation',['../class_d_i_ce_1_1_schema.html#a9adc1fdda69239debf3d390303fea84f',1,'DICe::Schema']]],
+  ['extents',['Extents',['../struct_d_i_ce_1_1_extents.html#a9fd255d768b8d8c8de290adabbff807a',1,'DICe::Extents']]]
 ];

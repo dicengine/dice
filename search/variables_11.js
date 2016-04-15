@@ -6,6 +6,7 @@ var searchData=
   ['use_5fhvm_5fstabilization',['use_hvm_stabilization',['../namespace_d_i_ce.html#af9ca95da9f79514c139f4fcc9c1ff583',1,'DICe']]],
   ['use_5fhvm_5fstabilization_5f',['use_hvm_stabilization_',['../class_d_i_ce_1_1_schema.html#a080f212696d912a981b438bf11a55c0d',1,'DICe::Schema']]],
   ['use_5fintegrated_5fdic',['use_integrated_dic',['../namespace_d_i_ce.html#abf63c7157e7da007af1b358edfe83d53',1,'DICe']]],
+  ['use_5fmotion_5fdetection_5f',['use_motion_detection_',['../struct_d_i_ce_1_1_motion___window___params.html#ae983b80e882656862510e34b423b962d',1,'DICe::Motion_Window_Params']]],
   ['use_5fobjective_5fregularization',['use_objective_regularization',['../namespace_d_i_ce.html#a737373addc607111e765c5e11a6a6170',1,'DICe']]],
   ['use_5fobjective_5fregularization_5f',['use_objective_regularization_',['../class_d_i_ce_1_1_schema.html#aeba4854674b2a4f7b3d985bb7aa2efc5',1,'DICe::Schema']]],
   ['use_5fsubset_5fevolution',['use_subset_evolution',['../namespace_d_i_ce.html#ae8c184ccb13ac6fd1b75becaf2c0fed6',1,'DICe']]],

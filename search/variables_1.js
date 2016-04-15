@@ -9,6 +9,7 @@ var searchData=
   ['bisize',['biSize',['../struct_d_i_ce_1_1cine_1_1bitmap__info__header.html#ae77a24dd6ebaf9f2b547c3bec717a4ea',1,'DICe::cine::bitmap_info_header']]],
   ['bisizeimage',['biSizeImage',['../struct_d_i_ce_1_1cine_1_1bitmap__info__header.html#a0b394d07944192037824e92ffcde3c02',1,'DICe::cine::bitmap_info_header']]],
   ['bit_5f12_5fwarning_5f',['bit_12_warning_',['../class_d_i_ce_1_1cine_1_1_cine___reader.html#a30fe8b6536b4dba3f898f39892cf52ab',1,'DICe::cine::Cine_Reader']]],
+  ['bit_5fdepth_5f',['bit_depth_',['../class_d_i_ce_1_1cine_1_1_cine___header.html#a7a3f126976da780e9d9aa1a9033c1f2a',1,'DICe::cine::Cine_Header']]],
   ['bitmap_5fheader_5f',['bitmap_header_',['../class_d_i_ce_1_1cine_1_1_cine___header.html#a3265d6efa20392c7e51e03517ae09782',1,'DICe::cine::Cine_Header']]],
   ['biwidth',['biWidth',['../struct_d_i_ce_1_1cine_1_1bitmap__info__header.html#a36fbbc902d025fb587c0cb5b4328a174',1,'DICe::cine::bitmap_info_header']]],
   ['bixpelspermeter',['biXPelsPerMeter',['../struct_d_i_ce_1_1cine_1_1bitmap__info__header.html#ac43cf559a4c41f38c6b48e9715b9b65d',1,'DICe::cine::bitmap_info_header']]],

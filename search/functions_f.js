@@ -28,6 +28,7 @@ var searchData=
   ['robust_5fdelta_5ftheta_5fparam',['robust_delta_theta_param',['../namespace_d_i_ce.html#a9d4af49de64c06d769a889873063f094',1,'DICe']]],
   ['robust_5fsolver_5ftolerance',['robust_solver_tolerance',['../class_d_i_ce_1_1_schema.html#aa6b0e5c40a402be633fee52c9890800e',1,'DICe::Schema']]],
   ['robust_5fsolver_5ftolerance_5fparam',['robust_solver_tolerance_param',['../namespace_d_i_ce.html#ae3bec3b681c0c7dceec6c58f6ca28346',1,'DICe']]],
+  ['rotate_5fdef_5fimage',['rotate_def_image',['../class_d_i_ce_1_1_schema.html#a47fbc455e35971a85e5f9df89b1a165c',1,'DICe::Schema']]],
   ['rotate_5fdef_5fimage_5f180_5fparam',['rotate_def_image_180_param',['../namespace_d_i_ce.html#a39f9bf558d75b5619076ce6424be8e24',1,'DICe']]],
   ['rotate_5fdef_5fimage_5f270_5fparam',['rotate_def_image_270_param',['../namespace_d_i_ce.html#a7fc7821c5d96a5ed4fa7eb4d22f426e3',1,'DICe']]],
   ['rotate_5fdef_5fimage_5f90_5fparam',['rotate_def_image_90_param',['../namespace_d_i_ce.html#a721efc50bb42037e23c81c369948f3fd',1,'DICe']]],

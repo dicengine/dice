@@ -12,6 +12,7 @@ var searchData=
   ['use_5fhvm_5fstabilization_5fparam',['use_hvm_stabilization_param',['../namespace_d_i_ce.html#ab82277eeb41a485f5d376df537438434',1,'DICe']]],
   ['use_5fintegrated_5fdic',['use_integrated_dic',['../namespace_d_i_ce.html#abf63c7157e7da007af1b358edfe83d53',1,'DICe']]],
   ['use_5fintegrated_5fdic_5fparam',['use_integrated_dic_param',['../namespace_d_i_ce.html#a025a49744062aefba499777524aa4cae',1,'DICe']]],
+  ['use_5fmotion_5fdetection_5f',['use_motion_detection_',['../struct_d_i_ce_1_1_motion___window___params.html#ae983b80e882656862510e34b423b962d',1,'DICe::Motion_Window_Params']]],
   ['use_5fobjective_5fregularization',['use_objective_regularization',['../class_d_i_ce_1_1_schema.html#ac871a70d9881cffa18e72fed06b5c67d',1,'DICe::Schema::use_objective_regularization()'],['../namespace_d_i_ce.html#a737373addc607111e765c5e11a6a6170',1,'DICe::use_objective_regularization()']]],
   ['use_5fobjective_5fregularization_5f',['use_objective_regularization_',['../class_d_i_ce_1_1_schema.html#aeba4854674b2a4f7b3d985bb7aa2efc5',1,'DICe::Schema']]],
   ['use_5fobjective_5fregularization_5fparam',['use_objective_regularization_param',['../namespace_d_i_ce.html#a03d8f22765325c0889b694e21047bd4f',1,'DICe']]],

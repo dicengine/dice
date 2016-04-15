@@ -4,7 +4,7 @@ var searchData=
   ['centroid_5fy',['centroid_y',['../class_d_i_ce_1_1_subset.html#a9bc78802f1abc2a9567c99ca6acd00c7',1,'DICe::Subset']]],
   ['check_5ffor_5fblocking_5fsubsets',['check_for_blocking_subsets',['../class_d_i_ce_1_1_schema.html#a6fc1fee072c3846b6e3af48fc8afa079',1,'DICe::Schema']]],
   ['cine_5fheader',['Cine_Header',['../class_d_i_ce_1_1cine_1_1_cine___header.html#a2dc0744543f0202b6ee3a8fc190e6b0f',1,'DICe::cine::Cine_Header']]],
-  ['cine_5freader',['Cine_Reader',['../class_d_i_ce_1_1cine_1_1_cine___reader.html#a5e8af6907fc835a5c2fd422833ba8e87',1,'DICe::cine::Cine_Reader']]],
+  ['cine_5freader',['Cine_Reader',['../class_d_i_ce_1_1cine_1_1_cine___reader.html#a2244e96e44b2f1369887129ffca8990d',1,'DICe::cine::Cine_Reader']]],
   ['circle',['Circle',['../class_d_i_ce_1_1_circle.html#a8b15764894e439d6d59d334e0a98c181',1,'DICe::Circle']]],
   ['closest_5ftriad',['closest_triad',['../class_d_i_ce_1_1_path___initializer.html#a8520cc86dd7ce2a43b9b844e1835d179',1,'DICe::Path_Initializer']]],
   ['complex_5fabs',['complex_abs',['../namespace_d_i_ce.html#a242fdde5d15cd522346f338f4afe2511',1,'DICe']]],

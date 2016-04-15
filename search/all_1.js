@@ -1,7 +1,7 @@
 var searchData=
 [
   ['best_5foptical_5fflow_5fpoint',['best_optical_flow_point',['../class_d_i_ce_1_1_optical___flow___initializer.html#af381dc35d96c2ead4a51a1eff55d6dc5',1,'DICe::Optical_Flow_Initializer']]],
-  ['beta',['beta',['../class_d_i_ce_1_1_objective.html#a1f4ccaf78db74db514b8796304c4005f',1,'DICe::Objective::beta()'],['../class_d_i_ce_1_1_objective___z_n_s_s_d.html#add46a12700d2361a8dd54ff7cc85e644',1,'DICe::Objective_ZNSSD::beta()']]],
+  ['beta',['beta',['../class_d_i_ce_1_1_objective.html#a5e8fd3c8ffb0ffe8a10347e400ae7d0f',1,'DICe::Objective::beta()'],['../class_d_i_ce_1_1_objective___z_n_s_s_d.html#add46a12700d2361a8dd54ff7cc85e644',1,'DICe::Objective_ZNSSD::beta()']]],
   ['bibitcount',['biBitCount',['../struct_d_i_ce_1_1cine_1_1bitmap__info__header.html#a74e311711b7d9380f95fae98fd67d713',1,'DICe::cine::bitmap_info_header']]],
   ['biclrimportant',['biClrImportant',['../struct_d_i_ce_1_1cine_1_1bitmap__info__header.html#a852faa09acd1467d80e324d20543032c',1,'DICe::cine::bitmap_info_header']]],
   ['biclrused',['biClrUsed',['../struct_d_i_ce_1_1cine_1_1bitmap__info__header.html#acf3bc32748ca8a9cd21ee0caaab19c32',1,'DICe::cine::bitmap_info_header']]],
@@ -11,6 +11,8 @@ var searchData=
   ['bisize',['biSize',['../struct_d_i_ce_1_1cine_1_1bitmap__info__header.html#ae77a24dd6ebaf9f2b547c3bec717a4ea',1,'DICe::cine::bitmap_info_header']]],
   ['bisizeimage',['biSizeImage',['../struct_d_i_ce_1_1cine_1_1bitmap__info__header.html#a0b394d07944192037824e92ffcde3c02',1,'DICe::cine::bitmap_info_header']]],
   ['bit_5f12_5fwarning_5f',['bit_12_warning_',['../class_d_i_ce_1_1cine_1_1_cine___reader.html#a30fe8b6536b4dba3f898f39892cf52ab',1,'DICe::cine::Cine_Reader']]],
+  ['bit_5fdepth',['Bit_Depth',['../namespace_d_i_ce_1_1cine.html#a55ad32d41730c807cfc2c6f4a48409a5',1,'DICe::cine']]],
+  ['bit_5fdepth_5f',['bit_depth_',['../class_d_i_ce_1_1cine_1_1_cine___header.html#a7a3f126976da780e9d9aa1a9033c1f2a',1,'DICe::cine::Cine_Header']]],
   ['bitmap_5fheader_5f',['bitmap_header_',['../class_d_i_ce_1_1cine_1_1_cine___header.html#a3265d6efa20392c7e51e03517ae09782',1,'DICe::cine::Cine_Header']]],
   ['bitmap_5finfo_5fheader',['bitmap_info_header',['../struct_d_i_ce_1_1cine_1_1bitmap__info__header.html',1,'DICe::cine']]],
   ['biwidth',['biWidth',['../struct_d_i_ce_1_1cine_1_1bitmap__info__header.html#a36fbbc902d025fb587c0cb5b4328a174',1,'DICe::cine::bitmap_info_header']]],

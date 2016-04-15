@@ -2,7 +2,6 @@ var searchData=
 [
   ['r',['r',['../structkiss__fft__cpx.html#a67c8e4e404fa6a45d318f02aed36111e',1,'kiss_fft_cpx']]],
   ['radius2_5f',['radius2_',['../class_d_i_ce_1_1_circle.html#a8c5994b1ca0d9eaae57261d9865be7b7',1,'DICe::Circle']]],
-  ['radius_5f',['radius_',['../class_d_i_ce_1_1_circle.html#a694194e93c8167bd489c7ff57ff319b6',1,'DICe::Circle']]],
   ['ref_5fcx_5f',['ref_cx_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a0c27a4e192581148f5f444812978fd88',1,'DICe::Optical_Flow_Initializer']]],
   ['ref_5fcy_5f',['ref_cy_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a0a716a118b52b7fce6113d6d8208536d',1,'DICe::Optical_Flow_Initializer']]],
   ['ref_5fimage_5frotation_5f',['ref_image_rotation_',['../class_d_i_ce_1_1_schema.html#a5e594ba5749b81faf50def4f9ddf1a3d',1,'DICe::Schema']]],
