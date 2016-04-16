@@ -433,16 +433,26 @@ void MainWindow::loadWorkingDir(){
           }
       }
     }
+    // remove existing input file if it exists:
     QFileInfo inputInfo = inputFile;
-    QFile::copy(inputInfo.filePath(),currentWorkingDir+inputInfo.fileName());
+    QFileInfo existingInput = currentWorkingDir+QString::fromStdString("input.xml");
+    if(existingInput.exists()){
+        std::cout << "Removing input.xml from current working directory" << std::endl;
+        QFile::remove(existingInput.filePath());
+    }
+    bool inputCopySuccess = QFile::copy(inputInfo.filePath(),currentWorkingDir+inputInfo.fileName());
+    if(!inputCopySuccess){
+        QMessageBox msgBox;
+        msgBox.setText("Error: could not copy input.xml to working dir.");
+        msgBox.exec();
+        return;
+    }
 
     // read the subset file:
     QList<QList<QPoint> > boundaryShapes;
     QList<QList<QPoint> > excludedShapes;
     if(hasSubsetFile){
         QFileInfo subsetInfo = subsetFile;
-        QFile::copy(subsetInfo.filePath(),currentWorkingDir+subsetInfo.fileName());
-
         bool hasROIDef = false;
         bool subsetError = false;
         std::fstream dataFile(subsetFile.toStdString().c_str(), std::ios_base::in);
@@ -496,6 +506,17 @@ void MainWindow::loadWorkingDir(){
             msgBox.exec();
             return;
         }
+        QFileInfo existingSubsetInfo = currentWorkingDir+QString::fromStdString("subset_defs.txt");
+        if(existingSubsetInfo.exists()){
+            std::cout << "Removing subset_defs.txt from current working directory" << std::endl;
+            QFile::remove(existingSubsetInfo.filePath());
+        }
+        bool subsetCopySuccess = QFile::copy(subsetInfo.filePath(),currentWorkingDir+subsetInfo.fileName());
+        if(!subsetCopySuccess){
+            QMessageBox msgBox;
+            msgBox.setText("Error: could not copy subset_defs.txt to working dir.");
+            msgBox.exec();
+        }
     }
 
 
@@ -508,6 +529,7 @@ void MainWindow::loadWorkingDir(){
         msgBox.exec();
         return;
     }
+
     // set the reference image in the Input_Vars singleton
     DICe::gui::Input_Vars::instance()->set_ref_file_info(refFileInfo);
 
@@ -534,7 +556,6 @@ void MainWindow::loadWorkingDir(){
         ui->simpleQtVTKWidget->importVertices(boundaryShapes,excludedShapes);
     }
 
-
     // import information:
     const int subsetSize = stringParams->get<int>("subset_size");
     ui->subsetSize->setValue(subsetSize);
@@ -544,8 +565,6 @@ void MainWindow::loadWorkingDir(){
     // import the parameters if they exist:
     if(foundParams){
         QFileInfo paramsInfo = paramsFile;
-        QFile::copy(paramsInfo.filePath(),currentWorkingDir+paramsInfo.fileName());
-
         Teuchos::RCP<Teuchos::ParameterList> corrParams = Teuchos::rcp( new Teuchos::ParameterList() );
         Teuchos::Ptr<Teuchos::ParameterList> corrParamsPtr(corrParams.get());
         Teuchos::updateParametersFromXmlFile(paramsFile.toStdString(), corrParamsPtr);
@@ -620,6 +639,17 @@ void MainWindow::loadWorkingDir(){
                 }
             }
         }
+        QFileInfo existingParams = currentWorkingDir+QString::fromStdString("params.xml");
+        if(existingParams.exists()){
+            std::cout << "Removing params.xml from current working directory" << std::endl;
+            QFile::remove(existingParams.filePath());
+        }
+        bool paramsCopySuccess = QFile::copy(paramsInfo.filePath(),currentWorkingDir+paramsInfo.fileName());
+        if(!paramsCopySuccess){
+            QMessageBox msgBox;
+            msgBox.setText("Error: could not copy params.xml to working dir.");
+            msgBox.exec();
+        }
     }
 
     // activate the run/write buttons
@@ -628,20 +658,38 @@ void MainWindow::loadWorkingDir(){
 
     // copy results files if they exist:
     if(foundResults){
+        // copy results files if they exist:
         // create the working directory
-        std::cout << "checking " << currentResultsDir.toStdString() << std::endl;
         if(!QDir(currentResultsDir).exists()){
-            std::cout << "creating " << currentResultsDir.toStdString() << std::endl;
-             QDir().mkdir(currentResultsDir);
+            QDir().mkdir(currentResultsDir);
+        }
+
+        std::cout << "Clearing existing results directory " << std::endl;
+        QStringList currentResFiles;
+        QDirIterator  currentIt(currentResultsDir, QStringList() << "*.txt",
+                       QDir::Files,QDirIterator::Subdirectories);
+        while (currentIt.hasNext()){
+            std::cout << "Removing file " << currentIt.next().toStdString() << std::endl;
+            QDir cDir;
+            cDir.remove(currentIt.filePath());
         }
 
         // copy files to this working directory
         QStringList resFiles;
         QDirIterator it(resultsDir, QStringList() << "*.txt",
-                       QDir::Files,QDirIterator::Subdirectories);
+                        QDir::Files,QDirIterator::Subdirectories);
         while (it.hasNext()){
-            std::cout << "Copying file " << it.next().toStdString() << std::endl;
-            QFile::copy(it.filePath(),currentResultsDir+it.fileName());
+            QString fromFile = it.next();
+            QString toFile = currentResultsDir+it.fileName();
+            std::cout << "Copying file: " << fromFile.toStdString() << std::endl;
+            std::cout << "          to: " << toFile.toStdString() << std::endl;
+            bool success = QFile::copy(it.filePath(),currentResultsDir+it.fileName());
+            if(!success){
+                QMessageBox msgBox;
+                msgBox.setText("Error: could not copy results files to working dir.");
+                msgBox.exec();
+                return;
+            }
         }
         // load the results viewer
         prepResultsViewer();
@@ -830,7 +878,6 @@ void MainWindow::on_runButton_clicked()
     QStringList args;
     args << "-i" << DICe::gui::Input_Vars::instance()->input_file_name().c_str() << "-v" << "-t";
 
-//    diceProcess->reset();
     diceProcess->start(diceExec,args);
     diceProcess->waitForFinished();
     diceProcess->close();
