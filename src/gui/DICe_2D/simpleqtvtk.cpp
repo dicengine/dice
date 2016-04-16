@@ -313,8 +313,10 @@ void SimpleQtVTK::resetCamera(){
     double xc = imageOrigin[0] + 0.5*(imageExtent[0] + imageExtent[1])*imageSpacing[0];
     double yc = imageOrigin[1] + 0.5*(imageExtent[2] + imageExtent[3])*imageSpacing[1];
     double yd = (imageExtent[3] - imageExtent[2] + 1)*imageSpacing[1];
+    double xd = (imageExtent[1] - imageExtent[0] + 1)*imageSpacing[0];
+    double md = yd > xd ? yd : xd;
     double d = camera->GetDistance();
-    camera->SetParallelScale(0.5*yd);
+    camera->SetParallelScale(0.5*md);
     camera->SetFocalPoint(xc,yc,0.0);
     camera->SetPosition(xc,yc,-d);
     camera->SetViewUp(0.0,-1.0,0.0);

@@ -215,8 +215,8 @@ public:
         this->Annotation = NULL;
     }
     void SetOriginSpacing(const double & originX, const double & originY, const double & spacingX, const double & spacingY){
-        this->ox = originY;
-        this->oy = originX;
+        this->ox = originX;
+        this->oy = originY;
         this->sx = spacingX;
         this->sy = spacingY;
     }
