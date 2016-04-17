@@ -54,6 +54,9 @@
 #ifndef DICE_EXEC_PATH
   #error
 #endif
+#ifndef GITSHA1
+  #define GITSHA1 "Version not available"
+#endif
 
 DICe::gui::Input_Vars * DICe::gui::Input_Vars::input_vars_ptr_ = NULL;
 
@@ -300,7 +303,20 @@ void MainWindow::on_workingDirButton_clicked()
 }
 
 void MainWindow::launchDICePage(){
-    QDesktopServices::openUrl(QUrl("https://github.com/dicengine/dice", QUrl::TolerantMode));
+    QMessageBox msgBox;
+    QString version = QString::fromStdString(GITSHA1);
+    msgBox.setText("Digital Image Correlation Engine (DICe)\n\nVersion: " + version
+                   +"\n\nCopyright 2015 Sandia Corporation");
+    QAbstractButton *myNoButton = msgBox.addButton(trUtf8("Close"), QMessageBox::NoRole);
+    QAbstractButton *myYesButton = msgBox.addButton(trUtf8("Github"), QMessageBox::YesRole);
+    msgBox.exec();
+    if(msgBox.clickedButton() == myYesButton){
+        QDesktopServices::openUrl(QUrl("https://github.com/dicengine/dice", QUrl::TolerantMode));
+        return;
+    }
+    else if(msgBox.clickedButton() == myNoButton){
+        return;
+    }
 }
 
 void MainWindow::loadWorkingDir(){

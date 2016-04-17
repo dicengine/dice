@@ -98,4 +98,14 @@ IF(WIN32)
   FILE(COPY ${QT_DIR}/bin/Qt5PrintSupport.dll DESTINATION ${DICE_OUTPUT_PREFIX}/bin)
 ENDIF()
 
+# Get the git information to put in the header message (to identify the commit corresponding
+# to the executable that was run
+execute_process(
+  COMMAND git describe --abbrev=6 --dirty --always --tags
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_SHA1
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  MESSAGE(STATUS "Git sha1: ${GIT_SHA1}")
+ADD_DEFINITIONS(-DGITSHA1=\"${GIT_SHA1}\")
+
 add_subdirectory(DICe_2D)
