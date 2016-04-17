@@ -140,6 +140,14 @@ public:
       enable_translation_ = flag;
   }
 
+  void set_enable_vsg(const bool flag){
+      enable_vsg_ = flag;
+  }
+
+  void set_strain_window_size(const int size){
+      strain_window_size_ = size;
+  }
+
   /// set the shape functions
   void set_enable_rotation(const bool flag){
       enable_rotation_ = flag;
@@ -246,12 +254,26 @@ public:
       // set the default delimiter
       DICe::write_xml_string_param(paramsFile,"output_delimiter",",",false);
 
-      // write the output fields
-      write_xml_param_list_open(paramsFile,"output_spec",false);
-      for(size_t i=0;i<output_fields_.size();++i){
-        write_xml_bool_param(paramsFile,output_fields_[i],"true",false);
+      // compute strain if requested
+      if(enable_vsg_){
+          DICe::write_xml_param_list_open(paramsFile,"post_process_vsg_strain",false);
+          std::stringstream windowSS;
+          windowSS << strain_window_size_;
+          DICe::write_xml_size_param(paramsFile,"strain_window_size_in_pixels",windowSS.str(),false);
+          DICe::write_xml_param_list_close(paramsFile,false);
       }
-      write_xml_param_list_close(paramsFile,false);
+
+      // write the output fields
+      DICe::write_xml_param_list_open(paramsFile,"output_spec",false);
+      for(size_t i=0;i<output_fields_.size();++i){
+        DICe::write_xml_bool_param(paramsFile,output_fields_[i],"true",false);
+      }
+      if(enable_vsg_){
+          DICe::write_xml_bool_param(paramsFile,"VSG_STRAIN_XX","true",false);
+          DICe::write_xml_bool_param(paramsFile,"VSG_STRAIN_YY","true",false);
+          DICe::write_xml_bool_param(paramsFile,"VSG_STRAIN_XY","true",false);
+      }
+      DICe::write_xml_param_list_close(paramsFile,false);
 
       DICe::finalize_xml_file(paramsFile);
   }
@@ -340,6 +362,11 @@ private:
   bool enable_normal_strain_;
   bool enable_shear_strain_;
   bool enable_rotation_;
+
+  bool enable_vsg_;
+
+  /// strain param
+  int strain_window_size_;
 
   /// File names
   std::string inputFile;

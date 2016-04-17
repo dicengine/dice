@@ -86,6 +86,8 @@ public:
     void loadWorkingDir();
 
     void launchDICePage();
+    void on_stepSize_editingFinished();
+
 private:
     Ui::MainWindow *ui;
 

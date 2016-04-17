@@ -768,6 +768,38 @@ background-color: #404040;
          </widget>
         </item>
         <item>
+         <widget class="QGroupBox" name="groupBox_13">
+          <property name="title">
+           <string>STRAIN</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_16">
+           <property name="spacing">
+            <number>12</number>
+           </property>
+           <item>
+            <widget class="QCheckBox" name="strainCheck">
+             <property name="text">
+              <string>Compute strain</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="strainCombo"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Window size (pixels):</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="strainWindowSpin"/>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
          <spacer name="verticalSpacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>

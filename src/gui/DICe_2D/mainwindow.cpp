@@ -181,6 +181,10 @@ void MainWindow::resetDefaults(){
     ui->interpMethodCombo->addItem("BICUBIC");
     ui->interpMethodCombo->addItem("BILINEAR");
 
+    // add the strain methods
+    ui->strainCombo->addItem("VIRTUAL_STRAIN_GAUGE");
+    ui->strainCheck->setChecked(true);
+
     // set up the step size and subset size
     ui->subsetSize->setMinimum(10);
     ui->subsetSize->setMaximum(50);
@@ -188,6 +192,11 @@ void MainWindow::resetDefaults(){
     ui->stepSize->setMinimum(1);
     ui->stepSize->setMaximum(100);
     ui->stepSize->setValue(15);
+    ui->strainWindowSpin->setMinimum(ui->stepSize->value()*2);
+    ui->strainWindowSpin->setMaximum(ui->stepSize->value()*6);
+    ui->strainWindowSpin->setValue(ui->stepSize->value()*2);
+    ui->strainWindowSpin->setSingleStep(ui->stepSize->value());
+
 
     // reset the progress bar
     //ui->progressBar->setValue(0);
@@ -765,6 +774,14 @@ void MainWindow::writeInputFiles(){
     DICe::gui::Input_Vars::instance()->set_enable_rotation(ui->rotationShapeCheck->isChecked());
     DICe::gui::Input_Vars::instance()->set_enable_normal_strain(ui->normalShapeCheck->isChecked());
     DICe::gui::Input_Vars::instance()->set_enable_shear_strain(ui->shearShapeCheck->isChecked());
+    std::cout << " strain check " << ui->strainCheck->isChecked() << std::endl;
+    std::cout << " strain combo " << ui->strainCombo->currentText().toStdString() << std::endl;
+    if(ui->strainCheck->isChecked()&&ui->strainCombo->currentText()=="VIRTUAL_STRAIN_GAUGE"){
+        DICe::gui::Input_Vars::instance()->set_enable_vsg(true);
+    }
+    else
+        DICe::gui::Input_Vars::instance()->set_enable_vsg(false);
+    DICe::gui::Input_Vars::instance()->set_strain_window_size(ui->strainWindowSpin->value());
     // output fields
     std::vector<std::string> output_fields;
     if(ui->xCheck->isChecked()) output_fields.push_back("COORDINATE_X");
@@ -914,4 +931,12 @@ void MainWindow::on_runButton_clicked()
 void MainWindow::on_diceButton_clicked()
 {
     QDesktopServices::openUrl(QUrl("https://github.com/dicengine/dice", QUrl::TolerantMode));
+}
+
+void MainWindow::on_stepSize_editingFinished()
+{
+    ui->strainWindowSpin->setMinimum(ui->stepSize->value()*2);
+    ui->strainWindowSpin->setMaximum(ui->stepSize->value()*6);
+    ui->strainWindowSpin->setValue(ui->stepSize->value()*2);
+    ui->strainWindowSpin->setSingleStep(ui->stepSize->value());
 }
