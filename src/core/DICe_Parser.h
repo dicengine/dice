@@ -112,11 +112,13 @@ const char* const create_separate_run_info_file = "create_separate_run_info_file
 /// \brief Parses the options set in the command line when dice is invoked
 /// \param argc typical argument from main
 /// \param argv typical argument from main
+/// \param force_exit true if the executable should exit gracefully
 /// \param outStream [out] The output stream, gets set to cout or blackholeStream depending on command line options
 /// \param analysis_type Global, Local, Constrained Optimziation, ...
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   char *argv[],
+  bool & force_exit,
   Teuchos::RCP<std::ostream> & outStream,
   const Analysis_Type analysis_type=LOCAL_DIC);
 

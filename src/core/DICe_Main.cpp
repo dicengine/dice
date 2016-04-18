@@ -70,7 +70,13 @@ int main(int argc, char *argv[]) {
 
     if(proc_rank==0)  DEBUG_MSG("Parsing command line options");
     Teuchos::RCP<std::ostream> outStream;
-    Teuchos::RCP<Teuchos::ParameterList> input_params = DICe::parse_command_line(argc,argv,outStream);
+    bool force_exit = false;
+    Teuchos::RCP<Teuchos::ParameterList> input_params = DICe::parse_command_line(argc,argv,force_exit,outStream);
+    if(force_exit){
+      // exit gracefully:
+      DICe::finalize();
+      return 0;
+    }
     *outStream << "Input Parameters: " << std::endl;
     input_params->print(*outStream);
     *outStream << "\n--- Input read successfully ---\n" << std::endl;
