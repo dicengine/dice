@@ -95,6 +95,8 @@ private:
 
      QProcess *diceProcess;
 
+     QString execPath;
+
 };
 
 // free function to tokenize a file line

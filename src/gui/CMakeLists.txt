@@ -38,12 +38,11 @@ SET(TRILINOS_LIBRARIES
   teuchosparameterlist
 )
 
-IF (NOT DEFINED DICE_EXEC_PATH)
-  MESSAGE(FATAL_ERROR "\nDICe Error: DICE_EXEC_PATH must be defined (-D DICE_EXEC_PATH:FILEPATH=<dice_exec_path>)")
-ENDIF()
-
-MESSAGE(STATUS "Using DICe executable from ${DICE_EXEC_PATH}")
-ADD_DEFINITIONS(-DDICE_EXEC_PATH=\"${DICE_EXEC_PATH}\")
+#IF (NOT DEFINED DICE_EXEC_PATH)
+#  MESSAGE(FATAL_ERROR "\nDICe Error: DICE_EXEC_PATH must be defined (-D DICE_EXEC_PATH:FILEPATH=<dice_exec_path>)")
+#ENDIF()
+#MESSAGE(STATUS "Using DICe executable from ${DICE_EXEC_PATH}")
+#ADD_DEFINITIONS(-DDICE_EXEC_PATH=\"${DICE_EXEC_PATH}\")
 
 # find the Qt libraries
 MESSAGE(STATUS "Searching for Qt in dir: ${QT_DIR}")

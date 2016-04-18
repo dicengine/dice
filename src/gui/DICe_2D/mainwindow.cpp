@@ -45,15 +45,13 @@
 #include <QFileInfo>
 #include <QDirIterator>
 #include <QDesktopServices>
+#include <QTextStream>
 #include <iostream>
 
 #include <DICe_InputVars.h>
 #include <simpleqtvtk.h>
 #include <Teuchos_XMLParameterListHelpers.hpp>
 
-#ifndef DICE_EXEC_PATH
-  #error
-#endif
 #ifndef GITSHA1
   #define GITSHA1 "Version not available"
 #endif
@@ -158,7 +156,72 @@ ui(new Ui::MainWindow)
     // set up the load working dir action
     connect(ui->actionLoad_working_dir, SIGNAL(triggered()), this, SLOT(loadWorkingDir()));
 
-    std::cout << "Using DICe from " << DICE_EXEC_PATH << std::endl;
+    QString configPath = QDir::homePath();
+#ifdef WIN32
+    configPath +=  "\\.dice";
+#else
+    configPath +=  "/.dice";
+#endif
+    QFileInfo configFile(configPath);
+    // check if file exists and if yes: Is it really a file and not a directory?
+    if (!configFile.exists() || !configFile.isFile()) {
+        // open file dialog box to select reference file
+        QFileInfo execFileInfo = QFileDialog::getOpenFileName(this,
+          tr("Select the DICe backend executable to use"), ".",
+          tr("Executable (dice.exe dice)"));
+        if(execFileInfo.fileName()==""){
+            QMessageBox msgBox;
+            msgBox.setText("Invalid DICe executable path");
+            msgBox.exec();
+            exit(0);
+        }
+        execPath = execFileInfo.filePath();
+        // save the selection to the config file:
+        QFile saveConfig(configPath);
+        if (saveConfig.open(QIODevice::ReadWrite)) {
+            QTextStream stream(&saveConfig);
+            stream << execPath << endl;
+            saveConfig.close();
+        }
+        else{
+            QMessageBox msgBox;
+            msgBox.setText("Error saving DICe configuration file.");
+            msgBox.exec();
+            exit(0);
+        }
+    }
+    else{ // read the file and get the executable location
+        QFile savedConfig(configPath);
+        if (savedConfig.open(QIODevice::ReadOnly)) {
+            execPath = savedConfig.readLine();
+            savedConfig.close();
+        }
+        else{
+            QMessageBox msgBox;
+            msgBox.setText("Error reading DICe configuration file.");
+            msgBox.exec();
+            exit(0);
+        }
+    }
+    std::cout << "Using DICe from " << execPath.toStdString() << std::endl;
+    QMessageBox msgBox;
+    msgBox.setText("Using DICe from " + execPath);
+    msgBox.exec();
+
+    QStringList args;
+    args << "--version";
+    diceProcess->start(execPath,args);
+    diceProcess->waitForFinished();
+    diceProcess->close();
+
+    if(diceProcess->exitStatus()||diceProcess->exitCode()){
+        QMessageBox msgBox;
+        msgBox.setText("ERROR: DICe execution failed, please re-select a valid DICe executable.");
+        msgBox.exec();
+        exit(0);
+    }
+
+    // TODO set button in file dropdown
 }
 
 void MainWindow::resetDefaults(){
@@ -907,11 +970,10 @@ void MainWindow::on_runButton_clicked()
     }
     std::cout << "Running correlation..." << std::endl << std::endl;
 
-    QString diceExec = DICE_EXEC_PATH;
     QStringList args;
     args << "-i" << DICe::gui::Input_Vars::instance()->input_file_name().c_str() << "-v" << "-t";
 
-    diceProcess->start(diceExec,args);
+    diceProcess->start(execPath,args);
     diceProcess->waitForFinished();
     diceProcess->close();
 
