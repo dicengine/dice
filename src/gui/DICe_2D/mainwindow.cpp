@@ -178,7 +178,7 @@ ui(new Ui::MainWindow)
 #ifdef WIN32
         execPath =  "C:\\Program Files (x86)\\Digital Image Correlation Engine\\dice.exe";
 #else
-        execPath =  "/Applications/DICe_v1.0-beta/DICe.app/Contents/MacOS/dice";
+        execPath =  "/Applications/DICe.app/Contents/MacOS/dice";
 #endif
         if (saveConfig.open(QIODevice::ReadWrite)) {
             QTextStream stream(&saveConfig);
