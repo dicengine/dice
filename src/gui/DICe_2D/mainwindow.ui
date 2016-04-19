@@ -853,6 +853,7 @@ background-color: #404040;
     </property>
     <addaction name="actionExport_input_files"/>
     <addaction name="actionLoad_working_dir"/>
+    <addaction name="actionSet_backend_exec"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -884,6 +885,11 @@ background-color: #404040;
   <action name="actionNew">
    <property name="text">
     <string>New...</string>
+   </property>
+  </action>
+  <action name="actionSet_backend_exec">
+   <property name="text">
+    <string>Set backend exec...</string>
    </property>
   </action>
  </widget>

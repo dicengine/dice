@@ -81,11 +81,14 @@ public:
 
     void readOutput();
 
+    int setExec();
+
     void exportInputFiles();
 
     void loadWorkingDir();
 
     void launchDICePage();
+
     void on_stepSize_editingFinished();
 
 private:

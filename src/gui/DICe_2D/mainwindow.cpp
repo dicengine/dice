@@ -156,6 +156,14 @@ ui(new Ui::MainWindow)
     // set up the load working dir action
     connect(ui->actionLoad_working_dir, SIGNAL(triggered()), this, SLOT(loadWorkingDir()));
 
+    // set the the change exec location action
+    connect(ui->actionSet_backend_exec, SIGNAL(triggered()), this, SLOT(setExec()));
+
+    // WRITE THE DEFAULT LOCATIONS TO FILE
+    // READ THE FILE AND TRY THE DEFAULT LCOATION
+    // ON FAILURE, ASK THE USER TO LCOATE THE INSTALL DIR
+    // TEST AGAIN TO SEE IF IT WORKS
+
     QString configPath = QDir::homePath();
 #ifdef WIN32
     configPath +=  "\\.dice";
@@ -164,20 +172,14 @@ ui(new Ui::MainWindow)
 #endif
     QFileInfo configFile(configPath);
     // check if file exists and if yes: Is it really a file and not a directory?
+    // if the file does not exist, create it with the default locations
     if (!configFile.exists() || !configFile.isFile()) {
-        // open file dialog box to select reference file
-        QFileInfo execFileInfo = QFileDialog::getOpenFileName(this,
-          tr("Select the DICe backend executable to use"), ".",
-          tr("Executable (dice.exe dice)"));
-        if(execFileInfo.fileName()==""){
-            QMessageBox msgBox;
-            msgBox.setText("Invalid DICe executable path");
-            msgBox.exec();
-            exit(0);
-        }
-        execPath = execFileInfo.filePath();
-        // save the selection to the config file:
         QFile saveConfig(configPath);
+#ifdef WIN32
+        execPath =  "C:\\Program Files (x86)\\Digital Image Correlation Engine\\dice.exe";
+#else
+        execPath =  "/Applications/DICe_v1.0-beta/DICe.app/Contents/MacOS/dice";
+#endif
         if (saveConfig.open(QIODevice::ReadWrite)) {
             QTextStream stream(&saveConfig);
             stream << execPath << endl;
@@ -185,41 +187,38 @@ ui(new Ui::MainWindow)
         }
         else{
             QMessageBox msgBox;
-            msgBox.setText("Error saving DICe configuration file.");
+            msgBox.setText("Unable to save DICe configuration file to the home directory.");
             msgBox.exec();
-            exit(0);
+            exit(1);
         }
     }
     else{ // read the file and get the executable location
         QFile savedConfig(configPath);
         if (savedConfig.open(QIODevice::ReadOnly)) {
             execPath = savedConfig.readLine();
+            execPath = execPath.simplified(); // remove white space
             savedConfig.close();
         }
         else{
             QMessageBox msgBox;
-            msgBox.setText("Error reading DICe configuration file.");
+            msgBox.setText("Unable to read DICe configuration file (/home/.dice)");
             msgBox.exec();
-            exit(0);
+            exit(1);
         }
     }
-    std::cout << "Using DICe from " << execPath.toStdString() << std::endl;
-    QMessageBox msgBox;
-    msgBox.setText("Using DICe from " + execPath);
-    msgBox.exec();
-
+    // test the executable
     QStringList args;
     args << "--version";
     diceProcess->start(execPath,args);
     diceProcess->waitForFinished();
     diceProcess->close();
-
+    // if dice process fails
     if(diceProcess->exitStatus()||diceProcess->exitCode()){
-        QMessageBox msgBox;
-        msgBox.setText("ERROR: DICe execution failed, please re-select a valid DICe executable.");
-        msgBox.exec();
-        exit(0);
-    }
+        if(this->setExec()){
+            exit(1);
+        }
+    } // end default location failed
+    std::cout << "Using DICe from " << execPath.toStdString() << std::endl;
 
     // TODO set button in file dropdown
 }
@@ -389,6 +388,51 @@ void MainWindow::launchDICePage(){
     else if(msgBox.clickedButton() == myNoButton){
         return;
     }
+}
+
+int MainWindow::setExec(){
+    QString configPath = QDir::homePath();
+#ifdef WIN32
+    configPath +=  "\\.dice";
+#else
+    configPath +=  "/.dice";
+#endif
+    QFileInfo execFileInfo = QFileDialog::getOpenFileName(this,
+      tr("Select the DICe backend executable to use"), ".",
+      tr("Executable (dice.exe dice)"));
+    if(execFileInfo.fileName()==""){
+        QMessageBox msgBox;
+        msgBox.setText("Invalid DICe backend executable");
+        msgBox.exec();
+        return 1;
+    }
+    execPath = execFileInfo.filePath();
+    // try the non-standard location:
+    QStringList args;
+    args << "--version";
+    diceProcess->start(execPath,args);
+    diceProcess->waitForFinished();
+    diceProcess->close();
+    if(diceProcess->exitStatus()||diceProcess->exitCode()){
+        QMessageBox msgBox;
+        msgBox.setText("Invalid DICe backend executable");
+        msgBox.exec();
+        return 1;
+    }
+    // save the selection to the config file:
+    QFile saveConfig(configPath);
+    if (saveConfig.open(QIODevice::ReadWrite)) {
+        QTextStream stream(&saveConfig);
+        stream << execPath << endl;
+        saveConfig.close();
+    }
+    else{
+        QMessageBox msgBox;
+        msgBox.setText("Error saving DICe configuration file.");
+        msgBox.exec();
+        return 1;
+    }
+    return 0;
 }
 
 void MainWindow::loadWorkingDir(){
