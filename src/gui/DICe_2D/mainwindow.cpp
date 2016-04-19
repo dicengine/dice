@@ -158,7 +158,7 @@ ui(new Ui::MainWindow)
     connect(ui->actionAbout_DICe, SIGNAL(triggered()), this, SLOT(launchDICePage()));
 
     // set up the load working dir action
-    connect(ui->actionLoad_working_dir, SIGNAL(triggered()), this, SLOT(loadWorkingDir()));
+    connect(ui->actionLoad_working_dir, SIGNAL(triggered()), this, SLOT(userLoadWorkingDir()));
 
     // set the the change exec location action
     connect(ui->actionSet_backend_exec, SIGNAL(triggered()), this, SLOT(setExec()));
@@ -223,6 +223,11 @@ ui(new Ui::MainWindow)
     } // end default location failed
     std::cout << "Using DICe from " << execPath.toStdString() << std::endl;
     ui->progressBar->setValue(0);
+
+    // if the current working directory has results/input files, load them
+    if(loadExistingFilesCheck(DICe::gui::Input_Vars::instance()->get_working_dir()))
+        this->loadWorkingDir(DICe::gui::Input_Vars::instance()->get_working_dir(),false);
+
 }
 
 void MainWindow::resetDefaults(){
@@ -359,13 +364,39 @@ void MainWindow::on_defListWidget_itemClicked(QListWidgetItem *item)
     ui->defImageShow->setPixmap(pix.scaled(w,h,Qt::KeepAspectRatio));
 }
 
+bool MainWindow::loadExistingFilesCheck(const QString & dir){
+    // if there are existing files in the dir ask if they should be over-written:
+    QString inputFile = dir;
+#ifdef WIN32
+    inputFile +=  "\\input.xml";
+#else
+    inputFile +=  "/input.xml";
+#endif
+    QFileInfo checkFile(inputFile);
+    // check if file exists and if yes: Is it really a file and not a directory?
+    if (checkFile.exists() && checkFile.isFile()) {
+        QMessageBox msgBox;
+        msgBox.setText("Existing input/results files found in the working directory\n"
+                       "Load these existing files? (otherwise they will be overwritten)");
+        msgBox.setStandardButtons(QMessageBox::Yes);
+        msgBox.addButton(QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::Yes);
+        if(msgBox.exec() == QMessageBox::No){
+            return false;
+        }
+        else
+            return true;
+    }
+    return false;
+}
+
 void MainWindow::on_workingDirButton_clicked()
 {
     // open a file dialog and get the directory
     QString dir = QFileDialog::getExistingDirectory(this,tr("Open Directory"),".",
                       QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
-    if(dir=="") return;
+    if(dir=="") return;    
 
     // set the reference image in the Input_Vars singleton
     DICe::gui::Input_Vars::instance()->set_working_dir(dir);
@@ -373,6 +404,8 @@ void MainWindow::on_workingDirButton_clicked()
     // display the name of the file in the reference file box
     ui->workingDirLabel->setText(dir);
 
+    if(loadExistingFilesCheck(dir))
+        this->loadWorkingDir(dir,false);
 }
 
 void MainWindow::launchDICePage(){
@@ -434,7 +467,7 @@ int MainWindow::setExec(){
     return 0;
 }
 
-void MainWindow::loadWorkingDir(){
+void MainWindow::userLoadWorkingDir(){
     QMessageBox msgBox;
     msgBox.setText("Input and results files will be imported\n"
                    "from the selected directory\n"
@@ -452,6 +485,10 @@ void MainWindow::loadWorkingDir(){
                       QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
     if(dir=="") return;
+    this->loadWorkingDir(dir,true);
+}
+
+void MainWindow::loadWorkingDir(const QString & dir, const bool overwrite){
 
     // if there are existing files in the dir ask if they should be over-written:
     QString inputFile = dir;
@@ -497,9 +534,11 @@ void MainWindow::loadWorkingDir(){
     //std::cout << " found input: " << foundInput << " params " << foundParams << " subset " << foundSubset << std::endl;
 
     if(!foundInput){
-        QMessageBox msgBox;
-        msgBox.setText("Unable to inport working directory because\nthe input.xml file is missing.");
-        msgBox.exec();
+        if(overwrite){
+            QMessageBox msgBox;
+            msgBox.setText("Unable to inport working directory because\nthe input.xml file is missing.");
+            msgBox.exec();
+        }
         return;
     }
     checkFile = resultsDir;
@@ -567,11 +606,13 @@ void MainWindow::loadWorkingDir(){
     // remove existing input file if it exists:
     QFileInfo inputInfo = inputFile;
     QFileInfo existingInput = currentWorkingDir+QString::fromStdString("input.xml");
-    if(existingInput.exists()){
+    if(existingInput.exists()&&overwrite){
         std::cout << "Removing input.xml from current working directory" << std::endl;
         QFile::remove(existingInput.filePath());
     }
-    bool inputCopySuccess = QFile::copy(inputInfo.filePath(),currentWorkingDir+inputInfo.fileName());
+    bool inputCopySuccess = true;
+    if(overwrite)
+        inputCopySuccess = QFile::copy(inputInfo.filePath(),currentWorkingDir+inputInfo.fileName());
     if(!inputCopySuccess){
         QMessageBox msgBox;
         msgBox.setText("Error: could not copy input.xml to working dir.");
@@ -638,18 +679,19 @@ void MainWindow::loadWorkingDir(){
             return;
         }
         QFileInfo existingSubsetInfo = currentWorkingDir+QString::fromStdString("subset_defs.txt");
-        if(existingSubsetInfo.exists()){
+        if(existingSubsetInfo.exists() && overwrite){
             std::cout << "Removing subset_defs.txt from current working directory" << std::endl;
             QFile::remove(existingSubsetInfo.filePath());
         }
-        bool subsetCopySuccess = QFile::copy(subsetInfo.filePath(),currentWorkingDir+subsetInfo.fileName());
+        bool subsetCopySuccess = true;
+        if(overwrite)
+            subsetCopySuccess = QFile::copy(subsetInfo.filePath(),currentWorkingDir+subsetInfo.fileName());
         if(!subsetCopySuccess){
             QMessageBox msgBox;
             msgBox.setText("Error: could not copy subset_defs.txt to working dir.");
             msgBox.exec();
         }
     }
-
 
     // load the reference image:
     // display the name of the file in the reference file box
@@ -771,11 +813,13 @@ void MainWindow::loadWorkingDir(){
             }
         }
         QFileInfo existingParams = currentWorkingDir+QString::fromStdString("params.xml");
-        if(existingParams.exists()){
+        if(existingParams.exists()&&overwrite){
             std::cout << "Removing params.xml from current working directory" << std::endl;
             QFile::remove(existingParams.filePath());
         }
-        bool paramsCopySuccess = QFile::copy(paramsInfo.filePath(),currentWorkingDir+paramsInfo.fileName());
+        bool paramsCopySuccess = true;
+        if(overwrite)
+            paramsCopySuccess = QFile::copy(paramsInfo.filePath(),currentWorkingDir+paramsInfo.fileName());
         if(!paramsCopySuccess){
             QMessageBox msgBox;
             msgBox.setText("Error: could not copy params.xml to working dir.");
@@ -789,43 +833,44 @@ void MainWindow::loadWorkingDir(){
 
     // copy results files if they exist:
     if(foundResults){
-        // copy results files if they exist:
-        // create the working directory
-        if(!QDir(currentResultsDir).exists()){
-            QDir().mkdir(currentResultsDir);
-        }
-
-        std::cout << "Clearing existing results directory " << std::endl;
-        QStringList currentResFiles;
-        QDirIterator  currentIt(currentResultsDir, QStringList() << "*.txt",
-                       QDir::Files,QDirIterator::Subdirectories);
-        while (currentIt.hasNext()){
-            std::cout << "Removing file " << currentIt.next().toStdString() << std::endl;
-            QDir cDir;
-            cDir.remove(currentIt.filePath());
-        }
-
-        // copy files to this working directory
-        QStringList resFiles;
-        QDirIterator it(resultsDir, QStringList() << "*.txt",
-                        QDir::Files,QDirIterator::Subdirectories);
-        while (it.hasNext()){
-            QString fromFile = it.next();
-            QString toFile = currentResultsDir+it.fileName();
-            std::cout << "Copying file: " << fromFile.toStdString() << std::endl;
-            std::cout << "          to: " << toFile.toStdString() << std::endl;
-            bool success = QFile::copy(it.filePath(),currentResultsDir+it.fileName());
-            if(!success){
-                QMessageBox msgBox;
-                msgBox.setText("Error: could not copy results files to working dir.");
-                msgBox.exec();
-                return;
+        if(overwrite){
+            // copy results files if they exist:
+            // create the working directory
+            if(!QDir(currentResultsDir).exists()){
+                QDir().mkdir(currentResultsDir);
             }
-        }
+
+            std::cout << "Clearing existing results directory " << std::endl;
+            QStringList currentResFiles;
+            QDirIterator  currentIt(currentResultsDir, QStringList() << "*.txt",
+                                    QDir::Files,QDirIterator::Subdirectories);
+            while (currentIt.hasNext()){
+                std::cout << "Removing file " << currentIt.next().toStdString() << std::endl;
+                QDir cDir;
+                cDir.remove(currentIt.filePath());
+            }
+
+            // copy files to this working directory
+            QStringList resFiles;
+            QDirIterator it(resultsDir, QStringList() << "*.txt",
+                            QDir::Files,QDirIterator::Subdirectories);
+            while (it.hasNext()){
+                QString fromFile = it.next();
+                QString toFile = currentResultsDir+it.fileName();
+                std::cout << "Copying file: " << fromFile.toStdString() << std::endl;
+                std::cout << "          to: " << toFile.toStdString() << std::endl;
+                bool success = QFile::copy(it.filePath(),currentResultsDir+it.fileName());
+                if(!success){
+                    QMessageBox msgBox;
+                    msgBox.setText("Error: could not copy results files to working dir.");
+                    msgBox.exec();
+                    return;
+                }
+            }
+        } // end overwrite
         // load the results viewer
         prepResultsViewer();
     }
-
 }
 
 void MainWindow::exportInputFiles(){
@@ -977,9 +1022,6 @@ void MainWindow::readOutput(){
 
 void MainWindow::on_runButton_clicked()
 {    
-    // reset the progress bar
-    ui->progressBar->setValue(0);
-    ui->progressBar->setMaximum(ui->defListWidget->count());
 
     // check for existing input for results files
     // if there are existing files in the dir ask if they should be over-written:
@@ -1001,6 +1043,10 @@ void MainWindow::on_runButton_clicked()
             return;
         }
     }
+
+    // reset the progress bar
+    ui->progressBar->setValue(1);
+    ui->progressBar->setMaximum(ui->defListWidget->count()+2);
 
     // write intput files, abort if write fails
     writeInputFiles();

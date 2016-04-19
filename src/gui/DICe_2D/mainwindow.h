@@ -89,7 +89,11 @@ public:
 
     void exportInputFiles();
 
-    void loadWorkingDir();
+    void userLoadWorkingDir();
+
+    void loadWorkingDir(const QString & dir, const bool overwrite);
+
+    bool loadExistingFilesCheck(const QString & dir);
 
     void launchDICePage();
 
