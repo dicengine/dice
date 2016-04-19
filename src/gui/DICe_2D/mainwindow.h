@@ -81,6 +81,10 @@ public:
 
     void readOutput();
 
+    void readValidationOutput();
+
+    void execWrapUp(int code);
+
     int setExec();
 
     void exportInputFiles();
@@ -95,6 +99,8 @@ private:
     Ui::MainWindow *ui;
 
      QDebugStream * qout;
+
+     QProcess *checkValidDiceProcess;
 
      QProcess *diceProcess;
 

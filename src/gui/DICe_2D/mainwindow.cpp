@@ -145,7 +145,11 @@ ui(new Ui::MainWindow)
 
     // set up the process that will run DICe
     diceProcess = new QProcess(this);
+    checkValidDiceProcess = new QProcess(this);
+    diceProcess->setProcessChannelMode(QProcess::MergedChannels);
     connect(diceProcess, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
+    connect(diceProcess, SIGNAL(finished(int)), this, SLOT(execWrapUp(int)));
+    connect(checkValidDiceProcess, SIGNAL(readyReadStandardOutput()), this, SLOT(readValidationOutput()));
 
     // set up the export files action
     connect(ui->actionExport_input_files, SIGNAL(triggered()), this, SLOT(exportInputFiles()));
@@ -159,10 +163,6 @@ ui(new Ui::MainWindow)
     // set the the change exec location action
     connect(ui->actionSet_backend_exec, SIGNAL(triggered()), this, SLOT(setExec()));
 
-    // WRITE THE DEFAULT LOCATIONS TO FILE
-    // READ THE FILE AND TRY THE DEFAULT LCOATION
-    // ON FAILURE, ASK THE USER TO LCOATE THE INSTALL DIR
-    // TEST AGAIN TO SEE IF IT WORKS
 
     QString configPath = QDir::homePath();
 #ifdef WIN32
@@ -209,18 +209,20 @@ ui(new Ui::MainWindow)
     // test the executable
     QStringList args;
     args << "--version";
-    diceProcess->start(execPath,args);
-    diceProcess->waitForFinished();
-    diceProcess->close();
+    checkValidDiceProcess->start(execPath,args);
+    checkValidDiceProcess->waitForFinished();
+    checkValidDiceProcess->close();
     // if dice process fails
-    if(diceProcess->exitStatus()||diceProcess->exitCode()){
+    if(checkValidDiceProcess->exitStatus()||checkValidDiceProcess->exitCode()){
         if(this->setExec()){
+            QMessageBox msgBox;
+            msgBox.setText("Invalid DICe backend executable");
+            msgBox.exec();
             exit(1);
         }
     } // end default location failed
     std::cout << "Using DICe from " << execPath.toStdString() << std::endl;
-
-    // TODO set button in file dropdown
+    ui->progressBar->setValue(0);
 }
 
 void MainWindow::resetDefaults(){
@@ -261,7 +263,7 @@ void MainWindow::resetDefaults(){
 
 
     // reset the progress bar
-    //ui->progressBar->setValue(0);
+    ui->progressBar->setValue(0);
 
     // set the default output fields
     ui->xCheck->setChecked(true);
@@ -401,19 +403,16 @@ int MainWindow::setExec(){
       tr("Select the DICe backend executable to use"), ".",
       tr("Executable (dice.exe dice)"));
     if(execFileInfo.fileName()==""){
-        QMessageBox msgBox;
-        msgBox.setText("Invalid DICe backend executable");
-        msgBox.exec();
         return 1;
     }
     execPath = execFileInfo.filePath();
     // try the non-standard location:
     QStringList args;
     args << "--version";
-    diceProcess->start(execPath,args);
-    diceProcess->waitForFinished();
-    diceProcess->close();
-    if(diceProcess->exitStatus()||diceProcess->exitCode()){
+    checkValidDiceProcess->start(execPath,args);
+    checkValidDiceProcess->waitForFinished();
+    checkValidDiceProcess->close();
+    if(checkValidDiceProcess->exitStatus()||checkValidDiceProcess->exitCode()){
         QMessageBox msgBox;
         msgBox.setText("Invalid DICe backend executable");
         msgBox.exec();
@@ -966,12 +965,22 @@ void MainWindow::prepResultsViewer()
     ui->simpleQtVTKWidget->changeInteractionMode(1);
 }
 
+void MainWindow::readValidationOutput(){
+    ui->consoleEdit->append(checkValidDiceProcess->readAllStandardOutput());
+}
+
 void MainWindow::readOutput(){
     ui->consoleEdit->append(diceProcess->readAllStandardOutput());
+    if(ui->progressBar->value()<ui->progressBar->maximum()-1)
+        ui->progressBar->setValue(ui->progressBar->value()+1);
 }
 
 void MainWindow::on_runButton_clicked()
 {    
+    // reset the progress bar
+    ui->progressBar->setValue(0);
+    ui->progressBar->setMaximum(ui->defListWidget->count());
+
     // check for existing input for results files
     // if there are existing files in the dir ask if they should be over-written:
     QString inputFile = DICe::gui::Input_Vars::instance()->get_working_dir();
@@ -1014,12 +1023,23 @@ void MainWindow::on_runButton_clicked()
     }
     std::cout << "Running correlation..." << std::endl << std::endl;
 
+    ui->runButton->setEnabled(false);
+    ui->refFileButton->setEnabled(false);
+    ui->defFileButton->setEnabled(false);
+    ui->workingDirButton->setEnabled(false);
+
     QStringList args;
     args << "-i" << DICe::gui::Input_Vars::instance()->input_file_name().c_str() << "-v" << "-t";
 
     diceProcess->start(execPath,args);
-    diceProcess->waitForFinished();
-    diceProcess->close();
+}
+
+void MainWindow::execWrapUp(int code){
+    ui->runButton->setEnabled(true);
+    ui->refFileButton->setEnabled(true);
+    ui->defFileButton->setEnabled(true);
+    ui->workingDirButton->setEnabled(true);
+
 
     if(diceProcess->exitStatus()||diceProcess->exitCode()){
         QMessageBox msgBox;
@@ -1029,6 +1049,9 @@ void MainWindow::on_runButton_clicked()
     }
     else
         std::cout << "DICe execution SUCCESSFUL" << std::endl;
+    ui->progressBar->setValue(ui->progressBar->maximum());
+
+    diceProcess->close();
 
     // after the run is complete, prepare the results viewer:
     prepResultsViewer();

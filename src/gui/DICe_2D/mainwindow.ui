@@ -178,10 +178,10 @@ background-color: #404040;
     <property name="verticalSpacing">
      <number>25</number>
     </property>
-    <item row="3" column="0">
+    <item row="2" column="0">
      <widget class="QGroupBox" name="groupBox_5">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
@@ -195,7 +195,16 @@ background-color: #404040;
       <property name="title">
        <string>ACTIONS</string>
       </property>
+      <property name="alignment">
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+      </property>
       <layout class="QVBoxLayout" name="verticalLayout_9">
+       <property name="spacing">
+        <number>-1</number>
+       </property>
+       <property name="topMargin">
+        <number>12</number>
+       </property>
        <item>
         <widget class="QPushButton" name="runButton">
          <property name="enabled">
@@ -213,75 +222,6 @@ background-color: #404040;
         </widget>
        </item>
       </layout>
-     </widget>
-    </item>
-    <item row="3" column="1">
-     <widget class="QGroupBox" name="groupBox_6">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="title">
-       <string>PROGRESS</string>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_10">
-       <item>
-        <widget class="QTextEdit" name="consoleEdit">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>100</height>
-          </size>
-         </property>
-         <property name="readOnly">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item row="0" column="0">
-     <widget class="QPushButton" name="diceButton">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="minimumSize">
-       <size>
-        <width>75</width>
-        <height>75</height>
-       </size>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>300</width>
-        <height>16777215</height>
-       </size>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-      <property name="icon">
-       <iconset resource="resources.qrc">
-        <normaloff>:/images/resources/images/DICe_logo_white-01.png</normaloff>:/images/resources/images/DICe_logo_white-01.png</iconset>
-      </property>
-      <property name="iconSize">
-       <size>
-        <width>250</width>
-        <height>75</height>
-       </size>
-      </property>
      </widget>
     </item>
     <item row="1" column="0">
@@ -814,6 +754,100 @@ background-color: #404040;
         </item>
        </layout>
       </widget>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QPushButton" name="diceButton">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>75</width>
+        <height>75</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>300</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/images/resources/images/DICe_logo_white-01.png</normaloff>:/images/resources/images/DICe_logo_white-01.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>250</width>
+        <height>75</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QGroupBox" name="groupBox_6">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>250</height>
+       </size>
+      </property>
+      <property name="title">
+       <string>PROGRESS</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_10">
+       <item>
+        <widget class="QTextEdit" name="consoleEdit">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>700</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="verticalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOn</enum>
+         </property>
+         <property name="horizontalScrollBarPolicy">
+          <enum>Qt::ScrollBarAsNeeded</enum>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QProgressBar" name="progressBar">
+         <property name="value">
+          <number>24</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </item>
     <item row="0" column="1" rowspan="2">
