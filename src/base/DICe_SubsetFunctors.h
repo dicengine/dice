@@ -59,6 +59,8 @@ struct Intensity_Sum_Functor{
   bool_device_view_1d is_deactivated_this_step_;
   /// constructor
   /// \param intensities the image intensity values
+  /// \param is_active flags for pixels that are permanently activated or de-activated
+  /// \param is_deactivated_this_step flags for pixels that are actived or de-activated for this step only
   Intensity_Sum_Functor(intensity_device_view_1d intensities,
     bool_device_view_1d is_active,
     bool_device_view_1d is_deactivated_this_step):
@@ -87,6 +89,8 @@ struct Intensity_Sum_Minus_Mean_Functor{
   /// constructor
   /// \param intensities the image intensity values
   /// \param mean the mean value
+  /// \param is_active flags for pixels that are permanently activated or de-activated
+  /// \param is_deactivated_this_step flags for pixels that are actived or de-activated for this step only
   Intensity_Sum_Minus_Mean_Functor(intensity_device_view_1d intensities,
     bool_device_view_1d is_active,
     bool_device_view_1d is_deactivated_this_step,

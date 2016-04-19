@@ -735,7 +735,7 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
         for(size_t id=0;id<it->second.size();++id){
           skip_on = !skip_on;
           state = skip_on ? on : off;
-          std::cout << "[DICe_DEBUG]: Schema::intialize(): at frame " << it->second[id] << " skip solve is " << state << std::endl;
+          std::cout << "[DICe_DEBUG]: Schema::initialize(): at frame " << it->second[id] << " skip solve is " << state << std::endl;
         }
       }
 #endif

@@ -232,8 +232,8 @@ public:
   }
 
   /// interpolant
-  /// \param global_x local image coordinate x
-  /// \param global_y local image coordinate y
+  /// \param local_x local image coordinate x
+  /// \param local_y local image coordinate y
   intensity_t interpolate_keys_fourth(const scalar_t & local_x,
     const scalar_t & local_y);
 
@@ -246,8 +246,8 @@ public:
   }
 
   /// interpolant
-  /// \param global_x local image coordinate x
-  /// \param global_y local image coordinate y
+  /// \param local_x local image coordinate x
+  /// \param local_y local image coordinate y
   intensity_t interpolate_bilinear(const scalar_t & local_x,
     const scalar_t & local_y);
 
@@ -260,8 +260,8 @@ public:
   }
 
   /// interpolant
-  /// \param global_x local image coordinate x
-  /// \param global_y local image coordinate y
+  /// \param local_x local image coordinate x
+  /// \param local_y local image coordinate y
   intensity_t interpolate_bicubic(const scalar_t & local_x,
     const scalar_t & local_y);
 

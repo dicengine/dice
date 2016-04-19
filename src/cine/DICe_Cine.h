@@ -81,6 +81,7 @@ typedef struct tagTIME64
   uint32_t seconds;
 } TIME64;
 
+/// Bit depth enumeration
 enum Bit_Depth{
   BIT_DEPTH_8=0,
   BIT_DEPTH_16,
@@ -201,6 +202,7 @@ public:
   /// \brief default constructor
   /// \param file_name the name of the cine file
   /// \param out_stream (optional) output stream
+  /// \param filter_failed_pixels true if failed pixels should be filtered out by taking the neighbor value
   Cine_Reader(const std::string & file_name,
     std::ostream * out_stream = NULL,
     const bool filter_failed_pixels=false);
@@ -244,7 +246,7 @@ public:
   }
 
   /// \brief 8 bit frame fetch
-  /// \param image, the image to populate
+  /// \param image the image to populate
   /// \param frame_index the frame to gather
   /// \param filter_failed_pixels get rid of outlier pixels or failed pixels
   void get_frame_8_bit(const Teuchos::RCP<Image> & image,
@@ -252,20 +254,20 @@ public:
   const bool filter_failed_pixels);
 
   /// \brief 10 bit frame fetch
-  /// \param image, the image to populate
+  /// \param image the image to populate
   /// \param frame_index the frame to gather
   void get_frame_10_bit(Teuchos::RCP<Image> image,
     const int_t frame_index);
 
   /// \brief 10 bit frame fetch with filtering
   /// separate function to avoid if statement for each pixel (optimization)
-  /// \param image, the image to populate
+  /// \param image the image to populate
   /// \param frame_index the frame to gather
   void get_frame_10_bit_filtered(Teuchos::RCP<Image> image,
     const int_t frame_index);
 
   /// \brief 16 bit frame fetch
-  /// \param image, the image to populate
+  /// \param image the image to populate
   /// \param frame_index the frame to gather
   /// \param filter_failed_pixels get rid of outlier pixels or failed pixels
   void get_frame_16_bit(const Teuchos::RCP<Image> & image,

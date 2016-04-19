@@ -98,13 +98,13 @@ public:
   typedef Teuchos::RCP<MultiField_Comm> comm_rcp;
 
   /// \brief Constructor that initializes empty images of the dimensions given
-  /// \param initial_intensity_value the intensity value to fill the initial images with
   /// \param img_width Image width (must be the same for the reference and deformed images)
   /// \param img_height Image height (must be the same for the reference and deformed images)
+  /// \param initial_intensity_value value to populate the pixel values with
   /// \param params Correlation parameters
   Schema(const int_t img_width,
     const int_t img_height,
-    const intensity_t intitial_intensity_value,
+    const intensity_t initial_intensity_value,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// \brief Constructor that takes string names of images as inputs
@@ -913,7 +913,7 @@ public:
   }
 
   /// \brief forces simplex method for certain subsets
-  /// \param id_vec Pointer to set of ids
+  /// \param ids Pointer to set of ids
   void set_force_simplex(Teuchos::RCP<std::set<int_t> > ids){
     if(ids==Teuchos::null)return;
     force_simplex_ = ids;

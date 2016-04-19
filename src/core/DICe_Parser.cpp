@@ -69,6 +69,7 @@ namespace DICe {
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   char *argv[],
+  bool & force_exit,
   Teuchos::RCP<std::ostream> & outStream,
   const Analysis_Type analysis_type){
 
@@ -79,6 +80,8 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   if(mpi_is_initialized)
     MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
 #endif
+  Teuchos::RCP<Teuchos::ParameterList> inputParams = Teuchos::rcp( new Teuchos::ParameterList() );
+  force_exit = false;
 
   // Declare the supported options.
   po::options_description desc("Allowed options");
@@ -120,26 +123,30 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
    if(vm.count("version")){
      if(proc_rank==0)
        print_banner();
-     exit(0);
+     force_exit = true;
+     return inputParams;
    }
 
    // Handle help requests
    if(vm.count("help")){
      print_banner();
      std::cout << desc << std::endl;
-     exit(0);
+     force_exit = true;
+     return inputParams;
    }
 
    // Generate input file templates and exit
    if(vm.count("generate")){
      if(analysis_type!=LOCAL_DIC){
        std::cout << "Generate option is not enabled for this analysis type" << std::endl;
-       exit(0);
+       force_exit = true;
+       return inputParams;
      }
      std::string templatePrefix = vm["generate"].as<std::string>();
      if(proc_rank==0) DEBUG_MSG("Generating input file templates using prefix: " << templatePrefix);
      generate_template_input_files(templatePrefix);
-     exit(0);
+     force_exit = true;
+     return inputParams;
    }
 
    std::string input_file;
@@ -153,7 +160,6 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
    }
    if(proc_rank==0) DEBUG_MSG("Using input file: " << input_file);
 
-   Teuchos::RCP<Teuchos::ParameterList> inputParams = Teuchos::rcp( new Teuchos::ParameterList() );
    Teuchos::Ptr<Teuchos::ParameterList> inputParamsPtr(inputParams.get());
    Teuchos::updateParametersFromXmlFile(input_file, inputParamsPtr);
    TEUCHOS_TEST_FOR_EXCEPTION(inputParams==Teuchos::null,std::runtime_error,"");
