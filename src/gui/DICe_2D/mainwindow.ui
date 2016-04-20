@@ -38,7 +38,7 @@ background: transparent;
 border-radius: 4px;
 }
 QMenuBar::item:selected {
-background: #a8a8a8;
+border: 1px solid yellow;
 }
 QMenuBar::item:pressed {
 background: #888888;
@@ -47,11 +47,34 @@ QComboBox {
 background-color: #404040;
 color: white;
 }
+QComboBox QAbstractItemView{
+background-color: #404040;
+color: white;
+}
 QListView {
 background-color: #404040;
+border: none;
+}
+QTabWidget{
+background-color: #202020;
+}
+QTabBar{
+background-color: #202020;
+}
+QTabBar::tab{
+background-color:#303030;
+padding: 5px 15px 5px 15px;
+color: white;
+}
+QTabBar::tab:hover:!pressed{
+border: 1px solid yellow;
+}
+QTabBar::tab:selected{
+background-color: #202020;
 }
 QTabWidget::pane{
-background-color: #252525;
+border: none;
+background-color: #202020;
 }
 QTextBrowser{
 background-color: #303030;
@@ -147,10 +170,15 @@ background-color: rgb(23, 85, 122);
 }
 QLabel{
 color: white;
-background-color: #252525;
+background-color: #202020;
 }
 QGroupBox{
-background-color: #252525;
+background-color: #202020;
+color: white;
+border: none;
+padding: 10;
+}
+QProgressBar{
 color: white;
 }
 QSelectionArea{
@@ -235,7 +263,7 @@ background-color: #404040;
       <property name="minimumSize">
        <size>
         <width>250</width>
-        <height>500</height>
+        <height>350</height>
        </size>
       </property>
       <property name="maximumSize">
@@ -537,7 +565,7 @@ background-color: #404040;
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <property name="spacing">
-         <number>40</number>
+         <number>5</number>
         </property>
         <property name="topMargin">
          <number>25</number>
@@ -819,7 +847,7 @@ background-color: #404040;
          </property>
          <property name="minimumSize">
           <size>
-           <width>700</width>
+           <width>300</width>
            <height>0</height>
           </size>
          </property>
@@ -861,7 +889,7 @@ background-color: #404040;
      <x>0</x>
      <y>0</y>
      <width>1245</width>
-     <height>28</height>
+     <height>22</height>
     </rect>
    </property>
    <property name="minimumSize">
@@ -870,16 +898,11 @@ background-color: #404040;
      <height>0</height>
     </size>
    </property>
-   <property name="font">
-    <font>
-     <pointsize>16</pointsize>
-    </font>
-   </property>
    <property name="autoFillBackground">
     <bool>false</bool>
    </property>
    <property name="nativeMenuBar">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
