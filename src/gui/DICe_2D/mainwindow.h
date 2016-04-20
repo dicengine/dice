@@ -83,6 +83,8 @@ public:
 
     void readOutput();
 
+    void readError();
+
     void readValidationOutput();
 
     void execWrapUp(int code);

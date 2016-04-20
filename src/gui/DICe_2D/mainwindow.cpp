@@ -137,8 +137,8 @@ ui(new Ui::MainWindow)
     ui->simpleQtVTKWidget->disableResultsTab();
 
     // reset the default working directory
-    ui->workingDirLabel->setText(".");
-    DICe::gui::Input_Vars::instance()->set_working_dir(QString("."));
+    ui->workingDirLabel->setText(QDir::homePath());
+    DICe::gui::Input_Vars::instance()->set_working_dir(QDir::homePath());
 
     // set up the console output
     qout = new QDebugStream(std::cout, ui->consoleEdit);
@@ -148,6 +148,7 @@ ui(new Ui::MainWindow)
     checkValidDiceProcess = new QProcess(this);
     diceProcess->setProcessChannelMode(QProcess::MergedChannels);
     connect(diceProcess, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
+    connect(diceProcess, SIGNAL(readyReadStandardError()), this, SLOT(readError()));
     connect(diceProcess, SIGNAL(finished(int)), this, SLOT(execWrapUp(int)));
     connect(checkValidDiceProcess, SIGNAL(readyReadStandardOutput()), this, SLOT(readValidationOutput()));
 
@@ -925,8 +926,6 @@ void MainWindow::writeInputFiles(){
     DICe::gui::Input_Vars::instance()->set_enable_rotation(ui->rotationShapeCheck->isChecked());
     DICe::gui::Input_Vars::instance()->set_enable_normal_strain(ui->normalShapeCheck->isChecked());
     DICe::gui::Input_Vars::instance()->set_enable_shear_strain(ui->shearShapeCheck->isChecked());
-    std::cout << " strain check " << ui->strainCheck->isChecked() << std::endl;
-    std::cout << " strain combo " << ui->strainCombo->currentText().toStdString() << std::endl;
     if(ui->strainCheck->isChecked()&&ui->strainCombo->currentText()=="VIRTUAL_STRAIN_GAUGE"){
         DICe::gui::Input_Vars::instance()->set_enable_vsg(true);
     }
@@ -1018,6 +1017,10 @@ void MainWindow::readOutput(){
     ui->consoleEdit->append(diceProcess->readAllStandardOutput());
     if(ui->progressBar->value()<ui->progressBar->maximum()-1)
         ui->progressBar->setValue(ui->progressBar->value()+1);
+}
+
+void MainWindow::readError(){
+    ui->consoleEdit->append(diceProcess->readAllStandardError());
 }
 
 void MainWindow::on_runButton_clicked()
