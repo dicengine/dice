@@ -260,7 +260,6 @@ int main(int argc, char *argv[]) {
         *outStream << "Processing Image: " << image_it << " of " << num_images << ", " << def_image_string << std::endl;
         schema->set_def_image(def_image_string);
       }
-
       { // start the timer
         boost::timer t;
 
@@ -311,4 +310,3 @@ int main(int argc, char *argv[]) {
 
   return 0;
 }
-

@@ -249,6 +249,8 @@ Schema::set_def_image(const std::string & defName,
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
+  TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[id]->width()!=ref_img_->width()||def_imgs_[id]->height()!=ref_img_->height(),
+    std::runtime_error,"Error, ref and def images must have the same dimensions");
   if(def_image_rotation_!=ZERO_DEGREES){
     def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);
   }
@@ -285,6 +287,8 @@ Schema::set_def_image(const int_t img_width,
   assert(id<(int_t)def_imgs_.size());
   TEUCHOS_TEST_FOR_EXCEPTION(img_width<=0,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(img_height<=0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(img_width!=ref_img_->width()||img_height!=ref_img_->height(),
+    std::runtime_error,"Error, ref and def images must have the same dimensions");
   def_imgs_[id] = Teuchos::rcp( new Image(img_width,img_height,defRCP));
   if(def_image_rotation_!=ZERO_DEGREES){
     def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);
