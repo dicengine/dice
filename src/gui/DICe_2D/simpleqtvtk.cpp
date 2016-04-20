@@ -86,6 +86,7 @@ SimpleQtVTK::SimpleQtVTK(QWidget *parent) :
     ui->displaceMeshBox->setChecked(true);
 
     isInitialized = false;
+    hasRefImage = false;
 
     // set the auto scale to true
     ui->autoScaleBox->setChecked(true);
@@ -453,6 +454,7 @@ int SimpleQtVTK::readImageFile(const std::string & fileName,
     callback->SetOriginSpacing(imageOrigin[0],imageOrigin[1],imageSpacing[0],imageSpacing[1]);
 
     resetCamera();
+    hasRefImage = true;
     return 0;
 }
 
@@ -891,11 +893,10 @@ void SimpleQtVTK::on_excludedMinus_clicked()
 void SimpleQtVTK::on_hideImageBox_clicked()
 {
     if(ui->hideImageBox->isChecked()){
-        if(isInitialized)
-            renderer->RemoveActor(imageActor);
+        renderer->RemoveActor(imageActor);
     }
     else{
-        if(isInitialized)
+        if(hasRefImage)
             renderer->AddActor(imageActor);
     }
     if(ui->vtkWidget->GetRenderWindow()->IsDrawable())

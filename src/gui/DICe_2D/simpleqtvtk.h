@@ -488,7 +488,7 @@ private:
     /// call back
     vtkSmartPointer<vtkImageInteractionCallback> callback;
 
-
+    bool hasRefImage;
 };
 
 
