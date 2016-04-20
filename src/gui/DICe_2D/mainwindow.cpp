@@ -1086,11 +1086,11 @@ void MainWindow::execWrapUp(int code){
     ui->defFileButton->setEnabled(true);
     ui->workingDirButton->setEnabled(true);
 
-
     if(diceProcess->exitStatus()||diceProcess->exitCode()||execError){
         QMessageBox msgBox;
         msgBox.setText("ERROR: DICe execution failed");
         msgBox.exec();
+        ui->progressBar->setValue(0);
         return;
     }
     else
