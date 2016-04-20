@@ -62,6 +62,8 @@ public:
     /// prep the results viewer
     void prepResultsViewer();
 
+    bool testForValidExec();
+
     private slots:
     void resetDefaults();
 
@@ -99,6 +101,14 @@ public:
 
     void on_stepSize_editingFinished();
 
+    void setError(){
+        execError = true;
+    }
+
+    void resetError(){
+        execError = false;
+    }
+
 private:
     Ui::MainWindow *ui;
 
@@ -109,6 +119,8 @@ private:
      QProcess *diceProcess;
 
      QString execPath;
+
+     bool execError;
 
 };
 

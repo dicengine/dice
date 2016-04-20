@@ -163,6 +163,11 @@ ui(new Ui::MainWindow)
     // set the the change exec location action
     connect(ui->actionSet_backend_exec, SIGNAL(triggered()), this, SLOT(setExec()));
 
+    // flag when errors occur with checkValidDiceProcess or diceProcess
+    connect(checkValidDiceProcess, SIGNAL(error(QProcess::ProcessError)),this,SLOT(setError()));
+    connect(checkValidDiceProcess, SIGNAL(started()),this,SLOT(resetError()));
+    connect(diceProcess, SIGNAL(error(QProcess::ProcessError)),this,SLOT(setError()));
+    connect(diceProcess, SIGNAL(started()),this,SLOT(resetError()));
 
     QString configPath = QDir::homePath();
 #ifdef WIN32
@@ -207,20 +212,9 @@ ui(new Ui::MainWindow)
         }
     }
     // test the executable
-    QStringList args;
-    args << "--version";
-    checkValidDiceProcess->start(execPath,args);
-    checkValidDiceProcess->waitForFinished();
-    checkValidDiceProcess->close();
-    // if dice process fails
-    if(checkValidDiceProcess->exitStatus()||checkValidDiceProcess->exitCode()){
-        if(this->setExec()){
-            QMessageBox msgBox;
-            msgBox.setText("Invalid DICe backend executable");
-            msgBox.exec();
-            exit(1);
-        }
-    } // end default location failed
+    if(testForValidExec())
+        exit(1);
+
     std::cout << "Using DICe from " << execPath.toStdString() << std::endl;
     ui->progressBar->setValue(0);
 
@@ -238,8 +232,6 @@ void MainWindow::resetDefaults(){
     ui->initMethodCombo->addItem("USE_FIELD_VALUES");
     ui->initMethodCombo->addItem("USE_NEIGHBOR_VALUES");
     ui->initMethodCombo->addItem("USE_NEIGHBOR_VALUES_FIRST_STEP");
-    ui->initMethodCombo->addItem("USE_PHASE_CORRELATION");
-    ui->initMethodCombo->addItem("USE_OPTICAL_FLOW");
 
     // add the optimization methods
     ui->optMethodCombo->addItem("GRADIENT_BASED");
@@ -265,7 +257,6 @@ void MainWindow::resetDefaults(){
     ui->strainWindowSpin->setMaximum(ui->stepSize->value()*6);
     ui->strainWindowSpin->setValue(ui->stepSize->value()*2);
     ui->strainWindowSpin->setSingleStep(ui->stepSize->value());
-
 
     // reset the progress bar
     ui->progressBar->setValue(0);
@@ -425,6 +416,23 @@ void MainWindow::launchDICePage(){
     }
 }
 
+bool MainWindow::testForValidExec(){
+    QStringList args;
+    args << "--version";
+    checkValidDiceProcess->start(execPath,args);
+    checkValidDiceProcess->waitForFinished();
+    checkValidDiceProcess->close();
+    if(checkValidDiceProcess->exitStatus()||checkValidDiceProcess->exitCode()||execError){
+        QMessageBox msgBox;
+        msgBox.setText("Invalid DICe backend executable:\n" + execPath
+                       + "\n\nThe executable path in home/.dice may be invalid,"
+                         "\nor an invalid executable was selected by the user.");
+        msgBox.exec();
+        return true;
+    }
+    return false;
+}
+
 int MainWindow::setExec(){
     QString configPath = QDir::homePath();
 #ifdef WIN32
@@ -440,17 +448,9 @@ int MainWindow::setExec(){
     }
     execPath = execFileInfo.filePath();
     // try the non-standard location:
-    QStringList args;
-    args << "--version";
-    checkValidDiceProcess->start(execPath,args);
-    checkValidDiceProcess->waitForFinished();
-    checkValidDiceProcess->close();
-    if(checkValidDiceProcess->exitStatus()||checkValidDiceProcess->exitCode()){
-        QMessageBox msgBox;
-        msgBox.setText("Invalid DICe backend executable");
-        msgBox.exec();
+    if(testForValidExec())
         return 1;
-    }
+
     // save the selection to the config file:
     QFile saveConfig(configPath);
     if (saveConfig.open(QIODevice::ReadWrite)) {
@@ -1087,7 +1087,7 @@ void MainWindow::execWrapUp(int code){
     ui->workingDirButton->setEnabled(true);
 
 
-    if(diceProcess->exitStatus()||diceProcess->exitCode()){
+    if(diceProcess->exitStatus()||diceProcess->exitCode()||execError){
         QMessageBox msgBox;
         msgBox.setText("ERROR: DICe execution failed");
         msgBox.exec();
