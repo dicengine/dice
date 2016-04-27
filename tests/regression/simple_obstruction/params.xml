@@ -1,0 +1,9 @@
+<ParameterList>
+  <Parameter name="use_tracking_default_params" type="bool" value="true" />
+  <Parameter name="normalize_gamma_with_active_pixels" type="bool" value="true" />
+  <ParameterList name="output_spec">
+    <Parameter name="COORDINATE_X" type="bool" value="true" />
+    <Parameter name="COORDINATE_Y" type="bool" value="true" />
+    <Parameter name="DISPLACEMENT_X" type="bool" value="true" />
+  </ParameterList>
+</ParameterList>

@@ -12,7 +12,7 @@ This tutorial walks the user through several simple examples using DICe to do th
 
 - Compute strains in an object undergoing deformation
 
-In all cases, the input files for these examples are located in the `dice_root/tests/examples` folder. To experiment with these examples, these files should be copied to a temporary folder. Run the `dice` executable in the temporary folder rather than inside the repository.
+In all cases, the input files for these examples are located in the `dice_root/examples` folder if a package installer was used ton install DICe, or in the `dice_root/tests/examples` folder if referencing the source code. To experiment with these examples, these files should be copied to a temporary folder. Run the `dice` executable in the temporary folder rather than inside the repository or the system install directory.
 
 Input Files
 ===========

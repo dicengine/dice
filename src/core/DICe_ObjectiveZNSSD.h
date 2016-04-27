@@ -136,8 +136,11 @@ public:
   /// See base class documentation
   using Objective::dof_map;
 
+//  /// See base class documentation
+//  using Objective::subset_;
+
   /// See base class documentation
-  using Objective::subset_;
+  using Objective::sub_image_id;
 };
 
 }// End DICe Namespace

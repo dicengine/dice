@@ -83,6 +83,8 @@ const std::string to_string(Field_Name in){
     "GAMMA",
     "BETA",
     "NOISE_LEVEL",
+    "CONTRAST_LEVEL",
+    "ACTIVE_PIXELS",
     "MATCH",
     "ITERATIONS",
     "STATUS_FLAG",
@@ -120,6 +122,7 @@ const std::string to_string(Status_Flag in){
     "HESSIAN_SINGULAR",
     "SKIPPED_FRAME_DUE_TO_HIGH_GAMMA",
     "FRAME_FAILED_DUE_TO_HIGH_GAMMA",
+    "FRAME_FAILED_DUE_TO_NEGATIVE_SIGMA",
     "FRAME_FAILED_DUE_TO_HIGH_PATH_DISTANCE",
     "RESET_REF_SUBSET_DUE_TO_HIGH_GAMMA",
     "MAX_GLOBAL_ITERATIONS_REACHED_IN_EVOLUTION_LOOP",
@@ -168,6 +171,7 @@ Field_Name string_to_field_name(std::string & in){
     if(to_string(static_cast<Field_Name>(i))==in) return static_cast<Field_Name>(i);
   }
   std::cout << "Error: Field_Name " << in << " does not exist." << std::endl;
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
   return NO_SUCH_FIELD_NAME; // prevent no return errors
 }
 DICE_LIB_DLL_EXPORT
@@ -178,6 +182,7 @@ Correlation_Routine string_to_correlation_routine(std::string & in){
     if(correlationRoutineStrings[i]==in) return static_cast<Correlation_Routine>(i);
   }
   std::cout << "Error: Correlation_Routine " << in << " does not exist." << std::endl;
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
   return NO_SUCH_CORRELATION_ROUTINE; // prevent no return errors
 }
 DICE_LIB_DLL_EXPORT
@@ -188,6 +193,7 @@ Projection_Method string_to_projection_method(std::string & in){
     if(projectionMethodStrings[i]==in) return static_cast<Projection_Method>(i);
   }
   std::cout << "Error: Projection_Method " << in << " does not exist." << std::endl;
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
   return NO_SUCH_PROJECTION_METHOD; // prevent no return errors
 }
 DICE_LIB_DLL_EXPORT
@@ -198,6 +204,7 @@ Initialization_Method string_to_initialization_method(std::string & in){
     if(initializationMethodStrings[i]==in) return static_cast<Initialization_Method>(i);
   }
   std::cout << "Error: Initialization_Method " << in << " does not exist." << std::endl;
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
   return NO_SUCH_INITIALIZATION_METHOD; // prevent no return errors
 }
 DICE_LIB_DLL_EXPORT
@@ -208,6 +215,7 @@ Optimization_Method string_to_optimization_method(std::string & in){
     if(optimizationMethodStrings[i]==in) return static_cast<Optimization_Method>(i);
   }
   std::cout << "Error: Optimization_Method " << in << " does not exist." << std::endl;
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
   return NO_SUCH_OPTIMIZATION_METHOD; // prevent no return errors
 }
 DICE_LIB_DLL_EXPORT
@@ -218,6 +226,7 @@ Interpolation_Method string_to_interpolation_method(std::string & in){
     if(interpolationMethodStrings[i]==in) return static_cast<Interpolation_Method>(i);
   }
   std::cout << "Error: Interpolation_Method " << in << " does not exist." << std::endl;
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
   return NO_SUCH_INTERPOLATION_METHOD; // prevent no return errors
 }
 
@@ -259,9 +268,9 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::output_evolved_subset_images,false);
   defaultParams->set(DICe::use_subset_evolution,true);
   defaultParams->set(DICe::output_beta,true);
-  defaultParams->set(DICe::output_delimiter," ");
+  defaultParams->set(DICe::output_delimiter,",");
   defaultParams->set(DICe::omit_output_row_id,false);
-  defaultParams->set(DICe::obstruction_skin_factor,1.0);
+  defaultParams->set(DICe::obstruction_skin_factor,1.8);
   defaultParams->set(DICe::normalize_gamma_with_active_pixels,false);
   defaultParams->set(DICe::use_objective_regularization,false);
   defaultParams->set(DICe::objective_regularization_factor,1000.0);

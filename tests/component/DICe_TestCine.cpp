@@ -66,6 +66,7 @@ int main(int argc, char *argv[]) {
   *outStream << "--- Begin test ---" << std::endl;
 
   std::vector<std::string> cine_files;
+  // the bool is whether ot not to convert the frame to 8 bit
   cine_files.push_back("packed_12bpp");
   cine_files.push_back("packed_raw_12bpp");
   cine_files.push_back("phantom_v12_raw_16bpp");
@@ -102,14 +103,14 @@ int main(int argc, char *argv[]) {
 
     for(int_t frame=0;frame<cine_reader.num_frames();++frame){
       *outStream << "testing frame " << frame << std::endl;
-      Teuchos::RCP<Image> cine_img = cine_reader.get_frame(frame);
+       Teuchos::RCP<Image> cine_img = cine_reader.get_frame(frame);
       std::stringstream name;
       //std::stringstream outname;
-      //std::stringstream tiffname;
+      std::stringstream tiffname;
       //outname << cine_files[i] << "_d_" << frame << ".rawi";
-      //tiffname << cine_files[i] << "_" << frame << ".tiff";
+      tiffname << cine_files[i] << "_" << frame << ".tiff";
       //cine_img->write(outname.str());
-      //cine_img->write(tiffname.str());
+      cine_img->write(tiffname.str());
 #if DICE_USE_DOUBLE
       name << "./images/" << cine_files[i]<< "_d_" << frame << ".rawi";
 #else
@@ -119,7 +120,7 @@ int main(int argc, char *argv[]) {
       bool intensity_value_error = false;
       for(int_t y=0;y<cine_reader.height();++y){
         for(int_t x=0;x<cine_reader.width();++x){
-          if((*cine_img)(x,y)!=cine_img_exact(x,y)){
+          if(std::abs((*cine_img)(x,y)-cine_img_exact(x,y)) > 0.05){
             //std::cout << x << " " << y << " actual " << (*cine_img)(x,y) << " exptected " << cine_img_exact(x,y) << std::endl;
             intensity_value_error=true;
           }
@@ -162,6 +163,72 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, an exception should have been thrown for an invalid frame index" << std::endl;
     errorFlag++;
   }
+
+  *outStream << "testing reading a set of sub regions from a 10 bit cine " << std::endl;
+  DICe::cine::Cine_Reader cine_reader("./images/packed_12bpp.cine",outStream.getRawPtr());
+  Teuchos::RCP<Image> image_0_rcp = cine_reader.get_frame(0,170,13,208,42,false,false);
+  Teuchos::RCP<Image> image_1_rcp = cine_reader.get_frame(0,196,72,238,95,false,false);
+  std::vector<Teuchos::RCP<Image> > image_rcps;
+  image_rcps.push_back(image_0_rcp);
+  image_rcps.push_back(image_1_rcp);
+  // output the images
+  for(size_t i=0;i<image_rcps.size();++i){
+    std::stringstream name;
+    name << "./images/motion_window_" << i << ".rawi";
+    Image cine_img_exact(name.str().c_str());
+    bool intensity_value_error = false;
+    for(int_t y=0;y<cine_img_exact.height();++y){
+      for(int_t x=0;x<cine_img_exact.width();++x){
+        if(std::abs((* image_rcps[i])(x,y)-cine_img_exact(x,y)) > 0.05){
+          //std::cout << x << " " << y << " actual " << (* image_rcps[i])(x,y) << " exptected " << cine_img_exact(x,y) << std::endl;
+          intensity_value_error=true;
+        }
+      }
+    }
+    if(intensity_value_error){
+      *outStream << "Error, image " << i << ", the intensity values are not correct" << std::endl;
+      errorFlag++;
+    }
+  }
+  *outStream << "motion window values have been checked" << std::endl;
+
+  *outStream << "testing reading a set of sub regions from an 8 bit cine " << std::endl;
+  DICe::cine::Cine_Reader cine_reader_8("./images/phantom_v1610.cine",outStream.getRawPtr());
+  Teuchos::RCP<Image> image_8 = cine_reader_8.get_frame(5,158,15,196,45,false,false);
+  bool intensity_value_error = false;
+  Image img_8_exact("./images/motion_window_8.rawi");
+  for(int_t y=0;y<image_8->height();++y){
+    for(int_t x=0;x<image_8->width();++x){
+      if(std::abs((*image_8)(x,y)-img_8_exact(x,y)) > 0.05){
+        intensity_value_error=true;
+      }
+    }
+  }
+  if(intensity_value_error){
+    *outStream << "Error, the 8 bit intensity values are not correct" << std::endl;
+    errorFlag++;
+  }
+  *outStream << "8 bit motion window values have been checked" << std::endl;
+
+  *outStream << "testing reading a set of sub regions from an 16 bit cine " << std::endl;
+  DICe::cine::Cine_Reader cine_reader_16("./images/phantom_v1610_16bpp.cine",outStream.getRawPtr());
+  Teuchos::RCP<Image> image_16 = cine_reader_16.get_frame(5,95,83,128,116,false,false);
+  intensity_value_error = false;
+  Image img_16_exact("./images/motion_window_16.rawi");
+  for(int_t y=0;y<image_16->height();++y){
+    for(int_t x=0;x<image_16->width();++x){
+      if(std::abs((*image_16)(x,y)-img_16_exact(x,y)) > 0.05){
+        intensity_value_error=true;
+      }
+    }
+  }
+  if(intensity_value_error){
+    *outStream << "Error, the 16 bit intensity values are not correct" << std::endl;
+    errorFlag++;
+  }
+  *outStream << "16 bit motion window values have been checked" << std::endl;
+
+
 
   *outStream << "--- End test ---" << std::endl;
 

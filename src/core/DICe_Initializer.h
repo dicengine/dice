@@ -352,6 +352,29 @@ public:
     Teuchos::RCP<std::vector<scalar_t> > deformation);
 };
 
+
+/// \class DICe::Zero_Value_Initializer
+/// \brief an initializer that places zeros in all values
+class DICE_LIB_DLL_EXPORT
+Zero_Value_Initializer : public Initializer{
+public:
+
+  /// constructor
+  /// \param schema the parent schema
+  Zero_Value_Initializer(Schema * schema):
+  Initializer(schema){};
+
+  /// virtual destructor
+  virtual ~Zero_Value_Initializer(){};
+
+  /// see base class description
+  virtual void pre_execution_tasks(){};
+
+  /// see base class description
+  virtual Status_Flag initial_guess(const int_t subset_gid,
+    Teuchos::RCP<std::vector<scalar_t> > deformation);
+};
+
 /// \class DICe::Optical_Flow_Initializer
 /// \brief an initializer that uses optical flow to predict the next location
 /// of the subset (Lucas-Kanade algorithm). This initializer is only intended for
@@ -491,15 +514,9 @@ class DICE_LIB_DLL_EXPORT
 Motion_Test_Utility{
 public:
   /// constructor
-  /// \param origin_x the upper left corner x coordinate of the test window (note: not the centroid)
-  /// \param origin_y the upper left corner y coordinate of the test window (note: not the centroid)
-  /// \param width the width of the window to test
-  /// \param height the height of the window to test
+  /// \param schema pointer to the schema that will be calling the motion test utility
   /// \param tol determines the threshold for the image diff to register motion
-  Motion_Test_Utility(const int_t origin_x,
-    const int_t origin_y,
-    const int_t width,
-    const int_t height,
+  Motion_Test_Utility(Schema * schema,
     const scalar_t & tol);
 
   /// virtual destructor
@@ -511,22 +528,14 @@ public:
   };
 
   /// Returns true if motion is detected
-  /// \param def_image pointer to the deformed image
-  bool motion_detected(Teuchos::RCP<Image> def_image);
+  /// \param sub_image_id the id of the window image around the subset
+  bool motion_detected(const int_t sub_image_id);
 
 private:
-  /// x coord of upper left corner of the motion window (not the centroid)
-  int_t origin_x_;
-  /// y coord of upper left corner of the motion window (not the centroid)
-  int_t origin_y_;
-  /// width of the window
-  int_t width_;
-  /// height of the window
-  int_t height_;
+  /// pointer to the schema that created this initializer, used for field access
+  Schema * schema_;
   /// image diff tolerance (above this means motion is occurring)
   scalar_t tol_;
-  /// pointer to the previous image
-  Teuchos::RCP<Image> prev_img_;
   /// keep a copy of the result incase another call is
   /// made for this initializer by another subset
   Motion_State motion_state_;

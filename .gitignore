@@ -8,3 +8,4 @@ doc/doxygen/html
 doc/doxygen/latex
 LocalDefinitions.py
 *.pyc
+*.pro.user

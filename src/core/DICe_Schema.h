@@ -97,6 +97,16 @@ public:
   /// Communicator RCP
   typedef Teuchos::RCP<MultiField_Comm> comm_rcp;
 
+  /// \brief Constructor that initializes empty images of the dimensions given
+  /// \param img_width Image width (must be the same for the reference and deformed images)
+  /// \param img_height Image height (must be the same for the reference and deformed images)
+  /// \param initial_intensity_value value to populate the pixel values with
+  /// \param params Correlation parameters
+  Schema(const int_t img_width,
+    const int_t img_height,
+    const intensity_t initial_intensity_value,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
   /// \brief Constructor that takes string names of images as inputs
   /// \param refName String name of reference image
   /// \param defName String name of deformed image
@@ -113,14 +123,6 @@ public:
     const std::string & defName,
     const std::string & params_file_name);
 
-  /// \brief Helper method to enable creating a schema with a parameter list or a file name
-  /// \param refName String name of reference image
-  /// \param defName String name of deformed image
-  /// \param params Correlation parameters
-  void construct_schema(const std::string & refName,
-    const std::string & defName,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
-
   /// \brief Constructor that takes arrays of intensity values as inputs
   /// \param img_width Image width (must be the same for the reference and deformed images)
   /// \param img_height Image height (must be the same for the reference and deformed images)
@@ -144,18 +146,6 @@ public:
     const Teuchos::ArrayRCP<intensity_t> refRCP,
     const Teuchos::ArrayRCP<intensity_t> defRCP,
     const std::string & params_file_name);
-
-  /// \brief Helper method to enable creating a schema with a parameter list or a file name
-  /// \param img_width Image width (must be the same for the reference and deformed images)
-  /// \param img_height Image height (must be the same for the reference and deformed images)
-  /// \param refRCP Array of intensity values for the reference image
-  /// \param defRCP Array of intensity values for deformed image
-  /// \param params Correlation parameters
-  void construct_schema(const int_t img_width,
-    const int_t img_height,
-    const Teuchos::ArrayRCP<intensity_t> refRCP,
-    const Teuchos::ArrayRCP<intensity_t> defRCP,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// \brief Constructor that takes already instantiated images as inputs
   /// \param ref_img Reference DICe::Image
@@ -171,6 +161,26 @@ public:
   /// \param params Correlation Parameters
   Schema(Teuchos::RCP<Image> ref_img,
     Teuchos::RCP<Image> def_img,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
+  /// \brief Helper method to enable creating a schema with a parameter list or a file name
+  /// \param refName String name of reference image
+  /// \param defName String name of deformed image
+  /// \param params Correlation parameters
+  void construct_schema(const std::string & refName,
+    const std::string & defName,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
+  /// \brief Helper method to enable creating a schema with a parameter list or a file name
+  /// \param img_width Image width (must be the same for the reference and deformed images)
+  /// \param img_height Image height (must be the same for the reference and deformed images)
+  /// \param refRCP Array of intensity values for the reference image
+  /// \param defRCP Array of intensity values for deformed image
+  /// \param params Correlation parameters
+  void construct_schema(const int_t img_width,
+    const int_t img_height,
+    const Teuchos::ArrayRCP<intensity_t> refRCP,
+    const Teuchos::ArrayRCP<intensity_t> defRCP,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// \brief Helper method to enable creating a schema with a parameter list or a file name
@@ -197,16 +207,26 @@ public:
   /// \param params_file_name File name of the paramteres file
   void set_params(const std::string & params_file_name);
 
-  /// Replace the deformed image for this Schema (only enabled with boost)
-  void set_def_image(const std::string & defName);
+  /// Replace the deformed image for this Schema
+  void set_def_image(const std::string & defName,
+    const int_t id=0);
 
   /// Replace the deformed image using an intensity array
   void set_def_image(const int_t img_width,
     const int_t img_height,
-    const Teuchos::ArrayRCP<intensity_t> defRCP);
+    const Teuchos::ArrayRCP<intensity_t> defRCP,
+    const int_t id=0);
 
   /// Replace the deformed image using an image
-  void set_def_image(Teuchos::RCP<Image> img);
+  void set_def_image(Teuchos::RCP<Image> img,
+    const int_t id=0);
+
+  /// Replace the previous image using an image
+  void set_prev_image(Teuchos::RCP<Image> img,
+    const int_t id=0);
+
+  /// Rotate the deformed image if requested
+  void rotate_def_image();
 
   /// Replace the deformed image for this Schema (only enabled with boost)
   void set_ref_image(const std::string & refName);
@@ -268,13 +288,25 @@ public:
   }
 
   /// Returns a pointer to the deformed DICe::Image
-  Teuchos::RCP<Image> def_img()const{
-    return def_img_;
+  Teuchos::RCP<Image> def_img(const int_t index=0)const{
+    assert(index>=0&&index<(int_t)def_imgs_.size());
+    return def_imgs_[index];
+  }
+
+  /// return a pointer to the def images vector
+  const std::vector<Teuchos::RCP<Image> > * def_imgs()const{
+    return &def_imgs_;
   }
 
   /// Returns a pointer to the preivous DICe::Image
-  Teuchos::RCP<Image> prev_img()const{
-    return prev_img_;
+  Teuchos::RCP<Image> prev_img(const int_t index=0)const{
+    assert(index>=0&&index<(int_t)prev_imgs_.size());
+    return prev_imgs_[index];
+  }
+
+  /// return a pointer to the def images vector
+  const std::vector<Teuchos::RCP<Image> > * prev_imgs()const{
+    return &prev_imgs_;
   }
 
   /// Returns the max solver iterations allowed for the fast (gradient based) algorithm
@@ -573,11 +605,13 @@ public:
   /// \param prefix Optional string to use as the file prefix
   /// \param separate_files_per_subset Forces the output to be one file per subset listing each frame on a new row.
   /// The default is one file per frame with all subsets listed one per row.
+  /// \param separate_header_file place the run information in another file rather than the header of the results
   /// \param type Type of file to write (currently only TEXT_FILE is implemented)
   // TODO export in exodus format
   void write_output(const std::string & output_folder,
     const std::string & prefix="DICe_solution",
     const bool separate_files_per_subset=false,
+    const bool separate_header_file=false,
     const Output_File_Type type = TEXT_FILE);
 
   /// \brief Write an image that shows all the subsets' current positions and shapes
@@ -656,6 +690,8 @@ public:
   /// \param gamma gamma value
   /// \param beta beta value
   /// \param noise noise level value
+  /// \param contrast the contrast level value
+  /// \param active_pixels the number of active pixels for this subset
   /// \param status status flag
   /// \param num_iterations the number of iterations
   void record_step(const int_t subset_gid,
@@ -665,6 +701,8 @@ public:
     const scalar_t & gamma,
     const scalar_t & beta,
     const scalar_t & noise,
+    const scalar_t & contrast,
+    const int_t active_pixels,
     const int_t status,
     const int_t num_iterations);
 
@@ -760,6 +798,17 @@ public:
     return image_frame_;
   }
 
+  /// Sets the first frame's index
+  /// \param index the index of the first frame (useful for cine files)
+  void set_first_frame_index(const int_t index){
+    first_frame_index_ = index;
+  }
+
+  /// Returns the offset to the first frame
+  int_t first_frame_index()const{
+    return first_frame_index_;
+  }
+
   /// Returns the number of images in the set (-1 if it has not been set)
   int_t num_image_frames() const{
     return num_image_frames_;
@@ -824,13 +873,13 @@ public:
 
   /// Provide access to the flags that determine if the solve should be skipped:
   /// \param skip_solve_flags the map of skip solve flags
-  void set_skip_solve_flags(Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags){
+  void set_skip_solve_flags(Teuchos::RCP<std::map<int_t,std::vector<int_t> > > skip_solve_flags){
     DEBUG_MSG("skip solve flags have been set");
     skip_solve_flags_ = skip_solve_flags;
   }
 
   /// Returns a pointer to the skip solve flags
-  Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags() const {
+  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > skip_solve_flags() const {
     return skip_solve_flags_;
   }
 
@@ -848,6 +897,11 @@ public:
     motion_window_params_ = motion_window_params;
   }
 
+  /// returns a pointer to the motion window params of the schema
+  Teuchos::RCP<std::map<int_t,Motion_Window_Params> > motion_window_params(){
+    return motion_window_params_;
+  }
+
   /// \brief EXPERIMENTAL sets the layering order of subets
   /// \param id_vec Pointer to map of vectors, each vector contains the ids for that particular subset in the order they will be layered if they cross paths
   ///
@@ -856,6 +910,13 @@ public:
   void set_obstructing_subset_ids(Teuchos::RCP<std::map<int_t,std::vector<int_t> > > id_vec){
     if(id_vec==Teuchos::null)return;
     obstructing_subset_ids_ = id_vec;
+  }
+
+  /// \brief forces simplex method for certain subsets
+  /// \param ids Pointer to set of ids
+  void set_force_simplex(Teuchos::RCP<std::set<int_t> > ids){
+    if(ids==Teuchos::null)return;
+    force_simplex_ = ids;
   }
 
   /// Return a pointer to the distribution map
@@ -982,9 +1043,11 @@ private:
   /// Pointer to reference image
   Teuchos::RCP<Image> ref_img_;
   /// Pointer to deformed image
-  Teuchos::RCP<Image> def_img_;
+  /// vector because there could be multiple sub-images
+  std::vector<Teuchos::RCP<Image> > def_imgs_;
   /// Pointer to previous image
-  Teuchos::RCP<Image> prev_img_;
+  /// vector because there could be multiple sub-images
+  std::vector<Teuchos::RCP<Image> > prev_imgs_;
   /// Vector of pointers to the post processing utilities
   std::vector<Teuchos::RCP<Post_Processor> > post_processors_;
   /// True if any post_processors have been activated
@@ -1031,6 +1094,8 @@ private:
   Teuchos::RCP<DICe::Output_Spec> output_spec_;
   /// Stores current fame number for a sequence of images
   int_t image_frame_;
+  /// Stores the offset to the first image's index (cine files can start with a negative index)
+  int_t first_frame_index_;
   /// Stores the number of images in the sequence
   int_t num_image_frames_;
   /// Displacement jump tolerance. If the displacement solution is larger than this from the previous frame
@@ -1072,6 +1137,8 @@ private:
   /// this vector stores a vector of obstructing subset ids that have
   /// the potential to block the subset associated with the outer vector index
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids_;
+  /// force simplex for these ids
+  Teuchos::RCP<std::set<int_t> > force_simplex_;
   /// filter the images using a 7 point gauss filter
   bool gauss_filter_images_;
   /// Compute the reference image gradients
@@ -1108,7 +1175,7 @@ private:
   Teuchos::RCP<std::map<int_t,bool> > optical_flow_flags_;
   /// Map to hold the flags for skipping solves for particular subsets (initialize only since
   /// only pixel accuracy may be needed
-  Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags_;
+  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > skip_solve_flags_;
   /// Map to hold the flags that determine if the next image should be
   /// tested for motion before doing the DIC
   Teuchos::RCP<std::map<int_t,Motion_Window_Params> > motion_window_params_;
@@ -1147,6 +1214,10 @@ public:
   void write_header(std::FILE * file,
     const std::string & row_id="");
 
+  /// \brief Writes the run information (interpolants used, etc.)
+  /// \param file Pointer to the output file (must already be open)
+  void write_info(std::FILE * file);
+
   /// \brief Writes the fields for the current frame
   /// \param file Pointer to the output file (must already be open)
   /// \param row_index The label for the current row (typically frame_number or subset_id)
@@ -1170,6 +1241,15 @@ private:
   /// True if the row_id should be omited (first column of output)
   bool omit_row_id_;
 };
+
+/// free function given a std::vector to determine if a frame index should be skipped or not
+/// \param trigger_based_frame_index index of the frame (as referenced to the trigger frame, can be negative)
+/// \param frame_id_vector vector of ids to turn skip solve off and on (first id is where the skipping should begin
+/// evey id after that changes the state of skipping. For example, if values 0 10 23 56 are stored in frame id vector
+/// skipping the solves begins on frame 0, then solves are done from 10 to 23, frames from 23 to 56 will have the
+/// solve skipped and solving will be performed for all frames after 56.
+bool frame_should_be_skipped(const int_t trigger_based_frame_index,
+  std::vector<int_t> & frame_id_vector);
 
 }// End DICe Namespace
 

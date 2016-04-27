@@ -75,82 +75,9 @@ void apply_transform(Teuchos::RCP<Image> image_in,
       Dy = (1.0-ey)*dY - g*dX;
       mapped_x = cos_t*Dx - sin_t*Dy - u + CX;
       mapped_y = sin_t*Dx + cos_t*Dy - v + CY;
-      image_out->intensities()[y*width+x] = interpolate_keys_fourth(mapped_x,mapped_y,image_in);
+      image_out->intensities()[y*width+x] = image_in->interpolate_keys_fourth(mapped_x,mapped_y);
     }// x
   }// y
-}
-
-intensity_t interpolate_bilinear(const scalar_t & global_x,
-  const scalar_t & global_y,
-  Teuchos::RCP<Image> image){
-  if(global_x>=0.0&&global_x<image->width()-1.5&&global_y>=0.0&&global_y<image->height()-1.5){
-    const int_t x1 = (int_t)global_x;
-    const int_t x2 = x1+1;
-    const int_t y1 = (int_t)global_y;
-    const int_t y2  = y1+1;
-    return (*image)(x1,y1)*(x2-global_x)*(y2-global_y)
-        +(*image)(x2,y1)*(global_x-x1)*(y2-global_y)
-        +(*image)(x2,y2)*(global_x-x1)*(global_y-y1)
-        +(*image)(x1,y2)*(x2-global_x)*(global_y-y1);
-  }
-  else{
-    // out of bounds pixels are black
-    return 0.0;
-  }
-}
-
-intensity_t interpolate_keys_fourth(const scalar_t & global_x,
-  const scalar_t & global_y,
-  Teuchos::RCP<Image> image){
-  int_t x1 = (int_t)global_x;
-  if(global_x - x1 >= 0.5) x1++;
-  int_t y1 = (int_t)global_y;
-  if(global_y - y1 >= 0.5) y1++;
-  // check that the global location is inside the image...
-  if(global_x>2.5&&global_x<image->width()-3.5&&global_y>2.5&&global_y<image->height()-3.5){
-    intensity_t intensity_value = 0.0;
-    // convolve all the pixels within + and - pixels of the point in question
-    scalar_t dy=0.0,dy2=0.0,dy3=0.0;
-    scalar_t dx=0.0,dx2=0.0,dx3=0.0;
-    scalar_t f0x=0.0,f0y=0.0;
-    for(int_t y=y1-3;y<=y1+3;++y){
-      dy = std::abs(global_y - y);
-      dy2=dy*dy;
-      dy3=dy2*dy;
-      f0y = 0.0;
-      if(dy <= 1.0){
-        f0y = 4.0/3.0*dy3 - 7.0/3.0*dy2 + 1.0;
-      }
-      else if(dy <= 2.0){
-        f0y = -7.0/12.0*dy3 + 3.0*dy2 - 59.0/12.0*dy + 15.0/6.0;
-      }
-      else if(dy <= 3.0){
-        f0y = 1.0/12.0*dy3 - 2.0/3.0*dy2 + 21.0/12.0*dy - 3.0/2.0;
-      }
-      for(int_t x=x1-3;x<=x1+3;++x){
-        // compute the f's of x and y
-        dx = std::abs(global_x - x);
-        dx2=dx*dx;
-        dx3=dx2*dx;
-        f0x = 0.0;
-        if(dx <= 1.0){
-          f0x = 4.0/3.0*dx3 - 7.0/3.0*dx2 + 1.0;
-        }
-        else if(dx <= 2.0){
-          f0x = -7.0/12.0*dx3 + 3.0*dx2 - 59.0/12.0*dx + 15.0/6.0;
-        }
-        else if(dx <= 3.0){
-          f0x = 1.0/12.0*dx3 - 2.0/3.0*dx2 + 21.0/12.0*dx - 3.0/2.0;
-        }
-        intensity_value += (*image)(x,y)*f0x*f0y;
-      }
-    }
-    return intensity_value;
-  }
-  // bilinear as a fall back near the edges
-  else{
-    return interpolate_bilinear(global_x,global_y,image);
-  }
 }
 
 }// End DICe Namespace

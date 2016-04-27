@@ -54,7 +54,8 @@ Subset::Subset(int_t cx,
   cx_(cx),
   cy_(cy),
   has_gradients_(false),
-  is_conformal_(false)
+  is_conformal_(false),
+  sub_image_id_(0)
 {
   assert(num_pixels_>0);
   assert(x.size()==y.size());
@@ -94,7 +95,8 @@ Subset::Subset(const int_t cx,
  cx_(cx),
  cy_(cy),
  has_gradients_(false),
- is_conformal_(false)
+ is_conformal_(false),
+ sub_image_id_(0)
 {
   assert(width>0);
   assert(height>0);
@@ -143,7 +145,8 @@ Subset::Subset(const int_t cx,
   cy_(cy),
   has_gradients_(false),
   conformal_subset_def_(subset_def),
-  is_conformal_(true)
+  is_conformal_(true),
+  sub_image_id_(0)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(cx<0,std::invalid_argument,"Error, cannot have negative coordinates for cx");
   TEUCHOS_TEST_FOR_EXCEPTION(cy<0,std::invalid_argument,"Error, cannot have negative coordinates for cy");
@@ -264,10 +267,14 @@ scalar_t
 Subset::mean(const Subset_View_Target target){
   scalar_t mean = 0.0;
   if(target==REF_INTENSITIES){
-    Intensity_Sum_Functor sum_func(ref_intensities_.d_view);
+    Intensity_Sum_Functor sum_func(ref_intensities_.d_view,
+      is_active_.d_view,
+      is_deactivated_this_step_.d_view);
     Kokkos::parallel_reduce(num_pixels_,sum_func,mean);
   }else{
-    Intensity_Sum_Functor sum_func(def_intensities_.d_view);
+    Intensity_Sum_Functor sum_func(def_intensities_.d_view,
+      is_active_.d_view,
+      is_deactivated_this_step_.d_view);
     Kokkos::parallel_reduce(num_pixels_,sum_func,mean);
   }
   return mean/num_pixels_;
@@ -279,10 +286,16 @@ Subset::mean(const Subset_View_Target target,
   scalar_t mean_ = mean(target);
   sum = 0.0;
   if(target==REF_INTENSITIES){
-    Intensity_Sum_Minus_Mean_Functor sum_minus_mean_func(ref_intensities_.d_view,mean_);
+    Intensity_Sum_Minus_Mean_Functor sum_minus_mean_func(ref_intensities_.d_view,
+      is_active_.d_view,
+      is_deactivated_this_step_.d_view,
+      mean_);
     Kokkos::parallel_reduce(num_pixels_,sum_minus_mean_func,sum);
   }else{
-    Intensity_Sum_Minus_Mean_Functor sum_minus_mean_func(def_intensities_.d_view,mean_);
+    Intensity_Sum_Minus_Mean_Functor sum_minus_mean_func(def_intensities_.d_view,
+      is_active_.d_view,
+      is_deactivated_this_step_.d_view,
+      mean_);
     Kokkos::parallel_reduce(num_pixels_,sum_minus_mean_func,sum);
   }
   sum = std::sqrt(sum);

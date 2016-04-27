@@ -106,15 +106,19 @@ const char* const image_file_extension = "image_file_extension";
 const char* const image_file_prefix = "image_file_prefix";
 /// Input parameter
 const char* const separate_output_file_for_each_subset = "separate_output_file_for_each_subset";
+/// Input parameter
+const char* const create_separate_run_info_file = "create_separate_run_info_file";
 
 /// \brief Parses the options set in the command line when dice is invoked
 /// \param argc typical argument from main
 /// \param argv typical argument from main
+/// \param force_exit true if the executable should exit gracefully
 /// \param outStream [out] The output stream, gets set to cout or blackholeStream depending on command line options
 /// \param analysis_type Global, Local, Constrained Optimziation, ...
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   char *argv[],
+  bool & force_exit,
   Teuchos::RCP<std::ostream> & outStream,
   const Analysis_Type analysis_type=LOCAL_DIC);
 
@@ -134,24 +138,30 @@ DICE_LIB_DLL_EXPORT
 Motion_Window_Params {
   /// constructor
   Motion_Window_Params():
-  origin_x_(0),
-  origin_y_(0),
-  width_(-1),
-  height_(-1),
+  start_x_(0),
+  start_y_(0),
+  end_x_(0),
+  end_y_(0),
   tol_(-1.0),
-  use_subset_id_(-1){};
+  use_subset_id_(-1),
+  use_motion_detection_(false),
+  sub_image_id_(-1){};
   /// upper left corner x coord
-  int_t origin_x_;
+  int_t start_x_;
   /// upper left corner y coord
-  int_t origin_y_;
-  /// width
-  int_t width_;
-  /// height
-  int_t height_;
+  int_t start_y_;
+  /// lower right corner x coord
+  int_t end_x_;
+  /// lower right corner y coord
+  int_t end_y_;
   /// tolerance for motion detection
   scalar_t tol_;
   /// point to another subsets' motion window if multiple subsets share one
   int_t use_subset_id_;
+  /// use motion detection
+  bool use_motion_detection_;
+  /// this gets set after the window images are created and the id is known
+  int_t sub_image_id_;
 };
 
 /// Simple struct for passing info back and forth from read_subset_file:
@@ -165,6 +175,7 @@ Subset_File_Info {
     coordinates_vector = Teuchos::rcp(new std::vector<int_t>());
     neighbor_vector = Teuchos::rcp(new std::vector<int_t>());
     id_sets_map = Teuchos::rcp(new std::map<int_t,std::vector<int_t> >());
+    force_simplex = Teuchos::rcp(new std::set<int_t>());
     size_map = Teuchos::rcp(new std::map<int_t,std::pair<int_t,int_t> >());
     displacement_map = Teuchos::rcp(new std::map<int_t,std::pair<scalar_t,scalar_t> >());
     normal_strain_map = Teuchos::rcp(new std::map<int_t,std::pair<scalar_t,scalar_t> >());
@@ -173,8 +184,9 @@ Subset_File_Info {
     seed_subset_ids = Teuchos::rcp(new std::map<int_t,int_t>());
     path_file_names = Teuchos::rcp(new std::map<int_t,std::string>());
     optical_flow_flags = Teuchos::rcp(new std::map<int_t,bool>());
-    skip_solve_flags = Teuchos::rcp(new std::map<int_t,bool>());
+    skip_solve_flags = Teuchos::rcp(new std::map<int_t,std::vector<int_t> >());
     motion_window_params = Teuchos::rcp(new std::map<int_t,Motion_Window_Params>());
+    num_motion_windows = 0;
     type = info_type;
   }
   /// Pointer to map of conformal subset defs (these are used to define conformal subsets)
@@ -185,6 +197,8 @@ Subset_File_Info {
   Teuchos::RCP<std::vector<int_t> > neighbor_vector;
   /// Pointer to a map that has vectos of subset ids (used to denote blocking subsets)
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > id_sets_map;
+  /// Pointer to a set of ids that force simplex method
+  Teuchos::RCP<std::set<int_t> > force_simplex;
   /// Type of information (subset or region of interest)
   Subset_File_Info_Type type;
   /// Pointer to a map of std::pairs of size values
@@ -204,9 +218,11 @@ Subset_File_Info {
   /// Map that turns on optical flow initializer for certain subsets
   Teuchos::RCP<std::map<int_t,bool> > optical_flow_flags;
   /// Map that turns off the solve (initialize only) for certain subsets
-  Teuchos::RCP<std::map<int_t,bool> > skip_solve_flags;
+  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > skip_solve_flags;
   /// Map that tests each frame for motion before performing DIC optimization
   Teuchos::RCP<std::map<int_t,Motion_Window_Params> > motion_window_params;
+  /// number of motion windows
+  int_t num_motion_windows;
 };
 
 /// \brief Read a list of coordinates for correlation points from file
@@ -289,96 +305,6 @@ bool valid_correlation_point(const int_t x_coord,
 DICE_LIB_DLL_EXPORT
 void generate_template_input_files(const std::string & file_prefix);
 
-/// \brief Create the opening parameter syntax
-/// \param file_name The name of the xml file
-DICE_LIB_DLL_EXPORT
-void initialize_xml_file(const std::string & file_name);
-
-/// \brief Create the closing parameter syntax
-/// \param file_name The name of the xml file
-DICE_LIB_DLL_EXPORT
-void finalize_xml_file(const std::string & file_name);
-
-/// \brief Write a comment to the xml file specified
-/// \param file_name The name of the xml file
-/// \param comment String comment to print to file
-DICE_LIB_DLL_EXPORT
-void write_xml_comment(const std::string & file_name,
-  const std::string & comment);
-
-/// \brief Write the opening part of a ParameterList
-/// \param file_name The xml file
-/// \param name Name of the ParameterList
-/// \param commented String comment to print to file
-DICE_LIB_DLL_EXPORT
-void write_xml_param_list_open(const std::string & file_name,
-  const std::string & name,
-  const bool commented=true);
-
-/// \brief Write the closing part of a ParameterList
-/// \param file_name The xml file
-/// \param commented String comment to print to file
-DICE_LIB_DLL_EXPORT
-void write_xml_param_list_close(const std::string & file_name,
-  const bool commented=true);
-
-/// \brief Write a general xml parameter to file
-/// \param file_name The name of the xml file to write to
-/// \param name The name of the parameter
-/// \param type The type of the parameter (bool, int, double, string)
-/// \param value The string value of the parameter
-/// \param commented Determines if this parameter should be commented out
-DICE_LIB_DLL_EXPORT
-void write_xml_param(const std::string & file_name,
-  const std::string & name,
-  const std::string & type,
-  const std::string & value,
-  const bool commented=true);
-
-/// \brief Write a string parameter to file
-/// \param file_name The name of the xml file to write to
-/// \param name The name of the parameter
-/// \param value The string value of the parameter
-/// \param commented Determines if this parameter should be commented out
-DICE_LIB_DLL_EXPORT
-void write_xml_string_param(const std::string & file_name,
-  const std::string & name,
-  const std::string & value="<value>",
-  const bool commented=true);
-
-/// \brief Write an integer valued parameter to file
-/// \param file_name The name of the xml file to write to
-/// \param name The name of the parameter
-/// \param value The string value of the parameter
-/// \param commented Determines if this parameter should be commented out
-DICE_LIB_DLL_EXPORT
-void write_xml_size_param(const std::string & file_name,
-  const std::string & name,
-  const std::string & value="<value>",
-  const bool commented=true);
-
-/// \brief Write a real valued parameter to file
-/// \param file_name The name of the xml file to write to
-/// \param name The name of the parameter
-/// \param value The string value of the parameter
-/// \param commented Determines if this parameter should be commented out
-DICE_LIB_DLL_EXPORT
-void write_xml_real_param(const std::string & file_name,
-  const std::string & name,
-  const std::string & value="<value>",
-  const bool commented=true);
-
-/// \brief Write a boolean valued parameter to file
-/// \param file_name The name of the xml file to write to
-/// \param name The name of the parameter
-/// \param value The string value of the parameter
-/// \param commented Determines if this parameter should be commented out
-DICE_LIB_DLL_EXPORT
-void write_xml_bool_param(const std::string & file_name,
-  const std::string & name,
-  const std::string & value="<value>",
-  const bool commented=true);
-
 /// \brief Determines if a string is a number
 /// \param s Input string
 DICE_LIB_DLL_EXPORT
@@ -406,6 +332,8 @@ const char* const parser_excluded = "EXCLUDED";
 const char* const parser_obstructed = "OBSTRUCTED";
 /// Parser string
 const char* const parser_blocking_subsets = "BLOCKING_SUBSETS";
+/// Parser string
+const char* const parser_force_simplex = "FORCE_SIMPLEX";
 /// Parser string
 const char* const parser_polygon = "POLYGON";
 /// Parser string
@@ -436,6 +364,8 @@ const char* const parser_use_path_file = "USE_PATH_FILE";
 const char* const parser_skip_solve = "SKIP_SOLVE";
 /// Parser string
 const char* const parser_test_for_motion = "TEST_FOR_MOTION";
+/// Parser string
+const char* const parser_motion_window = "MOTION_WINDOW";
 /// Parser string
 const char* const parser_location = "LOCATION";
 /// Parser string

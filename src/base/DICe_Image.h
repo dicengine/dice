@@ -124,10 +124,16 @@ public:
   /// constructor that creates a zero image
   /// \param width the width of the image
   /// \param height the height of the image
+  /// \param intensity value to fill the array with
+  /// \param offset_x offset to upper left corner x coord if this is a subregion of a larger image
+  /// \param offset_y offset to upper left corner y coord if this is a subregion of a larger image
   /// no params allowed since the intensity values are all zeros so gradients
   /// or filters would not make sense
   Image(const int_t width,
-    const int_t height);
+    const int_t height,
+    const intensity_t intensity=0.0,
+    const int_t offset_x = 0,
+    const int_t offset_y = 0);
 
   //
   // Sub portion of another image constructor (deep copy constructor for default args)
@@ -154,6 +160,9 @@ public:
 
   /// default constructor tasks
   void default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
+  /// post allocation tasks
+  void post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// virtual destructor
   virtual ~Image(){};
@@ -213,6 +222,49 @@ public:
   /// replaces the intensity values of the image
   /// \param intensities the new intensity value array
   void replace_intensities(Teuchos::ArrayRCP<intensity_t> intensities);
+
+  /// interpolant
+  /// \param global_x global image coordinate x
+  /// \param global_y global image coordinate y
+  intensity_t interpolate_keys_fourth_global(const scalar_t & global_x,
+    const scalar_t & global_y){
+    return interpolate_keys_fourth(global_x-offset_x_,global_y-offset_y_);
+  }
+
+  /// interpolant
+  /// \param local_x local image coordinate x
+  /// \param local_y local image coordinate y
+  intensity_t interpolate_keys_fourth(const scalar_t & local_x,
+    const scalar_t & local_y);
+
+  /// interpolant
+  /// \param global_x global image coordinate x
+  /// \param global_y global image coordinate y
+  intensity_t interpolate_bilinear_global(const scalar_t & global_x,
+    const scalar_t & global_y){
+    return interpolate_bilinear(global_x-offset_x_,global_y-offset_y_);
+  }
+
+  /// interpolant
+  /// \param local_x local image coordinate x
+  /// \param local_y local image coordinate y
+  intensity_t interpolate_bilinear(const scalar_t & local_x,
+    const scalar_t & local_y);
+
+  /// interpolant
+  /// \param global_x global image coordinate x
+  /// \param global_y global image coordinate y
+  intensity_t interpolate_bicubic_global(const scalar_t & global_x,
+    const scalar_t & global_y){
+    return interpolate_bicubic(global_x-offset_x_,global_y-offset_y_);
+  }
+
+  /// interpolant
+  /// \param local_x local image coordinate x
+  /// \param local_y local image coordinate y
+  intensity_t interpolate_bicubic(const scalar_t & local_x,
+    const scalar_t & local_y);
+
 
   /// gradient accessors:
   /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x

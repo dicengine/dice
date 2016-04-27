@@ -204,7 +204,7 @@ private:
   /// Center of the circle global y-coordinate
   int_t centroid_y_;
   /// Radius of the circle
-  scalar_t radius_;
+  //scalar_t radius_;
   /// Radius of the circle squared
   scalar_t radius2_;
   /// Minimum x global coordinate of the circle

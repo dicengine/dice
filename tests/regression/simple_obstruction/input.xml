@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<ParameterList>
+  <Parameter name="subset_file" type="string" value="./subsets.txt" />
+  
+  <Parameter name="output_folder" type="string" value="./results/" />
+  <Parameter name="image_folder" type="string" value="./images/" />
+  <Parameter name="reference_image_index" type="int" value="0"  />
+  <Parameter name="num_images" type="int" value="36" />
+  <Parameter name="num_file_suffix_digits" type="int" value="2" />
+  <Parameter name="image_file_extension" type="string" value=".tif" />
+  <Parameter name="image_file_prefix" type="string" value="Img_" />  
+  <Parameter name="correlation_parameters_file" type="string" value="params.xml" />
+  <Parameter name="separate_output_file_for_each_subset" type="bool" value="true"/>
+</ParameterList>

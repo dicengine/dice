@@ -155,6 +155,8 @@ const char* const compute_def_gradients = "compute_def_gradients";
 /// String parameter name
 const char* const compute_image_gradients = "compute_image_gradients";
 /// String parameter name
+const char* const filter_failed_cine_pixels = "filter_failed_cine_pixels";
+/// String parameter name
 const char* const enable_translation = "enable_translation";
 /// String parameter name
 const char* const enable_rotation = "enable_rotation";
@@ -302,14 +304,18 @@ enum Field_Name {
   // 21
   NOISE_LEVEL,       // estimated std. dev. of the image noise
   // 22
-  MATCH,             // 0 means match was found -1 means match failed
+  CONTRAST_LEVEL,    // estimated std. dev. of the image intensity values
   // 23
-  ITERATIONS,        // number of iterations taken by the solution algorithm
+  ACTIVE_PIXELS,     // number of active pixels for the subset
   // 24
-  STATUS_FLAG,       // information about the initialization method or error flags on failed steps
+  MATCH,             // 0 means match was found -1 means match failed
   // 25
-  NEIGHBOR_ID,       // the global id of the neighboring subset to use for initialization by neighbor value
+  ITERATIONS,        // number of iterations taken by the solution algorithm
   // 26
+  STATUS_FLAG,       // information about the initialization method or error flags on failed steps
+  // 27
+  NEIGHBOR_ID,       // the global id of the neighboring subset to use for initialization by neighbor value
+  // 28
   CONDITION_NUMBER,  // quality metric for the pseudoinverse matrix in the gradient-based method
   // *** DO NOT PUT ANY FIELDS UNDER THIS ONE ***
   // (this is how the field stride is automatically set if another field is added)
@@ -364,6 +370,7 @@ enum Initialization_Method {
   USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY,
   USE_PHASE_CORRELATION,
   USE_OPTICAL_FLOW,
+  USE_ZEROS,
   INITIALIZATION_METHOD_NOT_APPLICABLE,
   // DON'T ADD ANY BELOW MAX
   MAX_INITIALIZATION_METHOD,
@@ -376,6 +383,7 @@ const static char * initializationMethodStrings[] = {
   "USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY",
   "USE_PHASE_CORRELATION",
   "USE_OPTICAL_FLOW",
+  "USE_ZEROS",
   "INITIALIZATION_METHOD_NOT_APPLICABLE"
 };
 
@@ -402,6 +410,7 @@ const static char * optimizationMethodStrings[] = {
 /// Interpolation method
 enum Interpolation_Method {
   BILINEAR=0,
+  BICUBIC,
   KEYS_FOURTH,
   // DON'T ADD ANY BELOW MAX
   MAX_INTERPOLATION_METHOD,
@@ -410,6 +419,7 @@ enum Interpolation_Method {
 
 const static char * interpolationMethodStrings[] = {
   "BILINEAR",
+  "BICUBIC",
   "KEYS_FOURTH"
 };
 
@@ -489,18 +499,20 @@ enum Status_Flag{
   // 23
   FRAME_FAILED_DUE_TO_HIGH_GAMMA,
   // 24
-  FRAME_FAILED_DUE_TO_HIGH_PATH_DISTANCE,
+  FRAME_FAILED_DUE_TO_NEGATIVE_SIGMA,
   // 25
-  RESET_REF_SUBSET_DUE_TO_HIGH_GAMMA,
+  FRAME_FAILED_DUE_TO_HIGH_PATH_DISTANCE,
   // 26
-  MAX_GLOBAL_ITERATIONS_REACHED_IN_EVOLUTION_LOOP,
+  RESET_REF_SUBSET_DUE_TO_HIGH_GAMMA,
   // 27
-  FAILURE_DUE_TO_TOO_MANY_RESTARTS,
+  MAX_GLOBAL_ITERATIONS_REACHED_IN_EVOLUTION_LOOP,
   // 28
-  FAILURE_DUE_TO_DEVIATION_FROM_PATH,
+  FAILURE_DUE_TO_TOO_MANY_RESTARTS,
   // 29
-  FRAME_SKIPPED,
+  FAILURE_DUE_TO_DEVIATION_FROM_PATH,
   // 30
+  FRAME_SKIPPED,
+  // 31
   FRAME_SKIPPED_DUE_TO_NO_MOTION,
   // DON'T ADD ANY BELOW MAX
   MAX_STATUS_FLAG,
@@ -539,6 +551,32 @@ enum Correlation_Parameter_Type{
   SCALAR_PARAM,
   SIZE_PARAM,
   BOOL_PARAM
+};
+
+/// \class DICe::Extents
+/// \brief collection of origin x, y and width and height
+struct Extents {
+  /// constructor
+  /// \param origin_x upper left corner x loc
+  /// \param origin_y upper left corner y loc
+  /// \param width box width
+  /// \param height box height
+  Extents(const int_t origin_x,
+    const int_t origin_y,
+    const int_t width,
+    const int_t height):
+    origin_x_(origin_x),
+    origin_y_(origin_y),
+    width_(width),
+    height_(height){}
+  /// upper left corner x loc
+  int_t origin_x_;
+  /// upper_left corner y loc
+  int_t origin_y_;
+  /// widht
+  int_t width_;
+  /// height
+  int_t height_;
 };
 
 /// \class DICe::Correlation_Parameter
@@ -859,10 +897,15 @@ const Correlation_Parameter compute_image_gradients_param(compute_image_gradient
   BOOL_PARAM,
   false,
   "Compute image gradients");
+/// Correlation parameter and properties
+const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_pixels,
+  BOOL_PARAM,
+  false,
+  "Filter out any pixels that failed during cine acquisition");
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 56;
+const int_t num_valid_correlation_params = 57;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -920,7 +963,8 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   rotate_def_image_180_param,
   rotate_ref_image_270_param,
   rotate_def_image_270_param,
-  objective_regularization_factor_param
+  objective_regularization_factor_param,
+  filter_failed_cine_pixels_param
 };
 
 // TODO don't forget to update this when adding a new one

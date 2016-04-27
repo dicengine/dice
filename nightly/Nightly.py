@@ -11,6 +11,7 @@ from email.mime.text import MIMEText
 from Utils import now, append_time, force_write
 from UpdateTrilinos import update_trilinos
 from UpdateAndTestDICe import update_and_test_dice
+from PackageDICe import package_dice
 from LocalDefinitions import MACHINE_NAME, OPERATING_SYSTEM, LOG_FILE_DIRECTORY, TRILINOS_ACTIVE_CONFIGS, DICE_ACTIVE_CONFIGS, DICE_PKG_CONFIGS
 
 if __name__ == "__main__":
@@ -18,7 +19,7 @@ if __name__ == "__main__":
     distribution_list = ['dzturne@sandia.gov']
     status = "Passed"
     message = "DICe nightly testing on " + MACHINE_NAME + " " + OPERATING_SYSTEM + " " + now() + "\n\n"
-    logfile = open(LOG_FILE_DIRECTORY+'/NightlyTesting-'+str(date.today())+'.log', 'w')
+    logfile = open(LOG_FILE_DIRECTORY+'NightlyTesting-'+str(date.today())+'.log', 'w')
 
     NUM_CONFIGS = len(TRILINOS_ACTIVE_CONFIGS) + len(DICE_ACTIVE_CONFIGS) + len(DICE_PKG_CONFIGS)
     print "Total configurations: " + str(NUM_CONFIGS)
