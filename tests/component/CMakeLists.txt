@@ -2,6 +2,7 @@ include_directories (
     .
     ${DICE_HEADER_DIRS}
     ${DICE_TRILINOS_HEADERS}
+    
 )
 
 SET(DICE_COMP_LIBS
