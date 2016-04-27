@@ -513,8 +513,8 @@ read_exodus_coordinates(Teuchos::RCP<Mesh> mesh){
     delete[] temp_z;
 
   // export the coordinates back to the non-overlap field
-  mesh->field_overlap_export(initial_coords, field_enums::INITIAL_COORDINATES_FS, Tpetra::INSERT);
-  mesh->field_overlap_export(current_coords, field_enums::CURRENT_COORDINATES_FS, Tpetra::INSERT);
+  mesh->field_overlap_export(initial_coords, field_enums::INITIAL_COORDINATES_FS, INSERT);
+  mesh->field_overlap_export(current_coords, field_enums::CURRENT_COORDINATES_FS, INSERT);
   //std::cout << "INITIAL COORDS: " << std::endl;
   //initial_coords_ptr->vec()->describe();
 
@@ -823,7 +823,7 @@ exodus_output_dump(Teuchos::RCP<Mesh> mesh,
     if(field_it->first.get_rank()==field_enums::ELEMENT_RANK)
     {
       MultiField & field = *mesh->get_field(field_it->first);
-      //Teuchos::ArrayRCP<const scalar_t> field_values = field.vec()->get()->get1dView();
+      //Teuchos::ArrayRCP<const scalar_t> field_values = field.vec()->get_1d_view();
       DICe::mesh::block_type_map::iterator block_type_map_end = mesh->get_block_type_map()->end();
       std::string components[3];
       components[0] = (field_it->first.get_field_type()==field_enums::VECTOR_FIELD_TYPE) ? "X" : "";
@@ -904,7 +904,7 @@ exodus_face_edge_output_dump(Teuchos::RCP<Mesh> mesh,
     const int_t num_comps = (field_it->first.get_field_type()==field_enums::VECTOR_FIELD_TYPE) ? 3 : 1; // spheres are hard coded to have 3 dims
     const int_t comp_stride = (field_it->first.get_field_type()==field_enums::VECTOR_FIELD_TYPE) ? spa_dim : 1;
     MultiField & field = *mesh->get_field(field_it->first);
-    Teuchos::ArrayRCP<const scalar_t> field_values = field.get()->get1dView();
+    Teuchos::ArrayRCP<const scalar_t> field_values = field.get_1d_view();
     float values[num_values];
     std::string components[3];
     components[0] = (field_it->first.get_field_type()==field_enums::VECTOR_FIELD_TYPE) ? "X" : "";
@@ -1058,9 +1058,9 @@ create_face_edge_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   float z[num_elem];
 
   Teuchos::RCP<MultiField > internal_coords = mesh->get_field(field_enums::INTERNAL_FACE_EDGE_COORDINATES_FS);
-  Teuchos::ArrayRCP<const scalar_t> internal_coords_values = internal_coords->get()->get1dView();
+  Teuchos::ArrayRCP<const scalar_t> internal_coords_values = internal_coords->get_1d_view();
   //Teuchos::RCP<MultiField > external_coords = mesh->get_field(field_enums::EXTERNAL_FACE_EDGE_COORDINATES_FS);
-  //Teuchos::ArrayRCP<const scalar_t> external_coords_values = external_coords->get()->get1dView();
+  //Teuchos::ArrayRCP<const scalar_t> external_coords_values = external_coords->get_1d_view();
   int_t * elem_map = new int_t[num_elem];
   int_t * node_map = new int_t[num_elem];
 
@@ -1361,7 +1361,7 @@ initialize_control_volumes(Teuchos::RCP<Mesh> mesh){
 
   Teuchos::RCP<MultiField > coords = mesh->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
 
-  Teuchos::ArrayRCP<const scalar_t> coords_values = coords->get()->get1dView();
+  Teuchos::ArrayRCP<const scalar_t> coords_values = coords->get_1d_view();
 
   // iterate over subelements to create internal cells and faces or edges
   // and the internal cell and face or edge fields:
@@ -2028,7 +2028,7 @@ create_cell_size_and_radius(Teuchos::RCP<Mesh> mesh)
   mesh->create_field(field_enums::INITIAL_CELL_RADIUS_FS);
 
   Teuchos::RCP<MultiField > coords = mesh->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
-  Teuchos::ArrayRCP<const scalar_t> coords_values = coords->get()->get1dView();
+  Teuchos::ArrayRCP<const scalar_t> coords_values = coords->get_1d_view();
   DICe::mesh::element_set::const_iterator elem_it = mesh->get_element_set()->begin();
   DICe::mesh::element_set::const_iterator elem_end = mesh->get_element_set()->end();
   for(;elem_it!=elem_end;++elem_it)

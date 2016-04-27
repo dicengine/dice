@@ -58,6 +58,8 @@
 #include <Epetra_Vector.h>
 #include <Epetra_Import.h>
 #include <Epetra_Export.h>
+#include <Teuchos_ArrayView.hpp>
+#include <Teuchos_Array.hpp>
 
 namespace DICe {
 
@@ -120,6 +122,19 @@ public:
     const int_t index_base, MultiField_Comm & comm){
     map_ = Teuchos::rcp(new Epetra_Map(num_elements, elements.size(), &elements[0], index_base, *comm.get()));
   }
+
+  /// \brief Constructor that uses the local number of elements per processor and builds the global list
+  /// \param num_elements the global number of elements (-1 forces tpetra to decide)
+  /// \param num_local_elements the local number of elements
+  /// \param index_base either 0 or 1
+  /// \param comm the MPI communicator
+  MultiField_Map(const int_t num_elements,
+    const int_t num_local_elements,
+    const int_t index_base,
+    MultiField_Comm & comm){
+    map_ = Teuchos::rcp(new Epetra_Map(num_elements, num_local_elements, index_base, *comm.get()));
+  }
+
   /// destructor
   virtual ~MultiField_Map(){};
 
@@ -133,6 +148,12 @@ public:
     return map_->LID(global_id);
   }
 
+  /// \brief Return the global id for the given local id.
+  /// \param local_id the local id of the element
+  int get_global_element(const int_t local_id)const{
+    return map_->GID(local_id);
+  }
+
   /// Returns the total number of global elements
   int_t get_num_global_elements()const{
     return map_->NumGlobalElements();
@@ -142,6 +163,21 @@ public:
   int_t get_num_local_elements()const{
     return map_->NumMyElements();
   }
+
+  /// Returns the max of all the global ids
+  int_t get_max_global_index()const{
+    return map_->MaxAllGID();
+  }
+
+  /// returns a list of the remote indices
+  /// \param GIDList the list of global IDs
+  /// \param nodeIDList the list of node IDs
+  void get_remote_index_list(Teuchos::Array<int_t> & GIDList, Teuchos::Array<int_t> & nodeIDList)const {
+    const size_t num_entries = GIDList.size();
+    Teuchos::Array<int_t> dummy(num_entries);
+    map_->RemoteIDList(num_entries,&GIDList[0],&nodeIDList[0],&dummy[0]);
+  }
+
 
   /// Reutrns an array view that lists the elements that are local to this process
   Teuchos::ArrayView<const int_t> get_local_element_list()const{
@@ -267,20 +303,67 @@ public:
   /// \brief import the data from one distributed object to this one
   /// \param multifield the multifield to import
   /// \param importer the importer defines how the information will be transferred
+  /// \param mode combine mode
   ///
   /// For more information about importing and exporting see the Trilinos docs
-  void do_import(MultiField & multifield,
-    MultiField_Importer & importer){
-    epetra_mv_->Import(*multifield.get(),*importer.get(),Insert);
+  void do_import(Teuchos::RCP<MultiField> multifield,
+    MultiField_Importer & importer,
+    const Combine_Mode mode=INSERT){
+    if(mode==INSERT)
+      epetra_mv_->Import(*multifield->get(),*importer.get(),Insert);
+    else if(mode==ADD)
+      epetra_mv_->Import(*multifield->get(),*importer.get(),Add);
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"Error, invalid combine mode.");
+    }
+  }
+
+  /// \brief import the data from one distributed object to this one
+  /// \param multifield the multifield to import
+  /// \param importer the importer defines how the information will be transferred
+  /// \param mode combine mode
+  ///
+  /// For more information about importing and exporting see the Trilinos docs
+  void do_import(Teuchos::RCP<MultiField> multifield,
+    MultiField_Exporter & exporter,
+    const Combine_Mode mode=INSERT){
+    if(mode==INSERT)
+      epetra_mv_->Import(*multifield->get(),*exporter.get(),Insert);
+    else if(mode==ADD)
+      epetra_mv_->Import(*multifield->get(),*exporter.get(),Add);
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"Error, invalid combine mode.");
+    }
   }
 
   /// \brief export the data from one distributed object to this one
   /// \param multifield the multifield to export
   /// \param exporter the exporter defines how the information will be transferred
-  void do_export(MultiField & multifield,
-    MultiField_Exporter & exporter){
-    epetra_mv_->Export(*multifield.get(),*exporter.get(),Insert);
+  /// \param mode combine mode
+  void do_export(Teuchos::RCP<MultiField> multifield,
+    MultiField_Exporter & exporter,
+    const Combine_Mode mode=INSERT){
+    if(mode==INSERT)
+      epetra_mv_->Export(*multifield->get(),*exporter.get(),Insert);
+    else if(mode==ADD)
+      epetra_mv_->Export(*multifield->get(),*exporter.get(),Add);
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"Error, invalid combine mode.");
+    }
   }
+
+  /// Return an array of values for the multifield (most only contain one vector so the first index is 0)
+  Teuchos::ArrayRCP<const scalar_t> get_1d_view()const{
+    // TODO find a way to avoid this copy. Doing it this way for now
+    // because Epetra only has double type, not float so we have to copy/cast
+    Teuchos::ArrayRCP<scalar_t> array(epetra_mv_->MyLength());
+    for(int_t i=0;i<epetra_mv_->MyLength();++i){
+      array[i] = (*epetra_mv_)[0][i];
+    }
+    return array;
+  }
+
+
 private:
   /// Pointer to the underlying data type
   Teuchos::RCP<Epetra_MultiVector> epetra_mv_;

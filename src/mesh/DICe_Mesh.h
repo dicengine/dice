@@ -44,7 +44,11 @@
 
 #include <DICe.h>
 #include <DICe_MeshEnums.h>
-#include <DICe_MultiFieldTpetra.h>
+#ifdef DICE_TPETRA
+  #include "DICe_MultiFieldTpetra.h"
+#else
+  #include "DICe_MultiFieldEpetra.h"
+#endif
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ParameterList.hpp>
@@ -941,7 +945,7 @@ public:
   /// \param mode How the field should be combined when communicated (inserted, added, etc.)
   void field_overlap_export(const Teuchos::RCP<MultiField> from_field,
     const field_enums::Field_Spec & to_field_spec,
-    const Tpetra::CombineMode mode);
+    const Combine_Mode mode=INSERT);
 
   /// Print verbose information about all existing fields
   void print_field_info();

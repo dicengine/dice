@@ -929,12 +929,12 @@ public:
     if(target_field_descriptor_==ALL_OWNED) return; // NO-OP
 #if DICE_MPI
     if(target_field_descriptor_==DISTRIBUTED){
-      fields_->do_import(*dist_fields_,*importer_);
-      fields_nm1_->do_import(*dist_fields_nm1_,*importer_);
+      fields_->do_import(dist_fields_,*importer_);
+      fields_nm1_->do_import(dist_fields_nm1_,*importer_);
     }
     else if(target_field_descriptor_==DISTRIBUTED_GROUPED_BY_SEED){
-      fields_->do_import(*seed_dist_fields_,*seed_importer_);
-      fields_nm1_->do_import(*seed_dist_fields_,*seed_importer_);
+      fields_->do_import(seed_dist_fields_,*seed_importer_);
+      fields_nm1_->do_import(seed_dist_fields_,*seed_importer_);
     }
     else{
       assert(false && "Error: unknown field descriptor.");
@@ -951,12 +951,12 @@ public:
 #if DICE_MPI
     distributed_fields_being_modified_ = true;
     if(target_field_descriptor_==DISTRIBUTED){
-      dist_fields_->do_export(*fields_,*exporter_);
-      dist_fields_nm1_->do_export(*fields_nm1_,*exporter_);
+      dist_fields_->do_export(fields_,*exporter_);
+      dist_fields_nm1_->do_export(fields_nm1_,*exporter_);
     }
     else if(target_field_descriptor_==DISTRIBUTED_GROUPED_BY_SEED){
-      seed_dist_fields_->do_export(*fields_,*seed_exporter_);
-      seed_dist_fields_nm1_->do_export(*fields_nm1_,*seed_exporter_);
+      seed_dist_fields_->do_export(fields_,*seed_exporter_);
+      seed_dist_fields_nm1_->do_export(fields_nm1_,*seed_exporter_);
     }
     else{
       assert(false && "Error: unknown field descriptor.");

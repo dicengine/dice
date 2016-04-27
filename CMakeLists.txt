@@ -162,13 +162,21 @@ ELSE()
 ENDIF()
 
 IF(DICE_ENABLE_GLOBAL)
-  MESSAGE(STATUS "*** Enabling Global DIC (requires the Tpetra and Seacas libraries in Trilinos) ***")
-  SET(DICE_LIBRARIES
-    ${DICE_LIBRARIES}
-    tpetra
-    exodus
-  )
-  ADD_DEFINITIONS(-DDICE_TPETRA=1)
+  MESSAGE(STATUS "*** Enabling Global DIC (requires the Tpetra (or Epetra) and Seacas libraries in Trilinos) ***")
+  IF(DICE_USE_TPETRA)
+    SET(DICE_LIBRARIES
+      ${DICE_LIBRARIES}
+      tpetra
+      exodus
+    )
+    ADD_DEFINITIONS(-DDICE_TPETRA=1)
+  ELSE()
+    SET(DICE_LIBRARIES
+      ${DICE_LIBRARIES}
+      epetra
+      exodus
+    )
+  ENDIF()
 ELSE()
   MESSAGE(STATUS "Global DIC will not be enabled (to enable, set -D DICE_ENABLE_GLOBAL:BOOL=ON in the CMake script)")
   SET(DICE_LIBRARIES

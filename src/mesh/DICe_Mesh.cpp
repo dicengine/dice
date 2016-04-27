@@ -360,7 +360,7 @@ Mesh::create_elem_node_field_maps(){
 
   // go through all your local nodes, if the remote index list matches your processor than add it to the new_dist_list
   // otherwise another proc will pick it up
-  const int_t total_num_nodes = scalar_node_overlap_map_->get()->getMaxAllGlobalIndex();
+  const int_t total_num_nodes = scalar_node_overlap_map_->get_max_global_index();
   Teuchos::Array<int_t> nodeIDList(total_num_nodes);
   Teuchos::Array<int_t> GIDList(total_num_nodes);
   Teuchos::Array<int_t> gids_on_this_proc;
@@ -369,7 +369,7 @@ Mesh::create_elem_node_field_maps(){
   {
     GIDList[i] = i+1;
   }
-  scalar_node_overlap_map_->get()->getRemoteIndexList(GIDList,nodeIDList);
+  scalar_node_overlap_map_->get_remote_index_list(GIDList,nodeIDList);
 
   for(int_t i=0;i<total_num_nodes;++i)
   {
@@ -396,7 +396,7 @@ Mesh::create_elem_node_field_maps(){
     node_it->get()->update_overlap_local_id(node_it->get()->local_id());
     // replace the local id with the value corresponding to the dist map
     // NOTE some will be -1 if they are not locally owned
-    node_it->get()->update_local_id(scalar_node_dist_map_->get()->getLocalElement(node_it->get()->global_id()));
+    node_it->get()->update_local_id(scalar_node_dist_map_->get_local_element(node_it->get()->global_id()));
   }
 
   // ELEM DIST MAP AND VECTORIZED MAP
@@ -738,17 +738,19 @@ Mesh::field_import(const field_enums::Field_Spec & field_spec,
   Teuchos::RCP<MultiField_Map> to_map)
 {
   Teuchos::RCP<MultiField > from_field = field_registry_.find(field_spec)->second;
-
   Teuchos::RCP<MultiField > field_gather = Teuchos::rcp( new MultiField(to_map,1,true)); // FIXME: need to check this should be one
-  export_type exporter (to_map->get(),from_field->get_map()->get());
-  field_gather->get()->doImport((*from_field->get()), exporter, Tpetra::INSERT);
+
+  MultiField_Exporter exporter(*to_map,*from_field->get_map());
+  //export_type exporter (to_map->get(),from_field->get_map()->get());
+  field_gather->do_import(from_field,exporter);
+  //field_gather->get()->doImport((*from_field->get()), exporter, Tpetra::INSERT);
   return field_gather;
 }
 
 void
 Mesh::field_overlap_export(const Teuchos::RCP<MultiField > from_field,
   const field_enums::Field_Spec & to_field_spec,
-  const Tpetra::CombineMode mode)
+  const Combine_Mode mode)
 {
   Teuchos::RCP<MultiField_Map> map;
   if(to_field_spec.get_rank()==field_enums::NODE_RANK && to_field_spec.get_field_type()==field_enums::SCALAR_FIELD_TYPE)
@@ -766,8 +768,10 @@ Mesh::field_overlap_export(const Teuchos::RCP<MultiField > from_field,
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
   }
   Teuchos::RCP<MultiField > to_field = field_registry_.find(to_field_spec)->second;
-  export_type exporter (map->get(),to_field->get_map()->get());
-  to_field->get()->doExport((*from_field->get()), exporter, mode);
+  //export_type exporter (map->get(),to_field->get_map()->get());
+  MultiField_Exporter exporter(*map,*to_field->get_map());
+  to_field->do_export(from_field,exporter,mode);
+//  to_field->get()->doExport((*from_field->get()), exporter, mode);
 }
 
 void

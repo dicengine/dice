@@ -177,6 +177,18 @@ public:
     return map_->getNodeNumElements();
   }
 
+  /// Returns the max of all the global ids
+  int_t get_max_global_index()const{
+    return map_->getMaxAllGlobalIndex();
+  }
+
+  /// returns a list of the remote indices
+  /// \param GIDList the list of global IDs
+  /// \param nodeIDList the list of node IDs
+  void get_remote_index_list(Teuchos::Array<int_t> & GIDList, Teuchos::Array<int_t> & nodeIDList)const {
+    map_->getRemoteIndexList(GIDList,nodeIDList);
+  }
+
   /// Reutrns an array view that lists the elements that are local to this process
   Teuchos::ArrayView<const int_t> get_local_element_list()const{
     return map_->getNodeElementList();
@@ -334,25 +346,64 @@ public:
   /// \brief import the data from one distributed object to this one
   /// \param multifield the multifield to import
   /// \param importer the importer defines how the information will be transferred
+  /// \param mode combine mode
   ///
   /// For more information about importing and exporting see the Trilinos docs
-  void do_import(MultiField & multifield,
-    MultiField_Importer & importer){
-    tpetra_mv_->doImport(*multifield.get(),*importer.get(),Tpetra::INSERT);
+  void do_import(Teuchos::RCP<MultiField> multifield,
+    MultiField_Importer & importer,
+    const Combine_Mode mode=INSERT){
+    if(mode==INSERT)
+      tpetra_mv_->doImport(*multifield->get(),*importer.get(),Tpetra::INSERT);
+    else if(mode==ADD)
+      tpetra_mv_->doImport(*multifield->get(),*importer.get(),Tpetra::ADD);
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"Error, invalid combine mode.");
+    }
+  }
+
+  /// \brief import the data from one distributed object to this one
+  /// \param multifield the multifield to import
+  /// \param importer the importer defines how the information will be transferred
+  /// \param mode combine mode
+  ///
+  /// For more information about importing and exporting see the Trilinos docs
+  void do_import(Teuchos::RCP<MultiField> multifield,
+    MultiField_Exporter & exporter,
+    const Combine_Mode mode=INSERT){
+    if(mode==INSERT)
+      tpetra_mv_->doImport(*multifield->get(),*exporter.get(),Tpetra::INSERT);
+    else if(mode==ADD)
+      tpetra_mv_->doImport(*multifield->get(),*exporter.get(),Tpetra::ADD);
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"Error, invalid combine mode.");
+    }
   }
 
   /// \brief export the data from one distributed object to this one
   /// \param multifield the multifield to export
   /// \param exporter the exporter defines how the information will be transferred
-  void do_export(MultiField & multifield,
-    MultiField_Exporter & exporter){
-    tpetra_mv_->doExport(*multifield.get(),*exporter.get(),Tpetra::INSERT);
+  /// \param mode combine mode
+  void do_export(Teuchos::RCP<MultiField> multifield,
+    MultiField_Exporter & exporter,
+    const Combine_Mode mode=INSERT){
+    if(mode==INSERT)
+      tpetra_mv_->doExport(*multifield->get(),*exporter.get(),Tpetra::INSERT);
+    else if(mode==ADD)
+      tpetra_mv_->doExport(*multifield->get(),*exporter.get(),Tpetra::ADD);
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"Error, invalid combine mode.");
+    }
   }
 
   ///  Compute the 2 norm of the vector
   /// \param field_index The field of which to take the norm
   scalar_t norm(const int_t field_index=0){
     return tpetra_mv_->getVector(field_index)->norm2();
+  }
+
+  // returns a view of the multivector's data
+  Teuchos::ArrayRCP<const scalar_t> get_1d_view()const{
+    return tpetra_mv_->get1dView();
   }
 
 private:

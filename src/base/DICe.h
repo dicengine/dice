@@ -553,6 +553,12 @@ enum Correlation_Parameter_Type{
   BOOL_PARAM
 };
 
+/// Combine mode for fields
+enum Combine_Mode{
+  INSERT=0,
+  ADD
+};
+
 /// \class DICe::Extents
 /// \brief collection of origin x, y and width and height
 struct Extents {
