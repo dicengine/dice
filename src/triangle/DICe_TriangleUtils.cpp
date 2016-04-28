@@ -60,6 +60,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
   struct triangulateio in, out;
   in.numberofpoints = points_x.size();
   in.numberofpointattributes = 0;
+  in.pointmarkerlist = (int *) NULL;
   in.pointlist = new REAL[in.numberofpoints*2];
   for(int_t i=0;i<points_x.size();++i){
     in.pointlist[i*2+0] = points_x[i];
@@ -85,6 +86,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
   char args[1024];
   strncpy(args, arg_ss.str().c_str(), sizeof(args));
   args[sizeof(args) - 1] = 0;
+  DEBUG_MSG("generate_tri6_mesh() called with args: " << args);
 //  char args[] = arg_ss.str().c_str();
   triangulate(args,&in,&out,NULL);
 

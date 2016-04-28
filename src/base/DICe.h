@@ -139,8 +139,6 @@ const char* const use_constrained_opt_dic = "use_constrained_opt_dic";
 /// String parameter name
 const char* const use_integrated_dic = "use_integrated_dic";
 /// String parameter name
-const char* const use_hvm_stabilization = "use_hvm_stabilization";
-/// String parameter name
 const char* const interpolation_method = "interpolation_method";
 /// String parameter name
 const char* const initialization_method = "initialization_method";
@@ -871,11 +869,6 @@ const Correlation_Parameter use_integrated_dic_param(use_integrated_dic,
   false,
   "True if the integrated DIC algorithms should be used rather than subset or local DIC.");
 /// Correlation parameter and properties
-const Correlation_Parameter use_hvm_stabilization_param(use_hvm_stabilization,
-  BOOL_PARAM,
-  false,
-  "True if the global method should be use HVM stabilization.");
-/// Correlation parameter and properties
 const Correlation_Parameter use_objective_regularization_param(use_objective_regularization,
   BOOL_PARAM,
   false,
@@ -911,7 +904,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 57;
+const int_t num_valid_correlation_params = 56;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -955,7 +948,6 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   use_global_dic_param,
   use_constrained_opt_dic_param,
   use_integrated_dic_param,
-  use_hvm_stabilization_param,
   use_objective_regularization_param,
   pixel_integration_order_param,
   image_grad_use_hierarchical_parallelism_param,
@@ -975,49 +967,16 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_global_correlation_params = 11;
+const int_t num_valid_global_correlation_params = 7;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_global_correlation_params[num_valid_global_correlation_params] = {
   use_global_dic_param,
-  use_constrained_opt_dic_param,
-  use_integrated_dic_param,
   interpolation_method_param,
   gauss_filter_images_param,
-  max_solver_iterations_fast_param,
-  fast_solver_tolerance_param,
+  gauss_filter_mask_size_param,
   output_spec_param,
   output_delimiter_param,
-  omit_output_row_id_param,
-  use_hvm_stabilization_param
-};
-
-/// The total number of valid correlation params
-const int_t num_valid_constrained_opt_correlation_params = 6;
-/// Vector of valid parameter names
-const Correlation_Parameter valid_constrained_opt_correlation_params[num_valid_constrained_opt_correlation_params] = {
-  use_global_dic_param,
-  use_constrained_opt_dic_param,
-  use_integrated_dic_param,
-  interpolation_method_param,
-  pixel_integration_order_param,
-  max_solver_iterations_fast_param
-};
-
-/// The total number of valid correlation params
-const int_t num_valid_integrated_correlation_params = 11;
-/// Vector of valid parameter names
-const Correlation_Parameter valid_integrated_correlation_params[num_valid_integrated_correlation_params] = {
-  use_global_dic_param,
-  use_constrained_opt_dic_param,
-  use_integrated_dic_param,
-  interpolation_method_param,
-  max_solver_iterations_robust_param,
-  robust_solver_tolerance_param,
-  output_deformed_subset_images_param,
-  output_deformed_subset_intensity_images_param,
-  output_evolved_subset_images_param,
-  correlation_routine_param,
-  optimization_method_param
+  omit_output_row_id_param
 };
 
 } // end DICe namespace

@@ -44,6 +44,8 @@
 #include <DICe_ObjectiveZNSSD.h>
 #include <DICe_PostProcessor.h>
 #include <DICe_ParameterUtilities.h>
+#include <DICe_TriangleUtils.h>
+//#include <DICe_MeshIO.h> // TODO remove me later
 
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <Teuchos_ArrayRCP.hpp>
@@ -368,14 +370,40 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   if(params!=Teuchos::null){
     if(params->get<bool>(DICe::use_global_dic,false))
       analysis_type_=GLOBAL_DIC;
-    // TODO make sure only one of these is active
   }
 
   // start with the default params and add any that are specified by the input params
   Teuchos::RCP<Teuchos::ParameterList> diceParams = Teuchos::rcp( new Teuchos::ParameterList("Schema_Correlation_Parameters") );
 
   if(analysis_type_==GLOBAL_DIC){
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"Global DIC is not enabled");
+    dice_default_params(diceParams.getRawPtr());
+    if(proc_rank == 0) DEBUG_MSG("Initializing schema params with full-field default parameters");
+    // Overwrite any params that are specified by the params argument
+    if(params!=Teuchos::null){
+      // check that all the parameters are valid:
+      // this should catch the case that the user misspelled one of the parameters:
+      bool allParamsValid = true;
+      for(Teuchos::ParameterList::ConstIterator it=params->begin();it!=params->end();++it){
+        bool paramValid = false;
+        for(int_t j=0;j<DICe::num_valid_global_correlation_params;++j){
+          if(it->first==valid_global_correlation_params[j].name_){
+            diceParams->setEntry(it->first,it->second); // overwrite the default value with argument param specified values
+            paramValid = true;
+          }
+        }
+        if(!paramValid){
+          allParamsValid = false;
+          if(proc_rank == 0) std::cout << "Error: Invalid parameter: " << it->first << std::endl;
+        }
+      }
+      if(!allParamsValid){
+        if(proc_rank == 0) std::cout << "NOTE: valid parameters include: " << std::endl;
+        for(int_t j=0;j<DICe::num_valid_global_correlation_params;++j){
+          if(proc_rank == 0) std::cout << valid_global_correlation_params[j].name_ << std::endl;
+        }
+      }
+      TEUCHOS_TEST_FOR_EXCEPTION(!allParamsValid,std::invalid_argument,"Invalid parameter");
+    }
   }
   else if(analysis_type_==LOCAL_DIC){
     bool use_tracking_defaults = false;
@@ -531,8 +559,6 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     DEBUG_MSG("Gamma values will be normalized by the number of active pixels.");
   if(analysis_type_==GLOBAL_DIC){
     compute_ref_gradients_ = true;
-    TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::use_hvm_stabilization),std::runtime_error,"");
-    use_hvm_stabilization_ = diceParams->get<bool>(DICe::use_hvm_stabilization);
   }
   else{
     if(optimization_method_!=DICe::SIMPLEX) {
@@ -667,7 +693,28 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     subset_info = DICe::read_subset_file(fileName,img_width(),img_height());
     subset_info_type = subset_info->type;
   }
-  if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
+  if(analysis_type_==GLOBAL_DIC){
+    // create the computational mesh:
+    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::mesh_size),std::runtime_error,
+      "Error, missing required input parameter: mesh_size");
+    mesh_size_ = input_params->get<double>(DICe::mesh_size);
+    // determine the image extents:
+    const scalar_t buff_size = 20.0; //pixels
+    Teuchos::ArrayRCP<scalar_t> points_x(4);
+    Teuchos::ArrayRCP<scalar_t> points_y(4);
+    points_x[0] = buff_size; points_y[0] = buff_size;
+    points_x[1] = ref_img_->width() - buff_size; points_y[1] = buff_size;
+    points_x[2] = ref_img_->width() - buff_size; points_y[2] = ref_img_->height() - buff_size;
+    points_x[3] = buff_size; points_y[3] = ref_img_->height() - buff_size;
+    mesh_ = DICe::generate_tri6_mesh(points_x,points_y,mesh_size_,"DICe_solution.e");
+//    DICe::mesh::create_output_exodus_file(mesh_,"./");
+//    DICe::mesh::create_exodus_output_variable_names(mesh_);
+//    scalar_t time = 0.0;
+//    DICe::mesh::exodus_output_dump(mesh_,1,time);
+//    DICe::mesh::close_exodus_output(mesh_);
+    return;
+  }
+  else if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
     TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::step_size),std::runtime_error,
       "Error, step size has not been specified");
     step_size = input_params->get<int_t>(DICe::step_size);
@@ -1099,6 +1146,11 @@ Schema::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids){
 
 void
 Schema::execute_correlation(){
+
+  if(analysis_type_==GLOBAL_DIC){
+
+    return;
+  }
 
   // make sure the data is ready to go since it may have been initialized externally by an api
   assert(is_initialized_);
@@ -1823,6 +1875,7 @@ Schema::write_output(const std::string & output_folder,
   const bool separate_files_per_subset,
   const bool separate_header_file,
   const Output_File_Type type){
+  if(analysis_type_==GLOBAL_DIC) return;
 //  assert(analysis_type_!=CONSTRAINED_OPT && "Error, writing output from a schema using constrained optimization is not enabled.");
 //  assert(analysis_type_!=INTEGRATED_DIC && "Error, writing output from a schema using integrated DIC is not enabled.");
   int_t my_proc = comm_->get_rank();
@@ -2285,7 +2338,7 @@ Output_Spec::write_info(std::FILE * file){
   fprintf(file,"\n");
   fprintf(file,"*** Incremental correlation: false\n");
   if(schema_->analysis_type()==GLOBAL_DIC){
-    fprintf(file,"*** Mesh size: %i\n",schema_->mesh_size());
+    fprintf(file,"*** Mesh size: %f\n",schema_->mesh_size());
     fprintf(file,"*** Step size: N/A\n");
   }
   else{

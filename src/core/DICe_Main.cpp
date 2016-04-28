@@ -91,6 +91,11 @@ int main(int argc, char *argv[]) {
       correlation_params->print(*outStream);
       *outStream << "\n--- Correlation parameters read successfully ---\n" << std::endl;
     }
+    // if the mesh size was specified in the input params set the use_global_dic flag
+    else if(input_params->isParameter(DICe::mesh_size)){
+      if(correlation_params==Teuchos::null) correlation_params = Teuchos::rcp(new Teuchos::ParameterList());
+      correlation_params->set(DICe::use_global_dic,true);
+    }
     else{
       *outStream << "Correlation parameters not specified by user" << std::endl;
     }
@@ -202,17 +207,25 @@ int main(int argc, char *argv[]) {
 
     schema->initialize(input_params);
 
-    const bool has_motion_windows = schema->motion_window_params()->size()>0;
-
-    *outStream << "Number of subsets: " << schema->data_num_points() << std::endl;
-    for(int_t i=0;i<schema->data_num_points();++i){
-      if(i==10&&schema->data_num_points()!=11) *outStream << "..." << std::endl;
-      else if(i>10&&i<schema->data_num_points()-1) continue;
-      else
-        *outStream << "Subset: " << i << " global coordinates (" << schema->field_value(i,COORDINATE_X) <<
-        "," << schema->field_value(i,COORDINATE_Y) << ")" << std::endl;
+    bool has_motion_windows = false;
+    if(schema->analysis_type()==LOCAL_DIC){
+      has_motion_windows = schema->motion_window_params()->size()>0;
+      *outStream << "Number of subsets: " << schema->data_num_points() << std::endl;
+      for(int_t i=0;i<schema->data_num_points();++i){
+        if(i==10&&schema->data_num_points()!=11) *outStream << "..." << std::endl;
+        else if(i>10&&i<schema->data_num_points()-1) continue;
+        else
+          *outStream << "Subset: " << i << " global coordinates (" << schema->field_value(i,COORDINATE_X) <<
+          "," << schema->field_value(i,COORDINATE_Y) << ")" << std::endl;
+      }
+      *outStream << std::endl;
     }
-    *outStream << std::endl;
+    else if(schema->analysis_type()==GLOBAL_DIC){
+      *outStream << "Using qaudratic tri 6 elements" << std::endl;
+      *outStream << "Mesh size:          " << schema->mesh_size() << " (pixels^2)" << std::endl;
+      *outStream << "Number of nodes:    " << schema->mesh()->num_nodes() << std::endl;
+      *outStream << "Number of elements: " << schema->mesh()->num_elem() << std::endl;
+    }
 
     // let the schema know how many images there are in the sequence:
     schema->set_num_image_frames(num_images);
@@ -230,7 +243,7 @@ int main(int argc, char *argv[]) {
     for(int_t image_it=start_frame;image_it<=end_frame;++image_it){
       if(is_cine){
         *outStream << "Processing Image: " << image_it - start_frame + 1 << " of " << num_images << " frame id: " << first_frame_index + image_it << std::endl;
-        if(has_motion_windows){
+        if(has_motion_windows&!schema->analysis_type()==GLOBAL_DIC){
           std::map<int_t,Motion_Window_Params>::iterator map_it = schema->motion_window_params()->begin();
           for(;map_it!=schema->motion_window_params()->end();++map_it){
             if(schema->dist_map()->get_local_element(map_it->first)<0) continue;

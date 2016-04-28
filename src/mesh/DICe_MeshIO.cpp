@@ -215,7 +215,7 @@ Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coor
 
   mesh->set_initialized();
 
-  mesh->create_face_cell_field_maps();
+  //mesh->create_face_cell_field_maps();
 
   // initialize the fields needed for coordinates etc:
   mesh->create_field(field_enums::INITIAL_COORDINATES_FS);

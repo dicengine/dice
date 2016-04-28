@@ -47,6 +47,8 @@
 #include <DICe_Shape.h>
 #include <DICe_Initializer.h>
 #include <DICe_Parser.h>
+#include <DICe_Mesh.h>
+
 #ifdef DICE_TPETRA
   #include "DICe_MultiFieldTpetra.h"
 #else
@@ -237,13 +239,18 @@ public:
     const Teuchos::ArrayRCP<intensity_t> refRCP);
 
   /// Set the element size of the mesh (only for global DIC)
-  void set_mesh_size(const int_t mesh_size){
-    assert(mesh_size>=1);
+  void set_mesh_size(const scalar_t & mesh_size){
+    TEUCHOS_TEST_FOR_EXCEPTION(mesh_size<=0.0,std::runtime_error,"Error, invalid mesh size.");
     mesh_size_ = mesh_size;
   }
 
-  /// Returns the element size for global DIC (-1 if local DIC)
-  int_t mesh_size()const{
+  /// Returns a pointer to the mesh
+  Teuchos::RCP<DICe::mesh::Mesh> mesh()const{
+    return mesh_;
+  }
+
+  /// Returns the element size for global DIC (-1.0 if local DIC)
+  scalar_t mesh_size()const{
     return mesh_size_;
   }
 
@@ -1067,7 +1074,7 @@ private:
   /// Regular grid subset spacing in y direction (used only if subsets are not conformal)
   int_t step_size_y_;
   /// Element size for the global method
-  int_t mesh_size_;
+  scalar_t mesh_size_;
   /// Generic strain window size (horizon for nlvc, convolution support for keys, strain window size for vsg)
   int_t strain_window_size_;
   /// Map of subset id and geometry definition
@@ -1155,8 +1162,6 @@ private:
   bool use_subset_evolution_;
   /// True if the gamma values (match quality) should be normalized with the number of active pixels
   bool normalize_gamma_with_active_pixels_;
-  /// True if this anlysis is global DIC and the hvm terms should be used
-  bool use_hvm_stabilization_;
   /// True if regularization is used in the objective function
   bool use_objective_regularization_;
   /// regularization factor
@@ -1187,6 +1192,8 @@ private:
   double path_distance_threshold_;
   /// true if the beta parameter should be computed by the objective
   bool output_beta_;
+  /// pointer to the computational mesh for global method
+  Teuchos::RCP<DICe::mesh::Mesh> mesh_;
 };
 
 /// \class DICe::Output_Spec

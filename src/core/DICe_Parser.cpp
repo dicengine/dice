@@ -70,8 +70,7 @@ DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   char *argv[],
   bool & force_exit,
-  Teuchos::RCP<std::ostream> & outStream,
-  const Analysis_Type analysis_type){
+  Teuchos::RCP<std::ostream> & outStream){
 
   int proc_rank = 0;
 #if DICE_MPI
@@ -86,197 +85,192 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   // Declare the supported options.
   po::options_description desc("Allowed options");
 
-  if(analysis_type==LOCAL_DIC){
-    desc.add_options()("help,h", "produce help message")
-               ("verbose,v","Output log to screen")
-               ("version","Output version information to screen")
-               ("timing,t","Print timing statistics to screen")
-               ("input,i",po::value<std::string>(),"XML input file name <filename>.xml")
-               ("generate,g",po::value<std::string>()->implicit_value("dice"),"Create XML input file templates")
-               ;
+  desc.add_options()("help,h", "produce help message")
+                       ("verbose,v","Output log to screen")
+                       ("version","Output version information to screen")
+                       ("timing,t","Print timing statistics to screen")
+                       ("input,i",po::value<std::string>(),"XML input file name <filename>.xml")
+                       ("generate,g",po::value<std::string>()->implicit_value("dice"),"Create XML input file templates")
+                       ;
+
+  // Parse the command line options
+  po::variables_map vm;
+  // TODO add graceful exception catching for unrecognized options
+  // currently the executable crashes with a malloc error that is a little
+  // misleading
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+  po::notify(vm);
+
+  Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
+  outStream = Teuchos::rcp(&std::cout, false);
+  // Print info to screen
+  if(!vm.count("verbose") || proc_rank!=0){
+    outStream = bhs;
+  }
+
+  // Handle version requests
+  if(vm.count("version")){
+    if(proc_rank==0)
+      print_banner();
+    force_exit = true;
+    return inputParams;
+  }
+
+  // Handle help requests
+  if(vm.count("help")){
+    print_banner();
+    std::cout << desc << std::endl;
+    force_exit = true;
+    return inputParams;
+  }
+
+  // Generate input file templates and exit
+  if(vm.count("generate")){
+    std::string templatePrefix = vm["generate"].as<std::string>();
+    if(proc_rank==0) DEBUG_MSG("Generating input file templates using prefix: " << templatePrefix);
+    generate_template_input_files(templatePrefix);
+    force_exit = true;
+    return inputParams;
+  }
+
+  std::string input_file;
+  if(vm.count("input")){
+    input_file = vm["input"].as<std::string>();
   }
   else{
-    desc.add_options()("help,h", "produce help message")
-               ("verbose,v","Output log to screen")
-               ("version","Output version information to screen")
-               ("timing,t","Print timing statistics to screen")
-               ("input,i",po::value<std::string>(),"XML input file name <filename>.xml")
-               ;
+    std::cout << "Error: The XML input file must be specified on the command line with -i <filename>.xml" << std::endl;
+    std::cout << "       (To generate template input files, specify -g [file_prefix] on the command line)" << std::endl;
+    exit(1);
+  }
+  if(proc_rank==0) DEBUG_MSG("Using input file: " << input_file);
+
+  Teuchos::Ptr<Teuchos::ParameterList> inputParamsPtr(inputParams.get());
+  Teuchos::updateParametersFromXmlFile(input_file, inputParamsPtr);
+  TEUCHOS_TEST_FOR_EXCEPTION(inputParams==Teuchos::null,std::runtime_error,"");
+
+  // Print timing statistics?
+  if(vm.count("timing")){
+    inputParams->set(DICe::print_timing,true);
   }
 
-   // Parse the command line options
-   po::variables_map vm;
-   // TODO add graceful exception catching for unrecognized options
-   // currently the executable crashes with a malloc error that is a little
-   // misleading
-   po::store(po::parse_command_line(argc, argv, desc), vm);
-   po::notify(vm);
+  Analysis_Type analysis_type = LOCAL_DIC;
+  if(inputParams->isParameter(DICe::mesh_size)){
+    DEBUG_MSG("Using GLOBAL DIC formulation since mesh_size parameter was specified.");
+    analysis_type = GLOBAL_DIC;
+  }
 
-   Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
-   outStream = Teuchos::rcp(&std::cout, false);
-   // Print info to screen
-   if(!vm.count("verbose") || proc_rank!=0){
-     outStream = bhs;
-   }
+  // Test the input values
+  std::vector<std::pair<std::string,std::string> > required_params;
+  required_params.push_back(std::pair<std::string,std::string>(DICe::image_folder,"string"));
+  if(analysis_type==GLOBAL_DIC){
+    required_params.push_back(std::pair<std::string,std::string>(DICe::output_folder,"string"));
+    required_params.push_back(std::pair<std::string,std::string>(DICe::mesh_size,"double"));
+    //required_params.push_back(std::pair<std::string,std::string>(DICe::image_edge_buffer_size,"int"));
+  }
+  if(analysis_type==LOCAL_DIC){
+    required_params.push_back(std::pair<std::string,std::string>(DICe::output_folder,"string"));
+  }
 
-   // Handle version requests
-   if(vm.count("version")){
-     if(proc_rank==0)
-       print_banner();
-     force_exit = true;
-     return inputParams;
-   }
+  // make sure that a subset file was defined:
+  bool required_param_missing = false;
+  for(size_t i=0;i<required_params.size();++i){
+    if(!inputParams->isParameter(required_params[i].first)){
+      std::cout << "Error: The parameter " << required_params[i].first << " of type " <<
+          required_params[i].second << " must be defined in " << input_file << std::endl;
+      std::cout << "<Parameter name=\"" << required_params[i].first << "\" type=\"" <<
+          required_params[i].second << "\" value=\"<value>\" />" << std::endl;
+      required_param_missing = true;
+    }
+  }
+  // require either the step_size or subset_file
+  if(analysis_type==LOCAL_DIC){
+    if(!inputParams->isParameter(DICe::subset_file)&&!inputParams->isParameter(DICe::step_size)){
+      std::cout << "Error: The parameter " << DICe::subset_file << " of type string or " <<
+          DICe::step_size << " of type int must be defined in " << input_file << std::endl;
+      required_param_missing = true;
+    }
+  }
+  else{
+    std::vector<std::string> invalid_params;
+    invalid_params.push_back(DICe::subset_file);
+    invalid_params.push_back(DICe::step_size);
+    invalid_params.push_back(DICe::subset_size);
+    for(size_t i=0;i<invalid_params.size();++i){
+      if(inputParams->isParameter(invalid_params[i])){
+        std::cout << "Error: The parameter " << invalid_params[i] <<
+            " is not valid for this global DIC analysis" << std::endl;
+        required_param_missing = true;
+      }
+    }
+  }
+  if(!inputParams->isParameter(DICe::reference_image_index)&&!inputParams->isParameter(DICe::reference_image)&&!inputParams->isParameter(DICe::cine_file)){
+    std::cout << "Error: Either the parameter " << DICe:: reference_image_index << " or " <<
+        DICe::reference_image << " or " << DICe::cine_file << " needs to be specified in " << input_file << std::endl;
+    required_param_missing = true;
+  }
+  // specifying a simple two image correlation
+  if(inputParams->isParameter(DICe::reference_image)){
+    if(inputParams->isParameter(DICe::num_images)){
+      std::cout << "Error: The parameter " << DICe::num_images <<
+          " cannot be specified for a simple two image correlation (denoted by using the reference_image param) in " << input_file << std::endl;
+      required_param_missing = true;
+    }
+    if(inputParams->isParameter(DICe::num_file_suffix_digits)){
+      std::cout << "Error: The parameter " << DICe::num_file_suffix_digits <<
+          " cannot be specified for a simple two image correlation (denoted by using the reference_image param) in " << input_file << std::endl;
+      required_param_missing = true;
+    }
+    if(inputParams->isParameter(DICe::image_file_extension)){
+      std::cout << "Error: The parameter " << DICe::image_file_extension <<
+          " cannot be specified for a simple two image correlation (denoted by using the reference_image param) in " << input_file << std::endl;
+      required_param_missing = true;
+    }
+    if(inputParams->isParameter(DICe::image_file_prefix)){
+      std::cout << "Error: The parameter " << DICe::image_file_prefix <<
+          " cannot be specified for a simple two image correlation (denoted by using the reference_image param) in " << input_file << std::endl;
+      required_param_missing = true;
+    }
+  }
+  // specifying image sequence
+  if((inputParams->isParameter(DICe::reference_image_index)&&inputParams->isParameter(DICe::reference_image))||
+      (inputParams->isParameter(DICe::reference_image_index)&&inputParams->isParameter(DICe::deformed_images))){
+    std::cout << "Error: Cannot specify both " << DICe:: reference_image_index <<
+        " and (" << DICe::reference_image << " or " << DICe::deformed_images << ") in " << input_file << std::endl;
+    required_param_missing = true;
+  }
+  if(inputParams->isParameter(DICe::reference_image_index)){
+    if(!inputParams->isParameter(DICe::num_images)){
+      std::cout << "Error: The parameter " << DICe::num_images << " of type int must be defined in " << input_file << std::endl;
+      required_param_missing = true;
+    }
+    if(!inputParams->isParameter(DICe::num_file_suffix_digits)){
+      std::cout << "Error: The parameter " << DICe::num_file_suffix_digits << " of type int must be defined in " << input_file << std::endl;
+      required_param_missing = true;
+    }
+    if(!inputParams->isParameter(DICe::image_file_extension)){
+      std::cout << "Error: The parameter " << DICe::image_file_extension << " of string must be defined in " << input_file << std::endl;
+      required_param_missing = true;
+    }
+    if(!inputParams->isParameter(DICe::image_file_prefix)){
+      std::cout << "Error: The parameter " << DICe::image_file_prefix << " of string must be defined in " << input_file << std::endl;
+      required_param_missing = true;
+    }
+  }
 
-   // Handle help requests
-   if(vm.count("help")){
-     print_banner();
-     std::cout << desc << std::endl;
-     force_exit = true;
-     return inputParams;
-   }
+  if(required_param_missing) exit(1);
 
-   // Generate input file templates and exit
-   if(vm.count("generate")){
-     if(analysis_type!=LOCAL_DIC){
-       std::cout << "Generate option is not enabled for this analysis type" << std::endl;
-       force_exit = true;
-       return inputParams;
-     }
-     std::string templatePrefix = vm["generate"].as<std::string>();
-     if(proc_rank==0) DEBUG_MSG("Generating input file templates using prefix: " << templatePrefix);
-     generate_template_input_files(templatePrefix);
-     force_exit = true;
-     return inputParams;
-   }
-
-   std::string input_file;
-   if(vm.count("input")){
-     input_file = vm["input"].as<std::string>();
-   }
-   else{
-     std::cout << "Error: The XML input file must be specified on the command line with -i <filename>.xml" << std::endl;
-     std::cout << "       (To generate template input files, specify -g [file_prefix] on the command line)" << std::endl;
-     exit(1);
-   }
-   if(proc_rank==0) DEBUG_MSG("Using input file: " << input_file);
-
-   Teuchos::Ptr<Teuchos::ParameterList> inputParamsPtr(inputParams.get());
-   Teuchos::updateParametersFromXmlFile(input_file, inputParamsPtr);
-   TEUCHOS_TEST_FOR_EXCEPTION(inputParams==Teuchos::null,std::runtime_error,"");
-
-   // Print timing statistics?
-   if(vm.count("timing")){
-     inputParams->set(DICe::print_timing,true);
-   }
-
-   // Test the input values
-   std::vector<std::pair<std::string,std::string> > required_params;
-   required_params.push_back(std::pair<std::string,std::string>(DICe::image_folder,"string"));
-   if(analysis_type==GLOBAL_DIC){
-     required_params.push_back(std::pair<std::string,std::string>(DICe::output_folder,"string"));
-     required_params.push_back(std::pair<std::string,std::string>(DICe::mesh_size,"int"));
-     required_params.push_back(std::pair<std::string,std::string>(DICe::image_edge_buffer_size,"int"));
-   }
-   if(analysis_type==LOCAL_DIC){
-     required_params.push_back(std::pair<std::string,std::string>(DICe::output_folder,"string"));
-   }
-
-   // make sure that a subset file was defined:
-   bool required_param_missing = false;
-   for(size_t i=0;i<required_params.size();++i){
-     if(!inputParams->isParameter(required_params[i].first)){
-       std::cout << "Error: The parameter " << required_params[i].first << " of type " <<
-           required_params[i].second << " must be defined in " << input_file << std::endl;
-       std::cout << "<Parameter name=\"" << required_params[i].first << "\" type=\"" <<
-           required_params[i].second << "\" value=\"<value>\" />" << std::endl;
-       required_param_missing = true;
-     }
-   }
-   // require either the step_size or subset_file
-   if(analysis_type==LOCAL_DIC){
-     if(!inputParams->isParameter(DICe::subset_file)&&!inputParams->isParameter(DICe::step_size)){
-       std::cout << "Error: The parameter " << DICe::subset_file << " of type string or " <<
-           DICe::step_size << " of type int must be defined in " << input_file << std::endl;
-       required_param_missing = true;
-     }
-   }
-   else{
-     if(inputParams->isParameter(DICe::subset_file)||inputParams->isParameter(DICe::step_size)){
-       std::cout << "Error: The parameter " << DICe::subset_file << " of type string or " <<
-           DICe::step_size << " of type int are not valid params for this DIC analysis type: " <<
-           input_file << std::endl;
-       required_param_missing = true;
-     }
-   }
-
-   if(!inputParams->isParameter(DICe::reference_image_index)&&!inputParams->isParameter(DICe::reference_image)&&!inputParams->isParameter(DICe::cine_file)){
-     std::cout << "Error: Either the parameter " << DICe:: reference_image_index << " or " <<
-         DICe::reference_image << " or " << DICe::cine_file << " needs to be specified in " << input_file << std::endl;
-     required_param_missing = true;
-   }
-   // specifying a simple two image correlation
-   if(inputParams->isParameter(DICe::reference_image)){
-     if(inputParams->isParameter(DICe::num_images)){
-       std::cout << "Error: The parameter " << DICe::num_images <<
-           " cannot be specified for a simple two image correlation (denoted by using the reference_image param) in " << input_file << std::endl;
-       required_param_missing = true;
-     }
-     if(inputParams->isParameter(DICe::num_file_suffix_digits)){
-       std::cout << "Error: The parameter " << DICe::num_file_suffix_digits <<
-           " cannot be specified for a simple two image correlation (denoted by using the reference_image param) in " << input_file << std::endl;
-       required_param_missing = true;
-     }
-     if(inputParams->isParameter(DICe::image_file_extension)){
-       std::cout << "Error: The parameter " << DICe::image_file_extension <<
-           " cannot be specified for a simple two image correlation (denoted by using the reference_image param) in " << input_file << std::endl;
-       required_param_missing = true;
-     }
-     if(inputParams->isParameter(DICe::image_file_prefix)){
-       std::cout << "Error: The parameter " << DICe::image_file_prefix <<
-           " cannot be specified for a simple two image correlation (denoted by using the reference_image param) in " << input_file << std::endl;
-       required_param_missing = true;
-     }
-   }
-   // specifying image sequence
-   if((inputParams->isParameter(DICe::reference_image_index)&&inputParams->isParameter(DICe::reference_image))||
-       (inputParams->isParameter(DICe::reference_image_index)&&inputParams->isParameter(DICe::deformed_images))){
-     std::cout << "Error: Cannot specify both " << DICe:: reference_image_index <<
-         " and (" << DICe::reference_image << " or " << DICe::deformed_images << ") in " << input_file << std::endl;
-     required_param_missing = true;
-   }
-   if(inputParams->isParameter(DICe::reference_image_index)){
-     if(!inputParams->isParameter(DICe::num_images)){
-       std::cout << "Error: The parameter " << DICe::num_images << " of type int must be defined in " << input_file << std::endl;
-       required_param_missing = true;
-     }
-     if(!inputParams->isParameter(DICe::num_file_suffix_digits)){
-       std::cout << "Error: The parameter " << DICe::num_file_suffix_digits << " of type int must be defined in " << input_file << std::endl;
-       required_param_missing = true;
-     }
-     if(!inputParams->isParameter(DICe::image_file_extension)){
-       std::cout << "Error: The parameter " << DICe::image_file_extension << " of string must be defined in " << input_file << std::endl;
-       required_param_missing = true;
-     }
-     if(!inputParams->isParameter(DICe::image_file_prefix)){
-       std::cout << "Error: The parameter " << DICe::image_file_prefix << " of string must be defined in " << input_file << std::endl;
-       required_param_missing = true;
-     }
-   }
-
-   if(required_param_missing) exit(1);
-
-   // create the output folder if it does not exist
+  // create the output folder if it does not exist
 #ifdef DICE_DISABLE_BOOST_FILESYSTEM
-   std::cout << "** WARNING: Boost filesystem has been disabled so files will be output to current execution directory " << std::endl;
+  std::cout << "** WARNING: Boost filesystem has been disabled so files will be output to current execution directory " << std::endl;
 #else
-   std::string output_folder = inputParams->get<std::string>(DICe::output_folder);
-   if(proc_rank==0) DEBUG_MSG("Attempting to create directory : " << output_folder);
-   boost::filesystem::path dir(output_folder);
-   if(boost::filesystem::create_directory(dir)) {
-     if(proc_rank==0) DEBUG_MSG("Directory " << output_folder << " was successfully created");
-   }
+  std::string output_folder = inputParams->get<std::string>(DICe::output_folder);
+  if(proc_rank==0) DEBUG_MSG("Attempting to create directory : " << output_folder);
+  boost::filesystem::path dir(output_folder);
+  if(boost::filesystem::create_directory(dir)) {
+    if(proc_rank==0) DEBUG_MSG("Directory " << output_folder << " was successfully created");
+  }
 #endif
-   return inputParams;
+  return inputParams;
 }
 
 DICE_LIB_DLL_EXPORT
