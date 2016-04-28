@@ -137,8 +137,9 @@ SET(DICE_HEADER_DIRS
 IF(DICE_ENABLE_GLOBAL)
   SET(DICE_HEADER_DIRS
       ${DICE_HEADER_DIRS}
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/triangle
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/mesh)
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/global
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/global/triangle
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/global/mesh)
       add_definitions(-DTRILIBRARY -DANSI_DECLARATORS)
 ENDIF()
 

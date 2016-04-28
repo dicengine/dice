@@ -24,6 +24,5 @@ add_subdirectory(fft)
 add_subdirectory(api)
 
 IF(DICE_ENABLE_GLOBAL)
-  add_subdirectory(mesh)
-  add_subdirectory(triangle)
+  add_subdirectory(global)
 ENDIF()
