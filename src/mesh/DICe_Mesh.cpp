@@ -360,7 +360,7 @@ Mesh::create_elem_node_field_maps(){
 
   // go through all your local nodes, if the remote index list matches your processor than add it to the new_dist_list
   // otherwise another proc will pick it up
-  const int_t total_num_nodes = scalar_node_overlap_map_->get_max_global_index();
+  const int_t total_num_nodes = scalar_node_overlap_map_->get_max_global_index(); // note this assumes GIDs start with 1
   Teuchos::Array<int_t> nodeIDList(total_num_nodes);
   Teuchos::Array<int_t> GIDList(total_num_nodes);
   Teuchos::Array<int_t> gids_on_this_proc;
@@ -418,6 +418,7 @@ Mesh::create_elem_node_field_maps(){
     }
     elem_index++;
   }
+
   scalar_elem_dist_map_ = Teuchos::rcp (new MultiField_Map(-1, elem_list, indexBase, *comm_));
   //std::cout << " ELEM DIST MAP " << std::endl;
   //scalar_elem_dist_map->describe();
@@ -461,7 +462,7 @@ Mesh::create_face_cell_field_maps(){
       num_faces_this_proc+=6;
       num_cells_this_proc+=6;
     }
-    else if(elem_type == TRI3)
+    else if(elem_type == TRI3 || elem_type ==TRI6)
     {
       num_faces_this_proc+=3;
       num_cells_this_proc+=3;
@@ -539,7 +540,7 @@ for(;elem_it!=elem_end;++elem_it)
       num_subelem_this_proc+=1;
     else if(elem_type == QUAD4)
       num_subelem_this_proc+=2;
-    else if(elem_type == TRI3)
+    else if(elem_type == TRI3 || elem_type == TRI6)
       num_subelem_this_proc+=1;
     else if(elem_type == PYRAMID5)
       post_warning = true;

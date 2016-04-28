@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
   MultiField & coords = *mesh->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
   Teuchos::ArrayRCP<const scalar_t> coords_values = coords.get_1d_view();
   const int_t spa_dim = mesh->spatial_dimension();
-  for(int_t i=0;i<mesh->num_nodes();++i){
+  for(size_t i=0;i<mesh->num_nodes();++i){
     phi.local_value(i) = coords_values[i*spa_dim]*10.0;
   }
   *outStream << "fields have been created" << std::endl;

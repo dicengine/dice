@@ -215,13 +215,13 @@ public:
 
   /// Returns the number of shallow relations for this mesh object
   /// \param entity_rank The rank determines what the relation type is
-  int_t num_shallow_relations(const field_enums::Entity_Rank entity_rank)const{
+  size_t num_shallow_relations(const field_enums::Entity_Rank entity_rank)const{
     return shallow_relations_map_.find(entity_rank)->second.size();
   }
 
   /// Returns the number of deep relations for this mesh object
   /// \param entity_rank The rank determines what the relation type is
-  int_t num_deep_relations(const field_enums::Entity_Rank entity_rank)const{
+  size_t num_deep_relations(const field_enums::Entity_Rank entity_rank)const{
     return deep_relations_map_.find(entity_rank)->second.size();
   }
 
@@ -786,6 +786,11 @@ public:
   /// \param output_filename The name of the mesh file to write the output to
   Mesh(const std::string & input_filename, const std::string & output_filename);
 
+  /// Constructor (create a mesh from scratch, no existing exodus file)
+  /// \param output_filename The name of the mesh file to write the output to
+  Mesh(const std::string & output_filename):
+    Mesh("",output_filename){}
+
   /// Destructor
   ~Mesh(){};
 
@@ -861,7 +866,7 @@ public:
   }
 
   /// Returns the number of node sets
-  int_t num_node_sets()const{
+  size_t num_node_sets()const{
     return node_bc_sets_.size();
   }
 
@@ -1136,17 +1141,17 @@ public:
   }
 
   /// Returns the number of elements in the mesh
-  int_t num_elem()const{
+  size_t num_elem()const{
     return element_set_->size();
   }
 
   /// Returns the number of subelements in the mesh
-  int_t num_subelem()const{
+  size_t num_subelem()const{
     return subelement_set_->size();
   }
 
   /// Returns the number of internal faces or edges in the mehs
-  int_t num_internal_faces()const{
+  size_t num_internal_faces()const{
     return internal_face_edge_set_->size();
   }
 
@@ -1154,18 +1159,18 @@ public:
 //  const int_t num_boundary_faces()const{return boundary_face_edge_set_->size();}
 
   /// Returns the number of edges in the mesh
-  int_t num_edges()const{
+  size_t num_edges()const{
     return edge_set_->size();
   }
 
   /// Returns the number of bonds in the mesh
-  int_t num_bonds()const{
-    return bond_set_->size();
+  size_t num_bonds()const{
+    return (int_t)bond_set_->size();
   }
 
   /// Returns the number of nodes in the mesh
-  int_t num_nodes()const{
-    return node_set_->size();
+  size_t num_nodes()const{
+    return (int_t)node_set_->size();
   }
 
   /// Returns true if the mesh has been initialized
@@ -1299,7 +1304,7 @@ public:
   }
 
   /// Returns the number of blocks in the mesh
-  int_t num_blocks()const{
+  size_t num_blocks()const{
     return block_type_map_.size();
   }
 

@@ -80,6 +80,7 @@ void create_string_maps()
   base_element_type_string[TETRA4]                                                   = "TETRA4";
   base_element_type_string[TETRA]                                                    = "TETRA";
   base_element_type_string[TRI3]                                                     = "TRI3";
+  base_element_type_string[TRI6]                                                     = "TRI6";
   base_element_type_string[CVFEM_TRI]                                                = "CVFEM_TRI";
   base_element_type_string[CVFEM_TETRA]                                              = "CVFEM_TETRA";
   base_element_type_string[QUAD4]                                                    = "QUAD4";

@@ -57,6 +57,17 @@ namespace mesh{
 Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
   const std::string & serial_output_filename);
 
+/// create an exodus mesh from scratch, (not read from an existing file)
+/// \param node_coords_x x coordinates of the nodes
+/// \param node_coords_y y coordinates of the nodes
+/// \param connectivity the connectivity matrix
+/// \param serial_output_filename The output fiel name with no parallel decorations
+Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coords_x,
+  Teuchos::ArrayRCP<scalar_t> node_coords_y,
+  Teuchos::ArrayRCP<int_t> connectivity,
+  const std::string & serial_output_filename);
+
+
 /// Read the coordinates of the nodes from the mesh
 /// \param mesh The mesh to use for this function
 void read_exodus_coordinates(Teuchos::RCP<Mesh> mesh);

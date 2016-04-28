@@ -91,6 +91,7 @@ enum Base_Element_Type
   TETRA4,
   TETRA,
   TRI3,
+  TRI6,
   CVFEM_TRI,
   CVFEM_TETRA,
   SPHERE,

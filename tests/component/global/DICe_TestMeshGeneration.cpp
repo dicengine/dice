@@ -113,8 +113,47 @@ int main(int argc, char *argv[]) {
   out.edgelist = (int *) NULL;
   out.edgemarkerlist = (int *) NULL;
 
-  char args[] = "pczAeo2";
+  // using the o2 flag here to get quadratic tris with 6 nodes each
+
+  char args[] = "pcAeo2";
   triangulate(args,&in,&out,NULL);
+
+  // grab the node location values and connectivity
+  Teuchos::ArrayRCP<int_t> connectivity(out.numberoftriangles*out.numberofcorners); // numberofcorners is num nodes per elem
+  for(int_t i=0;i<out.numberoftriangles;++i){
+    for (int_t j = 0; j < out.numberofcorners; j++) {
+      connectivity[i*out.numberofcorners + j] = out.trianglelist[i * out.numberofcorners + j];
+    }
+  }
+  Teuchos::ArrayRCP<scalar_t> node_coords_x(out.numberofpoints); // numberofcorners is num nodes per elem
+  Teuchos::ArrayRCP<scalar_t> node_coords_y(out.numberofpoints); // numberofcorners is num nodes per elem
+  for(int_t i=0;i<out.numberofpoints;++i){
+      node_coords_x[i] = out.pointlist[i*2+0];
+      node_coords_y[i] = out.pointlist[i*2+1];
+  }
+
+  Teuchos::RCP<DICe::mesh::Mesh> mesh = DICe::mesh::create_tri6_exodus_mesh(node_coords_x,node_coords_y,connectivity,"scratch_mesh.e");
+  *outStream << "creating some fields on the mesh" << std::endl;
+  mesh->create_field(mesh::field_enums::CVFEM_AD_PHI_FS);
+  mesh->create_field(mesh::field_enums::CVFEM_AD_IMAGE_PHI_FS);
+  mesh->create_field(mesh::field_enums::CVFEM_AD_LAMBDA_FS);
+  *outStream << "populating values for phi field" << std::endl;
+  MultiField & phi = *mesh->get_field(mesh::field_enums::CVFEM_AD_PHI_FS);
+  MultiField & coords = *mesh->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::ArrayRCP<const scalar_t> coords_values = coords.get_1d_view();
+  const int_t spa_dim = mesh->spatial_dimension();
+  for(size_t i=0;i<mesh->num_nodes();++i){
+    phi.local_value(i) = coords_values[i*spa_dim]*10.0;
+  }
+  *outStream << "fields have been created" << std::endl;
+  *outStream << "creating the output meshes" << std::endl;
+  DICe::mesh::create_output_exodus_file(mesh,"./");
+  DICe::mesh::create_exodus_output_variable_names(mesh);
+  *outStream << "writing an output step" << std::endl;
+  scalar_t time = 0.0;
+  DICe::mesh::exodus_output_dump(mesh,1,time);
+  *outStream << "closing the exodus output files" << std::endl;
+  DICe::mesh::close_exodus_output(mesh);
 
   delete[] in.pointlist;
   delete[] in.pointattributelist;
@@ -124,7 +163,7 @@ int main(int argc, char *argv[]) {
   delete[] out.pointlist;
   delete[] out.pointmarkerlist;
   delete[] out.trianglelist;
-  delete[] out.trianglearealist;
+  delete[] out.triangleattributelist;
   delete[] out.segmentlist;
   delete[] out.segmentmarkerlist;
   delete[] out.edgelist;
