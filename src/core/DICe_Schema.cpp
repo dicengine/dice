@@ -45,7 +45,8 @@
 #include <DICe_PostProcessor.h>
 #include <DICe_ParameterUtilities.h>
 #include <DICe_TriangleUtils.h>
-//#include <DICe_MeshIO.h> // TODO remove me later
+#include <DICe_MeshIO.h>
+#include <DICe_GlobalUtils.h>
 
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <Teuchos_ArrayRCP.hpp>
@@ -707,11 +708,9 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     points_x[2] = ref_img_->width() - buff_size; points_y[2] = ref_img_->height() - buff_size;
     points_x[3] = buff_size; points_y[3] = ref_img_->height() - buff_size;
     mesh_ = DICe::generate_tri6_mesh(points_x,points_y,mesh_size_,"DICe_solution.e");
-//    DICe::mesh::create_output_exodus_file(mesh_,"./");
-//    DICe::mesh::create_exodus_output_variable_names(mesh_);
-//    scalar_t time = 0.0;
-//    DICe::mesh::exodus_output_dump(mesh_,1,time);
-//    DICe::mesh::close_exodus_output(mesh_);
+    // create the output exodus database:
+    std::string output_folder = input_params->get<std::string>(DICe::output_folder);
+    DICe::global::initialize_exodus_output(this,output_folder);
     return;
   }
   else if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
@@ -1145,10 +1144,16 @@ Schema::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids){
 }
 
 void
+Schema::post_execution_tasks(){
+  if(analysis_type_==GLOBAL_DIC)
+    DICe::mesh::close_exodus_output(mesh_);
+}
+
+void
 Schema::execute_correlation(){
 
   if(analysis_type_==GLOBAL_DIC){
-
+    DICe::global::execute_global_step(this);
     return;
   }
 
@@ -1875,7 +1880,10 @@ Schema::write_output(const std::string & output_folder,
   const bool separate_files_per_subset,
   const bool separate_header_file,
   const Output_File_Type type){
-  if(analysis_type_==GLOBAL_DIC) return;
+  if(analysis_type_==GLOBAL_DIC){
+
+    return;
+  }
 //  assert(analysis_type_!=CONSTRAINED_OPT && "Error, writing output from a schema using constrained optimization is not enabled.");
 //  assert(analysis_type_!=INTEGRATED_DIC && "Error, writing output from a schema using integrated DIC is not enabled.");
   int_t my_proc = comm_->get_rank();

@@ -243,7 +243,7 @@ int main(int argc, char *argv[]) {
     for(int_t image_it=start_frame;image_it<=end_frame;++image_it){
       if(is_cine){
         *outStream << "Processing Image: " << image_it - start_frame + 1 << " of " << num_images << " frame id: " << first_frame_index + image_it << std::endl;
-        if(has_motion_windows&!schema->analysis_type()==GLOBAL_DIC){
+        if(has_motion_windows&&schema->analysis_type()!=GLOBAL_DIC){
           std::map<int_t,Motion_Window_Params>::iterator map_it = schema->motion_window_params()->begin();
           for(;map_it!=schema->motion_window_params()->end();++map_it){
             if(schema->dist_map()->get_local_element(map_it->first)<0) continue;
@@ -292,6 +292,7 @@ int main(int argc, char *argv[]) {
       //}
 
     } // image loop
+    schema->post_execution_tasks();
 
     avg_time = total_time / num_images;
 

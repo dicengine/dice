@@ -166,6 +166,7 @@ enum Field_Name
   ELAST_FEM_RESIDUAL,
   ELAST_FEM_LHS,
   ELAST_FEM_DISPLACEMENT,
+  DISPLACEMENT,
   INTERNAL_FACE_EDGE_NORMAL,
   INTERNAL_FACE_EDGE_COORDINATES,
   INTERNAL_FACE_EDGE_SIZE,
@@ -351,6 +352,8 @@ inline std::ostream& operator<<(std::ostream& os,
     return fs.print(os);
 }
 
+// TODO remove some of these unneccsary field names
+
 /// field spec
 const Field_Spec NO_SUCH_FS(field_enums::NO_SUCH_FIELD_TYPE,field_enums::NO_SUCH_FIELD_NAME,field_enums::NO_SUCH_ENTITY_RANK,field_enums::NO_FIELD_STATE,false);
 /// field spec
@@ -429,9 +432,11 @@ const Field_Spec ELAST_FEM_RESIDUAL_FS(field_enums::VECTOR_FIELD_TYPE,field_enum
 const Field_Spec ELAST_FEM_LHS_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::ELAST_FEM_LHS,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec ELAST_FEM_DISPLACEMENT_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::ELAST_FEM_DISPLACEMENT,field_enums::NODE_RANK,field_enums::STATE_N_PLUS_ONE,true,true);
+/// field spec
+const Field_Spec DISPLACEMENT_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DISPLACEMENT,field_enums::NODE_RANK,field_enums::STATE_N_PLUS_ONE,true,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 37;
+const int_t num_fields_defined = 38;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -465,6 +470,7 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     ELAST_FEM_RESIDUAL_FS,
     ELAST_FEM_LHS_FS,
     ELAST_FEM_DISPLACEMENT_FS,
+    DISPLACEMENT_FS,
     INTERNAL_FACE_EDGE_NORMAL_FS,
     INTERNAL_FACE_EDGE_COORDINATES_FS,
     INTERNAL_FACE_EDGE_SIZE_FS,

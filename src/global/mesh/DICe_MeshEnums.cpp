@@ -138,6 +138,7 @@ void create_string_maps()
   field_name_string[field_enums::ELAST_FEM_RESIDUAL]                                 = "ELAST_FEM_RESIDUAL";
   field_name_string[field_enums::ELAST_FEM_LHS]                                      = "ELAST_FEM_LHS";
   field_name_string[field_enums::ELAST_FEM_DISPLACEMENT]                             = "ELAST_FEM_DISPLACEMENT";
+  field_name_string[field_enums::DISPLACEMENT]                                       = "DISPLACEMENT";
   field_name_string[field_enums::INTERNAL_FACE_EDGE_NORMAL]                          = "INTERNAL_FACE_EDGE_NORMAL";
   field_name_string[field_enums::INTERNAL_FACE_EDGE_COORDINATES]                     = "INTERNAL_FACE_EDGE_COORDINATES";
   field_name_string[field_enums::INTERNAL_FACE_EDGE_SIZE]                            = "INTERNAL_FACE_EDGE_SIZE";

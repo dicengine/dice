@@ -284,6 +284,9 @@ public:
   /// Conduct the correlation
   void execute_correlation();
 
+  /// do clean up tasks
+  void post_execution_tasks();
+
   /// Returns if the field storage is initilaized
   int_t is_initialized()const{
     return is_initialized_;
