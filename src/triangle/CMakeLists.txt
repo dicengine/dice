@@ -1,13 +1,17 @@
 SET(SOURCES
   triangle.c
+  DICe_TriangleUtils.cpp
   )
 
 SET(HEADERS
   triangle.h
+  DICe_TriangleUtils.h
   )
 
 include_directories (
     .
+    ${DICE_HEADER_DIRS}
+    ${DICE_TRILINOS_HEADERS}
 )
 
 #add_definitions(-DTRILIBRARY -DANSI_DECLARATORS)

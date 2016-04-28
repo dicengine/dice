@@ -43,12 +43,11 @@
 #include <DICe_Mesh.h>
 #include <DICe_MeshIO.h>
 #include <DICe_MeshEnums.h>
+#include <DICe_TriangleUtils.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
 #include <Teuchos_ParameterList.hpp>
-
-#include <triangle.h>
 
 #include <iostream>
 
@@ -70,69 +69,16 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- Begin test ---" << std::endl;
 
-  // define the veritces
-  struct triangulateio in, out;
-  in.numberofpoints = 4;
-  in.numberofpointattributes = 1;
-  in.pointattributelist = new REAL[in.numberofpoints*in.numberofpointattributes];
-  in.pointlist = new REAL[in.numberofpoints*2];
-  in.pointlist[0] = 0.0;
-  in.pointlist[1] = 0.0;
-  in.pointlist[2] = 1.0;
-  in.pointlist[3] = 0.0;
-  in.pointlist[4] = 1.0;
-  in.pointlist[5] = 10.0;
-  in.pointlist[6] = 0.0;
-  in.pointlist[7] = 10.0;
+  // define the boundary points
+  Teuchos::ArrayRCP<scalar_t> points_x(4);
+  Teuchos::ArrayRCP<scalar_t> points_y(4);
+  const scalar_t max_size_constraint = 0.1;
+  points_x[0] = 0.0; points_y[0] = 0.0;
+  points_x[1] = 5.0; points_y[1] = 0.0;
+  points_x[2] = 5.0; points_y[2] = 10.0;
+  points_x[3] = 0.0; points_y[3] = 10.0;
 
-  in.pointattributelist[0] = 0.0;
-  in.pointattributelist[1] = 1.0;
-  in.pointattributelist[2] = 11.0;
-  in.pointattributelist[3] = 10.0;
-  in.pointmarkerlist = new int[in.numberofpoints];
-  in.pointmarkerlist[0] = 0;
-  in.pointmarkerlist[1] = 2;
-  in.pointmarkerlist[2] = 0;
-  in.pointmarkerlist[3] = 0;
-
-  in.numberofsegments = 0;
-  in.numberofholes = 0;
-  in.numberofregions = 1;
-  in.regionlist = new REAL[in.numberofregions * 4];
-  in.regionlist[0] = 0.5; // x coordinate of the constraint
-  in.regionlist[1] = 5.0; // y coordinate of the constraint
-  in.regionlist[2] = 7.0; // regional atribute
-  in.regionlist[3] = 0.1; // maximum area
-
-  out.pointlist = (REAL *) NULL;
-  out.trianglelist = (int *) NULL;
-  out.triangleattributelist = (REAL *) NULL;
-  out.pointmarkerlist = (int *) NULL;
-  out.segmentlist = (int *) NULL;
-  out.segmentmarkerlist = (int *) NULL;
-  out.edgelist = (int *) NULL;
-  out.edgemarkerlist = (int *) NULL;
-
-  // using the o2 flag here to get quadratic tris with 6 nodes each
-
-  char args[] = "pcAeo2";
-  triangulate(args,&in,&out,NULL);
-
-  // grab the node location values and connectivity
-  Teuchos::ArrayRCP<int_t> connectivity(out.numberoftriangles*out.numberofcorners); // numberofcorners is num nodes per elem
-  for(int_t i=0;i<out.numberoftriangles;++i){
-    for (int_t j = 0; j < out.numberofcorners; j++) {
-      connectivity[i*out.numberofcorners + j] = out.trianglelist[i * out.numberofcorners + j];
-    }
-  }
-  Teuchos::ArrayRCP<scalar_t> node_coords_x(out.numberofpoints); // numberofcorners is num nodes per elem
-  Teuchos::ArrayRCP<scalar_t> node_coords_y(out.numberofpoints); // numberofcorners is num nodes per elem
-  for(int_t i=0;i<out.numberofpoints;++i){
-      node_coords_x[i] = out.pointlist[i*2+0];
-      node_coords_y[i] = out.pointlist[i*2+1];
-  }
-
-  Teuchos::RCP<DICe::mesh::Mesh> mesh = DICe::mesh::create_tri6_exodus_mesh(node_coords_x,node_coords_y,connectivity,"scratch_mesh.e");
+  Teuchos::RCP<DICe::mesh::Mesh> mesh = DICe::generate_tri6_mesh(points_x,points_y,max_size_constraint,"scratch_mesh.e");
   *outStream << "creating some fields on the mesh" << std::endl;
   mesh->create_field(mesh::field_enums::CVFEM_AD_PHI_FS);
   mesh->create_field(mesh::field_enums::CVFEM_AD_IMAGE_PHI_FS);
@@ -155,29 +101,24 @@ int main(int argc, char *argv[]) {
   *outStream << "closing the exodus output files" << std::endl;
   DICe::mesh::close_exodus_output(mesh);
 
-  delete[] in.pointlist;
-  delete[] in.pointattributelist;
-  delete[] in.regionlist;
-  delete[] in.pointmarkerlist;
+  *outStream << "checking the output file for correct mesh properties" << std::endl;
+  Teuchos::RCP<DICe::mesh::Mesh> mesh_out = DICe::mesh::read_exodus_mesh("scratch_mesh.e","no_file.e");
+  *outStream << "checking the basic properties of the output mesh" << std::endl;
+  if(mesh_out->num_nodes()!=1631){
+    *outStream << "Error, the number of nodes read from the output mesh is not correct" << std::endl;
+    errorFlag++;
+  }
+  if(mesh_out->num_elem()!=784){
+    *outStream << "Error, the number of elements read from the output mesh is not correct" << std::endl;
+    errorFlag++;
+  }
+  if(mesh_out->num_blocks()!=1){
+    *outStream << "Error, the number of blocks in the output mesh is not correct" << std::endl;
+    errorFlag++;
+  }
+  *outStream << "output mesh properties have been checked" << std::endl;
 
-  delete[] out.pointlist;
-  delete[] out.pointmarkerlist;
-  delete[] out.trianglelist;
-  delete[] out.triangleattributelist;
-  delete[] out.segmentlist;
-  delete[] out.segmentmarkerlist;
-  delete[] out.edgelist;
-  delete[] out.edgemarkerlist;
 
-  // TODO valgrind the final test
-
-  // TODO generate a mesh with a given set of boundary vertices
-
-  // TODO add holes
-
-  // TODO create an exodus mesh given the triangulation
-
-  // TODO export an exodus mesh
 
 
   *outStream << "--- End test ---" << std::endl;
