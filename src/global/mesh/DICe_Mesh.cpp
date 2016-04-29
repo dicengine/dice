@@ -586,6 +586,10 @@ Teuchos::RCP<Shape_Function_Evaluator> Shape_Function_Evaluator_Factory::create(
     return Teuchos::rcp(new FEM_Linear_Hex8());
   else if(elem_type==QUAD4)
     return Teuchos::rcp(new FEM_Linear_Quad4());
+  else if(elem_type==TRI3)
+    return Teuchos::rcp(new FEM_Linear_Tri3());
+  else if(elem_type==TRI6)
+    return Teuchos::rcp(new FEM_Quadratic_Tri6());
   else
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"Shape_Function_Evaluator_Factory: invalid element type: " + tostring(elem_type));
@@ -876,92 +880,7 @@ CVFEM_Linear_Tri3::get_natural_integration_points(const int_t order,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
   Teuchos::ArrayRCP<scalar_t> & weights,
   int_t & num_points){
-  TEUCHOS_TEST_FOR_EXCEPTION(order < 0 || order > 5,std::runtime_error,"");
-
-  const int_t spa_dim = 3;
-
-  // Dunavant quadrature:
-  if(order==1){
-    num_points = 1;
-    locations.resize(num_points);
-    for(int_t i=0;i<num_points;++i)
-      locations[i].resize(spa_dim);
-    weights.resize(num_points);
-
-    locations[0][0] = 0.333333333333333; locations[0][1] = 0.333333333333333; locations[0][2] = 0.333333333333333;
-    weights[0] = 1.000000000000000;
-  }
-  else if(order==2){
-    num_points = 3;
-    locations.resize(num_points);
-    for(int_t i=0;i<num_points;++i)
-      locations[i].resize(spa_dim);
-    weights.resize(num_points);
-    locations[0][0] = 0.666666666666667; locations[0][1] = 0.166666666666667; locations[0][2] = 0.166666666666667;
-    locations[1][0] = 0.166666666666667; locations[1][1] = 0.666666666666667; locations[1][2] = 0.166666666666667;
-    locations[2][0] = 0.166666666666667; locations[2][1] = 0.166666666666667; locations[2][2] = 0.666666666666667;
-    weights[0] = 0.333333333333333;
-    weights[1] = 0.333333333333333;
-    weights[2] = 0.333333333333333;
-  }
-  else if(order==3){
-    num_points = 4;
-    locations.resize(num_points);
-    for(int_t i=0;i<num_points;++i)
-      locations[i].resize(spa_dim);
-    weights.resize(num_points);
-    locations[0][0] = 0.333333333333333; locations[0][1] = 0.333333333333333; locations[0][2] = 0.333333333333333;
-    locations[1][0] = 0.600000000000000; locations[1][1] = 0.200000000000000; locations[1][2] = 0.200000000000000;
-    locations[2][0] = 0.200000000000000; locations[2][1] = 0.600000000000000; locations[2][2] = 0.200000000000000;
-    locations[3][0] = 0.200000000000000; locations[3][1] = 0.200000000000000; locations[3][2] = 0.600000000000000;
-    weights[0] = -0.562500000000000;
-    weights[1] = 0.520833333333333;
-    weights[2] = 0.520833333333333;
-    weights[3] = 0.520833333333333;
-  }
-  else if(order==4){
-    num_points = 6;
-    locations.resize(num_points);
-    for(int_t i=0;i<num_points;++i)
-      locations[i].resize(spa_dim);
-    weights.resize(num_points);
-    locations[0][0] = 0.108103018168070; locations[0][1] = 0.445948490915965; locations[0][2] = 0.445948490915965;
-    locations[1][0] = 0.445948490915965; locations[1][1] = 0.108103018168070; locations[1][2] = 0.445948490915965;
-    locations[2][0] = 0.445948490915965; locations[2][1] = 0.445948490915965; locations[2][2] = 0.108103018168070;
-    locations[3][0] = 0.816847572980459; locations[3][1] = 0.091576213509771; locations[3][2] = 0.091576213509771;
-    locations[4][0] = 0.091576213509771; locations[4][1] = 0.816847572980459; locations[4][2] = 0.091576213509771;
-    locations[5][0] = 0.091576213509771; locations[5][1] = 0.091576213509771; locations[5][2] = 0.816847572980459;
-    weights[0] = 0.223381589678011;
-    weights[1] = 0.223381589678011;
-    weights[2] = 0.223381589678011;
-    weights[3] = 0.109951743655322;
-    weights[4] = 0.109951743655322;
-    weights[5] = 0.109951743655322;
-  }
-  else if(order==5){
-    num_points = 7;
-    locations.resize(num_points);
-    for(int_t i=0;i<num_points;++i)
-      locations[i].resize(spa_dim);
-    weights.resize(num_points);
-    locations[0][0] = 0.333333333333333; locations[0][1] = 0.333333333333333; locations[0][2] = 0.333333333333333;
-    locations[1][0] = 0.059715871789770; locations[1][1] = 0.470142064105115; locations[1][2] = 0.470142064105115;
-    locations[2][0] = 0.470142064105115; locations[2][1] = 0.059715871789770; locations[2][2] = 0.470142064105115;
-    locations[3][0] = 0.470142064105115; locations[3][1] = 0.470142064105115; locations[3][2] = 0.059715871789770;
-    locations[4][0] = 0.797426985353087; locations[4][1] = 0.101286507323456; locations[4][2] = 0.101286507323456;
-    locations[5][0] = 0.101286507323456; locations[5][1] = 0.797426985353087; locations[5][2] = 0.101286507323456;
-    locations[6][0] = 0.101286507323456; locations[6][1] = 0.101286507323456; locations[6][2] = 0.797426985353087;
-    weights[0] = 0.225000000000000;
-    weights[1] = 0.132394152788506;
-    weights[2] = 0.132394152788506;
-    weights[3] = 0.132394152788506;
-    weights[4] = 0.125939180544827;
-    weights[5] = 0.125939180544827;
-    weights[6] = 0.125939180544827;
-  }
-  else{
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid pixel integration order.");
-  }
+  tri_natural_integration_points(order,locations,weights,num_points);
 }
 
 void
@@ -1430,8 +1349,191 @@ FEM_Linear_Quad4::evaluate_shape_function_derivatives(const scalar_t * natural_c
   shape_function_derivative_values[3*spa_dim+1] = 0.25 * (1.0 - xi);
 }
 
+
+bool
+FEM_Linear_Tri3::is_in_element(const scalar_t * nodal_coords,
+  const scalar_t * point_coords,
+  const scalar_t & coefficient){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Method not implemented yet");
+  return false;
+}
+
+void
+FEM_Linear_Tri3::get_natural_integration_points(const int_t order,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
+  Teuchos::ArrayRCP<scalar_t> & weights,
+  int_t & num_points){
+  tri_natural_integration_points(order,locations,weights,num_points);
+}
+
+void
+FEM_Linear_Tri3::evaluate_shape_functions(const scalar_t * natural_coords,
+  scalar_t * shape_function_values){
+  const scalar_t xi   = natural_coords[0];
+  const scalar_t eta  = natural_coords[1];
+
+  shape_function_values[0] = 1 - xi - eta;
+  shape_function_values[1] = xi;
+  shape_function_values[2] = eta;
+}
+
+void
+FEM_Linear_Tri3::evaluate_shape_function_derivatives(const scalar_t * natural_coords,
+  scalar_t * shape_function_derivative_values){
+  // natural coords not needed because constant, but passing in to make the
+  // function call similar
+  const int_t spa_dim = 2;
+
+  shape_function_derivative_values[0*spa_dim+0] = -1;
+  shape_function_derivative_values[1*spa_dim+0] = 1;
+  shape_function_derivative_values[2*spa_dim+0] = 0;
+  shape_function_derivative_values[0*spa_dim+1] = -1;
+  shape_function_derivative_values[1*spa_dim+1] = 0;
+  shape_function_derivative_values[2*spa_dim+1] = 1;
+}
+
+bool
+FEM_Quadratic_Tri6::is_in_element(const scalar_t * nodal_coords,
+  const scalar_t * point_coords,
+  const scalar_t & coefficient){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Method not implemented yet");
+  return false;
+}
+
+void
+FEM_Quadratic_Tri6::get_natural_integration_points(const int_t order,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
+  Teuchos::ArrayRCP<scalar_t> & weights,
+  int_t & num_points){
+  tri_natural_integration_points(order,locations,weights,num_points);
+}
+
+void
+FEM_Quadratic_Tri6::evaluate_shape_functions(const scalar_t * natural_coords,
+  scalar_t * shape_function_values){
+  const scalar_t xi   = natural_coords[0];
+  const scalar_t eta  = natural_coords[1];
+
+  shape_function_values[0] = (1.0 - 2.0 * xi - 2.0 * eta) * (1.0 - xi - eta);
+  shape_function_values[1] =  xi * (2.0 * xi - 1.0);
+  shape_function_values[2] = eta * (2.0 * eta - 1.0);
+  shape_function_values[3] = 4.0 * xi * (1.0 - xi - eta);
+  shape_function_values[4] = 4.0 * xi * eta;
+  shape_function_values[5] = 4.0 * eta * (1.0 - xi - eta);
+}
+
+void
+FEM_Quadratic_Tri6::evaluate_shape_function_derivatives(const scalar_t * natural_coords,
+  scalar_t * shape_function_derivative_values){
+  const scalar_t xi   = natural_coords[0];
+  const scalar_t eta  = natural_coords[1];
+  const int_t spa_dim = 2;
+
+  shape_function_derivative_values[0*spa_dim+0] = -2.0 * (1.0 - xi - eta) -1.0 * (1.0 - 2.0 * xi - 2.0 * eta);
+  shape_function_derivative_values[0*spa_dim+1] = -2.0 * (1.0 - xi - eta) -1.0 * (1.0 - 2.0 * xi - 2.0 * eta);
+  shape_function_derivative_values[1*spa_dim+0] = 4.0 * xi - 1.0;
+  shape_function_derivative_values[1*spa_dim+1] = 0.0;
+  shape_function_derivative_values[2*spa_dim+0] = 0.0;
+  shape_function_derivative_values[2*spa_dim+1] = 4.0 * eta - 1.0;
+  shape_function_derivative_values[3*spa_dim+0] =  4.0 * (1.0 - 2.0 * xi - eta);
+  shape_function_derivative_values[3*spa_dim+1] = -4.0 * xi;
+  shape_function_derivative_values[4*spa_dim+0] = 4.0 * eta;
+  shape_function_derivative_values[4*spa_dim+1] = 4.0 * xi;
+  shape_function_derivative_values[5*spa_dim+0] = -4.0 * eta;
+  shape_function_derivative_values[5*spa_dim+1] = 4.0 * (1.0 - xi - 2.0 * eta);
+}
+
 } // namespace mesh
 
+void tri_natural_integration_points(const int_t order,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
+  Teuchos::ArrayRCP<scalar_t> & weights,
+  int_t & num_points){
+  TEUCHOS_TEST_FOR_EXCEPTION(order < 0 || order > 5,std::runtime_error,"");
+  const int_t spa_dim = 3;
+  // Dunavant quadrature:
+  if(order==1){
+    num_points = 1;
+    locations.resize(num_points);
+    for(int_t i=0;i<num_points;++i)
+      locations[i].resize(spa_dim);
+    weights.resize(num_points);
+
+    locations[0][0] = 0.333333333333333; locations[0][1] = 0.333333333333333; locations[0][2] = 0.333333333333333;
+    weights[0] = 1.000000000000000;
+  }
+  else if(order==2){
+    num_points = 3;
+    locations.resize(num_points);
+    for(int_t i=0;i<num_points;++i)
+      locations[i].resize(spa_dim);
+    weights.resize(num_points);
+    locations[0][0] = 0.666666666666667; locations[0][1] = 0.166666666666667; locations[0][2] = 0.166666666666667;
+    locations[1][0] = 0.166666666666667; locations[1][1] = 0.666666666666667; locations[1][2] = 0.166666666666667;
+    locations[2][0] = 0.166666666666667; locations[2][1] = 0.166666666666667; locations[2][2] = 0.666666666666667;
+    weights[0] = 0.333333333333333;
+    weights[1] = 0.333333333333333;
+    weights[2] = 0.333333333333333;
+  }
+  else if(order==3){
+    num_points = 4;
+    locations.resize(num_points);
+    for(int_t i=0;i<num_points;++i)
+      locations[i].resize(spa_dim);
+    weights.resize(num_points);
+    locations[0][0] = 0.333333333333333; locations[0][1] = 0.333333333333333; locations[0][2] = 0.333333333333333;
+    locations[1][0] = 0.600000000000000; locations[1][1] = 0.200000000000000; locations[1][2] = 0.200000000000000;
+    locations[2][0] = 0.200000000000000; locations[2][1] = 0.600000000000000; locations[2][2] = 0.200000000000000;
+    locations[3][0] = 0.200000000000000; locations[3][1] = 0.200000000000000; locations[3][2] = 0.600000000000000;
+    weights[0] = -0.562500000000000;
+    weights[1] = 0.520833333333333;
+    weights[2] = 0.520833333333333;
+    weights[3] = 0.520833333333333;
+  }
+  else if(order==4){
+    num_points = 6;
+    locations.resize(num_points);
+    for(int_t i=0;i<num_points;++i)
+      locations[i].resize(spa_dim);
+    weights.resize(num_points);
+    locations[0][0] = 0.108103018168070; locations[0][1] = 0.445948490915965; locations[0][2] = 0.445948490915965;
+    locations[1][0] = 0.445948490915965; locations[1][1] = 0.108103018168070; locations[1][2] = 0.445948490915965;
+    locations[2][0] = 0.445948490915965; locations[2][1] = 0.445948490915965; locations[2][2] = 0.108103018168070;
+    locations[3][0] = 0.816847572980459; locations[3][1] = 0.091576213509771; locations[3][2] = 0.091576213509771;
+    locations[4][0] = 0.091576213509771; locations[4][1] = 0.816847572980459; locations[4][2] = 0.091576213509771;
+    locations[5][0] = 0.091576213509771; locations[5][1] = 0.091576213509771; locations[5][2] = 0.816847572980459;
+    weights[0] = 0.223381589678011;
+    weights[1] = 0.223381589678011;
+    weights[2] = 0.223381589678011;
+    weights[3] = 0.109951743655322;
+    weights[4] = 0.109951743655322;
+    weights[5] = 0.109951743655322;
+  }
+  else if(order==5){
+    num_points = 7;
+    locations.resize(num_points);
+    for(int_t i=0;i<num_points;++i)
+      locations[i].resize(spa_dim);
+    weights.resize(num_points);
+    locations[0][0] = 0.333333333333333; locations[0][1] = 0.333333333333333; locations[0][2] = 0.333333333333333;
+    locations[1][0] = 0.059715871789770; locations[1][1] = 0.470142064105115; locations[1][2] = 0.470142064105115;
+    locations[2][0] = 0.470142064105115; locations[2][1] = 0.059715871789770; locations[2][2] = 0.470142064105115;
+    locations[3][0] = 0.470142064105115; locations[3][1] = 0.470142064105115; locations[3][2] = 0.059715871789770;
+    locations[4][0] = 0.797426985353087; locations[4][1] = 0.101286507323456; locations[4][2] = 0.101286507323456;
+    locations[5][0] = 0.101286507323456; locations[5][1] = 0.797426985353087; locations[5][2] = 0.101286507323456;
+    locations[6][0] = 0.101286507323456; locations[6][1] = 0.101286507323456; locations[6][2] = 0.797426985353087;
+    weights[0] = 0.225000000000000;
+    weights[1] = 0.132394152788506;
+    weights[2] = 0.132394152788506;
+    weights[3] = 0.132394152788506;
+    weights[4] = 0.125939180544827;
+    weights[5] = 0.125939180544827;
+    weights[6] = 0.125939180544827;
+  }
+  else{
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid pixel integration order.");
+  }
+}
 
 //Compute the cross product AB x AC
 scalar_t cross(const scalar_t * a_coords,
@@ -1876,6 +1978,8 @@ void calc_B(const scalar_t * DN,
 //  }
 
 }
+
+
 
 
 } // DICe

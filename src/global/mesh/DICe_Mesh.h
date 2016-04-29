@@ -1740,6 +1740,97 @@ public:
     int_t & num_points);
 };
 
+/// \class FEM_Linear_Tri3
+/// \brief FEM Linear triangle element shape function evaluator
+class FEM_Linear_Tri3 : public Shape_Function_Evaluator
+{
+public:
+  /// Constructor
+  FEM_Linear_Tri3():Shape_Function_Evaluator(3,2){};
+
+  /// Destructor
+  virtual ~FEM_Linear_Tri3(){};
+
+  /// see base class documentation
+  virtual void evaluate_shape_functions(const scalar_t * nodal_coords,
+    const scalar_t * point_coords, const scalar_t & coefficient,
+    scalar_t * shape_function_values){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+  }
+
+  /// see base class documentation
+  virtual void evaluate_shape_functions(const scalar_t * natural_coords,
+    scalar_t * shape_function_values);
+
+  /// see base class documentation
+  virtual void evaluate_shape_function_derivatives(const scalar_t * nodal_coords,
+    const scalar_t & coefficient,
+    scalar_t * shape_function_derivative_values){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+  }
+
+  /// see base class documentation
+  virtual void evaluate_shape_function_derivatives(const scalar_t * natural_coords,
+    scalar_t * shape_function_derivative_values);
+
+  /// See base class documentation
+  virtual bool is_in_element(const scalar_t * nodal_coords,
+    const scalar_t * point_coords,
+    const scalar_t & coefficient);
+
+  /// See base class documentation
+  virtual void get_natural_integration_points(const int_t order,
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
+    Teuchos::ArrayRCP<scalar_t> & weights,
+    int_t & num_points);
+};
+
+
+/// \class FEM_Quadratic_Tri6
+/// \brief FEM quadratic triangle element shape function evaluator
+class FEM_Quadratic_Tri6 : public Shape_Function_Evaluator
+{
+public:
+  /// Constructor
+  FEM_Quadratic_Tri6():Shape_Function_Evaluator(6,2){};
+
+  /// Destructor
+  virtual ~FEM_Quadratic_Tri6(){};
+
+  /// see base class documentation
+  virtual void evaluate_shape_functions(const scalar_t * nodal_coords,
+    const scalar_t * point_coords, const scalar_t & coefficient,
+    scalar_t * shape_function_values){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+  }
+
+  /// see base class documentation
+  virtual void evaluate_shape_functions(const scalar_t * natural_coords,
+    scalar_t * shape_function_values);
+
+  /// see base class documentation
+  virtual void evaluate_shape_function_derivatives(const scalar_t * nodal_coords,
+    const scalar_t & coefficient,
+    scalar_t * shape_function_derivative_values){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+  }
+
+  /// see base class documentation
+  virtual void evaluate_shape_function_derivatives(const scalar_t * natural_coords,
+    scalar_t * shape_function_derivative_values);
+
+  /// See base class documentation
+  virtual bool is_in_element(const scalar_t * nodal_coords,
+    const scalar_t * point_coords,
+    const scalar_t & coefficient);
+
+  /// See base class documentation
+  virtual void get_natural_integration_points(const int_t order,
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
+    Teuchos::ArrayRCP<scalar_t> & weights,
+    int_t & num_points);
+};
+
 /// \class Shape_Function_Evaluator_Factory
 /// \brief Factory class that creates shape function evaluators
 class Shape_Function_Evaluator_Factory
@@ -1764,6 +1855,16 @@ private:
 };
 
 } //mesh
+
+/// gather the natural integration points for a triangle
+/// \param order the integration order
+/// \param locations array returned with integration point locations
+/// \param weights array returned with the weights associated with each point
+/// \param num_points return value with the total number of integration points
+void tri_natural_integration_points(const int_t order,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
+  Teuchos::ArrayRCP<scalar_t> & weights,
+  int_t & num_points);
 
 /// compute the cross product of two vectors (ABxAC) and return the area of the parallelogram
 /// \param A vector to point A

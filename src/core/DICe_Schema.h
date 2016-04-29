@@ -874,6 +874,11 @@ public:
     return disp_jump_tol_;
   }
 
+  /// Return the coefficient value
+  double global_constraint_coefficient()const{
+    return global_constraint_coefficient_;
+  }
+
   /// Provide access to the list of path file names:
   /// \param path_file_names the map of path file names
   void set_path_file_names(Teuchos::RCP<std::map<int_t,std::string> > path_file_names){
@@ -1197,6 +1202,8 @@ private:
   bool output_beta_;
   /// pointer to the computational mesh for global method
   Teuchos::RCP<DICe::mesh::Mesh> mesh_;
+  /// constraint coefficient
+  double global_constraint_coefficient_;
 };
 
 /// \class DICe::Output_Spec

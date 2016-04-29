@@ -58,11 +58,17 @@
 #include <Epetra_Vector.h>
 #include <Epetra_Import.h>
 #include <Epetra_Export.h>
+#include <Epetra_CrsMatrix.h>
+#include <Epetra_Operator.h>
+
 #include <Teuchos_ArrayView.hpp>
 #include <Teuchos_Array.hpp>
 
 namespace DICe {
 
+typedef Epetra_MultiVector vec_type;
+typedef Epetra_Operator operator_type;
+typedef double mv_scalar_type;
 
 /// \class DICe::MultiField_Comm
 /// \brief MPI Communicator
@@ -152,6 +158,12 @@ public:
   /// \param local_id the local id of the element
   int get_global_element(const int_t local_id)const{
     return map_->GID(local_id);
+  }
+
+  /// returns true if this global id is on this node
+  /// \param global_id the global id to check
+  bool is_node_global_elem(const int_t global_id){
+    return !map_->LID(global_id) == -1;
   }
 
   /// Returns the total number of global elements
@@ -300,6 +312,17 @@ public:
     return (*epetra_mv_)[field_index][local_id];
   }
 
+  /// \brief axpby for MultiField
+  /// \param alpha Multiplier of the input MultiField
+  /// \param multifield Input multifield
+  /// \param beta Multiplier of this Multifield
+  /// Result is this = beta*this + alpha*multifield
+  void update(const double & alpha,
+    const MultiField & multifield,
+    const double & beta){
+    epetra_mv_->Update(alpha,*multifield.get(),beta);
+  }
+
   /// \brief import the data from one distributed object to this one
   /// \param multifield the multifield to import
   /// \param importer the importer defines how the information will be transferred
@@ -363,6 +386,12 @@ public:
     return array;
   }
 
+  /// set all the values in this field to the given scalar
+  /// \param scalar
+  void put_scalar(const double & scalar){
+    epetra_mv_->PutScalar((double)scalar);
+  }
+
 
 private:
   /// Pointer to the underlying data type
@@ -370,6 +399,102 @@ private:
   /// Pointer to the underlying map
   Teuchos::RCP<MultiField_Map> map_;
 };
+
+
+/// \class DICe::MultiField_Matrix
+/// \brief A container class for a CrsMatrix
+class DICE_LIB_DLL_EXPORT
+MultiField_Matrix {
+public:
+  /// Default constructor
+  MultiField_Matrix(const MultiField_Map & row_map,
+    const int_t num_entries_per_row){
+    matrix_ = Teuchos::rcp(new Epetra_CrsMatrix(Copy, *row_map.get(),num_entries_per_row));
+  }
+
+  /// Constructor with a column map
+  MultiField_Matrix(const MultiField_Map & row_map,
+    const MultiField_Map & col_map,
+    const int_t num_entries_per_row){
+    matrix_ = Teuchos::rcp(new Epetra_CrsMatrix(Copy,*row_map.get(),*col_map.get(),num_entries_per_row));
+  }
+
+  /// Destructor
+  ~MultiField_Matrix(){};
+
+  /// Return the underlying matrix
+  Teuchos::RCP<Epetra_CrsMatrix> get() {return matrix_;}
+
+  /// get the number of rows
+  int_t num_local_rows(){
+    return matrix_->NumMyRows();
+  }
+
+  /// Put scalar value in all matrix entries
+  /// \param value The value to insert
+  void put_scalar(const double & value){
+    matrix_->PutScalar(value);
+  }
+
+  /// Insert values into the global indices given
+  /// \param global_row The global id of the row to insert
+  /// \param cols An array of global column ids
+  /// \param vals An array of real values to insert
+  void insert_global_values(const int_t global_row,
+    const Teuchos::ArrayView<const int_t> & cols,
+    const Teuchos::ArrayView<const double> & vals){
+    matrix_->InsertGlobalValues(global_row,vals.size(),&vals[0],&cols[0]);
+  }
+
+//  /// Insert values into the global indices given
+//  /// \param global_row The global id of the row to insert
+//  /// \param cols An array of global column ids
+//  /// \param vals An array of real values to insert
+//  void insert_global_values(const int_t global_row,
+//    const int_t & global_col,
+//    const double & val){
+//    matrix_->InsertGlobalValues(global_row,1,&val,&global_col);
+//  }
+
+  /// Print the matrix to the screen
+  void describe()const{
+    matrix_->Print(std::cout);
+  }
+
+  /// Finish assembling the matrix
+  void fill_complete(){
+    matrix_->FillComplete();
+  }
+
+  /// Finish assembling the matrix
+  void resume_fill(){
+    // FIXME
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Method not implemented");
+    //matrix_->ResumeFill();
+  }
+
+  /// \brief export the data from one distributed object to this one
+  /// \param multifield the multifield to export
+  /// \param exporter the exporter defines how the information will be transferred
+  /// \param mode combine mode
+  void do_export(Teuchos::RCP<MultiField_Matrix> multifield_matrix,
+    MultiField_Exporter & exporter,
+    const Combine_Mode mode=INSERT){
+    if(mode==INSERT)
+      matrix_->Export(*multifield_matrix->get(),*exporter.get(),Insert);
+    else if(mode==ADD)
+      matrix_->Export(*multifield_matrix->get(),*exporter.get(),Add);
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"Error, invalid combine mode.");
+    }
+  }
+
+
+private:
+  /// The underlying crs matrix
+  Teuchos::RCP<Epetra_CrsMatrix> matrix_;
+};
+
 
 }// End DICe Namespace
 

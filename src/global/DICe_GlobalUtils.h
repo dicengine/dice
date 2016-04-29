@@ -50,8 +50,21 @@ namespace global{
 void initialize_exodus_output(Schema * schema,
   const std::string & output_folder);
 
-void execute_global_step(Schema * schema);
+Status_Flag execute_global_step(Schema * schema);
 
+void calc_jacobian(const scalar_t * xcap,
+  const scalar_t * DN,
+  scalar_t * jacobian,
+  scalar_t * inv_jacobian,
+  scalar_t & J,
+  int_t num_elem_nodes,
+  int_t dim );
+
+void calc_B(const scalar_t * DN,
+  const scalar_t * inv_jacobian,
+  const int_t num_elem_nodes,
+  const int_t dim,
+  scalar_t * solid_B);
 
 }// end global namespace
 

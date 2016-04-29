@@ -91,13 +91,13 @@ int main(int argc, char *argv[]) {
       correlation_params->print(*outStream);
       *outStream << "\n--- Correlation parameters read successfully ---\n" << std::endl;
     }
-    // if the mesh size was specified in the input params set the use_global_dic flag
-    else if(input_params->isParameter(DICe::mesh_size)){
-      if(correlation_params==Teuchos::null) correlation_params = Teuchos::rcp(new Teuchos::ParameterList());
-      correlation_params->set(DICe::use_global_dic,true);
-    }
     else{
       *outStream << "Correlation parameters not specified by user" << std::endl;
+    }
+    // if the mesh size was specified in the input params set the use_global_dic flag
+    if(input_params->isParameter(DICe::mesh_size)){
+      if(correlation_params==Teuchos::null) correlation_params = Teuchos::rcp(new Teuchos::ParameterList());
+      correlation_params->set(DICe::use_global_dic,true);
     }
 
     // decipher the image file names (note: zero entry is the reference image):

@@ -70,6 +70,8 @@ typedef Tpetra::Operator<scalar_t,int_t> operator_type;
 typedef typename Tpetra::MultiVector<scalar_t,int_t,int_t>::dual_view_type::host_mirror_space host_device_type;
 /// Tpetra host view type
 typedef typename Tpetra::MultiVector<scalar_t,int_t,int_t>::dual_view_type::t_host host_view_type;
+/// scalar type
+typedef scalar_t mv_scalar_type;
 
 /// \class DICe::MultiField_Comm
 /// \brief MPI Communicator
@@ -181,6 +183,13 @@ public:
   int_t get_max_global_index()const{
     return map_->getMaxAllGlobalIndex();
   }
+
+  /// returns true if this global id is on this node
+  /// \param global_id the global id to check
+  bool is_node_global_elem(const int_t global_id){
+    return map_->isNodeGlobalElement(global_id);
+  }
+
 
   /// returns a list of the remote indices
   /// \param GIDList the list of global IDs
@@ -406,6 +415,7 @@ public:
     return tpetra_mv_->get1dView();
   }
 
+
 private:
   /// Pointer to the underlying data type
   Teuchos::RCP<vec_type> tpetra_mv_;
@@ -437,6 +447,11 @@ public:
   /// Return the underlying matrix
   Teuchos::RCP<matrix_type> get() {return matrix_;}
 
+  /// get the number of rows
+  int_t num_local_rows(){
+    return matrix_->getNodeNumRows();
+  }
+
   /// Put scalar value in all matrix entries
   /// \param value The value to insert
   void put_scalar(const scalar_t & value){
@@ -467,6 +482,22 @@ public:
   /// Finish assembling the matrix
   void resume_fill(){
     matrix_->resumeFill();
+  }
+
+  /// \brief export the data from one distributed object to this one
+  /// \param multifield the multifield to export
+  /// \param exporter the exporter defines how the information will be transferred
+  /// \param mode combine mode
+  void do_export(Teuchos::RCP<MultiField_Matrix> multifield_matrix,
+    MultiField_Exporter & exporter,
+    const Combine_Mode mode=INSERT){
+    if(mode==INSERT)
+      matrix_->doExport(*multifield_matrix->get(),*exporter.get(),Tpetra::INSERT);
+    else if(mode==ADD)
+      matrix_->doExport(*multifield_matrix->get(),*exporter.get(),Tpetra::ADD);
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"Error, invalid combine mode.");
+    }
   }
 
 private:

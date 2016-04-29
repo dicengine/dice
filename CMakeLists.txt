@@ -165,12 +165,14 @@ ELSE()
 ENDIF()
 
 IF(DICE_ENABLE_GLOBAL)
-  MESSAGE(STATUS "*** Enabling Global DIC (requires the Tpetra (or Epetra) and Seacas libraries in Trilinos) ***")
+  MESSAGE(STATUS "*** Enabling Global DIC (requires the Tpetra (or Epetra), Seacas libraries, and Belos in Trilinos) ***")
   IF(DICE_USE_TPETRA)
     SET(DICE_LIBRARIES
       ${DICE_LIBRARIES}
       tpetra
       exodus
+      belos
+      belostpetra
     )
     ADD_DEFINITIONS(-DDICE_TPETRA=1)
   ELSE()
@@ -178,6 +180,8 @@ IF(DICE_ENABLE_GLOBAL)
       ${DICE_LIBRARIES}
       epetra
       exodus
+      belos
+      belosepetra
     )
   ENDIF()
 ELSE()

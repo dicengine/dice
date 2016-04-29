@@ -286,6 +286,7 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::rotate_def_image_180,false);
   defaultParams->set(DICe::rotate_ref_image_270,false);
   defaultParams->set(DICe::rotate_def_image_270,false);
+  defaultParams->set(DICe::global_constraint_coefficient,0.01);
 }
 
 DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultParams){
@@ -330,6 +331,7 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::rotate_def_image_180,false);
   defaultParams->set(DICe::rotate_ref_image_270,false);
   defaultParams->set(DICe::rotate_def_image_270,false);
+  defaultParams->set(DICe::global_constraint_coefficient,0.01);
 }
 
 }// End DICe Namespace

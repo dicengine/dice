@@ -203,6 +203,8 @@ const char* const use_subset_evolution = "use_subset_evolution";
 /// String parameter name
 const char* const output_beta = "output_beta";
 /// String parameter name
+const char* const global_constraint_coefficient = "global_constraint_coefficient";
+/// String parameter name
 const char* const max_iterations = "max_iterations";
 /// String parameter name
 const char* const tolerance = "tolerance";
@@ -844,6 +846,11 @@ const Correlation_Parameter output_beta_param(output_beta,
   "True if the beta parameter should be computed (still needs to be added to the output spec if it should be included in the output file)"
   " This parameter measures the distinguishability of a pattern for template matching");
 /// Correlation parameter and properties
+const Correlation_Parameter global_constraint_coeff_param(global_constraint_coefficient,
+  SCALAR_PARAM,
+  true,
+  "Used only for global, this is the coefficient for the regularization term");
+/// Correlation parameter and properties
 const Correlation_Parameter use_tracking_default_params_param(use_tracking_default_params,
   BOOL_PARAM,
   true,
@@ -967,7 +974,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_global_correlation_params = 7;
+const int_t num_valid_global_correlation_params = 8;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_global_correlation_params[num_valid_global_correlation_params] = {
   use_global_dic_param,
@@ -976,7 +983,8 @@ const Correlation_Parameter valid_global_correlation_params[num_valid_global_cor
   gauss_filter_mask_size_param,
   output_spec_param,
   output_delimiter_param,
-  omit_output_row_id_param
+  omit_output_row_id_param,
+  global_constraint_coeff_param
 };
 
 } // end DICe namespace

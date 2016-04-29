@@ -351,6 +351,7 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   initial_gamma_threshold_ = -1.0;
   final_gamma_threshold_ = -1.0;
   path_distance_threshold_ = -1.0;
+  global_constraint_coefficient_ = 0.01;
   set_params(params);
 }
 
@@ -378,7 +379,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
 
   if(analysis_type_==GLOBAL_DIC){
     dice_default_params(diceParams.getRawPtr());
-    if(proc_rank == 0) DEBUG_MSG("Initializing schema params with full-field default parameters");
+    if(proc_rank == 0) DEBUG_MSG("Initializing schema params with full-field default global parameters");
     // Overwrite any params that are specified by the params argument
     if(params!=Teuchos::null){
       // check that all the parameters are valid:
@@ -559,6 +560,9 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   if(normalize_gamma_with_active_pixels_)
     DEBUG_MSG("Gamma values will be normalized by the number of active pixels.");
   if(analysis_type_==GLOBAL_DIC){
+    TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::global_constraint_coefficient),std::runtime_error,"");
+    global_constraint_coefficient_ = diceParams->get<double>(DICe::global_constraint_coefficient);
+    DEBUG_MSG("Setting the global constraint coefficient to " << global_constraint_coefficient_);
     compute_ref_gradients_ = true;
   }
   else{
@@ -1151,9 +1155,17 @@ Schema::post_execution_tasks(){
 
 void
 Schema::execute_correlation(){
-
   if(analysis_type_==GLOBAL_DIC){
-    DICe::global::execute_global_step(this);
+    Status_Flag global_status = CORRELATION_FAILED;
+    try{
+      global_status = DICe::global::execute_global_step(this);
+    }
+    catch(std::exception & e){
+      std::cout << "Error, global correlation failed: " << e.what() << std::endl;
+    }
+    if(global_status!=CORRELATION_SUCCESSFUL){
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, global correlation failed");
+    }
     return;
   }
 
