@@ -54,6 +54,7 @@ namespace mesh {
 Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coords_x,
   Teuchos::ArrayRCP<scalar_t> node_coords_y,
   Teuchos::ArrayRCP<int_t> connectivity,
+  std::set<int_t> & boundary_nodes,
   const std::string & serial_output_filename)
 {
   DEBUG_MSG("create_exodus_mesh(): creating an exodus mesh");
@@ -115,8 +116,9 @@ Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coor
   DEBUG_MSG("  Spatial dimension: " << num_dim);
   DEBUG_MSG("  Nodes:             " << num_nodes);
   DEBUG_MSG("  Elements:          " << num_elem);
+  DEBUG_MSG("  Boundary nodes:    " << boundary_nodes.size());
   //DEBUG_MSG("  Element blocks:    " << num_elem_blk);
-  //DEBUG_MSG("  Node sets:         " << num_node_sets);
+  DEBUG_MSG("  Node sets:         " << 1);
   //DEBUG_MSG("  Side sets:         " << num_side_sets);
   DEBUG_MSG("  --------------------------------------------------------------------------------------");
 
@@ -212,6 +214,14 @@ Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coor
     mesh->get_element_sets_by_block()->insert(std::pair<int_t,Teuchos::RCP<element_set> >(blk_map_it->first,elem_set));
     mesh->get_node_sets_by_block()->insert(std::pair<int_t,Teuchos::RCP<node_set> >(blk_map_it->first,node_set_ptr));
   }
+
+  std::vector<int_t> bc_def;
+  std::set<int_t>::const_iterator it = boundary_nodes.begin();
+  std::set<int_t>::const_iterator it_end = boundary_nodes.end();
+  for(;it!=it_end;++it){
+    bc_def.push_back(*it);
+  }
+  mesh->get_node_bc_sets()->insert(std::pair<int_t,std::vector<int_t> >(0,bc_def)); // all boundary nodes go in node set 0
 
   mesh->set_initialized();
 

@@ -90,21 +90,74 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
 //  char args[] = arg_ss.str().c_str();
   triangulate(args,&in,&out,NULL);
 
+  DEBUG_MSG("number of boundary segments: " << out.numberofsegments);
+  std::set<int_t> boundary_nodes;
+  //std::cout << "segments: " << std::endl;
+  for(int_t i=0;i<out.numberofsegments;++i){
+    //std::cout << i << " left index " << out.segmentlist[i*2+0] << " right " << out.segmentlist[i*2+1] << std::endl;
+    boundary_nodes.insert(out.segmentlist[i*2+0]);
+    boundary_nodes.insert(out.segmentlist[i*2+1]);
+  }
+  DEBUG_MSG("number of triangle edges: " << out.numberofedges);
+  //std::cout << "edges: " << std::endl;
+  //for(int_t i=0;i<out.numberofedges;++i){
+  //  std::cout << i << " left index " << out.edgelist[i*2+0] << " right " << out.edgelist[i*2+1] << std::endl;
+  //}
+
   // convert the resulting mesh to an exodus mesh
+
 
   Teuchos::ArrayRCP<int_t> connectivity(out.numberoftriangles*out.numberofcorners); // numberofcorners is num nodes per elem
   for(int_t i=0;i<out.numberoftriangles;++i){
     for (int_t j = 0; j < out.numberofcorners; j++) {
       connectivity[i*out.numberofcorners + j] = out.trianglelist[i * out.numberofcorners + j];
+      // search the connectivity for edge elements and side sets
+      for(int_t k=0;k<out.numberofsegments;++k){
+        if(out.segmentlist[k*2] == out.trianglelist[i*out.numberofcorners + j]){
+          //std::cout << "segment " << k << " left is in element " << i  << " position " << j << std::endl;
+          for(int_t m=0;m<out.numberofcorners;++m){
+            if(out.segmentlist[k*2+1] == out.trianglelist[i*out.numberofcorners +m]){
+              //std::cout << "segment " << k << " right is in element " << i  << " position " << m << std::endl;
+              // now that the element and side are known for boundary nodes add the middle node
+              int_t third_node_pos = -1;
+              if((j==0&&m==1)||(j==1&&m==0)){
+                third_node_pos = 5;
+              }
+              else if((j==1&&m==2)||(j==2&&m==1)){
+                third_node_pos = 3;
+              }
+              else if((j==0&&m==2)||(j==2&&m==0)){
+                third_node_pos = 4;
+              }
+              else{
+                TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid segment found");
+              }
+              boundary_nodes.insert(out.trianglelist[i*out.numberofcorners + third_node_pos]);
+              break;
+            }
+          } // right end of segment
+          break;
+        } // left end of segment
+      }
+
     }
   }
+
+  DEBUG_MSG("boundary nodes");
+  std::set<int_t>::const_iterator it = boundary_nodes.begin();
+  std::set<int_t>::const_iterator it_end = boundary_nodes.end();
+  for(;it!=it_end;++it){
+    DEBUG_MSG(*it);
+  }
+
   Teuchos::ArrayRCP<scalar_t> node_coords_x(out.numberofpoints); // numberofcorners is num nodes per elem
   Teuchos::ArrayRCP<scalar_t> node_coords_y(out.numberofpoints); // numberofcorners is num nodes per elem
   for(int_t i=0;i<out.numberofpoints;++i){
     node_coords_x[i] = out.pointlist[i*2+0];
     node_coords_y[i] = out.pointlist[i*2+1];
   }
-  Teuchos::RCP<DICe::mesh::Mesh> mesh = DICe::mesh::create_tri6_exodus_mesh(node_coords_x,node_coords_y,connectivity,output_file_name);
+  Teuchos::RCP<DICe::mesh::Mesh> mesh =
+      DICe::mesh::create_tri6_exodus_mesh(node_coords_x,node_coords_y,connectivity,boundary_nodes,output_file_name);
 
   delete[] in.pointlist;
   delete[] out.pointlist;
