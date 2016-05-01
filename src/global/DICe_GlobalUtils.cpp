@@ -41,12 +41,16 @@
 
 #include <DICe_GlobalUtils.h>
 #include <DICe_MeshIO.h>
+#include <DICe_MatrixService.h>
 
 #include <BelosBlockCGSolMgr.hpp>
 #include <BelosBlockGmresSolMgr.hpp>
 #include <BelosLinearProblem.hpp>
-//#include <BelosTpetraAdapter.hpp>
-#include <BelosEpetraAdapter.hpp>
+#ifdef DICE_TPETRA
+  #include <BelosTpetraAdapter.hpp>
+#else
+  #include <BelosEpetraAdapter.hpp>
+#endif
 
 namespace DICe {
 
@@ -69,15 +73,16 @@ Status_Flag execute_global_step(Schema * schema){
 
   int_t p_rank = mesh->get_comm()->get_rank();
   const int_t spa_dim = mesh->spatial_dimension();
+  //const scalar_t min_value_threshold = 1.0E-10; // smallest value of the stiffness matrix that will actually be inserted
 
   // square the alpha term
   scalar_t alpha2 = schema->global_constraint_coefficient();
   alpha2*=alpha2;
 
   // clear the dislacement field: TODO may not want to do this for an image progression
-  MultiField & residual = *mesh()->get_field(mesh::field_enums::RESIDUAL_FS);
-  MultiField & lhs = *mesh()->get_field(mesh::field_enums::LHS_FS);
-  MultiField & disp = *mesh()->get_field(mesh::field_enums::DISPLACEMENT_FS);
+  MultiField & residual = *mesh->get_field(mesh::field_enums::RESIDUAL_FS);
+  MultiField & lhs = *mesh->get_field(mesh::field_enums::LHS_FS);
+  MultiField & disp = *mesh->get_field(mesh::field_enums::DISPLACEMENT_FS);
   disp.put_scalar(0.0);
   residual.put_scalar(0.0);
 
@@ -106,9 +111,40 @@ Status_Flag execute_global_step(Schema * schema){
       Teuchos::rcp(new Belos::LinearProblem<mv_scalar_type,vec_type,operator_type>());
   /// Belos solver
   Teuchos::RCP< Belos::SolverManager<mv_scalar_type,vec_type,operator_type> > belos_solver  =
-      Teuchos::rcp( new Belos::BlockCGSolMgr<mv_scalar_type,vec_type,operator_type>(linear_problem,Teuchos::rcp(&belos_list,false)));
+      Teuchos::rcp( new Belos::BlockGmresSolMgr<mv_scalar_type,vec_type,operator_type>(linear_problem,Teuchos::rcp(&belos_list,false)));
 
   DEBUG_MSG("Solver and linear problem have been initialized.");
+
+  Teuchos::RCP<DICe::Matrix_Service> matrix_service;
+  matrix_service = Teuchos::rcp(new DICe::Matrix_Service(mesh->spatial_dimension()));
+  matrix_service->initialize_bc_register(mesh->get_vector_node_dist_map()->get_num_local_elements(),
+    mesh->get_vector_node_overlap_map()->get_num_local_elements());
+
+  // set up the boundary condition nodes: FIXME this assumes there is only one node set
+  //mesh->get_vector_node_dist_map()->describe();
+  DICe::mesh::bc_set * bc_set = mesh->get_node_bc_sets();
+  const int_t boundary_node_set_id = 0;
+  for(size_t i=0;i<bc_set->find(boundary_node_set_id)->second.size();++i){
+    const int_t node_gid = bc_set->find(boundary_node_set_id)->second[i];
+    //std::cout << " disp x condition on node " << node_gid << std::endl;
+    bool is_local_node = mesh->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim+1);
+    if(is_local_node){
+      const int_t row_id = mesh->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim+1);
+      matrix_service->register_row_bc(row_id);
+    }
+    int_t col_id = mesh->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim+1);
+    matrix_service->register_col_bc(col_id);
+    //std::cout << " disp y condition on node " << node_gid << std::endl;
+    is_local_node = mesh->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim+2);
+    if(is_local_node){
+      const int_t row_id = mesh->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim+2);
+      matrix_service->register_row_bc(row_id);
+    }
+    col_id = mesh->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim+2);
+    matrix_service->register_col_bc(col_id);
+  }
+
+  DEBUG_MSG("Matrix service has been initialized.");
 
   const int_t relations_size = mesh->max_num_node_relations();
   Teuchos::RCP<DICe::MultiField_Matrix> tangent =
@@ -235,7 +271,8 @@ Status_Flag execute_global_step(Schema * schema){
         for(int_t i=0;i<tri6_num_funcs*spa_dim;++i){
           for(int_t j=0;j<B_dim;++j){
             for(int_t k=0;k<tri6_num_funcs*spa_dim;++k){
-              elem_stiffness[i*tri6_num_funcs*spa_dim + k] += alpha2*B[j*tri6_num_funcs*spa_dim+i]*B[j*tri6_num_funcs*spa_dim + k] * gp_weights[gp] * J;
+              elem_stiffness[i*tri6_num_funcs*spa_dim + k] +=
+                  alpha2*B[j*tri6_num_funcs*spa_dim+i]*B[j*tri6_num_funcs*spa_dim + k] * gp_weights[gp] * J;
             }
           }
         }
@@ -251,15 +288,15 @@ Status_Flag execute_global_step(Schema * schema){
               const int_t row = (node_ids[i]-1)*spa_dim + m + 1;
               const int_t col = (node_ids[j]-1)*spa_dim + n + 1;
               const scalar_t value = elem_stiffness[(i*spa_dim + m)*tri6_num_funcs*spa_dim + (j*spa_dim + n)];
-              //const bool is_local_row_node = mesh->get_vector_node_dist_map()->is_node_global_elem(row);
-              //const bool row_is_bc_node = is_local_row_node ? matrix_service_->is_row_bc(mesh()->get_vector_node_dist_map()->get()->getLocalElement(row)) : false;
-              //const bool col_is_bc_node = matrix_service_->is_col_bc(mesh()->get_vector_node_overlap_map()->get()->getLocalElement(col));
+              const bool is_local_row_node = mesh->get_vector_node_dist_map()->is_node_global_elem(row);
+              const bool row_is_bc_node = is_local_row_node ?
+                  matrix_service->is_row_bc(mesh->get_vector_node_dist_map()->get_local_element(row)) : false;
+              //const bool col_is_bc_node = matrix_service->is_col_bc(mesh->get_vector_node_overlap_map()->get_local_element(col));
               //std::cout << " row " << row << " col " << col << " row_is_bc " << row_is_bc_node << " col_is_bc " << col_is_bc_node << std::endl;
-              //if(!row_is_bc_node && !col_is_bc_node)
-              //{
-              col_id_array_map.find(row)->second.push_back(col);
-              values_array_map.find(row)->second.push_back(value);
-              //}
+              if(!row_is_bc_node){// && !col_is_bc_node){
+                col_id_array_map.find(row)->second.push_back(col);
+                values_array_map.find(row)->second.push_back(value);
+              }
             } // spa dim
           } // num_funcs
         } // spa dim
@@ -267,6 +304,17 @@ Status_Flag execute_global_step(Schema * schema){
       //DEBUG_MSG("Done preparing values for insertion...");
 
     }  // elem
+
+    // add ones to the diagonal for kinematic bc nodes:
+    for(int_t i=0;i<mesh->get_vector_node_overlap_map()->get_num_local_elements();++i)
+    {
+      if(matrix_service->is_col_bc(i))
+      {
+        const int_t global_id = mesh->get_vector_node_overlap_map()->get_global_element(i);
+        col_id_array_map.find(global_id)->second.push_back(global_id);
+        values_array_map.find(global_id)->second.push_back(1.0);
+      }
+    }
 
     DEBUG_MSG("Inserting values into the global tangent...");
 
@@ -288,6 +336,17 @@ Status_Flag execute_global_step(Schema * schema){
     MultiField_Exporter exporter (*mesh->get_vector_node_overlap_map(),*mesh->get_vector_node_dist_map());
     tangent->do_export(tangent_overlap, exporter, ADD);
     tangent->fill_complete();
+
+    //tangent->describe();
+
+    DEBUG_MSG("Enforcing Dirichlet boundary condition");
+    // enforce the dirichlet boundary conditions
+    const scalar_t boundary_value = 100.0;
+    // add ones to the diagonal for kinematic bc nodes:
+    for(int_t i=0;i<mesh->get_vector_node_dist_map()->get_num_local_elements();++i){
+      if(matrix_service->is_col_bc(i))
+        residual.local_value(i) = boundary_value;
+    }
 
     DEBUG_MSG("Solving the linear system...");
 
@@ -333,8 +392,8 @@ void calc_jacobian(const scalar_t * xcap,
       for(int_t k=0;k<num_elem_nodes;++k)
         jacobian[i*dim+j] += xcap[k*dim + i] * DN[k*dim+j];
 //  std::cout << " jacobian " << std::endl;
-//  for(SizeT i=0;i<dim;++i){
-//    for(SizeT j=0;j<dim;++j)
+//  for(int_t i=0;i<dim;++i){
+//    for(int_t j=0;j<dim;++j)
 //      std::cout << " " << jacobian[i*dim+j];
 //    std::cout << std::endl;
 //  }
@@ -368,8 +427,8 @@ void calc_jacobian(const scalar_t * xcap,
 
 //  std::cout << " J " << J << std::endl;
 //  std::cout << " inv_jacobian " << std::endl;
-//  for(SizeT i=0;i<dim;++i){
-//    for(SizeT j=0;j<dim;++j)
+//  for(int_t i=0;i<dim;++i){
+//    for(int_t j=0;j<dim;++j)
 //      std::cout << " " << inv_jacobian[i*dim+j];
 //    std::cout << std::endl;
 //  }
@@ -386,8 +445,8 @@ void calc_B(const scalar_t * DN,
     dN[i] = 0.0;
 
 //  std::cout << " DN " << std::endl;
-//  for(SizeT j=0;j<num_elem_nodes;++j){
-//    for(SizeT i=0;i<dim;++i)
+//  for(int_t j=0;j<num_elem_nodes;++j){
+//    for(int_t i=0;i<dim;++i)
 //      std::cout << " " << DN[j*dim+i];
 //    std::cout << std::endl;
 //  }
@@ -437,8 +496,8 @@ void calc_B(const scalar_t * DN,
   };
 
 //  std::cout << " B " << std::endl;
-//  for(SizeT i=0;i<6;++i){
-//    for(SizeT j=0;j<num_elem_nodes*dim;++j)
+//  for(int_t i=0;i<6;++i){
+//    for(int_t j=0;j<num_elem_nodes*dim;++j)
 //      std::cout << " " << solid_B[i*(num_elem_nodes*dim)+j];
 //    std::cout << std::endl;
 //  }

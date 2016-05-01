@@ -468,6 +468,16 @@ public:
     matrix_->insertGlobalValues (global_row,cols,vals);
   }
 
+  /// Replace values in the local indices given
+  /// \param local_row The local id of the row to insert
+  /// \param cols An array of local column ids
+  /// \param vals An array of real values to insert
+  void replace_local_values(const int_t local_row,
+    const Teuchos::ArrayView<const int_t> & cols,
+    const Teuchos::ArrayView<const scalar_t> & vals){
+    matrix_->replaceLocalValues (local_row,cols,vals);
+  }
+
   /// Print the matrix to the screen
   void describe()const{
     Teuchos::RCP<Teuchos::FancyOStream> fos = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));

@@ -69,6 +69,8 @@ namespace DICe {
 typedef Epetra_MultiVector vec_type;
 typedef Epetra_Operator operator_type;
 typedef double mv_scalar_type;
+typedef Epetra_CrsMatrix matrix_type;
+
 
 /// \class DICe::MultiField_Comm
 /// \brief MPI Communicator
@@ -163,7 +165,7 @@ public:
   /// returns true if this global id is on this node
   /// \param global_id the global id to check
   bool is_node_global_elem(const int_t global_id){
-    return !map_->LID(global_id) == -1;
+    return !(bool)(map_->LID(global_id)==-1);
   }
 
   /// Returns the total number of global elements
@@ -297,8 +299,8 @@ public:
   /// \brief value accessor
   /// \param global_id the global id of the intended element
   /// \param field_index the index of the field to access
-  /// Warning: Epetra does not have a scalar type, its hard coded as double
-  double & global_value(const int_t global_id,
+  /// Warning: Epetra does not have a scalar type, its hard coded as mv_scalar_type
+  mv_scalar_type & global_value(const int_t global_id,
     const int_t field_index=0){
     return (*epetra_mv_)[field_index][epetra_mv_->Map().LID(global_id)];
   }
@@ -306,8 +308,8 @@ public:
   /// \brief value accessor
   /// \param local_id the local id of the intended element
   /// \param field_index the index of the field to access
-  /// Warning: Epetra does not have a scalar type, its hard coded as double
-  double & local_value(const int_t local_id,
+  /// Warning: Epetra does not have a scalar type, its hard coded as mv_scalar_type
+  mv_scalar_type & local_value(const int_t local_id,
     const int_t field_index=0){
     return (*epetra_mv_)[field_index][local_id];
   }
@@ -317,9 +319,9 @@ public:
   /// \param multifield Input multifield
   /// \param beta Multiplier of this Multifield
   /// Result is this = beta*this + alpha*multifield
-  void update(const double & alpha,
+  void update(const mv_scalar_type & alpha,
     const MultiField & multifield,
-    const double & beta){
+    const mv_scalar_type & beta){
     epetra_mv_->Update(alpha,*multifield.get(),beta);
   }
 
@@ -378,7 +380,7 @@ public:
   /// Return an array of values for the multifield (most only contain one vector so the first index is 0)
   Teuchos::ArrayRCP<const scalar_t> get_1d_view()const{
     // TODO find a way to avoid this copy. Doing it this way for now
-    // because Epetra only has double type, not float so we have to copy/cast
+    // because Epetra only has mv_scalar_type type, not float so we have to copy/cast
     Teuchos::ArrayRCP<scalar_t> array(epetra_mv_->MyLength());
     for(int_t i=0;i<epetra_mv_->MyLength();++i){
       array[i] = (*epetra_mv_)[0][i];
@@ -388,8 +390,8 @@ public:
 
   /// set all the values in this field to the given scalar
   /// \param scalar
-  void put_scalar(const double & scalar){
-    epetra_mv_->PutScalar((double)scalar);
+  void put_scalar(const mv_scalar_type & scalar){
+    epetra_mv_->PutScalar(scalar);
   }
 
 
@@ -432,7 +434,7 @@ public:
 
   /// Put scalar value in all matrix entries
   /// \param value The value to insert
-  void put_scalar(const double & value){
+  void put_scalar(const mv_scalar_type & value){
     matrix_->PutScalar(value);
   }
 
@@ -442,19 +444,19 @@ public:
   /// \param vals An array of real values to insert
   void insert_global_values(const int_t global_row,
     const Teuchos::ArrayView<const int_t> & cols,
-    const Teuchos::ArrayView<const double> & vals){
+    const Teuchos::ArrayView<const mv_scalar_type> & vals){
     matrix_->InsertGlobalValues(global_row,vals.size(),&vals[0],&cols[0]);
   }
 
-//  /// Insert values into the global indices given
-//  /// \param global_row The global id of the row to insert
-//  /// \param cols An array of global column ids
-//  /// \param vals An array of real values to insert
-//  void insert_global_values(const int_t global_row,
-//    const int_t & global_col,
-//    const double & val){
-//    matrix_->InsertGlobalValues(global_row,1,&val,&global_col);
-//  }
+  /// Replace values in the local indices given
+  /// \param local_row The local id of the row to insert
+  /// \param cols An array of local column ids
+  /// \param vals An array of real values to insert
+  void replace_local_values(const int_t local_row,
+    const Teuchos::ArrayView<const int_t> & cols,
+    const Teuchos::ArrayView<const mv_scalar_type> & vals){
+    matrix_->ReplaceMyValues(local_row,vals.size(),&vals[0],&cols[0]);
+  }
 
   /// Print the matrix to the screen
   void describe()const{

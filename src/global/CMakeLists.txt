@@ -1,9 +1,11 @@
 SET(SOURCES
   DICe_GlobalUtils.cpp
+  DICe_MatrixService.cpp
 )
 
 SET(HEADERS
   DICe_GlobalUtils.h
+  DICe_MatrixService.h
 )
 
 include_directories (
