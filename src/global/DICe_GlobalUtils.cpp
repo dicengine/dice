@@ -65,6 +65,8 @@ void initialize_exodus_output(Schema * schema,
   mesh->create_field(mesh::field_enums::RESIDUAL_FS);
   mesh->create_field(mesh::field_enums::LHS_FS);
   mesh->create_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
+  mesh->create_field(mesh::field_enums::IMAGE_PHI_FS);
+  mesh->create_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
    DICe::mesh::create_exodus_output_variable_names(mesh);
 }
 
@@ -80,6 +82,7 @@ Status_Flag execute_global_step(Schema * schema){
   scalar_t alpha2 = schema->global_constraint_coefficient();
   alpha2*=alpha2;
   const scalar_t m = 2.0;
+  const scalar_t g = 10.0;
 
   // clear the dislacement field: TODO may not want to do this for an image progression
   MultiField & residual = *mesh->get_field(mesh::field_enums::RESIDUAL_FS);
@@ -87,8 +90,10 @@ Status_Flag execute_global_step(Schema * schema){
   MultiField & disp = *mesh->get_field(mesh::field_enums::DISPLACEMENT_FS);
   disp.put_scalar(0.0);
   residual.put_scalar(0.0);
-  MultiField & coords    = *mesh->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  MultiField & coords = *mesh->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
   MultiField & exact_sol = *mesh->get_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
+  MultiField & image_phi = *mesh->get_field(mesh::field_enums::IMAGE_PHI_FS);
+  MultiField & image_grad_phi = *mesh->get_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
 
   scalar_t residual_norm = 0.0;
 
@@ -208,7 +213,8 @@ Status_Flag execute_global_step(Schema * schema){
     scalar_t B[B_dim*tri6_num_funcs*spa_dim];
     scalar_t elem_stiffness[tri6_num_funcs*spa_dim*tri6_num_funcs*spa_dim];
     scalar_t elem_force[tri6_num_funcs*spa_dim];
-    scalar_t x,y,fx,fy;
+    scalar_t grad_phi[spa_dim];
+    scalar_t x=0.0,y=0.0,fx=0.0,fy=0.0;
 
     // get the natural integration points for this element:
     const int_t integration_order = 3;
@@ -230,7 +236,7 @@ Status_Flag execute_global_step(Schema * schema){
     DICe::mesh::element_set::iterator elem_end = mesh->get_element_set()->end();
     for(;elem_it!=elem_end;++elem_it)
     {
-      std::cout << "ELEM: " << elem_it->get()->global_id() << std::endl;
+      //std::cout << "ELEM: " << elem_it->get()->global_id() << std::endl;
       const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
       // compute the shape functions and derivatives for this element:
       for(int_t nd=0;nd<tri6_num_funcs;++nd){
@@ -239,6 +245,7 @@ Status_Flag execute_global_step(Schema * schema){
         for(int_t dim=0;dim<spa_dim;++dim){
           const int_t stride = nd*spa_dim + dim;
           nodal_coords[stride] = coords_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
+          //std::cout << " node coords " << nodal_coords[stride] << std::endl;
         }
       }
 
@@ -261,10 +268,19 @@ Status_Flag execute_global_step(Schema * schema){
         // isoparametric coords of the gauss point
         for(int_t dim=0;dim<spa_dim;++dim)
           natural_coords[dim] = gp_locs[gp][dim];
+        //std::cout << " natural coords " << natural_coords[0] << " " << natural_coords[1] << std::endl;
 
         // evaluate the shape functions and derivatives:
         tri6_shape_func_evaluator->evaluate_shape_functions(natural_coords,N6);
         tri6_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN6);
+
+        // physical gp location
+        x = 0.0; y=0.0;
+        for(int_t i=0;i<tri6_num_funcs;++i){
+          x += nodal_coords[i*spa_dim+0]*N6[i];
+          y += nodal_coords[i*spa_dim+1]*N6[i];
+        }
+        //std::cout << " physical coords " << x << " " << y << std::endl;
 
         // compute the jacobian for this element:
         DICe::global::calc_jacobian(nodal_coords,DN6,jac,inv_jac,J,tri6_num_funcs,spa_dim);
@@ -282,15 +298,27 @@ Status_Flag execute_global_step(Schema * schema){
           }
         }
 
-        // mass term
-        //for(int_t i=0;i<tri6_num_funcs;++i){
-        //  const int_t row1 = (i*spa_dim) + 0;
-        //  const int_t row2 = (i*spa_dim) + 1;
-        //  for(int_t j=0;j<tri6_num_funcs;++j){
-        //    elem_stiffness[row1*tri6_num_funcs*spa_dim + j*spa_dim+0] += N6[i]*N6[j]*gp_weights[gp]*J;
-        //    elem_stiffness[row2*tri6_num_funcs*spa_dim + j*spa_dim+1] += N6[i]*N6[j]*gp_weights[gp]*J;
-        //  }
-        //}
+        // compute the image stiffness terms
+        scalar_t d_phi_dt = 0.0, grad_phi_x = 0.0, grad_phi_y = 0.0;
+        calc_mms_phi_terms_rich(x,y,m,schema->img_width(),g,d_phi_dt,grad_phi_x,grad_phi_y);
+        grad_phi[0] = grad_phi_x;
+        grad_phi[1] = grad_phi_y;
+
+        // image stiffness terms
+        for(int_t i=0;i<tri6_num_funcs;++i){
+          const int_t row1 = (i*spa_dim) + 0;
+          const int_t row2 = (i*spa_dim) + 1;
+          for(int_t j=0;j<tri6_num_funcs;++j){
+            elem_stiffness[row1*tri6_num_funcs*spa_dim + j*spa_dim+0]
+                           += N6[i]*(grad_phi[0]*grad_phi[0])*N6[j]*gp_weights[gp]*J;
+            elem_stiffness[row1*tri6_num_funcs*spa_dim + j*spa_dim+1]
+                           += N6[i]*(grad_phi[0]*grad_phi[1])*N6[j]*gp_weights[gp]*J;
+            elem_stiffness[row2*tri6_num_funcs*spa_dim + j*spa_dim+0]
+                           += N6[i]*(grad_phi[1]*grad_phi[0])*N6[j]*gp_weights[gp]*J;
+            elem_stiffness[row2*tri6_num_funcs*spa_dim + j*spa_dim+1]
+                           += N6[i]*(grad_phi[1]*grad_phi[1])*N6[j]*gp_weights[gp]*J;
+          }
+        }
 //        std::cout << " elem stiffness" << std::endl;
 //        for(int_t i=0;i<tri6_num_funcs*spa_dim;++i){
 //          for(int_t j=0;j<tri6_num_funcs*spa_dim;++j){
@@ -299,15 +327,24 @@ Status_Flag execute_global_step(Schema * schema){
 //          std::cout << std::endl;
 //        }
 
-        // physical gp location
-        x = 0.0; y=0.0;
-        for(int_t i=0;i<tri6_num_funcs;++i){
-          x += nodal_coords[i*spa_dim+0]*N6[i];
-          y += nodal_coords[i*spa_dim+1]*N6[i];
-        }
+        // compute the image force terms
+        fx = -d_phi_dt * grad_phi[0];
+        fy = -d_phi_dt * grad_phi[1];
+
+        // analytic force terms
+        scalar_t lap_b_x=0.0,lap_b_y=0.0,b_x=0.0,b_y=0.0;
+        calc_mms_lap_vel_rich(x,y,schema->img_width(),m,lap_b_x,lap_b_y);
+        calc_mms_vel_rich(x,y,schema->img_width(),m,b_x,b_y);
+//        std::cout << " b " << b_x << " " << b_y << std::endl;
+//        std::cout << " lap_b " << lap_b_x << " " << lap_b_y << std::endl;
+//        std::cout << " grad_phi " << grad_phi_x << " " << grad_phi_y << std::endl;
+//        std::cout << " dphidt " << d_phi_dt << std::endl;
+        fx += grad_phi[0]*d_phi_dt + (grad_phi[0]*grad_phi[0]*b_x + grad_phi[0]*grad_phi[1]*b_y) - alpha2*lap_b_x;
+        fy += grad_phi[1]*d_phi_dt + (grad_phi[1]*grad_phi[0]*b_x + grad_phi[1]*grad_phi[1]*b_y) - alpha2*lap_b_y;
+
         //compute the force terms for this point
         //calc_mms_force_elasticity(x,y,alpha2,schema->img_width(),m,fx,fy);
-        calc_mms_force_simple(alpha2,fx,fy);
+        //calc_mms_force_simple(alpha2,fx,fy);
         for(int_t i=0;i<tri6_num_funcs;++i){
           elem_force[i*spa_dim+0] += fx*N6[i]*gp_weights[gp]*J;
           elem_force[i*spa_dim+1] += fy*N6[i]*gp_weights[gp]*J;
@@ -398,9 +435,16 @@ Status_Flag execute_global_step(Schema * schema){
       scalar_t b_y = 0.0;
       const scalar_t x = coords.local_value(ix);
       const scalar_t y = coords.local_value(iy);
-      //calc_mms_bc_elasticity(x,y,schema->img_width(),m,b_x,b_y);
+      calc_mms_vel_rich(x,y,schema->img_width(),m,b_x,b_y);
+      scalar_t phi = 0.0,d_phi_dt=0.0,grad_phi_x=0.0,grad_phi_y=0.0;
+      calc_mms_phi_rich(x,y,schema->img_width(),g,phi);
+      image_phi.local_value(i) = phi;
+      calc_mms_phi_terms_rich(x,y,m,schema->img_width(),g,d_phi_dt,grad_phi_x,grad_phi_y);
+      image_grad_phi.local_value(ix) = grad_phi_x;
+      image_grad_phi.local_value(iy) = grad_phi_y;
+
       //calc_mms_bc_2(x,y,schema->img_width(),b_x,b_y);
-      calc_mms_bc_simple(x,y,b_x,b_y);
+      //calc_mms_bc_simple(x,y,b_x,b_y);
       exact_sol.local_value(ix) = b_x;
       exact_sol.local_value(iy) = b_y;
       if(matrix_service->is_col_bc(ix)){
@@ -593,11 +637,11 @@ void calc_mms_force_elasticity(const scalar_t & x,
   scalar_t & force_x,
   scalar_t & force_y){
   const scalar_t beta = m*DICE_PI/L;
-  force_x = -alpha*beta*beta*cos(beta*y)*sin(beta*x);
-  force_y = alpha*beta*beta*cos(beta*x)*sin(beta*y);
+  force_x = alpha*beta*beta*cos(beta*y)*sin(beta*x);
+  force_y = -alpha*beta*beta*cos(beta*x)*sin(beta*y);
 }
 
-void calc_mms_bc_elasticity(const scalar_t & x,
+void calc_mms_vel_rich(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & L,
   const scalar_t & m,
@@ -607,6 +651,63 @@ void calc_mms_bc_elasticity(const scalar_t & x,
   const scalar_t beta = m*DICE_PI/L;
   b_x = sin(beta*x)*cos(beta*y);
   b_y = -cos(beta*x)*sin(beta*y);
+  //b_x = x;
+  //b_y = -y;
+  //b_x = x + y*y;
+  //b_y = x*x - y;
+
+}
+
+void calc_mms_lap_vel_rich(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & L,
+  const scalar_t & m,
+  scalar_t & lap_b_x,
+  scalar_t & lap_b_y){
+  const scalar_t beta = m*DICE_PI/L;
+  lap_b_x = -beta*beta*cos(beta*y)*sin(beta*x);
+  lap_b_y = beta*beta*cos(beta*x)*sin(beta*y);
+  //lap_b_x = 0.0;
+  //lap_b_y = 0.0;
+  //lap_b_x = 2.0;
+  //lap_b_y = 2.0;
+}
+
+void calc_mms_phi_rich(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & L,
+  const scalar_t & g,
+  scalar_t & phi){
+  const scalar_t gamma = g*DICE_PI/L;
+  phi = sin(gamma*x)*cos(gamma*y+DICE_PI/2.0);
+  //const scalar_t gamma = g*DICE_PI/L;
+  //phi = -1.0/gamma*(std::cos(gamma*x)*std::cos(gamma*(x-L)) + std::cos(gamma*y)*std::cos(y-L));
+}
+
+void calc_mms_phi_terms_rich(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & m,
+  const scalar_t & L,
+  const scalar_t & g,
+  scalar_t & d_phi_dt,
+  scalar_t & grad_phi_x,
+  scalar_t & grad_phi_y){
+
+  scalar_t b_x = 0.0;
+  scalar_t b_y = 0.0;
+  calc_mms_vel_rich(x,y,L,m,b_x,b_y);
+  scalar_t mod_x = x - b_x;
+  scalar_t mod_y = y - b_y;
+
+  scalar_t phi_0 = 0.0;
+  calc_mms_phi_rich(x,y,L,g,phi_0);
+  scalar_t phi = 0.0;
+  calc_mms_phi_rich(mod_x,mod_y,L,g,phi);
+  d_phi_dt = phi - phi_0;
+
+  const scalar_t gamma = g*DICE_PI/L;
+  grad_phi_x = gamma*cos(gamma*x)*cos(DICE_PI/2.0 + gamma*y);
+  grad_phi_y = -gamma*sin(gamma*x)*sin(DICE_PI/2.0 + gamma*y);
 }
 
 void calc_mms_bc_simple(const scalar_t & x,

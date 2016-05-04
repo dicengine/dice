@@ -142,6 +142,8 @@ void create_string_maps()
   field_name_string[field_enums::RESIDUAL]                                           = "RESIDUAL";
   field_name_string[field_enums::LHS]                                                = "LHS";
   field_name_string[field_enums::EXACT_SOL_VECTOR]                                   = "EXACT_SOL_VECTOR";
+  field_name_string[field_enums::IMAGE_PHI]                                          = "IMAGE_PHI";
+  field_name_string[field_enums::IMAGE_GRAD_PHI]                                     = "IMAGE_GRAD_PHI";
   field_name_string[field_enums::INTERNAL_FACE_EDGE_NORMAL]                          = "INTERNAL_FACE_EDGE_NORMAL";
   field_name_string[field_enums::INTERNAL_FACE_EDGE_COORDINATES]                     = "INTERNAL_FACE_EDGE_COORDINATES";
   field_name_string[field_enums::INTERNAL_FACE_EDGE_SIZE]                            = "INTERNAL_FACE_EDGE_SIZE";

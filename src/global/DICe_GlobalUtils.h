@@ -74,12 +74,34 @@ void calc_mms_force_elasticity(const scalar_t & x,
   scalar_t & force_x,
   scalar_t & force_y);
 
-void calc_mms_bc_elasticity(const scalar_t & x,
+void calc_mms_vel_rich(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & L,
   const scalar_t & m,
   scalar_t & b_x,
   scalar_t & b_y);
+
+void calc_mms_lap_vel_rich(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & L,
+  const scalar_t & m,
+  scalar_t & lap_b_x,
+  scalar_t & lap_b_y);
+
+void calc_mms_phi_rich(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & L,
+  const scalar_t & g,
+  scalar_t & phi);
+
+void calc_mms_phi_terms_rich(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & m,
+  const scalar_t & L,
+  const scalar_t & g,
+  scalar_t & d_phi_dt,
+  scalar_t & grad_phi_x,
+  scalar_t & grad_phi_y);
 
 void calc_mms_bc_simple(const scalar_t & x,
   const scalar_t & y,
