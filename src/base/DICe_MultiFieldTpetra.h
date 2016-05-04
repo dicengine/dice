@@ -410,11 +410,16 @@ public:
     return tpetra_mv_->getVector(field_index)->norm2();
   }
 
-  // returns a view of the multivector's data
+  /// returns a view of the multivector's data
   Teuchos::ArrayRCP<const scalar_t> get_1d_view()const{
     return tpetra_mv_->get1dView();
   }
 
+  /// Print the vector to the screen
+  void describe()const{
+    Teuchos::RCP<Teuchos::FancyOStream> fos = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+    tpetra_mv_->describe(*fos,Teuchos::VERB_EXTREME);
+  }
 
 private:
   /// Pointer to the underlying data type

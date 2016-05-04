@@ -169,6 +169,7 @@ enum Field_Name
   DISPLACEMENT,
   RESIDUAL,
   LHS,
+  EXACT_SOL_VECTOR,
   INTERNAL_FACE_EDGE_NORMAL,
   INTERNAL_FACE_EDGE_COORDINATES,
   INTERNAL_FACE_EDGE_SIZE,
@@ -440,9 +441,11 @@ const Field_Spec DISPLACEMENT_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DIS
 const Field_Spec RESIDUAL_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::RESIDUAL,field_enums::NODE_RANK,field_enums::STATE_N_PLUS_ONE,true,true);
 /// field spec
 const Field_Spec LHS_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::LHS,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec EXACT_SOL_VECTOR_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::EXACT_SOL_VECTOR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 40;
+const int_t num_fields_defined = 41;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -479,6 +482,7 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     DISPLACEMENT_FS,
     RESIDUAL_FS,
     LHS_FS,
+    EXACT_SOL_VECTOR_FS,
     INTERNAL_FACE_EDGE_NORMAL_FS,
     INTERNAL_FACE_EDGE_COORDINATES_FS,
     INTERNAL_FACE_EDGE_SIZE_FS,

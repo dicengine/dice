@@ -395,6 +395,11 @@ public:
   }
 
 
+  /// print the vector to the screen
+  void describe()const{
+    epetra_mv_->Print(std::cout);
+  }
+
 private:
   /// Pointer to the underlying data type
   Teuchos::RCP<Epetra_MultiVector> epetra_mv_;

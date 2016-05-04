@@ -880,7 +880,7 @@ CVFEM_Linear_Tri3::get_natural_integration_points(const int_t order,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
   Teuchos::ArrayRCP<scalar_t> & weights,
   int_t & num_points){
-  tri_natural_integration_points(order,locations,weights,num_points);
+  tri3d_natural_integration_points(order,locations,weights,num_points);
 }
 
 void
@@ -1363,7 +1363,7 @@ FEM_Linear_Tri3::get_natural_integration_points(const int_t order,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
   Teuchos::ArrayRCP<scalar_t> & weights,
   int_t & num_points){
-  tri_natural_integration_points(order,locations,weights,num_points);
+  tri2d_natural_integration_points(order,locations,weights,num_points);
 }
 
 void
@@ -1405,17 +1405,17 @@ FEM_Quadratic_Tri6::get_natural_integration_points(const int_t order,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
   Teuchos::ArrayRCP<scalar_t> & weights,
   int_t & num_points){
-  tri_natural_integration_points(order,locations,weights,num_points);
+  tri2d_natural_integration_points(order,locations,weights,num_points);
 }
 
 void
 FEM_Quadratic_Tri6::evaluate_shape_functions(const scalar_t * natural_coords,
   scalar_t * shape_function_values){
+
   const scalar_t xi   = natural_coords[0];
   const scalar_t eta  = natural_coords[1];
-
   shape_function_values[0] = (1.0 - 2.0 * xi - 2.0 * eta) * (1.0 - xi - eta);
-  shape_function_values[1] =  xi * (2.0 * xi - 1.0);
+  shape_function_values[1] = xi * (2.0 * xi - 1.0);
   shape_function_values[2] = eta * (2.0 * eta - 1.0);
   shape_function_values[3] = 4.0 * xi * (1.0 - xi - eta);
   shape_function_values[4] = 4.0 * xi * eta;
@@ -1425,17 +1425,17 @@ FEM_Quadratic_Tri6::evaluate_shape_functions(const scalar_t * natural_coords,
 void
 FEM_Quadratic_Tri6::evaluate_shape_function_derivatives(const scalar_t * natural_coords,
   scalar_t * shape_function_derivative_values){
+
   const scalar_t xi   = natural_coords[0];
   const scalar_t eta  = natural_coords[1];
   const int_t spa_dim = 2;
-
   shape_function_derivative_values[0*spa_dim+0] = -2.0 * (1.0 - xi - eta) -1.0 * (1.0 - 2.0 * xi - 2.0 * eta);
   shape_function_derivative_values[0*spa_dim+1] = -2.0 * (1.0 - xi - eta) -1.0 * (1.0 - 2.0 * xi - 2.0 * eta);
   shape_function_derivative_values[1*spa_dim+0] = 4.0 * xi - 1.0;
   shape_function_derivative_values[1*spa_dim+1] = 0.0;
   shape_function_derivative_values[2*spa_dim+0] = 0.0;
   shape_function_derivative_values[2*spa_dim+1] = 4.0 * eta - 1.0;
-  shape_function_derivative_values[3*spa_dim+0] =  4.0 * (1.0 - 2.0 * xi - eta);
+  shape_function_derivative_values[3*spa_dim+0] = 4.0 * (1.0 - 2.0 * xi - eta);
   shape_function_derivative_values[3*spa_dim+1] = -4.0 * xi;
   shape_function_derivative_values[4*spa_dim+0] = 4.0 * eta;
   shape_function_derivative_values[4*spa_dim+1] = 4.0 * xi;
@@ -1445,7 +1445,7 @@ FEM_Quadratic_Tri6::evaluate_shape_function_derivatives(const scalar_t * natural
 
 } // namespace mesh
 
-void tri_natural_integration_points(const int_t order,
+void tri3d_natural_integration_points(const int_t order,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
   Teuchos::ArrayRCP<scalar_t> & weights,
   int_t & num_points){
@@ -1529,6 +1529,130 @@ void tri_natural_integration_points(const int_t order,
     weights[4] = 0.125939180544827;
     weights[5] = 0.125939180544827;
     weights[6] = 0.125939180544827;
+  }
+  else{
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid pixel integration order.");
+  }
+}
+
+void tri2d_natural_integration_points(const int_t order,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
+  Teuchos::ArrayRCP<scalar_t> & weights,
+  int_t & num_points){
+  TEUCHOS_TEST_FOR_EXCEPTION(order < 0 || order > 5,std::runtime_error,"");
+  const int_t spa_dim = 2;
+  // Dunavant quadrature:
+  if(order==1){
+    num_points = 1;
+    locations.resize(num_points);
+    for(int_t i=0;i<num_points;++i)
+      locations[i].resize(spa_dim);
+    weights.resize(num_points);
+
+    locations[0][0] = 0.333333333333333; locations[0][1] = 0.333333333333333;
+    weights[0] = 0.5;
+  }
+  else if(order==2){
+    num_points = 3;
+    locations.resize(num_points);
+    for(int_t i=0;i<num_points;++i)
+      locations[i].resize(spa_dim);
+    weights.resize(num_points);
+    locations[0][0] = 0.1666666666666667; locations[0][1] = 0.1666666666666667;
+    locations[1][0] = 0.6666666666666667; locations[1][1] = 0.1666666666666667;
+    locations[2][0] = 0.1666666666666667; locations[2][1] = 0.6666666666666667;
+    weights[0] = 0.1666666666666667; // weights sum to 1/2 because that is the area of the iso-tri
+    weights[1] = 0.1666666666666667;
+    weights[2] = 0.1666666666666667;
+  }
+  else if(order==3){
+    num_points = 4;
+    locations.resize(num_points);
+    for(int_t i=0;i<num_points;++i)
+      locations[i].resize(spa_dim);
+    weights.resize(num_points);
+    locations[0][0] = 0.333333333333333; locations[0][1] = 0.333333333333333;
+    locations[1][0] = 0.600000000000000; locations[1][1] = 0.200000000000000;
+    locations[2][0] = 0.200000000000000; locations[2][1] = 0.600000000000000;
+    locations[3][0] = 0.200000000000000; locations[3][1] = 0.200000000000000;
+    weights[0] = -0.281250000000000;// weights sum to 1/2 because that is the area of the iso-tri
+    weights[1] = 0.260416666666667;
+    weights[2] = 0.260416666666667;
+    weights[3] = 0.260416666666667;
+  }
+  else if(order==4){
+    num_points = 6;
+    locations.resize(num_points);
+    for(int_t i=0;i<num_points;++i)
+      locations[i].resize(spa_dim);
+    weights.resize(num_points);
+
+    locations[0][0] = 0.44594849091597; locations[0][1] = 0.44594849091597;
+    locations[1][0] = 0.44594849091597; locations[1][1] = 0.10810301816807;
+    locations[2][0] = 0.10810301816807; locations[2][1] = 0.44594849091597;
+    locations[3][0] = 0.09157621350977; locations[3][1] = 0.09157621350977;
+    locations[4][0] = 0.09157621350977; locations[4][1] = 0.81684757298046;
+    locations[5][0] = 0.81684757298046; locations[5][1] = 0.09157621350977;
+    weights[0] = 0.11169079483901;// weights sum to 1/2 because that is the area of the iso-tri
+    weights[1] = 0.11169079483901;
+    weights[2] = 0.11169079483901;
+    weights[3] = 0.05497587182766;
+    weights[4] = 0.05497587182766;
+    weights[5] = 0.05497587182766;
+  }
+  else if(order==5){
+    num_points = 7;
+    locations.resize(num_points);
+    for(int_t i=0;i<num_points;++i)
+      locations[i].resize(spa_dim);
+    weights.resize(num_points);
+
+    locations[0][0] = 0.333333333333333; locations[0][1] = 0.333333333333333;
+    locations[1][0] = 0.797426985353087; locations[1][1] = 0.101286507323456;
+    locations[2][0] = 0.101286507323456; locations[2][1] = 0.797426985353087;
+    locations[3][0] = 0.101286507323456; locations[3][1] = 0.101286507323456;
+    locations[4][0] = 0.470142064105115; locations[4][1] = 0.059715871789770;
+    locations[5][0] = 0.059715871789770; locations[5][1] = 0.470142064105115;
+    locations[6][0] = 0.470142064105115; locations[6][1] = 0.470142064105115;
+    weights[0] = 0.112500000000000;// weights sum to 1/2 because that is the area of the iso-tri
+    weights[1] = 0.06296959027241;
+    weights[2] = 0.06296959027241;
+    weights[3] = 0.06296959027241;
+    weights[4] = 0.06619707639425;
+    weights[5] = 0.06619707639425;
+    weights[6] = 0.06619707639425;
+  }
+  else if(order==6){
+    num_points = 12;
+    locations.resize(num_points);
+    for(int_t i=0;i<num_points;++i)
+      locations[i].resize(spa_dim);
+    weights.resize(num_points);
+
+    locations[0][0] = 0.24928674517091; locations[0][1] = 0.24928674517091;
+    locations[1][0] = 0.24928674517091; locations[1][1] = 0.50142650965818;
+    locations[2][0] = 0.50142650965818; locations[2][1] = 0.24928674517091;
+    locations[3][0] = 0.06308901449150; locations[3][1] = 0.06308901449150;
+    locations[4][0] = 0.06308901449150; locations[4][1] = 0.87382197101700;
+    locations[5][0] = 0.87382197101700; locations[5][1] = 0.06308901449150;
+    locations[6][0] = 0.31035245103378; locations[6][1] = 0.63650249912140;
+    locations[7][0] = 0.63650249912140; locations[7][1] = 0.05314504984482;
+    locations[8][0] = 0.05314504984482; locations[8][1] = 0.31035245103378;
+    locations[9][0] = 0.63650249912140; locations[9][1] = 0.31035245103378;
+    locations[10][0] = 0.31035245103378; locations[10][1] = 0.05314504984482;
+    locations[11][0] = 0.05314504984482; locations[11][1] = 0.63650249912140;
+    weights[0] = 0.05839313786319;// weights sum to 1/2 because that is the area of the iso-tri
+    weights[1] = 0.05839313786319;
+    weights[2] = 0.05839313786319;
+    weights[3] = 0.02542245318511;
+    weights[4] = 0.02542245318511;
+    weights[5] = 0.02542245318511;
+    weights[6] = 0.04142553780919;
+    weights[7] = 0.04142553780919;
+    weights[8] = 0.04142553780919;
+    weights[9] = 0.04142553780919;
+    weights[10] = 0.04142553780919;
+    weights[11] = 0.04142553780919;
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid pixel integration order.");

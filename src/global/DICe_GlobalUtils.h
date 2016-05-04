@@ -66,6 +66,36 @@ void calc_B(const scalar_t * DN,
   const int_t dim,
   scalar_t * solid_B);
 
+void calc_mms_force_elasticity(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & alpha,
+  const scalar_t & L,
+  const scalar_t & m,
+  scalar_t & force_x,
+  scalar_t & force_y);
+
+void calc_mms_bc_elasticity(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & L,
+  const scalar_t & m,
+  scalar_t & b_x,
+  scalar_t & b_y);
+
+void calc_mms_bc_simple(const scalar_t & x,
+  const scalar_t & y,
+  scalar_t & b_x,
+  scalar_t & b_y);
+
+void calc_mms_force_simple(const scalar_t & alpha,
+  scalar_t & force_x,
+  scalar_t & force_y);
+
+void calc_mms_bc_2(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & L,
+  scalar_t & b_x,
+  scalar_t & b_y);
+
 }// end global namespace
 
 }// End DICe Namespace

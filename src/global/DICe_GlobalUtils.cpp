@@ -64,7 +64,8 @@ void initialize_exodus_output(Schema * schema,
   mesh->create_field(mesh::field_enums::DISPLACEMENT_FS);
   mesh->create_field(mesh::field_enums::RESIDUAL_FS);
   mesh->create_field(mesh::field_enums::LHS_FS);
-  DICe::mesh::create_exodus_output_variable_names(mesh);
+  mesh->create_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
+   DICe::mesh::create_exodus_output_variable_names(mesh);
 }
 
 // take a schema pointer and create some fields on the mesh
@@ -78,6 +79,7 @@ Status_Flag execute_global_step(Schema * schema){
   // square the alpha term
   scalar_t alpha2 = schema->global_constraint_coefficient();
   alpha2*=alpha2;
+  const scalar_t m = 2.0;
 
   // clear the dislacement field: TODO may not want to do this for an image progression
   MultiField & residual = *mesh->get_field(mesh::field_enums::RESIDUAL_FS);
@@ -85,6 +87,8 @@ Status_Flag execute_global_step(Schema * schema){
   MultiField & disp = *mesh->get_field(mesh::field_enums::DISPLACEMENT_FS);
   disp.put_scalar(0.0);
   residual.put_scalar(0.0);
+  MultiField & coords    = *mesh->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  MultiField & exact_sol = *mesh->get_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
 
   scalar_t residual_norm = 0.0;
 
@@ -203,6 +207,8 @@ Status_Flag execute_global_step(Schema * schema){
     const int_t B_dim = 2*spa_dim - 1;
     scalar_t B[B_dim*tri6_num_funcs*spa_dim];
     scalar_t elem_stiffness[tri6_num_funcs*spa_dim*tri6_num_funcs*spa_dim];
+    scalar_t elem_force[tri6_num_funcs*spa_dim];
+    scalar_t x,y,fx,fy;
 
     // get the natural integration points for this element:
     const int_t integration_order = 3;
@@ -224,11 +230,12 @@ Status_Flag execute_global_step(Schema * schema){
     DICe::mesh::element_set::iterator elem_end = mesh->get_element_set()->end();
     for(;elem_it!=elem_end;++elem_it)
     {
-      //std::cout << "ELEM: " << elem_it->get()->global_id() << std::endl;
+      std::cout << "ELEM: " << elem_it->get()->global_id() << std::endl;
       const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
       // compute the shape functions and derivatives for this element:
       for(int_t nd=0;nd<tri6_num_funcs;++nd){
         node_ids[nd] = connectivity[nd]->global_id();
+        //std::cout << " gid " << node_ids[nd] << std::endl;
         for(int_t dim=0;dim<spa_dim;++dim){
           const int_t stride = nd*spa_dim + dim;
           nodal_coords[stride] = coords_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
@@ -238,6 +245,10 @@ Status_Flag execute_global_step(Schema * schema){
       // clear the elem stiffness
       for(int_t i=0;i<tri6_num_funcs*spa_dim*tri6_num_funcs*spa_dim;++i)
         elem_stiffness[i] = 0.0;
+
+      // clear the elem force
+      for(int_t i=0;i<tri6_num_funcs*spa_dim;++i)
+        elem_force[i] = 0.0;
 
       // gauss point loop:
       for(int_t gp=0;gp<num_integration_points;++gp){
@@ -255,17 +266,11 @@ Status_Flag execute_global_step(Schema * schema){
         tri6_shape_func_evaluator->evaluate_shape_functions(natural_coords,N6);
         tri6_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN6);
 
-        //DEBUG_MSG("Calculating the jacobian");
-
         // compute the jacobian for this element:
         DICe::global::calc_jacobian(nodal_coords,DN6,jac,inv_jac,J,tri6_num_funcs,spa_dim);
 
-        //DEBUG_MSG("Assembling the B matrix");
-
         // compute the B matrix
         DICe::global::calc_B(DN6,inv_jac,tri6_num_funcs,spa_dim,B);
-
-        //DEBUG_MSG("Assembling B'*B");
 
         // compute B'*B
         for(int_t i=0;i<tri6_num_funcs*spa_dim;++i){
@@ -276,11 +281,45 @@ Status_Flag execute_global_step(Schema * schema){
             }
           }
         }
+
+        // mass term
+        //for(int_t i=0;i<tri6_num_funcs;++i){
+        //  const int_t row1 = (i*spa_dim) + 0;
+        //  const int_t row2 = (i*spa_dim) + 1;
+        //  for(int_t j=0;j<tri6_num_funcs;++j){
+        //    elem_stiffness[row1*tri6_num_funcs*spa_dim + j*spa_dim+0] += N6[i]*N6[j]*gp_weights[gp]*J;
+        //    elem_stiffness[row2*tri6_num_funcs*spa_dim + j*spa_dim+1] += N6[i]*N6[j]*gp_weights[gp]*J;
+        //  }
+        //}
+//        std::cout << " elem stiffness" << std::endl;
+//        for(int_t i=0;i<tri6_num_funcs*spa_dim;++i){
+//          for(int_t j=0;j<tri6_num_funcs*spa_dim;++j){
+//            std::cout << elem_stiffness[i*tri6_num_funcs*spa_dim+j] << " ";
+//          }
+//          std::cout << std::endl;
+//        }
+
+        // physical gp location
+        x = 0.0; y=0.0;
+        for(int_t i=0;i<tri6_num_funcs;++i){
+          x += nodal_coords[i*spa_dim+0]*N6[i];
+          y += nodal_coords[i*spa_dim+1]*N6[i];
+        }
+        //compute the force terms for this point
+        //calc_mms_force_elasticity(x,y,alpha2,schema->img_width(),m,fx,fy);
+        calc_mms_force_simple(alpha2,fx,fy);
+        for(int_t i=0;i<tri6_num_funcs;++i){
+          elem_force[i*spa_dim+0] += fx*N6[i]*gp_weights[gp]*J;
+          elem_force[i*spa_dim+1] += fy*N6[i]*gp_weights[gp]*J;
+        }
+//        std::cout << " elem force" << std::endl;
+//        for(int_t i=0;i<tri6_num_funcs*spa_dim;++i){
+//            std::cout << elem_force[i] << " ";
+//          std::cout << std::endl;
+//        }
       } // gp loop
 
       // assemble the global stiffness matrix
-
-      //DEBUG_MSG("Preparing global tangent entries for insertion");
       for(int_t i=0;i<tri6_num_funcs;++i){
         for(int_t m=0;m<spa_dim;++m){
           for(int_t j=0;j<tri6_num_funcs;++j){
@@ -301,9 +340,23 @@ Status_Flag execute_global_step(Schema * schema){
           } // num_funcs
         } // spa dim
       } // num_funcs
-      //DEBUG_MSG("Done preparing values for insertion...");
+
+      // assemble the force terms
+      for(int_t i=0;i<tri6_num_funcs;++i){
+        //int_t nodex_local_id = connectivity[i]->overlap_local_id()*spa_dim;
+        //int_t nodey_local_id = nodex_local_id + 1;
+        //overlap_residual.local_value(nodex_local_id) += elem_force[i*spa_dim+0];
+        //overlap_residual.local_value(nodey_local_id) += elem_force[i*spa_dim+1];
+        int_t nodex_id = (connectivity[i]->global_id()-1)*spa_dim+1;
+        int_t nodey_id = nodex_id + 1;
+        residual.global_value(nodex_id) += elem_force[i*spa_dim+0];
+        residual.global_value(nodey_id) += elem_force[i*spa_dim+1];
+      } // num_funcs
 
     }  // elem
+
+    // export the overlap residual to the dist vector
+    //mesh->field_overlap_export(overlap_residual_ptr, mesh::field_enums::RESIDUAL_FS, ADD);
 
     // add ones to the diagonal for kinematic bc nodes:
     for(int_t i=0;i<mesh->get_vector_node_overlap_map()->get_num_local_elements();++i)
@@ -315,8 +368,6 @@ Status_Flag execute_global_step(Schema * schema){
         values_array_map.find(global_id)->second.push_back(1.0);
       }
     }
-
-    DEBUG_MSG("Inserting values into the global tangent...");
 
     std::map<int_t,Teuchos::Array<int_t> >::iterator cmap_it = col_id_array_map.begin();
     std::map<int_t,Teuchos::Array<int_t> >::iterator cmap_end = col_id_array_map.end();
@@ -331,22 +382,38 @@ Status_Flag execute_global_step(Schema * schema){
     }
     tangent_overlap->fill_complete();
 
-    DEBUG_MSG("Exporting the distributed tangent...");
-
     MultiField_Exporter exporter (*mesh->get_vector_node_overlap_map(),*mesh->get_vector_node_dist_map());
     tangent->do_export(tangent_overlap, exporter, ADD);
     tangent->fill_complete();
 
     //tangent->describe();
 
-    DEBUG_MSG("Enforcing Dirichlet boundary condition");
     // enforce the dirichlet boundary conditions
-    const scalar_t boundary_value = 100.0;
+    //const scalar_t boundary_value = 100.0;
     // add ones to the diagonal for kinematic bc nodes:
-    for(int_t i=0;i<mesh->get_vector_node_dist_map()->get_num_local_elements();++i){
-      if(matrix_service->is_col_bc(i))
-        residual.local_value(i) = boundary_value;
+    for(int_t i=0;i<mesh->get_scalar_node_dist_map()->get_num_local_elements();++i){
+      int_t ix = i*2+0;
+      int_t iy = i*2+1;
+      scalar_t b_x = 0.0;
+      scalar_t b_y = 0.0;
+      const scalar_t x = coords.local_value(ix);
+      const scalar_t y = coords.local_value(iy);
+      //calc_mms_bc_elasticity(x,y,schema->img_width(),m,b_x,b_y);
+      //calc_mms_bc_2(x,y,schema->img_width(),b_x,b_y);
+      calc_mms_bc_simple(x,y,b_x,b_y);
+      exact_sol.local_value(ix) = b_x;
+      exact_sol.local_value(iy) = b_y;
+      if(matrix_service->is_col_bc(ix)){
+        // get the coordinates of the node
+        residual.local_value(ix) = b_x;
+      }
+      if(matrix_service->is_col_bc(iy)){
+        // get the coordinates of the node
+        residual.local_value(iy) = b_y;
+      }
     }
+
+    //residual.describe();
 
     DEBUG_MSG("Solving the linear system...");
 
@@ -387,6 +454,20 @@ void calc_jacobian(const scalar_t * xcap,
   }
   J = 0.0;
 
+//  std::cout << " xcap " << std::endl;
+//  for(int_t k=0;k<num_elem_nodes;++k){
+//    for(int_t i=0;i<dim;++i){
+//      std::cout << xcap[k*dim + i] << " " ;
+//    }
+//    std::cout << std::endl;
+//  }
+//  std::cout << " DN " << std::endl;
+//  for(int_t k=0;k<num_elem_nodes;++k){
+//    for(int_t i=0;i<dim;++i){
+//      std::cout << DN[k*dim + i] << " " ;
+//    }
+//    std::cout << std::endl;
+//  }
   for(int_t i=0;i<dim;++i)
     for(int_t j=0;j<dim;++j)
       for(int_t k=0;k<num_elem_nodes;++k)
@@ -504,6 +585,60 @@ void calc_B(const scalar_t * DN,
 
 }
 
+void calc_mms_force_elasticity(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & alpha,
+  const scalar_t & L,
+  const scalar_t & m,
+  scalar_t & force_x,
+  scalar_t & force_y){
+  const scalar_t beta = m*DICE_PI/L;
+  force_x = -alpha*beta*beta*cos(beta*y)*sin(beta*x);
+  force_y = alpha*beta*beta*cos(beta*x)*sin(beta*y);
+}
+
+void calc_mms_bc_elasticity(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & L,
+  const scalar_t & m,
+  scalar_t & b_x,
+  scalar_t & b_y){
+
+  const scalar_t beta = m*DICE_PI/L;
+  b_x = sin(beta*x)*cos(beta*y);
+  b_y = -cos(beta*x)*sin(beta*y);
+}
+
+void calc_mms_bc_simple(const scalar_t & x,
+  const scalar_t & y,
+  scalar_t & b_x,
+  scalar_t & b_y){
+  //b_x = x + y;
+  //b_y = x - y;
+  b_x = x + y*y;
+  b_y = x*x - y;
+  //b_x = 0.0001;
+  //b_y = 0.0001;
+}
+
+void calc_mms_bc_2(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & L,
+  scalar_t & b_x,
+  scalar_t & b_y){
+  b_x = std::cos(x*DICE_PI/L);
+  b_y = 0.0;
+}
+
+
+void calc_mms_force_simple(const scalar_t & alpha,
+  scalar_t & force_x,
+  scalar_t & force_y){
+  //force_x = 0.0;
+  //force_y = 0.0;
+  force_x = -2.0*alpha;
+  force_y = -2.0*alpha;
+}
 
 }// end global namespace
 

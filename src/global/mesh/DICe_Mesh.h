@@ -1861,7 +1861,17 @@ private:
 /// \param locations array returned with integration point locations
 /// \param weights array returned with the weights associated with each point
 /// \param num_points return value with the total number of integration points
-void tri_natural_integration_points(const int_t order,
+void tri3d_natural_integration_points(const int_t order,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
+  Teuchos::ArrayRCP<scalar_t> & weights,
+  int_t & num_points);
+
+/// gather the natural integration points for a triangle
+/// \param order the integration order
+/// \param locations array returned with integration point locations
+/// \param weights array returned with the weights associated with each point
+/// \param num_points return value with the total number of integration points
+void tri2d_natural_integration_points(const int_t order,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
   Teuchos::ArrayRCP<scalar_t> & weights,
   int_t & num_points);
