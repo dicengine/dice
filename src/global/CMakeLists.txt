@@ -1,9 +1,11 @@
 SET(SOURCES
+  DICe_Global.cpp
   DICe_GlobalUtils.cpp
   DICe_MatrixService.cpp
 )
 
 SET(HEADERS
+  DICe_Global.h
   DICe_GlobalUtils.h
   DICe_MatrixService.h
 )

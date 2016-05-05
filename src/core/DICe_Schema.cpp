@@ -45,8 +45,6 @@
 #include <DICe_PostProcessor.h>
 #include <DICe_ParameterUtilities.h>
 #include <DICe_TriangleUtils.h>
-#include <DICe_MeshIO.h>
-#include <DICe_GlobalUtils.h>
 
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <Teuchos_ArrayRCP.hpp>
@@ -330,7 +328,6 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   subset_dim_ = -1;
   step_size_x_ = -1;
   step_size_y_ = -1;
-  mesh_size_ = -1.0;
   image_frame_ = 0;
   first_frame_index_ = 1;
   num_image_frames_ = -1;
@@ -351,7 +348,6 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   initial_gamma_threshold_ = -1.0;
   final_gamma_threshold_ = -1.0;
   path_distance_threshold_ = -1.0;
-  global_constraint_coefficient_ = 0.01;
   set_params(params);
 }
 
@@ -370,8 +366,13 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   const int_t proc_rank = comm_->get_rank();
 
   if(params!=Teuchos::null){
-    if(params->get<bool>(DICe::use_global_dic,false))
+    if(params->get<bool>(DICe::use_global_dic,false)){
+#ifdef DICE_ENABLE_GLOBAL
       analysis_type_=GLOBAL_DIC;
+#else
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, code was not compiled with global DIC enabled.");
+#endif
+    }
   }
 
   // start with the default params and add any that are specified by the input params
@@ -560,9 +561,6 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   if(normalize_gamma_with_active_pixels_)
     DEBUG_MSG("Gamma values will be normalized by the number of active pixels.");
   if(analysis_type_==GLOBAL_DIC){
-    TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::global_constraint_coefficient),std::runtime_error,"");
-    global_constraint_coefficient_ = diceParams->get<double>(DICe::global_constraint_coefficient);
-    DEBUG_MSG("Setting the global constraint coefficient to " << global_constraint_coefficient_);
     compute_ref_gradients_ = true;
   }
   else{
@@ -600,13 +598,14 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     post_processors_.push_back(keys4_ptr);
   }
   if(diceParams->isParameter(DICe::post_process_global_strain)){
-    Teuchos::ParameterList sublist = diceParams->sublist(DICe::post_process_global_strain);
-    Teuchos::RCP<Teuchos::ParameterList> ppParams = Teuchos::rcp( new Teuchos::ParameterList());
-    for(Teuchos::ParameterList::ConstIterator it=sublist.begin();it!=sublist.end();++it){
-      ppParams->setEntry(it->first,it->second);
-    }
-    Teuchos::RCP<Global_Strain_Post_Processor> global_ptr = Teuchos::rcp (new Global_Strain_Post_Processor(this,ppParams));
-    post_processors_.push_back(global_ptr);
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"This strain measure has been disabled");
+//    Teuchos::ParameterList sublist = diceParams->sublist(DICe::post_process_global_strain);
+//    Teuchos::RCP<Teuchos::ParameterList> ppParams = Teuchos::rcp( new Teuchos::ParameterList());
+//    for(Teuchos::ParameterList::ConstIterator it=sublist.begin();it!=sublist.end();++it){
+//      ppParams->setEntry(it->first,it->second);
+//    }
+//    Teuchos::RCP<Global_Strain_Post_Processor> global_ptr = Teuchos::rcp (new Global_Strain_Post_Processor(this,ppParams));
+//    post_processors_.push_back(global_ptr);
   }
   if(post_processors_.size()>0) has_post_processor_ = true;
 
@@ -702,19 +701,17 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     // create the computational mesh:
     TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::mesh_size),std::runtime_error,
       "Error, missing required input parameter: mesh_size");
-    mesh_size_ = input_params->get<double>(DICe::mesh_size);
-    // determine the image extents:
-    const scalar_t buff_size = 20.0; //pixels
-    Teuchos::ArrayRCP<scalar_t> points_x(4);
-    Teuchos::ArrayRCP<scalar_t> points_y(4);
-    points_x[0] = buff_size; points_y[0] = buff_size;
-    points_x[1] = ref_img_->width() - buff_size; points_y[1] = buff_size;
-    points_x[2] = ref_img_->width() - buff_size; points_y[2] = ref_img_->height() - buff_size;
-    points_x[3] = buff_size; points_y[3] = ref_img_->height() - buff_size;
-    mesh_ = DICe::generate_tri6_mesh(points_x,points_y,mesh_size_,"DICe_solution.e");
-    // create the output exodus database:
-    std::string output_folder = input_params->get<std::string>(DICe::output_folder);
-    DICe::global::initialize_exodus_output(this,output_folder);
+    const scalar_t mesh_size = input_params->get<double>(DICe::mesh_size);
+    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::output_folder),std::runtime_error,
+      "Error, missing required input parameter: output_folder");
+    const std::string output_folder = input_params->get<std::string>(DICe::output_folder);
+    const std::string output_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
+    init_params_->set(DICe::mesh_size,mesh_size); // pass the mesh size to the stored parameters for this schema (used by global method)
+    init_params_->set(DICe::output_prefix,output_prefix);
+    init_params_->set(DICe::output_folder,output_folder);
+#ifdef DICE_ENABLE_GLOBAL
+    global_algorithm_ = Teuchos::rcp(new DICe::global::Global_Algorithm(init_params_));
+#endif
     return;
   }
   else if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
@@ -1149,16 +1146,20 @@ Schema::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids){
 
 void
 Schema::post_execution_tasks(){
-  if(analysis_type_==GLOBAL_DIC)
-    DICe::mesh::close_exodus_output(mesh_);
+  if(analysis_type_==GLOBAL_DIC){
+#ifdef DICE_ENABLE_GLOBAL
+    global_algorithm_->post_execution_tasks(image_frame_);
+#endif
+  }
 }
 
 void
 Schema::execute_correlation(){
   if(analysis_type_==GLOBAL_DIC){
     Status_Flag global_status = CORRELATION_FAILED;
+#ifdef DICE_ENABLE_GLOBAL
     try{
-      global_status = DICe::global::execute_global_step(this);
+      global_status = global_algorithm_->execute();
     }
     catch(std::exception & e){
       std::cout << "Error, global correlation failed: " << e.what() << std::endl;
@@ -1166,6 +1167,7 @@ Schema::execute_correlation(){
     if(global_status!=CORRELATION_SUCCESSFUL){
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, global correlation failed");
     }
+#endif
     return;
   }
 
@@ -1893,7 +1895,6 @@ Schema::write_output(const std::string & output_folder,
   const bool separate_header_file,
   const Output_File_Type type){
   if(analysis_type_==GLOBAL_DIC){
-
     return;
   }
 //  assert(analysis_type_!=CONSTRAINED_OPT && "Error, writing output from a schema using constrained optimization is not enabled.");
@@ -2324,17 +2325,14 @@ Output_Spec::Output_Spec(Schema * schema,
 void
 Output_Spec::write_info(std::FILE * file){
   assert(file);
+  TEUCHOS_TEST_FOR_EXCEPTION(schema_->analysis_type()==GLOBAL_DIC,std::runtime_error,
+    "Error, write_info is not intended to be used for global DIC");
   fprintf(file,"***\n");
   fprintf(file,"*** Digital Image Correlation Engine (DICe), (git sha1: %s) Copyright 2015 Sandia Corporation\n",GITSHA1);
   fprintf(file,"***\n");
   fprintf(file,"*** Reference image: %s \n",schema_->ref_img()->file_name().c_str());
   fprintf(file,"*** Deformed image: %s \n",schema_->def_img(0)->file_name().c_str());
-  if(schema_->analysis_type()==GLOBAL_DIC){
-    fprintf(file,"*** DIC method : global \n");
-  }
-  else{
-    fprintf(file,"*** DIC method : local \n");
-  }
+  fprintf(file,"*** DIC method : local \n");
   fprintf(file,"*** Correlation method: ZNSSD\n");
   std::string interp_method = to_string(schema_->interpolation_method());
   fprintf(file,"*** Interpolation method: %s\n",interp_method.c_str());
@@ -2357,14 +2355,8 @@ Output_Spec::write_info(std::FILE * file){
     fprintf(file,"Shear Strain (gamma_xy) ");
   fprintf(file,"\n");
   fprintf(file,"*** Incremental correlation: false\n");
-  if(schema_->analysis_type()==GLOBAL_DIC){
-    fprintf(file,"*** Mesh size: %f\n",schema_->mesh_size());
-    fprintf(file,"*** Step size: N/A\n");
-  }
-  else{
-    fprintf(file,"*** Subset size: %i\n",schema_->subset_dim());
-    fprintf(file,"*** Step size: x %i y %i (-1 implies not regular grid)\n",schema_->step_size_x(),schema_->step_size_y());
-  }
+  fprintf(file,"*** Subset size: %i\n",schema_->subset_dim());
+  fprintf(file,"*** Step size: x %i y %i (-1 implies not regular grid)\n",schema_->step_size_x(),schema_->step_size_y());
   if(schema_->post_processors()->size()==0)
     fprintf(file,"*** Strain window: N/A\n");
   else

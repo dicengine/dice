@@ -47,7 +47,9 @@
 #include <DICe_Shape.h>
 #include <DICe_Initializer.h>
 #include <DICe_Parser.h>
-#include <DICe_Mesh.h>
+#ifdef DICE_ENABLE_GLOBAL
+  #include <DICe_Global.h>
+#endif
 
 #ifdef DICE_TPETRA
   #include "DICe_MultiFieldTpetra.h"
@@ -238,22 +240,6 @@ public:
     const int_t img_height,
     const Teuchos::ArrayRCP<intensity_t> refRCP);
 
-  /// Set the element size of the mesh (only for global DIC)
-  void set_mesh_size(const scalar_t & mesh_size){
-    TEUCHOS_TEST_FOR_EXCEPTION(mesh_size<=0.0,std::runtime_error,"Error, invalid mesh size.");
-    mesh_size_ = mesh_size;
-  }
-
-  /// Returns a pointer to the mesh
-  Teuchos::RCP<DICe::mesh::Mesh> mesh()const{
-    return mesh_;
-  }
-
-  /// Returns the element size for global DIC (-1.0 if local DIC)
-  scalar_t mesh_size()const{
-    return mesh_size_;
-  }
-
   /// \brief Initializes the data structures for the schema
   /// \param input_params pointer to the initialization parameters
   void initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params);
@@ -423,6 +409,13 @@ public:
   Analysis_Type analysis_type()const{
     return analysis_type_;
   }
+
+#ifdef DICE_ENABLE_GLOBAL
+  /// Returns a pointer to the global algorithm
+  Teuchos::RCP<DICe::global::Global_Algorithm> global_algorithm()const{
+    return global_algorithm_;
+  }
+#endif
 
   /// \brief Return either the distributed field vector value or the all-owned
   /// vector value, depending on the flag argument
@@ -874,11 +867,6 @@ public:
     return disp_jump_tol_;
   }
 
-  /// Return the coefficient value
-  double global_constraint_coefficient()const{
-    return global_constraint_coefficient_;
-  }
-
   /// Provide access to the list of path file names:
   /// \param path_file_names the map of path file names
   void set_path_file_names(Teuchos::RCP<std::map<int_t,std::string> > path_file_names){
@@ -1081,8 +1069,6 @@ private:
   int_t step_size_x_;
   /// Regular grid subset spacing in y direction (used only if subsets are not conformal)
   int_t step_size_y_;
-  /// Element size for the global method
-  scalar_t mesh_size_;
   /// Generic strain window size (horizon for nlvc, convolution support for keys, strain window size for vsg)
   int_t strain_window_size_;
   /// Map of subset id and geometry definition
@@ -1200,10 +1186,11 @@ private:
   double path_distance_threshold_;
   /// true if the beta parameter should be computed by the objective
   bool output_beta_;
-  /// pointer to the computational mesh for global method
-  Teuchos::RCP<DICe::mesh::Mesh> mesh_;
-  /// constraint coefficient
-  double global_constraint_coefficient_;
+#ifdef DICE_ENABLE_GLOBAL
+  /// Global algorithm
+  Teuchos::RCP<DICe::global::Global_Algorithm> global_algorithm_;
+#endif
+
 };
 
 /// \class DICe::Output_Spec

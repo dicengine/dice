@@ -340,131 +340,131 @@ VSG_Strain_Post_Processor::execute(){
 
   DEBUG_MSG("VSG_Strain_Post_Processor execute() end");
 }
-
-Global_Strain_Post_Processor::Global_Strain_Post_Processor(Schema * schema,
-  const Teuchos::RCP<Teuchos::ParameterList> & params) :
-  Post_Processor(schema,post_process_global_strain)
-{
-  field_names_.push_back(global_strain_xx);
-  field_names_.push_back(global_strain_yy);
-  field_names_.push_back(global_strain_xy);
-  field_names_.push_back(global_dudx);
-  field_names_.push_back(global_dudy);
-  field_names_.push_back(global_dvdx);
-  field_names_.push_back(global_dvdy);
-  DEBUG_MSG("Enabling post processor Global_Strain_Post_Processor with associated fields:");
-  for(size_t i=0;i<field_names_.size();++i){
-    DEBUG_MSG(field_names_[i]);
-  }
-  set_params(params);
-}
-
-void
-Global_Strain_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
-  assert(params!=Teuchos::null);
-  mesh_size_ = schema_->mesh_size();
-}
-
-void
-Global_Strain_Post_Processor::pre_execution_tasks(){
-  DEBUG_MSG("Global_Strain_Post_Processor pre_execution_tasks() begin");
-  DEBUG_MSG("Global_Strain_Post_Processor pre_execution_tasks() end");
-}
-
-void
-Global_Strain_Post_Processor::execute(){
-  DEBUG_MSG("Global_Strain_Post_Processor execute() begin");
-  // make sure the connectivity matrix is populated
-  assert(schema_->connectivity()->numRows()>0);
-  Teuchos::ArrayRCP<scalar_t> dN_dxi(4,0.0);
-  Teuchos::ArrayRCP<scalar_t> dN_deta(4,0.0);
-  Teuchos::ArrayRCP<scalar_t> elem_disp(8,0.0);
-  Teuchos::ArrayRCP<int_t> node_ids(4,0.0);
-  Teuchos::ArrayRCP<scalar_t> node_du_dx(data_num_points_,0.0);
-  Teuchos::ArrayRCP<scalar_t> node_du_dy(data_num_points_,0.0);
-  Teuchos::ArrayRCP<scalar_t> node_dv_dx(data_num_points_,0.0);
-  Teuchos::ArrayRCP<scalar_t> node_dv_dy(data_num_points_,0.0);
-  Teuchos::ArrayRCP<int_t> node_num_contribs(data_num_points_,0);
-  int_t start_x=0,end_x=0;
-  int_t start_y=0,end_y=0;
-  scalar_t center_x=0,center_y=0;
-  int_t elem_p_width=0,elem_p_height=0;
-
-  scalar_t xi=0.0,eta=0.0;
-  const int_t num_elem = schema_->connectivity()->numRows();
-  for(int_t elem=0;elem<num_elem;++elem){
-
-    for(int_t i=0;i<4;++i)
-      node_ids[i] = (*schema_->connectivity())(elem,i);
-
-    // create the local disp vector:
-    for(int_t i=0;i<4;++i){
-      elem_disp[i*2+0] = schema_->field_value(node_ids[i],DICe::DISPLACEMENT_X);
-      elem_disp[i*2+1] = schema_->field_value(node_ids[i],DICe::DISPLACEMENT_Y);
-    }
-
-    // get the pixel dimensions for this element's integration area
-    start_x = (int_t)(schema_->field_value(node_ids[0],DICe::COORDINATE_X) + 0.5);
-    end_x = (int_t)(schema_->field_value(node_ids[1],DICe::COORDINATE_X) - 0.5);
-    start_y = (int_t)(schema_->field_value(node_ids[0],DICe::COORDINATE_Y) + 0.5);
-    end_y = (int_t)(schema_->field_value(node_ids[3],DICe::COORDINATE_Y) - 0.5);
-    elem_p_width = end_x - start_x + 1;
-    elem_p_height = end_y - start_y + 1;
-    center_x = start_x + elem_p_width/2.0;
-    center_y = start_y + elem_p_height/2.0;
-
-    // iterate over the nodes of the element:
-    for(int_t node=0;node<4;++node){
-      xi = 2.0 * (schema_->field_value(node_ids[node],DICe::COORDINATE_X) - center_x)/elem_p_width;
-      eta = 2.0 * (schema_->field_value(node_ids[node],DICe::COORDINATE_Y) - center_y)/elem_p_height;
-
-      dN_dxi[0] = 0.25*(-1.0)*(1.0 - eta);
-      dN_dxi[1] = 0.25*(1.0 - eta);
-      dN_dxi[2] = 0.25*(1.0 + eta);
-      dN_dxi[3] = 0.25*(-1.0)*(1.0 + eta);
-      dN_deta[0] = 0.25*(1.0 - xi)*(-1.0);
-      dN_deta[1] = 0.25*(1.0 + xi)*(-1.0);
-      dN_deta[2] = 0.25*(1.0 + xi);
-      dN_deta[3] = 0.25*(1.0 - xi);
-
-      for(int_t i=0;i<4;++i){
-        node_du_dx[node_ids[node]]+=(2.0/elem_p_width)*dN_dxi[i]*elem_disp[i*2+0];
-        node_dv_dx[node_ids[node]]+=(2.0/elem_p_width)*dN_dxi[i]*elem_disp[i*2+1];
-        node_du_dy[node_ids[node]]+=(2.0/elem_p_height)*dN_deta[i]*elem_disp[i*2+0];
-        node_dv_dy[node_ids[node]]+=(2.0/elem_p_height)*dN_deta[i]*elem_disp[i*2+1];
-      }
-      for(int_t i=0;i<4;++i){
-        node_num_contribs[node_ids[i]]++;
-      }
-    } // elem node
-  } // elem
-
-  for(int_t i=0;i<data_num_points_;++i){
-    scalar_t du_dx = node_du_dx[i]/node_num_contribs[i];
-    scalar_t du_dy = node_du_dy[i]/node_num_contribs[i];
-    scalar_t dv_dx = node_dv_dx[i]/node_num_contribs[i];
-    scalar_t dv_dy = node_dv_dy[i]/node_num_contribs[i];
-    field_value(i,global_dudx) = du_dx;
-    field_value(i,global_dudy) = du_dy;
-    field_value(i,global_dvdx) = dv_dx;
-    field_value(i,global_dvdy) = dv_dy;
-
-    DEBUG_MSG("Node " << i << " dudx " << field_value(i,global_dudx) << " dudy " << field_value(i,global_dudy) <<
-      " dvdx " << field_value(i,global_dvdx) << " dvdy " << field_value(i,global_dvdy));
-
-    // compute the Green-Lagrange strain based on the derivatives computed above:
-    const scalar_t GL_xx = 0.5*(2.0*du_dx + du_dx*du_dx + dv_dx*dv_dx);
-    const scalar_t GL_yy = 0.5*(2.0*dv_dy + du_dy*du_dy + dv_dy*dv_dy);
-    const scalar_t GL_xy = 0.5*(du_dy + dv_dx + du_dx*du_dy + dv_dx*dv_dy);
-    field_value(i,global_strain_xx) = GL_xx;
-    field_value(i,global_strain_yy) = GL_yy;
-    field_value(i,global_strain_xy) = GL_xy;
-
-    DEBUG_MSG("Node " << i << " global Green-Lagrange strain XX: " << field_value(i,global_strain_xx) << " YY: " << field_value(i,global_strain_yy) <<
-      " XY: " << field_value(i,global_strain_xy));
-  }
-  DEBUG_MSG("Global_Strain_Post_Processor execute() end");
-}
+//
+//Global_Strain_Post_Processor::Global_Strain_Post_Processor(Schema * schema,
+//  const Teuchos::RCP<Teuchos::ParameterList> & params) :
+//  Post_Processor(schema,post_process_global_strain)
+//{
+//  field_names_.push_back(global_strain_xx);
+//  field_names_.push_back(global_strain_yy);
+//  field_names_.push_back(global_strain_xy);
+//  field_names_.push_back(global_dudx);
+//  field_names_.push_back(global_dudy);
+//  field_names_.push_back(global_dvdx);
+//  field_names_.push_back(global_dvdy);
+//  DEBUG_MSG("Enabling post processor Global_Strain_Post_Processor with associated fields:");
+//  for(size_t i=0;i<field_names_.size();++i){
+//    DEBUG_MSG(field_names_[i]);
+//  }
+//  set_params(params);
+//}
+//
+//void
+//Global_Strain_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
+//  assert(params!=Teuchos::null);
+//  mesh_size_ = schema_->mesh_size();
+//}
+//
+//void
+//Global_Strain_Post_Processor::pre_execution_tasks(){
+//  DEBUG_MSG("Global_Strain_Post_Processor pre_execution_tasks() begin");
+//  DEBUG_MSG("Global_Strain_Post_Processor pre_execution_tasks() end");
+//}
+//
+//void
+//Global_Strain_Post_Processor::execute(){
+//  DEBUG_MSG("Global_Strain_Post_Processor execute() begin");
+//  // make sure the connectivity matrix is populated
+//  assert(schema_->connectivity()->numRows()>0);
+//  Teuchos::ArrayRCP<scalar_t> dN_dxi(4,0.0);
+//  Teuchos::ArrayRCP<scalar_t> dN_deta(4,0.0);
+//  Teuchos::ArrayRCP<scalar_t> elem_disp(8,0.0);
+//  Teuchos::ArrayRCP<int_t> node_ids(4,0.0);
+//  Teuchos::ArrayRCP<scalar_t> node_du_dx(data_num_points_,0.0);
+//  Teuchos::ArrayRCP<scalar_t> node_du_dy(data_num_points_,0.0);
+//  Teuchos::ArrayRCP<scalar_t> node_dv_dx(data_num_points_,0.0);
+//  Teuchos::ArrayRCP<scalar_t> node_dv_dy(data_num_points_,0.0);
+//  Teuchos::ArrayRCP<int_t> node_num_contribs(data_num_points_,0);
+//  int_t start_x=0,end_x=0;
+//  int_t start_y=0,end_y=0;
+//  scalar_t center_x=0,center_y=0;
+//  int_t elem_p_width=0,elem_p_height=0;
+//
+//  scalar_t xi=0.0,eta=0.0;
+//  const int_t num_elem = schema_->connectivity()->numRows();
+//  for(int_t elem=0;elem<num_elem;++elem){
+//
+//    for(int_t i=0;i<4;++i)
+//      node_ids[i] = (*schema_->connectivity())(elem,i);
+//
+//    // create the local disp vector:
+//    for(int_t i=0;i<4;++i){
+//      elem_disp[i*2+0] = schema_->field_value(node_ids[i],DICe::DISPLACEMENT_X);
+//      elem_disp[i*2+1] = schema_->field_value(node_ids[i],DICe::DISPLACEMENT_Y);
+//    }
+//
+//    // get the pixel dimensions for this element's integration area
+//    start_x = (int_t)(schema_->field_value(node_ids[0],DICe::COORDINATE_X) + 0.5);
+//    end_x = (int_t)(schema_->field_value(node_ids[1],DICe::COORDINATE_X) - 0.5);
+//    start_y = (int_t)(schema_->field_value(node_ids[0],DICe::COORDINATE_Y) + 0.5);
+//    end_y = (int_t)(schema_->field_value(node_ids[3],DICe::COORDINATE_Y) - 0.5);
+//    elem_p_width = end_x - start_x + 1;
+//    elem_p_height = end_y - start_y + 1;
+//    center_x = start_x + elem_p_width/2.0;
+//    center_y = start_y + elem_p_height/2.0;
+//
+//    // iterate over the nodes of the element:
+//    for(int_t node=0;node<4;++node){
+//      xi = 2.0 * (schema_->field_value(node_ids[node],DICe::COORDINATE_X) - center_x)/elem_p_width;
+//      eta = 2.0 * (schema_->field_value(node_ids[node],DICe::COORDINATE_Y) - center_y)/elem_p_height;
+//
+//      dN_dxi[0] = 0.25*(-1.0)*(1.0 - eta);
+//      dN_dxi[1] = 0.25*(1.0 - eta);
+//      dN_dxi[2] = 0.25*(1.0 + eta);
+//      dN_dxi[3] = 0.25*(-1.0)*(1.0 + eta);
+//      dN_deta[0] = 0.25*(1.0 - xi)*(-1.0);
+//      dN_deta[1] = 0.25*(1.0 + xi)*(-1.0);
+//      dN_deta[2] = 0.25*(1.0 + xi);
+//      dN_deta[3] = 0.25*(1.0 - xi);
+//
+//      for(int_t i=0;i<4;++i){
+//        node_du_dx[node_ids[node]]+=(2.0/elem_p_width)*dN_dxi[i]*elem_disp[i*2+0];
+//        node_dv_dx[node_ids[node]]+=(2.0/elem_p_width)*dN_dxi[i]*elem_disp[i*2+1];
+//        node_du_dy[node_ids[node]]+=(2.0/elem_p_height)*dN_deta[i]*elem_disp[i*2+0];
+//        node_dv_dy[node_ids[node]]+=(2.0/elem_p_height)*dN_deta[i]*elem_disp[i*2+1];
+//      }
+//      for(int_t i=0;i<4;++i){
+//        node_num_contribs[node_ids[i]]++;
+//      }
+//    } // elem node
+//  } // elem
+//
+//  for(int_t i=0;i<data_num_points_;++i){
+//    scalar_t du_dx = node_du_dx[i]/node_num_contribs[i];
+//    scalar_t du_dy = node_du_dy[i]/node_num_contribs[i];
+//    scalar_t dv_dx = node_dv_dx[i]/node_num_contribs[i];
+//    scalar_t dv_dy = node_dv_dy[i]/node_num_contribs[i];
+//    field_value(i,global_dudx) = du_dx;
+//    field_value(i,global_dudy) = du_dy;
+//    field_value(i,global_dvdx) = dv_dx;
+//    field_value(i,global_dvdy) = dv_dy;
+//
+//    DEBUG_MSG("Node " << i << " dudx " << field_value(i,global_dudx) << " dudy " << field_value(i,global_dudy) <<
+//      " dvdx " << field_value(i,global_dvdx) << " dvdy " << field_value(i,global_dvdy));
+//
+//    // compute the Green-Lagrange strain based on the derivatives computed above:
+//    const scalar_t GL_xx = 0.5*(2.0*du_dx + du_dx*du_dx + dv_dx*dv_dx);
+//    const scalar_t GL_yy = 0.5*(2.0*dv_dy + du_dy*du_dy + dv_dy*dv_dy);
+//    const scalar_t GL_xy = 0.5*(du_dy + dv_dx + du_dx*du_dy + dv_dx*dv_dy);
+//    field_value(i,global_strain_xx) = GL_xx;
+//    field_value(i,global_strain_yy) = GL_yy;
+//    field_value(i,global_strain_xy) = GL_xy;
+//
+//    DEBUG_MSG("Node " << i << " global Green-Lagrange strain XX: " << field_value(i,global_strain_xx) << " YY: " << field_value(i,global_strain_yy) <<
+//      " XY: " << field_value(i,global_strain_xy));
+//  }
+//  DEBUG_MSG("Global_Strain_Post_Processor execute() end");
+//}
 
 Keys4_Strain_Post_Processor::Keys4_Strain_Post_Processor(Schema * schema,
   const Teuchos::RCP<Teuchos::ParameterList> & params) :

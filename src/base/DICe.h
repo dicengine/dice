@@ -203,13 +203,15 @@ const char* const use_subset_evolution = "use_subset_evolution";
 /// String parameter name
 const char* const output_beta = "output_beta";
 /// String parameter name
-const char* const global_constraint_coefficient = "global_constraint_coefficient";
+const char* const global_regularization_alpha = "global_regularization_alpha";
 /// String parameter name
 const char* const max_iterations = "max_iterations";
 /// String parameter name
 const char* const tolerance = "tolerance";
 /// String parameter name
 const char* const output_spec = "output_spec";
+/// String parameter name
+const char* const mms_spec = "mms_spec";
 /// String parameter name
 const char* const output_delimiter = "output_delimiter";
 /// String parameter name
@@ -238,6 +240,13 @@ const char* const rotate_def_image_180 = "rotate_def_image_180";
 const char* const rotate_ref_image_270 = "rotate_ref_image_270";
 /// String parameter name
 const char* const rotate_def_image_270 = "rotate_def_image_270";
+/// String parameter name, only for global DIC
+const char* const problem_name = "problem_name";
+/// String parameter name, only for global DIC
+const char* const phi_coeff = "phi_coeff";
+/// String parameter name, only for global DIC
+const char* const b_coeff = "b_coeff";
+
 
 /// enums:
 enum Subset_View_Target{
@@ -698,7 +707,11 @@ const Correlation_Parameter omit_output_row_id_param(omit_output_row_id,
   BOOL_PARAM,
   true,
   "True if the row id should be omitted from the output (column zero is skipped)");
-
+/// Correlation parameter and properties
+const Correlation_Parameter mms_spec_param(mms_spec,
+  STRING_PARAM,
+  false, // turned off because this one is manually added to the template output files
+  "Set of parameters for the method of manufactured solutions problems");
 
 /// Correlation parameter and properties
 const Correlation_Parameter output_spec_param(output_spec,
@@ -846,10 +859,10 @@ const Correlation_Parameter output_beta_param(output_beta,
   "True if the beta parameter should be computed (still needs to be added to the output spec if it should be included in the output file)"
   " This parameter measures the distinguishability of a pattern for template matching");
 /// Correlation parameter and properties
-const Correlation_Parameter global_constraint_coeff_param(global_constraint_coefficient,
+const Correlation_Parameter global_regularization_alpha_param(global_regularization_alpha,
   SCALAR_PARAM,
   true,
-  "Used only for global, this is the coefficient for the regularization term");
+  "Used only for global, this is the coefficient for the alpha regularization term");
 /// Correlation parameter and properties
 const Correlation_Parameter use_tracking_default_params_param(use_tracking_default_params,
   BOOL_PARAM,
@@ -974,7 +987,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_global_correlation_params = 8;
+const int_t num_valid_global_correlation_params = 9;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_global_correlation_params[num_valid_global_correlation_params] = {
   use_global_dic_param,
@@ -984,7 +997,8 @@ const Correlation_Parameter valid_global_correlation_params[num_valid_global_cor
   output_spec_param,
   output_delimiter_param,
   omit_output_row_id_param,
-  global_constraint_coeff_param
+  global_regularization_alpha_param,
+  mms_spec_param
 };
 
 } // end DICe namespace

@@ -4,6 +4,7 @@
 SET(DICE_GLOBAL_LIBS
   dicemesh
   triangle
+  diceglobal
 )
 FILE ( GLOB test_global_cpp_files "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 FOREACH ( test_file ${test_global_cpp_files})

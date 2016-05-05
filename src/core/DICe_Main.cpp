@@ -96,8 +96,13 @@ int main(int argc, char *argv[]) {
     }
     // if the mesh size was specified in the input params set the use_global_dic flag
     if(input_params->isParameter(DICe::mesh_size)){
+#ifdef DICE_ENABLE_GLOBAL
       if(correlation_params==Teuchos::null) correlation_params = Teuchos::rcp(new Teuchos::ParameterList());
       correlation_params->set(DICe::use_global_dic,true);
+#else
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, global method requested, but code"
+          " was not built with DICE_ENABLE_GLOBAL");
+#endif
     }
 
     // decipher the image file names (note: zero entry is the reference image):
@@ -221,10 +226,12 @@ int main(int argc, char *argv[]) {
       *outStream << std::endl;
     }
     else if(schema->analysis_type()==GLOBAL_DIC){
+#ifdef DICE_ENABLE_GLOBAL
       *outStream << "Using qaudratic tri 6 elements" << std::endl;
-      *outStream << "Mesh size:          " << schema->mesh_size() << " (pixels^2)" << std::endl;
-      *outStream << "Number of nodes:    " << schema->mesh()->num_nodes() << std::endl;
-      *outStream << "Number of elements: " << schema->mesh()->num_elem() << std::endl;
+      *outStream << "Mesh size:          " << schema->global_algorithm()->mesh_size() << std::endl;
+      *outStream << "Number of nodes:    " << schema->global_algorithm()->mesh()->num_nodes() << std::endl;
+      *outStream << "Number of elements: " << schema->global_algorithm()->mesh()->num_elem() << std::endl;
+#endif
     }
 
     // let the schema know how many images there are in the sequence:
