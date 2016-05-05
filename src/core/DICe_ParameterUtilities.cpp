@@ -164,6 +164,19 @@ const std::string to_string(Interpolation_Method in){
   return interpolationMethodStrings[in];
 }
 DICE_LIB_DLL_EXPORT
+const std::string to_string(Global_EQ_Term in){
+  assert(in < NO_SUCH_GLOBAL_EQ_TERM);
+  const static char * eqTermStrings[] = {
+  "DIV_SYMMETRIC_STRAIN_REGULARIZATION",
+  "MMS_GRAD_IMAGE_TENSOR",
+  "MMS_FORCE",
+  "MMS_IMAGE_TIME_FORCE",
+  "NO_SUCH_GLOBAL_EQ_TERM"
+  };
+  return eqTermStrings[in];
+};
+
+DICE_LIB_DLL_EXPORT
 Field_Name string_to_field_name(std::string & in){
   // convert the string to uppercase
   stringToUpper(in);

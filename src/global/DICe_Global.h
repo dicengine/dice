@@ -115,6 +115,16 @@ public:
     return mesh_;
   }
 
+  /// add a term to the formulation
+  void add_term(const Global_EQ_Term term){
+    eq_terms_.insert(term);
+  }
+
+  /// returns true if the given term is in the set
+  bool has_term(const Global_EQ_Term term){
+    return eq_terms_.find(term)!=eq_terms_.end();
+  }
+
 protected:
   /// protect the default constructor
   Global_Algorithm(const Global_Algorithm&);
@@ -140,6 +150,8 @@ protected:
   Teuchos::RCP<DICe::Matrix_Service> matrix_service_;
   /// true if the solver, etc been initialized
   bool is_initialized_;
+  /// set of active terms in the formulation
+  std::set<Global_EQ_Term> eq_terms_;
 };
 
 }// end global namespace

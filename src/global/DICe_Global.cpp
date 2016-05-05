@@ -43,6 +43,7 @@
 #include <DICe_Schema.h>
 #include <DICe_TriangleUtils.h>
 #include <DICe_MeshIO.h>
+#include <DICe_ParameterUtilities.h>
 
 namespace DICe {
 
@@ -145,6 +146,13 @@ Global_Algorithm::default_constructor_tasks(Teuchos::ArrayRCP<scalar_t> & points
   mesh_->create_field(mesh::field_enums::IMAGE_PHI_FS);
   mesh_->create_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
   DICe::mesh::create_exodus_output_variable_names(mesh_);
+
+  // for now default terms: TODO TODO TODO manage this another way
+  add_term(DIV_SYMMETRIC_STRAIN_REGULARIZATION);
+  add_term(MMS_GRAD_IMAGE_TENSOR);
+  add_term(MMS_IMAGE_TIME_FORCE);
+  add_term(MMS_FORCE);
+
 }
 
 void
@@ -207,6 +215,11 @@ Global_Algorithm::pre_execution_tasks(){
 
   DEBUG_MSG("Matrix service has been initialized.");
   is_initialized_ = true;
+
+  std::set<Global_EQ_Term>::iterator it=eq_terms_.begin();
+  std::set<Global_EQ_Term>::iterator it_end=eq_terms_.end();
+  for(;it!=it_end;++it)
+    DEBUG_MSG("Global_Algorithm::pre_execution_tasks() adding EQ term " << to_string(*it));
 }
 
 Status_Flag
@@ -285,12 +298,12 @@ Global_Algorithm::execute(){
     scalar_t jac[spa_dim*spa_dim];
     scalar_t inv_jac[spa_dim*spa_dim];
     scalar_t J =0.0;
-    const int_t B_dim = 2*spa_dim - 1;
-    scalar_t B[B_dim*tri6_num_funcs*spa_dim];
+    //const int_t B_dim = 2*spa_dim - 1;
+    //scalar_t B[B_dim*tri6_num_funcs*spa_dim];
     scalar_t elem_stiffness[tri6_num_funcs*spa_dim*tri6_num_funcs*spa_dim];
     scalar_t elem_force[tri6_num_funcs*spa_dim];
-    scalar_t grad_phi[spa_dim];
-    scalar_t x=0.0,y=0.0,fx=0.0,fy=0.0;
+    //scalar_t grad_phi[spa_dim];
+    scalar_t x=0.0,y=0.0;
 
     // get the natural integration points for this element:
     const int_t integration_order = 3;
@@ -324,22 +337,15 @@ Global_Algorithm::execute(){
           //std::cout << " node coords " << nodal_coords[stride] << std::endl;
         }
       }
-
       // clear the elem stiffness
       for(int_t i=0;i<tri6_num_funcs*spa_dim*tri6_num_funcs*spa_dim;++i)
         elem_stiffness[i] = 0.0;
-
       // clear the elem force
       for(int_t i=0;i<tri6_num_funcs*spa_dim;++i)
         elem_force[i] = 0.0;
 
       // gauss point loop:
       for(int_t gp=0;gp<num_integration_points;++gp){
-
-        // clear the temp matrices:
-        for(int_t i=0;i<B_dim*tri6_num_funcs*spa_dim;++i){
-          B[i] = 0.0;
-        }
 
         // isoparametric coords of the gauss point
         for(int_t dim=0;dim<spa_dim;++dim)
@@ -361,76 +367,30 @@ Global_Algorithm::execute(){
         // compute the jacobian for this element:
         DICe::global::calc_jacobian(nodal_coords,DN6,jac,inv_jac,J,tri6_num_funcs,spa_dim);
 
-        // compute the B matrix
-        DICe::global::calc_B(DN6,inv_jac,tri6_num_funcs,spa_dim,B);
+        // stiffness terms
 
-        // compute B'*B
-        for(int_t i=0;i<tri6_num_funcs*spa_dim;++i){
-          for(int_t j=0;j<B_dim;++j){
-            for(int_t k=0;k<tri6_num_funcs*spa_dim;++k){
-              elem_stiffness[i*tri6_num_funcs*spa_dim + k] +=
-                  alpha2_*B[j*tri6_num_funcs*spa_dim+i]*B[j*tri6_num_funcs*spa_dim + k] * gp_weights[gp] * J;
-            }
-          }
-        }
+        // alpha * div(0.5*(grad(b) + grad(b)^T))
+        if(has_term(DIV_SYMMETRIC_STRAIN_REGULARIZATION))
+          div_symmetric_strain(spa_dim,tri6_num_funcs,alpha2_,J,gp_weights[gp],inv_jac,DN6,elem_stiffness);
 
-        // compute the image stiffness terms
-        scalar_t d_phi_dt = 0.0, grad_phi_x = 0.0, grad_phi_y = 0.0;
-        mms_problem_->phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
-        grad_phi[0] = grad_phi_x;
-        grad_phi[1] = grad_phi_y;
+        // grad(phi) tensor_prod grad(phi)
+        if(has_term(MMS_GRAD_IMAGE_TENSOR))
+          mms_grad_image_tensor(mms_problem_,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_stiffness);
 
-        // image stiffness terms
-        for(int_t i=0;i<tri6_num_funcs;++i){
-          const int_t row1 = (i*spa_dim) + 0;
-          const int_t row2 = (i*spa_dim) + 1;
-          for(int_t j=0;j<tri6_num_funcs;++j){
-            elem_stiffness[row1*tri6_num_funcs*spa_dim + j*spa_dim+0]
-                           += N6[i]*(grad_phi[0]*grad_phi[0])*N6[j]*gp_weights[gp]*J;
-            elem_stiffness[row1*tri6_num_funcs*spa_dim + j*spa_dim+1]
-                           += N6[i]*(grad_phi[0]*grad_phi[1])*N6[j]*gp_weights[gp]*J;
-            elem_stiffness[row2*tri6_num_funcs*spa_dim + j*spa_dim+0]
-                           += N6[i]*(grad_phi[1]*grad_phi[0])*N6[j]*gp_weights[gp]*J;
-            elem_stiffness[row2*tri6_num_funcs*spa_dim + j*spa_dim+1]
-                           += N6[i]*(grad_phi[1]*grad_phi[1])*N6[j]*gp_weights[gp]*J;
-          }
-        }
-//        std::cout << " elem stiffness" << std::endl;
-//        for(int_t i=0;i<tri6_num_funcs*spa_dim;++i){
-//          for(int_t j=0;j<tri6_num_funcs*spa_dim;++j){
-//            std::cout << elem_stiffness[i*tri6_num_funcs*spa_dim+j] << " ";
-//          }
-//          std::cout << std::endl;
-//        }
+        // RHS terms
 
-        // compute the image force terms
-        fx = -d_phi_dt * grad_phi[0];
-        fy = -d_phi_dt * grad_phi[1];
+        // mms force
+        if(has_term(MMS_FORCE))
+          mms_force(mms_problem_,spa_dim,tri6_num_funcs,x,y,alpha2_,J,gp_weights[gp],N6,elem_force);
 
-        // analytic force terms
-        scalar_t lap_b_x=0.0,lap_b_y=0.0,b_x=0.0,b_y=0.0;
-        mms_problem_->velocity_laplacian(x,y,lap_b_x,lap_b_y);
-        mms_problem_->velocity(x,y,b_x,b_y);
-//        std::cout << " b " << b_x << " " << b_y << std::endl;
-//        std::cout << " lap_b " << lap_b_x << " " << lap_b_y << std::endl;
-//        std::cout << " grad_phi " << grad_phi_x << " " << grad_phi_y << std::endl;
-//        std::cout << " dphidt " << d_phi_dt << std::endl;
-        fx += grad_phi[0]*d_phi_dt + (grad_phi[0]*grad_phi[0]*b_x + grad_phi[0]*grad_phi[1]*b_y) - alpha2_*lap_b_x;
-        fy += grad_phi[1]*d_phi_dt + (grad_phi[1]*grad_phi[0]*b_x + grad_phi[1]*grad_phi[1]*b_y) - alpha2_*lap_b_y;
+        // d_dt(phi) * grad(phi)
+        if(has_term(MMS_IMAGE_TIME_FORCE))
+          mms_image_diff_force(mms_problem_,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_force);
 
-        //compute the force terms for this point
-        //calc_mms_force_elasticity(x,y,alpha2,schema->img_width(),m,fx,fy);
-        //calc_mms_force_simple(alpha2,fx,fy);
-        for(int_t i=0;i<tri6_num_funcs;++i){
-          elem_force[i*spa_dim+0] += fx*N6[i]*gp_weights[gp]*J;
-          elem_force[i*spa_dim+1] += fy*N6[i]*gp_weights[gp]*J;
-        }
-//        std::cout << " elem force" << std::endl;
-//        for(int_t i=0;i<tri6_num_funcs*spa_dim;++i){
-//            std::cout << elem_force[i] << " ";
-//          std::cout << std::endl;
-//        }
       } // gp loop
+
+      // add the element terms that go outside the standard FEM gp loop:
+
 
       // assemble the global stiffness matrix
       for(int_t i=0;i<tri6_num_funcs;++i){
@@ -467,7 +427,6 @@ Global_Algorithm::execute(){
       } // num_funcs
 
     }  // elem
-
     // export the overlap residual to the dist vector
     //mesh_->field_overlap_export(overlap_residual_ptr, mesh_::field_enums::RESIDUAL_FS, ADD);
 
@@ -590,8 +549,6 @@ Global_Algorithm::evaluate_mms_error(scalar_t & error_bx,
 
   DEBUG_MSG("MMS Error bx: " << error_bx << " by: " << error_by << " lambda: " << error_lambda);
 }
-
-
 
 
 }// end global namespace

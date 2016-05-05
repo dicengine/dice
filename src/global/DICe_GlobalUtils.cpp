@@ -483,6 +483,108 @@ namespace global{
 //  return CORRELATION_SUCCESSFUL; // TODO change this to success
 //}
 
+void div_symmetric_strain(const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & coeff,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * inv_jac,
+  const scalar_t * DN,
+  scalar_t * elem_stiffness){
+  const int_t B_dim = 2*spa_dim - 1;
+  scalar_t B[B_dim*num_funcs*spa_dim];
+
+  // compute the B matrix
+  DICe::global::calc_B(DN,inv_jac,num_funcs,spa_dim,B);
+
+  // compute B'*B
+  for(int_t i=0;i<num_funcs*spa_dim;++i){
+    for(int_t j=0;j<B_dim;++j){
+      for(int_t k=0;k<num_funcs*spa_dim;++k){
+        elem_stiffness[i*num_funcs*spa_dim + k] +=
+            coeff*B[j*num_funcs*spa_dim+i]*B[j*num_funcs*spa_dim + k] * gp_weight * J;
+      }
+    }
+  }
+}
+
+void mms_grad_image_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_stiffness){
+  TEUCHOS_TEST_FOR_EXCEPTION(mms_problem==Teuchos::null,std::runtime_error,
+    "Error, the pointer to the mms problem must be valid");
+  // compute the image stiffness terms
+  scalar_t d_phi_dt = 0.0, grad_phi_x = 0.0, grad_phi_y = 0.0;
+  mms_problem->phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
+
+  // image stiffness terms
+  for(int_t i=0;i<num_funcs;++i){
+    const int_t row1 = (i*spa_dim) + 0;
+    const int_t row2 = (i*spa_dim) + 1;
+    for(int_t j=0;j<num_funcs;++j){
+      elem_stiffness[row1*num_funcs*spa_dim + j*spa_dim+0]
+                     += N[i]*(grad_phi_x*grad_phi_x)*N[j]*gp_weight*J;
+      elem_stiffness[row1*num_funcs*spa_dim + j*spa_dim+1]
+                     += N[i]*(grad_phi_x*grad_phi_y)*N[j]*gp_weight*J;
+      elem_stiffness[row2*num_funcs*spa_dim + j*spa_dim+0]
+                     += N[i]*(grad_phi_y*grad_phi_x)*N[j]*gp_weight*J;
+      elem_stiffness[row2*num_funcs*spa_dim + j*spa_dim+1]
+                     += N[i]*(grad_phi_y*grad_phi_y)*N[j]*gp_weight*J;
+    }
+  }
+}
+
+void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & coeff,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_force){
+  TEUCHOS_TEST_FOR_EXCEPTION(mms_problem==Teuchos::null,std::runtime_error,
+    "Error, the pointer to the mms problem must be valid");
+
+  scalar_t fx = 0.0;
+  scalar_t fy = 0.0;
+  mms_problem->force(x,y,coeff,fx,fy);
+
+  //compute the force terms for this point
+  for(int_t i=0;i<num_funcs;++i){
+    elem_force[i*spa_dim+0] += fx*N[i]*gp_weight*J;
+    elem_force[i*spa_dim+1] += fy*N[i]*gp_weight*J;
+  }
+}
+
+
+void mms_image_diff_force(Teuchos::RCP<MMS_Problem> mms_problem,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_force){
+  TEUCHOS_TEST_FOR_EXCEPTION(mms_problem==Teuchos::null,std::runtime_error,
+    "Error, the pointer to the mms problem must be valid");
+  // compute the image force terms
+  scalar_t d_phi_dt = 0.0, grad_phi_x = 0.0, grad_phi_y = 0.0;
+  mms_problem->phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
+  for(int_t i=0;i<num_funcs;++i){
+    elem_force[i*spa_dim+0] -= d_phi_dt*grad_phi_x*N[i]*gp_weight*J;
+    elem_force[i*spa_dim+1] -= d_phi_dt*grad_phi_y*N[i]*gp_weight*J;
+  }
+}
+
 
 void calc_jacobian(const scalar_t * xcap,
   const scalar_t * DN,

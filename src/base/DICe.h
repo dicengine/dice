@@ -356,6 +356,8 @@ enum Analysis_Type {
   NO_SUCH_ANALYSIS_TYPE
 };
 
+
+
 /// Projection method
 enum Projection_Method {
   DISPLACEMENT_BASED=0,
@@ -567,6 +569,16 @@ enum Combine_Mode{
   INSERT=0,
   ADD
 };
+
+/// Global method terms to include in the residual
+enum Global_EQ_Term{
+  DIV_SYMMETRIC_STRAIN_REGULARIZATION=0,
+  MMS_GRAD_IMAGE_TENSOR,
+  MMS_FORCE,
+  MMS_IMAGE_TIME_FORCE,
+  NO_SUCH_GLOBAL_EQ_TERM
+};
+
 
 /// \class DICe::Extents
 /// \brief collection of origin x, y and width and height

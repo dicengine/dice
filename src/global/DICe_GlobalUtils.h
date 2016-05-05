@@ -114,6 +114,18 @@ public:
     scalar_t & grad_phi_x,
     scalar_t & grad_phi_y)=0;
 
+  /// Evaluation of the force terms
+  /// \param x x coordinate at which to evaluate the derivatives
+  /// \param y y coordinate at which to evaluate the derivatives
+  /// \param f_x output force x
+  /// \param f_y output force y
+  virtual void force(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & coeff_1,
+    scalar_t & f_x,
+    scalar_t & f_y)=0;
+
+
 protected:
   /// Protect the default constructor
   MMS_Problem(const MMS_Problem&);
@@ -199,6 +211,26 @@ public:
     grad_phi_y = -gamma*sin(gamma*x)*sin(DICE_PI/2.0 + gamma*y);
   }
 
+  /// See base class definition
+  virtual void force(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & coeff_1,
+    scalar_t & f_x,
+    scalar_t & f_y){
+
+    // TODO check which terms are active
+
+    f_x = 0.0;
+    f_y = 0.0;
+    scalar_t d_phi_dt = 0.0, grad_phi_x = 0.0, grad_phi_y = 0.0;
+    phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
+    scalar_t lap_b_x=0.0,lap_b_y=0.0,b_x=0.0,b_y=0.0;
+    velocity_laplacian(x,y,lap_b_x,lap_b_y);
+    velocity(x,y,b_x,b_y);
+    f_x = grad_phi_x*d_phi_dt + (grad_phi_x*grad_phi_x*b_x + grad_phi_x*grad_phi_y*b_y) - coeff_1*lap_b_x;
+    f_y = grad_phi_y*d_phi_dt + (grad_phi_y*grad_phi_x*b_x + grad_phi_y*grad_phi_y*b_y) - coeff_1*lap_b_y;
+  }
+
 protected:
   /// coefficient for image intensity values
   scalar_t phi_coeff_;
@@ -238,11 +270,86 @@ private:
   MMS_Problem_Factory& operator=(const MMS_Problem_Factory&);
 };
 
+/// adds the symmeterized strain regularizer to the elem stiffness matrix
+/// \param spa_dim spatial dimension
+/// \param num_funcs the number of shape functions
+/// \param coeff leading constant coefficient
+/// \param J determinant of the jacobian
+/// \param gp_weight gauss weight
+/// \param inv_jac inverse jacobian
+/// \param DN derivatives of the shape functions
+/// \param elem_stiffness output the element stiffness contributions
+void div_symmetric_strain(const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & coeff,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * inv_jac,
+  const scalar_t * DN,
+  scalar_t * elem_stiffness);
 
-//void initialize_exodus_output(Schema * schema,
-//  const std::string & output_folder);
-//
-//Status_Flag execute_global_step(Schema * schema);
+/// adds the image gradients term to the stiffness matrx (from manufactured solutions problem)
+/// \param mms_problem pointer to the method of manufactured solutions problem
+/// \param spa_dim spatial dimension
+/// \param num_funcs the number of shape functions
+/// \param x x-coordinate of the point
+/// \param y y-coordinate of the point
+/// \param J determinant of the jacobian
+/// \param gp_weight gauss weight
+/// \param N shape functions
+/// \param elem_stiffness output the element stiffness contributions
+void mms_grad_image_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_stiffness);
+
+/// adds the image gradients term to the force vector (from manufactured solutions problem)
+/// \param mms_problem pointer to the method of manufactured solutions problem
+/// \param spa_dim spatial dimension
+/// \param num_funcs the number of shape functions
+/// \param x x-coordinate of the point
+/// \param y y-coordinate of the point
+/// \param J determinant of the jacobian
+/// \param gp_weight gauss weight
+/// \param N shape functions
+/// \param elem_force output the element force contributions
+void mms_image_diff_force(Teuchos::RCP<MMS_Problem> mms_problem,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_force);
+
+/// adds the mms force vector (from manufactured solutions problem)
+/// \param mms_problem pointer to the method of manufactured solutions problem
+/// \param spa_dim spatial dimension
+/// \param num_funcs the number of shape functions
+/// \param x x-coordinate of the point
+/// \param y y-coordinate of the point
+/// \param coeff coefficient for stress term
+/// \param J determinant of the jacobian
+/// \param gp_weight gauss weight
+/// \param N shape functions
+/// \param elem_force output the element force contributions
+void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & coeff,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_force);
+
 
 void calc_jacobian(const scalar_t * xcap,
   const scalar_t * DN,

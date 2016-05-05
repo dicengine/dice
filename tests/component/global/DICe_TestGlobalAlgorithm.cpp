@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
   scalar_t error_lambda = 0.0;
   global_alg->evaluate_mms_error(error_bx,error_by,error_lambda);
 
-  const scalar_t error_max = 0.05;
+  const scalar_t error_max = 0.02;
   if(error_bx > error_max || error_by > error_max){
     *outStream << "error, the solution error is too large" << std::endl;
     errorFlag++;

@@ -87,6 +87,10 @@ const std::string to_string(Optimization_Method in);
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Interpolation_Method in);
 
+/// Convert a DICe::Global_EQ_Term to string
+DICE_LIB_DLL_EXPORT
+const std::string to_string(Global_EQ_Term in);
+
 /// Convert a string to a DICe::Field_Name
 DICE_LIB_DLL_EXPORT
 Field_Name string_to_field_name(std::string & in);
