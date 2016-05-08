@@ -107,6 +107,7 @@ Schema::construct_schema(const std::string & refName,
   // (the compute_image_gradients param is used by the image constructor)
   imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_);
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
+  imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   Teuchos::RCP<Image> prev_img = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   if(prev_imgs_.size()==0) prev_imgs_.push_back(prev_img);
@@ -164,6 +165,7 @@ Schema::construct_schema(const int_t img_width,
   // (the compute_image_gradients param is used by the image constructor)
   imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_);
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
+  imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   ref_img_ = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
   Teuchos::RCP<Image> prev_img = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
   if(prev_imgs_.size()==0) prev_imgs_.push_back(prev_img);
@@ -208,9 +210,9 @@ Schema::construct_schema(Teuchos::RCP<Image> ref_img,
   default_constructor_tasks(params);
   if(gauss_filter_images_){
     if(!ref_img->has_gauss_filter()) // the filter may have alread been applied to the image
-      ref_img->gauss_filter();
+      ref_img->gauss_filter(gauss_filter_mask_size_);
     if(!def_img->has_gauss_filter())
-      def_img->gauss_filter();
+      def_img->gauss_filter(gauss_filter_mask_size_);
   }
   ref_img_ = ref_img;
   if(def_imgs_.size()==0) def_imgs_.push_back(def_img);
@@ -248,6 +250,7 @@ Schema::set_def_image(const std::string & defName,
   assert(id<(int_t)def_imgs_.size());
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
+  imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
   TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[id]->width()!=ref_img_->width()||def_imgs_[id]->height()!=ref_img_->height(),
     std::runtime_error,"Error, ref and def images must have the same dimensions");
@@ -339,6 +342,7 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   has_post_processor_ = false;
   normalize_gamma_with_active_pixels_ = false;
   gauss_filter_images_ = false;
+  gauss_filter_mask_size_ = 7;
   init_params_ = params;
   comm_ = Teuchos::rcp(new MultiField_Comm());
   path_file_names_ = Teuchos::rcp(new std::map<int_t,std::string>());
@@ -439,6 +443,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
 #endif
 
   gauss_filter_images_ = diceParams->get<bool>(DICe::gauss_filter_images,false);
+  gauss_filter_mask_size_ = diceParams->get<int_t>(DICe::gauss_filter_mask_size,7);
   compute_ref_gradients_ = diceParams->get<bool>(DICe::compute_ref_gradients,true);
   compute_def_gradients_ = diceParams->get<bool>(DICe::compute_def_gradients,false);
   if(diceParams->get<bool>(DICe::compute_image_gradients,false)) { // this flag turns them both on

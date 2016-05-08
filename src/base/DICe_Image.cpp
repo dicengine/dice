@@ -98,7 +98,7 @@ Image::post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params
   gauss_filter_mask_size_ = params->get<int>(DICe::gauss_filter_mask_size,7);
   gauss_filter_half_mask_ = gauss_filter_mask_size_/2+1;
   if(gauss_filter_image){
-    gauss_filter(gauss_filter_use_hierarchical_parallelism,gauss_filter_team_size);
+    gauss_filter(-1,gauss_filter_use_hierarchical_parallelism,gauss_filter_team_size);
   }
   const bool compute_image_gradients = params->get<bool>(DICe::compute_image_gradients,false);
   DEBUG_MSG("Image::post_allocation_tasks(): compute_image_gradients is " << compute_image_gradients);

@@ -543,8 +543,10 @@ Image::apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformati
 }
 
 void
-Image::gauss_filter(const bool use_hierarchical_parallelism,
+Image::gauss_filter(const int_t mask_size,const bool use_hierarchical_parallelism,
   const int_t team_size){
+
+  if(mask_size>0) gauss_filter_mask_size_=mask_size;
 
   std::vector<scalar_t> coeffs(13,0.0);
 
