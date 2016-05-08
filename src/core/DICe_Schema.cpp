@@ -108,6 +108,7 @@ Schema::construct_schema(const std::string & refName,
   // (the compute_image_gradients param is used by the image constructor)
   imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_);
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
+  imgParams->set(DICe::gradient_method,gradient_method_);
   ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   Teuchos::RCP<Image> prev_img = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   if(prev_imgs_.size()==0) prev_imgs_.push_back(prev_img);
@@ -165,6 +166,7 @@ Schema::construct_schema(const int_t img_width,
   // (the compute_image_gradients param is used by the image constructor)
   imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_);
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
+  imgParams->set(DICe::gradient_method,gradient_method_);
   ref_img_ = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
   Teuchos::RCP<Image> prev_img = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
   if(prev_imgs_.size()==0) prev_imgs_.push_back(prev_img);
@@ -249,6 +251,7 @@ Schema::set_def_image(const std::string & defName,
   assert(id<(int_t)def_imgs_.size());
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
+  imgParams->set(DICe::gradient_method,gradient_method_);
   def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
   TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[id]->width()!=ref_img_->width()||def_imgs_[id]->height()!=ref_img_->height(),
     std::runtime_error,"Error, ref and def images must have the same dimensions");
@@ -301,6 +304,7 @@ Schema::set_ref_image(const std::string & refName){
   DEBUG_MSG("Schema:  Resetting the reference image");
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
+  imgParams->set(DICe::gradient_method,gradient_method_);
   ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
@@ -316,6 +320,7 @@ Schema::set_ref_image(const int_t img_width,
   TEUCHOS_TEST_FOR_EXCEPTION(img_height<=0,std::runtime_error,"");
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
+  imgParams->set(DICe::gradient_method,gradient_method_);
   ref_img_ = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
@@ -480,6 +485,8 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   projection_method_ = diceParams->get<Projection_Method>(DICe::projection_method);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::interpolation_method),std::runtime_error,"");
   interpolation_method_ = diceParams->get<Interpolation_Method>(DICe::interpolation_method);
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::gradient_method),std::runtime_error,"");
+  gradient_method_ = diceParams->get<Gradient_Method>(DICe::gradient_method);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::max_evolution_iterations),std::runtime_error,"");
   max_evolution_iterations_ = diceParams->get<int_t>(DICe::max_evolution_iterations);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::max_solver_iterations_fast),std::runtime_error,"");
@@ -710,7 +717,7 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     init_params_->set(DICe::output_prefix,output_prefix);
     init_params_->set(DICe::output_folder,output_folder);
 #ifdef DICE_ENABLE_GLOBAL
-    global_algorithm_ = Teuchos::rcp(new DICe::global::Global_Algorithm(init_params_));
+    global_algorithm_ = Teuchos::rcp(new DICe::global::Global_Algorithm(this,init_params_));
 #endif
     return;
   }
@@ -2336,7 +2343,8 @@ Output_Spec::write_info(std::FILE * file){
   fprintf(file,"*** Correlation method: ZNSSD\n");
   std::string interp_method = to_string(schema_->interpolation_method());
   fprintf(file,"*** Interpolation method: %s\n",interp_method.c_str());
-  fprintf(file,"*** Image gradient method: FINITE_DIFFERENCE\n");
+  std::string grad_method = to_string(schema_->gradient_method());
+  fprintf(file,"*** Image gradient method: %s\n",grad_method.c_str());
   std::string opt_method = to_string(schema_->optimization_method());
   fprintf(file,"*** Optimization method: %s\n",opt_method.c_str());
   std::string proj_method = to_string(schema_->projection_method());

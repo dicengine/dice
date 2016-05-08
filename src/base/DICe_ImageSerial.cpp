@@ -55,7 +55,8 @@ Image::Image(const char * file_name,
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   has_gauss_filter_(false),
-  file_name_(file_name)
+  file_name_(file_name),
+  gradient_method_(FINITE_DIFFERENCE)
 {
   try{
     utils::read_image_dimensions(file_name,width_,height_);
@@ -84,7 +85,8 @@ Image::Image(const char * file_name,
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   has_gauss_filter_(false),
-  file_name_(file_name)
+  file_name_(file_name),
+  gradient_method_(FINITE_DIFFERENCE)
 {
   // get the image dims
   int_t img_width = 0;
@@ -119,7 +121,8 @@ Image::Image(const int_t width,
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   has_gauss_filter_(false),
-  file_name_("(from array)")
+  file_name_("(from array)"),
+  gradient_method_(FINITE_DIFFERENCE)
 {
   assert(height_>0);
   assert(width_>0);
@@ -140,7 +143,8 @@ Image::Image(Teuchos::RCP<Image> img,
   intensity_rcp_(Teuchos::null),
   has_gradients_(img->has_gradients()),
   has_gauss_filter_(img->has_gauss_filter()),
-  file_name_(img->file_name())
+  file_name_(img->file_name()),
+  gradient_method_(FINITE_DIFFERENCE)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(offset_x_<0,std::invalid_argument,"Error, offset_x_ cannot be negative.");
   TEUCHOS_TEST_FOR_EXCEPTION(offset_y_<0,std::invalid_argument,"Error, offset_x_ cannot be negative.");
@@ -196,6 +200,9 @@ Image::Image(Teuchos::RCP<Image> img,
         }
     }
     if(params->isParameter(DICe::compute_image_gradients)){
+      if(params->isParameter(DICe::gradient_method)){
+        gradient_method_ = params->get<Gradient_Method>(DICe::gradient_method);
+      }
       if(!img->has_gradients()&&params->get<bool>(DICe::compute_image_gradients,false)){
         // if gradients have not been computed, but ther are requested here, compute them
         DEBUG_MSG("Image gradients requested, but origin image does not have gradients, computing them here");
@@ -391,6 +398,50 @@ Image::interpolate_keys_fourth(const scalar_t & local_x, const scalar_t & local_
 
 void
 Image::compute_gradients(const bool use_hierarchical_parallelism, const int_t team_size){
+
+  if(gradient_method_==FINITE_DIFFERENCE){
+    compute_gradients_finite_difference();
+  }
+  else if(gradient_method_==CONVOLUTION_5_POINT){
+    compute_gradients_finite_difference();
+    smooth_gradients_convolution_5_point();
+  }
+  has_gradients_ = true;
+}
+
+void
+Image::smooth_gradients_convolution_5_point(){
+
+  static scalar_t smooth_coeffs[][5] = {{0.00390625, 0.015625, 0.0234375, 0.015625, 0.00390625},
+                                        {0.015625,   0.0625,   0.09375,   0.0625,   0.015625},
+                                        {0.0234375,  0.09375,  0.140625,  0.09375,  0.0234375},
+                                        {0.015625,   0.0625,   0.09375,   0.0625,   0.015625},
+                                        {0.00390625, 0.015625, 0.0234375, 0.015625, 0.00390625}};
+  static int_t smooth_offsets[] =  {-2, -1, 0, 1, 2};
+
+  Teuchos::ArrayRCP<scalar_t> grad_x_temp(width_*height_,0.0);
+  Teuchos::ArrayRCP<scalar_t> grad_y_temp(width_*height_,0.0);
+  for(int_t i=0;i<width_*height_;++i){
+    grad_x_temp[i] = grad_x_[i];
+    grad_y_temp[i] = grad_y_[i];
+  }
+  for(int_t y=2;y<height_-2;++y){
+    for(int_t x=2;x<width_-2;++x){
+      scalar_t value_x = 0.0, value_y = 0.0;
+      for(int_t i=0;i<5;++i){
+        for(int_t j=0;j<5;++j){
+          value_x += smooth_coeffs[i][j] * grad_x_temp[(y + smooth_offsets[i])*width_ + x + smooth_offsets[j]];
+          value_y += smooth_coeffs[i][j] * grad_y_temp[(y + smooth_offsets[i])*width_ + x + smooth_offsets[j]];
+        }
+      }
+      grad_x_[y*width_+x] = value_x;
+      grad_y_[y*width_+x] = value_y;
+    }
+  }
+}
+
+void
+Image::compute_gradients_finite_difference(){
   for(int_t y=0;y<height_;++y){
     for(int_t x=0;x<width_;++x){
       if(x<2){
@@ -418,7 +469,6 @@ Image::compute_gradients(const bool use_hierarchical_parallelism, const int_t te
       }
     }
   }
-  has_gradients_ = true;
 }
 
 void
@@ -545,6 +595,7 @@ Image::apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformati
 void
 Image::gauss_filter(const bool use_hierarchical_parallelism,
   const int_t team_size){
+  DEBUG_MSG("Image::gauss_filter: mask_size " << gauss_filter_mask_size_);
 
   std::vector<scalar_t> coeffs(13,0.0);
 

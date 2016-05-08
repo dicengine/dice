@@ -341,6 +341,10 @@ Teuchos::RCP<Teuchos::ParameterList> read_correlation_params(const std::string &
         diceParams->set(DICe::interpolation_method,DICe::string_to_interpolation_method(
           stringParams->get<std::string>(it->first)));
       }
+      else if(paramName == DICe::gradient_method){
+        diceParams->set(DICe::gradient_method,DICe::string_to_gradient_method(
+          stringParams->get<std::string>(it->first)));
+      }
       else if(paramName == DICe::optimization_method){
         diceParams->set(DICe::optimization_method,DICe::string_to_optimization_method(
           stringParams->get<std::string>(it->first)));

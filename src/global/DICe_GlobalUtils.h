@@ -318,7 +318,7 @@ void mms_grad_image_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
 /// \param gp_weight gauss weight
 /// \param N shape functions
 /// \param elem_force output the element force contributions
-void mms_image_diff_force(Teuchos::RCP<MMS_Problem> mms_problem,
+void mms_image_time_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & x,

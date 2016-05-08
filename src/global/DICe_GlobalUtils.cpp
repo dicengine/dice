@@ -42,6 +42,7 @@
 #include <DICe_GlobalUtils.h>
 #include <DICe_MeshIO.h>
 #include <DICe_MatrixService.h>
+#include <DICe_Schema.h>
 
 #include <BelosBlockCGSolMgr.hpp>
 #include <BelosBlockGmresSolMgr.hpp>
@@ -565,7 +566,7 @@ void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
 }
 
 
-void mms_image_diff_force(Teuchos::RCP<MMS_Problem> mms_problem,
+void mms_image_time_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & x,
@@ -584,6 +585,35 @@ void mms_image_diff_force(Teuchos::RCP<MMS_Problem> mms_problem,
     elem_force[i*spa_dim+1] -= d_phi_dt*grad_phi_y*N[i]*gp_weight*J;
   }
 }
+//
+//void image_time_force(Schema * schema,
+//  const int_t spa_dim,
+//  const int_t num_funcs,
+//  const scalar_t & x,
+//  const scalar_t & y,
+//  const scalar_t & J,
+//  const scalar_t & gp_weight,
+//  const scalar_t * N,
+//  scalar_t * elem_force){
+//  TEUCHOS_TEST_FOR_EXCEPTION(schema==NULL,std::runtime_error,
+//    "Error, the pointer to the schema must be valid for this term");
+//
+//  // compute the image force terms
+//  const intensity_t phi_0 = schema->ref_img()->interpolate_bicubic(x,y);
+//  const intensity_t phi = schema->def_img()->interpolate_bicubic(x,y);
+//  const scalar_t d_phi_dt = phi - phi_0;
+//  const scalar_t grad_phi_x = schema->ref_img()->grad_x(); // TODO needs interpolate grad_x and grad_y...
+//  const scalar_t grad_phi_y = ;
+//
+//
+//
+//
+//  mms_problem->phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
+//  for(int_t i=0;i<num_funcs;++i){
+//    elem_force[i*spa_dim+0] -= d_phi_dt*grad_phi_x*N[i]*gp_weight*J;
+//    elem_force[i*spa_dim+1] -= d_phi_dt*grad_phi_y*N[i]*gp_weight*J;
+//  }
+//}
 
 
 void calc_jacobian(const scalar_t * xcap,

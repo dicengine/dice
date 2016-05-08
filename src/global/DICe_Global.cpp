@@ -147,12 +147,13 @@ Global_Algorithm::default_constructor_tasks(Teuchos::ArrayRCP<scalar_t> & points
   mesh_->create_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
   DICe::mesh::create_exodus_output_variable_names(mesh_);
 
-  // for now default terms: TODO TODO TODO manage this another way
-  add_term(DIV_SYMMETRIC_STRAIN_REGULARIZATION);
-  add_term(MMS_GRAD_IMAGE_TENSOR);
-  add_term(MMS_IMAGE_TIME_FORCE);
-  add_term(MMS_FORCE);
+//  // for now default terms: TODO TODO TODO manage this another way
+//  add_term(DIV_SYMMETRIC_STRAIN_REGULARIZATION);
+//  add_term(MMS_GRAD_IMAGE_TENSOR);
+//  add_term(MMS_IMAGE_TIME_FORCE);
+//  add_term(MMS_FORCE);
 
+  //add_term(IMAGE_TIME_FORCE);
 }
 
 void
@@ -220,15 +221,18 @@ Global_Algorithm::pre_execution_tasks(){
   std::set<Global_EQ_Term>::iterator it_end=eq_terms_.end();
   for(;it!=it_end;++it)
     DEBUG_MSG("Global_Algorithm::pre_execution_tasks() adding EQ term " << to_string(*it));
+
+  // if this is not an mms problem, set up the images
+  if(schema_){
+    initialize_ref_image();
+    set_def_image();
+  }
 }
 
 Status_Flag
 Global_Algorithm::execute(){
   DEBUG_MSG("Global_Algorithm::execute() called");
   if(!is_initialized_) pre_execution_tasks();
-
-  // TODO remove this later
-  TEUCHOS_TEST_FOR_EXCEPTION(mms_problem_==Teuchos::null,std::runtime_error,"");
 
   const int_t spa_dim = mesh_->spatial_dimension();
   const int_t p_rank = mesh_->get_comm()->get_rank();
@@ -312,6 +316,16 @@ Global_Algorithm::execute(){
     int_t num_integration_points = -1;
     tri6_shape_func_evaluator->get_natural_integration_points(integration_order,gp_locs,gp_weights,num_integration_points);
 
+    // get the high order natural integration points for this element:
+    const int_t high_order_integration_order = 6;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > high_order_gp_locs;
+    Teuchos::ArrayRCP<scalar_t> high_order_gp_weights;
+    int_t high_order_num_integration_points = -1;
+    tri6_shape_func_evaluator->get_natural_integration_points(high_order_integration_order,
+      high_order_gp_locs,
+      high_order_gp_weights,
+      high_order_num_integration_points);
+
     // gather the OVERLAP fields
     Teuchos::RCP<MultiField> overlap_residual_ptr = mesh_->get_overlap_field(mesh::field_enums::RESIDUAL_FS);
     MultiField & overlap_residual = *overlap_residual_ptr;
@@ -344,7 +358,7 @@ Global_Algorithm::execute(){
       for(int_t i=0;i<tri6_num_funcs*spa_dim;++i)
         elem_force[i] = 0.0;
 
-      // gauss point loop:
+      // low-order gauss point loop:
       for(int_t gp=0;gp<num_integration_points;++gp){
 
         // isoparametric coords of the gauss point
@@ -385,11 +399,42 @@ Global_Algorithm::execute(){
 
         // d_dt(phi) * grad(phi)
         if(has_term(MMS_IMAGE_TIME_FORCE))
-          mms_image_diff_force(mms_problem_,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_force);
+          mms_image_time_force(mms_problem_,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_force);
 
       } // gp loop
 
-      // add the element terms that go outside the standard FEM gp loop:
+//      // high-order gauss point loop:
+//      for(int_t gp=0;gp<high_order_num_integration_points;++gp){
+//
+//        // isoparametric coords of the gauss point
+//        for(int_t dim=0;dim<spa_dim;++dim)
+//          natural_coords[dim] = gp_locs[gp][dim];
+//        //std::cout << " natural coords " << natural_coords[0] << " " << natural_coords[1] << std::endl;
+//
+//        // evaluate the shape functions and derivatives:
+//        tri6_shape_func_evaluator->evaluate_shape_functions(natural_coords,N6);
+//        tri6_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN6);
+//
+//        // physical gp location
+//        x = 0.0; y=0.0;
+//        for(int_t i=0;i<tri6_num_funcs;++i){
+//          x += nodal_coords[i*spa_dim+0]*N6[i];
+//          y += nodal_coords[i*spa_dim+1]*N6[i];
+//        }
+//        //std::cout << " physical coords " << x << " " << y << std::endl;
+//
+//        // compute the jacobian for this element:
+//        DICe::global::calc_jacobian(nodal_coords,DN6,jac,inv_jac,J,tri6_num_funcs,spa_dim);
+//
+//        // add the element terms that go outside the standard FEM gp loop:
+//        if(has_term(IMAGE_TIME_FORCE))
+//          // TODO TODO
+//
+//
+//      }
+
+
+
 
 
       // assemble the global stiffness matrix
@@ -460,35 +505,37 @@ Global_Algorithm::execute(){
 
     //tangent->describe();
 
-    // enforce the dirichlet boundary conditions
-    //const scalar_t boundary_value = 100.0;
-    // add ones to the diagonal for kinematic bc nodes:
-    for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
-      int_t ix = i*2+0;
-      int_t iy = i*2+1;
-      scalar_t b_x = 0.0;
-      scalar_t b_y = 0.0;
-      const scalar_t x = coords.local_value(ix);
-      const scalar_t y = coords.local_value(iy);
-      mms_problem_->velocity(x,y,b_x,b_y);
-      scalar_t phi = 0.0,d_phi_dt=0.0,grad_phi_x=0.0,grad_phi_y=0.0;
-      mms_problem_->phi(x,y,phi);
-      image_phi.local_value(i) = phi;
-      mms_problem_->phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
-      image_grad_phi.local_value(ix) = grad_phi_x;
-      image_grad_phi.local_value(iy) = grad_phi_y;
+    if(mms_problem_!=Teuchos::null){
+      // enforce the dirichlet boundary conditions
+      //const scalar_t boundary_value = 100.0;
+      // add ones to the diagonal for kinematic bc nodes:
+      for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+        int_t ix = i*2+0;
+        int_t iy = i*2+1;
+        scalar_t b_x = 0.0;
+        scalar_t b_y = 0.0;
+        const scalar_t x = coords.local_value(ix);
+        const scalar_t y = coords.local_value(iy);
+        mms_problem_->velocity(x,y,b_x,b_y);
+        scalar_t phi = 0.0,d_phi_dt=0.0,grad_phi_x=0.0,grad_phi_y=0.0;
+        mms_problem_->phi(x,y,phi);
+        image_phi.local_value(i) = phi;
+        mms_problem_->phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
+        image_grad_phi.local_value(ix) = grad_phi_x;
+        image_grad_phi.local_value(iy) = grad_phi_y;
 
-      //calc_mms_bc_2(x,y,schema->img_width(),b_x,b_y);
-      //calc_mms_bc_simple(x,y,b_x,b_y);
-      exact_sol.local_value(ix) = b_x;
-      exact_sol.local_value(iy) = b_y;
-      if(matrix_service_->is_col_bc(ix)){
-        // get the coordinates of the node
-        residual.local_value(ix) = b_x;
-      }
-      if(matrix_service_->is_col_bc(iy)){
-        // get the coordinates of the node
-        residual.local_value(iy) = b_y;
+        //calc_mms_bc_2(x,y,schema->img_width(),b_x,b_y);
+        //calc_mms_bc_simple(x,y,b_x,b_y);
+        exact_sol.local_value(ix) = b_x;
+        exact_sol.local_value(iy) = b_y;
+        if(matrix_service_->is_col_bc(ix)){
+          // get the coordinates of the node
+          residual.local_value(ix) = b_x;
+        }
+        if(matrix_service_->is_col_bc(iy)){
+          // get the coordinates of the node
+          residual.local_value(iy) = b_y;
+        }
       }
     }
 
@@ -511,6 +558,44 @@ Global_Algorithm::execute(){
   disp.update(1.0,lhs,1.0);
 
   return CORRELATION_SUCCESSFUL;
+}
+
+
+void
+Global_Algorithm::initialize_ref_image(){
+  TEUCHOS_TEST_FOR_EXCEPTION(!schema_,std::runtime_error,"Error, schema must not be null for this method");
+
+  schema_->ref_img()->write("pre_ref_img.tif");
+
+  Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
+  imgParams->set(DICe::compute_image_gradients,true);
+  imgParams->set(DICe::gradient_method,FINITE_DIFFERENCE);
+  ref_img_ = schema_->ref_img()->normalize(imgParams);
+  ref_img_->write("global_normalized_image.tif");
+  // take the gradienst from the normalized image and make grad images for interpolation
+  const int_t w = ref_img_->width();
+  const int_t h = ref_img_->height();
+  Teuchos::ArrayRCP<intensity_t> grad_ref_x(ref_img_->width()*ref_img_->height(),0.0);
+  Teuchos::ArrayRCP<intensity_t> grad_ref_y(ref_img_->width()*ref_img_->height(),0.0);
+  for(int_t y=0;y<h;++y){
+    for(int_t x=0;x<w;++x){
+      grad_ref_x[y*w+x] = ref_img_->grad_x(x,y);
+      grad_ref_y[y*w+x] = ref_img_->grad_y(x,y);
+    }
+  }
+  grad_x_img_ = Teuchos::rcp(new Image(w,h,grad_ref_x));
+  grad_x_img_->write("grad_x_img.tif");
+  grad_y_img_ = Teuchos::rcp(new Image(w,h,grad_ref_y));
+  grad_y_img_->write("grad_y_img.tif");
+}
+
+void
+Global_Algorithm::set_def_image(){
+  schema_->def_img()->write("pre_def_img.tif");
+
+  TEUCHOS_TEST_FOR_EXCEPTION(!schema_,std::runtime_error,"Error, schema must not be null for this method");
+  def_img_ = schema_->def_img()->normalize();
+  def_img_->write("global_normalized_def_image.tif");
 }
 
 void

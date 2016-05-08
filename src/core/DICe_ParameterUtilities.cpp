@@ -164,14 +164,20 @@ const std::string to_string(Interpolation_Method in){
   return interpolationMethodStrings[in];
 }
 DICE_LIB_DLL_EXPORT
+const std::string to_string(Gradient_Method in){
+  assert(in < MAX_GRADIENT_METHOD);
+  return gradientMethodStrings[in];
+}
+DICE_LIB_DLL_EXPORT
 const std::string to_string(Global_EQ_Term in){
   assert(in < NO_SUCH_GLOBAL_EQ_TERM);
   const static char * eqTermStrings[] = {
-  "DIV_SYMMETRIC_STRAIN_REGULARIZATION",
-  "MMS_GRAD_IMAGE_TENSOR",
-  "MMS_FORCE",
-  "MMS_IMAGE_TIME_FORCE",
-  "NO_SUCH_GLOBAL_EQ_TERM"
+    "IMAGE_TIME_FORCE",
+    "DIV_SYMMETRIC_STRAIN_REGULARIZATION",
+    "MMS_GRAD_IMAGE_TENSOR",
+    "MMS_FORCE",
+    "MMS_IMAGE_TIME_FORCE",
+    "NO_SUCH_GLOBAL_EQ_TERM"
   };
   return eqTermStrings[in];
 };
@@ -243,6 +249,18 @@ Interpolation_Method string_to_interpolation_method(std::string & in){
   return NO_SUCH_INTERPOLATION_METHOD; // prevent no return errors
 }
 
+DICE_LIB_DLL_EXPORT
+Gradient_Method string_to_gradient_method(std::string & in){
+  // convert the string to uppercase
+  stringToUpper(in);
+  for(int_t i=0;i<MAX_GRADIENT_METHOD;++i){
+    if(gradientMethodStrings[i]==in) return static_cast<Gradient_Method>(i);
+  }
+  std::cout << "Error: Gradient_Method " << in << " does not exist." << std::endl;
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
+  return NO_SUCH_GRADIENT_METHOD; // prevent no return errors
+}
+
 /// Determine if the parameter is a string parameter
 DICE_LIB_DLL_EXPORT
 bool is_string_param(const std::string & in){
@@ -267,6 +285,7 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::robust_delta_disp,1.0);  // simplex method initial shape is based on these
   defaultParams->set(DICe::robust_delta_theta,0.1); //
   defaultParams->set(DICe::interpolation_method,DICe::KEYS_FOURTH);
+  defaultParams->set(DICe::gradient_method,DICe::FINITE_DIFFERENCE);
   defaultParams->set(DICe::optimization_method,DICe::SIMPLEX);
   defaultParams->set(DICe::initialization_method,DICe::USE_FIELD_VALUES);
   defaultParams->set(DICe::projection_method,DICe::DISPLACEMENT_BASED);
@@ -312,6 +331,7 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::robust_delta_disp,1.0);  // simplex method initial shape is based on these
   defaultParams->set(DICe::robust_delta_theta,0.1); //
   defaultParams->set(DICe::interpolation_method,DICe::KEYS_FOURTH);
+  defaultParams->set(DICe::gradient_method,DICe::FINITE_DIFFERENCE);
   defaultParams->set(DICe::optimization_method,DICe::GRADIENT_BASED_THEN_SIMPLEX);
   defaultParams->set(DICe::initialization_method,DICe::USE_FIELD_VALUES);
   defaultParams->set(DICe::projection_method,DICe::DISPLACEMENT_BASED);

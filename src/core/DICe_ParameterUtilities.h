@@ -87,6 +87,10 @@ const std::string to_string(Optimization_Method in);
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Interpolation_Method in);
 
+/// Convert a DICe::Gradient_Method to string
+DICE_LIB_DLL_EXPORT
+const std::string to_string(Gradient_Method in);
+
 /// Convert a DICe::Global_EQ_Term to string
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Global_EQ_Term in);
@@ -110,6 +114,10 @@ Initialization_Method string_to_initialization_method(std::string & in);
 /// Convert a string to a DICe::Interpolation_Method
 DICE_LIB_DLL_EXPORT
 Interpolation_Method string_to_interpolation_method(std::string & in);
+
+/// Convert a string to a DICe::Interpolation_Method
+DICE_LIB_DLL_EXPORT
+Gradient_Method string_to_gradient_method(std::string & in);
 
 /// Convert a string to a DICe::Optimization_Method
 DICE_LIB_DLL_EXPORT

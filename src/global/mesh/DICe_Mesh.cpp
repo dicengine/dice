@@ -1539,7 +1539,7 @@ void tri2d_natural_integration_points(const int_t order,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
   Teuchos::ArrayRCP<scalar_t> & weights,
   int_t & num_points){
-  TEUCHOS_TEST_FOR_EXCEPTION(order < 0 || order > 5,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(order < 0 || order > 7,std::runtime_error,"");
   const int_t spa_dim = 2;
   // Dunavant quadrature:
   if(order==1){

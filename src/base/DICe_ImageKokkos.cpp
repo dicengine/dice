@@ -55,7 +55,8 @@ Image::Image(const char * file_name,
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   has_gauss_filter_(false),
-  file_name_(file_name)
+  file_name_(file_name),
+  gradient_method_(FINITE_DIFFERENCE)
 {
   try{
     utils::read_image_dimensions(file_name,width_,height_);
@@ -85,7 +86,8 @@ Image::Image(const char * file_name,
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   has_gauss_filter_(false),
-  file_name_(file_name)
+  file_name_(file_name),
+  gradient_method_(FINITE_DIFFERENCE)
 {
   // get the image dims
   int_t img_width = 0;
@@ -122,7 +124,8 @@ Image::Image(const int_t width,
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   has_gauss_filter_(false),
-  file_name_("(from array)")
+  file_name_("(from array)"),
+  gradient_method_(FINITE_DIFFERENCE)
 {
   assert(height_>0);
   assert(width_>0);
@@ -148,7 +151,8 @@ Image::Image(Teuchos::RCP<Image> img,
   intensity_rcp_(Teuchos::null),
   has_gradients_(img->has_gradients()),
   has_gauss_filter_(img->has_gauss_filter()),
-  file_name_(img->file_name())
+  file_name_(img->file_name()),
+  gradient_method_(FINITE_DIFFERENCE)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(offset_x_<0,std::invalid_argument,"Error, offset_x_ cannot be negative.");
   TEUCHOS_TEST_FOR_EXCEPTION(offset_y_<0,std::invalid_argument,"Error, offset_x_ cannot be negative.");
@@ -211,6 +215,9 @@ Image::Image(Teuchos::RCP<Image> img,
         }
     }
     if(params->isParameter(DICe::compute_image_gradients)){
+      if(params->isParameter(DICe::gradient_method)){
+        gradient_method_ = params->get<Gradient_Method>(DICe::gradient_method);
+      }
       if(!img->has_gradients()&&params->get<bool>(DICe::compute_image_gradients,false)){
         // if gradients have not been computed, but ther are requested here, compute them
         DEBUG_MSG("Image gradients requested, but origin image does not have gradients, computing them here");
@@ -328,7 +335,20 @@ Image::interpolate_bicubic(const scalar_t & local_x, const scalar_t & local_y){
 }
 
 void
+Image::smooth_gradients_convolution_5_point(){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, this method should not be called");
+}
+
+/// compute the image gradients
+void
+Image::compute_gradients_finite_difference(){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, this method should not be called");
+}
+
+void
 Image::compute_gradients(const bool use_hierarchical_parallelism, const int_t team_size){
+  TEUCHOS_TEST_FOR_EXCEPTION(gradient_method_!=FINITE_DIFFERENCE,std::runtime_error,
+    "Error, gradient method must be FINITE_DIFFERENCE (this is the only method implemented for Kokkos");
   // Flat gradients:
   if(use_hierarchical_parallelism)
     Kokkos::parallel_for(Kokkos::TeamPolicy<Grad_Tag>(height_,team_size),*this);

@@ -45,6 +45,7 @@
 #include <DICe_Mesh.h>
 #include <DICe_GlobalUtils.h>
 #include <DICe_MatrixService.h>
+#include <DICe_Image.h>
 
 #include <BelosBlockCGSolMgr.hpp>
 #include <BelosBlockGmresSolMgr.hpp>
@@ -125,6 +126,12 @@ public:
     return eq_terms_.find(term)!=eq_terms_.end();
   }
 
+  /// set the reference image and perform the necessary pre-filtering + compute gradients
+  void initialize_ref_image();
+
+  /// set the reference image and perform the necessary pre-filtering + compute gradients
+  void set_def_image();
+
 protected:
   /// protect the default constructor
   Global_Algorithm(const Global_Algorithm&);
@@ -152,6 +159,14 @@ protected:
   bool is_initialized_;
   /// set of active terms in the formulation
   std::set<Global_EQ_Term> eq_terms_;
+  /// reference image (filtered and normalized)
+  Teuchos::RCP<Image> ref_img_;
+  /// deformed image (filtered and normalized)
+  Teuchos::RCP<Image> def_img_;
+  /// gradient_x image
+  Teuchos::RCP<Image> grad_x_img_;
+  /// gradient_y image
+  Teuchos::RCP<Image> grad_y_img_;
 };
 
 }// end global namespace

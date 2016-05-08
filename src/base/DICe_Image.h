@@ -326,6 +326,10 @@ public:
     const int_t cy,
     const bool apply_in_place=false);
 
+  /// normalize the image intensity values
+  /// \params the image parameters to use
+  Teuchos::RCP<Image> normalize(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
   /// apply a rotation to this image to create another image
   /// in this case, there are only three options 90, 180, and 270 degree rotations
   /// \param rotation enum that defines the rotation
@@ -336,6 +340,12 @@ public:
   /// compute the image gradients
   void compute_gradients(const bool use_hierarchical_parallelism=false,
     const int_t team_size=256);
+
+  /// compute the image gradients
+  void smooth_gradients_convolution_5_point();
+
+  /// compute the image gradients
+  void compute_gradients_finite_difference();
 
   /// returns true if the gradients have been computed
   bool has_gradients()const{
@@ -466,6 +476,8 @@ private:
   int_t gauss_filter_half_mask_;
   /// name of the file that was the source of this image
   std::string file_name_;
+  /// gradient method
+  Gradient_Method gradient_method_;
 };
 
 }// End DICe Namespace

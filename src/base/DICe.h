@@ -141,6 +141,8 @@ const char* const use_integrated_dic = "use_integrated_dic";
 /// String parameter name
 const char* const interpolation_method = "interpolation_method";
 /// String parameter name
+const char* const gradient_method = "gradient_method";
+/// String parameter name
 const char* const initialization_method = "initialization_method";
 /// String parameter name
 const char* const optimization_method = "optimization_method";
@@ -434,6 +436,21 @@ const static char * interpolationMethodStrings[] = {
   "KEYS_FOURTH"
 };
 
+/// Gradient method
+enum Gradient_Method {
+  FINITE_DIFFERENCE=0,
+  CONVOLUTION_5_POINT,
+  // DON'T ADD ANY BELOW MAX
+  MAX_GRADIENT_METHOD,
+  NO_SUCH_GRADIENT_METHOD
+};
+
+const static char * gradientMethodStrings[] = {
+  "FINITE_DIFFERENCE",
+  "CONVOLUTION_5_POINT"
+};
+
+
 /// Correlation routine (determines how the correlation steps are executed).
 /// Can be customized for a particular application
 enum Correlation_Routine {
@@ -572,7 +589,8 @@ enum Combine_Mode{
 
 /// Global method terms to include in the residual
 enum Global_EQ_Term{
-  DIV_SYMMETRIC_STRAIN_REGULARIZATION=0,
+  IMAGE_TIME_FORCE=0,
+  DIV_SYMMETRIC_STRAIN_REGULARIZATION,
   MMS_GRAD_IMAGE_TENSOR,
   MMS_FORCE,
   MMS_IMAGE_TIME_FORCE,
@@ -744,6 +762,13 @@ const Correlation_Parameter interpolation_method_param(interpolation_method,
   "Determines which interpolation method to use (can also affect the image gradients)",
   interpolationMethodStrings,
   MAX_INTERPOLATION_METHOD);
+/// Correlation parameter and properties
+const Correlation_Parameter gradient_method_param(gradient_method,
+  STRING_PARAM,
+  true,
+  "Determines which image gradient method to use",
+  gradientMethodStrings,
+  MAX_GRADIENT_METHOD);
 /// Correlation parameter and properties
 const Correlation_Parameter initialization_method_param(initialization_method,
   STRING_PARAM,
@@ -936,11 +961,12 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 56;
-/// Vector of valid parameter names
+const int_t num_valid_correlation_params = 57;
+/// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
   interpolation_method_param,
+  gradient_method_param,
   initialization_method_param,
   optimization_method_param,
   projection_method_param,
@@ -999,11 +1025,12 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_global_correlation_params = 9;
+const int_t num_valid_global_correlation_params = 10;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_global_correlation_params[num_valid_global_correlation_params] = {
   use_global_dic_param,
   interpolation_method_param,
+  gradient_method_param,
   gauss_filter_images_param,
   gauss_filter_mask_size_param,
   output_spec_param,

@@ -561,6 +561,11 @@ public:
     return interpolation_method_;
   }
 
+  /// Returns the interpolation method (see DICe_Types.h for valid values)
+  Gradient_Method gradient_method()const{
+    return gradient_method_;
+  }
+
   /// Returns the optimization method (see DICe_Types.h for valid values)
   Optimization_Method optimization_method()const{
     return optimization_method_;
@@ -1117,6 +1122,8 @@ private:
   Correlation_Routine correlation_routine_;
   /// DICe::Interpolation_Method
   Interpolation_Method interpolation_method_;
+  /// DICe::Interpolation_Method
+  Gradient_Method gradient_method_;
   /// DICe::Optimization_Method
   Optimization_Method optimization_method_;
   /// DICe::Initialization_Method

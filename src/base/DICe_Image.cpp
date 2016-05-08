@@ -92,6 +92,7 @@ Image::post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params
   gauss_filter_mask_size_ = 7; // default sizes
   gauss_filter_half_mask_ = 4;
   if(params==Teuchos::null) return;
+  gradient_method_ = params->get<Gradient_Method>(DICe::gradient_method,FINITE_DIFFERENCE);
   const bool gauss_filter_image =  params->get<bool>(DICe::gauss_filter_images,false);
   const bool gauss_filter_use_hierarchical_parallelism = params->get<bool>(DICe::gauss_filter_use_hierarchical_parallelism,false);
   const int gauss_filter_team_size = params->get<int>(DICe::gauss_filter_team_size,256);
@@ -120,6 +121,42 @@ Image::diff(Teuchos::RCP<Image> rhs) const{
     diff += diff_*diff_;
   }
   return std::sqrt(diff);
+}
+
+/// normalize the image intensity values
+Teuchos::RCP<Image>
+Image::normalize(const Teuchos::RCP<Teuchos::ParameterList> & params){
+  Teuchos::ArrayRCP<intensity_t> normalized_intens(width_*height_,0.0);
+  // TODO make the normalization more selective (only include the ROI)
+  intensity_t mean = 0.0;
+  int_t num_pixels = 0;
+  const int_t buffer = 10;
+  for(int_t y=buffer;y<height_-buffer;++y){
+    for(int_t x=buffer;x<width_-buffer;++x){
+      mean += (*this)(x,y);
+      if(num_pixels<10)
+      std::cout << " x " << x << " y " << y << " " << (*this)(x,y) << " p1 " << (*this)(x-1,y-1) << std::endl;
+      num_pixels++;
+    }
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(num_pixels<=0,std::runtime_error,"");
+  mean/=num_pixels;
+  DEBUG_MSG("Image::normalize() mean " << mean << " num pixels in mean " << num_pixels);
+
+  intensity_t mean_sum = 0.0;
+  for(int_t y=buffer;y<height_-buffer;++y){
+    for(int_t x=buffer;x<width_-buffer;++x){
+      mean_sum += ((*this)(x,y) - mean)*((*this)(x,y) - mean);
+    }
+  }
+  mean_sum = std::sqrt(mean_sum);
+  DEBUG_MSG("Image::normalize() mean sum " << mean_sum);
+  TEUCHOS_TEST_FOR_EXCEPTION(mean_sum==0.0,std::runtime_error,
+    "Error, mean sum should not be zero");
+  for(int_t i=0;i<width_*height_;++i)
+    normalized_intens[i] = ((*this)(i) - mean) / mean_sum;
+   Teuchos::RCP<Image> result = Teuchos::rcp(new Image(width_,height_,normalized_intens,params));
+   return result;
 }
 
 void
