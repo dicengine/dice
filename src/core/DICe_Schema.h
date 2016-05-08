@@ -1147,8 +1147,10 @@ private:
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids_;
   /// force simplex for these ids
   Teuchos::RCP<std::set<int_t> > force_simplex_;
-  /// filter the images using a 7 point gauss filter
+  /// filter the images using a gauss_filter_mask_size_ point gauss filter
   bool gauss_filter_images_;
+  /// filter the images using a gauss_filter_mask_size_ point gauss filter
+  int_t gauss_filter_mask_size_;
   /// Compute the reference image gradients
   bool compute_ref_gradients_;
   /// Compute the deformed image gradients

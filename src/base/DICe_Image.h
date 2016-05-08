@@ -358,7 +358,7 @@ public:
   }
 
   /// filter the image using a 7 point gauss filter
-  void gauss_filter(const bool use_hierarchical_parallelism=false,
+  void gauss_filter(const int_t mask_size=-1,const bool use_hierarchical_parallelism=false,
     const int_t team_size=256);
 
   /// returns the name of the file if available
