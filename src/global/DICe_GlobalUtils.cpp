@@ -40,6 +40,7 @@
 // @HEADER
 
 #include <DICe_GlobalUtils.h>
+#include <DICe_Global.h>
 #include <DICe_MeshIO.h>
 #include <DICe_MatrixService.h>
 #include <DICe_Schema.h>
@@ -56,433 +57,6 @@
 namespace DICe {
 
 namespace global{
-//
-//void initialize_exodus_output(Schema * schema,
-//  const std::string & output_folder){
-//  Teuchos::RCP<DICe::mesh::Mesh> mesh = schema->mesh();
-//  DICe::mesh::create_output_exodus_file(mesh,output_folder);
-//  // create the necessary fields:
-//  mesh->create_field(mesh::field_enums::DISPLACEMENT_FS);
-//  mesh->create_field(mesh::field_enums::RESIDUAL_FS);
-//  mesh->create_field(mesh::field_enums::LHS_FS);
-//  mesh->create_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
-//  mesh->create_field(mesh::field_enums::IMAGE_PHI_FS);
-//  mesh->create_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
-//   DICe::mesh::create_exodus_output_variable_names(mesh);
-//}
-//
-//// take a schema pointer and create some fields on the mesh
-//Status_Flag execute_global_step(Schema * schema){
-//  Teuchos::RCP<DICe::mesh::Mesh> mesh = schema->mesh();
-//
-//  int_t p_rank = mesh->get_comm()->get_rank();
-//  const int_t spa_dim = mesh->spatial_dimension();
-//  //const scalar_t min_value_threshold = 1.0E-10; // smallest value of the stiffness matrix that will actually be inserted
-//
-//  // square the alpha term
-//  scalar_t alpha2 = schema->global_constraint_coefficient();
-//  alpha2*=alpha2;
-//  const scalar_t m = 2.0;
-//  const scalar_t g = 10.0;
-//
-//  // clear the dislacement field: TODO may not want to do this for an image progression
-//  MultiField & residual = *mesh->get_field(mesh::field_enums::RESIDUAL_FS);
-//  MultiField & lhs = *mesh->get_field(mesh::field_enums::LHS_FS);
-//  MultiField & disp = *mesh->get_field(mesh::field_enums::DISPLACEMENT_FS);
-//  disp.put_scalar(0.0);
-//  residual.put_scalar(0.0);
-//  MultiField & coords = *mesh->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
-//  MultiField & exact_sol = *mesh->get_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
-//  MultiField & image_phi = *mesh->get_field(mesh::field_enums::IMAGE_PHI_FS);
-//  MultiField & image_grad_phi = *mesh->get_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
-//
-//  scalar_t residual_norm = 0.0;
-//
-//  // initialize the solver:
-//  // set up the solver
-//  Teuchos::ParameterList belos_list;
-//  const int_t maxiters = 500; // these are the max iterations of the belos solver not the nonlinear iterations
-//  const int_t numblk = (maxiters > 500) ? 500 : maxiters;
-//  const int_t maxrestarts = 1;
-//  const double conv_tol = 1.0E-8;
-//  std::string ortho("DGKS");
-//  belos_list.set( "Num Blocks", numblk);
-//  belos_list.set( "Maximum Iterations", maxiters);
-//  belos_list.set( "Convergence Tolerance", conv_tol); // Relative convergence tolerance requested
-//  belos_list.set( "Maximum Restarts", maxrestarts );  // Maximum number of restarts allowed
-//  int verbosity = Belos::Errors + Belos::Warnings + Belos::Debug + Belos::TimingDetails + Belos::FinalSummary + Belos::StatusTestDetails;
-//  belos_list.set( "Verbosity", verbosity );
-//  belos_list.set( "Output Style", Belos::Brief );
-//  belos_list.set( "Output Frequency", 1 );
-//  belos_list.set( "Orthogonalization", ortho); // Orthogonalization type
-//
-//  /// linear problem for solve
-//  Teuchos::RCP< Belos::LinearProblem<mv_scalar_type,vec_type,operator_type> > linear_problem =
-//      Teuchos::rcp(new Belos::LinearProblem<mv_scalar_type,vec_type,operator_type>());
-//  /// Belos solver
-//  Teuchos::RCP< Belos::SolverManager<mv_scalar_type,vec_type,operator_type> > belos_solver  =
-//      Teuchos::rcp( new Belos::BlockGmresSolMgr<mv_scalar_type,vec_type,operator_type>(linear_problem,Teuchos::rcp(&belos_list,false)));
-//
-//  DEBUG_MSG("Solver and linear problem have been initialized.");
-//
-//  Teuchos::RCP<DICe::Matrix_Service> matrix_service;
-//  matrix_service = Teuchos::rcp(new DICe::Matrix_Service(mesh->spatial_dimension()));
-//  matrix_service->initialize_bc_register(mesh->get_vector_node_dist_map()->get_num_local_elements(),
-//    mesh->get_vector_node_overlap_map()->get_num_local_elements());
-//
-//  // set up the boundary condition nodes: FIXME this assumes there is only one node set
-//  //mesh->get_vector_node_dist_map()->describe();
-//  DICe::mesh::bc_set * bc_set = mesh->get_node_bc_sets();
-//  const int_t boundary_node_set_id = 0;
-//  for(size_t i=0;i<bc_set->find(boundary_node_set_id)->second.size();++i){
-//    const int_t node_gid = bc_set->find(boundary_node_set_id)->second[i];
-//    //std::cout << " disp x condition on node " << node_gid << std::endl;
-//    bool is_local_node = mesh->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim+1);
-//    if(is_local_node){
-//      const int_t row_id = mesh->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim+1);
-//      matrix_service->register_row_bc(row_id);
-//    }
-//    int_t col_id = mesh->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim+1);
-//    matrix_service->register_col_bc(col_id);
-//    //std::cout << " disp y condition on node " << node_gid << std::endl;
-//    is_local_node = mesh->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim+2);
-//    if(is_local_node){
-//      const int_t row_id = mesh->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim+2);
-//      matrix_service->register_row_bc(row_id);
-//    }
-//    col_id = mesh->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim+2);
-//    matrix_service->register_col_bc(col_id);
-//  }
-//
-//  DEBUG_MSG("Matrix service has been initialized.");
-//
-//  const int_t relations_size = mesh->max_num_node_relations();
-//  Teuchos::RCP<DICe::MultiField_Matrix> tangent =
-//      Teuchos::rcp(new DICe::MultiField_Matrix(*mesh->get_vector_node_dist_map(),relations_size));
-//
-//  DEBUG_MSG("Tangent has been allocated.");
-//
-//  // global iteration loop:
-//  const int_t max_its = 1;
-//  if(p_rank==0){
-//    DEBUG_MSG("    iteration  residual_norm");
-//  }
-//  for(int_t iteration=0;iteration<max_its;++iteration){
-//    if(p_rank==0){
-//      DEBUG_MSG("    " << iteration << "      " << residual_norm);
-//    }
-//
-//    // assemble the distributed tangent matrix
-//    Teuchos::RCP<DICe::MultiField_Matrix> tangent_overlap =
-//        Teuchos::rcp(new DICe::MultiField_Matrix(*mesh->get_vector_node_overlap_map(),relations_size));
-//    // clear the jacobian values
-//    tangent_overlap->put_scalar(0.0);
-//    tangent->put_scalar(0.0);
-//    // allocate simple temp arrays for holding values of the local jacobain contributions
-//    // this will hopefully limit the number of calls to crsmatrix.insertGlobalValues
-//    std::map<int_t,Teuchos::Array<int_t> > col_id_array_map;
-//    std::map<int_t,Teuchos::Array<mv_scalar_type> > values_array_map;
-//    for(int_t i=0;i<tangent_overlap->num_local_rows();++i)
-//    {
-//      Teuchos::Array<int_t> id_array;
-//      Teuchos::Array<int_t> local_id_array;
-//      const int_t row_gid = mesh->get_vector_node_overlap_map()->get_global_element(i);
-//      col_id_array_map.insert(std::pair<int_t,Teuchos::Array<int_t> >(row_gid,id_array));
-//      Teuchos::Array<mv_scalar_type> value_array;
-//      values_array_map.insert(std::pair<int_t,Teuchos::Array<mv_scalar_type> >(row_gid,value_array));
-//    }
-//
-//    // establish the shape functions (using P2-P1 element for velocity pressure, or P2 velocity if no constraint):
-//    DICe::mesh::Shape_Function_Evaluator_Factory shape_func_eval_factory;
-////    Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> tri3_shape_func_evaluator =
-////        shape_func_eval_factory.create(DICe::mesh::TRI3);
-////    const int_t tri3_num_funcs = tri3_shape_func_evaluator->num_functions();
-////    scalar_t N3[tri3_num_funcs];
-////    scalar_t DN3[tri3_num_funcs*spa_dim];
-//    Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> tri6_shape_func_evaluator =
-//        shape_func_eval_factory.create(DICe::mesh::TRI6);
-//    const int_t tri6_num_funcs = tri6_shape_func_evaluator->num_functions();
-//    scalar_t N6[tri6_num_funcs];
-//    scalar_t DN6[tri6_num_funcs*spa_dim];
-//    int_t node_ids[tri6_num_funcs];
-//    scalar_t nodal_coords[tri6_num_funcs*spa_dim];
-//    scalar_t natural_coords[spa_dim];
-//    scalar_t jac[spa_dim*spa_dim];
-//    scalar_t inv_jac[spa_dim*spa_dim];
-//    scalar_t J =0.0;
-//    const int_t B_dim = 2*spa_dim - 1;
-//    scalar_t B[B_dim*tri6_num_funcs*spa_dim];
-//    scalar_t elem_stiffness[tri6_num_funcs*spa_dim*tri6_num_funcs*spa_dim];
-//    scalar_t elem_force[tri6_num_funcs*spa_dim];
-//    scalar_t grad_phi[spa_dim];
-//    scalar_t x=0.0,y=0.0,fx=0.0,fy=0.0;
-//
-//    // get the natural integration points for this element:
-//    const int_t integration_order = 3;
-//    Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > gp_locs;
-//    Teuchos::ArrayRCP<scalar_t> gp_weights;
-//    int_t num_integration_points = -1;
-//    tri6_shape_func_evaluator->get_natural_integration_points(integration_order,gp_locs,gp_weights,num_integration_points);
-//
-//    // gather the OVERLAP fields
-//    Teuchos::RCP<MultiField> overlap_residual_ptr = mesh->get_overlap_field(mesh::field_enums::RESIDUAL_FS);
-//    MultiField & overlap_residual = *overlap_residual_ptr;
-//    overlap_residual.put_scalar(0.0);
-//    Teuchos::RCP<MultiField> overlap_coords_ptr = mesh->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_FS);
-//    MultiField & overlap_coords = *overlap_coords_ptr;
-//    Teuchos::ArrayRCP<const scalar_t> coords_values = overlap_coords.get_1d_view();
-//
-//    // element loop
-//    DICe::mesh::element_set::iterator elem_it = mesh->get_element_set()->begin();
-//    DICe::mesh::element_set::iterator elem_end = mesh->get_element_set()->end();
-//    for(;elem_it!=elem_end;++elem_it)
-//    {
-//      //std::cout << "ELEM: " << elem_it->get()->global_id() << std::endl;
-//      const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
-//      // compute the shape functions and derivatives for this element:
-//      for(int_t nd=0;nd<tri6_num_funcs;++nd){
-//        node_ids[nd] = connectivity[nd]->global_id();
-//        //std::cout << " gid " << node_ids[nd] << std::endl;
-//        for(int_t dim=0;dim<spa_dim;++dim){
-//          const int_t stride = nd*spa_dim + dim;
-//          nodal_coords[stride] = coords_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
-//          //std::cout << " node coords " << nodal_coords[stride] << std::endl;
-//        }
-//      }
-//
-//      // clear the elem stiffness
-//      for(int_t i=0;i<tri6_num_funcs*spa_dim*tri6_num_funcs*spa_dim;++i)
-//        elem_stiffness[i] = 0.0;
-//
-//      // clear the elem force
-//      for(int_t i=0;i<tri6_num_funcs*spa_dim;++i)
-//        elem_force[i] = 0.0;
-//
-//      // gauss point loop:
-//      for(int_t gp=0;gp<num_integration_points;++gp){
-//
-//        // clear the temp matrices:
-//        for(int_t i=0;i<B_dim*tri6_num_funcs*spa_dim;++i){
-//          B[i] = 0.0;
-//        }
-//
-//        // isoparametric coords of the gauss point
-//        for(int_t dim=0;dim<spa_dim;++dim)
-//          natural_coords[dim] = gp_locs[gp][dim];
-//        //std::cout << " natural coords " << natural_coords[0] << " " << natural_coords[1] << std::endl;
-//
-//        // evaluate the shape functions and derivatives:
-//        tri6_shape_func_evaluator->evaluate_shape_functions(natural_coords,N6);
-//        tri6_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN6);
-//
-//        // physical gp location
-//        x = 0.0; y=0.0;
-//        for(int_t i=0;i<tri6_num_funcs;++i){
-//          x += nodal_coords[i*spa_dim+0]*N6[i];
-//          y += nodal_coords[i*spa_dim+1]*N6[i];
-//        }
-//        //std::cout << " physical coords " << x << " " << y << std::endl;
-//
-//        // compute the jacobian for this element:
-//        DICe::global::calc_jacobian(nodal_coords,DN6,jac,inv_jac,J,tri6_num_funcs,spa_dim);
-//
-//        // compute the B matrix
-//        DICe::global::calc_B(DN6,inv_jac,tri6_num_funcs,spa_dim,B);
-//
-//        // compute B'*B
-//        for(int_t i=0;i<tri6_num_funcs*spa_dim;++i){
-//          for(int_t j=0;j<B_dim;++j){
-//            for(int_t k=0;k<tri6_num_funcs*spa_dim;++k){
-//              elem_stiffness[i*tri6_num_funcs*spa_dim + k] +=
-//                  alpha2*B[j*tri6_num_funcs*spa_dim+i]*B[j*tri6_num_funcs*spa_dim + k] * gp_weights[gp] * J;
-//            }
-//          }
-//        }
-//
-//        // compute the image stiffness terms
-//        scalar_t d_phi_dt = 0.0, grad_phi_x = 0.0, grad_phi_y = 0.0;
-//        calc_mms_phi_terms_rich(x,y,m,schema->img_width(),g,d_phi_dt,grad_phi_x,grad_phi_y);
-//        grad_phi[0] = grad_phi_x;
-//        grad_phi[1] = grad_phi_y;
-//
-//        // image stiffness terms
-//        for(int_t i=0;i<tri6_num_funcs;++i){
-//          const int_t row1 = (i*spa_dim) + 0;
-//          const int_t row2 = (i*spa_dim) + 1;
-//          for(int_t j=0;j<tri6_num_funcs;++j){
-//            elem_stiffness[row1*tri6_num_funcs*spa_dim + j*spa_dim+0]
-//                           += N6[i]*(grad_phi[0]*grad_phi[0])*N6[j]*gp_weights[gp]*J;
-//            elem_stiffness[row1*tri6_num_funcs*spa_dim + j*spa_dim+1]
-//                           += N6[i]*(grad_phi[0]*grad_phi[1])*N6[j]*gp_weights[gp]*J;
-//            elem_stiffness[row2*tri6_num_funcs*spa_dim + j*spa_dim+0]
-//                           += N6[i]*(grad_phi[1]*grad_phi[0])*N6[j]*gp_weights[gp]*J;
-//            elem_stiffness[row2*tri6_num_funcs*spa_dim + j*spa_dim+1]
-//                           += N6[i]*(grad_phi[1]*grad_phi[1])*N6[j]*gp_weights[gp]*J;
-//          }
-//        }
-////        std::cout << " elem stiffness" << std::endl;
-////        for(int_t i=0;i<tri6_num_funcs*spa_dim;++i){
-////          for(int_t j=0;j<tri6_num_funcs*spa_dim;++j){
-////            std::cout << elem_stiffness[i*tri6_num_funcs*spa_dim+j] << " ";
-////          }
-////          std::cout << std::endl;
-////        }
-//
-//        // compute the image force terms
-//        fx = -d_phi_dt * grad_phi[0];
-//        fy = -d_phi_dt * grad_phi[1];
-//
-//        // analytic force terms
-//        scalar_t lap_b_x=0.0,lap_b_y=0.0,b_x=0.0,b_y=0.0;
-//        calc_mms_lap_vel_rich(x,y,schema->img_width(),m,lap_b_x,lap_b_y);
-//        calc_mms_vel_rich(x,y,schema->img_width(),m,b_x,b_y);
-////        std::cout << " b " << b_x << " " << b_y << std::endl;
-////        std::cout << " lap_b " << lap_b_x << " " << lap_b_y << std::endl;
-////        std::cout << " grad_phi " << grad_phi_x << " " << grad_phi_y << std::endl;
-////        std::cout << " dphidt " << d_phi_dt << std::endl;
-//        fx += grad_phi[0]*d_phi_dt + (grad_phi[0]*grad_phi[0]*b_x + grad_phi[0]*grad_phi[1]*b_y) - alpha2*lap_b_x;
-//        fy += grad_phi[1]*d_phi_dt + (grad_phi[1]*grad_phi[0]*b_x + grad_phi[1]*grad_phi[1]*b_y) - alpha2*lap_b_y;
-//
-//        //compute the force terms for this point
-//        //calc_mms_force_elasticity(x,y,alpha2,schema->img_width(),m,fx,fy);
-//        //calc_mms_force_simple(alpha2,fx,fy);
-//        for(int_t i=0;i<tri6_num_funcs;++i){
-//          elem_force[i*spa_dim+0] += fx*N6[i]*gp_weights[gp]*J;
-//          elem_force[i*spa_dim+1] += fy*N6[i]*gp_weights[gp]*J;
-//        }
-////        std::cout << " elem force" << std::endl;
-////        for(int_t i=0;i<tri6_num_funcs*spa_dim;++i){
-////            std::cout << elem_force[i] << " ";
-////          std::cout << std::endl;
-////        }
-//      } // gp loop
-//
-//      // assemble the global stiffness matrix
-//      for(int_t i=0;i<tri6_num_funcs;++i){
-//        for(int_t m=0;m<spa_dim;++m){
-//          for(int_t j=0;j<tri6_num_funcs;++j){
-//            for(int_t n=0;n<spa_dim;++n){
-//              const int_t row = (node_ids[i]-1)*spa_dim + m + 1;
-//              const int_t col = (node_ids[j]-1)*spa_dim + n + 1;
-//              const scalar_t value = elem_stiffness[(i*spa_dim + m)*tri6_num_funcs*spa_dim + (j*spa_dim + n)];
-//              const bool is_local_row_node = mesh->get_vector_node_dist_map()->is_node_global_elem(row);
-//              const bool row_is_bc_node = is_local_row_node ?
-//                  matrix_service->is_row_bc(mesh->get_vector_node_dist_map()->get_local_element(row)) : false;
-//              //const bool col_is_bc_node = matrix_service->is_col_bc(mesh->get_vector_node_overlap_map()->get_local_element(col));
-//              //std::cout << " row " << row << " col " << col << " row_is_bc " << row_is_bc_node << " col_is_bc " << col_is_bc_node << std::endl;
-//              if(!row_is_bc_node){// && !col_is_bc_node){
-//                col_id_array_map.find(row)->second.push_back(col);
-//                values_array_map.find(row)->second.push_back(value);
-//              }
-//            } // spa dim
-//          } // num_funcs
-//        } // spa dim
-//      } // num_funcs
-//
-//      // assemble the force terms
-//      for(int_t i=0;i<tri6_num_funcs;++i){
-//        //int_t nodex_local_id = connectivity[i]->overlap_local_id()*spa_dim;
-//        //int_t nodey_local_id = nodex_local_id + 1;
-//        //overlap_residual.local_value(nodex_local_id) += elem_force[i*spa_dim+0];
-//        //overlap_residual.local_value(nodey_local_id) += elem_force[i*spa_dim+1];
-//        int_t nodex_id = (connectivity[i]->global_id()-1)*spa_dim+1;
-//        int_t nodey_id = nodex_id + 1;
-//        residual.global_value(nodex_id) += elem_force[i*spa_dim+0];
-//        residual.global_value(nodey_id) += elem_force[i*spa_dim+1];
-//      } // num_funcs
-//
-//    }  // elem
-//
-//    // export the overlap residual to the dist vector
-//    //mesh->field_overlap_export(overlap_residual_ptr, mesh::field_enums::RESIDUAL_FS, ADD);
-//
-//    // add ones to the diagonal for kinematic bc nodes:
-//    for(int_t i=0;i<mesh->get_vector_node_overlap_map()->get_num_local_elements();++i)
-//    {
-//      if(matrix_service->is_col_bc(i))
-//      {
-//        const int_t global_id = mesh->get_vector_node_overlap_map()->get_global_element(i);
-//        col_id_array_map.find(global_id)->second.push_back(global_id);
-//        values_array_map.find(global_id)->second.push_back(1.0);
-//      }
-//    }
-//
-//    std::map<int_t,Teuchos::Array<int_t> >::iterator cmap_it = col_id_array_map.begin();
-//    std::map<int_t,Teuchos::Array<int_t> >::iterator cmap_end = col_id_array_map.end();
-//    for(;cmap_it!=cmap_end;++cmap_it)
-//    {
-//      int_t global_row = cmap_it->first;
-//      const Teuchos::Array<int_t> ids_array = cmap_it->second;
-//      const Teuchos::Array<mv_scalar_type> values_array = values_array_map.find(cmap_it->first)->second;
-//      if(ids_array.empty()) continue;
-//      // now do the insertGlobalValues calls:
-//      tangent_overlap->insert_global_values(global_row,ids_array,values_array);
-//    }
-//    tangent_overlap->fill_complete();
-//
-//    MultiField_Exporter exporter (*mesh->get_vector_node_overlap_map(),*mesh->get_vector_node_dist_map());
-//    tangent->do_export(tangent_overlap, exporter, ADD);
-//    tangent->fill_complete();
-//
-//    //tangent->describe();
-//
-//    // enforce the dirichlet boundary conditions
-//    //const scalar_t boundary_value = 100.0;
-//    // add ones to the diagonal for kinematic bc nodes:
-//    for(int_t i=0;i<mesh->get_scalar_node_dist_map()->get_num_local_elements();++i){
-//      int_t ix = i*2+0;
-//      int_t iy = i*2+1;
-//      scalar_t b_x = 0.0;
-//      scalar_t b_y = 0.0;
-//      const scalar_t x = coords.local_value(ix);
-//      const scalar_t y = coords.local_value(iy);
-//      calc_mms_vel_rich(x,y,schema->img_width(),m,b_x,b_y);
-//      scalar_t phi = 0.0,d_phi_dt=0.0,grad_phi_x=0.0,grad_phi_y=0.0;
-//      calc_mms_phi_rich(x,y,schema->img_width(),g,phi);
-//      image_phi.local_value(i) = phi;
-//      calc_mms_phi_terms_rich(x,y,m,schema->img_width(),g,d_phi_dt,grad_phi_x,grad_phi_y);
-//      image_grad_phi.local_value(ix) = grad_phi_x;
-//      image_grad_phi.local_value(iy) = grad_phi_y;
-//
-//      //calc_mms_bc_2(x,y,schema->img_width(),b_x,b_y);
-//      //calc_mms_bc_simple(x,y,b_x,b_y);
-//      exact_sol.local_value(ix) = b_x;
-//      exact_sol.local_value(iy) = b_y;
-//      if(matrix_service->is_col_bc(ix)){
-//        // get the coordinates of the node
-//        residual.local_value(ix) = b_x;
-//      }
-//      if(matrix_service->is_col_bc(iy)){
-//        // get the coordinates of the node
-//        residual.local_value(iy) = b_y;
-//      }
-//    }
-//
-//    //residual.describe();
-//
-//    DEBUG_MSG("Solving the linear system...");
-//
-//    // solve:
-//    lhs.put_scalar(0.0);
-//    linear_problem->setOperator(tangent->get());
-//    bool is_set = linear_problem->setProblem(lhs.get(), residual.get());
-//    TEUCHOS_TEST_FOR_EXCEPTION(!is_set, std::logic_error,
-//      "Error: Belos::LinearProblem::setProblem() failed to set up correctly.\n");
-//    Belos::ReturnType ret = belos_solver->solve();
-//    if(ret != Belos::Converged && p_rank==0)
-//      std::cout << "*** WARNING: Belos linear solver did not converge!" << std::endl;
-//  } // end iteration loop
-//
-//  // upate the displacements
-//  disp.update(1.0,lhs,1.0);
-//
-//  DEBUG_MSG("Writing the output file...");
-//
-//  scalar_t time = schema->image_frame(); // pseudo time is the frame number
-//  DICe::mesh::exodus_output_dump(mesh,1,time);
-//
-//  return CORRELATION_SUCCESSFUL; // TODO change this to success
-//}
 
 void div_symmetric_strain(const int_t spa_dim,
   const int_t num_funcs,
@@ -509,7 +83,7 @@ void div_symmetric_strain(const int_t spa_dim,
   }
 }
 
-void mms_grad_image_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
+void mms_image_grad_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & x,
@@ -550,13 +124,14 @@ void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const scalar_t & J,
   const scalar_t & gp_weight,
   const scalar_t * N,
+  std::set<Global_EQ_Term> * eq_terms,
   scalar_t * elem_force){
   TEUCHOS_TEST_FOR_EXCEPTION(mms_problem==Teuchos::null,std::runtime_error,
     "Error, the pointer to the mms problem must be valid");
 
   scalar_t fx = 0.0;
   scalar_t fy = 0.0;
-  mms_problem->force(x,y,coeff,fx,fy);
+  mms_problem->force(x,y,coeff,eq_terms,fx,fy);
 
   //compute the force terms for this point
   for(int_t i=0;i<num_funcs;++i){
@@ -585,36 +160,62 @@ void mms_image_time_force(Teuchos::RCP<MMS_Problem> mms_problem,
     elem_force[i*spa_dim+1] -= d_phi_dt*grad_phi_y*N[i]*gp_weight*J;
   }
 }
-//
-//void image_time_force(Schema * schema,
-//  const int_t spa_dim,
-//  const int_t num_funcs,
-//  const scalar_t & x,
-//  const scalar_t & y,
-//  const scalar_t & J,
-//  const scalar_t & gp_weight,
-//  const scalar_t * N,
-//  scalar_t * elem_force){
-//  TEUCHOS_TEST_FOR_EXCEPTION(schema==NULL,std::runtime_error,
-//    "Error, the pointer to the schema must be valid for this term");
-//
-//  // compute the image force terms
-//  const intensity_t phi_0 = schema->ref_img()->interpolate_bicubic(x,y);
-//  const intensity_t phi = schema->def_img()->interpolate_bicubic(x,y);
-//  const scalar_t d_phi_dt = phi - phi_0;
-//  const scalar_t grad_phi_x = schema->ref_img()->grad_x(); // TODO needs interpolate grad_x and grad_y...
-//  const scalar_t grad_phi_y = ;
-//
-//
-//
-//
-//  mms_problem->phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
-//  for(int_t i=0;i<num_funcs;++i){
-//    elem_force[i*spa_dim+0] -= d_phi_dt*grad_phi_x*N[i]*gp_weight*J;
-//    elem_force[i*spa_dim+1] -= d_phi_dt*grad_phi_y*N[i]*gp_weight*J;
-//  }
-//}
 
+void image_time_force(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_force){
+  TEUCHOS_TEST_FOR_EXCEPTION(alg==NULL,std::runtime_error,
+    "Error, the pointer to the algorithm must be valid");
+
+  // compute the image force terms
+  const intensity_t phi_0 = alg->ref_img()->interpolate_bicubic(x,y);
+  const intensity_t phi = alg->def_img()->interpolate_bicubic(x,y);
+  const scalar_t d_phi_dt = phi - phi_0;
+  const scalar_t grad_phi_x = alg->grad_x()->interpolate_bicubic(x,y);
+  const scalar_t grad_phi_y = alg->grad_y()->interpolate_bicubic(x,y);
+  for(int_t i=0;i<num_funcs;++i){
+    elem_force[i*spa_dim+0] -= d_phi_dt*grad_phi_x*N[i]*gp_weight*J;
+    elem_force[i*spa_dim+1] -= d_phi_dt*grad_phi_y*N[i]*gp_weight*J;
+  }
+}
+
+void image_grad_tensor(Global_Algorithm * alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_stiffness){
+  TEUCHOS_TEST_FOR_EXCEPTION(alg==NULL,std::runtime_error,
+    "Error, the pointer to the algorithm must be valid");
+  // compute the image stiffness terms
+  const scalar_t grad_phi_x = alg->grad_x()->interpolate_bicubic(x,y);
+  const scalar_t grad_phi_y = alg->grad_y()->interpolate_bicubic(x,y);
+
+  // image stiffness terms
+  for(int_t i=0;i<num_funcs;++i){
+    const int_t row1 = (i*spa_dim) + 0;
+    const int_t row2 = (i*spa_dim) + 1;
+    for(int_t j=0;j<num_funcs;++j){
+      elem_stiffness[row1*num_funcs*spa_dim + j*spa_dim+0]
+                     += N[i]*(grad_phi_x*grad_phi_x)*N[j]*gp_weight*J;
+      elem_stiffness[row1*num_funcs*spa_dim + j*spa_dim+1]
+                     += N[i]*(grad_phi_x*grad_phi_y)*N[j]*gp_weight*J;
+      elem_stiffness[row2*num_funcs*spa_dim + j*spa_dim+0]
+                     += N[i]*(grad_phi_y*grad_phi_x)*N[j]*gp_weight*J;
+      elem_stiffness[row2*num_funcs*spa_dim + j*spa_dim+1]
+                     += N[i]*(grad_phi_y*grad_phi_y)*N[j]*gp_weight*J;
+    }
+  }
+}
 
 void calc_jacobian(const scalar_t * xcap,
   const scalar_t * DN,

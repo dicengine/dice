@@ -721,6 +721,7 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     init_params_->set(DICe::mesh_size,mesh_size); // pass the mesh size to the stored parameters for this schema (used by global method)
     init_params_->set(DICe::output_prefix,output_prefix);
     init_params_->set(DICe::output_folder,output_folder);
+    init_params_->set(DICe::global_formulation,input_params->get<Global_Formulation>(DICe::global_formulation,HORN_SCHUNCK));
 #ifdef DICE_ENABLE_GLOBAL
     global_algorithm_ = Teuchos::rcp(new DICe::global::Global_Algorithm(this,init_params_));
 #endif

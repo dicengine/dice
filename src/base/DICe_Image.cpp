@@ -109,7 +109,6 @@ Image::post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params
     compute_gradients(image_grad_use_hierarchical_parallelism,image_grad_team_size);
 }
 
-// TODO add an option to normalize this by intensity mean
 scalar_t
 Image::diff(Teuchos::RCP<Image> rhs) const{
   if(rhs->width()!=width_||rhs->height()!=height_)
@@ -134,8 +133,8 @@ Image::normalize(const Teuchos::RCP<Teuchos::ParameterList> & params){
   for(int_t y=buffer;y<height_-buffer;++y){
     for(int_t x=buffer;x<width_-buffer;++x){
       mean += (*this)(x,y);
-      if(num_pixels<10)
-      std::cout << " x " << x << " y " << y << " " << (*this)(x,y) << " p1 " << (*this)(x-1,y-1) << std::endl;
+      //if(num_pixels<10)
+      //std::cout << " x " << x << " y " << y << " " << (*this)(x,y) << " p1 " << (*this)(x-1,y-1) << std::endl;
       num_pixels++;
     }
   }

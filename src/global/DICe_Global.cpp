@@ -55,70 +55,71 @@ Global_Algorithm::Global_Algorithm(Schema * schema,
   mesh_size_(1000.0),
   alpha2_(1.0),
   mms_problem_(Teuchos::null),
-  is_initialized_(false)
+  is_initialized_(false),
+  global_formulation_(NO_SUCH_GLOBAL_FORMULATION)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(!schema,std::runtime_error,"Error, cannot have null schema in this constructor");
-  TEUCHOS_TEST_FOR_EXCEPTION(params==Teuchos::null,std::runtime_error,"Error, params cannot be null");
-  /// get the mesh size from the params
-  if(params->isParameter(DICe::mesh_size))
-    mesh_size_ = params->get<double>(DICe::mesh_size);
-  DEBUG_MSG("Global_Algorithm::Global_Algorithm(): Mesh size " << mesh_size_);
-
-  // determine the image extents:
-  const scalar_t buff_size = 20.0; //pixels
-  Teuchos::ArrayRCP<scalar_t> points_x(4);
-  Teuchos::ArrayRCP<scalar_t> points_y(4);
-  points_x[0] = buff_size; points_y[0] = buff_size;
-  points_x[1] = schema->ref_img()->width() - buff_size; points_y[1] = buff_size;
-  points_x[2] = schema->ref_img()->width() - buff_size; points_y[2] = schema->ref_img()->height() - buff_size;
-  points_x[3] = buff_size; points_y[3] = schema->ref_img()->height() - buff_size;
-
-  default_constructor_tasks(points_x,points_y,params);
+  default_constructor_tasks(params);
 }
 
 Global_Algorithm::Global_Algorithm(const Teuchos::RCP<Teuchos::ParameterList> & params):
   schema_(NULL),
   mesh_size_(1000.0),
   alpha2_(1.0),
-  is_initialized_(false)
+  is_initialized_(false),
+  global_formulation_(NO_SUCH_GLOBAL_FORMULATION)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(params==Teuchos::null,std::runtime_error,"Error, params cannot be null");
-  /// get the mesh size from the params
-  if(params->isParameter(DICe::mesh_size))
-    mesh_size_ = params->get<double>(DICe::mesh_size);
-
-  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::mms_spec),std::runtime_error,"Error, mms_spec must be defined"
-      " in the parameters file for this constructor");
-  // carve off the mms_spec params:
-  Teuchos::ParameterList mms_sublist = params->sublist(DICe::mms_spec);
-  Teuchos::RCP<Teuchos::ParameterList> mms_params = Teuchos::rcp( new Teuchos::ParameterList());
-  // iterate the sublist and add the params to the output params:
-  for(Teuchos::ParameterList::ConstIterator it=mms_sublist.begin();it!=mms_sublist.end();++it){
-    mms_params->setEntry(it->first,it->second);
-  }
-  TEUCHOS_TEST_FOR_EXCEPTION(!mms_params->isParameter(DICe::problem_name),std::runtime_error,
-    "Error, the problem_name must be defined in the mms_spec");
-
-  MMS_Problem_Factory mms_factory;
-  mms_problem_ = mms_factory.create(mms_params);
-
-  // determine the problem extents:
-  Teuchos::ArrayRCP<scalar_t> points_x(4);
-  Teuchos::ArrayRCP<scalar_t> points_y(4);
-  points_x[0] = 0.0; points_y[0] = 0.0;
-  points_x[1] = mms_problem_->dim_x(); points_y[1] = 0.0;
-  points_x[2] = mms_problem_->dim_x(); points_y[2] = mms_problem_->dim_y();
-  points_x[3] = 0.0; points_y[3] = mms_problem_->dim_y();
-
-  default_constructor_tasks(points_x,points_y,params);
+  default_constructor_tasks(params);
 }
 
 void
-Global_Algorithm::default_constructor_tasks(Teuchos::ArrayRCP<scalar_t> & points_x,
-  Teuchos::ArrayRCP<scalar_t> & points_y,
-  const Teuchos::RCP<Teuchos::ParameterList> & params){
+Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params){
+
   TEUCHOS_TEST_FOR_EXCEPTION(params==Teuchos::null,std::runtime_error,
     "Error, params must be defined");
+
+  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::global_formulation),std::runtime_error,"Error, parameter: global_formulation must be defined");
+  global_formulation_ = params->get<Global_Formulation>(DICe::global_formulation);
+
+  /// get the mesh size from the params
+  if(params->isParameter(DICe::mesh_size))
+    mesh_size_ = params->get<double>(DICe::mesh_size);
+  DEBUG_MSG("Global_Algorithm::Global_Algorithm(): Mesh size " << mesh_size_);
+
+  Teuchos::ArrayRCP<scalar_t> points_x(4);
+  Teuchos::ArrayRCP<scalar_t> points_y(4);
+  if(params->isParameter(DICe::mms_spec)){
+//    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::mms_spec),std::runtime_error,"Error, mms_spec must be defined"
+//      " in the parameters file for this constructor");
+    // carve off the mms_spec params:
+    Teuchos::ParameterList mms_sublist = params->sublist(DICe::mms_spec);
+    Teuchos::RCP<Teuchos::ParameterList> mms_params = Teuchos::rcp( new Teuchos::ParameterList());
+    // iterate the sublist and add the params to the output params:
+    for(Teuchos::ParameterList::ConstIterator it=mms_sublist.begin();it!=mms_sublist.end();++it){
+      mms_params->setEntry(it->first,it->second);
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(!mms_params->isParameter(DICe::problem_name),std::runtime_error,
+      "Error, the problem_name must be defined in the mms_spec");
+
+    MMS_Problem_Factory mms_factory;
+    mms_problem_ = mms_factory.create(mms_params);
+
+    // determine the problem extents:
+    points_x[0] = 0.0; points_y[0] = 0.0;
+    points_x[1] = mms_problem_->dim_x(); points_y[1] = 0.0;
+    points_x[2] = mms_problem_->dim_x(); points_y[2] = mms_problem_->dim_y();
+    points_x[3] = 0.0; points_y[3] = mms_problem_->dim_y();
+  }
+  else{
+    TEUCHOS_TEST_FOR_EXCEPTION(schema_==NULL,std::runtime_error,"If not an mms problem, schema must not be null.");
+    // determine the image extents:
+    const scalar_t buff_size = 20.0; //pixels
+    points_x[0] = buff_size; points_y[0] = buff_size;
+    points_x[1] = schema_->ref_img()->width() - buff_size; points_y[1] = buff_size;
+    points_x[2] = schema_->ref_img()->width() - buff_size; points_y[2] = schema_->ref_img()->height() - buff_size;
+    points_x[3] = buff_size; points_y[3] = schema_->ref_img()->height() - buff_size;
+  }
+
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::global_regularization_alpha),std::runtime_error,
     "Error, global_regularization_alpha must be defined");
   const scalar_t alpha = params->get<double>(DICe::global_regularization_alpha);
@@ -142,18 +143,36 @@ Global_Algorithm::default_constructor_tasks(Teuchos::ArrayRCP<scalar_t> & points
   mesh_->create_field(mesh::field_enums::DISPLACEMENT_FS);
   mesh_->create_field(mesh::field_enums::RESIDUAL_FS);
   mesh_->create_field(mesh::field_enums::LHS_FS);
-  mesh_->create_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
-  mesh_->create_field(mesh::field_enums::IMAGE_PHI_FS);
-  mesh_->create_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
+  if(mms_problem_!=Teuchos::null){
+    mesh_->create_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
+    mesh_->create_field(mesh::field_enums::IMAGE_PHI_FS);
+    mesh_->create_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
+  }
   DICe::mesh::create_exodus_output_variable_names(mesh_);
 
-//  // for now default terms: TODO TODO TODO manage this another way
-//  add_term(DIV_SYMMETRIC_STRAIN_REGULARIZATION);
-//  add_term(MMS_GRAD_IMAGE_TENSOR);
-//  add_term(MMS_IMAGE_TIME_FORCE);
-//  add_term(MMS_FORCE);
+  DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): using global formulation: " << to_string(global_formulation_));
+  if(global_formulation_==HORN_SCHUNCK){
+    add_term(DIV_SYMMETRIC_STRAIN_REGULARIZATION);
+    if(mms_problem_!=Teuchos::null){
+        add_term(MMS_IMAGE_GRAD_TENSOR);
+        add_term(MMS_IMAGE_TIME_FORCE);
+        add_term(MMS_FORCE);
+        add_term(DIRICHLET_DISPLACEMENT_BC);
+    }
+    else{
+      add_term(IMAGE_TIME_FORCE);
+      add_term(IMAGE_GRAD_TENSOR);
+      //add_term(DIRICHLET_DISPLACEMENT_BC);
+    }
+  }
+  else{
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid global_formulation " + to_string(global_formulation_));
+  }
+  std::set<Global_EQ_Term>::iterator it=eq_terms_.begin();
+  std::set<Global_EQ_Term>::iterator it_end=eq_terms_.end();
+  for(;it!=it_end;++it)
+    DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): active EQ term " << to_string(*it));
 
-  //add_term(IMAGE_TIME_FORCE);
 }
 
 void
@@ -162,7 +181,7 @@ Global_Algorithm::pre_execution_tasks(){
   // initialize the solver:
   // set up the solver
   Teuchos::ParameterList belos_list;
-  const int_t maxiters = 500; // these are the max iterations of the belos solver not the nonlinear iterations
+  const int_t maxiters = 5000; // these are the max iterations of the belos solver not the nonlinear iterations
   const int_t numblk = (maxiters > 500) ? 500 : maxiters;
   const int_t maxrestarts = 1;
   const double conv_tol = 1.0E-8;
@@ -180,7 +199,7 @@ Global_Algorithm::pre_execution_tasks(){
   /// linear problem for solve
   linear_problem_ = Teuchos::rcp(new Belos::LinearProblem<mv_scalar_type,vec_type,operator_type>());
   /// Belos solver
-  belos_solver_ = Teuchos::rcp( new Belos::BlockGmresSolMgr<mv_scalar_type,vec_type,operator_type>
+  belos_solver_ = Teuchos::rcp( new Belos::BlockCGSolMgr<mv_scalar_type,vec_type,operator_type>
                                 (linear_problem_,Teuchos::rcp(&belos_list,false)));
 
   DEBUG_MSG("Solver and linear problem have been initialized.");
@@ -190,37 +209,34 @@ Global_Algorithm::pre_execution_tasks(){
   matrix_service_->initialize_bc_register(mesh_->get_vector_node_dist_map()->get_num_local_elements(),
     mesh_->get_vector_node_overlap_map()->get_num_local_elements());
 
-  // set up the boundary condition nodes: FIXME this assumes there is only one node set
-  //mesh->get_vector_node_dist_map()->describe();
-  DICe::mesh::bc_set * bc_set = mesh_->get_node_bc_sets();
-  const int_t boundary_node_set_id = 0;
-  for(size_t i=0;i<bc_set->find(boundary_node_set_id)->second.size();++i){
-    const int_t node_gid = bc_set->find(boundary_node_set_id)->second[i];
-    //std::cout << " disp x condition on node " << node_gid << std::endl;
-    bool is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim+1);
-    if(is_local_node){
-      const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim+1);
-      matrix_service_->register_row_bc(row_id);
+  if(has_term(DIRICHLET_DISPLACEMENT_BC)){
+    // set up the boundary condition nodes: FIXME this assumes there is only one node set
+    //mesh->get_vector_node_dist_map()->describe();
+    DICe::mesh::bc_set * bc_set = mesh_->get_node_bc_sets();
+    const int_t boundary_node_set_id = 0;
+    for(size_t i=0;i<bc_set->find(boundary_node_set_id)->second.size();++i){
+      const int_t node_gid = bc_set->find(boundary_node_set_id)->second[i];
+      //std::cout << " disp x condition on node " << node_gid << std::endl;
+      bool is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim+1);
+      if(is_local_node){
+        const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim+1);
+        matrix_service_->register_row_bc(row_id);
+      }
+      int_t col_id = mesh_->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim+1);
+      matrix_service_->register_col_bc(col_id);
+      //std::cout << " disp y condition on node " << node_gid << std::endl;
+      is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim+2);
+      if(is_local_node){
+        const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim+2);
+        matrix_service_->register_row_bc(row_id);
+      }
+      col_id = mesh_->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim+2);
+      matrix_service_->register_col_bc(col_id);
     }
-    int_t col_id = mesh_->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim+1);
-    matrix_service_->register_col_bc(col_id);
-    //std::cout << " disp y condition on node " << node_gid << std::endl;
-    is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim+2);
-    if(is_local_node){
-      const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim+2);
-      matrix_service_->register_row_bc(row_id);
-    }
-    col_id = mesh_->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim+2);
-    matrix_service_->register_col_bc(col_id);
   }
 
   DEBUG_MSG("Matrix service has been initialized.");
   is_initialized_ = true;
-
-  std::set<Global_EQ_Term>::iterator it=eq_terms_.begin();
-  std::set<Global_EQ_Term>::iterator it_end=eq_terms_.end();
-  for(;it!=it_end;++it)
-    DEBUG_MSG("Global_Algorithm::pre_execution_tasks() adding EQ term " << to_string(*it));
 
   // if this is not an mms problem, set up the images
   if(schema_){
@@ -248,10 +264,14 @@ Global_Algorithm::execute(){
   disp.put_scalar(0.0);
   MultiField & lhs = *mesh_->get_field(mesh::field_enums::LHS_FS);
   MultiField & coords = *mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
-  MultiField & exact_sol = *mesh_->get_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
-  MultiField & image_phi = *mesh_->get_field(mesh::field_enums::IMAGE_PHI_FS);
-  MultiField & image_grad_phi = *mesh_->get_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
-
+  Teuchos::RCP<MultiField> exact_sol;
+  Teuchos::RCP<MultiField> image_phi;
+  Teuchos::RCP<MultiField> image_grad_phi;
+  if(mms_problem_!=Teuchos::null){
+    exact_sol = mesh_->get_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
+    image_phi = mesh_->get_field(mesh::field_enums::IMAGE_PHI_FS);
+    image_grad_phi = mesh_->get_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
+  }
   scalar_t residual_norm = 0.0;
 
   // global iteration loop:
@@ -316,16 +336,6 @@ Global_Algorithm::execute(){
     int_t num_integration_points = -1;
     tri6_shape_func_evaluator->get_natural_integration_points(integration_order,gp_locs,gp_weights,num_integration_points);
 
-    // get the high order natural integration points for this element:
-    const int_t high_order_integration_order = 6;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > high_order_gp_locs;
-    Teuchos::ArrayRCP<scalar_t> high_order_gp_weights;
-    int_t high_order_num_integration_points = -1;
-    tri6_shape_func_evaluator->get_natural_integration_points(high_order_integration_order,
-      high_order_gp_locs,
-      high_order_gp_weights,
-      high_order_num_integration_points);
-
     // gather the OVERLAP fields
     Teuchos::RCP<MultiField> overlap_residual_ptr = mesh_->get_overlap_field(mesh::field_enums::RESIDUAL_FS);
     MultiField & overlap_residual = *overlap_residual_ptr;
@@ -388,14 +398,14 @@ Global_Algorithm::execute(){
           div_symmetric_strain(spa_dim,tri6_num_funcs,alpha2_,J,gp_weights[gp],inv_jac,DN6,elem_stiffness);
 
         // grad(phi) tensor_prod grad(phi)
-        if(has_term(MMS_GRAD_IMAGE_TENSOR))
-          mms_grad_image_tensor(mms_problem_,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_stiffness);
+        if(has_term(MMS_IMAGE_GRAD_TENSOR))
+          mms_image_grad_tensor(mms_problem_,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_stiffness);
 
         // RHS terms
 
         // mms force
         if(has_term(MMS_FORCE))
-          mms_force(mms_problem_,spa_dim,tri6_num_funcs,x,y,alpha2_,J,gp_weights[gp],N6,elem_force);
+          mms_force(mms_problem_,spa_dim,tri6_num_funcs,x,y,alpha2_,J,gp_weights[gp],N6,this->eq_terms(),elem_force);
 
         // d_dt(phi) * grad(phi)
         if(has_term(MMS_IMAGE_TIME_FORCE))
@@ -403,41 +413,56 @@ Global_Algorithm::execute(){
 
       } // gp loop
 
-//      // high-order gauss point loop:
-//      for(int_t gp=0;gp<high_order_num_integration_points;++gp){
-//
-//        // isoparametric coords of the gauss point
-//        for(int_t dim=0;dim<spa_dim;++dim)
-//          natural_coords[dim] = gp_locs[gp][dim];
-//        //std::cout << " natural coords " << natural_coords[0] << " " << natural_coords[1] << std::endl;
-//
-//        // evaluate the shape functions and derivatives:
-//        tri6_shape_func_evaluator->evaluate_shape_functions(natural_coords,N6);
-//        tri6_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN6);
-//
-//        // physical gp location
-//        x = 0.0; y=0.0;
-//        for(int_t i=0;i<tri6_num_funcs;++i){
-//          x += nodal_coords[i*spa_dim+0]*N6[i];
-//          y += nodal_coords[i*spa_dim+1]*N6[i];
-//        }
-//        //std::cout << " physical coords " << x << " " << y << std::endl;
-//
-//        // compute the jacobian for this element:
-//        DICe::global::calc_jacobian(nodal_coords,DN6,jac,inv_jac,J,tri6_num_funcs,spa_dim);
-//
-//        // add the element terms that go outside the standard FEM gp loop:
-//        if(has_term(IMAGE_TIME_FORCE))
-//          // TODO TODO
-//
-//
-//      }
+      if(has_term(IMAGE_TIME_FORCE)||has_term(IMAGE_GRAD_TENSOR)){
+        // get the high order natural integration points for this element:
+        const int_t high_order_integration_order = 6;
+        Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > high_order_gp_locs;
+        Teuchos::ArrayRCP<scalar_t> high_order_gp_weights;
+        int_t high_order_num_integration_points = -1;
+        tri6_shape_func_evaluator->get_natural_integration_points(high_order_integration_order,
+          high_order_gp_locs,
+          high_order_gp_weights,
+          high_order_num_integration_points);
 
+        // high-order gauss point loop:
+        for(int_t gp=0;gp<high_order_num_integration_points;++gp){
 
+          // isoparametric coords of the gauss point
+          for(int_t dim=0;dim<spa_dim;++dim)
+            natural_coords[dim] = high_order_gp_locs[gp][dim];
+          //std::cout << " natural coords " << natural_coords[0] << " " << natural_coords[1] << std::endl;
 
+          // evaluate the shape functions and derivatives:
+          tri6_shape_func_evaluator->evaluate_shape_functions(natural_coords,N6);
+          tri6_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN6);
 
+          // physical gp location
+          x = 0.0; y=0.0;
+          for(int_t i=0;i<tri6_num_funcs;++i){
+            x += nodal_coords[i*spa_dim+0]*N6[i];
+            y += nodal_coords[i*spa_dim+1]*N6[i];
+          }
+          //std::cout << " physical coords " << x << " " << y << std::endl;
+
+          // compute the jacobian for this element:
+          DICe::global::calc_jacobian(nodal_coords,DN6,jac,inv_jac,J,tri6_num_funcs,spa_dim);
+
+          // stiffness terms
+
+          // grad(phi) tensor-prod grad(phi)
+          if(has_term(IMAGE_GRAD_TENSOR))
+            image_grad_tensor(this,spa_dim,tri6_num_funcs,x,y,J,high_order_gp_weights[gp],N6,elem_stiffness);
+
+          // force terms
+
+          // d_dt(phi) * grad(phi)
+          if(has_term(IMAGE_TIME_FORCE))
+            image_time_force(this,spa_dim,tri6_num_funcs,x,y,J,high_order_gp_weights[gp],N6,elem_force);
+        }
+      }
 
       // assemble the global stiffness matrix
+
       for(int_t i=0;i<tri6_num_funcs;++i){
         for(int_t m=0;m<spa_dim;++m){
           for(int_t j=0;j<tri6_num_funcs;++j){
@@ -505,36 +530,38 @@ Global_Algorithm::execute(){
 
     //tangent->describe();
 
-    if(mms_problem_!=Teuchos::null){
-      // enforce the dirichlet boundary conditions
-      //const scalar_t boundary_value = 100.0;
-      // add ones to the diagonal for kinematic bc nodes:
-      for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
-        int_t ix = i*2+0;
-        int_t iy = i*2+1;
-        scalar_t b_x = 0.0;
-        scalar_t b_y = 0.0;
-        const scalar_t x = coords.local_value(ix);
-        const scalar_t y = coords.local_value(iy);
-        mms_problem_->velocity(x,y,b_x,b_y);
-        scalar_t phi = 0.0,d_phi_dt=0.0,grad_phi_x=0.0,grad_phi_y=0.0;
-        mms_problem_->phi(x,y,phi);
-        image_phi.local_value(i) = phi;
-        mms_problem_->phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
-        image_grad_phi.local_value(ix) = grad_phi_x;
-        image_grad_phi.local_value(iy) = grad_phi_y;
+    if(has_term(DIRICHLET_DISPLACEMENT_BC)){
+      if(mms_problem_!=Teuchos::null){
+        // enforce the dirichlet boundary conditions
+        //const scalar_t boundary_value = 100.0;
+        // add ones to the diagonal for kinematic bc nodes:
+        for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+          int_t ix = i*2+0;
+          int_t iy = i*2+1;
+          scalar_t b_x = 0.0;
+          scalar_t b_y = 0.0;
+          const scalar_t x = coords.local_value(ix);
+          const scalar_t y = coords.local_value(iy);
+          mms_problem_->velocity(x,y,b_x,b_y);
+          scalar_t phi = 0.0,d_phi_dt=0.0,grad_phi_x=0.0,grad_phi_y=0.0;
+          mms_problem_->phi(x,y,phi);
+          image_phi->local_value(i) = phi;
+          mms_problem_->phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
+          image_grad_phi->local_value(ix) = grad_phi_x;
+          image_grad_phi->local_value(iy) = grad_phi_y;
 
-        //calc_mms_bc_2(x,y,schema->img_width(),b_x,b_y);
-        //calc_mms_bc_simple(x,y,b_x,b_y);
-        exact_sol.local_value(ix) = b_x;
-        exact_sol.local_value(iy) = b_y;
-        if(matrix_service_->is_col_bc(ix)){
-          // get the coordinates of the node
-          residual.local_value(ix) = b_x;
-        }
-        if(matrix_service_->is_col_bc(iy)){
-          // get the coordinates of the node
-          residual.local_value(iy) = b_y;
+          //calc_mms_bc_2(x,y,schema->img_width(),b_x,b_y);
+          //calc_mms_bc_simple(x,y,b_x,b_y);
+          exact_sol->local_value(ix) = b_x;
+          exact_sol->local_value(iy) = b_y;
+          if(matrix_service_->is_col_bc(ix)){
+            // get the coordinates of the node
+            residual.local_value(ix) = b_x;
+          }
+          if(matrix_service_->is_col_bc(iy)){
+            // get the coordinates of the node
+            residual.local_value(iy) = b_y;
+          }
         }
       }
     }

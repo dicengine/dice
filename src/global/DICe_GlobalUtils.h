@@ -48,6 +48,9 @@ namespace DICe {
 
 namespace global{
 
+// forward declaration
+class Global_Algorithm;
+
 /// \class MMS_Problem
 /// \brief method of manufactured solutions problem generator
 /// provides forces and an analytic solution to evaluate convergence of
@@ -122,6 +125,7 @@ public:
   virtual void force(const scalar_t & x,
     const scalar_t & y,
     const scalar_t & coeff_1,
+    std::set<Global_EQ_Term> * eq_terms,
     scalar_t & f_x,
     scalar_t & f_y)=0;
 
@@ -215,6 +219,7 @@ public:
   virtual void force(const scalar_t & x,
     const scalar_t & y,
     const scalar_t & coeff_1,
+    std::set<Global_EQ_Term> * eq_terms,
     scalar_t & f_x,
     scalar_t & f_y){
 
@@ -224,11 +229,22 @@ public:
     f_y = 0.0;
     scalar_t d_phi_dt = 0.0, grad_phi_x = 0.0, grad_phi_y = 0.0;
     phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
-    scalar_t lap_b_x=0.0,lap_b_y=0.0,b_x=0.0,b_y=0.0;
-    velocity_laplacian(x,y,lap_b_x,lap_b_y);
-    velocity(x,y,b_x,b_y);
-    f_x = grad_phi_x*d_phi_dt + (grad_phi_x*grad_phi_x*b_x + grad_phi_x*grad_phi_y*b_y) - coeff_1*lap_b_x;
-    f_y = grad_phi_y*d_phi_dt + (grad_phi_y*grad_phi_x*b_x + grad_phi_y*grad_phi_y*b_y) - coeff_1*lap_b_y;
+    if(eq_terms->find(MMS_IMAGE_TIME_FORCE)!=eq_terms->end()){
+      f_x += grad_phi_x*d_phi_dt;
+      f_y += grad_phi_y*d_phi_dt;
+    }
+    if(eq_terms->find(MMS_IMAGE_GRAD_TENSOR)!=eq_terms->end()){
+      scalar_t b_x=0.0,b_y=0.0;
+      velocity(x,y,b_x,b_y);
+      f_x += (grad_phi_x*grad_phi_x*b_x + grad_phi_x*grad_phi_y*b_y);
+      f_y += (grad_phi_y*grad_phi_x*b_x + grad_phi_y*grad_phi_y*b_y);
+    }
+    if(eq_terms->find(MMS_IMAGE_GRAD_TENSOR)!=eq_terms->end()){
+      scalar_t lap_b_x=0.0,lap_b_y=0.0;
+      velocity_laplacian(x,y,lap_b_x,lap_b_y);
+      f_x -= coeff_1*lap_b_x;
+      f_y -= coeff_1*lap_b_y;
+    }
   }
 
 protected:
@@ -298,7 +314,27 @@ void div_symmetric_strain(const int_t spa_dim,
 /// \param gp_weight gauss weight
 /// \param N shape functions
 /// \param elem_stiffness output the element stiffness contributions
-void mms_grad_image_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
+void mms_image_grad_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_stiffness);
+
+/// adds the image gradients term to the stiffness matrx (from manufactured solutions problem)
+/// \param alg pointer to the Global_Algorithm
+/// \param spa_dim spatial dimension
+/// \param num_funcs the number of shape functions
+/// \param x x-coordinate of the point
+/// \param y y-coordinate of the point
+/// \param J determinant of the jacobian
+/// \param gp_weight gauss weight
+/// \param N shape functions
+/// \param elem_stiffness output the element stiffness contributions
+void image_grad_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & x,
@@ -348,8 +384,28 @@ void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const scalar_t & J,
   const scalar_t & gp_weight,
   const scalar_t * N,
+  std::set<Global_EQ_Term> * eq_terms,
   scalar_t * elem_force);
 
+/// adds the dphi_dt force vector to the residual
+/// \param alg pointer to the calling Global_Algorithm
+/// \param spa_dim spatial dimension
+/// \param num_funcs the number of shape functions
+/// \param x x-coordinate of the point
+/// \param y y-coordinate of the point
+/// \param J determinant of the jacobian
+/// \param gp_weight gauss weight
+/// \param N shape functions
+/// \param elem_force output the element force contributions
+void image_time_force(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_force);
 
 void calc_jacobian(const scalar_t * xcap,
   const scalar_t * DN,

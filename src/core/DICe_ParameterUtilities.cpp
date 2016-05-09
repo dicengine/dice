@@ -141,12 +141,12 @@ const std::string to_string(Correlation_Routine in){
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Projection_Method in){
   assert(in < MAX_PROJECTION_METHOD);
-  const static char * projectionMethodStrings[] = {
-    "DISPLACEMENT_BASED",
-    "VELOCITY_BASED",
-    "MULTISTEP"
-  };
   return projectionMethodStrings[in];
+}
+DICE_LIB_DLL_EXPORT
+const std::string to_string(Global_Formulation in){
+  assert(in < MAX_GLOBAL_FORMULATION);
+  return globalFormulationStrings[in];
 }
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Initialization_Method in){
@@ -173,10 +173,12 @@ const std::string to_string(Global_EQ_Term in){
   assert(in < NO_SUCH_GLOBAL_EQ_TERM);
   const static char * eqTermStrings[] = {
     "IMAGE_TIME_FORCE",
+    "IMAGE_GRAD_TENSOR",
     "DIV_SYMMETRIC_STRAIN_REGULARIZATION",
-    "MMS_GRAD_IMAGE_TENSOR",
+    "MMS_IMAGE_GRAD_TENSOR",
     "MMS_FORCE",
     "MMS_IMAGE_TIME_FORCE",
+    "DIRICHLET_DISPLACEMENT_BC",
     "NO_SUCH_GLOBAL_EQ_TERM"
   };
   return eqTermStrings[in];
@@ -214,6 +216,17 @@ Projection_Method string_to_projection_method(std::string & in){
   std::cout << "Error: Projection_Method " << in << " does not exist." << std::endl;
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
   return NO_SUCH_PROJECTION_METHOD; // prevent no return errors
+}
+DICE_LIB_DLL_EXPORT
+Global_Formulation string_to_global_formulation(std::string & in){
+  // convert the string to uppercase
+  stringToUpper(in);
+  for(int_t i=0;i<MAX_GLOBAL_FORMULATION;++i){
+    if(globalFormulationStrings[i]==in) return static_cast<Global_Formulation>(i);
+  }
+  std::cout << "Error: Global_Formulation " << in << " does not exist." << std::endl;
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
+  return NO_SUCH_GLOBAL_FORMULATION; // prevent no return errors
 }
 DICE_LIB_DLL_EXPORT
 Initialization_Method string_to_initialization_method(std::string & in){
@@ -318,6 +331,7 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::rotate_def_image_180,false);
   defaultParams->set(DICe::rotate_ref_image_270,false);
   defaultParams->set(DICe::rotate_def_image_270,false);
+  defaultParams->set(DICe::global_formulation,HORN_SCHUNCK);
   defaultParams->set(DICe::global_regularization_alpha,1.0);
 }
 
@@ -364,6 +378,7 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::rotate_def_image_180,false);
   defaultParams->set(DICe::rotate_ref_image_270,false);
   defaultParams->set(DICe::rotate_def_image_270,false);
+  defaultParams->set(DICe::global_formulation,HORN_SCHUNCK);
   defaultParams->set(DICe::global_regularization_alpha,1.0);
 }
 

@@ -243,6 +243,8 @@ const char* const rotate_ref_image_270 = "rotate_ref_image_270";
 /// String parameter name
 const char* const rotate_def_image_270 = "rotate_def_image_270";
 /// String parameter name, only for global DIC
+const char* const global_formulation = "global_formulation";
+/// String parameter name, only for global DIC
 const char* const problem_name = "problem_name";
 /// String parameter name, only for global DIC
 const char* const phi_coeff = "phi_coeff";
@@ -358,7 +360,19 @@ enum Analysis_Type {
   NO_SUCH_ANALYSIS_TYPE
 };
 
+/// Projection method
+enum Global_Formulation {
+  HORN_SCHUNCK=0,
+  METHOD_OF_MANUFACTURED_SOLUTIONS,
+  // DON'T ADD ANY BELOW MAX
+  MAX_GLOBAL_FORMULATION,
+  NO_SUCH_GLOBAL_FORMULATION
+};
 
+const static char * globalFormulationStrings[] = {
+  "HORN_SCHUNCK",
+  "METHOD_OF_MANUFACTURED_SOLUTIONS"
+};
 
 /// Projection method
 enum Projection_Method {
@@ -590,10 +604,12 @@ enum Combine_Mode{
 /// Global method terms to include in the residual
 enum Global_EQ_Term{
   IMAGE_TIME_FORCE=0,
+  IMAGE_GRAD_TENSOR,
   DIV_SYMMETRIC_STRAIN_REGULARIZATION,
-  MMS_GRAD_IMAGE_TENSOR,
+  MMS_IMAGE_GRAD_TENSOR,
   MMS_FORCE,
   MMS_IMAGE_TIME_FORCE,
+  DIRICHLET_DISPLACEMENT_BC,
   NO_SUCH_GLOBAL_EQ_TERM
 };
 
@@ -901,6 +917,14 @@ const Correlation_Parameter global_regularization_alpha_param(global_regularizat
   true,
   "Used only for global, this is the coefficient for the alpha regularization term");
 /// Correlation parameter and properties
+const Correlation_Parameter global_formulation_param(global_formulation,
+  STRING_PARAM,
+  true,
+  "Used only for global, this is the formulation to use (which terms are included, etc.)",
+  globalFormulationStrings,
+  MAX_GLOBAL_FORMULATION
+);
+/// Correlation parameter and properties
 const Correlation_Parameter use_tracking_default_params_param(use_tracking_default_params,
   BOOL_PARAM,
   true,
@@ -1025,7 +1049,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_global_correlation_params = 10;
+const int_t num_valid_global_correlation_params = 11;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_global_correlation_params[num_valid_global_correlation_params] = {
   use_global_dic_param,
@@ -1037,6 +1061,7 @@ const Correlation_Parameter valid_global_correlation_params[num_valid_global_cor
   output_delimiter_param,
   omit_output_row_id_param,
   global_regularization_alpha_param,
+  global_formulation_param,
   mms_spec_param
 };
 

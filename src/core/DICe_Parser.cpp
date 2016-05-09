@@ -353,6 +353,10 @@ Teuchos::RCP<Teuchos::ParameterList> read_correlation_params(const std::string &
         diceParams->set(DICe::projection_method,DICe::string_to_projection_method(
           stringParams->get<std::string>(it->first)));
       }
+      else if(paramName == DICe::global_formulation){
+        diceParams->set(DICe::global_formulation,DICe::string_to_global_formulation(
+          stringParams->get<std::string>(it->first)));
+      }
       else if(paramName == DICe::initialization_method){
         diceParams->set(DICe::initialization_method,DICe::string_to_initialization_method(
           stringParams->get<std::string>(it->first)));

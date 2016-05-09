@@ -85,9 +85,7 @@ public:
 
   /// default constructor tasks
   /// \param params the global params passed through
-  void default_constructor_tasks(Teuchos::ArrayRCP<scalar_t> & points_x,
-    Teuchos::ArrayRCP<scalar_t> & points_y,
-    const Teuchos::RCP<Teuchos::ParameterList> & params);
+  void default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params);
 
   /// set up the solvers and allocate memory
   void pre_execution_tasks();
@@ -121,6 +119,11 @@ public:
     eq_terms_.insert(term);
   }
 
+  /// return a pointer to the eq terms
+  std::set<Global_EQ_Term> * eq_terms(){
+    return &eq_terms_;
+  }
+
   /// returns true if the given term is in the set
   bool has_term(const Global_EQ_Term term){
     return eq_terms_.find(term)!=eq_terms_.end();
@@ -131,6 +134,27 @@ public:
 
   /// set the reference image and perform the necessary pre-filtering + compute gradients
   void set_def_image();
+
+  /// return a pointer to the reference image
+  Teuchos::RCP<Image> ref_img()const{
+    return ref_img_;
+  }
+
+  /// return a pointer to the deformed image
+  Teuchos::RCP<Image> def_img()const{
+    return def_img_;
+  }
+
+  /// return a pointer to the grad x image
+  Teuchos::RCP<Image> grad_x()const{
+    return grad_x_img_;
+  }
+
+  /// return a pointer to the grad y image
+  Teuchos::RCP<Image> grad_y()const{
+    return grad_y_img_;
+  }
+
 
 protected:
   /// protect the default constructor
@@ -167,6 +191,8 @@ protected:
   Teuchos::RCP<Image> grad_x_img_;
   /// gradient_y image
   Teuchos::RCP<Image> grad_y_img_;
+  /// enum of the formulation to use
+  Global_Formulation global_formulation_;
 };
 
 }// end global namespace

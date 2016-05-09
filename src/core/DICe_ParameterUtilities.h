@@ -75,6 +75,10 @@ const std::string to_string(Correlation_Routine in);
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Projection_Method in);
 
+/// Convert a DICe::Projection_Method to string
+DICE_LIB_DLL_EXPORT
+const std::string to_string(Global_Formulation in);
+
 /// Convert a DICe::Initialization_Method to string
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Initialization_Method in);
@@ -106,6 +110,10 @@ Correlation_Routine string_to_correlation_routine(std::string & in);
 /// Convert a string to a DICe::Projection_Method
 DICE_LIB_DLL_EXPORT
 Projection_Method string_to_projection_method(std::string & in);
+
+/// Convert a string to a DICe::Projection_Method
+DICE_LIB_DLL_EXPORT
+Global_Formulation string_to_global_formulation(std::string & in);
 
 /// Convert a string to a DICe::Initialization_Method
 DICE_LIB_DLL_EXPORT
