@@ -10,10 +10,16 @@ SET(REGRESSION_TESTS
   single_speckled_shift
   conformal_subset_def
   dic_challenge_12
-  mechanism_optical_flow
-  mechanism_skip_solves
   simple_obstruction
 )
+
+IF(!DICE_USE_DOUBLE)
+SET(REGRESSION_TESTS
+  ${REGRESSION_TESTS}
+  mechanism_optical_flow
+  mechanism_skip_solves
+)
+ENDIF()
 
 FOREACH ( test ${REGRESSION_TESTS})
     # Copy over all the test files (input and results)

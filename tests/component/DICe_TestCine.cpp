@@ -167,14 +167,20 @@ int main(int argc, char *argv[]) {
   *outStream << "testing reading a set of sub regions from a 10 bit cine " << std::endl;
   DICe::cine::Cine_Reader cine_reader("./images/packed_12bpp.cine",outStream.getRawPtr());
   Teuchos::RCP<Image> image_0_rcp = cine_reader.get_frame(0,170,13,208,42,false,false);
+  //image_0_rcp->write("motion_window_d_0.rawi");
   Teuchos::RCP<Image> image_1_rcp = cine_reader.get_frame(0,196,72,238,95,false,false);
+  //image_1_rcp->write("motion_window_d_1.rawi");
   std::vector<Teuchos::RCP<Image> > image_rcps;
   image_rcps.push_back(image_0_rcp);
   image_rcps.push_back(image_1_rcp);
   // output the images
   for(size_t i=0;i<image_rcps.size();++i){
     std::stringstream name;
+#if DICE_USE_DOUBLE
+    name << "./images/motion_window_d_" << i << ".rawi";
+#else
     name << "./images/motion_window_" << i << ".rawi";
+#endif
     Image cine_img_exact(name.str().c_str());
     bool intensity_value_error = false;
     for(int_t y=0;y<cine_img_exact.height();++y){
@@ -195,8 +201,13 @@ int main(int argc, char *argv[]) {
   *outStream << "testing reading a set of sub regions from an 8 bit cine " << std::endl;
   DICe::cine::Cine_Reader cine_reader_8("./images/phantom_v1610.cine",outStream.getRawPtr());
   Teuchos::RCP<Image> image_8 = cine_reader_8.get_frame(5,158,15,196,45,false,false);
+  //image_8->write("motion_window_d_8.rawi");
   bool intensity_value_error = false;
-  Image img_8_exact("./images/motion_window_8.rawi");
+#if DICE_USE_DOUBLE
+    Image img_8_exact("./images/motion_window_d_8.rawi");
+#else
+    Image img_8_exact("./images/motion_window_8.rawi");
+#endif
   for(int_t y=0;y<image_8->height();++y){
     for(int_t x=0;x<image_8->width();++x){
       if(std::abs((*image_8)(x,y)-img_8_exact(x,y)) > 0.05){
@@ -213,8 +224,13 @@ int main(int argc, char *argv[]) {
   *outStream << "testing reading a set of sub regions from an 16 bit cine " << std::endl;
   DICe::cine::Cine_Reader cine_reader_16("./images/phantom_v1610_16bpp.cine",outStream.getRawPtr());
   Teuchos::RCP<Image> image_16 = cine_reader_16.get_frame(5,95,83,128,116,false,false);
+  //image_16->write("motion_window_d_16.rawi");
   intensity_value_error = false;
-  Image img_16_exact("./images/motion_window_16.rawi");
+#if DICE_USE_DOUBLE
+    Image img_16_exact("./images/motion_window_d_16.rawi");
+#else
+    Image img_16_exact("./images/motion_window_16.rawi");
+#endif
   for(int_t y=0;y<image_16->height();++y){
     for(int_t x=0;x<image_16->width();++x){
       if(std::abs((*image_16)(x,y)-img_16_exact(x,y)) > 0.05){
@@ -227,8 +243,6 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   *outStream << "16 bit motion window values have been checked" << std::endl;
-
-
 
   *outStream << "--- End test ---" << std::endl;
 

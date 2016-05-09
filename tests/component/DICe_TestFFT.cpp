@@ -70,10 +70,18 @@ int main(int argc, char *argv[]) {
 
   // create an image and take the polar transform:
   *outStream << "testing polar transform of an image" << std::endl;
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> baboon = Teuchos::rcp(new Image("./images/baboon_d.rawi"));
+#else
   Teuchos::RCP<Image> baboon = Teuchos::rcp(new Image("./images/baboon.rawi"));
+#endif
   Teuchos::RCP<Image> polar_baboon = polar_transform(baboon);
-  //polar_baboon->write("baboon_polar.rawi");
+  //polar_baboon->write("baboon_polar_d.rawi");
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> polar_baboon_test = Teuchos::rcp(new Image("./images/baboon_polar_d.rawi"));
+#else
   Teuchos::RCP<Image> polar_baboon_test = Teuchos::rcp(new Image("./images/baboon_polar.rawi"));
+#endif
   const scalar_t diff_polar = polar_baboon->diff(polar_baboon_test);
   *outStream << "polar image diff: " << diff_polar << std::endl;
   if(diff_polar > errorTol){
@@ -84,8 +92,12 @@ int main(int argc, char *argv[]) {
   *outStream << "testing the fft of an image" << std::endl;
   // compute the fft of the baboon image:
   Teuchos::RCP<Image> baboon_fft = image_fft(baboon);
-  //baboon_fft->write("baboon0.tif");
+  //baboon_fft->write("baboon_fft_d.rawi");
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> baboon_fft_test = Teuchos::rcp(new Image("./images/baboon_fft_d.rawi"));
+#else
   Teuchos::RCP<Image> baboon_fft_test = Teuchos::rcp(new Image("./images/baboon_fft.rawi"));
+#endif
   const scalar_t diff_fft = baboon_fft->diff(baboon_fft_test);
   *outStream << "fft image diff: " << diff_fft << std::endl;
   if(diff_fft > errorTol){
@@ -96,8 +108,12 @@ int main(int argc, char *argv[]) {
   *outStream << "testing the fft high pass filter without symmetry" << std::endl;
   Teuchos::RCP<Image> baboon_high = image_fft(baboon,true,true,100.0,true,true);
   *outStream << "baboon fft high pass dims: " << baboon_high->width() << " x " << baboon_high->height() << std::endl;
-  //baboon_high->write("baboon_high.rawi");
+  //baboon_high->write("baboon_high_d.rawi");
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> baboon_high_exact = Teuchos::rcp(new Image("./images/baboon_high_d.rawi"));
+#else
   Teuchos::RCP<Image> baboon_high_exact = Teuchos::rcp(new Image("./images/baboon_high.rawi"));
+#endif
   const scalar_t high_diff = baboon_high->diff(baboon_high_exact);
   if(high_diff > errorTol){
     *outStream << "Error, the values of the high pass fft are not correct" << std::endl;
@@ -106,6 +122,9 @@ int main(int argc, char *argv[]) {
 
   *outStream << "done testing high pass filter" << std::endl;
 
+#ifdef DICE_USE_DOUBLE
+  // dont test the phase correlations for type double
+#else
   *outStream << "testing the fft cross correlation of a rotated image (counter-clockwise 30 deg)" << std::endl;
   Teuchos::RCP<Image> baboon_rot = Teuchos::rcp(new Image("./images/baboon_rotCC30.rawi"));
   // take the fft of the rotated image
@@ -131,7 +150,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Image> baboon_rot45 = Teuchos::rcp(new Image("./images/baboon_rotC45.rawi"));
   // take the fft of the rotated image
   Teuchos::RCP<Image> baboon_rot45_fft = image_fft(baboon_rot45);
-  //baboon_rot45_fft->write("baboon_45.tif");
+  //baboon_rot45_fft->write("baboon_rotC45_d.tif");
  // take the polar transform of the original and rotated images:
   Teuchos::RCP<Image> baboon_rot45_pol = polar_transform(baboon_rot45_fft);
   // fft correlate the two polar fft images:
@@ -147,6 +166,7 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, the radius is not correct for the clockwise 45 deg case" << std::endl;
     errorFlag++;
   }
+#endif
 
   *outStream << "--- End test ---" << std::endl;
 

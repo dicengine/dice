@@ -44,8 +44,9 @@
 #include <DICe_ObjectiveZNSSD.h>
 #include <DICe_PostProcessor.h>
 #include <DICe_ParameterUtilities.h>
-#include <DICe_TriangleUtils.h>
-
+#ifdef DICE_ENABLE_GLOBAL
+  #include <DICe_TriangleUtils.h>
+#endif
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <Teuchos_ArrayRCP.hpp>
 
@@ -1169,8 +1170,8 @@ Schema::post_execution_tasks(){
 void
 Schema::execute_correlation(){
   if(analysis_type_==GLOBAL_DIC){
-    Status_Flag global_status = CORRELATION_FAILED;
 #ifdef DICE_ENABLE_GLOBAL
+    Status_Flag global_status = CORRELATION_FAILED;
     try{
       global_status = global_algorithm_->execute();
     }
