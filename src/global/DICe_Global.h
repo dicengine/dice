@@ -155,6 +155,11 @@ public:
     return grad_y_img_;
   }
 
+  /// return a pointer to the schema
+  Schema * schema()const{
+    return schema_;
+  }
+
 
 protected:
   /// protect the default constructor

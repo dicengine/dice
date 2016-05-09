@@ -44,6 +44,7 @@
 #include <DICe_MeshIO.h>
 #include <DICe_MatrixService.h>
 #include <DICe_Schema.h>
+#include <DICe_Subset.h>
 
 #include <BelosBlockCGSolMgr.hpp>
 #include <BelosBlockGmresSolMgr.hpp>
@@ -216,6 +217,237 @@ void image_grad_tensor(Global_Algorithm * alg,
     }
   }
 }
+
+void subset_velocity(Global_Algorithm * alg,
+  const int_t & c_x, // closest pixel in x
+  const int_t & c_y, // closest pixel in y
+  const int_t & subset_size,
+  scalar_t & b_x,
+  scalar_t & b_y){
+
+  // create a subset:
+  Teuchos::RCP<Subset> subset = Teuchos::rcp(new Subset(c_x,c_y,subset_size,subset_size));
+  subset->initialize(alg->schema()->ref_img(),REF_INTENSITIES); // get the schema ref image rather than the alg since the alg is already normalized
+
+  // using type double here a lot because LAPACK doesn't support float.
+  int_t N = 2; // [ u_x u_y ]
+  scalar_t solve_tol_disp = 1.0E-6;
+  const int_t max_solve_its = 100;
+  int *IPIV = new int[N+1];
+  int LWORK = N*N;
+  int INFO = 0;
+  double *WORK = new double[LWORK];
+  double *GWORK = new double[10*N];
+  int *IWORK = new int[LWORK];
+  Teuchos::LAPACK<int_t,double> lapack;
+
+  // Initialize storage:
+  Teuchos::SerialDenseMatrix<int_t,double> H(N,N, true);
+  Teuchos::ArrayRCP<double> q(N,0.0);
+  Teuchos::RCP<std::vector<scalar_t> > deformation = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0)); // save off the previous value to test for convergence
+  Teuchos::RCP<std::vector<scalar_t> > def_old     = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0)); // save off the previous value to test for convergence
+  Teuchos::RCP<std::vector<scalar_t> > def_update  = Teuchos::rcp(new std::vector<scalar_t>(N,0.0)); // save off the previous value to test for convergence
+
+  Teuchos::ArrayRCP<scalar_t> gradGx = subset->grad_x_array();
+  Teuchos::ArrayRCP<scalar_t> gradGy = subset->grad_y_array();
+  const scalar_t meanF = subset->mean(REF_INTENSITIES);
+
+  // SOLVER ---------------------------------------------------------
+
+  int_t solve_it = 0;
+  for(;solve_it<=max_solve_its;++solve_it)
+  {
+    // update the deformed image with the new deformation:
+    subset->initialize(alg->schema()->def_img(),DEF_INTENSITIES,deformation); // get the schema def image rather than the alg since the alg is already normalized
+
+    // compute the mean value of the subsets:
+    const scalar_t meanG = subset->mean(DEF_INTENSITIES);
+
+    scalar_t Gx=0.0,Gy=0.0, GmF=0.0;
+    for(int_t index=0;index<subset->num_pixels();++index){
+      if(subset->is_deactivated_this_step(index)||!subset->is_active(index)) continue;
+      GmF = (subset->def_intensities(index) - meanG) - (subset->ref_intensities(index) - meanF);
+      Gx = gradGx[index];
+      Gy = gradGy[index];
+
+      q[0] += Gx*GmF;
+      q[1] += Gy*GmF;
+      H(0,0) += Gx*Gx;
+      H(0,1) += Gx*Gy;
+      H(1,0) += Gy*Gx;
+      H(1,1) += Gy*Gy;
+    }
+
+    // determine the max value in the matrix:
+    scalar_t maxH = 0.0;
+    for(int_t i=0;i<H.numCols();++i)
+      for(int_t j=0;j<H.numRows();++j)
+        if(std::abs(H(i,j))>maxH) maxH = std::abs(H(i,j));
+
+    // TODO: remove for performance?
+    // compute the 1-norm of H:
+    std::vector<scalar_t> colTotals(N,0.0);
+    for(int_t i=0;i<H.numCols();++i){
+      for(int_t j=0;j<H.numRows();++j){
+        colTotals[i]+=std::abs(H(j,i));
+      }
+    }
+    double anorm = 0.0;
+    for(int_t i=0;i<N;++i){
+      if(colTotals[i] > anorm) anorm = colTotals[i];
+    }
+
+    // clear temp storage
+    for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
+    for(int_t i=0;i<10*N;++i) GWORK[i] = 0.0;
+    for(int_t i=0;i<LWORK;++i) IWORK[i] = 0;
+    for(int_t i=0;i<N+1;++i) {IPIV[i] = 0;}
+    double rcond=0.0; // reciporical condition number
+    try
+    {
+      lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
+      lapack.GECON('1',N,H.values(),N,anorm,&rcond,GWORK,IWORK,&INFO);
+      //DEBUG_MSG("Subset at cx " << c_x << " cy " << c_y  << "    RCOND(H): "<< rcond);
+      TEUCHOS_TEST_FOR_EXCEPTION(rcond < 1.0E-12,std::runtime_error,"Hessian singular");
+    }
+    catch(std::exception &e){
+      DEBUG_MSG( e.what() << '\n');
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"subset boundary initializer condition number estimate failed");
+    }
+    for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
+    try
+    {
+      lapack.GETRI(N,H.values(),N,IPIV,WORK,LWORK,&INFO);
+    }
+    catch(std::exception &e){
+      DEBUG_MSG( e.what() << '\n');
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"subset boundary initializer matrix solve failed");
+    }
+
+    // save off last step d
+    for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i)
+      (*def_old)[i] = (*deformation)[i];
+
+    for(int_t i=0;i<N;++i)
+      (*def_update)[i] = 0.0;
+
+    for(int_t i=0;i<N;++i)
+      for(int_t j=0;j<N;++j)
+        (*def_update)[i] += H(i,j)*(-1.0)*q[j];
+
+    //DEBUG_MSG("    Iterative updates: u " << (*def_update)[0] << " v " << (*def_update)[1]);
+
+    (*deformation)[DICe::DISPLACEMENT_X] += (*def_update)[0];
+    (*deformation)[DICe::DISPLACEMENT_Y] += (*def_update)[1];
+
+//    DEBUG_MSG("Subset at cx " << c_x << " cy " << c_y  << " -- iteration: " << solve_it << " u " << (*deformation)[DICe::DISPLACEMENT_X] <<
+//      " v " << (*deformation)[DICe::DISPLACEMENT_Y] << " theta " << (*deformation)[DICe::ROTATION_Z] <<
+//      " ex " << (*deformation)[DICe::NORMAL_STRAIN_X] << " ey " << (*deformation)[DICe::NORMAL_STRAIN_Y] <<
+//      " gxy " << (*deformation)[DICe::SHEAR_STRAIN_XY] << ")");
+
+    if(std::abs((*deformation)[DICe::DISPLACEMENT_X] - (*def_old)[DICe::DISPLACEMENT_X]) < solve_tol_disp
+        && std::abs((*deformation)[DICe::DISPLACEMENT_Y] - (*def_old)[DICe::DISPLACEMENT_Y]) < solve_tol_disp){
+      DEBUG_MSG("subset_velocity(): solution at cx " << c_x << " cy " << c_y << ": b_x " << (*deformation)[DICe::DISPLACEMENT_X] <<
+        " b_y " << (*deformation)[DICe::DISPLACEMENT_Y]);
+      break;
+    }
+
+    // zero out the storage
+    H.putScalar(0.0);
+    for(int_t i=0;i<N;++i)
+      q[i] = 0.0;
+  }
+
+  // clean up storage for lapack:
+  delete [] WORK;
+  delete [] GWORK;
+  delete [] IWORK;
+  delete [] IPIV;
+
+  if(solve_it>=max_solve_its){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Subset_velocity(): max iterations reached");
+  }
+
+  b_x = (*deformation)[DICe::DISPLACEMENT_X];
+  b_y = (*deformation)[DICe::DISPLACEMENT_Y];
+}
+
+
+void optical_flow_velocity(Global_Algorithm * alg,
+  const int_t & c_x, // closest pixel in x
+  const int_t & c_y, // closest pixel in y
+  scalar_t & b_x,
+  scalar_t & b_y){
+  TEUCHOS_TEST_FOR_EXCEPTION(alg==NULL,std::runtime_error,
+    "Error, the pointer to the algorithm must be valid");
+
+  const int_t window_size = 21; // TODO make sure this is greater than the buffer
+  const int_t half_window_size = window_size / 2;
+  static scalar_t coeffs[] = {0.0039,0.0111,0.0286,0.0657,0.1353,0.2494,0.4111,0.6065,0.8007,0.9460,1.0000,
+         0.9460,0.8007,0.6065,0.4111,0.2494,0.1353,0.0657,0.0286,0.0111,0.0039};
+  //const int_t window_size = 13; // TODO make sure this is greater than the buffer
+  //const int_t half_window_size = window_size / 2;
+  //static scalar_t coeffs[] = {0.51, 0.64,0.84,0.91,0.96,0.99,1.0,0.99,0.96,0.91,0.84,0.64,0.51};
+  static scalar_t window_coeffs[window_size][window_size];
+  for(int_t j=0;j<window_size;++j){
+    for(int_t i=0;i<window_size;++i){
+      window_coeffs[i][j] = coeffs[i]*coeffs[j];
+    }
+  }
+
+  // do the optical flow about these points...
+  const int N = 2;
+  Teuchos::SerialDenseMatrix<int,double> H(N,N, true);
+  Teuchos::ArrayRCP<double> q(N,0.0);
+  int *IPIV = new int[N+1];
+  int LWORK = N*N;
+  int INFO = 0;
+  double *WORK = new double[LWORK];
+  Teuchos::LAPACK<int,double> lapack;
+
+  // clear the values of H and q
+  H(0,0) = 0.0;
+  H(1,0) = 0.0;
+  H(0,1) = 0.0;
+  H(1,1) = 0.0;
+  q[0] = 0.0;
+  q[1] = 0.0;
+  scalar_t Ix = 0.0;
+  scalar_t Iy = 0.0;
+  scalar_t It = 0.0;
+  scalar_t w_coeff = 0.0;
+  int_t x=0,y=0;
+  // loop over subset pixels in the deformed location
+  for(int_t j=0;j<window_size;++j){
+    y = c_y - half_window_size + j;
+    for(int_t i=0;i<window_size;++i){
+      x = c_x - half_window_size + i;
+      Ix = (*alg->grad_x())(x,y);
+      Iy = (*alg->grad_y())(x,y);
+      It = (*alg->def_img())(x,y) - (*alg->ref_img())(x,y); // FIXME this should be prev image
+      w_coeff = window_coeffs[i][j];
+      H(0,0) += Ix*Ix*w_coeff*w_coeff;
+      H(1,0) += Ix*Iy*w_coeff*w_coeff;
+      H(0,1) += Iy*Ix*w_coeff*w_coeff;
+      H(1,1) += Iy*Iy*w_coeff*w_coeff;
+      q[0] += Ix*It*w_coeff*w_coeff;
+      q[1] += Iy*It*w_coeff*w_coeff;
+    }
+  }
+  // do the inversion:
+  for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
+  for(int_t i=0;i<N+1;++i) {IPIV[i] = 0;}
+  lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
+  lapack.GETRI(N,H.values(),N,IPIV,WORK,LWORK,&INFO);
+  // compute u and v
+  b_x = -H(0,0)*q[0] - H(0,1)*q[1];
+  b_y = -H(1,0)*q[0] - H(1,1)*q[1];
+  DEBUG_MSG("optical_flow_velocity(): at point " << c_x << " " << c_y << " b_x "  << b_x << " b_y " << b_y);
+
+  delete [] IPIV;
+  delete [] WORK;
+}
+
 
 void calc_jacobian(const scalar_t * xcap,
   const scalar_t * DN,

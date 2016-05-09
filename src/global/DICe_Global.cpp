@@ -162,6 +162,9 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     else{
       add_term(IMAGE_TIME_FORCE);
       add_term(IMAGE_GRAD_TENSOR);
+      add_term(SUBSET_DISPLACEMENT_IC);
+      add_term(SUBSET_DISPLACEMENT_BC);
+      //add_term(OPTICAL_FLOW_DISPLACEMENT_BC);
       //add_term(DIRICHLET_DISPLACEMENT_BC);
     }
   }
@@ -209,7 +212,9 @@ Global_Algorithm::pre_execution_tasks(){
   matrix_service_->initialize_bc_register(mesh_->get_vector_node_dist_map()->get_num_local_elements(),
     mesh_->get_vector_node_overlap_map()->get_num_local_elements());
 
-  if(has_term(DIRICHLET_DISPLACEMENT_BC)){
+  if(has_term(DIRICHLET_DISPLACEMENT_BC)||
+     has_term(OPTICAL_FLOW_DISPLACEMENT_BC)||
+     has_term(SUBSET_DISPLACEMENT_BC)){
     // set up the boundary condition nodes: FIXME this assumes there is only one node set
     //mesh->get_vector_node_dist_map()->describe();
     DICe::mesh::bc_set * bc_set = mesh_->get_node_bc_sets();
@@ -530,6 +535,8 @@ Global_Algorithm::execute(){
 
     //tangent->describe();
 
+    lhs.put_scalar(0.0);
+
     if(has_term(DIRICHLET_DISPLACEMENT_BC)){
       if(mms_problem_!=Teuchos::null){
         // enforce the dirichlet boundary conditions
@@ -565,13 +572,56 @@ Global_Algorithm::execute(){
         }
       }
     }
+    if(has_term(OPTICAL_FLOW_DISPLACEMENT_BC)||
+       has_term(SUBSET_DISPLACEMENT_BC)||
+       has_term(SUBSET_DISPLACEMENT_IC)){
+      for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+        int_t ix = i*2+0;
+        int_t iy = i*2+1;
+        scalar_t b_x = 0.0;
+        scalar_t b_y = 0.0;
+        const scalar_t x = coords.local_value(ix);
+        const scalar_t y = coords.local_value(iy);
+        // get the closest pixel to x and y
+        int_t px = (int_t)x;
+        if(x - (int_t)x >= 0.5) px++;
+        int_t py = (int_t)y;
+        if(y - (int_t)y >= 0.5) py++;
+        // compute the optical flow here
+        if(has_term(OPTICAL_FLOW_DISPLACEMENT_BC)){
+          optical_flow_velocity(this,px,py,b_x,b_y);
+        }
+        else if(has_term(SUBSET_DISPLACEMENT_BC)||has_term(SUBSET_DISPLACEMENT_IC)){
+          const int_t subset_size = 39;
+          subset_velocity(this,px,py,subset_size,b_x,b_y);
+          if(has_term(SUBSET_DISPLACEMENT_IC)){
+            lhs.local_value(ix) = b_x;
+            lhs.local_value(iy) = b_y;
+          }
+        }
+        else{
+          TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+        }
+        if(matrix_service_->is_col_bc(ix)){
+          // get the coordinates of the node
+          residual.local_value(ix) = b_x;
+        }
+        if(matrix_service_->is_col_bc(iy)){
+          // get the coordinates of the node
+          residual.local_value(iy) = b_y;
+        }
+      }
+    }
+    if(has_term(SUBSET_DISPLACEMENT_IC)){
+
+    }
 
     //residual.describe();
 
     DEBUG_MSG("Solving the linear system...");
 
     // solve:
-    lhs.put_scalar(0.0);
+
     linear_problem_->setOperator(tangent->get());
     bool is_set = linear_problem_->setProblem(lhs.get(), residual.get());
     TEUCHOS_TEST_FOR_EXCEPTION(!is_set, std::logic_error,

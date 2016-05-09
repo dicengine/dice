@@ -179,6 +179,9 @@ const std::string to_string(Global_EQ_Term in){
     "MMS_FORCE",
     "MMS_IMAGE_TIME_FORCE",
     "DIRICHLET_DISPLACEMENT_BC",
+    "OPTICAL_FLOW_DISPLACEMENT_BC",
+    "SUBSET_DISPLACEMENT_BC",
+    "SUBSET_DISPLACEMENT_IC",
     "NO_SUCH_GLOBAL_EQ_TERM"
   };
   return eqTermStrings[in];

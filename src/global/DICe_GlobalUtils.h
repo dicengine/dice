@@ -407,6 +407,32 @@ void image_time_force(Global_Algorithm* alg,
   const scalar_t * N,
   scalar_t * elem_force);
 
+/// computes the optical flow velocity about a point
+/// \param alg pointer to the global algorithm
+/// \param c_x closest pixel coord in x
+/// \param c_y closest pixel coord in y
+/// \param b_x output flow velocity in x
+/// \param b_y output flow velocity in y
+void optical_flow_velocity(Global_Algorithm * alg,
+  const int_t & c_x, // closest pixel in x
+  const int_t & c_y, // closest pixel in y
+  scalar_t & b_x,
+  scalar_t & b_y);
+
+/// computes subset velocity about a point
+/// \param alg pointer to the global algorithm
+/// \param c_x closest pixel coord in x
+/// \param c_y closest pixel coord in y
+/// \param subset_size the size of the subset to use
+/// \param b_x output flow velocity in x
+/// \param b_y output flow velocity in y
+void subset_velocity(Global_Algorithm * alg,
+  const int_t & c_x, // closest pixel in x
+  const int_t & c_y, // closest pixel in y
+  const int_t & subset_size,
+  scalar_t & b_x,
+  scalar_t & b_y);
+
 void calc_jacobian(const scalar_t * xcap,
   const scalar_t * DN,
   scalar_t * jacobian,
