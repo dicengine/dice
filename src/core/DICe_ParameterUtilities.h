@@ -99,9 +99,17 @@ const std::string to_string(Gradient_Method in);
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Global_EQ_Term in);
 
+/// Convert a DICe::Global_Solver to string
+DICE_LIB_DLL_EXPORT
+const std::string to_string(Global_Solver in);
+
 /// Convert a string to a DICe::Field_Name
 DICE_LIB_DLL_EXPORT
 Field_Name string_to_field_name(std::string & in);
+
+/// Convert a string to a DICe::Global_Solver
+DICE_LIB_DLL_EXPORT
+Global_Solver string_to_global_solver(std::string & in);
 
 /// Convert a string to a DICe::Correlation_Routine
 DICE_LIB_DLL_EXPORT

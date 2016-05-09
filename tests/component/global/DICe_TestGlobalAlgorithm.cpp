@@ -72,6 +72,8 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> global_params = Teuchos::rcp(new Teuchos::ParameterList());
   global_params->set(DICe::mesh_size,1000.0);
   global_params->set(DICe::global_regularization_alpha,1.0);
+  global_params->set(DICe::global_formulation,HORN_SCHUNCK);
+  global_params->set(DICe::global_solver,GMRES_SOLVER);
   global_params->set(DICe::output_folder,"");
   global_params->set(DICe::output_prefix,"test_global_alg");
   Teuchos::ParameterList mms_sublist;

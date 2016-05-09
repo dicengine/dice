@@ -56,7 +56,8 @@ Global_Algorithm::Global_Algorithm(Schema * schema,
   alpha2_(1.0),
   mms_problem_(Teuchos::null),
   is_initialized_(false),
-  global_formulation_(NO_SUCH_GLOBAL_FORMULATION)
+  global_formulation_(NO_SUCH_GLOBAL_FORMULATION),
+  global_solver_(CG_SOLVER)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(!schema,std::runtime_error,"Error, cannot have null schema in this constructor");
   default_constructor_tasks(params);
@@ -67,7 +68,8 @@ Global_Algorithm::Global_Algorithm(const Teuchos::RCP<Teuchos::ParameterList> & 
   mesh_size_(1000.0),
   alpha2_(1.0),
   is_initialized_(false),
-  global_formulation_(NO_SUCH_GLOBAL_FORMULATION)
+  global_formulation_(NO_SUCH_GLOBAL_FORMULATION),
+  global_solver_(CG_SOLVER)
 {
   default_constructor_tasks(params);
 }
@@ -81,10 +83,13 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::global_formulation),std::runtime_error,"Error, parameter: global_formulation must be defined");
   global_formulation_ = params->get<Global_Formulation>(DICe::global_formulation);
 
+  global_solver_ = params->get<Global_Solver>(DICe::global_solver,CG_SOLVER);
+  DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): global solver type: " << to_string(global_solver_));
+
   /// get the mesh size from the params
   if(params->isParameter(DICe::mesh_size))
     mesh_size_ = params->get<double>(DICe::mesh_size);
-  DEBUG_MSG("Global_Algorithm::Global_Algorithm(): Mesh size " << mesh_size_);
+  DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): Mesh size " << mesh_size_);
 
   Teuchos::ArrayRCP<scalar_t> points_x(4);
   Teuchos::ArrayRCP<scalar_t> points_y(4);
@@ -120,11 +125,6 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     points_x[3] = buff_size; points_y[3] = schema_->ref_img()->height() - buff_size;
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::global_regularization_alpha),std::runtime_error,
-    "Error, global_regularization_alpha must be defined");
-  const scalar_t alpha = params->get<double>(DICe::global_regularization_alpha);
-  alpha2_ = alpha*alpha;
-
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::output_prefix),std::runtime_error,
     "Error, output_prefix must be defined");
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::output_folder),std::runtime_error,
@@ -152,6 +152,10 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
 
   DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): using global formulation: " << to_string(global_formulation_));
   if(global_formulation_==HORN_SCHUNCK){
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::global_regularization_alpha),std::runtime_error,
+      "Error, global_regularization_alpha must be defined");
+    const scalar_t alpha = params->get<double>(DICe::global_regularization_alpha);
+    alpha2_ = alpha*alpha;
     add_term(DIV_SYMMETRIC_STRAIN_REGULARIZATION);
     if(mms_problem_!=Teuchos::null){
         add_term(MMS_IMAGE_GRAD_TENSOR);
@@ -175,7 +179,7 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   std::set<Global_EQ_Term>::iterator it_end=eq_terms_.end();
   for(;it!=it_end;++it)
     DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): active EQ term " << to_string(*it));
-
+  DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): alpha^2: " << alpha2_);
 }
 
 void
@@ -202,10 +206,19 @@ Global_Algorithm::pre_execution_tasks(){
   /// linear problem for solve
   linear_problem_ = Teuchos::rcp(new Belos::LinearProblem<mv_scalar_type,vec_type,operator_type>());
   /// Belos solver
-  belos_solver_ = Teuchos::rcp( new Belos::BlockCGSolMgr<mv_scalar_type,vec_type,operator_type>
-                                (linear_problem_,Teuchos::rcp(&belos_list,false)));
+  if(global_solver_==CG_SOLVER){ // use Gmres for mms problems
+    belos_solver_ = Teuchos::rcp( new Belos::BlockCGSolMgr<mv_scalar_type,vec_type,operator_type>
+    (linear_problem_,Teuchos::rcp(&belos_list,false)));
+  }
+  else if(global_solver_==GMRES_SOLVER){
+    belos_solver_ = Teuchos::rcp( new Belos::BlockGmresSolMgr<mv_scalar_type,vec_type,operator_type>
+    (linear_problem_,Teuchos::rcp(&belos_list,false)));
+  }
+  else{
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, Unknown solver type.");
+  }
 
-  DEBUG_MSG("Solver and linear problem have been initialized.");
+  DEBUG_MSG("Global_Algorithm::pre_execution_tasks(): Solver and linear problem have been initialized.");
 
   const int_t spa_dim = mesh_->spatial_dimension();
   matrix_service_ = Teuchos::rcp(new DICe::Matrix_Service(spa_dim));
@@ -215,6 +228,7 @@ Global_Algorithm::pre_execution_tasks(){
   if(has_term(DIRICHLET_DISPLACEMENT_BC)||
      has_term(OPTICAL_FLOW_DISPLACEMENT_BC)||
      has_term(SUBSET_DISPLACEMENT_BC)){
+    DEBUG_MSG("Global_Algorithm::pre_execution_tasks(): setting the boundary condition nodes");
     // set up the boundary condition nodes: FIXME this assumes there is only one node set
     //mesh->get_vector_node_dist_map()->describe();
     DICe::mesh::bc_set * bc_set = mesh_->get_node_bc_sets();
@@ -240,7 +254,7 @@ Global_Algorithm::pre_execution_tasks(){
     }
   }
 
-  DEBUG_MSG("Matrix service has been initialized.");
+  DEBUG_MSG("Global_Algorithm::pre_execution_tasks(): Matrix service has been initialized.");
   is_initialized_ = true;
 
   // if this is not an mms problem, set up the images
@@ -252,7 +266,6 @@ Global_Algorithm::pre_execution_tasks(){
 
 Status_Flag
 Global_Algorithm::execute(){
-  DEBUG_MSG("Global_Algorithm::execute() called");
   if(!is_initialized_) pre_execution_tasks();
 
   const int_t spa_dim = mesh_->spatial_dimension();
@@ -261,7 +274,7 @@ Global_Algorithm::execute(){
   Teuchos::RCP<DICe::MultiField_Matrix> tangent =
       Teuchos::rcp(new DICe::MultiField_Matrix(*mesh_->get_vector_node_dist_map(),relations_size));
 
-  DEBUG_MSG("Tangent has been allocated.");
+  DEBUG_MSG("Global_Algorithm::execute(): Tangent has been allocated.");
 
   MultiField & residual = *mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
   residual.put_scalar(0.0);
@@ -273,6 +286,7 @@ Global_Algorithm::execute(){
   Teuchos::RCP<MultiField> image_phi;
   Teuchos::RCP<MultiField> image_grad_phi;
   if(mms_problem_!=Teuchos::null){
+    DEBUG_MSG("Global_Algorithm::execute(): gathering exact solution fields.");
     exact_sol = mesh_->get_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
     image_phi = mesh_->get_field(mesh::field_enums::IMAGE_PHI_FS);
     image_grad_phi = mesh_->get_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
@@ -612,13 +626,10 @@ Global_Algorithm::execute(){
         }
       }
     }
-    if(has_term(SUBSET_DISPLACEMENT_IC)){
-
-    }
 
     //residual.describe();
 
-    DEBUG_MSG("Solving the linear system...");
+    DEBUG_MSG("Global_Algorithm::execute(): Solving the linear system...");
 
     // solve:
 

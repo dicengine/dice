@@ -198,6 +198,8 @@ protected:
   Teuchos::RCP<Image> grad_y_img_;
   /// enum of the formulation to use
   Global_Formulation global_formulation_;
+  /// Global solver type
+  Global_Solver global_solver_;
 };
 
 }// end global namespace

@@ -243,6 +243,8 @@ const char* const rotate_ref_image_270 = "rotate_ref_image_270";
 /// String parameter name
 const char* const rotate_def_image_270 = "rotate_def_image_270";
 /// String parameter name, only for global DIC
+const char* const global_solver = "global_solver";
+/// String parameter name, only for global DIC
 const char* const global_formulation = "global_formulation";
 /// String parameter name, only for global DIC
 const char* const problem_name = "problem_name";
@@ -617,6 +619,13 @@ enum Global_EQ_Term{
 };
 
 
+/// Global solver type
+enum Global_Solver{
+  CG_SOLVER=0,
+  GMRES_SOLVER,
+  NO_SUCH_GLOBAL_SOLVER
+};
+
 /// \class DICe::Extents
 /// \brief collection of origin x, y and width and height
 struct Extents {
@@ -928,6 +937,12 @@ const Correlation_Parameter global_formulation_param(global_formulation,
   MAX_GLOBAL_FORMULATION
 );
 /// Correlation parameter and properties
+const Correlation_Parameter global_solver_param(global_solver,
+  STRING_PARAM,
+  true,
+  "Used only for global, this is the solver to use for the global method."
+);
+/// Correlation parameter and properties
 const Correlation_Parameter use_tracking_default_params_param(use_tracking_default_params,
   BOOL_PARAM,
   true,
@@ -988,7 +1003,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 57;
+const int_t num_valid_correlation_params = 60;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1047,12 +1062,15 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   rotate_ref_image_270_param,
   rotate_def_image_270_param,
   objective_regularization_factor_param,
-  filter_failed_cine_pixels_param
+  filter_failed_cine_pixels_param,
+  global_regularization_alpha_param,
+  global_formulation_param,
+  global_solver_param,
 };
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_global_correlation_params = 11;
+const int_t num_valid_global_correlation_params = 12;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_global_correlation_params[num_valid_global_correlation_params] = {
   use_global_dic_param,
@@ -1065,6 +1083,7 @@ const Correlation_Parameter valid_global_correlation_params[num_valid_global_cor
   omit_output_row_id_param,
   global_regularization_alpha_param,
   global_formulation_param,
+  global_solver_param,
   mms_spec_param
 };
 

@@ -188,6 +188,29 @@ const std::string to_string(Global_EQ_Term in){
 };
 
 DICE_LIB_DLL_EXPORT
+const std::string to_string(Global_Solver in){
+  assert(in < NO_SUCH_GLOBAL_SOLVER);
+  const static char * globalSolverStrings[] = {
+    "CG_SOLVER",
+    "GMRES_SOLVER",
+    "NO_SUCH_GLOBAL_SOLVER"
+  };
+  return globalSolverStrings[in];
+};
+
+DICE_LIB_DLL_EXPORT
+Global_Solver string_to_global_solver(std::string & in){
+  // convert the string to uppercase
+  stringToUpper(in);
+  for(int_t i=0;i<NO_SUCH_GLOBAL_SOLVER;++i){
+    if(to_string(static_cast<Global_Solver>(i))==in) return static_cast<Global_Solver>(i);
+  }
+  std::cout << "Error: Global_Solver " << in << " does not exist." << std::endl;
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
+  return NO_SUCH_GLOBAL_SOLVER; // prevent no return errors
+}
+
+DICE_LIB_DLL_EXPORT
 Field_Name string_to_field_name(std::string & in){
   // convert the string to uppercase
   stringToUpper(in);
@@ -198,6 +221,7 @@ Field_Name string_to_field_name(std::string & in){
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
   return NO_SUCH_FIELD_NAME; // prevent no return errors
 }
+
 DICE_LIB_DLL_EXPORT
 Correlation_Routine string_to_correlation_routine(std::string & in){
   // convert the string to uppercase
@@ -336,6 +360,7 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::rotate_def_image_270,false);
   defaultParams->set(DICe::global_formulation,HORN_SCHUNCK);
   defaultParams->set(DICe::global_regularization_alpha,1.0);
+  defaultParams->set(DICe::global_solver,CG_SOLVER);
 }
 
 DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultParams){
@@ -383,6 +408,7 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::rotate_def_image_270,false);
   defaultParams->set(DICe::global_formulation,HORN_SCHUNCK);
   defaultParams->set(DICe::global_regularization_alpha,1.0);
+  defaultParams->set(DICe::global_solver,CG_SOLVER);
 }
 
 }// End DICe Namespace
