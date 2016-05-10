@@ -138,6 +138,41 @@ public:
     int_t * x_coords,
     int_t * y_coords) const;
 
+  /// return a pointer to the polygon x vertices
+  std::vector<int_t> * vertex_coordinates_x(){
+    return & vertex_coordinates_x_;
+  }
+
+  /// return a pointer to the polygon x vertices
+  std::vector<int_t> * vertex_coordinates_y(){
+    return & vertex_coordinates_y_;
+  }
+
+  /// return the number of vertices
+  int_t num_vertices()const{
+    return vertex_coordinates_x_.size()-1; // the first index is repeated
+  }
+
+  /// return the min x vertex
+  int_t min_x()const{
+    return min_x_;
+  }
+
+  /// return the max x vertex
+  int_t max_x()const{
+    return max_x_;
+  }
+
+  /// return the min y vertex
+  int_t min_y()const{
+    return min_y_;
+  }
+
+  /// return the max y vertex
+  int_t max_y()const{
+    return max_y_;
+  }
+
 private:
   /// vector storing the integer vertex global x-coordinates
   std::vector<int_t> vertex_coordinates_x_;

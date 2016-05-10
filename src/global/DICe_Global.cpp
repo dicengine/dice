@@ -91,11 +91,20 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     mesh_size_ = params->get<double>(DICe::mesh_size);
   DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): Mesh size " << mesh_size_);
 
-  Teuchos::ArrayRCP<scalar_t> points_x(4);
-  Teuchos::ArrayRCP<scalar_t> points_y(4);
+  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::output_prefix),std::runtime_error,
+    "Error, output_prefix must be defined");
+  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::output_folder),std::runtime_error,
+    "Error, output_folder must be defined");
+  const std::string output_folder = params->get<std::string>(DICe::output_folder);
+  const std::string output_prefix = params->get<std::string>(DICe::output_prefix);
+  std::stringstream output_file_name_ss;
+  output_file_name_ss << output_prefix << ".e";
+  output_file_name_ = output_file_name_ss.str();
+  DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): output file name: " << output_file_name_);
+
   if(params->isParameter(DICe::mms_spec)){
-//    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::mms_spec),std::runtime_error,"Error, mms_spec must be defined"
-//      " in the parameters file for this constructor");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::subset_file),std::runtime_error,"Error, subset file cannot be defined"
+      " in the parameters file for an mms problem");
     // carve off the mms_spec params:
     Teuchos::ParameterList mms_sublist = params->sublist(DICe::mms_spec);
     Teuchos::RCP<Teuchos::ParameterList> mms_params = Teuchos::rcp( new Teuchos::ParameterList());
@@ -110,33 +119,21 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     mms_problem_ = mms_factory.create(mms_params);
 
     // determine the problem extents:
+    Teuchos::ArrayRCP<scalar_t> points_x(4);
+    Teuchos::ArrayRCP<scalar_t> points_y(4);
     points_x[0] = 0.0; points_y[0] = 0.0;
     points_x[1] = mms_problem_->dim_x(); points_y[1] = 0.0;
     points_x[2] = mms_problem_->dim_x(); points_y[2] = mms_problem_->dim_y();
     points_x[3] = 0.0; points_y[3] = mms_problem_->dim_y();
+    mesh_ = DICe::generate_tri6_mesh(points_x,points_y,mesh_size_,output_file_name_);
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(schema_==NULL,std::runtime_error,"If not an mms problem, schema must not be null.");
-    // determine the image extents:
-    const scalar_t buff_size = 20.0; //pixels
-    points_x[0] = buff_size; points_y[0] = buff_size;
-    points_x[1] = schema_->ref_img()->width() - buff_size; points_y[1] = buff_size;
-    points_x[2] = schema_->ref_img()->width() - buff_size; points_y[2] = schema_->ref_img()->height() - buff_size;
-    points_x[3] = buff_size; points_y[3] = schema_->ref_img()->height() - buff_size;
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::subset_file),std::runtime_error,"Error, subset file must be defined");
+    const std::string & subset_file = params->get<std::string>(DICe::subset_file);
+    mesh_ = DICe::generate_tri6_mesh(subset_file,mesh_size_,output_file_name_);
   }
-
-  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::output_prefix),std::runtime_error,
-    "Error, output_prefix must be defined");
-  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::output_folder),std::runtime_error,
-    "Error, output_folder must be defined");
-  const std::string output_folder = params->get<std::string>(DICe::output_folder);
-  const std::string output_prefix = params->get<std::string>(DICe::output_prefix);
-  std::stringstream output_file_name_ss;
-  output_file_name_ss << output_prefix << ".e";
-  output_file_name_ = output_file_name_ss.str();
-  DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): output file name: " << output_file_name_);
-
-  mesh_ = DICe::generate_tri6_mesh(points_x,points_y,mesh_size_,output_file_name_);
+  TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"Error, mesh should not be a null pointer here.");
 
   DICe::mesh::create_output_exodus_file(mesh_,output_folder);
   // create the necessary fields:
@@ -166,7 +163,8 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     else{
       add_term(IMAGE_TIME_FORCE);
       add_term(IMAGE_GRAD_TENSOR);
-      add_term(SUBSET_DISPLACEMENT_IC);
+      if(global_solver_==CG_SOLVER)
+        add_term(SUBSET_DISPLACEMENT_IC);
       add_term(SUBSET_DISPLACEMENT_BC);
       //add_term(OPTICAL_FLOW_DISPLACEMENT_BC);
       //add_term(DIRICHLET_DISPLACEMENT_BC);
@@ -592,37 +590,39 @@ Global_Algorithm::execute(){
       for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
         int_t ix = i*2+0;
         int_t iy = i*2+1;
-        scalar_t b_x = 0.0;
-        scalar_t b_y = 0.0;
-        const scalar_t x = coords.local_value(ix);
-        const scalar_t y = coords.local_value(iy);
-        // get the closest pixel to x and y
-        int_t px = (int_t)x;
-        if(x - (int_t)x >= 0.5) px++;
-        int_t py = (int_t)y;
-        if(y - (int_t)y >= 0.5) py++;
-        // compute the optical flow here
-        if(has_term(OPTICAL_FLOW_DISPLACEMENT_BC)){
-          optical_flow_velocity(this,px,py,b_x,b_y);
-        }
-        else if(has_term(SUBSET_DISPLACEMENT_BC)||has_term(SUBSET_DISPLACEMENT_IC)){
-          const int_t subset_size = 39;
-          subset_velocity(this,px,py,subset_size,b_x,b_y);
-          if(has_term(SUBSET_DISPLACEMENT_IC)){
-            lhs.local_value(ix) = b_x;
-            lhs.local_value(iy) = b_y;
+        if(matrix_service_->is_col_bc(ix)||matrix_service_->is_col_bc(iy)||has_term(SUBSET_DISPLACEMENT_IC)){
+          scalar_t b_x = 0.0;
+          scalar_t b_y = 0.0;
+          const scalar_t x = coords.local_value(ix);
+          const scalar_t y = coords.local_value(iy);
+          // get the closest pixel to x and y
+          int_t px = (int_t)x;
+          if(x - (int_t)x >= 0.5) px++;
+          int_t py = (int_t)y;
+          if(y - (int_t)y >= 0.5) py++;
+          // compute the optical flow here
+          if(has_term(OPTICAL_FLOW_DISPLACEMENT_BC)){
+            optical_flow_velocity(this,px,py,b_x,b_y);
           }
-        }
-        else{
-          TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
-        }
-        if(matrix_service_->is_col_bc(ix)){
-          // get the coordinates of the node
-          residual.local_value(ix) = b_x;
-        }
-        if(matrix_service_->is_col_bc(iy)){
-          // get the coordinates of the node
-          residual.local_value(iy) = b_y;
+          else if(has_term(SUBSET_DISPLACEMENT_BC)||has_term(SUBSET_DISPLACEMENT_IC)){
+            const int_t subset_size = 39;
+            subset_velocity(this,px,py,subset_size,b_x,b_y);
+            if(has_term(SUBSET_DISPLACEMENT_IC)){
+              lhs.local_value(ix) = b_x;
+              lhs.local_value(iy) = b_y;
+            }
+          }
+          else{
+            TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+          }
+          if(matrix_service_->is_col_bc(ix)){
+            // get the coordinates of the node
+            residual.local_value(ix) = b_x;
+          }
+          if(matrix_service_->is_col_bc(iy)){
+            // get the coordinates of the node
+            residual.local_value(iy) = b_y;
+          }
         }
       }
     }

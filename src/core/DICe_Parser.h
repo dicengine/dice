@@ -163,6 +163,19 @@ Motion_Window_Params {
   int_t sub_image_id_;
 };
 
+struct
+DICE_LIB_DLL_EXPORT
+Boundary_Condition_Def{
+  /// either boundary or excluded
+  std::string region_;
+  /// the shape id in the region set
+  int_t shape_id_;
+  /// the left vertex id in the shape
+  int_t left_vertex_id_;
+  /// the right vertex id in the shape
+  int_t right_vertex_id_;
+};
+
 /// Simple struct for passing info back and forth from read_subset_file:
 struct
 DICE_LIB_DLL_EXPORT
@@ -187,6 +200,7 @@ Subset_File_Info {
     motion_window_params = Teuchos::rcp(new std::map<int_t,Motion_Window_Params>());
     num_motion_windows = 0;
     type = info_type;
+    boundary_condition_defs = Teuchos::rcp(new std::vector<Boundary_Condition_Def>());
   }
   /// Pointer to map of conformal subset defs (these are used to define conformal subsets)
   Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
@@ -222,6 +236,8 @@ Subset_File_Info {
   Teuchos::RCP<std::map<int_t,Motion_Window_Params> > motion_window_params;
   /// number of motion windows
   int_t num_motion_windows;
+  /// Pointer to the vector of neighbor ids
+  Teuchos::RCP<std::vector<Boundary_Condition_Def> > boundary_condition_defs;
 };
 
 /// \brief Read a list of coordinates for correlation points from file
@@ -231,8 +247,8 @@ Subset_File_Info {
 /// TODO add conformal subset notes here.
 DICE_LIB_DLL_EXPORT
 const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileName,
-  const int_t width,
-  const int_t height);
+  const int_t width=-1,
+  const int_t height=-1);
 
 /// \brief Turns a string read from getline() into tokens
 /// \param dataFile fstream file to read line from (assumed to be open)
@@ -375,6 +391,8 @@ const char* const parser_normal_strain = "NORMAL_STRAIN";
 const char* const parser_shear_strain = "SHEAR_STRAIN";
 /// Parser string
 const char* const parser_rotation = "ROTATION";
+/// Parser string
+const char* const parser_dirichlet_bc = "DIRICHLET_BC";
 
 
 }// End DICe Namespace

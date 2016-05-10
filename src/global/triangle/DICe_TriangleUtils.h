@@ -53,6 +53,10 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
   const scalar_t & max_size_constraint,
   const std::string & output_file_name);
 
+Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(const std::string & roi_file_name,
+  const scalar_t & max_size_constraint,
+  const std::string & output_file_name);
+
 Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> points_x,
   Teuchos::ArrayRCP<scalar_t> points_y,
   Teuchos::ArrayRCP<scalar_t> holes_x,

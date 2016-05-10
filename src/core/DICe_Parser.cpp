@@ -190,9 +190,8 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
       required_param_missing = true;
     }
   }
-  else{
+  else{ // GLOBAL DIC
     std::vector<std::string> invalid_params;
-    invalid_params.push_back(DICe::subset_file);
     invalid_params.push_back(DICe::step_size);
     invalid_params.push_back(DICe::subset_size);
     for(size_t i=0;i<invalid_params.size();++i){
@@ -201,6 +200,10 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
             " is not valid for this global DIC analysis" << std::endl;
         required_param_missing = true;
       }
+    }
+    if(!inputParams->isParameter(DICe::subset_file)){
+      std::cout << "Error: The parameter " << DICe::subset_file << " of type string must be defined  for global DIC in " << input_file << std::endl;
+      required_param_missing = true;
     }
   }
   if(!inputParams->isParameter(DICe::reference_image_index)&&!inputParams->isParameter(DICe::reference_image)&&!inputParams->isParameter(DICe::cine_file)){
@@ -355,6 +358,10 @@ Teuchos::RCP<Teuchos::ParameterList> read_correlation_params(const std::string &
       }
       else if(paramName == DICe::global_formulation){
         diceParams->set(DICe::global_formulation,DICe::string_to_global_formulation(
+          stringParams->get<std::string>(it->first)));
+      }
+      else if(paramName == DICe::global_solver){
+        diceParams->set(DICe::global_solver,DICe::string_to_global_solver(
           stringParams->get<std::string>(it->first)));
       }
       else if(paramName == DICe::initialization_method){
@@ -702,10 +709,10 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          TEUCHOS_TEST_FOR_EXCEPTION(info->coordinates_vector->size()/2!=info->neighbor_vector->size(),std::runtime_error,"");
          TEUCHOS_TEST_FOR_EXCEPTION(info->coordinates_vector->size()%2!=0,std::runtime_error,"");
          for(int_t i=0;i<(int_t)info->coordinates_vector->size()/dim;++i){
-           if((*info->coordinates_vector)[i*dim]<0||(*info->coordinates_vector)[i*dim]>=width){
+           if((*info->coordinates_vector)[i*dim]<0||((*info->coordinates_vector)[i*dim]>=width&&width!=-1)){
              TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid subset coordinate in " << fileName << " x: "  << (*info->coordinates_vector)[i*dim]);
            }
-           if((*info->coordinates_vector)[i*dim+1]<0||(*info->coordinates_vector)[i*dim+1]>=height){
+           if((*info->coordinates_vector)[i*dim+1]<0||((*info->coordinates_vector)[i*dim+1]>=height&&height!=-1)){
              TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid subset coordinate in " << fileName << " y: "  << (*info->coordinates_vector)[i*dim+1]);
            }
            if(proc_rank==0) DEBUG_MSG("Subset coord: (" << (*info->coordinates_vector)[i*dim] << "," << (*info->coordinates_vector)[i*dim+1] << ")");
@@ -721,6 +728,29 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile);
            if(block_tokens.size()==0) continue; // blank line or comment
            else if(block_tokens[0]==parser_end) break; // end of the defs
+
+           // BOUNDARY CONDITIONS
+           else if(block_tokens[0]==parser_dirichlet_bc){
+             if(proc_rank==0) DEBUG_MSG("Reading dirichlet boundary condition ");
+             TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<5,std::runtime_error,
+               "Error, not enough values specified for dirichlet bc DIRICHLET_BC BOUNDARY/EXCLUDED SHAPE_ID VERTEX_ID VERTEX_ID." );
+             std::string region_type;
+             if(block_tokens[1]==parser_boundary){
+               if(proc_rank==0) DEBUG_MSG("Region: boundary");
+               region_type=parser_boundary;
+             }
+             else if(block_tokens[1]==parser_excluded){
+               if(proc_rank==0) DEBUG_MSG("Region: excluded");
+               region_type=parser_excluded;
+             }
+             TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[2]) || !is_number(block_tokens[3]) || !is_number(block_tokens[4]),std::runtime_error,"");
+             Boundary_Condition_Def bc_def;
+             bc_def.shape_id_ = atoi(block_tokens[2].c_str());
+             bc_def.left_vertex_id_ = atoi(block_tokens[3].c_str());
+             bc_def.right_vertex_id_ = atoi(block_tokens[4].c_str());
+             DEBUG_MSG("Shape id: " << bc_def.shape_id_ << " left vertex: " << bc_def.left_vertex_id_ << " right vertex: "<< bc_def.right_vertex_id_);
+             info->boundary_condition_defs->push_back(bc_def);
+           }
            // SHAPES
            else if(block_tokens[0]==parser_begin){
              TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<2,std::runtime_error,"");

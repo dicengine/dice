@@ -717,12 +717,16 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     const scalar_t mesh_size = input_params->get<double>(DICe::mesh_size);
     TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::output_folder),std::runtime_error,
       "Error, missing required input parameter: output_folder");
+    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_file),std::runtime_error,
+      "Error, missing required input parameter: subset_file");
     const std::string output_folder = input_params->get<std::string>(DICe::output_folder);
     const std::string output_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
+    const std::string subset_file = input_params->get<std::string>(DICe::subset_file);
     init_params_->set(DICe::mesh_size,mesh_size); // pass the mesh size to the stored parameters for this schema (used by global method)
     init_params_->set(DICe::output_prefix,output_prefix);
     init_params_->set(DICe::output_folder,output_folder);
-    init_params_->set(DICe::global_formulation,input_params->get<Global_Formulation>(DICe::global_formulation,HORN_SCHUNCK));
+    init_params_->set(DICe::subset_file,subset_file);
+    //init_params_->set(DICe::global_formulation,input_params->get<Global_Formulation>(DICe::global_formulation,HORN_SCHUNCK));
 #ifdef DICE_ENABLE_GLOBAL
     global_algorithm_ = Teuchos::rcp(new DICe::global::Global_Algorithm(this,init_params_));
 #endif
