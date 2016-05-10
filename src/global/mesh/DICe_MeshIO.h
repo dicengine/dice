@@ -65,7 +65,8 @@ Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
 Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coords_x,
   Teuchos::ArrayRCP<scalar_t> node_coords_y,
   Teuchos::ArrayRCP<int_t> connectivity,
-  std::set<int_t> & boundary_nodes,
+  std::set<int_t> & dirichlet_boundary_nodes,
+  std::set<int_t> & neumann_boundary_nodes,
   const std::string & serial_output_filename);
 
 

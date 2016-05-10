@@ -53,6 +53,17 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
   const scalar_t & max_size_constraint,
   const std::string & output_file_name);
 
+Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> points_x,
+  Teuchos::ArrayRCP<scalar_t> points_y,
+  Teuchos::ArrayRCP<scalar_t> holes_x,
+  Teuchos::ArrayRCP<scalar_t> holes_y,
+  Teuchos::ArrayRCP<int_t> dirichlet_boundary_segments_left,
+  Teuchos::ArrayRCP<int_t> dirichlet_boundary_segments_right,
+  Teuchos::ArrayRCP<int_t> neumann_boundary_segments_left,
+  Teuchos::ArrayRCP<int_t> neumann_boundary_segments_right,
+  const scalar_t & max_size_constraint,
+  const std::string & output_file_name);
+
 }// End DICe Namespace
 
 #endif
