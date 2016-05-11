@@ -167,7 +167,6 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
         add_term(SUBSET_DISPLACEMENT_IC);
       add_term(SUBSET_DISPLACEMENT_BC);
       //add_term(OPTICAL_FLOW_DISPLACEMENT_BC);
-      //add_term(DIRICHLET_DISPLACEMENT_BC);
     }
   }
   else{
@@ -231,7 +230,8 @@ Global_Algorithm::pre_execution_tasks(){
     //mesh->get_vector_node_dist_map()->describe();
     DICe::mesh::bc_set * bc_set = mesh_->get_node_bc_sets();
     const int_t boundary_node_set_id = 0;
-    for(size_t i=0;i<bc_set->find(boundary_node_set_id)->second.size();++i){
+    const int_t num_bc_nodes = bc_set->find(boundary_node_set_id)->second.size();
+    for(int_t i=0;i<num_bc_nodes;++i){
       const int_t node_gid = bc_set->find(boundary_node_set_id)->second[i];
       //std::cout << " disp x condition on node " << node_gid << std::endl;
       bool is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim+1);
@@ -250,6 +250,56 @@ Global_Algorithm::pre_execution_tasks(){
       col_id = mesh_->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim+2);
       matrix_service_->register_col_bc(col_id);
     }
+
+    // set up the neighbor list for each boundary node
+    DEBUG_MSG("Global_Algorithm::pre_execution_tasks(): creating the point cloud");
+    /// pointer to the point cloud used for the neighbor searching
+    MultiField & coords = *mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+    Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud<scalar_t>());
+    std::vector<int_t> node_map(num_bc_nodes);
+    point_cloud->pts.resize(num_bc_nodes);
+    for(int_t i=0;i<num_bc_nodes;++i){
+      const int_t node_gid = bc_set->find(boundary_node_set_id)->second[i];
+      point_cloud->pts[i].x = coords.global_value((node_gid-1)*spa_dim + 1);
+      point_cloud->pts[i].y = coords.global_value((node_gid-1)*spa_dim + 2);
+      point_cloud->pts[i].z = 0.0;
+      node_map[i] = node_gid;
+    }
+    DEBUG_MSG("Global_Algorithm::pre_execution_tasks(): building the kd-tree");
+    /// pointer to the kd-tree used for searching
+    Teuchos::RCP<my_kd_tree_t> kd_tree =
+        Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+    kd_tree->buildIndex();
+    DEBUG_MSG("Global_Algorithm::pre_execution_tasks(): setting up neighbors");
+    const int_t num_neighbors = 5;
+    scalar_t query_pt[3];
+    for(int_t i=0;i<num_bc_nodes;++i){
+      std::vector<size_t> ret_index(num_neighbors);
+      std::vector<int_t> neighbors(num_neighbors);
+      std::vector<scalar_t> out_dist_sqr(num_neighbors);
+      const int_t node_gid = bc_set->find(boundary_node_set_id)->second[i];
+      query_pt[0] = point_cloud->pts[i].x;
+      query_pt[1] = point_cloud->pts[i].y;
+      query_pt[2] = point_cloud->pts[i].z;
+      kd_tree->knnSearch(&query_pt[0], num_neighbors, &ret_index[0], &out_dist_sqr[0]);
+      for(int_t j=0;j<num_neighbors;++j)
+        neighbors[j] = node_map[ret_index[j]];
+      bc_neighbors_.insert(std::pair<int_t,std::vector<int_t> >(node_gid,neighbors));
+      bc_neighbor_distances_.insert(std::pair<int_t,std::vector<scalar_t> >(node_gid,out_dist_sqr));
+    }
+//    // describe the neighbors of each point:
+//    for(int_t i=0;i<num_bc_nodes;++i){
+//      const int_t node_gid = bc_set->find(boundary_node_set_id)->second[i];
+//      DEBUG_MSG("boundary node " << node_gid << " at " << point_cloud->pts[i].x << " " << point_cloud->pts[i].y);
+//      DEBUG_MSG("  has neighbors and distances: ");
+//      for(int_t j=0;j<num_neighbors;++j){
+//        TEUCHOS_TEST_FOR_EXCEPTION(bc_neighbors_.find(node_gid)==bc_neighbors_.end(),std::runtime_error,
+//          "Error, neighbors invalid node gid");
+//        TEUCHOS_TEST_FOR_EXCEPTION(bc_neighbor_distances_.find(node_gid)==bc_neighbor_distances_.end(),std::runtime_error,
+//          "Error, neighbor distances invalid node gid");
+//        DEBUG_MSG("  " << bc_neighbors_.find(node_gid)->second[j] << " " << bc_neighbor_distances_.find(node_gid)->second[j]);
+//      }
+//    }
   }
 
   DEBUG_MSG("Global_Algorithm::pre_execution_tasks(): Matrix service has been initialized.");
@@ -549,6 +599,26 @@ Global_Algorithm::execute(){
 
     lhs.put_scalar(0.0);
 
+    // apply IC first so that it is overwritten by BCs
+    if(has_term(SUBSET_DISPLACEMENT_IC)){
+      for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+        int_t ix = i*2+0;
+        int_t iy = i*2+1;
+        scalar_t b_x = 0.0;
+        scalar_t b_y = 0.0;
+        const scalar_t x = coords.local_value(ix);
+        const scalar_t y = coords.local_value(iy);
+        // get the closest pixel to x and y
+        int_t px = (int_t)x;
+        if(x - (int_t)x >= 0.5) px++;
+        int_t py = (int_t)y;
+        if(y - (int_t)y >= 0.5) py++;
+        const int_t subset_size = 39;
+        subset_velocity(this,px,py,subset_size,b_x,b_y);
+        lhs.local_value(ix) = b_x;
+        lhs.local_value(iy) = b_y;
+      }
+    }
     if(has_term(DIRICHLET_DISPLACEMENT_BC)){
       if(mms_problem_!=Teuchos::null){
         // enforce the dirichlet boundary conditions
@@ -568,9 +638,6 @@ Global_Algorithm::execute(){
           mms_problem_->phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
           image_grad_phi->local_value(ix) = grad_phi_x;
           image_grad_phi->local_value(iy) = grad_phi_y;
-
-          //calc_mms_bc_2(x,y,schema->img_width(),b_x,b_y);
-          //calc_mms_bc_simple(x,y,b_x,b_y);
           exact_sol->local_value(ix) = b_x;
           exact_sol->local_value(iy) = b_y;
           if(matrix_service_->is_col_bc(ix)){
@@ -584,13 +651,67 @@ Global_Algorithm::execute(){
         }
       }
     }
-    if(has_term(OPTICAL_FLOW_DISPLACEMENT_BC)||
-       has_term(SUBSET_DISPLACEMENT_BC)||
-       has_term(SUBSET_DISPLACEMENT_IC)){
+    if(has_term(SUBSET_DISPLACEMENT_BC)){
+      // compute all the displacements then average them to filter
+      std::map<int_t,scalar_t> disp_x_bcs;
+      std::map<int_t,scalar_t> disp_y_bcs;
       for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
         int_t ix = i*2+0;
         int_t iy = i*2+1;
-        if(matrix_service_->is_col_bc(ix)||matrix_service_->is_col_bc(iy)||has_term(SUBSET_DISPLACEMENT_IC)){
+        if(matrix_service_->is_col_bc(ix)||matrix_service_->is_col_bc(iy)){
+          const int_t node_gid = mesh_->get_scalar_node_dist_map()->get_global_element(i);
+          scalar_t b_x = 0.0;
+          scalar_t b_y = 0.0;
+          const scalar_t x = coords.local_value(ix);
+          const scalar_t y = coords.local_value(iy);
+          // get the closest pixel to x and y
+          int_t px = (int_t)x;
+          if(x - (int_t)x >= 0.5) px++;
+          int_t py = (int_t)y;
+          if(y - (int_t)y >= 0.5) py++;
+          const int_t subset_size = 39;
+          subset_velocity(this,px,py,subset_size,b_x,b_y);
+          disp_x_bcs.insert(std::pair<int_t,scalar_t>(node_gid,b_x));
+          disp_y_bcs.insert(std::pair<int_t,scalar_t>(node_gid,b_y));
+        }
+      }
+      // now that all the displacements have been computed, average them
+      // across neighbors to filter
+      for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+        int_t ix = i*2+0;
+        int_t iy = i*2+1;
+        if(matrix_service_->is_col_bc(ix)||matrix_service_->is_col_bc(iy)){
+          const int_t node_gid = mesh_->get_scalar_node_dist_map()->get_global_element(i);
+          TEUCHOS_TEST_FOR_EXCEPTION(bc_neighbors_.find(node_gid)==bc_neighbors_.end(),std::runtime_error,
+            "Error, missing node gid in neighbor map");
+          const int_t num_neighbors = bc_neighbors_.find(node_gid)->second.size();
+          scalar_t disp_x = 0.0;
+          scalar_t disp_y = 0.0;
+          for(int_t j=0;j<num_neighbors;++j){
+            const int_t neighbor_id = bc_neighbors_.find(node_gid)->second[j];
+            TEUCHOS_TEST_FOR_EXCEPTION(disp_x_bcs.find(neighbor_id)==disp_x_bcs.end(),std::runtime_error,
+              "Error, missing neighbor id in set of displacement bcs");
+            disp_x += disp_x_bcs.find(neighbor_id)->second;
+            disp_y += disp_y_bcs.find(neighbor_id)->second;
+          }
+          disp_x /= num_neighbors;
+          disp_y /= num_neighbors;
+          if(matrix_service_->is_col_bc(ix)){
+            // get the coordinates of the node
+            residual.local_value(ix) = disp_x;
+          }
+          if(matrix_service_->is_col_bc(iy)){
+            // get the coordinates of the node
+            residual.local_value(iy) = disp_y;
+          }
+        } // is a col bc in x or y
+      } // loop over all local nodes
+    } // has term SUBSET_DISPLACEMENT_BC
+    if(has_term(OPTICAL_FLOW_DISPLACEMENT_BC)){
+      for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+        int_t ix = i*2+0;
+        int_t iy = i*2+1;
+        if(matrix_service_->is_col_bc(ix)||matrix_service_->is_col_bc(iy)){
           scalar_t b_x = 0.0;
           scalar_t b_y = 0.0;
           const scalar_t x = coords.local_value(ix);
@@ -601,20 +722,7 @@ Global_Algorithm::execute(){
           int_t py = (int_t)y;
           if(y - (int_t)y >= 0.5) py++;
           // compute the optical flow here
-          if(has_term(OPTICAL_FLOW_DISPLACEMENT_BC)){
-            optical_flow_velocity(this,px,py,b_x,b_y);
-          }
-          else if(has_term(SUBSET_DISPLACEMENT_BC)||has_term(SUBSET_DISPLACEMENT_IC)){
-            const int_t subset_size = 39;
-            subset_velocity(this,px,py,subset_size,b_x,b_y);
-            if(has_term(SUBSET_DISPLACEMENT_IC)){
-              lhs.local_value(ix) = b_x;
-              lhs.local_value(iy) = b_y;
-            }
-          }
-          else{
-            TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
-          }
+          optical_flow_velocity(this,px,py,b_x,b_y);
           if(matrix_service_->is_col_bc(ix)){
             // get the coordinates of the node
             residual.local_value(ix) = b_x;
@@ -625,7 +733,7 @@ Global_Algorithm::execute(){
           }
         }
       }
-    }
+    } // end has_term OPTICAL_FLOW_DISPLACEMENT_BC
 
     //residual.describe();
 
@@ -652,14 +760,13 @@ Global_Algorithm::execute(){
 void
 Global_Algorithm::initialize_ref_image(){
   TEUCHOS_TEST_FOR_EXCEPTION(!schema_,std::runtime_error,"Error, schema must not be null for this method");
-
-  schema_->ref_img()->write("pre_ref_img.tif");
+  //schema_->ref_img()->write("pre_ref_img.tif");
 
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::compute_image_gradients,true);
   imgParams->set(DICe::gradient_method,FINITE_DIFFERENCE);
   ref_img_ = schema_->ref_img()->normalize(imgParams);
-  ref_img_->write("global_normalized_image.tif");
+  //ref_img_->write("global_normalized_image.tif");
   // take the gradienst from the normalized image and make grad images for interpolation
   const int_t w = ref_img_->width();
   const int_t h = ref_img_->height();
@@ -672,18 +779,18 @@ Global_Algorithm::initialize_ref_image(){
     }
   }
   grad_x_img_ = Teuchos::rcp(new Image(w,h,grad_ref_x));
-  grad_x_img_->write("grad_x_img.tif");
+  //grad_x_img_->write("grad_x_img.tif");
   grad_y_img_ = Teuchos::rcp(new Image(w,h,grad_ref_y));
-  grad_y_img_->write("grad_y_img.tif");
+  //grad_y_img_->write("grad_y_img.tif");
 }
 
 void
 Global_Algorithm::set_def_image(){
-  schema_->def_img()->write("pre_def_img.tif");
+  //schema_->def_img()->write("pre_def_img.tif");
 
   TEUCHOS_TEST_FOR_EXCEPTION(!schema_,std::runtime_error,"Error, schema must not be null for this method");
   def_img_ = schema_->def_img()->normalize();
-  def_img_->write("global_normalized_def_image.tif");
+  //def_img_->write("global_normalized_def_image.tif");
 }
 
 void

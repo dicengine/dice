@@ -200,6 +200,11 @@ protected:
   Global_Formulation global_formulation_;
   /// Global solver type
   Global_Solver global_solver_;
+  /// neighbor ids for dirichlet boundary (used for filtering bcs)
+  std::map<int_t,std::vector<int_t> > bc_neighbors_;
+  /// neighbor distances^2 for dirichlet boundary (used for filtering bcs)
+  std::map<int_t,std::vector<scalar_t> > bc_neighbor_distances_;
+
 };
 
 }// end global namespace
