@@ -181,7 +181,17 @@ enum Field_Name
   INTERNAL_CELL_COORDINATES,
   INTERNAL_CELL_SIZE,
   BLOCK_ID,
-  PROCESSOR_ID
+  PROCESSOR_ID,
+  FIELD_1,
+  FIELD_2,
+  FIELD_3,
+  FIELD_4,
+  FIELD_5,
+  FIELD_6,
+  FIELD_7,
+  FIELD_8,
+  FIELD_9,
+  FIELD_10
 };
 /// The location that the fields live
 enum Entity_Rank
@@ -449,9 +459,29 @@ const Field_Spec IMAGE_PHI_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::IMAGE_
 const Field_Spec IMAGE_GRAD_PHI_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::IMAGE_GRAD_PHI,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec EXACT_SOL_VECTOR_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::EXACT_SOL_VECTOR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec FIELD_1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_1,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec FIELD_2_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_2,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec FIELD_3_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_3,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec FIELD_4_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_4,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec FIELD_5_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_5,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec FIELD_6_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_6,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec FIELD_7_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_7,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec FIELD_8_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_8,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec FIELD_9_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_9,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec FIELD_10_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_10,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 43;
+const int_t num_fields_defined = 53;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -500,7 +530,17 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     INTERNAL_CELL_COORDINATES_FS,
     INTERNAL_CELL_SIZE_FS,
     BLOCK_ID_FS,
-    PROCESSOR_ID_FS
+    PROCESSOR_ID_FS,
+    FIELD_1_FS,
+    FIELD_2_FS,
+    FIELD_3_FS,
+    FIELD_4_FS,
+    FIELD_5_FS,
+    FIELD_6_FS,
+    FIELD_7_FS,
+    FIELD_8_FS,
+    FIELD_9_FS,
+    FIELD_10_FS
     // don't forget to add one to num_fields_defined
 };
 

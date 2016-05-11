@@ -152,6 +152,16 @@ void create_string_maps()
   field_name_string[field_enums::EXTERNAL_FACE_EDGE_SIZE]                            = "EXTERNAL_FACE_EDGE_SIZE";
   field_name_string[field_enums::INTERNAL_CELL_COORDINATES]                          = "INTERNAL_CELL_COORDINATES";
   field_name_string[field_enums::INTERNAL_CELL_SIZE]                                 = "INTERNAL_CELL_SIZE";
+  field_name_string[field_enums::FIELD_1]                                            = "FIELD_1";
+  field_name_string[field_enums::FIELD_2]                                            = "FIELD_2";
+  field_name_string[field_enums::FIELD_3]                                            = "FIELD_3";
+  field_name_string[field_enums::FIELD_4]                                            = "FIELD_4";
+  field_name_string[field_enums::FIELD_5]                                            = "FIELD_5";
+  field_name_string[field_enums::FIELD_6]                                            = "FIELD_6";
+  field_name_string[field_enums::FIELD_7]                                            = "FIELD_7";
+  field_name_string[field_enums::FIELD_8]                                            = "FIELD_8";
+  field_name_string[field_enums::FIELD_9]                                            = "FIELD_9";
+  field_name_string[field_enums::FIELD_10]                                           = "FIELD_10";
 
   for (std::map<field_enums::Field_Type,std::string>::iterator pos = field_type_string.begin(); pos != field_type_string.end(); ++pos){
     string_field_type[pos->second] = pos->first;

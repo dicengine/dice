@@ -329,34 +329,36 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
     for (int_t j = 0; j < out.numberofcorners; j++) {
       connectivity[i*out.numberofcorners + j] = out.trianglelist[i * out.numberofcorners + j];
       // search the connectivity for edge elements and side sets
-      for(int_t k=0;k<out.numberofsegments;++k){
-        if(out.segmentlist[k*2] == out.trianglelist[i*out.numberofcorners + j]){
-          for(int_t m=0;m<out.numberofcorners;++m){
-            if(out.segmentlist[k*2+1] == out.trianglelist[i*out.numberofcorners +m]){
-              // now that the element and side are known for boundary nodes add the middle node
-              int_t third_node_pos = -1;
-              if((j==0&&m==1)||(j==1&&m==0)){
-                third_node_pos = 5;
+      //if(has_dirich_segments||has_neumann_segments){
+        for(int_t k=0;k<out.numberofsegments;++k){
+          if(out.segmentlist[k*2] == out.trianglelist[i*out.numberofcorners + j]){
+            for(int_t m=0;m<out.numberofcorners;++m){
+              if(out.segmentlist[k*2+1] == out.trianglelist[i*out.numberofcorners +m]){
+                // now that the element and side are known for boundary nodes add the middle node
+                int_t third_node_pos = -1;
+                if((j==0&&m==1)||(j==1&&m==0)){
+                  third_node_pos = 5;
+                }
+                else if((j==1&&m==2)||(j==2&&m==1)){
+                  third_node_pos = 3;
+                }
+                else if((j==0&&m==2)||(j==2&&m==0)){
+                  third_node_pos = 4;
+                }
+                else{
+                  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid segment found");
+                }
+                if(out.segmentmarkerlist[k]==2){
+                  dirichlet_boundary_nodes.insert(out.trianglelist[i*out.numberofcorners + third_node_pos]);
+                }
+                if(out.segmentmarkerlist[k]==3){
+                  neumann_boundary_nodes.insert(out.trianglelist[i*out.numberofcorners + third_node_pos]);
+                }
               }
-              else if((j==1&&m==2)||(j==2&&m==1)){
-                third_node_pos = 3;
-              }
-              else if((j==0&&m==2)||(j==2&&m==0)){
-                third_node_pos = 4;
-              }
-              else{
-                TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid segment found");
-              }
-              if(out.segmentmarkerlist[k]==2){
-                dirichlet_boundary_nodes.insert(out.trianglelist[i*out.numberofcorners + third_node_pos]);
-              }
-              if(out.segmentmarkerlist[k]==3){
-                neumann_boundary_nodes.insert(out.trianglelist[i*out.numberofcorners + third_node_pos]);
-              }
-            }
-          } // right end of segment
-        } // left end of segment
-      }
+            } // right end of segment
+          } // left end of segment
+        }
+      //}
     }
   }
 
