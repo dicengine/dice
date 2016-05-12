@@ -160,6 +160,11 @@ public:
     return schema_;
   }
 
+  /// Return the alpha2 regularization parameter
+  scalar_t alpha2()const{
+    return alpha2_;
+  }
+
 
 protected:
   /// protect the default constructor

@@ -67,6 +67,8 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- Begin test ---" << std::endl;
 
+  *outStream << " TESTING HORN_SCHUNCK FORMULATION " << std::endl;
+
   *outStream << "creating the global parameter list" << std::endl;
 
   Teuchos::RCP<Teuchos::ParameterList> global_params = Teuchos::rcp(new Teuchos::ParameterList());
@@ -75,7 +77,7 @@ int main(int argc, char *argv[]) {
   global_params->set(DICe::global_formulation,HORN_SCHUNCK);
   global_params->set(DICe::global_solver,GMRES_SOLVER);
   global_params->set(DICe::output_folder,"");
-  global_params->set(DICe::output_prefix,"test_global_alg");
+  global_params->set(DICe::output_prefix,"test_global_alg_hs");
   Teuchos::ParameterList mms_sublist;
   mms_sublist.set(DICe::problem_name,"div_curl_modulator");
   mms_sublist.set(DICe::phi_coeff,10.0);
@@ -111,6 +113,48 @@ int main(int argc, char *argv[]) {
     *outStream << "error, the solution error is too large" << std::endl;
     errorFlag++;
   }
+// deactivating Levenberg Marquardt because it is not stable....
+
+//  *outStream << " TESTING LEVENBERG_MARQUARDT FORMULATION " << std::endl;
+//
+//  *outStream << "creating the global parameter list" << std::endl;
+//
+//  global_params->set(DICe::mesh_size,500.0);
+//  global_params->set(DICe::global_regularization_alpha,5.0);
+//  global_params->set(DICe::global_formulation,LEVENBERG_MARQUARDT);
+//  global_params->set(DICe::global_solver,GMRES_SOLVER);
+//  global_params->set(DICe::output_folder,"");
+//  global_params->set(DICe::output_prefix,"test_global_alg_lm");
+//  global_params->set(DICe::mms_spec,mms_sublist);
+//  global_params->print(*outStream);
+//
+//  *outStream << "creating a global algorithm" << std::endl;
+//
+//  Teuchos::RCP<DICe::global::Global_Algorithm> global_alg_lm = Teuchos::rcp(new DICe::global::Global_Algorithm(global_params));
+//
+//  *outStream << "pre-execution tasks" << std::endl;
+//
+//  global_alg_lm->pre_execution_tasks();
+//
+//  *outStream << "executing" << std::endl;
+//
+//  global_alg_lm->execute();
+//
+//  *outStream << "post execution tasks" << std::endl;
+//
+//  global_alg_lm->post_execution_tasks(1.0);
+//
+//  *outStream << "evaluating the error" << std::endl;
+//
+//  error_bx = 0.0;
+//  error_by = 0.0;
+//  error_lambda = 0.0;
+//  global_alg_lm->evaluate_mms_error(error_bx,error_by,error_lambda);
+//
+//  if(error_bx > error_max || error_by > error_max){
+//    *outStream << "error, the solution error is too large" << std::endl;
+//    errorFlag++;
+//  }
 
   *outStream << "--- End test ---" << std::endl;
 

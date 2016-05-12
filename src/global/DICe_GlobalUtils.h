@@ -239,11 +239,17 @@ public:
       f_x += (grad_phi_x*grad_phi_x*b_x + grad_phi_x*grad_phi_y*b_y);
       f_y += (grad_phi_y*grad_phi_x*b_x + grad_phi_y*grad_phi_y*b_y);
     }
-    if(eq_terms->find(MMS_IMAGE_GRAD_TENSOR)!=eq_terms->end()){
+    if(eq_terms->find(DIV_SYMMETRIC_STRAIN_REGULARIZATION)!=eq_terms->end()){
       scalar_t lap_b_x=0.0,lap_b_y=0.0;
       velocity_laplacian(x,y,lap_b_x,lap_b_y);
       f_x -= coeff_1*lap_b_x;
       f_y -= coeff_1*lap_b_y;
+    }
+    if(eq_terms->find(TIKHONOV_REGULARIZATION)!=eq_terms->end()){
+      scalar_t b_x=0.0,b_y=0.0;
+      velocity(x,y,b_x,b_y);
+      f_x += coeff_1*b_x;
+      f_y += coeff_1*b_y;
     }
   }
 
@@ -302,6 +308,21 @@ void div_symmetric_strain(const int_t spa_dim,
   const scalar_t & gp_weight,
   const scalar_t * inv_jac,
   const scalar_t * DN,
+  scalar_t * elem_stiffness);
+
+/// adds a tikhonov type regularizer to the governing eqs
+/// \param spa_dim spatial dimension
+/// \param num_funcs number of shape functions
+/// \param J determinant of the jacobian
+/// \param gp_weight gauss point weight
+/// \param N shape function vector
+/// \param elem_stiffness element stiffness
+void tikhonov_tensor(Global_Algorithm * alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
   scalar_t * elem_stiffness);
 
 /// adds the image gradients term to the stiffness matrx (from manufactured solutions problem)

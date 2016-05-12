@@ -169,6 +169,29 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
       //add_term(OPTICAL_FLOW_DISPLACEMENT_BC);
     }
   }
+  else if(global_formulation_==LEVENBERG_MARQUARDT){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, this formulation has been deactivated because it is not stable");
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::global_regularization_alpha),std::runtime_error,
+      "Error, global_regularization_alpha must be defined");
+    const scalar_t alpha = params->get<double>(DICe::global_regularization_alpha);
+    alpha2_ = alpha*alpha;
+    add_term(TIKHONOV_REGULARIZATION);
+    if(mms_problem_!=Teuchos::null){
+        add_term(MMS_IMAGE_GRAD_TENSOR);
+        add_term(MMS_IMAGE_TIME_FORCE);
+        add_term(MMS_FORCE);
+        add_term(DIRICHLET_DISPLACEMENT_BC);
+    }
+    else{
+      add_term(IMAGE_TIME_FORCE);
+      add_term(IMAGE_GRAD_TENSOR);
+      if(global_solver_==CG_SOLVER){
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"CG solver is not appropriate for LEVENBERG_MARQUARDT");
+      }
+      add_term(SUBSET_DISPLACEMENT_BC);
+      //add_term(OPTICAL_FLOW_DISPLACEMENT_BC);
+    }
+  }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid global_formulation " + to_string(global_formulation_));
   }
@@ -187,7 +210,7 @@ Global_Algorithm::pre_execution_tasks(){
   Teuchos::ParameterList belos_list;
   const int_t maxiters = 5000; // these are the max iterations of the belos solver not the nonlinear iterations
   const int_t numblk = (maxiters > 500) ? 500 : maxiters;
-  const int_t maxrestarts = 1;
+  const int_t maxrestarts = 10;
   const double conv_tol = 1.0E-8;
   std::string ortho("DGKS");
   belos_list.set( "Num Blocks", numblk);
@@ -460,9 +483,14 @@ Global_Algorithm::execute(){
 
         // stiffness terms
 
-        // alpha * div(0.5*(grad(b) + grad(b)^T))
+        // alpha^2 * div(0.5*(grad(b) + grad(b)^T))
         if(has_term(DIV_SYMMETRIC_STRAIN_REGULARIZATION))
           div_symmetric_strain(spa_dim,tri6_num_funcs,alpha2_,J,gp_weights[gp],inv_jac,DN6,elem_stiffness);
+
+        // alpha^2 * b
+        if(has_term(TIKHONOV_REGULARIZATION))
+          tikhonov_tensor(this,spa_dim,tri6_num_funcs,J,gp_weights[gp],N6,elem_stiffness);
+
 
         // grad(phi) tensor_prod grad(phi)
         if(has_term(MMS_IMAGE_GRAD_TENSOR))

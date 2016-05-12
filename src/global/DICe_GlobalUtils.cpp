@@ -218,6 +218,36 @@ void image_grad_tensor(Global_Algorithm * alg,
   }
 }
 
+void tikhonov_tensor(Global_Algorithm * alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_stiffness){
+  TEUCHOS_TEST_FOR_EXCEPTION(alg==NULL,std::runtime_error,
+    "Error, the pointer to the algorithm must be valid");
+
+  const scalar_t alpha2 = alg->alpha2();
+
+  // image stiffness terms
+  for(int_t i=0;i<num_funcs;++i){
+    const int_t row1 = (i*spa_dim) + 0;
+    const int_t row2 = (i*spa_dim) + 1;
+    for(int_t j=0;j<num_funcs;++j){
+      elem_stiffness[row1*num_funcs*spa_dim + j*spa_dim+0]
+                     += N[i]*alpha2*N[j]*gp_weight*J;
+//      elem_stiffness[row1*num_funcs*spa_dim + j*spa_dim+1]
+//                     += N[i]*alpha2*N[j]*gp_weight*J;
+//      elem_stiffness[row2*num_funcs*spa_dim + j*spa_dim+0]
+//                     += N[i]*alpha2*N[j]*gp_weight*J;
+      elem_stiffness[row2*num_funcs*spa_dim + j*spa_dim+1]
+                     += N[i]*alpha2*N[j]*gp_weight*J;
+    }
+  }
+}
+
+
 void subset_velocity(Global_Algorithm * alg,
   const int_t & c_x, // closest pixel in x
   const int_t & c_y, // closest pixel in y
