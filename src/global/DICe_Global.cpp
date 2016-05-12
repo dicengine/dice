@@ -145,20 +145,33 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     mesh_->create_field(mesh::field_enums::IMAGE_PHI_FS);
     mesh_->create_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
   }
+  if(is_mixed_formulation()){
+    mesh_->create_field(mesh::field_enums::MIXED_LHS_FS);
+    mesh_->create_field(mesh::field_enums::MIXED_RESIDUAL_FS);
+    mesh_->create_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
+  }
+  mesh_->print_field_info();
   DICe::mesh::create_exodus_output_variable_names(mesh_);
 
   DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): using global formulation: " << to_string(global_formulation_));
-  if(global_formulation_==HORN_SCHUNCK){
+  if(global_formulation_==HORN_SCHUNCK||global_formulation_==MIXED_HORN_SCHUNCK){
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::global_regularization_alpha),std::runtime_error,
       "Error, global_regularization_alpha must be defined");
     const scalar_t alpha = params->get<double>(DICe::global_regularization_alpha);
     alpha2_ = alpha*alpha;
     add_term(DIV_SYMMETRIC_STRAIN_REGULARIZATION);
+    if(global_formulation_==MIXED_HORN_SCHUNCK){
+      add_term(GRAD_LAGRANGE_MULTIPLIER);
+      add_term(DIV_VELOCITY);
+    }
     if(mms_problem_!=Teuchos::null){
         add_term(MMS_IMAGE_GRAD_TENSOR);
         add_term(MMS_IMAGE_TIME_FORCE);
         add_term(MMS_FORCE);
         add_term(DIRICHLET_DISPLACEMENT_BC);
+        if(global_formulation_==MIXED_HORN_SCHUNCK){
+          add_term(MMS_GRAD_LAGRANGE_MULTIPLIER);
+        }
     }
     else{
       add_term(IMAGE_TIME_FORCE);
@@ -241,9 +254,16 @@ Global_Algorithm::pre_execution_tasks(){
   DEBUG_MSG("Global_Algorithm::pre_execution_tasks(): Solver and linear problem have been initialized.");
 
   const int_t spa_dim = mesh_->spatial_dimension();
-  matrix_service_ = Teuchos::rcp(new DICe::Matrix_Service(spa_dim));
-  matrix_service_->initialize_bc_register(mesh_->get_vector_node_dist_map()->get_num_local_elements(),
-    mesh_->get_vector_node_overlap_map()->get_num_local_elements());
+  int_t matrix_service_dim = is_mixed_formulation() ? spa_dim + 1 : spa_dim;
+  matrix_service_ = Teuchos::rcp(new DICe::Matrix_Service(matrix_service_dim));
+  if(is_mixed_formulation()){
+    matrix_service_->initialize_bc_register(mesh_->get_mixed_vector_node_dist_map()->get_num_local_elements(),
+      mesh_->get_mixed_vector_node_overlap_map()->get_num_local_elements());
+  }
+  else{
+    matrix_service_->initialize_bc_register(mesh_->get_vector_node_dist_map()->get_num_local_elements(),
+      mesh_->get_vector_node_overlap_map()->get_num_local_elements());
+  }
 
   if(has_term(DIRICHLET_DISPLACEMENT_BC)||
      has_term(OPTICAL_FLOW_DISPLACEMENT_BC)||
@@ -256,22 +276,41 @@ Global_Algorithm::pre_execution_tasks(){
     const int_t num_bc_nodes = bc_set->find(boundary_node_set_id)->second.size();
     for(int_t i=0;i<num_bc_nodes;++i){
       const int_t node_gid = bc_set->find(boundary_node_set_id)->second[i];
-      //std::cout << " disp x condition on node " << node_gid << std::endl;
-      bool is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim+1);
-      if(is_local_node){
-        const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim+1);
-        matrix_service_->register_row_bc(row_id);
+      if(is_mixed_formulation()){
+        bool is_local_node = mesh_->get_mixed_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim+1);
+        if(is_local_node){
+          const int_t row_id = mesh_->get_mixed_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim+1);
+          matrix_service_->register_row_bc(row_id);
+        }
+        int_t col_id = mesh_->get_mixed_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim+1);
+        matrix_service_->register_col_bc(col_id);
+        //std::cout << " disp y condition on node " << node_gid << std::endl;
+        is_local_node = mesh_->get_mixed_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim+2);
+        if(is_local_node){
+          const int_t row_id = mesh_->get_mixed_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim+2);
+          matrix_service_->register_row_bc(row_id);
+        }
+        col_id = mesh_->get_mixed_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim+2);
+        matrix_service_->register_col_bc(col_id);
       }
-      int_t col_id = mesh_->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim+1);
-      matrix_service_->register_col_bc(col_id);
-      //std::cout << " disp y condition on node " << node_gid << std::endl;
-      is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim+2);
-      if(is_local_node){
-        const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim+2);
-        matrix_service_->register_row_bc(row_id);
+      else{
+        //std::cout << " disp x condition on node " << node_gid << std::endl;
+        bool is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim+1);
+        if(is_local_node){
+          const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim+1);
+          matrix_service_->register_row_bc(row_id);
+        }
+        int_t col_id = mesh_->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim+1);
+        matrix_service_->register_col_bc(col_id);
+        //std::cout << " disp y condition on node " << node_gid << std::endl;
+        is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim+2);
+        if(is_local_node){
+          const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim+2);
+          matrix_service_->register_row_bc(row_id);
+        }
+        col_id = mesh_->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim+2);
+        matrix_service_->register_col_bc(col_id);
       }
-      col_id = mesh_->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim+2);
-      matrix_service_->register_col_bc(col_id);
     }
 
     // set up the neighbor list for each boundary node
@@ -342,11 +381,25 @@ Global_Algorithm::execute(){
   const int_t spa_dim = mesh_->spatial_dimension();
   const int_t p_rank = mesh_->get_comm()->get_rank();
   const int_t relations_size = mesh_->max_num_node_relations();
-  Teuchos::RCP<DICe::MultiField_Matrix> tangent =
-      Teuchos::rcp(new DICe::MultiField_Matrix(*mesh_->get_vector_node_dist_map(),relations_size));
+  Teuchos::RCP<DICe::MultiField_Matrix> tangent;
+  if(is_mixed_formulation()){
+    tangent = Teuchos::rcp(new DICe::MultiField_Matrix(*mesh_->get_mixed_vector_node_dist_map(),relations_size));
+  }
+  else{
+    tangent = Teuchos::rcp(new DICe::MultiField_Matrix(*mesh_->get_vector_node_dist_map(),relations_size));
+  }
 
   DEBUG_MSG("Global_Algorithm::execute(): Tangent has been allocated.");
 
+  Teuchos::RCP<MultiField> mixed_residual;
+  Teuchos::RCP<MultiField> mixed_lhs;
+  Teuchos::RCP<MultiField> lagrange_multiplier;
+  if(is_mixed_formulation()){
+    DEBUG_MSG("Global_Algorithm::execute(): gathering mixed fields.");
+    mixed_residual = mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS);
+    mixed_lhs = mesh_->get_field(mesh::field_enums::MIXED_LHS_FS);
+    lagrange_multiplier = mesh_->get_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
+  }
   MultiField & residual = *mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
   residual.put_scalar(0.0);
   MultiField & disp = *mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
@@ -375,8 +428,13 @@ Global_Algorithm::execute(){
     }
 
     // assemble the distributed tangent matrix
-    Teuchos::RCP<DICe::MultiField_Matrix> tangent_overlap =
-        Teuchos::rcp(new DICe::MultiField_Matrix(*mesh_->get_vector_node_overlap_map(),relations_size));
+    Teuchos::RCP<DICe::MultiField_Matrix> tangent_overlap;
+    if(is_mixed_formulation()){
+      tangent_overlap = Teuchos::rcp(new DICe::MultiField_Matrix(*mesh_->get_mixed_vector_node_overlap_map(),relations_size));
+    }
+    else{
+      tangent_overlap = Teuchos::rcp(new DICe::MultiField_Matrix(*mesh_->get_vector_node_overlap_map(),relations_size));
+    }
     // clear the jacobian values
     tangent_overlap->put_scalar(0.0);
     tangent->put_scalar(0.0);
@@ -388,7 +446,8 @@ Global_Algorithm::execute(){
     {
       Teuchos::Array<int_t> id_array;
       Teuchos::Array<int_t> local_id_array;
-      const int_t row_gid = mesh_->get_vector_node_overlap_map()->get_global_element(i);
+      const int_t row_gid = is_mixed_formulation() ? mesh_->get_mixed_vector_node_overlap_map()->get_global_element(i) :
+          mesh_->get_vector_node_overlap_map()->get_global_element(i);
       col_id_array_map.insert(std::pair<int_t,Teuchos::Array<int_t> >(row_gid,id_array));
       Teuchos::Array<mv_scalar_type> value_array;
       values_array_map.insert(std::pair<int_t,Teuchos::Array<mv_scalar_type> >(row_gid,value_array));
@@ -396,11 +455,11 @@ Global_Algorithm::execute(){
 
     // establish the shape functions (using P2-P1 element for velocity pressure, or P2 velocity if no constraint):
     DICe::mesh::Shape_Function_Evaluator_Factory shape_func_eval_factory;
-//    Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> tri3_shape_func_evaluator =
-//        shape_func_eval_factory.create(DICe::mesh::TRI3);
-//    const int_t tri3_num_funcs = tri3_shape_func_evaluator->num_functions();
-//    scalar_t N3[tri3_num_funcs];
-//    scalar_t DN3[tri3_num_funcs*spa_dim];
+    Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> tri3_shape_func_evaluator =
+        shape_func_eval_factory.create(DICe::mesh::TRI3);
+    const int_t tri3_num_funcs = tri3_shape_func_evaluator->num_functions();
+    scalar_t N3[tri3_num_funcs];
+    scalar_t DN3[tri3_num_funcs*spa_dim];
     Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> tri6_shape_func_evaluator =
         shape_func_eval_factory.create(DICe::mesh::TRI6);
     const int_t tri6_num_funcs = tri6_shape_func_evaluator->num_functions();
@@ -415,6 +474,7 @@ Global_Algorithm::execute(){
     //const int_t B_dim = 2*spa_dim - 1;
     //scalar_t B[B_dim*tri6_num_funcs*spa_dim];
     scalar_t elem_stiffness[tri6_num_funcs*spa_dim*tri6_num_funcs*spa_dim];
+    scalar_t elem_div_stiffness[tri3_num_funcs*spa_dim*tri6_num_funcs];
     scalar_t elem_force[tri6_num_funcs*spa_dim];
     //scalar_t grad_phi[spa_dim];
     scalar_t x=0.0,y=0.0;
@@ -427,7 +487,8 @@ Global_Algorithm::execute(){
     tri6_shape_func_evaluator->get_natural_integration_points(integration_order,gp_locs,gp_weights,num_integration_points);
 
     // gather the OVERLAP fields
-    Teuchos::RCP<MultiField> overlap_residual_ptr = mesh_->get_overlap_field(mesh::field_enums::RESIDUAL_FS);
+    Teuchos::RCP<MultiField> overlap_residual_ptr = is_mixed_formulation() ? mesh_->get_overlap_field(mesh::field_enums::MIXED_RESIDUAL_FS):
+        mesh_->get_overlap_field(mesh::field_enums::RESIDUAL_FS);
     MultiField & overlap_residual = *overlap_residual_ptr;
     overlap_residual.put_scalar(0.0);
     Teuchos::RCP<MultiField> overlap_coords_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_FS);
@@ -448,7 +509,7 @@ Global_Algorithm::execute(){
         for(int_t dim=0;dim<spa_dim;++dim){
           const int_t stride = nd*spa_dim + dim;
           nodal_coords[stride] = coords_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
-          //std::cout << " node coords " << nodal_coords[stride] << std::endl;
+          std::cout << " node coords " << nodal_coords[stride] << std::endl;
         }
       }
       // clear the elem stiffness
@@ -457,6 +518,9 @@ Global_Algorithm::execute(){
       // clear the elem force
       for(int_t i=0;i<tri6_num_funcs*spa_dim;++i)
         elem_force[i] = 0.0;
+      // clear the div stiffness storage
+      for(int_t i=0;i<tri3_num_funcs*spa_dim*tri6_num_funcs;++i)
+        elem_div_stiffness[i] = 0.0;
 
       // low-order gauss point loop:
       for(int_t gp=0;gp<num_integration_points;++gp){
@@ -469,6 +533,10 @@ Global_Algorithm::execute(){
         // evaluate the shape functions and derivatives:
         tri6_shape_func_evaluator->evaluate_shape_functions(natural_coords,N6);
         tri6_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN6);
+
+        // evaluate the shape functions and derivatives:
+        tri3_shape_func_evaluator->evaluate_shape_functions(natural_coords,N3);
+        tri3_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN3);
 
         // physical gp location
         x = 0.0; y=0.0;
@@ -487,10 +555,16 @@ Global_Algorithm::execute(){
         if(has_term(DIV_SYMMETRIC_STRAIN_REGULARIZATION))
           div_symmetric_strain(spa_dim,tri6_num_funcs,alpha2_,J,gp_weights[gp],inv_jac,DN6,elem_stiffness);
 
+        if(has_term(DIV_VELOCITY))
+          div_velocity(spa_dim,tri3_num_funcs,tri6_num_funcs,J,gp_weights[gp],inv_jac,DN6,N3,elem_div_stiffness);
+
+//        std::cout << " div_stiffness term " << std::endl;
+//        for(int_t i=0;i<tri3_num_funcs*spa_dim*tri6_num_funcs;++i)
+//          std::cout << i << " " << elem_div_stiffness[i] << std::endl;
+
         // alpha^2 * b
         if(has_term(TIKHONOV_REGULARIZATION))
           tikhonov_tensor(this,spa_dim,tri6_num_funcs,J,gp_weights[gp],N6,elem_stiffness);
-
 
         // grad(phi) tensor_prod grad(phi)
         if(has_term(MMS_IMAGE_GRAD_TENSOR))
@@ -560,14 +634,40 @@ Global_Algorithm::execute(){
 
       for(int_t i=0;i<tri6_num_funcs;++i){
         for(int_t m=0;m<spa_dim;++m){
+//          // assemble the lagrange multiplier degrees of freedom
+//          for(int_t j=0;j<tri3_num_funcs;++j){
+//            const int_t row = (node_ids[i]-1)*spa_dim + m + 1;
+//            const int_t col = (node_ids[j]-1)*spa_dim + n + 1;
+//            const scalar_t value = elem_stiffness[(i*spa_dim + m)*tri6_num_funcs*spa_dim + (j*spa_dim + n)];
+//            const bool is_local_row_node = is_mixed_formulation() ?
+//                mesh_->get_mixed_vector_node_dist_map()->is_node_global_elem(row):
+//                mesh_->get_vector_node_dist_map()->is_node_global_elem(row);
+//            bool row_is_bc_node = false;
+//            if(is_local_row_node) row_is_bc_node = is_mixed_formulation() ?
+//                matrix_service_->is_row_bc(mesh_->get_mixed_vector_node_dist_map()->get_local_element(row)) :
+//                matrix_service_->is_row_bc(mesh_->get_vector_node_dist_map()->get_local_element(row));
+//            if(!row_is_bc_node){// && !col_is_bc_node){
+//              col_id_array_map.find(row)->second.push_back(col);
+//              values_array_map.find(row)->second.push_back(value);
+//              }
+//          } // tri3_num_funcs
+//
+
+          // assemble the velocity degrees of freedom
           for(int_t j=0;j<tri6_num_funcs;++j){
             for(int_t n=0;n<spa_dim;++n){
               const int_t row = (node_ids[i]-1)*spa_dim + m + 1;
               const int_t col = (node_ids[j]-1)*spa_dim + n + 1;
               const scalar_t value = elem_stiffness[(i*spa_dim + m)*tri6_num_funcs*spa_dim + (j*spa_dim + n)];
-              const bool is_local_row_node = mesh_->get_vector_node_dist_map()->is_node_global_elem(row);
-              const bool row_is_bc_node = is_local_row_node ?
-                  matrix_service_->is_row_bc(mesh_->get_vector_node_dist_map()->get_local_element(row)) : false;
+              const bool is_local_row_node = is_mixed_formulation() ?
+                  mesh_->get_mixed_vector_node_dist_map()->is_node_global_elem(row):
+                  mesh_->get_vector_node_dist_map()->is_node_global_elem(row);
+              bool row_is_bc_node = false;
+              if(is_local_row_node) row_is_bc_node = is_mixed_formulation() ?
+                  matrix_service_->is_row_bc(mesh_->get_mixed_vector_node_dist_map()->get_local_element(row)) :
+                  matrix_service_->is_row_bc(mesh_->get_vector_node_dist_map()->get_local_element(row));
+              //const bool row_is_bc_node = is_local_row_node ?
+              //    matrix_service_->is_row_bc(mesh_->get_vector_node_dist_map()->get_local_element(row)) : false;
               //const bool col_is_bc_node = matrix_service->is_col_bc(mesh_->get_vector_node_overlap_map()->get_local_element(col));
               //std::cout << " row " << row << " col " << col << " row_is_bc " << row_is_bc_node << " col_is_bc " << col_is_bc_node << std::endl;
               if(!row_is_bc_node){// && !col_is_bc_node){
@@ -579,6 +679,9 @@ Global_Algorithm::execute(){
         } // spa dim
       } // num_funcs
 
+      // TODO: assemble the lagrange multiplier stiffness terms
+
+
       // assemble the force terms
       for(int_t i=0;i<tri6_num_funcs;++i){
         //int_t nodex_local_id = connectivity[i]->overlap_local_id()*spa_dim;
@@ -587,8 +690,14 @@ Global_Algorithm::execute(){
         //overlap_residual.local_value(nodey_local_id) += elem_force[i*spa_dim+1];
         int_t nodex_id = (connectivity[i]->global_id()-1)*spa_dim+1;
         int_t nodey_id = nodex_id + 1;
-        residual.global_value(nodex_id) += elem_force[i*spa_dim+0];
-        residual.global_value(nodey_id) += elem_force[i*spa_dim+1];
+        if(is_mixed_formulation()){
+          mixed_residual->global_value(nodex_id) += elem_force[i*spa_dim+0];
+          mixed_residual->global_value(nodey_id) += elem_force[i*spa_dim+1];
+        }
+        else{
+          residual.global_value(nodex_id) += elem_force[i*spa_dim+0];
+          residual.global_value(nodey_id) += elem_force[i*spa_dim+1];
+        }
       } // num_funcs
 
     }  // elem
@@ -596,13 +705,26 @@ Global_Algorithm::execute(){
     //mesh_->field_overlap_export(overlap_residual_ptr, mesh_::field_enums::RESIDUAL_FS, ADD);
 
     // add ones to the diagonal for kinematic bc nodes:
-    for(int_t i=0;i<mesh_->get_vector_node_overlap_map()->get_num_local_elements();++i)
-    {
-      if(matrix_service_->is_col_bc(i))
+    if(is_mixed_formulation()){
+      for(int_t i=0;i<mesh_->get_mixed_vector_node_overlap_map()->get_num_local_elements();++i)
       {
-        const int_t global_id = mesh_->get_vector_node_overlap_map()->get_global_element(i);
-        col_id_array_map.find(global_id)->second.push_back(global_id);
-        values_array_map.find(global_id)->second.push_back(1.0);
+        if(matrix_service_->is_col_bc(i))
+        {
+          const int_t global_id = mesh_->get_mixed_vector_node_overlap_map()->get_global_element(i);
+          col_id_array_map.find(global_id)->second.push_back(global_id);
+          values_array_map.find(global_id)->second.push_back(1.0);
+        }
+      }
+    }
+    else{
+      for(int_t i=0;i<mesh_->get_vector_node_overlap_map()->get_num_local_elements();++i)
+      {
+        if(matrix_service_->is_col_bc(i))
+        {
+          const int_t global_id = mesh_->get_vector_node_overlap_map()->get_global_element(i);
+          col_id_array_map.find(global_id)->second.push_back(global_id);
+          values_array_map.find(global_id)->second.push_back(1.0);
+        }
       }
     }
 
@@ -619,16 +741,24 @@ Global_Algorithm::execute(){
     }
     tangent_overlap->fill_complete();
 
-    MultiField_Exporter exporter (*mesh_->get_vector_node_overlap_map(),*mesh_->get_vector_node_dist_map());
-    tangent->do_export(tangent_overlap, exporter, ADD);
+    if(is_mixed_formulation()){
+      MultiField_Exporter exporter (*mesh_->get_mixed_vector_node_overlap_map(),*mesh_->get_mixed_vector_node_dist_map());
+      tangent->do_export(tangent_overlap, exporter, ADD);
+    }
+    else{
+      MultiField_Exporter exporter (*mesh_->get_vector_node_overlap_map(),*mesh_->get_vector_node_dist_map());
+      tangent->do_export(tangent_overlap, exporter, ADD);
+    }
     tangent->fill_complete();
 
     //tangent->describe();
-
+    if(is_mixed_formulation())
+      mixed_lhs->put_scalar(0.0);
     lhs.put_scalar(0.0);
 
     // apply IC first so that it is overwritten by BCs
     if(has_term(SUBSET_DISPLACEMENT_IC)){
+      TEUCHOS_TEST_FOR_EXCEPTION(is_mixed_formulation(),std::runtime_error,"Error ICs have not been implemented for mixed methods");
       for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
         int_t ix = i*2+0;
         int_t iy = i*2+1;
@@ -669,12 +799,20 @@ Global_Algorithm::execute(){
           exact_sol->local_value(ix) = b_x;
           exact_sol->local_value(iy) = b_y;
           if(matrix_service_->is_col_bc(ix)){
-            // get the coordinates of the node
-            residual.local_value(ix) = b_x;
+            if(is_mixed_formulation()){
+              mixed_residual->local_value(ix) = b_x;
+            }
+            else{
+              residual.local_value(ix) = b_x;
+            }
           }
           if(matrix_service_->is_col_bc(iy)){
-            // get the coordinates of the node
-            residual.local_value(iy) = b_y;
+            if(is_mixed_formulation()){
+              mixed_residual->local_value(iy) = b_y;
+            }
+            else{
+              residual.local_value(iy) = b_y;
+            }
           }
         }
       }
@@ -725,17 +863,26 @@ Global_Algorithm::execute(){
           disp_x /= num_neighbors;
           disp_y /= num_neighbors;
           if(matrix_service_->is_col_bc(ix)){
-            // get the coordinates of the node
-            residual.local_value(ix) = disp_x;
+            if(is_mixed_formulation()){
+              mixed_residual->local_value(ix) = disp_x;
+            }
+            else{
+              residual.local_value(ix) = disp_x;
+            }
           }
           if(matrix_service_->is_col_bc(iy)){
-            // get the coordinates of the node
-            residual.local_value(iy) = disp_y;
+            if(is_mixed_formulation()){
+              mixed_residual->local_value(iy) = disp_y;
+            }
+            else{
+              residual.local_value(iy) = disp_y;
+            }
           }
         } // is a col bc in x or y
       } // loop over all local nodes
     } // has term SUBSET_DISPLACEMENT_BC
     if(has_term(OPTICAL_FLOW_DISPLACEMENT_BC)){
+      TEUCHOS_TEST_FOR_EXCEPTION(is_mixed_formulation(),std::runtime_error,"Error, optical flow bc has not been implemented for mixed formulations");
       for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
         int_t ix = i*2+0;
         int_t iy = i*2+1;
@@ -770,7 +917,8 @@ Global_Algorithm::execute(){
     // solve:
 
     linear_problem_->setOperator(tangent->get());
-    bool is_set = linear_problem_->setProblem(lhs.get(), residual.get());
+    bool is_set = is_mixed_formulation() ? linear_problem_->setProblem(mixed_lhs->get(), mixed_residual->get()):
+        linear_problem_->setProblem(lhs.get(), residual.get());
     TEUCHOS_TEST_FOR_EXCEPTION(!is_set, std::logic_error,
       "Error: Belos::LinearProblem::setProblem() failed to set up correctly.\n");
     Belos::ReturnType ret = belos_solver_->solve();
@@ -778,9 +926,23 @@ Global_Algorithm::execute(){
       std::cout << "*** WARNING: Belos linear solver did not converge!" << std::endl;
   } // end iteration loop
 
-  // upate the displacements
-  disp.update(1.0,lhs,1.0);
 
+  // if this is a mixed form split the lhs into displacement and lagrange multiplier fields
+  if(is_mixed_formulation()){
+    for(int_t i=0;i<mesh_->get_vector_node_dist_map()->get_num_local_elements();++i){
+      const int_t gid = mesh_->get_vector_node_dist_map()->get_global_element(i);
+      disp.global_value(gid) = mixed_lhs->global_value(gid);
+    }
+    const int_t lagrange_offset = mesh_->get_vector_node_dist_map()->get_num_global_elements();
+    for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+      const int_t gid = mesh_->get_scalar_node_dist_map()->get_global_element(i);
+      lagrange_multiplier->global_value(gid) = mixed_lhs->global_value(gid+lagrange_offset);
+    }
+  }
+  else{
+    // upate the displacements
+    disp.update(1.0,lhs,1.0);
+  }
   return CORRELATION_SUCCESSFUL;
 }
 

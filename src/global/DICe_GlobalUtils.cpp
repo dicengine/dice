@@ -247,6 +247,51 @@ void tikhonov_tensor(Global_Algorithm * alg,
   }
 }
 
+void div_velocity(const int_t spa_dim,
+  const int_t t3_num_funcs,
+  const int_t t6_num_funcs,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * inv_jac,
+  const scalar_t * DN6,
+  const scalar_t * N3,
+  scalar_t * elem_div_stiffness){
+
+  scalar_t vec_invjTDNT[t6_num_funcs*spa_dim];
+
+
+  for(int_t n=0;n<t6_num_funcs;++n){
+    vec_invjTDNT[n*spa_dim+0] = inv_jac[0]*DN6[n*spa_dim+0] + inv_jac[2]*DN6[n*spa_dim+1];
+    vec_invjTDNT[n*spa_dim+1] = inv_jac[1]*DN6[n*spa_dim+0] + inv_jac[3]*DN6[n*spa_dim+1];
+  }
+
+//  std::cout << " inv J " << std::endl;
+//  for(int_t i=0;i<spa_dim*spa_dim;++i)
+//    std::cout << " j " << inv_jac[i] << std::endl;
+//
+//  std::cout << " DN " << std::endl;
+//  for(int_t i=0;i<t6_num_funcs*spa_dim;++i)
+//    std::cout << " DN " << DN6[i] << std::endl;
+//
+//
+//
+//  std::cout << " vec jinvdt " << std::endl;
+//  for(int_t i=0;i<t6_num_funcs*spa_dim;++i)
+//    std::cout << "vec " << vec_invjTDNT[i] << std::endl;
+
+
+  // div velocity stiffness terms
+  for(int_t i=0;i<t3_num_funcs;++i){
+    for(int_t j=0;j<t6_num_funcs;++j){
+      for(int_t dim=0;dim<spa_dim;++dim){
+        elem_div_stiffness[i*t6_num_funcs*spa_dim + j*spa_dim+dim]
+                           -= N3[i]*vec_invjTDNT[j*spa_dim+dim]*gp_weight*J;
+      }
+    }
+  }
+}
+
+
 
 void subset_velocity(Global_Algorithm * alg,
   const int_t & c_x, // closest pixel in x

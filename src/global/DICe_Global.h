@@ -104,6 +104,11 @@ public:
     scalar_t & error_bt,
     scalar_t & error_lambda);
 
+  /// Returns true if the formulation is mixed
+  bool is_mixed_formulation()const{
+    return global_formulation_==MIXED_HORN_SCHUNCK || global_formulation_==MIXED_LEVENBERG_MARQUARDT;
+  }
+
   /// Returns the mesh size (max area constraint)
   scalar_t mesh_size()const{
     return mesh_size_;
