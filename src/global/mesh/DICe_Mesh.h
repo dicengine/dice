@@ -976,6 +976,11 @@ public:
   }
 
   /// Returns a pointer to the communication map
+  Teuchos::RCP<MultiField_Map> get_mixed_vector_node_overlap_map(){
+    return mixed_vector_node_overlap_map_;
+  }
+
+  /// Returns a pointer to the communication map
   Teuchos::RCP<MultiField_Map> get_scalar_node_dist_map(){
     return scalar_node_dist_map_;
   }
@@ -983,6 +988,11 @@ public:
   /// Returns a pointer to the communication map
   Teuchos::RCP<MultiField_Map> get_vector_node_dist_map(){
     return vector_node_dist_map_;
+  }
+
+  /// Returns a pointer to the communication map
+  Teuchos::RCP<MultiField_Map> get_mixed_vector_node_dist_map(){
+    return mixed_vector_node_dist_map_;
   }
 
   /// Returns a pointer to the communication map
@@ -1432,6 +1442,10 @@ private:
   Teuchos::RCP<MultiField_Map> vector_node_overlap_map_;
   /// Comminication map
   Teuchos::RCP<MultiField_Map> vector_node_dist_map_;
+  /// Comminication map
+  Teuchos::RCP<MultiField_Map> mixed_vector_node_overlap_map_;
+  /// Comminication map
+  Teuchos::RCP<MultiField_Map> mixed_vector_node_dist_map_;
   /// Comminication map
   Teuchos::RCP<MultiField_Map> scalar_elem_dist_map_;
   /// Comminication map

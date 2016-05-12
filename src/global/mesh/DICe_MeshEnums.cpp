@@ -107,6 +107,7 @@ void create_string_maps()
   field_type_string[field_enums::NO_SUCH_FIELD_TYPE]                                 = "NO_SUCH_FIELD_TYPE";
   field_type_string[field_enums::SCALAR_FIELD_TYPE]                                  = "SCALAR_FIELD_TYPE";
   field_type_string[field_enums::VECTOR_FIELD_TYPE]                                  = "VECTOR_FIELD_TYPE";
+  field_type_string[field_enums::MIXED_VECTOR_FIELD_TYPE]                            = "MIXED_VECTOR_FIELD_TYPE";
 
   field_name_string[field_enums::NO_SUCH_FIELD_NAME]                                 = "NO_SUCH_FIELD_NAME";
   field_name_string[field_enums::BLOCK_ID]                                           = "BLOCK_ID";
@@ -139,8 +140,11 @@ void create_string_maps()
   field_name_string[field_enums::ELAST_FEM_LHS]                                      = "ELAST_FEM_LHS";
   field_name_string[field_enums::ELAST_FEM_DISPLACEMENT]                             = "ELAST_FEM_DISPLACEMENT";
   field_name_string[field_enums::DISPLACEMENT]                                       = "DISPLACEMENT";
+  field_name_string[field_enums::LAGRANGE_MULTIPLIER]                                = "LAGRANGE_MULTIPLIER";
   field_name_string[field_enums::RESIDUAL]                                           = "RESIDUAL";
   field_name_string[field_enums::LHS]                                                = "LHS";
+  field_name_string[field_enums::MIXED_RESIDUAL]                                     = "MIXED_RESIDUAL";
+  field_name_string[field_enums::MIXED_LHS]                                          = "MIXED_LHS";
   field_name_string[field_enums::EXACT_SOL_VECTOR]                                   = "EXACT_SOL_VECTOR";
   field_name_string[field_enums::IMAGE_PHI]                                          = "IMAGE_PHI";
   field_name_string[field_enums::IMAGE_GRAD_PHI]                                     = "IMAGE_GRAD_PHI";

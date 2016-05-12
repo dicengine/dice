@@ -337,6 +337,7 @@ Mesh::create_elem_node_field_maps(){
   Teuchos::Array<int_t>::size_type num_nodes_this_proc = num_nodes();
   Teuchos::Array<int_t> node_list (num_nodes_this_proc);
   Teuchos::Array<int_t> node_list_vectorized (num_nodes_this_proc * spa_dim);
+  Teuchos::Array<int_t> node_list_mixed (num_nodes_this_proc * (spa_dim+1)); // add one for the lagrange multiplier
   DICe::mesh::node_set::const_iterator node_it = get_node_set()->begin();
   DICe::mesh::node_set::const_iterator node_end = get_node_set()->end();
   int_t node_index = 0;
@@ -349,12 +350,21 @@ Mesh::create_elem_node_field_maps(){
       const int_t stride = (node_it->get()->global_id() - 1) * spa_dim + dim + 1;
       node_list_vectorized[index_stride] = stride;
     }
+    for(int_t dim=0;dim<=spa_dim;++dim)
+    {
+      const int_t index_stride = node_index * (spa_dim+1) + dim;
+      const int_t stride = (node_it->get()->global_id() - 1) * (spa_dim+1) + dim + 1;
+      node_list_mixed[index_stride] = stride;
+    }
     node_index++;
   }
   scalar_node_overlap_map_ = Teuchos::rcp (new MultiField_Map(-1, node_list, indexBase, *comm_));
   //std::cout << " SCALAR_NODE_OVERLAP MAP: " << std::endl;
   //scalar_node_overlap_map->describe();
   vector_node_overlap_map_ = Teuchos::rcp (new MultiField_Map(-1, node_list_vectorized, indexBase, *comm_));
+  //std::cout << " VECTOR_NODE_OVERLAP MAP: " << std::endl;
+  //vector_node_overlap_map->describe();
+  mixed_vector_node_overlap_map_ = Teuchos::rcp (new MultiField_Map(-1, node_list_mixed, indexBase, *comm_));
   //std::cout << " VECTOR_NODE_OVERLAP MAP: " << std::endl;
   //vector_node_overlap_map->describe();
 
@@ -365,6 +375,7 @@ Mesh::create_elem_node_field_maps(){
   Teuchos::Array<int_t> GIDList(total_num_nodes);
   Teuchos::Array<int_t> gids_on_this_proc;
   Teuchos::Array<int_t> gids_on_this_proc_vectorized;
+  Teuchos::Array<int_t> gids_on_this_proc_mixed;
   for(int_t i=0;i<total_num_nodes;++i)
   {
     GIDList[i] = i+1;
@@ -377,13 +388,18 @@ Mesh::create_elem_node_field_maps(){
     {
       gids_on_this_proc.push_back(i+1);
       for(int_t dim=0;dim<spa_dim;++dim)
-        gids_on_this_proc_vectorized.push_back((i)*spa_dim+dim+1);
+        gids_on_this_proc_vectorized.push_back(i*spa_dim+dim+1);
+      for(int_t dim=0;dim<=spa_dim;++dim)
+        gids_on_this_proc_mixed.push_back(i*(spa_dim+1)+dim+1);
     }
   }
   scalar_node_dist_map_ = Teuchos::rcp(new MultiField_Map(-1,gids_on_this_proc, indexBase, *comm_));
   //std::cout << " SCALAR_NODE_DIST MAP: " << std::endl;
   //scalar_node_dist_map->describe();
   vector_node_dist_map_ = Teuchos::rcp(new MultiField_Map(-1,gids_on_this_proc_vectorized, indexBase, *comm_));
+  //std::cout << " VECTOR_NODE_DIST MAP: " << std::endl;
+  //vector_node_dist_map->describe();
+  mixed_vector_node_dist_map_ = Teuchos::rcp(new MultiField_Map(-1,gids_on_this_proc_mixed, indexBase, *comm_));
   //std::cout << " VECTOR_NODE_DIST MAP: " << std::endl;
   //vector_node_dist_map->describe();
 
@@ -624,6 +640,8 @@ Mesh::create_field(const field_enums::Field_Spec & field_spec)
     map = scalar_node_dist_map_;
   else if(field_spec.get_rank()==field_enums::NODE_RANK && field_spec.get_field_type()==field_enums::VECTOR_FIELD_TYPE)
     map = vector_node_dist_map_;
+  else if(field_spec.get_rank()==field_enums::NODE_RANK && field_spec.get_field_type()==field_enums::MIXED_VECTOR_FIELD_TYPE)
+    map = mixed_vector_node_dist_map_;
   else if(field_spec.get_rank()==field_enums::ELEMENT_RANK && field_spec.get_field_type()==field_enums::VECTOR_FIELD_TYPE)
     map = vector_elem_dist_map_;
   else if(field_spec.get_rank()==field_enums::ELEMENT_RANK && field_spec.get_field_type()==field_enums::SCALAR_FIELD_TYPE)
@@ -728,6 +746,8 @@ Mesh::get_overlap_field(const field_enums::Field_Spec & field_spec)
     map = scalar_node_overlap_map_;
   else if(field_spec.get_rank()==field_enums::NODE_RANK && field_spec.get_field_type()==field_enums::VECTOR_FIELD_TYPE)
     map = vector_node_overlap_map_;
+  else if(field_spec.get_rank()==field_enums::NODE_RANK && field_spec.get_field_type()==field_enums::MIXED_VECTOR_FIELD_TYPE)
+    map = mixed_vector_node_overlap_map_;
   else
   {
     std::stringstream oss;
@@ -762,6 +782,8 @@ Mesh::field_overlap_export(const Teuchos::RCP<MultiField > from_field,
     map = scalar_node_overlap_map_;
   else if(to_field_spec.get_rank()==field_enums::NODE_RANK && to_field_spec.get_field_type()==field_enums::VECTOR_FIELD_TYPE)
     map = vector_node_overlap_map_;
+  else if(to_field_spec.get_rank()==field_enums::NODE_RANK && to_field_spec.get_field_type()==field_enums::MIXED_VECTOR_FIELD_TYPE)
+    map = mixed_vector_node_overlap_map_;
   else{
     std::stringstream oss;
     oss << " MG_Mesh::field_overlap_export(): unknown rank and tensor order combination specified: " << tostring(to_field_spec.get_rank()) << " " << tostring(to_field_spec.get_field_type()) << std::endl;
@@ -796,6 +818,13 @@ Mesh::print_field_info()
   for (size_t i = 0; i < nodal_vector_fields.size(); ++i){
     for(int_t j=0; j<spatial_dimension();++j)
       std::cout << "  " << nodal_vector_fields[i] + index_to_component_string(j) << std::endl;
+  }
+  std::cout << "  =============== REGISTERED NODAL MIXED VECTOR FIELDS ===============" << std::endl;
+  std::vector<std::string> mixed_nodal_vector_fields = get_field_names(field_enums::NODE_RANK,field_enums::MIXED_VECTOR_FIELD_TYPE,false);
+  for (size_t i = 0; i < mixed_nodal_vector_fields.size(); ++i){
+    for(int_t j=0; j<spatial_dimension();++j)
+      std::cout << "  " << mixed_nodal_vector_fields[i] + index_to_component_string(j) << std::endl;
+    std::cout << "  " << mixed_nodal_vector_fields[i] + "LAM" << std::endl;
   }
   std::cout << "  ============== REGISTERED ELEMENT SCALAR FIELDS ==============" << std::endl;
   std::vector<std::string> element_scalar_fields = get_field_names(field_enums::ELEMENT_RANK,field_enums::SCALAR_FIELD_TYPE,false);
