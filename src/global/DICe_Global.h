@@ -184,6 +184,8 @@ protected:
   scalar_t alpha2_;
   /// computational mesh
   Teuchos::RCP<DICe::mesh::Mesh> mesh_;
+  /// lagrange multiplier mesh
+  Teuchos::RCP<DICe::mesh::Mesh> l_mesh_;
   /// optional pointer to a method of manufactured solutions problem
   Teuchos::RCP<MMS_Problem> mms_problem_;
   /// name of the output file

@@ -51,6 +51,276 @@
 namespace DICe {
 namespace mesh {
 
+Teuchos::RCP<Mesh> create_tri3_exodus_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mesh,
+  const std::string & serial_output_filename){
+  DEBUG_MSG("create_tri3_exodus_mesh_from_tri6(): creating a tri3 mesh from a tri6 one");
+  // find the position of the file extension
+  std::stringstream out_file_base;
+  size_t pos_out = serial_output_filename.find(".g");
+  if(pos_out==std::string::npos){
+    pos_out = serial_output_filename.find(".e");
+  }
+  if(pos_out==std::string::npos)
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, output mesh files must have the extension .g or .e");
+  out_file_base << serial_output_filename;
+
+  int_t num_procs = 1;
+  int_t my_rank = 0;
+#ifdef HAVE_MPI
+  int_t mpi_is_initialized = 0;
+  MPI_Initialized(&mpi_is_initialized);
+  TEUCHOS_TEST_FOR_EXCEPTION(!mpi_is_initialized,std::runtime_error,"Error: if MPI is enabled, MPI must be initialized at this point.");
+  MPI_Comm_size(MPI_COMM_WORLD,&num_procs);
+  MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);
+#endif
+  if(num_procs>1)
+  {
+    std::stringstream temp_ss1, temp_ss2, file_name_post;
+    temp_ss1 << num_procs;
+    const size_t procs_num_digits = temp_ss1.str().length();
+    temp_ss2 << my_rank;
+    const size_t rank_num_digits = temp_ss2.str().length();
+    const int_t num_fill_zeros = procs_num_digits - rank_num_digits;
+    file_name_post << "." << num_procs << ".";
+    for(int_t i=0;i<num_fill_zeros;++i)
+      file_name_post << "0";
+    file_name_post << my_rank;
+    out_file_base << file_name_post.str();
+  }
+  std::string output_filename = out_file_base.str();
+  DEBUG_MSG("Output file name: " << output_filename);
+
+  const int_t num_elem  = tri6_mesh->num_elem();
+
+  // iterate the elements, taking only the first three indices of the connectivity to
+  // populate the node list:
+  std::map<int_t,scalar_t> coords_x;
+  std::map<int_t,scalar_t> coords_y;
+
+  // element loop
+  TEUCHOS_TEST_FOR_EXCEPTION(tri6_mesh->get_block_type_map()->begin()->second!=TRI6,std::runtime_error,
+    "Error, the input mesh must be TRI6 elements");
+  Teuchos::RCP<MultiField > tri6_initial_coords = tri6_mesh->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
+  const int_t spa_dim = 2;
+  DICe::mesh::element_set::iterator elem_it = tri6_mesh->get_element_set()->begin();
+  DICe::mesh::element_set::iterator elem_end = tri6_mesh->get_element_set()->end();
+  //const int_t tri6_num_nodes_per_elem = 6;
+  const int_t tri3_num_nodes_per_elem = 3;
+  for(;elem_it!=elem_end;++elem_it)
+  {
+    //std::cout << "ELEM: " << elem_it->get()->global_id() << std::endl;
+    const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
+    for(int_t nd=0;nd<tri3_num_nodes_per_elem;++nd){ // only collect the first three nodes
+      const int_t node_gid = connectivity[nd]->global_id();
+      const int_t node_olid = connectivity[nd]->overlap_local_id();
+      coords_x.insert(std::pair<int_t,scalar_t>(node_gid,tri6_initial_coords->local_value(node_olid*spa_dim+0)));
+      coords_y.insert(std::pair<int_t,scalar_t>(node_gid,tri6_initial_coords->local_value(node_olid*spa_dim+1)));
+    }
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(coords_x.size()!=coords_y.size(),std::runtime_error,"Error, coords should be the same size");
+  const int_t num_nodes = coords_x.size();
+  int_t * node_map = new int_t[num_nodes];
+
+  //  std::cout << "nodes that got collected " << std::endl;
+  std::map<int_t,scalar_t>::iterator it=coords_x.begin();
+  std::map<int_t,scalar_t>::iterator it_end=coords_x.end();
+  int_t node_index = 0;
+  for(;it!=it_end;++it){
+    node_map[node_index] = it->first;
+    node_index++;
+    //std::cout << "gid " << it->first << " x " << it->second << std::endl;
+  }
+//  it=coords_y.begin();
+//  it_end=coords_y.end();
+//  for(;it!=it_end;++it){
+//    std::cout << "gid " << it->first << " y " << it->second << std::endl;
+//  }
+
+  Teuchos::RCP<DICe::mesh::Mesh> mesh = Teuchos::rcp(new DICe::mesh::Mesh(output_filename));
+  const int_t p_rank = mesh->get_comm()->get_rank();
+  mesh->set_input_exoid(-1);
+  const int_t num_dim = 2;
+  mesh->set_spatial_dimension(num_dim);
+
+  // put all the nodes in the mesh
+  for(int_t i =0;i<num_nodes;++i){
+    Teuchos::RCP<Node> node_rcp = Teuchos::rcp(new DICe::mesh::Node(node_map[i],i));
+    mesh->get_node_set()->push_back(node_rcp);
+  }
+
+  // create one block all of type TRI3 elems
+  mesh->get_block_type_map()->insert(std::pair<int_t,Base_Element_Type>(1,TRI3));
+
+  for(elem_it = tri6_mesh->get_element_set()->begin();elem_it!=elem_end;++elem_it)
+  {
+    connectivity_vector conn;
+    const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
+    for(int_t k=0;k<tri3_num_nodes_per_elem;++k)
+    {
+      const int_t global_node_id = connectivity[k]->global_id();
+      // find the node in the set with the same global id
+      bool found_node = false;
+      node_set::const_iterator it = mesh->get_node_set()->begin();
+      node_set::const_iterator end = mesh->get_node_set()->end();
+      for(;it!=end;++it)
+      {
+        if(it->get()->global_id()==global_node_id)
+        {
+          found_node = true;
+          conn.push_back(*it);
+          break;
+        }
+      }
+      TEUCHOS_TEST_FOR_EXCEPTION(!found_node,std::logic_error,"Could not find node rcp in set");
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(conn.size()!=tri3_num_nodes_per_elem,std::runtime_error,"Error, connectivity is of invalid size");
+    const int_t elem_local_id = elem_it->get()->local_id();
+    const int_t elem_global_id = elem_it->get()->global_id();
+    const int_t elem_index_in_block = elem_it->get()->index_in_block();
+    Teuchos::RCP<DICe::mesh::Element> element_rcp = Teuchos::rcp(new DICe::mesh::Element(conn,elem_global_id,elem_local_id,1,elem_index_in_block));
+    mesh->get_element_set()->push_back(element_rcp);
+  }
+
+  // since we are going to read in some field data like coordinates or volumes, etc
+  // we pause here to generate the Tpetra maps that will organize this stuff
+  mesh->create_elem_node_field_maps();
+
+  mesh->create_field(field_enums::BLOCK_ID_FS);
+  MultiField & block_id_field = *mesh->get_field(field_enums::BLOCK_ID_FS);
+  elem_it = mesh->get_element_set()->begin();
+  elem_end = mesh->get_element_set()->end();
+  for(;elem_it!=elem_end;++elem_it){
+    block_id_field.local_value(elem_it->get()->local_id()) = elem_it->get()->block_id();
+  }
+
+  // put the element blocks in a field so they are accessible in parallel from other processors
+  block_type_map::iterator blk_map_it = mesh->get_block_type_map()->begin();
+  block_type_map::iterator blk_map_end = mesh->get_block_type_map()->end();
+  for(;blk_map_it!=blk_map_end;++blk_map_it)
+  {
+    // TODO: do the same for faces/edges
+    Teuchos::RCP<element_set> elem_set = Teuchos::rcp(new element_set);
+    Teuchos::RCP<node_set> node_set_ptr = Teuchos::rcp(new node_set);
+    node_set & node_set_ref = *node_set_ptr;
+    for(elem_it=mesh->get_element_set()->begin();elem_it!=elem_end;++elem_it)
+    {
+      if(elem_it->get()->block_id()==blk_map_it->first)
+      {
+        elem_set->push_back(*elem_it);
+        const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
+        for(size_t node_it=0;node_it<connectivity.size();++node_it)
+        {
+          // check if the node is already there:
+          bool not_found = true;
+          for(size_t i=0;i<node_set_ptr->size();++i)
+          {
+            if(node_set_ref[i]==connectivity[node_it]) not_found = false;
+          }
+          if(not_found) node_set_ptr->push_back(connectivity[node_it]);
+        }
+      }
+    }
+    mesh->get_element_sets_by_block()->insert(std::pair<int_t,Teuchos::RCP<element_set> >(blk_map_it->first,elem_set));
+    mesh->get_node_sets_by_block()->insert(std::pair<int_t,Teuchos::RCP<node_set> >(blk_map_it->first,node_set_ptr));
+  }
+  // TODO deal with boundary conditions on the lagrange mesh
+//
+//  std::vector<int_t> dirichlet_bc_def;
+//  std::set<int_t>::const_iterator it = dirichlet_boundary_nodes.begin();
+//  std::set<int_t>::const_iterator it_end = dirichlet_boundary_nodes.end();
+//  for(;it!=it_end;++it){
+//    dirichlet_bc_def.push_back(*it);
+//  }
+//  if(dirichlet_bc_def.size()>0)
+//    mesh->get_node_bc_sets()->insert(std::pair<int_t,std::vector<int_t> >(0,dirichlet_bc_def)); // all dirichlet boundary nodes go in node set 0
+//  std::vector<int_t> neumann_bc_def;
+//  it = neumann_boundary_nodes.begin();
+//  it_end = neumann_boundary_nodes.end();
+//  for(;it!=it_end;++it){
+//    neumann_bc_def.push_back(*it);
+//  }
+//  if(neumann_bc_def.size()>0)
+//    mesh->get_node_bc_sets()->insert(std::pair<int_t,std::vector<int_t> >(1,neumann_bc_def)); // all neumann boundary nodes go in node set 1
+//
+  mesh->set_initialized();
+
+  // initialize the fields needed for coordinates etc:
+  mesh->create_field(field_enums::INITIAL_COORDINATES_FS);
+  mesh->create_field(field_enums::CURRENT_COORDINATES_FS);
+  Teuchos::RCP<MultiField > initial_coords = mesh->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField > current_coords = mesh->get_overlap_field(field_enums::CURRENT_COORDINATES_FS);
+
+  for(int_t i=0;i<num_nodes;++i)  // i represents the local_id
+  {
+    initial_coords->local_value(i*num_dim+0) = coords_x.find(node_map[i])->second;
+    current_coords->local_value(i*num_dim+0) = coords_x.find(node_map[i])->second;
+    initial_coords->local_value(i*num_dim+1) = coords_y.find(node_map[i])->second;
+    current_coords->local_value(i*num_dim+1) = coords_y.find(node_map[i])->second;
+  }
+
+  // export the coordinates back to the non-overlap field
+  mesh->field_overlap_export(initial_coords, field_enums::INITIAL_COORDINATES_FS, INSERT);
+  mesh->field_overlap_export(current_coords, field_enums::CURRENT_COORDINATES_FS, INSERT);
+  //std::cout << "INITIAL COORDS: " << std::endl;
+  //initial_coords_ptr->vec()->describe();
+
+  // CELL COORDINATES
+  mesh->create_field(field_enums::INITIAL_CELL_COORDINATES_FS);
+  mesh->create_field(field_enums::CURRENT_CELL_COORDINATES_FS);
+
+  Teuchos::RCP<MultiField > coords = mesh->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
+  MultiField & initial_cell_coords = *mesh->get_field(field_enums::INITIAL_CELL_COORDINATES_FS);
+  MultiField & current_cell_coords = *mesh->get_field(field_enums::CURRENT_CELL_COORDINATES_FS);
+
+  //compute the centroid from the coordinates of the nodes;
+  for(elem_it=mesh->get_element_set()->begin();elem_it!=elem_end;++elem_it)
+  {
+    const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
+    scalar_t centroid[num_dim];
+    for(int_t i=0;i<num_dim;++i) centroid[i]=0.0;
+    for(size_t node_it=0;node_it<connectivity.size();++node_it)
+    {
+      const Teuchos::RCP<DICe::mesh::Node> node = connectivity[node_it];
+      for(int_t dim=0;dim<num_dim;++dim)
+      {
+        centroid[dim] += coords->local_value(node.get()->overlap_local_id()*num_dim + dim);
+      }
+    }
+    for(int_t dim=0;dim<num_dim;++dim)
+    {
+      centroid[dim] /= connectivity.size();
+      initial_cell_coords.local_value(elem_it->get()->local_id()*num_dim+dim) = centroid[dim];
+      current_cell_coords.local_value(elem_it->get()->local_id()*num_dim+dim) = centroid[dim];
+    }
+  }
+  //std::cout << " INITIAL CELL COORDS: " << std::endl;
+  //initial_cell_coords.vec()->describe();
+
+  // PROCESSOR ID
+
+  // create the cell_coords, cell_radius and cell_size fields:
+  mesh->create_field(field_enums::PROCESSOR_ID_FS);
+  MultiField & proc_id = *mesh->get_field(field_enums::PROCESSOR_ID_FS);
+  elem_it = mesh->get_element_set()->begin();
+  for(;elem_it!=elem_end;++elem_it){
+    proc_id.local_value(elem_it->get()->local_id()) = p_rank;
+  }
+
+  DEBUG_MSG("  ------------------ Analysis Model Definition (processsor " << p_rank <<") --------------------------");
+  DEBUG_MSG("  Title:             " << "autogenerated linear Triangle mesh");
+  DEBUG_MSG("  Output file:       " << output_filename);
+  DEBUG_MSG("  Spatial dimension: " << num_dim);
+  DEBUG_MSG("  Nodes:             " << num_nodes);
+  DEBUG_MSG("  Elements:          " << num_elem);
+  DEBUG_MSG("  --------------------------------------------------------------------------------------");
+
+  delete[] node_map;
+
+  return mesh;
+}
+
+
+
 Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coords_x,
   Teuchos::ArrayRCP<scalar_t> node_coords_y,
   Teuchos::ArrayRCP<int_t> connectivity,

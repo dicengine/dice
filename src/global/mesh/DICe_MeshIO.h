@@ -69,6 +69,11 @@ Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coor
   std::set<int_t> & neumann_boundary_nodes,
   const std::string & serial_output_filename);
 
+/// create a linear tri mesh from a quadratic one
+/// \param tri6_mesh the parent tri6 mesh
+/// \param serial_output_filename the name to use for the output
+Teuchos::RCP<Mesh> create_tri3_exodus_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mesh,
+  const std::string & serial_output_filename);
 
 /// Read the coordinates of the nodes from the mesh
 /// \param mesh The mesh to use for this function

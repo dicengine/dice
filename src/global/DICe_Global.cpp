@@ -135,6 +135,10 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   }
   TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"Error, mesh should not be a null pointer here.");
 
+  // if this is a mixed formulation, generate the lagrange multiplier mesh
+
+
+
   DICe::mesh::create_output_exodus_file(mesh_,output_folder);
   // create the necessary fields:
   mesh_->create_field(mesh::field_enums::DISPLACEMENT_FS);

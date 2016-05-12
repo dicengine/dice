@@ -100,7 +100,6 @@ int main(int argc, char *argv[]) {
   DICe::mesh::exodus_output_dump(mesh,1,time);
   *outStream << "closing the exodus output files" << std::endl;
   DICe::mesh::close_exodus_output(mesh);
-
   *outStream << "checking the output file for correct mesh properties" << std::endl;
   Teuchos::RCP<DICe::mesh::Mesh> mesh_out = DICe::mesh::read_exodus_mesh("scratch_mesh.e","no_file.e");
   *outStream << "checking the basic properties of the output mesh" << std::endl;
@@ -118,8 +117,32 @@ int main(int argc, char *argv[]) {
   }
   *outStream << "output mesh properties have been checked" << std::endl;
 
+  *outStream << "generating a tri3 mesh from a tri6 mesh" << std::endl;
 
-
+  Teuchos::RCP<DICe::mesh::Mesh> mesh_tri3 = DICe::mesh::create_tri3_exodus_mesh_from_tri6(mesh,"scratch_mesh_tri3.e");
+  *outStream << "creating a linear tri3 output mesh" << std::endl;
+  DICe::mesh::create_output_exodus_file(mesh_tri3,"./");
+  DICe::mesh::create_exodus_output_variable_names(mesh_tri3);
+  *outStream << "writing an output step" << std::endl;
+  DICe::mesh::exodus_output_dump(mesh_tri3,1,time);
+  *outStream << "closing the linear tri3 exodus output file" << std::endl;
+  DICe::mesh::close_exodus_output(mesh_tri3);
+  *outStream << "checking the output file for correct mesh properties" << std::endl;
+  Teuchos::RCP<DICe::mesh::Mesh> mesh_out_tri3 = DICe::mesh::read_exodus_mesh("scratch_mesh_tri3.e","no_file.e");
+  *outStream << "checking the basic properties of the output mesh" << std::endl;
+  if(mesh_out_tri3->num_nodes()!=424){
+    *outStream << "Error, the number of nodes read from the output mesh is not correct" << std::endl;
+    errorFlag++;
+  }
+  if(mesh_out_tri3->num_elem()!=784){
+    *outStream << "Error, the number of elements read from the output mesh is not correct" << std::endl;
+    errorFlag++;
+  }
+  if(mesh_out_tri3->num_blocks()!=1){
+    *outStream << "Error, the number of blocks in the output mesh is not correct" << std::endl;
+    errorFlag++;
+  }
+  *outStream << "output mesh properties have been checked" << std::endl;
 
   *outStream << "--- End test ---" << std::endl;
 
