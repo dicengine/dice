@@ -112,6 +112,7 @@ void create_string_maps()
   field_name_string[field_enums::NO_SUCH_FIELD_NAME]                                 = "NO_SUCH_FIELD_NAME";
   field_name_string[field_enums::BLOCK_ID]                                           = "BLOCK_ID";
   field_name_string[field_enums::PROCESSOR_ID]                                       = "PROCESSOR_ID";
+  field_name_string[field_enums::MASTER_NODE_ID]                                     = "MASTER_NODE_ID";
   field_name_string[field_enums::INITIAL_COORDINATES]                                = "INITIAL_COORDINATES";
   field_name_string[field_enums::CURRENT_COORDINATES]                                = "CURRENT_COORDINATES";
   field_name_string[field_enums::INITIAL_CELL_COORDINATES]                           = "INITIAL_CELL_COORDINATES";

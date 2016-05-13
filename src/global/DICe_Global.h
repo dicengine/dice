@@ -190,6 +190,8 @@ protected:
   Teuchos::RCP<MMS_Problem> mms_problem_;
   /// name of the output file
   std::string output_file_name_;
+  /// name of the linear output file
+  std::string linear_output_file_name_;
   /// linear problem
   Teuchos::RCP< Belos::LinearProblem<mv_scalar_type,vec_type,operator_type> > linear_problem_;
   /// belos solver

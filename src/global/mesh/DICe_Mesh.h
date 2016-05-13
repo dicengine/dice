@@ -877,6 +877,9 @@ public:
   ///NOTE: exodus ids are 1 based, not 0 based
   void create_elem_node_field_maps();
 
+  /// Create the field maps for the mixed formulation elements
+  void create_mixed_node_field_maps(Teuchos::RCP<Mesh> alt_mesh);
+
   /// Create the maps the dictate how fields are communicated across processors for faces
   ///NOTE: exodus ids are 1 based, not 0 based
   void create_face_cell_field_maps();

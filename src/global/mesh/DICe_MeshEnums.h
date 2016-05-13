@@ -186,6 +186,7 @@ enum Field_Name
   INTERNAL_CELL_SIZE,
   BLOCK_ID,
   PROCESSOR_ID,
+  MASTER_NODE_ID,
   FIELD_1,
   FIELD_2,
   FIELD_3,
@@ -378,6 +379,8 @@ const Field_Spec NO_SUCH_FS(field_enums::NO_SUCH_FIELD_TYPE,field_enums::NO_SUCH
 /// field spec
 const Field_Spec PROCESSOR_ID_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::PROCESSOR_ID,field_enums::ELEMENT_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
+const Field_Spec MASTER_NODE_ID_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::MASTER_NODE_ID,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
 const Field_Spec BLOCK_ID_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::BLOCK_ID,field_enums::ELEMENT_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec INITIAL_COORDINATES_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::INITIAL_COORDINATES,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
@@ -458,7 +461,7 @@ const Field_Spec RESIDUAL_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::RESIDUA
 /// field spec
 const Field_Spec LHS_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::LHS,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
-const Field_Spec LAGRANGE_MULTIPLIER_FS(field_enums::MIXED_VECTOR_FIELD_TYPE,field_enums::LAGRANGE_MULTIPLIER,field_enums::NODE_RANK,field_enums::STATE_N_PLUS_ONE,true,true);
+const Field_Spec LAGRANGE_MULTIPLIER_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::LAGRANGE_MULTIPLIER,field_enums::NODE_RANK,field_enums::STATE_N_PLUS_ONE,true,true);
 /// field spec
 const Field_Spec MIXED_RESIDUAL_FS(field_enums::MIXED_VECTOR_FIELD_TYPE,field_enums::MIXED_RESIDUAL,field_enums::NODE_RANK,field_enums::STATE_N_PLUS_ONE,true,true);
 /// field spec
@@ -491,7 +494,7 @@ const Field_Spec FIELD_9_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_9,
 const Field_Spec FIELD_10_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_10,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 56;
+const int_t num_fields_defined = 57;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -544,6 +547,7 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     INTERNAL_CELL_SIZE_FS,
     BLOCK_ID_FS,
     PROCESSOR_ID_FS,
+    MASTER_NODE_ID_FS,
     FIELD_1_FS,
     FIELD_2_FS,
     FIELD_3_FS,

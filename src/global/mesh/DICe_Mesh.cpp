@@ -317,6 +317,65 @@ Mesh::Mesh(const std::string & input_filename,
   node_set_ = Teuchos::rcp(new node_set);
 }
 
+/// Create the field maps for the mixed formulation elements
+void
+Mesh::create_mixed_node_field_maps(Teuchos::RCP<Mesh> alt_mesh){
+  DEBUG_MSG("Creating the mixed element and node field maps for the mesh");
+
+  const int_t indexBase = 1;
+  const int_t spa_dim = spatial_dimension();
+  const int_t p_rank = comm_->get_rank();
+
+  // get the number of nodes in the alt_mesh
+  const int_t alt_num_nodes_this_proc = alt_mesh->num_nodes();
+  // Some nodes are shared among different processors so the node_overlap_map is not 1-to-1!
+  Teuchos::Array<int_t>::size_type num_nodes_this_proc = num_nodes();
+  const int_t offset = num_nodes_this_proc*spa_dim;
+  Teuchos::Array<int_t> node_list_mixed (num_nodes_this_proc*spa_dim + alt_num_nodes_this_proc); // add one for the lagrange multiplier on each lm node
+  DICe::mesh::node_set::const_iterator node_it = get_node_set()->begin();
+  DICe::mesh::node_set::const_iterator node_end = get_node_set()->end();
+  int_t node_index = 0;
+  for(;node_it!=node_end;++node_it)
+  {
+    for(int_t dim=0;dim<spa_dim;++dim)
+    {
+      const int_t index_stride = node_index * spa_dim + dim;
+      const int_t stride = (node_it->get()->global_id() - 1) * spa_dim + dim + 1;
+      node_list_mixed[index_stride] = stride;
+    }
+    node_index++;
+  }
+  node_it = alt_mesh->get_node_set()->begin();
+  node_end = alt_mesh->get_node_set()->end();
+  node_index = 0;
+  for(;node_it!=node_end;++node_it)
+  {
+    const int_t index_stride = offset + node_index;
+    const int_t stride = node_it->get()->global_id() + offset;
+    node_list_mixed[index_stride] = stride;
+    node_index++;
+  }
+  mixed_vector_node_overlap_map_ = Teuchos::rcp (new MultiField_Map(-1, node_list_mixed, indexBase, *comm_));
+  //std::cout << " MIXED_VECTOR_NODE_OVERLAP MAP: " << std::endl;
+  //mixed_vector_node_overlap_map_->describe();
+
+  // go through all your local nodes, if the remote index list matches your processor than add it to the new_dist_list
+  // otherwise another proc will pick it up
+  const int_t total_num_nodes = mixed_vector_node_overlap_map_->get_max_global_index(); // note this assumes GIDs start with 1
+  Teuchos::Array<int_t> nodeIDList(total_num_nodes);
+  Teuchos::Array<int_t> GIDList(total_num_nodes);
+  Teuchos::Array<int_t> gids_on_this_proc_mixed;
+  for(int_t i=0;i<total_num_nodes;++i)
+    GIDList[i] = i+1;
+  mixed_vector_node_overlap_map_->get_remote_index_list(GIDList,nodeIDList);
+  for(int_t i=0;i<total_num_nodes;++i)
+    if(nodeIDList[i]==p_rank) // only add the nodes that have this processor as their remote index
+      gids_on_this_proc_mixed.push_back(i+1);
+  mixed_vector_node_dist_map_ = Teuchos::rcp(new MultiField_Map(-1,gids_on_this_proc_mixed, indexBase, *comm_));
+  //std::cout << " MIXED_VECTOR_NODE_DIST MAP: " << std::endl;
+  //mixed_vector_node_dist_map_->describe();
+}
+
 void
 Mesh::create_elem_node_field_maps(){
   DEBUG_MSG("Creating the element and node field maps for the mesh");
@@ -337,7 +396,6 @@ Mesh::create_elem_node_field_maps(){
   Teuchos::Array<int_t>::size_type num_nodes_this_proc = num_nodes();
   Teuchos::Array<int_t> node_list (num_nodes_this_proc);
   Teuchos::Array<int_t> node_list_vectorized (num_nodes_this_proc * spa_dim);
-  Teuchos::Array<int_t> node_list_mixed (num_nodes_this_proc * (spa_dim+1)); // add one for the lagrange multiplier
   DICe::mesh::node_set::const_iterator node_it = get_node_set()->begin();
   DICe::mesh::node_set::const_iterator node_end = get_node_set()->end();
   int_t node_index = 0;
@@ -350,21 +408,12 @@ Mesh::create_elem_node_field_maps(){
       const int_t stride = (node_it->get()->global_id() - 1) * spa_dim + dim + 1;
       node_list_vectorized[index_stride] = stride;
     }
-    for(int_t dim=0;dim<=spa_dim;++dim)
-    {
-      const int_t index_stride = node_index * (spa_dim+1) + dim;
-      const int_t stride = (node_it->get()->global_id() - 1) * (spa_dim+1) + dim + 1;
-      node_list_mixed[index_stride] = stride;
-    }
     node_index++;
   }
   scalar_node_overlap_map_ = Teuchos::rcp (new MultiField_Map(-1, node_list, indexBase, *comm_));
   //std::cout << " SCALAR_NODE_OVERLAP MAP: " << std::endl;
   //scalar_node_overlap_map->describe();
   vector_node_overlap_map_ = Teuchos::rcp (new MultiField_Map(-1, node_list_vectorized, indexBase, *comm_));
-  //std::cout << " VECTOR_NODE_OVERLAP MAP: " << std::endl;
-  //vector_node_overlap_map->describe();
-  mixed_vector_node_overlap_map_ = Teuchos::rcp (new MultiField_Map(-1, node_list_mixed, indexBase, *comm_));
   //std::cout << " VECTOR_NODE_OVERLAP MAP: " << std::endl;
   //vector_node_overlap_map->describe();
 
@@ -375,7 +424,6 @@ Mesh::create_elem_node_field_maps(){
   Teuchos::Array<int_t> GIDList(total_num_nodes);
   Teuchos::Array<int_t> gids_on_this_proc;
   Teuchos::Array<int_t> gids_on_this_proc_vectorized;
-  Teuchos::Array<int_t> gids_on_this_proc_mixed;
   for(int_t i=0;i<total_num_nodes;++i)
   {
     GIDList[i] = i+1;
@@ -389,17 +437,12 @@ Mesh::create_elem_node_field_maps(){
       gids_on_this_proc.push_back(i+1);
       for(int_t dim=0;dim<spa_dim;++dim)
         gids_on_this_proc_vectorized.push_back(i*spa_dim+dim+1);
-      for(int_t dim=0;dim<=spa_dim;++dim)
-        gids_on_this_proc_mixed.push_back(i*(spa_dim+1)+dim+1);
     }
   }
   scalar_node_dist_map_ = Teuchos::rcp(new MultiField_Map(-1,gids_on_this_proc, indexBase, *comm_));
   //std::cout << " SCALAR_NODE_DIST MAP: " << std::endl;
   //scalar_node_dist_map->describe();
   vector_node_dist_map_ = Teuchos::rcp(new MultiField_Map(-1,gids_on_this_proc_vectorized, indexBase, *comm_));
-  //std::cout << " VECTOR_NODE_DIST MAP: " << std::endl;
-  //vector_node_dist_map->describe();
-  mixed_vector_node_dist_map_ = Teuchos::rcp(new MultiField_Map(-1,gids_on_this_proc_mixed, indexBase, *comm_));
   //std::cout << " VECTOR_NODE_DIST MAP: " << std::endl;
   //vector_node_dist_map->describe();
 

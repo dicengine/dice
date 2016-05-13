@@ -119,14 +119,16 @@ Teuchos::RCP<Mesh> create_tri3_exodus_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mes
   }
   TEUCHOS_TEST_FOR_EXCEPTION(coords_x.size()!=coords_y.size(),std::runtime_error,"Error, coords should be the same size");
   const int_t num_nodes = coords_x.size();
-  int_t * node_map = new int_t[num_nodes];
+  int_t * local_to_master_node_map = new int_t[num_nodes];
 
   //  std::cout << "nodes that got collected " << std::endl;
   std::map<int_t,scalar_t>::iterator it=coords_x.begin();
   std::map<int_t,scalar_t>::iterator it_end=coords_x.end();
   int_t node_index = 0;
+  std::map<int_t,int_t> master_to_local_node_map;
   for(;it!=it_end;++it){
-    node_map[node_index] = it->first;
+    local_to_master_node_map[node_index] = it->first;
+    master_to_local_node_map.insert(std::pair<int_t,int_t>(it->first,node_index));
     node_index++;
     //std::cout << "gid " << it->first << " x " << it->second << std::endl;
   }
@@ -144,7 +146,7 @@ Teuchos::RCP<Mesh> create_tri3_exodus_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mes
 
   // put all the nodes in the mesh
   for(int_t i =0;i<num_nodes;++i){
-    Teuchos::RCP<Node> node_rcp = Teuchos::rcp(new DICe::mesh::Node(node_map[i],i));
+    Teuchos::RCP<Node> node_rcp = Teuchos::rcp(new DICe::mesh::Node(i+1,i)); // FIXME this is not right for parallel
     mesh->get_node_set()->push_back(node_rcp);
   }
 
@@ -157,7 +159,10 @@ Teuchos::RCP<Mesh> create_tri3_exodus_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mes
     const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
     for(int_t k=0;k<tri3_num_nodes_per_elem;++k)
     {
-      const int_t global_node_id = connectivity[k]->global_id();
+      TEUCHOS_TEST_FOR_EXCEPTION(master_to_local_node_map.find(connectivity[k]->global_id())==master_to_local_node_map.end(),std::runtime_error,
+        "Error, invalid master to local node.");
+      const int_t global_node_id = master_to_local_node_map.find(connectivity[k]->global_id())->second + 1; // add one to convert to global id
+
       // find the node in the set with the same global id
       bool found_node = false;
       node_set::const_iterator it = mesh->get_node_set()->begin();
@@ -192,6 +197,15 @@ Teuchos::RCP<Mesh> create_tri3_exodus_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mes
   for(;elem_it!=elem_end;++elem_it){
     block_id_field.local_value(elem_it->get()->local_id()) = elem_it->get()->block_id();
   }
+
+  mesh->create_field(field_enums::MASTER_NODE_ID_FS);
+  MultiField & master_field = *mesh->get_field(field_enums::MASTER_NODE_ID_FS);
+  DICe::mesh::node_set::iterator node_it = mesh->get_node_set()->begin();
+  DICe::mesh::node_set::iterator node_end = mesh->get_node_set()->end();
+  for(;node_it!=node_end;++node_it){
+    master_field.local_value(node_it->get()->local_id()) = local_to_master_node_map[node_it->get()->local_id()];
+  }
+
 
   // put the element blocks in a field so they are accessible in parallel from other processors
   block_type_map::iterator blk_map_it = mesh->get_block_type_map()->begin();
@@ -252,10 +266,10 @@ Teuchos::RCP<Mesh> create_tri3_exodus_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mes
 
   for(int_t i=0;i<num_nodes;++i)  // i represents the local_id
   {
-    initial_coords->local_value(i*num_dim+0) = coords_x.find(node_map[i])->second;
-    current_coords->local_value(i*num_dim+0) = coords_x.find(node_map[i])->second;
-    initial_coords->local_value(i*num_dim+1) = coords_y.find(node_map[i])->second;
-    current_coords->local_value(i*num_dim+1) = coords_y.find(node_map[i])->second;
+    initial_coords->local_value(i*num_dim+0) = coords_x.find(local_to_master_node_map[i])->second;
+    current_coords->local_value(i*num_dim+0) = coords_x.find(local_to_master_node_map[i])->second;
+    initial_coords->local_value(i*num_dim+1) = coords_y.find(local_to_master_node_map[i])->second;
+    current_coords->local_value(i*num_dim+1) = coords_y.find(local_to_master_node_map[i])->second;
   }
 
   // export the coordinates back to the non-overlap field
@@ -314,7 +328,7 @@ Teuchos::RCP<Mesh> create_tri3_exodus_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mes
   DEBUG_MSG("  Elements:          " << num_elem);
   DEBUG_MSG("  --------------------------------------------------------------------------------------");
 
-  delete[] node_map;
+  delete[] local_to_master_node_map;
 
   return mesh;
 }
