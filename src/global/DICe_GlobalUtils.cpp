@@ -98,7 +98,7 @@ void mms_image_grad_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
   // compute the image stiffness terms
   scalar_t d_phi_dt = 0.0, grad_phi_x = 0.0, grad_phi_y = 0.0;
   mms_problem->phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
-
+  //std::cout << " x " << x << " y " << y << " grad_phi_x " << grad_phi_x << " grad_phi_y " << grad_phi_y << std::endl;
   // image stiffness terms
   for(int_t i=0;i<num_funcs;++i){
     const int_t row1 = (i*spa_dim) + 0;
@@ -237,10 +237,6 @@ void tikhonov_tensor(Global_Algorithm * alg,
     for(int_t j=0;j<num_funcs;++j){
       elem_stiffness[row1*num_funcs*spa_dim + j*spa_dim+0]
                      += N[i]*alpha2*N[j]*gp_weight*J;
-//      elem_stiffness[row1*num_funcs*spa_dim + j*spa_dim+1]
-//                     += N[i]*alpha2*N[j]*gp_weight*J;
-//      elem_stiffness[row2*num_funcs*spa_dim + j*spa_dim+0]
-//                     += N[i]*alpha2*N[j]*gp_weight*J;
       elem_stiffness[row2*num_funcs*spa_dim + j*spa_dim+1]
                      += N[i]*alpha2*N[j]*gp_weight*J;
     }

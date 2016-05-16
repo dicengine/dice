@@ -210,7 +210,7 @@ public:
     scalar_t phi_cur = 0.0;
     phi(mod_x,mod_y,phi_cur);
     dphi_dt = phi_cur - phi_0;
-    static scalar_t gamma = b_coeff_*DICE_PI/dim_x_;
+    static scalar_t gamma = phi_coeff_*DICE_PI/dim_x_;
     grad_phi_x = gamma*cos(gamma*x)*cos(DICE_PI/2.0 + gamma*y);
     grad_phi_y = -gamma*sin(gamma*x)*sin(DICE_PI/2.0 + gamma*y);
   }

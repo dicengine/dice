@@ -139,7 +139,7 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"Error, mesh should not be a null pointer here.");
   DICe::mesh::create_output_exodus_file(mesh_,output_folder);
   // if this is a mixed formulation, generate the lagrange multiplier mesh
-  if(is_mixed_formulation()){
+  if(is_mixed_formulation()||global_formulation_==LEVENBERG_MARQUARDT){
     l_mesh_ = DICe::mesh::create_tri3_exodus_mesh_from_tri6(mesh_,linear_output_file_name_);
     TEUCHOS_TEST_FOR_EXCEPTION(l_mesh_==Teuchos::null,std::runtime_error,"Error, mesh should not be a null pointer here.");
     DICe::mesh::create_output_exodus_file(l_mesh_,output_folder);
@@ -157,10 +157,11 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   }
   mesh_->print_field_info();
   DICe::mesh::create_exodus_output_variable_names(mesh_);
-  if(is_mixed_formulation()){
+  if(is_mixed_formulation()||global_formulation_==LEVENBERG_MARQUARDT){
     mesh_->create_field(mesh::field_enums::MIXED_LHS_FS);
     mesh_->create_field(mesh::field_enums::MIXED_RESIDUAL_FS);
     l_mesh_->create_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
+    l_mesh_->create_field(mesh::field_enums::DISPLACEMENT_FS);
     l_mesh_->print_field_info();
     DICe::mesh::create_exodus_output_variable_names(l_mesh_);
   }
@@ -194,8 +195,31 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
       //add_term(OPTICAL_FLOW_DISPLACEMENT_BC);
     }
   }
+  else if(global_formulation_==LEHOUCQ_TURNER){
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::global_regularization_alpha),std::runtime_error,
+      "Error, global_regularization_alpha must be defined");
+    const scalar_t alpha = params->get<double>(DICe::global_regularization_alpha);
+    alpha2_ = alpha*alpha;
+    add_term(TIKHONOV_REGULARIZATION);
+    add_term(GRAD_LAGRANGE_MULTIPLIER);
+    add_term(DIV_VELOCITY);
+    if(mms_problem_!=Teuchos::null){
+        add_term(MMS_IMAGE_GRAD_TENSOR);
+        add_term(MMS_IMAGE_TIME_FORCE);
+        add_term(MMS_FORCE);
+        add_term(DIRICHLET_DISPLACEMENT_BC);
+    }
+    else{
+      add_term(IMAGE_TIME_FORCE);
+      add_term(IMAGE_GRAD_TENSOR);
+      if(global_solver_==CG_SOLVER){
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"CG solver is not appropriate for LEHOUCQ_TURNER");
+      }
+      add_term(SUBSET_DISPLACEMENT_BC);
+    }
+  }
   else if(global_formulation_==LEVENBERG_MARQUARDT){
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, this formulation has been deactivated because it is not stable");
+    //TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, this formulation has been deactivated because it is not stable");
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::global_regularization_alpha),std::runtime_error,
       "Error, global_regularization_alpha must be defined");
     const scalar_t alpha = params->get<double>(DICe::global_regularization_alpha);
@@ -244,8 +268,9 @@ Global_Algorithm::pre_execution_tasks(){
   belos_list.set( "Maximum Restarts", maxrestarts );  // Maximum number of restarts allowed
   int verbosity = Belos::Errors + Belos::Warnings + Belos::Debug + Belos::TimingDetails + Belos::FinalSummary + Belos::StatusTestDetails;
   belos_list.set( "Verbosity", verbosity );
-  belos_list.set( "Output Style", Belos::Brief );
+  //belos_list.set( "Output Style", Belos::Brief );
   belos_list.set( "Output Frequency", 1 );
+  //belos_list.set( "Lambda", 1.0 );
   belos_list.set( "Orthogonalization", ortho); // Orthogonalization type
 
   /// linear problem for solve
@@ -257,6 +282,10 @@ Global_Algorithm::pre_execution_tasks(){
   }
   else if(global_solver_==GMRES_SOLVER){
     belos_solver_ = Teuchos::rcp( new Belos::BlockGmresSolMgr<mv_scalar_type,vec_type,operator_type>
+    (linear_problem_,Teuchos::rcp(&belos_list,false)));
+  }
+  else if(global_solver_==LSQR_SOLVER){
+    belos_solver_ = Teuchos::rcp( new Belos::LSQRSolMgr<mv_scalar_type,vec_type,operator_type>
     (linear_problem_,Teuchos::rcp(&belos_list,false)));
   }
   else{
@@ -542,9 +571,36 @@ Global_Algorithm::execute(){
 
         // stiffness terms
 
+        // grad(phi) tensor_prod grad(phi)
+        if(has_term(MMS_IMAGE_GRAD_TENSOR))
+          mms_image_grad_tensor(mms_problem_,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_stiffness);
+
+//        std::cout << " elem stiffness " << std::endl;
+//        for(int_t i=0;i<tri6_num_funcs*spa_dim;++i){
+//          for(int_t j=0;j<tri6_num_funcs*spa_dim;++j){
+//            std::cout << elem_stiffness[i*tri6_num_funcs*spa_dim + j] << " ";
+//          }
+//          std::cout << std::endl;
+//        }
+
         // alpha^2 * div(0.5*(grad(b) + grad(b)^T))
         if(has_term(DIV_SYMMETRIC_STRAIN_REGULARIZATION))
           div_symmetric_strain(spa_dim,tri6_num_funcs,alpha2_,J,gp_weights[gp],inv_jac,DN6,elem_stiffness);
+
+        // alpha^2 * b
+        if(has_term(TIKHONOV_REGULARIZATION))
+          tikhonov_tensor(this,spa_dim,tri6_num_funcs,J,gp_weights[gp],N6,elem_stiffness);
+
+//        std::cout << " elem stiffness " << std::endl;
+//        for(int_t i=0;i<tri6_num_funcs*spa_dim;++i){
+//          for(int_t j=0;j<tri6_num_funcs*spa_dim;++j){
+//            std::cout << elem_stiffness[i*tri6_num_funcs*spa_dim + j] << " ";
+//          }
+//          std::cout << std::endl;
+//        }
+
+
+        // mixed formulation stiffness terms
 
         if(has_term(DIV_VELOCITY))
           div_velocity(spa_dim,tri3_num_funcs,tri6_num_funcs,J,gp_weights[gp],inv_jac,DN6,N3,elem_div_stiffness);
@@ -552,14 +608,6 @@ Global_Algorithm::execute(){
 //        std::cout << " div_stiffness term " << std::endl;
 //        for(int_t i=0;i<tri3_num_funcs*spa_dim*tri6_num_funcs;++i)
 //          std::cout << i << " " << elem_div_stiffness[i] << std::endl;
-
-        // alpha^2 * b
-        if(has_term(TIKHONOV_REGULARIZATION))
-          tikhonov_tensor(this,spa_dim,tri6_num_funcs,J,gp_weights[gp],N6,elem_stiffness);
-
-        // grad(phi) tensor_prod grad(phi)
-        if(has_term(MMS_IMAGE_GRAD_TENSOR))
-          mms_image_grad_tensor(mms_problem_,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_stiffness);
 
         // RHS terms
 
@@ -883,10 +931,10 @@ Global_Algorithm::execute(){
       }
     } // end has_term OPTICAL_FLOW_DISPLACEMENT_BC
 
-    //if(is_mixed_formulation())
-    //  mixed_residual->describe();
-    //else
-    //  residual->describe();
+//    if(is_mixed_formulation())
+//      mixed_residual->describe();
+//    else
+//      residual->describe();
 
     DEBUG_MSG("Global_Algorithm::execute(): Solving the linear system...");
 
@@ -918,6 +966,26 @@ Global_Algorithm::execute(){
     // upate the displacements
     disp.update(1.0,*lhs,1.0);
   }
+  //disp.describe();
+
+  // for levenberg marquart, copy the quadratic displacement field to the linear mesh
+  if(is_mixed_formulation()||global_formulation_==LEVENBERG_MARQUARDT){
+    TEUCHOS_TEST_FOR_EXCEPTION(l_mesh_==Teuchos::null,std::runtime_error,"Error, pointer should not be null here");
+    Teuchos::RCP<MultiField> linear_disp = l_mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
+    Teuchos::RCP<MultiField> master_gids = l_mesh_->get_field(mesh::field_enums::MASTER_NODE_ID_FS);
+    for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+      // get the gid from the
+      const int_t linear_gid = l_mesh_->get_scalar_node_dist_map()->get_global_element(i);
+      const int_t ux_id = (linear_gid-1)*spa_dim + 1;
+      const int_t uy_id = ux_id + 1;
+      const int_t node_gid = master_gids->local_value(i);
+      const int_t ux_master_id = (node_gid-1)*spa_dim + 1;
+      const int_t uy_master_id = ux_master_id + 1;
+      linear_disp->global_value(ux_id) = disp.global_value(ux_master_id);
+      linear_disp->global_value(uy_id) = disp.global_value(uy_master_id);
+    }
+  }
+
   return CORRELATION_SUCCESSFUL;
 }
 
@@ -964,7 +1032,7 @@ Global_Algorithm::post_execution_tasks(const scalar_t & time_stamp){
 
   DEBUG_MSG("Writing the output file with time stamp: " << time_stamp);
   DICe::mesh::exodus_output_dump(mesh_,1,time_stamp);
-  if(is_mixed_formulation()){
+  if(is_mixed_formulation()||global_formulation_==LEVENBERG_MARQUARDT){
     DEBUG_MSG("Writing the lagrange multiplier output file with time stamp: " << time_stamp);
     DICe::mesh::exodus_output_dump(l_mesh_,1,time_stamp);
   }

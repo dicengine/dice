@@ -67,15 +67,13 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- Begin test ---" << std::endl;
 
-  *outStream << " TESTING HORN_SCHUNCK FORMULATION " << std::endl;
-
   *outStream << "creating the global parameter list" << std::endl;
 
   Teuchos::RCP<Teuchos::ParameterList> global_params = Teuchos::rcp(new Teuchos::ParameterList());
   global_params->set(DICe::mesh_size,1000.0);
   global_params->set(DICe::global_regularization_alpha,1.0);
   global_params->set(DICe::global_formulation,HORN_SCHUNCK);
-  global_params->set(DICe::global_solver,GMRES_SOLVER);
+  global_params->set(DICe::global_solver,LSQR_SOLVER);
   global_params->set(DICe::output_folder,"");
   global_params->set(DICe::output_prefix,"test_global_alg_hs");
   Teuchos::ParameterList mms_sublist;
@@ -84,6 +82,8 @@ int main(int argc, char *argv[]) {
   mms_sublist.set(DICe::b_coeff,2.0);
   global_params->set(DICe::mms_spec,mms_sublist);
   global_params->print(*outStream);
+
+  *outStream << " TESTING HORN_SCHUNCK FORMULATION " << std::endl;
 
   *outStream << "creating a global algorithm" << std::endl;
 
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
 
   const scalar_t error_max = 0.02;
   if(error_bx > error_max || error_by > error_max){
-    *outStream << "error, the solution error is too large" << std::endl;
+    *outStream << "error, the solution error is too large for HORN_SCHUNCK" << std::endl;
     errorFlag++;
   }
 
@@ -145,53 +145,83 @@ int main(int argc, char *argv[]) {
 
   const scalar_t error_max_mixed = 0.8;
   if(error_bx > error_max_mixed || error_by > error_max_mixed){
-    *outStream << "error, the solution error is too large" << std::endl;
+    *outStream << "error, the solution error is too large for MIXED_HORN_SCHUNCK" << std::endl;
     errorFlag++;
   }
 
-
-//// deactivating Levenberg Marquardt because it is not stable....
+//  *outStream << " TESTING THE LEHOUCQ_TURNER FORMULATION " << std::endl;
 //
-//  *outStream << " TESTING LEVENBERG_MARQUARDT FORMULATION " << std::endl;
-//
-//  *outStream << "creating the global parameter list" << std::endl;
-//
-//  global_params->set(DICe::mesh_size,500.0);
-//  global_params->set(DICe::global_regularization_alpha,5.0);
-//  global_params->set(DICe::global_formulation,LEVENBERG_MARQUARDT);
-//  global_params->set(DICe::global_solver,GMRES_SOLVER);
-//  global_params->set(DICe::output_folder,"");
-//  global_params->set(DICe::output_prefix,"test_global_alg_lm");
-//  global_params->set(DICe::mms_spec,mms_sublist);
+//  global_params->set(DICe::global_formulation,LEHOUCQ_TURNER);
+//  global_params->set(DICe::global_regularization_alpha,1.0);
+//  global_params->set(DICe::output_prefix,"test_global_alg_LT");
 //  global_params->print(*outStream);
 //
 //  *outStream << "creating a global algorithm" << std::endl;
 //
-//  Teuchos::RCP<DICe::global::Global_Algorithm> global_alg_lm = Teuchos::rcp(new DICe::global::Global_Algorithm(global_params));
+//  Teuchos::RCP<DICe::global::Global_Algorithm> global_alg_lt = Teuchos::rcp(new DICe::global::Global_Algorithm(global_params));
 //
 //  *outStream << "pre-execution tasks" << std::endl;
 //
-//  global_alg_lm->pre_execution_tasks();
+//  global_alg_lt->pre_execution_tasks();
 //
 //  *outStream << "executing" << std::endl;
 //
-//  global_alg_lm->execute();
+//  global_alg_lt->execute();
 //
 //  *outStream << "post execution tasks" << std::endl;
 //
-//  global_alg_lm->post_execution_tasks(1.0);
+//  global_alg_lt->post_execution_tasks(1.0);
 //
 //  *outStream << "evaluating the error" << std::endl;
 //
 //  error_bx = 0.0;
 //  error_by = 0.0;
 //  error_lambda = 0.0;
-//  global_alg_lm->evaluate_mms_error(error_bx,error_by,error_lambda);
+//  global_alg_lt->evaluate_mms_error(error_bx,error_by,error_lambda);
 //
-//  if(error_bx > error_max || error_by > error_max){
-//    *outStream << "error, the solution error is too large" << std::endl;
+//  const scalar_t error_max_lt = 0.8;
+//  if(error_bx > error_max_lt || error_by > error_max_lt){
+//    *outStream << "error, the solution error is too large for LEHOUCQ_TURNER" << std::endl;
 //    errorFlag++;
 //  }
+
+  *outStream << " TESTING LEVENBERG_MARQUARDT FORMULATION " << std::endl;
+
+  *outStream << "creating the global parameter list" << std::endl;
+
+  global_params->set(DICe::global_formulation,LEVENBERG_MARQUARDT);
+  global_params->set(DICe::global_regularization_alpha,1.0);
+  global_params->set(DICe::output_prefix,"test_global_alg_lm");
+  global_params->print(*outStream);
+
+  *outStream << "creating a global algorithm" << std::endl;
+
+  Teuchos::RCP<DICe::global::Global_Algorithm> global_alg_lm = Teuchos::rcp(new DICe::global::Global_Algorithm(global_params));
+
+  *outStream << "pre-execution tasks" << std::endl;
+
+  global_alg_lm->pre_execution_tasks();
+
+  *outStream << "executing" << std::endl;
+
+  global_alg_lm->execute();
+
+  *outStream << "post execution tasks" << std::endl;
+
+  global_alg_lm->post_execution_tasks(1.0);
+
+  *outStream << "evaluating the error" << std::endl;
+
+  error_bx = 0.0;
+  error_by = 0.0;
+  error_lambda = 0.0;
+  global_alg_lm->evaluate_mms_error(error_bx,error_by,error_lambda);
+
+  const scalar_t error_max_lm = 0.8;
+  if(error_bx > error_max_lm || error_by > error_max_lm){
+    *outStream << "error, the solution error is too large" << std::endl;
+    errorFlag++;
+  }
 
   *outStream << "--- End test ---" << std::endl;
 

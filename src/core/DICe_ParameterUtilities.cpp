@@ -197,6 +197,7 @@ const std::string to_string(Global_Solver in){
   const static char * globalSolverStrings[] = {
     "CG_SOLVER",
     "GMRES_SOLVER",
+    "LSQR_SOLVER",
     "NO_SUCH_GLOBAL_SOLVER"
   };
   return globalSolverStrings[in];

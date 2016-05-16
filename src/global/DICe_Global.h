@@ -49,6 +49,8 @@
 
 #include <BelosBlockCGSolMgr.hpp>
 #include <BelosBlockGmresSolMgr.hpp>
+#include <BelosFixedPointSolMgr.hpp>
+#include <BelosLSQRSolMgr.hpp>
 #include <BelosLinearProblem.hpp>
 #ifdef DICE_TPETRA
   #include <BelosTpetraAdapter.hpp>
@@ -106,7 +108,9 @@ public:
 
   /// Returns true if the formulation is mixed
   bool is_mixed_formulation()const{
-    return global_formulation_==MIXED_HORN_SCHUNCK || global_formulation_==MIXED_LEVENBERG_MARQUARDT;
+    return global_formulation_==MIXED_HORN_SCHUNCK ||
+        global_formulation_==MIXED_LEVENBERG_MARQUARDT||
+        global_formulation_==LEHOUCQ_TURNER;
   }
 
   /// Returns the mesh size (max area constraint)
