@@ -109,7 +109,6 @@ public:
   /// Returns true if the formulation is mixed
   bool is_mixed_formulation()const{
     return global_formulation_==MIXED_HORN_SCHUNCK ||
-        global_formulation_==MIXED_LEVENBERG_MARQUARDT||
         global_formulation_==LEHOUCQ_TURNER;
   }
 

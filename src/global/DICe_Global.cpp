@@ -218,6 +218,24 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
       add_term(SUBSET_DISPLACEMENT_BC);
     }
   }
+  else if(global_formulation_==UNREGULARIZED){
+    // TODO read regularizer lambda from the params
+//    const scalar_t alpha = params->get<double>(DICe::global_regularization_alpha);
+//    alpha2_ = alpha; // NOTE not squared for this formulation
+    if(mms_problem_!=Teuchos::null){
+        add_term(MMS_IMAGE_GRAD_TENSOR);
+        add_term(MMS_IMAGE_TIME_FORCE);
+        add_term(MMS_FORCE);
+        add_term(DIRICHLET_DISPLACEMENT_BC);
+    }
+    else{
+      add_term(IMAGE_TIME_FORCE);
+      add_term(IMAGE_GRAD_TENSOR);
+      if(global_solver_==CG_SOLVER){
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"CG solver is not appropriate for UNREGULARIZED");
+      }
+    }
+  }
   else if(global_formulation_==LEVENBERG_MARQUARDT){
     //TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, this formulation has been deactivated because it is not stable");
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::global_regularization_alpha),std::runtime_error,
@@ -270,7 +288,8 @@ Global_Algorithm::pre_execution_tasks(){
   belos_list.set( "Verbosity", verbosity );
   //belos_list.set( "Output Style", Belos::Brief );
   belos_list.set( "Output Frequency", 1 );
-  //belos_list.set( "Lambda", 1.0 );
+// TODO  if(global_formulation_==UNREGULARIZED)
+//    belos_list.set( "Lambda", alpha2_ );
   belos_list.set( "Orthogonalization", ortho); // Orthogonalization type
 
   /// linear problem for solve

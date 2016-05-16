@@ -219,7 +219,45 @@ int main(int argc, char *argv[]) {
 
   const scalar_t error_max_lm = 0.8;
   if(error_bx > error_max_lm || error_by > error_max_lm){
-    *outStream << "error, the solution error is too large" << std::endl;
+    *outStream << "error, the solution error for the LEVENBERG_MARQUARDT formulation is too large" << std::endl;
+    errorFlag++;
+  }
+
+  *outStream << " TESTING UNREGULARIZED FORMULATION " << std::endl;
+
+  *outStream << "creating the global parameter list" << std::endl;
+
+  global_params->set(DICe::global_formulation,UNREGULARIZED);
+  global_params->set(DICe::mesh_size,10000.0);
+  global_params->set(DICe::output_prefix,"test_global_alg_unreg");
+  global_params->print(*outStream);
+
+  *outStream << "creating a global algorithm" << std::endl;
+
+  Teuchos::RCP<DICe::global::Global_Algorithm> global_alg_unreg = Teuchos::rcp(new DICe::global::Global_Algorithm(global_params));
+
+  *outStream << "pre-execution tasks" << std::endl;
+
+  global_alg_unreg->pre_execution_tasks();
+
+  *outStream << "executing" << std::endl;
+
+  global_alg_unreg->execute();
+
+  *outStream << "post execution tasks" << std::endl;
+
+  global_alg_unreg->post_execution_tasks(1.0);
+
+  *outStream << "evaluating the error" << std::endl;
+
+  error_bx = 0.0;
+  error_by = 0.0;
+  error_lambda = 0.0;
+  global_alg_unreg->evaluate_mms_error(error_bx,error_by,error_lambda);
+
+  const scalar_t error_max_unreg = 2.0;
+  if(error_bx > error_max_unreg || error_by > error_max_unreg){
+    *outStream << "error, the solution error for UNREGULARIZED formulation is too large" << std::endl;
     errorFlag++;
   }
 
