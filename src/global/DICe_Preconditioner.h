@@ -38,73 +38,36 @@
 //
 // ************************************************************************
 // @HEADER
+#ifndef DICE_PRECONDITIONER_H
+#define DICE_PRECONDITIONER_H
 
-#include <DICe_MatrixService.h>
+#include <DICe.h>
+
+#include <Teuchos_ParameterList.hpp>
+
+#ifdef DICE_TPETRA
+  #include "DICe_MultiFieldTpetra.h"
+  #include <Ifpack2_Factory.hpp>
+#else
+  #include "DICe_MultiFieldEpetra.h"
+  #include <Ifpack.h>
+#endif
 
 namespace DICe {
 
-Matrix_Service::Matrix_Service(const int_t spatial_dimension) :
-    spatial_dimension_(spatial_dimension),
-    row_bc_register_(0),
-    col_bc_register_(0),
-    mixed_bc_register_(0),
-    row_bc_register_size_(0),
-    col_bc_register_size_(0),
-    mixed_bc_register_size_(0),
-    bc_register_initialized_(false)
-{
-  diag_value_.push_back(0);
-  diag_column_.push_back(0);
-}
-
-void
-Matrix_Service::initialize_bc_register(const int_t row_register_size,
-  const int_t col_register_size,
-  const int_t mixed_register_size)
-{
-  row_bc_register_size_ = row_register_size;
-  row_bc_register_ = new bool[row_bc_register_size_];
-  for(int_t i=0;i<row_bc_register_size_;++i)
-    row_bc_register_[i] = false;
-
-  col_bc_register_size_ = col_register_size;
-  col_bc_register_ = new bool[col_bc_register_size_];
-  for(int_t i=0;i<col_bc_register_size_;++i)
-    col_bc_register_[i] = false;
-
-  mixed_bc_register_size_ = mixed_register_size;
-  mixed_bc_register_ = new bool[mixed_bc_register_size_];
-  for(int_t i=0;i<mixed_bc_register_size_;++i)
-    mixed_bc_register_[i] = false;
-
-  bc_register_initialized_ = true;
-}
-
-void
-Matrix_Service::clear_bc_register()
-{
-  for(int_t i=0;i<row_bc_register_size_;++i)
-    row_bc_register_[i] = false;
-  for(int_t i=0;i<col_bc_register_size_;++i)
-    col_bc_register_[i] = false;
-  for(int_t i=0;i<mixed_bc_register_size_;++i)
-    mixed_bc_register_[i] = false;
-}
-
-void
-Matrix_Service::apply_bc_diagonals(const mv_scalar_type & diagonal_value)
-{
-  diag_value_[0] = diagonal_value;
-  for(int_t row=0;row<row_bc_register_size_;++row)
-  {
-    if(row_bc_register_[row])
-    {
-      diag_column_[0] = row;
-      matrix_->replace_local_values(row,diag_column_,diag_value_);
-    }
-  }
-  TEUCHOS_TEST_FOR_EXCEPTION(mixed_bc_register_size_>0,std::runtime_error,
-    "Error, this method has not been implemented for mixed formulations yet");
-}
+#ifdef DICE_TPETRA
+#error // ifpack is not set up for Tpetra...
+#else
+class Preconditioner_Factory {
+private:
+public:
+  Preconditioner_Factory(){};
+  Teuchos::RCP<Teuchos::ParameterList> parameter_list_for_ifpack () const;
+  Teuchos::RCP<Ifpack_Preconditioner> create (Teuchos::RCP<matrix_type> A,
+          const Teuchos::RCP<Teuchos::ParameterList> plist) const;
+};
+#endif
 
 }// End DICe Namespace
+
+#endif

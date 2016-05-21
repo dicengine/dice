@@ -39,72 +39,64 @@
 // ************************************************************************
 // @HEADER
 
-#include <DICe_MatrixService.h>
+#include <DICe_Preconditioner.h>
 
 namespace DICe {
 
-Matrix_Service::Matrix_Service(const int_t spatial_dimension) :
-    spatial_dimension_(spatial_dimension),
-    row_bc_register_(0),
-    col_bc_register_(0),
-    mixed_bc_register_(0),
-    row_bc_register_size_(0),
-    col_bc_register_size_(0),
-    mixed_bc_register_size_(0),
-    bc_register_initialized_(false)
-{
-  diag_value_.push_back(0);
-  diag_column_.push_back(0);
+#ifdef DICE_TPETRA
+#else
+
+Teuchos::RCP<Teuchos::ParameterList>
+Preconditioner_Factory::parameter_list_for_ifpack() const{
+  // The name of the type of preconditioner to use.
+  const std::string precondType("ILU");
+  // Ifpack expects double-precision arguments here.
+  const double fillLevel = 2.0;
+  const double dropTol = 0.0;
+  const double absThreshold = 0.1;
+//  const bool verbose = false;
+//  const bool debug = false;
+  Teuchos::RCP<Teuchos::ParameterList> pl = Teuchos::parameterList ("Preconditioner");
+  pl->set ("Ifpack::Preconditioner", precondType);
+  Teuchos::ParameterList precParams ("Ifpack");
+  precParams.set ("fact: ilut level-of-fill", fillLevel);
+  precParams.set ("fact: drop tolerance", dropTol);
+  precParams.set ("fact: absolute threshold", absThreshold);
+  pl->set ("Ifpack", precParams);
+  return pl;
 }
 
-void
-Matrix_Service::initialize_bc_register(const int_t row_register_size,
-  const int_t col_register_size,
-  const int_t mixed_register_size)
+// Compute and return an Ifpack preconditioner.
+Teuchos::RCP<Ifpack_Preconditioner>
+Preconditioner_Factory::create (Teuchos::RCP<matrix_type> A,
+          const Teuchos::RCP<Teuchos::ParameterList> plist) const
 {
-  row_bc_register_size_ = row_register_size;
-  row_bc_register_ = new bool[row_bc_register_size_];
-  for(int_t i=0;i<row_bc_register_size_;++i)
-    row_bc_register_[i] = false;
+  DEBUG_MSG("Preconditioner_Factory(): creating ILUT preconditioner");
+  DEBUG_MSG("Preconditioner_Factory(): configuring");
+  Ifpack factory;
 
-  col_bc_register_size_ = col_register_size;
-  col_bc_register_ = new bool[col_bc_register_size_];
-  for(int_t i=0;i<col_bc_register_size_;++i)
-    col_bc_register_[i] = false;
+  // Get the preconditioner type.
+  const std::string precName =
+      plist->get<std::string> ("Ifpack::Preconditioner");
 
-  mixed_bc_register_size_ = mixed_register_size;
-  mixed_bc_register_ = new bool[mixed_bc_register_size_];
-  for(int_t i=0;i<mixed_bc_register_size_;++i)
-    mixed_bc_register_[i] = false;
+  // Set up the preconditioner of that type.
+  int_t overlap_level = 1;
+  Teuchos::RCP<Ifpack_Preconditioner> prec = Teuchos::rcp( factory.Create(precName, A.get(), overlap_level) );
+  //prec = factory.Create(precName, A.get(),overlap_level);
+  Teuchos::ParameterList ifpackParams;
+  if (plist->isSublist ("Ifpack"))
+    ifpackParams = plist->sublist ("Ifpack");
+  else
+    ifpackParams.setName ("Ifpack");
+  prec->SetParameters (ifpackParams);
 
-  bc_register_initialized_ = true;
+  DEBUG_MSG("Preconditioner_Factory(): initializing");
+  prec->Initialize();
+  DEBUG_MSG("Preconditioner_Factory(): computing");
+  prec->Compute();
+
+  return prec;
 }
-
-void
-Matrix_Service::clear_bc_register()
-{
-  for(int_t i=0;i<row_bc_register_size_;++i)
-    row_bc_register_[i] = false;
-  for(int_t i=0;i<col_bc_register_size_;++i)
-    col_bc_register_[i] = false;
-  for(int_t i=0;i<mixed_bc_register_size_;++i)
-    mixed_bc_register_[i] = false;
-}
-
-void
-Matrix_Service::apply_bc_diagonals(const mv_scalar_type & diagonal_value)
-{
-  diag_value_[0] = diagonal_value;
-  for(int_t row=0;row<row_bc_register_size_;++row)
-  {
-    if(row_bc_register_[row])
-    {
-      diag_column_[0] = row;
-      matrix_->replace_local_values(row,diag_column_,diag_value_);
-    }
-  }
-  TEUCHOS_TEST_FOR_EXCEPTION(mixed_bc_register_size_>0,std::runtime_error,
-    "Error, this method has not been implemented for mixed formulations yet");
-}
+#endif
 
 }// End DICe Namespace

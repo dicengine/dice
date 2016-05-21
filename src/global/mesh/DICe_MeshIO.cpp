@@ -340,6 +340,7 @@ Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coor
   Teuchos::ArrayRCP<int_t> connectivity,
   std::set<int_t> & dirichlet_boundary_nodes,
   std::set<int_t> & neumann_boundary_nodes,
+  std::set<int_t> & lagrange_boundary_nodes,
   const std::string & serial_output_filename)
 {
   DEBUG_MSG("create_exodus_mesh(): creating an exodus mesh");
@@ -504,6 +505,14 @@ Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coor
   }
   if(neumann_bc_def.size()>0)
     mesh->get_node_bc_sets()->insert(std::pair<int_t,std::vector<int_t> >(1,neumann_bc_def)); // all neumann boundary nodes go in node set 1
+  std::vector<int_t> lagrange_bc_def;
+  it = lagrange_boundary_nodes.begin();
+  it_end = lagrange_boundary_nodes.end();
+  for(;it!=it_end;++it){
+    lagrange_bc_def.push_back(*it);
+  }
+  if(lagrange_bc_def.size()>0)
+    mesh->get_node_bc_sets()->insert(std::pair<int_t,std::vector<int_t> >(2,lagrange_bc_def)); // all lagrange boundary nodes go in node set 2
 
   mesh->set_initialized();
 

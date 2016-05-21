@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, wrong number of nodes" << std::endl;
     errorFlag++;
   }
-  if(mesh->num_node_sets()!=2){
+  if(mesh->num_node_sets()!=3){
     *outStream << "Error, wrong number of nodes sets" << std::endl;
     errorFlag++;
   }

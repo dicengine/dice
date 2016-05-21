@@ -2,12 +2,14 @@ SET(SOURCES
   DICe_Global.cpp
   DICe_GlobalUtils.cpp
   DICe_MatrixService.cpp
+  DICe_Preconditioner.cpp
 )
 
 SET(HEADERS
   DICe_Global.h
   DICe_GlobalUtils.h
   DICe_MatrixService.h
+  DICe_Preconditioner.h
 )
 
 include_directories (

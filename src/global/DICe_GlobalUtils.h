@@ -87,6 +87,24 @@ public:
     scalar_t & b_x,
     scalar_t & b_y)=0;
 
+  /// Evaluation of the lagrange multiplier field
+  /// \param x x coordinate at which to evaluate the velocity
+  /// \param y y coordinate at which to evaluate the velocity
+  /// \param l_out output x lagrange multplier
+  virtual void lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_out)=0;
+
+  /// Evaluation of the lagrangian derivatives
+  /// \param x x coordinate at which to evaluate the velocity
+  /// \param y y coordinate at which to evaluate the velocity
+  /// \param dl_dx output x deriv
+  /// \param dl_dy output y deriv
+  virtual void grad_lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_x,
+    scalar_t & l_y)=0;
+
   /// Evaluation of the laplacian of the velocity field
   /// \param x x coordinate at which to evaluate the velocity
   /// \param y y coordinate at which to evaluate the velocity
@@ -187,6 +205,24 @@ public:
   }
 
   /// See base class definition
+  virtual void lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_out){
+    static scalar_t beta = b_coeff_*DICE_PI/dim_x_;
+    l_out = sin(beta*x)*cos(beta*y + 0.5*DICE_PI);
+  }
+
+  /// See base class definition
+  virtual void grad_lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_x,
+    scalar_t & l_y){
+    static scalar_t beta = b_coeff_*DICE_PI/dim_x_;
+    l_x = beta*cos(beta*x)*cos(beta*y+0.5*DICE_PI);
+    l_y = -beta*sin(beta*x)*sin(beta*y+0.5*DICE_PI);
+  }
+
+  /// See base class definition
   virtual void phi(const scalar_t & x,
     const scalar_t & y,
     scalar_t & phi){
@@ -250,6 +286,12 @@ public:
       velocity(x,y,b_x,b_y);
       f_x += coeff_1*b_x;
       f_y += coeff_1*b_y;
+    }
+    if(eq_terms->find(GRAD_LAGRANGE_MULTIPLIER)!=eq_terms->end()){
+      scalar_t dl_dx=0.0,dl_dy=0.0;
+      grad_lagrange(x,y,dl_dx,dl_dy);
+      f_x += dl_dx;
+      f_y += dl_dy;
     }
   }
 
@@ -344,6 +386,22 @@ void tikhonov_tensor(Global_Algorithm * alg,
   const scalar_t & gp_weight,
   const scalar_t * N,
   scalar_t * elem_stiffness);
+
+/// adds a tikhonov type regularizer to the governing eqs
+/// \param spa_dim spatial dimension
+/// \param num_funcs number of shape functions
+/// \param J determinant of the jacobian
+/// \param gp_weight gauss point weight
+/// \param N shape function vector
+/// \param elem_stiffness element stiffness
+void lumped_tikhonov_tensor(Global_Algorithm * alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_stiffness);
+
 
 /// adds the image gradients term to the stiffness matrx (from manufactured solutions problem)
 /// \param mms_problem pointer to the method of manufactured solutions problem

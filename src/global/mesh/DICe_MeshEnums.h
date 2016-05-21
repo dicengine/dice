@@ -174,6 +174,7 @@ enum Field_Name
   LHS,
   MIXED_LHS,
   EXACT_SOL_VECTOR,
+  EXACT_LAGRANGE_MULTIPLIER,
   IMAGE_PHI,
   IMAGE_GRAD_PHI,
   INTERNAL_FACE_EDGE_NORMAL,
@@ -473,6 +474,8 @@ const Field_Spec IMAGE_GRAD_PHI_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::I
 /// field spec
 const Field_Spec EXACT_SOL_VECTOR_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::EXACT_SOL_VECTOR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
+const Field_Spec EXACT_LAGRANGE_MULTIPLIER_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::EXACT_LAGRANGE_MULTIPLIER,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
 const Field_Spec FIELD_1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_1,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec FIELD_2_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_2,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
@@ -494,7 +497,7 @@ const Field_Spec FIELD_9_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_9,
 const Field_Spec FIELD_10_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_10,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 57;
+const int_t num_fields_defined = 58;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -535,6 +538,7 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     MIXED_RESIDUAL_FS,
     MIXED_LHS_FS,
     EXACT_SOL_VECTOR_FS,
+    EXACT_LAGRANGE_MULTIPLIER_FS,
     IMAGE_PHI_FS,
     IMAGE_GRAD_PHI_FS,
     INTERNAL_FACE_EDGE_NORMAL_FS,

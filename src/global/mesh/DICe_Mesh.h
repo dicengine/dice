@@ -1848,6 +1848,52 @@ public:
     int_t & num_points);
 };
 
+/// \class FEM_Barycentric_Tri6
+/// \brief FEM Barycentric triangle element shape function evaluator
+class FEM_Barycentric_Tri6 : public Shape_Function_Evaluator
+{
+public:
+  /// Constructor
+  FEM_Barycentric_Tri6():Shape_Function_Evaluator(6,2){};
+
+  /// Destructor
+  virtual ~FEM_Barycentric_Tri6(){};
+
+  /// see base class documentation
+  virtual void evaluate_shape_functions(const scalar_t * nodal_coords,
+    const scalar_t * point_coords, const scalar_t & coefficient,
+    scalar_t * shape_function_values){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+  }
+
+  /// see base class documentation
+  virtual void evaluate_shape_functions(const scalar_t * natural_coords,
+    scalar_t * shape_function_values);
+
+  /// see base class documentation
+  virtual void evaluate_shape_function_derivatives(const scalar_t * nodal_coords,
+    const scalar_t & coefficient,
+    scalar_t * shape_function_derivative_values){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+  }
+
+  /// see base class documentation
+  virtual void evaluate_shape_function_derivatives(const scalar_t * natural_coords,
+    scalar_t * shape_function_derivative_values);
+
+  /// See base class documentation
+  virtual bool is_in_element(const scalar_t * nodal_coords,
+    const scalar_t * point_coords,
+    const scalar_t & coefficient);
+
+  /// See base class documentation
+  virtual void get_natural_integration_points(const int_t order,
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
+    Teuchos::ArrayRCP<scalar_t> & weights,
+    int_t & num_points);
+};
+
+
 /// \class Shape_Function_Evaluator_Factory
 /// \brief Factory class that creates shape function evaluators
 class Shape_Function_Evaluator_Factory

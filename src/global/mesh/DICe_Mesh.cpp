@@ -1477,6 +1477,7 @@ FEM_Quadratic_Tri6::get_natural_integration_points(const int_t order,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
   Teuchos::ArrayRCP<scalar_t> & weights,
   int_t & num_points){
+  // Note assumes the coordinates for the natural points has two values, x and y
   tri2d_natural_integration_points(order,locations,weights,num_points);
 }
 
@@ -1484,6 +1485,7 @@ void
 FEM_Quadratic_Tri6::evaluate_shape_functions(const scalar_t * natural_coords,
   scalar_t * shape_function_values){
 
+  // Note assumes the coordinates for the natural points has two values, x and y
   const scalar_t xi   = natural_coords[0];
   const scalar_t eta  = natural_coords[1];
   shape_function_values[0] = (1.0 - 2.0 * xi - 2.0 * eta) * (1.0 - xi - eta);
@@ -1497,7 +1499,7 @@ FEM_Quadratic_Tri6::evaluate_shape_functions(const scalar_t * natural_coords,
 void
 FEM_Quadratic_Tri6::evaluate_shape_function_derivatives(const scalar_t * natural_coords,
   scalar_t * shape_function_derivative_values){
-
+  // Note assumes the coordinates for the natural points has two values, x and y
   const scalar_t xi   = natural_coords[0];
   const scalar_t eta  = natural_coords[1];
   const int_t spa_dim = 2;
@@ -1514,6 +1516,91 @@ FEM_Quadratic_Tri6::evaluate_shape_function_derivatives(const scalar_t * natural
   shape_function_derivative_values[5*spa_dim+0] = -4.0 * eta;
   shape_function_derivative_values[5*spa_dim+1] = 4.0 * (1.0 - xi - 2.0 * eta);
 }
+
+
+bool
+FEM_Barycentric_Tri6::is_in_element(const scalar_t * nodal_coords,
+  const scalar_t * point_coords,
+  const scalar_t & coefficient){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Method not implemented yet");
+  return false;
+}
+
+void
+FEM_Barycentric_Tri6::get_natural_integration_points(const int_t order,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
+  Teuchos::ArrayRCP<scalar_t> & weights,
+  int_t & num_points){
+
+  if(order==3){
+    num_points = 6;
+    locations.resize(num_points);
+    for(int_t i=0;i<num_points;++i)
+      locations[i].resize(3); // there are 3 coordinates for Barycentric elements z1, z2, and z3
+    weights.resize(num_points);
+
+    locations[0][0] = 0.816847572980458; locations[0][1] = 0.091576213509771; locations[0][2] = 0.091576213509771;
+    locations[1][0] = 0.091576213509771; locations[1][1] = 0.816847572980458; locations[1][2] = 0.091576213509771;
+    locations[2][0] = 0.091576213509771; locations[2][1] = 0.091576213509771; locations[2][2] = 0.816847572980458;
+    locations[3][0] = 0.108103018168070; locations[3][1] = 0.445948490915965; locations[3][2] = 0.445948490915965;
+    locations[4][0] = 0.445948490915965; locations[4][1] = 0.108103018168070; locations[4][2] = 0.445948490915965;
+    locations[5][0] = 0.445948490915965; locations[5][1] = 0.445948490915965; locations[5][2] = 0.108103018168070;
+    weights[0] = 0.109951743655322;
+    weights[1] = 0.109951743655322;
+    weights[2] = 0.109951743655322;
+    weights[3] = 0.223381589678011;
+    weights[4] = 0.223381589678011;
+    weights[5] = 0.223381589678011;
+  }
+  else{
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid order for Barycentric_Tri6 natural integration points");
+  }
+}
+
+void
+FEM_Barycentric_Tri6::evaluate_shape_functions(const scalar_t * natural_coords,
+  scalar_t * shape_function_values){
+
+  // Note assumes the coordinates for the natural points has 3 values
+  const scalar_t z1  = natural_coords[0];
+  const scalar_t z2  = natural_coords[1];
+  const scalar_t z3  = natural_coords[2];
+  shape_function_values[0] = z1*(2.0*z1 - 1.0);
+  shape_function_values[1] = z2*(2.0*z2 - 1.0);
+  shape_function_values[2] = z3*(2.0*z3 - 1.0);
+  shape_function_values[3] = 4.0*z1*z2;
+  shape_function_values[4] = 4.0*z2*z3;
+  shape_function_values[5] = 4.0*z3*z1;
+}
+
+void
+FEM_Barycentric_Tri6::evaluate_shape_function_derivatives(const scalar_t * natural_coords,
+  scalar_t * shape_function_derivative_values){
+  // Note assumes the coordinates for the natural points has three values
+  const scalar_t z1  = natural_coords[0];
+  const scalar_t z2  = natural_coords[1];
+  const scalar_t z3  = natural_coords[2];
+  const int_t spa_dim = 3; // three coords per barycentric point
+  shape_function_derivative_values[0*spa_dim+0] = 4.0*z1-1.0;
+  shape_function_derivative_values[0*spa_dim+1] = 0.0;
+  shape_function_derivative_values[0*spa_dim+2] = 0.0;
+  shape_function_derivative_values[1*spa_dim+0] = 0.0;
+  shape_function_derivative_values[1*spa_dim+1] = 4.0*z2-1.0;
+  shape_function_derivative_values[1*spa_dim+2] = 0.0;
+  shape_function_derivative_values[2*spa_dim+0] = 0.0;
+  shape_function_derivative_values[2*spa_dim+1] = 0.0;
+  shape_function_derivative_values[2*spa_dim+2] = 4.0*z3-1.0;
+  shape_function_derivative_values[3*spa_dim+0] = 4.0*z2;
+  shape_function_derivative_values[3*spa_dim+1] = 4.0*z1;
+  shape_function_derivative_values[3*spa_dim+2] = 0.0;
+  shape_function_derivative_values[4*spa_dim+0] = 0.0;
+  shape_function_derivative_values[4*spa_dim+1] = 4.0*z3;
+  shape_function_derivative_values[4*spa_dim+2] = 4.0*z2;
+  shape_function_derivative_values[5*spa_dim+0] = 4.0*z3;
+  shape_function_derivative_values[5*spa_dim+1] = 0.0;
+  shape_function_derivative_values[5*spa_dim+2] = 4.0*z1;
+}
+
 
 } // namespace mesh
 
@@ -1611,7 +1698,7 @@ void tri2d_natural_integration_points(const int_t order,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
   Teuchos::ArrayRCP<scalar_t> & weights,
   int_t & num_points){
-  TEUCHOS_TEST_FOR_EXCEPTION(order < 0 || order > 7,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(order < -7 || order > 7,std::runtime_error,"");
   const int_t spa_dim = 2;
   // Dunavant quadrature:
   if(order==1){
@@ -1623,6 +1710,19 @@ void tri2d_natural_integration_points(const int_t order,
 
     locations[0][0] = 0.333333333333333; locations[0][1] = 0.333333333333333;
     weights[0] = 0.5;
+  }
+  else if(order==-2){
+    num_points = 3;
+    locations.resize(num_points);
+    for(int_t i=0;i<num_points;++i)
+      locations[i].resize(spa_dim);
+    weights.resize(num_points);
+    locations[0][0] = 0.5; locations[0][1] = 0.0;
+    locations[1][0] = 0.0; locations[1][1] = 0.5;
+    locations[2][0] = 0.5; locations[2][1] = 0.5;
+    weights[0] = 0.1666666666666667; // weights sum to 1/2 because that is the area of the iso-tri
+    weights[1] = 0.1666666666666667;
+    weights[2] = 0.1666666666666667;
   }
   else if(order==2){
     num_points = 3;

@@ -147,6 +147,7 @@ void create_string_maps()
   field_name_string[field_enums::MIXED_RESIDUAL]                                     = "MIXED_RESIDUAL";
   field_name_string[field_enums::MIXED_LHS]                                          = "MIXED_LHS";
   field_name_string[field_enums::EXACT_SOL_VECTOR]                                   = "EXACT_SOL_VECTOR";
+  field_name_string[field_enums::EXACT_LAGRANGE_MULTIPLIER]                          = "EXACT_LAGRANGE_MULTIPLIER";
   field_name_string[field_enums::IMAGE_PHI]                                          = "IMAGE_PHI";
   field_name_string[field_enums::IMAGE_GRAD_PHI]                                     = "IMAGE_GRAD_PHI";
   field_name_string[field_enums::INTERNAL_FACE_EDGE_NORMAL]                          = "INTERNAL_FACE_EDGE_NORMAL";

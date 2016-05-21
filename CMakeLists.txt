@@ -181,6 +181,7 @@ IF(DICE_ENABLE_GLOBAL)
       epetra
       exodus
       belos
+      ifpack
       belosepetra
     )
   ENDIF()
