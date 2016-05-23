@@ -1091,6 +1091,9 @@ Global_Algorithm::execute(){
       linear_disp->global_value(uy_id) = disp.global_value(uy_master_id);
     }
   }
+  mesh_->print_field_stats();
+  if(is_mixed_formulation())
+    l_mesh_->print_field_stats();
   return CORRELATION_SUCCESSFUL;
 }
 

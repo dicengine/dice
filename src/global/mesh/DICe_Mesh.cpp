@@ -905,6 +905,107 @@ Mesh::print_field_info()
   std::cout <<  "  --------------------------------------------------------------------------------------" << std::endl;
 }
 
+void
+Mesh::print_field_stats()
+{
+  if(comm_->get_rank()!=0) return;
+
+  std::cout.fill('*');
+  std::cout.width(90);
+  std::cout << "*" << std::endl;
+  std::cout.fill(' ');
+  std::cout.width(30);
+  std::cout << "Field";
+  std::cout.width(15);
+  std::cout << "Max";
+  std::cout.width(15);
+  std::cout << "Min";
+  std::cout.width(15);
+  std::cout << "Avg";
+  std::cout.width(15);
+  std::cout << "Std Dev" << std::endl;
+  std::cout.width(90);
+  std::cout.fill('-');
+  std::cout << "-" << std::endl;
+  std::cout.fill(' ');
+  std::vector<std::string> comps;
+  comps.push_back("_X");
+  comps.push_back("_Y");
+  // iterate the fields
+  std::vector<std::string> names;
+  field_registry::const_iterator field_it = field_registry_.begin();
+  field_registry::const_iterator field_end = field_registry_.end();
+  for(;field_it!=field_end;++field_it)
+  {
+    if(field_it->first.get_field_type()==DICe::mesh::field_enums::SCALAR_FIELD_TYPE){
+      scalar_t max = std::numeric_limits<scalar_t>::lowest();
+      scalar_t min = std::numeric_limits<scalar_t>::max();
+      scalar_t avg = 0.0;
+      scalar_t std_dev = 0.0;
+      Teuchos::RCP<MultiField> field = get_field(field_it->first);
+      const int_t num_points = field->get_map()->get_num_local_elements();
+      TEUCHOS_TEST_FOR_EXCEPTION(num_points<=0,std::runtime_error,"Error, num_points = 0");
+      for(int_t i=0;i<num_points;++i){
+        avg += field->local_value(i);
+        if(field->local_value(i)>max) max = field->local_value(i);
+        if(field->local_value(i)<min) min = field->local_value(i);
+      }
+      avg /= num_points;
+      for(int_t i=0;i<num_points;++i){
+        std_dev += (field->local_value(i)-avg)*(field->local_value(i)-avg);
+      }
+      std_dev = std::sqrt(std_dev/num_points);
+      std::cout.width(30);
+      std::cout << field_it->first.get_name_label();
+      std::cout.width(15);
+      std::cout << max;
+      std::cout.width(15);
+      std::cout << min;
+      std::cout.width(15);
+      std::cout << avg;
+      std::cout.width(15);
+      std::cout << std_dev << std::endl;
+    }
+    else if(field_it->first.get_field_type()==DICe::mesh::field_enums::VECTOR_FIELD_TYPE){
+      for(int_t dim=0;dim<spatial_dimension();++dim){
+        scalar_t max = std::numeric_limits<scalar_t>::lowest();
+        scalar_t min = std::numeric_limits<scalar_t>::max();
+        scalar_t avg = 0.0;
+        scalar_t std_dev = 0.0;
+        Teuchos::RCP<MultiField> field = get_field(field_it->first);
+        const int_t num_points = field->get_map()->get_num_local_elements();
+        TEUCHOS_TEST_FOR_EXCEPTION(num_points<=0,std::runtime_error,"Error, num_points = 0");
+        for(int_t i=0;i<num_points/2;++i){
+          int_t index = i*spatial_dimension() + dim;
+          avg += field->local_value(index);
+          if(field->local_value(index)>max) max = field->local_value(index);
+          if(field->local_value(index)<min) min = field->local_value(index);
+        }
+        avg /= num_points*0.5;
+        for(int_t i=0;i<num_points/2;++i){
+          int_t index = i*spatial_dimension() + dim;
+          std_dev += (field->local_value(index)-avg)*(field->local_value(index)-avg);
+        }
+        std_dev = std::sqrt(std_dev/(0.5*num_points));
+        std::cout.width(30);
+        std::cout << field_it->first.get_name_label() + comps[dim];
+        std::cout.width(15);
+        std::cout << max;
+        std::cout.width(15);
+        std::cout << min;
+        std::cout.width(15);
+        std::cout << avg;
+        std::cout.width(15);
+        std::cout << std_dev << std::endl;
+      }
+    }
+  }
+  std::cout.fill('*');
+  std::cout.width(90);
+  std::cout << "*" << std::endl;
+}
+
+
 bool
 CVFEM_Linear_Tri3::is_in_element(const scalar_t * nodal_coords,
   const scalar_t * point_coords,

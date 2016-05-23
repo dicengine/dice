@@ -958,6 +958,9 @@ public:
   /// Print verbose information about all existing fields
   void print_field_info();
 
+  /// Print the max min avg and std dev of all fields to the screen
+  void print_field_stats();
+
   /// Returns a pointer to the communication map
   Teuchos::RCP<MultiField_Map> get_proc_map(){
     return proc_map_;
