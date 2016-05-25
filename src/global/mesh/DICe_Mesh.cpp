@@ -1003,6 +1003,7 @@ Mesh::print_field_stats()
   std::cout.fill('*');
   std::cout.width(90);
   std::cout << "*" << std::endl;
+  std::cout.fill(' ');
 }
 
 

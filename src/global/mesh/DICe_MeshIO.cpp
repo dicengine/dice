@@ -338,7 +338,7 @@ Teuchos::RCP<Mesh> create_tri3_exodus_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mes
 Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coords_x,
   Teuchos::ArrayRCP<scalar_t> node_coords_y,
   Teuchos::ArrayRCP<int_t> connectivity,
-  std::set<int_t> & dirichlet_boundary_nodes,
+  std::map<int_t,int_t> & dirichlet_boundary_nodes,
   std::set<int_t> & neumann_boundary_nodes,
   std::set<int_t> & lagrange_boundary_nodes,
   const std::string & serial_output_filename)
@@ -489,22 +489,32 @@ Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coor
     mesh->get_node_sets_by_block()->insert(std::pair<int_t,Teuchos::RCP<node_set> >(blk_map_it->first,node_set_ptr));
   }
 
-  std::vector<int_t> dirichlet_bc_def;
-  std::set<int_t>::const_iterator it = dirichlet_boundary_nodes.begin();
-  std::set<int_t>::const_iterator it_end = dirichlet_boundary_nodes.end();
-  for(;it!=it_end;++it){
-    dirichlet_bc_def.push_back(*it);
+  //std::vector<int_t> dirichlet_bc_def;
+  std::map<int_t,int_t>::const_iterator mit = dirichlet_boundary_nodes.begin();
+  std::map<int_t,int_t>::const_iterator mit_end = dirichlet_boundary_nodes.end();
+  std::map<int_t,std::vector<int_t> > bc_node_collections;
+  for(;mit!=mit_end;++mit){
+    if(bc_node_collections.find(mit->second)==bc_node_collections.end())
+      bc_node_collections.insert(std::pair<int_t,std::vector<int_t> >(mit->second,std::vector<int_t>()));
+    bc_node_collections.find(mit->second)->second.push_back(mit->first);
   }
-  if(dirichlet_bc_def.size()>0)
-    mesh->get_node_bc_sets()->insert(std::pair<int_t,std::vector<int_t> >(0,dirichlet_bc_def)); // all dirichlet boundary nodes go in node set 0
+  if(bc_node_collections.size()>0){
+    std::map<int_t,std::vector<int_t> >::iterator col_it = bc_node_collections.begin();
+    std::map<int_t,std::vector<int_t> >::iterator col_end = bc_node_collections.end();
+    for(;col_it!=col_end;++col_it){
+      mesh->get_node_bc_sets()->insert(std::pair<int_t,std::vector<int_t> >(col_it->first,col_it->second));
+    }
+  }
   std::vector<int_t> neumann_bc_def;
+  std::set<int_t>::const_iterator it = neumann_boundary_nodes.begin();
+  std::set<int_t>::const_iterator it_end = neumann_boundary_nodes.end();
   it = neumann_boundary_nodes.begin();
   it_end = neumann_boundary_nodes.end();
   for(;it!=it_end;++it){
     neumann_bc_def.push_back(*it);
   }
   if(neumann_bc_def.size()>0)
-    mesh->get_node_bc_sets()->insert(std::pair<int_t,std::vector<int_t> >(1,neumann_bc_def)); // all neumann boundary nodes go in node set 1
+    mesh->get_node_bc_sets()->insert(std::pair<int_t,std::vector<int_t> >(0,neumann_bc_def)); // all neumann boundary nodes go in node set 0
   std::vector<int_t> lagrange_bc_def;
   it = lagrange_boundary_nodes.begin();
   it_end = lagrange_boundary_nodes.end();
@@ -512,7 +522,7 @@ Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coor
     lagrange_bc_def.push_back(*it);
   }
   if(lagrange_bc_def.size()>0)
-    mesh->get_node_bc_sets()->insert(std::pair<int_t,std::vector<int_t> >(2,lagrange_bc_def)); // all lagrange boundary nodes go in node set 2
+    mesh->get_node_bc_sets()->insert(std::pair<int_t,std::vector<int_t> >(-1,lagrange_bc_def)); // all lagrange boundary nodes go in node set -1
 
   mesh->set_initialized();
 

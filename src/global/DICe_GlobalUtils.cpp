@@ -42,7 +42,6 @@
 #include <DICe_GlobalUtils.h>
 #include <DICe_Global.h>
 #include <DICe_MeshIO.h>
-#include <DICe_MatrixService.h>
 #include <DICe_Schema.h>
 #include <DICe_Subset.h>
 

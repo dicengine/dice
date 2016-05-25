@@ -166,6 +166,17 @@ Motion_Window_Params {
 struct
 DICE_LIB_DLL_EXPORT
 Boundary_Condition_Def{
+  /// Constructor
+  Boundary_Condition_Def():
+  region_("BOUNDARY"),
+  shape_id_(-1),
+  left_vertex_id_(-1),
+  right_vertex_id_(-1),
+  has_value_(false),
+  value_x_(0.0),
+  value_y_(0.0),
+  use_subsets_(false),
+  subset_size_(-1){};
   /// either boundary or excluded
   std::string region_;
   /// the shape id in the region set
@@ -174,6 +185,16 @@ Boundary_Condition_Def{
   int_t left_vertex_id_;
   /// the right vertex id in the shape
   int_t right_vertex_id_;
+  /// true if there is a prescribed value
+  bool has_value_;
+  /// value to prescribe for a dirichlet bc in x
+  scalar_t value_x_;
+  /// value to prescribe for a dirichlet bc in x
+  scalar_t value_y_;
+  /// true if the subset formulation should be used to define the displacement
+  bool use_subsets_;
+  /// subsets size if subsets are used
+  int_t subset_size_;
 };
 
 /// Simple struct for passing info back and forth from read_subset_file:
@@ -339,6 +360,8 @@ const char* const parser_region_of_interest = "REGION_OF_INTEREST";
 const char* const parser_conformal_subset = "CONFORMAL_SUBSET";
 /// Parser string
 const char* const parser_subset_id = "SUBSET_ID";
+/// Parser string
+const char* const parser_use_subsets = "USE_SUBSETS";
 /// Parser string
 const char* const parser_boundary = "BOUNDARY";
 /// Parser string

@@ -44,7 +44,7 @@
 #include <DICe.h>
 #include <DICe_Mesh.h>
 #include <DICe_GlobalUtils.h>
-#include <DICe_MatrixService.h>
+#include <DICe_BCManager.h>
 #include <DICe_Image.h>
 
 #include <BelosBlockCGSolMgr.hpp>
@@ -122,6 +122,11 @@ public:
     return mesh_;
   }
 
+  /// Returns a pointer to the linear mesh
+  Teuchos::RCP<DICe::mesh::Mesh> l_mesh()const{
+    return l_mesh_;
+  }
+
   /// add a term to the formulation
   void add_term(const Global_EQ_Term term){
     eq_terms_.insert(term);
@@ -173,6 +178,10 @@ public:
     return alpha2_;
   }
 
+  /// return a pointer to the mms problem
+  Teuchos::RCP<MMS_Problem> mms_problem(){
+    return mms_problem_;
+  }
 
 protected:
   /// protect the default constructor
@@ -199,8 +208,8 @@ protected:
   Teuchos::RCP< Belos::LinearProblem<mv_scalar_type,vec_type,operator_type> > linear_problem_;
   /// belos solver
   Teuchos::RCP< Belos::SolverManager<mv_scalar_type,vec_type,operator_type> > belos_solver_;
-  /// matrix service
-  Teuchos::RCP<DICe::Matrix_Service> matrix_service_;
+  /// boundary condition manager
+  Teuchos::RCP<BC_Manager> bc_manager_;
   /// true if the solver, etc been initialized
   bool is_initialized_;
   /// set of active terms in the formulation
@@ -217,11 +226,6 @@ protected:
   Global_Formulation global_formulation_;
   /// Global solver type
   Global_Solver global_solver_;
-  /// neighbor ids for dirichlet boundary (used for filtering bcs)
-  std::map<int_t,std::vector<int_t> > bc_neighbors_;
-  /// neighbor distances^2 for dirichlet boundary (used for filtering bcs)
-  std::map<int_t,std::vector<scalar_t> > bc_neighbor_distances_;
-
 };
 
 }// end global namespace

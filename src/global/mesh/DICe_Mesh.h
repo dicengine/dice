@@ -44,6 +44,7 @@
 
 #include <DICe.h>
 #include <DICe_MeshEnums.h>
+#include <DICe_Parser.h>
 #ifdef DICE_TPETRA
   #include "DICe_MultiFieldTpetra.h"
 #else
@@ -1365,6 +1366,17 @@ public:
     return & integration_point_ownership_;
   }
 
+  /// sets boundary condition defs
+  /// \param bc_defs a vector of bc definitions
+  void set_bc_defs(std::vector<Boundary_Condition_Def> & bc_defs){
+    bc_defs_ = bc_defs;
+  }
+
+  /// returns a pointer to the boundary condition defs
+  std::vector<Boundary_Condition_Def> * bc_defs(){
+    return & bc_defs_;
+  }
+
 private:
   /// The parallel or serial communicator
   Teuchos::RCP<MultiField_Comm> comm_;
@@ -1486,8 +1498,8 @@ private:
   /// Note the ownership is unique and complete, multiple elements cannot own the same integration points
   /// and all integration points must be owned
   std::vector<std::set<std::pair<scalar_t,scalar_t> > > integration_point_ownership_;
-
-
+  /// storage of the boundary condition definitions
+  std::vector<Boundary_Condition_Def> bc_defs_;
 };
 
 /// \class Shape_Function_Evaluator
