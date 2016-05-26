@@ -105,6 +105,20 @@ public:
     scalar_t & l_x,
     scalar_t & l_y)=0;
 
+  /// Evaluation of the grad of the velocity
+  /// \param x x coordinate at which to evaluate the velocity
+  /// \param y y coordinate at which to evaluate the velocity
+  /// \param b_x_x output x derivative of x velocity
+  /// \param b_x_y output y derivative of x velocity
+  /// \param b_y_x output x derivative of y velocity
+  /// \param b_y_y output y derivative of y velocity
+  virtual void grad_velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x_x,
+    scalar_t & b_x_y,
+    scalar_t & b_y_x,
+    scalar_t & b_y_y)=0;
+
   /// Evaluation of the laplacian of the velocity field
   /// \param x x coordinate at which to evaluate the velocity
   /// \param y y coordinate at which to evaluate the velocity
@@ -202,6 +216,20 @@ public:
     static scalar_t beta = b_coeff_*DICE_PI/dim_x_;
     lap_b_x = -beta*beta*cos(beta*y)*sin(beta*x);
     lap_b_y = beta*beta*cos(beta*x)*sin(beta*y);
+  }
+
+  /// See base class definition
+  virtual void grad_velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x_x,
+    scalar_t & b_x_y,
+    scalar_t & b_y_x,
+    scalar_t & b_y_y){
+    static scalar_t beta = b_coeff_*DICE_PI/dim_x_;
+    b_x_x = beta*cos(beta*x)*cos(beta*y);
+    b_x_y = -beta*sin(beta*x)*sin(beta*y);
+    b_y_x = beta*sin(beta*x)*sin(beta*y);
+    b_y_y = -beta*cos(beta*x)*cos(beta*y);
   }
 
   /// See base class definition

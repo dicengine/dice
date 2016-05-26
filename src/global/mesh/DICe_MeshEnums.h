@@ -197,7 +197,19 @@ enum Field_Name
   FIELD_7,
   FIELD_8,
   FIELD_9,
-  FIELD_10
+  FIELD_10,
+  U_X_DERIV,
+  U_Y_DERIV,
+  V_X_DERIV,
+  V_Y_DERIV,
+  DU_DX_EXACT,
+  DU_DY_EXACT,
+  DV_DX_EXACT,
+  DV_DY_EXACT,
+  STRAIN_CONTRIBS,
+  GREEN_LAGRANGE_STRAIN_XX,
+  GREEN_LAGRANGE_STRAIN_YY,
+  GREEN_LAGRANGE_STRAIN_XY
 };
 /// The location that the fields live
 enum Entity_Rank
@@ -495,9 +507,33 @@ const Field_Spec FIELD_8_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_8,
 const Field_Spec FIELD_9_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_9,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec FIELD_10_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_10,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec DU_DX_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::U_X_DERIV,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec DU_DY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::U_Y_DERIV,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec DV_DX_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::V_X_DERIV,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec DV_DY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::V_Y_DERIV,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec DU_DX_EXACT_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DU_DX_EXACT,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec DU_DY_EXACT_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DU_DY_EXACT,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec DV_DX_EXACT_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DV_DX_EXACT,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec DV_DY_EXACT_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DV_DY_EXACT,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec STRAIN_CONTRIBS_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::STRAIN_CONTRIBS,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec GREEN_LAGRANGE_STRAIN_XX_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::GREEN_LAGRANGE_STRAIN_XX,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec GREEN_LAGRANGE_STRAIN_YY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::GREEN_LAGRANGE_STRAIN_YY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec GREEN_LAGRANGE_STRAIN_XY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::GREEN_LAGRANGE_STRAIN_XY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 58;
+const int_t num_fields_defined = 66;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -561,7 +597,15 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     FIELD_7_FS,
     FIELD_8_FS,
     FIELD_9_FS,
-    FIELD_10_FS
+    FIELD_10_FS,
+    DU_DX_FS,
+    DU_DY_FS,
+    DV_DX_FS,
+    DV_DY_FS,
+    STRAIN_CONTRIBS_FS,
+    GREEN_LAGRANGE_STRAIN_XX_FS,
+    GREEN_LAGRANGE_STRAIN_YY_FS,
+    GREEN_LAGRANGE_STRAIN_XY_FS
     // don't forget to add one to num_fields_defined
 };
 

@@ -98,6 +98,9 @@ public:
   /// post execution tasks
   void post_execution_tasks(const scalar_t & time_stamp);
 
+  /// compute the strain values
+  void compute_strains();
+
   /// evaluate the error norms for mms problems
   /// \param error_bx output error in x velocity field
   /// \param error_by output error in y velocity field

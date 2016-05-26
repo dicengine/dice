@@ -151,12 +151,27 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   mesh_->create_field(mesh::field_enums::DISPLACEMENT_FS);
   mesh_->create_field(mesh::field_enums::RESIDUAL_FS);
   mesh_->create_field(mesh::field_enums::LHS_FS);
+  // create the strain fields
+  mesh_->create_field(mesh::field_enums::DU_DX_FS);
+  mesh_->create_field(mesh::field_enums::DU_DY_FS);
+  mesh_->create_field(mesh::field_enums::DV_DX_FS);
+  mesh_->create_field(mesh::field_enums::DV_DY_FS);
+  mesh_->create_field(mesh::field_enums::STRAIN_CONTRIBS_FS);
+  mesh_->create_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_XX_FS);
+  mesh_->create_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_YY_FS);
+  mesh_->create_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_XY_FS);
+  // create the MMS fields if necessary
   if(mms_problem_!=Teuchos::null){
+    mesh_->create_field(mesh::field_enums::DU_DX_EXACT_FS);
+    mesh_->create_field(mesh::field_enums::DU_DY_EXACT_FS);
+    mesh_->create_field(mesh::field_enums::DV_DX_EXACT_FS);
+    mesh_->create_field(mesh::field_enums::DV_DY_EXACT_FS);
     mesh_->create_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
     mesh_->create_field(mesh::field_enums::IMAGE_PHI_FS);
     mesh_->create_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
   }
   mesh_->print_field_info();
+  // create the mixed fields for the mixed formulations
   DICe::mesh::create_exodus_output_variable_names(mesh_);
   if(is_mixed_formulation()){//||global_formulation_==LEVENBERG_MARQUARDT){
     mesh_->create_field(mesh::field_enums::MIXED_LHS_FS);
@@ -716,6 +731,8 @@ Global_Algorithm::execute(){
   }
   //disp.describe();
 
+  compute_strains();
+
   // for levenberg marquart, copy the quadratic displacement field to the linear mesh
   if(is_mixed_formulation()){//||global_formulation_==LEVENBERG_MARQUARDT){
     TEUCHOS_TEST_FOR_EXCEPTION(l_mesh_==Teuchos::null,std::runtime_error,"Error, pointer should not be null here");
@@ -737,6 +754,149 @@ Global_Algorithm::execute(){
   if(is_mixed_formulation())
     l_mesh_->print_field_stats();
   return CORRELATION_SUCCESSFUL;
+}
+
+void
+Global_Algorithm::compute_strains(){
+  DEBUG_MSG("Global_Algiorithm::compute_strains(): computing the Green-Lagrange strains");
+  Teuchos::RCP<MultiField> du_dx = mesh_->get_field(mesh::field_enums::DU_DX_FS);
+  du_dx->put_scalar(0.0);
+  Teuchos::RCP<MultiField> du_dy = mesh_->get_field(mesh::field_enums::DU_DY_FS);
+  du_dy->put_scalar(0.0);
+  Teuchos::RCP<MultiField> dv_dx = mesh_->get_field(mesh::field_enums::DV_DX_FS);
+  dv_dx->put_scalar(0.0);
+  Teuchos::RCP<MultiField> dv_dy = mesh_->get_field(mesh::field_enums::DV_DY_FS);
+  dv_dy->put_scalar(0.0);
+  Teuchos::RCP<MultiField> strain_contribs = mesh_->get_field(mesh::field_enums::STRAIN_CONTRIBS_FS);
+  Teuchos::RCP<MultiField> gl_xx = mesh_->get_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_XX_FS);
+  Teuchos::RCP<MultiField> gl_yy = mesh_->get_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_YY_FS);
+  Teuchos::RCP<MultiField> gl_xy = mesh_->get_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_XY_FS);
+  Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+
+  Teuchos::RCP<MultiField> overlap_coords_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  MultiField & overlap_coords = *overlap_coords_ptr;
+  Teuchos::ArrayRCP<const scalar_t> coords_values = overlap_coords.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_disp_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_FS);
+  MultiField & overlap_disp = *overlap_disp_ptr;
+  Teuchos::ArrayRCP<const scalar_t> disp_values = overlap_disp.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_strain_contribs_ptr = mesh_->get_overlap_field(mesh::field_enums::STRAIN_CONTRIBS_FS);
+  overlap_strain_contribs_ptr->put_scalar(0.0);
+  //MultiField & overlap_strain_contribs = *overlap_strain_contribs_ptr;
+  //Teuchos::ArrayRCP<const scalar_t> strain_contribs_values = overlap_strain_contribs.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_dudx_ptr = mesh_->get_overlap_field(mesh::field_enums::DU_DX_FS);
+  overlap_dudx_ptr->put_scalar(0.0);
+  //MultiField & overlap_dudx = *overlap_dudx_ptr;
+  //Teuchos::ArrayRCP<const scalar_t> dudx_values = overlap_dudx.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_dudy_ptr = mesh_->get_overlap_field(mesh::field_enums::DU_DY_FS);
+  overlap_dudy_ptr->put_scalar(0.0);
+  //MultiField & overlap_dudy = *overlap_dudy_ptr;
+  //Teuchos::ArrayRCP<const scalar_t> dudy_values = overlap_dudy.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_dvdx_ptr = mesh_->get_overlap_field(mesh::field_enums::DV_DX_FS);
+  overlap_dvdx_ptr->put_scalar(0.0);
+  //MultiField & overlap_dvdx = *overlap_dvdx_ptr;
+  //Teuchos::ArrayRCP<const scalar_t> dvdx_values = overlap_dvdx.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_dvdy_ptr = mesh_->get_overlap_field(mesh::field_enums::DV_DY_FS);
+  overlap_dvdy_ptr->put_scalar(0.0);
+  //MultiField & overlap_dvdy = *overlap_dvdy_ptr;
+  //Teuchos::ArrayRCP<const scalar_t> dvdy_values = overlap_dvdy.get_1d_view();
+
+  const int_t spa_dim = mesh_->spatial_dimension();
+  DICe::mesh::Shape_Function_Evaluator_Factory shape_func_eval_factory;
+  Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> shape_func_evaluator =
+      //shape_func_eval_factory.create(DICe::mesh::TRI3); // linear strains
+      shape_func_eval_factory.create(DICe::mesh::TRI6); // quadratic strains
+  const int_t num_funcs = shape_func_evaluator->num_functions();
+  scalar_t DN[num_funcs*spa_dim];
+  scalar_t nodal_coords[num_funcs*spa_dim];
+  scalar_t nodal_disp[num_funcs*spa_dim];
+  scalar_t jac[spa_dim*spa_dim];
+  scalar_t inv_jac[spa_dim*spa_dim];
+  scalar_t J =0.0;
+  scalar_t natural_coords[spa_dim];
+  scalar_t node_nat_x[] = {0.0, 1.0, 0.0, 0.5, 0.5, 0.0};
+  scalar_t node_nat_y[] = {0.0, 0.0, 1.0, 0.0, 0.5, 0.5};
+
+  // element loop
+  DICe::mesh::element_set::iterator elem_it = mesh_->get_element_set()->begin();
+  DICe::mesh::element_set::iterator elem_end = mesh_->get_element_set()->end();
+  for(;elem_it!=elem_end;++elem_it)
+  {
+    //std::cout << "ELEM: " << elem_it->get()->global_id() << std::endl;
+    const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
+    // compute the shape functions and derivatives for this element:
+    for(int_t nd=0;nd<num_funcs;++nd){
+      for(int_t dim=0;dim<spa_dim;++dim){
+        const int_t stride = nd*spa_dim + dim;
+        nodal_coords[stride] = coords_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
+        nodal_disp[stride] = disp_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
+        //std::cout << " node coords " << nodal_coords[stride] << std::endl;
+      }
+    }
+    // iterate the nodes for this element and compute the strain at each node
+    // sum the contributions
+    for(int_t nd=0;nd<num_funcs;++nd){
+      // isoparametric coords
+      natural_coords[0] = node_nat_x[nd];
+      natural_coords[1] = node_nat_y[nd];
+
+      // evaluate the shape functions and derivatives:
+      shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN);
+
+      // compute the jacobian for this element:
+      DICe::global::calc_jacobian(nodal_coords,DN,jac,inv_jac,J,num_funcs,spa_dim);
+
+      for(int_t i=0;i<num_funcs;++i){
+        int_t local_index = connectivity[nd]->overlap_local_id();
+        overlap_dudx_ptr->local_value(local_index) += nodal_disp[i*spa_dim + 0]*(inv_jac[0]*DN[i*spa_dim + 0]+inv_jac[2]*DN[i*spa_dim + 1]);
+        overlap_dudy_ptr->local_value(local_index) += nodal_disp[i*spa_dim + 0]*(inv_jac[1]*DN[i*spa_dim + 0]+inv_jac[3]*DN[i*spa_dim + 1]);
+        overlap_dvdx_ptr->local_value(local_index) += nodal_disp[i*spa_dim + 1]*(inv_jac[0]*DN[i*spa_dim + 0]+inv_jac[2]*DN[i*spa_dim + 1]);
+        overlap_dvdy_ptr->local_value(local_index) += nodal_disp[i*spa_dim + 1]*(inv_jac[1]*DN[i*spa_dim + 0]+inv_jac[3]*DN[i*spa_dim + 1]);
+      }
+      overlap_strain_contribs_ptr->local_value(connectivity[nd]->overlap_local_id()) += 1.0;
+    }
+  }  // elem
+
+  // export the fields
+  mesh_->field_overlap_export(overlap_dudx_ptr,DICe::mesh::field_enums::DU_DX_FS, ADD);
+  mesh_->field_overlap_export(overlap_dudy_ptr,DICe::mesh::field_enums::DU_DY_FS, ADD);
+  mesh_->field_overlap_export(overlap_dvdx_ptr,DICe::mesh::field_enums::DV_DX_FS, ADD);
+  mesh_->field_overlap_export(overlap_dvdy_ptr,DICe::mesh::field_enums::DV_DY_FS, ADD);
+  mesh_->field_overlap_export(overlap_strain_contribs_ptr,DICe::mesh::field_enums::STRAIN_CONTRIBS_FS, ADD);
+
+  Teuchos::RCP<MultiField> du_dx_exact;
+  Teuchos::RCP<MultiField> du_dy_exact;
+  Teuchos::RCP<MultiField> dv_dx_exact;
+  Teuchos::RCP<MultiField> dv_dy_exact;
+  if(mms_problem_!=Teuchos::null){
+    du_dx_exact = mesh_->get_field(mesh::field_enums::DU_DX_EXACT_FS);
+    du_dy_exact = mesh_->get_field(mesh::field_enums::DU_DY_EXACT_FS);
+    dv_dx_exact = mesh_->get_field(mesh::field_enums::DV_DX_EXACT_FS);
+    dv_dy_exact = mesh_->get_field(mesh::field_enums::DV_DY_EXACT_FS);
+  }
+
+  for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+    const scalar_t count = strain_contribs->local_value(i);
+    du_dx->local_value(i) /= count;
+    du_dy->local_value(i) /= count;
+    dv_dx->local_value(i) /= count;
+    dv_dy->local_value(i) /= count;
+    // compute the green-lagrange strains
+    gl_xx->local_value(i) = 0.5*(2.0*du_dx->local_value(i) + du_dx->local_value(i)*du_dx->local_value(i) + dv_dx->local_value(i)*dv_dx->local_value(i));
+    gl_yy->local_value(i) = 0.5*(2.0*dv_dy->local_value(i) + du_dy->local_value(i)*du_dy->local_value(i) + dv_dy->local_value(i)*dv_dy->local_value(i));
+    gl_xy->local_value(i) = 0.5*(du_dy->local_value(i) + dv_dx->local_value(i) + du_dx->local_value(i)*du_dy->local_value(i) + dv_dx->local_value(i)*dv_dy->local_value(i));
+    if(mms_problem_!=Teuchos::null){
+      int_t ix = i*spa_dim + 0;
+      int_t iy = i*spa_dim + 1;
+      scalar_t x = coords->local_value(ix);
+      scalar_t y = coords->local_value(iy);
+      scalar_t b_x_x=0.0,b_x_y=0.0,b_y_x=0.0,b_y_y=0.0;
+      mms_problem_->grad_velocity(x,y,b_x_x,b_x_y,b_y_x,b_y_y);
+      du_dx_exact->local_value(i) = b_x_x;
+      du_dy_exact->local_value(i) = b_x_y;
+      dv_dx_exact->local_value(i) = b_y_x;
+      dv_dy_exact->local_value(i) = b_y_y;
+    }
+  }
 }
 
 

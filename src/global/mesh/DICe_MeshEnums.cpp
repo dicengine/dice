@@ -168,6 +168,18 @@ void create_string_maps()
   field_name_string[field_enums::FIELD_8]                                            = "FIELD_8";
   field_name_string[field_enums::FIELD_9]                                            = "FIELD_9";
   field_name_string[field_enums::FIELD_10]                                           = "FIELD_10";
+  field_name_string[field_enums::U_X_DERIV]                                          = "U_X_DERIV";
+  field_name_string[field_enums::U_Y_DERIV]                                          = "U_Y_DERIV";
+  field_name_string[field_enums::V_X_DERIV]                                          = "V_X_DERIV";
+  field_name_string[field_enums::V_Y_DERIV]                                          = "V_Y_DERIV";
+  field_name_string[field_enums::DU_DX_EXACT]                                        = "DU_DX_EXACT";
+  field_name_string[field_enums::DU_DY_EXACT]                                        = "DU_DY_EXACT";
+  field_name_string[field_enums::DV_DX_EXACT]                                        = "DV_DX_EXACT";
+  field_name_string[field_enums::DV_DY_EXACT]                                        = "DV_DY_EXACT";
+  field_name_string[field_enums::STRAIN_CONTRIBS]                                    = "STRAIN_CONTRIBS";
+  field_name_string[field_enums::GREEN_LAGRANGE_STRAIN_XX]                           = "GREEN_LAGRANGE_STRAIN_XX";
+  field_name_string[field_enums::GREEN_LAGRANGE_STRAIN_YY]                           = "GREEN_LAGRANGE_STRAIN_YY";
+  field_name_string[field_enums::GREEN_LAGRANGE_STRAIN_XY]                           = "GREEN_LAGRANGE_STRAIN_XY";
 
   for (std::map<field_enums::Field_Type,std::string>::iterator pos = field_type_string.begin(); pos != field_type_string.end(); ++pos){
     string_field_type[pos->second] = pos->first;
