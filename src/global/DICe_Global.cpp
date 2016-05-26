@@ -160,13 +160,13 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   mesh_->create_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_XX_FS);
   mesh_->create_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_YY_FS);
   mesh_->create_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_XY_FS);
+  mesh_->create_field(mesh::field_enums::EXACT_SOL_VECTOR_FS); // zeros if not an mms problem
   // create the MMS fields if necessary
   if(mms_problem_!=Teuchos::null){
     mesh_->create_field(mesh::field_enums::DU_DX_EXACT_FS);
     mesh_->create_field(mesh::field_enums::DU_DY_EXACT_FS);
     mesh_->create_field(mesh::field_enums::DV_DX_EXACT_FS);
     mesh_->create_field(mesh::field_enums::DV_DY_EXACT_FS);
-    mesh_->create_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
     mesh_->create_field(mesh::field_enums::IMAGE_PHI_FS);
     mesh_->create_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
   }
@@ -438,6 +438,12 @@ Global_Algorithm::execute(){
   const int_t natural_coord_dim = gp_locs[0].size();
   scalar_t natural_coords[natural_coord_dim];
 
+  const int_t image_integration_order = 20;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > image_gp_locs;
+  Teuchos::ArrayRCP<scalar_t> image_gp_weights;
+  int_t num_image_integration_points = -1;
+  tri2d_nonexact_integration_points(image_integration_order,image_gp_locs,image_gp_weights,num_image_integration_points);
+
   // gather the OVERLAP fields
   Teuchos::RCP<MultiField> overlap_residual_ptr = is_mixed_formulation() ? mesh_->get_overlap_field(mesh::field_enums::MIXED_RESIDUAL_FS):
       mesh_->get_overlap_field(mesh::field_enums::RESIDUAL_FS);
@@ -518,9 +524,9 @@ Global_Algorithm::execute(){
         tikhonov_tensor(this,spa_dim,tri6_num_funcs,J,gp_weights[gp],N6,elem_stiffness);
       //lumped_tikhonov_tensor(this,spa_dim,tri6_num_funcs,J,gp_weights[gp],N6,elem_stiffness);
 
-      // grad(phi) tensor_prod grad(phi)
-      if(has_term(IMAGE_GRAD_TENSOR))
-        image_grad_tensor(this,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_stiffness);
+//      // grad(phi) tensor_prod grad(phi)
+//      if(has_term(IMAGE_GRAD_TENSOR))
+//        image_grad_tensor(this,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_stiffness);
 
       //std::cout << " elem stiffness " << std::endl;
       //for(int_t i=0;i<tri6_num_funcs*spa_dim;++i){
@@ -554,11 +560,48 @@ Global_Algorithm::execute(){
       if(has_term(MMS_IMAGE_TIME_FORCE))
         mms_image_time_force(mms_problem_,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_force);
 
-      // d_dt(phi) * grad(phi)
-      if(has_term(IMAGE_TIME_FORCE))
-        image_time_force(this,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_force);
+//      // d_dt(phi) * grad(phi)
+//      if(has_term(IMAGE_TIME_FORCE))
+//        image_time_force(this,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_force);
 
     } // gp loop
+
+    // low-order gauss point loop:
+    for(int_t gp=0;gp<num_image_integration_points;++gp){
+
+      // isoparametric coords of the gauss point
+      for(int_t dim=0;dim<natural_coord_dim;++dim){
+        natural_coords[dim] = image_gp_locs[gp][dim];
+        //std::cout << " natural coords " << dim << " " << natural_coords[dim] << std::endl;
+      }
+      // evaluate the shape functions and derivatives:
+      tri6_shape_func_evaluator->evaluate_shape_functions(natural_coords,N6);
+      tri6_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN6);
+
+      // physical gp location
+      x = 0.0; y=0.0;
+      for(int_t i=0;i<tri6_num_funcs;++i){
+        x += nodal_coords[i*spa_dim+0]*N6[i];
+        y += nodal_coords[i*spa_dim+1]*N6[i];
+      }
+      //std::cout << " physical coords " << x << " " << y << std::endl;
+
+      // compute the jacobian for this element:
+      DICe::global::calc_jacobian(nodal_coords,DN6,jac,inv_jac,J,tri6_num_funcs,spa_dim);
+
+      // stiffness terms
+
+      // grad(phi) tensor_prod grad(phi)
+      if(has_term(IMAGE_GRAD_TENSOR))
+        image_grad_tensor(this,spa_dim,tri6_num_funcs,x,y,J,image_gp_weights[gp],N6,elem_stiffness);
+
+      // force terms
+
+      // d_dt(phi) * grad(phi)
+      if(has_term(IMAGE_TIME_FORCE))
+        image_time_force(this,spa_dim,tri6_num_funcs,x,y,J,image_gp_weights[gp],N6,elem_force);
+
+    } // image gp loop
 
     // assemble the global stiffness matrix
     for(int_t i=0;i<tri6_num_funcs;++i){

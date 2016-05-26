@@ -398,11 +398,12 @@ Image::interpolate_keys_fourth(const scalar_t & local_x, const scalar_t & local_
 
 void
 Image::compute_gradients(const bool use_hierarchical_parallelism, const int_t team_size){
-
   if(gradient_method_==FINITE_DIFFERENCE){
+    DEBUG_MSG("Image::compute_gradients(): using FINITE_DIFFERENCE");
     compute_gradients_finite_difference();
   }
   else if(gradient_method_==CONVOLUTION_5_POINT){
+    DEBUG_MSG("Image::compute_gradients(): using CONVOLUTION_5_POINT");
     compute_gradients_finite_difference();
     smooth_gradients_convolution_5_point();
   }

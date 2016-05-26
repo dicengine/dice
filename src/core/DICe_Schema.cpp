@@ -1100,7 +1100,7 @@ Schema::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids){
           if((*neighbor_ids)[i]!=-1) print_warning = true;
         }
         if(print_warning && proc_id==0){
-          std::cout << "*** Waring: Seed values were specified for an anlysis with obstructing subsets. " << std::endl;
+          std::cout << "*** Waring: Seed values were specified for an analysis with obstructing subsets. " << std::endl;
           std::cout << "            These values will be used to initialize subsets for which a seed has been specified, but the seed map " << std::endl;
           std::cout << "            will be set to the distributed map because grouping subsets by obstruction trumps seed ordering." << std::endl;
           std::cout << "            Seed dependencies between neighbors will not be enforced." << std::endl;

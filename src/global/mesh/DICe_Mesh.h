@@ -1950,6 +1950,17 @@ void tri2d_natural_integration_points(const int_t order,
   Teuchos::ArrayRCP<scalar_t> & weights,
   int_t & num_points);
 
+/// gather the natural integration points for a triangle
+/// these points are equally spaced and weighted so this isn't exact for any order
+/// \param order the integration order
+/// \param locations array returned with integration point locations
+/// \param weights array returned with the weights associated with each point
+/// \param num_points return value with the total number of integration points
+void tri2d_nonexact_integration_points(const int_t order,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
+  Teuchos::ArrayRCP<scalar_t> & weights,
+  int_t & num_points);
+
 /// compute the cross product of two vectors (ABxAC) and return the area of the parallelogram
 /// \param A vector to point A
 /// \param B vector to point B
