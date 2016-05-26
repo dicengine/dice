@@ -147,7 +147,7 @@ Teuchos::RCP<Mesh> create_tri3_exodus_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mes
   // put all the nodes in the mesh
   for(int_t i =0;i<num_nodes;++i){
     Teuchos::RCP<Node> node_rcp = Teuchos::rcp(new DICe::mesh::Node(i+1,i)); // FIXME this is not right for parallel
-    mesh->get_node_set()->push_back(node_rcp);
+    mesh->get_node_set()->insert(std::pair<int_t,Teuchos::RCP<Node> >(node_rcp->global_id(),node_rcp));
   }
 
   // create one block all of type TRI3 elems
@@ -162,21 +162,15 @@ Teuchos::RCP<Mesh> create_tri3_exodus_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mes
       TEUCHOS_TEST_FOR_EXCEPTION(master_to_local_node_map.find(connectivity[k]->global_id())==master_to_local_node_map.end(),std::runtime_error,
         "Error, invalid master to local node.");
       const int_t global_node_id = master_to_local_node_map.find(connectivity[k]->global_id())->second + 1; // add one to convert to global id
-
       // find the node in the set with the same global id
       bool found_node = false;
-      node_set::const_iterator it = mesh->get_node_set()->begin();
-      node_set::const_iterator end = mesh->get_node_set()->end();
-      for(;it!=end;++it)
-      {
-        if(it->get()->global_id()==global_node_id)
-        {
-          found_node = true;
-          conn.push_back(*it);
-          break;
-        }
+      if(mesh->get_node_set()->find(global_node_id)!=mesh->get_node_set()->end()){
+        found_node = true;
+        conn.push_back(mesh->get_node_set()->find(global_node_id)->second);
       }
-      TEUCHOS_TEST_FOR_EXCEPTION(!found_node,std::logic_error,"Could not find node rcp in set");
+      else{
+        TEUCHOS_TEST_FOR_EXCEPTION(!found_node,std::logic_error,"Could not find node rcp in set");
+      }
     }
     TEUCHOS_TEST_FOR_EXCEPTION(conn.size()!=tri3_num_nodes_per_elem,std::runtime_error,"Error, connectivity is of invalid size");
     const int_t elem_local_id = elem_it->get()->local_id();
@@ -203,7 +197,7 @@ Teuchos::RCP<Mesh> create_tri3_exodus_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mes
   DICe::mesh::node_set::iterator node_it = mesh->get_node_set()->begin();
   DICe::mesh::node_set::iterator node_end = mesh->get_node_set()->end();
   for(;node_it!=node_end;++node_it){
-    master_field.local_value(node_it->get()->local_id()) = local_to_master_node_map[node_it->get()->local_id()];
+    master_field.local_value(node_it->second->local_id()) = local_to_master_node_map[node_it->second->local_id()];
   }
 
 
@@ -214,28 +208,28 @@ Teuchos::RCP<Mesh> create_tri3_exodus_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mes
   {
     // TODO: do the same for faces/edges
     Teuchos::RCP<element_set> elem_set = Teuchos::rcp(new element_set);
-    Teuchos::RCP<node_set> node_set_ptr = Teuchos::rcp(new node_set);
-    node_set & node_set_ref = *node_set_ptr;
+//    Teuchos::RCP<node_set> node_set_ptr = Teuchos::rcp(new node_set);
+//    node_set & node_set_ref = *node_set_ptr;
     for(elem_it=mesh->get_element_set()->begin();elem_it!=elem_end;++elem_it)
     {
       if(elem_it->get()->block_id()==blk_map_it->first)
       {
         elem_set->push_back(*elem_it);
-        const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
-        for(size_t node_it=0;node_it<connectivity.size();++node_it)
-        {
-          // check if the node is already there:
-          bool not_found = true;
-          for(size_t i=0;i<node_set_ptr->size();++i)
-          {
-            if(node_set_ref[i]==connectivity[node_it]) not_found = false;
-          }
-          if(not_found) node_set_ptr->push_back(connectivity[node_it]);
-        }
+//        const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
+//        for(size_t node_it=0;node_it<connectivity.size();++node_it)
+//        {
+//          // check if the node is already there:
+//          bool not_found = true;
+//          for(size_t i=0;i<node_set_ptr->size();++i)
+//          {
+//            if(node_set_ref[i]==connectivity[node_it]) not_found = false;
+//          }
+//          if(not_found) node_set_ptr->push_back(connectivity[node_it]);
+//        }
       }
     }
     mesh->get_element_sets_by_block()->insert(std::pair<int_t,Teuchos::RCP<element_set> >(blk_map_it->first,elem_set));
-    mesh->get_node_sets_by_block()->insert(std::pair<int_t,Teuchos::RCP<node_set> >(blk_map_it->first,node_set_ptr));
+//    mesh->get_node_sets_by_block()->insert(std::pair<int_t,Teuchos::RCP<node_set> >(blk_map_it->first,node_set_ptr));
   }
   // TODO deal with boundary conditions on the lagrange mesh
 //
@@ -400,7 +394,7 @@ Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coor
   // TODO create local and global ids from the NODE MAP and ELEM MAP
   for(int_t i =0;i<num_nodes;++i){
     Teuchos::RCP<Node> node_rcp = Teuchos::rcp(new DICe::mesh::Node(i+1,i));
-    mesh->get_node_set()->push_back(node_rcp);
+    mesh->get_node_set()->insert(std::pair<int_t,Teuchos::RCP<Node> >(node_rcp->global_id(),node_rcp));
   }
 
   // create one block all of type TRI6 elems
@@ -424,18 +418,14 @@ Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coor
       const int_t global_node_id = connectivity_swap[k];
       // find the node in the set with the same global id
       bool found_node = false;
-      node_set::const_iterator it = mesh->get_node_set()->begin();
-      node_set::const_iterator end = mesh->get_node_set()->end();
-      for(;it!=end;++it)
-      {
-        if(it->get()->global_id()==global_node_id)
-        {
-          found_node = true;
-          conn.push_back(*it);
-          break;
-        }
+      // find the node in the set with the same global id
+      if(mesh->get_node_set()->find(global_node_id)!=mesh->get_node_set()->end()){
+        found_node = true;
+        conn.push_back(mesh->get_node_set()->find(global_node_id)->second);
       }
-      TEUCHOS_TEST_FOR_EXCEPTION(!found_node,std::logic_error,"Could not find node rcp in set");
+      else{
+        TEUCHOS_TEST_FOR_EXCEPTION(!found_node,std::logic_error,"Could not find node rcp in set");
+      }
     }
     // create an element and put it in the mesh
     // TODO work out global and local ids for elements
@@ -465,28 +455,28 @@ Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coor
   {
     // TODO: do the same for faces/edges
     Teuchos::RCP<element_set> elem_set = Teuchos::rcp(new element_set);
-    Teuchos::RCP<node_set> node_set_ptr = Teuchos::rcp(new node_set);
-    node_set & node_set_ref = *node_set_ptr;
+//    Teuchos::RCP<node_set> node_set_ptr = Teuchos::rcp(new node_set);
+//    node_set & node_set_ref = *node_set_ptr;
     for(elem_it=mesh->get_element_set()->begin();elem_it!=elem_end;++elem_it)
     {
       if(elem_it->get()->block_id()==blk_map_it->first)
       {
         elem_set->push_back(*elem_it);
-        const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
-        for(size_t node_it=0;node_it<connectivity.size();++node_it)
-        {
-          // check if the node is already there:
-          bool not_found = true;
-          for(size_t i=0;i<node_set_ptr->size();++i)
-          {
-            if(node_set_ref[i]==connectivity[node_it]) not_found = false;
-          }
-          if(not_found) node_set_ptr->push_back(connectivity[node_it]);
-        }
+//        const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
+//        for(size_t node_it=0;node_it<connectivity.size();++node_it)
+//        {
+//          // check if the node is already there:
+//          bool not_found = true;
+//          for(size_t i=0;i<node_set_ptr->size();++i)
+//          {
+//            if(node_set_ref[i]==connectivity[node_it]) not_found = false;
+//          }
+//          if(not_found) node_set_ptr->push_back(connectivity[node_it]);
+//        }
       }
     }
     mesh->get_element_sets_by_block()->insert(std::pair<int_t,Teuchos::RCP<element_set> >(blk_map_it->first,elem_set));
-    mesh->get_node_sets_by_block()->insert(std::pair<int_t,Teuchos::RCP<node_set> >(blk_map_it->first,node_set_ptr));
+//    mesh->get_node_sets_by_block()->insert(std::pair<int_t,Teuchos::RCP<node_set> >(blk_map_it->first,node_set_ptr));
   }
 
   //std::vector<int_t> dirichlet_bc_def;
@@ -713,7 +703,7 @@ Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
   for(int_t i =0;i<num_nodes;++i)
   {
     Teuchos::RCP<Node> node_rcp = Teuchos::rcp(new DICe::mesh::Node(node_map[i],i));
-    mesh->get_node_set()->push_back(node_rcp);
+    mesh->get_node_set()->insert(std::pair<int_t,Teuchos::RCP<Node> >(node_rcp->global_id(),node_rcp));
   }
 
   char elem_type_str[MAX_STR_LENGTH + 1];
@@ -762,21 +752,15 @@ Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
       for(int_t k=0;k<num_nodes_per_elem[i];++k)
       {
         const int_t global_node_id = node_map[connectivity[j*num_nodes_per_elem[i] + k] - 1];
-
         // find the node in the set with the same global id
         bool found_node = false;
-        node_set::const_iterator it = mesh->get_node_set()->begin();
-        node_set::const_iterator end = mesh->get_node_set()->end();
-        for(;it!=end;++it)
-        {
-          if(it->get()->global_id()==global_node_id)
-          {
-            found_node = true;
-            conn.push_back(*it);
-            break;
-          }
+        if(mesh->get_node_set()->find(global_node_id)!=mesh->get_node_set()->end()){
+          found_node = true;
+          conn.push_back(mesh->get_node_set()->find(global_node_id)->second);
         }
-        TEUCHOS_TEST_FOR_EXCEPTION(!found_node,std::logic_error,"Could not find node rcp in set");
+        else{
+          TEUCHOS_TEST_FOR_EXCEPTION(!found_node,std::logic_error,"Could not find node rcp in set");
+        }
       }
       // create an element and put it in the mesh
       const int_t elem_global_id = elem_map[elem_local_id];
@@ -807,28 +791,28 @@ Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
   {
     // TODO: do the same for faces/edges
     Teuchos::RCP<element_set> elem_set = Teuchos::rcp(new element_set);
-    Teuchos::RCP<node_set> node_set_ptr = Teuchos::rcp(new node_set);
-    node_set & node_set_ref = *node_set_ptr;
+//    Teuchos::RCP<node_set> node_set_ptr = Teuchos::rcp(new node_set);
+//    node_set & node_set_ref = *node_set_ptr;
     for(elem_it=mesh->get_element_set()->begin();elem_it!=elem_end;++elem_it)
     {
       if(elem_it->get()->block_id()==blk_map_it->first)
       {
         elem_set->push_back(*elem_it);
-        const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
-        for(size_t node_it=0;node_it<connectivity.size();++node_it)
-        {
-          // check if the node is already there:
-          bool not_found = true;
-          for(size_t i=0;i<node_set_ptr->size();++i)
-          {
-            if(node_set_ref[i]==connectivity[node_it]) not_found = false;
-          }
-          if(not_found) node_set_ptr->push_back(connectivity[node_it]);
-        }
+//        const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
+//        for(size_t node_it=0;node_it<connectivity.size();++node_it)
+//        {
+//          // check if the node is already there:
+//          bool not_found = true;
+//          for(size_t i=0;i<node_set_ptr->size();++i)
+//          {
+//            if(node_set_ref[i]==connectivity[node_it]) not_found = false;
+//          }
+//          if(not_found) node_set_ptr->push_back(connectivity[node_it]);
+//        }
       }
     }
     mesh->get_element_sets_by_block()->insert(std::pair<int_t,Teuchos::RCP<element_set> >(blk_map_it->first,elem_set));
-    mesh->get_node_sets_by_block()->insert(std::pair<int_t,Teuchos::RCP<node_set> >(blk_map_it->first,node_set_ptr));
+//    mesh->get_node_sets_by_block()->insert(std::pair<int_t,Teuchos::RCP<node_set> >(blk_map_it->first,node_set_ptr));
   }
 
 //#ifdef DICE_DEBUG_MSG
@@ -1159,14 +1143,14 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   DICe::mesh::node_set::const_iterator node_end = mesh->get_node_set()->end();
   for(;node_it!=node_end;++node_it)
   {
-    const int_t local_id = node_it->get()->overlap_local_id();
+    const int_t local_id = node_it->second->overlap_local_id();
     x[local_id] = coords->local_value(local_id*spatial_dimension);
     y[local_id] = coords->local_value(local_id*spatial_dimension+1);
     if(spatial_dimension > 2)
       z[local_id] = coords->local_value(local_id*spatial_dimension+2);
     else
       z[local_id] = 0.0;
-    node_map[local_id]=node_it->get()->global_id(); // ids are 1 based in exodus
+    node_map[local_id]=node_it->first; // ids are 1 based in exodus
   }
   DICe::mesh::element_set::const_iterator elem_it = mesh->get_element_set()->begin();
   DICe::mesh::element_set::const_iterator elem_end = mesh->get_element_set()->end();
@@ -1431,7 +1415,7 @@ exodus_output_dump(Teuchos::RCP<Mesh> mesh,
         DICe::mesh::node_set::const_iterator node_end = mesh->get_node_set()->end();
         for(;node_it!=node_end;++node_it)
         {
-          values[node_it->get()->overlap_local_id()] = field->local_value(node_it->get()->overlap_local_id()*num_comps+comp);
+          values[node_it->second->overlap_local_id()] = field->local_value(node_it->second->overlap_local_id()*num_comps+comp);
         }
         const int_t var_index = get_var_index(mesh, tostring(field_it->first.get_name()), components[comp], field_it->first.get_rank());
         error_int = ex_put_nodal_var(mesh->get_output_exoid(), time_step_num, var_index,mesh->num_nodes(), values);
@@ -2122,7 +2106,7 @@ initialize_control_volumes(Teuchos::RCP<Mesh> mesh){
   DICe::mesh::node_set::iterator node_end = mesh->get_node_set()->end();
   for(;node_it!=node_end;++node_it)
   {
-    Teuchos::RCP<DICe::mesh::Node> node = *node_it;
+    Teuchos::RCP<DICe::mesh::Node> node = node_it->second;
     oss << "  Node: " << node->global_id() << " | ";
     const int_t rel_size = node->num_deep_relations(field_enums::NODE_RANK);
     average_node_relations_this_proc += rel_size;

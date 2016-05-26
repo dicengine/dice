@@ -340,7 +340,7 @@ Mesh::create_mixed_node_field_maps(Teuchos::RCP<Mesh> alt_mesh){
     for(int_t dim=0;dim<spa_dim;++dim)
     {
       const int_t index_stride = node_index * spa_dim + dim;
-      const int_t stride = (node_it->get()->global_id() - 1) * spa_dim + dim + 1;
+      const int_t stride = (node_it->first - 1) * spa_dim + dim + 1;
       node_list_mixed[index_stride] = stride;
     }
     node_index++;
@@ -351,7 +351,7 @@ Mesh::create_mixed_node_field_maps(Teuchos::RCP<Mesh> alt_mesh){
   for(;node_it!=node_end;++node_it)
   {
     const int_t index_stride = offset + node_index;
-    const int_t stride = node_it->get()->global_id() + offset;
+    const int_t stride = node_it->first + offset;
     node_list_mixed[index_stride] = stride;
     node_index++;
   }
@@ -401,11 +401,11 @@ Mesh::create_elem_node_field_maps(){
   int_t node_index = 0;
   for(;node_it!=node_end;++node_it)
   {
-    node_list[node_index] = node_it->get()->global_id();
+    node_list[node_index] = node_it->first;
     for(int_t dim=0;dim<spa_dim;++dim)
     {
       const int_t index_stride = node_index * spa_dim + dim;
-      const int_t stride = (node_it->get()->global_id() - 1) * spa_dim + dim + 1;
+      const int_t stride = (node_it->first - 1) * spa_dim + dim + 1;
       node_list_vectorized[index_stride] = stride;
     }
     node_index++;
@@ -452,10 +452,10 @@ Mesh::create_elem_node_field_maps(){
     // the local id as created by exodus is really the overlap_local_id. Here the local_id gets saved
     // off as it should in the overlap_local_id member data, and later we replace the local_id data
     // with the true local_id from the distributed map
-    node_it->get()->update_overlap_local_id(node_it->get()->local_id());
+    node_it->second->update_overlap_local_id(node_it->second->local_id());
     // replace the local id with the value corresponding to the dist map
     // NOTE some will be -1 if they are not locally owned
-    node_it->get()->update_local_id(scalar_node_dist_map_->get_local_element(node_it->get()->global_id()));
+    node_it->second->update_local_id(scalar_node_dist_map_->get_local_element(node_it->first));
   }
 
   // ELEM DIST MAP AND VECTORIZED MAP

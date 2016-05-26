@@ -715,7 +715,7 @@ typedef std::vector<Teuchos::RCP<DICe::mesh::Bond> > bond_set;
 /// typedef
 typedef std::vector<Teuchos::RCP<DICe::mesh::Internal_Cell> > internal_cell_set;
 /// typedef
-typedef std::vector<Teuchos::RCP<DICe::mesh::Node> > node_set;
+typedef std::map<int_t,Teuchos::RCP<DICe::mesh::Node> > node_set;
 
 /// Holds information for side sets in the mesh
 struct side_set_info
@@ -1347,14 +1347,10 @@ public:
   /// \param global_id The global id to search for
   int_t node_global_to_local_id(const int_t global_id)
   {
-    node_set::const_iterator it = node_set_->begin();
-    node_set::const_iterator end = node_set_->end();
-    for(;it!=end;++it)
-    {
-      if(it->get()->global_id()==global_id)
-        return it->get()->local_id();
-    }
-    return -1;
+    if(node_set_->find(global_id)!=node_set_->end())
+      return node_set_->find(global_id)->second->local_id();
+    else
+      return -1;
   }
 
   /// Note y and x values are reversed here
