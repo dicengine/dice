@@ -149,17 +149,33 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(const std::string & roi_file_n
       DEBUG_MSG("Interior point for the hole " << pt_x << " " << pt_y);
     }
   }
+
+  // add the user defined neumann bcs:
+  const int_t num_boundary_segments = subset_file_info->boundary_condition_defs->size();
+  DEBUG_MSG("Number of dirichlet and neumann boundary segments: " << num_boundary_segments);
+  int_t num_user_defined_neumann = 0;
+  for(int_t i=0;i<num_boundary_segments;++i){
+    if((*subset_file_info->boundary_condition_defs)[i].is_neumann_){
+      segments_left.push_back((*subset_file_info->boundary_condition_defs)[i].left_vertex_id_+1);
+      segments_right.push_back((*subset_file_info->boundary_condition_defs)[i].right_vertex_id_+1);
+      num_user_defined_neumann++;
+    }
+  }
+  DEBUG_MSG("Number of user-defined Neumann segments: " << num_user_defined_neumann);
   Teuchos::ArrayRCP<int_t> neumann_boundary_segments_left(&segments_left[0],0,segments_left.size(),false);
   Teuchos::ArrayRCP<int_t> neumann_boundary_segments_right(&segments_right[0],0,segments_left.size(),false);
 
   // gather the boundary segments
-  const int_t num_boundary_segments = subset_file_info->boundary_condition_defs->size();
-  DEBUG_MSG("Number of dirichlet boundary segments: " << num_boundary_segments);
-  Teuchos::ArrayRCP<int_t> dirichlet_boundary_segments_left(num_boundary_segments);
-  Teuchos::ArrayRCP<int_t> dirichlet_boundary_segments_right(num_boundary_segments);
+  const int_t num_dirichlet_segments = num_boundary_segments - num_user_defined_neumann;
+  DEBUG_MSG("Number of user-defined Dirichlet segments: " << num_dirichlet_segments);
+  Teuchos::ArrayRCP<int_t> dirichlet_boundary_segments_left(num_dirichlet_segments);
+  Teuchos::ArrayRCP<int_t> dirichlet_boundary_segments_right(num_dirichlet_segments);
+  int_t seg_index = 0;
   for(int_t i=0;i<num_boundary_segments;++i){
-    dirichlet_boundary_segments_left[i] = (*subset_file_info->boundary_condition_defs)[i].left_vertex_id_+1; // +1 because ids are 1-based in Triangle
-    dirichlet_boundary_segments_right[i] = (*subset_file_info->boundary_condition_defs)[i].right_vertex_id_+1;
+    if((*subset_file_info->boundary_condition_defs)[i].is_neumann_) continue;
+    dirichlet_boundary_segments_left[seg_index] = (*subset_file_info->boundary_condition_defs)[i].left_vertex_id_+1; // +1 because ids are 1-based in Triangle
+    dirichlet_boundary_segments_right[seg_index] = (*subset_file_info->boundary_condition_defs)[i].right_vertex_id_+1;
+    seg_index++;
   }
   Teuchos::ArrayRCP<scalar_t> points_x(&pts_x[0],0,pts_x.size(),false);
   Teuchos::ArrayRCP<scalar_t> points_y(&pts_y[0],0,pts_y.size(),false);
@@ -219,7 +235,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
 
   const bool has_dirich_segments = dirichlet_boundary_segments_left!=Teuchos::null;
   const bool has_neumann_segments = neumann_boundary_segments_left!=Teuchos::null;
-  int_t num_dirich = 4; // the default is the segments between the first four sets of coords
+  int_t num_dirich = 0; // the default is the segments between the first four sets of coords
   int_t num_neum = 0;
   if(has_dirich_segments){
     TEUCHOS_TEST_FOR_EXCEPTION(dirichlet_boundary_segments_left.size()!=dirichlet_boundary_segments_left.size(),
@@ -236,12 +252,12 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
     " number of neumann segments: " << num_neum << " total: " << num_segments);
 
   int_t seg_offset = 0;
-  in.numberofsegments = num_segments;
-  in.segmentlist = new int[in.numberofsegments*2];
-  in.segmentmarkerlist = new int[in.numberofsegments];
   if(!has_dirich_segments&&!has_neumann_segments){
+    in.numberofsegments = 4;
+    in.segmentlist = new int[in.numberofsegments*2];
+    in.segmentmarkerlist = new int[in.numberofsegments];
     DEBUG_MSG("generate_tri6_mesh(): no input boundary conditions given, using default dirichlet around outer edge.");
-    TEUCHOS_TEST_FOR_EXCEPTION(num_segments!=4,std::runtime_error,"Error, wrong number of segments.");
+    //TEUCHOS_TEST_FOR_EXCEPTION(num_segments!=4,std::runtime_error,"Error, wrong number of segments.");
     TEUCHOS_TEST_FOR_EXCEPTION(points_x.size()<4,std::runtime_error,"Error, too few points.");
       in.segmentlist[0] = 1;in.segmentlist[1] = 2;
       in.segmentlist[2] = 2;in.segmentlist[3] = 3;
@@ -253,6 +269,9 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
       in.segmentmarkerlist[3] = 1; // hard coded id for dirichlet bcs
   }
   else{
+    in.numberofsegments = num_segments;
+    in.segmentlist = new int[in.numberofsegments*2];
+    in.segmentmarkerlist = new int[in.numberofsegments];
     for(int_t i=0;i<num_dirich;++i){
       in.segmentlist[i*2+0] = dirichlet_boundary_segments_left[i];
       in.segmentlist[i*2+1] = dirichlet_boundary_segments_right[i];
@@ -262,7 +281,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
     for(int_t i=0;i<num_neum;++i){
       in.segmentlist[(i+seg_offset)*2+0] = neumann_boundary_segments_left[i];
       in.segmentlist[(i+seg_offset)*2+1] = neumann_boundary_segments_right[i];
-      in.segmentmarkerlist[i+seg_offset] = 0; // hard coded 0 for neumann bcs
+      in.segmentmarkerlist[i+seg_offset] = -10000; // hard coded -10000 for neumann bcs
     }
   }
 
@@ -312,7 +331,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
       lagrange_boundary_nodes.insert(out.segmentlist[i*2+0]);
       lagrange_boundary_nodes.insert(out.segmentlist[i*2+0]);
     }
-    if(out.segmentmarkerlist[i]==0){ // 0 is for neumann
+    if(out.segmentmarkerlist[i]==-10000){ // -10000 is for neumann
       neumann_boundary_nodes.insert(out.segmentlist[i*2+0]);
       neumann_boundary_nodes.insert(out.segmentlist[i*2+1]);
     }
@@ -352,7 +371,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
                   dirichlet_boundary_nodes.insert(std::pair<int_t,int_t>(out.trianglelist[i*out.numberofcorners + third_node_pos],out.segmentmarkerlist[k]));
                   // mid nodes do not get added the lagrange set
                 }
-                if(out.segmentmarkerlist[k]==0){
+                if(out.segmentmarkerlist[k]==-10000){ // -10000 is the neumann hard coded bc id
                   neumann_boundary_nodes.insert(out.trianglelist[i*out.numberofcorners + third_node_pos]);
                 }
               }
@@ -377,7 +396,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
   std::set<int_t>::const_iterator it = neumann_boundary_nodes.begin();
   std::set<int_t>::const_iterator it_end = neumann_boundary_nodes.end();
   for(;it!=it_end;++it){
-    DEBUG_MSG("node " << *it << " bc id " << 0);
+    DEBUG_MSG("node " << *it << " bc id " << -10000);
   }
   DEBUG_MSG("lagrange boundary nodes");
   it = lagrange_boundary_nodes.begin();

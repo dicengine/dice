@@ -136,6 +136,10 @@ int main(int argc, char *argv[]) {
   roi_file << "      end vertices\n";
   roi_file << "    end polygon\n";
   roi_file << "  end boundary\n";
+  roi_file << "  neumann_bc boundary 0 0 1\n";
+  roi_file << "  neumann_bc boundary 0 1 2\n";
+  roi_file << "  neumann_bc boundary 0 2 3\n";
+  roi_file << "  neumann_bc boundary 0 3 0\n";
   roi_file << "end region_of_interest\n";
   roi_file.close();
 

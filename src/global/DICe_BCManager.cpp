@@ -78,8 +78,8 @@ BC_Manager::BC_Manager(Global_Algorithm * alg) :
   DICe::mesh::bc_set::iterator it_end = bc_set->end();
   for(;it!=it_end;++it){
     const int_t boundary_node_set_id = it->first;
-    if(boundary_node_set_id==0)
-      continue; // neumann boundary is 0 id
+    if(boundary_node_set_id==-10000)
+      continue; // neumann boundary is -10000 id
     // lagrange multiplier boundary is negative id
     if(boundary_node_set_id<0 && is_mixed_){
       const int_t num_bc_nodes = bc_set->find(boundary_node_set_id)->second.size();

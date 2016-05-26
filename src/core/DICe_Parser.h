@@ -176,7 +176,8 @@ Boundary_Condition_Def{
   value_x_(0.0),
   value_y_(0.0),
   use_subsets_(false),
-  subset_size_(-1){};
+  subset_size_(-1),
+  is_neumann_(false){};
   /// either boundary or excluded
   std::string region_;
   /// the shape id in the region set
@@ -195,6 +196,8 @@ Boundary_Condition_Def{
   bool use_subsets_;
   /// subsets size if subsets are used
   int_t subset_size_;
+  /// true if this is a neumann condition
+  bool is_neumann_;
 };
 
 /// Simple struct for passing info back and forth from read_subset_file:
@@ -416,6 +419,8 @@ const char* const parser_shear_strain = "SHEAR_STRAIN";
 const char* const parser_rotation = "ROTATION";
 /// Parser string
 const char* const parser_dirichlet_bc = "DIRICHLET_BC";
+/// Parser string
+const char* const parser_neumann_bc = "NEUMANN_BC";
 
 
 }// End DICe Namespace

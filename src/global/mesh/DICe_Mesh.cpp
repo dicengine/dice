@@ -1803,15 +1803,15 @@ void tri2d_nonexact_integration_points(const int_t order,
 
   TEUCHOS_TEST_FOR_EXCEPTION(order<=0,std::runtime_error,"");
   const int_t spa_dim = 2;
-  std::cout << "ORDER " << order << std::endl;
+  //std::cout << "ORDER " << order << std::endl;
   const scalar_t h = 1.0 / order;
-  std::cout << "H " << h << std::endl;
+  //std::cout << "H " << h << std::endl;
   // determine the number of points
   num_points = 0;
   for(int_t i=0;i<order;++i){
     num_points += i;
   }
-  std::cout << "NUM_POINTS " << num_points << std::endl;
+  //std::cout << "NUM_POINTS " << num_points << std::endl;
   TEUCHOS_TEST_FOR_EXCEPTION(num_points<=0,std::runtime_error,"");
   const scalar_t weight = 1.0 / num_points;
 
