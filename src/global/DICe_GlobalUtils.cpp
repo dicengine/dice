@@ -307,8 +307,8 @@ void subset_velocity(Global_Algorithm * alg,
 
   // using type double here a lot because LAPACK doesn't support float.
   int_t N = 2; // [ u_x u_y ]
-  scalar_t solve_tol_disp = 1.0E-6;
-  const int_t max_solve_its = 100;
+  scalar_t solve_tol_disp = alg->schema()->fast_solver_tolerance();
+  const int_t max_solve_its = alg->schema()->max_solver_iterations_fast();
   int *IPIV = new int[N+1];
   int LWORK = N*N;
   int INFO = 0;
@@ -416,10 +416,10 @@ void subset_velocity(Global_Algorithm * alg,
     (*deformation)[DICe::DISPLACEMENT_X] += (*def_update)[0];
     (*deformation)[DICe::DISPLACEMENT_Y] += (*def_update)[1];
 
-//    DEBUG_MSG("Subset at cx " << c_x << " cy " << c_y  << " -- iteration: " << solve_it << " u " << (*deformation)[DICe::DISPLACEMENT_X] <<
-//      " v " << (*deformation)[DICe::DISPLACEMENT_Y] << " theta " << (*deformation)[DICe::ROTATION_Z] <<
-//      " ex " << (*deformation)[DICe::NORMAL_STRAIN_X] << " ey " << (*deformation)[DICe::NORMAL_STRAIN_Y] <<
-//      " gxy " << (*deformation)[DICe::SHEAR_STRAIN_XY] << ")");
+    //DEBUG_MSG("Subset at cx " << c_x << " cy " << c_y  << " -- iteration: " << solve_it << " u " << (*deformation)[DICe::DISPLACEMENT_X] <<
+    //  " v " << (*deformation)[DICe::DISPLACEMENT_Y] << " theta " << (*deformation)[DICe::ROTATION_Z] <<
+    //  " ex " << (*deformation)[DICe::NORMAL_STRAIN_X] << " ey " << (*deformation)[DICe::NORMAL_STRAIN_Y] <<
+    //  " gxy " << (*deformation)[DICe::SHEAR_STRAIN_XY] << ")");
 
     if(std::abs((*deformation)[DICe::DISPLACEMENT_X] - (*def_old)[DICe::DISPLACEMENT_X]) < solve_tol_disp
         && std::abs((*deformation)[DICe::DISPLACEMENT_Y] - (*def_old)[DICe::DISPLACEMENT_Y]) < solve_tol_disp){

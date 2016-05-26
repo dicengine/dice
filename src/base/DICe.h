@@ -1084,11 +1084,12 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_global_correlation_params = 12;
+const int_t num_valid_global_correlation_params = 13;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_global_correlation_params[num_valid_global_correlation_params] = {
   use_global_dic_param,
   interpolation_method_param,
+  max_solver_iterations_fast_param,
   gradient_method_param,
   gauss_filter_images_param,
   gauss_filter_mask_size_param,
