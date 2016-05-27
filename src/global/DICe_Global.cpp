@@ -327,66 +327,28 @@ Global_Algorithm::pre_execution_tasks(){
   }
 }
 
-Status_Flag
-Global_Algorithm::execute(){
-  if(!is_initialized_) pre_execution_tasks();
+Teuchos::RCP<DICe::MultiField_Matrix>
+Global_Algorithm::compute_tangent(){
 
+  DEBUG_MSG("Global_Algorithm::compute_tangent(): Computing the tangent matrix");
   const int_t spa_dim = mesh_->spatial_dimension();
-  const int_t p_rank = mesh_->get_comm()->get_rank();
   const int_t relations_size = mesh_->max_num_node_relations();
   Teuchos::RCP<DICe::MultiField_Matrix> tangent;
-  if(is_mixed_formulation()){
+  if(is_mixed_formulation())
     tangent = Teuchos::rcp(new DICe::MultiField_Matrix(*mesh_->get_mixed_vector_node_dist_map(),relations_size));
-  }
-  else{
+  else
     tangent = Teuchos::rcp(new DICe::MultiField_Matrix(*mesh_->get_vector_node_dist_map(),relations_size));
-  }
-
   DEBUG_MSG("Global_Algorithm::execute(): Tangent has been allocated.");
-
-  Teuchos::RCP<MultiField> mixed_residual;
-  Teuchos::RCP<MultiField> mixed_lhs;
-  Teuchos::RCP<MultiField> lagrange_multiplier;
-  Teuchos::RCP<MultiField> residual;
-  Teuchos::RCP<MultiField> lhs;
-  Teuchos::RCP<MultiField> exact_sol;
-  Teuchos::RCP<MultiField> exact_lag;
-  Teuchos::RCP<MultiField> image_phi;
-  Teuchos::RCP<MultiField> image_grad_phi;
-  const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_num_global_elements();
-  if(is_mixed_formulation()){
-    DEBUG_MSG("Global_Algorithm::execute(): gathering mixed fields.");
-    mixed_residual = mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS);
-    mixed_lhs = mesh_->get_field(mesh::field_enums::MIXED_LHS_FS);
-    lagrange_multiplier = l_mesh_->get_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
-    if(mms_problem_!=Teuchos::null){
-      exact_lag = l_mesh_->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
-    }
-  }
-  else{
-    residual = mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
-    residual->put_scalar(0.0);
-    lhs = mesh_->get_field(mesh::field_enums::LHS_FS);
-  }
-  MultiField & disp = *mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
-  disp.put_scalar(0.0);
-  if(mms_problem_!=Teuchos::null){
-    DEBUG_MSG("Global_Algorithm::execute(): gathering exact solution fields.");
-    exact_sol = mesh_->get_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
-    image_phi = mesh_->get_field(mesh::field_enums::IMAGE_PHI_FS);
-    image_grad_phi = mesh_->get_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
-  }
-  DEBUG_MSG("Global_Algorithm::execute(): Assembling the linear system...");
-  DEBUG_MSG("Global_Algorithm::execute(): mixed global offset: " << mixed_global_offset);
+  const int_t mgo = mixed_global_offset();
+  DEBUG_MSG("Global_Algorithm::compute_tangent(): mixed global offset: " << mgo);
 
   // assemble the distributed tangent matrix
   Teuchos::RCP<DICe::MultiField_Matrix> tangent_overlap;
-  if(is_mixed_formulation()){
+  if(is_mixed_formulation())
     tangent_overlap = Teuchos::rcp(new DICe::MultiField_Matrix(*mesh_->get_mixed_vector_node_overlap_map(),relations_size));
-  }
-  else{
+  else
     tangent_overlap = Teuchos::rcp(new DICe::MultiField_Matrix(*mesh_->get_vector_node_overlap_map(),relations_size));
-  }
+
   // clear the jacobian values
   tangent_overlap->put_scalar(0.0);
   tangent->put_scalar(0.0);
@@ -410,7 +372,6 @@ Global_Algorithm::execute(){
       shape_func_eval_factory.create(DICe::mesh::TRI3);
   const int_t tri3_num_funcs = tri3_shape_func_evaluator->num_functions();
   scalar_t N3[tri3_num_funcs];
-  scalar_t DN3[tri3_num_funcs*spa_dim];
   Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> tri6_shape_func_evaluator =
       shape_func_eval_factory.create(DICe::mesh::TRI6);
   const int_t tri6_num_funcs = tri6_shape_func_evaluator->num_functions();
@@ -421,11 +382,8 @@ Global_Algorithm::execute(){
   scalar_t jac[spa_dim*spa_dim];
   scalar_t inv_jac[spa_dim*spa_dim];
   scalar_t J =0.0;
-  //const int_t B_dim = 2*spa_dim - 1;
-  //scalar_t B[B_dim*tri6_num_funcs*spa_dim];
   scalar_t elem_stiffness[tri6_num_funcs*spa_dim*tri6_num_funcs*spa_dim];
   scalar_t elem_div_stiffness[tri3_num_funcs*spa_dim*tri6_num_funcs];
-  scalar_t elem_force[tri6_num_funcs*spa_dim];
   //scalar_t grad_phi[spa_dim];
   scalar_t x=0.0,y=0.0;
 
@@ -445,15 +403,9 @@ Global_Algorithm::execute(){
   tri2d_nonexact_integration_points(image_integration_order,image_gp_locs,image_gp_weights,num_image_integration_points);
 
   // gather the OVERLAP fields
-  Teuchos::RCP<MultiField> overlap_residual_ptr = is_mixed_formulation() ? mesh_->get_overlap_field(mesh::field_enums::MIXED_RESIDUAL_FS):
-      mesh_->get_overlap_field(mesh::field_enums::RESIDUAL_FS);
-  MultiField & overlap_residual = *overlap_residual_ptr;
-  overlap_residual.put_scalar(0.0);
   Teuchos::RCP<MultiField> overlap_coords_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_FS);
   MultiField & overlap_coords = *overlap_coords_ptr;
   Teuchos::ArrayRCP<const scalar_t> coords_values = overlap_coords.get_1d_view();
-
-  scalar_t max_diag = 0.0;
 
   // element loop
   DICe::mesh::element_set::iterator elem_it = mesh_->get_element_set()->begin();
@@ -475,9 +427,6 @@ Global_Algorithm::execute(){
     // clear the elem stiffness
     for(int_t i=0;i<tri6_num_funcs*spa_dim*tri6_num_funcs*spa_dim;++i)
       elem_stiffness[i] = 0.0;
-    // clear the elem force
-    for(int_t i=0;i<tri6_num_funcs*spa_dim;++i)
-      elem_force[i] = 0.0;
     // clear the div stiffness storage
     for(int_t i=0;i<tri3_num_funcs*spa_dim*tri6_num_funcs;++i)
       elem_div_stiffness[i] = 0.0;
@@ -496,7 +445,6 @@ Global_Algorithm::execute(){
 
       // evaluate the shape functions and derivatives:
       tri3_shape_func_evaluator->evaluate_shape_functions(natural_coords,N3);
-      tri3_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN3);
 
       // physical gp location
       x = 0.0; y=0.0;
@@ -508,8 +456,6 @@ Global_Algorithm::execute(){
 
       // compute the jacobian for this element:
       DICe::global::calc_jacobian(nodal_coords,DN6,jac,inv_jac,J,tri6_num_funcs,spa_dim);
-
-      // stiffness terms
 
       // grad(phi) tensor_prod grad(phi)
       if(has_term(MMS_IMAGE_GRAD_TENSOR))
@@ -524,45 +470,11 @@ Global_Algorithm::execute(){
         tikhonov_tensor(this,spa_dim,tri6_num_funcs,J,gp_weights[gp],N6,elem_stiffness);
       //lumped_tikhonov_tensor(this,spa_dim,tri6_num_funcs,J,gp_weights[gp],N6,elem_stiffness);
 
-//      // grad(phi) tensor_prod grad(phi)
-//      if(has_term(IMAGE_GRAD_TENSOR))
-//        image_grad_tensor(this,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_stiffness);
-
-      //std::cout << " elem stiffness " << std::endl;
-      //for(int_t i=0;i<tri6_num_funcs*spa_dim;++i){
-      //  for(int_t j=0;j<tri6_num_funcs*spa_dim;++j){
-      //    std::cout << elem_stiffness[i*tri6_num_funcs*spa_dim + j] << " ";
-      //  }
-      //  std::cout << std::endl;
-      //}
-
       // mixed formulation stiffness terms
 
       // grad(lambda)
       if(has_term(DIV_VELOCITY))
         div_velocity(spa_dim,tri3_num_funcs,tri6_num_funcs,J,gp_weights[gp],inv_jac,DN6,N3,elem_div_stiffness);
-
-      //std::cout << "div elem stiffness " << std::endl;
-      //for(int_t i=0;i<tri3_num_funcs;++i){
-      //  for(int_t j=0;j<tri6_num_funcs*spa_dim;++j){
-      //    std::cout << elem_div_stiffness[i*tri6_num_funcs*spa_dim + j] << " ";
-      //  }
-      //  std::cout << std::endl;
-      //}
-
-      // force terms
-
-      // mms force
-      if(has_term(MMS_FORCE))
-        mms_force(mms_problem_,spa_dim,tri6_num_funcs,x,y,alpha2_,J,gp_weights[gp],N6,this->eq_terms(),elem_force);
-
-      // d_dt(phi) * grad(phi)
-      if(has_term(MMS_IMAGE_TIME_FORCE))
-        mms_image_time_force(mms_problem_,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_force);
-
-//      // d_dt(phi) * grad(phi)
-//      if(has_term(IMAGE_TIME_FORCE))
-//        image_time_force(this,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_force);
 
     } // gp loop
 
@@ -589,20 +501,13 @@ Global_Algorithm::execute(){
       // compute the jacobian for this element:
       DICe::global::calc_jacobian(nodal_coords,DN6,jac,inv_jac,J,tri6_num_funcs,spa_dim);
 
-      // stiffness terms
-
       // grad(phi) tensor_prod grad(phi)
       if(has_term(IMAGE_GRAD_TENSOR))
         image_grad_tensor(this,spa_dim,tri6_num_funcs,x,y,J,image_gp_weights[gp],N6,elem_stiffness);
 
-      // force terms
-
-      // d_dt(phi) * grad(phi)
-      if(has_term(IMAGE_TIME_FORCE))
-        image_time_force(this,spa_dim,tri6_num_funcs,x,y,J,image_gp_weights[gp],N6,elem_force);
-
     } // image gp loop
 
+    //DEBUG_MSG("Global_Algorithm::compute_tangent(): Assembling the tangent matrix");
     // assemble the global stiffness matrix
     for(int_t i=0;i<tri6_num_funcs;++i){
       for(int_t m=0;m<spa_dim;++m){
@@ -610,7 +515,7 @@ Global_Algorithm::execute(){
         if(is_mixed_formulation()){
           for(int_t j=0;j<tri3_num_funcs;++j){
             const int_t row = (node_ids[i]-1)*spa_dim + m + 1;
-            const int_t col = node_ids[j] + mixed_global_offset;
+            const int_t col = node_ids[j] + mgo;
             //std::cout << "row " << row << " col " << col << std::endl;
             const scalar_t value = elem_div_stiffness[j*tri6_num_funcs*spa_dim + i*spa_dim+m];
             const bool is_local_row_node =  mesh_->get_vector_node_dist_map()->is_node_global_elem(row); // using the non-mixed map because the row is a velocity row
@@ -643,7 +548,6 @@ Global_Algorithm::execute(){
             const bool row_is_bc_node = is_local_row_node ?
                 bc_manager_->is_row_bc(mesh_->get_vector_node_dist_map()->get_local_element(row)) : false;
             if(!row_is_bc_node){// && !col_is_bc_node){
-              if(row==col && value > max_diag) max_diag=value;
               TEUCHOS_TEST_FOR_EXCEPTION(col_id_array_map.find(row)==col_id_array_map.end(),std::runtime_error,"Error, invalid col id");
               col_id_array_map.find(row)->second.push_back(col);
               values_array_map.find(row)->second.push_back(value);
@@ -652,56 +556,28 @@ Global_Algorithm::execute(){
         } // num_funcs
       } // spa dim
     } // num_funcs
-
-    // assemble the force terms
-    for(int_t i=0;i<tri6_num_funcs;++i){
-      //int_t nodex_local_id = connectivity[i]->overlap_local_id()*spa_dim;
-      //int_t nodey_local_id = nodex_local_id + 1;
-      //overlap_residual.local_value(nodex_local_id) += elem_force[i*spa_dim+0];
-      //overlap_residual.local_value(nodey_local_id) += elem_force[i*spa_dim+1];
-      int_t nodex_id = (connectivity[i]->global_id()-1)*spa_dim+1;
-      int_t nodey_id = nodex_id + 1;
-      if(is_mixed_formulation()){
-        mixed_residual->global_value(nodex_id) += elem_force[i*spa_dim+0];
-        mixed_residual->global_value(nodey_id) += elem_force[i*spa_dim+1];
-      }
-      else{
-        residual->global_value(nodex_id) += elem_force[i*spa_dim+0];
-        residual->global_value(nodey_id) += elem_force[i*spa_dim+1];
-      }
-    } // num_funcs
   }  // elem
-
-  // export the overlap residual to the dist vector
-  //mesh_->field_overlap_export(overlap_residual_ptr, mesh_::field_enums::RESIDUAL_FS, ADD);
-
   // add ones to the diagonal for kinematic velocity bc nodes:
-  for(int_t i=0;i<mesh_->get_vector_node_overlap_map()->get_num_local_elements();++i)
-  {
-    if(bc_manager_->is_col_bc(i))
-    {
+  for(int_t i=0;i<mesh_->get_vector_node_overlap_map()->get_num_local_elements();++i){
+    if(bc_manager_->is_col_bc(i)){
       const int_t global_id = mesh_->get_vector_node_overlap_map()->get_global_element(i);
       col_id_array_map.find(global_id)->second.push_back(global_id);
-      values_array_map.find(global_id)->second.push_back(1.0);//max_diag);
+      values_array_map.find(global_id)->second.push_back(1.0);
     }
   }
   /// lagrange multiplier bc
   if(is_mixed_formulation()){
-    for(int_t i=0;i<l_mesh_->get_scalar_node_overlap_map()->get_num_local_elements();++i)
-    {
-      if(bc_manager_->is_mixed_bc(i))
-      {
-        const int_t global_id = l_mesh_->get_scalar_node_overlap_map()->get_global_element(i) + mixed_global_offset;
+    for(int_t i=0;i<l_mesh_->get_scalar_node_overlap_map()->get_num_local_elements();++i){
+      if(bc_manager_->is_mixed_bc(i)){
+        const int_t global_id = l_mesh_->get_scalar_node_overlap_map()->get_global_element(i) + mgo;
         col_id_array_map.find(global_id)->second.push_back(global_id);
-        values_array_map.find(global_id)->second.push_back(1.0);//max_diag);
+        values_array_map.find(global_id)->second.push_back(1.0);
       }
     }
   }
-
   std::map<int_t,Teuchos::Array<int_t> >::iterator cmap_it = col_id_array_map.begin();
   std::map<int_t,Teuchos::Array<int_t> >::iterator cmap_end = col_id_array_map.end();
-  for(;cmap_it!=cmap_end;++cmap_it)
-  {
+  for(;cmap_it!=cmap_end;++cmap_it){
     int_t global_row = cmap_it->first;
     const Teuchos::Array<int_t> ids_array = cmap_it->second;
     const Teuchos::Array<mv_scalar_type> values_array = values_array_map.find(cmap_it->first)->second;
@@ -710,7 +586,6 @@ Global_Algorithm::execute(){
     tangent_overlap->insert_global_values(global_row,ids_array,values_array);
   }
   tangent_overlap->fill_complete();
-
   if(is_mixed_formulation()){
     MultiField_Exporter exporter (*mesh_->get_mixed_vector_node_overlap_map(),*mesh_->get_mixed_vector_node_dist_map());
     tangent->do_export(tangent_overlap, exporter, ADD);
@@ -721,16 +596,200 @@ Global_Algorithm::execute(){
   }
   tangent->fill_complete();
   //tangent->describe();
+  return tangent;
+}
 
+void
+Global_Algorithm::compute_residual(){
+
+  DEBUG_MSG("Global_Algorithm::compute_residual(): computing the residual.");
+  const int_t spa_dim = mesh_->spatial_dimension();
+
+  Teuchos::RCP<MultiField> residual;
   if(is_mixed_formulation())
-    mixed_lhs->put_scalar(0.0);
+    residual = mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS);
   else
-    lhs->put_scalar(0.0);
+    residual = mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
+  residual->put_scalar(0.0);
 
-  //    if(is_mixed_formulation())
-  //      mixed_residual->describe();
-  //    else
-  //      residual->describe();
+  // establish the shape functions (using P2-P1 element for velocity pressure, or P2 velocity if no constraint):
+  DICe::mesh::Shape_Function_Evaluator_Factory shape_func_eval_factory;
+  Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> tri3_shape_func_evaluator =
+      shape_func_eval_factory.create(DICe::mesh::TRI3);
+  const int_t tri3_num_funcs = tri3_shape_func_evaluator->num_functions();
+  scalar_t N3[tri3_num_funcs];
+  Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> tri6_shape_func_evaluator =
+      shape_func_eval_factory.create(DICe::mesh::TRI6);
+  const int_t tri6_num_funcs = tri6_shape_func_evaluator->num_functions();
+  scalar_t N6[tri6_num_funcs];
+  scalar_t DN6[tri6_num_funcs*spa_dim];
+  scalar_t nodal_coords[tri6_num_funcs*spa_dim];
+  scalar_t jac[spa_dim*spa_dim];
+  scalar_t inv_jac[spa_dim*spa_dim];
+  scalar_t J =0.0;
+  scalar_t elem_force[tri6_num_funcs*spa_dim];
+  scalar_t x=0.0,y=0.0;
+
+  // get the natural integration points for this element:
+  const int_t integration_order = 6;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > gp_locs;
+  Teuchos::ArrayRCP<scalar_t> gp_weights;
+  int_t num_integration_points = -1;
+  tri6_shape_func_evaluator->get_natural_integration_points(integration_order,gp_locs,gp_weights,num_integration_points);
+  const int_t natural_coord_dim = gp_locs[0].size();
+  scalar_t natural_coords[natural_coord_dim];
+
+  const int_t image_integration_order = 20;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > image_gp_locs;
+  Teuchos::ArrayRCP<scalar_t> image_gp_weights;
+  int_t num_image_integration_points = -1;
+  tri2d_nonexact_integration_points(image_integration_order,image_gp_locs,image_gp_weights,num_image_integration_points);
+
+  // gather the OVERLAP fields
+//  Teuchos::RCP<MultiField> overlap_residual_ptr = is_mixed_formulation() ? mesh_->get_overlap_field(mesh::field_enums::MIXED_RESIDUAL_FS):
+//      mesh_->get_overlap_field(mesh::field_enums::RESIDUAL_FS);
+//  MultiField & overlap_residual = *overlap_residual_ptr;
+//  overlap_residual.put_scalar(0.0);
+  Teuchos::RCP<MultiField> overlap_coords_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  MultiField & overlap_coords = *overlap_coords_ptr;
+  Teuchos::ArrayRCP<const scalar_t> coords_values = overlap_coords.get_1d_view();
+
+  // element loop
+  DICe::mesh::element_set::iterator elem_it = mesh_->get_element_set()->begin();
+  DICe::mesh::element_set::iterator elem_end = mesh_->get_element_set()->end();
+  for(;elem_it!=elem_end;++elem_it)
+  {
+    //std::cout << "ELEM: " << elem_it->get()->global_id() << std::endl;
+    const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
+    // compute the shape functions and derivatives for this element:
+    for(int_t nd=0;nd<tri6_num_funcs;++nd){
+      for(int_t dim=0;dim<spa_dim;++dim){
+        const int_t stride = nd*spa_dim + dim;
+        nodal_coords[stride] = coords_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
+        //std::cout << " node coords " << nodal_coords[stride] << std::endl;
+      }
+    }
+    // clear the elem force
+    for(int_t i=0;i<tri6_num_funcs*spa_dim;++i)
+      elem_force[i] = 0.0;
+
+    if(mms_problem_!=Teuchos::null){
+      // low-order gauss point loop:
+      for(int_t gp=0;gp<num_integration_points;++gp){
+
+        // isoparametric coords of the gauss point
+        for(int_t dim=0;dim<natural_coord_dim;++dim){
+          natural_coords[dim] = gp_locs[gp][dim];
+          //std::cout << " natural coords " << dim << " " << natural_coords[dim] << std::endl;
+        }
+        // evaluate the shape functions and derivatives:
+        tri6_shape_func_evaluator->evaluate_shape_functions(natural_coords,N6);
+        tri6_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN6);
+
+        // evaluate the shape functions and derivatives:
+        tri3_shape_func_evaluator->evaluate_shape_functions(natural_coords,N3);
+
+        // physical gp location
+        x = 0.0; y=0.0;
+        for(int_t i=0;i<tri6_num_funcs;++i){
+          x += nodal_coords[i*spa_dim+0]*N6[i];
+          y += nodal_coords[i*spa_dim+1]*N6[i];
+        }
+        //std::cout << " physical coords " << x << " " << y << std::endl;
+
+        // compute the jacobian for this element:
+        DICe::global::calc_jacobian(nodal_coords,DN6,jac,inv_jac,J,tri6_num_funcs,spa_dim);
+
+        // mms force
+        if(has_term(MMS_FORCE))
+          mms_force(mms_problem_,spa_dim,tri6_num_funcs,x,y,alpha2_,J,gp_weights[gp],N6,this->eq_terms(),elem_force);
+
+        // d_dt(phi) * grad(phi)
+        if(has_term(MMS_IMAGE_TIME_FORCE))
+          mms_image_time_force(mms_problem_,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_force);
+
+      } // gp loop
+    } // has mms_problem
+
+    // low-order gauss point loop:
+    for(int_t gp=0;gp<num_image_integration_points;++gp){
+
+      // isoparametric coords of the gauss point
+      for(int_t dim=0;dim<natural_coord_dim;++dim){
+        natural_coords[dim] = image_gp_locs[gp][dim];
+        //std::cout << " natural coords " << dim << " " << natural_coords[dim] << std::endl;
+      }
+      // evaluate the shape functions and derivatives:
+      tri6_shape_func_evaluator->evaluate_shape_functions(natural_coords,N6);
+      tri6_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN6);
+
+      // physical gp location
+      x = 0.0; y=0.0;
+      for(int_t i=0;i<tri6_num_funcs;++i){
+        x += nodal_coords[i*spa_dim+0]*N6[i];
+        y += nodal_coords[i*spa_dim+1]*N6[i];
+      }
+      //std::cout << " physical coords " << x << " " << y << std::endl;
+
+      // compute the jacobian for this element:
+      DICe::global::calc_jacobian(nodal_coords,DN6,jac,inv_jac,J,tri6_num_funcs,spa_dim);
+
+      // d_dt(phi) * grad(phi)
+      if(has_term(IMAGE_TIME_FORCE))
+        image_time_force(this,spa_dim,tri6_num_funcs,x,y,J,image_gp_weights[gp],N6,elem_force);
+
+    } // image gp loop
+
+    // assemble the force terms
+    // (note: no force terms for lagrange multiplier...so assembly is the same if mixed or not)
+    for(int_t i=0;i<tri6_num_funcs;++i){
+      //int_t nodex_local_id = connectivity[i]->overlap_local_id()*spa_dim;
+      //int_t nodey_local_id = nodex_local_id + 1;
+      //overlap_residual.local_value(nodex_local_id) += elem_force[i*spa_dim+0];
+      //overlap_residual.local_value(nodey_local_id) += elem_force[i*spa_dim+1];
+      int_t nodex_id = (connectivity[i]->global_id()-1)*spa_dim+1;
+      int_t nodey_id = nodex_id + 1;
+      residual->global_value(nodex_id) += elem_force[i*spa_dim+0];
+      residual->global_value(nodey_id) += elem_force[i*spa_dim+1];
+    } // num_funcs
+  }  // elem
+
+  // export the overlap residual to the dist vector
+  //mesh_->field_overlap_export(overlap_residual_ptr, mesh_::field_enums::RESIDUAL_FS, ADD);
+
+  //residual->describe();
+}
+
+
+Status_Flag
+Global_Algorithm::execute(){
+  DEBUG_MSG("Global_Algorithm::execute(): method called");
+  if(!is_initialized_) pre_execution_tasks();
+
+  const int_t p_rank = mesh_->get_comm()->get_rank();
+
+  Teuchos::RCP<MultiField> residual;
+  Teuchos::RCP<MultiField> lhs;
+  Teuchos::RCP<MultiField> lagrange_multiplier;
+  if(is_mixed_formulation()){
+    residual = mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS);
+    lhs = mesh_->get_field(mesh::field_enums::MIXED_LHS_FS);
+    lagrange_multiplier = l_mesh_->get_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
+    lagrange_multiplier->put_scalar(0.0);
+  }
+  else{
+    residual = mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
+    lhs = mesh_->get_field(mesh::field_enums::LHS_FS);
+  }
+  MultiField & disp = *mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
+  disp.put_scalar(0.0);
+  lhs->put_scalar(0.0);
+
+  DEBUG_MSG("Global_Algorithm::execute(): Assembling tangent and residual...");
+
+  Teuchos::RCP<DICe::MultiField_Matrix> tangent = compute_tangent();
+
+  compute_residual();
 
   // apply the boundary conditions
   bc_manager_->apply_bcs();
@@ -748,8 +807,7 @@ Global_Algorithm::execute(){
   Teuchos::RCP<Belos::EpetraPrecOp> belosPrec = Teuchos::rcp( new Belos::EpetraPrecOp( Prec ) );
   linear_problem_->setLeftPrec( belosPrec );
 
-  bool is_set = is_mixed_formulation() ? linear_problem_->setProblem(mixed_lhs->get(), mixed_residual->get()):
-      linear_problem_->setProblem(lhs->get(), residual->get());
+  bool is_set = linear_problem_->setProblem(lhs->get(), residual->get());
   TEUCHOS_TEST_FOR_EXCEPTION(!is_set, std::logic_error,
     "Error: Belos::LinearProblem::setProblem() failed to set up correctly.\n");
   Belos::ReturnType ret = belos_solver_->solve();
@@ -761,11 +819,11 @@ Global_Algorithm::execute(){
   if(is_mixed_formulation()){
     for(int_t i=0;i<mesh_->get_vector_node_dist_map()->get_num_local_elements();++i){
       const int_t gid = mesh_->get_vector_node_dist_map()->get_global_element(i);
-      disp.global_value(gid) = mixed_lhs->global_value(gid);
+      disp.global_value(gid) = lhs->global_value(gid);
     }
     for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
       const int_t gid = l_mesh_->get_scalar_node_dist_map()->get_global_element(i);
-      lagrange_multiplier->global_value(gid) = mixed_lhs->global_value(gid+mixed_global_offset);
+      lagrange_multiplier->global_value(gid) = lhs->global_value(gid+mixed_global_offset());
     }
   }
   else{
@@ -776,8 +834,8 @@ Global_Algorithm::execute(){
 
   compute_strains();
 
-  // for levenberg marquart, copy the quadratic displacement field to the linear mesh
-  if(is_mixed_formulation()){//||global_formulation_==LEVENBERG_MARQUARDT){
+  if(is_mixed_formulation()){
+    const int_t spa_dim = mesh_->spatial_dimension();
     TEUCHOS_TEST_FOR_EXCEPTION(l_mesh_==Teuchos::null,std::runtime_error,"Error, pointer should not be null here");
     Teuchos::RCP<MultiField> linear_disp = l_mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
     Teuchos::RCP<MultiField> master_gids = l_mesh_->get_field(mesh::field_enums::MASTER_NODE_ID_FS);

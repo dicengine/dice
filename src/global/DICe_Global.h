@@ -98,6 +98,17 @@ public:
   /// post execution tasks
   void post_execution_tasks(const scalar_t & time_stamp);
 
+  /// populate the tangent matrix
+  Teuchos::RCP<DICe::MultiField_Matrix> compute_tangent();
+
+  /// populate the residual vector
+  void compute_residual();
+
+  /// returns the offset to the first lagrange multiplier dof
+  int_t mixed_global_offset()const{
+    return mesh_->get_vector_node_dist_map()->get_num_global_elements();
+  }
+
   /// compute the strain values
   void compute_strains();
 
