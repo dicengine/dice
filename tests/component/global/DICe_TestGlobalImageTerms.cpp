@@ -129,17 +129,17 @@ int main(int argc, char *argv[]) {
   roi_file << "  begin boundary\n";
   roi_file << "    begin polygon\n";
   roi_file << "      begin vertices\n";
-  roi_file << "        0 0\n";
-  roi_file << "        500 0\n";
-  roi_file << "        500 500\n";
-  roi_file << "        0 500\n";
+  roi_file << "        20 20\n";
+  roi_file << "        480 20\n";
+  roi_file << "        480 480\n";
+  roi_file << "        20 480\n";
   roi_file << "      end vertices\n";
   roi_file << "    end polygon\n";
   roi_file << "  end boundary\n";
-  roi_file << "  neumann_bc boundary 0 0 1\n";
-  roi_file << "  neumann_bc boundary 0 1 2\n";
-  roi_file << "  neumann_bc boundary 0 2 3\n";
-  roi_file << "  neumann_bc boundary 0 3 0\n";
+  roi_file << "  dirichlet_bc boundary 0 0 1 use_subsets 27\n";
+  roi_file << "  dirichlet_bc boundary 0 1 2 use_subsets 27\n";
+  roi_file << "  dirichlet_bc boundary 0 2 3 use_subsets 27\n";
+  roi_file << "  dirichlet_bc boundary 0 3 0 use_subsets 27\n";
   roi_file << "end region_of_interest\n";
   roi_file.close();
 
@@ -163,45 +163,42 @@ int main(int argc, char *argv[]) {
     exact_sol->local_value(iy) = by;
   }
 
-  *outStream << " executing a correlation" << std::endl;
+  //output the grad images
+  schema->ref_img()->write_grad_x("ref_image_terms_grad_x.tif");
+  schema->ref_img()->write_grad_y("ref_image_terms_grad_y.tif");
+
+  *outStream << "executing a correlation" << std::endl;
   schema->execute_correlation();
 
   // write the output etc.
   schema->post_execution_tasks();
 
-  // TODO check the output values and compute the error...
+  *outStream << "checking the output" << std::endl;
 
-//  error_bx = 0.0;
-//  error_by = 0.0;
-//  error_lambda = 0.0;
-//
-//  MultiField & disp = *mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
-//  MultiField & exact_sol = *mesh_->get_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
-//
-//  for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
-//    int_t ix = i*2+0;
-//    int_t iy = i*2+1;
-//    const scalar_t b_x = disp.local_value(ix);
-//    const scalar_t b_y = disp.local_value(iy);
-//    const scalar_t b_exact_x = exact_sol.local_value(ix);
-//    const scalar_t b_exact_y = exact_sol.local_value(iy);
-//    error_bx += (b_exact_x - b_x)*(b_exact_x - b_x);
-//    error_by += (b_exact_y - b_y)*(b_exact_y - b_y);
-//  }
-//  error_bx = std::sqrt(error_bx);
-//  error_by = std::sqrt(error_by);
-//
-//  if(is_mixed_formulation()){
-//    MultiField & l_exact_sol = *l_mesh_->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
-//    MultiField & l_field = *l_mesh_->get_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
-//    for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
-//      const scalar_t l = l_field.local_value(i);
-//      const scalar_t l_exact = l_exact_sol.local_value(i);
-//      error_lambda += (l_exact - l)*(l_exact - l);
-//    }
-//    error_lambda = std::sqrt(error_lambda);
-//  }
+  scalar_t error_bx = 0.0;
+  scalar_t error_by = 0.0;
 
+  Teuchos::RCP<MultiField> disp = schema->global_algorithm()->mesh()->get_field(mesh::field_enums::DISPLACEMENT_FS);
+  for(int_t i=0;i<schema->global_algorithm()->mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
+    int_t ix = i*2+0;
+    int_t iy = i*2+1;
+    const scalar_t b_x = disp->local_value(ix);
+    const scalar_t b_y = disp->local_value(iy);
+    const scalar_t b_exact_x = exact_sol->local_value(ix);
+    const scalar_t b_exact_y = exact_sol->local_value(iy);
+    error_bx += (b_exact_x - b_x)*(b_exact_x - b_x);
+    error_by += (b_exact_y - b_y)*(b_exact_y - b_y);
+  }
+  error_bx = std::sqrt(error_bx);
+  error_by = std::sqrt(error_by);
+
+  *outStream << "ERROR_X: " << error_bx << " ERROR_Y: " << error_by << std::endl;
+
+  const scalar_t error_max = 0.1;
+  if(error_bx > error_max || error_by > error_max){
+    *outStream << "Error, the solution error is too high" << std::endl;
+    errorFlag++;
+  }
 
   *outStream << "--- End test ---" << std::endl;
 

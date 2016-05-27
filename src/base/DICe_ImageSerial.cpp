@@ -247,6 +247,16 @@ Image::grad_x(const int_t x,
   return grad_x_[y*width_+x];
 }
 
+Teuchos::ArrayRCP<scalar_t>
+Image::grad_x() const {
+  return grad_x_;
+}
+
+Teuchos::ArrayRCP<scalar_t>
+Image::grad_y() const {
+  return grad_y_;
+}
+
 const scalar_t&
 Image::grad_y(const int_t x,
   const int_t y) const {

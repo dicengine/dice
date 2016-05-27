@@ -191,6 +191,26 @@ Image::write(const std::string & file_name){
   }
 }
 
+void
+Image::write_grad_x(const std::string & file_name){
+  try{
+    utils::write_image(file_name.c_str(),width_,height_,grad_x().getRawPtr(),default_is_layout_right());
+  }
+  catch(std::exception &e){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, write image grad_x failure.");
+  }
+}
+
+void
+Image::write_grad_y(const std::string & file_name){
+  try{
+    utils::write_image(file_name.c_str(),width_,height_,grad_y().getRawPtr(),default_is_layout_right());
+  }
+  catch(std::exception &e){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, write image grad_y failure.");
+  }
+}
+
 Teuchos::RCP<Image>
 Image::apply_rotation(const Rotation_Value rotation,
   const Teuchos::RCP<Teuchos::ParameterList> & params){

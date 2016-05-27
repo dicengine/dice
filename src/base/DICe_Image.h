@@ -175,6 +175,22 @@ public:
   /// \param file_name the name of the file to write to
   void write(const std::string & file_name);
 
+  /// write the image x gradients to a file
+  /// (tiff, jpeg, or png, depending on which file extension is used in the name)
+  /// Tiff, jpeg, and png will truncate the intensity values to an 8-bit integer value
+  /// and scale the image so that the histogram is spread over the entire 0-255 range.
+  /// The rawi format saves the full intesity_t precision value to file
+  /// \param file_name the name of the file to write to
+  void write_grad_x(const std::string & file_name);
+
+  /// write the image y gradients to a file
+  /// (tiff, jpeg, or png, depending on which file extension is used in the name)
+  /// Tiff, jpeg, and png will truncate the intensity values to an 8-bit integer value
+  /// and scale the image so that the histogram is spread over the entire 0-255 range.
+  /// The rawi format saves the full intesity_t precision value to file
+  /// \param file_name the name of the file to write to
+  void write_grad_y(const std::string & file_name);
+
   /// returns the width of the image
   int_t width()const{
     return width_;
@@ -218,6 +234,12 @@ public:
 
   /// returns a copy of the intenisity values as an array
   Teuchos::ArrayRCP<intensity_t> intensities()const;
+
+  /// returns a copy of the grad_x values as an array
+  Teuchos::ArrayRCP<scalar_t> grad_x()const;
+
+  /// returns a copy of the grad_y values as an array
+  Teuchos::ArrayRCP<scalar_t> grad_y()const;
 
   /// replaces the intensity values of the image
   /// \param intensities the new intensity value array
