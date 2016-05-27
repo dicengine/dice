@@ -63,7 +63,8 @@ Image::Image(intensity_t * intensities,
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   has_gauss_filter_(false),
-  file_name_("(from raw array)")
+  file_name_("(from raw array)"),
+  gradient_method_(FINITE_DIFFERENCE)
 {
   initialize_array_image(intensities);
   default_constructor_tasks(params);
@@ -80,7 +81,8 @@ Image::Image(const int_t width,
   intensity_rcp_(intensities),
   has_gradients_(false),
   has_gauss_filter_(false),
-  file_name_("(from array)")
+  file_name_("(from array)"),
+  gradient_method_(FINITE_DIFFERENCE)
 {
   initialize_array_image(intensities.getRawPtr());
   default_constructor_tasks(params);

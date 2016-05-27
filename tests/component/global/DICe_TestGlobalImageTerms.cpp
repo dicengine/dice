@@ -84,7 +84,6 @@ int main(int argc, char *argv[]) {
   input_params->set(DICe::output_folder,"");
   input_params->set(DICe::output_prefix,"image_terms");
   corr_params->set(DICe::use_global_dic,true);
-  corr_params->set(DICe::global_regularization_alpha,0.0001);
   corr_params->set(DICe::global_formulation,UNREGULARIZED);
   corr_params->set(DICe::global_solver,GMRES_SOLVER);
 
