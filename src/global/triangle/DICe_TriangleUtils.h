@@ -68,6 +68,16 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
   const scalar_t & max_size_constraint,
   const std::string & output_file_name);
 
+Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri6_mesh(const scalar_t & begin_x,
+  const scalar_t & end_x,
+  const scalar_t & begin_y,
+  const scalar_t & end_y,
+  const scalar_t & h,
+  std::vector<int_t> & dirichlet_sides,
+  std::vector<int_t> & neumann_sides,
+  const std::string & output_file_name);
+
+
 }// End DICe Namespace
 
 #endif

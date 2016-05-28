@@ -728,6 +728,10 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile);
            if(block_tokens.size()==0) continue; // blank line or comment
            else if(block_tokens[0]==parser_end) break; // end of the defs
+           // force the triangulation to be a regular grid rather than delaunay
+           else if(block_tokens[0]==parser_use_regular_grid){
+             info->use_regular_grid = true;
+           }
            // BOUNDARY CONDITIONS
            else if(block_tokens[0]==parser_dirichlet_bc){
              if(proc_rank==0) DEBUG_MSG("Reading dirichlet boundary condition ");

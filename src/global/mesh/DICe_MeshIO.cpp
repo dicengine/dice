@@ -424,7 +424,7 @@ Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coor
         conn.push_back(mesh->get_node_set()->find(global_node_id)->second);
       }
       else{
-        TEUCHOS_TEST_FOR_EXCEPTION(!found_node,std::logic_error,"Could not find node rcp in set");
+        TEUCHOS_TEST_FOR_EXCEPTION(!found_node,std::logic_error,"Could not find node rcp in set: " << global_node_id);
       }
     }
     // create an element and put it in the mesh

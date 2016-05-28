@@ -225,6 +225,7 @@ Subset_File_Info {
     num_motion_windows = 0;
     type = info_type;
     boundary_condition_defs = Teuchos::rcp(new std::vector<Boundary_Condition_Def>());
+    use_regular_grid = false;
   }
   /// Pointer to map of conformal subset defs (these are used to define conformal subsets)
   Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
@@ -262,6 +263,8 @@ Subset_File_Info {
   int_t num_motion_windows;
   /// Pointer to the vector of neighbor ids
   Teuchos::RCP<std::vector<Boundary_Condition_Def> > boundary_condition_defs;
+  /// true if the mesh should be constructed with a regular grid
+  bool use_regular_grid;
 };
 
 /// \brief Read a list of coordinates for correlation points from file
@@ -359,6 +362,8 @@ const char* const parser_end = "END";
 const char* const parser_subset_coordinates = "SUBSET_COORDINATES";
 /// Parser string
 const char* const parser_region_of_interest = "REGION_OF_INTEREST";
+/// Parser string
+const char* const parser_use_regular_grid = "USE_REGULAR_GRID";
 /// Parser string
 const char* const parser_conformal_subset = "CONFORMAL_SUBSET";
 /// Parser string
