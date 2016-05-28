@@ -601,7 +601,7 @@ Global_Algorithm::compute_tangent(){
 }
 
 scalar_t
-Global_Algorithm::compute_residual(const bool use_lagrangian_coordinates){
+Global_Algorithm::compute_residual(const bool use_fixed_point){
 
   DEBUG_MSG("Global_Algorithm::compute_residual(): computing the residual.");
   const int_t spa_dim = mesh_->spatial_dimension();
@@ -735,7 +735,7 @@ Global_Algorithm::compute_residual(const bool use_lagrangian_coordinates){
       for(int_t i=0;i<tri6_num_funcs;++i){
         x += nodal_coords[i*spa_dim+0]*N6[i];
         y += nodal_coords[i*spa_dim+1]*N6[i];
-        if(use_lagrangian_coordinates){
+        if(use_fixed_point){
           bx += nodal_disp[i*spa_dim+0]*N6[i];
           by += nodal_disp[i*spa_dim+1]*N6[i];
         }
@@ -759,10 +759,13 @@ Global_Algorithm::compute_residual(const bool use_lagrangian_coordinates){
       //int_t nodey_local_id = nodex_local_id + 1;
       //overlap_residual.local_value(nodex_local_id) += elem_force[i*spa_dim+0];
       //overlap_residual.local_value(nodey_local_id) += elem_force[i*spa_dim+1];
-      int_t nodex_id = (connectivity[i]->global_id()-1)*spa_dim+1;
-      int_t nodey_id = nodex_id + 1;
-      residual->global_value(nodex_id) += elem_force[i*spa_dim+0];
-      residual->global_value(nodey_id) += elem_force[i*spa_dim+1];
+      for(int_t dim=0;dim<spa_dim;++dim){
+        int_t row = (connectivity[i]->global_id()-1)*spa_dim+dim+1;
+        //const bool is_local_row_node =  mesh_->get_vector_node_dist_map()->is_node_global_elem(row); // using the non-mixed map because the row is a velocity row
+        //const bool row_is_bc_node = is_local_row_node ?
+        //    bc_manager_->is_row_bc(mesh_->get_vector_node_dist_map()->get_local_element(row)) : false; // same rationalle here
+        residual->global_value(row) += elem_force[i*spa_dim+dim];
+      }
     } // num_funcs
   }  // elem
 
@@ -804,19 +807,19 @@ Global_Algorithm::execute(){
 
   // if this is a real problem (not MMS) use the lagrangian coordinates
   // and use a fixed point iteration loop rather than a direct solve
-  const bool use_lagrangian_coordinates = mms_problem_==Teuchos::null;
-  DEBUG_MSG("Global_Algorithm::execute: use_lagrangian_coordinates: " << use_lagrangian_coordinates);
-  const int_t max_its = 5;
+  const bool use_fixed_point = mms_problem_==Teuchos::null;
+  DEBUG_MSG("Global_Algorithm::execute: use_fixed_point: " << use_fixed_point);
+  const int_t max_its = 10;
   const scalar_t tol = 1.0E-6;
   int_t it=0;
   for(;it<=max_its;++it){
     // clear the left hand side
     lhs->put_scalar(0.0);
 
-    const scalar_t resid_norm = compute_residual(use_lagrangian_coordinates);
+    const scalar_t resid_norm = compute_residual(use_fixed_point);
 
     // apply the boundary conditions
-    bc_manager_->apply_bcs();
+    bc_manager_->apply_bcs(it==0);
 
     if(resid_norm < tol){
       DEBUG_MSG("Iteration: " << it << " residual norm: " << resid_norm);
@@ -845,17 +848,18 @@ Global_Algorithm::execute(){
     if(is_mixed_formulation()){
       for(int_t i=0;i<mesh_->get_vector_node_dist_map()->get_num_local_elements();++i){
         const int_t gid = mesh_->get_vector_node_dist_map()->get_global_element(i);
-        disp->global_value(gid) = lhs->global_value(gid);
+        disp->global_value(gid) += lhs->global_value(gid);
       }
       for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
         const int_t gid = l_mesh_->get_scalar_node_dist_map()->get_global_element(i);
-        lagrange_multiplier->global_value(gid) = lhs->global_value(gid+mixed_global_offset());
+        lagrange_multiplier->global_value(gid) += lhs->global_value(gid+mixed_global_offset());
       }
     }
     else{
       // upate the displacements
       disp->update(1.0,*lhs,1.0);
     }
+
     //disp.describe();
     //write out the stats on the displacement field
     scalar_t lhs_min_x = 0.0, lhs_min_y = 0.0;
@@ -875,7 +879,7 @@ Global_Algorithm::execute(){
     DEBUG_MSG("DISPLACEMENT: min_x " << disp_min_x << " max_x " << disp_max_x << " avg_x " << disp_avg_x << " std_dev_x " << disp_std_dev_x);
     DEBUG_MSG("DISPLACEMENT: min_y " << disp_min_y << " max_y " << disp_max_y << " avg_y " << disp_avg_y << " std_dev_y " << disp_std_dev_y);
 
-    if(!use_lagrangian_coordinates){
+    if(!use_fixed_point){
       DEBUG_MSG("Global_Algorithm::execute(): * * * convergence successful * * *");
       DEBUG_MSG("Global_Algorithm::execute(): criteria: single iteration required");
       break;

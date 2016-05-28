@@ -74,7 +74,8 @@ public:
   virtual ~Boundary_Condition(){};
 
   /// Apply the boundary condition
-  virtual void apply()=0;
+  /// \param first_iteration true if this is the first iteration
+  virtual void apply(const bool first_iteration)=0;
 
 protected:
   /// Protect the default constructor
@@ -103,7 +104,7 @@ public:
   virtual ~Dirichlet_BC(){};
 
   /// Apply the boundary condition
-  virtual void apply();
+  virtual void apply(const bool first_iteration);
 
 protected:
 };
@@ -126,7 +127,7 @@ public:
   virtual ~Subset_BC(){};
 
   /// Apply the boundary condition
-  virtual void apply();
+  virtual void apply(const bool first_iteration);
 
 protected:
   /// pointer to a global algorithm
@@ -151,7 +152,7 @@ public:
   virtual ~MMS_BC(){};
 
   /// Apply the boundary condition
-  virtual void apply();
+  virtual void apply(const bool first_iteration);
 
 protected:
   /// pointer to a global algorithm
@@ -264,7 +265,8 @@ public:
     const bool is_mixed);
 
   /// apply the boundary conditions
-  void apply_bcs();
+  /// \param first_iteration true if this is the first iteration
+  void apply_bcs(const bool first_iteration);
 
 protected:
   BC_Manager(const BC_Manager&);

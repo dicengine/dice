@@ -208,9 +208,13 @@ int main(int argc, char *argv[]) {
     corr_params->remove(DICe::output_prefix);
   } // end shift loop
 
+  *outStream << "-----------------------------------------------------------------------------------------------------------" << std::endl;
+  *outStream << "Results Summary:" << std::endl;
+  *outStream << "-----------------------------------------------------------------------------------------------------------" << std::endl;
   for(size_t i=0;i<error_x.size();++i){
-    *outStream << "shift: " << i*0.05 << " error_x: " << error_x[i] << " error_y: " << error_y[i] << std::endl;
+    *outStream << "shift: " << std::setw(10) << i*0.05 << " error_x: " << std::setw(15)  << error_x[i] << " error_y: " << std::setw(15) << error_y[i] << std::endl;
   }
+  *outStream << "-----------------------------------------------------------------------------------------------------------" << std::endl;
 
   *outStream << "--- End test ---" << std::endl;
 

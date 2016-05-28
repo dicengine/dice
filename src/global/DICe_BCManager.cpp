@@ -173,14 +173,14 @@ BC_Manager::create_bc(Global_EQ_Term eq_term,
 }
 
 void
-BC_Manager::apply_bcs(){
-  DEBUG_MSG("BC_Manager::apply_bcs(): applying the boundary conditions");
+BC_Manager::apply_bcs(const bool first_iteration){
+  DEBUG_MSG("BC_Manager::apply_bcs(): first iteration: " << first_iteration);
   for(size_t i=0;i<bcs_.size();++i)
-    bcs_[i]->apply();
+    bcs_[i]->apply(first_iteration);
 }
 
 void
-Dirichlet_BC::apply(){
+Dirichlet_BC::apply(const bool first_iteration){
   // get the residual field
   Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
       mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
@@ -203,8 +203,8 @@ Dirichlet_BC::apply(){
       const int_t node_gid = bc_sets->find(node_set_id)->second[i];
       const int_t ix = (node_gid-1)*spa_dim + 1;
       const int_t iy = (node_gid-1)*spa_dim + 2;
-      residual->global_value(ix) = value_x;
-      residual->global_value(iy) = value_y;
+      residual->global_value(ix) = first_iteration ? value_x : 0.0;
+      residual->global_value(iy) = first_iteration ? value_y : 0.0;
     }
   }
   // if this is a mixed formulation set the lagrange multiplier to 0 on this boundary
@@ -227,7 +227,7 @@ Dirichlet_BC::apply(){
 }
 
 void
-Subset_BC::apply(){
+Subset_BC::apply(const bool first_iteration){
   // get the residual field
   Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
       mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
@@ -250,18 +250,24 @@ Subset_BC::apply(){
       const int_t node_gid = bc_sets->find(node_set_id)->second[i];
       const int_t ix = (node_gid-1)*spa_dim + 1;
       const int_t iy = (node_gid-1)*spa_dim + 2;
-      scalar_t b_x = 0.0;
-      scalar_t b_y = 0.0;
-      const scalar_t x = coords->global_value(ix);
-      const scalar_t y = coords->global_value(iy);
-      // get the closest pixel to x and y
-      int_t px = (int_t)x;
-      if(x - (int_t)x >= 0.5) px++;
-      int_t py = (int_t)y;
-      if(y - (int_t)y >= 0.5) py++;
-      DICe::global::subset_velocity(alg_,px,py,subset_size,b_x,b_y);
-      residual->global_value(ix) = b_x;
-      residual->global_value(iy) = b_y;
+      if(!first_iteration){
+        residual->global_value(ix) = 0.0;
+        residual->global_value(iy) = 0.0;
+      }
+      else{
+        scalar_t b_x = 0.0;
+        scalar_t b_y = 0.0;
+        const scalar_t x = coords->global_value(ix);
+        const scalar_t y = coords->global_value(iy);
+        // get the closest pixel to x and y
+        int_t px = (int_t)x;
+        if(x - (int_t)x >= 0.5) px++;
+        int_t py = (int_t)y;
+        if(y - (int_t)y >= 0.5) py++;
+        DICe::global::subset_velocity(alg_,px,py,subset_size,b_x,b_y);
+        residual->global_value(ix) = b_x;
+        residual->global_value(iy) = b_y;
+      }
     }
   }
   // if this is a mixed formulation set the lagrange multiplier to 0 on this boundary
@@ -284,7 +290,7 @@ Subset_BC::apply(){
 }
 
 void
-MMS_BC::apply(){
+MMS_BC::apply(const bool first_iteration){
   // get the residual field
   Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
       mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
@@ -297,22 +303,24 @@ MMS_BC::apply(){
   TEUCHOS_TEST_FOR_EXCEPTION(alg_->mms_problem()==Teuchos::null,std::runtime_error,"Error, mms_problem should not be null");
 
   // populate the image and solution fields
-  for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
-    int_t ix = i*2+0;
-    int_t iy = i*2+1;
-    scalar_t b_x = 0.0;
-    scalar_t b_y = 0.0;
-    const scalar_t x = coords->local_value(ix);
-    const scalar_t y = coords->local_value(iy);
-    alg_->mms_problem()->velocity(x,y,b_x,b_y);
-    scalar_t phi = 0.0,d_phi_dt=0.0,grad_phi_x=0.0,grad_phi_y=0.0;
-    alg_->mms_problem()->phi(x,y,phi);
-    image_phi->local_value(i) = phi;
-    alg_->mms_problem()->phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
-    image_grad_phi->local_value(ix) = grad_phi_x;
-    image_grad_phi->local_value(iy) = grad_phi_y;
-    exact_sol->local_value(ix) = b_x;
-    exact_sol->local_value(iy) = b_y;
+  if(first_iteration){
+    for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+      int_t ix = i*2+0;
+      int_t iy = i*2+1;
+      scalar_t b_x = 0.0;
+      scalar_t b_y = 0.0;
+      const scalar_t x = coords->local_value(ix);
+      const scalar_t y = coords->local_value(iy);
+      alg_->mms_problem()->velocity(x,y,b_x,b_y);
+      scalar_t phi = 0.0,d_phi_dt=0.0,grad_phi_x=0.0,grad_phi_y=0.0;
+      alg_->mms_problem()->phi(x,y,phi);
+      image_phi->local_value(i) = phi;
+      alg_->mms_problem()->phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
+      image_grad_phi->local_value(ix) = grad_phi_x;
+      image_grad_phi->local_value(iy) = grad_phi_y;
+      exact_sol->local_value(ix) = b_x;
+      exact_sol->local_value(iy) = b_y;
+    }
   }
   const int_t node_set_id = 1;  // mms bcs are hard coded to node set id 1
   DEBUG_MSG("MMS_BC::apply(): applying a Dirichlet bc to node set id " << node_set_id);
@@ -325,26 +333,34 @@ MMS_BC::apply(){
     const int_t node_gid = bc_sets->find(node_set_id)->second[i];
     const int_t ix = (node_gid-1)*spa_dim + 1;
     const int_t iy = (node_gid-1)*spa_dim + 2;
-    const scalar_t x = coords->global_value(ix);
-    const scalar_t y = coords->global_value(iy);
-    scalar_t b_x = 0.0, b_y = 0.0;
-    alg_->mms_problem()->velocity(x,y,b_x,b_y);
-    residual->global_value(ix) = b_x;
-    residual->global_value(iy) = b_y;
+    if(!first_iteration){
+      residual->global_value(ix) = 0.0;
+      residual->global_value(iy) = 0.0;
+    }
+    else{
+      const scalar_t x = coords->global_value(ix);
+      const scalar_t y = coords->global_value(iy);
+      scalar_t b_x = 0.0, b_y = 0.0;
+      alg_->mms_problem()->velocity(x,y,b_x,b_y);
+      residual->global_value(ix) = b_x;
+      residual->global_value(iy) = b_y;
+    }
   }
   if(is_mixed_){
     TEUCHOS_TEST_FOR_EXCEPTION(alg_->l_mesh()==Teuchos::null,std::runtime_error,
       "Error, l_mesh pointer should not be null");
     const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_num_global_elements();
-    Teuchos::RCP<MultiField> exact_lag = alg_->l_mesh()->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
-    for(int_t i=0;i<alg_->l_mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
-      int_t ix = i*2+0;
-      int_t iy = i*2+1;
-      const scalar_t x = coords->local_value(ix);
-      const scalar_t y = coords->local_value(iy);
-      scalar_t l_out = 0.0;
-      alg_->mms_problem()->lagrange(x,y,l_out);
-      exact_lag->local_value(i) = l_out;
+    if(first_iteration){ // populate the exact solution fields
+      Teuchos::RCP<MultiField> exact_lag = alg_->l_mesh()->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
+      for(int_t i=0;i<alg_->l_mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
+        int_t ix = i*2+0;
+        int_t iy = i*2+1;
+        const scalar_t x = coords->local_value(ix);
+        const scalar_t y = coords->local_value(iy);
+        scalar_t l_out = 0.0;
+        alg_->mms_problem()->lagrange(x,y,l_out);
+        exact_lag->local_value(i) = l_out;
+      }
     }
     const int_t node_set_id = -1;  // mms bcs are hard coded to node set id -1 for the lagrange multiplier
     DEBUG_MSG("MMS_BC::apply(): applying a Dirichlet Lagrange Multiplier BC to node set id " << node_set_id);
@@ -357,11 +373,16 @@ MMS_BC::apply(){
       const int_t node_gid = bc_sets->find(node_set_id)->second[i];
       const int_t ix = (node_gid-1)*spa_dim + 1;
       const int_t iy = (node_gid-1)*spa_dim + 2;
-      const scalar_t x = coords->global_value(ix);
-      const scalar_t y = coords->global_value(iy);
-      scalar_t l_out = 0.0;
-      alg_->mms_problem()->lagrange(x,y,l_out);
-      residual->global_value(node_gid + mixed_global_offset) = l_out;
+      if(!first_iteration){
+        residual->global_value(node_gid + mixed_global_offset) = 0.0;
+      }
+      else{
+        const scalar_t x = coords->global_value(ix);
+        const scalar_t y = coords->global_value(iy);
+        scalar_t l_out = 0.0;
+        alg_->mms_problem()->lagrange(x,y,l_out);
+        residual->global_value(node_gid + mixed_global_offset) = l_out;
+      }
     }
   } // is mixed
 }
