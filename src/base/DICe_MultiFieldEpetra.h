@@ -388,6 +388,29 @@ public:
     return array;
   }
 
+  ///  Compute the 2 norm of the vector
+  /// \param field_index The field of which to take the norm
+  scalar_t norm(const int_t field_index=0){
+    mv_scalar_type norm = 0.0;
+    epetra_mv_->Norm2(&norm);
+    return norm;
+  }
+
+  ///  Compute the 2 norm of this vector minus another
+  /// \param multifield the field to diff against
+  scalar_t norm(Teuchos::RCP<MultiField> multifield){
+    TEUCHOS_TEST_FOR_EXCEPTION(this->get_map()->get_num_local_elements()!=
+        multifield->get_map()->get_num_local_elements(),std::runtime_error,
+        "Error, incompatible multifield maps");
+    scalar_t norm = 0.0;
+    for(int_t i=0;i<get_map()->get_num_local_elements();++i){
+      norm += (this->local_value(i)-multifield->local_value(i))*
+          (this->local_value(i)-multifield->local_value(i));
+    }
+    norm = std::sqrt(norm);
+    return norm;
+  }
+
   /// set all the values in this field to the given scalar
   /// \param scalar
   void put_scalar(const mv_scalar_type & scalar){

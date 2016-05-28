@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
   } // end formulation loop
 
   *outStream << "-----------------------------------------------------------------------------------------------------------" << std::endl;
-  *outStream << "RESULTS:" << std::endl;
+  *outStream << "Results Summary:" << std::endl;
   *outStream << "-----------------------------------------------------------------------------------------------------------" << std::endl;
   for(size_t i=0;i<formulation.size();++i){
     *outStream << std::setw(25) << to_string(formulation[i]) << " error x: " << std::setw(15) << error_x[i] << " error y: "

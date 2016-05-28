@@ -149,6 +149,7 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   }
   // create the necessary fields:
   mesh_->create_field(mesh::field_enums::DISPLACEMENT_FS);
+  mesh_->create_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
   mesh_->create_field(mesh::field_enums::RESIDUAL_FS);
   mesh_->create_field(mesh::field_enums::LHS_FS);
   // create the strain fields
@@ -599,8 +600,8 @@ Global_Algorithm::compute_tangent(){
   return tangent;
 }
 
-void
-Global_Algorithm::compute_residual(){
+scalar_t
+Global_Algorithm::compute_residual(const bool use_lagrangian_coordinates){
 
   DEBUG_MSG("Global_Algorithm::compute_residual(): computing the residual.");
   const int_t spa_dim = mesh_->spatial_dimension();
@@ -624,11 +625,12 @@ Global_Algorithm::compute_residual(){
   scalar_t N6[tri6_num_funcs];
   scalar_t DN6[tri6_num_funcs*spa_dim];
   scalar_t nodal_coords[tri6_num_funcs*spa_dim];
+  scalar_t nodal_disp[tri6_num_funcs*spa_dim];
   scalar_t jac[spa_dim*spa_dim];
   scalar_t inv_jac[spa_dim*spa_dim];
   scalar_t J =0.0;
   scalar_t elem_force[tri6_num_funcs*spa_dim];
-  scalar_t x=0.0,y=0.0;
+  scalar_t x=0.0,y=0.0,bx=0.0,by=0.0;
 
   // get the natural integration points for this element:
   const int_t integration_order = 6;
@@ -653,6 +655,9 @@ Global_Algorithm::compute_residual(){
   Teuchos::RCP<MultiField> overlap_coords_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_FS);
   MultiField & overlap_coords = *overlap_coords_ptr;
   Teuchos::ArrayRCP<const scalar_t> coords_values = overlap_coords.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_disp_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_FS);
+  MultiField & overlap_disp = *overlap_disp_ptr;
+  Teuchos::ArrayRCP<const scalar_t> disp_values = overlap_disp.get_1d_view();
 
   // element loop
   DICe::mesh::element_set::iterator elem_it = mesh_->get_element_set()->begin();
@@ -666,6 +671,7 @@ Global_Algorithm::compute_residual(){
       for(int_t dim=0;dim<spa_dim;++dim){
         const int_t stride = nd*spa_dim + dim;
         nodal_coords[stride] = coords_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
+        nodal_disp[stride] = disp_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
         //std::cout << " node coords " << nodal_coords[stride] << std::endl;
       }
     }
@@ -725,10 +731,16 @@ Global_Algorithm::compute_residual(){
 
       // physical gp location
       x = 0.0; y=0.0;
+      bx = 0.0; by=0.0;
       for(int_t i=0;i<tri6_num_funcs;++i){
         x += nodal_coords[i*spa_dim+0]*N6[i];
         y += nodal_coords[i*spa_dim+1]*N6[i];
+        if(use_lagrangian_coordinates){
+          bx += nodal_disp[i*spa_dim+0]*N6[i];
+          by += nodal_disp[i*spa_dim+1]*N6[i];
+        }
       }
+      //std::cout << " x " << x << " y " << y <<  " bx " << bx << " by " << by << std::endl;
       //std::cout << " physical coords " << x << " " << y << std::endl;
 
       // compute the jacobian for this element:
@@ -736,7 +748,7 @@ Global_Algorithm::compute_residual(){
 
       // d_dt(phi) * grad(phi)
       if(has_term(IMAGE_TIME_FORCE))
-        image_time_force(this,spa_dim,tri6_num_funcs,x,y,J,image_gp_weights[gp],N6,elem_force);
+        image_time_force(this,spa_dim,tri6_num_funcs,x,y,bx,by,J,image_gp_weights[gp],N6,elem_force);
 
     } // image gp loop
 
@@ -756,7 +768,7 @@ Global_Algorithm::compute_residual(){
 
   // export the overlap residual to the dist vector
   //mesh_->field_overlap_export(overlap_residual_ptr, mesh_::field_enums::RESIDUAL_FS, ADD);
-
+  return residual->norm();
   //residual->describe();
 }
 
@@ -781,56 +793,110 @@ Global_Algorithm::execute(){
     residual = mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
     lhs = mesh_->get_field(mesh::field_enums::LHS_FS);
   }
-  MultiField & disp = *mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
-  disp.put_scalar(0.0);
-  lhs->put_scalar(0.0);
-
-  DEBUG_MSG("Global_Algorithm::execute(): Assembling tangent and residual...");
+  Teuchos::RCP<MultiField> disp = mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
+  Teuchos::RCP<MultiField> disp_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
+  disp->put_scalar(0.0);
+  disp_nm1->put_scalar(0.0);
 
   Teuchos::RCP<DICe::MultiField_Matrix> tangent = compute_tangent();
-
-  compute_residual();
-
-  // apply the boundary conditions
-  bc_manager_->apply_bcs();
-
-  DEBUG_MSG("Global_Algorithm::execute(): Solving the linear system...");
-
-  // solve:
   linear_problem_->setHermitian(true);
   linear_problem_->setOperator(tangent->get());
 
-  DEBUG_MSG("Global_Algorithm::execute(): Preconditioning");
-  Preconditioner_Factory factory;
-  Teuchos::RCP<Teuchos::ParameterList> plist = factory.parameter_list_for_ifpack();
-  Teuchos::RCP<Ifpack_Preconditioner> Prec = factory.create (tangent->get(), plist);
-  Teuchos::RCP<Belos::EpetraPrecOp> belosPrec = Teuchos::rcp( new Belos::EpetraPrecOp( Prec ) );
-  linear_problem_->setLeftPrec( belosPrec );
+  // if this is a real problem (not MMS) use the lagrangian coordinates
+  // and use a fixed point iteration loop rather than a direct solve
+  const bool use_lagrangian_coordinates = mms_problem_==Teuchos::null;
+  DEBUG_MSG("Global_Algorithm::execute: use_lagrangian_coordinates: " << use_lagrangian_coordinates);
+  const int_t max_its = 5;
+  const scalar_t tol = 1.0E-6;
+  int_t it=0;
+  for(;it<=max_its;++it){
+    // clear the left hand side
+    lhs->put_scalar(0.0);
 
-  bool is_set = linear_problem_->setProblem(lhs->get(), residual->get());
-  TEUCHOS_TEST_FOR_EXCEPTION(!is_set, std::logic_error,
-    "Error: Belos::LinearProblem::setProblem() failed to set up correctly.\n");
-  Belos::ReturnType ret = belos_solver_->solve();
-  if(ret != Belos::Converged && p_rank==0)
-    std::cout << "*** WARNING: Belos linear solver did not converge!" << std::endl;
-  // } // end iteration loop
+    const scalar_t resid_norm = compute_residual(use_lagrangian_coordinates);
 
-  // if this is a mixed form split the lhs into displacement and lagrange multiplier fields
-  if(is_mixed_formulation()){
-    for(int_t i=0;i<mesh_->get_vector_node_dist_map()->get_num_local_elements();++i){
-      const int_t gid = mesh_->get_vector_node_dist_map()->get_global_element(i);
-      disp.global_value(gid) = lhs->global_value(gid);
+    // apply the boundary conditions
+    bc_manager_->apply_bcs();
+
+    if(resid_norm < tol){
+      DEBUG_MSG("Iteration: " << it << " residual norm: " << resid_norm);
+      DEBUG_MSG("Global_Algorithm::execute(): * * * convergence successful * * *");
+      DEBUG_MSG("Global_Algorithm::execute(): criteria: residual_norm < tol (" << tol << ")");
+      break;
     }
-    for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
-      const int_t gid = l_mesh_->get_scalar_node_dist_map()->get_global_element(i);
-      lagrange_multiplier->global_value(gid) = lhs->global_value(gid+mixed_global_offset());
+
+    // solve:
+    DEBUG_MSG("Global_Algorithm::execute(): Solving the linear system...");
+    DEBUG_MSG("Global_Algorithm::execute(): Preconditioning");
+    Preconditioner_Factory factory;
+    Teuchos::RCP<Teuchos::ParameterList> plist = factory.parameter_list_for_ifpack();
+    Teuchos::RCP<Ifpack_Preconditioner> Prec = factory.create (tangent->get(), plist);
+    Teuchos::RCP<Belos::EpetraPrecOp> belosPrec = Teuchos::rcp( new Belos::EpetraPrecOp( Prec ) );
+    linear_problem_->setLeftPrec( belosPrec );
+    bool is_set = linear_problem_->setProblem(lhs->get(), residual->get());
+    TEUCHOS_TEST_FOR_EXCEPTION(!is_set, std::logic_error,
+      "Error: Belos::LinearProblem::setProblem() failed to set up correctly.\n");
+    Belos::ReturnType ret = belos_solver_->solve();
+    if(ret != Belos::Converged && p_rank==0)
+      std::cout << "*** WARNING: Belos linear solver did not converge!" << std::endl;
+    // } // end iteration loop
+
+    // if this is a mixed form split the lhs into displacement and lagrange multiplier fields
+    if(is_mixed_formulation()){
+      for(int_t i=0;i<mesh_->get_vector_node_dist_map()->get_num_local_elements();++i){
+        const int_t gid = mesh_->get_vector_node_dist_map()->get_global_element(i);
+        disp->global_value(gid) = lhs->global_value(gid);
+      }
+      for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+        const int_t gid = l_mesh_->get_scalar_node_dist_map()->get_global_element(i);
+        lagrange_multiplier->global_value(gid) = lhs->global_value(gid+mixed_global_offset());
+      }
     }
+    else{
+      // upate the displacements
+      disp->update(1.0,*lhs,1.0);
+    }
+    //disp.describe();
+    //write out the stats on the displacement field
+    scalar_t lhs_min_x = 0.0, lhs_min_y = 0.0;
+    scalar_t lhs_max_x = 0.0, lhs_max_y = 0.0;
+    scalar_t lhs_avg_x = 0.0, lhs_avg_y = 0.0;
+    scalar_t lhs_std_dev_x = 0.0, lhs_std_dev_y = 0.0;
+    mesh_->field_stats(DICe::mesh::field_enums::LHS_FS,lhs_min_x,lhs_max_x,lhs_avg_x,lhs_std_dev_x,0);
+    mesh_->field_stats(DICe::mesh::field_enums::LHS_FS,lhs_min_y,lhs_max_y,lhs_avg_y,lhs_std_dev_y,1);
+    DEBUG_MSG("DISPLACEMENT UPDATE: min_x " << lhs_min_x << " max_x " << lhs_max_x << " avg_x " << lhs_avg_x << " std_dev_x " << lhs_std_dev_x);
+    DEBUG_MSG("DISPLACEMENT UPDATE: min_y " << lhs_min_y << " max_y " << lhs_max_y << " avg_y " << lhs_avg_y << " std_dev_y " << lhs_std_dev_y);
+    scalar_t disp_min_x = 0.0, disp_min_y = 0.0;
+    scalar_t disp_max_x = 0.0, disp_max_y = 0.0;
+    scalar_t disp_avg_x = 0.0, disp_avg_y = 0.0;
+    scalar_t disp_std_dev_x = 0.0, disp_std_dev_y = 0.0;
+    mesh_->field_stats(DICe::mesh::field_enums::DISPLACEMENT_FS,disp_min_x,disp_max_x,disp_avg_x,disp_std_dev_x,0);
+    mesh_->field_stats(DICe::mesh::field_enums::DISPLACEMENT_FS,disp_min_y,disp_max_y,disp_avg_y,disp_std_dev_y,1);
+    DEBUG_MSG("DISPLACEMENT: min_x " << disp_min_x << " max_x " << disp_max_x << " avg_x " << disp_avg_x << " std_dev_x " << disp_std_dev_x);
+    DEBUG_MSG("DISPLACEMENT: min_y " << disp_min_y << " max_y " << disp_max_y << " avg_y " << disp_avg_y << " std_dev_y " << disp_std_dev_y);
+
+    if(!use_lagrangian_coordinates){
+      DEBUG_MSG("Global_Algorithm::execute(): * * * convergence successful * * *");
+      DEBUG_MSG("Global_Algorithm::execute(): criteria: single iteration required");
+      break;
+    }
+
+    // compute the change in disp from the last solution:
+    const scalar_t disp_norm = disp->norm();
+    const scalar_t delta_disp_norm = disp->norm(disp_nm1);
+    DEBUG_MSG("Iteration: " << it << " residual norm: " << resid_norm
+      << " disp norm: " << disp_norm << " disp update norm: " << delta_disp_norm);
+    if(delta_disp_norm < tol){
+      DEBUG_MSG("Global_Algorithm::execute(): * * * convergence successful * * *");
+      DEBUG_MSG("Global_Algorithm::execute(): criteria: delta_disp_norm < tol (" << tol << ")");
+      break;
+    }
+    // copy the displacement solution to state n-1
+    disp_nm1->update(1.0,*disp,0.0);
   }
-  else{
-    // upate the displacements
-    disp.update(1.0,*lhs,1.0);
-  }
-  //disp.describe();
+  TEUCHOS_TEST_FOR_EXCEPTION(it>=max_its,std::runtime_error,"Error, max iterations reached.");
+
+  DEBUG_MSG("Global_Algorithm::execute(): linear solve complete");
 
   compute_strains();
 
@@ -847,8 +913,8 @@ Global_Algorithm::execute(){
       const int_t node_gid = master_gids->local_value(i);
       const int_t ux_master_id = (node_gid-1)*spa_dim + 1;
       const int_t uy_master_id = ux_master_id + 1;
-      linear_disp->global_value(ux_id) = disp.global_value(ux_master_id);
-      linear_disp->global_value(uy_id) = disp.global_value(uy_master_id);
+      linear_disp->global_value(ux_id) = disp->global_value(ux_master_id);
+      linear_disp->global_value(uy_id) = disp->global_value(uy_master_id);
     }
   }
   mesh_->print_field_stats();

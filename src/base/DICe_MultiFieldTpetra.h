@@ -410,6 +410,21 @@ public:
     return tpetra_mv_->getVector(field_index)->norm2();
   }
 
+  ///  Compute the 2 norm of this vector minus another
+  /// \param multifield the field to diff against
+  scalar_t norm(Teuchos::RCP<MultiField> multifield){
+    TEUCHOS_TEST_FOR_EXCEPTION(this->get_map()->get_num_local_elements()!=
+        multifield->get_map()->get_num_local_elements(),std::runtime_error,
+        "Error, incompatible multifield maps");
+    scalar_t norm = 0.0;
+    for(int_t i=0;i<get_map()->get_num_local_elements();++i){
+      norm += (this->local_value(i)-multifield->local_value(i))*
+          (this->local_value(i)-multifield->local_value(i));
+    }
+    norm = std::sqrt(norm);
+    return norm;
+  }
+
   /// returns a view of the multivector's data
   Teuchos::ArrayRCP<const scalar_t> get_1d_view()const{
     return tpetra_mv_->get1dView();

@@ -102,7 +102,8 @@ public:
   Teuchos::RCP<DICe::MultiField_Matrix> compute_tangent();
 
   /// populate the residual vector
-  void compute_residual();
+  /// \param use_lagrangian_coordinates use lagrangian rather than eulerian image coords
+  scalar_t compute_residual(const bool use_lagrangian_coordinates);
 
   /// returns the offset to the first lagrange multiplier dof
   int_t mixed_global_offset()const{

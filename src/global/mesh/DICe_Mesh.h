@@ -962,6 +962,20 @@ public:
   /// Print the max min avg and std dev of all fields to the screen
   void print_field_stats();
 
+  /// compute the average value, min, max and std dev of a multifield
+  /// \param field_spec the field to evaluate
+  /// \param min the minimum value
+  /// \param max the maximum value
+  /// \param avg the average
+  /// \param std_dev the standard deviation,
+  /// \param comp the component if this is a vector field
+  void field_stats(const field_enums::Field_Spec field_spec,
+    scalar_t & min,
+    scalar_t & max,
+    scalar_t & avg,
+    scalar_t & std_dev,
+    const int_t comp);
+
   /// Returns a pointer to the communication map
   Teuchos::RCP<MultiField_Map> get_proc_map(){
     return proc_map_;

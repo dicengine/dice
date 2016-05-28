@@ -468,7 +468,9 @@ const Field_Spec ELAST_FEM_LHS_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::EL
 /// field spec
 const Field_Spec ELAST_FEM_DISPLACEMENT_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::ELAST_FEM_DISPLACEMENT,field_enums::NODE_RANK,field_enums::STATE_N_PLUS_ONE,true,true);
 /// field spec
-const Field_Spec DISPLACEMENT_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DISPLACEMENT,field_enums::NODE_RANK,field_enums::STATE_N_PLUS_ONE,true,true);
+const Field_Spec DISPLACEMENT_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DISPLACEMENT,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+/// field spec
+const Field_Spec DISPLACEMENT_NM1_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DISPLACEMENT,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,true,true);
 /// field spec
 const Field_Spec RESIDUAL_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::RESIDUAL,field_enums::NODE_RANK,field_enums::STATE_N_PLUS_ONE,true,true);
 /// field spec
@@ -533,7 +535,7 @@ const Field_Spec GREEN_LAGRANGE_STRAIN_YY_FS(field_enums::SCALAR_FIELD_TYPE,fiel
 const Field_Spec GREEN_LAGRANGE_STRAIN_XY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::GREEN_LAGRANGE_STRAIN_XY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 66;
+const int_t num_fields_defined = 67;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -568,6 +570,7 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     ELAST_FEM_LHS_FS,
     ELAST_FEM_DISPLACEMENT_FS,
     DISPLACEMENT_FS,
+    DISPLACEMENT_NM1_FS,
     RESIDUAL_FS,
     LHS_FS,
     LAGRANGE_MULTIPLIER_FS,

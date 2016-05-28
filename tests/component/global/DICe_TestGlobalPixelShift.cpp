@@ -98,6 +98,7 @@ int main(int argc, char *argv[]) {
   std::vector<scalar_t> error_x;
   std::vector<scalar_t> error_y;
 
+//  for(scalar_t shift = 0.0;shift<=1.0001;shift+=0.05){
   for(scalar_t shift = 0.0;shift<=1.0001;shift+=0.05){
     *outStream << "SHIFT " << shift << std::endl;
     *outStream << "creating the image set" << std::endl;
@@ -116,13 +117,13 @@ int main(int argc, char *argv[]) {
       }
     }
     Teuchos::RCP<Image> ref = Teuchos::rcp(new Image(w,h,ref_intens));
-    std::stringstream ref_name;
-    ref_name << "ref_pixel_shift_" << shift << ".tif";
-    ref->write(ref_name.str());
+    //std::stringstream ref_name;
+    //ref_name << "ref_pixel_shift_" << shift << ".tif";
+    //ref->write(ref_name.str());
     Teuchos::RCP<Image> def = Teuchos::rcp(new Image(w,h,def_intens));
-    std::stringstream def_name;
-    def_name << "def_pixel_shift_" << shift << ".tif";
-    def->write(def_name.str());
+    //std::stringstream def_name;
+    //def_name << "def_pixel_shift_" << shift << ".tif";
+    //def->write(def_name.str());
 
     *outStream << "creating the global roi file" << std::endl;
 

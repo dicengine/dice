@@ -166,6 +166,8 @@ void image_time_force(Global_Algorithm* alg,
   const int_t num_funcs,
   const scalar_t & x,
   const scalar_t & y,
+  const scalar_t & bx,
+  const scalar_t & by,
   const scalar_t & J,
   const scalar_t & gp_weight,
   const scalar_t * N,
@@ -174,7 +176,7 @@ void image_time_force(Global_Algorithm* alg,
     "Error, the pointer to the algorithm must be valid");
 
   // compute the image force terms
-  const intensity_t phi_0 = alg->ref_img()->interpolate_bicubic(x,y);
+  const intensity_t phi_0 = alg->ref_img()->interpolate_bicubic(x-bx,y-by);
   const intensity_t phi = alg->def_img()->interpolate_bicubic(x,y);
   const scalar_t d_phi_dt = phi - phi_0;
   const scalar_t grad_phi_x = alg->grad_x()->interpolate_bicubic(x,y);
