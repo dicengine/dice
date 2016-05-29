@@ -252,6 +252,8 @@ const char* const problem_name = "problem_name";
 const char* const phi_coeff = "phi_coeff";
 /// String parameter name, only for global DIC
 const char* const b_coeff = "b_coeff";
+/// String parameter name, only for global DIC
+const char* const num_image_integration_points = "num_image_integration_points";
 
 
 /// enums:
@@ -957,6 +959,12 @@ const Correlation_Parameter global_solver_param(global_solver,
   "Used only for global, this is the solver to use for the global method."
 );
 /// Correlation parameter and properties
+const Correlation_Parameter num_image_integration_points_param(num_image_integration_points,
+  SIZE_PARAM,
+  true,
+  "Used only for global, this is the number of integration points (in each dim per element) to use for the global method."
+);
+/// Correlation parameter and properties
 const Correlation_Parameter use_tracking_default_params_param(use_tracking_default_params,
   BOOL_PARAM,
   true,
@@ -1017,7 +1025,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 60;
+const int_t num_valid_correlation_params = 61;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1080,11 +1088,12 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   global_regularization_alpha_param,
   global_formulation_param,
   global_solver_param,
+  num_image_integration_points_param,
 };
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_global_correlation_params = 13;
+const int_t num_valid_global_correlation_params = 14;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_global_correlation_params[num_valid_global_correlation_params] = {
   use_global_dic_param,
@@ -1099,7 +1108,8 @@ const Correlation_Parameter valid_global_correlation_params[num_valid_global_cor
   global_regularization_alpha_param,
   global_formulation_param,
   global_solver_param,
-  mms_spec_param
+  mms_spec_param,
+  num_image_integration_points_param
 };
 
 } // end DICe namespace

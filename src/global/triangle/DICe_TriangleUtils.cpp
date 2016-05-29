@@ -98,10 +98,10 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(const std::string & roi_file_n
       std::runtime_error,"Error, y0 must = y1 (must be a rectangular shape)");
     TEUCHOS_TEST_FOR_EXCEPTION((*boundary_polygon->vertex_coordinates_y())[2]!=(*boundary_polygon->vertex_coordinates_y())[3],
       std::runtime_error,"Error, y2 must = y3 (must be a rectangular shape)");
-    const scalar_t begin_x = (*boundary_polygon->vertex_coordinates_x())[0];
-    const scalar_t end_x = (*boundary_polygon->vertex_coordinates_x())[1];
-    const scalar_t begin_y = (*boundary_polygon->vertex_coordinates_y())[0];
-    const scalar_t end_y = (*boundary_polygon->vertex_coordinates_y())[3];
+    const scalar_t begin_x = (*boundary_polygon->vertex_coordinates_x())[0]-0.5; // the offsets are so that the mesh edge aligns with a pixel edge
+    const scalar_t end_x = (*boundary_polygon->vertex_coordinates_x())[1]+0.5;
+    const scalar_t begin_y = (*boundary_polygon->vertex_coordinates_y())[0]-0.5;
+    const scalar_t end_y = (*boundary_polygon->vertex_coordinates_y())[3]+0.5;
     std::vector<int_t> dirichlet_sides;
     std::vector<int_t> neumann_sides;
     const int_t num_boundary_segments = subset_file_info->boundary_condition_defs->size();
@@ -247,8 +247,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(const std::string & roi_file_n
       neumann_boundary_segments_right,
       max_size_constraint,
       output_file_name);
-    mesh->set_bc_defs(*subset_file_info->boundary_condition_defs);
   }
+  mesh->set_bc_defs(*subset_file_info->boundary_condition_defs);
   return mesh;
 }
 
@@ -503,27 +503,25 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri6_mesh(const scalar_t & begin
   const scalar_t height = end_y - begin_y;
   TEUCHOS_TEST_FOR_EXCEPTION(height<=0,std::runtime_error,"Error, invalid height");
   std::vector<scalar_t> x_ticks;
-  for(scalar_t x=begin_x;x<end_x;x+=h){
+  for(scalar_t x=begin_x;x<=end_x;x+=h){
     x_ticks.push_back(x);
   }
-  x_ticks.push_back(end_x);
   std::vector<scalar_t> y_ticks;
-  for(scalar_t y=begin_y;y<end_y;y+=h){
+  for(scalar_t y=begin_y;y<=end_y;y+=h){
     y_ticks.push_back(y);
   }
-  y_ticks.push_back(end_y);
 
   const int_t num_nodes_x = x_ticks.size();
   const int_t num_nodes_y = y_ticks.size();
 
-//  DEBUG_MSG("generate_regular_tri6_mesh(): x ticks");
-//  for(int_t i=0;i<num_nodes_x;++i){
-//    DEBUG_MSG("x_coord " << x_ticks[i]);
-//  }
-//  DEBUG_MSG("generate_regular_tri6_mesh(): y ticks");
-//  for(int_t i=0;i<num_nodes_y;++i){
-//    DEBUG_MSG("y_coord " << y_ticks[i]);
-//  }
+  DEBUG_MSG("generate_regular_tri6_mesh(): x ticks");
+  for(int_t i=0;i<num_nodes_x;++i){
+    DEBUG_MSG("x_coord " << x_ticks[i]);
+  }
+  DEBUG_MSG("generate_regular_tri6_mesh(): y ticks");
+  for(int_t i=0;i<num_nodes_y;++i){
+    DEBUG_MSG("y_coord " << y_ticks[i]);
+  }
   const int_t num_corner_nodes = num_nodes_x * num_nodes_y;
 
   // set up the corner nodes
@@ -595,12 +593,12 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri6_mesh(const scalar_t & begin
       const int_t upper_id = j*(num_col_x*2) + num_col_x + i;
       //std::cout << " upper id " << upper_id << std::endl;
       int_t upper_nodes[6];
-      upper_nodes[0] = j*num_nodes_x + i + 1;
-      upper_nodes[1] = (j+1)*num_nodes_x + i + 1;
-      upper_nodes[2] = (j+1)*num_nodes_x + i;
-      upper_nodes[3] = diag_offset + j*num_diag_per_row + (i+1)*2;
-      upper_nodes[4] = mid_offset + (j+1)*num_mid_per_row + i;
-      upper_nodes[5] = diag_offset + j*num_diag_per_row + (i*2) + 1;
+      upper_nodes[2] = j*num_nodes_x + i + 1;
+      upper_nodes[0] = (j+1)*num_nodes_x + i + 1;
+      upper_nodes[1] = (j+1)*num_nodes_x + i;
+      upper_nodes[5] = diag_offset + j*num_diag_per_row + (i+1)*2;
+      upper_nodes[3] = mid_offset + (j+1)*num_mid_per_row + i;
+      upper_nodes[4] = diag_offset + j*num_diag_per_row + (i*2) + 1;
       for(int_t n=0;n<6;++n)
         connectivity[upper_id*6+n] = upper_nodes[swap_ids[n]]+1;
 //      std::cout << " conn: ";

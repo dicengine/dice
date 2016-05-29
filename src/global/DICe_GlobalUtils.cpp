@@ -179,8 +179,8 @@ void image_time_force(Global_Algorithm* alg,
   const intensity_t phi_0 = alg->ref_img()->interpolate_bicubic(x-bx,y-by);
   const intensity_t phi = alg->def_img()->interpolate_bicubic(x,y);
   const scalar_t d_phi_dt = phi - phi_0;
-  const scalar_t grad_phi_x = alg->grad_x()->interpolate_bicubic(x,y);
-  const scalar_t grad_phi_y = alg->grad_y()->interpolate_bicubic(x,y);
+  const scalar_t grad_phi_x = alg->grad_x()->interpolate_bicubic(x-bx,y-by);
+  const scalar_t grad_phi_y = alg->grad_y()->interpolate_bicubic(x-bx,y-by);
   for(int_t i=0;i<num_funcs;++i){
     elem_force[i*spa_dim+0] -= d_phi_dt*grad_phi_x*N[i]*gp_weight*J;
     elem_force[i*spa_dim+1] -= d_phi_dt*grad_phi_y*N[i]*gp_weight*J;

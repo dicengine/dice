@@ -97,15 +97,13 @@ int main(int argc, char *argv[]) {
   const scalar_t height = end_y - begin_y;
   TEUCHOS_TEST_FOR_EXCEPTION(height<=0,std::runtime_error,"Error, invalid height");
   std::vector<scalar_t> x_ticks;
-  for(scalar_t x=begin_x;x<end_x;x+=h){
+  for(scalar_t x=begin_x;x<=end_x;x+=h){
     x_ticks.push_back(x);
   }
-  x_ticks.push_back(end_x);
   std::vector<scalar_t> y_ticks;
-  for(scalar_t y=begin_y;y<end_y;y+=h){
+  for(scalar_t y=begin_y;y<=end_y;y+=h){
     y_ticks.push_back(y);
   }
-  y_ticks.push_back(end_y);
   const int_t num_nodes_x = x_ticks.size();
   const int_t num_nodes_y = y_ticks.size();
   // set up the corner nodes
@@ -135,24 +133,26 @@ int main(int argc, char *argv[]) {
   const int_t num_elem = (num_nodes_x-1)*(num_nodes_y-1)*2;
 
   *outStream << "testing the output mesh for correctness" << std::endl;
-  if(mesh->num_nodes()!=num_nodes){
+  if((int_t)mesh->num_nodes()!=num_nodes){
     *outStream << "Error, wrong number of nodes in the mesh" << std::endl;
     errorFlag++;
   }
-  if(mesh->num_elem()!=num_elem){
+  if((int_t)mesh->num_elem()!=num_elem){
     *outStream << "Error, wrong number of elements" << std::endl;
     errorFlag++;
   }
-  Teuchos::RCP<MultiField> coords = mesh->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
-  const scalar_t tol = 1.0E-5;
-  for(int_t i=0;i<num_nodes;++i){
-    const int_t ix = i*2+0;
-    const int_t iy = i*2+1;
-    scalar_t error_x = std::abs(coords->local_value(ix) - x_coords[i]);
-    scalar_t error_y = std::abs(coords->local_value(iy) - y_coords[i]);
-    if(error_x>tol||error_y>tol){
-      *outStream << "Error, coordinates are not correct" << std::endl;
-      errorFlag++;
+  if(errorFlag==0){
+    Teuchos::RCP<MultiField> coords = mesh->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
+    const scalar_t tol = 1.0E-5;
+    for(int_t i=0;i<num_nodes;++i){
+      const int_t ix = i*2+0;
+      const int_t iy = i*2+1;
+      scalar_t error_x = std::abs(coords->local_value(ix) - x_coords[i]);
+      scalar_t error_y = std::abs(coords->local_value(iy) - y_coords[i]);
+      if(error_x>tol||error_y>tol){
+        *outStream << "Error, coordinates are not correct" << std::endl;
+        errorFlag++;
+      }
     }
   }
   *outStream << "mesh has been tested for correctness" << std::endl;

@@ -79,13 +79,18 @@ int main(int argc, char *argv[]) {
   *outStream << "generating the correlation and input params" << std::endl;
   Teuchos::RCP<Teuchos::ParameterList> input_params = Teuchos::rcp(new Teuchos::ParameterList());
   Teuchos::RCP<Teuchos::ParameterList> corr_params = Teuchos::rcp(new Teuchos::ParameterList());
-  input_params->set(DICe::mesh_size,4000.0);
+  input_params->set(DICe::mesh_size,100.0);//4000.0);
   input_params->set(DICe::subset_file,"pixel_shift_roi.txt");
   input_params->set(DICe::output_folder,"");
   input_params->set(DICe::output_prefix,"pixel_shift");
   corr_params->set(DICe::use_global_dic,true);
+  corr_params->set(DICe::global_regularization_alpha,1.0);
+//  corr_params->set(DICe::interpolation_method,BICUBIC);
+//  corr_params->set(DICe::global_formulation,LEVENBERG_MARQUARDT);
   corr_params->set(DICe::global_formulation,UNREGULARIZED);
   corr_params->set(DICe::global_solver,GMRES_SOLVER);
+  corr_params->set(DICe::num_image_integration_points,50);
+  corr_params->set(DICe::num_image_integration_points,100);
 
   *outStream << "generating the mms problem" << std::endl;
   // create an MMS problem
@@ -99,7 +104,7 @@ int main(int argc, char *argv[]) {
   std::vector<scalar_t> error_y;
 
 //  for(scalar_t shift = 0.0;shift<=1.0001;shift+=0.05){
-  for(scalar_t shift = 0.0;shift<=1.0001;shift+=0.05){
+  for(scalar_t shift = 0.0;shift<=2.0001;shift+=0.05){
     *outStream << "SHIFT " << shift << std::endl;
     *outStream << "creating the image set" << std::endl;
 
@@ -141,10 +146,15 @@ int main(int argc, char *argv[]) {
     roi_file << "      end vertices\n";
     roi_file << "    end polygon\n";
     roi_file << "  end boundary\n";
-    roi_file << "  dirichlet_bc boundary 0 0 1 use_subsets 27\n";
-    roi_file << "  dirichlet_bc boundary 0 1 2 use_subsets 27\n";
-    roi_file << "  dirichlet_bc boundary 0 2 3 use_subsets 27\n";
-    roi_file << "  dirichlet_bc boundary 0 3 0 use_subsets 27\n";
+    roi_file << "  use_regular_grid\n";
+    roi_file << "  dirichlet_bc boundary 0 0 1 " << shift << " " << shift<<"\n";
+    roi_file << "  dirichlet_bc boundary 0 1 2 " << shift << " " << shift<<"\n";
+    roi_file << "  dirichlet_bc boundary 0 2 3 " << shift << " " << shift<<"\n";
+    roi_file << "  dirichlet_bc boundary 0 3 0 " << shift << " " << shift<<"\n";
+//    roi_file << "  neumann_bc boundary 0 0 1\n";
+//    roi_file << "  neumann_bc boundary 0 1 2\n";
+//    roi_file << "  neumann_bc boundary 0 2 3\n";
+//    roi_file << "  neumann_bc boundary 0 3 0\n";
     roi_file << "end region_of_interest\n";
     roi_file.close();
 

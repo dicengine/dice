@@ -862,7 +862,7 @@ Mesh::print_field_info()
     for(int_t j=0; j<spatial_dimension();++j)
       std::cout << "  " << nodal_vector_fields[i] + index_to_component_string(j) << std::endl;
   }
-  std::cout << "  =============== REGISTERED NODAL MIXED VECTOR FIELDS ===============" << std::endl;
+  std::cout << "  ============== REGISTERED NODAL MIXED VECTOR FIELDS ==========" << std::endl;
   std::vector<std::string> mixed_nodal_vector_fields = get_field_names(field_enums::NODE_RANK,field_enums::MIXED_VECTOR_FIELD_TYPE,false);
   for (size_t i = 0; i < mixed_nodal_vector_fields.size(); ++i){
     for(int_t j=0; j<spatial_dimension();++j)
@@ -880,12 +880,12 @@ Mesh::print_field_info()
     for(int_t j=0; j<spatial_dimension();++j)
       std::cout << "  " << element_vector_fields[i] + index_to_component_string(j) << std::endl;
   }
-  std::cout << "  ============== REGISTERED FACE EDGE SCALAR FIELDS ==============" << std::endl;
+  std::cout << "  ============== REGISTERED FACE EDGE SCALAR FIELDS ============" << std::endl;
   std::vector<std::string> face_scalar_fields = get_field_names(field_enums::INTERNAL_FACE_EDGE_RANK,field_enums::SCALAR_FIELD_TYPE,false);
   for (size_t i = 0; i < face_scalar_fields.size(); ++i){
     std::cout << "  " << face_scalar_fields[i] << std::endl;
   }
-  std::cout << "  ============== REGISTERED FACE EDGE VECTOR FIELDS ==============" << std::endl;
+  std::cout << "  ============== REGISTERED FACE EDGE VECTOR FIELDS ============" << std::endl;
   std::vector<std::string> face_vector_fields = get_field_names(field_enums::INTERNAL_FACE_EDGE_RANK,field_enums::VECTOR_FIELD_TYPE,false);
   for (size_t i = 0; i < face_vector_fields.size(); ++i){
     for(int_t j=0; j<spatial_dimension();++j)
@@ -992,6 +992,7 @@ Mesh::print_field_stats()
   field_registry::const_iterator field_end = field_registry_.end();
   for(;field_it!=field_end;++field_it)
   {
+    if(!field_it->first.is_printable())continue;
     if(field_it->first.get_field_type()==DICe::mesh::field_enums::SCALAR_FIELD_TYPE){
       scalar_t max = 0.0;
       scalar_t min = 0.0;

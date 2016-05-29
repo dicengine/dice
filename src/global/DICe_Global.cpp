@@ -58,7 +58,8 @@ Global_Algorithm::Global_Algorithm(Schema * schema,
   mms_problem_(Teuchos::null),
   is_initialized_(false),
   global_formulation_(NO_SUCH_GLOBAL_FORMULATION),
-  global_solver_(CG_SOLVER)
+  global_solver_(CG_SOLVER),
+  num_image_integration_points_(20)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(!schema,std::runtime_error,"Error, cannot have null schema in this constructor");
   default_constructor_tasks(params);
@@ -70,7 +71,8 @@ Global_Algorithm::Global_Algorithm(const Teuchos::RCP<Teuchos::ParameterList> & 
   alpha2_(1.0),
   is_initialized_(false),
   global_formulation_(NO_SUCH_GLOBAL_FORMULATION),
-  global_solver_(CG_SOLVER)
+  global_solver_(CG_SOLVER),
+  num_image_integration_points_(20)
 {
   default_constructor_tasks(params);
 }
@@ -83,6 +85,11 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
 
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::global_formulation),std::runtime_error,"Error, parameter: global_formulation must be defined");
   global_formulation_ = params->get<Global_Formulation>(DICe::global_formulation);
+
+  num_image_integration_points_ = params->get<int_t>(DICe::num_image_integration_points,20);
+
+  DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): num image integration points: " << num_image_integration_points_);
+  TEUCHOS_TEST_FOR_EXCEPTION(num_image_integration_points_<=0,std::runtime_error,"Error, invalid num integration points");
 
   global_solver_ = params->get<Global_Solver>(DICe::global_solver,CG_SOLVER);
   DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): global solver type: " << to_string(global_solver_));
@@ -397,7 +404,7 @@ Global_Algorithm::compute_tangent(){
   const int_t natural_coord_dim = gp_locs[0].size();
   scalar_t natural_coords[natural_coord_dim];
 
-  const int_t image_integration_order = 20;
+  const int_t image_integration_order = num_image_integration_points_;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > image_gp_locs;
   Teuchos::ArrayRCP<scalar_t> image_gp_weights;
   int_t num_image_integration_points = -1;
@@ -641,7 +648,7 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
   const int_t natural_coord_dim = gp_locs[0].size();
   scalar_t natural_coords[natural_coord_dim];
 
-  const int_t image_integration_order = 20;
+  const int_t image_integration_order = num_image_integration_points_;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > image_gp_locs;
   Teuchos::ArrayRCP<scalar_t> image_gp_weights;
   int_t num_image_integration_points = -1;
@@ -809,8 +816,9 @@ Global_Algorithm::execute(){
   // and use a fixed point iteration loop rather than a direct solve
   const bool use_fixed_point = mms_problem_==Teuchos::null;
   DEBUG_MSG("Global_Algorithm::execute: use_fixed_point: " << use_fixed_point);
-  const int_t max_its = 10;
-  const scalar_t tol = 1.0E-6;
+  const int_t max_its = 25;
+  const scalar_t update_tol = 1.0E-8;
+  const scalar_t residual_tol = 1.0E-8;
   int_t it=0;
   for(;it<=max_its;++it){
     // clear the left hand side
@@ -821,10 +829,10 @@ Global_Algorithm::execute(){
     // apply the boundary conditions
     bc_manager_->apply_bcs(it==0);
 
-    if(resid_norm < tol){
+    if(resid_norm < residual_tol){
       DEBUG_MSG("Iteration: " << it << " residual norm: " << resid_norm);
       DEBUG_MSG("Global_Algorithm::execute(): * * * convergence successful * * *");
-      DEBUG_MSG("Global_Algorithm::execute(): criteria: residual_norm < tol (" << tol << ")");
+      DEBUG_MSG("Global_Algorithm::execute(): criteria: residual_norm < tol (" << residual_tol << ")");
       break;
     }
 
@@ -890,9 +898,9 @@ Global_Algorithm::execute(){
     const scalar_t delta_disp_norm = disp->norm(disp_nm1);
     DEBUG_MSG("Iteration: " << it << " residual norm: " << resid_norm
       << " disp norm: " << disp_norm << " disp update norm: " << delta_disp_norm);
-    if(delta_disp_norm < tol){
+    if(delta_disp_norm < update_tol){
       DEBUG_MSG("Global_Algorithm::execute(): * * * convergence successful * * *");
-      DEBUG_MSG("Global_Algorithm::execute(): criteria: delta_disp_norm < tol (" << tol << ")");
+      DEBUG_MSG("Global_Algorithm::execute(): criteria: delta_disp_norm < tol (" << update_tol << ")");
       break;
     }
     // copy the displacement solution to state n-1

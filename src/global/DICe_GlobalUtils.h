@@ -287,8 +287,6 @@ public:
     scalar_t & f_x,
     scalar_t & f_y){
 
-    // TODO check which terms are active
-
     f_x = 0.0;
     f_y = 0.0;
     scalar_t d_phi_dt = 0.0, grad_phi_x = 0.0, grad_phi_y = 0.0;
@@ -329,6 +327,8 @@ protected:
   /// coefficient for velocity values
   scalar_t b_coeff_;
 };
+
+
 
 /// \class MMS_Problem_Factory
 /// \brief Factory class that creates method of manufactured solutions problems

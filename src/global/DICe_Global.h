@@ -241,6 +241,9 @@ protected:
   Global_Formulation global_formulation_;
   /// Global solver type
   Global_Solver global_solver_;
+  /// number of integration points to use in each dimension per element for
+  /// image integration terms
+  int_t num_image_integration_points_;
 };
 
 }// end global namespace

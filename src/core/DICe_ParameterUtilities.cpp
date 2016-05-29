@@ -367,6 +367,7 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::global_formulation,HORN_SCHUNCK);
   defaultParams->set(DICe::global_regularization_alpha,1.0);
   defaultParams->set(DICe::global_solver,CG_SOLVER);
+  defaultParams->set(DICe::num_image_integration_points,20);
 }
 
 DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultParams){
@@ -415,6 +416,7 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::global_formulation,HORN_SCHUNCK);
   defaultParams->set(DICe::global_regularization_alpha,1.0);
   defaultParams->set(DICe::global_solver,CG_SOLVER);
+  defaultParams->set(DICe::num_image_integration_points,20);
 }
 
 }// End DICe Namespace

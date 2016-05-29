@@ -470,7 +470,7 @@ const Field_Spec ELAST_FEM_DISPLACEMENT_FS(field_enums::VECTOR_FIELD_TYPE,field_
 /// field spec
 const Field_Spec DISPLACEMENT_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DISPLACEMENT,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
 /// field spec
-const Field_Spec DISPLACEMENT_NM1_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DISPLACEMENT,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,true,true);
+const Field_Spec DISPLACEMENT_NM1_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DISPLACEMENT,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
 /// field spec
 const Field_Spec RESIDUAL_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::RESIDUAL,field_enums::NODE_RANK,field_enums::STATE_N_PLUS_ONE,true,true);
 /// field spec
