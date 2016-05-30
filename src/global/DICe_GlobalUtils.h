@@ -43,6 +43,7 @@
 
 #include <DICe.h>
 #include <Teuchos_ParameterList.hpp>
+#include <DICe_Parser.h>
 
 namespace DICe {
 
@@ -329,6 +330,155 @@ protected:
 };
 
 
+/// \class Patch_Test
+/// \brief an MMS problem where the user can try a standard patch test
+/// free component in the velocity solution
+class Patch_Test : public MMS_Problem
+{
+public:
+  /// Constructor
+  /// force the size to be 500 x 500
+  Patch_Test(const Teuchos::RCP<Teuchos::ParameterList> & params):
+    MMS_Problem(500,500),
+    displacement_(1.0),
+    phi_coeff_(10.0)
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::parser_displacement),std::runtime_error,
+      "Error, Patch_Test mms problem requires the parameter parser_displacement");
+    displacement_ = params->get<double>(DICe::parser_displacement);
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("phi_coeff"),std::runtime_error,
+      "Error, Div_Curl_Modulator mms problem requires the parameter phi_coeff");
+    phi_coeff_ = params->get<double>("phi_coeff");
+  };
+
+  /// Destructor
+  virtual ~Patch_Test(){};
+
+  /// See base class definition
+  virtual void velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x,
+    scalar_t & b_y){
+    b_x = displacement_;
+    b_y = displacement_;
+  }
+
+  /// See base class definition
+  virtual void velocity_laplacian(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & lap_b_x,
+    scalar_t & lap_b_y){
+    lap_b_x = 0.0;
+    lap_b_y = 0.0;
+  }
+
+  /// See base class definition
+  virtual void grad_velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x_x,
+    scalar_t & b_x_y,
+    scalar_t & b_y_x,
+    scalar_t & b_y_y){
+    b_x_x = 0.0;
+    b_x_y = 0.0;
+    b_y_x = 0.0;
+    b_y_y = 0.0;
+  }
+
+  /// See base class definition
+  virtual void lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_out){
+    l_out = 0.0;
+  }
+
+  /// See base class definition
+  virtual void grad_lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_x,
+    scalar_t & l_y){
+    l_x = 0.0;
+    l_y = 0.0;
+  }
+
+  /// See base class definition
+  virtual void phi(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & phi){
+    static scalar_t gamma = phi_coeff_*DICE_PI/dim_x_;
+    phi = sin(gamma*x)*cos(gamma*y+DICE_PI/2.0);
+  }
+
+  /// See base class definition
+  virtual void phi_derivatives(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & dphi_dt,
+    scalar_t & grad_phi_x,
+    scalar_t & grad_phi_y) {
+    scalar_t b_x = 0.0;
+    scalar_t b_y = 0.0;
+    velocity(x,y,b_x,b_y);
+    scalar_t mod_x = x - b_x;
+    scalar_t mod_y = y - b_y;
+    scalar_t phi_0 = 0.0;
+    phi(x,y,phi_0);
+    scalar_t phi_cur = 0.0;
+    phi(mod_x,mod_y,phi_cur);
+    dphi_dt = phi_cur - phi_0;
+    static scalar_t gamma = phi_coeff_*DICE_PI/dim_x_;
+    grad_phi_x = gamma*cos(gamma*x)*cos(DICE_PI/2.0 + gamma*y);
+    grad_phi_y = -gamma*sin(gamma*x)*sin(DICE_PI/2.0 + gamma*y);
+  }
+
+  /// See base class definition
+  virtual void force(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & coeff_1,
+    std::set<Global_EQ_Term> * eq_terms,
+    scalar_t & f_x,
+    scalar_t & f_y){
+
+    f_x = 0.0;
+    f_y = 0.0;
+    scalar_t d_phi_dt = 0.0, grad_phi_x = 0.0, grad_phi_y = 0.0;
+    phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
+    if(eq_terms->find(MMS_IMAGE_TIME_FORCE)!=eq_terms->end()){
+      f_x += grad_phi_x*d_phi_dt;
+      f_y += grad_phi_y*d_phi_dt;
+    }
+    if(eq_terms->find(MMS_IMAGE_GRAD_TENSOR)!=eq_terms->end()){
+      scalar_t b_x=0.0,b_y=0.0;
+      velocity(x,y,b_x,b_y);
+      f_x += (grad_phi_x*grad_phi_x*b_x + grad_phi_x*grad_phi_y*b_y);
+      f_y += (grad_phi_y*grad_phi_x*b_x + grad_phi_y*grad_phi_y*b_y);
+    }
+    if(eq_terms->find(DIV_SYMMETRIC_STRAIN_REGULARIZATION)!=eq_terms->end()){
+      scalar_t lap_b_x=0.0,lap_b_y=0.0;
+      velocity_laplacian(x,y,lap_b_x,lap_b_y);
+      f_x -= coeff_1*lap_b_x;
+      f_y -= coeff_1*lap_b_y;
+    }
+    if(eq_terms->find(TIKHONOV_REGULARIZATION)!=eq_terms->end()){
+      scalar_t b_x=0.0,b_y=0.0;
+      velocity(x,y,b_x,b_y);
+      f_x += coeff_1*b_x;
+      f_y += coeff_1*b_y;
+    }
+    if(eq_terms->find(GRAD_LAGRANGE_MULTIPLIER)!=eq_terms->end()){
+      scalar_t dl_dx=0.0,dl_dy=0.0;
+      grad_lagrange(x,y,dl_dx,dl_dy);
+      f_x += dl_dx;
+      f_y += dl_dy;
+    }
+  }
+
+protected:
+  /// coefficient for image intensity values
+  scalar_t displacement_;
+  /// coefficient for image intensity values
+  scalar_t phi_coeff_;
+};
+
 
 /// \class MMS_Problem_Factory
 /// \brief Factory class that creates method of manufactured solutions problems
@@ -349,6 +499,8 @@ public:
     const std::string problem_name = params->get<std::string>("problem_name");
     if(problem_name=="div_curl_modulator")
       return Teuchos::rcp(new Div_Curl_Modulator(params));
+    else if(problem_name=="patch_test")
+      return Teuchos::rcp(new Patch_Test(params));
     else{
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"MMS_Problem_Factory: invalid problem: " + problem_name);
     }
