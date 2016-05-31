@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
   points_x[2] = 5.0; points_y[2] = 10.0;
   points_x[3] = 0.0; points_y[3] = 10.0;
 
-  Teuchos::RCP<DICe::mesh::Mesh> mesh = DICe::generate_tri6_mesh(points_x,points_y,max_size_constraint,"scratch_mesh.e");
+  Teuchos::RCP<DICe::mesh::Mesh> mesh = DICe::generate_tri_mesh(DICe::mesh::TRI6,points_x,points_y,max_size_constraint,"scratch_mesh.e");
   *outStream << "creating some fields on the mesh" << std::endl;
   mesh->create_field(mesh::field_enums::CVFEM_AD_PHI_FS);
   mesh->create_field(mesh::field_enums::CVFEM_AD_IMAGE_PHI_FS);

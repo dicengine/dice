@@ -243,8 +243,6 @@ void image_grad_force(Global_Algorithm* alg,
     elem_force[i*spa_dim+1]
                -= (grad_phi_y*grad_phi_x*bx + grad_phi_y*grad_phi_y*by)*N[i]*gp_weight*J;
   }
-
-
 }
 
 

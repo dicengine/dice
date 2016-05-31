@@ -79,19 +79,22 @@ int main(int argc, char *argv[]) {
   *outStream << "generating the correlation and input params" << std::endl;
   Teuchos::RCP<Teuchos::ParameterList> input_params = Teuchos::rcp(new Teuchos::ParameterList());
   Teuchos::RCP<Teuchos::ParameterList> corr_params = Teuchos::rcp(new Teuchos::ParameterList());
-  input_params->set(DICe::mesh_size,100.0);//4000.0);
   input_params->set(DICe::subset_file,"pixel_shift_roi.txt");
   input_params->set(DICe::output_folder,"");
   input_params->set(DICe::output_prefix,"pixel_shift");
   corr_params->set(DICe::use_global_dic,true);
-  corr_params->set(DICe::max_solver_iterations_fast,250);
-  corr_params->set(DICe::global_regularization_alpha,0.01);
+  corr_params->set(DICe::global_solver,GMRES_SOLVER);
+  corr_params->set(DICe::max_solver_iterations_fast,200);
 //  corr_params->set(DICe::interpolation_method,BICUBIC);
 //  corr_params->set(DICe::global_formulation,LEVENBERG_MARQUARDT);
 //  corr_params->set(DICe::global_formulation,HORN_SCHUNCK);
   corr_params->set(DICe::global_formulation,UNREGULARIZED);
-  corr_params->set(DICe::global_solver,GMRES_SOLVER);
+  corr_params->set(DICe::global_element_type,"TRI3");
+//  corr_params->set(DICe::use_fixed_point_iterations,false);
+  input_params->set(DICe::mesh_size,100.0);//4000.0);
   corr_params->set(DICe::num_image_integration_points,100);
+//  corr_params->set(DICe::global_regularization_alpha,0.05);
+
   *outStream << "generating the mms problem" << std::endl;
   // create an MMS problem
   const int_t w = 500;
@@ -122,13 +125,13 @@ int main(int argc, char *argv[]) {
       }
     }
     Teuchos::RCP<Image> ref = Teuchos::rcp(new Image(w,h,ref_intens));
-    std::stringstream ref_name;
-    ref_name << "ref_pixel_shift_" << shift << ".tif";
-    ref->write(ref_name.str());
+    //std::stringstream ref_name;
+    //ref_name << "ref_pixel_shift_" << shift << ".tif";
+    //ref->write(ref_name.str());
     Teuchos::RCP<Image> def = Teuchos::rcp(new Image(w,h,def_intens));
-    std::stringstream def_name;
-    def_name << "def_pixel_shift_" << shift << ".tif";
-    def->write(def_name.str());
+    //std::stringstream def_name;
+    //def_name << "def_pixel_shift_" << shift << ".tif";
+    //def->write(def_name.str());
 
     *outStream << "creating the global roi file" << std::endl;
 

@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
 
   const scalar_t max_size_constraint = 75.0;
   const std::string file_name = "roi.txt";
-  Teuchos::RCP<DICe::mesh::Mesh> mesh = generate_tri6_mesh(file_name,max_size_constraint,"triangle_test_mesh.e");
+  Teuchos::RCP<DICe::mesh::Mesh> mesh = generate_tri_mesh(DICe::mesh::TRI6,file_name,max_size_constraint,"triangle_test_mesh.e");
 
   DICe::mesh::create_output_exodus_file(mesh,"");
   DICe::mesh::create_exodus_output_variable_names(mesh);

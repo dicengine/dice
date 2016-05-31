@@ -48,11 +48,13 @@
 
 namespace DICe {
 
-Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> points_x,
+Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
+  Teuchos::ArrayRCP<scalar_t> points_x,
   Teuchos::ArrayRCP<scalar_t> points_y,
   const scalar_t & max_size_constraint,
   const std::string & output_file_name){
-  return generate_tri6_mesh(points_x,
+  return generate_tri_mesh(elem_type,
+    points_x,
     points_y,
     Teuchos::null,
     Teuchos::null,
@@ -64,10 +66,13 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
     output_file_name);
 }
 
-Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(const std::string & roi_file_name,
+Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
+  const std::string & roi_file_name,
   const scalar_t & max_size_constraint,
   const std::string & output_file_name){
 
+  TEUCHOS_TEST_FOR_EXCEPTION(elem_type!=DICe::mesh::TRI6&&elem_type!=DICe::mesh::TRI3,std::runtime_error,
+    "Error, invalid element type");
   std::vector<scalar_t> pts_x;
   std::vector<scalar_t> pts_y;
   const Teuchos::RCP<Subset_File_Info> subset_file_info = DICe::read_subset_file(roi_file_name);
@@ -85,7 +90,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(const std::string & roi_file_n
   const int_t num_boundary_vertices = boundary_polygon->num_vertices();
   Teuchos::RCP<DICe::mesh::Mesh> mesh = Teuchos::null;
   if(subset_file_info->use_regular_grid){
-    DEBUG_MSG("generate_tri6_mesh(): creating a regular grid tri mesh (not Delaunay)");
+    DEBUG_MSG("generate_tri_mesh(): creating a regular grid tri mesh (not Delaunay)");
     TEUCHOS_TEST_FOR_EXCEPTION(num_boundary_vertices!=4,std::runtime_error,
       "Error, for regular grid only 4 boundary vertices are allowed.");
     TEUCHOS_TEST_FOR_EXCEPTION(map_it->second.has_excluded_area(),std::runtime_error,
@@ -130,7 +135,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(const std::string & roi_file_n
         dirichlet_sides.push_back(side);
       }
     }
-    mesh = generate_regular_tri6_mesh(begin_x,
+    mesh = generate_regular_tri_mesh(elem_type,
+      begin_x,
       end_x,
       begin_y,
       end_y,
@@ -236,7 +242,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(const std::string & roi_file_n
     }
     Teuchos::ArrayRCP<scalar_t> points_x(&pts_x[0],0,pts_x.size(),false);
     Teuchos::ArrayRCP<scalar_t> points_y(&pts_y[0],0,pts_y.size(),false);
-    mesh = generate_tri6_mesh(
+    mesh = generate_tri_mesh(elem_type,
       points_x,
       points_y,
       holes_x,
@@ -253,7 +259,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(const std::string & roi_file_n
   return mesh;
 }
 
-Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> points_x,
+Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
+  Teuchos::ArrayRCP<scalar_t> points_x,
   Teuchos::ArrayRCP<scalar_t> points_y,
   Teuchos::ArrayRCP<scalar_t> holes_x,
   Teuchos::ArrayRCP<scalar_t> holes_y,
@@ -264,6 +271,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
   const scalar_t & max_size_constraint,
   const std::string & output_file_name){
 
+  TEUCHOS_TEST_FOR_EXCEPTION(elem_type!=DICe::mesh::TRI6&&elem_type!=DICe::mesh::TRI3,std::runtime_error,
+    "Error, invalid elem type");
   TEUCHOS_TEST_FOR_EXCEPTION(points_x.size()<=0||points_y.size()<=0,std::runtime_error,"Error, points size must be greater than 0");
   TEUCHOS_TEST_FOR_EXCEPTION(points_x.size()!=points_y.size(),std::runtime_error,"Error, points must be the same size");
   TEUCHOS_TEST_FOR_EXCEPTION(output_file_name=="",std::runtime_error,"Error, ivalid output file name");
@@ -274,13 +283,10 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
     TEUCHOS_TEST_FOR_EXCEPTION(holes_x.size()!=holes_y.size(),std::runtime_error,"Error, holes arrays must be the same size");
     num_holes = holes_x.size();
   }
-
   // set up the traingle data structures
-
   struct triangulateio in, out;
 
   // deal with the vertices
-
   in.numberofpoints = points_x.size();
   in.numberofpointattributes = 0;
   in.pointmarkerlist = (int *) NULL;
@@ -291,7 +297,6 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
   }
 
   // deal with segments (defines the boundary edges)
-
   const bool has_dirich_segments = dirichlet_boundary_segments_left!=Teuchos::null;
   const bool has_neumann_segments = neumann_boundary_segments_left!=Teuchos::null;
   int_t num_dirich = 0; // the default is the segments between the first four sets of coords
@@ -307,7 +312,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
     num_neum = neumann_boundary_segments_left.size();
   }
   const int_t num_segments = num_dirich + num_neum;
-  DEBUG_MSG("generate_tri6_mesh(): number of dirichlet segments: " << num_dirich <<
+  DEBUG_MSG("generate_tri_mesh(): number of dirichlet segments: " << num_dirich <<
     " number of neumann segments: " << num_neum << " total: " << num_segments);
 
   int_t seg_offset = 0;
@@ -315,7 +320,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
     in.numberofsegments = 4;
     in.segmentlist = new int[in.numberofsegments*2];
     in.segmentmarkerlist = new int[in.numberofsegments];
-    DEBUG_MSG("generate_tri6_mesh(): no input boundary conditions given, using default dirichlet around outer edge.");
+    DEBUG_MSG("generate_tri_mesh(): no input boundary conditions given, using default dirichlet around outer edge.");
     //TEUCHOS_TEST_FOR_EXCEPTION(num_segments!=4,std::runtime_error,"Error, wrong number of segments.");
     TEUCHOS_TEST_FOR_EXCEPTION(points_x.size()<4,std::runtime_error,"Error, too few points.");
       in.segmentlist[0] = 1;in.segmentlist[1] = 2;
@@ -347,7 +352,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
   // deal with holes
 
   in.numberofholes = num_holes;
-  DEBUG_MSG("generate_tri6_mesh(): number of holes: " << num_holes);
+  DEBUG_MSG("generate_tri_mesh(): number of holes: " << num_holes);
   in.holelist = new REAL[in.numberofholes*2];
   for(int_t i=0;i<num_holes;++i){
     in.holelist[i*2+0] = holes_x[i];
@@ -369,15 +374,18 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
 
   // using the o2 flag here to get quadratic tris with 6 nodes each
   std::stringstream arg_ss;
-  arg_ss << "qpcAeo2a" << max_size_constraint;
+  if(elem_type==DICe::mesh::TRI6)
+    arg_ss << "qpcAeo2a" << max_size_constraint;
+  else
+    arg_ss << "qpcAea" << max_size_constraint;
   char args[1024];
   strncpy(args, arg_ss.str().c_str(), sizeof(args));
   args[sizeof(args) - 1] = 0;
-  DEBUG_MSG("generate_tri6_mesh() called with args: " << args);
+  DEBUG_MSG("generate_tri_mesh() called with args: " << args);
 //  char args[] = arg_ss.str().c_str();
   triangulate(args,&in,&out,NULL);
 
-  DEBUG_MSG("generate_tri6_mesh(): number of boundary segments: " << out.numberofsegments);
+  DEBUG_MSG("generate_tri_mesh(): number of boundary segments: " << out.numberofsegments);
   std::map<int_t,int_t> dirichlet_boundary_nodes;
   std::set<int_t> neumann_boundary_nodes;
   std::set<int_t> lagrange_boundary_nodes;
@@ -406,6 +414,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
   for(int_t i=0;i<out.numberoftriangles;++i){
     for (int_t j = 0; j < out.numberofcorners; j++) {
       connectivity[i*out.numberofcorners + j] = out.trianglelist[i * out.numberofcorners + j];
+      if(elem_type==DICe::mesh::TRI6){
       // search the connectivity for edge elements and side sets
       //if(has_dirich_segments||has_neumann_segments){
         for(int_t k=0;k<out.numberofsegments;++k){
@@ -437,13 +446,13 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
             } // right end of segment
           } // left end of segment
         }
-      //}
+      } // end TRI6
     }
   }
-  DEBUG_MSG("generate_tri6_mesh(): number of triangle edges: " << out.numberofedges);
-  DEBUG_MSG("generate_tri6_mesh(): number of dirichlet nodes: " << dirichlet_boundary_nodes.size());
-  DEBUG_MSG("generate_tri6_mesh(): number of lagrange nodes: " << lagrange_boundary_nodes.size());
-  DEBUG_MSG("generate_tri6_mesh(): number of neumann nodes: " << neumann_boundary_nodes.size());
+  DEBUG_MSG("generate_tri_mesh(): number of triangle edges: " << out.numberofedges);
+  DEBUG_MSG("generate_tri_mesh(): number of dirichlet nodes: " << dirichlet_boundary_nodes.size());
+  DEBUG_MSG("generate_tri_mesh(): number of lagrange nodes: " << lagrange_boundary_nodes.size());
+  DEBUG_MSG("generate_tri_mesh(): number of neumann nodes: " << neumann_boundary_nodes.size());
 
   DEBUG_MSG("dirichlet boundary nodes");
   std::map<int_t,int_t>::const_iterator mit = dirichlet_boundary_nodes.begin();
@@ -470,7 +479,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
     node_coords_y[i] = out.pointlist[i*2+1];
   }
   Teuchos::RCP<DICe::mesh::Mesh> mesh =
-      DICe::mesh::create_tri6_exodus_mesh(node_coords_x,
+      DICe::mesh::create_tri_exodus_mesh(elem_type,node_coords_x,
         node_coords_y,connectivity,dirichlet_boundary_nodes,
         neumann_boundary_nodes,lagrange_boundary_nodes,output_file_name);
 
@@ -490,7 +499,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(Teuchos::ArrayRCP<scalar_t> po
   return mesh;
 }
 
-Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri6_mesh(const scalar_t & begin_x,
+Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
+  const scalar_t & begin_x,
   const scalar_t & end_x,
   const scalar_t & begin_y,
   const scalar_t & end_y,
@@ -499,6 +509,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri6_mesh(const scalar_t & begin
   std::vector<int_t> & neumann_sides,
   const std::string & output_file_name){
 
+  TEUCHOS_TEST_FOR_EXCEPTION(elem_type!=DICe::mesh::TRI6&&elem_type!=DICe::mesh::TRI3,std::runtime_error,
+    "Error, invalid elem type");
   const scalar_t width = end_x - begin_x;
   TEUCHOS_TEST_FOR_EXCEPTION(width<=0,std::runtime_error,"Error, invalid width");
   const scalar_t height = end_y - begin_y;
@@ -515,11 +527,11 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri6_mesh(const scalar_t & begin
   const int_t num_nodes_x = x_ticks.size();
   const int_t num_nodes_y = y_ticks.size();
 
-  DEBUG_MSG("generate_regular_tri6_mesh(): x ticks");
+  DEBUG_MSG("generate_regular_tri_mesh(): x ticks");
   for(int_t i=0;i<num_nodes_x;++i){
     DEBUG_MSG("x_coord " << x_ticks[i]);
   }
-  DEBUG_MSG("generate_regular_tri6_mesh(): y ticks");
+  DEBUG_MSG("generate_regular_tri_mesh(): y ticks");
   for(int_t i=0;i<num_nodes_y;++i){
     DEBUG_MSG("y_coord " << y_ticks[i]);
   }
@@ -534,25 +546,26 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri6_mesh(const scalar_t & begin
       y_coords.push_back(y_ticks[j]);
     }
   }
-  // set up the mid nodes in y
-  for(int_t j=0;j<num_nodes_y-1;++j){
-    for(int_t i=0;i<2*num_nodes_x-1;++i){
-      x_coords.push_back(begin_x + i*0.5*h);
-      y_coords.push_back(begin_y + j*h + 0.5*h);
+  if(elem_type==DICe::mesh::TRI6){
+    // set up the mid nodes in y
+    for(int_t j=0;j<num_nodes_y-1;++j){
+      for(int_t i=0;i<2*num_nodes_x-1;++i){
+        x_coords.push_back(begin_x + i*0.5*h);
+        y_coords.push_back(begin_y + j*h + 0.5*h);
+      }
+    }
+    // set up the mid nodes in x
+    for(int_t j=0;j<num_nodes_y;++j){
+      for(int_t i=0;i<num_nodes_x-1;++i){
+        x_coords.push_back(begin_x + i*h + 0.5*h);
+        y_coords.push_back(begin_y + j*h);
+      }
     }
   }
-  // set up the mid nodes in x
-  for(int_t j=0;j<num_nodes_y;++j){
-    for(int_t i=0;i<num_nodes_x-1;++i){
-      x_coords.push_back(begin_x + i*h + 0.5*h);
-      y_coords.push_back(begin_y + j*h);
-    }
-  }
-
   const int_t num_nodes = x_coords.size();
   TEUCHOS_TEST_FOR_EXCEPTION(x_coords.size()!=y_coords.size(),std::runtime_error,"Error, coord vectors should be equal size");
-  DEBUG_MSG("generate_regular_tri6_mesh(): num_corner_nodes " << num_corner_nodes);
-  DEBUG_MSG("generate_regular_tri6_mesh(): num_nodes " << num_nodes);
+  DEBUG_MSG("generate_regular_tri_mesh(): num_corner_nodes " << num_corner_nodes);
+  DEBUG_MSG("generate_regular_tri_mesh(): num_nodes " << num_nodes);
 
 //  for(int_t i=0;i<num_nodes;++i){
 //    std::cout << "node " << i << " x " << x_coords[i] << " y " << y_coords[i] << std::endl;
@@ -562,9 +575,11 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri6_mesh(const scalar_t & begin
   const int_t num_col_x = num_nodes_x - 1;
   const int_t num_col_y = num_nodes_y - 1;
   const int_t num_elem = (num_nodes_x-1)*(num_nodes_y-1)*2;
-  DEBUG_MSG("generate_regular_tri6_mesh(): num elements: " << num_elem);
+  DEBUG_MSG("generate_regular_tri_mesh(): num elements: " << num_elem);
 
-  Teuchos::ArrayRCP<int_t> connectivity(num_elem*6,-1);
+  const int_t num_nodes_per_elem = elem_type==DICe::mesh::TRI6 ? 6 : 3;
+
+  Teuchos::ArrayRCP<int_t> connectivity(num_elem*num_nodes_per_elem,-1);
   const int_t num_diag_per_row = 2*num_nodes_x-1;
   const int_t num_mid_per_row = num_col_x;
   const int_t diag_offset = num_corner_nodes;
@@ -577,15 +592,17 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri6_mesh(const scalar_t & begin
       // lower row of tris
       const int_t lower_id = j*(num_col_x*2) + i;
       //std::cout << " lower id " << lower_id << std::endl;
-      int_t lower_nodes[6];
+      int_t lower_nodes[num_nodes_per_elem];
       lower_nodes[0] = j*num_nodes_x + i;
       lower_nodes[1] = j*num_nodes_x + i + 1;
       lower_nodes[2] = (j+1)*num_nodes_x + i;
-      lower_nodes[3] = mid_offset + j*num_mid_per_row + i;
-      lower_nodes[4] = diag_offset + j*num_diag_per_row + (i*2) + 1;
-      lower_nodes[5] = diag_offset + j*num_diag_per_row + (i*2);
-      for(int_t n=0;n<6;++n)
-        connectivity[lower_id*6+n] = lower_nodes[swap_ids[n]]+1;
+      if(elem_type==DICe::mesh::TRI6){
+        lower_nodes[3] = mid_offset + j*num_mid_per_row + i;
+        lower_nodes[4] = diag_offset + j*num_diag_per_row + (i*2) + 1;
+        lower_nodes[5] = diag_offset + j*num_diag_per_row + (i*2);
+      }
+      for(int_t n=0;n<num_nodes_per_elem;++n)
+        connectivity[lower_id*num_nodes_per_elem+n] = lower_nodes[swap_ids[n]]+1;
 //      std::cout << " conn: ";
 //      for(int_t n=0;n<6;++n)
 //        std::cout << " " << connectivity[lower_id*6+n];
@@ -593,15 +610,17 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri6_mesh(const scalar_t & begin
       // upper row of tris
       const int_t upper_id = j*(num_col_x*2) + num_col_x + i;
       //std::cout << " upper id " << upper_id << std::endl;
-      int_t upper_nodes[6];
+      int_t upper_nodes[num_nodes_per_elem];
       upper_nodes[2] = j*num_nodes_x + i + 1;
       upper_nodes[0] = (j+1)*num_nodes_x + i + 1;
       upper_nodes[1] = (j+1)*num_nodes_x + i;
-      upper_nodes[5] = diag_offset + j*num_diag_per_row + (i+1)*2;
-      upper_nodes[3] = mid_offset + (j+1)*num_mid_per_row + i;
-      upper_nodes[4] = diag_offset + j*num_diag_per_row + (i*2) + 1;
-      for(int_t n=0;n<6;++n)
-        connectivity[upper_id*6+n] = upper_nodes[swap_ids[n]]+1;
+      if(elem_type==DICe::mesh::TRI6){
+        upper_nodes[5] = diag_offset + j*num_diag_per_row + (i+1)*2;
+        upper_nodes[3] = mid_offset + (j+1)*num_mid_per_row + i;
+        upper_nodes[4] = diag_offset + j*num_diag_per_row + (i*2) + 1;
+      }
+      for(int_t n=0;n<num_nodes_per_elem;++n)
+        connectivity[upper_id*num_nodes_per_elem+n] = upper_nodes[swap_ids[n]]+1;
 //      std::cout << " conn: ";
 //      for(int_t n=0;n<6;++n)
 //        std::cout << " " << connectivity[upper_id*6+n];
@@ -614,24 +633,27 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri6_mesh(const scalar_t & begin
     bottom_edge_nodes.push_back(j+1);
     bottom_lag_nodes.push_back(j+1);
   }
-  for(int_t j=0;j<num_nodes_x-1;++j)
-    bottom_edge_nodes.push_back(j+1+mid_offset);
+  if(elem_type==DICe::mesh::TRI6)
+    for(int_t j=0;j<num_nodes_x-1;++j)
+      bottom_edge_nodes.push_back(j+1+mid_offset);
   std::vector<int_t> left_edge_nodes;
   std::vector<int_t> left_lag_nodes;
   for(int_t j=0;j<num_nodes_y;++j){
     left_edge_nodes.push_back(j*num_nodes_x + 1);
     left_lag_nodes.push_back(j*num_nodes_x + 1);
   }
-  for(int_t j=0;j<num_nodes_y-1;++j)
-    left_edge_nodes.push_back(diag_offset + j*num_diag_per_row + 1);
+  if(elem_type==DICe::mesh::TRI6)
+    for(int_t j=0;j<num_nodes_y-1;++j)
+      left_edge_nodes.push_back(diag_offset + j*num_diag_per_row + 1);
   std::vector<int_t> right_edge_nodes;
   std::vector<int_t> right_lag_nodes;
   for(int_t j=0;j<num_nodes_y;++j){
     right_edge_nodes.push_back(j*num_nodes_x + num_nodes_x);
     right_lag_nodes.push_back(j*num_nodes_x + num_nodes_x);
   }
-  for(int_t j=0;j<num_nodes_y-1;++j)
-    right_edge_nodes.push_back(diag_offset + j*num_diag_per_row + num_diag_per_row);
+  if(elem_type==DICe::mesh::TRI6)
+    for(int_t j=0;j<num_nodes_y-1;++j)
+      right_edge_nodes.push_back(diag_offset + j*num_diag_per_row + num_diag_per_row);
   std::vector<int_t> top_edge_nodes;
   std::vector<int_t> top_lag_nodes;
   const int_t offset = (num_nodes_y-1)*num_nodes_x;
@@ -639,8 +661,9 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri6_mesh(const scalar_t & begin
     top_edge_nodes.push_back(j+1+offset);
     top_lag_nodes.push_back(j+1+offset);
   }
-  for(int_t j=0;j<num_nodes_x-1;++j)
-    top_edge_nodes.push_back(mid_offset + (num_nodes_y-1)*num_mid_per_row + j + 1);
+  if(elem_type==DICe::mesh::TRI6)
+    for(int_t j=0;j<num_nodes_x-1;++j)
+      top_edge_nodes.push_back(mid_offset + (num_nodes_y-1)*num_mid_per_row + j + 1);
 //  std::cout << "bottom edge " << std::endl;
 //  for(size_t i=0;i<bottom_edge_nodes.size();++i){
 //    std::cout << bottom_edge_nodes[i] << std::endl;
@@ -727,9 +750,11 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri6_mesh(const scalar_t & begin
   }
 
   Teuchos::RCP<DICe::mesh::Mesh> mesh =
-      DICe::mesh::create_tri6_exodus_mesh(node_coords_x,
+      DICe::mesh::create_tri_exodus_mesh(elem_type,
+        node_coords_x,
         node_coords_y,connectivity,dirichlet_bcs,
         neumann_bcs,lag_bcs,output_file_name);
+
   return mesh;
 }
 

@@ -137,7 +137,7 @@ public:
     return mesh_;
   }
 
-  /// Returns a pointer to the linear mesh
+  /// Returns a pointer to the lagrange multiplier mesh
   Teuchos::RCP<DICe::mesh::Mesh> l_mesh()const{
     return l_mesh_;
   }
@@ -218,7 +218,7 @@ protected:
   /// name of the output file
   std::string output_file_name_;
   /// name of the linear output file
-  std::string linear_output_file_name_;
+  std::string lagrange_output_file_name_;
   /// linear problem
   Teuchos::RCP< Belos::LinearProblem<mv_scalar_type,vec_type,operator_type> > linear_problem_;
   /// belos solver
@@ -248,6 +248,8 @@ protected:
   int_t max_iterations_;
   /// element type to use
   DICe::mesh::Base_Element_Type element_type_;
+  /// use a fixed point iteration technique
+  bool use_fixed_point_iterations_;
 };
 
 }// end global namespace

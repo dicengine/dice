@@ -61,7 +61,8 @@ Global_Algorithm::Global_Algorithm(Schema * schema,
   global_solver_(CG_SOLVER),
   num_image_integration_points_(20),
   max_iterations_(25),
-  element_type_(DICe::mesh::TRI6)
+  element_type_(DICe::mesh::TRI6),
+  use_fixed_point_iterations_(false)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(!schema,std::runtime_error,"Error, cannot have null schema in this constructor");
   default_constructor_tasks(params);
@@ -76,7 +77,8 @@ Global_Algorithm::Global_Algorithm(const Teuchos::RCP<Teuchos::ParameterList> & 
   global_solver_(CG_SOLVER),
   num_image_integration_points_(20),
   max_iterations_(25),
-  element_type_(DICe::mesh::TRI6)
+  element_type_(DICe::mesh::TRI6),
+  use_fixed_point_iterations_(false)
 {
   default_constructor_tasks(params);
 }
@@ -112,6 +114,7 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,"Error, invalid element type: " << elem_str);
     }
   }
+  DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): using element type " << tostring(element_type_));
 
   /// get the mesh size from the params
   if(params->isParameter(DICe::mesh_size))
@@ -125,13 +128,15 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   const std::string output_folder = params->get<std::string>(DICe::output_folder);
   const std::string output_prefix = params->get<std::string>(DICe::output_prefix);
   std::stringstream output_file_name_ss;
-  std::stringstream linear_output_file_name_ss;
+  std::stringstream lagrange_output_file_name_ss;
   output_file_name_ss << output_prefix << ".e";
-  linear_output_file_name_ss << output_prefix << "_linear.e";
+  lagrange_output_file_name_ss << output_prefix << "_linear.e";
   output_file_name_ = output_file_name_ss.str();
-  linear_output_file_name_ = linear_output_file_name_ss.str();
+  lagrange_output_file_name_ = lagrange_output_file_name_ss.str();
   DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): output file name: " << output_file_name_);
-
+  if(is_mixed_formulation()){
+    DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): lagrange output file name: " << lagrange_output_file_name_);
+  }
   if(params->isParameter(DICe::mms_spec)){
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::subset_file),std::runtime_error,"Error, subset file cannot be defined"
       " in the parameters file for an mms problem");
@@ -155,19 +160,28 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     points_x[1] = mms_problem_->dim_x(); points_y[1] = 0.0;
     points_x[2] = mms_problem_->dim_x(); points_y[2] = mms_problem_->dim_y();
     points_x[3] = 0.0; points_y[3] = mms_problem_->dim_y();
-    mesh_ = DICe::generate_tri6_mesh(points_x,points_y,mesh_size_,output_file_name_);
+    mesh_ = DICe::generate_tri_mesh(element_type_,points_x,points_y,mesh_size_,output_file_name_);
+    // if this is a mixed formulation, generate the lagrange multiplier mesh
+    if(is_mixed_formulation()){
+      l_mesh_ = element_type_==DICe::mesh::TRI6 ? DICe::mesh::create_tri3_exodus_mesh_from_tri6(mesh_,lagrange_output_file_name_):
+          DICe::generate_tri_mesh(element_type_,points_x,points_y,mesh_size_,lagrange_output_file_name_);
+    }
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(schema_==NULL,std::runtime_error,"If not an mms problem, schema must not be null.");
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::subset_file),std::runtime_error,"Error, subset file must be defined");
     const std::string & subset_file = params->get<std::string>(DICe::subset_file);
-    mesh_ = DICe::generate_tri6_mesh(subset_file,mesh_size_,output_file_name_);
+    mesh_ = DICe::generate_tri_mesh(element_type_,subset_file,mesh_size_,output_file_name_);
+    // if this is a mixed formulation, generate the lagrange multiplier mesh
+    if(is_mixed_formulation()){
+      l_mesh_ = element_type_==DICe::mesh::TRI6 ? DICe::mesh::create_tri3_exodus_mesh_from_tri6(mesh_,lagrange_output_file_name_):
+          DICe::generate_tri_mesh(element_type_,subset_file,mesh_size_,lagrange_output_file_name_);
+    }
   }
   TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"Error, mesh should not be a null pointer here.");
   DICe::mesh::create_output_exodus_file(mesh_,output_folder);
   // if this is a mixed formulation, generate the lagrange multiplier mesh
-  if(is_mixed_formulation()){//||global_formulation_==LEVENBERG_MARQUARDT){
-    l_mesh_ = DICe::mesh::create_tri3_exodus_mesh_from_tri6(mesh_,linear_output_file_name_);
+  if(is_mixed_formulation()){
     TEUCHOS_TEST_FOR_EXCEPTION(l_mesh_==Teuchos::null,std::runtime_error,"Error, mesh should not be a null pointer here.");
     DICe::mesh::create_output_exodus_file(l_mesh_,output_folder);
     // create the mixed field maps for the master mesh
@@ -283,6 +297,15 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   for(;it!=it_end;++it)
     DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): active EQ term " << to_string(*it));
   DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): alpha^2: " << alpha2_);
+
+  if(params->isParameter(DICe::use_fixed_point_iterations)){
+    use_fixed_point_iterations_ = params->get<bool>(DICe::use_fixed_point_iterations);
+  }
+  else if(mms_problem_==Teuchos::null){
+    use_fixed_point_iterations_ = true;
+  }
+  DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): use_fixed_point_iterations: " << use_fixed_point_iterations_);
+
 }
 
 void
@@ -401,22 +424,23 @@ Global_Algorithm::compute_tangent(){
   }
   // establish the shape functions (using P2-P1 element for velocity pressure, or P2 velocity if no constraint):
   DICe::mesh::Shape_Function_Evaluator_Factory shape_func_eval_factory;
-  Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> tri3_shape_func_evaluator =
+  Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> lag_shape_func_evaluator =
       shape_func_eval_factory.create(DICe::mesh::TRI3);
-  const int_t tri3_num_funcs = tri3_shape_func_evaluator->num_functions();
-  scalar_t N3[tri3_num_funcs];
-  Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> tri6_shape_func_evaluator =
-      shape_func_eval_factory.create(DICe::mesh::TRI6);
-  const int_t tri6_num_funcs = tri6_shape_func_evaluator->num_functions();
-  scalar_t N6[tri6_num_funcs];
-  scalar_t DN6[tri6_num_funcs*spa_dim];
-  int_t node_ids[tri6_num_funcs];
-  scalar_t nodal_coords[tri6_num_funcs*spa_dim];
+  const int_t lag_num_funcs = lag_shape_func_evaluator->num_functions();
+  scalar_t N_lag[lag_num_funcs];
+  Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> vel_shape_func_evaluator = element_type_ ==DICe::mesh::TRI6 ?
+      shape_func_eval_factory.create(DICe::mesh::TRI6):
+      shape_func_eval_factory.create(DICe::mesh::TRI3);
+  const int_t vel_num_funcs = vel_shape_func_evaluator->num_functions();
+  scalar_t N_vel[vel_num_funcs];
+  scalar_t DN_vel[vel_num_funcs*spa_dim];
+  int_t node_ids[vel_num_funcs];
+  scalar_t nodal_coords[vel_num_funcs*spa_dim];
   scalar_t jac[spa_dim*spa_dim];
   scalar_t inv_jac[spa_dim*spa_dim];
   scalar_t J =0.0;
-  scalar_t elem_stiffness[tri6_num_funcs*spa_dim*tri6_num_funcs*spa_dim];
-  scalar_t elem_div_stiffness[tri3_num_funcs*spa_dim*tri6_num_funcs];
+  scalar_t elem_stiffness[vel_num_funcs*spa_dim*vel_num_funcs*spa_dim];
+  scalar_t elem_div_stiffness[lag_num_funcs*spa_dim*vel_num_funcs];
   //scalar_t grad_phi[spa_dim];
   scalar_t x=0.0,y=0.0;
 
@@ -425,7 +449,7 @@ Global_Algorithm::compute_tangent(){
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > gp_locs;
   Teuchos::ArrayRCP<scalar_t> gp_weights;
   int_t num_integration_points = -1;
-  tri6_shape_func_evaluator->get_natural_integration_points(integration_order,gp_locs,gp_weights,num_integration_points);
+  vel_shape_func_evaluator->get_natural_integration_points(integration_order,gp_locs,gp_weights,num_integration_points);
   const int_t natural_coord_dim = gp_locs[0].size();
   scalar_t natural_coords[natural_coord_dim];
 
@@ -448,7 +472,7 @@ Global_Algorithm::compute_tangent(){
     //std::cout << "ELEM: " << elem_it->get()->global_id() << std::endl;
     const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
     // compute the shape functions and derivatives for this element:
-    for(int_t nd=0;nd<tri6_num_funcs;++nd){
+    for(int_t nd=0;nd<vel_num_funcs;++nd){
       node_ids[nd] = connectivity[nd]->global_id();
       //std::cout << " gid " << node_ids[nd] << std::endl;
       for(int_t dim=0;dim<spa_dim;++dim){
@@ -458,10 +482,10 @@ Global_Algorithm::compute_tangent(){
       }
     }
     // clear the elem stiffness
-    for(int_t i=0;i<tri6_num_funcs*spa_dim*tri6_num_funcs*spa_dim;++i)
+    for(int_t i=0;i<vel_num_funcs*spa_dim*vel_num_funcs*spa_dim;++i)
       elem_stiffness[i] = 0.0;
     // clear the div stiffness storage
-    for(int_t i=0;i<tri3_num_funcs*spa_dim*tri6_num_funcs;++i)
+    for(int_t i=0;i<lag_num_funcs*spa_dim*vel_num_funcs;++i)
       elem_div_stiffness[i] = 0.0;
 
     // low-order gauss point loop:
@@ -473,41 +497,41 @@ Global_Algorithm::compute_tangent(){
         //std::cout << " natural coords " << dim << " " << natural_coords[dim] << std::endl;
       }
       // evaluate the shape functions and derivatives:
-      tri6_shape_func_evaluator->evaluate_shape_functions(natural_coords,N6);
-      tri6_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN6);
+      vel_shape_func_evaluator->evaluate_shape_functions(natural_coords,N_vel);
+      vel_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN_vel);
 
       // evaluate the shape functions and derivatives:
-      tri3_shape_func_evaluator->evaluate_shape_functions(natural_coords,N3);
+      lag_shape_func_evaluator->evaluate_shape_functions(natural_coords,N_lag);
 
       // physical gp location
       x = 0.0; y=0.0;
-      for(int_t i=0;i<tri6_num_funcs;++i){
-        x += nodal_coords[i*spa_dim+0]*N6[i];
-        y += nodal_coords[i*spa_dim+1]*N6[i];
+      for(int_t i=0;i<vel_num_funcs;++i){
+        x += nodal_coords[i*spa_dim+0]*N_vel[i];
+        y += nodal_coords[i*spa_dim+1]*N_vel[i];
       }
       //std::cout << " physical coords " << x << " " << y << std::endl;
 
       // compute the jacobian for this element:
-      DICe::global::calc_jacobian(nodal_coords,DN6,jac,inv_jac,J,tri6_num_funcs,spa_dim);
+      DICe::global::calc_jacobian(nodal_coords,DN_vel,jac,inv_jac,J,vel_num_funcs,spa_dim);
 
       // grad(phi) tensor_prod grad(phi)
       if(has_term(MMS_IMAGE_GRAD_TENSOR))
-        mms_image_grad_tensor(mms_problem_,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_stiffness);
+        mms_image_grad_tensor(mms_problem_,spa_dim,vel_num_funcs,x,y,J,gp_weights[gp],N_vel,elem_stiffness);
 
       // alpha^2 * div(0.5*(grad(b) + grad(b)^T))
       if(has_term(DIV_SYMMETRIC_STRAIN_REGULARIZATION))
-        div_symmetric_strain(spa_dim,tri6_num_funcs,alpha2_,J,gp_weights[gp],inv_jac,DN6,elem_stiffness);
+        div_symmetric_strain(spa_dim,vel_num_funcs,alpha2_,J,gp_weights[gp],inv_jac,DN_vel,elem_stiffness);
 
       // alpha^2 * b
       if(has_term(TIKHONOV_REGULARIZATION))
-        tikhonov_tensor(this,spa_dim,tri6_num_funcs,J,gp_weights[gp],N6,elem_stiffness);
+        tikhonov_tensor(this,spa_dim,vel_num_funcs,J,gp_weights[gp],N_vel,elem_stiffness);
       //lumped_tikhonov_tensor(this,spa_dim,tri6_num_funcs,J,gp_weights[gp],N6,elem_stiffness);
 
       // mixed formulation stiffness terms
 
       // grad(lambda)
       if(has_term(DIV_VELOCITY))
-        div_velocity(spa_dim,tri3_num_funcs,tri6_num_funcs,J,gp_weights[gp],inv_jac,DN6,N3,elem_div_stiffness);
+        div_velocity(spa_dim,lag_num_funcs,vel_num_funcs,J,gp_weights[gp],inv_jac,DN_vel,N_lag,elem_div_stiffness);
 
     } // gp loop
 
@@ -520,37 +544,37 @@ Global_Algorithm::compute_tangent(){
         //std::cout << " natural coords " << dim << " " << natural_coords[dim] << std::endl;
       }
       // evaluate the shape functions and derivatives:
-      tri6_shape_func_evaluator->evaluate_shape_functions(natural_coords,N6);
-      tri6_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN6);
+      vel_shape_func_evaluator->evaluate_shape_functions(natural_coords,N_vel);
+      vel_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN_vel);
 
       // physical gp location
       x = 0.0; y=0.0;
-      for(int_t i=0;i<tri6_num_funcs;++i){
-        x += nodal_coords[i*spa_dim+0]*N6[i];
-        y += nodal_coords[i*spa_dim+1]*N6[i];
+      for(int_t i=0;i<vel_num_funcs;++i){
+        x += nodal_coords[i*spa_dim+0]*N_vel[i];
+        y += nodal_coords[i*spa_dim+1]*N_vel[i];
       }
       //std::cout << " physical coords " << x << " " << y << std::endl;
 
       // compute the jacobian for this element:
-      DICe::global::calc_jacobian(nodal_coords,DN6,jac,inv_jac,J,tri6_num_funcs,spa_dim);
+      DICe::global::calc_jacobian(nodal_coords,DN_vel,jac,inv_jac,J,vel_num_funcs,spa_dim);
 
       // grad(phi) tensor_prod grad(phi)
       if(has_term(IMAGE_GRAD_TENSOR))
-        image_grad_tensor(this,spa_dim,tri6_num_funcs,x,y,J,image_gp_weights[gp],N6,elem_stiffness);
+        image_grad_tensor(this,spa_dim,vel_num_funcs,x,y,J,image_gp_weights[gp],N_vel,elem_stiffness);
 
     } // image gp loop
 
     //DEBUG_MSG("Global_Algorithm::compute_tangent(): Assembling the tangent matrix");
     // assemble the global stiffness matrix
-    for(int_t i=0;i<tri6_num_funcs;++i){
+    for(int_t i=0;i<vel_num_funcs;++i){
       for(int_t m=0;m<spa_dim;++m){
         // assemble the lagrange multiplier degrees of freedom
         if(is_mixed_formulation()){
-          for(int_t j=0;j<tri3_num_funcs;++j){
+          for(int_t j=0;j<lag_num_funcs;++j){
             const int_t row = (node_ids[i]-1)*spa_dim + m + 1;
             const int_t col = node_ids[j] + mgo;
             //std::cout << "row " << row << " col " << col << std::endl;
-            const scalar_t value = elem_div_stiffness[j*tri6_num_funcs*spa_dim + i*spa_dim+m];
+            const scalar_t value = elem_div_stiffness[j*vel_num_funcs*spa_dim + i*spa_dim+m];
             const bool is_local_row_node =  mesh_->get_vector_node_dist_map()->is_node_global_elem(row); // using the non-mixed map because the row is a velocity row
             const bool row_is_bc_node = is_local_row_node ?
                 bc_manager_->is_row_bc(mesh_->get_vector_node_dist_map()->get_local_element(row)) : false; // same rationalle here
@@ -572,11 +596,11 @@ Global_Algorithm::compute_tangent(){
           } // tri3_num_funcs
         }
         // assemble the velocity degrees of freedom
-        for(int_t j=0;j<tri6_num_funcs;++j){
+        for(int_t j=0;j<vel_num_funcs;++j){
           for(int_t n=0;n<spa_dim;++n){
             const int_t row = (node_ids[i]-1)*spa_dim + m + 1;
             const int_t col = (node_ids[j]-1)*spa_dim + n + 1;
-            const scalar_t value = elem_stiffness[(i*spa_dim + m)*tri6_num_funcs*spa_dim + (j*spa_dim + n)];
+            const scalar_t value = elem_stiffness[(i*spa_dim + m)*vel_num_funcs*spa_dim + (j*spa_dim + n)];
             const bool is_local_row_node = mesh_->get_vector_node_dist_map()->is_node_global_elem(row);
             const bool row_is_bc_node = is_local_row_node ?
                 bc_manager_->is_row_bc(mesh_->get_vector_node_dist_map()->get_local_element(row)) : false;
@@ -647,21 +671,22 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
 
   // establish the shape functions (using P2-P1 element for velocity pressure, or P2 velocity if no constraint):
   DICe::mesh::Shape_Function_Evaluator_Factory shape_func_eval_factory;
-  Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> tri3_shape_func_evaluator =
+  Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> lag_shape_func_evaluator =
       shape_func_eval_factory.create(DICe::mesh::TRI3);
-  const int_t tri3_num_funcs = tri3_shape_func_evaluator->num_functions();
-  scalar_t N3[tri3_num_funcs];
-  Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> tri6_shape_func_evaluator =
-      shape_func_eval_factory.create(DICe::mesh::TRI6);
-  const int_t tri6_num_funcs = tri6_shape_func_evaluator->num_functions();
-  scalar_t N6[tri6_num_funcs];
-  scalar_t DN6[tri6_num_funcs*spa_dim];
-  scalar_t nodal_coords[tri6_num_funcs*spa_dim];
-  scalar_t nodal_disp[tri6_num_funcs*spa_dim];
+  const int_t lag_num_funcs = lag_shape_func_evaluator->num_functions();
+  scalar_t N_lag[lag_num_funcs];
+  Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> vel_shape_func_evaluator = element_type_==DICe::mesh::TRI6 ?
+      shape_func_eval_factory.create(DICe::mesh::TRI6) :
+      shape_func_eval_factory.create(DICe::mesh::TRI3);
+  const int_t vel_num_funcs = vel_shape_func_evaluator->num_functions();
+  scalar_t N_vel[vel_num_funcs];
+  scalar_t DN_vel[vel_num_funcs*spa_dim];
+  scalar_t nodal_coords[vel_num_funcs*spa_dim];
+  scalar_t nodal_disp[vel_num_funcs*spa_dim];
   scalar_t jac[spa_dim*spa_dim];
   scalar_t inv_jac[spa_dim*spa_dim];
   scalar_t J =0.0;
-  scalar_t elem_force[tri6_num_funcs*spa_dim];
+  scalar_t elem_force[vel_num_funcs*spa_dim];
   scalar_t x=0.0,y=0.0,bx=0.0,by=0.0;
 
   // get the natural integration points for this element:
@@ -669,7 +694,7 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > gp_locs;
   Teuchos::ArrayRCP<scalar_t> gp_weights;
   int_t num_integration_points = -1;
-  tri6_shape_func_evaluator->get_natural_integration_points(integration_order,gp_locs,gp_weights,num_integration_points);
+  vel_shape_func_evaluator->get_natural_integration_points(integration_order,gp_locs,gp_weights,num_integration_points);
   const int_t natural_coord_dim = gp_locs[0].size();
   scalar_t natural_coords[natural_coord_dim];
 
@@ -699,7 +724,7 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
     //std::cout << "ELEM: " << elem_it->get()->global_id() << std::endl;
     const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
     // compute the shape functions and derivatives for this element:
-    for(int_t nd=0;nd<tri6_num_funcs;++nd){
+    for(int_t nd=0;nd<vel_num_funcs;++nd){
       for(int_t dim=0;dim<spa_dim;++dim){
         const int_t stride = nd*spa_dim + dim;
         nodal_coords[stride] = coords_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
@@ -708,7 +733,7 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
       }
     }
     // clear the elem force
-    for(int_t i=0;i<tri6_num_funcs*spa_dim;++i)
+    for(int_t i=0;i<vel_num_funcs*spa_dim;++i)
       elem_force[i] = 0.0;
 
     if(mms_problem_!=Teuchos::null){
@@ -721,30 +746,30 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
           //std::cout << " natural coords " << dim << " " << natural_coords[dim] << std::endl;
         }
         // evaluate the shape functions and derivatives:
-        tri6_shape_func_evaluator->evaluate_shape_functions(natural_coords,N6);
-        tri6_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN6);
+        vel_shape_func_evaluator->evaluate_shape_functions(natural_coords,N_vel);
+        vel_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN_vel);
 
         // evaluate the shape functions and derivatives:
-        tri3_shape_func_evaluator->evaluate_shape_functions(natural_coords,N3);
+        lag_shape_func_evaluator->evaluate_shape_functions(natural_coords,N_lag);
 
         // physical gp location
         x = 0.0; y=0.0;
-        for(int_t i=0;i<tri6_num_funcs;++i){
-          x += nodal_coords[i*spa_dim+0]*N6[i];
-          y += nodal_coords[i*spa_dim+1]*N6[i];
+        for(int_t i=0;i<vel_num_funcs;++i){
+          x += nodal_coords[i*spa_dim+0]*N_vel[i];
+          y += nodal_coords[i*spa_dim+1]*N_vel[i];
         }
         //std::cout << " physical coords " << x << " " << y << std::endl;
 
         // compute the jacobian for this element:
-        DICe::global::calc_jacobian(nodal_coords,DN6,jac,inv_jac,J,tri6_num_funcs,spa_dim);
+        DICe::global::calc_jacobian(nodal_coords,DN_vel,jac,inv_jac,J,vel_num_funcs,spa_dim);
 
         // mms force
         if(has_term(MMS_FORCE))
-          mms_force(mms_problem_,spa_dim,tri6_num_funcs,x,y,alpha2_,J,gp_weights[gp],N6,this->eq_terms(),elem_force);
+          mms_force(mms_problem_,spa_dim,vel_num_funcs,x,y,alpha2_,J,gp_weights[gp],N_vel,this->eq_terms(),elem_force);
 
         // d_dt(phi) * grad(phi)
         if(has_term(MMS_IMAGE_TIME_FORCE))
-          mms_image_time_force(mms_problem_,spa_dim,tri6_num_funcs,x,y,J,gp_weights[gp],N6,elem_force);
+          mms_image_time_force(mms_problem_,spa_dim,vel_num_funcs,x,y,J,gp_weights[gp],N_vel,elem_force);
 
       } // gp loop
     } // has mms_problem
@@ -758,29 +783,29 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
         //std::cout << " natural coords " << dim << " " << natural_coords[dim] << std::endl;
       }
       // evaluate the shape functions and derivatives:
-      tri6_shape_func_evaluator->evaluate_shape_functions(natural_coords,N6);
-      tri6_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN6);
+      vel_shape_func_evaluator->evaluate_shape_functions(natural_coords,N_vel);
+      vel_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN_vel);
 
       // physical gp location
       x = 0.0; y=0.0;
       bx = 0.0; by=0.0;
-      for(int_t i=0;i<tri6_num_funcs;++i){
-        x += nodal_coords[i*spa_dim+0]*N6[i];
-        y += nodal_coords[i*spa_dim+1]*N6[i];
+      for(int_t i=0;i<vel_num_funcs;++i){
+        x += nodal_coords[i*spa_dim+0]*N_vel[i];
+        y += nodal_coords[i*spa_dim+1]*N_vel[i];
         if(use_fixed_point){
-          bx += nodal_disp[i*spa_dim+0]*N6[i];
-          by += nodal_disp[i*spa_dim+1]*N6[i];
+          bx += nodal_disp[i*spa_dim+0]*N_vel[i];
+          by += nodal_disp[i*spa_dim+1]*N_vel[i];
         }
       }
       //std::cout << " x " << x << " y " << y <<  " bx " << bx << " by " << by << std::endl;
       //std::cout << " physical coords " << x << " " << y << std::endl;
 
       // compute the jacobian for this element:
-      DICe::global::calc_jacobian(nodal_coords,DN6,jac,inv_jac,J,tri6_num_funcs,spa_dim);
+      DICe::global::calc_jacobian(nodal_coords,DN_vel,jac,inv_jac,J,vel_num_funcs,spa_dim);
 
       // d_dt(phi) * grad(phi)
       if(has_term(IMAGE_TIME_FORCE))
-        image_time_force(this,spa_dim,tri6_num_funcs,x,y,bx,by,J,image_gp_weights[gp],N6,elem_force);
+        image_time_force(this,spa_dim,vel_num_funcs,x,y,bx,by,J,image_gp_weights[gp],N_vel,elem_force);
 
       //if(use_fixed_point)
       //  image_grad_force(this,spa_dim,tri6_num_funcs,x,y,bx,by,J,image_gp_weights[gp],N6,elem_force);
@@ -789,14 +814,11 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
       //if(has_term(TIKHONOV_REGULARIZATION)&&use_fixed_point)
       //  tikhonov_force(this,spa_dim,tri6_num_funcs,bx,by,J,image_gp_weights[gp],N6,elem_force);
 
-
-
-
     } // image gp loop
 
     // assemble the force terms
     // (note: no force terms for lagrange multiplier...so assembly is the same if mixed or not)
-    for(int_t i=0;i<tri6_num_funcs;++i){
+    for(int_t i=0;i<vel_num_funcs;++i){
       //int_t nodex_local_id = connectivity[i]->overlap_local_id()*spa_dim;
       //int_t nodey_local_id = nodex_local_id + 1;
       //overlap_residual.local_value(nodex_local_id) += elem_force[i*spa_dim+0];
@@ -849,8 +871,7 @@ Global_Algorithm::execute(){
 
   // if this is a real problem (not MMS) use the lagrangian coordinates
   // and use a fixed point iteration loop rather than a direct solve
-  const bool use_fixed_point = mms_problem_==Teuchos::null;
-  DEBUG_MSG("Global_Algorithm::execute: use_fixed_point: " << use_fixed_point);
+  DEBUG_MSG("Global_Algorithm::execute: use_fixed_point: " << use_fixed_point_iterations_);
   const int_t max_its = max_iterations_;
   const scalar_t update_tol = 1.0E-5;
   const scalar_t residual_tol = 1.0E-8;
@@ -860,7 +881,7 @@ Global_Algorithm::execute(){
     // apply the initial conditions (sets lhs and disp_nm1)
     bc_manager_->apply_ics(it==0);
 
-    const scalar_t resid_norm = compute_residual(use_fixed_point);
+    const scalar_t resid_norm = compute_residual(use_fixed_point_iterations_);
 
     // apply the boundary conditions
     bc_manager_->apply_bcs(it==0);
@@ -869,6 +890,19 @@ Global_Algorithm::execute(){
       DEBUG_MSG("Iteration: " << it << " residual norm: " << resid_norm);
       DEBUG_MSG("Global_Algorithm::execute(): * * * convergence successful * * *");
       DEBUG_MSG("Global_Algorithm::execute(): criteria: residual_norm < tol (" << residual_tol << ")");
+      if(is_mixed_formulation()){
+        for(int_t i=0;i<mesh_->get_vector_node_dist_map()->get_num_local_elements();++i){
+          const int_t gid = mesh_->get_vector_node_dist_map()->get_global_element(i);
+          disp->global_value(gid) += lhs->global_value(gid);
+        }
+        for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+          const int_t gid = l_mesh_->get_scalar_node_dist_map()->get_global_element(i);
+          lagrange_multiplier->global_value(gid) += lhs->global_value(gid+mixed_global_offset());
+        }
+      }
+      else
+        disp->update(1.0,*lhs,1.0);
+      //disp.describe();
       break;
     }
 
@@ -899,12 +933,10 @@ Global_Algorithm::execute(){
         lagrange_multiplier->global_value(gid) += lhs->global_value(gid+mixed_global_offset());
       }
     }
-    else{
-      // upate the displacements
+    else
       disp->update(1.0,*lhs,1.0);
-    }
-
     //disp.describe();
+
     //write out the stats on the displacement field
     scalar_t lhs_min_x = 0.0, lhs_min_y = 0.0;
     scalar_t lhs_max_x = 0.0, lhs_max_y = 0.0;
@@ -923,7 +955,7 @@ Global_Algorithm::execute(){
     DEBUG_MSG("DISPLACEMENT: min_x " << disp_min_x << " max_x " << disp_max_x << " avg_x " << disp_avg_x << " std_dev_x " << disp_std_dev_x);
     DEBUG_MSG("DISPLACEMENT: min_y " << disp_min_y << " max_y " << disp_max_y << " avg_y " << disp_avg_y << " std_dev_y " << disp_std_dev_y);
 
-    if(!use_fixed_point){
+    if(!use_fixed_point_iterations_){
       DEBUG_MSG("Global_Algorithm::execute(): * * * convergence successful * * *");
       DEBUG_MSG("Global_Algorithm::execute(): criteria: single iteration required");
       break;
@@ -1020,9 +1052,9 @@ Global_Algorithm::compute_strains(){
 
   const int_t spa_dim = mesh_->spatial_dimension();
   DICe::mesh::Shape_Function_Evaluator_Factory shape_func_eval_factory;
-  Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> shape_func_evaluator =
-      //shape_func_eval_factory.create(DICe::mesh::TRI3); // linear strains
-      shape_func_eval_factory.create(DICe::mesh::TRI6); // quadratic strains
+  Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> shape_func_evaluator = element_type_==DICe::mesh::TRI6 ?
+      shape_func_eval_factory.create(DICe::mesh::TRI6) : // linear strains
+      shape_func_eval_factory.create(DICe::mesh::TRI3); // constant strains
   const int_t num_funcs = shape_func_evaluator->num_functions();
   scalar_t DN[num_funcs*spa_dim];
   scalar_t nodal_coords[num_funcs*spa_dim];
@@ -1031,7 +1063,7 @@ Global_Algorithm::compute_strains(){
   scalar_t inv_jac[spa_dim*spa_dim];
   scalar_t J =0.0;
   scalar_t natural_coords[spa_dim];
-  scalar_t node_nat_x[] = {0.0, 1.0, 0.0, 0.5, 0.5, 0.0};
+  scalar_t node_nat_x[] = {0.0, 1.0, 0.0, 0.5, 0.5, 0.0}; // If the elem is TRI6 the last three are not used
   scalar_t node_nat_y[] = {0.0, 0.0, 1.0, 0.0, 0.5, 0.5};
 
   // element loop
@@ -1126,7 +1158,7 @@ Global_Algorithm::initialize_ref_image(){
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::compute_image_gradients,true);
   imgParams->set(DICe::gradient_method,FINITE_DIFFERENCE);
-  ref_img_ = schema_->ref_img()->normalize(imgParams);
+  ref_img_ = schema_->ref_img();//->normalize(imgParams);
   //ref_img_->write("global_normalized_image.tif");
   // take the gradienst from the normalized image and make grad images for interpolation
   const int_t w = ref_img_->width();
@@ -1150,7 +1182,7 @@ Global_Algorithm::set_def_image(){
   //schema_->def_img()->write("pre_def_img.tif");
 
   TEUCHOS_TEST_FOR_EXCEPTION(!schema_,std::runtime_error,"Error, schema must not be null for this method");
-  def_img_ = schema_->def_img()->normalize();
+  def_img_ = schema_->def_img();//->normalize();
   //def_img_->write("global_normalized_def_image.tif");
 }
 

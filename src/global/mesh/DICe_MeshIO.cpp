@@ -329,7 +329,8 @@ Teuchos::RCP<Mesh> create_tri3_exodus_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mes
 
 
 
-Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coords_x,
+Teuchos::RCP<Mesh> create_tri_exodus_mesh(const DICe::mesh::Base_Element_Type elem_type,
+  Teuchos::ArrayRCP<scalar_t> node_coords_x,
   Teuchos::ArrayRCP<scalar_t> node_coords_y,
   Teuchos::ArrayRCP<int_t> connectivity,
   std::map<int_t,int_t> & dirichlet_boundary_nodes,
@@ -338,10 +339,13 @@ Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coor
   const std::string & serial_output_filename)
 {
   DEBUG_MSG("create_exodus_mesh(): creating an exodus mesh");
-  const int_t num_nodes_per_elem = 6; // fixed number of nodes per TRI6 elem
-  TEUCHOS_TEST_FOR_EXCEPTION(connectivity.size()%6!=0,std::runtime_error,
-    "Error connectivity should be a multiple of 6");
-  const int_t num_elem  = connectivity.size()/6;
+  TEUCHOS_TEST_FOR_EXCEPTION(elem_type!=DICe::mesh::TRI6&&elem_type!=DICe::mesh::TRI3,std::runtime_error,
+    "Error, invalid element type");
+  const int_t num_nodes_per_elem = elem_type==DICe::mesh::TRI6 ? 6 : 3; // fixed number of nodes per TRI6 or TRI3 elem
+  TEUCHOS_TEST_FOR_EXCEPTION((elem_type==DICe::mesh::TRI6&&connectivity.size()%6!=0)||
+    (elem_type==DICe::mesh::TRI3&&connectivity.size()%3!=0),std::runtime_error,
+    "Error connectivity should be a multiple of 6 for TRI6 or 3 for TRI3");
+  const int_t num_elem = connectivity.size()/num_nodes_per_elem;
   // check the input data
   TEUCHOS_TEST_FOR_EXCEPTION(node_coords_x.size()<0,std::runtime_error,
     "Error node coords x is of zero size");
@@ -397,8 +401,11 @@ Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coor
     mesh->get_node_set()->insert(std::pair<int_t,Teuchos::RCP<Node> >(node_rcp->global_id(),node_rcp));
   }
 
-  // create one block all of type TRI6 elems
-  mesh->get_block_type_map()->insert(std::pair<int_t,Base_Element_Type>(1,TRI6));
+  // create one block all of type TRI6 or TRI3 elems
+  if(elem_type==DICe::mesh::TRI6)
+    mesh->get_block_type_map()->insert(std::pair<int_t,Base_Element_Type>(1,TRI6));
+  else
+    mesh->get_block_type_map()->insert(std::pair<int_t,Base_Element_Type>(1,TRI3));
 
   // read element connectivity
   Teuchos::ArrayRCP<int_t> connectivity_swap(num_nodes_per_elem);
@@ -410,9 +417,11 @@ Teuchos::RCP<Mesh> create_tri6_exodus_mesh(Teuchos::ArrayRCP<scalar_t> node_coor
     connectivity_swap[0] = connectivity[j*num_nodes_per_elem + 0];
     connectivity_swap[1] = connectivity[j*num_nodes_per_elem + 1];
     connectivity_swap[2] = connectivity[j*num_nodes_per_elem + 2];
-    connectivity_swap[4] = connectivity[j*num_nodes_per_elem + 3];
-    connectivity_swap[5] = connectivity[j*num_nodes_per_elem + 4];
-    connectivity_swap[3] = connectivity[j*num_nodes_per_elem + 5];
+    if(elem_type==DICe::mesh::TRI6){
+      connectivity_swap[4] = connectivity[j*num_nodes_per_elem + 3];
+      connectivity_swap[5] = connectivity[j*num_nodes_per_elem + 4];
+      connectivity_swap[3] = connectivity[j*num_nodes_per_elem + 5];
+    }
     for(int_t k=0;k<num_nodes_per_elem;++k)
     {
       const int_t global_node_id = connectivity_swap[k];

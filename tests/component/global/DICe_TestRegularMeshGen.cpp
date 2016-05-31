@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
     dirichlet_sides.push_back(i);
 
   Teuchos::RCP<DICe::mesh::Mesh> mesh =
-      DICe::generate_regular_tri6_mesh(begin_x,end_x,begin_y,end_y,h,dirichlet_sides,neumann_sides,"regular_tri_mesh.e");
+      DICe::generate_regular_tri_mesh(DICe::mesh::TRI6,begin_x,end_x,begin_y,end_y,h,dirichlet_sides,neumann_sides,"regular_tri_mesh.e");
   *outStream << "creating the output meshes" << std::endl;
   DICe::mesh::create_output_exodus_file(mesh,"./");
   DICe::mesh::create_exodus_output_variable_names(mesh);
