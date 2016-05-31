@@ -84,14 +84,14 @@ int main(int argc, char *argv[]) {
   input_params->set(DICe::output_folder,"");
   input_params->set(DICe::output_prefix,"pixel_shift");
   corr_params->set(DICe::use_global_dic,true);
-  corr_params->set(DICe::global_regularization_alpha,1.0);
+  corr_params->set(DICe::max_solver_iterations_fast,250);
+  corr_params->set(DICe::global_regularization_alpha,0.01);
 //  corr_params->set(DICe::interpolation_method,BICUBIC);
 //  corr_params->set(DICe::global_formulation,LEVENBERG_MARQUARDT);
+//  corr_params->set(DICe::global_formulation,HORN_SCHUNCK);
   corr_params->set(DICe::global_formulation,UNREGULARIZED);
   corr_params->set(DICe::global_solver,GMRES_SOLVER);
-  corr_params->set(DICe::num_image_integration_points,50);
   corr_params->set(DICe::num_image_integration_points,100);
-
   *outStream << "generating the mms problem" << std::endl;
   // create an MMS problem
   const int_t w = 500;
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
   std::vector<scalar_t> error_y;
 
 //  for(scalar_t shift = 0.0;shift<=1.0001;shift+=0.05){
-  for(scalar_t shift = 0.0;shift<=2.0001;shift+=0.05){
+  for(scalar_t shift = 0.0;shift<=1.0001;shift+=0.05){
     *outStream << "SHIFT " << shift << std::endl;
     *outStream << "creating the image set" << std::endl;
 
@@ -122,13 +122,13 @@ int main(int argc, char *argv[]) {
       }
     }
     Teuchos::RCP<Image> ref = Teuchos::rcp(new Image(w,h,ref_intens));
-    //std::stringstream ref_name;
-    //ref_name << "ref_pixel_shift_" << shift << ".tif";
-    //ref->write(ref_name.str());
+    std::stringstream ref_name;
+    ref_name << "ref_pixel_shift_" << shift << ".tif";
+    ref->write(ref_name.str());
     Teuchos::RCP<Image> def = Teuchos::rcp(new Image(w,h,def_intens));
-    //std::stringstream def_name;
-    //def_name << "def_pixel_shift_" << shift << ".tif";
-    //def->write(def_name.str());
+    std::stringstream def_name;
+    def_name << "def_pixel_shift_" << shift << ".tif";
+    def->write(def_name.str());
 
     *outStream << "creating the global roi file" << std::endl;
 
@@ -147,6 +147,8 @@ int main(int argc, char *argv[]) {
     roi_file << "    end polygon\n";
     roi_file << "  end boundary\n";
     roi_file << "  use_regular_grid\n";
+    roi_file << "  ic_value_x " << shift << "\n";
+    roi_file << "  ic_value_y " << shift << "\n";
     roi_file << "  dirichlet_bc boundary 0 0 1 " << shift << " " << shift<<"\n";
     roi_file << "  dirichlet_bc boundary 0 1 2 " << shift << " " << shift<<"\n";
     roi_file << "  dirichlet_bc boundary 0 2 3 " << shift << " " << shift<<"\n";

@@ -1183,7 +1183,8 @@ Schema::execute_correlation(){
       std::cout << "Error, global correlation failed: " << e.what() << std::endl;
     }
     if(global_status!=CORRELATION_SUCCESSFUL){
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, global correlation failed");
+      std::cout << "********* Error, global correlation failed **************** " << std::endl;
+      //TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, global correlation failed");
     }
 #endif
     return;

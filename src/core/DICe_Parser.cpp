@@ -732,6 +732,18 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            else if(block_tokens[0]==parser_use_regular_grid){
              info->use_regular_grid = true;
            }
+           else if(block_tokens[0]==parser_ic_value_x){
+             TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<=1,std::runtime_error,"");
+             TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[1]),std::runtime_error,"");
+             info->ic_value_x = strtod(block_tokens[1].c_str(),NULL);
+             DEBUG_MSG("found region of interest IC value x: " << info->ic_value_x);
+           }
+           else if(block_tokens[0]==parser_ic_value_y){
+             TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<=1,std::runtime_error,"");
+             TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[1]),std::runtime_error,"");
+             info->ic_value_y = strtod(block_tokens[1].c_str(),NULL);
+             DEBUG_MSG("found region of interest IC value x: " << info->ic_value_y);
+           }
            // BOUNDARY CONDITIONS
            else if(block_tokens[0]==parser_dirichlet_bc){
              if(proc_rank==0) DEBUG_MSG("Reading dirichlet boundary condition ");

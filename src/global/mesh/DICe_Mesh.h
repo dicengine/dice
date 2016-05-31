@@ -1387,6 +1387,23 @@ public:
     return & bc_defs_;
   }
 
+  /// return the initial condition value in x
+  scalar_t ic_value_x()const{
+    return ic_value_x_;
+  }
+
+  /// return the initial condition value in x
+  scalar_t ic_value_y()const{
+    return ic_value_y_;
+  }
+
+  /// set the value of the initial conditions
+  void set_ic_values(const scalar_t & value_x,
+    const scalar_t & value_y){
+    ic_value_x_ = value_x;
+    ic_value_y_ = value_y;
+  }
+
 private:
   /// The parallel or serial communicator
   Teuchos::RCP<MultiField_Comm> comm_;
@@ -1510,6 +1527,10 @@ private:
   std::vector<std::set<std::pair<scalar_t,scalar_t> > > integration_point_ownership_;
   /// storage of the boundary condition definitions
   std::vector<Boundary_Condition_Def> bc_defs_;
+  /// value to use for initial condition in x
+  scalar_t ic_value_x_;
+  /// value to use for initial condition in x
+  scalar_t ic_value_y_;
 };
 
 /// \class Shape_Function_Evaluator

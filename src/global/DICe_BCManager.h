@@ -134,6 +134,32 @@ protected:
   Global_Algorithm * alg_;
 };
 
+/// \class Constant_IC
+/// \brief initialize the solution to a constant value for all nodes
+class Constant_IC : public Boundary_Condition
+{
+public:
+  /// Constructor
+  Constant_IC(Global_Algorithm * alg,
+    Teuchos::RCP<DICe::mesh::Mesh> mesh,
+    const bool is_mixed):
+  Boundary_Condition(mesh,is_mixed),
+  alg_(alg){
+    DEBUG_MSG("Constant_IC::Constant_IC(): Creating a constant IC");
+  };
+
+  /// Destructor
+  virtual ~Constant_IC(){};
+
+  /// Apply the boundary condition
+  virtual void apply(const bool first_iteration);
+
+protected:
+  /// pointer to a global algorithm
+  Global_Algorithm * alg_;
+};
+
+
 /// \class MMS_BC
 /// \brief prescribed values along the boundary using the method of manufactured solutions values
 class MMS_BC : public Boundary_Condition
@@ -268,6 +294,10 @@ public:
   /// \param first_iteration true if this is the first iteration
   void apply_bcs(const bool first_iteration);
 
+  /// apply the initial conditions
+  /// \param first_iteration true if this is the first iteration
+  void apply_ics(const bool first_iteration);
+
 protected:
   BC_Manager(const BC_Manager&);
   BC_Manager& operator=(const BC_Manager&);
@@ -292,6 +322,8 @@ protected:
   bool is_mixed_;
   /// a vector of boundary conditions to enforce
   std::vector<Teuchos::RCP<Boundary_Condition> > bcs_;
+  /// a vector of initial conditions to enforce
+  std::vector<Teuchos::RCP<Boundary_Condition> > ics_;
   /// pointer to a global algorithm
   Global_Algorithm * alg_;
 };

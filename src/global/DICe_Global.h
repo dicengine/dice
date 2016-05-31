@@ -244,6 +244,10 @@ protected:
   /// number of integration points to use in each dimension per element for
   /// image integration terms
   int_t num_image_integration_points_;
+  /// number of iterations to allow
+  int_t max_iterations_;
+  /// element type to use
+  DICe::mesh::Base_Element_Type element_type_;
 };
 
 }// end global namespace

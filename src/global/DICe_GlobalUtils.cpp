@@ -219,6 +219,35 @@ void image_grad_tensor(Global_Algorithm * alg,
   }
 }
 
+void image_grad_force(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & bx,
+  const scalar_t & by,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_force){
+  TEUCHOS_TEST_FOR_EXCEPTION(alg==NULL,std::runtime_error,
+    "Error, the pointer to the algorithm must be valid");
+
+  const scalar_t grad_phi_x = alg->grad_x()->interpolate_bicubic(x-bx,y-by);
+  const scalar_t grad_phi_y = alg->grad_y()->interpolate_bicubic(x-bx,y-by);
+
+  // image stiffness terms
+  for(int_t i=0;i<num_funcs;++i){
+    elem_force[i*spa_dim+0]
+               -= (grad_phi_x*grad_phi_x*bx + grad_phi_x*grad_phi_y*by)*N[i]*gp_weight*J;
+    elem_force[i*spa_dim+1]
+               -= (grad_phi_y*grad_phi_x*bx + grad_phi_y*grad_phi_y*by)*N[i]*gp_weight*J;
+  }
+
+
+}
+
+
 void tikhonov_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -244,6 +273,28 @@ void tikhonov_tensor(Global_Algorithm * alg,
   }
 }
 
+void tikhonov_force(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & bx,
+  const scalar_t & by,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_force){
+  TEUCHOS_TEST_FOR_EXCEPTION(alg==NULL,std::runtime_error,
+    "Error, the pointer to the algorithm must be valid");
+
+  const scalar_t alpha2 = alg->alpha2();
+
+  // compute the image force terms
+  for(int_t i=0;i<num_funcs;++i){
+    elem_force[i*spa_dim+0] -= alpha2*bx*N[i]*gp_weight*J;
+    elem_force[i*spa_dim+1] -= alpha2*by*N[i]*gp_weight*J;
+  }
+}
+
+
 void lumped_tikhonov_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -268,8 +319,6 @@ void lumped_tikhonov_tensor(Global_Algorithm * alg,
     }
   }
 }
-
-
 
 void div_velocity(const int_t spa_dim,
   const int_t t3_num_funcs,

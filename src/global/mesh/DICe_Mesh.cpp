@@ -304,7 +304,9 @@ Mesh::Mesh(const std::string & input_filename,
   output_filename_(output_filename),
   face_edge_output_filename_("face_edge_" + output_filename),
   control_volumes_are_initialized_(false),
-  cell_sizes_are_initialized_(false)
+  cell_sizes_are_initialized_(false),
+  ic_value_x_(0.0),
+  ic_value_y_(0.0)
 {
   comm_ = Teuchos::rcp(new MultiField_Comm());
   element_set_ = Teuchos::rcp(new element_set);

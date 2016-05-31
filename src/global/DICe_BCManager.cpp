@@ -167,6 +167,10 @@ BC_Manager::create_bc(Global_EQ_Term eq_term,
     Teuchos::RCP<Boundary_Condition> bc_rcp = Teuchos::rcp(new MMS_BC(alg_,mesh_,is_mixed));
     bcs_.push_back(bc_rcp);
   }
+  else if(eq_term==CONSTANT_IC){
+    Teuchos::RCP<Boundary_Condition> bc_rcp = Teuchos::rcp(new Constant_IC(alg_,mesh_,is_mixed));
+    ics_.push_back(bc_rcp);
+  }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid bc type");
   }
@@ -178,6 +182,14 @@ BC_Manager::apply_bcs(const bool first_iteration){
   for(size_t i=0;i<bcs_.size();++i)
     bcs_[i]->apply(first_iteration);
 }
+
+void
+BC_Manager::apply_ics(const bool first_iteration){
+  DEBUG_MSG("BC_Manager::apply_ics(): first iteration: " << first_iteration);
+  for(size_t i=0;i<ics_.size();++i)
+    ics_[i]->apply(first_iteration);
+}
+
 
 void
 Dirichlet_BC::apply(const bool first_iteration){
@@ -386,6 +398,28 @@ MMS_BC::apply(const bool first_iteration){
     }
   } // is mixed
 }
+
+
+void
+Constant_IC::apply(const bool first_iteration){
+  if(!first_iteration) return; // only apply this ic on the first it
+  // get the residual field
+  Teuchos::RCP<MultiField> lhs = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_LHS_FS):
+      mesh_->get_field(mesh::field_enums::LHS_FS);
+  Teuchos::RCP<MultiField> disp_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
+  const int_t spa_dim = mesh_->spatial_dimension();
+
+  // populate the image and solution fields
+  for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+    int_t ix = i*spa_dim+0;
+    int_t iy = i*spa_dim+1;
+    lhs->local_value(ix) = alg_->mesh()->ic_value_x();
+    lhs->local_value(iy) = alg_->mesh()->ic_value_y();
+    disp_nm1->local_value(ix) = alg_->mesh()->ic_value_x();
+    disp_nm1->local_value(iy) = alg_->mesh()->ic_value_y();
+  }
+}
+
 
 } // end namespace global
 

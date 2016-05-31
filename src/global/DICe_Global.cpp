@@ -59,7 +59,9 @@ Global_Algorithm::Global_Algorithm(Schema * schema,
   is_initialized_(false),
   global_formulation_(NO_SUCH_GLOBAL_FORMULATION),
   global_solver_(CG_SOLVER),
-  num_image_integration_points_(20)
+  num_image_integration_points_(20),
+  max_iterations_(25),
+  element_type_(DICe::mesh::TRI6)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(!schema,std::runtime_error,"Error, cannot have null schema in this constructor");
   default_constructor_tasks(params);
@@ -72,7 +74,9 @@ Global_Algorithm::Global_Algorithm(const Teuchos::RCP<Teuchos::ParameterList> & 
   is_initialized_(false),
   global_formulation_(NO_SUCH_GLOBAL_FORMULATION),
   global_solver_(CG_SOLVER),
-  num_image_integration_points_(20)
+  num_image_integration_points_(20),
+  max_iterations_(25),
+  element_type_(DICe::mesh::TRI6)
 {
   default_constructor_tasks(params);
 }
@@ -87,12 +91,27 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   global_formulation_ = params->get<Global_Formulation>(DICe::global_formulation);
 
   num_image_integration_points_ = params->get<int_t>(DICe::num_image_integration_points,20);
-
   DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): num image integration points: " << num_image_integration_points_);
   TEUCHOS_TEST_FOR_EXCEPTION(num_image_integration_points_<=0,std::runtime_error,"Error, invalid num integration points");
 
+  max_iterations_ = params->get<int_t>(DICe::max_solver_iterations_fast,25);
+
   global_solver_ = params->get<Global_Solver>(DICe::global_solver,CG_SOLVER);
   DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): global solver type: " << to_string(global_solver_));
+
+  if(params->isParameter(DICe::global_element_type)){
+    std::string elem_str = params->get<std::string>(DICe::global_element_type);
+    if(elem_str=="tri6"||elem_str=="TRI6")
+      element_type_ = DICe::mesh::TRI6;
+    else if(elem_str=="tri3"||elem_str=="TRI3"){
+      element_type_ = DICe::mesh::TRI3;
+      // TODO relax this later to see what happens
+      TEUCHOS_TEST_FOR_EXCEPTION(is_mixed_formulation(),std::runtime_error,"Error, mixed formulations cannot use TRI3 elements (not stable)");
+    }
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,"Error, invalid element type: " << elem_str);
+    }
+  }
 
   /// get the mesh size from the params
   if(params->isParameter(DICe::mesh_size))
@@ -207,6 +226,9 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     add_term(DIRICHLET_DISPLACEMENT_BC);
     add_term(SUBSET_DISPLACEMENT_BC);
   }
+
+  // allways add a constant term IC
+  add_term(CONSTANT_IC);
 
   if(global_formulation_==HORN_SCHUNCK||global_formulation_==MIXED_HORN_SCHUNCK){
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::global_regularization_alpha),std::runtime_error,
@@ -323,6 +345,9 @@ Global_Algorithm::pre_execution_tasks(){
   }
   if(has_term(MMS_DIRICHLET_DISPLACEMENT_BC)){
     bc_manager_->create_bc(MMS_DIRICHLET_DISPLACEMENT_BC,is_mixed_formulation());
+  }
+  if(has_term(CONSTANT_IC)){
+    bc_manager_->create_bc(CONSTANT_IC,is_mixed_formulation());
   }
 
   DEBUG_MSG("Global_Algorithm::pre_execution_tasks(): BC_Manager has been initialized.");
@@ -757,6 +782,16 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
       if(has_term(IMAGE_TIME_FORCE))
         image_time_force(this,spa_dim,tri6_num_funcs,x,y,bx,by,J,image_gp_weights[gp],N6,elem_force);
 
+      //if(use_fixed_point)
+      //  image_grad_force(this,spa_dim,tri6_num_funcs,x,y,bx,by,J,image_gp_weights[gp],N6,elem_force);
+
+      //// d_dt(phi) * grad(phi)
+      //if(has_term(TIKHONOV_REGULARIZATION)&&use_fixed_point)
+      //  tikhonov_force(this,spa_dim,tri6_num_funcs,bx,by,J,image_gp_weights[gp],N6,elem_force);
+
+
+
+
     } // image gp loop
 
     // assemble the force terms
@@ -816,13 +851,14 @@ Global_Algorithm::execute(){
   // and use a fixed point iteration loop rather than a direct solve
   const bool use_fixed_point = mms_problem_==Teuchos::null;
   DEBUG_MSG("Global_Algorithm::execute: use_fixed_point: " << use_fixed_point);
-  const int_t max_its = 25;
-  const scalar_t update_tol = 1.0E-8;
+  const int_t max_its = max_iterations_;
+  const scalar_t update_tol = 1.0E-5;
   const scalar_t residual_tol = 1.0E-8;
   int_t it=0;
   for(;it<=max_its;++it){
-    // clear the left hand side
-    lhs->put_scalar(0.0);
+
+    // apply the initial conditions (sets lhs and disp_nm1)
+    bc_manager_->apply_ics(it==0);
 
     const scalar_t resid_norm = compute_residual(use_fixed_point);
 
@@ -906,7 +942,7 @@ Global_Algorithm::execute(){
     // copy the displacement solution to state n-1
     disp_nm1->update(1.0,*disp,0.0);
   }
-  TEUCHOS_TEST_FOR_EXCEPTION(it>=max_its,std::runtime_error,"Error, max iterations reached.");
+  //TEUCHOS_TEST_FOR_EXCEPTION(it>=max_its,std::runtime_error,"Error, max iterations reached.");
 
   DEBUG_MSG("Global_Algorithm::execute(): linear solve complete");
 
@@ -932,7 +968,10 @@ Global_Algorithm::execute(){
   mesh_->print_field_stats();
   if(is_mixed_formulation())
     l_mesh_->print_field_stats();
-  return CORRELATION_SUCCESSFUL;
+  if(it>=max_its)
+    return CORRELATION_FAILED;
+  else
+    return CORRELATION_SUCCESSFUL;
 }
 
 void

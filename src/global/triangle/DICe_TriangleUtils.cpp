@@ -249,6 +249,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri6_mesh(const std::string & roi_file_n
       output_file_name);
   }
   mesh->set_bc_defs(*subset_file_info->boundary_condition_defs);
+  mesh->set_ic_values(subset_file_info->ic_value_x,subset_file_info->ic_value_y);
   return mesh;
 }
 

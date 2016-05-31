@@ -690,6 +690,50 @@ void image_time_force(Global_Algorithm* alg,
   const scalar_t * N,
   scalar_t * elem_force);
 
+/// adds the grad_phi tensor grad_phi force vector to the residual
+/// \param alg pointer to the calling Global_Algorithm
+/// \param spa_dim spatial dimension
+/// \param num_funcs the number of shape functions
+/// \param x x-coordinate of the point
+/// \param y y-coordinate of the point
+/// \param bx x-component of the velocity
+/// \param by y-component of the velocity
+/// \param J determinant of the jacobian
+/// \param gp_weight gauss weight
+/// \param N shape functions
+/// \param elem_force output the element force contributions
+void image_grad_force(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & bx,
+  const scalar_t & by,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_force);
+
+/// adds the tikhonov term to the residual
+/// \param alg pointer to the calling Global_Algorithm
+/// \param spa_dim spatial dimension
+/// \param num_funcs the number of shape functions
+/// \param bx x-component of the velocity
+/// \param by y-component of the velocity
+/// \param J determinant of the jacobian
+/// \param gp_weight gauss weight
+/// \param N shape functions
+/// \param elem_force output the element force contributions
+void tikhonov_force(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & bx,
+  const scalar_t & by,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_force);
+
 /// computes the optical flow velocity about a point
 /// \param alg pointer to the global algorithm
 /// \param c_x closest pixel coord in x
