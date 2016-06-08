@@ -306,7 +306,8 @@ Mesh::Mesh(const std::string & input_filename,
   control_volumes_are_initialized_(false),
   cell_sizes_are_initialized_(false),
   ic_value_x_(0.0),
-  ic_value_y_(0.0)
+  ic_value_y_(0.0),
+  is_regular_grid_(false)
 {
   comm_ = Teuchos::rcp(new MultiField_Comm());
   element_set_ = Teuchos::rcp(new element_set);
@@ -1833,6 +1834,7 @@ void tri2d_nonexact_integration_points(const int_t order,
   Teuchos::ArrayRCP<scalar_t> & weights,
   int_t & num_points){
 
+  // note 0.5 factor for being a triangle is included in the gauss weight
   TEUCHOS_TEST_FOR_EXCEPTION(order<=0,std::runtime_error,"");
   const int_t spa_dim = 2;
   //std::cout << "ORDER " << order << std::endl;
@@ -1840,28 +1842,27 @@ void tri2d_nonexact_integration_points(const int_t order,
   //std::cout << "H " << h << std::endl;
   // determine the number of points
   num_points = 0;
-  for(int_t i=0;i<order;++i){
+  for(int_t i=0;i<=order;++i){
     num_points += i;
   }
   //std::cout << "NUM_POINTS " << num_points << std::endl;
   TEUCHOS_TEST_FOR_EXCEPTION(num_points<=0,std::runtime_error,"");
-  const scalar_t weight = 1.0 / num_points;
+  const scalar_t weight = 0.5 / (num_points-0.5*order); // There are order number half cells along the diag
 
   // resize the storage
   locations.resize(num_points);
   for(int_t i=0;i<num_points;++i)
     locations[i].resize(spa_dim);
   weights.resize(num_points);
-  for(int_t i=0;i<num_points;++i)
-    weights[i] = weight;
 
   int_t index = 0;
-  for(int_t j=0;j<order-1;++j){
+  for(int_t j=0;j<order;++j){
     scalar_t y = 0.5*h + j*h;
-    for(int_t i=0;i<order-j-1;++i){
+    for(int_t i=0;i<=order-j-1;++i){
       scalar_t x = 0.5*h + i*h;
       locations[index][0] = x;
       locations[index][1] = y;
+      weights[index] = i==order-j-1?0.5*weight:weight;
       index++;
     }
   }

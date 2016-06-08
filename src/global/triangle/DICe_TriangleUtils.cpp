@@ -144,6 +144,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
       dirichlet_sides,
       neumann_sides,
       output_file_name);
+    mesh->set_is_regular_grid(true);
   }
   else{
     DEBUG_MSG("Number of vertices in the boundary polygon: " << num_boundary_vertices);

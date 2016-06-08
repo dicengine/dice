@@ -62,7 +62,8 @@ Global_Algorithm::Global_Algorithm(Schema * schema,
   num_image_integration_points_(20),
   max_iterations_(25),
   element_type_(DICe::mesh::TRI6),
-  use_fixed_point_iterations_(false)
+  use_fixed_point_iterations_(false),
+  use_regular_grid_(false)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(!schema,std::runtime_error,"Error, cannot have null schema in this constructor");
   default_constructor_tasks(params);
@@ -78,7 +79,8 @@ Global_Algorithm::Global_Algorithm(const Teuchos::RCP<Teuchos::ParameterList> & 
   num_image_integration_points_(20),
   max_iterations_(25),
   element_type_(DICe::mesh::TRI6),
-  use_fixed_point_iterations_(false)
+  use_fixed_point_iterations_(false),
+  use_regular_grid_(false)
 {
   default_constructor_tasks(params);
 }
@@ -457,7 +459,11 @@ Global_Algorithm::compute_tangent(){
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > image_gp_locs;
   Teuchos::ArrayRCP<scalar_t> image_gp_weights;
   int_t num_image_integration_points = -1;
-  tri2d_nonexact_integration_points(image_integration_order,image_gp_locs,image_gp_weights,num_image_integration_points);
+//  if(mesh_->is_regular_grid())
+    tri2d_nonexact_integration_points(image_integration_order,image_gp_locs,image_gp_weights,num_image_integration_points);
+//  else
+//   vel_shape_func_evaluator->get_natural_integration_points(image_integration_order,
+//      image_gp_locs,image_gp_weights,num_image_integration_points);
 
   // gather the OVERLAP fields
   Teuchos::RCP<MultiField> overlap_coords_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_FS);
@@ -702,8 +708,11 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > image_gp_locs;
   Teuchos::ArrayRCP<scalar_t> image_gp_weights;
   int_t num_image_integration_points = -1;
-  tri2d_nonexact_integration_points(image_integration_order,image_gp_locs,image_gp_weights,num_image_integration_points);
-
+//  if(mesh_->is_regular_grid())
+    tri2d_nonexact_integration_points(image_integration_order,image_gp_locs,image_gp_weights,num_image_integration_points);
+//  else
+//    vel_shape_func_evaluator->get_natural_integration_points(image_integration_order,
+//      image_gp_locs,image_gp_weights,num_image_integration_points);
   // gather the OVERLAP fields
 //  Teuchos::RCP<MultiField> overlap_residual_ptr = is_mixed_formulation() ? mesh_->get_overlap_field(mesh::field_enums::MIXED_RESIDUAL_FS):
 //      mesh_->get_overlap_field(mesh::field_enums::RESIDUAL_FS);

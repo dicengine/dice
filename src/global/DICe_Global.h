@@ -250,6 +250,8 @@ protected:
   DICe::mesh::Base_Element_Type element_type_;
   /// use a fixed point iteration technique
   bool use_fixed_point_iterations_;
+  /// using a regular grid of integration points for the image terms
+  bool use_regular_grid_;
 };
 
 }// end global namespace

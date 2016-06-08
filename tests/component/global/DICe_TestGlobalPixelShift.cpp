@@ -87,13 +87,13 @@ int main(int argc, char *argv[]) {
   corr_params->set(DICe::max_solver_iterations_fast,200);
 //  corr_params->set(DICe::interpolation_method,BICUBIC);
 //  corr_params->set(DICe::global_formulation,LEVENBERG_MARQUARDT);
-//  corr_params->set(DICe::global_formulation,HORN_SCHUNCK);
-  corr_params->set(DICe::global_formulation,UNREGULARIZED);
+  corr_params->set(DICe::global_formulation,HORN_SCHUNCK);
+//  corr_params->set(DICe::global_formulation,UNREGULARIZED);
   corr_params->set(DICe::global_element_type,"TRI3");
 //  corr_params->set(DICe::use_fixed_point_iterations,false);
   input_params->set(DICe::mesh_size,100.0);//4000.0);
   corr_params->set(DICe::num_image_integration_points,100);
-//  corr_params->set(DICe::global_regularization_alpha,0.05);
+  corr_params->set(DICe::global_regularization_alpha,0.05);
 
   *outStream << "generating the mms problem" << std::endl;
   // create an MMS problem

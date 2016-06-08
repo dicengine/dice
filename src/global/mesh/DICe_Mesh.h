@@ -1404,6 +1404,16 @@ public:
     ic_value_y_ = value_y;
   }
 
+  /// set the value of the is a regular grid flag
+  void set_is_regular_grid(const bool is_regular_grid){
+    is_regular_grid_ = is_regular_grid;
+  }
+
+  /// returns true if this mesh is a regular grid
+  bool is_regular_grid()const{
+    return is_regular_grid_;
+  }
+
 private:
   /// The parallel or serial communicator
   Teuchos::RCP<MultiField_Comm> comm_;
@@ -1531,6 +1541,8 @@ private:
   scalar_t ic_value_x_;
   /// value to use for initial condition in x
   scalar_t ic_value_y_;
+  /// true if this mesh is a regular grid
+  bool is_regular_grid_;
 };
 
 /// \class Shape_Function_Evaluator
