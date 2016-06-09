@@ -173,7 +173,9 @@ public:
   /// and scale the image so that the histogram is spread over the entire 0-255 range.
   /// The rawi format saves the full intesity_t precision value to file
   /// \param file_name the name of the file to write to
-  void write(const std::string & file_name);
+  /// \param scale_to_8_bit scale image to eight bit range if true
+  void write(const std::string & file_name,
+    const bool scale_to_8_bit=true);
 
   /// write the image x gradients to a file
   /// (tiff, jpeg, or png, depending on which file extension is used in the name)
