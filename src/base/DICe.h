@@ -253,6 +253,8 @@ const char* const phi_coeff = "phi_coeff";
 /// String parameter name, only for global DIC
 const char* const b_coeff = "b_coeff";
 /// String parameter name, only for global DIC
+const char* const curl_coeff = "curl_coeff";
+/// String parameter name, only for global DIC
 const char* const num_image_integration_points = "num_image_integration_points";
 /// String parameter name, only for global DIC
 const char* const global_element_type = "global_element_type";

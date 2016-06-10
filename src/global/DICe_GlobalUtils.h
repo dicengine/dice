@@ -186,7 +186,8 @@ public:
   Div_Curl_Modulator(const Teuchos::RCP<Teuchos::ParameterList> & params):
     MMS_Problem(500,500),
     phi_coeff_(10.0),
-    b_coeff_(2.0)
+    b_coeff_(2.0),
+    curl_coeff_(0.0)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("phi_coeff"),std::runtime_error,
       "Error, Div_Curl_Modulator mms problem requires the parameter phi_coeff");
@@ -194,6 +195,7 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("b_coeff"),std::runtime_error,
       "Error, Div_Curl_Modulator mms problem requires the parameter b_coeff");
     b_coeff_ = params->get<double>("b_coeff");
+    curl_coeff_ = params->get<double>("curl_coeff",0.0);
   };
 
   /// Destructor
@@ -205,8 +207,12 @@ public:
     scalar_t & b_x,
     scalar_t & b_y){
     static scalar_t beta = b_coeff_*DICE_PI/dim_x_;
+    // div free part
     b_x = sin(beta*x)*cos(beta*y);
     b_y = -cos(beta*x)*sin(beta*y);
+    // curl free part
+    b_x += -curl_coeff_*(cos(beta*y)*cos(beta*(dim_y_ - y))*sin(beta*(dim_x_ - 2*x)));
+    b_y += -curl_coeff_*(cos(beta*x)*cos(beta*(dim_x_ - x))*sin(beta*(dim_y_ - 2*y)));
   }
 
   /// See base class definition
@@ -217,6 +223,10 @@ public:
     static scalar_t beta = b_coeff_*DICE_PI/dim_x_;
     lap_b_x = -beta*beta*cos(beta*y)*sin(beta*x);
     lap_b_y = beta*beta*cos(beta*x)*sin(beta*y);
+    lap_b_x += curl_coeff_*(-beta*beta*(2.0*sin(2.0*beta*(x - dim_x_ + y)) + sin(2.0*beta*x)
+        - sin(2.0*beta*(dim_x_ - x)) + 2.0*sin(2.0*beta*(x - y))));
+    lap_b_y += curl_coeff_*(-beta*beta*(2.0*sin(2.0*beta*(x - dim_x_ + y)) + sin(2.0*beta*y)
+        - sin(2.0*beta*(dim_x_ - y)) - 2.0*sin(2.0*beta*(x - y))));
   }
 
   /// See base class definition
@@ -231,6 +241,10 @@ public:
     b_x_y = -beta*sin(beta*x)*sin(beta*y);
     b_y_x = beta*sin(beta*x)*sin(beta*y);
     b_y_y = -beta*cos(beta*x)*cos(beta*y);
+    b_x_x += curl_coeff_*(2*beta*cos(beta*y)*cos(beta*(dim_x_ - 2*x))*cos(beta*(dim_y_ - y)));
+    b_x_y += curl_coeff_*( (beta*(cos(2.0*beta*(x - dim_x_ + y)) - cos(2.0*beta*(x - y))))/2.0);
+    b_y_x += curl_coeff_*( (beta*(cos(2.0*beta*(x - dim_y_ + y)) - cos(2.0*beta*(x - y))))/2.0);
+    b_y_y += curl_coeff_*(2.0*beta*cos(beta*x)*cos(beta*(dim_x_ - x))*cos(beta*(dim_y_ - 2.0*y)));
   }
 
   /// See base class definition
@@ -327,6 +341,8 @@ protected:
   scalar_t phi_coeff_;
   /// coefficient for velocity values
   scalar_t b_coeff_;
+  /// coefficient of the curl free term
+  scalar_t curl_coeff_;
 };
 
 
