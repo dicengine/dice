@@ -3,7 +3,7 @@ add_subdirectory(component)
 enable_testing()
 
 #  Component Tests:
-#  Tests classes in DICE
+#  Tests classes in DICe
 #  Slightly more involved than a unit test, but very fine grained for one 
 #  particular class
 
