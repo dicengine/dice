@@ -997,6 +997,94 @@ Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
   return mesh;
 }
 
+int_t
+read_exodus_num_steps(Teuchos::RCP<Mesh> mesh){
+  int_t num_steps = 0;
+  float version;
+  int_t CPU_word_size = 0;
+  int_t IO_word_size = 0;
+  /*open exodus II file */
+  std::string file_name_str = mesh->get_input_filename();
+  std::vector<char> writable(file_name_str.size() + 1);
+  std::copy(file_name_str.begin(), file_name_str.end(), writable.begin());
+  //const char * file_name = analysis_model->input_file_name().c_str();
+  const int input_exoid = ex_open(&writable[0],EX_READ,&CPU_word_size,&IO_word_size,&version);
+  if (input_exoid < 0)
+  {
+    std::stringstream oss;
+    oss << "Reading mesh failure: " << file_name_str;
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
+  }
+  float ret_float;
+  char ret_char;
+  ex_inquire(input_exoid,EX_INQ_TIME,&num_steps,&ret_float,&ret_char);
+  return num_steps;
+}
+
+std::vector<scalar_t>
+read_exodus_field(Teuchos::RCP<Mesh> mesh,
+  const int_t var_index,
+  const int_t step){
+  float version;
+  int_t CPU_word_size = 0;
+  int_t IO_word_size = 0;
+  /*open exodus II file */
+  std::string file_name_str = mesh->get_input_filename();
+  std::vector<char> writable(file_name_str.size() + 1);
+  std::copy(file_name_str.begin(), file_name_str.end(), writable.begin());
+  //const char * file_name = analysis_model->input_file_name().c_str();
+  const int input_exoid = ex_open(&writable[0],EX_READ,&CPU_word_size,&IO_word_size,&version);
+  if (input_exoid < 0)
+  {
+    std::stringstream oss;
+    oss << "Reading mesh failure: " << file_name_str;
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
+  }
+  float ex_result[mesh->num_nodes()];
+  std::vector<scalar_t> result(mesh->num_nodes());
+  ex_get_nodal_var(input_exoid,step,var_index,result.size(),&ex_result[0]);
+  for(size_t i=0;i<mesh->num_nodes();++i){
+    result[i] = ex_result[i];
+  }
+  return result;
+}
+
+std::vector<std::string>
+read_exodus_field_names(Teuchos::RCP<Mesh> mesh){
+  float version;
+  int_t CPU_word_size = 0;
+  int_t IO_word_size = 0;
+
+  std::vector<std::string> field_names;
+
+  /*open exodus II file */
+  std::string file_name_str = mesh->get_input_filename();
+  std::vector<char> writable(file_name_str.size() + 1);
+  std::copy(file_name_str.begin(), file_name_str.end(), writable.begin());
+
+  //const char * file_name = analysis_model->input_file_name().c_str();
+  const int input_exoid = ex_open(&writable[0],EX_READ,&CPU_word_size,&IO_word_size,&version);
+  if (input_exoid < 0)
+  {
+    std::stringstream oss;
+    oss << "Reading mesh failure: " << file_name_str;
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
+  }
+  // TODO read element variables
+  // nodal variables
+  int_t num_node_vars = 0;
+  ex_get_var_param(input_exoid,"n",&num_node_vars);
+  DEBUG_MSG("read_exodus_field_names(): number of nodal fields: " << num_node_vars);
+  for(int_t i=1;i<=num_node_vars;++i){ // exodus is one based
+    char nodal_var_name[100];
+    ex_get_var_name(input_exoid,"n",i,&nodal_var_name[0]);
+    std::string var_name = nodal_var_name;
+    field_names.push_back(var_name);
+    //DEBUG_MSG("read_exodus_field_names(): mesh has field: " << var_name);
+  }
+  return field_names;
+}
+
 void
 read_exodus_coordinates(Teuchos::RCP<Mesh> mesh){
   int error_int;

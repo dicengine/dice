@@ -64,3 +64,18 @@ set_target_properties(DICe_CineToTiff DICe_Diff DICe_DiffAvg
   ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
   RUNTIME_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/bin"
 )
+
+if(DICE_ENABLE_GLOBAL)
+  add_executable(DICe_ExoDiff DICe_ExoDiff.cpp)
+  target_link_libraries(DICe_ExoDiff ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES} dicemesh)
+
+  install(TARGETS DICe_ExoDiff
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/bin 
+  )
+  set_target_properties(DICe_ExoDiff
+    PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
+    ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
+    RUNTIME_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/bin"
+  )
+endif()

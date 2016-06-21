@@ -85,6 +85,27 @@ Teuchos::RCP<Mesh> create_tri3_exodus_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mes
 /// \param mesh The mesh to use for this function
 void read_exodus_coordinates(Teuchos::RCP<Mesh> mesh);
 
+/// Read the nodal field names of from the mesh
+/// \param mesh The mesh to use for this function
+/// returns a vector of the field names
+std::vector<std::string>
+read_exodus_field_names(Teuchos::RCP<Mesh> mesh);
+
+/// returns the number of steps in the file
+/// \param mesh The mesh to use for this function
+int_t read_exodus_num_steps(Teuchos::RCP<Mesh> mesh);
+
+/// Returns a vector with nodal field values
+/// \param mesh the mesh to use
+/// \param field_name
+/// \param step the step number
+/// \param rank the field rank (node, elem, etc.)
+std::vector<scalar_t>
+read_exodus_field(
+Teuchos::RCP<Mesh> mesh,
+  const int_t var_index,
+  const int_t step);
+
 /// Create an exodus output file
 /// \param mesh The mesh to use for this function
 /// \param output_folder The name of the output folder
