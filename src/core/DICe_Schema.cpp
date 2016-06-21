@@ -1178,6 +1178,7 @@ Schema::execute_correlation(){
     Status_Flag global_status = CORRELATION_FAILED;
     try{
       global_status = global_algorithm_->execute();
+      update_image_frame();
     }
     catch(std::exception & e){
       std::cout << "Error, global correlation failed: " << e.what() << std::endl;
@@ -1185,7 +1186,6 @@ Schema::execute_correlation(){
     if(global_status!=CORRELATION_SUCCESSFUL){
       std::cout << "********* Error, global correlation failed **************** " << std::endl;
       return 1;
-      //TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, global correlation failed");
     }
 #endif
     return 0;

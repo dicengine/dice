@@ -300,9 +300,8 @@ int main(int argc, char *argv[]) {
       //if(subset_info->conformal_area_defs!=Teuchos::null&&image_it==1){
       //  schema->write_control_points_image("RegionOfInterest");
       //}
-
+      schema->post_execution_tasks();
     } // image loop
-    schema->post_execution_tasks();
 
     avg_time = total_time / num_images;
 

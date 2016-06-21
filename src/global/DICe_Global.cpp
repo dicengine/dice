@@ -313,6 +313,12 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
 void
 Global_Algorithm::pre_execution_tasks(){
 
+  if(is_initialized_ && schema_){
+    // if this is not an mms problem, set up the images
+    set_def_image();
+    return;
+  }
+
   // initialize the solver:
   // set up the solver
   Teuchos::ParameterList belos_list;
@@ -375,14 +381,13 @@ Global_Algorithm::pre_execution_tasks(){
     bc_manager_->create_bc(CONSTANT_IC,is_mixed_formulation());
   }
 
-  DEBUG_MSG("Global_Algorithm::pre_execution_tasks(): BC_Manager has been initialized.");
-  is_initialized_ = true;
-
-  // if this is not an mms problem, set up the images
   if(schema_){
     initialize_ref_image();
     set_def_image();
   }
+
+  DEBUG_MSG("Global_Algorithm::pre_execution_tasks(): BC_Manager has been initialized.");
+  is_initialized_ = true;
 }
 
 Teuchos::RCP<DICe::MultiField_Matrix>
@@ -852,7 +857,7 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
 Status_Flag
 Global_Algorithm::execute(){
   DEBUG_MSG("Global_Algorithm::execute(): method called");
-  if(!is_initialized_) pre_execution_tasks();
+  pre_execution_tasks();
 
   const int_t p_rank = mesh_->get_comm()->get_rank();
 
@@ -1199,11 +1204,12 @@ void
 Global_Algorithm::post_execution_tasks(const scalar_t & time_stamp){
   TEUCHOS_TEST_FOR_EXCEPTION(!is_initialized_,std::runtime_error,"Error, must be initialized");
 
-  DEBUG_MSG("Writing the output file with time stamp: " << time_stamp);
-  DICe::mesh::exodus_output_dump(mesh_,1,time_stamp);
+  const int_t time_step = time_stamp;
+  DEBUG_MSG("Writing the output file with step : " << time_step << " time stamp: " << time_stamp);
+  DICe::mesh::exodus_output_dump(mesh_,time_step,time_stamp);
   if(is_mixed_formulation()){//||global_formulation_==LEVENBERG_MARQUARDT){
-    DEBUG_MSG("Writing the lagrange multiplier output file with time stamp: " << time_stamp);
-    DICe::mesh::exodus_output_dump(l_mesh_,1,time_stamp);
+    DEBUG_MSG("Writing the lagrange multiplier output file with step: " << time_step << " time stamp: " << time_stamp);
+    DICe::mesh::exodus_output_dump(l_mesh_,time_step,time_stamp);
   }
 }
 
