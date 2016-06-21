@@ -243,6 +243,7 @@ int main(int argc, char *argv[]) {
     scalar_t max_time = 0.0;
     scalar_t min_time = 1.0E10;
     scalar_t avg_time = 0.0;
+    bool failed_step = false;
     std::string file_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
     // TODO find a more straightforward way to do the indexing
     const int_t start_frame = cine_start_index==-1 ? 1 : cine_start_index;
@@ -283,7 +284,9 @@ int main(int argc, char *argv[]) {
       { // start the timer
         boost::timer t;
 
-        schema->execute_correlation();
+        int_t corr_error = schema->execute_correlation();
+        if(corr_error)
+          failed_step = true;
 
         // timing info
         elapsed_time = t.elapsed();
@@ -303,7 +306,10 @@ int main(int argc, char *argv[]) {
 
     avg_time = total_time / num_images;
 
-    *outStream << "\n--- Successful Completion ---\n" << std::endl;
+    if(failed_step)
+      *outStream << "\n--- Failed Step Occurred ---\n" << std::endl;
+    else
+      *outStream << "\n--- Successful Completion ---\n" << std::endl;
 
     // output timing
 

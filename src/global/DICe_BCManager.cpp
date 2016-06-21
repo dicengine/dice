@@ -208,7 +208,7 @@ Dirichlet_BC::apply(const bool first_iteration){
       << " value x " << value_x << " value y " << value_y);
     DICe::mesh::bc_set * bc_sets = mesh_->get_node_bc_sets();
     TEUCHOS_TEST_FOR_EXCEPTION(bc_sets->find(node_set_id)==bc_sets->end(),std::runtime_error,
-      "Error, invalid node set id");
+      "Error, invalid node set id: " << node_set_id);
     const int_t num_bc_nodes = bc_sets->find(node_set_id)->second.size();
     DEBUG_MSG("Dirichlet_BC::apply(): number of nodes in set " << num_bc_nodes);
     for(int_t i=0;i<num_bc_nodes;++i){

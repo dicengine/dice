@@ -89,6 +89,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
   TEUCHOS_TEST_FOR_EXCEPTION(boundary_polygon==Teuchos::null,std::runtime_error,"Error, failed cast to polygon.");
   const int_t num_boundary_vertices = boundary_polygon->num_vertices();
   Teuchos::RCP<DICe::mesh::Mesh> mesh = Teuchos::null;
+  std::vector<Boundary_Condition_Def> stored_bcs;
   if(subset_file_info->use_regular_grid){
     DEBUG_MSG("generate_tri_mesh(): creating a regular grid tri mesh (not Delaunay)");
     TEUCHOS_TEST_FOR_EXCEPTION(num_boundary_vertices!=4,std::runtime_error,
@@ -132,6 +133,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
       }
       // dirchlet bcs
       else{
+        stored_bcs.push_back((*subset_file_info->boundary_condition_defs)[i]);
         dirichlet_sides.push_back(side);
       }
     }
@@ -152,7 +154,6 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
       pts_x.push_back((*boundary_polygon->vertex_coordinates_x())[i]);
       pts_y.push_back((*boundary_polygon->vertex_coordinates_y())[i]);
     }
-
     // gather all the excluded regions in the roi
     const int_t num_excluded_shapes = map_it->second.has_excluded_area() ? map_it->second.excluded_area()->size(): 0;
     DEBUG_MSG("Number of excluded shapes: " << num_excluded_shapes);
@@ -237,6 +238,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
     int_t seg_index = 0;
     for(int_t i=0;i<num_boundary_segments;++i){
       if((*subset_file_info->boundary_condition_defs)[i].is_neumann_) continue;
+      stored_bcs.push_back((*subset_file_info->boundary_condition_defs)[i]);
       dirichlet_boundary_segments_left[seg_index] = (*subset_file_info->boundary_condition_defs)[i].left_vertex_id_+1; // +1 because ids are 1-based in Triangle
       dirichlet_boundary_segments_right[seg_index] = (*subset_file_info->boundary_condition_defs)[i].right_vertex_id_+1;
       seg_index++;
@@ -255,7 +257,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
       max_size_constraint,
       output_file_name);
   }
-  mesh->set_bc_defs(*subset_file_info->boundary_condition_defs);
+  mesh->set_bc_defs(stored_bcs);
   mesh->set_ic_values(subset_file_info->ic_value_x,subset_file_info->ic_value_y);
   return mesh;
 }

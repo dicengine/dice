@@ -1171,7 +1171,7 @@ Schema::post_execution_tasks(){
   }
 }
 
-void
+int_t
 Schema::execute_correlation(){
   if(analysis_type_==GLOBAL_DIC){
 #ifdef DICE_ENABLE_GLOBAL
@@ -1184,10 +1184,11 @@ Schema::execute_correlation(){
     }
     if(global_status!=CORRELATION_SUCCESSFUL){
       std::cout << "********* Error, global correlation failed **************** " << std::endl;
+      return 1;
       //TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, global correlation failed");
     }
 #endif
-    return;
+    return 0;
   }
 
   // make sure the data is ready to go since it may have been initialized externally by an api
@@ -1355,6 +1356,7 @@ Schema::execute_correlation(){
     post_processors_[i]->execute();
   }
   update_image_frame();
+  return 0;
 };
 
 void

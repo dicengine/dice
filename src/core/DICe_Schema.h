@@ -268,7 +268,8 @@ public:
     const int_t subset_size);
 
   /// Conduct the correlation
-  void execute_correlation();
+  /// returns 0 if successful
+  int_t execute_correlation();
 
   /// do clean up tasks
   void post_execution_tasks();
