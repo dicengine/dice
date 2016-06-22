@@ -133,6 +133,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
       }
       // dirchlet bcs
       else{
+        //DEBUG_MSG("generate_tri_mesh(): regular_grid storing bc id " << i);
         stored_bcs.push_back((*subset_file_info->boundary_condition_defs)[i]);
         dirichlet_sides.push_back(side);
       }
