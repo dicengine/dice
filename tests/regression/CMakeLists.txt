@@ -50,6 +50,10 @@ ENDFOREACH ( )
 IF(DICE_ENABLE_GLOBAL)
 SET(GLOBAL_REGRESSION_TESTS
   global_14_unreg
+  global_14_hs
+  global_14_hs_mixed
+  global_14_lm
+  global_14_lm_mixed
   )
 FOREACH ( test ${GLOBAL_REGRESSION_TESTS})
     # Copy over all the test files (input and results)

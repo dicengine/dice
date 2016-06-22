@@ -1,0 +1,16 @@
+BEGIN REGION_OF_INTEREST
+  BEGIN BOUNDARY
+    BEGIN POLYGON
+      begin vertices
+        100 100
+        1950 100
+        1950 490
+        100 490
+      end
+    END POLYGON
+  END
+  dirichlet_bc boundary 0 1 2 0.0 0.0
+  dirichlet_bc boundary 0 3 0 0.0 0.0
+  dirichlet_bc boundary 0 2 3 use_subsets 47
+  dirichlet_bc boundary 0 0 1 use_subsets 47
+END
