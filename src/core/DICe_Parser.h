@@ -228,6 +228,7 @@ Subset_File_Info {
     use_regular_grid = false;
     ic_value_x = 0.0;
     ic_value_y = 0.0;
+    enforce_lagrange_bc = false;
   }
   /// Pointer to map of conformal subset defs (these are used to define conformal subsets)
   Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
@@ -271,6 +272,8 @@ Subset_File_Info {
   scalar_t ic_value_x;
   /// value to prescribe for the initial condition
   scalar_t ic_value_y;
+  /// true if all dirichlet bcs should have lagrange multiplier = 0
+  bool enforce_lagrange_bc;
 };
 
 /// \brief Read a list of coordinates for correlation points from file
@@ -370,6 +373,8 @@ const char* const parser_subset_coordinates = "SUBSET_COORDINATES";
 const char* const parser_region_of_interest = "REGION_OF_INTEREST";
 /// Parser string
 const char* const parser_use_regular_grid = "USE_REGULAR_GRID";
+/// Parser string
+const char* const parser_enforce_lagrange_bc = "ENFORCE_LAGRANGE_BC";
 /// Parser string
 const char* const parser_ic_value_x = "IC_VALUE_X";
 /// Parser string

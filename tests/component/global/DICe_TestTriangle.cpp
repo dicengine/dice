@@ -104,6 +104,7 @@ int main(int argc, char *argv[]) {
   roi_file << "      end vertices\n";
   roi_file << "    end polygon\n";
   roi_file << "  end excluded\n";
+  roi_file << "  enforce_lagrange_bc\n";
   roi_file << "  dirichlet_bc boundary 0 0 3 USE_SUBSETS 27\n";
   roi_file << "  dirichlet_bc boundary 0 1 2 0.0 0.0\n";
   roi_file << "end region_of_interest\n";

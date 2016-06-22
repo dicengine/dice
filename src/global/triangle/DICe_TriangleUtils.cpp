@@ -63,7 +63,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
     Teuchos::null,
     Teuchos::null,
     max_size_constraint,
-    output_file_name);
+    output_file_name,true);
 }
 
 Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
@@ -146,7 +146,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
       max_size_constraint,
       dirichlet_sides,
       neumann_sides,
-      output_file_name);
+      output_file_name,
+      subset_file_info->enforce_lagrange_bc);
     mesh->set_is_regular_grid(true);
   }
   else{
@@ -256,7 +257,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
       neumann_boundary_segments_left,
       neumann_boundary_segments_right,
       max_size_constraint,
-      output_file_name);
+      output_file_name,
+      subset_file_info->enforce_lagrange_bc);
   }
   mesh->set_bc_defs(stored_bcs);
   mesh->set_ic_values(subset_file_info->ic_value_x,subset_file_info->ic_value_y);
@@ -273,7 +275,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
   Teuchos::ArrayRCP<int_t> neumann_boundary_segments_left,
   Teuchos::ArrayRCP<int_t> neumann_boundary_segments_right,
   const scalar_t & max_size_constraint,
-  const std::string & output_file_name){
+  const std::string & output_file_name,
+  const bool enforce_lagrange_bc){
 
   TEUCHOS_TEST_FOR_EXCEPTION(elem_type!=DICe::mesh::TRI6&&elem_type!=DICe::mesh::TRI3,std::runtime_error,
     "Error, invalid elem type");
@@ -399,8 +402,10 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
     if(out.segmentmarkerlist[i]>0){ // positive is for dirichlet
       dirichlet_boundary_nodes.insert(std::pair<int_t,int_t>(out.segmentlist[i*2+0],out.segmentmarkerlist[i]));
       dirichlet_boundary_nodes.insert(std::pair<int_t,int_t>(out.segmentlist[i*2+1],out.segmentmarkerlist[i]));
-      lagrange_boundary_nodes.insert(out.segmentlist[i*2+0]);
-      lagrange_boundary_nodes.insert(out.segmentlist[i*2+0]);
+      if(enforce_lagrange_bc){
+        lagrange_boundary_nodes.insert(out.segmentlist[i*2+0]);
+        lagrange_boundary_nodes.insert(out.segmentlist[i*2+0]);
+      }
     }
     if(out.segmentmarkerlist[i]==-10000){ // -10000 is for neumann
       neumann_boundary_nodes.insert(out.segmentlist[i*2+0]);
@@ -511,7 +516,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri_mesh(const DICe::mesh::Base_
   const scalar_t & h,
   std::vector<int_t> & dirichlet_sides,
   std::vector<int_t> & neumann_sides,
-  const std::string & output_file_name){
+  const std::string & output_file_name,
+  const bool enforce_lagrange_bc){
 
   TEUCHOS_TEST_FOR_EXCEPTION(elem_type!=DICe::mesh::TRI6&&elem_type!=DICe::mesh::TRI3,std::runtime_error,
     "Error, invalid elem type");
@@ -694,32 +700,40 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri_mesh(const DICe::mesh::Base_
       //dirichlet_bcs.insert(std::pair<int_t,std::vector<int_t> >(i+1,bottom_edge_nodes));
       for(size_t j=0;j<bottom_edge_nodes.size();++j)
         dirichlet_bcs.insert(std::pair<int_t,int_t>(bottom_edge_nodes[j],i+1));
-      for(size_t j=0;j<bottom_lag_nodes.size();++j)
-        lag_bcs.insert(bottom_lag_nodes[j]);
+      if(enforce_lagrange_bc){
+        for(size_t j=0;j<bottom_lag_nodes.size();++j)
+          lag_bcs.insert(bottom_lag_nodes[j]);
+      }
     }
     // right edge
     else if(dirichlet_sides[i]==1){
       //dirichlet_bcs.insert(std::pair<int_t,std::vector<int_t> >(i+1,right_edge_nodes));
       for(size_t j=0;j<right_edge_nodes.size();++j)
         dirichlet_bcs.insert(std::pair<int_t,int_t>(right_edge_nodes[j],i+1));
-      for(size_t j=0;j<right_lag_nodes.size();++j)
-        lag_bcs.insert(right_lag_nodes[j]);
+      if(enforce_lagrange_bc){
+        for(size_t j=0;j<right_lag_nodes.size();++j)
+          lag_bcs.insert(right_lag_nodes[j]);
+      }
     }
     // top edge
     else if(dirichlet_sides[i]==2){
       //dirichlet_bcs.insert(std::pair<int_t,std::vector<int_t> >(i+1,top_edge_nodes));
       for(size_t j=0;j<top_edge_nodes.size();++j)
         dirichlet_bcs.insert(std::pair<int_t,int_t>(top_edge_nodes[j],i+1));
-      for(size_t j=0;j<top_lag_nodes.size();++j)
-        lag_bcs.insert(top_lag_nodes[j]);
+      if(enforce_lagrange_bc){
+        for(size_t j=0;j<top_lag_nodes.size();++j)
+          lag_bcs.insert(top_lag_nodes[j]);
+      }
     }
     // left edge
     else if(dirichlet_sides[i]==3){
       //dirichlet_bcs.insert(std::pair<int_t,std::vector<int_t> >(i+1,left_edge_nodes));
       for(size_t j=0;j<left_edge_nodes.size();++j)
         dirichlet_bcs.insert(std::pair<int_t,int_t>(left_edge_nodes[j],i+1));
-      for(size_t j=0;j<left_lag_nodes.size();++j)
-        lag_bcs.insert(left_lag_nodes[j]);
+      if(enforce_lagrange_bc){
+        for(size_t j=0;j<left_lag_nodes.size();++j)
+          lag_bcs.insert(left_lag_nodes[j]);
+      }
     }
     else{
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid side");

@@ -69,7 +69,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
   Teuchos::ArrayRCP<int_t> neumann_boundary_segments_left,
   Teuchos::ArrayRCP<int_t> neumann_boundary_segments_right,
   const scalar_t & max_size_constraint,
-  const std::string & output_file_name);
+  const std::string & output_file_name,
+  const bool enforce_lagrange_bc=false);
 
 Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
   const scalar_t & begin_x,
@@ -79,7 +80,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri_mesh(const DICe::mesh::Base_
   const scalar_t & h,
   std::vector<int_t> & dirichlet_sides,
   std::vector<int_t> & neumann_sides,
-  const std::string & output_file_name);
+  const std::string & output_file_name,
+  const bool enforce_lagrange_bc=false);
 
 
 }// End DICe Namespace

@@ -732,6 +732,9 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            else if(block_tokens[0]==parser_use_regular_grid){
              info->use_regular_grid = true;
            }
+           else if(block_tokens[0]==parser_enforce_lagrange_bc){
+             info->enforce_lagrange_bc = true;
+           }
            else if(block_tokens[0]==parser_ic_value_x){
              TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<=1,std::runtime_error,"");
              TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[1]),std::runtime_error,"");
