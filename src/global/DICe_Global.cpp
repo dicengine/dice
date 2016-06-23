@@ -235,12 +235,14 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     add_term(MMS_IMAGE_TIME_FORCE);
     add_term(MMS_FORCE);
     add_term(MMS_DIRICHLET_DISPLACEMENT_BC);
+    // mms dirichlet bc automatically adds the lagrange bc so no need for that term here
   }
   else{
     add_term(IMAGE_TIME_FORCE);
     add_term(IMAGE_GRAD_TENSOR);
     add_term(DIRICHLET_DISPLACEMENT_BC);
     add_term(SUBSET_DISPLACEMENT_BC);
+    add_term(LAGRANGE_BC);
   }
 
   // allways add a constant term IC
@@ -372,6 +374,11 @@ Global_Algorithm::pre_execution_tasks(){
   if(has_term(SUBSET_DISPLACEMENT_BC)){
     if(mesh_->bc_defs()->size()>0){
       bc_manager_->create_bc(SUBSET_DISPLACEMENT_BC,is_mixed_formulation());
+    }
+  }
+  if(has_term(LAGRANGE_BC)){
+    if(mesh_->bc_defs()->size()>0){
+      bc_manager_->create_bc(LAGRANGE_BC,is_mixed_formulation());
     }
   }
   if(has_term(MMS_DIRICHLET_DISPLACEMENT_BC)){

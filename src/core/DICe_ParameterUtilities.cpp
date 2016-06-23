@@ -187,6 +187,7 @@ const std::string to_string(Global_EQ_Term in){
     "OPTICAL_FLOW_DISPLACEMENT_BC",
     "SUBSET_DISPLACEMENT_BC",
     "SUBSET_DISPLACEMENT_IC",
+    "LAGRANGE_BC",
     "CONSTANT_IC",
     "NO_SUCH_GLOBAL_EQ_TERM"
   };

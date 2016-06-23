@@ -109,6 +109,28 @@ public:
 protected:
 };
 
+/// \class Lagrange_BC
+/// \brief prescribed values along the boundary
+class Lagrange_BC : public Boundary_Condition
+{
+public:
+  /// Constructor
+  Lagrange_BC(Teuchos::RCP<DICe::mesh::Mesh> mesh,
+    const bool is_mixed):
+  Boundary_Condition(mesh,is_mixed){
+    DEBUG_MSG("Lagrange_BC::Lagrange_BC(): Creating a Lagrange BC");
+  };
+
+  /// Destructor
+  virtual ~Lagrange_BC(){};
+
+  /// Apply the boundary condition
+  virtual void apply(const bool first_iteration);
+
+protected:
+};
+
+
 /// \class Subset_BC
 /// \brief prescribed values along the boundary using a subset solution
 class Subset_BC : public Boundary_Condition
