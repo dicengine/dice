@@ -345,6 +345,95 @@ protected:
   scalar_t curl_coeff_;
 };
 
+/// \class Simple_HS
+/// \brief a very simple MMS problem that doesn't require any body force for an analytic solution
+/// free component in the velocity solution
+class Simple_HS : public MMS_Problem
+{
+public:
+  /// Constructor
+  /// force the size to be 500 x 500
+  Simple_HS(const Teuchos::RCP<Teuchos::ParameterList> & params):
+    MMS_Problem(500,500){};
+
+  /// Destructor
+  virtual ~Simple_HS(){};
+
+  /// See base class definition
+  virtual void velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x,
+    scalar_t & b_y){
+    b_x = -1.0/dim_x_*x;
+    b_y = 1.0/dim_y_*y;
+  }
+
+  /// See base class definition
+  virtual void velocity_laplacian(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & lap_b_x,
+    scalar_t & lap_b_y){
+    lap_b_x = 0.0;
+    lap_b_y = 0.0;
+  }
+
+  /// See base class definition
+  virtual void grad_velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x_x,
+    scalar_t & b_x_y,
+    scalar_t & b_y_x,
+    scalar_t & b_y_y){
+    b_x_x = -1.0/dim_x_;
+    b_x_y = 0.0;
+    b_y_x = 0.0;
+    b_y_y = -1.0/dim_y_;
+  }
+
+  /// See base class definition
+  virtual void lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_out){
+    l_out = 1.0;
+  }
+
+  /// See base class definition
+  virtual void grad_lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_x,
+    scalar_t & l_y){
+    l_x = 0.0;
+    l_y = 0.0;
+  }
+
+  /// See base class definition
+  virtual void phi(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & phi){
+    phi = 0.0;
+  }
+
+  /// See base class definition
+  virtual void phi_derivatives(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & dphi_dt,
+    scalar_t & grad_phi_x,
+    scalar_t & grad_phi_y) {
+    grad_phi_x = 0.0;
+    grad_phi_y = 0.0;
+  }
+
+  /// See base class definition
+  virtual void force(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & coeff_1,
+    std::set<Global_EQ_Term> * eq_terms,
+    scalar_t & f_x,
+    scalar_t & f_y){
+    f_x = 0.0;
+    f_y = 0.0;
+  }
+};
 
 /// \class Patch_Test
 /// \brief an MMS problem where the user can try a standard patch test
@@ -517,6 +606,10 @@ public:
       return Teuchos::rcp(new Div_Curl_Modulator(params));
     else if(problem_name=="patch_test")
       return Teuchos::rcp(new Patch_Test(params));
+    else if(problem_name=="simple_hs")
+      return Teuchos::rcp(new Simple_HS(params));
+    else if(problem_name=="simple_hs_mixed")
+      return Teuchos::rcp(new Simple_HS(params));
     else{
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"MMS_Problem_Factory: invalid problem: " + problem_name);
     }

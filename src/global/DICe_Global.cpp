@@ -907,7 +907,7 @@ Global_Algorithm::execute(){
     // apply the boundary conditions
     bc_manager_->apply_bcs(it==0);
 
-    if(resid_norm < residual_tol){
+    if(resid_norm < residual_tol && it!=0){
       DEBUG_MSG("Iteration: " << it << " residual norm: " << resid_norm);
       DEBUG_MSG("Global_Algorithm::execute(): * * * convergence successful * * *");
       DEBUG_MSG("Global_Algorithm::execute(): criteria: residual_norm < tol (" << residual_tol << ")");
