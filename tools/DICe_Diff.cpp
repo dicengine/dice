@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 
   if(argc < 3) {
     printf("You must provide two files to compare\n");
-    return 1;
+    exit(1);
   }
 
   DEBUG_MSG("User specified " << argc << " arguments");
@@ -199,7 +199,7 @@ int main(int argc, char *argv[]) {
 
   if (errorFlag != 0){
     std::cout << "End Result: TEST FAILED\n";
-    return 1;
+    exit(1);
   }
   else
     std::cout << "End Result: TEST PASSED\n";
