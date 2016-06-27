@@ -387,7 +387,7 @@ public:
     b_x_x = -1.0/dim_x_;
     b_x_y = 0.0;
     b_y_x = 0.0;
-    b_y_y = -1.0/dim_y_;
+    b_y_y = 1.0/dim_y_;
   }
 
   /// See base class definition
@@ -433,6 +433,104 @@ public:
     f_x = 0.0;
     f_y = 0.0;
   }
+};
+
+/// \class Simple_LM
+/// \brief a very simple MMS problem that doesn't require any body force for an analytic solution
+/// free component in the velocity solution
+class Simple_LM : public MMS_Problem
+{
+public:
+  /// Constructor
+  /// force the size to be 500 x 500
+  Simple_LM(const Teuchos::RCP<Teuchos::ParameterList> & params):
+    MMS_Problem(500,500),
+    coeff_(1.0){
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("b_coeff"),std::runtime_error,
+      "Error, Simple_LM mms problem requires the parameter b_coeff");
+    const scalar_t coeff = params->get<double>("b_coeff");
+    coeff_ = coeff*coeff;
+  };
+
+  /// Destructor
+  virtual ~Simple_LM(){};
+
+  /// See base class definition
+  virtual void velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x,
+    scalar_t & b_y){
+    b_x = -1.0/dim_x_*x;
+    b_y = 1.0/dim_y_*y;
+  }
+
+  /// See base class definition
+  virtual void velocity_laplacian(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & lap_b_x,
+    scalar_t & lap_b_y){
+    lap_b_x = 0.0;
+    lap_b_y = 0.0;
+  }
+
+  /// See base class definition
+  virtual void grad_velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x_x,
+    scalar_t & b_x_y,
+    scalar_t & b_y_x,
+    scalar_t & b_y_y){
+    b_x_x = -1.0/dim_x_;
+    b_x_y = 0.0;
+    b_y_x = 0.0;
+    b_y_y = 1.0/dim_y_;
+  }
+
+  /// See base class definition
+  virtual void lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_out){
+    l_out = coeff_*0.5*((-1.0/dim_x_)*x*x + (1.0/dim_y_)*y*y);
+  }
+
+  /// See base class definition
+  virtual void grad_lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_x,
+    scalar_t & l_y){
+    l_x = coeff_*(-1.0/dim_x_)*x;
+    l_y = coeff_*(-1.0/dim_y_)*y;
+  }
+
+  /// See base class definition
+  virtual void phi(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & phi){
+    phi = 0.0;
+  }
+
+  /// See base class definition
+  virtual void phi_derivatives(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & dphi_dt,
+    scalar_t & grad_phi_x,
+    scalar_t & grad_phi_y) {
+    grad_phi_x = 0.0;
+    grad_phi_y = 0.0;
+  }
+
+  /// See base class definition
+  virtual void force(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & coeff_1,
+    std::set<Global_EQ_Term> * eq_terms,
+    scalar_t & f_x,
+    scalar_t & f_y){
+    f_x = 0.0;
+    f_y = 0.0;
+  }
+  /// coefficient for velocity values
+  scalar_t coeff_;
 };
 
 /// \class Patch_Test
@@ -610,6 +708,8 @@ public:
       return Teuchos::rcp(new Simple_HS(params));
     else if(problem_name=="simple_hs_mixed")
       return Teuchos::rcp(new Simple_HS(params));
+    else if(problem_name=="simple_lm_mixed")
+      return Teuchos::rcp(new Simple_LM(params));
     else{
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"MMS_Problem_Factory: invalid problem: " + problem_name);
     }

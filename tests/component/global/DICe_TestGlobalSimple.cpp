@@ -77,7 +77,8 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> global_params = Teuchos::rcp(new Teuchos::ParameterList());
   global_params->set(DICe::global_solver,GMRES_SOLVER);
   global_params->set(DICe::output_folder,"");
-  global_params->set(DICe::mesh_size,1000.0);
+  global_params->set(DICe::mesh_size,1000.0);//50000.0
+//  global_params->set(DICe::global_element_type,"TRI3");
   Teuchos::ParameterList mms_sublist;
   mms_sublist.set(DICe::phi_coeff,10.0);
   std::vector<std::string> mms_problem_name;
@@ -85,13 +86,18 @@ int main(int argc, char *argv[]) {
   std::vector<scalar_t> alpha;
 
   // HORN SCHNUNCK
-  formulation.push_back(HORN_SCHUNCK);
-  mms_problem_name.push_back("simple_hs");
-  alpha.push_back(1.0);
+//  formulation.push_back(HORN_SCHUNCK);
+//  mms_problem_name.push_back("simple_hs");
+//  alpha.push_back(1.0);
   // MIXED HORN SCHNUNCK
-  //formulation.push_back(MIXED_HORN_SCHUNCK);
-  //mms_problem_name.push_back("simple_hs_mixed");
-  //alpha.push_back(1.0);
+//  formulation.push_back(MIXED_HORN_SCHUNCK);
+//  mms_problem_name.push_back("simple_hs_mixed");
+//  alpha.push_back(0.001);
+
+  // MIXED HORN SCHNUNCK
+  formulation.push_back(LEHOUCQ_TURNER);
+  mms_problem_name.push_back("simple_lm_mixed");
+  alpha.push_back(1.0);
 
   const scalar_t error_max = 0.1;
   TEUCHOS_TEST_FOR_EXCEPTION(formulation.size()!=mms_problem_name.size()||formulation.size()!=alpha.size(),
@@ -109,6 +115,8 @@ int main(int argc, char *argv[]) {
     global_params->set(DICe::global_formulation,formulation[i]);
     global_params->set(DICe::output_prefix,mms_problem_name[i]);
     mms_sublist.set(DICe::problem_name,mms_problem_name[i]);
+    mms_sublist.set(DICe::b_coeff,alpha[i]);
+    mms_sublist.set(DICe::parser_enforce_lagrange_bc,false);
     global_params->set(DICe::mms_spec,mms_sublist);
     global_params->print(*outStream);
     *outStream << "creating a global algorithm" << std::endl;

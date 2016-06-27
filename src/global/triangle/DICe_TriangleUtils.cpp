@@ -52,7 +52,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
   Teuchos::ArrayRCP<scalar_t> points_x,
   Teuchos::ArrayRCP<scalar_t> points_y,
   const scalar_t & max_size_constraint,
-  const std::string & output_file_name){
+  const std::string & output_file_name,
+  const bool enforce_lagrange_bc){
   return generate_tri_mesh(elem_type,
     points_x,
     points_y,
@@ -63,7 +64,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
     Teuchos::null,
     Teuchos::null,
     max_size_constraint,
-    output_file_name,true);
+    output_file_name,
+    enforce_lagrange_bc);
 }
 
 Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,

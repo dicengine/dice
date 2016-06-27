@@ -116,6 +116,9 @@ BC_Manager::BC_Manager(Global_Algorithm * alg) :
       }
     } // end bcs from node sets
   }
+  // FIXME FIXME REMOVE LATER
+  register_mixed_bc(0);
+
 }
 
 void
@@ -169,6 +172,14 @@ BC_Manager::create_bc(Global_EQ_Term eq_term,
   }
   else if(eq_term==MMS_DIRICHLET_DISPLACEMENT_BC){
     Teuchos::RCP<Boundary_Condition> bc_rcp = Teuchos::rcp(new MMS_BC(alg_,mesh_,is_mixed));
+    bcs_.push_back(bc_rcp);
+  }
+  else if(eq_term==MMS_LAGRANGE_BC){
+    Teuchos::RCP<Boundary_Condition> bc_rcp = Teuchos::rcp(new MMS_Lagrange_BC(alg_,mesh_,is_mixed));
+    bcs_.push_back(bc_rcp);
+  }
+  else if(eq_term==CORNER_BC){
+    Teuchos::RCP<Boundary_Condition> bc_rcp = Teuchos::rcp(new Corner_BC(mesh_,is_mixed));
     bcs_.push_back(bc_rcp);
   }
   else if(eq_term==CONSTANT_IC){
@@ -241,23 +252,6 @@ Dirichlet_BC::apply(const bool first_iteration){
       residual->global_value(iy) = first_iteration ? value_y : 0.0;
     }
   }
-//  // if this is a mixed formulation set the lagrange multiplier to 0 on this boundary
-//  if(is_mixed_){
-//    const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_num_global_elements();
-//    for(size_t i=0;i<mesh_->bc_defs()->size();++i){
-//      if(!(*mesh_->bc_defs())[i].has_value_) continue;
-//      const int_t node_set_id = i+1;  // +1 because bc ids are one-based
-//      DEBUG_MSG("Dirichlet_BC::apply(): applying a 0.0 Lagrange multiplier bc to node set id " << node_set_id);
-//      DICe::mesh::bc_set * bc_sets = mesh_->get_node_bc_sets();
-//      TEUCHOS_TEST_FOR_EXCEPTION(bc_sets->find(node_set_id)==bc_sets->end(),std::runtime_error,
-//        "Error, invalid node set id");
-//      const int_t num_bc_nodes = bc_sets->find(node_set_id)->second.size();
-//      for(int_t i=0;i<num_bc_nodes;++i){
-//        const int_t node_gid = bc_sets->find(node_set_id)->second[i];
-//        residual->global_value(node_gid+mixed_global_offset) = 0.0;
-//      } // bc node
-//    } // bc set
-//  } // is_mixed
 }
 
 void
@@ -304,23 +298,6 @@ Subset_BC::apply(const bool first_iteration){
       }
     }
   }
-//  // if this is a mixed formulation set the lagrange multiplier to 0 on this boundary
-//  if(is_mixed_){
-//    const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_num_global_elements();
-//    for(size_t i=0;i<mesh_->bc_defs()->size();++i){
-//      const int_t node_set_id = i+1;  // +1 because bc ids are one-based
-//      if(!(*mesh_->bc_defs())[i].use_subsets_) continue;
-//      DEBUG_MSG("Subset_BC::apply(): applying a 0.0 Lagrange multiplier bc to node set id " << node_set_id);
-//      DICe::mesh::bc_set * bc_sets = mesh_->get_node_bc_sets();
-//      TEUCHOS_TEST_FOR_EXCEPTION(bc_sets->find(node_set_id)==bc_sets->end(),std::runtime_error,
-//        "Error, invalid node set id");
-//      const int_t num_bc_nodes = bc_sets->find(node_set_id)->second.size();
-//      for(int_t i=0;i<num_bc_nodes;++i){
-//        const int_t node_gid = bc_sets->find(node_set_id)->second[i];
-//        residual->global_value(node_gid+mixed_global_offset) = 0.0;
-//      } // bc node
-//    } // bc set
-//  } // is_mixed
 }
 
 void
@@ -355,6 +332,18 @@ MMS_BC::apply(const bool first_iteration){
       exact_sol->local_value(ix) = b_x;
       exact_sol->local_value(iy) = b_y;
     }
+    if(is_mixed_){
+      Teuchos::RCP<MultiField> exact_lag = alg_->l_mesh()->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
+      for(int_t i=0;i<alg_->l_mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
+        int_t ix = i*2+0;
+        int_t iy = i*2+1;
+        const scalar_t x = coords->local_value(ix);
+        const scalar_t y = coords->local_value(iy);
+        scalar_t l_out = 0.0;
+        alg_->mms_problem()->lagrange(x,y,l_out);
+        exact_lag->local_value(i) = l_out;
+      }
+    }
   }
   const int_t node_set_id = 1;  // mms bcs are hard coded to node set id 1
   DEBUG_MSG("MMS_BC::apply(): applying a Dirichlet bc to node set id " << node_set_id);
@@ -380,47 +369,64 @@ MMS_BC::apply(const bool first_iteration){
       residual->global_value(iy) = b_y;
     }
   }
-  if(is_mixed_){
-    TEUCHOS_TEST_FOR_EXCEPTION(alg_->l_mesh()==Teuchos::null,std::runtime_error,
-      "Error, l_mesh pointer should not be null");
-    const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_num_global_elements();
-    if(first_iteration){ // populate the exact solution fields
-      Teuchos::RCP<MultiField> exact_lag = alg_->l_mesh()->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
-      for(int_t i=0;i<alg_->l_mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
-        int_t ix = i*2+0;
-        int_t iy = i*2+1;
-        const scalar_t x = coords->local_value(ix);
-        const scalar_t y = coords->local_value(iy);
-        scalar_t l_out = 0.0;
-        alg_->mms_problem()->lagrange(x,y,l_out);
-        exact_lag->local_value(i) = l_out;
-      }
-    }
-    const int_t node_set_id = -1;  // mms bcs are hard coded to node set id -1 for the lagrange multiplier
-    DEBUG_MSG("MMS_BC::apply(): applying a Dirichlet Lagrange Multiplier BC to node set id " << node_set_id);
-    DICe::mesh::bc_set * bc_sets = mesh_->get_node_bc_sets();
-    TEUCHOS_TEST_FOR_EXCEPTION(bc_sets->find(node_set_id)==bc_sets->end(),std::runtime_error,
-      "Error, invalid node set id");
-    const int_t num_bc_nodes = bc_sets->find(node_set_id)->second.size();
-    DEBUG_MSG("MMS_BC::apply(): number of nodes in set " << num_bc_nodes);
-    for(int_t i=0;i<num_bc_nodes;++i){
-      const int_t node_gid = bc_sets->find(node_set_id)->second[i];
-      const int_t ix = (node_gid-1)*spa_dim + 1;
-      const int_t iy = (node_gid-1)*spa_dim + 2;
-      if(!first_iteration){
-        residual->global_value(node_gid + mixed_global_offset) = 0.0;
-      }
-      else{
-        const scalar_t x = coords->global_value(ix);
-        const scalar_t y = coords->global_value(iy);
-        scalar_t l_out = 0.0;
-        alg_->mms_problem()->lagrange(x,y,l_out);
-        residual->global_value(node_gid + mixed_global_offset) = l_out;
-      }
-    }
-  } // is mixed
 }
 
+void
+MMS_Lagrange_BC::apply(const bool first_iteration){
+  // get the residual field
+  Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
+      mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
+  Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  const int_t spa_dim = mesh_->spatial_dimension();
+  TEUCHOS_TEST_FOR_EXCEPTION(alg_->mms_problem()==Teuchos::null,std::runtime_error,"Error, mms_problem should not be null");
+  TEUCHOS_TEST_FOR_EXCEPTION(alg_->l_mesh()==Teuchos::null,std::runtime_error,
+    "Error, l_mesh pointer should not be null");
+  const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_num_global_elements();
+//  if(first_iteration){ // populate the exact solution fields
+//    Teuchos::RCP<MultiField> exact_lag = alg_->l_mesh()->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
+//    for(int_t i=0;i<alg_->l_mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
+//      int_t ix = i*2+0;
+//      int_t iy = i*2+1;
+//      const scalar_t x = coords->local_value(ix);
+//      const scalar_t y = coords->local_value(iy);
+//      scalar_t l_out = 0.0;
+//      alg_->mms_problem()->lagrange(x,y,l_out);
+//      exact_lag->local_value(i) = l_out;
+//    }
+//  }
+  const int_t node_set_id = -1;  // mms bcs are hard coded to node set id -1 for the lagrange multiplier
+  DEBUG_MSG("MMS_BC::apply(): applying a Lagrange Multiplier BC to node set id " << node_set_id);
+  DICe::mesh::bc_set * bc_sets = mesh_->get_node_bc_sets();
+  if(bc_sets->find(node_set_id)==bc_sets->end())return;
+  const int_t num_bc_nodes = bc_sets->find(node_set_id)->second.size();
+  DEBUG_MSG("MMS_BC::apply(): number of nodes in set " << num_bc_nodes);
+  for(int_t i=0;i<num_bc_nodes;++i){
+    const int_t node_gid = bc_sets->find(node_set_id)->second[i];
+    const int_t ix = (node_gid-1)*spa_dim + 1;
+    const int_t iy = (node_gid-1)*spa_dim + 2;
+    if(!first_iteration){
+      residual->global_value(node_gid + mixed_global_offset) = 0.0;
+    }
+    else{
+      const scalar_t x = coords->global_value(ix);
+      const scalar_t y = coords->global_value(iy);
+      scalar_t l_out = 0.0;
+      alg_->mms_problem()->lagrange(x,y,l_out);
+      residual->global_value(node_gid + mixed_global_offset) = l_out;
+    }
+  }
+}
+
+void
+Corner_BC::apply(const bool first_iteration){
+  // get the residual field
+  Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
+      mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
+  const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_num_global_elements();
+  DEBUG_MSG("Corner_BC::apply(): applying 0.0 constraint to node 1");
+  const int_t node_gid = 1;
+  residual->global_value(node_gid + mixed_global_offset) = 0.0;
+}
 
 void
 Constant_IC::apply(const bool first_iteration){

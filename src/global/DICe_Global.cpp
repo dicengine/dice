@@ -110,7 +110,7 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     else if(elem_str=="tri3"||elem_str=="TRI3"){
       element_type_ = DICe::mesh::TRI3;
       // TODO relax this later to see what happens
-      TEUCHOS_TEST_FOR_EXCEPTION(is_mixed_formulation(),std::runtime_error,"Error, mixed formulations cannot use TRI3 elements (not stable)");
+      //TEUCHOS_TEST_FOR_EXCEPTION(is_mixed_formulation(),std::runtime_error,"Error, mixed formulations cannot use TRI3 elements (not stable)");
     }
     else{
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,"Error, invalid element type: " << elem_str);
@@ -152,6 +152,10 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     TEUCHOS_TEST_FOR_EXCEPTION(!mms_params->isParameter(DICe::problem_name),std::runtime_error,
       "Error, the problem_name must be defined in the mms_spec");
 
+    // see if the user wants a lagrange bc or nor
+    bool enforce_lagrange_bc = mms_params->get<bool>(DICe::parser_enforce_lagrange_bc,true);
+    DEBUG_MSG("MMS Lagrange BC enforcement: " << enforce_lagrange_bc);
+
     MMS_Problem_Factory mms_factory;
     mms_problem_ = mms_factory.create(mms_params);
 
@@ -162,7 +166,7 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     points_x[1] = mms_problem_->dim_x(); points_y[1] = 0.0;
     points_x[2] = mms_problem_->dim_x(); points_y[2] = mms_problem_->dim_y();
     points_x[3] = 0.0; points_y[3] = mms_problem_->dim_y();
-    mesh_ = DICe::generate_tri_mesh(element_type_,points_x,points_y,mesh_size_,output_file_name_);
+    mesh_ = DICe::generate_tri_mesh(element_type_,points_x,points_y,mesh_size_,output_file_name_,enforce_lagrange_bc);
     // if this is a mixed formulation, generate the lagrange multiplier mesh
     if(is_mixed_formulation()){
       l_mesh_ = element_type_==DICe::mesh::TRI6 ? DICe::mesh::create_tri3_exodus_mesh_from_tri6(mesh_,lagrange_output_file_name_):
@@ -235,6 +239,8 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     add_term(MMS_IMAGE_TIME_FORCE);
     add_term(MMS_FORCE);
     add_term(MMS_DIRICHLET_DISPLACEMENT_BC);
+    //add_term(MMS_LAGRANGE_BC);
+    add_term(CORNER_BC);
     // mms dirichlet bc automatically adds the lagrange bc so no need for that term here
   }
   else{
@@ -381,8 +387,14 @@ Global_Algorithm::pre_execution_tasks(){
       bc_manager_->create_bc(LAGRANGE_BC,is_mixed_formulation());
     }
   }
+  if(has_term(CORNER_BC)){
+    bc_manager_->create_bc(CORNER_BC,is_mixed_formulation());
+  }
   if(has_term(MMS_DIRICHLET_DISPLACEMENT_BC)){
     bc_manager_->create_bc(MMS_DIRICHLET_DISPLACEMENT_BC,is_mixed_formulation());
+  }
+  if(has_term(MMS_LAGRANGE_BC)){
+    bc_manager_->create_bc(MMS_LAGRANGE_BC,is_mixed_formulation());
   }
   if(has_term(CONSTANT_IC)){
     bc_manager_->create_bc(CONSTANT_IC,is_mixed_formulation());
@@ -487,16 +499,16 @@ Global_Algorithm::compute_tangent(){
   DICe::mesh::element_set::iterator elem_end = mesh_->get_element_set()->end();
   for(;elem_it!=elem_end;++elem_it)
   {
-    //std::cout << "ELEM: " << elem_it->get()->global_id() << std::endl;
+    std::cout << "ELEM: " << elem_it->get()->global_id() << std::endl;
     const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
     // compute the shape functions and derivatives for this element:
     for(int_t nd=0;nd<vel_num_funcs;++nd){
       node_ids[nd] = connectivity[nd]->global_id();
-      //std::cout << " gid " << node_ids[nd] << std::endl;
+      std::cout << " gid " << node_ids[nd] << std::endl;
       for(int_t dim=0;dim<spa_dim;++dim){
         const int_t stride = nd*spa_dim + dim;
         nodal_coords[stride] = coords_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
-        //std::cout << " node coords " << nodal_coords[stride] << std::endl;
+        std::cout << " node coords " << nodal_coords[stride] << std::endl;
       }
     }
     // clear the elem stiffness
@@ -553,6 +565,14 @@ Global_Algorithm::compute_tangent(){
 
     } // gp loop
 
+    std::cout << "div stiff " << std::endl;
+    for(int_t j=0;j<3;++j){
+      for(int_t i=0;i<vel_num_funcs*spa_dim;++i){
+        std::cout << elem_div_stiffness[j*vel_num_funcs*spa_dim + i] << " ";
+      }
+      std::cout << std::endl;
+    }
+
     // low-order gauss point loop:
     for(int_t gp=0;gp<num_image_integration_points;++gp){
 
@@ -603,13 +623,13 @@ Global_Algorithm::compute_tangent(){
               col_id_array_map.find(row)->second.push_back(col);
               values_array_map.find(row)->second.push_back(value);
               // transpose should be the same value
-              const bool is_local_mixed_col_node =  l_mesh_->get_scalar_node_dist_map()->is_node_global_elem(node_ids[j]); // using the non-mixed map because the row is a velocity row
-              const bool is_p_col = is_local_mixed_col_node ?
-                  bc_manager_->is_mixed_bc(l_mesh_->get_scalar_node_dist_map()->get_local_element(node_ids[j])) : false;
-              if(!is_p_col){
-                col_id_array_map.find(col)->second.push_back(row);
-                values_array_map.find(col)->second.push_back(value);
-              }
+            }
+            const bool is_local_mixed_col_node =  l_mesh_->get_scalar_node_dist_map()->is_node_global_elem(node_ids[j]); // using the non-mixed map because the row is a velocity row
+            const bool is_p_col = is_local_mixed_col_node ?
+                bc_manager_->is_mixed_bc(l_mesh_->get_scalar_node_dist_map()->get_local_element(node_ids[j])) : false;
+            if(!is_p_col){
+              col_id_array_map.find(col)->second.push_back(row);
+              values_array_map.find(col)->second.push_back(value);
             }
           } // tri3_num_funcs
         }
@@ -890,6 +910,8 @@ Global_Algorithm::execute(){
   linear_problem_->setHermitian(true);
   linear_problem_->setOperator(tangent->get());
 
+  tangent->describe();
+
   // if this is a real problem (not MMS) use the lagrangian coordinates
   // and use a fixed point iteration loop rather than a direct solve
   DEBUG_MSG("Global_Algorithm::execute: use_fixed_point: " << use_fixed_point_iterations_);
@@ -956,7 +978,9 @@ Global_Algorithm::execute(){
     }
     else
       disp->update(1.0,*lhs,1.0);
-    //disp.describe();
+    //lhs->describe();
+    disp->describe();
+    lagrange_multiplier->describe();
 
     //write out the stats on the displacement field
     scalar_t lhs_min_x = 0.0, lhs_min_y = 0.0;

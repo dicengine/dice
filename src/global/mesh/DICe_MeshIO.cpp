@@ -412,7 +412,7 @@ Teuchos::RCP<Mesh> create_tri_exodus_mesh(const DICe::mesh::Base_Element_Type el
   for(int_t j=0; j<num_elem; ++j)
   {
     connectivity_vector conn;
-
+    std::cout << " Element " << j << std::endl;
     // the connectivity vector needs to be re-arranged from Triangle format to exodus format
     connectivity_swap[0] = connectivity[j*num_nodes_per_elem + 0];
     connectivity_swap[1] = connectivity[j*num_nodes_per_elem + 1];
@@ -431,6 +431,7 @@ Teuchos::RCP<Mesh> create_tri_exodus_mesh(const DICe::mesh::Base_Element_Type el
       if(mesh->get_node_set()->find(global_node_id)!=mesh->get_node_set()->end()){
         found_node = true;
         conn.push_back(mesh->get_node_set()->find(global_node_id)->second);
+        std::cout << global_node_id << std::endl;
       }
       else{
         TEUCHOS_TEST_FOR_EXCEPTION(!found_node,std::logic_error,"Could not find node rcp in set: " << global_node_id);
@@ -455,6 +456,14 @@ Teuchos::RCP<Mesh> create_tri_exodus_mesh(const DICe::mesh::Base_Element_Type el
   DICe::mesh::element_set::const_iterator elem_end = mesh->get_element_set()->end();
   for(;elem_it!=elem_end;++elem_it){
     block_id_field.local_value(elem_it->get()->local_id()) = elem_it->get()->block_id();
+  }
+
+  mesh->create_field(field_enums::MASTER_NODE_ID_FS);
+  MultiField & master_field = *mesh->get_field(field_enums::MASTER_NODE_ID_FS);
+  DICe::mesh::node_set::iterator node_it = mesh->get_node_set()->begin();
+  DICe::mesh::node_set::iterator node_end = mesh->get_node_set()->end();
+  for(;node_it!=node_end;++node_it){
+    master_field.local_value(node_it->second->local_id()) = node_it->second->local_id();
   }
 
   // put the element blocks in a field so they are accessible in parallel from other processors

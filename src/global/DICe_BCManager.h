@@ -130,6 +130,28 @@ public:
 protected:
 };
 
+/// \class Corner_BC
+/// \brief prescribed values at a corner (presumably the first node with GID 1)
+class Corner_BC : public Boundary_Condition
+{
+public:
+  /// Constructor
+  Corner_BC(Teuchos::RCP<DICe::mesh::Mesh> mesh,
+    const bool is_mixed):
+  Boundary_Condition(mesh,is_mixed){
+    DEBUG_MSG("Corner_BC::Corner_BC(): Creating a Corner BC");
+  };
+
+  /// Destructor
+  virtual ~Corner_BC(){};
+
+  /// Apply the boundary condition
+  virtual void apply(const bool first_iteration);
+
+protected:
+};
+
+
 
 /// \class Subset_BC
 /// \brief prescribed values along the boundary using a subset solution
@@ -206,6 +228,32 @@ protected:
   /// pointer to a global algorithm
   Global_Algorithm * alg_;
 };
+
+/// \class MMS_Lagrange_BC
+/// \brief prescribed values along the boundary using the method of manufactured solutions values
+class MMS_Lagrange_BC : public Boundary_Condition
+{
+public:
+  /// Constructor
+  MMS_Lagrange_BC(Global_Algorithm * alg,
+    Teuchos::RCP<DICe::mesh::Mesh> mesh,
+    const bool is_mixed):
+  Boundary_Condition(mesh,is_mixed),
+  alg_(alg){
+    DEBUG_MSG("MMS_Lagrange_BC::Subset_BC(): Creating an MMS Lagrange BC");
+  };
+
+  /// Destructor
+  virtual ~MMS_Lagrange_BC(){};
+
+  /// Apply the boundary condition
+  virtual void apply(const bool first_iteration);
+
+protected:
+  /// pointer to a global algorithm
+  Global_Algorithm * alg_;
+};
+
 
 class BC_Manager
 {
