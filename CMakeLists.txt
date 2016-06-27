@@ -57,8 +57,9 @@ SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
 SET(CMAKE_C_COMPILER ${Trilinos_C_COMPILER} )
 SET(CMAKE_VERBOSE_MAKEFILE OFF)
 
-SET(DICE_MPI_EXEC ${Trilinos_MPI_EXEC})
-
+IF(NOT DEFINED DICE_MPI_EXEC)
+  SET(DICE_MPI_EXEC mpiexec)
+ENDIF()
 # End of setup and error checking
 #  NOTE: PROJECT command checks for compilers, so this statement
 #        is moved AFTER setting CMAKE_CXX_COMPILER opton
@@ -96,7 +97,7 @@ IF (MPI_List_ID GREATER -1)
   MESSAGE(STATUS "Checking if MPI is enabled in Trilinos: MPI ENABLED")
   SET(DICE_MPI TRUE)
   ADD_DEFINITIONS(-DDICE_MPI=1)
-  MESSAGE(STATUS "Using DICE_MPI_EXEC:${DICE_MPI_EXEC}")
+  MESSAGE(STATUS "Using DICE_MPI_EXEC: ${DICE_MPI_EXEC}")
 ELSE()
   MESSAGE(STATUS "Checking if MPI is enabled in Trilinos: MPI NOT ENABLED")
   SET(DICE_MPI FALSE)
