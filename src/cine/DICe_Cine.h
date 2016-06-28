@@ -245,6 +245,19 @@ public:
       convert_to_8_bit,filter_failed_pixels,params);
   }
 
+  /// \brief create and populate an image from an average of a range of cine frames
+  /// \param frame_start beginning of the averaging range (starting with 0 as first frame, disregard triggger indexing)
+  /// \param frame_end end of the averaging range (starting with 0 as first frame, disregard triggger indexing)
+  /// \param convert_to_8_bit true if the values should be converted to the range 0-255
+  /// \param filter_failed_pixels true if the pixel values should be binned and filtered for outliers
+  /// like dead pixels that have the max value
+  /// \param params image parameters (filter image, compute gradients, etc)
+  Teuchos::RCP<Image> get_average_frame(const int_t frame_start,
+    const int_t frame_end,
+    const bool convert_to_8_bit=true,
+    const bool filter_failed_pixels=false,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
   /// \brief 8 bit frame fetch
   /// \param image the image to populate
   /// \param frame_index the frame to gather

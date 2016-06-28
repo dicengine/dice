@@ -190,7 +190,14 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<DICe::Schema> schema;
     if(is_cine){
       // read in the reference image from the cine file and create the schema:
-      Teuchos::RCP<DICe::Image> ref_image = cine_reader->get_frame(cine_ref_index,true,filter_failed_pixels,correlation_params);
+      Teuchos::RCP<DICe::Image> ref_image;
+      if(input_params->isParameter(DICe::time_average_cine_ref_frame)){
+        const int_t num_avg_frames = input_params->get<int_t>(DICe::time_average_cine_ref_frame,1);
+        ref_image = cine_reader->get_average_frame(cine_ref_index,cine_ref_index+num_avg_frames,true,filter_failed_pixels,correlation_params);
+      }
+      else{
+        ref_image = cine_reader->get_frame(cine_ref_index,true,filter_failed_pixels,correlation_params);
+      }
       schema = Teuchos::rcp(new DICe::Schema(ref_image,ref_image,correlation_params));
     }
     else{

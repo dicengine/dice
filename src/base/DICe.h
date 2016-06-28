@@ -125,6 +125,8 @@ const char* const image_grad_team_size = "image_grad_team_size";
 /// String parameter name
 const char* const gauss_filter_images = "gauss_filter_images";
 /// String parameter name
+const char* const time_average_cine_ref_frame = "time_average_cine_ref_frame";
+/// String parameter name
 const char* const gauss_filter_use_hierarchical_parallelism = "gauss_filter_use_hierarchical_parallelism";
 /// String parameter name
 const char* const gauss_filter_team_size = "gauss_filter_team_size";
@@ -888,6 +890,11 @@ const Correlation_Parameter gauss_filter_images_param(gauss_filter_images,
   false,
   "Filter the images using a 7 point gauss filter (eliminates high frequnecy content)");
 /// Correlation parameter and properties
+const Correlation_Parameter time_average_cine_ref_frame_param(time_average_cine_ref_frame,
+  SIZE_PARAM,
+  false,
+  "Select the number of frames over which to time average the reference frame of a cine file");
+/// Correlation parameter and properties
 const Correlation_Parameter compute_def_gradients_param(compute_def_gradients,
   BOOL_PARAM,
   false,
@@ -905,7 +912,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 57;
+const int_t num_valid_correlation_params = 58;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -964,7 +971,8 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   rotate_ref_image_270_param,
   rotate_def_image_270_param,
   objective_regularization_factor_param,
-  filter_failed_cine_pixels_param
+  filter_failed_cine_pixels_param,
+  time_average_cine_ref_frame_param
 };
 
 // TODO don't forget to update this when adding a new one
