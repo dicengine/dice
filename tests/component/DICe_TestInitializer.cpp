@@ -208,6 +208,8 @@ int main(int argc, char *argv[]) {
       // if the init method was set to N/A, then use neighbor values automatically
       params->set(DICe::initialization_method,init_methods[init_i]==INITIALIZATION_METHOD_NOT_APPLICABLE?USE_NEIGHBOR_VALUES:init_methods[init_i]);
       params->set(DICe::correlation_routine,corr_routines[corr_i]);
+      params->set(DICe::disp_jump_tol,500.0);
+      params->set(DICe::theta_jump_tol,100.0);
       Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema("./images/InitRef.tif","./images/InitDef.tif",params));
       schema->initialize(num_subsets,subset_size,Teuchos::null,neighbor_ids);
       if(init_methods[init_i]==INITIALIZATION_METHOD_NOT_APPLICABLE)

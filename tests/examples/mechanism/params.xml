@@ -7,6 +7,8 @@
   <Parameter name="initialization_method" type="string" value="use_field_values" />
   <Parameter name="gauss_filter_images" type="bool" value="true" />
   <Parameter name="output_beta" type="bool" value="true" />
+  <Parameter name="disp_jump_tol" type="double" value="500.0" />
+  <Parameter name="theta_jump_tol" type="double" value="100.0" />
   <ParameterList name="output_spec">
     <Parameter name="COORDINATE_X" type="bool" value="true" />
     <Parameter name="COORDINATE_Y" type="bool" value="true" />

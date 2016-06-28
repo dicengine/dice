@@ -1571,6 +1571,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       }
     }
   }
+  const scalar_t prev_u = local_field_value(subset_gid,DICe::DISPLACEMENT_X);
+  const scalar_t prev_v = local_field_value(subset_gid,DICe::DISPLACEMENT_Y);
+  const scalar_t prev_t = local_field_value(subset_gid,DICe::ROTATION_Z);
   //
   // perform the correlation
   //
@@ -1590,7 +1593,19 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       corr_status = CORRELATION_FAILED_BY_EXCEPTION;
     };
   }
-  if(corr_status!=CORRELATION_SUCCESSFUL){
+  //
+  //  test for the jump tolerances here:
+  //
+  // test for jump failure (too high displacement or rotation from last step due to subset getting lost)
+  bool jump_pass = true;
+  scalar_t diffU = ((*deformation)[DISPLACEMENT_X] - prev_u);
+  scalar_t diffV = ((*deformation)[DISPLACEMENT_Y] - prev_v);
+  scalar_t diffT = ((*deformation)[ROTATION_Z] - prev_t);
+  DEBUG_MSG("Subset " << subset_gid << " U jump: " << diffU << " V jump: " << diffV << " T jump: " << diffT);
+  if(std::abs(diffU) > disp_jump_tol_ || std::abs(diffV) > disp_jump_tol_ || std::abs(diffT) > theta_jump_tol_)
+    jump_pass = false;
+  DEBUG_MSG("Subset " << subset_gid << " jump pass: " << jump_pass);
+  if(corr_status!=CORRELATION_SUCCESSFUL||!jump_pass){
     if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::GRADIENT_BASED||force_simplex){
       record_failed_step(subset_gid,static_cast<int_t>(corr_status),num_iterations);
       return;
@@ -1665,6 +1680,19 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       record_failed_step(subset_gid,static_cast<int_t>(FRAME_FAILED_DUE_TO_HIGH_PATH_DISTANCE),num_iterations);
       return;
     }
+  }
+  //
+  //  Test jumps again
+  //
+  diffU = ((*deformation)[DISPLACEMENT_X] - prev_u);
+  diffV = ((*deformation)[DISPLACEMENT_Y] - prev_v);
+  diffT = ((*deformation)[ROTATION_Z] - prev_t);
+  DEBUG_MSG("Subset " << subset_gid << " U jump: " << diffU << " V jump: " << diffV << " T jump: " << diffT);
+  if(std::abs(diffU) > disp_jump_tol_ || std::abs(diffV) > disp_jump_tol_ || std::abs(diffT) > theta_jump_tol_){
+    DEBUG_MSG("Subset " << subset_gid << " FAILS jump test: ");
+    // TODO for the phase correlation initialization method, the initial guess needs to be stored
+    record_failed_step(subset_gid,static_cast<int_t>(JUMP_TOLERANCE_EXCEEDED),num_iterations);
+    return;
   }
   // TODO how to respond to failure here? or for initialization?
   //
