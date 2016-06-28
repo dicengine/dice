@@ -244,9 +244,14 @@ scalar_t
 Subset::contrast_std_dev(){
   const scalar_t mean_intensity = mean(DEF_INTENSITIES);
   scalar_t std_dev = 0.0;
-  for(int_t i = 0;i<num_pixels();++i)
-    std_dev += (def_intensities(i) - mean_intensity)*(def_intensities(i) - mean_intensity);
-  std_dev = std::sqrt(std_dev/num_pixels());
+  int_t num_active = 0;
+  for(int_t i = 0;i<num_pixels();++i){
+    if(is_active(i)&&!is_deactivated_this_step(i)){
+      num_active++;
+      std_dev += (def_intensities(i) - mean_intensity)*(def_intensities(i) - mean_intensity);
+    }
+  }
+  std_dev = std::sqrt(std_dev/num_active);
   return std_dev;
 }
 
