@@ -302,24 +302,11 @@ Image::intensities()const{
 }
 
 intensity_t
-Image::interpolate_keys_fourth_global(const scalar_t & global_x, const scalar_t & global_y){
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
-}
-intensity_t
 Image::interpolate_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
-}
-
-intensity_t
-Image::interpolate_bilinear_global(const scalar_t & global_x, const scalar_t & global_y){
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
 }
 intensity_t
 Image::interpolate_bilinear(const scalar_t & local_x, const scalar_t & local_y){
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
-}
-intensity_t
-Image::interpolate_bicubic_global(const scalar_t & global_x, const scalar_t & global_y){
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
 }
 intensity_t
