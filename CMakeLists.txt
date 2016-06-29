@@ -171,7 +171,7 @@ IF(WIN32)
   find_package(Boost 1.46.0) # find_package for boost works a little dif for Windows
 ELSE()
   set(Boost_USE_STATIC_LIBS   ON)
-  find_package(Boost 1.46.0 COMPONENTS program_options system filesystem timer)
+  find_package(Boost 1.46.0 COMPONENTS program_options system filesystem timer chrono)
 ENDIF()
 
 if (Boost_FOUND)
