@@ -794,7 +794,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  else if(seed_tokens[0]==parser_rotation){
                    TEUCHOS_TEST_FOR_EXCEPTION(seed_tokens.size()<=1,std::runtime_error,
                      "Error, not enough values specified for seed rotation." );
-                   TEUCHOS_TEST_FOR_EXCEPTION(!is_number(seed_tokens[1])||!is_number(seed_tokens[2]),
+                   TEUCHOS_TEST_FOR_EXCEPTION(!is_number(seed_tokens[1]),
                      std::runtime_error,"");
                    seed_rotation = strtod(seed_tokens[1].c_str(),NULL);
                    if(proc_rank==0) DEBUG_MSG("Seed rotation " << seed_rotation);
@@ -978,7 +978,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                else if(seed_tokens[0]==parser_rotation){
                  TEUCHOS_TEST_FOR_EXCEPTION(seed_tokens.size()<=1,std::runtime_error,
                    "Error, a value must be specified for rotation." );
-                 TEUCHOS_TEST_FOR_EXCEPTION(!is_number(seed_tokens[1])||!is_number(seed_tokens[2]),
+                 TEUCHOS_TEST_FOR_EXCEPTION(!is_number(seed_tokens[1]),
                    std::runtime_error,"");
                  seed_rotation = strtod(seed_tokens[1].c_str(),NULL);
                  if(proc_rank==0) DEBUG_MSG("Seed Rotation " << seed_rotation);
