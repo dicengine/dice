@@ -267,6 +267,7 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::output_deformed_subset_intensity_images,false);
   defaultParams->set(DICe::output_evolved_subset_images,false);
   defaultParams->set(DICe::use_subset_evolution,true);
+  defaultParams->set(DICe::use_nonlinear_update,false);
   defaultParams->set(DICe::output_beta,true);
   defaultParams->set(DICe::output_delimiter,",");
   defaultParams->set(DICe::omit_output_row_id,false);
@@ -311,6 +312,7 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::output_deformed_subset_intensity_images,false);
   defaultParams->set(DICe::output_evolved_subset_images,false);
   defaultParams->set(DICe::use_subset_evolution,false);
+  defaultParams->set(DICe::use_nonlinear_update,false);
   defaultParams->set(DICe::output_beta,false);
   defaultParams->set(DICe::output_delimiter," ");
   defaultParams->set(DICe::omit_output_row_id,false);

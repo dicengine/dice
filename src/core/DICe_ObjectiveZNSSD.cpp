@@ -268,6 +268,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
       Gx = gradGx[index];
       Gy = gradGy[index];
       delTheta = Gx*(-sinTheta*Dx - cosTheta*Dy) + Gy*(cosTheta*Dx - sinTheta*Dy);
+      //deldelTheta = Gx*(-cosTheta*Dx + sinTheta*Dy) + Gy*(-sinTheta*Dx - cosTheta*Dy);
       delEx = Gx*dx*cosTheta + Gy*dx*sinTheta;
       delEy = -Gx*dy*sinTheta + Gy*dy*cosTheta;
       delGxy = Gx*(cosTheta*dy - sinTheta*dx) + Gy*(sinTheta*dy + cosTheta*dx);
@@ -295,7 +296,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
 
       H(0,2) += Gx*delTheta;
       H(1,2) += Gy*delTheta;
-      H(2,2) += delTheta*delTheta;
+      H(2,2) += delTheta*delTheta;// + delTheta*deldelTheta;
       H(3,2) += delEx*delTheta;
       H(4,2) += delEy*delTheta;
       H(5,2) += delGxy*delTheta;
@@ -471,5 +472,236 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
   }
   else return CORRELATION_SUCCESSFUL;
 }
+
+
+Status_Flag
+Objective_ZNSSD::computeUpdateNonlinear(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  int_t & num_iterations){
+  assert(deformation->size()==DICE_DEFORMATION_SIZE);
+  DEBUG_MSG("Objective_ZNSSD::computeUpdateNonlinear(): computing the update ");
+
+  TEUCHOS_TEST_FOR_EXCEPTION(!subset_->has_gradients(),std::runtime_error,"Error, image gradients have not been computed but are needed here.");
+  TEUCHOS_TEST_FOR_EXCEPTION(schema_->shear_strain_enabled(),std::runtime_error,"Error, shear strain cannot be enabled for nonlinear update");
+  TEUCHOS_TEST_FOR_EXCEPTION(schema_->normal_strain_enabled(),std::runtime_error,"Error, normal strain cannot be enabled for nonlinear update");
+  TEUCHOS_TEST_FOR_EXCEPTION(!schema_->translation_enabled(),std::runtime_error,"Error, translation must be enabled for nonlinear update");
+  TEUCHOS_TEST_FOR_EXCEPTION(!schema_->rotation_enabled(),std::runtime_error,"Error, rotation must be enabled for nonlinear update");
+
+  // using type double here a lot because LAPACK doesn't support float.
+  int_t N = 3; // [ u_x u_y theta dudx dvdy gxy ]
+  scalar_t solve_tol = schema_->fast_solver_tolerance();
+  const int_t max_solve_its = schema_->max_solver_iterations_fast();
+  int *IPIV = new int[N+1];
+  int LWORK = N*N;
+  int INFO = 0;
+  double *WORK = new double[LWORK];
+  double *GWORK = new double[10*N];
+  int *IWORK = new int[LWORK];
+  Teuchos::LAPACK<int_t,double> lapack;
+  assert(N==3 && "  DICe ERROR: this DIC method is currently only approprate for 3 variables.");
+
+  // Initialize storage:
+  Teuchos::SerialDenseMatrix<int_t,double> H(N,N, true);
+  Teuchos::ArrayRCP<double> q(N,0.0);
+  Teuchos::RCP<std::vector<scalar_t> > def_old    = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0)); // save off the previous value to test for convergence
+  Teuchos::RCP<std::vector<scalar_t> > def_update = Teuchos::rcp(new std::vector<scalar_t>(N,0.0)); // save off the previous value to test for convergence
+
+  Teuchos::ArrayRCP<scalar_t> gradGx = subset_->grad_x_array();
+  Teuchos::ArrayRCP<scalar_t> gradGy = subset_->grad_y_array();
+  const scalar_t cx = subset_->centroid_x();
+  const scalar_t cy = subset_->centroid_y();
+  const scalar_t meanF = subset_->mean(REF_INTENSITIES);
+
+  // SOLVER ---------------------------------------------------------
+  DEBUG_MSG(std::setw(5) << "Iter" <<
+    std::setw(10) << " Ru" <<
+    std::setw(10) << " Rv" <<
+    std::setw(10) << " Rt" <<
+    std::setw(10) << " u"  <<
+    std::setw(15) << " du" <<
+    std::setw(10) << " v"  <<
+    std::setw(15) << " dv" <<
+    std::setw(10) << " t"  <<
+    std::setw(15) << " dt");
+
+  int_t solve_it = 0;
+  for(;solve_it<=max_solve_its;++solve_it){
+    num_iterations = solve_it;
+    // update the deformed image with the new deformation:
+    try{
+      subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,deformation,schema_->interpolation_method());
+    }
+    catch (std::logic_error & err) {
+      return SUBSET_CONSTRUCTION_FAILED;
+    }
+
+    // compute the mean value of the subsets:
+    const scalar_t meanG = subset_->mean(DEF_INTENSITIES);
+
+    scalar_t Dx=0.0,Dy=0.0;
+    //scalar_t R=0.0;
+    scalar_t delTheta=0.0,deldelTheta=0.0;
+    scalar_t Gx=0.0,Gy=0.0, GmF=0.0;
+    //scalar_t Gxt=0.0,Gyt=0.0;
+    //const scalar_t u = (*def_update)[0];
+    //const scalar_t v = (*def_update)[1];
+    const scalar_t theta = (*def_update)[2];
+    //const scalar_t sint = std::sin(theta);
+    //const scalar_t cost = std::cos(theta);
+    //const scalar_t cos2t = std::cos(2.0*theta);
+    //const scalar_t sin2t = std::sin(2.0*theta);
+    //const scalar_t angle_c = sint / (2.0 + 2.0*cost);
+    //const scalar_t angle_c = theta / (2.0 + 2.0*(1.0-0.5*theta*theta));
+    //const scalar_t theta2 = 1.0 - 0.5*theta*theta;
+
+    for(int_t index=0;index<subset_->num_pixels();++index){
+      if(subset_->is_deactivated_this_step(index)||!subset_->is_active(index)) continue;
+      Dx = subset_->x(index) - cx;
+      Dy = subset_->y(index) - cy;
+      GmF = (subset_->def_intensities(index) - meanG) - (subset_->ref_intensities(index) - meanF);
+      //std::cout << " pixel " << index << " GmF " <<  GmF << " G " << subset_->def_intensities(index) << " meanG " << meanG << " F " << subset_->ref_intensities(index) << " meanF " <<  meanF << std::endl;
+      // TODO redo for small angle assump.
+
+      Gx = gradGx[index];
+      Gy = gradGy[index];
+      //Gxt = (cost*Gx + sint*Gy);
+      //Gyt = (-sint*Gx + cost*Gy);
+
+      delTheta = Gx*(-theta*Dx - Dy) + Gy*(Dx - theta*Dy);
+      //delTheta = Gxt*(-sint*Dx - cost*Dy) + Gyt*(cost*Dx - sint*Dy);
+      //delTheta = Gxt*(-theta*Dx - Dy) + Gyt*(Dx - theta*Dy);
+      deldelTheta = -Gx*Dx -Gy*Dy;
+      //deldelTheta = - 2*(Dy*cost + Dx*sint)*(Gy*cost - Gx*sint) - 2*(Dx*cost - Dy*sint)*(Gx*cost + Gy*sint);
+
+      q[0] += Gx*GmF;
+      //q[0] += Gxt*GmF;
+      q[1] += Gy*GmF;
+      //q[1] += Gyt*GmF;
+      q[2] += delTheta*GmF;
+      //q[2] += delTheta*GmF;
+
+      H(0,0) += Gx*Gx;
+      H(1,0) += Gy*Gx;
+      H(2,0) += delTheta*Gx;
+
+      H(0,1) += Gx*Gy;
+      H(1,1) += Gy*Gy;
+      H(2,1) += delTheta*Gy;
+
+      H(0,2) += Gx*delTheta;
+      H(1,2) += Gy*delTheta;
+      H(2,2) += delTheta*delTheta + delTheta*deldelTheta;
+    } // end pixel loop
+    // compute the residual norm
+    const scalar_t resid_norm = std::sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+
+    //if(resid_norm < solve_tol){
+    //  DEBUG_MSG("Subset " << correlation_point_global_id_ << " ** CONVERGED SOLUTION, u " << (*deformation)[DICe::DISPLACEMENT_X] <<
+    //    " v " << (*deformation)[DICe::DISPLACEMENT_Y] << " theta " << (*deformation)[DICe::ROTATION_Z]);
+    //  break;
+    //}
+
+    // determine the max value in the matrix:
+    //scalar_t maxH = 0.0;
+    //for(int_t i=0;i<H.numCols();++i)
+    //  for(int_t j=0;j<H.numRows();++j)
+    //    if(std::abs(H(i,j))>maxH) maxH = std::abs(H(i,j));
+    // compute the 1-norm of H:
+    //std::vector<scalar_t> colTotals(N,0.0);
+    //for(int_t i=0;i<H.numCols();++i){
+    //  for(int_t j=0;j<H.numRows();++j){
+    //    colTotals[i]+=std::abs(H(j,i));
+    //  }
+    //}
+    //double anorm = 0.0;
+    //for(int_t i=0;i<N;++i){
+    //  if(colTotals[i] > anorm) anorm = colTotals[i];
+    //}
+
+    // clear temp storage
+    for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
+    for(int_t i=0;i<10*N;++i) GWORK[i] = 0.0;
+    for(int_t i=0;i<LWORK;++i) IWORK[i] = 0;
+    for(int_t i=0;i<N+1;++i) {IPIV[i] = 0;}
+    //double rcond=0.0; // reciporical condition number
+    try
+    {
+      lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
+      //lapack.GECON('1',N,H.values(),N,anorm,&rcond,GWORK,IWORK,&INFO);
+      //DEBUG_MSG("Subset " << correlation_point_global_id_ << "    RCOND(H): "<< rcond);
+      //schema_->local_field_value(correlation_point_global_id_,DICe::CONDITION_NUMBER) = (rcond !=0.0) ? 1.0/rcond : 0.0;
+      //if(rcond < 1.0E-12) return HESSIAN_SINGULAR;
+    }
+    catch(std::exception &e){
+      DEBUG_MSG( e.what() << '\n');
+      return LINEAR_SOLVE_FAILED;
+    }
+    for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
+    try
+    {
+      lapack.GETRI(N,H.values(),N,IPIV,WORK,LWORK,&INFO);
+    }
+    catch(std::exception &e){
+      DEBUG_MSG( e.what() << '\n');
+      return LINEAR_SOLVE_FAILED;
+    }
+
+    // save off last step d
+    for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i)
+      (*def_old)[i] = (*deformation)[i];
+
+    for(int_t i=0;i<N;++i)
+      (*def_update)[i] = 0.0;
+
+    for(int_t i=0;i<N;++i)
+      for(int_t j=0;j<N;++j)
+        (*def_update)[i] += H(i,j)*(-1.0)*q[j];
+
+    // damp the rotation component
+    //(*def_update)[0] *= 0.1;
+    //(*def_update)[1] *= 0.1;
+    //(*def_update)[2] *= 0.1;
+
+    DEBUG_MSG(std::setw(5) << solve_it <<
+      //std::setw(15) << resid_norm <<
+      std::setw(10) << q[0] <<
+      std::setw(10) << q[1] <<
+      std::setw(10) << q[2] <<
+      std::setw(10) << (*deformation)[DICe::DISPLACEMENT_X] <<
+      std::setw(15) << (*def_update)[0] <<
+      std::setw(10) << (*deformation)[DICe::DISPLACEMENT_Y] <<
+      std::setw(15) << (*def_update)[1] <<
+      std::setw(10) << (*deformation)[DICe::ROTATION_Z] <<
+      std::setw(15) << (*def_update)[2]);
+
+    (*deformation)[DICe::DISPLACEMENT_X] += (*def_update)[0];
+    (*deformation)[DICe::DISPLACEMENT_Y] += (*def_update)[1];
+    (*deformation)[DICe::ROTATION_Z] += (*def_update)[2];
+
+    if(std::abs((*deformation)[DICe::DISPLACEMENT_X] - (*def_old)[DICe::DISPLACEMENT_X]) < solve_tol
+        && std::abs((*deformation)[DICe::DISPLACEMENT_Y] - (*def_old)[DICe::DISPLACEMENT_Y]) < solve_tol
+        && std::abs((*deformation)[DICe::ROTATION_Z] - (*def_old)[DICe::ROTATION_Z]) < solve_tol){
+      DEBUG_MSG("Subset " << correlation_point_global_id_ << " ** CONVERGED SOLUTION, u " << (*deformation)[DICe::DISPLACEMENT_X] <<
+        " v " << (*deformation)[DICe::DISPLACEMENT_Y] << " theta " << (*deformation)[DICe::ROTATION_Z]);
+      break;
+    }
+
+    // zero out the storage
+    H.putScalar(0.0);
+    for(int_t i=0;i<N;++i)
+      q[i] = 0.0;
+  }
+
+  // clean up storage for lapack:
+  delete [] WORK;
+  delete [] GWORK;
+  delete [] IWORK;
+  delete [] IPIV;
+
+  if(solve_it>max_solve_its){
+    return MAX_ITERATIONS_REACHED;
+  }
+  else return CORRELATION_SUCCESSFUL;
+}
+
 
 }// End DICe Namespace

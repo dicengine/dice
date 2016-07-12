@@ -124,6 +124,13 @@ public:
   virtual Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     int_t & num_iterations) = 0;
 
+  /// \brief Gradient based optimization algorithm
+  /// \param deformation [out] The deformation map parameters taken as input as the initial guess and returned as the converged solution
+  /// \param num_iterations [out] The number of interations a particular frame took to execute
+  virtual Status_Flag computeUpdateNonlinear(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+    int_t & num_iterations) = 0;
+
+
   /// \brief Simplex based optimization algorithm
   /// \param deformation [out] The deformation map parameters taken as input as the initial guess and returned as the converged solution
   /// \param num_iterations [out] The number of interations a particular frame took to execute

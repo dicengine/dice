@@ -505,6 +505,8 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   output_evolved_subset_images_ = diceParams->get<bool>(DICe::output_evolved_subset_images);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::use_subset_evolution),std::runtime_error,"");
   use_subset_evolution_ = diceParams->get<bool>(DICe::use_subset_evolution);
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::use_nonlinear_update),std::runtime_error,"");
+  use_nonlinear_update_ = diceParams->get<bool>(DICe::use_nonlinear_update);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::pixel_integration_order),std::runtime_error,"");
   pixel_integration_order_ = diceParams->get<int_t>(DICe::pixel_integration_order);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::obstruction_skin_factor),std::runtime_error,"");
@@ -1587,7 +1589,10 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   }
   else if(optimization_method_==DICe::GRADIENT_BASED||optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX){
     try{
-      corr_status = obj->computeUpdateFast(deformation,num_iterations);
+      if(use_nonlinear_update_)
+        corr_status = obj->computeUpdateNonlinear(deformation,num_iterations);
+      else
+        corr_status = obj->computeUpdateFast(deformation,num_iterations);
     }
     catch (std::logic_error &err) { //a non-graceful exception occurred
       corr_status = CORRELATION_FAILED_BY_EXCEPTION;
@@ -1628,7 +1633,10 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       // try again using gradient based
       init_status = initial_guess(subset_gid,deformation);
       try{
-        corr_status = obj->computeUpdateFast(deformation,num_iterations);
+        if(use_nonlinear_update_)
+          corr_status = obj->computeUpdateNonlinear(deformation,num_iterations);
+        else
+          corr_status = obj->computeUpdateFast(deformation,num_iterations);
       }
       catch (std::logic_error &err) { //a non-graceful exception occurred
         corr_status = CORRELATION_FAILED_BY_EXCEPTION;

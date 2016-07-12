@@ -137,6 +137,8 @@ const char* const correlation_routine = "correlation_routine";
 /// String parameter name
 const char* const use_global_dic = "use_global_dic";
 /// String parameter name
+const char* const use_nonlinear_update = "use_nonlinear_update";
+/// String parameter name
 const char* const use_constrained_opt_dic = "use_constrained_opt_dic";
 /// String parameter name
 const char* const use_integrated_dic = "use_integrated_dic";
@@ -836,6 +838,11 @@ const Correlation_Parameter use_subset_evolution_param(use_subset_evolution,
   true,
   "Used to evolve subsets that are initially obscured (Currently only available for TRACKING_ROUTINE correlation routine, not GENERIC)");
 /// Correlation parameter and properties
+const Correlation_Parameter use_nonlinear_update_param(use_nonlinear_update,
+  BOOL_PARAM,
+  true,
+  "Use a nonlinear solver for the deformation update equation, useful for large angle deformation (Currently only available for TRACKING_ROUTINE correlation routine, not GENERIC)");
+/// Correlation parameter and properties
 const Correlation_Parameter output_beta_param(output_beta,
   BOOL_PARAM,
   true,
@@ -912,7 +919,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 58;
+const int_t num_valid_correlation_params = 59;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -946,6 +953,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   output_deformed_subset_intensity_images_param,
   output_evolved_subset_images_param,
   use_subset_evolution_param,
+  use_nonlinear_update_param,
   output_beta_param,
   output_spec_param,
   output_delimiter_param,

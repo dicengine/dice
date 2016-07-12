@@ -119,6 +119,10 @@ public:
   virtual Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     int_t & num_iterations);
 
+  /// Similar to computeUpdateFast() only using linearized sub-iterations
+  virtual Status_Flag computeUpdateNonlinear(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+    int_t & num_iterations);
+
   /// See base class documentation
   virtual Status_Flag computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     int_t & num_iterations,
