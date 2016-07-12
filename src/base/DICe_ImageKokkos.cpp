@@ -305,12 +305,44 @@ intensity_t
 Image::interpolate_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
 }
+
+scalar_t
+Image::interpolate_grad_x_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
+}
+
+scalar_t
+Image::interpolate_grad_y_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
+}
+
 intensity_t
 Image::interpolate_bilinear(const scalar_t & local_x, const scalar_t & local_y){
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
 }
+
+scalar_t
+Image::interpolate_grad_x_bilinear(const scalar_t & local_x, const scalar_t & local_y){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
+}
+
+scalar_t
+Image::interpolate_grad_y_bilinear(const scalar_t & local_x, const scalar_t & local_y){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
+}
+
 intensity_t
 Image::interpolate_bicubic(const scalar_t & local_x, const scalar_t & local_y){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
+}
+
+scalar_t
+Image::interpolate_grad_x_bicubic(const scalar_t & local_x, const scalar_t & local_y){
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
+}
+
+scalar_t
+Image::interpolate_grad_y_bicubic(const scalar_t & local_x, const scalar_t & local_y){
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, method not implemented yet.");
 }
 
