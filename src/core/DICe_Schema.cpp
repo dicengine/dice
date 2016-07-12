@@ -248,7 +248,7 @@ Schema::set_def_image(const std::string & defName,
   assert(def_imgs_.size()>0);
   assert(id<(int_t)def_imgs_.size());
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
-  imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_);
+  imgParams->set(DICe::compute_image_gradients,compute_def_gradients_);
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
