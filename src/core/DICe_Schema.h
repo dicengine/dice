@@ -1189,8 +1189,6 @@ private:
   double path_distance_threshold_;
   /// true if the beta parameter should be computed by the objective
   bool output_beta_;
-  /// true if the nonlinear update routine should be used
-  bool use_nonlinear_update_;
 };
 
 /// \class DICe::Output_Spec
