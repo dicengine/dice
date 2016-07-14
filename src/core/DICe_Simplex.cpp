@@ -130,6 +130,11 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,
 
   // simplex minimization routine
   scalar_t old_rtol = 0.0;
+  scalar_t gamma_new = 0.0;
+  scalar_t gamma_old = -1.0;
+  int_t gamma_repeats = 0;
+  const int_t gamma_repeats_allowed = 15;
+  const scalar_t gamma_tol = 1.0E-8;
   int_t iteration = 0;
   for (iteration=0; iteration < max_iterations_; iteration++) {
     if( iteration >= max_iterations_-1){
@@ -157,7 +162,15 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     if(rtol_diff < tiny_){
       DEBUG_MSG("Warning: simplex optimization exiting due to tolerance stagnation");
     }
-    if (rtol < tolerance_ || rtol_diff < tolerance_) {
+    if(std::abs(gamma_new-gamma_old) < gamma_tol){
+      gamma_repeats ++;
+      DEBUG_MSG("Warning: simplex optimization gamma is repeating (leads to poor convergence)");
+    }
+    gamma_old = gamma_new;
+    if(gamma_repeats > gamma_repeats_allowed){
+      DEBUG_MSG("*** Warning: simplex optimization exiting due to repeating gamma (loss of accuracy may occur)");
+    }
+    if (rtol < tolerance_ || rtol_diff < tolerance_ || gamma_repeats > gamma_repeats_allowed) {
       scalar_t dum = gamma_values[0];
       gamma_values[0] = gamma_values[ilo];
       gamma_values[ilo] = dum;
@@ -248,10 +261,11 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,
       }
     } else --nfunk;
 
+    gamma_new = obj_->gamma(deformation);
 #ifdef DICE_DEBUG_MSG
     std::cout << "Iteration " << iteration;
     for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i) std::cout << " " << (*deformation)[i];
-    std::cout << " nfunk: " << nfunk << " gamma: " << obj_->gamma(deformation) << " rtol: " << rtol << " tol: " << tolerance_ << std::endl;
+    std::cout << " nfunk: " << nfunk << " gamma: " << gamma_new << " rtol: " << rtol << " tol: " << tolerance_ << std::endl;
 #endif
   }
 
