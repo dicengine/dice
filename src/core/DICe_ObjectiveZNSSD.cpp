@@ -217,6 +217,8 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
   Teuchos::RCP<std::vector<scalar_t> > def_old    = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0)); // save off the previous value to test for convergence
   Teuchos::RCP<std::vector<scalar_t> > def_update = Teuchos::rcp(new std::vector<scalar_t>(N,0.0)); // save off the previous value to test for convergence
 
+  // note this creates a pointer to the array so
+  // the values are updated each frame if compute_grad_def_images is on
   Teuchos::ArrayRCP<scalar_t> gradGx = subset_->grad_x_array();
   Teuchos::ArrayRCP<scalar_t> gradGy = subset_->grad_y_array();
   const scalar_t cx = subset_->centroid_x();
@@ -228,6 +230,16 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
   //const scalar_t prev_theta = (*deformation)[ROTATION_Z];
 
   // SOLVER ---------------------------------------------------------
+  DEBUG_MSG(std::setw(5) << "Iter" <<
+    std::setw(12) << " Ru" <<
+    std::setw(12) << " Rv" <<
+    std::setw(12) << " Rt" <<
+    std::setw(12) << " u"  <<
+    std::setw(12) << " du" <<
+    std::setw(12) << " v"  <<
+    std::setw(12) << " dv" <<
+    std::setw(12) << " t"  <<
+    std::setw(12) << " dt");
 
   int_t solve_it = 0;
   for(;solve_it<=max_solve_its;++solve_it)
@@ -399,7 +411,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
     {
       lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
       lapack.GECON('1',N,H.values(),N,anorm,&rcond,GWORK,IWORK,&INFO);
-      DEBUG_MSG("Subset " << correlation_point_global_id_ << "    RCOND(H): "<< rcond);
+      //DEBUG_MSG("Subset " << correlation_point_global_id_ << "    RCOND(H): "<< rcond);
       schema_->local_field_value(correlation_point_global_id_,DICe::CONDITION_NUMBER) = (rcond !=0.0) ? 1.0/rcond : 0.0;
       if(rcond < 1.0E-12) return HESSIAN_SINGULAR;
     }
@@ -429,8 +441,8 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
       for(int_t j=0;j<N;++j)
         (*def_update)[i] += H(i,j)*(-1.0)*q[j];
 
-    DEBUG_MSG("    Iterative updates: u " << (*def_update)[0] << " v " << (*def_update)[1] << " theta " <<
-      (*def_update)[2] << " ex " << (*def_update)[3] << " ey " << (*def_update)[4] << " gxy " << (*def_update)[5]);
+    //DEBUG_MSG("    Iterative updates: u " << (*def_update)[0] << " v " << (*def_update)[1] << " theta " <<
+    //  (*def_update)[2] << " ex " << (*def_update)[3] << " ey " << (*def_update)[4] << " gxy " << (*def_update)[5]);
 
     (*deformation)[DICe::DISPLACEMENT_X] += (*def_update)[0];
     (*deformation)[DICe::DISPLACEMENT_Y] += (*def_update)[1];
@@ -439,11 +451,26 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
     (*deformation)[DICe::NORMAL_STRAIN_Y] += (*def_update)[4];
     (*deformation)[DICe::SHEAR_STRAIN_XY] += (*def_update)[5];
 
-    DEBUG_MSG("Subset " << correlation_point_global_id_ << " -- iteration: " << solve_it << " u " << (*deformation)[DICe::DISPLACEMENT_X] <<
-      " v " << (*deformation)[DICe::DISPLACEMENT_Y] << " theta " << (*deformation)[DICe::ROTATION_Z] <<
-      " ex " << (*deformation)[DICe::NORMAL_STRAIN_X] << " ey " << (*deformation)[DICe::NORMAL_STRAIN_Y] <<
-      " gxy " << (*deformation)[DICe::SHEAR_STRAIN_XY] <<
-      " residual: (" << q[0] << "," << q[1] << "," << q[2] << ")");
+    std::ios  state(NULL);
+    state.copyfmt(std::cout);
+    DEBUG_MSG(std::setw(5) << solve_it <<
+      //std::setw(15) << resid_norm <<
+      std::setw(12) << std::scientific << std::setprecision(4) << q[0] <<
+      std::setw(12) << q[1] <<
+      std::setw(12) << q[2] <<
+      std::setw(12) << (*deformation)[DICe::DISPLACEMENT_X] <<
+      std::setw(12) << (*def_update)[0] <<
+      std::setw(12) << (*deformation)[DICe::DISPLACEMENT_Y] <<
+      std::setw(12) << (*def_update)[1] <<
+      std::setw(12) << (*deformation)[DICe::ROTATION_Z] <<
+      std::setw(12) << (*def_update)[2]);
+    std::cout.copyfmt(state);
+
+    //DEBUG_MSG("Subset " << correlation_point_global_id_ << " -- iteration: " << solve_it << " u " << (*deformation)[DICe::DISPLACEMENT_X] <<
+    //  " v " << (*deformation)[DICe::DISPLACEMENT_Y] << " theta " << (*deformation)[DICe::ROTATION_Z] <<
+    //  " ex " << (*deformation)[DICe::NORMAL_STRAIN_X] << " ey " << (*deformation)[DICe::NORMAL_STRAIN_Y] <<
+    //  " gxy " << (*deformation)[DICe::SHEAR_STRAIN_XY] <<
+    //  " residual: (" << q[0] << "," << q[1] << "," << q[2] << ")");
 
     if(std::abs((*deformation)[DICe::DISPLACEMENT_X] - (*def_old)[DICe::DISPLACEMENT_X]) < solve_tol_disp
         && std::abs((*deformation)[DICe::DISPLACEMENT_Y] - (*def_old)[DICe::DISPLACEMENT_Y]) < solve_tol_disp
@@ -505,6 +532,8 @@ Objective_ZNSSD::computeUpdateNonlinear(Teuchos::RCP<std::vector<scalar_t> > & d
   Teuchos::RCP<std::vector<scalar_t> > def_old    = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0)); // save off the previous value to test for convergence
   Teuchos::RCP<std::vector<scalar_t> > def_update = Teuchos::rcp(new std::vector<scalar_t>(N,0.0)); // save off the previous value to test for convergence
 
+  // note this creates a pointer to the array so
+  // the values are updated each frame if compute_grad_def_images is on
   Teuchos::ArrayRCP<scalar_t> gradGx = subset_->grad_x_array();
   Teuchos::ArrayRCP<scalar_t> gradGy = subset_->grad_y_array();
   const scalar_t cx = subset_->centroid_x();
@@ -539,7 +568,7 @@ Objective_ZNSSD::computeUpdateNonlinear(Teuchos::RCP<std::vector<scalar_t> > & d
 
     scalar_t Dx=0.0,Dy=0.0;
     //scalar_t R=0.0;
-    scalar_t delTheta=0.0,deldelTheta=0.0;
+    scalar_t delTheta=0.0;//,deldelTheta=0.0;
     scalar_t Gx=0.0,Gy=0.0, GmF=0.0;
     //scalar_t Gxt=0.0,Gyt=0.0;
     //const scalar_t u = (*def_update)[0];
@@ -569,7 +598,7 @@ Objective_ZNSSD::computeUpdateNonlinear(Teuchos::RCP<std::vector<scalar_t> > & d
       delTheta = Gx*(-sint*Dx - cost*Dy) + Gy*(cost*Dx - sint*Dy);
       //delTheta = Gxt*(-sint*Dx - cost*Dy) + Gyt*(cost*Dx - sint*Dy);
       //delTheta = Gxt*(-theta*Dx - Dy) + Gyt*(Dx - theta*Dy);
-      deldelTheta = -Gx*Dx -Gy*Dy;
+      //deldelTheta = -Gx*Dx -Gy*Dy;
       //deldelTheta = - 2*(Dy*cost + Dx*sint)*(Gy*cost - Gx*sint) - 2*(Dx*cost - Dy*sint)*(Gx*cost + Gy*sint);
 
       q[0] += Gx*GmF;
@@ -592,7 +621,7 @@ Objective_ZNSSD::computeUpdateNonlinear(Teuchos::RCP<std::vector<scalar_t> > & d
       H(2,2) += delTheta*delTheta;// + delTheta*deldelTheta;
     } // end pixel loop
     // compute the residual norm
-    const scalar_t resid_norm = std::sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    //const scalar_t resid_norm = std::sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
 
     //if(resid_norm < solve_tol){
     //  DEBUG_MSG("Subset " << correlation_point_global_id_ << " ** CONVERGED SOLUTION, u " << (*deformation)[DICe::DISPLACEMENT_X] <<
@@ -663,7 +692,7 @@ Objective_ZNSSD::computeUpdateNonlinear(Teuchos::RCP<std::vector<scalar_t> > & d
 
     DEBUG_MSG(std::setw(5) << solve_it <<
       //std::setw(15) << resid_norm <<
-      std::setw(10) << q[0] <<
+      std::setw(10) << std::scientific << q[0] <<
       std::setw(10) << q[1] <<
       std::setw(10) << q[2] <<
       std::setw(10) << (*deformation)[DICe::DISPLACEMENT_X] <<
