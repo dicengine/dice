@@ -544,9 +544,9 @@ Objective_ZNSSD::computeUpdateNonlinear(Teuchos::RCP<std::vector<scalar_t> > & d
     //scalar_t Gxt=0.0,Gyt=0.0;
     //const scalar_t u = (*def_update)[0];
     //const scalar_t v = (*def_update)[1];
-    const scalar_t theta = (*def_update)[2];
-    //const scalar_t sint = std::sin(theta);
-    //const scalar_t cost = std::cos(theta);
+    const scalar_t theta = (*deformation)[ROTATION_Z];//(*def_update)[2];
+    const scalar_t sint = std::sin(theta);
+    const scalar_t cost = std::cos(theta);
     //const scalar_t cos2t = std::cos(2.0*theta);
     //const scalar_t sin2t = std::sin(2.0*theta);
     //const scalar_t angle_c = sint / (2.0 + 2.0*cost);
@@ -566,7 +566,7 @@ Objective_ZNSSD::computeUpdateNonlinear(Teuchos::RCP<std::vector<scalar_t> > & d
       //Gxt = (cost*Gx + sint*Gy);
       //Gyt = (-sint*Gx + cost*Gy);
 
-      delTheta = Gx*(-theta*Dx - Dy) + Gy*(Dx - theta*Dy);
+      delTheta = Gx*(-sint*Dx - cost*Dy) + Gy*(cost*Dx - sint*Dy);
       //delTheta = Gxt*(-sint*Dx - cost*Dy) + Gyt*(cost*Dx - sint*Dy);
       //delTheta = Gxt*(-theta*Dx - Dy) + Gyt*(Dx - theta*Dy);
       deldelTheta = -Gx*Dx -Gy*Dy;
@@ -589,7 +589,7 @@ Objective_ZNSSD::computeUpdateNonlinear(Teuchos::RCP<std::vector<scalar_t> > & d
 
       H(0,2) += Gx*delTheta;
       H(1,2) += Gy*delTheta;
-      H(2,2) += delTheta*delTheta + delTheta*deldelTheta;
+      H(2,2) += delTheta*delTheta;// + delTheta*deldelTheta;
     } // end pixel loop
     // compute the residual norm
     const scalar_t resid_norm = std::sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
