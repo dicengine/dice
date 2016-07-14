@@ -205,7 +205,7 @@ int main(int argc, char *argv[]) {
       schema = Teuchos::rcp(new DICe::Schema(ref_image_string,ref_image_string,correlation_params));
     }
 
-    schema->set_first_frame_index(first_frame_index);
+    schema->set_first_frame_index(cine_start_index + first_frame_index);
 
     schema->initialize(input_params);
 
