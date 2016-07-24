@@ -333,7 +333,7 @@ Teuchos::RCP<Mesh> create_tri_exodus_mesh(const DICe::mesh::Base_Element_Type el
   Teuchos::ArrayRCP<scalar_t> node_coords_x,
   Teuchos::ArrayRCP<scalar_t> node_coords_y,
   Teuchos::ArrayRCP<int_t> connectivity,
-  std::map<int_t,int_t> & dirichlet_boundary_nodes,
+  std::vector<std::pair<int_t,int_t> > & dirichlet_boundary_nodes,
   std::set<int_t> & neumann_boundary_nodes,
   std::set<int_t> & lagrange_boundary_nodes,
   const std::string & serial_output_filename)
@@ -412,7 +412,7 @@ Teuchos::RCP<Mesh> create_tri_exodus_mesh(const DICe::mesh::Base_Element_Type el
   for(int_t j=0; j<num_elem; ++j)
   {
     connectivity_vector conn;
-    std::cout << " Element " << j << std::endl;
+    //std::cout << " Element " << j << std::endl;
     // the connectivity vector needs to be re-arranged from Triangle format to exodus format
     connectivity_swap[0] = connectivity[j*num_nodes_per_elem + 0];
     connectivity_swap[1] = connectivity[j*num_nodes_per_elem + 1];
@@ -431,7 +431,7 @@ Teuchos::RCP<Mesh> create_tri_exodus_mesh(const DICe::mesh::Base_Element_Type el
       if(mesh->get_node_set()->find(global_node_id)!=mesh->get_node_set()->end()){
         found_node = true;
         conn.push_back(mesh->get_node_set()->find(global_node_id)->second);
-        std::cout << global_node_id << std::endl;
+        //std::cout << global_node_id << std::endl;
       }
       else{
         TEUCHOS_TEST_FOR_EXCEPTION(!found_node,std::logic_error,"Could not find node rcp in set: " << global_node_id);
@@ -498,13 +498,13 @@ Teuchos::RCP<Mesh> create_tri_exodus_mesh(const DICe::mesh::Base_Element_Type el
   }
 
   //std::vector<int_t> dirichlet_bc_def;
-  std::map<int_t,int_t>::const_iterator mit = dirichlet_boundary_nodes.begin();
-  std::map<int_t,int_t>::const_iterator mit_end = dirichlet_boundary_nodes.end();
+  //std::map<int_t,int_t>::const_iterator mit = dirichlet_boundary_nodes.begin();
+  //std::map<int_t,int_t>::const_iterator mit_end = dirichlet_boundary_nodes.end();
   std::map<int_t,std::vector<int_t> > bc_node_collections;
-  for(;mit!=mit_end;++mit){
-    if(bc_node_collections.find(mit->second)==bc_node_collections.end())
-      bc_node_collections.insert(std::pair<int_t,std::vector<int_t> >(mit->second,std::vector<int_t>()));
-    bc_node_collections.find(mit->second)->second.push_back(mit->first);
+  for(size_t i=0;i<dirichlet_boundary_nodes.size();++i){
+    if(bc_node_collections.find(dirichlet_boundary_nodes[i].second)==bc_node_collections.end())
+      bc_node_collections.insert(std::pair<int_t,std::vector<int_t> >(dirichlet_boundary_nodes[i].second,std::vector<int_t>()));
+    bc_node_collections.find(dirichlet_boundary_nodes[i].second)->second.push_back(dirichlet_boundary_nodes[i].first);
   }
   if(bc_node_collections.size()>0){
     std::map<int_t,std::vector<int_t> >::iterator col_it = bc_node_collections.begin();

@@ -61,7 +61,7 @@ Global_Algorithm::Global_Algorithm(Schema * schema,
   global_solver_(CG_SOLVER),
   num_image_integration_points_(20),
   max_iterations_(25),
-  element_type_(DICe::mesh::TRI6),
+  element_type_(DICe::mesh::TRI3),
   use_fixed_point_iterations_(false),
   use_regular_grid_(false)
 {
@@ -78,7 +78,7 @@ Global_Algorithm::Global_Algorithm(const Teuchos::RCP<Teuchos::ParameterList> & 
   global_solver_(CG_SOLVER),
   num_image_integration_points_(20),
   max_iterations_(25),
-  element_type_(DICe::mesh::TRI6),
+  element_type_(DICe::mesh::TRI3),
   use_fixed_point_iterations_(false),
   use_regular_grid_(false)
 {
@@ -130,15 +130,15 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   const std::string output_folder = params->get<std::string>(DICe::output_folder);
   const std::string output_prefix = params->get<std::string>(DICe::output_prefix);
   std::stringstream output_file_name_ss;
-  std::stringstream lagrange_output_file_name_ss;
+  //std::stringstream lagrange_output_file_name_ss;
   output_file_name_ss << output_prefix << ".e";
-  lagrange_output_file_name_ss << output_prefix << "_linear.e";
+  //lagrange_output_file_name_ss << output_prefix << "_linear.e";
   output_file_name_ = output_file_name_ss.str();
-  lagrange_output_file_name_ = lagrange_output_file_name_ss.str();
+  //lagrange_output_file_name_ = lagrange_output_file_name_ss.str();
   DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): output file name: " << output_file_name_);
-  if(is_mixed_formulation()){
-    DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): lagrange output file name: " << lagrange_output_file_name_);
-  }
+  //if(is_mixed_formulation()){
+  //  DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): lagrange output file name: " << lagrange_output_file_name_);
+  //}
   if(params->isParameter(DICe::mms_spec)){
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::subset_file),std::runtime_error,"Error, subset file cannot be defined"
       " in the parameters file for an mms problem");
@@ -168,10 +168,10 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     points_x[3] = 0.0; points_y[3] = mms_problem_->dim_y();
     mesh_ = DICe::generate_tri_mesh(element_type_,points_x,points_y,mesh_size_,output_file_name_,enforce_lagrange_bc);
     // if this is a mixed formulation, generate the lagrange multiplier mesh
-    if(is_mixed_formulation()){
-      l_mesh_ = element_type_==DICe::mesh::TRI6 ? DICe::mesh::create_tri3_exodus_mesh_from_tri6(mesh_,lagrange_output_file_name_):
-          DICe::generate_tri_mesh(element_type_,points_x,points_y,mesh_size_,lagrange_output_file_name_);
-    }
+    //if(is_mixed_formulation()){
+    //  l_mesh_ = element_type_==DICe::mesh::TRI6 ? DICe::mesh::create_tri3_exodus_mesh_from_tri6(mesh_,lagrange_output_file_name_):
+    //      DICe::generate_tri_mesh(element_type_,points_x,points_y,mesh_size_,lagrange_output_file_name_);
+    //}
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(schema_==NULL,std::runtime_error,"If not an mms problem, schema must not be null.");
@@ -179,19 +179,20 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     const std::string & subset_file = params->get<std::string>(DICe::subset_file);
     mesh_ = DICe::generate_tri_mesh(element_type_,subset_file,mesh_size_,output_file_name_);
     // if this is a mixed formulation, generate the lagrange multiplier mesh
-    if(is_mixed_formulation()){
-      l_mesh_ = element_type_==DICe::mesh::TRI6 ? DICe::mesh::create_tri3_exodus_mesh_from_tri6(mesh_,lagrange_output_file_name_):
-          DICe::generate_tri_mesh(element_type_,subset_file,mesh_size_,lagrange_output_file_name_);
-    }
+    //if(is_mixed_formulation()){
+    //  l_mesh_ = element_type_==DICe::mesh::TRI6 ? DICe::mesh::create_tri3_exodus_mesh_from_tri6(mesh_,lagrange_output_file_name_):
+    //      DICe::generate_tri_mesh(element_type_,subset_file,mesh_size_,lagrange_output_file_name_);
+    //}
   }
   TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"Error, mesh should not be a null pointer here.");
   DICe::mesh::create_output_exodus_file(mesh_,output_folder);
   // if this is a mixed formulation, generate the lagrange multiplier mesh
   if(is_mixed_formulation()){
-    TEUCHOS_TEST_FOR_EXCEPTION(l_mesh_==Teuchos::null,std::runtime_error,"Error, mesh should not be a null pointer here.");
-    DICe::mesh::create_output_exodus_file(l_mesh_,output_folder);
-    // create the mixed field maps for the master mesh
-    mesh_->create_mixed_node_field_maps(l_mesh_);
+  //  TEUCHOS_TEST_FOR_EXCEPTION(l_mesh_==Teuchos::null,std::runtime_error,"Error, mesh should not be a null pointer here.");
+  //  DICe::mesh::create_output_exodus_file(l_mesh_,output_folder);
+  //  // create the mixed field maps for the master mesh
+    mesh_->create_mixed_node_field_maps(mesh_);
+    //mesh_->create_mixed_node_field_maps(l_mesh_);
   }
   // create the necessary fields:
   mesh_->create_field(mesh::field_enums::DISPLACEMENT_FS);
@@ -217,20 +218,25 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     mesh_->create_field(mesh::field_enums::IMAGE_PHI_FS);
     mesh_->create_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
   }
-  mesh_->print_field_info();
+//  mesh_->print_field_info();
   // create the mixed fields for the mixed formulations
-  DICe::mesh::create_exodus_output_variable_names(mesh_);
+//  DICe::mesh::create_exodus_output_variable_names(mesh_);
   if(is_mixed_formulation()){//||global_formulation_==LEVENBERG_MARQUARDT){
     mesh_->create_field(mesh::field_enums::MIXED_LHS_FS);
     mesh_->create_field(mesh::field_enums::MIXED_RESIDUAL_FS);
-    l_mesh_->create_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
-    l_mesh_->create_field(mesh::field_enums::DISPLACEMENT_FS);
+    mesh_->create_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
+    //mesh_->create_field(mesh::field_enums::DISPLACEMENT_FS);
+    //l_mesh_->create_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
+    //l_mesh_->create_field(mesh::field_enums::DISPLACEMENT_FS);
     if(mms_problem_!=Teuchos::null){
-      l_mesh_->create_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
+      mesh_->create_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
+      //l_mesh_->create_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
     }
-    l_mesh_->print_field_info();
-    DICe::mesh::create_exodus_output_variable_names(l_mesh_);
+//    l_mesh_->print_field_info();
+    //DICe::mesh::create_exodus_output_variable_names(l_mesh_);
   }
+  DICe::mesh::create_exodus_output_variable_names(mesh_);
+  mesh_->print_field_info();
 
   DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): using global formulation: " << to_string(global_formulation_));
 
@@ -239,8 +245,8 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     add_term(MMS_IMAGE_TIME_FORCE);
     add_term(MMS_FORCE);
     add_term(MMS_DIRICHLET_DISPLACEMENT_BC);
-    //add_term(MMS_LAGRANGE_BC);
-    add_term(CORNER_BC);
+    add_term(MMS_LAGRANGE_BC);
+    //add_term(CORNER_BC);
     // mms dirichlet bc automatically adds the lagrange bc so no need for that term here
   }
   else{
@@ -499,16 +505,16 @@ Global_Algorithm::compute_tangent(){
   DICe::mesh::element_set::iterator elem_end = mesh_->get_element_set()->end();
   for(;elem_it!=elem_end;++elem_it)
   {
-    std::cout << "ELEM: " << elem_it->get()->global_id() << std::endl;
+    //std::cout << "ELEM: " << elem_it->get()->global_id() << std::endl;
     const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
     // compute the shape functions and derivatives for this element:
     for(int_t nd=0;nd<vel_num_funcs;++nd){
       node_ids[nd] = connectivity[nd]->global_id();
-      std::cout << " gid " << node_ids[nd] << std::endl;
+      //std::cout << " gid " << node_ids[nd] << std::endl;
       for(int_t dim=0;dim<spa_dim;++dim){
         const int_t stride = nd*spa_dim + dim;
         nodal_coords[stride] = coords_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
-        std::cout << " node coords " << nodal_coords[stride] << std::endl;
+        //std::cout << " node coords " << nodal_coords[stride] << std::endl;
       }
     }
     // clear the elem stiffness
@@ -565,13 +571,13 @@ Global_Algorithm::compute_tangent(){
 
     } // gp loop
 
-    std::cout << "div stiff " << std::endl;
-    for(int_t j=0;j<3;++j){
-      for(int_t i=0;i<vel_num_funcs*spa_dim;++i){
-        std::cout << elem_div_stiffness[j*vel_num_funcs*spa_dim + i] << " ";
-      }
-      std::cout << std::endl;
-    }
+    //std::cout << "div stiff " << std::endl;
+    //for(int_t j=0;j<3;++j){
+    //  for(int_t i=0;i<vel_num_funcs*spa_dim;++i){
+    //    std::cout << elem_div_stiffness[j*vel_num_funcs*spa_dim + i] << " ";
+    //  }
+    //  std::cout << std::endl;
+    //}
 
     // low-order gauss point loop:
     for(int_t gp=0;gp<num_image_integration_points;++gp){
@@ -616,17 +622,21 @@ Global_Algorithm::compute_tangent(){
             const bool is_local_row_node =  mesh_->get_vector_node_dist_map()->is_node_global_elem(row); // using the non-mixed map because the row is a velocity row
             const bool row_is_bc_node = is_local_row_node ?
                 bc_manager_->is_row_bc(mesh_->get_vector_node_dist_map()->get_local_element(row)) : false; // same rationalle here
-            const bool is_local_mixed_row_node =  l_mesh_->get_scalar_node_dist_map()->is_node_global_elem(node_ids[i]); // using the non-mixed map because the row is a velocity row
+            //const bool is_local_mixed_row_node =  l_mesh_->get_scalar_node_dist_map()->is_node_global_elem(node_ids[i]); // using the non-mixed map because the row is a velocity row
+            const bool is_local_mixed_row_node =  mesh_->get_scalar_node_dist_map()->is_node_global_elem(node_ids[i]); // using the non-mixed map because the row is a velocity row
             const bool is_p_row = is_local_mixed_row_node ?
-                bc_manager_->is_mixed_bc(l_mesh_->get_scalar_node_dist_map()->get_local_element(node_ids[i])) : false;
+                bc_manager_->is_mixed_bc(mesh_->get_scalar_node_dist_map()->get_local_element(node_ids[i])) : false;
+            //bc_manager_->is_mixed_bc(l_mesh_->get_scalar_node_dist_map()->get_local_element(node_ids[i])) : false;
             if(!row_is_bc_node&&!is_p_row){// && !col_is_bc_node){
               col_id_array_map.find(row)->second.push_back(col);
               values_array_map.find(row)->second.push_back(value);
               // transpose should be the same value
             }
-            const bool is_local_mixed_col_node =  l_mesh_->get_scalar_node_dist_map()->is_node_global_elem(node_ids[j]); // using the non-mixed map because the row is a velocity row
+            //const bool is_local_mixed_col_node =  l_mesh_->get_scalar_node_dist_map()->is_node_global_elem(node_ids[j]); // using the non-mixed map because the row is a velocity row
+            const bool is_local_mixed_col_node =  mesh_->get_scalar_node_dist_map()->is_node_global_elem(node_ids[j]); // using the non-mixed map because the row is a velocity row
             const bool is_p_col = is_local_mixed_col_node ?
-                bc_manager_->is_mixed_bc(l_mesh_->get_scalar_node_dist_map()->get_local_element(node_ids[j])) : false;
+                bc_manager_->is_mixed_bc(mesh_->get_scalar_node_dist_map()->get_local_element(node_ids[j])) : false;
+            //bc_manager_->is_mixed_bc(l_mesh_->get_scalar_node_dist_map()->get_local_element(node_ids[j])) : false;
             if(!is_p_col){
               col_id_array_map.find(col)->second.push_back(row);
               values_array_map.find(col)->second.push_back(value);
@@ -662,9 +672,11 @@ Global_Algorithm::compute_tangent(){
   }
   /// lagrange multiplier bc
   if(is_mixed_formulation()){
-    for(int_t i=0;i<l_mesh_->get_scalar_node_overlap_map()->get_num_local_elements();++i){
+//    for(int_t i=0;i<l_mesh_->get_scalar_node_overlap_map()->get_num_local_elements();++i){
+    for(int_t i=0;i<mesh_->get_scalar_node_overlap_map()->get_num_local_elements();++i){
       if(bc_manager_->is_mixed_bc(i)){
-        const int_t global_id = l_mesh_->get_scalar_node_overlap_map()->get_global_element(i) + mgo;
+        //const int_t global_id = l_mesh_->get_scalar_node_overlap_map()->get_global_element(i) + mgo;
+        const int_t global_id = mesh_->get_scalar_node_overlap_map()->get_global_element(i) + mgo;
         col_id_array_map.find(global_id)->second.push_back(global_id);
         values_array_map.find(global_id)->second.push_back(1.0);
       }
@@ -894,7 +906,8 @@ Global_Algorithm::execute(){
   if(is_mixed_formulation()){
     residual = mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS);
     lhs = mesh_->get_field(mesh::field_enums::MIXED_LHS_FS);
-    lagrange_multiplier = l_mesh_->get_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
+    //lagrange_multiplier = l_mesh_->get_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
+    lagrange_multiplier = mesh_->get_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
     lagrange_multiplier->put_scalar(0.0);
   }
   else{
@@ -910,7 +923,7 @@ Global_Algorithm::execute(){
   linear_problem_->setHermitian(true);
   linear_problem_->setOperator(tangent->get());
 
-  tangent->describe();
+  //tangent->describe();
 
   // if this is a real problem (not MMS) use the lagrangian coordinates
   // and use a fixed point iteration loop rather than a direct solve
@@ -938,8 +951,10 @@ Global_Algorithm::execute(){
           const int_t gid = mesh_->get_vector_node_dist_map()->get_global_element(i);
           disp->global_value(gid) += lhs->global_value(gid);
         }
-        for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
-          const int_t gid = l_mesh_->get_scalar_node_dist_map()->get_global_element(i);
+//        for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+//          const int_t gid = l_mesh_->get_scalar_node_dist_map()->get_global_element(i);
+        for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+          const int_t gid = mesh_->get_scalar_node_dist_map()->get_global_element(i);
           lagrange_multiplier->global_value(gid) += lhs->global_value(gid+mixed_global_offset());
         }
       }
@@ -971,16 +986,18 @@ Global_Algorithm::execute(){
         const int_t gid = mesh_->get_vector_node_dist_map()->get_global_element(i);
         disp->global_value(gid) += lhs->global_value(gid);
       }
-      for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
-        const int_t gid = l_mesh_->get_scalar_node_dist_map()->get_global_element(i);
+//      for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+//        const int_t gid = l_mesh_->get_scalar_node_dist_map()->get_global_element(i);
+      for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+        const int_t gid = mesh_->get_scalar_node_dist_map()->get_global_element(i);
         lagrange_multiplier->global_value(gid) += lhs->global_value(gid+mixed_global_offset());
       }
     }
     else
       disp->update(1.0,*lhs,1.0);
     //lhs->describe();
-    disp->describe();
-    lagrange_multiplier->describe();
+    //disp->describe();
+    //lagrange_multiplier->describe();
 
     //write out the stats on the displacement field
     scalar_t lhs_min_x = 0.0, lhs_min_y = 0.0;
@@ -1025,26 +1042,26 @@ Global_Algorithm::execute(){
 
   compute_strains();
 
-  if(is_mixed_formulation()){
-    const int_t spa_dim = mesh_->spatial_dimension();
-    TEUCHOS_TEST_FOR_EXCEPTION(l_mesh_==Teuchos::null,std::runtime_error,"Error, pointer should not be null here");
-    Teuchos::RCP<MultiField> linear_disp = l_mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
-    Teuchos::RCP<MultiField> master_gids = l_mesh_->get_field(mesh::field_enums::MASTER_NODE_ID_FS);
-    for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
-      // get the gid from the
-      const int_t linear_gid = l_mesh_->get_scalar_node_dist_map()->get_global_element(i);
-      const int_t ux_id = (linear_gid-1)*spa_dim + 1;
-      const int_t uy_id = ux_id + 1;
-      const int_t node_gid = master_gids->local_value(i);
-      const int_t ux_master_id = (node_gid-1)*spa_dim + 1;
-      const int_t uy_master_id = ux_master_id + 1;
-      linear_disp->global_value(ux_id) = disp->global_value(ux_master_id);
-      linear_disp->global_value(uy_id) = disp->global_value(uy_master_id);
-    }
-  }
+//  if(is_mixed_formulation()){
+//    const int_t spa_dim = mesh_->spatial_dimension();
+//    TEUCHOS_TEST_FOR_EXCEPTION(l_mesh_==Teuchos::null,std::runtime_error,"Error, pointer should not be null here");
+//    Teuchos::RCP<MultiField> linear_disp = l_mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
+//    Teuchos::RCP<MultiField> master_gids = l_mesh_->get_field(mesh::field_enums::MASTER_NODE_ID_FS);
+//    for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+//      // get the gid from the
+//      const int_t linear_gid = l_mesh_->get_scalar_node_dist_map()->get_global_element(i);
+//      const int_t ux_id = (linear_gid-1)*spa_dim + 1;
+//      const int_t uy_id = ux_id + 1;
+//      const int_t node_gid = master_gids->local_value(i);
+//      const int_t ux_master_id = (node_gid-1)*spa_dim + 1;
+//      const int_t uy_master_id = ux_master_id + 1;
+//      linear_disp->global_value(ux_id) = disp->global_value(ux_master_id);
+//      linear_disp->global_value(uy_id) = disp->global_value(uy_master_id);
+//    }
+//  }
   mesh_->print_field_stats();
-  if(is_mixed_formulation())
-    l_mesh_->print_field_stats();
+//  if(is_mixed_formulation())
+//    l_mesh_->print_field_stats();
   if(it>=max_its)
     return CORRELATION_FAILED;
   else
@@ -1238,10 +1255,10 @@ Global_Algorithm::post_execution_tasks(const scalar_t & time_stamp){
   const int_t time_step = time_stamp;
   DEBUG_MSG("Writing the output file with step : " << time_step << " time stamp: " << time_stamp);
   DICe::mesh::exodus_output_dump(mesh_,time_step,time_stamp);
-  if(is_mixed_formulation()){//||global_formulation_==LEVENBERG_MARQUARDT){
-    DEBUG_MSG("Writing the lagrange multiplier output file with step: " << time_step << " time stamp: " << time_stamp);
-    DICe::mesh::exodus_output_dump(l_mesh_,time_step,time_stamp);
-  }
+  //if(is_mixed_formulation()){//||global_formulation_==LEVENBERG_MARQUARDT){
+  //  DEBUG_MSG("Writing the lagrange multiplier output file with step: " << time_step << " time stamp: " << time_stamp);
+  //  DICe::mesh::exodus_output_dump(l_mesh_,time_step,time_stamp);
+  //}
 }
 
 void
@@ -1271,9 +1288,12 @@ Global_Algorithm::evaluate_mms_error(scalar_t & error_bx,
   error_by = std::sqrt(error_by);
 
   if(is_mixed_formulation()){
-    MultiField & l_exact_sol = *l_mesh_->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
-    MultiField & l_field = *l_mesh_->get_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
-    for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+    //    MultiField & l_exact_sol = *l_mesh_->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
+    //    MultiField & l_field = *l_mesh_->get_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
+    //    for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+    MultiField & l_exact_sol = *mesh_->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
+    MultiField & l_field = *mesh_->get_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
+    for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
       const scalar_t l = l_field.local_value(i);
       const scalar_t l_exact = l_exact_sol.local_value(i);
       error_lambda += (l_exact - l)*(l_exact - l);

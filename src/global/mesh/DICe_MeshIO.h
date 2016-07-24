@@ -70,7 +70,7 @@ Teuchos::RCP<Mesh> create_tri_exodus_mesh(const DICe::mesh::Base_Element_Type el
   Teuchos::ArrayRCP<scalar_t> node_coords_x,
   Teuchos::ArrayRCP<scalar_t> node_coords_y,
   Teuchos::ArrayRCP<int_t> connectivity,
-  std::map<int_t,int_t> & dirichlet_boundary_nodes,
+  std::vector<std::pair<int_t,int_t> > & dirichlet_boundary_nodes,
   std::set<int_t> & neumann_boundary_nodes,
   std::set<int_t> & lagrange_boundary_nodes,
   const std::string & serial_output_filename);

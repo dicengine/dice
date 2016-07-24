@@ -490,7 +490,7 @@ public:
   virtual void lagrange(const scalar_t & x,
     const scalar_t & y,
     scalar_t & l_out){
-    l_out = coeff_*0.5*((-1.0/dim_x_)*x*x + (1.0/dim_y_)*y*y);
+    l_out = coeff_*0.5*((1.0/dim_x_)*x*x + (-1.0/dim_y_)*y*y);
   }
 
   /// See base class definition
@@ -498,7 +498,7 @@ public:
     const scalar_t & y,
     scalar_t & l_x,
     scalar_t & l_y){
-    l_x = coeff_*(-1.0/dim_x_)*x;
+    l_x = coeff_*(1.0/dim_x_)*x;
     l_y = coeff_*(-1.0/dim_y_)*y;
   }
 

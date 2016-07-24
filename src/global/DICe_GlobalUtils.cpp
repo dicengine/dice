@@ -333,17 +333,17 @@ void div_velocity(const int_t spa_dim,
     vec_invjTDNT[n*spa_dim+1] = inv_jac[1]*DN6[n*spa_dim+0] + inv_jac[3]*DN6[n*spa_dim+1];
   }
 
-  std::cout << "DN6: " << std::endl;
-  std::cout << DN6[0] << " " << DN6[1] << std::endl;
-  std::cout << DN6[2] << " " << DN6[3] << std::endl;
-  std::cout << DN6[4] << " " << DN6[5] << std::endl;
-  std::cout << DN6[6] << " " << DN6[7] << std::endl;
-  std::cout << DN6[8] << " " << DN6[9] << std::endl;
-  std::cout << DN6[10] << " " << DN6[11] << std::endl;
-
-  std::cout << "invJ: " << std::endl;
-  std::cout << inv_jac[0] << " " << inv_jac[1] << std::endl;
-  std::cout << inv_jac[2] << " " << inv_jac[3] << std::endl;
+//  std::cout << "DN6: " << std::endl;
+//  std::cout << DN6[0] << " " << DN6[1] << std::endl;
+//  std::cout << DN6[2] << " " << DN6[3] << std::endl;
+//  std::cout << DN6[4] << " " << DN6[5] << std::endl;
+//  std::cout << DN6[6] << " " << DN6[7] << std::endl;
+//  std::cout << DN6[8] << " " << DN6[9] << std::endl;
+//  std::cout << DN6[10] << " " << DN6[11] << std::endl;
+//
+//  std::cout << "invJ: " << std::endl;
+//  std::cout << inv_jac[0] << " " << inv_jac[1] << std::endl;
+//  std::cout << inv_jac[2] << " " << inv_jac[3] << std::endl;
 
 
   // div velocity stiffness terms
@@ -351,7 +351,7 @@ void div_velocity(const int_t spa_dim,
     for(int_t j=0;j<t6_num_funcs;++j){
       for(int_t dim=0;dim<spa_dim;++dim){
         elem_div_stiffness[i*t6_num_funcs*spa_dim + j*spa_dim+dim]
-                           += N3[i]*vec_invjTDNT[j*spa_dim+dim]*gp_weight*J;
+                           -= N3[i]*vec_invjTDNT[j*spa_dim+dim]*gp_weight*J;
       }
     }
   }

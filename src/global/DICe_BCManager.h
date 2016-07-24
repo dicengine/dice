@@ -387,7 +387,7 @@ protected:
   /// quadratic parent mesh
   Teuchos::RCP<DICe::mesh::Mesh> mesh_;
   /// linear child mesh (lagrange multiplier for the mixed methods, or null for single field formulations)
-  Teuchos::RCP<DICe::mesh::Mesh> l_mesh_;
+  //Teuchos::RCP<DICe::mesh::Mesh> l_mesh_;
   /// true if this is a mixed formulation
   bool is_mixed_;
   /// a vector of boundary conditions to enforce

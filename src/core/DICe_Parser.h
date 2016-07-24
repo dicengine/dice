@@ -173,8 +173,8 @@ Boundary_Condition_Def{
   left_vertex_id_(-1),
   right_vertex_id_(-1),
   has_value_(false),
-  value_x_(0.0),
-  value_y_(0.0),
+  value_(0.0),
+  comp_(0),
   use_subsets_(false),
   subset_size_(-1),
   is_neumann_(false){};
@@ -188,10 +188,10 @@ Boundary_Condition_Def{
   int_t right_vertex_id_;
   /// true if there is a prescribed value
   bool has_value_;
-  /// value to prescribe for a dirichlet bc in x
-  scalar_t value_x_;
-  /// value to prescribe for a dirichlet bc in x
-  scalar_t value_y_;
+  /// value to prescribe for a dirichlet bc
+  scalar_t value_;
+  /// component 0 = x 1 = y
+  int_t comp_;
   /// true if the subset formulation should be used to define the displacement
   bool use_subsets_;
   /// subsets size if subsets are used

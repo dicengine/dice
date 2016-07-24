@@ -126,8 +126,8 @@ int main(int argc, char *argv[]) {
       global_params->set(DICe::mesh_size,100.0);
     *outStream << "creating a global algorithm" << std::endl;
     Teuchos::RCP<DICe::global::Global_Algorithm> global_alg = Teuchos::rcp(new DICe::global::Global_Algorithm(global_params));
-    *outStream << "pre-execution tasks" << std::endl;
-    global_alg->pre_execution_tasks();
+    //*outStream << "pre-execution tasks" << std::endl;
+    //global_alg->pre_execution_tasks();
     *outStream << "executing" << std::endl;
     global_alg->execute();
     *outStream << "post execution tasks" << std::endl;

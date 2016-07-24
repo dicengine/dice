@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
   global_params->set(DICe::global_solver,GMRES_SOLVER);
   global_params->set(DICe::output_folder,"");
   global_params->set(DICe::mesh_size,1000.0);//50000.0
-//  global_params->set(DICe::global_element_type,"TRI3");
+  global_params->set(DICe::global_element_type,"TRI3");
   Teuchos::ParameterList mms_sublist;
   mms_sublist.set(DICe::phi_coeff,10.0);
   std::vector<std::string> mms_problem_name;
@@ -116,13 +116,13 @@ int main(int argc, char *argv[]) {
     global_params->set(DICe::output_prefix,mms_problem_name[i]);
     mms_sublist.set(DICe::problem_name,mms_problem_name[i]);
     mms_sublist.set(DICe::b_coeff,alpha[i]);
-    mms_sublist.set(DICe::parser_enforce_lagrange_bc,false);
+    mms_sublist.set(DICe::parser_enforce_lagrange_bc,true);
     global_params->set(DICe::mms_spec,mms_sublist);
     global_params->print(*outStream);
     *outStream << "creating a global algorithm" << std::endl;
     Teuchos::RCP<DICe::global::Global_Algorithm> global_alg = Teuchos::rcp(new DICe::global::Global_Algorithm(global_params));
-    *outStream << "pre-execution tasks" << std::endl;
-    global_alg->pre_execution_tasks();
+    //*outStream << "pre-execution tasks" << std::endl;
+    //global_alg->pre_execution_tasks();
     *outStream << "executing" << std::endl;
     global_alg->execute();
     *outStream << "post execution tasks" << std::endl;

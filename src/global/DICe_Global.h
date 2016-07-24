@@ -137,10 +137,10 @@ public:
     return mesh_;
   }
 
-  /// Returns a pointer to the lagrange multiplier mesh
-  Teuchos::RCP<DICe::mesh::Mesh> l_mesh()const{
-    return l_mesh_;
-  }
+//  /// Returns a pointer to the lagrange multiplier mesh
+//  Teuchos::RCP<DICe::mesh::Mesh> l_mesh()const{
+//    return l_mesh_;
+//  }
 
   /// add a term to the formulation
   void add_term(const Global_EQ_Term term){

@@ -57,14 +57,14 @@ BC_Manager::BC_Manager(Global_Algorithm * alg) :
     mixed_bc_register_size_(0),
     bc_register_initialized_(false),
     mesh_(alg->mesh()),
-    l_mesh_(alg->l_mesh()),
+    //l_mesh_(alg->l_mesh()),
     is_mixed_(false),
     alg_(alg)
 {
-  if(l_mesh_!=Teuchos::null)
-    is_mixed_ = true;
+  //if(l_mesh_!=Teuchos::null)
+    is_mixed_ = alg->is_mixed_formulation();//true;
 
-  const int_t lagrange_size = is_mixed_ ? l_mesh_->get_scalar_node_dist_map()->get_num_local_elements() : 0;
+  const int_t lagrange_size = is_mixed_ ? mesh_->get_scalar_node_dist_map()->get_num_local_elements() : 0;
   initialize_bc_register(mesh_->get_vector_node_dist_map()->get_num_local_elements(),
     mesh_->get_vector_node_overlap_map()->get_num_local_elements(),lagrange_size);
 
@@ -78,6 +78,7 @@ BC_Manager::BC_Manager(Global_Algorithm * alg) :
   DICe::mesh::bc_set::iterator it_end = bc_set->end();
   for(;it!=it_end;++it){
     const int_t boundary_node_set_id = it->first;
+    DEBUG_MSG("Setting up bc register flags for note set id " << boundary_node_set_id);
     if(boundary_node_set_id==-10000)
       continue; // neumann boundary is -10000 id
     // lagrange multiplier boundary is negative id
@@ -85,40 +86,46 @@ BC_Manager::BC_Manager(Global_Algorithm * alg) :
       const int_t num_bc_nodes = bc_set->find(boundary_node_set_id)->second.size();
       for(int_t i=0;i<num_bc_nodes;++i){
         const int_t node_gid = bc_set->find(boundary_node_set_id)->second[i];
-        //std::cout << " lagrange condition on node " << node_gid << std::endl;
-        bool is_local_node = l_mesh_->get_scalar_node_dist_map()->is_node_global_elem(node_gid);
+        DEBUG_MSG(" lagrange condition on node " << node_gid);
+        bool is_local_node = mesh_->get_scalar_node_dist_map()->is_node_global_elem(node_gid);
         if(is_local_node){
-          const int_t row_id = l_mesh_->get_scalar_node_dist_map()->get_local_element(node_gid);
+          const int_t row_id = mesh_->get_scalar_node_dist_map()->get_local_element(node_gid);
           register_mixed_bc(row_id);
         }
       }
     }
     else{
+      // make sure that a bc def exists for this nodes set
+      TEUCHOS_TEST_FOR_EXCEPTION((int_t)mesh_->bc_defs()->size() < boundary_node_set_id,std::runtime_error,"bc_def does not exist for this node set id " << boundary_node_set_id);
+      const int_t comp = (*mesh_->bc_defs())[boundary_node_set_id-1].comp_;
       const int_t num_bc_nodes = bc_set->find(boundary_node_set_id)->second.size();
       for(int_t i=0;i<num_bc_nodes;++i){
         const int_t node_gid = bc_set->find(boundary_node_set_id)->second[i];
-        //std::cout << " disp x condition on node " << node_gid << std::endl;
         bool is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim_+1);
-        if(is_local_node){
-          const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim_+1);
-          register_row_bc(row_id);
-        }
         int_t col_id = mesh_->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim_+1);
-        register_col_bc(col_id);
-        //std::cout << " disp y condition on node " << node_gid << std::endl;
-        is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim_+2);
-        if(is_local_node){
-          const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim_+2);
-          register_row_bc(row_id);
+        if(comp==0){
+          DEBUG_MSG("disp x condition on node " << node_gid);
+          if(is_local_node){
+            const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim_+1);
+            register_row_bc(row_id);
+          }
+          register_col_bc(col_id);
         }
-        col_id = mesh_->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim_+2);
-        register_col_bc(col_id);
+        if(comp==1){
+          DEBUG_MSG("disp y condition on node " << node_gid);
+          is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim_+2);
+          if(is_local_node){
+            const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim_+2);
+            register_row_bc(row_id);
+          }
+          col_id = mesh_->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim_+2);
+          register_col_bc(col_id);
+        }
       }
     } // end bcs from node sets
   }
   // FIXME FIXME REMOVE LATER
-  register_mixed_bc(0);
-
+  //register_mixed_bc(0);
 }
 
 void
@@ -235,10 +242,10 @@ Dirichlet_BC::apply(const bool first_iteration){
   for(size_t i=0;i<mesh_->bc_defs()->size();++i){
     const int_t node_set_id = i+1;  // +1 because bc ids are one-based
     if(!(*mesh_->bc_defs())[i].has_value_) continue;
-    const scalar_t value_x = (*mesh_->bc_defs())[i].value_x_;
-    const scalar_t value_y = (*mesh_->bc_defs())[i].value_y_;
+    const scalar_t value_ = (*mesh_->bc_defs())[i].value_;
+    const int_t comp = (*mesh_->bc_defs())[i].comp_;
     DEBUG_MSG("Dirichlet_BC::apply(): applying a Dirichlet bc to node set id " << node_set_id
-      << " value x " << value_x << " value y " << value_y);
+      << " comp " << comp << " value " << value_);
     DICe::mesh::bc_set * bc_sets = mesh_->get_node_bc_sets();
     TEUCHOS_TEST_FOR_EXCEPTION(bc_sets->find(node_set_id)==bc_sets->end(),std::runtime_error,
       "Error, invalid node set id: " << node_set_id);
@@ -248,8 +255,10 @@ Dirichlet_BC::apply(const bool first_iteration){
       const int_t node_gid = bc_sets->find(node_set_id)->second[i];
       const int_t ix = (node_gid-1)*spa_dim + 1;
       const int_t iy = (node_gid-1)*spa_dim + 2;
-      residual->global_value(ix) = first_iteration ? value_x : 0.0;
-      residual->global_value(iy) = first_iteration ? value_y : 0.0;
+      if(comp==0)
+        residual->global_value(ix) = first_iteration ? value_ : 0.0;
+      if(comp==1)
+        residual->global_value(iy) = first_iteration ? value_ : 0.0;
     }
   }
 }
@@ -266,6 +275,7 @@ Subset_BC::apply(const bool first_iteration){
   for(size_t i=0;i<mesh_->bc_defs()->size();++i){
     const int_t node_set_id = i+1;  // +1 because bc ids are one-based
     if(!(*mesh_->bc_defs())[i].use_subsets_) continue;
+    const int_t comp = (*mesh_->bc_defs())[i].comp_;
     const int_t subset_size = (*mesh_->bc_defs())[i].subset_size_;
     DEBUG_MSG("Subset_BC::apply(): applying a subset bc to node set id " << node_set_id
       << " subset size " << subset_size);
@@ -279,8 +289,10 @@ Subset_BC::apply(const bool first_iteration){
       const int_t ix = (node_gid-1)*spa_dim + 1;
       const int_t iy = (node_gid-1)*spa_dim + 2;
       if(!first_iteration){
-        residual->global_value(ix) = 0.0;
-        residual->global_value(iy) = 0.0;
+        if(comp==0)
+          residual->global_value(ix) = 0.0;
+        if(comp==1)
+          residual->global_value(iy) = 0.0;
       }
       else{
         scalar_t b_x = 0.0;
@@ -293,8 +305,10 @@ Subset_BC::apply(const bool first_iteration){
         int_t py = (int_t)y;
         if(y - (int_t)y >= 0.5) py++;
         DICe::global::subset_velocity(alg_,px,py,subset_size,b_x,b_y);
-        residual->global_value(ix) = b_x;
-        residual->global_value(iy) = b_y;
+        if(comp==0)
+          residual->global_value(ix) = b_x;
+        if(comp==1)
+          residual->global_value(iy) = b_y;
       }
     }
   }
@@ -333,8 +347,8 @@ MMS_BC::apply(const bool first_iteration){
       exact_sol->local_value(iy) = b_y;
     }
     if(is_mixed_){
-      Teuchos::RCP<MultiField> exact_lag = alg_->l_mesh()->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
-      for(int_t i=0;i<alg_->l_mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
+      Teuchos::RCP<MultiField> exact_lag = alg_->mesh()->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
+      for(int_t i=0;i<alg_->mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
         int_t ix = i*2+0;
         int_t iy = i*2+1;
         const scalar_t x = coords->local_value(ix);
@@ -345,28 +359,37 @@ MMS_BC::apply(const bool first_iteration){
       }
     }
   }
-  const int_t node_set_id = 1;  // mms bcs are hard coded to node set id 1
-  DEBUG_MSG("MMS_BC::apply(): applying a Dirichlet bc to node set id " << node_set_id);
-  DICe::mesh::bc_set * bc_sets = mesh_->get_node_bc_sets();
-  TEUCHOS_TEST_FOR_EXCEPTION(bc_sets->find(node_set_id)==bc_sets->end(),std::runtime_error,
-    "Error, invalid node set id");
-  const int_t num_bc_nodes = bc_sets->find(node_set_id)->second.size();
-  DEBUG_MSG("MMS_BC::apply(): number of nodes in set " << num_bc_nodes);
-  for(int_t i=0;i<num_bc_nodes;++i){
-    const int_t node_gid = bc_sets->find(node_set_id)->second[i];
-    const int_t ix = (node_gid-1)*spa_dim + 1;
-    const int_t iy = (node_gid-1)*spa_dim + 2;
-    if(!first_iteration){
-      residual->global_value(ix) = 0.0;
-      residual->global_value(iy) = 0.0;
-    }
-    else{
-      const scalar_t x = coords->global_value(ix);
-      const scalar_t y = coords->global_value(iy);
-      scalar_t b_x = 0.0, b_y = 0.0;
-      alg_->mms_problem()->velocity(x,y,b_x,b_y);
-      residual->global_value(ix) = b_x;
-      residual->global_value(iy) = b_y;
+  for(size_t i=0;i<mesh_->bc_defs()->size();++i){
+    const int_t node_set_id = i+1;
+    DEBUG_MSG("MMS_BC::apply(): applying a MMS Dirichlet bc to node set id " << node_set_id);
+    DICe::mesh::bc_set * bc_sets = mesh_->get_node_bc_sets();
+    TEUCHOS_TEST_FOR_EXCEPTION(bc_sets->find(node_set_id)==bc_sets->end(),std::runtime_error,
+      "Error, invalid node set id");
+    TEUCHOS_TEST_FOR_EXCEPTION((int_t)mesh_->bc_defs()->size()<node_set_id,std::runtime_error,
+      "Error, invalid node set id");
+    const int_t num_bc_nodes = bc_sets->find(node_set_id)->second.size();
+    const int_t comp = (*mesh_->bc_defs())[node_set_id-1].comp_;
+    DEBUG_MSG("MMS_BC::apply(): number of nodes in set " << num_bc_nodes);
+    for(int_t i=0;i<num_bc_nodes;++i){
+      const int_t node_gid = bc_sets->find(node_set_id)->second[i];
+      const int_t ix = (node_gid-1)*spa_dim + 1;
+      const int_t iy = (node_gid-1)*spa_dim + 2;
+      if(!first_iteration){
+        if(comp==0)
+          residual->global_value(ix) = 0.0;
+        if(comp==1)
+          residual->global_value(iy) = 0.0;
+      }
+      else{
+        const scalar_t x = coords->global_value(ix);
+        const scalar_t y = coords->global_value(iy);
+        scalar_t b_x = 0.0, b_y = 0.0;
+        alg_->mms_problem()->velocity(x,y,b_x,b_y);
+        if(comp==0)
+          residual->global_value(ix) = b_x;
+        if(comp==1)
+          residual->global_value(iy) = b_y;
+      }
     }
   }
 }
@@ -379,8 +402,8 @@ MMS_Lagrange_BC::apply(const bool first_iteration){
   Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
   const int_t spa_dim = mesh_->spatial_dimension();
   TEUCHOS_TEST_FOR_EXCEPTION(alg_->mms_problem()==Teuchos::null,std::runtime_error,"Error, mms_problem should not be null");
-  TEUCHOS_TEST_FOR_EXCEPTION(alg_->l_mesh()==Teuchos::null,std::runtime_error,
-    "Error, l_mesh pointer should not be null");
+  //TEUCHOS_TEST_FOR_EXCEPTION(alg_->mesh()==Teuchos::null,std::runtime_error,
+  //  "Error, mesh pointer should not be null");
   const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_num_global_elements();
 //  if(first_iteration){ // populate the exact solution fields
 //    Teuchos::RCP<MultiField> exact_lag = alg_->l_mesh()->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);

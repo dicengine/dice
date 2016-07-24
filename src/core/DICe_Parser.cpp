@@ -751,7 +751,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            else if(block_tokens[0]==parser_dirichlet_bc){
              if(proc_rank==0) DEBUG_MSG("Reading dirichlet boundary condition ");
              TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<7,std::runtime_error,
-               "Error, not enough values specified for dirichlet bc: DIRICHLET_BC BOUNDARY/EXCLUDED SHAPE_ID VERTEX_ID VERTEX_ID <VALUE_X VALUE_Y / USE_SUBSETS SUBSET_SIZE>." );
+               "Error, not enough values specified for dirichlet bc: DIRICHLET_BC BOUNDARY/EXCLUDED SHAPE_ID VERTEX_ID VERTEX_ID COMPONENT <VALUE_X VALUE_Y / USE_SUBSETS SUBSET_SIZE>." );
              std::string region_type;
              if(block_tokens[1]==parser_boundary){
                if(proc_rank==0) DEBUG_MSG("Region: boundary");
@@ -766,20 +766,23 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              bc_def.shape_id_ = atoi(block_tokens[2].c_str());
              bc_def.left_vertex_id_ = atoi(block_tokens[3].c_str());
              bc_def.right_vertex_id_ = atoi(block_tokens[4].c_str());
-             TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[6]),std::runtime_error,"");
+             TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[5]),std::runtime_error,"");
+             bc_def.comp_ = atoi(block_tokens[5].c_str());
              if(is_number(block_tokens[5])){
                bc_def.has_value_ = true;
                bc_def.use_subsets_ = false;
-               bc_def.value_x_ = strtod(block_tokens[5].c_str(),NULL);
-               bc_def.value_y_ = strtod(block_tokens[6].c_str(),NULL);
+               bc_def.value_ = strtod(block_tokens[5].c_str(),NULL);
              }
              else if(block_tokens[5]==parser_use_subsets){
                bc_def.has_value_ = false;
                bc_def.use_subsets_ = true;
                bc_def.subset_size_ = atoi(block_tokens[6].c_str());
              }
+             else{
+               TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+             }
              DEBUG_MSG("Shape id: " << bc_def.shape_id_ << " left vertex: " << bc_def.left_vertex_id_ << " right vertex: "<< bc_def.right_vertex_id_
-               << " has value " << bc_def.has_value_ << " value x " << bc_def.value_x_ << " value y " << bc_def.value_y_
+               << " component " << bc_def.comp_ << " has value " << bc_def.has_value_ << " value " << bc_def.value_
                << " use subsets " << bc_def.use_subsets_ << " subset size " << bc_def.subset_size_);
              info->boundary_condition_defs->push_back(bc_def);
            }
@@ -805,7 +808,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              bc_def.use_subsets_=false;
              bc_def.is_neumann_=true;
              DEBUG_MSG("Shape id: " << bc_def.shape_id_ << " left vertex: " << bc_def.left_vertex_id_ << " right vertex: "<< bc_def.right_vertex_id_
-               << " has value " << bc_def.has_value_ << " value x " << bc_def.value_x_ << " value y " << bc_def.value_y_
+               << " has value " << bc_def.has_value_ << " value " << bc_def.value_
                << " use subsets " << bc_def.use_subsets_ << " subset size " << bc_def.subset_size_);
              info->boundary_condition_defs->push_back(bc_def);
            }
