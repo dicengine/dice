@@ -62,7 +62,7 @@ Global_Algorithm::Global_Algorithm(Schema * schema,
   global_solver_(CG_SOLVER),
   num_image_integration_points_(20),
   max_iterations_(25),
-  element_type_(DICe::mesh::TRI3),
+  element_type_(DICe::mesh::TRI6),
   use_fixed_point_iterations_(false),
   stabilization_tau_(-1.0)
 {
@@ -79,7 +79,7 @@ Global_Algorithm::Global_Algorithm(const Teuchos::RCP<Teuchos::ParameterList> & 
   global_solver_(CG_SOLVER),
   num_image_integration_points_(20),
   max_iterations_(25),
-  element_type_(DICe::mesh::TRI3),
+  element_type_(DICe::mesh::TRI6),
   use_fixed_point_iterations_(false),
   stabilization_tau_(-1.0)
 {
@@ -145,7 +145,7 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     TEUCHOS_TEST_FOR_EXCEPTION(!mms_params->isParameter(DICe::problem_name),std::runtime_error,
       "Error, the problem_name must be defined in the mms_spec");
     // see if the user wants a lagrange bc or nor
-    bool enforce_lagrange_bc = mms_params->get<bool>(DICe::parser_enforce_lagrange_bc,true);
+    bool enforce_lagrange_bc = is_mixed_formulation() && mms_params->get<bool>(DICe::parser_enforce_lagrange_bc,true);
     DEBUG_MSG("MMS Lagrange BC enforcement: " << enforce_lagrange_bc);
 
     MMS_Problem_Factory mms_factory;

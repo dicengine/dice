@@ -135,10 +135,10 @@ int main(int argc, char *argv[]) {
   roi_file << "      end vertices\n";
   roi_file << "    end polygon\n";
   roi_file << "  end boundary\n";
-  roi_file << "  dirichlet_bc boundary 0 0 1 use_subsets 27\n";
-  roi_file << "  dirichlet_bc boundary 0 1 2 use_subsets 27\n";
-  roi_file << "  dirichlet_bc boundary 0 2 3 use_subsets 27\n";
-  roi_file << "  dirichlet_bc boundary 0 3 0 use_subsets 27\n";
+  roi_file << "  dirichlet_bc boundary 0 0 1 2 use_subsets 27\n";
+  roi_file << "  dirichlet_bc boundary 0 1 2 2 use_subsets 27\n";
+  roi_file << "  dirichlet_bc boundary 0 2 3 2 use_subsets 27\n";
+  roi_file << "  dirichlet_bc boundary 0 3 0 2 use_subsets 27\n";
   roi_file << "end region_of_interest\n";
   roi_file.close();
 

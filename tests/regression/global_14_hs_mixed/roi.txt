@@ -10,8 +10,8 @@ BEGIN REGION_OF_INTEREST
     END POLYGON
   END
   enforce_lagrange_bc
-  dirichlet_bc boundary 0 1 2 0.0 0.0
-  dirichlet_bc boundary 0 3 0 0.0 0.0
-  dirichlet_bc boundary 0 2 3 use_subsets 47
-  dirichlet_bc boundary 0 0 1 use_subsets 47
+  dirichlet_bc boundary 0 1 2 2 0.0 0.0
+  dirichlet_bc boundary 0 3 0 2 0.0 0.0
+  dirichlet_bc boundary 0 2 3 2 use_subsets 47
+  dirichlet_bc boundary 0 0 1 2 use_subsets 47
 END

@@ -118,6 +118,7 @@ int main(int argc, char *argv[]) {
     scalar_t error_lambda = 0.0;
     *outStream << " TESTING " << to_string(formulation[i]) << " FORMULATION " << std::endl;
     global_params->set(DICe::global_regularization_alpha,alpha[i]);
+    global_params->set(DICe::global_stabilization_tau,0.0);
     global_params->set(DICe::global_formulation,formulation[i]);
     global_params->set(DICe::output_prefix,out_file_name[i]);
     if(formulation[i]==UNREGULARIZED)

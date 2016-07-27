@@ -103,11 +103,11 @@ int main(int argc, char *argv[]) {
   *outStream << "checking the output file for correct mesh properties" << std::endl;
   Teuchos::RCP<DICe::mesh::Mesh> mesh_out = DICe::mesh::read_exodus_mesh("scratch_mesh.e","no_file.e");
   *outStream << "checking the basic properties of the output mesh" << std::endl;
-  if(mesh_out->num_nodes()!=1631){
+  if(mesh_out->num_nodes()!=1662){
     *outStream << "Error, the number of nodes read from the output mesh is not correct" << std::endl;
     errorFlag++;
   }
-  if(mesh_out->num_elem()!=784){
+  if(mesh_out->num_elem()!=789){
     *outStream << "Error, the number of elements read from the output mesh is not correct" << std::endl;
     errorFlag++;
   }
@@ -130,11 +130,11 @@ int main(int argc, char *argv[]) {
   *outStream << "checking the output file for correct mesh properties" << std::endl;
   Teuchos::RCP<DICe::mesh::Mesh> mesh_out_tri3 = DICe::mesh::read_exodus_mesh("scratch_mesh_tri3.e","no_file.e");
   *outStream << "checking the basic properties of the output mesh" << std::endl;
-  if(mesh_out_tri3->num_nodes()!=424){
+  if(mesh_out_tri3->num_nodes()!=437){
     *outStream << "Error, the number of nodes read from the output mesh is not correct" << std::endl;
     errorFlag++;
   }
-  if(mesh_out_tri3->num_elem()!=784){
+  if(mesh_out_tri3->num_elem()!=789){
     *outStream << "Error, the number of elements read from the output mesh is not correct" << std::endl;
     errorFlag++;
   }

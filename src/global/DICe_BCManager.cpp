@@ -77,7 +77,7 @@ BC_Manager::BC_Manager(Global_Algorithm * alg) :
   DICe::mesh::bc_set::iterator it_end = bc_set->end();
   for(;it!=it_end;++it){
     const int_t boundary_node_set_id = it->first;
-    DEBUG_MSG("Setting up bc register flags for note set id " << boundary_node_set_id);
+    DEBUG_MSG("Setting up bc register flags for node set id " << boundary_node_set_id);
     if(boundary_node_set_id==0)
       continue; // neumann boundary is 0 id
     // lagrange multiplier boundary is negative id
@@ -104,7 +104,7 @@ BC_Manager::BC_Manager(Global_Algorithm * alg) :
         const int_t node_gid = bc_set->find(boundary_node_set_id)->second[i];
         bool is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim_+1);
         int_t col_id = mesh_->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim_+1);
-        if(comp==0){
+        if(comp==0||comp==2){
           DEBUG_MSG("disp x condition on node " << node_gid);
           if(is_local_node){
             const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim_+1);
@@ -112,7 +112,7 @@ BC_Manager::BC_Manager(Global_Algorithm * alg) :
           }
           register_col_bc(col_id);
         }
-        if(comp==1){
+        if(comp==1||comp==2){
           DEBUG_MSG("disp y condition on node " << node_gid);
           is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim_+2);
           if(is_local_node){
@@ -254,9 +254,9 @@ Dirichlet_BC::apply(const bool first_iteration){
       const int_t node_gid = bc_sets->find(node_set_id)->second[i];
       const int_t ix = (node_gid-1)*spa_dim + 1;
       const int_t iy = (node_gid-1)*spa_dim + 2;
-      if(comp==0)
+      if(comp==0||comp==2)
         residual->global_value(ix) = first_iteration ? value_ : 0.0;
-      if(comp==1)
+      if(comp==1||comp==2)
         residual->global_value(iy) = first_iteration ? value_ : 0.0;
     }
   }
@@ -288,9 +288,9 @@ Subset_BC::apply(const bool first_iteration){
       const int_t ix = (node_gid-1)*spa_dim + 1;
       const int_t iy = (node_gid-1)*spa_dim + 2;
       if(!first_iteration){
-        if(comp==0)
+        if(comp==0||comp==2)
           residual->global_value(ix) = 0.0;
-        if(comp==1)
+        if(comp==1||comp==2)
           residual->global_value(iy) = 0.0;
       }
       else{
@@ -304,9 +304,9 @@ Subset_BC::apply(const bool first_iteration){
         int_t py = (int_t)y;
         if(y - (int_t)y >= 0.5) py++;
         DICe::global::subset_velocity(alg_,px,py,subset_size,b_x,b_y);
-        if(comp==0)
+        if(comp==0||comp==2)
           residual->global_value(ix) = b_x;
-        if(comp==1)
+        if(comp==1||comp==2)
           residual->global_value(iy) = b_y;
       }
     }
@@ -374,9 +374,9 @@ MMS_BC::apply(const bool first_iteration){
       const int_t ix = (node_gid-1)*spa_dim + 1;
       const int_t iy = (node_gid-1)*spa_dim + 2;
       if(!first_iteration){
-        if(comp==0)
+        if(comp==0||comp==2)
           residual->global_value(ix) = 0.0;
-        if(comp==1)
+        if(comp==1||comp==2)
           residual->global_value(iy) = 0.0;
       }
       else{
@@ -384,9 +384,9 @@ MMS_BC::apply(const bool first_iteration){
         const scalar_t y = coords->global_value(iy);
         scalar_t b_x = 0.0, b_y = 0.0;
         alg_->mms_problem()->velocity(x,y,b_x,b_y);
-        if(comp==0)
+        if(comp==0||comp==2)
           residual->global_value(ix) = b_x;
-        if(comp==1)
+        if(comp==1||comp==2)
           residual->global_value(iy) = b_y;
       }
     }

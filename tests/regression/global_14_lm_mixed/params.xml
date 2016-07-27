@@ -4,5 +4,5 @@
   <Parameter name="max_solver_iterations_fast" type="int" value="500" />
   <Parameter name="global_solver" type="string" value="gmres_solver" />
   <Parameter name="global_formulation" type="string" value="lehoucq_turner" />
-  <Parameter name="global_regularization_alpha" type="double" value="1.0" />
+  <Parameter name="global_regularization_alpha" type="double" value="0.0001" />
 </ParameterList>

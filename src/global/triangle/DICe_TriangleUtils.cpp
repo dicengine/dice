@@ -449,7 +449,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
     if(elem_type==DICe::mesh::TRI6)
       arg_ss << "qpcDAeo2a" << max_size_constraint;
     else
-      arg_ss << "qpcAea" << max_size_constraint;
+      arg_ss << "qpcDAea" << max_size_constraint;
     char args[1024];
     strncpy(args, arg_ss.str().c_str(), sizeof(args));
     args[sizeof(args) - 1] = 0;

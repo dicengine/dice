@@ -768,15 +768,15 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              bc_def.right_vertex_id_ = atoi(block_tokens[4].c_str());
              TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[5]),std::runtime_error,"");
              bc_def.comp_ = atoi(block_tokens[5].c_str());
-             if(is_number(block_tokens[5])){
+             if(is_number(block_tokens[6])){
                bc_def.has_value_ = true;
                bc_def.use_subsets_ = false;
-               bc_def.value_ = strtod(block_tokens[5].c_str(),NULL);
+               bc_def.value_ = strtod(block_tokens[6].c_str(),NULL);
              }
-             else if(block_tokens[5]==parser_use_subsets){
+             else if(block_tokens[6]==parser_use_subsets){
                bc_def.has_value_ = false;
                bc_def.use_subsets_ = true;
-               bc_def.subset_size_ = atoi(block_tokens[6].c_str());
+               bc_def.subset_size_ = atoi(block_tokens[7].c_str());
              }
              else{
                TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");

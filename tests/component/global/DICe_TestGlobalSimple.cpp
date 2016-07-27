@@ -87,20 +87,22 @@ int main(int argc, char *argv[]) {
   std::vector<scalar_t> alpha;
 
   // HORN SCHNUNCK
-//  formulation.push_back(HORN_SCHUNCK);
-//  mms_problem_name.push_back("simple_hs");
-//  alpha.push_back(1.0);
-  // MIXED HORN SCHNUNCK
-//  formulation.push_back(MIXED_HORN_SCHUNCK);
-//  mms_problem_name.push_back("simple_hs_mixed");
-//  alpha.push_back(0.001);
+  formulation.push_back(HORN_SCHUNCK);
+  mms_problem_name.push_back("simple_hs");
+  alpha.push_back(1.0);
 
   // MIXED HORN SCHNUNCK
+  formulation.push_back(MIXED_HORN_SCHUNCK);
+  mms_problem_name.push_back("simple_hs_mixed");
+  alpha.push_back(1.0);
+
+  // LEHOUCQ TURNER
   formulation.push_back(LEHOUCQ_TURNER);
   mms_problem_name.push_back("simple_lm_mixed");
   alpha.push_back(1.0);
 
-  const scalar_t error_max = 0.1;
+  const scalar_t error_max = 1.0E-5;
+  const scalar_t error_lam_max = 50.0;
   TEUCHOS_TEST_FOR_EXCEPTION(formulation.size()!=mms_problem_name.size()||formulation.size()!=alpha.size(),
     std::runtime_error,"Error missing a parameter");
   std::vector<scalar_t> error_x(formulation.size(),-1.0);
@@ -113,7 +115,7 @@ int main(int argc, char *argv[]) {
     scalar_t error_lambda = 0.0;
     *outStream << " TESTING " << to_string(formulation[i]) << " FORMULATION " << std::endl;
     global_params->set(DICe::global_regularization_alpha,alpha[i]);
-    global_params->set(DICe::global_stabilization_tau,1.0E-6);
+    global_params->set(DICe::global_stabilization_tau,0.0);
     global_params->set(DICe::global_formulation,formulation[i]);
     global_params->set(DICe::output_prefix,mms_problem_name[i]);
     mms_sublist.set(DICe::problem_name,mms_problem_name[i]);
@@ -134,6 +136,10 @@ int main(int argc, char *argv[]) {
     error_l[i] = error_lambda;
     if(error_bx > error_max || error_by > error_max){
       *outStream << "error, the solution error is too large for " << to_string(formulation[i]) << std::endl;
+      errorFlag++;
+    }
+    if(error_lambda > error_lam_max){
+      *outStream << "error, the lagrange mult. solution error is too large for " << to_string(formulation[i]) << std::endl;
       errorFlag++;
     }
   } // end formulation loop
