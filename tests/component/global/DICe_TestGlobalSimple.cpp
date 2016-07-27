@@ -77,8 +77,8 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> global_params = Teuchos::rcp(new Teuchos::ParameterList());
   global_params->set(DICe::global_solver,GMRES_SOLVER);
   global_params->set(DICe::output_folder,"");
-  global_params->set(DICe::mesh_size,250.0);
-  global_params->set(DICe::global_element_type,"TRI3");
+  global_params->set(DICe::mesh_size,25.0);
+  global_params->set(DICe::global_element_type,"TRI6");
   global_params->set(DICe::parser_use_regular_grid,true);
   Teuchos::ParameterList mms_sublist;
   mms_sublist.set(DICe::phi_coeff,10.0);
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
     scalar_t error_lambda = 0.0;
     *outStream << " TESTING " << to_string(formulation[i]) << " FORMULATION " << std::endl;
     global_params->set(DICe::global_regularization_alpha,alpha[i]);
-    global_params->set(DICe::global_stabilization_tau,0.0);
+    global_params->set(DICe::global_stabilization_tau,1.0E-6);
     global_params->set(DICe::global_formulation,formulation[i]);
     global_params->set(DICe::output_prefix,mms_problem_name[i]);
     mms_sublist.set(DICe::problem_name,mms_problem_name[i]);

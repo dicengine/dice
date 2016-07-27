@@ -743,8 +743,7 @@ void div_symmetric_strain(const int_t spa_dim,
 
 /// adds the divergence free constraint stiffness terms
 /// \param spa_dim spatial dimension
-/// \param t3_num_funcs the number of shape functions for tri3
-/// \param t6_num_funcs the number of shape functions for tri6
+/// \param num_funcs the number of element shape functions
 /// \param J determinant of the jacobian
 /// \param gp_weight gauss weight
 /// \param inv_jac inverse jacobian
@@ -754,13 +753,12 @@ void div_symmetric_strain(const int_t spa_dim,
 /// \param tau the stabilization coefficient
 /// \param elem_div_stiffness output the element stiffness contributions
 void div_velocity(const int_t spa_dim,
-  const int_t t3_num_funcs,
-  const int_t t6_num_funcs,
+  const int_t num_funcs,
   const scalar_t & J,
   const scalar_t & gp_weight,
   const scalar_t * inv_jac,
-  const scalar_t * DN6,
-  const scalar_t * N3,
+  const scalar_t * DN,
+  const scalar_t * N,
   const scalar_t & alpha2,
   const scalar_t & tau,
   scalar_t * elem_div_stiffness);

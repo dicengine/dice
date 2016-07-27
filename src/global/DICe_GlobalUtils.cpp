@@ -320,44 +320,36 @@ void lumped_tikhonov_tensor(Global_Algorithm * alg,
 }
 
 void div_velocity(const int_t spa_dim,
-  const int_t t3_num_funcs,
-  const int_t t6_num_funcs,
+  const int_t num_funcs,
   const scalar_t & J,
   const scalar_t & gp_weight,
   const scalar_t * inv_jac,
-  const scalar_t * DN6,
-  const scalar_t * N3,
+  const scalar_t * DN,
+  const scalar_t * N,
   const scalar_t & alpha2,
   const scalar_t & tau,
   scalar_t * elem_div_stiffness){
-  scalar_t vec_invjTDNT[t6_num_funcs*spa_dim];
-  for(int_t n=0;n<t6_num_funcs;++n){
-    vec_invjTDNT[n*spa_dim+0] = inv_jac[0]*DN6[n*spa_dim+0] + inv_jac[2]*DN6[n*spa_dim+1];
-    vec_invjTDNT[n*spa_dim+1] = inv_jac[1]*DN6[n*spa_dim+0] + inv_jac[3]*DN6[n*spa_dim+1];
+  scalar_t vec_invjTDNT[num_funcs*spa_dim];
+  for(int_t n=0;n<num_funcs;++n){
+    vec_invjTDNT[n*spa_dim+0] = inv_jac[0]*DN[n*spa_dim+0] + inv_jac[2]*DN[n*spa_dim+1];
+    vec_invjTDNT[n*spa_dim+1] = inv_jac[1]*DN[n*spa_dim+0] + inv_jac[3]*DN[n*spa_dim+1];
   }
 
-  // TODO fix the num_funcs args for t6 vs t3 and remove this test
-  //TEUCHOS_TEST_FOR_EXCEPTION(t6_num_funcs!=3,std::runtime_error,"");
-
   // div velocity stiffness terms
-  for(int_t i=0;i<t3_num_funcs;++i){
-    for(int_t j=0;j<t6_num_funcs;++j){
+  for(int_t i=0;i<num_funcs;++i){
+    for(int_t j=0;j<num_funcs;++j){
       for(int_t dim=0;dim<spa_dim;++dim){
-        elem_div_stiffness[i*t6_num_funcs*spa_dim + j*spa_dim+dim]
-                           -= N3[i]*vec_invjTDNT[j*spa_dim+dim]*gp_weight*J;
+        elem_div_stiffness[i*num_funcs*spa_dim + j*spa_dim+dim]
+                           -= N[i]*vec_invjTDNT[j*spa_dim+dim]*gp_weight*J;
       }
     }
   }
-  for(int_t i=0;i<t3_num_funcs;++i){
-    for(int_t j=0;j<t3_num_funcs;++j){
-        elem_div_stiffness[i*t3_num_funcs*spa_dim + j*spa_dim+0] -= tau*alpha2*N3[j]*vec_invjTDNT[i*spa_dim+0]*gp_weight*J;
-        elem_div_stiffness[i*t3_num_funcs*spa_dim + j*spa_dim+1] -= tau*alpha2*N3[j]*vec_invjTDNT[i*spa_dim+1]*gp_weight*J;
-//        elem_div_stiffness[i*t3_num_funcs*spa_dim + j*spa_dim+0] -= tau*N3[j]*vec_invjTDNT[i*spa_dim+0]*gp_weight*J;
-//        elem_div_stiffness[i*t3_num_funcs*spa_dim + j*spa_dim+1] -= tau*N3[j]*vec_invjTDNT[i*spa_dim+1]*gp_weight*J;
+  for(int_t i=0;i<num_funcs;++i){
+    for(int_t j=0;j<num_funcs;++j){
+        elem_div_stiffness[i*num_funcs*spa_dim + j*spa_dim+0] -= tau*alpha2*N[j]*vec_invjTDNT[i*spa_dim+0]*gp_weight*J;
+        elem_div_stiffness[i*num_funcs*spa_dim + j*spa_dim+1] -= tau*alpha2*N[j]*vec_invjTDNT[i*spa_dim+1]*gp_weight*J;
     }
   }
-
-
 }
 
 
