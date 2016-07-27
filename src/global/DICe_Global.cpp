@@ -45,6 +45,7 @@
 #include <DICe_MeshIO.h>
 #include <DICe_ParameterUtilities.h>
 #include <DICe_Preconditioner.h>
+#include <DICe_Parser.h>
 
 namespace DICe {
 
@@ -63,7 +64,7 @@ Global_Algorithm::Global_Algorithm(Schema * schema,
   max_iterations_(25),
   element_type_(DICe::mesh::TRI3),
   use_fixed_point_iterations_(false),
-  use_regular_grid_(false)
+  stabilization_tau_(-1.0)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(!schema,std::runtime_error,"Error, cannot have null schema in this constructor");
   default_constructor_tasks(params);
@@ -80,7 +81,7 @@ Global_Algorithm::Global_Algorithm(const Teuchos::RCP<Teuchos::ParameterList> & 
   max_iterations_(25),
   element_type_(DICe::mesh::TRI3),
   use_fixed_point_iterations_(false),
-  use_regular_grid_(false)
+  stabilization_tau_(-1.0)
 {
   default_constructor_tasks(params);
 }
@@ -166,7 +167,8 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     points_x[1] = mms_problem_->dim_x(); points_y[1] = 0.0;
     points_x[2] = mms_problem_->dim_x(); points_y[2] = mms_problem_->dim_y();
     points_x[3] = 0.0; points_y[3] = mms_problem_->dim_y();
-    mesh_ = DICe::generate_tri_mesh(element_type_,points_x,points_y,mesh_size_,output_file_name_,enforce_lagrange_bc);
+    bool use_regular_grid = params->get<bool>(DICe::parser_use_regular_grid,false);
+    mesh_ = DICe::generate_tri_mesh(element_type_,points_x,points_y,mesh_size_,output_file_name_,enforce_lagrange_bc,use_regular_grid);
     // if this is a mixed formulation, generate the lagrange multiplier mesh
     //if(is_mixed_formulation()){
     //  l_mesh_ = element_type_==DICe::mesh::TRI6 ? DICe::mesh::create_tri3_exodus_mesh_from_tri6(mesh_,lagrange_output_file_name_):
@@ -259,6 +261,10 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
 
   // allways add a constant term IC
   add_term(CONSTANT_IC);
+  if(is_mixed_formulation())
+    add_term(STAB_LAGRANGE); // pressure stabilization
+
+  stabilization_tau_ = params->get<double>(DICe::global_stabilization_tau,-1.0);
 
   if(global_formulation_==HORN_SCHUNCK||global_formulation_==MIXED_HORN_SCHUNCK){
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::global_regularization_alpha),std::runtime_error,
@@ -460,6 +466,7 @@ Global_Algorithm::compute_tangent(){
       shape_func_eval_factory.create(DICe::mesh::TRI3);
   const int_t lag_num_funcs = lag_shape_func_evaluator->num_functions();
   scalar_t N_lag[lag_num_funcs];
+  scalar_t DN_lag[lag_num_funcs*spa_dim];
   Teuchos::RCP<DICe::mesh::Shape_Function_Evaluator> vel_shape_func_evaluator = element_type_ ==DICe::mesh::TRI6 ?
       shape_func_eval_factory.create(DICe::mesh::TRI6):
       shape_func_eval_factory.create(DICe::mesh::TRI3);
@@ -473,6 +480,8 @@ Global_Algorithm::compute_tangent(){
   scalar_t J =0.0;
   scalar_t elem_stiffness[vel_num_funcs*spa_dim*vel_num_funcs*spa_dim];
   scalar_t elem_div_stiffness[lag_num_funcs*spa_dim*vel_num_funcs];
+  scalar_t elem_stab_stiffness[lag_num_funcs*lag_num_funcs];
+
   //scalar_t grad_phi[spa_dim];
   scalar_t x=0.0,y=0.0;
 
@@ -523,6 +532,9 @@ Global_Algorithm::compute_tangent(){
     // clear the div stiffness storage
     for(int_t i=0;i<lag_num_funcs*spa_dim*vel_num_funcs;++i)
       elem_div_stiffness[i] = 0.0;
+    // clear the stab stiffness storage
+    for(int_t i=0;i<lag_num_funcs*lag_num_funcs;++i)
+      elem_stab_stiffness[i] = 0.0;
 
     // low-order gauss point loop:
     for(int_t gp=0;gp<num_integration_points;++gp){
@@ -536,8 +548,10 @@ Global_Algorithm::compute_tangent(){
       vel_shape_func_evaluator->evaluate_shape_functions(natural_coords,N_vel);
       vel_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN_vel);
 
+      // FIXME merge these later
       // evaluate the shape functions and derivatives:
       lag_shape_func_evaluator->evaluate_shape_functions(natural_coords,N_lag);
+      lag_shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN_lag);
 
       // physical gp location
       x = 0.0; y=0.0;
@@ -550,6 +564,12 @@ Global_Algorithm::compute_tangent(){
       // compute the jacobian for this element:
       DICe::global::calc_jacobian(nodal_coords,DN_vel,jac,inv_jac,J,vel_num_funcs,spa_dim);
 
+      scalar_t tau = 0.0;
+      if(is_mixed_formulation()){
+        tau = stabilization_tau_ == -1.0 ? compute_tau_tri3(global_formulation_,alpha2_,natural_coords,J,inv_jac) :
+            stabilization_tau_;
+      }
+
       // grad(phi) tensor_prod grad(phi)
       if(has_term(MMS_IMAGE_GRAD_TENSOR))
         mms_image_grad_tensor(mms_problem_,spa_dim,vel_num_funcs,x,y,J,gp_weights[gp],N_vel,elem_stiffness);
@@ -560,24 +580,51 @@ Global_Algorithm::compute_tangent(){
 
       // alpha^2 * b
       if(has_term(TIKHONOV_REGULARIZATION))
-        tikhonov_tensor(this,spa_dim,vel_num_funcs,J,gp_weights[gp],N_vel,elem_stiffness);
+        tikhonov_tensor(this,spa_dim,vel_num_funcs,J,gp_weights[gp],N_vel,tau,elem_stiffness);
       //lumped_tikhonov_tensor(this,spa_dim,tri6_num_funcs,J,gp_weights[gp],N6,elem_stiffness);
 
       // mixed formulation stiffness terms
 
       // grad(lambda)
       if(has_term(DIV_VELOCITY))
-        div_velocity(spa_dim,lag_num_funcs,vel_num_funcs,J,gp_weights[gp],inv_jac,DN_vel,N_lag,elem_div_stiffness);
+        div_velocity(spa_dim,lag_num_funcs,vel_num_funcs,J,gp_weights[gp],inv_jac,DN_vel,N_lag,alpha2_,tau,elem_div_stiffness);
+
+      if(has_term(STAB_LAGRANGE))
+        stab_lagrange(spa_dim,lag_num_funcs,J,gp_weights[gp],inv_jac,DN_lag,tau,elem_stab_stiffness);
+
+//      std::cout << "INT div stiff " << std::endl;
+//      for(int_t j=0;j<lag_num_funcs;++j){
+//        for(int_t i=0;i<vel_num_funcs*spa_dim;++i){
+//          std::cout << elem_div_stiffness[j*vel_num_funcs*spa_dim + i] << " ";
+//        }
+//        std::cout << std::endl;
+//      }
 
     } // gp loop
 
-    //std::cout << "div stiff " << std::endl;
-    //for(int_t j=0;j<3;++j){
-    //  for(int_t i=0;i<vel_num_funcs*spa_dim;++i){
-    //    std::cout << elem_div_stiffness[j*vel_num_funcs*spa_dim + i] << " ";
-    //  }
-    //  std::cout << std::endl;
-    //}
+//    std::cout << "div stiff " << std::endl;
+//    for(int_t j=0;j<lag_num_funcs;++j){
+//      for(int_t i=0;i<vel_num_funcs*spa_dim;++i){
+//        std::cout << elem_div_stiffness[j*vel_num_funcs*spa_dim + i] << " ";
+//      }
+//      std::cout << std::endl;
+//    }
+//
+//    std::cout << "Kvv stiff " << std::endl;
+//    for(int_t j=0;j<vel_num_funcs*spa_dim;++j){
+//      for(int_t i=0;i<vel_num_funcs*spa_dim;++i){
+//        std::cout << elem_stiffness[j*vel_num_funcs*spa_dim + i] << " ";
+//      }
+//      std::cout << std::endl;
+//    }
+//
+//    std::cout << "Kp stiff " << std::endl;
+//    for(int_t j=0;j<vel_num_funcs;++j){
+//      for(int_t i=0;i<vel_num_funcs;++i){
+//        std::cout << elem_stab_stiffness[j*vel_num_funcs + i] << " ";
+//      }
+//      std::cout << std::endl;
+//    }
 
     // low-order gauss point loop:
     for(int_t gp=0;gp<num_image_integration_points;++gp){
@@ -611,6 +658,24 @@ Global_Algorithm::compute_tangent(){
     //DEBUG_MSG("Global_Algorithm::compute_tangent(): Assembling the tangent matrix");
     // assemble the global stiffness matrix
     for(int_t i=0;i<vel_num_funcs;++i){
+      if(is_mixed_formulation()){
+        for(int_t j=0;j<lag_num_funcs;++j){
+          const int_t row = node_ids[i] + mgo;
+          const int_t col = node_ids[j] + mgo;
+          //std::cout << "row " << row << " col " << col << std::endl;
+          const scalar_t value = elem_stab_stiffness[j*lag_num_funcs + i];
+          const bool is_local_row_node =  mesh_->get_vector_node_dist_map()->is_node_global_elem(row); // using the non-mixed map because the row is a velocity row
+          const bool row_is_bc_node = is_local_row_node ?
+              bc_manager_->is_row_bc(mesh_->get_vector_node_dist_map()->get_local_element(row)) : false; // same rationalle here
+          const bool is_local_mixed_row_node =  mesh_->get_scalar_node_dist_map()->is_node_global_elem(node_ids[i]); // using the non-mixed map because the row is a velocity row
+          const bool is_p_row = is_local_mixed_row_node ?
+              bc_manager_->is_mixed_bc(mesh_->get_scalar_node_dist_map()->get_local_element(node_ids[i])) : false;
+          if(!row_is_bc_node&&!is_p_row){// && !col_is_bc_node){
+            col_id_array_map.find(row)->second.push_back(col);
+            values_array_map.find(row)->second.push_back(value);
+          }
+        } // tri3_num_funcs
+      }
       for(int_t m=0;m<spa_dim;++m){
         // assemble the lagrange multiplier degrees of freedom
         if(is_mixed_formulation()){
@@ -888,8 +953,8 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
 
   // export the overlap residual to the dist vector
   //mesh_->field_overlap_export(overlap_residual_ptr, mesh_::field_enums::RESIDUAL_FS, ADD);
-  return residual->norm();
   //residual->describe();
+  return residual->norm();
 }
 
 
@@ -942,6 +1007,8 @@ Global_Algorithm::execute(){
     // apply the boundary conditions
     bc_manager_->apply_bcs(it==0);
 
+    //residual->describe();
+
     if(resid_norm < residual_tol && it!=0){
       DEBUG_MSG("Iteration: " << it << " residual norm: " << resid_norm);
       DEBUG_MSG("Global_Algorithm::execute(): * * * convergence successful * * *");
@@ -967,11 +1034,11 @@ Global_Algorithm::execute(){
     // solve:
     DEBUG_MSG("Global_Algorithm::execute(): Solving the linear system...");
     DEBUG_MSG("Global_Algorithm::execute(): Preconditioning");
-    Preconditioner_Factory factory;
-    Teuchos::RCP<Teuchos::ParameterList> plist = factory.parameter_list_for_ifpack();
-    Teuchos::RCP<Ifpack_Preconditioner> Prec = factory.create (tangent->get(), plist);
-    Teuchos::RCP<Belos::EpetraPrecOp> belosPrec = Teuchos::rcp( new Belos::EpetraPrecOp( Prec ) );
-    linear_problem_->setLeftPrec( belosPrec );
+    //Preconditioner_Factory factory;
+    //Teuchos::RCP<Teuchos::ParameterList> plist = factory.parameter_list_for_ifpack();
+    //Teuchos::RCP<Ifpack_Preconditioner> Prec = factory.create (tangent->get(), plist);
+    //Teuchos::RCP<Belos::EpetraPrecOp> belosPrec = Teuchos::rcp( new Belos::EpetraPrecOp( Prec ) );
+    //linear_problem_->setLeftPrec( belosPrec );
     bool is_set = linear_problem_->setProblem(lhs->get(), residual->get());
     TEUCHOS_TEST_FOR_EXCEPTION(!is_set, std::logic_error,
       "Error: Belos::LinearProblem::setProblem() failed to set up correctly.\n");

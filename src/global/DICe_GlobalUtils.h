@@ -460,8 +460,8 @@ public:
     const scalar_t & y,
     scalar_t & b_x,
     scalar_t & b_y){
-    b_x = -1.0/dim_x_*x;
-    b_y = 1.0/dim_y_*y;
+    b_x = 1.0/dim_x_*x;
+    b_y = -1.0/dim_y_*y;
   }
 
   /// See base class definition
@@ -480,17 +480,17 @@ public:
     scalar_t & b_x_y,
     scalar_t & b_y_x,
     scalar_t & b_y_y){
-    b_x_x = -1.0/dim_x_;
+    b_x_x = 1.0/dim_x_;
     b_x_y = 0.0;
     b_y_x = 0.0;
-    b_y_y = 1.0/dim_y_;
+    b_y_y = -1.0/dim_y_;
   }
 
   /// See base class definition
   virtual void lagrange(const scalar_t & x,
     const scalar_t & y,
     scalar_t & l_out){
-    l_out = coeff_*0.5*((1.0/dim_x_)*x*x + (-1.0/dim_y_)*y*y);
+    l_out = coeff_*0.5*((-1.0/dim_x_)*x*x + (1.0/dim_y_)*y*y);
   }
 
   /// See base class definition
@@ -498,8 +498,8 @@ public:
     const scalar_t & y,
     scalar_t & l_x,
     scalar_t & l_y){
-    l_x = coeff_*(1.0/dim_x_)*x;
-    l_y = coeff_*(-1.0/dim_y_)*y;
+    l_x = coeff_*(-1.0/dim_x_)*x;
+    l_y = coeff_*(1.0/dim_y_)*y;
   }
 
   /// See base class definition
@@ -750,6 +750,8 @@ void div_symmetric_strain(const int_t spa_dim,
 /// \param inv_jac inverse jacobian
 /// \param DN6 derivatives of the shape functions for tri6 elem
 /// \param N3 shape functions for tri3 elem
+/// \param alpha2 the regularization parameter
+/// \param tau the stabilization coefficient
 /// \param elem_div_stiffness output the element stiffness contributions
 void div_velocity(const int_t spa_dim,
   const int_t t3_num_funcs,
@@ -759,7 +761,27 @@ void div_velocity(const int_t spa_dim,
   const scalar_t * inv_jac,
   const scalar_t * DN6,
   const scalar_t * N3,
+  const scalar_t & alpha2,
+  const scalar_t & tau,
   scalar_t * elem_div_stiffness);
+
+/// adds the lagrange stabilization stiffness terms
+/// \param spa_dim spatial dimension
+/// \param num_funcs the number of shape functions
+/// \param J determinant of the jacobian
+/// \param gp_weight gauss weight
+/// \param inv_jac inverse jacobian
+/// \param DN derivatives of the shape functions for tri6 elem
+/// \param tau the stabilization coefficient
+/// \param elem_stab_stiffness output the element stiffness contributions
+void stab_lagrange(const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * inv_jac,
+  const scalar_t * DN,
+  const scalar_t & tau,
+  scalar_t * elem_stab_stiffness);
 
 /// adds a tikhonov type regularizer to the governing eqs
 /// \param spa_dim spatial dimension
@@ -767,6 +789,7 @@ void div_velocity(const int_t spa_dim,
 /// \param J determinant of the jacobian
 /// \param gp_weight gauss point weight
 /// \param N shape function vector
+/// \param tau stabilization coefficient
 /// \param elem_stiffness element stiffness
 void tikhonov_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
@@ -774,6 +797,7 @@ void tikhonov_tensor(Global_Algorithm * alg,
   const scalar_t & J,
   const scalar_t & gp_weight,
   const scalar_t * N,
+  const scalar_t & tau,
   scalar_t * elem_stiffness);
 
 /// adds a tikhonov type regularizer to the governing eqs
@@ -968,6 +992,12 @@ void subset_velocity(Global_Algorithm * alg,
   const int_t & subset_size,
   scalar_t & b_x,
   scalar_t & b_y);
+
+scalar_t compute_tau_tri3(const Global_Formulation & formulation,
+  const scalar_t & alpha2,
+  const scalar_t * natural_coords,
+  const scalar_t & J,
+  scalar_t * inv_jac);
 
 void calc_jacobian(const scalar_t * xcap,
   const scalar_t * DN,

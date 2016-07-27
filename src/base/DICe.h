@@ -207,6 +207,8 @@ const char* const output_beta = "output_beta";
 /// String parameter name
 const char* const global_regularization_alpha = "global_regularization_alpha";
 /// String parameter name
+const char* const global_stabilization_tau = "global_stabilization_tau";
+/// String parameter name
 const char* const max_iterations = "max_iterations";
 /// String parameter name
 const char* const tolerance = "tolerance";
@@ -640,6 +642,7 @@ enum Global_EQ_Term{
   SUBSET_DISPLACEMENT_IC,
   LAGRANGE_BC,
   CONSTANT_IC,
+  STAB_LAGRANGE,
   NO_SUCH_GLOBAL_EQ_TERM
 };
 
@@ -955,6 +958,11 @@ const Correlation_Parameter global_regularization_alpha_param(global_regularizat
   true,
   "Used only for global, this is the coefficient for the alpha regularization term");
 /// Correlation parameter and properties
+const Correlation_Parameter global_stabilization_tau_param(global_stabilization_tau,
+  SCALAR_PARAM,
+  true,
+  "Used only for global, this is the stabilization coefficient (overrides automatically calculated one)");
+/// Correlation parameter and properties
 const Correlation_Parameter global_formulation_param(global_formulation,
   STRING_PARAM,
   true,
@@ -1047,7 +1055,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 63;
+const int_t num_valid_correlation_params = 64;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1108,6 +1116,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   objective_regularization_factor_param,
   filter_failed_cine_pixels_param,
   global_regularization_alpha_param,
+  global_stabilization_tau_param,
   global_formulation_param,
   global_solver_param,
   global_element_type_param,
@@ -1117,7 +1126,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_global_correlation_params = 17;
+const int_t num_valid_global_correlation_params = 18;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_global_correlation_params[num_valid_global_correlation_params] = {
   use_global_dic_param,
@@ -1131,6 +1140,7 @@ const Correlation_Parameter valid_global_correlation_params[num_valid_global_cor
   output_delimiter_param,
   omit_output_row_id_param,
   global_regularization_alpha_param,
+  global_stabilization_tau_param,
   global_formulation_param,
   global_solver_param,
   mms_spec_param,

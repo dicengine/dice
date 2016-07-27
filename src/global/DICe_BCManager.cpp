@@ -61,8 +61,7 @@ BC_Manager::BC_Manager(Global_Algorithm * alg) :
     is_mixed_(false),
     alg_(alg)
 {
-  //if(l_mesh_!=Teuchos::null)
-    is_mixed_ = alg->is_mixed_formulation();//true;
+  is_mixed_ = alg->is_mixed_formulation();
 
   const int_t lagrange_size = is_mixed_ ? mesh_->get_scalar_node_dist_map()->get_num_local_elements() : 0;
   initialize_bc_register(mesh_->get_vector_node_dist_map()->get_num_local_elements(),
@@ -79,8 +78,8 @@ BC_Manager::BC_Manager(Global_Algorithm * alg) :
   for(;it!=it_end;++it){
     const int_t boundary_node_set_id = it->first;
     DEBUG_MSG("Setting up bc register flags for note set id " << boundary_node_set_id);
-    if(boundary_node_set_id==-10000)
-      continue; // neumann boundary is -10000 id
+    if(boundary_node_set_id==0)
+      continue; // neumann boundary is 0 id
     // lagrange multiplier boundary is negative id
     if(boundary_node_set_id<0 && is_mixed_){
       const int_t num_bc_nodes = bc_set->find(boundary_node_set_id)->second.size();
@@ -96,7 +95,9 @@ BC_Manager::BC_Manager(Global_Algorithm * alg) :
     }
     else{
       // make sure that a bc def exists for this nodes set
-      TEUCHOS_TEST_FOR_EXCEPTION((int_t)mesh_->bc_defs()->size() < boundary_node_set_id,std::runtime_error,"bc_def does not exist for this node set id " << boundary_node_set_id);
+      TEUCHOS_TEST_FOR_EXCEPTION(boundary_node_set_id <=0, std::runtime_error,"bc set id should be positive here");
+      TEUCHOS_TEST_FOR_EXCEPTION((int_t)mesh_->bc_defs()->size() < boundary_node_set_id,std::runtime_error,
+        "bc_def does not exist for this node set id " << boundary_node_set_id);
       const int_t comp = (*mesh_->bc_defs())[boundary_node_set_id-1].comp_;
       const int_t num_bc_nodes = bc_set->find(boundary_node_set_id)->second.size();
       for(int_t i=0;i<num_bc_nodes;++i){
@@ -124,8 +125,6 @@ BC_Manager::BC_Manager(Global_Algorithm * alg) :
       }
     } // end bcs from node sets
   }
-  // FIXME FIXME REMOVE LATER
-  //register_mixed_bc(0);
 }
 
 void

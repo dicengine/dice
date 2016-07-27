@@ -252,6 +252,7 @@ void tikhonov_tensor(Global_Algorithm * alg,
   const scalar_t & J,
   const scalar_t & gp_weight,
   const scalar_t * N,
+  const scalar_t & tau,
   scalar_t * elem_stiffness){
   TEUCHOS_TEST_FOR_EXCEPTION(alg==NULL,std::runtime_error,
     "Error, the pointer to the algorithm must be valid");
@@ -264,9 +265,9 @@ void tikhonov_tensor(Global_Algorithm * alg,
     const int_t row2 = (i*spa_dim) + 1;
     for(int_t j=0;j<num_funcs;++j){
       elem_stiffness[row1*num_funcs*spa_dim + j*spa_dim+0]
-                     += N[i]*alpha2*N[j]*gp_weight*J;
+                     += (1.0 - tau*alpha2)*N[i]*alpha2*N[j]*gp_weight*J;
       elem_stiffness[row2*num_funcs*spa_dim + j*spa_dim+1]
-                     += N[i]*alpha2*N[j]*gp_weight*J;
+                     += (1.0 - tau*alpha2)*N[i]*alpha2*N[j]*gp_weight*J;
     }
   }
 }
@@ -326,6 +327,8 @@ void div_velocity(const int_t spa_dim,
   const scalar_t * inv_jac,
   const scalar_t * DN6,
   const scalar_t * N3,
+  const scalar_t & alpha2,
+  const scalar_t & tau,
   scalar_t * elem_div_stiffness){
   scalar_t vec_invjTDNT[t6_num_funcs*spa_dim];
   for(int_t n=0;n<t6_num_funcs;++n){
@@ -333,18 +336,8 @@ void div_velocity(const int_t spa_dim,
     vec_invjTDNT[n*spa_dim+1] = inv_jac[1]*DN6[n*spa_dim+0] + inv_jac[3]*DN6[n*spa_dim+1];
   }
 
-//  std::cout << "DN6: " << std::endl;
-//  std::cout << DN6[0] << " " << DN6[1] << std::endl;
-//  std::cout << DN6[2] << " " << DN6[3] << std::endl;
-//  std::cout << DN6[4] << " " << DN6[5] << std::endl;
-//  std::cout << DN6[6] << " " << DN6[7] << std::endl;
-//  std::cout << DN6[8] << " " << DN6[9] << std::endl;
-//  std::cout << DN6[10] << " " << DN6[11] << std::endl;
-//
-//  std::cout << "invJ: " << std::endl;
-//  std::cout << inv_jac[0] << " " << inv_jac[1] << std::endl;
-//  std::cout << inv_jac[2] << " " << inv_jac[3] << std::endl;
-
+  // TODO fix the num_funcs args for t6 vs t3 and remove this test
+  //TEUCHOS_TEST_FOR_EXCEPTION(t6_num_funcs!=3,std::runtime_error,"");
 
   // div velocity stiffness terms
   for(int_t i=0;i<t3_num_funcs;++i){
@@ -355,7 +348,41 @@ void div_velocity(const int_t spa_dim,
       }
     }
   }
+  for(int_t i=0;i<t3_num_funcs;++i){
+    for(int_t j=0;j<t3_num_funcs;++j){
+        elem_div_stiffness[i*t3_num_funcs*spa_dim + j*spa_dim+0] -= tau*alpha2*N3[j]*vec_invjTDNT[i*spa_dim+0]*gp_weight*J;
+        elem_div_stiffness[i*t3_num_funcs*spa_dim + j*spa_dim+1] -= tau*alpha2*N3[j]*vec_invjTDNT[i*spa_dim+1]*gp_weight*J;
+//        elem_div_stiffness[i*t3_num_funcs*spa_dim + j*spa_dim+0] -= tau*N3[j]*vec_invjTDNT[i*spa_dim+0]*gp_weight*J;
+//        elem_div_stiffness[i*t3_num_funcs*spa_dim + j*spa_dim+1] -= tau*N3[j]*vec_invjTDNT[i*spa_dim+1]*gp_weight*J;
+    }
+  }
+
+
 }
+
+
+void stab_lagrange(const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * inv_jac,
+  const scalar_t * DN,
+  const scalar_t & tau,
+  scalar_t * elem_stab_stiffness){
+  scalar_t invjTDNT[num_funcs*spa_dim];
+  for(int_t n=0;n<num_funcs;++n){
+    invjTDNT[n*spa_dim+0] = inv_jac[0]*DN[n*spa_dim+0] + inv_jac[2]*DN[n*spa_dim+1];
+    invjTDNT[n*spa_dim+1] = inv_jac[1]*DN[n*spa_dim+0] + inv_jac[3]*DN[n*spa_dim+1];
+  }
+  // stab lagrange stiffness terms
+  for(int_t i=0;i<num_funcs;++i){
+    for(int_t j=0;j<num_funcs;++j){
+        elem_stab_stiffness[i*num_funcs + j]
+           -= tau*(invjTDNT[i*2]*invjTDNT[j*2] + invjTDNT[i*2+1]*invjTDNT[j*2+1])*gp_weight*J;
+    }
+  }
+}
+
 
 void subset_velocity(Global_Algorithm * alg,
   const int_t & c_x, // closest pixel in x
@@ -587,6 +614,22 @@ void optical_flow_velocity(Global_Algorithm * alg,
   delete [] WORK;
 }
 
+scalar_t compute_tau_tri3(const Global_Formulation & formulation,
+  const scalar_t & alpha2,
+  const scalar_t * natural_coords,
+  const scalar_t & J,
+  scalar_t * inv_jac){
+
+  const scalar_t tau_1 = 0.225*0.5*J;
+  const scalar_t tau_2 = 0.14464285714286*0.5*J;
+  const scalar_t tau_3 = (inv_jac[0]*inv_jac[0] + inv_jac[2]*inv_jac[2] + inv_jac[0]*inv_jac[1] +
+                          inv_jac[2]*inv_jac[3] + inv_jac[1]*inv_jac[1] + inv_jac[3]*inv_jac[3])*4.05*J;
+  const scalar_t be = 27.0 * natural_coords[0]*natural_coords[1]*(1.0 - natural_coords[0] - natural_coords[1]);
+  const scalar_t tau = formulation==LEHOUCQ_TURNER ? be*tau_1/alpha2*tau_2 : be*tau_1/alpha2*tau_3;
+
+  return tau;
+}
+
 
 void calc_jacobian(const scalar_t * xcap,
   const scalar_t * DN,
@@ -602,30 +645,10 @@ void calc_jacobian(const scalar_t * xcap,
   }
   J = 0.0;
 
-//  std::cout << " xcap " << std::endl;
-//  for(int_t k=0;k<num_elem_nodes;++k){
-//    for(int_t i=0;i<dim;++i){
-//      std::cout << xcap[k*dim + i] << " " ;
-//    }
-//    std::cout << std::endl;
-//  }
-//  std::cout << " DN " << std::endl;
-//  for(int_t k=0;k<num_elem_nodes;++k){
-//    for(int_t i=0;i<dim;++i){
-//      std::cout << DN[k*dim + i] << " " ;
-//    }
-//    std::cout << std::endl;
-//  }
   for(int_t i=0;i<dim;++i)
     for(int_t j=0;j<dim;++j)
       for(int_t k=0;k<num_elem_nodes;++k)
         jacobian[i*dim+j] += xcap[k*dim + i] * DN[k*dim+j];
-//  std::cout << " jacobian " << std::endl;
-//  for(int_t i=0;i<dim;++i){
-//    for(int_t j=0;j<dim;++j)
-//      std::cout << " " << jacobian[i*dim+j];
-//    std::cout << std::endl;
-//  }
 
   if(dim==2){
     J = jacobian[0]*jacobian[3] - jacobian[1]*jacobian[2];
@@ -653,14 +676,6 @@ void calc_jacobian(const scalar_t * xcap,
   }
   else
     TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"Error, invalid dimension");
-
-//  std::cout << " J " << J << std::endl;
-//  std::cout << " inv_jacobian " << std::endl;
-//  for(int_t i=0;i<dim;++i){
-//    for(int_t j=0;j<dim;++j)
-//      std::cout << " " << inv_jacobian[i*dim+j];
-//    std::cout << std::endl;
-//  }
 };
 
 void calc_B(const scalar_t * DN,
@@ -673,25 +688,11 @@ void calc_B(const scalar_t * DN,
   for(int_t i=0;i<dim*num_elem_nodes;++i)
     dN[i] = 0.0;
 
-//  std::cout << " DN " << std::endl;
-//  for(int_t j=0;j<num_elem_nodes;++j){
-//    for(int_t i=0;i<dim;++i)
-//      std::cout << " " << DN[j*dim+i];
-//    std::cout << std::endl;
-//  }
-
   // compute j_inv_transpose * DN_transpose
   for(int_t i=0;i<dim;++i)
     for(int_t j=0;j<num_elem_nodes;++j)
       for(int_t k=0;k<dim;++k)
         dN[i*num_elem_nodes+j] += inv_jacobian[k*dim + i] * DN[j*dim+k];
-
-//  std::cout << " dN " << std::endl;
-//  for(int_t i=0;i<dim;++i){
-//    for(int_t j=0;j<num_elem_nodes;++j)
-//      std::cout << " " << dN[i*num_elem_nodes+j];
-//    std::cout << std::endl;
-//  }
 
   const int_t stride = dim*num_elem_nodes;
   int_t placer = 0;

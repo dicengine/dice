@@ -263,7 +263,11 @@ public:
   BC_Manager(Global_Algorithm * alg);
 
   /// destructor
-  virtual ~BC_Manager(){};
+  virtual ~BC_Manager(){
+    delete [] row_bc_register_;
+    delete [] col_bc_register_;
+    delete [] mixed_bc_register_;
+  };
 
   /// returns true if the register has been initialized
   const bool bc_register_initialized()const{
