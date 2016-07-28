@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
   *outStream << "generating the mms parameters" << std::endl;
   Teuchos::RCP<Teuchos::ParameterList> mms_params = Teuchos::rcp(new Teuchos::ParameterList());
   mms_params->set(DICe::problem_name,"div_curl_modulator");
-  mms_params->set(DICe::phi_coeff,20.0);
+  mms_params->set(DICe::phi_coeff,40.0);
   mms_params->set(DICe::b_coeff,2.0);
   mms_params->print(*outStream);
 
@@ -87,13 +87,13 @@ int main(int argc, char *argv[]) {
   corr_params->set(DICe::max_solver_iterations_fast,200);
 //  corr_params->set(DICe::interpolation_method,BICUBIC);
 //  corr_params->set(DICe::global_formulation,LEVENBERG_MARQUARDT);
-  corr_params->set(DICe::global_formulation,HORN_SCHUNCK);
-//  corr_params->set(DICe::global_formulation,UNREGULARIZED);
-  corr_params->set(DICe::global_element_type,"TRI3");
+//  corr_params->set(DICe::global_formulation,HORN_SCHUNCK);
+  corr_params->set(DICe::global_formulation,UNREGULARIZED);
+  corr_params->set(DICe::global_element_type,"TRI6");
 //  corr_params->set(DICe::use_fixed_point_iterations,false);
   input_params->set(DICe::mesh_size,100.0);//4000.0);
-  corr_params->set(DICe::num_image_integration_points,100);
-  corr_params->set(DICe::global_regularization_alpha,0.05);
+  corr_params->set(DICe::num_image_integration_points,125);
+//  corr_params->set(DICe::global_regularization_alpha,0.05);
 
   *outStream << "generating the mms problem" << std::endl;
   // create an MMS problem
@@ -125,9 +125,9 @@ int main(int argc, char *argv[]) {
       }
     }
     Teuchos::RCP<Image> ref = Teuchos::rcp(new Image(w,h,ref_intens));
-    //std::stringstream ref_name;
-    //ref_name << "ref_pixel_shift_" << shift << ".tif";
-    //ref->write(ref_name.str());
+    std::stringstream ref_name;
+    ref_name << "ref_pixel_shift_" << shift << ".tif";
+    ref->write(ref_name.str());
     Teuchos::RCP<Image> def = Teuchos::rcp(new Image(w,h,def_intens));
     //std::stringstream def_name;
     //def_name << "def_pixel_shift_" << shift << ".tif";
@@ -212,7 +212,7 @@ int main(int argc, char *argv[]) {
     error_x.push_back(error_bx);
     error_y.push_back(error_by);
 
-    const scalar_t error_max = 0.1;
+    const scalar_t error_max = 1.0E-4;
     if(error_bx > error_max || error_by > error_max){
       *outStream << "Error, the solution error is too high" << std::endl;
       errorFlag++;
