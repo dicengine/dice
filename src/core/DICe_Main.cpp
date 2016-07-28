@@ -94,6 +94,16 @@ int main(int argc, char *argv[]) {
     else{
       *outStream << "Correlation parameters not specified by user" << std::endl;
     }
+    // if the mesh size was specified in the input params set the use_global_dic flag
+    if(input_params->isParameter(DICe::mesh_size)){
+#ifdef DICE_ENABLE_GLOBAL
+      if(correlation_params==Teuchos::null) correlation_params = Teuchos::rcp(new Teuchos::ParameterList());
+      correlation_params->set(DICe::use_global_dic,true);
+#else
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, global method requested, but code"
+          " was not built with DICE_ENABLE_GLOBAL");
+#endif
+    }
 
     // decipher the image file names (note: zero entry is the reference image):
 
@@ -209,17 +219,27 @@ int main(int argc, char *argv[]) {
 
     schema->initialize(input_params);
 
-    const bool has_motion_windows = schema->motion_window_params()->size()>0;
-
-    *outStream << "Number of subsets: " << schema->data_num_points() << std::endl;
-    for(int_t i=0;i<schema->data_num_points();++i){
-      if(i==10&&schema->data_num_points()!=11) *outStream << "..." << std::endl;
-      else if(i>10&&i<schema->data_num_points()-1) continue;
-      else
-        *outStream << "Subset: " << i << " global coordinates (" << schema->field_value(i,COORDINATE_X) <<
-        "," << schema->field_value(i,COORDINATE_Y) << ")" << std::endl;
+    bool has_motion_windows = false;
+    if(schema->analysis_type()==LOCAL_DIC){
+      has_motion_windows = schema->motion_window_params()->size()>0;
+      *outStream << "Number of subsets: " << schema->data_num_points() << std::endl;
+      for(int_t i=0;i<schema->data_num_points();++i){
+        if(i==10&&schema->data_num_points()!=11) *outStream << "..." << std::endl;
+        else if(i>10&&i<schema->data_num_points()-1) continue;
+        else
+          *outStream << "Subset: " << i << " global coordinates (" << schema->field_value(i,COORDINATE_X) <<
+          "," << schema->field_value(i,COORDINATE_Y) << ")" << std::endl;
+      }
+      *outStream << std::endl;
     }
-    *outStream << std::endl;
+    else if(schema->analysis_type()==GLOBAL_DIC){
+#ifdef DICE_ENABLE_GLOBAL
+      *outStream << "Using qaudratic tri 6 elements" << std::endl;
+      *outStream << "Mesh size:          " << schema->global_algorithm()->mesh_size() << std::endl;
+      *outStream << "Number of nodes:    " << schema->global_algorithm()->mesh()->num_nodes() << std::endl;
+      *outStream << "Number of elements: " << schema->global_algorithm()->mesh()->num_elem() << std::endl;
+#endif
+    }
 
     // let the schema know how many images there are in the sequence:
     schema->set_num_image_frames(num_images);
@@ -230,6 +250,7 @@ int main(int argc, char *argv[]) {
     scalar_t max_time = 0.0;
     scalar_t min_time = 1.0E10;
     scalar_t avg_time = 0.0;
+    bool failed_step = false;
     std::string file_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
     // TODO find a more straightforward way to do the indexing
     const int_t start_frame = cine_start_index==-1 ? 1 : cine_start_index;
@@ -237,7 +258,7 @@ int main(int argc, char *argv[]) {
     for(int_t image_it=start_frame;image_it<=end_frame;++image_it){
       if(is_cine){
         *outStream << "Processing Image: " << image_it - start_frame + 1 << " of " << num_images << " frame id: " << first_frame_index + image_it << std::endl;
-        if(has_motion_windows){
+        if(has_motion_windows&&schema->analysis_type()!=GLOBAL_DIC){
           std::map<int_t,Motion_Window_Params>::iterator map_it = schema->motion_window_params()->begin();
           for(;map_it!=schema->motion_window_params()->end();++map_it){
             if(schema->dist_map()->get_local_element(map_it->first)<0) continue;
@@ -270,7 +291,9 @@ int main(int argc, char *argv[]) {
       { // start the timer
         boost::timer t;
 
-        schema->execute_correlation();
+        int_t corr_error = schema->execute_correlation();
+        if(corr_error)
+          failed_step = true;
 
         // timing info
         elapsed_time = t.elapsed();
@@ -284,12 +307,15 @@ int main(int argc, char *argv[]) {
       //if(subset_info->conformal_area_defs!=Teuchos::null&&image_it==1){
       //  schema->write_control_points_image("RegionOfInterest");
       //}
-
+      schema->post_execution_tasks();
     } // image loop
 
     avg_time = total_time / num_images;
 
-    *outStream << "\n--- Successful Completion ---\n" << std::endl;
+    if(failed_step)
+      *outStream << "\n--- Failed Step Occurred ---\n" << std::endl;
+    else
+      *outStream << "\n--- Successful Completion ---\n" << std::endl;
 
     // output timing
 

@@ -264,56 +264,56 @@ private:
   Teuchos::ArrayRCP<scalar_t> neighbor_distances_y_;
 };
 
-
-/// \class DICe::Global_Strain_Post_Processor
-/// \brief A specific instance of post processor that computes strain in an FEM fashion
-///
-class DICE_LIB_DLL_EXPORT
-Global_Strain_Post_Processor : public Post_Processor {
-
-public:
-
-  /// Default constructor
-  /// \param schema Pointer to the parent schema that is using this post processor
-  /// \param params Pointer to the set of parameters for this post processor
-  Global_Strain_Post_Processor(Schema * schema,
-    const Teuchos::RCP<Teuchos::ParameterList> & params);
-
-  /// Virtual destructor
-  virtual ~Global_Strain_Post_Processor(){}
-
-  /// Set the parameters for this post processor
-  virtual void set_params(const Teuchos::RCP<Teuchos::ParameterList> & params);
-
-  /// Collect the neighborhoods of each of the points
-  virtual void pre_execution_tasks();
-
-  /// See base clase docutmentation
-  virtual int_t strain_window_size(){
-    return mesh_size_;
-  }
-
-  /// Execute the post processor
-  virtual void execute();
-
-  /// See base class documentation
-  using Post_Processor::field_names_;
-
-  /// See base class documentation
-  using Post_Processor::data_num_points_;
-
-  /// See base class documentation
-  using Post_Processor::schema_;
-
-  /// See base class documentation
-  using Post_Processor::field_value;
-
-private:
-  /// Window size for the virtual strain gauge (in pixels)
-  int_t mesh_size_;
-  /// The stride used for the compute vectors
-  //int_t vec_stride_;
-};
+//
+///// \class DICe::Global_Strain_Post_Processor
+///// \brief A specific instance of post processor that computes strain in an FEM fashion
+/////
+//class DICE_LIB_DLL_EXPORT
+//Global_Strain_Post_Processor : public Post_Processor {
+//
+//public:
+//
+//  /// Default constructor
+//  /// \param schema Pointer to the parent schema that is using this post processor
+//  /// \param params Pointer to the set of parameters for this post processor
+//  Global_Strain_Post_Processor(Schema * schema,
+//    const Teuchos::RCP<Teuchos::ParameterList> & params);
+//
+//  /// Virtual destructor
+//  virtual ~Global_Strain_Post_Processor(){}
+//
+//  /// Set the parameters for this post processor
+//  virtual void set_params(const Teuchos::RCP<Teuchos::ParameterList> & params);
+//
+//  /// Collect the neighborhoods of each of the points
+//  virtual void pre_execution_tasks();
+//
+//  /// See base clase docutmentation
+//  virtual int_t strain_window_size(){
+//    return mesh_size_;
+//  }
+//
+//  /// Execute the post processor
+//  virtual void execute();
+//
+//  /// See base class documentation
+//  using Post_Processor::field_names_;
+//
+//  /// See base class documentation
+//  using Post_Processor::data_num_points_;
+//
+//  /// See base class documentation
+//  using Post_Processor::schema_;
+//
+//  /// See base class documentation
+//  using Post_Processor::field_value;
+//
+//private:
+//  /// Window size for the virtual strain gauge (in pixels)
+//  int_t mesh_size_;
+//  /// The stride used for the compute vectors
+//  //int_t vec_stride_;
+//};
 
 
 /// \class DICe::NLVC_Strain_Post_Processor

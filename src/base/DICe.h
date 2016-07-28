@@ -141,9 +141,9 @@ const char* const use_constrained_opt_dic = "use_constrained_opt_dic";
 /// String parameter name
 const char* const use_integrated_dic = "use_integrated_dic";
 /// String parameter name
-const char* const use_hvm_stabilization = "use_hvm_stabilization";
-/// String parameter name
 const char* const interpolation_method = "interpolation_method";
+/// String parameter name
+const char* const gradient_method = "gradient_method";
 /// String parameter name
 const char* const initialization_method = "initialization_method";
 /// String parameter name
@@ -207,11 +207,17 @@ const char* const use_subset_evolution = "use_subset_evolution";
 /// String parameter name
 const char* const output_beta = "output_beta";
 /// String parameter name
+const char* const global_regularization_alpha = "global_regularization_alpha";
+/// String parameter name
+const char* const global_stabilization_tau = "global_stabilization_tau";
+/// String parameter name
 const char* const max_iterations = "max_iterations";
 /// String parameter name
 const char* const tolerance = "tolerance";
 /// String parameter name
 const char* const output_spec = "output_spec";
+/// String parameter name
+const char* const mms_spec = "mms_spec";
 /// String parameter name
 const char* const output_delimiter = "output_delimiter";
 /// String parameter name
@@ -240,6 +246,25 @@ const char* const rotate_def_image_180 = "rotate_def_image_180";
 const char* const rotate_ref_image_270 = "rotate_ref_image_270";
 /// String parameter name
 const char* const rotate_def_image_270 = "rotate_def_image_270";
+/// String parameter name, only for global DIC
+const char* const global_solver = "global_solver";
+/// String parameter name, only for global DIC
+const char* const global_formulation = "global_formulation";
+/// String parameter name, only for global DIC
+const char* const problem_name = "problem_name";
+/// String parameter name, only for global DIC
+const char* const phi_coeff = "phi_coeff";
+/// String parameter name, only for global DIC
+const char* const b_coeff = "b_coeff";
+/// String parameter name, only for global DIC
+const char* const curl_coeff = "curl_coeff";
+/// String parameter name, only for global DIC
+const char* const num_image_integration_points = "num_image_integration_points";
+/// String parameter name, only for global DIC
+const char* const global_element_type = "global_element_type";
+/// String parameter name, only for global DIC
+const char* const use_fixed_point_iterations = "use_fixed_point_iterations";
+
 
 /// enums:
 enum Subset_View_Target{
@@ -350,6 +375,28 @@ enum Analysis_Type {
 };
 
 /// Projection method
+enum Global_Formulation {
+  HORN_SCHUNCK=0,
+  MIXED_HORN_SCHUNCK,
+  LEVENBERG_MARQUARDT,
+  LEHOUCQ_TURNER,
+  UNREGULARIZED,
+  METHOD_OF_MANUFACTURED_SOLUTIONS,
+  // DON'T ADD ANY BELOW MAX
+  MAX_GLOBAL_FORMULATION,
+  NO_SUCH_GLOBAL_FORMULATION
+};
+
+const static char * globalFormulationStrings[] = {
+  "HORN_SCHUNCK",
+  "MIXED_HORN_SCHUNCK",
+  "LEVENBERG_MARQUARDT",
+  "LEHOUCQ_TURNER",
+  "UNREGULARIZED",
+  "METHOD_OF_MANUFACTURED_SOLUTIONS"
+};
+
+/// Projection method
 enum Projection_Method {
   DISPLACEMENT_BASED=0,
   VELOCITY_BASED,
@@ -424,6 +471,21 @@ const static char * interpolationMethodStrings[] = {
   "BICUBIC",
   "KEYS_FOURTH"
 };
+
+/// Gradient method
+enum Gradient_Method {
+  FINITE_DIFFERENCE=0,
+  CONVOLUTION_5_POINT,
+  // DON'T ADD ANY BELOW MAX
+  MAX_GRADIENT_METHOD,
+  NO_SUCH_GRADIENT_METHOD
+};
+
+const static char * gradientMethodStrings[] = {
+  "FINITE_DIFFERENCE",
+  "CONVOLUTION_5_POINT"
+};
+
 
 /// Correlation routine (determines how the correlation steps are executed).
 /// Can be customized for a particular application
@@ -553,6 +615,46 @@ enum Correlation_Parameter_Type{
   SCALAR_PARAM,
   SIZE_PARAM,
   BOOL_PARAM
+};
+
+/// Combine mode for fields
+enum Combine_Mode{
+  INSERT=0,
+  ADD
+};
+
+/// Global method terms to include in the residual
+enum Global_EQ_Term{
+  IMAGE_TIME_FORCE=0,
+  IMAGE_GRAD_TENSOR,
+  DIV_SYMMETRIC_STRAIN_REGULARIZATION,
+  TIKHONOV_REGULARIZATION,
+  GRAD_LAGRANGE_MULTIPLIER,
+  DIV_VELOCITY,
+  MMS_IMAGE_GRAD_TENSOR,
+  MMS_FORCE,
+  MMS_IMAGE_TIME_FORCE,
+  MMS_GRAD_LAGRANGE_MULTIPLIER,
+  DIRICHLET_DISPLACEMENT_BC,
+  MMS_DIRICHLET_DISPLACEMENT_BC,
+  MMS_LAGRANGE_BC,
+  CORNER_BC,
+  OPTICAL_FLOW_DISPLACEMENT_BC,
+  SUBSET_DISPLACEMENT_BC,
+  SUBSET_DISPLACEMENT_IC,
+  LAGRANGE_BC,
+  CONSTANT_IC,
+  STAB_LAGRANGE,
+  NO_SUCH_GLOBAL_EQ_TERM
+};
+
+
+/// Global solver type
+enum Global_Solver{
+  CG_SOLVER=0,
+  GMRES_SOLVER,
+  LSQR_SOLVER,
+  NO_SUCH_GLOBAL_SOLVER
 };
 
 /// \class DICe::Extents
@@ -694,7 +796,11 @@ const Correlation_Parameter omit_output_row_id_param(omit_output_row_id,
   BOOL_PARAM,
   true,
   "True if the row id should be omitted from the output (column zero is skipped)");
-
+/// Correlation parameter and properties
+const Correlation_Parameter mms_spec_param(mms_spec,
+  STRING_PARAM,
+  false, // turned off because this one is manually added to the template output files
+  "Set of parameters for the method of manufactured solutions problems");
 
 /// Correlation parameter and properties
 const Correlation_Parameter output_spec_param(output_spec,
@@ -715,6 +821,13 @@ const Correlation_Parameter interpolation_method_param(interpolation_method,
   "Determines which interpolation method to use (can also affect the image gradients)",
   interpolationMethodStrings,
   MAX_INTERPOLATION_METHOD);
+/// Correlation parameter and properties
+const Correlation_Parameter gradient_method_param(gradient_method,
+  STRING_PARAM,
+  true,
+  "Determines which image gradient method to use",
+  gradientMethodStrings,
+  MAX_GRADIENT_METHOD);
 /// Correlation parameter and properties
 const Correlation_Parameter initialization_method_param(initialization_method,
   STRING_PARAM,
@@ -842,6 +955,48 @@ const Correlation_Parameter output_beta_param(output_beta,
   "True if the beta parameter should be computed (still needs to be added to the output spec if it should be included in the output file)"
   " This parameter measures the distinguishability of a pattern for template matching");
 /// Correlation parameter and properties
+const Correlation_Parameter global_regularization_alpha_param(global_regularization_alpha,
+  SCALAR_PARAM,
+  true,
+  "Used only for global, this is the coefficient for the alpha regularization term");
+/// Correlation parameter and properties
+const Correlation_Parameter global_stabilization_tau_param(global_stabilization_tau,
+  SCALAR_PARAM,
+  true,
+  "Used only for global, this is the stabilization coefficient (overrides automatically calculated one)");
+/// Correlation parameter and properties
+const Correlation_Parameter global_formulation_param(global_formulation,
+  STRING_PARAM,
+  true,
+  "Used only for global, this is the formulation to use (which terms are included, etc.)",
+  globalFormulationStrings,
+  MAX_GLOBAL_FORMULATION
+);
+/// Correlation parameter and properties
+const Correlation_Parameter global_solver_param(global_solver,
+  STRING_PARAM,
+  true,
+  "Used only for global, this is the solver to use for the global method."
+);
+/// Correlation parameter and properties
+const Correlation_Parameter use_fixed_point_iterations_param(use_fixed_point_iterations,
+  BOOL_PARAM,
+  true,
+  "Used only for global, uses the fixed point iteration scheme for the global method."
+);
+/// Correlation parameter and properties
+const Correlation_Parameter global_element_type_param(global_element_type,
+  STRING_PARAM,
+  true,
+  "Used only for global, this is the element type to use for the global method."
+);
+/// Correlation parameter and properties
+const Correlation_Parameter num_image_integration_points_param(num_image_integration_points,
+  SIZE_PARAM,
+  true,
+  "Used only for global, this is the number of integration points (in each dim per element) to use for the global method."
+);
+/// Correlation parameter and properties
 const Correlation_Parameter use_tracking_default_params_param(use_tracking_default_params,
   BOOL_PARAM,
   true,
@@ -866,11 +1021,6 @@ const Correlation_Parameter use_integrated_dic_param(use_integrated_dic,
   BOOL_PARAM,
   false,
   "True if the integrated DIC algorithms should be used rather than subset or local DIC.");
-/// Correlation parameter and properties
-const Correlation_Parameter use_hvm_stabilization_param(use_hvm_stabilization,
-  BOOL_PARAM,
-  false,
-  "True if the global method should be use HVM stabilization.");
 /// Correlation parameter and properties
 const Correlation_Parameter use_objective_regularization_param(use_objective_regularization,
   BOOL_PARAM,
@@ -912,11 +1062,13 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_correlation_params = 58;
 /// Vector of valid parameter names
+const int_t num_valid_correlation_params = 65;
+/// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
   interpolation_method_param,
+  gradient_method_param,
   initialization_method_param,
   optimization_method_param,
   projection_method_param,
@@ -956,7 +1108,6 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   use_global_dic_param,
   use_constrained_opt_dic_param,
   use_integrated_dic_param,
-  use_hvm_stabilization_param,
   use_objective_regularization_param,
   pixel_integration_order_param,
   image_grad_use_hierarchical_parallelism_param,
@@ -972,54 +1123,39 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   rotate_def_image_270_param,
   objective_regularization_factor_param,
   filter_failed_cine_pixels_param,
-  time_average_cine_ref_frame_param
+  time_average_cine_ref_frame_param,
+  global_regularization_alpha_param,
+  global_stabilization_tau_param,
+  global_formulation_param,
+  global_solver_param,
+  global_element_type_param,
+  num_image_integration_points_param,
+  use_fixed_point_iterations_param
 };
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_global_correlation_params = 11;
+const int_t num_valid_global_correlation_params = 18;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_global_correlation_params[num_valid_global_correlation_params] = {
   use_global_dic_param,
-  use_constrained_opt_dic_param,
-  use_integrated_dic_param,
   interpolation_method_param,
-  gauss_filter_images_param,
-  max_solver_iterations_fast_param,
   fast_solver_tolerance_param,
+  max_solver_iterations_fast_param,
+  gradient_method_param,
+  gauss_filter_images_param,
+  gauss_filter_mask_size_param,
   output_spec_param,
   output_delimiter_param,
   omit_output_row_id_param,
-  use_hvm_stabilization_param
-};
-
-/// The total number of valid correlation params
-const int_t num_valid_constrained_opt_correlation_params = 6;
-/// Vector of valid parameter names
-const Correlation_Parameter valid_constrained_opt_correlation_params[num_valid_constrained_opt_correlation_params] = {
-  use_global_dic_param,
-  use_constrained_opt_dic_param,
-  use_integrated_dic_param,
-  interpolation_method_param,
-  pixel_integration_order_param,
-  max_solver_iterations_fast_param
-};
-
-/// The total number of valid correlation params
-const int_t num_valid_integrated_correlation_params = 11;
-/// Vector of valid parameter names
-const Correlation_Parameter valid_integrated_correlation_params[num_valid_integrated_correlation_params] = {
-  use_global_dic_param,
-  use_constrained_opt_dic_param,
-  use_integrated_dic_param,
-  interpolation_method_param,
-  max_solver_iterations_robust_param,
-  robust_solver_tolerance_param,
-  output_deformed_subset_images_param,
-  output_deformed_subset_intensity_images_param,
-  output_evolved_subset_images_param,
-  correlation_routine_param,
-  optimization_method_param
+  global_regularization_alpha_param,
+  global_stabilization_tau_param,
+  global_formulation_param,
+  global_solver_param,
+  mms_spec_param,
+  num_image_integration_points_param,
+  global_element_type_param,
+  use_fixed_point_iterations_param
 };
 
 } // end DICe namespace

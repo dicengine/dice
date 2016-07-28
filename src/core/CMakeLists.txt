@@ -34,6 +34,9 @@ include_directories(${Boost_INCLUDE_DIRS} COMPONENTS gil program_options REQUIRE
 
 add_library(dicecore ${DICE_SOURCES} ${DICE_HEADERS})
 target_link_libraries(dicecore ${Boost_LIBRARIES} ${DICE_LIBRARIES} dicebase diceutils dicefft)
+IF(DICE_ENABLE_GLOBAL)
+  target_link_libraries(dicecore triangle dicemesh diceglobal)
+ENDIF()
 target_compile_definitions(dicecore PRIVATE -D DICE_LIB_EXPORTS_MODE)
 
 install(FILES ${DICE_HEADERS} ../kdtree/nanoflann.hpp

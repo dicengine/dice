@@ -1,0 +1,6 @@
+<ParameterList>
+  <!--<Parameter name="gauss_filter_images" type="bool" value="true" />-->
+  <!--<Parameter name="gauss_filter_mask_size" type="int" value="5" />-->
+  <Parameter name="global_solver" type="string" value="gmres_solver" />
+  <Parameter name="global_formulation" type="string" value="unregularized" />
+</ParameterList>

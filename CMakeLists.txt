@@ -135,6 +135,15 @@ SET(DICE_HEADER_DIRS
   ${PNG_DIR}/include
   )
 
+IF(DICE_ENABLE_GLOBAL)
+  SET(DICE_HEADER_DIRS
+      ${DICE_HEADER_DIRS}
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/global
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/global/triangle
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/global/mesh)
+      add_definitions(-DTRILIBRARY -DANSI_DECLARATORS -DDICE_ENABLE_GLOBAL=1)
+ENDIF()
+
 SET(DICE_LIBRARIES
     ${DICE_LIBRARIES}
     teuchoscore
@@ -154,6 +163,31 @@ IF(DICE_ENABLE_MANYCORE)
   ADD_DEFINITIONS(-DDICE_KOKKOS=1 -DDICE_TPETRA=1)
 ELSE()
   MESSAGE(STATUS "MANYCORE disabled")
+ENDIF()
+
+IF(DICE_ENABLE_GLOBAL)
+  MESSAGE(STATUS "*** Enabling Global DIC (requires the Tpetra (or Epetra), Seacas libraries, and Belos in Trilinos) ***")
+  IF(DICE_USE_TPETRA)
+    SET(DICE_LIBRARIES
+      ${DICE_LIBRARIES}
+      tpetra
+      exodus
+      belos
+      belostpetra
+    )
+    ADD_DEFINITIONS(-DDICE_TPETRA=1)
+  ELSE()
+    SET(DICE_LIBRARIES
+      ${DICE_LIBRARIES}
+      epetra
+      exodus
+      belos
+      ifpack
+      belosepetra
+    )
+  ENDIF()
+ELSE()
+  MESSAGE(STATUS "Global DIC will not be enabled (to enable, set -D DICE_ENABLE_GLOBAL:BOOL=ON in the CMake script)")
   SET(DICE_LIBRARIES
     ${DICE_LIBRARIES}
     epetra

@@ -230,7 +230,8 @@ void write_image(const char * file_name,
   const int_t width,
   const int_t height,
   intensity_t * intensities,
-  const bool is_layout_right){
+  const bool is_layout_right,
+  const bool scale_to_8_bit){
   // determine the file type based on the file_name
   Image_File_Type file_type = image_file_type(file_name);
   if(file_type==NO_SUCH_IMAGE_FILE_TYPE){
@@ -260,11 +261,17 @@ void write_image(const char * file_name,
       boost::gil::gray8_view_t::x_iterator src_it = img_view.row_begin(y);
       if(is_layout_right)
         for (int_t x=0; x<width;++x){
-          src_it[x] = (boost::gil::gray8_pixel_t)(std::floor((intensities[y*width + x]-min_intensity)*fac));
+          if(scale_to_8_bit)
+            src_it[x] = (boost::gil::gray8_pixel_t)(std::floor((intensities[y*width + x]-min_intensity)*fac));
+          else
+            src_it[x] = (boost::gil::gray8_pixel_t)(std::floor(intensities[y*width + x]));
         }
       else
         for (int_t x=0; x<width;++x){
-          src_it[x] = (boost::gil::gray8_pixel_t)(std::floor((intensities[x*height+y]-min_intensity)*fac));
+          if(scale_to_8_bit)
+            src_it[x] = (boost::gil::gray8_pixel_t)(std::floor((intensities[x*height+y]-min_intensity)*fac));
+          else
+            src_it[x] = (boost::gil::gray8_pixel_t)(std::floor(intensities[x*height+y]));
         }
     }
     if(file_type==TIFF){

@@ -173,7 +173,25 @@ public:
   /// and scale the image so that the histogram is spread over the entire 0-255 range.
   /// The rawi format saves the full intesity_t precision value to file
   /// \param file_name the name of the file to write to
-  void write(const std::string & file_name);
+  /// \param scale_to_8_bit scale image to eight bit range if true
+  void write(const std::string & file_name,
+    const bool scale_to_8_bit=true);
+
+  /// write the image x gradients to a file
+  /// (tiff, jpeg, or png, depending on which file extension is used in the name)
+  /// Tiff, jpeg, and png will truncate the intensity values to an 8-bit integer value
+  /// and scale the image so that the histogram is spread over the entire 0-255 range.
+  /// The rawi format saves the full intesity_t precision value to file
+  /// \param file_name the name of the file to write to
+  void write_grad_x(const std::string & file_name);
+
+  /// write the image y gradients to a file
+  /// (tiff, jpeg, or png, depending on which file extension is used in the name)
+  /// Tiff, jpeg, and png will truncate the intensity values to an 8-bit integer value
+  /// and scale the image so that the histogram is spread over the entire 0-255 range.
+  /// The rawi format saves the full intesity_t precision value to file
+  /// \param file_name the name of the file to write to
+  void write_grad_y(const std::string & file_name);
 
   /// returns the width of the image
   int_t width()const{
@@ -218,6 +236,12 @@ public:
 
   /// returns a copy of the intenisity values as an array
   Teuchos::ArrayRCP<intensity_t> intensities()const;
+
+  /// returns a copy of the grad_x values as an array
+  Teuchos::ArrayRCP<scalar_t> grad_x()const;
+
+  /// returns a copy of the grad_y values as an array
+  Teuchos::ArrayRCP<scalar_t> grad_y()const;
 
   /// replaces the intensity values of the image
   /// \param intensities the new intensity value array
@@ -361,6 +385,10 @@ public:
     const int_t cy,
     const bool apply_in_place=false);
 
+  /// normalize the image intensity values
+  /// \params the image parameters to use
+  Teuchos::RCP<Image> normalize(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
   /// apply a rotation to this image to create another image
   /// in this case, there are only three options 90, 180, and 270 degree rotations
   /// \param rotation enum that defines the rotation
@@ -371,6 +399,12 @@ public:
   /// compute the image gradients
   void compute_gradients(const bool use_hierarchical_parallelism=false,
     const int_t team_size=256);
+
+  /// compute the image gradients
+  void smooth_gradients_convolution_5_point();
+
+  /// compute the image gradients
+  void compute_gradients_finite_difference();
 
   /// returns true if the gradients have been computed
   bool has_gradients()const{
@@ -501,6 +535,8 @@ private:
   int_t gauss_filter_half_mask_;
   /// name of the file that was the source of this image
   std::string file_name_;
+  /// gradient method
+  Gradient_Method gradient_method_;
 };
 
 }// End DICe Namespace

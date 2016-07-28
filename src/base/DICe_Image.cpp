@@ -63,7 +63,8 @@ Image::Image(intensity_t * intensities,
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   has_gauss_filter_(false),
-  file_name_("(from raw array)")
+  file_name_("(from raw array)"),
+  gradient_method_(FINITE_DIFFERENCE)
 {
   initialize_array_image(intensities);
   default_constructor_tasks(params);
@@ -80,7 +81,8 @@ Image::Image(const int_t width,
   intensity_rcp_(intensities),
   has_gradients_(false),
   has_gauss_filter_(false),
-  file_name_("(from array)")
+  file_name_("(from array)"),
+  gradient_method_(FINITE_DIFFERENCE)
 {
   initialize_array_image(intensities.getRawPtr());
   default_constructor_tasks(params);
@@ -92,6 +94,7 @@ Image::post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params
   gauss_filter_mask_size_ = 7; // default sizes
   gauss_filter_half_mask_ = 4;
   if(params==Teuchos::null) return;
+  gradient_method_ = params->get<Gradient_Method>(DICe::gradient_method,FINITE_DIFFERENCE);
   const bool gauss_filter_image =  params->get<bool>(DICe::gauss_filter_images,false);
   const bool gauss_filter_use_hierarchical_parallelism = params->get<bool>(DICe::gauss_filter_use_hierarchical_parallelism,false);
   const int gauss_filter_team_size = params->get<int>(DICe::gauss_filter_team_size,256);
@@ -108,7 +111,6 @@ Image::post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params
     compute_gradients(image_grad_use_hierarchical_parallelism,image_grad_team_size);
 }
 
-// TODO add an option to normalize this by intensity mean
 scalar_t
 Image::diff(Teuchos::RCP<Image> rhs) const{
   if(rhs->width()!=width_||rhs->height()!=height_)
@@ -120,6 +122,42 @@ Image::diff(Teuchos::RCP<Image> rhs) const{
     diff += diff_*diff_;
   }
   return std::sqrt(diff);
+}
+
+/// normalize the image intensity values
+Teuchos::RCP<Image>
+Image::normalize(const Teuchos::RCP<Teuchos::ParameterList> & params){
+  Teuchos::ArrayRCP<intensity_t> normalized_intens(width_*height_,0.0);
+  // TODO make the normalization more selective (only include the ROI)
+  intensity_t mean = 0.0;
+  int_t num_pixels = 0;
+  const int_t buffer = 10;
+  for(int_t y=buffer;y<height_-buffer;++y){
+    for(int_t x=buffer;x<width_-buffer;++x){
+      mean += (*this)(x,y);
+      //if(num_pixels<10)
+      //std::cout << " x " << x << " y " << y << " " << (*this)(x,y) << " p1 " << (*this)(x-1,y-1) << std::endl;
+      num_pixels++;
+    }
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(num_pixels<=0,std::runtime_error,"");
+  mean/=num_pixels;
+  DEBUG_MSG("Image::normalize() mean " << mean << " num pixels in mean " << num_pixels);
+
+  intensity_t mean_sum = 0.0;
+  for(int_t y=buffer;y<height_-buffer;++y){
+    for(int_t x=buffer;x<width_-buffer;++x){
+      mean_sum += ((*this)(x,y) - mean)*((*this)(x,y) - mean);
+    }
+  }
+  mean_sum = std::sqrt(mean_sum);
+  DEBUG_MSG("Image::normalize() mean sum " << mean_sum);
+  TEUCHOS_TEST_FOR_EXCEPTION(mean_sum==0.0,std::runtime_error,
+    "Error, mean sum should not be zero");
+  for(int_t i=0;i<width_*height_;++i)
+    normalized_intens[i] = ((*this)(i) - mean) / mean_sum;
+   Teuchos::RCP<Image> result = Teuchos::rcp(new Image(width_,height_,normalized_intens,params));
+   return result;
 }
 
 void
@@ -146,12 +184,33 @@ Image::mean()const{
 }
 
 void
-Image::write(const std::string & file_name){
+Image::write(const std::string & file_name,
+  const bool scale_to_8_bit){
   try{
-    utils::write_image(file_name.c_str(),width_,height_,intensities().getRawPtr(),default_is_layout_right());
+    utils::write_image(file_name.c_str(),width_,height_,intensities().getRawPtr(),default_is_layout_right(),scale_to_8_bit);
   }
   catch(std::exception &e){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, write image failure.");
+  }
+}
+
+void
+Image::write_grad_x(const std::string & file_name){
+  try{
+    utils::write_image(file_name.c_str(),width_,height_,grad_x().getRawPtr(),default_is_layout_right());
+  }
+  catch(std::exception &e){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, write image grad_x failure.");
+  }
+}
+
+void
+Image::write_grad_y(const std::string & file_name){
+  try{
+    utils::write_image(file_name.c_str(),width_,height_,grad_y().getRawPtr(),default_is_layout_right());
+  }
+  catch(std::exception &e){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, write image grad_y failure.");
   }
 }
 

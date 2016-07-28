@@ -98,8 +98,13 @@ int main(int argc, char *argv[]) {
     for(int_t x=0;x<img->width();++x)
       mask_values[y*img->width()+x] = img->mask(x,y);
   Image mask(img->width(),img->height(),mask_values);
+  //mask.write("mask_d.rawi");
   // compare with the saved mask file
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> mask_exact = Teuchos::rcp(new Image("./images/mask_d.rawi"));
+#else
   Teuchos::RCP<Image> mask_exact = Teuchos::rcp(new Image("./images/mask.rawi"));
+#endif
   const scalar_t mask_diff = mask.diff(mask_exact);
   *outStream << "mask value diff: " << mask_diff << std::endl;
   const scalar_t mask_tol = 1.0E-2;
@@ -137,8 +142,12 @@ int main(int argc, char *argv[]) {
   *outStream << "creating a sub-image" << std::endl;
   // purposefully making the image extend beyond the bounds of the input image
   Teuchos::RCP<Image> portion = Teuchos::rcp(new Image(img,img->width()/2,img->height()/2,img->width(),img->height()));
-  //portion->write("portion.rawi");
+  //portion->write("portion_d.rawi");
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> portion_exact = Teuchos::rcp(new Image("./images/portion_d.rawi"));
+#else
   Teuchos::RCP<Image> portion_exact = Teuchos::rcp(new Image("./images/portion.rawi"));
+#endif
   scalar_t portion_diff = portion_exact->diff(portion);
   if(portion_diff > mask_tol){
     *outStream << "Error, the portion image is not correct" << std::endl;
@@ -239,7 +248,13 @@ int main(int argc, char *argv[]) {
 
   // test image transform:
   *outStream << "testing an image transform" << std::endl;
+#ifdef DICE_USE_DOUBLE
+  Image baboon("./images/baboon_d.rawi");
+#else
   Image baboon("./images/baboon.rawi");
+#endif
+  //Image baboon("./images/baboon.tif");
+  //baboon.write("baboon_d.rawi");
   const int_t cx = 100;
   const int_t cy = 100;
   const scalar_t u = 25.0;
@@ -251,8 +266,12 @@ int main(int argc, char *argv[]) {
   (*def)[ROTATION_Z] = theta;
   Teuchos::RCP<Image> trans_baboon = baboon.apply_transformation(def,cx,cy,false);
   //trans_baboon->write("baboon_trans.rawi");
-  //trans_baboon->write("baboon_trans.tif");
+  //trans_baboon->write("baboon_trans_d.rawi");
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> trans_baboon_exact = Teuchos::rcp(new Image("./images/baboon_trans_d.rawi"));
+#else
   Teuchos::RCP<Image> trans_baboon_exact = Teuchos::rcp(new Image("./images/baboon_trans.rawi"));
+#endif
   //trans_baboon_exact->write("baboon_trans_exact.tif");
   const scalar_t diff_trans_baboon = trans_baboon->diff(trans_baboon_exact);
   *outStream << "image diff trans baboon: " << diff_trans_baboon << std::endl;
@@ -264,8 +283,12 @@ int main(int argc, char *argv[]) {
 
   *outStream << "testing 180 rotation in place" << std::endl;
   Teuchos::RCP<Image> baboon_180 = baboon.apply_rotation(ONE_HUNDRED_EIGHTY_DEGREES);
-  //baboon.write("baboon_180.rawi");
+  //baboon_180->write("baboon_180_d.rawi");
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> baboon_180_exact = Teuchos::rcp(new Image("./images/baboon_180_d.rawi"));
+#else
   Teuchos::RCP<Image> baboon_180_exact = Teuchos::rcp(new Image("./images/baboon_180.rawi"));
+#endif
   const scalar_t diff_180 = baboon_180->diff(baboon_180_exact);
   if(diff_180 > diff_tol){
     *outStream << "Error, the 180 degree transformed image does not have the right intensities." << std::endl;
@@ -278,18 +301,26 @@ int main(int argc, char *argv[]) {
   *outStream << "testing 90 and 270 degree rotations" << std::endl;
   Teuchos::RCP<Image> img_0_deg = Teuchos::rcp(new Image("./images/ImageB.tif"));
   Teuchos::RCP<Image> img_90_deg = img_0_deg->apply_rotation(NINTY_DEGREES);
-  //img_90_deg->write("img_90.tif");
+  //img_90_deg->write("img_90_d.rawi");
   //img_90_deg->write("img_90.rawi");
   Teuchos::RCP<Image> img_270_deg = img_0_deg->apply_rotation(TWO_HUNDRED_SEVENTY_DEGREES);
-  //img_270_deg->write("img_270.tif");
+  //img_270_deg->write("img_270_d.rawi");
   //img_270_deg->write("img_270.rawi");
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> img_90_exact = Teuchos::rcp(new Image("./images/img_90_d.rawi"));
+#else
   Teuchos::RCP<Image> img_90_exact = Teuchos::rcp(new Image("./images/img_90.rawi"));
+#endif
   const scalar_t diff_90 = img_90_deg->diff(img_90_exact);
   if(diff_90 > 1.0E-4){
     *outStream << "Error, the 90 degree transformed image does not have the right intensities." << std::endl;
     errorFlag++;
   }
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> img_270_exact = Teuchos::rcp(new Image("./images/img_270_d.rawi"));
+#else
   Teuchos::RCP<Image> img_270_exact = Teuchos::rcp(new Image("./images/img_270.rawi"));
+#endif
   const scalar_t diff_270 = img_270_deg->diff(img_270_exact);
   if(diff_270 > 1.0E-4){
     *outStream << "Error, the 270 degree transformed image does not have the right intensities." << std::endl;
@@ -304,9 +335,13 @@ int main(int argc, char *argv[]) {
   filter_5_params->set(DICe::gauss_filter_images,true);
   filter_5_params->set(DICe::gauss_filter_mask_size,5);
   Teuchos::RCP<Image> filter_5_img = Teuchos::rcp(new Image("./images/ImageB.tif",filter_5_params));
-  //filter_5_img.write("outFilter5.tif");
+  //filter_5_img->write("outFilter5_d.rawi");
   //filter_5_img.write("outFilter5.rawi");
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> filter_5_exact = Teuchos::rcp(new Image("./images/outFilter5_d.rawi"));
+#else
   Teuchos::RCP<Image> filter_5_exact = Teuchos::rcp(new Image("./images/outFilter5.rawi"));
+#endif
   const scalar_t diff_5 = filter_5_exact->diff(filter_5_img);
   if(diff_5 > diff_tol){
     *outStream << "Error, the 5 pixel filter image does not have the right intensities." << std::endl;
@@ -318,9 +353,13 @@ int main(int argc, char *argv[]) {
   filter_7_params->set(DICe::gauss_filter_images,true);
   filter_7_params->set(DICe::gauss_filter_mask_size,7);
   Teuchos::RCP<Image> filter_7_img = Teuchos::rcp(new Image("./images/ImageB.tif",filter_7_params));
-  //filter_7_img.write("outFilter7.tif");
+  //filter_7_img->write("outFilter7_d.rawi");
   //filter_7_img.write("outFilter7.rawi");
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> filter_7_exact = Teuchos::rcp(new Image("./images/outFilter7_d.rawi"));
+#else
   Teuchos::RCP<Image> filter_7_exact = Teuchos::rcp(new Image("./images/outFilter7.rawi"));
+#endif
   const scalar_t diff_7 = filter_7_exact->diff(filter_7_img);
   if(diff_7 > diff_tol){
     *outStream << "Error, the 7 pixel filter image does not have the right intensities." << std::endl;
@@ -332,9 +371,13 @@ int main(int argc, char *argv[]) {
   filter_9_params->set(DICe::gauss_filter_images,true);
   filter_9_params->set(DICe::gauss_filter_mask_size,9);
   Teuchos::RCP<Image> filter_9_img = Teuchos::rcp(new Image("./images/ImageB.tif",filter_9_params));
-  //filter_9_img.write("outFilter9.tif");
+  //filter_9_img->write("outFilter9_d.rawi");
   //filter_9_img.write("outFilter9.rawi");
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> filter_9_exact = Teuchos::rcp(new Image("./images/outFilter9_d.rawi"));
+#else
   Teuchos::RCP<Image> filter_9_exact = Teuchos::rcp(new Image("./images/outFilter9.rawi"));
+#endif
   const scalar_t diff_9 = filter_9_exact->diff(filter_9_img);
   if(diff_9 > diff_tol){
     *outStream << "Error, the 9 pixel filter image does not have the right intensities." << std::endl;
@@ -346,9 +389,13 @@ int main(int argc, char *argv[]) {
   filter_11_params->set(DICe::gauss_filter_images,true);
   filter_11_params->set(DICe::gauss_filter_mask_size,11);
   Teuchos::RCP<Image> filter_11_img = Teuchos::rcp(new Image("./images/ImageB.tif",filter_11_params));
-  //filter_11_img.write("outFilter11.tif");
+  //filter_11_img->write("outFilter11_d.rawi");
   //filter_11_img.write("outFilter11.rawi");
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> filter_11_exact = Teuchos::rcp(new Image("./images/outFilter11_d.rawi"));
+#else
   Teuchos::RCP<Image> filter_11_exact = Teuchos::rcp(new Image("./images/outFilter11.rawi"));
+#endif
   const scalar_t diff_11 = filter_11_exact->diff(filter_11_img);
   if(diff_11 > diff_tol){
     *outStream << "Error, the 11 pixel filter image does not have the right intensities." << std::endl;
@@ -360,9 +407,13 @@ int main(int argc, char *argv[]) {
   filter_13_params->set(DICe::gauss_filter_images,true);
   filter_13_params->set(DICe::gauss_filter_mask_size,13);
   Teuchos::RCP<Image> filter_13_img = Teuchos::rcp(new Image("./images/ImageB.tif",filter_13_params));
-  //filter_13_img.write("outFilter13.tif");
+  //filter_13_img->write("outFilter13_d.rawi");
   //filter_13_img.write("outFilter13.rawi");
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> filter_13_exact = Teuchos::rcp(new Image("./images/outFilter13_d.rawi"));
+#else
   Teuchos::RCP<Image> filter_13_exact = Teuchos::rcp(new Image("./images/outFilter13.rawi"));
+#endif
   const scalar_t diff_13 = filter_13_exact->diff(filter_13_img);
   if(diff_13 > diff_tol){
     *outStream << "Error, the 13 pixel filter image does not have the right intensities." << std::endl;
@@ -396,7 +447,7 @@ int main(int argc, char *argv[]) {
   // create an image from jpeg file:
   *outStream << "creating an image from a jpeg file " << std::endl;
   Teuchos::RCP<Image> img_jpg = Teuchos::rcp(new Image("./images/ImageB.jpg"));
-  //img_jpg->write("JpegImageB.jpg");
+  //img_jpg->write("JpegImageB_d.rawi");
   //img_jpg->write("JpegImageB.rawi");
   if(img_jpg->width()!=240){
     *outStream << "Error, the jpeg image width is not correct" << std::endl;
@@ -406,7 +457,11 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, the jpeg image height is not correct" << std::endl;
     errorFlag +=1;
   }
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> img_jpg_exact = Teuchos::rcp(new Image("./images/JpegImageB_d.rawi"));
+#else
   Teuchos::RCP<Image> img_jpg_exact = Teuchos::rcp(new Image("./images/JpegImageB.rawi"));
+#endif
   const scalar_t diff_jpg = img_jpg_exact->diff(img_jpg);
   if(diff_jpg > diff_tol){
     *outStream << "Error, the jpeg image does not have the right intensities." << std::endl;
@@ -414,7 +469,7 @@ int main(int argc, char *argv[]) {
  }
   *outStream << "creating a sub portion image from a jpeg file " << std::endl;
   Teuchos::RCP<Image> img_sub_jpg = Teuchos::rcp(new Image("./images/ImageB.jpg",10,15,20,30));
-  //img_sub_jpg->write("JpegImageBSub.jpg");
+  //img_sub_jpg->write("JpegImageBSub_d.rawi");
   //img_sub_jpg->write("JpegImageBSub.rawi");
   if(img_sub_jpg->width()!=20){
     *outStream << "Error, the jpeg sub image width is not correct" << std::endl;
@@ -424,7 +479,11 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, the jpeg sub image height is not correct" << std::endl;
     errorFlag +=1;
   }
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> img_jpg_sub_exact = Teuchos::rcp(new Image("./images/JpegImageBSub_d.rawi"));
+#else
   Teuchos::RCP<Image> img_jpg_sub_exact = Teuchos::rcp(new Image("./images/JpegImageBSub.rawi"));
+#endif
   const scalar_t diff_jpg_sub = img_jpg_sub_exact->diff(img_sub_jpg);
   if(diff_jpg_sub > diff_tol){
     *outStream << "Error, the jpeg sub image does not have the right intensities." << std::endl;
@@ -449,7 +508,7 @@ int main(int argc, char *argv[]) {
   // create an image from jpeg file:
   *outStream << "creating an image from a png file " << std::endl;
   Teuchos::RCP<Image> img_png = Teuchos::rcp(new Image("./images/ImageB.png"));
-  //img_png->write("PngImageB.png");
+  //img_png->write("PngImageB_d.rawi");
   //img_png->write("PngImageB.rawi");
   if(img_png->width()!=240){
     *outStream << "Error, the png image width is not correct" << std::endl;
@@ -459,7 +518,11 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, the png image height is not correct" << std::endl;
     errorFlag +=1;
   }
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> img_png_exact = Teuchos::rcp(new Image("./images/PngImageB_d.rawi"));
+#else
   Teuchos::RCP<Image> img_png_exact = Teuchos::rcp(new Image("./images/PngImageB.rawi"));
+#endif
   const scalar_t diff_png = img_png_exact->diff(img_png);
   if(diff_png > diff_tol){
     *outStream << "Error, the png image does not have the right intensities." << std::endl;
@@ -467,7 +530,7 @@ int main(int argc, char *argv[]) {
   }
   *outStream << "creating a sub portion image from a png file " << std::endl;
   Teuchos::RCP<Image> img_sub_png = Teuchos::rcp(new Image("./images/ImageB.jpg",10,15,20,30));
-  //img_sub_png->write("PngImageBSub.jpg");
+  //img_sub_png->write("PngImageBSub_d.rawi");
   //img_sub_png->write("PngImageBSub.rawi");
   if(img_sub_png->width()!=20){
     *outStream << "Error, the png sub image width is not correct" << std::endl;
@@ -477,7 +540,11 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, the png sub image height is not correct" << std::endl;
     errorFlag +=1;
   }
+#ifdef DICE_USE_DOUBLE
+  Teuchos::RCP<Image> img_png_sub_exact = Teuchos::rcp(new Image("./images/PngImageBSub_d.rawi"));
+#else
   Teuchos::RCP<Image> img_png_sub_exact = Teuchos::rcp(new Image("./images/PngImageBSub.rawi"));
+#endif
   const scalar_t diff_png_sub = img_png_sub_exact->diff(img_sub_png);
   if(diff_png_sub > diff_tol){
     *outStream << "Error, the png sub image does not have the right intensities." << std::endl;

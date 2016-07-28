@@ -75,6 +75,10 @@ const std::string to_string(Correlation_Routine in);
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Projection_Method in);
 
+/// Convert a DICe::Projection_Method to string
+DICE_LIB_DLL_EXPORT
+const std::string to_string(Global_Formulation in);
+
 /// Convert a DICe::Initialization_Method to string
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Initialization_Method in);
@@ -87,9 +91,25 @@ const std::string to_string(Optimization_Method in);
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Interpolation_Method in);
 
+/// Convert a DICe::Gradient_Method to string
+DICE_LIB_DLL_EXPORT
+const std::string to_string(Gradient_Method in);
+
+/// Convert a DICe::Global_EQ_Term to string
+DICE_LIB_DLL_EXPORT
+const std::string to_string(Global_EQ_Term in);
+
+/// Convert a DICe::Global_Solver to string
+DICE_LIB_DLL_EXPORT
+const std::string to_string(Global_Solver in);
+
 /// Convert a string to a DICe::Field_Name
 DICE_LIB_DLL_EXPORT
 Field_Name string_to_field_name(std::string & in);
+
+/// Convert a string to a DICe::Global_Solver
+DICE_LIB_DLL_EXPORT
+Global_Solver string_to_global_solver(std::string & in);
 
 /// Convert a string to a DICe::Correlation_Routine
 DICE_LIB_DLL_EXPORT
@@ -99,6 +119,10 @@ Correlation_Routine string_to_correlation_routine(std::string & in);
 DICE_LIB_DLL_EXPORT
 Projection_Method string_to_projection_method(std::string & in);
 
+/// Convert a string to a DICe::Projection_Method
+DICE_LIB_DLL_EXPORT
+Global_Formulation string_to_global_formulation(std::string & in);
+
 /// Convert a string to a DICe::Initialization_Method
 DICE_LIB_DLL_EXPORT
 Initialization_Method string_to_initialization_method(std::string & in);
@@ -106,6 +130,10 @@ Initialization_Method string_to_initialization_method(std::string & in);
 /// Convert a string to a DICe::Interpolation_Method
 DICE_LIB_DLL_EXPORT
 Interpolation_Method string_to_interpolation_method(std::string & in);
+
+/// Convert a string to a DICe::Interpolation_Method
+DICE_LIB_DLL_EXPORT
+Gradient_Method string_to_gradient_method(std::string & in);
 
 /// Convert a string to a DICe::Optimization_Method
 DICE_LIB_DLL_EXPORT

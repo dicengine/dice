@@ -47,6 +47,10 @@
 #include <DICe_Shape.h>
 #include <DICe_Initializer.h>
 #include <DICe_Parser.h>
+#ifdef DICE_ENABLE_GLOBAL
+  #include <DICe_Global.h>
+#endif
+
 #ifdef DICE_TPETRA
   #include "DICe_MultiFieldTpetra.h"
 #else
@@ -236,17 +240,6 @@ public:
     const int_t img_height,
     const Teuchos::ArrayRCP<intensity_t> refRCP);
 
-  /// Set the element size of the mesh (only for global DIC)
-  void set_mesh_size(const int_t mesh_size){
-    assert(mesh_size>=1);
-    mesh_size_ = mesh_size;
-  }
-
-  /// Returns the element size for global DIC (-1 if local DIC)
-  int_t mesh_size()const{
-    return mesh_size_;
-  }
-
   /// \brief Initializes the data structures for the schema
   /// \param input_params pointer to the initialization parameters
   void initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params);
@@ -275,7 +268,11 @@ public:
     const int_t subset_size);
 
   /// Conduct the correlation
-  void execute_correlation();
+  /// returns 0 if successful
+  int_t execute_correlation();
+
+  /// do clean up tasks
+  void post_execution_tasks();
 
   /// Returns if the field storage is initilaized
   int_t is_initialized()const{
@@ -413,6 +410,13 @@ public:
   Analysis_Type analysis_type()const{
     return analysis_type_;
   }
+
+#ifdef DICE_ENABLE_GLOBAL
+  /// Returns a pointer to the global algorithm
+  Teuchos::RCP<DICe::global::Global_Algorithm> global_algorithm()const{
+    return global_algorithm_;
+  }
+#endif
 
   /// \brief Return either the distributed field vector value or the all-owned
   /// vector value, depending on the flag argument
@@ -556,6 +560,11 @@ public:
   /// Returns the interpolation method (see DICe_Types.h for valid values)
   Interpolation_Method interpolation_method()const{
     return interpolation_method_;
+  }
+
+  /// Returns the interpolation method (see DICe_Types.h for valid values)
+  Gradient_Method gradient_method()const{
+    return gradient_method_;
   }
 
   /// Returns the optimization method (see DICe_Types.h for valid values)
@@ -929,12 +938,12 @@ public:
     if(target_field_descriptor_==ALL_OWNED) return; // NO-OP
 #if DICE_MPI
     if(target_field_descriptor_==DISTRIBUTED){
-      fields_->do_import(*dist_fields_,*importer_);
-      fields_nm1_->do_import(*dist_fields_nm1_,*importer_);
+      fields_->do_import(dist_fields_,*importer_);
+      fields_nm1_->do_import(dist_fields_nm1_,*importer_);
     }
     else if(target_field_descriptor_==DISTRIBUTED_GROUPED_BY_SEED){
-      fields_->do_import(*seed_dist_fields_,*seed_importer_);
-      fields_nm1_->do_import(*seed_dist_fields_,*seed_importer_);
+      fields_->do_import(seed_dist_fields_,*seed_importer_);
+      fields_nm1_->do_import(seed_dist_fields_,*seed_importer_);
     }
     else{
       assert(false && "Error: unknown field descriptor.");
@@ -951,12 +960,12 @@ public:
 #if DICE_MPI
     distributed_fields_being_modified_ = true;
     if(target_field_descriptor_==DISTRIBUTED){
-      dist_fields_->do_export(*fields_,*exporter_);
-      dist_fields_nm1_->do_export(*fields_nm1_,*exporter_);
+      dist_fields_->do_export(fields_,*exporter_);
+      dist_fields_nm1_->do_export(fields_nm1_,*exporter_);
     }
     else if(target_field_descriptor_==DISTRIBUTED_GROUPED_BY_SEED){
-      seed_dist_fields_->do_export(*fields_,*seed_exporter_);
-      seed_dist_fields_nm1_->do_export(*fields_nm1_,*seed_exporter_);
+      seed_dist_fields_->do_export(fields_,*seed_exporter_);
+      seed_dist_fields_nm1_->do_export(fields_nm1_,*seed_exporter_);
     }
     else{
       assert(false && "Error: unknown field descriptor.");
@@ -1066,8 +1075,6 @@ private:
   int_t step_size_x_;
   /// Regular grid subset spacing in y direction (used only if subsets are not conformal)
   int_t step_size_y_;
-  /// Element size for the global method
-  int_t mesh_size_;
   /// Generic strain window size (horizon for nlvc, convolution support for keys, strain window size for vsg)
   int_t strain_window_size_;
   /// Map of subset id and geometry definition
@@ -1116,6 +1123,8 @@ private:
   Correlation_Routine correlation_routine_;
   /// DICe::Interpolation_Method
   Interpolation_Method interpolation_method_;
+  /// DICe::Interpolation_Method
+  Gradient_Method gradient_method_;
   /// DICe::Optimization_Method
   Optimization_Method optimization_method_;
   /// DICe::Initialization_Method
@@ -1157,8 +1166,6 @@ private:
   bool use_subset_evolution_;
   /// True if the gamma values (match quality) should be normalized with the number of active pixels
   bool normalize_gamma_with_active_pixels_;
-  /// True if this anlysis is global DIC and the hvm terms should be used
-  bool use_hvm_stabilization_;
   /// True if regularization is used in the objective function
   bool use_objective_regularization_;
   /// regularization factor
@@ -1189,6 +1196,11 @@ private:
   double path_distance_threshold_;
   /// true if the beta parameter should be computed by the objective
   bool output_beta_;
+#ifdef DICE_ENABLE_GLOBAL
+  /// Global algorithm
+  Teuchos::RCP<DICe::global::Global_Algorithm> global_algorithm_;
+#endif
+
 };
 
 /// \class DICe::Output_Spec

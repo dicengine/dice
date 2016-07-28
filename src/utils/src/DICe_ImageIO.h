@@ -104,12 +104,14 @@ void read_image(const char * file_name,
 /// \param height the height of the image
 /// \param intensities assumed to be an array of size width x height
 /// \param is_layout_right [optional] memory layout is LayoutRight (row-major)
+/// \param scale_to_8_bit scale the values to 8 bit range
 DICE_LIB_DLL_EXPORT
 void write_image(const char * file_name,
   const int_t width,
   const int_t height,
   intensity_t * intensities,
-  const bool is_layout_right = true);
+  const bool is_layout_right = true,
+  const bool scale_to_8_bit = true);
 
 } // end namespace utils
 } // end namespace DICe

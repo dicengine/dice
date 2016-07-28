@@ -257,7 +257,11 @@ int main(int argc, char *argv[]) {
   // read in the image that was just created and compare to a gold copy:
   Image conf_img("./conformal.tif");
   conf_img.write("conformal.rawi");
+#ifdef DICE_USE_DOUBLE
+  Image conf_img_exact("./images/conformal_d.rawi");
+#else
   Image conf_img_exact("./images/conformal.rawi");
+#endif
   //conformal_subset.write_subset_on_image("ConformalOnImage.tiff",image);
   // compare the sizes and intensity values
   if(conf_img.width()!=conf_img_exact.width() || conf_img.height()!=conf_img_exact.height()){

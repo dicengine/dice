@@ -10,14 +10,21 @@ SET(REGRESSION_TESTS
   single_speckled_shift
   conformal_subset_def
   dic_challenge_12
-  mechanism_optical_flow
   simple_obstruction
 )
-IF(NOT DICE_ENABLE_MANYCORE)
+
+IF(NOT DICE_USE_DOUBLE)
   SET(REGRESSION_TESTS
     ${REGRESSION_TESTS}
-    mechanism_skip_solves 
+    mechanism_optical_flow
+    simple_obstruction
   )
+  IF(NOT DICE_ENABLE_MANYCORE)
+    SET(REGRESSION_TESTS
+      ${REGRESSION_TESTS}
+      mechanism_skip_solves 
+    )
+  ENDIF()
 ENDIF()
 
 FOREACH ( test ${REGRESSION_TESTS})
@@ -40,6 +47,41 @@ FOREACH ( test ${REGRESSION_TESTS})
         set_property(TEST "DIFF_${test}_${trim_name}" APPEND PROPERTY DEPENDS "RUN_${test}")
     ENDFOREACH ( )
 ENDFOREACH ( )
+
+#  Global method tests
+#
+#  Run the global formulation and compare the exodus output to a gold copy
+#
+
+IF(DICE_ENABLE_GLOBAL)
+SET(GLOBAL_REGRESSION_TESTS
+  global_14_unreg
+  global_14_hs
+  global_14_hs_mixed
+  global_14_lm
+  global_14_lm_mixed
+  )
+FOREACH ( test ${GLOBAL_REGRESSION_TESTS})
+    # Copy over all the test files (input and results)
+    FILE(COPY ${test} DESTINATION . )
+    # create a test
+    ADD_TEST ( NAME "RUN_${test}"
+         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${test}
+         COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/dice -i input.xml -v)
+    # remove the results folder (to clear previous runs)
+    FILE(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/${test}/results)
+    # Separate test for each output file (could be more elegant way to do this...)
+    FILE ( GLOB gold_files "${CMAKE_CURRENT_BINARY_DIR}/${test}/gold/*.e")
+    FOREACH ( gold_file ${gold_files})
+        # get the name of the file without the directory
+        GET_FILENAME_COMPONENT ( trim_name ${gold_file} NAME)
+        ADD_TEST ( NAME "DIFF_${test}_${trim_name}" 
+            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/DICe_ExoDiff ${gold_file} ${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name} ${CMAKE_CURRENT_BINARY_DIR}/${test}/exo_diff.txt)
+        set_tests_properties("DIFF_${test}_${trim_name}" PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
+        set_property(TEST "DIFF_${test}_${trim_name}" APPEND PROPERTY DEPENDS "RUN_${test}")
+    ENDFOREACH ( )
+ENDFOREACH ( )
+ENDIF()
 
 #  AVERAGE_DIFF_TESTS
 #

@@ -44,7 +44,9 @@
 #include <DICe_ObjectiveZNSSD.h>
 #include <DICe_PostProcessor.h>
 #include <DICe_ParameterUtilities.h>
-
+#ifdef DICE_ENABLE_GLOBAL
+  #include <DICe_TriangleUtils.h>
+#endif
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <Teuchos_ArrayRCP.hpp>
 
@@ -107,6 +109,7 @@ Schema::construct_schema(const std::string & refName,
   imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_);
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
+  imgParams->set(DICe::gradient_method,gradient_method_);
   ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   Teuchos::RCP<Image> prev_img = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   if(prev_imgs_.size()==0) prev_imgs_.push_back(prev_img);
@@ -165,6 +168,7 @@ Schema::construct_schema(const int_t img_width,
   imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_);
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
+  imgParams->set(DICe::gradient_method,gradient_method_);
   ref_img_ = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
   Teuchos::RCP<Image> prev_img = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
   if(prev_imgs_.size()==0) prev_imgs_.push_back(prev_img);
@@ -251,6 +255,7 @@ Schema::set_def_image(const std::string & defName,
   imgParams->set(DICe::compute_image_gradients,compute_def_gradients_);
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
+  imgParams->set(DICe::gradient_method,gradient_method_);
   def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
   TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[id]->width()!=ref_img_->width()||def_imgs_[id]->height()!=ref_img_->height(),
     std::runtime_error,"Error, ref and def images must have the same dimensions");
@@ -303,6 +308,7 @@ Schema::set_ref_image(const std::string & refName){
   DEBUG_MSG("Schema:  Resetting the reference image");
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
+  imgParams->set(DICe::gradient_method,gradient_method_);
   ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
@@ -318,6 +324,7 @@ Schema::set_ref_image(const int_t img_width,
   TEUCHOS_TEST_FOR_EXCEPTION(img_height<=0,std::runtime_error,"");
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
+  imgParams->set(DICe::gradient_method,gradient_method_);
   ref_img_ = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
@@ -330,7 +337,6 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   subset_dim_ = -1;
   step_size_x_ = -1;
   step_size_y_ = -1;
-  mesh_size_ = -1.0;
   image_frame_ = 0;
   first_frame_index_ = 1;
   num_image_frames_ = -1;
@@ -370,16 +376,47 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   const int_t proc_rank = comm_->get_rank();
 
   if(params!=Teuchos::null){
-    if(params->get<bool>(DICe::use_global_dic,false))
+    if(params->get<bool>(DICe::use_global_dic,false)){
+#ifdef DICE_ENABLE_GLOBAL
       analysis_type_=GLOBAL_DIC;
-    // TODO make sure only one of these is active
+#else
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, code was not compiled with global DIC enabled.");
+#endif
+    }
   }
 
   // start with the default params and add any that are specified by the input params
   Teuchos::RCP<Teuchos::ParameterList> diceParams = Teuchos::rcp( new Teuchos::ParameterList("Schema_Correlation_Parameters") );
 
   if(analysis_type_==GLOBAL_DIC){
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"Global DIC is not enabled");
+    dice_default_params(diceParams.getRawPtr());
+    if(proc_rank == 0) DEBUG_MSG("Initializing schema params with full-field default global parameters");
+    // Overwrite any params that are specified by the params argument
+    if(params!=Teuchos::null){
+      // check that all the parameters are valid:
+      // this should catch the case that the user misspelled one of the parameters:
+      bool allParamsValid = true;
+      for(Teuchos::ParameterList::ConstIterator it=params->begin();it!=params->end();++it){
+        bool paramValid = false;
+        for(int_t j=0;j<DICe::num_valid_global_correlation_params;++j){
+          if(it->first==valid_global_correlation_params[j].name_){
+            diceParams->setEntry(it->first,it->second); // overwrite the default value with argument param specified values
+            paramValid = true;
+          }
+        }
+        if(!paramValid){
+          allParamsValid = false;
+          if(proc_rank == 0) std::cout << "Error: Invalid parameter: " << it->first << std::endl;
+        }
+      }
+      if(!allParamsValid){
+        if(proc_rank == 0) std::cout << "NOTE: valid parameters include: " << std::endl;
+        for(int_t j=0;j<DICe::num_valid_global_correlation_params;++j){
+          if(proc_rank == 0) std::cout << valid_global_correlation_params[j].name_ << std::endl;
+        }
+      }
+      TEUCHOS_TEST_FOR_EXCEPTION(!allParamsValid,std::invalid_argument,"Invalid parameter");
+    }
   }
   else if(analysis_type_==LOCAL_DIC){
     bool use_tracking_defaults = false;
@@ -454,6 +491,8 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   projection_method_ = diceParams->get<Projection_Method>(DICe::projection_method);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::interpolation_method),std::runtime_error,"");
   interpolation_method_ = diceParams->get<Interpolation_Method>(DICe::interpolation_method);
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::gradient_method),std::runtime_error,"");
+  gradient_method_ = diceParams->get<Gradient_Method>(DICe::gradient_method);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::max_evolution_iterations),std::runtime_error,"");
   max_evolution_iterations_ = diceParams->get<int_t>(DICe::max_evolution_iterations);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::max_solver_iterations_fast),std::runtime_error,"");
@@ -536,8 +575,6 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     DEBUG_MSG("Gamma values will be normalized by the number of active pixels.");
   if(analysis_type_==GLOBAL_DIC){
     compute_ref_gradients_ = true;
-    TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::use_hvm_stabilization),std::runtime_error,"");
-    use_hvm_stabilization_ = diceParams->get<bool>(DICe::use_hvm_stabilization);
   }
   else{
     if(optimization_method_!=DICe::SIMPLEX) {
@@ -574,13 +611,14 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     post_processors_.push_back(keys4_ptr);
   }
   if(diceParams->isParameter(DICe::post_process_global_strain)){
-    Teuchos::ParameterList sublist = diceParams->sublist(DICe::post_process_global_strain);
-    Teuchos::RCP<Teuchos::ParameterList> ppParams = Teuchos::rcp( new Teuchos::ParameterList());
-    for(Teuchos::ParameterList::ConstIterator it=sublist.begin();it!=sublist.end();++it){
-      ppParams->setEntry(it->first,it->second);
-    }
-    Teuchos::RCP<Global_Strain_Post_Processor> global_ptr = Teuchos::rcp (new Global_Strain_Post_Processor(this,ppParams));
-    post_processors_.push_back(global_ptr);
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"This strain measure has been disabled");
+//    Teuchos::ParameterList sublist = diceParams->sublist(DICe::post_process_global_strain);
+//    Teuchos::RCP<Teuchos::ParameterList> ppParams = Teuchos::rcp( new Teuchos::ParameterList());
+//    for(Teuchos::ParameterList::ConstIterator it=sublist.begin();it!=sublist.end();++it){
+//      ppParams->setEntry(it->first,it->second);
+//    }
+//    Teuchos::RCP<Global_Strain_Post_Processor> global_ptr = Teuchos::rcp (new Global_Strain_Post_Processor(this,ppParams));
+//    post_processors_.push_back(global_ptr);
   }
   if(post_processors_.size()>0) has_post_processor_ = true;
 
@@ -672,7 +710,29 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     subset_info = DICe::read_subset_file(fileName,img_width(),img_height());
     subset_info_type = subset_info->type;
   }
-  if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
+  if(analysis_type_==GLOBAL_DIC){
+    // create the computational mesh:
+    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::mesh_size),std::runtime_error,
+      "Error, missing required input parameter: mesh_size");
+    const scalar_t mesh_size = input_params->get<double>(DICe::mesh_size);
+    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::output_folder),std::runtime_error,
+      "Error, missing required input parameter: output_folder");
+    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_file),std::runtime_error,
+      "Error, missing required input parameter: subset_file");
+    const std::string output_folder = input_params->get<std::string>(DICe::output_folder);
+    const std::string output_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
+    const std::string subset_file = input_params->get<std::string>(DICe::subset_file);
+    init_params_->set(DICe::mesh_size,mesh_size); // pass the mesh size to the stored parameters for this schema (used by global method)
+    init_params_->set(DICe::output_prefix,output_prefix);
+    init_params_->set(DICe::output_folder,output_folder);
+    init_params_->set(DICe::subset_file,subset_file);
+    //init_params_->set(DICe::global_formulation,input_params->get<Global_Formulation>(DICe::global_formulation,HORN_SCHUNCK));
+#ifdef DICE_ENABLE_GLOBAL
+    global_algorithm_ = Teuchos::rcp(new DICe::global::Global_Algorithm(this,init_params_));
+#endif
+    return;
+  }
+  else if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
     TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::step_size),std::runtime_error,
       "Error, step size has not been specified");
     step_size = input_params->get<int_t>(DICe::step_size);
@@ -1040,7 +1100,7 @@ Schema::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids){
           if((*neighbor_ids)[i]!=-1) print_warning = true;
         }
         if(print_warning && proc_id==0){
-          std::cout << "*** Waring: Seed values were specified for an anlysis with obstructing subsets. " << std::endl;
+          std::cout << "*** Waring: Seed values were specified for an analysis with obstructing subsets. " << std::endl;
           std::cout << "            These values will be used to initialize subsets for which a seed has been specified, but the seed map " << std::endl;
           std::cout << "            will be set to the distributed map because grouping subsets by obstruction trumps seed ordering." << std::endl;
           std::cout << "            Seed dependencies between neighbors will not be enforced." << std::endl;
@@ -1103,7 +1163,33 @@ Schema::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids){
 }
 
 void
+Schema::post_execution_tasks(){
+  if(analysis_type_==GLOBAL_DIC){
+#ifdef DICE_ENABLE_GLOBAL
+    global_algorithm_->post_execution_tasks(image_frame_);
+#endif
+  }
+}
+
+int_t
 Schema::execute_correlation(){
+  if(analysis_type_==GLOBAL_DIC){
+#ifdef DICE_ENABLE_GLOBAL
+    Status_Flag global_status = CORRELATION_FAILED;
+    try{
+      global_status = global_algorithm_->execute();
+      update_image_frame();
+    }
+    catch(std::exception & e){
+      std::cout << "Error, global correlation failed: " << e.what() << std::endl;
+    }
+    if(global_status!=CORRELATION_SUCCESSFUL){
+      std::cout << "********* Error, global correlation failed **************** " << std::endl;
+      return 1;
+    }
+#endif
+    return 0;
+  }
 
   // make sure the data is ready to go since it may have been initialized externally by an api
   assert(is_initialized_);
@@ -1270,6 +1356,7 @@ Schema::execute_correlation(){
     post_processors_[i]->execute();
   }
   update_image_frame();
+  return 0;
 };
 
 void
@@ -1856,6 +1943,9 @@ Schema::write_output(const std::string & output_folder,
   const bool separate_files_per_subset,
   const bool separate_header_file,
   const Output_File_Type type){
+  if(analysis_type_==GLOBAL_DIC){
+    return;
+  }
 //  assert(analysis_type_!=CONSTRAINED_OPT && "Error, writing output from a schema using constrained optimization is not enabled.");
 //  assert(analysis_type_!=INTEGRATED_DIC && "Error, writing output from a schema using integrated DIC is not enabled.");
   int_t my_proc = comm_->get_rank();
@@ -2284,21 +2374,19 @@ Output_Spec::Output_Spec(Schema * schema,
 void
 Output_Spec::write_info(std::FILE * file){
   assert(file);
+  TEUCHOS_TEST_FOR_EXCEPTION(schema_->analysis_type()==GLOBAL_DIC,std::runtime_error,
+    "Error, write_info is not intended to be used for global DIC");
   fprintf(file,"***\n");
   fprintf(file,"*** Digital Image Correlation Engine (DICe), (git sha1: %s) Copyright 2015 Sandia Corporation\n",GITSHA1);
   fprintf(file,"***\n");
   fprintf(file,"*** Reference image: %s \n",schema_->ref_img()->file_name().c_str());
   fprintf(file,"*** Deformed image: %s \n",schema_->def_img(0)->file_name().c_str());
-  if(schema_->analysis_type()==GLOBAL_DIC){
-    fprintf(file,"*** DIC method : global \n");
-  }
-  else{
-    fprintf(file,"*** DIC method : local \n");
-  }
+  fprintf(file,"*** DIC method : local \n");
   fprintf(file,"*** Correlation method: ZNSSD\n");
   std::string interp_method = to_string(schema_->interpolation_method());
   fprintf(file,"*** Interpolation method: %s\n",interp_method.c_str());
-  fprintf(file,"*** Image gradient method: FINITE_DIFFERENCE\n");
+  std::string grad_method = to_string(schema_->gradient_method());
+  fprintf(file,"*** Image gradient method: %s\n",grad_method.c_str());
   std::string opt_method = to_string(schema_->optimization_method());
   fprintf(file,"*** Optimization method: %s\n",opt_method.c_str());
   std::string proj_method = to_string(schema_->projection_method());
@@ -2317,14 +2405,8 @@ Output_Spec::write_info(std::FILE * file){
     fprintf(file,"Shear Strain (gamma_xy) ");
   fprintf(file,"\n");
   fprintf(file,"*** Incremental correlation: false\n");
-  if(schema_->analysis_type()==GLOBAL_DIC){
-    fprintf(file,"*** Mesh size: %i\n",schema_->mesh_size());
-    fprintf(file,"*** Step size: N/A\n");
-  }
-  else{
-    fprintf(file,"*** Subset size: %i\n",schema_->subset_dim());
-    fprintf(file,"*** Step size: x %i y %i (-1 implies not regular grid)\n",schema_->step_size_x(),schema_->step_size_y());
-  }
+  fprintf(file,"*** Subset size: %i\n",schema_->subset_dim());
+  fprintf(file,"*** Step size: x %i y %i (-1 implies not regular grid)\n",schema_->step_size_x(),schema_->step_size_y());
   if(schema_->post_processors()->size()==0)
     fprintf(file,"*** Strain window: N/A\n");
   else

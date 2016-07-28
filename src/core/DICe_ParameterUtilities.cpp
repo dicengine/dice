@@ -141,12 +141,12 @@ const std::string to_string(Correlation_Routine in){
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Projection_Method in){
   assert(in < MAX_PROJECTION_METHOD);
-  const static char * projectionMethodStrings[] = {
-    "DISPLACEMENT_BASED",
-    "VELOCITY_BASED",
-    "MULTISTEP"
-  };
   return projectionMethodStrings[in];
+}
+DICE_LIB_DLL_EXPORT
+const std::string to_string(Global_Formulation in){
+  assert(in < MAX_GLOBAL_FORMULATION);
+  return globalFormulationStrings[in];
 }
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Initialization_Method in){
@@ -164,6 +164,64 @@ const std::string to_string(Interpolation_Method in){
   return interpolationMethodStrings[in];
 }
 DICE_LIB_DLL_EXPORT
+const std::string to_string(Gradient_Method in){
+  assert(in < MAX_GRADIENT_METHOD);
+  return gradientMethodStrings[in];
+}
+DICE_LIB_DLL_EXPORT
+const std::string to_string(Global_EQ_Term in){
+  assert(in < NO_SUCH_GLOBAL_EQ_TERM);
+  const static char * eqTermStrings[] = {
+    "IMAGE_TIME_FORCE",
+    "IMAGE_GRAD_TENSOR",
+    "DIV_SYMMETRIC_STRAIN_REGULARIZATION",
+    "TIKHONOV_REGULARIZATION",
+    "GRAD_LAGRANGE_MULTIPLIER",
+    "DIV_VELOCITY",
+    "MMS_IMAGE_GRAD_TENSOR",
+    "MMS_FORCE",
+    "MMS_IMAGE_TIME_FORCE",
+    "MMS_GRAD_LAGRANGE_MULTIPLIER",
+    "DIRICHLET_DISPLACEMENT_BC",
+    "MMS_DIRICHLET_DISPLACEMENT_BC",
+    "MMS_LAGRANGE_BC",
+    "CORNER_BC",
+    "OPTICAL_FLOW_DISPLACEMENT_BC",
+    "SUBSET_DISPLACEMENT_BC",
+    "SUBSET_DISPLACEMENT_IC",
+    "LAGRANGE_BC",
+    "CONSTANT_IC",
+    "STAB_LAGRANGE",
+    "NO_SUCH_GLOBAL_EQ_TERM"
+  };
+  return eqTermStrings[in];
+};
+
+DICE_LIB_DLL_EXPORT
+const std::string to_string(Global_Solver in){
+  assert(in < NO_SUCH_GLOBAL_SOLVER);
+  const static char * globalSolverStrings[] = {
+    "CG_SOLVER",
+    "GMRES_SOLVER",
+    "LSQR_SOLVER",
+    "NO_SUCH_GLOBAL_SOLVER"
+  };
+  return globalSolverStrings[in];
+};
+
+DICE_LIB_DLL_EXPORT
+Global_Solver string_to_global_solver(std::string & in){
+  // convert the string to uppercase
+  stringToUpper(in);
+  for(int_t i=0;i<NO_SUCH_GLOBAL_SOLVER;++i){
+    if(to_string(static_cast<Global_Solver>(i))==in) return static_cast<Global_Solver>(i);
+  }
+  std::cout << "Error: Global_Solver " << in << " does not exist." << std::endl;
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
+  return NO_SUCH_GLOBAL_SOLVER; // prevent no return errors
+}
+
+DICE_LIB_DLL_EXPORT
 Field_Name string_to_field_name(std::string & in){
   // convert the string to uppercase
   stringToUpper(in);
@@ -174,6 +232,7 @@ Field_Name string_to_field_name(std::string & in){
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
   return NO_SUCH_FIELD_NAME; // prevent no return errors
 }
+
 DICE_LIB_DLL_EXPORT
 Correlation_Routine string_to_correlation_routine(std::string & in){
   // convert the string to uppercase
@@ -195,6 +254,17 @@ Projection_Method string_to_projection_method(std::string & in){
   std::cout << "Error: Projection_Method " << in << " does not exist." << std::endl;
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
   return NO_SUCH_PROJECTION_METHOD; // prevent no return errors
+}
+DICE_LIB_DLL_EXPORT
+Global_Formulation string_to_global_formulation(std::string & in){
+  // convert the string to uppercase
+  stringToUpper(in);
+  for(int_t i=0;i<MAX_GLOBAL_FORMULATION;++i){
+    if(globalFormulationStrings[i]==in) return static_cast<Global_Formulation>(i);
+  }
+  std::cout << "Error: Global_Formulation " << in << " does not exist." << std::endl;
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
+  return NO_SUCH_GLOBAL_FORMULATION; // prevent no return errors
 }
 DICE_LIB_DLL_EXPORT
 Initialization_Method string_to_initialization_method(std::string & in){
@@ -230,6 +300,18 @@ Interpolation_Method string_to_interpolation_method(std::string & in){
   return NO_SUCH_INTERPOLATION_METHOD; // prevent no return errors
 }
 
+DICE_LIB_DLL_EXPORT
+Gradient_Method string_to_gradient_method(std::string & in){
+  // convert the string to uppercase
+  stringToUpper(in);
+  for(int_t i=0;i<MAX_GRADIENT_METHOD;++i){
+    if(gradientMethodStrings[i]==in) return static_cast<Gradient_Method>(i);
+  }
+  std::cout << "Error: Gradient_Method " << in << " does not exist." << std::endl;
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
+  return NO_SUCH_GRADIENT_METHOD; // prevent no return errors
+}
+
 /// Determine if the parameter is a string parameter
 DICE_LIB_DLL_EXPORT
 bool is_string_param(const std::string & in){
@@ -254,6 +336,7 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::robust_delta_disp,1.0);  // simplex method initial shape is based on these
   defaultParams->set(DICe::robust_delta_theta,0.1); //
   defaultParams->set(DICe::interpolation_method,DICe::KEYS_FOURTH);
+  defaultParams->set(DICe::gradient_method,DICe::FINITE_DIFFERENCE);
   defaultParams->set(DICe::optimization_method,DICe::SIMPLEX);
   defaultParams->set(DICe::initialization_method,DICe::USE_FIELD_VALUES);
   defaultParams->set(DICe::projection_method,DICe::DISPLACEMENT_BASED);
@@ -286,6 +369,12 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::rotate_def_image_180,false);
   defaultParams->set(DICe::rotate_ref_image_270,false);
   defaultParams->set(DICe::rotate_def_image_270,false);
+  defaultParams->set(DICe::global_formulation,HORN_SCHUNCK);
+  defaultParams->set(DICe::global_regularization_alpha,1.0);
+  defaultParams->set(DICe::global_stabilization_tau,-1.0);
+  defaultParams->set(DICe::global_solver,CG_SOLVER);
+  defaultParams->set(DICe::global_element_type,"TRI6");
+  defaultParams->set(DICe::num_image_integration_points,20);
 }
 
 DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultParams){
@@ -298,6 +387,7 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::robust_delta_disp,1.0);  // simplex method initial shape is based on these
   defaultParams->set(DICe::robust_delta_theta,0.1); //
   defaultParams->set(DICe::interpolation_method,DICe::KEYS_FOURTH);
+  defaultParams->set(DICe::gradient_method,DICe::FINITE_DIFFERENCE);
   defaultParams->set(DICe::optimization_method,DICe::GRADIENT_BASED_THEN_SIMPLEX);
   defaultParams->set(DICe::initialization_method,DICe::USE_FIELD_VALUES);
   defaultParams->set(DICe::projection_method,DICe::DISPLACEMENT_BASED);
@@ -330,6 +420,12 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::rotate_def_image_180,false);
   defaultParams->set(DICe::rotate_ref_image_270,false);
   defaultParams->set(DICe::rotate_def_image_270,false);
+  defaultParams->set(DICe::global_formulation,HORN_SCHUNCK);
+  defaultParams->set(DICe::global_regularization_alpha,1.0);
+  defaultParams->set(DICe::global_stabilization_tau,-1.0);
+  defaultParams->set(DICe::global_element_type,"TRI6");
+  defaultParams->set(DICe::global_solver,CG_SOLVER);
+  defaultParams->set(DICe::num_image_integration_points,20);
 }
 
 }// End DICe Namespace

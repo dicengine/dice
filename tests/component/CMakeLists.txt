@@ -2,6 +2,7 @@ include_directories (
     .
     ${DICE_HEADER_DIRS}
     ${DICE_TRILINOS_HEADERS}
+    
 )
 
 SET(DICE_COMP_LIBS
@@ -20,4 +21,8 @@ FOREACH ( test_file ${test_cpp_files})
     GET_FILENAME_COMPONENT ( name ${test_file} NAME_WE)
     add_executable(${name} ${test_file})
     target_link_libraries(${name} ${DICE_LIBRARIES} ${DICE_COMP_LIBS})
-ENDFOREACH ( )
+ENDFOREACH()
+
+IF(DICE_ENABLE_GLOBAL)
+  add_subdirectory(global)
+ENDIF()

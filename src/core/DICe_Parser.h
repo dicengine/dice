@@ -119,8 +119,7 @@ DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   char *argv[],
   bool & force_exit,
-  Teuchos::RCP<std::ostream> & outStream,
-  const Analysis_Type analysis_type=LOCAL_DIC);
+  Teuchos::RCP<std::ostream> & outStream);
 
 /// \brief Read the correlation parameters from a file
 /// \param paramFileName File name of the correlation parameters file
@@ -164,6 +163,43 @@ Motion_Window_Params {
   int_t sub_image_id_;
 };
 
+struct
+DICE_LIB_DLL_EXPORT
+Boundary_Condition_Def{
+  /// Constructor
+  Boundary_Condition_Def():
+  region_("BOUNDARY"),
+  shape_id_(-1),
+  left_vertex_id_(-1),
+  right_vertex_id_(-1),
+  has_value_(false),
+  value_(0.0),
+  comp_(0),
+  use_subsets_(false),
+  subset_size_(-1),
+  is_neumann_(false){};
+  /// either boundary or excluded
+  std::string region_;
+  /// the shape id in the region set
+  int_t shape_id_;
+  /// the left vertex id in the shape
+  int_t left_vertex_id_;
+  /// the right vertex id in the shape
+  int_t right_vertex_id_;
+  /// true if there is a prescribed value
+  bool has_value_;
+  /// value to prescribe for a dirichlet bc
+  scalar_t value_;
+  /// component 0 = x 1 = y
+  int_t comp_;
+  /// true if the subset formulation should be used to define the displacement
+  bool use_subsets_;
+  /// subsets size if subsets are used
+  int_t subset_size_;
+  /// true if this is a neumann condition
+  bool is_neumann_;
+};
+
 /// Simple struct for passing info back and forth from read_subset_file:
 struct
 DICE_LIB_DLL_EXPORT
@@ -188,6 +224,11 @@ Subset_File_Info {
     motion_window_params = Teuchos::rcp(new std::map<int_t,Motion_Window_Params>());
     num_motion_windows = 0;
     type = info_type;
+    boundary_condition_defs = Teuchos::rcp(new std::vector<Boundary_Condition_Def>());
+    use_regular_grid = false;
+    ic_value_x = 0.0;
+    ic_value_y = 0.0;
+    enforce_lagrange_bc = false;
   }
   /// Pointer to map of conformal subset defs (these are used to define conformal subsets)
   Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
@@ -223,6 +264,16 @@ Subset_File_Info {
   Teuchos::RCP<std::map<int_t,Motion_Window_Params> > motion_window_params;
   /// number of motion windows
   int_t num_motion_windows;
+  /// Pointer to the vector of neighbor ids
+  Teuchos::RCP<std::vector<Boundary_Condition_Def> > boundary_condition_defs;
+  /// true if the mesh should be constructed with a regular grid
+  bool use_regular_grid;
+  /// value to prescribe for the initial condition
+  scalar_t ic_value_x;
+  /// value to prescribe for the initial condition
+  scalar_t ic_value_y;
+  /// true if all dirichlet bcs should have lagrange multiplier = 0
+  bool enforce_lagrange_bc;
 };
 
 /// \brief Read a list of coordinates for correlation points from file
@@ -232,8 +283,8 @@ Subset_File_Info {
 /// TODO add conformal subset notes here.
 DICE_LIB_DLL_EXPORT
 const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileName,
-  const int_t width,
-  const int_t height);
+  const int_t width=-1,
+  const int_t height=-1);
 
 /// \brief Turns a string read from getline() into tokens
 /// \param dataFile fstream file to read line from (assumed to be open)
@@ -321,9 +372,19 @@ const char* const parser_subset_coordinates = "SUBSET_COORDINATES";
 /// Parser string
 const char* const parser_region_of_interest = "REGION_OF_INTEREST";
 /// Parser string
+const char* const parser_use_regular_grid = "USE_REGULAR_GRID";
+/// Parser string
+const char* const parser_enforce_lagrange_bc = "ENFORCE_LAGRANGE_BC";
+/// Parser string
+const char* const parser_ic_value_x = "IC_VALUE_X";
+/// Parser string
+const char* const parser_ic_value_y = "IC_VALUE_Y";
+/// Parser string
 const char* const parser_conformal_subset = "CONFORMAL_SUBSET";
 /// Parser string
 const char* const parser_subset_id = "SUBSET_ID";
+/// Parser string
+const char* const parser_use_subsets = "USE_SUBSETS";
 /// Parser string
 const char* const parser_boundary = "BOUNDARY";
 /// Parser string
@@ -376,6 +437,10 @@ const char* const parser_normal_strain = "NORMAL_STRAIN";
 const char* const parser_shear_strain = "SHEAR_STRAIN";
 /// Parser string
 const char* const parser_rotation = "ROTATION";
+/// Parser string
+const char* const parser_dirichlet_bc = "DIRICHLET_BC";
+/// Parser string
+const char* const parser_neumann_bc = "NEUMANN_BC";
 
 
 }// End DICe Namespace
