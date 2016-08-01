@@ -95,11 +95,11 @@ int main(int argc, char *argv[]) {
   // LEHOUCQ TURNER
   formulation.push_back(LEHOUCQ_TURNER);
   out_file_name.push_back("test_global_alg_lt_mixed");
-  alpha.push_back(10.0);
+  alpha.push_back(1.0);
   // LEVENBERG_MARQUARDT
   formulation.push_back(LEVENBERG_MARQUARDT);
   out_file_name.push_back("test_global_alg_lm");
-  alpha.push_back(10.0);
+  alpha.push_back(1.0);
   // UNREGULARIZED
   formulation.push_back(UNREGULARIZED);
   out_file_name.push_back("test_global_alg_unreg");
@@ -121,10 +121,13 @@ int main(int argc, char *argv[]) {
     global_params->set(DICe::global_stabilization_tau,0.0);
     global_params->set(DICe::global_formulation,formulation[i]);
     global_params->set(DICe::output_prefix,out_file_name[i]);
-    if(formulation[i]==UNREGULARIZED)
-      global_params->set(DICe::mesh_size,10000.0);
-    else
-      global_params->set(DICe::mesh_size,100.0);
+    global_params->set(DICe::parser_use_regular_grid,true);
+    global_params->set(DICe::parser_enforce_lagrange_bc,true);
+    global_params->set(DICe::num_image_integration_points,75);
+    //if(formulation[i]==UNREGULARIZED)
+    //  global_params->set(DICe::mesh_size,10000.0);
+    //else
+    global_params->set(DICe::mesh_size,25.0);
     *outStream << "creating a global algorithm" << std::endl;
     Teuchos::RCP<DICe::global::Global_Algorithm> global_alg = Teuchos::rcp(new DICe::global::Global_Algorithm(global_params));
     //*outStream << "pre-execution tasks" << std::endl;
