@@ -111,11 +111,15 @@ int main(int argc, char *argv[]) {
   std::vector<scalar_t> error_x(formulation.size(),-1.0);
   std::vector<scalar_t> error_y(formulation.size(),-1.0);
   std::vector<scalar_t> error_l(formulation.size(),-1.0);
+  std::vector<scalar_t> max_error_x(formulation.size(),-1.0);
 
   for(size_t i=0;i<formulation.size();++i){
     scalar_t error_bx = 0.0;
     scalar_t error_by = 0.0;
     scalar_t error_lambda = 0.0;
+    scalar_t max_error_bx = 0.0;
+    scalar_t max_error_by = 0.0;
+    scalar_t max_error_lambda = 0.0;
     *outStream << " TESTING " << to_string(formulation[i]) << " FORMULATION " << std::endl;
     global_params->set(DICe::global_regularization_alpha,alpha[i]);
     global_params->set(DICe::global_stabilization_tau,0.0);
@@ -137,10 +141,11 @@ int main(int argc, char *argv[]) {
     *outStream << "post execution tasks" << std::endl;
     global_alg->post_execution_tasks(1.0);
     *outStream << "evaluating the error" << std::endl;
-    global_alg->evaluate_mms_error(error_bx,error_by,error_lambda);
+    global_alg->evaluate_mms_error(error_bx,error_by,error_lambda,max_error_bx,max_error_by,max_error_lambda);
     error_x[i] = error_bx;
     error_y[i] = error_by;
     error_l[i] = error_lambda;
+    max_error_x[i] = max_error_bx;
     if(formulation[i]!=UNREGULARIZED&&(error_bx > error_max || error_by > error_max)){
       *outStream << "error, the solution error is too large for " << to_string(formulation[i]) << std::endl;
       errorFlag++;
@@ -152,7 +157,7 @@ int main(int argc, char *argv[]) {
   *outStream << "-----------------------------------------------------------------------------------------------------------" << std::endl;
   for(size_t i=0;i<formulation.size();++i){
     *outStream << std::setw(25) << to_string(formulation[i]) << " error x: " << std::setw(15) << error_x[i] << " error y: "
-        << std::setw(15) << error_y [i] << " error l: " << std::setw(15) << error_l[i] << std::endl;
+        << std::setw(15) << error_y [i] << " error l: " << std::setw(15) << error_l[i] << " max error x: " << max_error_x[i] << std::endl;
   }
   *outStream << "-----------------------------------------------------------------------------------------------------------" << std::endl;
 

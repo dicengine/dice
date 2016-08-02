@@ -117,9 +117,15 @@ public:
   /// \param error_bx output error in x velocity field
   /// \param error_by output error in y velocity field
   /// \param error_lambda output error in lagrange multiplier (zero if not used)
+  /// \param max_error_bx output max error in x velocity field
+  /// \param max_error_by output max error in y velocity field
+  /// \param max_error_lambda output max error in lagrange multiplier (zero if not used)
   void evaluate_mms_error(scalar_t & error_bx,
-    scalar_t & error_bt,
-    scalar_t & error_lambda);
+    scalar_t & error_by,
+    scalar_t & error_lambda,
+    scalar_t & max_error_bx,
+    scalar_t & max_error_by,
+    scalar_t & max_error_lambda);
 
   /// Returns true if the formulation is mixed
   bool is_mixed_formulation()const{

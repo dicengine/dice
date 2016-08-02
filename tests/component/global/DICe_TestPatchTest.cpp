@@ -116,6 +116,9 @@ int main(int argc, char *argv[]) {
     scalar_t error_bx = 0.0;
     scalar_t error_by = 0.0;
     scalar_t error_lambda = 0.0;
+    scalar_t max_error_bx = 0.0;
+    scalar_t max_error_by = 0.0;
+    scalar_t max_error_lambda = 0.0;
     *outStream << " TESTING " << to_string(formulation[i]) << " FORMULATION " << std::endl;
     global_params->set(DICe::global_regularization_alpha,alpha[i]);
     global_params->set(DICe::global_formulation,formulation[i]);
@@ -133,7 +136,7 @@ int main(int argc, char *argv[]) {
     *outStream << "post execution tasks" << std::endl;
     global_alg->post_execution_tasks(1.0);
     *outStream << "evaluating the error" << std::endl;
-    global_alg->evaluate_mms_error(error_bx,error_by,error_lambda);
+    global_alg->evaluate_mms_error(error_bx,error_by,error_lambda,max_error_bx,max_error_by,max_error_lambda);
     error_x[i] = error_bx;
     error_y[i] = error_by;
     error_l[i] = error_lambda;

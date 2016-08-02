@@ -10,7 +10,6 @@ SET(REGRESSION_TESTS
   single_speckled_shift
   conformal_subset_def
   dic_challenge_12
-  simple_obstruction
 )
 
 IF(NOT DICE_USE_DOUBLE)

@@ -1261,12 +1261,19 @@ Global_Algorithm::post_execution_tasks(const scalar_t & time_stamp){
 void
 Global_Algorithm::evaluate_mms_error(scalar_t & error_bx,
   scalar_t & error_by,
-  scalar_t & error_lambda){
+  scalar_t & error_lambda,
+  scalar_t & max_error_bx,
+  scalar_t & max_error_by,
+  scalar_t & max_error_lambda){
   if(mms_problem_==Teuchos::null) return;
 
   error_bx = 0.0;
   error_by = 0.0;
   error_lambda = 0.0;
+  max_error_bx = 0.0;
+  max_error_by = 0.0;
+  max_error_lambda = 0.0;
+
 
   MultiField & disp = *mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
   MultiField & exact_sol = *mesh_->get_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
@@ -1278,8 +1285,14 @@ Global_Algorithm::evaluate_mms_error(scalar_t & error_bx,
     const scalar_t b_y = disp.local_value(iy);
     const scalar_t b_exact_x = exact_sol.local_value(ix);
     const scalar_t b_exact_y = exact_sol.local_value(iy);
-    error_bx += (b_exact_x - b_x)*(b_exact_x - b_x);
-    error_by += (b_exact_y - b_y)*(b_exact_y - b_y);
+    const scalar_t diff_x = (b_exact_x - b_x)*(b_exact_x - b_x);
+    const scalar_t diff_y = (b_exact_y - b_y)*(b_exact_y - b_y);
+    error_bx += diff_x;
+    error_by += diff_y;
+    if(std::sqrt(diff_x) > max_error_bx)
+      max_error_bx = std::sqrt(diff_x);
+    if(std::sqrt(diff_y) > max_error_by)
+      max_error_by = std::sqrt(diff_y);
   }
   error_bx = std::sqrt(error_bx);
   error_by = std::sqrt(error_by);
@@ -1293,12 +1306,16 @@ Global_Algorithm::evaluate_mms_error(scalar_t & error_bx,
     for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
       const scalar_t l = l_field.local_value(i);
       const scalar_t l_exact = l_exact_sol.local_value(i);
-      error_lambda += (l_exact - l)*(l_exact - l);
+      const scalar_t diff = (l_exact - l)*(l_exact - l);
+      error_lambda += diff;
+      if(std::sqrt(diff) > max_error_lambda)
+        max_error_lambda = std::sqrt(diff);
     }
     error_lambda = std::sqrt(error_lambda);
   }
 
-  DEBUG_MSG("MMS Error bx: " << error_bx << " by: " << error_by << " lambda: " << error_lambda);
+  DEBUG_MSG("MMS Error bx: " << error_bx << " max bx: " << max_error_bx <<
+    " by: " << error_by << " max by: " << max_error_by << " lambda: " << error_lambda << " max lambda: " << max_error_lambda);
 }
 
 
