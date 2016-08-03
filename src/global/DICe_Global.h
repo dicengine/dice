@@ -99,7 +99,8 @@ public:
   void post_execution_tasks(const scalar_t & time_stamp);
 
   /// populate the tangent matrix
-  Teuchos::RCP<DICe::MultiField_Matrix> compute_tangent();
+  /// \param use_fixed_point true if fixed point iteration is being employed
+  Teuchos::RCP<DICe::MultiField_Matrix> compute_tangent(const bool use_fixed_point);
 
   /// populate the residual vector
   /// \param use_fixed_point use the fixed point iteration strategy

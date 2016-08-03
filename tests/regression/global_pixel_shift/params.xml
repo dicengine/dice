@@ -1,0 +1,8 @@
+<ParameterList>
+  <Parameter name="global_solver" type="string" value="gmres_solver" />
+  <Parameter name="global_formulation" type="string" value="unregularized" />
+  <Parameter name="global_stabilization_tau" type="double" value="0.0" />
+  <Parameter name="global_regularization_alpha" type="double" value="0.0" />
+  <Parameter name="max_solver_iterations_fast" type="int" value="250" />
+  <!--<Parameter name="compute_image_gradients" type="bool" value="true" />-->
+</ParameterList>

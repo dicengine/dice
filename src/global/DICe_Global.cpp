@@ -175,8 +175,14 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   // create the necessary fields:
   mesh_->create_field(mesh::field_enums::DISPLACEMENT_FS);
   mesh_->create_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
+  Teuchos::RCP<MultiField> disp = mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
+  Teuchos::RCP<MultiField> disp_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
+  disp->put_scalar(0.0);
+  disp_nm1->put_scalar(0.0);
   mesh_->create_field(mesh::field_enums::RESIDUAL_FS);
   mesh_->create_field(mesh::field_enums::LHS_FS);
+  Teuchos::RCP<MultiField> lhs = mesh_->get_field(mesh::field_enums::LHS_FS);
+  lhs->put_scalar(0.0);
   // create the strain fields
   mesh_->create_field(mesh::field_enums::DU_DX_FS);
   mesh_->create_field(mesh::field_enums::DU_DY_FS);
@@ -198,6 +204,8 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   }
   if(is_mixed_formulation()){
     mesh_->create_field(mesh::field_enums::MIXED_LHS_FS);
+    Teuchos::RCP<MultiField> mixed_lhs = mesh_->get_field(mesh::field_enums::MIXED_LHS_FS);
+    mixed_lhs->put_scalar(0.0);
     mesh_->create_field(mesh::field_enums::MIXED_RESIDUAL_FS);
     mesh_->create_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
     if(mms_problem_!=Teuchos::null){
@@ -227,7 +235,7 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   }
 
   // allways add a constant term IC
-  add_term(CONSTANT_IC);
+  //add_term(CONSTANT_IC);
   if(is_mixed_formulation())
     add_term(STAB_LAGRANGE); // pressure stabilization
 
@@ -386,7 +394,7 @@ Global_Algorithm::pre_execution_tasks(){
 }
 
 Teuchos::RCP<DICe::MultiField_Matrix>
-Global_Algorithm::compute_tangent(){
+Global_Algorithm::compute_tangent(const bool use_fixed_point){
 
   DEBUG_MSG("Global_Algorithm::compute_tangent(): Computing the tangent matrix");
   const int_t spa_dim = mesh_->spatial_dimension();
@@ -434,6 +442,7 @@ Global_Algorithm::compute_tangent(){
   scalar_t DN[num_funcs*spa_dim];
   int_t node_ids[num_funcs];
   scalar_t nodal_coords[num_funcs*spa_dim];
+  scalar_t nodal_disp[num_funcs*spa_dim];
   scalar_t jac[spa_dim*spa_dim];
   scalar_t inv_jac[spa_dim*spa_dim];
   scalar_t J =0.0;
@@ -443,6 +452,7 @@ Global_Algorithm::compute_tangent(){
 
   //scalar_t grad_phi[spa_dim];
   scalar_t x=0.0,y=0.0;
+  scalar_t bx=0.0,by=0.0;
 
   // get the natural integration points for this element:
   const int_t integration_order = 6;
@@ -463,6 +473,9 @@ Global_Algorithm::compute_tangent(){
   Teuchos::RCP<MultiField> overlap_coords_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_FS);
   MultiField & overlap_coords = *overlap_coords_ptr;
   Teuchos::ArrayRCP<const scalar_t> coords_values = overlap_coords.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_disp_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_FS);
+  MultiField & overlap_disp = *overlap_disp_ptr;
+  Teuchos::ArrayRCP<const scalar_t> disp_values = overlap_disp.get_1d_view();
 
   // element loop
   DICe::mesh::element_set::iterator elem_it = mesh_->get_element_set()->begin();
@@ -478,6 +491,7 @@ Global_Algorithm::compute_tangent(){
       for(int_t dim=0;dim<spa_dim;++dim){
         const int_t stride = nd*spa_dim + dim;
         nodal_coords[stride] = coords_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
+        nodal_disp[stride] = disp_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
         //std::cout << " node coords " << nodal_coords[stride] << std::endl;
       }
     }
@@ -600,9 +614,14 @@ Global_Algorithm::compute_tangent(){
 
       // physical gp location
       x = 0.0; y=0.0;
+      bx = 0.0; by=0.0;
       for(int_t i=0;i<num_funcs;++i){
         x += nodal_coords[i*spa_dim+0]*N[i];
         y += nodal_coords[i*spa_dim+1]*N[i];
+        if(use_fixed_point){
+          bx += nodal_disp[i*spa_dim+0]*N[i];
+          by += nodal_disp[i*spa_dim+1]*N[i];
+        }
       }
       //std::cout << " physical coords " << x << " " << y << std::endl;
 
@@ -611,7 +630,7 @@ Global_Algorithm::compute_tangent(){
 
       // grad(phi) tensor_prod grad(phi)
       if(has_term(IMAGE_GRAD_TENSOR))
-        image_grad_tensor(this,spa_dim,num_funcs,x,y,J,image_gp_weights[gp],N,elem_stiffness);
+        image_grad_tensor(this,spa_dim,num_funcs,x,y,bx,by,J,image_gp_weights[gp],N,elem_stiffness);
 
     } // image gp loop
 
@@ -929,12 +948,13 @@ Global_Algorithm::execute(){
   }
   Teuchos::RCP<MultiField> disp = mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
   Teuchos::RCP<MultiField> disp_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
-  disp->put_scalar(0.0);
-  disp_nm1->put_scalar(0.0);
+//  disp->describe();
+//  disp->put_scalar(0.0);
+//  disp_nm1->put_scalar(0.0);
 
-  Teuchos::RCP<DICe::MultiField_Matrix> tangent = compute_tangent();
-  linear_problem_->setHermitian(true);
-  linear_problem_->setOperator(tangent->get());
+//  Teuchos::RCP<DICe::MultiField_Matrix> tangent = compute_tangent(use_fixed_point_iterations_);
+//  linear_problem_->setHermitian(true);
+//  linear_problem_->setOperator(tangent->get());
 
   //tangent->describe();
 
@@ -946,6 +966,10 @@ Global_Algorithm::execute(){
   const scalar_t residual_tol = 1.0E-8;
   int_t it=0;
   for(;it<=max_its;++it){
+
+    Teuchos::RCP<DICe::MultiField_Matrix> tangent = compute_tangent(use_fixed_point_iterations_);
+    linear_problem_->setHermitian(true);
+    linear_problem_->setOperator(tangent->get());
 
     // apply the initial conditions (sets lhs and disp_nm1)
     bc_manager_->apply_ics(it==0);
@@ -1011,6 +1035,8 @@ Global_Algorithm::execute(){
     else
       disp->update(1.0,*lhs,1.0);
     //lhs->describe();
+    //disp->describe();
+
     //disp->describe();
     //lagrange_multiplier->describe();
 

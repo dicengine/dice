@@ -840,6 +840,8 @@ void mms_image_grad_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
 /// \param num_funcs the number of shape functions
 /// \param x x-coordinate of the point
 /// \param y y-coordinate of the point
+/// \param bx current x displacement
+/// \param by current y displacement
 /// \param J determinant of the jacobian
 /// \param gp_weight gauss weight
 /// \param N shape functions
@@ -849,6 +851,8 @@ void image_grad_tensor(Global_Algorithm * alg,
   const int_t num_funcs,
   const scalar_t & x,
   const scalar_t & y,
+  const scalar_t & bx,
+  const scalar_t & by,
   const scalar_t & J,
   const scalar_t & gp_weight,
   const scalar_t * N,

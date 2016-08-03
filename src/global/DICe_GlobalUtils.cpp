@@ -192,6 +192,8 @@ void image_grad_tensor(Global_Algorithm * alg,
   const int_t num_funcs,
   const scalar_t & x,
   const scalar_t & y,
+  const scalar_t & bx,
+  const scalar_t & by,
   const scalar_t & J,
   const scalar_t & gp_weight,
   const scalar_t * N,
@@ -199,8 +201,8 @@ void image_grad_tensor(Global_Algorithm * alg,
   TEUCHOS_TEST_FOR_EXCEPTION(alg==NULL,std::runtime_error,
     "Error, the pointer to the algorithm must be valid");
   // compute the image stiffness terms
-  const scalar_t grad_phi_x = alg->grad_x()->interpolate_bicubic(x,y);
-  const scalar_t grad_phi_y = alg->grad_y()->interpolate_bicubic(x,y);
+  const scalar_t grad_phi_x = alg->grad_x()->interpolate_bicubic(x-bx,y-by);
+  const scalar_t grad_phi_y = alg->grad_y()->interpolate_bicubic(x-bx,y-by);
 
   // image stiffness terms
   for(int_t i=0;i<num_funcs;++i){
@@ -405,6 +407,13 @@ void subset_velocity(Global_Algorithm * alg,
   Teuchos::RCP<std::vector<scalar_t> > deformation = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0)); // save off the previous value to test for convergence
   Teuchos::RCP<std::vector<scalar_t> > def_old     = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0)); // save off the previous value to test for convergence
   Teuchos::RCP<std::vector<scalar_t> > def_update  = Teuchos::rcp(new std::vector<scalar_t>(N,0.0)); // save off the previous value to test for convergence
+  // initialize the displacement field with the incoming values
+  const scalar_t b_in_x = b_x;
+  const scalar_t b_in_y = b_y;
+  (*deformation)[DISPLACEMENT_X] = b_x;
+  (*deformation)[DISPLACEMENT_Y] = b_y;
+  (*def_old)[DISPLACEMENT_X] = b_x;
+  (*def_old)[DISPLACEMENT_Y] = b_y;
 
   Teuchos::ArrayRCP<scalar_t> gradGx = subset->grad_x_array();
   Teuchos::ArrayRCP<scalar_t> gradGy = subset->grad_y_array();
@@ -505,8 +514,8 @@ void subset_velocity(Global_Algorithm * alg,
 
     if(std::abs((*deformation)[DICe::DISPLACEMENT_X] - (*def_old)[DICe::DISPLACEMENT_X]) < solve_tol_disp
         && std::abs((*deformation)[DICe::DISPLACEMENT_Y] - (*def_old)[DICe::DISPLACEMENT_Y]) < solve_tol_disp){
-      DEBUG_MSG("subset_velocity(): solution at cx " << c_x << " cy " << c_y << ": b_x " << (*deformation)[DICe::DISPLACEMENT_X] <<
-        " b_y " << (*deformation)[DICe::DISPLACEMENT_Y]);
+      DEBUG_MSG("subset_velocity(): solution at cx " << c_x << " cy " << c_y << ": b_x_in " << b_in_x << " b_x " << (*deformation)[DICe::DISPLACEMENT_X] <<
+        " b_y_in " << b_in_y << " b_y " << (*deformation)[DICe::DISPLACEMENT_Y]);
       break;
     }
 

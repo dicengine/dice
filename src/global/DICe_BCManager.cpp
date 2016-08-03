@@ -220,7 +220,7 @@ Lagrange_BC::apply(const bool first_iteration){
 
   const int_t node_set_id = -1; // lagrangian nodes are all in set -1
   const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_num_global_elements();
-  DEBUG_MSG("Dirichlet_BC::apply(): applying a 0.0 Lagrange multiplier bc to node set id " << node_set_id);
+  DEBUG_MSG("Lagrange_BC::apply(): applying a 0.0 Lagrange multiplier bc to node set id " << node_set_id);
   DICe::mesh::bc_set * bc_sets = mesh_->get_node_bc_sets();
   if(bc_sets->find(node_set_id)==bc_sets->end())return;
   const int_t num_bc_nodes = bc_sets->find(node_set_id)->second.size();
@@ -235,6 +235,7 @@ Dirichlet_BC::apply(const bool first_iteration){
   // get the residual field
   Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
       mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
+  Teuchos::RCP<MultiField> disp = mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
 
   const int_t spa_dim = mesh_->spatial_dimension();
   // iterate the boudnary condition def
@@ -254,10 +255,14 @@ Dirichlet_BC::apply(const bool first_iteration){
       const int_t node_gid = bc_sets->find(node_set_id)->second[i];
       const int_t ix = (node_gid-1)*spa_dim + 1;
       const int_t iy = (node_gid-1)*spa_dim + 2;
-      if(comp==0||comp==2)
+      if(comp==0||comp==2){
         residual->global_value(ix) = first_iteration ? value_ : 0.0;
-      if(comp==1||comp==2)
+         if(first_iteration) disp->global_value(ix) = 0.0;
+      }
+      if(comp==1||comp==2){
         residual->global_value(iy) = first_iteration ? value_ : 0.0;
+        if(first_iteration) disp->global_value(iy) = 0.0;
+      }
     }
   }
 }
@@ -268,6 +273,7 @@ Subset_BC::apply(const bool first_iteration){
   Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
       mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
   Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField> disp = mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
 
   const int_t spa_dim = mesh_->spatial_dimension();
   // iterate the boudnary condition def
@@ -294,8 +300,8 @@ Subset_BC::apply(const bool first_iteration){
           residual->global_value(iy) = 0.0;
       }
       else{
-        scalar_t b_x = 0.0;
-        scalar_t b_y = 0.0;
+        scalar_t b_x = disp->global_value(ix);
+        scalar_t b_y = disp->global_value(iy);
         const scalar_t x = coords->global_value(ix);
         const scalar_t y = coords->global_value(iy);
         // get the closest pixel to x and y
@@ -304,13 +310,42 @@ Subset_BC::apply(const bool first_iteration){
         int_t py = (int_t)y;
         if(y - (int_t)y >= 0.5) py++;
         DICe::global::subset_velocity(alg_,px,py,subset_size,b_x,b_y);
-        if(comp==0||comp==2)
+        if(comp==0||comp==2){
           residual->global_value(ix) = b_x;
-        if(comp==1||comp==2)
+        }
+        if(comp==1||comp==2){
           residual->global_value(iy) = b_y;
-      }
-    }
-  }
+        }
+      } // is first iteration
+    } // nodes in the bc def
+  } // bc defs
+
+  // now iterate the node sets and set the value of the displacement field to zero
+  // in case this isn't the first frame
+  if(first_iteration){
+    for(size_t i=0;i<mesh_->bc_defs()->size();++i){
+      const int_t node_set_id = i+1;  // +1 because bc ids are one-based
+      if(!(*mesh_->bc_defs())[i].use_subsets_) continue;
+      const int_t comp = (*mesh_->bc_defs())[i].comp_;
+      DICe::mesh::bc_set * bc_sets = mesh_->get_node_bc_sets();
+      TEUCHOS_TEST_FOR_EXCEPTION(bc_sets->find(node_set_id)==bc_sets->end(),std::runtime_error,
+        "Error, invalid node set id: " << node_set_id);
+      const int_t num_bc_nodes = bc_sets->find(node_set_id)->second.size();
+      for(int_t i=0;i<num_bc_nodes;++i){
+        const int_t node_gid = bc_sets->find(node_set_id)->second[i];
+        const int_t ix = (node_gid-1)*spa_dim + 1;
+        const int_t iy = (node_gid-1)*spa_dim + 2;
+        if(comp==0||comp==2){
+          disp->global_value(ix) = 0.0;
+        }
+        if(comp==1||comp==2){
+          disp->global_value(iy) = 0.0;
+        }
+      } // nodes in the bc def
+    } // bc defs
+  } // first iteration
+
+
 }
 
 void
