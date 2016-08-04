@@ -430,12 +430,6 @@ public:
     return tpetra_mv_->get1dView();
   }
 
-  /// Print the vector to the screen
-  void describe()const{
-    Teuchos::RCP<Teuchos::FancyOStream> fos = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
-    tpetra_mv_->describe(*fos,Teuchos::VERB_EXTREME);
-  }
-
 private:
   /// Pointer to the underlying data type
   Teuchos::RCP<vec_type> tpetra_mv_;

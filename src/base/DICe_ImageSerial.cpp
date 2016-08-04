@@ -248,12 +248,12 @@ Image::grad_x(const int_t x,
 }
 
 Teuchos::ArrayRCP<scalar_t>
-Image::grad_x() const {
+Image::grad_x_array() const {
   return grad_x_;
 }
 
 Teuchos::ArrayRCP<scalar_t>
-Image::grad_y() const {
+Image::grad_y_array() const {
   return grad_y_;
 }
 

@@ -238,10 +238,10 @@ public:
   Teuchos::ArrayRCP<intensity_t> intensities()const;
 
   /// returns a copy of the grad_x values as an array
-  Teuchos::ArrayRCP<scalar_t> grad_x()const;
+  Teuchos::ArrayRCP<scalar_t> grad_x_array()const;
 
   /// returns a copy of the grad_y values as an array
-  Teuchos::ArrayRCP<scalar_t> grad_y()const;
+  Teuchos::ArrayRCP<scalar_t> grad_y_array()const;
 
   /// replaces the intensity values of the image
   /// \param intensities the new intensity value array

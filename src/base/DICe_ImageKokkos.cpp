@@ -303,13 +303,13 @@ Image::mask(const int_t x,
 }
 
 Teuchos::ArrayRCP<scalar_t>
-Image::grad_x()const{
+Image::grad_x_array()const{
   Teuchos::ArrayRCP<scalar_t> array(grad_x_.h_view.ptr_on_device(),0,width_*height_,false);
   return array;
 }
 
 Teuchos::ArrayRCP<scalar_t>
-Image::grad_y()const{
+Image::grad_y_array()const{
   Teuchos::ArrayRCP<scalar_t> array(grad_y_.h_view.ptr_on_device(),0,width_*height_,false);
   return array;
 }
