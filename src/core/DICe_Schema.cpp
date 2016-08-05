@@ -544,6 +544,8 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   output_evolved_subset_images_ = diceParams->get<bool>(DICe::output_evolved_subset_images);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::use_subset_evolution),std::runtime_error,"");
   use_subset_evolution_ = diceParams->get<bool>(DICe::use_subset_evolution);
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::override_force_simplex),std::runtime_error,"");
+  override_force_simplex_ = diceParams->get<bool>(DICe::override_force_simplex);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::pixel_integration_order),std::runtime_error,"");
   pixel_integration_order_ = diceParams->get<int_t>(DICe::pixel_integration_order);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::obstruction_skin_factor),std::runtime_error,"");
@@ -1637,27 +1639,29 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   // determine if the subset is a blocker and if so, force it to use simplex method:
   // also force simplex if it is a blocked subset (not enough speckles to use grad-based method)
   bool force_simplex = false;
-  if(force_simplex_!=Teuchos::null)
-    if(force_simplex_->find(subset_gid)!=force_simplex_->end()) force_simplex=true;
-  if(obstructing_subset_ids_!=Teuchos::null){
-    if(obstructing_subset_ids_->find(subset_gid)!=obstructing_subset_ids_->end()){
-      if(obstructing_subset_ids_->find(subset_gid)->second.size()>0){
-        force_simplex = true;
-        DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " is a blocker or blocked subset, forcing simplex method for this subset.");
-      }
-    }
-    std::map<int_t,std::vector<int_t> >::iterator blk_it = obstructing_subset_ids_->begin();
-    std::map<int_t,std::vector<int_t> >::iterator blk_end = obstructing_subset_ids_->end();
-    for(;blk_it!=blk_end;++blk_it){
-      std::vector<int_t> * obst_ids = &blk_it->second;
-      for(size_t i=0;i<obst_ids->size();++i){
-        if((*obst_ids)[i]==subset_gid){
+  if(!override_force_simplex_){
+    if(force_simplex_!=Teuchos::null)
+      if(force_simplex_->find(subset_gid)!=force_simplex_->end()) force_simplex=true;
+    if(obstructing_subset_ids_!=Teuchos::null){
+      if(obstructing_subset_ids_->find(subset_gid)!=obstructing_subset_ids_->end()){
+        if(obstructing_subset_ids_->find(subset_gid)->second.size()>0){
           force_simplex = true;
-          DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " is a blocking subset, forcing simplex method for this subset.");
+          DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " is a blocker or blocked subset, forcing simplex method for this subset.");
         }
       }
-    }
-  }
+      std::map<int_t,std::vector<int_t> >::iterator blk_it = obstructing_subset_ids_->begin();
+      std::map<int_t,std::vector<int_t> >::iterator blk_end = obstructing_subset_ids_->end();
+      for(;blk_it!=blk_end;++blk_it){
+        std::vector<int_t> * obst_ids = &blk_it->second;
+        for(size_t i=0;i<obst_ids->size();++i){
+          if((*obst_ids)[i]==subset_gid){
+            force_simplex = true;
+            DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " is a blocking subset, forcing simplex method for this subset.");
+          }
+        }
+      }
+    } // loop over obstructing subset ids
+  } // end !override force simplex
   const scalar_t prev_u = local_field_value(subset_gid,DICe::DISPLACEMENT_X);
   const scalar_t prev_v = local_field_value(subset_gid,DICe::DISPLACEMENT_Y);
   const scalar_t prev_t = local_field_value(subset_gid,DICe::ROTATION_Z);

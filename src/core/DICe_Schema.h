@@ -1164,6 +1164,8 @@ private:
   bool output_evolved_subset_images_;
   /// Use subset evolution (Fill in the reference subset pixels as they become visible in subsequent frames)
   bool use_subset_evolution_;
+  /// override the forcing of simplex method for blocking subsets
+  bool override_force_simplex_;
   /// True if the gamma values (match quality) should be normalized with the number of active pixels
   bool normalize_gamma_with_active_pixels_;
   /// True if regularization is used in the objective function

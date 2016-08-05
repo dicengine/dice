@@ -227,6 +227,8 @@ const char* const obstruction_skin_factor = "obstruction_skin_factor";
 /// String parameter name
 const char* const use_tracking_default_params = "use_tracking_default_params";
 /// String parameter name
+const char* const override_force_simplex = "override_force_simplex";
+/// String parameter name
 const char* const normalize_gamma_with_active_pixels = "normalize_gamma_with_active_pixels";
 /// String parameter name
 const char* const use_objective_regularization = "use_objective_regularization";
@@ -1002,6 +1004,11 @@ const Correlation_Parameter use_tracking_default_params_param(use_tracking_defau
   true,
   "Use the TRACKING default parameters instead of the GENERIC defaults (Not commonly used).");
 /// Correlation parameter and properties
+const Correlation_Parameter override_force_simplex_param(override_force_simplex,
+  BOOL_PARAM,
+  true,
+  "Override the forcing of the simplex method for blocking subsets or those specified using the force_simplex keyword in the subset definition file.");
+/// Correlation parameter and properties
 const Correlation_Parameter normalize_gamma_with_active_pixels_param(normalize_gamma_with_active_pixels,
   BOOL_PARAM,
   true,
@@ -1063,7 +1070,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 65;
+const int_t num_valid_correlation_params = 66;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1104,6 +1111,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   omit_output_row_id_param,
   obstruction_skin_factor_param,
   use_tracking_default_params_param,
+  override_force_simplex_param,
   normalize_gamma_with_active_pixels_param,
   use_global_dic_param,
   use_constrained_opt_dic_param,
