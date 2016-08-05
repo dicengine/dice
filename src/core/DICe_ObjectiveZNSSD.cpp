@@ -261,7 +261,11 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
     // compute the mean value of the subsets:
     const scalar_t meanG = subset_->mean(DEF_INTENSITIES);
 
+    // the gradients are taken from the def images rather than the ref
+    const bool use_ref_grads = schema_->def_img()->has_gradients() ? false : true;
+
     scalar_t dx=0.0,dy=0.0,Dx=0.0,Dy=0.0,delTheta=0.0,delEx=0.0,delEy=0.0,delGxy=0.0;
+    scalar_t gx = 0.0, gy= 0.0;
     scalar_t Gx=0.0,Gy=0.0, GmF=0.0;
     const scalar_t theta = (*deformation)[DICe::ROTATION_Z];
     const scalar_t dudx = (*deformation)[DICe::NORMAL_STRAIN_X];
@@ -277,8 +281,11 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
       Dx = (1.0+dudx)*(dx) + gxy*(dy);
       Dy = (1.0+dvdy)*(dy) + gxy*(dx);
       GmF = (subset_->def_intensities(index) - meanG) - (subset_->ref_intensities(index) - meanF);
-      Gx = gradGx[index];
-      Gy = gradGy[index];
+      gx = gradGx[index];
+      gy = gradGy[index];
+      Gx = use_ref_grads ? cosTheta*gx - sinTheta*gy : gx;
+      Gy = use_ref_grads ? sinTheta*gx + cosTheta*gy : gy;
+
       delTheta = Gx*(-sinTheta*Dx - cosTheta*Dy) + Gy*(cosTheta*Dx - sinTheta*Dy);
       //deldelTheta = Gx*(-cosTheta*Dx + sinTheta*Dy) + Gy*(-sinTheta*Dx - cosTheta*Dy);
       delEx = Gx*dx*cosTheta + Gy*dx*sinTheta;
