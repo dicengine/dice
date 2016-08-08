@@ -359,6 +359,7 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   final_gamma_threshold_ = -1.0;
   path_distance_threshold_ = -1.0;
   set_params(params);
+  stat_container_ = Teuchos::rcp(new Stat_Container());
 }
 
 void
@@ -1587,6 +1588,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //  check if initialization was successful
   //
   if(init_status==INITIALIZE_FAILED){
+    if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_failed_init(subset_gid,first_frame_index_+image_frame_-1);
     record_failed_step(subset_gid,static_cast<int_t>(init_status),num_iterations);
     return;
   }
@@ -1693,8 +1695,10 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   scalar_t diffV = ((*deformation)[DISPLACEMENT_Y] - prev_v);
   scalar_t diffT = ((*deformation)[ROTATION_Z] - prev_t);
   DEBUG_MSG("Subset " << subset_gid << " U jump: " << diffU << " V jump: " << diffV << " T jump: " << diffT);
-  if(std::abs(diffU) > disp_jump_tol_ || std::abs(diffV) > disp_jump_tol_ || std::abs(diffT) > theta_jump_tol_)
+  if(std::abs(diffU) > disp_jump_tol_ || std::abs(diffV) > disp_jump_tol_ || std::abs(diffT) > theta_jump_tol_){
+    if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_jump_exceeded(subset_gid,first_frame_index_+image_frame_-1);
     jump_pass = false;
+  }
   DEBUG_MSG("Subset " << subset_gid << " jump pass: " << jump_pass);
   if(corr_status!=CORRELATION_SUCCESSFUL||!jump_pass){
     bool second_attempt_failed = false;
@@ -1702,6 +1706,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       second_attempt_failed = true;
     }
     else if(optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX){
+      if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_backup_opt_call(subset_gid,first_frame_index_+image_frame_-1);
       // try again using simplex
       init_status = initial_guess(subset_gid,deformation);
       try{
@@ -1715,6 +1720,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       }
     }
     else if(optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED){
+      if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_backup_opt_call(subset_gid,first_frame_index_+image_frame_-1);
       // try again using gradient based
       init_status = initial_guess(subset_gid,deformation);
       try{
@@ -1728,6 +1734,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       }
     }
     if(second_attempt_failed){
+      if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_search_call(subset_gid,first_frame_index_+image_frame_-1);
       // before giving up, try a search initialization, then simplex, then give up if it still can't track:
       const scalar_t search_step_xy = 1.0; // pixels
       const scalar_t search_dim_xy = 10.0; // pixels
@@ -2065,6 +2072,20 @@ Schema::write_output(const std::string & output_folder,
     }
     fclose (filePtr);
   }
+}
+
+void
+Schema::write_stats(const std::string & output_folder,
+  const std::string & prefix){
+  if(analysis_type_==GLOBAL_DIC||correlation_routine_!=TRACKING_ROUTINE){
+    return;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(output_spec_==Teuchos::null,std::runtime_error,"");
+  std::stringstream infoName;
+  infoName << output_folder << prefix << ".info";
+  std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"a"); // overwrite the file if it exists
+  output_spec_->write_stats(infoFilePtr);
+  fclose(infoFilePtr);
 }
 
 void
@@ -2443,6 +2464,53 @@ Output_Spec::write_info(std::FILE * file){
 }
 
 void
+Output_Spec::write_stats(std::FILE * file){
+  assert(file);
+  TEUCHOS_TEST_FOR_EXCEPTION(schema_->analysis_type()==GLOBAL_DIC,std::runtime_error,
+    "Error, write_info is not intended to be used for global DIC");
+  if(schema_->correlation_routine()!=TRACKING_ROUTINE) return;
+  fprintf(file,"***\n");
+  fprintf(file,"*** Analysis stats summary: \n");
+  fprintf(file,"***\n");
+  fprintf(file,"%-18s %-18s %-18s %-18s %-18s\n","subset","backup opt calls","search calls","init fails","jump tol fails");
+  for(size_t i=0;i<schema_->obj_vec()->size();++i){
+    const int_t subset_id = (*schema_->obj_vec())[i]->correlation_point_global_id();
+    const int_t backup_ops = schema_->stat_container()->num_backup_opts(subset_id);
+    const int_t init_fails = schema_->stat_container()->num_failed_inits(subset_id);
+    const int_t searches = schema_->stat_container()->num_searches(subset_id);
+    const int_t jump_fails = schema_->stat_container()->num_jump_fails(subset_id);
+    fprintf(file,"%-18i %-18i %-18i %-18i %-18i\n",subset_id,backup_ops,searches,init_fails,jump_fails);
+  }
+  for(size_t i=0;i<schema_->obj_vec()->size();++i){
+    const int_t subset_id = (*schema_->obj_vec())[i]->correlation_point_global_id();
+    fprintf(file,"\n***\n");
+    fprintf(file,"*** Details for subset %i: \n",subset_id);
+    fprintf(file,"***\n");
+    const int_t backup_ops = schema_->stat_container()->num_backup_opts(subset_id);
+    const int_t init_fails = schema_->stat_container()->num_failed_inits(subset_id);
+    const int_t searches = schema_->stat_container()->num_searches(subset_id);
+    const int_t jump_fails = schema_->stat_container()->num_jump_fails(subset_id);
+    fprintf(file,"\n Backup optimization was called for frames: \n");
+    for(int_t j=0;j<backup_ops;++j){
+      fprintf(file,"%i ",schema_->stat_container()->backup_optimization_call_frams()->find(subset_id)->second[j]);
+    }
+    fprintf(file,"\n Search initialization was done for frames: \n");
+    for(int_t j=0;j<searches;++j){
+      fprintf(file,"%i",schema_->stat_container()->search_call_frames()->find(subset_id)->second[j]);
+    }
+    fprintf(file,"\n Jump tolerance was exceeded for frames: \n");
+    for(int_t j=0;j<jump_fails;++j){
+      fprintf(file,"%i",schema_->stat_container()->jump_tol_exceeded_frames()->find(subset_id)->second[j]);
+    }
+    fprintf(file,"\n Initialization failed for frames: \n");
+    for(int_t j=0;j<init_fails;++j){
+      fprintf(file,"%i",schema_->stat_container()->failed_init_frames()->find(subset_id)->second[j]);
+    }
+  }
+}
+
+
+void
 Output_Spec::write_header(std::FILE * file,
   const std::string & row_id){
   assert(file);
@@ -2501,5 +2569,54 @@ bool frame_should_be_skipped(const int_t trigger_based_frame_index,
   if(index%2==0||index==0) return false;
   else return true;
 }
+
+void
+Stat_Container::register_backup_opt_call(const int_t subset_id,
+  const int_t frame_id){
+  if(backup_optimization_call_frames_.find(subset_id) == backup_optimization_call_frames_.end()){
+    std::vector<int_t> frames;
+    frames.push_back(frame_id);
+    backup_optimization_call_frames_.insert(std::pair<int_t,std::vector<int_t> >(subset_id,frames));
+  }
+  else
+    backup_optimization_call_frames_.find(subset_id)->second.push_back(frame_id);
+}
+
+void
+Stat_Container::register_search_call(const int_t subset_id,
+  const int_t frame_id){
+  if(search_call_frames_.find(subset_id) == search_call_frames_.end()){
+    std::vector<int_t> frames;
+    frames.push_back(frame_id);
+    search_call_frames_.insert(std::pair<int_t,std::vector<int_t> >(subset_id,frames));
+  }
+  else
+    search_call_frames_.find(subset_id)->second.push_back(frame_id);
+}
+
+void
+Stat_Container::register_jump_exceeded(const int_t subset_id,
+  const int_t frame_id){
+  if(jump_tol_exceeded_frames_.find(subset_id) == jump_tol_exceeded_frames_.end()){
+    std::vector<int_t> frames;
+    frames.push_back(frame_id);
+    jump_tol_exceeded_frames_.insert(std::pair<int_t,std::vector<int_t> >(subset_id,frames));
+  }
+  else
+    jump_tol_exceeded_frames_.find(subset_id)->second.push_back(frame_id);
+}
+
+void
+Stat_Container::register_failed_init(const int_t subset_id,
+  const int_t frame_id){
+  if(failed_init_frames_.find(subset_id) == failed_init_frames_.end()){
+    std::vector<int_t> frames;
+    frames.push_back(frame_id);
+    failed_init_frames_.insert(std::pair<int_t,std::vector<int_t> >(subset_id,frames));
+  }
+  else
+    failed_init_frames_.find(subset_id)->second.push_back(frame_id);
+}
+
 
 }// End DICe Namespace

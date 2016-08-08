@@ -73,6 +73,106 @@ class Output_Spec;
 // forward declaration of Post_Processor
 class Post_Processor;
 
+class
+DICE_LIB_DLL_EXPORT
+Stat_Container{
+public:
+  /// Constructor
+  Stat_Container(){};
+  /// Destructor
+  ~Stat_Container(){};
+
+  /// register a call to backup optimization
+  /// \param subset_id the id of the subset to register
+  /// \param frame_id the id of the current frame
+  void register_backup_opt_call(const int_t subset_id,
+    const int_t frame_id);
+
+  /// register a call to the search initializer
+  /// \param subset_id the id of the subset to register
+  /// \param frame_id the id of the current frame
+  void register_search_call(const int_t subset_id,
+    const int_t frame_id);
+
+  /// register that the jump tolerances were exceeded
+  /// \param subset_id the id of the subset to register
+  /// \param frame_id the id of the current frame
+  void register_jump_exceeded(const int_t subset_id,
+    const int_t frame_id);
+
+  /// register a failed initialization
+  /// \param subset_id the id of the subset to register
+  /// \param frame_id the id of the current frame
+  void register_failed_init(const int_t subset_id,
+    const int_t frame_id);
+
+  /// returns a pointer to the storage member
+  std::map<int_t,std::vector<int_t> > * backup_optimization_call_frams(){
+    return & backup_optimization_call_frames_;
+  }
+
+  /// returns a pointer to the storage member
+  std::map<int_t,std::vector<int_t> > * jump_tol_exceeded_frames(){
+    return & jump_tol_exceeded_frames_;
+  }
+
+  /// returns a pointer to the storage member
+  std::map<int_t,std::vector<int_t> > * search_call_frames(){
+    return & search_call_frames_;
+  }
+
+  /// returns a pointer to the storage member
+  std::map<int_t,std::vector<int_t> > * failed_init_frames(){
+    return & failed_init_frames_;
+  }
+
+  /// returns the number of occurrances for this subset
+  const int_t num_backup_opts(const int_t subset_id){
+    if(backup_optimization_call_frames_.find(subset_id)!=backup_optimization_call_frames_.end()){
+      return backup_optimization_call_frames_.find(subset_id)->second.size();
+    }
+    else
+      return 0;
+  }
+
+  /// returns the number of occurrances for this subset
+  const int_t num_jump_fails(const int_t subset_id){
+    if(jump_tol_exceeded_frames_.find(subset_id)!=jump_tol_exceeded_frames_.end()){
+      return jump_tol_exceeded_frames_.find(subset_id)->second.size();
+    }
+    else
+      return 0;
+  }
+
+  /// returns the number of occurrances for this subset
+  const int_t num_searches(const int_t subset_id){
+    if(search_call_frames_.find(subset_id)!=search_call_frames_.end()){
+      return search_call_frames_.find(subset_id)->second.size();
+    }
+    else
+      return 0;
+  }
+
+  /// returns the number of occurrances for this subset
+  const int_t num_failed_inits(const int_t subset_id){
+    if(failed_init_frames_.find(subset_id)!=failed_init_frames_.end()){
+      return failed_init_frames_.find(subset_id)->second.size();
+    }
+    else
+      return 0;
+  }
+
+private:
+  /// number of times backup optimization routine had to be used
+  std::map<int_t,std::vector<int_t> > backup_optimization_call_frames_;
+  /// number of times the search was called
+  std::map<int_t,std::vector<int_t> > search_call_frames_;
+  /// frames that exceeded the jump tolerance
+  std::map<int_t,std::vector<int_t> > jump_tol_exceeded_frames_;
+  /// failed initialization frames
+  std::map<int_t,std::vector<int_t> > failed_init_frames_;
+};
+
 /// \class DICe::Schema
 /// \brief The centralized container for the correlation plan and parameters
 ///
@@ -616,12 +716,17 @@ public:
   /// The default is one file per frame with all subsets listed one per row.
   /// \param separate_header_file place the run information in another file rather than the header of the results
   /// \param type Type of file to write (currently only TEXT_FILE is implemented)
-  // TODO export in exodus format
   void write_output(const std::string & output_folder,
     const std::string & prefix="DICe_solution",
     const bool separate_files_per_subset=false,
     const bool separate_header_file=false,
     const Output_File_Type type = TEXT_FILE);
+
+  /// \brief Write the stats for a completed run
+  /// \param output_folder Name of the folder for output (the file name is fixed)
+  /// \param prefix Optional string to use as the file prefix
+  void write_stats(const std::string & output_folder,
+    const std::string & prefix="DICe_solution");
 
   /// \brief Write an image that shows all the subsets' current positions and shapes
   /// using the current field values
@@ -992,6 +1097,16 @@ public:
     return init_params_;
   }
 
+  /// returns a pointer to the stats class
+  Teuchos::RCP<Stat_Container> stat_container(){
+    return stat_container_;
+  }
+
+  /// return a pointer to the objective vector
+  std::vector<Teuchos::RCP<Objective> > * obj_vec(){
+    return &obj_vec_;
+  }
+
 private:
   /// Pointer to communicator (can be serial)
   comm_rcp comm_;
@@ -1202,6 +1317,9 @@ private:
   /// Global algorithm
   Teuchos::RCP<DICe::global::Global_Algorithm> global_algorithm_;
 #endif
+  /// keep track of stats for each subset (only for tracking routine)
+  Teuchos::RCP<Stat_Container> stat_container_;
+
 
 };
 
@@ -1233,6 +1351,10 @@ public:
   /// \brief Writes the run information (interpolants used, etc.)
   /// \param file Pointer to the output file (must already be open)
   void write_info(std::FILE * file);
+
+  /// \brief appends statistics for each subset to the info file
+  /// \param file Pointer to the output file (must already be open)
+  void write_stats(std::FILE * file);
 
   /// \brief Writes the fields for the current frame
   /// \param file Pointer to the output file (must already be open)

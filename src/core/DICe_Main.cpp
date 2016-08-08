@@ -310,6 +310,8 @@ int main(int argc, char *argv[]) {
       schema->post_execution_tasks();
     } // image loop
 
+    schema->write_stats(output_folder,file_prefix);
+
     avg_time = total_time / num_images;
 
     if(failed_step)
