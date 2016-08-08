@@ -1697,9 +1697,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     jump_pass = false;
   DEBUG_MSG("Subset " << subset_gid << " jump pass: " << jump_pass);
   if(corr_status!=CORRELATION_SUCCESSFUL||!jump_pass){
+    bool second_attempt_failed = false;
     if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::GRADIENT_BASED||force_simplex){
-      record_failed_step(subset_gid,static_cast<int_t>(corr_status),num_iterations);
-      return;
+      second_attempt_failed = true;
     }
     else if(optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX){
       // try again using simplex
@@ -1711,8 +1711,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
         corr_status = CORRELATION_FAILED_BY_EXCEPTION;
       };
       if(corr_status!=CORRELATION_SUCCESSFUL){
-        record_failed_step(subset_gid,static_cast<int_t>(corr_status),num_iterations);
-        return;
+        second_attempt_failed = true;
       }
     }
     else if(optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED){
@@ -1720,6 +1719,30 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       init_status = initial_guess(subset_gid,deformation);
       try{
           corr_status = obj->computeUpdateFast(deformation,num_iterations);
+      }
+      catch (std::logic_error &err) { //a non-graceful exception occurred
+        corr_status = CORRELATION_FAILED_BY_EXCEPTION;
+      };
+      if(corr_status!=CORRELATION_SUCCESSFUL){
+        second_attempt_failed = true;
+      }
+    }
+    if(second_attempt_failed){
+      // before giving up, try a search initialization, then simplex, then give up if it still can't track:
+      const scalar_t search_step_xy = 1.0; // pixels
+      const scalar_t search_dim_xy = 10.0; // pixels
+      const scalar_t search_step_theta = 0.0; // radians (keep theta the same)
+      const scalar_t search_dim_theta = 0.0;
+      // reset the deformation position to the previous step's value
+      for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i)
+        (*deformation)[i] = 0.0;
+      (*deformation)[DISPLACEMENT_X] = prev_u;
+      (*deformation)[DISPLACEMENT_Y] = prev_v;
+      (*deformation)[ROTATION_Z] = prev_t;
+      Search_Initializer searcher(this,obj->subset(),search_step_xy,search_dim_xy,search_step_theta,search_dim_theta);
+      searcher.initial_guess(subset_gid,deformation);
+      try{
+          corr_status = obj->computeUpdateRobust(deformation,num_iterations);
       }
       catch (std::logic_error &err) { //a non-graceful exception occurred
         corr_status = CORRELATION_FAILED_BY_EXCEPTION;

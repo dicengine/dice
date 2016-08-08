@@ -302,6 +302,60 @@ Phase_Correlation_Initializer::pre_execution_tasks(){
   DEBUG_MSG("Phase_Correlation_Initializer::pre_execution_tasks(): initial displacements ux: " << phase_cor_u_x_ << " uy: " << phase_cor_u_y_);
 }
 
+Status_Flag
+Search_Initializer::initial_guess(const int_t subset_gid,
+  Teuchos::RCP<std::vector<scalar_t> > deformation){
+
+  DEBUG_MSG("Search_Initializer::initial_guess(): called for subset " << subset_gid);
+
+  // start with the input deformation
+  const scalar_t orig_x = (*deformation)[DISPLACEMENT_X];
+  const scalar_t orig_y = (*deformation)[DISPLACEMENT_Y];
+  const scalar_t orig_t = (*deformation)[ROTATION_Z];
+  const scalar_t start_x = orig_x - search_dim_xy_;
+  const scalar_t start_y = orig_y - search_dim_xy_;
+  const scalar_t start_t = orig_t - search_dim_theta_;
+  const scalar_t end_x = orig_x + search_dim_xy_;
+  const scalar_t end_y = orig_y + search_dim_xy_;
+  const scalar_t end_t = orig_t + search_dim_theta_;
+  const scalar_t gamma_good_enough = 1.0E-4;
+  scalar_t min_gamma = 100.0;
+  scalar_t min_x = 0.0;
+  scalar_t min_y = 0.0;
+  scalar_t min_theta = 0.0;
+  for(scalar_t pos_y = start_y;pos_y<=end_y;pos_y+=step_size_xy_){
+    for(scalar_t pos_x = start_x;pos_x<=end_x;pos_x+=step_size_xy_){
+      for(scalar_t pos_t = start_t;pos_t<=end_t;pos_t+=step_size_theta_){
+        (*deformation)[DISPLACEMENT_X] = pos_x;
+        (*deformation)[DISPLACEMENT_Y] = pos_y;
+        (*deformation)[ROTATION_Z] = pos_t;
+        subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation);
+        // assumes that the reference subset has already been initialized
+        const scalar_t gamma = subset_->gamma();
+        //DEBUG_MSG("search pos " << pos_x << " " << pos_y << " " << pos_t << " gamma " << gamma);
+        if(gamma < min_gamma){
+          min_gamma = gamma;
+          min_x = pos_x;
+          min_y = pos_y;
+          min_theta = pos_t;
+        }
+        if(gamma < gamma_good_enough){
+          DEBUG_MSG("Found very small gamma: " << gamma << " skipping the rest of the search");
+          DEBUG_MSG("Search initialization values: " << (*deformation)[DISPLACEMENT_X] << " "
+            << (*deformation)[DISPLACEMENT_Y] << " " << (*deformation)[ROTATION_Z]);
+          return INITIALIZE_SUCCESSFUL;
+        }
+      }
+    }
+  }
+
+  DEBUG_MSG("Search initialization values: " << min_x << " " << min_y << " " << min_theta << " gamma: " << min_gamma);
+  (*deformation)[DISPLACEMENT_X] = min_x;
+  (*deformation)[DISPLACEMENT_Y] = min_y;
+  (*deformation)[ROTATION_Z] = min_theta;
+
+  return INITIALIZE_SUCCESSFUL;
+};
 
 Status_Flag
 Field_Value_Initializer::initial_guess(const int_t subset_gid,

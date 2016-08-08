@@ -340,7 +340,7 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::optimization_method,DICe::SIMPLEX);
   defaultParams->set(DICe::initialization_method,DICe::USE_FIELD_VALUES);
   defaultParams->set(DICe::projection_method,DICe::DISPLACEMENT_BASED);
-  defaultParams->set(DICe::disp_jump_tol,3.5);
+  defaultParams->set(DICe::disp_jump_tol,8.0);
   defaultParams->set(DICe::theta_jump_tol,0.1);
   defaultParams->set(DICe::enable_translation,true);
   defaultParams->set(DICe::enable_rotation,true);

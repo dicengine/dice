@@ -328,6 +328,51 @@ protected:
   scalar_t phase_cor_u_y_;
 };
 
+/// \class DICe::Search_Initializer
+/// \brief A class that searches a nearby neighborhood for the subset
+class DICE_LIB_DLL_EXPORT
+Search_Initializer : public Initializer{
+public:
+
+  /// constructor
+  /// \param schema the parent schema
+  Search_Initializer(Schema * schema,
+    Teuchos::RCP<Subset> subset,
+    const scalar_t & step_size_xy,
+    const scalar_t & search_dim_xy,
+    const scalar_t & step_size_theta,
+    const scalar_t & search_dim_theta):
+  Initializer(schema),
+  subset_(subset),
+  step_size_xy_(step_size_xy),
+  search_dim_xy_(search_dim_xy),
+  step_size_theta_(step_size_theta),
+  search_dim_theta_(search_dim_theta){};
+
+  /// virtual destructor
+  virtual ~Search_Initializer(){};
+
+  /// see base class description
+  virtual void pre_execution_tasks(){};
+
+  /// see base class description
+  virtual Status_Flag initial_guess(const int_t subset_gid,
+    Teuchos::RCP<std::vector<scalar_t> > deformation);
+
+protected:
+  /// pointer to a specific subset
+  Teuchos::RCP<Subset> subset_;
+  /// search step size in x and y
+  scalar_t step_size_xy_;
+  /// extent of search in x and y (added and substracted from input to get extents)
+  scalar_t search_dim_xy_;
+  /// search step size in theta
+  scalar_t step_size_theta_;
+  /// extent of search in theta
+  scalar_t search_dim_theta_;
+};
+
+
 /// \class DICe::Field_Value_Initializer
 /// \brief an initializer that grabs values from the field values
 /// in the schema as the first guess, for example, the last frame's solution
