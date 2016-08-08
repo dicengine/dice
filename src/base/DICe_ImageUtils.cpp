@@ -80,4 +80,73 @@ void apply_transform(Teuchos::RCP<Image> image_in,
   }// y
 }
 
+void SinCos_Image_Deformer::compute_deformation(const scalar_t & coord_x,
+  const scalar_t & coord_y,
+  scalar_t & bx,
+  scalar_t & by){
+  // pattern repeats every 500 pixels
+  // TODO should this depend on the image dims?
+  const scalar_t L = 500.0;
+  bx = 0.0;
+  by = 0.0;
+  for(int_t i=0;i<num_steps_;++i){
+    const scalar_t beta = (i+1)*DICE_PI/L;
+    bx += sin(beta*coord_x)*cos(beta*coord_y)*0.5/(i+1);
+    by += -cos(beta*coord_x)*sin(beta*coord_y)*0.5/(i+1);
+  }
+}
+
+void SinCos_Image_Deformer::compute_deriv_deformation(const scalar_t & coord_x,
+  const scalar_t & coord_y,
+  scalar_t & bxx,
+  scalar_t & bxy,
+  scalar_t & byx,
+  scalar_t & byy){
+  // pattern repeats every 500 pixels
+  // TODO should this depend on the image dims?
+  const scalar_t L = 500.0;
+  bxx = 0.0;
+  bxy = 0.0;
+  byx = 0.0;
+  byy = 0.0;
+  for(int_t i=0;i<num_steps_;++i){
+    const scalar_t beta = (i+1)*DICE_PI/L;
+    bxx += beta*cos(beta*coord_x)*cos(beta*coord_y)*0.5/(i+1);
+    bxy += -beta*sin(beta*coord_x)*sin(beta*coord_y)*0.5/(i+1);
+    byx += beta*sin(beta*coord_x)*sin(beta*coord_y)*0.5/(i+1);
+    byy += -beta*cos(beta*coord_x)*cos(beta*coord_y)*0.5/(i+1);
+  }
+}
+
+Teuchos::RCP<Image>
+SinCos_Image_Deformer::deform_image(Teuchos::RCP<Image> ref_image){
+  // Note: uses 11 x 11 point sampling grid to evaluate the deformed intensity
+  const int_t w = ref_image->width();
+  const int_t h = ref_image->height();
+  static scalar_t coeffs[11] =
+  {0.0001,0.0017,0.0168,0.0870,
+    0.2328,0.3231,0.2328,
+    0.0870,0.0168,0.0017,0.0001};
+  Teuchos::ArrayRCP<intensity_t> def_intens(w*h,0.0);
+  scalar_t bx=0.0,by=0.0;
+  for(int_t j=0;j<h;++j){
+    for(int_t i=0;i<w;++i){
+      scalar_t avg_intens = 0.0;
+      for(int_t oy=0;oy<11;++oy){
+        const scalar_t sample_y = j - 5.0/11.0 + oy/11.0;
+        for(int_t ox=0;ox<11;++ox){
+          const scalar_t sample_x = i - 5.0/11.0 + ox/11.0;
+          const scalar_t weight = coeffs[ox]*coeffs[oy];
+          compute_deformation(sample_x,sample_y,bx,by);
+          scalar_t intens = ref_image->interpolate_keys_fourth(sample_x-bx,sample_y-by);
+          avg_intens += weight*intens;
+        } // end super pixel ox
+      } // end super pixel oy
+      def_intens[j*w+i] = avg_intens;
+    } // end pixel i
+  } // ens pixel j
+  Teuchos::RCP<Image> def_img = Teuchos::rcp(new Image(w,h,def_intens));
+  return def_img;
+}
+
 }// End DICe Namespace
