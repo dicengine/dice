@@ -71,13 +71,16 @@ int main(int argc, char *argv[]) {
   // create an image from file:
   *outStream << "creating an image from a tiff file " << std::endl;
   Teuchos::RCP<Image> ref_img = Teuchos::rcp(new Image("./images/sincos_ref.tif"));
-  ref_img->write("sincos_ref.tif");
+  //ref_img->write("sincos_ref.tif");
 
+#if DICE_KOKKOS
+#else
   // create an image deformer class
   const int_t num_steps = 20;
   Teuchos::RCP<SinCos_Image_Deformer> deformer = Teuchos::rcp(new SinCos_Image_Deformer(num_steps));
   Teuchos::RCP<Image> def_img = deformer->deform_image(ref_img);
-  def_img->write("sincos_def.tif");
+  //def_img->write("sincos_def.tif");
+#endif
 
   *outStream << "--- End test ---" << std::endl;
 

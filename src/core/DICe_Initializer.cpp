@@ -331,7 +331,13 @@ Search_Initializer::initial_guess(const int_t subset_gid,
         (*deformation)[ROTATION_Z] = pos_t;
         subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation);
         // assumes that the reference subset has already been initialized
-        const scalar_t gamma = subset_->gamma();
+        scalar_t gamma = 100.0;
+        try{
+          gamma = subset_->gamma();
+        }
+        catch(std::exception & e){
+          gamma = 100.0;
+        }
         //DEBUG_MSG("search pos " << pos_x << " " << pos_y << " " << pos_t << " gamma " << gamma);
         if(gamma < min_gamma){
           min_gamma = gamma;
