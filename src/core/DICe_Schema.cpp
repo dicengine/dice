@@ -2019,11 +2019,11 @@ Schema::write_output(const std::string & output_folder,
         std::FILE * filePtr = fopen(fName.str().c_str(),"w"); // overwrite the file if it exists
         if(separate_header_file){
           std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"w"); // overwrite the file if it exists
-          output_spec_->write_info(infoFilePtr);
+          output_spec_->write_info(infoFilePtr,true);
           fclose(infoFilePtr);
          }
         else{
-          output_spec_->write_info(filePtr);
+          output_spec_->write_info(filePtr,false);
         }
         output_spec_->write_header(filePtr,"FRAME");
         fclose (filePtr);
@@ -2059,11 +2059,11 @@ Schema::write_output(const std::string & output_folder,
     std::FILE * filePtr = fopen(fName.str().c_str(),"w");
     if(separate_header_file){
       std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"w"); // overwrite the file if it exists
-      output_spec_->write_info(infoFilePtr);
+      output_spec_->write_info(infoFilePtr,true);
       fclose(infoFilePtr);
      }
     else{
-      output_spec_->write_info(filePtr);
+      output_spec_->write_info(filePtr,false);
     }
     output_spec_->write_header(filePtr,"SUBSET_ID");
 
@@ -2420,7 +2420,8 @@ Output_Spec::Output_Spec(Schema * schema,
 };
 
 void
-Output_Spec::write_info(std::FILE * file){
+Output_Spec::write_info(std::FILE * file,
+  const bool include_time_of_day){
   assert(file);
   TEUCHOS_TEST_FOR_EXCEPTION(schema_->analysis_type()==GLOBAL_DIC,std::runtime_error,
     "Error, write_info is not intended to be used for global DIC");
@@ -2461,6 +2462,12 @@ Output_Spec::write_info(std::FILE * file){
     fprintf(file,"*** Strain window size in pixels: %i (only first strain post-processor is reported)\n",schema_->strain_window_size(0));
   fprintf(file,"*** Coordinates given with (0,0) as upper left corner of image, x positive right, y positive down\n");
   fprintf(file,"***\n");
+  if(include_time_of_day){
+    time_t t = time(0);   // get time now
+    struct tm * now = localtime( & t );
+    fprintf(file,"*** Analysis start time %i_%i_%i %i %i %i \n",
+      now->tm_year + 1900,now->tm_mon + 1,now->tm_mday,now->tm_hour,now->tm_min,now->tm_sec);
+  }
 }
 
 void
@@ -2468,6 +2475,10 @@ Output_Spec::write_stats(std::FILE * file){
   assert(file);
   TEUCHOS_TEST_FOR_EXCEPTION(schema_->analysis_type()==GLOBAL_DIC,std::runtime_error,
     "Error, write_info is not intended to be used for global DIC");
+  time_t t = time(0);   // get time now
+  struct tm * now = localtime( & t );
+  fprintf(file,"*** Analysis end time %i_%i_%i %i %i %i \n",
+    now->tm_year + 1900,now->tm_mon + 1,now->tm_mday,now->tm_hour,now->tm_min,now->tm_sec);
   if(schema_->correlation_routine()!=TRACKING_ROUTINE) return;
   fprintf(file,"***\n");
   fprintf(file,"*** Analysis stats summary: \n");
@@ -2496,15 +2507,15 @@ Output_Spec::write_stats(std::FILE * file){
     }
     fprintf(file,"\n Search initialization was done for frames: \n");
     for(int_t j=0;j<searches;++j){
-      fprintf(file,"%i",schema_->stat_container()->search_call_frames()->find(subset_id)->second[j]);
+      fprintf(file,"%i ",schema_->stat_container()->search_call_frames()->find(subset_id)->second[j]);
     }
     fprintf(file,"\n Jump tolerance was exceeded for frames: \n");
     for(int_t j=0;j<jump_fails;++j){
-      fprintf(file,"%i",schema_->stat_container()->jump_tol_exceeded_frames()->find(subset_id)->second[j]);
+      fprintf(file,"%i ",schema_->stat_container()->jump_tol_exceeded_frames()->find(subset_id)->second[j]);
     }
     fprintf(file,"\n Initialization failed for frames: \n");
     for(int_t j=0;j<init_fails;++j){
-      fprintf(file,"%i",schema_->stat_container()->failed_init_frames()->find(subset_id)->second[j]);
+      fprintf(file,"%i ",schema_->stat_container()->failed_init_frames()->find(subset_id)->second[j]);
     }
   }
 }

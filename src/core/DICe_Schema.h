@@ -1350,7 +1350,9 @@ public:
 
   /// \brief Writes the run information (interpolants used, etc.)
   /// \param file Pointer to the output file (must already be open)
-  void write_info(std::FILE * file);
+  /// \param include_time_of_day stamp the start of the run
+  void write_info(std::FILE * file,
+    const bool include_time_of_day);
 
   /// \brief appends statistics for each subset to the info file
   /// \param file Pointer to the output file (must already be open)
