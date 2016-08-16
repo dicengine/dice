@@ -308,6 +308,9 @@ Search_Initializer::initial_guess(const int_t subset_gid,
 
   DEBUG_MSG("Search_Initializer::initial_guess(): called for subset " << subset_gid);
 
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size_xy_==0.0,std::runtime_error,"Error, step xy size must be > 0");
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size_theta_==0.0,std::runtime_error,"Error, step theta size must be > 0");
+
   // start with the input deformation
   const scalar_t orig_x = (*deformation)[DISPLACEMENT_X];
   const scalar_t orig_y = (*deformation)[DISPLACEMENT_Y];

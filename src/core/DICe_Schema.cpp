@@ -1598,7 +1598,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       const scalar_t search_step_xy = 1.0; // pixels
       const scalar_t search_dim_xy = 10.0; // pixels
       const scalar_t search_step_theta = 0.0; // radians (keep theta the same)
-      const scalar_t search_dim_theta = 0.0;
+      const scalar_t search_dim_theta = 0.01;
       // reset the deformation position to the previous step's value
       for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i)
         (*deformation)[i] = 0.0;
