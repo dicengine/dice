@@ -43,7 +43,6 @@
 #include <DICe_Parser.h>
 #include <DICe_Image.h>
 #include <DICe_ImageIO.h>
-#include <DICe_ImageUtils.h>
 #include <DICe_Schema.h>
 #include <DICe_Cine.h>
 
@@ -250,8 +249,7 @@ int main(int argc, char *argv[]) {
     if(correlation_params->get<int_t>(DICe::predict_resolution_error,-1)>0){
       file_prefix = "DICe_error_estimation_solution";
       const int_t num_steps = correlation_params->get<int_t>(DICe::predict_resolution_error);
-      Teuchos::RCP<SinCos_Image_Deformer> deformer = Teuchos::rcp(new SinCos_Image_Deformer());
-      deformer->estimate_resolution_error(schema.getRawPtr(),num_steps,output_folder,file_prefix,outStream);
+      schema->estimate_resolution_error(num_steps,output_folder,file_prefix,outStream);
       DICe::finalize();
       return 0;
     }

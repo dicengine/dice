@@ -1016,6 +1016,16 @@ public:
     return motion_window_params_;
   }
 
+  /// estimate the error in the displacement resolution and strain
+  /// \param num_steps number of frequency profiles to cycle through
+  /// \param output_folder where to place the output files
+  /// \param prefix the file prefix to use for output files
+  /// \param outStream output stream to write screen output to
+  void estimate_resolution_error(const int num_steps,
+    std::string & output_folder,
+    std::string & prefix,
+    Teuchos::RCP<std::ostream> & outStream);
+
   /// \brief EXPERIMENTAL sets the layering order of subets
   /// \param id_vec Pointer to map of vectors, each vector contains the ids for that particular subset in the order they will be layered if they cross paths
   ///

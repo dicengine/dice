@@ -44,6 +44,7 @@
 #include <DICe_ObjectiveZNSSD.h>
 #include <DICe_PostProcessor.h>
 #include <DICe_ParameterUtilities.h>
+#include <DICe_ImageUtils.h>
 #ifdef DICE_ENABLE_GLOBAL
   #include <DICe_TriangleUtils.h>
 #endif
@@ -1922,6 +1923,148 @@ Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
 #endif
 }
 
+void
+Schema::estimate_resolution_error(const int num_steps,
+  std::string & output_folder,
+  std::string & prefix,
+  Teuchos::RCP<std::ostream> & outStream){
+#if DICE_KOKKOS
+#else
+  DEBUG_MSG("Schema::estimate_resolution_error(): Estimating resolution error with num_steps = " << num_steps);
+
+  std::stringstream result_stream;
+  // create an image deformer class
+
+  for(int_t step=0;step<num_steps;++step){
+    DEBUG_MSG("Processing step " << step);
+    Teuchos::RCP<SinCos_Image_Deformer> deformer = Teuchos::rcp(new SinCos_Image_Deformer(step));
+    Teuchos::RCP<Image> def_img = deformer->deform_image(ref_img());
+    std::stringstream sincos_name;
+    sincos_name << "sincos_iamge_" << step << ".tif";
+    def_img->write(sincos_name.str());
+
+    // set the deformed image for the schema
+    set_def_image(def_img);
+    int_t corr_error = execute_correlation();
+    DEBUG_MSG("Error prediction step correlation return value " << corr_error);
+    write_output(output_folder,prefix,false,true);
+    post_execution_tasks();
+
+    // compute the error:
+    scalar_t h1x_error = 0.0;
+    scalar_t h1y_error = 0.0;
+    scalar_t hinfx_error = 0.0;
+    scalar_t hinfy_error = 0.0;
+    scalar_t avgx_error = 0.0;
+    scalar_t avgy_error = 0.0;
+    for(int_t i=0;i<data_num_points();++i){
+      const scalar_t x = field_value(i,DICe::COORDINATE_X);
+      const scalar_t y = field_value(i,DICe::COORDINATE_Y);
+      const scalar_t u = field_value(i,DICe::DISPLACEMENT_X);
+      const scalar_t v = field_value(i,DICe::DISPLACEMENT_Y);
+      scalar_t e_x;
+      scalar_t e_y;
+      deformer->compute_displacement_error(x,y,u,v,e_x,e_y);
+      h1x_error += e_x;
+      h1y_error += e_y;
+      avgx_error += std::sqrt(e_x);
+      avgy_error += std::sqrt(e_y);
+      if(e_x > hinfx_error) hinfx_error = e_x;
+      if(e_y > hinfy_error) hinfy_error = e_y;
+    }
+    h1x_error = std::sqrt(h1x_error);
+    h1y_error = std::sqrt(h1y_error);
+    hinfx_error = std::sqrt(hinfx_error);
+    hinfy_error = std::sqrt(hinfy_error);
+    avgx_error /= data_num_points();
+    avgy_error /= data_num_points();
+    scalar_t std_dev_x = 0.0;
+    scalar_t std_dev_y = 0.0;
+    for(int_t i=0;i<data_num_points();++i){
+      const scalar_t x = field_value(i,DICe::COORDINATE_X);
+      const scalar_t y = field_value(i,DICe::COORDINATE_Y);
+      const scalar_t u = field_value(i,DICe::DISPLACEMENT_X);
+      const scalar_t v = field_value(i,DICe::DISPLACEMENT_Y);
+      scalar_t e_x;
+      scalar_t e_y;
+      deformer->compute_displacement_error(x,y,u,v,e_x,e_y);
+      e_x = std::sqrt(e_x);
+      e_y = std::sqrt(e_y);
+      std_dev_x += (e_x - avgx_error)*(e_x - avgx_error);
+      std_dev_y += (e_y - avgy_error)*(e_y - avgy_error);
+    }
+    std_dev_x = std::sqrt(1.0/data_num_points()*std_dev_x);
+    std_dev_y = std::sqrt(1.0/data_num_points()*std_dev_y);
+    result_stream << "Step: " << std::setw(3) << step << " ERRORS H_1 x: " << std::setw(8) << h1x_error << " H_1 y: " << std::setw(8) << h1y_error <<
+        " H_inf x: " << std::setw(8) << hinfx_error << " H_inf error y: " << std::setw(8) << hinfy_error << " std_dev x: " << std::setw(8) << std_dev_x <<
+        " std_dev y: " << std::setw(8) << std_dev_y << std::endl;
+
+    scalar_t sh1x_error = 0.0;
+    scalar_t sh1y_error = 0.0;
+    scalar_t shinfx_error = 0.0;
+    scalar_t shinfy_error = 0.0;
+    scalar_t savgx_error = 0.0;
+    scalar_t savgy_error = 0.0;
+    // FIXME assumes that the first post_processor gives the strain values
+    TEUCHOS_TEST_FOR_EXCEPTION(post_processors()->size()<=0,std::runtime_error,"Error, VSG post processor not enabled, but needs to be for image deformer error calcs");
+    for(int_t i=0;i<data_num_points();++i){
+      const scalar_t x = field_value(i,DICe::COORDINATE_X);
+      const scalar_t y = field_value(i,DICe::COORDINATE_Y);
+      const scalar_t exx = (*post_processors())[0]->field_value(i,vsg_strain_xx);
+      const scalar_t eyy = (*post_processors())[0]->field_value(i,vsg_strain_yy);
+      scalar_t e_x;
+      scalar_t e_y;
+      deformer->compute_deriv_error(x,y,exx,eyy,e_x,e_y);
+      sh1x_error += e_x;
+      sh1y_error += e_y;
+      savgx_error += std::sqrt(e_x);
+      savgy_error += std::sqrt(e_y);
+      if(e_x > shinfx_error) shinfx_error = e_x;
+      if(e_y > shinfy_error) shinfy_error = e_y;
+    }
+    sh1x_error = std::sqrt(sh1x_error);
+    sh1y_error = std::sqrt(sh1y_error);
+    shinfx_error = std::sqrt(shinfx_error);
+    shinfy_error = std::sqrt(shinfy_error);
+    savgx_error /= data_num_points();
+    savgy_error /= data_num_points();
+    scalar_t std_dev_sx = 0.0;
+    scalar_t std_dev_sy = 0.0;
+    for(int_t i=0;i<data_num_points();++i){
+      const scalar_t x = field_value(i,DICe::COORDINATE_X);
+      const scalar_t y = field_value(i,DICe::COORDINATE_Y);
+      const scalar_t exx = (*post_processors())[0]->field_value(i,vsg_strain_xx);
+      const scalar_t eyy = (*post_processors())[0]->field_value(i,vsg_strain_yy);
+      scalar_t e_x;
+      scalar_t e_y;
+      deformer->compute_deriv_error(x,y,exx,eyy,e_x,e_y);
+      e_x = std::sqrt(e_x);
+      e_y = std::sqrt(e_y);
+      std_dev_sx += (e_x - savgx_error)*(e_x - savgx_error);
+      std_dev_sy += (e_y - savgy_error)*(e_y - savgy_error);
+    }
+    std_dev_sx = std::sqrt(1.0/data_num_points()*std_dev_sx);
+    std_dev_sy = std::sqrt(1.0/data_num_points()*std_dev_sy);
+    result_stream << "Step: " << std::setw(3) << step << " STRAIN ERRORS H_1 x: " << std::setw(8) << sh1x_error << " H_1 y: " << std::setw(8) << sh1y_error <<
+        " H_inf x: " << std::setw(8) << shinfx_error << " H_inf error y: " << std::setw(8) << shinfy_error << " std_dev x: " << std::setw(8) << std_dev_sx <<
+        " std_dev y: " << std::setw(8) << std_dev_sy << std::endl;
+  }
+  write_stats(output_folder,prefix);
+  // write the results to the .info file
+  std::stringstream infoName;
+  infoName << output_folder << prefix << ".info";
+  std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"a");
+  fprintf(infoFilePtr,"***\n");
+  fprintf(infoFilePtr,"*** Displacement and Strain Error Estimates \n");
+  fprintf(infoFilePtr,"***\n");
+  fprintf(infoFilePtr,result_stream.str().c_str());
+  fprintf(infoFilePtr,"***\n");
+  fprintf(infoFilePtr,"***\n");
+  fprintf(infoFilePtr,"***\n");
+  fclose(infoFilePtr);
+  *outStream << result_stream.str();
+#endif
+}
 // TODO fix this up so that it works with conformal subsets:
 void
 Schema::write_control_points_image(const std::string & fileName,

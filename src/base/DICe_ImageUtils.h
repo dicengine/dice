@@ -54,9 +54,6 @@ namespace DICe {
 // forward declaration of DICe::Image
 class Image;
 
-// forward declaration of a DICe::Schema
-class Schema;
-
 /// free function to apply a transformation to an image:
 /// \param image_in the image where the intensities are taken
 /// \param image_out the output image
@@ -142,12 +139,6 @@ public:
     const scalar_t & sol_y,
     scalar_t & error_x,
     scalar_t & error_y);
-
-  void estimate_resolution_error(DICe::Schema * schema,
-    const int num_steps,
-    std::string & output_folder,
-    std::string & prefix,
-    Teuchos::RCP<std::ostream> & outStream);
 
   /// destructor
   ~SinCos_Image_Deformer(){};
