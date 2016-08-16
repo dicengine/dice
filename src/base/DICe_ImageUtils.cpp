@@ -41,7 +41,6 @@
 
 #include <DICe_ImageUtils.h>
 #include <DICe_Image.h>
-#include <DICe_Schema.h>
 
 namespace DICe {
 
