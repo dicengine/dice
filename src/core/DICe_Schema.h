@@ -1313,6 +1313,8 @@ private:
   double path_distance_threshold_;
   /// true if the beta parameter should be computed by the objective
   bool output_beta_;
+  /// true if search initialization should be used for failed steps (otherwise the subset is skipped)
+  bool use_search_initialization_for_failed_steps_;
 #ifdef DICE_ENABLE_GLOBAL
   /// Global algorithm
   Teuchos::RCP<DICe::global::Global_Algorithm> global_algorithm_;

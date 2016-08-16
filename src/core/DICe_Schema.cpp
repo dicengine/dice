@@ -557,6 +557,8 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   objective_regularization_factor_ = diceParams->get<double>(DICe::objective_regularization_factor);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::output_beta),std::runtime_error,"");
   output_beta_ = diceParams->get<bool>(DICe::output_beta);
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::use_search_initialization_for_failed_steps),std::runtime_error,"");
+  use_search_initialization_for_failed_steps_ = diceParams->get<bool>(DICe::use_search_initialization_for_failed_steps);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::normalize_gamma_with_active_pixels),std::runtime_error,"");
   normalize_gamma_with_active_pixels_ = diceParams->get<bool>(DICe::normalize_gamma_with_active_pixels);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::rotate_ref_image_90),std::runtime_error,"");
@@ -1588,9 +1590,28 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //  check if initialization was successful
   //
   if(init_status==INITIALIZE_FAILED){
-    if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_failed_init(subset_gid,first_frame_index_+image_frame_-1);
-    record_failed_step(subset_gid,static_cast<int_t>(init_status),num_iterations);
-    return;
+    // try again with a search initializer
+    if(correlation_routine_==TRACKING_ROUTINE && use_search_initialization_for_failed_steps_){
+      stat_container_->register_search_call(subset_gid,first_frame_index_+image_frame_-1);
+      // before giving up, try a search initialization, then simplex, then give up if it still can't track:
+      const scalar_t search_step_xy = 1.0; // pixels
+      const scalar_t search_dim_xy = 10.0; // pixels
+      const scalar_t search_step_theta = 0.0; // radians (keep theta the same)
+      const scalar_t search_dim_theta = 0.0;
+      // reset the deformation position to the previous step's value
+      for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i)
+        (*deformation)[i] = 0.0;
+      (*deformation)[DISPLACEMENT_X] = local_field_value(subset_gid,DICe::DISPLACEMENT_X);
+      (*deformation)[DISPLACEMENT_Y] = local_field_value(subset_gid,DICe::DISPLACEMENT_Y);
+      (*deformation)[ROTATION_Z] = local_field_value(subset_gid,DICe::ROTATION_Z);
+      Search_Initializer searcher(this,obj->subset(),search_step_xy,search_dim_xy,search_step_theta,search_dim_theta);
+      init_status = searcher.initial_guess(subset_gid,deformation);
+    }
+    if(init_status==INITIALIZE_FAILED){
+      if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_failed_init(subset_gid,first_frame_index_+image_frame_-1);
+      record_failed_step(subset_gid,static_cast<int_t>(init_status),num_iterations);
+      return;
+    }
   }
   //
   //  check if the user rrequested to skip the solve and only initialize (param set in subset file)
@@ -1734,26 +1755,26 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       }
     }
     if(second_attempt_failed){
-      if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_search_call(subset_gid,first_frame_index_+image_frame_-1);
-      // before giving up, try a search initialization, then simplex, then give up if it still can't track:
-      const scalar_t search_step_xy = 1.0; // pixels
-      const scalar_t search_dim_xy = 10.0; // pixels
-      const scalar_t search_step_theta = 0.0; // radians (keep theta the same)
-      const scalar_t search_dim_theta = 0.0;
-      // reset the deformation position to the previous step's value
-      for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i)
-        (*deformation)[i] = 0.0;
-      (*deformation)[DISPLACEMENT_X] = prev_u;
-      (*deformation)[DISPLACEMENT_Y] = prev_v;
-      (*deformation)[ROTATION_Z] = prev_t;
-      Search_Initializer searcher(this,obj->subset(),search_step_xy,search_dim_xy,search_step_theta,search_dim_theta);
-      searcher.initial_guess(subset_gid,deformation);
-      try{
-          corr_status = obj->computeUpdateRobust(deformation,num_iterations);
-      }
-      catch (std::logic_error &err) { //a non-graceful exception occurred
-        corr_status = CORRELATION_FAILED_BY_EXCEPTION;
-      };
+//      if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_search_call(subset_gid,first_frame_index_+image_frame_-1);
+//      // before giving up, try a search initialization, then simplex, then give up if it still can't track:
+//      const scalar_t search_step_xy = 1.0; // pixels
+//      const scalar_t search_dim_xy = 10.0; // pixels
+//      const scalar_t search_step_theta = 0.0; // radians (keep theta the same)
+//      const scalar_t search_dim_theta = 0.0;
+//      // reset the deformation position to the previous step's value
+//      for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i)
+//        (*deformation)[i] = 0.0;
+//      (*deformation)[DISPLACEMENT_X] = prev_u;
+//      (*deformation)[DISPLACEMENT_Y] = prev_v;
+//      (*deformation)[ROTATION_Z] = prev_t;
+//      Search_Initializer searcher(this,obj->subset(),search_step_xy,search_dim_xy,search_step_theta,search_dim_theta);
+//      searcher.initial_guess(subset_gid,deformation);
+//      try{
+//          corr_status = obj->computeUpdateRobust(deformation,num_iterations);
+//      }
+//      catch (std::logic_error &err) { //a non-graceful exception occurred
+//        corr_status = CORRELATION_FAILED_BY_EXCEPTION;
+//      };
       if(corr_status!=CORRELATION_SUCCESSFUL){
         record_failed_step(subset_gid,static_cast<int_t>(corr_status),num_iterations);
         return;
