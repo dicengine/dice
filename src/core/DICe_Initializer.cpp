@@ -363,7 +363,7 @@ Search_Initializer::initial_guess(const int_t subset_gid,
   (*deformation)[DISPLACEMENT_Y] = min_y;
   (*deformation)[ROTATION_Z] = min_theta;
 
-  if(min_gamma < 0.5)
+  if(min_gamma < 1.0)
     return INITIALIZE_SUCCESSFUL;
   else
     return INITIALIZE_FAILED;
