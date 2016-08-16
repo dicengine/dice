@@ -43,6 +43,7 @@
 #include <DICe_Parser.h>
 #include <DICe_Image.h>
 #include <DICe_ImageIO.h>
+#include <DICe_ImageUtils.h>
 #include <DICe_Schema.h>
 #include <DICe_Cine.h>
 
@@ -243,6 +244,17 @@ int main(int argc, char *argv[]) {
 
     // let the schema know how many images there are in the sequence:
     schema->set_num_image_frames(num_images);
+    std::string file_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
+
+    // if the user selects predict_resolution_error option, an error analysis is performed and the actual analysis is skipped
+    if(correlation_params->get<int_t>(DICe::predict_resolution_error,-1)>0){
+      file_prefix = "DICe_error_estimation_solution";
+      const int_t num_steps = correlation_params->get<int_t>(DICe::predict_resolution_error);
+      Teuchos::RCP<SinCos_Image_Deformer> deformer = Teuchos::rcp(new SinCos_Image_Deformer());
+      deformer->estimate_resolution_error(schema.getRawPtr(),num_steps,output_folder,file_prefix,outStream);
+      DICe::finalize();
+      return 0;
+    }
 
     // iterate through the images and perform the correlation:
     scalar_t total_time = 0.0;
@@ -251,7 +263,6 @@ int main(int argc, char *argv[]) {
     scalar_t min_time = 1.0E10;
     scalar_t avg_time = 0.0;
     bool failed_step = false;
-    std::string file_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
     // TODO find a more straightforward way to do the indexing
     const int_t start_frame = cine_start_index==-1 ? 1 : cine_start_index;
     const int_t end_frame = cine_end_index==-1 ? num_images : cine_end_index;

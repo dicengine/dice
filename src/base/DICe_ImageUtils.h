@@ -54,6 +54,9 @@ namespace DICe {
 // forward declaration of DICe::Image
 class Image;
 
+// forward declaration of a DICe::Schema
+class Schema;
+
 /// free function to apply a transformation to an image:
 /// \param image_in the image where the intensities are taken
 /// \param image_out the output image
@@ -77,6 +80,10 @@ public:
   /// \param num_steps the number of frequency steps to superimpose
   SinCos_Image_Deformer(const int_t num_steps):
     num_steps_(num_steps){};
+
+  /// parameterless constructor
+  SinCos_Image_Deformer():
+    num_steps_(1){};
 
   /// perform deformation on the image
   /// returns a pointer to the deformed image
@@ -106,6 +113,41 @@ public:
     scalar_t & bxy,
     scalar_t & byx,
     scalar_t & byy);
+
+  /// compute the error of a given solution at the given coords
+  /// \param coord_x the x coordinate
+  /// \param coord_y the y coordinate
+  /// \param sol_x the solution value in x
+  /// \param sol_y the solution value in y
+  /// \param error_x [out] the x error at the given coords
+  /// \param error_y [out] the y error at the given coords
+  void compute_displacement_error(const scalar_t & coord_x,
+    const scalar_t & coord_y,
+    const scalar_t & sol_x,
+    const scalar_t & sol_y,
+    scalar_t & error_x,
+    scalar_t & error_y);
+
+  /// compute the error of the derivative of a given solution at the given coords
+  /// \param coord_x the x coordinate
+  /// \param coord_y the y coordinate
+  /// \param sol_x the solution value in x
+  /// \param sol_y the solution value in y
+  /// \param error_x [out] the x error at the given coords
+  /// \param error_y [out] the y error at the given coords
+  // TODO add off-diagonal terms
+  void compute_deriv_error(const scalar_t & coord_x,
+    const scalar_t & coord_y,
+    const scalar_t & sol_x,
+    const scalar_t & sol_y,
+    scalar_t & error_x,
+    scalar_t & error_y);
+
+  void estimate_resolution_error(DICe::Schema * schema,
+    const int num_steps,
+    std::string & output_folder,
+    std::string & prefix,
+    Teuchos::RCP<std::ostream> & outStream);
 
   /// destructor
   ~SinCos_Image_Deformer(){};

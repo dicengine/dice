@@ -2036,6 +2036,7 @@ Schema::write_output(const std::string & output_folder,
   }
   else{
     std::stringstream fName;
+    std::stringstream infofName;
     // determine the number of digits to append:
     int_t num_zeros = 0;
     if(num_image_frames_>0){
@@ -2050,6 +2051,7 @@ Schema::write_output(const std::string & output_folder,
       num_zeros = num_digits_total - num_digits_image;
     }
     fName << output_folder << prefix << "_";
+    infofName << output_folder << prefix << ".txt";
     for(int_t i=0;i<num_zeros;++i)
       fName << "0";
     fName << image_frame_ - 1;
@@ -2057,7 +2059,7 @@ Schema::write_output(const std::string & output_folder,
       fName << "." << proc_size;
     fName << ".txt";
     std::FILE * filePtr = fopen(fName.str().c_str(),"w");
-    if(separate_header_file){
+    if(separate_header_file && image_frame_<=1){
       std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"w"); // overwrite the file if it exists
       output_spec_->write_info(infoFilePtr,true);
       fclose(infoFilePtr);
@@ -2077,9 +2079,8 @@ Schema::write_output(const std::string & output_folder,
 void
 Schema::write_stats(const std::string & output_folder,
   const std::string & prefix){
-  if(analysis_type_==GLOBAL_DIC||correlation_routine_!=TRACKING_ROUTINE){
+  if(analysis_type_==GLOBAL_DIC)
     return;
-  }
   TEUCHOS_TEST_FOR_EXCEPTION(output_spec_==Teuchos::null,std::runtime_error,"");
   std::stringstream infoName;
   infoName << output_folder << prefix << ".info";
@@ -2474,7 +2475,7 @@ void
 Output_Spec::write_stats(std::FILE * file){
   assert(file);
   TEUCHOS_TEST_FOR_EXCEPTION(schema_->analysis_type()==GLOBAL_DIC,std::runtime_error,
-    "Error, write_info is not intended to be used for global DIC");
+    "Error, write_stats is not intended to be used for global DIC");
   time_t t = time(0);   // get time now
   struct tm * now = localtime( & t );
   fprintf(file,"*** Analysis end time %i_%i_%i %i %i %i \n",
