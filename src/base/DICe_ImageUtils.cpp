@@ -89,14 +89,17 @@ void SinCos_Image_Deformer::compute_deformation(const scalar_t & coord_x,
   const scalar_t L = 500.0;
   bx = 0.0;
   by = 0.0;
-//  for(int_t i=0;i<num_steps_;++i){
-//    const scalar_t beta = (i+1)*DICE_PI/L;
-//    bx += sin(beta*coord_x)*cos(beta*coord_y)*0.5/(i+1);
-//    by += -cos(beta*coord_x)*sin(beta*coord_y)*0.5/(i+1);
-  //  }
-  const scalar_t beta = (num_steps_+1)*DICE_PI/L;
-  bx += sin(beta*coord_x)*cos(beta*coord_y);
-  by += -cos(beta*coord_x)*sin(beta*coord_y);
+  if(use_superposition_){
+    for(int_t i=0;i<num_steps_;++i){
+      const scalar_t beta = (i+1)*DICE_PI/L;
+      bx += sin(beta*coord_x)*cos(beta*coord_y)*0.5/(i+1);
+      by += -cos(beta*coord_x)*sin(beta*coord_y)*0.5/(i+1);
+    }
+  }else{
+    const scalar_t beta = (num_steps_+1)*DICE_PI/L;
+    bx = sin(beta*coord_x)*cos(beta*coord_y);
+    by = -cos(beta*coord_x)*sin(beta*coord_y);
+  }
 }
 
 void SinCos_Image_Deformer::compute_deriv_deformation(const scalar_t & coord_x,
@@ -112,18 +115,22 @@ void SinCos_Image_Deformer::compute_deriv_deformation(const scalar_t & coord_x,
   bxy = 0.0;
   byx = 0.0;
   byy = 0.0;
-//  for(int_t i=0;i<num_steps_;++i){
-//    const scalar_t beta = (i+1)*DICE_PI/L;
-//    bxx += beta*cos(beta*coord_x)*cos(beta*coord_y)*0.5/(i+1);
-//    bxy += -beta*sin(beta*coord_x)*sin(beta*coord_y)*0.5/(i+1);
-//    byx += beta*sin(beta*coord_x)*sin(beta*coord_y)*0.5/(i+1);
-//    byy += -beta*cos(beta*coord_x)*cos(beta*coord_y)*0.5/(i+1);
-//  }
-  const scalar_t beta = (num_steps_+1)*DICE_PI/L;
-  bxx = beta*cos(beta*coord_x)*cos(beta*coord_y);
-  bxy = -beta*sin(beta*coord_x)*sin(beta*coord_y);
-  byx = beta*sin(beta*coord_x)*sin(beta*coord_y);
-  byy = -beta*cos(beta*coord_x)*cos(beta*coord_y);
+  if(use_superposition_){
+    for(int_t i=0;i<num_steps_;++i){
+      const scalar_t beta = (i+1)*DICE_PI/L;
+      bxx += beta*cos(beta*coord_x)*cos(beta*coord_y)*0.5/(i+1);
+      bxy += -beta*sin(beta*coord_x)*sin(beta*coord_y)*0.5/(i+1);
+      byx += beta*sin(beta*coord_x)*sin(beta*coord_y)*0.5/(i+1);
+      byy += -beta*cos(beta*coord_x)*cos(beta*coord_y)*0.5/(i+1);
+    }
+  }
+  else{
+    const scalar_t beta = (num_steps_+1)*DICE_PI/L;
+    bxx = beta*cos(beta*coord_x)*cos(beta*coord_y);
+    bxy = -beta*sin(beta*coord_x)*sin(beta*coord_y);
+    byx = beta*sin(beta*coord_x)*sin(beta*coord_y);
+    byy = -beta*cos(beta*coord_x)*cos(beta*coord_y);
+  }
 }
 
 void SinCos_Image_Deformer::compute_displacement_error(const scalar_t & coord_x,

@@ -75,12 +75,15 @@ public:
 
   /// constructor
   /// \param num_steps the number of frequency steps to superimpose
-  SinCos_Image_Deformer(const int_t num_steps):
-    num_steps_(num_steps){};
+  SinCos_Image_Deformer(const int_t num_steps,
+    bool use_superposition = false):
+    num_steps_(num_steps),
+    use_superposition_(use_superposition){};
 
   /// parameterless constructor
   SinCos_Image_Deformer():
-    num_steps_(1){};
+    num_steps_(1),
+    use_superposition_(false){};
 
   /// perform deformation on the image
   /// returns a pointer to the deformed image
@@ -146,6 +149,8 @@ public:
 private:
   /// number of frequency steps to impose
   int_t num_steps_;
+  /// use superposition for each step
+  bool use_superposition_;
 
 };
 

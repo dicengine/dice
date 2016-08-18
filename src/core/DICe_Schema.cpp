@@ -1946,6 +1946,7 @@ Schema::estimate_resolution_error(const int num_steps,
     // set the deformed image for the schema
     set_def_image(def_img);
     int_t corr_error = execute_correlation();
+    TEUCHOS_TEST_FOR_EXCEPTION(corr_error,std::runtime_error,"Error, correlation unsuccesssful");
     DEBUG_MSG("Error prediction step correlation return value " << corr_error);
     write_output(output_folder,prefix,false,true);
     post_execution_tasks();
