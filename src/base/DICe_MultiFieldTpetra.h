@@ -372,7 +372,7 @@ public:
 
   /// \brief import the data from one distributed object to this one
   /// \param multifield the multifield to import
-  /// \param importer the importer defines how the information will be transferred
+  /// \param exporter the importer defines how the information will be transferred
   /// \param mode combine mode
   ///
   /// For more information about importing and exporting see the Trilinos docs
@@ -509,7 +509,7 @@ public:
   }
 
   /// \brief export the data from one distributed object to this one
-  /// \param multifield the multifield to export
+  /// \param multifield_matrix the multifield to export
   /// \param exporter the exporter defines how the information will be transferred
   /// \param mode combine mode
   void do_export(Teuchos::RCP<MultiField_Matrix> multifield_matrix,

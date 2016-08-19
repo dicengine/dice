@@ -386,7 +386,7 @@ public:
     const bool apply_in_place=false);
 
   /// normalize the image intensity values
-  /// \params the image parameters to use
+  /// \param params the image parameters to use
   Teuchos::RCP<Image> normalize(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// apply a rotation to this image to create another image

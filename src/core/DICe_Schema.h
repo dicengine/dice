@@ -73,6 +73,7 @@ class Output_Spec;
 // forward declaration of Post_Processor
 class Post_Processor;
 
+/// container class that holds information about a tracking analysis
 class
 DICE_LIB_DLL_EXPORT
 Stat_Container{

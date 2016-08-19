@@ -336,6 +336,11 @@ public:
 
   /// constructor
   /// \param schema the parent schema
+  /// \param subset pointer to a subset
+  /// \param step_size_xy the search step size in u and v
+  /// \param search_dim_xy the extents of the search in u and v
+  /// \param step_size_theta the angle step size
+  /// \param search_dim_theta the extents of the search in angle
   Search_Initializer(Schema * schema,
     Teuchos::RCP<Subset> subset,
     const scalar_t & step_size_xy,

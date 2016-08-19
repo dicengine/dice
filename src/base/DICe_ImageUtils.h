@@ -75,6 +75,7 @@ public:
 
   /// constructor
   /// \param num_steps the number of frequency steps to superimpose
+  /// \param use_superposition true if the sin curves should be added together
   SinCos_Image_Deformer(const int_t num_steps,
     bool use_superposition = false):
     num_steps_(num_steps),

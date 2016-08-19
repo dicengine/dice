@@ -114,7 +114,6 @@ const char* const create_separate_run_info_file = "create_separate_run_info_file
 /// \param argv typical argument from main
 /// \param force_exit true if the executable should exit gracefully
 /// \param outStream [out] The output stream, gets set to cout or blackholeStream depending on command line options
-/// \param analysis_type Global, Local, Constrained Optimziation, ...
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   char *argv[],
@@ -163,6 +162,7 @@ Motion_Window_Params {
   int_t sub_image_id_;
 };
 
+/// Holds info used to define a boundary condition
 struct
 DICE_LIB_DLL_EXPORT
 Boundary_Condition_Def{
