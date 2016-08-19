@@ -102,7 +102,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <p>A container class for a CrsMatrix.  
  <a href="class_d_i_ce_1_1_multi_field___matrix.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="_d_i_ce___multi_field_tpetra_8h_source.html">DICe_MultiFieldTpetra.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="_d_i_ce___multi_field_epetra_8h_source.html">DICe_MultiFieldEpetra.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -118,14 +118,20 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#a16ede47171a16564c1df93230cf3d6af">~MultiField_Matrix</a> ()</td></tr>
 <tr class="memdesc:a16ede47171a16564c1df93230cf3d6af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. <br /></td></tr>
 <tr class="separator:a16ede47171a16564c1df93230cf3d6af"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aac23c5550702269cd0e7c1aa3f893597"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aac23c5550702269cd0e7c1aa3f893597"></a>
-Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#ad7618c13e7bdb68999700790035b60e4">matrix_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#aac23c5550702269cd0e7c1aa3f893597">get</a> ()</td></tr>
-<tr class="memdesc:aac23c5550702269cd0e7c1aa3f893597"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the underlying matrix. <br /></td></tr>
-<tr class="separator:aac23c5550702269cd0e7c1aa3f893597"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adff534307b6e135798449e4d7bbab9c9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#adff534307b6e135798449e4d7bbab9c9">put_scalar</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;value)</td></tr>
-<tr class="separator:adff534307b6e135798449e4d7bbab9c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab668fb23a0c5fd02a0451def5e9aef7c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#ab668fb23a0c5fd02a0451def5e9aef7c">insert_global_values</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> global_row, const Teuchos::ArrayView&lt; const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &gt; &amp;cols, const Teuchos::ArrayView&lt; const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &amp;vals)</td></tr>
-<tr class="separator:ab668fb23a0c5fd02a0451def5e9aef7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a07b0bc99ff71bc2b87dbc8cceb8047d1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a07b0bc99ff71bc2b87dbc8cceb8047d1"></a>
+Teuchos::RCP&lt; Epetra_CrsMatrix &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#a07b0bc99ff71bc2b87dbc8cceb8047d1">get</a> ()</td></tr>
+<tr class="memdesc:a07b0bc99ff71bc2b87dbc8cceb8047d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the underlying matrix. <br /></td></tr>
+<tr class="separator:a07b0bc99ff71bc2b87dbc8cceb8047d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae57854c78ecda076152a95c8898b90eb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae57854c78ecda076152a95c8898b90eb"></a>
+<a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#ae57854c78ecda076152a95c8898b90eb">num_local_rows</a> ()</td></tr>
+<tr class="memdesc:ae57854c78ecda076152a95c8898b90eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the number of rows <br /></td></tr>
+<tr class="separator:ae57854c78ecda076152a95c8898b90eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb924f9a381eec824a2a706edf22e15b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#acb924f9a381eec824a2a706edf22e15b">put_scalar</a> (const <a class="el" href="namespace_d_i_ce.html#a617720b84b20659e0ee8e0f0500d211a">mv_scalar_type</a> &amp;value)</td></tr>
+<tr class="separator:acb924f9a381eec824a2a706edf22e15b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a29ebe58a4ac07775be703ce699e81965"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#a29ebe58a4ac07775be703ce699e81965">insert_global_values</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> global_row, const Teuchos::ArrayView&lt; const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &gt; &amp;cols, const Teuchos::ArrayView&lt; const <a class="el" href="namespace_d_i_ce.html#a617720b84b20659e0ee8e0f0500d211a">mv_scalar_type</a> &gt; &amp;vals)</td></tr>
+<tr class="separator:a29ebe58a4ac07775be703ce699e81965"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad844eeb2038896a391611341ab669020"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#ad844eeb2038896a391611341ab669020">replace_local_values</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> local_row, const Teuchos::ArrayView&lt; const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &gt; &amp;cols, const Teuchos::ArrayView&lt; const <a class="el" href="namespace_d_i_ce.html#a617720b84b20659e0ee8e0f0500d211a">mv_scalar_type</a> &gt; &amp;vals)</td></tr>
+<tr class="separator:ad844eeb2038896a391611341ab669020"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5fd5154829c3046f6e51c30a9c86b88b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5fd5154829c3046f6e51c30a9c86b88b"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#a5fd5154829c3046f6e51c30a9c86b88b">describe</a> () const </td></tr>
 <tr class="memdesc:a5fd5154829c3046f6e51c30a9c86b88b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print the matrix to the screen. <br /></td></tr>
@@ -138,17 +144,213 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#a48a278db173cd05eaab396ed4b89194d">resume_fill</a> ()</td></tr>
 <tr class="memdesc:a48a278db173cd05eaab396ed4b89194d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finish assembling the matrix. <br /></td></tr>
 <tr class="separator:a48a278db173cd05eaab396ed4b89194d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4bee6bf554a59f4dc151591a63b54537"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#a4bee6bf554a59f4dc151591a63b54537">do_export</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html">MultiField_Matrix</a> &gt; multifield_matrix, <a class="el" href="class_d_i_ce_1_1_multi_field___exporter.html">MultiField_Exporter</a> &amp;exporter, const <a class="el" href="namespace_d_i_ce.html#a560bb4d831d11d5f34475c8b4909db98">Combine_Mode</a> mode=INSERT)</td></tr>
+<tr class="memdesc:a4bee6bf554a59f4dc151591a63b54537"><td class="mdescLeft">&#160;</td><td class="mdescRight">export the data from one distributed object to this one  <a href="#a4bee6bf554a59f4dc151591a63b54537">More...</a><br /></td></tr>
+<tr class="separator:a4bee6bf554a59f4dc151591a63b54537"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac29f518b34f4c6cb2681c735ff366bdc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac29f518b34f4c6cb2681c735ff366bdc"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#ac29f518b34f4c6cb2681c735ff366bdc">MultiField_Matrix</a> (const <a class="el" href="class_d_i_ce_1_1_multi_field___map.html">MultiField_Map</a> &amp;row_map, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> num_entries_per_row)</td></tr>
+<tr class="memdesc:ac29f518b34f4c6cb2681c735ff366bdc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default constructor. <br /></td></tr>
+<tr class="separator:ac29f518b34f4c6cb2681c735ff366bdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc271b4fa01267053009ab823d8bc76c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adc271b4fa01267053009ab823d8bc76c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#adc271b4fa01267053009ab823d8bc76c">MultiField_Matrix</a> (const <a class="el" href="class_d_i_ce_1_1_multi_field___map.html">MultiField_Map</a> &amp;row_map, const <a class="el" href="class_d_i_ce_1_1_multi_field___map.html">MultiField_Map</a> &amp;col_map, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> num_entries_per_row)</td></tr>
+<tr class="memdesc:adc271b4fa01267053009ab823d8bc76c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor with a column map. <br /></td></tr>
+<tr class="separator:adc271b4fa01267053009ab823d8bc76c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16ede47171a16564c1df93230cf3d6af"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a16ede47171a16564c1df93230cf3d6af"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#a16ede47171a16564c1df93230cf3d6af">~MultiField_Matrix</a> ()</td></tr>
+<tr class="memdesc:a16ede47171a16564c1df93230cf3d6af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. <br /></td></tr>
+<tr class="separator:a16ede47171a16564c1df93230cf3d6af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aac23c5550702269cd0e7c1aa3f893597"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aac23c5550702269cd0e7c1aa3f893597"></a>
+Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7b8c8c482b4f0410f6dbee2fe0aa85d6">matrix_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#aac23c5550702269cd0e7c1aa3f893597">get</a> ()</td></tr>
+<tr class="memdesc:aac23c5550702269cd0e7c1aa3f893597"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the underlying matrix. <br /></td></tr>
+<tr class="separator:aac23c5550702269cd0e7c1aa3f893597"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae57854c78ecda076152a95c8898b90eb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae57854c78ecda076152a95c8898b90eb"></a>
+<a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#ae57854c78ecda076152a95c8898b90eb">num_local_rows</a> ()</td></tr>
+<tr class="memdesc:ae57854c78ecda076152a95c8898b90eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the number of rows <br /></td></tr>
+<tr class="separator:ae57854c78ecda076152a95c8898b90eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adff534307b6e135798449e4d7bbab9c9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#adff534307b6e135798449e4d7bbab9c9">put_scalar</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;value)</td></tr>
+<tr class="separator:adff534307b6e135798449e4d7bbab9c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab668fb23a0c5fd02a0451def5e9aef7c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#ab668fb23a0c5fd02a0451def5e9aef7c">insert_global_values</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> global_row, const Teuchos::ArrayView&lt; const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &gt; &amp;cols, const Teuchos::ArrayView&lt; const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &amp;vals)</td></tr>
+<tr class="separator:ab668fb23a0c5fd02a0451def5e9aef7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a721464c223ca7c15d98437ecd7c08d8f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#a721464c223ca7c15d98437ecd7c08d8f">replace_local_values</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> local_row, const Teuchos::ArrayView&lt; const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &gt; &amp;cols, const Teuchos::ArrayView&lt; const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &amp;vals)</td></tr>
+<tr class="separator:a721464c223ca7c15d98437ecd7c08d8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5fd5154829c3046f6e51c30a9c86b88b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5fd5154829c3046f6e51c30a9c86b88b"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#a5fd5154829c3046f6e51c30a9c86b88b">describe</a> () const </td></tr>
+<tr class="memdesc:a5fd5154829c3046f6e51c30a9c86b88b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print the matrix to the screen. <br /></td></tr>
+<tr class="separator:a5fd5154829c3046f6e51c30a9c86b88b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac08f125bf46ebfba264b35abd413db44"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac08f125bf46ebfba264b35abd413db44"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#ac08f125bf46ebfba264b35abd413db44">fill_complete</a> ()</td></tr>
+<tr class="memdesc:ac08f125bf46ebfba264b35abd413db44"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finish assembling the matrix. <br /></td></tr>
+<tr class="separator:ac08f125bf46ebfba264b35abd413db44"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48a278db173cd05eaab396ed4b89194d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a48a278db173cd05eaab396ed4b89194d"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#a48a278db173cd05eaab396ed4b89194d">resume_fill</a> ()</td></tr>
+<tr class="memdesc:a48a278db173cd05eaab396ed4b89194d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finish assembling the matrix. <br /></td></tr>
+<tr class="separator:a48a278db173cd05eaab396ed4b89194d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4bee6bf554a59f4dc151591a63b54537"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#a4bee6bf554a59f4dc151591a63b54537">do_export</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html">MultiField_Matrix</a> &gt; multifield_matrix, <a class="el" href="class_d_i_ce_1_1_multi_field___exporter.html">MultiField_Exporter</a> &amp;exporter, const <a class="el" href="namespace_d_i_ce.html#a560bb4d831d11d5f34475c8b4909db98">Combine_Mode</a> mode=INSERT)</td></tr>
+<tr class="memdesc:a4bee6bf554a59f4dc151591a63b54537"><td class="mdescLeft">&#160;</td><td class="mdescRight">export the data from one distributed object to this one  <a href="#a4bee6bf554a59f4dc151591a63b54537">More...</a><br /></td></tr>
+<tr class="separator:a4bee6bf554a59f4dc151591a63b54537"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
+<tr class="memitem:af95170576b9d35263ba5228a53379dbe"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af95170576b9d35263ba5228a53379dbe"></a>
+Teuchos::RCP&lt; Epetra_CrsMatrix &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#af95170576b9d35263ba5228a53379dbe">matrix_</a></td></tr>
+<tr class="memdesc:af95170576b9d35263ba5228a53379dbe"><td class="mdescLeft">&#160;</td><td class="mdescRight">The underlying crs matrix. <br /></td></tr>
+<tr class="separator:af95170576b9d35263ba5228a53379dbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adefa9c5dd5bc99354290b8001c9308b7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adefa9c5dd5bc99354290b8001c9308b7"></a>
-Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#ad7618c13e7bdb68999700790035b60e4">matrix_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#adefa9c5dd5bc99354290b8001c9308b7">matrix_</a></td></tr>
+Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7b8c8c482b4f0410f6dbee2fe0aa85d6">matrix_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html#adefa9c5dd5bc99354290b8001c9308b7">matrix_</a></td></tr>
 <tr class="memdesc:adefa9c5dd5bc99354290b8001c9308b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">The underlying crs matrix. <br /></td></tr>
 <tr class="separator:adefa9c5dd5bc99354290b8001c9308b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A container class for a CrsMatrix. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a4bee6bf554a59f4dc151591a63b54537"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::MultiField_Matrix::do_export </td>
+          <td>(</td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html">MultiField_Matrix</a> &gt;&#160;</td>
+          <td class="paramname"><em>multifield_matrix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_d_i_ce_1_1_multi_field___exporter.html">MultiField_Exporter</a> &amp;&#160;</td>
+          <td class="paramname"><em>exporter</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a560bb4d831d11d5f34475c8b4909db98">Combine_Mode</a>&#160;</td>
+          <td class="paramname"><em>mode</em> = <code>INSERT</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>export the data from one distributed object to this one </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">multifield_matrix</td><td>the multifield to export </td></tr>
+    <tr><td class="paramname">exporter</td><td>the exporter defines how the information will be transferred </td></tr>
+    <tr><td class="paramname">mode</td><td>combine mode </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a4bee6bf554a59f4dc151591a63b54537"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::MultiField_Matrix::do_export </td>
+          <td>(</td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field___matrix.html">MultiField_Matrix</a> &gt;&#160;</td>
+          <td class="paramname"><em>multifield_matrix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_d_i_ce_1_1_multi_field___exporter.html">MultiField_Exporter</a> &amp;&#160;</td>
+          <td class="paramname"><em>exporter</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a560bb4d831d11d5f34475c8b4909db98">Combine_Mode</a>&#160;</td>
+          <td class="paramname"><em>mode</em> = <code>INSERT</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>export the data from one distributed object to this one </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">multifield_matrix</td><td>the multifield to export </td></tr>
+    <tr><td class="paramname">exporter</td><td>the exporter defines how the information will be transferred </td></tr>
+    <tr><td class="paramname">mode</td><td>combine mode </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a29ebe58a4ac07775be703ce699e81965"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::MultiField_Matrix::insert_global_values </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>global_row</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Teuchos::ArrayView&lt; const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>cols</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Teuchos::ArrayView&lt; const <a class="el" href="namespace_d_i_ce.html#a617720b84b20659e0ee8e0f0500d211a">mv_scalar_type</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>vals</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Insert values into the global indices given </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">global_row</td><td>The global id of the row to insert </td></tr>
+    <tr><td class="paramname">cols</td><td>An array of global column ids </td></tr>
+    <tr><td class="paramname">vals</td><td>An array of real values to insert </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="ab668fb23a0c5fd02a0451def5e9aef7c"></a>
 <div class="memitem">
 <div class="memproto">
@@ -197,6 +399,36 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#ad7618c13e7bdb6899970
 
 </div>
 </div>
+<a class="anchor" id="acb924f9a381eec824a2a706edf22e15b"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::MultiField_Matrix::put_scalar </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a617720b84b20659e0ee8e0f0500d211a">mv_scalar_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Put scalar value in all matrix entries </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">value</td><td>The value to insert </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="adff534307b6e135798449e4d7bbab9c9"></a>
 <div class="memitem">
 <div class="memproto">
@@ -227,10 +459,106 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#ad7618c13e7bdb6899970
 
 </div>
 </div>
+<a class="anchor" id="ad844eeb2038896a391611341ab669020"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::MultiField_Matrix::replace_local_values </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>local_row</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Teuchos::ArrayView&lt; const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>cols</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Teuchos::ArrayView&lt; const <a class="el" href="namespace_d_i_ce.html#a617720b84b20659e0ee8e0f0500d211a">mv_scalar_type</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>vals</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Replace values in the local indices given </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">local_row</td><td>The local id of the row to insert </td></tr>
+    <tr><td class="paramname">cols</td><td>An array of local column ids </td></tr>
+    <tr><td class="paramname">vals</td><td>An array of real values to insert </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a721464c223ca7c15d98437ecd7c08d8f"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::MultiField_Matrix::replace_local_values </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>local_row</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Teuchos::ArrayView&lt; const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>cols</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Teuchos::ArrayView&lt; const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>vals</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Replace values in the local indices given </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">local_row</td><td>The local id of the row to insert </td></tr>
+    <tr><td class="paramname">cols</td><td>An array of local column ids </td></tr>
+    <tr><td class="paramname">vals</td><td>An array of real values to insert </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 15 2016 10:21:53 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Aug 19 2016 12:09:32 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>

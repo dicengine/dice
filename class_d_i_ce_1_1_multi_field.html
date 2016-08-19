@@ -125,18 +125,38 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field___map.html">Mu
 Teuchos::RCP&lt; Epetra_MultiVector &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#a226ba62ccc6feaf40091e10caf37280e">get</a> () const </td></tr>
 <tr class="memdesc:a226ba62ccc6feaf40091e10caf37280e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a pointer to the underlying vector data type. <br /></td></tr>
 <tr class="separator:a226ba62ccc6feaf40091e10caf37280e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a25133bfcb6bf3e4f48e6c9831e49dbf7"><td class="memItemLeft" align="right" valign="top">double &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#a25133bfcb6bf3e4f48e6c9831e49dbf7">global_value</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> global_id, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> field_index=0)</td></tr>
-<tr class="memdesc:a25133bfcb6bf3e4f48e6c9831e49dbf7"><td class="mdescLeft">&#160;</td><td class="mdescRight">value accessor  <a href="#a25133bfcb6bf3e4f48e6c9831e49dbf7">More...</a><br /></td></tr>
-<tr class="separator:a25133bfcb6bf3e4f48e6c9831e49dbf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5131e0eb2013d5cd2f16eff4084b1b39"><td class="memItemLeft" align="right" valign="top">double &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#a5131e0eb2013d5cd2f16eff4084b1b39">local_value</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> local_id, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> field_index=0)</td></tr>
-<tr class="memdesc:a5131e0eb2013d5cd2f16eff4084b1b39"><td class="mdescLeft">&#160;</td><td class="mdescRight">value accessor  <a href="#a5131e0eb2013d5cd2f16eff4084b1b39">More...</a><br /></td></tr>
-<tr class="separator:a5131e0eb2013d5cd2f16eff4084b1b39"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae0fda8c20a4071d42547b099874bfebc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#ae0fda8c20a4071d42547b099874bfebc">do_import</a> (<a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &amp;multifield, <a class="el" href="class_d_i_ce_1_1_multi_field___importer.html">MultiField_Importer</a> &amp;importer)</td></tr>
-<tr class="memdesc:ae0fda8c20a4071d42547b099874bfebc"><td class="mdescLeft">&#160;</td><td class="mdescRight">import the data from one distributed object to this one  <a href="#ae0fda8c20a4071d42547b099874bfebc">More...</a><br /></td></tr>
-<tr class="separator:ae0fda8c20a4071d42547b099874bfebc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a45a7afa659f37d91bf4aeef483e14a9c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#a45a7afa659f37d91bf4aeef483e14a9c">do_export</a> (<a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &amp;multifield, <a class="el" href="class_d_i_ce_1_1_multi_field___exporter.html">MultiField_Exporter</a> &amp;exporter)</td></tr>
-<tr class="memdesc:a45a7afa659f37d91bf4aeef483e14a9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">export the data from one distributed object to this one  <a href="#a45a7afa659f37d91bf4aeef483e14a9c">More...</a><br /></td></tr>
-<tr class="separator:a45a7afa659f37d91bf4aeef483e14a9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a46511ff66ae2084336eee681c61ebdc9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#a617720b84b20659e0ee8e0f0500d211a">mv_scalar_type</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#a46511ff66ae2084336eee681c61ebdc9">global_value</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> global_id, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> field_index=0)</td></tr>
+<tr class="memdesc:a46511ff66ae2084336eee681c61ebdc9"><td class="mdescLeft">&#160;</td><td class="mdescRight">value accessor  <a href="#a46511ff66ae2084336eee681c61ebdc9">More...</a><br /></td></tr>
+<tr class="separator:a46511ff66ae2084336eee681c61ebdc9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae509f02ffc42411e23ed2b980164c9c8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#a617720b84b20659e0ee8e0f0500d211a">mv_scalar_type</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#ae509f02ffc42411e23ed2b980164c9c8">local_value</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> local_id, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> field_index=0)</td></tr>
+<tr class="memdesc:ae509f02ffc42411e23ed2b980164c9c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">value accessor  <a href="#ae509f02ffc42411e23ed2b980164c9c8">More...</a><br /></td></tr>
+<tr class="separator:ae509f02ffc42411e23ed2b980164c9c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e28f82010b1b5074c2c6afe95f50424"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#a3e28f82010b1b5074c2c6afe95f50424">update</a> (const <a class="el" href="namespace_d_i_ce.html#a617720b84b20659e0ee8e0f0500d211a">mv_scalar_type</a> &amp;alpha, const <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &amp;multifield, const <a class="el" href="namespace_d_i_ce.html#a617720b84b20659e0ee8e0f0500d211a">mv_scalar_type</a> &amp;beta)</td></tr>
+<tr class="memdesc:a3e28f82010b1b5074c2c6afe95f50424"><td class="mdescLeft">&#160;</td><td class="mdescRight">axpby for <a class="el" href="class_d_i_ce_1_1_multi_field.html" title="A container class for the data structures used in DICe This class was created to enable switching bac...">MultiField</a>  <a href="#a3e28f82010b1b5074c2c6afe95f50424">More...</a><br /></td></tr>
+<tr class="separator:a3e28f82010b1b5074c2c6afe95f50424"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade04ae326dfa142570095a5603451c6f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#ade04ae326dfa142570095a5603451c6f">do_import</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt; multifield, <a class="el" href="class_d_i_ce_1_1_multi_field___importer.html">MultiField_Importer</a> &amp;importer, const <a class="el" href="namespace_d_i_ce.html#a560bb4d831d11d5f34475c8b4909db98">Combine_Mode</a> mode=INSERT)</td></tr>
+<tr class="memdesc:ade04ae326dfa142570095a5603451c6f"><td class="mdescLeft">&#160;</td><td class="mdescRight">import the data from one distributed object to this one  <a href="#ade04ae326dfa142570095a5603451c6f">More...</a><br /></td></tr>
+<tr class="separator:ade04ae326dfa142570095a5603451c6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada274c5865b36546be445504fb77294a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#ada274c5865b36546be445504fb77294a">do_import</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt; multifield, <a class="el" href="class_d_i_ce_1_1_multi_field___exporter.html">MultiField_Exporter</a> &amp;exporter, const <a class="el" href="namespace_d_i_ce.html#a560bb4d831d11d5f34475c8b4909db98">Combine_Mode</a> mode=INSERT)</td></tr>
+<tr class="memdesc:ada274c5865b36546be445504fb77294a"><td class="mdescLeft">&#160;</td><td class="mdescRight">import the data from one distributed object to this one  <a href="#ada274c5865b36546be445504fb77294a">More...</a><br /></td></tr>
+<tr class="separator:ada274c5865b36546be445504fb77294a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed55aede7233085ae193e98f74e6ff02"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#aed55aede7233085ae193e98f74e6ff02">do_export</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt; multifield, <a class="el" href="class_d_i_ce_1_1_multi_field___exporter.html">MultiField_Exporter</a> &amp;exporter, const <a class="el" href="namespace_d_i_ce.html#a560bb4d831d11d5f34475c8b4909db98">Combine_Mode</a> mode=INSERT)</td></tr>
+<tr class="memdesc:aed55aede7233085ae193e98f74e6ff02"><td class="mdescLeft">&#160;</td><td class="mdescRight">export the data from one distributed object to this one  <a href="#aed55aede7233085ae193e98f74e6ff02">More...</a><br /></td></tr>
+<tr class="separator:aed55aede7233085ae193e98f74e6ff02"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f1d20e41ef5c33c05f70e9f4415ae60"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7f1d20e41ef5c33c05f70e9f4415ae60"></a>
+Teuchos::ArrayRCP&lt; const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#a7f1d20e41ef5c33c05f70e9f4415ae60">get_1d_view</a> () const </td></tr>
+<tr class="memdesc:a7f1d20e41ef5c33c05f70e9f4415ae60"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return an array of values for the multifield (most only contain one vector so the first index is 0) <br /></td></tr>
+<tr class="separator:a7f1d20e41ef5c33c05f70e9f4415ae60"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa337aa21e78be47d07e13d4323fdafd5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#aa337aa21e78be47d07e13d4323fdafd5">norm</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> field_index=0)</td></tr>
+<tr class="separator:aa337aa21e78be47d07e13d4323fdafd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d13ed542709b8694a4bc0311bf780d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#a8d13ed542709b8694a4bc0311bf780d0">norm</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt; multifield)</td></tr>
+<tr class="separator:a8d13ed542709b8694a4bc0311bf780d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a379aa8c40cab6d7c1d5ea76faf172beb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#a379aa8c40cab6d7c1d5ea76faf172beb">put_scalar</a> (const <a class="el" href="namespace_d_i_ce.html#a617720b84b20659e0ee8e0f0500d211a">mv_scalar_type</a> &amp;scalar)</td></tr>
+<tr class="separator:a379aa8c40cab6d7c1d5ea76faf172beb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd2b27aaf643e09af999b858d6fd92bb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afd2b27aaf643e09af999b858d6fd92bb"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#afd2b27aaf643e09af999b858d6fd92bb">describe</a> () const </td></tr>
+<tr class="memdesc:afd2b27aaf643e09af999b858d6fd92bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">print the vector to the screen <br /></td></tr>
+<tr class="separator:afd2b27aaf643e09af999b858d6fd92bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acfb4bf9748fb4c77cdfb5bb8a49ea11a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#acfb4bf9748fb4c77cdfb5bb8a49ea11a">MultiField</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field___map.html">MultiField_Map</a> &gt; map, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &amp;num_fields, const bool &amp;zero_values=false)</td></tr>
 <tr class="memdesc:acfb4bf9748fb4c77cdfb5bb8a49ea11a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default constructor.  <a href="#acfb4bf9748fb4c77cdfb5bb8a49ea11a">More...</a><br /></td></tr>
 <tr class="separator:acfb4bf9748fb4c77cdfb5bb8a49ea11a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -153,7 +173,7 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field___map.html">Mu
 <tr class="memdesc:a5c610e62a13216254295c792db3593a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of fields. <br /></td></tr>
 <tr class="separator:a5c610e62a13216254295c792db3593a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acabdfbf02dacd225a5ffd977adf8529f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acabdfbf02dacd225a5ffd977adf8529f"></a>
-Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00d9c99209f6e5">vec_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#acabdfbf02dacd225a5ffd977adf8529f">get</a> () const </td></tr>
+Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#af6e608e39d06033742d8d26c1dc80561">vec_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#acabdfbf02dacd225a5ffd977adf8529f">get</a> () const </td></tr>
 <tr class="memdesc:acabdfbf02dacd225a5ffd977adf8529f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a pointer to the underlying vector data type. <br /></td></tr>
 <tr class="separator:acabdfbf02dacd225a5ffd977adf8529f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afd2b27aaf643e09af999b858d6fd92bb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afd2b27aaf643e09af999b858d6fd92bb"></a>
@@ -172,14 +192,23 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:a372d7cc869382f043b82bdf6e235b784"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#a372d7cc869382f043b82bdf6e235b784">update</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;alpha, const <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &amp;multifield, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;beta)</td></tr>
 <tr class="memdesc:a372d7cc869382f043b82bdf6e235b784"><td class="mdescLeft">&#160;</td><td class="mdescRight">axpby for <a class="el" href="class_d_i_ce_1_1_multi_field.html" title="A container class for the data structures used in DICe This class was created to enable switching bac...">MultiField</a>  <a href="#a372d7cc869382f043b82bdf6e235b784">More...</a><br /></td></tr>
 <tr class="separator:a372d7cc869382f043b82bdf6e235b784"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae0fda8c20a4071d42547b099874bfebc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#ae0fda8c20a4071d42547b099874bfebc">do_import</a> (<a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &amp;multifield, <a class="el" href="class_d_i_ce_1_1_multi_field___importer.html">MultiField_Importer</a> &amp;importer)</td></tr>
-<tr class="memdesc:ae0fda8c20a4071d42547b099874bfebc"><td class="mdescLeft">&#160;</td><td class="mdescRight">import the data from one distributed object to this one  <a href="#ae0fda8c20a4071d42547b099874bfebc">More...</a><br /></td></tr>
-<tr class="separator:ae0fda8c20a4071d42547b099874bfebc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a45a7afa659f37d91bf4aeef483e14a9c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#a45a7afa659f37d91bf4aeef483e14a9c">do_export</a> (<a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &amp;multifield, <a class="el" href="class_d_i_ce_1_1_multi_field___exporter.html">MultiField_Exporter</a> &amp;exporter)</td></tr>
-<tr class="memdesc:a45a7afa659f37d91bf4aeef483e14a9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">export the data from one distributed object to this one  <a href="#a45a7afa659f37d91bf4aeef483e14a9c">More...</a><br /></td></tr>
-<tr class="separator:a45a7afa659f37d91bf4aeef483e14a9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade04ae326dfa142570095a5603451c6f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#ade04ae326dfa142570095a5603451c6f">do_import</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt; multifield, <a class="el" href="class_d_i_ce_1_1_multi_field___importer.html">MultiField_Importer</a> &amp;importer, const <a class="el" href="namespace_d_i_ce.html#a560bb4d831d11d5f34475c8b4909db98">Combine_Mode</a> mode=INSERT)</td></tr>
+<tr class="memdesc:ade04ae326dfa142570095a5603451c6f"><td class="mdescLeft">&#160;</td><td class="mdescRight">import the data from one distributed object to this one  <a href="#ade04ae326dfa142570095a5603451c6f">More...</a><br /></td></tr>
+<tr class="separator:ade04ae326dfa142570095a5603451c6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada274c5865b36546be445504fb77294a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#ada274c5865b36546be445504fb77294a">do_import</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt; multifield, <a class="el" href="class_d_i_ce_1_1_multi_field___exporter.html">MultiField_Exporter</a> &amp;exporter, const <a class="el" href="namespace_d_i_ce.html#a560bb4d831d11d5f34475c8b4909db98">Combine_Mode</a> mode=INSERT)</td></tr>
+<tr class="memdesc:ada274c5865b36546be445504fb77294a"><td class="mdescLeft">&#160;</td><td class="mdescRight">import the data from one distributed object to this one  <a href="#ada274c5865b36546be445504fb77294a">More...</a><br /></td></tr>
+<tr class="separator:ada274c5865b36546be445504fb77294a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed55aede7233085ae193e98f74e6ff02"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#aed55aede7233085ae193e98f74e6ff02">do_export</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt; multifield, <a class="el" href="class_d_i_ce_1_1_multi_field___exporter.html">MultiField_Exporter</a> &amp;exporter, const <a class="el" href="namespace_d_i_ce.html#a560bb4d831d11d5f34475c8b4909db98">Combine_Mode</a> mode=INSERT)</td></tr>
+<tr class="memdesc:aed55aede7233085ae193e98f74e6ff02"><td class="mdescLeft">&#160;</td><td class="mdescRight">export the data from one distributed object to this one  <a href="#aed55aede7233085ae193e98f74e6ff02">More...</a><br /></td></tr>
+<tr class="separator:aed55aede7233085ae193e98f74e6ff02"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa337aa21e78be47d07e13d4323fdafd5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#aa337aa21e78be47d07e13d4323fdafd5">norm</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> field_index=0)</td></tr>
 <tr class="separator:aa337aa21e78be47d07e13d4323fdafd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d13ed542709b8694a4bc0311bf780d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#a8d13ed542709b8694a4bc0311bf780d0">norm</a> (Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt; multifield)</td></tr>
+<tr class="separator:a8d13ed542709b8694a4bc0311bf780d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f1d20e41ef5c33c05f70e9f4415ae60"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7f1d20e41ef5c33c05f70e9f4415ae60"></a>
+Teuchos::ArrayRCP&lt; const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#a7f1d20e41ef5c33c05f70e9f4415ae60">get_1d_view</a> () const </td></tr>
+<tr class="memdesc:a7f1d20e41ef5c33c05f70e9f4415ae60"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns a view of the multivector's data <br /></td></tr>
+<tr class="separator:a7f1d20e41ef5c33c05f70e9f4415ae60"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
@@ -192,7 +221,7 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field___map.html">Mu
 <tr class="memdesc:a4bbd262bcc9eddb310a454766678f093"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pointer to the underlying map. <br /></td></tr>
 <tr class="separator:a4bbd262bcc9eddb310a454766678f093"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a68c6ff84b10cd724ef30a88a6c4cacc8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a68c6ff84b10cd724ef30a88a6c4cacc8"></a>
-Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00d9c99209f6e5">vec_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#a68c6ff84b10cd724ef30a88a6c4cacc8">tpetra_mv_</a></td></tr>
+Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#af6e608e39d06033742d8d26c1dc80561">vec_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_multi_field.html#a68c6ff84b10cd724ef30a88a6c4cacc8">tpetra_mv_</a></td></tr>
 <tr class="memdesc:a68c6ff84b10cd724ef30a88a6c4cacc8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pointer to the underlying data type. <br /></td></tr>
 <tr class="separator:a68c6ff84b10cd724ef30a88a6c4cacc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -300,7 +329,7 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a45a7afa659f37d91bf4aeef483e14a9c"></a>
+<a class="anchor" id="aed55aede7233085ae193e98f74e6ff02"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -310,14 +339,20 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
         <tr>
           <td class="memname">void DICe::MultiField::do_export </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &amp;&#160;</td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt;&#160;</td>
           <td class="paramname"><em>multifield</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="class_d_i_ce_1_1_multi_field___exporter.html">MultiField_Exporter</a> &amp;&#160;</td>
-          <td class="paramname"><em>exporter</em>&#160;</td>
+          <td class="paramname"><em>exporter</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a560bb4d831d11d5f34475c8b4909db98">Combine_Mode</a>&#160;</td>
+          <td class="paramname"><em>mode</em> = <code>INSERT</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -337,13 +372,14 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
   <table class="params">
     <tr><td class="paramname">multifield</td><td>the multifield to export </td></tr>
     <tr><td class="paramname">exporter</td><td>the exporter defines how the information will be transferred </td></tr>
+    <tr><td class="paramname">mode</td><td>combine mode </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a class="anchor" id="a45a7afa659f37d91bf4aeef483e14a9c"></a>
+<a class="anchor" id="aed55aede7233085ae193e98f74e6ff02"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -353,14 +389,20 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
         <tr>
           <td class="memname">void DICe::MultiField::do_export </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &amp;&#160;</td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt;&#160;</td>
           <td class="paramname"><em>multifield</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="class_d_i_ce_1_1_multi_field___exporter.html">MultiField_Exporter</a> &amp;&#160;</td>
-          <td class="paramname"><em>exporter</em>&#160;</td>
+          <td class="paramname"><em>exporter</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a560bb4d831d11d5f34475c8b4909db98">Combine_Mode</a>&#160;</td>
+          <td class="paramname"><em>mode</em> = <code>INSERT</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -380,13 +422,14 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
   <table class="params">
     <tr><td class="paramname">multifield</td><td>the multifield to export </td></tr>
     <tr><td class="paramname">exporter</td><td>the exporter defines how the information will be transferred </td></tr>
+    <tr><td class="paramname">mode</td><td>combine mode </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a class="anchor" id="ae0fda8c20a4071d42547b099874bfebc"></a>
+<a class="anchor" id="ade04ae326dfa142570095a5603451c6f"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -396,14 +439,20 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
         <tr>
           <td class="memname">void DICe::MultiField::do_import </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &amp;&#160;</td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt;&#160;</td>
           <td class="paramname"><em>multifield</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="class_d_i_ce_1_1_multi_field___importer.html">MultiField_Importer</a> &amp;&#160;</td>
-          <td class="paramname"><em>importer</em>&#160;</td>
+          <td class="paramname"><em>importer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a560bb4d831d11d5f34475c8b4909db98">Combine_Mode</a>&#160;</td>
+          <td class="paramname"><em>mode</em> = <code>INSERT</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -422,7 +471,8 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">multifield</td><td>the multifield to import </td></tr>
-    <tr><td class="paramname">importer</td><td>the importer defines how the information will be transferred</td></tr>
+    <tr><td class="paramname">importer</td><td>the importer defines how the information will be transferred </td></tr>
+    <tr><td class="paramname">mode</td><td>combine mode</td></tr>
   </table>
   </dd>
 </dl>
@@ -430,7 +480,7 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
 
 </div>
 </div>
-<a class="anchor" id="ae0fda8c20a4071d42547b099874bfebc"></a>
+<a class="anchor" id="ada274c5865b36546be445504fb77294a"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -440,14 +490,20 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
         <tr>
           <td class="memname">void DICe::MultiField::do_import </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &amp;&#160;</td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt;&#160;</td>
           <td class="paramname"><em>multifield</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="class_d_i_ce_1_1_multi_field___importer.html">MultiField_Importer</a> &amp;&#160;</td>
-          <td class="paramname"><em>importer</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="class_d_i_ce_1_1_multi_field___exporter.html">MultiField_Exporter</a> &amp;&#160;</td>
+          <td class="paramname"><em>exporter</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a560bb4d831d11d5f34475c8b4909db98">Combine_Mode</a>&#160;</td>
+          <td class="paramname"><em>mode</em> = <code>INSERT</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -466,7 +522,8 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">multifield</td><td>the multifield to import </td></tr>
-    <tr><td class="paramname">importer</td><td>the importer defines how the information will be transferred</td></tr>
+    <tr><td class="paramname">exporter</td><td>the importer defines how the information will be transferred </td></tr>
+    <tr><td class="paramname">mode</td><td>combine mode</td></tr>
   </table>
   </dd>
 </dl>
@@ -474,7 +531,7 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
 
 </div>
 </div>
-<a class="anchor" id="a25133bfcb6bf3e4f48e6c9831e49dbf7"></a>
+<a class="anchor" id="ade04ae326dfa142570095a5603451c6f"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -482,7 +539,109 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">double&amp; DICe::MultiField::global_value </td>
+          <td class="memname">void DICe::MultiField::do_import </td>
+          <td>(</td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt;&#160;</td>
+          <td class="paramname"><em>multifield</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_d_i_ce_1_1_multi_field___importer.html">MultiField_Importer</a> &amp;&#160;</td>
+          <td class="paramname"><em>importer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a560bb4d831d11d5f34475c8b4909db98">Combine_Mode</a>&#160;</td>
+          <td class="paramname"><em>mode</em> = <code>INSERT</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>import the data from one distributed object to this one </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">multifield</td><td>the multifield to import </td></tr>
+    <tr><td class="paramname">importer</td><td>the importer defines how the information will be transferred </td></tr>
+    <tr><td class="paramname">mode</td><td>combine mode</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>For more information about importing and exporting see the Trilinos docs </p>
+
+</div>
+</div>
+<a class="anchor" id="ada274c5865b36546be445504fb77294a"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::MultiField::do_import </td>
+          <td>(</td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt;&#160;</td>
+          <td class="paramname"><em>multifield</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_d_i_ce_1_1_multi_field___exporter.html">MultiField_Exporter</a> &amp;&#160;</td>
+          <td class="paramname"><em>exporter</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a560bb4d831d11d5f34475c8b4909db98">Combine_Mode</a>&#160;</td>
+          <td class="paramname"><em>mode</em> = <code>INSERT</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>import the data from one distributed object to this one </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">multifield</td><td>the multifield to import </td></tr>
+    <tr><td class="paramname">exporter</td><td>the importer defines how the information will be transferred </td></tr>
+    <tr><td class="paramname">mode</td><td>combine mode</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>For more information about importing and exporting see the Trilinos docs </p>
+
+</div>
+</div>
+<a class="anchor" id="a46511ff66ae2084336eee681c61ebdc9"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#a617720b84b20659e0ee8e0f0500d211a">mv_scalar_type</a>&amp; DICe::MultiField::global_value </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
           <td class="paramname"><em>global_id</em>, </td>
@@ -510,7 +669,7 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">global_id</td><td>the global id of the intended element </td></tr>
-    <tr><td class="paramname">field_index</td><td>the index of the field to access Warning: Epetra does not have a scalar type, its hard coded as double </td></tr>
+    <tr><td class="paramname">field_index</td><td>the index of the field to access Warning: Epetra does not have a scalar type, its hard coded as mv_scalar_type </td></tr>
   </table>
   </dd>
 </dl>
@@ -560,7 +719,7 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
 
 </div>
 </div>
-<a class="anchor" id="a5131e0eb2013d5cd2f16eff4084b1b39"></a>
+<a class="anchor" id="ae509f02ffc42411e23ed2b980164c9c8"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -568,7 +727,7 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">double&amp; DICe::MultiField::local_value </td>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#a617720b84b20659e0ee8e0f0500d211a">mv_scalar_type</a>&amp; DICe::MultiField::local_value </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
           <td class="paramname"><em>local_id</em>, </td>
@@ -596,7 +755,7 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">local_id</td><td>the local id of the intended element </td></tr>
-    <tr><td class="paramname">field_index</td><td>the index of the field to access Warning: Epetra does not have a scalar type, its hard coded as double </td></tr>
+    <tr><td class="paramname">field_index</td><td>the index of the field to access Warning: Epetra does not have a scalar type, its hard coded as mv_scalar_type </td></tr>
   </table>
   </dd>
 </dl>
@@ -676,6 +835,96 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
 
 </div>
 </div>
+<a class="anchor" id="a8d13ed542709b8694a4bc0311bf780d0"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> DICe::MultiField::norm </td>
+          <td>(</td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt;&#160;</td>
+          <td class="paramname"><em>multifield</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Compute the 2 norm of this vector minus another </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">multifield</td><td>the field to diff against </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="aa337aa21e78be47d07e13d4323fdafd5"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> DICe::MultiField::norm </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>field_index</em> = <code>0</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Compute the 2 norm of the vector </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">field_index</td><td>The field of which to take the norm </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a8d13ed542709b8694a4bc0311bf780d0"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> DICe::MultiField::norm </td>
+          <td>(</td>
+          <td class="paramtype">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt;&#160;</td>
+          <td class="paramname"><em>multifield</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Compute the 2 norm of this vector minus another </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">multifield</td><td>the field to diff against </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a7c3fd443df1576fa92f55e0f6f4cc104"></a>
 <div class="memitem">
 <div class="memproto">
@@ -702,6 +951,86 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">value</td><td>The value to populate with </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a379aa8c40cab6d7c1d5ea76faf172beb"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::MultiField::put_scalar </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a617720b84b20659e0ee8e0f0500d211a">mv_scalar_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>scalar</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>set all the values in this field to the given scalar </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">scalar</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a3e28f82010b1b5074c2c6afe95f50424"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::MultiField::update </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a617720b84b20659e0ee8e0f0500d211a">mv_scalar_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>alpha</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &amp;&#160;</td>
+          <td class="paramname"><em>multifield</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a617720b84b20659e0ee8e0f0500d211a">mv_scalar_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>beta</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>axpby for <a class="el" href="class_d_i_ce_1_1_multi_field.html" title="A container class for the data structures used in DICe This class was created to enable switching bac...">MultiField</a> </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">alpha</td><td>Multiplier of the input <a class="el" href="class_d_i_ce_1_1_multi_field.html" title="A container class for the data structures used in DICe This class was created to enable switching bac...">MultiField</a> </td></tr>
+    <tr><td class="paramname">multifield</td><td>Input multifield </td></tr>
+    <tr><td class="paramname">beta</td><td>Multiplier of this Multifield Result is this = beta*this + alpha*multifield </td></tr>
   </table>
   </dd>
 </dl>
@@ -761,7 +1090,7 @@ Teuchos::RCP&lt; <a class="el" href="namespace_d_i_ce.html#a7a9b9477dd8f2588cb00
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 15 2016 10:21:53 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Aug 19 2016 12:09:32 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>

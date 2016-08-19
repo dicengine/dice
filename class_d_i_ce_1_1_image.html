@@ -129,8 +129,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#ad3904320db8b4d56d072cdbaac68b0f2">~Image</a> ()</td></tr>
 <tr class="memdesc:ad3904320db8b4d56d072cdbaac68b0f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">virtual destructor <br /></td></tr>
 <tr class="separator:ad3904320db8b4d56d072cdbaac68b0f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaca1a7b5439796ba7bffe79b9c6a1439"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#aaca1a7b5439796ba7bffe79b9c6a1439">write</a> (const std::string &amp;<a class="el" href="class_d_i_ce_1_1_image.html#a2b7f526b8ce008c84d097e9f035d81cc">file_name</a>)</td></tr>
-<tr class="separator:aaca1a7b5439796ba7bffe79b9c6a1439"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aece5120ffa8c448f126ba4d0a2dfcdc7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#aece5120ffa8c448f126ba4d0a2dfcdc7">write</a> (const std::string &amp;<a class="el" href="class_d_i_ce_1_1_image.html#a2b7f526b8ce008c84d097e9f035d81cc">file_name</a>, const bool scale_to_8_bit=true)</td></tr>
+<tr class="separator:aece5120ffa8c448f126ba4d0a2dfcdc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4b11e63226af97348737ab1aba0f5a30"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a4b11e63226af97348737ab1aba0f5a30">write_grad_x</a> (const std::string &amp;<a class="el" href="class_d_i_ce_1_1_image.html#a2b7f526b8ce008c84d097e9f035d81cc">file_name</a>)</td></tr>
+<tr class="separator:a4b11e63226af97348737ab1aba0f5a30"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a593244983075c83e5c11db2b278306c7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a593244983075c83e5c11db2b278306c7">write_grad_y</a> (const std::string &amp;<a class="el" href="class_d_i_ce_1_1_image.html#a2b7f526b8ce008c84d097e9f035d81cc">file_name</a>)</td></tr>
+<tr class="separator:a593244983075c83e5c11db2b278306c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1a8ed67bc7027b841fd7f5b17300eb50"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1a8ed67bc7027b841fd7f5b17300eb50"></a>
 <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a1a8ed67bc7027b841fd7f5b17300eb50">width</a> () const </td></tr>
 <tr class="memdesc:a1a8ed67bc7027b841fd7f5b17300eb50"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns the width of the image <br /></td></tr>
@@ -163,20 +167,40 @@ virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="c
 Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a3a2a58f8111a2b530aa074ca32e7a0eb">intensities</a> () const </td></tr>
 <tr class="memdesc:a3a2a58f8111a2b530aa074ca32e7a0eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns a copy of the intenisity values as an array <br /></td></tr>
 <tr class="separator:a3a2a58f8111a2b530aa074ca32e7a0eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a71d84d2378108d33579fe9c286556d82"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a71d84d2378108d33579fe9c286556d82"></a>
+Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a71d84d2378108d33579fe9c286556d82">grad_x_array</a> () const </td></tr>
+<tr class="memdesc:a71d84d2378108d33579fe9c286556d82"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns a copy of the grad_x values as an array <br /></td></tr>
+<tr class="separator:a71d84d2378108d33579fe9c286556d82"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad59811c13fc8bf39664c947da97d546f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad59811c13fc8bf39664c947da97d546f"></a>
+Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#ad59811c13fc8bf39664c947da97d546f">grad_y_array</a> () const </td></tr>
+<tr class="memdesc:ad59811c13fc8bf39664c947da97d546f"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns a copy of the grad_y values as an array <br /></td></tr>
+<tr class="separator:ad59811c13fc8bf39664c947da97d546f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9913f24898eaf422559509967e56a070"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a9913f24898eaf422559509967e56a070">replace_intensities</a> (Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt; <a class="el" href="class_d_i_ce_1_1_image.html#a3a2a58f8111a2b530aa074ca32e7a0eb">intensities</a>)</td></tr>
 <tr class="separator:a9913f24898eaf422559509967e56a070"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6cffc1d6dcacacd08ed876f47ba0fa15"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a6cffc1d6dcacacd08ed876f47ba0fa15">interpolate_keys_fourth_global</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;global_x, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;global_y)</td></tr>
 <tr class="separator:a6cffc1d6dcacacd08ed876f47ba0fa15"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaa588aa9f92d1ff4f0c056932e928e8a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#aaa588aa9f92d1ff4f0c056932e928e8a">interpolate_keys_fourth</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_x, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_y)</td></tr>
 <tr class="separator:aaa588aa9f92d1ff4f0c056932e928e8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab14ed385a184108ba9e95108813103d4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#ab14ed385a184108ba9e95108813103d4">interpolate_grad_x_keys_fourth</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_x, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_y)</td></tr>
+<tr class="separator:ab14ed385a184108ba9e95108813103d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3bb73c6d95d3ab06523a36c33a700dea"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a3bb73c6d95d3ab06523a36c33a700dea">interpolate_grad_y_keys_fourth</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_x, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_y)</td></tr>
+<tr class="separator:a3bb73c6d95d3ab06523a36c33a700dea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa188bc767b2042b0dfd2caf48804a7d3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#aa188bc767b2042b0dfd2caf48804a7d3">interpolate_bilinear_global</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;global_x, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;global_y)</td></tr>
 <tr class="separator:aa188bc767b2042b0dfd2caf48804a7d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaee081060a9b5bb3239de8f629e3472a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#aaee081060a9b5bb3239de8f629e3472a">interpolate_bilinear</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_x, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_y)</td></tr>
 <tr class="separator:aaee081060a9b5bb3239de8f629e3472a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad18e470a6e54c780010fccc1f2a4c181"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#ad18e470a6e54c780010fccc1f2a4c181">interpolate_grad_x_bilinear</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_x, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_y)</td></tr>
+<tr class="separator:ad18e470a6e54c780010fccc1f2a4c181"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c4208190de1146f0af32f91f6ba4490"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a7c4208190de1146f0af32f91f6ba4490">interpolate_grad_y_bilinear</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_x, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_y)</td></tr>
+<tr class="separator:a7c4208190de1146f0af32f91f6ba4490"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a80f7b912d421e85e91499dcae46e354a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a80f7b912d421e85e91499dcae46e354a">interpolate_bicubic_global</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;global_x, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;global_y)</td></tr>
 <tr class="separator:a80f7b912d421e85e91499dcae46e354a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa31986bd8b9595d02411577e85b78755"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#aa31986bd8b9595d02411577e85b78755">interpolate_bicubic</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_x, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_y)</td></tr>
 <tr class="separator:aa31986bd8b9595d02411577e85b78755"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac25a0e7aeba4ae3952a709f38fa6cb49"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#ac25a0e7aeba4ae3952a709f38fa6cb49">interpolate_grad_x_bicubic</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_x, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_y)</td></tr>
+<tr class="separator:ac25a0e7aeba4ae3952a709f38fa6cb49"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a15871fedd2d9ce66d93508091a04b1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a2a15871fedd2d9ce66d93508091a04b1">interpolate_grad_y_bicubic</a> (const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_x, const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;local_y)</td></tr>
+<tr class="separator:a2a15871fedd2d9ce66d93508091a04b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36d426085cb6accb9cdb8c7f9315626c"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a36d426085cb6accb9cdb8c7f9315626c">grad_x</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> x, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> y) const </td></tr>
 <tr class="separator:a36d426085cb6accb9cdb8c7f9315626c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8dc535ef788f4ca395c159438763520a"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a8dc535ef788f4ca395c159438763520a">grad_y</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> x, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> y) const </td></tr>
@@ -191,12 +215,22 @@ Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75
 <tr class="separator:a9d898ba0b5588224af6a7af15dc0ac79"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a33074e9cac2646579c4a121d16c29493"><td class="memItemLeft" align="right" valign="top">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a33074e9cac2646579c4a121d16c29493">apply_transformation</a> (Teuchos::RCP&lt; const std::vector&lt; <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &gt; &gt; deformation, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> cx, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> cy, const bool apply_in_place=false)</td></tr>
 <tr class="separator:a33074e9cac2646579c4a121d16c29493"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a42259e4b84a1a7a3305d6ce04bd6a6ab"><td class="memItemLeft" align="right" valign="top">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a42259e4b84a1a7a3305d6ce04bd6a6ab">normalize</a> (const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params=Teuchos::null)</td></tr>
+<tr class="separator:a42259e4b84a1a7a3305d6ce04bd6a6ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6ac253102ff5ef2cccd661565211c058"><td class="memItemLeft" align="right" valign="top">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a6ac253102ff5ef2cccd661565211c058">apply_rotation</a> (const <a class="el" href="namespace_d_i_ce.html#ab06b9b53f802eaa6bcb71be18ae9ec5d">Rotation_Value</a> rotation, const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params=Teuchos::null)</td></tr>
 <tr class="separator:a6ac253102ff5ef2cccd661565211c058"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2682e023d6cb67cce6d44b1a7baf2553"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2682e023d6cb67cce6d44b1a7baf2553"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a2682e023d6cb67cce6d44b1a7baf2553">compute_gradients</a> (const bool use_hierarchical_parallelism=false, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> team_size=256)</td></tr>
 <tr class="memdesc:a2682e023d6cb67cce6d44b1a7baf2553"><td class="mdescLeft">&#160;</td><td class="mdescRight">compute the image gradients <br /></td></tr>
 <tr class="separator:a2682e023d6cb67cce6d44b1a7baf2553"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab91d81aff38d9fdfe2e1382725001229"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab91d81aff38d9fdfe2e1382725001229"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#ab91d81aff38d9fdfe2e1382725001229">smooth_gradients_convolution_5_point</a> ()</td></tr>
+<tr class="memdesc:ab91d81aff38d9fdfe2e1382725001229"><td class="mdescLeft">&#160;</td><td class="mdescRight">compute the image gradients <br /></td></tr>
+<tr class="separator:ab91d81aff38d9fdfe2e1382725001229"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeffb301423ed9ae502af84e987632b0b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeffb301423ed9ae502af84e987632b0b"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#aeffb301423ed9ae502af84e987632b0b">compute_gradients_finite_difference</a> ()</td></tr>
+<tr class="memdesc:aeffb301423ed9ae502af84e987632b0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">compute the image gradients <br /></td></tr>
+<tr class="separator:aeffb301423ed9ae502af84e987632b0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac4e6d2d375ae8c1f11a2a13dfd49e71b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac4e6d2d375ae8c1f11a2a13dfd49e71b"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#ac4e6d2d375ae8c1f11a2a13dfd49e71b">has_gradients</a> () const </td></tr>
 <tr class="memdesc:ac4e6d2d375ae8c1f11a2a13dfd49e71b"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns true if the gradients have been computed <br /></td></tr>
@@ -205,10 +239,10 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a908ac1a314af285fce27b3e24e0f018c">has_gauss_filter</a> () const </td></tr>
 <tr class="memdesc:a908ac1a314af285fce27b3e24e0f018c"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns true if the image has been gauss filtered <br /></td></tr>
 <tr class="separator:a908ac1a314af285fce27b3e24e0f018c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5bcf85e4d040aedadd1a060985be98ca"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5bcf85e4d040aedadd1a060985be98ca"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a5bcf85e4d040aedadd1a060985be98ca">gauss_filter</a> (const bool use_hierarchical_parallelism=false, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> team_size=256)</td></tr>
-<tr class="memdesc:a5bcf85e4d040aedadd1a060985be98ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">filter the image using a 7 point gauss filter <br /></td></tr>
-<tr class="separator:a5bcf85e4d040aedadd1a060985be98ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad758e7966f2d4ab1398abfe98add17f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aad758e7966f2d4ab1398abfe98add17f"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#aad758e7966f2d4ab1398abfe98add17f">gauss_filter</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> mask_size=-1, const bool use_hierarchical_parallelism=false, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> team_size=256)</td></tr>
+<tr class="memdesc:aad758e7966f2d4ab1398abfe98add17f"><td class="mdescLeft">&#160;</td><td class="mdescRight">filter the image using a 7 point gauss filter <br /></td></tr>
+<tr class="separator:aad758e7966f2d4ab1398abfe98add17f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2b7f526b8ce008c84d097e9f035d81cc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2b7f526b8ce008c84d097e9f035d81cc"></a>
 std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a2b7f526b8ce008c84d097e9f035d81cc">file_name</a> () const </td></tr>
 <tr class="memdesc:a2b7f526b8ce008c84d097e9f035d81cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns the name of the file if available <br /></td></tr>
@@ -294,6 +328,10 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#ae785a2b0a0056b8eb3cca34d6974a9dc">file_name_</a></td></tr>
 <tr class="memdesc:ae785a2b0a0056b8eb3cca34d6974a9dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">name of the file that was the source of this image <br /></td></tr>
 <tr class="separator:ae785a2b0a0056b8eb3cca34d6974a9dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a998318f0d3838587cab6e79619ed45d0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a998318f0d3838587cab6e79619ed45d0"></a>
+<a class="el" href="namespace_d_i_ce.html#af68eb788cf1c6c98857451bf859d552d">Gradient_Method</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_image.html#a998318f0d3838587cab6e79619ed45d0">gradient_method_</a></td></tr>
+<tr class="memdesc:a998318f0d3838587cab6e79619ed45d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">gradient method <br /></td></tr>
+<tr class="separator:a998318f0d3838587cab6e79619ed45d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A container class to hold the pixel intensity information and provide some basic methods Note: the coordinates are from the top left corner (positive right for x and positive down for y) intensity access is always in local coordinates, for example if only a portion of an image is read into the intensity values, accessing the first value in the array is via the indicies (0,0) even if the first pixel is not in the upper left corner of the global image from which the poriton was taken </p>
@@ -1006,6 +1044,204 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hre
 
 </div>
 </div>
+<a class="anchor" id="ac25a0e7aeba4ae3952a709f38fa6cb49"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> DICe::Image::interpolate_grad_x_bicubic </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>local_x</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>local_y</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>interpolant </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">local_x</td><td>local image coordinate x </td></tr>
+    <tr><td class="paramname">local_y</td><td>local image coordinate y </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ad18e470a6e54c780010fccc1f2a4c181"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> DICe::Image::interpolate_grad_x_bilinear </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>local_x</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>local_y</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>interpolant </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">local_x</td><td>local image coordinate x </td></tr>
+    <tr><td class="paramname">local_y</td><td>local image coordinate y </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ab14ed385a184108ba9e95108813103d4"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> DICe::Image::interpolate_grad_x_keys_fourth </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>local_x</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>local_y</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>interpolant </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">local_x</td><td>local image coordinate x </td></tr>
+    <tr><td class="paramname">local_y</td><td>local image coordinate y </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a2a15871fedd2d9ce66d93508091a04b1"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> DICe::Image::interpolate_grad_y_bicubic </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>local_x</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>local_y</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>interpolant </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">local_x</td><td>local image coordinate x </td></tr>
+    <tr><td class="paramname">local_y</td><td>local image coordinate y </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a7c4208190de1146f0af32f91f6ba4490"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> DICe::Image::interpolate_grad_y_bilinear </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>local_x</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>local_y</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>interpolant </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">local_x</td><td>local image coordinate x </td></tr>
+    <tr><td class="paramname">local_y</td><td>local image coordinate y </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a3bb73c6d95d3ab06523a36c33a700dea"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> DICe::Image::interpolate_grad_y_keys_fourth </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>local_x</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp;&#160;</td>
+          <td class="paramname"><em>local_y</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>interpolant </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">local_x</td><td>local image coordinate x </td></tr>
+    <tr><td class="paramname">local_y</td><td>local image coordinate y </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="aaa588aa9f92d1ff4f0c056932e928e8a"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1107,6 +1343,28 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hre
   <table class="params">
     <tr><td class="paramname">x</td><td>image coordinate x </td></tr>
     <tr><td class="paramname">y</td><td>image coordinate y </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a42259e4b84a1a7a3305d6ce04bd6a6ab"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Teuchos::RCP&lt;<a class="el" href="class_d_i_ce_1_1_image.html">Image</a>&gt; DICe::Image::normalize </td>
+          <td>(</td>
+          <td class="paramtype">const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;&#160;</td>
+          <td class="paramname"><em>params</em> = <code>Teuchos::null</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>normalize the image intensity values </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">params</td><td>the image parameters to use </td></tr>
   </table>
   </dd>
 </dl>
@@ -1220,7 +1478,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hre
 
 </div>
 </div>
-<a class="anchor" id="aaca1a7b5439796ba7bffe79b9c6a1439"></a>
+<a class="anchor" id="aece5120ffa8c448f126ba4d0a2dfcdc7"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -1228,12 +1486,67 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hre
           <td class="memname">void DICe::Image::write </td>
           <td>(</td>
           <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>file_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>scale_to_8_bit</em> = <code>true</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>write the image to a file (tiff, jpeg, or png, depending on which file extension is used in the name) Tiff, jpeg, and png will truncate the intensity values to an 8-bit integer value and scale the image so that the histogram is spread over the entire 0-255 range. The rawi format saves the full intesity_t precision value to file </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">file_name</td><td>the name of the file to write to </td></tr>
+    <tr><td class="paramname">scale_to_8_bit</td><td>scale image to eight bit range if true </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a4b11e63226af97348737ab1aba0f5a30"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::Image::write_grad_x </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>file_name</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>write the image to a file (tiff, jpeg, or png, depending on which file extension is used in the name) Tiff, jpeg, and png will truncate the intensity values to an 8-bit integer value and scale the image so that the histogram is spread over the entire 0-255 range. The rawi format saves the full intesity_t precision value to file </p><dl class="params"><dt>Parameters</dt><dd>
+<p>write the image x gradients to a file (tiff, jpeg, or png, depending on which file extension is used in the name) Tiff, jpeg, and png will truncate the intensity values to an 8-bit integer value and scale the image so that the histogram is spread over the entire 0-255 range. The rawi format saves the full intesity_t precision value to file </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">file_name</td><td>the name of the file to write to </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a593244983075c83e5c11db2b278306c7"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::Image::write_grad_y </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>file_name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>write the image y gradients to a file (tiff, jpeg, or png, depending on which file extension is used in the name) Tiff, jpeg, and png will truncate the intensity values to an 8-bit integer value and scale the image so that the histogram is spread over the entire 0-255 range. The rawi format saves the full intesity_t precision value to file </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">file_name</td><td>the name of the file to write to </td></tr>
   </table>
@@ -1288,7 +1601,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hre
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 15 2016 10:21:53 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Aug 19 2016 12:09:32 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>

@@ -1,5 +1,15 @@
 var searchData=
 [
-  ['valid_5fcorrelation_5fpoint',['valid_correlation_point',['../namespace_d_i_ce.html#adb9857d069be6da27f249811e2924580',1,'DICe']]],
-  ['vsg_5fstrain_5fpost_5fprocessor',['VSG_Strain_Post_Processor',['../class_d_i_ce_1_1_v_s_g___strain___post___processor.html#aa72d39d6f1f5d797ee3361d246f07f46',1,'DICe::VSG_Strain_Post_Processor']]]
+  ['update',['update',['../class_d_i_ce_1_1_multi_field.html#a3e28f82010b1b5074c2c6afe95f50424',1,'DICe::MultiField::update(const mv_scalar_type &amp;alpha, const MultiField &amp;multifield, const mv_scalar_type &amp;beta)'],['../class_d_i_ce_1_1_multi_field.html#a372d7cc869382f043b82bdf6e235b784',1,'DICe::MultiField::update(const scalar_t &amp;alpha, const MultiField &amp;multifield, const scalar_t &amp;beta)']]],
+  ['update_5fimage_5fframe',['update_image_frame',['../class_d_i_ce_1_1_schema.html#aa11817f39a77a9727d5fb0acc52db777',1,'DICe::Schema']]],
+  ['use_5fconstrained_5fopt_5fdic_5fparam',['use_constrained_opt_dic_param',['../namespace_d_i_ce.html#a62b2532a8886c4f39a4b3884479d4d09',1,'DICe']]],
+  ['use_5ffixed_5fpoint_5fiterations_5fparam',['use_fixed_point_iterations_param',['../namespace_d_i_ce.html#adc96f5c5a349995070e7e394742ab5cd',1,'DICe']]],
+  ['use_5fglobal_5fdic_5fparam',['use_global_dic_param',['../namespace_d_i_ce.html#a980774b0c425ca6e8eb26197d44afa51',1,'DICe']]],
+  ['use_5fintegrated_5fdic_5fparam',['use_integrated_dic_param',['../namespace_d_i_ce.html#a025a49744062aefba499777524aa4cae',1,'DICe']]],
+  ['use_5fobjective_5fregularization',['use_objective_regularization',['../class_d_i_ce_1_1_schema.html#ac871a70d9881cffa18e72fed06b5c67d',1,'DICe::Schema']]],
+  ['use_5fobjective_5fregularization_5fparam',['use_objective_regularization_param',['../namespace_d_i_ce.html#a03d8f22765325c0889b694e21047bd4f',1,'DICe']]],
+  ['use_5fsearch_5finitialization_5ffor_5ffailed_5fsteps_5fparam',['use_search_initialization_for_failed_steps_param',['../namespace_d_i_ce.html#a47c95af463b4ba8ed231314eb057132c',1,'DICe']]],
+  ['use_5fsubset_5fevolution',['use_subset_evolution',['../class_d_i_ce_1_1_schema.html#a42321354eae371a127b3db1fd4ec1432',1,'DICe::Schema']]],
+  ['use_5fsubset_5fevolution_5fparam',['use_subset_evolution_param',['../namespace_d_i_ce.html#a9ec4cebeab83d7b072d0130c8fbebd1a',1,'DICe']]],
+  ['use_5ftracking_5fdefault_5fparams_5fparam',['use_tracking_default_params_param',['../namespace_d_i_ce.html#aee75982b98f06c874888abcc2d32c368',1,'DICe']]]
 ];

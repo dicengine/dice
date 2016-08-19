@@ -1,6 +1,20 @@
 var searchData=
 [
-  ['width_5f',['width_',['../struct_d_i_ce_1_1_extents.html#a4c59c434d62862e7c7184469c7b0dde7',1,'DICe::Extents::width_()'],['../class_d_i_ce_1_1_image.html#a03fba626318b898f0d3ef3dbf85aa9a6',1,'DICe::Image::width_()'],['../struct_d_i_ce_1_1_mask___smoothing___functor.html#ace861b3f6f6250d3e14bb2a5f7220d4b',1,'DICe::Mask_Smoothing_Functor::width_()'],['../struct_d_i_ce_1_1_mask___apply___functor.html#a5dc7ef47d24049da7483deb53350282e',1,'DICe::Mask_Apply_Functor::width_()'],['../struct_d_i_ce_1_1_transform___functor.html#a5c1e0df099f2644f71fc928f7fcf17b8',1,'DICe::Transform_Functor::width_()'],['../class_d_i_ce_1_1_rectangle.html#a7007373622ce7062caef61f217a38968',1,'DICe::Rectangle::width_()']]],
-  ['window_5fcoeffs_5f',['window_coeffs_',['../class_d_i_ce_1_1_optical___flow___initializer.html#ab158e23165b3c48f1cf9a0d2b1719bc5',1,'DICe::Optical_Flow_Initializer']]],
-  ['window_5fsize_5f',['window_size_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a7456e6df0c40541d286e481da13a93b6',1,'DICe::Optical_Flow_Initializer::window_size_()'],['../class_d_i_ce_1_1_v_s_g___strain___post___processor.html#aa5d9757082b1a0b8aaaca66571ca1559',1,'DICe::VSG_Strain_Post_Processor::window_size_()']]]
+  ['u_5f',['u_',['../struct_d_i_ce_1_1def__triad.html#a0e1bad625fe2673e73b8004781d60eab',1,'DICe::def_triad::u_()'],['../struct_d_i_ce_1_1_transform___functor.html#afb4b42994ed146c666d26e82f5ce9fad',1,'DICe::Transform_Functor::u_()'],['../struct_d_i_ce_1_1_subset___init___functor.html#a47d5bb782226203dee857cb782f41b60',1,'DICe::Subset_Init_Functor::u_()']]],
+  ['use_5fconstrained_5fopt_5fdic',['use_constrained_opt_dic',['../namespace_d_i_ce.html#a88e93a94daa3cd775b1da15b0e69be22',1,'DICe']]],
+  ['use_5ffixed_5fpoint_5fiterations',['use_fixed_point_iterations',['../namespace_d_i_ce.html#a5cf826e4595a92ba7382906ed27886aa',1,'DICe']]],
+  ['use_5fglobal_5fdic',['use_global_dic',['../namespace_d_i_ce.html#a07444b676e60e941b5e9e47b6113f918',1,'DICe']]],
+  ['use_5fintegrated_5fdic',['use_integrated_dic',['../namespace_d_i_ce.html#abf63c7157e7da007af1b358edfe83d53',1,'DICe']]],
+  ['use_5fmotion_5fdetection_5f',['use_motion_detection_',['../struct_d_i_ce_1_1_motion___window___params.html#ae983b80e882656862510e34b423b962d',1,'DICe::Motion_Window_Params']]],
+  ['use_5fobjective_5fregularization',['use_objective_regularization',['../namespace_d_i_ce.html#a737373addc607111e765c5e11a6a6170',1,'DICe']]],
+  ['use_5fobjective_5fregularization_5f',['use_objective_regularization_',['../class_d_i_ce_1_1_schema.html#aeba4854674b2a4f7b3d985bb7aa2efc5',1,'DICe::Schema']]],
+  ['use_5fregular_5fgrid',['use_regular_grid',['../struct_d_i_ce_1_1_subset___file___info.html#a12b1a01abca9bad8412ae0ccafa2e8a2',1,'DICe::Subset_File_Info']]],
+  ['use_5fsearch_5finitialization_5ffor_5ffailed_5fsteps',['use_search_initialization_for_failed_steps',['../namespace_d_i_ce.html#a6c9073dd950d940e84bf1310f2a33732',1,'DICe']]],
+  ['use_5fsearch_5finitialization_5ffor_5ffailed_5fsteps_5f',['use_search_initialization_for_failed_steps_',['../class_d_i_ce_1_1_schema.html#aba4c3f23107d8f1f74a844177f3521d6',1,'DICe::Schema']]],
+  ['use_5fsubset_5fevolution',['use_subset_evolution',['../namespace_d_i_ce.html#ae8c184ccb13ac6fd1b75becaf2c0fed6',1,'DICe']]],
+  ['use_5fsubset_5fevolution_5f',['use_subset_evolution_',['../class_d_i_ce_1_1_schema.html#a5fc45146513f36beac3555d9357ab33d',1,'DICe::Schema']]],
+  ['use_5fsubset_5fid_5f',['use_subset_id_',['../struct_d_i_ce_1_1_motion___window___params.html#a82a73ae1b9b15e4fc7497a4792d5310c',1,'DICe::Motion_Window_Params']]],
+  ['use_5fsubsets_5f',['use_subsets_',['../struct_d_i_ce_1_1_boundary___condition___def.html#a7832fd4c264763b7333a8436b617a2f1',1,'DICe::Boundary_Condition_Def']]],
+  ['use_5fsuperposition_5f',['use_superposition_',['../class_d_i_ce_1_1_sin_cos___image___deformer.html#ac5e2cd3818fdb7d772acedb3999285a8',1,'DICe::SinCos_Image_Deformer']]],
+  ['use_5ftracking_5fdefault_5fparams',['use_tracking_default_params',['../namespace_d_i_ce.html#a07516258357c11f76ac6313eae61ab17',1,'DICe']]]
 ];

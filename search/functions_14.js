@@ -1,27 +1,7 @@
 var searchData=
 [
-  ['width',['width',['../class_d_i_ce_1_1_image.html#a1a8ed67bc7027b841fd7f5b17300eb50',1,'DICe::Image::width()'],['../class_d_i_ce_1_1cine_1_1_cine___reader.html#aeccdabdf489b446c6afccaf9b978a77a',1,'DICe::cine::Cine_Reader::width()']]],
-  ['write',['write',['../class_d_i_ce_1_1_image.html#aaca1a7b5439796ba7bffe79b9c6a1439',1,'DICe::Image']]],
-  ['write_5fcontrol_5fpoints_5fimage',['write_control_points_image',['../class_d_i_ce_1_1_schema.html#a3c895e24a1100eda631ea303984c0449',1,'DICe::Schema']]],
-  ['write_5fdeformed_5fsubset_5fintensity_5fimage',['write_deformed_subset_intensity_image',['../class_d_i_ce_1_1_schema.html#afaaa6242276be9fc6886fa435ffa7ec3',1,'DICe::Schema']]],
-  ['write_5fdeformed_5fsubsets_5fimage',['write_deformed_subsets_image',['../class_d_i_ce_1_1_schema.html#af80f14425a01092f9a99ef6647eee165',1,'DICe::Schema']]],
-  ['write_5fdeformed_5fsubsets_5fimage_5fnew',['write_deformed_subsets_image_new',['../class_d_i_ce_1_1_schema.html#a5a411f95d5022847402c8487fe4aba9f',1,'DICe::Schema']]],
-  ['write_5fframe',['write_frame',['../class_d_i_ce_1_1_output___spec.html#a5b98daee687e4cc5bd4a3bb502a02cc7',1,'DICe::Output_Spec']]],
-  ['write_5fheader',['write_header',['../class_d_i_ce_1_1_output___spec.html#a973a81052648ed586a3a601b936f6d14',1,'DICe::Output_Spec']]],
-  ['write_5fimage',['write_image',['../namespace_d_i_ce_1_1utils.html#a4d952a11768e19fa6e901f35ea7ad380',1,'DICe::utils']]],
-  ['write_5finfo',['write_info',['../class_d_i_ce_1_1_output___spec.html#aeb852c5359b68845f5961c2cb2099b67',1,'DICe::Output_Spec']]],
-  ['write_5foutput',['write_output',['../class_d_i_ce_1_1_schema.html#a3233dda46abc3469300ef06b37594cbd',1,'DICe::Schema']]],
-  ['write_5frawi_5fimage',['write_rawi_image',['../namespace_d_i_ce_1_1utils.html#a9a22787f75ad33b17d703149041502ab',1,'DICe::utils']]],
-  ['write_5freference_5fsubset_5fintensity_5fimage',['write_reference_subset_intensity_image',['../class_d_i_ce_1_1_schema.html#afcf7b68e219aaa3a8a994380267dd1a8',1,'DICe::Schema']]],
-  ['write_5fsubset_5fon_5fimage',['write_subset_on_image',['../class_d_i_ce_1_1_subset.html#ab1d0bd4ff7e38c76e37f5fa568ce3715',1,'DICe::Subset']]],
-  ['write_5ftiff',['write_tiff',['../class_d_i_ce_1_1_subset.html#a1815e07c98c476a79661315915801149',1,'DICe::Subset']]],
-  ['write_5fto_5ftext_5ffile',['write_to_text_file',['../class_d_i_ce_1_1_path___initializer.html#abffaf8b3d7ec0e3625beb384dde2c693',1,'DICe::Path_Initializer']]],
-  ['write_5fxml_5fbool_5fparam',['write_xml_bool_param',['../namespace_d_i_ce.html#a2e773cb854773525bafaf9869899a587',1,'DICe']]],
-  ['write_5fxml_5fcomment',['write_xml_comment',['../namespace_d_i_ce.html#a628f24c51cb82c28b586830af0f22df7',1,'DICe']]],
-  ['write_5fxml_5fparam',['write_xml_param',['../namespace_d_i_ce.html#a098c62af8fe8590c77813219dbc159d5',1,'DICe']]],
-  ['write_5fxml_5fparam_5flist_5fclose',['write_xml_param_list_close',['../namespace_d_i_ce.html#a3b235fd081a22af44902715f13df98ad',1,'DICe']]],
-  ['write_5fxml_5fparam_5flist_5fopen',['write_xml_param_list_open',['../namespace_d_i_ce.html#a1db7d39f98706a13e2e05bddcd68bd06',1,'DICe']]],
-  ['write_5fxml_5freal_5fparam',['write_xml_real_param',['../namespace_d_i_ce.html#ab7ab7595e1d74ffc5e3a8b9b34346331',1,'DICe']]],
-  ['write_5fxml_5fsize_5fparam',['write_xml_size_param',['../namespace_d_i_ce.html#a72f84caa23b8e5780d6b18f7d588a801',1,'DICe']]],
-  ['write_5fxml_5fstring_5fparam',['write_xml_string_param',['../namespace_d_i_ce.html#ad720ca745cd7a9187361c64b28f39f16',1,'DICe']]]
+  ['valid_5fcorrelation_5fpoint',['valid_correlation_point',['../namespace_d_i_ce.html#adb9857d069be6da27f249811e2924580',1,'DICe']]],
+  ['vertex_5fcoordinates_5fx',['vertex_coordinates_x',['../class_d_i_ce_1_1_polygon.html#a94501bd6a770aab91824d7850d6f3fbc',1,'DICe::Polygon']]],
+  ['vertex_5fcoordinates_5fy',['vertex_coordinates_y',['../class_d_i_ce_1_1_polygon.html#adff91cfbe6098bd8238b03b1e766374a',1,'DICe::Polygon']]],
+  ['vsg_5fstrain_5fpost_5fprocessor',['VSG_Strain_Post_Processor',['../class_d_i_ce_1_1_v_s_g___strain___post___processor.html#aa72d39d6f1f5d797ee3361d246f07f46',1,'DICe::VSG_Strain_Post_Processor']]]
 ];

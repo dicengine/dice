@@ -1,7 +1,19 @@
 var searchData=
 [
-  ['x',['x',['../struct_point___cloud_1_1_point.html#a5377963975d83555aad794f088b8533d',1,'Point_Cloud::Point']]],
-  ['x_5f',['x_',['../struct_d_i_ce_1_1_mask___init___functor.html#a509ce71269f02b21b8a272648627f8b0',1,'DICe::Mask_Init_Functor::x_()'],['../class_d_i_ce_1_1_subset.html#a208885f6ab34f037935a1f84bd0de8c1',1,'DICe::Subset::x_()'],['../struct_d_i_ce_1_1_subset___init___functor.html#a8cde720916d3be2aa29b886403641f8c',1,'DICe::Subset_Init_Functor::x_()']]],
-  ['xx',['xx',['../struct_d_i_ce_1_1_tensor__2_d.html#a4840d50bb252d7491c8a80773a425db1',1,'DICe::Tensor_2D']]],
-  ['xy',['xy',['../struct_d_i_ce_1_1_tensor__2_d.html#afacaf7715b43ad30518ee9e6409b51aa',1,'DICe::Tensor_2D']]]
+  ['v_5f',['v_',['../struct_d_i_ce_1_1def__triad.html#a74d1b40e29e69334eade06206c228f0c',1,'DICe::def_triad::v_()'],['../struct_d_i_ce_1_1_transform___functor.html#ad851f4109bb732c50b81fc9c09601e8b',1,'DICe::Transform_Functor::v_()'],['../struct_d_i_ce_1_1_subset___init___functor.html#acdcd3c3fe51dbc75853e1186ca53bb97',1,'DICe::Subset_Init_Functor::v_()']]],
+  ['valid_5fcorrelation_5fparams',['valid_correlation_params',['../namespace_d_i_ce.html#ab32ae587d77b3525eda47832a8e32708',1,'DICe']]],
+  ['valid_5fglobal_5fcorrelation_5fparams',['valid_global_correlation_params',['../namespace_d_i_ce.html#a520114468bcb913c21b0df78493c3f92',1,'DICe']]],
+  ['valid_5fpost_5fprocessor_5fparams',['valid_post_processor_params',['../namespace_d_i_ce.html#a674e17092a6c50572c5418077be592cd',1,'DICe']]],
+  ['value_5f',['value_',['../struct_d_i_ce_1_1_boundary___condition___def.html#a06b982b9cae12983acb68eeaac09e469',1,'DICe::Boundary_Condition_Def']]],
+  ['vec_5fstride_5f',['vec_stride_',['../class_d_i_ce_1_1_v_s_g___strain___post___processor.html#ade6ad80e8f4464fb8f4d0bc1dc97c938',1,'DICe::VSG_Strain_Post_Processor::vec_stride_()'],['../class_d_i_ce_1_1_n_l_v_c___strain___post___processor.html#a795da6ed9d90b0992da2c209592dc5e8',1,'DICe::NLVC_Strain_Post_Processor::vec_stride_()'],['../class_d_i_ce_1_1_keys4___strain___post___processor.html#a0b7afbd2a6bc28701f1f5d18a4d9af9d',1,'DICe::Keys4_Strain_Post_Processor::vec_stride_()']]],
+  ['version',['Version',['../struct_d_i_ce_1_1cine_1_1cine__file__header.html#aa57bef7cb8c365d3b2be413f76b8e2ba',1,'DICe::cine::cine_file_header']]],
+  ['vertex_5fcoordinates_5fx_5f',['vertex_coordinates_x_',['../class_d_i_ce_1_1_polygon.html#a9a72eb90316abaa67062164159172bd9',1,'DICe::Polygon']]],
+  ['vertex_5fcoordinates_5fy_5f',['vertex_coordinates_y_',['../class_d_i_ce_1_1_polygon.html#a99e77abdaa97990d44e8ed33657339ee',1,'DICe::Polygon']]],
+  ['vsg_5fdudx',['vsg_dudx',['../namespace_d_i_ce.html#aa52625da9e5a53cd27d4c5d7abc881bf',1,'DICe']]],
+  ['vsg_5fdudy',['vsg_dudy',['../namespace_d_i_ce.html#ad9ffb958ab7757aa1d9a5e78af3c874d',1,'DICe']]],
+  ['vsg_5fdvdx',['vsg_dvdx',['../namespace_d_i_ce.html#ac6cd08d0cec53ddec631c1d0d391ade2',1,'DICe']]],
+  ['vsg_5fdvdy',['vsg_dvdy',['../namespace_d_i_ce.html#a579266be04b238ac36455fc906b7deab',1,'DICe']]],
+  ['vsg_5fstrain_5fxx',['vsg_strain_xx',['../namespace_d_i_ce.html#a4cfe4d2651b503e40ae0bc301a459b09',1,'DICe']]],
+  ['vsg_5fstrain_5fxy',['vsg_strain_xy',['../namespace_d_i_ce.html#acbdfea5efcab8a0d12c7f2b8a2821103',1,'DICe']]],
+  ['vsg_5fstrain_5fyy',['vsg_strain_yy',['../namespace_d_i_ce.html#aafec76de487ac927d27eb766e7b2556f',1,'DICe']]]
 ];

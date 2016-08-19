@@ -269,39 +269,53 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00264"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_v_s_g___strain___post___processor.html#a1935c553b220d0f1aeba5dbc4eda9208">  264</a></span>&#160;  Teuchos::ArrayRCP&lt;scalar_t&gt; <a class="code" href="class_d_i_ce_1_1_v_s_g___strain___post___processor.html#a1935c553b220d0f1aeba5dbc4eda9208">neighbor_distances_y_</a>;</div>
 <div class="line"><a name="l00265"></a><span class="lineno">  265</span>&#160;};</div>
 <div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;</div>
-<div class="line"><a name="l00267"></a><span class="lineno">  267</span>&#160;</div>
-<div class="line"><a name="l00271"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_global___strain___post___processor.html">  271</a></span>&#160;<span class="keyword">class </span>DICE_LIB_DLL_EXPORT</div>
-<div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;<a class="code" href="class_d_i_ce_1_1_global___strain___post___processor.html">Global_Strain_Post_Processor</a> : <span class="keyword">public</span> <a class="code" href="class_d_i_ce_1_1_post___processor.html">Post_Processor</a> {</div>
-<div class="line"><a name="l00273"></a><span class="lineno">  273</span>&#160;</div>
-<div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;</div>
-<div class="line"><a name="l00279"></a><span class="lineno">  279</span>&#160;  <a class="code" href="class_d_i_ce_1_1_global___strain___post___processor.html">Global_Strain_Post_Processor</a>(<a class="code" href="class_d_i_ce_1_1_schema.html">Schema</a> * schema,</div>
-<div class="line"><a name="l00280"></a><span class="lineno">  280</span>&#160;    <span class="keyword">const</span> Teuchos::RCP&lt;Teuchos::ParameterList&gt; &amp; params);</div>
-<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160;</div>
-<div class="line"><a name="l00283"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_global___strain___post___processor.html#a1a24fd55d254b380d4837173c324fa49">  283</a></span>&#160;  <span class="keyword">virtual</span> <a class="code" href="class_d_i_ce_1_1_global___strain___post___processor.html#a1a24fd55d254b380d4837173c324fa49">~Global_Strain_Post_Processor</a>(){}</div>
-<div class="line"><a name="l00284"></a><span class="lineno">  284</span>&#160;</div>
-<div class="line"><a name="l00286"></a><span class="lineno">  286</span>&#160;  <span class="keyword">virtual</span> <span class="keywordtype">void</span> set_params(<span class="keyword">const</span> Teuchos::RCP&lt;Teuchos::ParameterList&gt; &amp; params);</div>
-<div class="line"><a name="l00287"></a><span class="lineno">  287</span>&#160;</div>
-<div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160;  <span class="keyword">virtual</span> <span class="keywordtype">void</span> pre_execution_tasks();</div>
-<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160;</div>
-<div class="line"><a name="l00292"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_global___strain___post___processor.html#a05850447fd3a8ba17a35f2ead0a38fe6">  292</a></span>&#160;  <span class="keyword">virtual</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="code" href="class_d_i_ce_1_1_global___strain___post___processor.html#a05850447fd3a8ba17a35f2ead0a38fe6">strain_window_size</a>(){</div>
-<div class="line"><a name="l00293"></a><span class="lineno">  293</span>&#160;    <span class="keywordflow">return</span> mesh_size_;</div>
-<div class="line"><a name="l00294"></a><span class="lineno">  294</span>&#160;  }</div>
-<div class="line"><a name="l00295"></a><span class="lineno">  295</span>&#160;</div>
-<div class="line"><a name="l00297"></a><span class="lineno">  297</span>&#160;  <span class="keyword">virtual</span> <span class="keywordtype">void</span> execute();</div>
-<div class="line"><a name="l00298"></a><span class="lineno">  298</span>&#160;</div>
-<div class="line"><a name="l00300"></a><span class="lineno">  300</span>&#160;  <span class="keyword">using</span> <a class="code" href="class_d_i_ce_1_1_post___processor.html#ae76b14dd3be83773c1cb7c68e22b857f">Post_Processor::field_names_</a>;</div>
-<div class="line"><a name="l00301"></a><span class="lineno">  301</span>&#160;</div>
-<div class="line"><a name="l00303"></a><span class="lineno">  303</span>&#160;  <span class="keyword">using</span> <a class="code" href="class_d_i_ce_1_1_post___processor.html#a2a4417d44543fa928070b5620da7f102">Post_Processor::data_num_points_</a>;</div>
-<div class="line"><a name="l00304"></a><span class="lineno">  304</span>&#160;</div>
-<div class="line"><a name="l00306"></a><span class="lineno">  306</span>&#160;  <span class="keyword">using</span> <a class="code" href="class_d_i_ce_1_1_post___processor.html#af7aefd539384c15d6d791edb540a43f3">Post_Processor::schema_</a>;</div>
-<div class="line"><a name="l00307"></a><span class="lineno">  307</span>&#160;</div>
-<div class="line"><a name="l00309"></a><span class="lineno">  309</span>&#160;  <span class="keyword">using</span> <a class="code" href="class_d_i_ce_1_1_post___processor.html#ac819f6c71ab0fcdbf6af11fdecade8e9">Post_Processor::field_value</a>;</div>
-<div class="line"><a name="l00310"></a><span class="lineno">  310</span>&#160;</div>
-<div class="line"><a name="l00311"></a><span class="lineno">  311</span>&#160;<span class="keyword">private</span>:</div>
-<div class="line"><a name="l00313"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_global___strain___post___processor.html#a0d6273a114840be86d7bd26e4f4c5b60">  313</a></span>&#160;  <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="code" href="class_d_i_ce_1_1_global___strain___post___processor.html#a0d6273a114840be86d7bd26e4f4c5b60">mesh_size_</a>;</div>
-<div class="line"><a name="l00315"></a><span class="lineno">  315</span>&#160;  <span class="comment">//int_t vec_stride_;</span></div>
-<div class="line"><a name="l00316"></a><span class="lineno">  316</span>&#160;};</div>
+<div class="line"><a name="l00267"></a><span class="lineno">  267</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160;<span class="comment"></span><span class="comment">//class DICE_LIB_DLL_EXPORT</span></div>
+<div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;<span class="comment">//Global_Strain_Post_Processor : public Post_Processor {</span></div>
+<div class="line"><a name="l00273"></a><span class="lineno">  273</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160;<span class="comment">//public:</span></div>
+<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00276"></a><span class="lineno">  276</span>&#160;<span class="comment">//  /// Default constructor</span></div>
+<div class="line"><a name="l00277"></a><span class="lineno">  277</span>&#160;<span class="comment">//  /// \param schema Pointer to the parent schema that is using this post processor</span></div>
+<div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;<span class="comment">//  /// \param params Pointer to the set of parameters for this post processor</span></div>
+<div class="line"><a name="l00279"></a><span class="lineno">  279</span>&#160;<span class="comment">//  Global_Strain_Post_Processor(Schema * schema,</span></div>
+<div class="line"><a name="l00280"></a><span class="lineno">  280</span>&#160;<span class="comment">//    const Teuchos::RCP&lt;Teuchos::ParameterList&gt; &amp; params);</span></div>
+<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00282"></a><span class="lineno">  282</span>&#160;<span class="comment">//  /// Virtual destructor</span></div>
+<div class="line"><a name="l00283"></a><span class="lineno">  283</span>&#160;<span class="comment">//  virtual ~Global_Strain_Post_Processor(){}</span></div>
+<div class="line"><a name="l00284"></a><span class="lineno">  284</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00285"></a><span class="lineno">  285</span>&#160;<span class="comment">//  /// Set the parameters for this post processor</span></div>
+<div class="line"><a name="l00286"></a><span class="lineno">  286</span>&#160;<span class="comment">//  virtual void set_params(const Teuchos::RCP&lt;Teuchos::ParameterList&gt; &amp; params);</span></div>
+<div class="line"><a name="l00287"></a><span class="lineno">  287</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00288"></a><span class="lineno">  288</span>&#160;<span class="comment">//  /// Collect the neighborhoods of each of the points</span></div>
+<div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160;<span class="comment">//  virtual void pre_execution_tasks();</span></div>
+<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00291"></a><span class="lineno">  291</span>&#160;<span class="comment">//  /// See base clase docutmentation</span></div>
+<div class="line"><a name="l00292"></a><span class="lineno">  292</span>&#160;<span class="comment">//  virtual int_t strain_window_size(){</span></div>
+<div class="line"><a name="l00293"></a><span class="lineno">  293</span>&#160;<span class="comment">//    return mesh_size_;</span></div>
+<div class="line"><a name="l00294"></a><span class="lineno">  294</span>&#160;<span class="comment">//  }</span></div>
+<div class="line"><a name="l00295"></a><span class="lineno">  295</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00296"></a><span class="lineno">  296</span>&#160;<span class="comment">//  /// Execute the post processor</span></div>
+<div class="line"><a name="l00297"></a><span class="lineno">  297</span>&#160;<span class="comment">//  virtual void execute();</span></div>
+<div class="line"><a name="l00298"></a><span class="lineno">  298</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00299"></a><span class="lineno">  299</span>&#160;<span class="comment">//  /// See base class documentation</span></div>
+<div class="line"><a name="l00300"></a><span class="lineno">  300</span>&#160;<span class="comment">//  using Post_Processor::field_names_;</span></div>
+<div class="line"><a name="l00301"></a><span class="lineno">  301</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00302"></a><span class="lineno">  302</span>&#160;<span class="comment">//  /// See base class documentation</span></div>
+<div class="line"><a name="l00303"></a><span class="lineno">  303</span>&#160;<span class="comment">//  using Post_Processor::data_num_points_;</span></div>
+<div class="line"><a name="l00304"></a><span class="lineno">  304</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00305"></a><span class="lineno">  305</span>&#160;<span class="comment">//  /// See base class documentation</span></div>
+<div class="line"><a name="l00306"></a><span class="lineno">  306</span>&#160;<span class="comment">//  using Post_Processor::schema_;</span></div>
+<div class="line"><a name="l00307"></a><span class="lineno">  307</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00308"></a><span class="lineno">  308</span>&#160;<span class="comment">//  /// See base class documentation</span></div>
+<div class="line"><a name="l00309"></a><span class="lineno">  309</span>&#160;<span class="comment">//  using Post_Processor::field_value;</span></div>
+<div class="line"><a name="l00310"></a><span class="lineno">  310</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00311"></a><span class="lineno">  311</span>&#160;<span class="comment">//private:</span></div>
+<div class="line"><a name="l00312"></a><span class="lineno">  312</span>&#160;<span class="comment">//  /// Window size for the virtual strain gauge (in pixels)</span></div>
+<div class="line"><a name="l00313"></a><span class="lineno">  313</span>&#160;<span class="comment">//  int_t mesh_size_;</span></div>
+<div class="line"><a name="l00314"></a><span class="lineno">  314</span>&#160;<span class="comment">//  /// The stride used for the compute vectors</span></div>
+<div class="line"><a name="l00315"></a><span class="lineno">  315</span>&#160;<span class="comment">//  //int_t vec_stride_;</span></div>
+<div class="line"><a name="l00316"></a><span class="lineno">  316</span>&#160;<span class="comment">//};</span></div>
 <div class="line"><a name="l00317"></a><span class="lineno">  317</span>&#160;</div>
 <div class="line"><a name="l00318"></a><span class="lineno">  318</span>&#160;</div>
 <div class="line"><a name="l00323"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_n_l_v_c___strain___post___processor.html">  323</a></span>&#160;<span class="keyword">class </span>DICE_LIB_DLL_EXPORT</div>
@@ -378,7 +392,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00431"></a><span class="lineno">  431</span>&#160;}<span class="comment">// End DICe Namespace</span></div>
 <div class="line"><a name="l00432"></a><span class="lineno">  432</span>&#160;</div>
 <div class="line"><a name="l00433"></a><span class="lineno">  433</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="ttc" id="class_d_i_ce_1_1_global___strain___post___processor_html_a0d6273a114840be86d7bd26e4f4c5b60"><div class="ttname"><a href="class_d_i_ce_1_1_global___strain___post___processor.html#a0d6273a114840be86d7bd26e4f4c5b60">DICe::Global_Strain_Post_Processor::mesh_size_</a></div><div class="ttdeci">int_t mesh_size_</div><div class="ttdoc">Window size for the virtual strain gauge (in pixels) </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:313</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_aba4ef8c390c8440852e0fe017d3cfa2a"><div class="ttname"><a href="namespace_d_i_ce.html#aba4ef8c390c8440852e0fe017d3cfa2a">DICe::nlvc_strain_xx</a></div><div class="ttdeci">const char *const nlvc_strain_xx</div><div class="ttdoc">String field name. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:110</div></div>
 <div class="ttc" id="class_d_i_ce_1_1_keys4___strain___post___processor_html_ac4046a49cdf85521cfbe4744381bc10f"><div class="ttname"><a href="class_d_i_ce_1_1_keys4___strain___post___processor.html#ac4046a49cdf85521cfbe4744381bc10f">DICe::Keys4_Strain_Post_Processor::neighbor_distances_x_</a></div><div class="ttdeci">Teuchos::ArrayRCP&lt; scalar_t &gt; neighbor_distances_x_</div><div class="ttdoc">X distances to each of this subset&#39;s neighbors. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:426</div></div>
 <div class="ttc" id="class_d_i_ce_1_1_keys4___strain___post___processor_html"><div class="ttname"><a href="class_d_i_ce_1_1_keys4___strain___post___processor.html">DICe::Keys4_Strain_Post_Processor</a></div><div class="ttdoc">A specific instance of post processor that computes fourth order Keys inspired strains. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:378</div></div>
@@ -393,21 +406,18 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="ttc" id="class_d_i_ce_1_1_post___processor_html_ac0576946698f815b178eb56055fa6cd4"><div class="ttname"><a href="class_d_i_ce_1_1_post___processor.html#ac0576946698f815b178eb56055fa6cd4">DICe::Post_Processor::name_</a></div><div class="ttdeci">std::string name_</div><div class="ttdoc">String name of this post processor. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:195</div></div>
 <div class="ttc" id="class_d_i_ce_1_1_keys4___strain___post___processor_html_a341f21783743b1dc4570f582b2ae0e9f"><div class="ttname"><a href="class_d_i_ce_1_1_keys4___strain___post___processor.html#a341f21783743b1dc4570f582b2ae0e9f">DICe::Keys4_Strain_Post_Processor::neighbor_lists_</a></div><div class="ttdeci">Teuchos::ArrayRCP&lt; int_t &gt; neighbor_lists_</div><div class="ttdoc">List of all the subsets within the window size. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:422</div></div>
 <div class="ttc" id="class_d_i_ce_1_1_v_s_g___strain___post___processor_html_aed93463cfaca1bc14b5ba716641bee1d"><div class="ttname"><a href="class_d_i_ce_1_1_v_s_g___strain___post___processor.html#aed93463cfaca1bc14b5ba716641bee1d">DICe::VSG_Strain_Post_Processor::num_neigh_</a></div><div class="ttdeci">Teuchos::ArrayRCP&lt; int_t &gt; num_neigh_</div><div class="ttdoc">Number of neighbors for each subset. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:260</div></div>
-<div class="ttc" id="class_d_i_ce_1_1_global___strain___post___processor_html"><div class="ttname"><a href="class_d_i_ce_1_1_global___strain___post___processor.html">DICe::Global_Strain_Post_Processor</a></div><div class="ttdoc">A specific instance of post processor that computes strain in an FEM fashion. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:271</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_a73839d1707b8b4bf8bf2348bbaaa11c1"><div class="ttname"><a href="namespace_d_i_ce.html#a73839d1707b8b4bf8bf2348bbaaa11c1">DICe::strain_window_size_in_pixels</a></div><div class="ttdeci">const char *const strain_window_size_in_pixels</div><div class="ttdoc">String Parameter name. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:63</div></div>
-<div class="ttc" id="class_d_i_ce_1_1_global___strain___post___processor_html_a1a24fd55d254b380d4837173c324fa49"><div class="ttname"><a href="class_d_i_ce_1_1_global___strain___post___processor.html#a1a24fd55d254b380d4837173c324fa49">DICe::Global_Strain_Post_Processor::~Global_Strain_Post_Processor</a></div><div class="ttdeci">virtual ~Global_Strain_Post_Processor()</div><div class="ttdoc">Virtual destructor. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:283</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_a970c0cf372a935951f8522a788769dde"><div class="ttname"><a href="namespace_d_i_ce.html#a970c0cf372a935951f8522a788769dde">DICe::num_valid_post_processor_params</a></div><div class="ttdeci">const int_t num_valid_post_processor_params</div><div class="ttdoc">Number of post processor options. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:72</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_a4337da9155ed0cc3010cb7f7fab93630"><div class="ttname"><a href="namespace_d_i_ce.html#a4337da9155ed0cc3010cb7f7fab93630">DICe::keys4_dvdx</a></div><div class="ttdeci">const char *const keys4_dvdx</div><div class="ttdoc">String field name. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:142</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_a6eae8323e9cc24a775a59d232f0539d6"><div class="ttname"><a href="namespace_d_i_ce.html#a6eae8323e9cc24a775a59d232f0539d6">DICe::nlvc_integrated_phi_y</a></div><div class="ttdeci">const char *const nlvc_integrated_phi_y</div><div class="ttdoc">String field name. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:130</div></div>
 <div class="ttc" id="class_d_i_ce_1_1_n_l_v_c___strain___post___processor_html_a1f9191e00fb1bd42970375c7ec868cd5"><div class="ttname"><a href="class_d_i_ce_1_1_n_l_v_c___strain___post___processor.html#a1f9191e00fb1bd42970375c7ec868cd5">DICe::NLVC_Strain_Post_Processor::horizon_</a></div><div class="ttdeci">int_t horizon_</div><div class="ttdoc">Neighborhood diameter (circular distance around the point of interest where the interaction is non-ne...</div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:363</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_a1e0777faae1db9bc54d8887c82d1a108"><div class="ttname"><a href="namespace_d_i_ce.html#a1e0777faae1db9bc54d8887c82d1a108">DICe::keys4_strain_xy</a></div><div class="ttdeci">const char *const keys4_strain_xy</div><div class="ttdoc">String field name. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:136</div></div>
-<div class="ttc" id="class_d_i_ce_1_1_schema_html"><div class="ttname"><a href="class_d_i_ce_1_1_schema.html">DICe::Schema</a></div><div class="ttdoc">The centralized container for the correlation plan and parameters. </div><div class="ttdef"><b>Definition:</b> DICe_Schema.h:84</div></div>
+<div class="ttc" id="class_d_i_ce_1_1_schema_html"><div class="ttname"><a href="class_d_i_ce_1_1_schema.html">DICe::Schema</a></div><div class="ttdoc">The centralized container for the correlation plan and parameters. </div><div class="ttdef"><b>Definition:</b> DICe_Schema.h:189</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_ac199618ae79a7d2fc6f128eda7e0dbe5"><div class="ttname"><a href="namespace_d_i_ce.html#ac199618ae79a7d2fc6f128eda7e0dbe5">DICe::post_process_keys4_strain</a></div><div class="ttdeci">const char *const post_process_keys4_strain</div><div class="ttdoc">String parameter name. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:59</div></div>
 <div class="ttc" id="class_d_i_ce_1_1_post___processor_html_acc999e75d6462afd09ee9c4e47c54b95"><div class="ttname"><a href="class_d_i_ce_1_1_post___processor.html#acc999e75d6462afd09ee9c4e47c54b95">DICe::Post_Processor::~Post_Processor</a></div><div class="ttdeci">virtual ~Post_Processor()</div><div class="ttdoc">Pure virtual destructor. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:160</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_a997134882b6dae87606a694570e5c955"><div class="ttname"><a href="namespace_d_i_ce.html#a997134882b6dae87606a694570e5c955">DICe::global_dvdy</a></div><div class="ttdeci">const char *const global_dvdy</div><div class="ttdoc">String field name. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:108</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_a839fd44b8ee582168dd7f331f8ee11b2"><div class="ttname"><a href="namespace_d_i_ce.html#a839fd44b8ee582168dd7f331f8ee11b2">DICe::post_process_global_strain</a></div><div class="ttdeci">const char *const post_process_global_strain</div><div class="ttdoc">String parameter name. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:61</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_a31eccdb972dcadc3c74b365b258adbc1"><div class="ttname"><a href="namespace_d_i_ce.html#a31eccdb972dcadc3c74b365b258adbc1">DICe::global_strain_xy</a></div><div class="ttdeci">const char *const global_strain_xy</div><div class="ttdoc">String field name. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:100</div></div>
-<div class="ttc" id="class_d_i_ce_1_1_global___strain___post___processor_html_a05850447fd3a8ba17a35f2ead0a38fe6"><div class="ttname"><a href="class_d_i_ce_1_1_global___strain___post___processor.html#a05850447fd3a8ba17a35f2ead0a38fe6">DICe::Global_Strain_Post_Processor::strain_window_size</a></div><div class="ttdeci">virtual int_t strain_window_size()</div><div class="ttdoc">See base clase docutmentation. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:292</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_ae975fab69359f3c23af6cfd9bcadcc04"><div class="ttname"><a href="namespace_d_i_ce.html#ae975fab69359f3c23af6cfd9bcadcc04">DICe::spline_order</a></div><div class="ttdeci">const char *const spline_order</div><div class="ttdoc">String Parameter name. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:69</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_ad9ffb958ab7757aa1d9a5e78af3c874d"><div class="ttname"><a href="namespace_d_i_ce.html#ad9ffb958ab7757aa1d9a5e78af3c874d">DICe::vsg_dudy</a></div><div class="ttdeci">const char *const vsg_dudy</div><div class="ttdoc">String field name. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:90</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_aa52625da9e5a53cd27d4c5d7abc881bf"><div class="ttname"><a href="namespace_d_i_ce.html#aa52625da9e5a53cd27d4c5d7abc881bf">DICe::vsg_dudx</a></div><div class="ttdeci">const char *const vsg_dudx</div><div class="ttdoc">String field name. </div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:88</div></div>
@@ -467,7 +477,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 15 2016 10:21:52 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Aug 19 2016 12:09:32 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>

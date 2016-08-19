@@ -1,14 +1,17 @@
 var searchData=
 [
-  ['update',['update',['../class_d_i_ce_1_1_multi_field.html#a372d7cc869382f043b82bdf6e235b784',1,'DICe::MultiField']]],
-  ['update_5fimage_5fframe',['update_image_frame',['../class_d_i_ce_1_1_schema.html#aa11817f39a77a9727d5fb0acc52db777',1,'DICe::Schema']]],
-  ['use_5fconstrained_5fopt_5fdic_5fparam',['use_constrained_opt_dic_param',['../namespace_d_i_ce.html#a62b2532a8886c4f39a4b3884479d4d09',1,'DICe']]],
-  ['use_5fglobal_5fdic_5fparam',['use_global_dic_param',['../namespace_d_i_ce.html#a980774b0c425ca6e8eb26197d44afa51',1,'DICe']]],
-  ['use_5fhvm_5fstabilization_5fparam',['use_hvm_stabilization_param',['../namespace_d_i_ce.html#ab82277eeb41a485f5d376df537438434',1,'DICe']]],
-  ['use_5fintegrated_5fdic_5fparam',['use_integrated_dic_param',['../namespace_d_i_ce.html#a025a49744062aefba499777524aa4cae',1,'DICe']]],
-  ['use_5fobjective_5fregularization',['use_objective_regularization',['../class_d_i_ce_1_1_schema.html#ac871a70d9881cffa18e72fed06b5c67d',1,'DICe::Schema']]],
-  ['use_5fobjective_5fregularization_5fparam',['use_objective_regularization_param',['../namespace_d_i_ce.html#a03d8f22765325c0889b694e21047bd4f',1,'DICe']]],
-  ['use_5fsubset_5fevolution',['use_subset_evolution',['../class_d_i_ce_1_1_schema.html#a42321354eae371a127b3db1fd4ec1432',1,'DICe::Schema']]],
-  ['use_5fsubset_5fevolution_5fparam',['use_subset_evolution_param',['../namespace_d_i_ce.html#a9ec4cebeab83d7b072d0130c8fbebd1a',1,'DICe']]],
-  ['use_5ftracking_5fdefault_5fparams_5fparam',['use_tracking_default_params_param',['../namespace_d_i_ce.html#aee75982b98f06c874888abcc2d32c368',1,'DICe']]]
+  ['tensor_5f2d',['Tensor_2D',['../struct_d_i_ce_1_1_tensor__2_d.html#a95c4fd3edef2c4d798770b2a5992562c',1,'DICe::Tensor_2D::Tensor_2D()'],['../struct_d_i_ce_1_1_tensor__2_d.html#a9023f7dc34a1cc45b5ab5a2ab094e7e9',1,'DICe::Tensor_2D::Tensor_2D(const Scalar &amp;xx_, const Scalar &amp;xy_, const Scalar &amp;yx_, const Scalar &amp;yy_)'],['../struct_d_i_ce_1_1_tensor__2_d.html#a7ec54c3e1bbd7168f7b7e9035da743a8',1,'DICe::Tensor_2D::Tensor_2D(const Scalar &amp;alpha)']]],
+  ['theta_5fjump_5ftol',['theta_jump_tol',['../class_d_i_ce_1_1_schema.html#a743e43e12c5d7a57c7f70807f7fa84ec',1,'DICe::Schema']]],
+  ['theta_5fjump_5ftol_5fparam',['theta_jump_tol_param',['../namespace_d_i_ce.html#afe09d8bf4dda19e6b976f9fdbe69c2dd',1,'DICe']]],
+  ['time_5faverage_5fcine_5fref_5fframe_5fparam',['time_average_cine_ref_frame_param',['../namespace_d_i_ce.html#ac5fe76691606bb506fe4c5a1a3348f7e',1,'DICe']]],
+  ['to_5fstring',['to_string',['../namespace_d_i_ce.html#a6b6a8d2c6f3a2360a2d0408c0372673d',1,'DICe::to_string(Field_Name in)'],['../namespace_d_i_ce.html#aef2a756d32a0d4b69dddccee5578a2b3',1,'DICe::to_string(Status_Flag in)'],['../namespace_d_i_ce.html#af193ec3ccf9da2c5fb808f42d36ff67d',1,'DICe::to_string(Correlation_Routine in)'],['../namespace_d_i_ce.html#a0d671458eca6b30e2252b1c4fa52d993',1,'DICe::to_string(Projection_Method in)'],['../namespace_d_i_ce.html#a04d6ca94f8906521152b84500a3487a7',1,'DICe::to_string(Global_Formulation in)'],['../namespace_d_i_ce.html#ac4da406c31ac6041ac14808453d76d98',1,'DICe::to_string(Initialization_Method in)'],['../namespace_d_i_ce.html#a139c242def60ea0071242b72abd600d1',1,'DICe::to_string(Optimization_Method in)'],['../namespace_d_i_ce.html#a7ae39bf5c05ca4ff5a8da8c3e4d4495e',1,'DICe::to_string(Interpolation_Method in)'],['../namespace_d_i_ce.html#a79d1c61c98ebdc2e08c92368ad50a430',1,'DICe::to_string(Gradient_Method in)'],['../namespace_d_i_ce.html#a684ee5a6ac9e3cb3b0f542b2b133a87c',1,'DICe::to_string(Global_EQ_Term in)'],['../namespace_d_i_ce.html#ad3e3750dd96217ccbee49776b91bf24e',1,'DICe::to_string(Global_Solver in)']]],
+  ['tokenize_5fline',['tokenize_line',['../namespace_d_i_ce.html#ae8bad67473b3311c5c8c5fe9fc554950',1,'DICe']]],
+  ['trace',['trace',['../struct_d_i_ce_1_1_tensor__2_d.html#a6e80ca95cce53a2a9215ec0244240016',1,'DICe::Tensor_2D']]],
+  ['tracking_5fdefault_5fparams',['tracking_default_params',['../namespace_d_i_ce.html#a3e98a5e122a35eeeb0eabe8aad83ae22',1,'DICe']]],
+  ['transform_5ffunctor',['Transform_Functor',['../struct_d_i_ce_1_1_transform___functor.html#a65645702a6a812e71446e71d91a4cd62',1,'DICe::Transform_Functor']]],
+  ['translation_5fenabled',['translation_enabled',['../class_d_i_ce_1_1_schema.html#a3fc80de1f2fdac73882c0cadb64503e9',1,'DICe::Schema']]],
+  ['transpose',['transpose',['../struct_d_i_ce_1_1_tensor__2_d.html#a7fd471f344b69e56abb085c1462a3314',1,'DICe::Tensor_2D']]],
+  ['triads',['triads',['../class_d_i_ce_1_1_path___initializer.html#a78c3d4bfd95c0d3c6f1cf20b9f33aef3',1,'DICe::Path_Initializer']]],
+  ['turn_5foff_5fobstructed_5fpixels',['turn_off_obstructed_pixels',['../class_d_i_ce_1_1_subset.html#ac52243da9e14e15ff7acb42d22baae89',1,'DICe::Subset']]],
+  ['turn_5fon_5fpreviously_5fobstructed_5fpixels',['turn_on_previously_obstructed_pixels',['../class_d_i_ce_1_1_subset.html#a9d0b66384e5e55dced4ec16dc14868aa',1,'DICe::Subset']]]
 ];

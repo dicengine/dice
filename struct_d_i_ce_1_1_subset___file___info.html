@@ -179,6 +179,26 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
 <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_d_i_ce_1_1_subset___file___info.html#a809489c1cbb179ab054218f95d016f35">num_motion_windows</a></td></tr>
 <tr class="memdesc:a809489c1cbb179ab054218f95d016f35"><td class="mdescLeft">&#160;</td><td class="mdescRight">number of motion windows <br /></td></tr>
 <tr class="separator:a809489c1cbb179ab054218f95d016f35"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c3b9e0f1f8cdd28e4b59478cf01cbae"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3c3b9e0f1f8cdd28e4b59478cf01cbae"></a>
+Teuchos::RCP&lt; std::vector&lt; <a class="el" href="struct_d_i_ce_1_1_boundary___condition___def.html">Boundary_Condition_Def</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_d_i_ce_1_1_subset___file___info.html#a3c3b9e0f1f8cdd28e4b59478cf01cbae">boundary_condition_defs</a></td></tr>
+<tr class="memdesc:a3c3b9e0f1f8cdd28e4b59478cf01cbae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pointer to the vector of neighbor ids. <br /></td></tr>
+<tr class="separator:a3c3b9e0f1f8cdd28e4b59478cf01cbae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12b1a01abca9bad8412ae0ccafa2e8a2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a12b1a01abca9bad8412ae0ccafa2e8a2"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_d_i_ce_1_1_subset___file___info.html#a12b1a01abca9bad8412ae0ccafa2e8a2">use_regular_grid</a></td></tr>
+<tr class="memdesc:a12b1a01abca9bad8412ae0ccafa2e8a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">true if the mesh should be constructed with a regular grid <br /></td></tr>
+<tr class="separator:a12b1a01abca9bad8412ae0ccafa2e8a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a913f6f049ec3f9fe65affa14ec236e5d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a913f6f049ec3f9fe65affa14ec236e5d"></a>
+<a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_d_i_ce_1_1_subset___file___info.html#a913f6f049ec3f9fe65affa14ec236e5d">ic_value_x</a></td></tr>
+<tr class="memdesc:a913f6f049ec3f9fe65affa14ec236e5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">value to prescribe for the initial condition <br /></td></tr>
+<tr class="separator:a913f6f049ec3f9fe65affa14ec236e5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a880825fd7b2b07d0ec2865dcbaf97d5f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a880825fd7b2b07d0ec2865dcbaf97d5f"></a>
+<a class="el" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_d_i_ce_1_1_subset___file___info.html#a880825fd7b2b07d0ec2865dcbaf97d5f">ic_value_y</a></td></tr>
+<tr class="memdesc:a880825fd7b2b07d0ec2865dcbaf97d5f"><td class="mdescLeft">&#160;</td><td class="mdescRight">value to prescribe for the initial condition <br /></td></tr>
+<tr class="separator:a880825fd7b2b07d0ec2865dcbaf97d5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24bd390ebd05543990438c0fa186f1e0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a24bd390ebd05543990438c0fa186f1e0"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_d_i_ce_1_1_subset___file___info.html#a24bd390ebd05543990438c0fa186f1e0">enforce_lagrange_bc</a></td></tr>
+<tr class="memdesc:a24bd390ebd05543990438c0fa186f1e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">true if all dirichlet bcs should have lagrange multiplier = 0 <br /></td></tr>
+<tr class="separator:a24bd390ebd05543990438c0fa186f1e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Simple struct for passing info back and forth from read_subset_file: </p>
@@ -216,7 +236,7 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 15 2016 10:21:55 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Aug 19 2016 12:09:34 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>

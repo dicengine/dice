@@ -10,6 +10,7 @@ var searchData=
   ['enable_5ftranslation_5f',['enable_translation_',['../class_d_i_ce_1_1_schema.html#a2264d4f0375534a9f0476f333f5266df',1,'DICe::Schema']]],
   ['end_5fx_5f',['end_x_',['../struct_d_i_ce_1_1_motion___window___params.html#ac1c02040b4c0fe7efa8029954b15be58',1,'DICe::Motion_Window_Params']]],
   ['end_5fy_5f',['end_y_',['../struct_d_i_ce_1_1_motion___window___params.html#af90884911793c0a867a55b0d10c50b39',1,'DICe::Motion_Window_Params']]],
+  ['enforce_5flagrange_5fbc',['enforce_lagrange_bc',['../struct_d_i_ce_1_1_subset___file___info.html#a24bd390ebd05543990438c0fa186f1e0',1,'DICe::Subset_File_Info']]],
   ['epetra_5fmv_5f',['epetra_mv_',['../class_d_i_ce_1_1_multi_field.html#afd172aa1e6a28c9a12c545ffca451345',1,'DICe::MultiField']]],
   ['ex_5f',['ex_',['../struct_d_i_ce_1_1_transform___functor.html#a3de66e9496c0c295585c7064b86f0359',1,'DICe::Transform_Functor::ex_()'],['../struct_d_i_ce_1_1_subset___init___functor.html#a238055ae57ef68b61d16f71a40cee42e',1,'DICe::Subset_Init_Functor::ex_()']]],
   ['excluded_5farea_5f',['excluded_area_',['../class_d_i_ce_1_1_conformal___area___def.html#a7fe14b3ea8baa6744cd782f771c94632',1,'DICe::Conformal_Area_Def']]],

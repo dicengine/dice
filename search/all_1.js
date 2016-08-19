@@ -1,5 +1,8 @@
 var searchData=
 [
+  ['b_5fcoeff',['b_coeff',['../namespace_d_i_ce.html#afc8e317248c04170ca5af7f650cab81e',1,'DICe']]],
+  ['backup_5foptimization_5fcall_5fframes_5f',['backup_optimization_call_frames_',['../class_d_i_ce_1_1_stat___container.html#ad966580731fb4782e2f72a30b1323965',1,'DICe::Stat_Container']]],
+  ['backup_5foptimization_5fcall_5fframs',['backup_optimization_call_frams',['../class_d_i_ce_1_1_stat___container.html#ac594605b389bf22cf41c6cc2cc02e880',1,'DICe::Stat_Container']]],
   ['best_5foptical_5fflow_5fpoint',['best_optical_flow_point',['../class_d_i_ce_1_1_optical___flow___initializer.html#af381dc35d96c2ead4a51a1eff55d6dc5',1,'DICe::Optical_Flow_Initializer']]],
   ['beta',['beta',['../class_d_i_ce_1_1_objective.html#a5e8fd3c8ffb0ffe8a10347e400ae7d0f',1,'DICe::Objective::beta()'],['../class_d_i_ce_1_1_objective___z_n_s_s_d.html#add46a12700d2361a8dd54ff7cc85e644',1,'DICe::Objective_ZNSSD::beta()']]],
   ['bibitcount',['biBitCount',['../struct_d_i_ce_1_1cine_1_1bitmap__info__header.html#a74e311711b7d9380f95fae98fd67d713',1,'DICe::cine::bitmap_info_header']]],
@@ -21,5 +24,8 @@ var searchData=
   ['bool_5fdevice_5fview_5f1d',['bool_device_view_1d',['../namespace_d_i_ce.html#a2d0a17b7d7bfa781b93294977f611f9e',1,'DICe']]],
   ['bool_5fdual_5fview_5f1d',['bool_dual_view_1d',['../namespace_d_i_ce.html#a1252967b3da73cb07d48c0d90f28e113',1,'DICe']]],
   ['boundary',['boundary',['../class_d_i_ce_1_1_conformal___area___def.html#aec2d91d4453a8fcbb4b6ce0e3e0b9dd8',1,'DICe::Conformal_Area_Def']]],
-  ['boundary_5f',['boundary_',['../class_d_i_ce_1_1_conformal___area___def.html#aad24e82961d7a14c19e855a867d16f94',1,'DICe::Conformal_Area_Def']]]
+  ['boundary_5f',['boundary_',['../class_d_i_ce_1_1_conformal___area___def.html#aad24e82961d7a14c19e855a867d16f94',1,'DICe::Conformal_Area_Def']]],
+  ['boundary_5fcondition_5fdef',['Boundary_Condition_Def',['../struct_d_i_ce_1_1_boundary___condition___def.html#a62ab1b5b6d79441ec5a8fdf2ae94c1cf',1,'DICe::Boundary_Condition_Def']]],
+  ['boundary_5fcondition_5fdef',['Boundary_Condition_Def',['../struct_d_i_ce_1_1_boundary___condition___def.html',1,'DICe']]],
+  ['boundary_5fcondition_5fdefs',['boundary_condition_defs',['../struct_d_i_ce_1_1_subset___file___info.html#a3c3b9e0f1f8cdd28e4b59478cf01cbae',1,'DICe::Subset_File_Info']]]
 ];

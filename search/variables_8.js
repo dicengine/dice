@@ -1,6 +1,8 @@
 var searchData=
 [
   ['i',['i',['../structkiss__fft__cpx.html#a1acc702e3b59700a1c1f99dcc39b9839',1,'kiss_fft_cpx']]],
+  ['ic_5fvalue_5fx',['ic_value_x',['../struct_d_i_ce_1_1_subset___file___info.html#a913f6f049ec3f9fe65affa14ec236e5d',1,'DICe::Subset_File_Info']]],
+  ['ic_5fvalue_5fy',['ic_value_y',['../struct_d_i_ce_1_1_subset___file___info.html#a880825fd7b2b07d0ec2865dcbaf97d5f',1,'DICe::Subset_File_Info']]],
   ['id_5fsets_5fmap',['id_sets_map',['../struct_d_i_ce_1_1_subset___file___info.html#a567e819b8cade53cf48584831e78fc0c',1,'DICe::Subset_File_Info']]],
   ['ids_5f',['ids_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a393bb3b29bfebcf9558fa92b20d8d791',1,'DICe::Optical_Flow_Initializer']]],
   ['image_5fedge_5fbuffer_5fsize',['image_edge_buffer_size',['../namespace_d_i_ce.html#af1e2f7db85cc0b0fa9e4de6b4a0b4330',1,'DICe']]],
@@ -35,5 +37,6 @@ var searchData=
   ['is_5factive_5f',['is_active_',['../class_d_i_ce_1_1_subset.html#a261afb15859d87631cc618a3e650e1af',1,'DICe::Subset::is_active_()'],['../struct_d_i_ce_1_1_intensity___sum___functor.html#ad828dba5ac5e09ea154cd57029a15cdf',1,'DICe::Intensity_Sum_Functor::is_active_()'],['../struct_d_i_ce_1_1_intensity___sum___minus___mean___functor.html#a6c5191d50caf88dafd7c78982b0fcddb',1,'DICe::Intensity_Sum_Minus_Mean_Functor::is_active_()'],['../struct_d_i_ce_1_1_z_n_s_s_d___gamma___functor.html#acc7795a70a30120deababb86e810552a',1,'DICe::ZNSSD_Gamma_Functor::is_active_()']]],
   ['is_5fconformal_5f',['is_conformal_',['../class_d_i_ce_1_1_subset.html#acce4a9c398a5431dd525d032f83ab668',1,'DICe::Subset']]],
   ['is_5fdeactivated_5fthis_5fstep_5f',['is_deactivated_this_step_',['../class_d_i_ce_1_1_subset.html#ae3b10826fa46cb89a470030d14c55193',1,'DICe::Subset::is_deactivated_this_step_()'],['../struct_d_i_ce_1_1_intensity___sum___functor.html#ad61435d3f0e4d548ce105322a14c1a78',1,'DICe::Intensity_Sum_Functor::is_deactivated_this_step_()'],['../struct_d_i_ce_1_1_intensity___sum___minus___mean___functor.html#ad1fc3417df8802e2d29402236e277768',1,'DICe::Intensity_Sum_Minus_Mean_Functor::is_deactivated_this_step_()'],['../struct_d_i_ce_1_1_z_n_s_s_d___gamma___functor.html#a3d13580257b9eb1450e4313ca653943f',1,'DICe::ZNSSD_Gamma_Functor::is_deactivated_this_step_()']]],
-  ['is_5finitialized_5f',['is_initialized_',['../class_d_i_ce_1_1_schema.html#a42350fe2cb223fa53e45f9cf6b6b6ca1',1,'DICe::Schema']]]
+  ['is_5finitialized_5f',['is_initialized_',['../class_d_i_ce_1_1_schema.html#a42350fe2cb223fa53e45f9cf6b6b6ca1',1,'DICe::Schema']]],
+  ['is_5fneumann_5f',['is_neumann_',['../struct_d_i_ce_1_1_boundary___condition___def.html#a748639535c1f26cc90d570efcb0cc54c',1,'DICe::Boundary_Condition_Def']]]
 ];

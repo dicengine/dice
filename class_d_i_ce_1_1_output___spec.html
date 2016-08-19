@@ -112,9 +112,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a973a81052648ed586a3a601b936f6d14"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_output___spec.html#a973a81052648ed586a3a601b936f6d14">write_header</a> (std::FILE *file, const std::string &amp;row_id=&quot;&quot;)</td></tr>
 <tr class="memdesc:a973a81052648ed586a3a601b936f6d14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the file header information.  <a href="#a973a81052648ed586a3a601b936f6d14">More...</a><br /></td></tr>
 <tr class="separator:a973a81052648ed586a3a601b936f6d14"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeb852c5359b68845f5961c2cb2099b67"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_output___spec.html#aeb852c5359b68845f5961c2cb2099b67">write_info</a> (std::FILE *file)</td></tr>
-<tr class="memdesc:aeb852c5359b68845f5961c2cb2099b67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the run information (interpolants used, etc.)  <a href="#aeb852c5359b68845f5961c2cb2099b67">More...</a><br /></td></tr>
-<tr class="separator:aeb852c5359b68845f5961c2cb2099b67"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab88537497917837f23b92529510fbf01"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_output___spec.html#ab88537497917837f23b92529510fbf01">write_info</a> (std::FILE *file, const bool include_time_of_day)</td></tr>
+<tr class="memdesc:ab88537497917837f23b92529510fbf01"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the run information (interpolants used, etc.)  <a href="#ab88537497917837f23b92529510fbf01">More...</a><br /></td></tr>
+<tr class="separator:ab88537497917837f23b92529510fbf01"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0448658dab189be523ccedefa3e90440"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_output___spec.html#a0448658dab189be523ccedefa3e90440">write_stats</a> (std::FILE *file)</td></tr>
+<tr class="memdesc:a0448658dab189be523ccedefa3e90440"><td class="mdescLeft">&#160;</td><td class="mdescRight">appends statistics for each subset to the info file  <a href="#a0448658dab189be523ccedefa3e90440">More...</a><br /></td></tr>
+<tr class="separator:a0448658dab189be523ccedefa3e90440"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5b98daee687e4cc5bd4a3bb502a02cc7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_output___spec.html#a5b98daee687e4cc5bd4a3bb502a02cc7">write_frame</a> (std::FILE *file, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> row_index, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> field_value_index)</td></tr>
 <tr class="memdesc:a5b98daee687e4cc5bd4a3bb502a02cc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the fields for the current frame.  <a href="#a5b98daee687e4cc5bd4a3bb502a02cc7">More...</a><br /></td></tr>
 <tr class="separator:a5b98daee687e4cc5bd4a3bb502a02cc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -273,12 +276,47 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 
 </div>
 </div>
-<a class="anchor" id="aeb852c5359b68845f5961c2cb2099b67"></a>
+<a class="anchor" id="ab88537497917837f23b92529510fbf01"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">void DICe::Output_Spec::write_info </td>
+          <td>(</td>
+          <td class="paramtype">std::FILE *&#160;</td>
+          <td class="paramname"><em>file</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>include_time_of_day</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Writes the run information (interpolants used, etc.) </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">file</td><td>Pointer to the output file (must already be open) </td></tr>
+    <tr><td class="paramname">include_time_of_day</td><td>stamp the start of the run </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a0448658dab189be523ccedefa3e90440"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::Output_Spec::write_stats </td>
           <td>(</td>
           <td class="paramtype">std::FILE *&#160;</td>
           <td class="paramname"><em>file</em></td><td>)</td>
@@ -287,7 +325,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
       </table>
 </div><div class="memdoc">
 
-<p>Writes the run information (interpolants used, etc.) </p>
+<p>appends statistics for each subset to the info file </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">file</td><td>Pointer to the output file (must already be open) </td></tr>
@@ -300,7 +338,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 15 2016 10:21:54 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Aug 19 2016 12:09:33 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>

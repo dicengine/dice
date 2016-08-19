@@ -166,29 +166,30 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;</div>
 <div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;<span class="comment">// TODO write a function that reads into the device memory directly</span></div>
 <div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;</div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;DICE_LIB_DLL_EXPORT</div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespace_d_i_ce_1_1utils.html#a4d952a11768e19fa6e901f35ea7ad380">write_image</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * file_name,</div>
-<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> width,</div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> height,</div>
-<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> * intensities,</div>
-<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;  <span class="keyword">const</span> <span class="keywordtype">bool</span> is_layout_right = <span class="keyword">true</span>);</div>
-<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;</div>
-<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;} <span class="comment">// end namespace utils</span></div>
-<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;} <span class="comment">// end namespace DICe</span></div>
-<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;</div>
-<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="ttc" id="namespace_d_i_ce_1_1utils_html_a4d952a11768e19fa6e901f35ea7ad380"><div class="ttname"><a href="namespace_d_i_ce_1_1utils.html#a4d952a11768e19fa6e901f35ea7ad380">DICe::utils::write_image</a></div><div class="ttdeci">DICE_LIB_DLL_EXPORT void write_image(const char *file_name, const int_t width, const int_t height, intensity_t *intensities, const bool is_layout_right=true)</div></div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;DICE_LIB_DLL_EXPORT</div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespace_d_i_ce_1_1utils.html#ad2899bffc29df05ebcf0ed53bae012ad">write_image</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * file_name,</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> width,</div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> height,</div>
+<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> * intensities,</div>
+<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;  <span class="keyword">const</span> <span class="keywordtype">bool</span> is_layout_right = <span class="keyword">true</span>,</div>
+<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;  <span class="keyword">const</span> <span class="keywordtype">bool</span> scale_to_8_bit = <span class="keyword">true</span>);</div>
+<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;</div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;} <span class="comment">// end namespace utils</span></div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;} <span class="comment">// end namespace DICe</span></div>
+<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;</div>
+<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="ttc" id="namespace_d_i_ce_1_1utils_html_af1735c1dd8d407ac8a2025999af8f91c"><div class="ttname"><a href="namespace_d_i_ce_1_1utils.html#af1735c1dd8d407ac8a2025999af8f91c">DICe::utils::read_image_dimensions</a></div><div class="ttdeci">DICE_LIB_DLL_EXPORT void read_image_dimensions(const char *file_name, int_t &amp;width, int_t &amp;height)</div></div>
+<div class="ttc" id="namespace_d_i_ce_1_1utils_html_ad2899bffc29df05ebcf0ed53bae012ad"><div class="ttname"><a href="namespace_d_i_ce_1_1utils.html#ad2899bffc29df05ebcf0ed53bae012ad">DICe::utils::write_image</a></div><div class="ttdeci">DICE_LIB_DLL_EXPORT void write_image(const char *file_name, const int_t width, const int_t height, intensity_t *intensities, const bool is_layout_right=true, const bool scale_to_8_bit=true)</div></div>
 <div class="ttc" id="namespace_d_i_ce_1_1utils_html_a28ea71dced60b2c90b28ca8e761c3503"><div class="ttname"><a href="namespace_d_i_ce_1_1utils.html#a28ea71dced60b2c90b28ca8e761c3503">DICe::utils::read_image</a></div><div class="ttdeci">DICE_LIB_DLL_EXPORT void read_image(const char *file_name, intensity_t *intensities, const bool is_layout_right=true)</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_a138ceb69f1a2f75eea9a7ebed6d3cdef"><div class="ttname"><a href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">DICe::intensity_t</a></div><div class="ttdeci">float intensity_t</div><div class="ttdoc">basic types </div><div class="ttdef"><b>Definition:</b> DICe.h:92</div></div>
-<div class="ttc" id="namespace_d_i_ce_html_ac9e56ca8b0324ffc892642104e8fa302"><div class="ttname"><a href="namespace_d_i_ce.html#ac9e56ca8b0324ffc892642104e8fa302">DICe::Image_File_Type</a></div><div class="ttdeci">Image_File_Type</div><div class="ttdoc">The type of image file. </div><div class="ttdef"><b>Definition:</b> DICe.h:538</div></div>
+<div class="ttc" id="namespace_d_i_ce_html_ac9e56ca8b0324ffc892642104e8fa302"><div class="ttname"><a href="namespace_d_i_ce.html#ac9e56ca8b0324ffc892642104e8fa302">DICe::Image_File_Type</a></div><div class="ttdeci">Image_File_Type</div><div class="ttdoc">The type of image file. </div><div class="ttdef"><b>Definition:</b> DICe.h:608</div></div>
 <div class="ttc" id="namespace_d_i_ce_1_1utils_html_ac111da24071199cbb3ebc6dc77a2571e"><div class="ttname"><a href="namespace_d_i_ce_1_1utils.html#ac111da24071199cbb3ebc6dc77a2571e">DICe::utils::image_file_type</a></div><div class="ttdeci">DICE_LIB_DLL_EXPORT Image_File_Type image_file_type(const char *file_name)</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_a2c6297e4a786e52754918318b31daf75"><div class="ttname"><a href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">DICe::int_t</a></div><div class="ttdeci">int int_t</div><div class="ttdoc">integer type </div><div class="ttdef"><b>Definition:</b> DICe.h:98</div></div>
 <div class="ttc" id="namespace_d_i_ce_html"><div class="ttname"><a href="namespace_d_i_ce.html">DICe</a></div><div class="ttdoc">generic DICe classes and functions </div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 15 2016 10:21:52 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Aug 19 2016 12:09:32 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>

@@ -108,8 +108,8 @@ Functions</h2></td></tr>
 <tr class="separator:a28ea71dced60b2c90b28ca8e761c3503"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa68d51bd1d3203d5122d16151f964fb9"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1utils.html#aa68d51bd1d3203d5122d16151f964fb9">read_image</a> (const char *file_name, <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> offset_x, <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> offset_y, <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> width, <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> height, <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> *intensities, const bool is_layout_right=true)</td></tr>
 <tr class="separator:aa68d51bd1d3203d5122d16151f964fb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4d952a11768e19fa6e901f35ea7ad380"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1utils.html#a4d952a11768e19fa6e901f35ea7ad380">write_image</a> (const char *file_name, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> width, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> height, <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> *intensities, const bool is_layout_right=true)</td></tr>
-<tr class="separator:a4d952a11768e19fa6e901f35ea7ad380"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2899bffc29df05ebcf0ed53bae012ad"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1utils.html#ad2899bffc29df05ebcf0ed53bae012ad">write_image</a> (const char *file_name, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> width, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> height, <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> *intensities, const bool is_layout_right=true, const bool scale_to_8_bit=true)</td></tr>
+<tr class="separator:ad2899bffc29df05ebcf0ed53bae012ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaba4e56c4df5292801311e65c101c335"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1utils.html#aaba4e56c4df5292801311e65c101c335">read_rawi_image_dimensions</a> (const char *file_name, <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &amp;width, <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &amp;height)</td></tr>
 <tr class="separator:aaba4e56c4df5292801311e65c101c335"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a134d29e547729981472699ea4204b6fe"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1utils.html#a134d29e547729981472699ea4204b6fe">read_rawi_image</a> (const char *file_name, <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> *intensities, const bool is_layout_right=true)</td></tr>
@@ -370,7 +370,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a4d952a11768e19fa6e901f35ea7ad380"></a>
+<a class="anchor" id="ad2899bffc29df05ebcf0ed53bae012ad"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -402,7 +402,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const bool&#160;</td>
-          <td class="paramname"><em>is_layout_right</em> = <code>true</code>&#160;</td>
+          <td class="paramname"><em>is_layout_right</em> = <code>true</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>scale_to_8_bit</em> = <code>true</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -418,6 +424,7 @@ Functions</h2></td></tr>
     <tr><td class="paramname">height</td><td>the height of the image </td></tr>
     <tr><td class="paramname">intensities</td><td>assumed to be an array of size width x height </td></tr>
     <tr><td class="paramname">is_layout_right</td><td>[optional] memory layout is LayoutRight (row-major) </td></tr>
+    <tr><td class="paramname">scale_to_8_bit</td><td>scale the values to 8 bit range </td></tr>
   </table>
   </dd>
 </dl>
@@ -481,7 +488,7 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 15 2016 10:21:55 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Aug 19 2016 12:09:35 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>

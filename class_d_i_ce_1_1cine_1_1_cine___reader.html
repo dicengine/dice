@@ -119,6 +119,9 @@ virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="c
 <tr class="memitem:aabf3b6b8bf9cc3cf84f35ace546c0d96"><td class="memItemLeft" align="right" valign="top">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1cine_1_1_cine___reader.html#aabf3b6b8bf9cc3cf84f35ace546c0d96">get_frame</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> frame_index, const bool convert_to_8_bit=true, const bool filter_failed_pixels=false, const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params=Teuchos::null)</td></tr>
 <tr class="memdesc:aabf3b6b8bf9cc3cf84f35ace546c0d96"><td class="mdescLeft">&#160;</td><td class="mdescRight">create and populate an image from a cine frame allows for reading only portions of the image  <a href="#aabf3b6b8bf9cc3cf84f35ace546c0d96">More...</a><br /></td></tr>
 <tr class="separator:aabf3b6b8bf9cc3cf84f35ace546c0d96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a370ee06966d47b4606e879a3fb2d7231"><td class="memItemLeft" align="right" valign="top">Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1cine_1_1_cine___reader.html#a370ee06966d47b4606e879a3fb2d7231">get_average_frame</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> frame_start, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> frame_end, const bool convert_to_8_bit=true, const bool filter_failed_pixels=false, const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;params=Teuchos::null)</td></tr>
+<tr class="memdesc:a370ee06966d47b4606e879a3fb2d7231"><td class="mdescLeft">&#160;</td><td class="mdescRight">create and populate an image from an average of a range of cine frames  <a href="#a370ee06966d47b4606e879a3fb2d7231">More...</a><br /></td></tr>
+<tr class="separator:a370ee06966d47b4606e879a3fb2d7231"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9cbdb3d81f4026abd594e0d3132237b4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1cine_1_1_cine___reader.html#a9cbdb3d81f4026abd594e0d3132237b4">get_frame_8_bit</a> (const Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_image.html">Image</a> &gt; &amp;image, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> frame_index, const bool filter_failed_pixels)</td></tr>
 <tr class="memdesc:a9cbdb3d81f4026abd594e0d3132237b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">8 bit frame fetch  <a href="#a9cbdb3d81f4026abd594e0d3132237b4">More...</a><br /></td></tr>
 <tr class="separator:a9cbdb3d81f4026abd594e0d3132237b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -229,6 +232,62 @@ long long int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" h
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a370ee06966d47b4606e879a3fb2d7231"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Teuchos::RCP&lt;<a class="el" href="class_d_i_ce_1_1_image.html">Image</a>&gt; DICe::cine::Cine_Reader::get_average_frame </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>frame_start</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>frame_end</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>convert_to_8_bit</em> = <code>true</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>filter_failed_pixels</em> = <code>false</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;&#160;</td>
+          <td class="paramname"><em>params</em> = <code>Teuchos::null</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>create and populate an image from an average of a range of cine frames </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">frame_start</td><td>beginning of the averaging range (starting with 0 as first frame, disregard triggger indexing) </td></tr>
+    <tr><td class="paramname">frame_end</td><td>end of the averaging range (starting with 0 as first frame, disregard triggger indexing) </td></tr>
+    <tr><td class="paramname">convert_to_8_bit</td><td>true if the values should be converted to the range 0-255 </td></tr>
+    <tr><td class="paramname">filter_failed_pixels</td><td>true if the pixel values should be binned and filtered for outliers like dead pixels that have the max value </td></tr>
+    <tr><td class="paramname">params</td><td>image parameters (filter image, compute gradients, etc) </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="af71006f8283f59b5f4f7d118338159e1"></a>
 <div class="memitem">
 <div class="memproto">
@@ -520,7 +579,7 @@ long long int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" h
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 15 2016 10:21:55 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Aug 19 2016 12:09:35 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>

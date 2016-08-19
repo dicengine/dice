@@ -148,16 +148,73 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;  <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> cy,</div>
 <div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;  Teuchos::RCP&lt;<span class="keyword">const</span> std::vector&lt;scalar_t&gt; &gt; deformation);</div>
 <div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;}<span class="comment">// End DICe Namespace</span></div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;</div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00071"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_sin_cos___image___deformer.html">   71</a></span>&#160;<span class="keyword">class</span></div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;DICE_LIB_DLL_EXPORT</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;<a class="code" href="class_d_i_ce_1_1_sin_cos___image___deformer.html">SinCos_Image_Deformer</a>{</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;</div>
+<div class="line"><a name="l00079"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_sin_cos___image___deformer.html#a847f7219ce080bad4ec76f2e5c6d62ed">   79</a></span>&#160;  <a class="code" href="class_d_i_ce_1_1_sin_cos___image___deformer.html#a847f7219ce080bad4ec76f2e5c6d62ed">SinCos_Image_Deformer</a>(<span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> num_steps,</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;    <span class="keywordtype">bool</span> use_superposition = <span class="keyword">false</span>):</div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;    num_steps_(num_steps),</div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;    use_superposition_(use_superposition){};</div>
+<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;</div>
+<div class="line"><a name="l00085"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_sin_cos___image___deformer.html#adf93bc69a177c979f0a2e099c53204df">   85</a></span>&#160;  <a class="code" href="class_d_i_ce_1_1_sin_cos___image___deformer.html#adf93bc69a177c979f0a2e099c53204df">SinCos_Image_Deformer</a>():</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;    num_steps_(1),</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;    use_superposition_(false){};</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;  Teuchos::RCP&lt;Image&gt; deform_image(Teuchos::RCP&lt;Image&gt; ref_image);</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;  <span class="keywordtype">void</span> compute_deformation(<span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; coord_x,</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;    <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; coord_y,</div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;    <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; bx,</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;    <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; by);</div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;</div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;  <span class="keywordtype">void</span> compute_deriv_deformation(<span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; coord_x,</div>
+<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;    <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; coord_y,</div>
+<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;    <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; bxx,</div>
+<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;    <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; bxy,</div>
+<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;    <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; byx,</div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;    <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; byy);</div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;</div>
+<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;  <span class="keywordtype">void</span> compute_displacement_error(<span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; coord_x,</div>
+<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;    <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; coord_y,</div>
+<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;    <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; sol_x,</div>
+<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;    <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; sol_y,</div>
+<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;    <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; error_x,</div>
+<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;    <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; error_y);</div>
+<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;</div>
+<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;  <span class="comment">// TODO add off-diagonal terms</span></div>
+<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;  <span class="keywordtype">void</span> compute_deriv_error(<span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; coord_x,</div>
+<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;    <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; coord_y,</div>
+<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;    <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; sol_x,</div>
+<div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;    <span class="keyword">const</span> <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; sol_y,</div>
+<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;    <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; error_x,</div>
+<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;    <a class="code" href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">scalar_t</a> &amp; error_y);</div>
+<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;</div>
+<div class="line"><a name="l00148"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_sin_cos___image___deformer.html#a16f160c40aa47609a4a6d9437f874369">  148</a></span>&#160;  <a class="code" href="class_d_i_ce_1_1_sin_cos___image___deformer.html#a16f160c40aa47609a4a6d9437f874369">~SinCos_Image_Deformer</a>(){};</div>
+<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;</div>
+<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;  <a class="code" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> num_steps_;</div>
+<div class="line"><a name="l00154"></a><span class="lineno"><a class="line" href="class_d_i_ce_1_1_sin_cos___image___deformer.html#ac5e2cd3818fdb7d772acedb3999285a8">  154</a></span>&#160;  <span class="keywordtype">bool</span> <a class="code" href="class_d_i_ce_1_1_sin_cos___image___deformer.html#ac5e2cd3818fdb7d772acedb3999285a8">use_superposition_</a>;</div>
+<div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;</div>
+<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;};</div>
+<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;</div>
+<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;}<span class="comment">// End DICe Namespace</span></div>
+<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;</div>
+<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="ttc" id="class_d_i_ce_1_1_sin_cos___image___deformer_html_a847f7219ce080bad4ec76f2e5c6d62ed"><div class="ttname"><a href="class_d_i_ce_1_1_sin_cos___image___deformer.html#a847f7219ce080bad4ec76f2e5c6d62ed">DICe::SinCos_Image_Deformer::SinCos_Image_Deformer</a></div><div class="ttdeci">SinCos_Image_Deformer(const int_t num_steps, bool use_superposition=false)</div><div class="ttdef"><b>Definition:</b> DICe_ImageUtils.h:79</div></div>
+<div class="ttc" id="class_d_i_ce_1_1_sin_cos___image___deformer_html_adf93bc69a177c979f0a2e099c53204df"><div class="ttname"><a href="class_d_i_ce_1_1_sin_cos___image___deformer.html#adf93bc69a177c979f0a2e099c53204df">DICe::SinCos_Image_Deformer::SinCos_Image_Deformer</a></div><div class="ttdeci">SinCos_Image_Deformer()</div><div class="ttdoc">parameterless constructor </div><div class="ttdef"><b>Definition:</b> DICe_ImageUtils.h:85</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_a76b8c6e9a6b46ab9759439ac3ff6f901"><div class="ttname"><a href="namespace_d_i_ce.html#a76b8c6e9a6b46ab9759439ac3ff6f901">DICe::apply_transform</a></div><div class="ttdeci">void apply_transform(Teuchos::RCP&lt; Image &gt; image_in, Teuchos::RCP&lt; Image &gt; image_out, const int_t cx, const int_t cy, Teuchos::RCP&lt; const std::vector&lt; scalar_t &gt; &gt; deformation)</div></div>
+<div class="ttc" id="class_d_i_ce_1_1_sin_cos___image___deformer_html_a16f160c40aa47609a4a6d9437f874369"><div class="ttname"><a href="class_d_i_ce_1_1_sin_cos___image___deformer.html#a16f160c40aa47609a4a6d9437f874369">DICe::SinCos_Image_Deformer::~SinCos_Image_Deformer</a></div><div class="ttdeci">~SinCos_Image_Deformer()</div><div class="ttdoc">destructor </div><div class="ttdef"><b>Definition:</b> DICe_ImageUtils.h:148</div></div>
+<div class="ttc" id="class_d_i_ce_1_1_sin_cos___image___deformer_html_ac5e2cd3818fdb7d772acedb3999285a8"><div class="ttname"><a href="class_d_i_ce_1_1_sin_cos___image___deformer.html#ac5e2cd3818fdb7d772acedb3999285a8">DICe::SinCos_Image_Deformer::use_superposition_</a></div><div class="ttdeci">bool use_superposition_</div><div class="ttdoc">use superposition for each step </div><div class="ttdef"><b>Definition:</b> DICe_ImageUtils.h:154</div></div>
+<div class="ttc" id="namespace_d_i_ce_html_ab1a851426cd4fbca5d364c4348d99155"><div class="ttname"><a href="namespace_d_i_ce.html#ab1a851426cd4fbca5d364c4348d99155">DICe::scalar_t</a></div><div class="ttdeci">float scalar_t</div><div class="ttdoc">generic scalar type </div><div class="ttdef"><b>Definition:</b> DICe.h:94</div></div>
+<div class="ttc" id="class_d_i_ce_1_1_sin_cos___image___deformer_html"><div class="ttname"><a href="class_d_i_ce_1_1_sin_cos___image___deformer.html">DICe::SinCos_Image_Deformer</a></div><div class="ttdoc">a class that deformed an input image according to a sin()*cos() function </div><div class="ttdef"><b>Definition:</b> DICe_ImageUtils.h:71</div></div>
 <div class="ttc" id="namespace_d_i_ce_html_a2c6297e4a786e52754918318b31daf75"><div class="ttname"><a href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">DICe::int_t</a></div><div class="ttdeci">int int_t</div><div class="ttdoc">integer type </div><div class="ttdef"><b>Definition:</b> DICe.h:98</div></div>
 <div class="ttc" id="namespace_d_i_ce_html"><div class="ttname"><a href="namespace_d_i_ce.html">DICe</a></div><div class="ttdoc">generic DICe classes and functions </div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 15 2016 10:21:52 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Aug 19 2016 12:09:31 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>

@@ -1,5 +1,7 @@
 var searchData=
 [
-  ['nlvc_5fstrain_5fpost_5fprocessor',['NLVC_Strain_Post_Processor',['../class_d_i_ce_1_1_n_l_v_c___strain___post___processor.html',1,'DICe']]],
-  ['no_5fmap_5ftag',['No_Map_Tag',['../struct_d_i_ce_1_1_subset___init___functor_1_1_no___map___tag.html',1,'DICe::Subset_Init_Functor']]]
+  ['objective',['Objective',['../class_d_i_ce_1_1_objective.html',1,'DICe']]],
+  ['objective_5fznssd',['Objective_ZNSSD',['../class_d_i_ce_1_1_objective___z_n_s_s_d.html',1,'DICe']]],
+  ['optical_5fflow_5finitializer',['Optical_Flow_Initializer',['../class_d_i_ce_1_1_optical___flow___initializer.html',1,'DICe']]],
+  ['output_5fspec',['Output_Spec',['../class_d_i_ce_1_1_output___spec.html',1,'DICe']]]
 ];

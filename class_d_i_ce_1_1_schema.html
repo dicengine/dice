@@ -196,14 +196,6 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a3545673a78468f736528098986bd7845">set_ref_image</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#a04be9594fcff96b8e9f1da6d457badc8">img_width</a>, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#a0cdd3b0280909421cd05bba93e0cc4ab">img_height</a>, const Teuchos::ArrayRCP&lt; <a class="el" href="namespace_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt; refRCP)</td></tr>
 <tr class="memdesc:a3545673a78468f736528098986bd7845"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replace the deformed image using an intensity array. <br /></td></tr>
 <tr class="separator:a3545673a78468f736528098986bd7845"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab2c908caa512d54cf95e9ed173528cf7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab2c908caa512d54cf95e9ed173528cf7"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ab2c908caa512d54cf95e9ed173528cf7">set_mesh_size</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#ac8bf96fa9ab9c40b6090fb1bcfdd1466">mesh_size</a>)</td></tr>
-<tr class="memdesc:ab2c908caa512d54cf95e9ed173528cf7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the element size of the mesh (only for global DIC) <br /></td></tr>
-<tr class="separator:ab2c908caa512d54cf95e9ed173528cf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac8bf96fa9ab9c40b6090fb1bcfdd1466"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac8bf96fa9ab9c40b6090fb1bcfdd1466"></a>
-<a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ac8bf96fa9ab9c40b6090fb1bcfdd1466">mesh_size</a> () const </td></tr>
-<tr class="memdesc:ac8bf96fa9ab9c40b6090fb1bcfdd1466"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the element size for global DIC (-1 if local DIC) <br /></td></tr>
-<tr class="separator:ac8bf96fa9ab9c40b6090fb1bcfdd1466"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a930243155783611de78fd850952c1f17"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a930243155783611de78fd850952c1f17">initialize</a> (const Teuchos::RCP&lt; Teuchos::ParameterList &gt; &amp;input_params)</td></tr>
 <tr class="memdesc:a930243155783611de78fd850952c1f17"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes the data structures for the schema.  <a href="#a930243155783611de78fd850952c1f17">More...</a><br /></td></tr>
 <tr class="separator:a930243155783611de78fd850952c1f17"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -216,10 +208,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:a75f755069b71d93d447b3680ce3e8f64"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a75f755069b71d93d447b3680ce3e8f64">initialize</a> (const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#aa2e862a1c72ac612d18c7ce71dfd41e4">step_size_x</a>, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#a61e909f9ed0cd65d932f64aa68e7378b">step_size_y</a>, const <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="namespace_d_i_ce.html#a2cfcc8088186a921bb41696a2f79cccd">subset_size</a>)</td></tr>
 <tr class="memdesc:a75f755069b71d93d447b3680ce3e8f64"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simple initialization routine that sets up a regular grid of correlation points throughout the image spaced according to the step sizes.  <a href="#a75f755069b71d93d447b3680ce3e8f64">More...</a><br /></td></tr>
 <tr class="separator:a75f755069b71d93d447b3680ce3e8f64"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9adc1fdda69239debf3d390303fea84f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9adc1fdda69239debf3d390303fea84f"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a9adc1fdda69239debf3d390303fea84f">execute_correlation</a> ()</td></tr>
-<tr class="memdesc:a9adc1fdda69239debf3d390303fea84f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Conduct the correlation. <br /></td></tr>
-<tr class="separator:a9adc1fdda69239debf3d390303fea84f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aface79ec4b6b671ac2a74fb631fdb154"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#aface79ec4b6b671ac2a74fb631fdb154">execute_correlation</a> ()</td></tr>
+<tr class="separator:aface79ec4b6b671ac2a74fb631fdb154"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86c5ee77ba33ef092bbb085cc3bfecc9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a86c5ee77ba33ef092bbb085cc3bfecc9"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a86c5ee77ba33ef092bbb085cc3bfecc9">post_execution_tasks</a> ()</td></tr>
+<tr class="memdesc:a86c5ee77ba33ef092bbb085cc3bfecc9"><td class="mdescLeft">&#160;</td><td class="mdescRight">do clean up tasks <br /></td></tr>
+<tr class="separator:a86c5ee77ba33ef092bbb085cc3bfecc9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5fd28be40580742804a87ecf6fbac068"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5fd28be40580742804a87ecf6fbac068"></a>
 <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a5fd28be40580742804a87ecf6fbac068">is_initialized</a> () const </td></tr>
 <tr class="memdesc:a5fd28be40580742804a87ecf6fbac068"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns if the field storage is initilaized. <br /></td></tr>
@@ -335,6 +329,10 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
 <a class="el" href="namespace_d_i_ce.html#a6f5cb0968c11707aa2e6d86802eb2938">Interpolation_Method</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ac6ec9ac019da30b1f6e06e5b245cbb68">interpolation_method</a> () const </td></tr>
 <tr class="memdesc:ac6ec9ac019da30b1f6e06e5b245cbb68"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the interpolation method (see DICe_Types.h for valid values) <br /></td></tr>
 <tr class="separator:ac6ec9ac019da30b1f6e06e5b245cbb68"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a863ffd98422c44f4aed32b975d5348c3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a863ffd98422c44f4aed32b975d5348c3"></a>
+<a class="el" href="namespace_d_i_ce.html#af68eb788cf1c6c98857451bf859d552d">Gradient_Method</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a863ffd98422c44f4aed32b975d5348c3">gradient_method</a> () const </td></tr>
+<tr class="memdesc:a863ffd98422c44f4aed32b975d5348c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the interpolation method (see DICe_Types.h for valid values) <br /></td></tr>
+<tr class="separator:a863ffd98422c44f4aed32b975d5348c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a55c4f90258255ef44bbc1ad60b13f22f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a55c4f90258255ef44bbc1ad60b13f22f"></a>
 <a class="el" href="namespace_d_i_ce.html#a181b304ab7fb88726f025b726e6ae2cf">Optimization_Method</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a55c4f90258255ef44bbc1ad60b13f22f">optimization_method</a> () const </td></tr>
 <tr class="memdesc:a55c4f90258255ef44bbc1ad60b13f22f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the optimization method (see DICe_Types.h for valid values) <br /></td></tr>
@@ -367,6 +365,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:a3233dda46abc3469300ef06b37594cbd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a3233dda46abc3469300ef06b37594cbd">write_output</a> (const std::string &amp;<a class="el" href="namespace_d_i_ce.html#ad4d0a4b4d4b5475d1e80867ca6022ec6">output_folder</a>, const std::string &amp;prefix=&quot;DICe_solution&quot;, const bool separate_files_per_subset=false, const bool separate_header_file=false, const <a class="el" href="namespace_d_i_ce.html#ad682d1a7497e869f71e385b87beb98d6">Output_File_Type</a> type=TEXT_FILE)</td></tr>
 <tr class="memdesc:a3233dda46abc3469300ef06b37594cbd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the solution vector to a text file.  <a href="#a3233dda46abc3469300ef06b37594cbd">More...</a><br /></td></tr>
 <tr class="separator:a3233dda46abc3469300ef06b37594cbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa63b63c74b97249e0dfe83e684bfe49f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#aa63b63c74b97249e0dfe83e684bfe49f">write_stats</a> (const std::string &amp;<a class="el" href="namespace_d_i_ce.html#ad4d0a4b4d4b5475d1e80867ca6022ec6">output_folder</a>, const std::string &amp;prefix=&quot;DICe_solution&quot;)</td></tr>
+<tr class="memdesc:aa63b63c74b97249e0dfe83e684bfe49f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the stats for a completed run.  <a href="#aa63b63c74b97249e0dfe83e684bfe49f">More...</a><br /></td></tr>
+<tr class="separator:aa63b63c74b97249e0dfe83e684bfe49f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af80f14425a01092f9a99ef6647eee165"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#af80f14425a01092f9a99ef6647eee165">write_deformed_subsets_image</a> (const bool use_gamma_as_color=false)</td></tr>
 <tr class="memdesc:af80f14425a01092f9a99ef6647eee165"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write an image that shows all the subsets' current positions and shapes using the current field values.  <a href="#af80f14425a01092f9a99ef6647eee165">More...</a><br /></td></tr>
 <tr class="separator:af80f14425a01092f9a99ef6647eee165"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -527,6 +528,8 @@ Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
 Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>, <a class="el" href="struct_d_i_ce_1_1_motion___window___params.html">Motion_Window_Params</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a1577c9ed5a05101f89411d717c76c0c4">motion_window_params</a> ()</td></tr>
 <tr class="memdesc:a1577c9ed5a05101f89411d717c76c0c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns a pointer to the motion window params of the schema <br /></td></tr>
 <tr class="separator:a1577c9ed5a05101f89411d717c76c0c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae495f1cad9d89b383e20a629f0c08b7b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ae495f1cad9d89b383e20a629f0c08b7b">estimate_resolution_error</a> (const int num_steps, std::string &amp;<a class="el" href="namespace_d_i_ce.html#ad4d0a4b4d4b5475d1e80867ca6022ec6">output_folder</a>, std::string &amp;prefix, Teuchos::RCP&lt; std::ostream &gt; &amp;outStream)</td></tr>
+<tr class="separator:ae495f1cad9d89b383e20a629f0c08b7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49c67ef28e4ff35f043d47085b261fdf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a49c67ef28e4ff35f043d47085b261fdf">set_obstructing_subset_ids</a> (Teuchos::RCP&lt; std::map&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>, std::vector&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &gt; &gt; &gt; id_vec)</td></tr>
 <tr class="memdesc:a49c67ef28e4ff35f043d47085b261fdf"><td class="mdescLeft">&#160;</td><td class="mdescRight">EXPERIMENTAL sets the layering order of subets.  <a href="#a49c67ef28e4ff35f043d47085b261fdf">More...</a><br /></td></tr>
 <tr class="separator:a49c67ef28e4ff35f043d47085b261fdf"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -553,6 +556,14 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 Teuchos::RCP&lt; Teuchos::ParameterList &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a71594038ea1535d7d998791e8ee83f75">get_params</a> ()</td></tr>
 <tr class="memdesc:a71594038ea1535d7d998791e8ee83f75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a pointer to the params that were used to construct this schema. <br /></td></tr>
 <tr class="separator:a71594038ea1535d7d998791e8ee83f75"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab6f21856431aa42e8048f3615f375ad8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab6f21856431aa42e8048f3615f375ad8"></a>
+Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_stat___container.html">Stat_Container</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ab6f21856431aa42e8048f3615f375ad8">stat_container</a> ()</td></tr>
+<tr class="memdesc:ab6f21856431aa42e8048f3615f375ad8"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns a pointer to the stats class <br /></td></tr>
+<tr class="separator:ab6f21856431aa42e8048f3615f375ad8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1202eabeae59fa8c56bceebd315d748"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab1202eabeae59fa8c56bceebd315d748"></a>
+std::vector&lt; Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_objective.html">Objective</a> &gt; &gt; *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ab1202eabeae59fa8c56bceebd315d748">obj_vec</a> ()</td></tr>
+<tr class="memdesc:ab1202eabeae59fa8c56bceebd315d748"><td class="mdescLeft">&#160;</td><td class="mdescRight">return a pointer to the objective vector <br /></td></tr>
+<tr class="separator:ab1202eabeae59fa8c56bceebd315d748"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
@@ -652,10 +663,6 @@ Teuchos::SerialDenseMatrix&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297
 <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a89191422524b722f556d8e08d3f20610">step_size_y_</a></td></tr>
 <tr class="memdesc:a89191422524b722f556d8e08d3f20610"><td class="mdescLeft">&#160;</td><td class="mdescRight">Regular grid subset spacing in y direction (used only if subsets are not conformal) <br /></td></tr>
 <tr class="separator:a89191422524b722f556d8e08d3f20610"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a04128958fb60d0bea8fd5b56e5c9f8da"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a04128958fb60d0bea8fd5b56e5c9f8da"></a>
-<a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a04128958fb60d0bea8fd5b56e5c9f8da">mesh_size_</a></td></tr>
-<tr class="memdesc:a04128958fb60d0bea8fd5b56e5c9f8da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Element size for the global method. <br /></td></tr>
-<tr class="separator:a04128958fb60d0bea8fd5b56e5c9f8da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad3eac75f38eac92eeb6e8507a9494fe9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad3eac75f38eac92eeb6e8507a9494fe9"></a>
 <a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ad3eac75f38eac92eeb6e8507a9494fe9">strain_window_size_</a></td></tr>
 <tr class="memdesc:ad3eac75f38eac92eeb6e8507a9494fe9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generic strain window size (horizon for nlvc, convolution support for keys, strain window size for vsg) <br /></td></tr>
@@ -744,6 +751,10 @@ double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cl
 <a class="el" href="namespace_d_i_ce.html#a6f5cb0968c11707aa2e6d86802eb2938">Interpolation_Method</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a62254c630083ac00e92c123b525097d8">interpolation_method_</a></td></tr>
 <tr class="memdesc:a62254c630083ac00e92c123b525097d8"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="namespace_d_i_ce.html#a6f5cb0968c11707aa2e6d86802eb2938" title="Interpolation method. ">DICe::Interpolation_Method</a>. <br /></td></tr>
 <tr class="separator:a62254c630083ac00e92c123b525097d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abc783f0b7a49970a73e1eae23f58a674"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abc783f0b7a49970a73e1eae23f58a674"></a>
+<a class="el" href="namespace_d_i_ce.html#af68eb788cf1c6c98857451bf859d552d">Gradient_Method</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#abc783f0b7a49970a73e1eae23f58a674">gradient_method_</a></td></tr>
+<tr class="memdesc:abc783f0b7a49970a73e1eae23f58a674"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="namespace_d_i_ce.html#a6f5cb0968c11707aa2e6d86802eb2938" title="Interpolation method. ">DICe::Interpolation_Method</a>. <br /></td></tr>
+<tr class="separator:abc783f0b7a49970a73e1eae23f58a674"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a215479718ea2ac3d391e6f697d5af5fc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a215479718ea2ac3d391e6f697d5af5fc"></a>
 <a class="el" href="namespace_d_i_ce.html#a181b304ab7fb88726f025b726e6ae2cf">Optimization_Method</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a215479718ea2ac3d391e6f697d5af5fc">optimization_method_</a></td></tr>
 <tr class="memdesc:a215479718ea2ac3d391e6f697d5af5fc"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="namespace_d_i_ce.html#a181b304ab7fb88726f025b726e6ae2cf" title="Optimization method. ">DICe::Optimization_Method</a>. <br /></td></tr>
@@ -786,8 +797,12 @@ Teuchos::RCP&lt; std::set&lt; <a class="el" href="namespace_d_i_ce.html#a2c6297e
 <tr class="separator:a64cd05b638999358ca7d4f35d7175d1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa4402542370bc8d4ad3ed8909b2343ce"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa4402542370bc8d4ad3ed8909b2343ce"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#aa4402542370bc8d4ad3ed8909b2343ce">gauss_filter_images_</a></td></tr>
-<tr class="memdesc:aa4402542370bc8d4ad3ed8909b2343ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">filter the images using a 7 point gauss filter <br /></td></tr>
+<tr class="memdesc:aa4402542370bc8d4ad3ed8909b2343ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">filter the images using a gauss_filter_mask_size_ point gauss filter <br /></td></tr>
 <tr class="separator:aa4402542370bc8d4ad3ed8909b2343ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f5b197553717836e93c3b8e8c861df0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6f5b197553717836e93c3b8e8c861df0"></a>
+<a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a6f5b197553717836e93c3b8e8c861df0">gauss_filter_mask_size_</a></td></tr>
+<tr class="memdesc:a6f5b197553717836e93c3b8e8c861df0"><td class="mdescLeft">&#160;</td><td class="mdescRight">filter the images using a gauss_filter_mask_size_ point gauss filter <br /></td></tr>
+<tr class="separator:a6f5b197553717836e93c3b8e8c861df0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa5901b22fc4840801aa8dc21741100df"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa5901b22fc4840801aa8dc21741100df"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#aa5901b22fc4840801aa8dc21741100df">compute_ref_gradients_</a></td></tr>
 <tr class="memdesc:aa5901b22fc4840801aa8dc21741100df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the reference image gradients. <br /></td></tr>
@@ -812,14 +827,14 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a5fc45146513f36beac3555d9357ab33d">use_subset_evolution_</a></td></tr>
 <tr class="memdesc:a5fc45146513f36beac3555d9357ab33d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Use subset evolution (Fill in the reference subset pixels as they become visible in subsequent frames) <br /></td></tr>
 <tr class="separator:a5fc45146513f36beac3555d9357ab33d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab0c486e178823fd266f2fbb80af91ca3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab0c486e178823fd266f2fbb80af91ca3"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ab0c486e178823fd266f2fbb80af91ca3">override_force_simplex_</a></td></tr>
+<tr class="memdesc:ab0c486e178823fd266f2fbb80af91ca3"><td class="mdescLeft">&#160;</td><td class="mdescRight">override the forcing of simplex method for blocking subsets <br /></td></tr>
+<tr class="separator:ab0c486e178823fd266f2fbb80af91ca3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae579c53e15732e80e915f8e1675c4705"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae579c53e15732e80e915f8e1675c4705"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ae579c53e15732e80e915f8e1675c4705">normalize_gamma_with_active_pixels_</a></td></tr>
 <tr class="memdesc:ae579c53e15732e80e915f8e1675c4705"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if the gamma values (match quality) should be normalized with the number of active pixels. <br /></td></tr>
 <tr class="separator:ae579c53e15732e80e915f8e1675c4705"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a080f212696d912a981b438bf11a55c0d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a080f212696d912a981b438bf11a55c0d"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a080f212696d912a981b438bf11a55c0d">use_hvm_stabilization_</a></td></tr>
-<tr class="memdesc:a080f212696d912a981b438bf11a55c0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if this anlysis is global DIC and the hvm terms should be used. <br /></td></tr>
-<tr class="separator:a080f212696d912a981b438bf11a55c0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeba4854674b2a4f7b3d985bb7aa2efc5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeba4854674b2a4f7b3d985bb7aa2efc5"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#aeba4854674b2a4f7b3d985bb7aa2efc5">use_objective_regularization_</a></td></tr>
 <tr class="memdesc:aeba4854674b2a4f7b3d985bb7aa2efc5"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if regularization is used in the objective function. <br /></td></tr>
@@ -872,6 +887,14 @@ double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cl
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ac400b68de6dd9377f6fc143f528d4552">output_beta_</a></td></tr>
 <tr class="memdesc:ac400b68de6dd9377f6fc143f528d4552"><td class="mdescLeft">&#160;</td><td class="mdescRight">true if the beta parameter should be computed by the objective <br /></td></tr>
 <tr class="separator:ac400b68de6dd9377f6fc143f528d4552"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba4c3f23107d8f1f74a844177f3521d6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aba4c3f23107d8f1f74a844177f3521d6"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#aba4c3f23107d8f1f74a844177f3521d6">use_search_initialization_for_failed_steps_</a></td></tr>
+<tr class="memdesc:aba4c3f23107d8f1f74a844177f3521d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">true if search initialization should be used for failed steps (otherwise the subset is skipped) <br /></td></tr>
+<tr class="separator:aba4c3f23107d8f1f74a844177f3521d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab21f626e25164372efc64cac85ff3fa6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab21f626e25164372efc64cac85ff3fa6"></a>
+Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_stat___container.html">Stat_Container</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ab21f626e25164372efc64cac85ff3fa6">stat_container_</a></td></tr>
+<tr class="memdesc:ab21f626e25164372efc64cac85ff3fa6"><td class="mdescLeft">&#160;</td><td class="mdescRight">keep track of stats for each subset (only for tracking routine) <br /></td></tr>
+<tr class="separator:ab21f626e25164372efc64cac85ff3fa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>The centralized container for the correlation plan and parameters. </p>
@@ -1389,6 +1412,69 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a class="anchor" id="ae495f1cad9d89b383e20a629f0c08b7b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::Schema::estimate_resolution_error </td>
+          <td>(</td>
+          <td class="paramtype">const int&#160;</td>
+          <td class="paramname"><em>num_steps</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::string &amp;&#160;</td>
+          <td class="paramname"><em>output_folder</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::string &amp;&#160;</td>
+          <td class="paramname"><em>prefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Teuchos::RCP&lt; std::ostream &gt; &amp;&#160;</td>
+          <td class="paramname"><em>outStream</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>estimate the error in the displacement resolution and strain </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">num_steps</td><td>number of frequency profiles to cycle through </td></tr>
+    <tr><td class="paramname">output_folder</td><td>where to place the output files </td></tr>
+    <tr><td class="paramname">prefix</td><td>the file prefix to use for output files </td></tr>
+    <tr><td class="paramname">outStream</td><td>output stream to write screen output to </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="aface79ec4b6b671ac2a74fb631fdb154"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> DICe::Schema::execute_correlation </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Conduct the correlation returns 0 if successful </p>
 
 </div>
 </div>
@@ -2656,6 +2742,41 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 
 </div>
 </div>
+<a class="anchor" id="aa63b63c74b97249e0dfe83e684bfe49f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DICe::Schema::write_stats </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>output_folder</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>prefix</em> = <code>&quot;DICe_solution&quot;</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Write the stats for a completed run. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">output_folder</td><td>Name of the folder for output (the file name is fixed) </td></tr>
+    <tr><td class="paramname">prefix</td><td>Optional string to use as the file prefix </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <h2 class="groupheader">Member Data Documentation</h2>
 <a class="anchor" id="ad9d39888b1b1cf3f407943b6413fd092"></a>
 <div class="memitem">
@@ -2717,7 +2838,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </table>
 </div><div class="memdoc">
 <p>Pointer to a map of vectors that hold the fields at step n_minus_1</p>
-<p>Managing the fields is a little tricky. If MPI is not enabled There is only one set of vectors. All calls to local_field_value and field_value do the same thing (these calls point to the same vector, which is not distributed). However, if MPI is enabled, there are two sets of field vectors, for the fields_ and fields_nm1_ vectors, all processor own all elements. For the dist_fields_ and dist_fields_nm1_ vectors, these are distributed across processors with a one-to-one map. In this case, calls to field_value point to the all shared vectors, and local_field_value points to the distributed vectors and can only be given an index that is a valid local index for this processor. All of the work on the distributed vector occurrs inside the execute_correlation function. When this function is entered the data has to be copied over from the all-owned vectors to the distributed. When the calculations are finished from <a class="el" href="class_d_i_ce_1_1_schema.html#a9adc1fdda69239debf3d390303fea84f" title="Conduct the correlation. ">execute_correlation()</a>, the data has to be copied back to the all-owned vectors. </p>
+<p>Managing the fields is a little tricky. If MPI is not enabled There is only one set of vectors. All calls to local_field_value and field_value do the same thing (these calls point to the same vector, which is not distributed). However, if MPI is enabled, there are two sets of field vectors, for the fields_ and fields_nm1_ vectors, all processor own all elements. For the dist_fields_ and dist_fields_nm1_ vectors, these are distributed across processors with a one-to-one map. In this case, calls to field_value point to the all shared vectors, and local_field_value points to the distributed vectors and can only be given an index that is a valid local index for this processor. All of the work on the distributed vector occurrs inside the execute_correlation function. When this function is entered the data has to be copied over from the all-owned vectors to the distributed. When the calculations are finished from <a class="el" href="class_d_i_ce_1_1_schema.html#aface79ec4b6b671ac2a74fb631fdb154">execute_correlation()</a>, the data has to be copied back to the all-owned vectors. </p>
 
 </div>
 </div>
@@ -2829,7 +2950,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 15 2016 10:21:55 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Aug 19 2016 12:09:34 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>
