@@ -283,7 +283,7 @@ void MainWindow::on_refFileButton_clicked()
 {
     // open file dialog box to select reference file
     QFileInfo refFileInfo = QFileDialog::getOpenFileName(this,
-      tr("Select reference file"), ".",
+      tr("Select reference file"),  DICe::gui::Input_Vars::instance()->get_working_dir(),
       tr("Tagged Image File Format (*.tiff *.tif);;Portable Network Graphics (*.png);;Joint Photographic Experts Group (*.jpg *.jpeg)"));
     
     if(refFileInfo.fileName()=="") return;
@@ -313,8 +313,9 @@ void MainWindow::on_defFileButton_clicked()
     // open a file dialog box to select the deformed images
     QFileDialog defDialog(this);
     defDialog.setFileMode(QFileDialog::ExistingFiles);
+    defDialog.setDirectory(DICe::gui::Input_Vars::instance()->get_working_dir());
     QStringList defFileNames = defDialog.getOpenFileNames(this,
-      tr("Select reference file"), ".",
+      tr("Select reference file"), DICe::gui::Input_Vars::instance()->get_working_dir(),
       tr("Tagged Image File Format (*.tiff *.tif);;Portable Network Graphics (*.png);;Joint Photographic Experts Group (*.jpg *.jpeg)"));
     
     if(defFileNames.size()==0) return;
