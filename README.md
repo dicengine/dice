@@ -30,7 +30,7 @@ Tutorials
 
 Releases (and Installers)
 -------------------------
-Windows package installers for DICe can be found [here](https://github.com/dicengine/dice/releases)
+Windows 7 and Mac OSX Yosemite  package installers for DICe can be found [here](https://github.com/dicengine/dice/releases)
 
 Contributing to DICe
 --------------------
