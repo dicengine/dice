@@ -101,7 +101,9 @@ int main(int argc, char *argv[]) {
   params->set(DICe::enable_shear_strain,true);
   params->set(DICe::robust_solver_tolerance,1.0E-4);
   Teuchos::RCP<DICe::Schema> schemaSquare = Teuchos::rcp(new DICe::Schema(fileRef,fileDef,params));
-  schemaSquare->initialize(1,subset_size); // only one correlation point for this
+  Teuchos::ArrayRCP<scalar_t> coords_x(1,30);
+  Teuchos::ArrayRCP<scalar_t> coords_y(1,30);
+  schemaSquare->initialize(coords_x,coords_y,subset_size); // only one correlation point for this
 
   // create the column titles
   std::vector<std::string> colTitles;

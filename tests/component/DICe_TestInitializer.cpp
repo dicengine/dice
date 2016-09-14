@@ -178,8 +178,8 @@ int main(int argc, char *argv[]) {
   const int_t subset_size = 27;
   Teuchos::RCP<std::vector<int_t> > neighbor_ids = Teuchos::rcp(new std::vector<int_t>(4,0));
   (*neighbor_ids)[0] = -1; // subsets 1 2 and 3 all have 0 as their seed neighbor, but 0 has -1 because it is the seed
-  std::vector<int_t> coords_x(num_subsets,0);
-  std::vector<int_t> coords_y(num_subsets,0);
+  Teuchos::ArrayRCP<scalar_t> coords_x(num_subsets,0);
+  Teuchos::ArrayRCP<scalar_t> coords_y(num_subsets,0);
   coords_x[0] = 151; coords_y[0] = 277;
   coords_x[1] = 209; coords_y[1] = 269;
   coords_x[2] = 153; coords_y[2] = 328;
@@ -211,7 +211,7 @@ int main(int argc, char *argv[]) {
       params->set(DICe::disp_jump_tol,500.0);
       params->set(DICe::theta_jump_tol,100.0);
       Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema("./images/InitRef.tif","./images/InitDef.tif",params));
-      schema->initialize(num_subsets,subset_size,Teuchos::null,neighbor_ids);
+      schema->initialize(coords_x,coords_y,subset_size,Teuchos::null,neighbor_ids);
       if(init_methods[init_i]==INITIALIZATION_METHOD_NOT_APPLICABLE)
         schema->set_path_file_names(path_file_names);
       for(int_t i=0;i<num_subsets;++i){

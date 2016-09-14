@@ -671,18 +671,24 @@ Schema::initialize(const int_t step_size_x,
 
   const int_t num_pts = numPointsX * numPointsY;
 
-  initialize(num_pts,subset_size);
-  assert(data_num_points_==num_pts);
-
-  int_t x_it=0, y_it=0, x_coord=0, y_coord=0;
+  Teuchos::ArrayRCP<scalar_t> coords_x(num_pts,0.0);
+  Teuchos::ArrayRCP<scalar_t> coords_y(num_pts,0.0);
+  int_t x_it=0, y_it=0;
   for (int_t i=0;i<num_pts;++i)
   {
      y_it = i / numPointsX;
      x_it = i - (y_it*numPointsX);
-     x_coord = subset_dim_ + x_it * step_size_x_ -1;
-     y_coord = subset_dim_ + y_it * step_size_y_ -1;
-     field_value(i,COORDINATE_X) = x_coord;
-     field_value(i,COORDINATE_Y) = y_coord;
+     coords_x[i] = subset_size + x_it * step_size_x_ -1;
+     coords_y[i] = subset_size + y_it * step_size_y_ -1;
+  }
+
+  initialize(coords_x,coords_y,subset_size);
+  assert(data_num_points_==num_pts);
+
+  for (int_t i=0;i<num_pts;++i)
+  {
+     field_value(i,COORDINATE_X) = coords_x[i];
+     field_value(i,COORDINATE_Y) = coords_y[i];
   }
 }
 
@@ -779,7 +785,13 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
   // set the subsets that should force the simplex method
   set_force_simplex(force_simplex);
   // initialize the schema
-  initialize(num_subsets,subset_size,conformal_area_defs,neighbor_ids);
+  Teuchos::ArrayRCP<scalar_t> coords_x(num_subsets,0.0);
+  Teuchos::ArrayRCP<scalar_t> coords_y(num_subsets,0.0);
+  for(int_t i=0;i<num_subsets;++i){
+    coords_x[i] = (*subset_centroids)[i*dim + 0];
+    coords_y[i] = (*subset_centroids)[i*dim + 1];
+  }
+  initialize(coords_x,coords_y,subset_size,conformal_area_defs,neighbor_ids);
 
   // set the coordinates for the subsets:
   // all other values are initiliazed to zero
@@ -858,11 +870,11 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
       }
     }
   }
-
 }
 
 void
-Schema::initialize(const int_t num_pts,
+Schema::initialize(Teuchos::ArrayRCP<scalar_t> coords_x,
+  Teuchos::ArrayRCP<scalar_t> coords_y,
   const int_t subset_size,
   Teuchos::RCP<std::map<int_t,Conformal_Area_Def> > conformal_subset_defs,
   Teuchos::RCP<std::vector<int_t> > neighbor_ids){
@@ -875,9 +887,13 @@ Schema::initialize(const int_t num_pts,
     assert(fields_nm1_->get_num_fields()==MAX_FIELD_NAME);
     return;  // no need to initialize if already done
   }
+  TEUCHOS_TEST_FOR_EXCEPTION(coords_x==Teuchos::null || coords_y==Teuchos::null,std::runtime_error,"Error, invalid pointers for coordinates");
+  TEUCHOS_TEST_FOR_EXCEPTION(coords_x.size() <= 0,std::runtime_error,"Error, invalid x coordinates");
+  data_num_points_ = coords_x.size();
+  TEUCHOS_TEST_FOR_EXCEPTION(coords_x.size() != coords_y.size(),std::runtime_error,"Error, size of the coords arrays must match");
+
   // TODO find some way to address this (for constrained optimization, the schema doesn't need any fields)
   //assert(num_pts>0);
-  data_num_points_ = num_pts;
   subset_dim_ = subset_size;
 
   // evenly distributed one-to-one map
@@ -893,6 +909,9 @@ Schema::initialize(const int_t num_pts,
   create_obstruction_dist_map();
 
   create_seed_dist_map(neighbor_ids);
+
+  // create an exodus mesh for output
+  //create_mesh(coords_x,coords_y);
 
   importer_ = Teuchos::rcp(new MultiField_Importer(*dist_map_,*all_map_));
   exporter_ = Teuchos::rcp(new MultiField_Exporter(*all_map_,*dist_map_));
@@ -935,6 +954,22 @@ Schema::initialize(const int_t num_pts,
     for(int_t i=0;i<data_num_points_;++i){
       field_value(i,DICe::NEIGHBOR_ID)  = (*neighbor_ids)[i];
     }
+}
+
+void
+Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
+  Teuchos::ArrayRCP<scalar_t> coords_y){
+
+  Teuchos::RCP<DICe::mesh::Mesh> mesh = generate_tri_mesh(DICe::mesh::TRI3,
+    coords_x,
+    coords_y,
+    step_size_x_*10,
+    "sample_mesh.e",
+    false,
+    false);
+
+
+  assert(false);
 }
 
 void

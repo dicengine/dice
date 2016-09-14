@@ -350,12 +350,14 @@ public:
   void initialize(const std::string & params_file_name);
 
   /// \brief Initializes the data structures for the schema
-  /// \param num_pts Number of correlation points
+  /// \param coords_x the x positions of the subset centroids
+  /// \param coords_y the y positions of the subset centroids
   /// \param subset_size int_t of the subsets, (use -1 if conformals are defined for all subsets, otherwise all subsets without a
   /// conformal subset def will be square and assigned this subset size.
   /// \param conformal_subset_defs Optional definition of conformal subsets
   /// \param neighbor_ids A vector (of length num_pts) that contains the neighbor id to use when initializing the solution by neighbor value
-  void initialize(const int_t num_pts,
+  void initialize(Teuchos::ArrayRCP<scalar_t> coords_x,
+    Teuchos::ArrayRCP<scalar_t> coords_y,
     const int_t subset_size,
     Teuchos::RCP<std::map<int_t,Conformal_Area_Def> > conformal_subset_defs=Teuchos::null,
     Teuchos::RCP<std::vector<int_t> > neighbor_ids=Teuchos::null);
@@ -367,6 +369,12 @@ public:
   void initialize(const int_t step_size_x,
     const int_t step_size_y,
     const int_t subset_size);
+
+  /// \brief Create an exodus mesh for output
+  /// \param coords_x array of x coordinates for the subset centroids
+  /// \param coords_y array of y coordinates for the subset centroids
+  void create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
+    Teuchos::ArrayRCP<scalar_t> coords_y);
 
   /// Conduct the correlation
   /// returns 0 if successful

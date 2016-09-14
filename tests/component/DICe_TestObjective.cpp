@@ -114,7 +114,9 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<DICe::Image> defImg = Teuchos::rcp(new DICe::Image(img_width,img_height,intensitiesShift));
     // create a temp schema:
     DICe::Schema * schema = new DICe::Schema(img_width,img_height,intensities,intensitiesShift);
-    schema->initialize(1,99);
+    Teuchos::ArrayRCP<scalar_t> coords_x(1,100);
+    Teuchos::ArrayRCP<scalar_t> coords_y(1,100);
+    schema->initialize(coords_x,coords_y,99);
     schema->field_value(0,DICe::COORDINATE_X) = 100;
     schema->field_value(0,DICe::COORDINATE_Y) = 100;
     schema->sync_fields_all_to_dist(); // distribute the fields across processors if necessary

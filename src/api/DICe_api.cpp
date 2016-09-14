@@ -105,11 +105,18 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate(scalar_t points[], int_t n_points
   // the constructor won't get called on the static schema if this is not the first image since it's static
   schema.set_def_image(def_w,def_h,defRCP);
 
-  // initialize the schema
-  // since the input data array is of a different size and in a different
-  // order, we have to manually plug the values in
-  schema.initialize(n_points,subset_size);
-
+  if(!initialized){
+    // initialize the schema
+    // since the input data array is of a different size and in a different
+    // order, we have to manually plug the values in
+    Teuchos::ArrayRCP<scalar_t> coords_x(n_points,0.0);
+    Teuchos::ArrayRCP<scalar_t> coords_y(n_points,0.0);
+    for(int_t i=0;i<n_points;++i){
+      coords_x[i] = points[i*DICE_API_STRIDE + 0];
+      coords_y[i] = points[i*DICE_API_STRIDE + 1];
+    }
+    schema.initialize(coords_x,coords_y,subset_size);
+  }
   initialized = true;
 
   // manually copy values into the schema's field values
@@ -222,12 +229,18 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
     }
   }
 
-  // initialize the schema
-  // since the input data array is of a different size and in a different
-  // order, we have to manually plug the values in
-  // Passing -1 as subset size to require that all subsets are defined in the input file
-  schema.initialize(n_points,-1,conformal_area_defs);
   if(!initialized){
+    // initialize the schema
+    // since the input data array is of a different size and in a different
+    // order, we have to manually plug the values in
+    // Passing -1 as subset size to require that all subsets are defined in the input file
+    Teuchos::ArrayRCP<scalar_t> coords_x(n_points,0.0);
+    Teuchos::ArrayRCP<scalar_t> coords_y(n_points,0.0);
+    for(int_t i=0;i<n_points;++i){
+      coords_x[i] = points[i*DICE_API_STRIDE + 0];
+      coords_y[i] = points[i*DICE_API_STRIDE + 1];
+    }
+    schema.initialize(coords_x,coords_y,-1,conformal_area_defs);
     schema.set_obstructing_subset_ids(blocking_subset_ids);
   }
 
