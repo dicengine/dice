@@ -117,9 +117,9 @@ int main(int argc, char *argv[]) {
     Teuchos::ArrayRCP<scalar_t> coords_x(1,100);
     Teuchos::ArrayRCP<scalar_t> coords_y(1,100);
     schema->initialize(coords_x,coords_y,99);
-    schema->field_value(0,DICe::COORDINATE_X) = 100;
-    schema->field_value(0,DICe::COORDINATE_Y) = 100;
-    schema->sync_fields_all_to_dist(); // distribute the fields across processors if necessary
+    schema->local_field_value(0,DICe::COORDINATE_X) = 100;
+    schema->local_field_value(0,DICe::COORDINATE_Y) = 100;
+    //schema->sync_fields_all_to_dist(); // distribute the fields across processors if necessary
     // create an objective:
     Teuchos::RCP<DICe::Objective_ZNSSD> obj = Teuchos::rcp(new DICe::Objective_ZNSSD(schema,0));
     // evaluate the correlation value:

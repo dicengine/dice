@@ -659,7 +659,7 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
         // assemble the lagrange multiplier degrees of freedom
         if(is_mixed_formulation()){
           for(int_t j=0;j<num_funcs;++j){
-            const int_t row = (node_ids[i]-1)*spa_dim + m + 1;
+            const int_t row = node_ids[i]*spa_dim + m ;
             const int_t col = node_ids[j] + mgo;
             //std::cout << "row " << row << " col " << col << std::endl;
             const scalar_t value = elem_div_stiffness[j*num_funcs*spa_dim + i*spa_dim+m];
@@ -690,8 +690,8 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
         // assemble the velocity degrees of freedom
         for(int_t j=0;j<num_funcs;++j){
           for(int_t n=0;n<spa_dim;++n){
-            const int_t row = (node_ids[i]-1)*spa_dim + m + 1;
-            const int_t col = (node_ids[j]-1)*spa_dim + n + 1;
+            const int_t row = node_ids[i]*spa_dim + m;
+            const int_t col = node_ids[j]*spa_dim + n;
             const scalar_t value = elem_stiffness[(i*spa_dim + m)*num_funcs*spa_dim + (j*spa_dim + n)];
             const bool is_local_row_node = mesh_->get_vector_node_dist_map()->is_node_global_elem(row);
             const bool row_is_bc_node = is_local_row_node ?
@@ -909,7 +909,7 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
       //overlap_residual.local_value(nodex_local_id) += elem_force[i*spa_dim+0];
       //overlap_residual.local_value(nodey_local_id) += elem_force[i*spa_dim+1];
       for(int_t dim=0;dim<spa_dim;++dim){
-        int_t row = (connectivity[i]->global_id()-1)*spa_dim+dim+1;
+        int_t row = connectivity[i]->global_id()*spa_dim+dim;
         //const bool is_local_row_node =  mesh_->get_vector_node_dist_map()->is_node_global_elem(row); // using the non-mixed map because the row is a velocity row
         //const bool row_is_bc_node = is_local_row_node ?
         //    bc_manager_->is_row_bc(mesh_->get_vector_node_dist_map()->get_local_element(row)) : false; // same rationalle here

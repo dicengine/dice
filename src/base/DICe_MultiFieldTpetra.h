@@ -184,6 +184,11 @@ public:
     return map_->getMaxAllGlobalIndex();
   }
 
+  /// Returns the min of all the global ids
+  int_t get_min_global_index()const{
+    return map_->getMinAllGlobalIndex();
+  }
+
   /// returns true if this global id is on this node
   /// \param global_id the global id to check
   bool is_node_global_elem(const int_t global_id){
@@ -199,7 +204,7 @@ public:
   }
 
   /// Reutrns an array view that lists the elements that are local to this process
-  Teuchos::ArrayView<const int_t> get_local_element_list()const{
+  Teuchos::ArrayView<const int_t> get_global_element_list()const{
     return map_->getNodeElementList();
   }
 

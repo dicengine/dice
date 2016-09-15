@@ -183,6 +183,11 @@ public:
     return map_->MaxAllGID();
   }
 
+  /// Returns the min of all the global ids
+  int_t get_min_global_index()const{
+    return map_->MinAllGID();
+  }
+
   /// returns a list of the remote indices
   /// \param GIDList the list of global IDs
   /// \param nodeIDList the list of node IDs
@@ -194,7 +199,7 @@ public:
 
 
   /// Reutrns an array view that lists the elements that are local to this process
-  Teuchos::ArrayView<const int_t> get_local_element_list()const{
+  Teuchos::ArrayView<const int_t> get_global_element_list()const{
     return Teuchos::ArrayView<const int_t>(map_->MyGlobalElements(),map_->NumMyElements());
   }
 

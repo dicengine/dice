@@ -95,7 +95,8 @@ enum Base_Element_Type
   CVFEM_TRI,
   CVFEM_TETRA,
   SPHERE,
-  PYRAMID5
+  PYRAMID5,
+  MESHLESS
 };
 
 /// converts a base element type to a string
@@ -141,6 +142,9 @@ enum Field_Name
 {
   NO_SUCH_FIELD_NAME=0,
   INITIAL_COORDINATES,
+  INITIAL_COORDINATES_X,
+  INITIAL_COORDINATES_Y,
+  INITIAL_COORDINATES_Z,
   CURRENT_COORDINATES,
   INITIAL_CELL_COORDINATES,
   CURRENT_CELL_COORDINATES,
@@ -148,26 +152,30 @@ enum Field_Name
   INITIAL_SUBELEMENT_SIZE,
   INITIAL_WEIGHTED_CELL_SIZE,
   INITIAL_CELL_RADIUS,
-  CVFEM_AD_RESIDUAL,
-  CVFEM_AD_LHS,
-  CVFEM_AD_G_PHI,
-  CVFEM_AD_GRAD_PHI,
-  CVFEM_AD_LAMBDA,
-  CVFEM_AD_GRAD_J,
-  CVFEM_AD_IS_BOUNDARY,
-  CVFEM_AD_IMAGE_PHI,
-  CVFEM_AD_PHI,
-  CVFEM_AD_PHI_0,
-  CVFEM_AD_DIFFUSIVITY,
-  CVFEM_AD_ADVECTION_VELOCITY,
-  CVFEM_AD_ELEM_ADV_VEL,
-  CVFEM_AD_NODE_ADV_VEL,
-  ELAST_FEM_LAMBDA,
-  ELAST_FEM_MU,
-  ELAST_FEM_RESIDUAL,
-  ELAST_FEM_LHS,
-  ELAST_FEM_DISPLACEMENT,
   DISPLACEMENT,
+  DISPLACEMENT_X,
+  DISPLACEMENT_Y,
+  DISPLACEMENT_Z,
+  ROTATION_X,
+  ROTATION_Y,
+  ROTATION_Z,
+  SIGMA,
+  GAMMA,
+  BETA,
+  NOISE_LEVEL,
+  CONTRAST_LEVEL,
+  ACTIVE_PIXELS,
+  MATCH,
+  ITERATIONS,
+  STATUS_FLAG,
+  NEIGHBOR_ID,
+  CONDITION_NUMBER,
+  SHEAR_STRETCH_XY,
+  SHEAR_STRETCH_YZ,
+  SHEAR_STRETCH_XZ,
+  NORMAL_STRETCH_XX,
+  NORMAL_STRETCH_YY,
+  NORMAL_STRETCH_ZZ,
   LAGRANGE_MULTIPLIER,
   RESIDUAL,
   MIXED_RESIDUAL,
@@ -398,6 +406,12 @@ const Field_Spec BLOCK_ID_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::BLOCK_I
 /// field spec
 const Field_Spec INITIAL_COORDINATES_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::INITIAL_COORDINATES,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
+const Field_Spec INITIAL_COORDINATES_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::INITIAL_COORDINATES_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec INITIAL_COORDINATES_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::INITIAL_COORDINATES_Y,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec INITIAL_COORDINATES_Z_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::INITIAL_COORDINATES_Z,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
 const Field_Spec CURRENT_COORDINATES_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::CURRENT_COORDINATES,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec INITIAL_CELL_COORDINATES_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::INITIAL_CELL_COORDINATES,field_enums::ELEMENT_RANK,field_enums::NO_FIELD_STATE,true);
@@ -412,65 +426,43 @@ const Field_Spec INITIAL_WEIGHTED_CELL_SIZE_FS(field_enums::SCALAR_FIELD_TYPE,fi
 /// field spec
 const Field_Spec INITIAL_CELL_RADIUS_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::INITIAL_CELL_RADIUS,field_enums::ELEMENT_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
-const Field_Spec CVFEM_AD_RESIDUAL_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CVFEM_AD_RESIDUAL,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec CVFEM_AD_LHS_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CVFEM_AD_LHS,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec CVFEM_AD_G_PHI_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CVFEM_AD_G_PHI,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec CVFEM_AD_GRAD_PHI_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::CVFEM_AD_GRAD_PHI,field_enums::ELEMENT_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec CVFEM_AD_LAMBDA_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CVFEM_AD_LAMBDA,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec CVFEM_AD_LAMBDA_N_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CVFEM_AD_LAMBDA,field_enums::NODE_RANK,field_enums::STATE_N,false);
-//const Field_Spec CVFEM_AD_GRAD_J_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::CVFEM_AD_GRAD_J,field_enums::INTERNAL_FACE_EDGE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec CVFEM_AD_GRAD_J_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::CVFEM_AD_GRAD_J,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec CVFEM_AD_IS_BOUNDARY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CVFEM_AD_IS_BOUNDARY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec CVFEM_AD_PHI_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CVFEM_AD_PHI,field_enums::NODE_RANK,field_enums::STATE_N_PLUS_ONE,true,true);
-/// field spec
-const Field_Spec CVFEM_AD_PHI_N_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CVFEM_AD_PHI,field_enums::NODE_RANK,field_enums::STATE_N,false);
-/// field spec
-const Field_Spec CVFEM_AD_PHI_0_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CVFEM_AD_PHI_0,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec CVFEM_AD_IMAGE_PHI_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CVFEM_AD_IMAGE_PHI,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec CVFEM_AD_DIFFUSIVITY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CVFEM_AD_DIFFUSIVITY,field_enums::INTERNAL_FACE_EDGE_RANK,field_enums::NO_FIELD_STATE,false);
-/// field spec
-const Field_Spec CVFEM_AD_ADVECTION_VELOCITY_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::CVFEM_AD_ADVECTION_VELOCITY,field_enums::INTERNAL_FACE_EDGE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec CVFEM_AD_ELEM_ADV_VEL_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::CVFEM_AD_ELEM_ADV_VEL,field_enums::ELEMENT_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec CVFEM_AD_NODE_ADV_VEL_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::CVFEM_AD_NODE_ADV_VEL,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
 const Field_Spec INTERNAL_FACE_EDGE_NORMAL_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::INTERNAL_FACE_EDGE_NORMAL,field_enums::INTERNAL_FACE_EDGE_RANK,field_enums::NO_FIELD_STATE,false);
 /// field spec
 const Field_Spec INTERNAL_FACE_EDGE_COORDINATES_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::INTERNAL_FACE_EDGE_COORDINATES,field_enums::INTERNAL_FACE_EDGE_RANK,field_enums::NO_FIELD_STATE,false);
 /// field spec
 const Field_Spec INTERNAL_FACE_EDGE_SIZE_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::INTERNAL_FACE_EDGE_SIZE,field_enums::INTERNAL_FACE_EDGE_RANK,field_enums::NO_FIELD_STATE,false);
-//const Field_Spec EXTERNAL_FACE_EDGE_NORMAL_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::EXTERNAL_FACE_EDGE_NORMAL,field_enums::EXTERNAL_FACE_EDGE_RANK,field_enums::NO_FIELD_STATE,false);
-//const Field_Spec EXTERNAL_FACE_EDGE_COORDINATES_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::EXTERNAL_FACE_EDGE_COORDINATES,field_enums::EXTERNAL_FACE_EDGE_RANK,field_enums::NO_FIELD_STATE,false);
-//const Field_Spec EXTERNAL_FACE_EDGE_SIZE_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::EXTERNAL_FACE_EDGE_SIZE,field_enums::EXTERNAL_FACE_EDGE_RANK,field_enums::NO_FIELD_STATE,false);
 /// field spec
 const Field_Spec INTERNAL_CELL_COORDINATES_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::INTERNAL_CELL_COORDINATES,field_enums::INTERNAL_CELL_RANK,field_enums::NO_FIELD_STATE,false);
 /// field spec
 const Field_Spec INTERNAL_CELL_SIZE_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::INTERNAL_CELL_SIZE,field_enums::INTERNAL_CELL_RANK,field_enums::NO_FIELD_STATE,false);
 /// field spec
-const Field_Spec ELAST_FEM_LAMBDA_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ELAST_FEM_LAMBDA,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec ELAST_FEM_MU_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ELAST_FEM_MU,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec ELAST_FEM_RESIDUAL_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::ELAST_FEM_RESIDUAL,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec ELAST_FEM_LHS_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::ELAST_FEM_LHS,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec ELAST_FEM_DISPLACEMENT_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::ELAST_FEM_DISPLACEMENT,field_enums::NODE_RANK,field_enums::STATE_N_PLUS_ONE,true,true);
-/// field spec
 const Field_Spec DISPLACEMENT_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DISPLACEMENT,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
 /// field spec
 const Field_Spec DISPLACEMENT_NM1_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DISPLACEMENT,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec DISPLACEMENT_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DISPLACEMENT_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+/// field spec
+const Field_Spec DISPLACEMENT_X_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DISPLACEMENT_X,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec DISPLACEMENT_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DISPLACEMENT_Y,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+/// field spec
+const Field_Spec DISPLACEMENT_Y_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DISPLACEMENT_Y,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec DISPLACEMENT_Z_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DISPLACEMENT_Z,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+/// field spec
+const Field_Spec DISPLACEMENT_Z_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DISPLACEMENT_Z,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec ROTATION_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ROTATION_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+/// field spec
+const Field_Spec ROTATION_X_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ROTATION_X,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec ROTATION_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ROTATION_Y,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+/// field spec
+const Field_Spec ROTATION_Y_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ROTATION_Y,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec ROTATION_Z_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ROTATION_Z,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+/// field spec
+const Field_Spec ROTATION_Z_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ROTATION_Z,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
 /// field spec
 const Field_Spec RESIDUAL_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::RESIDUAL,field_enums::NODE_RANK,field_enums::STATE_N_PLUS_ONE,true,true);
 /// field spec
@@ -489,6 +481,52 @@ const Field_Spec IMAGE_GRAD_PHI_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::I
 const Field_Spec EXACT_SOL_VECTOR_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::EXACT_SOL_VECTOR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec EXACT_LAGRANGE_MULTIPLIER_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::EXACT_LAGRANGE_MULTIPLIER,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec SIGMA_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SIGMA,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec GAMMA_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::GAMMA,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec BETA_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::BETA,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec NOISE_LEVEL_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NOISE_LEVEL,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec CONTRAST_LEVEL_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CONTRAST_LEVEL,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec ACTIVE_PIXELS_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ACTIVE_PIXELS,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec MATCH_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::MATCH,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec ITERATIONS_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ITERATIONS,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec STATUS_FLAG_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::STATUS_FLAG,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec NEIGHBOR_ID_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NEIGHBOR_ID,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec CONDITION_NUMBER_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CONDITION_NUMBER,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec SHEAR_STRETCH_XY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SHEAR_STRETCH_XY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec SHEAR_STRETCH_XY_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SHEAR_STRETCH_XY,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec SHEAR_STRETCH_YZ_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SHEAR_STRETCH_YZ,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec SHEAR_STRETCH_YZ_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SHEAR_STRETCH_YZ,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec SHEAR_STRETCH_XZ_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SHEAR_STRETCH_XZ,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec SHEAR_STRETCH_XZ_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SHEAR_STRETCH_XZ,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec NORMAL_STRETCH_XX_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NORMAL_STRETCH_XX,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec NORMAL_STRETCH_XX_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NORMAL_STRETCH_XX,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec NORMAL_STRETCH_YY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NORMAL_STRETCH_YY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec NORMAL_STRETCH_YY_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NORMAL_STRETCH_YY,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec NORMAL_STRETCH_ZZ_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NORMAL_STRETCH_ZZ,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec NORMAL_STRETCH_ZZ_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NORMAL_STRETCH_ZZ,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
 /// field spec
 const Field_Spec FIELD_1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_1,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
@@ -535,12 +573,15 @@ const Field_Spec GREEN_LAGRANGE_STRAIN_YY_FS(field_enums::SCALAR_FIELD_TYPE,fiel
 const Field_Spec GREEN_LAGRANGE_STRAIN_XY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::GREEN_LAGRANGE_STRAIN_XY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 67;
+const int_t num_fields_defined = 78;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     NO_SUCH_FS,
     INITIAL_COORDINATES_FS,
+    INITIAL_COORDINATES_X_FS,
+    INITIAL_COORDINATES_Y_FS,
+    INITIAL_COORDINATES_Z_FS,
     CURRENT_COORDINATES_FS,
     INITIAL_CELL_COORDINATES_FS,
     CURRENT_CELL_COORDINATES_FS,
@@ -548,30 +589,38 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     INITIAL_SUBELEMENT_SIZE_FS,
     INITIAL_WEIGHTED_CELL_SIZE_FS,
     INITIAL_CELL_RADIUS_FS,
-    CVFEM_AD_RESIDUAL_FS,
-    CVFEM_AD_IS_BOUNDARY_FS,
-    CVFEM_AD_LHS_FS,
-    CVFEM_AD_G_PHI_FS,
-    CVFEM_AD_GRAD_PHI_FS,
-    CVFEM_AD_LAMBDA_FS,
-    CVFEM_AD_LAMBDA_N_FS,
-    CVFEM_AD_GRAD_J_FS,
-    CVFEM_AD_IMAGE_PHI_FS,
-    CVFEM_AD_PHI_FS,
-    CVFEM_AD_PHI_N_FS,
-    CVFEM_AD_PHI_0_FS,
-    CVFEM_AD_DIFFUSIVITY_FS,
-    CVFEM_AD_ADVECTION_VELOCITY_FS,
-    CVFEM_AD_ELEM_ADV_VEL_FS,
-    CVFEM_AD_NODE_ADV_VEL_FS,
-    ELAST_FEM_LAMBDA_FS,
-    ELAST_FEM_MU_FS,
-    ELAST_FEM_RESIDUAL_FS,
-    ELAST_FEM_LHS_FS,
-    ELAST_FEM_DISPLACEMENT_FS,
     DISPLACEMENT_FS,
     DISPLACEMENT_NM1_FS,
+    DISPLACEMENT_X_FS,
+    DISPLACEMENT_X_NM1_FS,
+    DISPLACEMENT_Y_FS,
+    DISPLACEMENT_Y_NM1_FS,
+    DISPLACEMENT_Z_FS,
+    DISPLACEMENT_Z_NM1_FS,
+    ROTATION_X_FS,
+    ROTATION_X_NM1_FS,
+    ROTATION_Y_FS,
+    ROTATION_Y_NM1_FS,
+    ROTATION_Z_FS,
+    ROTATION_Z_NM1_FS,
     RESIDUAL_FS,
+    SIGMA_FS,
+    GAMMA_FS,
+    BETA_FS,
+    NOISE_LEVEL_FS,
+    CONTRAST_LEVEL_FS,
+    ACTIVE_PIXELS_FS,
+    MATCH_FS,
+    ITERATIONS_FS,
+    STATUS_FLAG_FS,
+    NEIGHBOR_ID_FS,
+    CONDITION_NUMBER_FS,
+    SHEAR_STRETCH_XY_FS,
+    SHEAR_STRETCH_YZ_FS,
+    SHEAR_STRETCH_XZ_FS,
+    NORMAL_STRETCH_XX_FS,
+    NORMAL_STRETCH_YY_FS,
+    NORMAL_STRETCH_ZZ_FS,
     LHS_FS,
     LAGRANGE_MULTIPLIER_FS,
     MIXED_RESIDUAL_FS,
@@ -583,9 +632,6 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     INTERNAL_FACE_EDGE_NORMAL_FS,
     INTERNAL_FACE_EDGE_COORDINATES_FS,
     INTERNAL_FACE_EDGE_SIZE_FS,
-//    EXTERNAL_FACE_EDGE_NORMAL_FS,
-//    EXTERNAL_FACE_EDGE_COORDINATES_FS,
-//    EXTERNAL_FACE_EDGE_SIZE_FS,
     INTERNAL_CELL_COORDINATES_FS,
     INTERNAL_CELL_SIZE_FS,
     BLOCK_ID_FS,

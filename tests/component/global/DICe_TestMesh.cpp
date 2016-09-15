@@ -150,11 +150,9 @@ int main(int argc, char *argv[]) {
   *outStream << "internal faces and cells have been checked" << std::endl;
 
   *outStream << "creating some fields on the mesh" << std::endl;
-  mesh->create_field(mesh::field_enums::CVFEM_AD_PHI_FS);
-  mesh->create_field(mesh::field_enums::CVFEM_AD_IMAGE_PHI_FS);
-  mesh->create_field(mesh::field_enums::CVFEM_AD_LAMBDA_FS);
+  mesh->create_field(mesh::field_enums::FIELD_1_FS);
   *outStream << "populating values for phi field" << std::endl;
-  MultiField & phi = *mesh->get_field(mesh::field_enums::CVFEM_AD_PHI_FS);
+  MultiField & phi = *mesh->get_field(mesh::field_enums::FIELD_1_FS);
   MultiField & coords = *mesh->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
   Teuchos::ArrayRCP<const scalar_t> coords_values = coords.get_1d_view();
   const int_t spa_dim = mesh->spatial_dimension();
@@ -182,6 +180,7 @@ int main(int argc, char *argv[]) {
 
   *outStream << "checking the output file for correct mesh properties" << std::endl;
   Teuchos::RCP<DICe::mesh::Mesh> mesh_out = DICe::mesh::read_exodus_mesh(mesh_output_file_name,"no_file.e");
+  mesh_out->print_field_info();
   *outStream << "checking the basic properties of the output mesh" << std::endl;
   if(mesh_out->num_nodes()!=257){
     *outStream << "Error, the number of nodes read from the output mesh is not correct" << std::endl;
@@ -196,9 +195,9 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   *outStream << "output mesh properties have been checked" << std::endl;
-// TODO test the field values in the output mesh
+// TODO test the fields in the output mesh
 //  *outStream << "checking the output file for correct fields" << std::endl;
-//  MultiField & phi_out = *mesh_out->get_field(mesh::field_enums::CVFEM_AD_PHI_FS);
+//  MultiField & phi_out = *mesh_out->get_field(mesh::field_enums::FIELD_1_FS);
 //  bool field_value_error = false;
 //  for(int_t i=0;i<mesh_out->num_nodes();++i){
 //    if(std::abs(phi_out.local_value(i)-coords_values[i*spa_dim]*10.0)>1.0E-3){

@@ -125,10 +125,10 @@ public:
     const scalar_t & override_tol = -1.0);
 
   /// See base class documentation
-  using Objective::local_field_value;
+  using Objective::global_field_value;
 
   /// See base class documentation
-  using Objective::local_field_value_nm1;
+  using Objective::global_field_value_nm1;
 
   /// See base class documentation
   using Objective::num_dofs;

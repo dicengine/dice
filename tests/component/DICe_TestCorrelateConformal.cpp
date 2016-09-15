@@ -172,30 +172,30 @@ int main(int argc, char *argv[]) {
       schema->set_params(params);
 
       // reset the initial guess
-      schema->field_value(0,DICe::COORDINATE_X) = 30;
-      schema->field_value(0,DICe::COORDINATE_Y) = 30;
-      schema->field_value(0,DICe::SIGMA) = 0.0;
-      schema->field_value(0,DICe::GAMMA) = 0.0;
-      schema->field_value(0,DICe::STATUS_FLAG) = 0;
-      schema->field_value(0,DICe::DISPLACEMENT_X) = defExact[DICe::DISPLACEMENT_X] - 0.25;
-      schema->field_value(0,DICe::DISPLACEMENT_Y) = defExact[DICe::DISPLACEMENT_Y] - 0.25;
-      schema->field_value(0,DICe::ROTATION_Z)     = defExact[DICe::ROTATION_Z]     - 0.05;
-      schema->field_value(0,DICe::NORMAL_STRAIN_X) = 0.0;
-      schema->field_value(0,DICe::NORMAL_STRAIN_Y) = 0.0;
-      schema->field_value(0,DICe::SHEAR_STRAIN_XY) = 0.0;
+      schema->local_field_value(0,DICe::COORDINATE_X) = 30;
+      schema->local_field_value(0,DICe::COORDINATE_Y) = 30;
+      schema->local_field_value(0,DICe::SIGMA) = 0.0;
+      schema->local_field_value(0,DICe::GAMMA) = 0.0;
+      schema->local_field_value(0,DICe::STATUS_FLAG) = 0;
+      schema->local_field_value(0,DICe::DISPLACEMENT_X) = defExact[DICe::DISPLACEMENT_X] - 0.25;
+      schema->local_field_value(0,DICe::DISPLACEMENT_Y) = defExact[DICe::DISPLACEMENT_Y] - 0.25;
+      schema->local_field_value(0,DICe::ROTATION_Z)     = defExact[DICe::ROTATION_Z]     - 0.05;
+      schema->local_field_value(0,DICe::NORMAL_STRAIN_X) = 0.0;
+      schema->local_field_value(0,DICe::NORMAL_STRAIN_Y) = 0.0;
+      schema->local_field_value(0,DICe::SHEAR_STRAIN_XY) = 0.0;
 
       schema->execute_correlation();
 
       // check the solution to ensure the error is small:
       bool valueError = false;
-      if(std::abs(schema->field_value(0,DICe::DISPLACEMENT_X) - defExact[DICe::DISPLACEMENT_X]) > errtol) valueError = true;
-      if(std::abs(schema->field_value(0,DICe::DISPLACEMENT_Y) - defExact[DICe::DISPLACEMENT_Y]) > errtol) valueError = true;
-      if(std::abs(schema->field_value(0,DICe::ROTATION_Z) - defExact[DICe::ROTATION_Z]) > errtol) valueError = true;
-      if(std::abs(schema->field_value(0,DICe::NORMAL_STRAIN_X) - defExact[DICe::NORMAL_STRAIN_X]) > errtol) valueError = true;
-      if(std::abs(schema->field_value(0,DICe::NORMAL_STRAIN_Y) - defExact[DICe::NORMAL_STRAIN_Y]) > errtol) valueError = true;
-      if(std::abs(schema->field_value(0,DICe::SHEAR_STRAIN_XY) - defExact[DICe::SHEAR_STRAIN_XY]) > errtol) valueError = true;
-      if(std::abs(schema->field_value(0,DICe::STATUS_FLAG) - DICe::INITIALIZE_USING_PREVIOUS_FRAME_SUCCESSFUL) > errtol) valueError = true;
-      if(std::abs(schema->field_value(0,DICe::SIGMA) + 1) < errtol) valueError = true; // check that sigma != -1
+      if(std::abs(schema->local_field_value(0,DICe::DISPLACEMENT_X) - defExact[DICe::DISPLACEMENT_X]) > errtol) valueError = true;
+      if(std::abs(schema->local_field_value(0,DICe::DISPLACEMENT_Y) - defExact[DICe::DISPLACEMENT_Y]) > errtol) valueError = true;
+      if(std::abs(schema->local_field_value(0,DICe::ROTATION_Z) - defExact[DICe::ROTATION_Z]) > errtol) valueError = true;
+      if(std::abs(schema->local_field_value(0,DICe::NORMAL_STRAIN_X) - defExact[DICe::NORMAL_STRAIN_X]) > errtol) valueError = true;
+      if(std::abs(schema->local_field_value(0,DICe::NORMAL_STRAIN_Y) - defExact[DICe::NORMAL_STRAIN_Y]) > errtol) valueError = true;
+      if(std::abs(schema->local_field_value(0,DICe::SHEAR_STRAIN_XY) - defExact[DICe::SHEAR_STRAIN_XY]) > errtol) valueError = true;
+      if(std::abs(schema->local_field_value(0,DICe::STATUS_FLAG) - DICe::INITIALIZE_USING_PREVIOUS_FRAME_SUCCESSFUL) > errtol) valueError = true;
+      if(std::abs(schema->local_field_value(0,DICe::SIGMA) + 1) < errtol) valueError = true; // check that sigma != -1
 
       std::string statusStr = valueError ? "FAIL": "PASS";
       if(valueError) errorFlag++;
@@ -207,15 +207,15 @@ int main(int argc, char *argv[]) {
       *outStream << std::setw(7)  << schema->interpolation_method();
       *outStream << std::setw(7)  << schema->initialization_method();
       *outStream << std::setw(7)  << schema->optimization_method();
-      *outStream << std::setw(7)  << std::setprecision(3) << schema->field_value(0,DICe::DISPLACEMENT_X);
-      *outStream << std::setw(7)  << std::setprecision(3) << schema->field_value(0,DICe::DISPLACEMENT_Y);
-      *outStream << std::setw(7)  << std::setprecision(3) << schema->field_value(0,DICe::ROTATION_Z);
-      *outStream << std::setw(7)  << std::setprecision(3) << schema->field_value(0,DICe::NORMAL_STRAIN_X);
-      *outStream << std::setw(7)  << std::setprecision(3) << schema->field_value(0,DICe::NORMAL_STRAIN_Y);
-      *outStream << std::setw(12) << std::setprecision(2) << schema->field_value(0,DICe::SHEAR_STRAIN_XY);
-      *outStream << std::setw(12) << std::setprecision(3) << std::setiosflags(std::ios::scientific) <<  schema->field_value(0,DICe::SIGMA);
-      *outStream << std::setw(12) <<  schema->field_value(0,DICe::GAMMA);
-      *outStream << std::setw(7)  << std::setiosflags(std::ios_base::fixed) << schema->field_value(0,DICe::STATUS_FLAG);
+      *outStream << std::setw(7)  << std::setprecision(3) << schema->local_field_value(0,DICe::DISPLACEMENT_X);
+      *outStream << std::setw(7)  << std::setprecision(3) << schema->local_field_value(0,DICe::DISPLACEMENT_Y);
+      *outStream << std::setw(7)  << std::setprecision(3) << schema->local_field_value(0,DICe::ROTATION_Z);
+      *outStream << std::setw(7)  << std::setprecision(3) << schema->local_field_value(0,DICe::NORMAL_STRAIN_X);
+      *outStream << std::setw(7)  << std::setprecision(3) << schema->local_field_value(0,DICe::NORMAL_STRAIN_Y);
+      *outStream << std::setw(12) << std::setprecision(2) << schema->local_field_value(0,DICe::SHEAR_STRAIN_XY);
+      *outStream << std::setw(12) << std::setprecision(3) << std::setiosflags(std::ios::scientific) <<  schema->local_field_value(0,DICe::SIGMA);
+      *outStream << std::setw(12) <<  schema->local_field_value(0,DICe::GAMMA);
+      *outStream << std::setw(7)  << std::setiosflags(std::ios_base::fixed) << schema->local_field_value(0,DICe::STATUS_FLAG);
       *outStream << std::endl;
       outStream->flags(f); // reset the cout flags to the original state
     }
@@ -253,23 +253,23 @@ int main(int argc, char *argv[]) {
 
 
   // centroid 1
-  schema2->field_value(0,DICe::COORDINATE_X) = 30;
-  schema2->field_value(0,DICe::COORDINATE_Y) = 30;
+  schema2->local_field_value(0,DICe::COORDINATE_X) = 30;
+  schema2->local_field_value(0,DICe::COORDINATE_Y) = 30;
   // centroid 2
-  schema2->field_value(1,DICe::COORDINATE_X) = 32;
-  schema2->field_value(1,DICe::COORDINATE_Y) = 32;
+  schema2->local_field_value(1,DICe::COORDINATE_X) = 32;
+  schema2->local_field_value(1,DICe::COORDINATE_Y) = 32;
 
   for(int_t i=0;i<2;++i){
     // reset the initial guess
-    schema2->field_value(i,DICe::SIGMA) = 0.0;
-    schema2->field_value(i,DICe::GAMMA) = 0.0;
-    schema2->field_value(i,DICe::STATUS_FLAG) = 0;
-    schema2->field_value(i,DICe::DISPLACEMENT_X) = defExact[DICe::DISPLACEMENT_X] - 0.25;
-    schema2->field_value(i,DICe::DISPLACEMENT_Y) = defExact[DICe::DISPLACEMENT_Y] - 0.25;
-    schema2->field_value(i,DICe::ROTATION_Z)     = defExact[DICe::ROTATION_Z]     - 0.05;
-    schema2->field_value(i,DICe::NORMAL_STRAIN_X) = 0.0;
-    schema2->field_value(i,DICe::NORMAL_STRAIN_Y) = 0.0;
-    schema2->field_value(i,DICe::SHEAR_STRAIN_XY) = 0.0;
+    schema2->local_field_value(i,DICe::SIGMA) = 0.0;
+    schema2->local_field_value(i,DICe::GAMMA) = 0.0;
+    schema2->local_field_value(i,DICe::STATUS_FLAG) = 0;
+    schema2->local_field_value(i,DICe::DISPLACEMENT_X) = defExact[DICe::DISPLACEMENT_X] - 0.25;
+    schema2->local_field_value(i,DICe::DISPLACEMENT_Y) = defExact[DICe::DISPLACEMENT_Y] - 0.25;
+    schema2->local_field_value(i,DICe::ROTATION_Z)     = defExact[DICe::ROTATION_Z]     - 0.05;
+    schema2->local_field_value(i,DICe::NORMAL_STRAIN_X) = 0.0;
+    schema2->local_field_value(i,DICe::NORMAL_STRAIN_Y) = 0.0;
+    schema2->local_field_value(i,DICe::SHEAR_STRAIN_XY) = 0.0;
   }
 
   schema2->execute_correlation();
@@ -277,26 +277,26 @@ int main(int argc, char *argv[]) {
   // check the solution to ensure the error is small:
   bool valueError = false;
   for(int_t i=0;i<2;++i){
-    *outStream << " x[" << i << "] " << schema2->field_value(i,DICe::COORDINATE_X);
-    *outStream << " y[" << i << "] " << schema2->field_value(i,DICe::COORDINATE_Y);
-    *outStream << " u[" << i << "] " << schema2->field_value(i,DICe::DISPLACEMENT_X);
-    *outStream << " v[" << i << "] " << schema2->field_value(i,DICe::DISPLACEMENT_Y);
-    *outStream << " Rz[" << i << "] " << schema2->field_value(i,DICe::ROTATION_Z);
-    *outStream << " Nx[" << i << "] " << schema2->field_value(i,DICe::NORMAL_STRAIN_X);
-    *outStream << " Ny[" << i << "] " << schema2->field_value(i,DICe::NORMAL_STRAIN_Y);
-    *outStream << " Gxy[" << i << "] " << schema2->field_value(i,DICe::SHEAR_STRAIN_XY);
-    *outStream << " Sigma[" << i << "] " <<  schema2->field_value(i,DICe::SIGMA);
-    *outStream << " Gamma[" << i << "] " <<  schema2->field_value(i,DICe::GAMMA);
-    *outStream << " Status[" << i << "] " << schema2->field_value(i,DICe::STATUS_FLAG) << std::endl;
+    *outStream << " x[" << i << "] " << schema2->local_field_value(i,DICe::COORDINATE_X);
+    *outStream << " y[" << i << "] " << schema2->local_field_value(i,DICe::COORDINATE_Y);
+    *outStream << " u[" << i << "] " << schema2->local_field_value(i,DICe::DISPLACEMENT_X);
+    *outStream << " v[" << i << "] " << schema2->local_field_value(i,DICe::DISPLACEMENT_Y);
+    *outStream << " Rz[" << i << "] " << schema2->local_field_value(i,DICe::ROTATION_Z);
+    *outStream << " Nx[" << i << "] " << schema2->local_field_value(i,DICe::NORMAL_STRAIN_X);
+    *outStream << " Ny[" << i << "] " << schema2->local_field_value(i,DICe::NORMAL_STRAIN_Y);
+    *outStream << " Gxy[" << i << "] " << schema2->local_field_value(i,DICe::SHEAR_STRAIN_XY);
+    *outStream << " Sigma[" << i << "] " <<  schema2->local_field_value(i,DICe::SIGMA);
+    *outStream << " Gamma[" << i << "] " <<  schema2->local_field_value(i,DICe::GAMMA);
+    *outStream << " Status[" << i << "] " << schema2->local_field_value(i,DICe::STATUS_FLAG) << std::endl;
 
-    if(std::abs(schema2->field_value(i,DICe::DISPLACEMENT_X) - defExact[DICe::DISPLACEMENT_X]) > errtolSoft) valueError = true;
-    if(std::abs(schema2->field_value(i,DICe::DISPLACEMENT_Y) - defExact[DICe::DISPLACEMENT_Y]) > errtolSoft) valueError = true;
-    if(std::abs(schema2->field_value(i,DICe::ROTATION_Z) - defExact[DICe::ROTATION_Z]) > errtolSoft) valueError = true;
-    if(std::abs(schema2->field_value(i,DICe::NORMAL_STRAIN_X) - defExact[DICe::NORMAL_STRAIN_X]) > errtol) valueError = true;
-    if(std::abs(schema2->field_value(i,DICe::NORMAL_STRAIN_Y) - defExact[DICe::NORMAL_STRAIN_Y]) > errtol) valueError = true;
-    if(std::abs(schema2->field_value(i,DICe::SHEAR_STRAIN_XY) - defExact[DICe::SHEAR_STRAIN_XY]) > errtol) valueError = true;
-    if(std::abs(schema2->field_value(i,DICe::STATUS_FLAG) - DICe::INITIALIZE_USING_PREVIOUS_FRAME_SUCCESSFUL) > errtol) valueError = true;
-    if(std::abs(schema2->field_value(i,DICe::SIGMA) + 1) < errtol) valueError = true; // check that sigma != -1
+    if(std::abs(schema2->local_field_value(i,DICe::DISPLACEMENT_X) - defExact[DICe::DISPLACEMENT_X]) > errtolSoft) valueError = true;
+    if(std::abs(schema2->local_field_value(i,DICe::DISPLACEMENT_Y) - defExact[DICe::DISPLACEMENT_Y]) > errtolSoft) valueError = true;
+    if(std::abs(schema2->local_field_value(i,DICe::ROTATION_Z) - defExact[DICe::ROTATION_Z]) > errtolSoft) valueError = true;
+    if(std::abs(schema2->local_field_value(i,DICe::NORMAL_STRAIN_X) - defExact[DICe::NORMAL_STRAIN_X]) > errtol) valueError = true;
+    if(std::abs(schema2->local_field_value(i,DICe::NORMAL_STRAIN_Y) - defExact[DICe::NORMAL_STRAIN_Y]) > errtol) valueError = true;
+    if(std::abs(schema2->local_field_value(i,DICe::SHEAR_STRAIN_XY) - defExact[DICe::SHEAR_STRAIN_XY]) > errtol) valueError = true;
+    if(std::abs(schema2->local_field_value(i,DICe::STATUS_FLAG) - DICe::INITIALIZE_USING_PREVIOUS_FRAME_SUCCESSFUL) > errtol) valueError = true;
+    if(std::abs(schema2->local_field_value(i,DICe::SIGMA) + 1) < errtol) valueError = true; // check that sigma != -1
   }
   if(valueError){
     *outStream << "---> POSSIBLE ERROR ABOVE! Solution values not correct for multiple subsets " << std::endl;

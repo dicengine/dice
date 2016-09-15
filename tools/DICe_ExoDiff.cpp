@@ -148,14 +148,18 @@ int main(int argc, char *argv[]) {
   for(size_t i=0;i<field_names.size();++i){
     bool field_found_in_a = false;
     bool field_found_in_b = false;
+    int_t var_index_a = 0;
+    int_t var_index_b = 0;
     for(size_t j=0;j<mesh_a_fields.size();++j){
       if(mesh_a_fields[j]==field_names[i]){
         field_found_in_a = true;
+        var_index_a = j+1;
       }
     }
     for(size_t j=0;j<mesh_b_fields.size();++j){
       if(mesh_b_fields[j]==field_names[i]){
         field_found_in_b = true;
+        var_index_b = j+1;
       }
     }
     TEUCHOS_TEST_FOR_EXCEPTION(!field_found_in_a,std::runtime_error,"Error, field not found in mesh_a: " << field_names[i]);
@@ -163,8 +167,8 @@ int main(int argc, char *argv[]) {
 
     // iterate all steps in the file
     for(int_t time_step=1;time_step<=num_steps_a;++time_step){
-      std::vector<scalar_t> a_field = DICe::mesh::read_exodus_field(mesh_a,i+1,time_step);
-      std::vector<scalar_t> b_field = DICe::mesh::read_exodus_field(mesh_b,i+1,time_step);
+      std::vector<scalar_t> a_field = DICe::mesh::read_exodus_field(mesh_a,var_index_a,time_step);
+      std::vector<scalar_t> b_field = DICe::mesh::read_exodus_field(mesh_b,var_index_b,time_step);
 
       scalar_t error = 0.0;
       for(int_t node=0;node<num_nodes_a;++node){

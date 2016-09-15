@@ -527,108 +527,91 @@ public:
   }
 #endif
 
-  /// \brief Return either the distributed field vector value or the all-owned
-  /// vector value, depending on the flag argument
+  /// \brief Return the value of the given field at the given global id (must be local to this process)
+  /// Note: does not check if the gid is local to this process
   /// \param global_id Global ID of the element
   /// \param name Field name (see DICe_Types.h for valid field names)
-#if DICE_TPETRA
-  scalar_t & field_value(const int_t global_id,
+  mv_scalar_type & global_field_value(const int_t global_id,
     const Field_Name name){
-#else // Epetra is hard coded on double
-  double & field_value(const int_t global_id,
-    const Field_Name name){
-#endif
-    assert(!distributed_fields_being_modified_ && "Error: Attempting to modify or access an all-owned field, but the distributed"
-      " fields have the lock, sync_dist_to_all() must be called first to re-enable access to the all-owned fields.");
-    assert(global_id<data_num_points_);
-    assert(name<MAX_FIELD_NAME);
-    return fields_->global_value(global_id,name);
+    return local_field_value(mesh_->get_scalar_node_dist_map()->get_local_element(global_id),name);
   }
 
-  /// \brief Return either the distributed field vector value or the all-owned
-  /// vector value, depending on the flag argument for frame_(n-1)
-  /// \param global_id Global ID of the element
+  /// \brief Return the value of the given field at the given global id (must be local to this process)
+  /// for the previous frame
+  /// Note: does not check if the gid is local to this process
+  /// \param global_id Global ID of the subset
   /// \param name Field name (see DICe_Types.h for valid field names)
-#if DICE_TPETRA
-  scalar_t & field_value_nm1(const int_t global_id,
+  mv_scalar_type & global_field_value_nm1(const int_t global_id,
     const Field_Name name){
-    assert(!distributed_fields_being_modified_ && "Error: Attempting to modify or access an all-owned field, but the distributed"
-      " fields have the lock, sync_dist_to_all() must be called first to re-enable access to the all-owned fields.");
-    assert(global_id<data_num_points_);
-    assert(name<MAX_FIELD_NAME);
-    return fields_nm1_->global_value(global_id,name);
-  }
-#else // Epetra is hard coded on double
-  double & field_value_nm1(const int_t global_id,
-    const Field_Name name){
-    assert(!distributed_fields_being_modified_ && "Error: Attempting to modify or access an all-owned field, but the distributed"
-      " fields have the lock, sync_dist_to_all() must be called first to re-enable access to the all-owned fields.");
-    assert(global_id<data_num_points_);
-    assert(name<MAX_FIELD_NAME);
-    return fields_nm1_->global_value(global_id,name);
-  }
-#endif
-
-  /// \brief Return either the distributed field vector value or the all-owned
-  /// vector value, depending on the flag argument
-  /// \param global_id Global ID of the element
-  /// \param name Field name (see DICe_Types.h for valid field names)
-#if DICE_TPETRA
-  scalar_t & local_field_value(const int_t global_id,
-    const Field_Name name){
-#else // Epetra is hard coded on double
-  double & local_field_value(const int_t global_id,
-    const Field_Name name){
-#endif
-    assert(global_id<data_num_points_);
-    assert(name<MAX_FIELD_NAME);
-#if DICE_MPI
-    if(target_field_descriptor_==DISTRIBUTED){
-      assert(distributed_fields_being_modified_ && "Error: Attempting to modify or access a distributed field, but the all-owned"
-          " fields have the lock, sync_all_to_dist() must be called first to enable access to the distributed fields.");
-      assert(dist_map_->get_local_element(global_id)>=0);
-      return dist_fields_->global_value(global_id,name);
-    }
-    else if(target_field_descriptor_==DISTRIBUTED_GROUPED_BY_SEED){
-      assert(distributed_fields_being_modified_ && "Error: Attempting to modify or access a distributed field, but the all-owned"
-          " fields have the lock, sync_all_to_dist() must be called first to enable access to the distributed fields.");
-      assert(seed_dist_map_->get_local_element(global_id)>=0);
-      return seed_dist_fields_->global_value(global_id,name);
-    }
-#endif
-    assert(target_field_descriptor_==ALL_OWNED);
-    return fields_->global_value(global_id,name);
+    return local_field_value_nm1(mesh_->get_scalar_node_dist_map()->get_local_element(global_id),name);
   }
 
-  /// \brief Return either the distributed field vector value or the all-owned
-  /// vector value, depending on the flag argument for frame_(n-1)
+  /// \brief Return the value of the given field at the given local id (must be local to this process)
+  /// \param local_id local ID of the subset
+  /// \param name Field name (see DICe_Types.h for valid field names)
+  mv_scalar_type & local_field_value(const int_t local_id,
+    const Field_Name name){
+    assert(local_id<data_num_points_);
+    assert(name<MAX_FIELD_NAME);
+    // table to convert a field name to a field spec with an offset
+    static std::vector<DICe::mesh::field_enums::Field_Spec> spec_table = {
+      DICe::mesh::field_enums::DISPLACEMENT_X_FS,
+      DICe::mesh::field_enums::DISPLACEMENT_Y_FS,
+      DICe::mesh::field_enums::DISPLACEMENT_Z_FS,
+      DICe::mesh::field_enums::ROTATION_X_FS,
+      DICe::mesh::field_enums::ROTATION_Y_FS,
+      DICe::mesh::field_enums::ROTATION_Z_FS,
+      DICe::mesh::field_enums::NORMAL_STRETCH_XX_FS,
+      DICe::mesh::field_enums::NORMAL_STRETCH_YY_FS,
+      DICe::mesh::field_enums::NORMAL_STRETCH_ZZ_FS,
+      DICe::mesh::field_enums::SHEAR_STRETCH_XY_FS,
+      DICe::mesh::field_enums::SHEAR_STRETCH_YZ_FS,
+      DICe::mesh::field_enums::SHEAR_STRETCH_XZ_FS,
+      DICe::mesh::field_enums::INITIAL_COORDINATES_X_FS,
+      DICe::mesh::field_enums::INITIAL_COORDINATES_Y_FS,
+      DICe::mesh::field_enums::INITIAL_COORDINATES_Z_FS,
+      DICe::mesh::field_enums::FIELD_1_FS,
+      DICe::mesh::field_enums::FIELD_2_FS,
+      DICe::mesh::field_enums::FIELD_3_FS,
+      DICe::mesh::field_enums::SIGMA_FS,
+      DICe::mesh::field_enums::GAMMA_FS,
+      DICe::mesh::field_enums::BETA_FS,
+      DICe::mesh::field_enums::NOISE_LEVEL_FS,
+      DICe::mesh::field_enums::CONTRAST_LEVEL_FS,
+      DICe::mesh::field_enums::ACTIVE_PIXELS_FS,
+      DICe::mesh::field_enums::MATCH_FS,
+      DICe::mesh::field_enums::ITERATIONS_FS,
+      DICe::mesh::field_enums::STATUS_FLAG_FS,
+      DICe::mesh::field_enums::NEIGHBOR_ID_FS,
+      DICe::mesh::field_enums::CONDITION_NUMBER_FS
+    };
+    return mesh_->get_field(spec_table[name])->local_value(local_id);
+  }
+
+  /// \brief Return the value of the given field at the given local id (must be local to this process)
+  /// for the previous frame
   /// \param global_id Global ID of the element
   /// \param name Field name (see DICe_Types.h for valid field names)
-#if DICE_TPETRA
-  scalar_t & local_field_value_nm1(const int_t global_id,
+  mv_scalar_type & local_field_value_nm1(const int_t local_id,
     const Field_Name name){
-#else // Epetra is hard coded on double
-  double & local_field_value_nm1(const int_t global_id,
-    const Field_Name name){
-#endif
-    assert(global_id<data_num_points_);
-    assert(name<MAX_FIELD_NAME);
-#if DICE_MPI
-    if(target_field_descriptor_==DISTRIBUTED){
-      assert(distributed_fields_being_modified_ && "Error: Attempting to modify or access a distributed field, but the all-owned"
-        " fields have the lock, sync_all_to_dist() must be called first to enable access to the distributed fields.");
-      assert(dist_map_->get_local_element(global_id)>=0);
-      return dist_fields_nm1_->global_value(global_id,name);
-    }
-    else if(target_field_descriptor_==DISTRIBUTED_GROUPED_BY_SEED){
-      assert(distributed_fields_being_modified_ && "Error: Attempting to modify or access a distributed field, but the all-owned"
-          " fields have the lock, sync_all_to_dist() must be called first to enable access to the distributed fields.");
-      assert(seed_dist_map_->get_local_element(global_id)>=0);
-      return seed_dist_fields_nm1_->global_value(global_id,name);
-    }
-#endif
-    assert(target_field_descriptor_==ALL_OWNED);
-    return fields_nm1_->global_value(global_id,name);
+    assert(local_id<data_num_points_);
+    assert(name<=SHEAR_STRAIN_XZ);
+    // table to convert a field name to a field spec with an offset
+    static std::vector<DICe::mesh::field_enums::Field_Spec> spec_table = {
+      DICe::mesh::field_enums::DISPLACEMENT_X_NM1_FS,
+      DICe::mesh::field_enums::DISPLACEMENT_Y_NM1_FS,
+      DICe::mesh::field_enums::DISPLACEMENT_Z_NM1_FS,
+      DICe::mesh::field_enums::ROTATION_X_NM1_FS,
+      DICe::mesh::field_enums::ROTATION_Y_NM1_FS,
+      DICe::mesh::field_enums::ROTATION_Z_NM1_FS,
+      DICe::mesh::field_enums::NORMAL_STRETCH_XX_NM1_FS,
+      DICe::mesh::field_enums::NORMAL_STRETCH_YY_NM1_FS,
+      DICe::mesh::field_enums::NORMAL_STRETCH_ZZ_NM1_FS,
+      DICe::mesh::field_enums::SHEAR_STRETCH_XY_NM1_FS,
+      DICe::mesh::field_enums::SHEAR_STRETCH_YZ_NM1_FS,
+      DICe::mesh::field_enums::SHEAR_STRETCH_XZ_NM1_FS
+    };
+    return mesh_->get_field(spec_table[name])->local_value(local_id);
   }
 
   /// \brief Save off the current solution into the storage for frame n - 1 (only used if projection_method is VELOCITY_BASED)
@@ -636,16 +619,7 @@ public:
   void save_off_fields(const int_t global_id){
     DEBUG_MSG("Saving off solution nm1 for subset (global id) " << global_id);
     for(int_t i=0;i<MAX_FIELD_NAME;++i){
-#if DICE_MPI
-      if(target_field_descriptor_==DISTRIBUTED)
-        dist_fields_nm1_->global_value(global_id,i) = dist_fields_->global_value(global_id,i);
-      else if(target_field_descriptor_==DISTRIBUTED_GROUPED_BY_SEED)
-        seed_dist_fields_nm1_->global_value(global_id,i) = seed_dist_fields_->global_value(global_id,i);
-      else
-        fields_nm1_->global_value(global_id,i) = fields_->global_value(global_id,i);
-#else
-      fields_nm1_->global_value(global_id,i) = fields_->global_value(global_id,i);
-#endif
+      global_field_value_nm1(global_id,static_cast<Field_Name>(i)) = global_field_value(global_id,static_cast<Field_Name>(i));
     }
   };
 
@@ -704,7 +678,7 @@ public:
   void create_obstruction_dist_map();
 
   /// set up the distributed map so that it respects dependencies among seeds
-  void create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids);
+  //void create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids);
 
   /// \brief Create an image that shows the correlation points
   /// \param fileName String name of file to for output
@@ -972,10 +946,10 @@ public:
     return &pixels_owning_element_global_id_;
   }
 
-  /// Return a pointer to the connectivity matrix
-  Teuchos::SerialDenseMatrix<int_t,int_t> * connectivity(){
-    return &connectivity_;
-  }
+//  /// Return a pointer to the connectivity matrix
+//  Teuchos::SerialDenseMatrix<int_t,int_t> * connectivity(){
+//    return &connectivity_;
+//  }
 
   /// Return the jump tolerance for rotations
   double theta_jump_tol()const{
@@ -1053,63 +1027,63 @@ public:
   }
 
   /// Return a pointer to the distribution map
-  const map_rcp dist_map()const{
-    return dist_map_;
-  }
+  //const map_rcp dist_map()const{
+  //  return dist_map_;
+  //}
 
   /// Copy distributed fields to serial fields
-  void sync_fields_dist_to_all(){
-    if(target_field_descriptor_==ALL_OWNED) return; // NO-OP
-#if DICE_MPI
-    if(target_field_descriptor_==DISTRIBUTED){
-      fields_->do_import(dist_fields_,*importer_);
-      fields_nm1_->do_import(dist_fields_nm1_,*importer_);
-    }
-    else if(target_field_descriptor_==DISTRIBUTED_GROUPED_BY_SEED){
-      fields_->do_import(seed_dist_fields_,*seed_importer_);
-      fields_nm1_->do_import(seed_dist_fields_,*seed_importer_);
-    }
-    else{
-      assert(false && "Error: unknown field descriptor.");
-    }
-    distributed_fields_being_modified_ = false;
-#else
-    return; // NO-OP without MPI
-#endif
-  }
+//  void sync_fields_dist_to_all(){
+//    if(target_field_descriptor_==ALL_OWNED) return; // NO-OP
+//#if DICE_MPI
+//    if(target_field_descriptor_==DISTRIBUTED){
+//      fields_->do_import(dist_fields_,*importer_);
+//      fields_nm1_->do_import(dist_fields_nm1_,*importer_);
+//    }
+//    else if(target_field_descriptor_==DISTRIBUTED_GROUPED_BY_SEED){
+//      fields_->do_import(seed_dist_fields_,*seed_importer_);
+//      fields_nm1_->do_import(seed_dist_fields_,*seed_importer_);
+//    }
+//    else{
+//      assert(false && "Error: unknown field descriptor.");
+//    }
+//    distributed_fields_being_modified_ = false;
+//#else
+//    return; // NO-OP without MPI
+//#endif
+//  }
 
-  /// Copy serial fields to distributedsinsert
-  void sync_fields_all_to_dist(){
-    if(target_field_descriptor_==ALL_OWNED) return; // NO-OP
-#if DICE_MPI
-    distributed_fields_being_modified_ = true;
-    if(target_field_descriptor_==DISTRIBUTED){
-      dist_fields_->do_export(fields_,*exporter_);
-      dist_fields_nm1_->do_export(fields_nm1_,*exporter_);
-    }
-    else if(target_field_descriptor_==DISTRIBUTED_GROUPED_BY_SEED){
-      seed_dist_fields_->do_export(fields_,*seed_exporter_);
-      seed_dist_fields_nm1_->do_export(fields_nm1_,*seed_exporter_);
-    }
-    else{
-      assert(false && "Error: unknown field descriptor.");
-    }
-    //Teuchos::RCP<Teuchos::FancyOStream> fos = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
-    //dist_fields_->describe(*fos,Teuchos::VERB_EXTREME);
-#else
-    return; // NO-OP without MPI
-#endif
-  }
+//  /// Copy serial fields to distributed
+//  void sync_fields_all_to_dist(){
+//    if(target_field_descriptor_==ALL_OWNED) return; // NO-OP
+//#if DICE_MPI
+//    distributed_fields_being_modified_ = true;
+//    if(target_field_descriptor_==DISTRIBUTED){
+//      dist_fields_->do_export(fields_,*exporter_);
+//      dist_fields_nm1_->do_export(fields_nm1_,*exporter_);
+//    }
+//    else if(target_field_descriptor_==DISTRIBUTED_GROUPED_BY_SEED){
+//      seed_dist_fields_->do_export(fields_,*seed_exporter_);
+//      seed_dist_fields_nm1_->do_export(fields_nm1_,*seed_exporter_);
+//    }
+//    else{
+//      assert(false && "Error: unknown field descriptor.");
+//    }
+//    //Teuchos::RCP<Teuchos::FancyOStream> fos = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+//    //dist_fields_->describe(*fos,Teuchos::VERB_EXTREME);
+//#else
+//    return; // NO-OP without MPI
+//#endif
+//  }
 
-  /// Provide access to the distributed map:
-  int_t get_local_id(const int_t gid)const{
-    if(target_field_descriptor_==DISTRIBUTED)
-      return dist_map_->get_local_element(gid);
-    else if(target_field_descriptor_==DISTRIBUTED_GROUPED_BY_SEED)
-      return seed_dist_map_->get_local_element(gid);
-    else
-      return all_map_->get_local_element(gid);
-  }
+//  /// Provide access to the distributed map:
+//  int_t get_local_id(const int_t gid)const{
+//    if(target_field_descriptor_==DISTRIBUTED)
+//      return dist_map_->get_local_element(gid);
+//    else if(target_field_descriptor_==DISTRIBUTED_GROUPED_BY_SEED)
+//      return seed_dist_map_->get_local_element(gid);
+//    else
+//      return all_map_->get_local_element(gid);
+//  }
 
   /// Returns a pointer to the params that were used to construct this schema
   Teuchos::RCP<Teuchos::ParameterList> get_params(){
@@ -1126,59 +1100,68 @@ public:
     return &obj_vec_;
   }
 
+  /// return a pointer to the mesh object that holds all the fields and maps
+  Teuchos::RCP<DICe::mesh::Mesh> mesh(){
+    return mesh_;
+  }
+
 private:
   /// Pointer to communicator (can be serial)
   comm_rcp comm_;
-  /// Pointer to map that defines the parallel decomposition
-  map_rcp dist_map_;
-  /// Pointer to map that defines parallel decomposition according to
-  /// the number of seeds or regions of interest in the analysis
-  map_rcp seed_dist_map_;
-  /// Pointer to map that holds all elements on all processors
-  map_rcp all_map_;
-  /// Pointer to importer for managing distributed fields
-  imp_rcp importer_;
-  /// Pointer to exporter for managing distributed fields
-  exp_rcp exporter_;
-  /// Pointer to importer for managing distributed fields grouped by seed
-  imp_rcp seed_importer_;
-  /// Pointer to exporter for managing distributed fields grouped by seed
-  exp_rcp seed_exporter_;
-#if DICE_MPI
-  /// Pointer to a map of vectors that hold the distributed fields.
-  /// These are meant to be internal and not exposed to the user via field_values();
-  mf_rcp dist_fields_;
-  /// Pointer to a map of vectors that hold the distributed fields at step n_minus_1
-  /// These are meant to be internal and not exposed to the user via field_values();
-  mf_rcp dist_fields_nm1_;
-  /// Pointer to a map of vectors that hold the distributed fields grouped by seed.
-  /// These are meant to be internal and not exposed to the user via field_values();
-  mf_rcp seed_dist_fields_;
-  /// Pointer to a map of vectors that hold the distributed fields grouped by seed at step n_minus_1
-  /// These are meant to be internal and not exposed to the user via field_values();
-  mf_rcp seed_dist_fields_nm1_;
-#endif
-  /// Determines where the field_value calls should look for the field vectors
-  Target_Field_Descriptor target_field_descriptor_;
-  /// Lock the fields if the distributed vectors are being modified
-  bool distributed_fields_being_modified_;
-  /// Pointer to a map of vectors that hold the fields
-  mf_rcp fields_;
-  /// Pointer to a map of vectors that hold the fields at step n_minus_1
-  ///
-  /// Managing the fields is a little tricky. If MPI is not enabled
-  /// There is only one set of vectors. All calls to local_field_value and field_value
-  /// do the same thing (these calls point to the same vector, which is not distributed).
-  /// However, if MPI is enabled, there are two sets of field vectors, for the fields_ and
-  /// fields_nm1_ vectors, all processor own all elements. For the dist_fields_ and
-  /// dist_fields_nm1_ vectors, these are distributed across processors with a one-to-one map.
-  /// In this case, calls to field_value point to the all shared vectors, and local_field_value points
-  /// to the distributed vectors and can only be given an index that is a valid local index for this
-  /// processor. All of the work on the distributed vector occurrs inside the execute_correlation
-  /// function. When this function is entered the data has to be copied over from the all-owned
-  /// vectors to the distributed. When the calculations are finished from execute_correlation(), the data
-  /// has to be copied back to the all-owned vectors.
-  mf_rcp fields_nm1_;
+//  /// Pointer to map that defines the parallel decomposition
+//  map_rcp dist_map_;
+//  /// Pointer to map that defines parallel decomposition according to
+//  /// the number of seeds or regions of interest in the analysis
+//  map_rcp seed_dist_map_;
+//  /// Pointer to map that holds all elements on all processors
+//  map_rcp all_map_;
+//  /// Pointer to importer for managing distributed fields
+//  imp_rcp importer_;
+//  /// Pointer to exporter for managing distributed fields
+//  exp_rcp exporter_;
+//  /// Pointer to importer for managing distributed fields grouped by seed
+//  imp_rcp seed_importer_;
+//  /// Pointer to exporter for managing distributed fields grouped by seed
+//  exp_rcp seed_exporter_;
+//#if DICE_MPI
+//  /// Pointer to a map of vectors that hold the distributed fields.
+//  /// These are meant to be internal and not exposed to the user via field_values();
+//  mf_rcp dist_fields_;
+//  /// Pointer to a map of vectors that hold the distributed fields at step n_minus_1
+//  /// These are meant to be internal and not exposed to the user via field_values();
+//  mf_rcp dist_fields_nm1_;
+//  /// Pointer to a map of vectors that hold the distributed fields grouped by seed.
+//  /// These are meant to be internal and not exposed to the user via field_values();
+//  mf_rcp seed_dist_fields_;
+//  /// Pointer to a map of vectors that hold the distributed fields grouped by seed at step n_minus_1
+//  /// These are meant to be internal and not exposed to the user via field_values();
+//  mf_rcp seed_dist_fields_nm1_;
+//#endif
+//  /// Determines where the field_value calls should look for the field vectors
+//  Target_Field_Descriptor target_field_descriptor_;
+//  /// Lock the fields if the distributed vectors are being modified
+//  bool distributed_fields_being_modified_;
+//  /// Pointer to a map of vectors that hold the fields
+//  mf_rcp fields_;
+//  /// Pointer to a map of vectors that hold the fields at step n_minus_1
+//  ///
+//  /// Managing the fields is a little tricky. If MPI is not enabled
+//  /// There is only one set of vectors. All calls to local_field_value and field_value
+//  /// do the same thing (these calls point to the same vector, which is not distributed).
+//  /// However, if MPI is enabled, there are two sets of field vectors, for the fields_ and
+//  /// fields_nm1_ vectors, all processor own all elements. For the dist_fields_ and
+//  /// dist_fields_nm1_ vectors, these are distributed across processors with a one-to-one map.
+//  /// In this case, calls to field_value point to the all shared vectors, and local_field_value points
+//  /// to the distributed vectors and can only be given an index that is a valid local index for this
+//  /// processor. All of the work on the distributed vector occurrs inside the execute_correlation
+//  /// function. When this function is entered the data has to be copied over from the all-owned
+//  /// vectors to the distributed. When the calculations are finished from execute_correlation(), the data
+//  /// has to be copied back to the all-owned vectors.
+//  mf_rcp fields_nm1_;
+
+  /// the mesh holds the fields and subsets or elements and nodes
+  Teuchos::RCP<DICe::mesh::Mesh> mesh_;
+
   /// Keeps track of the gids of subsets that are local to this process.
   Teuchos::ArrayView<const int_t> this_proc_subset_global_ids_;
   /// Vector of objective classes
@@ -1202,7 +1185,7 @@ private:
   /// For constrained optimiation, this lists the owning element global id for each pixel:
   std::vector<int_t> pixels_owning_element_global_id_;
   /// Connectivity matrix for the global DIC method
-  Teuchos::SerialDenseMatrix<int_t,int_t> connectivity_;
+  //Teuchos::SerialDenseMatrix<int_t,int_t> connectivity_;
   /// Square subset size (used only if subsets are not conformal)
   int_t subset_dim_;
   /// Regular grid subset spacing in x direction (used only if subsets are not conformal)

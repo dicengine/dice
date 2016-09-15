@@ -108,7 +108,7 @@ public:
 
   /// returns the offset to the first lagrange multiplier dof
   int_t mixed_global_offset()const{
-    return mesh_->get_vector_node_dist_map()->get_num_global_elements();
+    return mesh_->get_vector_node_dist_map()->get_max_global_index();
   }
 
   /// compute the strain values

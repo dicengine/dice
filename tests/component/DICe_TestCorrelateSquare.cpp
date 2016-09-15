@@ -137,9 +137,9 @@ int main(int argc, char *argv[]) {
   bool error_y_occurred = false;
   bool error_flag = false;
   for(int_t i=0;i<schemaMultiple->data_num_points();++i){
-    const scalar_t disp_x = schemaMultiple->field_value(i,DICe::DISPLACEMENT_X);
-    const scalar_t disp_y = schemaMultiple->field_value(i,DICe::DISPLACEMENT_Y);
-    const scalar_t flag = schemaMultiple->field_value(i,DICe::STATUS_FLAG);
+    const scalar_t disp_x = schemaMultiple->local_field_value(i,DICe::DISPLACEMENT_X);
+    const scalar_t disp_y = schemaMultiple->local_field_value(i,DICe::DISPLACEMENT_Y);
+    const scalar_t flag = schemaMultiple->local_field_value(i,DICe::STATUS_FLAG);
     if(disp_x<0.1||disp_x>0.8) error_x_occurred = true;
     if(disp_y<0.1||disp_y>0.8) error_y_occurred = true;
     if(flag!=DICe::INITIALIZE_USING_PREVIOUS_FRAME_SUCCESSFUL&&flag!=DICe::INITIALIZE_USING_NEIGHBOR_VALUE_SUCCESSFUL) error_flag = true;

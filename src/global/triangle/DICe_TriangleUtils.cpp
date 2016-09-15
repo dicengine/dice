@@ -170,7 +170,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
     if(num_excluded_shapes>0){
       for(size_t i=0;i<map_it->second.excluded_area()->size();++i){
         DEBUG_MSG("Excluded shape " << i);
-        // cast the excluded shape to a polygon and throw is unsuccessful
+        // cast the excluded shape to a polygon and throw if unsuccessful
         Teuchos::RCP<DICe::Polygon> excluded_polygon =
             Teuchos::rcp_dynamic_cast<DICe::Polygon>((*map_it->second.excluded_area())[i]);
         TEUCHOS_TEST_FOR_EXCEPTION(excluded_polygon==Teuchos::null,std::runtime_error,"Error, failed cast to polygon.");
@@ -200,8 +200,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
         const int_t max_x = excluded_polygon->max_x();
         const int_t min_y = excluded_polygon->min_y();
         const int_t max_y = excluded_polygon->max_y();
-        TEUCHOS_TEST_FOR_EXCEPTION(max_x-min_x < 4,std::runtime_error,"Error, excluded regions is too small");
-        TEUCHOS_TEST_FOR_EXCEPTION(max_y-min_y < 4,std::runtime_error,"Error, excluded regions is too small");
+        TEUCHOS_TEST_FOR_EXCEPTION(max_x-min_x < 4,std::runtime_error,"Error, excluded region is too small");
+        TEUCHOS_TEST_FOR_EXCEPTION(max_y-min_y < 4,std::runtime_error,"Error, excluded region is too small");
         const int_t pt_y = (max_y - min_y)/2 + min_y;
         int_t pt_x = min_x;
         int_t valid_pixels = 0;
@@ -551,12 +551,14 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
     }
     Teuchos::ArrayRCP<scalar_t> node_coords_x(out.numberofpoints); // numberofcorners is num nodes per elem
     Teuchos::ArrayRCP<scalar_t> node_coords_y(out.numberofpoints); // numberofcorners is num nodes per elem
+    Teuchos::ArrayRCP<int_t> node_map(out.numberofpoints,0);
     for(int_t i=0;i<out.numberofpoints;++i){
       node_coords_x[i] = out.pointlist[i*2+0];
       node_coords_y[i] = out.pointlist[i*2+1];
+      node_map[i] = i + 1;
     }
     mesh = DICe::mesh::create_tri_exodus_mesh(elem_type,node_coords_x,
-      node_coords_y,connectivity,dirichlet_boundary_nodes,
+      node_coords_y,connectivity,node_map,dirichlet_boundary_nodes,
       neumann_boundary_nodes,lagrange_boundary_nodes,output_file_name);
 
     if(!has_dirich_segments&&!has_neumann_segments){
@@ -841,11 +843,14 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri_mesh(const DICe::mesh::Base_
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid side");
     }
   }
+  Teuchos::ArrayRCP<int_t> node_map(num_nodes,0);
+  for(int_t i=0;i<num_nodes;++i)
+    node_map[i] = i+1;
 
   Teuchos::RCP<DICe::mesh::Mesh> mesh =
       DICe::mesh::create_tri_exodus_mesh(elem_type,
         node_coords_x,
-        node_coords_y,connectivity,dirichlet_bcs,
+        node_coords_y,connectivity,node_map,dirichlet_bcs,
         neumann_bcs,lag_bcs,output_file_name);
 
   mesh->set_is_regular_grid(true);

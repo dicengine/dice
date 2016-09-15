@@ -118,8 +118,8 @@ VSG_Strain_Post_Processor::pre_execution_tasks(){
   assert(min_x>0&&min_y>0);
   DEBUG_MSG("width " << min_x << " height " << min_y);
   for(int_t i=0;i<data_num_points_;++i){
-    x = schema_->field_value(i,DICe::COORDINATE_X);
-    y = schema_->field_value(i,DICe::COORDINATE_Y);
+    x = schema_->local_field_value(i,DICe::COORDINATE_X);
+    y = schema_->local_field_value(i,DICe::COORDINATE_Y);
     if(x < min_x) min_x = x;
     if(y < min_y) min_y = y;
     if(x > max_x) max_x = x;
@@ -142,8 +142,8 @@ VSG_Strain_Post_Processor::pre_execution_tasks(){
   // organize the subsets according to the step size grid
   int_t row=0,col=0;
   for(int_t subset=0;subset<data_num_points_;++subset){
-    x = schema_->field_value(subset,DICe::COORDINATE_X);
-    y = schema_->field_value(subset,DICe::COORDINATE_Y);
+    x = schema_->local_field_value(subset,DICe::COORDINATE_X);
+    y = schema_->local_field_value(subset,DICe::COORDINATE_Y);
     row = (y - min_y)/step_size_y;
     col = (x - min_x)/step_size_x;
     assert(row*num_cols + col < subset_id_grid.size());
@@ -232,8 +232,8 @@ VSG_Strain_Post_Processor::execute(){
     // gather the displacements of the neighbors
     for(int_t j=0;j<num_neigh;++j){
       neigh_id = neighbor_lists_[subset*vec_stride_ + j];
-      u_x[j] = schema_->field_value(neigh_id,DICe::DISPLACEMENT_X);
-      u_y[j] = schema_->field_value(neigh_id,DICe::DISPLACEMENT_Y);
+      u_x[j] = schema_->local_field_value(neigh_id,DICe::DISPLACEMENT_X);
+      u_y[j] = schema_->local_field_value(neigh_id,DICe::DISPLACEMENT_Y);
     }
 
     // set up the X^T matrix
@@ -515,8 +515,8 @@ Keys4_Strain_Post_Processor::pre_execution_tasks(){
   assert(min_x>0&&min_y>0);
   DEBUG_MSG("width " << min_x << " height " << min_y);
   for(int_t i=0;i<data_num_points_;++i){
-    x = schema_->field_value(i,DICe::COORDINATE_X);
-    y = schema_->field_value(i,DICe::COORDINATE_Y);
+    x = schema_->local_field_value(i,DICe::COORDINATE_X);
+    y = schema_->local_field_value(i,DICe::COORDINATE_Y);
     if(x < min_x) min_x = x;
     if(y < min_y) min_y = y;
     if(x > max_x) max_x = x;
@@ -538,8 +538,8 @@ Keys4_Strain_Post_Processor::pre_execution_tasks(){
   // organize the subsets according to the step size grid
   int_t row=0,col=0;
   for(int_t subset=0;subset<data_num_points_;++subset){
-    x = schema_->field_value(subset,DICe::COORDINATE_X);
-    y = schema_->field_value(subset,DICe::COORDINATE_Y);
+    x = schema_->local_field_value(subset,DICe::COORDINATE_X);
+    y = schema_->local_field_value(subset,DICe::COORDINATE_Y);
     row = (y - min_y)/step_size;
     col = (x - min_x)/step_size;
     assert(row*num_cols + col < subset_id_grid.size());
@@ -619,8 +619,8 @@ Keys4_Strain_Post_Processor::execute(){
       neigh_id = neighbor_lists_[subset*vec_stride_ + j];
       dxS = neighbor_distances_x_[subset*vec_stride_ + j];
       dyS = neighbor_distances_y_[subset*vec_stride_ + j];
-      u_x = schema_->field_value(neigh_id,DICe::DISPLACEMENT_X);
-      u_y = schema_->field_value(neigh_id,DICe::DISPLACEMENT_Y);
+      u_x = schema_->local_field_value(neigh_id,DICe::DISPLACEMENT_X);
+      u_y = schema_->local_field_value(neigh_id,DICe::DISPLACEMENT_Y);
       dx = std::abs(dxS);
       dy = std::abs(dyS);
       sign_x = (dxS < 0.0) ? -1.0 : 1.0;
@@ -748,8 +748,8 @@ NLVC_Strain_Post_Processor::pre_execution_tasks(){
   assert(min_x>0&&min_y>0);
   DEBUG_MSG("width " << min_x << " height " << min_y);
   for(int_t i=0;i<data_num_points_;++i){
-    x = schema_->field_value(i,DICe::COORDINATE_X);
-    y = schema_->field_value(i,DICe::COORDINATE_Y);
+    x = schema_->local_field_value(i,DICe::COORDINATE_X);
+    y = schema_->local_field_value(i,DICe::COORDINATE_Y);
     if(x < min_x) min_x = x;
     if(y < min_y) min_y = y;
     if(x > max_x) max_x = x;
@@ -772,8 +772,8 @@ NLVC_Strain_Post_Processor::pre_execution_tasks(){
   // organize the subsets according to the step size grid
   int_t row=0,col=0;
   for(int_t subset=0;subset<data_num_points_;++subset){
-    x = schema_->field_value(subset,DICe::COORDINATE_X);
-    y = schema_->field_value(subset,DICe::COORDINATE_Y);
+    x = schema_->local_field_value(subset,DICe::COORDINATE_X);
+    y = schema_->local_field_value(subset,DICe::COORDINATE_Y);
     row = (y - min_y)/step_size_y;
     col = (x - min_x)/step_size_x;
     assert(row*num_cols + col < subset_id_grid.size());
@@ -859,8 +859,8 @@ NLVC_Strain_Post_Processor::execute(){
       //assert(neighbor_distances_mag_[subset][j] <= horizon_/2.0 && "Error, the distance between these two points is greater than the horizon, but somehow they are in each other's neighborhoods.");
       const scalar_t dist_x = neighbor_distances_x_[subset*vec_stride_ + j];
       const scalar_t dist_y = neighbor_distances_y_[subset*vec_stride_ + j];
-      u_x = schema_->field_value(neighbor_gid,DICe::DISPLACEMENT_X);
-      u_y = schema_->field_value(neighbor_gid,DICe::DISPLACEMENT_Y);
+      u_x = schema_->local_field_value(neighbor_gid,DICe::DISPLACEMENT_X);
+      u_y = schema_->local_field_value(neighbor_gid,DICe::DISPLACEMENT_Y);
       if(dist_x==0){
         phi_x = 4.0*(dist_x + 0.5*horizon_)/(horizon_*horizon_);
         alpha_x = 0.0;

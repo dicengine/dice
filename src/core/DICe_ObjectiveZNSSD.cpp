@@ -419,7 +419,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
       lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
       lapack.GECON('1',N,H.values(),N,anorm,&rcond,GWORK,IWORK,&INFO);
       //DEBUG_MSG("Subset " << correlation_point_global_id_ << "    RCOND(H): "<< rcond);
-      schema_->local_field_value(correlation_point_global_id_,DICe::CONDITION_NUMBER) = (rcond !=0.0) ? 1.0/rcond : 0.0;
+      schema_->global_field_value(correlation_point_global_id_,DICe::CONDITION_NUMBER) = (rcond !=0.0) ? 1.0/rcond : 0.0;
       if(rcond < 1.0E-12) return HESSIAN_SINGULAR;
     }
     catch(std::exception &e){

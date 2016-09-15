@@ -122,15 +122,15 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate(scalar_t points[], int_t n_points
   // manually copy values into the schema's field values
   for(int_t i=0;i<n_points;++i){
     // leave the coordinates alone
-    schema.field_value(i,DICe::COORDINATE_X)   = points[i*DICE_API_STRIDE + 0];
-    schema.field_value(i,DICe::COORDINATE_Y)   = points[i*DICE_API_STRIDE + 1];
-    schema.field_value(i,DICe::DISPLACEMENT_X) = points[i*DICE_API_STRIDE + 2];
-    schema.field_value(i,DICe::DISPLACEMENT_Y) = points[i*DICE_API_STRIDE + 3];
-    schema.field_value(i,DICe::ROTATION_Z)     = points[i*DICE_API_STRIDE + 4];
-    schema.field_value(i,DICe::SIGMA)          = points[i*DICE_API_STRIDE + 5];
-    schema.field_value(i,DICe::GAMMA)          = points[i*DICE_API_STRIDE + 6];
-    schema.field_value(i,DICe::BETA)           = points[i*DICE_API_STRIDE + 7];
-    schema.field_value(i,DICe::STATUS_FLAG)    = points[i*DICE_API_STRIDE + 8];
+    schema.local_field_value(i,DICe::COORDINATE_X)   = points[i*DICE_API_STRIDE + 0];
+    schema.local_field_value(i,DICe::COORDINATE_Y)   = points[i*DICE_API_STRIDE + 1];
+    schema.local_field_value(i,DICe::DISPLACEMENT_X) = points[i*DICE_API_STRIDE + 2];
+    schema.local_field_value(i,DICe::DISPLACEMENT_Y) = points[i*DICE_API_STRIDE + 3];
+    schema.local_field_value(i,DICe::ROTATION_Z)     = points[i*DICE_API_STRIDE + 4];
+    schema.local_field_value(i,DICe::SIGMA)          = points[i*DICE_API_STRIDE + 5];
+    schema.local_field_value(i,DICe::GAMMA)          = points[i*DICE_API_STRIDE + 6];
+    schema.local_field_value(i,DICe::BETA)           = points[i*DICE_API_STRIDE + 7];
+    schema.local_field_value(i,DICe::STATUS_FLAG)    = points[i*DICE_API_STRIDE + 8];
   }
 
   schema.execute_correlation();
@@ -138,13 +138,13 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate(scalar_t points[], int_t n_points
   // extract the values from the correlation and put it back in the data array:
   for(int_t i=0;i<n_points;++i){
     // leave the coordinates alone
-    points[i*DICE_API_STRIDE + 2] = schema.field_value(i,DICe::DISPLACEMENT_X);
-    points[i*DICE_API_STRIDE + 3] = schema.field_value(i,DICe::DISPLACEMENT_Y);
-    points[i*DICE_API_STRIDE + 4] = schema.field_value(i,DICe::ROTATION_Z);
-    points[i*DICE_API_STRIDE + 5] = schema.field_value(i,DICe::SIGMA);
-    points[i*DICE_API_STRIDE + 6] = schema.field_value(i,DICe::GAMMA);
-    points[i*DICE_API_STRIDE + 7] = schema.field_value(i,DICe::BETA);
-    points[i*DICE_API_STRIDE + 8] = schema.field_value(i,DICe::STATUS_FLAG);
+    points[i*DICE_API_STRIDE + 2] = schema.local_field_value(i,DICe::DISPLACEMENT_X);
+    points[i*DICE_API_STRIDE + 3] = schema.local_field_value(i,DICe::DISPLACEMENT_Y);
+    points[i*DICE_API_STRIDE + 4] = schema.local_field_value(i,DICe::ROTATION_Z);
+    points[i*DICE_API_STRIDE + 5] = schema.local_field_value(i,DICe::SIGMA);
+    points[i*DICE_API_STRIDE + 6] = schema.local_field_value(i,DICe::GAMMA);
+    points[i*DICE_API_STRIDE + 7] = schema.local_field_value(i,DICe::BETA);
+    points[i*DICE_API_STRIDE + 8] = schema.local_field_value(i,DICe::STATUS_FLAG);
   }
 
   return 0;
@@ -249,15 +249,15 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
   // manually copy values into the schema's field values
   for(int_t i=0;i<n_points;++i){
     // leave the coordinates alone
-    schema.field_value(i,DICe::COORDINATE_X)   = points[i*DICE_API_STRIDE + 0];
-    schema.field_value(i,DICe::COORDINATE_Y)   = points[i*DICE_API_STRIDE + 1];
-    schema.field_value(i,DICe::DISPLACEMENT_X) = points[i*DICE_API_STRIDE + 2];
-    schema.field_value(i,DICe::DISPLACEMENT_Y) = points[i*DICE_API_STRIDE + 3];
-    schema.field_value(i,DICe::ROTATION_Z)     = points[i*DICE_API_STRIDE + 4];
-    schema.field_value(i,DICe::SIGMA)          = points[i*DICE_API_STRIDE + 5];
-    schema.field_value(i,DICe::GAMMA)          = points[i*DICE_API_STRIDE + 6];
-    schema.field_value(i,DICe::BETA)           = points[i*DICE_API_STRIDE + 7];
-    schema.field_value(i,DICe::STATUS_FLAG)    = points[i*DICE_API_STRIDE + 8];
+    schema.local_field_value(i,DICe::COORDINATE_X)   = points[i*DICE_API_STRIDE + 0];
+    schema.local_field_value(i,DICe::COORDINATE_Y)   = points[i*DICE_API_STRIDE + 1];
+    schema.local_field_value(i,DICe::DISPLACEMENT_X) = points[i*DICE_API_STRIDE + 2];
+    schema.local_field_value(i,DICe::DISPLACEMENT_Y) = points[i*DICE_API_STRIDE + 3];
+    schema.local_field_value(i,DICe::ROTATION_Z)     = points[i*DICE_API_STRIDE + 4];
+    schema.local_field_value(i,DICe::SIGMA)          = points[i*DICE_API_STRIDE + 5];
+    schema.local_field_value(i,DICe::GAMMA)          = points[i*DICE_API_STRIDE + 6];
+    schema.local_field_value(i,DICe::BETA)           = points[i*DICE_API_STRIDE + 7];
+    schema.local_field_value(i,DICe::STATUS_FLAG)    = points[i*DICE_API_STRIDE + 8];
   }
 
   schema.execute_correlation();
@@ -267,15 +267,15 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
 
   // extract the values from the correlation and put it back in the data array:
   for(int_t i=0;i<n_points;++i){
-    points[i*DICE_API_STRIDE + 0] = schema.field_value(i,DICe::COORDINATE_X);
-    points[i*DICE_API_STRIDE + 1] = schema.field_value(i,DICe::COORDINATE_Y);
-    points[i*DICE_API_STRIDE + 2] = schema.field_value(i,DICe::DISPLACEMENT_X);
-    points[i*DICE_API_STRIDE + 3] = schema.field_value(i,DICe::DISPLACEMENT_Y);
-    points[i*DICE_API_STRIDE + 4] = schema.field_value(i,DICe::ROTATION_Z);
-    points[i*DICE_API_STRIDE + 5] = schema.field_value(i,DICe::SIGMA);
-    points[i*DICE_API_STRIDE + 6] = schema.field_value(i,DICe::GAMMA);
-    points[i*DICE_API_STRIDE + 7] = schema.field_value(i,DICe::BETA);
-    points[i*DICE_API_STRIDE + 8] = schema.field_value(i,DICe::STATUS_FLAG);
+    points[i*DICE_API_STRIDE + 0] = schema.local_field_value(i,DICe::COORDINATE_X);
+    points[i*DICE_API_STRIDE + 1] = schema.local_field_value(i,DICe::COORDINATE_Y);
+    points[i*DICE_API_STRIDE + 2] = schema.local_field_value(i,DICe::DISPLACEMENT_X);
+    points[i*DICE_API_STRIDE + 3] = schema.local_field_value(i,DICe::DISPLACEMENT_Y);
+    points[i*DICE_API_STRIDE + 4] = schema.local_field_value(i,DICe::ROTATION_Z);
+    points[i*DICE_API_STRIDE + 5] = schema.local_field_value(i,DICe::SIGMA);
+    points[i*DICE_API_STRIDE + 6] = schema.local_field_value(i,DICe::GAMMA);
+    points[i*DICE_API_STRIDE + 7] = schema.local_field_value(i,DICe::BETA);
+    points[i*DICE_API_STRIDE + 8] = schema.local_field_value(i,DICe::STATUS_FLAG);
   }
 
   return 0;

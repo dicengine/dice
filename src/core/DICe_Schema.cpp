@@ -48,6 +48,9 @@
 #ifdef DICE_ENABLE_GLOBAL
   #include <DICe_TriangleUtils.h>
 #endif
+
+#include <DICe_MeshIO.h>
+
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <Teuchos_ArrayRCP.hpp>
 
@@ -344,8 +347,8 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   has_output_spec_ = false;
   is_initialized_ = false;
   analysis_type_ = LOCAL_DIC;
-  target_field_descriptor_ = ALL_OWNED;
-  distributed_fields_being_modified_ = false;
+//  target_field_descriptor_ = ALL_OWNED;
+//  distributed_fields_being_modified_ = false;
   has_post_processor_ = false;
   normalize_gamma_with_active_pixels_ = false;
   gauss_filter_images_ = false;
@@ -687,8 +690,8 @@ Schema::initialize(const int_t step_size_x,
 
   for (int_t i=0;i<num_pts;++i)
   {
-     field_value(i,COORDINATE_X) = coords_x[i];
-     field_value(i,COORDINATE_Y) = coords_y[i];
+     local_field_value(i,COORDINATE_X) = coords_x[i];
+     local_field_value(i,COORDINATE_Y) = coords_y[i];
   }
 }
 
@@ -796,8 +799,8 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
   // set the coordinates for the subsets:
   // all other values are initiliazed to zero
   for(int_t i=0;i<num_subsets;++i){
-    field_value(i,DICe::COORDINATE_X) = (*subset_centroids)[i*dim + 0];
-    field_value(i,DICe::COORDINATE_Y) = (*subset_centroids)[i*dim + 1];
+    local_field_value(i,DICe::COORDINATE_X) = (*subset_centroids)[i*dim + 0];
+    local_field_value(i,DICe::COORDINATE_Y) = (*subset_centroids)[i*dim + 1];
   }
   // set the seed value if they exist
   if(subset_info!=Teuchos::null){
@@ -847,25 +850,25 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
         const int_t roi_id = it->second;
         TEUCHOS_TEST_FOR_EXCEPTION(subset_info->displacement_map->find(roi_id)==subset_info->displacement_map->end(),
           std::runtime_error,"");
-        field_value(subset_id,DICe::DISPLACEMENT_X) = subset_info->displacement_map->find(roi_id)->second.first;
-        field_value(subset_id,DICe::DISPLACEMENT_Y) = subset_info->displacement_map->find(roi_id)->second.second;
+        global_field_value(subset_id,DICe::DISPLACEMENT_X) = subset_info->displacement_map->find(roi_id)->second.first;
+        global_field_value(subset_id,DICe::DISPLACEMENT_Y) = subset_info->displacement_map->find(roi_id)->second.second;
         if(proc_rank==0) DEBUG_MSG("Seeding the displacement solution for subset " << subset_id << " with ux: " <<
-          field_value(subset_id,DICe::DISPLACEMENT_X) << " uy: " << field_value(subset_id,DICe::DISPLACEMENT_Y));
+          global_field_value(subset_id,DICe::DISPLACEMENT_X) << " uy: " << global_field_value(subset_id,DICe::DISPLACEMENT_Y));
         if(subset_info->normal_strain_map->find(roi_id)!=subset_info->normal_strain_map->end()){
-          field_value(subset_id,DICe::NORMAL_STRAIN_X) = subset_info->normal_strain_map->find(roi_id)->second.first;
-          field_value(subset_id,DICe::NORMAL_STRAIN_Y) = subset_info->normal_strain_map->find(roi_id)->second.second;
+          global_field_value(subset_id,DICe::NORMAL_STRAIN_X) = subset_info->normal_strain_map->find(roi_id)->second.first;
+          global_field_value(subset_id,DICe::NORMAL_STRAIN_Y) = subset_info->normal_strain_map->find(roi_id)->second.second;
           if(proc_rank==0) DEBUG_MSG("Seeding the normal strain solution for subset " << subset_id << " with ex: " <<
-            field_value(subset_id,DICe::NORMAL_STRAIN_X) << " ey: " << field_value(subset_id,DICe::NORMAL_STRAIN_Y));
+            global_field_value(subset_id,DICe::NORMAL_STRAIN_X) << " ey: " << global_field_value(subset_id,DICe::NORMAL_STRAIN_Y));
         }
         if(subset_info->shear_strain_map->find(roi_id)!=subset_info->shear_strain_map->end()){
-          field_value(subset_id,DICe::SHEAR_STRAIN_XY) = subset_info->shear_strain_map->find(roi_id)->second;
+          global_field_value(subset_id,DICe::SHEAR_STRAIN_XY) = subset_info->shear_strain_map->find(roi_id)->second;
           if(proc_rank==0) DEBUG_MSG("Seeding the shear strain solution for subset " << subset_id << " with gamma_xy: " <<
-            field_value(subset_id,DICe::SHEAR_STRAIN_XY));
+            global_field_value(subset_id,DICe::SHEAR_STRAIN_XY));
         }
         if(subset_info->rotation_map->find(roi_id)!=subset_info->rotation_map->end()){
-          field_value(subset_id,DICe::ROTATION_Z) = subset_info->rotation_map->find(roi_id)->second;
+          global_field_value(subset_id,DICe::ROTATION_Z) = subset_info->rotation_map->find(roi_id)->second;
           if(proc_rank==0) DEBUG_MSG("Seeding the rotation solution for subset " << subset_id << " with theta_z: " <<
-            field_value(subset_id,DICe::ROTATION_Z));
+            global_field_value(subset_id,DICe::ROTATION_Z));
         }
       }
     }
@@ -883,8 +886,8 @@ Schema::initialize(Teuchos::ArrayRCP<scalar_t> coords_x,
   TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[0]->height()!=ref_img_->height(),std::runtime_error,"");
   if(is_initialized_){
     assert(data_num_points_>0);
-    assert(fields_->get_num_fields()==MAX_FIELD_NAME);
-    assert(fields_nm1_->get_num_fields()==MAX_FIELD_NAME);
+    //assert(fields_->get_num_fields()==MAX_FIELD_NAME);
+    //assert(fields_nm1_->get_num_fields()==MAX_FIELD_NAME);
     return;  // no need to initialize if already done
   }
   TEUCHOS_TEST_FOR_EXCEPTION(coords_x==Teuchos::null || coords_y==Teuchos::null,std::runtime_error,"Error, invalid pointers for coordinates");
@@ -897,34 +900,36 @@ Schema::initialize(Teuchos::ArrayRCP<scalar_t> coords_x,
   subset_dim_ = subset_size;
 
   // evenly distributed one-to-one map
-  dist_map_ = Teuchos::rcp(new MultiField_Map(data_num_points_,0,*comm_));
+  //dist_map_ = Teuchos::rcp(new MultiField_Map(data_num_points_,0,*comm_));
 
   // all owned map (not one-to-one)
-  Teuchos::Array<int_t> all_subsets(data_num_points_);
-  for(int_t i=0;i<data_num_points_;++i)
-    all_subsets[i] = i;
-  all_map_ = Teuchos::rcp(new MultiField_Map(-1,all_subsets.view(0,all_subsets.size()),0,*comm_));
+  //Teuchos::Array<int_t> all_subsets(data_num_points_);
+  //for(int_t i=0;i<data_num_points_;++i)
+  //  all_subsets[i] = i;
+  //all_map_ = Teuchos::rcp(new MultiField_Map(-1,all_subsets.view(0,all_subsets.size()),0,*comm_));
 
   // if there are blocking subsets, they need to be on the same processor and put in order:
   create_obstruction_dist_map();
 
-  create_seed_dist_map(neighbor_ids);
-
   // create an exodus mesh for output
-  //create_mesh(coords_x,coords_y);
+  create_mesh(coords_x,coords_y);
 
-  importer_ = Teuchos::rcp(new MultiField_Importer(*dist_map_,*all_map_));
-  exporter_ = Teuchos::rcp(new MultiField_Exporter(*all_map_,*dist_map_));
-  seed_importer_ = Teuchos::rcp(new MultiField_Importer(*seed_dist_map_,*all_map_));
-  seed_exporter_ = Teuchos::rcp(new MultiField_Exporter(*all_map_,*seed_dist_map_));
-  fields_ = Teuchos::rcp(new MultiField(all_map_,MAX_FIELD_NAME,true));
-  fields_nm1_ = Teuchos::rcp(new MultiField(all_map_,MAX_FIELD_NAME,true));
-#if DICE_MPI
-  dist_fields_ = Teuchos::rcp(new MultiField(dist_map_,MAX_FIELD_NAME,true));
-  dist_fields_nm1_ = Teuchos::rcp(new MultiField(dist_map_,MAX_FIELD_NAME,true));
-  seed_dist_fields_ = Teuchos::rcp(new MultiField(seed_dist_map_,MAX_FIELD_NAME,true));
-  seed_dist_fields_nm1_ = Teuchos::rcp(new MultiField(seed_dist_map_,MAX_FIELD_NAME,true));
-#endif
+
+  //create_seed_dist_map(neighbor_ids);
+
+
+//  importer_ = Teuchos::rcp(new MultiField_Importer(*dist_map_,*all_map_));
+//  exporter_ = Teuchos::rcp(new MultiField_Exporter(*all_map_,*dist_map_));
+//  seed_importer_ = Teuchos::rcp(new MultiField_Importer(*seed_dist_map_,*all_map_));
+//  seed_exporter_ = Teuchos::rcp(new MultiField_Exporter(*all_map_,*seed_dist_map_));
+//  fields_ = Teuchos::rcp(new MultiField(all_map_,MAX_FIELD_NAME,true));
+//  fields_nm1_ = Teuchos::rcp(new MultiField(all_map_,MAX_FIELD_NAME,true));
+//#if DICE_MPI
+//  dist_fields_ = Teuchos::rcp(new MultiField(dist_map_,MAX_FIELD_NAME,true));
+//  dist_fields_nm1_ = Teuchos::rcp(new MultiField(dist_map_,MAX_FIELD_NAME,true));
+//  seed_dist_fields_ = Teuchos::rcp(new MultiField(seed_dist_map_,MAX_FIELD_NAME,true));
+//  seed_dist_fields_nm1_ = Teuchos::rcp(new MultiField(seed_dist_map_,MAX_FIELD_NAME,true));
+//#endif
   // initialize the conformal subset map to avoid havng to check if its null always
   if(conformal_subset_defs==Teuchos::null)
     conformal_subset_defs_ = Teuchos::rcp(new std::map<int_t,DICe::Conformal_Area_Def>);
@@ -952,7 +957,7 @@ Schema::initialize(Teuchos::ArrayRCP<scalar_t> coords_x,
 
   if(neighbor_ids!=Teuchos::null)
     for(int_t i=0;i<data_num_points_;++i){
-      field_value(i,DICe::NEIGHBOR_ID)  = (*neighbor_ids)[i];
+      local_field_value(i,DICe::NEIGHBOR_ID)  = (*neighbor_ids)[i];
     }
 }
 
@@ -960,16 +965,98 @@ void
 Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   Teuchos::ArrayRCP<scalar_t> coords_y){
 
-  Teuchos::RCP<DICe::mesh::Mesh> mesh = generate_tri_mesh(DICe::mesh::TRI3,
+  // create a  DICe::mesh::Mesh that has a connectivity with only one node per elem
+  const int_t num_points = coords_x.size();
+  Teuchos::ArrayRCP<int_t> connectivity(num_points,0);
+  Teuchos::ArrayRCP<int_t> node_map(num_points,0);
+  for(int_t i=0;i<num_points;++i){
+    connectivity[i] = i+1;
+    node_map[i] = i;
+  }
+  std::vector<std::pair<int_t,int_t>> dirichlet_boundary_nodes;
+  std::set<int_t> neumann_boundary_nodes;
+  std::set<int_t> lagrange_boundary_nodes;
+  mesh_ = DICe::mesh::create_tri_exodus_mesh(DICe::mesh::MESHLESS,
     coords_x,
     coords_y,
-    step_size_x_*10,
-    "sample_mesh.e",
-    false,
-    false);
+    connectivity,
+    node_map,
+    dirichlet_boundary_nodes,
+    neumann_boundary_nodes,
+    lagrange_boundary_nodes,
+    "sample_mesh.e");
 
+  mesh_->create_field(mesh::field_enums::DISPLACEMENT_X_FS);
+  mesh_->create_field(mesh::field_enums::DISPLACEMENT_X_NM1_FS);
+  mesh_->create_field(mesh::field_enums::DISPLACEMENT_Y_FS);
+  mesh_->create_field(mesh::field_enums::DISPLACEMENT_Y_NM1_FS);
+  mesh_->create_field(mesh::field_enums::DISPLACEMENT_Z_FS);
+  mesh_->create_field(mesh::field_enums::DISPLACEMENT_Z_NM1_FS);
+  mesh_->create_field(mesh::field_enums::ROTATION_X_FS);
+  mesh_->create_field(mesh::field_enums::ROTATION_X_NM1_FS);
+  mesh_->create_field(mesh::field_enums::ROTATION_Y_FS);
+  mesh_->create_field(mesh::field_enums::ROTATION_Y_NM1_FS);
+  mesh_->create_field(mesh::field_enums::ROTATION_Z_FS);
+  mesh_->create_field(mesh::field_enums::ROTATION_Z_NM1_FS);
+  mesh_->create_field(mesh::field_enums::SHEAR_STRETCH_XY_FS);
+  mesh_->create_field(mesh::field_enums::SHEAR_STRETCH_XY_NM1_FS);
+  mesh_->create_field(mesh::field_enums::SHEAR_STRETCH_YZ_FS);
+  mesh_->create_field(mesh::field_enums::SHEAR_STRETCH_YZ_NM1_FS);
+  mesh_->create_field(mesh::field_enums::SHEAR_STRETCH_XZ_FS);
+  mesh_->create_field(mesh::field_enums::SHEAR_STRETCH_XZ_NM1_FS);
+  mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_XX_FS);
+  mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_XX_NM1_FS);
+  mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_YY_FS);
+  mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_YY_NM1_FS);
+  mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_ZZ_FS);
+  mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_ZZ_NM1_FS);
+  mesh_->create_field(mesh::field_enums::INITIAL_COORDINATES_X_FS);
+  mesh_->create_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
+  mesh_->create_field(mesh::field_enums::INITIAL_COORDINATES_Z_FS);
+  mesh_->create_field(mesh::field_enums::SIGMA_FS);
+  mesh_->create_field(mesh::field_enums::GAMMA_FS);
+  mesh_->create_field(mesh::field_enums::BETA_FS);
+  mesh_->create_field(mesh::field_enums::NOISE_LEVEL_FS);
+  mesh_->create_field(mesh::field_enums::CONTRAST_LEVEL_FS);
+  mesh_->create_field(mesh::field_enums::ACTIVE_PIXELS_FS);
+  mesh_->create_field(mesh::field_enums::MATCH_FS);
+  mesh_->create_field(mesh::field_enums::ITERATIONS_FS);
+  mesh_->create_field(mesh::field_enums::STATUS_FLAG_FS);
+  mesh_->create_field(mesh::field_enums::NEIGHBOR_ID_FS);
+  mesh_->create_field(mesh::field_enums::CONDITION_NUMBER_FS);
+  mesh_->create_field(mesh::field_enums::FIELD_1_FS);
+  mesh_->create_field(mesh::field_enums::FIELD_2_FS);
+  mesh_->create_field(mesh::field_enums::FIELD_3_FS);
+  mesh_->create_field(mesh::field_enums::FIELD_4_FS);
+  mesh_->create_field(mesh::field_enums::FIELD_5_FS);
+  mesh_->create_field(mesh::field_enums::FIELD_6_FS);
+  mesh_->create_field(mesh::field_enums::FIELD_7_FS);
+  mesh_->create_field(mesh::field_enums::FIELD_8_FS);
+  mesh_->create_field(mesh::field_enums::FIELD_9_FS);
+  mesh_->create_field(mesh::field_enums::FIELD_10_FS);
 
-  assert(false);
+//  Teuchos::ArrayRCP<scalar_t> holes_x(1,250);
+//  Teuchos::ArrayRCP<scalar_t> holes_y(1,250);
+//
+//  Teuchos::RCP<DICe::mesh::Mesh> mesh = generate_tri_mesh(DICe::mesh::TRI3,
+//    coords_x,
+//    coords_y,
+//    Teuchos::null,//holes_x,
+//    Teuchos::null,//holes_y,
+//    Teuchos::null,
+//    Teuchos::null,
+//    Teuchos::null,
+//    Teuchos::null,
+//    step_size_x_*step_size_x_*100,
+//    "sample_mesh.e",
+//    false,
+//    false);
+//
+//  TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"Error, mesh should not be a null pointer here.");
+//  DICe::mesh::create_output_exodus_file(mesh_,"./"); // FIXME output folder is not correct
+//  DICe::mesh::create_exodus_output_variable_names(mesh_);
+//  DICe::mesh::exodus_output_dump(mesh_,1,1.0); // FIXME remove this
+
 }
 
 void
@@ -1052,12 +1139,12 @@ Schema::create_obstruction_dist_map(){
 
   // divy up the obstruction groups among the processors:
   int_t obst_group_gid = 0;
-  std::vector<std::set<int_t> > local_subset_ids(num_procs);
+  std::vector<std::set<int_t> > local_subset_gids(num_procs);
   while(obst_group_gid < (int_t)obstruction_groups.size()){
     for(int_t p_id=0;p_id<num_procs;++p_id){
       if(obst_group_gid < (int_t)obstruction_groups.size()){
         //if(p_id==proc_id){
-        local_subset_ids[p_id].insert(obstruction_groups[obst_group_gid].begin(),obstruction_groups[obst_group_gid].end());
+        local_subset_gids[p_id].insert(obstruction_groups[obst_group_gid].begin(),obstruction_groups[obst_group_gid].end());
         //}
         obst_group_gid++;
       }
@@ -1069,34 +1156,34 @@ Schema::create_obstruction_dist_map(){
     int_t proc_with_fewest_subsets = 0;
     int_t lowest_num_subsets = data_num_points_;
     for(int_t i=0;i<num_procs;++i){
-      if((int_t)local_subset_ids[i].size() <= lowest_num_subsets){
-        lowest_num_subsets = local_subset_ids[i].size();
+      if((int_t)local_subset_gids[i].size() <= lowest_num_subsets){
+        lowest_num_subsets = local_subset_gids[i].size();
         proc_with_fewest_subsets = i;
       }
     }
-    local_subset_ids[proc_with_fewest_subsets].insert(*elig_it);
+    local_subset_gids[proc_with_fewest_subsets].insert(*elig_it);
   }
   // order the subset ids so that they respect the dependencies:
-  std::vector<int_t> local_ids;
-  std::set<int_t>::iterator set_it = local_subset_ids[proc_id].begin();
-  for(;set_it!=local_subset_ids[proc_id].end();++set_it){
+  std::vector<int_t> local_gids;
+  std::set<int_t>::iterator set_it = local_subset_gids[proc_id].begin();
+  for(;set_it!=local_subset_gids[proc_id].end();++set_it){
     // not in the list of subsets with blockers
     if(obstructing_subset_ids_->find(*set_it)==obstructing_subset_ids_->end()){
-      local_ids.push_back(*set_it);
+      local_gids.push_back(*set_it);
     }
     // in the list of subsets with blockers, but has no blocking ids
     else if(obstructing_subset_ids_->find(*set_it)->second.size()==0){
-      local_ids.push_back(*set_it);
+      local_gids.push_back(*set_it);
     }
 
   }
-  set_it = local_subset_ids[proc_id].begin();
-  for(;set_it!=local_subset_ids[proc_id].end();++set_it){
+  set_it = local_subset_gids[proc_id].begin();
+  for(;set_it!=local_subset_gids[proc_id].end();++set_it){
     if(obstructing_subset_ids_->find(*set_it)!=obstructing_subset_ids_->end()){
       if(obstructing_subset_ids_->find(*set_it)->second.size()>0){
         TEUCHOS_TEST_FOR_EXCEPTION(earliest_id_can_appear.find(*set_it)==earliest_id_can_appear.end(),
           std::runtime_error,"");
-        local_ids.push_back(*set_it);
+        local_gids.push_back(*set_it);
       }
     }
   }
@@ -1104,104 +1191,111 @@ Schema::create_obstruction_dist_map(){
   ss.str(std::string());
   ss.clear();
   ss << "[PROC " << proc_id << "] Has the following subset ids: " << std::endl;
-  for(size_t i=0;i<local_ids.size();++i){
-    ss << "[PROC " << proc_id << "] " << local_ids[i] <<  std::endl;
+  for(size_t i=0;i<local_gids.size();++i){
+    ss << "[PROC " << proc_id << "] " << local_gids[i] <<  std::endl;
   }
   DEBUG_MSG(ss.str());
 
-  Teuchos::ArrayView<const int_t> lids_grouped_by_obstruction(&local_ids[0],local_ids.size());
-  dist_map_ = Teuchos::rcp(new MultiField_Map(data_num_points_,lids_grouped_by_obstruction,0,*comm_));
-  //dist_map_->describe();
-  TEUCHOS_TEST_FOR_EXCEPTION(!dist_map_->is_one_to_one(),std::runtime_error,"");
+  Teuchos::ArrayView<const int_t> lids_grouped_by_obstruction(&local_gids[0],local_gids.size());
 
-  // if this is a serial run, the ordering must be changed too
-  if(num_procs==1)
-    all_map_ = Teuchos::rcp(new MultiField_Map(data_num_points_,lids_grouped_by_obstruction,0,*comm_));
-  //all_map_->describe();
+  // TODO TODO TODO
+  // reset the NODE NUMBERS OR HOW THEY ARE ALLOCATED use this function rather than a generic split
+
+
+
+//
+//  dist_map_ = Teuchos::rcp(new MultiField_Map(data_num_points_,lids_grouped_by_obstruction,0,*comm_));
+//  //dist_map_->describe();
+//  TEUCHOS_TEST_FOR_EXCEPTION(!dist_map_->is_one_to_one(),std::runtime_error,"");
+//
+//  // if this is a serial run, the ordering must be changed too
+//  if(num_procs==1)
+//    all_map_ = Teuchos::rcp(new MultiField_Map(data_num_points_,lids_grouped_by_obstruction,0,*comm_));
+//  //all_map_->describe();
 }
 
-void
-Schema::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids){
-  // distribution according to seeds map (one-to-one, not all procs have entries)
-  // If the initialization method is USE_NEIGHBOR_VALUES or USE_NEIGHBOR_VALUES_FIRST_STEP, the
-  // first step has to have a special map that keeps all subsets that use a particular seed
-  // on the same processor (the parallelism is limited to the number of seeds).
-  const int_t proc_id = comm_->get_rank();
-  const int_t num_procs = comm_->get_size();
-
-  if(neighbor_ids!=Teuchos::null){
-    // catch the case that this is an TRACKING_ROUTINE run, but seed values were specified for
-    // the individual subsets. In that case, the seed map is not necessary because there are
-    // no initializiation dependencies among subsets, but the seed map will still be used since it
-    // will be activated when seeds are specified for a subset.
-    if(obstructing_subset_ids_!=Teuchos::null){
-      if(obstructing_subset_ids_->size()>0){
-        bool print_warning = false;
-        for(size_t i=0;i<neighbor_ids->size();++i){
-          if((*neighbor_ids)[i]!=-1) print_warning = true;
-        }
-        if(print_warning && proc_id==0){
-          std::cout << "*** Waring: Seed values were specified for an analysis with obstructing subsets. " << std::endl;
-          std::cout << "            These values will be used to initialize subsets for which a seed has been specified, but the seed map " << std::endl;
-          std::cout << "            will be set to the distributed map because grouping subsets by obstruction trumps seed ordering." << std::endl;
-          std::cout << "            Seed dependencies between neighbors will not be enforced." << std::endl;
-        }
-        seed_dist_map_ = dist_map_;
-        return;
-      }
-    }
-    std::vector<int_t> local_subset_gids_grouped_by_roi;
-    TEUCHOS_TEST_FOR_EXCEPTION((int_t)neighbor_ids->size()!=data_num_points_,std::runtime_error,"");
-    std::vector<int_t> this_group_gids;
-    std::vector<std::vector<int_t> > seed_groupings;
-    std::vector<std::vector<int_t> > local_seed_groupings;
-    for(int_t i=data_num_points_-1;i>=0;--i){
-      this_group_gids.push_back(i);
-      // if this subset is a seed, break this grouping and insert it in the set
-      if((*neighbor_ids)[i]==-1){
-        seed_groupings.push_back(this_group_gids);
-        this_group_gids.clear();
-      }
-    }
-    // TODO order the sets by their sizes and load balance better:
-    // divy up the seed_groupings round-robin style:
-    int_t group_gid = 0;
-    int_t local_total_id_list_size = 0;
-    while(group_gid < (int_t)seed_groupings.size()){
-      // reverse the order so the subsets are computed from the seed out
-      for(int_t p_id=0;p_id<num_procs;++p_id){
-        if(group_gid < (int_t)seed_groupings.size()){
-          if(p_id==proc_id){
-            std::reverse(seed_groupings[group_gid].begin(), seed_groupings[group_gid].end());
-            local_seed_groupings.push_back(seed_groupings[group_gid]);
-            local_total_id_list_size += seed_groupings[group_gid].size();
-          }
-          group_gid++;
-        }
-        else break;
-      }
-    }
-    DEBUG_MSG("[PROC " << proc_id << "] Has " << local_seed_groupings.size() << " local seed grouping(s)");
-    for(size_t i=0;i<local_seed_groupings.size();++i){
-      DEBUG_MSG("[PROC " << proc_id << "] local group id: " << i);
-      for(size_t j=0;j<local_seed_groupings[i].size();++j){
-        DEBUG_MSG("[PROC " << proc_id << "] gid: " << local_seed_groupings[i][j] );
-      }
-    }
-    // concat local subset ids:
-    local_subset_gids_grouped_by_roi.reserve(local_total_id_list_size);
-    for(size_t i=0;i<local_seed_groupings.size();++i){
-      local_subset_gids_grouped_by_roi.insert( local_subset_gids_grouped_by_roi.end(),
-        local_seed_groupings[i].begin(),
-        local_seed_groupings[i].end());
-    }
-    Teuchos::ArrayView<const int_t> lids_grouped_by_roi(&local_subset_gids_grouped_by_roi[0],local_total_id_list_size);
-    seed_dist_map_ = Teuchos::rcp(new MultiField_Map(data_num_points_,lids_grouped_by_roi,0,*comm_));
-  } // end has_neighbor_ids
-  else{
-    seed_dist_map_ = dist_map_;
-  }
-}
+//void
+//Schema::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids){
+//  // distribution according to seeds map (one-to-one, not all procs have entries)
+//  // If the initialization method is USE_NEIGHBOR_VALUES or USE_NEIGHBOR_VALUES_FIRST_STEP, the
+//  // first step has to have a special map that keeps all subsets that use a particular seed
+//  // on the same processor (the parallelism is limited to the number of seeds).
+//  const int_t proc_id = comm_->get_rank();
+//  const int_t num_procs = comm_->get_size();
+//
+//  if(neighbor_ids!=Teuchos::null){
+//    // catch the case that this is an TRACKING_ROUTINE run, but seed values were specified for
+//    // the individual subsets. In that case, the seed map is not necessary because there are
+//    // no initializiation dependencies among subsets, but the seed map will still be used since it
+//    // will be activated when seeds are specified for a subset.
+//    if(obstructing_subset_ids_!=Teuchos::null){
+//      if(obstructing_subset_ids_->size()>0){
+//        bool print_warning = false;
+//        for(size_t i=0;i<neighbor_ids->size();++i){
+//          if((*neighbor_ids)[i]!=-1) print_warning = true;
+//        }
+//        if(print_warning && proc_id==0){
+//          std::cout << "*** Waring: Seed values were specified for an analysis with obstructing subsets. " << std::endl;
+//          std::cout << "            These values will be used to initialize subsets for which a seed has been specified, but the seed map " << std::endl;
+//          std::cout << "            will be set to the distributed map because grouping subsets by obstruction trumps seed ordering." << std::endl;
+//          std::cout << "            Seed dependencies between neighbors will not be enforced." << std::endl;
+//        }
+//        seed_dist_map_ = dist_map_;
+//        return;
+//      }
+//    }
+//    std::vector<int_t> local_subset_gids_grouped_by_roi;
+//    TEUCHOS_TEST_FOR_EXCEPTION((int_t)neighbor_ids->size()!=data_num_points_,std::runtime_error,"");
+//    std::vector<int_t> this_group_gids;
+//    std::vector<std::vector<int_t> > seed_groupings;
+//    std::vector<std::vector<int_t> > local_seed_groupings;
+//    for(int_t i=data_num_points_-1;i>=0;--i){
+//      this_group_gids.push_back(i);
+//      // if this subset is a seed, break this grouping and insert it in the set
+//      if((*neighbor_ids)[i]==-1){
+//        seed_groupings.push_back(this_group_gids);
+//        this_group_gids.clear();
+//      }
+//    }
+//    // TODO order the sets by their sizes and load balance better:
+//    // divy up the seed_groupings round-robin style:
+//    int_t group_gid = 0;
+//    int_t local_total_id_list_size = 0;
+//    while(group_gid < (int_t)seed_groupings.size()){
+//      // reverse the order so the subsets are computed from the seed out
+//      for(int_t p_id=0;p_id<num_procs;++p_id){
+//        if(group_gid < (int_t)seed_groupings.size()){
+//          if(p_id==proc_id){
+//            std::reverse(seed_groupings[group_gid].begin(), seed_groupings[group_gid].end());
+//            local_seed_groupings.push_back(seed_groupings[group_gid]);
+//            local_total_id_list_size += seed_groupings[group_gid].size();
+//          }
+//          group_gid++;
+//        }
+//        else break;
+//      }
+//    }
+//    DEBUG_MSG("[PROC " << proc_id << "] Has " << local_seed_groupings.size() << " local seed grouping(s)");
+//    for(size_t i=0;i<local_seed_groupings.size();++i){
+//      DEBUG_MSG("[PROC " << proc_id << "] local group id: " << i);
+//      for(size_t j=0;j<local_seed_groupings[i].size();++j){
+//        DEBUG_MSG("[PROC " << proc_id << "] gid: " << local_seed_groupings[i][j] );
+//      }
+//    }
+//    // concat local subset ids:
+//    local_subset_gids_grouped_by_roi.reserve(local_total_id_list_size);
+//    for(size_t i=0;i<local_seed_groupings.size();++i){
+//      local_subset_gids_grouped_by_roi.insert( local_subset_gids_grouped_by_roi.end(),
+//        local_seed_groupings[i].begin(),
+//        local_seed_groupings[i].end());
+//    }
+//    Teuchos::ArrayView<const int_t> lids_grouped_by_roi(&local_subset_gids_grouped_by_roi[0],local_total_id_list_size);
+//    seed_dist_map_ = Teuchos::rcp(new MultiField_Map(data_num_points_,lids_grouped_by_roi,0,*comm_));
+//  } // end has_neighbor_ids
+//  else{
+//    seed_dist_map_ = dist_map_;
+//  }
+//}
 
 void
 Schema::post_execution_tasks(){
@@ -1234,8 +1328,8 @@ Schema::execute_correlation(){
 
   // make sure the data is ready to go since it may have been initialized externally by an api
   assert(is_initialized_);
-  assert(fields_->get_num_fields()==MAX_FIELD_NAME);
-  assert(fields_nm1_->get_num_fields()==MAX_FIELD_NAME);
+  //assert(fields_->get_num_fields()==MAX_FIELD_NAME);
+  //assert(fields_nm1_->get_num_fields()==MAX_FIELD_NAME);
   assert(data_num_points_>0);
 
   const int_t proc_id = comm_->get_rank();
@@ -1249,7 +1343,7 @@ Schema::execute_correlation(){
   DEBUG_MSG(progress.str());
   DEBUG_MSG("********************");
 
-  int_t num_local_subsets = this_proc_subset_global_ids_.size();
+//  int_t num_local_subsets = this_proc_subset_global_ids_.size();
 
   // reset the motion detectors for each subset if used
   for(std::map<int_t,Teuchos::RCP<Motion_Test_Utility> >::iterator it = motion_detectors_.begin();
@@ -1258,56 +1352,69 @@ Schema::execute_correlation(){
     it->second->reset();
   }
 
-  // PARALLEL CASE:
-  if(num_procs >1){
-    // first pass for a USE_FILED_VALUES run sets up the local subset list
-    // for all subsequent frames, the list remains unchanged. For this case, it
-    // doesn't matter if seeding is used, because neighbor values are not needed
-    if(initialization_method_==USE_FIELD_VALUES){
-      target_field_descriptor_ = DISTRIBUTED;
-      if(this_proc_subset_global_ids_.size()==0){
-        num_local_subsets = dist_map_->get_num_local_elements();
-        this_proc_subset_global_ids_ = dist_map_->get_local_element_list();
-      }
-    }
-    // if seeding is used and the init method is USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY, the first
-    // frame has to be serial, the rest can be parallel
-    // TODO if multiple ROIs are used, the ROIs can be split across processors
-    else if(initialization_method_==USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY){
-      if(image_frame_==0){
-        target_field_descriptor_ = DISTRIBUTED_GROUPED_BY_SEED;
-        num_local_subsets = seed_dist_map_->get_num_local_elements();
-        this_proc_subset_global_ids_ = seed_dist_map_->get_local_element_list();
-      }
-      else if(image_frame_==1){
-        target_field_descriptor_ = DISTRIBUTED;
-        num_local_subsets = dist_map_->get_num_local_elements();
-        this_proc_subset_global_ids_ = dist_map_->get_local_element_list();
-      }
-      // otherwise nothing needs to be done since the maps will not need to change after step 1
-    }
-    /// For use neighbor values, the run has to be serial for each grouping that has a seed
-    else if(initialization_method_==USE_NEIGHBOR_VALUES){
-      if(image_frame_==0){
-        target_field_descriptor_ = DISTRIBUTED_GROUPED_BY_SEED;
-        num_local_subsets = seed_dist_map_->get_num_local_elements();
-        this_proc_subset_global_ids_ = seed_dist_map_->get_local_element_list();
-      }
-    }
-    else{
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: unknown initialization_method in execute correlation");
-    }
-  }
+//  // PARALLEL CASE:
+//  if(num_procs >1){
+//    // first pass for a USE_FILED_VALUES run sets up the local subset list
+//    // for all subsequent frames, the list remains unchanged. For this case, it
+//    // doesn't matter if seeding is used, because neighbor values are not needed
+//    if(initialization_method_==USE_FIELD_VALUES){
+////      target_field_descriptor_ = DISTRIBUTED;
+//      if(this_proc_subset_global_ids_.size()==0){
+//        num_local_subsets = mesh_->get_scalar_node_dist_map()->get_num_global_elements();
+//        this_proc_subset_global_ids_ = mesh_->get_scalar_node_dist_map()->get_global_element_list();
+//      }
+//    }
+//    // if seeding is used and the init method is USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY, the first
+//    // frame has to be serial, the rest can be parallel
+//    // TODO if multiple ROIs are used, the ROIs can be split across processors
+//    else if(initialization_method_==USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY){
+//      if(image_frame_==0){
+////        target_field_descriptor_ = DISTRIBUTED_GROUPED_BY_SEED;
+//        num_local_subsets = mesh_->get_scalar_node_dist_map()->get_num_global_elements();
+//        this_proc_subset_global_ids_ = mesh_->get_scalar_node_dist_map()->get_global_element_list();
+////        num_local_subsets = seed_dist_map_->get_num_local_elements();
+////        this_proc_subset_global_ids_ = seed_dist_map_->get_local_element_list();
+//      }
+//      else if(image_frame_==1){
+////        target_field_descriptor_ = DISTRIBUTED;
+//        num_local_subsets = mesh_->get_scalar_node_dist_map()->get_num_global_elements();
+//        this_proc_subset_global_ids_ = mesh_->get_scalar_node_dist_map()->get_global_element_list();
+////        num_local_subsets = dist_map_->get_num_local_elements();
+////        this_proc_subset_global_ids_ = dist_map_->get_local_element_list();
+//      }
+//      // otherwise nothing needs to be done since the maps will not need to change after step 1
+//    }
+//    /// For use neighbor values, the run has to be serial for each grouping that has a seed
+//    else if(initialization_method_==USE_NEIGHBOR_VALUES){
+//      if(image_frame_==0){
+////        target_field_descriptor_ = DISTRIBUTED_GROUPED_BY_SEED;
+//        num_local_subsets = mesh_->get_scalar_node_dist_map()->get_num_global_elements();
+//        this_proc_subset_global_ids_ = mesh_->get_scalar_node_dist_map()->get_global_element_list();
+////        num_local_subsets = seed_dist_map_->get_num_local_elements();
+////        this_proc_subset_global_ids_ = seed_dist_map_->get_local_element_list();
+//      }
+//    }
+//    else{
+//      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: unknown initialization_method in execute correlation");
+//    }
+//  }
+//
+//  // SERIAL CASE:
+//
+//  else{
+//    if(image_frame_==0){
+////      target_field_descriptor_ = ALL_OWNED;
+//      num_local_subsets = mesh_->get_scalar_node_dist_map()->get_num_global_elements();
+//      this_proc_subset_global_ids_ = mesh_->get_scalar_node_dist_map()->get_global_element_list();
+////      num_local_subsets = all_map_->get_num_local_elements();
+////      this_proc_subset_global_ids_ = all_map_->get_local_element_list();
+//    }
+//  }
 
-  // SERIAL CASE:
 
-  else{
-    if(image_frame_==0){
-      target_field_descriptor_ = ALL_OWNED;
-      num_local_subsets = all_map_->get_num_local_elements();
-      this_proc_subset_global_ids_ = all_map_->get_local_element_list();
-    }
-  }
+  const int_t num_local_subsets = mesh_->get_scalar_node_dist_map()->get_num_global_elements();
+  this_proc_subset_global_ids_ = mesh_->get_scalar_node_dist_map()->get_global_element_list();
+
 #ifdef DICE_DEBUG_MSG
   std::stringstream message;
   message << std::endl;
@@ -1316,7 +1423,7 @@ Schema::execute_correlation(){
   }
   DEBUG_MSG(message.str());
 #endif
-  DEBUG_MSG("[PROC " << proc_id << "] has target_field_descriptor " << target_field_descriptor_);
+//  DEBUG_MSG("[PROC " << proc_id << "] has target_field_descriptor " << target_field_descriptor_);
 
   // Complete the set up activities for the post processors
   if(image_frame_==0){
@@ -1326,7 +1433,7 @@ Schema::execute_correlation(){
   }
 
   // sync the fields:
-  sync_fields_all_to_dist();
+  //sync_fields_all_to_dist();
 
   // The generic routine is typically used when the dataset involves numerous subsets,
   // but only a small number of images. In this case it's more efficient to re-allocate the
@@ -1378,13 +1485,14 @@ Schema::execute_correlation(){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: unknown correlation routine.");
 
   // sync the fields
-  sync_fields_dist_to_all();
+  //sync_fields_dist_to_all();
 
   if(proc_id==0){
     for(int_t subset_index=0;subset_index<data_num_points_;++subset_index){
-      DEBUG_MSG("[PROC " << proc_id << "] Subset " << subset_index << " synced-up solution after execute_correlation() done, u: " <<
-        field_value(subset_index,DISPLACEMENT_X) << " v: " << field_value(subset_index,DISPLACEMENT_Y)
-        << " theta: " << field_value(subset_index,ROTATION_Z) << " sigma: " << field_value(subset_index,SIGMA) << " gamma: " << field_value(subset_index,GAMMA) << " beta: " << field_value(subset_index,BETA));
+      DEBUG_MSG("[PROC " << proc_id << "] Subset " << this_proc_subset_global_ids_[subset_index] << " synced-up solution after execute_correlation() done, u: " <<
+        local_field_value(subset_index,DISPLACEMENT_X) << " v: " << local_field_value(subset_index,DISPLACEMENT_Y)
+        << " theta: " << local_field_value(subset_index,ROTATION_Z) << " sigma: " << local_field_value(subset_index,SIGMA) << " gamma: " <<
+        local_field_value(subset_index,GAMMA) << " beta: " << local_field_value(subset_index,BETA));
     }
   }
 
@@ -1519,15 +1627,15 @@ Schema::record_failed_step(const int_t subset_gid,
   const int_t status,
   const int_t num_iterations){
   DEBUG_MSG("Subset " << subset_gid << " record failed step");
-  local_field_value(subset_gid,SIGMA) = -1.0;
-  local_field_value(subset_gid,MATCH) = -1.0;
-  local_field_value(subset_gid,GAMMA) = -1.0;
-  local_field_value(subset_gid,BETA) = -1.0;
-  local_field_value(subset_gid,NOISE_LEVEL) = -1.0;
-  local_field_value(subset_gid,CONTRAST_LEVEL) = -1.0;
-  local_field_value(subset_gid,ACTIVE_PIXELS) = -1.0;
-  local_field_value(subset_gid,STATUS_FLAG) = status;
-  local_field_value(subset_gid,ITERATIONS) = num_iterations;
+  global_field_value(subset_gid,SIGMA) = -1.0;
+  global_field_value(subset_gid,MATCH) = -1.0;
+  global_field_value(subset_gid,GAMMA) = -1.0;
+  global_field_value(subset_gid,BETA) = -1.0;
+  global_field_value(subset_gid,NOISE_LEVEL) = -1.0;
+  global_field_value(subset_gid,CONTRAST_LEVEL) = -1.0;
+  global_field_value(subset_gid,ACTIVE_PIXELS) = -1.0;
+  global_field_value(subset_gid,STATUS_FLAG) = status;
+  global_field_value(subset_gid,ITERATIONS) = num_iterations;
 }
 
 void
@@ -1543,21 +1651,21 @@ Schema::record_step(const int_t subset_gid,
   const int_t status,
   const int_t num_iterations){
   DEBUG_MSG("Subset " << subset_gid << " record step");
-  local_field_value(subset_gid,DISPLACEMENT_X) = (*deformation)[DISPLACEMENT_X];
-  local_field_value(subset_gid,DISPLACEMENT_Y) = (*deformation)[DISPLACEMENT_Y];
-  local_field_value(subset_gid,NORMAL_STRAIN_X) = (*deformation)[NORMAL_STRAIN_X];
-  local_field_value(subset_gid,NORMAL_STRAIN_Y) = (*deformation)[NORMAL_STRAIN_Y];
-  local_field_value(subset_gid,SHEAR_STRAIN_XY) = (*deformation)[SHEAR_STRAIN_XY];
-  local_field_value(subset_gid,ROTATION_Z) = (*deformation)[DICe::ROTATION_Z];
-  local_field_value(subset_gid,SIGMA) = sigma;
-  local_field_value(subset_gid,MATCH) = match; // 0 means data is successful
-  local_field_value(subset_gid,GAMMA) = gamma;
-  local_field_value(subset_gid,BETA) = beta;
-  local_field_value(subset_gid,NOISE_LEVEL) = noise;
-  local_field_value(subset_gid,CONTRAST_LEVEL) = contrast;
-  local_field_value(subset_gid,ACTIVE_PIXELS) = active_pixels;
-  local_field_value(subset_gid,STATUS_FLAG) = status;
-  local_field_value(subset_gid,ITERATIONS) = num_iterations;
+  global_field_value(subset_gid,DISPLACEMENT_X) = (*deformation)[DISPLACEMENT_X];
+  global_field_value(subset_gid,DISPLACEMENT_Y) = (*deformation)[DISPLACEMENT_Y];
+  global_field_value(subset_gid,NORMAL_STRAIN_X) = (*deformation)[NORMAL_STRAIN_X];
+  global_field_value(subset_gid,NORMAL_STRAIN_Y) = (*deformation)[NORMAL_STRAIN_Y];
+  global_field_value(subset_gid,SHEAR_STRAIN_XY) = (*deformation)[SHEAR_STRAIN_XY];
+  global_field_value(subset_gid,ROTATION_Z) = (*deformation)[DICe::ROTATION_Z];
+  global_field_value(subset_gid,SIGMA) = sigma;
+  global_field_value(subset_gid,MATCH) = match; // 0 means data is successful
+  global_field_value(subset_gid,GAMMA) = gamma;
+  global_field_value(subset_gid,BETA) = beta;
+  global_field_value(subset_gid,NOISE_LEVEL) = noise;
+  global_field_value(subset_gid,CONTRAST_LEVEL) = contrast;
+  global_field_value(subset_gid,ACTIVE_PIXELS) = active_pixels;
+  global_field_value(subset_gid,STATUS_FLAG) = status;
+  global_field_value(subset_gid,ITERATIONS) = num_iterations;
 }
 
 Status_Flag
@@ -1569,6 +1677,9 @@ Schema::initial_guess(const int_t subset_gid,
   if(correlation_routine_==TRACKING_ROUTINE){
     sid = subset_gid;
   }
+
+  // I AM HERE I AM HERE I AM HERE I AM HERE // TODO TODO TODO
+
   TEUCHOS_TEST_FOR_EXCEPTION(opt_initializers_.find(sid)==opt_initializers_.end(),std::runtime_error,
     "Initializer does not exist, but should here");
   return opt_initializers_.find(sid)->second->initial_guess(subset_gid,deformation);
@@ -1578,10 +1689,10 @@ void
 Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
 
   const int_t subset_gid = obj->correlation_point_global_id();
-  TEUCHOS_TEST_FOR_EXCEPTION(get_local_id(subset_gid)==-1,std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(mesh_->get_scalar_node_dist_map()->get_local_element(subset_gid)==-1,std::runtime_error,
     "Error: subset id is not local to this process.");
-  DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " (" << local_field_value(subset_gid,DICe::COORDINATE_X) <<
-    "," << local_field_value(subset_gid,DICe::COORDINATE_Y) << ")");
+  DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " (" << global_field_value(subset_gid,DICe::COORDINATE_X) <<
+    "," << global_field_value(subset_gid,DICe::COORDINATE_Y) << ")");
 
   // check if the solve should be skipped
   bool skip_frame = false;
@@ -1603,9 +1714,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   if(!motion){
     DEBUG_MSG("Subset " << subset_gid << " skipping frame due to no motion");
     // only change the match value and the status flag
-    local_field_value(subset_gid,MATCH) = 0.0;
-    local_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(FRAME_SKIPPED_DUE_TO_NO_MOTION);
-    local_field_value(subset_gid,ITERATIONS) = 0;
+    global_field_value(subset_gid,MATCH) = 0.0;
+    global_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(FRAME_SKIPPED_DUE_TO_NO_MOTION);
+    global_field_value(subset_gid,ITERATIONS) = 0;
     return;
   }
   //
@@ -1637,9 +1748,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       // reset the deformation position to the previous step's value
       for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i)
         (*deformation)[i] = 0.0;
-      (*deformation)[DISPLACEMENT_X] = local_field_value(subset_gid,DICe::DISPLACEMENT_X);
-      (*deformation)[DISPLACEMENT_Y] = local_field_value(subset_gid,DICe::DISPLACEMENT_Y);
-      (*deformation)[ROTATION_Z] = local_field_value(subset_gid,DICe::ROTATION_Z);
+      (*deformation)[DISPLACEMENT_X] = global_field_value(subset_gid,DICe::DISPLACEMENT_X);
+      (*deformation)[DISPLACEMENT_Y] = global_field_value(subset_gid,DICe::DISPLACEMENT_Y);
+      (*deformation)[ROTATION_Z] = global_field_value(subset_gid,DICe::ROTATION_Z);
       Search_Initializer searcher(this,obj->subset(),search_step_xy,search_dim_xy,search_step_theta,search_dim_theta);
       init_status = searcher.initial_guess(subset_gid,deformation);
     }
@@ -1721,9 +1832,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       }
     } // loop over obstructing subset ids
   } // end !override force simplex
-  const scalar_t prev_u = local_field_value(subset_gid,DICe::DISPLACEMENT_X);
-  const scalar_t prev_v = local_field_value(subset_gid,DICe::DISPLACEMENT_Y);
-  const scalar_t prev_t = local_field_value(subset_gid,DICe::ROTATION_Z);
+  const scalar_t prev_u = global_field_value(subset_gid,DICe::DISPLACEMENT_X);
+  const scalar_t prev_v = global_field_value(subset_gid,DICe::DISPLACEMENT_Y);
+  const scalar_t prev_t = global_field_value(subset_gid,DICe::ROTATION_Z);
   //
   // perform the correlation
   //
@@ -1994,10 +2105,10 @@ Schema::estimate_resolution_error(const int num_steps,
     scalar_t avgx_error = 0.0;
     scalar_t avgy_error = 0.0;
     for(int_t i=0;i<data_num_points();++i){
-      const scalar_t x = field_value(i,DICe::COORDINATE_X);
-      const scalar_t y = field_value(i,DICe::COORDINATE_Y);
-      const scalar_t u = field_value(i,DICe::DISPLACEMENT_X);
-      const scalar_t v = field_value(i,DICe::DISPLACEMENT_Y);
+      const scalar_t x = local_field_value(i,DICe::COORDINATE_X);
+      const scalar_t y = local_field_value(i,DICe::COORDINATE_Y);
+      const scalar_t u = local_field_value(i,DICe::DISPLACEMENT_X);
+      const scalar_t v = local_field_value(i,DICe::DISPLACEMENT_Y);
       scalar_t e_x;
       scalar_t e_y;
       deformer->compute_displacement_error(x,y,u,v,e_x,e_y);
@@ -2017,10 +2128,10 @@ Schema::estimate_resolution_error(const int num_steps,
     scalar_t std_dev_x = 0.0;
     scalar_t std_dev_y = 0.0;
     for(int_t i=0;i<data_num_points();++i){
-      const scalar_t x = field_value(i,DICe::COORDINATE_X);
-      const scalar_t y = field_value(i,DICe::COORDINATE_Y);
-      const scalar_t u = field_value(i,DICe::DISPLACEMENT_X);
-      const scalar_t v = field_value(i,DICe::DISPLACEMENT_Y);
+      const scalar_t x = local_field_value(i,DICe::COORDINATE_X);
+      const scalar_t y = local_field_value(i,DICe::COORDINATE_Y);
+      const scalar_t u = local_field_value(i,DICe::DISPLACEMENT_X);
+      const scalar_t v = local_field_value(i,DICe::DISPLACEMENT_Y);
       scalar_t e_x;
       scalar_t e_y;
       deformer->compute_displacement_error(x,y,u,v,e_x,e_y);
@@ -2044,8 +2155,8 @@ Schema::estimate_resolution_error(const int num_steps,
     // FIXME assumes that the first post_processor gives the strain values
     TEUCHOS_TEST_FOR_EXCEPTION(post_processors()->size()<=0,std::runtime_error,"Error, VSG post processor not enabled, but needs to be for image deformer error calcs");
     for(int_t i=0;i<data_num_points();++i){
-      const scalar_t x = field_value(i,DICe::COORDINATE_X);
-      const scalar_t y = field_value(i,DICe::COORDINATE_Y);
+      const scalar_t x = local_field_value(i,DICe::COORDINATE_X);
+      const scalar_t y = local_field_value(i,DICe::COORDINATE_Y);
       const scalar_t exx = (*post_processors())[0]->field_value(i,vsg_strain_xx);
       const scalar_t eyy = (*post_processors())[0]->field_value(i,vsg_strain_yy);
       scalar_t e_x;
@@ -2067,8 +2178,8 @@ Schema::estimate_resolution_error(const int num_steps,
     scalar_t std_dev_sx = 0.0;
     scalar_t std_dev_sy = 0.0;
     for(int_t i=0;i<data_num_points();++i){
-      const scalar_t x = field_value(i,DICe::COORDINATE_X);
-      const scalar_t y = field_value(i,DICe::COORDINATE_Y);
+      const scalar_t x = local_field_value(i,DICe::COORDINATE_X);
+      const scalar_t y = local_field_value(i,DICe::COORDINATE_Y);
       const scalar_t exx = (*post_processors())[0]->field_value(i,vsg_strain_xx);
       const scalar_t eyy = (*post_processors())[0]->field_value(i,vsg_strain_yy);
       scalar_t e_x;
@@ -2126,8 +2237,8 @@ Schema::write_control_points_image(const std::string & fileName,
   const int_t i_end = use_one_point ? i_start + 1 : numLocalControlPts;
   const int_t color = use_one_point ? 255 : 0;
   for (int_t i=i_start;i<i_end;++i){
-    x = field_value(i,COORDINATE_X);
-    y = field_value(i,COORDINATE_Y);
+    x = local_field_value(i,COORDINATE_X);
+    y = local_field_value(i,COORDINATE_Y);
     for(int_t j=0;j<subset_dim_;++j){
       xAlt = x - subset_dim_/2 + j;
       intensities[(y+subset_dim_/2)*width+xAlt] = color;
@@ -2141,8 +2252,8 @@ Schema::write_control_points_image(const std::string & fileName,
   }
   // place white plus signs at the control points
   for (int_t i=0;i<numLocalControlPts;++i){
-    x = field_value(i,COORDINATE_X);
-    y = field_value(i,COORDINATE_Y);
+    x = local_field_value(i,COORDINATE_X);
+    y = local_field_value(i,COORDINATE_Y);
     intensities[y*width+x] = 255;
     for(int_t j=0;j<3;++j){
       intensities[y*width+(x+j)] = 255;
@@ -2153,9 +2264,9 @@ Schema::write_control_points_image(const std::string & fileName,
   }
   // place black plus signs at the control points that were successful
   for (int_t i=0;i<numLocalControlPts;++i){
-    if(field_value(i,SIGMA)<=0) return;
-    x = field_value(i,COORDINATE_X);
-    y = field_value(i,COORDINATE_Y);
+    if(local_field_value(i,SIGMA)<=0) return;
+    x = local_field_value(i,COORDINATE_X);
+    y = local_field_value(i,COORDINATE_Y);
     intensities[y*width+x] = 0;
     for(int_t j=0;j<2;++j){
       intensities[y*width+(x+j)] = 0;
@@ -2296,10 +2407,10 @@ Schema::print_fields(const std::string & fileName){
     std::cout << " Schema has 0 control points." << std::endl;
     return;
   }
-  if(fields_->get_num_fields()==0){
-    std::cout << " Schema fields are emplty." << std::endl;
-    return;
-  }
+//  if(mesh_->getffields_->get_num_fields()==0){
+//    std::cout << " Schema fields are emplty." << std::endl;
+//    return;
+//  }
   const int_t proc_id = comm_->get_rank();
 
   if(fileName==""){
@@ -2308,11 +2419,11 @@ Schema::print_fields(const std::string & fileName){
       std::cout << "[PROC " << proc_id << "] Control Point ID: " << i << std::endl;
       for(int_t j=0;j<DICe::MAX_FIELD_NAME;++j){
         std::cout << "[PROC " << proc_id << "]   " << to_string(static_cast<Field_Name>(j)) <<  " " <<
-            field_value(i,static_cast<Field_Name>(j)) << std::endl;
-        if(dist_map_->get_local_element(i)!=-1){
-          std::cout << "[PROC " << proc_id << "]   " << to_string(static_cast<Field_Name>(j)) <<  " (has distributed value)  " <<
-              local_field_value(i,static_cast<Field_Name>(j)) << std::endl;
-        }
+            local_field_value(i,static_cast<Field_Name>(j)) << std::endl;
+        //if(dist_map_->get_local_element(i)!=-1){
+        //  std::cout << "[PROC " << proc_id << "]   " << to_string(static_cast<Field_Name>(j)) <<  " (has distributed value)  " <<
+        //      local_field_value(i,static_cast<Field_Name>(j)) << std::endl;
+        //}
       }
     }
 
@@ -2323,7 +2434,7 @@ Schema::print_fields(const std::string & fileName){
     for(int_t i=0;i<data_num_points_;++i){
       fprintf(outFile,"%i ",i);
       for(int_t j=0;j<DICe::MAX_FIELD_NAME;++j){
-        fprintf(outFile," %4.4E ",field_value(i,static_cast<Field_Name>(j)));
+        fprintf(outFile," %4.4E ",local_field_value(i,static_cast<Field_Name>(j)));
       }
       fprintf(outFile,"\n");
     }
@@ -2337,7 +2448,7 @@ Schema::check_for_blocking_subsets(const int_t subset_global_id){
   if(obstructing_subset_ids_->find(subset_global_id)==obstructing_subset_ids_->end()) return;
   if(obstructing_subset_ids_->find(subset_global_id)->second.size()==0) return;
 
-  const int_t subset_local_id = get_local_id(subset_global_id);
+  const int_t subset_local_id = mesh_->get_scalar_node_dist_map()->get_local_element(subset_global_id);
 
   // turn off pixels in subset 0 that are blocked by 1 and 2
   // get a pointer to the member data in the subset that will store the list of blocked pixels
@@ -2350,17 +2461,17 @@ Schema::check_for_blocking_subsets(const int_t subset_global_id){
   // iterate over all the blocking subsets
   for(size_t si=0;si<obst_ids->size();++si){
     int_t global_ss = (*obst_ids)[si];
-    int_t local_ss = get_local_id(global_ss);
+    int_t local_ss = mesh_->get_scalar_elem_dist_map()->get_local_element(global_ss);
     assert(local_ss>=0);
     int_t cx = obj_vec_[local_ss]->subset()->centroid_x();
     int_t cy = obj_vec_[local_ss]->subset()->centroid_y();
     Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-    (*def)[DICe::DISPLACEMENT_X]  = local_field_value(global_ss,DICe::DISPLACEMENT_X);
-    (*def)[DICe::DISPLACEMENT_Y]  = local_field_value(global_ss,DICe::DISPLACEMENT_Y);
-    (*def)[DICe::ROTATION_Z]      = local_field_value(global_ss,DICe::ROTATION_Z);
-    (*def)[DICe::NORMAL_STRAIN_X] = local_field_value(global_ss,DICe::NORMAL_STRAIN_X);
-    (*def)[DICe::NORMAL_STRAIN_Y] = local_field_value(global_ss,DICe::NORMAL_STRAIN_Y);
-    (*def)[DICe::SHEAR_STRAIN_XY] = local_field_value(global_ss,DICe::SHEAR_STRAIN_XY);
+    (*def)[DICe::DISPLACEMENT_X]  = global_field_value(global_ss,DICe::DISPLACEMENT_X);
+    (*def)[DICe::DISPLACEMENT_Y]  = global_field_value(global_ss,DICe::DISPLACEMENT_Y);
+    (*def)[DICe::ROTATION_Z]      = global_field_value(global_ss,DICe::ROTATION_Z);
+    (*def)[DICe::NORMAL_STRAIN_X] = global_field_value(global_ss,DICe::NORMAL_STRAIN_X);
+    (*def)[DICe::NORMAL_STRAIN_Y] = global_field_value(global_ss,DICe::NORMAL_STRAIN_Y);
+    (*def)[DICe::SHEAR_STRAIN_XY] = global_field_value(global_ss,DICe::SHEAR_STRAIN_XY);
     std::set<std::pair<int_t,int_t> > subset_pixels =
         obj_vec_[local_ss]->subset()->deformed_shapes(def,cx,cy,obstruction_skin_factor_);
     blocked_pixels.insert(subset_pixels.begin(),subset_pixels.end());
@@ -2430,12 +2541,12 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
 
     //if(gid==1) continue;
     // get the deformation vector for each subset
-    const scalar_t u     = local_field_value(gid,DICe::DISPLACEMENT_X);
-    const scalar_t v     = local_field_value(gid,DICe::DISPLACEMENT_Y);
-    const scalar_t theta = local_field_value(gid,DICe::ROTATION_Z);
-    const scalar_t dudx  = local_field_value(gid,DICe::NORMAL_STRAIN_X);
-    const scalar_t dvdy  = local_field_value(gid,DICe::NORMAL_STRAIN_Y);
-    const scalar_t gxy   = local_field_value(gid,DICe::SHEAR_STRAIN_XY);
+    const scalar_t u     = global_field_value(gid,DICe::DISPLACEMENT_X);
+    const scalar_t v     = global_field_value(gid,DICe::DISPLACEMENT_Y);
+    const scalar_t theta = global_field_value(gid,DICe::ROTATION_Z);
+    const scalar_t dudx  = global_field_value(gid,DICe::NORMAL_STRAIN_X);
+    const scalar_t dvdy  = global_field_value(gid,DICe::NORMAL_STRAIN_Y);
+    const scalar_t gxy   = global_field_value(gid,DICe::SHEAR_STRAIN_XY);
     DEBUG_MSG("Write deformed subset " << gid << " u " << u << " v " << v << " theta " << theta << " dudx " << dudx << " dvdy " << dvdy << " gxy " << gxy);
     Teuchos::RCP<DICe::Subset> ref_subset = obj_vec_[subset]->subset();
     ox = ref_subset->centroid_x();
@@ -2751,7 +2862,7 @@ Output_Spec::write_frame(std::FILE * file,
     // if the field_name is from one of the schema fields, get the information from the schema
     scalar_t value = 0.0;
     if(post_processor_ids_[i]==-1)
-      value = schema_->field_value(field_value_index,string_to_field_name(field_names_[i]));
+      value = schema_->local_field_value(field_value_index,string_to_field_name(field_names_[i]));
     // otherwise the field must belong to a post processor
     else{
       assert(post_processor_ids_[i]>=0 && post_processor_ids_[i]<(int_t)schema_->post_processors()->size());

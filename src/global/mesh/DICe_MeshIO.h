@@ -61,7 +61,8 @@ Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
 /// \param elem_type the element type TRI6 or TRI3
 /// \param node_coords_x x coordinates of the nodes
 /// \param node_coords_y y coordinates of the nodes
-/// \param connectivity the connectivity matrix
+/// \param connectivity the connectivity matrix (always 1...n based)
+/// \param node_map converts local ids to global ids
 /// \param dirichlet_boundary_nodes a set of nodes to mark as dirichlet boundary nodes
 /// \param neumann_boundary_nodes a set of nodes to mark as a neumann boundary
 /// \param lagrange_boundary_nodes a set of nodes to mark as the lagrange multiplier boundary nodes
@@ -70,6 +71,7 @@ Teuchos::RCP<Mesh> create_tri_exodus_mesh(const DICe::mesh::Base_Element_Type el
   Teuchos::ArrayRCP<scalar_t> node_coords_x,
   Teuchos::ArrayRCP<scalar_t> node_coords_y,
   Teuchos::ArrayRCP<int_t> connectivity,
+  Teuchos::ArrayRCP<int_t> node_map,
   std::vector<std::pair<int_t,int_t> > & dirichlet_boundary_nodes,
   std::set<int_t> & neumann_boundary_nodes,
   std::set<int_t> & lagrange_boundary_nodes,

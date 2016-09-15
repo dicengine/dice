@@ -102,24 +102,24 @@ BC_Manager::BC_Manager(Global_Algorithm * alg) :
       const int_t num_bc_nodes = bc_set->find(boundary_node_set_id)->second.size();
       for(int_t i=0;i<num_bc_nodes;++i){
         const int_t node_gid = bc_set->find(boundary_node_set_id)->second[i];
-        bool is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim_+1);
-        int_t col_id = mesh_->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim_+1);
+        bool is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem(node_gid*spa_dim_+0);
+        int_t col_id = mesh_->get_vector_node_overlap_map()->get_local_element(node_gid*spa_dim_+0);
         if(comp==0||comp==2){
           DEBUG_MSG("disp x condition on node " << node_gid);
           if(is_local_node){
-            const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim_+1);
+            const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element(node_gid*spa_dim_+0);
             register_row_bc(row_id);
           }
           register_col_bc(col_id);
         }
         if(comp==1||comp==2){
           DEBUG_MSG("disp y condition on node " << node_gid);
-          is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem((node_gid-1)*spa_dim_+2);
+          is_local_node = mesh_->get_vector_node_dist_map()->is_node_global_elem(node_gid*spa_dim_+1);
+          col_id = mesh_->get_vector_node_overlap_map()->get_local_element(node_gid*spa_dim_+1);
           if(is_local_node){
-            const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element((node_gid-1)*spa_dim_+2);
+            const int_t row_id = mesh_->get_vector_node_dist_map()->get_local_element(node_gid*spa_dim_+1);
             register_row_bc(row_id);
           }
-          col_id = mesh_->get_vector_node_overlap_map()->get_local_element((node_gid-1)*spa_dim_+2);
           register_col_bc(col_id);
         }
       }
@@ -219,7 +219,7 @@ Lagrange_BC::apply(const bool first_iteration){
       mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
 
   const int_t node_set_id = -1; // lagrangian nodes are all in set -1
-  const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_num_global_elements();
+  const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_max_global_index();
   DEBUG_MSG("Lagrange_BC::apply(): applying a 0.0 Lagrange multiplier bc to node set id " << node_set_id);
   DICe::mesh::bc_set * bc_sets = mesh_->get_node_bc_sets();
   if(bc_sets->find(node_set_id)==bc_sets->end())return;
@@ -253,8 +253,8 @@ Dirichlet_BC::apply(const bool first_iteration){
     DEBUG_MSG("Dirichlet_BC::apply(): number of nodes in set " << num_bc_nodes);
     for(int_t i=0;i<num_bc_nodes;++i){
       const int_t node_gid = bc_sets->find(node_set_id)->second[i];
-      const int_t ix = (node_gid-1)*spa_dim + 1;
-      const int_t iy = (node_gid-1)*spa_dim + 2;
+      const int_t ix = node_gid*spa_dim + 0;
+      const int_t iy = node_gid*spa_dim + 1;
       if(comp==0||comp==2){
         residual->global_value(ix) = first_iteration ? value_ : 0.0;
          if(first_iteration) disp->global_value(ix) = 0.0;
@@ -291,8 +291,8 @@ Subset_BC::apply(const bool first_iteration){
     DEBUG_MSG("Subset_BC::apply(): number of nodes in set " << num_bc_nodes);
     for(int_t i=0;i<num_bc_nodes;++i){
       const int_t node_gid = bc_sets->find(node_set_id)->second[i];
-      const int_t ix = (node_gid-1)*spa_dim + 1;
-      const int_t iy = (node_gid-1)*spa_dim + 2;
+      const int_t ix = node_gid*spa_dim + 0;
+      const int_t iy = node_gid*spa_dim + 1;
       if(!first_iteration){
         if(comp==0||comp==2)
           residual->global_value(ix) = 0.0;
@@ -333,8 +333,8 @@ Subset_BC::apply(const bool first_iteration){
       const int_t num_bc_nodes = bc_sets->find(node_set_id)->second.size();
       for(int_t i=0;i<num_bc_nodes;++i){
         const int_t node_gid = bc_sets->find(node_set_id)->second[i];
-        const int_t ix = (node_gid-1)*spa_dim + 1;
-        const int_t iy = (node_gid-1)*spa_dim + 2;
+        const int_t ix = node_gid*spa_dim + 0;
+        const int_t iy = node_gid*spa_dim + 1;
         if(comp==0||comp==2){
           disp->global_value(ix) = 0.0;
         }
@@ -406,8 +406,8 @@ MMS_BC::apply(const bool first_iteration){
     DEBUG_MSG("MMS_BC::apply(): number of nodes in set " << num_bc_nodes);
     for(int_t i=0;i<num_bc_nodes;++i){
       const int_t node_gid = bc_sets->find(node_set_id)->second[i];
-      const int_t ix = (node_gid-1)*spa_dim + 1;
-      const int_t iy = (node_gid-1)*spa_dim + 2;
+      const int_t ix = node_gid*spa_dim + 0;
+      const int_t iy = node_gid*spa_dim + 1;
       if(!first_iteration){
         if(comp==0||comp==2)
           residual->global_value(ix) = 0.0;
@@ -438,7 +438,7 @@ MMS_Lagrange_BC::apply(const bool first_iteration){
   TEUCHOS_TEST_FOR_EXCEPTION(alg_->mms_problem()==Teuchos::null,std::runtime_error,"Error, mms_problem should not be null");
   //TEUCHOS_TEST_FOR_EXCEPTION(alg_->mesh()==Teuchos::null,std::runtime_error,
   //  "Error, mesh pointer should not be null");
-  const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_num_global_elements();
+  const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_max_global_index();
 //  if(first_iteration){ // populate the exact solution fields
 //    Teuchos::RCP<MultiField> exact_lag = alg_->l_mesh()->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
 //    for(int_t i=0;i<alg_->l_mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
@@ -459,8 +459,8 @@ MMS_Lagrange_BC::apply(const bool first_iteration){
   DEBUG_MSG("MMS_BC::apply(): number of nodes in set " << num_bc_nodes);
   for(int_t i=0;i<num_bc_nodes;++i){
     const int_t node_gid = bc_sets->find(node_set_id)->second[i];
-    const int_t ix = (node_gid-1)*spa_dim + 1;
-    const int_t iy = (node_gid-1)*spa_dim + 2;
+    const int_t ix = node_gid*spa_dim + 0;
+    const int_t iy = node_gid*spa_dim + 1;
     if(!first_iteration){
       residual->global_value(node_gid + mixed_global_offset) = 0.0;
     }
@@ -479,7 +479,7 @@ Corner_BC::apply(const bool first_iteration){
   // get the residual field
   Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
       mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
-  const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_num_global_elements();
+  const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_max_global_index();
   DEBUG_MSG("Corner_BC::apply(): applying 0.0 constraint to node 1");
   const int_t node_gid = 1;
   residual->global_value(node_gid + mixed_global_offset) = 0.0;
