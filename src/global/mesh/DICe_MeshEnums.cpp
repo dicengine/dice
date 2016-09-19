@@ -114,7 +114,6 @@ void create_string_maps()
   field_name_string[field_enums::BLOCK_ID]                                           = "BLOCK_ID";
   field_name_string[field_enums::PROCESSOR_ID]                                       = "PROCESSOR_ID";
   field_name_string[field_enums::MASTER_NODE_ID]                                     = "MASTER_NODE_ID";
-  field_name_string[field_enums::INITIAL_COORDINATES]                                = "INITIAL_COORDINATES";
   field_name_string[field_enums::INITIAL_COORDINATES_X]                              = "INITIAL_COORDINATES_X";
   field_name_string[field_enums::INITIAL_COORDINATES_Y]                              = "INITIAL_COORDINATES_Y";
   field_name_string[field_enums::INITIAL_COORDINATES_Z]                              = "INITIAL_COORDINATES_Z";

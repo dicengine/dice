@@ -677,8 +677,8 @@ public:
   /// set up the distributed map so that it respects dependencies among obstructions
   void create_obstruction_dist_map();
 
-  /// set up the distributed map so that it respects dependencies among seeds
-  //void create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids);
+//  /// set up the distributed map so that it respects dependencies among seeds
+//  void create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids);
 
   /// \brief Create an image that shows the correlation points
   /// \param fileName String name of file to for output

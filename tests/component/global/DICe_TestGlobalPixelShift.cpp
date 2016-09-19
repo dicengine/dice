@@ -170,7 +170,8 @@ int main(int argc, char *argv[]) {
 
     *outStream << "creating and populating the exact solution fields" << std::endl;
     //  schema->global_algorithm()->mesh()->create_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);
-    Teuchos::RCP<MultiField> coords = schema.global_algorithm()->mesh()->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
+    Teuchos::RCP<MultiField> coords_x = schema.global_algorithm()->mesh()->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_X_FS);
+    Teuchos::RCP<MultiField> coords_y = schema.global_algorithm()->mesh()->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_Y_FS);
     Teuchos::RCP<MultiField> exact_sol = schema.global_algorithm()->mesh()->get_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);
     for(int_t i=0;i<schema.global_algorithm()->mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
       const int_t ix = i*2+0;

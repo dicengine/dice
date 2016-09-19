@@ -911,11 +911,11 @@ Schema::initialize(Teuchos::ArrayRCP<scalar_t> coords_x,
   // if there are blocking subsets, they need to be on the same processor and put in order:
   create_obstruction_dist_map();
 
+  //create_seed_dist_map(neighbor_ids);
+
   // create an exodus mesh for output
   create_mesh(coords_x,coords_y);
 
-
-  //create_seed_dist_map(neighbor_ids);
 
 
 //  importer_ = Teuchos::rcp(new MultiField_Importer(*dist_map_,*all_map_));
@@ -973,6 +973,7 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
     connectivity[i] = i+1;
     node_map[i] = i;
   }
+  // dummy arrays
   std::vector<std::pair<int_t,int_t>> dirichlet_boundary_nodes;
   std::set<int_t> neumann_boundary_nodes;
   std::set<int_t> lagrange_boundary_nodes;
@@ -1010,9 +1011,9 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_YY_NM1_FS);
   mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_ZZ_FS);
   mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_ZZ_NM1_FS);
-  mesh_->create_field(mesh::field_enums::INITIAL_COORDINATES_X_FS);
-  mesh_->create_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
-  mesh_->create_field(mesh::field_enums::INITIAL_COORDINATES_Z_FS);
+//  mesh_->create_field(mesh::field_enums::INITIAL_COORDINATES_X_FS);
+//  mesh_->create_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
+//  mesh_->create_field(mesh::field_enums::INITIAL_COORDINATES_Z_FS);
   mesh_->create_field(mesh::field_enums::SIGMA_FS);
   mesh_->create_field(mesh::field_enums::GAMMA_FS);
   mesh_->create_field(mesh::field_enums::BETA_FS);
@@ -1198,12 +1199,6 @@ Schema::create_obstruction_dist_map(){
 
   Teuchos::ArrayView<const int_t> lids_grouped_by_obstruction(&local_gids[0],local_gids.size());
 
-  // TODO TODO TODO
-  // reset the NODE NUMBERS OR HOW THEY ARE ALLOCATED use this function rather than a generic split
-
-
-
-//
 //  dist_map_ = Teuchos::rcp(new MultiField_Map(data_num_points_,lids_grouped_by_obstruction,0,*comm_));
 //  //dist_map_->describe();
 //  TEUCHOS_TEST_FOR_EXCEPTION(!dist_map_->is_one_to_one(),std::runtime_error,"");

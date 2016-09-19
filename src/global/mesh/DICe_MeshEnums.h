@@ -141,7 +141,6 @@ enum Field_Type
 enum Field_Name
 {
   NO_SUCH_FIELD_NAME=0,
-  INITIAL_COORDINATES,
   INITIAL_COORDINATES_X,
   INITIAL_COORDINATES_Y,
   INITIAL_COORDINATES_Z,
@@ -404,8 +403,6 @@ const Field_Spec MASTER_NODE_ID_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::M
 /// field spec
 const Field_Spec BLOCK_ID_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::BLOCK_ID,field_enums::ELEMENT_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
-const Field_Spec INITIAL_COORDINATES_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::INITIAL_COORDINATES,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
 const Field_Spec INITIAL_COORDINATES_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::INITIAL_COORDINATES_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec INITIAL_COORDINATES_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::INITIAL_COORDINATES_Y,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
@@ -573,12 +570,11 @@ const Field_Spec GREEN_LAGRANGE_STRAIN_YY_FS(field_enums::SCALAR_FIELD_TYPE,fiel
 const Field_Spec GREEN_LAGRANGE_STRAIN_XY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::GREEN_LAGRANGE_STRAIN_XY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 78;
+const int_t num_fields_defined = 77;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     NO_SUCH_FS,
-    INITIAL_COORDINATES_FS,
     INITIAL_COORDINATES_X_FS,
     INITIAL_COORDINATES_Y_FS,
     INITIAL_COORDINATES_Z_FS,

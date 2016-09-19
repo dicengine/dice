@@ -272,7 +272,8 @@ Subset_BC::apply(const bool first_iteration){
   // get the residual field
   Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
       mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
-  Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField> coords_x = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> coords_y = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
   Teuchos::RCP<MultiField> disp = mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
 
   const int_t spa_dim = mesh_->spatial_dimension();
@@ -302,8 +303,8 @@ Subset_BC::apply(const bool first_iteration){
       else{
         scalar_t b_x = disp->global_value(ix);
         scalar_t b_y = disp->global_value(iy);
-        const scalar_t x = coords->global_value(ix);
-        const scalar_t y = coords->global_value(iy);
+        const scalar_t x = coords_x->global_value(node_gid);
+        const scalar_t y = coords_y->global_value(node_gid);
         // get the closest pixel to x and y
         int_t px = (int_t)x;
         if(x - (int_t)x >= 0.5) px++;
@@ -353,7 +354,8 @@ MMS_BC::apply(const bool first_iteration){
   // get the residual field
   Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
       mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
-  Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField> coords_x = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> coords_y = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
   Teuchos::RCP<MultiField> exact_sol = mesh_->get_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
   Teuchos::RCP<MultiField> image_phi = mesh_->get_field(mesh::field_enums::IMAGE_PHI_FS);
   Teuchos::RCP<MultiField> image_grad_phi = mesh_->get_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
@@ -368,8 +370,8 @@ MMS_BC::apply(const bool first_iteration){
       int_t iy = i*2+1;
       scalar_t b_x = 0.0;
       scalar_t b_y = 0.0;
-      const scalar_t x = coords->local_value(ix);
-      const scalar_t y = coords->local_value(iy);
+      const scalar_t x = coords_x->local_value(i);
+      const scalar_t y = coords_y->local_value(i);
       alg_->mms_problem()->velocity(x,y,b_x,b_y);
       scalar_t phi = 0.0,d_phi_dt=0.0,grad_phi_x=0.0,grad_phi_y=0.0;
       alg_->mms_problem()->phi(x,y,phi);
@@ -383,10 +385,8 @@ MMS_BC::apply(const bool first_iteration){
     if(is_mixed_){
       Teuchos::RCP<MultiField> exact_lag = alg_->mesh()->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
       for(int_t i=0;i<alg_->mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
-        int_t ix = i*2+0;
-        int_t iy = i*2+1;
-        const scalar_t x = coords->local_value(ix);
-        const scalar_t y = coords->local_value(iy);
+        const scalar_t x = coords_x->local_value(i);
+        const scalar_t y = coords_y->local_value(i);
         scalar_t l_out = 0.0;
         alg_->mms_problem()->lagrange(x,y,l_out);
         exact_lag->local_value(i) = l_out;
@@ -415,8 +415,8 @@ MMS_BC::apply(const bool first_iteration){
           residual->global_value(iy) = 0.0;
       }
       else{
-        const scalar_t x = coords->global_value(ix);
-        const scalar_t y = coords->global_value(iy);
+        const scalar_t x = coords_x->global_value(node_gid);
+        const scalar_t y = coords_y->global_value(node_gid);
         scalar_t b_x = 0.0, b_y = 0.0;
         alg_->mms_problem()->velocity(x,y,b_x,b_y);
         if(comp==0||comp==2)
@@ -433,8 +433,8 @@ MMS_Lagrange_BC::apply(const bool first_iteration){
   // get the residual field
   Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
       mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
-  Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
-  const int_t spa_dim = mesh_->spatial_dimension();
+  Teuchos::RCP<MultiField> coords_x = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> coords_y = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
   TEUCHOS_TEST_FOR_EXCEPTION(alg_->mms_problem()==Teuchos::null,std::runtime_error,"Error, mms_problem should not be null");
   //TEUCHOS_TEST_FOR_EXCEPTION(alg_->mesh()==Teuchos::null,std::runtime_error,
   //  "Error, mesh pointer should not be null");
@@ -459,14 +459,12 @@ MMS_Lagrange_BC::apply(const bool first_iteration){
   DEBUG_MSG("MMS_BC::apply(): number of nodes in set " << num_bc_nodes);
   for(int_t i=0;i<num_bc_nodes;++i){
     const int_t node_gid = bc_sets->find(node_set_id)->second[i];
-    const int_t ix = node_gid*spa_dim + 0;
-    const int_t iy = node_gid*spa_dim + 1;
     if(!first_iteration){
       residual->global_value(node_gid + mixed_global_offset) = 0.0;
     }
     else{
-      const scalar_t x = coords->global_value(ix);
-      const scalar_t y = coords->global_value(iy);
+      const scalar_t x = coords_x->global_value(node_gid);
+      const scalar_t y = coords_y->global_value(node_gid);
       scalar_t l_out = 0.0;
       alg_->mms_problem()->lagrange(x,y,l_out);
       residual->global_value(node_gid + mixed_global_offset) = l_out;

@@ -172,26 +172,33 @@ void initialize_control_volumes(Teuchos::RCP<Mesh> mesh);
 
 /// Compute the edge lengths and normals for a subelement derived from a tri 3 parent element
 /// \param mesh The computational mesh
-/// \param coords_values An array containing the coordinate values
+/// \param coords_values_x An array containing the x coordinate values
+/// \param coords_values_y An array containing the y coordinate values
 /// \param cv_node the control volume node
 /// \param subelement The control volume subelement
 void tri3_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const scalar_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_x,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y,
   Teuchos::RCP<DICe::mesh::Node> cv_node,
   Teuchos::RCP<DICe::mesh::Subelement> subelement);
 
 /// Compute the edge lengths and normals for a subelement derived from a tetra 4 parent element
 /// \param mesh The computational mesh
-/// \param coords_values An array containing the coordinate values
+/// \param coords_values_x An array containing the x coordinate values
+/// \param coords_values_y An array containing the y coordinate values
+/// \param coords_values_z An array containing the z coordinate values
 /// \param cv_node the control volume node
 /// \param subelement The control volume subelement
 void tetra4_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const scalar_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_x,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_z,
   Teuchos::RCP<DICe::mesh::Node> cv_node,
   Teuchos::RCP<DICe::mesh::Subelement> subelement);
 
 /// Compute the submesh object from a tri 3 parent element
-/// \param coords_values An array with the coordinates values
+/// \param coords_values_x An array with the x coordinates values
+/// \param coords_values_y An array with the y coordinates values
 /// \param node_A Node A in the diagram for subelements
 /// \param node_B Node B in the diagram for subelements
 /// \param node_I Node I in the diagram for subelements
@@ -201,7 +208,8 @@ void tetra4_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
 /// \param subtri_centroid Pointer to an array with the centroid of this subelement
 /// \param subtri_edge_centroid Pointer to an array with the centroid of the edge
 void compute_submesh_obj_from_tri3(
-  Teuchos::ArrayRCP<const scalar_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_x,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_I,
@@ -212,7 +220,9 @@ void compute_submesh_obj_from_tri3(
   scalar_t * subtri_edge_centroid);
 
 /// Compute the submesh object from a tet4 parent element
-/// \param coords_values An array with the coordinates values
+/// \param coords_values_x An array with the x coordinates values
+/// \param coords_values_y An array with the y coordinates values
+/// \param coords_values_z An array with the z coordinates values
 /// \param node_A Node A in the diagram for subelements
 /// \param node_B Node B in the diagram for subelements
 /// \param node_C Node C in the diagram for subelements
@@ -223,7 +233,9 @@ void compute_submesh_obj_from_tri3(
 /// \param subtet_centroid [out] Pointer to an array with the centroid of this subelement
 /// \param subtet_face_centroid [out] Pointer to an array with the centroid of the face
 void compute_submesh_obj_from_tet4(
-  Teuchos::ArrayRCP<const scalar_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_x,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_z,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_C,
@@ -235,27 +247,33 @@ void compute_submesh_obj_from_tet4(
   scalar_t * subtet_face_centroid);
 
 /// Compute the centroid of a triangle
-/// \param coords_values An array with the coordinates values
+/// \param coords_values_x An array with the x coordinates values
+/// \param coords_values_y An array with the y coordinates values
 /// \param node_A Node A in the diagram for subelements
 /// \param node_B Node B in the diagram for subelements
 /// \param node_I Node I in the diagram for subelements
 /// \param cntrd [out] Pointer to the array with the centroid coordinates
 void compute_centroid_of_tri(
-  Teuchos::ArrayRCP<const scalar_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_x,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_I,
   scalar_t * cntrd);
 
 /// Compute the centroid of a tetrahedron
-/// \param coords_values An array with the coordinates values
+/// \param coords_values_x An array with the x coordinates values
+/// \param coords_values_y An array with the y coordinates values
+/// \param coords_values_y An array with the z coordinates values
 /// \param node_A Node A in the diagram for subelements
 /// \param node_B Node B in the diagram for subelements
 /// \param node_C Node C in the diagram for subelements
 /// \param node_I Node I in the diagram for subelements
 /// \param cntrd [out] Pointer to the array with the centroid coordinates
 void compute_centroid_of_tet(
-  Teuchos::ArrayRCP<const scalar_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_x,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_z,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_C,
@@ -263,23 +281,29 @@ void compute_centroid_of_tet(
   scalar_t * cntrd);
 
 /// Compute the area of a triangle
-/// \param coords_values An array with the coordinate values
+/// \param coords_values_x An array with the x coordinate values
+/// \param coords_values_y An array with the y coordinate values
 /// \param node_A Node A from the diagram for subelements
 /// \param node_B Node B from the diagram for subelements
 /// \param node_C Node C from the diagram for subelements
-scalar_t tri3_area(Teuchos::ArrayRCP<const scalar_t> coords_values,
+scalar_t tri3_area(Teuchos::ArrayRCP<const scalar_t> coords_values_x,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_C);
 
 /// Compute the volume of a tetrahedron
 /// Compute the area of a triangle
-/// \param coords_values An array with the coordinate values
+/// \param coords_values_x An array with the x coordinate values
+/// \param coords_values_y An array with the y coordinate values
+/// \param coords_values_z An array with the z coordinate values
 /// \param node_A Node A from the diagram for subelements
 /// \param node_B Node B from the diagram for subelements
 /// \param node_C Node C from the diagram for subelements
 /// \param node_D Node D from the diagram for subelements
-scalar_t tetra4_volume(Teuchos::ArrayRCP<const scalar_t> coords_values,
+scalar_t tetra4_volume(Teuchos::ArrayRCP<const scalar_t> coords_values_x,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_z,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_C,
@@ -291,42 +315,58 @@ void create_cell_size_and_radius(Teuchos::RCP<Mesh> mesh);
 
 /// Compute a specific elemnet type size
 /// \param mesh the mesh
-/// \param coords_values Array with the coordinate values
+/// \param coords_values_x Array with the x coordinate values
+/// \param coords_values_y Array with the y coordinate values
+/// \param coords_values_z Array with the z coordinate values
 /// \param element Pointer to the particular element
 void hex8_volume_radius(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const scalar_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_x,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_z,
   const Teuchos::RCP<DICe::mesh::Element>  element);
 
 /// Compute a specific elemnet type size
 /// \param mesh the mesh
-/// \param coords_values Array with the coordinate values
+/// \param coords_values_x Array with the x coordinate values
+/// \param coords_values_y Array with the y coordinate values
+/// \param coords_values_z Array with the z coordinate values
 /// \param element Pointer to the particular element
 void tetra4_volume_radius(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const scalar_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_x,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_z,
   const Teuchos::RCP<DICe::mesh::Element>  element);
 
 /// Compute a specific elemnet type size
 /// \param mesh the mesh
-/// \param coords_values Array with the coordinate values
+/// \param coords_values_x Array with the x coordinate values
+/// \param coords_values_y Array with the y coordinate values
 /// \param element Pointer to the particular element
 void quad4_area_radius(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const scalar_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_x,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y,
   const Teuchos::RCP<DICe::mesh::Element> element);
 
 /// Compute a specific elemnet type size
 /// \param mesh the mesh
-/// \param coords_values Array with the coordinate values
+/// \param coords_values_x Array with the x coordinate values
+/// \param coords_values_y Array with the y coordinate values
 /// \param element Pointer to the particular element
 void tri3_area_radius(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const scalar_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_x,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y,
   const Teuchos::RCP<DICe::mesh::Element> element);
 
 /// Compute a specific elemnet type size
 /// \param mesh the mesh
-/// \param coords_values Array with the coordinate values
+/// \param coords_values_x Array with the x coordinate values
+/// \param coords_values_y Array with the y coordinate values
+/// \param coords_values_z Array with the z coordinate values
 /// \param element Pointer to the particular element
 void pyramid5_volume_radius(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const scalar_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_x,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y,
+  Teuchos::ArrayRCP<const scalar_t> coords_values_z,
   const Teuchos::RCP<DICe::mesh::Element> element);
 
 } //mesh

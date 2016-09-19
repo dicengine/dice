@@ -85,8 +85,10 @@ int main(int argc, char *argv[]) {
   //mesh->create_field(mesh::field_enums::CVFEM_AD_LAMBDA_FS);
   *outStream << "populating values for phi field" << std::endl;
   //MultiField & phi = *mesh->get_field(mesh::field_enums::CVFEM_AD_PHI_FS);
-  MultiField & coords = *mesh->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
-  Teuchos::ArrayRCP<const scalar_t> coords_values = coords.get_1d_view();
+  MultiField & coords_x = *mesh->get_field(mesh::field_enums::INITIAL_COORDINATES_X_FS);
+  MultiField & coords_y = *mesh->get_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
+  Teuchos::ArrayRCP<const scalar_t> coords_values_x = coords_x.get_1d_view();
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y = coords_y.get_1d_view();
   //const int_t spa_dim = mesh->spatial_dimension();
   //for(size_t i=0;i<mesh->num_nodes();++i){
   //  phi.local_value(i) = coords_values[i*spa_dim]*10.0;

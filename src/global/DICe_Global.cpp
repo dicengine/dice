@@ -470,9 +470,12 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
   tri2d_nonexact_integration_points(image_integration_order,image_gp_locs,image_gp_weights,num_image_integration_points);
 
   // gather the OVERLAP fields
-  Teuchos::RCP<MultiField> overlap_coords_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_FS);
-  MultiField & overlap_coords = *overlap_coords_ptr;
-  Teuchos::ArrayRCP<const scalar_t> coords_values = overlap_coords.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_coords_x_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_X_FS);
+  MultiField & overlap_coords_x = *overlap_coords_x_ptr;
+  Teuchos::RCP<MultiField> overlap_coords_y_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
+  MultiField & overlap_coords_y = *overlap_coords_y_ptr;
+  Teuchos::ArrayRCP<const scalar_t> coords_values_x = overlap_coords_x.get_1d_view();
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y = overlap_coords_y.get_1d_view();
   Teuchos::RCP<MultiField> overlap_disp_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_FS);
   MultiField & overlap_disp = *overlap_disp_ptr;
   Teuchos::ArrayRCP<const scalar_t> disp_values = overlap_disp.get_1d_view();
@@ -488,9 +491,10 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
     for(int_t nd=0;nd<num_funcs;++nd){
       node_ids[nd] = connectivity[nd]->global_id();
       //std::cout << " gid " << node_ids[nd] << std::endl;
+      nodal_coords[nd*spa_dim+0] = coords_values_x[connectivity[nd]->overlap_local_id()];
+      nodal_coords[nd*spa_dim+1] = coords_values_y[connectivity[nd]->overlap_local_id()];
       for(int_t dim=0;dim<spa_dim;++dim){
         const int_t stride = nd*spa_dim + dim;
-        nodal_coords[stride] = coords_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
         nodal_disp[stride] = disp_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
         //std::cout << " node coords " << nodal_coords[stride] << std::endl;
       }
@@ -797,9 +801,12 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
 //      mesh_->get_overlap_field(mesh::field_enums::RESIDUAL_FS);
 //  MultiField & overlap_residual = *overlap_residual_ptr;
 //  overlap_residual.put_scalar(0.0);
-  Teuchos::RCP<MultiField> overlap_coords_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_FS);
-  MultiField & overlap_coords = *overlap_coords_ptr;
-  Teuchos::ArrayRCP<const scalar_t> coords_values = overlap_coords.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_coords_x_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_X_FS);
+  MultiField & overlap_coords_x = *overlap_coords_x_ptr;
+  Teuchos::ArrayRCP<const scalar_t> coords_values_x = overlap_coords_x.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_coords_y_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
+  MultiField & overlap_coords_y = *overlap_coords_y_ptr;
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y = overlap_coords_y.get_1d_view();
   Teuchos::RCP<MultiField> overlap_disp_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_FS);
   MultiField & overlap_disp = *overlap_disp_ptr;
   Teuchos::ArrayRCP<const scalar_t> disp_values = overlap_disp.get_1d_view();
@@ -813,9 +820,10 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
     const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
     // compute the shape functions and derivatives for this element:
     for(int_t nd=0;nd<num_funcs;++nd){
+      nodal_coords[nd*spa_dim+0] = coords_values_x[connectivity[nd]->overlap_local_id()];
+      nodal_coords[nd*spa_dim+1] = coords_values_y[connectivity[nd]->overlap_local_id()];
       for(int_t dim=0;dim<spa_dim;++dim){
         const int_t stride = nd*spa_dim + dim;
-        nodal_coords[stride] = coords_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
         nodal_disp[stride] = disp_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
         //std::cout << " node coords " << nodal_coords[stride] << std::endl;
       }
@@ -1106,11 +1114,15 @@ Global_Algorithm::compute_strains(){
   Teuchos::RCP<MultiField> gl_xx = mesh_->get_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_XX_FS);
   Teuchos::RCP<MultiField> gl_yy = mesh_->get_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_YY_FS);
   Teuchos::RCP<MultiField> gl_xy = mesh_->get_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_XY_FS);
-  Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField> coords_x = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> coords_y = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
 
-  Teuchos::RCP<MultiField> overlap_coords_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_FS);
-  MultiField & overlap_coords = *overlap_coords_ptr;
-  Teuchos::ArrayRCP<const scalar_t> coords_values = overlap_coords.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_coords_x_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_X_FS);
+  MultiField & overlap_coords_x = *overlap_coords_x_ptr;
+  Teuchos::ArrayRCP<const scalar_t> coords_values_x = overlap_coords_x.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_coords_y_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
+  MultiField & overlap_coords_y = *overlap_coords_y_ptr;
+  Teuchos::ArrayRCP<const scalar_t> coords_values_y = overlap_coords_y.get_1d_view();
   Teuchos::RCP<MultiField> overlap_disp_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_FS);
   MultiField & overlap_disp = *overlap_disp_ptr;
   Teuchos::ArrayRCP<const scalar_t> disp_values = overlap_disp.get_1d_view();
@@ -1160,9 +1172,10 @@ Global_Algorithm::compute_strains(){
     const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
     // compute the shape functions and derivatives for this element:
     for(int_t nd=0;nd<num_funcs;++nd){
+      nodal_coords[nd*spa_dim+0] = coords_values_x[connectivity[nd]->overlap_local_id()];
+      nodal_coords[nd*spa_dim+1] = coords_values_y[connectivity[nd]->overlap_local_id()];
       for(int_t dim=0;dim<spa_dim;++dim){
         const int_t stride = nd*spa_dim + dim;
-        nodal_coords[stride] = coords_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
         nodal_disp[stride] = disp_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
         //std::cout << " node coords " << nodal_coords[stride] << std::endl;
       }
@@ -1220,10 +1233,8 @@ Global_Algorithm::compute_strains(){
     gl_yy->local_value(i) = 0.5*(2.0*dv_dy->local_value(i) + du_dy->local_value(i)*du_dy->local_value(i) + dv_dy->local_value(i)*dv_dy->local_value(i));
     gl_xy->local_value(i) = 0.5*(du_dy->local_value(i) + dv_dx->local_value(i) + du_dx->local_value(i)*du_dy->local_value(i) + dv_dx->local_value(i)*dv_dy->local_value(i));
     if(mms_problem_!=Teuchos::null){
-      int_t ix = i*spa_dim + 0;
-      int_t iy = i*spa_dim + 1;
-      scalar_t x = coords->local_value(ix);
-      scalar_t y = coords->local_value(iy);
+      scalar_t x = coords_x->local_value(i);
+      scalar_t y = coords_y->local_value(i);
       scalar_t b_x_x=0.0,b_x_y=0.0,b_y_x=0.0,b_y_y=0.0;
       mms_problem_->grad_velocity(x,y,b_x_x,b_x_y,b_y_x,b_y_y);
       du_dx_exact->local_value(i) = b_x_x;
