@@ -178,12 +178,13 @@ int main(int argc, char *argv[]) {
   scalar_t error_bx = 0.0;
   scalar_t error_by = 0.0;
 
-  Teuchos::RCP<MultiField> disp = schema->global_algorithm()->mesh()->get_field(mesh::field_enums::DISPLACEMENT_FS);
+  Teuchos::RCP<MultiField> disp_x = schema->global_algorithm()->mesh()->get_field(mesh::field_enums::DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> disp_y = schema->global_algorithm()->mesh()->get_field(mesh::field_enums::DISPLACEMENT_Y_FS);
   for(int_t i=0;i<schema->global_algorithm()->mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
     int_t ix = i*2+0;
     int_t iy = i*2+1;
-    const scalar_t b_x = disp->local_value(ix);
-    const scalar_t b_y = disp->local_value(iy);
+    const scalar_t b_x = disp_x->local_value(i);
+    const scalar_t b_y = disp_y->local_value(i);
     const scalar_t b_exact_x = exact_sol->local_value(ix);
     const scalar_t b_exact_y = exact_sol->local_value(iy);
     error_bx += (b_exact_x - b_x)*(b_exact_x - b_x);

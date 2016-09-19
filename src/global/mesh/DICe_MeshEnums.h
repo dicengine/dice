@@ -151,7 +151,6 @@ enum Field_Name
   INITIAL_SUBELEMENT_SIZE,
   INITIAL_WEIGHTED_CELL_SIZE,
   INITIAL_CELL_RADIUS,
-  DISPLACEMENT,
   DISPLACEMENT_X,
   DISPLACEMENT_Y,
   DISPLACEMENT_Z,
@@ -433,10 +432,6 @@ const Field_Spec INTERNAL_CELL_COORDINATES_FS(field_enums::VECTOR_FIELD_TYPE,fie
 /// field spec
 const Field_Spec INTERNAL_CELL_SIZE_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::INTERNAL_CELL_SIZE,field_enums::INTERNAL_CELL_RANK,field_enums::NO_FIELD_STATE,false);
 /// field spec
-const Field_Spec DISPLACEMENT_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DISPLACEMENT,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
-/// field spec
-const Field_Spec DISPLACEMENT_NM1_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DISPLACEMENT,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
-/// field spec
 const Field_Spec DISPLACEMENT_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DISPLACEMENT_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
 /// field spec
 const Field_Spec DISPLACEMENT_X_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DISPLACEMENT_X,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
@@ -570,7 +565,7 @@ const Field_Spec GREEN_LAGRANGE_STRAIN_YY_FS(field_enums::SCALAR_FIELD_TYPE,fiel
 const Field_Spec GREEN_LAGRANGE_STRAIN_XY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::GREEN_LAGRANGE_STRAIN_XY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 77;
+const int_t num_fields_defined = 76;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -585,8 +580,6 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     INITIAL_SUBELEMENT_SIZE_FS,
     INITIAL_WEIGHTED_CELL_SIZE_FS,
     INITIAL_CELL_RADIUS_FS,
-    DISPLACEMENT_FS,
-    DISPLACEMENT_NM1_FS,
     DISPLACEMENT_X_FS,
     DISPLACEMENT_X_NM1_FS,
     DISPLACEMENT_Y_FS,

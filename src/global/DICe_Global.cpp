@@ -173,12 +173,18 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     mesh_->create_mixed_node_field_maps(mesh_);
 
   // create the necessary fields:
-  mesh_->create_field(mesh::field_enums::DISPLACEMENT_FS);
-  mesh_->create_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
-  Teuchos::RCP<MultiField> disp = mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
-  Teuchos::RCP<MultiField> disp_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
-  disp->put_scalar(0.0);
-  disp_nm1->put_scalar(0.0);
+  mesh_->create_field(mesh::field_enums::DISPLACEMENT_X_FS);
+  mesh_->create_field(mesh::field_enums::DISPLACEMENT_X_NM1_FS);
+  mesh_->create_field(mesh::field_enums::DISPLACEMENT_Y_FS);
+  mesh_->create_field(mesh::field_enums::DISPLACEMENT_Y_NM1_FS);
+  Teuchos::RCP<MultiField> disp_x = mesh_->get_field(mesh::field_enums::DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> disp_x_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_X_NM1_FS);
+  Teuchos::RCP<MultiField> disp_y = mesh_->get_field(mesh::field_enums::DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> disp_y_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_Y_NM1_FS);
+  disp_x->put_scalar(0.0);
+  disp_x_nm1->put_scalar(0.0);
+  disp_y->put_scalar(0.0);
+  disp_y_nm1->put_scalar(0.0);
   mesh_->create_field(mesh::field_enums::RESIDUAL_FS);
   mesh_->create_field(mesh::field_enums::LHS_FS);
   Teuchos::RCP<MultiField> lhs = mesh_->get_field(mesh::field_enums::LHS_FS);
@@ -476,9 +482,12 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
   MultiField & overlap_coords_y = *overlap_coords_y_ptr;
   Teuchos::ArrayRCP<const scalar_t> coords_values_x = overlap_coords_x.get_1d_view();
   Teuchos::ArrayRCP<const scalar_t> coords_values_y = overlap_coords_y.get_1d_view();
-  Teuchos::RCP<MultiField> overlap_disp_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_FS);
-  MultiField & overlap_disp = *overlap_disp_ptr;
-  Teuchos::ArrayRCP<const scalar_t> disp_values = overlap_disp.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_disp_x_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_X_FS);
+  MultiField & overlap_disp_x = *overlap_disp_x_ptr;
+  Teuchos::ArrayRCP<const scalar_t> disp_values_x = overlap_disp_x.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_disp_y_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_Y_FS);
+  MultiField & overlap_disp_y = *overlap_disp_y_ptr;
+  Teuchos::ArrayRCP<const scalar_t> disp_values_y = overlap_disp_y.get_1d_view();
 
   // element loop
   DICe::mesh::element_set::iterator elem_it = mesh_->get_element_set()->begin();
@@ -493,11 +502,8 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
       //std::cout << " gid " << node_ids[nd] << std::endl;
       nodal_coords[nd*spa_dim+0] = coords_values_x[connectivity[nd]->overlap_local_id()];
       nodal_coords[nd*spa_dim+1] = coords_values_y[connectivity[nd]->overlap_local_id()];
-      for(int_t dim=0;dim<spa_dim;++dim){
-        const int_t stride = nd*spa_dim + dim;
-        nodal_disp[stride] = disp_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
-        //std::cout << " node coords " << nodal_coords[stride] << std::endl;
-      }
+      nodal_disp[nd*spa_dim+0] = disp_values_x[connectivity[nd]->overlap_local_id()];
+      nodal_disp[nd*spa_dim+1] = disp_values_y[connectivity[nd]->overlap_local_id()];
     }
     // clear the elem stiffness
     for(int_t i=0;i<num_funcs*spa_dim*num_funcs*spa_dim;++i)
@@ -807,9 +813,12 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
   Teuchos::RCP<MultiField> overlap_coords_y_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
   MultiField & overlap_coords_y = *overlap_coords_y_ptr;
   Teuchos::ArrayRCP<const scalar_t> coords_values_y = overlap_coords_y.get_1d_view();
-  Teuchos::RCP<MultiField> overlap_disp_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_FS);
-  MultiField & overlap_disp = *overlap_disp_ptr;
-  Teuchos::ArrayRCP<const scalar_t> disp_values = overlap_disp.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_disp_x_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_X_FS);
+  MultiField & overlap_disp_x = *overlap_disp_x_ptr;
+  Teuchos::ArrayRCP<const scalar_t> disp_values_x = overlap_disp_x.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_disp_y_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_Y_FS);
+  MultiField & overlap_disp_y = *overlap_disp_y_ptr;
+  Teuchos::ArrayRCP<const scalar_t> disp_values_y = overlap_disp_y.get_1d_view();
 
   // element loop
   DICe::mesh::element_set::iterator elem_it = mesh_->get_element_set()->begin();
@@ -822,11 +831,8 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
     for(int_t nd=0;nd<num_funcs;++nd){
       nodal_coords[nd*spa_dim+0] = coords_values_x[connectivity[nd]->overlap_local_id()];
       nodal_coords[nd*spa_dim+1] = coords_values_y[connectivity[nd]->overlap_local_id()];
-      for(int_t dim=0;dim<spa_dim;++dim){
-        const int_t stride = nd*spa_dim + dim;
-        nodal_disp[stride] = disp_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
-        //std::cout << " node coords " << nodal_coords[stride] << std::endl;
-      }
+      nodal_disp[nd*spa_dim+0] = disp_values_x[connectivity[nd]->overlap_local_id()];
+      nodal_disp[nd*spa_dim+1] = disp_values_y[connectivity[nd]->overlap_local_id()];
     }
     // clear the elem force
     for(int_t i=0;i<num_funcs*spa_dim;++i)
@@ -939,6 +945,7 @@ Global_Algorithm::execute(){
   pre_execution_tasks();
 
   const int_t p_rank = mesh_->get_comm()->get_rank();
+  const int_t spa_dim = mesh_->spatial_dimension();
 
   Teuchos::RCP<MultiField> residual;
   Teuchos::RCP<MultiField> lhs;
@@ -954,8 +961,10 @@ Global_Algorithm::execute(){
     residual = mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
     lhs = mesh_->get_field(mesh::field_enums::LHS_FS);
   }
-  Teuchos::RCP<MultiField> disp = mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
-  Teuchos::RCP<MultiField> disp_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
+  Teuchos::RCP<MultiField> disp_x = mesh_->get_field(mesh::field_enums::DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> disp_x_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_X_NM1_FS);
+  Teuchos::RCP<MultiField> disp_y = mesh_->get_field(mesh::field_enums::DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> disp_y_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_Y_NM1_FS);
 //  disp->describe();
 //  disp->put_scalar(0.0);
 //  disp_nm1->put_scalar(0.0);
@@ -993,20 +1002,14 @@ Global_Algorithm::execute(){
       DEBUG_MSG("Iteration: " << it << " residual norm: " << resid_norm);
       DEBUG_MSG("Global_Algorithm::execute(): * * * convergence successful * * *");
       DEBUG_MSG("Global_Algorithm::execute(): criteria: residual_norm < tol (" << residual_tol << ")");
-      if(is_mixed_formulation()){
-        for(int_t i=0;i<mesh_->get_vector_node_dist_map()->get_num_local_elements();++i){
-          const int_t gid = mesh_->get_vector_node_dist_map()->get_global_element(i);
-          disp->global_value(gid) += lhs->global_value(gid);
-        }
-//        for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
-//          const int_t gid = l_mesh_->get_scalar_node_dist_map()->get_global_element(i);
-        for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+      for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+        disp_x->local_value(i) += lhs->local_value(i*spa_dim+0);
+        disp_y->local_value(i) += lhs->local_value(i*spa_dim+1);
+        if(is_mixed_formulation()){
           const int_t gid = mesh_->get_scalar_node_dist_map()->get_global_element(i);
           lagrange_multiplier->global_value(gid) += lhs->global_value(gid+mixed_global_offset());
         }
       }
-      else
-        disp->update(1.0,*lhs,1.0);
       //disp.describe();
       break;
     }
@@ -1027,21 +1030,14 @@ Global_Algorithm::execute(){
       std::cout << "*** WARNING: Belos linear solver did not converge!" << std::endl;
     // } // end iteration loop
 
-    // if this is a mixed form split the lhs into displacement and lagrange multiplier fields
-    if(is_mixed_formulation()){
-      for(int_t i=0;i<mesh_->get_vector_node_dist_map()->get_num_local_elements();++i){
-        const int_t gid = mesh_->get_vector_node_dist_map()->get_global_element(i);
-        disp->global_value(gid) += lhs->global_value(gid);
-      }
-//      for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
-//        const int_t gid = l_mesh_->get_scalar_node_dist_map()->get_global_element(i);
-      for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+    for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+      disp_x->local_value(i) += lhs->local_value(i*spa_dim+0);
+      disp_y->local_value(i) += lhs->local_value(i*spa_dim+1);
+      if(is_mixed_formulation()){
         const int_t gid = mesh_->get_scalar_node_dist_map()->get_global_element(i);
         lagrange_multiplier->global_value(gid) += lhs->global_value(gid+mixed_global_offset());
       }
     }
-    else
-      disp->update(1.0,*lhs,1.0);
     //lhs->describe();
     //disp->describe();
 
@@ -1061,8 +1057,8 @@ Global_Algorithm::execute(){
     scalar_t disp_max_x = 0.0, disp_max_y = 0.0;
     scalar_t disp_avg_x = 0.0, disp_avg_y = 0.0;
     scalar_t disp_std_dev_x = 0.0, disp_std_dev_y = 0.0;
-    mesh_->field_stats(DICe::mesh::field_enums::DISPLACEMENT_FS,disp_min_x,disp_max_x,disp_avg_x,disp_std_dev_x,0);
-    mesh_->field_stats(DICe::mesh::field_enums::DISPLACEMENT_FS,disp_min_y,disp_max_y,disp_avg_y,disp_std_dev_y,1);
+    mesh_->field_stats(DICe::mesh::field_enums::DISPLACEMENT_X_FS,disp_min_x,disp_max_x,disp_avg_x,disp_std_dev_x,0);
+    mesh_->field_stats(DICe::mesh::field_enums::DISPLACEMENT_Y_FS,disp_min_y,disp_max_y,disp_avg_y,disp_std_dev_y,0);
     DEBUG_MSG("DISPLACEMENT: min_x " << disp_min_x << " max_x " << disp_max_x << " avg_x " << disp_avg_x << " std_dev_x " << disp_std_dev_x);
     DEBUG_MSG("DISPLACEMENT: min_y " << disp_min_y << " max_y " << disp_max_y << " avg_y " << disp_avg_y << " std_dev_y " << disp_std_dev_y);
 
@@ -1073,8 +1069,12 @@ Global_Algorithm::execute(){
     }
 
     // compute the change in disp from the last solution:
-    const scalar_t disp_norm = disp->norm();
-    const scalar_t delta_disp_norm = disp->norm(disp_nm1);
+    const scalar_t disp_x_norm = disp_x->norm();
+    const scalar_t delta_x_disp_norm = disp_x->norm(disp_x_nm1);
+    const scalar_t disp_y_norm = disp_y->norm();
+    const scalar_t delta_y_disp_norm = disp_y->norm(disp_y_nm1);
+    const scalar_t disp_norm = disp_x_norm + disp_y_norm;
+    const scalar_t delta_disp_norm = delta_x_disp_norm + delta_y_disp_norm;
     DEBUG_MSG("Iteration: " << it << " residual norm: " << resid_norm
       << " disp norm: " << disp_norm << " disp update norm: " << delta_disp_norm);
     if(delta_disp_norm < update_tol){
@@ -1083,7 +1083,8 @@ Global_Algorithm::execute(){
       break;
     }
     // copy the displacement solution to state n-1
-    disp_nm1->update(1.0,*disp,0.0);
+    disp_x_nm1->update(1.0,*disp_x,0.0);
+    disp_y_nm1->update(1.0,*disp_y,0.0);
   }
   //TEUCHOS_TEST_FOR_EXCEPTION(it>=max_its,std::runtime_error,"Error, max iterations reached.");
 
@@ -1123,9 +1124,12 @@ Global_Algorithm::compute_strains(){
   Teuchos::RCP<MultiField> overlap_coords_y_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
   MultiField & overlap_coords_y = *overlap_coords_y_ptr;
   Teuchos::ArrayRCP<const scalar_t> coords_values_y = overlap_coords_y.get_1d_view();
-  Teuchos::RCP<MultiField> overlap_disp_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_FS);
-  MultiField & overlap_disp = *overlap_disp_ptr;
-  Teuchos::ArrayRCP<const scalar_t> disp_values = overlap_disp.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_disp_x_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_X_FS);
+  MultiField & overlap_disp_x = *overlap_disp_x_ptr;
+  Teuchos::ArrayRCP<const scalar_t> disp_values_x = overlap_disp_x.get_1d_view();
+  Teuchos::RCP<MultiField> overlap_disp_y_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_Y_FS);
+  MultiField & overlap_disp_y = *overlap_disp_y_ptr;
+  Teuchos::ArrayRCP<const scalar_t> disp_values_y = overlap_disp_y.get_1d_view();
   Teuchos::RCP<MultiField> overlap_strain_contribs_ptr = mesh_->get_overlap_field(mesh::field_enums::STRAIN_CONTRIBS_FS);
   overlap_strain_contribs_ptr->put_scalar(0.0);
   //MultiField & overlap_strain_contribs = *overlap_strain_contribs_ptr;
@@ -1174,11 +1178,8 @@ Global_Algorithm::compute_strains(){
     for(int_t nd=0;nd<num_funcs;++nd){
       nodal_coords[nd*spa_dim+0] = coords_values_x[connectivity[nd]->overlap_local_id()];
       nodal_coords[nd*spa_dim+1] = coords_values_y[connectivity[nd]->overlap_local_id()];
-      for(int_t dim=0;dim<spa_dim;++dim){
-        const int_t stride = nd*spa_dim + dim;
-        nodal_disp[stride] = disp_values[connectivity[nd]->overlap_local_id()*spa_dim + dim];
-        //std::cout << " node coords " << nodal_coords[stride] << std::endl;
-      }
+      nodal_disp[nd*spa_dim+0] = disp_values_x[connectivity[nd]->overlap_local_id()];
+      nodal_disp[nd*spa_dim+1] = disp_values_y[connectivity[nd]->overlap_local_id()];
     }
     // iterate the nodes for this element and compute the strain at each node
     // sum the contributions
@@ -1312,14 +1313,15 @@ Global_Algorithm::evaluate_mms_error(scalar_t & error_bx,
   max_error_lambda = 0.0;
 
 
-  MultiField & disp = *mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
+  MultiField & disp_x = *mesh_->get_field(mesh::field_enums::DISPLACEMENT_X_FS);
+  MultiField & disp_y = *mesh_->get_field(mesh::field_enums::DISPLACEMENT_Y_FS);
   MultiField & exact_sol = *mesh_->get_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
 
   for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
     int_t ix = i*2+0;
     int_t iy = i*2+1;
-    const scalar_t b_x = disp.local_value(ix);
-    const scalar_t b_y = disp.local_value(iy);
+    const scalar_t b_x = disp_x.local_value(i);
+    const scalar_t b_y = disp_y.local_value(i);
     const scalar_t b_exact_x = exact_sol.local_value(ix);
     const scalar_t b_exact_y = exact_sol.local_value(iy);
     const scalar_t diff_x = (b_exact_x - b_x)*(b_exact_x - b_x);

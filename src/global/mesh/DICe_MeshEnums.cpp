@@ -124,7 +124,6 @@ void create_string_maps()
   field_name_string[field_enums::INITIAL_SUBELEMENT_SIZE]                            = "INITIAL_SUBELEMENT_SIZE";
   field_name_string[field_enums::INITIAL_WEIGHTED_CELL_SIZE]                         = "INITIAL_WEIGHTED_CELL_SIZE";
   field_name_string[field_enums::INITIAL_CELL_RADIUS]                                = "INITIAL_CELL_RADIUS";
-  field_name_string[field_enums::DISPLACEMENT]                                       = "DISPLACEMENT";
   field_name_string[field_enums::DISPLACEMENT_X]                                     = "DISPLACEMENT_X";
   field_name_string[field_enums::DISPLACEMENT_Y]                                     = "DISPLACEMENT_Y";
   field_name_string[field_enums::DISPLACEMENT_Z]                                     = "DISPLACEMENT_Z";
