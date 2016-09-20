@@ -557,8 +557,11 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
       node_coords_y[i] = out.pointlist[i*2+1];
       node_map[i] = i + 1;
     }
+    Teuchos::ArrayRCP<int_t> elem_map(out.numberoftriangles,0);
+    for(int_t i=0;i<out.numberoftriangles;++i)
+      elem_map[i] = i + 1;
     mesh = DICe::mesh::create_tri_exodus_mesh(elem_type,node_coords_x,
-      node_coords_y,connectivity,node_map,dirichlet_boundary_nodes,
+      node_coords_y,connectivity,node_map,elem_map,dirichlet_boundary_nodes,
       neumann_boundary_nodes,lagrange_boundary_nodes,output_file_name);
 
     if(!has_dirich_segments&&!has_neumann_segments){
@@ -847,10 +850,15 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri_mesh(const DICe::mesh::Base_
   for(int_t i=0;i<num_nodes;++i)
     node_map[i] = i+1;
 
+  Teuchos::ArrayRCP<int_t> elem_map(num_elem,0);
+  for(int_t i=0;i<num_elem;++i)
+    elem_map[i] = i + 1;
+
+
   Teuchos::RCP<DICe::mesh::Mesh> mesh =
       DICe::mesh::create_tri_exodus_mesh(elem_type,
         node_coords_x,
-        node_coords_y,connectivity,node_map,dirichlet_bcs,
+        node_coords_y,connectivity,node_map,elem_map,dirichlet_bcs,
         neumann_bcs,lag_bcs,output_file_name);
 
   mesh->set_is_regular_grid(true);

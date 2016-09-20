@@ -222,12 +222,12 @@ int main(int argc, char *argv[]) {
     bool has_motion_windows = false;
     if(schema->analysis_type()==LOCAL_DIC){
       has_motion_windows = schema->motion_window_params()->size()>0;
-      *outStream << "Number of subsets: " << schema->data_num_points() << std::endl;
-      for(int_t i=0;i<schema->data_num_points();++i){
-        if(i==10&&schema->data_num_points()!=11) *outStream << "..." << std::endl;
-        else if(i>10&&i<schema->data_num_points()-1) continue;
+      *outStream << "Number of global subsets: " << schema->global_num_subsets() << std::endl;
+      for(int_t i=0;i<schema->local_num_subsets();++i){
+        if(i==10&&schema->local_num_subsets()!=11) *outStream << "..." << std::endl;
+        else if(i>10&&i<schema->local_num_subsets()-1) continue;
         else
-          *outStream << "Subset global id: " << schema->mesh()->get_scalar_node_dist_map()->get_global_element(i) << " global coordinates (" << schema->local_field_value(i,COORDINATE_X) <<
+          *outStream << "Proc 0: subset global id: " << schema->mesh()->get_scalar_elem_dist_map()->get_global_element(i) << " global coordinates (" << schema->local_field_value(i,COORDINATE_X) <<
           "," << schema->local_field_value(i,COORDINATE_Y) << ")" << std::endl;
       }
       *outStream << std::endl;
@@ -270,9 +270,9 @@ int main(int argc, char *argv[]) {
         if(has_motion_windows&&schema->analysis_type()!=GLOBAL_DIC){
           std::map<int_t,Motion_Window_Params>::iterator map_it = schema->motion_window_params()->begin();
           for(;map_it!=schema->motion_window_params()->end();++map_it){
-            if(schema->mesh()->get_scalar_node_dist_map()->get_local_element(map_it->first)<0) continue;
+            if(schema->mesh()->get_scalar_elem_dist_map()->get_local_element(map_it->first)<0) continue;
             DEBUG_MSG("[PROC " << proc_rank << "] Reading motion window for subset " << map_it->first);
-            if(map_it->second.use_subset_id_!=-1&&schema->mesh()->get_scalar_node_dist_map()->get_local_element(map_it->second.use_subset_id_)>=0) continue;
+            if(map_it->second.use_subset_id_!=-1&&schema->mesh()->get_scalar_elem_dist_map()->get_local_element(map_it->second.use_subset_id_)>=0) continue;
             const int_t use_subset_id = map_it->second.use_subset_id_!=-1 ? map_it->second.use_subset_id_ : map_it->first;
             const int_t sub_image_id = map_it->second.sub_image_id_;
             DEBUG_MSG("[PROC " << proc_rank << "] Reading motion window sub_image " << sub_image_id);

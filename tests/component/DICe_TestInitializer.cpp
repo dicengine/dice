@@ -241,7 +241,7 @@ int main(int argc, char *argv[]) {
         continue;
       }
       //schema->print_fields();
-      for(int_t i=0;i<schema->data_num_points();++i){
+      for(int_t i=0;i<schema->local_num_subsets();++i){
         const scalar_t u = schema->local_field_value(i,DISPLACEMENT_X);
         const scalar_t v = schema->local_field_value(i,DISPLACEMENT_Y);
         *outStream << i << " u: " << u << " v: " << v << std::endl;

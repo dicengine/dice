@@ -373,8 +373,16 @@ public:
   /// \brief Create an exodus mesh for output
   /// \param coords_x array of x coordinates for the subset centroids
   /// \param coords_y array of y coordinates for the subset centroids
+  /// \param elem_map the distributed map of how elements are partitioned
+  /// note: the current parallel design for the subset-based methods is that
+  /// all subsets are owned by all elements, this enables using the overlap
+  /// map to collect the solution from other procs because the overlap map and the
+  /// all owned map are the same. The dist_map is used to define the distributed
+  /// ownership for which procs will correlate a given subset. This map is one-to-one
+  /// with no overlap
   void create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
-    Teuchos::ArrayRCP<scalar_t> coords_y);
+    Teuchos::ArrayRCP<scalar_t> coords_y,
+    Teuchos::RCP<MultiField_Map> dist_map);
 
   /// Conduct the correlation
   /// returns 0 if successful
@@ -510,9 +518,14 @@ public:
     return step_size_y_;
   }
 
-  /// Returns the number of correlation points
-  int_t data_num_points()const{
-    return data_num_points_;
+  /// Returns the global number of correlation points
+  int_t global_num_subsets()const{
+    return global_num_subsets_;
+  }
+
+  /// Returns the local number of correlation points
+  int_t local_num_subsets()const{
+    return local_num_subsets_;
   }
 
   /// Returns true if the analysis is global DIC
@@ -527,33 +540,12 @@ public:
   }
 #endif
 
-  /// \brief Return the value of the given field at the given global id (must be local to this process)
-  /// Note: does not check if the gid is local to this process
-  /// \param global_id Global ID of the element
-  /// \param name Field name (see DICe_Types.h for valid field names)
-  mv_scalar_type & global_field_value(const int_t global_id,
-    const Field_Name name){
-    return local_field_value(mesh_->get_scalar_node_dist_map()->get_local_element(global_id),name);
-  }
-
-  /// \brief Return the value of the given field at the given global id (must be local to this process)
-  /// for the previous frame
-  /// Note: does not check if the gid is local to this process
-  /// \param global_id Global ID of the subset
-  /// \param name Field name (see DICe_Types.h for valid field names)
-  mv_scalar_type & global_field_value_nm1(const int_t global_id,
-    const Field_Name name){
-    return local_field_value_nm1(mesh_->get_scalar_node_dist_map()->get_local_element(global_id),name);
-  }
-
-  /// \brief Return the value of the given field at the given local id (must be local to this process)
-  /// \param local_id local ID of the subset
-  /// \param name Field name (see DICe_Types.h for valid field names)
-  mv_scalar_type & local_field_value(const int_t local_id,
-    const Field_Name name){
-    assert(local_id<data_num_points_);
-    assert(name<MAX_FIELD_NAME);
+  /// Returns a field spec for a given field name
+  /// A helper function that converts the schema field names to a mesh field
+  /// \param name the field name
+  DICe::mesh::field_enums::Field_Spec field_name_to_spec(const Field_Name name) const{
     // table to convert a field name to a field spec with an offset
+    assert(name<MAX_FIELD_NAME);
     static std::vector<DICe::mesh::field_enums::Field_Spec> spec_table = {
       DICe::mesh::field_enums::DISPLACEMENT_X_FS,
       DICe::mesh::field_enums::DISPLACEMENT_Y_FS,
@@ -585,16 +577,13 @@ public:
       DICe::mesh::field_enums::NEIGHBOR_ID_FS,
       DICe::mesh::field_enums::CONDITION_NUMBER_FS
     };
-    return mesh_->get_field(spec_table[name])->local_value(local_id);
+    return spec_table[name];
   }
 
-  /// \brief Return the value of the given field at the given local id (must be local to this process)
-  /// for the previous frame
-  /// \param global_id Global ID of the element
-  /// \param name Field name (see DICe_Types.h for valid field names)
-  mv_scalar_type & local_field_value_nm1(const int_t local_id,
-    const Field_Name name){
-    assert(local_id<data_num_points_);
+  /// Return a field spec for an input field name
+  /// \param name field name
+  DICe::mesh::field_enums::Field_Spec field_name_to_nm1_spec(const Field_Name name) const{
+    // table to convert a field name to a field spec with an offset
     assert(name<=SHEAR_STRAIN_XZ);
     // table to convert a field name to a field spec with an offset
     static std::vector<DICe::mesh::field_enums::Field_Spec> spec_table = {
@@ -611,7 +600,44 @@ public:
       DICe::mesh::field_enums::SHEAR_STRETCH_YZ_NM1_FS,
       DICe::mesh::field_enums::SHEAR_STRETCH_XZ_NM1_FS
     };
-    return mesh_->get_field(spec_table[name])->local_value(local_id);
+    return spec_table[name];
+  }
+
+  /// \brief Return the value of the given field at the given global id (must be local to this process)
+  /// \param global_id Global ID of the element
+  /// \param name Field name (see DICe_Types.h for valid field names)
+  mv_scalar_type & global_field_value(const int_t global_id,
+    const Field_Name name){
+    return local_field_value(mesh_->get_scalar_elem_dist_map()->get_local_element(global_id),name);
+  }
+
+  /// \brief Return the value of the given field at the given global id (must be local to this process)
+  /// for the previous frame
+  /// \param global_id Global ID of the subset
+  /// \param name Field name (see DICe_Types.h for valid field names)
+  mv_scalar_type & global_field_value_nm1(const int_t global_id,
+    const Field_Name name){
+    return local_field_value_nm1(mesh_->get_scalar_elem_dist_map()->get_local_element(global_id),name);
+  }
+
+  /// \brief Return the value of the given field at the given local id (must be local to this process)
+  /// \param local_id local ID of the subset
+  /// \param name Field name (see DICe_Types.h for valid field names)
+  mv_scalar_type & local_field_value(const int_t local_id,
+    const Field_Name name){
+    assert(local_id<local_num_subsets_);
+    //return mesh_->get_field(spec_table[name])->local_value(local_id);
+    return mesh_->get_field(field_name_to_spec(name))->local_value(local_id);
+  }
+
+  /// \brief Return the value of the given field at the given local id (must be local to this process)
+  /// for the previous frame
+  /// \param global_id Global ID of the element
+  /// \param name Field name (see DICe_Types.h for valid field names)
+  mv_scalar_type & local_field_value_nm1(const int_t local_id,
+    const Field_Name name){
+    assert(local_id<local_num_subsets_);
+    return mesh_->get_field(field_name_to_nm1_spec(name))->local_value(local_id);
   }
 
   /// \brief Save off the current solution into the storage for frame n - 1 (only used if projection_method is VELOCITY_BASED)
@@ -675,10 +701,14 @@ public:
     Teuchos::RCP<std::vector<scalar_t> > deformation);
 
   /// set up the distributed map so that it respects dependencies among obstructions
-  void create_obstruction_dist_map();
+  /// \param map a map of ids split by obstruction groupings
+  void create_obstruction_dist_map(Teuchos::RCP<MultiField_Map> & map);
 
-//  /// set up the distributed map so that it respects dependencies among seeds
-//  void create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > neighbor_ids);
+  /// set up the distributed map so that it respects dependencies among seeds
+  /// \param map a map of ids split by seeds
+  /// \param neighbor_ids a vector of neighbor ids for each id
+  void create_seed_dist_map(Teuchos::RCP<MultiField_Map> & map,
+    Teuchos::RCP<std::vector<int_t> > neighbor_ids);
 
   /// \brief Create an image that shows the correlation points
   /// \param fileName String name of file to for output
@@ -1085,6 +1115,16 @@ public:
 //      return all_map_->get_local_element(gid);
 //  }
 
+  /// Return the global id of a subset local id
+  int_t subset_global_id(const int_t local_id){
+    return mesh_->get_scalar_elem_dist_map()->get_global_element(local_id);
+  }
+
+  /// Return the local id of a subset global id
+  int_t subset_local_id(const int_t global_id){
+    return mesh_->get_scalar_elem_dist_map()->get_local_element(global_id);
+  }
+
   /// Returns a pointer to the params that were used to construct this schema
   Teuchos::RCP<Teuchos::ParameterList> get_params(){
     return init_params_;
@@ -1162,8 +1202,8 @@ private:
   /// the mesh holds the fields and subsets or elements and nodes
   Teuchos::RCP<DICe::mesh::Mesh> mesh_;
 
-  /// Keeps track of the gids of subsets that are local to this process.
-  Teuchos::ArrayView<const int_t> this_proc_subset_global_ids_;
+  /// Keeps track of the order of gids local to this process
+  std::vector<int_t> this_proc_gid_order_;
   /// Vector of objective classes
   std::vector<Teuchos::RCP<Objective> > obj_vec_;
   /// Pointer to reference image
@@ -1210,8 +1250,10 @@ private:
   double skip_solve_gamma_threshold_;
   /// skip the solve for all subsets and just use the initial guess as the solution
   bool skip_all_solves_;
-  /// The number of correlation points
-  int_t data_num_points_;
+  /// The global number of correlation points
+  int_t global_num_subsets_;
+  /// The local number of correlation points
+  int_t local_num_subsets_;
   /// Are the output fields and columns specified by the user?
   bool has_output_spec_;
   /// Determines how the output is formatted

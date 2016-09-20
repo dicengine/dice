@@ -384,7 +384,7 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
     sid=subset_gid;
 
   // make sure the data lives on this processor
-  TEUCHOS_TEST_FOR_EXCEPTION(schema_->mesh()->get_scalar_node_dist_map()->get_local_element(sid)<0,std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(schema_->mesh()->get_scalar_elem_dist_map()->get_local_element(sid)<0,std::runtime_error,
     "Error: Only subset ids on this processor can be used for initialization");
 
   // 1: check if there exists a value from the previous step (image in a series)

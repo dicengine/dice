@@ -920,6 +920,10 @@ public:
   /// \param field_spec the field_spec defines the field to get
   Teuchos::RCP<MultiField> get_overlap_field(const field_enums::Field_Spec & field_spec);
 
+  /// this will actually do the import, create a new field that has all values and return a pointer to that field
+  /// \param field_spec the field_spec defines the field to get
+  Teuchos::RCP<MultiField> get_all_field(const field_enums::Field_Spec & field_spec);
+
   /// Returns a vector of stings of the field names
   /// \param entity_rank The rank that filters which fields are returned
   /// \param field_type Differentiates between vector and scalar fields

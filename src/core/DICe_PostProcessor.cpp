@@ -57,7 +57,7 @@ Post_Processor::Post_Processor(Schema * schema,
 
 void
 Post_Processor::initialize(){
-  data_num_points_ = schema_->data_num_points();
+  data_num_points_ = schema_->global_num_subsets();
   assert(data_num_points_>0);
   std::vector<scalar_t> tmp_vec(data_num_points_,0.0);
   for(size_t i=0;i<field_names_.size();++i)
@@ -97,6 +97,7 @@ VSG_Strain_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList>
 
 void
 VSG_Strain_Post_Processor::pre_execution_tasks(){
+  if(schema_->mesh()->get_comm()->get_rank()!=0) return;
   DEBUG_MSG("VSG_Strain_Post_Processor pre_execution_tasks() begin");
 
   // Note neighborhood information is collected over square windows, not circular
@@ -109,6 +110,10 @@ VSG_Strain_Post_Processor::pre_execution_tasks(){
   TEUCHOS_TEST_FOR_EXCEPTION(step_size_x<=0,std::runtime_error,"Error VSG requires that the step size parameter is used to layout the subsets in x.");
   TEUCHOS_TEST_FOR_EXCEPTION(step_size_y<=0,std::runtime_error,"Error VSG requires that the step size parameter is used to layout the subsets in x.");
 
+  // gather an all owned field here
+  Teuchos::RCP<MultiField> coords_x = schema_->mesh()->get_all_field(DICe::mesh::field_enums::INITIAL_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> coords_y = schema_->mesh()->get_all_field(DICe::mesh::field_enums::INITIAL_COORDINATES_Y_FS);
+
   // find the min/max x and y, these will be used to set up the rows and columns
   int_t min_x = schema_->ref_img()->width();
   int_t min_y = schema_->ref_img()->height();
@@ -118,8 +123,8 @@ VSG_Strain_Post_Processor::pre_execution_tasks(){
   assert(min_x>0&&min_y>0);
   DEBUG_MSG("width " << min_x << " height " << min_y);
   for(int_t i=0;i<data_num_points_;++i){
-    x = schema_->local_field_value(i,DICe::COORDINATE_X);
-    y = schema_->local_field_value(i,DICe::COORDINATE_Y);
+    x = coords_x->local_value(i);
+    y = coords_y->local_value(i);
     if(x < min_x) min_x = x;
     if(y < min_y) min_y = y;
     if(x > max_x) max_x = x;
@@ -142,8 +147,8 @@ VSG_Strain_Post_Processor::pre_execution_tasks(){
   // organize the subsets according to the step size grid
   int_t row=0,col=0;
   for(int_t subset=0;subset<data_num_points_;++subset){
-    x = schema_->local_field_value(subset,DICe::COORDINATE_X);
-    y = schema_->local_field_value(subset,DICe::COORDINATE_Y);
+    x = coords_x->local_value(subset);
+    y = coords_y->local_value(subset);
     row = (y - min_y)/step_size_y;
     col = (x - min_x)/step_size_x;
     assert(row*num_cols + col < subset_id_grid.size());
@@ -203,7 +208,12 @@ VSG_Strain_Post_Processor::pre_execution_tasks(){
 
 void
 VSG_Strain_Post_Processor::execute(){
+  if(schema_->mesh()->get_comm()->get_rank()!=0) return;
   DEBUG_MSG("VSG_Strain_Post_Processor execute() begin");
+
+  // gather an all owned field here
+  Teuchos::RCP<MultiField> disp_x = schema_->mesh()->get_all_field(DICe::mesh::field_enums::DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> disp_y = schema_->mesh()->get_all_field(DICe::mesh::field_enums::DISPLACEMENT_Y_FS);
 
   const int_t N = 3;
   int *IPIV = new int[N+1];
@@ -232,8 +242,8 @@ VSG_Strain_Post_Processor::execute(){
     // gather the displacements of the neighbors
     for(int_t j=0;j<num_neigh;++j){
       neigh_id = neighbor_lists_[subset*vec_stride_ + j];
-      u_x[j] = schema_->local_field_value(neigh_id,DICe::DISPLACEMENT_X);
-      u_y[j] = schema_->local_field_value(neigh_id,DICe::DISPLACEMENT_Y);
+      u_x[j] = disp_x->local_value(neigh_id);
+      u_y[j] = disp_y->local_value(neigh_id);
     }
 
     // set up the X^T matrix
@@ -493,7 +503,12 @@ Keys4_Strain_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterLis
 
 void
 Keys4_Strain_Post_Processor::pre_execution_tasks(){
+  if(schema_->mesh()->get_comm()->get_rank()!=0) return;
   DEBUG_MSG("Keys4_Strain_Post_Processor pre_execution_tasks() begin");
+
+  // gather an all owned field here
+  Teuchos::RCP<MultiField> coords_x = schema_->mesh()->get_all_field(DICe::mesh::field_enums::INITIAL_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> coords_y = schema_->mesh()->get_all_field(DICe::mesh::field_enums::INITIAL_COORDINATES_Y_FS);
 
   // Note neighborhood information is collected over square windows, not circular
   // The window size is automatically set to make a 7 by 7 window of subsets
@@ -515,8 +530,8 @@ Keys4_Strain_Post_Processor::pre_execution_tasks(){
   assert(min_x>0&&min_y>0);
   DEBUG_MSG("width " << min_x << " height " << min_y);
   for(int_t i=0;i<data_num_points_;++i){
-    x = schema_->local_field_value(i,DICe::COORDINATE_X);
-    y = schema_->local_field_value(i,DICe::COORDINATE_Y);
+    x = coords_x->local_value(i);
+    y = coords_y->local_value(i);
     if(x < min_x) min_x = x;
     if(y < min_y) min_y = y;
     if(x > max_x) max_x = x;
@@ -538,8 +553,8 @@ Keys4_Strain_Post_Processor::pre_execution_tasks(){
   // organize the subsets according to the step size grid
   int_t row=0,col=0;
   for(int_t subset=0;subset<data_num_points_;++subset){
-    x = schema_->local_field_value(subset,DICe::COORDINATE_X);
-    y = schema_->local_field_value(subset,DICe::COORDINATE_Y);
+    x = coords_x->local_value(subset);
+    y = coords_y->local_value(subset);
     row = (y - min_y)/step_size;
     col = (x - min_x)/step_size;
     assert(row*num_cols + col < subset_id_grid.size());
@@ -596,7 +611,12 @@ Keys4_Strain_Post_Processor::pre_execution_tasks(){
 
 void
 Keys4_Strain_Post_Processor::execute(){
+  if(schema_->mesh()->get_comm()->get_rank()!=0) return;
   DEBUG_MSG("Keys4_Strain_Post_Processor execute() begin");
+
+  // gather an all owned field here
+  Teuchos::RCP<MultiField> disp_x = schema_->mesh()->get_all_field(DICe::mesh::field_enums::DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> disp_y = schema_->mesh()->get_all_field(DICe::mesh::field_enums::DISPLACEMENT_Y_FS);
 
   int_t num_neigh = 0;
   int_t neigh_id = 0;
@@ -619,8 +639,8 @@ Keys4_Strain_Post_Processor::execute(){
       neigh_id = neighbor_lists_[subset*vec_stride_ + j];
       dxS = neighbor_distances_x_[subset*vec_stride_ + j];
       dyS = neighbor_distances_y_[subset*vec_stride_ + j];
-      u_x = schema_->local_field_value(neigh_id,DICe::DISPLACEMENT_X);
-      u_y = schema_->local_field_value(neigh_id,DICe::DISPLACEMENT_Y);
+      u_x = disp_x->local_value(neigh_id);
+      u_y = disp_y->local_value(neigh_id);
       dx = std::abs(dxS);
       dy = std::abs(dyS);
       sign_x = (dxS < 0.0) ? -1.0 : 1.0;
@@ -723,7 +743,13 @@ NLVC_Strain_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList
 
 void
 NLVC_Strain_Post_Processor::pre_execution_tasks(){
+  if(schema_->mesh()->get_comm()->get_rank()!=0) return;
+
   DEBUG_MSG("NLVC_Strain_Post_Processor pre_execution_tasks() begin");
+
+  // gather an all owned field here
+  Teuchos::RCP<MultiField> coords_x = schema_->mesh()->get_all_field(DICe::mesh::field_enums::INITIAL_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> coords_y = schema_->mesh()->get_all_field(DICe::mesh::field_enums::INITIAL_COORDINATES_Y_FS);
 
   // Note neighborhood information is collected over square windows, not circular
 
@@ -748,8 +774,8 @@ NLVC_Strain_Post_Processor::pre_execution_tasks(){
   assert(min_x>0&&min_y>0);
   DEBUG_MSG("width " << min_x << " height " << min_y);
   for(int_t i=0;i<data_num_points_;++i){
-    x = schema_->local_field_value(i,DICe::COORDINATE_X);
-    y = schema_->local_field_value(i,DICe::COORDINATE_Y);
+    x = coords_x->local_value(i);
+    y = coords_y->local_value(i);
     if(x < min_x) min_x = x;
     if(y < min_y) min_y = y;
     if(x > max_x) max_x = x;
@@ -772,8 +798,8 @@ NLVC_Strain_Post_Processor::pre_execution_tasks(){
   // organize the subsets according to the step size grid
   int_t row=0,col=0;
   for(int_t subset=0;subset<data_num_points_;++subset){
-    x = schema_->local_field_value(subset,DICe::COORDINATE_X);
-    y = schema_->local_field_value(subset,DICe::COORDINATE_Y);
+    x = coords_x->local_value(subset);
+    y = coords_y->local_value(subset);
     row = (y - min_y)/step_size_y;
     col = (x - min_x)/step_size_x;
     assert(row*num_cols + col < subset_id_grid.size());
@@ -832,7 +858,12 @@ NLVC_Strain_Post_Processor::pre_execution_tasks(){
 
 void
 NLVC_Strain_Post_Processor::execute(){
+  if(schema_->mesh()->get_comm()->get_rank()!=0) return;
   DEBUG_MSG("NLVC_Strain_Post_Processor execute() begin");
+
+  // gather an all owned field here
+  Teuchos::RCP<MultiField> disp_x = schema_->mesh()->get_all_field(DICe::mesh::field_enums::DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> disp_y = schema_->mesh()->get_all_field(DICe::mesh::field_enums::DISPLACEMENT_Y_FS);
 
   const int_t step_size = schema_->step_size_x();
   const scalar_t factor = step_size*step_size;
@@ -859,8 +890,8 @@ NLVC_Strain_Post_Processor::execute(){
       //assert(neighbor_distances_mag_[subset][j] <= horizon_/2.0 && "Error, the distance between these two points is greater than the horizon, but somehow they are in each other's neighborhoods.");
       const scalar_t dist_x = neighbor_distances_x_[subset*vec_stride_ + j];
       const scalar_t dist_y = neighbor_distances_y_[subset*vec_stride_ + j];
-      u_x = schema_->local_field_value(neighbor_gid,DICe::DISPLACEMENT_X);
-      u_y = schema_->local_field_value(neighbor_gid,DICe::DISPLACEMENT_Y);
+      u_x = disp_x->local_value(neighbor_gid);
+      u_y = disp_y->local_value(neighbor_gid);
       if(dist_x==0){
         phi_x = 4.0*(dist_x + 0.5*horizon_)/(horizon_*horizon_);
         alpha_x = 0.0;

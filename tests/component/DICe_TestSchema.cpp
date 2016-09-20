@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
       *outStream << "Error, image height is not right" << std::endl;
       errorFlag++;
     }
-    if(schemaVec[i]->data_num_points()!=0){
+    if(schemaVec[i]->local_num_subsets()!=0){
       *outStream << "Error, num_points is not right" << std::endl;
       errorFlag++;
     }

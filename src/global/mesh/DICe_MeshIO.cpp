@@ -329,6 +329,7 @@ Teuchos::RCP<Mesh> create_tri_exodus_mesh(const DICe::mesh::Base_Element_Type el
   Teuchos::ArrayRCP<scalar_t> node_coords_y,
   Teuchos::ArrayRCP<int_t> connectivity, // this is based on the gids of the elements (always 1..n never 0 based)
   Teuchos::ArrayRCP<int_t> node_map,
+  Teuchos::ArrayRCP<int_t> elem_map,
   std::vector<std::pair<int_t,int_t> > & dirichlet_boundary_nodes,
   std::set<int_t> & neumann_boundary_nodes,
   std::set<int_t> & lagrange_boundary_nodes,
@@ -443,7 +444,7 @@ Teuchos::RCP<Mesh> create_tri_exodus_mesh(const DICe::mesh::Base_Element_Type el
     // create an element and put it in the mesh
     // TODO work out global and local ids for elements
     const int_t elem_local_id = j;
-    const int_t elem_global_id = elem_local_id;
+    const int_t elem_global_id = elem_map[j];
     const int_t elem_index_in_block = elem_local_id;
     Teuchos::RCP<DICe::mesh::Element> element_rcp = Teuchos::rcp(new DICe::mesh::Element(conn,elem_global_id,elem_local_id,1,elem_index_in_block));
     mesh->get_element_set()->push_back(element_rcp);

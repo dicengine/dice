@@ -55,7 +55,6 @@ namespace DICe {
 
 scalar_t
 Objective_ZNSSD::gamma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
-
   assert(deformation->size()==DICE_DEFORMATION_SIZE);
   try{
     subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,deformation,schema_->interpolation_method());

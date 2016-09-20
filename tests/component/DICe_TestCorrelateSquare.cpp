@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
   bool error_x_occurred = false;
   bool error_y_occurred = false;
   bool error_flag = false;
-  for(int_t i=0;i<schemaMultiple->data_num_points();++i){
+  for(int_t i=0;i<schemaMultiple->local_num_subsets();++i){
     const scalar_t disp_x = schemaMultiple->local_field_value(i,DICe::DISPLACEMENT_X);
     const scalar_t disp_y = schemaMultiple->local_field_value(i,DICe::DISPLACEMENT_Y);
     const scalar_t flag = schemaMultiple->local_field_value(i,DICe::STATUS_FLAG);

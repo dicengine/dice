@@ -420,7 +420,7 @@ Mesh::create_elem_node_field_maps(){
 
   // go through all your local nodes, if the remote index list matches your processor than add it to the new_dist_list
   // otherwise another proc will pick it up
-  const int_t total_num_nodes = scalar_node_overlap_map_->get_num_global_elements();// GIDs are 0 based
+  const int_t total_num_nodes = scalar_node_overlap_map_->get_num_global_elements();
   Teuchos::Array<int_t> nodeIDList(total_num_nodes);
   Teuchos::Array<int_t> GIDList(total_num_nodes);
   const int_t min_gid = scalar_node_overlap_map_->get_min_global_index();
@@ -803,6 +803,39 @@ Mesh::get_overlap_field(const field_enums::Field_Spec & field_spec)
   const Teuchos::RCP<MultiField > to_field = field_import(field_spec,map);
   return to_field;
 }
+
+Teuchos::RCP<MultiField >
+Mesh::get_all_field(const field_enums::Field_Spec & field_spec)
+{
+  const int_t num_global_ids = scalar_node_dist_map_->get_num_global_elements();
+  const int_t spa_dim = spatial_dimension();
+  Teuchos::RCP<MultiField_Map> map;
+  if(field_spec.get_rank()==field_enums::NODE_RANK && field_spec.get_field_type()==field_enums::SCALAR_FIELD_TYPE){
+    // create a scalar all onwed map for this processor:
+    Teuchos::Array<int_t> all_subsets(num_global_ids);
+    for(int_t i=0;i<scalar_elem_dist_map_->get_num_global_elements();++i)
+      all_subsets[i] = i;
+    map = Teuchos::rcp(new MultiField_Map(-1,all_subsets.view(0,all_subsets.size()),0,*comm_));
+  }
+  else if(field_spec.get_rank()==field_enums::NODE_RANK && field_spec.get_field_type()==field_enums::VECTOR_FIELD_TYPE){
+    // create a scalar all onwed map for this processor:
+    Teuchos::Array<int_t> all_subsets(num_global_ids*spa_dim);
+    for(int_t i=0;i<scalar_elem_dist_map_->get_num_global_elements();++i){
+      all_subsets[i*spa_dim+0] = i*spa_dim + 0;
+      all_subsets[i*spa_dim+1] = i*spa_dim + 1;
+    }
+    map = Teuchos::rcp(new MultiField_Map(-1,all_subsets.view(0,all_subsets.size()),0,*comm_));
+  }
+  else
+  {
+    std::stringstream oss;
+    oss << " MG_Mesh::get_all_field(): unknown rank and tensor order combination specified: " << tostring(field_spec.get_rank()) << " " << tostring(field_spec.get_field_type()) << std::endl;
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
+  }
+  const Teuchos::RCP<MultiField > to_field = field_import(field_spec,map);
+  return to_field;
+}
+
 
 Teuchos::RCP<MultiField>
 Mesh::field_import(const field_enums::Field_Spec & field_spec,
