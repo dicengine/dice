@@ -686,12 +686,6 @@ Schema::initialize(const int_t step_size_x,
 
   initialize(coords_x,coords_y,subset_size);
   assert(global_num_subsets_==num_pts);
-
-//  for (int_t i=0;i<num_pts;++i)
-//  {
-//     local_field_value(i,COORDINATE_X) = coords_x[i];
-//     local_field_value(i,COORDINATE_Y) = coords_y[i];
-//  }
 }
 
 void
@@ -794,13 +788,6 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     coords_y[i] = (*subset_centroids)[i*dim + 1];
   }
   initialize(coords_x,coords_y,subset_size,conformal_area_defs,neighbor_ids);
-
-  // set the coordinates for the subsets:
-  // all other values are initiliazed to zero
-//  for(int_t i=0;i<num_subsets;++i){
-//    local_field_value(i,DICe::COORDINATE_X) = (*subset_centroids)[i*dim + 0];
-//    local_field_value(i,DICe::COORDINATE_Y) = (*subset_centroids)[i*dim + 1];
-//  }
 
   // set the seed value if they exist
   if(subset_info!=Teuchos::null){

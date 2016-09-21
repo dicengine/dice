@@ -144,11 +144,6 @@ public:
     return mesh_;
   }
 
-//  /// Returns a pointer to the lagrange multiplier mesh
-//  Teuchos::RCP<DICe::mesh::Mesh> l_mesh()const{
-//    return l_mesh_;
-//  }
-
   /// add a term to the formulation
   void add_term(const Global_EQ_Term term){
     eq_terms_.insert(term);
@@ -218,8 +213,6 @@ protected:
   scalar_t alpha2_;
   /// computational mesh
   Teuchos::RCP<DICe::mesh::Mesh> mesh_;
-  /// lagrange multiplier mesh
-  Teuchos::RCP<DICe::mesh::Mesh> l_mesh_;
   /// optional pointer to a method of manufactured solutions problem
   Teuchos::RCP<MMS_Problem> mms_problem_;
   /// name of the output file

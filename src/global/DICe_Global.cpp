@@ -676,21 +676,17 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
             const bool is_local_row_node =  mesh_->get_vector_node_dist_map()->is_node_global_elem(row); // using the non-mixed map because the row is a velocity row
             const bool row_is_bc_node = is_local_row_node ?
                 bc_manager_->is_row_bc(mesh_->get_vector_node_dist_map()->get_local_element(row)) : false; // same rationalle here
-            //const bool is_local_mixed_row_node =  l_mesh_->get_scalar_node_dist_map()->is_node_global_elem(node_ids[i]); // using the non-mixed map because the row is a velocity row
             const bool is_local_mixed_row_node =  mesh_->get_scalar_node_dist_map()->is_node_global_elem(node_ids[i]); // using the non-mixed map because the row is a velocity row
             const bool is_p_row = is_local_mixed_row_node ?
                 bc_manager_->is_mixed_bc(mesh_->get_scalar_node_dist_map()->get_local_element(node_ids[i])) : false;
-            //bc_manager_->is_mixed_bc(l_mesh_->get_scalar_node_dist_map()->get_local_element(node_ids[i])) : false;
             if(!row_is_bc_node&&!is_p_row){// && !col_is_bc_node){
               col_id_array_map.find(row)->second.push_back(col);
               values_array_map.find(row)->second.push_back(value);
               // transpose should be the same value
             }
-            //const bool is_local_mixed_col_node =  l_mesh_->get_scalar_node_dist_map()->is_node_global_elem(node_ids[j]); // using the non-mixed map because the row is a velocity row
             const bool is_local_mixed_col_node =  mesh_->get_scalar_node_dist_map()->is_node_global_elem(node_ids[j]); // using the non-mixed map because the row is a velocity row
             const bool is_p_col = is_local_mixed_col_node ?
                 bc_manager_->is_mixed_bc(mesh_->get_scalar_node_dist_map()->get_local_element(node_ids[j])) : false;
-            //bc_manager_->is_mixed_bc(l_mesh_->get_scalar_node_dist_map()->get_local_element(node_ids[j])) : false;
             if(!is_p_col){
               col_id_array_map.find(col)->second.push_back(row);
               values_array_map.find(col)->second.push_back(value);
@@ -726,10 +722,8 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
   }
   /// lagrange multiplier bc
   if(is_mixed_formulation()){
-//    for(int_t i=0;i<l_mesh_->get_scalar_node_overlap_map()->get_num_local_elements();++i){
     for(int_t i=0;i<mesh_->get_scalar_node_overlap_map()->get_num_local_elements();++i){
       if(bc_manager_->is_mixed_bc(i)){
-        //const int_t global_id = l_mesh_->get_scalar_node_overlap_map()->get_global_element(i) + mgo;
         const int_t global_id = mesh_->get_scalar_node_overlap_map()->get_global_element(i) + mgo;
         col_id_array_map.find(global_id)->second.push_back(global_id);
         values_array_map.find(global_id)->second.push_back(1.0);
@@ -953,7 +947,6 @@ Global_Algorithm::execute(){
   if(is_mixed_formulation()){
     residual = mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS);
     lhs = mesh_->get_field(mesh::field_enums::MIXED_LHS_FS);
-    //lagrange_multiplier = l_mesh_->get_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
     lagrange_multiplier = mesh_->get_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
     lagrange_multiplier->put_scalar(0.0);
   }
@@ -1290,10 +1283,6 @@ Global_Algorithm::post_execution_tasks(const scalar_t & time_stamp){
   const int_t time_step = time_stamp;
   DEBUG_MSG("Writing the output file with step : " << time_step << " time stamp: " << time_stamp);
   DICe::mesh::exodus_output_dump(mesh_,time_step,time_stamp);
-  //if(is_mixed_formulation()){//||global_formulation_==LEVENBERG_MARQUARDT){
-  //  DEBUG_MSG("Writing the lagrange multiplier output file with step: " << time_step << " time stamp: " << time_stamp);
-  //  DICe::mesh::exodus_output_dump(l_mesh_,time_step,time_stamp);
-  //}
 }
 
 void
@@ -1337,9 +1326,6 @@ Global_Algorithm::evaluate_mms_error(scalar_t & error_bx,
   error_by = std::sqrt(error_by);
 
   if(is_mixed_formulation()){
-    //    MultiField & l_exact_sol = *l_mesh_->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
-    //    MultiField & l_field = *l_mesh_->get_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
-    //    for(int_t i=0;i<l_mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
     MultiField & l_exact_sol = *mesh_->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
     MultiField & l_field = *mesh_->get_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
     for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){

@@ -57,7 +57,6 @@ BC_Manager::BC_Manager(Global_Algorithm * alg) :
     mixed_bc_register_size_(0),
     bc_register_initialized_(false),
     mesh_(alg->mesh()),
-    //l_mesh_(alg->l_mesh()),
     is_mixed_(false),
     alg_(alg)
 {
