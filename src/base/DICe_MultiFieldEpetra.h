@@ -98,6 +98,9 @@ public:
   /// Returns the number of processors
   int get_size()const{return comm_->NumProc();}
 
+  /// call barrier method
+  void barrier()const{comm_->Barrier();}
+
   /// Returns a pointer to the underlying communicator
   Teuchos::RCP<Epetra_Comm> get()const{return comm_;}
 private:

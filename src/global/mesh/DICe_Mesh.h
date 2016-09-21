@@ -876,7 +876,9 @@ public:
 
   /// Create the maps the dictate how fields are communicated across processors
   ///NOTE: exodus ids are 1 based, not 0 based
-  void create_elem_node_field_maps();
+  /// \param force_elem_and_node_maps_to_match useful for particle methods where the element has one node
+  /// and it is desired to have the elements split in the same way the nodes are
+  void create_elem_node_field_maps(const bool force_elem_and_node_maps_to_match=false);
 
   /// Create the field maps for the mixed formulation elements
   void create_mixed_node_field_maps(Teuchos::RCP<Mesh> alt_mesh);
@@ -919,10 +921,6 @@ public:
   /// this will actually do the import, create a new field that has the overlap values and return a pointer to that field
   /// \param field_spec the field_spec defines the field to get
   Teuchos::RCP<MultiField> get_overlap_field(const field_enums::Field_Spec & field_spec);
-
-  /// this will actually do the import, create a new field that has all values and return a pointer to that field
-  /// \param field_spec the field_spec defines the field to get
-  Teuchos::RCP<MultiField> get_all_field(const field_enums::Field_Spec & field_spec);
 
   /// Returns a vector of stings of the field names
   /// \param entity_rank The rank that filters which fields are returned

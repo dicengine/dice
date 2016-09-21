@@ -2,4 +2,11 @@
   <Parameter name="correlation_routine" type="string" value="GENERIC_ROUTINE" />
   <Parameter name="initialization_method" type="string" value="USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY" />
   <Parameter name="output_deformed_subset_images" type="bool" value="false" />
+  <ParameterList name="output_spec">
+    <Parameter name="COORDINATE_X" type="bool" value="true" />
+    <Parameter name="COORDINATE_Y" type="bool" value="true" />
+    <Parameter name="DISPLACEMENT_X" type="bool" value="true" />
+    <Parameter name="DISPLACEMENT_Y" type="bool" value="true" />
+    <Parameter name="SIGMA" type="bool" value="true" />
+  </ParameterList>
 </ParameterList>

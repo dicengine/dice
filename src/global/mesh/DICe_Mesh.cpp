@@ -379,7 +379,7 @@ Mesh::create_mixed_node_field_maps(Teuchos::RCP<Mesh> alt_mesh){
 }
 
 void
-Mesh::create_elem_node_field_maps(){
+Mesh::create_elem_node_field_maps(const bool force_elem_and_node_maps_to_match){
   DEBUG_MSG("Creating the element and node field maps for the mesh");
   const int_t indexBase = 0;
   const int_t spa_dim = spatial_dimension();
@@ -418,48 +418,6 @@ Mesh::create_elem_node_field_maps(){
   //std::cout << " VECTOR_NODE_OVERLAP MAP: " << std::endl;
   //vector_node_overlap_map->describe();
 
-  // go through all your local nodes, if the remote index list matches your processor than add it to the new_dist_list
-  // otherwise another proc will pick it up
-  const int_t total_num_nodes = scalar_node_overlap_map_->get_num_global_elements();
-  Teuchos::Array<int_t> nodeIDList(total_num_nodes);
-  Teuchos::Array<int_t> GIDList(total_num_nodes);
-  const int_t min_gid = scalar_node_overlap_map_->get_min_global_index();
-  //const int_t max_gid = scalar_node_overlap_map_->get_max_global_index();
-  Teuchos::Array<int_t> gids_on_this_proc;
-  Teuchos::Array<int_t> gids_on_this_proc_vectorized;
-  for(int_t i=0;i<total_num_nodes;++i)
-  {
-    GIDList[i] = min_gid + i;
-  }
-  scalar_node_overlap_map_->get_remote_index_list(GIDList,nodeIDList);
-
-  for(int_t i=0;i<total_num_nodes;++i)
-  {
-    if(nodeIDList[i]==p_rank) // only add the nodes that have this processor as their remote index
-    {
-      gids_on_this_proc.push_back(min_gid + i);
-      for(int_t dim=0;dim<spa_dim;++dim)
-        gids_on_this_proc_vectorized.push_back((min_gid + i)*spa_dim+dim);
-    }
-  }
-  scalar_node_dist_map_ = Teuchos::rcp(new MultiField_Map(-1,gids_on_this_proc, indexBase, *comm_));
-  //std::cout << " SCALAR_NODE_DIST MAP: " << std::endl;
-  //scalar_node_dist_map->describe();
-  vector_node_dist_map_ = Teuchos::rcp(new MultiField_Map(-1,gids_on_this_proc_vectorized, indexBase, *comm_));
-  //std::cout << " VECTOR_NODE_DIST MAP: " << std::endl;
-  //vector_node_dist_map->describe();
-
-  for(node_it = get_node_set()->begin(); node_it!=node_end;++node_it)
-  {
-    // since the map used by exodus for the nodes is the overlap map (nodes appear on multiple processors)
-    // the local id as created by exodus is really the overlap_local_id. Here the local_id gets saved
-    // off as it should in the overlap_local_id member data, and later we replace the local_id data
-    // with the true local_id from the distributed map
-    node_it->second->update_overlap_local_id(node_it->second->local_id());
-    // replace the local id with the value corresponding to the dist map
-    // NOTE some will be -1 if they are not locally owned
-    node_it->second->update_local_id(scalar_node_dist_map_->get_local_element(node_it->first));
-  }
 
   // ELEM DIST MAP AND VECTORIZED MAP
   // This map should be 1-to-1
@@ -485,6 +443,59 @@ Mesh::create_elem_node_field_maps(){
   //std::cout << " ELEM DIST MAP " << std::endl;
   //scalar_elem_dist_map->describe();
   vector_elem_dist_map_ = Teuchos::rcp (new MultiField_Map(-1, elem_list_vectorized, indexBase, *comm_));
+
+  if(force_elem_and_node_maps_to_match){
+    scalar_node_dist_map_ = Teuchos::rcp(new MultiField_Map(-1,elem_list, indexBase, *comm_));
+    vector_node_dist_map_ = Teuchos::rcp(new MultiField_Map(-1,elem_list_vectorized, indexBase, *comm_));
+  }
+  else{
+    // go through all your local nodes, if the remote index list matches your processor then add it to the new_dist_list
+    // otherwise another proc will pick it up
+    const int_t total_num_nodes = scalar_node_overlap_map_->get_num_global_elements();
+    Teuchos::Array<int_t> nodeIDList(total_num_nodes);
+    Teuchos::Array<int_t> GIDList(total_num_nodes);
+    const int_t min_gid = scalar_node_overlap_map_->get_min_global_index();
+    //const int_t max_gid = scalar_node_overlap_map_->get_max_global_index();
+    Teuchos::Array<int_t> gids_on_this_proc;
+    Teuchos::Array<int_t> gids_on_this_proc_vectorized;
+    for(int_t i=0;i<total_num_nodes;++i)
+    {
+      GIDList[i] = min_gid + i;
+    }
+    scalar_node_overlap_map_->get_remote_index_list(GIDList,nodeIDList);
+
+    for(int_t i=0;i<total_num_nodes;++i)
+    {
+      if(nodeIDList[i]==p_rank) // only add the nodes that have this processor as their remote index
+      {
+        gids_on_this_proc.push_back(min_gid + i);
+        for(int_t dim=0;dim<spa_dim;++dim)
+          gids_on_this_proc_vectorized.push_back((min_gid + i)*spa_dim+dim);
+      }
+    }
+    scalar_node_dist_map_ = Teuchos::rcp(new MultiField_Map(-1,gids_on_this_proc, indexBase, *comm_));
+    //std::cout << " SCALAR_NODE_DIST MAP: " << std::endl;
+    //scalar_node_dist_map->describe();
+    vector_node_dist_map_ = Teuchos::rcp(new MultiField_Map(-1,gids_on_this_proc_vectorized, indexBase, *comm_));
+    //std::cout << " VECTOR_NODE_DIST MAP: " << std::endl;
+    //vector_node_dist_map->describe();
+  }
+
+  for(node_it = get_node_set()->begin(); node_it!=node_end;++node_it)
+  {
+    // since the map used by exodus for the nodes is the overlap map (nodes appear on multiple processors)
+    // the local id as created by exodus is really the overlap_local_id. Here the local_id gets saved
+    // off as it should in the overlap_local_id member data, and later we replace the local_id data
+    // with the true local_id from the distributed map
+    node_it->second->update_overlap_local_id(node_it->second->local_id());
+    // replace the local id with the value corresponding to the dist map
+    // NOTE some will be -1 if they are not locally owned
+    node_it->second->update_local_id(scalar_node_dist_map_->get_local_element(node_it->first));
+  }
+
+
+
+
 }
 
 void
@@ -803,39 +814,6 @@ Mesh::get_overlap_field(const field_enums::Field_Spec & field_spec)
   const Teuchos::RCP<MultiField > to_field = field_import(field_spec,map);
   return to_field;
 }
-
-Teuchos::RCP<MultiField >
-Mesh::get_all_field(const field_enums::Field_Spec & field_spec)
-{
-  const int_t num_global_ids = scalar_node_dist_map_->get_num_global_elements();
-  const int_t spa_dim = spatial_dimension();
-  Teuchos::RCP<MultiField_Map> map;
-  if(field_spec.get_rank()==field_enums::NODE_RANK && field_spec.get_field_type()==field_enums::SCALAR_FIELD_TYPE){
-    // create a scalar all onwed map for this processor:
-    Teuchos::Array<int_t> all_subsets(num_global_ids);
-    for(int_t i=0;i<scalar_elem_dist_map_->get_num_global_elements();++i)
-      all_subsets[i] = i;
-    map = Teuchos::rcp(new MultiField_Map(-1,all_subsets.view(0,all_subsets.size()),0,*comm_));
-  }
-  else if(field_spec.get_rank()==field_enums::NODE_RANK && field_spec.get_field_type()==field_enums::VECTOR_FIELD_TYPE){
-    // create a scalar all onwed map for this processor:
-    Teuchos::Array<int_t> all_subsets(num_global_ids*spa_dim);
-    for(int_t i=0;i<scalar_elem_dist_map_->get_num_global_elements();++i){
-      all_subsets[i*spa_dim+0] = i*spa_dim + 0;
-      all_subsets[i*spa_dim+1] = i*spa_dim + 1;
-    }
-    map = Teuchos::rcp(new MultiField_Map(-1,all_subsets.view(0,all_subsets.size()),0,*comm_));
-  }
-  else
-  {
-    std::stringstream oss;
-    oss << " MG_Mesh::get_all_field(): unknown rank and tensor order combination specified: " << tostring(field_spec.get_rank()) << " " << tostring(field_spec.get_field_type()) << std::endl;
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
-  }
-  const Teuchos::RCP<MultiField > to_field = field_import(field_spec,map);
-  return to_field;
-}
-
 
 Teuchos::RCP<MultiField>
 Mesh::field_import(const field_enums::Field_Spec & field_spec,
