@@ -33,11 +33,6 @@ set_target_properties(diceglobal PROPERTIES
 )
 
 #
-#  Computational mesh utilities
-#
-add_subdirectory(mesh)
-
-#
 #  Delaunay triangulation library
 #
 add_subdirectory(triangle)

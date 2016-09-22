@@ -50,6 +50,7 @@
 #ifdef DICE_ENABLE_GLOBAL
   #include <DICe_Global.h>
 #endif
+#include <DICe_Mesh.h>
 
 #ifdef DICE_TPETRA
   #include "DICe_MultiFieldTpetra.h"

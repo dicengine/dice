@@ -127,6 +127,7 @@ SET(DICE_HEADER_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}/src/fft
   ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/src
   ${CMAKE_CURRENT_SOURCE_DIR}/src/kdtree
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/mesh
   ${TIFF_DIR}
   ${JPEG_DIR}
   ${PNG_DIR}
@@ -139,8 +140,8 @@ IF(DICE_ENABLE_GLOBAL)
   SET(DICE_HEADER_DIRS
       ${DICE_HEADER_DIRS}
       ${CMAKE_CURRENT_SOURCE_DIR}/src/global
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/global/triangle
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/global/mesh)
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/mesh/io
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/global/triangle)
       add_definitions(-DTRILIBRARY -DANSI_DECLARATORS -DDICE_ENABLE_GLOBAL=1)
 ENDIF()
 

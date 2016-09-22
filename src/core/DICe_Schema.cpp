@@ -45,11 +45,6 @@
 #include <DICe_PostProcessor.h>
 #include <DICe_ParameterUtilities.h>
 #include <DICe_ImageUtils.h>
-#ifdef DICE_ENABLE_GLOBAL
-  #include <DICe_TriangleUtils.h>
-#endif
-
-#include <DICe_MeshIO.h>
 
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <Teuchos_ArrayRCP.hpp>
@@ -957,7 +952,7 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   std::vector<std::pair<int_t,int_t>> dirichlet_boundary_nodes;
   std::set<int_t> neumann_boundary_nodes;
   std::set<int_t> lagrange_boundary_nodes;
-  mesh_ = DICe::mesh::create_tri_exodus_mesh(DICe::mesh::MESHLESS,
+  mesh_ = DICe::mesh::create_point_or_tri_mesh(DICe::mesh::MESHLESS,
     coords_x,
     coords_y,
     connectivity,

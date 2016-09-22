@@ -40,7 +40,6 @@
 // @HEADER
 
 #include <DICe_TriangleUtils.h>
-#include <DICe_MeshIO.h>
 #include <DICe_Mesh.h>
 #include <DICe_Parser.h>
 
@@ -560,7 +559,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
     Teuchos::ArrayRCP<int_t> elem_map(out.numberoftriangles,0);
     for(int_t i=0;i<out.numberoftriangles;++i)
       elem_map[i] = i + 1;
-    mesh = DICe::mesh::create_tri_exodus_mesh(elem_type,node_coords_x,
+    mesh = DICe::mesh::create_point_or_tri_mesh(elem_type,node_coords_x,
       node_coords_y,connectivity,node_map,elem_map,dirichlet_boundary_nodes,
       neumann_boundary_nodes,lagrange_boundary_nodes,output_file_name);
 
@@ -856,7 +855,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri_mesh(const DICe::mesh::Base_
 
 
   Teuchos::RCP<DICe::mesh::Mesh> mesh =
-      DICe::mesh::create_tri_exodus_mesh(elem_type,
+      DICe::mesh::create_point_or_tri_mesh(elem_type,
         node_coords_x,
         node_coords_y,connectivity,node_map,elem_map,dirichlet_bcs,
         neumann_bcs,lag_bcs,output_file_name);

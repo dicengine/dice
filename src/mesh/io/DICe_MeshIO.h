@@ -57,34 +57,6 @@ namespace mesh{
 Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
   const std::string & serial_output_filename);
 
-/// create an exodus mesh from scratch, (not read from an existing file)
-/// \param elem_type the element type TRI6 or TRI3
-/// \param node_coords_x x coordinates of the nodes
-/// \param node_coords_y y coordinates of the nodes
-/// \param connectivity the connectivity matrix (always 1...n based)
-/// \param node_map converts local ids to global ids
-/// \param elem_map converts local ids to global ids
-/// \param dirichlet_boundary_nodes a set of nodes to mark as dirichlet boundary nodes
-/// \param neumann_boundary_nodes a set of nodes to mark as a neumann boundary
-/// \param lagrange_boundary_nodes a set of nodes to mark as the lagrange multiplier boundary nodes
-/// \param serial_output_filename The output fiel name with no parallel decorations
-Teuchos::RCP<Mesh> create_tri_exodus_mesh(const DICe::mesh::Base_Element_Type elem_type,
-  Teuchos::ArrayRCP<scalar_t> node_coords_x,
-  Teuchos::ArrayRCP<scalar_t> node_coords_y,
-  Teuchos::ArrayRCP<int_t> connectivity,
-  Teuchos::ArrayRCP<int_t> node_map,
-  Teuchos::ArrayRCP<int_t> elem_map,
-  std::vector<std::pair<int_t,int_t> > & dirichlet_boundary_nodes,
-  std::set<int_t> & neumann_boundary_nodes,
-  std::set<int_t> & lagrange_boundary_nodes,
-  const std::string & serial_output_filename);
-
-/// create a linear tri mesh from a quadratic one
-/// \param tri6_mesh the parent tri6 mesh
-/// \param serial_output_filename the name to use for the output
-Teuchos::RCP<Mesh> create_tri3_exodus_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mesh,
-  const std::string & serial_output_filename);
-
 /// Read the coordinates of the nodes from the mesh
 /// \param mesh The mesh to use for this function
 void read_exodus_coordinates(Teuchos::RCP<Mesh> mesh);

@@ -23,6 +23,11 @@ add_subdirectory(fft)
 #
 add_subdirectory(api)
 
+#
+#  Computational mesh utilities
+#
+add_subdirectory(mesh)
+
 IF(DICE_ENABLE_GLOBAL)
   add_subdirectory(global)
 ENDIF()

@@ -144,7 +144,8 @@ target_link_libraries(main
   dicebase
   dicefft
   diceutils
-  dicecine)
+  dicecine
+  dicemesh)
   
 # add the other libraries needed
 target_link_libraries(main

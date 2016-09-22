@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
 
   *outStream << "generating a tri3 mesh from a tri6 mesh" << std::endl;
 
-  Teuchos::RCP<DICe::mesh::Mesh> mesh_tri3 = DICe::mesh::create_tri3_exodus_mesh_from_tri6(mesh,"scratch_mesh_tri3.e");
+  Teuchos::RCP<DICe::mesh::Mesh> mesh_tri3 = DICe::mesh::create_tri3_mesh_from_tri6(mesh,"scratch_mesh_tri3.e");
   *outStream << "creating a linear tri3 output mesh" << std::endl;
   DICe::mesh::create_output_exodus_file(mesh_tri3,"./");
   DICe::mesh::create_exodus_output_variable_names(mesh_tri3);
