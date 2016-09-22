@@ -7,7 +7,6 @@ include_directories (
 include_directories(${Boost_INCLUDE_DIRS})
 add_library(dicemeshio DICe_MeshIO.cpp DICe_MeshIO.h)
 target_link_libraries(dicemeshio ${DICE_LIBRARIES} ${Boost_LIBRARIES} dicemesh)
-target_link_libraries(dicemeshio ${Boost_LIBRARIES})
 install(TARGETS dicemeshio
   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )

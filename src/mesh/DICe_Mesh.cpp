@@ -1747,7 +1747,7 @@ FEM_Barycentric_Tri6::evaluate_shape_function_derivatives(const scalar_t * natur
 }
 
 // mesh generation utilities:
-
+DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Mesh> create_point_or_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
   Teuchos::ArrayRCP<scalar_t> node_coords_x,
   Teuchos::ArrayRCP<scalar_t> node_coords_y,
@@ -2023,6 +2023,7 @@ Teuchos::RCP<Mesh> create_point_or_tri_mesh(const DICe::mesh::Base_Element_Type 
   return mesh;
 }
 
+DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Mesh> create_tri3_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mesh,
   const std::string & serial_output_filename){
   DEBUG_MSG("create_tri3_mesh_from_tri6(): creating a tri3 mesh from a tri6 one");
@@ -2272,6 +2273,7 @@ Teuchos::RCP<Mesh> create_tri3_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mesh,
 
 } // namespace mesh
 
+DICE_LIB_DLL_EXPORT
 void tri3d_natural_integration_points(const int_t order,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
   Teuchos::ArrayRCP<scalar_t> & weights,
@@ -2362,6 +2364,7 @@ void tri3d_natural_integration_points(const int_t order,
   }
 }
 
+DICE_LIB_DLL_EXPORT
 void tri2d_nonexact_integration_points(const int_t order,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
   Teuchos::ArrayRCP<scalar_t> & weights,
@@ -2402,6 +2405,7 @@ void tri2d_nonexact_integration_points(const int_t order,
   TEUCHOS_TEST_FOR_EXCEPTION(index!=num_points,std::runtime_error,"");
 }
 
+DICE_LIB_DLL_EXPORT
 void tri2d_natural_integration_points(const int_t order,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
   Teuchos::ArrayRCP<scalar_t> & weights,
@@ -2540,6 +2544,7 @@ void tri2d_natural_integration_points(const int_t order,
 }
 
 //Compute the cross product AB x AC
+DICE_LIB_DLL_EXPORT
 scalar_t cross(const scalar_t * a_coords,
   const scalar_t * b_coords,
   const scalar_t * c_coords)
@@ -2554,6 +2559,7 @@ scalar_t cross(const scalar_t * a_coords,
   return cross;
 }
 //Compute the cross product AB x AC
+DICE_LIB_DLL_EXPORT
 scalar_t cross3d(const scalar_t * a_coords,
   const scalar_t * b_coords,
   const scalar_t * c_coords)
@@ -2573,6 +2579,7 @@ scalar_t cross3d(const scalar_t * a_coords,
 }
 
 //Compute the cross product AB x AC return the area of the parallelogram and update the normal pointer
+DICE_LIB_DLL_EXPORT
 scalar_t cross3d_with_normal(const scalar_t * a_coords,
   const scalar_t * b_coords,
   const scalar_t * c_coords,
@@ -2601,6 +2608,7 @@ scalar_t cross3d_with_normal(const scalar_t * a_coords,
 
 //Compute the cross product AB x AC return the area of the parallelogram and update the normal pointer
 //TODO condense these three functions to use the same subfunction
+DICE_LIB_DLL_EXPORT
 void cross3d_with_cross_prod(const scalar_t * a_coords,
   const scalar_t * b_coords,
   const scalar_t * c_coords,
@@ -2619,6 +2627,7 @@ void cross3d_with_cross_prod(const scalar_t * a_coords,
   cross_prod[2] = AB[0] * AC[1] - AB[1] * AC[0];
 }
 
+DICE_LIB_DLL_EXPORT
 scalar_t determinant_4x4(const scalar_t * a)
 {
   const scalar_t det =
@@ -2641,6 +2650,7 @@ scalar_t determinant_4x4(const scalar_t * a)
   return det;
 }
 
+DICE_LIB_DLL_EXPORT
 void gauss_1D(Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & r,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & w,
   int_t gauss_order){
@@ -2775,6 +2785,7 @@ void gauss_1D(Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & r,
   }
 }
 
+DICE_LIB_DLL_EXPORT
 void gauss_2D(Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & r,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & w,
   int_t gauss_order){
@@ -2821,6 +2832,7 @@ void gauss_2D(Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & r,
 }
 
 
+DICE_LIB_DLL_EXPORT
 Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > kronecker( Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & A,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & B){
 
@@ -2851,7 +2863,7 @@ Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > kronecker( Teuchos::ArrayRCP<Teu
  return C;
 };
 
-
+DICE_LIB_DLL_EXPORT
 void calc_jacobian(const scalar_t * xcap,
   const scalar_t * DN,
   scalar_t * jacobian,
@@ -2912,13 +2924,14 @@ void calc_jacobian(const scalar_t * xcap,
 
 };
 
+DICE_LIB_DLL_EXPORT
 void calc_B(const scalar_t * DN,
   const scalar_t * inv_jacobian,
   int_t num_elem_nodes,
   int_t dim,
   scalar_t * solid_B){
 
-  scalar_t dN[dim*num_elem_nodes];
+  scalar_t * dN = new scalar_t[dim*num_elem_nodes];
   for(int_t i=0;i<dim*num_elem_nodes;++i)
     dN[i] = 0.0;
 
@@ -2980,7 +2993,7 @@ void calc_B(const scalar_t * DN,
 //      std::cout << " " << solid_B[i*(num_elem_nodes*dim)+j];
 //    std::cout << std::endl;
 //  }
-
+  delete [] dN;
 }
 
 

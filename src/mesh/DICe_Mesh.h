@@ -100,7 +100,9 @@ typedef std::map<int_t,std::vector<int_t> > bc_set;
 
 /// \class Mesh_Object
 /// \brief A mesh object is the base class for elements, nodes, faces, that make up the computational domain
-class Mesh_Object
+class
+DICE_LIB_DLL_EXPORT
+Mesh_Object
 {
 public:
   /// \brief Basic and only constructor
@@ -283,7 +285,9 @@ protected:
 
 /// \class Element
 /// \brief Standard finite element object
-class Element : public Mesh_Object
+class
+DICE_LIB_DLL_EXPORT
+Element : public Mesh_Object
 {
 public:
   /// Constructor
@@ -340,7 +344,9 @@ private:
 
 /// \class Subelement
 /// \brief Elements are divided up in to subelements for CVFEM
-class Subelement : public Mesh_Object
+class
+DICE_LIB_DLL_EXPORT
+Subelement : public Mesh_Object
 {
 public:
   /// Constructor that uses a pointer to an element to subdivide the element
@@ -392,7 +398,9 @@ private:
 
 /// \class Bond
 /// \brief Represents a connection between two mesh objects (used mostly for peridynamics)
-class Bond : public Mesh_Object
+class
+DICE_LIB_DLL_EXPORT
+Bond : public Mesh_Object
 {
 public:
   /// Basic constructor
@@ -506,7 +514,9 @@ private:
 
 /// \class Edge
 /// \brief Edge mesh object
-class Edge : public Mesh_Object
+class
+DICE_LIB_DLL_EXPORT
+Edge : public Mesh_Object
 {
 public:
   /// Constructor
@@ -565,7 +575,9 @@ private:
 
 /// \class Internal_Face_Edge
 /// \brief Internal face or edge mesh object (edge for 2D, face for 3D). These do not include the faces or edges on the boundary
-class Internal_Face_Edge : public Mesh_Object
+class
+DICE_LIB_DLL_EXPORT
+Internal_Face_Edge : public Mesh_Object
 {
 public:
   /// Constructor
@@ -649,7 +661,9 @@ private:
 
 /// \class Internal_Cell
 /// \brief Internal cell mesh object
-class Internal_Cell : public Mesh_Object
+class
+DICE_LIB_DLL_EXPORT
+Internal_Cell : public Mesh_Object
 {
 public:
   /// Constructor
@@ -688,7 +702,9 @@ private:
 
 /// \class Node
 /// \brief Node mesh object
-class Node : public Mesh_Object
+class
+DICE_LIB_DLL_EXPORT
+Node : public Mesh_Object
 {
 public:
   /// Constructor
@@ -779,7 +795,9 @@ struct side_set_info
 /// accross processors. The underlying MultiFields in both cases are the same so
 /// schema fields and mesh fields can interact with each other, but they have been
 /// separated to preserve the separation between physics and DIC.
-class Mesh
+class
+DICE_LIB_DLL_EXPORT
+Mesh
 {
 public:
   /// Constructor
@@ -1549,7 +1567,9 @@ private:
 
 /// \class Shape_Function_Evaluator
 /// \brief Base class for shape function evaluation
-class Shape_Function_Evaluator
+class
+DICE_LIB_DLL_EXPORT
+Shape_Function_Evaluator
 {
 public:
   /// Constrtuctor
@@ -1635,7 +1655,9 @@ protected:
 
 /// \class CVFEM_Linear_Tri3
 /// \brief CVFEM Linear Tri element shape function evaluator
-class CVFEM_Linear_Tri3 : public Shape_Function_Evaluator
+class
+DICE_LIB_DLL_EXPORT
+CVFEM_Linear_Tri3 : public Shape_Function_Evaluator
 {
 public:
   /// Constructor
@@ -1680,7 +1702,9 @@ public:
 
 /// \class CVFEM_Linear_Tet4
 /// \brief CVFEM Linear Tet element shape function evaluator
-class CVFEM_Linear_Tet4 : public Shape_Function_Evaluator
+class
+DICE_LIB_DLL_EXPORT
+CVFEM_Linear_Tet4 : public Shape_Function_Evaluator
 {
 public:
   /// Constructor
@@ -1728,7 +1752,9 @@ public:
 
 /// \class FEM_Linear_Hex8
 /// \brief FEM Linear Tet element shape function evaluator
-class FEM_Linear_Hex8 : public Shape_Function_Evaluator
+class
+DICE_LIB_DLL_EXPORT
+FEM_Linear_Hex8 : public Shape_Function_Evaluator
 {
 public:
   /// Constructor
@@ -1774,7 +1800,9 @@ public:
 
 /// \class FEM_Linear_Quad4
 /// \brief FEM Linear quad element shape function evaluator
-class FEM_Linear_Quad4 : public Shape_Function_Evaluator
+class
+DICE_LIB_DLL_EXPORT
+FEM_Linear_Quad4 : public Shape_Function_Evaluator
 {
 public:
   /// Constructor
@@ -1819,7 +1847,9 @@ public:
 
 /// \class FEM_Linear_Tri3
 /// \brief FEM Linear triangle element shape function evaluator
-class FEM_Linear_Tri3 : public Shape_Function_Evaluator
+class
+DICE_LIB_DLL_EXPORT
+FEM_Linear_Tri3 : public Shape_Function_Evaluator
 {
 public:
   /// Constructor
@@ -1865,7 +1895,9 @@ public:
 
 /// \class FEM_Quadratic_Tri6
 /// \brief FEM quadratic triangle element shape function evaluator
-class FEM_Quadratic_Tri6 : public Shape_Function_Evaluator
+class
+DICE_LIB_DLL_EXPORT
+FEM_Quadratic_Tri6 : public Shape_Function_Evaluator
 {
 public:
   /// Constructor
@@ -1910,7 +1942,9 @@ public:
 
 /// \class FEM_Barycentric_Tri6
 /// \brief FEM Barycentric triangle element shape function evaluator
-class FEM_Barycentric_Tri6 : public Shape_Function_Evaluator
+class
+DICE_LIB_DLL_EXPORT
+FEM_Barycentric_Tri6 : public Shape_Function_Evaluator
 {
 public:
   /// Constructor
@@ -1956,7 +1990,9 @@ public:
 
 /// \class Shape_Function_Evaluator_Factory
 /// \brief Factory class that creates shape function evaluators
-class Shape_Function_Evaluator_Factory
+class
+DICE_LIB_DLL_EXPORT
+Shape_Function_Evaluator_Factory
 {
 public:
   /// Constructor
@@ -1988,6 +2024,7 @@ private:
 /// \param neumann_boundary_nodes a set of nodes to mark as a neumann boundary
 /// \param lagrange_boundary_nodes a set of nodes to mark as the lagrange multiplier boundary nodes
 /// \param serial_output_filename The output fiel name with no parallel decorations
+DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Mesh> create_point_or_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
   Teuchos::ArrayRCP<scalar_t> node_coords_x,
   Teuchos::ArrayRCP<scalar_t> node_coords_y,
@@ -2002,6 +2039,7 @@ Teuchos::RCP<Mesh> create_point_or_tri_mesh(const DICe::mesh::Base_Element_Type 
 /// create a linear tri mesh from a quadratic one
 /// \param tri6_mesh the parent tri6 mesh
 /// \param serial_output_filename the name to use for the output
+DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Mesh> create_tri3_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mesh,
   const std::string & serial_output_filename);
 
@@ -2012,6 +2050,7 @@ Teuchos::RCP<Mesh> create_tri3_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mesh,
 /// \param locations array returned with integration point locations
 /// \param weights array returned with the weights associated with each point
 /// \param num_points return value with the total number of integration points
+DICE_LIB_DLL_EXPORT
 void tri3d_natural_integration_points(const int_t order,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
   Teuchos::ArrayRCP<scalar_t> & weights,
@@ -2022,6 +2061,7 @@ void tri3d_natural_integration_points(const int_t order,
 /// \param locations array returned with integration point locations
 /// \param weights array returned with the weights associated with each point
 /// \param num_points return value with the total number of integration points
+DICE_LIB_DLL_EXPORT
 void tri2d_natural_integration_points(const int_t order,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
   Teuchos::ArrayRCP<scalar_t> & weights,
@@ -2033,6 +2073,7 @@ void tri2d_natural_integration_points(const int_t order,
 /// \param locations array returned with integration point locations
 /// \param weights array returned with the weights associated with each point
 /// \param num_points return value with the total number of integration points
+DICE_LIB_DLL_EXPORT
 void tri2d_nonexact_integration_points(const int_t order,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
   Teuchos::ArrayRCP<scalar_t> & weights,
@@ -2042,6 +2083,7 @@ void tri2d_nonexact_integration_points(const int_t order,
 /// \param A vector to point A
 /// \param B vector to point B
 /// \param C vector to point C
+DICE_LIB_DLL_EXPORT
 scalar_t cross(const scalar_t * A,
   const scalar_t * B,
   const scalar_t * C);
@@ -2050,6 +2092,7 @@ scalar_t cross(const scalar_t * A,
 /// \param A vector to point A
 /// \param B vector to point B
 /// \param C vector to point C
+DICE_LIB_DLL_EXPORT
 scalar_t cross3d(const scalar_t * A,
   const scalar_t * B,
   const scalar_t * C);
@@ -2059,6 +2102,7 @@ scalar_t cross3d(const scalar_t * A,
 /// \param B vector to point B
 /// \param C vector to point C
 /// \param normal [out] the vector normal to ABXAC
+DICE_LIB_DLL_EXPORT
 scalar_t cross3d_with_normal(const scalar_t * A,
   const scalar_t * B,
   const scalar_t * C,
@@ -2070,6 +2114,7 @@ scalar_t cross3d_with_normal(const scalar_t * A,
 /// \param B vector to point B
 /// \param C vector to point C
 /// \param cross_prod [out] the vector ABXAC (not normalized by the mag as the normal would be)
+DICE_LIB_DLL_EXPORT
 void cross3d_with_cross_prod(const scalar_t * A,
   const scalar_t * B,
   const scalar_t * C,
@@ -2077,12 +2122,14 @@ void cross3d_with_cross_prod(const scalar_t * A,
 
 /// Compute the determinant of a 4 x 4
 /// \param a The coefficients in an array format
+DICE_LIB_DLL_EXPORT
 scalar_t determinant_4x4(const scalar_t * a);
 
 /// Compute the 1d gauss points
 /// \param r the gauss points
 /// \param w the wieghts
 /// \param gauss_order the order of integration
+DICE_LIB_DLL_EXPORT
 void gauss_1D(Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & r,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & w,
   int_t gauss_order);
@@ -2091,6 +2138,7 @@ void gauss_1D(Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & r,
 /// \param r the gauss points
 /// \param w the wieghts
 /// \param gauss_order the order of integration
+DICE_LIB_DLL_EXPORT
 void gauss_2D(Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & r,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & w,
   int_t gauss_order);
@@ -2098,6 +2146,7 @@ void gauss_2D(Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & r,
 /// Compute the kronecker product of two matrices
 /// \param A the A matrix
 /// \param B the B matrix
+DICE_LIB_DLL_EXPORT
 Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > kronecker( Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & A,
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & B);
 
@@ -2109,6 +2158,7 @@ Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > kronecker( Teuchos::ArrayRCP<Teu
 /// \param J the determinant of the jacobian
 /// \param num_elem_nodes number of nodes per element
 /// \param dim spatial dimension
+DICE_LIB_DLL_EXPORT
 void calc_jacobian(const scalar_t * xcap,
   const scalar_t * DN,
   scalar_t * jacobian,
@@ -2123,6 +2173,7 @@ void calc_jacobian(const scalar_t * xcap,
 /// \param num_elem_nodes The number of nodes per element
 /// \param dim spatial dimension
 /// \param solid_B [out] the output B vector
+DICE_LIB_DLL_EXPORT
 void calc_B(const scalar_t * DN,
   const scalar_t * inv_jacobian,
   int_t num_elem_nodes,

@@ -18,7 +18,7 @@ include_directories (
 include_directories(${Boost_INCLUDE_DIRS})
 add_library(dicemesh ${DICE_SOURCES} ${DICE_HEADERS})
 target_link_libraries(dicemesh ${DICE_LIBRARIES} ${Boost_LIBRARIES})
-target_link_libraries(dicemesh ${Boost_LIBRARIES})
+target_compile_definitions(dicemesh PRIVATE -D DICE_LIB_EXPORTS_MODE)
 install(TARGETS dicemesh
   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
