@@ -883,20 +883,7 @@ Schema::initialize(Teuchos::ArrayRCP<scalar_t> coords_x,
   TEUCHOS_TEST_FOR_EXCEPTION(coords_x.size() <= 0,std::runtime_error,"Error, invalid x coordinates");
   global_num_subsets_ = coords_x.size();
   TEUCHOS_TEST_FOR_EXCEPTION(coords_x.size() != coords_y.size(),std::runtime_error,"Error, size of the coords arrays must match");
-
-  // TODO find some way to address this (for constrained optimization, the schema doesn't need any fields)
-  //assert(num_pts>0);
   subset_dim_ = subset_size;
-
-  // evenly distributed one-to-one map
-  //dist_map_ = Teuchos::rcp(new MultiField_Map(global_num_subsets_,0,*comm_));
-
-  // all owned map (not one-to-one)
-  //Teuchos::Array<int_t> all_subsets(global_num_subsets_);
-  //for(int_t i=0;i<global_num_subsets_;++i)
-  //  all_subsets[i] = i;
-  //all_map_ = Teuchos::rcp(new MultiField_Map(-1,all_subsets.view(0,all_subsets.size()),0,*comm_));
-
 
   // create an evenly split map to start:
   Teuchos::RCP<MultiField_Map> id_decomp_map = Teuchos::rcp(new MultiField_Map(global_num_subsets_,0,*comm_));
@@ -913,8 +900,6 @@ Schema::initialize(Teuchos::ArrayRCP<scalar_t> coords_x,
   // create an exodus mesh for output
   create_mesh(coords_x,coords_y,id_decomp_map);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"Error: mesh should not be null here");
-  local_num_subsets_ = mesh_->get_scalar_node_dist_map()->get_num_local_elements();
   DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] num local subsets: " << local_num_subsets_);
   // initialize the conformal subset map to avoid havng to check if its null always
   if(conformal_subset_defs==Teuchos::null)
@@ -983,12 +968,18 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
     lagrange_boundary_nodes,
     "sample_mesh.e");
 
-  mesh_->create_field(mesh::field_enums::DISPLACEMENT_X_FS);
-  mesh_->create_field(mesh::field_enums::DISPLACEMENT_X_NM1_FS);
-  mesh_->create_field(mesh::field_enums::DISPLACEMENT_Y_FS);
-  mesh_->create_field(mesh::field_enums::DISPLACEMENT_Y_NM1_FS);
-  mesh_->create_field(mesh::field_enums::DISPLACEMENT_Z_FS);
-  mesh_->create_field(mesh::field_enums::DISPLACEMENT_Z_NM1_FS);
+  TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"Error: mesh should not be null here");
+  local_num_subsets_ = mesh_->get_scalar_node_dist_map()->get_num_local_elements();
+
+  mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+  mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_X_NM1_FS);
+  mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+  mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_Y_NM1_FS);
+  mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_Z_FS);
+  mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_Z_NM1_FS);
+  mesh_->create_field(mesh::field_enums::SUBSET_COORDINATES_X_FS);
+  mesh_->create_field(mesh::field_enums::SUBSET_COORDINATES_Y_FS);
+  mesh_->create_field(mesh::field_enums::SUBSET_COORDINATES_Z_FS);
   mesh_->create_field(mesh::field_enums::ROTATION_X_FS);
   mesh_->create_field(mesh::field_enums::ROTATION_X_NM1_FS);
   mesh_->create_field(mesh::field_enums::ROTATION_Y_FS);
@@ -1007,9 +998,6 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_YY_NM1_FS);
   mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_ZZ_FS);
   mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_ZZ_NM1_FS);
-//  mesh_->create_field(mesh::field_enums::INITIAL_COORDINATES_X_FS);
-//  mesh_->create_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
-//  mesh_->create_field(mesh::field_enums::INITIAL_COORDINATES_Z_FS);
   mesh_->create_field(mesh::field_enums::SIGMA_FS);
   mesh_->create_field(mesh::field_enums::GAMMA_FS);
   mesh_->create_field(mesh::field_enums::BETA_FS);
@@ -1031,6 +1019,13 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   mesh_->create_field(mesh::field_enums::FIELD_8_FS);
   mesh_->create_field(mesh::field_enums::FIELD_9_FS);
   mesh_->create_field(mesh::field_enums::FIELD_10_FS);
+
+  // fill the subset coordinates field:
+  Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  for(int_t i=0;i<local_num_subsets_;++i){
+    local_field_value(i,COORDINATE_X) = coords->local_value(i*2+0);
+    local_field_value(i,COORDINATE_Y) = coords->local_value(i*2+1);
+  }
 
 //  Teuchos::ArrayRCP<scalar_t> holes_x(1,250);
 //  Teuchos::ArrayRCP<scalar_t> holes_y(1,250);
@@ -1202,15 +1197,6 @@ Schema::create_obstruction_dist_map(Teuchos::RCP<MultiField_Map> & map){
   std::sort(local_gids.begin(),local_gids.end());
   Teuchos::ArrayView<const int_t> lids_grouped_by_obstruction(&local_gids[0],local_gids.size());
   map = Teuchos::rcp(new MultiField_Map(global_num_subsets_,lids_grouped_by_obstruction,0,*comm_));
-
-  //  dist_map_ = Teuchos::rcp(new MultiField_Map(global_num_subsets_,lids_grouped_by_obstruction,0,*comm_));
-//  //dist_map_->describe();
-//  TEUCHOS_TEST_FOR_EXCEPTION(!dist_map_->is_one_to_one(),std::runtime_error,"");
-//
-//  // if this is a serial run, the ordering must be changed too
-//  if(num_procs==1)
-//    all_map_ = Teuchos::rcp(new MultiField_Map(global_num_subsets_,lids_grouped_by_obstruction,0,*comm_));
-//  //all_map_->describe();
 }
 
 void
@@ -2022,8 +2008,8 @@ Schema::estimate_resolution_error(const int num_steps,
   DEBUG_MSG("Schema::estimate_resolution_error(): Estimating resolution error with num_steps = " << num_steps);
 
   std::stringstream result_stream;
+  const int_t spa_dim = mesh_->spatial_dimension();
   // create an image deformer class
-
   for(int_t step=0;step<num_steps;++step){
     DEBUG_MSG("Processing step " << step);
     Teuchos::RCP<SinCos_Image_Deformer> deformer = Teuchos::rcp(new SinCos_Image_Deformer(step));
@@ -2041,10 +2027,8 @@ Schema::estimate_resolution_error(const int num_steps,
     post_execution_tasks();
 
     // gather an all owned field here
-    Teuchos::RCP<MultiField> coords_x = mesh_->get_overlap_field(DICe::mesh::field_enums::INITIAL_COORDINATES_X_FS);
-    Teuchos::RCP<MultiField> coords_y = mesh_->get_overlap_field(DICe::mesh::field_enums::INITIAL_COORDINATES_Y_FS);
-    Teuchos::RCP<MultiField> disp_x = mesh_->get_overlap_field(DICe::mesh::field_enums::DISPLACEMENT_X_FS);
-    Teuchos::RCP<MultiField> disp_y = mesh_->get_overlap_field(DICe::mesh::field_enums::DISPLACEMENT_Y_FS);
+    Teuchos::RCP<MultiField> coords = mesh_->get_overlap_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
+    Teuchos::RCP<MultiField> disp = mesh_->get_overlap_field(DICe::mesh::field_enums::DISPLACEMENT_FS);
 
     // compute the error:
     scalar_t h1x_error = 0.0;
@@ -2054,10 +2038,10 @@ Schema::estimate_resolution_error(const int num_steps,
     scalar_t avgx_error = 0.0;
     scalar_t avgy_error = 0.0;
     for(int_t i=0;i<global_num_subsets_;++i){
-      const scalar_t x = coords_x->local_value(i);
-      const scalar_t y = coords_y->local_value(i);
-      const scalar_t u = disp_x->local_value(i);
-      const scalar_t v = disp_y->local_value(i);
+      const scalar_t x = coords->local_value(i*spa_dim+0);
+      const scalar_t y = coords->local_value(i*spa_dim+1);
+      const scalar_t u = disp->local_value(i*spa_dim+0);
+      const scalar_t v = disp->local_value(i*spa_dim+1);
       scalar_t e_x;
       scalar_t e_y;
       deformer->compute_displacement_error(x,y,u,v,e_x,e_y);
@@ -2077,10 +2061,10 @@ Schema::estimate_resolution_error(const int num_steps,
     scalar_t std_dev_x = 0.0;
     scalar_t std_dev_y = 0.0;
     for(int_t i=0;i<global_num_subsets_;++i){
-      const scalar_t x = coords_x->local_value(i);
-      const scalar_t y = coords_y->local_value(i);
-      const scalar_t u = disp_x->local_value(i);
-      const scalar_t v = disp_y->local_value(i);
+      const scalar_t x = coords->local_value(i*spa_dim+0);
+      const scalar_t y = coords->local_value(i*spa_dim+1);
+      const scalar_t u = disp->local_value(i*spa_dim+0);
+      const scalar_t v = disp->local_value(i*spa_dim+1);
       scalar_t e_x;
       scalar_t e_y;
       deformer->compute_displacement_error(x,y,u,v,e_x,e_y);
@@ -2104,8 +2088,8 @@ Schema::estimate_resolution_error(const int num_steps,
     // FIXME assumes that the first post_processor gives the strain values
     TEUCHOS_TEST_FOR_EXCEPTION(post_processors()->size()<=0,std::runtime_error,"Error, VSG post processor not enabled, but needs to be for image deformer error calcs");
     for(int_t i=0;i<global_num_subsets_;++i){
-      const scalar_t x = coords_x->local_value(i);
-      const scalar_t y = coords_y->local_value(i);
+      const scalar_t x = coords->local_value(i*spa_dim+0);
+      const scalar_t y = coords->local_value(i*spa_dim+1);
       const scalar_t exx = (*post_processors())[0]->field_value(i,vsg_strain_xx);
       const scalar_t eyy = (*post_processors())[0]->field_value(i,vsg_strain_yy);
       scalar_t e_x;
@@ -2127,8 +2111,8 @@ Schema::estimate_resolution_error(const int num_steps,
     scalar_t std_dev_sx = 0.0;
     scalar_t std_dev_sy = 0.0;
     for(int_t i=0;i<global_num_subsets_;++i){
-      const scalar_t x = coords_x->local_value(i);
-      const scalar_t y = coords_y->local_value(i);
+      const scalar_t x = coords->local_value(i*spa_dim+0);
+      const scalar_t y = coords->local_value(i*spa_dim+1);
       const scalar_t exx = (*post_processors())[0]->field_value(i,vsg_strain_xx);
       const scalar_t eyy = (*post_processors())[0]->field_value(i,vsg_strain_yy);
       scalar_t e_x;

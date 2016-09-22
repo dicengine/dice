@@ -111,8 +111,8 @@ VSG_Strain_Post_Processor::pre_execution_tasks(){
   TEUCHOS_TEST_FOR_EXCEPTION(step_size_y<=0,std::runtime_error,"Error VSG requires that the step size parameter is used to layout the subsets in x.");
 
   // gather an all owned field here
-  Teuchos::RCP<MultiField> coords_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::INITIAL_COORDINATES_X_FS);
-  Teuchos::RCP<MultiField> coords_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::INITIAL_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> coords_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> coords_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS);
 
   // find the min/max x and y, these will be used to set up the rows and columns
   int_t min_x = schema_->ref_img()->width();
@@ -212,8 +212,8 @@ VSG_Strain_Post_Processor::execute(){
   DEBUG_MSG("VSG_Strain_Post_Processor execute() begin");
 
   // gather an all owned field here
-  Teuchos::RCP<MultiField> disp_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> disp_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> disp_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> disp_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
 
   const int_t N = 3;
   int *IPIV = new int[N+1];
@@ -507,8 +507,8 @@ Keys4_Strain_Post_Processor::pre_execution_tasks(){
   DEBUG_MSG("Keys4_Strain_Post_Processor pre_execution_tasks() begin");
 
   // gather an all owned field here
-  Teuchos::RCP<MultiField> coords_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::INITIAL_COORDINATES_X_FS);
-  Teuchos::RCP<MultiField> coords_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::INITIAL_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> coords_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> coords_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS);
 
   // Note neighborhood information is collected over square windows, not circular
   // The window size is automatically set to make a 7 by 7 window of subsets
@@ -615,8 +615,8 @@ Keys4_Strain_Post_Processor::execute(){
   DEBUG_MSG("Keys4_Strain_Post_Processor execute() begin");
 
   // gather an all owned field here
-  Teuchos::RCP<MultiField> disp_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> disp_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> disp_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> disp_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
 
   int_t num_neigh = 0;
   int_t neigh_id = 0;
@@ -748,8 +748,8 @@ NLVC_Strain_Post_Processor::pre_execution_tasks(){
   DEBUG_MSG("NLVC_Strain_Post_Processor pre_execution_tasks() begin");
 
   // gather an all owned field here
-  Teuchos::RCP<MultiField> coords_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::INITIAL_COORDINATES_X_FS);
-  Teuchos::RCP<MultiField> coords_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::INITIAL_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> coords_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> coords_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS);
 
   // Note neighborhood information is collected over square windows, not circular
 
@@ -862,8 +862,8 @@ NLVC_Strain_Post_Processor::execute(){
   DEBUG_MSG("NLVC_Strain_Post_Processor execute() begin");
 
   // gather an all owned field here
-  Teuchos::RCP<MultiField> disp_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> disp_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> disp_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> disp_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
 
   const int_t step_size = schema_->step_size_x();
   const scalar_t factor = step_size*step_size;

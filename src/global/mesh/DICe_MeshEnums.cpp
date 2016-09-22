@@ -114,9 +114,10 @@ void create_string_maps()
   field_name_string[field_enums::BLOCK_ID]                                           = "BLOCK_ID";
   field_name_string[field_enums::PROCESSOR_ID]                                       = "PROCESSOR_ID";
   field_name_string[field_enums::MASTER_NODE_ID]                                     = "MASTER_NODE_ID";
-  field_name_string[field_enums::INITIAL_COORDINATES_X]                              = "INITIAL_COORDINATES_X";
-  field_name_string[field_enums::INITIAL_COORDINATES_Y]                              = "INITIAL_COORDINATES_Y";
-  field_name_string[field_enums::INITIAL_COORDINATES_Z]                              = "INITIAL_COORDINATES_Z";
+  field_name_string[field_enums::INITIAL_COORDINATES]                                = "INITIAL_COORDINATES";
+  field_name_string[field_enums::SUBSET_COORDINATES_X]                               = "SUBSET_COORDINATES_X";
+  field_name_string[field_enums::SUBSET_COORDINATES_Y]                               = "SUBSET_COORDINATES_Y";
+  field_name_string[field_enums::SUBSET_COORDINATES_Z]                               = "SUBSET_COORDINATES_Z";
   field_name_string[field_enums::CURRENT_COORDINATES]                                = "CURRENT_COORDINATES";
   field_name_string[field_enums::INITIAL_CELL_COORDINATES]                           = "INITIAL_CELL_COORDINATES";
   field_name_string[field_enums::CURRENT_CELL_COORDINATES]                           = "CURRENT_CELL_COORDINATES";
@@ -124,9 +125,10 @@ void create_string_maps()
   field_name_string[field_enums::INITIAL_SUBELEMENT_SIZE]                            = "INITIAL_SUBELEMENT_SIZE";
   field_name_string[field_enums::INITIAL_WEIGHTED_CELL_SIZE]                         = "INITIAL_WEIGHTED_CELL_SIZE";
   field_name_string[field_enums::INITIAL_CELL_RADIUS]                                = "INITIAL_CELL_RADIUS";
-  field_name_string[field_enums::DISPLACEMENT_X]                                     = "DISPLACEMENT_X";
-  field_name_string[field_enums::DISPLACEMENT_Y]                                     = "DISPLACEMENT_Y";
-  field_name_string[field_enums::DISPLACEMENT_Z]                                     = "DISPLACEMENT_Z";
+  field_name_string[field_enums::DISPLACEMENT]                                       = "DISPLACEMENT";
+  field_name_string[field_enums::SUBSET_DISPLACEMENT_X]                              = "SUBSET_DISPLACEMENT_X";
+  field_name_string[field_enums::SUBSET_DISPLACEMENT_Y]                              = "SUBSET_DISPLACEMENT_Y";
+  field_name_string[field_enums::SUBSET_DISPLACEMENT_Z]                              = "SUBSET_DISPLACEMENT_Z";
   field_name_string[field_enums::ROTATION_X]                                         = "ROTATION_X";
   field_name_string[field_enums::ROTATION_Y]                                         = "ROTATION_Y";
   field_name_string[field_enums::ROTATION_Z]                                         = "ROTATION_Z";

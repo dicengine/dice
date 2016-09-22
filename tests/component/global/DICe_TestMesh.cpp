@@ -119,15 +119,7 @@ int main(int argc, char *argv[]) {
   *outStream << "the basic properties of the input mesh have been checked" << std::endl;
 
   *outStream << "checking that the coordinates fields have been created " << std::endl;
-  if(!mesh->field_exists("INITIAL_COORDINATES_X")){
-    *outStream << "Error, the initial coordinates fields do not exist, but should" << std::endl;
-    errorFlag++;
-  }
-  if(!mesh->field_exists("INITIAL_COORDINATES_Y")){
-    *outStream << "Error, the initial coordinates fields do not exist, but should" << std::endl;
-    errorFlag++;
-  }
-  if(!mesh->field_exists("INITIAL_COORDINATES_Z")){
+  if(!mesh->field_exists("INITIAL_COORDINATES")){
     *outStream << "Error, the initial coordinates fields do not exist, but should" << std::endl;
     errorFlag++;
   }
@@ -161,7 +153,7 @@ int main(int argc, char *argv[]) {
   mesh->create_field(mesh::field_enums::FIELD_1_FS);
   *outStream << "populating values for phi field" << std::endl;
   MultiField & phi = *mesh->get_field(mesh::field_enums::FIELD_1_FS);
-  MultiField & coords = *mesh->get_field(mesh::field_enums::INITIAL_COORDINATES_X_FS);
+  MultiField & coords = *mesh->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
   Teuchos::ArrayRCP<const scalar_t> coords_values = coords.get_1d_view();
   for(size_t i=0;i<mesh->num_nodes();++i){
     phi.local_value(i) = coords_values[i]*10.0;

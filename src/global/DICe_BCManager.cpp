@@ -234,8 +234,7 @@ Dirichlet_BC::apply(const bool first_iteration){
   // get the residual field
   Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
       mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
-  Teuchos::RCP<MultiField> disp_x = mesh_->get_field(mesh::field_enums::DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> disp_y = mesh_->get_field(mesh::field_enums::DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> disp = mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
 
   const int_t spa_dim = mesh_->spatial_dimension();
   // iterate the boudnary condition def
@@ -257,11 +256,11 @@ Dirichlet_BC::apply(const bool first_iteration){
       const int_t iy = node_gid*spa_dim + 1;
       if(comp==0||comp==2){
         residual->global_value(ix) = first_iteration ? value_ : 0.0;
-         if(first_iteration) disp_x->global_value(node_gid) = 0.0;
+         if(first_iteration) disp->global_value(node_gid*spa_dim+0) = 0.0;
       }
       if(comp==1||comp==2){
         residual->global_value(iy) = first_iteration ? value_ : 0.0;
-        if(first_iteration) disp_y->global_value(node_gid) = 0.0;
+        if(first_iteration) disp->global_value(node_gid*spa_dim+1) = 0.0;
       }
     }
   }
@@ -272,10 +271,8 @@ Subset_BC::apply(const bool first_iteration){
   // get the residual field
   Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
       mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
-  Teuchos::RCP<MultiField> coords_x = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_X_FS);
-  Teuchos::RCP<MultiField> coords_y = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
-  Teuchos::RCP<MultiField> disp_x = mesh_->get_field(mesh::field_enums::DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> disp_y = mesh_->get_field(mesh::field_enums::DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField> disp = mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
 
   const int_t spa_dim = mesh_->spatial_dimension();
   // iterate the boudnary condition def
@@ -302,10 +299,10 @@ Subset_BC::apply(const bool first_iteration){
           residual->global_value(iy) = 0.0;
       }
       else{
-        scalar_t b_x = disp_x->global_value(node_gid);
-        scalar_t b_y = disp_y->global_value(node_gid);
-        const scalar_t x = coords_x->global_value(node_gid);
-        const scalar_t y = coords_y->global_value(node_gid);
+        scalar_t b_x = disp->global_value(ix);
+        scalar_t b_y = disp->global_value(iy);
+        const scalar_t x = coords->global_value(ix);
+        const scalar_t y = coords->global_value(iy);
         // get the closest pixel to x and y
         int_t px = (int_t)x;
         if(x - (int_t)x >= 0.5) px++;
@@ -336,10 +333,10 @@ Subset_BC::apply(const bool first_iteration){
       for(int_t i=0;i<num_bc_nodes;++i){
         const int_t node_gid = bc_sets->find(node_set_id)->second[i];
         if(comp==0||comp==2){
-          disp_x->global_value(node_gid) = 0.0;
+          disp->global_value(node_gid*spa_dim+0) = 0.0;
         }
         if(comp==1||comp==2){
-          disp_y->global_value(node_gid) = 0.0;
+          disp->global_value(node_gid*spa_dim+1) = 0.0;
         }
       } // nodes in the bc def
     } // bc defs
@@ -353,8 +350,7 @@ MMS_BC::apply(const bool first_iteration){
   // get the residual field
   Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
       mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
-  Teuchos::RCP<MultiField> coords_x = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_X_FS);
-  Teuchos::RCP<MultiField> coords_y = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
   Teuchos::RCP<MultiField> exact_sol = mesh_->get_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
   Teuchos::RCP<MultiField> image_phi = mesh_->get_field(mesh::field_enums::IMAGE_PHI_FS);
   Teuchos::RCP<MultiField> image_grad_phi = mesh_->get_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
@@ -369,8 +365,8 @@ MMS_BC::apply(const bool first_iteration){
       int_t iy = i*2+1;
       scalar_t b_x = 0.0;
       scalar_t b_y = 0.0;
-      const scalar_t x = coords_x->local_value(i);
-      const scalar_t y = coords_y->local_value(i);
+      const scalar_t x = coords->local_value(ix);
+      const scalar_t y = coords->local_value(iy);
       alg_->mms_problem()->velocity(x,y,b_x,b_y);
       scalar_t phi = 0.0,d_phi_dt=0.0,grad_phi_x=0.0,grad_phi_y=0.0;
       alg_->mms_problem()->phi(x,y,phi);
@@ -384,8 +380,8 @@ MMS_BC::apply(const bool first_iteration){
     if(is_mixed_){
       Teuchos::RCP<MultiField> exact_lag = alg_->mesh()->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
       for(int_t i=0;i<alg_->mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
-        const scalar_t x = coords_x->local_value(i);
-        const scalar_t y = coords_y->local_value(i);
+        const scalar_t x = coords->local_value(i*2+0);
+        const scalar_t y = coords->local_value(i*2+1);
         scalar_t l_out = 0.0;
         alg_->mms_problem()->lagrange(x,y,l_out);
         exact_lag->local_value(i) = l_out;
@@ -414,8 +410,8 @@ MMS_BC::apply(const bool first_iteration){
           residual->global_value(iy) = 0.0;
       }
       else{
-        const scalar_t x = coords_x->global_value(node_gid);
-        const scalar_t y = coords_y->global_value(node_gid);
+        const scalar_t x = coords->global_value(ix);
+        const scalar_t y = coords->global_value(iy);
         scalar_t b_x = 0.0, b_y = 0.0;
         alg_->mms_problem()->velocity(x,y,b_x,b_y);
         if(comp==0||comp==2)
@@ -432,8 +428,7 @@ MMS_Lagrange_BC::apply(const bool first_iteration){
   // get the residual field
   Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
       mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
-  Teuchos::RCP<MultiField> coords_x = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_X_FS);
-  Teuchos::RCP<MultiField> coords_y = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
   TEUCHOS_TEST_FOR_EXCEPTION(alg_->mms_problem()==Teuchos::null,std::runtime_error,"Error, mms_problem should not be null");
   //TEUCHOS_TEST_FOR_EXCEPTION(alg_->mesh()==Teuchos::null,std::runtime_error,
   //  "Error, mesh pointer should not be null");
@@ -462,8 +457,8 @@ MMS_Lagrange_BC::apply(const bool first_iteration){
       residual->global_value(node_gid + mixed_global_offset) = 0.0;
     }
     else{
-      const scalar_t x = coords_x->global_value(node_gid);
-      const scalar_t y = coords_y->global_value(node_gid);
+      const scalar_t x = coords->global_value(node_gid*2+0);
+      const scalar_t y = coords->global_value(node_gid*2+1);
       scalar_t l_out = 0.0;
       alg_->mms_problem()->lagrange(x,y,l_out);
       residual->global_value(node_gid + mixed_global_offset) = l_out;
@@ -488,8 +483,7 @@ Constant_IC::apply(const bool first_iteration){
   // get the residual field
   Teuchos::RCP<MultiField> lhs = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_LHS_FS):
       mesh_->get_field(mesh::field_enums::LHS_FS);
-  Teuchos::RCP<MultiField> disp_x_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_X_NM1_FS);
-  Teuchos::RCP<MultiField> disp_y_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_Y_NM1_FS);
+  Teuchos::RCP<MultiField> disp_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
   const int_t spa_dim = mesh_->spatial_dimension();
 
   // populate the image and solution fields
@@ -498,8 +492,8 @@ Constant_IC::apply(const bool first_iteration){
     int_t iy = i*spa_dim+1;
     lhs->local_value(ix) = alg_->mesh()->ic_value_x();
     lhs->local_value(iy) = alg_->mesh()->ic_value_y();
-    disp_x_nm1->local_value(i) = alg_->mesh()->ic_value_x();
-    disp_y_nm1->local_value(i) = alg_->mesh()->ic_value_y();
+    disp_nm1->local_value(ix) = alg_->mesh()->ic_value_x();
+    disp_nm1->local_value(iy) = alg_->mesh()->ic_value_y();
   }
 }
 

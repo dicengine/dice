@@ -142,12 +142,11 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   if(errorFlag==0){
-    Teuchos::RCP<MultiField> coords_x = mesh->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_X_FS);
-    Teuchos::RCP<MultiField> coords_y = mesh->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_Y_FS);
+    Teuchos::RCP<MultiField> coords = mesh->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
     const scalar_t tol = 1.0E-5;
     for(int_t i=0;i<num_nodes;++i){
-      scalar_t error_x = std::abs(coords_x->local_value(i) - x_coords[i]);
-      scalar_t error_y = std::abs(coords_y->local_value(i) - y_coords[i]);
+      scalar_t error_x = std::abs(coords->local_value(i*2+0) - x_coords[i]);
+      scalar_t error_y = std::abs(coords->local_value(i*2+1) - y_coords[i]);
       if(error_x>tol||error_y>tol){
         *outStream << "Error, coordinates are not correct" << std::endl;
         errorFlag++;

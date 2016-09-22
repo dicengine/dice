@@ -141,9 +141,10 @@ enum Field_Type
 enum Field_Name
 {
   NO_SUCH_FIELD_NAME=0,
-  INITIAL_COORDINATES_X,
-  INITIAL_COORDINATES_Y,
-  INITIAL_COORDINATES_Z,
+  INITIAL_COORDINATES,
+  SUBSET_COORDINATES_X,
+  SUBSET_COORDINATES_Y,
+  SUBSET_COORDINATES_Z,
   CURRENT_COORDINATES,
   INITIAL_CELL_COORDINATES,
   CURRENT_CELL_COORDINATES,
@@ -151,9 +152,10 @@ enum Field_Name
   INITIAL_SUBELEMENT_SIZE,
   INITIAL_WEIGHTED_CELL_SIZE,
   INITIAL_CELL_RADIUS,
-  DISPLACEMENT_X,
-  DISPLACEMENT_Y,
-  DISPLACEMENT_Z,
+  DISPLACEMENT,
+  SUBSET_DISPLACEMENT_X,
+  SUBSET_DISPLACEMENT_Y,
+  SUBSET_DISPLACEMENT_Z,
   ROTATION_X,
   ROTATION_Y,
   ROTATION_Z,
@@ -402,11 +404,13 @@ const Field_Spec MASTER_NODE_ID_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::M
 /// field spec
 const Field_Spec BLOCK_ID_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::BLOCK_ID,field_enums::ELEMENT_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
-const Field_Spec INITIAL_COORDINATES_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::INITIAL_COORDINATES_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+const Field_Spec INITIAL_COORDINATES_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::INITIAL_COORDINATES,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
-const Field_Spec INITIAL_COORDINATES_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::INITIAL_COORDINATES_Y,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+const Field_Spec SUBSET_COORDINATES_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SUBSET_COORDINATES_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
-const Field_Spec INITIAL_COORDINATES_Z_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::INITIAL_COORDINATES_Z,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+const Field_Spec SUBSET_COORDINATES_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SUBSET_COORDINATES_Y,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec SUBSET_COORDINATES_Z_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SUBSET_COORDINATES_Z,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec CURRENT_COORDINATES_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::CURRENT_COORDINATES,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
@@ -432,17 +436,21 @@ const Field_Spec INTERNAL_CELL_COORDINATES_FS(field_enums::VECTOR_FIELD_TYPE,fie
 /// field spec
 const Field_Spec INTERNAL_CELL_SIZE_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::INTERNAL_CELL_SIZE,field_enums::INTERNAL_CELL_RANK,field_enums::NO_FIELD_STATE,false);
 /// field spec
-const Field_Spec DISPLACEMENT_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DISPLACEMENT_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+const Field_Spec DISPLACEMENT_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DISPLACEMENT,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
 /// field spec
-const Field_Spec DISPLACEMENT_X_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DISPLACEMENT_X,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+const Field_Spec DISPLACEMENT_NM1_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DISPLACEMENT,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
 /// field spec
-const Field_Spec DISPLACEMENT_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DISPLACEMENT_Y,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+const Field_Spec SUBSET_DISPLACEMENT_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SUBSET_DISPLACEMENT_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
 /// field spec
-const Field_Spec DISPLACEMENT_Y_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DISPLACEMENT_Y,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+const Field_Spec SUBSET_DISPLACEMENT_X_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SUBSET_DISPLACEMENT_X,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
 /// field spec
-const Field_Spec DISPLACEMENT_Z_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DISPLACEMENT_Z,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+const Field_Spec SUBSET_DISPLACEMENT_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SUBSET_DISPLACEMENT_Y,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
 /// field spec
-const Field_Spec DISPLACEMENT_Z_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DISPLACEMENT_Z,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+const Field_Spec SUBSET_DISPLACEMENT_Y_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SUBSET_DISPLACEMENT_Y,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec SUBSET_DISPLACEMENT_Z_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SUBSET_DISPLACEMENT_Z,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+/// field spec
+const Field_Spec SUBSET_DISPLACEMENT_Z_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SUBSET_DISPLACEMENT_Z,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
 /// field spec
 const Field_Spec ROTATION_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ROTATION_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
 /// field spec
@@ -565,14 +573,15 @@ const Field_Spec GREEN_LAGRANGE_STRAIN_YY_FS(field_enums::SCALAR_FIELD_TYPE,fiel
 const Field_Spec GREEN_LAGRANGE_STRAIN_XY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::GREEN_LAGRANGE_STRAIN_XY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 76;
+const int_t num_fields_defined = 78;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     NO_SUCH_FS,
-    INITIAL_COORDINATES_X_FS,
-    INITIAL_COORDINATES_Y_FS,
-    INITIAL_COORDINATES_Z_FS,
+    INITIAL_COORDINATES_FS,
+    SUBSET_COORDINATES_X_FS,
+    SUBSET_COORDINATES_Y_FS,
+    SUBSET_COORDINATES_Z_FS,
     CURRENT_COORDINATES_FS,
     INITIAL_CELL_COORDINATES_FS,
     CURRENT_CELL_COORDINATES_FS,
@@ -580,12 +589,13 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     INITIAL_SUBELEMENT_SIZE_FS,
     INITIAL_WEIGHTED_CELL_SIZE_FS,
     INITIAL_CELL_RADIUS_FS,
-    DISPLACEMENT_X_FS,
-    DISPLACEMENT_X_NM1_FS,
-    DISPLACEMENT_Y_FS,
-    DISPLACEMENT_Y_NM1_FS,
-    DISPLACEMENT_Z_FS,
-    DISPLACEMENT_Z_NM1_FS,
+    DISPLACEMENT_FS,
+    SUBSET_DISPLACEMENT_X_FS,
+    SUBSET_DISPLACEMENT_X_NM1_FS,
+    SUBSET_DISPLACEMENT_Y_FS,
+    SUBSET_DISPLACEMENT_Y_NM1_FS,
+    SUBSET_DISPLACEMENT_Z_FS,
+    SUBSET_DISPLACEMENT_Z_NM1_FS,
     ROTATION_X_FS,
     ROTATION_X_NM1_FS,
     ROTATION_Y_FS,

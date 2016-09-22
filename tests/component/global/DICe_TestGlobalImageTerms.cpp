@@ -149,14 +149,13 @@ int main(int argc, char *argv[]) {
 
   *outStream << "creating and populating the exact solution fields" << std::endl;
 //  schema->global_algorithm()->mesh()->create_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);
-  Teuchos::RCP<MultiField> coords_x = schema->global_algorithm()->mesh()->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_X_FS);
-  Teuchos::RCP<MultiField> coords_y = schema->global_algorithm()->mesh()->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> coords = schema->global_algorithm()->mesh()->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
   Teuchos::RCP<MultiField> exact_sol = schema->global_algorithm()->mesh()->get_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);
   for(int_t i=0;i<schema->global_algorithm()->mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
     const int_t ix = i*2+0;
     const int_t iy = i*2+1;
-    const scalar_t x = coords_x->local_value(i);
-    const scalar_t y = coords_y->local_value(i);
+    const scalar_t x = coords->local_value(ix);
+    const scalar_t y = coords->local_value(iy);
     scalar_t bx=0.0,by=0.0;
     prob->velocity(x,y,bx,by);
     exact_sol->local_value(ix) = bx;
@@ -178,13 +177,12 @@ int main(int argc, char *argv[]) {
   scalar_t error_bx = 0.0;
   scalar_t error_by = 0.0;
 
-  Teuchos::RCP<MultiField> disp_x = schema->global_algorithm()->mesh()->get_field(mesh::field_enums::DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> disp_y = schema->global_algorithm()->mesh()->get_field(mesh::field_enums::DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> disp = schema->global_algorithm()->mesh()->get_field(mesh::field_enums::DISPLACEMENT_FS);
   for(int_t i=0;i<schema->global_algorithm()->mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
     int_t ix = i*2+0;
     int_t iy = i*2+1;
-    const scalar_t b_x = disp_x->local_value(i);
-    const scalar_t b_y = disp_y->local_value(i);
+    const scalar_t b_x = disp->local_value(ix);
+    const scalar_t b_y = disp->local_value(iy);
     const scalar_t b_exact_x = exact_sol->local_value(ix);
     const scalar_t b_exact_y = exact_sol->local_value(iy);
     error_bx += (b_exact_x - b_x)*(b_exact_x - b_x);
