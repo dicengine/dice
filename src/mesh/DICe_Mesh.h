@@ -1644,9 +1644,9 @@ public:
 
 protected:
   /// Protect the default constructor
-  Shape_Function_Evaluator(const Shape_Function_Evaluator&);
+  //Shape_Function_Evaluator(const Shape_Function_Evaluator&);
   /// Comparison operator
-  Shape_Function_Evaluator& operator=(const Shape_Function_Evaluator&);
+  //Shape_Function_Evaluator& operator=(const Shape_Function_Evaluator&);
   /// Number of functions
   const int_t num_functions_;
   /// Number of spatial dimensions

@@ -53,7 +53,9 @@ namespace DICe{
 namespace mesh{
 
 /// Status of the current step
-enum Step_Status
+enum
+DICE_LIB_DLL_EXPORT
+Step_Status
 {
   STEP_CONVERGED = 0,
   STEP_ITERATING,
@@ -61,7 +63,9 @@ enum Step_Status
 };
 
 /// vector components
-enum Component
+enum
+DICE_LIB_DLL_EXPORT
+Component
 {
   NO_COMP=0,
   X_COMP,
@@ -71,19 +75,25 @@ enum Component
 
 /// converts a component to a string
 /// \param comp the component
+DICE_LIB_DLL_EXPORT
 std::string tostring(const Component & comp);
 /// converts a string to a component
 /// \param input_string the input string
+DICE_LIB_DLL_EXPORT
 Component string_to_component(const std::string & input_string);
 /// converts an index to a component string
 /// \param index the index
+DICE_LIB_DLL_EXPORT
 std::string index_to_component_string(const int_t index);
 /// converts and index to a component
 /// \param index the index
+DICE_LIB_DLL_EXPORT
 std::string index_to_component(const int_t index);
 
 /// The base element type for a block
-enum Base_Element_Type
+enum
+DICE_LIB_DLL_EXPORT
+Base_Element_Type
 {
   NO_SUCH_ELEMENT_TYPE=0,
   HEX8,
@@ -101,13 +111,17 @@ enum Base_Element_Type
 
 /// converts a base element type to a string
 /// \param base_element_type the element type
+DICE_LIB_DLL_EXPORT
 std::string tostring(const Base_Element_Type & base_element_type);
 /// converts a string to a base element type
 /// \param input_string the input string
+DICE_LIB_DLL_EXPORT
 Base_Element_Type string_to_base_element_type(const std::string & input_string);
 
 /// Terms that are included in the physics
-enum Physics_Term
+enum
+DICE_LIB_DLL_EXPORT
+Physics_Term
 {
   NO_SUCH_PHYSICS_TERM=0,
   MASS,
@@ -118,9 +132,11 @@ enum Physics_Term
 
 /// converts a physics term to a string
 /// \param physics_term the term to convert
+DICE_LIB_DLL_EXPORT
 std::string tostring(const Physics_Term & physics_term);
 /// converts a string to a physics term
 /// \param input_string the input string
+DICE_LIB_DLL_EXPORT
 Physics_Term string_to_physics_term(const std::string & input_string);
 
 /*!
@@ -130,7 +146,9 @@ Physics_Term string_to_physics_term(const std::string & input_string);
 /// Field names and properties
 namespace field_enums{
 /// The type of field (tensor order)
-enum Field_Type
+enum
+DICE_LIB_DLL_EXPORT
+Field_Type
 {
   NO_SUCH_FIELD_TYPE=0,
   SCALAR_FIELD_TYPE,
@@ -138,7 +156,9 @@ enum Field_Type
   MIXED_VECTOR_FIELD_TYPE
 };
 /// The names of the fields
-enum Field_Name
+enum
+DICE_LIB_DLL_EXPORT
+Field_Name
 {
   NO_SUCH_FIELD_NAME=0,
   INITIAL_COORDINATES,
@@ -220,7 +240,9 @@ enum Field_Name
   GREEN_LAGRANGE_STRAIN_XY
 };
 /// The location that the fields live
-enum Entity_Rank
+enum
+DICE_LIB_DLL_EXPORT
+Entity_Rank
 {
   NO_SUCH_ENTITY_RANK=0,
   NODE_RANK,
@@ -234,7 +256,9 @@ enum Entity_Rank
   BOND_RANK
 };
 /// The state of the fields
-enum Field_State
+enum
+DICE_LIB_DLL_EXPORT
+Field_State
 {
   NO_FIELD_STATE=0,
   STATE_N_MINUS_ONE,
@@ -244,39 +268,51 @@ enum Field_State
 }  //field enums
 /// converts a field type to string
 /// \param field_type the field type
+DICE_LIB_DLL_EXPORT
 std::string tostring(const field_enums::Field_Type & field_type);
 /// converts a field name to a string
 /// \param field_name the field name
+DICE_LIB_DLL_EXPORT
 std::string tostring(const field_enums::Field_Name & field_name);
 /// converts a field rank to string
 /// \param field_rank the field rank
+DICE_LIB_DLL_EXPORT
 std::string tostring(const field_enums::Entity_Rank & field_rank);
 /// converts a component to an index
 /// \param comp the component
+DICE_LIB_DLL_EXPORT
 int_t toindex(const Component comp);
 /// converts a string to a field type
 /// \param input_string the input string
+DICE_LIB_DLL_EXPORT
 field_enums::Field_Type string_to_field_type(const std::string & input_string);
 /// converts a string to a field name
 /// \param input_string the input string
+DICE_LIB_DLL_EXPORT
 field_enums::Field_Name string_to_field_name(const std::string & input_string);
 /// updates the field names by adding the given field to the list
 /// \param field_name the name of the field to add
 /// \param input_string the string name of the field
+DICE_LIB_DLL_EXPORT
 void update_field_names(const field_enums::Field_Name & field_name,
   const std::string & input_string);
 
 /// returns the number of field names
+DICE_LIB_DLL_EXPORT
 int_t num_field_names();
 /// returns a list of the fields in reverse order
+DICE_LIB_DLL_EXPORT
 std::list<std::string> get_reverse_sorted_field_names();
 /// converts a string to entity rank
 /// \param input_string the input string
+DICE_LIB_DLL_EXPORT
 field_enums::Entity_Rank string_to_entity_rank(const std::string & input_string);
 
 namespace field_enums{
 /// A struct that holds all the necessary information to define a field
-struct Field_Spec  {
+struct
+DICE_LIB_DLL_EXPORT
+Field_Spec  {
 private:
   /// field type
   Field_Type field_type_;
@@ -388,6 +424,7 @@ public:
 /// stream print operator for a field spec
 /// \param os the out stream
 /// \param fs the field spec
+DICE_LIB_DLL_EXPORT
 inline std::ostream& operator<<(std::ostream& os,
   const Field_Spec& fs) {
     return fs.print(os);

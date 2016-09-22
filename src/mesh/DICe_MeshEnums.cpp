@@ -60,8 +60,9 @@ static std::map<std::string,field_enums::Field_Name> string_field_name;
 static std::map<Physics_Term,std::string> physics_term_string;
 static std::map<std::string,Physics_Term> string_physics_term;
 
-
+DICE_LIB_DLL_EXPORT
 void create_string_maps();
+DICE_LIB_DLL_EXPORT
 void create_string_maps()
 {
   if (string_maps_created)
@@ -209,6 +210,7 @@ void create_string_maps()
   }
 }
 
+DICE_LIB_DLL_EXPORT
 std::string tostring(const Physics_Term & physics_term)
 {
   create_string_maps();
@@ -222,6 +224,7 @@ std::string tostring(const Physics_Term & physics_term)
     return pos->second;
 }
 
+DICE_LIB_DLL_EXPORT
 std::string tostring(const Component & comp)
 {
   create_string_maps();
@@ -234,6 +237,7 @@ std::string tostring(const Component & comp)
     }
     return pos->second;
 }
+DICE_LIB_DLL_EXPORT
 std::string tostring(const Base_Element_Type & base_element_type)
 {
   create_string_maps();
@@ -246,6 +250,7 @@ std::string tostring(const Base_Element_Type & base_element_type)
     }
     return pos->second;
 }
+DICE_LIB_DLL_EXPORT
 std::string tostring(const field_enums::Field_Type & field_type)
 {
   create_string_maps();
@@ -258,6 +263,7 @@ std::string tostring(const field_enums::Field_Type & field_type)
     }
     return pos->second;
 }
+DICE_LIB_DLL_EXPORT
 std::string tostring(const field_enums::Field_Name & field_name)
 {
   create_string_maps();
@@ -270,6 +276,7 @@ std::string tostring(const field_enums::Field_Name & field_name)
     }
     return pos->second;
 }
+DICE_LIB_DLL_EXPORT
 std::string tostring(const field_enums::Entity_Rank & entity_rank)
 {
   create_string_maps();
@@ -282,7 +289,7 @@ std::string tostring(const field_enums::Entity_Rank & entity_rank)
     }
     return pos->second;
 }
-
+DICE_LIB_DLL_EXPORT
 int_t toindex(const Component comp)
 {
   if(comp == NO_COMP || comp == X_COMP)
@@ -299,7 +306,7 @@ int_t toindex(const Component comp)
   }
   return -1;
 }
-
+DICE_LIB_DLL_EXPORT
 Physics_Term string_to_physics_term(const std::string & input_string)
 {
   create_string_maps();
@@ -318,7 +325,7 @@ Physics_Term string_to_physics_term(const std::string & input_string)
   return pos->second;
 }
 
-
+DICE_LIB_DLL_EXPORT
 Component string_to_component(const std::string & input_string)
 {
   create_string_maps();
@@ -337,6 +344,7 @@ Component string_to_component(const std::string & input_string)
   return pos->second;
 }
 
+DICE_LIB_DLL_EXPORT
 std::string index_to_component(const int_t index)
 {
   if (index==0)
@@ -349,6 +357,7 @@ std::string index_to_component(const int_t index)
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"Unknown index");
 }
 
+DICE_LIB_DLL_EXPORT
 std::string index_to_component_string(const int_t index)
 {
   if (index==0)
@@ -361,6 +370,7 @@ std::string index_to_component_string(const int_t index)
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"Unknown index");
 }
 
+DICE_LIB_DLL_EXPORT
 Base_Element_Type string_to_base_element_type(const std::string & input_string)
 {
   create_string_maps();
@@ -379,6 +389,7 @@ Base_Element_Type string_to_base_element_type(const std::string & input_string)
   return pos->second;
 }
 
+DICE_LIB_DLL_EXPORT
 field_enums::Field_Type string_to_field_type(const std::string & input_string)
 {
   create_string_maps();
@@ -397,6 +408,7 @@ field_enums::Field_Type string_to_field_type(const std::string & input_string)
   return pos->second;
 }
 
+DICE_LIB_DLL_EXPORT
 std::list<std::string>
 get_reverse_sorted_field_names()
 {
@@ -412,6 +424,7 @@ get_reverse_sorted_field_names()
   return names_list;
 }
 
+DICE_LIB_DLL_EXPORT
 void
 update_field_names(const field_enums::Field_Name & field_name, const std::string & input_string)
 {
@@ -424,6 +437,7 @@ int_t num_field_names()
   return string_field_name.size();
 }
 
+DICE_LIB_DLL_EXPORT
 field_enums::Field_Name string_to_field_name(const std::string & input_string)
 {
   create_string_maps();
@@ -442,6 +456,7 @@ field_enums::Field_Name string_to_field_name(const std::string & input_string)
   return pos->second;
 }
 
+DICE_LIB_DLL_EXPORT
 field_enums::Entity_Rank string_to_entity_rank(const std::string & input_string)
 {
   create_string_maps();
