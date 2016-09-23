@@ -510,14 +510,6 @@ const static char * correlationRoutineStrings[] = {
   "CORRELATION_ROUTINE_NOT_APPLICABLE"
 };
 
-/// Output file type
-enum Output_File_Type {
-  TEXT_FILE=0,
-  // DON'T ADD ANY BELOW MAX
-  MAX_OUTPUT_FILE_TYPE,
-  NO_SUCH_OUTPUT_FILE_TYPE
-};
-
 /// Status flags
 enum Status_Flag{
   // 0

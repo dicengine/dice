@@ -45,6 +45,9 @@
 #include <DICe_PostProcessor.h>
 #include <DICe_ParameterUtilities.h>
 #include <DICe_ImageUtils.h>
+#ifdef DICE_ENABLE_GLOBAL
+#include <DICe_MeshIO.h>
+#endif
 
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <Teuchos_ArrayRCP.hpp>
@@ -451,6 +454,11 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
             paramValid = true;
           }
         }
+        // catch the output folder and output prefix sent to schema for exodus output
+        if(it->first==output_folder||it->first==output_prefix){
+          diceParams->setEntry(it->first,it->second); // overwrite the default value with argument param specified values
+          paramValid = true;
+        }
         if(!paramValid){
           allParamsValid = false;
           if(proc_rank == 0) std::cout << "Error: Invalid parameter: " << it->first << std::endl;
@@ -713,21 +721,20 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
     subset_info = DICe::read_subset_file(fileName,img_width(),img_height());
     subset_info_type = subset_info->type;
   }
+  const std::string output_folder = input_params->get<std::string>(DICe::output_folder,"");
+  const std::string output_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
+  init_params_->set(DICe::output_prefix,output_prefix);
+  init_params_->set(DICe::output_folder,output_folder);
+
   if(analysis_type_==GLOBAL_DIC){
     // create the computational mesh:
     TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::mesh_size),std::runtime_error,
       "Error, missing required input parameter: mesh_size");
     const scalar_t mesh_size = input_params->get<double>(DICe::mesh_size);
-    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::output_folder),std::runtime_error,
-      "Error, missing required input parameter: output_folder");
+    init_params_->set(DICe::mesh_size,mesh_size); // pass the mesh size to the stored parameters for this schema (used by global method)
     TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_file),std::runtime_error,
       "Error, missing required input parameter: subset_file");
-    const std::string output_folder = input_params->get<std::string>(DICe::output_folder);
-    const std::string output_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
     const std::string subset_file = input_params->get<std::string>(DICe::subset_file);
-    init_params_->set(DICe::mesh_size,mesh_size); // pass the mesh size to the stored parameters for this schema (used by global method)
-    init_params_->set(DICe::output_prefix,output_prefix);
-    init_params_->set(DICe::output_folder,output_folder);
     init_params_->set(DICe::subset_file,subset_file);
     //init_params_->set(DICe::global_formulation,input_params->get<Global_Formulation>(DICe::global_formulation,HORN_SCHUNCK));
 #ifdef DICE_ENABLE_GLOBAL
@@ -948,6 +955,16 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   for(int_t i=0;i<num_points;++i){
     node_map[i] = i;
   }
+  // filename for output
+  std::stringstream exo_name;
+  std::string output_dir= "";
+  if(init_params_!=Teuchos::null){
+    exo_name << init_params_->get<std::string>(output_prefix,"DICe_solution") << ".e";
+    output_dir = init_params_->get<std::string>(output_folder,"");
+  }
+  else
+    exo_name << "DICe_solution.e";
+
   // dummy arrays
   std::vector<std::pair<int_t,int_t>> dirichlet_boundary_nodes;
   std::set<int_t> neumann_boundary_nodes;
@@ -961,7 +978,7 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
     dirichlet_boundary_nodes,
     neumann_boundary_nodes,
     lagrange_boundary_nodes,
-    "sample_mesh.e");
+    exo_name.str());
 
   TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"Error: mesh should not be null here");
   local_num_subsets_ = mesh_->get_scalar_node_dist_map()->get_num_local_elements();
@@ -1022,28 +1039,11 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
     local_field_value(i,COORDINATE_Y) = coords->local_value(i*2+1);
   }
 
-//  Teuchos::ArrayRCP<scalar_t> holes_x(1,250);
-//  Teuchos::ArrayRCP<scalar_t> holes_y(1,250);
-//
-//  Teuchos::RCP<DICe::mesh::Mesh> mesh = generate_tri_mesh(DICe::mesh::TRI3,
-//    coords_x,
-//    coords_y,
-//    Teuchos::null,//holes_x,
-//    Teuchos::null,//holes_y,
-//    Teuchos::null,
-//    Teuchos::null,
-//    Teuchos::null,
-//    Teuchos::null,
-//    step_size_x_*step_size_x_*100,
-//    "sample_mesh.e",
-//    false,
-//    false);
-//
-//  TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"Error, mesh should not be a null pointer here.");
-//  DICe::mesh::create_output_exodus_file(mesh_,"./"); // FIXME output folder is not correct
-//  DICe::mesh::create_exodus_output_variable_names(mesh_);
-//  DICe::mesh::exodus_output_dump(mesh_,1,1.0); // FIXME remove this
-
+  // create an exodus output file if global is enabled
+#ifdef DICE_ENABLE_GLOBAL
+  DICe::mesh::create_output_exodus_file(mesh_,output_dir);
+  DICe::mesh::create_exodus_output_variable_names(mesh_);
+#endif
 }
 
 void
@@ -2214,16 +2214,17 @@ void
 Schema::write_output(const std::string & output_folder,
   const std::string & prefix,
   const bool separate_files_per_subset,
-  const bool separate_header_file,
-  const Output_File_Type type){
+  const bool separate_header_file){
   if(analysis_type_==GLOBAL_DIC){
     return;
   }
-  TEUCHOS_TEST_FOR_EXCEPTION(type!=TEXT_FILE,std::invalid_argument,
-    "Currently only TEXT_FILE output is implemented");
   TEUCHOS_TEST_FOR_EXCEPTION(output_spec_==Teuchos::null,std::runtime_error,"");
   int_t my_proc = comm_->get_rank();
   int_t proc_size = comm_->get_size();
+
+#ifdef DICE_ENABLE_GLOBAL
+    DICe::mesh::exodus_output_dump(mesh_,image_frame_,image_frame_);
+#endif
 
   // populate the RCP vector of fields in the output spec
   output_spec_->gather_fields();

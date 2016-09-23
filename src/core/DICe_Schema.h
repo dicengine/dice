@@ -734,8 +734,7 @@ public:
   void write_output(const std::string & output_folder,
     const std::string & prefix="DICe_solution",
     const bool separate_files_per_subset=false,
-    const bool separate_header_file=false,
-    const Output_File_Type type = TEXT_FILE);
+    const bool separate_header_file=false);
 
   /// \brief Write the stats for a completed run
   /// \param output_folder Name of the folder for output (the file name is fixed)

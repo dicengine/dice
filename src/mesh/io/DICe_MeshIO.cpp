@@ -953,7 +953,6 @@ exodus_output_dump(Teuchos::RCP<Mesh> mesh,
     else if(field_it->first.get_rank()==field_enums::NODE_RANK)
     {
       Teuchos::RCP<MultiField > field = mesh->get_overlap_field(field_it->first);
-
       float values[mesh->num_nodes()];
       std::string components[3];
       components[0] = (field_it->first.get_field_type()==field_enums::VECTOR_FIELD_TYPE) ? "X" : "";
