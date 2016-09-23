@@ -101,9 +101,6 @@ public:
     return comm_->getSize();
   }
 
-  /// call barrier method
-  void barrier()const{comm_->Barrier();}
-
   /// Returns a pointer to the underlying communicator
   const Teuchos::RCP<const Teuchos::Comm<int> > get()const{
     return comm_;
