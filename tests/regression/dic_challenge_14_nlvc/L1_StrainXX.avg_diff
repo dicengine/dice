@@ -8,7 +8,7 @@
   <Parameter name="command_coord_col" type="int" value="0" />    
   <Parameter name="command_value_col" type="int" value="2" />    
   <Parameter name="verbose" type="bool" value="true" />    
-  <Parameter name="relative_tolerance" type="double" value="785.0" />    
+  <Parameter name="relative_tolerance" type="double" value="850.0" />    
   <Parameter name="output_file_name" type="string" value="avg_results_strain_L1.txt" />    
   <Parameter name="compare_factor" type="double" value="1.0E6" />
 </ParameterList>

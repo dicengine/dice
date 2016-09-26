@@ -728,7 +728,7 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
     if(elem_type_enum == HEX8)
       num_nodes_per_elem = 8;
     else if(elem_type_enum == MESHLESS){
-      std::string elem_type_str = "SPHERE"; // use sphere type for paraview
+      elem_type_str = "SPHERE"; // use sphere type for paraview
       elem_type = const_cast<char *>(elem_type_str.c_str());
       num_nodes_per_elem = 1;
     }

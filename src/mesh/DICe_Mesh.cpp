@@ -775,6 +775,39 @@ Mesh::get_field(const std::string & field_name)
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"Field was not found in the registry: " + field_name);
 }
 
+field_enums::Field_Spec
+Mesh::get_field_spec(const std::string & field_name,
+  const field_enums::Field_State state){
+  // if the requested field spec has more than one state, always retrieve the state n_plus_one spec
+  // search the field specs of every field for this name:
+  field_registry::const_iterator reg_it = field_registry_.begin();
+  const field_registry::const_iterator reg_end = field_registry_.end();
+  bool field_found = false;
+  bool multi_state_field = false;
+  field_enums::Field_Spec fs;
+  for(;reg_it!=reg_end;++reg_it)
+  {
+    if(reg_it->first.get_name_label()==field_name)
+    {
+      if(field_found) multi_state_field = true;
+      field_found = true;
+      fs = reg_it->first;
+    }
+  }
+  if(field_found)
+  {
+    if(multi_state_field) fs.set_state(state);
+    return fs;
+  }
+  if(comm_->get_rank()==0) std::cout << " The following fields are defined: "  << std::endl;
+  for(reg_it = field_registry_.begin();reg_it!=reg_end;++reg_it)
+  {
+    if(comm_->get_rank()==0) std::cout << "  " << reg_it->first.get_name_label() << std::endl;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"Field was not found in the registry: " + field_name);
+}
+
+
 std::vector<std::string>
 Mesh::get_field_names(const field_enums::Entity_Rank entity_rank,
   const field_enums::Field_Type field_type,

@@ -46,38 +46,111 @@
 
 namespace DICe {
 
-Post_Processor::Post_Processor(Schema * schema,
-  const std::string & name) :
-  schema_(schema),
+Post_Processor::Post_Processor(const std::string & name) :
   name_(name),
-  data_num_points_(0)
-{
-  assert(schema);
+  local_num_points_(0),
+  global_num_points_(0),
+  neighborhood_initialized_(false),
+  coords_x_name_(DICe::mesh::field_enums::INITIAL_COORDINATES_FS.get_name_label()),
+  coords_y_name_(DICe::mesh::field_enums::INITIAL_COORDINATES_FS.get_name_label()),
+  disp_x_name_(DICe::mesh::field_enums::DISPLACEMENT_FS.get_name_label()),
+  disp_y_name_(DICe::mesh::field_enums::DISPLACEMENT_FS.get_name_label())
+{}
+
+void
+Post_Processor::initialize(Teuchos::RCP<DICe::mesh::Mesh> & mesh){
+  mesh_ = mesh;
+  assert(mesh_!=Teuchos::null);
+  local_num_points_ = mesh_->get_scalar_node_dist_map()->get_num_local_elements();
+  global_num_points_ = mesh_->get_scalar_node_dist_map()->get_num_global_elements();
+  assert(local_num_points_>0);
+  assert(global_num_points_>0);
+  for(size_t i=0;i<field_specs_.size();++i)
+    mesh_->create_field(field_specs_[i]);
 }
 
 void
-Post_Processor::initialize(){
-  data_num_points_ = schema_->global_num_subsets();
-  assert(data_num_points_>0);
-  std::vector<scalar_t> tmp_vec(data_num_points_,0.0);
-  for(size_t i=0;i<field_names_.size();++i)
-    fields_.insert(std::pair<std::string,std::vector<scalar_t> >(field_names_[i],tmp_vec));
+Post_Processor::initialize_neighborhood(const scalar_t & neighborhood_radius){
+  DEBUG_MSG("Post_Processor::initialize_neighborhood(): begin");
+
+  // gather an all owned field here
+  const int_t spa_dim = mesh_->spatial_dimension();
+  DICe::mesh::field_enums::Field_Spec coords_x_spec = mesh_->get_field_spec(coords_x_name_);
+  DICe::mesh::field_enums::Field_Spec coords_y_spec = mesh_->get_field_spec(coords_y_name_);
+  Teuchos::RCP<MultiField> coords;
+  if(coords_x_spec.get_field_type()==DICe::mesh::field_enums::SCALAR_FIELD_TYPE){
+    Teuchos::RCP<MultiField> coords_x = mesh_->get_overlap_field(coords_x_spec);
+    Teuchos::RCP<MultiField> coords_y = mesh_->get_overlap_field(coords_y_spec);
+    Teuchos::RCP<MultiField_Map> overlap_map = mesh_->get_vector_node_overlap_map();
+    coords = Teuchos::rcp( new MultiField(overlap_map,1,true));
+    for(int_t i=0;i<mesh_->get_scalar_node_overlap_map()->get_num_local_elements();++i){
+      coords->local_value(i*spa_dim+0) = coords_x->local_value(i);
+      coords->local_value(i*spa_dim+1) = coords_y->local_value(i);
+    }
+  }else{
+    // note assumes that the same vector field spec was given for x and y
+    coords = mesh_->get_overlap_field(coords_x_spec);
+  }
+  // create neighborhood lists using nanoflann:
+  DEBUG_MSG("creating the point cloud using nanoflann");
+  point_cloud_ = Teuchos::rcp(new Point_Cloud<scalar_t>());
+  point_cloud_->pts.resize(global_num_points_);
+  for(int_t i=0;i<global_num_points_;++i){
+    point_cloud_->pts[i].x = coords->local_value(i*spa_dim+0);
+    point_cloud_->pts[i].y = coords->local_value(i*spa_dim+1);
+    point_cloud_->pts[i].z = 0.0;
+  }
+  DEBUG_MSG("building the kd-tree");
+  Teuchos::RCP<my_kd_tree_t> kd_tree = Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud_.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+  kd_tree->buildIndex();
+  DEBUG_MSG("kd-tree completed");
+
+  std::vector<std::pair<size_t,scalar_t> > ret_matches;
+  nanoflann::SearchParams params;
+  params.sorted = true; // sort by distance in ascending order
+  const scalar_t tiny = 1.0E-5;
+  scalar_t neigh_rad_2 = neighborhood_radius*neighborhood_radius + tiny;
+
+  // perform a pass to size the neighbor lists
+  neighbor_list_.resize(local_num_points_);
+  neighbor_dist_x_.resize(local_num_points_);
+  neighbor_dist_y_.resize(local_num_points_);
+  scalar_t query_pt[3];
+  for(int_t i=0;i<local_num_points_;++i){
+    // get the gid of the point
+    const int_t gid = mesh_->get_scalar_node_dist_map()->get_global_element(i);
+    //std::cout << "** POINT GID " << gid << std::endl;
+    // get the overlap local id of the point
+    const int_t olid = mesh_->get_scalar_node_overlap_map()->get_local_element(gid);
+    std::cout << olid << std::endl;
+    query_pt[0] = point_cloud_->pts[olid].x;
+    query_pt[1] = point_cloud_->pts[olid].y;
+    query_pt[2] = point_cloud_->pts[olid].z;
+    kd_tree->radiusSearch(&query_pt[0],neigh_rad_2,ret_matches,params);
+    for(size_t j=0;j<ret_matches.size();++j){
+      const int_t neigh_olid = ret_matches[j].first;
+      neighbor_list_[i].push_back(neigh_olid);
+      neighbor_dist_x_[i].push_back(coords->local_value(neigh_olid*spa_dim+0) - coords->local_value(olid*spa_dim+0));
+      neighbor_dist_y_[i].push_back(coords->local_value(neigh_olid*spa_dim+1) - coords->local_value(olid*spa_dim+1));
+      //std::cout << "** NEIGHBOR GID " << mesh_->get_scalar_node_overlap_map()->get_global_element(neigh_olid) << " dist x " << neighbor_dist_x_[i][j] << " dist y " << neighbor_dist_y_[i][j] << std::endl;
+    }
+  }
+  neighborhood_initialized_ = true;
+  DEBUG_MSG("Post_Processor::initialize_neighborhood(): end");
 }
 
-VSG_Strain_Post_Processor::VSG_Strain_Post_Processor(Schema * schema,
-  const Teuchos::RCP<Teuchos::ParameterList> & params) :
-  Post_Processor(schema,post_process_vsg_strain)
-{
-  field_names_.push_back(vsg_strain_xx);
-  field_names_.push_back(vsg_strain_yy);
-  field_names_.push_back(vsg_strain_xy);
-  field_names_.push_back(vsg_dudx);
-  field_names_.push_back(vsg_dudy);
-  field_names_.push_back(vsg_dvdx);
-  field_names_.push_back(vsg_dvdy);
+VSG_Strain_Post_Processor::VSG_Strain_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params) :
+  Post_Processor(post_process_vsg_strain){
+  field_specs_.push_back(DICe::mesh::field_enums::VSG_STRAIN_XX_FS);
+  field_specs_.push_back(DICe::mesh::field_enums::VSG_STRAIN_YY_FS);
+  field_specs_.push_back(DICe::mesh::field_enums::VSG_STRAIN_XY_FS);
+  field_specs_.push_back(DICe::mesh::field_enums::VSG_DUDX_FS);
+  field_specs_.push_back(DICe::mesh::field_enums::VSG_DUDY_FS);
+  field_specs_.push_back(DICe::mesh::field_enums::VSG_DVDX_FS);
+  field_specs_.push_back(DICe::mesh::field_enums::VSG_DVDY_FS);
   DEBUG_MSG("Enabling post processor VSG_Strain_Post_Processor with associated fields:");
-  for(size_t i=0;i<field_names_.size();++i){
-    DEBUG_MSG(field_names_[i]);
+  for(size_t i=0;i<field_specs_.size();++i){
+    DEBUG_MSG(field_specs_[i].get_name_label());
   }
   set_params(params);
 }
@@ -93,127 +166,74 @@ VSG_Strain_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList>
   window_size_ = params->get<int_t>(strain_window_size_in_pixels);
   TEUCHOS_TEST_FOR_EXCEPTION(window_size_<=0,std::runtime_error,"Error, window size must be greater than 0");
   DEBUG_MSG("VSG_Strain_Post_Processor strain window size: " << window_size_);
+  // change the field specs for disp and coords if provided
+  if(params->isParameter(coordinates_x_field_name)){
+    coords_x_name_ = params->get<std::string>(coordinates_x_field_name);
+    DEBUG_MSG("Setting the VSG post processor coords x field to " << coords_x_name_);
+  }
+  if(params->isParameter(coordinates_y_field_name)){
+    coords_y_name_ = params->get<std::string>(coordinates_y_field_name);
+    DEBUG_MSG("Setting the VSG post processor coords y field to " << coords_y_name_);
+  }
+  if(params->isParameter(displacement_x_field_name)){
+    disp_x_name_ = params->get<std::string>(displacement_x_field_name);
+    DEBUG_MSG("Setting the VSG post processor displacement x field to " << disp_x_name_);
+  }
+  if(params->isParameter(displacement_y_field_name)){
+    disp_y_name_ = params->get<std::string>(displacement_y_field_name);
+    DEBUG_MSG("Setting the VSG post processor displacement y field to " << disp_y_name_);
+  }
 }
 
 void
 VSG_Strain_Post_Processor::pre_execution_tasks(){
-  //if(schema_->mesh()->get_comm()->get_rank()!=0) return;
   DEBUG_MSG("VSG_Strain_Post_Processor pre_execution_tasks() begin");
-
-  // Note neighborhood information is collected over square windows, not circular
-
-  // This post processor requires that the points are set in a regular grid (although there can be gaps)
-  // compute the i and j indices of each subset in terms of the step size:
-  // get the step size for this analysis
-  const int_t step_size_x = schema_->step_size_x();
-  const int_t step_size_y = schema_->step_size_y();
-  TEUCHOS_TEST_FOR_EXCEPTION(step_size_x<=0,std::runtime_error,"Error VSG requires that the step size parameter is used to layout the subsets in x.");
-  TEUCHOS_TEST_FOR_EXCEPTION(step_size_y<=0,std::runtime_error,"Error VSG requires that the step size parameter is used to layout the subsets in x.");
-
-  // gather an all owned field here
-  Teuchos::RCP<MultiField> coords_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
-  Teuchos::RCP<MultiField> coords_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS);
-
-  // find the min/max x and y, these will be used to set up the rows and columns
-  int_t min_x = schema_->ref_img()->width();
-  int_t min_y = schema_->ref_img()->height();
-  int_t max_x = 0;
-  int_t max_y = 0;
-  int_t x=0,y=0;
-  assert(min_x>0&&min_y>0);
-  DEBUG_MSG("width " << min_x << " height " << min_y);
-  for(int_t i=0;i<data_num_points_;++i){
-    x = coords_x->local_value(i);
-    y = coords_y->local_value(i);
-    if(x < min_x) min_x = x;
-    if(y < min_y) min_y = y;
-    if(x > max_x) max_x = x;
-    if(y > max_y) max_y = y;
-  }
-  DEBUG_MSG("min x: " << min_x << " max_x " << max_x << " min_y " << min_y << " max_y " << max_y);
-  const int_t num_cols = (max_x - min_x) / step_size_x + 1;
-  const int_t num_rows = (max_y - min_y) / step_size_y + 1;
-  DEBUG_MSG("num_rows " << num_rows << " num_cols " << num_cols);
-  int_t arm_x = (window_size_/2)/step_size_x;
-  int_t arm_y = (window_size_/2)/step_size_y;
-  vec_stride_ = (arm_x*2+1)*(arm_y*2+1);
-  DEBUG_MSG("Max number of neighbors per subset = vec_stride: " << vec_stride_);
-  neighbor_lists_ = Teuchos::ArrayRCP<int_t>(data_num_points_*vec_stride_,-1);
-  num_neigh_ = Teuchos::ArrayRCP<int_t>(data_num_points_,0);
-  neighbor_distances_x_ = Teuchos::ArrayRCP<scalar_t>(data_num_points_*vec_stride_,-1.0);
-  neighbor_distances_y_ = Teuchos::ArrayRCP<scalar_t>(data_num_points_*vec_stride_,-1.0);
-
-  Teuchos::ArrayRCP<int_t> subset_id_grid(num_rows*num_cols,-1);
-  // organize the subsets according to the step size grid
-  int_t row=0,col=0;
-  for(int_t subset=0;subset<data_num_points_;++subset){
-    x = coords_x->local_value(subset);
-    y = coords_y->local_value(subset);
-    row = (y - min_y)/step_size_y;
-    col = (x - min_x)/step_size_x;
-    assert(row*num_cols + col < subset_id_grid.size());
-    subset_id_grid[row*num_cols + col] = subset;
-  }
-//  // print out the subset_id_grid:
-//  for(int_t j=0;j<num_rows;++j){
-//    std::cout << "ROW : " << j << " ";
-//    for(int_t i=0;i<num_cols;++i){
-//      std::cout << " " << subset_id_grid[j*num_cols+i];
-//    }
-//    std::cout << std::endl;
-//  }
-
-  // now assign the neighbors:
-  int_t subset_gid = 0;
-  int_t neigh_gid = 0;
-  for(row=0;row<num_rows;++row){
-    for(col=0;col<num_cols;++col){
-      subset_gid = subset_id_grid[row*num_cols + col];
-      if(subset_gid<0)continue;
-      for(int_t j=row-arm_y;j<=row+arm_y;++j){
-        if(j<0||j>=num_rows)continue;
-        for(int_t i=col-arm_x;i<=col+arm_x;++i){
-          if(i<0||i>=num_cols)continue;
-          neigh_gid = subset_id_grid[j*num_cols + i];
-          if(neigh_gid<0)continue;
-          assert(num_neigh_[subset_gid]>=0&&num_neigh_[subset_gid]<vec_stride_);
-          neighbor_lists_[subset_gid*vec_stride_ + num_neigh_[subset_gid]] = neigh_gid;
-          neighbor_distances_x_[subset_gid*vec_stride_ + num_neigh_[subset_gid]] = (i-col)*step_size_x;
-          neighbor_distances_y_[subset_gid*vec_stride_ + num_neigh_[subset_gid]] = (j-row)*step_size_y;
-          num_neigh_[subset_gid] += 1;
-        } // i loop
-      } // j loop
-      if(num_neigh_[subset_gid]<3){
-        std::cout << "Error: Subset " << subset_gid << " does not have enough subsets inside the strain window: " << window_size_ << std::endl;
-        std::cout << "       There aren't enough neighbor points to fit the polynomial. " << std::endl;
-        std::cout << "       The input parameter strain_window_size_in_pixels should be increased. " << std::endl;
-        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
-      }
-    } // col loop
-  } // row loop
-
-//  DEBUG_MSG("VSG_Strain_Post_Processor neighbor lists");
-//#ifdef DICE_DEBUG_MSG
-//  for(int_t i=0;i<data_num_points_;++i){
-//    std::stringstream ss;
-//    ss << "Subset " << i << ":";
-//    for(int_t j=0;j<num_neigh_[i];++j){
-//      ss << " " << neighbor_lists_[i*vec_stride_ + j] << " (" << neighbor_distances_x_[i*vec_stride_ + j] << "," << neighbor_distances_y_[i*vec_stride_ + j] << ")";
-//    }
-//    DEBUG_MSG(ss.str());
-//  }
-//#endif
+  const scalar_t neigh_rad = (scalar_t)window_size_/2.0;
+  initialize_neighborhood(neigh_rad);
+  TEUCHOS_TEST_FOR_EXCEPTION(!neighborhood_initialized_,std::runtime_error,"Error, neighborhoods should be initialized here.");
   DEBUG_MSG("VSG_Strain_Post_Processor pre_execution_tasks() end");
+  DICe::mesh::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
+  DICe::mesh::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
+  DICe::mesh::field_enums::Field_Spec coords_x_spec = mesh_->get_field_spec(coords_x_name_);
+  DICe::mesh::field_enums::Field_Spec coords_y_spec = mesh_->get_field_spec(coords_y_name_);
+  TEUCHOS_TEST_FOR_EXCEPTION(disp_x_spec.get_field_type()!=disp_y_spec.get_field_type(),
+    std::runtime_error,"Error: invalid field selections");
+  TEUCHOS_TEST_FOR_EXCEPTION(disp_x_spec.get_rank()!=disp_y_spec.get_rank(),
+    std::runtime_error,"Error: invalid field selections");
+  TEUCHOS_TEST_FOR_EXCEPTION(coords_x_spec.get_field_type()!=coords_y_spec.get_field_type(),
+    std::runtime_error,"Error: invalid field selections");
+  TEUCHOS_TEST_FOR_EXCEPTION(coords_x_spec.get_rank()!=coords_y_spec.get_rank(),
+    std::runtime_error,"Error: invalid field selections");
 }
 
 void
 VSG_Strain_Post_Processor::execute(){
-  //if(schema_->mesh()->get_comm()->get_rank()!=0) return;
   DEBUG_MSG("VSG_Strain_Post_Processor execute() begin");
-
-  // gather an all owned field here
-  Teuchos::RCP<MultiField> disp_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> disp_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+  // gather an all owned fields here
+  DICe::mesh::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
+  DICe::mesh::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
+  const int_t spa_dim = mesh_->spatial_dimension();
+  Teuchos::RCP<MultiField> disp;
+  if(disp_x_spec.get_field_type()==DICe::mesh::field_enums::SCALAR_FIELD_TYPE){
+    Teuchos::RCP<MultiField> disp_x = mesh_->get_overlap_field(disp_x_spec);
+    Teuchos::RCP<MultiField> disp_y = mesh_->get_overlap_field(disp_y_spec);
+    Teuchos::RCP<MultiField_Map> overlap_map = mesh_->get_vector_node_overlap_map();
+    disp = Teuchos::rcp( new MultiField(overlap_map,1,true));
+    for(int_t i=0;i<mesh_->get_scalar_node_overlap_map()->get_num_local_elements();++i){
+      disp->local_value(i*spa_dim+0) = disp_x->local_value(i);
+      disp->local_value(i*spa_dim+1) = disp_y->local_value(i);
+    }
+  }else{
+    // note assumes that the same vector field spec was given for x and y
+    disp = mesh_->get_overlap_field(disp_x_spec);
+  }
+  Teuchos::RCP<DICe::MultiField> vsg_strain_xx_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_XX_FS);
+  Teuchos::RCP<DICe::MultiField> vsg_strain_yy_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_YY_FS);
+  Teuchos::RCP<DICe::MultiField> vsg_strain_xy_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_XY_FS);
+  Teuchos::RCP<DICe::MultiField> vsg_dudx_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_DUDX_FS);
+  Teuchos::RCP<DICe::MultiField> vsg_dudy_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_DUDY_FS);
+  Teuchos::RCP<DICe::MultiField> vsg_dvdx_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_DVDX_FS);
+  Teuchos::RCP<DICe::MultiField> vsg_dvdy_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_DVDY_FS);
 
   const int_t N = 3;
   int *IPIV = new int[N+1];
@@ -222,14 +242,14 @@ VSG_Strain_Post_Processor::execute(){
   double *WORK = new double[LWORK];
   double *GWORK = new double[10*N];
   int *IWORK = new int[LWORK];
-  // FIXME, LAPACK does not allow templating on long int or scalar_t...must use int and double
+  // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
   Teuchos::LAPACK<int,double> lapack;
 
   int_t num_neigh = 0;
   int_t neigh_id = 0;
-  for(int_t subset=0;subset<data_num_points_;++subset){
-    DEBUG_MSG("Processing subset " << subset << " of " << data_num_points_);
-    num_neigh = num_neigh_[subset];
+  for(int_t subset=0;subset<local_num_points_;++subset){
+    DEBUG_MSG("Processing subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << ", " << subset + 1 << " of " << local_num_points_);
+    num_neigh = neighbor_list_[subset].size();
     Teuchos::ArrayRCP<double> u_x(num_neigh,0.0);
     Teuchos::ArrayRCP<double> u_y(num_neigh,0.0);
     Teuchos::ArrayRCP<double> X_t_u_x(N,0.0);
@@ -241,16 +261,16 @@ VSG_Strain_Post_Processor::execute(){
 
     // gather the displacements of the neighbors
     for(int_t j=0;j<num_neigh;++j){
-      neigh_id = neighbor_lists_[subset*vec_stride_ + j];
-      u_x[j] = disp_x->local_value(neigh_id);
-      u_y[j] = disp_y->local_value(neigh_id);
+      neigh_id = neighbor_list_[subset][j];
+      u_x[j] = disp->local_value(neigh_id*spa_dim+0);
+      u_y[j] = disp->local_value(neigh_id*spa_dim+1);
     }
 
     // set up the X^T matrix
     for(int_t j=0;j<num_neigh;++j){
       X_t(0,j) = 1.0;
-      X_t(1,j) = neighbor_distances_x_[subset*vec_stride_ + j];
-      X_t(2,j) = neighbor_distances_y_[subset*vec_stride_ + j];
+      X_t(1,j) = neighbor_dist_x_[subset][j];
+      X_t(2,j) = neighbor_dist_y_[subset][j];
     }
     // set up X^T*X
     for(int_t k=0;k<N;++k){
@@ -322,24 +342,24 @@ VSG_Strain_Post_Processor::execute(){
     const double dudy = coeffs_x[2];
     const double dvdx = coeffs_y[1];
     const double dvdy = coeffs_y[2];
-    field_value(subset,vsg_dudx) = dudx;
-    field_value(subset,vsg_dudy) = dudy;
-    field_value(subset,vsg_dvdx) = dvdx;
-    field_value(subset,vsg_dvdy) = dvdy;
+    vsg_dudx_rcp->local_value(subset) = dudx;
+    vsg_dudy_rcp->local_value(subset) = dudy;
+    vsg_dvdx_rcp->local_value(subset) = dvdx;
+    vsg_dvdy_rcp->local_value(subset) = dvdy;
 
-    DEBUG_MSG("Subset " << subset << " dudx " << field_value(subset,vsg_dudx) << " dudy " << field_value(subset,vsg_dudy) <<
-      " dvdx " << field_value(subset,vsg_dvdx) << " dvdy " << field_value(subset,vsg_dvdy));
+    DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " dudx " << dudx << " dudy " << dudy <<
+      " dvdx " << dvdx << " dvdy " << dvdy);
 
     // compute the Green-Lagrange strain based on the derivatives computed above:
     const scalar_t GL_xx = 0.5*(2.0*dudx + dudx*dudx + dvdx*dvdx);
     const scalar_t GL_yy = 0.5*(2.0*dvdy + dudy*dudy + dvdy*dvdy);
     const scalar_t GL_xy = 0.5*(dudy + dvdx + dudx*dudy + dvdx*dvdy);
-    field_value(subset,vsg_strain_xx) = GL_xx;
-    field_value(subset,vsg_strain_yy) = GL_yy;
-    field_value(subset,vsg_strain_xy) = GL_xy;
+    vsg_strain_xx_rcp->local_value(subset) = GL_xx;
+    vsg_strain_yy_rcp->local_value(subset) = GL_yy;
+    vsg_strain_xy_rcp->local_value(subset) = GL_xy;
 
-    DEBUG_MSG("Subset " << subset << " VSG Green-Lagrange strain XX: " << field_value(subset,vsg_strain_xx) << " YY: " << field_value(subset,vsg_strain_yy) <<
-      " XY: " << field_value(subset,vsg_strain_xy));
+    DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " VSG Green-Lagrange strain XX: " << GL_xx << " YY: " << GL_yy <<
+      " XY: " << GL_xy);
 
   } // end subset loop
 
@@ -347,382 +367,22 @@ VSG_Strain_Post_Processor::execute(){
   delete [] GWORK;
   delete [] IWORK;
   delete [] IPIV;
-
   DEBUG_MSG("VSG_Strain_Post_Processor execute() end");
 }
-//
-//Global_Strain_Post_Processor::Global_Strain_Post_Processor(Schema * schema,
-//  const Teuchos::RCP<Teuchos::ParameterList> & params) :
-//  Post_Processor(schema,post_process_global_strain)
-//{
-//  field_names_.push_back(global_strain_xx);
-//  field_names_.push_back(global_strain_yy);
-//  field_names_.push_back(global_strain_xy);
-//  field_names_.push_back(global_dudx);
-//  field_names_.push_back(global_dudy);
-//  field_names_.push_back(global_dvdx);
-//  field_names_.push_back(global_dvdy);
-//  DEBUG_MSG("Enabling post processor Global_Strain_Post_Processor with associated fields:");
-//  for(size_t i=0;i<field_names_.size();++i){
-//    DEBUG_MSG(field_names_[i]);
-//  }
-//  set_params(params);
-//}
-//
-//void
-//Global_Strain_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
-//  assert(params!=Teuchos::null);
-//  mesh_size_ = schema_->mesh_size();
-//}
-//
-//void
-//Global_Strain_Post_Processor::pre_execution_tasks(){
-//  DEBUG_MSG("Global_Strain_Post_Processor pre_execution_tasks() begin");
-//  DEBUG_MSG("Global_Strain_Post_Processor pre_execution_tasks() end");
-//}
-//
-//void
-//Global_Strain_Post_Processor::execute(){
-//  DEBUG_MSG("Global_Strain_Post_Processor execute() begin");
-//  // make sure the connectivity matrix is populated
-//  assert(schema_->connectivity()->numRows()>0);
-//  Teuchos::ArrayRCP<scalar_t> dN_dxi(4,0.0);
-//  Teuchos::ArrayRCP<scalar_t> dN_deta(4,0.0);
-//  Teuchos::ArrayRCP<scalar_t> elem_disp(8,0.0);
-//  Teuchos::ArrayRCP<int_t> node_ids(4,0.0);
-//  Teuchos::ArrayRCP<scalar_t> node_du_dx(data_num_points_,0.0);
-//  Teuchos::ArrayRCP<scalar_t> node_du_dy(data_num_points_,0.0);
-//  Teuchos::ArrayRCP<scalar_t> node_dv_dx(data_num_points_,0.0);
-//  Teuchos::ArrayRCP<scalar_t> node_dv_dy(data_num_points_,0.0);
-//  Teuchos::ArrayRCP<int_t> node_num_contribs(data_num_points_,0);
-//  int_t start_x=0,end_x=0;
-//  int_t start_y=0,end_y=0;
-//  scalar_t center_x=0,center_y=0;
-//  int_t elem_p_width=0,elem_p_height=0;
-//
-//  scalar_t xi=0.0,eta=0.0;
-//  const int_t num_elem = schema_->connectivity()->numRows();
-//  for(int_t elem=0;elem<num_elem;++elem){
-//
-//    for(int_t i=0;i<4;++i)
-//      node_ids[i] = (*schema_->connectivity())(elem,i);
-//
-//    // create the local disp vector:
-//    for(int_t i=0;i<4;++i){
-//      elem_disp[i*2+0] = schema_->field_value(node_ids[i],DICe::DISPLACEMENT_X);
-//      elem_disp[i*2+1] = schema_->field_value(node_ids[i],DICe::DISPLACEMENT_Y);
-//    }
-//
-//    // get the pixel dimensions for this element's integration area
-//    start_x = (int_t)(schema_->field_value(node_ids[0],DICe::COORDINATE_X) + 0.5);
-//    end_x = (int_t)(schema_->field_value(node_ids[1],DICe::COORDINATE_X) - 0.5);
-//    start_y = (int_t)(schema_->field_value(node_ids[0],DICe::COORDINATE_Y) + 0.5);
-//    end_y = (int_t)(schema_->field_value(node_ids[3],DICe::COORDINATE_Y) - 0.5);
-//    elem_p_width = end_x - start_x + 1;
-//    elem_p_height = end_y - start_y + 1;
-//    center_x = start_x + elem_p_width/2.0;
-//    center_y = start_y + elem_p_height/2.0;
-//
-//    // iterate over the nodes of the element:
-//    for(int_t node=0;node<4;++node){
-//      xi = 2.0 * (schema_->field_value(node_ids[node],DICe::COORDINATE_X) - center_x)/elem_p_width;
-//      eta = 2.0 * (schema_->field_value(node_ids[node],DICe::COORDINATE_Y) - center_y)/elem_p_height;
-//
-//      dN_dxi[0] = 0.25*(-1.0)*(1.0 - eta);
-//      dN_dxi[1] = 0.25*(1.0 - eta);
-//      dN_dxi[2] = 0.25*(1.0 + eta);
-//      dN_dxi[3] = 0.25*(-1.0)*(1.0 + eta);
-//      dN_deta[0] = 0.25*(1.0 - xi)*(-1.0);
-//      dN_deta[1] = 0.25*(1.0 + xi)*(-1.0);
-//      dN_deta[2] = 0.25*(1.0 + xi);
-//      dN_deta[3] = 0.25*(1.0 - xi);
-//
-//      for(int_t i=0;i<4;++i){
-//        node_du_dx[node_ids[node]]+=(2.0/elem_p_width)*dN_dxi[i]*elem_disp[i*2+0];
-//        node_dv_dx[node_ids[node]]+=(2.0/elem_p_width)*dN_dxi[i]*elem_disp[i*2+1];
-//        node_du_dy[node_ids[node]]+=(2.0/elem_p_height)*dN_deta[i]*elem_disp[i*2+0];
-//        node_dv_dy[node_ids[node]]+=(2.0/elem_p_height)*dN_deta[i]*elem_disp[i*2+1];
-//      }
-//      for(int_t i=0;i<4;++i){
-//        node_num_contribs[node_ids[i]]++;
-//      }
-//    } // elem node
-//  } // elem
-//
-//  for(int_t i=0;i<data_num_points_;++i){
-//    scalar_t du_dx = node_du_dx[i]/node_num_contribs[i];
-//    scalar_t du_dy = node_du_dy[i]/node_num_contribs[i];
-//    scalar_t dv_dx = node_dv_dx[i]/node_num_contribs[i];
-//    scalar_t dv_dy = node_dv_dy[i]/node_num_contribs[i];
-//    field_value(i,global_dudx) = du_dx;
-//    field_value(i,global_dudy) = du_dy;
-//    field_value(i,global_dvdx) = dv_dx;
-//    field_value(i,global_dvdy) = dv_dy;
-//
-//    DEBUG_MSG("Node " << i << " dudx " << field_value(i,global_dudx) << " dudy " << field_value(i,global_dudy) <<
-//      " dvdx " << field_value(i,global_dvdx) << " dvdy " << field_value(i,global_dvdy));
-//
-//    // compute the Green-Lagrange strain based on the derivatives computed above:
-//    const scalar_t GL_xx = 0.5*(2.0*du_dx + du_dx*du_dx + dv_dx*dv_dx);
-//    const scalar_t GL_yy = 0.5*(2.0*dv_dy + du_dy*du_dy + dv_dy*dv_dy);
-//    const scalar_t GL_xy = 0.5*(du_dy + dv_dx + du_dx*du_dy + dv_dx*dv_dy);
-//    field_value(i,global_strain_xx) = GL_xx;
-//    field_value(i,global_strain_yy) = GL_yy;
-//    field_value(i,global_strain_xy) = GL_xy;
-//
-//    DEBUG_MSG("Node " << i << " global Green-Lagrange strain XX: " << field_value(i,global_strain_xx) << " YY: " << field_value(i,global_strain_yy) <<
-//      " XY: " << field_value(i,global_strain_xy));
-//  }
-//  DEBUG_MSG("Global_Strain_Post_Processor execute() end");
-//}
 
-Keys4_Strain_Post_Processor::Keys4_Strain_Post_Processor(Schema * schema,
-  const Teuchos::RCP<Teuchos::ParameterList> & params) :
-  Post_Processor(schema,post_process_keys4_strain)
+NLVC_Strain_Post_Processor::NLVC_Strain_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params) :
+  Post_Processor(post_process_nlvc_strain)
 {
-  field_names_.push_back(keys4_strain_xx);
-  field_names_.push_back(keys4_strain_yy);
-  field_names_.push_back(keys4_strain_xy);
-  field_names_.push_back(keys4_dudx);
-  field_names_.push_back(keys4_dudy);
-  field_names_.push_back(keys4_dvdx);
-  field_names_.push_back(keys4_dvdy);
-
-  DEBUG_MSG("Enabling post processor Keys4_Strain_Post_Processor with associated fields:");
-  for(size_t i=0;i<field_names_.size();++i){
-    DEBUG_MSG(field_names_[i]);
-  }
-
-  set_params(params);
-}
-
-void
-Keys4_Strain_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
-  // currently a no-op
-}
-
-void
-Keys4_Strain_Post_Processor::pre_execution_tasks(){
-  //if(schema_->mesh()->get_comm()->get_rank()!=0) return;
-  DEBUG_MSG("Keys4_Strain_Post_Processor pre_execution_tasks() begin");
-
-  // gather an all owned field here
-  Teuchos::RCP<MultiField> coords_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
-  Teuchos::RCP<MultiField> coords_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS);
-
-  // Note neighborhood information is collected over square windows, not circular
-  // The window size is automatically set to make a 7 by 7 window of subsets
-  // The window size is tied closely to the order of the strain measure
-
-  // get the step size for this analysis
-  const int_t step_size = schema_->step_size_x();
-  TEUCHOS_TEST_FOR_EXCEPTION(step_size<=0,std::runtime_error,
-    "Error Keys4 strain requires that the step size parameter is used to layout the subsets in x and y.");
-  TEUCHOS_TEST_FOR_EXCEPTION(step_size!=schema_->step_size_y(),std::runtime_error,
-    "Error Keys4 strain requires that the grid of subsets is equally spaced in x and y.");
-
-  // find the min/max x and y, these will be used to set up the rows and columns
-  int_t min_x = schema_->ref_img()->width();
-  int_t min_y = schema_->ref_img()->height();
-  int_t max_x = 0;
-  int_t max_y = 0;
-  int_t x=0,y=0;
-  assert(min_x>0&&min_y>0);
-  DEBUG_MSG("width " << min_x << " height " << min_y);
-  for(int_t i=0;i<data_num_points_;++i){
-    x = coords_x->local_value(i);
-    y = coords_y->local_value(i);
-    if(x < min_x) min_x = x;
-    if(y < min_y) min_y = y;
-    if(x > max_x) max_x = x;
-    if(y > max_y) max_y = y;
-  }
-  DEBUG_MSG("min x: " << min_x << " max_x " << max_x << " min_y " << min_y << " max_y " << max_y);
-  const int_t num_cols = (max_x - min_x) / step_size + 1;
-  const int_t num_rows = (max_y - min_y) / step_size + 1;
-  DEBUG_MSG("num_rows " << num_rows << " num_cols " << num_cols);
-  int_t arm = 3;
-  vec_stride_ = (arm*2+1)*(arm*2+1);
-  DEBUG_MSG("Max number of neighbors per subset = vec_stride: " << vec_stride_);
-  neighbor_lists_ = Teuchos::ArrayRCP<int_t>(data_num_points_*vec_stride_,-1);
-  num_neigh_ = Teuchos::ArrayRCP<int_t>(data_num_points_,0);
-  neighbor_distances_x_ = Teuchos::ArrayRCP<scalar_t>(data_num_points_*vec_stride_,-1.0);
-  neighbor_distances_y_ = Teuchos::ArrayRCP<scalar_t>(data_num_points_*vec_stride_,-1.0);
-
-  Teuchos::ArrayRCP<int_t> subset_id_grid(num_rows*num_cols,-1);
-  // organize the subsets according to the step size grid
-  int_t row=0,col=0;
-  for(int_t subset=0;subset<data_num_points_;++subset){
-    x = coords_x->local_value(subset);
-    y = coords_y->local_value(subset);
-    row = (y - min_y)/step_size;
-    col = (x - min_x)/step_size;
-    assert(row*num_cols + col < subset_id_grid.size());
-    subset_id_grid[row*num_cols + col] = subset;
-  }
-//  // print out the subset_id_grid:
-//  for(int_t j=0;j<num_rows;++j){
-//    std::cout << "ROW : " << j << " ";
-//    for(int_t i=0;i<num_cols;++i){
-//      std::cout << " " << subset_id_grid[j*num_cols+i];
-//    }
-//    std::cout << std::endl;
-//  }
-
-  // now assign the neighbors:
-  int_t subset_gid = 0;
-  int_t neigh_gid = 0;
-  for(row=0;row<num_rows;++row){
-    for(col=0;col<num_cols;++col){
-      subset_gid = subset_id_grid[row*num_cols + col];
-      for(int_t j=row-arm;j<=row+arm;++j){
-        if(j<0||j>=num_rows)continue;
-        for(int_t i=col-arm;i<=col+arm;++i){
-          if(i<0||i>=num_cols)continue;
-          neigh_gid = subset_id_grid[j*num_cols + i];
-          if(neigh_gid<0)continue;
-          assert(num_neigh_[subset_gid]>=0&&num_neigh_[subset_gid]<vec_stride_);
-          neighbor_lists_[subset_gid*vec_stride_ + num_neigh_[subset_gid]] = neigh_gid;
-          neighbor_distances_x_[subset_gid*vec_stride_ + num_neigh_[subset_gid]] = (i-col);
-          neighbor_distances_y_[subset_gid*vec_stride_ + num_neigh_[subset_gid]] = (j-row);
-          num_neigh_[subset_gid] += 1;
-        } // i loop
-      } // j loop
-      if(num_neigh_[subset_gid]<3){
-        std::cout << "Error: Subset " << subset_gid << " does not have enough subsets inside the strain window for fourth order Keys." << std::endl;
-        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
-      }
-    } // col loop
-  } // row loop
-
-//  DEBUG_MSG("Keys4_Strain_Post_Processor neighbor lists");
-//#ifdef DICE_DEBUG_MSG
-//  for(int_t i=0;i<data_num_points_;++i){
-//    std::stringstream ss;
-//    ss << "Subset " << i << ":";
-//    for(int_t j=0;j<num_neigh_[i];++j){
-//      ss << " " << neighbor_lists_[i*vec_stride_ + j] << " (" << neighbor_distances_x_[i*vec_stride_ + j] << "," << neighbor_distances_y_[i*vec_stride_ + j] << ")";
-//    }
-//    DEBUG_MSG(ss.str());
-//  }
-//#endif
-  DEBUG_MSG("Keys4_Strain_Post_Processor pre_execution_tasks() end");
-}
-
-void
-Keys4_Strain_Post_Processor::execute(){
-  //if(schema_->mesh()->get_comm()->get_rank()!=0) return;
-  DEBUG_MSG("Keys4_Strain_Post_Processor execute() begin");
-
-  // gather an all owned field here
-  Teuchos::RCP<MultiField> disp_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> disp_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
-
-  int_t num_neigh = 0;
-  int_t neigh_id = 0;
-  const int_t step_size = schema_->step_size_x(); // already checked above that x and y have the same step size and step_size > 0
-  const scalar_t factor = 1.0/(step_size);
-  for(int_t subset=0;subset<data_num_points_;++subset){
-    DEBUG_MSG("Processing subset " << subset << " of " << data_num_points_);
-    num_neigh = num_neigh_[subset];
-    scalar_t dudx = 0.0;
-    scalar_t dudy = 0.0;
-    scalar_t dvdx = 0.0;
-    scalar_t dvdy = 0.0;
-    scalar_t dxS = 0.0, dx = 0.0, dx2 = 0.0, dx3 = 0.0;
-    scalar_t dyS = 0.0, dy = 0.0, dy2 = 0.0, dy3 = 0.0;
-    scalar_t sign_x = 1.0, sign_y = 1.0;
-    scalar_t f0x=0.0, f0y=0.0;
-    scalar_t f0xdx=0.0, f0ydy=0.0;
-    scalar_t u_x=0.0, u_y=0.0;
-    for(int_t j=0;j<num_neigh;++j){
-      neigh_id = neighbor_lists_[subset*vec_stride_ + j];
-      dxS = neighbor_distances_x_[subset*vec_stride_ + j];
-      dyS = neighbor_distances_y_[subset*vec_stride_ + j];
-      u_x = disp_x->local_value(neigh_id);
-      u_y = disp_y->local_value(neigh_id);
-      dx = std::abs(dxS);
-      dy = std::abs(dyS);
-      sign_x = (dxS < 0.0) ? -1.0 : 1.0;
-      sign_y = (dyS < 0.0) ? -1.0 : 1.0;
-      dy2=dy*dy;
-      dy3=dy2*dy;
-      dx2=dx*dx;
-      dx3=dx2*dx;
-      f0y = 0.0;
-      f0ydy = 0.0;
-      f0x = 0.0;
-      f0xdx = 0.0;
-      // Y values
-      if(dy <= 1.0){
-        f0y = 4.0/3.0*dy3 - 7.0/3.0*dy2 + 1.0;
-        f0ydy = sign_y*4.0*dy2 - sign_y*14.0/3.0*dy;
-      }
-      else if(dy <= 2.0){
-        f0y = -7.0/12.0*dy3 + 3.0*dy2 - 59.0/12.0*dy + 15.0/6.0;
-        f0ydy = -sign_y*21.0/12.0*dy2 + sign_y*6.0*dy - sign_y*59.0/12.0;
-      }
-      else if(dy <= 3.0){
-        f0y = 1.0/12.0*dy3 - 2.0/3.0*dy2 + 21.0/12.0*dy - 3.0/2.0;
-        f0ydy = sign_y*3.0/12.0*dy2 - sign_y*4.0/3.0*dy + sign_y*21.0/12.0;
-      }
-      // X values
-      if(dx <= 1.0){
-        f0x = 4.0/3.0*dx3 - 7.0/3.0*dx2 + 1.0;
-        f0xdx = sign_x*4.0*dx2 - sign_x*14.0/3.0*dx;
-      }
-      else if(dx <= 2.0){
-        f0x = -7.0/12.0*dx3 + 3.0*dx2 - 59.0/12.0*dx + 15.0/6.0;
-        f0xdx = -sign_x*21.0/12.0*dx2 + sign_x*6.0*dx - sign_x*59.0/12.0;
-      }
-      else if(dx <= 3.0){
-        f0x = 1.0/12.0*dx3 - 2.0/3.0*dx2 + 21.0/12.0*dx - 3.0/2.0;
-        f0xdx = sign_x*3.0/12.0*dx2 - sign_x*4.0/3.0*dx + sign_x*21.0/12.0;
-      }
-      dudx -= u_x*f0xdx*f0y*factor;
-      dudy -= u_x*f0ydy*f0x*factor;
-      dvdx -= u_y*f0xdx*f0y*factor;
-      dvdy -= u_y*f0ydy*f0x*factor;
-      DEBUG_MSG("Subset " << subset << " dxS " << dxS << " dyS " << dyS << " ux " << u_x << " uy " << u_y << " f0x " << f0x << " f0xdx " << f0xdx);
-    } // neighbor loop
-    field_value(subset,keys4_dudx) = dudx;
-    field_value(subset,keys4_dudy) = dudy;
-    field_value(subset,keys4_dvdx) = dvdx;
-    field_value(subset,keys4_dvdy) = dvdy;
-    DEBUG_MSG("Subset " << subset << " dudx " << field_value(subset,keys4_dudx) << " dudy " << field_value(subset,keys4_dudy) <<
-      " dvdx " << field_value(subset,keys4_dvdx) << " dvdy " << field_value(subset,keys4_dvdy));
-    // compute the Green-Lagrange strain based on the derivatives computed above:
-    const scalar_t GL_xx = 0.5*(2.0*dudx + dudx*dudx + dvdx*dvdx);
-    const scalar_t GL_yy = 0.5*(2.0*dvdy + dudy*dudy + dvdy*dvdy);
-    const scalar_t GL_xy = 0.5*(dudy + dvdx + dudx*dudy + dvdx*dvdy);
-    field_value(subset,keys4_strain_xx) = GL_xx;
-    field_value(subset,keys4_strain_yy) = GL_yy;
-    field_value(subset,keys4_strain_xy) = GL_xy;
-
-    DEBUG_MSG("Subset " << subset << " Keys4 Green-Lagrange strain XX: " << field_value(subset,keys4_strain_xx) << " YY: " << field_value(subset,keys4_strain_yy) <<
-      " XY: " << field_value(subset,keys4_strain_xy));
-  } // end subset loop
-  DEBUG_MSG("Keys4_Strain_Post_Processor execute() end");
-}
-
-NLVC_Strain_Post_Processor::NLVC_Strain_Post_Processor(Schema * schema,
-  const Teuchos::RCP<Teuchos::ParameterList> & params) :
-  Post_Processor(schema,post_process_nlvc_strain)
-{
-  field_names_.push_back(nlvc_strain_xx);
-  field_names_.push_back(nlvc_strain_yy);
-  field_names_.push_back(nlvc_strain_xy);
-  field_names_.push_back(nlvc_dudx);
-  field_names_.push_back(nlvc_dudy);
-  field_names_.push_back(nlvc_dvdx);
-  field_names_.push_back(nlvc_dvdy);
-  field_names_.push_back(nlvc_integrated_alpha_x);
-  field_names_.push_back(nlvc_integrated_alpha_y);
-  field_names_.push_back(nlvc_integrated_phi_x);
-  field_names_.push_back(nlvc_integrated_phi_y);
+  field_specs_.push_back(DICe::mesh::field_enums::NLVC_STRAIN_XX_FS);
+  field_specs_.push_back(DICe::mesh::field_enums::NLVC_STRAIN_YY_FS);
+  field_specs_.push_back(DICe::mesh::field_enums::NLVC_STRAIN_XY_FS);
+  field_specs_.push_back(DICe::mesh::field_enums::NLVC_DUDX_FS);
+  field_specs_.push_back(DICe::mesh::field_enums::NLVC_DUDY_FS);
+  field_specs_.push_back(DICe::mesh::field_enums::NLVC_DVDX_FS);
+  field_specs_.push_back(DICe::mesh::field_enums::NLVC_DVDY_FS);
   DEBUG_MSG("Enabling post processor NLVC_Strain_Post_Processor with associated fields:");
-  for(size_t i=0;i<field_names_.size();++i){
-    DEBUG_MSG(field_names_[i]);
+  for(size_t i=0;i<field_specs_.size();++i){
+    DEBUG_MSG(field_specs_[i].get_name_label());
   }
   set_params(params);
 }
@@ -739,215 +399,151 @@ NLVC_Strain_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList
   TEUCHOS_TEST_FOR_EXCEPTION(horizon_<=0,std::runtime_error,
     "Error, horizon must be greater than 0");
   DEBUG_MSG("NLVC_Strain_Post_Processor horizon diameter size: " << horizon_);
+  if(params->isParameter(coordinates_x_field_name)){
+    coords_x_name_ = params->get<std::string>(coordinates_x_field_name);
+    DEBUG_MSG("Setting the NLVC post processor coords x field to " << coords_x_name_);
+  }
+  if(params->isParameter(coordinates_y_field_name)){
+    coords_y_name_ = params->get<std::string>(coordinates_y_field_name);
+    DEBUG_MSG("Setting the NLVC post processor coords y field to " << coords_y_name_);
+  }
+  if(params->isParameter(displacement_x_field_name)){
+    disp_x_name_ = params->get<std::string>(displacement_x_field_name);
+    DEBUG_MSG("Setting the NLVC post processor displacement x field to " << disp_x_name_);
+  }
+  if(params->isParameter(displacement_y_field_name)){
+    disp_y_name_ = params->get<std::string>(displacement_y_field_name);
+    DEBUG_MSG("Setting the NLVC post processor displacement y field to " << disp_y_name_);
+  }
 }
 
 void
 NLVC_Strain_Post_Processor::pre_execution_tasks(){
-  //if(schema_->mesh()->get_comm()->get_rank()!=0) return;
-
   DEBUG_MSG("NLVC_Strain_Post_Processor pre_execution_tasks() begin");
-
-  // gather an all owned field here
-  Teuchos::RCP<MultiField> coords_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
-  Teuchos::RCP<MultiField> coords_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS);
-
-  // Note neighborhood information is collected over square windows, not circular
-
-  // TODO unify all the neighbor searching algs so that they share code
-
-  // This post processor requires that the points are set in a regular grid (although there can be gaps)
-  // compute the i and j indices of each subset in terms of the step size:
-  // get the step size for this analysis
-  const int_t step_size_x = schema_->step_size_x();
-  const int_t step_size_y = schema_->step_size_y();
-  TEUCHOS_TEST_FOR_EXCEPTION(step_size_x<=0,std::runtime_error,
-    "Error NLVC strain requires that the step size parameter is used to layout the subsets in x.");
-  TEUCHOS_TEST_FOR_EXCEPTION(step_size_y<=0,std::runtime_error,
-    "Error NLVC strain requires that the step size parameter is used to layout the subsets in x.");
-
-  // find the min/max x and y, these will be used to set up the rows and columns
-  int_t min_x = schema_->ref_img()->width();
-  int_t min_y = schema_->ref_img()->height();
-  int_t max_x = 0;
-  int_t max_y = 0;
-  int_t x=0,y=0;
-  assert(min_x>0&&min_y>0);
-  DEBUG_MSG("width " << min_x << " height " << min_y);
-  for(int_t i=0;i<data_num_points_;++i){
-    x = coords_x->local_value(i);
-    y = coords_y->local_value(i);
-    if(x < min_x) min_x = x;
-    if(y < min_y) min_y = y;
-    if(x > max_x) max_x = x;
-    if(y > max_y) max_y = y;
-  }
-  DEBUG_MSG("min x: " << min_x << " max_x " << max_x << " min_y " << min_y << " max_y " << max_y);
-  const int_t num_cols = (max_x - min_x) / step_size_x + 1;
-  const int_t num_rows = (max_y - min_y) / step_size_y + 1;
-  DEBUG_MSG("num_rows " << num_rows << " num_cols " << num_cols);
-  int_t arm_x = (horizon_/2)/step_size_x;
-  int_t arm_y = (horizon_/2)/step_size_y;
-  vec_stride_ = (arm_x*2+1)*(arm_y*2+1);
-  DEBUG_MSG("Max number of neighbors per subset = vec_stride: " << vec_stride_);
-  neighbor_lists_ = Teuchos::ArrayRCP<int_t>(data_num_points_*vec_stride_,-1);
-  num_neigh_ = Teuchos::ArrayRCP<int_t>(data_num_points_,0);
-  neighbor_distances_x_ = Teuchos::ArrayRCP<scalar_t>(data_num_points_*vec_stride_,-1.0);
-  neighbor_distances_y_ = Teuchos::ArrayRCP<scalar_t>(data_num_points_*vec_stride_,-1.0);
-
-  Teuchos::ArrayRCP<int_t> subset_id_grid(num_rows*num_cols,-1);
-  // organize the subsets according to the step size grid
-  int_t row=0,col=0;
-  for(int_t subset=0;subset<data_num_points_;++subset){
-    x = coords_x->local_value(subset);
-    y = coords_y->local_value(subset);
-    row = (y - min_y)/step_size_y;
-    col = (x - min_x)/step_size_x;
-    assert(row*num_cols + col < subset_id_grid.size());
-    subset_id_grid[row*num_cols + col] = subset;
-  }
-//  // print out the subset_id_grid:
-//  for(int_t j=0;j<num_rows;++j){
-//    std::cout << "ROW : " << j << " ";
-//    for(int_t i=0;i<num_cols;++i){
-//      std::cout << " " << subset_id_grid[j*num_cols+i];
-//    }
-//    std::cout << std::endl;
-//  }
-
-  // now assign the neighbors:
-  int_t subset_gid = 0;
-  int_t neigh_gid = 0;
-  for(row=0;row<num_rows;++row){
-    for(col=0;col<num_cols;++col){
-      subset_gid = subset_id_grid[row*num_cols + col];
-      for(int_t j=row-arm_y;j<=row+arm_y;++j){
-        if(j<0||j>=num_rows)continue;
-        for(int_t i=col-arm_x;i<=col+arm_x;++i){
-          if(i<0||i>=num_cols)continue;
-          neigh_gid = subset_id_grid[j*num_cols + i];
-          if(neigh_gid<0)continue;
-          assert(num_neigh_[subset_gid]>=0&&num_neigh_[subset_gid]<vec_stride_);
-          neighbor_lists_[subset_gid*vec_stride_ + num_neigh_[subset_gid]] = neigh_gid;
-          neighbor_distances_x_[subset_gid*vec_stride_ + num_neigh_[subset_gid]] = (i-col)*step_size_x;
-          neighbor_distances_y_[subset_gid*vec_stride_ + num_neigh_[subset_gid]] = (j-row)*step_size_y;
-          num_neigh_[subset_gid] += 1;
-        } // i loop
-      } // j loop
-      if(num_neigh_[subset_gid]<3){
-        std::cout << "Error: Subset " << subset_gid << " does not have enough subsets inside the nonlocal horizon: " << horizon_ << std::endl;
-        std::cout << "       There aren't enough neighbor points to fit the polynomial. " << std::endl;
-        std::cout << "       The input parameter horizon_diameter_in_pixels should be increased. " << std::endl;
-        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
-      }
-    } // col loop
-  } // row loop
-
-//  DEBUG_MSG("NLVC_Strain_Post_Processor neighbor lists");
-//#ifdef DICE_DEBUG_MSG
-//  for(int_t i=0;i<data_num_points_;++i){
-//    std::stringstream ss;
-//    ss << "Subset " << i << ":";
-//    for(int_t j=0;j<num_neigh_[i];++j){
-//      ss << " " << neighbor_lists_[i*vec_stride_ + j] << " (" << neighbor_distances_x_[i*vec_stride_ + j] << "," << neighbor_distances_y_[i*vec_stride_ + j] << ")";
-//    }
-//    DEBUG_MSG(ss.str());
-//  }
-//#endif
+  const scalar_t neigh_rad = (scalar_t)horizon_/2.0;
+  initialize_neighborhood(neigh_rad);
+  TEUCHOS_TEST_FOR_EXCEPTION(!neighborhood_initialized_,std::runtime_error,"Error, neighborhoods should be initialized here.");
   DEBUG_MSG("NLVC_Strain_Post_Processor pre_execution_tasks() end");
+  DICe::mesh::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
+  DICe::mesh::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
+  DICe::mesh::field_enums::Field_Spec coords_x_spec = mesh_->get_field_spec(coords_x_name_);
+  DICe::mesh::field_enums::Field_Spec coords_y_spec = mesh_->get_field_spec(coords_y_name_);
+  TEUCHOS_TEST_FOR_EXCEPTION(disp_x_spec.get_field_type()!=disp_y_spec.get_field_type(),
+    std::runtime_error,"Error: invalid field selections");
+  TEUCHOS_TEST_FOR_EXCEPTION(disp_x_spec.get_rank()!=disp_y_spec.get_rank(),
+    std::runtime_error,"Error: invalid field selections");
+  TEUCHOS_TEST_FOR_EXCEPTION(coords_x_spec.get_field_type()!=coords_y_spec.get_field_type(),
+    std::runtime_error,"Error: invalid field selections");
+  TEUCHOS_TEST_FOR_EXCEPTION(coords_x_spec.get_rank()!=coords_y_spec.get_rank(),
+    std::runtime_error,"Error: invalid field selections");
 }
 
 void
+NLVC_Strain_Post_Processor::compute_kernel(const scalar_t & dx,
+  const scalar_t & dy,
+  scalar_t & kx,
+  scalar_t & ky){
+  static scalar_t h = (scalar_t)horizon_*0.5;
+  static scalar_t s = h / 3.0;
+  const scalar_t r = std::sqrt(dx*dx+dy*dy);
+  kx = 1.0/(2*DICE_PI*s*s)*(-2*dx/(2*s*s))*exp(-(r*r/(2*s*s)));
+  ky = 1.0/(2*DICE_PI*s*s)*(-2*dy/(2*s*s))*exp(-(r*r/(2*s*s)));
+}
+
+
+void
 NLVC_Strain_Post_Processor::execute(){
-  //if(schema_->mesh()->get_comm()->get_rank()!=0) return;
   DEBUG_MSG("NLVC_Strain_Post_Processor execute() begin");
 
   // gather an all owned field here
-  Teuchos::RCP<MultiField> disp_x = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> disp_y = schema_->mesh()->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+  DICe::mesh::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
+  DICe::mesh::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
+  const int_t spa_dim = mesh_->spatial_dimension();
+  Teuchos::RCP<MultiField> disp;
+  if(disp_x_spec.get_field_type()==DICe::mesh::field_enums::SCALAR_FIELD_TYPE){
+    Teuchos::RCP<MultiField> disp_x = mesh_->get_overlap_field(disp_x_spec);
+    Teuchos::RCP<MultiField> disp_y = mesh_->get_overlap_field(disp_y_spec);
+    Teuchos::RCP<MultiField_Map> overlap_map = mesh_->get_vector_node_overlap_map();
+    disp = Teuchos::rcp( new MultiField(overlap_map,1,true));
+    for(int_t i=0;i<mesh_->get_scalar_node_overlap_map()->get_num_local_elements();++i){
+      disp->local_value(i*spa_dim+0) = disp_x->local_value(i);
+      disp->local_value(i*spa_dim+1) = disp_y->local_value(i);
+    }
+  }else{
+    // note assumes that the same vector field spec was given for x and y
+    disp = mesh_->get_overlap_field(disp_x_spec);
+  }
+  Teuchos::RCP<DICe::MultiField> nlvc_strain_xx_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_XX_FS);
+  Teuchos::RCP<DICe::MultiField> nlvc_strain_yy_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_YY_FS);
+  Teuchos::RCP<DICe::MultiField> nlvc_strain_xy_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_XY_FS);
+  Teuchos::RCP<DICe::MultiField> nlvc_dudx_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_DUDX_FS);
+  Teuchos::RCP<DICe::MultiField> nlvc_dudy_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_DUDY_FS);
+  Teuchos::RCP<DICe::MultiField> nlvc_dvdx_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_DVDX_FS);
+  Teuchos::RCP<DICe::MultiField> nlvc_dvdy_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_DVDY_FS);
+  Teuchos::RCP<DICe::MultiField> f9_rcp = mesh_->get_field(DICe::mesh::field_enums::FIELD_9_FS);
+  Teuchos::RCP<DICe::MultiField> f10_rcp = mesh_->get_field(DICe::mesh::field_enums::FIELD_10_FS);
 
-  const int_t step_size = schema_->step_size_x();
-  const scalar_t factor = step_size*step_size;
-  scalar_t alpha_x = 0.0;
-  scalar_t alpha_y = 0.0;
-  scalar_t phi_x = 0.0;
-  scalar_t phi_y = 0.0;
-  scalar_t u_x = 0.0;
-  scalar_t u_y = 0.0;
-  for(int_t subset=0;subset<data_num_points_;++subset){
+  for(int_t subset=0;subset<local_num_points_;++subset){
+    DEBUG_MSG("Processing subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << ", " << subset + 1 << " of " << local_num_points_);
     scalar_t dudx = 0.0;
     scalar_t dudy = 0.0;
     scalar_t dvdx = 0.0;
     scalar_t dvdy = 0.0;
-    scalar_t integrated_alpha_x = 0.0;
-    scalar_t integrated_alpha_y = 0.0;
-    scalar_t integrated_phi_x = 0.0;
-    scalar_t integrated_phi_y = 0.0;
-    DEBUG_MSG("Processing subset " << subset << " with " << neighbor_lists_[subset] << "neighbors");
-    for(int_t j=0;j<num_neigh_[subset];++j){
-      const int_t neighbor_gid = neighbor_lists_[subset*vec_stride_ + j];
-      //assert(neighbor_index >=0);
-      //assert(neighbor_index < neighbor_lists_[self_global_id].size());
-      //assert(neighbor_distances_mag_[subset][j] <= horizon_/2.0 && "Error, the distance between these two points is greater than the horizon, but somehow they are in each other's neighborhoods.");
-      const scalar_t dist_x = neighbor_distances_x_[subset*vec_stride_ + j];
-      const scalar_t dist_y = neighbor_distances_y_[subset*vec_stride_ + j];
-      u_x = disp_x->local_value(neighbor_gid);
-      u_y = disp_y->local_value(neighbor_gid);
-      if(dist_x==0){
-        phi_x = 4.0*(dist_x + 0.5*horizon_)/(horizon_*horizon_);
-        alpha_x = 0.0;
-      }
-      else if(dist_x < 0){
-        phi_x = 4.0*(dist_x + 0.5*horizon_)/(horizon_*horizon_);
-        alpha_x = 4.0 / (horizon_*horizon_);
-      }
-      else{
-        phi_x = 4.0*(0.5*horizon_ - dist_x)/(horizon_*horizon_);
-        alpha_x = -4.0 / (horizon_*horizon_);
-      }
-      if(dist_y==0){
-        phi_y = 4.0*(dist_y + 0.5*horizon_)/(horizon_*horizon_);
-        alpha_y = 0.0;
-      }
-      else if(dist_y < 0){
-        phi_y = 4.0*(dist_y + 0.5*horizon_)/(horizon_*horizon_);
-        alpha_y = 4.0 / (horizon_*horizon_);
-      }
-      else{
-        phi_y = 4.0*(0.5*horizon_ - dist_y)/(horizon_*horizon_);
-        alpha_y = -4.0 / (horizon_*horizon_);
-      }
-      integrated_alpha_x += alpha_x*factor;
-      integrated_alpha_y += alpha_y*factor;
-      integrated_phi_x += phi_x*factor;
-      integrated_phi_y += phi_y*factor;
-      dudx -= u_x * alpha_x*phi_y * factor;
-      dudy -= u_x * alpha_y*phi_x * factor;
-      dvdx -= u_y * alpha_x*phi_y * factor;
-      dvdy -= u_y * alpha_y*phi_x * factor;
+    scalar_t ux = 0.0;
+    scalar_t uy = 0.0;
+    scalar_t dx = 0.0;
+    scalar_t dy = 0.0;
+    scalar_t sum_int_x = 0.0;
+    scalar_t sum_int_y = 0.0;
+    scalar_t kx = 0.0;
+    scalar_t ky = 0.0;
+    int_t neigh_id = 0;
+
+    assert(neighbor_dist_x_[subset].size()>1);
+    assert(neighbor_dist_y_[subset].size()>1);
+    // neigbor 0 is yourself
+    const scalar_t nearest_neigh_dist = std::sqrt(neighbor_dist_x_[subset][1]*neighbor_dist_x_[subset][1] +
+      neighbor_dist_y_[subset][1]*neighbor_dist_y_[subset][1]);
+    const scalar_t patch_area = nearest_neigh_dist*nearest_neigh_dist;
+    const int_t num_neigh = neighbor_dist_x_[subset].size();
+    for(int_t j=0;j<num_neigh;++j){
+      neigh_id = neighbor_list_[subset][j];
+      ux = disp->local_value(neigh_id*spa_dim+0);
+      uy = disp->local_value(neigh_id*spa_dim+1);
+      dx = neighbor_dist_x_[subset][j];
+      dy = neighbor_dist_y_[subset][j];
+      compute_kernel(dx,dy,kx,ky);
+      sum_int_x += kx*patch_area;
+      sum_int_y += ky*patch_area;
+      dudx -= ux * kx*patch_area;
+      dudy -= ux * ky*patch_area;
+      dvdx -= uy * kx*patch_area;
+      dvdy -= uy * ky*patch_area;
     } // neighbor loop
-    field_value(subset,nlvc_dudx) = dudx;
-    field_value(subset,nlvc_dudy) = dudy;
-    field_value(subset,nlvc_dvdx) = dvdx;
-    field_value(subset,nlvc_dvdy) = dvdy;
-    field_value(subset,nlvc_integrated_alpha_x) = integrated_alpha_x;
-    field_value(subset,nlvc_integrated_alpha_y) = integrated_alpha_y;
-    field_value(subset,nlvc_integrated_phi_x) = integrated_phi_x;
-    field_value(subset,nlvc_integrated_phi_y) = integrated_phi_y;
-    DEBUG_MSG("Subset " << subset << " dudx " << field_value(subset,nlvc_dudx) << " dudy " << field_value(subset,nlvc_dudy) <<
-      " dvdx " << field_value(subset,nlvc_dvdx) << " dvdy " << field_value(subset,nlvc_dvdy));
-    DEBUG_MSG("Subset " << subset << " integrated_alpha_x " << integrated_alpha_x << " _y " << integrated_alpha_y << " integrated_phi_x " << integrated_phi_x << " _y " << integrated_phi_y);
+    nlvc_dudx_rcp->local_value(subset) = dudx;
+    nlvc_dudy_rcp->local_value(subset) = dudy;
+    nlvc_dvdx_rcp->local_value(subset) = dvdx;
+    nlvc_dvdy_rcp->local_value(subset) = dvdy;
+    f9_rcp->local_value(subset) = sum_int_x;
+    f10_rcp->local_value(subset) = sum_int_y;
+
+    DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " dudx " << dudx << " dudy " << dudy <<
+      " dvdx " << dvdx << " dvdy " << dvdy);
+    DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " sum_int_x " << sum_int_x <<
+      " sum_int_y " << sum_int_y);
 
     // compute the Green-Lagrange strain based on the derivatives computed above:
     const scalar_t GL_xx = 0.5*(2.0*dudx + dudx*dudx + dvdx*dvdx);
     const scalar_t GL_yy = 0.5*(2.0*dvdy + dudy*dudy + dvdy*dvdy);
     const scalar_t GL_xy = 0.5*(dudy + dvdx + dudx*dudy + dvdx*dvdy);
-    field_value(subset,nlvc_strain_xx) = GL_xx;
-    field_value(subset,nlvc_strain_yy) = GL_yy;
-    field_value(subset,nlvc_strain_xy) = GL_xy;
-    DEBUG_MSG("Subset " << subset << " NLVC Green-Lagrange strain XX: " << field_value(subset,nlvc_strain_xx) << " YY: " << field_value(subset,nlvc_strain_yy) <<
-      " XY: " << field_value(subset,nlvc_strain_xy));
+    nlvc_strain_xx_rcp->local_value(subset) = GL_xx;
+    nlvc_strain_yy_rcp->local_value(subset) = GL_yy;
+    nlvc_strain_xy_rcp->local_value(subset) = GL_xy;
 
+    DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " NLVC Green-Lagrange strain XX: " << GL_xx << " YY: " << GL_yy <<
+      " XY: " << GL_xy);
   } // subset loop
+
   DEBUG_MSG("NLVC_Strain_Post_Processor execute() end");
 }
 

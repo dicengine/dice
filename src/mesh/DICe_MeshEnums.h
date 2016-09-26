@@ -237,7 +237,24 @@ Field_Name
   STRAIN_CONTRIBS,
   GREEN_LAGRANGE_STRAIN_XX,
   GREEN_LAGRANGE_STRAIN_YY,
-  GREEN_LAGRANGE_STRAIN_XY
+  GREEN_LAGRANGE_STRAIN_XY,
+  EXACT_STRAIN_XX,
+  EXACT_STRAIN_YY,
+  EXACT_STRAIN_XY,
+  VSG_STRAIN_XX,
+  VSG_STRAIN_YY,
+  VSG_STRAIN_XY,
+  VSG_DUDX,
+  VSG_DUDY,
+  VSG_DVDX,
+  VSG_DVDY,
+  NLVC_STRAIN_XX,
+  NLVC_STRAIN_YY,
+  NLVC_STRAIN_XY,
+  NLVC_DUDX,
+  NLVC_DUDY,
+  NLVC_DVDX,
+  NLVC_DVDY
 };
 /// The location that the fields live
 enum
@@ -608,9 +625,43 @@ const Field_Spec GREEN_LAGRANGE_STRAIN_XX_FS(field_enums::SCALAR_FIELD_TYPE,fiel
 const Field_Spec GREEN_LAGRANGE_STRAIN_YY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::GREEN_LAGRANGE_STRAIN_YY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec GREEN_LAGRANGE_STRAIN_XY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::GREEN_LAGRANGE_STRAIN_XY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec VSG_STRAIN_XX_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::VSG_STRAIN_XX,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec VSG_STRAIN_YY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::VSG_STRAIN_YY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec VSG_STRAIN_XY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::VSG_STRAIN_XY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec VSG_DUDX_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::VSG_DUDX,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec VSG_DUDY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::VSG_DUDY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec VSG_DVDX_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::VSG_DVDX,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec VSG_DVDY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::VSG_DVDY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec NLVC_STRAIN_XX_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_XX,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec NLVC_STRAIN_YY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_YY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec NLVC_STRAIN_XY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_XY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec NLVC_DUDX_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_DUDX,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec NLVC_DUDY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_DUDY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec NLVC_DVDX_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_DVDX,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec NLVC_DVDY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_DVDY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec EXACT_STRAIN_XX_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::EXACT_STRAIN_XX,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec EXACT_STRAIN_YY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::EXACT_STRAIN_YY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec EXACT_STRAIN_XY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::EXACT_STRAIN_XY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 78;
+const int_t num_fields_defined = 95;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -690,7 +741,24 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     STRAIN_CONTRIBS_FS,
     GREEN_LAGRANGE_STRAIN_XX_FS,
     GREEN_LAGRANGE_STRAIN_YY_FS,
-    GREEN_LAGRANGE_STRAIN_XY_FS
+    GREEN_LAGRANGE_STRAIN_XY_FS,
+    VSG_STRAIN_XX_FS,
+    VSG_STRAIN_YY_FS,
+    VSG_STRAIN_XY_FS,
+    VSG_DUDX_FS,
+    VSG_DUDY_FS,
+    VSG_DVDX_FS,
+    VSG_DVDY_FS,
+    NLVC_STRAIN_XX_FS,
+    NLVC_STRAIN_YY_FS,
+    NLVC_STRAIN_XY_FS,
+    NLVC_DUDX_FS,
+    NLVC_DUDY_FS,
+    NLVC_DVDX_FS,
+    NLVC_DVDY_FS,
+    EXACT_STRAIN_XX_FS,
+    EXACT_STRAIN_YY_FS,
+    EXACT_STRAIN_XY_FS
     // don't forget to add one to num_fields_defined
 };
 

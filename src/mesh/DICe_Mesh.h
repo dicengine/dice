@@ -936,6 +936,12 @@ public:
   /// \param field_name The string name of the field
   std::pair<field_enums::Field_Spec,Teuchos::RCP<MultiField> > get_field(const std::string & field_name);
 
+  /// Return a field spec given the string field name
+  /// \param field_name The string name of the field
+  /// \param state the field state
+  field_enums::Field_Spec get_field_spec(const std::string & field_name,
+    const field_enums::Field_State state = field_enums::NO_FIELD_STATE);
+
   /// this will actually do the import, create a new field that has the overlap values and return a pointer to that field
   /// \param field_spec the field_spec defines the field to get
   Teuchos::RCP<MultiField> get_overlap_field(const field_enums::Field_Spec & field_spec);

@@ -600,7 +600,15 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     for(Teuchos::ParameterList::ConstIterator it=sublist.begin();it!=sublist.end();++it){
       ppParams->setEntry(it->first,it->second);
     }
-    Teuchos::RCP<VSG_Strain_Post_Processor> vsg_ptr = Teuchos::rcp (new VSG_Strain_Post_Processor(this,ppParams));
+    if(!ppParams->isParameter(displacement_x_field_name)&&analysis_type_==LOCAL_DIC){
+      ppParams->set<std::string>(displacement_x_field_name,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS.get_name_label());
+      ppParams->set<std::string>(displacement_y_field_name,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS.get_name_label());
+    }
+    if(!ppParams->isParameter(coordinates_x_field_name)&&analysis_type_==LOCAL_DIC){
+      ppParams->set<std::string>(coordinates_x_field_name,DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS.get_name_label());
+      ppParams->set<std::string>(coordinates_y_field_name,DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS.get_name_label());
+    }
+    Teuchos::RCP<VSG_Strain_Post_Processor> vsg_ptr = Teuchos::rcp (new VSG_Strain_Post_Processor(ppParams));
     post_processors_.push_back(vsg_ptr);
   }
   if(diceParams->isParameter(DICe::post_process_nlvc_strain)){
@@ -609,27 +617,16 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     for(Teuchos::ParameterList::ConstIterator it=sublist.begin();it!=sublist.end();++it){
       ppParams->setEntry(it->first,it->second);
     }
-    Teuchos::RCP<NLVC_Strain_Post_Processor> nlvc_ptr = Teuchos::rcp (new NLVC_Strain_Post_Processor(this,ppParams));
-    post_processors_.push_back(nlvc_ptr);
-  }
-  if(diceParams->isParameter(DICe::post_process_keys4_strain)){
-    Teuchos::ParameterList sublist = diceParams->sublist(DICe::post_process_keys4_strain);
-    Teuchos::RCP<Teuchos::ParameterList> ppParams = Teuchos::rcp( new Teuchos::ParameterList());
-    for(Teuchos::ParameterList::ConstIterator it=sublist.begin();it!=sublist.end();++it){
-      ppParams->setEntry(it->first,it->second);
+    if(!ppParams->isParameter(displacement_x_field_name)&&analysis_type_==LOCAL_DIC){
+      ppParams->set<std::string>(displacement_x_field_name,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS.get_name_label());
+      ppParams->set<std::string>(displacement_y_field_name,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS.get_name_label());
     }
-    Teuchos::RCP<Keys4_Strain_Post_Processor> keys4_ptr = Teuchos::rcp (new Keys4_Strain_Post_Processor(this,ppParams));
-    post_processors_.push_back(keys4_ptr);
-  }
-  if(diceParams->isParameter(DICe::post_process_global_strain)){
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"This strain measure has been disabled");
-//    Teuchos::ParameterList sublist = diceParams->sublist(DICe::post_process_global_strain);
-//    Teuchos::RCP<Teuchos::ParameterList> ppParams = Teuchos::rcp( new Teuchos::ParameterList());
-//    for(Teuchos::ParameterList::ConstIterator it=sublist.begin();it!=sublist.end();++it){
-//      ppParams->setEntry(it->first,it->second);
-//    }
-//    Teuchos::RCP<Global_Strain_Post_Processor> global_ptr = Teuchos::rcp (new Global_Strain_Post_Processor(this,ppParams));
-//    post_processors_.push_back(global_ptr);
+    if(!ppParams->isParameter(coordinates_x_field_name)&&analysis_type_==LOCAL_DIC){
+      ppParams->set<std::string>(coordinates_x_field_name,DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS.get_name_label());
+      ppParams->set<std::string>(coordinates_y_field_name,DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS.get_name_label());
+    }
+    Teuchos::RCP<NLVC_Strain_Post_Processor> nlvc_ptr = Teuchos::rcp (new NLVC_Strain_Post_Processor(ppParams));
+    post_processors_.push_back(nlvc_ptr);
   }
   if(post_processors_.size()>0) has_post_processor_ = true;
 
@@ -924,7 +921,16 @@ Schema::initialize(Teuchos::ArrayRCP<scalar_t> coords_x,
 
   // initialize the post processors
   for(size_t i=0;i<post_processors_.size();++i)
-    post_processors_[i]->initialize();
+    post_processors_[i]->initialize(mesh_);
+
+  // now that the post processors have been created
+  // create an exodus output file if global is enabled
+#ifdef DICE_ENABLE_GLOBAL
+  std::string output_dir= "";
+  if(init_params_!=Teuchos::null)
+    output_dir = init_params_->get<std::string>(output_folder,"");
+  DICe::mesh::create_output_exodus_file(mesh_,output_dir);
+#endif
 
   is_initialized_ = true;
 
@@ -957,11 +963,8 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   }
   // filename for output
   std::stringstream exo_name;
-  std::string output_dir= "";
-  if(init_params_!=Teuchos::null){
+  if(init_params_!=Teuchos::null)
     exo_name << init_params_->get<std::string>(output_prefix,"DICe_solution") << ".e";
-    output_dir = init_params_->get<std::string>(output_folder,"");
-  }
   else
     exo_name << "DICe_solution.e";
 
@@ -1038,12 +1041,6 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
     local_field_value(i,COORDINATE_X) = coords->local_value(i*2+0);
     local_field_value(i,COORDINATE_Y) = coords->local_value(i*2+1);
   }
-
-  // create an exodus output file if global is enabled
-#ifdef DICE_ENABLE_GLOBAL
-  DICe::mesh::create_output_exodus_file(mesh_,output_dir);
-  DICe::mesh::create_exodus_output_variable_names(mesh_);
-#endif
 }
 
 void
@@ -1347,11 +1344,8 @@ Schema::execute_correlation(){
       post_processors_[i]->pre_execution_tasks();
     }
   }
-
-  // sync the fields:
-  //sync_fields_all_to_dist();
-   TEUCHOS_TEST_FOR_EXCEPTION((int_t)this_proc_gid_order_.size()!=local_num_subsets_,std::runtime_error,
-     "Error, the subset gid order vector is the wrong size");
+  TEUCHOS_TEST_FOR_EXCEPTION((int_t)this_proc_gid_order_.size()!=local_num_subsets_,std::runtime_error,
+    "Error, the subset gid order vector is the wrong size");
   // The generic routine is typically used when the dataset involves numerous subsets,
   // but only a small number of images. In this case it's more efficient to re-allocate the
   // objectives at every step, since making them static would consume a lot of memory
@@ -1405,23 +1399,14 @@ Schema::execute_correlation(){
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: unknown correlation routine.");
 
-  // sync the fields
-  //sync_fields_dist_to_all();
-
-  //if(proc_id==0){
-    for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
-      DEBUG_MSG("[PROC " << proc_id << "] global subset id " << subset_global_id(subset_index) << " post execute_correlation() field values, u: " <<
-        local_field_value(subset_index,DISPLACEMENT_X) << " v: " << local_field_value(subset_index,DISPLACEMENT_Y)
-        << " theta: " << local_field_value(subset_index,ROTATION_Z) << " sigma: " << local_field_value(subset_index,SIGMA) << " gamma: " <<
-        local_field_value(subset_index,GAMMA) << " beta: " << local_field_value(subset_index,BETA));
-    }
-  //}
+  for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
+    DEBUG_MSG("[PROC " << proc_id << "] global subset id " << subset_global_id(subset_index) << " post execute_correlation() field values, u: " <<
+      local_field_value(subset_index,DISPLACEMENT_X) << " v: " << local_field_value(subset_index,DISPLACEMENT_Y)
+      << " theta: " << local_field_value(subset_index,ROTATION_Z) << " sigma: " << local_field_value(subset_index,SIGMA) << " gamma: " <<
+      local_field_value(subset_index,GAMMA) << " beta: " << local_field_value(subset_index,BETA));
+  }
 
   // compute post-processed quantities
-  // for now, the fields required for post processors are scattered all to all
-  // and the post processor is executed in serial on every proc
-  // TODO In the future, this can be parallelized
-  // Complete the set up activities for the post processors
   for(size_t i=0;i<post_processors_.size();++i){
     post_processors_[i]->execute();
   }
@@ -1997,10 +1982,15 @@ Schema::estimate_resolution_error(const int num_steps,
   std::string & prefix,
   Teuchos::RCP<std::ostream> & outStream){
   // only done on processor 0
-  if(mesh_->get_comm()->get_rank()!=0) return;
+  const int_t proc_id = comm_->get_rank();
 #if DICE_KOKKOS
 #else
   DEBUG_MSG("Schema::estimate_resolution_error(): Estimating resolution error with num_steps = " << num_steps);
+
+  // search the mesh fields to see if vsg or nlvc strain exist:
+  const bool has_vsg = mesh_->has_field(DICe::mesh::field_enums::VSG_STRAIN_XX);
+  const bool has_nlvc = mesh_->has_field(DICe::mesh::field_enums::NLVC_STRAIN_XX);
+  const bool is_subset_based = analysis_type_ == LOCAL_DIC;
 
   std::stringstream result_stream;
   const int_t spa_dim = mesh_->spatial_dimension();
@@ -2009,21 +1999,55 @@ Schema::estimate_resolution_error(const int num_steps,
     DEBUG_MSG("Processing step " << step);
     Teuchos::RCP<SinCos_Image_Deformer> deformer = Teuchos::rcp(new SinCos_Image_Deformer(step));
     Teuchos::RCP<Image> def_img = deformer->deform_image(ref_img());
-    std::stringstream sincos_name;
-    sincos_name << "sincos_iamge_" << step << ".tif";
-    def_img->write(sincos_name.str());
-
+    if(proc_id==0){
+      std::stringstream sincos_name;
+      sincos_name << "sincos_image_" << step << ".tif";
+      def_img->write(sincos_name.str());
+    }
     // set the deformed image for the schema
     set_def_image(def_img);
     int_t corr_error = execute_correlation();
     TEUCHOS_TEST_FOR_EXCEPTION(corr_error,std::runtime_error,"Error, correlation unsuccesssful");
     DEBUG_MSG("Error prediction step correlation return value " << corr_error);
-    write_output(output_folder,prefix,false,true);
     post_execution_tasks();
 
-    // gather an all owned field here
+    // gather all owned fields here
     Teuchos::RCP<MultiField> coords = mesh_->get_overlap_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
-    Teuchos::RCP<MultiField> disp = mesh_->get_overlap_field(DICe::mesh::field_enums::DISPLACEMENT_FS);
+    Teuchos::RCP<MultiField> disp;
+    if(is_subset_based){
+      Teuchos::RCP<MultiField> disp_x = mesh_->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+      Teuchos::RCP<MultiField> disp_y = mesh_->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+      Teuchos::RCP<MultiField_Map> overlap_map = mesh_->get_vector_node_overlap_map();
+      disp = Teuchos::rcp( new MultiField(overlap_map,1,true));
+      for(int_t i=0;i<mesh_->get_scalar_node_overlap_map()->get_num_local_elements();++i){
+        disp->local_value(i*spa_dim+0) = disp_x->local_value(i);
+        disp->local_value(i*spa_dim+1) = disp_y->local_value(i);
+      }
+    }else{
+      disp = mesh_->get_overlap_field(DICe::mesh::field_enums::DISPLACEMENT_FS);
+    }
+    Teuchos::RCP<MultiField> vsg_xx;
+    Teuchos::RCP<MultiField> vsg_yy;
+    Teuchos::RCP<MultiField> nlvc_xx;
+    Teuchos::RCP<MultiField> nlvc_yy;
+    if(has_vsg){
+      vsg_xx = mesh_->get_overlap_field(DICe::mesh::field_enums::VSG_STRAIN_XX_FS);
+      vsg_yy = mesh_->get_overlap_field(DICe::mesh::field_enums::VSG_STRAIN_YY_FS);
+    }
+    if(has_nlvc){
+      nlvc_xx = mesh_->get_overlap_field(DICe::mesh::field_enums::NLVC_STRAIN_XX_FS);
+      nlvc_yy = mesh_->get_overlap_field(DICe::mesh::field_enums::NLVC_STRAIN_YY_FS);
+    }
+
+    // populate the exact sol, etc
+    mesh_->create_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);
+    Teuchos::RCP<MultiField> exact_disp = mesh_->get_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);
+    mesh_->create_field(DICe::mesh::field_enums::EXACT_STRAIN_XX_FS);
+    Teuchos::RCP<MultiField> exact_strain_xx = mesh_->get_field(DICe::mesh::field_enums::EXACT_STRAIN_XX_FS);
+    mesh_->create_field(DICe::mesh::field_enums::EXACT_STRAIN_YY_FS);
+    Teuchos::RCP<MultiField> exact_strain_yy = mesh_->get_field(DICe::mesh::field_enums::EXACT_STRAIN_YY_FS);
+    mesh_->create_field(DICe::mesh::field_enums::EXACT_STRAIN_XY_FS);
+    Teuchos::RCP<MultiField> exact_strain_xy = mesh_->get_field(DICe::mesh::field_enums::EXACT_STRAIN_XY_FS);
 
     // compute the error:
     scalar_t h1x_error = 0.0;
@@ -2040,6 +2064,15 @@ Schema::estimate_resolution_error(const int num_steps,
       scalar_t e_x;
       scalar_t e_y;
       deformer->compute_displacement_error(x,y,u,v,e_x,e_y);
+      const int_t gid = mesh_->get_scalar_node_overlap_map()->get_global_element(i);
+      if(mesh_->get_scalar_node_dist_map()->is_node_global_elem(gid)){
+        const int_t lid = mesh_->get_scalar_node_dist_map()->get_local_element(gid);
+        scalar_t eu = 0.0;
+        scalar_t ev = 0.0;
+        deformer->compute_deformation(x,y,eu,ev);
+        exact_disp->local_value(lid*spa_dim+0) = eu;
+        exact_disp->local_value(lid*spa_dim+1) = ev;
+      }
       h1x_error += e_x;
       h1y_error += e_y;
       avgx_error += std::sqrt(e_x);
@@ -2070,60 +2103,131 @@ Schema::estimate_resolution_error(const int num_steps,
     }
     std_dev_x = std::sqrt(1.0/global_num_subsets_*std_dev_x);
     std_dev_y = std::sqrt(1.0/global_num_subsets_*std_dev_y);
-    result_stream << "Step: " << std::setw(3) << step << " ERRORS H_1 x: " << std::setw(8) << h1x_error << " H_1 y: " << std::setw(8) << h1y_error <<
+    result_stream << "Step: " << std::setw(3) << step << " DISP ERRORS H_1 x: " << std::setw(8) << h1x_error << " H_1 y: " << std::setw(8) << h1y_error <<
         " H_inf x: " << std::setw(8) << hinfx_error << " H_inf error y: " << std::setw(8) << hinfy_error << " std_dev x: " << std::setw(8) << std_dev_x <<
         " std_dev y: " << std::setw(8) << std_dev_y << std::endl;
 
-    scalar_t sh1x_error = 0.0;
-    scalar_t sh1y_error = 0.0;
-    scalar_t shinfx_error = 0.0;
-    scalar_t shinfy_error = 0.0;
-    scalar_t savgx_error = 0.0;
-    scalar_t savgy_error = 0.0;
-    // FIXME assumes that the first post_processor gives the strain values
-    TEUCHOS_TEST_FOR_EXCEPTION(post_processors()->size()<=0,std::runtime_error,"Error, VSG post processor not enabled, but needs to be for image deformer error calcs");
-    for(int_t i=0;i<global_num_subsets_;++i){
-      const scalar_t x = coords->local_value(i*spa_dim+0);
-      const scalar_t y = coords->local_value(i*spa_dim+1);
-      const scalar_t exx = (*post_processors())[0]->field_value(i,vsg_strain_xx);
-      const scalar_t eyy = (*post_processors())[0]->field_value(i,vsg_strain_yy);
-      scalar_t e_x;
-      scalar_t e_y;
-      deformer->compute_deriv_error(x,y,exx,eyy,e_x,e_y);
-      sh1x_error += e_x;
-      sh1y_error += e_y;
-      savgx_error += std::sqrt(e_x);
-      savgy_error += std::sqrt(e_y);
-      if(e_x > shinfx_error) shinfx_error = e_x;
-      if(e_y > shinfy_error) shinfy_error = e_y;
-    }
-    sh1x_error = std::sqrt(sh1x_error);
-    sh1y_error = std::sqrt(sh1y_error);
-    shinfx_error = std::sqrt(shinfx_error);
-    shinfy_error = std::sqrt(shinfy_error);
-    savgx_error /= global_num_subsets_;
-    savgy_error /= global_num_subsets_;
-    scalar_t std_dev_sx = 0.0;
-    scalar_t std_dev_sy = 0.0;
-    for(int_t i=0;i<global_num_subsets_;++i){
-      const scalar_t x = coords->local_value(i*spa_dim+0);
-      const scalar_t y = coords->local_value(i*spa_dim+1);
-      const scalar_t exx = (*post_processors())[0]->field_value(i,vsg_strain_xx);
-      const scalar_t eyy = (*post_processors())[0]->field_value(i,vsg_strain_yy);
-      scalar_t e_x;
-      scalar_t e_y;
-      deformer->compute_deriv_error(x,y,exx,eyy,e_x,e_y);
-      e_x = std::sqrt(e_x);
-      e_y = std::sqrt(e_y);
-      std_dev_sx += (e_x - savgx_error)*(e_x - savgx_error);
-      std_dev_sy += (e_y - savgy_error)*(e_y - savgy_error);
-    }
-    std_dev_sx = std::sqrt(1.0/global_num_subsets_*std_dev_sx);
-    std_dev_sy = std::sqrt(1.0/global_num_subsets_*std_dev_sy);
-    result_stream << "Step: " << std::setw(3) << step << " STRAIN ERRORS H_1 x: " << std::setw(8) << sh1x_error << " H_1 y: " << std::setw(8) << sh1y_error <<
-        " H_inf x: " << std::setw(8) << shinfx_error << " H_inf error y: " << std::setw(8) << shinfy_error << " std_dev x: " << std::setw(8) << std_dev_sx <<
-        " std_dev y: " << std::setw(8) << std_dev_sy << std::endl;
-  }
+    if(has_vsg || has_nlvc){
+      scalar_t sh1x_error_vsg = 0.0;
+      scalar_t sh1y_error_vsg = 0.0;
+      scalar_t shinfx_error_vsg = 0.0;
+      scalar_t shinfy_error_vsg = 0.0;
+      scalar_t savgx_error_vsg = 0.0;
+      scalar_t savgy_error_vsg = 0.0;
+      scalar_t sh1x_error_nlvc = 0.0;
+      scalar_t sh1y_error_nlvc = 0.0;
+      scalar_t shinfx_error_nlvc = 0.0;
+      scalar_t shinfy_error_nlvc = 0.0;
+      scalar_t savgx_error_nlvc = 0.0;
+      scalar_t savgy_error_nlvc = 0.0;
+      TEUCHOS_TEST_FOR_EXCEPTION(post_processors()->size()<=0,std::runtime_error,
+        "Error, strain post processor not enabled, but needs to be for error estimation of strain");
+      for(int_t i=0;i<global_num_subsets_;++i){
+        const scalar_t x = coords->local_value(i*spa_dim+0);
+        const scalar_t y = coords->local_value(i*spa_dim+1);
+        scalar_t e_x_vsg = 0.0;
+        scalar_t e_y_vsg = 0.0;
+        if(has_vsg){
+          const scalar_t exx_vsg = vsg_xx->local_value(i);
+          const scalar_t eyy_vsg = vsg_yy->local_value(i);
+          deformer->compute_deriv_error(x,y,exx_vsg,eyy_vsg,e_x_vsg,e_y_vsg);
+        }
+        scalar_t e_x_nlvc = 0.0;
+        scalar_t e_y_nlvc = 0.0;
+        if(has_nlvc){
+          const scalar_t exx_nlvc = nlvc_xx->local_value(i);
+          const scalar_t eyy_nlvc = nlvc_yy->local_value(i);
+          deformer->compute_deriv_error(x,y,exx_nlvc,eyy_nlvc,e_x_nlvc,e_y_nlvc);
+        }
+        const int_t gid = mesh_->get_scalar_node_overlap_map()->get_global_element(i);
+        if(mesh_->get_scalar_node_dist_map()->is_node_global_elem(gid)){
+          const int_t lid = mesh_->get_scalar_node_dist_map()->get_local_element(gid);
+          scalar_t exact_xx = 0.0;
+          scalar_t exact_yy = 0.0;
+          scalar_t exact_xy = 0.0;
+          scalar_t exact_yx = 0.0;
+          deformer->compute_deriv_deformation(x,y,exact_xx,exact_xy,exact_yx,exact_yy);
+          // Note: this assumes Green-Lagrange form of the strain
+          exact_strain_xx->local_value(lid) = 0.5*(2.0*exact_xx + exact_xx*exact_xx + exact_yx*exact_yx);
+          exact_strain_xy->local_value(lid) = 0.5*(exact_xy + exact_yx + exact_xy*exact_xy + exact_yx*exact_yx);
+          exact_strain_yy->local_value(lid) = 0.5*(2.0*exact_yy + exact_yy*exact_yy + exact_xy*exact_xy);
+        }
+        sh1x_error_vsg += e_x_vsg;
+        sh1y_error_vsg += e_y_vsg;
+        savgx_error_vsg += std::sqrt(e_x_vsg);
+        savgy_error_vsg += std::sqrt(e_y_vsg);
+        if(e_x_vsg > shinfx_error_vsg) shinfx_error_vsg = e_x_vsg;
+        if(e_y_vsg > shinfy_error_vsg) shinfy_error_vsg = e_y_vsg;
+        sh1x_error_nlvc += e_x_nlvc;
+        sh1y_error_nlvc += e_y_nlvc;
+        savgx_error_nlvc += std::sqrt(e_x_nlvc);
+        savgy_error_nlvc += std::sqrt(e_y_nlvc);
+        if(e_x_nlvc > shinfx_error_nlvc) shinfx_error_nlvc = e_x_nlvc;
+        if(e_y_nlvc > shinfy_error_nlvc) shinfy_error_nlvc = e_y_nlvc;
+      }
+      sh1x_error_vsg = std::sqrt(sh1x_error_vsg);
+      sh1y_error_vsg = std::sqrt(sh1y_error_vsg);
+      shinfx_error_vsg = std::sqrt(shinfx_error_vsg);
+      shinfy_error_vsg = std::sqrt(shinfy_error_vsg);
+      savgx_error_vsg /= global_num_subsets_;
+      savgy_error_vsg /= global_num_subsets_;
+      sh1x_error_nlvc = std::sqrt(sh1x_error_nlvc);
+      sh1y_error_nlvc = std::sqrt(sh1y_error_nlvc);
+      shinfx_error_nlvc = std::sqrt(shinfx_error_nlvc);
+      shinfy_error_nlvc = std::sqrt(shinfy_error_nlvc);
+      savgx_error_nlvc /= global_num_subsets_;
+      savgy_error_nlvc /= global_num_subsets_;
+      scalar_t std_dev_sx_vsg = 0.0;
+      scalar_t std_dev_sy_vsg = 0.0;
+      scalar_t std_dev_sx_nlvc = 0.0;
+      scalar_t std_dev_sy_nlvc = 0.0;
+      for(int_t i=0;i<global_num_subsets_;++i){
+        const scalar_t x = coords->local_value(i*spa_dim+0);
+        const scalar_t y = coords->local_value(i*spa_dim+1);
+        scalar_t e_x_vsg = 0.0;
+        scalar_t e_y_vsg = 0.0;
+        if(has_vsg){
+          const scalar_t exx_vsg = vsg_xx->local_value(i);
+          const scalar_t eyy_vsg = vsg_yy->local_value(i);
+          deformer->compute_deriv_error(x,y,exx_vsg,eyy_vsg,e_x_vsg,e_y_vsg);
+        }
+        scalar_t e_x_nlvc = 0.0;
+        scalar_t e_y_nlvc = 0.0;
+        if(has_nlvc){
+          const scalar_t exx_nlvc = nlvc_xx->local_value(i);
+          const scalar_t eyy_nlvc = nlvc_yy->local_value(i);
+          deformer->compute_deriv_error(x,y,exx_nlvc,eyy_nlvc,e_x_nlvc,e_y_nlvc);
+        }
+        e_x_vsg = std::sqrt(e_x_vsg);
+        e_y_vsg = std::sqrt(e_y_vsg);
+        std_dev_sx_vsg += (e_x_vsg - savgx_error_vsg)*(e_x_vsg - savgx_error_vsg);
+        std_dev_sy_vsg += (e_y_vsg - savgy_error_vsg)*(e_y_vsg - savgy_error_vsg);
+        e_x_nlvc = std::sqrt(e_x_nlvc);
+        e_y_nlvc = std::sqrt(e_y_nlvc);
+        std_dev_sx_nlvc += (e_x_nlvc - savgx_error_nlvc)*(e_x_nlvc - savgx_error_nlvc);
+        std_dev_sy_nlvc += (e_y_nlvc - savgy_error_nlvc)*(e_y_nlvc - savgy_error_nlvc);
+      }
+      std_dev_sx_vsg = std::sqrt(1.0/global_num_subsets_*std_dev_sx_vsg);
+      std_dev_sy_vsg = std::sqrt(1.0/global_num_subsets_*std_dev_sy_vsg);
+      std_dev_sx_nlvc = std::sqrt(1.0/global_num_subsets_*std_dev_sx_nlvc);
+      std_dev_sy_nlvc = std::sqrt(1.0/global_num_subsets_*std_dev_sy_nlvc);
+      if(has_vsg){
+        result_stream << "Step: " << std::setw(3) << step << " VSG STRAIN ERRORS H_1 x: " << std::setw(8) << sh1x_error_vsg << " H_1 y: " << std::setw(8) << sh1y_error_vsg <<
+            " H_inf x: " << std::setw(8) << shinfx_error_vsg << " H_inf error y: " << std::setw(8) << shinfy_error_vsg << " std_dev x: " << std::setw(8) << std_dev_sx_vsg <<
+            " std_dev y: " << std::setw(8) << std_dev_sy_vsg << std::endl;
+      }
+      if(has_nlvc){
+        result_stream << "Step: " << std::setw(3) << step << " NLVC STRAIN ERRORS H_1 x: " << std::setw(8) << sh1x_error_nlvc << " H_1 y: " << std::setw(8) << sh1y_error_nlvc <<
+            " H_inf x: " << std::setw(8) << shinfx_error_nlvc << " H_inf error y: " << std::setw(8) << shinfy_error_nlvc << " std_dev x: " << std::setw(8) << std_dev_sx_nlvc <<
+            " std_dev y: " << std::setw(8) << std_dev_sy_nlvc << std::endl;
+      }
+    } // end has strain
+  } // end step loop
+
+  write_output(output_folder,prefix,false,true);
+
+  if(proc_id!=0) return;
+
   // write_stats(output_folder,prefix);
   // write the results to the .info file
   std::stringstream infoName;
@@ -2223,7 +2327,9 @@ Schema::write_output(const std::string & output_folder,
   int_t proc_size = comm_->get_size();
 
 #ifdef DICE_ENABLE_GLOBAL
-    DICe::mesh::exodus_output_dump(mesh_,image_frame_,image_frame_);
+  if(image_frame_==1)
+    DICe::mesh::create_exodus_output_variable_names(mesh_);
+  DICe::mesh::exodus_output_dump(mesh_,image_frame_,image_frame_);
 #endif
 
   // populate the RCP vector of fields in the output spec
@@ -2549,25 +2655,15 @@ Output_Spec::Output_Spec(Schema * schema,
   // default output format
   if(params == Teuchos::null){
     field_names_.push_back(to_string(DICe::COORDINATE_X));
-    post_processor_ids_.push_back(-1);
     field_names_.push_back(to_string(DICe::COORDINATE_Y));
-    post_processor_ids_.push_back(-1);
     field_names_.push_back(to_string(DICe::DISPLACEMENT_X));
-    post_processor_ids_.push_back(-1);
     field_names_.push_back(to_string(DICe::DISPLACEMENT_Y));
-    post_processor_ids_.push_back(-1);
     field_names_.push_back(to_string(DICe::ROTATION_Z));
-    post_processor_ids_.push_back(-1);
     field_names_.push_back(to_string(DICe::NORMAL_STRAIN_X));
-    post_processor_ids_.push_back(-1);
     field_names_.push_back(to_string(DICe::NORMAL_STRAIN_Y));
-    post_processor_ids_.push_back(-1);
     field_names_.push_back(to_string(DICe::SHEAR_STRAIN_XY));
-    post_processor_ids_.push_back(-1);
     field_names_.push_back(to_string(DICe::SIGMA));
-    post_processor_ids_.push_back(-1);
     field_names_.push_back(to_string(DICe::STATUS_FLAG));
-    post_processor_ids_.push_back(-1);
   }
   else{
     // get the total number of field names
@@ -2589,7 +2685,6 @@ Output_Spec::Output_Spec(Schema * schema,
     DEBUG_MSG("Output spec has " << num_names << " active fields");
     // get the max index
     field_names_.resize(num_names);
-    post_processor_ids_.resize(num_names);
     int_t max_index = 0;
     std::set<int_t> indices;
 
@@ -2598,7 +2693,6 @@ Output_Spec::Output_Spec(Schema * schema,
     for(Teuchos::ParameterList::ConstIterator it=params->begin();it!=params->end();++it){
       std::string string_field_name = it->first;
       stringToUpper(string_field_name);
-      int_t post_processor_id = -1;
       bool paramValid = false;
       for(int_t j=0;j<MAX_FIELD_NAME;++j){
         if(string_field_name==to_string(static_cast<Field_Name>(j)))
@@ -2606,10 +2700,9 @@ Output_Spec::Output_Spec(Schema * schema,
       }
       // see if this field is in one of the post processors instead
       for(int_t j=0;j<(int_t)schema_->post_processors()->size();++j){
-        for(int_t k=0;k<(int_t)(*schema_->post_processors())[j]->field_names()->size();++k){
-          if(string_field_name==(*(*schema_->post_processors())[j]->field_names())[k]){
+        for(int_t k=0;k<(int_t)(*schema_->post_processors())[j]->field_specs()->size();++k){
+          if(string_field_name==(*(*schema_->post_processors())[j]->field_specs())[k].get_name_label()){
             paramValid = true;
-            post_processor_id = j;
           }
         }
       }
@@ -2643,7 +2736,6 @@ Output_Spec::Output_Spec(Schema * schema,
       indices.insert(field_index);
       if(field_index > max_index) max_index = field_index;
       field_names_[field_index] = string_field_name;
-      post_processor_ids_[field_index] = post_processor_id;
     } // loop over field names in the parameterlist
     if(max_index!=num_names-1){
       std::cout << "Error: The max field index in the output spec is not equal to the number of fields, num_fields " << field_names_.size() << " max_index " << max_index << std::endl;
@@ -2657,10 +2749,14 @@ Output_Spec::gather_fields(){
   field_vec_.clear();
   field_vec_.resize(field_names_.size());
   for(size_t i=0;i<field_names_.size();++i){
-    if(post_processor_ids_[i]==-1)
+    Field_Name fn = string_to_field_name(field_names_[i]);
+    // test if the fn is not one of the cardinal schema fields but a mesh field added by a post processor
+    if(fn==NO_SUCH_FIELD_NAME){
+      field_vec_[i] = schema_->mesh()->get_overlap_field(schema_->mesh()->get_field_spec(field_names_[i]));
+    }
+    else{
       field_vec_[i] = schema_->mesh()->get_overlap_field(schema_->field_name_to_spec(string_to_field_name(field_names_[i])));
-    else
-      field_vec_[i] = Teuchos::null;
+    }
   }
 }
 
@@ -2790,21 +2886,11 @@ Output_Spec::write_frame(std::FILE * file,
   assert(file);
   if(!omit_row_id_)
     fprintf(file,"%i%s",row_index,delimiter_.c_str());
-  assert(field_names_.size()==post_processor_ids_.size());
   for(size_t i=0;i<field_names_.size();++i)
   {
     // if the field_name is from one of the schema fields, get the information from the schema
     scalar_t value = 0.0;
-    if(post_processor_ids_[i]==-1){
-      TEUCHOS_TEST_FOR_EXCEPTION(field_vec_[i]==Teuchos::null,std::runtime_error,"Error, null field");
-      value = field_vec_[i]->local_value(field_value_index);
-      //value = schema_->local_field_value(field_value_index,string_to_field_name(field_names_[i]));
-    // otherwise the field must belong to a post processor
-    }
-    else{
-      assert(post_processor_ids_[i]>=0 && post_processor_ids_[i]<(int_t)schema_->post_processors()->size());
-      value = (*schema_->post_processors())[post_processor_ids_[i]]->field_value(field_value_index,field_names_[i]);
-    }
+    value = field_vec_[i]->local_value(field_value_index);
     if(i==0)
       fprintf(file,"%4.4E",value);
     else

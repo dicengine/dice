@@ -228,8 +228,8 @@ Field_Name string_to_field_name(std::string & in){
   for(int_t i=0;i<MAX_FIELD_NAME;++i){
     if(to_string(static_cast<Field_Name>(i))==in) return static_cast<Field_Name>(i);
   }
-  std::cout << "Error: Field_Name " << in << " does not exist." << std::endl;
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
+  //std::cout << "Error: Field_Name " << in << " does not exist." << std::endl;
+  //TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
   return NO_SUCH_FIELD_NAME; // prevent no return errors
 }
 

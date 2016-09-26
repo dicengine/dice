@@ -189,6 +189,23 @@ void create_string_maps()
   field_name_string[field_enums::GREEN_LAGRANGE_STRAIN_XX]                           = "GREEN_LAGRANGE_STRAIN_XX";
   field_name_string[field_enums::GREEN_LAGRANGE_STRAIN_YY]                           = "GREEN_LAGRANGE_STRAIN_YY";
   field_name_string[field_enums::GREEN_LAGRANGE_STRAIN_XY]                           = "GREEN_LAGRANGE_STRAIN_XY";
+  field_name_string[field_enums::VSG_STRAIN_XX]                                      = "VSG_STRAIN_XX";
+  field_name_string[field_enums::VSG_STRAIN_YY]                                      = "VSG_STRAIN_YY";
+  field_name_string[field_enums::VSG_STRAIN_XY]                                      = "VSG_STRAIN_XY";
+  field_name_string[field_enums::VSG_DUDX]                                           = "VSG_DUDX";
+  field_name_string[field_enums::VSG_DUDY]                                           = "VSG_DUDY";
+  field_name_string[field_enums::VSG_DVDX]                                           = "VSG_DVDX";
+  field_name_string[field_enums::VSG_DVDY]                                           = "VSG_DVDY";
+  field_name_string[field_enums::NLVC_STRAIN_XX]                                     = "NLVC_STRAIN_XX";
+  field_name_string[field_enums::NLVC_STRAIN_YY]                                     = "NLVC_STRAIN_YY";
+  field_name_string[field_enums::NLVC_STRAIN_XY]                                     = "NLVC_STRAIN_XY";
+  field_name_string[field_enums::NLVC_DUDX]                                          = "NLVC_DUDX";
+  field_name_string[field_enums::NLVC_DUDY]                                          = "NLVC_DUDY";
+  field_name_string[field_enums::NLVC_DVDX]                                          = "NLVC_DVDX";
+  field_name_string[field_enums::NLVC_DVDY]                                          = "NLVC_DVDY";
+  field_name_string[field_enums::EXACT_STRAIN_XX]                                    = "EXACT_STRAIN_XX";
+  field_name_string[field_enums::EXACT_STRAIN_YY]                                    = "EXACT_STRAIN_YY";
+  field_name_string[field_enums::EXACT_STRAIN_XY]                                    = "EXACT_STRAIN_XY";
 
   for (std::map<field_enums::Field_Type,std::string>::iterator pos = field_type_string.begin(); pos != field_type_string.end(); ++pos){
     string_field_type[pos->second] = pos->first;

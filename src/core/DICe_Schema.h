@@ -1325,8 +1325,6 @@ public:
 private:
   /// Vector of Field_Names that will be output to file
   std::vector<std::string> field_names_;
-  /// Vector of corresponding ids of the post processor that the field belongs to (-1 id means the field is on the schema)
-  std::vector<int_t> post_processor_ids_;
   /// Pointer to the parent schema (used to obtain field values)
   Schema * schema_;
   /// Delimeter to use in the output file
