@@ -56,7 +56,9 @@ class Global_Algorithm;
 /// \brief method of manufactured solutions problem generator
 /// provides forces and an analytic solution to evaluate convergence of
 /// global method
-class MMS_Problem
+class
+DICE_LIB_DLL_EXPORT
+MMS_Problem
 {
 public:
   /// Constrtuctor
@@ -178,7 +180,9 @@ protected:
 /// \class Div_Curl_Modulator
 /// \brief an MMS problem where the user can modulate the amount of the div or curl
 /// free component in the velocity solution
-class Div_Curl_Modulator : public MMS_Problem
+class
+DICE_LIB_DLL_EXPORT
+Div_Curl_Modulator : public MMS_Problem
 {
 public:
   /// Constructor
@@ -348,7 +352,9 @@ protected:
 /// \class Simple_HS
 /// \brief a very simple MMS problem that doesn't require any body force for an analytic solution
 /// free component in the velocity solution
-class Simple_HS : public MMS_Problem
+class
+DICE_LIB_DLL_EXPORT
+Simple_HS : public MMS_Problem
 {
 public:
   /// Constructor
@@ -438,7 +444,9 @@ public:
 /// \class Simple_LM
 /// \brief a very simple MMS problem that doesn't require any body force for an analytic solution
 /// free component in the velocity solution
-class Simple_LM : public MMS_Problem
+class
+DICE_LIB_DLL_EXPORT
+Simple_LM : public MMS_Problem
 {
 public:
   /// Constructor
@@ -536,7 +544,9 @@ public:
 /// \class Patch_Test
 /// \brief an MMS problem where the user can try a standard patch test
 /// free component in the velocity solution
-class Patch_Test : public MMS_Problem
+class
+DICE_LIB_DLL_EXPORT
+Patch_Test : public MMS_Problem
 {
 public:
   /// Constructor
@@ -685,7 +695,9 @@ protected:
 
 /// \class MMS_Problem_Factory
 /// \brief Factory class that creates method of manufactured solutions problems
-class MMS_Problem_Factory
+class
+DICE_LIB_DLL_EXPORT
+MMS_Problem_Factory
 {
 public:
   /// Constructor
@@ -732,6 +744,7 @@ private:
 /// \param inv_jac inverse jacobian
 /// \param DN derivatives of the shape functions
 /// \param elem_stiffness output the element stiffness contributions
+DICE_LIB_DLL_EXPORT
 void div_symmetric_strain(const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & coeff,
@@ -752,6 +765,7 @@ void div_symmetric_strain(const int_t spa_dim,
 /// \param alpha2 the regularization parameter
 /// \param tau the stabilization coefficient
 /// \param elem_div_stiffness output the element stiffness contributions
+DICE_LIB_DLL_EXPORT
 void div_velocity(const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & J,
@@ -772,6 +786,7 @@ void div_velocity(const int_t spa_dim,
 /// \param DN derivatives of the shape functions for tri6 elem
 /// \param tau the stabilization coefficient
 /// \param elem_stab_stiffness output the element stiffness contributions
+DICE_LIB_DLL_EXPORT
 void stab_lagrange(const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & J,
@@ -789,6 +804,7 @@ void stab_lagrange(const int_t spa_dim,
 /// \param N shape function vector
 /// \param tau stabilization coefficient
 /// \param elem_stiffness element stiffness
+DICE_LIB_DLL_EXPORT
 void tikhonov_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -805,6 +821,7 @@ void tikhonov_tensor(Global_Algorithm * alg,
 /// \param gp_weight gauss point weight
 /// \param N shape function vector
 /// \param elem_stiffness element stiffness
+DICE_LIB_DLL_EXPORT
 void lumped_tikhonov_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -824,6 +841,7 @@ void lumped_tikhonov_tensor(Global_Algorithm * alg,
 /// \param gp_weight gauss weight
 /// \param N shape functions
 /// \param elem_stiffness output the element stiffness contributions
+DICE_LIB_DLL_EXPORT
 void mms_image_grad_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -846,6 +864,7 @@ void mms_image_grad_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
 /// \param gp_weight gauss weight
 /// \param N shape functions
 /// \param elem_stiffness output the element stiffness contributions
+DICE_LIB_DLL_EXPORT
 void image_grad_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -868,6 +887,7 @@ void image_grad_tensor(Global_Algorithm * alg,
 /// \param gp_weight gauss weight
 /// \param N shape functions
 /// \param elem_force output the element force contributions
+DICE_LIB_DLL_EXPORT
 void mms_image_time_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -889,6 +909,7 @@ void mms_image_time_force(Teuchos::RCP<MMS_Problem> mms_problem,
 /// \param gp_weight gauss weight
 /// \param N shape functions
 /// \param elem_force output the element force contributions
+DICE_LIB_DLL_EXPORT
 void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -913,6 +934,7 @@ void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
 /// \param gp_weight gauss weight
 /// \param N shape functions
 /// \param elem_force output the element force contributions
+DICE_LIB_DLL_EXPORT
 void image_time_force(Global_Algorithm* alg,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -937,6 +959,7 @@ void image_time_force(Global_Algorithm* alg,
 /// \param gp_weight gauss weight
 /// \param N shape functions
 /// \param elem_force output the element force contributions
+DICE_LIB_DLL_EXPORT
 void image_grad_force(Global_Algorithm* alg,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -959,6 +982,7 @@ void image_grad_force(Global_Algorithm* alg,
 /// \param gp_weight gauss weight
 /// \param N shape functions
 /// \param elem_force output the element force contributions
+DICE_LIB_DLL_EXPORT
 void tikhonov_force(Global_Algorithm* alg,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -975,6 +999,7 @@ void tikhonov_force(Global_Algorithm* alg,
 /// \param c_y closest pixel coord in y
 /// \param b_x output flow velocity in x
 /// \param b_y output flow velocity in y
+DICE_LIB_DLL_EXPORT
 void optical_flow_velocity(Global_Algorithm * alg,
   const int_t & c_x, // closest pixel in x
   const int_t & c_y, // closest pixel in y
@@ -988,6 +1013,7 @@ void optical_flow_velocity(Global_Algorithm * alg,
 /// \param subset_size the size of the subset to use
 /// \param b_x output flow velocity in x
 /// \param b_y output flow velocity in y
+DICE_LIB_DLL_EXPORT
 void subset_velocity(Global_Algorithm * alg,
   const int_t & c_x, // closest pixel in x
   const int_t & c_y, // closest pixel in y
@@ -995,12 +1021,14 @@ void subset_velocity(Global_Algorithm * alg,
   scalar_t & b_x,
   scalar_t & b_y);
 
+DICE_LIB_DLL_EXPORT
 scalar_t compute_tau_tri3(const Global_Formulation & formulation,
   const scalar_t & alpha2,
   const scalar_t * natural_coords,
   const scalar_t & J,
   scalar_t * inv_jac);
 
+DICE_LIB_DLL_EXPORT
 void calc_jacobian(const scalar_t * xcap,
   const scalar_t * DN,
   scalar_t * jacobian,
@@ -1009,12 +1037,14 @@ void calc_jacobian(const scalar_t * xcap,
   int_t num_elem_nodes,
   int_t dim );
 
+DICE_LIB_DLL_EXPORT
 void calc_B(const scalar_t * DN,
   const scalar_t * inv_jacobian,
   const int_t num_elem_nodes,
   const int_t dim,
   scalar_t * solid_B);
 
+DICE_LIB_DLL_EXPORT
 void calc_mms_force_elasticity(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & alpha,
@@ -1023,6 +1053,7 @@ void calc_mms_force_elasticity(const scalar_t & x,
   scalar_t & force_x,
   scalar_t & force_y);
 
+DICE_LIB_DLL_EXPORT
 void calc_mms_vel_rich(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & L,
@@ -1030,6 +1061,7 @@ void calc_mms_vel_rich(const scalar_t & x,
   scalar_t & b_x,
   scalar_t & b_y);
 
+DICE_LIB_DLL_EXPORT
 void calc_mms_lap_vel_rich(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & L,
@@ -1037,12 +1069,14 @@ void calc_mms_lap_vel_rich(const scalar_t & x,
   scalar_t & lap_b_x,
   scalar_t & lap_b_y);
 
+DICE_LIB_DLL_EXPORT
 void calc_mms_phi_rich(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & L,
   const scalar_t & g,
   scalar_t & phi);
 
+DICE_LIB_DLL_EXPORT
 void calc_mms_phi_terms_rich(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & m,
@@ -1052,15 +1086,18 @@ void calc_mms_phi_terms_rich(const scalar_t & x,
   scalar_t & grad_phi_x,
   scalar_t & grad_phi_y);
 
+DICE_LIB_DLL_EXPORT
 void calc_mms_bc_simple(const scalar_t & x,
   const scalar_t & y,
   scalar_t & b_x,
   scalar_t & b_y);
 
+DICE_LIB_DLL_EXPORT
 void calc_mms_force_simple(const scalar_t & alpha,
   scalar_t & force_x,
   scalar_t & force_y);
 
+DICE_LIB_DLL_EXPORT
 void calc_mms_bc_2(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & L,

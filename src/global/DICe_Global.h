@@ -68,7 +68,9 @@ namespace global{
 
 /// \class Global_Algorithm
 /// \brief holds all the methods and data for global DIC
-class Global_Algorithm
+class
+DICE_LIB_DLL_EXPORT
+Global_Algorithm
 {
 public:
   /// Constrtuctor with valid pointer to a schema

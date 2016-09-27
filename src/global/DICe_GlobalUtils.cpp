@@ -58,6 +58,7 @@ namespace DICe {
 
 namespace global{
 
+DICE_LIB_DLL_EXPORT
 void div_symmetric_strain(const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & coeff,
@@ -83,6 +84,7 @@ void div_symmetric_strain(const int_t spa_dim,
   }
 }
 
+DICE_LIB_DLL_EXPORT
 void mms_image_grad_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -115,6 +117,7 @@ void mms_image_grad_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
   }
 }
 
+DICE_LIB_DLL_EXPORT
 void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -140,7 +143,7 @@ void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
   }
 }
 
-
+DICE_LIB_DLL_EXPORT
 void mms_image_time_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -161,6 +164,7 @@ void mms_image_time_force(Teuchos::RCP<MMS_Problem> mms_problem,
   }
 }
 
+DICE_LIB_DLL_EXPORT
 void image_time_force(Global_Algorithm* alg,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -187,6 +191,7 @@ void image_time_force(Global_Algorithm* alg,
   }
 }
 
+DICE_LIB_DLL_EXPORT
 void image_grad_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -221,6 +226,7 @@ void image_grad_tensor(Global_Algorithm * alg,
   }
 }
 
+DICE_LIB_DLL_EXPORT
 void image_grad_force(Global_Algorithm* alg,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -247,7 +253,7 @@ void image_grad_force(Global_Algorithm* alg,
   }
 }
 
-
+DICE_LIB_DLL_EXPORT
 void tikhonov_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -274,6 +280,7 @@ void tikhonov_tensor(Global_Algorithm * alg,
   }
 }
 
+DICE_LIB_DLL_EXPORT
 void tikhonov_force(Global_Algorithm* alg,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -295,7 +302,7 @@ void tikhonov_force(Global_Algorithm* alg,
   }
 }
 
-
+DICE_LIB_DLL_EXPORT
 void lumped_tikhonov_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
@@ -321,6 +328,7 @@ void lumped_tikhonov_tensor(Global_Algorithm * alg,
   }
 }
 
+DICE_LIB_DLL_EXPORT
 void div_velocity(const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & J,
@@ -354,7 +362,7 @@ void div_velocity(const int_t spa_dim,
   }
 }
 
-
+DICE_LIB_DLL_EXPORT
 void stab_lagrange(const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & J,
@@ -377,7 +385,7 @@ void stab_lagrange(const int_t spa_dim,
   }
 }
 
-
+DICE_LIB_DLL_EXPORT
 void subset_velocity(Global_Algorithm * alg,
   const int_t & c_x, // closest pixel in x
   const int_t & c_y, // closest pixel in y
@@ -539,7 +547,7 @@ void subset_velocity(Global_Algorithm * alg,
   b_y = (*deformation)[DICe::DISPLACEMENT_Y];
 }
 
-
+DICE_LIB_DLL_EXPORT
 void optical_flow_velocity(Global_Algorithm * alg,
   const int_t & c_x, // closest pixel in x
   const int_t & c_y, // closest pixel in y
@@ -615,6 +623,7 @@ void optical_flow_velocity(Global_Algorithm * alg,
   delete [] WORK;
 }
 
+DICE_LIB_DLL_EXPORT
 scalar_t compute_tau_tri3(const Global_Formulation & formulation,
   const scalar_t & alpha2,
   const scalar_t * natural_coords,
@@ -631,7 +640,7 @@ scalar_t compute_tau_tri3(const Global_Formulation & formulation,
   return tau;
 }
 
-
+DICE_LIB_DLL_EXPORT
 void calc_jacobian(const scalar_t * xcap,
   const scalar_t * DN,
   scalar_t * jacobian,
@@ -679,6 +688,7 @@ void calc_jacobian(const scalar_t * xcap,
     TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"Error, invalid dimension");
 };
 
+DICE_LIB_DLL_EXPORT
 void calc_B(const scalar_t * DN,
   const scalar_t * inv_jacobian,
   const int_t num_elem_nodes,
@@ -735,6 +745,7 @@ void calc_B(const scalar_t * DN,
 
 }
 
+DICE_LIB_DLL_EXPORT
 void calc_mms_force_elasticity(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & alpha,
@@ -747,6 +758,7 @@ void calc_mms_force_elasticity(const scalar_t & x,
   force_y = -alpha*beta*beta*cos(beta*x)*sin(beta*y);
 }
 
+DICE_LIB_DLL_EXPORT
 void calc_mms_vel_rich(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & L,
@@ -764,6 +776,7 @@ void calc_mms_vel_rich(const scalar_t & x,
 
 }
 
+DICE_LIB_DLL_EXPORT
 void calc_mms_lap_vel_rich(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & L,
@@ -779,6 +792,7 @@ void calc_mms_lap_vel_rich(const scalar_t & x,
   //lap_b_y = 2.0;
 }
 
+DICE_LIB_DLL_EXPORT
 void calc_mms_phi_rich(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & L,
@@ -790,6 +804,7 @@ void calc_mms_phi_rich(const scalar_t & x,
   //phi = -1.0/gamma*(std::cos(gamma*x)*std::cos(gamma*(x-L)) + std::cos(gamma*y)*std::cos(y-L));
 }
 
+DICE_LIB_DLL_EXPORT
 void calc_mms_phi_terms_rich(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & m,
@@ -816,6 +831,7 @@ void calc_mms_phi_terms_rich(const scalar_t & x,
   grad_phi_y = -gamma*sin(gamma*x)*sin(DICE_PI/2.0 + gamma*y);
 }
 
+DICE_LIB_DLL_EXPORT
 void calc_mms_bc_simple(const scalar_t & x,
   const scalar_t & y,
   scalar_t & b_x,
@@ -828,6 +844,7 @@ void calc_mms_bc_simple(const scalar_t & x,
   //b_y = 0.0001;
 }
 
+DICE_LIB_DLL_EXPORT
 void calc_mms_bc_2(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & L,
@@ -837,7 +854,7 @@ void calc_mms_bc_2(const scalar_t & x,
   b_y = 0.0;
 }
 
-
+DICE_LIB_DLL_EXPORT
 void calc_mms_force_simple(const scalar_t & alpha,
   scalar_t & force_x,
   scalar_t & force_y){

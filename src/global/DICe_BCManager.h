@@ -61,7 +61,9 @@ class Global_Algorithm;
 
 /// \class Boundary_Condition
 /// \brief boundary condition
-class Boundary_Condition
+class
+DICE_LIB_DLL_EXPORT
+Boundary_Condition
 {
 public:
   /// Constrtuctor
@@ -90,7 +92,9 @@ protected:
 
 /// \class Dirichlet_BC
 /// \brief prescribed values along the boundary
-class Dirichlet_BC : public Boundary_Condition
+class
+DICE_LIB_DLL_EXPORT
+Dirichlet_BC : public Boundary_Condition
 {
 public:
   /// Constructor
@@ -111,7 +115,9 @@ protected:
 
 /// \class Lagrange_BC
 /// \brief prescribed values along the boundary
-class Lagrange_BC : public Boundary_Condition
+class
+DICE_LIB_DLL_EXPORT
+Lagrange_BC : public Boundary_Condition
 {
 public:
   /// Constructor
@@ -155,7 +161,9 @@ protected:
 
 /// \class Subset_BC
 /// \brief prescribed values along the boundary using a subset solution
-class Subset_BC : public Boundary_Condition
+class
+DICE_LIB_DLL_EXPORT
+Subset_BC : public Boundary_Condition
 {
 public:
   /// Constructor
@@ -180,7 +188,9 @@ protected:
 
 /// \class Constant_IC
 /// \brief initialize the solution to a constant value for all nodes
-class Constant_IC : public Boundary_Condition
+class
+DICE_LIB_DLL_EXPORT
+Constant_IC : public Boundary_Condition
 {
 public:
   /// Constructor
@@ -206,7 +216,9 @@ protected:
 
 /// \class MMS_BC
 /// \brief prescribed values along the boundary using the method of manufactured solutions values
-class MMS_BC : public Boundary_Condition
+class
+DICE_LIB_DLL_EXPORT
+MMS_BC : public Boundary_Condition
 {
 public:
   /// Constructor
@@ -231,7 +243,9 @@ protected:
 
 /// \class MMS_Lagrange_BC
 /// \brief prescribed values along the boundary using the method of manufactured solutions values
-class MMS_Lagrange_BC : public Boundary_Condition
+class
+DICE_LIB_DLL_EXPORT
+MMS_Lagrange_BC : public Boundary_Condition
 {
 public:
   /// Constructor
@@ -255,7 +269,9 @@ protected:
 };
 
 
-class BC_Manager
+class
+DICE_LIB_DLL_EXPORT
+BC_Manager
 {
 public:
   /// constructor that takes two mesh pointers, the l_mesh can be null for single field formulations
