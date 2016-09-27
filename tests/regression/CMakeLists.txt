@@ -127,6 +127,7 @@ if(DICE_MPI)
     parallel_subsets
     parallel_subsets_seed
     parallel_seed_first_step_only
+    parallel_image_def
     #parallel_obstruct_depend
   )
   FOREACH ( test ${MPI_TESTS})
