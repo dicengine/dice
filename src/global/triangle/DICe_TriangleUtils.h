@@ -48,6 +48,7 @@
 
 namespace DICe {
 
+DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
   Teuchos::ArrayRCP<scalar_t> points_x,
   Teuchos::ArrayRCP<scalar_t> points_y,
@@ -56,11 +57,13 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
   const bool enforce_lagrange_bc=true,
   const bool use_regular_grid=false);
 
+DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
   const std::string & roi_file_name,
   const scalar_t & max_size_constraint,
   const std::string & output_file_name);
 
+DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
   Teuchos::ArrayRCP<scalar_t> points_x,
   Teuchos::ArrayRCP<scalar_t> points_y,
@@ -75,6 +78,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
   const bool enforce_lagrange_bc=false,
   const bool use_regular_grid=false);
 
+DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
   const scalar_t & begin_x,
   const scalar_t & end_x,
