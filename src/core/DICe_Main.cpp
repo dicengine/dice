@@ -286,15 +286,21 @@ int main(int argc, char *argv[]) {
               schema->set_prev_image(def_img,sub_image_id);
             }
           }
-        }
+        } // end has_motion_windows
         else{
           Teuchos::RCP<DICe::Image> def_image = cine_reader->get_frame(image_it,true,filter_failed_pixels,correlation_params);
+          if(schema->use_incremental_formulation()){
+            schema->set_ref_image(schema->def_img());
+          }
           schema->set_def_image(def_image);
         }
-      }
+      } // end is_cine
       else{
         const std::string def_image_string = image_files[image_it];
         *outStream << "Processing Image: " << image_it << " of " << num_images << ", " << def_image_string << std::endl;
+        if(schema->use_incremental_formulation()){
+          schema->set_ref_image(schema->def_img());
+        }
         schema->set_def_image(def_image_string);
       }
       { // start the timer

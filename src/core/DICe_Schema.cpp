@@ -334,6 +334,18 @@ Schema::set_ref_image(const int_t img_width,
 }
 
 void
+Schema::set_ref_image(Teuchos::RCP<Image> img){
+  DEBUG_MSG("Schema::set_ref_image() Resetting the reference image");
+  ref_img_ = img;
+  if(ref_image_rotation_!=ZERO_DEGREES){
+    Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
+    imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
+    imgParams->set(DICe::gradient_method,gradient_method_);
+    ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
+  }
+}
+
+void
 Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params){
   global_num_subsets_ = 0;
   local_num_subsets_ = 0;
@@ -359,8 +371,9 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   initial_gamma_threshold_ = -1.0;
   final_gamma_threshold_ = -1.0;
   path_distance_threshold_ = -1.0;
-  set_params(params);
   stat_container_ = Teuchos::rcp(new Stat_Container());
+  use_incremental_formulation_ = false;
+  set_params(params);
 }
 
 void
@@ -486,11 +499,16 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   }
 #endif
 
+  use_incremental_formulation_ = diceParams->get<bool>(DICe::use_incremental_formulation,false);
   gauss_filter_images_ = diceParams->get<bool>(DICe::gauss_filter_images,false);
   gauss_filter_mask_size_ = diceParams->get<int_t>(DICe::gauss_filter_mask_size,7);
   compute_ref_gradients_ = diceParams->get<bool>(DICe::compute_ref_gradients,true);
   compute_def_gradients_ = diceParams->get<bool>(DICe::compute_def_gradients,false);
   if(diceParams->get<bool>(DICe::compute_image_gradients,false)) { // this flag turns them both on
+    compute_ref_gradients_ = true;
+    compute_def_gradients_ = true;
+  }
+  if(use_incremental_formulation_){ // force gradient calcs to be on for incremental
     compute_ref_gradients_ = true;
     compute_def_gradients_ = true;
   }
@@ -1035,6 +1053,11 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   mesh_->create_field(mesh::field_enums::FIELD_9_FS);
   mesh_->create_field(mesh::field_enums::FIELD_10_FS);
 
+  if(use_incremental_formulation_){
+    mesh_->create_field(mesh::field_enums::ACCUMULATED_DISP_FS);
+    mesh_->get_field(mesh::field_enums::ACCUMULATED_DISP_FS)->put_scalar(0.0);
+  }
+
   // fill the subset coordinates field:
   Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
   for(int_t i=0;i<local_num_subsets_;++i){
@@ -1293,6 +1316,9 @@ int_t
 Schema::execute_correlation(){
   if(analysis_type_==GLOBAL_DIC){
 #ifdef DICE_ENABLE_GLOBAL
+    if(use_incremental_formulation_)
+      mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS)->put_scalar(0.0);
+
     Status_Flag global_status = CORRELATION_FAILED;
     try{
       global_status = global_algorithm_->execute();
@@ -1304,6 +1330,10 @@ Schema::execute_correlation(){
     if(global_status!=CORRELATION_SUCCESSFUL){
       std::cout << "********* Error, global correlation failed **************** " << std::endl;
       return 1;
+    }
+    // accumulate the displacements
+    if(use_incremental_formulation_){
+      mesh_->get_field(DICe::mesh::field_enums::ACCUMULATED_DISP_FS)->update(1.0,*mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS),1.0);
     }
 #endif
     return 0;
@@ -1338,6 +1368,13 @@ Schema::execute_correlation(){
   }
   DEBUG_MSG(message.str());
 #endif
+
+  // if the formulation is incremental, clear the displacement fields
+  if(use_incremental_formulation_){
+    mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS)->put_scalar(0.0);
+    mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS)->put_scalar(0.0);
+  }
+
   // Complete the set up activities for the post processors
   if(image_frame_==0){
     for(size_t i=0;i<post_processors_.size();++i){
@@ -1404,6 +1441,16 @@ Schema::execute_correlation(){
       local_field_value(subset_index,DISPLACEMENT_X) << " v: " << local_field_value(subset_index,DISPLACEMENT_Y)
       << " theta: " << local_field_value(subset_index,ROTATION_Z) << " sigma: " << local_field_value(subset_index,SIGMA) << " gamma: " <<
       local_field_value(subset_index,GAMMA) << " beta: " << local_field_value(subset_index,BETA));
+  }
+
+  // accumulate the displacements
+  if(use_incremental_formulation_){
+    const int_t spa_dim = mesh_->spatial_dimension();
+    Teuchos::RCP<DICe::MultiField> accumulated_disp = mesh_->get_field(DICe::mesh::field_enums::ACCUMULATED_DISP_FS);
+    for(int_t i=0;i<local_num_subsets_;++i){
+      accumulated_disp->local_value(i*spa_dim+0) += local_field_value(i,DISPLACEMENT_X);
+      accumulated_disp->local_value(i*spa_dim+1) += local_field_value(i,DISPLACEMENT_Y);
+    }
   }
 
   // compute post-processed quantities
@@ -1584,9 +1631,6 @@ Schema::initial_guess(const int_t subset_gid,
   if(correlation_routine_==TRACKING_ROUTINE){
     sid = subset_gid;
   }
-
-  // I AM HERE I AM HERE I AM HERE I AM HERE // TODO TODO TODO
-
   TEUCHOS_TEST_FOR_EXCEPTION(opt_initializers_.find(sid)==opt_initializers_.end(),std::runtime_error,
     "Initializer does not exist, but should here");
   return opt_initializers_.find(sid)->second->initial_guess(subset_gid,deformation);

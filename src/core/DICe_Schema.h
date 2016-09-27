@@ -342,6 +342,9 @@ public:
     const int_t img_height,
     const Teuchos::ArrayRCP<intensity_t> refRCP);
 
+  /// Replace the reference image using an image
+  void set_ref_image(Teuchos::RCP<Image> img);
+
   /// \brief Initializes the data structures for the schema
   /// \param input_params pointer to the initialization parameters
   void initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params);
@@ -839,6 +842,11 @@ public:
     return use_objective_regularization_;
   }
 
+  /// returns true if the incremental formulation is used
+  bool use_incremental_formulation()const{
+    return use_incremental_formulation_;
+  }
+
   // shape function controls:
   /// Returns true if translation shape functions are enabled
   bool translation_enabled() const {
@@ -1264,6 +1272,8 @@ private:
 #endif
   /// keep track of stats for each subset (only for tracking routine)
   Teuchos::RCP<Stat_Container> stat_container_;
+  /// use the previous image as the reference rather than the original ref image
+  bool use_incremental_formulation_;
 
 
 };

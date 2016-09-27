@@ -254,7 +254,8 @@ Field_Name
   NLVC_DUDX,
   NLVC_DUDY,
   NLVC_DVDX,
-  NLVC_DVDY
+  NLVC_DVDY,
+  ACCUMULATED_DISP
 };
 /// The location that the fields live
 enum
@@ -659,9 +660,11 @@ const Field_Spec EXACT_STRAIN_XX_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::
 const Field_Spec EXACT_STRAIN_YY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::EXACT_STRAIN_YY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec EXACT_STRAIN_XY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::EXACT_STRAIN_XY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec ACCUMULATED_DISP_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::ACCUMULATED_DISP,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 95;
+const int_t num_fields_defined = 96;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -758,7 +761,8 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     NLVC_DVDY_FS,
     EXACT_STRAIN_XX_FS,
     EXACT_STRAIN_YY_FS,
-    EXACT_STRAIN_XY_FS
+    EXACT_STRAIN_XY_FS,
+    ACCUMULATED_DISP_FS
     // don't forget to add one to num_fields_defined
 };
 

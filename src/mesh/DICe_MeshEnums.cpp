@@ -206,6 +206,7 @@ void create_string_maps()
   field_name_string[field_enums::EXACT_STRAIN_XX]                                    = "EXACT_STRAIN_XX";
   field_name_string[field_enums::EXACT_STRAIN_YY]                                    = "EXACT_STRAIN_YY";
   field_name_string[field_enums::EXACT_STRAIN_XY]                                    = "EXACT_STRAIN_XY";
+  field_name_string[field_enums::ACCUMULATED_DISP]                                   = "ACCUMULATED_DISP";
 
   for (std::map<field_enums::Field_Type,std::string>::iterator pos = field_type_string.begin(); pos != field_type_string.end(); ++pos){
     string_field_type[pos->second] = pos->first;
