@@ -20,6 +20,7 @@ include_directories (
 
 add_library(diceglobal ${SOURCES} ${HEADERS})
 target_compile_definitions(diceglobal PRIVATE -D DICE_LIB_EXPORTS_MODE)
+target_link_libraries(diceglobal triangle)
 
 install(FILES ${HEADERS}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include
