@@ -122,7 +122,6 @@ Post_Processor::initialize_neighborhood(const scalar_t & neighborhood_radius){
     //std::cout << "** POINT GID " << gid << std::endl;
     // get the overlap local id of the point
     const int_t olid = mesh_->get_scalar_node_overlap_map()->get_local_element(gid);
-    std::cout << olid << std::endl;
     query_pt[0] = point_cloud_->pts[olid].x;
     query_pt[1] = point_cloud_->pts[olid].y;
     query_pt[2] = point_cloud_->pts[olid].z;
