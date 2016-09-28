@@ -1316,9 +1316,6 @@ int_t
 Schema::execute_correlation(){
   if(analysis_type_==GLOBAL_DIC){
 #ifdef DICE_ENABLE_GLOBAL
-    if(use_incremental_formulation_)
-      mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS)->put_scalar(0.0);
-
     Status_Flag global_status = CORRELATION_FAILED;
     try{
       global_status = global_algorithm_->execute();
@@ -1330,10 +1327,6 @@ Schema::execute_correlation(){
     if(global_status!=CORRELATION_SUCCESSFUL){
       std::cout << "********* Error, global correlation failed **************** " << std::endl;
       return 1;
-    }
-    // accumulate the displacements
-    if(use_incremental_formulation_){
-      mesh_->get_field(DICe::mesh::field_enums::ACCUMULATED_DISP_FS)->update(1.0,*mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS),1.0);
     }
 #endif
     return 0;
