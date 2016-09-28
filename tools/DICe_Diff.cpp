@@ -112,6 +112,7 @@ int main(int argc, char *argv[]) {
     else if(arg=="-f"){
       assert(argc>i+1 && "Error, floor value must be specified for -f option");
       floor = strtod(argv[i+1],NULL);
+      use_floor = true;
       i++;
     }
     else{

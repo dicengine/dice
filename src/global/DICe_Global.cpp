@@ -179,8 +179,9 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   Teuchos::RCP<MultiField> disp_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
   disp->put_scalar(0.0);
   disp_nm1->put_scalar(0.0);
-  if(schema_->use_incremental_formulation())
-    mesh_->create_field(mesh::field_enums::ACCUMULATED_DISP_FS);
+  if(schema_)
+    if(schema_->use_incremental_formulation())
+      mesh_->create_field(mesh::field_enums::ACCUMULATED_DISP_FS);
 
   mesh_->create_field(mesh::field_enums::RESIDUAL_FS);
   mesh_->create_field(mesh::field_enums::LHS_FS);
@@ -941,10 +942,11 @@ Global_Algorithm::execute(){
   }
   Teuchos::RCP<MultiField> disp = mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
   Teuchos::RCP<MultiField> disp_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
-  if(schema_->use_incremental_formulation()){
-    disp->put_scalar(0.0);
-    disp_nm1->put_scalar(0.0);
-  }
+  if(schema_)
+    if(schema_->use_incremental_formulation()){
+      disp->put_scalar(0.0);
+      disp_nm1->put_scalar(0.0);
+    }
 //  disp->describe();
 
 //  Teuchos::RCP<DICe::MultiField_Matrix> tangent = compute_tangent(use_fixed_point_iterations_);
@@ -1061,9 +1063,10 @@ Global_Algorithm::execute(){
 
     // incrementally increase the accumulated displacements if using incremental
     // accumulate the displacements
-    if(schema_->use_incremental_formulation()){
-      mesh_->get_field(DICe::mesh::field_enums::ACCUMULATED_DISP_FS)->update(1.0,*mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS),1.0);
-    }
+    if(schema_)
+      if(schema_->use_incremental_formulation()){
+        mesh_->get_field(DICe::mesh::field_enums::ACCUMULATED_DISP_FS)->update(1.0,*mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS),1.0);
+      }
   }
   //TEUCHOS_TEST_FOR_EXCEPTION(it>=max_its,std::runtime_error,"Error, max iterations reached.");
 

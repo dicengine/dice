@@ -396,7 +396,7 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::initialization_method,DICe::USE_FIELD_VALUES);
   defaultParams->set(DICe::projection_method,DICe::DISPLACEMENT_BASED);
   defaultParams->set(DICe::predict_resolution_error,-1);
-  defaultParams->set(DICe::use_incremental_formulation,true);
+  defaultParams->set(DICe::use_incremental_formulation,false);
   defaultParams->set(DICe::use_search_initialization_for_failed_steps,false);
   defaultParams->set(DICe::disp_jump_tol,25.0);
   defaultParams->set(DICe::theta_jump_tol,2.0);
