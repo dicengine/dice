@@ -35,7 +35,7 @@ include_directories(${Boost_INCLUDE_DIRS} COMPONENTS gil program_options REQUIRE
 add_library(dicecore ${DICE_SOURCES} ${DICE_HEADERS})
 target_link_libraries(dicecore ${Boost_LIBRARIES} ${DICE_LIBRARIES} dicebase diceutils dicefft dicemesh)
 IF(DICE_ENABLE_GLOBAL)
-  target_link_libraries(dicecore triangle diceglobal dicemeshio)
+  target_link_libraries(dicecore diceglobal dicemeshio)
 ENDIF()
 target_compile_definitions(dicecore PRIVATE -D DICE_LIB_EXPORTS_MODE)
 

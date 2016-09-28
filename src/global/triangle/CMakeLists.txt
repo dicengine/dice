@@ -18,6 +18,7 @@ include_directories (
 
 add_library(triangle ${SOURCES} ${HEADERS})
 target_compile_definitions(triangle PRIVATE -D DICE_LIB_EXPORTS_MODE)
+target_link_libraries(triangle dicecore dicebase)
 
 install(FILES ${HEADERS}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include
