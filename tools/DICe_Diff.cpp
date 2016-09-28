@@ -55,7 +55,7 @@ using namespace DICe;
 
 int main(int argc, char *argv[]) {
 
-  /// usage ./DICe_Diff <infileA> <infileB> [-t <tol>] [-v] [-n]
+  /// usage ./DICe_Diff <infileA> <infileB> [-t <tol>] [-f <value>] [-v] [-n]
 
   DICe::initialize(argc, argv);
 
@@ -63,6 +63,8 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<std::ostream> outStream = Teuchos::rcp(&bhs, false);
   int_t errorFlag  = 0;
   scalar_t relTol = 1.0E-6;
+  scalar_t floor = 0.0;
+  bool use_floor = false;
   std::string delimiter = " ,\r";
   bool numerical_values_only = false;
 
@@ -74,6 +76,7 @@ int main(int argc, char *argv[]) {
       std::cout << " Options: -h show help message " << std::endl;
       std::cout << "          -v verbose " << std::endl;
       std::cout << "          -t <tol> relative tolerance " << std::endl;
+      std::cout << "          -f <value> floor, values below the floor in the gold file will not be tested" << std::endl;
       std::cout << "          -n numerical values only" << std::endl;
       exit(0);
     }
@@ -106,6 +109,11 @@ int main(int argc, char *argv[]) {
       relTol = strtod(argv[i+1],NULL);
       i++;
     }
+    else if(arg=="-f"){
+      assert(argc>i+1 && "Error, floor value must be specified for -f option");
+      floor = strtod(argv[i+1],NULL);
+      i++;
+    }
     else{
       std::cout << "Error, unrecognized option: " << argv[i] << std::endl;
       assert(false);
@@ -116,6 +124,7 @@ int main(int argc, char *argv[]) {
   *outStream << "File A: " << fileA << std::endl;
   *outStream << "File B: " << fileB << std::endl;
   *outStream << "Relative Tol: " << relTol << std::endl;
+  *outStream << "Floor value: " << floor << " active " << use_floor << std::endl;
 
   // read the two files line by line and compare both
   // (white space is ignored)
@@ -158,10 +167,13 @@ int main(int argc, char *argv[]) {
         scalar_t valB = strtod(tokensB[i].c_str(),NULL);
         scalar_t diff = std::abs((valA - valB)/valA);
         const bool tiny = (std::abs(valA) + std::abs(valB) < 1.0E-8);
-        if(!tiny && diff > relTol){
-          line_diff = true;
-          badTokenIds.push_back(i);
-          badTokenTypes.push_back("n");
+        const bool below_floor = std::abs(valA) < floor;
+        if(!below_floor||!use_floor){
+          if(!tiny && diff > relTol){
+            line_diff = true;
+            badTokenIds.push_back(i);
+            badTokenTypes.push_back("n");
+          }
         }
       }
       // string
