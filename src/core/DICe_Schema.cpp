@@ -2015,14 +2015,15 @@ Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
 
 void
 Schema::estimate_resolution_error(const int num_steps,
+  const int num_mags,
   std::string & output_folder,
   std::string & prefix,
   Teuchos::RCP<std::ostream> & outStream){
-  // only done on processor 0
-  const int_t proc_id = comm_->get_rank();
 #if DICE_KOKKOS
 #else
-  DEBUG_MSG("Schema::estimate_resolution_error(): Estimating resolution error with num_steps = " << num_steps);
+  // only done on processor 0
+  const int_t proc_id = comm_->get_rank();
+  DEBUG_MSG("Schema::estimate_resolution_error(): Estimating resolution error with num_mags = " << num_mags << " num_steps = " << num_steps);
 
   // search the mesh fields to see if vsg or nlvc strain exist:
   const bool has_vsg = mesh_->has_field(DICe::mesh::field_enums::VSG_STRAIN_XX);
@@ -2030,255 +2031,266 @@ Schema::estimate_resolution_error(const int num_steps,
   const bool is_subset_based = analysis_type_ == LOCAL_DIC;
 
   std::stringstream result_stream;
+  std::stringstream infoName;
+
+  // populate the exact sol, etc
+  mesh_->create_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);
+  Teuchos::RCP<MultiField> exact_disp = mesh_->get_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);
+  mesh_->create_field(DICe::mesh::field_enums::EXACT_STRAIN_XX_FS);
+  Teuchos::RCP<MultiField> exact_strain_xx = mesh_->get_field(DICe::mesh::field_enums::EXACT_STRAIN_XX_FS);
+  mesh_->create_field(DICe::mesh::field_enums::EXACT_STRAIN_YY_FS);
+  Teuchos::RCP<MultiField> exact_strain_yy = mesh_->get_field(DICe::mesh::field_enums::EXACT_STRAIN_YY_FS);
+  mesh_->create_field(DICe::mesh::field_enums::EXACT_STRAIN_XY_FS);
+  Teuchos::RCP<MultiField> exact_strain_xy = mesh_->get_field(DICe::mesh::field_enums::EXACT_STRAIN_XY_FS);
+
+  if(proc_id==0){
+    infoName << output_folder << prefix << ".info";
+    std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"a");
+    fprintf(infoFilePtr,"***\n");
+    fprintf(infoFilePtr,"*** Displacement and Strain Error Estimates \n");
+    fprintf(infoFilePtr,"***\n");
+    fclose(infoFilePtr);
+  }
   const int_t spa_dim = mesh_->spatial_dimension();
   // create an image deformer class
-  for(int_t step=0;step<num_steps;++step){
-    DEBUG_MSG("Processing step " << step);
-    Teuchos::RCP<SinCos_Image_Deformer> deformer = Teuchos::rcp(new SinCos_Image_Deformer(step));
-    Teuchos::RCP<Image> def_img = deformer->deform_image(ref_img());
-    if(proc_id==0){
-      std::stringstream sincos_name;
-      sincos_name << "sincos_image_" << step << ".tif";
-      def_img->write(sincos_name.str());
-    }
-    // set the deformed image for the schema
-    set_def_image(def_img);
-    int_t corr_error = execute_correlation();
-    TEUCHOS_TEST_FOR_EXCEPTION(corr_error,std::runtime_error,"Error, correlation unsuccesssful");
-    DEBUG_MSG("Error prediction step correlation return value " << corr_error);
-    post_execution_tasks();
-
-    // gather all owned fields here
-    Teuchos::RCP<MultiField> coords = mesh_->get_overlap_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
-    Teuchos::RCP<MultiField> disp;
-    if(is_subset_based){
-      Teuchos::RCP<MultiField> disp_x = mesh_->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-      Teuchos::RCP<MultiField> disp_y = mesh_->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
-      Teuchos::RCP<MultiField_Map> overlap_map = mesh_->get_vector_node_overlap_map();
-      disp = Teuchos::rcp( new MultiField(overlap_map,1,true));
-      for(int_t i=0;i<mesh_->get_scalar_node_overlap_map()->get_num_local_elements();++i){
-        disp->local_value(i*spa_dim+0) = disp_x->local_value(i);
-        disp->local_value(i*spa_dim+1) = disp_y->local_value(i);
+  for(int_t mag=0;mag<num_mags;++mag){
+    for(int_t step=0;step<num_steps;++step){
+      DEBUG_MSG("Processing magitude " << mag << " step " << step);
+      Teuchos::RCP<SinCos_Image_Deformer> deformer = Teuchos::rcp(new SinCos_Image_Deformer(step,mag));
+      Teuchos::RCP<Image> def_img = deformer->deform_image(ref_img());
+      if(proc_id==0){
+        std::stringstream sincos_name;
+        sincos_name << "sincos_image_" << mag << "_" << step << ".tif";
+        def_img->write(sincos_name.str());
       }
-    }else{
-      disp = mesh_->get_overlap_field(DICe::mesh::field_enums::DISPLACEMENT_FS);
-    }
-    Teuchos::RCP<MultiField> vsg_xx;
-    Teuchos::RCP<MultiField> vsg_yy;
-    Teuchos::RCP<MultiField> nlvc_xx;
-    Teuchos::RCP<MultiField> nlvc_yy;
-    if(has_vsg){
-      vsg_xx = mesh_->get_overlap_field(DICe::mesh::field_enums::VSG_STRAIN_XX_FS);
-      vsg_yy = mesh_->get_overlap_field(DICe::mesh::field_enums::VSG_STRAIN_YY_FS);
-    }
-    if(has_nlvc){
-      nlvc_xx = mesh_->get_overlap_field(DICe::mesh::field_enums::NLVC_STRAIN_XX_FS);
-      nlvc_yy = mesh_->get_overlap_field(DICe::mesh::field_enums::NLVC_STRAIN_YY_FS);
-    }
+      // set the deformed image for the schema
+      set_def_image(def_img);
+      int_t corr_error = execute_correlation();
+      TEUCHOS_TEST_FOR_EXCEPTION(corr_error,std::runtime_error,"Error, correlation unsuccesssful");
+      DEBUG_MSG("Error prediction step correlation return value " << corr_error);
+      post_execution_tasks();
 
-    // populate the exact sol, etc
-    mesh_->create_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);
-    Teuchos::RCP<MultiField> exact_disp = mesh_->get_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);
-    mesh_->create_field(DICe::mesh::field_enums::EXACT_STRAIN_XX_FS);
-    Teuchos::RCP<MultiField> exact_strain_xx = mesh_->get_field(DICe::mesh::field_enums::EXACT_STRAIN_XX_FS);
-    mesh_->create_field(DICe::mesh::field_enums::EXACT_STRAIN_YY_FS);
-    Teuchos::RCP<MultiField> exact_strain_yy = mesh_->get_field(DICe::mesh::field_enums::EXACT_STRAIN_YY_FS);
-    mesh_->create_field(DICe::mesh::field_enums::EXACT_STRAIN_XY_FS);
-    Teuchos::RCP<MultiField> exact_strain_xy = mesh_->get_field(DICe::mesh::field_enums::EXACT_STRAIN_XY_FS);
-
-    // compute the error:
-    scalar_t h1x_error = 0.0;
-    scalar_t h1y_error = 0.0;
-    scalar_t hinfx_error = 0.0;
-    scalar_t hinfy_error = 0.0;
-    scalar_t avgx_error = 0.0;
-    scalar_t avgy_error = 0.0;
-    for(int_t i=0;i<global_num_subsets_;++i){
-      const scalar_t x = coords->local_value(i*spa_dim+0);
-      const scalar_t y = coords->local_value(i*spa_dim+1);
-      const scalar_t u = disp->local_value(i*spa_dim+0);
-      const scalar_t v = disp->local_value(i*spa_dim+1);
-      scalar_t e_x;
-      scalar_t e_y;
-      deformer->compute_displacement_error(x,y,u,v,e_x,e_y);
-      const int_t gid = mesh_->get_scalar_node_overlap_map()->get_global_element(i);
-      if(mesh_->get_scalar_node_dist_map()->is_node_global_elem(gid)){
-        const int_t lid = mesh_->get_scalar_node_dist_map()->get_local_element(gid);
-        scalar_t eu = 0.0;
-        scalar_t ev = 0.0;
-        deformer->compute_deformation(x,y,eu,ev);
-        exact_disp->local_value(lid*spa_dim+0) = eu;
-        exact_disp->local_value(lid*spa_dim+1) = ev;
+      // gather all owned fields here
+      Teuchos::RCP<MultiField> coords = mesh_->get_overlap_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
+      Teuchos::RCP<MultiField> disp;
+      if(is_subset_based){
+        Teuchos::RCP<MultiField> disp_x = mesh_->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+        Teuchos::RCP<MultiField> disp_y = mesh_->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+        Teuchos::RCP<MultiField_Map> overlap_map = mesh_->get_vector_node_overlap_map();
+        disp = Teuchos::rcp( new MultiField(overlap_map,1,true));
+        for(int_t i=0;i<mesh_->get_scalar_node_overlap_map()->get_num_local_elements();++i){
+          disp->local_value(i*spa_dim+0) = disp_x->local_value(i);
+          disp->local_value(i*spa_dim+1) = disp_y->local_value(i);
+        }
+      }else{
+        disp = mesh_->get_overlap_field(DICe::mesh::field_enums::DISPLACEMENT_FS);
       }
-      h1x_error += e_x;
-      h1y_error += e_y;
-      avgx_error += std::sqrt(e_x);
-      avgy_error += std::sqrt(e_y);
-      if(e_x > hinfx_error) hinfx_error = e_x;
-      if(e_y > hinfy_error) hinfy_error = e_y;
-    }
-    h1x_error = std::sqrt(h1x_error);
-    h1y_error = std::sqrt(h1y_error);
-    hinfx_error = std::sqrt(hinfx_error);
-    hinfy_error = std::sqrt(hinfy_error);
-    avgx_error /= global_num_subsets_;
-    avgy_error /= global_num_subsets_;
-    scalar_t std_dev_x = 0.0;
-    scalar_t std_dev_y = 0.0;
-    for(int_t i=0;i<global_num_subsets_;++i){
-      const scalar_t x = coords->local_value(i*spa_dim+0);
-      const scalar_t y = coords->local_value(i*spa_dim+1);
-      const scalar_t u = disp->local_value(i*spa_dim+0);
-      const scalar_t v = disp->local_value(i*spa_dim+1);
-      scalar_t e_x;
-      scalar_t e_y;
-      deformer->compute_displacement_error(x,y,u,v,e_x,e_y);
-      e_x = std::sqrt(e_x);
-      e_y = std::sqrt(e_y);
-      std_dev_x += (e_x - avgx_error)*(e_x - avgx_error);
-      std_dev_y += (e_y - avgy_error)*(e_y - avgy_error);
-    }
-    std_dev_x = std::sqrt(1.0/global_num_subsets_*std_dev_x);
-    std_dev_y = std::sqrt(1.0/global_num_subsets_*std_dev_y);
-    result_stream << "Step: " << std::setw(3) << step << " DISP ERRORS H_1 x: " << std::setw(8) << h1x_error << " H_1 y: " << std::setw(8) << h1y_error <<
-        " H_inf x: " << std::setw(8) << hinfx_error << " H_inf error y: " << std::setw(8) << hinfy_error << " std_dev x: " << std::setw(8) << std_dev_x <<
-        " std_dev y: " << std::setw(8) << std_dev_y << std::endl;
+      Teuchos::RCP<MultiField> vsg_xx;
+      Teuchos::RCP<MultiField> vsg_yy;
+      Teuchos::RCP<MultiField> nlvc_xx;
+      Teuchos::RCP<MultiField> nlvc_yy;
+      if(has_vsg){
+        vsg_xx = mesh_->get_overlap_field(DICe::mesh::field_enums::VSG_STRAIN_XX_FS);
+        vsg_yy = mesh_->get_overlap_field(DICe::mesh::field_enums::VSG_STRAIN_YY_FS);
+      }
+      if(has_nlvc){
+        nlvc_xx = mesh_->get_overlap_field(DICe::mesh::field_enums::NLVC_STRAIN_XX_FS);
+        nlvc_yy = mesh_->get_overlap_field(DICe::mesh::field_enums::NLVC_STRAIN_YY_FS);
+      }
 
-    if(has_vsg || has_nlvc){
-      scalar_t sh1x_error_vsg = 0.0;
-      scalar_t sh1y_error_vsg = 0.0;
-      scalar_t shinfx_error_vsg = 0.0;
-      scalar_t shinfy_error_vsg = 0.0;
-      scalar_t savgx_error_vsg = 0.0;
-      scalar_t savgy_error_vsg = 0.0;
-      scalar_t sh1x_error_nlvc = 0.0;
-      scalar_t sh1y_error_nlvc = 0.0;
-      scalar_t shinfx_error_nlvc = 0.0;
-      scalar_t shinfy_error_nlvc = 0.0;
-      scalar_t savgx_error_nlvc = 0.0;
-      scalar_t savgy_error_nlvc = 0.0;
-      TEUCHOS_TEST_FOR_EXCEPTION(post_processors()->size()<=0,std::runtime_error,
-        "Error, strain post processor not enabled, but needs to be for error estimation of strain");
+      // compute the error:
+      scalar_t h1x_error = 0.0;
+      scalar_t h1y_error = 0.0;
+      scalar_t hinfx_error = 0.0;
+      scalar_t hinfy_error = 0.0;
+      scalar_t avgx_error = 0.0;
+      scalar_t avgy_error = 0.0;
       for(int_t i=0;i<global_num_subsets_;++i){
         const scalar_t x = coords->local_value(i*spa_dim+0);
         const scalar_t y = coords->local_value(i*spa_dim+1);
-        scalar_t e_x_vsg = 0.0;
-        scalar_t e_y_vsg = 0.0;
-        if(has_vsg){
-          const scalar_t exx_vsg = vsg_xx->local_value(i);
-          const scalar_t eyy_vsg = vsg_yy->local_value(i);
-          deformer->compute_deriv_error(x,y,exx_vsg,eyy_vsg,e_x_vsg,e_y_vsg);
-        }
-        scalar_t e_x_nlvc = 0.0;
-        scalar_t e_y_nlvc = 0.0;
-        if(has_nlvc){
-          const scalar_t exx_nlvc = nlvc_xx->local_value(i);
-          const scalar_t eyy_nlvc = nlvc_yy->local_value(i);
-          deformer->compute_deriv_error(x,y,exx_nlvc,eyy_nlvc,e_x_nlvc,e_y_nlvc);
-        }
+        const scalar_t u = disp->local_value(i*spa_dim+0);
+        const scalar_t v = disp->local_value(i*spa_dim+1);
+        scalar_t e_x;
+        scalar_t e_y;
+        deformer->compute_displacement_error(x,y,u,v,e_x,e_y);
         const int_t gid = mesh_->get_scalar_node_overlap_map()->get_global_element(i);
         if(mesh_->get_scalar_node_dist_map()->is_node_global_elem(gid)){
           const int_t lid = mesh_->get_scalar_node_dist_map()->get_local_element(gid);
-          scalar_t exact_xx = 0.0;
-          scalar_t exact_yy = 0.0;
-          scalar_t exact_xy = 0.0;
-          scalar_t exact_yx = 0.0;
-          deformer->compute_deriv_deformation(x,y,exact_xx,exact_xy,exact_yx,exact_yy);
-          // Note: this assumes Green-Lagrange form of the strain
-          exact_strain_xx->local_value(lid) = 0.5*(2.0*exact_xx + exact_xx*exact_xx + exact_yx*exact_yx);
-          exact_strain_xy->local_value(lid) = 0.5*(exact_xy + exact_yx + exact_xy*exact_xy + exact_yx*exact_yx);
-          exact_strain_yy->local_value(lid) = 0.5*(2.0*exact_yy + exact_yy*exact_yy + exact_xy*exact_xy);
+          scalar_t eu = 0.0;
+          scalar_t ev = 0.0;
+          deformer->compute_deformation(x,y,eu,ev);
+          exact_disp->local_value(lid*spa_dim+0) = eu;
+          exact_disp->local_value(lid*spa_dim+1) = ev;
         }
-        sh1x_error_vsg += e_x_vsg;
-        sh1y_error_vsg += e_y_vsg;
-        savgx_error_vsg += std::sqrt(e_x_vsg);
-        savgy_error_vsg += std::sqrt(e_y_vsg);
-        if(e_x_vsg > shinfx_error_vsg) shinfx_error_vsg = e_x_vsg;
-        if(e_y_vsg > shinfy_error_vsg) shinfy_error_vsg = e_y_vsg;
-        sh1x_error_nlvc += e_x_nlvc;
-        sh1y_error_nlvc += e_y_nlvc;
-        savgx_error_nlvc += std::sqrt(e_x_nlvc);
-        savgy_error_nlvc += std::sqrt(e_y_nlvc);
-        if(e_x_nlvc > shinfx_error_nlvc) shinfx_error_nlvc = e_x_nlvc;
-        if(e_y_nlvc > shinfy_error_nlvc) shinfy_error_nlvc = e_y_nlvc;
+        h1x_error += e_x;
+        h1y_error += e_y;
+        avgx_error += std::sqrt(e_x);
+        avgy_error += std::sqrt(e_y);
+        if(e_x > hinfx_error) hinfx_error = e_x;
+        if(e_y > hinfy_error) hinfy_error = e_y;
       }
-      sh1x_error_vsg = std::sqrt(sh1x_error_vsg);
-      sh1y_error_vsg = std::sqrt(sh1y_error_vsg);
-      shinfx_error_vsg = std::sqrt(shinfx_error_vsg);
-      shinfy_error_vsg = std::sqrt(shinfy_error_vsg);
-      savgx_error_vsg /= global_num_subsets_;
-      savgy_error_vsg /= global_num_subsets_;
-      sh1x_error_nlvc = std::sqrt(sh1x_error_nlvc);
-      sh1y_error_nlvc = std::sqrt(sh1y_error_nlvc);
-      shinfx_error_nlvc = std::sqrt(shinfx_error_nlvc);
-      shinfy_error_nlvc = std::sqrt(shinfy_error_nlvc);
-      savgx_error_nlvc /= global_num_subsets_;
-      savgy_error_nlvc /= global_num_subsets_;
-      scalar_t std_dev_sx_vsg = 0.0;
-      scalar_t std_dev_sy_vsg = 0.0;
-      scalar_t std_dev_sx_nlvc = 0.0;
-      scalar_t std_dev_sy_nlvc = 0.0;
+      h1x_error = std::sqrt(h1x_error);
+      h1y_error = std::sqrt(h1y_error);
+      hinfx_error = std::sqrt(hinfx_error);
+      hinfy_error = std::sqrt(hinfy_error);
+      avgx_error /= global_num_subsets_;
+      avgy_error /= global_num_subsets_;
+      scalar_t std_dev_x = 0.0;
+      scalar_t std_dev_y = 0.0;
       for(int_t i=0;i<global_num_subsets_;++i){
         const scalar_t x = coords->local_value(i*spa_dim+0);
         const scalar_t y = coords->local_value(i*spa_dim+1);
-        scalar_t e_x_vsg = 0.0;
-        scalar_t e_y_vsg = 0.0;
+        const scalar_t u = disp->local_value(i*spa_dim+0);
+        const scalar_t v = disp->local_value(i*spa_dim+1);
+        scalar_t e_x;
+        scalar_t e_y;
+        deformer->compute_displacement_error(x,y,u,v,e_x,e_y);
+        e_x = std::sqrt(e_x);
+        e_y = std::sqrt(e_y);
+        std_dev_x += (e_x - avgx_error)*(e_x - avgx_error);
+        std_dev_y += (e_y - avgy_error)*(e_y - avgy_error);
+      }
+      std_dev_x = std::sqrt(1.0/global_num_subsets_*std_dev_x);
+      std_dev_y = std::sqrt(1.0/global_num_subsets_*std_dev_y);
+      result_stream << "MAG " << std::setw(3) << mag << " STEP " << std::setw(3) <<  step << " DISP ERRORS H_1 x: " << std::setw(8) << h1x_error << " H_1 y: " << std::setw(8) << h1y_error <<
+          " H_inf x: " << std::setw(8) << hinfx_error << " H_inf error y: " << std::setw(8) << hinfy_error << " std_dev x: " << std::setw(8) << std_dev_x <<
+          " std_dev y: " << std::setw(8) << std_dev_y;// << std::endl;
+
+      if(has_vsg || has_nlvc){
+        scalar_t sh1x_error_vsg = 0.0;
+        scalar_t sh1y_error_vsg = 0.0;
+        scalar_t shinfx_error_vsg = 0.0;
+        scalar_t shinfy_error_vsg = 0.0;
+        scalar_t savgx_error_vsg = 0.0;
+        scalar_t savgy_error_vsg = 0.0;
+        scalar_t sh1x_error_nlvc = 0.0;
+        scalar_t sh1y_error_nlvc = 0.0;
+        scalar_t shinfx_error_nlvc = 0.0;
+        scalar_t shinfy_error_nlvc = 0.0;
+        scalar_t savgx_error_nlvc = 0.0;
+        scalar_t savgy_error_nlvc = 0.0;
+        TEUCHOS_TEST_FOR_EXCEPTION(post_processors()->size()<=0,std::runtime_error,
+          "Error, strain post processor not enabled, but needs to be for error estimation of strain");
+        for(int_t i=0;i<global_num_subsets_;++i){
+          const scalar_t x = coords->local_value(i*spa_dim+0);
+          const scalar_t y = coords->local_value(i*spa_dim+1);
+          scalar_t e_x_vsg = 0.0;
+          scalar_t e_y_vsg = 0.0;
+          if(has_vsg){
+            const scalar_t exx_vsg = vsg_xx->local_value(i);
+            const scalar_t eyy_vsg = vsg_yy->local_value(i);
+            deformer->compute_deriv_error(x,y,exx_vsg,eyy_vsg,e_x_vsg,e_y_vsg);
+          }
+          scalar_t e_x_nlvc = 0.0;
+          scalar_t e_y_nlvc = 0.0;
+          if(has_nlvc){
+            const scalar_t exx_nlvc = nlvc_xx->local_value(i);
+            const scalar_t eyy_nlvc = nlvc_yy->local_value(i);
+            deformer->compute_deriv_error(x,y,exx_nlvc,eyy_nlvc,e_x_nlvc,e_y_nlvc);
+          }
+          const int_t gid = mesh_->get_scalar_node_overlap_map()->get_global_element(i);
+          if(mesh_->get_scalar_node_dist_map()->is_node_global_elem(gid)){
+            const int_t lid = mesh_->get_scalar_node_dist_map()->get_local_element(gid);
+            scalar_t exact_xx = 0.0;
+            scalar_t exact_yy = 0.0;
+            scalar_t exact_xy = 0.0;
+            scalar_t exact_yx = 0.0;
+            deformer->compute_deriv_deformation(x,y,exact_xx,exact_xy,exact_yx,exact_yy);
+            // Note: this assumes Green-Lagrange form of the strain
+            exact_strain_xx->local_value(lid) = 0.5*(2.0*exact_xx + exact_xx*exact_xx + exact_yx*exact_yx);
+            exact_strain_xy->local_value(lid) = 0.5*(exact_xy + exact_yx + exact_xy*exact_xy + exact_yx*exact_yx);
+            exact_strain_yy->local_value(lid) = 0.5*(2.0*exact_yy + exact_yy*exact_yy + exact_xy*exact_xy);
+          }
+          sh1x_error_vsg += e_x_vsg;
+          sh1y_error_vsg += e_y_vsg;
+          savgx_error_vsg += std::sqrt(e_x_vsg);
+          savgy_error_vsg += std::sqrt(e_y_vsg);
+          if(e_x_vsg > shinfx_error_vsg) shinfx_error_vsg = e_x_vsg;
+          if(e_y_vsg > shinfy_error_vsg) shinfy_error_vsg = e_y_vsg;
+          sh1x_error_nlvc += e_x_nlvc;
+          sh1y_error_nlvc += e_y_nlvc;
+          savgx_error_nlvc += std::sqrt(e_x_nlvc);
+          savgy_error_nlvc += std::sqrt(e_y_nlvc);
+          if(e_x_nlvc > shinfx_error_nlvc) shinfx_error_nlvc = e_x_nlvc;
+          if(e_y_nlvc > shinfy_error_nlvc) shinfy_error_nlvc = e_y_nlvc;
+        }
+        sh1x_error_vsg = std::sqrt(sh1x_error_vsg);
+        sh1y_error_vsg = std::sqrt(sh1y_error_vsg);
+        shinfx_error_vsg = std::sqrt(shinfx_error_vsg);
+        shinfy_error_vsg = std::sqrt(shinfy_error_vsg);
+        savgx_error_vsg /= global_num_subsets_;
+        savgy_error_vsg /= global_num_subsets_;
+        sh1x_error_nlvc = std::sqrt(sh1x_error_nlvc);
+        sh1y_error_nlvc = std::sqrt(sh1y_error_nlvc);
+        shinfx_error_nlvc = std::sqrt(shinfx_error_nlvc);
+        shinfy_error_nlvc = std::sqrt(shinfy_error_nlvc);
+        savgx_error_nlvc /= global_num_subsets_;
+        savgy_error_nlvc /= global_num_subsets_;
+        scalar_t std_dev_sx_vsg = 0.0;
+        scalar_t std_dev_sy_vsg = 0.0;
+        scalar_t std_dev_sx_nlvc = 0.0;
+        scalar_t std_dev_sy_nlvc = 0.0;
+        for(int_t i=0;i<global_num_subsets_;++i){
+          const scalar_t x = coords->local_value(i*spa_dim+0);
+          const scalar_t y = coords->local_value(i*spa_dim+1);
+          scalar_t e_x_vsg = 0.0;
+          scalar_t e_y_vsg = 0.0;
+          if(has_vsg){
+            const scalar_t exx_vsg = vsg_xx->local_value(i);
+            const scalar_t eyy_vsg = vsg_yy->local_value(i);
+            deformer->compute_deriv_error(x,y,exx_vsg,eyy_vsg,e_x_vsg,e_y_vsg);
+          }
+          scalar_t e_x_nlvc = 0.0;
+          scalar_t e_y_nlvc = 0.0;
+          if(has_nlvc){
+            const scalar_t exx_nlvc = nlvc_xx->local_value(i);
+            const scalar_t eyy_nlvc = nlvc_yy->local_value(i);
+            deformer->compute_deriv_error(x,y,exx_nlvc,eyy_nlvc,e_x_nlvc,e_y_nlvc);
+          }
+          e_x_vsg = std::sqrt(e_x_vsg);
+          e_y_vsg = std::sqrt(e_y_vsg);
+          std_dev_sx_vsg += (e_x_vsg - savgx_error_vsg)*(e_x_vsg - savgx_error_vsg);
+          std_dev_sy_vsg += (e_y_vsg - savgy_error_vsg)*(e_y_vsg - savgy_error_vsg);
+          e_x_nlvc = std::sqrt(e_x_nlvc);
+          e_y_nlvc = std::sqrt(e_y_nlvc);
+          std_dev_sx_nlvc += (e_x_nlvc - savgx_error_nlvc)*(e_x_nlvc - savgx_error_nlvc);
+          std_dev_sy_nlvc += (e_y_nlvc - savgy_error_nlvc)*(e_y_nlvc - savgy_error_nlvc);
+        }
+        std_dev_sx_vsg = std::sqrt(1.0/global_num_subsets_*std_dev_sx_vsg);
+        std_dev_sy_vsg = std::sqrt(1.0/global_num_subsets_*std_dev_sy_vsg);
+        std_dev_sx_nlvc = std::sqrt(1.0/global_num_subsets_*std_dev_sx_nlvc);
+        std_dev_sy_nlvc = std::sqrt(1.0/global_num_subsets_*std_dev_sy_nlvc);
         if(has_vsg){
-          const scalar_t exx_vsg = vsg_xx->local_value(i);
-          const scalar_t eyy_vsg = vsg_yy->local_value(i);
-          deformer->compute_deriv_error(x,y,exx_vsg,eyy_vsg,e_x_vsg,e_y_vsg);
+          result_stream << " VSG STRAIN ERRORS H_1 x: " << std::setw(8) << sh1x_error_vsg << " H_1 y: " << std::setw(8) << sh1y_error_vsg <<
+              " H_inf x: " << std::setw(8) << shinfx_error_vsg << " H_inf error y: " << std::setw(8) << shinfy_error_vsg << " std_dev x: " << std::setw(8) << std_dev_sx_vsg <<
+              " std_dev y: " << std::setw(8) << std_dev_sy_vsg;// << std::endl;
         }
-        scalar_t e_x_nlvc = 0.0;
-        scalar_t e_y_nlvc = 0.0;
         if(has_nlvc){
-          const scalar_t exx_nlvc = nlvc_xx->local_value(i);
-          const scalar_t eyy_nlvc = nlvc_yy->local_value(i);
-          deformer->compute_deriv_error(x,y,exx_nlvc,eyy_nlvc,e_x_nlvc,e_y_nlvc);
+          result_stream << " NLVC STRAIN ERRORS H_1 x: " << std::setw(8) << sh1x_error_nlvc << " H_1 y: " << std::setw(8) << sh1y_error_nlvc <<
+              " H_inf x: " << std::setw(8) << shinfx_error_nlvc << " H_inf error y: " << std::setw(8) << shinfy_error_nlvc << " std_dev x: " << std::setw(8) << std_dev_sx_nlvc <<
+              " std_dev y: " << std::setw(8) << std_dev_sy_nlvc;// << std::endl;
         }
-        e_x_vsg = std::sqrt(e_x_vsg);
-        e_y_vsg = std::sqrt(e_y_vsg);
-        std_dev_sx_vsg += (e_x_vsg - savgx_error_vsg)*(e_x_vsg - savgx_error_vsg);
-        std_dev_sy_vsg += (e_y_vsg - savgy_error_vsg)*(e_y_vsg - savgy_error_vsg);
-        e_x_nlvc = std::sqrt(e_x_nlvc);
-        e_y_nlvc = std::sqrt(e_y_nlvc);
-        std_dev_sx_nlvc += (e_x_nlvc - savgx_error_nlvc)*(e_x_nlvc - savgx_error_nlvc);
-        std_dev_sy_nlvc += (e_y_nlvc - savgy_error_nlvc)*(e_y_nlvc - savgy_error_nlvc);
+      } // end has strain
+      result_stream << std::endl;
+      write_output(output_folder,prefix,false,true);
+      // write the results to the .info file
+      if(proc_id==0){
+        std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"a");
+        fprintf(infoFilePtr,result_stream.str().c_str());
+        fclose(infoFilePtr);
+        *outStream << result_stream.str();
       }
-      std_dev_sx_vsg = std::sqrt(1.0/global_num_subsets_*std_dev_sx_vsg);
-      std_dev_sy_vsg = std::sqrt(1.0/global_num_subsets_*std_dev_sy_vsg);
-      std_dev_sx_nlvc = std::sqrt(1.0/global_num_subsets_*std_dev_sx_nlvc);
-      std_dev_sy_nlvc = std::sqrt(1.0/global_num_subsets_*std_dev_sy_nlvc);
-      if(has_vsg){
-        result_stream << "Step: " << std::setw(3) << step << " VSG STRAIN ERRORS H_1 x: " << std::setw(8) << sh1x_error_vsg << " H_1 y: " << std::setw(8) << sh1y_error_vsg <<
-            " H_inf x: " << std::setw(8) << shinfx_error_vsg << " H_inf error y: " << std::setw(8) << shinfy_error_vsg << " std_dev x: " << std::setw(8) << std_dev_sx_vsg <<
-            " std_dev y: " << std::setw(8) << std_dev_sy_vsg << std::endl;
-      }
-      if(has_nlvc){
-        result_stream << "Step: " << std::setw(3) << step << " NLVC STRAIN ERRORS H_1 x: " << std::setw(8) << sh1x_error_nlvc << " H_1 y: " << std::setw(8) << sh1y_error_nlvc <<
-            " H_inf x: " << std::setw(8) << shinfx_error_nlvc << " H_inf error y: " << std::setw(8) << shinfy_error_nlvc << " std_dev x: " << std::setw(8) << std_dev_sx_nlvc <<
-            " std_dev y: " << std::setw(8) << std_dev_sy_nlvc << std::endl;
-      }
-    } // end has strain
-  } // end step loop
-
-  write_output(output_folder,prefix,false,true);
-
-  if(proc_id!=0) return;
-
-  // write_stats(output_folder,prefix);
-  // write the results to the .info file
-  std::stringstream infoName;
-  infoName << output_folder << prefix << ".info";
-  std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"a");
-  fprintf(infoFilePtr,"***\n");
-  fprintf(infoFilePtr,"*** Displacement and Strain Error Estimates \n");
-  fprintf(infoFilePtr,"***\n");
-  fprintf(infoFilePtr,result_stream.str().c_str());
-  fprintf(infoFilePtr,"***\n");
-  fprintf(infoFilePtr,"***\n");
-  fprintf(infoFilePtr,"***\n");
-  fclose(infoFilePtr);
-  *outStream << result_stream.str();
+      result_stream.clear();
+      result_stream.str("");
+    } // end step loop
+  } // end mag loop
+  if(proc_id==0){
+    std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"a");
+    fprintf(infoFilePtr,"***\n");
+    fprintf(infoFilePtr,"***\n");
+    fprintf(infoFilePtr,"***\n");
+    fclose(infoFilePtr);
+  }
 #endif
 }
 // TODO fix this up so that it works with conformal subsets:

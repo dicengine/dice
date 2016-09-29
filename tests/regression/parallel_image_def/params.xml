@@ -1,5 +1,5 @@
 <ParameterList>
-  <Parameter name="predict_resolution_error" type="int" value="1" />  
+  <Parameter name="estimate_resolution_error" type="bool" value="true" />  
   <Parameter name="interpolation_method" type="string" value="KEYS_FOURTH" />  
   <Parameter name="optimization_method" type="string" value="GRADIENT_BASED" />  
   <Parameter name="initialization_method" type="string" value="USE_FIELD_VALUES" />  

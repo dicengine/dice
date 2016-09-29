@@ -251,7 +251,11 @@ const char* const rotate_ref_image_270 = "rotate_ref_image_270";
 /// String parameter name
 const char* const rotate_def_image_270 = "rotate_def_image_270";
 /// String parameter name
-const char* const predict_resolution_error = "predict_resolution_error";
+const char* const estimate_resolution_error = "estimate_resolution_error";
+/// String parameter name
+const char* const estimate_resolution_error_freq_steps = "estimate_resolution_error_freq_steps";
+/// String parameter name
+const char* const estimate_resolution_error_mag_steps = "estimate_resolution_error_mag_steps";
 /// String parameter name
 const char* const use_incremental_formulation = "use_incremental_formulation";
 /// String parameter name, only for global DIC
@@ -787,11 +791,21 @@ const Correlation_Parameter obstruction_skin_factor_param(obstruction_skin_facto
   "Stretches the obstruction subsets to make them larger (factor > 1.0) or smaller (factor < 1.0) than they actually are.");
 
 /// Correlation parameter and properties
-const Correlation_Parameter predict_resolution_error_param(predict_resolution_error,
-  SIZE_PARAM,
+const Correlation_Parameter estimate_resolution_error_param(estimate_resolution_error,
+  BOOL_PARAM,
   true,
   "Only evaluates the error from a known solution synthetically applied to the reference image,"
   " determines the spatial resolution. Integer value affects the wave number of the sin() function");
+/// Correlation parameter and properties
+const Correlation_Parameter estimate_resolution_error_freq_steps_param(estimate_resolution_error_freq_steps,
+  SIZE_PARAM,
+  true,
+  "number of frequency steps to use in the estimation of resolution error");
+/// Correlation parameter and properties
+const Correlation_Parameter estimate_resolution_error_mag_steps_param(estimate_resolution_error_mag_steps,
+  SIZE_PARAM,
+  true,
+  "number of magnitude steps to use in the estimation of resolution error");
 /// Correlation parameter and properties
 const Correlation_Parameter use_incremental_formulation_param(use_incremental_formulation,
   BOOL_PARAM,
@@ -1084,7 +1098,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 69;
+const int_t num_valid_correlation_params = 71;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1124,7 +1138,9 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   output_delimiter_param,
   omit_output_row_id_param,
   obstruction_skin_factor_param,
-  predict_resolution_error_param,
+  estimate_resolution_error_param,
+  estimate_resolution_error_freq_steps_param,
+  estimate_resolution_error_mag_steps_param,
   use_incremental_formulation_param,
   use_search_initialization_for_failed_steps_param,
   use_tracking_default_params_param,
@@ -1160,7 +1176,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_global_correlation_params = 20;
+const int_t num_valid_global_correlation_params = 22;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_global_correlation_params[num_valid_global_correlation_params] = {
   use_global_dic_param,
@@ -1173,7 +1189,9 @@ const Correlation_Parameter valid_global_correlation_params[num_valid_global_cor
   output_spec_param,
   output_delimiter_param,
   omit_output_row_id_param,
-  predict_resolution_error_param,
+  estimate_resolution_error_param,
+  estimate_resolution_error_freq_steps_param,
+  estimate_resolution_error_mag_steps_param,
   use_incremental_formulation_param,
   global_regularization_alpha_param,
   global_stabilization_tau_param,

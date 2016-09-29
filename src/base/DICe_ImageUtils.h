@@ -74,16 +74,20 @@ SinCos_Image_Deformer{
 public:
 
   /// constructor
-  /// \param num_steps the number of frequency steps to superimpose
+  /// \param freq_step the current frequency step
+  /// \param mag_step the current magnitude step
   /// \param use_superposition true if the sin curves should be added together
-  SinCos_Image_Deformer(const int_t num_steps,
+  SinCos_Image_Deformer(const int_t freq_step,
+    const int_t mag_step,
     bool use_superposition = false):
-    num_steps_(num_steps),
+      freq_step_(freq_step),
+      mag_step_(mag_step),
     use_superposition_(use_superposition){};
 
   /// parameterless constructor
   SinCos_Image_Deformer():
-    num_steps_(1),
+    freq_step_(1),
+    mag_step_(1),
     use_superposition_(false){};
 
   /// perform deformation on the image
@@ -148,8 +152,10 @@ public:
   ~SinCos_Image_Deformer(){};
 
 private:
-  /// number of frequency steps to impose
-  int_t num_steps_;
+  /// current frequency step
+  int_t freq_step_;
+  /// current magnitude step
+  int_t mag_step_;
   /// use superposition for each step
   bool use_superposition_;
 

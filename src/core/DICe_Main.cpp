@@ -246,10 +246,11 @@ int main(int argc, char *argv[]) {
     std::string file_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
 
     // if the user selects predict_resolution_error option, an error analysis is performed and the actual analysis is skipped
-    if(correlation_params->get<int_t>(DICe::predict_resolution_error,-1)>0){
+    if(correlation_params->get<bool>(DICe::estimate_resolution_error,false)){
       file_prefix = "DICe_error_estimation_solution";
-      const int_t num_steps = correlation_params->get<int_t>(DICe::predict_resolution_error);
-      schema->estimate_resolution_error(num_steps,output_folder,file_prefix,outStream);
+      const int_t num_steps = correlation_params->get<int_t>(DICe::estimate_resolution_error_freq_steps,1);
+      const int_t num_mags = correlation_params->get<int_t>(DICe::estimate_resolution_error_mag_steps,1);
+      schema->estimate_resolution_error(num_steps,num_mags,output_folder,file_prefix,outStream);
       DICe::finalize();
       return 0;
     }

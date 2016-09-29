@@ -90,15 +90,15 @@ void SinCos_Image_Deformer::compute_deformation(const scalar_t & coord_x,
   bx = 0.0;
   by = 0.0;
   if(use_superposition_){
-    for(int_t i=0;i<num_steps_;++i){
+    for(int_t i=0;i<freq_step_;++i){
       const scalar_t beta = (i+1)*DICE_PI/L;
       bx += sin(beta*coord_x)*cos(beta*coord_y)*0.5/(i+1);
       by += -cos(beta*coord_x)*sin(beta*coord_y)*0.5/(i+1);
     }
   }else{
-    const scalar_t beta = (num_steps_+1)*DICE_PI/L;
-    bx = sin(beta*coord_x)*cos(beta*coord_y);
-    by = -cos(beta*coord_x)*sin(beta*coord_y);
+    const scalar_t beta = (freq_step_+1)*DICE_PI/L;
+    bx = sin(beta*coord_x)*cos(beta*coord_y)*0.25*(mag_step_+1);
+    by = -cos(beta*coord_x)*sin(beta*coord_y)*0.25*(mag_step_+1);
   }
 }
 
@@ -116,7 +116,7 @@ void SinCos_Image_Deformer::compute_deriv_deformation(const scalar_t & coord_x,
   byx = 0.0;
   byy = 0.0;
   if(use_superposition_){
-    for(int_t i=0;i<num_steps_;++i){
+    for(int_t i=0;i<freq_step_;++i){
       const scalar_t beta = (i+1)*DICE_PI/L;
       bxx += beta*cos(beta*coord_x)*cos(beta*coord_y)*0.5/(i+1);
       bxy += -beta*sin(beta*coord_x)*sin(beta*coord_y)*0.5/(i+1);
@@ -125,11 +125,11 @@ void SinCos_Image_Deformer::compute_deriv_deformation(const scalar_t & coord_x,
     }
   }
   else{
-    const scalar_t beta = (num_steps_+1)*DICE_PI/L;
-    bxx = beta*cos(beta*coord_x)*cos(beta*coord_y);
-    bxy = -beta*sin(beta*coord_x)*sin(beta*coord_y);
-    byx = beta*sin(beta*coord_x)*sin(beta*coord_y);
-    byy = -beta*cos(beta*coord_x)*cos(beta*coord_y);
+    const scalar_t beta = (freq_step_+1)*DICE_PI/L;
+    bxx = beta*cos(beta*coord_x)*cos(beta*coord_y)*0.25*(mag_step_+1);
+    bxy = -beta*sin(beta*coord_x)*sin(beta*coord_y)*0.25*(mag_step_+1);
+    byx = beta*sin(beta*coord_x)*sin(beta*coord_y)*0.25*(mag_step_+1);
+    byy = -beta*cos(beta*coord_x)*cos(beta*coord_y)*0.25*(mag_step_+1);
   }
 }
 

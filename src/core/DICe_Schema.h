@@ -1035,10 +1035,12 @@ public:
 
   /// estimate the error in the displacement resolution and strain
   /// \param num_steps number of frequency profiles to cycle through
+  /// \param num_mags number of magnitude profiles to cycle through
   /// \param output_folder where to place the output files
   /// \param prefix the file prefix to use for output files
   /// \param outStream output stream to write screen output to
   void estimate_resolution_error(const int num_steps,
+    const int num_mags,
     std::string & output_folder,
     std::string & prefix,
     Teuchos::RCP<std::ostream> & outStream);
