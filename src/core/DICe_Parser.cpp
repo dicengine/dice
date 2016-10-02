@@ -91,6 +91,7 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
                        ("timing,t","Print timing statistics to screen")
                        ("input,i",po::value<std::string>(),"XML input file name <filename>.xml")
                        ("generate,g",po::value<std::string>()->implicit_value("dice"),"Create XML input file templates")
+                       ("stats,s","Print field statistics to screen")
                        ;
 
   // Parse the command line options
@@ -151,6 +152,11 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   // Print timing statistics?
   if(vm.count("timing")){
     inputParams->set(DICe::print_timing,true);
+  }
+
+  // Print timing statistics?
+  if(vm.count("stats")){
+    inputParams->set(DICe::print_stats,true);
   }
 
   Analysis_Type analysis_type = LOCAL_DIC;

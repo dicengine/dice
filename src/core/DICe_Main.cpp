@@ -324,6 +324,11 @@ int main(int argc, char *argv[]) {
       //  schema->write_control_points_image("RegionOfInterest");
       //}
       schema->post_execution_tasks();
+
+      // print the timing data with or without verbose flag
+      if(input_params->get<bool>(DICe::print_stats,false)){
+        schema->mesh()->print_field_stats();
+      }
     } // image loop
 
     schema->write_stats(output_folder,file_prefix);

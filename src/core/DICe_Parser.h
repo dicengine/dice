@@ -77,6 +77,8 @@ const char* const image_edge_buffer_size = "image_edge_buffer_size";
 /// Input parameter
 const char* const print_timing = "print_timing";
 /// Input parameter
+const char* const print_stats = "print_stats";
+/// Input parameter
 const char* const correlation_parameters_file = "correlation_parameters_file";
 /// Input parameter
 const char* const physics_parameters_file = "physics_parameters_file";
