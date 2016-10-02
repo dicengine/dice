@@ -13,6 +13,7 @@ SET(DICE_COMP_LIBS
   dicefft
   dicecine
 )
+include_directories(${Boost_INCLUDE_DIRS} COMPONENTS gil program_options REQUIRED)
 
 # glob all the cpp files
 FILE ( GLOB test_cpp_files "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
