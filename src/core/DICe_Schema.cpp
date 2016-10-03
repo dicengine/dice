@@ -2052,17 +2052,43 @@ Schema::estimate_resolution_error(const int num_steps,
     fclose(infoFilePtr);
   }
   const int_t spa_dim = mesh_->spatial_dimension();
-  // create an image deformer class
-  for(int_t mag=0;mag<num_mags;++mag){
-    for(int_t step=0;step<num_steps;++step){
+  for(int_t step=0;step<num_steps;++step){
+    // reset the displacements between frequency updates, otherwise the existing solution makes a nice initial guess
+    if(is_subset_based){
+      mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS)->put_scalar(0.0);
+      mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS)->put_scalar(0.0);
+    }else{
+      mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS)->put_scalar(0.0);
+    }
+    for(int_t mag=0;mag<num_mags;++mag){
       DEBUG_MSG("Processing magitude " << mag << " step " << step);
+      // create an image deformer class
       Teuchos::RCP<SinCos_Image_Deformer> deformer = Teuchos::rcp(new SinCos_Image_Deformer(step,mag));
-      Teuchos::RCP<Image> def_img = deformer->deform_image(ref_img());
-      if(proc_id==0){
-        std::stringstream sincos_name;
-        sincos_name << "sincos_image_" << mag << "_" << step << ".tif";
-        def_img->write(sincos_name.str());
+      std::stringstream sincos_name;
+      Teuchos::RCP<Image> def_img;
+      std::stringstream amp_ss;
+      std::stringstream per_ss;
+      amp_ss << deformer->amplitude();
+      std::string amp_s = amp_ss.str();
+      std::replace( amp_s.begin(), amp_s.end(), '.', 'p'); // replace dots with p for file name
+      per_ss << deformer->period();
+      std::string per_s = per_ss.str();
+      std::replace( per_s.begin(), per_s.end(), '.', 'p'); // replace dots with p for file name
+      sincos_name << "sincos_amp_" << std::setprecision(4) << amp_s << "_period_" << std::setprecision(4) << per_s << ".tif";
+
+      // check to see if the deformed image already exists:
+      std::ifstream f(sincos_name.str().c_str());
+      if(f.good()){
+        DEBUG_MSG("** Using previously saved image");
+        def_img = Teuchos::rcp(new DICe::Image(sincos_name.str().c_str()));
+      }else{
+        DEBUG_MSG("** Generating new image");
+        def_img = deformer->deform_image(ref_img());
+        if(proc_id==0){
+          def_img->write(sincos_name.str());
+        }
       }
+
       // set the deformed image for the schema
       set_def_image(def_img);
       int_t corr_error = execute_correlation();
@@ -2072,6 +2098,7 @@ Schema::estimate_resolution_error(const int num_steps,
 
       // gather all owned fields here
       Teuchos::RCP<MultiField> coords = mesh_->get_overlap_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
+      Teuchos::RCP<MultiField> sigma = mesh_->get_overlap_field(DICe::mesh::field_enums::SIGMA_FS);
       Teuchos::RCP<MultiField> disp;
       if(is_subset_based){
         Teuchos::RCP<MultiField> disp_x = mesh_->get_overlap_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
@@ -2105,11 +2132,13 @@ Schema::estimate_resolution_error(const int num_steps,
       scalar_t hinfy_error = 0.0;
       scalar_t avgx_error = 0.0;
       scalar_t avgy_error = 0.0;
+      int_t num_failed = 0;
       for(int_t i=0;i<global_num_subsets_;++i){
         const scalar_t x = coords->local_value(i*spa_dim+0);
         const scalar_t y = coords->local_value(i*spa_dim+1);
         const scalar_t u = disp->local_value(i*spa_dim+0);
         const scalar_t v = disp->local_value(i*spa_dim+1);
+        const scalar_t s = sigma->local_value(i);
         scalar_t e_x;
         scalar_t e_y;
         deformer->compute_displacement_error(x,y,u,v,e_x,e_y);
@@ -2122,19 +2151,24 @@ Schema::estimate_resolution_error(const int num_steps,
           exact_disp->local_value(lid*spa_dim+0) = eu;
           exact_disp->local_value(lid*spa_dim+1) = ev;
         }
-        h1x_error += e_x;
-        h1y_error += e_y;
-        avgx_error += std::sqrt(e_x);
-        avgy_error += std::sqrt(e_y);
-        if(e_x > hinfx_error) hinfx_error = e_x;
-        if(e_y > hinfy_error) hinfy_error = e_y;
+        if(s==-1.0){
+          num_failed++;
+        }else{
+          h1x_error += e_x;
+          h1y_error += e_y;
+          avgx_error += std::sqrt(e_x);
+          avgy_error += std::sqrt(e_y);
+          if(e_x > hinfx_error) hinfx_error = e_x;
+          if(e_y > hinfy_error) hinfy_error = e_y;
+        }
       }
       h1x_error = std::sqrt(h1x_error);
       h1y_error = std::sqrt(h1y_error);
       hinfx_error = std::sqrt(hinfx_error);
       hinfy_error = std::sqrt(hinfy_error);
-      avgx_error /= global_num_subsets_;
-      avgy_error /= global_num_subsets_;
+      const scalar_t denom = num_failed==global_num_subsets_ ? 0.0: 1.0/(global_num_subsets_ - num_failed);
+      avgx_error *= denom;
+      avgy_error *= denom;
       scalar_t std_dev_x = 0.0;
       scalar_t std_dev_y = 0.0;
       for(int_t i=0;i<global_num_subsets_;++i){
@@ -2142,17 +2176,24 @@ Schema::estimate_resolution_error(const int num_steps,
         const scalar_t y = coords->local_value(i*spa_dim+1);
         const scalar_t u = disp->local_value(i*spa_dim+0);
         const scalar_t v = disp->local_value(i*spa_dim+1);
+        const scalar_t s = sigma->local_value(i);
         scalar_t e_x;
         scalar_t e_y;
         deformer->compute_displacement_error(x,y,u,v,e_x,e_y);
         e_x = std::sqrt(e_x);
         e_y = std::sqrt(e_y);
-        std_dev_x += (e_x - avgx_error)*(e_x - avgx_error);
-        std_dev_y += (e_y - avgy_error)*(e_y - avgy_error);
+        if(s!=-1.0){
+          std_dev_x += (e_x - avgx_error)*(e_x - avgx_error);
+          std_dev_y += (e_y - avgy_error)*(e_y - avgy_error);
+        }
       }
-      std_dev_x = std::sqrt(1.0/global_num_subsets_*std_dev_x);
-      std_dev_y = std::sqrt(1.0/global_num_subsets_*std_dev_y);
-      result_stream << "MAG " << std::setw(3) << mag << " STEP " << std::setw(3) <<  step << " DISP ERRORS H_1 x: " << std::setw(8) << h1x_error << " H_1 y: " << std::setw(8) << h1y_error <<
+      const scalar_t factor = num_failed==global_num_subsets_ ? 0.0: 1.0/(global_num_subsets_ - num_failed);
+      std_dev_x = std::sqrt(factor*std_dev_x);
+      std_dev_y = std::sqrt(factor*std_dev_y);
+
+      result_stream << "PERIOD " << std::setw(4) << std::setprecision(4) << deformer->period() << " AMPLITUDE " << std::setw(4) << std::setprecision(4) << deformer->amplitude() <<
+          " num failed: " << num_failed <<
+          " DISP ERRORS H_1 x: " << std::setw(8) << h1x_error << " H_1 y: " << std::setw(8) << h1y_error <<
           " H_inf x: " << std::setw(8) << hinfx_error << " H_inf error y: " << std::setw(8) << hinfy_error << " std_dev x: " << std::setw(8) << std_dev_x <<
           " std_dev y: " << std::setw(8) << std_dev_y;// << std::endl;
 
@@ -2174,6 +2215,7 @@ Schema::estimate_resolution_error(const int num_steps,
         for(int_t i=0;i<global_num_subsets_;++i){
           const scalar_t x = coords->local_value(i*spa_dim+0);
           const scalar_t y = coords->local_value(i*spa_dim+1);
+          const scalar_t s = sigma->local_value(i);
           scalar_t e_x_vsg = 0.0;
           scalar_t e_y_vsg = 0.0;
           if(has_vsg){
@@ -2201,31 +2243,34 @@ Schema::estimate_resolution_error(const int num_steps,
             exact_strain_xy->local_value(lid) = 0.5*(exact_xy + exact_yx + exact_xy*exact_xy + exact_yx*exact_yx);
             exact_strain_yy->local_value(lid) = 0.5*(2.0*exact_yy + exact_yy*exact_yy + exact_xy*exact_xy);
           }
-          sh1x_error_vsg += e_x_vsg;
-          sh1y_error_vsg += e_y_vsg;
-          savgx_error_vsg += std::sqrt(e_x_vsg);
-          savgy_error_vsg += std::sqrt(e_y_vsg);
-          if(e_x_vsg > shinfx_error_vsg) shinfx_error_vsg = e_x_vsg;
-          if(e_y_vsg > shinfy_error_vsg) shinfy_error_vsg = e_y_vsg;
-          sh1x_error_nlvc += e_x_nlvc;
-          sh1y_error_nlvc += e_y_nlvc;
-          savgx_error_nlvc += std::sqrt(e_x_nlvc);
-          savgy_error_nlvc += std::sqrt(e_y_nlvc);
-          if(e_x_nlvc > shinfx_error_nlvc) shinfx_error_nlvc = e_x_nlvc;
-          if(e_y_nlvc > shinfy_error_nlvc) shinfy_error_nlvc = e_y_nlvc;
+          if(s!=-1.0){
+            sh1x_error_vsg += e_x_vsg;
+            sh1y_error_vsg += e_y_vsg;
+            savgx_error_vsg += std::sqrt(e_x_vsg);
+            savgy_error_vsg += std::sqrt(e_y_vsg);
+            if(e_x_vsg > shinfx_error_vsg) shinfx_error_vsg = e_x_vsg;
+            if(e_y_vsg > shinfy_error_vsg) shinfy_error_vsg = e_y_vsg;
+            sh1x_error_nlvc += e_x_nlvc;
+            sh1y_error_nlvc += e_y_nlvc;
+            savgx_error_nlvc += std::sqrt(e_x_nlvc);
+            savgy_error_nlvc += std::sqrt(e_y_nlvc);
+            if(e_x_nlvc > shinfx_error_nlvc) shinfx_error_nlvc = e_x_nlvc;
+            if(e_y_nlvc > shinfy_error_nlvc) shinfy_error_nlvc = e_y_nlvc;
+          }
         }
         sh1x_error_vsg = std::sqrt(sh1x_error_vsg);
         sh1y_error_vsg = std::sqrt(sh1y_error_vsg);
         shinfx_error_vsg = std::sqrt(shinfx_error_vsg);
         shinfy_error_vsg = std::sqrt(shinfy_error_vsg);
-        savgx_error_vsg /= global_num_subsets_;
-        savgy_error_vsg /= global_num_subsets_;
+
+        savgx_error_vsg *= denom;
+        savgy_error_vsg *= denom;
         sh1x_error_nlvc = std::sqrt(sh1x_error_nlvc);
         sh1y_error_nlvc = std::sqrt(sh1y_error_nlvc);
         shinfx_error_nlvc = std::sqrt(shinfx_error_nlvc);
         shinfy_error_nlvc = std::sqrt(shinfy_error_nlvc);
-        savgx_error_nlvc /= global_num_subsets_;
-        savgy_error_nlvc /= global_num_subsets_;
+        savgx_error_nlvc *= denom;
+        savgy_error_nlvc *= denom;
         scalar_t std_dev_sx_vsg = 0.0;
         scalar_t std_dev_sy_vsg = 0.0;
         scalar_t std_dev_sx_nlvc = 0.0;
@@ -2233,6 +2278,7 @@ Schema::estimate_resolution_error(const int num_steps,
         for(int_t i=0;i<global_num_subsets_;++i){
           const scalar_t x = coords->local_value(i*spa_dim+0);
           const scalar_t y = coords->local_value(i*spa_dim+1);
+          const scalar_t s = sigma->local_value(i);
           scalar_t e_x_vsg = 0.0;
           scalar_t e_y_vsg = 0.0;
           if(has_vsg){
@@ -2247,19 +2293,21 @@ Schema::estimate_resolution_error(const int num_steps,
             const scalar_t eyy_nlvc = nlvc_yy->local_value(i);
             deformer->compute_deriv_error(x,y,exx_nlvc,eyy_nlvc,e_x_nlvc,e_y_nlvc);
           }
-          e_x_vsg = std::sqrt(e_x_vsg);
-          e_y_vsg = std::sqrt(e_y_vsg);
-          std_dev_sx_vsg += (e_x_vsg - savgx_error_vsg)*(e_x_vsg - savgx_error_vsg);
-          std_dev_sy_vsg += (e_y_vsg - savgy_error_vsg)*(e_y_vsg - savgy_error_vsg);
-          e_x_nlvc = std::sqrt(e_x_nlvc);
-          e_y_nlvc = std::sqrt(e_y_nlvc);
-          std_dev_sx_nlvc += (e_x_nlvc - savgx_error_nlvc)*(e_x_nlvc - savgx_error_nlvc);
-          std_dev_sy_nlvc += (e_y_nlvc - savgy_error_nlvc)*(e_y_nlvc - savgy_error_nlvc);
+          if(s!=-1.0){
+            e_x_vsg = std::sqrt(e_x_vsg);
+            e_y_vsg = std::sqrt(e_y_vsg);
+            std_dev_sx_vsg += (e_x_vsg - savgx_error_vsg)*(e_x_vsg - savgx_error_vsg);
+            std_dev_sy_vsg += (e_y_vsg - savgy_error_vsg)*(e_y_vsg - savgy_error_vsg);
+            e_x_nlvc = std::sqrt(e_x_nlvc);
+            e_y_nlvc = std::sqrt(e_y_nlvc);
+            std_dev_sx_nlvc += (e_x_nlvc - savgx_error_nlvc)*(e_x_nlvc - savgx_error_nlvc);
+            std_dev_sy_nlvc += (e_y_nlvc - savgy_error_nlvc)*(e_y_nlvc - savgy_error_nlvc);
+          }
         }
-        std_dev_sx_vsg = std::sqrt(1.0/global_num_subsets_*std_dev_sx_vsg);
-        std_dev_sy_vsg = std::sqrt(1.0/global_num_subsets_*std_dev_sy_vsg);
-        std_dev_sx_nlvc = std::sqrt(1.0/global_num_subsets_*std_dev_sx_nlvc);
-        std_dev_sy_nlvc = std::sqrt(1.0/global_num_subsets_*std_dev_sy_nlvc);
+        std_dev_sx_vsg = std::sqrt(factor*std_dev_sx_vsg);
+        std_dev_sy_vsg = std::sqrt(factor*std_dev_sy_vsg);
+        std_dev_sx_nlvc = std::sqrt(factor*std_dev_sx_nlvc);
+        std_dev_sy_nlvc = std::sqrt(factor*std_dev_sy_nlvc);
         if(has_vsg){
           result_stream << " VSG STRAIN ERRORS H_1 x: " << std::setw(8) << sh1x_error_vsg << " H_1 y: " << std::setw(8) << sh1y_error_vsg <<
               " H_inf x: " << std::setw(8) << shinfx_error_vsg << " H_inf error y: " << std::setw(8) << shinfy_error_vsg << " std_dev x: " << std::setw(8) << std_dev_sx_vsg <<

@@ -169,6 +169,19 @@ int main(int argc, char *argv[]) {
   *outStream << "running keys-opt" << std::endl;
   {
     boost::timer t;
+    std::vector<std::vector<intensity_t> > intens_cache(w*h,std::vector<intensity_t>(36,0.0));
+    // prefetch the neighbors
+//    for(int_t j=2;j<h-3;++j){
+//      for(int_t i=2;i<h-3;++i){
+//        int_t index = 0;
+//        for(int_t m=-2;m<=3;++m){
+//          for(int_t n=-2;n<=3;++n){
+//            intens_cache[j*w+i][index++] = intensities[(j+m)*w+(i+n)];
+//          }
+//        }
+//      }
+//    }
+
     std::vector<scalar_t> coeffs_x(6,0.0);
     std::vector<scalar_t> coeffs_y(6,0.0);
     scalar_t dx = 0.0;
@@ -202,9 +215,11 @@ int main(int argc, char *argv[]) {
           coeffs_y[4] = f1(2.0-dy);
           coeffs_y[5] = f2(3.0-dy);
           value = 0.0;
+          //int_t index = 0;
           for(m=0;m<6;++m){
             for(n=0;n<6;++n){
               value += coeffs_y[m]*coeffs_x[n]*intensities[(iy-2+m)*w + ix-2+n];
+              //value += coeffs_y[m]*coeffs_x[n]*intens_cache[iy*w + ix][index++];
             }
           }
           exact = intens(x,y);
@@ -219,6 +234,8 @@ int main(int argc, char *argv[]) {
     *outStream << "error:        " << error << std::endl;
     *outStream << "elapsed time: " << elapsed_time << std::endl;
   }
+
+  delete [] intensities;
 
   *outStream << "--- End test ---" << std::endl;
 

@@ -90,6 +90,15 @@ public:
     mag_step_(1),
     use_superposition_(false){};
 
+  /// returns the current amplitude
+  scalar_t amplitude(){
+    return (mag_step_+1)*0.25;
+  }
+  /// returns the current period
+  scalar_t period(){
+    return 1000.0/(freq_step_+1);
+  }
+
   /// perform deformation on the image
   /// returns a pointer to the deformed image
   /// \param ref_image the reference image
