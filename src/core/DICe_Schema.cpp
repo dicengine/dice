@@ -2060,6 +2060,7 @@ Schema::estimate_resolution_error(const int num_steps,
     }else{
       mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS)->put_scalar(0.0);
     }
+    mesh_->get_field(DICe::mesh::field_enums::SIGMA_FS)->put_scalar(0.0);
     for(int_t mag=0;mag<num_mags;++mag){
       DEBUG_MSG("Processing magitude " << mag << " step " << step);
       // create an image deformer class
