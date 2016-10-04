@@ -48,6 +48,16 @@
 
 namespace DICe {
 
+inline scalar_t keys_f0(const scalar_t & s){
+  return 1.33333333333333*s*s*s - 2.33333333333333*s*s+ 1.0;
+}
+inline scalar_t keys_f1(const scalar_t & s){
+  return -0.58333333333333*s*s*s + 3.0*s*s - 4.91666666666666*s + 2.5;
+}
+inline scalar_t keys_f2(const scalar_t & s){
+  return 0.08333333333333*s*s*s - 0.66666666666666*s*s + 1.75*s - 1.5;
+}
+
 Image::Image(const char * file_name,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
   offset_x_(0),
@@ -490,182 +500,107 @@ Image::interpolate_grad_y_bicubic(const scalar_t & local_x, const scalar_t & loc
 
 intensity_t
 Image::interpolate_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
-  int_t x1 = (int_t)local_x;
-  int_t y1 = (int_t)local_y;
+  static std::vector<scalar_t> coeffs_x(6,0.0);
+  static std::vector<scalar_t> coeffs_y(6,0.0);
+  static scalar_t dx = 0.0;
+  static scalar_t dy = 0.0;
+  static int_t ix=0,iy=0,m=0,n=0;
+  static intensity_t value=0.0;
+  ix = (int_t)local_x;
+  iy = (int_t)local_y;
   if(local_x<=2.5||local_x>=width_-3.5||local_y<=2.5||local_y>=height_-3.5)
     return this->interpolate_bilinear(local_x,local_y);
-
-  static scalar_t c1 = 4.0/3.0;
-  static scalar_t c2 = - 7.0/3.0;
-  static scalar_t c3 = -7.0/12.0;
-  static scalar_t c4 = - 59.0/12.0;
-  static scalar_t c5 = 15.0/6.0;
-  static scalar_t c6 = 1.0/12.0;
-  static scalar_t c7 = - 2.0/3.0;
-  static scalar_t c8 = 21.0/12.0;
-  static scalar_t c9 = -3.0/2.0;
-
-  if(local_x - x1 >= 0.5) x1++;
-  if(local_y - y1 >= 0.5) y1++;
-  // check that the global location is inside the image...
-  intensity_t intensity_value = 0.0;
-  // convolve all the pixels within + and - pixels of the point in question
-  scalar_t dy=0.0,dy2=0.0,dy3=0.0;
-  scalar_t dx=0.0,dx2=0.0,dx3=0.0;
-  scalar_t f0x=0.0,f0y=0.0;
-  for(int_t y=y1-3;y<=y1+3;++y){
-    dy = std::abs(local_y - y);
-    dy2=dy*dy;
-    dy3=dy2*dy;
-    f0y = 0.0;
-    if(dy <= 1.0){
-      f0y = c1*dy3 +c2*dy2 + 1.0;
-    }
-    else if(dy <= 2.0){
-      f0y = c3*dy3 + 3.0*dy2 +c4*dy + c5;
-    }
-    else if(dy <= 3.0){
-      f0y = c6*dy3 +c7*dy2 + c8*dy +c9;
-    }
-    for(int_t x=x1-3;x<=x1+3;++x){
-      // compute the f's of x and y
-      dx = std::abs(local_x - x);
-      dx2=dx*dx;
-      dx3=dx2*dx;
-      f0x = 0.0;
-      if(dx <= 1.0){
-        f0x = c1*dx3 +c2*dx2 + 1.0;
-      }
-      else if(dx <= 2.0){
-        f0x = c3*dx3 + 3.0*dx2 +c4*dx + c5;
-      }
-      else if(dx <= 3.0){
-        f0x = c6*dx3 +c7*dx2 + c8*dx +c9;
-      }
-      intensity_value += intensities_[y*width_+x]*f0x*f0y;
+  dx = local_x - ix;
+  dy = local_y - iy;
+  coeffs_x[0] = keys_f2(dx+2.0);
+  coeffs_x[1] = keys_f1(dx+1.0);
+  coeffs_x[2] = keys_f0(dx);
+  coeffs_x[3] = keys_f0(1.0-dx);
+  coeffs_x[4] = keys_f1(2.0-dx);
+  coeffs_x[5] = keys_f2(3.0-dx);
+  coeffs_y[0] = keys_f2(dy+2.0);
+  coeffs_y[1] = keys_f1(dy+1.0);
+  coeffs_y[2] = keys_f0(dy);
+  coeffs_y[3] = keys_f0(1.0-dy);
+  coeffs_y[4] = keys_f1(2.0-dy);
+  coeffs_y[5] = keys_f2(3.0-dy);
+  value = 0.0;
+  for(m=0;m<6;++m){
+    for(n=0;n<6;++n){
+      value += coeffs_y[m]*coeffs_x[n]*intensities_[(iy-2+m)*width_ + ix-2+n];
     }
   }
-  return intensity_value;
+  return value;
 }
 
 scalar_t
 Image::interpolate_grad_x_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
-  int_t x1 = (int_t)local_x;
-  int_t y1 = (int_t)local_y;
+  static std::vector<scalar_t> coeffs_x(6,0.0);
+  static std::vector<scalar_t> coeffs_y(6,0.0);
+  static scalar_t dx = 0.0;
+  static scalar_t dy = 0.0;
+  static int_t ix=0,iy=0,m=0,n=0;
+  static intensity_t value=0.0;
+  ix = (int_t)local_x;
+  iy = (int_t)local_y;
   if(local_x<=2.5||local_x>=width_-3.5||local_y<=2.5||local_y>=height_-3.5)
     return this->interpolate_grad_x_bilinear(local_x,local_y);
-
-  static scalar_t c1 = 4.0/3.0;
-  static scalar_t c2 = - 7.0/3.0;
-  static scalar_t c3 = -7.0/12.0;
-  static scalar_t c4 = - 59.0/12.0;
-  static scalar_t c5 = 15.0/6.0;
-  static scalar_t c6 = 1.0/12.0;
-  static scalar_t c7 = - 2.0/3.0;
-  static scalar_t c8 = 21.0/12.0;
-  static scalar_t c9 = -3.0/2.0;
-
-  if(local_x - x1 >= 0.5) x1++;
-  if(local_y - y1 >= 0.5) y1++;
-  // check that the global location is inside the image...
-  scalar_t intensity_value = 0.0;
-  // convolve all the pixels within + and - pixels of the point in question
-  scalar_t dy=0.0,dy2=0.0,dy3=0.0;
-  scalar_t dx=0.0,dx2=0.0,dx3=0.0;
-  scalar_t f0x=0.0,f0y=0.0;
-  for(int_t y=y1-3;y<=y1+3;++y){
-    dy = std::abs(local_y - y);
-    dy2=dy*dy;
-    dy3=dy2*dy;
-    f0y = 0.0;
-    if(dy <= 1.0){
-      f0y = c1*dy3 +c2*dy2 + 1.0;
-    }
-    else if(dy <= 2.0){
-      f0y = c3*dy3 + 3.0*dy2 +c4*dy + c5;
-    }
-    else if(dy <= 3.0){
-      f0y = c6*dy3 +c7*dy2 + c8*dy +c9;
-    }
-    for(int_t x=x1-3;x<=x1+3;++x){
-      // compute the f's of x and y
-      dx = std::abs(local_x - x);
-      dx2=dx*dx;
-      dx3=dx2*dx;
-      f0x = 0.0;
-      if(dx <= 1.0){
-        f0x = c1*dx3 +c2*dx2 + 1.0;
-      }
-      else if(dx <= 2.0){
-        f0x = c3*dx3 + 3.0*dx2 +c4*dx + c5;
-      }
-      else if(dx <= 3.0){
-        f0x = c6*dx3 +c7*dx2 + c8*dx +c9;
-      }
-      intensity_value += grad_x_[y*width_+x]*f0x*f0y;
+  dx = local_x - ix;
+  dy = local_y - iy;
+  coeffs_x[0] = keys_f2(dx+2.0);
+  coeffs_x[1] = keys_f1(dx+1.0);
+  coeffs_x[2] = keys_f0(dx);
+  coeffs_x[3] = keys_f0(1.0-dx);
+  coeffs_x[4] = keys_f1(2.0-dx);
+  coeffs_x[5] = keys_f2(3.0-dx);
+  coeffs_y[0] = keys_f2(dy+2.0);
+  coeffs_y[1] = keys_f1(dy+1.0);
+  coeffs_y[2] = keys_f0(dy);
+  coeffs_y[3] = keys_f0(1.0-dy);
+  coeffs_y[4] = keys_f1(2.0-dy);
+  coeffs_y[5] = keys_f2(3.0-dy);
+  value = 0.0;
+  for(m=0;m<6;++m){
+    for(n=0;n<6;++n){
+      value += coeffs_y[m]*coeffs_x[n]*grad_x_[(iy-2+m)*width_ + ix-2+n];
     }
   }
-  return intensity_value;
+  return value;
 }
 
 scalar_t
 Image::interpolate_grad_y_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
-  int_t x1 = (int_t)local_x;
-  int_t y1 = (int_t)local_y;
+  static std::vector<scalar_t> coeffs_x(6,0.0);
+  static std::vector<scalar_t> coeffs_y(6,0.0);
+  static scalar_t dx = 0.0;
+  static scalar_t dy = 0.0;
+  static int_t ix=0,iy=0,m=0,n=0;
+  static intensity_t value=0.0;
+  ix = (int_t)local_x;
+  iy = (int_t)local_y;
   if(local_x<=2.5||local_x>=width_-3.5||local_y<=2.5||local_y>=height_-3.5)
     return this->interpolate_grad_y_bilinear(local_x,local_y);
-
-  static scalar_t c1 = 4.0/3.0;
-  static scalar_t c2 = - 7.0/3.0;
-  static scalar_t c3 = -7.0/12.0;
-  static scalar_t c4 = - 59.0/12.0;
-  static scalar_t c5 = 15.0/6.0;
-  static scalar_t c6 = 1.0/12.0;
-  static scalar_t c7 = - 2.0/3.0;
-  static scalar_t c8 = 21.0/12.0;
-  static scalar_t c9 = -3.0/2.0;
-
-  if(local_x - x1 >= 0.5) x1++;
-  if(local_y - y1 >= 0.5) y1++;
-  // check that the global location is inside the image...
-  scalar_t intensity_value = 0.0;
-  // convolve all the pixels within + and - pixels of the point in question
-  scalar_t dy=0.0,dy2=0.0,dy3=0.0;
-  scalar_t dx=0.0,dx2=0.0,dx3=0.0;
-  scalar_t f0x=0.0,f0y=0.0;
-  for(int_t y=y1-3;y<=y1+3;++y){
-    dy = std::abs(local_y - y);
-    dy2=dy*dy;
-    dy3=dy2*dy;
-    f0y = 0.0;
-    if(dy <= 1.0){
-      f0y = c1*dy3 +c2*dy2 + 1.0;
-    }
-    else if(dy <= 2.0){
-      f0y = c3*dy3 + 3.0*dy2 +c4*dy + c5;
-    }
-    else if(dy <= 3.0){
-      f0y = c6*dy3 +c7*dy2 + c8*dy +c9;
-    }
-    for(int_t x=x1-3;x<=x1+3;++x){
-      // compute the f's of x and y
-      dx = std::abs(local_x - x);
-      dx2=dx*dx;
-      dx3=dx2*dx;
-      f0x = 0.0;
-      if(dx <= 1.0){
-        f0x = c1*dx3 +c2*dx2 + 1.0;
-      }
-      else if(dx <= 2.0){
-        f0x = c3*dx3 + 3.0*dx2 +c4*dx + c5;
-      }
-      else if(dx <= 3.0){
-        f0x = c6*dx3 +c7*dx2 + c8*dx +c9;
-      }
-      intensity_value += grad_y_[y*width_+x]*f0x*f0y;
+  dx = local_x - ix;
+  dy = local_y - iy;
+  coeffs_x[0] = keys_f2(dx+2.0);
+  coeffs_x[1] = keys_f1(dx+1.0);
+  coeffs_x[2] = keys_f0(dx);
+  coeffs_x[3] = keys_f0(1.0-dx);
+  coeffs_x[4] = keys_f1(2.0-dx);
+  coeffs_x[5] = keys_f2(3.0-dx);
+  coeffs_y[0] = keys_f2(dy+2.0);
+  coeffs_y[1] = keys_f1(dy+1.0);
+  coeffs_y[2] = keys_f0(dy);
+  coeffs_y[3] = keys_f0(1.0-dy);
+  coeffs_y[4] = keys_f1(2.0-dy);
+  coeffs_y[5] = keys_f2(3.0-dy);
+  value = 0.0;
+  for(m=0;m<6;++m){
+    for(n=0;n<6;++n){
+      value += coeffs_y[m]*coeffs_x[n]*grad_y_[(iy-2+m)*width_ + ix-2+n];
     }
   }
-  return intensity_value;
+  return value;
 }
 
 void

@@ -57,16 +57,6 @@ intensity_t intens(const scalar_t & x, const scalar_t & y){
   return (255.0*0.5) + 0.5*255.0*std::sin(gamma*x)*std::cos(gamma*y);
 }
 
-inline scalar_t f0(const scalar_t & s){
-  return 1.33333333333333*s*s*s - 2.33333333333333*s*s+ 1.0;
-}
-inline scalar_t f1(const scalar_t & s){
-  return -0.58333333333333*s*s*s + 3.0*s*s - 4.91666666666666*s + 2.5;
-}
-inline scalar_t f2(const scalar_t & s){
-  return 0.08333333333333*s*s*s - 0.66666666666666*s*s + 1.75*s - 1.5;
-}
-
 int main(int argc, char *argv[]) {
 
   DICe::initialize(argc, argv);
@@ -123,6 +113,10 @@ int main(int argc, char *argv[]) {
     *outStream << "error:        " << error << std::endl;
     *outStream << "elapsed time: " << elapsed_time << std::endl;
   }
+  if(error > 2000.0){
+    *outStream << "Error: bilinear interpolant accumulated error too high" << std::endl;
+    errorFlag++;
+  }
   error = 0.0;
   *outStream << "running bicubic" << std::endl;
   {
@@ -143,6 +137,10 @@ int main(int argc, char *argv[]) {
     const scalar_t elapsed_time = t.elapsed();
     *outStream << "error:        " << error << std::endl;
     *outStream << "elapsed time: " << elapsed_time << std::endl;
+  }
+  if(error > 50.0){
+    *outStream << "Error: bicubic interpolant accumulated error too high" << std::endl;
+    errorFlag++;
   }
   error = 0.0;
   *outStream << "running keys-fourth" << std::endl;
@@ -165,74 +163,9 @@ int main(int argc, char *argv[]) {
     *outStream << "error:        " << error << std::endl;
     *outStream << "elapsed time: " << elapsed_time << std::endl;
   }
-  error = 0.0;
-  *outStream << "running keys-opt" << std::endl;
-  {
-    boost::timer t;
-    std::vector<std::vector<intensity_t> > intens_cache(w*h,std::vector<intensity_t>(36,0.0));
-    // prefetch the neighbors
-//    for(int_t j=2;j<h-3;++j){
-//      for(int_t i=2;i<h-3;++i){
-//        int_t index = 0;
-//        for(int_t m=-2;m<=3;++m){
-//          for(int_t n=-2;n<=3;++n){
-//            intens_cache[j*w+i][index++] = intensities[(j+m)*w+(i+n)];
-//          }
-//        }
-//      }
-//    }
-
-    std::vector<scalar_t> coeffs_x(6,0.0);
-    std::vector<scalar_t> coeffs_y(6,0.0);
-    scalar_t dx = 0.0;
-    scalar_t dy = 0.0;
-    scalar_t x = 0.0;
-    scalar_t y = 0.0;
-    int_t ix = 0;
-    int_t iy = 0;
-    int_t m=0,n=0;
-    intensity_t value = 0.0;
-    scalar_t exact = 0.0;
-    for(int_t it=0;it<100;++it){
-      for(int_t j=10;j<h-10;++j){
-        for(int_t i=10;i<h-10;++i){
-          x = i + distribution(generator);
-          y = j + distribution(generator);
-          ix = (int_t)x;
-          iy = (int_t)y;
-          dx = x - ix;
-          dy = y - iy;
-          coeffs_x[0] = f2(dx+2.0);
-          coeffs_x[1] = f1(dx+1.0);
-          coeffs_x[2] = f0(dx);
-          coeffs_x[3] = f0(1.0-dx);
-          coeffs_x[4] = f1(2.0-dx);
-          coeffs_x[5] = f2(3.0-dx);
-          coeffs_y[0] = f2(dy+2.0);
-          coeffs_y[1] = f1(dy+1.0);
-          coeffs_y[2] = f0(dy);
-          coeffs_y[3] = f0(1.0-dy);
-          coeffs_y[4] = f1(2.0-dy);
-          coeffs_y[5] = f2(3.0-dy);
-          value = 0.0;
-          //int_t index = 0;
-          for(m=0;m<6;++m){
-            for(n=0;n<6;++n){
-              value += coeffs_y[m]*coeffs_x[n]*intensities[(iy-2+m)*w + ix-2+n];
-              //value += coeffs_y[m]*coeffs_x[n]*intens_cache[iy*w + ix][index++];
-            }
-          }
-          exact = intens(x,y);
-          //std::cout << " exact " << exact << " value " << value << std::endl;
-          error += (value - exact)*(value - exact);
-        }
-      }
-    }
-    error = std::sqrt(error);
-    // timing info
-    const scalar_t elapsed_time = t.elapsed();
-    *outStream << "error:        " << error << std::endl;
-    *outStream << "elapsed time: " << elapsed_time << std::endl;
+  if(error > 2.0){
+    *outStream << "Error: keys_fourth interpolant accumulated error too high" << std::endl;
+    errorFlag++;
   }
 
   delete [] intensities;
