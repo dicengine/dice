@@ -951,7 +951,7 @@ Mesh::print_field_info()
   std::cout <<  "  --------------------------------------------------------------------------------------" << std::endl;
 }
 
-void
+scalar_t
 Mesh::field_stats(const field_enums::Field_Spec field_spec,
   scalar_t & min,
   scalar_t & max,
@@ -965,45 +965,119 @@ Mesh::field_stats(const field_enums::Field_Spec field_spec,
   TEUCHOS_TEST_FOR_EXCEPTION(field_it==field_registry_.end(),std::runtime_error,
     "Error, invalid field " << field_spec.get_name_label());
 
+  const int_t p_rank = comm_->get_rank();
+
+  scalar_t failure_rate = 0.0;
   max = std::numeric_limits<scalar_t>::lowest();
   min = std::numeric_limits<scalar_t>::max();
   avg = 0.0;
   std_dev = 0.0;
 
+  // Send the whole field to procesor 0
+
+  // create all on zero map
+  Teuchos::RCP<MultiField> field = field_it->second;
+  const int_t num_values = field->get_map()->get_num_global_elements();
+  Teuchos::Array<int_t> all_on_zero_ids;
+  if(p_rank==0){
+    all_on_zero_ids.resize(num_values);
+    for(int_t i=0;i<num_values;++i)
+       all_on_zero_ids[i] = i;
+  }
+  Teuchos::RCP<MultiField_Map> all_on_zero_map = Teuchos::rcp (new MultiField_Map(-1, all_on_zero_ids, 0, *comm_));
+  Teuchos::RCP<MultiField> all_on_zero_field = Teuchos::rcp( new MultiField(all_on_zero_map,1,true));
+
+  // create exporter with the map
+  MultiField_Exporter exporter(*all_on_zero_map,*field->get_map());
+  // export the field to zero
+  all_on_zero_field->do_import(field,exporter);
+
+  // analyze stats
+
+  const int_t num_points = all_on_zero_field->get_map()->get_num_local_elements();
+  TEUCHOS_TEST_FOR_EXCEPTION(num_points > 0 && p_rank > 0,std::runtime_error,"Error, only process zero should have any points here");
   if(field_spec.get_field_type()==DICe::mesh::field_enums::SCALAR_FIELD_TYPE){
     TEUCHOS_TEST_FOR_EXCEPTION(comp!=0,std::runtime_error,"Error, invalid comp for scalar field")
-    Teuchos::RCP<MultiField> field = field_it->second;
-    const int_t num_points = field->get_map()->get_num_local_elements();
     TEUCHOS_TEST_FOR_EXCEPTION(num_points<=0,std::runtime_error,"Error, num_points = 0");
     for(int_t i=0;i<num_points;++i){
-      avg += field->local_value(i);
-      if(field->local_value(i)>max) max = field->local_value(i);
-      if(field->local_value(i)<min) min = field->local_value(i);
+      avg += all_on_zero_field->local_value(i);
+      if(all_on_zero_field->local_value(i)>max) max = all_on_zero_field->local_value(i);
+      if(all_on_zero_field->local_value(i)<min) min = all_on_zero_field->local_value(i);
     }
-    avg /= num_points;
+    if(num_points > 0)
+      avg /= num_points;
     for(int_t i=0;i<num_points;++i){
-      std_dev += (field->local_value(i)-avg)*(field->local_value(i)-avg);
+      std_dev += (all_on_zero_field->local_value(i)-avg)*(all_on_zero_field->local_value(i)-avg);
     }
-    std_dev = std::sqrt(std_dev/num_points);
+    if(num_points > 0)
+      std_dev = std::sqrt(std_dev/num_points);
   }
-  else if(field_it->first.get_field_type()==DICe::mesh::field_enums::VECTOR_FIELD_TYPE){
+  else if(field_spec.get_field_type()==DICe::mesh::field_enums::VECTOR_FIELD_TYPE){
     TEUCHOS_TEST_FOR_EXCEPTION(comp!=0&&comp!=1,std::runtime_error,"Error, invalid comp for scalar field")
-    Teuchos::RCP<MultiField> field = get_field(field_it->first);
-    const int_t num_points = field->get_map()->get_num_local_elements();
-    TEUCHOS_TEST_FOR_EXCEPTION(num_points<=0,std::runtime_error,"Error, num_points = 0");
     for(int_t i=0;i<num_points/2;++i){
       int_t index = i*spatial_dimension() + comp;
-      avg += field->local_value(index);
-      if(field->local_value(index)>max) max = field->local_value(index);
-      if(field->local_value(index)<min) min = field->local_value(index);
+      avg += all_on_zero_field->local_value(index);
+      if(all_on_zero_field->local_value(index)>max) max = all_on_zero_field->local_value(index);
+      if(all_on_zero_field->local_value(index)<min) min = all_on_zero_field->local_value(index);
     }
-    avg /= num_points*0.5;
+    if(num_points > 0)
+      avg /= num_points*0.5;
     for(int_t i=0;i<num_points/2;++i){
       int_t index = i*spatial_dimension() + comp;
-      std_dev += (field->local_value(index)-avg)*(field->local_value(index)-avg);
+      std_dev += (all_on_zero_field->local_value(index)-avg)*(all_on_zero_field->local_value(index)-avg);
     }
-    std_dev = std::sqrt(std_dev/(0.5*num_points));
+    if(num_points > 0)
+      std_dev = std::sqrt(std_dev/(0.5*num_points));
   }
+  else{
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: unknown field type in stats call");
+  }
+
+  // communicate results back to dist procs
+
+  Teuchos::Array<int_t> results_on_zero_ids;
+  if(p_rank==0){
+    results_on_zero_ids.resize(4);
+    for(int_t i=0;i<4;++i)
+       results_on_zero_ids[i] = i;
+  }
+  // create a field to send out the results to the other procs:
+  Teuchos::RCP<MultiField_Map> results_on_zero_map = Teuchos::rcp (new MultiField_Map(-1, results_on_zero_ids, 0, *comm_));
+  Teuchos::RCP<MultiField> results_on_zero_field = Teuchos::rcp( new MultiField(results_on_zero_map,1,true));
+  // set the values on zero
+  if(p_rank==0){
+    results_on_zero_field->local_value(0) = min;
+    results_on_zero_field->local_value(1) = max;
+    results_on_zero_field->local_value(2) = avg;
+    results_on_zero_field->local_value(3) = std_dev;
+  }
+  // create the all on all map
+  Teuchos::Array<int_t> results_on_all_ids;
+  results_on_all_ids.resize(4);
+  for(int_t i=0;i<4;++i)
+    results_on_all_ids[i] = i;
+  // create a field to send out the results to the other procs:
+  Teuchos::RCP<MultiField_Map> results_on_all_map = Teuchos::rcp (new MultiField_Map(-1, results_on_all_ids, 0, *comm_));
+  Teuchos::RCP<MultiField> results_on_all_field = Teuchos::rcp( new MultiField(results_on_all_map,1,true));
+
+  // create exporter with the map
+  MultiField_Exporter exporter_res(*results_on_all_map,*results_on_zero_field->get_map());
+  // export the field to zero
+  results_on_all_field->do_import(results_on_zero_field,exporter_res);
+
+  if(p_rank==0){
+    TEUCHOS_TEST_FOR_EXCEPTION(results_on_all_field->local_value(0)!=min,std::runtime_error,"Error miscommunication of field stats across processors");
+    TEUCHOS_TEST_FOR_EXCEPTION(results_on_all_field->local_value(1)!=max,std::runtime_error,"Error miscommunication of field stats across processors");
+    TEUCHOS_TEST_FOR_EXCEPTION(results_on_all_field->local_value(2)!=avg,std::runtime_error,"Error miscommunication of field stats across processors");
+    TEUCHOS_TEST_FOR_EXCEPTION(results_on_all_field->local_value(3)!=std_dev,std::runtime_error,"Error miscommunication of field stats across processors");
+  }else{
+    min = results_on_all_field->local_value(0);
+    max = results_on_all_field->local_value(1);
+    avg = results_on_all_field->local_value(2);
+    std_dev = results_on_all_field->local_value(3);
+  }
+
+  return failure_rate;
 }
 
 void

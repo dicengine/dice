@@ -138,29 +138,62 @@ void SinCos_Image_Deformer::compute_displacement_error(const scalar_t & coord_x,
   const scalar_t & sol_x,
   const scalar_t & sol_y,
   scalar_t & error_x,
-  scalar_t & error_y){
+  scalar_t & error_y,
+  const bool use_mag,
+  const bool relative){
 
   scalar_t out_x = 0.0;
   scalar_t out_y = 0.0;
   compute_deformation(coord_x,coord_y,out_x,out_y);
-  error_x = (sol_x - out_x)*(sol_x - out_x);
-  error_y = (sol_y - out_y)*(sol_y - out_y);
+  if(use_mag){
+    error_x = (sol_x - out_x)*(sol_x - out_x);
+    error_y = (sol_y - out_y)*(sol_y - out_y);
+  }else{
+    error_x = sol_x - out_x;
+    error_y = sol_y - out_y;
+  }
+  if(relative){
+    error_x /= 0.25*(mag_step_+1);
+    error_y /= 0.25*(mag_step_+1);
+  }
 }
 
-void SinCos_Image_Deformer::compute_deriv_error(const scalar_t & coord_x,
+void SinCos_Image_Deformer::compute_lagrange_strain_error(const scalar_t & coord_x,
   const scalar_t & coord_y,
-  const scalar_t & sol_x,
-  const scalar_t & sol_y,
-  scalar_t & error_x,
-  scalar_t & error_y){
+  const scalar_t & sol_xx,
+  const scalar_t & sol_xy,
+  const scalar_t & sol_yy,
+  scalar_t & error_xx,
+  scalar_t & error_xy,
+  scalar_t & error_yy,
+  const bool use_mag,
+  const bool relative){
 
   scalar_t out_xx = 0.0;
   scalar_t out_xy = 0.0;
   scalar_t out_yx = 0.0;
   scalar_t out_yy = 0.0;
   compute_deriv_deformation(coord_x,coord_y,out_xx,out_xy,out_yx,out_yy);
-  error_x = (sol_x - out_xx)*(sol_x - out_xx);
-  error_y = (sol_y - out_yy)*(sol_y - out_yy);
+
+  const scalar_t strain_xx = 0.5*(2.0*out_xx + out_xx*out_xx + out_yx*out_yx);
+  const scalar_t strain_xy = 0.5*(out_xy + out_yx + out_xy*out_xy + out_yx*out_yx);
+  const scalar_t strain_yy = 0.5*(2.0*out_yy + out_yy*out_yy + out_xy*out_xy);
+
+  if(use_mag){
+    error_xx = (sol_xx - strain_xx)*(sol_xx - strain_xx);
+    error_xy = (sol_xy - strain_xy)*(sol_xy - strain_xy);
+    error_yy = (sol_yy - strain_yy)*(sol_yy - strain_yy);
+  }else{
+    error_xx = sol_xx - strain_xx;
+    error_xy = sol_xy - strain_xy;
+    error_yy = sol_yy - strain_yy;
+  }
+  if(relative){
+    scalar_t rel = (freq_step_+1)*DICE_PI/500.0*(0.25*(mag_step_+1));
+    error_xx /= rel;
+    error_xy /= rel;
+    error_yy /= rel;
+  }
 }
 
 Teuchos::RCP<Image>

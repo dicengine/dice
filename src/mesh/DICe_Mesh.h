@@ -989,13 +989,14 @@ public:
   void print_field_stats();
 
   /// compute the average value, min, max and std dev of a multifield
+  /// return value is the percent successful if a failure marker fields is specified
   /// \param field_spec the field to evaluate
   /// \param min the minimum value
   /// \param max the maximum value
   /// \param avg the average
   /// \param std_dev the standard deviation,
   /// \param comp the component if this is a vector field
-  void field_stats(const field_enums::Field_Spec field_spec,
+  scalar_t field_stats(const field_enums::Field_Spec field_spec,
     scalar_t & min,
     scalar_t & max,
     scalar_t & avg,

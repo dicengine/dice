@@ -135,27 +135,38 @@ public:
   /// \param sol_y the solution value in y
   /// \param error_x [out] the x error at the given coords
   /// \param error_y [out] the y error at the given coords
+  /// \param use_mag square the difference if true
+  /// \param relative divide by the magnitude of the solution at that point (%)
   void compute_displacement_error(const scalar_t & coord_x,
     const scalar_t & coord_y,
     const scalar_t & sol_x,
     const scalar_t & sol_y,
     scalar_t & error_x,
-    scalar_t & error_y);
+    scalar_t & error_y,
+    const bool use_mag = false,
+    const bool relative = true);
 
   /// compute the error of the derivative of a given solution at the given coords
   /// \param coord_x the x coordinate
   /// \param coord_y the y coordinate
-  /// \param sol_x the solution value in x
-  /// \param sol_y the solution value in y
-  /// \param error_x [out] the x error at the given coords
-  /// \param error_y [out] the y error at the given coords
-  // TODO add off-diagonal terms
-  void compute_deriv_error(const scalar_t & coord_x,
+  /// \param sol_xx the solution value in xx
+  /// \param sol_xy the solution value in xy
+  /// \param sol_yy the solution value in yy
+  /// \param error_xx [out] the xx error at the given coords
+  /// \param error_xy [out] the xy error at the given coords
+  /// \param error_yy [out] the yy error at the given coords
+  /// \param use_mag square the difference if true
+  /// \param relative divide by the magnitude of the solution at that point (%)
+  void compute_lagrange_strain_error(const scalar_t & coord_x,
     const scalar_t & coord_y,
-    const scalar_t & sol_x,
-    const scalar_t & sol_y,
-    scalar_t & error_x,
-    scalar_t & error_y);
+    const scalar_t & sol_xx,
+    const scalar_t & sol_xy,
+    const scalar_t & sol_yy,
+    scalar_t & error_xx,
+    scalar_t & error_xy,
+    scalar_t & error_yy,
+    const bool use_mag = false,
+    const bool relative = true);
 
   /// destructor
   ~SinCos_Image_Deformer(){};

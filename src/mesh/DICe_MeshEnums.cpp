@@ -207,6 +207,13 @@ void create_string_maps()
   field_name_string[field_enums::EXACT_STRAIN_YY]                                    = "EXACT_STRAIN_YY";
   field_name_string[field_enums::EXACT_STRAIN_XY]                                    = "EXACT_STRAIN_XY";
   field_name_string[field_enums::ACCUMULATED_DISP]                                   = "ACCUMULATED_DISP";
+  field_name_string[field_enums::DISP_ERROR]                                         = "DISP_ERROR";
+  field_name_string[field_enums::VSG_STRAIN_ERROR_XX]                                = "VSG_STRAIN_ERROR_XX";
+  field_name_string[field_enums::VSG_STRAIN_ERROR_XY]                                = "VSG_STRAIN_ERROR_XY";
+  field_name_string[field_enums::VSG_STRAIN_ERROR_YY]                                = "VSG_STRAIN_ERROR_YY";
+  field_name_string[field_enums::NLVC_STRAIN_ERROR_XX]                               = "NLVC_STRAIN_ERROR_XX";
+  field_name_string[field_enums::NLVC_STRAIN_ERROR_XY]                               = "NLVC_STRAIN_ERROR_XY";
+  field_name_string[field_enums::NLVC_STRAIN_ERROR_YY]                               = "NLVC_STRAIN_ERROR_YY";
 
   for (std::map<field_enums::Field_Type,std::string>::iterator pos = field_type_string.begin(); pos != field_type_string.end(); ++pos){
     string_field_type[pos->second] = pos->first;
