@@ -1049,10 +1049,9 @@ Global_Algorithm::execute(){
     }
 
     // compute the change in disp from the last solution:
-    const scalar_t disp_norm = disp->norm();
     const scalar_t delta_disp_norm = disp->norm(disp_nm1);
     DEBUG_MSG("Iteration: " << it << " residual norm: " << resid_norm
-      << " disp norm: " << disp_norm << " disp update norm: " << delta_disp_norm);
+      << " disp norm: " << disp->norm() << " disp update norm: " << delta_disp_norm);
     if(delta_disp_norm < update_tol){
       DEBUG_MSG("Global_Algorithm::execute(): * * * convergence successful * * *");
       DEBUG_MSG("Global_Algorithm::execute(): criteria: delta_disp_norm < tol (" << update_tol << ")");

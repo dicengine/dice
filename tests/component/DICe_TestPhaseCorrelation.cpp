@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
     (*def180)[ROTATION_Z] = theta_180;
     Teuchos::RCP<Image> rot_ref_0 = ref->apply_transformation(def,ref->width()/2,ref->height()/2);
     Teuchos::RCP<Image> rot_ref_180 = ref->apply_transformation(def180,ref->width()/2,ref->height()/2);
-    //std::stringstream transName0;
+    std::stringstream transName0;
     //transName0 << "trans0_" << i << ".tif";
     //std::stringstream transName180;
     //transName180 << "trans180_" << i << ".tif";

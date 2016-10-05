@@ -221,7 +221,7 @@ phase_correlate_x_y(Teuchos::RCP<Image> image_a,
   }
   //std::cout << " max real " << max_real << " u_x " << u_x << " u_y " << u_y << " max_complex  " <<
   //max_complex << " next_real " << next_real << " nx " << next_x << " ny " << next_y << std::endl;
-  assert(max_complex <= 1.0E-6);
+  assert(max_complex <= 1.0E-5);
   // deal with aliasing (which causes a false peak at 0,0)
   // TODO find a better approach to this using pre-whitening, etc.
   if(u_x!=next_x&&next_x>1){

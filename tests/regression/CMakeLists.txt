@@ -127,9 +127,13 @@ if(DICE_MPI)
     parallel_subsets
     parallel_subsets_seed
     parallel_seed_first_step_only
-    parallel_image_def
-    #parallel_obstruct_depend
   )
+  IF(DICE_USE_DOUBLE)
+    SET(MPI_TESTS
+      ${MPI_TESTS}
+      parallel_image_def
+    )
+  ENDIF()
   FOREACH ( test ${MPI_TESTS})
     # Copy over all the test files (input and results)
     FILE(COPY ${test} DESTINATION . )
@@ -149,9 +153,9 @@ if(DICE_MPI)
       # get the name of the file without the directory
       GET_FILENAME_COMPONENT ( trim_name ${gold_file} NAME_WE)
       ADD_TEST ( NAME "DIFF_${test}_${trim_name}_n2"
-        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/DICe_Diff ${gold_file} "${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name}.2.txt" -t 1E-4 -v)
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/DICe_Diff ${gold_file} "${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name}.2.txt" -t 1E-2 -f 1E-4 -v)
       ADD_TEST ( NAME "DIFF_${test}_${trim_name}_n4"
-        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/DICe_Diff ${gold_file} "${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name}.4.txt" -t 1E-4 -v)
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/DICe_Diff ${gold_file} "${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name}.4.txt" -t 1E-2 -f 1E-4 -v)
       set_tests_properties("DIFF_${test}_${trim_name}_n2" PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
       set_tests_properties("DIFF_${test}_${trim_name}_n4" PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
       set_property(TEST "DIFF_${test}_${trim_name}_n2" APPEND PROPERTY DEPENDS "RUN_${test}_n2")
