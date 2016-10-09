@@ -168,6 +168,18 @@ public:
     const bool use_mag = false,
     const bool relative = true);
 
+  /// compute the lagrange strain given solution at the given coords
+  /// \param coord_x the x coordinate
+  /// \param coord_y the y coordinate
+  /// \param strain_xx [out] the xx strain at the given coords
+  /// \param strain_xy [out] the xy strain at the given coords
+  /// \param strain_yy [out] the yy strain at the given coords
+  void compute_lagrange_strain(const scalar_t & coord_x,
+    const scalar_t & coord_y,
+    scalar_t & strain_xx,
+    scalar_t & strain_xy,
+    scalar_t & strain_yy);
+
   /// destructor
   ~SinCos_Image_Deformer(){};
 

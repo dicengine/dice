@@ -153,10 +153,29 @@ void SinCos_Image_Deformer::compute_displacement_error(const scalar_t & coord_x,
     error_y = sol_y - out_y;
   }
   if(relative){
-    error_x /= 0.25*(mag_step_+1);
-    error_y /= 0.25*(mag_step_+1);
+    error_x /= 0.25*(mag_step_+1)/100.0; // convert to percent
+    error_y /= 0.25*(mag_step_+1)/100.0;
   }
 }
+
+
+void SinCos_Image_Deformer::compute_lagrange_strain(const scalar_t & coord_x,
+  const scalar_t & coord_y,
+  scalar_t & strain_xx,
+  scalar_t & strain_xy,
+  scalar_t & strain_yy){
+
+  scalar_t out_xx = 0.0;
+  scalar_t out_xy = 0.0;
+  scalar_t out_yx = 0.0;
+  scalar_t out_yy = 0.0;
+  compute_deriv_deformation(coord_x,coord_y,out_xx,out_xy,out_yx,out_yy);
+
+  strain_xx = 0.5*(2.0*out_xx + out_xx*out_xx + out_yx*out_yx);
+  strain_xy = 0.5*(out_xy + out_yx + out_xy*out_xy + out_yx*out_yx);
+  strain_yy = 0.5*(2.0*out_yy + out_yy*out_yy + out_xy*out_xy);
+}
+
 
 void SinCos_Image_Deformer::compute_lagrange_strain_error(const scalar_t & coord_x,
   const scalar_t & coord_y,
@@ -169,15 +188,11 @@ void SinCos_Image_Deformer::compute_lagrange_strain_error(const scalar_t & coord
   const bool use_mag,
   const bool relative){
 
-  scalar_t out_xx = 0.0;
-  scalar_t out_xy = 0.0;
-  scalar_t out_yx = 0.0;
-  scalar_t out_yy = 0.0;
-  compute_deriv_deformation(coord_x,coord_y,out_xx,out_xy,out_yx,out_yy);
+  scalar_t strain_xx = 0.0;
+  scalar_t strain_xy = 0.0;
+  scalar_t strain_yy = 0.0;
 
-  const scalar_t strain_xx = 0.5*(2.0*out_xx + out_xx*out_xx + out_yx*out_yx);
-  const scalar_t strain_xy = 0.5*(out_xy + out_yx + out_xy*out_xy + out_yx*out_yx);
-  const scalar_t strain_yy = 0.5*(2.0*out_yy + out_yy*out_yy + out_xy*out_xy);
+  compute_lagrange_strain(coord_x,coord_y,strain_xx,strain_xy,strain_yy);
 
   if(use_mag){
     error_xx = (sol_xx - strain_xx)*(sol_xx - strain_xx);
@@ -189,7 +204,7 @@ void SinCos_Image_Deformer::compute_lagrange_strain_error(const scalar_t & coord
     error_yy = sol_yy - strain_yy;
   }
   if(relative){
-    scalar_t rel = (freq_step_+1)*DICE_PI/500.0*(0.25*(mag_step_+1));
+    scalar_t rel = (freq_step_+1)*DICE_PI/500.0*(0.25*(mag_step_+1))/100.0;
     error_xx /= rel;
     error_xy /= rel;
     error_yy /= rel;

@@ -2164,6 +2164,13 @@ Schema::estimate_resolution_error(const int num_steps,
         deformer->compute_displacement_error(x,y,u,v,error_u,error_v);
         disp_error->local_value(i*spa_dim+0) = error_u;
         disp_error->local_value(i*spa_dim+1) = error_v;
+        scalar_t strain_xx = 0.0;
+        scalar_t strain_xy = 0.0;
+        scalar_t strain_yy = 0.0;
+        deformer->compute_lagrange_strain(x,y,strain_xx,strain_xy,strain_yy);
+        exact_strain_xx->local_value(i) = strain_xx;
+        exact_strain_xy->local_value(i) = strain_xy;
+        exact_strain_yy->local_value(i) = strain_yy;
         if(has_vsg){
           const scalar_t e_xx = vsg_xx->local_value(i);
           const scalar_t e_xy = vsg_xy->local_value(i);
@@ -2199,11 +2206,11 @@ Schema::estimate_resolution_error(const int num_steps,
       scalar_t max_error_v = 0.0;
       scalar_t avg_error_v = 0.0;
       scalar_t std_dev_error_v = 0.0;
-      scalar_t failure_rate = mesh_->field_stats(DICe::mesh::field_enums::DISP_ERROR_FS,min_error_u,max_error_u,avg_error_u,std_dev_error_u,0);
-      mesh_->field_stats(DICe::mesh::field_enums::DISP_ERROR_FS,min_error_v,max_error_v,avg_error_v,std_dev_error_v,1);
-      result_stream << "period (px)" << std::setw(4) << std::setprecision(4) << deformer->period() << " amp (px)" << std::setw(4) << std::setprecision(4) << deformer->amplitude() <<
-          " failure rate " << std::setw(4) << std::setprecision(2) << failure_rate  << " disp_u error (rel %): min " << min_error_u << " max " << max_error_u <<
-          " avg " << avg_error_u << " std_dev " << std_dev_error_u << " disp_v error (rel %): min " << min_error_v << " max " << max_error_v << " avg " << avg_error_v <<
+      scalar_t failure_rate = mesh_->field_stats(DICe::mesh::field_enums::DISP_ERROR_FS,min_error_u,max_error_u,avg_error_u,std_dev_error_u,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+      mesh_->field_stats(DICe::mesh::field_enums::DISP_ERROR_FS,min_error_v,max_error_v,avg_error_v,std_dev_error_v,1,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+      result_stream << "period (px) " << std::setw(4) << std::setprecision(4) << deformer->period() << " amp (px) " << std::setw(4) << std::setprecision(4) << deformer->amplitude() <<
+          " failure rate " << std::setw(4) << std::setprecision(2) << failure_rate  << " disp_u error (rel %%): min " << min_error_u << " max " << max_error_u <<
+          " avg " << avg_error_u << " std_dev " << std_dev_error_u << " disp_v error (rel %%): min " << min_error_v << " max " << max_error_v << " avg " << avg_error_v <<
           " std_dev " << std_dev_error_v;
       if(has_vsg){
         scalar_t min_vsg_xx = 0.0;
@@ -2218,12 +2225,12 @@ Schema::estimate_resolution_error(const int num_steps,
         scalar_t max_vsg_yy = 0.0;
         scalar_t avg_vsg_yy = 0.0;
         scalar_t std_dev_vsg_yy = 0.0;
-        mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_ERROR_XX_FS,min_vsg_xx,max_vsg_xx,avg_vsg_xx,std_dev_vsg_xx,0);
-        mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_ERROR_XY_FS,min_vsg_xy,max_vsg_xy,avg_vsg_xy,std_dev_vsg_xy,0);
-        mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_ERROR_YY_FS,min_vsg_yy,max_vsg_yy,avg_vsg_yy,std_dev_vsg_yy,0);
-        result_stream << " vsg_xx error (rel %): min " << min_vsg_xx << " max " << max_vsg_xx << " avg " << avg_vsg_xx << " std_dev " << std_dev_vsg_xx;
-        result_stream << " vsg_xy error (rel %): min " << min_vsg_xy << " max " << max_vsg_xy << " avg " << avg_vsg_xy << " std_dev " << std_dev_vsg_xy;
-        result_stream << " vsg_yy error (rel %): min " << min_vsg_yy << " max " << max_vsg_yy << " avg " << avg_vsg_yy << " std_dev " << std_dev_vsg_yy;
+        mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_ERROR_XX_FS,min_vsg_xx,max_vsg_xx,avg_vsg_xx,std_dev_vsg_xx,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+        mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_ERROR_XY_FS,min_vsg_xy,max_vsg_xy,avg_vsg_xy,std_dev_vsg_xy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+        mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_ERROR_YY_FS,min_vsg_yy,max_vsg_yy,avg_vsg_yy,std_dev_vsg_yy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+        result_stream << " vsg_xx error (rel %%): min " << min_vsg_xx << " max " << max_vsg_xx << " avg " << avg_vsg_xx << " std_dev " << std_dev_vsg_xx;
+        result_stream << " vsg_xy error (rel %%): min " << min_vsg_xy << " max " << max_vsg_xy << " avg " << avg_vsg_xy << " std_dev " << std_dev_vsg_xy;
+        result_stream << " vsg_yy error (rel %%): min " << min_vsg_yy << " max " << max_vsg_yy << " avg " << avg_vsg_yy << " std_dev " << std_dev_vsg_yy;
       }
       if(has_nlvc){
         scalar_t min_nlvc_xx = 0.0;
@@ -2238,12 +2245,12 @@ Schema::estimate_resolution_error(const int num_steps,
         scalar_t max_nlvc_yy = 0.0;
         scalar_t avg_nlvc_yy = 0.0;
         scalar_t std_dev_nlvc_yy = 0.0;
-        mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_ERROR_XX_FS,min_nlvc_xx,max_nlvc_xx,avg_nlvc_xx,std_dev_nlvc_xx,0);
-        mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_ERROR_XY_FS,min_nlvc_xy,max_nlvc_xy,avg_nlvc_xy,std_dev_nlvc_xy,0);
-        mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_ERROR_YY_FS,min_nlvc_yy,max_nlvc_yy,avg_nlvc_yy,std_dev_nlvc_yy,0);
-        result_stream << " nlvc_xx error (rel %): min " << min_nlvc_xx << " max " << max_nlvc_xx << " avg " << avg_nlvc_xx << " std_dev " << std_dev_nlvc_xx;
-        result_stream << " nlvc_xy error (rel %): min " << min_nlvc_xy << " max " << max_nlvc_xy << " avg " << avg_nlvc_xy << " std_dev " << std_dev_nlvc_xy;
-        result_stream << " nlvc_yy error (rel %): min " << min_nlvc_yy << " max " << max_nlvc_yy << " avg " << avg_nlvc_yy << " std_dev " << std_dev_nlvc_yy;
+        mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_ERROR_XX_FS,min_nlvc_xx,max_nlvc_xx,avg_nlvc_xx,std_dev_nlvc_xx,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+        mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_ERROR_XY_FS,min_nlvc_xy,max_nlvc_xy,avg_nlvc_xy,std_dev_nlvc_xy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+        mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_ERROR_YY_FS,min_nlvc_yy,max_nlvc_yy,avg_nlvc_yy,std_dev_nlvc_yy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+        result_stream << " nlvc_xx error (rel %%): min " << min_nlvc_xx << " max " << max_nlvc_xx << " avg " << avg_nlvc_xx << " std_dev " << std_dev_nlvc_xx;
+        result_stream << " nlvc_xy error (rel %%): min " << min_nlvc_xy << " max " << max_nlvc_xy << " avg " << avg_nlvc_xy << " std_dev " << std_dev_nlvc_xy;
+        result_stream << " nlvc_yy error (rel %%): min " << min_nlvc_yy << " max " << max_nlvc_yy << " avg " << avg_nlvc_yy << " std_dev " << std_dev_nlvc_yy;
       }
 
       result_stream << std::endl;

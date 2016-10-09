@@ -996,12 +996,16 @@ public:
   /// \param avg the average
   /// \param std_dev the standard deviation,
   /// \param comp the component if this is a vector field
-  scalar_t field_stats(const field_enums::Field_Spec field_spec,
+  /// \param marker_field if specified this field will be tested to be over the threshold if a point is included in the stats
+  /// \param threshold if marker is used only points with the marker field above this value will be included
+  scalar_t field_stats(const field_enums::Field_Spec & field_spec,
     scalar_t & min,
     scalar_t & max,
     scalar_t & avg,
     scalar_t & std_dev,
-    const int_t comp);
+    const int_t comp,
+    const field_enums::Field_Spec & marker_spec = DICe::mesh::field_enums::NO_SUCH_FS,
+    const scalar_t & threshold = -1.0);
 
   /// Returns a pointer to the communication map
   Teuchos::RCP<MultiField_Map> get_proc_map(){

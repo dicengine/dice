@@ -952,12 +952,14 @@ Mesh::print_field_info()
 }
 
 scalar_t
-Mesh::field_stats(const field_enums::Field_Spec field_spec,
+Mesh::field_stats(const field_enums::Field_Spec & field_spec,
   scalar_t & min,
   scalar_t & max,
   scalar_t & avg,
   scalar_t & std_dev,
-  const int_t comp){
+  const int_t comp,
+  const field_enums::Field_Spec & marker_spec,
+  const scalar_t & threshold){
   std::vector<std::string> comps;
   comps.push_back("_X");
   comps.push_back("_Y");
@@ -966,6 +968,8 @@ Mesh::field_stats(const field_enums::Field_Spec field_spec,
     "Error, invalid field " << field_spec.get_name_label());
 
   const int_t p_rank = comm_->get_rank();
+
+  const bool has_marker = marker_spec != DICe::mesh::field_enums::NO_SUCH_FS;
 
   scalar_t failure_rate = 0.0;
   max = std::numeric_limits<scalar_t>::lowest();
@@ -992,42 +996,92 @@ Mesh::field_stats(const field_enums::Field_Spec field_spec,
   // export the field to zero
   all_on_zero_field->do_import(field,exporter);
 
+  // bring in the marker field
+  Teuchos::RCP<MultiField> marker_on_zero_field;
+  Teuchos::RCP<MultiField_Map> marker_on_zero_map;
+  Teuchos::Array<int_t> marker_on_zero_ids;
+  if(has_marker){
+    field_registry::const_iterator marker_it = field_registry_.find(marker_spec);
+    TEUCHOS_TEST_FOR_EXCEPTION(marker_it==field_registry_.end(),std::runtime_error,
+      "Error, invalid marker field " << marker_spec.get_name_label());
+    Teuchos::RCP<MultiField> marker_field = marker_it->second;
+    // for a scalar field the array list above can be reused
+    if(field_spec.get_field_type()==DICe::mesh::field_enums::SCALAR_FIELD_TYPE){
+      marker_on_zero_map = Teuchos::rcp (new MultiField_Map(-1, all_on_zero_ids, 0, *comm_));
+    }else{
+      if(p_rank==0){
+        marker_on_zero_ids.resize(marker_field->get_map()->get_num_global_elements());
+        for(int_t i=0;i<marker_field->get_map()->get_num_global_elements();++i)
+           marker_on_zero_ids[i] = i;
+      }
+      marker_on_zero_map = Teuchos::rcp (new MultiField_Map(-1, marker_on_zero_ids, 0, *comm_));
+    }
+    marker_on_zero_field = Teuchos::rcp( new MultiField(marker_on_zero_map,1,true));
+    // create exporter with the map
+    MultiField_Exporter exporter_marker(*marker_on_zero_map,*marker_field->get_map());
+    // export the field to zero
+    marker_on_zero_field->do_import(marker_field,exporter_marker);
+  }
+
   // analyze stats
 
+  int_t num_failed = 0;
   const int_t num_points = all_on_zero_field->get_map()->get_num_local_elements();
   TEUCHOS_TEST_FOR_EXCEPTION(num_points > 0 && p_rank > 0,std::runtime_error,"Error, only process zero should have any points here");
   if(field_spec.get_field_type()==DICe::mesh::field_enums::SCALAR_FIELD_TYPE){
     TEUCHOS_TEST_FOR_EXCEPTION(comp!=0,std::runtime_error,"Error, invalid comp for scalar field")
-    TEUCHOS_TEST_FOR_EXCEPTION(num_points<=0,std::runtime_error,"Error, num_points = 0");
+    TEUCHOS_TEST_FOR_EXCEPTION(p_rank==0 && num_points<=0,std::runtime_error,"Error, num_points = 0");
     for(int_t i=0;i<num_points;++i){
+      if(has_marker){
+        if(marker_on_zero_field->local_value(i)<=threshold){
+          num_failed++;
+          continue;
+        }
+      }
       avg += all_on_zero_field->local_value(i);
       if(all_on_zero_field->local_value(i)>max) max = all_on_zero_field->local_value(i);
       if(all_on_zero_field->local_value(i)<min) min = all_on_zero_field->local_value(i);
     }
-    if(num_points > 0)
-      avg /= num_points;
+    if(num_points - num_failed > 0)
+      avg /= (num_points-num_failed);
     for(int_t i=0;i<num_points;++i){
+      if(has_marker){
+        if(marker_on_zero_field->local_value(i)<=threshold){
+          continue;
+        }
+      }
       std_dev += (all_on_zero_field->local_value(i)-avg)*(all_on_zero_field->local_value(i)-avg);
     }
-    if(num_points > 0)
-      std_dev = std::sqrt(std_dev/num_points);
+    if(num_points-num_failed > 0)
+      std_dev = std::sqrt(std_dev/(num_points-num_failed));
   }
   else if(field_spec.get_field_type()==DICe::mesh::field_enums::VECTOR_FIELD_TYPE){
     TEUCHOS_TEST_FOR_EXCEPTION(comp!=0&&comp!=1,std::runtime_error,"Error, invalid comp for scalar field")
     for(int_t i=0;i<num_points/2;++i){
+      if(has_marker){
+        if(marker_on_zero_field->local_value(i)<=threshold){
+          num_failed++;
+          continue;
+        }
+      }
       int_t index = i*spatial_dimension() + comp;
       avg += all_on_zero_field->local_value(index);
       if(all_on_zero_field->local_value(index)>max) max = all_on_zero_field->local_value(index);
       if(all_on_zero_field->local_value(index)<min) min = all_on_zero_field->local_value(index);
     }
-    if(num_points > 0)
-      avg /= num_points*0.5;
+    if(num_points - num_failed> 0)
+      avg /= (num_points-num_failed)*0.5;
     for(int_t i=0;i<num_points/2;++i){
       int_t index = i*spatial_dimension() + comp;
+      if(has_marker){
+        if(marker_on_zero_field->local_value(i)<=threshold){
+          continue;
+        }
+      }
       std_dev += (all_on_zero_field->local_value(index)-avg)*(all_on_zero_field->local_value(index)-avg);
     }
-    if(num_points > 0)
-      std_dev = std::sqrt(std_dev/(0.5*num_points));
+    if(num_points - num_failed > 0)
+      std_dev = std::sqrt(std_dev/(0.5*(num_points-num_failed)));
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: unknown field type in stats call");
@@ -1037,8 +1091,8 @@ Mesh::field_stats(const field_enums::Field_Spec field_spec,
 
   Teuchos::Array<int_t> results_on_zero_ids;
   if(p_rank==0){
-    results_on_zero_ids.resize(4);
-    for(int_t i=0;i<4;++i)
+    results_on_zero_ids.resize(5);
+    for(int_t i=0;i<5;++i)
        results_on_zero_ids[i] = i;
   }
   // create a field to send out the results to the other procs:
@@ -1050,11 +1104,12 @@ Mesh::field_stats(const field_enums::Field_Spec field_spec,
     results_on_zero_field->local_value(1) = max;
     results_on_zero_field->local_value(2) = avg;
     results_on_zero_field->local_value(3) = std_dev;
+    results_on_zero_field->local_value(4) = num_failed / scalar_node_dist_map_->get_num_global_elements();
   }
   // create the all on all map
   Teuchos::Array<int_t> results_on_all_ids;
-  results_on_all_ids.resize(4);
-  for(int_t i=0;i<4;++i)
+  results_on_all_ids.resize(5);
+  for(int_t i=0;i<5;++i)
     results_on_all_ids[i] = i;
   // create a field to send out the results to the other procs:
   Teuchos::RCP<MultiField_Map> results_on_all_map = Teuchos::rcp (new MultiField_Map(-1, results_on_all_ids, 0, *comm_));
@@ -1076,6 +1131,7 @@ Mesh::field_stats(const field_enums::Field_Spec field_spec,
     avg = results_on_all_field->local_value(2);
     std_dev = results_on_all_field->local_value(3);
   }
+  failure_rate = results_on_all_field->local_value(4);
 
   return failure_rate;
 }
