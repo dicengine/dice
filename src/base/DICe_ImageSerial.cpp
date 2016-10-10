@@ -500,12 +500,12 @@ Image::interpolate_grad_y_bicubic(const scalar_t & local_x, const scalar_t & loc
 
 intensity_t
 Image::interpolate_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
-  std::vector<scalar_t> coeffs_x(6,0.0);
-  std::vector<scalar_t> coeffs_y(6,0.0);
-  scalar_t dx = 0.0;
-  scalar_t dy = 0.0;
-  int_t ix=0,iy=0;
-  intensity_t value=0.0;
+  static std::vector<scalar_t> coeffs_x(6,0.0);
+  static std::vector<scalar_t> coeffs_y(6,0.0);
+  static scalar_t dx = 0.0;
+  static scalar_t dy = 0.0;
+  static int_t ix=0,iy=0;
+  static intensity_t value=0.0;
   ix = (int_t)local_x;
   iy = (int_t)local_y;
   if(local_x<=2.5||local_x>=width_-3.5||local_y<=2.5||local_y>=height_-3.5)
@@ -535,12 +535,12 @@ Image::interpolate_keys_fourth(const scalar_t & local_x, const scalar_t & local_
 
 scalar_t
 Image::interpolate_grad_x_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
-  std::vector<scalar_t> coeffs_x(6,0.0);
-  std::vector<scalar_t> coeffs_y(6,0.0);
-  scalar_t dx = 0.0;
-  scalar_t dy = 0.0;
-  int_t ix=0,iy=0;
-  intensity_t value=0.0;
+  static std::vector<scalar_t> coeffs_x(6,0.0);
+  static std::vector<scalar_t> coeffs_y(6,0.0);
+  static scalar_t dx = 0.0;
+  static scalar_t dy = 0.0;
+  static int_t ix=0,iy=0;
+  static intensity_t value=0.0;
   ix = (int_t)local_x;
   iy = (int_t)local_y;
   if(local_x<=2.5||local_x>=width_-3.5||local_y<=2.5||local_y>=height_-3.5)
@@ -570,12 +570,12 @@ Image::interpolate_grad_x_keys_fourth(const scalar_t & local_x, const scalar_t &
 
 scalar_t
 Image::interpolate_grad_y_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
-  std::vector<scalar_t> coeffs_x(6,0.0);
-  std::vector<scalar_t> coeffs_y(6,0.0);
-  scalar_t dx = 0.0;
-  scalar_t dy = 0.0;
-  int_t ix=0,iy=0;
-  intensity_t value=0.0;
+  static std::vector<scalar_t> coeffs_x(6,0.0);
+  static std::vector<scalar_t> coeffs_y(6,0.0);
+  static scalar_t dx = 0.0;
+  static scalar_t dy = 0.0;
+  static int_t ix=0,iy=0;
+  static intensity_t value=0.0;
   ix = (int_t)local_x;
   iy = (int_t)local_y;
   if(local_x<=2.5||local_x>=width_-3.5||local_y<=2.5||local_y>=height_-3.5)
