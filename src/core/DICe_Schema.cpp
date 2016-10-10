@@ -2047,20 +2047,20 @@ Schema::estimate_resolution_error(const int num_steps,
   Teuchos::RCP<MultiField> disp_error = mesh_->get_field(DICe::mesh::field_enums::DISP_ERROR_FS);
   Teuchos::RCP<MultiField> vsg_error_xx, vsg_error_xy, vsg_error_yy, nlvc_error_xx, nlvc_error_xy, nlvc_error_yy;
   if(has_vsg){
-    mesh_->create_field(DICe::mesh::field_enums::VSG_STRAIN_ERROR_XX_FS);
-    vsg_error_xx = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_ERROR_XX_FS);
-    mesh_->create_field(DICe::mesh::field_enums::VSG_STRAIN_ERROR_XY_FS);
-    vsg_error_xy = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_ERROR_XY_FS);
-    mesh_->create_field(DICe::mesh::field_enums::VSG_STRAIN_ERROR_YY_FS);
-    vsg_error_yy = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_ERROR_YY_FS);
+    mesh_->create_field(DICe::mesh::field_enums::VSG_STRAIN_XX_ERROR_FS);
+    vsg_error_xx = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_XX_ERROR_FS);
+    mesh_->create_field(DICe::mesh::field_enums::VSG_STRAIN_XY_ERROR_FS);
+    vsg_error_xy = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_XY_ERROR_FS);
+    mesh_->create_field(DICe::mesh::field_enums::VSG_STRAIN_YY_ERROR_FS);
+    vsg_error_yy = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_YY_ERROR_FS);
   }
   if(has_nlvc){
-    mesh_->create_field(DICe::mesh::field_enums::NLVC_STRAIN_ERROR_XX_FS);
-    nlvc_error_xx = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_ERROR_XX_FS);
-    mesh_->create_field(DICe::mesh::field_enums::NLVC_STRAIN_ERROR_XY_FS);
-    nlvc_error_xy = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_ERROR_XY_FS);
-    mesh_->create_field(DICe::mesh::field_enums::NLVC_STRAIN_ERROR_YY_FS);
-    nlvc_error_yy = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_ERROR_YY_FS);
+    mesh_->create_field(DICe::mesh::field_enums::NLVC_STRAIN_XX_ERROR_FS);
+    nlvc_error_xx = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_XX_ERROR_FS);
+    mesh_->create_field(DICe::mesh::field_enums::NLVC_STRAIN_XY_ERROR_FS);
+    nlvc_error_xy = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_XY_ERROR_FS);
+    mesh_->create_field(DICe::mesh::field_enums::NLVC_STRAIN_YY_ERROR_FS);
+    nlvc_error_yy = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_YY_ERROR_FS);
   }
 
   if(proc_id==0){
@@ -2225,9 +2225,9 @@ Schema::estimate_resolution_error(const int num_steps,
         scalar_t max_vsg_yy = 0.0;
         scalar_t avg_vsg_yy = 0.0;
         scalar_t std_dev_vsg_yy = 0.0;
-        mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_ERROR_XX_FS,min_vsg_xx,max_vsg_xx,avg_vsg_xx,std_dev_vsg_xx,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
-        mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_ERROR_XY_FS,min_vsg_xy,max_vsg_xy,avg_vsg_xy,std_dev_vsg_xy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
-        mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_ERROR_YY_FS,min_vsg_yy,max_vsg_yy,avg_vsg_yy,std_dev_vsg_yy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+        mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_XX_ERROR_FS,min_vsg_xx,max_vsg_xx,avg_vsg_xx,std_dev_vsg_xx,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+        mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_XY_ERROR_FS,min_vsg_xy,max_vsg_xy,avg_vsg_xy,std_dev_vsg_xy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+        mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_YY_ERROR_FS,min_vsg_yy,max_vsg_yy,avg_vsg_yy,std_dev_vsg_yy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
         result_stream << " vsg_xx error (rel %%): min " << min_vsg_xx << " max " << max_vsg_xx << " avg " << avg_vsg_xx << " std_dev " << std_dev_vsg_xx;
         result_stream << " vsg_xy error (rel %%): min " << min_vsg_xy << " max " << max_vsg_xy << " avg " << avg_vsg_xy << " std_dev " << std_dev_vsg_xy;
         result_stream << " vsg_yy error (rel %%): min " << min_vsg_yy << " max " << max_vsg_yy << " avg " << avg_vsg_yy << " std_dev " << std_dev_vsg_yy;
@@ -2245,9 +2245,9 @@ Schema::estimate_resolution_error(const int num_steps,
         scalar_t max_nlvc_yy = 0.0;
         scalar_t avg_nlvc_yy = 0.0;
         scalar_t std_dev_nlvc_yy = 0.0;
-        mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_ERROR_XX_FS,min_nlvc_xx,max_nlvc_xx,avg_nlvc_xx,std_dev_nlvc_xx,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
-        mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_ERROR_XY_FS,min_nlvc_xy,max_nlvc_xy,avg_nlvc_xy,std_dev_nlvc_xy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
-        mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_ERROR_YY_FS,min_nlvc_yy,max_nlvc_yy,avg_nlvc_yy,std_dev_nlvc_yy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+        mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_XX_ERROR_FS,min_nlvc_xx,max_nlvc_xx,avg_nlvc_xx,std_dev_nlvc_xx,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+        mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_XY_ERROR_FS,min_nlvc_xy,max_nlvc_xy,avg_nlvc_xy,std_dev_nlvc_xy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+        mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_YY_ERROR_FS,min_nlvc_yy,max_nlvc_yy,avg_nlvc_yy,std_dev_nlvc_yy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
         result_stream << " nlvc_xx error (rel %%): min " << min_nlvc_xx << " max " << max_nlvc_xx << " avg " << avg_nlvc_xx << " std_dev " << std_dev_nlvc_xx;
         result_stream << " nlvc_xy error (rel %%): min " << min_nlvc_xy << " max " << max_nlvc_xy << " avg " << avg_nlvc_xy << " std_dev " << std_dev_nlvc_xy;
         result_stream << " nlvc_yy error (rel %%): min " << min_nlvc_yy << " max " << max_nlvc_yy << " avg " << avg_nlvc_yy << " std_dev " << std_dev_nlvc_yy;

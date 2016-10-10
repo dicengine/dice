@@ -257,12 +257,12 @@ Field_Name
   NLVC_DVDY,
   ACCUMULATED_DISP,
   DISP_ERROR,
-  VSG_STRAIN_ERROR_XX,
-  VSG_STRAIN_ERROR_XY,
-  VSG_STRAIN_ERROR_YY,
-  NLVC_STRAIN_ERROR_XX,
-  NLVC_STRAIN_ERROR_XY,
-  NLVC_STRAIN_ERROR_YY
+  VSG_STRAIN_XX_ERROR,
+  VSG_STRAIN_XY_ERROR,
+  VSG_STRAIN_YY_ERROR,
+  NLVC_STRAIN_XX_ERROR,
+  NLVC_STRAIN_XY_ERROR,
+  NLVC_STRAIN_YY_ERROR
 };
 /// The location that the fields live
 enum
@@ -672,17 +672,17 @@ const Field_Spec ACCUMULATED_DISP_FS(field_enums::VECTOR_FIELD_TYPE,field_enums:
 /// field spec
 const Field_Spec DISP_ERROR_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DISP_ERROR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
-const Field_Spec VSG_STRAIN_ERROR_XX_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::VSG_STRAIN_ERROR_XX,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+const Field_Spec VSG_STRAIN_XX_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::VSG_STRAIN_XX_ERROR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
-const Field_Spec VSG_STRAIN_ERROR_XY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::VSG_STRAIN_ERROR_XY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+const Field_Spec VSG_STRAIN_XY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::VSG_STRAIN_XY_ERROR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
-const Field_Spec VSG_STRAIN_ERROR_YY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::VSG_STRAIN_ERROR_YY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+const Field_Spec VSG_STRAIN_YY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::VSG_STRAIN_YY_ERROR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
-const Field_Spec NLVC_STRAIN_ERROR_XX_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_ERROR_XX,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+const Field_Spec NLVC_STRAIN_XX_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_XX_ERROR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
-const Field_Spec NLVC_STRAIN_ERROR_XY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_ERROR_XY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+const Field_Spec NLVC_STRAIN_XY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_XY_ERROR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
-const Field_Spec NLVC_STRAIN_ERROR_YY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_ERROR_YY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+const Field_Spec NLVC_STRAIN_YY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_YY_ERROR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
 const int_t num_fields_defined = 103;
@@ -785,12 +785,12 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     EXACT_STRAIN_XY_FS,
     ACCUMULATED_DISP_FS,
     DISP_ERROR_FS,
-    VSG_STRAIN_ERROR_XX_FS,
-    VSG_STRAIN_ERROR_XY_FS,
-    VSG_STRAIN_ERROR_YY_FS,
-    NLVC_STRAIN_ERROR_XX_FS,
-    NLVC_STRAIN_ERROR_XY_FS,
-    NLVC_STRAIN_ERROR_YY_FS
+    VSG_STRAIN_XX_ERROR_FS,
+    VSG_STRAIN_XY_ERROR_FS,
+    VSG_STRAIN_YY_ERROR_FS,
+    NLVC_STRAIN_XX_ERROR_FS,
+    NLVC_STRAIN_XY_ERROR_FS,
+    NLVC_STRAIN_YY_ERROR_FS
     // don't forget to add one to num_fields_defined
 };
 
