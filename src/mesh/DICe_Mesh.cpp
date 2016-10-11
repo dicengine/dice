@@ -2295,7 +2295,7 @@ Teuchos::RCP<Mesh> create_tri3_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mesh,
         TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"Could not find node rcp in set " << global_node_id);
       }
     }
-    TEUCHOS_TEST_FOR_EXCEPTION(conn.size()!=tri3_num_nodes_per_elem,std::runtime_error,"Error, connectivity is of invalid size");
+    TEUCHOS_TEST_FOR_EXCEPTION((int_t)conn.size()!=tri3_num_nodes_per_elem,std::runtime_error,"Error, connectivity is of invalid size");
     const int_t elem_local_id = elem_it->get()->local_id();
     const int_t elem_global_id = elem_it->get()->global_id();
     const int_t elem_index_in_block = elem_it->get()->index_in_block();
