@@ -86,6 +86,16 @@ const char* const physics_parameters_file = "physics_parameters_file";
 /// Input parameter
 const char* const reference_image = "reference_image";
 /// Input parameter
+const char* const stereo_left_suffix = "stereo_left_suffix";
+/// Input parameter
+const char* const stereo_right_suffix = "stereo_right_suffix";
+/// Input parameter
+const char* const stereo_cine_file = "stereo_cine_file";
+/// Input parameter
+const char* const stereo_reference_image = "stereo_reference_image";
+/// Input parameter
+const char* const stereo_deformed_images = "stereo_deformed_images";
+/// Input parameter
 const char* const cine_file = "cine_file";
 /// Input parameter
 const char* const cine_ref_index = "cine_ref_index";
@@ -319,8 +329,12 @@ multi_shape read_shapes(std::fstream & dataFile);
 
 /// \brief Converts params into string names of all the images in a sequence
 /// \param params Defines the prefix for the image names, number of images, etc.
+/// \param image_files [out] list of 2d image files or left camera files
+/// \param stereo_image_files [out] list of stereo image files or right camera (size 0 for 2d)
 DICE_LIB_DLL_EXPORT
-const std::vector<std::string> decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params);
+void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
+  std::vector<std::string> & image_files,
+  std::vector<std::string> & stero_image_files);
 
 /// \brief Creates a regular square grid of correlation points
 /// \param correlation_points Vector of global point coordinates

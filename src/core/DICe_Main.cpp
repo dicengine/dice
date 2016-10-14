@@ -107,8 +107,21 @@ int main(int argc, char *argv[]) {
 
     // decipher the image file names (note: zero entry is the reference image):
 
-    // TODO some error checking to prevent the wrong image type (jpg, text, ...)
-    std::vector<std::string> image_files = DICe::decipher_image_file_names(input_params);
+    std::vector<std::string> image_files;
+    std::vector<std::string> stereo_image_files;
+    DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
+
+    const bool is_stereo = stereo_image_files.size() > 0;
+
+//    std::cout << "IMAGE FILES: " << image_files.size() << std::endl;
+//    for(size_t i=0;i<image_files.size();++i){
+//      std::cout << image_files[i] << std::endl;
+//    }
+//    std::cout << "STEREO IMAGE FILES: " << stereo_image_files.size() << std::endl;
+//    for(size_t i=0;i<stereo_image_files.size();++i){
+//      std::cout << stereo_image_files[i] << std::endl;
+//    }
+//    assert(false);
 
     int_t num_images = 0;
     int_t cine_ref_index = -1;
@@ -120,19 +133,35 @@ int main(int argc, char *argv[]) {
     bool is_cine = false;
     bool filter_failed_pixels = false;
     Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader;
+    Teuchos::RCP<DICe::cine::Cine_Reader> stereo_cine_reader;
     if(image_files[0]==DICe::cine_file){
       is_cine = true;
       // read the file_name from the input_parasm
       TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::cine_file),std::runtime_error,
         "Error, the file name of the cine file has not been specified");
       std::string cine_file_name = input_params->get<std::string>(DICe::cine_file);
+      std::string stereo_cine_file_name;
+      if(is_stereo){
+        TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::stereo_cine_file),std::runtime_error,
+          "Error, the file name of the cine file has not been specified");
+        stereo_cine_file_name = input_params->get<std::string>(DICe::stereo_cine_file);
+      }
       // add the directory to the name:
       std::stringstream cine_name;
+      std::stringstream stereo_cine_name;
       cine_name << input_params->get<std::string>(DICe::image_folder) << cine_file_name;
-      *outStream << "cine file name: " << cine_name.str() << std::endl;
+      if(is_stereo)
+        *outStream << "stereo left cine file name: " << cine_name.str() << std::endl;
+      else
+        *outStream << "cine file name: " << cine_name.str() << std::endl;
+      stereo_cine_name << input_params->get<std::string>(DICe::image_folder) << stereo_cine_file_name;
+      if(is_stereo)
+      *outStream << "stereo right cine file name: " << stereo_cine_name.str() << std::endl;
       // read the cine header info:
       filter_failed_pixels = correlation_params->get<bool>(DICe::filter_failed_cine_pixels,false);
       cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(cine_name.str(),outStream.getRawPtr(),filter_failed_pixels));
+      if(is_stereo)
+        stereo_cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(stereo_cine_name.str(),outStream.getRawPtr(),filter_failed_pixels));
       // read the image data for a frame
       num_images = cine_reader->num_frames();
       image_width = cine_reader->width();
@@ -151,6 +180,14 @@ int main(int argc, char *argv[]) {
       *outStream << "number of frames to analyze: " << num_images << std::endl;
 
       // sanity checks
+      if(is_stereo){
+        TEUCHOS_TEST_FOR_EXCEPTION(cine_reader->num_frames()!=stereo_cine_reader->num_frames(),std::runtime_error,
+          "Error, incompatible left and right cine files, num frames left " << cine_reader->num_frames() << " num frames right " << stereo_cine_reader->num_frames());
+        TEUCHOS_TEST_FOR_EXCEPTION(image_width!=stereo_cine_reader->width(),std::runtime_error,
+          "Error, incompatible left and right cine files, image width left " << image_width << " image width right " << stereo_cine_reader->width());
+        TEUCHOS_TEST_FOR_EXCEPTION(image_height!=stereo_cine_reader->height(),std::runtime_error,
+          "Error, incompatible left and right cine files, image height left " << image_height << " image height right " << stereo_cine_reader->height());
+      }
       TEUCHOS_TEST_FOR_EXCEPTION(cine_start_index > cine_end_index,std::invalid_argument,"Error, the cine start index is > the cine end index");
       TEUCHOS_TEST_FOR_EXCEPTION(cine_start_index < first_frame_index,std::invalid_argument,"Error, the cine start index is < the first frame index");
       TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index > cine_end_index,std::invalid_argument,"Error, the cine ref index is > the cine end index");
@@ -165,7 +202,7 @@ int main(int argc, char *argv[]) {
 
       *outStream << "\n--- Cine file information read successfuly ---\n" << std::endl;
     }
-    else
+    else  // non-cine input
     {
       num_images = image_files.size() - 1; // the first file is the reference image
       first_frame_index = input_params->get<int_t>(DICe::reference_image_index,0)+1;
@@ -180,7 +217,7 @@ int main(int argc, char *argv[]) {
       *outStream << "\n--- List of images constructed successfuly ---\n" << std::endl;
       // get width and heigh of reference image to use in setting up the subets
       utils::read_image_dimensions(image_files[0].c_str(),image_width,image_height);
-    }
+    }  // end non-cine input
     *outStream << "Image dimensions: " << image_width << " x " << image_height << std::endl;
 
     // set up output files

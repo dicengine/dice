@@ -1203,7 +1203,9 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
 }
 
 DICE_LIB_DLL_EXPORT
-const std::vector<std::string> decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params){
+void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
+  std::vector<std::string> & image_files,
+  std::vector<std::string> & stereo_image_files){
   int proc_rank = 0;
 #if DICE_MPI
   int mpi_is_initialized = 0;
@@ -1213,7 +1215,8 @@ const std::vector<std::string> decipher_image_file_names(Teuchos::RCP<Teuchos::P
 #endif
 
   // The reference image will be the first image in the vector, the rest are the deformed
-  std::vector<std::string> images;
+  image_files.clear();
+  stereo_image_files.clear();
 
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::image_folder),std::runtime_error,
     "Error, image folder was not specified");
@@ -1223,10 +1226,36 @@ const std::vector<std::string> decipher_image_file_names(Teuchos::RCP<Teuchos::P
 
   // User specified a ref and def image alone (not a sequence)
   if(params->isParameter(DICe::reference_image)){
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image_index),std::runtime_error,
+      "Error, cannot specify reference_image_index and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::last_image_index),std::runtime_error,
+      "Error, cannot specify last_image_index and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::image_file_prefix),std::runtime_error,
+      "Error, cannot specify image_file_prefix and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::image_file_extension),std::runtime_error,
+      "Error, cannot specify image_file_prefix and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::num_file_suffix_digits),std::runtime_error,
+      "Error, cannot specify image_file_prefix and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_left_suffix),std::runtime_error,
+      "Error, cannot specify stereo_left_suffix and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_right_suffix),std::runtime_error,
+      "Error, cannot specify stereo_right_suffix and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::cine_file),std::runtime_error,
+      "Error, cannot specify cine_file and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_cine_file),std::runtime_error,
+      "Error, cannot specify stereo_cine_file and reference_image");
+
     std::string ref_file_name = params->get<std::string>(DICe::reference_image);
     std::stringstream ref_name;
     ref_name << folder << ref_file_name;
-    images.push_back(ref_name.str());
+    image_files.push_back(ref_name.str());
+    if(params->isParameter(DICe::stereo_reference_image)){
+      std::string stereo_ref_file_name = params->get<std::string>(DICe::stereo_reference_image);
+      std::stringstream stereo_ref_name;
+      stereo_ref_name << folder << stereo_ref_file_name;
+      stereo_image_files.push_back(stereo_ref_name.str());
+    }
+
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::deformed_images),std::runtime_error,
       "Error, the deformed images were not specified");
     // create a sublist of the deformed images:
@@ -1237,19 +1266,77 @@ const std::vector<std::string> decipher_image_file_names(Teuchos::RCP<Teuchos::P
       if(active){
         std::stringstream def_name;
         def_name << folder << it->first;
-        images.push_back(def_name.str());
+        image_files.push_back(def_name.str());
       }
+    }
+    if(params->isParameter(DICe::stereo_reference_image)){
+      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::stereo_deformed_images),std::runtime_error,
+        "Error, the stereo deformed images were not specified");
+      Teuchos::ParameterList stereo_def_image_sublist = params->sublist(DICe::stereo_deformed_images);
+      // iterate the sublis and add the params to the output params:
+      for(Teuchos::ParameterList::ConstIterator it=stereo_def_image_sublist.begin();it!=stereo_def_image_sublist.end();++it){
+        const bool active = stereo_def_image_sublist.get<bool>(it->first);
+        if(active){
+          std::stringstream def_name;
+          def_name << folder << it->first;
+          stereo_image_files.push_back(def_name.str());
+        }
+      }
+      TEUCHOS_TEST_FOR_EXCEPTION(stereo_image_files.size()!=image_files.size(),std::runtime_error,
+        "Error, the number of deformed images and stereo deformed images must be the same");
     }
   }
   else if(params->isParameter(DICe::cine_file)){
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image),std::runtime_error,
+      "Error, cannot specify reference_image and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::deformed_images),std::runtime_error,
+      "Error, cannot specify deformed_images and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_reference_image),std::runtime_error,
+      "Error, cannot specify stereo_reference_image and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_deformed_images),std::runtime_error,
+      "Error, cannot specify stereo_deformed_images and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image_index),std::runtime_error,
+      "Error, cannot specify reference_image_index and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::last_image_index),std::runtime_error,
+      "Error, cannot specify last_image_index and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::image_file_prefix),std::runtime_error,
+      "Error, cannot specify image_file_prefix and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::image_file_extension),std::runtime_error,
+      "Error, cannot specify image_file_prefix and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::num_file_suffix_digits),std::runtime_error,
+      "Error, cannot specify image_file_prefix and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_left_suffix),std::runtime_error,
+      "Error, cannot specify stereo_left_suffix and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_right_suffix),std::runtime_error,
+      "Error, cannot specify stereo_right_suffix and cine_file");
     // flag that this analysis is a cine file
     // the first two strings will be "cine_file"
-    // TODO do this more elegantly
-    images.push_back(DICe::cine_file);
-    images.push_back(DICe::cine_file);
+    image_files.push_back(DICe::cine_file);
+    image_files.push_back(DICe::cine_file);
+    if(params->isParameter(DICe::stereo_cine_file)){
+      stereo_image_files.push_back(DICe::cine_file); // push back cine_file not stereo_cine_file because this is the flag that main uses to denote cine input
+      stereo_image_files.push_back(DICe::cine_file);
+    }
   }
   // User specified an image sequence:
   else{
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image),std::runtime_error,
+      "Error, cannot specify reference_image and reference_image_index");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::deformed_images),std::runtime_error,
+      "Error, cannot specify deformed_images and reference_image_index");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_reference_image),std::runtime_error,
+      "Error, cannot specify stereo_reference_image and reference_image_index");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_deformed_images),std::runtime_error,
+      "Error, cannot specify stereo_deformed_images and reference_image_index");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image),std::runtime_error,
+      "Error, cannot specify reference_image and reference_image_index");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::deformed_images),std::runtime_error,
+      "Error, cannot specify deformed_images and reference_image_index");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_reference_image),std::runtime_error,
+      "Error, cannot specify stereo_reference_image and reference_image_index");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_deformed_images),std::runtime_error,
+      "Error, cannot specify stereo_deformed_images and reference_image_index");
+
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::reference_image_index),std::runtime_error,
       "Error, the reference image index was not specified");
     // pull the parameters out
@@ -1273,6 +1360,16 @@ const std::vector<std::string> decipher_image_file_names(Teuchos::RCP<Teuchos::P
     const int_t numImages = lastImageIndex - refId + 1;
     TEUCHOS_TEST_FOR_EXCEPTION(numImages<=0,std::runtime_error,"");
 
+    std::string stereo_left_suffix = "";
+    std::string stereo_right_suffix = "";
+    const bool is_stereo = params->isParameter(DICe::stereo_left_suffix) || params->isParameter(DICe::stereo_right_suffix);
+    if(is_stereo){
+      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::stereo_left_suffix),std::runtime_error,"Error, for stereo the stereo_left_suffix parameter must be set");
+      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::stereo_right_suffix),std::runtime_error,"Error, for stereo the stereo_right_suffix parameter must be set");
+      stereo_left_suffix = params->get<std::string>(DICe::stereo_left_suffix);
+      stereo_right_suffix = params->get<std::string>(DICe::stereo_right_suffix);
+    }
+
     // determine the reference image
     int_t number = refId;
     int_t refDig = 0;
@@ -1286,8 +1383,17 @@ const std::vector<std::string> decipher_image_file_names(Teuchos::RCP<Teuchos::P
     if(digits > 1){
       for(int_t i=0;i<digits - refDig;++i) ref_name << "0";
     }
-    ref_name << refId << fileType;
-    images.push_back(ref_name.str());
+    ref_name << refId << stereo_left_suffix << fileType;
+    image_files.push_back(ref_name.str());
+    if(is_stereo){
+      std::stringstream stereo_ref_name;
+      stereo_ref_name << folder << prefix;
+      if(digits > 1){
+        for(int_t i=0;i<digits - refDig;++i) stereo_ref_name << "0";
+      }
+      stereo_ref_name << refId << stereo_right_suffix << fileType;
+      stereo_image_files.push_back(stereo_ref_name.str());
+    }
 
     // determine the deformed images
     for(int_t i=0;i<numImages;++i){
@@ -1302,12 +1408,20 @@ const std::vector<std::string> decipher_image_file_names(Teuchos::RCP<Teuchos::P
       }
       if(digits > 1)
         for(int_t j=0;j<digits - defDig;++j) def_name << "0";
-      def_name << refId+i << fileType;
-      images.push_back(def_name.str());
+      def_name << refId+i << stereo_left_suffix << fileType;
+      image_files.push_back(def_name.str());
+      if(is_stereo){
+        std::stringstream stereo_def_name;
+        stereo_def_name << folder << prefix;
+        if(digits > 1)
+          for(int_t j=0;j<digits - defDig;++j) stereo_def_name << "0";
+        stereo_def_name << refId+i << stereo_right_suffix << fileType;
+        stereo_image_files.push_back(stereo_def_name.str());
+      }
     }
+    TEUCHOS_TEST_FOR_EXCEPTION(is_stereo && image_files.size()!=stereo_image_files.size(),std::runtime_error,"");
   }
-  TEUCHOS_TEST_FOR_EXCEPTION(images.size()<=1,std::runtime_error,"");
-  return images;
+  TEUCHOS_TEST_FOR_EXCEPTION(image_files.size()<=1,std::runtime_error,"");
 }
 
 DICE_LIB_DLL_EXPORT
