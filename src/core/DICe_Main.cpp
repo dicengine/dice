@@ -168,6 +168,7 @@ int main(int argc, char *argv[]) {
     else
     {
       num_images = image_files.size() - 1; // the first file is the reference image
+      first_frame_index = input_params->get<int_t>(DICe::reference_image_index,0)+1;
       TEUCHOS_TEST_FOR_EXCEPTION(num_images<=0,std::runtime_error,"");
       *outStream << "Reference image: " << image_files[0] << std::endl;
       for(int_t i=1;i<=num_images;++i){

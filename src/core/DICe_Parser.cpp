@@ -219,8 +219,8 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   }
   // specifying a simple two image correlation
   if(inputParams->isParameter(DICe::reference_image)){
-    if(inputParams->isParameter(DICe::num_images)){
-      std::cout << "Error: The parameter " << DICe::num_images <<
+    if(inputParams->isParameter(DICe::last_image_index)){
+      std::cout << "Error: The parameter " << DICe::last_image_index <<
           " cannot be specified for a simple two image correlation (denoted by using the reference_image param) in " << input_file << std::endl;
       required_param_missing = true;
     }
@@ -248,8 +248,8 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
     required_param_missing = true;
   }
   if(inputParams->isParameter(DICe::reference_image_index)){
-    if(!inputParams->isParameter(DICe::num_images)){
-      std::cout << "Error: The parameter " << DICe::num_images << " of type int must be defined in " << input_file << std::endl;
+    if(!inputParams->isParameter(DICe::last_image_index)){
+      std::cout << "Error: The parameter " << DICe::last_image_index << " of type int must be defined in " << input_file << std::endl;
       required_param_missing = true;
     }
     if(!inputParams->isParameter(DICe::num_file_suffix_digits)){
@@ -1253,10 +1253,9 @@ const std::vector<std::string> decipher_image_file_names(Teuchos::RCP<Teuchos::P
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::reference_image_index),std::runtime_error,
       "Error, the reference image index was not specified");
     // pull the parameters out
-    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::num_images),std::runtime_error,
-      "Error, the number of images was not specified");
-    const int_t numImages = params->get<int_t>(DICe::num_images);
-    TEUCHOS_TEST_FOR_EXCEPTION(numImages<=0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::last_image_index),std::runtime_error,
+      "Error, the last image index was not specified");
+    const int_t lastImageIndex = params->get<int_t>(DICe::last_image_index);
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::image_file_prefix),std::runtime_error,
       "Error, the image file prefix was not specified");
     const std::string prefix = params->get<std::string>(DICe::image_file_prefix);
@@ -1270,6 +1269,9 @@ const std::vector<std::string> decipher_image_file_names(Teuchos::RCP<Teuchos::P
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::reference_image_index),std::runtime_error,
       "Error, the reference image index was not specified");
     const int_t refId = params->get<int_t>(DICe::reference_image_index);
+    TEUCHOS_TEST_FOR_EXCEPTION(lastImageIndex < refId,std::runtime_error,"Error invalid reference image index");
+    const int_t numImages = lastImageIndex - refId + 1;
+    TEUCHOS_TEST_FOR_EXCEPTION(numImages<=0,std::runtime_error,"");
 
     // determine the reference image
     int_t number = refId;
@@ -1291,11 +1293,16 @@ const std::vector<std::string> decipher_image_file_names(Teuchos::RCP<Teuchos::P
     for(int_t i=0;i<numImages;++i){
       std::stringstream def_name;
       def_name << folder << prefix;
-      int_t tmpNum = refId+i+1;
+      int_t tmpNum = refId+i;
       int_t defDig = 0;
-      while (tmpNum) {tmpNum /= 10; defDig++;}
-      for(int_t j=0;j<digits - defDig;++j) def_name << "0";
-      def_name << refId+i+1 << fileType;
+      if(tmpNum==0)
+        defDig = 1;
+      else{
+        while (tmpNum) {tmpNum /= 10; defDig++;}
+      }
+      if(digits > 1)
+        for(int_t j=0;j<digits - defDig;++j) def_name << "0";
+      def_name << refId+i << fileType;
       images.push_back(def_name.str());
     }
   }
@@ -1577,8 +1584,8 @@ void generate_template_input_files(const std::string & file_prefix){
   write_xml_comment(inputFile,"For an image sequence, remove the two options above (reference_image and deformed_image) and use the following:");
   write_xml_size_param(inputFile,DICe::reference_image_index,"<value>");
   write_xml_comment(inputFile,"The index of the file to use as the reference image (no preceeding zeros). For the example above this would be \"1\" if the first image should be used");
-  write_xml_size_param(inputFile,DICe::num_images);
-  write_xml_comment(inputFile,"The number of images in the sequence to analyze. For the example above this would be 1000");
+  write_xml_size_param(inputFile,DICe::last_image_index);
+  write_xml_comment(inputFile,"The index of the last image in the sequence to analyze. For the example above this would be 1000");
   write_xml_size_param(inputFile,DICe::num_file_suffix_digits);
   write_xml_comment(inputFile,"The number of digits in the file suffix. For the example above this would be 4");
   write_xml_string_param(inputFile,DICe::image_file_extension);

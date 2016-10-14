@@ -1966,10 +1966,10 @@ Schema::write_deformed_subset_intensity_image(Teuchos::RCP<Objective> obj){
     if(num_image_frames_>0){
       int_t num_digits_total = 0;
       int_t num_digits_image = 0;
-      int_t decrement_total = num_image_frames_;
-      int_t decrement_image = image_frame_;
+      int_t decrement_total = first_frame_index_ + num_image_frames_;
+      int_t decrement_image = first_frame_index_ + image_frame_;
       while (decrement_total){decrement_total /= 10; num_digits_total++;}
-      if(image_frame_==0) num_digits_image = 1;
+      if(decrement_image==0) num_digits_image = 1;
       else
         while (decrement_image){decrement_image /= 10; num_digits_image++;}
       num_zeros = num_digits_total - num_digits_image;
@@ -1978,7 +1978,7 @@ Schema::write_deformed_subset_intensity_image(Teuchos::RCP<Objective> obj){
     ss << dirStr << "deformedSubset_" << obj->correlation_point_global_id() << "_";
     for(int_t i=0;i<num_zeros;++i)
       ss << "0";
-    ss << image_frame_ << ".tif";
+    ss << first_frame_index_ + image_frame_ << ".tif";
     obj->subset()->write_tiff(ss.str(),true);
 #endif
 }
@@ -1996,10 +1996,10 @@ Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
     if(num_image_frames_>0){
       int_t num_digits_total = 0;
       int_t num_digits_image = 0;
-      int_t decrement_total = num_image_frames_;
-      int_t decrement_image = image_frame_;
+      int_t decrement_total = first_frame_index_ + num_image_frames_;
+      int_t decrement_image = first_frame_index_ + image_frame_;
       while (decrement_total){decrement_total /= 10; num_digits_total++;}
-      if(image_frame_==0) num_digits_image = 1;
+      if(decrement_image==0) num_digits_image = 1;
       else
         while (decrement_image){decrement_image /= 10; num_digits_image++;}
       num_zeros = num_digits_total - num_digits_image;
@@ -2008,7 +2008,7 @@ Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
     ss << dirStr << "evolvedSubset_" << obj->correlation_point_global_id() << "_";
     for(int_t i=0;i<num_zeros;++i)
       ss << "0";
-    ss << image_frame_ << ".tif";
+    ss << first_frame_index_ + image_frame_ << ".tif";
     obj->subset()->write_tiff(ss.str());
 #endif
 }
@@ -2421,10 +2421,11 @@ Schema::write_output(const std::string & output_folder,
     if(num_image_frames_>0){
       int_t num_digits_total = 0;
       int_t num_digits_image = 0;
-      int_t decrement_total = num_image_frames_;
-      int_t decrement_image = image_frame_ -1;
+      int_t decrement_total = first_frame_index_+num_image_frames_;
+      int_t decrement_image = first_frame_index_+image_frame_-1;
       while (decrement_total){decrement_total /= 10; num_digits_total++;}
-      if(image_frame_-1==0) num_digits_image = 1;
+      if(decrement_image==0)
+        num_digits_image = 1;
       else
         while (decrement_image){decrement_image /= 10; num_digits_image++;}
       num_zeros = num_digits_total - num_digits_image;
@@ -2433,7 +2434,7 @@ Schema::write_output(const std::string & output_folder,
     infofName << output_folder << prefix << ".txt";
     for(int_t i=0;i<num_zeros;++i)
       fName << "0";
-    fName << image_frame_ - 1;
+    fName << first_frame_index_ + image_frame_ - 1;
     if(proc_size >1)
       fName << "." << proc_size;
     fName << ".txt";
@@ -2553,10 +2554,11 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
   if(num_image_frames_>0){
     int_t num_digits_total = 0;
     int_t num_digits_image = 0;
-    int_t decrement_total = num_image_frames_;
-    int_t decrement_image = image_frame_;
+    int_t decrement_total = first_frame_index_ + num_image_frames_;
+    int_t decrement_image = first_frame_index_ + image_frame_;
     while (decrement_total){decrement_total /= 10; num_digits_total++;}
-    if(image_frame_==0) num_digits_image = 1;
+    if(decrement_image==0)
+      num_digits_image = 1;
     else
       while (decrement_image){decrement_image /= 10; num_digits_image++;}
     num_zeros = num_digits_total - num_digits_image;
@@ -2566,7 +2568,7 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
   ss << dirStr << "def_subsets_p_" << proc_id << "_";
   for(int_t i=0;i<num_zeros;++i)
     ss << "0";
-  ss << image_frame_ << ".tif";
+  ss << first_frame_index_ + image_frame_ << ".tif";
 
   const int_t w = ref_img_->width();
   const int_t h = ref_img_->height();

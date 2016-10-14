@@ -2,7 +2,7 @@
 *** Digital Image Correlation Engine (DICe), Copyright 2015 Sandia Corporation
 ***
 *** Reference image: ./images/obstruction_01.tif 
-*** Deformed image: ./images/obstruction_02.tif 
+*** Deformed image: ./images/obstruction_01.tif 
 *** DIC method : local 
 *** Correlation method: ZNSSD
 *** Interpolation method: BILINEAR

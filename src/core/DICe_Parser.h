@@ -99,7 +99,7 @@ const char* const deformed_images = "deformed_images";
 /// Input parameter
 const char* const reference_image_index = "reference_image_index";
 /// Input parameter
-const char* const num_images = "num_images";
+const char* const last_image_index = "last_image_index";
 /// Input parameter
 const char* const num_file_suffix_digits = "num_file_suffix_digits";
 /// Input parameter
