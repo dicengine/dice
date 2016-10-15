@@ -35,6 +35,12 @@ FOREACH ( img_file ${img_files} )
     FILE(COPY ${img_file} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/component/images/ )
 ENDFOREACH ( )
 
+# copy the calibration files to the build dir
+FILE ( GLOB cal_files "${CMAKE_CURRENT_SOURCE_DIR}/component/cal/*.*")
+FOREACH ( cal_file ${cal_files} )
+    FILE(COPY ${cal_file} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/component/cal/ )
+ENDFOREACH ( )
+
 # copy the mesh files to the build dir
 FILE ( GLOB mesh_files "${CMAKE_CURRENT_SOURCE_DIR}/component/global/meshes/*.*")
 FOREACH ( mesh_file ${mesh_files} )

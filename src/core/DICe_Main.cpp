@@ -94,6 +94,17 @@ int main(int argc, char *argv[]) {
     else{
       *outStream << "Correlation parameters not specified by user" << std::endl;
     }
+    std::vector<std::vector<scalar_t> > calibration_intrinsics;
+    std::vector<std::vector<scalar_t> > calibration_T_mat;
+    if(input_params->isParameter(DICe::calibration_parameters_file)){
+      const std::string calFileName = input_params->get<std::string>(DICe::calibration_parameters_file);
+      DICe::read_cal_params(calFileName,calibration_intrinsics,calibration_T_mat);
+      *outStream << "\n--- Calibration parameters read successfully ---\n" << std::endl;
+    }
+    else{
+      *outStream << "Calibration parameters not specified by user" << std::endl;
+    }
+
     // if the mesh size was specified in the input params set the use_global_dic flag
     if(input_params->isParameter(DICe::mesh_size)){
 #ifdef DICE_ENABLE_GLOBAL
@@ -110,19 +121,15 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> image_files;
     std::vector<std::string> stereo_image_files;
     DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
-
     const bool is_stereo = stereo_image_files.size() > 0;
-
-//    std::cout << "IMAGE FILES: " << image_files.size() << std::endl;
-//    for(size_t i=0;i<image_files.size();++i){
-//      std::cout << image_files[i] << std::endl;
-//    }
-//    std::cout << "STEREO IMAGE FILES: " << stereo_image_files.size() << std::endl;
-//    for(size_t i=0;i<stereo_image_files.size();++i){
-//      std::cout << stereo_image_files[i] << std::endl;
-//    }
-//    assert(false);
-
+    if(is_stereo){
+      TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::calibration_parameters_file),std::runtime_error,
+        "Error, calibration_parameters_file required for stereo");
+      TEUCHOS_TEST_FOR_EXCEPTION(calibration_T_mat.size()!=4,std::runtime_error,
+        "Error, calibration T matrix is the wrong size: " << calibration_T_mat.size());
+      TEUCHOS_TEST_FOR_EXCEPTION(calibration_intrinsics.size()!=2,std::runtime_error,
+        "Error, calibration intrinsics is the wrong size: " << calibration_intrinsics.size());
+    }
     int_t num_images = 0;
     int_t cine_ref_index = -1;
     int_t cine_start_index = -1;
