@@ -102,9 +102,6 @@ Triangulation::invert_transform(Teuchos::SerialDenseMatrix<int_t,double> & T_out
 void
 Triangulation::load_calibration_parameters(const std::string & param_file_name){
   DEBUG_MSG("Triangulation::load_calibration_parameters(): begin");
-  TEUCHOS_TEST_FOR_EXCEPTION(has_cal_params_,std::runtime_error,
-    "Error, calibration parameters have already been loaded, repeat call to load_calibration_parameters()");
-
   DEBUG_MSG("Triangulation::load_calibration_parameters(): Parsing calibration parameters from file: " << param_file_name);
   std::fstream dataFile(param_file_name.c_str(), std::ios_base::in);
   TEUCHOS_TEST_FOR_EXCEPTION(!dataFile.good(), std::runtime_error,
@@ -261,6 +258,11 @@ Triangulation::load_calibration_parameters(const std::string & param_file_name){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,
       "Error, unrecognized calibration parameters file format: " << param_file_name);
   }
+  TEUCHOS_TEST_FOR_EXCEPTION(cal_intrinsics_[0][0]<=0.0,std::runtime_error,"Error, invalid cx for camera 0" << cal_intrinsics_[0][0]);
+  TEUCHOS_TEST_FOR_EXCEPTION(cal_intrinsics_[0][1]<=0.0,std::runtime_error,"Error, invalid cy for camera 0" << cal_intrinsics_[0][1]);
+  TEUCHOS_TEST_FOR_EXCEPTION(cal_intrinsics_[1][0]<=0.0,std::runtime_error,"Error, invalid cx for camera 1" << cal_intrinsics_[1][0]);
+  TEUCHOS_TEST_FOR_EXCEPTION(cal_intrinsics_[1][1]<=0.0,std::runtime_error,"Error, invalid cy for camera 1" << cal_intrinsics_[1][1]);
+
   for(int_t i=0;i<2;++i){
     DEBUG_MSG("Triangulation::load_calibration_parameters(): camera " << i << " intrinsic parameters");
     DEBUG_MSG("Triangulation::load_calibration_parameters(): cx " << cal_intrinsics_[i][0]);
@@ -282,7 +284,6 @@ Triangulation::load_calibration_parameters(const std::string & param_file_name){
     DEBUG_MSG("Triangulation::load_calibration_parameters(): " << trans_extrinsics_[i][0] <<
       " " << trans_extrinsics_[i][1] << " " << trans_extrinsics_[i][2] << " " << trans_extrinsics_[i][3]);
   }
-  has_cal_params_ = true;
   DEBUG_MSG("Triangulation::load_calibration_parameters(): end");
 }
 
@@ -292,8 +293,23 @@ void Triangulation::triangulate(const scalar_t & x0,
   const scalar_t & y1,
   scalar_t & x_out,
   scalar_t & y_out,
-  scalar_t & z_out){
+  scalar_t & z_out,
+  const bool correct_lens_distortion){
   DEBUG_MSG("Triangulation::triangulate(): camera 0 sensor coords " << x0 << " " << y0 << " camera 1 sensor coords " << x1 << " " << y1);
+  static scalar_t xc0 = 0.0;
+  static scalar_t yc0 = 0.0;
+  static scalar_t xc1 = 0.0;
+  static scalar_t yc1 = 0.0;
+  xc0 = x0;
+  yc0 = y0;
+  xc1 = x1;
+  yc1 = y1;
+  if(correct_lens_distortion){
+    correct_lens_distortion_radial(xc0,yc0,0);
+    correct_lens_distortion_radial(xc1,yc1,1);
+    DEBUG_MSG("Triangulation::triangulate(): distortion corrected camera 0 sensor coords " << xc0 << " " << yc0 << " camera 1 sensor coords " << xc1 << " " << yc1);
+  }
+
   static Teuchos::SerialDenseMatrix<int_t,double> M(4,3,true);
   static Teuchos::SerialDenseMatrix<int_t,double> MTM(3,3,true);
   static Teuchos::SerialDenseMatrix<int_t,double> MTMMT(3,4,true);
@@ -331,11 +347,11 @@ void Triangulation::triangulate(const scalar_t & x0,
   // calculate the M matrix
   M(0,0) = cal_intrinsics_[0][2]; // fx0
   M(0,1) = cal_intrinsics_[0][4]; // fs0
-  M(0,2) = cal_intrinsics_[0][0] - x0; // cx1 - xs1
+  M(0,2) = cal_intrinsics_[0][0] - xc0; // cx1 - xs1
   M(1,1) = cal_intrinsics_[0][3]; // fy1
-  M(1,2) = cal_intrinsics_[0][1] - y0; // cy1 - ys1
-  cmx = cal_intrinsics_[1][0] - x1; // cx2 - xs2
-  cmy = cal_intrinsics_[1][1] - y1; // cy2 - ys2
+  M(1,2) = cal_intrinsics_[0][1] - yc0; // cy1 - ys1
+  cmx = cal_intrinsics_[1][0] - xc1; // cx2 - xs2
+  cmy = cal_intrinsics_[1][1] - yc1; // cy2 - ys2
   // (cx2-xs2)*R31 + fx2*R11 + fs2*R21
   M(2,0) = cmx*cal_extrinsics_[2][0] + cal_intrinsics_[1][2]*cal_extrinsics_[0][0] + cal_intrinsics_[1][4]*cal_extrinsics_[1][0];
   // (cx2-xs2)*R32 + fx2*R12 + fs2*R22
@@ -409,6 +425,24 @@ void Triangulation::triangulate(const scalar_t & x0,
   y_out = XYZ[1];
   z_out = XYZ[2];
   DEBUG_MSG("Triangulation::triangulate(): world coordinates X " << x_out << " Y " << y_out << " Z "  << z_out);
+}
+
+void
+Triangulation::correct_lens_distortion_radial(scalar_t & x_s,
+  scalar_t & y_s,
+  const int_t camera_id){
+  static scalar_t rho_tilde = 0.0; // = rho^2
+  static scalar_t r1 = 0.0;
+  static scalar_t r2 = 0.0;
+  static scalar_t factor = 0.0;
+  r1 = (x_s-cal_intrinsics_[camera_id][0])/cal_intrinsics_[camera_id][0]; // tested above to see that cx > 0 and cy > 0 when cal parameters loaded
+  r2 = (y_s-cal_intrinsics_[camera_id][1])/cal_intrinsics_[camera_id][1];
+  rho_tilde = r1*r1 + r2*r2;
+  factor = (cal_intrinsics_[camera_id][5]*rho_tilde + cal_intrinsics_[camera_id][6]*rho_tilde*rho_tilde
+      + cal_intrinsics_[camera_id][7]*rho_tilde*rho_tilde*rho_tilde);
+  //DEBUG_MSG("Triangulation::correct_lens_distortion(): corrections x " << factor*r1*cal_intrinsics_[camera_id][0] << " y " << factor*r2*cal_intrinsics_[camera_id][1]);
+  x_s = x_s - factor*r1*cal_intrinsics_[camera_id][0];
+  y_s = y_s - factor*r2*cal_intrinsics_[camera_id][1];
 }
 
 

@@ -89,8 +89,7 @@ int main(int argc, char *argv[]) {
 
   *outStream << "reading calibration parameters from vic3d format" << std::endl;
 
-  Teuchos::RCP<Triangulation> triangulation_xml = Teuchos::rcp(new Triangulation());
-  triangulation_xml->load_calibration_parameters("./cal/cal_a.xml");
+  Teuchos::RCP<Triangulation> triangulation_xml = Teuchos::rcp(new Triangulation("./cal/cal_a.xml"));
   std::vector<std::vector<scalar_t> > & calibration_intrinsics_xml = *triangulation_xml->cal_intrinsics();
   std::vector<std::vector<scalar_t> > & calibration_T_mat_xml = * triangulation_xml->cal_extrinsics();
   std::vector<std::vector<scalar_t> > & zero_to_world_xml = * triangulation_xml->trans_extrinsics();
@@ -168,8 +167,7 @@ int main(int argc, char *argv[]) {
 
   *outStream << "reading calibration parameters from text format" << std::endl;
 
-  Teuchos::RCP<Triangulation> triangulation_txt = Teuchos::rcp(new Triangulation());
-  triangulation_txt->load_calibration_parameters("./cal/cal_a.txt");
+  Teuchos::RCP<Triangulation> triangulation_txt = Teuchos::rcp(new Triangulation("./cal/cal_a.txt"));
   std::vector<std::vector<scalar_t> > & calibration_intrinsics_txt = *triangulation_txt->cal_intrinsics();
   std::vector<std::vector<scalar_t> > & calibration_T_mat_txt = * triangulation_txt->cal_extrinsics();
   std::vector<std::vector<scalar_t> > & zero_to_world_txt = * triangulation_txt->trans_extrinsics();
@@ -247,8 +245,7 @@ int main(int argc, char *argv[]) {
 
   *outStream << "testing calibration txt file with custom transform" << std::endl;
 
-  Teuchos::RCP<Triangulation> tri_custom = Teuchos::rcp(new Triangulation());
-  tri_custom->load_calibration_parameters("./cal/cal_a_with_transform.txt");
+  Teuchos::RCP<Triangulation> tri_custom = Teuchos::rcp(new Triangulation("./cal/cal_a_with_transform.txt"));
   std::vector<std::vector<scalar_t> > & custom_zero_to_world = * tri_custom->trans_extrinsics();
   *outStream << "testing camera 0 to world transform from txt format with custom transform" << std::endl;
 
@@ -277,14 +274,11 @@ int main(int argc, char *argv[]) {
 
   *outStream << "testing triangulation of 3d points" << std::endl;
 
-  Teuchos::RCP<Triangulation> tri = Teuchos::rcp(new Triangulation());
-  tri->load_calibration_parameters("./cal/cal_b.xml");
-
+  Teuchos::RCP<Triangulation> tri = Teuchos::rcp(new Triangulation("./cal/cal_b.xml"));
   scalar_t x_out=0.0,y_out=0.0,z_out=0.0;
   scalar_t x_0 = 190; scalar_t y_0 = 187;
   scalar_t x_1 = 193.8777; scalar_t y_1 = 186.0944;
-  tri->triangulate(x_0,y_0,x_1,y_1,x_out,y_out,z_out);
-  // TODO check output points
+  tri->triangulate(x_0,y_0,x_1,y_1,x_out,y_out,z_out,false);
   scalar_t global_x_gold = 46.1199;
   scalar_t global_y_gold = -25.5283;
   scalar_t global_z_gold = -6543.5;

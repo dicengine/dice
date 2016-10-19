@@ -58,20 +58,13 @@ class DICE_LIB_DLL_EXPORT
 Triangulation{
 public:
   /// \brief Default constructor
-  Triangulation():
-    has_cal_params_(false){};
+  /// \param param_file_name the name of the file to parse the calibration parameters from
+  Triangulation(const std::string & param_file_name){
+    load_calibration_parameters(param_file_name);
+  };
 
   /// Pure virtual destructor
   virtual ~Triangulation(){}
-
-  /// \brief load the calibration parameters
-  /// \param param_file_name File name of the cal parameters file
-  void load_calibration_parameters(const std::string & param_file_name);
-
-  /// returns true if the cal parameters have been loaded
-  bool has_cal_params()const{
-    return has_cal_params_;
-  }
 
   /// returns a pointer to the calibration intrinsics
   std::vector<std::vector<scalar_t> > * cal_intrinsics(){
@@ -98,13 +91,15 @@ public:
   /// \param x_out global x position in world coords
   /// \param y_out global y position in world coords
   /// \param z_out global z position in world coords
+  /// \param correct_lens_distortion correct for lens distortion
   void triangulate(const scalar_t & x0,
     const scalar_t & y0,
     const scalar_t & x1,
     const scalar_t & y1,
     scalar_t & x_out,
     scalar_t & y_out,
-    scalar_t & z_out);
+    scalar_t & z_out,
+    const bool correct_lens_distortion = false);
 
   /// convert Cardan-Bryant angles and offsets to T matrix format
   /// \param alpha euler angle in degrees
@@ -125,9 +120,19 @@ public:
   /// \param T_out the matrix to invert
   void invert_transform(Teuchos::SerialDenseMatrix<int_t,double> & T_out);
 
-protected:
-  /// true if the calibration parameters have been loaded
-  bool has_cal_params_;
+  /// correct the lens distortion with a radial model
+  /// \param x_s x sensor coordinate to correct, modified in place
+  /// \param y_s y sensor coordinate to correct, modified in place
+  /// \param camera_id either 0 or 1
+  void correct_lens_distortion_radial(scalar_t & x_s,
+    scalar_t & y_s,
+    const int_t camera_id);
+
+private:
+  /// \brief load the calibration parameters
+  /// \param param_file_name File name of the cal parameters file
+  void load_calibration_parameters(const std::string & param_file_name);
+
   /// 2 x 8 matrix of camera intrinsics
   /// first index is the camera id, second index is cx cy fx fy fs k1 k2 k3
   std::vector<std::vector<scalar_t> > cal_intrinsics_;

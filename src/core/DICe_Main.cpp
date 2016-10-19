@@ -95,10 +95,10 @@ int main(int argc, char *argv[]) {
     else{
       *outStream << "Correlation parameters not specified by user" << std::endl;
     }
-    Teuchos::RCP<DICe::Triangulation> triangulation = Teuchos::rcp(new DICe::Triangulation());
+    Teuchos::RCP<DICe::Triangulation> triangulation;
     if(input_params->isParameter(DICe::calibration_parameters_file)){
       const std::string cal_file_name = input_params->get<std::string>(DICe::calibration_parameters_file);
-      triangulation->load_calibration_parameters(cal_file_name);
+      triangulation = Teuchos::rcp(new DICe::Triangulation(cal_file_name));
       *outStream << "\n--- Calibration parameters read successfully ---\n" << std::endl;
     }
     else{
@@ -127,8 +127,6 @@ int main(int argc, char *argv[]) {
         "Error, calibration_parameters_file required for stereo");
       TEUCHOS_TEST_FOR_EXCEPTION(triangulation==Teuchos::null,std::runtime_error,
         "Error, triangulation should be instantiated at this point");
-      TEUCHOS_TEST_FOR_EXCEPTION(!triangulation->has_cal_params(),std::runtime_error,
-        "Error, cal parameters should be loaded at this point");
     }
     int_t num_images = 0;
     int_t cine_ref_index = -1;
