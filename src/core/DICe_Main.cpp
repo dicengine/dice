@@ -45,6 +45,7 @@
 #include <DICe_ImageIO.h>
 #include <DICe_Schema.h>
 #include <DICe_Cine.h>
+#include <DICe_Triangulation.h>
 
 #include <boost/timer.hpp>
 
@@ -94,11 +95,10 @@ int main(int argc, char *argv[]) {
     else{
       *outStream << "Correlation parameters not specified by user" << std::endl;
     }
-    std::vector<std::vector<scalar_t> > calibration_intrinsics;
-    std::vector<std::vector<scalar_t> > calibration_T_mat;
+    Teuchos::RCP<DICe::Triangulation> triangulation = Teuchos::rcp(new DICe::Triangulation());
     if(input_params->isParameter(DICe::calibration_parameters_file)){
-      const std::string calFileName = input_params->get<std::string>(DICe::calibration_parameters_file);
-      DICe::read_cal_params(calFileName,calibration_intrinsics,calibration_T_mat);
+      const std::string cal_file_name = input_params->get<std::string>(DICe::calibration_parameters_file);
+      triangulation->load_calibration_parameters(cal_file_name);
       *outStream << "\n--- Calibration parameters read successfully ---\n" << std::endl;
     }
     else{
@@ -125,10 +125,10 @@ int main(int argc, char *argv[]) {
     if(is_stereo){
       TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::calibration_parameters_file),std::runtime_error,
         "Error, calibration_parameters_file required for stereo");
-      TEUCHOS_TEST_FOR_EXCEPTION(calibration_T_mat.size()!=4,std::runtime_error,
-        "Error, calibration T matrix is the wrong size: " << calibration_T_mat.size());
-      TEUCHOS_TEST_FOR_EXCEPTION(calibration_intrinsics.size()!=2,std::runtime_error,
-        "Error, calibration intrinsics is the wrong size: " << calibration_intrinsics.size());
+      TEUCHOS_TEST_FOR_EXCEPTION(triangulation==Teuchos::null,std::runtime_error,
+        "Error, triangulation should be instantiated at this point");
+      TEUCHOS_TEST_FOR_EXCEPTION(!triangulation->has_cal_params(),std::runtime_error,
+        "Error, cal parameters should be loaded at this point");
     }
     int_t num_images = 0;
     int_t cine_ref_index = -1;

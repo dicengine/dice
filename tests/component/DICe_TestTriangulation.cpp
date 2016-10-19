@@ -40,7 +40,7 @@
 // @HEADER
 
 #include <DICe.h>
-#include <DICe_Parser.h>
+#include <DICe_Triangulation.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -67,11 +67,6 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- Begin test ---" << std::endl;
 
-  *outStream << "reading calibration parameters from vic3d format" << std::endl;
-
-  std::vector<std::vector<scalar_t> > calibration_intrinsics_xml;
-  std::vector<std::vector<scalar_t> > calibration_T_mat_xml;
-  DICe::read_cal_params("./cal/cal_a.xml",calibration_intrinsics_xml,calibration_T_mat_xml);
 
   std::vector<std::vector<scalar_t> > intrinsic_gold =
     {{638.913,407.295,2468.53,2468.25,-0.171198,0.0638413,0,0},
@@ -81,6 +76,24 @@ int main(int argc, char *argv[]) {
      {-0.00145487,0.999998,-0.00109863,-0.610487},
      {0.309519,0.00149499,0.950892,17.1329},
      {0,0,0,1}};
+  std::vector<std::vector<scalar_t> > zero_to_world_xml_gold =
+     {{0.987647,0.000580617,-0.156696,65.3774},
+      {0.000684129,-1.0,0.00060666,-0.305243},
+      {-0.156695,-0.000706366,-0.987647,8.56645},
+      {0.0,0.0,0.0,1.0}};
+  std::vector<std::vector<scalar_t> > zero_to_world_txt_gold =
+    {{1.0,0.0,0.0,0.0},
+     {0.0,1.0,0.0,0.0},
+     {0.0,0.0,1.0,0.0},
+     {0.0,0.0,0.0,1.0}};
+
+  *outStream << "reading calibration parameters from vic3d format" << std::endl;
+
+  Teuchos::RCP<Triangulation> triangulation_xml = Teuchos::rcp(new Triangulation());
+  triangulation_xml->load_calibration_parameters("./cal/cal_a.xml");
+  std::vector<std::vector<scalar_t> > & calibration_intrinsics_xml = *triangulation_xml->cal_intrinsics();
+  std::vector<std::vector<scalar_t> > & calibration_T_mat_xml = * triangulation_xml->cal_extrinsics();
+  std::vector<std::vector<scalar_t> > & zero_to_world_xml = * triangulation_xml->trans_extrinsics();
 
   *outStream << "testing intrinsics from vic3d format" << std::endl;
 
@@ -128,13 +141,38 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  *outStream << "testing camera 0 to world transform from vic3d format" << std::endl;
+
+  if(zero_to_world_xml.size()!=4){
+    errorFlag++;
+    *outStream << "Error, zero_to_world array is the wrong length, should be 4 and is " << zero_to_world_xml.size() << std::endl;
+  }
+  else{
+    if(zero_to_world_xml[0].size()!=4){
+      errorFlag++;
+      *outStream << "Error, zero_to_world array is the wrong width, should be 4 and is " << zero_to_world_xml[0].size() << std::endl;
+    }
+    else{
+      for(size_t i=0;i<zero_to_world_xml_gold.size();++i){
+        for(size_t j=0;j<zero_to_world_xml_gold[0].size();++j){
+          if(std::abs(zero_to_world_xml[i][j]-zero_to_world_xml_gold[i][j])>errorTol){
+            *outStream << "Error, zero_to_world value " << i << " " << j << " is not correct. Should be " << zero_to_world_xml_gold[i][j] << " is " << zero_to_world_xml[i][j] << std::endl;
+            errorFlag++;
+          }
+        }
+      }
+    }
+  }
+
   *outStream << "calibration parameters from vic3d format have been checked" << std::endl;
 
   *outStream << "reading calibration parameters from text format" << std::endl;
 
-  std::vector<std::vector<scalar_t> > calibration_intrinsics_txt;
-  std::vector<std::vector<scalar_t> > calibration_T_mat_txt;
-  DICe::read_cal_params("./cal/cal_a.txt",calibration_intrinsics_txt,calibration_T_mat_txt);
+  Teuchos::RCP<Triangulation> triangulation_txt = Teuchos::rcp(new Triangulation());
+  triangulation_txt->load_calibration_parameters("./cal/cal_a.txt");
+  std::vector<std::vector<scalar_t> > & calibration_intrinsics_txt = *triangulation_txt->cal_intrinsics();
+  std::vector<std::vector<scalar_t> > & calibration_T_mat_txt = * triangulation_txt->cal_extrinsics();
+  std::vector<std::vector<scalar_t> > & zero_to_world_txt = * triangulation_txt->trans_extrinsics();
 
   *outStream << "testing intrinsics from txt format" << std::endl;
 
@@ -182,7 +220,89 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  *outStream << "testing camera 0 to world transform from txt format" << std::endl;
+
+  if(zero_to_world_txt.size()!=4){
+    errorFlag++;
+    *outStream << "Error, zero_to_world array is the wrong length, should be 4 and is " << zero_to_world_txt.size() << std::endl;
+  }
+  else{
+    if(zero_to_world_txt[0].size()!=4){
+      errorFlag++;
+      *outStream << "Error, zero_to_world array is the wrong width, should be 4 and is " << zero_to_world_txt[0].size() << std::endl;
+    }
+    else{
+      for(size_t i=0;i<zero_to_world_txt_gold.size();++i){
+        for(size_t j=0;j<zero_to_world_txt_gold[0].size();++j){
+          if(std::abs(zero_to_world_txt[i][j]-zero_to_world_txt_gold[i][j])>errorTol){
+            *outStream << "Error, zero_to_world value " << i << " " << j << " is not correct. Should be " << zero_to_world_txt_gold[i][j] << " is " << zero_to_world_txt[i][j] << std::endl;
+            errorFlag++;
+          }
+        }
+      }
+    }
+  }
+
   *outStream << "calibration parameters from txt format have been checked" << std::endl;
+
+  *outStream << "testing calibration txt file with custom transform" << std::endl;
+
+  Teuchos::RCP<Triangulation> tri_custom = Teuchos::rcp(new Triangulation());
+  tri_custom->load_calibration_parameters("./cal/cal_a_with_transform.txt");
+  std::vector<std::vector<scalar_t> > & custom_zero_to_world = * tri_custom->trans_extrinsics();
+  *outStream << "testing camera 0 to world transform from txt format with custom transform" << std::endl;
+
+  if(custom_zero_to_world.size()!=4){
+    errorFlag++;
+    *outStream << "Error, zero_to_world array is the wrong length, should be 4 and is " << custom_zero_to_world.size() << std::endl;
+  }
+  else{
+    if(custom_zero_to_world[0].size()!=4){
+      errorFlag++;
+      *outStream << "Error, zero_to_world array is the wrong width, should be 4 and is " << custom_zero_to_world[0].size() << std::endl;
+    }
+    else{
+      for(size_t i=0;i<zero_to_world_xml_gold.size();++i){
+        for(size_t j=0;j<zero_to_world_xml_gold[0].size();++j){
+          if(std::abs(custom_zero_to_world[i][j]-zero_to_world_xml_gold[i][j])>errorTol){
+            *outStream << "Error, zero_to_world value " << i << " " << j << " is not correct. Should be " << zero_to_world_xml_gold[i][j] << " is " << custom_zero_to_world[i][j] << std::endl;
+            errorFlag++;
+          }
+        }
+      }
+    }
+  }
+
+  *outStream << "calibration parameters from txt format with custom transform have been checked" << std::endl;
+
+  *outStream << "testing triangulation of 3d points" << std::endl;
+
+  Teuchos::RCP<Triangulation> tri = Teuchos::rcp(new Triangulation());
+  tri->load_calibration_parameters("./cal/cal_b.xml");
+
+  scalar_t x_out=0.0,y_out=0.0,z_out=0.0;
+  scalar_t x_0 = 190; scalar_t y_0 = 187;
+  scalar_t x_1 = 193.8777; scalar_t y_1 = 186.0944;
+  tri->triangulate(x_0,y_0,x_1,y_1,x_out,y_out,z_out);
+  // TODO check output points
+  scalar_t global_x_gold = 46.1199;
+  scalar_t global_y_gold = -25.5283;
+  scalar_t global_z_gold = -6543.5;
+  if(std::abs(global_x_gold - x_out) > errorTol){
+    errorFlag++;
+    *outStream << "Error, triangulation x coord is wrong. Should be " << global_x_gold << " is " << x_out << std::endl;
+  }
+  if(std::abs(global_y_gold - y_out) > errorTol){
+    errorFlag++;
+    *outStream << "Error, triangulation y coord is wrong. Should be " << global_y_gold << " is " << y_out << std::endl;
+  }
+  if(std::abs(global_z_gold - z_out) > errorTol){
+    errorFlag++;
+    *outStream << "Error, triangulation z coord is wrong. Should be " << global_z_gold << " is " << z_out << std::endl;
+  }
+
+  *outStream << "triangulation of 3d points completed and tested" << std::endl;
+
 
   *outStream << "--- End test ---" << std::endl;
 

@@ -5,6 +5,7 @@ SET(DICE_SOURCES
   DICe_Schema.cpp
   DICe_ObjectiveZNSSD.cpp
   DICe_Parser.cpp
+  DICe_Triangulation.cpp
   DICe_XMLUtils.cpp
   DICe_PostProcessor.cpp
   DICe_ParameterUtilities.cpp
@@ -18,6 +19,7 @@ SET(DICE_HEADERS
   DICe_Schema.h
   DICe_ParameterUtilities.h
   DICe_Parser.h
+  DICe_Triangulation.h
   DICe_XMLUtils.h
   DICe_PostProcessor.h
   DICe_Initializer.h

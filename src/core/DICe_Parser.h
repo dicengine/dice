@@ -144,16 +144,6 @@ Teuchos::RCP<Teuchos::ParameterList> read_correlation_params(const std::string &
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> read_physics_params(const std::string & paramFileName);
 
-/// \brief Read the calibration parameters
-/// \param paramFileName File name of the cal parameters file
-/// \param intrinsics [out] the intrinsic parameters for camera 0 and 1 (first dimension is the camera id)
-/// \param T_mat [out] the transformation matrix from camera 0 to camera 1
-/// T = [ R11 R12 R13 tx; R21 R22 R23 ty; R31 R32 R33 ty; 0 0 0 1]; 4x 4 matrix of scalar values
-DICE_LIB_DLL_EXPORT
-void read_cal_params(const std::string & paramFileName,
-  std::vector<std::vector<scalar_t> > & intrinsics,
-  std::vector<std::vector<scalar_t> > & T_mat);
-
 /// struct to hold motion window around a subset to test for movement
 struct
 DICE_LIB_DLL_EXPORT
