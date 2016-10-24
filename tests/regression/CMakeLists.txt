@@ -10,6 +10,7 @@ SET(REGRESSION_TESTS
   single_speckled_shift
   conformal_subset_def
   dic_challenge_12
+  dic_challenge_12_sorted
 )
 
 IF(NOT DICE_USE_DOUBLE)

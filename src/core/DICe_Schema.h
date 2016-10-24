@@ -1276,8 +1276,8 @@ private:
   Teuchos::RCP<Stat_Container> stat_container_;
   /// use the previous image as the reference rather than the original ref image
   bool use_incremental_formulation_;
-
-
+  /// sort the txt output for full field results by coordinates so that they are in ascending order x, then y
+  bool sort_txt_output_;
 };
 
 /// \class DICe::Output_Spec

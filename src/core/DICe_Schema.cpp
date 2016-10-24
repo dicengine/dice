@@ -56,6 +56,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <tuple>
 
 #include <cassert>
 #include <set>
@@ -373,6 +374,7 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   path_distance_threshold_ = -1.0;
   stat_container_ = Teuchos::rcp(new Stat_Container());
   use_incremental_formulation_ = false;
+  sort_txt_output_ = false;
   set_params(params);
 }
 
@@ -500,6 +502,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
 #endif
 
   use_incremental_formulation_ = diceParams->get<bool>(DICe::use_incremental_formulation,false);
+  sort_txt_output_ = diceParams->get<bool>(DICe::sort_txt_output,false);
   gauss_filter_images_ = diceParams->get<bool>(DICe::gauss_filter_images,false);
   gauss_filter_mask_size_ = diceParams->get<int_t>(DICe::gauss_filter_mask_size,7);
   compute_ref_gradients_ = diceParams->get<bool>(DICe::compute_ref_gradients,true);
@@ -2444,13 +2447,39 @@ Schema::write_output(const std::string & output_folder,
       output_spec_->write_info(infoFilePtr,true);
       fclose(infoFilePtr);
      }
-    else{
+    else if(!separate_header_file){
       output_spec_->write_info(filePtr,false);
     }
     output_spec_->write_header(filePtr,"SUBSET_ID");
 
-    for(int_t i=0;i<global_num_subsets_;++i){
-      output_spec_->write_frame(filePtr,i,i);
+    // determine the sort order
+    if(sort_txt_output_){
+      // gather the coordinates fields
+      Teuchos::RCP<MultiField> subset_coords_x = mesh_->get_overlap_field(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
+      Teuchos::RCP<MultiField> subset_coords_y = mesh_->get_overlap_field(DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS);
+      std::vector<std::tuple<int_t,scalar_t,scalar_t> >
+        data(global_num_subsets_,std::tuple<int_t,scalar_t,scalar_t>(0,0.0,0.0));
+      for(int_t i=0;i<global_num_subsets_;++i){
+        std::get<0>(data[i]) = i;
+        std::get<1>(data[i]) = subset_coords_x->local_value(i);
+        std::get<2>(data[i]) = subset_coords_y->local_value(i);
+      }
+      // sort the vector of tuples by y coordinate
+      std::sort(std::begin(data), std::end(data), [](const std::tuple<int_t,scalar_t,scalar_t> & a, const std::tuple<int_t,scalar_t,scalar_t>& b)
+      {return std::get<1>(a) < std::get<1>(b) || ((std::get<1>(a) == std::get<1>(b))&&(std::get<2>(a) < std::get<2>(b)));});
+      // sort the vector of tuples by x coordinate
+      //std::sort(std::begin(data), std::end(data), [](const std::tuple<int_t,scalar_t,scalar_t> & a, const std::tuple<int_t,scalar_t,scalar_t>& b)
+      //{return std::get<1>(a) < std::get<1>(b);});
+      // write the output
+      for(int_t i=0;i<global_num_subsets_;++i){
+        const int_t sorted_index = std::get<0>(data[i]);
+        output_spec_->write_frame(filePtr,sorted_index,sorted_index);
+      }
+    }
+    else{
+      for(int_t i=0;i<global_num_subsets_;++i){
+        output_spec_->write_frame(filePtr,i,i);
+      }
     }
     fclose (filePtr);
   }
