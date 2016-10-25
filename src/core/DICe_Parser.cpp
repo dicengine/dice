@@ -595,19 +595,50 @@ multi_shape read_shapes(std::fstream & dataFile){
   return multi_shape;
 }
 
+std::istream & safeGetline(std::istream& is, std::string& t)
+{
+    t.clear();
+    // The characters in the stream are read one-by-one using a std::streambuf.
+    // That is faster than reading them one-by-one using the std::istream.
+    // Code that uses streambuf this way must be guarded by a sentry object.
+    // The sentry object performs various tasks,
+    // such as thread synchronization and updating the stream state.
+    std::istream::sentry se(is, true);
+    std::streambuf* sb = is.rdbuf();
+    for(;;) {
+        int c = sb->sbumpc();
+        switch (c) {
+        case '\n':
+            return is;
+        case '\r':
+            if(sb->sgetc() == '\n')
+                sb->sbumpc();
+            return is;
+        case EOF:
+            // Also handle the case when the last line has no line ending
+            if(t.empty())
+                is.setstate(std::ios::eofbit);
+            return is;
+        default:
+            t += (char)c;
+        }
+    }
+}
 
 DICE_LIB_DLL_EXPORT
 Teuchos::ArrayRCP<std::string> tokenize_line(std::fstream &dataFile,
   const std::string & delim,
   const bool capitalize){
-  static int_t MAX_CHARS_PER_LINE = 512;
-  static int_t MAX_TOKENS_PER_LINE = 20;
+//  static int_t MAX_CHARS_PER_LINE = 512;
+  static int_t MAX_TOKENS_PER_LINE = 100;
 
   Teuchos::ArrayRCP<std::string> tokens(MAX_TOKENS_PER_LINE,"");
 
   // read an entire line into memory
-  char * buf = new char[MAX_CHARS_PER_LINE];
-  dataFile.getline(buf, MAX_CHARS_PER_LINE);
+  std::string buf_str;
+  safeGetline(dataFile, buf_str);
+  char *buf = new char[buf_str.length() + 1];
+  strcpy(buf, buf_str.c_str());
 
   // parse the line into blank-delimited tokens
   int_t n = 0; // a for-loop index

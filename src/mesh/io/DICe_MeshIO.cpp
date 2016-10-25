@@ -84,6 +84,8 @@ Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
 #endif
   if(num_procs>1)
   {
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, read_exodus_mesh has only been implemented for serial use.");
+
     std::stringstream temp_ss1, temp_ss2, file_name_post;
     temp_ss1 << num_procs;
     const size_t procs_num_digits = temp_ss1.str().length();
@@ -439,6 +441,46 @@ Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
 
   // read the coordinates from the mesh file:
   DICe::mesh::read_exodus_coordinates(mesh);
+
+  // read in the existing nodal fields
+  int_t num_time_steps;
+  float ret_float;
+  char ret_char;
+  ex_inquire(input_exoid,EX_INQ_TIME,&num_time_steps,&ret_float,&ret_char);
+  DEBUG_MSG("number of time steps in mesh: " << num_time_steps);
+  mesh->create_imported_field_storage(num_time_steps);
+
+  int_t num_existing_nodal_vars = 0;
+  ex_get_var_param(input_exoid,"n",&num_existing_nodal_vars);
+  DEBUG_MSG("number of existing nodal variables: " << num_existing_nodal_vars);
+  std::vector<std::string> nodal_string_var_names(num_existing_nodal_vars);
+  for (int_t i = 0; i < num_existing_nodal_vars; ++i){
+    nodal_string_var_names[i].resize(256);
+  }
+  char* nodal_var_names[num_existing_nodal_vars];
+  for (int_t i = 0; i < num_existing_nodal_vars; ++i){
+    nodal_var_names[i] = (char*) (nodal_string_var_names[i].c_str());
+  }
+  ex_get_var_names (input_exoid,"n",num_existing_nodal_vars,nodal_var_names);
+  for (int_t i = 0; i < num_existing_nodal_vars; ++i){
+    char * myStr = nodal_var_names[i];
+    nodal_string_var_names[i] = myStr;
+    //DEBUG_MSG("nodal variable: " << nodal_string_var_names[i]);
+  }
+  float * data = new float[num_nodes];
+  for(int_t i=0;i<num_time_steps;++i){
+    DEBUG_MSG("reading time step: " << i);
+    for (int_t j = 0; j < num_existing_nodal_vars; ++j){
+      DEBUG_MSG("nodal variable: " << nodal_string_var_names[j]);
+      mesh->create_imported_field(nodal_string_var_names[j],i); // creates a nodal scalar field
+      ex_get_nodal_var(input_exoid,i+1,j+1,num_nodes,data);
+      Teuchos::RCP<MultiField> field = mesh->get_imported_field(nodal_string_var_names[j],i);
+      for(int_t k=0;k<num_nodes;++k){
+        field->local_value(k) = data[k];
+      }
+    }
+  } // end time steps
+  delete [] data;
 
   return mesh;
 }

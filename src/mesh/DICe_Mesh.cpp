@@ -492,10 +492,6 @@ Mesh::create_elem_node_field_maps(const bool force_elem_and_node_maps_to_match){
     // NOTE some will be -1 if they are not locally owned
     node_it->second->update_local_id(scalar_node_dist_map_->get_local_element(node_it->first));
   }
-
-
-
-
 }
 
 void
@@ -541,6 +537,8 @@ Mesh::create_face_cell_field_maps(){
     }
     else if(elem_type == PYRAMID5)
       post_warning = true;
+    else if(elem_type == SPHERE) // sphere gets you kicked out of this method
+      return;
     else
     {
       std::stringstream oss;

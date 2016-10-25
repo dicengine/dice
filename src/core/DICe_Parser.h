@@ -300,6 +300,12 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
   const int_t width=-1,
   const int_t height=-1);
 
+DICE_LIB_DLL_EXPORT
+/// safe getline that works with windows and linux line endings
+/// \param is input stream
+/// \param t [out] string from getline
+std::istream& safeGetline(std::istream& is, std::string& t);
+
 /// \brief Turns a string read from getline() into tokens
 /// \param dataFile fstream file to read line from (assumed to be open)
 /// \param delim Delimiter character

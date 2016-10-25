@@ -1,0 +1,4 @@
+subset_displacement_x 0.001
+subset_displacement_y 0.001
+vsg_strain_xx 0.001
+vsg_strain_yy 0.001
