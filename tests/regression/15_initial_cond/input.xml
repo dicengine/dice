@@ -1,0 +1,11 @@
+<ParameterList>
+  <Parameter name="output_folder" type="string" value="./results/" />  
+  <Parameter name="image_folder" type="string" value="./images/" />  
+  <Parameter name="mesh_size" type="double" value="25.0" />  
+  <Parameter name="subset_file" type="string" value="roi.txt" />  
+  <Parameter name="correlation_parameters_file" type="string" value="params.xml" />
+  <Parameter name="reference_image" type="string" value="Reference.tif" />
+  <ParameterList name="deformed_images">
+    <Parameter name="P200_K50_N2.tif" type="bool" value="true" />
+  </ParameterList>
+</ParameterList>

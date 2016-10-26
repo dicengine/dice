@@ -1,0 +1,16 @@
+BEGIN REGION_OF_INTEREST
+  BEGIN BOUNDARY
+    BEGIN POLYGON
+      begin vertices
+        30 30 
+        1970 30
+        1970 970
+        30 970
+      end
+    END POLYGON
+  END
+  use_regular_grid
+  #dirichlet_bc boundary 0 2 3 2 0.0
+  #dirichlet_bc boundary 0 0 1 0 0.0
+  #dirichlet_bc boundary 0 0 1 1 -9.57
+END

@@ -1,0 +1,29 @@
+<ParameterList>
+<!-- Auto generated params file from DICe GUI -->
+<Parameter name="max_solver_iterations_fast" type="int" value="0" />
+<Parameter name="interpolation_method" type="string" value="KEYS_FOURTH" />  
+<Parameter name="optimization_method" type="string" value="GRADIENT_BASED" />  
+<Parameter name="initialization_method" type="string" value="USE_FIELD_VALUES" />  
+<Parameter name="enable_translation" type="bool" value="true" />  
+<Parameter name="enable_rotation" type="bool" value="false" />  
+<Parameter name="enable_normal_strain" type="bool" value="true" />  
+<Parameter name="enable_shear_strain" type="bool" value="false" />  
+<Parameter name="output_delimiter" type="string" value="," />  
+<Parameter name="omit_output_row_id" type="bool" value="true" />  
+<Parameter name="sort_txt_output" type="bool" value="true" />  
+<Parameter name="initial_condition_file" type="string" value="initial_condition.txt" />  
+<ParameterList name="post_process_vsg_strain">
+<Parameter name="strain_window_size_in_pixels" type="int" value="25" />  
+</ParameterList>
+<ParameterList name="output_spec">
+<Parameter name="COORDINATE_X" type="bool" value="true" />  
+<Parameter name="COORDINATE_Y" type="bool" value="true" />  
+<Parameter name="DISPLACEMENT_X" type="bool" value="true" />  
+<Parameter name="DISPLACEMENT_Y" type="bool" value="true" />  
+<Parameter name="VSG_STRAIN_XX" type="bool" value="true" />  
+<Parameter name="VSG_STRAIN_YY" type="bool" value="true" />  
+<Parameter name="VSG_STRAIN_XY" type="bool" value="true" />  
+<Parameter name="SIGMA" type="bool" value="true" />  
+<Parameter name="MATCH" type="bool" value="true" />  
+</ParameterList>
+</ParameterList>

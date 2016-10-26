@@ -1227,12 +1227,12 @@ public:
 
   /// Returns the number of bonds in the mesh
   size_t num_bonds()const{
-    return (int_t)bond_set_->size();
+    return bond_set_->size();
   }
 
   /// Returns the number of nodes in the mesh
   size_t num_nodes()const{
-    return (int_t)node_set_->size();
+    return node_set_->size();
   }
 
   /// Returns true if the mesh has been initialized

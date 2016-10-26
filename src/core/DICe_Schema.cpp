@@ -47,6 +47,7 @@
 #include <DICe_ImageUtils.h>
 #ifdef DICE_ENABLE_GLOBAL
 #include <DICe_MeshIO.h>
+#include <DICe_MeshIOUtils.h>
 #endif
 
 #include <Teuchos_XMLParameterListHelpers.hpp>
@@ -501,6 +502,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   }
 #endif
 
+  initial_condition_file_ = diceParams->get<std::string>(DICe::initial_condition_file,"");
   use_incremental_formulation_ = diceParams->get<bool>(DICe::use_incremental_formulation,false);
   sort_txt_output_ = diceParams->get<bool>(DICe::sort_txt_output,false);
   gauss_filter_images_ = diceParams->get<bool>(DICe::gauss_filter_images,false);
@@ -1370,6 +1372,29 @@ Schema::execute_correlation(){
     mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS)->put_scalar(0.0);
     mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS)->put_scalar(0.0);
   }
+#ifdef DICE_ENABLE_GLOBAL
+  if(has_initial_condition_file()&&image_frame_==0){
+    TEUCHOS_TEST_FOR_EXCEPTION(initialization_method_!=USE_FIELD_VALUES,std::runtime_error,
+      "Initialization method must be USE_FIELD_VALUES if an initial condition file is specified");
+    Teuchos::RCP<DICe::mesh::Importer_Projector> importer = Teuchos::rcp(new DICe::mesh::Importer_Projector(initial_condition_file_,mesh_));
+    TEUCHOS_TEST_FOR_EXCEPTION(importer->num_target_pts()!=local_num_subsets_,std::runtime_error,"");
+    std::vector<scalar_t> disp_x;
+    std::vector<scalar_t> disp_y;
+    if(importer->is_valid_vector_source_field(initial_condition_file_,"SUBSET_DISPLACEMENT")){
+      importer->import_vector_field(initial_condition_file_,"SUBSET_DISPLACEMENT",disp_x,disp_y);
+    }
+    else{
+      importer->import_vector_field(initial_condition_file_,"DISPLACEMENT",disp_x,disp_y);
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION((int_t)disp_x.size()!=local_num_subsets_||(int_t)disp_y.size()!=local_num_subsets_,std::runtime_error,"");
+    Teuchos::RCP<MultiField> ux = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+    Teuchos::RCP<MultiField> uy = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+    for(int_t i=0;i<local_num_subsets_;++i){
+      ux->local_value(i) = disp_x[i];
+      uy->local_value(i) = disp_y[i];
+    }
+  }
+#endif
 
   // Complete the set up activities for the post processors
   if(image_frame_==0){

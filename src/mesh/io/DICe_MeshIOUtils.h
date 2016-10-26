@@ -67,6 +67,12 @@ public:
   Importer_Projector(const std::string & source_file_name,
     const std::string & target_file_name);
 
+  /// constructor
+  /// \param source_file_name same format as the target file, but this is where the data will come from
+  /// \param target_mesh an exodus mesh to project the source data to
+  Importer_Projector(const std::string & source_file_name,
+    Teuchos::RCP<DICe::mesh::Mesh> target_mesh);
+
   /// returns the number of target points
   int_t num_target_pts(){
     return (int_t)target_pts_x_.size();
@@ -119,12 +125,21 @@ public:
     return & target_pts_y_;
   }
 
+  /// returns true if the field is a valid source field
+  /// \param file_name the name of the file to check
+  /// \param field_name the name of the requested field
+  bool is_valid_vector_source_field(const std::string & file_name,
+    const std::string & field_name);
 
 private:
   /// protect the default constructor
   Importer_Projector(const Importer_Projector&);
   /// comparison operator
   Importer_Projector& operator=(const Importer_Projector&);
+
+  /// set up the locations where the data will be projected from
+  /// \param source_file_name the string name of the file to use for source locations
+  void initialize_source_points(const std::string & source_file_name);
 
   /// locations to import the data from
   std::vector<scalar_t> source_pts_x_;

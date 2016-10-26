@@ -43,6 +43,7 @@
 #include <DICe_Schema.h>
 #include <DICe_TriangleUtils.h>
 #include <DICe_MeshIO.h>
+#include <DICe_MeshIOUtils.h>
 #include <DICe_ParameterUtilities.h>
 #include <DICe_Preconditioner.h>
 #include <DICe_Parser.h>
@@ -942,11 +943,32 @@ Global_Algorithm::execute(){
   }
   Teuchos::RCP<MultiField> disp = mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
   Teuchos::RCP<MultiField> disp_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
-  if(schema_)
+  if(schema_){
     if(schema_->use_incremental_formulation()){
       disp->put_scalar(0.0);
       disp_nm1->put_scalar(0.0);
     }
+    if(schema_->has_initial_condition_file()&&schema_->image_frame()==0){
+      Teuchos::RCP<DICe::mesh::Importer_Projector> importer =
+          Teuchos::rcp(new DICe::mesh::Importer_Projector(schema_->initial_condition_file(),mesh_));
+      TEUCHOS_TEST_FOR_EXCEPTION(importer->num_target_pts()!=(int_t)mesh_->num_nodes(),std::runtime_error,"");
+      std::vector<scalar_t> disp_x;
+      std::vector<scalar_t> disp_y;
+      if(importer->is_valid_vector_source_field(schema_->initial_condition_file(),"SUBSET_DISPLACEMENT")){
+        importer->import_vector_field(schema_->initial_condition_file(),"SUBSET_DISPLACEMENT",disp_x,disp_y);
+      }
+      else{
+        importer->import_vector_field(schema_->initial_condition_file(),"DISPLACEMENT",disp_x,disp_y);
+      }
+      TEUCHOS_TEST_FOR_EXCEPTION(disp_x.size()!=mesh_->num_nodes()||disp_y.size()!=mesh_->num_nodes(),std::runtime_error,"");
+      for(int_t i=0;i<(int_t)mesh_->num_nodes();++i){
+        disp->local_value(i*spa_dim+0) = disp_x[i];
+        disp->local_value(i*spa_dim+1) = disp_y[i];
+        disp_nm1->local_value(i*spa_dim+0) = disp_x[i];
+        disp_nm1->local_value(i*spa_dim+1) = disp_y[i];
+      }
+    }
+  }
 //  disp->describe();
 
 //  Teuchos::RCP<DICe::MultiField_Matrix> tangent = compute_tangent(use_fixed_point_iterations_);

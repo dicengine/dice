@@ -1033,6 +1033,16 @@ public:
     return motion_window_params_;
   }
 
+  /// returns true if an initial condition file has been specified
+  bool has_initial_condition_file()const{
+    return initial_condition_file_!="";
+  }
+
+  /// returns the string name of the initial conditions file
+  std::string initial_condition_file()const{
+    return initial_condition_file_;
+  }
+
   /// estimate the error in the displacement resolution and strain
   /// \param num_steps number of frequency profiles to cycle through
   /// \param num_mags number of magnitude profiles to cycle through
@@ -1278,6 +1288,8 @@ private:
   bool use_incremental_formulation_;
   /// sort the txt output for full field results by coordinates so that they are in ascending order x, then y
   bool sort_txt_output_;
+  /// name of the file to read for the initial condition
+  std::string initial_condition_file_;
 };
 
 /// \class DICe::Output_Spec

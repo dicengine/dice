@@ -159,6 +159,8 @@ const char* const compute_image_gradients = "compute_image_gradients";
 /// String parameter name
 const char* const filter_failed_cine_pixels = "filter_failed_cine_pixels";
 /// String parameter name
+const char* const initial_condition_file = "initial_condition_file";
+/// String parameter name
 const char* const enable_translation = "enable_translation";
 /// String parameter name
 const char* const enable_rotation = "enable_rotation";
@@ -882,6 +884,11 @@ const Correlation_Parameter projection_method_param(projection_method,
   projectionMethodStrings,
   MAX_PROJECTION_METHOD);
 /// Correlation parameter and properties
+const Correlation_Parameter initial_condition_file_param(initial_condition_file,
+  BOOL_PARAM,
+  true,
+  "Denotes a file to read the solution from as the initial condition");
+/// Correlation parameter and properties
 const Correlation_Parameter enable_translation_param(enable_translation,
   BOOL_PARAM,
   true,
@@ -1105,7 +1112,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 72;
+const int_t num_valid_correlation_params = 73;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1118,6 +1125,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   compute_def_gradients_param,
   compute_image_gradients_param,
   gauss_filter_images_param,
+  initial_condition_file_param,
   enable_translation_param,
   enable_rotation_param,
   enable_normal_strain_param,
@@ -1184,7 +1192,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_global_correlation_params = 23;
+const int_t num_valid_global_correlation_params = 24;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_global_correlation_params[num_valid_global_correlation_params] = {
   use_global_dic_param,
@@ -1209,7 +1217,8 @@ const Correlation_Parameter valid_global_correlation_params[num_valid_global_cor
   mms_spec_param,
   num_image_integration_points_param,
   global_element_type_param,
-  use_fixed_point_iterations_param
+  use_fixed_point_iterations_param,
+  initial_condition_file_param
 };
 
 } // end DICe namespace

@@ -481,6 +481,7 @@ NLVC_Strain_Post_Processor::execute(){
   Teuchos::RCP<DICe::MultiField> nlvc_dvdy_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_DVDY_FS);
   Teuchos::RCP<DICe::MultiField> f9_rcp = mesh_->get_field(DICe::mesh::field_enums::FIELD_9_FS);
   Teuchos::RCP<DICe::MultiField> f10_rcp = mesh_->get_field(DICe::mesh::field_enums::FIELD_10_FS);
+  Teuchos::RCP<DICe::MultiField> match = mesh_->get_field(DICe::mesh::field_enums::MATCH_FS);
 
   for(int_t subset=0;subset<local_num_points_;++subset){
     DEBUG_MSG("Processing subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << ", " << subset + 1 << " of " << local_num_points_);
@@ -538,6 +539,9 @@ NLVC_Strain_Post_Processor::execute(){
     nlvc_strain_xx_rcp->local_value(subset) = GL_xx;
     nlvc_strain_yy_rcp->local_value(subset) = GL_yy;
     nlvc_strain_xy_rcp->local_value(subset) = GL_xy;
+    if(sum_int_x > 0.01 || sum_int_y > 0.01 || sum_int_x < -0.01 || sum_int_y < -0.01){
+      match->local_value(subset) = -1;
+    }
 
     DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " NLVC Green-Lagrange strain XX: " << GL_xx << " YY: " << GL_yy <<
       " XY: " << GL_xy);

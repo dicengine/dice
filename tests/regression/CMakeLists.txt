@@ -61,6 +61,8 @@ SET(GLOBAL_REGRESSION_TESTS
   global_14_lm
   global_14_lm_mixed
   global_pixel_shift
+  14_initial_cond
+  15_initial_cond
   )
 FOREACH ( test ${GLOBAL_REGRESSION_TESTS})
     # Copy over all the test files (input and results)

@@ -58,11 +58,29 @@ namespace DICe {
 namespace mesh {
 
 Importer_Projector::Importer_Projector(const std::string & source_file_name,
+  Teuchos::RCP<DICe::mesh::Mesh> target_mesh):
+  projection_required_(true),
+  num_neigh_(5){
+
+  const int_t spa_dim = target_mesh->spatial_dimension();
+  Teuchos::RCP<MultiField> coords = target_mesh->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
+  target_pts_x_.resize(target_mesh->num_nodes());
+  target_pts_y_.resize(target_mesh->num_nodes());
+  for(size_t i=0;i<target_mesh->num_nodes();++i){
+    target_pts_x_[i] = coords->local_value(i*spa_dim+0);
+    target_pts_y_[i] = coords->local_value(i*spa_dim+1);
+  }
+  initialize_source_points(source_file_name);
+}
+
+Importer_Projector::Importer_Projector(const std::string & source_file_name,
   const std::string & target_file_name):
   projection_required_(true),
   num_neigh_(5){
+
   // read in the target locations
   read_coordinates(target_file_name,target_pts_x_,target_pts_y_);
+  // read in the source points
   // read in the source points
   if(target_file_name==source_file_name){
     projection_required_ = false;
@@ -70,41 +88,48 @@ Importer_Projector::Importer_Projector(const std::string & source_file_name,
     source_pts_y_ = target_pts_y_;
   }
   else{
-    // only acceptable option here is that the source points come from DICe exodus mesh or a DICe text output file
-    // DICe text output file
-    const std::string text_ext(".txt");
-    const std::string exo_ext(".e");
-    // make sure its not a locations file as the input
-    if(source_file_name.find(text_ext)!=std::string::npos){
-      std::fstream dataFile(source_file_name.c_str(), std::ios_base::in);
-      TEUCHOS_TEST_FOR_EXCEPTION(!dataFile.good(),std::runtime_error,"Error reading file " << source_file_name);
-      Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \r\n,");
-      TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()<4,std::runtime_error,"Error, invalid source file " << source_file_name << ". must have at least 4 cols, (x,y,u,v)");
-      dataFile.close();
-    }
-    if(source_file_name.find(text_ext)!=std::string::npos||source_file_name.find(exo_ext)!=std::string::npos){
-      read_coordinates(source_file_name,source_pts_x_,source_pts_y_);
-    }
-    // DICe exodus file
-    else{
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid source file format." << source_file_name);
-    }
-    projection_required_ = true;
+    initialize_source_points(source_file_name);
+  }
+}
 
-    // determine if both files have the same points:
-    if(source_pts_x_.size()==target_pts_x_.size()){
-      const scalar_t tol = 1.0E-3;
-      scalar_t diff = 0.0;
-      for(size_t i=0;i<source_pts_x_.size();++i){
-        diff += (std::abs(source_pts_x_[i] - target_pts_x_[i]) + std::abs(source_pts_y_[i] - target_pts_y_[i]));
-      }
-      DEBUG_MSG("Importer_Projector::Importer_Projector(): difference between source and target points: " << diff);
-      if(diff <= tol){
-        DEBUG_MSG("Importer_Projector::Importer_Projector(): diff tolerance met, treating as colocated points (no projection will be used)");
-        projection_required_ = false;
-      }
+void
+Importer_Projector::initialize_source_points(const std::string & source_file_name){
+
+  // only acceptable option here is that the source points come from DICe exodus mesh or a DICe text output file
+  // DICe text output file
+  const std::string text_ext(".txt");
+  const std::string exo_ext(".e");
+  // make sure its not a locations file as the input
+  if(source_file_name.find(text_ext)!=std::string::npos){
+    std::fstream dataFile(source_file_name.c_str(), std::ios_base::in);
+    TEUCHOS_TEST_FOR_EXCEPTION(!dataFile.good(),std::runtime_error,"Error reading file " << source_file_name);
+    Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \r\n,");
+    TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()<4,std::runtime_error,"Error, invalid source file " << source_file_name << ". must have at least 4 cols, (x,y,u,v)");
+    dataFile.close();
+  }
+  if(source_file_name.find(text_ext)!=std::string::npos||source_file_name.find(exo_ext)!=std::string::npos){
+    read_coordinates(source_file_name,source_pts_x_,source_pts_y_);
+  }
+  // DICe exodus file
+  else{
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid source file format." << source_file_name);
+  }
+  projection_required_ = true;
+
+  // determine if both files have the same points:
+  if(source_pts_x_.size()==target_pts_x_.size()){
+    const scalar_t tol = 1.0E-3;
+    scalar_t diff = 0.0;
+    for(size_t i=0;i<source_pts_x_.size();++i){
+      diff += (std::abs(source_pts_x_[i] - target_pts_x_[i]) + std::abs(source_pts_y_[i] - target_pts_y_[i]));
+    }
+    DEBUG_MSG("Importer_Projector::Importer_Projector(): difference between source and target points: " << diff);
+    if(diff <= tol){
+      DEBUG_MSG("Importer_Projector::Importer_Projector(): diff tolerance met, treating as colocated points (no projection will be used)");
+      projection_required_ = false;
     }
   }
+
   TEUCHOS_TEST_FOR_EXCEPTION(target_pts_x_.size()<=0,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(target_pts_y_.size()!=target_pts_x_.size(),std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(source_pts_x_.size()<=0,std::runtime_error,"");
@@ -164,6 +189,7 @@ Importer_Projector::import_vector_field(const std::string & file_name,
   if(!projection_required_){
     // simple copy operation
     read_vector_field(file_name,field_name,field_x,field_y,step);
+
     // fields have to be of compatible sizes
     TEUCHOS_TEST_FOR_EXCEPTION(field_x.size()!=target_pts_x_.size(),std::runtime_error,"");
     TEUCHOS_TEST_FOR_EXCEPTION(field_y.size()!=target_pts_y_.size(),std::runtime_error,"");
@@ -340,6 +366,51 @@ Importer_Projector::read_vector_field(const std::string & file_name,
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, unrecognized file format " << file_name);
   }
 }
+
+bool
+Importer_Projector::is_valid_vector_source_field(const std::string & file_name,
+  const std::string & field_name){
+
+  // automatically append the components to the field name
+  const std::string field_name_x = field_name + "_X";
+  const std::string field_name_y = field_name + "_Y";
+
+  DEBUG_MSG("Importer_Projector::is_valid_source_field: looking for vector fields " << field_name_x << " and " << field_name_y );
+
+  // determine the file type
+  const std::string text_ext(".txt");
+  const std::string exo_ext(".e");
+
+  // text file, could be a set of points or DICe output file
+  if(file_name.find(text_ext)!=std::string::npos){
+    // read the first line of the file
+    std::fstream dataFile(file_name.c_str(), std::ios_base::in);
+    TEUCHOS_TEST_FOR_EXCEPTION(!dataFile.good(),std::runtime_error,"Error reading file " << file_name);
+    Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \r\n,");
+    int_t num_values_per_line = tokens.size();
+    for(int_t i=0;i<num_values_per_line;++i){
+      DEBUG_MSG("Importer_Projector::read_vector_field(): found field " << tokens[i] << " in results file");
+      if(strcmp(tokens[i].c_str(),field_name_x.c_str())==0||strcmp(tokens[i].c_str(),field_name_y.c_str())==0){
+        return true;
+      }
+    }
+    dataFile.close();
+  }
+  // exodus file
+  else if(file_name.find(exo_ext)){
+    std::vector<std::string> field_names = DICe::mesh::read_exodus_field_names(file_name);
+    for(size_t i=0;i<field_names.size();++i){
+      if(field_names[i]==field_name_x||field_names[i]==field_name_y){
+        return true;
+      }
+    }
+  }
+  else{
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, unrecognized file format " << file_name);
+  }
+  return false;
+}
+
 
 void
 Importer_Projector::read_coordinates(const std::string & file_name,
