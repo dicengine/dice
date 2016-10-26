@@ -96,8 +96,6 @@ typedef std::map<field_enums::Entity_Rank, std::vector<Teuchos::RCP<Mesh_Object>
 /// typedef
 typedef std::map<const field_enums::Field_Spec,const Teuchos::RCP<MultiField> > field_registry;
 /// typedef
-typedef std::map<const std::string,const Teuchos::RCP<MultiField> > imported_field_registry;
-/// typedef
 typedef std::map<int_t,std::vector<int_t> > bc_set;
 
 /// \class Mesh_Object
@@ -912,56 +910,6 @@ public:
     return &field_registry_;
   }
 
-  /// set up the map of fields loaded from file
-  void create_imported_field_storage(const int_t num_steps){
-    for(int_t i=0;i<num_steps;++i){
-      imported_field_registry reg;
-      imported_field_registries_.insert(std::pair<int_t,imported_field_registry>(i,reg));
-    }
-  }
-
-  /// create a field to store data being loaded from an exodus file
-  /// \param field_name the string field name
-  /// \param step_id the time step id
-  /// for now all fields are nodal scalars FIXME: exapand this to element fields
-  void create_imported_field(const std::string & field_name, const int_t step_id){
-    Teuchos::RCP<MultiField> field_ptr = Teuchos::rcp(new MultiField(scalar_node_dist_map_,1,true));
-    TEUCHOS_TEST_FOR_EXCEPTION(imported_field_registries_.find(step_id)==imported_field_registries_.end(),std::invalid_argument,
-      "Error, invalid step: " << step_id);
-    imported_field_registries_.find(step_id)->second.insert(std::pair<std::string,Teuchos::RCP<MultiField > >(field_name,field_ptr));
-  }
-
-  /// returns the number of time steps loaded
-  int_t num_time_steps_imported(){
-    return (int_t)imported_field_registries_.size();
-  }
-
-  /// returns a vector of field names for all imported nodal scalar fields
-  std::vector<std::string> get_imported_fields(){
-    std::vector<std::string> ret;
-    if(imported_field_registries_.find(0)!=imported_field_registries_.end()){
-      ret.resize(imported_field_registries_.find(0)->second.size());
-      imported_field_registry::iterator it = imported_field_registries_.find(0)->second.begin();
-      imported_field_registry::iterator it_end = imported_field_registries_.find(0)->second.end();
-      int_t index = 0;
-      for(;it!=it_end;++it){
-        ret[index] = it->first;
-        index++;
-      }
-    }
-    return ret;
-  }
-
-  /// all this does is return a pointer to an imported field
-  /// \param field_name string name that defines the sought field
-  Teuchos::RCP<MultiField> get_imported_field(const std::string & field_name, const int_t step_id){
-    TEUCHOS_TEST_FOR_EXCEPTION(imported_field_registries_.find(step_id)==imported_field_registries_.end(),std::invalid_argument,
-      "Error, invalid step: " << step_id);
-    TEUCHOS_TEST_FOR_EXCEPTION(imported_field_registries_.find(step_id)->second.find(field_name)==imported_field_registries_.find(step_id)->second.end(),
-      std::invalid_argument,"Requested field is not in the imported registry. " << field_name);
-    return imported_field_registries_.find(step_id)->second.find(field_name)->second;
-  }
-
   /// Returns true if the field exists
   /// \param field_name The name of the field
   bool has_field(const field_enums::Field_Name field_name){
@@ -1606,9 +1554,6 @@ private:
   Teuchos::RCP<MultiField_Map> vector_subelem_dist_map_;
   /// Registry that holds all the mesh fields
   field_registry field_registry_;
-  /// Registry that holds all the fields loaded from a file during read_mesh
-  /// the vector index corresponds to the time step id
-  std::map<int_t,imported_field_registry> imported_field_registries_;
   /// True if the control volume fields have been initialized
   bool control_volumes_are_initialized_;
   /// True if the cell size field has been populated

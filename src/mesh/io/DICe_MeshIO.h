@@ -67,19 +67,48 @@ void read_exodus_coordinates(Teuchos::RCP<Mesh> mesh);
 std::vector<std::string>
 read_exodus_field_names(Teuchos::RCP<Mesh> mesh);
 
+/// Read the nodal field names of from the mesh
+/// \param file_name The file to read for this function
+/// returns a vector of the field names
+std::vector<std::string>
+read_exodus_field_names(const std::string & file_name);
+
 /// returns the number of steps in the file
 /// \param mesh The mesh to use for this function
 int_t read_exodus_num_steps(Teuchos::RCP<Mesh> mesh);
 
+/// returns the number of steps in the file
+/// \param file_name the file to read for this function
+int_t read_exodus_num_steps(const std::string & file_name);
+
 /// Returns a vector with nodal field values
 /// \param mesh the mesh to use
-/// \param field_name
+/// \param var_index the variable index for the requested field
 /// \param step the step number
-/// \param rank the field rank (node, elem, etc.)
 std::vector<scalar_t>
 read_exodus_field(
 Teuchos::RCP<Mesh> mesh,
   const int_t var_index,
+  const int_t step);
+
+/// Returns a vector with nodal field values
+/// \param file_name the exodus file to read
+/// \param var_index the variable index for the requested field
+/// \param step the step number
+std::vector<scalar_t>
+read_exodus_field(
+  const std::string & file_name,
+  const int_t var_index,
+  const int_t step);
+
+/// Returns a vector with nodal field values
+/// \param file_name the name of the exodus file
+/// \param field_name string name of the requested field
+/// \param step the step number
+std::vector<scalar_t>
+read_exodus_field(
+  const std::string & file_name,
+  const std::string & field_name,
   const int_t step);
 
 /// Create an exodus output file
