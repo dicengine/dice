@@ -49,6 +49,7 @@
 #include <Teuchos_ParameterList.hpp>
 
 #include <iostream>
+#include <random>
 
 using namespace DICe;
 
@@ -65,7 +66,7 @@ void compute_b(const scalar_t & x, const scalar_t & y, const scalar_t & period, 
   const scalar_t freq = 1.0/period;
   const scalar_t gamma = 2.0*freq*DICE_PI;
   bx = amplitude*0.5 + 0.5*amplitude*std::sin(gamma*x)*std::cos(gamma*y);
-  by = amplitude*0.5 + -0.5*amplitude*std::cos(gamma*x)*std::sin(gamma*y);
+  by = amplitude*0.5 - 0.5*amplitude*std::cos(gamma*x)*std::sin(gamma*y);
 }
 
 struct computed_point
@@ -91,18 +92,19 @@ int main(int argc, char *argv[]) {
   *outStream << "--- Begin test ---" << std::endl;
 
   *outStream << "argc " << argc << std::endl;
-  TEUCHOS_TEST_FOR_EXCEPTION(argc!=1&&argc!=2&&argc!=7&&argc!=11,std::runtime_error,"Error, invalid syntax");
+  TEUCHOS_TEST_FOR_EXCEPTION(argc!=1&&argc!=2&&argc!=7&&argc!=11&&argc!=12,std::runtime_error,"Error, invalid syntax");
 
   std::string var_name = "";
   scalar_t start_val = 0.0;
   scalar_t end_val = 0.0;
   scalar_t step_val = 0.0;
-  scalar_t add_noise = 0.0;
   int_t print_style = 0.0;
   std::string var_name2 = "";
   scalar_t start_val2 = 0.0;
   scalar_t end_val2 = 0.0;
   scalar_t step_val2 = 1.0;
+  scalar_t noise_mag = 0.0; // counts
+  scalar_t regularization_mag = 0.0; // counts
 
   // set up default for test case
   if(argc==1||argc==2){
@@ -113,32 +115,40 @@ int main(int argc, char *argv[]) {
   }
   else{
     // parse the command line options
-    TEUCHOS_TEST_FOR_EXCEPTION(argc!=7&&argc!=11,std::runtime_error,"Error, invalid syntax");
+    TEUCHOS_TEST_FOR_EXCEPTION(argc!=7&&argc!=11&&argc!=12,std::runtime_error,"Error, invalid syntax");
     var_name = argv[1];
     start_val = std::strtod(argv[2],NULL);
     end_val = std::strtod(argv[3],NULL);
     step_val = std::strtod(argv[4],NULL);
-    add_noise = std::strtod(argv[5],NULL);
+    //noise_mag = std::strtod(argv[5],NULL); // TODO turn noise back on later!!
     print_style = std::stoi(argv[6]);
     if(argc > 7){
-      TEUCHOS_TEST_FOR_EXCEPTION(argc!=11,std::runtime_error,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(argc!=11&&argc!=12,std::runtime_error,"");
       var_name2 = argv[7];
       start_val2 = std::strtod(argv[8],NULL);
       end_val2 = std::strtod(argv[9],NULL);
       step_val2 = std::strtod(argv[10],NULL);
     }
+    if(argc > 11){
+      TEUCHOS_TEST_FOR_EXCEPTION(argc!=12,std::runtime_error,"");
+      regularization_mag = std::strtod(argv[11],NULL);
+    }
   }
 
-  *outStream << "variable name:     " << var_name << std::endl;
-  *outStream << "start value:       " << start_val << std::endl;
-  *outStream << "end value:         " << end_val << std::endl;
-  *outStream << "step value:        " << step_val << std::endl;
-  *outStream << "add noise:         " << add_noise << std::endl;
-  *outStream << "print style:       " << print_style << std::endl;
-  *outStream << "variable name 2:   " << var_name2 << std::endl;
-  *outStream << "start value 2:     " << start_val2 << std::endl;
-  *outStream << "end value 2:       " << end_val2 << std::endl;
-  *outStream << "step value 2:      " << step_val2 << std::endl;
+  std::default_random_engine generator;
+  std::normal_distribution<intensity_t> distribution(0.0,0.5);
+
+  *outStream << "variable name:      " << var_name << std::endl;
+  *outStream << "start value:        " << start_val << std::endl;
+  *outStream << "end value:          " << end_val << std::endl;
+  *outStream << "step value:         " << step_val << std::endl;
+  *outStream << "print style:        " << print_style << std::endl;
+  *outStream << "variable name 2:    " << var_name2 << std::endl;
+  *outStream << "start value 2:      " << start_val2 << std::endl;
+  *outStream << "end value 2:        " << end_val2 << std::endl;
+  *outStream << "step value 2:       " << step_val2 << std::endl;
+  *outStream << "noise_mag:          " << noise_mag << std::endl;
+  *outStream << "regularization_mag: " << regularization_mag << std::endl;
 
   // test for valid variable name
   if(var_name!="subset_size"&&
@@ -308,7 +318,15 @@ int main(int argc, char *argv[]) {
             H(0,1) += img->grad_x(i,j)*img->grad_y(i,j);
             H(1,0) += img->grad_y(i,j)*img->grad_x(i,j);
             H(1,1) += img->grad_y(i,j)*img->grad_y(i,j);
+            H(0,0) += regularization_mag;
+            H(1,1) += regularization_mag;
             compute_b(i,j,b_period,b_amp,L,bx,by);
+            if(noise_mag > 0.0){
+                intensity_t pert = distribution(generator);
+                //std::cout << "pert: " << pert << " noise_mag " << noise_mag << std::endl;
+                bx+= pert*noise_mag;
+                by+= pert*noise_mag;
+            }
             b_dot_grad_phi = bx*img->grad_x(i,j) + by*img->grad_y(i,j);
             q[0] += b_dot_grad_phi * img->grad_x(i,j);
             q[1] += b_dot_grad_phi * img->grad_y(i,j);
@@ -372,6 +390,7 @@ int main(int argc, char *argv[]) {
       }
       // now sort the approximate points to pick out the peaks
       int_t num_peaks = ((L/b_period)*2-2)*(L/b_period-1);
+      if(num_peaks > 100) num_peaks=100;
       *outStream << "num_peaks: " << num_peaks; // << std::endl;
       TEUCHOS_TEST_FOR_EXCEPTION(num_peaks<=5,std::runtime_error,"");
       // bx-sort
@@ -383,8 +402,8 @@ int main(int argc, char *argv[]) {
       // compute the average of the top num_peaks error
       scalar_t avg_error_x = 0.0;
       for(int_t i=0;i<num_peaks;++i){
-        //*outStream << "peak: " << i << " command bx: " << approx_points[i].sol_bx_ << " rel error bx: " << approx_points[i].error_bx_ << "%" <<  std::endl;
-        avg_error_x += approx_points[i].error_bx_;
+        //*outStream << "peak: " << i << " command bx: " << approx_points[i].sol_bx_ << " comp bx: " << approx_points[i].bx_ <<  " rel error bx: " << approx_points[i].error_bx_ << "%" <<  std::endl;
+        avg_error_x += std::abs(approx_points[i].error_bx_);
       }
       avg_error_x /= num_peaks;
       scalar_t std_dev_x = 0.0;
@@ -403,7 +422,7 @@ int main(int argc, char *argv[]) {
       scalar_t avg_error_y = 0.0;
       for(int_t i=0;i<num_peaks;++i){
         //*outStream << "peak: " << i << " command by: " << approx_points[i].sol_by_ << " rel error by: " << approx_points[i].error_by_ << std::endl;
-        avg_error_y += approx_points[i].error_by_;
+        avg_error_y += std::abs(approx_points[i].error_by_);
       }
       avg_error_y /= num_peaks;
       scalar_t std_dev_y = 0.0;
