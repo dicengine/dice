@@ -88,8 +88,8 @@ void SinCos_Image_Deformer::compute_deformation(const scalar_t & coord_x,
   scalar_t & by){
   assert(period_>0.0);
   const scalar_t beta = DICE_TWOPI*(1.0/period_);
-  bx = sin(beta*coord_x)*cos(beta*coord_y)*0.5*amplitude_;
-  by = -cos(beta*coord_x)*sin(beta*coord_y)*0.5*amplitude_;
+  bx = 0.5*amplitude_ + sin(beta*coord_x)*cos(beta*coord_y)*0.5*amplitude_;
+  by = 0.5*amplitude_ - cos(beta*coord_x)*sin(beta*coord_y)*0.5*amplitude_;
 }
 
 void SinCos_Image_Deformer::compute_deriv_deformation(const scalar_t & coord_x,
@@ -129,8 +129,8 @@ void SinCos_Image_Deformer::compute_displacement_error(const scalar_t & coord_x,
     error_y = sol_y - out_y;
   }
   if(relative){
-    error_x /= amplitude_/100.0; // convert to percent
-    error_y /= amplitude_/100.0;
+    error_x /= amplitude_/200.0; // convert to percent (multiplied by two to account for top and bottom roll-off)
+    error_y /= amplitude_/200.0;
   }
 }
 
@@ -180,7 +180,7 @@ void SinCos_Image_Deformer::compute_lagrange_strain_error(const scalar_t & coord
     error_yy = sol_yy - strain_yy;
   }
   if(relative){
-    scalar_t rel = (1.0/period_)*DICE_TWOPI*amplitude_/100.0;
+    scalar_t rel = (1.0/period_)*DICE_TWOPI*amplitude_/200.0;
     error_xx /= rel;
     error_xy /= rel;
     error_yy /= rel;

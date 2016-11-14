@@ -2287,8 +2287,8 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
         scalar_t error_v = 0.0;
         scalar_t error_u = 0.0;
         deformer->compute_displacement_error(x,y,u,v,error_u,error_v);
-        disp_error->local_value(i*spa_dim+0) = error_u;
-        disp_error->local_value(i*spa_dim+1) = error_v;
+        disp_error->local_value(i*spa_dim+0) = std::abs(error_u);
+        disp_error->local_value(i*spa_dim+1) = std::abs(error_v);
         scalar_t strain_xx = 0.0;
         scalar_t strain_xy = 0.0;
         scalar_t strain_yy = 0.0;
@@ -2304,9 +2304,9 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
           scalar_t error_xy = 0.0;
           scalar_t error_yy = 0.0;
           deformer->compute_lagrange_strain_error(x,y,e_xx,e_xy,e_yy,error_xx,error_xy,error_yy);
-          vsg_error_xx->local_value(i) = error_xx;
-          vsg_error_xy->local_value(i) = error_xy;
-          vsg_error_yy->local_value(i) = error_yy;
+          vsg_error_xx->local_value(i) = std::abs(error_xx);
+          vsg_error_xy->local_value(i) = std::abs(error_xy);
+          vsg_error_yy->local_value(i) = std::abs(error_yy);
         }
         if(has_nlvc){
           const scalar_t e_xx = nlvc_xx->local_value(i);
@@ -2316,9 +2316,9 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
           scalar_t error_xy = 0.0;
           scalar_t error_yy = 0.0;
           deformer->compute_lagrange_strain_error(x,y,e_xx,e_xy,e_yy,error_xx,error_xy,error_yy);
-          nlvc_error_xx->local_value(i) = error_xx;
-          nlvc_error_xy->local_value(i) = error_xy;
-          nlvc_error_yy->local_value(i) = error_yy;
+          nlvc_error_xx->local_value(i) = std::abs(error_xx);
+          nlvc_error_xy->local_value(i) = std::abs(error_xy);
+          nlvc_error_yy->local_value(i) = std::abs(error_yy);
         }
       } // end local subsets loop
 
