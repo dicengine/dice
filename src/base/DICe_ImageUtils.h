@@ -113,6 +113,12 @@ Teuchos::RCP<Image> create_synthetic_speckle_image(const int_t w,
   const scalar_t & speckle_size,
   const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
+/// free function to add noise counts to an image
+/// \param image the image to modify
+/// \param noise_percent the amount of noise to add in percentage of the maximum intensity
+void add_noise_to_image(Teuchos::RCP<Image> & image,
+  const scalar_t & noise_percent);
+
 /// \class SinCos_Image_Deformer
 /// \brief a class that deformed an input image according to a sin()*cos() function
 class

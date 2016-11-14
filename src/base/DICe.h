@@ -269,6 +269,8 @@ const char* const estimate_resolution_error_amplitude_step = "estimate_resolutio
 /// String parameter name
 const char* const estimate_resolution_error_speckle_size = "estimate_resolution_error_speckle_size";
 /// String parameter name
+const char* const estimate_resolution_error_noise_percent = "estimate_resolution_error_noise_percent";
+/// String parameter name
 const char* const use_incremental_formulation = "use_incremental_formulation";
 /// String parameter name
 const char* const sort_txt_output = "sort_txt_output";
@@ -846,6 +848,11 @@ const Correlation_Parameter estimate_resolution_error_speckle_size_param(estimat
   true,
   "create synthetic images with speckles of a regular size in the estimation of resolution error");
 /// Correlation parameter and properties
+const Correlation_Parameter estimate_resolution_error_noise_percent_param(estimate_resolution_error_noise_percent,
+  SCALAR_PARAM,
+  true,
+  "amount of noise to add in percent of counts to the deformed image in the estimation of resolution error");
+/// Correlation parameter and properties
 const Correlation_Parameter use_incremental_formulation_param(use_incremental_formulation,
   BOOL_PARAM,
   true,
@@ -1147,7 +1154,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 78;
+const int_t num_valid_correlation_params = 79;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1196,6 +1203,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   estimate_resolution_error_max_amplitude_param,
   estimate_resolution_error_amplitude_step_param,
   estimate_resolution_error_speckle_size_param,
+  estimate_resolution_error_noise_percent_param,
   use_incremental_formulation_param,
   sort_txt_output_param,
   use_search_initialization_for_failed_steps_param,
@@ -1232,7 +1240,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_global_correlation_params = 29;
+const int_t num_valid_global_correlation_params = 30;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_global_correlation_params[num_valid_global_correlation_params] = {
   use_global_dic_param,
@@ -1253,6 +1261,7 @@ const Correlation_Parameter valid_global_correlation_params[num_valid_global_cor
   estimate_resolution_error_max_amplitude_param,
   estimate_resolution_error_amplitude_step_param,
   estimate_resolution_error_speckle_size_param,
+  estimate_resolution_error_noise_percent_param,
   use_incremental_formulation_param,
   sort_txt_output_param,
   global_regularization_alpha_param,

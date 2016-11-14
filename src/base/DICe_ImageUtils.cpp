@@ -42,6 +42,8 @@
 #include <DICe_ImageUtils.h>
 #include <DICe_Image.h>
 
+#include <random>
+
 namespace DICe {
 
 void apply_transform(Teuchos::RCP<Image> image_in,
@@ -421,6 +423,26 @@ Teuchos::RCP<Image> create_synthetic_speckle_image(const int_t w,
   }
   Teuchos::RCP<Image> img = Teuchos::rcp(new Image(w,h,intensities,params));
   return img;
+}
+
+void add_noise_to_image(Teuchos::RCP<Image> & image,
+  const scalar_t & noise_percent){
+
+  // convert noise_percent to counts:
+  // rip through the image and find the max intensity
+  scalar_t max_intensity = 0.0;
+  for(int_t i=0;i<image->width()*image->height();++i){
+    if((*image)(i)>max_intensity)
+      max_intensity = (*image)(i);
+  }
+  const scalar_t std_dev = noise_percent*0.01*max_intensity;
+  DEBUG_MSG("add_noise_to_image(): max intensity:    " << max_intensity << " counts");
+  DEBUG_MSG("add_noise_to_image(): std dev of noise: " << std_dev << " counts");
+  std::default_random_engine generator;
+  std::normal_distribution<intensity_t> distribution(0.0,std_dev);
+  for(int_t i=0;i<image->width()*image->height();++i){
+    image->intensities()[i] += distribution(generator);
+  }
 }
 
 

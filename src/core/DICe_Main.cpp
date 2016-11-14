@@ -298,7 +298,8 @@ int main(int argc, char *argv[]) {
       const scalar_t max_amp = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_max_amplitude,4.0);
       const scalar_t amp_step = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_amplitude_step,0.5);
       const scalar_t speckle_size = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_speckle_size,-1.0);
-      schema->estimate_resolution_error(speckle_size,min_period,max_period,period_factor,min_amp,max_amp,amp_step,output_folder,file_prefix,outStream);
+      const scalar_t noise_percent = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_noise_percent,-1.0);
+      schema->estimate_resolution_error(speckle_size,noise_percent,min_period,max_period,period_factor,min_amp,max_amp,amp_step,output_folder,file_prefix,outStream);
       DICe::finalize();
       return 0;
     }

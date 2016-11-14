@@ -2043,6 +2043,7 @@ Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
 
 void
 Schema::estimate_resolution_error(const scalar_t & speckle_size,
+  const scalar_t & noise_percent,
   const scalar_t & min_period,
   const scalar_t & max_period,
   const scalar_t & period_factor,
@@ -2054,17 +2055,46 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
   Teuchos::RCP<std::ostream> & outStream){
 #if DICE_KOKKOS
 #else
-  // only done on processor 0
   const int_t proc_id = comm_->get_rank();
+
+  // search the mesh fields to see if vsg or nlvc strain exist:
+  const bool has_vsg = mesh_->has_field(DICe::mesh::field_enums::VSG_STRAIN_XX);
+  const bool has_nlvc = mesh_->has_field(DICe::mesh::field_enums::NLVC_STRAIN_XX);
+  const bool is_subset_based = analysis_type_ == LOCAL_DIC;
+
+  scalar_t subset_elem_size = 0.0;
+  scalar_t step_size = -1.0;
+  scalar_t vsg_size = -1.0;
+  scalar_t nlvc_size = -1.0;
+  if(analysis_type_==GLOBAL_DIC){
+    subset_elem_size = global_algorithm()->mesh_size();
+  }else{
+    subset_elem_size = subset_dim_;
+    step_size = step_size_x_;
+  }
+  if(has_vsg){
+    Teuchos::ParameterList sublist = init_params_->sublist(DICe::post_process_vsg_strain);
+    vsg_size = sublist.get<int_t>(DICe::strain_window_size_in_pixels,-1);
+  }
+  if(has_nlvc){
+    Teuchos::ParameterList sublist = init_params_->sublist(DICe::post_process_nlvc_strain);
+    nlvc_size = sublist.get<int_t>(DICe::horizon_diameter_in_pixels,-1);
+  }
   DEBUG_MSG("****************************************************************");
   DEBUG_MSG("Schema::estimate_resolution_error(): ");
   DEBUG_MSG("****************************************************************");
-  DEBUG_MSG("minumum motion period:    " << min_period << " pixels");
-  DEBUG_MSG("maximum motion period:    " << max_period << " pixels");
-  DEBUG_MSG("period factor:            " << period_factor);
-  DEBUG_MSG("minimum motion amplitude: " << min_amp << " pixels");
-  DEBUG_MSG("maximum motion amplitude: " << max_amp << " pixels");
-  DEBUG_MSG("amplitude step:           " << amp_step << " pixels");
+  DEBUG_MSG("subset or element size:    " << subset_elem_size << " pixels");
+  DEBUG_MSG("step size:                 " << step_size << " pixels");
+  DEBUG_MSG("strain window size:        " << vsg_size << " pixels");
+  DEBUG_MSG("nonlocal horizon diameter: " << nlvc_size << " pixels");
+  DEBUG_MSG("minumum motion period:     " << min_period << " pixels");
+  DEBUG_MSG("maximum motion period:     " << max_period << " pixels");
+  DEBUG_MSG("period factor:             " << period_factor);
+  DEBUG_MSG("minimum motion amplitude:  " << min_amp << " pixels");
+  DEBUG_MSG("maximum motion amplitude:  " << max_amp << " pixels");
+  DEBUG_MSG("amplitude step:            " << amp_step << " pixels");
+  DEBUG_MSG("speckle size:              " << speckle_size << " pixels (-1 means not specified)");
+  DEBUG_MSG("noise level:               " << noise_percent << "% of 255 counts (-1 means not specified)");
   DEBUG_MSG("****************************************************************");
   TEUCHOS_TEST_FOR_EXCEPTION(min_period <= 0.0,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(min_amp <= 0.0,std::runtime_error,"");
@@ -2095,11 +2125,6 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
   if(boost::filesystem::create_directory(data_dir)) {
     DEBUG_MSG("Directory successfully created");
   }
-
-  // search the mesh fields to see if vsg or nlvc strain exist:
-  const bool has_vsg = mesh_->has_field(DICe::mesh::field_enums::VSG_STRAIN_XX);
-  const bool has_nlvc = mesh_->has_field(DICe::mesh::field_enums::NLVC_STRAIN_XX);
-  const bool is_subset_based = analysis_type_ == LOCAL_DIC;
 
   std::stringstream result_stream;
 
@@ -2135,6 +2160,7 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
 
   // generate synthetic speckled image instead of using the reference image
   if(speckle_size >= 1.0){
+    TEUCHOS_TEST_FOR_EXCEPTION(speckle_size > 500.0,std::runtime_error,"Error, unreasonable speckle size: " << speckle_size);
     DEBUG_MSG("Creating a reference image with synthetic speckles of size " << speckle_size);
     Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
     imgParams->set(DICe::compute_image_gradients,true);
@@ -2145,9 +2171,11 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
 
   std::stringstream data_name;
   data_name << data_dir_str << "spatial_resolution.txt";
-  if(proc_id==0){
+  // see if the file exists already:
+  std::ifstream output_file(data_name.str().c_str());
+  if(proc_id==0&&!output_file.good()){
     std::FILE * infoFilePtr = fopen(data_name.str().c_str(),"w");
-    fprintf(infoFilePtr,"period(px) amp(px) u_err_min(rel%%) u_err_max(rel%%) u_err_avg(rel%%) u_err_std_dev(rel%%) "
+    fprintf(infoFilePtr,"subset_elem_size(px) step_size(px) speckle_size(px) noise_percent(%%) vsg_size(px) nlvc_size(px) period(px) amp(px) u_err_min(rel%%) u_err_max(rel%%) u_err_avg(rel%%) u_err_std_dev(rel%%) "
         "v_err_min(rel%%) v_err_max(rel%%) v_err_avg(rel%%) v_err_std_dev(rel%%)");
     fprintf(infoFilePtr," u_peaks_avg_err(rel%%) u_peaks_std_dev_err(rel%%) v_peaks_avg_err(rel%%) v_peaks_std_dev_err(rel%%)");
     if(has_vsg){
@@ -2199,6 +2227,9 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
       //}else{
         DEBUG_MSG("generating new synthetic image");
         def_img = deformer->deform_image(ref_img());
+        if(noise_percent > 0.0){
+          add_noise_to_image(def_img,noise_percent);
+        }
         if(proc_id==0){
           def_img->write(sincos_name.str());
         }
@@ -2291,6 +2322,8 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
         }
       } // end local subsets loop
 
+      result_stream << subset_elem_size << " " << step_size << " " << speckle_size << " " << noise_percent << " " << vsg_size << " " << nlvc_size;
+
       // collect the global stats based on the field info above:
       scalar_t min_error_u = 0.0;
       scalar_t max_error_u = 0.0;
@@ -2302,7 +2335,7 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
       scalar_t std_dev_error_v = 0.0;
       mesh_->field_stats(DICe::mesh::field_enums::DISP_ERROR_FS,min_error_u,max_error_u,avg_error_u,std_dev_error_u,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
       mesh_->field_stats(DICe::mesh::field_enums::DISP_ERROR_FS,min_error_v,max_error_v,avg_error_v,std_dev_error_v,1,DICe::mesh::field_enums::SIGMA_FS,-1.0);
-      result_stream << std::setprecision(4) << deformer->period() << " "<< std::setprecision(4) << deformer->amplitude()
+      result_stream << " " << std::setprecision(4) << deformer->period() << " "<< std::setprecision(4) << deformer->amplitude()
           << " " << min_error_u << " " << max_error_u << " " << avg_error_u << " " << std_dev_error_u << " " << min_error_v << " " << max_error_v << " " << avg_error_v << " " << std_dev_error_v;
 
       scalar_t peaks_avg_error_x = 0.0;

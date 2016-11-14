@@ -1045,6 +1045,7 @@ public:
 
   /// estimate the error in the displacement resolution and strain
   /// \param speckle_size to use instead of the reference image speckles (creates a new synthetic image)
+  /// \param noise_percent amount of image noise to add to the deformed images (given in percent of counts so 2% of 255 would be specified as 2.0)
   /// \param min_period minimum period in the imposed deformation
   /// \param max_period maximum period in the imposed deformation
   /// \param period_factor reduction factor applied to period between each step
@@ -1055,6 +1056,7 @@ public:
   /// \param prefix the file prefix to use for output files
   /// \param outStream output stream to write screen output to
   void estimate_resolution_error(const scalar_t & speckle_size,
+    const scalar_t & noise_percent,
     const scalar_t & min_period,
     const scalar_t & max_period,
     const scalar_t & period_factor,
