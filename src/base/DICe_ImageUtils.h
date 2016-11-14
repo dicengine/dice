@@ -42,6 +42,7 @@
 #define DICE_IMAGEUTILS_H
 
 #include <DICe.h>
+#include <DICe_Image.h>
 #ifdef DICE_TPETRA
   #include "DICe_MultiFieldTpetra.h"
 #else
@@ -101,6 +102,16 @@ void compute_roll_off_stats(const scalar_t & period,
   scalar_t & peaks_std_dev_error_x,
   scalar_t & peaks_avg_error_y,
   scalar_t & peaks_std_dev_error_y);
+
+/// free function to create a synthetically speckled image with perfectly smooth and regular speckles of a certain size
+/// \param w width of the image
+/// \param h height of the image
+/// \param speckle_size size of the speckles to create
+/// \param params set of image parameters (compute gradients, etc)
+Teuchos::RCP<Image> create_synthetic_speckle_image(const int_t w,
+  const int_t h,
+  const scalar_t & speckle_size,
+  const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
 /// \class SinCos_Image_Deformer
 /// \brief a class that deformed an input image according to a sin()*cos() function

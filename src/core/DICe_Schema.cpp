@@ -2042,7 +2042,8 @@ Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
 }
 
 void
-Schema::estimate_resolution_error(const scalar_t & min_period,
+Schema::estimate_resolution_error(const scalar_t & speckle_size,
+  const scalar_t & min_period,
   const scalar_t & max_period,
   const scalar_t & period_factor,
   const scalar_t & min_amp,
@@ -2130,6 +2131,16 @@ Schema::estimate_resolution_error(const scalar_t & min_period,
     nlvc_error_xy = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_XY_ERROR_FS);
     mesh_->create_field(DICe::mesh::field_enums::NLVC_STRAIN_YY_ERROR_FS);
     nlvc_error_yy = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_YY_ERROR_FS);
+  }
+
+  // generate synthetic speckled image instead of using the reference image
+  if(speckle_size >= 1.0){
+    DEBUG_MSG("Creating a reference image with synthetic speckles of size " << speckle_size);
+    Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
+    imgParams->set(DICe::compute_image_gradients,true);
+    imgParams->set(DICe::gradient_method,gradient_method_);
+    Teuchos::RCP<Image> speckled_ref = create_synthetic_speckle_image(ref_img()->width(),ref_img()->height(),speckle_size,imgParams);
+    set_ref_image(speckled_ref);
   }
 
   std::stringstream data_name;

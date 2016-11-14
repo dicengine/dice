@@ -1044,6 +1044,7 @@ public:
   }
 
   /// estimate the error in the displacement resolution and strain
+  /// \param speckle_size to use instead of the reference image speckles (creates a new synthetic image)
   /// \param min_period minimum period in the imposed deformation
   /// \param max_period maximum period in the imposed deformation
   /// \param period_factor reduction factor applied to period between each step
@@ -1053,7 +1054,8 @@ public:
   /// \param output_folder where to place the output files
   /// \param prefix the file prefix to use for output files
   /// \param outStream output stream to write screen output to
-  void estimate_resolution_error(const scalar_t & min_period,
+  void estimate_resolution_error(const scalar_t & speckle_size,
+    const scalar_t & min_period,
     const scalar_t & max_period,
     const scalar_t & period_factor,
     const scalar_t & min_amp,

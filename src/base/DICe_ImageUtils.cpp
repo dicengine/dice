@@ -402,4 +402,26 @@ void compute_roll_off_stats(const scalar_t & period,
   peaks_std_dev_error_y = std_dev_y;
 }
 
+Teuchos::RCP<Image> create_synthetic_speckle_image(const int_t w,
+  const int_t h,
+  const scalar_t & speckle_size,
+  const Teuchos::RCP<Teuchos::ParameterList> & params){
+
+  const scalar_t period = speckle_size * 2;
+  assert(period > 0.0);
+  const scalar_t freq = 1.0/period;
+  const scalar_t gamma = freq*DICE_TWOPI;
+  const intensity_t mag = 255.0*0.5;
+
+  Teuchos::ArrayRCP<intensity_t> intensities(w*h,0.0);
+  for(int_t y=0;y<h;++y){
+    for(int_t x=0;x<w;++x){
+      intensities[y*w+x] = mag + mag*std::cos(gamma*x)*std::cos(gamma*y);
+    }
+  }
+  Teuchos::RCP<Image> img = Teuchos::rcp(new Image(w,h,intensities,params));
+  return img;
+}
+
+
 }// End DICe Namespace
