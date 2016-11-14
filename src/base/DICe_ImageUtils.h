@@ -42,6 +42,12 @@
 #define DICE_IMAGEUTILS_H
 
 #include <DICe.h>
+#ifdef DICE_TPETRA
+  #include "DICe_MultiFieldTpetra.h"
+#else
+  #include "DICe_MultiFieldEpetra.h"
+#endif
+
 #include <Teuchos_ParameterList.hpp>
 
 /*!
@@ -66,6 +72,36 @@ void apply_transform(Teuchos::RCP<Image> image_in,
   const int_t cy,
   Teuchos::RCP<const std::vector<scalar_t> > deformation);
 
+/// struct used to sort solutions by peak values
+struct computed_point
+{
+    scalar_t x_, y_, bx_, by_, sol_bx_, sol_by_,error_bx_,error_by_;
+};
+
+/// free function to compute the roll off statistics for the peaks in the exact solution
+/// \param period, the period of the exact displacement
+/// \param img_w the width of the image
+/// \param img_h the height of the image
+/// \param coords the coordinates field
+/// \param disp the computed displacement field
+/// \param exact_disp the exact displacement field
+/// \param disp_error the error field
+/// \param peaks_avg_error_x [out] computed stat
+/// \param peaks_std_dev_error_x [out] computed stat
+/// \param peaks_avg_error_y [out] computed stat
+/// \param peaks_std_dev_error_y [out] computed stat
+void compute_roll_off_stats(const scalar_t & period,
+  const scalar_t & img_w,
+  const scalar_t & img_h,
+  Teuchos::RCP<MultiField> & coords,
+  Teuchos::RCP<MultiField> & disp,
+  Teuchos::RCP<MultiField> & exact_disp,
+  Teuchos::RCP<MultiField> & disp_error,
+  scalar_t & peaks_avg_error_x,
+  scalar_t & peaks_std_dev_error_x,
+  scalar_t & peaks_avg_error_y,
+  scalar_t & peaks_std_dev_error_y);
+
 /// \class SinCos_Image_Deformer
 /// \brief a class that deformed an input image according to a sin()*cos() function
 class
@@ -74,29 +110,25 @@ SinCos_Image_Deformer{
 public:
 
   /// constructor
-  /// \param freq_step the current frequency step
-  /// \param mag_step the current magnitude step
-  /// \param use_superposition true if the sin curves should be added together
-  SinCos_Image_Deformer(const int_t freq_step,
-    const int_t mag_step,
-    bool use_superposition = false):
-      freq_step_(freq_step),
-      mag_step_(mag_step),
-    use_superposition_(use_superposition){};
+  /// \param period the period of the motion in pixels
+  /// \param amplitude the amplitude of the motion in pixels
+  SinCos_Image_Deformer(const scalar_t & period,
+    const scalar_t & amplitude):
+      period_(period),
+      amplitude_(amplitude){};
 
   /// parameterless constructor
   SinCos_Image_Deformer():
-    freq_step_(1),
-    mag_step_(1),
-    use_superposition_(false){};
+    period_(100),
+    amplitude_(1){};
 
   /// returns the current amplitude
   scalar_t amplitude(){
-    return (mag_step_+1)*0.25;
+    return amplitude_;
   }
   /// returns the current period
   scalar_t period(){
-    return 1000.0/(freq_step_+1);
+    return period_;
   }
 
   /// perform deformation on the image
@@ -184,14 +216,16 @@ public:
   ~SinCos_Image_Deformer(){};
 
 private:
-  /// current frequency step
-  int_t freq_step_;
-  /// current magnitude step
-  int_t mag_step_;
-  /// use superposition for each step
-  bool use_superposition_;
+  /// period of the motion
+  scalar_t period_;
+  /// amplitude of the motion
+  scalar_t amplitude_;
 
 };
+
+
+
+
 
 }// End DICe Namespace
 

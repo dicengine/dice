@@ -255,9 +255,17 @@ const char* const rotate_def_image_270 = "rotate_def_image_270";
 /// String parameter name
 const char* const estimate_resolution_error = "estimate_resolution_error";
 /// String parameter name
-const char* const estimate_resolution_error_freq_steps = "estimate_resolution_error_freq_steps";
+const char* const estimate_resolution_error_min_period = "estimate_resolution_error_min_period";
 /// String parameter name
-const char* const estimate_resolution_error_mag_steps = "estimate_resolution_error_mag_steps";
+const char* const estimate_resolution_error_max_period = "estimate_resolution_error_max_period";
+/// String parameter name
+const char* const estimate_resolution_error_period_factor = "estimate_resolution_error_period_factor";
+/// String parameter name
+const char* const estimate_resolution_error_min_amplitude = "estimate_resolution_error_min_amplitude";
+/// String parameter name
+const char* const estimate_resolution_error_max_amplitude = "estimate_resolution_error_max_amplitude";
+/// String parameter name
+const char* const estimate_resolution_error_amplitude_step = "estimate_resolution_error_amplitude_step";
 /// String parameter name
 const char* const use_incremental_formulation = "use_incremental_formulation";
 /// String parameter name
@@ -801,15 +809,35 @@ const Correlation_Parameter estimate_resolution_error_param(estimate_resolution_
   "Only evaluates the error from a known solution synthetically applied to the reference image,"
   " determines the spatial resolution. Integer value affects the wave number of the sin() function");
 /// Correlation parameter and properties
-const Correlation_Parameter estimate_resolution_error_freq_steps_param(estimate_resolution_error_freq_steps,
-  SIZE_PARAM,
+const Correlation_Parameter estimate_resolution_error_min_period_param(estimate_resolution_error_min_period,
+  SCALAR_PARAM,
   true,
-  "number of frequency steps to use in the estimation of resolution error");
+  "minimum motion period to use in the estimation of resolution error");
 /// Correlation parameter and properties
-const Correlation_Parameter estimate_resolution_error_mag_steps_param(estimate_resolution_error_mag_steps,
-  SIZE_PARAM,
+const Correlation_Parameter estimate_resolution_error_max_period_param(estimate_resolution_error_max_period,
+  SCALAR_PARAM,
   true,
-  "number of magnitude steps to use in the estimation of resolution error");
+  "maximum motion period to use in the estimation of resolution error");
+/// Correlation parameter and properties
+const Correlation_Parameter estimate_resolution_error_period_factor_param(estimate_resolution_error_period_factor,
+  SCALAR_PARAM,
+  true,
+  "reduction factor to apply to the period for each step in the estimation of resolution error");
+/// Correlation parameter and properties
+const Correlation_Parameter estimate_resolution_error_min_amplitude_param(estimate_resolution_error_min_amplitude,
+  SCALAR_PARAM,
+  true,
+  "minimum amplitude of the motion to use in the estimation of resolution error");
+/// Correlation parameter and properties
+const Correlation_Parameter estimate_resolution_error_max_amplitude_param(estimate_resolution_error_max_amplitude,
+  SCALAR_PARAM,
+  true,
+  "maximum amplitude of the motion to use in the estimation of resolution error");
+/// Correlation parameter and properties
+const Correlation_Parameter estimate_resolution_error_amplitude_step_param(estimate_resolution_error_amplitude_step,
+  SCALAR_PARAM,
+  true,
+  "amount of amplitude added to the motion amplitude for each step in the estimation of resolution error");
 /// Correlation parameter and properties
 const Correlation_Parameter use_incremental_formulation_param(use_incremental_formulation,
   BOOL_PARAM,
@@ -1112,7 +1140,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 73;
+const int_t num_valid_correlation_params = 77;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1154,8 +1182,12 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   omit_output_row_id_param,
   obstruction_skin_factor_param,
   estimate_resolution_error_param,
-  estimate_resolution_error_freq_steps_param,
-  estimate_resolution_error_mag_steps_param,
+  estimate_resolution_error_min_period_param,
+  estimate_resolution_error_max_period_param,
+  estimate_resolution_error_period_factor_param,
+  estimate_resolution_error_min_amplitude_param,
+  estimate_resolution_error_max_amplitude_param,
+  estimate_resolution_error_amplitude_step_param,
   use_incremental_formulation_param,
   sort_txt_output_param,
   use_search_initialization_for_failed_steps_param,
@@ -1192,7 +1224,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_global_correlation_params = 24;
+const int_t num_valid_global_correlation_params = 28;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_global_correlation_params[num_valid_global_correlation_params] = {
   use_global_dic_param,
@@ -1206,8 +1238,12 @@ const Correlation_Parameter valid_global_correlation_params[num_valid_global_cor
   output_delimiter_param,
   omit_output_row_id_param,
   estimate_resolution_error_param,
-  estimate_resolution_error_freq_steps_param,
-  estimate_resolution_error_mag_steps_param,
+  estimate_resolution_error_min_period_param,
+  estimate_resolution_error_max_period_param,
+  estimate_resolution_error_period_factor_param,
+  estimate_resolution_error_min_amplitude_param,
+  estimate_resolution_error_max_amplitude_param,
+  estimate_resolution_error_amplitude_step_param,
   use_incremental_formulation_param,
   sort_txt_output_param,
   global_regularization_alpha_param,

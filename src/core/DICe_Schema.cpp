@@ -2042,8 +2042,12 @@ Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
 }
 
 void
-Schema::estimate_resolution_error(const int num_steps,
-  const int num_mags,
+Schema::estimate_resolution_error(const scalar_t & min_period,
+  const scalar_t & max_period,
+  const scalar_t & period_factor,
+  const scalar_t & min_amp,
+  const scalar_t & max_amp,
+  const scalar_t & amp_step,
   std::string & output_folder,
   std::string & prefix,
   Teuchos::RCP<std::ostream> & outStream){
@@ -2051,7 +2055,45 @@ Schema::estimate_resolution_error(const int num_steps,
 #else
   // only done on processor 0
   const int_t proc_id = comm_->get_rank();
-  DEBUG_MSG("Schema::estimate_resolution_error(): Estimating resolution error with num_mags = " << num_mags << " num_steps = " << num_steps);
+  DEBUG_MSG("****************************************************************");
+  DEBUG_MSG("Schema::estimate_resolution_error(): ");
+  DEBUG_MSG("****************************************************************");
+  DEBUG_MSG("minumum motion period:    " << min_period << " pixels");
+  DEBUG_MSG("maximum motion period:    " << max_period << " pixels");
+  DEBUG_MSG("period factor:            " << period_factor);
+  DEBUG_MSG("minimum motion amplitude: " << min_amp << " pixels");
+  DEBUG_MSG("maximum motion amplitude: " << max_amp << " pixels");
+  DEBUG_MSG("amplitude step:           " << amp_step << " pixels");
+  DEBUG_MSG("****************************************************************");
+  TEUCHOS_TEST_FOR_EXCEPTION(min_period <= 0.0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(min_amp <= 0.0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(max_period < min_period,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(period_factor <= 0.0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(max_amp < min_amp,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(amp_step <= 0.0,std::runtime_error,"");
+
+  // create the images folder if it doesn't exist
+#if defined(WIN32)
+  std::string image_dir_str = ".\\synthetic_images\\";
+#else
+  std::string image_dir_str = "./synthetic_images/";
+#endif
+  DEBUG_MSG("Attempting to create directory : " << image_dir_str);
+  boost::filesystem::path image_dir(image_dir_str);
+  if(boost::filesystem::create_directory(image_dir)) {
+    DEBUG_MSG("Directory successfully created");
+  }
+  // create the results folder if it doesn't exist
+#if defined(WIN32)
+  std::string data_dir_str = ".\\synthetic_results\\";
+#else
+  std::string data_dir_str = "./synthetic_results/";
+#endif
+  DEBUG_MSG("Attempting to create directory : " << data_dir_str);
+  boost::filesystem::path data_dir(data_dir_str);
+  if(boost::filesystem::create_directory(data_dir)) {
+    DEBUG_MSG("Directory successfully created");
+  }
 
   // search the mesh fields to see if vsg or nlvc strain exist:
   const bool has_vsg = mesh_->has_field(DICe::mesh::field_enums::VSG_STRAIN_XX);
@@ -2059,7 +2101,6 @@ Schema::estimate_resolution_error(const int num_steps,
   const bool is_subset_based = analysis_type_ == LOCAL_DIC;
 
   std::stringstream result_stream;
-  std::stringstream infoName;
 
   // populate the exact sol, etc
   mesh_->create_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);
@@ -2091,16 +2132,30 @@ Schema::estimate_resolution_error(const int num_steps,
     nlvc_error_yy = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_YY_ERROR_FS);
   }
 
+  std::stringstream data_name;
+  data_name << data_dir_str << "spatial_resolution.txt";
   if(proc_id==0){
-    infoName << output_folder << prefix << ".info";
-    std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"a");
-    fprintf(infoFilePtr,"***\n");
-    fprintf(infoFilePtr,"*** Displacement and Strain Error Estimates \n");
-    fprintf(infoFilePtr,"***\n");
+    std::FILE * infoFilePtr = fopen(data_name.str().c_str(),"w");
+    fprintf(infoFilePtr,"period(px) amp(px) u_err_min(rel%%) u_err_max(rel%%) u_err_avg(rel%%) u_err_std_dev(rel%%) "
+        "v_err_min(rel%%) v_err_max(rel%%) v_err_avg(rel%%) v_err_std_dev(rel%%)");
+    fprintf(infoFilePtr," u_peaks_avg_err(rel%%) u_peaks_std_dev_err(rel%%) v_peaks_avg_err(rel%%) v_peaks_std_dev_err(rel%%)");
+    if(has_vsg){
+      fprintf(infoFilePtr," vsg_xx_err_min(rel%%) vsg_xx_err_max(rel%%) vsg_xx_err_avg(rel%%) vsg_xx_std_dev(rel%%) "
+          "vsg_xy_err_min(rel%%) vsg_xy_err_max(rel%%) vsg_xy_err_avg(rel%%) vsg_xy_err_std_dev(rel%%) "
+          "vsg_yy_err_min(rel%%) vsg_yy_err_max(rel%%) vsg_yy_err_avg(rel%%) vsg_yy_err_std_dev(rel%%)");
+      fprintf(infoFilePtr," vsg_xx_peaks_avg_err(rel%%) vsg_xx_peaks_std_dev_err(rel%%) vsg_yy_peaks_avg_err(rel%%) vsg_yy_peaks_std_dev_err(rel%%)");
+    }
+    if(has_nlvc){
+      fprintf(infoFilePtr," nlvc_xx_err_min(rel%%) nlvc_xx_err_max(rel%%) nlvc_xx_err_avg(rel%%) nlvc_xx_std_dev(rel%%) "
+          "nlvc_xy_err_min(rel%%) nlvc_xy_err_max(rel%%) nlvc_xy_err_avg(rel%%) nlvc_xy_err_std_dev(rel%%) "
+          "nlvc_yy_err_min(rel%%) nlvc_yy_err_max(rel%%) nlvc_yy_err_avg(rel%%) nlvc_yy_err_std_dev(rel%%)");
+      fprintf(infoFilePtr," nlvc_xx_peaks_avg_err(rel%%) nlvc_xx_peaks_std_dev_err(rel%%) nlvc_yy_peaks_avg_err(rel%%) nlvc_yy_peaks_std_dev_err(rel%%)");
+    }
+    fprintf(infoFilePtr,"\n");
     fclose(infoFilePtr);
   }
   const int_t spa_dim = mesh_->spatial_dimension();
-  for(int_t step=0;step<num_steps;++step){
+  for(scalar_t period=max_period;period>=min_period;period*=period_factor){
     // reset the displacements between frequency updates, otherwise the existing solution makes a nice initial guess
     if(is_subset_based){
       mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS)->put_scalar(0.0);
@@ -2109,10 +2164,10 @@ Schema::estimate_resolution_error(const int num_steps,
       mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS)->put_scalar(0.0);
     }
     mesh_->get_field(DICe::mesh::field_enums::SIGMA_FS)->put_scalar(0.0);
-    for(int_t mag=0;mag<num_mags;++mag){
-      DEBUG_MSG("Processing magitude " << mag << " step " << step);
+    for(scalar_t amplitude=min_amp;amplitude<=max_amp;amplitude+=amp_step){
+      DEBUG_MSG("processing period " << period << " amplitude " << amplitude);
       // create an image deformer class
-      Teuchos::RCP<SinCos_Image_Deformer> deformer = Teuchos::rcp(new SinCos_Image_Deformer(step,mag));
+      Teuchos::RCP<SinCos_Image_Deformer> deformer = Teuchos::rcp(new SinCos_Image_Deformer(period,amplitude));
       std::stringstream sincos_name;
       Teuchos::RCP<Image> def_img;
       std::stringstream amp_ss;
@@ -2123,20 +2178,20 @@ Schema::estimate_resolution_error(const int num_steps,
       per_ss << deformer->period();
       std::string per_s = per_ss.str();
       std::replace( per_s.begin(), per_s.end(), '.', 'p'); // replace dots with p for file name
-      sincos_name << "sincos_amp_" << std::setprecision(4) << amp_s << "_period_" << std::setprecision(4) << per_s << ".tif";
+      sincos_name << image_dir_str << "amp_" << std::setprecision(4) << amp_s << "_period_" << std::setprecision(4) << per_s << ".tif";
 
       // check to see if the deformed image already exists:
       std::ifstream f(sincos_name.str().c_str());
-      if(f.good()){
-        DEBUG_MSG("** Using previously saved image");
-        def_img = Teuchos::rcp(new DICe::Image(sincos_name.str().c_str()));
-      }else{
-        DEBUG_MSG("** Generating new image");
+      //if(f.good()){
+      //  DEBUG_MSG("using previously saved image");
+      //  def_img = Teuchos::rcp(new DICe::Image(sincos_name.str().c_str()));
+      //}else{
+        DEBUG_MSG("generating new synthetic image");
         def_img = deformer->deform_image(ref_img());
         if(proc_id==0){
           def_img->write(sincos_name.str());
         }
-      }
+      //}
 
       // set the deformed image for the schema
       set_def_image(def_img);
@@ -2176,7 +2231,7 @@ Schema::estimate_resolution_error(const int num_steps,
         nlvc_xy = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_XY_FS);
         nlvc_yy = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_YY_FS);
       }
-      // compute the error:
+      // compute the error fields
       for(int_t i=0;i<local_num_subsets_;++i){
         const scalar_t x = coords->local_value(i*spa_dim+0);
         const scalar_t y = coords->local_value(i*spa_dim+1);
@@ -2234,12 +2289,20 @@ Schema::estimate_resolution_error(const int num_steps,
       scalar_t max_error_v = 0.0;
       scalar_t avg_error_v = 0.0;
       scalar_t std_dev_error_v = 0.0;
-      scalar_t failure_rate = mesh_->field_stats(DICe::mesh::field_enums::DISP_ERROR_FS,min_error_u,max_error_u,avg_error_u,std_dev_error_u,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+      mesh_->field_stats(DICe::mesh::field_enums::DISP_ERROR_FS,min_error_u,max_error_u,avg_error_u,std_dev_error_u,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
       mesh_->field_stats(DICe::mesh::field_enums::DISP_ERROR_FS,min_error_v,max_error_v,avg_error_v,std_dev_error_v,1,DICe::mesh::field_enums::SIGMA_FS,-1.0);
-      result_stream << "period (px) " << std::setw(4) << std::setprecision(4) << deformer->period() << " amp (px) " << std::setw(4) << std::setprecision(4) << deformer->amplitude() <<
-          " failure rate " << std::setw(4) << std::setprecision(2) << failure_rate  << " disp_u error (rel %%): min " << min_error_u << " max " << max_error_u <<
-          " avg " << avg_error_u << " std_dev " << std_dev_error_u << " disp_v error (rel %%): min " << min_error_v << " max " << max_error_v << " avg " << avg_error_v <<
-          " std_dev " << std_dev_error_v;
+      result_stream << std::setprecision(4) << deformer->period() << " "<< std::setprecision(4) << deformer->amplitude()
+          << " " << min_error_u << " " << max_error_u << " " << avg_error_u << " " << std_dev_error_u << " " << min_error_v << " " << max_error_v << " " << avg_error_v << " " << std_dev_error_v;
+
+      scalar_t peaks_avg_error_x = 0.0;
+      scalar_t peaks_std_dev_error_x = 0.0;
+      scalar_t peaks_avg_error_y = 0.0;
+      scalar_t peaks_std_dev_error_y = 0.0;
+      // analyze the peaks of the output to evaluate the roll off
+      compute_roll_off_stats(period,def_img->width(),def_img->height(),coords,disp,exact_disp,disp_error,
+        peaks_avg_error_x,peaks_std_dev_error_x,peaks_avg_error_y,peaks_std_dev_error_y);
+      result_stream << " " << peaks_avg_error_x << " " << peaks_std_dev_error_x << " " << peaks_avg_error_y << " " << peaks_std_dev_error_y;
+
       if(has_vsg){
         scalar_t min_vsg_xx = 0.0;
         scalar_t max_vsg_xx = 0.0;
@@ -2256,9 +2319,30 @@ Schema::estimate_resolution_error(const int num_steps,
         mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_XX_ERROR_FS,min_vsg_xx,max_vsg_xx,avg_vsg_xx,std_dev_vsg_xx,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
         mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_XY_ERROR_FS,min_vsg_xy,max_vsg_xy,avg_vsg_xy,std_dev_vsg_xy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
         mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_YY_ERROR_FS,min_vsg_yy,max_vsg_yy,avg_vsg_yy,std_dev_vsg_yy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
-        result_stream << " vsg_xx error (rel %%): min " << min_vsg_xx << " max " << max_vsg_xx << " avg " << avg_vsg_xx << " std_dev " << std_dev_vsg_xx;
-        result_stream << " vsg_xy error (rel %%): min " << min_vsg_xy << " max " << max_vsg_xy << " avg " << avg_vsg_xy << " std_dev " << std_dev_vsg_xy;
-        result_stream << " vsg_yy error (rel %%): min " << min_vsg_yy << " max " << max_vsg_yy << " avg " << avg_vsg_yy << " std_dev " << std_dev_vsg_yy;
+        result_stream << " " << min_vsg_xx << " " << max_vsg_xx << " " << avg_vsg_xx << " " << std_dev_vsg_xx;
+        result_stream << " " << min_vsg_xy << " " << max_vsg_xy << " " << avg_vsg_xy << " " << std_dev_vsg_xy;
+        result_stream << " " << min_vsg_yy << " " << max_vsg_yy << " " << avg_vsg_yy << " " << std_dev_vsg_yy;
+        scalar_t strain_peaks_avg_error_x = 0.0;
+        scalar_t strain_peaks_std_dev_error_x = 0.0;
+        scalar_t strain_peaks_avg_error_y = 0.0;
+        scalar_t strain_peaks_std_dev_error_y = 0.0;
+        // assemble the strains into a vector
+        Teuchos::RCP<MultiField_Map> map = mesh_->get_vector_node_dist_map();
+        Teuchos::RCP<MultiField> strain = Teuchos::rcp( new MultiField(map,1,true));
+        Teuchos::RCP<MultiField> exact_strain = Teuchos::rcp( new MultiField(map,1,true));
+        Teuchos::RCP<MultiField> strain_error = Teuchos::rcp( new MultiField(map,1,true));
+        for(int_t i=0;i<local_num_subsets_;++i){
+          strain->local_value(i*spa_dim+0) = vsg_xx->local_value(i);
+          strain->local_value(i*spa_dim+1) = vsg_yy->local_value(i);
+          exact_strain->local_value(i*spa_dim+0) = exact_strain_xx->local_value(i);
+          exact_strain->local_value(i*spa_dim+1) = exact_strain_yy->local_value(i);
+          strain_error->local_value(i*spa_dim+0) = vsg_error_xx->local_value(i);
+          strain_error->local_value(i*spa_dim+1) = vsg_error_yy->local_value(i);
+        }
+        // analyze the peaks of the output to evaluate the roll off
+        compute_roll_off_stats(period,def_img->width(),def_img->height(),coords,strain,exact_strain,strain_error,
+          strain_peaks_avg_error_x,strain_peaks_std_dev_error_x,strain_peaks_avg_error_y,strain_peaks_std_dev_error_y);
+        result_stream << " " << strain_peaks_avg_error_x << " " << strain_peaks_std_dev_error_x << " " << strain_peaks_avg_error_y << " " << strain_peaks_std_dev_error_y;
       }
       if(has_nlvc){
         scalar_t min_nlvc_xx = 0.0;
@@ -2276,16 +2360,37 @@ Schema::estimate_resolution_error(const int num_steps,
         mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_XX_ERROR_FS,min_nlvc_xx,max_nlvc_xx,avg_nlvc_xx,std_dev_nlvc_xx,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
         mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_XY_ERROR_FS,min_nlvc_xy,max_nlvc_xy,avg_nlvc_xy,std_dev_nlvc_xy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
         mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_YY_ERROR_FS,min_nlvc_yy,max_nlvc_yy,avg_nlvc_yy,std_dev_nlvc_yy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
-        result_stream << " nlvc_xx error (rel %%): min " << min_nlvc_xx << " max " << max_nlvc_xx << " avg " << avg_nlvc_xx << " std_dev " << std_dev_nlvc_xx;
-        result_stream << " nlvc_xy error (rel %%): min " << min_nlvc_xy << " max " << max_nlvc_xy << " avg " << avg_nlvc_xy << " std_dev " << std_dev_nlvc_xy;
-        result_stream << " nlvc_yy error (rel %%): min " << min_nlvc_yy << " max " << max_nlvc_yy << " avg " << avg_nlvc_yy << " std_dev " << std_dev_nlvc_yy;
+        result_stream << " " << min_nlvc_xx << " " << max_nlvc_xx << " " << avg_nlvc_xx << " " << std_dev_nlvc_xx;
+        result_stream << " " << min_nlvc_xy << " " << max_nlvc_xy << " " << avg_nlvc_xy << " " << std_dev_nlvc_xy;
+        result_stream << " " << min_nlvc_yy << " " << max_nlvc_yy << " " << avg_nlvc_yy << " " << std_dev_nlvc_yy;
+        scalar_t strain_peaks_avg_error_x = 0.0;
+        scalar_t strain_peaks_std_dev_error_x = 0.0;
+        scalar_t strain_peaks_avg_error_y = 0.0;
+        scalar_t strain_peaks_std_dev_error_y = 0.0;
+        // assemble the strains into a vector
+        Teuchos::RCP<MultiField_Map> map = mesh_->get_vector_node_dist_map();
+        Teuchos::RCP<MultiField> strain = Teuchos::rcp( new MultiField(map,1,true));
+        Teuchos::RCP<MultiField> exact_strain = Teuchos::rcp( new MultiField(map,1,true));
+        Teuchos::RCP<MultiField> strain_error = Teuchos::rcp( new MultiField(map,1,true));
+        for(int_t i=0;i<local_num_subsets_;++i){
+          strain->local_value(i*spa_dim+0) = vsg_xx->local_value(i);
+          strain->local_value(i*spa_dim+1) = vsg_yy->local_value(i);
+          exact_strain->local_value(i*spa_dim+0) = exact_strain_xx->local_value(i);
+          exact_strain->local_value(i*spa_dim+1) = exact_strain_yy->local_value(i);
+          strain_error->local_value(i*spa_dim+0) = nlvc_error_xx->local_value(i);
+          strain_error->local_value(i*spa_dim+1) = nlvc_error_yy->local_value(i);
+        }
+        // analyze the peaks of the output to evaluate the roll off
+        compute_roll_off_stats(period,def_img->width(),def_img->height(),coords,strain,exact_strain,strain_error,
+          strain_peaks_avg_error_x,strain_peaks_std_dev_error_x,strain_peaks_avg_error_y,strain_peaks_std_dev_error_y);
+        result_stream << " " << strain_peaks_avg_error_x << " " << strain_peaks_std_dev_error_x << " " << strain_peaks_avg_error_y << " " << strain_peaks_std_dev_error_y;
       }
 
       result_stream << std::endl;
       write_output(output_folder,prefix,false,true);
       // write the results to the .info file
       if(proc_id==0){
-        std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"a");
+        std::FILE * infoFilePtr = fopen(data_name.str().c_str(),"a");
         fprintf(infoFilePtr,result_stream.str().c_str());
         fclose(infoFilePtr);
         *outStream << result_stream.str();
@@ -2294,13 +2399,6 @@ Schema::estimate_resolution_error(const int num_steps,
       result_stream.str("");
     } // end step loop
   } // end mag loop
-  if(proc_id==0){
-    std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"a");
-    fprintf(infoFilePtr,"***\n");
-    fprintf(infoFilePtr,"***\n");
-    fprintf(infoFilePtr,"***\n");
-    fclose(infoFilePtr);
-  }
 #endif
 }
 // TODO fix this up so that it works with conformal subsets:

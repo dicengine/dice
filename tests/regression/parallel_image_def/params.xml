@@ -1,5 +1,11 @@
 <ParameterList>
   <Parameter name="estimate_resolution_error" type="bool" value="true" />  
+  <Parameter name="estimate_resolution_error_min_period" type="double" value="100.0" />  
+  <Parameter name="estimate_resolution_error_max_period" type="double" value="100.0" />  
+  <Parameter name="estimate_resolution_error_period_factor" type="double" value="0.5" />  
+  <Parameter name="estimate_resolution_error_min_amplitude" type="double" value="0.5" />  
+  <Parameter name="estimate_resolution_error_max_amplitude" type="double" value="0.5" />  
+  <Parameter name="estimate_resolution_error_amplitude_step" type="double" value="1.0" />  
   <Parameter name="interpolation_method" type="string" value="KEYS_FOURTH" />  
   <Parameter name="optimization_method" type="string" value="GRADIENT_BASED" />  
   <Parameter name="initialization_method" type="string" value="USE_FIELD_VALUES" />  

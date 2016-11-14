@@ -121,7 +121,8 @@ public:
   /// \param comm the MPI communicator
   MultiField_Map(const int_t num_elements,
     const int_t index_base,
-    MultiField_Comm & comm){
+    MultiField_Comm & comm):
+    comm_(comm){
     map_ = Teuchos::rcp(new map_type(num_elements, index_base, comm.get()));
   }
 
@@ -133,7 +134,8 @@ public:
   MultiField_Map(const int_t num_elements,
     Teuchos::ArrayView<const int_t> elements,
     const int_t index_base,
-    MultiField_Comm & comm){
+    MultiField_Comm & comm):
+    comm_(comm){
     map_ = Teuchos::rcp(new map_type(num_elements, elements, index_base, comm.get()));
   }
   /// \brief Constructor that uses the local number of elements per processor and builds the global list
@@ -144,7 +146,8 @@ public:
   MultiField_Map(const int_t num_elements,
     const int_t num_local_elements,
     const int_t index_base,
-    MultiField_Comm & comm){
+    MultiField_Comm & comm):
+    comm_(comm){
     map_ = Teuchos::rcp(new map_type(num_elements, num_local_elements, index_base, comm.get()));
   }
 
@@ -189,6 +192,11 @@ public:
     return map_->getMinAllGlobalIndex();
   }
 
+  /// returns the parallel communicator
+  MultiField_Comm get_comm()const{
+    return comm_;
+  }
+
   /// returns true if this global id is on this node
   /// \param global_id the global id to check
   bool is_node_global_elem(const int_t global_id){
@@ -222,6 +230,8 @@ public:
 private:
   /// Pointer to the underlying map object for this class
   Teuchos::RCP<const map_type> map_;
+  /// communicator
+  MultiField_Comm comm_;
 };
 
 /// \class DICe::MultiField_Exporter

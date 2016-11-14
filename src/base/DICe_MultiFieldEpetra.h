@@ -116,7 +116,8 @@ public:
   /// \param comm the MPI communicator
   MultiField_Map(const int_t num_elements,
     const int_t index_base,
-    MultiField_Comm & comm){
+    MultiField_Comm & comm):
+    comm_(comm){
     map_ = Teuchos::rcp(new Epetra_Map(num_elements, index_base, *comm.get()));
   }
 
@@ -127,7 +128,8 @@ public:
   /// \param comm MPI communicator
   MultiField_Map(const int_t num_elements,
     Teuchos::ArrayView<const int_t> elements,
-    const int_t index_base, MultiField_Comm & comm){
+    const int_t index_base, MultiField_Comm & comm):
+    comm_(comm){
     map_ = Teuchos::rcp(new Epetra_Map(num_elements, elements.size(), &elements[0], index_base, *comm.get()));
   }
 
@@ -139,7 +141,8 @@ public:
   MultiField_Map(const int_t num_elements,
     const int_t num_local_elements,
     const int_t index_base,
-    MultiField_Comm & comm){
+    MultiField_Comm & comm):
+    comm_(comm){
     map_ = Teuchos::rcp(new Epetra_Map(num_elements, num_local_elements, index_base, *comm.get()));
   }
 
@@ -160,6 +163,11 @@ public:
   /// \param local_id the local id of the element
   int get_global_element(const int_t local_id)const{
     return map_->GID(local_id);
+  }
+
+  /// returns the parallel communicator
+  MultiField_Comm get_comm()const{
+    return comm_;
   }
 
   /// returns true if this global id is on this node
@@ -216,6 +224,8 @@ public:
 private:
   /// Pointer to the underlying map object for this class
   Teuchos::RCP<const Epetra_Map> map_;
+  /// communicator
+  MultiField_Comm comm_;
 };
 
 /// \class DICe::MultiField_Exporter

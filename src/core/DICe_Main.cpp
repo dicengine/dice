@@ -291,9 +291,13 @@ int main(int argc, char *argv[]) {
     // if the user selects predict_resolution_error option, an error analysis is performed and the actual analysis is skipped
     if(correlation_params->get<bool>(DICe::estimate_resolution_error,false)){
       file_prefix = "DICe_error_estimation_solution";
-      const int_t num_steps = correlation_params->get<int_t>(DICe::estimate_resolution_error_freq_steps,1);
-      const int_t num_mags = correlation_params->get<int_t>(DICe::estimate_resolution_error_mag_steps,1);
-      schema->estimate_resolution_error(num_steps,num_mags,output_folder,file_prefix,outStream);
+      const scalar_t min_period = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_min_period,25);
+      const scalar_t max_period = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_max_period,100);
+      const scalar_t period_factor = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_period_factor,0.5);
+      const scalar_t min_amp = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_min_amplitude,0.5);
+      const scalar_t max_amp = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_max_amplitude,4.0);
+      const scalar_t amp_step = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_amplitude_step,0.5);
+      schema->estimate_resolution_error(min_period,max_period,period_factor,min_amp,max_amp,amp_step,output_folder,file_prefix,outStream);
       DICe::finalize();
       return 0;
     }
