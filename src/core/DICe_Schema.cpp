@@ -580,10 +580,8 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   pixel_integration_order_ = diceParams->get<int_t>(DICe::pixel_integration_order);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::obstruction_skin_factor),std::runtime_error,"");
   obstruction_skin_factor_ = diceParams->get<double>(DICe::obstruction_skin_factor);
-  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::use_objective_regularization),std::runtime_error,"");
-  use_objective_regularization_ = diceParams->get<bool>(DICe::use_objective_regularization);
-  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::objective_regularization_factor),std::runtime_error,"");
-  objective_regularization_factor_ = diceParams->get<double>(DICe::objective_regularization_factor);
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::levenberg_marquardt_regularization_factor),std::runtime_error,"");
+  levenberg_marquardt_regularization_factor_ = diceParams->get<double>(DICe::levenberg_marquardt_regularization_factor);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::output_beta),std::runtime_error,"");
   output_beta_ = diceParams->get<bool>(DICe::output_beta);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::use_search_initialization_for_failed_steps),std::runtime_error,"");

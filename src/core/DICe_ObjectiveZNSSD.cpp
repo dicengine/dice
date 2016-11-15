@@ -224,8 +224,8 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
   const scalar_t cy = subset_->centroid_y();
   const scalar_t meanF = subset_->mean(REF_INTENSITIES);
   // these are used for regularization below
-  const scalar_t prev_u = (*deformation)[DISPLACEMENT_X];
-  const scalar_t prev_v = (*deformation)[DISPLACEMENT_Y];
+  //const scalar_t prev_u = (*deformation)[DISPLACEMENT_X];
+  //const scalar_t prev_v = (*deformation)[DISPLACEMENT_Y];
   //const scalar_t prev_theta = (*deformation)[ROTATION_Z];
 
   // SOLVER ---------------------------------------------------------
@@ -343,9 +343,9 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
 
     if(schema_->use_objective_regularization()){
       // add the penalty terms
-      const scalar_t alpha = schema_->objective_regularization_factor();
-      q[0] += alpha * ((*deformation)[DICe::DISPLACEMENT_X] - prev_u);
-      q[1] += alpha * ((*deformation)[DICe::DISPLACEMENT_Y] - prev_v);
+      const scalar_t alpha = schema_->levenberg_marquardt_regularization_factor();
+      //q[0] += alpha * ((*deformation)[DICe::DISPLACEMENT_X] - prev_u);
+      //q[1] += alpha * ((*deformation)[DICe::DISPLACEMENT_Y] - prev_v);
       //q[2] += alpha * ((*deformation)[DICe::ROTATION_Z] - prev_theta);
       H(0,0) += alpha;
       H(1,1) += alpha;

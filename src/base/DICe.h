@@ -235,9 +235,7 @@ const char* const use_search_initialization_for_failed_steps = "use_search_initi
 /// String parameter name
 const char* const normalize_gamma_with_active_pixels = "normalize_gamma_with_active_pixels";
 /// String parameter name
-const char* const use_objective_regularization = "use_objective_regularization";
-/// String parameter name
-const char* const objective_regularization_factor = "objective_regularization_factor";
+const char* const levenberg_marquardt_regularization_factor = "levenberg_marquardt_regularization_factor";
 /// String parameter name
 const char* const pixel_integration_order = "pixel_integration_order";
 /// String parameter name
@@ -951,7 +949,7 @@ const Correlation_Parameter enable_shear_strain_param(enable_shear_strain,
   true,
   "Enables the shear strain shape function defree of freedom (gamma_xy = gamma_yx)");
 /// Correlation parameter and properties
-const Correlation_Parameter objective_regularization_factor_param(objective_regularization_factor,
+const Correlation_Parameter levenberg_marquardt_regularization_factor_param(levenberg_marquardt_regularization_factor,
   SCALAR_PARAM,
   true,
   "The coefficient applied to the regularization term if active");
@@ -1112,11 +1110,6 @@ const Correlation_Parameter use_integrated_dic_param(use_integrated_dic,
   BOOL_PARAM,
   false,
   "True if the integrated DIC algorithms should be used rather than subset or local DIC.");
-/// Correlation parameter and properties
-const Correlation_Parameter use_objective_regularization_param(use_objective_regularization,
-  BOOL_PARAM,
-  false,
-  "True if regularization terms should be added to the objective minimization process (similar to damping).");
 
 // These are not exposed automatically to the user (they are internal params used by the schema and image classes)
 
@@ -1154,7 +1147,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 79;
+const int_t num_valid_correlation_params = 78;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1213,7 +1206,6 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   use_global_dic_param,
   use_constrained_opt_dic_param,
   use_integrated_dic_param,
-  use_objective_regularization_param,
   pixel_integration_order_param,
   image_grad_use_hierarchical_parallelism_param,
   image_grad_team_size_param,
@@ -1226,7 +1218,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   rotate_def_image_180_param,
   rotate_ref_image_270_param,
   rotate_def_image_270_param,
-  objective_regularization_factor_param,
+  levenberg_marquardt_regularization_factor_param,
   filter_failed_cine_pixels_param,
   time_average_cine_ref_frame_param,
   global_regularization_alpha_param,

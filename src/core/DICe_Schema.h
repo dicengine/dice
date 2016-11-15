@@ -839,7 +839,7 @@ public:
 
   /// Returns true if regularization should be used in the objective evaluation
   bool use_objective_regularization()const{
-    return use_objective_regularization_;
+    return levenberg_marquardt_regularization_factor_ > 0.0;
   }
 
   /// returns true if the incremental formulation is used
@@ -965,9 +965,9 @@ public:
     return obstruction_skin_factor_;
   }
 
-  /// Returns the factor to use for objective regularization
-  double objective_regularization_factor()const{
-    return objective_regularization_factor_;
+  /// Returns the factor to use for regularization
+  double levenberg_marquardt_regularization_factor()const{
+    return levenberg_marquardt_regularization_factor_;
   }
 
   /// Returns the integration order for each pixel
@@ -1258,10 +1258,8 @@ private:
   bool override_force_simplex_;
   /// True if the gamma values (match quality) should be normalized with the number of active pixels
   bool normalize_gamma_with_active_pixels_;
-  /// True if regularization is used in the objective function
-  bool use_objective_regularization_;
   /// regularization factor
-  double objective_regularization_factor_;
+  double levenberg_marquardt_regularization_factor_;
   /// Solution vector and subsets are initialized
   bool is_initialized_;
   /// Pointer to the parameters whith which this schema was initialized
