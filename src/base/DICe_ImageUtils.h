@@ -67,6 +67,7 @@ class Image;
 /// \param cx the centroid x coordiante
 /// \param cy the centroid y coordinate
 /// \param deformation a vector that defines the deformation map parameters
+DICE_LIB_DLL_EXPORT
 void apply_transform(Teuchos::RCP<Image> image_in,
   Teuchos::RCP<Image> image_out,
   const int_t cx,
@@ -91,6 +92,7 @@ struct computed_point
 /// \param peaks_std_dev_error_x [out] computed stat
 /// \param peaks_avg_error_y [out] computed stat
 /// \param peaks_std_dev_error_y [out] computed stat
+DICE_LIB_DLL_EXPORT
 void compute_roll_off_stats(const scalar_t & period,
   const scalar_t & img_w,
   const scalar_t & img_h,
@@ -108,6 +110,7 @@ void compute_roll_off_stats(const scalar_t & period,
 /// \param h height of the image
 /// \param speckle_size size of the speckles to create
 /// \param params set of image parameters (compute gradients, etc)
+DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Image> create_synthetic_speckle_image(const int_t w,
   const int_t h,
   const scalar_t & speckle_size,
@@ -116,6 +119,7 @@ Teuchos::RCP<Image> create_synthetic_speckle_image(const int_t w,
 /// free function to add noise counts to an image
 /// \param image the image to modify
 /// \param noise_percent the amount of noise to add in percentage of the maximum intensity
+DICE_LIB_DLL_EXPORT
 void add_noise_to_image(Teuchos::RCP<Image> & image,
   const scalar_t & noise_percent);
 

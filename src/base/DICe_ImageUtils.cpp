@@ -46,6 +46,7 @@
 
 namespace DICe {
 
+DICE_LIB_DLL_EXPORT
 void apply_transform(Teuchos::RCP<Image> image_in,
   Teuchos::RCP<Image> image_out,
   const int_t cx,
@@ -253,6 +254,7 @@ SinCos_Image_Deformer::deform_image(Teuchos::RCP<Image> ref_image){
   return def_img;
 }
 
+DICE_LIB_DLL_EXPORT
 void compute_roll_off_stats(const scalar_t & period,
   const scalar_t & img_w,
   const scalar_t & img_h,
@@ -404,6 +406,7 @@ void compute_roll_off_stats(const scalar_t & period,
   peaks_std_dev_error_y = std_dev_y;
 }
 
+DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Image> create_synthetic_speckle_image(const int_t w,
   const int_t h,
   const scalar_t & speckle_size,
@@ -425,6 +428,7 @@ Teuchos::RCP<Image> create_synthetic_speckle_image(const int_t w,
   return img;
 }
 
+DICE_LIB_DLL_EXPORT
 void add_noise_to_image(Teuchos::RCP<Image> & image,
   const scalar_t & noise_percent){
 
