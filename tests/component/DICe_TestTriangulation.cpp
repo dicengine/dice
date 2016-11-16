@@ -67,20 +67,81 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- Begin test ---" << std::endl;
 
+  std::vector<scalar_t> ig_1(8,0.0);
+  ig_1[0] = 638.913;
+  ig_1[1] = 407.295;
+  ig_1[2] = 2468.53;
+  ig_1[3] = 2468.25;
+  ig_1[4] = -0.171198;
+  ig_1[5] = 0.0638413;
+  ig_1[6] = 0.0;
+  ig_1[7] = 0.0;
+  std::vector<scalar_t> ig_2(8,0.0);
+  ig_2[0] = 628.607;
+  ig_2[1] = 394.571;
+  ig_2[2] = 2377.11;
+  ig_2[3] = 2376.92;
+  ig_2[4] = 0.0897842;
+  ig_2[5] = 0.0619845;
+  ig_2[6] = 0.0;
+  ig_2[7] = 0.0;
+  std::vector<std::vector<scalar_t> > intrinsic_gold;
+  intrinsic_gold.push_back(ig_1);
+  intrinsic_gold.push_back(ig_2);
+  std::vector<scalar_t> T_1(4,0.0);
+  T_1[0] = 0.950892;
+  T_1[1] = 0.00104338;
+  T_1[2] = -0.30952;
+  T_1[3] = 130.755;
+  std::vector<scalar_t> T_2(4,0.0);
+  T_2[0] = -0.00145487;
+  T_2[1] = 0.999998;
+  T_2[2] = -0.00109863;
+  T_2[3] = -0.610487;
+  std::vector<scalar_t> T_3(4,0.0);
+  T_3[0] = 0.309519;
+  T_3[1] = 0.00149499;
+  T_3[2] = 0.950892;
+  T_3[3] = 17.1329;
+  std::vector<scalar_t> T_4(4,0.0);
+  T_4[0] = 0;
+  T_4[1] = 0;
+  T_4[2] = 0;
+  T_4[3] = 1;
 
-  std::vector<std::vector<scalar_t> > intrinsic_gold =
-    {{638.913,407.295,2468.53,2468.25,-0.171198,0.0638413,0,0},
-     {628.607,394.571,2377.11,2376.92,0.0897842,0.0619845,0,0}};
-  std::vector<std::vector<scalar_t> > T_mat_gold =
-    {{0.950892,0.00104338,-0.30952,130.755},
-     {-0.00145487,0.999998,-0.00109863,-0.610487},
-     {0.309519,0.00149499,0.950892,17.1329},
-     {0,0,0,1}};
-  std::vector<std::vector<scalar_t> > zero_to_world_xml_gold =
-     {{0.987647,0.000580617,-0.156696,65.3774},
-      {0.000684129,-1.0,0.00060666,-0.305243},
-      {-0.156695,-0.000706366,-0.987647,8.56645},
-      {0.0,0.0,0.0,1.0}};
+  std::vector<std::vector<scalar_t> > T_mat_gold;
+  T_mat_gold.push_back(T_1);
+  T_mat_gold.push_back(T_2);
+  T_mat_gold.push_back(T_3);
+  T_mat_gold.push_back(T_4);
+
+  std::vector<scalar_t> z_1(4,0.0);
+  z_1[0] = 0.987647;
+  z_1[1] = 0.000580617;
+  z_1[2] = -0.156696;
+  z_1[3] = 65.3774;
+  std::vector<scalar_t> z_2(4,0.0);
+  z_2[0] = 0.000684129;
+  z_2[1] = -1.0;
+  z_2[2] = 0.00060666;
+  z_2[3] = -0.305243;
+  std::vector<scalar_t> z_3(4,0.0);
+  z_3[0] = -0.156695;
+  z_3[1] = -0.000706366;
+  z_3[2] = -0.987647;
+  z_3[3] = 8.56645;
+  std::vector<scalar_t> z_4(4,0.0);
+  z_4[0] = 0;
+  z_4[1] = 0;
+  z_4[2] = 0;
+  z_4[3] = 1;
+
+  std::vector<std::vector<scalar_t> > zero_to_world_xml_gold;
+  zero_to_world_xml_gold.push_back(z_1);
+  zero_to_world_xml_gold.push_back(z_2);
+  zero_to_world_xml_gold.push_back(z_3);
+  zero_to_world_xml_gold.push_back(z_4);
+
   std::vector<std::vector<scalar_t> > zero_to_world_txt_gold =
     {{1.0,0.0,0.0,0.0},
      {0.0,1.0,0.0,0.0},
