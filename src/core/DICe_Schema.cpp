@@ -2065,7 +2065,9 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
   scalar_t vsg_size = -1.0;
   scalar_t nlvc_size = -1.0;
   if(analysis_type_==GLOBAL_DIC){
+#ifdef DICE_ENABLE_GLOBAL
     subset_elem_size = global_algorithm()->mesh_size();
+#endif
   }else{
     subset_elem_size = subset_dim_;
     step_size = step_size_x_;
