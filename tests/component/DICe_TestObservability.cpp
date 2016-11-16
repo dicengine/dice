@@ -47,6 +47,7 @@
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
 #include <Teuchos_ParameterList.hpp>
+#include <Teuchos_LAPACK.hpp>
 
 #include <iostream>
 #include <random>
