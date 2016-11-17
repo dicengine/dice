@@ -14,6 +14,12 @@ add_subdirectory(core)
 add_subdirectory(cine)
 
 #
+#  Netcdf File Reader
+#
+IF(DICE_ENABLE_NETCDF)
+  add_subdirectory(netcdf)
+ENDIF()
+#
 # FFT utilities
 #
 add_subdirectory(fft)

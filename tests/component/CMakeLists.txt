@@ -27,3 +27,8 @@ ENDFOREACH()
 IF(DICE_ENABLE_GLOBAL)
   add_subdirectory(global)
 ENDIF()
+
+IF(DICE_ENABLE_NETCDF)
+  add_subdirectory(netcdf)
+ENDIF()
+
