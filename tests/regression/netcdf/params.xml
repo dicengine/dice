@@ -1,0 +1,39 @@
+<ParameterList>
+  <Parameter name="estimate_resolution_error" type="bool" value="true" />  
+  <Parameter name="estimate_resolution_error_min_period" type="double" value="300.0" />  
+  <Parameter name="estimate_resolution_error_max_period" type="double" value="300.0" />  
+  <Parameter name="estimate_resolution_error_period_factor" type="double" value="0.75" />  
+  <Parameter name="estimate_resolution_error_min_amplitude" type="double" value="1.0" />  
+  <Parameter name="estimate_resolution_error_max_amplitude" type="double" value="1.0" />  
+  <Parameter name="estimate_resolution_error_amplitude_step" type="double" value="1.0" />  
+  <Parameter name="interpolation_method" type="string" value="KEYS_FOURTH" />  
+  <Parameter name="optimization_method" type="string" value="GRADIENT_BASED" />  
+  <Parameter name="initialization_method" type="string" value="USE_FIELD_VALUES" />  
+  <Parameter name="enable_translation" type="bool" value="true" />  
+  <Parameter name="enable_rotation" type="bool" value="false" />  
+  <Parameter name="enable_normal_strain" type="bool" value="false" />  
+  <Parameter name="enable_shear_strain" type="bool" value="false" />  
+  <Parameter name="output_delimiter" type="string" value="," />  
+  <ParameterList name="post_process_vsg_strain">
+    <Parameter name="strain_window_size_in_pixels" type="int" value="50" />  
+  </ParameterList>
+  <ParameterList name="post_process_nlvc_strain">
+    <Parameter name="horizon_diameter_in_pixels" type="int" value="50" />  
+  </ParameterList>
+  <ParameterList name="output_spec">
+    <Parameter name="COORDINATE_X" type="bool" value="true" />  
+    <Parameter name="COORDINATE_Y" type="bool" value="true" />  
+    <Parameter name="DISPLACEMENT_X" type="bool" value="true" />  
+    <Parameter name="DISPLACEMENT_Y" type="bool" value="true" />  
+    <Parameter name="SIGMA" type="bool" value="true" />  
+    <Parameter name="GAMMA" type="bool" value="true" />  
+    <Parameter name="BETA" type="bool" value="true" />  
+    <Parameter name="STATUS_FLAG" type="bool" value="true" />  
+    <Parameter name="VSG_STRAIN_XX" type="bool" value="true" />  
+    <Parameter name="VSG_STRAIN_YY" type="bool" value="true" />  
+    <Parameter name="VSG_STRAIN_XY" type="bool" value="true" />  
+    <Parameter name="NLVC_STRAIN_XX" type="bool" value="true" />  
+    <Parameter name="NLVC_STRAIN_YY" type="bool" value="true" />  
+    <Parameter name="NLVC_STRAIN_XY" type="bool" value="true" />  
+  </ParameterList>
+</ParameterList>

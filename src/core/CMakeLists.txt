@@ -39,6 +39,9 @@ target_link_libraries(dicecore ${Boost_LIBRARIES} ${DICE_LIBRARIES} dicebase dic
 IF(DICE_ENABLE_GLOBAL)
   target_link_libraries(dicecore diceglobal dicemeshio)
 ENDIF()
+IF(DICE_ENABLE_NETCDF)
+  target_link_libraries(dicecore dicenetcdf)
+ENDIF()
 target_compile_definitions(dicecore PRIVATE -D DICE_LIB_EXPORTS_MODE)
 
 install(FILES ${DICE_HEADERS} ../kdtree/nanoflann.hpp

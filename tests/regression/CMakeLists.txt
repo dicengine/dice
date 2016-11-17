@@ -26,6 +26,11 @@ IF(NOT DICE_USE_DOUBLE)
     )
   ENDIF()
 ENDIF()
+IF(DICE_ENABLE_NETCDF)
+  SET(REGRESSION_TESTS
+    ${REGRESSION_TESTS}
+    netcdf)
+ENDIF()
 
 FOREACH ( test ${REGRESSION_TESTS})
     # Copy over all the test files (input and results)

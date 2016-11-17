@@ -71,6 +71,10 @@ IF(WIN32)
   SET(DICE_LIBRARIES ${DICE_LIBRARIES} libf2c)
 ENDIF()
 
+if(DICE_ENABLE_NETCDF)
+  ADD_DEFINITIONS(-DDICE_ENABLE_NETCDF=1)
+endif()
+
 # FIND BOOST
 IF(WIN32)
   find_package(Boost 1.46.0) # find_package for boost works a little dif for Windows 
@@ -125,6 +129,7 @@ link_directories(${TIFF_DIR}/lib
   ${PNG_DIR}/lib)
 SET(DICE_HEADER_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../netcdf
   ${TIFF_DIR}
   ${JPEG_DIR}
   ${PNG_DIR}

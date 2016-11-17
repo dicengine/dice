@@ -56,6 +56,9 @@
 #if DICE_PNG
   #include <boost/gil/extension/io/png_dynamic_io.hpp>
 #endif
+#if DICE_ENABLE_NETCDF
+  #include <DICe_NetCDF.h>
+#endif
 namespace DICe{
 namespace utils{
 
@@ -81,6 +84,11 @@ Image_File_Type image_file_type(const char * file_name){
   const std::string png("png");
   if(file_str.find(png)!=std::string::npos)
     return PNG;
+#endif
+#if DICE_ENABLE_NETCDF
+  const std::string nc(".nc");
+  if(file_str.find(nc)!=std::string::npos)
+    return NETCDF;
 #endif
   return file_type;
 }
@@ -116,6 +124,12 @@ void read_image_dimensions(const char * file_name,
     boost::gil::point2<std::ptrdiff_t> pt = boost::gil::png_read_dimensions(file_name);
     width = pt.x;
     height = pt.y;
+  }
+#endif
+#if DICE_ENABLE_NETCDF
+  else if(file_type==NETCDF){
+    netcdf::NetCDF_Reader netcdf_reader;
+    netcdf_reader.get_image_dimensions(file_name,width,height);
   }
 #endif
 }

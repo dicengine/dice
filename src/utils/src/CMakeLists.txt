@@ -16,6 +16,7 @@ include_directories(
     ${Boost_INCLUDE_DIRS}
     ${DICE_TRILINOS_HEADERS}
     ${TIFF_INCLUDE_DIR}
+    ${NetCDF_DIR}}
 )
 
 link_directories (

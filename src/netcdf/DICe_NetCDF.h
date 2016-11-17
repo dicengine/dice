@@ -76,8 +76,17 @@ public:
 
   /// retrieve a DICe image from a netcdf file
   /// \param file_name name of the netcdf file to read
+  /// \param params image parameters
   Teuchos::RCP<Image> get_image(const std::string & file_name,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
+  /// retrive the image dimensions of a NetCDF file
+  /// \param file_name the name of the file to get dims for
+  /// \param width the width of the image
+  /// \param height the height of the image
+  void get_image_dimensions(const std::string & file_name,
+    int_t & width,
+    int_t & height);
 
 private:
 

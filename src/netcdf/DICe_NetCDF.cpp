@@ -46,13 +46,10 @@
 namespace DICe {
 namespace netcdf {
 
-Teuchos::RCP<Image>
-NetCDF_Reader::get_image(const std::string & file_name,
-  const Teuchos::RCP<Teuchos::ParameterList> & params){
-
-  // *** Note: use native types for calls to netcdf, otherwise the array sizes and allocations may be off
-  // nc_type 5 = float, 4 = int, 2 = char
-  // assumes that there is only one time per file and one band per file
+void
+NetCDF_Reader::get_image_dimensions(const std::string & file_name,
+  int_t & width,
+  int_t & height){
 
   int error_int = 0;
 
@@ -61,14 +58,10 @@ NetCDF_Reader::get_image(const std::string & file_name,
   error_int = nc_open(file_name.c_str(), 0, &ncid);
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::runtime_error,"Error, could not open NetCDF file " << file_name);
 
-  int num_vars = 0;
-  nc_inq_nvars(ncid, &num_vars);
-  DEBUG_MSG("NetCDF_Reader::get_image(): number of variables in the file: " << num_vars);
-
   // acquire the dimensions of the file
   int num_data_dims = 0;
-  int height = -1;
-  int width = -1;
+  height = -1;
+  width = -1;
   nc_inq_ndims(ncid, &num_data_dims);
   DEBUG_MSG("NetCDF_Reader::get_image(): number of data dimensions: " <<  num_data_dims);
   for(int_t i=0;i<num_data_dims;++i){
@@ -89,6 +82,35 @@ NetCDF_Reader::get_image(const std::string & file_name,
   TEUCHOS_TEST_FOR_EXCEPTION(width <=0, std::runtime_error,"Error, could not find xc dimension in NetCDF file " << file_name);
   TEUCHOS_TEST_FOR_EXCEPTION(height <=0, std::runtime_error,"Error, could not find yc dimension in NetCDF file " << file_name);
   DEBUG_MSG("NetCDF_Reader::get_image(): image dimensions " << width << " x " << height);
+
+  // close the nc_file
+  nc_close(ncid);
+}
+
+Teuchos::RCP<Image>
+NetCDF_Reader::get_image(const std::string & file_name,
+  const Teuchos::RCP<Teuchos::ParameterList> & params){
+
+  // *** Note: use native types for calls to netcdf, otherwise the array sizes and allocations may be off
+  // nc_type 5 = float, 4 = int, 2 = char
+  // assumes that there is only one time per file and one band per file
+
+  int error_int = 0;
+
+  // get the image dimensions
+  int_t width = 0;
+  int_t height = 0;
+  get_image_dimensions(file_name,width,height);
+
+
+  // Open the file for read access
+  int ncid;
+  error_int = nc_open(file_name.c_str(), 0, &ncid);
+  TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::runtime_error,"Error, could not open NetCDF file " << file_name);
+
+  int num_vars = 0;
+  nc_inq_nvars(ncid, &num_vars);
+  DEBUG_MSG("NetCDF_Reader::get_image(): number of variables in the file: " << num_vars);
 
   // get the variable names
   int data_var_index = -1;
