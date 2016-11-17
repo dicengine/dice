@@ -45,6 +45,7 @@
 #include <DICe_PostProcessor.h>
 #include <DICe_ParameterUtilities.h>
 #include <DICe_ImageUtils.h>
+#include <DICe_FFT.h>
 #ifdef DICE_ENABLE_GLOBAL
 #include <DICe_MeshIO.h>
 #include <DICe_MeshIOUtils.h>
@@ -2219,6 +2220,31 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
     set_ref_image(speckled_ref);
   }
 
+  // estimate the speckle period of the reference image:
+  Teuchos::RCP<Image> ref_fft = image_fft(ref_img_);
+  ref_fft->write("ref_fft.tif");
+  // find the location of the max intensity of the fft image:
+  int_t max_x = 0;
+  int_t max_y = 0;
+  intensity_t max_intensity = 0.0;
+  for(int_t j=ref_fft->height()/2+1;j<ref_fft->height();++j){
+    for(int_t i=ref_fft->width()/2+1;i<ref_fft->width();++i){
+      if((*ref_fft)(i,j) > max_intensity){
+        max_intensity = (*ref_fft)(i,j);
+        max_x = i;
+        max_y = j;
+      }
+    }
+  }
+  scalar_t denom = std::abs((scalar_t)(max_x - (ref_fft->width()/2))/(scalar_t)ref_fft->width());
+  denom = denom == 0.0 ? -1.0 : denom;
+  const scalar_t avg_speckle_size_x = 0.5/denom;
+  denom = std::abs((scalar_t)(max_y - (ref_fft->height()/2))/(scalar_t)ref_fft->height());
+  denom = denom == 0.0 ? -1.0 : denom;
+  const scalar_t avg_speckle_size_y = 0.5/denom;
+  DEBUG_MSG("Average speckle size " << avg_speckle_size_x << " (px) in x and " << avg_speckle_size_y << " (px) in y");
+  const scalar_t avg_speckle_size = avg_speckle_size_x*0.5 + avg_speckle_size_y*0.5;
+
   std::stringstream data_name;
   data_name << data_dir_str << "spatial_resolution.txt";
   // see if the file exists already:
@@ -2372,7 +2398,7 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
         }
       } // end local subsets loop
 
-      result_stream << subset_elem_size << " " << step_size << " " << speckle_size << " " << noise_percent << " " << vsg_size << " " << nlvc_size;
+      result_stream << subset_elem_size << " " << step_size << " " << avg_speckle_size << " " << noise_percent << " " << vsg_size << " " << nlvc_size;
 
       // collect the global stats based on the field info above:
       scalar_t min_error_u = 0.0;
