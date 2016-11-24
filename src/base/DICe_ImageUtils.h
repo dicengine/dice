@@ -123,6 +123,14 @@ DICE_LIB_DLL_EXPORT
 void add_noise_to_image(Teuchos::RCP<Image> & image,
   const scalar_t & noise_percent);
 
+/// free function to determine the distribution of speckle sizes
+/// returns the next largest odd integer size (so if the pattern predominant size is 6, the function returns 7)
+/// \param output_dir the directory to save the statistics file in
+/// \param image the image containing the speckle pattern
+DICE_LIB_DLL_EXPORT
+int_t compute_speckle_stats(const std::string & output_dir,
+  Teuchos::RCP<Image> & image);
+
 /// \class SinCos_Image_Deformer
 /// \brief a class that deformed an input image according to a sin()*cos() function
 class

@@ -255,6 +255,149 @@ SinCos_Image_Deformer::deform_image(Teuchos::RCP<Image> ref_image){
 }
 
 DICE_LIB_DLL_EXPORT
+int_t compute_speckle_stats(const std::string & output_dir,
+  Teuchos::RCP<Image> & image){
+
+  // estimate the speckle period of the reference image:
+  std::stringstream speckle_stats_name;
+  speckle_stats_name << output_dir << "speckle_stats.txt";
+  std::FILE * speckleFilePtr = fopen(speckle_stats_name.str().c_str(),"w");
+
+  // compute the mean intensity
+  scalar_t mean_intens = image->mean();
+  mean_intens *= 1.0001; // slighly reduce the mean to include more pixels
+  // create a copy of the ref image to manipulate
+  Teuchos::RCP<Image> morf_img = Teuchos::rcp(new Image(image));
+  // binary image
+  Teuchos::ArrayRCP<intensity_t> morf_intens = morf_img->intensities();
+  for(int_t i=0;i<image->width()*image->height();++i)
+    if(morf_intens[i] <= mean_intens)
+      morf_intens[i] = 0.0;
+    else
+      morf_intens[i] = 255.0;
+  //morf_img->write("morf_img.tif");
+
+  // now iterate the morf_image removing speckles of decreasing size
+  // 21 px is the largest speckle detected
+  const int_t max_speckle_detected = 21;
+  int_t avg_speckle_size = -1;
+  int_t max_speckle_count = 0;
+  const int_t morf_w = morf_img->width();
+  const int_t morf_h = morf_img->height();
+  std::vector<int_t> erosion_flags(morf_w*morf_h,0);
+  std::vector<int_t> dilation_flags(morf_w*morf_h,0);
+  std::vector<int_t> speckle_count(max_speckle_detected,0);
+//  Teuchos::RCP<Image> dil_morf_img = Teuchos::rcp(new Image(morf_img->width(),morf_img->height(),255.0));
+//  Teuchos::ArrayRCP<intensity_t> dil_morf_intens = dil_morf_img->intensities();
+//  Teuchos::RCP<Image> er_morf_img = Teuchos::rcp(new Image(morf_img->width(),morf_img->height(),255.0));
+//  Teuchos::ArrayRCP<intensity_t> er_morf_intens = er_morf_img->intensities();
+  int_t num_px = (morf_w-2*max_speckle_detected)*(morf_h-2*max_speckle_detected);
+  scalar_t prev_coverage = 0.0;
+  for(int_t speckle_interval = max_speckle_detected; speckle_interval > 0; speckle_interval-=2){
+    // clear the dilated image
+//    dil_morf_intens[0] = 0.0;
+//    er_morf_intens[0] = 0.0;
+//    for(int_t i=1;i<dil_morf_img->width()*dil_morf_img->height();++i){
+//      dil_morf_intens[i] = 255.0;
+//      er_morf_intens[i] = 255.0;
+//    }
+    // loop over all the non-border pixels in the image and erode
+    for(int_t y=speckle_interval/2; y<morf_h - speckle_interval/2-1;++y){
+      for(int_t x=speckle_interval/2; x<morf_w - speckle_interval/2-1;++x){
+        // test for a fit
+        int_t start_px_x = x - speckle_interval/2;
+        int_t start_px_y = y - speckle_interval/2;
+        int_t end_px_x = start_px_x + speckle_interval;
+        int_t end_px_y = start_px_y + speckle_interval;
+        scalar_t num_hits = 0.0;
+        for(int_t j=start_px_y; j<end_px_y; ++j){
+          for(int_t i=start_px_x; i<end_px_x; ++i){
+            if(morf_intens[j*morf_w+i] == 0.0)
+              num_hits++;
+          }
+        }
+        // mark the pixels that are the center of a full fit
+        scalar_t num_structure_px = speckle_interval*speckle_interval;
+        if(num_hits == num_structure_px){//(num_hits / num_structure_px > 0.95){
+          erosion_flags[y*morf_w+x] = 1;
+//          er_morf_intens[y*morf_w+x] = 0.0;
+        }
+      } // end x
+    } // end y
+    // loop over all the non-border pixels in the image and dilate
+    for(int_t y=max_speckle_detected; y<morf_h - max_speckle_detected;++y){
+      for(int_t x=max_speckle_detected; x<morf_w - max_speckle_detected;++x){
+        // test for a fit
+        int_t start_px_x = x - speckle_interval/2;
+        int_t start_px_y = y - speckle_interval/2;
+        int_t end_px_x = start_px_x + speckle_interval;
+        int_t end_px_y = start_px_y + speckle_interval;
+        for(int_t j=start_px_y; j<end_px_y; ++j){
+          for(int_t i=start_px_x; i<end_px_x; ++i){
+            if(erosion_flags[j*morf_w+i]==1){
+              dilation_flags[y*morf_w+x] = 1;
+//              dil_morf_intens[y*morf_w+x] = 0.0;
+            }
+          }
+        }
+      } // end x
+    } // end y
+    // determine the coverage of the dilation
+    scalar_t dilation_count = 0.0;
+    for(int_t i=0;i<morf_w*morf_h;++i)
+      dilation_count += dilation_flags[i];
+    scalar_t coverage = dilation_count / (scalar_t)num_px;
+    int_t num_speckles = (coverage - prev_coverage)*num_px/(speckle_interval*speckle_interval);
+    if(num_speckles > max_speckle_count){
+      max_speckle_count = num_speckles;
+      avg_speckle_size = speckle_interval;
+    }
+    prev_coverage = coverage;
+    DEBUG_MSG("Speckle size " << speckle_interval << " coverage " << coverage << " num speckles " << num_speckles);
+    fprintf(speckleFilePtr,"%i %f %i\n",speckle_interval,coverage,num_speckles);
+//    std::stringstream dil_name;
+//    dil_name << "dil_img_" << speckle_interval << ".tif";
+//    dil_morf_img->write(dil_name.str());
+//    std::stringstream er_name;
+//    er_name << "er_img_" << speckle_interval << ".tif";
+//    er_morf_img->write(er_name.str());
+  } // end speckle interval
+  fclose(speckleFilePtr);
+  DEBUG_MSG("Characteristic speckle size: " << avg_speckle_size - 1 << " to " << avg_speckle_size);
+
+  return avg_speckle_size;
+
+// determine speckle size via fft:
+
+//  Teuchos::RCP<Image> ref_fft = image_fft(ref_img_);
+//  //ref_fft->write("ref_fft.tif");
+//  // find the location of the max intensity of the fft image:
+//  int_t max_x = 0;
+//  int_t max_y = 0;
+//  intensity_t max_intensity = 0.0;
+//  for(int_t j=ref_fft->height()/2+1;j<ref_fft->height();++j){
+//    for(int_t i=ref_fft->width()/2+1;i<ref_fft->width();++i){
+//      if((*ref_fft)(i,j) > max_intensity){
+//        max_intensity = (*ref_fft)(i,j);
+//        max_x = i;
+//        max_y = j;
+//      }
+//    }
+//  }
+//  scalar_t denom = std::abs((scalar_t)(max_x - (ref_fft->width()/2))/(scalar_t)ref_fft->width());
+//  denom = denom == 0.0 ? -1.0 : denom;
+//  const scalar_t avg_speckle_size_x = 0.5/denom;
+//  denom = std::abs((scalar_t)(max_y - (ref_fft->height()/2))/(scalar_t)ref_fft->height());
+//  denom = denom == 0.0 ? -1.0 : denom;
+//  const scalar_t avg_speckle_size_y = 0.5/denom;
+//  DEBUG_MSG("Average speckle size " << avg_speckle_size_x << " (px) in x and " << avg_speckle_size_y << " (px) in y");
+//  const scalar_t avg_speckle_size = avg_speckle_size_x*0.5 + avg_speckle_size_y*0.5;
+
+}
+
+
+
+DICE_LIB_DLL_EXPORT
 void compute_roll_off_stats(const scalar_t & period,
   const scalar_t & img_w,
   const scalar_t & img_h,
@@ -325,7 +468,7 @@ void compute_roll_off_stats(const scalar_t & period,
     std::sort(std::begin(approx_points), std::end(approx_points), [](const computed_point& a, const computed_point& b)
       {
       // sort based on bx alone (assumes that by is a peak at the same location
-      return a.bx_ > b.bx_;
+      return a.sol_bx_ > b.sol_bx_;
       });
     // compute the average of the top num_peaks error
     for(int_t i=0;i<num_peaks;++i){
@@ -342,7 +485,7 @@ void compute_roll_off_stats(const scalar_t & period,
     std::sort(std::begin(approx_points), std::end(approx_points), [](const computed_point& a, const computed_point& b)
       {
       // sort based on bx alone (assumes that by is a peak at the same location
-      return a.by_ > b.by_;
+      return a.sol_by_ > b.sol_by_;
       });
     // compute the average of the top num_peaks error
     for(int_t i=0;i<num_peaks;++i){
