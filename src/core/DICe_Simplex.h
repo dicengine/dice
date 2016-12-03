@@ -63,38 +63,78 @@ Simplex {
 public:
 
   /// \brief Default constructor
-  /// \param obj Pointer to a DICe::Objective, used to gain access to the gamma() method of the objective
+  /// \param num_dofs the number of degrees of freedom (must be less than num_variables)
+  /// \param num_variables the total number of variables (not all degrees of freedom for simplex optimization)
   /// \param params Paramters that define the varaitions on the initial guess, convergence tolerance and max number of iterations
-  Simplex(const DICe::Objective * const obj,
+  Simplex(const int_t num_dofs,
+    const int_t num_variables,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// destructor
   virtual ~Simplex(){};
 
   /// \brief Returns the status of the algorithm when complete
-  /// \param deformation [out] Taken as the initial guess for the first iteration and returned as the converged deformation solution at successful completion.
+  /// \param variables [out] Taken as the initial guess for the first iteration and returned as the converged solution at successful completion.
   /// \param deltas The variations on the initial guess used to construct the other simplex points.
   /// \param num_iterations [out] Returns the number of iterations that took place
   /// \param threshold if the initial evaluation of gamma is below this value, the analysis will be skipped
   /// A return value of MAX_ITERATIONS_REACHED means that convergence did not occur in the allowed number of iterations.
-  /// A return value of CORRELATION_SUCCESSFUL means that convergence was obtained for the solution stored in the deformation vector
-  Status_Flag minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  /// A return value of CORRELATION_SUCCESSFUL means that convergence was obtained for the solution stored in the variables vector
+  Status_Flag minimize(Teuchos::RCP<std::vector<scalar_t> > & variables,
     Teuchos::RCP<std::vector<scalar_t> > & deltas,
     int_t & num_iterations,
     const scalar_t & threshold = 1.0E-10);
 
-private:
+  /// \brief the objective function that the simplex method is optimizing
+  /// \param variables the current guess at which to evaluate the objective
+  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > & variables)=0;
+
+  /// \brief a function to map a vector index to a degree of freedom
+  /// used when not every element of the variables vector is a degree of freedom
+  virtual int_t dof_map(const int_t index)=0;
+
+protected:
   /// Maximum allowed iterations for convergence
   int_t max_iterations_;
   /// The dimension of the simplex (one dim for each free parameter)
-  int_t num_dim_;
+  int_t num_dofs_;
+  /// The total number of parameters (not all degrees of freedom, some can be fixed)
+  int_t num_variables_;
   /// Convergence tolerance
   double tolerance_;
   /// Numerically small value
   scalar_t tiny_;
+
+};
+
+class DICE_LIB_DLL_EXPORT
+Subset_Simplex : public Simplex {
+
+public:
+
+  /// \brief Default constructor
+  /// \param obj Pointer to a DICe::Objective, used to gain access to the gamma() method of the objective
+  /// \param params Paramters that define the varaitions on the initial guess, convergence tolerance and max number of iterations
+  Subset_Simplex(const DICe::Objective * const obj,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
+  /// destructor
+  virtual ~Subset_Simplex(){};
+
+  /// \brief the objective function that the simplex method is optimizing
+  /// \param variables the current guess at which to evaluate the objective
+  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > & variables);
+
+  /// \brief the mapping from degrees of freedom to the control vector
+  virtual int_t dof_map(const int_t index){
+    return obj_->dof_map(index);
+  }
+
+  using Simplex::minimize;
+
+protected:
   /// Pointer to a DICe::Objective, used to gain access to objective methods like gamma()
   const DICe::Objective * const obj_;
-
 };
 
 

@@ -170,7 +170,7 @@ Objective_ZNSSD::computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & defo
   Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
   params->set(DICe::max_iterations,  schema_->max_solver_iterations_robust());
   params->set(DICe::tolerance, schema_->robust_solver_tolerance());
-  DICe::Simplex simplex(this,params);
+  DICe::Subset_Simplex simplex(this,params);
 
   Teuchos::RCP<std::vector<scalar_t> > deltas = Teuchos::rcp(new std::vector<scalar_t>(num_dofs(),0.0));
   for(int_t i=0;i<num_dofs();++i){

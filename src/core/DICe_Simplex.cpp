@@ -45,67 +45,65 @@
 
 namespace DICe {
 
-Simplex::Simplex(const DICe::Objective * const obj,
+Simplex::Simplex(const  int_t num_dofs,
+  const int_t num_variables,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
   max_iterations_(1000),
-  num_dim_(0),
+  num_dofs_(num_dofs),
+  num_variables_(num_variables),
   tolerance_(1.0E-8),
-  tiny_(1.0E-10),
-  obj_(obj)
+  tiny_(1.0E-10)
 {
   if(params!=Teuchos::null){
     if(params->isParameter(DICe::max_iterations)) max_iterations_ = params->get<int_t>(DICe::max_iterations);
     if(params->isParameter(DICe::tolerance)) tolerance_ = params->get<double>(DICe::tolerance);
   }
-  // get num dims from the objective
-  assert(obj_);
-  num_dim_ = obj_->num_dofs();
-  assert(num_dim_!=0);
-  assert(num_dim_<=DICE_DEFORMATION_SIZE);
+  assert(num_dofs_!=0);
+  assert(num_dofs_<=num_variables_);
 }
 
 Status_Flag
-Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & variables,
   Teuchos::RCP<std::vector<scalar_t> > & deltas,
   int_t & num_iterations,
   const scalar_t & threshold){
 
-  assert(deformation->size()==DICE_DEFORMATION_SIZE);
-  assert((int_t)deltas->size()==num_dim_);
+  assert((int_t)variables->size()==num_variables_);
+  assert((int_t)deltas->size()==num_dofs_);
 
   DEBUG_MSG("Conducting multidimensional simplex minimization");
   DEBUG_MSG("Max iterations: " << max_iterations_ << " tolerance: " << tolerance_);
   DEBUG_MSG("Initial guess: ");
 #ifdef DICE_DEBUG_MSG
   std::cout << " POINT 0: ";
-  for(int_t j=0;j<DICE_DEFORMATION_SIZE;++j) std::cout << " " << (*deformation)[j];
+  for(int_t j=0;j<num_variables_;++j) std::cout << " " << (*variables)[j];
   std::cout << std::endl;
 #endif
 
   // allocate temp storage for routine and initialize the simplex vertices
 
-  const int_t mpts = num_dim_ + 1;
+  const int_t mpts = num_dofs_ + 1;
   scalar_t * gamma_values = new scalar_t[mpts];
   std::vector< Teuchos::RCP<std::vector<scalar_t> > > points(mpts);
   for(int_t i=0;i<mpts;++i){
-    points[i] = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+    points[i] = Teuchos::rcp(new std::vector<scalar_t>(num_variables_,0.0));
     // set the points for the initial bounding simplex
-    for(int_t j=0;j<DICE_DEFORMATION_SIZE;++j){
-      (*points[i])[j] = (*deformation)[j];
+    for(int_t j=0;j<num_variables_;++j){
+      (*points[i])[j] = (*variables)[j];
     }
     if(i>0)
-      (*points[i])[obj_->dof_map(i-1)] += (*deltas)[i-1];
+      (*points[i])[dof_map(i-1)] += (*deltas)[i-1];
 #ifdef DICE_DEBUG_MSG
     std::cout << " SIMPLEX POINT: ";
-    for(int_t j=0;j<DICE_DEFORMATION_SIZE;++j) std::cout << " " << (*points[i])[j];
+    for(int_t j=0;j<num_variables_;++j) std::cout << " " << (*points[i])[j];
     std::cout << std::endl;
 #endif
     // evaluate gamma at these points
-    gamma_values[i] = obj_->gamma(points[i]);
+    gamma_values[i] = objective(points[i]);
     DEBUG_MSG("Gamma value for this point: " << gamma_values[i]);
     if(i==0&&gamma_values[i]<threshold&&gamma_values[i]>=0.0){
       num_iterations = 0;
-      DEBUG_MSG("Initial deformation guess is good enough (gamma < " << threshold << " for this guess)");
+      DEBUG_MSG("Initial variables guess is good enough (gamma < " << threshold << " for this guess)");
       return CORRELATION_SUCCESSFUL;
     }
   }
@@ -115,15 +113,15 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,
   int_t inhi;
   scalar_t ysave;
   int_t nfunk = 0;
-  scalar_t * points_column_sums = new scalar_t[num_dim_];
-  scalar_t * ptry = new scalar_t[num_dim_];
+  scalar_t * points_column_sums = new scalar_t[num_dofs_];
+  scalar_t * ptry = new scalar_t[num_dofs_];
 
   // sum up the columns of the simplex vertices
 
-  for (int_t j = 0; j < num_dim_; j++) {
+  for (int_t j = 0; j < num_dofs_; j++) {
     scalar_t sum = 0.0;
     for (int_t i = 0; i < mpts; i++) {
-      sum += (*points[i])[obj_->dof_map(j)];
+      sum += (*points[i])[dof_map(j)];
     }
     points_column_sums[j] = sum;
   }
@@ -174,10 +172,10 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,
       scalar_t dum = gamma_values[0];
       gamma_values[0] = gamma_values[ilo];
       gamma_values[ilo] = dum;
-      for (int_t i = 0; i < num_dim_; i++) {
-        scalar_t dum2 = (*points[0])[obj_->dof_map(i)];
-        (*points[0])[obj_->dof_map(i)] = (*points[ilo])[obj_->dof_map(i)];
-        (*points[ilo])[obj_->dof_map(i)] = dum2;
+      for (int_t i = 0; i < num_dofs_; i++) {
+        scalar_t dum2 = (*points[0])[dof_map(i)];
+        (*points[0])[dof_map(i)] = (*points[ilo])[dof_map(i)];
+        (*points[ilo])[dof_map(i)] = dum2;
       }
       break;
     }
@@ -186,85 +184,85 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     scalar_t ytry,fac,fac1,fac2;
 
     fac = -1.0;
-    fac1 = (1.0 - fac)/num_dim_;
+    fac1 = (1.0 - fac)/num_dofs_;
     fac2 = fac1 - fac;
 
-    for (int_t j = 0; j < num_dim_; j++)
-      ptry[j] = points_column_sums[j]*fac1 - (*points[ihi])[obj_->dof_map(j)]*fac2;
+    for (int_t j = 0; j < num_dofs_; j++)
+      ptry[j] = points_column_sums[j]*fac1 - (*points[ihi])[dof_map(j)]*fac2;
 
-    for(int_t n=0;n<num_dim_;++n)
-      (*deformation)[obj_->dof_map(n)] = ptry[n];
-    ytry = obj_->gamma(deformation);
+    for(int_t n=0;n<num_dofs_;++n)
+      (*variables)[dof_map(n)] = ptry[n];
+    ytry = objective(variables);
 
     if (ytry < gamma_values[ihi]) {
       gamma_values[ihi] = ytry;
-      for (int_t j = 0; j < num_dim_; j++) {
-        points_column_sums[j] += ptry[j] - (*points[ihi])[obj_->dof_map(j)];
-        (*points[ihi])[obj_->dof_map(j)] = ptry[j];
+      for (int_t j = 0; j < num_dofs_; j++) {
+        points_column_sums[j] += ptry[j] - (*points[ihi])[dof_map(j)];
+        (*points[ihi])[dof_map(j)] = ptry[j];
       }
     }
     if (ytry <= gamma_values[ilo]) {
       fac = 2.0;
-      fac1 = (1.0 - fac)/num_dim_;
+      fac1 = (1.0 - fac)/num_dofs_;
       fac2 = fac1 - fac;
-      for (int_t j = 0; j < num_dim_; j++)
-        ptry[j] = points_column_sums[j]*fac1 - (*points[ihi])[obj_->dof_map(j)]*fac2;
+      for (int_t j = 0; j < num_dofs_; j++)
+        ptry[j] = points_column_sums[j]*fac1 - (*points[ihi])[dof_map(j)]*fac2;
 
-      for(int_t n=0;n<num_dim_;++n)
-        (*deformation)[obj_->dof_map(n)] = ptry[n];
-      ytry = obj_->gamma(deformation);
+      for(int_t n=0;n<num_dofs_;++n)
+        (*variables)[dof_map(n)] = ptry[n];
+      ytry = objective(variables);
 
       if (ytry < gamma_values[ihi]) {
         gamma_values[ihi] = ytry;
-        for (int_t j = 0; j < num_dim_; j++) {
-          points_column_sums[j] += ptry[j] - (*points[ihi])[obj_->dof_map(j)];
-          (*points[ihi])[obj_->dof_map(j)] = ptry[j];
+        for (int_t j = 0; j < num_dofs_; j++) {
+          points_column_sums[j] += ptry[j] - (*points[ihi])[dof_map(j)];
+          (*points[ihi])[dof_map(j)] = ptry[j];
         }
       }
     } else if (ytry >= gamma_values[inhi]) {
       ysave = gamma_values[ihi];
       fac = 0.5;
-      fac1 = (1.0 - fac)/num_dim_;
+      fac1 = (1.0 - fac)/num_dofs_;
       fac2 = fac1 - fac;
-      for (int_t j = 0; j < num_dim_; j++)
-        ptry[j] = points_column_sums[j]*fac1 - (*points[ihi])[obj_->dof_map(j)]*fac2;
+      for (int_t j = 0; j < num_dofs_; j++)
+        ptry[j] = points_column_sums[j]*fac1 - (*points[ihi])[dof_map(j)]*fac2;
 
-      for(int_t n=0;n<num_dim_;++n)
-        (*deformation)[obj_->dof_map(n)] = ptry[n];
-      ytry = obj_->gamma(deformation);
+      for(int_t n=0;n<num_dofs_;++n)
+        (*variables)[dof_map(n)] = ptry[n];
+      ytry = objective(variables);
 
       if (ytry < gamma_values[ihi]) {
         gamma_values[ihi] = ytry;
-        for (int_t j = 0; j < num_dim_; j++) {
-          points_column_sums[j] += ptry[j] - (*points[ihi])[obj_->dof_map(j)];
-          (*points[ihi])[obj_->dof_map(j)] = ptry[j];
+        for (int_t j = 0; j < num_dofs_; j++) {
+          points_column_sums[j] += ptry[j] - (*points[ihi])[dof_map(j)];
+          (*points[ihi])[dof_map(j)] = ptry[j];
         }
       }
       if (ytry >= ysave) {
         for (int_t i = 0; i < mpts; i++) {
           if (i != ilo) {
-            for (int_t j = 0; j < num_dim_; j++)
-              (*points[i])[obj_->dof_map(j)] = points_column_sums[j] = 0.5*((*points[i])[obj_->dof_map(j)] + (*points[ilo])[obj_->dof_map(j)]);
-            for(int_t n=0;n<num_dim_;++n)
-              (*deformation)[obj_->dof_map(n)] = points_column_sums[n];
-            gamma_values[i] = obj_->gamma(deformation);
+            for (int_t j = 0; j < num_dofs_; j++)
+              (*points[i])[dof_map(j)] = points_column_sums[j] = 0.5*((*points[i])[dof_map(j)] + (*points[ilo])[dof_map(j)]);
+            for(int_t n=0;n<num_dofs_;++n)
+              (*variables)[dof_map(n)] = points_column_sums[n];
+            gamma_values[i] = objective(variables);
           }
         }
-        nfunk += num_dim_;
+        nfunk += num_dofs_;
 
-        for (int_t j = 0; j < num_dim_; j++) {
+        for (int_t j = 0; j < num_dofs_; j++) {
           scalar_t sum = 0.0;
           for (int_t i = 0; i < mpts; i++)
-            sum += (*points[i])[obj_->dof_map(j)];
+            sum += (*points[i])[dof_map(j)];
           points_column_sums[j] = sum;
         }
       }
     } else --nfunk;
 
-    gamma_new = obj_->gamma(deformation);
+    gamma_new = objective(variables);
 #ifdef DICE_DEBUG_MSG
     std::cout << "Iteration " << iteration;
-    for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i) std::cout << " " << (*deformation)[i];
+    for(int_t i=0;i<num_variables_;++i) std::cout << " " << (*variables)[i];
     std::cout << " nfunk: " << nfunk << " gamma: " << gamma_new << " rtol: " << rtol << " tol: " << tolerance_ << std::endl;
 #endif
   }
@@ -275,5 +273,23 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & deformation,
   num_iterations = iteration;
   return CORRELATION_SUCCESSFUL;
 }
+
+Subset_Simplex::Subset_Simplex(const DICe::Objective * const obj,
+  const Teuchos::RCP<Teuchos::ParameterList> & params):
+  Simplex(obj->num_dofs(),
+    DICE_DEFORMATION_SIZE,params),
+  obj_(obj)
+{
+  // get num dims from the objective
+  assert(obj_);
+}
+
+scalar_t
+Subset_Simplex::objective(Teuchos::RCP<std::vector<scalar_t> > & variables){
+  return obj_->gamma(variables);
+}
+
+
+
 
 }// End DICe Namespace
