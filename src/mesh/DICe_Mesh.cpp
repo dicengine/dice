@@ -2110,31 +2110,23 @@ Teuchos::RCP<Mesh> create_point_or_tri_mesh(const DICe::mesh::Base_Element_Type 
 
   // initialize the fields needed for coordinates etc:
   mesh->create_field(field_enums::INITIAL_COORDINATES_FS);
-  mesh->create_field(field_enums::CURRENT_COORDINATES_FS);
   Teuchos::RCP<MultiField > initial_coords = mesh->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
-  Teuchos::RCP<MultiField > current_coords = mesh->get_overlap_field(field_enums::CURRENT_COORDINATES_FS);
 
   for(int_t i=0;i<num_nodes;++i)  // i represents the local_id
   {
     initial_coords->local_value(i*num_dim+0) = node_coords_x[i];
-    current_coords->local_value(i*num_dim+0) = node_coords_x[i];
     initial_coords->local_value(i*num_dim+1) = node_coords_y[i];
-    current_coords->local_value(i*num_dim+1) = node_coords_y[i];
   }
 
   // export the coordinates back to the non-overlap field
   mesh->field_overlap_export(initial_coords, field_enums::INITIAL_COORDINATES_FS, INSERT);
-  mesh->field_overlap_export(current_coords, field_enums::CURRENT_COORDINATES_FS, INSERT);
   //std::cout << "INITIAL COORDS: " << std::endl;
   //initial_coords_ptr->vec()->describe();
 
   // CELL COORDINATES
   mesh->create_field(field_enums::INITIAL_CELL_COORDINATES_FS);
-  mesh->create_field(field_enums::CURRENT_CELL_COORDINATES_FS);
-
   Teuchos::RCP<MultiField > coords = mesh->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
   MultiField & initial_cell_coords = *mesh->get_field(field_enums::INITIAL_CELL_COORDINATES_FS);
-  MultiField & current_cell_coords = *mesh->get_field(field_enums::CURRENT_CELL_COORDINATES_FS);
 
   //compute the centroid from the coordinates of the nodes;
   for(elem_it=mesh->get_element_set()->begin();elem_it!=elem_end;++elem_it)
@@ -2152,7 +2144,6 @@ Teuchos::RCP<Mesh> create_point_or_tri_mesh(const DICe::mesh::Base_Element_Type 
     {
       centroid[dim] /= connectivity.size();
       initial_cell_coords.local_value(elem_it->get()->local_id()*num_dim+dim) = centroid[dim];
-      current_cell_coords.local_value(elem_it->get()->local_id()*num_dim+dim) = centroid[dim];
     }
   }
   //std::cout << " INITIAL CELL COORDS: " << std::endl;
@@ -2360,31 +2351,24 @@ Teuchos::RCP<Mesh> create_tri3_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mesh,
 
   // initialize the fields needed for coordinates etc:
   mesh->create_field(field_enums::INITIAL_COORDINATES_FS);
-  mesh->create_field(field_enums::CURRENT_COORDINATES_FS);
   Teuchos::RCP<MultiField > initial_coords = mesh->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
-  Teuchos::RCP<MultiField > current_coords = mesh->get_overlap_field(field_enums::CURRENT_COORDINATES_FS);
 
   for(int_t i=0;i<num_nodes;++i)  // i represents the local_id
   {
     initial_coords->local_value(i*num_dim+0) = coords_x.find(local_to_master_node_map[i])->second;
-    current_coords->local_value(i*num_dim+0) = coords_x.find(local_to_master_node_map[i])->second;
     initial_coords->local_value(i*num_dim+1) = coords_y.find(local_to_master_node_map[i])->second;
-    current_coords->local_value(i*num_dim+1) = coords_y.find(local_to_master_node_map[i])->second;
   }
 
   // export the coordinates back to the non-overlap field
   mesh->field_overlap_export(initial_coords, field_enums::INITIAL_COORDINATES_FS, INSERT);
-  mesh->field_overlap_export(current_coords, field_enums::CURRENT_COORDINATES_FS, INSERT);
   //std::cout << "INITIAL COORDS: " << std::endl;
   //initial_coords_ptr->vec()->describe();
 
   // CELL COORDINATES
   mesh->create_field(field_enums::INITIAL_CELL_COORDINATES_FS);
-  mesh->create_field(field_enums::CURRENT_CELL_COORDINATES_FS);
 
   Teuchos::RCP<MultiField > mcoords = mesh->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
   MultiField & initial_cell_coords = *mesh->get_field(field_enums::INITIAL_CELL_COORDINATES_FS);
-  MultiField & current_cell_coords = *mesh->get_field(field_enums::CURRENT_CELL_COORDINATES_FS);
 
   //compute the centroid from the coordinates of the nodes;
   for(elem_it=mesh->get_element_set()->begin();elem_it!=elem_end;++elem_it)
@@ -2402,7 +2386,6 @@ Teuchos::RCP<Mesh> create_tri3_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mesh,
     {
       centroid[dim] /= connectivity.size();
       initial_cell_coords.local_value(elem_it->get()->local_id()*num_dim+dim) = centroid[dim];
-      current_cell_coords.local_value(elem_it->get()->local_id()*num_dim+dim) = centroid[dim];
     }
   }
   //std::cout << " INITIAL CELL COORDS: " << std::endl;

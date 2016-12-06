@@ -596,7 +596,6 @@ read_exodus_coordinates(Teuchos::RCP<Mesh> mesh){
 
   // initialize the fields needed for coordinates etc:
   mesh->create_field(field_enums::INITIAL_COORDINATES_FS);
-  mesh->create_field(field_enums::CURRENT_COORDINATES_FS);
 
   const int_t p_rank = mesh->get_comm()->get_rank();
 
@@ -608,7 +607,6 @@ read_exodus_coordinates(Teuchos::RCP<Mesh> mesh){
   TEUCHOS_TEST_FOR_EXCEPTION(num_dim!=spa_dim,std::runtime_error,"");
 
   Teuchos::RCP<MultiField > initial_coords = mesh->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
-  Teuchos::RCP<MultiField > current_coords = mesh->get_overlap_field(field_enums::CURRENT_COORDINATES_FS);
 
   /* read nodal coordinates values and names from database */
   float * temp_x = new float[num_nodes];
@@ -621,13 +619,10 @@ read_exodus_coordinates(Teuchos::RCP<Mesh> mesh){
   for(int_t i=0;i<num_nodes;++i)  // i represents the local_id
   {
     initial_coords->local_value(i*spa_dim+0) = temp_x[i];
-    current_coords->local_value(i*spa_dim+0) = temp_x[i];
     initial_coords->local_value(i*spa_dim+1) = temp_y[i];
-    current_coords->local_value(i*spa_dim+1) = temp_y[i];
     if (num_dim >= 3)
     {
       initial_coords->local_value(i*spa_dim+2) = temp_z[i];
-      current_coords->local_value(i*spa_dim+2) = temp_z[i];
     }
   }
   delete[] temp_x;
@@ -637,18 +632,15 @@ read_exodus_coordinates(Teuchos::RCP<Mesh> mesh){
 
   // export the coordinates back to the non-overlap field
   mesh->field_overlap_export(initial_coords, field_enums::INITIAL_COORDINATES_FS, INSERT);
-  mesh->field_overlap_export(current_coords, field_enums::CURRENT_COORDINATES_FS, INSERT);
   //std::cout << "INITIAL COORDS: " << std::endl;
   //initial_coords_ptr->vec()->describe();
 
   // CELL COORDINATES
 
   mesh->create_field(field_enums::INITIAL_CELL_COORDINATES_FS);
-  mesh->create_field(field_enums::CURRENT_CELL_COORDINATES_FS);
 
   Teuchos::RCP<MultiField > coords = mesh->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
   MultiField & initial_cell_coords = *mesh->get_field(field_enums::INITIAL_CELL_COORDINATES_FS);
-  MultiField & current_cell_coords = *mesh->get_field(field_enums::CURRENT_CELL_COORDINATES_FS);
 
   //compute the centroid from the coordinates of the nodes;
   DICe::mesh::element_set::const_iterator elem_it = mesh->get_element_set()->begin();
@@ -668,7 +660,6 @@ read_exodus_coordinates(Teuchos::RCP<Mesh> mesh){
     {
       centroid[dim] /= connectivity.size();
       initial_cell_coords.local_value(elem_it->get()->local_id()*spa_dim+dim) = centroid[dim];
-      current_cell_coords.local_value(elem_it->get()->local_id()*spa_dim+dim) = centroid[dim];
     }
   }
   //std::cout << " INITIAL CELL COORDS: " << std::endl;

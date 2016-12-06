@@ -167,9 +167,7 @@ Field_Name
   SUBSET_COORDINATES_Z,
   CROSS_CORR_Q,
   CROSS_CORR_R,
-  CURRENT_COORDINATES,
   INITIAL_CELL_COORDINATES,
-  CURRENT_CELL_COORDINATES,
   INITIAL_CELL_SIZE,
   INITIAL_SUBELEMENT_SIZE,
   INITIAL_WEIGHTED_CELL_SIZE,
@@ -476,11 +474,7 @@ const Field_Spec SUBSET_COORDINATES_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_en
 /// field spec
 const Field_Spec SUBSET_COORDINATES_Z_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SUBSET_COORDINATES_Z,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
-const Field_Spec CURRENT_COORDINATES_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::CURRENT_COORDINATES,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
 const Field_Spec INITIAL_CELL_COORDINATES_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::INITIAL_CELL_COORDINATES,field_enums::ELEMENT_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec CURRENT_CELL_COORDINATES_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::CURRENT_CELL_COORDINATES,field_enums::ELEMENT_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec INITIAL_CELL_SIZE_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::INITIAL_CELL_SIZE,field_enums::ELEMENT_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
@@ -691,7 +685,7 @@ const Field_Spec NLVC_STRAIN_XY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_en
 const Field_Spec NLVC_STRAIN_YY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_YY_ERROR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 105;
+const int_t num_fields_defined = 103;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -700,9 +694,7 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     SUBSET_COORDINATES_X_FS,
     SUBSET_COORDINATES_Y_FS,
     SUBSET_COORDINATES_Z_FS,
-    CURRENT_COORDINATES_FS,
     INITIAL_CELL_COORDINATES_FS,
-    CURRENT_CELL_COORDINATES_FS,
     INITIAL_CELL_SIZE_FS,
     INITIAL_SUBELEMENT_SIZE_FS,
     INITIAL_WEIGHTED_CELL_SIZE_FS,
