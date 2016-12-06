@@ -353,6 +353,12 @@ public:
   /// \param input_params pointer to the initialization parameters
   void initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params);
 
+  /// \brief Initializes the data structures for the schema using another schema
+  /// \param input_params pointer to the initialization parameters
+  /// \param schema pointer to another schema
+  void initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+    const Teuchos::RCP<Schema> schema);
+
   /// \brief Initializes the data structures for the schema
   /// \param params_file_name String name of the parameters file
   void initialize(const std::string & params_file_name);

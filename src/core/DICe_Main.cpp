@@ -239,8 +239,9 @@ int main(int argc, char *argv[]) {
       *outStream << "Execution information will be written to a separate file (not placed in the output headers)" << std::endl;
     }
 
-    // create a schema:
+    // create schemas:
     Teuchos::RCP<DICe::Schema> schema;
+    Teuchos::RCP<DICe::Schema> stereo_schema;
     if(is_cine){
       // read in the reference image from the cine file and create the schema:
       Teuchos::RCP<DICe::Image> ref_image;
@@ -287,6 +288,8 @@ int main(int argc, char *argv[]) {
     // let the schema know how many images there are in the sequence:
     schema->set_num_image_frames(num_images);
     std::string file_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
+    std::string stereo_file_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
+    stereo_file_prefix += "_stereo";
 
     // if the user selects predict_resolution_error option, an error analysis is performed and the actual analysis is skipped
     if(correlation_params->get<bool>(DICe::estimate_resolution_error,false)){
@@ -309,17 +312,30 @@ int main(int argc, char *argv[]) {
     const int_t end_frame = cine_end_index==-1 ? num_images : cine_end_index;
     // if this is a stereo analysis do the initial cross correlation:
     if(is_stereo){
+      TEUCHOS_TEST_FOR_EXCEPTION(schema->analysis_type()==GLOBAL_DIC,std::runtime_error,"Error, global stereo not enabled yet");
       *outStream << "Processing cross correlation using image " << first_frame_index << " from the left and right cameras" << std::endl;
       if(is_cine){
-        Teuchos::RCP<DICe::Image> def_image = stereo_cine_reader->get_frame(start_frame,true,filter_failed_pixels,correlation_params);
-        schema->set_def_image(def_image);
+        Teuchos::RCP<DICe::Image> right_image;
+        if(input_params->isParameter(DICe::time_average_cine_ref_frame)){
+          const int_t num_avg_frames = input_params->get<int_t>(DICe::time_average_cine_ref_frame,1);
+          right_image = stereo_cine_reader->get_average_frame(start_frame,start_frame+num_avg_frames,true,filter_failed_pixels,correlation_params);
+        }
+        else
+          right_image = stereo_cine_reader->get_frame(start_frame,true,filter_failed_pixels,correlation_params);
+        schema->set_def_image(right_image);
+        stereo_schema = Teuchos::rcp(new DICe::Schema(right_image,right_image,correlation_params));
       } // end is_cine
       else{
-        const std::string def_image_string = stereo_image_files[start_frame];
-        schema->set_def_image(def_image_string);
+        const std::string right_image_string = stereo_image_files[start_frame];
+        schema->set_def_image(right_image_string);
+        stereo_schema = Teuchos::rcp(new DICe::Schema(right_image_string,right_image_string,correlation_params));
       }
       schema->initialize_cross_correlation(triangulation);
       schema->execute_correlation(true);
+      assert(stereo_schema!=Teuchos::null);
+      stereo_schema->set_first_frame_index(cine_start_index + first_frame_index);
+      stereo_schema->initialize(input_params,schema);
+      stereo_schema->set_num_image_frames(num_images);
     }
 
     // iterate through the images and perform the correlation:
@@ -358,15 +374,29 @@ int main(int argc, char *argv[]) {
             schema->set_ref_image(schema->def_img());
           }
           schema->set_def_image(def_image);
+          if(is_stereo){
+            Teuchos::RCP<DICe::Image> right_def_image = stereo_cine_reader->get_frame(image_it,true,filter_failed_pixels,correlation_params);
+            if(stereo_schema->use_incremental_formulation()){
+              stereo_schema->set_ref_image(stereo_schema->def_img());
+            }
+            stereo_schema->set_def_image(right_def_image);
+          }
         }
       } // end is_cine
       else{
         const std::string def_image_string = image_files[image_it];
-        *outStream << "Processing Image: " << image_it << " of " << num_images << ", " << def_image_string << std::endl;
+        *outStream << "Processing frame: " << image_it << " of " << num_images << ", " << def_image_string << std::endl;
         if(schema->use_incremental_formulation()){
           schema->set_ref_image(schema->def_img());
         }
         schema->set_def_image(def_image_string);
+        if(is_stereo){
+          const std::string right_def_image_string = stereo_image_files[image_it];
+          if(stereo_schema->use_incremental_formulation()){
+            stereo_schema->set_ref_image(stereo_schema->def_img());
+          }
+          stereo_schema->set_def_image(right_def_image_string);
+        }
       }
       { // start the timer
         boost::timer t;
@@ -374,7 +404,11 @@ int main(int argc, char *argv[]) {
         int_t corr_error = schema->execute_correlation();
         if(corr_error)
           failed_step = true;
-
+        if(is_stereo){
+          corr_error = stereo_schema->execute_correlation();
+          if(corr_error)
+            failed_step = true;
+        }
         // timing info
         elapsed_time = t.elapsed();
         if(elapsed_time>max_time)max_time = elapsed_time;
@@ -384,18 +418,30 @@ int main(int argc, char *argv[]) {
 
       // write the output
       schema->write_output(output_folder,file_prefix,separate_output_file_for_each_subset,separate_header_file);
-      //if(subset_info->conformal_area_defs!=Teuchos::null&&image_it==1){
-      //  schema->write_control_points_image("RegionOfInterest");
-      //}
       schema->post_execution_tasks();
-
       // print the timing data with or without verbose flag
       if(input_params->get<bool>(DICe::print_stats,false)){
         schema->mesh()->print_field_stats();
       }
+      //if(subset_info->conformal_area_defs!=Teuchos::null&&image_it==1){
+      //  schema->write_control_points_image("RegionOfInterest");
+      //}
+      if(is_stereo){
+        stereo_schema->write_output(output_folder,stereo_file_prefix,separate_output_file_for_each_subset,separate_header_file);
+        stereo_schema->post_execution_tasks();
+        // TODO DO TRIANGULATION TO POPULATE THE X Y Z fields...
+
+        // TODO MOVE execute post processors to after this step
+
+        // TODO refactor post processors to use the X and Y fields for strain
+
+      }
+
     } // image loop
 
     schema->write_stats(output_folder,file_prefix);
+    if(is_stereo)
+      stereo_schema->write_stats(output_folder,stereo_file_prefix);
 
     avg_time = total_time / num_images;
 

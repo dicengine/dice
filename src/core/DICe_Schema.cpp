@@ -65,6 +65,7 @@
 #include <fstream>
 #include <algorithm>
 #include <tuple>
+#include <math.h>
 
 #include <cassert>
 #include <set>
@@ -937,6 +938,54 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
 }
 
 void
+Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+  const Teuchos::RCP<Schema> schema){
+  const std::string output_folder = input_params->get<std::string>(DICe::output_folder,"");
+  init_params_->set(DICe::output_folder,output_folder);
+  std::string output_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
+  output_prefix += "_stereo";
+  init_params_->set(DICe::output_prefix,output_prefix);
+
+  if(analysis_type_==GLOBAL_DIC){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, global stereo has not been implemented yet");
+//    // create the computational mesh:
+//    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::mesh_size),std::runtime_error,
+//      "Error, missing required input parameter: mesh_size");
+//    const scalar_t mesh_size = input_params->get<double>(DICe::mesh_size);
+//    init_params_->set(DICe::mesh_size,mesh_size); // pass the mesh size to the stored parameters for this schema (used by global method)
+//    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_file),std::runtime_error,
+//      "Error, missing required input parameter: subset_file");
+//    const std::string subset_file = input_params->get<std::string>(DICe::subset_file);
+//    init_params_->set(DICe::subset_file,subset_file);
+//    //init_params_->set(DICe::global_formulation,input_params->get<Global_Formulation>(DICe::global_formulation,HORN_SCHUNCK));
+//#ifdef DICE_ENABLE_GLOBAL
+//    global_algorithm_ = Teuchos::rcp(new DICe::global::Global_Algorithm(this,init_params_));
+//#endif
+//    return;
+  }
+
+  const int_t num_local_subsets = schema->local_num_subsets();
+  set_step_size(schema->step_size_x()); // this is done just so the step_size appears in the output file header (it's not actually used)
+  // let the schema know how many images there are in the sequence:
+  // initialize the schema
+  Teuchos::ArrayRCP<scalar_t> coords_x(num_local_subsets,0.0);
+  Teuchos::ArrayRCP<scalar_t> coords_y(num_local_subsets,0.0);
+  Teuchos::RCP<std::vector<int_t> > neighbor_ids = Teuchos::rcp(new std::vector<int_t>(num_local_subsets,-1));
+  for(int_t i=0;i<num_local_subsets;++i){
+    coords_x[i] = std::round(schema->local_field_value(i,STEREO_COORDINATE_X));
+    coords_y[i] = std::round(schema->local_field_value(i,STEREO_COORDINATE_Y));
+    (*neighbor_ids)[i] = schema->local_field_value(i,NEIGHBOR_ID);
+  }
+  initialize(coords_x,coords_y,schema->subset_dim(),Teuchos::null,neighbor_ids);
+  TEUCHOS_TEST_FOR_EXCEPTION(schema->skip_solve_flags()->size()>0,std::runtime_error,"Error skip solves cannot be used in stereo");
+  TEUCHOS_TEST_FOR_EXCEPTION(schema->motion_window_params()->size()>0,std::runtime_error,"Error motion windows cannot be used in stereo");
+
+  // TODO implement seed for the right image if needed
+
+}
+
+
+void
 Schema::initialize(Teuchos::ArrayRCP<scalar_t> coords_x,
   Teuchos::ArrayRCP<scalar_t> coords_y,
   const int_t subset_size,
@@ -1541,7 +1590,7 @@ Schema::execute_correlation(const bool is_cross_corr){
     Teuchos::RCP<MultiField> cross_r = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_R_FS);
     cross_q->update(1.0,*ux,0.0);
     cross_r->update(1.0,*uy,0.0);
-    // clear the deformation fields
+    // clear the deformation fields and update the initial positions of the cross corr subsets
     ux->put_scalar(0.0);
     uy->put_scalar(0.0);
     int_t num_failures = 0;
@@ -1551,6 +1600,8 @@ Schema::execute_correlation(const bool is_cross_corr){
       local_field_value(i,NORMAL_STRAIN_Y) = 0.0;
       local_field_value(i,SHEAR_STRAIN_XY) = 0.0;
       local_field_value(i,ROTATION_Z) = 0.0;
+      local_field_value(i,STEREO_COORDINATE_X) = local_field_value(i,COORDINATE_X) + cross_q->local_value(i);
+      local_field_value(i,STEREO_COORDINATE_Y) = local_field_value(i,COORDINATE_Y) + cross_r->local_value(i);
       if(local_field_value(i,SIGMA) < 0.0)
         num_failures++;
       if(local_field_value(i,GAMMA) > worst_gamma)
