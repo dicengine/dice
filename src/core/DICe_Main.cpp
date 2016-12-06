@@ -408,6 +408,7 @@ int main(int argc, char *argv[]) {
           corr_error = stereo_schema->execute_correlation();
           if(corr_error)
             failed_step = true;
+          schema->execute_triangulation(triangulation,stereo_schema);
         }
         // timing info
         elapsed_time = t.elapsed();

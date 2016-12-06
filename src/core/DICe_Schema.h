@@ -410,6 +410,13 @@ public:
   /// \param tri Triangulation that contains the camera params
   int_t initialize_cross_correlation(Teuchos::RCP<Triangulation> tri);
 
+  /// Triangulate the current positions of the subset centroids
+  /// returns 0 if successful
+  /// \param tri pointer to a triangulation
+  /// \param right_schema pointer to the right camera's schema (holds the displacement info)
+  int_t execute_triangulation(Teuchos::RCP<Triangulation> tri,
+    Teuchos::RCP<Schema> right_schema);
+
   /// do clean up tasks
   void post_execution_tasks();
 

@@ -2618,6 +2618,52 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri){
   return 0;
 }
 
+int_t
+Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
+  Teuchos::RCP<Schema> right_schema){
+  TEUCHOS_TEST_FOR_EXCEPTION(right_schema==Teuchos::null,std::runtime_error,"");
+
+  assert(right_schema->local_num_subsets()==local_num_subsets_);
+
+  // make sure the stereo coords fields are populated
+  Teuchos::RCP<MultiField> coords_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> coords_y = mesh_->get_field(DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS);
+  // the coordinates of the stereo subsets already got copied over at the end of the cross corr execution
+  Teuchos::RCP<MultiField> stereo_coords_x = mesh_->get_field(DICe::mesh::field_enums::STEREO_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> stereo_coords_y = mesh_->get_field(DICe::mesh::field_enums::STEREO_COORDINATES_Y_FS);
+  TEUCHOS_TEST_FOR_EXCEPTION(stereo_coords_x->norm()==0.0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(stereo_coords_y->norm()==0.0,std::runtime_error,"");
+
+  // copy the stereo displacement field into place
+  Teuchos::RCP<MultiField> disp_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> disp_y = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> stereo_disp_x = right_schema->mesh()->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> stereo_disp_y = right_schema->mesh()->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> my_stereo_disp_x = mesh_->get_field(DICe::mesh::field_enums::STEREO_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> my_stereo_disp_y = mesh_->get_field(DICe::mesh::field_enums::STEREO_DISPLACEMENT_Y_FS);
+  my_stereo_disp_x->update(1.0,*stereo_disp_x,0.0);
+  my_stereo_disp_y->update(1.0,*stereo_disp_y,0.0);
+  Teuchos::RCP<MultiField> model_x = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> model_y = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> model_z = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_Z_FS);
+  scalar_t X=0.0,Y=0.0,Z=0.0;
+  scalar_t Xw=0.0,Yw=0.0,Zw=0.0;
+  scalar_t xl=0.0,yl=0.0;
+  scalar_t xr=0.0,yr=0.0;
+  for(int_t i=0;i<local_num_subsets_;++i){
+    xl = coords_x->local_value(i) + disp_x->local_value(i);
+    yl = coords_y->local_value(i) + disp_y->local_value(i);
+    xr = stereo_coords_x->local_value(i) + my_stereo_disp_x->local_value(i);
+    yr = stereo_coords_y->local_value(i) + my_stereo_disp_y->local_value(i);
+    tri->triangulate(xl,yl,xr,yr,X,Y,Z,Xw,Yw,Zw);
+    model_x->local_value(i) = Xw; // w-coordinates have been transformed by a user defined transform to world or model coords
+    model_y->local_value(i) = Yw;
+    model_z->local_value(i) = Zw;
+    //std::cout << " xl " << xl << " yl " << yl << " xr " << xr << " yr " << yr << " X " << Xw << " Y " << Yw << " Z " << Zw << std::endl;
+  }
+  return 0;
+}
+
 // TODO fix this up so that it works with conformal subsets:
 void
 Schema::write_control_points_image(const std::string & fileName,
