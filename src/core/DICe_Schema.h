@@ -565,19 +565,22 @@ public:
     static std::vector<DICe::mesh::field_enums::Field_Spec> spec_table = {
       DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS,
       DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS,
-      DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Z_FS,
-      DICe::mesh::field_enums::ROTATION_X_FS,
-      DICe::mesh::field_enums::ROTATION_Y_FS,
       DICe::mesh::field_enums::ROTATION_Z_FS,
       DICe::mesh::field_enums::NORMAL_STRETCH_XX_FS,
       DICe::mesh::field_enums::NORMAL_STRETCH_YY_FS,
-      DICe::mesh::field_enums::NORMAL_STRETCH_ZZ_FS,
       DICe::mesh::field_enums::SHEAR_STRETCH_XY_FS,
-      DICe::mesh::field_enums::SHEAR_STRETCH_YZ_FS,
-      DICe::mesh::field_enums::SHEAR_STRETCH_XZ_FS,
       DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS,
       DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS,
-      DICe::mesh::field_enums::SUBSET_COORDINATES_Z_FS,
+      DICe::mesh::field_enums::STEREO_COORDINATES_X_FS,
+      DICe::mesh::field_enums::STEREO_COORDINATES_Y_FS,
+      DICe::mesh::field_enums::MODEL_COORDINATES_X_FS,
+      DICe::mesh::field_enums::MODEL_COORDINATES_Y_FS,
+      DICe::mesh::field_enums::MODEL_COORDINATES_Z_FS,
+      DICe::mesh::field_enums::STEREO_DISPLACEMENT_X_FS,
+      DICe::mesh::field_enums::STEREO_DISPLACEMENT_Y_FS,
+      DICe::mesh::field_enums::MODEL_DISPLACEMENT_X_FS,
+      DICe::mesh::field_enums::MODEL_DISPLACEMENT_Y_FS,
+      DICe::mesh::field_enums::MODEL_DISPLACEMENT_Z_FS,
       DICe::mesh::field_enums::FIELD_1_FS,
       DICe::mesh::field_enums::FIELD_2_FS,
       DICe::mesh::field_enums::FIELD_3_FS,
@@ -602,21 +605,15 @@ public:
   /// \param name field name
   DICe::mesh::field_enums::Field_Spec field_name_to_nm1_spec(const Field_Name name) const{
     // table to convert a field name to a field spec with an offset
-    assert(name<=SHEAR_STRAIN_XZ);
+    assert(name<=SHEAR_STRAIN_XY);
     // table to convert a field name to a field spec with an offset
     static std::vector<DICe::mesh::field_enums::Field_Spec> spec_table = {
       DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_NM1_FS,
       DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_NM1_FS,
-      DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Z_NM1_FS,
-      DICe::mesh::field_enums::ROTATION_X_NM1_FS,
-      DICe::mesh::field_enums::ROTATION_Y_NM1_FS,
       DICe::mesh::field_enums::ROTATION_Z_NM1_FS,
       DICe::mesh::field_enums::NORMAL_STRETCH_XX_NM1_FS,
       DICe::mesh::field_enums::NORMAL_STRETCH_YY_NM1_FS,
-      DICe::mesh::field_enums::NORMAL_STRETCH_ZZ_NM1_FS,
       DICe::mesh::field_enums::SHEAR_STRETCH_XY_NM1_FS,
-      DICe::mesh::field_enums::SHEAR_STRETCH_YZ_NM1_FS,
-      DICe::mesh::field_enums::SHEAR_STRETCH_XZ_NM1_FS
     };
     return spec_table[name];
   }

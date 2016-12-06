@@ -68,7 +68,7 @@
 #endif
 // size of the deformation vectors used in the correlation
 // includes fields below from 0 to (DICE_DEFORMATION_SIZE-1)
-#define DICE_DEFORMATION_SIZE 12
+#define DICE_DEFORMATION_SIZE 6
 
 
 #include <string>
@@ -313,66 +313,72 @@ enum Field_Name {
   // 1
   DISPLACEMENT_Y,    // v
   // 2
-  DISPLACEMENT_Z,    // w (used for stereo only)
-  // 3
-  ROTATION_X,        // rotation about the x-axis (used for stereo only)
-  // 4
-  ROTATION_Y,        // rotation about the y-axis (used for stero only)
-  // 5
   ROTATION_Z,        // (theta) rotation about the z-axis, z is out of the plane
-  // 6
+  // 3
   NORMAL_STRAIN_X,   // stretch in the x direction
-  // 7
+  // 4
   NORMAL_STRAIN_Y,   // stretch in the y direction
-  // 8
-  NORMAL_STRAIN_Z,   // stretch in the z direction (used for stero only)
-  // 9
+  // 5
   SHEAR_STRAIN_XY,   // shear strain in the x-y plane
-  // 10
-  SHEAR_STRAIN_YZ,   // shear strain in th y-z plane (not currently used)
-  // 11
-  SHEAR_STRAIN_XZ,   // shear strain in the x-z plane (not currently used)
   // *** Fields >= DICE_DEFORMATION_SIZE are not part of the deformation state of a subset
   //     but used elsewhere in the schema
+  // 6
+  COORDINATE_X,      // x position of the subset in sensor (image) coordinates
+  // 7
+  COORDINATE_Y,      // y position of the subset in sensor (image) coordinates
+  // 8
+  STEREO_COORDINATE_X,// x position of the stereo subset in sensor (right image) coordinates (used for stereo only)
+  // 9
+  STEREO_COORDINATE_Y,// y position of the stereo subset in sensor (right image) coordinates (used for stereo only)
+  // 10
+  MODEL_COORDINATE_X, // x position in world or physical coordinates (used for stereo only)
+  // 11
+  MODEL_COORDINATE_Y,// y position in world or physical coordinates (used for stereo only)
   // 12
-  COORDINATE_X,      // x position in space
+  MODEL_COORDINATE_Z,// z position in world or physical coordinates (used for stereo only)
   // 13
-  COORDINATE_Y,      // y position in space
+  STEREO_DISPLACEMENT_X,// right image u (used for stereo only)
   // 14
-  COORDINATE_Z,      // z position in space (not currently used)
+  STEREO_DISPLACEMENT_Y,// right image v (used for stereo only)
   // 15
-  VAR_X,             // auxiliary variable
+  MODEL_DISPLACEMENT_X,// x displacement in world or physical coordinates
   // 16
-  VAR_Y,             // auxiliary variable
+  MODEL_DISPLACEMENT_Y,// y displacement in world or physical coordinates
   // 17
-  VAR_Z,             // auxiliary varaible
+  MODEL_DISPLACEMENT_Z,// z displacement in world or physical coordinates
   // 18
+  VAR_X,             // auxiliary variable
+  // 19
+  VAR_Y,             // auxiliary variable
+  // 20
+  VAR_Z,             // auxiliary varaible
+  // 21
   SIGMA,             // predicted std. dev. of the displacement solution given std. dev. of image
                      // noise and interpolation bias, smaller sigma is better
-  // 19
+  // 22
   GAMMA,             // template match quality (value of the cost function),
                      // smaller gamma is better, 0.0 is perfect match
-  // 20
-  BETA,              // sensitivity of the cost function to small perturbations in the displacement solution
-  // 21
-  NOISE_LEVEL,       // estimated std. dev. of the image noise
-  // 22
-  CONTRAST_LEVEL,    // estimated std. dev. of the image intensity values
   // 23
-  ACTIVE_PIXELS,     // number of active pixels for the subset
+  BETA,              // sensitivity of the cost function to small perturbations in the displacement solution
   // 24
-  MATCH,             // 0 means match was found -1 means match failed
+  NOISE_LEVEL,       // estimated std. dev. of the image noise
   // 25
-  ITERATIONS,        // number of iterations taken by the solution algorithm
+  CONTRAST_LEVEL,    // estimated std. dev. of the image intensity values
   // 26
-  STATUS_FLAG,       // information about the initialization method or error flags on failed steps
+  ACTIVE_PIXELS,     // number of active pixels for the subset
   // 27
-  NEIGHBOR_ID,       // the global id of the neighboring subset to use for initialization by neighbor value
+  MATCH,             // 0 means match was found -1 means match failed
   // 28
-  CONDITION_NUMBER,  // quality metric for the pseudoinverse matrix in the gradient-based method
+  ITERATIONS,        // number of iterations taken by the solution algorithm
   // 29
-  CROSS_CORR_Q,      // cross correlation Q coordinate
+  STATUS_FLAG,       // information about the initialization method or error flags on failed steps
   // 30
+  NEIGHBOR_ID,       // the global id of the neighboring subset to use for initialization by neighbor value
+  // 31
+  CONDITION_NUMBER,  // quality metric for the pseudoinverse matrix in the gradient-based method
+  // 32
+  CROSS_CORR_Q,      // cross correlation Q coordinate
+  // 33
   CROSS_CORR_R,      // cross correlation R coordinate
   // *** DO NOT PUT ANY FIELDS UNDER THIS ONE ***
   // (this is how the field stride is automatically set if another field is added)
