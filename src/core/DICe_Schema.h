@@ -74,6 +74,10 @@ class Output_Spec;
 // forward declaration of Post_Processor
 class Post_Processor;
 
+// forward dec for a triangulation
+class Triangulation;
+
+
 /// container class that holds information about a tracking analysis
 class
 DICE_LIB_DLL_EXPORT
@@ -390,7 +394,15 @@ public:
 
   /// Conduct the correlation
   /// returns 0 if successful
-  int_t execute_correlation();
+  /// \param is_cross_corr true if this is a cross correlation rather than a typical
+  /// frame to frame correlation
+  int_t execute_correlation(const bool is_cross_corr=false);
+
+  /// Create intial guess for cross correlation using epipolar lines
+  /// and the camera parameters
+  /// returns 0 if successful
+  /// \param tri Triangulation that contains the camera params
+  int_t initialize_cross_correlation(Teuchos::RCP<Triangulation> tri);
 
   /// do clean up tasks
   void post_execution_tasks();
@@ -579,7 +591,9 @@ public:
       DICe::mesh::field_enums::ITERATIONS_FS,
       DICe::mesh::field_enums::STATUS_FLAG_FS,
       DICe::mesh::field_enums::NEIGHBOR_ID_FS,
-      DICe::mesh::field_enums::CONDITION_NUMBER_FS
+      DICe::mesh::field_enums::CONDITION_NUMBER_FS,
+      DICe::mesh::field_enums::CROSS_CORR_Q_FS,
+      DICe::mesh::field_enums::CROSS_CORR_R_FS
     };
     return spec_table[name];
   }

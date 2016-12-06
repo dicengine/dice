@@ -44,8 +44,13 @@
 
 #include <DICe.h>
 #include <DICe_Objective.h>
+#include <DICe_Image.h>
 
 namespace DICe {
+
+/// forward dec for a Triangulation
+class Triangulation;
+
 
 /// \class DICe::Simplex
 /// \brief Non-gradient based optimization algorithm class
@@ -137,6 +142,45 @@ protected:
   const DICe::Objective * const obj_;
 };
 
+
+class DICE_LIB_DLL_EXPORT
+Homography_Simplex : public Simplex {
+
+public:
+
+  /// \brief Default constructor
+  /// \param left_img the left image
+  /// \param right_img the right image
+  /// \param tri pointer to a triangulation class
+  /// \param params Paramters that define the varaitions on the initial guess, convergence tolerance and max number of iterations
+  Homography_Simplex(Teuchos::RCP<Image> left_img,
+    Teuchos::RCP<Image> right_img,
+    Triangulation * tri,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
+  /// destructor
+  virtual ~Homography_Simplex(){};
+
+  /// \brief the objective function that the simplex method is optimizing
+  /// \param variables the current guess at which to evaluate the objective
+  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > & variables);
+
+  /// \brief the mapping from degrees of freedom to the control vector
+  /// \param index the dof to map
+  virtual int_t dof_map(const int_t index){
+    return index;
+  }
+
+  using Simplex::minimize;
+
+protected:
+  /// Pointer to the left image
+  Teuchos::RCP<Image> left_img_;
+  /// Pointer to the right image
+  Teuchos::RCP<Image> right_img_;
+  /// Pointer to a triangulation
+  Triangulation * tri_;
+};
 
 }// End DICe Namespace
 

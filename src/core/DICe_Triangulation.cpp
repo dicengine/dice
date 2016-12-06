@@ -40,9 +40,12 @@
 // @HEADER
 
 #include <DICe_Triangulation.h>
+#include <DICe_Simplex.h>
 #include <DICe_Parser.h>
 
 #include <Teuchos_LAPACK.hpp>
+
+#include <fstream>
 
 namespace DICe {
 
@@ -291,9 +294,12 @@ void Triangulation::triangulate(const scalar_t & x0,
   const scalar_t & y0,
   const scalar_t & x1,
   const scalar_t & y1,
-  scalar_t & x_out,
-  scalar_t & y_out,
-  scalar_t & z_out,
+  scalar_t & xc_out,
+  scalar_t & yc_out,
+  scalar_t & zc_out,
+  scalar_t & xw_out,
+  scalar_t & yw_out,
+  scalar_t & zw_out,
   const bool correct_lens_distortion){
   DEBUG_MSG("Triangulation::triangulate(): camera 0 sensor coords " << x0 << " " << y0 << " camera 1 sensor coords " << x1 << " " << y1);
   static scalar_t xc0 = 0.0;
@@ -413,6 +419,9 @@ void Triangulation::triangulate(const scalar_t & x0,
     }
   }
   XYZc0[3] = 1.0;
+  xc_out = XYZc0[0];
+  yc_out = XYZc0[1];
+  zc_out = XYZc0[2];
   DEBUG_MSG("Triangulation::triangulate(): camera 0 coordinates X " << XYZc0[0] << " Y " << XYZc0[1] << " Z "  << XYZc0[2]);
 
   // apply the camera 0 to world coord transform
@@ -421,16 +430,17 @@ void Triangulation::triangulate(const scalar_t & x0,
       XYZ[i] += trans_extrinsics_[i][j]*XYZc0[j];
     }
   }
-  x_out = XYZ[0];
-  y_out = XYZ[1];
-  z_out = XYZ[2];
-  DEBUG_MSG("Triangulation::triangulate(): world coordinates X " << x_out << " Y " << y_out << " Z "  << z_out);
+  xw_out = XYZ[0];
+  yw_out = XYZ[1];
+  zw_out = XYZ[2];
+  DEBUG_MSG("Triangulation::triangulate(): world coordinates X " << xw_out << " Y " << yw_out << " Z "  << zw_out);
 }
 
 void
 Triangulation::correct_lens_distortion_radial(scalar_t & x_s,
   scalar_t & y_s,
   const int_t camera_id){
+  assert(cal_intrinsics_.size()>0);
   static scalar_t rho_tilde = 0.0; // = rho^2
   static scalar_t r1 = 0.0;
   static scalar_t r2 = 0.0;
@@ -445,6 +455,227 @@ Triangulation::correct_lens_distortion_radial(scalar_t & x_s,
   y_s = y_s - factor*r2*cal_intrinsics_[camera_id][1];
 }
 
+void
+Triangulation::project_camera_0_to_sensor_1(const scalar_t & xc,
+  const scalar_t & yc,
+  const scalar_t & zc,
+  scalar_t & xs2_out,
+  scalar_t & ys2_out){
 
+  Teuchos::SerialDenseMatrix<int_t,double> F2(3,4,true);
+  F2(0,0) = cal_intrinsics_[1][2];
+  F2(0,1) = cal_intrinsics_[1][4];
+  F2(0,2) = cal_intrinsics_[1][0];
+  F2(1,1) = cal_intrinsics_[1][3];
+  F2(1,2) = cal_intrinsics_[1][1];
+  F2(2,2) = 1.0;
+
+  Teuchos::SerialDenseMatrix<int_t,double> F2_T(3,4,true);
+  for(int_t j=0;j<3;++j){
+    for(int_t k=0;k<4;++k){
+      for(int_t i=0;i<4;++i){
+        F2_T(j,k) += F2(j,i)*cal_extrinsics_[i][k];
+      }
+    }
+  }
+//  std::cout << " F2 " << std::endl;
+//  for(int_t j=0;j<3;++j){
+//    for(int_t k=0;k<4;++k){
+//      std::cout << F2(j,k) << " ";
+//    }
+//    std::cout << std::endl;
+//  }
+//  std::cout << " T " << std::endl;
+//  for(int_t j=0;j<4;++j){
+//    for(int_t k=0;k<4;++k){
+//      std::cout << cal_extrinsics_[j][k] << " ";
+//    }
+//    std::cout << std::endl;
+//  }
+//  std::cout << " F2T " << std::endl;
+//  for(int_t j=0;j<3;++j){
+//    for(int_t k=0;k<4;++k){
+//      std::cout << F2_T(j,k) << " ";
+//    }
+//    std::cout << std::endl;
+//  }
+  const scalar_t psi2 = cal_extrinsics_[2][0]*xc + cal_extrinsics_[2][1]*yc + cal_extrinsics_[2][2]*zc + cal_extrinsics_[2][3];
+  assert(psi2!=0.0);
+  xs2_out = 1.0/psi2*(F2_T(0,0)*xc + F2_T(0,1)*yc + F2_T(0,2)*zc + F2_T(0,3));
+  ys2_out = 1.0/psi2*(F2_T(1,0)*xc + F2_T(1,1)*yc + F2_T(1,2)*zc + F2_T(1,3));
+  scalar_t z2 = 1.0/psi2*(F2_T(2,0)*xc + F2_T(2,1)*yc + F2_T(2,2)*zc + F2_T(2,3));
+  std::cout << " xs2_out " << xs2_out << " ys2out " << ys2_out << std::endl;
+  std::cout << "z2 " << z2 << std::endl;
+  assert(std::abs(z2-1.0) < 0.1);
+
+}
+
+/// estimate the projective transform from the left to right image
+void
+Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
+  Teuchos::RCP<Image> right_img,
+  const bool output_projected_image){
+
+  // read the projection points from projection_points.dat
+  std::fstream projDataFile("projection_points.dat", std::ios_base::in);
+  TEUCHOS_TEST_FOR_EXCEPTION(!projDataFile.good(),std::runtime_error,
+    "Error, could not open file projection_points.dat (required for cross-correlation)");
+  int_t num_coords = 0;
+  while(!projDataFile.eof()){
+    Teuchos::ArrayRCP<std::string> tokens = tokenize_line(projDataFile);
+    if(tokens.size()==0) continue;
+    TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()!=4,std::runtime_error,
+      "Error reading projection_points.dat, should be 4 values per line (x_left y_left x_righ y_right),"
+        " but found " << tokens.size() << " values on line " << num_coords+1);
+    num_coords++;
+  }
+  DEBUG_MSG("Triangulation::estimate_projective_transform(): found projection_points.dat file with " << num_coords << " points");
+  TEUCHOS_TEST_FOR_EXCEPTION(num_coords<4,std::runtime_error,
+    "Error, not enough sets of coordinates in projection_points.dat to estimate projection (needs at least 4)");
+  std::vector<scalar_t> proj_xl(num_coords,0.0);
+  std::vector<scalar_t> proj_yl(num_coords,0.0);
+  std::vector<scalar_t> proj_xr(num_coords,0.0);
+  std::vector<scalar_t> proj_yr(num_coords,0.0);
+  projDataFile.clear();
+  projDataFile.seekg(0, std::ios::beg);
+  int_t coord_index = 0;
+  while(!projDataFile.eof()){
+    Teuchos::ArrayRCP<std::string> tokens = tokenize_line(projDataFile);
+    if(tokens.size()==0) continue;
+    assert(tokens.size()==4);
+    proj_xl[coord_index] = strtod(tokens[0].c_str(),NULL);
+    proj_yl[coord_index] = strtod(tokens[1].c_str(),NULL);
+    proj_xr[coord_index] = strtod(tokens[2].c_str(),NULL);
+    proj_yr[coord_index] = strtod(tokens[3].c_str(),NULL);
+    DEBUG_MSG("Triangulation::estimate_projective_transform(): xl " <<
+      proj_xl[coord_index] << " yl " << proj_yl[coord_index] << " xr " << proj_xr[coord_index] << " yr " << proj_yr[coord_index]);
+    coord_index++;
+  }
+  projDataFile.close();
+
+  // use a least squares fit to estimate the parameters
+  int N = 8;
+  Teuchos::SerialDenseMatrix<int_t,double> K(num_coords*2,N,true);
+  Teuchos::SerialDenseMatrix<int_t,double> KTK(N,N,true);
+  Teuchos::ArrayRCP<scalar_t> F(num_coords*2,0.0);
+  Teuchos::ArrayRCP<scalar_t> KTu(N,0.0);
+  for(int_t i=0;i<num_coords;++i){
+    K(i*2+0,0) = proj_xl[i];
+    K(i*2+0,1) = proj_yl[i];
+    K(i*2+0,2) = 1.0;
+    K(i*2+0,6) = -1.0*proj_xl[i]*proj_xr[i];
+    K(i*2+0,7) = -1.0*proj_yl[i]*proj_xr[i];
+    K(i*2+1,3) = proj_xl[i];
+    K(i*2+1,4) = proj_yl[i];
+    K(i*2+1,5) = 1.0;
+    K(i*2+1,6) = -1.0*proj_xl[i]*proj_yr[i];
+    K(i*2+1,7) = -1.0*proj_yl[i]*proj_yr[i];
+    F[i*2+0] = proj_xr[i];
+    F[i*2+1] = proj_yr[i];
+  }
+  // set up K^T*K
+  for(int_t k=0;k<N;++k){
+    for(int_t m=0;m<N;++m){
+      for(int_t j=0;j<num_coords*2;++j){
+        KTK(k,m) += K(j,k)*K(j,m);
+      }
+    }
+  }
+  int *IPIV = new int[N+1];
+  int LWORK = N*N;
+  int INFO = 0;
+  double *WORK = new double[LWORK];
+  // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
+  Teuchos::LAPACK<int,double> lapack;
+  // invert the KTK matrix
+  lapack.GETRF(KTK.numRows(),KTK.numCols(),KTK.values(),KTK.numRows(),IPIV,&INFO);
+  lapack.GETRI(KTK.numRows(),KTK.values(),KTK.numRows(),IPIV,WORK,LWORK,&INFO);
+  // compute K^T*F
+  for(int_t i=0;i<N;++i){
+    for(int_t j=0;j<num_coords*2;++j){
+      KTu[i] += K(j,i)*F[j];
+    }
+  }
+  for(size_t i=0;i<projectives_->size();++i)
+    (*projectives_)[i] = 0.0;
+  // compute the coeffs
+  for(int_t i=0;i<N;++i){
+    for(int_t j=0;j<N;++j){
+      (*projectives_)[i] += KTK(i,j)*KTu[j];
+    }
+  }
+  delete [] WORK;
+  delete [] IPIV;
+
+  int_t num_iterations = 0;
+  // create an output file with the initial solution and final solution for projection params
+  std::FILE * filePtr = fopen("projection_out.dat","w");
+  fprintf(filePtr,"Projection parameters from point matching: \n");
+  for(size_t i=0;i<projectives_->size();++i){
+    fprintf(filePtr,"%e\n",(*projectives_)[i]);
+  }
+  fclose(filePtr);
+
+  // simplex optimize the coefficients
+  Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
+  params->set(DICe::max_iterations,200);
+  params->set(DICe::tolerance,0.00001);
+  DICe::Homography_Simplex simplex(left_img,right_img,this,params);
+  Teuchos::RCP<std::vector<scalar_t> > deltas = Teuchos::rcp(new std::vector<scalar_t>(8,0.0));
+  (*deltas)[0] = 0.001;
+  (*deltas)[1] = 0.001;
+  (*deltas)[2] = 1.0;
+  (*deltas)[3] = 0.001;
+  (*deltas)[4] = 0.001;
+  (*deltas)[5] = 1.0;
+  (*deltas)[6] = 0.0001;
+  (*deltas)[7] = 0.0001;
+  Status_Flag corr_status = simplex.minimize(projectives_,deltas,num_iterations);
+  TEUCHOS_TEST_FOR_EXCEPTION(corr_status!=CORRELATION_SUCCESSFUL,std::runtime_error,"Error, could not determine projective transform.");
+
+  filePtr = fopen("projection_out.dat","a");
+  fprintf(filePtr,"Projection parameters after simplex optimization: \n");
+  for(size_t i=0;i<projectives_->size();++i){
+    fprintf(filePtr,"%e\n",(*projectives_)[i]);
+  }
+  fprintf(filePtr,"Optimization took %i iterations\n",num_iterations);
+  fclose(filePtr);
+
+  if(output_projected_image){
+    const int_t w = left_img->width();
+    const int_t h = left_img->height();
+    Teuchos::RCP<Image> img = Teuchos::rcp(new Image(w,h,0.0));
+    Teuchos::ArrayRCP<intensity_t> intens = img->intensities();
+    Teuchos::RCP<Image> diff_img = Teuchos::rcp(new Image(w,h,0.0));
+    Teuchos::ArrayRCP<intensity_t> diff_intens = diff_img->intensities();
+    scalar_t xr = 0.0;
+    scalar_t yr = 0.0;
+    for(int_t j=0.05*h;j<0.95*h;++j){
+      for(int_t i=0.05*w;i<0.95*w;++i){
+        project_left_to_right_sensor_coords(i,j,xr,yr);
+        diff_intens[j*w+i] = (*left_img)(i,j) - right_img->interpolate_keys_fourth(xr,yr);
+        intens[j*w+i] = right_img->interpolate_keys_fourth(xr,yr);
+      }
+    }
+    diff_img->write("projection_diff.tif");
+    img->write("right_projected_to_left.tif");
+  }
+}
+
+void
+Triangulation::project_left_to_right_sensor_coords(const scalar_t & xl,
+  const scalar_t & yl,
+  scalar_t & xr,
+  scalar_t & yr){
+  // correct for lens distortion
+  //scalar_t xlc = xl;
+  //scalar_t ylc = yl;
+  //correct_lens_distortion_radial(xlc,ylc,0);
+  assert(projectives_!=Teuchos::null);
+  assert(projectives_->size()==8);
+  xr = ((*projectives_)[0]*xl+(*projectives_)[1]*yl+(*projectives_)[2])/((*projectives_)[6]*xl+(*projectives_)[7]*yl+1);
+  yr = ((*projectives_)[3]*xl+(*projectives_)[4]*yl+(*projectives_)[5])/((*projectives_)[6]*xl+(*projectives_)[7]*yl+1);
+  //correct_lens_distortion_radial(xr,yr,1);
+}
 
 }// End DICe Namespace

@@ -116,6 +116,8 @@ void create_string_maps()
   field_name_string[field_enums::PROCESSOR_ID]                                       = "PROCESSOR_ID";
   field_name_string[field_enums::MASTER_NODE_ID]                                     = "MASTER_NODE_ID";
   field_name_string[field_enums::INITIAL_COORDINATES]                                = "INITIAL_COORDINATES";
+  field_name_string[field_enums::CROSS_CORR_Q]                                       = "CROSS_CORR_Q";
+  field_name_string[field_enums::CROSS_CORR_R]                                       = "CROSS_CORR_R";
   field_name_string[field_enums::SUBSET_COORDINATES_X]                               = "SUBSET_COORDINATES_X";
   field_name_string[field_enums::SUBSET_COORDINATES_Y]                               = "SUBSET_COORDINATES_Y";
   field_name_string[field_enums::SUBSET_COORDINATES_Z]                               = "SUBSET_COORDINATES_Z";

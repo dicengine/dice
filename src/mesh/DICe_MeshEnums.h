@@ -165,6 +165,8 @@ Field_Name
   SUBSET_COORDINATES_X,
   SUBSET_COORDINATES_Y,
   SUBSET_COORDINATES_Z,
+  CROSS_CORR_Q,
+  CROSS_CORR_R,
   CURRENT_COORDINATES,
   INITIAL_CELL_COORDINATES,
   CURRENT_CELL_COORDINATES,
@@ -502,6 +504,10 @@ const Field_Spec DISPLACEMENT_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DIS
 /// field spec
 const Field_Spec DISPLACEMENT_NM1_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::DISPLACEMENT,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
 /// field spec
+const Field_Spec CROSS_CORR_Q_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CROSS_CORR_Q,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+/// field spec
+const Field_Spec CROSS_CORR_R_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CROSS_CORR_R,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+/// field spec
 const Field_Spec SUBSET_DISPLACEMENT_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SUBSET_DISPLACEMENT_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
 /// field spec
 const Field_Spec SUBSET_DISPLACEMENT_X_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SUBSET_DISPLACEMENT_X,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
@@ -685,7 +691,7 @@ const Field_Spec NLVC_STRAIN_XY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_en
 const Field_Spec NLVC_STRAIN_YY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_YY_ERROR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 103;
+const int_t num_fields_defined = 105;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -702,6 +708,8 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     INITIAL_WEIGHTED_CELL_SIZE_FS,
     INITIAL_CELL_RADIUS_FS,
     DISPLACEMENT_FS,
+    CROSS_CORR_Q_FS,
+    CROSS_CORR_R_FS,
     SUBSET_DISPLACEMENT_X_FS,
     SUBSET_DISPLACEMENT_X_NM1_FS,
     SUBSET_DISPLACEMENT_Y_FS,

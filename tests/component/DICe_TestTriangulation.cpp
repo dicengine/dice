@@ -336,28 +336,52 @@ int main(int argc, char *argv[]) {
   *outStream << "testing triangulation of 3d points" << std::endl;
 
   Teuchos::RCP<Triangulation> tri = Teuchos::rcp(new Triangulation("./cal/cal_b.xml"));
-  scalar_t x_out=0.0,y_out=0.0,z_out=0.0;
+  scalar_t xc_out=0.0,yc_out=0.0,zc_out=0.0;
+  scalar_t xw_out=0.0,yw_out=0.0,zw_out=0.0;
   scalar_t x_0 = 190; scalar_t y_0 = 187;
   scalar_t x_1 = 193.8777; scalar_t y_1 = 186.0944;
-  tri->triangulate(x_0,y_0,x_1,y_1,x_out,y_out,z_out,false);
+  tri->triangulate(x_0,y_0,x_1,y_1,xc_out,yc_out,zc_out,xw_out,yw_out,zw_out,false);
   scalar_t global_x_gold = 46.1199;
   scalar_t global_y_gold = -25.5283;
   scalar_t global_z_gold = -6543.5;
-  if(std::abs(global_x_gold - x_out) > errorTol){
+  if(std::abs(global_x_gold - xw_out) > errorTol){
     errorFlag++;
-    *outStream << "Error, triangulation x coord is wrong. Should be " << global_x_gold << " is " << x_out << std::endl;
+    *outStream << "Error, triangulation x coord is wrong. Should be " << global_x_gold << " is " << xw_out << std::endl;
   }
-  if(std::abs(global_y_gold - y_out) > errorTol){
+  if(std::abs(global_y_gold - yw_out) > errorTol){
     errorFlag++;
-    *outStream << "Error, triangulation y coord is wrong. Should be " << global_y_gold << " is " << y_out << std::endl;
+    *outStream << "Error, triangulation y coord is wrong. Should be " << global_y_gold << " is " << yw_out << std::endl;
   }
-  if(std::abs(global_z_gold - z_out) > errorTol){
+  if(std::abs(global_z_gold - zw_out) > errorTol){
     errorFlag++;
-    *outStream << "Error, triangulation z coord is wrong. Should be " << global_z_gold << " is " << z_out << std::endl;
+    *outStream << "Error, triangulation z coord is wrong. Should be " << global_z_gold << " is " << zw_out << std::endl;
   }
 
   *outStream << "triangulation of 3d points completed and tested" << std::endl;
 
+  *outStream << "testing projective transforms" << std::endl;
+
+  Teuchos::RCP<Triangulation> proj_tri = Teuchos::rcp(new Triangulation());
+  Teuchos::RCP<std::vector<scalar_t> > projectives = Teuchos::rcp(new std::vector<scalar_t>(8,0.0));
+  (*projectives)[0] = 1.5;
+  (*projectives)[1] = 0.03;
+  (*projectives)[2] = -25.85;
+  (*projectives)[3] = 0.3;
+  (*projectives)[4] = 1.6;
+  (*projectives)[5] = -18.0;
+  (*projectives)[6] = 0.0005;
+  (*projectives)[7] = 0.0001;
+  proj_tri->set_projectives(projectives);
+  const scalar_t xl0 = 75, yl0 = 380;
+  scalar_t xr0 = 0.0, yr0 = 0.0;
+  proj_tri->project_left_to_right_sensor_coords(xl0,yl0,xr0,yr0);
+
+  *outStream << "xl " << xl0 << " yl " << yl0 << " xr " << xr0 << " yr " << yr0 << std::endl;
+
+  if(std::abs(xr0 - 91.166) > errorTol || std::abs(yr0 - 569.5026) > errorTol){
+    errorFlag++;
+    *outStream << "Error, projective transform is incorrect" << std::endl;
+  }
 
   *outStream << "--- End test ---" << std::endl;
 

@@ -304,6 +304,24 @@ int main(int argc, char *argv[]) {
       return 0;
     }
 
+    // TODO find a more straightforward way to do the indexing
+    const int_t start_frame = cine_start_index==-1 ? 1 : cine_start_index;
+    const int_t end_frame = cine_end_index==-1 ? num_images : cine_end_index;
+    // if this is a stereo analysis do the initial cross correlation:
+    if(is_stereo){
+      *outStream << "Processing cross correlation using image " << first_frame_index << " from the left and right cameras" << std::endl;
+      if(is_cine){
+        Teuchos::RCP<DICe::Image> def_image = stereo_cine_reader->get_frame(start_frame,true,filter_failed_pixels,correlation_params);
+        schema->set_def_image(def_image);
+      } // end is_cine
+      else{
+        const std::string def_image_string = stereo_image_files[start_frame];
+        schema->set_def_image(def_image_string);
+      }
+      schema->initialize_cross_correlation(triangulation);
+      schema->execute_correlation(true);
+    }
+
     // iterate through the images and perform the correlation:
     scalar_t total_time = 0.0;
     scalar_t elapsed_time = 0.0;
@@ -311,9 +329,6 @@ int main(int argc, char *argv[]) {
     scalar_t min_time = 1.0E10;
     scalar_t avg_time = 0.0;
     bool failed_step = false;
-    // TODO find a more straightforward way to do the indexing
-    const int_t start_frame = cine_start_index==-1 ? 1 : cine_start_index;
-    const int_t end_frame = cine_end_index==-1 ? num_images : cine_end_index;
     for(int_t image_it=start_frame;image_it<=end_frame;++image_it){
       if(is_cine){
         *outStream << "Processing Image: " << image_it - start_frame + 1 << " of " << num_images << " frame id: " << first_frame_index + image_it << std::endl;

@@ -40,6 +40,7 @@
 // @HEADER
 
 #include <DICe_Simplex.h>
+#include <DICe_Triangulation.h>
 
 #include <cassert>
 
@@ -289,7 +290,75 @@ Subset_Simplex::objective(Teuchos::RCP<std::vector<scalar_t> > & variables){
   return obj_->gamma(variables);
 }
 
+Homography_Simplex::Homography_Simplex(Teuchos::RCP<Image> left_img,
+  Teuchos::RCP<Image> right_img,
+  Triangulation * tri,
+  const Teuchos::RCP<Teuchos::ParameterList> & params):
+  Simplex(8,8,params),
+  tri_(tri){
 
+  left_img->write("left_0.tif");
+  right_img->write("right_0.tif");
 
+  // median filter the images:
+  const intensity_t avg_left = left_img->mean();
+  const intensity_t avg_right = right_img->mean();
+  const int_t w = left_img->width();
+  const int_t h = left_img->height();
+  const int_t num_px = w*h;
+  Teuchos::RCP<Image> mf_left = Teuchos::rcp(new Image(left_img));
+  Teuchos::ArrayRCP<intensity_t> mf_left_intens = mf_left->intensities();
+  Teuchos::RCP<Image> mf_right = Teuchos::rcp(new Image(right_img));
+  Teuchos::ArrayRCP<intensity_t> mf_right_intens = mf_right->intensities();
+  for(int_t i=0; i<num_px;++i){
+    if(mf_left_intens[i]<avg_left){
+      mf_left_intens[i] = 0.0;
+    }else{
+      mf_left_intens[i] = 1.0;
+    }
+    if(mf_right_intens[i]<avg_right){
+      mf_right_intens[i] = 0.0;
+    }else{
+      mf_right_intens[i] = 1.0;
+    }
+  }
+  //mf_left->write("mf_left.tif");
+  //mf_right->write("mf_right.tif");
+  left_img_ = mf_left;
+  right_img_ = mf_right;
+//  left_img_ = left_img;
+//  right_img_ = right_img;
+}
+
+scalar_t
+Homography_Simplex::objective(Teuchos::RCP<std::vector<scalar_t> > & variables){
+
+  const int_t w = left_img_->width();
+  const int_t h = left_img_->height();
+
+  tri_->set_projectives(variables);
+
+//  static int_t image_index = 0;
+//  Teuchos::RCP<Image> img = Teuchos::rcp(new Image(w,h,0.0));
+//  Teuchos::ArrayRCP<intensity_t> intens = img->intensities();
+//  std::stringstream name;
+//  name << "projected_image_" << image_index++ << ".tif";
+  scalar_t value = 0.0;
+  scalar_t xr = 0.0;
+  scalar_t yr = 0.0;
+  intensity_t left_intens = 0.0;
+  intensity_t right_intens = 0.0;
+  for(int_t j=0.1*h;j<0.9*h;++j){
+    for(int_t i=0.1*w;i<0.9*w;++i){
+      tri_->project_left_to_right_sensor_coords(i,j,xr,yr);
+      left_intens = (*left_img_)(i,j);
+      right_intens = right_img_->interpolate_keys_fourth(xr,yr);
+      //intens[j*w+i] = right_intens;
+      value += (left_intens - right_intens)*(left_intens - right_intens);
+    }
+  }
+  //img->write(name.str().c_str());
+  return value;
+}
 
 }// End DICe Namespace

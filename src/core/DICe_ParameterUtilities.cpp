@@ -89,7 +89,9 @@ const std::string to_string(Field_Name in){
     "ITERATIONS",
     "STATUS_FLAG",
     "NEIGHBOR_ID",
-    "CONDITION_NUMBER"
+    "CONDITION_NUMBER",
+    "CROSS_CORR_Q",
+    "CROSS_CORR_R"
   };
   return fieldNameStrings[in];
 }

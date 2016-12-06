@@ -370,6 +370,10 @@ enum Field_Name {
   NEIGHBOR_ID,       // the global id of the neighboring subset to use for initialization by neighbor value
   // 28
   CONDITION_NUMBER,  // quality metric for the pseudoinverse matrix in the gradient-based method
+  // 29
+  CROSS_CORR_Q,      // cross correlation Q coordinate
+  // 30
+  CROSS_CORR_R,      // cross correlation R coordinate
   // *** DO NOT PUT ANY FIELDS UNDER THIS ONE ***
   // (this is how the field stride is automatically set if another field is added)
   MAX_FIELD_NAME,

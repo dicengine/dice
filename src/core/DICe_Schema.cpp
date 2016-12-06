@@ -46,6 +46,8 @@
 #include <DICe_ParameterUtilities.h>
 #include <DICe_ImageUtils.h>
 #include <DICe_FFT.h>
+#include <DICe_Triangulation.h>
+#include <DICe_Simplex.h>
 #ifdef DICE_ENABLE_GLOBAL
 #include <DICe_MeshIO.h>
 #include <DICe_MeshIOUtils.h>
@@ -1058,6 +1060,8 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"Error: mesh should not be null here");
   local_num_subsets_ = mesh_->get_scalar_node_dist_map()->get_num_local_elements();
 
+  mesh_->create_field(mesh::field_enums::CROSS_CORR_Q_FS);
+  mesh_->create_field(mesh::field_enums::CROSS_CORR_R_FS);
   mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
   mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_X_NM1_FS);
   mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
@@ -1367,13 +1371,20 @@ Schema::post_execution_tasks(){
 }
 
 int_t
-Schema::execute_correlation(){
+Schema::execute_correlation(const bool is_cross_corr){
+  Optimization_Method orig_opt_method = optimization_method_;
+  if(is_cross_corr)
+    optimization_method_ = SIMPLEX; // force simplex for cross-correlation
   if(analysis_type_==GLOBAL_DIC){
 #ifdef DICE_ENABLE_GLOBAL
     Status_Flag global_status = CORRELATION_FAILED;
     try{
       global_status = global_algorithm_->execute();
-      update_image_frame();
+      if(is_cross_corr){
+        optimization_method_=orig_opt_method;
+      }else{
+        update_image_frame();
+      }
     }
     catch(std::exception & e){
       std::cout << "Error, global correlation failed: " << e.what() << std::endl;
@@ -1403,6 +1414,7 @@ Schema::execute_correlation(){
   // reset the motion detectors for each subset if used
   for(std::map<int_t,Teuchos::RCP<Motion_Test_Utility> >::iterator it = motion_detectors_.begin();
       it != motion_detectors_.end();++it){
+    if(is_cross_corr) continue;
     DEBUG_MSG("Resetting motion detector: " << it->first);
     it->second->reset();
   }
@@ -1422,7 +1434,7 @@ Schema::execute_correlation(){
     mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS)->put_scalar(0.0);
   }
 #ifdef DICE_ENABLE_GLOBAL
-  if(has_initial_condition_file()&&image_frame_==0){
+  if(has_initial_condition_file()&&image_frame_==0&&!is_cross_corr){
     TEUCHOS_TEST_FOR_EXCEPTION(initialization_method_!=USE_FIELD_VALUES,std::runtime_error,
       "Initialization method must be USE_FIELD_VALUES if an initial condition file is specified");
     Teuchos::RCP<DICe::mesh::Importer_Projector> importer = Teuchos::rcp(new DICe::mesh::Importer_Projector(initial_condition_file_,mesh_));
@@ -1446,7 +1458,7 @@ Schema::execute_correlation(){
 #endif
 
   // Complete the set up activities for the post processors
-  if(image_frame_==0){
+  if(image_frame_==0&&!is_cross_corr){
     for(size_t i=0;i<post_processors_.size();++i){
       post_processors_[i]->pre_execution_tasks();
     }
@@ -1498,10 +1510,12 @@ Schema::execute_correlation(){
       check_for_blocking_subsets(subset_gid);
       generic_correlation_routine(obj_vec_[subset_lid]);
     }
-    if(output_deformed_subset_images_)
-      write_deformed_subsets_image();
-    for(size_t i=0;i<prev_imgs_.size();++i)
-      prev_imgs_[i]=def_imgs_[i];
+    if(!is_cross_corr){
+      if(output_deformed_subset_images_)
+        write_deformed_subsets_image();
+      for(size_t i=0;i<prev_imgs_.size();++i)
+        prev_imgs_[i]=def_imgs_[i];
+    }
   }
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: unknown correlation routine.");
@@ -1514,7 +1528,7 @@ Schema::execute_correlation(){
   }
 
   // accumulate the displacements
-  if(use_incremental_formulation_){
+  if(use_incremental_formulation_&&!is_cross_corr){
     const int_t spa_dim = mesh_->spatial_dimension();
     Teuchos::RCP<DICe::MultiField> accumulated_disp = mesh_->get_field(DICe::mesh::field_enums::ACCUMULATED_DISP_FS);
     for(int_t i=0;i<local_num_subsets_;++i){
@@ -1523,12 +1537,42 @@ Schema::execute_correlation(){
     }
   }
 
-  // compute post-processed quantities
-  for(size_t i=0;i<post_processors_.size();++i){
-    post_processors_[i]->execute();
+  if(is_cross_corr){
+    Teuchos::RCP<MultiField> ux = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+    Teuchos::RCP<MultiField> uy = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+    Teuchos::RCP<MultiField> cross_q = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_Q_FS);
+    Teuchos::RCP<MultiField> cross_r = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_R_FS);
+    cross_q->update(1.0,*ux,0.0);
+    cross_r->update(1.0,*uy,0.0);
+    // clear the deformation fields
+    ux->put_scalar(0.0);
+    uy->put_scalar(0.0);
+    int_t num_failures = 0;
+    scalar_t worst_gamma = 0.0;
+    for(int_t i=0;i<local_num_subsets_;++i){
+      local_field_value(i,NORMAL_STRAIN_X) = 0.0;
+      local_field_value(i,NORMAL_STRAIN_Y) = 0.0;
+      local_field_value(i,SHEAR_STRAIN_XY) = 0.0;
+      local_field_value(i,ROTATION_Z) = 0.0;
+      if(local_field_value(i,SIGMA) < 0.0)
+        num_failures++;
+      if(local_field_value(i,GAMMA) > worst_gamma)
+        worst_gamma = local_field_value(i,GAMMA);
+    }
+    std::FILE * filePtr = fopen("projection_out.dat","a");
+    fprintf(filePtr,"Number of failed cross-correlation points: %i\n",num_failures);
+    fprintf(filePtr,"Worst cross-correlation gamma: %e\n",worst_gamma);
+    fclose(filePtr);
+    optimization_method_ = orig_opt_method;
   }
-  DEBUG_MSG("[PROC " << proc_id << "] post processing complete");
-  update_image_frame();
+  // compute post-processed quantities
+  else{
+    for(size_t i=0;i<post_processors_.size();++i){
+      post_processors_[i]->execute();
+    }
+    DEBUG_MSG("[PROC " << proc_id << "] post processing complete");
+    update_image_frame();
+  }
   return 0;
 };
 
@@ -2498,6 +2542,34 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
   } // end mag loop
 #endif
 }
+
+int_t
+Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri){
+  DEBUG_MSG("Schema::initialize_cross_correlation(): estimating the projective transform from left to right camera");
+
+  // note: we try to avoid feature matching approaches here because the speckle pattern
+  // may be repeating which would lead to false positives
+  tri->estimate_projective_transform(ref_img_,def_imgs_[0],true);
+  for(int_t i=0;i<local_num_subsets_;++i){
+    scalar_t cx = local_field_value(i,COORDINATE_X);
+    scalar_t cy = local_field_value(i,COORDINATE_Y);
+    scalar_t px = 0.0;
+    scalar_t py = 0.0;
+    tri->project_left_to_right_sensor_coords(cx,cy,px,py);
+    local_field_value(i,DISPLACEMENT_X) = px - cx;
+    local_field_value(i,DISPLACEMENT_Y) = py - cy;
+  }
+  //assert(false);
+  Teuchos::RCP<MultiField> ux = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> uy = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<DICe::MultiField> cross_q = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_Q_FS);
+  Teuchos::RCP<DICe::MultiField> cross_r = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_R_FS);
+  cross_q->update(1.0,*ux,0.0);
+  cross_r->update(1.0,*uy,0.0);
+  DEBUG_MSG("Schema::initialize_cross_correlation(): projective transform estimation successful");
+  return 0;
+}
+
 // TODO fix this up so that it works with conformal subsets:
 void
 Schema::write_control_points_image(const std::string & fileName,
