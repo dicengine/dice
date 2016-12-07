@@ -684,7 +684,8 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   const std::string filename = out_file.str();
   std::vector<char> writable(filename.size() + 1);
   std::copy(filename.begin(), filename.end(), writable.begin());
-  int_t spatial_dimension = mesh->spatial_dimension();
+  int_t spa_dim = mesh->spatial_dimension();
+  int_t init_spa_dim = spa_dim;
   int_t num_nodes = mesh->num_nodes();
   int_t num_elem = mesh->num_elem();
   int error_int;
@@ -693,12 +694,32 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   /* create EXODUS II file */
   const int output_exoid = ex_create (&writable[0],EX_CLOBBER,&CPU_word_size, &IO_word_size);
   mesh->set_output_exoid(output_exoid);
-  const int_t spa_dim = mesh->spatial_dimension();
 
-  DEBUG_MSG("output_exoid: " << output_exoid << " file: " << out_file.str() << " spatial_dimension: " << spatial_dimension << " num_nodes: " << num_nodes << " num_elem: " << num_elem
+  // check if model coordinates is a valid field
+  bool use_model_coordinates = false;
+  Teuchos::RCP<MultiField> model_x;
+  Teuchos::RCP<MultiField> model_y;
+  Teuchos::RCP<MultiField> model_z;
+  try{
+    mesh->get_field(field_enums::MODEL_COORDINATES_X_FS);
+    use_model_coordinates = true;
+  }catch(std::exception & e){
+    use_model_coordinates = false;
+  }
+  if(use_model_coordinates){
+    model_x = mesh->get_overlap_field(field_enums::MODEL_COORDINATES_X_FS);
+    model_y = mesh->get_overlap_field(field_enums::MODEL_COORDINATES_Y_FS);
+    model_z = mesh->get_overlap_field(field_enums::MODEL_COORDINATES_Z_FS);
+    // also check that the field has values
+    use_model_coordinates = model_x->norm() > 1.0E-8;
+  }
+  if(use_model_coordinates){
+    init_spa_dim = 3;
+  }
+  DEBUG_MSG("output_exoid: " << output_exoid << " file: " << out_file.str() << " spatial_dimension: " << spa_dim << " num_nodes: " << num_nodes << " num_elem: " << num_elem
      << " num_blocks: " << mesh->num_blocks() << " node_sets: "<< mesh->num_node_sets() << " side_sets: "<< mesh->get_side_set_info()->ids.size());
 
-  error_int = ex_put_init(output_exoid, &writable[0], spatial_dimension, num_nodes,
+  error_int = ex_put_init(output_exoid, &writable[0], init_spa_dim, num_nodes,
     num_elem, mesh->num_blocks(), mesh->num_node_sets(),  mesh->get_side_set_info()->ids.size());
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error, "ex_put_init(): Failure");
 
@@ -718,12 +739,19 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   for(;node_it!=node_end;++node_it)
   {
     const int_t local_id = node_it->second->overlap_local_id();
-    x[local_id] = coords->local_value(local_id*spa_dim+0);
-    y[local_id] = coords->local_value(local_id*spa_dim+1);
-    if(spatial_dimension > 2)
-      z[local_id] = coords->local_value(local_id*spa_dim+2);
-    else
-      z[local_id] = 0.0;
+    if(use_model_coordinates){
+      x[local_id] = model_x->local_value(local_id);
+      y[local_id] = model_y->local_value(local_id);
+      z[local_id] = model_z->local_value(local_id);
+    }
+    else{
+      x[local_id] = coords->local_value(local_id*spa_dim+0);
+      y[local_id] = coords->local_value(local_id*spa_dim+1);
+      if(spa_dim > 2)
+        z[local_id] = coords->local_value(local_id*spa_dim+2);
+      else
+        z[local_id] = 0.0;
+    }
     node_map[local_id]=node_it->first;
   }
   DICe::mesh::element_set::const_iterator elem_it = mesh->get_element_set()->begin();
@@ -736,9 +764,16 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
 
   error_int = ex_put_coord(output_exoid, x, y, z);
   char * coord_names[3];
-  coord_names[0] = (char*) "INITIAL_COORDINATES_X";
-  coord_names[1] = (char*) "INITIAL_COORDINATES_Y";
-  coord_names[2] = (char*) "INITIAL_COORDINATES_Z";
+  if(use_model_coordinates){
+    coord_names[0] = (char*) "MODEL_COORDINATES_X";
+    coord_names[1] = (char*) "MODEL_COORDINATES_Y";
+    coord_names[2] = (char*) "MODEL_COORDINATES_Z";
+  }
+  else{
+    coord_names[0] = (char*) "INITIAL_COORDINATES_X";
+    coord_names[1] = (char*) "INITIAL_COORDINATES_Y";
+    coord_names[2] = (char*) "INITIAL_COORDINATES_Z";
+  }
   error_int = ex_put_coord_names(output_exoid, coord_names);
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_coord_names(): Failure");
   error_int = ex_put_elem_num_map(output_exoid, elem_map);
@@ -931,7 +966,6 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   delete[] ss_elem_list;
   delete[] ss_side_list;
   delete[] dist_fact;
-
 }
 
 void

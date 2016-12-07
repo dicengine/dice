@@ -227,6 +227,7 @@ int main(int argc, char *argv[]) {
 
     // set up output files
     std::string output_folder = input_params->get<std::string>(DICe::output_folder);
+
     const bool separate_output_file_for_each_subset = input_params->get<bool>(DICe::separate_output_file_for_each_subset,false);
     if(separate_output_file_for_each_subset){
       *outStream << "Output will be written to separate output files for each subset" << std::endl;

@@ -1046,15 +1046,6 @@ Schema::initialize(Teuchos::ArrayRCP<scalar_t> coords_x,
   for(size_t i=0;i<post_processors_.size();++i)
     post_processors_[i]->initialize(mesh_);
 
-  // now that the post processors have been created
-  // create an exodus output file if global is enabled
-#ifdef DICE_ENABLE_GLOBAL
-  std::string output_dir= "";
-  if(init_params_!=Teuchos::null)
-    output_dir = init_params_->get<std::string>(output_folder,"");
-  DICe::mesh::create_output_exodus_file(mesh_,output_dir);
-#endif
-
   is_initialized_ = true;
 
   if(neighbor_ids!=Teuchos::null)
@@ -2747,8 +2738,13 @@ Schema::write_output(const std::string & output_folder,
   int_t proc_size = comm_->get_size();
 
 #ifdef DICE_ENABLE_GLOBAL
-  if(image_frame_==1)
+  if(image_frame_==1){
+    std::string output_dir= "";
+    if(init_params_!=Teuchos::null)
+      output_dir = init_params_->get<std::string>(DICe::output_folder,"");
+    DICe::mesh::create_output_exodus_file(mesh_,output_dir);
     DICe::mesh::create_exodus_output_variable_names(mesh_);
+  }
   DICe::mesh::exodus_output_dump(mesh_,image_frame_,image_frame_);
 #endif
 
