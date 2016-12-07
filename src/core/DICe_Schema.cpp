@@ -2637,6 +2637,9 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
   Teuchos::RCP<MultiField> model_x = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_X_FS);
   Teuchos::RCP<MultiField> model_y = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_Y_FS);
   Teuchos::RCP<MultiField> model_z = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_Z_FS);
+  Teuchos::RCP<MultiField> model_disp_x = mesh_->get_field(DICe::mesh::field_enums::MODEL_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> model_disp_y = mesh_->get_field(DICe::mesh::field_enums::MODEL_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> model_disp_z = mesh_->get_field(DICe::mesh::field_enums::MODEL_DISPLACEMENT_Z_FS);
   scalar_t X=0.0,Y=0.0,Z=0.0;
   scalar_t Xw=0.0,Yw=0.0,Zw=0.0;
   scalar_t xl=0.0,yl=0.0;
@@ -2647,9 +2650,16 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
     xr = stereo_coords_x->local_value(i) + my_stereo_disp_x->local_value(i);
     yr = stereo_coords_y->local_value(i) + my_stereo_disp_y->local_value(i);
     tri->triangulate(xl,yl,xr,yr,X,Y,Z,Xw,Yw,Zw);
-    model_x->local_value(i) = Xw; // w-coordinates have been transformed by a user defined transform to world or model coords
-    model_y->local_value(i) = Yw;
-    model_z->local_value(i) = Zw;
+    if(image_frame_==1){
+      model_x->local_value(i) = Xw; // w-coordinates have been transformed by a user defined transform to world or model coords
+      model_y->local_value(i) = Yw;
+      model_z->local_value(i) = Zw;
+    }
+    else{
+      model_disp_x->local_value(i) = Xw - model_x->local_value(i); // w-coordinates have been transformed by a user defined transform to world or model coords
+      model_disp_y->local_value(i) = Yw - model_y->local_value(i);
+      model_disp_z->local_value(i) = Zw - model_z->local_value(i);
+    }
     //std::cout << " xl " << xl << " yl " << yl << " xr " << xr << " yr " << yr << " X " << Xw << " Y " << Yw << " Z " << Zw << std::endl;
   }
   return 0;
