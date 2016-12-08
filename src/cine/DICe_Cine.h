@@ -240,6 +240,8 @@ public:
     const bool convert_to_8_bit=true,
     const bool filter_failed_pixels=false,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null){
+    TEUCHOS_TEST_FOR_EXCEPTION(frame_index < 0 || frame_index >= (int_t)cine_header_->header_.ImageCount,
+      std::runtime_error,"Error, invalid frame index" << frame_index);
     return get_frame(frame_index,0,0,
       cine_header_->bitmap_header_.biWidth-1,cine_header_->bitmap_header_.biHeight-1,
       convert_to_8_bit,filter_failed_pixels,params);
