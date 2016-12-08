@@ -314,7 +314,7 @@ int main(int argc, char *argv[]) {
     // if this is a stereo analysis do the initial cross correlation:
     if(is_stereo){
       TEUCHOS_TEST_FOR_EXCEPTION(schema->analysis_type()==GLOBAL_DIC,std::runtime_error,"Error, global stereo not enabled yet");
-      *outStream << "Processing cross correlation using image " << first_frame_index << " from the left and right cameras" << std::endl;
+      *outStream << "Processing cross correlation between left and right images" << std::endl;
       if(is_cine){
         Teuchos::RCP<DICe::Image> right_image;
         if(input_params->isParameter(DICe::time_average_cine_ref_frame)){

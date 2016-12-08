@@ -1862,7 +1862,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     }
   }
   //
-  //  check if the user rrequested to skip the solve and only initialize (param set in subset file)
+  //  check if the user requested to skip the solve and only initialize (param set in subset file)
   //
   if(skip_frame||skip_all_solves_){
     if(skip_all_solves_){
@@ -1898,7 +1898,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   if(initial_gamma_threshold_!=-1.0){
     const scalar_t initial_gamma = obj->gamma(deformation);
-    if(initial_gamma > initial_gamma_threshold_){
+    if(initial_gamma > initial_gamma_threshold_ || initial_gamma < 0.0){
       DEBUG_MSG("Subset " << subset_gid << " initial gamma value FAILS threshold test, gamma: " <<
         initial_gamma << " (threshold: " << initial_gamma_threshold_ << ")");
       record_failed_step(subset_gid,static_cast<int_t>(INITIALIZE_FAILED),num_iterations);
@@ -2043,8 +2043,8 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   }
   const scalar_t gamma = obj->gamma(deformation);
   const scalar_t beta = output_beta_ ? obj->beta(deformation) : 0.0;
-  if(final_gamma_threshold_!=-1.0&&gamma > final_gamma_threshold_){
-    DEBUG_MSG("Subset " << subset_gid << " final gamma value FAILS threshold test, gamma: " <<
+  if((final_gamma_threshold_!=-1.0 && gamma > final_gamma_threshold_)||gamma < 0.0){
+    DEBUG_MSG("Subset " << subset_gid << " final gamma value " << gamma << " FAILS threshold test or is negative, gamma: " <<
       gamma << " (threshold: " << final_gamma_threshold_ << ")");
     // TODO for the phase correlation initialization method, the initial guess needs to be stored
     record_failed_step(subset_gid,static_cast<int_t>(FRAME_FAILED_DUE_TO_HIGH_GAMMA),num_iterations);

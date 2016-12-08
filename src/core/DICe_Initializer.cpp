@@ -213,6 +213,7 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
   // assumes that the reference subset has already been initialized
   scalar_t gamma = subset_->gamma();
   DEBUG_MSG("input u: " << u << " v: " << v << " theta: " << t << " gamma: " << gamma);
+  if(gamma<0.0) gamma = 4.0; // catch a failed gamma eval
   closest_triad(u,v,t,id,dist);
   DEBUG_MSG("closest triad id: " << id << " distance squared: " << dist);
   scalar_t best_u = u;
@@ -233,6 +234,7 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
     // assumes that the reference subset has already been initialized
     gamma = subset_->gamma();
     DEBUG_MSG("gamma value " << gamma);
+    if(gamma<0.0) gamma = 4.0; // catch a failed gamma eval
     if(gamma < best_gamma){
       best_gamma = gamma;
       best_u = (*deformation)[DISPLACEMENT_X];
@@ -272,6 +274,7 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
     // assumes that the reference subset has already been initialized
     gamma = subset_->gamma();
     DEBUG_MSG("gamma value " << std::setprecision(6) << gamma);
+    if(gamma<0.0) gamma = 4.0; // catch a failed gamma eval
     if(gamma < best_gamma){
       best_gamma = gamma;
       best_u = (*deformation)[DISPLACEMENT_X];
@@ -337,6 +340,7 @@ Search_Initializer::initial_guess(const int_t subset_gid,
         scalar_t gamma = 100.0;
         try{
           gamma = subset_->gamma();
+          if(gamma<0.0) gamma = 4.0; // catch a failed gamma eval
         }
         catch(std::exception & e){
           gamma = 100.0;

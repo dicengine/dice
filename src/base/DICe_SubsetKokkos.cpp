@@ -309,8 +309,7 @@ Subset::gamma(){
   const scalar_t mean_ref = mean(REF_INTENSITIES,mean_sum_ref);
   scalar_t mean_sum_def = 0.0;
   const scalar_t mean_def = mean(DEF_INTENSITIES,mean_sum_def);
-  TEUCHOS_TEST_FOR_EXCEPTION(mean_sum_ref==0.0||mean_sum_def==0.0,std::runtime_error," invalid mean sum (cannot be 0.0, ZNSSD is then undefined)" <<
-    mean_sum_ref << " " << mean_sum_def);
+  if(mean_sum_ref==0.0||mean_sum_def==0.0) return -1.0;
   scalar_t gamma = 0.0;
   ZNSSD_Gamma_Functor gamma_func(ref_intensities_.d_view,
      def_intensities_.d_view,
