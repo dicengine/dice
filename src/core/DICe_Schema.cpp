@@ -2883,7 +2883,10 @@ Schema::write_stats(const std::string & output_folder,
   TEUCHOS_TEST_FOR_EXCEPTION(output_spec_==Teuchos::null,std::runtime_error,"");
   std::stringstream infoName;
   infoName << output_folder << prefix << ".info";
-  std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"a"); // overwrite the file if it exists
+  // the info file must exist for the stats to be written, otherwise no op
+  std::ifstream f(infoName.str().c_str());
+  if(!f.good()) return;
+  std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"a");
   output_spec_->write_stats(infoFilePtr);
   fclose(infoFilePtr);
 }

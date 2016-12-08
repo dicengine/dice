@@ -75,7 +75,8 @@ int main(int argc, char *argv[]) {
   }
 
   if(argc < 5) {
-      printf("four input arguments are required <cine_file_name> <start_index> <end_index> <output_prefix>\n");
+      printf("four input arguments are required, last two are optional "
+          "<cine_file_name> <start_index> <end_index> <output_prefix> [output_suffix] [rotation]\n");
       exit(0);
   }
 
@@ -87,11 +88,19 @@ int main(int argc, char *argv[]) {
   *outStream << "Cine file name: " << fileName << std::endl;
   std::string prefix = argv[4];
   *outStream << "Tiff prefix: " << prefix << std::endl;
-
+  std::string suffix = "";
   int_t rotation = 0;
-  if(argc > 5){
-    rotation = std::stoi(argv[5]);
-    DEBUG_MSG("User requested image roation by " << rotation << " degrees");
+  if(argc>5){
+    for(int_t i=5;i<argc;++i){
+      if(is_number(argv[i])){
+        rotation = std::stoi(argv[5]);
+        *outStream << "User requested image roation by " << rotation << " degrees" << std::endl;
+      }
+      else{
+        suffix = argv[i];
+        *outStream << "Tiff suffix: " << suffix << std::endl;
+      }
+    }
   }
 
   Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader  =  Teuchos::rcp(new DICe::cine::Cine_Reader(fileName,outStream.getRawPtr()));
@@ -127,10 +136,10 @@ int main(int argc, char *argv[]) {
     int_t num_zeros = num_digits_total - num_digits_frame;
     // determine the file name for this subset
     std::stringstream fName;
-    fName << prefix << "_";
+    fName << prefix;
     for(int_t j=0;j<num_zeros;++j)
       fName << "0";
-    fName << i << ".tif";
+    fName << i << suffix << ".tif";
      Teuchos::RCP<DICe::Image> image = cine_reader->get_frame(i);
     if(rotation!=0){
       if(rotation==90){
