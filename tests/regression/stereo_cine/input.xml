@@ -1,0 +1,15 @@
+<ParameterList>
+  <Parameter name="subset_file" type="string" value="roi.dat" />
+  <Parameter name="correlation_parameters_file" type="string" value="./params.xml" />
+  <Parameter name="calibration_parameters_file" type="string" value="cal.txt" />
+  <Parameter name="output_folder" type="string" value="./results/" />
+  <Parameter name="output_prefix" type="string" value="DICe_solution_cine" />
+  <Parameter name="image_folder" type="string" value="./images/" />  
+  <Parameter name="subset_size" type="int" value="27" />
+  <Parameter name="step_size" type="int" value="35" />
+  <Parameter name="cine_file" type="string" value="Camera_0.cine" /> 
+  <Parameter name="stereo_cine_file" type="string" value="Camera_1.cine" /> 
+  <Parameter name="cine_ref_index" type="int" value="0" /> 
+  <Parameter name="cine_start_index" type="int" value="0" /> 
+  <Parameter name="cine_end_index" type="int" value="5" /> 
+</ParameterList>

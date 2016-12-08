@@ -1,0 +1,28 @@
+<ParameterList>
+  <Parameter name="output_folder" type="string" value="./results/" />
+  <Parameter name="output_prefix" type="string" value="DICe_solution_list" />
+  <Parameter name="image_folder" type="string" value="./images/" />
+  <Parameter name="subset_size" type="int" value="27" />
+  <Parameter name="step_size" type="int" value="35" />
+  <Parameter name="subset_file" type="string" value="roi.dat" />
+  <Parameter name="calibration_parameters_file" type="string" value="cal.xml" />
+  <Parameter name="correlation_parameters_file" type="string" value="params.xml" />
+  <Parameter name="reference_image" type="string" value="img_0000_0.tif" />
+  <ParameterList name="deformed_images">
+    <Parameter name="img_0000_0.tif" type="bool" value="true" />
+    <Parameter name="img_0001_0.tif" type="bool" value="true" />
+    <Parameter name="img_0002_0.tif" type="bool" value="true" />
+    <Parameter name="img_0003_0.tif" type="bool" value="true" />
+    <Parameter name="img_0004_0.tif" type="bool" value="true" />
+    <Parameter name="img_0005_0.tif" type="bool" value="true" />
+  </ParameterList>
+  <Parameter name="stereo_reference_image" type="string" value="img_0000_1.tif" />
+  <ParameterList name="stereo_deformed_images">
+    <Parameter name="img_0000_1.tif" type="bool" value="true" />
+    <Parameter name="img_0001_1.tif" type="bool" value="true" />
+    <Parameter name="img_0002_1.tif" type="bool" value="true" />
+    <Parameter name="img_0003_1.tif" type="bool" value="true" />
+    <Parameter name="img_0004_1.tif" type="bool" value="true" />
+    <Parameter name="img_0005_1.tif" type="bool" value="true" />
+  </ParameterList>
+</ParameterList>

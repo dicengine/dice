@@ -1,0 +1,12 @@
+beGIN REGION_OF_INTEREST
+  begin boundary
+    begin polygon
+      begin vertices
+        160 300
+        1100 300
+        1100 540
+        160 540
+      end
+    end
+  end
+END REGION_OF_INTEREST

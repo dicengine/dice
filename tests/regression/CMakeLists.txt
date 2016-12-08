@@ -68,6 +68,9 @@ SET(GLOBAL_REGRESSION_TESTS
   global_pixel_shift
   14_initial_cond
   15_initial_cond
+  stereo_cine
+  stereo_list
+  stereo_auto
   )
 FOREACH ( test ${GLOBAL_REGRESSION_TESTS})
     # Copy over all the test files (input and results)

@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
     *outStream << mesh_a_fields[i] << std::endl;
   }
   int_t num_steps_a = DICe::mesh::read_exodus_num_steps(mesh_a);
-  *outStream << "number of times steps " << num_steps_a << std::endl;
+  *outStream << "number of time steps " << num_steps_a << std::endl;
   *outStream << "reading " << file_b_name << std::endl;
   Teuchos::RCP<DICe::mesh::Mesh> mesh_b = DICe::mesh::read_exodus_mesh(file_b_name,"dummy_output_name.e");
   std::vector<std::string> mesh_b_fields = DICe::mesh::read_exodus_field_names(mesh_b);
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
     *outStream << mesh_b_fields[i] << std::endl;
   }
   int_t num_steps_b = DICe::mesh::read_exodus_num_steps(mesh_b);
-  *outStream << "number of times steps " << num_steps_b << std::endl;
+  *outStream << "number of time steps " << num_steps_b << std::endl;
 
   // check that the meshes are compatible
   int_t num_nodes_a = mesh_a->num_nodes();
