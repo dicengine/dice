@@ -1493,13 +1493,6 @@ Schema::execute_correlation(const bool is_cross_corr){
     }
   }
 #endif
-
-  // Complete the set up activities for the post processors
-  if(image_frame_==0&&!is_cross_corr){
-    for(size_t i=0;i<post_processors_.size();++i){
-      post_processors_[i]->pre_execution_tasks();
-    }
-  }
   TEUCHOS_TEST_FOR_EXCEPTION((int_t)this_proc_gid_order_.size()!=local_num_subsets_,std::runtime_error,
     "Error, the subset gid order vector is the wrong size");
   // The generic routine is typically used when the dataset involves numerous subsets,
@@ -1604,16 +1597,20 @@ Schema::execute_correlation(const bool is_cross_corr){
     fclose(filePtr);
     optimization_method_ = orig_opt_method;
   }
-  // compute post-processed quantities
   else{
-    for(size_t i=0;i<post_processors_.size();++i){
-      post_processors_[i]->execute();
-    }
-    DEBUG_MSG("[PROC " << proc_id << "] post processing complete");
     update_image_frame();
   }
   return 0;
 };
+
+void
+Schema::execute_post_processors(){
+  // compute post-processed quantities
+  for(size_t i=0;i<post_processors_.size();++i){
+    post_processors_[i]->execute();
+  }
+  DEBUG_MSG("[PROC " << comm_->get_rank() << "] post processing complete");
+}
 
 void
 Schema::prepare_optimization_initializers(){
@@ -2376,6 +2373,7 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
       int_t corr_error = execute_correlation();
       TEUCHOS_TEST_FOR_EXCEPTION(corr_error,std::runtime_error,"Error, correlation unsuccesssful");
       DEBUG_MSG("Error prediction step correlation return value " << corr_error);
+      execute_post_processors();
       post_execution_tasks();
 
       // gather all owned fields here

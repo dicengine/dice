@@ -404,6 +404,9 @@ public:
   /// frame to frame correlation
   int_t execute_correlation(const bool is_cross_corr=false);
 
+  /// Run the post processors
+  void execute_post_processors();
+
   /// Create intial guess for cross correlation using epipolar lines
   /// and the camera parameters
   /// returns 0 if successful

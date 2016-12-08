@@ -137,6 +137,12 @@ public:
   /// Read in parameters for this post processor
   virtual void set_params(const Teuchos::RCP<Teuchos::ParameterList> & params)=0;
 
+  /// Set the field names
+  void set_field_names(const Teuchos::RCP<Teuchos::ParameterList> & params);
+
+  /// Default to the model fields for post processors
+  void set_stereo_field_names();
+
   /// Execute the post processor
   virtual void execute()=0;
 
@@ -174,6 +180,8 @@ protected:
   std::string disp_x_name_;
   /// holds the field name to be used for coordinates field
   std::string disp_y_name_;
+  /// true if the fields have been customized
+  bool has_custom_field_names_;
 };
 
 /// \class DICe::VSG_Strain_Post_Processor

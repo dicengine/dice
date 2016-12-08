@@ -54,7 +54,8 @@ Post_Processor::Post_Processor(const std::string & name) :
   coords_x_name_(DICe::mesh::field_enums::INITIAL_COORDINATES_FS.get_name_label()),
   coords_y_name_(DICe::mesh::field_enums::INITIAL_COORDINATES_FS.get_name_label()),
   disp_x_name_(DICe::mesh::field_enums::DISPLACEMENT_FS.get_name_label()),
-  disp_y_name_(DICe::mesh::field_enums::DISPLACEMENT_FS.get_name_label())
+  disp_y_name_(DICe::mesh::field_enums::DISPLACEMENT_FS.get_name_label()),
+  has_custom_field_names_(false)
 {}
 
 void
@@ -68,6 +69,64 @@ Post_Processor::initialize(Teuchos::RCP<DICe::mesh::Mesh> & mesh){
   for(size_t i=0;i<field_specs_.size();++i)
     mesh_->create_field(field_specs_[i]);
 }
+
+void
+Post_Processor::set_field_names(const Teuchos::RCP<Teuchos::ParameterList> & params){
+  // change the field specs for disp and coords if provided
+  if(params->isParameter(coordinates_x_field_name)){
+    coords_x_name_ = params->get<std::string>(coordinates_x_field_name);
+    if(coords_x_name_!=DICe::mesh::field_enums::INITIAL_COORDINATES_FS.get_name_label()&&coords_x_name_!=DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS.get_name_label())
+      has_custom_field_names_ = true;
+  }
+  if(params->isParameter(coordinates_y_field_name)){
+    coords_y_name_ = params->get<std::string>(coordinates_y_field_name);
+    if(coords_y_name_!=DICe::mesh::field_enums::INITIAL_COORDINATES_FS.get_name_label()&&coords_y_name_!=DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS.get_name_label())
+      has_custom_field_names_ = true;
+  }
+  if(params->isParameter(displacement_x_field_name)){
+    disp_x_name_ = params->get<std::string>(displacement_x_field_name);
+    if(disp_x_name_!=DICe::mesh::field_enums::DISPLACEMENT_FS.get_name_label()&&disp_x_name_!=DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS.get_name_label())
+      has_custom_field_names_ = true;
+  }
+  if(params->isParameter(displacement_y_field_name)){
+    disp_y_name_ = params->get<std::string>(displacement_y_field_name);
+    if(disp_y_name_!=DICe::mesh::field_enums::DISPLACEMENT_FS.get_name_label()&&disp_y_name_!=DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS.get_name_label())
+      has_custom_field_names_ = true;
+  }
+  DEBUG_MSG("Setting the coords x field to " << coords_x_name_ << " for post processor " << name_);
+  DEBUG_MSG("Setting the coords y field to " << coords_y_name_ << " for post processor " << name_);
+  DEBUG_MSG("Setting the displacement x field to " << disp_x_name_ << " for post processor " << name_);
+  DEBUG_MSG("Setting the displacement y field to " << disp_y_name_ << " for post processor " << name_);
+}
+
+void
+Post_Processor::set_stereo_field_names(){
+  if(has_custom_field_names_) return; // no op
+
+  // test to see if the analysis is stereo and therefor the model coordinates are populated
+  bool use_model_coordinates = false;
+  try{
+    mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_X_FS);
+    use_model_coordinates = true;
+  }catch(std::exception & e){
+    use_model_coordinates = false;
+  }
+  if(use_model_coordinates){
+    Teuchos::RCP<DICe::MultiField> model_x_coords = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_X_FS);
+    if(model_x_coords->norm() < 1.0E-8) // also check that the field has values, not just zeros
+      use_model_coordinates = false;
+  }
+  if(!use_model_coordinates) return;  // no op
+  coords_x_name_ = DICe::mesh::field_enums::MODEL_COORDINATES_X_FS.get_name_label();
+  coords_y_name_ = DICe::mesh::field_enums::MODEL_COORDINATES_Y_FS.get_name_label();
+  disp_x_name_ = DICe::mesh::field_enums::MODEL_DISPLACEMENT_X_FS.get_name_label();
+  disp_y_name_ = DICe::mesh::field_enums::MODEL_DISPLACEMENT_Y_FS.get_name_label();
+  DEBUG_MSG("Setting the coords x field to " << coords_x_name_ << " for post processor " << name_);
+  DEBUG_MSG("Setting the coords y field to " << coords_y_name_ << " for post processor " << name_);
+  DEBUG_MSG("Setting the displacement x field to " << disp_x_name_ << " for post processor " << name_);
+  DEBUG_MSG("Setting the displacement y field to " << disp_y_name_ << " for post processor " << name_);
+}
+
 
 void
 Post_Processor::initialize_neighborhood(const scalar_t & neighborhood_radius){
@@ -165,23 +224,7 @@ VSG_Strain_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList>
   window_size_ = params->get<int_t>(strain_window_size_in_pixels);
   TEUCHOS_TEST_FOR_EXCEPTION(window_size_<=0,std::runtime_error,"Error, window size must be greater than 0");
   DEBUG_MSG("VSG_Strain_Post_Processor strain window size: " << window_size_);
-  // change the field specs for disp and coords if provided
-  if(params->isParameter(coordinates_x_field_name)){
-    coords_x_name_ = params->get<std::string>(coordinates_x_field_name);
-    DEBUG_MSG("Setting the VSG post processor coords x field to " << coords_x_name_);
-  }
-  if(params->isParameter(coordinates_y_field_name)){
-    coords_y_name_ = params->get<std::string>(coordinates_y_field_name);
-    DEBUG_MSG("Setting the VSG post processor coords y field to " << coords_y_name_);
-  }
-  if(params->isParameter(displacement_x_field_name)){
-    disp_x_name_ = params->get<std::string>(displacement_x_field_name);
-    DEBUG_MSG("Setting the VSG post processor displacement x field to " << disp_x_name_);
-  }
-  if(params->isParameter(displacement_y_field_name)){
-    disp_y_name_ = params->get<std::string>(displacement_y_field_name);
-    DEBUG_MSG("Setting the VSG post processor displacement y field to " << disp_y_name_);
-  }
+  set_field_names(params);
 }
 
 void
@@ -191,6 +234,7 @@ VSG_Strain_Post_Processor::pre_execution_tasks(){
   initialize_neighborhood(neigh_rad);
   TEUCHOS_TEST_FOR_EXCEPTION(!neighborhood_initialized_,std::runtime_error,"Error, neighborhoods should be initialized here.");
   DEBUG_MSG("VSG_Strain_Post_Processor pre_execution_tasks() end");
+  set_stereo_field_names();
   DICe::mesh::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
   DICe::mesh::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
   DICe::mesh::field_enums::Field_Spec coords_x_spec = mesh_->get_field_spec(coords_x_name_);
@@ -208,6 +252,8 @@ VSG_Strain_Post_Processor::pre_execution_tasks(){
 void
 VSG_Strain_Post_Processor::execute(){
   DEBUG_MSG("VSG_Strain_Post_Processor execute() begin");
+  if(!neighborhood_initialized_) pre_execution_tasks();
+
   // gather an all owned fields here
   DICe::mesh::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
   DICe::mesh::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
@@ -398,22 +444,7 @@ NLVC_Strain_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList
   TEUCHOS_TEST_FOR_EXCEPTION(horizon_<=0,std::runtime_error,
     "Error, horizon must be greater than 0");
   DEBUG_MSG("NLVC_Strain_Post_Processor horizon diameter size: " << horizon_);
-  if(params->isParameter(coordinates_x_field_name)){
-    coords_x_name_ = params->get<std::string>(coordinates_x_field_name);
-    DEBUG_MSG("Setting the NLVC post processor coords x field to " << coords_x_name_);
-  }
-  if(params->isParameter(coordinates_y_field_name)){
-    coords_y_name_ = params->get<std::string>(coordinates_y_field_name);
-    DEBUG_MSG("Setting the NLVC post processor coords y field to " << coords_y_name_);
-  }
-  if(params->isParameter(displacement_x_field_name)){
-    disp_x_name_ = params->get<std::string>(displacement_x_field_name);
-    DEBUG_MSG("Setting the NLVC post processor displacement x field to " << disp_x_name_);
-  }
-  if(params->isParameter(displacement_y_field_name)){
-    disp_y_name_ = params->get<std::string>(displacement_y_field_name);
-    DEBUG_MSG("Setting the NLVC post processor displacement y field to " << disp_y_name_);
-  }
+  set_field_names(params);
 }
 
 void
@@ -423,6 +454,7 @@ NLVC_Strain_Post_Processor::pre_execution_tasks(){
   initialize_neighborhood(neigh_rad);
   TEUCHOS_TEST_FOR_EXCEPTION(!neighborhood_initialized_,std::runtime_error,"Error, neighborhoods should be initialized here.");
   DEBUG_MSG("NLVC_Strain_Post_Processor pre_execution_tasks() end");
+  set_stereo_field_names();
   DICe::mesh::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
   DICe::mesh::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
   DICe::mesh::field_enums::Field_Spec coords_x_spec = mesh_->get_field_spec(coords_x_name_);
@@ -453,6 +485,8 @@ NLVC_Strain_Post_Processor::compute_kernel(const scalar_t & dx,
 void
 NLVC_Strain_Post_Processor::execute(){
   DEBUG_MSG("NLVC_Strain_Post_Processor execute() begin");
+  if(!neighborhood_initialized_) pre_execution_tasks();
+
 
   // gather an all owned field here
   DICe::mesh::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);

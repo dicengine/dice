@@ -411,6 +411,7 @@ int main(int argc, char *argv[]) {
             failed_step = true;
           schema->execute_triangulation(triangulation,stereo_schema);
         }
+        schema->execute_post_processors();
         // timing info
         elapsed_time = t.elapsed();
         if(elapsed_time>max_time)max_time = elapsed_time;
@@ -431,12 +432,8 @@ int main(int argc, char *argv[]) {
       if(is_stereo){
         stereo_schema->write_output(output_folder,stereo_file_prefix,separate_output_file_for_each_subset,separate_header_file);
         stereo_schema->post_execution_tasks();
-        // TODO DO TRIANGULATION TO POPULATE THE X Y Z fields...
-
         // TODO MOVE execute post processors to after this step
-
         // TODO refactor post processors to use the X and Y fields for strain
-
       }
 
     } // image loop

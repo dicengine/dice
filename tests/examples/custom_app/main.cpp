@@ -69,6 +69,8 @@ int main(int argc, char *argv[]) {
   // Run the analysis
   //
   schema.execute_correlation();
+  // post process the strain, etc.
+  schema.execute_post_processors();
 
   //
   // STEP 4:
