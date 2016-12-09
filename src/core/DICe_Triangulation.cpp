@@ -650,8 +650,8 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     Teuchos::ArrayRCP<intensity_t> diff_intens = diff_img->intensities();
     scalar_t xr = 0.0;
     scalar_t yr = 0.0;
-    for(int_t j=0.05*h;j<0.95*h;++j){
-      for(int_t i=0.05*w;i<0.95*w;++i){
+    for(int_t j=0.1*h;j<0.9*h;++j){
+      for(int_t i=0.1*w;i<0.9*w;++i){
         project_left_to_right_sensor_coords(i,j,xr,yr);
         diff_intens[j*w+i] = (*left_img)(i,j) - right_img->interpolate_keys_fourth(xr,yr);
         intens[j*w+i] = right_img->interpolate_keys_fourth(xr,yr);
@@ -673,8 +673,10 @@ Triangulation::project_left_to_right_sensor_coords(const scalar_t & xl,
   //correct_lens_distortion_radial(xlc,ylc,0);
   assert(projectives_!=Teuchos::null);
   assert(projectives_->size()==8);
-  xr = ((*projectives_)[0]*xl+(*projectives_)[1]*yl+(*projectives_)[2])/((*projectives_)[6]*xl+(*projectives_)[7]*yl+1);
-  yr = ((*projectives_)[3]*xl+(*projectives_)[4]*yl+(*projectives_)[5])/((*projectives_)[6]*xl+(*projectives_)[7]*yl+1);
+  std::vector<scalar_t> & pr = *projectives_;
+  scalar_t denom = pr[6]*xl + pr[7]*yl + 1.0;
+  xr = (pr[0]*xl+pr[1]*yl+pr[2])/denom;
+  yr = (pr[3]*xl+pr[4]*yl+pr[5])/denom;
   //correct_lens_distortion_radial(xr,yr,1);
 }
 

@@ -332,7 +332,8 @@ int main(int argc, char *argv[]) {
         stereo_schema = Teuchos::rcp(new DICe::Schema(right_image_string,right_image_string,correlation_params));
       }
       schema->initialize_cross_correlation(triangulation);
-      schema->execute_correlation(true);
+      schema->save_cross_correlation_fields();
+      //schema->execute_correlation(true);
       assert(stereo_schema!=Teuchos::null);
       stereo_schema->set_first_frame_index(cine_start_index + first_frame_index);
       stereo_schema->initialize(input_params,schema);

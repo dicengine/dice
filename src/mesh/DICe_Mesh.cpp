@@ -413,11 +413,10 @@ Mesh::create_elem_node_field_maps(const bool force_elem_and_node_maps_to_match){
   }
   scalar_node_overlap_map_ = Teuchos::rcp (new MultiField_Map(-1, node_list, indexBase, *comm_));
   //std::cout << " SCALAR_NODE_OVERLAP MAP: " << std::endl;
-  //scalar_node_overlap_map->describe();
+  //scalar_node_overlap_map_->describe();
   vector_node_overlap_map_ = Teuchos::rcp (new MultiField_Map(-1, node_list_vectorized, indexBase, *comm_));
   //std::cout << " VECTOR_NODE_OVERLAP MAP: " << std::endl;
-  //vector_node_overlap_map->describe();
-
+  //vector_node_overlap_map_->describe();
 
   // ELEM DIST MAP AND VECTORIZED MAP
   // This map should be 1-to-1
@@ -480,6 +479,8 @@ Mesh::create_elem_node_field_maps(const bool force_elem_and_node_maps_to_match){
     //std::cout << " VECTOR_NODE_DIST MAP: " << std::endl;
     //vector_node_dist_map->describe();
   }
+  //std::cout << " SCALAR_NODE_DIST MAP: " << std::endl;
+  //scalar_node_dist_map_->describe();
 
   for(node_it = get_node_set()->begin(); node_it!=node_end;++node_it)
   {

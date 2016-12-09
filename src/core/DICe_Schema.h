@@ -413,6 +413,10 @@ public:
   /// \param tri Triangulation that contains the camera params
   int_t initialize_cross_correlation(Teuchos::RCP<Triangulation> tri);
 
+  /// Save off the q and r fields once the mapping from left to right image is known
+  void save_cross_correlation_fields();
+
+
   /// Triangulate the current positions of the subset centroids
   /// returns 0 if successful
   /// \param tri pointer to a triangulation

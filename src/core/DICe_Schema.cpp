@@ -964,24 +964,26 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
 //    return;
   }
 
-  const int_t num_local_subsets = schema->local_num_subsets();
   set_step_size(schema->step_size_x()); // this is done just so the step_size appears in the output file header (it's not actually used)
   // let the schema know how many images there are in the sequence:
   // initialize the schema
-  Teuchos::ArrayRCP<scalar_t> coords_x(num_local_subsets,0.0);
-  Teuchos::ArrayRCP<scalar_t> coords_y(num_local_subsets,0.0);
-  Teuchos::RCP<std::vector<int_t> > neighbor_ids = Teuchos::rcp(new std::vector<int_t>(num_local_subsets,-1));
-  for(int_t i=0;i<num_local_subsets;++i){
-    coords_x[i] = std::round(schema->local_field_value(i,STEREO_COORDINATE_X));
-    coords_y[i] = std::round(schema->local_field_value(i,STEREO_COORDINATE_Y));
-    (*neighbor_ids)[i] = schema->local_field_value(i,NEIGHBOR_ID);
+  // collect the overlap coordinates vector from the other schema because the local fields will only have this proc's
+  Teuchos::RCP<MultiField> stereo_coords_x = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::STEREO_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> stereo_coords_y = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::STEREO_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> neighbors = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::NEIGHBOR_ID_FS);
+  const int_t num_global_subsets = schema->global_num_subsets();
+  assert(num_global_subsets == stereo_coords_x->get_map()->get_num_local_elements());
+  Teuchos::ArrayRCP<scalar_t> coords_x(num_global_subsets,0.0);
+  Teuchos::ArrayRCP<scalar_t> coords_y(num_global_subsets,0.0);
+  Teuchos::RCP<std::vector<int_t> > neighbor_ids = Teuchos::rcp(new std::vector<int_t>(num_global_subsets,-1));
+  for(int_t i=0;i<num_global_subsets;++i){
+    coords_x[i] = std::round(stereo_coords_x->local_value(i));
+    coords_y[i] = std::round(stereo_coords_y->local_value(i));
+    (*neighbor_ids)[i] = neighbors->local_value(i);
   }
   initialize(coords_x,coords_y,schema->subset_dim(),Teuchos::null,neighbor_ids);
   TEUCHOS_TEST_FOR_EXCEPTION(schema->skip_solve_flags()->size()>0,std::runtime_error,"Error skip solves cannot be used in stereo");
   TEUCHOS_TEST_FOR_EXCEPTION(schema->motion_window_params()->size()>0,std::runtime_error,"Error motion windows cannot be used in stereo");
-
-  // TODO implement seed for the right image if needed
-
 }
 
 
@@ -1568,33 +1570,7 @@ Schema::execute_correlation(const bool is_cross_corr){
   }
 
   if(is_cross_corr){
-    Teuchos::RCP<MultiField> ux = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-    Teuchos::RCP<MultiField> uy = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
-    Teuchos::RCP<MultiField> cross_q = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_Q_FS);
-    Teuchos::RCP<MultiField> cross_r = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_R_FS);
-    cross_q->update(1.0,*ux,0.0);
-    cross_r->update(1.0,*uy,0.0);
-    // clear the deformation fields and update the initial positions of the cross corr subsets
-    ux->put_scalar(0.0);
-    uy->put_scalar(0.0);
-    int_t num_failures = 0;
-    scalar_t worst_gamma = 0.0;
-    for(int_t i=0;i<local_num_subsets_;++i){
-      local_field_value(i,NORMAL_STRAIN_X) = 0.0;
-      local_field_value(i,NORMAL_STRAIN_Y) = 0.0;
-      local_field_value(i,SHEAR_STRAIN_XY) = 0.0;
-      local_field_value(i,ROTATION_Z) = 0.0;
-      local_field_value(i,STEREO_COORDINATE_X) = local_field_value(i,COORDINATE_X) + cross_q->local_value(i);
-      local_field_value(i,STEREO_COORDINATE_Y) = local_field_value(i,COORDINATE_Y) + cross_r->local_value(i);
-      if(local_field_value(i,SIGMA) < 0.0)
-        num_failures++;
-      if(local_field_value(i,GAMMA) > worst_gamma)
-        worst_gamma = local_field_value(i,GAMMA);
-    }
-    std::FILE * filePtr = fopen("projection_out.dat","a");
-    fprintf(filePtr,"Number of failed cross-correlation points: %i\n",num_failures);
-    fprintf(filePtr,"Worst cross-correlation gamma: %e\n",worst_gamma);
-    fclose(filePtr);
+    save_cross_correlation_fields();
     optimization_method_ = orig_opt_method;
   }
   else{
@@ -1602,6 +1578,38 @@ Schema::execute_correlation(const bool is_cross_corr){
   }
   return 0;
 };
+
+void
+Schema::save_cross_correlation_fields(){
+  Teuchos::RCP<MultiField> ux = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> uy = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> cross_q = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_Q_FS);
+  Teuchos::RCP<MultiField> cross_r = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_R_FS);
+  cross_q->update(1.0,*ux,0.0);
+  cross_r->update(1.0,*uy,0.0);
+  // clear the deformation fields and update the initial positions of the cross corr subsets
+  ux->put_scalar(0.0);
+  uy->put_scalar(0.0);
+  int_t num_failures = 0;
+  scalar_t worst_gamma = 0.0;
+  for(int_t i=0;i<local_num_subsets_;++i){
+    local_field_value(i,NORMAL_STRAIN_X) = 0.0;
+    local_field_value(i,NORMAL_STRAIN_Y) = 0.0;
+    local_field_value(i,SHEAR_STRAIN_XY) = 0.0;
+    local_field_value(i,ROTATION_Z) = 0.0;
+    local_field_value(i,STEREO_COORDINATE_X) = local_field_value(i,COORDINATE_X) + cross_q->local_value(i);
+    local_field_value(i,STEREO_COORDINATE_Y) = local_field_value(i,COORDINATE_Y) + cross_r->local_value(i);
+    if(local_field_value(i,SIGMA) < 0.0)
+      num_failures++;
+    if(local_field_value(i,GAMMA) > worst_gamma)
+      worst_gamma = local_field_value(i,GAMMA);
+  }
+  std::FILE * filePtr = fopen("projection_out.dat","a");
+  fprintf(filePtr,"Number of failed cross-correlation points: %i\n",num_failures);
+  fprintf(filePtr,"Worst cross-correlation gamma: %e\n",worst_gamma);
+  fclose(filePtr);
+}
+
 
 void
 Schema::execute_post_processors(){
