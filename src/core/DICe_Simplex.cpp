@@ -297,8 +297,8 @@ Homography_Simplex::Homography_Simplex(Teuchos::RCP<Image> left_img,
   Simplex(8,8,params),
   tri_(tri){
 
-  left_img->write("left_0.tif");
-  right_img->write("right_0.tif");
+  //left_img->write("left_0.tif");
+  //right_img->write("right_0.tif");
 
   // median filter the images:
   const intensity_t avg_left = left_img->mean();

@@ -2594,7 +2594,8 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri){
 
   // note: we try to avoid feature matching approaches here because the speckle pattern
   // may be repeating which would lead to false positives
-  tri->estimate_projective_transform(ref_img_,def_imgs_[0],true);
+  const bool write_images = comm_->get_rank() == 0;
+  tri->estimate_projective_transform(ref_img_,def_imgs_[0],write_images);
   for(int_t i=0;i<local_num_subsets_;++i){
     scalar_t cx = local_field_value(i,COORDINATE_X);
     scalar_t cy = local_field_value(i,COORDINATE_Y);
