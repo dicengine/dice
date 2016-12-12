@@ -2868,7 +2868,7 @@ Schema::write_output(const std::string & output_folder,
         fName << "0";
       fName << subset_global_id(subset);
       if(proc_size>1)
-        fName << "." << proc_size;
+        fName << "." << proc_size << "." << my_proc;
       fName << ".txt";
       if(image_frame_==1){
         std::FILE * filePtr = fopen(fName.str().c_str(),"w"); // overwrite the file if it exists
@@ -2912,14 +2912,14 @@ Schema::write_output(const std::string & output_folder,
       fName << "0";
     fName << first_frame_index_ + image_frame_ - 1;
     if(proc_size >1)
-      fName << "." << my_proc;
+      fName << "." << proc_size << "." << my_proc;
     fName << ".txt";
     std::FILE * filePtr = fopen(fName.str().c_str(),"w");
     if(separate_header_file && image_frame_<=1 && my_proc==0){
       std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"w"); // overwrite the file if it exists
       output_spec_->write_info(infoFilePtr,true);
       fclose(infoFilePtr);
-     }
+    }
     else if(!separate_header_file){
       output_spec_->write_info(filePtr,false);
     }
@@ -3420,7 +3420,6 @@ void
 Output_Spec::write_frame(std::FILE * file,
   const int_t row_index,
   const int_t field_value_index){
-
   assert(file);
   if(!omit_row_id_)
     fprintf(file,"%i%s",row_index,delimiter_.c_str());
@@ -3431,8 +3430,9 @@ Output_Spec::write_frame(std::FILE * file,
     value = field_vec_[i]->local_value(field_value_index);
     if(i==0)
       fprintf(file,"%4.4E",value);
-    else
+    else{
       fprintf(file,"%s%4.4E",delimiter_.c_str(),value);
+    }
   }
   fprintf(file,"\n"); // the space before end of line is important for parsing in the output diff tool
 }

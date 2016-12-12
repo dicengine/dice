@@ -311,7 +311,7 @@ std::istream& safeGetline(std::istream& is, std::string& t);
 /// \param delim Delimiter character
 /// \param capitalize true if the tokens should be automatically capitalized
 DICE_LIB_DLL_EXPORT
-Teuchos::ArrayRCP<std::string> tokenize_line(std::fstream &dataFile,
+Teuchos::ArrayRCP<std::string> tokenize_line(std::istream &dataFile,
   const std::string & delim=" \t",
   const bool capitalize = true);
 

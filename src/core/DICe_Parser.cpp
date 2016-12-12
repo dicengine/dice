@@ -626,7 +626,7 @@ std::istream & safeGetline(std::istream& is, std::string& t)
 }
 
 DICE_LIB_DLL_EXPORT
-Teuchos::ArrayRCP<std::string> tokenize_line(std::fstream &dataFile,
+Teuchos::ArrayRCP<std::string> tokenize_line(std::istream &dataFile,
   const std::string & delim,
   const bool capitalize){
 //  static int_t MAX_CHARS_PER_LINE = 512;

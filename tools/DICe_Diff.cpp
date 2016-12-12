@@ -50,12 +50,16 @@
 #include <Teuchos_oblackholestream.hpp>
 
 #include <cassert>
+#include <map>
 
 using namespace DICe;
 
 int main(int argc, char *argv[]) {
 
-  /// usage ./DICe_Diff <infileA> <infileB> [-t <tol>] [-f <value>] [-v] [-n]
+  /// usage ./DICe_Diff <infileA> <infileB or base name for parallel> [-t <tol>] [-f <value>] [-v] [-n] [-p <count>]
+  /// Note: if this is a parallel comparison, this exec assumes that the first file is serail (contains all data points)
+  /// the second file listed is the one that is split among several processors so only the base name is specified and the
+  /// rest of the name is determined based on the number of procs
 
   DICe::initialize(argc, argv);
 
@@ -78,6 +82,7 @@ int main(int argc, char *argv[]) {
       std::cout << "          -t <tol> relative tolerance " << std::endl;
       std::cout << "          -f <value> floor, values below the floor in the gold file will not be tested" << std::endl;
       std::cout << "          -n numerical values only" << std::endl;
+      std::cout << "          -p <count> parallel output number of processors" << std::endl;
       exit(0);
     }
   }
@@ -96,6 +101,7 @@ int main(int argc, char *argv[]) {
 
   // TODO add delimeter option
 
+  int_t num_procs = 1;
   for(int_t i=3;i<argc;++i){
     std::string arg = argv[i];
     if(arg=="-v"){
@@ -107,6 +113,11 @@ int main(int argc, char *argv[]) {
     else if(arg=="-t"){
       assert(argc>i+1 && "Error, tolerance must be specified for -t option");
       relTol = strtod(argv[i+1],NULL);
+      i++;
+    }
+    else if(arg=="-p"){
+      assert(argc>i+1 && "Error, count must be specified for -p option");
+      num_procs = atoi(argv[i+1]);
       i++;
     }
     else if(arg=="-f"){
@@ -122,92 +133,215 @@ int main(int argc, char *argv[]) {
   }
   std::string fileA = argv[1];
   std::string fileB = argv[2];
-  *outStream << "File A: " << fileA << std::endl;
-  *outStream << "File B: " << fileB << std::endl;
-  *outStream << "Relative Tol: " << relTol << std::endl;
-  *outStream << "Floor value: " << floor << " active " << use_floor << std::endl;
+  *outStream << "File A:                " << fileA << std::endl;
+  *outStream << "File B (or base name): " << fileB << std::endl;
+  *outStream << "Relative Tol:          " << relTol << std::endl;
+  *outStream << "Floor value:           " << floor << " active " << use_floor << std::endl;
+  *outStream << "Number of processors:  " << num_procs << std::endl;
 
-  // read the two files line by line and compare both
-  // (white space is ignored)
-
-  std::fstream dataFileA(fileA.c_str(), std::ios_base::in | std::ios_base::binary);
-  assert(dataFileA.good());
-  std::fstream dataFileB(fileB.c_str(), std::ios_base::in | std::ios_base::binary);
-  assert(dataFileB.good());
-
-  // read each line of the file
-  int_t line = 0;
-  while (!dataFileA.eof())
-  {
-    bool line_diff = false;
-    std::vector<int_t> badTokenIds;
-    std::vector<std::string> badTokenTypes;
-    if(dataFileB.eof()) {
-      *outStream << "Error, File A has more lines than FileB " << std::endl;
-      errorFlag++;
-      break;
+  if(num_procs > 1){
+    // read all of the number line from A and store in a map
+    std::map<int_t,Teuchos::ArrayRCP<std::string> > fileASolutions;
+    std::fstream dataFileA(fileA.c_str(), std::ios_base::in | std::ios_base::binary);
+    while (!dataFileA.eof())
+    {
+      Teuchos::ArrayRCP<std::string> tokens = DICe::tokenize_line(dataFileA,delimiter);
+      if(tokens.size()==0) continue;
+      if(!DICe::is_number(tokens[0])) continue;
+      // check that the first number is an integer (presumed an id)
+      // if ids have been omitted this will fail
+      const scalar_t remainder = strtod(tokens[0].c_str(),NULL) - std::floor(strtod(tokens[0].c_str(),NULL));
+      TEUCHOS_TEST_FOR_EXCEPTION(remainder!=0.0,std::runtime_error,
+        "Error, first column in the output file must be the subset or node id "
+        "(cannot ommit the id in the output parameters to compare parallel files)");
+      fileASolutions.insert(std::pair<int_t,Teuchos::ArrayRCP<std::string> >(std::atoi(tokens[0].c_str()),tokens));
     }
-    Teuchos::ArrayRCP<std::string> tokensA = DICe::tokenize_line(dataFileA,delimiter);
-    Teuchos::ArrayRCP<std::string> tokensB = DICe::tokenize_line(dataFileB,delimiter);
-    if(tokensA.size()>=2){
-      if(tokensA[1].find(masthead)!=std::string::npos){ // skip the masthead
-        line++;
-        continue;
-      }
-    }
-    if(tokensA.size()!=tokensB.size()){
-      *outStream << "Error, Different number of tokens per line A:" << tokensA.size() << " B: " << tokensB.size() << std::endl;
-      errorFlag++;
-      break;
-    }
-    for(int_t i=0;i<tokensA.size();++i){
-      // number
-      if(DICe::is_number(tokensA[i])){
-        assert(DICe::is_number(tokensB[i]));
-        scalar_t valA = strtod(tokensA[i].c_str(),NULL);
-        scalar_t valB = strtod(tokensB[i].c_str(),NULL);
-        scalar_t diff = std::abs((valA - valB)/valA);
-        const bool tiny = (std::abs(valA) + std::abs(valB) < 1.0E-8);
-        const bool below_floor = std::abs(valA) < floor;
-        if(!below_floor||!use_floor){
-          if(!tiny && diff > relTol){
-            line_diff = true;
-            badTokenIds.push_back(i);
-            badTokenTypes.push_back("n");
+    dataFileA.close();
+    // now that the offsets are set up, compare the files one processor chunk at a time
+    std::set<int_t> compared_ids;
+    for(int_t i=0;i<num_procs;++i){
+      std::stringstream name;
+      name << fileB << "." << num_procs << "." << i << ".txt";
+      // read the number of lines in each file:
+      std::fstream dataFileB(name.str().c_str(), std::ios_base::in | std::ios_base::binary);
+      assert(dataFileB.good());
+      int_t par_line = 0;
+      while (!dataFileB.eof())
+      {
+        bool line_diff = false;
+        std::vector<int_t> badTokenIds;
+        std::vector<std::string> badTokenTypes;
+        Teuchos::ArrayRCP<std::string> tokensB = DICe::tokenize_line(dataFileB,delimiter);
+        if(tokensB.size()==0) continue;
+        if(!DICe::is_number(tokensB[0])) continue;
+        const scalar_t remainder = strtod(tokensB[0].c_str(),NULL) - std::floor(strtod(tokensB[0].c_str(),NULL));
+        TEUCHOS_TEST_FOR_EXCEPTION(remainder!=0.0,std::runtime_error,
+          "Error, first column in the parallel output file must be the subset or node id "
+          "(cannot ommit the id in the output parameters to compare parallel files)");
+        const int_t subset_id = std::atoi(tokensB[0].c_str());
+        // find that row in the saved data:
+        TEUCHOS_TEST_FOR_EXCEPTION(fileASolutions.find(subset_id)==fileASolutions.end(),std::runtime_error,
+          "Error could not find parallel subset " << subset_id << " in serial file");
+        Teuchos::ArrayRCP<std::string> tokensA = fileASolutions.find(subset_id)->second;
+        compared_ids.insert(subset_id);
+        if(tokensB.size()==0) break;
+        bool read_error = false;
+        assert(tokensA.size()!=0);
+        assert(tokensB.size()!=0);
+        read_error = !DICe::is_number(tokensA[0]);
+        read_error = !DICe::is_number(tokensB[0]);
+        read_error = tokensA.size()!=tokensB.size();
+        if(read_error){
+          *outStream << "Error, output files are not compatible (read error)" << std::endl;
+          errorFlag++;
+          break;
+        }
+        for(int_t i=0;i<tokensA.size();++i){
+          // number
+          if(DICe::is_number(tokensA[i])){
+            assert(DICe::is_number(tokensB[i]));
+            scalar_t valA = strtod(tokensA[i].c_str(),NULL);
+            scalar_t valB = strtod(tokensB[i].c_str(),NULL);
+            scalar_t diff = std::abs((valA - valB)/valA);
+            const bool tiny = (std::abs(valA) + std::abs(valB) < 1.0E-8);
+            const bool below_floor = std::abs(valA) < floor;
+            if(!below_floor||!use_floor){
+              if(!tiny && diff > relTol){
+                line_diff = true;
+                badTokenIds.push_back(i);
+                badTokenTypes.push_back("n");
+              }
+            }
           }
+          // string
+          else{
+            assert(!DICe::is_number(tokensB[i]));
+            if(tokensA[i]!=tokensB[i] && !numerical_values_only)
+              line_diff = true;
+            badTokenIds.push_back(i);
+            badTokenTypes.push_back("s");
+          }
+        } // end token iteration
+        if(line_diff){
+          errorFlag++;
+          *outStream << "< " << par_line << " (";
+          for(size_t i=0;i<badTokenIds.size();++i){
+            *outStream << badTokenIds[i] << "[" << badTokenTypes[i] << "] ";
+          }
+          *outStream  << "): ";
+          for(int_t i=0;i<tokensA.size();++i)
+            *outStream << tokensA[i] << " ";
+          *outStream << std::endl;
+          *outStream << "> " << par_line << " (";
+          for(size_t i=0;i<badTokenIds.size();++i){
+            *outStream << badTokenIds[i] << "[" << badTokenTypes[i] << "] ";
+          }
+          *outStream  << "): ";
+          for(int_t i=0;i<tokensB.size();++i)
+            *outStream << tokensB[i] << " ";
+          *outStream << std::endl;
+        } // end line diff
+        par_line++;
+      } // end dataFileB.eof() loop
+      *outStream << "proc " << i << " number of lines compared " << par_line << std::endl;
+      assert(par_line>0);
+      dataFileB.close();
+    } // end of parallel loop
+    // check that all the ids were compared
+    std::map<int_t,Teuchos::ArrayRCP<std::string> >::iterator it=fileASolutions.begin();
+    std::map<int_t,Teuchos::ArrayRCP<std::string> >::iterator it_end=fileASolutions.end();
+    bool missing_value = false;
+    for(;it!=it_end;++it){
+      if(compared_ids.find(it->first)==compared_ids.end())missing_value = true;
+    }
+    if(missing_value){
+      *outStream << "Error, some ids in the serial output file were not present in any of the parallel output files" << std::endl;
+      errorFlag++;
+    }
+  }
+  else{
+    // read the two files line by line and compare both
+    // (white space is ignored)
+    std::fstream dataFileA(fileA.c_str(), std::ios_base::in | std::ios_base::binary);
+    assert(dataFileA.good());
+    std::fstream dataFileB(fileB.c_str(), std::ios_base::in | std::ios_base::binary);
+    assert(dataFileB.good());
+
+    // read each line of the file
+    int_t line = 0;
+    while (!dataFileA.eof())
+    {
+      bool line_diff = false;
+      std::vector<int_t> badTokenIds;
+      std::vector<std::string> badTokenTypes;
+      if(dataFileB.eof()) {
+        *outStream << "Error, File A has more lines than FileB " << std::endl;
+        errorFlag++;
+        break;
+      }
+      Teuchos::ArrayRCP<std::string> tokensA = DICe::tokenize_line(dataFileA,delimiter);
+      Teuchos::ArrayRCP<std::string> tokensB = DICe::tokenize_line(dataFileB,delimiter);
+      if(tokensA.size()>=2){
+        if(tokensA[1].find(masthead)!=std::string::npos){ // skip the masthead
+          line++;
+          continue;
         }
       }
-      // string
-      else{
-        assert(!DICe::is_number(tokensB[i]));
-        if(tokensA[i]!=tokensB[i] && !numerical_values_only)
-          line_diff = true;
-        badTokenIds.push_back(i);
-        badTokenTypes.push_back("s");
+      if(tokensA.size()!=tokensB.size()){
+        *outStream << "Error, Different number of tokens per line A:" << tokensA.size() << " B: " << tokensB.size() << std::endl;
+        errorFlag++;
+        break;
       }
+      for(int_t i=0;i<tokensA.size();++i){
+        // number
+        if(DICe::is_number(tokensA[i])){
+          assert(DICe::is_number(tokensB[i]));
+          scalar_t valA = strtod(tokensA[i].c_str(),NULL);
+          scalar_t valB = strtod(tokensB[i].c_str(),NULL);
+          scalar_t diff = std::abs((valA - valB)/valA);
+          const bool tiny = (std::abs(valA) + std::abs(valB) < 1.0E-8);
+          const bool below_floor = std::abs(valA) < floor;
+          if(!below_floor||!use_floor){
+            if(!tiny && diff > relTol){
+              line_diff = true;
+              badTokenIds.push_back(i);
+              badTokenTypes.push_back("n");
+            }
+          }
+        }
+        // string
+        else{
+          assert(!DICe::is_number(tokensB[i]));
+          if(tokensA[i]!=tokensB[i] && !numerical_values_only)
+            line_diff = true;
+          badTokenIds.push_back(i);
+          badTokenTypes.push_back("s");
+        }
+      }
+      if(line_diff){
+        errorFlag++;
+        *outStream << "< " << line << " (";
+        for(size_t i=0;i<badTokenIds.size();++i){
+          *outStream << badTokenIds[i] << "[" << badTokenTypes[i] << "] ";
+        }
+        *outStream  << "): ";
+        for(int_t i=0;i<tokensA.size();++i)
+          *outStream << tokensA[i] << " ";
+        *outStream << std::endl;
+        *outStream << "> " << line << " (";
+        for(size_t i=0;i<badTokenIds.size();++i){
+          *outStream << badTokenIds[i] << "[" << badTokenTypes[i] << "] ";
+        }
+        *outStream  << "): ";
+        for(int_t i=0;i<tokensB.size();++i)
+          *outStream << tokensB[i] << " ";
+        *outStream << std::endl;
+      }
+      line++;
     }
-    if(line_diff){
-      errorFlag++;
-      *outStream << "< " << line << " (";
-      for(size_t i=0;i<badTokenIds.size();++i){
-        *outStream << badTokenIds[i] << "[" << badTokenTypes[i] << "] ";
-      }
-      *outStream  << "): ";
-      for(int_t i=0;i<tokensA.size();++i)
-        *outStream << tokensA[i] << " ";
-      *outStream << std::endl;
-      *outStream << "> " << line << " (";
-      for(size_t i=0;i<badTokenIds.size();++i){
-        *outStream << badTokenIds[i] << "[" << badTokenTypes[i] << "] ";
-      }
-      *outStream  << "): ";
-      for(int_t i=0;i<tokensB.size();++i)
-        *outStream << tokensB[i] << " ";
-      *outStream << std::endl;
-    }
-    line++;
-  }
-
+    dataFileA.close();
+    dataFileB.close();
+  } // end serial comparison
   DICe::finalize();
 
   if (errorFlag != 0){
