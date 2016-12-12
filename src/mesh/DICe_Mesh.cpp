@@ -440,7 +440,7 @@ Mesh::create_elem_node_field_maps(const bool force_elem_and_node_maps_to_match){
 
   scalar_elem_dist_map_ = Teuchos::rcp (new MultiField_Map(-1, elem_list, indexBase, *comm_));
   //std::cout << " ELEM DIST MAP " << std::endl;
-  //scalar_elem_dist_map->describe();
+  //scalar_elem_dist_map_->describe();
   vector_elem_dist_map_ = Teuchos::rcp (new MultiField_Map(-1, elem_list_vectorized, indexBase, *comm_));
 
   if(force_elem_and_node_maps_to_match){
@@ -474,7 +474,7 @@ Mesh::create_elem_node_field_maps(const bool force_elem_and_node_maps_to_match){
     }
     scalar_node_dist_map_ = Teuchos::rcp(new MultiField_Map(-1,gids_on_this_proc, indexBase, *comm_));
     //std::cout << " SCALAR_NODE_DIST MAP: " << std::endl;
-    //scalar_node_dist_map->describe();
+    //scalar_node_dist_map_->describe();
     vector_node_dist_map_ = Teuchos::rcp(new MultiField_Map(-1,gids_on_this_proc_vectorized, indexBase, *comm_));
     //std::cout << " VECTOR_NODE_DIST MAP: " << std::endl;
     //vector_node_dist_map->describe();
@@ -1921,6 +1921,14 @@ Teuchos::RCP<Mesh> create_point_or_tri_mesh(const DICe::mesh::Base_Element_Type 
   std::set<int_t> & lagrange_boundary_nodes,
   const std::string & serial_output_filename)
 {
+  // notes on creating an exodus mesh below:
+  // the input connectivity vector is in terms of local ids
+  // the output connectivity stored on each element is in terms of global ids
+  // the node map maps local ids to global node ids
+  // the elem map maps local elem ids to global ids
+  // in the exodus mesh: the connectivity vectors have to be 1 based,
+  // although in the elem and node maps the "display global id" can be 0 based
+
   DEBUG_MSG("create_exodus_mesh(): creating an exodus mesh");
   TEUCHOS_TEST_FOR_EXCEPTION(elem_type!=DICe::mesh::TRI6&&elem_type!=DICe::mesh::TRI3&&elem_type!=DICe::mesh::MESHLESS,
     std::runtime_error,
@@ -1939,7 +1947,6 @@ Teuchos::RCP<Mesh> create_point_or_tri_mesh(const DICe::mesh::Base_Element_Type 
     "Error node coords x is of zero size");
   TEUCHOS_TEST_FOR_EXCEPTION(node_coords_x.size()!=node_coords_y.size(),std::runtime_error,
     "Error the dims of the node coord vectors don't match");
-  const int_t num_nodes = node_coords_x.size();
   std::stringstream out_file_base;
   // find the position of the file extension
   size_t pos_out = serial_output_filename.find(".g");
@@ -1982,7 +1989,8 @@ Teuchos::RCP<Mesh> create_point_or_tri_mesh(const DICe::mesh::Base_Element_Type 
   const int_t num_dim = 2;
   mesh->set_spatial_dimension(num_dim);
 
-  // put all the nodes in the mesh
+  // put all the overlap nodes in the mesh
+  const int_t num_nodes = node_map.size();
   for(int_t i =0;i<num_nodes;++i){
     Teuchos::RCP<Node> node_rcp = Teuchos::rcp(new DICe::mesh::Node(node_map[i],i));
     mesh->get_node_set()->insert(std::pair<int_t,Teuchos::RCP<Node> >(node_rcp->global_id(),node_rcp));
@@ -2015,13 +2023,14 @@ Teuchos::RCP<Mesh> create_point_or_tri_mesh(const DICe::mesh::Base_Element_Type 
     }
     for(int_t k=0;k<num_nodes_per_elem;++k)
     {
+      assert(node_map.size()>connectivity_swap[k]-1);
       const int_t global_node_id = node_map[connectivity_swap[k]-1];
       // find the node in the set with the same global id
       if(mesh->get_node_set()->find(global_node_id)!=mesh->get_node_set()->end()){
         conn.push_back(mesh->get_node_set()->find(global_node_id)->second);
       }
       else{
-        TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"Could not find node rcp in set: " << global_node_id);
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"Proc " << mesh->get_comm()->get_rank() << " Could not find node rcp in set: " << global_node_id);
       }
     }
     // create an element and put it in the mesh

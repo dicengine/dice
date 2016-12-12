@@ -711,7 +711,7 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
     model_y = mesh->get_overlap_field(field_enums::MODEL_COORDINATES_Y_FS);
     model_z = mesh->get_overlap_field(field_enums::MODEL_COORDINATES_Z_FS);
     // also check that the field has values
-    use_model_coordinates = model_x->norm() > 1.0E-8;
+    use_model_coordinates = mesh->get_field(field_enums::MODEL_COORDINATES_X_FS)->norm() > 1.0E-8;
   }
   if(use_model_coordinates){
     init_spa_dim = 3;
@@ -759,7 +759,7 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   for(;elem_it!=elem_end;++elem_it)
   {
     const int_t local_id = elem_it->get()->local_id();
-    elem_map[local_id]=elem_it->get()->global_id()+1; // ids are !ALWAYS! 1 based in exodus
+    elem_map[local_id]=elem_it->get()->global_id() + 1;
   }
 
   error_int = ex_put_coord(output_exoid, x, y, z);
@@ -857,7 +857,7 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
           const int_t stride = conn_index * num_nodes_per_elem + node_it;
           const Teuchos::RCP<DICe::mesh::Node> node = connectivity[node_it];
           const int_t local_node_id = node.get()->overlap_local_id();
-          block_connect[stride] = local_node_id+1;  // connectivity is !ALWAYS! 1 based in exodus file
+          block_connect[stride] = local_node_id + 1;  // connectivity is !ALWAYS! 1 based in exodus file
         }
         conn_index++;
       }

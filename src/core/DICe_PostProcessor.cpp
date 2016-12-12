@@ -49,7 +49,7 @@ namespace DICe {
 Post_Processor::Post_Processor(const std::string & name) :
   name_(name),
   local_num_points_(0),
-  global_num_points_(0),
+  overlap_num_points_(0),
   neighborhood_initialized_(false),
   coords_x_name_(DICe::mesh::field_enums::INITIAL_COORDINATES_FS.get_name_label()),
   coords_y_name_(DICe::mesh::field_enums::INITIAL_COORDINATES_FS.get_name_label()),
@@ -63,9 +63,9 @@ Post_Processor::initialize(Teuchos::RCP<DICe::mesh::Mesh> & mesh){
   mesh_ = mesh;
   assert(mesh_!=Teuchos::null);
   local_num_points_ = mesh_->get_scalar_node_dist_map()->get_num_local_elements();
-  global_num_points_ = mesh_->get_scalar_node_dist_map()->get_num_global_elements();
+  overlap_num_points_ = mesh_->get_scalar_node_overlap_map()->get_num_local_elements();
   assert(local_num_points_>0);
-  assert(global_num_points_>0);
+  assert(overlap_num_points_>0);
   for(size_t i=0;i<field_specs_.size();++i)
     mesh_->create_field(field_specs_[i]);
 }
@@ -153,8 +153,8 @@ Post_Processor::initialize_neighborhood(const scalar_t & neighborhood_radius){
   // create neighborhood lists using nanoflann:
   DEBUG_MSG("creating the point cloud using nanoflann");
   point_cloud_ = Teuchos::rcp(new Point_Cloud<scalar_t>());
-  point_cloud_->pts.resize(global_num_points_);
-  for(int_t i=0;i<global_num_points_;++i){
+  point_cloud_->pts.resize(overlap_num_points_);
+  for(int_t i=0;i<overlap_num_points_;++i){
     point_cloud_->pts[i].x = coords->local_value(i*spa_dim+0);
     point_cloud_->pts[i].y = coords->local_value(i*spa_dim+1);
     point_cloud_->pts[i].z = 0.0;
@@ -178,19 +178,18 @@ Post_Processor::initialize_neighborhood(const scalar_t & neighborhood_radius){
   for(int_t i=0;i<local_num_points_;++i){
     // get the gid of the point
     const int_t gid = mesh_->get_scalar_node_dist_map()->get_global_element(i);
-    //std::cout << "** POINT GID " << gid << std::endl;
     // get the overlap local id of the point
     const int_t olid = mesh_->get_scalar_node_overlap_map()->get_local_element(gid);
+    assert(olid<overlap_num_points_);
     query_pt[0] = point_cloud_->pts[olid].x;
     query_pt[1] = point_cloud_->pts[olid].y;
-    query_pt[2] = point_cloud_->pts[olid].z;
+    query_pt[2] = 0.0;
     kd_tree->radiusSearch(&query_pt[0],neigh_rad_2,ret_matches,params);
     for(size_t j=0;j<ret_matches.size();++j){
       const int_t neigh_olid = ret_matches[j].first;
       neighbor_list_[i].push_back(neigh_olid);
       neighbor_dist_x_[i].push_back(coords->local_value(neigh_olid*spa_dim+0) - coords->local_value(olid*spa_dim+0));
       neighbor_dist_y_[i].push_back(coords->local_value(neigh_olid*spa_dim+1) - coords->local_value(olid*spa_dim+1));
-      //std::cout << "** NEIGHBOR GID " << mesh_->get_scalar_node_overlap_map()->get_global_element(neigh_olid) << " dist x " << neighbor_dist_x_[i][j] << " dist y " << neighbor_dist_y_[i][j] << std::endl;
     }
   }
   neighborhood_initialized_ = true;

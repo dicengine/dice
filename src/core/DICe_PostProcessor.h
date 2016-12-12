@@ -158,8 +158,8 @@ protected:
   std::string name_;
   /// Number of points local to this processor
   int_t local_num_points_;
-  /// Number of global points
-  int_t global_num_points_;
+  /// Number of overalp points
+  int_t overlap_num_points_;
   /// The collection of field names specific to this post processor
   std::vector<DICe::mesh::field_enums::Field_Spec> field_specs_;
   /// pointer to the point cloud used for the neighbor searching

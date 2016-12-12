@@ -968,18 +968,20 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   // let the schema know how many images there are in the sequence:
   // initialize the schema
   // collect the overlap coordinates vector from the other schema because the local fields will only have this proc's
+  // the size of the coords vector needs to be the global number of elements, but only the locally used elements need values
   Teuchos::RCP<MultiField> stereo_coords_x = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::STEREO_COORDINATES_X_FS);
   Teuchos::RCP<MultiField> stereo_coords_y = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::STEREO_COORDINATES_Y_FS);
   Teuchos::RCP<MultiField> neighbors = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::NEIGHBOR_ID_FS);
-  const int_t num_global_subsets = schema->global_num_subsets();
-  assert(num_global_subsets == stereo_coords_x->get_map()->get_num_local_elements());
-  Teuchos::ArrayRCP<scalar_t> coords_x(num_global_subsets,0.0);
-  Teuchos::ArrayRCP<scalar_t> coords_y(num_global_subsets,0.0);
-  Teuchos::RCP<std::vector<int_t> > neighbor_ids = Teuchos::rcp(new std::vector<int_t>(num_global_subsets,-1));
-  for(int_t i=0;i<num_global_subsets;++i){
-    coords_x[i] = std::round(stereo_coords_x->local_value(i));
-    coords_y[i] = std::round(stereo_coords_y->local_value(i));
-    (*neighbor_ids)[i] = neighbors->local_value(i);
+  const int_t global_num_subsets = schema->global_num_subsets();
+  const int_t num_overlap_subsets = stereo_coords_x->get_map()->get_num_local_elements();
+  Teuchos::ArrayRCP<scalar_t> coords_x(global_num_subsets,0.0);
+  Teuchos::ArrayRCP<scalar_t> coords_y(global_num_subsets,0.0);
+  Teuchos::RCP<std::vector<int_t> > neighbor_ids = Teuchos::rcp(new std::vector<int_t>(global_num_subsets,-1));
+  for(int_t i=0;i<num_overlap_subsets;++i){
+    int_t global_id = stereo_coords_x->get_map()->get_global_element(i);
+    coords_x[global_id] = std::round(stereo_coords_x->local_value(i));
+    coords_y[global_id] = std::round(stereo_coords_y->local_value(i));
+    (*neighbor_ids)[global_id] = neighbors->local_value(i);
   }
   initialize(coords_x,coords_y,schema->subset_dim(),Teuchos::null,neighbor_ids);
   TEUCHOS_TEST_FOR_EXCEPTION(schema->skip_solve_flags()->size()>0,std::runtime_error,"Error skip solves cannot be used in stereo");
@@ -1062,20 +1064,90 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   Teuchos::ArrayRCP<scalar_t> coords_y,
   Teuchos::RCP<MultiField_Map> dist_map){
 
+
+  int proc_rank=0;
+#if DICE_MPI
+  MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
+#endif
+
+  // collect all the ids local to this processor already:
+  std::set<int_t> id_list;
+  Teuchos::ArrayView<const int_t> my_gids = dist_map->get_global_element_list();
+  for(int_t i=0;i<my_gids.size();++i){
+    id_list.insert(my_gids[i]);
+  }
+
+  // determine the max strain window size:
+  scalar_t max_strain_window_size = 0.0;
+  for(size_t i=0;i<post_processors_.size();++i)
+    if(post_processors_[i]->strain_window_size() > max_strain_window_size)
+      max_strain_window_size = post_processors_[i]->strain_window_size();
+  DEBUG_MSG("max strain window size " << max_strain_window_size);
+
+  // Do a neighborhood search for all possible neighbors for post-processors
+
+  Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud<scalar_t>());
+  point_cloud->pts.resize(coords_x.size());
+  for(int_t i=0;i<coords_x.size();++i){
+    point_cloud->pts[i].x = coords_x[i];
+    point_cloud->pts[i].y = coords_y[i];
+    point_cloud->pts[i].z = 0.0;
+  }
+  DEBUG_MSG("building the kd-tree");
+  Teuchos::RCP<my_kd_tree_t> kd_tree = Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+  kd_tree->buildIndex();
+  DEBUG_MSG("kd-tree completed");
+  std::vector<std::pair<size_t,scalar_t> > ret_matches;
+  nanoflann::SearchParams params;
+  params.sorted = true; // sort by distance in ascending order
+  const scalar_t tiny = 1.0E-5;
+  scalar_t neigh_rad_2 = (scalar_t)max_strain_window_size/2.0;
+  neigh_rad_2 *= neigh_rad_2;
+  neigh_rad_2 += tiny;
+  scalar_t query_pt[3];
+  for(int_t i=0;i<my_gids.size();++i){
+    const int_t gid = my_gids[i];
+    assert(gid>=0&&gid<coords_x.size());
+    query_pt[0] = coords_x[gid];
+    query_pt[1] = coords_y[gid];
+    query_pt[2] = 0.0;
+    kd_tree->radiusSearch(&query_pt[0],neigh_rad_2,ret_matches,params);
+    for(size_t j=0;j<ret_matches.size();++j){
+      id_list.insert(ret_matches[j].first);
+    }
+  }
+  // at this point, the max neighbors should be included so create a reduced set of coordinates
+  const int_t num_overlap_points = id_list.size();
+  Teuchos::ArrayRCP<int_t> node_map(num_overlap_points,0);
+  Teuchos::ArrayRCP<scalar_t> overlap_coords_x(num_overlap_points,0.0);
+  Teuchos::ArrayRCP<scalar_t> overlap_coords_y(num_overlap_points,0.0);
+  std::set<int_t>::iterator list_it = id_list.begin();
+  std::set<int_t>::iterator list_end = id_list.end();
+  int_t ii=0;
+  for(;list_it!=list_end;++list_it){
+    overlap_coords_x[ii] = coords_x[*list_it];
+    overlap_coords_y[ii] = coords_y[*list_it];
+    node_map[ii++] = *list_it;
+  }
+
   // create a  DICe::mesh::Mesh that has a connectivity with only one node per elem
-  const int_t num_points = coords_x.size();
+  //const int_t num_points = coords_x.size();
   // the subset ownership is dictated by the dist_map
   // the overlap map for the subset-based method is an all own all map
   const int_t num_elem = dist_map->get_global_element_list().size();
   Teuchos::ArrayRCP<int_t> connectivity(num_elem,0);
   Teuchos::ArrayRCP<int_t> elem_map(num_elem,0);
-  for(int_t i=0;i<num_elem;++i){
-    connectivity[i] = dist_map->get_global_element_list()[i] + 1; // connectivity is ALWAYS one based in exodus
-    elem_map[i] = dist_map->get_global_element_list()[i];
+  // note: this assumes the elements are contiguous in terms of ids and that the overlap ids
+  // are in ascending order
+  int_t overlap_offset = 0;
+  list_it = id_list.begin();
+  for(;list_it!=list_end;++list_it){
+    if(dist_map->get_global_element_list()[0] <= *list_it) break;
+    overlap_offset++;
   }
-  Teuchos::ArrayRCP<int_t> node_map(num_points,0);
-  for(int_t i=0;i<num_points;++i){
-    node_map[i] = i;
+  for(int_t i=0;i<num_elem;++i){
+    connectivity[i] = overlap_offset + i + 1; // + 1 because exodus elem ids are 1-based
+    elem_map[i] = dist_map->get_global_element_list()[i];
   }
   // filename for output
   std::stringstream exo_name;
@@ -1089,8 +1161,8 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   std::set<int_t> neumann_boundary_nodes;
   std::set<int_t> lagrange_boundary_nodes;
   mesh_ = DICe::mesh::create_point_or_tri_mesh(DICe::mesh::MESHLESS,
-    coords_x,
-    coords_y,
+    overlap_coords_x,
+    overlap_coords_y,
     connectivity,
     node_map,
     elem_map,
@@ -2620,8 +2692,10 @@ int_t
 Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
   Teuchos::RCP<Schema> right_schema){
   TEUCHOS_TEST_FOR_EXCEPTION(right_schema==Teuchos::null,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(right_schema->local_num_subsets()!=local_num_subsets_,std::runtime_error,
+    "Error, incompatible schemas: left number of subsets " << local_num_subsets_ << " right " << right_schema->local_num_subsets());
 
-  assert(right_schema->local_num_subsets()==local_num_subsets_);
+  //assert(right_schema->local_num_subsets()==local_num_subsets_);
 
   // make sure the stereo coords fields are populated
   Teuchos::RCP<MultiField> coords_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
@@ -2769,20 +2843,20 @@ Schema::write_output(const std::string & output_folder,
   output_spec_->gather_fields();
 
   // only process 0 actually writes the output
-  if(my_proc!=0) return;
+  //if(my_proc!=0) return;
 
   std::stringstream infoName;
   infoName << output_folder << prefix << ".info";
 
   if(separate_files_per_subset){
-    for(int_t subset=0;subset<global_num_subsets_;++subset){
+    for(int_t subset=0;subset<local_num_subsets_;++subset){
       // determine the number of digits to append:
       int_t num_digits_total = 0;
       int_t num_digits_subset = 0;
       int_t decrement_total = global_num_subsets_;
-      int_t decrement_subset = subset;
+      int_t decrement_subset = subset_global_id(subset);
       while (decrement_total){decrement_total /= 10; num_digits_total++;}
-      if(subset==0) num_digits_subset = 1;
+      if(subset_global_id(subset)==0) num_digits_subset = 1;
       else
         while (decrement_subset){decrement_subset /= 10; num_digits_subset++;}
       int_t num_zeros = num_digits_total - num_digits_subset;
@@ -2792,13 +2866,13 @@ Schema::write_output(const std::string & output_folder,
       fName << output_folder << prefix << "_";
       for(int_t i=0;i<num_zeros;++i)
         fName << "0";
-      fName << subset;
+      fName << subset_global_id(subset);
       if(proc_size>1)
         fName << "." << proc_size;
       fName << ".txt";
       if(image_frame_==1){
         std::FILE * filePtr = fopen(fName.str().c_str(),"w"); // overwrite the file if it exists
-        if(separate_header_file){
+        if(separate_header_file&&my_proc==0){
           std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"w"); // overwrite the file if it exists
           output_spec_->write_info(infoFilePtr,true);
           fclose(infoFilePtr);
@@ -2811,7 +2885,7 @@ Schema::write_output(const std::string & output_folder,
       }
       // append the latest result to the file
       std::FILE * filePtr = fopen(fName.str().c_str(),"a");
-      output_spec_->write_frame(filePtr,first_frame_index_+image_frame_-1,subset);
+      output_spec_->write_frame(filePtr,first_frame_index_+image_frame_-1,subset_global_id(subset));
       fclose (filePtr);
     } // subset loop
   }
@@ -2838,10 +2912,10 @@ Schema::write_output(const std::string & output_folder,
       fName << "0";
     fName << first_frame_index_ + image_frame_ - 1;
     if(proc_size >1)
-      fName << "." << proc_size;
+      fName << "." << my_proc;
     fName << ".txt";
     std::FILE * filePtr = fopen(fName.str().c_str(),"w");
-    if(separate_header_file && image_frame_<=1){
+    if(separate_header_file && image_frame_<=1 && my_proc==0){
       std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"w"); // overwrite the file if it exists
       output_spec_->write_info(infoFilePtr,true);
       fclose(infoFilePtr);
@@ -2854,12 +2928,12 @@ Schema::write_output(const std::string & output_folder,
     // determine the sort order
     if(sort_txt_output_){
       // gather the coordinates fields
-      Teuchos::RCP<MultiField> subset_coords_x = mesh_->get_overlap_field(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
-      Teuchos::RCP<MultiField> subset_coords_y = mesh_->get_overlap_field(DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS);
+      Teuchos::RCP<MultiField> subset_coords_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
+      Teuchos::RCP<MultiField> subset_coords_y = mesh_->get_field(DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS);
       std::vector<std::tuple<int_t,scalar_t,scalar_t> >
-        data(global_num_subsets_,std::tuple<int_t,scalar_t,scalar_t>(0,0.0,0.0));
-      for(int_t i=0;i<global_num_subsets_;++i){
-        std::get<0>(data[i]) = i;
+        data(local_num_subsets_,std::tuple<int_t,scalar_t,scalar_t>(0,0.0,0.0));
+      for(int_t i=0;i<local_num_subsets_;++i){
+        std::get<0>(data[i]) = subset_global_id(i);
         std::get<1>(data[i]) = subset_coords_x->local_value(i);
         std::get<2>(data[i]) = subset_coords_y->local_value(i);
       }
@@ -2870,14 +2944,14 @@ Schema::write_output(const std::string & output_folder,
       //std::sort(std::begin(data), std::end(data), [](const std::tuple<int_t,scalar_t,scalar_t> & a, const std::tuple<int_t,scalar_t,scalar_t>& b)
       //{return std::get<1>(a) < std::get<1>(b);});
       // write the output
-      for(int_t i=0;i<global_num_subsets_;++i){
+      for(int_t i=0;i<local_num_subsets_;++i){
         const int_t sorted_index = std::get<0>(data[i]);
         output_spec_->write_frame(filePtr,sorted_index,sorted_index);
       }
     }
     else{
-      for(int_t i=0;i<global_num_subsets_;++i){
-        output_spec_->write_frame(filePtr,i,i);
+      for(int_t i=0;i<local_num_subsets_;++i){
+        output_spec_->write_frame(filePtr,subset_global_id(i),i);
       }
     }
     fclose (filePtr);
@@ -3216,10 +3290,10 @@ Output_Spec::gather_fields(){
     Field_Name fn = string_to_field_name(field_names_[i]);
     // test if the fn is not one of the cardinal schema fields but a mesh field added by a post processor
     if(fn==NO_SUCH_FIELD_NAME){
-      field_vec_[i] = schema_->mesh()->get_overlap_field(schema_->mesh()->get_field_spec(field_names_[i]));
+      field_vec_[i] = schema_->mesh()->get_field(schema_->mesh()->get_field_spec(field_names_[i]));
     }
     else{
-      field_vec_[i] = schema_->mesh()->get_overlap_field(schema_->field_name_to_spec(string_to_field_name(field_names_[i])));
+      field_vec_[i] = schema_->mesh()->get_field(schema_->field_name_to_spec(string_to_field_name(field_names_[i])));
     }
   }
 }
