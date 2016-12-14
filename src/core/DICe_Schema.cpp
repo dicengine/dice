@@ -2743,6 +2743,26 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
     }
     //std::cout << " xl " << xl << " yl " << yl << " xr " << xr << " yr " << yr << " X " << Xw << " Y " << Yw << " Z " << Zw << std::endl;
   }
+  if(image_frame_==1){
+    // if there is a best fit plane file, determine the best fit plane
+    // this has to be done after the inital 3d coords are established
+    std::ifstream f("best_fit_plane.dat");
+    if(f.good()){
+      Teuchos::RCP<MultiField> sigma = mesh_->get_field(DICe::mesh::field_enums::SIGMA_FS);
+      tri->best_fit_plane(model_x,model_y,model_z,sigma);
+      // retriangulate the coordinate in the first frame
+      for(int_t i=0;i<local_num_subsets_;++i){
+        xl = coords_x->local_value(i) + disp_x->local_value(i);
+        yl = coords_y->local_value(i) + disp_y->local_value(i);
+        xr = stereo_coords_x->local_value(i) + my_stereo_disp_x->local_value(i);
+        yr = stereo_coords_y->local_value(i) + my_stereo_disp_y->local_value(i);
+        tri->triangulate(xl,yl,xr,yr,X,Y,Z,Xw,Yw,Zw);
+        model_x->local_value(i) = Xw; // w-coordinates have been transformed by a user defined transform to world or model coords
+        model_y->local_value(i) = Yw;
+        model_z->local_value(i) = Zw;
+      }
+    }
+  }
   return 0;
 }
 

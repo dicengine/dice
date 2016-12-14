@@ -41,6 +41,7 @@
 
 #include <DICe.h>
 #include <DICe_Triangulation.h>
+#include <DICe_Parser.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -381,6 +382,69 @@ int main(int argc, char *argv[]) {
   if(std::abs(xr0 - 91.166) > errorTol || std::abs(yr0 - 569.5026) > errorTol){
     errorFlag++;
     *outStream << "Error, projective transform is incorrect" << std::endl;
+  }
+
+  *outStream << "testing projection to a best fit plane" << std::endl;
+
+  const scalar_t a = 1.2389;
+  const scalar_t b = 0.045;
+  const scalar_t d = 206.89;
+
+  const int_t num_data_pts = 10;
+  Teuchos::Array<int_t> map_ids(num_data_pts,0);
+  for(int_t i=0;i<num_data_pts;++i)
+       map_ids[i] = i;
+
+  MultiField_Comm comm;
+  Teuchos::RCP<MultiField_Map> map = Teuchos::rcp (new MultiField_Map(-1, map_ids, 0, comm));
+  Teuchos::RCP<MultiField> coords_x = Teuchos::rcp( new MultiField(map,1,true));
+  Teuchos::RCP<MultiField> coords_y = Teuchos::rcp( new MultiField(map,1,true));
+  Teuchos::RCP<MultiField> coords_z = Teuchos::rcp( new MultiField(map,1,true));
+  Teuchos::RCP<MultiField> sigma = Teuchos::rcp( new MultiField(map,1,true));
+  for(int_t i=0;i<num_data_pts;++i){
+    coords_x->local_value(i) = i;
+    coords_y->local_value(i) = -i*i;
+    coords_z->local_value(i) = -1.0*(a*i - b*i*i + d);
+    sigma->local_value(i) = 1.0;
+  }
+  Teuchos::RCP<Triangulation> fit_tri = Teuchos::rcp(new Triangulation("./cal/cal_a.txt"));
+  // create the best_fit_plane.dat file
+  std::FILE * filePtr = fopen("best_fit_plane.dat","w");
+  fprintf(filePtr,"%i %i\n",539,195);
+  fprintf(filePtr,"%i %i\n",550,195);
+  fclose(filePtr);
+
+  fit_tri->best_fit_plane(coords_x,coords_y,coords_z,sigma);
+
+  std::fstream bestFitDataFile("best_fit_plane_out.dat", std::ios_base::in);
+  TEUCHOS_TEST_FOR_EXCEPTION(!bestFitDataFile.good(),std::runtime_error,
+    "Error, could not open file best_fit_plane_out.dat");
+  std::vector<scalar_t> fit_sol = {1.238900e+00,4.500000e-02,2.068900e+02,-1.700444e+01,-3.485363e+01,-1.842548e+02,
+    -1.512044e+01,-3.484886e+01,-1.865891e+02,6.280542e-01,-2.298346e-02,7.778301e-01,1.589684e-03,9.995995e-01,
+    2.825277e-02,-7.781679e-01,-1.650777e-02,6.278393e-01,-1.700444e+01,-3.485363e+01,-1.842548e+02};
+  std::vector<scalar_t> fit_comp;
+  while(!bestFitDataFile.eof()){
+    Teuchos::ArrayRCP<std::string> tokens = tokenize_line(bestFitDataFile);
+    if(tokens.size()==0) continue;
+    TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()!=1,std::runtime_error,
+      "Error reading best_fit_plane.dat, should be 1 values per line");
+    fit_comp.push_back(std::strtod(tokens[0].c_str(),NULL));
+  }
+  if(fit_comp.size()!=fit_sol.size()){
+    *outStream << "Error wrong number of computed solution points in best_fit_plane.dat" << std::endl;
+    errorFlag++;
+  }
+  else{
+    bool value_error = false;
+    for(size_t i=0;i<fit_comp.size();++i){
+      if(std::abs(fit_comp[i]-fit_sol[i]) > errorTol){
+        value_error = true;
+        *outStream << "Error, wrong value. Should be " << fit_sol[i] << " is " << fit_comp[i] << std::endl;
+      }
+      if(value_error){
+        errorFlag++;
+      }
+    }
   }
 
   *outStream << "--- End test ---" << std::endl;

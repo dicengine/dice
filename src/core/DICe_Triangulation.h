@@ -44,6 +44,11 @@
 
 #include <DICe.h>
 #include <DICe_Image.h>
+#ifdef DICE_TPETRA
+  #include "DICe_MultiFieldTpetra.h"
+#else
+  #include "DICe_MultiFieldEpetra.h"
+#endif
 
 #include <Teuchos_SerialDenseMatrix.hpp>
 
@@ -182,6 +187,24 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION(projectives->size()!=8,std::runtime_error,"Error, projectives vector is the wrong size");
     projectives_ = projectives;
   }
+
+  /// determine the best fit plane to the complete set of X Y Z coordinates (excluding any failed points)
+  /// \param cx pointer to the x coordinates from the initial triangulation
+  /// \param cy pointer to the y coordinates from the initial triangulation
+  /// \param cz pointer to the z coordinates from the intiial triangulation
+  /// \param sigma pointer to the sigma field
+  void best_fit_plane(Teuchos::RCP<MultiField> & cx,
+    Teuchos::RCP<MultiField> & cy,
+    Teuchos::RCP<MultiField> & cz,
+    Teuchos::RCP<MultiField> & sigma);
+
+
+  /// returns the cosine of the angle between two vectors
+  /// \param a vector a, must have three components
+  /// \param b vector b, must have three components
+  scalar_t cosine_of_two_vectors(const std::vector<scalar_t> & a,
+    const std::vector<scalar_t> & b);
+
 
 private:
   /// \brief load the calibration parameters
