@@ -3,6 +3,7 @@ include_directories (
     . 
     ${DICE_HEADER_DIRS}
     ${DICE_TRILINOS_HEADERS}
+    ${Boost_INCLUDE_DIRS}
 )
 
 SET(DICE_TEST_LIBRARIES
@@ -73,6 +74,20 @@ if(DICE_ENABLE_GLOBAL)
     DESTINATION ${CMAKE_INSTALL_PREFIX}/bin 
   )
   set_target_properties(DICe_ExoDiff
+    PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
+    ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
+    RUNTIME_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/bin"
+  )
+endif()
+if(DICE_ENABLE_NETCDF)
+  add_executable(DICe_NetCDFToTiff DICe_NetCDFToTiff.cpp)
+  target_link_libraries(DICe_NetCDFToTiff ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES} dicebase)
+
+  install(TARGETS DICe_NetCDFToTiff
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/bin 
+  )
+  set_target_properties(DICe_NetCDFToTiff
     PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
     ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
