@@ -56,6 +56,7 @@
 using namespace DICe;
 
 int main(int argc, char *argv[]) {
+  boost::timer total_t;
   try{
     DICe::initialize(argc,argv);
 
@@ -312,7 +313,9 @@ int main(int argc, char *argv[]) {
     const int_t start_frame = cine_start_index==-1 ? 1 : cine_start_index;
     const int_t end_frame = cine_end_index==-1 ? num_images : cine_end_index;
     // if this is a stereo analysis do the initial cross correlation:
+    scalar_t cross_corr_time = 0.0;
     if(is_stereo){
+      boost::timer t;
       TEUCHOS_TEST_FOR_EXCEPTION(schema->analysis_type()==GLOBAL_DIC,std::runtime_error,"Error, global stereo not enabled yet");
       *outStream << "Processing cross correlation between left and right images" << std::endl;
       if(is_cine){
@@ -338,11 +341,13 @@ int main(int argc, char *argv[]) {
       stereo_schema->set_first_frame_index(cine_start_index + first_frame_index);
       stereo_schema->initialize(input_params,schema);
       stereo_schema->set_num_image_frames(num_images);
+      cross_corr_time = t.elapsed();
     }
 
     // iterate through the images and perform the correlation:
-    scalar_t total_time = 0.0;
+    scalar_t corr_time = 0.0;
     scalar_t elapsed_time = 0.0;
+    scalar_t write_time = 0.0;
     scalar_t max_time = 0.0;
     scalar_t min_time = 1.0E10;
     scalar_t avg_time = 0.0;
@@ -417,10 +422,11 @@ int main(int argc, char *argv[]) {
         elapsed_time = t.elapsed();
         if(elapsed_time>max_time)max_time = elapsed_time;
         if(elapsed_time<min_time)min_time = elapsed_time;
-        total_time += elapsed_time;
+        corr_time += elapsed_time;
       }
 
       // write the output
+      boost::timer write_t;
       schema->write_output(output_folder,file_prefix,separate_output_file_for_each_subset,separate_header_file);
       schema->post_execution_tasks();
       // print the timing data with or without verbose flag
@@ -436,35 +442,39 @@ int main(int argc, char *argv[]) {
         // TODO MOVE execute post processors to after this step
         // TODO refactor post processors to use the X and Y fields for strain
       }
-
+      write_time = write_t.elapsed();
     } // image loop
 
     schema->write_stats(output_folder,file_prefix);
     if(is_stereo)
       stereo_schema->write_stats(output_folder,stereo_file_prefix);
 
-    avg_time = total_time / num_images;
+    avg_time = corr_time / num_images;
 
     if(failed_step)
       *outStream << "\n--- Failed Step Occurred ---\n" << std::endl;
     else
       *outStream << "\n--- Successful Completion ---\n" << std::endl;
 
-    // output timing
+    scalar_t total_time = total_t.elapsed();
 
+    // output timing
     // print the timing data with or without verbose flag
     if(input_params->get<bool>(DICe::print_timing,false)){
-      std::cout << "Total time:              " << total_time << std::endl;
-      std::cout << "Avgerage time per image: " << avg_time << std::endl;
-      std::cout << "Max time per image:      " << max_time << std::endl;
-      std::cout << "Min time per image:      " << min_time << std::endl;
+      std::cout << "Total time:                " << total_time << std::endl;
+      std::cout << "Cross correlation time:    " << cross_corr_time << std::endl;
+      std::cout << "Correlation time:          " << corr_time << std::endl;
+      std::cout << "  Avgerage time per image: " << avg_time << std::endl;
+      std::cout << "  Max time per image:      " << max_time << std::endl;
+      std::cout << "  Min time per image:      " << min_time << std::endl;
+      std::cout << "Write output time:         " << write_time << std::endl;
     }
     //  write the time output to file:
     std::stringstream timeFileName;
     timeFileName << output_folder << "timing."<< proc_size << "." << proc_rank << ".txt";
     std::FILE * timeFile = fopen(timeFileName.str().c_str(),"w");
-    fprintf(timeFile,"TOTAL AVERAGE_PER_IMAGE MAX_PER_IMAGE MIN_PER_IMAGE\n");
-    fprintf(timeFile,"%4.4E %4.4E %4.4E %4.4E\n",total_time,avg_time,max_time,min_time);
+    fprintf(timeFile,"TOTAL CROSS_CORR CORR AVERAGE_PER_IMAGE MAX_PER_IMAGE MIN_PER_IMAGE WRITE\n");
+    fprintf(timeFile,"%4.4E %4.4E %4.4E %4.4E %4.4E %4.4E %4.4E\n",total_time,cross_corr_time,corr_time,avg_time,max_time,min_time,write_time);
     fclose(timeFile);
 
     DICe::finalize();
