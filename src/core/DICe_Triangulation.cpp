@@ -897,6 +897,19 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
   delete [] WORK;
   delete [] IPIV;
 
+  // for each point, plug in the left coords and compute the right
+  scalar_t error = 0.0;
+  for(int_t i=0;i<num_coords;++i){
+    scalar_t comp_right_x = 0.0;
+    scalar_t comp_right_y = 0.0;
+    project_left_to_right_sensor_coords(proj_xl[i],proj_yl[i],comp_right_x,comp_right_y);
+    DEBUG_MSG("input left x: " << proj_xl[i] << " y: " << proj_yl[i] << " right x: " << proj_xr[i] << " y: " << proj_yr[i] << " computed right x: " << comp_right_x << " y: " << comp_right_y);
+    error+=(comp_right_x - proj_xr[i])*(comp_right_x - proj_xr[i]) + (comp_right_y - proj_yr[i])*(comp_right_y - proj_yr[i]);
+  }
+  error = std::sqrt(error);
+  DEBUG_MSG("Triangulation::estimate_projective_transform(): initial projection error: " << error);
+  TEUCHOS_TEST_FOR_EXCEPTION(error > 100.0,std::runtime_error,"Error, initial projection error too large");
+
   int_t num_iterations = 0;
   // create an output file with the initial solution and final solution for projection params
   std::FILE * filePtr = fopen("projection_out.dat","w");
@@ -905,6 +918,31 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     fprintf(filePtr,"%e\n",(*projectives_)[i]);
   }
   fclose(filePtr);
+
+  if(output_projected_image){
+    const int_t w = left_img->width();
+    const int_t h = left_img->height();
+    Teuchos::RCP<Image> img = Teuchos::rcp(new Image(w,h,0.0));
+    Teuchos::ArrayRCP<intensity_t> intens = img->intensities();
+    scalar_t xr = 0.0;
+    scalar_t yr = 0.0;
+    intensity_t max_intens = 0.0;
+    for(int_t j=0.1*h;j<0.9*h;++j){
+      for(int_t i=0.1*w;i<0.9*w;++i){
+        project_left_to_right_sensor_coords(i,j,xr,yr);
+        intens[j*w+i] = right_img->interpolate_keys_fourth(xr,yr);
+        if(intens[j*w+i] > max_intens) max_intens = intens[j*w+i];
+      }
+    }
+    for(int_t j=0;j<h;++j){
+      for(int_t i=0;i<w;++i){
+        if(j<=0.1*h||j>=0.9*h||i<=0.1*w||i>=0.9*w){
+          intens[j*w+i] = max_intens; // color the boarder of the image white
+        }
+      }
+    }
+    img->write("right_projected_to_left_initial.tif");
+  }
 
   // simplex optimize the coefficients
   Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
@@ -940,13 +978,23 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     Teuchos::ArrayRCP<intensity_t> diff_intens = diff_img->intensities();
     scalar_t xr = 0.0;
     scalar_t yr = 0.0;
+    intensity_t max_intens = 0.0;
     for(int_t j=0.1*h;j<0.9*h;++j){
       for(int_t i=0.1*w;i<0.9*w;++i){
         project_left_to_right_sensor_coords(i,j,xr,yr);
         diff_intens[j*w+i] = (*left_img)(i,j) - right_img->interpolate_keys_fourth(xr,yr);
         intens[j*w+i] = right_img->interpolate_keys_fourth(xr,yr);
+        if(intens[j*w+i] > max_intens) max_intens = intens[j*w+i];
       }
     }
+    for(int_t j=0;j<h;++j){
+      for(int_t i=0;i<w;++i){
+        if(j<=0.1*h||j>=0.9*h||i<=0.1*w||i>=0.9*w){
+          intens[j*w+i] = max_intens; // color the boarder of the image white
+        }
+      }
+    }
+
     diff_img->write("projection_diff.tif");
     img->write("right_projected_to_left.tif");
   }
