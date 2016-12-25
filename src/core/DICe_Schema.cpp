@@ -1642,7 +1642,7 @@ Schema::execute_correlation(const bool is_cross_corr){
   }
 
   if(is_cross_corr){
-    save_cross_correlation_fields();
+    //save_cross_correlation_fields();
     optimization_method_ = orig_opt_method;
   }
   else{

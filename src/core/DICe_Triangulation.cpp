@@ -926,19 +926,10 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     Teuchos::ArrayRCP<intensity_t> intens = img->intensities();
     scalar_t xr = 0.0;
     scalar_t yr = 0.0;
-    intensity_t max_intens = 0.0;
-    for(int_t j=0.1*h;j<0.9*h;++j){
-      for(int_t i=0.1*w;i<0.9*w;++i){
-        project_left_to_right_sensor_coords(i,j,xr,yr);
-        intens[j*w+i] = right_img->interpolate_keys_fourth(xr,yr);
-        if(intens[j*w+i] > max_intens) max_intens = intens[j*w+i];
-      }
-    }
     for(int_t j=0;j<h;++j){
       for(int_t i=0;i<w;++i){
-        if(j<=0.1*h||j>=0.9*h||i<=0.1*w||i>=0.9*w){
-          intens[j*w+i] = max_intens; // color the boarder of the image white
-        }
+        project_left_to_right_sensor_coords(i,j,xr,yr);
+        intens[j*w+i] = right_img->interpolate_keys_fourth(xr,yr);
       }
     }
     img->write("right_projected_to_left_initial.tif");
@@ -978,23 +969,13 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     Teuchos::ArrayRCP<intensity_t> diff_intens = diff_img->intensities();
     scalar_t xr = 0.0;
     scalar_t yr = 0.0;
-    intensity_t max_intens = 0.0;
-    for(int_t j=0.1*h;j<0.9*h;++j){
-      for(int_t i=0.1*w;i<0.9*w;++i){
+    for(int_t j=0;j<h;++j){
+      for(int_t i=0;i<w;++i){
         project_left_to_right_sensor_coords(i,j,xr,yr);
         diff_intens[j*w+i] = (*left_img)(i,j) - right_img->interpolate_keys_fourth(xr,yr);
         intens[j*w+i] = right_img->interpolate_keys_fourth(xr,yr);
-        if(intens[j*w+i] > max_intens) max_intens = intens[j*w+i];
       }
     }
-    for(int_t j=0;j<h;++j){
-      for(int_t i=0;i<w;++i){
-        if(j<=0.1*h||j>=0.9*h||i<=0.1*w||i>=0.9*w){
-          intens[j*w+i] = max_intens; // color the boarder of the image white
-        }
-      }
-    }
-
     diff_img->write("projection_diff.tif");
     img->write("right_projected_to_left.tif");
   }
