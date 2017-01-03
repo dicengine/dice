@@ -429,6 +429,7 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   path_distance_threshold_ = -1.0;
   stat_container_ = Teuchos::rcp(new Stat_Container());
   use_incremental_formulation_ = false;
+  use_nonlinear_projection_ = false;
   sort_txt_output_ = false;
   set_params(params);
 }
@@ -558,6 +559,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
 
   initial_condition_file_ = diceParams->get<std::string>(DICe::initial_condition_file,"");
   use_incremental_formulation_ = diceParams->get<bool>(DICe::use_incremental_formulation,false);
+  use_nonlinear_projection_ = diceParams->get<bool>(DICe::use_nonlinear_projection,false);
   sort_txt_output_ = diceParams->get<bool>(DICe::sort_txt_output,false);
   gauss_filter_images_ = diceParams->get<bool>(DICe::gauss_filter_images,false);
   gauss_filter_mask_size_ = diceParams->get<int_t>(DICe::gauss_filter_mask_size,7);
@@ -1211,6 +1213,8 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   mesh_->create_field(mesh::field_enums::STATUS_FLAG_FS);
   mesh_->create_field(mesh::field_enums::NEIGHBOR_ID_FS);
   mesh_->create_field(mesh::field_enums::CONDITION_NUMBER_FS);
+  mesh_->create_field(mesh::field_enums::PROJECTION_AUG_X_FS);
+  mesh_->create_field(mesh::field_enums::PROJECTION_AUG_Y_FS);
   mesh_->create_field(mesh::field_enums::FIELD_1_FS);
   mesh_->create_field(mesh::field_enums::FIELD_2_FS);
   mesh_->create_field(mesh::field_enums::FIELD_3_FS);
@@ -1481,21 +1485,305 @@ Schema::post_execution_tasks(){
   }
 }
 
+void
+Schema::project_right_image_into_left_frame(Teuchos::RCP<Triangulation> tri,
+  const bool reference){
+  DEBUG_MSG("Schema::exectute_cross_correlation(): projecting the right image onto the left frame of reference");
+  const int_t w = ref_img_->width();
+  const int_t h = ref_img_->height();
+  Teuchos::RCP<Image> img = reference ? ref_img_ : def_imgs_[0];
+  Teuchos::RCP<Image> proj_img = Teuchos::rcp(new Image(w,h,0.0));
+  Teuchos::ArrayRCP<intensity_t> intens = proj_img->intensities();
+  scalar_t xr = 0.0;
+  scalar_t yr = 0.0;
+  for(int_t j=0;j<h;++j){
+    for(int_t i=0;i<w;++i){
+      tri->project_left_to_right_sensor_coords(i,j,xr,yr);
+      intens[j*w+i] = img->interpolate_keys_fourth(xr,yr);
+    }
+  }
+  if(reference){
+    // automatically compute the derivatives of the new reference image...
+    proj_img->compute_gradients();
+    set_ref_image(proj_img);
+  }else{
+    set_def_image(proj_img);
+  }
+}
+
 int_t
-Schema::execute_correlation(const bool is_cross_corr){
-  Optimization_Method orig_opt_method = optimization_method_;
-  if(is_cross_corr)
-    optimization_method_ = SIMPLEX; // force simplex for cross-correlation
+Schema::execute_cross_correlation(){
+  if(analysis_type_==GLOBAL_DIC){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, cross-correlation has not been implemented for global DIC");
+    return 0;
+  }
+  // make sure the data is ready to go since it may have been initialized externally by an api
+  assert(is_initialized_);
+  assert(global_num_subsets_>0);
+  assert(local_num_subsets_>0);
+  const int_t proc_id = comm_->get_rank();
+  const int_t num_procs = comm_->get_size();
+  DEBUG_MSG("********************");
+  std::stringstream progress;
+  progress << "[PROC " << proc_id << " of " << num_procs << "] processing cross correlation";
+  DEBUG_MSG(progress.str());
+  DEBUG_MSG("********************");
+
+  // keep track of the original parameters
+  const Initialization_Method orig_init_method = initialization_method_;
+  const Optimization_Method orig_opt_method = optimization_method_;
+
+  // change the parameters for cross-correlation
+  //initialization_method_ = USE_NEIGHBOR_VALUES;
+  //optimization_method_ = SIMPLEX;
+
+  // project the right image onto the left if requested
+  if(use_nonlinear_projection_){
+//    DEBUG_MSG("Schema::exectute_cross_correlation(): projecting the right image onto the left frame of reference");
+//    const int_t w = ref_img_->width();
+//    const int_t h = ref_img_->height();
+//    Teuchos::RCP<Image> proj_img = Teuchos::rcp(new Image(w,h,0.0));
+//    Teuchos::ArrayRCP<intensity_t> intens = proj_img->intensities();
+//    scalar_t xr = 0.0;
+//    scalar_t yr = 0.0;
+//    for(int_t j=0;j<h;++j){
+//      for(int_t i=0;i<w;++i){
+//        tri->project_left_to_right_sensor_coords(i,j,xr,yr);
+//        intens[j*w+i] = def_imgs_[0]->interpolate_keys_fourth(xr,yr);
+//      }
+//    }
+//    set_def_image(proj_img);
+
+    // the nonlinear projection may not be good enough to initialize so start with a 25x25 pixel search window
+
+    Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+    for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
+      scalar_t best_gamma = 100.0;
+      scalar_t min_u = 0.0;
+      scalar_t min_v = 0.0;
+      scalar_t search_radius_x = 100.0;
+      scalar_t search_radius_y = 25.0;
+      scalar_t search_step = 2.0;
+      Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,subset_global_id(subset_index)));
+      for(scalar_t v=-search_radius_y;v<search_radius_y;v+=search_step){
+        for(scalar_t u=-search_radius_x;u<search_radius_x;u+=search_step){
+          (*def)[DISPLACEMENT_X] = u; // note: value already in disp u is not added here
+          (*def)[DISPLACEMENT_Y] = v;
+          const scalar_t gamma = obj->gamma(def);
+          if(gamma > 0.0 && gamma < best_gamma){
+            best_gamma = gamma;
+            min_u = u;
+            min_v = v;
+          }
+        } // end search i loop
+      } // end search j loop
+      local_field_value(subset_index,DISPLACEMENT_X) = min_u;
+      local_field_value(subset_index,DISPLACEMENT_Y) = min_v;
+      DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " v " << min_v << " gamma " << best_gamma);
+    } // end subset loop
+  }
+  //def_imgs_[0]->write("new_right.tif");
+
+#ifdef DICE_DEBUG_MSG
+  std::stringstream message;
+  message << std::endl;
+  for(int_t i=0;i<local_num_subsets_;++i){
+    message << "[PROC " << proc_id << "] Owns subset global id (in cross-correlation order): " << this_proc_gid_order_[i] << " neighbor id: " << global_field_value(this_proc_gid_order_[i],NEIGHBOR_ID) << std::endl;
+  }
+  DEBUG_MSG(message.str());
+#endif
+
+  prepare_optimization_initializers();
+  for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
+    Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,
+      this_proc_gid_order_[subset_index]));
+    generic_correlation_routine(obj);
+  }
+
+//  // find the subset with the best match:
+//  scalar_t best_gamma = 100.0;
+//  int_t best_local_id = -1;
+//  Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+//  for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
+//    Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,
+//      this_proc_gid_order_[subset_index]));
+//    // for each subset: initialze the deformed subset with no deformation
+//    (*def)[DISPLACEMENT_X] = local_field_value(subset_index,DISPLACEMENT_X);
+//    (*def)[DISPLACEMENT_Y] = local_field_value(subset_index,DISPLACEMENT_Y);
+//    // if nonlinear projection is used, the deformation should be zero (check this)
+//    if(use_nonlinear_projection_){
+//      assert((*def)[DISPLACEMENT_X] == 0.0);
+//      assert((*def)[DISPLACEMENT_Y] == 0.0);
+//    }
+//    // measure initial gamma
+//    const scalar_t initial_gamma = obj->gamma(def);
+//    if(initial_gamma < best_gamma){
+//      best_gamma = initial_gamma;
+//      best_local_id = subset_index;
+//    }
+//  }
+//  DEBUG_MSG("Schema::exectute_cross_correlation(): best initial gamma " << best_gamma << " from subset " << subset_global_id(best_local_id) <<
+//    " location " << local_field_value(best_local_id,COORDINATE_X) << " " << local_field_value(best_local_id,COORDINATE_Y));
+//  assert(best_local_id > 0);
+//  TEUCHOS_TEST_FOR_EXCEPTION(best_gamma > 1.0,std::runtime_error,
+//    "Error, search for best initial gamma failed. Cross correlation initialization is too poor.");
+//
+//  // search in the vicinity for the best match for the best local id
+//  const int_t search_window_radius = 100.0;
+//  scalar_t min_u = local_field_value(best_local_id,DISPLACEMENT_X);
+//  scalar_t min_v = local_field_value(best_local_id,DISPLACEMENT_Y);
+//  Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,subset_global_id(best_local_id)));
+//  for(scalar_t v=-search_window_radius;v<search_window_radius;v+=1.0){
+//    for(scalar_t u=-search_window_radius;u<search_window_radius;u+=1.0){
+//      (*def)[DISPLACEMENT_X] = local_field_value(best_local_id,DISPLACEMENT_X) + u;
+//      (*def)[DISPLACEMENT_Y] = local_field_value(best_local_id,DISPLACEMENT_Y) + v;
+//      const scalar_t gamma = obj->gamma(def);
+//      if(gamma < best_gamma){
+//        best_gamma = gamma;
+//        min_u = u;
+//        min_v = v;
+//      }
+//    }
+//  }
+//  local_field_value(best_local_id,DISPLACEMENT_X) = min_u;
+//  local_field_value(best_local_id,DISPLACEMENT_Y) = min_v;
+//  DEBUG_MSG("Schema::execute_cross_correlation(): best initial displacement for subset " <<
+//    subset_global_id(best_local_id) << " u " << min_u << " v " << min_v);
+//
+//  // set up the seeds and order of subsets for processing:
+//
+//  // save off the original neigh id field
+//  Teuchos::RCP<MultiField> neigh_ids = mesh_->get_field(DICe::mesh::field_enums::NEIGHBOR_ID_FS);
+//  Teuchos::RCP<MultiField_Map> map = mesh_->get_scalar_node_dist_map();
+//  Teuchos::RCP<MultiField> original_neigh_ids = Teuchos::rcp(new MultiField(map,1,true));
+//  original_neigh_ids->update(1.0,*neigh_ids,0.0);
+//  // reset the nieghbor ids field
+//  neigh_ids->put_scalar(-1.0);
+//
+//  // set up a neighbor search tree:
+//  Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud<scalar_t>());
+//  point_cloud->pts.resize(local_num_subsets_);
+//  for(int_t i=0;i<local_num_subsets_;++i){
+//    point_cloud->pts[i].x = local_field_value(i,COORDINATE_X);
+//    point_cloud->pts[i].y = local_field_value(i,COORDINATE_Y);
+//    point_cloud->pts[i].z = 0.0;
+//  }
+//  DEBUG_MSG("building the kd-tree");
+//  Teuchos::RCP<my_kd_tree_t> kd_tree = Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+//  kd_tree->buildIndex();
+//  DEBUG_MSG("kd-tree completed");
+//
+//  std::set<int_t> used_ids;
+//  std::vector<int_t> neighbor_ordered_local_id_list;
+//  used_ids.insert(best_local_id);
+//  neighbor_ordered_local_id_list.push_back(best_local_id);
+//
+//  // start with the best local id and expand from there
+//  scalar_t query_pt[3];
+//  const int_t num_neigh = 5;
+//  std::vector<size_t> ret_index(num_neigh);
+//  std::vector<scalar_t> out_dist_sqr(num_neigh);
+//  std::vector<int_t> new_fresh_ids;
+//  new_fresh_ids.push_back(best_local_id);
+//  while(new_fresh_ids.size()>0){
+//    std::vector<int_t> old_fresh_ids = new_fresh_ids;
+//    new_fresh_ids.clear();
+//    for(size_t fi=0;fi<old_fresh_ids.size();++fi){
+//      int_t id = old_fresh_ids[fi];
+//      query_pt[0] = point_cloud->pts[id].x;
+//      query_pt[1] = point_cloud->pts[id].y;
+//      query_pt[2] = point_cloud->pts[id].z;
+//      kd_tree->knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
+//      for(size_t i=0;i<num_neigh;++i){
+//        const int_t neigh_id = ret_index[i]; // local id
+//        if(local_field_value(neigh_id,NEIGHBOR_ID)<0 && neigh_id!=best_local_id){
+//          local_field_value(neigh_id,NEIGHBOR_ID) = subset_global_id(id);
+//          used_ids.insert(neigh_id);
+//          bool in_list = false;
+//          for(size_t n=0;n<neighbor_ordered_local_id_list.size();++n){
+//            if(neighbor_ordered_local_id_list[n]==neigh_id) in_list = true;
+//          }
+//          if(!in_list){
+//            neighbor_ordered_local_id_list.push_back(neigh_id);
+//            new_fresh_ids.push_back(neigh_id);
+//          }
+//        }
+//      } // end neigh loop
+//    } // end fresh ids loop
+//  } // end while loop
+//
+//  bool all_ids_in_list = true;
+//  bool all_ids_have_neighbors = true;
+//  for(int_t i=0;i<local_num_subsets_;++i){
+//    if(used_ids.find(i)==used_ids.end())
+//      all_ids_in_list = false;
+//    if(local_field_value(i,NEIGHBOR_ID)<0 && i!=best_local_id)
+//      all_ids_have_neighbors = false;
+//  }
+//  //  std::cout << "ordered id list: " << std::endl;
+//  //  for(size_t i=0;i<neighbor_ordered_local_id_list.size();++i){
+//  //    std::cout << " id " << neighbor_ordered_local_id_list[i] << std::endl;
+//  //  }
+//  TEUCHOS_TEST_FOR_EXCEPTION(!all_ids_in_list,std::runtime_error,
+//    "Error not all local subsets made it into the ordered cross corr execution list");
+//  TEUCHOS_TEST_FOR_EXCEPTION(!all_ids_have_neighbors,std::runtime_error,
+//    "Error not all local subsets have a neighbor, but should");
+//  TEUCHOS_TEST_FOR_EXCEPTION((int_t)neighbor_ordered_local_id_list.size()!=local_num_subsets_,std::runtime_error,
+//    "Error ordered execution id list for cross correlation is the wrong size");
+//
+//#ifdef DICE_DEBUG_MSG
+//  std::stringstream message;
+//  message << std::endl;
+//  for(size_t i=0;i<neighbor_ordered_local_id_list.size();++i){
+//    message << "[PROC " << proc_id << "] Owns subset global id (in cross-correlation order): " <<
+//        subset_global_id(neighbor_ordered_local_id_list[i]) <<
+//        " neighbor id: " << local_field_value(neighbor_ordered_local_id_list[i],NEIGHBOR_ID) << std::endl;
+//  }
+//  DEBUG_MSG(message.str());
+//#endif
+//  TEUCHOS_TEST_FOR_EXCEPTION(correlation_routine_!=GENERIC_ROUTINE,std::runtime_error,
+//    "Error, only the GENERIC_ROUTINE can be used for cross-correlation")
+//
+//  prepare_optimization_initializers();
+//  for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
+//    const int_t local_id = neighbor_ordered_local_id_list[subset_index];
+//    const int_t global_id = subset_global_id(local_id);
+//    Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,global_id));
+//    generic_correlation_routine(obj);
+//  }
+
+  for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
+    DEBUG_MSG("[PROC " << proc_id << "] global subset id " << subset_global_id(subset_index) << " post execute_correlation() field values, u: " <<
+      local_field_value(subset_index,DISPLACEMENT_X) << " v: " << local_field_value(subset_index,DISPLACEMENT_Y)
+      << " theta: " << local_field_value(subset_index,ROTATION_Z) << " sigma: " << local_field_value(subset_index,SIGMA) << " gamma: " <<
+      local_field_value(subset_index,GAMMA) << " beta: " << local_field_value(subset_index,BETA));
+  }
+
+  // add the projection fields back to the output for the total u/v, etc.
+  if(use_nonlinear_projection_){
+    // the original projective transform has to be added to the displacements
+    Teuchos::RCP<MultiField> proj_aug_x = mesh_->get_field(DICe::mesh::field_enums::PROJECTION_AUG_X_FS);
+    Teuchos::RCP<MultiField> proj_aug_y = mesh_->get_field(DICe::mesh::field_enums::PROJECTION_AUG_Y_FS);
+    mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS)->update(1.0,*proj_aug_x,1.0);
+    mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS)->update(1.0,*proj_aug_y,1.0);
+  }
+
+  // reset the neighbor ids fiel and initialization method
+  //neigh_ids->update(1.0,*original_neigh_ids,0.0);
+  initialization_method_ = orig_init_method;
+  optimization_method_ = orig_opt_method;
+
+  return 0;
+};
+
+int_t
+Schema::execute_correlation(){
   if(analysis_type_==GLOBAL_DIC){
 #ifdef DICE_ENABLE_GLOBAL
     Status_Flag global_status = CORRELATION_FAILED;
     try{
       global_status = global_algorithm_->execute();
-      if(is_cross_corr){
-        optimization_method_=orig_opt_method;
-      }else{
-        update_image_frame();
-      }
+      update_image_frame();
     }
     catch(std::exception & e){
       std::cout << "Error, global correlation failed: " << e.what() << std::endl;
@@ -1525,7 +1813,6 @@ Schema::execute_correlation(const bool is_cross_corr){
   // reset the motion detectors for each subset if used
   for(std::map<int_t,Teuchos::RCP<Motion_Test_Utility> >::iterator it = motion_detectors_.begin();
       it != motion_detectors_.end();++it){
-    if(is_cross_corr) continue;
     DEBUG_MSG("Resetting motion detector: " << it->first);
     it->second->reset();
   }
@@ -1545,7 +1832,7 @@ Schema::execute_correlation(const bool is_cross_corr){
     mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS)->put_scalar(0.0);
   }
 #ifdef DICE_ENABLE_GLOBAL
-  if(has_initial_condition_file()&&image_frame_==0&&!is_cross_corr){
+  if(has_initial_condition_file()&&image_frame_==0){
     TEUCHOS_TEST_FOR_EXCEPTION(initialization_method_!=USE_FIELD_VALUES,std::runtime_error,
       "Initialization method must be USE_FIELD_VALUES if an initial condition file is specified");
     Teuchos::RCP<DICe::mesh::Importer_Projector> importer = Teuchos::rcp(new DICe::mesh::Importer_Projector(initial_condition_file_,mesh_));
@@ -1614,12 +1901,10 @@ Schema::execute_correlation(const bool is_cross_corr){
       check_for_blocking_subsets(subset_gid);
       generic_correlation_routine(obj_vec_[subset_lid]);
     }
-    if(!is_cross_corr){
-      if(output_deformed_subset_images_)
-        write_deformed_subsets_image();
-      for(size_t i=0;i<prev_imgs_.size();++i)
-        prev_imgs_[i]=def_imgs_[i];
-    }
+    if(output_deformed_subset_images_)
+      write_deformed_subsets_image();
+    for(size_t i=0;i<prev_imgs_.size();++i)
+      prev_imgs_[i]=def_imgs_[i];
   }
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: unknown correlation routine.");
@@ -1632,7 +1917,7 @@ Schema::execute_correlation(const bool is_cross_corr){
   }
 
   // accumulate the displacements
-  if(use_incremental_formulation_&&!is_cross_corr){
+  if(use_incremental_formulation_){
     const int_t spa_dim = mesh_->spatial_dimension();
     Teuchos::RCP<DICe::MultiField> accumulated_disp = mesh_->get_field(DICe::mesh::field_enums::ACCUMULATED_DISP_FS);
     for(int_t i=0;i<local_num_subsets_;++i){
@@ -1640,14 +1925,7 @@ Schema::execute_correlation(const bool is_cross_corr){
       accumulated_disp->local_value(i*spa_dim+1) += local_field_value(i,DISPLACEMENT_Y);
     }
   }
-
-  if(is_cross_corr){
-    //save_cross_correlation_fields();
-    optimization_method_ = orig_opt_method;
-  }
-  else{
-    update_image_frame();
-  }
+  update_image_frame();
   return 0;
 };
 
@@ -1677,8 +1955,8 @@ Schema::save_cross_correlation_fields(){
       worst_gamma = local_field_value(i,GAMMA);
   }
   std::FILE * filePtr = fopen("projection_out.dat","a");
-  fprintf(filePtr,"Number of failed cross-correlation points: %i\n",num_failures);
-  fprintf(filePtr,"Worst cross-correlation gamma: %e\n",worst_gamma);
+  fprintf(filePtr,"# Number of failed cross-correlation points: %i\n",num_failures);
+  fprintf(filePtr,"# Worst cross-correlation gamma: %e\n",worst_gamma);
   fclose(filePtr);
 }
 
@@ -2667,23 +2945,32 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri){
   // note: we try to avoid feature matching approaches here because the speckle pattern
   // may be repeating which would lead to false positives
   const bool write_images = comm_->get_rank() == 0;
-  tri->estimate_projective_transform(ref_img_,def_imgs_[0],write_images);
+  tri->estimate_projective_transform(ref_img_,def_imgs_[0],write_images,use_nonlinear_projection_);
+
+  // only do this if the analysis does not ask for right to left projection
+  // otherwise, leave these field uninitialized
+  Teuchos::RCP<MultiField> proj_aug_x = mesh_->get_field(DICe::mesh::field_enums::PROJECTION_AUG_X_FS);
+  Teuchos::RCP<MultiField> proj_aug_y = mesh_->get_field(DICe::mesh::field_enums::PROJECTION_AUG_Y_FS);
   for(int_t i=0;i<local_num_subsets_;++i){
     scalar_t cx = local_field_value(i,COORDINATE_X);
     scalar_t cy = local_field_value(i,COORDINATE_Y);
     scalar_t px = 0.0;
     scalar_t py = 0.0;
     tri->project_left_to_right_sensor_coords(cx,cy,px,py);
-    local_field_value(i,DISPLACEMENT_X) = px - cx;
-    local_field_value(i,DISPLACEMENT_Y) = py - cy;
+    if(use_nonlinear_projection_){
+      proj_aug_x->local_value(i) = px - cx;
+      proj_aug_y->local_value(i) = py - cy;
+    }else{
+      local_field_value(i,DISPLACEMENT_X) = px - cx;
+      local_field_value(i,DISPLACEMENT_Y) = py - cy;
+    }
   }
-  //assert(false);
-  Teuchos::RCP<MultiField> ux = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> uy = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
-  Teuchos::RCP<DICe::MultiField> cross_q = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_Q_FS);
-  Teuchos::RCP<DICe::MultiField> cross_r = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_R_FS);
-  cross_q->update(1.0,*ux,0.0);
-  cross_r->update(1.0,*uy,0.0);
+  //Teuchos::RCP<MultiField> ux = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+  //Teuchos::RCP<MultiField> uy = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+  //Teuchos::RCP<DICe::MultiField> cross_q = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_Q_FS);
+  //Teuchos::RCP<DICe::MultiField> cross_r = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_R_FS);
+  //cross_q->update(1.0,*ux,0.0);
+  //cross_r->update(1.0,*uy,0.0);
   DEBUG_MSG("Schema::initialize_cross_correlation(): projective transform estimation successful");
   return 0;
 }

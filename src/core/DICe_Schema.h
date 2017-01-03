@@ -400,9 +400,17 @@ public:
 
   /// Conduct the correlation
   /// returns 0 if successful
-  /// \param is_cross_corr true if this is a cross correlation rather than a typical
-  /// frame to frame correlation
-  int_t execute_correlation(const bool is_cross_corr=false);
+  int_t execute_correlation();
+
+  /// Conduct the cross correlation (a modified version of the regular correlation)
+  /// returns 0 if successful
+  int_t execute_cross_correlation();
+
+  /// projects the right image into the left frame (useful when the mapping between is highly nonlinear)
+  /// \param tri a pointer to a triangulation that contains the projective parameters
+  /// \param reference true if the transformation should be applied to the reference image
+  void project_right_image_into_left_frame(Teuchos::RCP<Triangulation> tri,
+    const bool reference);
 
   /// Run the post processors
   void execute_post_processors();
@@ -878,6 +886,11 @@ public:
     return use_incremental_formulation_;
   }
 
+  /// returns true if the nonlinear projection is used
+  bool use_nonlinear_projection()const{
+    return use_nonlinear_projection_;
+  }
+
   // shape function controls:
   /// Returns true if translation shape functions are enabled
   bool translation_enabled() const {
@@ -1331,6 +1344,8 @@ private:
   bool sort_txt_output_;
   /// name of the file to read for the initial condition
   std::string initial_condition_file_;
+  /// project the right image onto the left frame of reference using a nonlinear projection
+  bool use_nonlinear_projection_;
 };
 
 /// \class DICe::Output_Spec

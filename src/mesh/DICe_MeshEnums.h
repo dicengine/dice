@@ -177,6 +177,8 @@ Field_Name
   INITIAL_WEIGHTED_CELL_SIZE,
   INITIAL_CELL_RADIUS,
   DISPLACEMENT,
+  PROJECTION_AUG_X,
+  PROJECTION_AUG_Y,
   SUBSET_DISPLACEMENT_X,
   SUBSET_DISPLACEMENT_Y,
   STEREO_DISPLACEMENT_X,
@@ -513,6 +515,10 @@ const Field_Spec CROSS_CORR_Q_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CRO
 /// field spec
 const Field_Spec CROSS_CORR_R_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CROSS_CORR_R,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
 /// field spec
+const Field_Spec PROJECTION_AUG_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::PROJECTION_AUG_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+/// field spec
+const Field_Spec PROJECTION_AUG_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::PROJECTION_AUG_Y,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+/// field spec
 const Field_Spec SUBSET_DISPLACEMENT_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SUBSET_DISPLACEMENT_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
 /// field spec
 const Field_Spec SUBSET_DISPLACEMENT_X_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SUBSET_DISPLACEMENT_X,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
@@ -682,7 +688,7 @@ const Field_Spec NLVC_STRAIN_XY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_en
 const Field_Spec NLVC_STRAIN_YY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_YY_ERROR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 102;
+const int_t num_fields_defined = 104;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -703,6 +709,8 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     DISPLACEMENT_FS,
     CROSS_CORR_Q_FS,
     CROSS_CORR_R_FS,
+    PROJECTION_AUG_X_FS,
+    PROJECTION_AUG_Y_FS,
     SUBSET_DISPLACEMENT_X_FS,
     SUBSET_DISPLACEMENT_X_NM1_FS,
     SUBSET_DISPLACEMENT_Y_FS,

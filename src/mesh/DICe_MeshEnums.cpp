@@ -131,6 +131,8 @@ void create_string_maps()
   field_name_string[field_enums::INITIAL_WEIGHTED_CELL_SIZE]                         = "INITIAL_WEIGHTED_CELL_SIZE";
   field_name_string[field_enums::INITIAL_CELL_RADIUS]                                = "INITIAL_CELL_RADIUS";
   field_name_string[field_enums::DISPLACEMENT]                                       = "DISPLACEMENT";
+  field_name_string[field_enums::PROJECTION_AUG_X]                                   = "PROJECTION_AUG_X";
+  field_name_string[field_enums::PROJECTION_AUG_Y]                                   = "PROJECTION_AUG_Y";
   field_name_string[field_enums::SUBSET_DISPLACEMENT_X]                              = "SUBSET_DISPLACEMENT_X";
   field_name_string[field_enums::SUBSET_DISPLACEMENT_Y]                              = "SUBSET_DISPLACEMENT_Y";
   field_name_string[field_enums::STEREO_DISPLACEMENT_X]                              = "STEREO_DISPLACEMENT_X";

@@ -335,9 +335,13 @@ int main(int argc, char *argv[]) {
         stereo_schema = Teuchos::rcp(new DICe::Schema(right_image_string,right_image_string,correlation_params));
       }
       schema->initialize_cross_correlation(triangulation);
+      schema->project_right_image_into_left_frame(triangulation,false);
+      if(stereo_schema->use_nonlinear_projection())
+        schema->execute_cross_correlation();
       schema->save_cross_correlation_fields();
-      //schema->execute_correlation(true);
       assert(stereo_schema!=Teuchos::null);
+      if(stereo_schema->use_nonlinear_projection())
+        stereo_schema->project_right_image_into_left_frame(triangulation,true);
       stereo_schema->set_first_frame_index(cine_start_index + first_frame_index);
       stereo_schema->initialize(input_params,schema);
       stereo_schema->set_num_image_frames(num_images);
@@ -387,6 +391,8 @@ int main(int argc, char *argv[]) {
               stereo_schema->set_ref_image(stereo_schema->def_img());
             }
             stereo_schema->set_def_image(right_def_image);
+            if(stereo_schema->use_nonlinear_projection())
+              stereo_schema->project_right_image_into_left_frame(triangulation,false);
           }
         }
       } // end is_cine
@@ -403,6 +409,8 @@ int main(int argc, char *argv[]) {
             stereo_schema->set_ref_image(stereo_schema->def_img());
           }
           stereo_schema->set_def_image(right_def_image_string);
+          if(stereo_schema->use_nonlinear_projection())
+            stereo_schema->project_right_image_into_left_frame(triangulation,false);
         }
       }
       { // start the timer

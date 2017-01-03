@@ -1,3 +1,3 @@
-model_displacement_x 0.001
-model_displacement_y 0.001
-model_displacement_z 0.001
+model_displacement_x 0.01
+model_displacement_y 0.01
+model_displacement_z 0.01

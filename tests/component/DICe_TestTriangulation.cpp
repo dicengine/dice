@@ -363,23 +363,24 @@ int main(int argc, char *argv[]) {
   *outStream << "testing projective transforms" << std::endl;
 
   Teuchos::RCP<Triangulation> proj_tri = Teuchos::rcp(new Triangulation());
-  Teuchos::RCP<std::vector<scalar_t> > projectives = Teuchos::rcp(new std::vector<scalar_t>(8,0.0));
-  (*projectives)[0] = 1.5;
-  (*projectives)[1] = 0.03;
-  (*projectives)[2] = -25.85;
-  (*projectives)[3] = 0.3;
-  (*projectives)[4] = 1.6;
-  (*projectives)[5] = -18.0;
-  (*projectives)[6] = 0.0005;
-  (*projectives)[7] = 0.0001;
-  proj_tri->set_projectives(projectives);
+  Teuchos::RCP<std::vector<scalar_t> > projectives = Teuchos::rcp(new std::vector<scalar_t>(9,0.0));
+  (*projectives)[0] = -6.004022e-01;
+  (*projectives)[1] = 3.400666e-03;
+  (*projectives)[2] = 3.504610e+01;
+  (*projectives)[3] = -1.782819e-02;
+  (*projectives)[4] = -5.714431e-01;
+  (*projectives)[5] = 3.934283e+01;
+  (*projectives)[6] = -2.809746e-05;
+  (*projectives)[7] = 1.053975e-06;
+  (*projectives)[8] = -5.482798e-01;
+  proj_tri->set_projective_params(projectives);
   const scalar_t xl0 = 75, yl0 = 380;
   scalar_t xr0 = 0.0, yr0 = 0.0;
   proj_tri->project_left_to_right_sensor_coords(xl0,yl0,xr0,yr0);
 
   *outStream << "xl " << xl0 << " yl " << yl0 << " xr " << xr0 << " yr " << yr0 << std::endl;
 
-  if(std::abs(xr0 - 91.166) > errorTol || std::abs(yr0 - 569.5026) > errorTol){
+  if(std::abs(xr0 - 15.8037) > errorTol || std::abs(yr0 - 325.722) > errorTol){
     errorFlag++;
     *outStream << "Error, projective transform is incorrect" << std::endl;
   }
@@ -408,6 +409,7 @@ int main(int argc, char *argv[]) {
     sigma->local_value(i) = 1.0;
   }
   Teuchos::RCP<Triangulation> fit_tri = Teuchos::rcp(new Triangulation("./cal/cal_a.txt"));
+  fit_tri->set_projective_params(projectives);
   // create the best_fit_plane.dat file
   std::FILE * filePtr = fopen("best_fit_plane.dat","w");
   fprintf(filePtr,"%i %i\n",539,195);
@@ -419,9 +421,10 @@ int main(int argc, char *argv[]) {
   std::fstream bestFitDataFile("best_fit_plane_out.dat", std::ios_base::in);
   TEUCHOS_TEST_FOR_EXCEPTION(!bestFitDataFile.good(),std::runtime_error,
     "Error, could not open file best_fit_plane_out.dat");
-  std::vector<scalar_t> fit_sol = {1.238900e+00,4.500000e-02,2.068900e+02,-1.700444e+01,-3.485363e+01,-1.842548e+02,
-    -1.512044e+01,-3.484886e+01,-1.865891e+02,6.280542e-01,-2.298346e-02,7.778301e-01,1.589684e-03,9.995995e-01,
-    2.825277e-02,-7.781679e-01,-1.650777e-02,6.278393e-01,-1.700444e+01,-3.485363e+01,-1.842548e+02};
+  std::vector<scalar_t> fit_sol = {1.238900e+00,4.500000e-02,2.068900e+02,-1.781168e+01,
+    -4.038207e+01,-1.830059e+02,-1.585211e+01,-4.033431e+01,-1.854358e+02,
+    6.276800e-01,-3.159507e-02,7.778301e-01,1.529904e-02,9.994837e-01,2.825277e-02,
+    -7.783212e-01,-5.833639e-03,6.278393e-01,-1.781168e+01,-4.038207e+01,-1.830059e+02};
   std::vector<scalar_t> fit_comp;
   while(!bestFitDataFile.eof()){
     Teuchos::ArrayRCP<std::string> tokens = tokenize_line(bestFitDataFile);

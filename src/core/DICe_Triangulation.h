@@ -66,17 +66,25 @@ public:
   /// \brief Default constructor
   /// \param param_file_name the name of the file to parse the calibration parameters from
   Triangulation(const std::string & param_file_name){
-    projectives_ = Teuchos::rcp(new std::vector<scalar_t>(8,0.0));
-    (*projectives_)[0] = 1.0;
-    (*projectives_)[4] = 1.0;
+    warp_params_ = Teuchos::rcp(new std::vector<scalar_t>(12,0.0)); /// at max there are 12 parameters that must be set (for the quadratic)
+    (*warp_params_)[1] = 1.0;
+    (*warp_params_)[8] = 1.0;
+    projective_params_ = Teuchos::rcp(new std::vector<scalar_t>(9,0.0));
+    (*projective_params_)[0] = 1.0;
+    (*projective_params_)[4] = 1.0;
+    (*projective_params_)[8] = 1.0;
     load_calibration_parameters(param_file_name);
   };
 
   /// \brief constructor with no args
   Triangulation(){
-    projectives_ = Teuchos::rcp(new std::vector<scalar_t>(8,0.0));
-    (*projectives_)[0] = 1.0;
-    (*projectives_)[4] = 1.0;
+    warp_params_ = Teuchos::rcp(new std::vector<scalar_t>(12,0.0));
+    (*warp_params_)[1] = 1.0;
+    (*warp_params_)[8] = 1.0;
+    projective_params_ = Teuchos::rcp(new std::vector<scalar_t>(9,0.0));
+    (*projective_params_)[0] = 1.0;
+    (*projective_params_)[4] = 1.0;
+    (*projective_params_)[8] = 1.0;
   };
 
   /// Pure virtual destructor
@@ -165,10 +173,12 @@ public:
   /// estimate the projective transform from the left to right image
   /// \param left_img pointer to the left image
   /// \param right_img pointer to the right image
-  /// \param outout_projected_image true if an image should be output using the solution projection parameters
+  /// \param output_projected_image true if an image should be output using the solution projection parameters
+  /// \param use_nonlinear_projection true if an additional 12 nonlinear parameter projection model should be used
   void estimate_projective_transform(Teuchos::RCP<Image> left_img,
     Teuchos::RCP<Image> right_img,
-    const bool output_projected_image = false);
+    const bool output_projected_image = false,
+    const bool use_nonlinear_projection = false);
 
   /// determine the corresponding right sensor coordinates given the left
   /// using the projective transform
@@ -181,11 +191,18 @@ public:
     scalar_t & xr,
     scalar_t & yr);
 
-  /// set the projectives vector of the triangulation
-  /// \param projectives the projective parameters
-  void set_projectives(Teuchos::RCP<std::vector<scalar_t> > & projectives){
-    TEUCHOS_TEST_FOR_EXCEPTION(projectives->size()!=8,std::runtime_error,"Error, projectives vector is the wrong size");
-    projectives_ = projectives;
+  /// set the warp parameter vector of the triangulation
+  /// \param params the projective parameters
+  void set_warp_params(Teuchos::RCP<std::vector<scalar_t> > & params){
+    TEUCHOS_TEST_FOR_EXCEPTION(params->size()!=12,std::runtime_error,"Error, params vector is the wrong size");
+    warp_params_ = params;
+  }
+
+  /// set the projective parameter vector of the triangulation
+  /// \param params the projective parameters
+  void set_projective_params(Teuchos::RCP<std::vector<scalar_t> > & params){
+    TEUCHOS_TEST_FOR_EXCEPTION(params->size()!=9,std::runtime_error,"Error, params vector is the wrong size");
+    projective_params_ = params;
   }
 
   /// determine the best fit plane to the complete set of X Y Z coordinates (excluding any failed points)
@@ -229,8 +246,10 @@ private:
   /// 0   0   0   1
   std::vector<std::vector<scalar_t> > trans_extrinsics_;
 
+  /// 12 parameters that define a warping (independent from intrinsic and extrinsic parameters)
+  Teuchos::RCP<std::vector<scalar_t> > warp_params_;
   /// 8 parameters that define a projective transform (independent from intrinsic and extrinsic parameters)
-  Teuchos::RCP<std::vector<scalar_t> > projectives_;
+  Teuchos::RCP<std::vector<scalar_t> > projective_params_;
 };
 
 }// End DICe Namespace
