@@ -194,6 +194,19 @@ Image::write(const std::string & file_name,
   }
 }
 
+void
+Image::write_overlap_image(const std::string & file_name,
+  Teuchos::RCP<Image> top_img){
+  TEUCHOS_TEST_FOR_EXCEPTION(top_img->height()!=height_||top_img->width()!=width_,std::runtime_error,"Error, dimensions must match for top and bottom image");
+  try{
+    utils::write_color_overlap_image(file_name.c_str(),width_,height_,intensities().getRawPtr(),top_img->intensities().getRawPtr());
+  }
+  catch(std::exception &e){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, write color overlap image failure.");
+  }
+}
+
+
 #if DICE_KOKKOS
 #else
 void

@@ -44,7 +44,6 @@
 #include <DICe_Parser.h>
 
 #include <Teuchos_LAPACK.hpp>
-
 #include <fstream>
 
 namespace DICe {
@@ -807,6 +806,8 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
   const bool output_projected_image,
   const bool use_nonlinear_projection){
 
+  scalar_t error = 0.0;
+
   // check if a file exists with the calculated projective parameters already:
   std::fstream proj_params_file("projection_out.dat", std::ios_base::in);
   if(proj_params_file.good()){
@@ -831,26 +832,6 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
       for(int_t i=18;i<30;++i){
         (*warp_params_)[i-18] = values[i];
       }
-    }
-
-    if(output_projected_image){
-      const int_t w = left_img->width();
-      const int_t h = left_img->height();
-      Teuchos::RCP<Image> img = Teuchos::rcp(new Image(w,h,0.0));
-      Teuchos::ArrayRCP<intensity_t> intens = img->intensities();
-      Teuchos::RCP<Image> diff_img = Teuchos::rcp(new Image(w,h,0.0));
-      Teuchos::ArrayRCP<intensity_t> diff_intens = diff_img->intensities();
-      scalar_t xr = 0.0;
-      scalar_t yr = 0.0;
-      for(int_t j=0;j<h;++j){
-        for(int_t i=0;i<w;++i){
-          project_left_to_right_sensor_coords(i,j,xr,yr);
-          diff_intens[j*w+i] = (*left_img)(i,j) - right_img->interpolate_keys_fourth(xr,yr);
-          intens[j*w+i] = right_img->interpolate_keys_fourth(xr,yr);
-        }
-      }
-      diff_img->write("projection_diff.tif");
-      img->write("right_projected_to_left.tif");
     }
   }
   else{
@@ -1130,7 +1111,6 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     }
 
     // for each point, plug in the left coords and compute the right
-    scalar_t error = 0.0;
     for(int_t i=0;i<num_coords;++i){
       scalar_t comp_right_x = 0.0;
       scalar_t comp_right_y = 0.0;
@@ -1239,28 +1219,31 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
       }
       fprintf(filePtr,"# Optimization took %i iterations\n",num_iterations);
       fclose(filePtr);
-
-      if(output_projected_image){
-        const int_t w = left_img->width();
-        const int_t h = left_img->height();
-        Teuchos::RCP<Image> img = Teuchos::rcp(new Image(w,h,0.0));
-        Teuchos::ArrayRCP<intensity_t> intens = img->intensities();
-        Teuchos::RCP<Image> diff_img = Teuchos::rcp(new Image(w,h,0.0));
-        Teuchos::ArrayRCP<intensity_t> diff_intens = diff_img->intensities();
-        scalar_t xr = 0.0;
-        scalar_t yr = 0.0;
-        for(int_t j=0;j<h;++j){
-          for(int_t i=0;i<w;++i){
-            project_left_to_right_sensor_coords(i,j,xr,yr);
-            diff_intens[j*w+i] = (*left_img)(i,j) - right_img->interpolate_keys_fourth(xr,yr);
-            intens[j*w+i] = right_img->interpolate_keys_fourth(xr,yr);
-          }
-        }
-        diff_img->write("projection_diff.tif");
-        img->write("right_projected_to_left_nonlinear.tif");
-      }
     }
   }
+
+  // create an image that overlaps the right and left using tinted colors:
+  if(output_projected_image){
+    const int_t w = left_img->width();
+    const int_t h = left_img->height();
+    Teuchos::RCP<Image> img = Teuchos::rcp(new Image(w,h,0.0));
+    Teuchos::ArrayRCP<intensity_t> intens = img->intensities();
+    Teuchos::RCP<Image> diff_img = Teuchos::rcp(new Image(w,h,0.0));
+    Teuchos::ArrayRCP<intensity_t> diff_intens = diff_img->intensities();
+    scalar_t xr = 0.0;
+    scalar_t yr = 0.0;
+    for(int_t j=0;j<h;++j){
+      for(int_t i=0;i<w;++i){
+        project_left_to_right_sensor_coords(i,j,xr,yr);
+        diff_intens[j*w+i] = (*left_img)(i,j) - right_img->interpolate_keys_fourth(xr,yr);
+        intens[j*w+i] = right_img->interpolate_keys_fourth(xr,yr);
+      }
+    }
+    diff_img->write("right_projected_to_left_diff.tif");
+    img->write("right_projected_to_left.tif");
+    left_img->write_overlap_image("right_projected_to_left_color.tif",img);
+  }
+
 }
 
 void

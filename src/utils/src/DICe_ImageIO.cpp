@@ -240,6 +240,44 @@ void read_image(const char * file_name,
 }
 
 DICE_LIB_DLL_EXPORT
+void write_color_overlap_image(const char * file_name,
+  const int_t width,
+  const int_t height,
+  intensity_t * bottom_intensities,
+  intensity_t * top_intensities){
+
+  intensity_t bot_max_intensity = -1.0E10;
+  intensity_t bot_min_intensity = 1.0E10;
+  intensity_t top_max_intensity = -1.0E10;
+  intensity_t top_min_intensity = 1.0E10;
+  for(int_t i=0; i<width*height; ++i){
+    if(bottom_intensities[i] > bot_max_intensity) bot_max_intensity = bottom_intensities[i];
+    if(bottom_intensities[i] < bot_min_intensity) bot_min_intensity = bottom_intensities[i];
+    if(top_intensities[i] > top_max_intensity) top_max_intensity = top_intensities[i];
+    if(top_intensities[i] < top_min_intensity) top_min_intensity = top_intensities[i];
+  }
+  intensity_t bot_fac = 1.0;
+  intensity_t top_fac = 1.0;
+  if((bot_max_intensity - bot_min_intensity) != 0.0)
+    bot_fac = 0.5*255.0 / (bot_max_intensity - bot_min_intensity);
+  if((top_max_intensity - top_min_intensity) != 0.0)
+    top_fac = 0.5*255.0 / (top_max_intensity - top_min_intensity);
+
+  boost::gil::rgb8_image_t img(width,height);
+  boost::gil::rgb8_view_t img_view = boost::gil::view(img);
+  for (int_t y=0; y<height; ++y) {
+    boost::gil::rgb8_view_t::x_iterator src_it = img_view.row_begin(y);
+      for (int_t x=0; x<width;++x){
+        boost::gil::rgb8_pixel_t pixel(std::floor((bottom_intensities[y*width + x]-bot_min_intensity)*bot_fac),
+          std::floor((top_intensities[y*width + x]-top_min_intensity)*top_fac),0);
+        src_it[x] = pixel;
+      }
+  }
+  boost::gil::tiff_write_view(file_name, img_view);
+}
+
+
+DICE_LIB_DLL_EXPORT
 void write_image(const char * file_name,
   const int_t width,
   const int_t height,

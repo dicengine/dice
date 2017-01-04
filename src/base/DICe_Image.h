@@ -177,6 +177,13 @@ public:
   void write(const std::string & file_name,
     const bool scale_to_8_bit=true);
 
+  /// write an image to file that combines this image and another of the same size
+  /// with both overlayed using transparency
+  /// \param file_name the name of the file to output
+  /// \param top_img pointer to the image to be overlayed on top of this one
+  void write_overlap_image(const std::string & file_name,
+    Teuchos::RCP<Image> top_img);
+
   /// write the image x gradients to a file
   /// (tiff, jpeg, or png, depending on which file extension is used in the name)
   /// Tiff, jpeg, and png will truncate the intensity values to an 8-bit integer value

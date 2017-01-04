@@ -113,6 +113,21 @@ void write_image(const char * file_name,
   const bool is_layout_right = true,
   const bool scale_to_8_bit = true);
 
+
+/// write an image to disk with two base images overlayed with transparency
+/// \param file_name the name of the file
+/// \param width the width of the image to write
+/// \param height the height of the image
+/// \param bottom_intensities assumed to be an array of size width x height
+/// \param top_intensities assumed to be an array of size width x height
+DICE_LIB_DLL_EXPORT
+void write_color_overlap_image(const char * file_name,
+  const int_t width,
+  const int_t height,
+  intensity_t * bottom_intensities,
+  intensity_t * top_intensities);
+
+
 } // end namespace utils
 } // end namespace DICe
 
