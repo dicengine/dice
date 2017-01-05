@@ -793,10 +793,7 @@ Triangulation::project_camera_0_to_sensor_1(const scalar_t & xc,
   xs2_out = 1.0/psi2*(F2_T(0,0)*xc + F2_T(0,1)*yc + F2_T(0,2)*zc + F2_T(0,3));
   ys2_out = 1.0/psi2*(F2_T(1,0)*xc + F2_T(1,1)*yc + F2_T(1,2)*zc + F2_T(1,3));
   scalar_t z2 = 1.0/psi2*(F2_T(2,0)*xc + F2_T(2,1)*yc + F2_T(2,2)*zc + F2_T(2,3));
-  //std::cout << " xs2_out " << xs2_out << " ys2out " << ys2_out << std::endl;
-  //std::cout << "z2 " << z2 << std::endl;
-  assert(std::abs(z2-1.0) < 0.1);
-
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(z2-1.0) > 0.1,std::runtime_error,"");
 }
 
 /// estimate the projective transform from the left to right image
