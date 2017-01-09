@@ -40,6 +40,7 @@
 // @HEADER
 
 #include <DICe_Parser.h>
+#include <DICe_Image.h>
 #include <DICe_XMLUtils.h>
 #include <DICe_ParameterUtilities.h>
 #include <DICe.h>
@@ -1456,17 +1457,17 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
 DICE_LIB_DLL_EXPORT
 bool valid_correlation_point(const int_t x_coord,
   const int_t y_coord,
-  const int_t width,
-  const int_t height,
+  Teuchos::RCP<Image> image,
   const int_t subset_size,
   std::set<std::pair<int_t,int_t> > & coords,
-  std::set<std::pair<int_t,int_t> > & excluded_coords){
+  std::set<std::pair<int_t,int_t> > & excluded_coords,
+  const scalar_t & grad_threshold){
 
   // need to check if the point is interior to the image by at least one subset_size
   if(x_coord<subset_size-1) return false;
-  if(x_coord>width-subset_size) return false;
+  if(x_coord>image->width()-subset_size) return false;
   if(y_coord<subset_size-1) return false;
-  if(y_coord>height-subset_size) return false;
+  if(y_coord>image->height()-subset_size) return false;
 
   // only the centroid has to be inside the ROI
   if(coords.find(std::pair<int_t,int_t>(y_coord,x_coord))==coords.end()) return false;
@@ -1483,7 +1484,25 @@ bool valid_correlation_point(const int_t x_coord,
     if(excluded_coords.find(std::pair<int_t,int_t>(corners_y[i],corners_x[i]))!=excluded_coords.end())
       all_corners_in = false;
   }
-  return all_corners_in;
+  if(!all_corners_in) return false;
+
+  // check the gradient SSSIG threshold
+  if(grad_threshold > 0.0){
+    TEUCHOS_TEST_FOR_EXCEPTION(!image->has_gradients(),std::runtime_error,
+      "Error, testing valid points for SSSIG tol, but image gradients have not been computed");
+    scalar_t SSSIG = 0.0;
+    for(int_t y=corners_y[0];y<corners_y[2];++y){
+      for(int_t x=corners_x[0];x<corners_x[1];++x){
+        SSSIG += image->grad_x(x,y)*image->grad_x(x,y) + image->grad_x(x,y)*image->grad_x(x,y);
+      }
+    }
+    SSSIG /= (subset_size*subset_size);
+    //std::cout << "x " << x_coord << " y " << y_coord << " SSSIG: " << SSSIG << " threshold " << grad_threshold << std::endl;
+    if(SSSIG < grad_threshold) return false;
+  }
+
+
+  return true;
 
 }
 
@@ -1492,8 +1511,9 @@ void
 create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_points,
   std::vector<int_t> & neighbor_ids,
   Teuchos::RCP<Teuchos::ParameterList> params,
-  const int_t width, const int_t height,
-  Teuchos::RCP<DICe::Subset_File_Info> subset_file_info){
+  Teuchos::RCP<Image> image,
+  Teuchos::RCP<DICe::Subset_File_Info> subset_file_info,
+  const scalar_t & grad_threshold){
   int proc_rank = 0;
 #if DICE_MPI
   int mpi_is_initialized = 0;
@@ -1514,6 +1534,9 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
   const int_t subset_size = params->get<int_t>(DICe::subset_size);
   correlation_points.clear();
   neighbor_ids.clear();
+
+  const int_t width = image->width();
+  const int_t height = image->height();
 
   bool seed_was_specified = false;
   Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > roi_defs;
@@ -1541,7 +1564,6 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
     roi_defs = Teuchos::rcp(new std::map<int_t,DICe::Conformal_Area_Def> ());
     roi_defs->insert(std::pair<int_t,DICe::Conformal_Area_Def>(0,conformal_area_def));
   }
-
 
   // if no ROI is specified, the whole image is the ROI
 
@@ -1597,7 +1619,7 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
     //if(seed_was_specified&&this_roi_has_seed){
       x_coord = subset_size-1 + seed_col*step_size;
       y_coord = subset_size-1 + seed_row*step_size;
-    if(valid_correlation_point(x_coord,y_coord,width,height,subset_size,coords,excluded_coords)){
+    if(valid_correlation_point(x_coord,y_coord,image,subset_size,coords,excluded_coords,grad_threshold)){
       correlation_points.push_back(x_coord);
       correlation_points.push_back(y_coord);
       //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding seed correlation point " << x_coord << " " << y_coord);
@@ -1607,6 +1629,9 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
       }
       neighbor_ids.push_back(-1); // seed point cannot have a neighbor
       current_subset_id++;
+    }
+    else if(!(seed_row==0&&seed_col==0)){
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, seed specified does not meet the SSSIG criteria for suffient image gradients");
     }
 
     // snake right from seed
@@ -1624,7 +1649,7 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
       if(col>=num_cols)break;
       x_coord = subset_size - 1 + col*step_size;
       y_coord = subset_size - 1 + row*step_size;
-      if(valid_correlation_point(x_coord,y_coord,width,height,subset_size,coords,excluded_coords)){
+      if(valid_correlation_point(x_coord,y_coord,image,subset_size,coords,excluded_coords,grad_threshold)){
         correlation_points.push_back(x_coord);
         correlation_points.push_back(y_coord);
         //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding snake right correlation point " << x_coord << " " << y_coord);
@@ -1651,7 +1676,7 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
       if(col<0)break;
       x_coord = subset_size - 1 + col*step_size;
       y_coord = subset_size - 1 + row*step_size;
-      if(valid_correlation_point(x_coord,y_coord,width,height,subset_size,coords,excluded_coords)){
+      if(valid_correlation_point(x_coord,y_coord,image,subset_size,coords,excluded_coords,grad_threshold)){
         correlation_points.push_back(x_coord);
         correlation_points.push_back(y_coord);
         //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding snake left correlation point " << x_coord << " " << y_coord);
@@ -1663,6 +1688,7 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
       }  // valid point
     }  // end snake left
   }  // conformal area map
+  DEBUG_MSG("create_regular_grid_of_correlation_points(): complete, created " << correlation_points.size() << " points");
 }
 
 DICE_LIB_DLL_EXPORT

@@ -824,12 +824,19 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
         " of interest with separation (step_size) of " << step_size << " pixels.");
     subset_centroids = Teuchos::rcp(new std::vector<int_t>());
     neighbor_ids = Teuchos::rcp(new std::vector<int_t>());
-    DICe::create_regular_grid_of_correlation_points(*subset_centroids,*neighbor_ids,input_params,img_width(),img_height(),subset_info);
+    if(optimization_method_==GRADIENT_BASED || optimization_method_==GRADIENT_BASED_THEN_SIMPLEX){
+      const scalar_t grad_threshold = 50.0; // threshold determined from example images
+      DICe::create_regular_grid_of_correlation_points(*subset_centroids,*neighbor_ids,input_params,ref_img_,subset_info,grad_threshold);
+    }
+    else
+      DICe::create_regular_grid_of_correlation_points(*subset_centroids,*neighbor_ids,input_params,ref_img_,subset_info);
+    // check all the subsets and eliminate ones with a gradient ratio too low
     num_subsets = subset_centroids->size()/dim; // divide by three because the stride is x y neighbor_id
     assert(neighbor_ids->size()==subset_centroids->size()/2);
     TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_size),std::runtime_error,
       "Error, the subset size has not been specified"); // required for all square subsets case
     subset_size = input_params->get<int_t>(DICe::subset_size);
+
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(subset_info==Teuchos::null,std::runtime_error,"");
@@ -2153,6 +2160,16 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " (" << global_field_value(subset_gid,DICe::COORDINATE_X) <<
     "," << global_field_value(subset_gid,DICe::COORDINATE_Y) << ")");
 
+  // if for some reason the coordinates of this subset are outside the image domain, record a failed step,
+  // this may have occurred for a subset in the left image projected to the right that is not in the right image
+  if(subset_dim_ > 0){
+    if(global_field_value(subset_gid,DICe::COORDINATE_X) < subset_dim_/2 || global_field_value(subset_gid,DICe::COORDINATE_X) > ref_img_->width() - subset_dim_/2||
+        global_field_value(subset_gid,DICe::COORDINATE_Y) < subset_dim_/2 || global_field_value(subset_gid,DICe::COORDINATE_Y) > ref_img_->height() - subset_dim_/2){
+      DEBUG_MSG("Invalid subset origin (probably from stereo projection of the left subset not being in the right image)");
+      record_failed_step(subset_gid,static_cast<int_t>(INITIALIZE_FAILED_BY_EXCEPTION),-1);
+    }
+  }
+
   // check if the solve should be skipped
   bool skip_frame = false;
   if(skip_solve_flags_->find(subset_gid)!=skip_solve_flags_->end()||skip_all_solves_){
@@ -2982,7 +2999,90 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
   TEUCHOS_TEST_FOR_EXCEPTION(right_schema->local_num_subsets()!=local_num_subsets_,std::runtime_error,
     "Error, incompatible schemas: left number of subsets " << local_num_subsets_ << " right " << right_schema->local_num_subsets());
 
-  //assert(right_schema->local_num_subsets()==local_num_subsets_);
+  Teuchos::RCP<MultiField> disp_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> disp_y = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> stereo_disp_x = right_schema->mesh()->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> stereo_disp_y = right_schema->mesh()->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+
+  // for all the failed points, average the nearest neighbor result so that the plotting
+  // doesn't get ruined, but still record a -1 for sigma and match fields
+  Teuchos::RCP<MultiField> sigma_left = mesh_->get_field(DICe::mesh::field_enums::SIGMA_FS);
+  Teuchos::RCP<MultiField> match_left = mesh_->get_field(DICe::mesh::field_enums::MATCH_FS);
+  Teuchos::RCP<MultiField> sigma_right = right_schema->mesh()->get_field(DICe::mesh::field_enums::SIGMA_FS);
+
+  // set up a neighbor search tree:
+  Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud<scalar_t>());
+  point_cloud->pts.resize(local_num_subsets_);
+  for(int_t i=0;i<local_num_subsets_;++i){
+    point_cloud->pts[i].x = local_field_value(i,COORDINATE_X);
+    point_cloud->pts[i].y = local_field_value(i,COORDINATE_Y);
+    point_cloud->pts[i].z = 0.0;
+  }
+  DEBUG_MSG("Schema::execute_triangulation(): building the kd-tree");
+  Teuchos::RCP<my_kd_tree_t> kd_tree = Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+  kd_tree->buildIndex();
+  DEBUG_MSG("Schema::execute_triangulation(): kd-tree completed");
+
+  // start with the best local id and expand from there
+  scalar_t query_pt[3];
+  const int_t num_neigh = 5;
+  std::vector<size_t> ret_index(num_neigh);
+  std::vector<scalar_t> out_dist_sqr(num_neigh);
+
+  for(int_t i=0;i<local_num_subsets_;++i){
+    if(sigma_left->local_value(i) < 0 || sigma_right->local_value(i) < 0){
+      // find 5 nearest neighbors in the left schema:
+      query_pt[0] = point_cloud->pts[i].x;
+      query_pt[1] = point_cloud->pts[i].y;
+      query_pt[2] = point_cloud->pts[i].z;
+      kd_tree->knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
+      scalar_t avg_u = 0.0;
+      scalar_t avg_v = 0.0;
+      int_t num_neigh_valid = 0;
+      if(sigma_left->local_value(i) < 0){  // it was the left subset that failed
+        for(size_t i=0;i<num_neigh;++i){
+          const int_t neigh_id = ret_index[i]; // local id
+          if(sigma_left->local_value(neigh_id) > 0){
+            avg_u += disp_x->local_value(neigh_id);
+            avg_v += disp_y->local_value(neigh_id);
+            num_neigh_valid++;
+          }
+        }
+        if(num_neigh_valid!=0){
+          avg_u /= num_neigh_valid;
+          avg_v /= num_neigh_valid;
+        }
+        DEBUG_MSG("Schema::execute_triangulation(): failed left subset " << subset_global_id(i) <<
+          " replacing disp value " << disp_x->local_value(i) << "," << disp_y->local_value(i) <<
+          " with neighbor average for traingulation " << avg_u << "," << avg_v);
+        disp_x->local_value(i) = avg_u;
+        disp_y->local_value(i) = avg_v;
+      }
+      else{ // it was the right subset that failed
+        for(size_t i=0;i<num_neigh;++i){
+          const int_t neigh_id = ret_index[i]; // local id
+          if(sigma_right->local_value(neigh_id) > 0){
+            avg_u += stereo_disp_x->local_value(neigh_id);
+            avg_v += stereo_disp_y->local_value(neigh_id);
+            num_neigh_valid++;
+          }
+        }
+        if(num_neigh_valid!=0){
+          avg_u /= num_neigh_valid;
+          avg_v /= num_neigh_valid;
+        }
+        DEBUG_MSG("Schema::execute_triangulation(): failed right subset " << subset_global_id(i) <<
+          " replacing disp value " << stereo_disp_x->local_value(i) << "," << stereo_disp_y->local_value(i) <<
+          " with neighbor average for traingulation " << avg_u << "," << avg_v);
+        stereo_disp_x->local_value(i) = avg_u;
+        stereo_disp_y->local_value(i) = avg_v;
+      }
+    } // end left of right sigma < 0
+    if(sigma_right->local_value(i) < 0){
+      sigma_left->local_value(i) = -1;
+      match_left->local_value(i) = -1;
+    }
+  } // end subset loop
 
   // make sure the stereo coords fields are populated
   Teuchos::RCP<MultiField> coords_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
@@ -2994,10 +3094,6 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
   TEUCHOS_TEST_FOR_EXCEPTION(stereo_coords_y->norm()==0.0,std::runtime_error,"");
 
   // copy the stereo displacement field into place
-  Teuchos::RCP<MultiField> disp_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> disp_y = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
-  Teuchos::RCP<MultiField> stereo_disp_x = right_schema->mesh()->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> stereo_disp_y = right_schema->mesh()->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
   Teuchos::RCP<MultiField> my_stereo_disp_x = mesh_->get_field(DICe::mesh::field_enums::STEREO_DISPLACEMENT_X_FS);
   Teuchos::RCP<MultiField> my_stereo_disp_y = mesh_->get_field(DICe::mesh::field_enums::STEREO_DISPLACEMENT_Y_FS);
   my_stereo_disp_x->update(1.0,*stereo_disp_x,0.0);

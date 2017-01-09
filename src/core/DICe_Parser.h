@@ -50,6 +50,10 @@
 
 namespace DICe {
 
+// forward declaration of an Image
+class Image;
+
+
 // input parameter names
 // using globals here to avoid misspellings
 /// Input parameter, location to place the output files
@@ -348,32 +352,33 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
 /// \param correlation_points Vector of global point coordinates
 /// \param neighbor_ids Vector of neighbor ids (established if there is a seed)
 /// \param params Used to determine the step size (spacing of points)
-/// \param width The image width
-/// \param height The image height
+/// \param pointer to a DICe::Image
 /// \param subset_file_info Optional information from the subset file (ROIs, etc.)
+/// \param grad_threshold subsets with a gradiend SSSIG lower than this will be removed
 DICE_LIB_DLL_EXPORT
 void create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_points,
   std::vector<int_t> & neighbor_ids,
   Teuchos::RCP<Teuchos::ParameterList> params,
-  const int_t width, const int_t height,
-  Teuchos::RCP<DICe::Subset_File_Info> subset_file_info=Teuchos::null);
+  Teuchos::RCP<Image> ref_image,
+  Teuchos::RCP<DICe::Subset_File_Info> subset_file_info=Teuchos::null,
+  const scalar_t & grad_threshold = -1.0);
 
 /// \brief Test to see that the point falls with the boundary of a conformal def and not in the excluded area
 /// \param x_coord X coordinate of the point in question
 /// \param y_coord Y coordinate of the point in question
-/// \param width Image width
-/// \param height Image height
+/// \param image pointer to an image
 /// \param subset_size Size of the subset
 /// \param coords Set of valid coordinates in the area
 /// \param excluded_coords Set of coordinates that should be excluded
+/// \param grad_threshold the SSSIG threshold to eliminate a subset without enough gradients to correlate
 DICE_LIB_DLL_EXPORT
 bool valid_correlation_point(const int_t x_coord,
   const int_t y_coord,
-  const int_t width,
-  const int_t height,
+  Teuchos::RCP<Image> image,
   const int_t subset_size,
   std::set<std::pair<int_t,int_t> > & coords,
-  std::set<std::pair<int_t,int_t> > & excluded_coords);
+  std::set<std::pair<int_t,int_t> > & excluded_coords,
+  const scalar_t & grad_threshold);
 
 /// \brief Create template input files with lots of comments
 /// \param file_prefix The prefix used to name the template files
