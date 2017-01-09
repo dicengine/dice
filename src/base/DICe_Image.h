@@ -418,6 +418,11 @@ public:
     return has_gradients_;
   }
 
+  /// returns true if the image was created from a file not array
+  bool has_file_name()const{
+    return has_file_name_;
+  }
+
   /// returns true if the image has been  gauss filtered
   bool has_gauss_filter()const{
     return has_gauss_filter_;
@@ -542,6 +547,8 @@ private:
   int_t gauss_filter_half_mask_;
   /// name of the file that was the source of this image
   std::string file_name_;
+  /// true if the image was read from a file not created from an array
+  bool has_file_name_;
   /// gradient method
   Gradient_Method gradient_method_;
 };

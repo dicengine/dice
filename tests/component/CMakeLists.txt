@@ -32,3 +32,7 @@ IF(DICE_ENABLE_NETCDF)
   add_subdirectory(netcdf)
 ENDIF()
 
+IF(DICE_ENABLE_OPENCV)
+  add_subdirectory(opencv)
+ENDIF()
+

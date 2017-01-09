@@ -64,6 +64,7 @@ Image::Image(intensity_t * intensities,
   has_gradients_(false),
   has_gauss_filter_(false),
   file_name_("(from raw array)"),
+  has_file_name_(false),
   gradient_method_(FINITE_DIFFERENCE)
 {
   initialize_array_image(intensities);
@@ -82,6 +83,7 @@ Image::Image(const int_t width,
   has_gradients_(false),
   has_gauss_filter_(false),
   file_name_("(from array)"),
+  has_file_name_(false),
   gradient_method_(FINITE_DIFFERENCE)
 {
   initialize_array_image(intensities.getRawPtr());

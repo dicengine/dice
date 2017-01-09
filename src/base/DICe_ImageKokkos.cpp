@@ -56,6 +56,7 @@ Image::Image(const char * file_name,
   has_gradients_(false),
   has_gauss_filter_(false),
   file_name_(file_name),
+  has_file_name_(true),
   gradient_method_(FINITE_DIFFERENCE)
 {
   try{
@@ -87,6 +88,7 @@ Image::Image(const char * file_name,
   has_gradients_(false),
   has_gauss_filter_(false),
   file_name_(file_name),
+  has_file_name_(true),
   gradient_method_(FINITE_DIFFERENCE)
 {
   // get the image dims
@@ -125,6 +127,7 @@ Image::Image(const int_t width,
   has_gradients_(false),
   has_gauss_filter_(false),
   file_name_("(from array)"),
+  has_file_name_(false),
   gradient_method_(FINITE_DIFFERENCE)
 {
   assert(height_>0);
@@ -152,6 +155,7 @@ Image::Image(Teuchos::RCP<Image> img,
   has_gradients_(img->has_gradients()),
   has_gauss_filter_(img->has_gauss_filter()),
   file_name_(img->file_name()),
+  has_file_name_(img->has_file_name()),
   gradient_method_(FINITE_DIFFERENCE)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(offset_x_<0,std::invalid_argument,"Error, offset_x_ cannot be negative.");

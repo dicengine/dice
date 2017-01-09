@@ -37,3 +37,7 @@ add_subdirectory(mesh)
 IF(DICE_ENABLE_GLOBAL)
   add_subdirectory(global)
 ENDIF()
+
+IF(DICE_ENABLE_OPENCV)
+  add_subdirectory(opencv)
+ENDIF()

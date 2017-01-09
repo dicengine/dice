@@ -113,6 +113,16 @@ ELSE()
   SET(DICE_MPI FALSE)
 ENDIF()
 
+# find OpenCV
+message(STATUS "Looking for OpenCV in dir: ${OpenCV_DIR}")
+find_package( OpenCV NO_DEFAULT_PATH PATHS ${OpenCV_DIR} )
+IF(OpenCV_FOUND)
+  set(DICE_ENABLE_OPENCV ON)
+ELSE()
+  message(STATUS "OpenCV not found")
+ENDIF()
+
+
 SET(DICE_TRILINOS_HEADERS
     ${Trilinos_INCLUDE_DIRS}
     ${Trilinos_TPL_INCLUDE_DIRS}
@@ -154,6 +164,14 @@ IF(DICE_ENABLE_GLOBAL)
       ${CMAKE_CURRENT_SOURCE_DIR}/src/mesh/io
       ${CMAKE_CURRENT_SOURCE_DIR}/src/global/triangle)
       add_definitions(-DTRILIBRARY -DANSI_DECLARATORS -DDICE_ENABLE_GLOBAL=1)
+ENDIF()
+
+IF(DICE_ENABLE_OPENCV)
+  SET(DICE_HEADER_DIRS
+      ${DICE_HEADER_DIRS}      
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/opencv
+  )
+  add_definitions(-DDICE_ENABLE_OPENCV=1)
 ENDIF()
 
 SET(DICE_LIBRARIES
