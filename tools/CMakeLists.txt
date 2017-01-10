@@ -20,6 +20,12 @@ SET(DICE_TEST_LIBRARIES
   triangle)
 endif()
 
+if(DICE_ENABLE_OPENCV)
+SET(DICE_TEST_LIBRARIES
+  ${DICE_TEST_LIBRARIES}
+  dicefeature)
+ENDIF()
+
 # DICE_LIBRARIES has the Trilinos libs (teuchos, tiff)
 # DICE_TEST_LIBRARIES has dicecore (Image, Subset, Schema...)
 

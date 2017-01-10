@@ -13,6 +13,11 @@ SET(DICE_COMP_LIBS
   dicefft
   dicecine
 )
+IF(DICE_ENABLE_OPENCV)
+  SET(DICE_COMP_LIBS
+    ${DICE_COMP_LIBS}
+    dicefeature)
+ENDIF()
 include_directories(${Boost_INCLUDE_DIRS} COMPONENTS gil program_options REQUIRED)
 
 # glob all the cpp files

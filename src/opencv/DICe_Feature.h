@@ -60,10 +60,10 @@ namespace DICe {
 DICE_LIB_DLL_EXPORT
 void match_features(Teuchos::RCP<Image> left_image,
   Teuchos::RCP<Image> right_image,
-  Teuchos::ArrayRCP<scalar_t> & left_x,
-  Teuchos::ArrayRCP<scalar_t> & left_y,
-  Teuchos::ArrayRCP<scalar_t> & right_x,
-  Teuchos::ArrayRCP<scalar_t> & right_y,
+  std::vector<scalar_t> & left_x,
+  std::vector<scalar_t> & left_y,
+  std::vector<scalar_t> & right_x,
+  std::vector<scalar_t> & right_y,
   const bool draw_result_image=false);
 
 }// End DICe Namespace

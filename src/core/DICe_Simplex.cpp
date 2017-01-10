@@ -297,38 +297,35 @@ Homography_Simplex::Homography_Simplex(Teuchos::RCP<Image> left_img,
   Simplex(9,9,params),
   tri_(tri){
 
-  //left_img->write("left_0.tif");
-  //right_img->write("right_0.tif");
-
-  // median filter the images:
-  const intensity_t avg_left = left_img->mean();
-  const intensity_t avg_right = right_img->mean();
-  const int_t wl = left_img->width();
-  const int_t hl = left_img->height();
-  const int_t num_px_left = wl*hl;
-  const int_t wr = right_img->width();
-  const int_t hr = right_img->height();
-  const int_t num_px_right = wr*hr;
-  Teuchos::RCP<Image> mf_left = Teuchos::rcp(new Image(left_img));
-  Teuchos::ArrayRCP<intensity_t> mf_left_intens = mf_left->intensities();
-  Teuchos::RCP<Image> mf_right = Teuchos::rcp(new Image(right_img));
-  Teuchos::ArrayRCP<intensity_t> mf_right_intens = mf_right->intensities();
-  for(int_t i=0; i<num_px_left;++i){
-    if(mf_left_intens[i]<avg_left){
-      mf_left_intens[i] = 0.0;
-    }else{
-      mf_left_intens[i] = 1.0;
-    }
-  }
-  for(int_t i=0; i<num_px_right;++i){
-    if(mf_right_intens[i]<avg_right){
-      mf_right_intens[i] = 0.0;
-    }else{
-      mf_right_intens[i] = 1.0;
-    }
-  }
-  mf_left->write("median_filter_left.tif");
-  mf_right->write("median_filter_right.tif");
+//  // median filter the images:
+//  const intensity_t avg_left = left_img->mean();
+//  const intensity_t avg_right = right_img->mean();
+//  const int_t wl = left_img->width();
+//  const int_t hl = left_img->height();
+//  const int_t num_px_left = wl*hl;
+//  const int_t wr = right_img->width();
+//  const int_t hr = right_img->height();
+//  const int_t num_px_right = wr*hr;
+//  Teuchos::RCP<Image> mf_left = Teuchos::rcp(new Image(left_img));
+//  Teuchos::ArrayRCP<intensity_t> mf_left_intens = mf_left->intensities();
+//  Teuchos::RCP<Image> mf_right = Teuchos::rcp(new Image(right_img));
+//  Teuchos::ArrayRCP<intensity_t> mf_right_intens = mf_right->intensities();
+//  for(int_t i=0; i<num_px_left;++i){
+//    if(mf_left_intens[i]<avg_left){
+//      mf_left_intens[i] = 0.0;
+//    }else{
+//      mf_left_intens[i] = 1.0;
+//    }
+//  }
+//  for(int_t i=0; i<num_px_right;++i){
+//    if(mf_right_intens[i]<avg_right){
+//      mf_right_intens[i] = 0.0;
+//    }else{
+//      mf_right_intens[i] = 1.0;
+//    }
+//  }
+//  mf_left->write("median_filter_left.tif");
+//  mf_right->write("median_filter_right.tif");
 //  left_img_ = mf_left;
 //  right_img_ = mf_right;
   left_img_ = left_img;
@@ -367,38 +364,35 @@ Warp_Simplex::Warp_Simplex(Teuchos::RCP<Image> left_img,
   Simplex(12,12,params),
   tri_(tri){
 
-  //left_img->write("left_0.tif");
-  //right_img->write("right_0.tif");
-
-  // median filter the images:
-  const intensity_t avg_left = left_img->mean();
-  const intensity_t avg_right = right_img->mean();
-  const int_t wl = left_img->width();
-  const int_t hl = left_img->height();
-  const int_t num_px_left = wl*hl;
-  const int_t wr = right_img->width();
-  const int_t hr = right_img->height();
-  const int_t num_px_right = wr*hr;
-  Teuchos::RCP<Image> mf_left = Teuchos::rcp(new Image(left_img));
-  Teuchos::ArrayRCP<intensity_t> mf_left_intens = mf_left->intensities();
-  Teuchos::RCP<Image> mf_right = Teuchos::rcp(new Image(right_img));
-  Teuchos::ArrayRCP<intensity_t> mf_right_intens = mf_right->intensities();
-  for(int_t i=0; i<num_px_left;++i){
-    if(mf_left_intens[i]<avg_left){
-      mf_left_intens[i] = 0.0;
-    }else{
-      mf_left_intens[i] = 1.0;
-    }
-  }
-  for(int_t i=0; i<num_px_right;++i){
-    if(mf_right_intens[i]<avg_right){
-      mf_right_intens[i] = 0.0;
-    }else{
-      mf_right_intens[i] = 1.0;
-    }
-  }
-  mf_left->write("median_filter_left.tif");
-  mf_right->write("median_filter_right.tif");
+//  // median filter the images:
+//  const intensity_t avg_left = left_img->mean();
+//  const intensity_t avg_right = right_img->mean();
+//  const int_t wl = left_img->width();
+//  const int_t hl = left_img->height();
+//  const int_t num_px_left = wl*hl;
+//  const int_t wr = right_img->width();
+//  const int_t hr = right_img->height();
+//  const int_t num_px_right = wr*hr;
+//  Teuchos::RCP<Image> mf_left = Teuchos::rcp(new Image(left_img));
+//  Teuchos::ArrayRCP<intensity_t> mf_left_intens = mf_left->intensities();
+//  Teuchos::RCP<Image> mf_right = Teuchos::rcp(new Image(right_img));
+//  Teuchos::ArrayRCP<intensity_t> mf_right_intens = mf_right->intensities();
+//  for(int_t i=0; i<num_px_left;++i){
+//    if(mf_left_intens[i]<avg_left){
+//      mf_left_intens[i] = 0.0;
+//    }else{
+//      mf_left_intens[i] = 1.0;
+//    }
+//  }
+//  for(int_t i=0; i<num_px_right;++i){
+//    if(mf_right_intens[i]<avg_right){
+//      mf_right_intens[i] = 0.0;
+//    }else{
+//      mf_right_intens[i] = 1.0;
+//    }
+//  }
+//  mf_left->write("median_filter_left.tif");
+//  mf_right->write("median_filter_right.tif");
 //  left_img_ = mf_left;
 //  right_img_ = mf_right;
   left_img_ = left_img;

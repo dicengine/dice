@@ -70,10 +70,10 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Image> left_img = Teuchos::rcp(new Image("../images/refSpeckled.tif"));
   Teuchos::RCP<Image> right_img = Teuchos::rcp(new Image("../images/shiftSpeckled_160x140y.tif"));
 
-  Teuchos::ArrayRCP<scalar_t> left_x;
-  Teuchos::ArrayRCP<scalar_t> left_y;
-  Teuchos::ArrayRCP<scalar_t> right_x;
-  Teuchos::ArrayRCP<scalar_t> right_y;
+  std::vector<scalar_t> left_x;
+  std::vector<scalar_t> left_y;
+  std::vector<scalar_t> right_x;
+  std::vector<scalar_t> right_y;
 
   match_features(left_img,right_img,left_x,left_y,right_x,right_y,true);
   const int_t num_matches = left_x.size();

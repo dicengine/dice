@@ -45,6 +45,8 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/opencv.hpp>
 
+#include <cstdio>
+
 namespace DICe {
 
 
@@ -53,10 +55,10 @@ namespace DICe {
 DICE_LIB_DLL_EXPORT
 void match_features(Teuchos::RCP<Image> left_image,
   Teuchos::RCP<Image> right_image,
-  Teuchos::ArrayRCP<scalar_t> & left_x,
-  Teuchos::ArrayRCP<scalar_t> & left_y,
-  Teuchos::ArrayRCP<scalar_t> & right_x,
-  Teuchos::ArrayRCP<scalar_t> & right_y,
+  std::vector<scalar_t> & left_x,
+  std::vector<scalar_t> & left_y,
+  std::vector<scalar_t> & right_x,
+  std::vector<scalar_t> & right_y,
   const bool draw_result_image){
 
   left_x.clear();
@@ -64,24 +66,39 @@ void match_features(Teuchos::RCP<Image> left_image,
   right_x.clear();
   right_y.clear();
 
-#if DICE_USE_DOUBLE
-  // need to convert the double array to a float array
-  Teuchos::ArrayRCP<intensity_t> left_intensities_dbl = left_image->intensities();
-  Teuchos::ArrayRCP<intensity_t> right_intensities_dbl = right_image->intensities();
-  Teuchos::ArrayRCP<float> left_intensities(left_image->width()*left_image->height(),0.0);
-  Teuchos::ArrayRCP<float> right_intensities(right_image->width()*right_image->height(),0.0);
-  for(int_t i=0;i<left_intensities_dbl.size();++i)
-    left_intensities[i] = static_cast<float>(left_intensities_dbl[i]);
-  for(int_t i=0;i<right_intensities_dbl.size();++i)
-    right_intensities[i] = static_cast<float>(right_intensities_dbl[i]);
-#else
-      Teuchos::ArrayRCP<intensity_t> left_intensities = left_image->intensities();
-      Teuchos::ArrayRCP<intensity_t> right_intensities = right_image->intensities();
-#endif
-  cv::Mat img1 = cv::Mat(left_image->width(),left_image->height(),CV_32F,left_intensities.getRawPtr());
-  cv::Mat img2 = cv::Mat(right_image->width(),right_image->height(),CV_32F,right_intensities.getRawPtr());
-
+  DEBUG_MSG("match_features(): initializing OpenCV Mats");
+  cv::Mat img1;
+  cv::Mat img2;
+  if(left_image->has_file_name()&&right_image->has_file_name()){
+    // see if the image has a valid file name
+    img1 = cv::imread(left_image->file_name().c_str(), cv::IMREAD_GRAYSCALE);
+    img2 = cv::imread(right_image->file_name().c_str(), cv::IMREAD_GRAYSCALE);
+  }else{
+    left_image->write("left_image.tif");
+    right_image->write("right_image.tif");
+    img1 = cv::imread("left_image.tif", cv::IMREAD_GRAYSCALE);
+    img2 = cv::imread("right_image.tif", cv::IMREAD_GRAYSCALE);
+    //TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Feature detection only enabled for images read from file, not array images");
+//#if DICE_USE_DOUBLE
+//    // need to convert the double array to a float array
+//    Teuchos::ArrayRCP<intensity_t> left_intensities_dbl = left_image->intensities();
+//    Teuchos::ArrayRCP<intensity_t> right_intensities_dbl = right_image->intensities();
+//    Teuchos::ArrayRCP<float> left_intensities(left_image->width()*left_image->height(),0.0);
+//    Teuchos::ArrayRCP<float> right_intensities(right_image->width()*right_image->height(),0.0);
+//    for(int_t i=0;i<left_intensities_dbl.size();++i)
+//      left_intensities[i] = static_cast<float>(left_intensities_dbl[i]);
+//    for(int_t i=0;i<right_intensities_dbl.size();++i)
+//      right_intensities[i] = static_cast<float>(right_intensities_dbl[i]);
+//#else
+//    Teuchos::ArrayRCP<intensity_t> left_intensities = left_image->intensities();
+//    Teuchos::ArrayRCP<intensity_t> right_intensities = right_image->intensities();
+//#endif
+//    cv::Mat img1 = cv::Mat(left_image->width(),left_image->height(),CV_32F,left_intensities.getRawPtr());
+//    cv::Mat img2 = cv::Mat(right_image->width(),right_image->height(),CV_32F,right_intensities.getRawPtr());
+  }
   const float nn_match_ratio = 0.6f;   // Nearest neighbor matching ratio
+
+  DEBUG_MSG("match_features(): detect and compute features");
 
   std::vector<cv::KeyPoint> kpts1, kpts2;
   cv::Mat desc1, desc2;
@@ -89,9 +106,13 @@ void match_features(Teuchos::RCP<Image> left_image,
   akaze->detectAndCompute(img1, cv::noArray(), kpts1, desc1);
   akaze->detectAndCompute(img2, cv::noArray(), kpts2, desc2);
 
+  DEBUG_MSG("match_features(): matching features");
+
   cv::BFMatcher matcher(cv::NORM_HAMMING);
   std::vector< std::vector<cv::DMatch> > nn_matches;
   matcher.knnMatch(desc1, desc2, nn_matches, 2);
+
+  DEBUG_MSG("match_features(): removing outliers");
 
   std::vector<cv::KeyPoint> matched1, matched2, inliers1, inliers2;
   std::vector<cv::DMatch> good_matches;
@@ -129,13 +150,18 @@ void match_features(Teuchos::RCP<Image> left_image,
   // draw results image if requested
   if(draw_result_image){
     cv::Mat res;
-    if(left_image->has_file_name()&&right_image->has_file_name()){
-      // see if the image has a valid file name
-      img1 = cv::imread(left_image->file_name().c_str(), cv::IMREAD_GRAYSCALE);
-      img2 = cv::imread(right_image->file_name().c_str(), cv::IMREAD_GRAYSCALE);
-    }
+//    if(left_image->has_file_name()&&right_image->has_file_name()){
+//      // see if the image has a valid file name
+//      img1 = cv::imread(left_image->file_name().c_str(), cv::IMREAD_GRAYSCALE);
+//      img2 = cv::imread(right_image->file_name().c_str(), cv::IMREAD_GRAYSCALE);
+//    }
     cv::drawMatches(img1, inliers1, img2, inliers2, good_matches, res);
     cv::imwrite("res.png", res);
+  }
+  if(!(left_image->has_file_name()&&right_image->has_file_name())){
+    // remove the left and right image temp files:
+    std::remove("left_image.tif"); // delete file
+    std::remove("right_image.tif"); // delete file
   }
 }
 

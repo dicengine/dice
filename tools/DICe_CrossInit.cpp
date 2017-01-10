@@ -61,21 +61,25 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<std::ostream> outStream = Teuchos::rcp(&bhs, false);
 
   // read the parameters from the input file:
-  if(argc!=3){ // executable and input file
-    std::cout << "Usage: DICe_CrossInit <left_image> <right_image>" << std::endl;
+  if(argc!=4){ // executable and input file
+    std::cout << "Usage: DICe_CrossInit <left_image> <right_image> <1=use_nonlinear_with_points_file>" << std::endl;
     exit(1);
   }
   std::string left_name = argv[1];
   DEBUG_MSG("left image: " << left_name);
   std::string right_name = argv[2];
   DEBUG_MSG("right image: " << right_name);
+  const int_t use_nonlinear = std::atoi(argv[3]);
+  const bool use_nonlin = use_nonlinear==1;
+  DEBUG_MSG("CrossInit(): use_nonlinear is " << use_nonlin);
 
   Teuchos::RCP<Image> left_img = Teuchos::rcp(new Image(left_name.c_str()));
   Teuchos::RCP<Image> right_img = Teuchos::rcp(new Image(right_name.c_str()));
 
   // create a triangulation
   Teuchos::RCP<Triangulation> triang = Teuchos::rcp(new Triangulation());
-  triang->estimate_projective_transform(left_img,right_img,true);
+  const int_t ret_val = triang->estimate_projective_transform(left_img,right_img,true,use_nonlin);
+  DEBUG_MSG("CrossInit(): estimate_projective_transform() return value " << ret_val);
 
   DICe::finalize();
 

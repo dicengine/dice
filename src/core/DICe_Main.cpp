@@ -335,9 +335,10 @@ int main(int argc, char *argv[]) {
         stereo_schema = Teuchos::rcp(new DICe::Schema(right_image_string,right_image_string,correlation_params));
       }
       schema->initialize_cross_correlation(triangulation);
-      schema->project_right_image_into_left_frame(triangulation,false);
-      if(stereo_schema->use_nonlinear_projection())
+      if(stereo_schema->use_nonlinear_projection()){
+        schema->project_right_image_into_left_frame(triangulation,false);
         schema->execute_cross_correlation();
+      }
       schema->save_cross_correlation_fields();
       assert(stereo_schema!=Teuchos::null);
       if(stereo_schema->use_nonlinear_projection())

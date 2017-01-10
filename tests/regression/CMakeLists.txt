@@ -103,13 +103,13 @@ ENDFOREACH ( )
     FILE(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/strain_exec/DICe_exo*)
     FILE(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/strain_exec/DICe_custom_exo*)
     # create a test    
-    ADD_TEST ( NAME "RUN_strain_exec_DICe_mult_text"
+    ADD_TEST ( NAME "RUN_strain_exec_DICe_multi_text"
          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/strain_exec
          COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/dice_strain DICe_solution_0.txt DICe_solution_1.txt DICe_solution_2.txt 25 StrainLocs.txt DICe_multi_text)
     ADD_TEST ( NAME "RUN_strain_exec_DICe_single_text"
          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/strain_exec
          COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/dice_strain DICe_solution_0.txt 25 DICe_single_text)
-    ADD_TEST ( NAME "RUN_strain_exec_DICE_exo"
+    ADD_TEST ( NAME "RUN_strain_exec_DICe_exo"
          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/strain_exec
          COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/dice_strain DICe_solution.e 25 DICe_exo)
     ADD_TEST ( NAME "RUN_strain_exec_DICe_custom_exo"
@@ -123,8 +123,11 @@ ENDFOREACH ( )
         ADD_TEST ( NAME "DIFF_strain_exec_${trim_name}" 
             COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/DICe_ExoDiff ${gold_file} ${CMAKE_CURRENT_BINARY_DIR}/strain_exec/${trim_name} ${CMAKE_CURRENT_BINARY_DIR}/strain_exec/exo_diff.txt)
         set_tests_properties("DIFF_strain_exec_${trim_name}" PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
-        set_property(TEST "DIFF_strain_exec_${trim_name}" APPEND PROPERTY DEPENDS "RUN_strain_exec_${trim_name}")
     ENDFOREACH ( )
+    set_property(TEST "DIFF_strain_exec_DICe_multi_text.e" APPEND PROPERTY DEPENDS "RUN_strain_exec_DICe_multi_text")
+    set_property(TEST "DIFF_strain_exec_DICe_single_text.e" APPEND PROPERTY DEPENDS "RUN_strain_exec_DICe_single_text")
+    set_property(TEST "DIFF_strain_exec_DICe_exo.e" APPEND PROPERTY DEPENDS "RUN_strain_exec_DICe_exo")
+    set_property(TEST "DIFF_strain_exec_DICe_custom_exo.e" APPEND PROPERTY DEPENDS "RUN_strain_exec_DICe_custom_exo")
     FILE ( GLOB gold_files "${CMAKE_CURRENT_BINARY_DIR}/strain_exec/gold/*.txt")
     FOREACH ( gold_file ${gold_files})
         # get the name of the file without the directory
@@ -132,7 +135,10 @@ ENDFOREACH ( )
         ADD_TEST ( NAME "DIFF_strain_exec_${trim_name}" 
             COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/DICe_Diff ${gold_file} ${CMAKE_CURRENT_BINARY_DIR}/strain_exec/${trim_name} -t 0.05 -v)
         set_tests_properties("DIFF_strain_exec_${trim_name}" PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
-        set_property(TEST "DIFF_strain_exec_${trim_name}" APPEND PROPERTY DEPENDS "RUN_strain_exec_${trim_name}")
+        set_property(TEST "DIFF_strain_exec_${trim_name}" APPEND PROPERTY DEPENDS "RUN_strain_exec_DICe_multi_text")
+        set_property(TEST "DIFF_strain_exec_${trim_name}" APPEND PROPERTY DEPENDS "RUN_strain_exec_DICe_single_text")
+        set_property(TEST "DIFF_strain_exec_${trim_name}" APPEND PROPERTY DEPENDS "RUN_strain_exec_DICe_exo")
+        set_property(TEST "DIFF_strain_exec_${trim_name}" APPEND PROPERTY DEPENDS "RUN_strain_exec_DICe_custom_exo")
     ENDFOREACH ( )
     
 ENDIF() # end global tests

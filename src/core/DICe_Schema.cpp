@@ -2962,7 +2962,8 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri){
   // note: we try to avoid feature matching approaches here because the speckle pattern
   // may be repeating which would lead to false positives
   const bool write_images = comm_->get_rank() == 0;
-  tri->estimate_projective_transform(ref_img_,def_imgs_[0],write_images,use_nonlinear_projection_);
+  const int_t success = tri->estimate_projective_transform(ref_img_,def_imgs_[0],write_images,use_nonlinear_projection_);
+  TEUCHOS_TEST_FOR_EXCEPTION(success!=0,std::runtime_error,"Error, Schema::initialize_cross_correlation(): estimate_projective_transform failed");
 
   // only do this if the analysis does not ask for right to left projection
   // otherwise, leave these field uninitialized
