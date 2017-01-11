@@ -337,8 +337,8 @@ int main(int argc, char *argv[]) {
       schema->initialize_cross_correlation(triangulation);
       if(stereo_schema->use_nonlinear_projection()){
         schema->project_right_image_into_left_frame(triangulation,false);
-        schema->execute_cross_correlation();
       }
+      schema->execute_cross_correlation();
       schema->save_cross_correlation_fields();
       assert(stereo_schema!=Teuchos::null);
       if(stereo_schema->use_nonlinear_projection())

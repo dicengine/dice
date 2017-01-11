@@ -416,15 +416,16 @@ int main(int argc, char *argv[]) {
   fprintf(filePtr,"%i %i\n",550,195);
   fclose(filePtr);
 
+  fit_tri->clear_trans_extrinsics();
   fit_tri->best_fit_plane(coords_x,coords_y,coords_z,sigma);
 
   std::fstream bestFitDataFile("best_fit_plane_out.dat", std::ios_base::in);
   TEUCHOS_TEST_FOR_EXCEPTION(!bestFitDataFile.good(),std::runtime_error,
     "Error, could not open file best_fit_plane_out.dat");
-  std::vector<scalar_t> fit_sol = {1.238900e+00,4.500000e-02,2.068900e+02,-1.781168e+01,
-    -4.038207e+01,-1.830059e+02,-1.585211e+01,-4.033431e+01,-1.854358e+02,
-    6.276800e-01,-3.159507e-02,7.778301e-01,1.529904e-02,9.994837e-01,2.825277e-02,
-    -7.783212e-01,-5.833639e-03,6.278393e-01,-1.781168e+01,-4.038207e+01,-1.830059e+02};
+  std::vector<scalar_t> fit_sol = {1.238900e+00,4.500000e-02,2.068900e+02,
+   8.853325e+00,1.881083e+01,-2.187049e+02,7.833042e+00,1.870169e+01,-2.174359e+02,
+    -6.252117e-01,-6.688012e-02,7.775843e-01,1.768548e+02,-6.395888e-02,9.973609e-01,3.435741e-02,-1.068081e+01,-7.778301e-01,
+    -2.825277e-02,-6.278393e-01,-1.298937e+02};
   std::vector<scalar_t> fit_comp;
   while(!bestFitDataFile.eof()){
     Teuchos::ArrayRCP<std::string> tokens = tokenize_line(bestFitDataFile);
@@ -434,7 +435,7 @@ int main(int argc, char *argv[]) {
     fit_comp.push_back(std::strtod(tokens[0].c_str(),NULL));
   }
   if(fit_comp.size()!=fit_sol.size()){
-    *outStream << "Error wrong number of computed solution points in best_fit_plane.dat" << std::endl;
+    *outStream << "Error wrong number of computed solution points in best_fit_plane_out.dat" << std::endl;
     errorFlag++;
   }
   else{

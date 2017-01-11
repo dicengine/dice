@@ -327,9 +327,9 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
     all_entries->local_value(3) += y*y;
     all_entries->local_value(4) += y;
     all_entries->local_value(5) += 1.0;
-    all_entries->local_value(6) += -1.0*x*z;
-    all_entries->local_value(7) += -1.0*y*z;
-    all_entries->local_value(8) += -1.0*z;
+    all_entries->local_value(6) -= 1.0*x*z;
+    all_entries->local_value(7) -= 1.0*y*z;
+    all_entries->local_value(8) -= 1.0*z;
   }
   // broadcast the values to processor 0
   Teuchos::Array<int_t> all_on_zero_ids;
@@ -385,7 +385,7 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
     delete [] IPIV;
     delete [] WORK;
     // determine the coefficients
-    // z = -1*(u[0]*x + u[1]*y + u[3]), equation of a plane
+    // -z = u[0]*x + u[1]*y + u[3], equation of a plane
     for(int_t i=0;i<3;++i){
       for(int_t j=0;j<3;++j){
         u[i] += K(i,j)*F[j];
@@ -395,7 +395,7 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
       DEBUG_MSG("[proc " << comm.get_rank() << "] best_fit_plane coeff " << i << " " << u[i]);
     }
     std::FILE * filePtr = fopen("best_fit_plane_out.dat","w");
-    fprintf(filePtr,"# Best fit plane equation coefficients (z = -1*(c[0]*x + c[1]*y + c[2]) ): \n");
+    fprintf(filePtr,"# Best fit plane equation coefficients (-z = c[0]*x + c[1]*y + c[2]): \n");
     fprintf(filePtr,"%e\n",u[0]);
     fprintf(filePtr,"%e\n",u[1]);
     fprintf(filePtr,"%e\n",u[2]);
@@ -403,8 +403,8 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
     // read in origin in image left coordinates
     std::vector<int_t> fit_def_x_left(2,0);
     std::vector<int_t> fit_def_y_left(2,0);
-    std::vector<scalar_t> fit_def_x_right(2,0.0);
-    std::vector<scalar_t> fit_def_y_right(2,0.0);
+    //std::vector<scalar_t> fit_def_x_right(2,0.0);
+    //std::vector<scalar_t> fit_def_y_right(2,0.0);
     std::fstream bestFitDataFile("best_fit_plane.dat", std::ios_base::in);
     TEUCHOS_TEST_FOR_EXCEPTION(!bestFitDataFile.good(),std::runtime_error,
       "Error, could not open file best_fit_plane.dat (required to project output to best fit plane)");
@@ -420,47 +420,38 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
       fit_def_y_left[line] = atoi(tokens[1].c_str());
       line++;
     }
-    DEBUG_MSG("Best fit plane origin (left sensor coords):          " << fit_def_x_left[0] << " " << fit_def_y_left[0]);
-    DEBUG_MSG("Best fit plane point on x axis (left sensor coords): " << fit_def_x_left[1] << " " << fit_def_y_left[1]);
-    scalar_t xr = 0.0;
-    scalar_t yr = 0.0;
-    for(int_t i=0;i<2;++i){
-      project_left_to_right_sensor_coords(fit_def_x_left[i],fit_def_y_left[i],xr,yr);
-      fit_def_x_right[i] = xr;
-      fit_def_y_right[i] = yr;
-    }
-    DEBUG_MSG("Best fit plane origin (right sensor coords):          " << fit_def_x_right[0] << " " << fit_def_y_right[0]);
-    DEBUG_MSG("Best fit plane point on x axis (right sensor coords): " << fit_def_x_right[1] << " " << fit_def_y_right[1]);
-    // triangulate the two points to get the origin and x-axis in model coordinates
-    scalar_t oX = 0.0; // origin point
-    scalar_t oY = 0.0;
-    scalar_t oZ = 0.0;
-    scalar_t oXw = 0.0;
-    scalar_t oYw = 0.0;
-    scalar_t oZw = 0.0;
-    triangulate(fit_def_x_left[0],fit_def_y_left[0],fit_def_x_right[0],fit_def_y_right[0],oX,oY,oZ,oXw,oYw,oZw);
-    // convert to planar coordinates
-    oZw = u[0]*oXw + u[1]*oYw + u[2];
-    oZw *=-1.0;
-    scalar_t xaX = 0.0; // origin point
-    scalar_t xaY = 0.0;
-    scalar_t xaZ = 0.0;
-    scalar_t xaXw = 0.0;
-    scalar_t xaYw = 0.0;
-    scalar_t xaZw = 0.0;
-    triangulate(fit_def_x_left[1],fit_def_y_left[1],fit_def_x_right[1],fit_def_y_right[1],xaX,xaY,xaZ,xaXw,xaYw,xaZw);
-    // convert to planar coordinates
-    xaZw = u[0]*xaXw + u[1]*xaYw + u[2];
-    xaZw *= -1.0;
+    DEBUG_MSG("Best fit plane origin (left sensor coords):           " << fit_def_x_left[0] << " " << fit_def_y_left[0]);
+    DEBUG_MSG("Best fit plane point on x axis (left sensor coords):  " << fit_def_x_left[1] << " " << fit_def_y_left[1]);
 
-    fprintf(filePtr,"# Best fit origin in model coordinates \n");
-    fprintf(filePtr,"%e\n",oXw);
-    fprintf(filePtr,"%e\n",oYw);
-    fprintf(filePtr,"%e\n",oZw);
-    fprintf(filePtr,"# Best fit point along x axis in model coordinates \n");
-    fprintf(filePtr,"%e\n",xaXw);
-    fprintf(filePtr,"%e\n",xaYw);
-    fprintf(filePtr,"%e\n",xaZw);
+    // determine the corresponding point in the camera 0 coordinates, given the image coordinates of the origin:
+    // this is done by using the psi[u,v,1] = [F]*[X,Y,Z] formula with Z = -1(u0*X+u1*Y+u2) to solve for X and Y
+    const scalar_t cx = cal_intrinsics_[0][0];
+    const scalar_t cy = cal_intrinsics_[0][1];
+    const scalar_t fx = cal_intrinsics_[0][2];
+    const scalar_t fy = cal_intrinsics_[0][3];
+    const scalar_t fs = cal_intrinsics_[0][4];
+    scalar_t U = fit_def_x_left[0];
+    scalar_t V = fit_def_y_left[0];
+    const scalar_t c0 = u[0];
+    const scalar_t c1 = u[1];
+    const scalar_t c2 = u[2];
+    const scalar_t XO = -(c2*cy*fs - c2*cx*fy + c2*fy*U - c2*fs*V)/(fx*fy + c0*cy*fs - c0*cx*fy - c1*cy*fx + c0*fy*U - c0*fs*V + c1*fx*V);
+    const scalar_t YO = (c2*cy*fx - c2*fx*V)/(fx*fy + c0*cy*fs - c0*cx*fy - c1*cy*fx + c0*fy*U - c0*fs*V + c1*fx*V);
+    const scalar_t ZO = -1.0*(c0*XO + c1*YO + c2);
+    U = fit_def_x_left[1];
+    V = fit_def_y_left[1];
+    const scalar_t XP = -(c2*cy*fs - c2*cx*fy + c2*fy*U - c2*fs*V)/(fx*fy + c0*cy*fs - c0*cx*fy - c1*cy*fx + c0*fy*U - c0*fs*V + c1*fx*V);
+    const scalar_t YP = (c2*cy*fx - c2*fx*V)/(fx*fy + c0*cy*fs - c0*cx*fy - c1*cy*fx + c0*fy*U - c0*fs*V + c1*fx*V);
+    const scalar_t ZP = -1.0*(c0*XP + c1*YP + c2);
+
+    fprintf(filePtr,"# Best fit origin in camera 0 coordinates \n");
+    fprintf(filePtr,"%e\n",XO);
+    fprintf(filePtr,"%e\n",YO);
+    fprintf(filePtr,"%e\n",ZO);
+    fprintf(filePtr,"# Best fit point along x axis in camera 0 coordinates \n");
+    fprintf(filePtr,"%e\n",XP);
+    fprintf(filePtr,"%e\n",YP);
+    fprintf(filePtr,"%e\n",ZP);
 
     // the world coordinates are obtained from the standard basis vectors e1 = 1 0 0, e2 = 0 1 0, e3 = 0 0 1
     std::vector<scalar_t> e1(3,0.0);
@@ -473,36 +464,94 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
     // the best fit plane coordinates are determined by the basis vectors g1 g2 g3
     // g1 is from the origin to the point on the x-axis
     std::vector<scalar_t> g1(3,0.0);
-    g1[0] = xaXw - oXw;
-    g1[1] = xaYw - oYw;
-    g1[2] = xaZw - oZw;
+    g1[0] = XP - XO;//xaXw - oXw;
+    g1[1] = YP - YO;//xaYw - oYw;
+    g1[2] = ZP - ZO;//xaZw - oZw;
     // g3 is the normal vector on the plane
     std::vector<scalar_t> g3(3,0.0);
-    g3[0] = u[0];
-    g3[1] = u[1];
-    g3[2] = 1.0;
+    g3[0] = -u[0];
+    g3[1] = -u[1];
+    g3[2] = -1.0;
     // g2 is obtained by the cross product of g3 with g1
     std::vector<scalar_t> g2(3,0.0);
     g2[0] = g3[1]*g1[2] - g1[1]*g3[2];
     g2[1] = g3[2]*g1[0] - g1[2]*g3[0];
     g2[2] = g3[0]*g1[1] - g1[0]*g3[1];
 
+    // need to invert the solution to get the transformation to the best fit plane
+    Teuchos::SerialDenseMatrix<int_t,double> TK(4,4,true);
+    TK(0,0) = cosine_of_two_vectors(e1,g1);
+    TK(0,1) = cosine_of_two_vectors(e1,g2);
+    TK(0,2) = cosine_of_two_vectors(e1,g3);
+    TK(0,3) = XO;
+    TK(1,0) = cosine_of_two_vectors(e2,g1);
+    TK(1,1) = cosine_of_two_vectors(e2,g2);
+    TK(1,2) = cosine_of_two_vectors(e2,g3);
+    TK(1,3) = YO;
+    TK(2,0) = cosine_of_two_vectors(e3,g1);
+    TK(2,1) = cosine_of_two_vectors(e3,g2);
+    TK(2,2) = cosine_of_two_vectors(e3,g3);
+    TK(2,3) = ZO;
+    TK(3,3) = 1.0;
+//    std::cout << "Transformation Matrix: " << std::endl;
+//    for(int_t i=0;i<4;++i){
+//      for(int_t j=0;j<4;++j){
+//        std::cout << TK(i,j) << " ";
+//      }
+//      std::cout << std::endl;
+//    }
+
+    // transformation has to be inverted to get trans_extrinsic matrix
+    int *TIPIV = new int[5];
+    int TLWORK = 16;
+    int TINFO = 0;
+    double *TWORK = new double[TLWORK];
+    lapack.GETRF(4,4,TK.values(),4,TIPIV,&TINFO);
+    for(int_t i=0;i<TLWORK;++i) TWORK[i] = 0.0;
+    try
+    {
+      lapack.GETRI(4,TK.values(),4,TIPIV,TWORK,TLWORK,&TINFO);
+    }
+    catch(std::exception &e){
+      DEBUG_MSG( e.what() << '\n');
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,
+        "Error, could not invert the TK matrix in best fit plane");
+    }
+    delete [] TIPIV;
+    delete [] TWORK;
+
+//    std::cout << "Inverse Transformation Matrix: " << std::endl;
+//    for(int_t i=0;i<4;++i){
+//      for(int_t j=0;j<4;++j){
+//        std::cout << TK(i,j) << " ";
+//      }
+//      std::cout << std::endl;
+//    }
+
+    // check that the origin actually falls at (0,0,0) in the transformed system
+    //scalar_t origin_error = 0.0;
+    //for(int_t i=0;i<3;++i)
+    //    origin_error += TK(i,0)*XO + TK(i,1)*YO + TK(i,2);
+    //TEUCHOS_TEST_FOR_EXCEPTION(std::abs(origin_error) > 0.0, std::runtime_error,
+    //  "Error, transformed origin is not at (0,0,0), origin: (" <<
+    //  TK(0,0)*XO + TK(0,1)*YO + TK(0,2) << "," << TK(1,0)*XO + TK(1,1)*YO + TK(1,2) << "," << TK(2,0)*XO + TK(2,1)*YO + TK(2,2) <<
+    //  "). The transformation cannot be correct");
+
     // the rotation matrix components are the cosines of the angles between the basis vectors
-    all_on_zero_coeffs->local_value(0) = cosine_of_two_vectors(e1,g1);
-    all_on_zero_coeffs->local_value(1) = cosine_of_two_vectors(e1,g2);
-    all_on_zero_coeffs->local_value(2) = cosine_of_two_vectors(e1,g3);
-    all_on_zero_coeffs->local_value(3) = cosine_of_two_vectors(e2,g1);
-    all_on_zero_coeffs->local_value(4) = cosine_of_two_vectors(e2,g2);
-    all_on_zero_coeffs->local_value(5) = cosine_of_two_vectors(e2,g3);
-    all_on_zero_coeffs->local_value(6) = cosine_of_two_vectors(e3,g1);
-    all_on_zero_coeffs->local_value(7) = cosine_of_two_vectors(e3,g2);
-    all_on_zero_coeffs->local_value(8) = cosine_of_two_vectors(e3,g3);
-    // the translation is simply given by the origin of the transform;
-    all_on_zero_coeffs->local_value(9) = oXw;
-    all_on_zero_coeffs->local_value(10) = oYw;
-    all_on_zero_coeffs->local_value(11) = oZw;
+    all_on_zero_coeffs->local_value(0) = TK(0,0);
+    all_on_zero_coeffs->local_value(1) = TK(0,1);
+    all_on_zero_coeffs->local_value(2) = TK(0,2);
+    all_on_zero_coeffs->local_value(3) = TK(0,3);
+    all_on_zero_coeffs->local_value(4) = TK(1,0);
+    all_on_zero_coeffs->local_value(5) = TK(1,1);
+    all_on_zero_coeffs->local_value(6) = TK(1,2);
+    all_on_zero_coeffs->local_value(7) = TK(1,3);
+    all_on_zero_coeffs->local_value(8) = TK(2,0);
+    all_on_zero_coeffs->local_value(9) = TK(2,1);
+    all_on_zero_coeffs->local_value(10) = TK(2,2);
+    all_on_zero_coeffs->local_value(11) = TK(2,3);
     fprintf(filePtr,"# Transform from current world coords to best fit plane origin and bases \n");
-    fprintf(filePtr,"# R11 R12 R13 R21 R22 R23 R31 R32 R33 tx ty tz \n");
+    fprintf(filePtr,"# R11 R12 R13 tx R21 R22 R23 ty R31 R32 R33 tz \n");
     for(int_t i=0;i<num_coeffs;++i)
       fprintf(filePtr,"%e\n",all_on_zero_coeffs->local_value(i));
     fclose(filePtr);
@@ -514,46 +563,30 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
   DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff R11: " << all_coeffs->local_value(0));
   DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff R12: " << all_coeffs->local_value(1));
   DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff R13: " << all_coeffs->local_value(2));
-  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff R21: " << all_coeffs->local_value(3));
-  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff R22: " << all_coeffs->local_value(4));
-  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff R23: " << all_coeffs->local_value(5));
-  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff R31: " << all_coeffs->local_value(6));
-  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff R32: " << all_coeffs->local_value(7));
-  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff R33: " << all_coeffs->local_value(8));
-  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff tx: " << all_coeffs->local_value(9));
-  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff ty: " << all_coeffs->local_value(10));
-  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff tz: " << all_coeffs->local_value(11));
+  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff tx: "  << all_coeffs->local_value(3));
+  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff R21: " << all_coeffs->local_value(4));
+  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff R22: " << all_coeffs->local_value(5));
+  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff R23: " << all_coeffs->local_value(6));
+  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff ty: "  << all_coeffs->local_value(7));
+  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff R31: " << all_coeffs->local_value(8));
+  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff R32: " << all_coeffs->local_value(9));
+  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff R33: " << all_coeffs->local_value(10));
+  DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff tz: "  << all_coeffs->local_value(11));
 
-  // convert the existig tranformation matrix to the new one
-  std::vector<std::vector<scalar_t> > temp(4,std::vector<scalar_t>(4,0.0));
-  for(int_t i=0;i<4;++i){
-    for(int_t j=0;j<4;++j){
-      temp[i][j] = trans_extrinsics_[i][j];
-      trans_extrinsics_[i][j] = 0.0;
-    }
-  }
-  std::vector<std::vector<scalar_t> > fit(4,std::vector<scalar_t>(4,0.0));
-  fit[0][0] = all_coeffs->local_value(0);
-  fit[0][1] = all_coeffs->local_value(1);
-  fit[0][2] = all_coeffs->local_value(2);
-  fit[0][3] = all_coeffs->local_value(9);
-  fit[1][0] = all_coeffs->local_value(3);
-  fit[1][1] = all_coeffs->local_value(4);
-  fit[1][2] = all_coeffs->local_value(5);
-  fit[1][3] = all_coeffs->local_value(10);
-  fit[2][0] = all_coeffs->local_value(6);
-  fit[2][1] = all_coeffs->local_value(7);
-  fit[2][2] = all_coeffs->local_value(8);
-  fit[2][3] = all_coeffs->local_value(11);
-  fit[3][3] = 1.0;
-
-  for(int_t i=0;i<4;++i){
-    for(int_t j=0;j<4;++j){
-      for(int_t k=0;k<4;++k){
-        trans_extrinsics_[i][k] += temp[i][j] * fit[j][k];
-      }
-    }
-  }
+  // set the new transformation matrix
+  trans_extrinsics_[0][0] = all_coeffs->local_value(0);
+  trans_extrinsics_[0][1] = all_coeffs->local_value(1);
+  trans_extrinsics_[0][2] = all_coeffs->local_value(2);
+  trans_extrinsics_[0][3] = all_coeffs->local_value(3);
+  trans_extrinsics_[1][0] = all_coeffs->local_value(4);
+  trans_extrinsics_[1][1] = all_coeffs->local_value(5);
+  trans_extrinsics_[1][2] = all_coeffs->local_value(6);
+  trans_extrinsics_[1][3] = all_coeffs->local_value(7);
+  trans_extrinsics_[2][0] = all_coeffs->local_value(8);
+  trans_extrinsics_[2][1] = all_coeffs->local_value(9);
+  trans_extrinsics_[2][2] = all_coeffs->local_value(10);
+  trans_extrinsics_[2][3] = all_coeffs->local_value(11);
+  trans_extrinsics_[3][3] = 1.0;
 }
 
 scalar_t

@@ -223,6 +223,13 @@ public:
   scalar_t cosine_of_two_vectors(const std::vector<scalar_t> & a,
     const std::vector<scalar_t> & b);
 
+  /// set the transform to the identity matrix
+  void clear_trans_extrinsics(){
+    for(size_t i=0;i<4;++i)
+      for(size_t j=0;j<4;++j)
+        trans_extrinsics_[i][j] = i==j ? 1.0 : 0.0;
+  }
+
 
 private:
   /// \brief load the calibration parameters
