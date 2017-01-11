@@ -334,7 +334,7 @@ bool is_string_param(const std::string & in){
 DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defaultParams){
   defaultParams->set(DICe::correlation_routine,DICe::TRACKING_ROUTINE);
   defaultParams->set(DICe::max_evolution_iterations,10);
-  defaultParams->set(DICe::max_solver_iterations_fast,250);
+  defaultParams->set(DICe::max_solver_iterations_fast,25);
   defaultParams->set(DICe::max_solver_iterations_robust,1000);
   defaultParams->set(DICe::robust_solver_tolerance,1.0E-6);
   defaultParams->set(DICe::fast_solver_tolerance,1.0E-4);
@@ -389,7 +389,7 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
 DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultParams){
   defaultParams->set(DICe::correlation_routine,DICe::GENERIC_ROUTINE);
   defaultParams->set(DICe::max_evolution_iterations,10);
-  defaultParams->set(DICe::max_solver_iterations_fast,250);
+  defaultParams->set(DICe::max_solver_iterations_fast,25);
   defaultParams->set(DICe::max_solver_iterations_robust,1000);
   defaultParams->set(DICe::robust_solver_tolerance,1.0E-6);
   defaultParams->set(DICe::fast_solver_tolerance,1.0E-4);

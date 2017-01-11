@@ -1,4 +1,5 @@
 <ParameterList>
+  <Parameter name="max_solver_iterations_fast" type="int" value="250" />  
   <Parameter name="estimate_resolution_error" type="bool" value="true" />  
   <Parameter name="estimate_resolution_error_min_period" type="double" value="300.0" />  
   <Parameter name="estimate_resolution_error_max_period" type="double" value="300.0" />  
