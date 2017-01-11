@@ -1567,26 +1567,27 @@ Schema::execute_cross_correlation(){
     for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
       scalar_t best_gamma = 100.0;
       scalar_t min_u = 0.0;
-      scalar_t min_v = 0.0;
-      scalar_t search_radius_x = 100.0;
-      scalar_t search_radius_y = 25.0;
-      scalar_t search_step = 2.0;
+      //scalar_t min_v = 0.0;
+      scalar_t search_radius_x = 20.0;
+      //scalar_t search_radius_y = 25.0;
+      scalar_t search_step = 1.0;
       Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,subset_global_id(subset_index)));
-      for(scalar_t v=-search_radius_y;v<search_radius_y;v+=search_step){
+      //for(scalar_t v=-search_radius_y;v<search_radius_y;v+=search_step){
         for(scalar_t u=-search_radius_x;u<search_radius_x;u+=search_step){
           (*def)[DISPLACEMENT_X] = u; // note: value already in disp u is not added here
-          (*def)[DISPLACEMENT_Y] = v;
+          //(*def)[DISPLACEMENT_Y] = v;
           const scalar_t gamma = obj->gamma(def);
           if(gamma > 0.0 && gamma < best_gamma){
             best_gamma = gamma;
             min_u = u;
-            min_v = v;
+            //min_v = v;
           }
-        } // end search i loop
-      } // end search j loop
+        } // end search x loop
+      //} // end search y loop
       local_field_value(subset_index,DISPLACEMENT_X) = min_u;
-      local_field_value(subset_index,DISPLACEMENT_Y) = min_v;
-      DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " v " << min_v << " gamma " << best_gamma);
+      //local_field_value(subset_index,DISPLACEMENT_Y) = min_v;
+      //DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " v " << min_v << " gamma " << best_gamma);
+      DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " gamma " << best_gamma);
     } // end subset loop
   }
   //def_imgs_[0]->write("new_right.tif");
