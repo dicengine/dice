@@ -1546,23 +1546,7 @@ Schema::execute_cross_correlation(){
 
   // project the right image onto the left if requested
   if(use_nonlinear_projection_){
-//    DEBUG_MSG("Schema::exectute_cross_correlation(): projecting the right image onto the left frame of reference");
-//    const int_t w = ref_img_->width();
-//    const int_t h = ref_img_->height();
-//    Teuchos::RCP<Image> proj_img = Teuchos::rcp(new Image(w,h,0.0));
-//    Teuchos::ArrayRCP<intensity_t> intens = proj_img->intensities();
-//    scalar_t xr = 0.0;
-//    scalar_t yr = 0.0;
-//    for(int_t j=0;j<h;++j){
-//      for(int_t i=0;i<w;++i){
-//        tri->project_left_to_right_sensor_coords(i,j,xr,yr);
-//        intens[j*w+i] = def_imgs_[0]->interpolate_keys_fourth(xr,yr);
-//      }
-//    }
-//    set_def_image(proj_img);
-
-    // the nonlinear projection may not be good enough to initialize so start with a 25x25 pixel search window
-
+    // the nonlinear projection may not be good enough to initialize so start with a search window
     Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
     for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
       scalar_t best_gamma = 100.0;
@@ -1590,7 +1574,6 @@ Schema::execute_cross_correlation(){
       DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " gamma " << best_gamma);
     } // end subset loop
   }
-  //def_imgs_[0]->write("new_right.tif");
 
 #ifdef DICE_DEBUG_MSG
   std::stringstream message;
@@ -1607,158 +1590,6 @@ Schema::execute_cross_correlation(){
       this_proc_gid_order_[subset_index]));
     generic_correlation_routine(obj);
   }
-
-//  // find the subset with the best match:
-//  scalar_t best_gamma = 100.0;
-//  int_t best_local_id = -1;
-//  Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-//  for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
-//    Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,
-//      this_proc_gid_order_[subset_index]));
-//    // for each subset: initialze the deformed subset with no deformation
-//    (*def)[DISPLACEMENT_X] = local_field_value(subset_index,DISPLACEMENT_X);
-//    (*def)[DISPLACEMENT_Y] = local_field_value(subset_index,DISPLACEMENT_Y);
-//    // if nonlinear projection is used, the deformation should be zero (check this)
-//    if(use_nonlinear_projection_){
-//      assert((*def)[DISPLACEMENT_X] == 0.0);
-//      assert((*def)[DISPLACEMENT_Y] == 0.0);
-//    }
-//    // measure initial gamma
-//    const scalar_t initial_gamma = obj->gamma(def);
-//    if(initial_gamma < best_gamma){
-//      best_gamma = initial_gamma;
-//      best_local_id = subset_index;
-//    }
-//  }
-//  DEBUG_MSG("Schema::exectute_cross_correlation(): best initial gamma " << best_gamma << " from subset " << subset_global_id(best_local_id) <<
-//    " location " << local_field_value(best_local_id,COORDINATE_X) << " " << local_field_value(best_local_id,COORDINATE_Y));
-//  assert(best_local_id > 0);
-//  TEUCHOS_TEST_FOR_EXCEPTION(best_gamma > 1.0,std::runtime_error,
-//    "Error, search for best initial gamma failed. Cross correlation initialization is too poor.");
-//
-//  // search in the vicinity for the best match for the best local id
-//  const int_t search_window_radius = 100.0;
-//  scalar_t min_u = local_field_value(best_local_id,DISPLACEMENT_X);
-//  scalar_t min_v = local_field_value(best_local_id,DISPLACEMENT_Y);
-//  Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,subset_global_id(best_local_id)));
-//  for(scalar_t v=-search_window_radius;v<search_window_radius;v+=1.0){
-//    for(scalar_t u=-search_window_radius;u<search_window_radius;u+=1.0){
-//      (*def)[DISPLACEMENT_X] = local_field_value(best_local_id,DISPLACEMENT_X) + u;
-//      (*def)[DISPLACEMENT_Y] = local_field_value(best_local_id,DISPLACEMENT_Y) + v;
-//      const scalar_t gamma = obj->gamma(def);
-//      if(gamma < best_gamma){
-//        best_gamma = gamma;
-//        min_u = u;
-//        min_v = v;
-//      }
-//    }
-//  }
-//  local_field_value(best_local_id,DISPLACEMENT_X) = min_u;
-//  local_field_value(best_local_id,DISPLACEMENT_Y) = min_v;
-//  DEBUG_MSG("Schema::execute_cross_correlation(): best initial displacement for subset " <<
-//    subset_global_id(best_local_id) << " u " << min_u << " v " << min_v);
-//
-//  // set up the seeds and order of subsets for processing:
-//
-//  // save off the original neigh id field
-//  Teuchos::RCP<MultiField> neigh_ids = mesh_->get_field(DICe::mesh::field_enums::NEIGHBOR_ID_FS);
-//  Teuchos::RCP<MultiField_Map> map = mesh_->get_scalar_node_dist_map();
-//  Teuchos::RCP<MultiField> original_neigh_ids = Teuchos::rcp(new MultiField(map,1,true));
-//  original_neigh_ids->update(1.0,*neigh_ids,0.0);
-//  // reset the nieghbor ids field
-//  neigh_ids->put_scalar(-1.0);
-//
-//  // set up a neighbor search tree:
-//  Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud<scalar_t>());
-//  point_cloud->pts.resize(local_num_subsets_);
-//  for(int_t i=0;i<local_num_subsets_;++i){
-//    point_cloud->pts[i].x = local_field_value(i,COORDINATE_X);
-//    point_cloud->pts[i].y = local_field_value(i,COORDINATE_Y);
-//    point_cloud->pts[i].z = 0.0;
-//  }
-//  DEBUG_MSG("building the kd-tree");
-//  Teuchos::RCP<my_kd_tree_t> kd_tree = Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
-//  kd_tree->buildIndex();
-//  DEBUG_MSG("kd-tree completed");
-//
-//  std::set<int_t> used_ids;
-//  std::vector<int_t> neighbor_ordered_local_id_list;
-//  used_ids.insert(best_local_id);
-//  neighbor_ordered_local_id_list.push_back(best_local_id);
-//
-//  // start with the best local id and expand from there
-//  scalar_t query_pt[3];
-//  const int_t num_neigh = 5;
-//  std::vector<size_t> ret_index(num_neigh);
-//  std::vector<scalar_t> out_dist_sqr(num_neigh);
-//  std::vector<int_t> new_fresh_ids;
-//  new_fresh_ids.push_back(best_local_id);
-//  while(new_fresh_ids.size()>0){
-//    std::vector<int_t> old_fresh_ids = new_fresh_ids;
-//    new_fresh_ids.clear();
-//    for(size_t fi=0;fi<old_fresh_ids.size();++fi){
-//      int_t id = old_fresh_ids[fi];
-//      query_pt[0] = point_cloud->pts[id].x;
-//      query_pt[1] = point_cloud->pts[id].y;
-//      query_pt[2] = point_cloud->pts[id].z;
-//      kd_tree->knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
-//      for(size_t i=0;i<num_neigh;++i){
-//        const int_t neigh_id = ret_index[i]; // local id
-//        if(local_field_value(neigh_id,NEIGHBOR_ID)<0 && neigh_id!=best_local_id){
-//          local_field_value(neigh_id,NEIGHBOR_ID) = subset_global_id(id);
-//          used_ids.insert(neigh_id);
-//          bool in_list = false;
-//          for(size_t n=0;n<neighbor_ordered_local_id_list.size();++n){
-//            if(neighbor_ordered_local_id_list[n]==neigh_id) in_list = true;
-//          }
-//          if(!in_list){
-//            neighbor_ordered_local_id_list.push_back(neigh_id);
-//            new_fresh_ids.push_back(neigh_id);
-//          }
-//        }
-//      } // end neigh loop
-//    } // end fresh ids loop
-//  } // end while loop
-//
-//  bool all_ids_in_list = true;
-//  bool all_ids_have_neighbors = true;
-//  for(int_t i=0;i<local_num_subsets_;++i){
-//    if(used_ids.find(i)==used_ids.end())
-//      all_ids_in_list = false;
-//    if(local_field_value(i,NEIGHBOR_ID)<0 && i!=best_local_id)
-//      all_ids_have_neighbors = false;
-//  }
-//  //  std::cout << "ordered id list: " << std::endl;
-//  //  for(size_t i=0;i<neighbor_ordered_local_id_list.size();++i){
-//  //    std::cout << " id " << neighbor_ordered_local_id_list[i] << std::endl;
-//  //  }
-//  TEUCHOS_TEST_FOR_EXCEPTION(!all_ids_in_list,std::runtime_error,
-//    "Error not all local subsets made it into the ordered cross corr execution list");
-//  TEUCHOS_TEST_FOR_EXCEPTION(!all_ids_have_neighbors,std::runtime_error,
-//    "Error not all local subsets have a neighbor, but should");
-//  TEUCHOS_TEST_FOR_EXCEPTION((int_t)neighbor_ordered_local_id_list.size()!=local_num_subsets_,std::runtime_error,
-//    "Error ordered execution id list for cross correlation is the wrong size");
-//
-//#ifdef DICE_DEBUG_MSG
-//  std::stringstream message;
-//  message << std::endl;
-//  for(size_t i=0;i<neighbor_ordered_local_id_list.size();++i){
-//    message << "[PROC " << proc_id << "] Owns subset global id (in cross-correlation order): " <<
-//        subset_global_id(neighbor_ordered_local_id_list[i]) <<
-//        " neighbor id: " << local_field_value(neighbor_ordered_local_id_list[i],NEIGHBOR_ID) << std::endl;
-//  }
-//  DEBUG_MSG(message.str());
-//#endif
-//  TEUCHOS_TEST_FOR_EXCEPTION(correlation_routine_!=GENERIC_ROUTINE,std::runtime_error,
-//    "Error, only the GENERIC_ROUTINE can be used for cross-correlation")
-//
-//  prepare_optimization_initializers();
-//  for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
-//    const int_t local_id = neighbor_ordered_local_id_list[subset_index];
-//    const int_t global_id = subset_global_id(local_id);
-//    Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,global_id));
-//    generic_correlation_routine(obj);
-//  }
 
   for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
     DEBUG_MSG("[PROC " << proc_id << "] global subset id " << subset_global_id(subset_index) << " post execute_correlation() field values, u: " <<

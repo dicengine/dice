@@ -1174,7 +1174,7 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     DEBUG_MSG("input left x: " << proj_xl[i] << " y: " << proj_yl[i] << " right x: " << proj_xr[i] << " y: " << proj_yr[i] << " computed right x: " << comp_right_x << " y: " << comp_right_y);
     error+=(comp_right_x - proj_xr[i])*(comp_right_x - proj_xr[i]) + (comp_right_y - proj_yr[i])*(comp_right_y - proj_yr[i]);
   }
-  error = std::sqrt(error);
+  error = std::sqrt(error)/num_coords;
   DEBUG_MSG("Triangulation::estimate_projective_transform(): initial projection error: " << error);
   if(error > 100) return -3;
   //TEUCHOS_TEST_FOR_EXCEPTION(error > 100.0,std::runtime_error,"Error, initial projection error too large");
