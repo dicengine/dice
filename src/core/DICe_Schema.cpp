@@ -1073,70 +1073,86 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   Teuchos::ArrayRCP<scalar_t> coords_y,
   Teuchos::RCP<MultiField_Map> dist_map){
 
-
   int proc_rank=0;
 #if DICE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
 #endif
 
-  // collect all the ids local to this processor already:
-  std::set<int_t> id_list;
-  Teuchos::ArrayView<const int_t> my_gids = dist_map->get_global_element_list();
-  for(int_t i=0;i<my_gids.size();++i){
-    id_list.insert(my_gids[i]);
-  }
+  Teuchos::ArrayRCP<scalar_t> overlap_coords_x;
+  Teuchos::ArrayRCP<scalar_t> overlap_coords_y;
+  Teuchos::ArrayRCP<int_t> node_map;
+  const bool is_parallel = dist_map->get_comm().get_size() > 1;
+  if(is_parallel){
 
-  // determine the max strain window size:
-  scalar_t max_strain_window_size = 0.0;
-  for(size_t i=0;i<post_processors_.size();++i)
-    if(post_processors_[i]->strain_window_size() > max_strain_window_size)
-      max_strain_window_size = post_processors_[i]->strain_window_size();
-  DEBUG_MSG("max strain window size " << max_strain_window_size);
-
-  // Do a neighborhood search for all possible neighbors for post-processors
-
-  Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud<scalar_t>());
-  point_cloud->pts.resize(coords_x.size());
-  for(int_t i=0;i<coords_x.size();++i){
-    point_cloud->pts[i].x = coords_x[i];
-    point_cloud->pts[i].y = coords_y[i];
-    point_cloud->pts[i].z = 0.0;
-  }
-  DEBUG_MSG("building the kd-tree");
-  Teuchos::RCP<my_kd_tree_t> kd_tree = Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
-  kd_tree->buildIndex();
-  DEBUG_MSG("kd-tree completed");
-  std::vector<std::pair<size_t,scalar_t> > ret_matches;
-  nanoflann::SearchParams params;
-  params.sorted = true; // sort by distance in ascending order
-  const scalar_t tiny = 1.0E-5;
-  scalar_t neigh_rad_2 = (scalar_t)max_strain_window_size/2.0;
-  neigh_rad_2 *= neigh_rad_2;
-  neigh_rad_2 += tiny;
-  scalar_t query_pt[3];
-  for(int_t i=0;i<my_gids.size();++i){
-    const int_t gid = my_gids[i];
-    assert(gid>=0&&gid<coords_x.size());
-    query_pt[0] = coords_x[gid];
-    query_pt[1] = coords_y[gid];
-    query_pt[2] = 0.0;
-    kd_tree->radiusSearch(&query_pt[0],neigh_rad_2,ret_matches,params);
-    for(size_t j=0;j<ret_matches.size();++j){
-      id_list.insert(ret_matches[j].first);
+    // collect all the ids local to this processor already:
+    std::set<int_t> id_list;
+    Teuchos::ArrayView<const int_t> my_gids = dist_map->get_global_element_list();
+    for(int_t i=0;i<my_gids.size();++i){
+      id_list.insert(my_gids[i]);
     }
+
+    // determine the max strain window size:
+    scalar_t max_strain_window_size = 0.0;
+    for(size_t i=0;i<post_processors_.size();++i)
+      if(post_processors_[i]->strain_window_size() > max_strain_window_size)
+        max_strain_window_size = post_processors_[i]->strain_window_size();
+    DEBUG_MSG("max strain window size " << max_strain_window_size);
+
+    // Do a neighborhood search for all possible neighbors for post-processors
+
+    Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud<scalar_t>());
+    point_cloud->pts.resize(coords_x.size());
+    for(int_t i=0;i<coords_x.size();++i){
+      point_cloud->pts[i].x = coords_x[i];
+      point_cloud->pts[i].y = coords_y[i];
+      point_cloud->pts[i].z = 0.0;
+    }
+    DEBUG_MSG("building the kd-tree");
+    Teuchos::RCP<my_kd_tree_t> kd_tree = Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+    kd_tree->buildIndex();
+    DEBUG_MSG("kd-tree completed");
+    std::vector<std::pair<size_t,scalar_t> > ret_matches;
+    nanoflann::SearchParams params;
+    params.sorted = true; // sort by distance in ascending order
+    const scalar_t tiny = 1.0E-5;
+    scalar_t neigh_rad_2 = (scalar_t)max_strain_window_size/2.0;
+    neigh_rad_2 *= neigh_rad_2;
+    neigh_rad_2 += tiny;
+    scalar_t query_pt[3];
+    for(int_t i=0;i<my_gids.size();++i){
+      const int_t gid = my_gids[i];
+      assert(gid>=0&&gid<coords_x.size());
+      query_pt[0] = coords_x[gid];
+      query_pt[1] = coords_y[gid];
+      query_pt[2] = 0.0;
+      kd_tree->radiusSearch(&query_pt[0],neigh_rad_2,ret_matches,params);
+      for(size_t j=0;j<ret_matches.size();++j){
+        id_list.insert(ret_matches[j].first);
+      }
+    }
+    DEBUG_MSG("neighbor list constructed");
+
+    // at this point, the max neighbors should be included so create a reduced set of coordinates
+    const int_t num_overlap_points = id_list.size();
+    node_map.resize(num_overlap_points,0);
+    overlap_coords_x.resize(num_overlap_points,0.0);
+    overlap_coords_y.resize(num_overlap_points,0.0);
+    std::set<int_t>::iterator list_it = id_list.begin();
+    std::set<int_t>::iterator list_end = id_list.end();
+    int_t ii=0;
+    for(;list_it!=list_end;++list_it){
+      overlap_coords_x[ii] = coords_x[*list_it];
+      overlap_coords_y[ii] = coords_y[*list_it];
+      node_map[ii++] = *list_it;
+    }
+    DEBUG_MSG("coordinate list has been trimmed");
   }
-  // at this point, the max neighbors should be included so create a reduced set of coordinates
-  const int_t num_overlap_points = id_list.size();
-  Teuchos::ArrayRCP<int_t> node_map(num_overlap_points,0);
-  Teuchos::ArrayRCP<scalar_t> overlap_coords_x(num_overlap_points,0.0);
-  Teuchos::ArrayRCP<scalar_t> overlap_coords_y(num_overlap_points,0.0);
-  std::set<int_t>::iterator list_it = id_list.begin();
-  std::set<int_t>::iterator list_end = id_list.end();
-  int_t ii=0;
-  for(;list_it!=list_end;++list_it){
-    overlap_coords_x[ii] = coords_x[*list_it];
-    overlap_coords_y[ii] = coords_y[*list_it];
-    node_map[ii++] = *list_it;
+  else{
+    overlap_coords_x = coords_x;
+    overlap_coords_y = coords_y;
+    node_map.resize(coords_x.size(),0);
+    for(int_t i=0;i<node_map.size();++i)
+      node_map[i] = i;
   }
 
   // create a  DICe::mesh::Mesh that has a connectivity with only one node per elem
@@ -1149,9 +1165,13 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   // note: this assumes the elements are contiguous in terms of ids and that the overlap ids
   // are in ascending order
   int_t overlap_offset = 0;
-  list_it = id_list.begin();
-  for(;list_it!=list_end;++list_it){
-    if(dist_map->get_global_element_list()[0] <= *list_it) break;
+  //list_it = id_list.begin();
+  //for(;list_it!=list_end;++list_it){
+  //  if(dist_map->get_global_element_list()[0] <= *list_it) break;
+  //  overlap_offset++;
+  //}
+  for(int_t i=0;i<node_map.size();++i){
+    if(dist_map->get_global_element_list()[0] <= node_map[i]) break;
     overlap_offset++;
   }
   for(int_t i=0;i<num_elem;++i){
@@ -1310,19 +1330,19 @@ Schema::create_obstruction_dist_map(Teuchos::RCP<MultiField_Map> & map){
     obstruction_groups.push_back(dependencies);
   } // outer obstruction set it
   if(proc_id == 0) DEBUG_MSG("[PROC " << proc_id << "] There are " << obstruction_groups.size() << " obstruction groupings: ");
-  std::stringstream ss;
-  for(size_t i=0;i<obstruction_groups.size();++i){
-    ss << "[PROC " << proc_id << "] Group: " << i << std::endl;
-    std::set<int_t>::iterator j = obstruction_groups[i].begin();
-    for(;j!=obstruction_groups[i].end();++j){
-      ss << "[PROC " << proc_id << "]   id: " << *j << std::endl;
-    }
-  }
-  ss << "[PROC " << proc_id << "] Eligible ids: " << std::endl;
-  for(std::set<int_t>::iterator elig_it=eligible_ids.begin();elig_it!=eligible_ids.end();++elig_it){
-    ss << "[PROC " << proc_id << "]   " << *elig_it << std::endl;
-  }
-  if(proc_id == 0) DEBUG_MSG(ss.str());
+//  std::stringstream ss;
+//  for(size_t i=0;i<obstruction_groups.size();++i){
+//    ss << "[PROC " << proc_id << "] Group: " << i << std::endl;
+//    std::set<int_t>::iterator j = obstruction_groups[i].begin();
+//    for(;j!=obstruction_groups[i].end();++j){
+//      ss << "[PROC " << proc_id << "]   id: " << *j << std::endl;
+//    }
+//  }
+//  ss << "[PROC " << proc_id << "] Eligible ids: " << std::endl;
+//  for(std::set<int_t>::iterator elig_it=eligible_ids.begin();elig_it!=eligible_ids.end();++elig_it){
+//    ss << "[PROC " << proc_id << "]   " << *elig_it << std::endl;
+//  }
+//  if(proc_id == 0) DEBUG_MSG(ss.str());
 
   // divy up the obstruction groups among the processors:
   int_t obst_group_gid = 0;
@@ -1375,13 +1395,13 @@ Schema::create_obstruction_dist_map(Teuchos::RCP<MultiField_Map> & map){
     }
   }
 
-  ss.str(std::string());
-  ss.clear();
-  ss << "[PROC " << proc_id << "] Has the following subset ids: " << std::endl;
-  for(size_t i=0;i<local_gids.size();++i){
-    ss << "[PROC " << proc_id << "] " << local_gids[i] <<  std::endl;
-  }
-  DEBUG_MSG(ss.str());
+//  ss.str(std::string());
+//  ss.clear();
+//  ss << "[PROC " << proc_id << "] Has the following subset ids: " << std::endl;
+//  for(size_t i=0;i<local_gids.size();++i){
+//    ss << "[PROC " << proc_id << "] " << local_gids[i] <<  std::endl;
+//  }
+//  DEBUG_MSG(ss.str());
 
   // copy the ids in order to the schema storage
   this_proc_gid_order_ = std::vector<int_t>(local_gids.size(),-1);
