@@ -49,17 +49,15 @@
 
 namespace DICe {
 
-
-//A = Mat(2, 5, CV_32FC1, &data); this was for a 2 row 5 col set of floats
-
 DICE_LIB_DLL_EXPORT
-void match_features(Teuchos::RCP<Image> left_image,
-  Teuchos::RCP<Image> right_image,
+void match_features(const std::string & left_file_name,
+  const std::string & right_file_name,
   std::vector<scalar_t> & left_x,
   std::vector<scalar_t> & left_y,
   std::vector<scalar_t> & right_x,
   std::vector<scalar_t> & right_y,
-  const bool draw_result_image){
+  const float & feature_tol,
+  const std::string & result_image_name){
 
   left_x.clear();
   left_y.clear();
@@ -69,40 +67,15 @@ void match_features(Teuchos::RCP<Image> left_image,
   DEBUG_MSG("match_features(): initializing OpenCV Mats");
   cv::Mat img1;
   cv::Mat img2;
-  if(left_image->has_file_name()&&right_image->has_file_name()){
-    // see if the image has a valid file name
-    img1 = cv::imread(left_image->file_name().c_str(), cv::IMREAD_GRAYSCALE);
-    img2 = cv::imread(right_image->file_name().c_str(), cv::IMREAD_GRAYSCALE);
-  }else{
-    left_image->write("left_image.tif");
-    right_image->write("right_image.tif");
-    img1 = cv::imread("left_image.tif", cv::IMREAD_GRAYSCALE);
-    img2 = cv::imread("right_image.tif", cv::IMREAD_GRAYSCALE);
-    //TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Feature detection only enabled for images read from file, not array images");
-//#if DICE_USE_DOUBLE
-//    // need to convert the double array to a float array
-//    Teuchos::ArrayRCP<intensity_t> left_intensities_dbl = left_image->intensities();
-//    Teuchos::ArrayRCP<intensity_t> right_intensities_dbl = right_image->intensities();
-//    Teuchos::ArrayRCP<float> left_intensities(left_image->width()*left_image->height(),0.0);
-//    Teuchos::ArrayRCP<float> right_intensities(right_image->width()*right_image->height(),0.0);
-//    for(int_t i=0;i<left_intensities_dbl.size();++i)
-//      left_intensities[i] = static_cast<float>(left_intensities_dbl[i]);
-//    for(int_t i=0;i<right_intensities_dbl.size();++i)
-//      right_intensities[i] = static_cast<float>(right_intensities_dbl[i]);
-//#else
-//    Teuchos::ArrayRCP<intensity_t> left_intensities = left_image->intensities();
-//    Teuchos::ArrayRCP<intensity_t> right_intensities = right_image->intensities();
-//#endif
-//    cv::Mat img1 = cv::Mat(left_image->width(),left_image->height(),CV_32F,left_intensities.getRawPtr());
-//    cv::Mat img2 = cv::Mat(right_image->width(),right_image->height(),CV_32F,right_intensities.getRawPtr());
-  }
+  img1 = cv::imread(left_file_name.c_str(), cv::IMREAD_GRAYSCALE);
+  img2 = cv::imread(right_file_name.c_str(), cv::IMREAD_GRAYSCALE);
   const float nn_match_ratio = 0.6f;   // Nearest neighbor matching ratio
 
   DEBUG_MSG("match_features(): detect and compute features");
 
   std::vector<cv::KeyPoint> kpts1, kpts2;
   cv::Mat desc1, desc2;
-  cv::Ptr<cv::AKAZE> akaze = cv::AKAZE::create();
+  cv::Ptr<cv::AKAZE> akaze = cv::AKAZE::create(cv::AKAZE::DESCRIPTOR_MLDB,0,3,feature_tol,4,4,cv::KAZE::DIFF_PM_G2);
   akaze->detectAndCompute(img1, cv::noArray(), kpts1, desc1);
   akaze->detectAndCompute(img2, cv::noArray(), kpts2, desc2);
 
@@ -146,18 +119,50 @@ void match_features(Teuchos::RCP<Image> left_image,
     right_x[i] = inliers2[i].pt.x;
     right_y[i] = inliers2[i].pt.y;
   }
-
   // draw results image if requested
-  if(draw_result_image){
+  if(result_image_name!=""){
     cv::Mat res;
-//    if(left_image->has_file_name()&&right_image->has_file_name()){
-//      // see if the image has a valid file name
-//      img1 = cv::imread(left_image->file_name().c_str(), cv::IMREAD_GRAYSCALE);
-//      img2 = cv::imread(right_image->file_name().c_str(), cv::IMREAD_GRAYSCALE);
-//    }
     cv::drawMatches(img1, inliers1, img2, inliers2, good_matches, res);
-    cv::imwrite("res.png", res);
+    cv::imwrite(result_image_name.c_str(), res);
   }
+}
+
+
+DICE_LIB_DLL_EXPORT
+void match_features(Teuchos::RCP<Image> left_image,
+  Teuchos::RCP<Image> right_image,
+  std::vector<scalar_t> & left_x,
+  std::vector<scalar_t> & left_y,
+  std::vector<scalar_t> & right_x,
+  std::vector<scalar_t> & right_y,
+  const float & feature_tol,
+  const std::string & result_image_name){
+
+  if(left_image->has_file_name()&&right_image->has_file_name()){
+    // see if the image has a valid file name
+    match_features(left_image->file_name(),right_image->file_name(),left_x,left_y,right_x,right_y,feature_tol,result_image_name);
+  }else{
+    left_image->write("left_image.tif");
+    right_image->write("right_image.tif");
+    match_features("left_image.tif","right_image.tif",left_x,left_y,right_x,right_y,feature_tol,result_image_name);
+  }
+    //TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Feature detection only enabled for images read from file, not array images");
+//#if DICE_USE_DOUBLE
+//    // need to convert the double array to a float array
+//    Teuchos::ArrayRCP<intensity_t> left_intensities_dbl = left_image->intensities();
+//    Teuchos::ArrayRCP<intensity_t> right_intensities_dbl = right_image->intensities();
+//    Teuchos::ArrayRCP<float> left_intensities(left_image->width()*left_image->height(),0.0);
+//    Teuchos::ArrayRCP<float> right_intensities(right_image->width()*right_image->height(),0.0);
+//    for(int_t i=0;i<left_intensities_dbl.size();++i)
+//      left_intensities[i] = static_cast<float>(left_intensities_dbl[i]);
+//    for(int_t i=0;i<right_intensities_dbl.size();++i)
+//      right_intensities[i] = static_cast<float>(right_intensities_dbl[i]);
+//#else
+//    Teuchos::ArrayRCP<intensity_t> left_intensities = left_image->intensities();
+//    Teuchos::ArrayRCP<intensity_t> right_intensities = right_image->intensities();
+//#endif
+//    cv::Mat img1 = cv::Mat(left_image->width(),left_image->height(),CV_32F,left_intensities.getRawPtr());
+//    cv::Mat img2 = cv::Mat(right_image->width(),right_image->height(),CV_32F,right_intensities.getRawPtr());
   if(!(left_image->has_file_name()&&right_image->has_file_name())){
     // remove the left and right image temp files:
     std::remove("left_image.tif"); // delete file

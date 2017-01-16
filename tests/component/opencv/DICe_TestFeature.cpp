@@ -75,7 +75,8 @@ int main(int argc, char *argv[]) {
   std::vector<scalar_t> right_x;
   std::vector<scalar_t> right_y;
 
-  match_features(left_img,right_img,left_x,left_y,right_x,right_y,true);
+  const float tol = 0.001f;
+  match_features(left_img,right_img,left_x,left_y,right_x,right_y,tol,"res.png");
   const int_t num_matches = left_x.size();
   *outStream << "number of features matched: " << num_matches << std::endl;
   if(num_matches!=1962){

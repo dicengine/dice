@@ -402,6 +402,47 @@ public:
     Teuchos::RCP<std::vector<scalar_t> > deformation);
 };
 
+/// \class DICe::Feature_Matching_Initializer
+/// \brief an initializer that uses nearby feature matching to initialize the solution
+class DICE_LIB_DLL_EXPORT
+Feature_Matching_Initializer : public Initializer{
+public:
+
+  /// constructor
+  /// \param schema the parent schema
+  Feature_Matching_Initializer(Schema * schema):
+    Initializer(schema),
+    prev_img_name_(""),
+    first_call_(true){};
+
+  /// virtual destructor
+  virtual ~Feature_Matching_Initializer(){};
+
+  /// see base class description
+  virtual void pre_execution_tasks();
+
+  /// see base class description
+  virtual Status_Flag initial_guess(const int_t subset_gid,
+    Teuchos::RCP<std::vector<scalar_t> > deformation);
+
+protected:
+  /// pointer to the kd-tree used for searching
+  Teuchos::RCP<my_kd_tree_t> kd_tree_;
+  /// pointer to the point cloud used for the neighbor searching
+  Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud_;
+  /// storage for displacements of feautures
+  std::vector<scalar_t> u_;
+  /// storage for displacements of features
+  std::vector<scalar_t> v_;
+  /// previous image pointer (used if the images are constructed from an array)
+  Teuchos::RCP<Image> prev_img_;
+  /// previous image name (used if the images are constructed from file rather than array)
+  std::string prev_img_name_;
+  /// first time the pre execution tasks are called
+  bool first_call_;
+};
+
+
 
 /// \class DICe::Zero_Value_Initializer
 /// \brief an initializer that places zeros in all values

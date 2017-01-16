@@ -42,6 +42,7 @@
 #include <DICe_Initializer.h>
 #include <DICe_Schema.h>
 #include <DICe_FFT.h>
+#include <DICe_Feature.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_LAPACK.hpp>
@@ -52,7 +53,7 @@
 #include <math.h>
 #include <cassert>
 
-//#include    <boost/filesystem.hpp>
+#include <boost/timer.hpp>
 
 namespace DICe {
 
@@ -458,6 +459,101 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
   }
   return INITIALIZE_FAILED;
 };
+
+void
+Feature_Matching_Initializer::pre_execution_tasks(){
+
+  if(first_call_){
+    if(schema_->ref_img()->has_file_name()){
+      prev_img_name_ = schema_->ref_img()->file_name();
+      prev_img_ = Teuchos::null;
+    }
+    else{
+      prev_img_name_ = "";
+      prev_img_ = Teuchos::rcp(new Image(schema_->ref_img()));
+    }
+  }
+//  static int_t num_calls;
+//  num_calls++;
+//  std::stringstream file_name;
+//  file_name << "prev_image_" << num_calls << ".tif";
+//  prev_img_->write(file_name.str());
+
+  // read both images and match features between them
+  std::vector<scalar_t> left_x;
+  std::vector<scalar_t> left_y;
+  std::vector<scalar_t> right_x;
+  std::vector<scalar_t> right_y;
+  {
+    boost::timer t;
+    const float tol = 0.005f;
+    if(schema_->ref_img()->has_file_name()){
+      match_features(prev_img_name_,schema_->def_img(0)->file_name(),left_x,left_y,right_x,right_y,tol,"fm_initializer.png");
+    }else{
+      match_features(prev_img_,schema_->def_img(0),left_x,left_y,right_x,right_y,tol,"fm_initializer.png");
+    }
+    const int_t num_matches = left_x.size();
+    DEBUG_MSG("number of features matched: " << num_matches);
+    DEBUG_MSG("time to compute features: "  << t.elapsed());
+    TEUCHOS_TEST_FOR_EXCEPTION(num_matches < 10,std::runtime_error,"Error, not enough features matched for feature matching initializer");
+  }
+  // create a point cloud and find the nearest neighbor:
+  point_cloud_ = Teuchos::rcp(new Point_Cloud<scalar_t>());
+  point_cloud_->pts.resize(left_x.size());
+  for(size_t i=0;i<left_x.size();++i){
+    point_cloud_->pts[i].x = left_x[i];
+    point_cloud_->pts[i].y = left_y[i];
+    point_cloud_->pts[i].z = 0.0;
+  }
+  DEBUG_MSG("Feature_Matching_Initializer: building the kd-tree");
+  kd_tree_ = Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud_.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+  kd_tree_->buildIndex();
+  u_.resize(left_x.size());
+  v_.resize(left_x.size());
+  for(size_t i=0;i<left_x.size();++i){
+    u_[i] = right_x[i] - left_x[i];
+    v_[i] = right_y[i] - left_y[i];
+  }
+  if(schema_->ref_img()->has_file_name()){
+    prev_img_name_ = schema_->def_img(0)->file_name();
+  }
+  else{
+    prev_img_ = Teuchos::rcp(new Image(schema_->def_img(0)));
+  }
+  first_call_ = false;
+}
+
+Status_Flag
+Feature_Matching_Initializer::initial_guess(const int_t subset_gid,
+  Teuchos::RCP<std::vector<scalar_t> > deformation){
+
+  if(schema_->global_field_value(subset_gid,DICe::SIGMA)<0)
+    return INITIALIZE_FAILED;
+
+  TEUCHOS_TEST_FOR_EXCEPTION(deformation->size()!=DICE_DEFORMATION_SIZE,std::runtime_error,"");
+  const int_t num_neighbors = 1;
+  // now set up the neighbor list for each triad:
+  //std::vector<size_t>(subset_->num_pixels()*num_neighbors_,0);
+  const scalar_t current_loc_x = schema_->global_field_value(subset_gid,COORDINATE_X) + schema_->global_field_value(subset_gid,DISPLACEMENT_X);
+  const scalar_t current_loc_y = schema_->global_field_value(subset_gid,COORDINATE_Y) + schema_->global_field_value(subset_gid,DISPLACEMENT_Y);
+  scalar_t query_pt[3];
+  std::vector<size_t> ret_index(num_neighbors);
+  std::vector<scalar_t> out_dist_sqr(num_neighbors);
+  query_pt[0] = current_loc_x;
+  query_pt[1] = current_loc_y;
+  query_pt[2] = 0.0;
+  kd_tree_->knnSearch(&query_pt[0], num_neighbors, &ret_index[0], &out_dist_sqr[0]);
+  const int_t nearest_feature_id = ret_index[0];
+  TEUCHOS_TEST_FOR_EXCEPTION((int_t)u_.size()<=nearest_feature_id,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION((int_t)v_.size()<=nearest_feature_id,std::runtime_error,"");
+  (*deformation)[DISPLACEMENT_X] = u_[nearest_feature_id] + schema_->global_field_value(subset_gid,DISPLACEMENT_X);
+  (*deformation)[DISPLACEMENT_Y] = v_[nearest_feature_id] + schema_->global_field_value(subset_gid,DISPLACEMENT_Y);
+  DEBUG_MSG("Subset " << subset_gid << " init. with values: u " << (*deformation)[DICe::DISPLACEMENT_X] <<
+    " v " << (*deformation)[DICe::DISPLACEMENT_Y] << " dist from nearest feature: " << std::sqrt(out_dist_sqr[0]) << " px");
+
+  return INITIALIZE_SUCCESSFUL;
+};
+
 
 Status_Flag
 Zero_Value_Initializer::initial_guess(const int_t subset_gid,

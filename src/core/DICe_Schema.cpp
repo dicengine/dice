@@ -1561,7 +1561,7 @@ Schema::execute_cross_correlation(){
   const Optimization_Method orig_opt_method = optimization_method_;
 
   // change the parameters for cross-correlation
-  //initialization_method_ = USE_NEIGHBOR_VALUES;
+  initialization_method_ = USE_FIELD_VALUES;
   //optimization_method_ = SIMPLEX;
 
   // project the right image onto the left if requested
@@ -1631,6 +1631,8 @@ Schema::execute_cross_correlation(){
   //neigh_ids->update(1.0,*original_neigh_ids,0.0);
   initialization_method_ = orig_init_method;
   optimization_method_ = orig_opt_method;
+  // clear the optimization initializers so that the correlation in time uses the user requested one
+  opt_initializers_.clear();
 
   return 0;
 };
@@ -1852,6 +1854,10 @@ Schema::prepare_optimization_initializers(){
     DEBUG_MSG("Default initializer is zero value initializer");
     default_initializer = Teuchos::rcp(new Zero_Value_Initializer(this));
   }
+  else if(initialization_method_==USE_FEATURE_MATCHING){
+    DEBUG_MSG("Default initializer is feature matching initializer");
+    default_initializer = Teuchos::rcp(new Feature_Matching_Initializer(this));
+  }
   else if(initialization_method_==USE_OPTICAL_FLOW){
     // make syre tga the correlation routine is tracking routine
     TEUCHOS_TEST_FOR_EXCEPTION(correlation_routine_!=TRACKING_ROUTINE,std::invalid_argument,"Error, USE_OPTICAL_FLOW "
@@ -2015,10 +2021,13 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   // if for some reason the coordinates of this subset are outside the image domain, record a failed step,
   // this may have occurred for a subset in the left image projected to the right that is not in the right image
   if(subset_dim_ > 0){
-    if(global_field_value(subset_gid,DICe::COORDINATE_X) < subset_dim_/2 || global_field_value(subset_gid,DICe::COORDINATE_X) > ref_img_->width() - subset_dim_/2||
-        global_field_value(subset_gid,DICe::COORDINATE_Y) < subset_dim_/2 || global_field_value(subset_gid,DICe::COORDINATE_Y) > ref_img_->height() - subset_dim_/2){
+    const scalar_t current_pos_x = global_field_value(subset_gid,DICe::COORDINATE_X) + global_field_value(subset_gid,DICe::DISPLACEMENT_X);
+    const scalar_t current_pos_y = global_field_value(subset_gid,DICe::COORDINATE_Y) + global_field_value(subset_gid,DICe::DISPLACEMENT_Y);
+    if(current_pos_x < subset_dim_/2 || current_pos_x > ref_img_->width() - subset_dim_/2 ||
+        current_pos_y < subset_dim_/2 || current_pos_y > ref_img_->height() - subset_dim_/2){
       DEBUG_MSG("Invalid subset origin (probably from stereo projection of the left subset not being in the right image)");
       record_failed_step(subset_gid,static_cast<int_t>(INITIALIZE_FAILED_BY_EXCEPTION),-1);
+      return;
     }
   }
 

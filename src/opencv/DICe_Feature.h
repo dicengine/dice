@@ -56,7 +56,8 @@ namespace DICe {
 /// \param left_y [out] image y coordinate in the left image for features
 /// \param right_x [out] image x coordinates in the right image for features
 /// \param right_y [out] image y coordinate in the right image for features
-/// \param draw_result_image output an image showing the matched features
+/// \param feature_tol tolerance to use for AKAZE features
+/// \param result_image_name output an image showing the matched features with this filename
 DICE_LIB_DLL_EXPORT
 void match_features(Teuchos::RCP<Image> left_image,
   Teuchos::RCP<Image> right_image,
@@ -64,7 +65,28 @@ void match_features(Teuchos::RCP<Image> left_image,
   std::vector<scalar_t> & left_y,
   std::vector<scalar_t> & right_x,
   std::vector<scalar_t> & right_y,
-  const bool draw_result_image=false);
+  const float & feature_tol=0.001f,
+  const std::string & result_image_name="");
+
+/// Free function to match features from one DICe image to another
+/// \param left_file_name file name of the left image
+/// \param right_file_name file name of the right image
+/// \param left_x [out] image x coordinates in the left image for features
+/// \param left_y [out] image y coordinate in the left image for features
+/// \param right_x [out] image x coordinates in the right image for features
+/// \param right_y [out] image y coordinate in the right image for features
+/// \param feature_tol tolerance to use for AKAZE features
+/// \param result_image_name output an image showing the matched features with this filename
+DICE_LIB_DLL_EXPORT
+void match_features(const std::string & left_file_name,
+  const std::string & right_file_name,
+  std::vector<scalar_t> & left_x,
+  std::vector<scalar_t> & left_y,
+  std::vector<scalar_t> & right_x,
+  std::vector<scalar_t> & right_y,
+  const float & feature_tol=0.001f,
+  const std::string & result_image_name="");
+
 
 }// End DICe Namespace
 

@@ -921,13 +921,20 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
   }else{
 #ifdef DICE_ENABLE_OPENCV
     DEBUG_MSG("Triangulation::estimate_projective_transform(): begin matching features");
-    match_features(left_img,right_img,proj_xl,proj_yl,proj_xr,proj_yr,true);
+    float feature_tol = 0.005f;
+    match_features(left_img,right_img,proj_xl,proj_yl,proj_xr,proj_yr,feature_tol,"fm_projective_trans.png");
+    if(proj_xl.size() < 5){
+      DEBUG_MSG("Triangulation::estimate_projective_transform(): initial attempt failed with tol = 0.005f, setting to 0.001f and trying again.");
+      feature_tol = 0.001f;
+      match_features(left_img,right_img,proj_xl,proj_yl,proj_xr,proj_yr,feature_tol,"fm_projective_trans.png");
+    }
     DEBUG_MSG("Triangulation::estimate_projective_transform(): matching features complete");
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,"Error, OpeCV required for cross correlation initialization.");
 #endif
-    if(proj_xl.size() < 5)
+    if(proj_xl.size() < 5){
       return -1;
+    }
     //TEUCHOS_TEST_FOR_EXCEPTION(proj_xl.size()<5, std::runtime_error,"Error, not enough features matched to estimate projection parameters");
     num_coords = proj_xl.size();
   }
@@ -1240,7 +1247,8 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
 #ifdef DICE_ENABLE_OPENCV
     DEBUG_MSG("Triangulation::estimate_projective_transform(): begin matching features for warp parameters");
     Teuchos::RCP<Image> projection_opt_img = Teuchos::rcp(new Image("right_projected_to_left_proj_opt.tif"));
-    match_features(left_img,projection_opt_img,warp_xl,warp_yl,warp_xr,warp_yr,true);
+    const float tol = 0.001f;
+    match_features(left_img,projection_opt_img,warp_xl,warp_yl,warp_xr,warp_yr,tol,"fm_nonlinear_proj_trans.png");
     DEBUG_MSG("Triangulation::estimate_projective_transform(): matching warp features complete");
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,"Error, OpeCV required for cross correlation initialization.");
