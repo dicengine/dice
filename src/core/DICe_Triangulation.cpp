@@ -400,6 +400,8 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
     fprintf(filePtr,"%e\n",u[1]);
     fprintf(filePtr,"%e\n",u[2]);
 
+    bool is_y_axis = false;
+
     // read in origin in image left coordinates
     std::vector<int_t> fit_def_x_left(2,0);
     std::vector<int_t> fit_def_y_left(2,0);
@@ -412,7 +414,12 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
     while(!bestFitDataFile.eof()){
       Teuchos::ArrayRCP<std::string> tokens = tokenize_line(bestFitDataFile);
       if(tokens.size()==0) continue;
-      TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()!=2,std::runtime_error,
+      if(tokens.size()>2){
+        if(tokens[2] == "YAXIS"){
+          is_y_axis = true;
+        }
+      }
+      TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()!=2&&!is_y_axis,std::runtime_error,
         "Error reading best_fit_plane.dat, should be 2 values per line (x_left y_left for origin and point on x axis),"
           " but found " << tokens.size() << " values on one line");
       assert(line<(int_t)fit_def_x_left.size());
@@ -421,8 +428,11 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
       line++;
     }
     DEBUG_MSG("Best fit plane origin (left sensor coords):           " << fit_def_x_left[0] << " " << fit_def_y_left[0]);
-    DEBUG_MSG("Best fit plane point on x axis (left sensor coords):  " << fit_def_x_left[1] << " " << fit_def_y_left[1]);
-
+    if(is_y_axis){
+      DEBUG_MSG("Best fit plane point on y axis (left sensor coords):  " << fit_def_x_left[1] << " " << fit_def_y_left[1]);
+    }else{
+      DEBUG_MSG("Best fit plane point on x axis (left sensor coords):  " << fit_def_x_left[1] << " " << fit_def_y_left[1]);
+    }
     // determine the corresponding point in the camera 0 coordinates, given the image coordinates of the origin:
     // this is done by using the psi[u,v,1] = [F]*[X,Y,Z] formula with Z = -1(u0*X+u1*Y+u2) to solve for X and Y
     const scalar_t cx = cal_intrinsics_[0][0];
@@ -462,21 +472,33 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
     e3[2] = 1.0;
 
     // the best fit plane coordinates are determined by the basis vectors g1 g2 g3
-    // g1 is from the origin to the point on the x-axis
     std::vector<scalar_t> g1(3,0.0);
-    g1[0] = XP - XO;//xaXw - oXw;
-    g1[1] = YP - YO;//xaYw - oYw;
-    g1[2] = ZP - ZO;//xaZw - oZw;
+    std::vector<scalar_t> g2(3,0.0);
     // g3 is the normal vector on the plane
     std::vector<scalar_t> g3(3,0.0);
     g3[0] = -u[0];
     g3[1] = -u[1];
     g3[2] = -1.0;
-    // g2 is obtained by the cross product of g3 with g1
-    std::vector<scalar_t> g2(3,0.0);
-    g2[0] = g3[1]*g1[2] - g1[1]*g3[2];
-    g2[1] = g3[2]*g1[0] - g1[2]*g3[0];
-    g2[2] = g3[0]*g1[1] - g1[0]*g3[1];
+
+    if(is_y_axis){
+      // g2 is from the origin to the point on the y-axis
+      g2[0] = XP - XO;//xaXw - oXw;
+      g2[1] = YP - YO;//xaYw - oYw;
+      g2[2] = ZP - ZO;//xaZw - oZw;
+      // g2 is obtained by the cross product of g3 with g1
+      g1[0] = g2[1]*g3[2] - g3[1]*g2[2];
+      g1[1] = g2[2]*g3[0] - g3[2]*g2[0];
+      g1[2] = g2[0]*g3[1] - g3[0]*g2[1];
+    }else{
+      // g1 is from the origin to the point on the x-axis
+      g1[0] = XP - XO;//xaXw - oXw;
+      g1[1] = YP - YO;//xaYw - oYw;
+      g1[2] = ZP - ZO;//xaZw - oZw;
+      // g2 is obtained by the cross product of g3 with g1
+      g2[0] = g3[1]*g1[2] - g1[1]*g3[2];
+      g2[1] = g3[2]*g1[0] - g1[2]*g3[0];
+      g2[2] = g3[0]*g1[1] - g1[0]*g3[1];
+    }
 
     // need to invert the solution to get the transformation to the best fit plane
     Teuchos::SerialDenseMatrix<int_t,double> TK(4,4,true);
