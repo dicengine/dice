@@ -14,4 +14,5 @@
   <Parameter name="image_file_prefix" type="string" value="img_" />  
   <Parameter name="stereo_left_suffix" type="string" value="_0" />  
   <Parameter name="stereo_right_suffix" type="string" value="_1" />  
+  <Parameter name="output_stereo_files" type="bool" value="true" />
 </ParameterList>
