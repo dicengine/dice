@@ -2872,74 +2872,74 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
   Teuchos::RCP<MultiField> match_left = mesh_->get_field(DICe::mesh::field_enums::MATCH_FS);
   Teuchos::RCP<MultiField> sigma_right = right_schema->mesh()->get_field(DICe::mesh::field_enums::SIGMA_FS);
 
-  // set up a neighbor search tree:
-  Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud<scalar_t>());
-  point_cloud->pts.resize(local_num_subsets_);
-  for(int_t i=0;i<local_num_subsets_;++i){
-    point_cloud->pts[i].x = local_field_value(i,COORDINATE_X);
-    point_cloud->pts[i].y = local_field_value(i,COORDINATE_Y);
-    point_cloud->pts[i].z = 0.0;
-  }
-  DEBUG_MSG("Schema::execute_triangulation(): building the kd-tree");
-  Teuchos::RCP<my_kd_tree_t> kd_tree = Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
-  kd_tree->buildIndex();
-  DEBUG_MSG("Schema::execute_triangulation(): kd-tree completed");
+//  // set up a neighbor search tree:
+//  Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud<scalar_t>());
+//  point_cloud->pts.resize(local_num_subsets_);
+//  for(int_t i=0;i<local_num_subsets_;++i){
+//    point_cloud->pts[i].x = local_field_value(i,COORDINATE_X);
+//    point_cloud->pts[i].y = local_field_value(i,COORDINATE_Y);
+//    point_cloud->pts[i].z = 0.0;
+//  }
+//  DEBUG_MSG("Schema::execute_triangulation(): building the kd-tree");
+//  Teuchos::RCP<my_kd_tree_t> kd_tree = Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+//  kd_tree->buildIndex();
+//  DEBUG_MSG("Schema::execute_triangulation(): kd-tree completed");
+//
+//  // start with the best local id and expand from there
+//  scalar_t query_pt[3];
+//  const int_t num_neigh = 5;
+//  std::vector<size_t> ret_index(num_neigh);
+//  std::vector<scalar_t> out_dist_sqr(num_neigh);
 
-  // start with the best local id and expand from there
-  scalar_t query_pt[3];
-  const int_t num_neigh = 5;
-  std::vector<size_t> ret_index(num_neigh);
-  std::vector<scalar_t> out_dist_sqr(num_neigh);
-
   for(int_t i=0;i<local_num_subsets_;++i){
-    if(sigma_left->local_value(i) < 0 || sigma_right->local_value(i) < 0){
-      // find 5 nearest neighbors in the left schema:
-      query_pt[0] = point_cloud->pts[i].x;
-      query_pt[1] = point_cloud->pts[i].y;
-      query_pt[2] = point_cloud->pts[i].z;
-      kd_tree->knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
-      scalar_t avg_u = 0.0;
-      scalar_t avg_v = 0.0;
-      int_t num_neigh_valid = 0;
-      if(sigma_left->local_value(i) < 0){  // it was the left subset that failed
-        for(size_t i=0;i<num_neigh;++i){
-          const int_t neigh_id = ret_index[i]; // local id
-          if(sigma_left->local_value(neigh_id) > 0){
-            avg_u += disp_x->local_value(neigh_id);
-            avg_v += disp_y->local_value(neigh_id);
-            num_neigh_valid++;
-          }
-        }
-        if(num_neigh_valid!=0){
-          avg_u /= num_neigh_valid;
-          avg_v /= num_neigh_valid;
-        }
-        DEBUG_MSG("Schema::execute_triangulation(): failed left subset " << subset_global_id(i) <<
-          " replacing disp value " << disp_x->local_value(i) << "," << disp_y->local_value(i) <<
-          " with neighbor average for traingulation " << avg_u << "," << avg_v);
-        disp_x->local_value(i) = avg_u;
-        disp_y->local_value(i) = avg_v;
-      }
-      else{ // it was the right subset that failed
-        for(size_t i=0;i<num_neigh;++i){
-          const int_t neigh_id = ret_index[i]; // local id
-          if(sigma_right->local_value(neigh_id) > 0){
-            avg_u += stereo_disp_x->local_value(neigh_id);
-            avg_v += stereo_disp_y->local_value(neigh_id);
-            num_neigh_valid++;
-          }
-        }
-        if(num_neigh_valid!=0){
-          avg_u /= num_neigh_valid;
-          avg_v /= num_neigh_valid;
-        }
-        DEBUG_MSG("Schema::execute_triangulation(): failed right subset " << subset_global_id(i) <<
-          " replacing disp value " << stereo_disp_x->local_value(i) << "," << stereo_disp_y->local_value(i) <<
-          " with neighbor average for traingulation " << avg_u << "," << avg_v);
-        stereo_disp_x->local_value(i) = avg_u;
-        stereo_disp_y->local_value(i) = avg_v;
-      }
-    } // end left of right sigma < 0
+//    if(sigma_left->local_value(i) < 0 || sigma_right->local_value(i) < 0){
+//      // find 5 nearest neighbors in the left schema:
+//      query_pt[0] = point_cloud->pts[i].x;
+//      query_pt[1] = point_cloud->pts[i].y;
+//      query_pt[2] = point_cloud->pts[i].z;
+//      kd_tree->knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
+//      scalar_t avg_u = 0.0;
+//      scalar_t avg_v = 0.0;
+//      int_t num_neigh_valid = 0;
+//      if(sigma_left->local_value(i) < 0){  // it was the left subset that failed
+//        for(size_t i=0;i<num_neigh;++i){
+//          const int_t neigh_id = ret_index[i]; // local id
+//          if(sigma_left->local_value(neigh_id) > 0){
+//            avg_u += disp_x->local_value(neigh_id);
+//            avg_v += disp_y->local_value(neigh_id);
+//            num_neigh_valid++;
+//          }
+//        }
+//        if(num_neigh_valid!=0){
+//          avg_u /= num_neigh_valid;
+//          avg_v /= num_neigh_valid;
+//        }
+//        DEBUG_MSG("Schema::execute_triangulation(): failed left subset " << subset_global_id(i) <<
+//          " replacing disp value " << disp_x->local_value(i) << "," << disp_y->local_value(i) <<
+//          " with neighbor average for traingulation " << avg_u << "," << avg_v);
+//        disp_x->local_value(i) = avg_u;
+//        disp_y->local_value(i) = avg_v;
+//      }
+//      else{ // it was the right subset that failed
+//        for(size_t i=0;i<num_neigh;++i){
+//          const int_t neigh_id = ret_index[i]; // local id
+//          if(sigma_right->local_value(neigh_id) > 0){
+//            avg_u += stereo_disp_x->local_value(neigh_id);
+//            avg_v += stereo_disp_y->local_value(neigh_id);
+//            num_neigh_valid++;
+//          }
+//        }
+//        if(num_neigh_valid!=0){
+//          avg_u /= num_neigh_valid;
+//          avg_v /= num_neigh_valid;
+//        }
+//        DEBUG_MSG("Schema::execute_triangulation(): failed right subset " << subset_global_id(i) <<
+//          " replacing disp value " << stereo_disp_x->local_value(i) << "," << stereo_disp_y->local_value(i) <<
+//          " with neighbor average for traingulation " << avg_u << "," << avg_v);
+//        stereo_disp_x->local_value(i) = avg_u;
+//        stereo_disp_y->local_value(i) = avg_v;
+//      }
+//    } // end left of right sigma < 0
     if(sigma_right->local_value(i) < 0){
       sigma_left->local_value(i) = -1;
       match_left->local_value(i) = -1;

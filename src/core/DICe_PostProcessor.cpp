@@ -271,6 +271,9 @@ VSG_Strain_Post_Processor::execute(){
     // note assumes that the same vector field spec was given for x and y
     disp = mesh_->get_overlap_field(disp_x_spec);
   }
+  // get the sigma field:
+  Teuchos::RCP<MultiField> sigma = mesh_->get_overlap_field(DICe::mesh::field_enums::SIGMA_FS);
+  // get pointers to the local fields
   Teuchos::RCP<DICe::MultiField> vsg_strain_xx_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_XX_FS);
   Teuchos::RCP<DICe::MultiField> vsg_strain_yy_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_YY_FS);
   Teuchos::RCP<DICe::MultiField> vsg_strain_xy_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_XY_FS);
@@ -278,6 +281,7 @@ VSG_Strain_Post_Processor::execute(){
   Teuchos::RCP<DICe::MultiField> vsg_dudy_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_DUDY_FS);
   Teuchos::RCP<DICe::MultiField> vsg_dvdx_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_DVDX_FS);
   Teuchos::RCP<DICe::MultiField> vsg_dvdy_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_DVDY_FS);
+  Teuchos::RCP<DICe::MultiField> match = mesh_->get_field(DICe::mesh::field_enums::MATCH_FS);
 
   const int_t N = 3;
   int *IPIV = new int[N+1];
@@ -290,120 +294,159 @@ VSG_Strain_Post_Processor::execute(){
   Teuchos::LAPACK<int,double> lapack;
 
   int_t num_neigh = 0;
+  std::vector<bool> neigh_valid;
   int_t neigh_id = 0;
   for(int_t subset=0;subset<local_num_points_;++subset){
     DEBUG_MSG("Processing subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << ", " << subset + 1 << " of " << local_num_points_);
+    // search the neighbors to see how many valid neighbors exist:
     num_neigh = neighbor_list_[subset].size();
-    Teuchos::ArrayRCP<double> u_x(num_neigh,0.0);
-    Teuchos::ArrayRCP<double> u_y(num_neigh,0.0);
-    Teuchos::ArrayRCP<double> X_t_u_x(N,0.0);
-    Teuchos::ArrayRCP<double> X_t_u_y(N,0.0);
-    Teuchos::ArrayRCP<double> coeffs_x(N,0.0);
-    Teuchos::ArrayRCP<double> coeffs_y(N,0.0);
-    Teuchos::SerialDenseMatrix<int_t,double> X_t(N,num_neigh, true);
-    Teuchos::SerialDenseMatrix<int_t,double> X_t_X(N,N,true);
-
-    // gather the displacements of the neighbors
+    neigh_valid.resize(num_neigh);
+    int_t num_valid_neigh = 0;
     for(int_t j=0;j<num_neigh;++j){
-      neigh_id = neighbor_list_[subset][j];
-      u_x[j] = disp->local_value(neigh_id*spa_dim+0);
-      u_y[j] = disp->local_value(neigh_id*spa_dim+1);
+      if(sigma->local_value(neighbor_list_[subset][j])>=0.0){
+        neigh_valid[j] = true;
+        num_valid_neigh++;
+      }else{
+        neigh_valid[j] = false;
+      }
     }
+    if(num_valid_neigh < 3 || sigma->local_value(subset) < 0.0){
+      vsg_dudx_rcp->local_value(subset) = 0.0;
+      vsg_dudy_rcp->local_value(subset) = 0.0;
+      vsg_dvdx_rcp->local_value(subset) = 0.0;
+      vsg_dvdy_rcp->local_value(subset) = 0.0;
+      vsg_strain_xx_rcp->local_value(subset) = 0.0;
+      vsg_strain_yy_rcp->local_value(subset) = 0.0;
+      vsg_strain_xy_rcp->local_value(subset) = 0.0;
+      DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " failed subset (sigma=-1) or not enough neighbors to calculate VSG strain."
+          " Setting all strain values to zero.");
+      match->local_value(subset) = -1;
+    }else{
+      DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " num valid neighbors: " << num_valid_neigh);
+      Teuchos::ArrayRCP<double> u_x(num_valid_neigh,0.0);
+      Teuchos::ArrayRCP<double> u_y(num_valid_neigh,0.0);
+      Teuchos::ArrayRCP<double> X_t_u_x(N,0.0);
+      Teuchos::ArrayRCP<double> X_t_u_y(N,0.0);
+      Teuchos::ArrayRCP<double> coeffs_x(N,0.0);
+      Teuchos::ArrayRCP<double> coeffs_y(N,0.0);
+      Teuchos::SerialDenseMatrix<int_t,double> X_t(N,num_valid_neigh, true);
+      Teuchos::SerialDenseMatrix<int_t,double> X_t_X(N,N,true);
 
-    // set up the X^T matrix
-    for(int_t j=0;j<num_neigh;++j){
-      X_t(0,j) = 1.0;
-      X_t(1,j) = neighbor_dist_x_[subset][j];
-      X_t(2,j) = neighbor_dist_y_[subset][j];
-    }
-    // set up X^T*X
-    for(int_t k=0;k<N;++k){
-      for(int_t m=0;m<N;++m){
-        for(int_t j=0;j<num_neigh;++j){
-          X_t_X(k,m) += X_t(k,j)*X_t(m,j);
+      // gather the displacements of the neighbors
+      int_t valid_id = 0;
+      for(int_t j=0;j<num_neigh;++j){
+        if(!neigh_valid[j])continue;
+        neigh_id = neighbor_list_[subset][j];
+        assert(sigma->local_value(neigh_id)>=0.0);
+        u_x[valid_id] = disp->local_value(neigh_id*spa_dim+0);
+        u_y[valid_id] = disp->local_value(neigh_id*spa_dim+1);
+        // set up the X^T matrix
+        X_t(0,valid_id) = 1.0;
+        X_t(1,valid_id) = neighbor_dist_x_[subset][j];
+        X_t(2,valid_id) = neighbor_dist_y_[subset][j];
+        valid_id++;
+      }
+
+      // set up X^T*X
+      for(int_t k=0;k<N;++k){
+        for(int_t m=0;m<N;++m){
+          for(int_t j=0;j<num_valid_neigh;++j){
+            X_t_X(k,m) += X_t(k,j)*X_t(m,j);
+          }
         }
       }
-    }
-    //X_t_X.print(std::cout);
+      //X_t_X.print(std::cout);
 
-    // Invert X^T*X
-    // TODO: remove for performance?
-    // compute the 1-norm of H:
-    std::vector<double> colTotals(X_t_X.numCols(),0.0);
-    for(int_t i=0;i<X_t_X.numCols();++i){
-      for(int_t j=0;j<X_t_X.numRows();++j){
-        colTotals[i]+=std::abs(X_t_X(j,i));
+      // Invert X^T*X
+      // TODO: remove for performance?
+      // compute the 1-norm of H:
+      std::vector<double> colTotals(X_t_X.numCols(),0.0);
+      for(int_t i=0;i<X_t_X.numCols();++i){
+        for(int_t j=0;j<X_t_X.numRows();++j){
+          colTotals[i]+=std::abs(X_t_X(j,i));
+        }
       }
-    }
-    double anorm = 0.0;
-    for(int_t i=0;i<X_t_X.numCols();++i){
-      if(colTotals[i] > anorm) anorm = colTotals[i];
-    }
-    DEBUG_MSG("Subset " << subset << " anorm " << anorm);
-    double rcond=0.0; // reciporical condition number
-    try
-    {
-      lapack.GETRF(X_t_X.numRows(),X_t_X.numCols(),X_t_X.values(),X_t_X.numRows(),IPIV,&INFO);
-      lapack.GECON('1',X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),anorm,&rcond,GWORK,IWORK,&INFO);
-      DEBUG_MSG("Subset " << subset << " VSG X^T*X RCOND(H): "<< rcond);
-      if(rcond < 1.0E-12) {
-        std::cout << "Error: The pseudo-inverse of the VSG strain calculation is (or is near) singular." << std::endl;
+      double anorm = 0.0;
+      for(int_t i=0;i<X_t_X.numCols();++i){
+        if(colTotals[i] > anorm) anorm = colTotals[i];
+      }
+      DEBUG_MSG("Subset " << subset << " anorm " << anorm);
+      double rcond=0.0; // reciporical condition number
+      try
+      {
+        lapack.GETRF(X_t_X.numRows(),X_t_X.numCols(),X_t_X.values(),X_t_X.numRows(),IPIV,&INFO);
+        lapack.GECON('1',X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),anorm,&rcond,GWORK,IWORK,&INFO);
+        DEBUG_MSG("Subset " << subset << " VSG X^T*X RCOND(H): "<< rcond);
+        if(rcond < 1.0E-12) {
+          vsg_dudx_rcp->local_value(subset) = 0.0;
+          vsg_dudy_rcp->local_value(subset) = 0.0;
+          vsg_dvdx_rcp->local_value(subset) = 0.0;
+          vsg_dvdy_rcp->local_value(subset) = 0.0;
+          vsg_strain_xx_rcp->local_value(subset) = 0.0;
+          vsg_strain_yy_rcp->local_value(subset) = 0.0;
+          vsg_strain_xy_rcp->local_value(subset) = 0.0;
+          DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " failed subset, the pseudo-inverse of the VSG strain calculation is (or is near) singular."
+              " Setting all strain values to zero.");
+          match->local_value(subset) = -1;
+          continue;
+          //std::cout << "Error: The pseudo-inverse of the VSG strain calculation is (or is near) singular." << std::endl;
+          //TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+        }
+      }
+      catch(std::exception &e){
+        DEBUG_MSG( e.what() << '\n');
+        std::cout << "Error: Something went wrong in the condition number calculation" << std::endl;
         TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
       }
-    }
-    catch(std::exception &e){
-      DEBUG_MSG( e.what() << '\n');
-      std::cout << "Error: Something went wrong in the condition number calculation" << std::endl;
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
-    }
-    try
-    {
-      lapack.GETRI(X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),IPIV,WORK,LWORK,&INFO);
-    }
-    catch(std::exception &e){
-      DEBUG_MSG( e.what() << '\n');
-      std::cout << "Error: Something went wrong in the inverse calculation of X^T*X " << std::endl;
-    }
-
-    // compute X^T*u
-    for(int_t i=0;i<N;++i){
-      for(int_t j=0;j<num_neigh;++j){
-        X_t_u_x[i] += X_t(i,j)*u_x[j];
-        X_t_u_y[i] += X_t(i,j)*u_y[j];
+      try
+      {
+        lapack.GETRI(X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),IPIV,WORK,LWORK,&INFO);
       }
-    }
-
-    // compute the coeffs
-    for(int_t i=0;i<N;++i){
-      for(int_t j=0;j<N;++j){
-        coeffs_x[i] += X_t_X(i,j)*X_t_u_x[j];
-        coeffs_y[i] += X_t_X(i,j)*X_t_u_y[j];
+      catch(std::exception &e){
+        DEBUG_MSG( e.what() << '\n');
+        std::cout << "Error: Something went wrong in the inverse calculation of X^T*X " << std::endl;
       }
-    }
 
-    // update the field values
-    const double dudx = coeffs_x[1];
-    const double dudy = coeffs_x[2];
-    const double dvdx = coeffs_y[1];
-    const double dvdy = coeffs_y[2];
-    vsg_dudx_rcp->local_value(subset) = dudx;
-    vsg_dudy_rcp->local_value(subset) = dudy;
-    vsg_dvdx_rcp->local_value(subset) = dvdx;
-    vsg_dvdy_rcp->local_value(subset) = dvdy;
+      // compute X^T*u
+      for(int_t i=0;i<N;++i){
+        for(int_t j=0;j<num_valid_neigh;++j){
+          X_t_u_x[i] += X_t(i,j)*u_x[j];
+          X_t_u_y[i] += X_t(i,j)*u_y[j];
+        }
+      }
 
-    DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " dudx " << dudx << " dudy " << dudy <<
-      " dvdx " << dvdx << " dvdy " << dvdy);
+      // compute the coeffs
+      for(int_t i=0;i<N;++i){
+        for(int_t j=0;j<N;++j){
+          coeffs_x[i] += X_t_X(i,j)*X_t_u_x[j];
+          coeffs_y[i] += X_t_X(i,j)*X_t_u_y[j];
+        }
+      }
 
-    // compute the Green-Lagrange strain based on the derivatives computed above:
-    const scalar_t GL_xx = 0.5*(2.0*dudx + dudx*dudx + dvdx*dvdx);
-    const scalar_t GL_yy = 0.5*(2.0*dvdy + dudy*dudy + dvdy*dvdy);
-    const scalar_t GL_xy = 0.5*(dudy + dvdx + dudx*dudy + dvdx*dvdy);
-    vsg_strain_xx_rcp->local_value(subset) = GL_xx;
-    vsg_strain_yy_rcp->local_value(subset) = GL_yy;
-    vsg_strain_xy_rcp->local_value(subset) = GL_xy;
+      // update the field values
+      const double dudx = coeffs_x[1];
+      const double dudy = coeffs_x[2];
+      const double dvdx = coeffs_y[1];
+      const double dvdy = coeffs_y[2];
+      vsg_dudx_rcp->local_value(subset) = dudx;
+      vsg_dudy_rcp->local_value(subset) = dudy;
+      vsg_dvdx_rcp->local_value(subset) = dvdx;
+      vsg_dvdy_rcp->local_value(subset) = dvdy;
 
-    DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " VSG Green-Lagrange strain XX: " << GL_xx << " YY: " << GL_yy <<
-      " XY: " << GL_xy);
+      DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " dudx " << dudx << " dudy " << dudy <<
+        " dvdx " << dvdx << " dvdy " << dvdy);
+
+      // compute the Green-Lagrange strain based on the derivatives computed above:
+      const scalar_t GL_xx = 0.5*(2.0*dudx + dudx*dudx + dvdx*dvdx);
+      const scalar_t GL_yy = 0.5*(2.0*dvdy + dudy*dudy + dvdy*dvdy);
+      const scalar_t GL_xy = 0.5*(dudy + dvdx + dudx*dudy + dvdx*dvdy);
+      vsg_strain_xx_rcp->local_value(subset) = GL_xx;
+      vsg_strain_yy_rcp->local_value(subset) = GL_yy;
+      vsg_strain_xy_rcp->local_value(subset) = GL_xy;
+
+      DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " VSG Green-Lagrange strain XX: " << GL_xx << " YY: " << GL_yy <<
+        " XY: " << GL_xy);
+    } // end has enough valid neighbors to compute strain check
 
   } // end subset loop
 
@@ -486,7 +529,6 @@ NLVC_Strain_Post_Processor::execute(){
   DEBUG_MSG("NLVC_Strain_Post_Processor execute() begin");
   if(!neighborhood_initialized_) pre_execution_tasks();
 
-
   // gather an all owned field here
   DICe::mesh::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
   DICe::mesh::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
@@ -505,6 +547,9 @@ NLVC_Strain_Post_Processor::execute(){
     // note assumes that the same vector field spec was given for x and y
     disp = mesh_->get_overlap_field(disp_x_spec);
   }
+  // get the sigma field:
+  Teuchos::RCP<MultiField> sigma = mesh_->get_overlap_field(DICe::mesh::field_enums::SIGMA_FS);
+  // get pointers to the local fields
   Teuchos::RCP<DICe::MultiField> nlvc_strain_xx_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_XX_FS);
   Teuchos::RCP<DICe::MultiField> nlvc_strain_yy_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_YY_FS);
   Teuchos::RCP<DICe::MultiField> nlvc_strain_xy_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_XY_FS);
@@ -516,6 +561,7 @@ NLVC_Strain_Post_Processor::execute(){
   Teuchos::RCP<DICe::MultiField> f10_rcp = mesh_->get_field(DICe::mesh::field_enums::FIELD_10_FS);
   Teuchos::RCP<DICe::MultiField> match = mesh_->get_field(DICe::mesh::field_enums::MATCH_FS);
 
+  std::vector<bool> neigh_valid;
   for(int_t subset=0;subset<local_num_points_;++subset){
     DEBUG_MSG("Processing subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << ", " << subset + 1 << " of " << local_num_points_);
     scalar_t dudx = 0.0;
@@ -531,53 +577,76 @@ NLVC_Strain_Post_Processor::execute(){
     scalar_t kx = 0.0;
     scalar_t ky = 0.0;
     int_t neigh_id = 0;
-
-    assert(neighbor_dist_x_[subset].size()>1);
-    assert(neighbor_dist_y_[subset].size()>1);
-    // neigbor 0 is yourself
-    const scalar_t nearest_neigh_dist = std::sqrt(neighbor_dist_x_[subset][1]*neighbor_dist_x_[subset][1] +
-      neighbor_dist_y_[subset][1]*neighbor_dist_y_[subset][1]);
-    const scalar_t patch_area = nearest_neigh_dist*nearest_neigh_dist;
     const int_t num_neigh = neighbor_dist_x_[subset].size();
+    neigh_valid.resize(num_neigh);
+    int_t num_valid_neigh = 0;
     for(int_t j=0;j<num_neigh;++j){
-      neigh_id = neighbor_list_[subset][j];
-      ux = disp->local_value(neigh_id*spa_dim+0);
-      uy = disp->local_value(neigh_id*spa_dim+1);
-      dx = neighbor_dist_x_[subset][j];
-      dy = neighbor_dist_y_[subset][j];
-      compute_kernel(dx,dy,kx,ky);
-      sum_int_x += kx*patch_area;
-      sum_int_y += ky*patch_area;
-      dudx -= ux * kx*patch_area;
-      dudy -= ux * ky*patch_area;
-      dvdx -= uy * kx*patch_area;
-      dvdy -= uy * ky*patch_area;
-    } // neighbor loop
-    nlvc_dudx_rcp->local_value(subset) = dudx;
-    nlvc_dudy_rcp->local_value(subset) = dudy;
-    nlvc_dvdx_rcp->local_value(subset) = dvdx;
-    nlvc_dvdy_rcp->local_value(subset) = dvdy;
-    f9_rcp->local_value(subset) = sum_int_x;
-    f10_rcp->local_value(subset) = sum_int_y;
-
-    DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " dudx " << dudx << " dudy " << dudy <<
-      " dvdx " << dvdx << " dvdy " << dvdy);
-    DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " sum_int_x " << sum_int_x <<
-      " sum_int_y " << sum_int_y);
-
-    // compute the Green-Lagrange strain based on the derivatives computed above:
-    const scalar_t GL_xx = 0.5*(2.0*dudx + dudx*dudx + dvdx*dvdx);
-    const scalar_t GL_yy = 0.5*(2.0*dvdy + dudy*dudy + dvdy*dvdy);
-    const scalar_t GL_xy = 0.5*(dudy + dvdx + dudx*dudy + dvdx*dvdy);
-    nlvc_strain_xx_rcp->local_value(subset) = GL_xx;
-    nlvc_strain_yy_rcp->local_value(subset) = GL_yy;
-    nlvc_strain_xy_rcp->local_value(subset) = GL_xy;
-    if(sum_int_x > 0.01 || sum_int_y > 0.01 || sum_int_x < -0.01 || sum_int_y < -0.01){
-      match->local_value(subset) = -1;
+      if(sigma->local_value(neighbor_list_[subset][j])>=0.0){
+        neigh_valid[j] = true;
+        num_valid_neigh++;
+      }else{
+        neigh_valid[j] = false;
+      }
     }
+    if(num_valid_neigh < 3 || sigma->local_value(subset)<0.0){
+      nlvc_dudx_rcp->local_value(subset) = 0.0;
+      nlvc_dudy_rcp->local_value(subset) = 0.0;
+      nlvc_dvdx_rcp->local_value(subset) = 0.0;
+      nlvc_dvdy_rcp->local_value(subset) = 0.0;
+      nlvc_strain_xx_rcp->local_value(subset) = 0.0;
+      nlvc_strain_yy_rcp->local_value(subset) = 0.0;
+      nlvc_strain_xy_rcp->local_value(subset) = 0.0;
+      DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " failed subset (sigma=-1) or not enough neighbors to calculate NLVC strain."
+          " Setting all strain values to zero.");
+      match->local_value(subset) = -1;
+    }else{
+      assert(neighbor_dist_x_[subset].size()>1);
+      assert(neighbor_dist_y_[subset].size()>1);
+      // neighbor 0 is yourself
+      const scalar_t nearest_neigh_dist = std::sqrt(neighbor_dist_x_[subset][1]*neighbor_dist_x_[subset][1] +
+        neighbor_dist_y_[subset][1]*neighbor_dist_y_[subset][1]);
+      const scalar_t patch_area = nearest_neigh_dist*nearest_neigh_dist;
+      for(int_t j=0;j<num_neigh;++j){
+        if(!neigh_valid[j]) continue;
+        neigh_id = neighbor_list_[subset][j];
+        assert(sigma->local_value(neigh_id)>=0.0);
+        ux = disp->local_value(neigh_id*spa_dim+0);
+        uy = disp->local_value(neigh_id*spa_dim+1);
+        dx = neighbor_dist_x_[subset][j];
+        dy = neighbor_dist_y_[subset][j];
+        compute_kernel(dx,dy,kx,ky);
+        sum_int_x += kx*patch_area;
+        sum_int_y += ky*patch_area;
+        dudx -= ux * kx*patch_area;
+        dudy -= ux * ky*patch_area;
+        dvdx -= uy * kx*patch_area;
+        dvdy -= uy * ky*patch_area;
+      } // neighbor loop
+      nlvc_dudx_rcp->local_value(subset) = dudx;
+      nlvc_dudy_rcp->local_value(subset) = dudy;
+      nlvc_dvdx_rcp->local_value(subset) = dvdx;
+      nlvc_dvdy_rcp->local_value(subset) = dvdy;
+      f9_rcp->local_value(subset) = sum_int_x;
+      f10_rcp->local_value(subset) = sum_int_y;
 
-    DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " NLVC Green-Lagrange strain XX: " << GL_xx << " YY: " << GL_yy <<
-      " XY: " << GL_xy);
+      DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " dudx " << dudx << " dudy " << dudy <<
+        " dvdx " << dvdx << " dvdy " << dvdy);
+      DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " sum_int_x " << sum_int_x <<
+        " sum_int_y " << sum_int_y);
+
+      // compute the Green-Lagrange strain based on the derivatives computed above:
+      const scalar_t GL_xx = 0.5*(2.0*dudx + dudx*dudx + dvdx*dvdx);
+      const scalar_t GL_yy = 0.5*(2.0*dvdy + dudy*dudy + dvdy*dvdy);
+      const scalar_t GL_xy = 0.5*(dudy + dvdx + dudx*dudy + dvdx*dvdy);
+      nlvc_strain_xx_rcp->local_value(subset) = GL_xx;
+      nlvc_strain_yy_rcp->local_value(subset) = GL_yy;
+      nlvc_strain_xy_rcp->local_value(subset) = GL_xy;
+      if(sum_int_x > 0.01 || sum_int_y > 0.01 || sum_int_x < -0.01 || sum_int_y < -0.01){
+        match->local_value(subset) = -1;
+      }
+      DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " NLVC Green-Lagrange strain XX: " << GL_xx << " YY: " << GL_yy <<
+        " XY: " << GL_xy);
+    }
   } // subset loop
 
   DEBUG_MSG("NLVC_Strain_Post_Processor execute() end");
