@@ -398,6 +398,9 @@ public:
     Teuchos::ArrayRCP<scalar_t> coords_y,
     Teuchos::RCP<MultiField_Map> dist_map);
 
+  /// create all of the fields necessary on the mesh
+  void create_mesh_fields();
+
   /// Conduct the correlation
   /// returns 0 if successful
   int_t execute_correlation();
@@ -1158,6 +1161,11 @@ public:
   /// return a pointer to the mesh object that holds all the fields and maps
   Teuchos::RCP<DICe::mesh::Mesh> mesh(){
     return mesh_;
+  }
+
+  /// return a copy of the gid order for this processor
+  std::vector<int_t> this_proc_gid_order()const{
+    return this_proc_gid_order_;
   }
 
 private:

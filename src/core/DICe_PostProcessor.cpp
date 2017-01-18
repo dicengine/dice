@@ -310,7 +310,8 @@ VSG_Strain_Post_Processor::execute(){
         neigh_valid[j] = false;
       }
     }
-    if(num_valid_neigh < 3 || sigma->local_value(subset) < 0.0){
+    DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " num valid neighbors: " << num_valid_neigh);
+    if(num_valid_neigh < 3 || sigma->local_value(neighbor_list_[subset][0]) < 0.0){
       vsg_dudx_rcp->local_value(subset) = 0.0;
       vsg_dudy_rcp->local_value(subset) = 0.0;
       vsg_dvdx_rcp->local_value(subset) = 0.0;
@@ -322,7 +323,6 @@ VSG_Strain_Post_Processor::execute(){
           " Setting all strain values to zero.");
       match->local_value(subset) = -1;
     }else{
-      DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " num valid neighbors: " << num_valid_neigh);
       Teuchos::ArrayRCP<double> u_x(num_valid_neigh,0.0);
       Teuchos::ArrayRCP<double> u_y(num_valid_neigh,0.0);
       Teuchos::ArrayRCP<double> X_t_u_x(N,0.0);
@@ -588,7 +588,8 @@ NLVC_Strain_Post_Processor::execute(){
         neigh_valid[j] = false;
       }
     }
-    if(num_valid_neigh < 3 || sigma->local_value(subset)<0.0){
+    DEBUG_MSG("Subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << " num valid neighbors: " << num_valid_neigh);
+    if(num_valid_neigh < 3 || sigma->local_value(neighbor_list_[subset][0])<0.0){
       nlvc_dudx_rcp->local_value(subset) = 0.0;
       nlvc_dudy_rcp->local_value(subset) = 0.0;
       nlvc_dvdx_rcp->local_value(subset) = 0.0;

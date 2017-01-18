@@ -978,23 +978,99 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   // initialize the schema
   // collect the overlap coordinates vector from the other schema because the local fields will only have this proc's
   // the size of the coords vector needs to be the global number of elements, but only the locally used elements need values
-  Teuchos::RCP<MultiField> stereo_coords_x = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::STEREO_COORDINATES_X_FS);
-  Teuchos::RCP<MultiField> stereo_coords_y = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::STEREO_COORDINATES_Y_FS);
-  Teuchos::RCP<MultiField> neighbors = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::NEIGHBOR_ID_FS);
-  const int_t global_num_subsets = schema->global_num_subsets();
-  const int_t num_overlap_subsets = stereo_coords_x->get_map()->get_num_local_elements();
-  Teuchos::ArrayRCP<scalar_t> coords_x(global_num_subsets,0.0);
-  Teuchos::ArrayRCP<scalar_t> coords_y(global_num_subsets,0.0);
-  Teuchos::RCP<std::vector<int_t> > neighbor_ids = Teuchos::rcp(new std::vector<int_t>(global_num_subsets,-1));
-  for(int_t i=0;i<num_overlap_subsets;++i){
-    int_t global_id = stereo_coords_x->get_map()->get_global_element(i);
-    coords_x[global_id] = std::round(stereo_coords_x->local_value(i));
-    coords_y[global_id] = std::round(stereo_coords_y->local_value(i));
-    (*neighbor_ids)[global_id] = neighbors->local_value(i);
-  }
-  initialize(coords_x,coords_y,schema->subset_dim(),Teuchos::null,neighbor_ids);
   TEUCHOS_TEST_FOR_EXCEPTION(schema->skip_solve_flags()->size()>0,std::runtime_error,"Error skip solves cannot be used in stereo");
   TEUCHOS_TEST_FOR_EXCEPTION(schema->motion_window_params()->size()>0,std::runtime_error,"Error motion windows cannot be used in stereo");
+  Teuchos::RCP<MultiField> stereo_coords_x = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::STEREO_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> stereo_coords_y = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::STEREO_COORDINATES_Y_FS);
+  //Teuchos::RCP<MultiField> neighbors = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::NEIGHBOR_ID_FS);
+
+  assert(def_imgs_.size()>0);
+  TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[0]->width()!=ref_img_->width(),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[0]->height()!=ref_img_->height(),std::runtime_error,"");
+  global_num_subsets_ = schema->mesh()->get_scalar_node_dist_map()->get_num_global_elements();
+  TEUCHOS_TEST_FOR_EXCEPTION(global_num_subsets_<=0,std::runtime_error,"");
+  subset_dim_ = schema->subset_dim();
+  this_proc_gid_order_ = schema->this_proc_gid_order();
+
+//  // create an evenly split map to start:
+//  Teuchos::RCP<MultiField_Map> id_decomp_map = schema->mesh()->get_scalar_node_dist_map();
+//  this_proc_gid_order_ = std::vector<int_t>(id_decomp_map->get_num_local_elements(),-1);
+//  for(int_t i=0;i<id_decomp_map->get_num_local_elements();++i)
+//    this_proc_gid_order_[i] = id_decomp_map->get_global_element(i);
+
+  const int_t num_overlap_coords = schema->mesh()->get_scalar_node_overlap_map()->get_num_local_elements();
+  Teuchos::ArrayRCP<scalar_t> overlap_coords_x(num_overlap_coords,0.0);
+  Teuchos::ArrayRCP<scalar_t> overlap_coords_y(num_overlap_coords,0.0);
+  Teuchos::ArrayRCP<int_t> node_map(num_overlap_coords,0);
+  for(int_t i=0;i<num_overlap_coords;++i){
+    overlap_coords_x[i] = std::round(stereo_coords_x->local_value(i));
+    overlap_coords_y[i] = std::round(stereo_coords_y->local_value(i));
+    node_map[i] = schema->mesh()->get_scalar_node_overlap_map()->get_global_element(i);
+  }
+  const int_t num_elem = schema->mesh()->get_scalar_node_dist_map()->get_num_local_elements();
+  Teuchos::ArrayRCP<int_t> connectivity(num_elem,0);
+  Teuchos::ArrayRCP<int_t> elem_map(num_elem,0);
+  // note: this assumes the elements are contiguous in terms of ids and that the overlap ids
+  // are in ascending order
+  int_t overlap_offset = 0;
+  for(int_t i=0;i<node_map.size();++i){
+    if(schema->mesh()->get_scalar_node_dist_map()->get_global_element_list()[0] <= node_map[i]) break;
+    overlap_offset++;
+  }
+  for(int_t i=0;i<num_elem;++i){
+    connectivity[i] = overlap_offset + i + 1; // + 1 because exodus elem ids are 1-based
+    elem_map[i] = schema->mesh()->get_scalar_node_dist_map()->get_global_element(i);
+  }
+  // filename for output
+  std::stringstream exo_name;
+  if(init_params_!=Teuchos::null)
+    exo_name << init_params_->get<std::string>(output_prefix,"DICe_solution_stereo") << ".e";
+  else
+    exo_name << "DICe_solution_stereo.e";
+  // dummy arrays
+  std::vector<std::pair<int_t,int_t>> dirichlet_boundary_nodes;
+  std::set<int_t> neumann_boundary_nodes;
+  std::set<int_t> lagrange_boundary_nodes;
+
+  mesh_ = DICe::mesh::create_point_or_tri_mesh(DICe::mesh::MESHLESS,
+    overlap_coords_x,
+    overlap_coords_y,
+    connectivity,
+    node_map,
+    elem_map,
+    dirichlet_boundary_nodes,
+    neumann_boundary_nodes,
+    lagrange_boundary_nodes,
+    exo_name.str());
+
+  conformal_subset_defs_ = Teuchos::rcp(new std::map<int_t,DICe::Conformal_Area_Def>);
+
+  // initialize the post processors
+  for(size_t i=0;i<post_processors_.size();++i)
+    post_processors_[i]->initialize(mesh_);
+
+  is_initialized_ = true;
+
+  TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"Error: mesh should not be null here");
+  local_num_subsets_ = mesh_->get_scalar_node_dist_map()->get_num_local_elements();
+  create_mesh_fields();
+
+  mesh_->get_field(DICe::mesh::field_enums::NEIGHBOR_ID_FS)->update(1.0,*schema->mesh()->get_field(DICe::mesh::field_enums::NEIGHBOR_ID_FS),0.0);
+
+  DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] right schema initialized");
+
+//  const int_t global_num_subsets = schema->global_num_subsets();
+//  const int_t num_overlap_subsets = stereo_coords_x->get_map()->get_num_local_elements();
+//  Teuchos::ArrayRCP<scalar_t> coords_x(global_num_subsets,0.0);
+//  Teuchos::ArrayRCP<scalar_t> coords_y(global_num_subsets,0.0);
+//  Teuchos::RCP<std::vector<int_t> > neighbor_ids = Teuchos::rcp(new std::vector<int_t>(global_num_subsets,-1));
+//  for(int_t i=0;i<num_overlap_subsets;++i){
+//    int_t global_id = stereo_coords_x->get_map()->get_global_element(i);
+//    coords_x[global_id] = std::round(stereo_coords_x->local_value(i));
+//    coords_y[global_id] = std::round(stereo_coords_y->local_value(i));
+//    (*neighbor_ids)[global_id] = neighbors->local_value(i);
+//  }
+//  initialize(coords_x,coords_y,schema->subset_dim(),Teuchos::null,neighbor_ids);
 }
 
 
@@ -1158,7 +1234,7 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   // create a  DICe::mesh::Mesh that has a connectivity with only one node per elem
   //const int_t num_points = coords_x.size();
   // the subset ownership is dictated by the dist_map
-  // the overlap map for the subset-based method is an all own all map
+  // the overlap map for is dictated by which neighbors are needed to access
   const int_t num_elem = dist_map->get_global_element_list().size();
   Teuchos::ArrayRCP<int_t> connectivity(num_elem,0);
   Teuchos::ArrayRCP<int_t> elem_map(num_elem,0);
@@ -1202,7 +1278,11 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
 
   TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"Error: mesh should not be null here");
   local_num_subsets_ = mesh_->get_scalar_node_dist_map()->get_num_local_elements();
+  create_mesh_fields();
+}
 
+void
+Schema::create_mesh_fields(){
   mesh_->create_field(mesh::field_enums::CROSS_CORR_Q_FS);
   mesh_->create_field(mesh::field_enums::CROSS_CORR_R_FS);
   mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
@@ -2941,6 +3021,8 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
 //      }
 //    } // end left of right sigma < 0
     if(sigma_right->local_value(i) < 0){
+      DEBUG_MSG("Schema::execute_triangulation(): setting left subset gid " << sigma_left->get_map()->get_global_element(i) <<
+        " sigma value to -1 since right sigma = -1 " << " (right subset gid " << sigma_right->get_map()->get_global_element(i) << ")");
       sigma_left->local_value(i) = -1;
       match_left->local_value(i) = -1;
     }
