@@ -202,9 +202,9 @@ int main(int argc, char *argv[]) {
             assert(DICe::is_number(tokensB[i]));
             scalar_t valA = strtod(tokensA[i].c_str(),NULL);
             scalar_t valB = strtod(tokensB[i].c_str(),NULL);
-            scalar_t diff = std::abs((valA - valB)/valA);
+            scalar_t diff = valA == 0.0 ? std::abs((valA - valB)/valA) : std::abs(valA - valB);
             const bool tiny = (std::abs(valA) + std::abs(valB) < 1.0E-8);
-            const bool below_floor = std::abs(valA) < floor;
+            const bool below_floor = std::abs(valA) < floor && valA!=0.0;
             if(!below_floor||!use_floor){
               if(!tiny && diff > relTol){
                 line_diff = true;
