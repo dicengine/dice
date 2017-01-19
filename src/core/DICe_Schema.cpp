@@ -3175,7 +3175,8 @@ void
 Schema::write_output(const std::string & output_folder,
   const std::string & prefix,
   const bool separate_files_per_subset,
-  const bool separate_header_file){
+  const bool separate_header_file,
+  const bool no_text_output){
   if(analysis_type_==GLOBAL_DIC){
     return;
   }
@@ -3193,6 +3194,8 @@ Schema::write_output(const std::string & output_folder,
   }
   DICe::mesh::exodus_output_dump(mesh_,image_frame_,image_frame_);
 #endif
+
+  if(no_text_output) return;
 
   // populate the RCP vector of fields in the output spec
   output_spec_->gather_fields();

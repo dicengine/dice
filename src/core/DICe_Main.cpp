@@ -436,7 +436,8 @@ int main(int argc, char *argv[]) {
 
       // write the output
       boost::timer write_t;
-      schema->write_output(output_folder,file_prefix,separate_output_file_for_each_subset,separate_header_file);
+      const bool no_text_output = input_params->get<bool>(DICe::no_text_output_files,false);
+      schema->write_output(output_folder,file_prefix,separate_output_file_for_each_subset,separate_header_file,no_text_output);
       schema->post_execution_tasks();
       // print the timing data with or without verbose flag
       if(input_params->get<bool>(DICe::print_stats,false)){
@@ -447,7 +448,7 @@ int main(int argc, char *argv[]) {
       //}
       if(is_stereo){
         if(input_params->get<bool>(DICe::output_stereo_files,false)){
-          stereo_schema->write_output(output_folder,stereo_file_prefix,separate_output_file_for_each_subset,separate_header_file);
+          stereo_schema->write_output(output_folder,stereo_file_prefix,separate_output_file_for_each_subset,separate_header_file,no_text_output);
         }
         stereo_schema->post_execution_tasks();
         // TODO MOVE execute post processors to after this step
