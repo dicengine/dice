@@ -1,0 +1,17 @@
+<ParameterList>
+  <Parameter name="output_folder" type="string" value="./results/" />
+  <Parameter name="output_prefix" type="string" value="DICe_out" />
+  <Parameter name="image_folder" type="string" value="./images/" />
+  <Parameter name="subset_size" type="int" value="35" />
+  <Parameter name="step_size" type="int" value="100" />
+  <Parameter name="calibration_parameters_file" type="string" value="cal.txt" />
+  <Parameter name="correlation_parameters_file" type="string" value="params.xml" />
+  <Parameter name="reference_image" type="string" value="goes14.2016.130.214059.BAND_01.tif" />
+  <ParameterList name="deformed_images">
+    <Parameter name="goes14.2016.130.214059.BAND_01.tif" type="bool" value="true" />
+  </ParameterList>
+  <Parameter name="stereo_reference_image" type="string" value="goes13.2016.130.213725.BAND_01.tif" />
+  <ParameterList name="stereo_deformed_images">
+    <Parameter name="goes13.2016.130.213725.BAND_01.tif" type="bool" value="true" />
+  </ParameterList>
+</ParameterList>

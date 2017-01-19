@@ -1,0 +1,22 @@
+1214 # cx (anything after the # is a comment)
+693.5 # cy
+30000 # fx
+30000 # fy
+0.0 # fs
+0.0 # k1
+0.0 # k2
+0.0 # k3
+4156 # cx
+1321 # cy
+30000 # fx
+30000 # fy
+0.0 # fs
+0.0 # k1
+0.0 # k2
+0.0 # k3
+0.0 # alpha
+30.0 # beta
+0.0 # gamma
+18531 # tx
+0 # ty
+0 # tz

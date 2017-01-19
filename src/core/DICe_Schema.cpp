@@ -1024,7 +1024,7 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   // filename for output
   std::stringstream exo_name;
   if(init_params_!=Teuchos::null)
-    exo_name << init_params_->get<std::string>(output_prefix,"DICe_solution_stereo") << ".e";
+    exo_name << init_params_->get<std::string>(DICe::output_prefix,"DICe_solution_stereo") << ".e";
   else
     exo_name << "DICe_solution_stereo.e";
   // dummy arrays

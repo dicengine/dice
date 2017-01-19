@@ -1,0 +1,1260 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE vpml>
+<project dir="C:/Users/emjones/My Research/Projects/LDRD/Sharlotte VFM code/ExperimentalData/GT4/DICImages">
+ <calibration lri="calibration">
+  <camera id="0">9.550537385e+02 6.452301624e+02 6.636033383e+03 6.636440175e+03 -5.693077075e-04 -1.957515272e-04 8.739544595e-01 -2.691426143e+01<orientation>1.799332210e+02 9.415993919e+00 -5.775865407e-02 -5.820738494e+01 1.641145944e-01 2.016820788e+01</orientation>
+  </camera>
+  <camera id="1">9.713275619e+02 6.157965508e+02 6.609847619e+03 6.609166930e+03 7.051020868e-01 -5.225966870e-03 1.077694686e+00 -3.005404073e+01<orientation>-1.799418875e+02 -9.416050875e+00 4.747312256e-02 5.984373321e+01 2.184759676e-01 2.104719884e+01</orientation>
+  </camera>
+ </calibration>
+ <files lri="files">
+  <reference>GT4-0000_0.tif</reference>
+  <deformed>GT4-0001_0.tif</deformed>
+  <deformed>GT4-0002_0.tif</deformed>
+  <deformed>GT4-0003_0.tif</deformed>
+  <deformed>GT4-0004_0.tif</deformed>
+  <deformed>GT4-0005_0.tif</deformed>
+  <deformed>GT4-0006_0.tif</deformed>
+  <deformed>GT4-0007_0.tif</deformed>
+  <deformed>GT4-0008_0.tif</deformed>
+  <deformed>GT4-0009_0.tif</deformed>
+  <deformed>GT4-0010_0.tif</deformed>
+  <deformed>GT4-0011_0.tif</deformed>
+  <deformed>GT4-0012_0.tif</deformed>
+  <deformed>GT4-0013_0.tif</deformed>
+  <deformed>GT4-0014_0.tif</deformed>
+  <deformed>GT4-0015_0.tif</deformed>
+  <deformed>GT4-0016_0.tif</deformed>
+  <deformed>GT4-0017_0.tif</deformed>
+  <deformed>GT4-0018_0.tif</deformed>
+  <deformed>GT4-0019_0.tif</deformed>
+  <deformed>GT4-0020_0.tif</deformed>
+  <deformed>GT4-0021_0.tif</deformed>
+  <deformed>GT4-0022_0.tif</deformed>
+  <deformed>GT4-0023_0.tif</deformed>
+  <deformed>GT4-0024_0.tif</deformed>
+  <deformed>GT4-0025_0.tif</deformed>
+  <deformed>GT4-0026_0.tif</deformed>
+  <deformed>GT4-0027_0.tif</deformed>
+  <deformed>GT4-0028_0.tif</deformed>
+  <deformed>GT4-0029_0.tif</deformed>
+  <deformed>GT4-0030_0.tif</deformed>
+  <deformed>GT4-0031_0.tif</deformed>
+  <deformed>GT4-0032_0.tif</deformed>
+  <deformed>GT4-0033_0.tif</deformed>
+  <deformed>GT4-0034_0.tif</deformed>
+  <deformed>GT4-0035_0.tif</deformed>
+  <deformed>GT4-0036_0.tif</deformed>
+  <deformed>GT4-0037_0.tif</deformed>
+  <deformed>GT4-0038_0.tif</deformed>
+  <deformed>GT4-0039_0.tif</deformed>
+  <deformed>GT4-0040_0.tif</deformed>
+  <deformed>GT4-0041_0.tif</deformed>
+  <deformed>GT4-0042_0.tif</deformed>
+  <deformed>GT4-0043_0.tif</deformed>
+  <deformed>GT4-0044_0.tif</deformed>
+  <deformed>GT4-0045_0.tif</deformed>
+  <deformed>GT4-0046_0.tif</deformed>
+  <deformed>GT4-0047_0.tif</deformed>
+  <deformed>GT4-0048_0.tif</deformed>
+  <deformed>GT4-0049_0.tif</deformed>
+  <deformed>GT4-0050_0.tif</deformed>
+  <deformed>GT4-0051_0.tif</deformed>
+  <deformed>GT4-0052_0.tif</deformed>
+  <deformed>GT4-0053_0.tif</deformed>
+  <deformed>GT4-0054_0.tif</deformed>
+  <deformed>GT4-0055_0.tif</deformed>
+  <deformed>GT4-0056_0.tif</deformed>
+  <deformed>GT4-0057_0.tif</deformed>
+  <deformed>GT4-0058_0.tif</deformed>
+  <deformed>GT4-0059_0.tif</deformed>
+  <deformed>GT4-0060_0.tif</deformed>
+  <deformed>GT4-0061_0.tif</deformed>
+  <deformed>GT4-0062_0.tif</deformed>
+  <deformed>GT4-0063_0.tif</deformed>
+  <deformed>GT4-0064_0.tif</deformed>
+  <deformed>GT4-0065_0.tif</deformed>
+  <deformed>GT4-0066_0.tif</deformed>
+  <deformed>GT4-0067_0.tif</deformed>
+  <deformed>GT4-0068_0.tif</deformed>
+  <deformed>GT4-0069_0.tif</deformed>
+  <deformed>GT4-0070_0.tif</deformed>
+  <deformed>GT4-0071_0.tif</deformed>
+  <deformed>GT4-0072_0.tif</deformed>
+  <deformed>GT4-0073_0.tif</deformed>
+  <deformed>GT4-0074_0.tif</deformed>
+  <deformed>GT4-0075_0.tif</deformed>
+  <deformed>GT4-0076_0.tif</deformed>
+  <deformed>GT4-0077_0.tif</deformed>
+  <deformed>GT4-0078_0.tif</deformed>
+  <deformed>GT4-0079_0.tif</deformed>
+  <deformed>GT4-0080_0.tif</deformed>
+  <deformed>GT4-0081_0.tif</deformed>
+  <deformed>GT4-0082_0.tif</deformed>
+  <deformed>GT4-0083_0.tif</deformed>
+  <deformed>GT4-0084_0.tif</deformed>
+  <deformed>GT4-0085_0.tif</deformed>
+  <deformed>GT4-0086_0.tif</deformed>
+  <deformed>GT4-0087_0.tif</deformed>
+  <deformed>GT4-0088_0.tif</deformed>
+  <deformed>GT4-0089_0.tif</deformed>
+  <deformed>GT4-0090_0.tif</deformed>
+  <deformed>GT4-0091_0.tif</deformed>
+  <deformed>GT4-0092_0.tif</deformed>
+  <deformed>GT4-0093_0.tif</deformed>
+  <deformed>GT4-0094_0.tif</deformed>
+  <deformed>GT4-0095_0.tif</deformed>
+  <deformed>GT4-0096_0.tif</deformed>
+  <deformed>GT4-0097_0.tif</deformed>
+  <deformed>GT4-0098_0.tif</deformed>
+  <deformed>GT4-0099_0.tif</deformed>
+  <deformed>GT4-0100_0.tif</deformed>
+  <deformed>GT4-0101_0.tif</deformed>
+  <deformed>GT4-0102_0.tif</deformed>
+  <deformed>GT4-0103_0.tif</deformed>
+  <deformed>GT4-0104_0.tif</deformed>
+  <deformed>GT4-0105_0.tif</deformed>
+  <deformed>GT4-0106_0.tif</deformed>
+  <deformed>GT4-0107_0.tif</deformed>
+  <deformed>GT4-0108_0.tif</deformed>
+  <deformed>GT4-0109_0.tif</deformed>
+  <deformed>GT4-0110_0.tif</deformed>
+  <deformed>GT4-0111_0.tif</deformed>
+  <deformed>GT4-0112_0.tif</deformed>
+  <deformed>GT4-0113_0.tif</deformed>
+  <deformed>GT4-0114_0.tif</deformed>
+  <deformed>GT4-0115_0.tif</deformed>
+  <deformed>GT4-0116_0.tif</deformed>
+  <deformed>GT4-0117_0.tif</deformed>
+  <deformed>GT4-0118_0.tif</deformed>
+  <deformed>GT4-0119_0.tif</deformed>
+  <deformed>GT4-0120_0.tif</deformed>
+  <deformed>GT4-0121_0.tif</deformed>
+  <deformed>GT4-0122_0.tif</deformed>
+  <deformed>GT4-0123_0.tif</deformed>
+  <deformed>GT4-0124_0.tif</deformed>
+  <deformed>GT4-0125_0.tif</deformed>
+  <deformed>GT4-0126_0.tif</deformed>
+  <deformed>GT4-0127_0.tif</deformed>
+  <deformed>GT4-0128_0.tif</deformed>
+  <deformed>GT4-0129_0.tif</deformed>
+  <deformed>GT4-0130_0.tif</deformed>
+  <deformed>GT4-0131_0.tif</deformed>
+  <deformed>GT4-0132_0.tif</deformed>
+  <deformed>GT4-0133_0.tif</deformed>
+  <deformed>GT4-0134_0.tif</deformed>
+  <deformed>GT4-0135_0.tif</deformed>
+  <deformed>GT4-0136_0.tif</deformed>
+  <deformed>GT4-0137_0.tif</deformed>
+  <deformed>GT4-0138_0.tif</deformed>
+  <deformed>GT4-0139_0.tif</deformed>
+  <deformed>GT4-0140_0.tif</deformed>
+  <deformed>GT4-0141_0.tif</deformed>
+  <deformed>GT4-0142_0.tif</deformed>
+  <deformed>GT4-0143_0.tif</deformed>
+  <deformed>GT4-0144_0.tif</deformed>
+  <deformed>GT4-0145_0.tif</deformed>
+  <deformed>GT4-0146_0.tif</deformed>
+  <deformed>GT4-0147_0.tif</deformed>
+  <deformed>GT4-0148_0.tif</deformed>
+  <deformed>GT4-0149_0.tif</deformed>
+  <deformed>GT4-0150_0.tif</deformed>
+  <deformed>GT4-0151_0.tif</deformed>
+  <deformed>GT4-0152_0.tif</deformed>
+  <deformed>GT4-0153_0.tif</deformed>
+  <deformed>GT4-0154_0.tif</deformed>
+  <deformed>GT4-0155_0.tif</deformed>
+  <deformed>GT4-0156_0.tif</deformed>
+  <deformed>GT4-0157_0.tif</deformed>
+  <deformed>GT4-0158_0.tif</deformed>
+  <deformed>GT4-0159_0.tif</deformed>
+  <deformed>GT4-0160_0.tif</deformed>
+  <deformed>GT4-0161_0.tif</deformed>
+  <deformed>GT4-0162_0.tif</deformed>
+  <deformed>GT4-0163_0.tif</deformed>
+  <deformed>GT4-0164_0.tif</deformed>
+  <deformed>GT4-0165_0.tif</deformed>
+  <deformed>GT4-0166_0.tif</deformed>
+  <deformed>GT4-0167_0.tif</deformed>
+  <deformed>GT4-0168_0.tif</deformed>
+  <deformed>GT4-0169_0.tif</deformed>
+  <deformed>GT4-0170_0.tif</deformed>
+  <deformed>GT4-0171_0.tif</deformed>
+  <deformed>GT4-0172_0.tif</deformed>
+  <deformed>GT4-0173_0.tif</deformed>
+  <deformed>GT4-0174_0.tif</deformed>
+  <deformed>GT4-0175_0.tif</deformed>
+  <deformed>GT4-0176_0.tif</deformed>
+  <deformed>GT4-0177_0.tif</deformed>
+  <deformed>GT4-0178_0.tif</deformed>
+  <deformed>GT4-0179_0.tif</deformed>
+  <deformed>GT4-0180_0.tif</deformed>
+  <deformed>GT4-0181_0.tif</deformed>
+  <deformed>GT4-0182_0.tif</deformed>
+  <deformed>GT4-0183_0.tif</deformed>
+  <deformed>GT4-0184_0.tif</deformed>
+  <deformed>GT4-0185_0.tif</deformed>
+  <deformed>GT4-0186_0.tif</deformed>
+  <deformed>GT4-0187_0.tif</deformed>
+  <deformed>GT4-0188_0.tif</deformed>
+  <deformed>GT4-0189_0.tif</deformed>
+  <deformed>GT4-0190_0.tif</deformed>
+  <deformed>GT4-0191_0.tif</deformed>
+  <deformed>GT4-0192_0.tif</deformed>
+  <deformed>GT4-0193_0.tif</deformed>
+  <deformed>GT4-0194_0.tif</deformed>
+  <deformed>GT4-0195_0.tif</deformed>
+  <deformed>GT4-0196_0.tif</deformed>
+  <deformed>GT4-0197_0.tif</deformed>
+  <deformed>GT4-0198_0.tif</deformed>
+  <deformed>GT4-0199_0.tif</deformed>
+  <deformed>GT4-0200_0.tif</deformed>
+  <deformed>GT4-0201_0.tif</deformed>
+  <deformed>GT4-0202_0.tif</deformed>
+  <deformed>GT4-0203_0.tif</deformed>
+  <deformed>GT4-0204_0.tif</deformed>
+  <deformed>GT4-0205_0.tif</deformed>
+  <deformed>GT4-0206_0.tif</deformed>
+  <deformed>GT4-0207_0.tif</deformed>
+  <deformed>GT4-0208_0.tif</deformed>
+  <deformed>GT4-0209_0.tif</deformed>
+  <deformed>GT4-0210_0.tif</deformed>
+  <deformed>GT4-0211_0.tif</deformed>
+  <deformed>GT4-0212_0.tif</deformed>
+  <deformed>GT4-0213_0.tif</deformed>
+  <deformed>GT4-0214_0.tif</deformed>
+  <deformed>GT4-0215_0.tif</deformed>
+  <deformed>GT4-0216_0.tif</deformed>
+  <deformed>GT4-0217_0.tif</deformed>
+  <deformed>GT4-0218_0.tif</deformed>
+  <deformed>GT4-0219_0.tif</deformed>
+  <deformed>GT4-0220_0.tif</deformed>
+  <deformed>GT4-0221_0.tif</deformed>
+  <deformed>GT4-0222_0.tif</deformed>
+  <deformed>GT4-0223_0.tif</deformed>
+  <deformed>GT4-0224_0.tif</deformed>
+  <deformed>GT4-0225_0.tif</deformed>
+  <deformed>GT4-0226_0.tif</deformed>
+  <deformed>GT4-0227_0.tif</deformed>
+  <deformed>GT4-0228_0.tif</deformed>
+  <deformed>GT4-0229_0.tif</deformed>
+  <deformed>GT4-0230_0.tif</deformed>
+  <deformed>GT4-0231_0.tif</deformed>
+  <deformed>GT4-0232_0.tif</deformed>
+  <deformed>GT4-0233_0.tif</deformed>
+  <deformed>GT4-0234_0.tif</deformed>
+  <deformed>GT4-0235_0.tif</deformed>
+  <deformed>GT4-0236_0.tif</deformed>
+  <deformed>GT4-0237_0.tif</deformed>
+  <deformed>GT4-0238_0.tif</deformed>
+  <deformed>GT4-0239_0.tif</deformed>
+  <deformed>GT4-0240_0.tif</deformed>
+  <deformed>GT4-0241_0.tif</deformed>
+  <deformed>GT4-0242_0.tif</deformed>
+  <deformed>GT4-0243_0.tif</deformed>
+  <deformed>GT4-0244_0.tif</deformed>
+  <deformed>GT4-0245_0.tif</deformed>
+  <deformed>GT4-0246_0.tif</deformed>
+  <deformed>GT4-0247_0.tif</deformed>
+  <deformed>GT4-0248_0.tif</deformed>
+  <deformed>GT4-0249_0.tif</deformed>
+  <deformed>GT4-0250_0.tif</deformed>
+  <deformed>GT4-0251_0.tif</deformed>
+  <deformed>GT4-0252_0.tif</deformed>
+  <deformed>GT4-0253_0.tif</deformed>
+  <deformed>GT4-0254_0.tif</deformed>
+  <deformed>GT4-0255_0.tif</deformed>
+  <deformed>GT4-0256_0.tif</deformed>
+  <deformed>GT4-0257_0.tif</deformed>
+  <deformed>GT4-0258_0.tif</deformed>
+  <deformed>GT4-0259_0.tif</deformed>
+  <deformed>GT4-0260_0.tif</deformed>
+  <deformed>GT4-0261_0.tif</deformed>
+  <deformed>GT4-0262_0.tif</deformed>
+  <deformed>GT4-0263_0.tif</deformed>
+  <deformed>GT4-0264_0.tif</deformed>
+  <deformed>GT4-0265_0.tif</deformed>
+  <deformed>GT4-0266_0.tif</deformed>
+  <deformed>GT4-0267_0.tif</deformed>
+  <deformed>GT4-0268_0.tif</deformed>
+  <deformed>GT4-0269_0.tif</deformed>
+  <deformed>GT4-0270_0.tif</deformed>
+  <deformed>GT4-0271_0.tif</deformed>
+  <deformed>GT4-0272_0.tif</deformed>
+  <deformed>GT4-0273_0.tif</deformed>
+  <deformed>GT4-0274_0.tif</deformed>
+  <deformed>GT4-0275_0.tif</deformed>
+  <deformed>GT4-0276_0.tif</deformed>
+  <deformed>GT4-0277_0.tif</deformed>
+  <deformed>GT4-0278_0.tif</deformed>
+  <deformed>GT4-0279_0.tif</deformed>
+  <deformed>GT4-0280_0.tif</deformed>
+  <deformed>GT4-0281_0.tif</deformed>
+  <deformed>GT4-0282_0.tif</deformed>
+  <deformed>GT4-0283_0.tif</deformed>
+  <deformed>GT4-0284_0.tif</deformed>
+  <deformed>GT4-0285_0.tif</deformed>
+  <deformed>GT4-0286_0.tif</deformed>
+  <deformed>GT4-0287_0.tif</deformed>
+  <deformed>GT4-0288_0.tif</deformed>
+  <deformed>GT4-0289_0.tif</deformed>
+  <deformed>GT4-0290_0.tif</deformed>
+  <deformed>GT4-0291_0.tif</deformed>
+  <deformed>GT4-0292_0.tif</deformed>
+  <deformed>GT4-0293_0.tif</deformed>
+  <deformed>GT4-0294_0.tif</deformed>
+  <deformed>GT4-0295_0.tif</deformed>
+  <deformed>GT4-0296_0.tif</deformed>
+  <deformed>GT4-0297_0.tif</deformed>
+  <deformed>GT4-0298_0.tif</deformed>
+  <deformed>GT4-0299_0.tif</deformed>
+  <deformed>GT4-0300_0.tif</deformed>
+  <deformed>GT4-0301_0.tif</deformed>
+  <deformed>GT4-0302_0.tif</deformed>
+  <deformed>GT4-0303_0.tif</deformed>
+  <deformed>GT4-0304_0.tif</deformed>
+  <deformed>GT4-0305_0.tif</deformed>
+  <deformed>GT4-0306_0.tif</deformed>
+  <deformed>GT4-0307_0.tif</deformed>
+  <deformed>GT4-0308_0.tif</deformed>
+  <deformed>GT4-0309_0.tif</deformed>
+  <deformed>GT4-0310_0.tif</deformed>
+  <deformed>GT4-0311_0.tif</deformed>
+  <deformed>GT4-0312_0.tif</deformed>
+  <deformed>GT4-0313_0.tif</deformed>
+  <deformed>GT4-0314_0.tif</deformed>
+  <deformed>GT4-0315_0.tif</deformed>
+  <deformed>GT4-0316_0.tif</deformed>
+  <deformed>GT4-0317_0.tif</deformed>
+  <deformed>GT4-0318_0.tif</deformed>
+  <deformed>GT4-0319_0.tif</deformed>
+  <deformed>GT4-0320_0.tif</deformed>
+  <deformed>GT4-0321_0.tif</deformed>
+  <deformed>GT4-0322_0.tif</deformed>
+  <deformed>GT4-0323_0.tif</deformed>
+  <deformed>GT4-0324_0.tif</deformed>
+  <deformed>GT4-0325_0.tif</deformed>
+  <deformed>GT4-0326_0.tif</deformed>
+  <deformed>GT4-0327_0.tif</deformed>
+  <deformed>GT4-0328_0.tif</deformed>
+  <deformed>GT4-0329_0.tif</deformed>
+  <deformed>GT4-0330_0.tif</deformed>
+  <deformed>GT4-0331_0.tif</deformed>
+  <deformed>GT4-0332_0.tif</deformed>
+  <deformed>GT4-0333_0.tif</deformed>
+  <deformed>GT4-0334_0.tif</deformed>
+  <deformed>GT4-0335_0.tif</deformed>
+  <deformed>GT4-0336_0.tif</deformed>
+  <deformed>GT4-0337_0.tif</deformed>
+  <deformed>GT4-0338_0.tif</deformed>
+  <deformed>GT4-0339_0.tif</deformed>
+  <deformed>GT4-0340_0.tif</deformed>
+  <deformed>GT4-0341_0.tif</deformed>
+  <deformed>GT4-0342_0.tif</deformed>
+  <deformed>GT4-0343_0.tif</deformed>
+  <deformed>GT4-0344_0.tif</deformed>
+  <deformed>GT4-0345_0.tif</deformed>
+  <deformed>GT4-0346_0.tif</deformed>
+  <deformed>GT4-0347_0.tif</deformed>
+  <deformed>GT4-0348_0.tif</deformed>
+  <deformed>GT4-0349_0.tif</deformed>
+  <deformed>GT4-0350_0.tif</deformed>
+  <deformed>GT4-0351_0.tif</deformed>
+  <deformed>GT4-0352_0.tif</deformed>
+  <deformed>GT4-0353_0.tif</deformed>
+  <deformed>GT4-0354_0.tif</deformed>
+  <deformed>GT4-0355_0.tif</deformed>
+  <deformed>GT4-0356_0.tif</deformed>
+  <deformed>GT4-0357_0.tif</deformed>
+  <deformed>GT4-0358_0.tif</deformed>
+  <deformed>GT4-0359_0.tif</deformed>
+  <deformed>GT4-0360_0.tif</deformed>
+  <deformed>GT4-0361_0.tif</deformed>
+  <deformed>GT4-0362_0.tif</deformed>
+  <deformed>GT4-0363_0.tif</deformed>
+  <deformed>GT4-0364_0.tif</deformed>
+  <deformed>GT4-0365_0.tif</deformed>
+  <deformed>GT4-0366_0.tif</deformed>
+  <deformed>GT4-0367_0.tif</deformed>
+  <deformed>GT4-0368_0.tif</deformed>
+  <deformed>GT4-0369_0.tif</deformed>
+  <deformed>GT4-0370_0.tif</deformed>
+  <deformed>GT4-0371_0.tif</deformed>
+  <deformed>GT4-0372_0.tif</deformed>
+  <deformed>GT4-0373_0.tif</deformed>
+  <deformed>GT4-0374_0.tif</deformed>
+  <deformed>GT4-0375_0.tif</deformed>
+  <deformed>GT4-0376_0.tif</deformed>
+  <deformed>GT4-0377_0.tif</deformed>
+  <deformed>GT4-0378_0.tif</deformed>
+  <deformed>GT4-0379_0.tif</deformed>
+  <deformed>GT4-0380_0.tif</deformed>
+  <deformed>GT4-0381_0.tif</deformed>
+  <deformed>GT4-0382_0.tif</deformed>
+  <deformed>GT4-0383_0.tif</deformed>
+  <deformed>GT4-0384_0.tif</deformed>
+  <deformed>GT4-0385_0.tif</deformed>
+  <deformed>GT4-0386_0.tif</deformed>
+  <deformed>GT4-0387_0.tif</deformed>
+  <deformed>GT4-0388_0.tif</deformed>
+  <deformed>GT4-0389_0.tif</deformed>
+  <deformed>GT4-0390_0.tif</deformed>
+  <deformed>GT4-0391_0.tif</deformed>
+  <deformed>GT4-0392_0.tif</deformed>
+  <deformed>GT4-0393_0.tif</deformed>
+  <deformed>GT4-0394_0.tif</deformed>
+  <deformed>GT4-0395_0.tif</deformed>
+  <deformed>GT4-0396_0.tif</deformed>
+  <deformed>GT4-0397_0.tif</deformed>
+  <deformed>GT4-0398_0.tif</deformed>
+  <deformed>GT4-0399_0.tif</deformed>
+  <deformed>GT4-0400_0.tif</deformed>
+  <deformed>GT4-0401_0.tif</deformed>
+  <deformed>GT4-0402_0.tif</deformed>
+  <deformed>GT4-0403_0.tif</deformed>
+  <deformed>GT4-0404_0.tif</deformed>
+  <deformed>GT4-0405_0.tif</deformed>
+  <deformed>GT4-0406_0.tif</deformed>
+  <deformed>GT4-0407_0.tif</deformed>
+  <deformed>GT4-0408_0.tif</deformed>
+  <deformed>GT4-0409_0.tif</deformed>
+  <deformed>GT4-0410_0.tif</deformed>
+  <deformed>GT4-0411_0.tif</deformed>
+  <deformed>GT4-0412_0.tif</deformed>
+  <deformed>GT4-0413_0.tif</deformed>
+  <deformed>GT4-0414_0.tif</deformed>
+  <deformed>GT4-0415_0.tif</deformed>
+  <deformed>GT4-0416_0.tif</deformed>
+  <deformed>GT4-0417_0.tif</deformed>
+  <deformed>GT4-0418_0.tif</deformed>
+  <deformed>GT4-0419_0.tif</deformed>
+  <deformed>GT4-0420_0.tif</deformed>
+  <deformed>GT4-0421_0.tif</deformed>
+  <deformed>GT4-0422_0.tif</deformed>
+  <deformed>GT4-0423_0.tif</deformed>
+  <deformed>GT4-0424_0.tif</deformed>
+  <deformed>GT4-0425_0.tif</deformed>
+  <deformed>GT4-0426_0.tif</deformed>
+  <deformed>GT4-0427_0.tif</deformed>
+  <deformed>GT4-0428_0.tif</deformed>
+  <deformed>GT4-0429_0.tif</deformed>
+  <deformed>GT4-0430_0.tif</deformed>
+  <deformed>GT4-0431_0.tif</deformed>
+  <deformed>GT4-0432_0.tif</deformed>
+  <deformed>GT4-0433_0.tif</deformed>
+  <deformed>GT4-0434_0.tif</deformed>
+  <deformed>GT4-0435_0.tif</deformed>
+  <deformed>GT4-0436_0.tif</deformed>
+  <deformed>GT4-0437_0.tif</deformed>
+  <deformed>GT4-0438_0.tif</deformed>
+  <deformed>GT4-0439_0.tif</deformed>
+  <deformed>GT4-0440_0.tif</deformed>
+  <deformed>GT4-0441_0.tif</deformed>
+  <deformed>GT4-0442_0.tif</deformed>
+  <deformed>GT4-0443_0.tif</deformed>
+  <deformed>GT4-0444_0.tif</deformed>
+  <deformed>GT4-0445_0.tif</deformed>
+  <deformed>GT4-0446_0.tif</deformed>
+  <deformed>GT4-0447_0.tif</deformed>
+  <deformed>GT4-0448_0.tif</deformed>
+  <deformed>GT4-0449_0.tif</deformed>
+  <deformed>GT4-0450_0.tif</deformed>
+  <deformed>GT4-0451_0.tif</deformed>
+  <deformed>GT4-0452_0.tif</deformed>
+  <deformed>GT4-0453_0.tif</deformed>
+  <deformed>GT4-0454_0.tif</deformed>
+  <deformed>GT4-0455_0.tif</deformed>
+  <deformed>GT4-0456_0.tif</deformed>
+  <deformed>GT4-0457_0.tif</deformed>
+  <deformed>GT4-0458_0.tif</deformed>
+  <deformed>GT4-0459_0.tif</deformed>
+  <deformed>GT4-0460_0.tif</deformed>
+  <deformed>GT4-0461_0.tif</deformed>
+  <deformed>GT4-0462_0.tif</deformed>
+  <deformed>GT4-0463_0.tif</deformed>
+  <deformed>GT4-0464_0.tif</deformed>
+  <deformed>GT4-0465_0.tif</deformed>
+  <deformed>GT4-0466_0.tif</deformed>
+  <deformed>GT4-0467_0.tif</deformed>
+  <deformed>GT4-0468_0.tif</deformed>
+  <deformed>GT4-0469_0.tif</deformed>
+  <deformed>GT4-0470_0.tif</deformed>
+  <deformed>GT4-0471_0.tif</deformed>
+  <deformed>GT4-0472_0.tif</deformed>
+  <deformed>GT4-0473_0.tif</deformed>
+  <deformed>GT4-0474_0.tif</deformed>
+  <deformed>GT4-0475_0.tif</deformed>
+  <deformed>GT4-0476_0.tif</deformed>
+  <deformed>GT4-0477_0.tif</deformed>
+  <deformed>GT4-0478_0.tif</deformed>
+  <deformed>GT4-0479_0.tif</deformed>
+  <deformed>GT4-0480_0.tif</deformed>
+  <deformed>GT4-0481_0.tif</deformed>
+  <deformed>GT4-0482_0.tif</deformed>
+  <deformed>GT4-0483_0.tif</deformed>
+  <deformed>GT4-0484_0.tif</deformed>
+  <deformed>GT4-0485_0.tif</deformed>
+  <deformed>GT4-0486_0.tif</deformed>
+  <deformed>GT4-0487_0.tif</deformed>
+  <deformed>GT4-0488_0.tif</deformed>
+  <deformed>GT4-0489_0.tif</deformed>
+  <deformed>GT4-0490_0.tif</deformed>
+  <deformed>GT4-0491_0.tif</deformed>
+  <deformed>GT4-0492_0.tif</deformed>
+  <deformed>GT4-0493_0.tif</deformed>
+  <deformed>GT4-0494_0.tif</deformed>
+  <deformed>GT4-0495_0.tif</deformed>
+  <deformed>GT4-0496_0.tif</deformed>
+  <deformed>GT4-0497_0.tif</deformed>
+  <deformed>GT4-0498_0.tif</deformed>
+  <deformed>GT4-0499_0.tif</deformed>
+  <deformed>GT4-0500_0.tif</deformed>
+  <deformed>GT4-0501_0.tif</deformed>
+  <deformed>GT4-0502_0.tif</deformed>
+  <deformed>GT4-0503_0.tif</deformed>
+  <deformed>GT4-0504_0.tif</deformed>
+  <deformed>GT4-0505_0.tif</deformed>
+  <deformed>GT4-0506_0.tif</deformed>
+  <deformed>GT4-0507_0.tif</deformed>
+  <deformed>GT4-0508_0.tif</deformed>
+  <deformed>GT4-0509_0.tif</deformed>
+  <deformed>GT4-0510_0.tif</deformed>
+  <deformed>GT4-0511_0.tif</deformed>
+  <deformed>GT4-0512_0.tif</deformed>
+  <deformed>GT4-0513_0.tif</deformed>
+  <deformed>GT4-0514_0.tif</deformed>
+  <deformed>GT4-0515_0.tif</deformed>
+  <deformed>GT4-0516_0.tif</deformed>
+  <deformed>GT4-0517_0.tif</deformed>
+  <deformed>GT4-0518_0.tif</deformed>
+  <deformed>GT4-0519_0.tif</deformed>
+  <deformed>GT4-0520_0.tif</deformed>
+  <deformed>GT4-0521_0.tif</deformed>
+  <deformed>GT4-0522_0.tif</deformed>
+  <deformed>GT4-0523_0.tif</deformed>
+  <deformed>GT4-0524_0.tif</deformed>
+  <deformed>GT4-0525_0.tif</deformed>
+  <deformed>GT4-0526_0.tif</deformed>
+  <deformed>GT4-0527_0.tif</deformed>
+  <deformed>GT4-0528_0.tif</deformed>
+  <deformed>GT4-0529_0.tif</deformed>
+  <deformed>GT4-0530_0.tif</deformed>
+  <deformed>GT4-0531_0.tif</deformed>
+  <deformed>GT4-0532_0.tif</deformed>
+  <deformed>GT4-0533_0.tif</deformed>
+  <deformed>GT4-0534_0.tif</deformed>
+  <deformed>GT4-0535_0.tif</deformed>
+  <deformed>GT4-0536_0.tif</deformed>
+  <deformed>GT4-0537_0.tif</deformed>
+  <datafile>GT4-0000_0.out</datafile>
+  <datafile>GT4-0001_0.out</datafile>
+  <datafile>GT4-0002_0.out</datafile>
+  <datafile>GT4-0003_0.out</datafile>
+  <datafile>GT4-0004_0.out</datafile>
+  <datafile>GT4-0005_0.out</datafile>
+  <datafile>GT4-0006_0.out</datafile>
+  <datafile>GT4-0007_0.out</datafile>
+  <datafile>GT4-0008_0.out</datafile>
+  <datafile>GT4-0009_0.out</datafile>
+  <datafile>GT4-0010_0.out</datafile>
+  <datafile>GT4-0011_0.out</datafile>
+  <datafile>GT4-0012_0.out</datafile>
+  <datafile>GT4-0013_0.out</datafile>
+  <datafile>GT4-0014_0.out</datafile>
+  <datafile>GT4-0015_0.out</datafile>
+  <datafile>GT4-0016_0.out</datafile>
+  <datafile>GT4-0017_0.out</datafile>
+  <datafile>GT4-0018_0.out</datafile>
+  <datafile>GT4-0019_0.out</datafile>
+  <datafile>GT4-0020_0.out</datafile>
+  <datafile>GT4-0021_0.out</datafile>
+  <datafile>GT4-0022_0.out</datafile>
+  <datafile>GT4-0023_0.out</datafile>
+  <datafile>GT4-0024_0.out</datafile>
+  <datafile>GT4-0025_0.out</datafile>
+  <datafile>GT4-0026_0.out</datafile>
+  <datafile>GT4-0027_0.out</datafile>
+  <datafile>GT4-0028_0.out</datafile>
+  <datafile>GT4-0029_0.out</datafile>
+  <datafile>GT4-0030_0.out</datafile>
+  <datafile>GT4-0031_0.out</datafile>
+  <datafile>GT4-0032_0.out</datafile>
+  <datafile>GT4-0033_0.out</datafile>
+  <datafile>GT4-0034_0.out</datafile>
+  <datafile>GT4-0035_0.out</datafile>
+  <datafile>GT4-0036_0.out</datafile>
+  <datafile>GT4-0037_0.out</datafile>
+  <datafile>GT4-0038_0.out</datafile>
+  <datafile>GT4-0039_0.out</datafile>
+  <datafile>GT4-0040_0.out</datafile>
+  <datafile>GT4-0041_0.out</datafile>
+  <datafile>GT4-0042_0.out</datafile>
+  <datafile>GT4-0043_0.out</datafile>
+  <datafile>GT4-0044_0.out</datafile>
+  <datafile>GT4-0045_0.out</datafile>
+  <datafile>GT4-0046_0.out</datafile>
+  <datafile>GT4-0047_0.out</datafile>
+  <datafile>GT4-0048_0.out</datafile>
+  <datafile>GT4-0049_0.out</datafile>
+  <datafile>GT4-0050_0.out</datafile>
+  <datafile>GT4-0051_0.out</datafile>
+  <datafile>GT4-0052_0.out</datafile>
+  <datafile>GT4-0053_0.out</datafile>
+  <datafile>GT4-0054_0.out</datafile>
+  <datafile>GT4-0055_0.out</datafile>
+  <datafile>GT4-0056_0.out</datafile>
+  <datafile>GT4-0057_0.out</datafile>
+  <datafile>GT4-0058_0.out</datafile>
+  <datafile>GT4-0059_0.out</datafile>
+  <datafile>GT4-0060_0.out</datafile>
+  <datafile>GT4-0061_0.out</datafile>
+  <datafile>GT4-0062_0.out</datafile>
+  <datafile>GT4-0063_0.out</datafile>
+  <datafile>GT4-0064_0.out</datafile>
+  <datafile>GT4-0065_0.out</datafile>
+  <datafile>GT4-0066_0.out</datafile>
+  <datafile>GT4-0067_0.out</datafile>
+  <datafile>GT4-0068_0.out</datafile>
+  <datafile>GT4-0069_0.out</datafile>
+  <datafile>GT4-0070_0.out</datafile>
+  <datafile>GT4-0071_0.out</datafile>
+  <datafile>GT4-0072_0.out</datafile>
+  <datafile>GT4-0073_0.out</datafile>
+  <datafile>GT4-0074_0.out</datafile>
+  <datafile>GT4-0075_0.out</datafile>
+  <datafile>GT4-0076_0.out</datafile>
+  <datafile>GT4-0077_0.out</datafile>
+  <datafile>GT4-0078_0.out</datafile>
+  <datafile>GT4-0079_0.out</datafile>
+  <datafile>GT4-0080_0.out</datafile>
+  <datafile>GT4-0081_0.out</datafile>
+  <datafile>GT4-0082_0.out</datafile>
+  <datafile>GT4-0083_0.out</datafile>
+  <datafile>GT4-0084_0.out</datafile>
+  <datafile>GT4-0085_0.out</datafile>
+  <datafile>GT4-0086_0.out</datafile>
+  <datafile>GT4-0087_0.out</datafile>
+  <datafile>GT4-0088_0.out</datafile>
+  <datafile>GT4-0089_0.out</datafile>
+  <datafile>GT4-0090_0.out</datafile>
+  <datafile>GT4-0091_0.out</datafile>
+  <datafile>GT4-0092_0.out</datafile>
+  <datafile>GT4-0093_0.out</datafile>
+  <datafile>GT4-0094_0.out</datafile>
+  <datafile>GT4-0095_0.out</datafile>
+  <datafile>GT4-0096_0.out</datafile>
+  <datafile>GT4-0097_0.out</datafile>
+  <datafile>GT4-0098_0.out</datafile>
+  <datafile>GT4-0099_0.out</datafile>
+  <datafile>GT4-0100_0.out</datafile>
+  <datafile>GT4-0101_0.out</datafile>
+  <datafile>GT4-0102_0.out</datafile>
+  <datafile>GT4-0103_0.out</datafile>
+  <datafile>GT4-0104_0.out</datafile>
+  <datafile>GT4-0105_0.out</datafile>
+  <datafile>GT4-0106_0.out</datafile>
+  <datafile>GT4-0107_0.out</datafile>
+  <datafile>GT4-0108_0.out</datafile>
+  <datafile>GT4-0109_0.out</datafile>
+  <datafile>GT4-0110_0.out</datafile>
+  <datafile>GT4-0111_0.out</datafile>
+  <datafile>GT4-0112_0.out</datafile>
+  <datafile>GT4-0113_0.out</datafile>
+  <datafile>GT4-0114_0.out</datafile>
+  <datafile>GT4-0115_0.out</datafile>
+  <datafile>GT4-0116_0.out</datafile>
+  <datafile>GT4-0117_0.out</datafile>
+  <datafile>GT4-0118_0.out</datafile>
+  <datafile>GT4-0119_0.out</datafile>
+  <datafile>GT4-0120_0.out</datafile>
+  <datafile>GT4-0121_0.out</datafile>
+  <datafile>GT4-0122_0.out</datafile>
+  <datafile>GT4-0123_0.out</datafile>
+  <datafile>GT4-0124_0.out</datafile>
+  <datafile>GT4-0125_0.out</datafile>
+  <datafile>GT4-0126_0.out</datafile>
+  <datafile>GT4-0127_0.out</datafile>
+  <datafile>GT4-0128_0.out</datafile>
+  <datafile>GT4-0129_0.out</datafile>
+  <datafile>GT4-0130_0.out</datafile>
+  <datafile>GT4-0131_0.out</datafile>
+  <datafile>GT4-0132_0.out</datafile>
+  <datafile>GT4-0133_0.out</datafile>
+  <datafile>GT4-0134_0.out</datafile>
+  <datafile>GT4-0135_0.out</datafile>
+  <datafile>GT4-0136_0.out</datafile>
+  <datafile>GT4-0137_0.out</datafile>
+  <datafile>GT4-0138_0.out</datafile>
+  <datafile>GT4-0139_0.out</datafile>
+  <datafile>GT4-0140_0.out</datafile>
+  <datafile>GT4-0141_0.out</datafile>
+  <datafile>GT4-0142_0.out</datafile>
+  <datafile>GT4-0143_0.out</datafile>
+  <datafile>GT4-0144_0.out</datafile>
+  <datafile>GT4-0145_0.out</datafile>
+  <datafile>GT4-0146_0.out</datafile>
+  <datafile>GT4-0147_0.out</datafile>
+  <datafile>GT4-0148_0.out</datafile>
+  <datafile>GT4-0149_0.out</datafile>
+  <datafile>GT4-0150_0.out</datafile>
+  <datafile>GT4-0151_0.out</datafile>
+  <datafile>GT4-0152_0.out</datafile>
+  <datafile>GT4-0153_0.out</datafile>
+  <datafile>GT4-0154_0.out</datafile>
+  <datafile>GT4-0155_0.out</datafile>
+  <datafile>GT4-0156_0.out</datafile>
+  <datafile>GT4-0157_0.out</datafile>
+  <datafile>GT4-0158_0.out</datafile>
+  <datafile>GT4-0159_0.out</datafile>
+  <datafile>GT4-0160_0.out</datafile>
+  <datafile>GT4-0161_0.out</datafile>
+  <datafile>GT4-0162_0.out</datafile>
+  <datafile>GT4-0163_0.out</datafile>
+  <datafile>GT4-0164_0.out</datafile>
+  <datafile>GT4-0165_0.out</datafile>
+  <datafile>GT4-0166_0.out</datafile>
+  <datafile>GT4-0167_0.out</datafile>
+  <datafile>GT4-0168_0.out</datafile>
+  <datafile>GT4-0169_0.out</datafile>
+  <datafile>GT4-0170_0.out</datafile>
+  <datafile>GT4-0171_0.out</datafile>
+  <datafile>GT4-0172_0.out</datafile>
+  <datafile>GT4-0173_0.out</datafile>
+  <datafile>GT4-0174_0.out</datafile>
+  <datafile>GT4-0175_0.out</datafile>
+  <datafile>GT4-0176_0.out</datafile>
+  <datafile>GT4-0177_0.out</datafile>
+  <datafile>GT4-0178_0.out</datafile>
+  <datafile>GT4-0179_0.out</datafile>
+  <datafile>GT4-0180_0.out</datafile>
+  <datafile>GT4-0181_0.out</datafile>
+  <datafile>GT4-0182_0.out</datafile>
+  <datafile>GT4-0183_0.out</datafile>
+  <datafile>GT4-0184_0.out</datafile>
+  <datafile>GT4-0185_0.out</datafile>
+  <datafile>GT4-0186_0.out</datafile>
+  <datafile>GT4-0187_0.out</datafile>
+  <datafile>GT4-0188_0.out</datafile>
+  <datafile>GT4-0189_0.out</datafile>
+  <datafile>GT4-0190_0.out</datafile>
+  <datafile>GT4-0191_0.out</datafile>
+  <datafile>GT4-0192_0.out</datafile>
+  <datafile>GT4-0193_0.out</datafile>
+  <datafile>GT4-0194_0.out</datafile>
+  <datafile>GT4-0195_0.out</datafile>
+  <datafile>GT4-0196_0.out</datafile>
+  <datafile>GT4-0197_0.out</datafile>
+  <datafile>GT4-0198_0.out</datafile>
+  <datafile>GT4-0199_0.out</datafile>
+  <datafile>GT4-0200_0.out</datafile>
+  <datafile>GT4-0201_0.out</datafile>
+  <datafile>GT4-0202_0.out</datafile>
+  <datafile>GT4-0203_0.out</datafile>
+  <datafile>GT4-0204_0.out</datafile>
+  <datafile>GT4-0205_0.out</datafile>
+  <datafile>GT4-0206_0.out</datafile>
+  <datafile>GT4-0207_0.out</datafile>
+  <datafile>GT4-0208_0.out</datafile>
+  <datafile>GT4-0209_0.out</datafile>
+  <datafile>GT4-0210_0.out</datafile>
+  <datafile>GT4-0211_0.out</datafile>
+  <datafile>GT4-0212_0.out</datafile>
+  <datafile>GT4-0213_0.out</datafile>
+  <datafile>GT4-0214_0.out</datafile>
+  <datafile>GT4-0215_0.out</datafile>
+  <datafile>GT4-0216_0.out</datafile>
+  <datafile>GT4-0217_0.out</datafile>
+  <datafile>GT4-0218_0.out</datafile>
+  <datafile>GT4-0219_0.out</datafile>
+  <datafile>GT4-0220_0.out</datafile>
+  <datafile>GT4-0221_0.out</datafile>
+  <datafile>GT4-0222_0.out</datafile>
+  <datafile>GT4-0223_0.out</datafile>
+  <datafile>GT4-0224_0.out</datafile>
+  <datafile>GT4-0225_0.out</datafile>
+  <datafile>GT4-0226_0.out</datafile>
+  <datafile>GT4-0227_0.out</datafile>
+  <datafile>GT4-0228_0.out</datafile>
+  <datafile>GT4-0229_0.out</datafile>
+  <datafile>GT4-0230_0.out</datafile>
+  <datafile>GT4-0231_0.out</datafile>
+  <datafile>GT4-0232_0.out</datafile>
+  <datafile>GT4-0233_0.out</datafile>
+  <datafile>GT4-0234_0.out</datafile>
+  <datafile>GT4-0235_0.out</datafile>
+  <datafile>GT4-0236_0.out</datafile>
+  <datafile>GT4-0237_0.out</datafile>
+  <datafile>GT4-0238_0.out</datafile>
+  <datafile>GT4-0239_0.out</datafile>
+  <datafile>GT4-0240_0.out</datafile>
+  <datafile>GT4-0241_0.out</datafile>
+  <datafile>GT4-0242_0.out</datafile>
+  <datafile>GT4-0243_0.out</datafile>
+  <datafile>GT4-0244_0.out</datafile>
+  <datafile>GT4-0245_0.out</datafile>
+  <datafile>GT4-0246_0.out</datafile>
+  <datafile>GT4-0247_0.out</datafile>
+  <datafile>GT4-0248_0.out</datafile>
+  <datafile>GT4-0249_0.out</datafile>
+  <datafile>GT4-0250_0.out</datafile>
+  <datafile>GT4-0251_0.out</datafile>
+  <datafile>GT4-0252_0.out</datafile>
+  <datafile>GT4-0253_0.out</datafile>
+  <datafile>GT4-0254_0.out</datafile>
+  <datafile>GT4-0255_0.out</datafile>
+  <datafile>GT4-0256_0.out</datafile>
+  <datafile>GT4-0257_0.out</datafile>
+  <datafile>GT4-0258_0.out</datafile>
+  <datafile>GT4-0259_0.out</datafile>
+  <datafile>GT4-0260_0.out</datafile>
+  <datafile>GT4-0261_0.out</datafile>
+  <datafile>GT4-0262_0.out</datafile>
+  <datafile>GT4-0263_0.out</datafile>
+  <datafile>GT4-0264_0.out</datafile>
+  <datafile>GT4-0265_0.out</datafile>
+  <datafile>GT4-0266_0.out</datafile>
+  <datafile>GT4-0267_0.out</datafile>
+  <datafile>GT4-0268_0.out</datafile>
+  <datafile>GT4-0269_0.out</datafile>
+  <datafile>GT4-0270_0.out</datafile>
+  <datafile>GT4-0271_0.out</datafile>
+  <datafile>GT4-0272_0.out</datafile>
+  <datafile>GT4-0273_0.out</datafile>
+  <datafile>GT4-0274_0.out</datafile>
+  <datafile>GT4-0275_0.out</datafile>
+  <datafile>GT4-0276_0.out</datafile>
+  <datafile>GT4-0277_0.out</datafile>
+  <datafile>GT4-0278_0.out</datafile>
+  <datafile>GT4-0279_0.out</datafile>
+  <datafile>GT4-0280_0.out</datafile>
+  <datafile>GT4-0281_0.out</datafile>
+  <datafile>GT4-0282_0.out</datafile>
+  <datafile>GT4-0283_0.out</datafile>
+  <datafile>GT4-0284_0.out</datafile>
+  <datafile>GT4-0285_0.out</datafile>
+  <datafile>GT4-0286_0.out</datafile>
+  <datafile>GT4-0287_0.out</datafile>
+  <datafile>GT4-0288_0.out</datafile>
+  <datafile>GT4-0289_0.out</datafile>
+  <datafile>GT4-0290_0.out</datafile>
+  <datafile>GT4-0291_0.out</datafile>
+  <datafile>GT4-0292_0.out</datafile>
+  <datafile>GT4-0293_0.out</datafile>
+  <datafile>GT4-0294_0.out</datafile>
+  <datafile>GT4-0295_0.out</datafile>
+  <datafile>GT4-0296_0.out</datafile>
+  <datafile>GT4-0297_0.out</datafile>
+  <datafile>GT4-0298_0.out</datafile>
+  <datafile>GT4-0299_0.out</datafile>
+  <datafile>GT4-0300_0.out</datafile>
+  <datafile>GT4-0301_0.out</datafile>
+  <datafile>GT4-0302_0.out</datafile>
+  <datafile>GT4-0303_0.out</datafile>
+  <datafile>GT4-0304_0.out</datafile>
+  <datafile>GT4-0305_0.out</datafile>
+  <datafile>GT4-0306_0.out</datafile>
+  <datafile>GT4-0307_0.out</datafile>
+  <datafile>GT4-0308_0.out</datafile>
+  <datafile>GT4-0309_0.out</datafile>
+  <datafile>GT4-0310_0.out</datafile>
+  <datafile>GT4-0311_0.out</datafile>
+  <datafile>GT4-0312_0.out</datafile>
+  <datafile>GT4-0313_0.out</datafile>
+  <datafile>GT4-0314_0.out</datafile>
+  <datafile>GT4-0315_0.out</datafile>
+  <datafile>GT4-0316_0.out</datafile>
+  <datafile>GT4-0317_0.out</datafile>
+  <datafile>GT4-0318_0.out</datafile>
+  <datafile>GT4-0319_0.out</datafile>
+  <datafile>GT4-0320_0.out</datafile>
+  <datafile>GT4-0321_0.out</datafile>
+  <datafile>GT4-0322_0.out</datafile>
+  <datafile>GT4-0323_0.out</datafile>
+  <datafile>GT4-0324_0.out</datafile>
+  <datafile>GT4-0325_0.out</datafile>
+  <datafile>GT4-0326_0.out</datafile>
+  <datafile>GT4-0327_0.out</datafile>
+  <datafile>GT4-0328_0.out</datafile>
+  <datafile>GT4-0329_0.out</datafile>
+  <datafile>GT4-0330_0.out</datafile>
+  <datafile>GT4-0331_0.out</datafile>
+  <datafile>GT4-0332_0.out</datafile>
+  <datafile>GT4-0333_0.out</datafile>
+  <datafile>GT4-0334_0.out</datafile>
+  <datafile>GT4-0335_0.out</datafile>
+  <datafile>GT4-0336_0.out</datafile>
+  <datafile>GT4-0337_0.out</datafile>
+  <datafile>GT4-0338_0.out</datafile>
+  <datafile>GT4-0339_0.out</datafile>
+  <datafile>GT4-0340_0.out</datafile>
+  <datafile>GT4-0341_0.out</datafile>
+  <datafile>GT4-0342_0.out</datafile>
+  <datafile>GT4-0343_0.out</datafile>
+  <datafile>GT4-0344_0.out</datafile>
+  <datafile>GT4-0345_0.out</datafile>
+  <datafile>GT4-0346_0.out</datafile>
+  <datafile>GT4-0347_0.out</datafile>
+  <datafile>GT4-0348_0.out</datafile>
+  <datafile>GT4-0349_0.out</datafile>
+  <datafile>GT4-0350_0.out</datafile>
+  <datafile>GT4-0351_0.out</datafile>
+  <datafile>GT4-0352_0.out</datafile>
+  <datafile>GT4-0353_0.out</datafile>
+  <datafile>GT4-0354_0.out</datafile>
+  <datafile>GT4-0355_0.out</datafile>
+  <datafile>GT4-0356_0.out</datafile>
+  <datafile>GT4-0357_0.out</datafile>
+  <datafile>GT4-0358_0.out</datafile>
+  <datafile>GT4-0359_0.out</datafile>
+  <datafile>GT4-0360_0.out</datafile>
+  <datafile>GT4-0361_0.out</datafile>
+  <datafile>GT4-0362_0.out</datafile>
+  <datafile>GT4-0363_0.out</datafile>
+  <datafile>GT4-0364_0.out</datafile>
+  <datafile>GT4-0365_0.out</datafile>
+  <datafile>GT4-0366_0.out</datafile>
+  <datafile>GT4-0367_0.out</datafile>
+  <datafile>GT4-0368_0.out</datafile>
+  <datafile>GT4-0369_0.out</datafile>
+  <datafile>GT4-0370_0.out</datafile>
+  <datafile>GT4-0371_0.out</datafile>
+  <datafile>GT4-0372_0.out</datafile>
+  <datafile>GT4-0373_0.out</datafile>
+  <datafile>GT4-0374_0.out</datafile>
+  <datafile>GT4-0375_0.out</datafile>
+  <datafile>GT4-0376_0.out</datafile>
+  <datafile>GT4-0377_0.out</datafile>
+  <datafile>GT4-0378_0.out</datafile>
+  <datafile>GT4-0379_0.out</datafile>
+  <datafile>GT4-0380_0.out</datafile>
+  <datafile>GT4-0381_0.out</datafile>
+  <datafile>GT4-0382_0.out</datafile>
+  <datafile>GT4-0383_0.out</datafile>
+  <datafile>GT4-0384_0.out</datafile>
+  <datafile>GT4-0385_0.out</datafile>
+  <datafile>GT4-0386_0.out</datafile>
+  <datafile>GT4-0387_0.out</datafile>
+  <datafile>GT4-0388_0.out</datafile>
+  <datafile>GT4-0389_0.out</datafile>
+  <datafile>GT4-0390_0.out</datafile>
+  <datafile>GT4-0391_0.out</datafile>
+  <datafile>GT4-0392_0.out</datafile>
+  <datafile>GT4-0393_0.out</datafile>
+  <datafile>GT4-0394_0.out</datafile>
+  <datafile>GT4-0395_0.out</datafile>
+  <datafile>GT4-0396_0.out</datafile>
+  <datafile>GT4-0397_0.out</datafile>
+  <datafile>GT4-0398_0.out</datafile>
+  <datafile>GT4-0399_0.out</datafile>
+  <datafile>GT4-0400_0.out</datafile>
+  <datafile>GT4-0401_0.out</datafile>
+  <datafile>GT4-0402_0.out</datafile>
+  <datafile>GT4-0403_0.out</datafile>
+  <datafile>GT4-0404_0.out</datafile>
+  <datafile>GT4-0405_0.out</datafile>
+  <datafile>GT4-0406_0.out</datafile>
+  <datafile>GT4-0407_0.out</datafile>
+  <datafile>GT4-0408_0.out</datafile>
+  <datafile>GT4-0409_0.out</datafile>
+  <datafile>GT4-0410_0.out</datafile>
+  <datafile>GT4-0411_0.out</datafile>
+  <datafile>GT4-0412_0.out</datafile>
+  <datafile>GT4-0413_0.out</datafile>
+  <datafile>GT4-0414_0.out</datafile>
+  <datafile>GT4-0415_0.out</datafile>
+  <datafile>GT4-0416_0.out</datafile>
+  <datafile>GT4-0417_0.out</datafile>
+  <datafile>GT4-0418_0.out</datafile>
+  <datafile>GT4-0419_0.out</datafile>
+  <datafile>GT4-0420_0.out</datafile>
+  <datafile>GT4-0421_0.out</datafile>
+  <datafile>GT4-0422_0.out</datafile>
+  <datafile>GT4-0423_0.out</datafile>
+  <datafile>GT4-0424_0.out</datafile>
+  <datafile>GT4-0425_0.out</datafile>
+  <datafile>GT4-0426_0.out</datafile>
+  <datafile>GT4-0427_0.out</datafile>
+  <datafile>GT4-0428_0.out</datafile>
+  <datafile>GT4-0429_0.out</datafile>
+  <datafile>GT4-0430_0.out</datafile>
+  <datafile>GT4-0431_0.out</datafile>
+  <datafile>GT4-0432_0.out</datafile>
+  <datafile>GT4-0433_0.out</datafile>
+  <datafile>GT4-0434_0.out</datafile>
+  <datafile>GT4-0435_0.out</datafile>
+  <datafile>GT4-0436_0.out</datafile>
+  <datafile>GT4-0437_0.out</datafile>
+  <datafile>GT4-0438_0.out</datafile>
+  <datafile>GT4-0439_0.out</datafile>
+  <datafile>GT4-0440_0.out</datafile>
+  <datafile>GT4-0441_0.out</datafile>
+  <datafile>GT4-0442_0.out</datafile>
+  <datafile>GT4-0443_0.out</datafile>
+  <datafile>GT4-0444_0.out</datafile>
+  <datafile>GT4-0445_0.out</datafile>
+  <datafile>GT4-0446_0.out</datafile>
+  <datafile>GT4-0447_0.out</datafile>
+  <datafile>GT4-0448_0.out</datafile>
+  <datafile>GT4-0449_0.out</datafile>
+  <datafile>GT4-0450_0.out</datafile>
+  <datafile>GT4-0451_0.out</datafile>
+  <datafile>GT4-0452_0.out</datafile>
+  <datafile>GT4-0453_0.out</datafile>
+  <datafile>GT4-0454_0.out</datafile>
+  <datafile>GT4-0455_0.out</datafile>
+  <datafile>GT4-0456_0.out</datafile>
+  <datafile>GT4-0457_0.out</datafile>
+  <datafile>GT4-0458_0.out</datafile>
+  <datafile>GT4-0459_0.out</datafile>
+  <datafile>GT4-0460_0.out</datafile>
+  <datafile>GT4-0461_0.out</datafile>
+  <datafile>GT4-0462_0.out</datafile>
+  <datafile>GT4-0463_0.out</datafile>
+  <datafile>GT4-0464_0.out</datafile>
+  <datafile>GT4-0465_0.out</datafile>
+  <datafile>GT4-0466_0.out</datafile>
+  <datafile>GT4-0467_0.out</datafile>
+  <datafile>GT4-0468_0.out</datafile>
+  <datafile>GT4-0469_0.out</datafile>
+  <datafile>GT4-0470_0.out</datafile>
+  <datafile>GT4-0471_0.out</datafile>
+  <datafile>GT4-0472_0.out</datafile>
+  <datafile>GT4-0473_0.out</datafile>
+  <datafile>GT4-0474_0.out</datafile>
+  <datafile>GT4-0475_0.out</datafile>
+  <datafile>GT4-0476_0.out</datafile>
+  <datafile>GT4-0477_0.out</datafile>
+  <datafile>GT4-0478_0.out</datafile>
+  <datafile>GT4-0479_0.out</datafile>
+  <datafile>GT4-0480_0.out</datafile>
+  <datafile>GT4-0481_0.out</datafile>
+  <datafile>GT4-0482_0.out</datafile>
+  <datafile>GT4-0483_0.out</datafile>
+  <datafile>GT4-0484_0.out</datafile>
+  <datafile>GT4-0485_0.out</datafile>
+  <datafile>GT4-0486_0.out</datafile>
+  <datafile>GT4-0487_0.out</datafile>
+  <datafile>GT4-0488_0.out</datafile>
+  <datafile>GT4-0489_0.out</datafile>
+  <datafile>GT4-0490_0.out</datafile>
+  <datafile>GT4-0491_0.out</datafile>
+  <datafile>GT4-0492_0.out</datafile>
+  <datafile>GT4-0493_0.out</datafile>
+  <datafile>GT4-0494_0.out</datafile>
+  <datafile>GT4-0495_0.out</datafile>
+  <datafile>GT4-0496_0.out</datafile>
+  <datafile>GT4-0497_0.out</datafile>
+  <datafile>GT4-0498_0.out</datafile>
+  <datafile>GT4-0499_0.out</datafile>
+  <datafile>GT4-0500_0.out</datafile>
+  <datafile>GT4-0501_0.out</datafile>
+  <datafile>GT4-0502_0.out</datafile>
+  <datafile>GT4-0503_0.out</datafile>
+  <datafile>GT4-0504_0.out</datafile>
+  <datafile>GT4-0505_0.out</datafile>
+  <datafile>GT4-0506_0.out</datafile>
+  <datafile>GT4-0507_0.out</datafile>
+  <datafile>GT4-0508_0.out</datafile>
+  <datafile>GT4-0509_0.out</datafile>
+  <datafile>GT4-0510_0.out</datafile>
+  <datafile>GT4-0511_0.out</datafile>
+  <datafile>GT4-0512_0.out</datafile>
+  <datafile>GT4-0513_0.out</datafile>
+  <datafile>GT4-0514_0.out</datafile>
+  <datafile>GT4-0515_0.out</datafile>
+  <datafile>GT4-0516_0.out</datafile>
+  <datafile>GT4-0517_0.out</datafile>
+  <datafile>GT4-0518_0.out</datafile>
+  <datafile>GT4-0519_0.out</datafile>
+  <datafile>GT4-0520_0.out</datafile>
+  <datafile>GT4-0521_0.out</datafile>
+  <datafile>GT4-0522_0.out</datafile>
+  <datafile>GT4-0523_0.out</datafile>
+  <datafile>GT4-0524_0.out</datafile>
+  <datafile>GT4-0525_0.out</datafile>
+  <datafile>GT4-0526_0.out</datafile>
+  <datafile>GT4-0527_0.out</datafile>
+  <datafile>GT4-0528_0.out</datafile>
+  <datafile>GT4-0529_0.out</datafile>
+  <datafile>GT4-0530_0.out</datafile>
+  <datafile>GT4-0531_0.out</datafile>
+  <datafile>GT4-0532_0.out</datafile>
+  <datafile>GT4-0533_0.out</datafile>
+  <datafile>GT4-0534_0.out</datafile>
+  <datafile>GT4-0535_0.out</datafile>
+  <datafile>GT4-0536_0.out</datafile>
+  <datafile>GT4-0537_0.out</datafile>
+ </files>
+ <projectaois lri="projectaois">
+  <aoinode img="GT4-0000_0.tif" lri="aoinode">
+   <polygonmask width="1920" height="1200" lri="polygonmask">
+    <polygon height="3" stepsize="3" selected="true" subsetsize="15">
+     <outline>1001.82 953.419 1141 936.345 1271.86 904.841 1411.9 852.218 1524.44 797.333 1613.06 741.622 1663.4 711.245 1706.44 697.646 1752.67 707.062 1793.36 732.905 1790.14 2.71193 1568.87 0 1565.7 0.172703 1521.02 79.269 1504.28 98.7735 1487.27 107.487 1464.63 108.381 425.959 125.836 381.707 125.115 355.531 122.493 336.187 104.429 275.728 0.916041 83.1534 1.37595 84.4631 721.601 116.799 701.059 153.596 694.445 191.595 703.722 260.659 747.436 366.593 811.783 492.445 870.887 620.683 915.088 784.131 948.102 866.25 954.58</outline>
+     <cutout>918.244 430.323 889.498 429.11 864.08 427.743 832.933 424.643 803.487 419.678 771.225 413.281 739.597 404.685 711.372 396.131 684.962 386.771 656.582 375.321 633.793 364.398 614.717 355.244 595.102 345.222 576.049 333.202 557.696 321.67 539.009 309.874 522.154 297.359 509.407 287.794 498.73 276.66 491.967 262.101 493.139 243.643 497.875 228.074 505.672 219.941 515.781 213.74 528.208 210.306 544.267 209.761 1293.44 201.216 1319.49 200.809 1334.14 207.32 1345.21 221.252 1351.23 238.654 1347.97 259.001 1337.72 276.426 1318.67 291.556 1288.15 312.433 1258.85 331.843 1231.18 346.9 1206.14 359.94 1179.91 372.537 1151.83 383.931 1124.97 393.291 1100.96 401.023 1067.18 410.789 1039.84 416.844 1015.91 421.777 977.657 427.067 949.722 428.704</cutout>
+    </polygon>
+   </polygonmask>
+  </aoinode>
+  <startpoint ref_img="C:/Users/emjones/My Research/Projects/LDRD/Sharlotte VFM code/ExperimentalData/GT4/DICImages/GT4-0000_0.tif" lri="startpoint">
+   <guess type="auto" score="0.00304456" img="GT4-0002_0.tif">1447.02 680.969 0.0001777 -0.00017955 -0.00017749 0.000425579</guess>
+   <guess type="user" score="-1" img="GT4-0326_0.tif">1493.77 625.329 0.0645822 -0.205858 0.166225 -0.0544125</guess>
+   <guess type="user" score="-1" img="GT4-0287_1.tif">1450.22 593.369 0.00309162 -0.17816 0.13682 -0.0720312</guess>
+   <guess type="user" score="-1" img="GT4-0041_1.tif">1413.74 638.191 -0.0464093 -0.0148896 0.000192966 -0.0219907</guess>
+   <guess type="user" score="-1" img="GT4-0452_0.tif">1518.81 596.473 0.0880927 -0.303379 0.252262 -0.0976654</guess>
+   <guess type="user" score="-1" img="GT4-0010_1.tif">1413.92 638.674 -0.0475217 -0.0134294 0.000652159 -0.0214327</guess>
+   <guess type="user" score="-1" img="GT4-0104_0.tif">1447.37 680.367 -0.000494672 -0.000284279 0.00358752 0.00188666</guess>
+   <guess type="user" score="-1" img="GT4-0389_0.tif">1506.48 611.125 0.0775407 -0.258046 0.211267 -0.0776886</guess>
+   <guess type="user" score="-1" img="GT4-0143_1.tif">1419.05 625.748 -0.042703 -0.0318329 0.0193861 -0.0292406</guess>
+   <guess type="user" score="-1" img="GT4-0062_0.tif">1447.37 680.414 0.000675121 0.000792029 0.00147926 -8.92839e-05</guess>
+   <guess type="auto" score="0.0143364" img="GT4-0002_1.tif">1413.99 638.887 -0.0469405 -0.00483038 0.000534126 -0.028106</guess>
+   <guess type="user" score="-1" img="GT4-0326_1.tif">1457.83 584.947 0.00595377 -0.208926 0.163782 -0.0849464</guess>
+   <guess type="user" score="-1" img="GT4-0245_0.tif">1476.62 643.397 0.0465286 -0.134333 0.104036 -0.0329153</guess>
+   <guess type="user" score="-1" img="GT4-0452_1.tif">1481.31 557.098 0.0277064 -0.296867 0.242837 -0.123615</guess>
+   <guess type="user" score="-1" img="GT4-0164_0.tif">1458.03 661.964 0.0190595 -0.0475252 0.0346112 -0.00691087</guess>
+   <guess type="user" score="-1" img="GT4-0104_1.tif">1413.81 638.26 -0.0484577 -0.0147842 0.00171823 -0.0226041</guess>
+   <guess type="user" score="-1" img="GT4-0389_1.tif">1469.68 571.244 0.017161 -0.255535 0.205274 -0.105191</guess>
+   <guess type="user" score="-1" img="GT4-0062_1.tif">1413.86 638.318 -0.0457875 -0.0156891 0.000900723 -0.0233966</guess>
+   <guess type="user" score="-1" img="GT4-0245_1.tif">1441.59 602.416 -0.0127989 -0.138734 0.104013 -0.0592587</guess>
+   <guess type="user" score="-1" img="GT4-0164_1.tif">1423.88 620.417 -0.0356027 -0.0536114 0.0346042 -0.0360224</guess>
+   <guess type="user" score="-1" img="GT4-0003_0.tif">1447.05 680.949 0.000323015 0.000301839 -0.000128835 0.00341842</guess>
+   <guess type="user" score="-1" img="GT4-0410_0.tif">1510.69 606.314 0.0774242 -0.273109 0.222641 -0.0828582</guess>
+   <guess type="user" score="-1" img="GT4-0529_0.tif">1483.64 596.52 0.0737866 -0.3307 0.284177 -0.108409</guess>
+   <guess type="ref" score="-1" img="GT4-0000_0.tif">1447 681 0 0 0 0</guess>
+   <guess type="user" score="-1" img="GT4-0347_0.tif">1497.95 620.642 0.0681162 -0.223837 0.181771 -0.0627711</guess>
+   <guess type="user" score="-1" img="GT4-0266_0.tif">1481.25 638.701 0.0527034 -0.155369 0.121195 -0.0418162</guess>
+   <guess type="user" score="-1" img="GT4-0473_0.tif">1519.8 591.874 0.0899907 -0.320732 0.268723 -0.106077</guess>
+   <guess type="user" score="-1" img="GT4-0125_0.tif">1448.19 678.082 0.00138968 -0.00334122 0.00305183 0.00269618</guess>
+   <guess type="user" score="-1" img="GT4-0203_0.tif">1467.21 652.819 0.0309783 -0.09216 0.0672915 -0.020104</guess>
+   <guess type="user" score="-1" img="GT4-0003_1.tif">1414 638.829 -0.046821 -0.0143414 0.00159635 -0.0231172</guess>
+   <guess type="user" score="-1" img="GT4-0410_1.tif">1473.62 566.591 0.0188648 -0.268134 0.218502 -0.111976</guess>
+   <guess type="user" score="-1" img="GT4-0529_1.tif">1447.75 556.996 0.0151116 -0.323446 0.281856 -0.135026</guess>
+   <guess type="user" score="-1" img="GT4-0308_0.tif">1490.11 629.349 0.0589295 -0.189167 0.152794 -0.0514871</guess>
+   <guess type="user" score="-1" img="GT4-0083_0.tif">1447.37 680.311 -0.00020666 -0.00317153 0.00163712 0.00375857</guess>
+   <guess type="auto" score="0.0142587" img="GT4-0000_1.tif">1414 638.912 -0.0464568 -0.0050601 0.000663218 -0.0280272</guess>
+   <guess type="user" score="-1" img="GT4-0347_1.tif">1461.69 580.446 0.012526 -0.228742 0.177386 -0.0913453</guess>
+   <guess type="user" score="-1" img="GT4-0004_0.tif">1447.06 680.935 0.00165803 -0.00216144 0.00183108 0.000958286</guess>
+   <guess type="user" score="-1" img="GT4-0266_1.tif">1445.95 597.879 -0.00601018 -0.157749 0.119653 -0.0668206</guess>
+   <guess type="user" score="-1" img="GT4-0473_1.tif">1482.21 552.658 0.0271232 -0.313252 0.262692 -0.131508</guess>
+   <guess type="user" score="-1" img="GT4-0125_1.tif">1414.57 636.044 -0.0454443 -0.0163633 -0.000233616 -0.0202511</guess>
+   <guess type="user" score="-1" img="GT4-0203_1.tif">1432.57 611.548 -0.0251828 -0.0960398 0.0673664 -0.0454602</guess>
+   <guess type="user" score="-1" img="GT4-0368_0.tif">1502.22 615.918 0.0759241 -0.242131 0.198235 -0.0715024</guess>
+   <guess type="user" score="-1" img="GT4-0182_0.tif">1462.31 657.664 0.0219594 -0.0686927 0.0511382 -0.0117103</guess>
+   <guess type="user" score="-1" img="GT4-0308_1.tif">1454.38 588.837 0.00524538 -0.19464 0.149212 -0.080157</guess>
+   <guess type="user" score="-1" img="GT4-0083_1.tif">1413.76 638.199 -0.047734 -0.0153427 0.000136011 -0.0231698</guess>
+   <guess type="user" score="-1" img="GT4-0494_0.tif">1505.25 599.619 0.0767756 -0.334855 0.290233 -0.110258</guess>
+   <guess type="user" score="-1" img="GT4-0004_1.tif">1413.99 638.816 -0.0484355 -0.0120271 0.00119228 -0.0260924</guess>
+   <guess type="user" score="-1" img="GT4-0512_0.tif">1493.53 599.618 0.0742802 -0.333623 0.29239 -0.109996</guess>
+   <guess type="user" score="-1" img="GT4-0224_0.tif">1471.99 648.072 0.0407371 -0.114824 0.0858151 -0.026322</guess>
+   <guess type="auto" score="0.00299352" img="GT4-0001_0.tif">1447.01 680.981 -1.3987e-05 -9.67438e-06 0.000377868 0.000596496</guess>
+   <guess type="user" score="-1" img="GT4-0431_0.tif">1514.83 601.45 0.08437 -0.28874 0.236958 -0.0903479</guess>
+   <guess type="user" score="-1" img="GT4-0368_1.tif">1465.64 575.855 0.0143212 -0.238453 0.193824 -0.0988953</guess>
+   <guess type="user" score="-1" img="GT4-0182_1.tif">1427.95 616.231 -0.0303879 -0.0732556 0.0492412 -0.0386765</guess>
+   <guess type="user" score="-1" img="GT4-0287_0.tif">1485.75 634.051 0.0589463 -0.172861 0.138382 -0.0475055</guess>
+   <guess type="user" score="-1" img="GT4-0494_1.tif">1468.37 560.098 0.0136712 -0.324475 0.28754 -0.139499</guess>
+   <guess type="user" score="-1" img="GT4-0041_0.tif">1447.35 680.306 -0.000104304 -0.00253638 0.00267049 0.00190582</guess>
+   <guess type="user" score="-1" img="GT4-0512_1.tif">1457.16 560.038 0.0163578 -0.327427 0.286693 -0.135598</guess>
+   <guess type="user" score="-1" img="GT4-0224_1.tif">1437.14 606.931 -0.013622 -0.122413 0.0843297 -0.0511144</guess>
+   <guess type="user" score="-1" img="GT4-0010_0.tif">1447.14 680.802 0.00246838 -0.00111935 0.000867875 0.00107224</guess>
+   <guess type="auto" score="0.0142072" img="GT4-0001_1.tif">1414 638.903 -0.046697 -0.00497662 0.00123945 -0.0281184</guess>
+   <guess type="user" score="-1" img="GT4-0431_1.tif">1477.54 561.902 0.0244919 -0.280934 0.230347 -0.119587</guess>
+   <guess type="user" score="-1" img="GT4-0143_0.tif">1452.96 667.473 0.00596739 -0.0195758 0.0181929 -0.00265912</guess>
+  </startpoint>
+ </projectaois>
+ <correlationoptions lri="correlationoptions">
+  <option value="0.02" name="prop_thresh"/>
+  <option value="0.05" name="conf_thresh"/>
+  <option value="-1" name="stereo_conf_thresh"/>
+  <option value="0.1" name="match_thresh"/>
+  <option value="-1" name="epi_thresh"/>
+  <option value="8" name="num_threads"/>
+  <option value="25" name="subset_size"/>
+  <option value="7" name="step_size"/>
+  <option value="true" name="autoplanefit"/>
+  <option value="false" name="exhaustive"/>
+  <option value="false" name="incremental"/>
+  <option value="true" name="lowpass"/>
+  <option value="znssd" name="criterion"/>
+  <option value="optimized8" name="interpolation"/>
+  <option value="gaussian" name="weights"/>
+  <option value="false" name="computeconfidence"/>
+  <option value="false" name="computestrain"/>
+  <option value="true" name="computeprincipals"/>
+  <option value="15" name="strainwindow"/>
+  <option value="0" name="straintensor"/>
+  <option value="1" name="strainfilter"/>
+  <option value="false" name="projected_speckle_mode"/>
+  <option value="false" name="multi_system"/>
+  <option value="false" name="multi_naming"/>
+  <option value="" name="multi_cal_filename"/>
+  <option value="0" name="deformed_scale"/>
+ </correlationoptions>
+ <coordinatetransformations lri="coordinatetransformations">
+  <coordinatetransformation name="GT4OriginXAxis">-0.420005 0.636599 0.0196829 33.3455 -24.7042 367.299</coordinatetransformation>
+  <coordinatetransformation name="OriginX">-2.62724e-07 6.87967e-08 0.0392718 22.5623 -19.8743 0.00598444</coordinatetransformation>
+  <coordinatetransformation name="X2">1.86276e-12 -2.25078e-12 23.777 2.27506 1.22033 -0.00539076</coordinatetransformation>
+  <coordinatetransformation name="X3">-1.93152e-10 2.49593e-11 -23.9151 0.651049 -1.93422 0.00188122</coordinatetransformation>
+  <coordinatetransformation name="X4">1.70396e-10 9.22678e-11 0.139027 -3.10503 3.77021 0.00615729</coordinatetransformation>
+  <coordinatetransformation name="X5">-5.48133e-11 -1.47502e-10 0.408258 1.49719 -0.29911 -0.00337975</coordinatetransformation>
+ </coordinatetransformations>
+ <plotdata lri="plotdata">
+  <option value="true" name="show_deformed"/>
+  <option value="false" name="show_cam2"/>
+  <option value="false" name="show_min"/>
+  <option value="false" name="show_max"/>
+  <option value="false" name="show_major"/>
+  <option value="false" name="show_minor"/>
+  <option value="true" name="auto_xyz"/>
+  <option value="true" name="auto_cnt"/>
+  <option value="false" name="grow_only"/>
+  <option value="true" name="show_cnt"/>
+  <option value="0" name="strain_unit"/>
+  <option value="6" name="opacity"/>
+  <option value="0.3" name="z_ratio"/>
+  <option value="0" name="contour_variable"/>
+  <option value="0" name="view_mode"/>
+  <option value="#ffffff" name="vector_color"/>
+  <option value="true" name="vector_color_cnt"/>
+  <option value="10" name="vector_skip"/>
+  <option value="1" name="vector_scale"/>
+  <option value="false" name="vector_show"/>
+  <option value="0" name="color_map_id"/>
+  <option value="16" name="color_map_ncol"/>
+  <option value="16" name="contour_labels"/>
+  <option value="false" name="show_iso_lines"/>
+  <option value="0" name="iso_line_skip"/>
+  <option value="1.1" name="iso_line_width"/>
+  <option value="#000000" name="iso_line_color"/>
+  <option value="1498 960" name="plot_size"/>
+  <option value="C:/Users/emjones/My Research/Projects/LDRD/Sharlotte VFM code/ExperimentalData/GT4/DICImages/GT4-0526_0.out" name="filename"/>
+  <contour_cache>
+   <range v_type="1" name="X [mm]" u_set="0">-17.7764 65.2441 -17.7764 65.2441</range>
+   <range v_type="7" name="r_ref [pixel]" u_set="0">-56.5108 -21.4284 -56.5108 -21.4284</range>
+   <range v_type="3" name="W [mm]" u_set="0">-0.42208 -0.0557617 -0.42208 -0.0557617</range>
+   <range v_type="0" name="x [pixel]" u_set="0">240.289 1661.78 240.289 1661.78</range>
+   <range v_type="1" name="Y [mm]D" u_set="1">0 4.47686 -32.2791 5.77348</range>
+   <range v_type="3" name="V [mm]" u_set="0">-1.18891 10.4103 -1.18891 10.4103</range>
+   <range v_type="2" name="u [pixel]" u_set="0">-181.984 235.712 -181.984 235.712</range>
+   <range v_type="0" name="y [pixel]" u_set="0">95.2285 919.405 95.2285 919.405</range>
+   <range v_type="3" name="U [mm]" u_set="0">-11.1338 13.2938 -11.1338 13.2938</range>
+   <range v_type="7" name="r [pixel]" u_set="0">-223.566 2.4153 -223.566 2.4153</range>
+   <range v_type="2" name="v [pixel]" u_set="0">-181.236 19.152 -181.236 19.152</range>
+   <range v_type="1" name="Z [mm]D" u_set="0">-0.42192 -0.0502212 -0.42192 -0.0502212</range>
+   <range v_type="7" name="q [pixel]" u_set="0">-236.42 176.975 -236.42 176.975</range>
+   <range v_type="1" name="Z [mm]" u_set="0">-0.0136309 0.0198775 -0.0136309 0.0198775</range>
+   <range v_type="5" name="sigma [pixel]" u_set="0">0.00529629 0.0315052 0.00529629 0.0315052</range>
+   <range v_type="7" name="q_ref [pixel]" u_set="0">-47.1789 -19.1508 -47.1789 -19.1508</range>
+   <range v_type="1" name="Y [mm]" u_set="0">-42.1104 5.1902 -42.1104 5.1902</range>
+   <range v_type="1" name="X [mm]D" u_set="0">-27.4739 78.0142 -27.4739 78.0142</range>
+  </contour_cache>
+  <axis_cache>
+   <range v_type="1" name="Z [mm]D" u_set="0">-0.42192 -0.0502212 -0.42192 -0.0502212</range>
+   <range v_type="1" name="Z [mm]" u_set="0">-0.0136309 0.0198775 -0.0136309 0.0198775</range>
+   <range v_type="1" name="Y [mm]" u_set="0">-42.1104 5.1902 -42.1104 5.1902</range>
+   <range v_type="1" name="X [mm]" u_set="0">-17.7764 65.2441 -17.7764 65.2441</range>
+   <range v_type="1" name="X [mm]D" u_set="0">-27.4739 78.0142 -27.4739 78.0142</range>
+   <range v_type="1" name="Y [mm]D" u_set="0">-32.2791 5.77348 -32.2791 5.77348</range>
+  </axis_cache>
+  <inspector_point label="P0" lri="inspector_point">
+   <ref_pos>1656.68 696.939</ref_pos>
+  </inspector_point>
+ </plotdata>
+</project>

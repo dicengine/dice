@@ -71,6 +71,9 @@ SET(GLOBAL_REGRESSION_TESTS
   stereo_cine
   stereo_list
   stereo_auto
+  stereo_d_spec
+  stereo_satellite
+  stereo_dogbone
   )
 FOREACH ( test ${GLOBAL_REGRESSION_TESTS})
     # Copy over all the test files (input and results)
@@ -188,6 +191,13 @@ if(DICE_MPI)
     parallel_subsets_seed
     parallel_seed_first_step_only
   )
+  IF(DICE_ENABLE_GLOBAL)
+    SET(MPI_TESTS
+      ${MPI_TESTS}
+      stereo_d_spec
+      stereo_dogbone
+    )
+  ENDIF()
   IF(DICE_USE_DOUBLE)
     SET(MPI_TESTS
       ${MPI_TESTS}
