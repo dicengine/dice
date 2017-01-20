@@ -1,0 +1,12 @@
+<ParameterList>
+  <Parameter name="correlation_parameters_file" type="string" value="./params.xml" />
+  <Parameter name="output_folder" type="string" value="./results/" />
+  <Parameter name="output_prefix" type="string" value="DICe_solution_cine" />
+  <Parameter name="image_folder" type="string" value="./images/" />  
+  <Parameter name="subset_size" type="int" value="27" />
+  <Parameter name="step_size" type="int" value="10" />
+  <Parameter name="cine_file" type="string" value="packed_12bpp.cine" /> 
+  <Parameter name="cine_ref_index" type="int" value="60" /> 
+  <Parameter name="cine_start_index" type="int" value="60" /> 
+  <Parameter name="cine_end_index" type="int" value="5" /> 
+</ParameterList>

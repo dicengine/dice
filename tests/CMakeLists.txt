@@ -41,6 +41,12 @@ FOREACH ( cal_file ${cal_files} )
     FILE(COPY ${cal_file} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/component/cal/ )
 ENDFOREACH ( )
 
+# copy the decomp files to the build dir
+FILE ( GLOB decomp_files "${CMAKE_CURRENT_SOURCE_DIR}/component/decomp/*.*")
+FOREACH ( decomp_file ${decomp_files} )
+    FILE(COPY ${decomp_file} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/component/decomp/ )
+ENDFOREACH ( )
+
 # copy the mesh files to the build dir
 FILE ( GLOB mesh_files "${CMAKE_CURRENT_SOURCE_DIR}/component/global/meshes/*.*")
 FOREACH ( mesh_file ${mesh_files} )

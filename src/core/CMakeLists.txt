@@ -10,6 +10,7 @@ SET(DICE_SOURCES
   DICe_PostProcessor.cpp
   DICe_ParameterUtilities.cpp
   DICe_Initializer.cpp
+  DICe_Decomp.cpp
   )
 
 SET(DICE_HEADERS
@@ -24,6 +25,7 @@ SET(DICE_HEADERS
   DICe_PostProcessor.h
   DICe_Initializer.h
   DICe_Utilities.h
+  DICe_Decomp.h
   )
 
 include_directories (

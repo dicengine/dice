@@ -1,0 +1,34 @@
+<ParameterList>
+  <Parameter name="interpolation_method" type="string" value="KEYS_FOURTH" />
+  <Parameter name="initialization_method" type="string" value="USE_FIELD_VALUES" />
+  <Parameter name="optimization_method" type="string" value="GRADIENT_BASED" />
+  <Parameter name="enable_translation" type="bool" value="true" />
+  <Parameter name="enable_rotation" type="bool" value="false" />
+  <Parameter name="enable_normal_strain" type="bool" value="true" />
+  <Parameter name="enable_shear_strain" type="bool" value="false" />
+  <Parameter name="output_delimiter" type="string" value="," />
+  <Parameter name="omit_output_row_id" type="bool" value="false" />
+  <Parameter name="max_solver_iterations_fast" type="int" value="25" />
+  <ParameterList name="post_process_vsg_strain">
+    <Parameter name="strain_window_size_in_pixels" type="int" value="300" />
+  </ParameterList>
+  <ParameterList name="post_process_nlvc_strain">
+    <Parameter name="horizon_diameter_in_pixels" type="int" value="300" />
+  </ParameterList>
+  <ParameterList name="output_spec">
+    <Parameter name="COORDINATE_X" type="bool" value="true" />
+    <Parameter name="COORDINATE_Y" type="bool" value="true" />    
+    <Parameter name="CROSS_CORR_Q" type="bool" value="true" />
+    <Parameter name="CROSS_CORR_R" type="bool" value="true" />
+    <Parameter name="DISPLACEMENT_X" type="bool" value="true" />
+    <Parameter name="DISPLACEMENT_Y" type="bool" value="true" />
+    <Parameter name="VSG_STRAIN_XX" type="bool" value="true" />
+    <Parameter name="VSG_STRAIN_YY" type="bool" value="true" />
+    <Parameter name="VSG_STRAIN_XY" type="bool" value="true" />
+    <Parameter name="NLVC_STRAIN_XX" type="bool" value="true" />
+    <Parameter name="NLVC_STRAIN_YY" type="bool" value="true" />
+    <Parameter name="NLVC_STRAIN_XY" type="bool" value="true" />
+    <Parameter name="GAMMA" type="bool" value="true" />
+    <Parameter name="MATCH" type="bool" value="true" />
+  </ParameterList>
+</ParameterList>
