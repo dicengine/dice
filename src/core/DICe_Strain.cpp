@@ -45,6 +45,7 @@
 #include <DICe_MeshIO.h>
 #include <DICe_Schema.h>
 #include <DICe_PostProcessor.h>
+#include <DICe_Image.h>
 
 #include <Teuchos_RCP.hpp>
 
@@ -201,9 +202,7 @@ int main(int argc, char *argv[]) {
     }
     params->set(DICe::output_spec,*output_sublist);
 
-    Teuchos::RCP<Schema> schema = Teuchos::rcp(new Schema(100,100,0.0,params));
-    // initialize the schema with the subset coordinates
-    schema->set_first_frame_index(0);
+
     const int_t dummy_subset_size = 25;
     Teuchos::ArrayRCP<scalar_t> target_pts_x(importer->num_target_pts(),0.0);
     Teuchos::ArrayRCP<scalar_t> target_pts_y(importer->num_target_pts(),0.0);
@@ -211,8 +210,12 @@ int main(int argc, char *argv[]) {
       target_pts_x[i] = (*importer->target_pts_x())[i];
       target_pts_y[i] = (*importer->target_pts_y())[i];
     }
-
-    schema->initialize(target_pts_x,target_pts_y,dummy_subset_size);
+    Teuchos::RCP<Image> ref_img = Teuchos::rcp(new Image(100,100,0.0));
+    Teuchos::RCP<Schema> schema = Teuchos::rcp(new Schema(target_pts_x,target_pts_y,dummy_subset_size,Teuchos::null,Teuchos::null,params));
+    schema->set_ref_image(ref_img);
+    schema->set_def_image(ref_img);
+    // initialize the schema with the subset coordinates
+    schema->set_first_frame_index(0);
 
     for(int_t time_step=0;time_step<num_time_steps;++time_step){
       schema->update_image_frame();

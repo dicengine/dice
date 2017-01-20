@@ -86,15 +86,21 @@ int main(int argc, char *argv[]) {
   const int_t img_height = imgRef->height();
 
   *outStream << "testing schema construction from image file names" << std::endl;
-  Teuchos::RCP<DICe::Schema> schemaString = Teuchos::rcp(new DICe::Schema(refString,defString));
+  Teuchos::RCP<DICe::Schema> schemaString = Teuchos::rcp(new DICe::Schema());
+  schemaString->set_ref_image(refString);
+  schemaString->set_def_image(defString);
   *outStream << "success" << std::endl;
 
   *outStream << "testing schema construction from array " << std::endl;
-  Teuchos::RCP<DICe::Schema> schemaArray = Teuchos::rcp(new DICe::Schema(img_width,img_height,imgRefArray,imgDefArray));
+  Teuchos::RCP<DICe::Schema> schemaArray = Teuchos::rcp(new DICe::Schema());
+  schemaArray->set_ref_image(img_width,img_height,imgRefArray);
+  schemaArray->set_def_image(img_width,img_height,imgDefArray);
   *outStream << "success" << std::endl;
 
   *outStream << "testing schema construction from images " << std::endl;
-  Teuchos::RCP<DICe::Schema> schemaImage = Teuchos::rcp(new DICe::Schema(imgRef,imgDef));
+  Teuchos::RCP<DICe::Schema> schemaImage = Teuchos::rcp(new DICe::Schema());
+  schemaImage->set_ref_image(imgRef);
+  schemaImage->set_def_image(imgDef);
   *outStream << "success" << std::endl;
 
 
@@ -144,7 +150,7 @@ int main(int argc, char *argv[]) {
   badParams->set(DICe::tolerance,0.01);
   bool exception_thrown_as_it_should = false;
   try{
-    Teuchos::RCP<DICe::Schema> schemaTextBadParams = Teuchos::rcp(new DICe::Schema(imgRef,imgDef,badParams));
+    Teuchos::RCP<DICe::Schema> schemaTextBadParams = Teuchos::rcp(new DICe::Schema(badParams));
   }
   catch (std::logic_error &err) {
     exception_thrown_as_it_should = true;

@@ -121,10 +121,11 @@ int main(int argc, char *argv[]) {
   params->set(DICe::enable_normal_strain,true);
   params->set(DICe::enable_shear_strain,true);
   params->set(DICe::robust_solver_tolerance,1.0E-4);
-  Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema(fileRef,fileDef,params));
   Teuchos::ArrayRCP<scalar_t> coords_x(1,30);
   Teuchos::ArrayRCP<scalar_t> coords_y(1,30);
-  schema->initialize(coords_x,coords_y,-1,subset_defs);
+  Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema(coords_x,coords_y,-1,subset_defs,Teuchos::null,params));
+  schema->set_ref_image(fileRef);
+  schema->set_def_image(fileDef);
 
   // create the column titles
   std::vector<std::string> colTitles;
@@ -244,13 +245,13 @@ int main(int argc, char *argv[]) {
   subset_defs2->insert(std::pair<int_t,DICe::Conformal_Area_Def>(0,subset_def));
   subset_defs2->insert(std::pair<int_t,DICe::Conformal_Area_Def>(1,subset_def2));
 
-  Teuchos::RCP<DICe::Schema> schema2 = Teuchos::rcp(new DICe::Schema(fileRef,fileDef,params));
   Teuchos::ArrayRCP<scalar_t> coords_x2(2,0.0);
   Teuchos::ArrayRCP<scalar_t> coords_y2(2,0.0);
   coords_x2[0] = 30; coords_y2[0] = 30;
   coords_x2[1] = 32; coords_y2[1] = 32;
-  schema2->initialize(coords_x2,coords_y2,-1,subset_defs2);
-
+  Teuchos::RCP<DICe::Schema> schema2 = Teuchos::rcp(new DICe::Schema(coords_x2,coords_y2,-1,subset_defs2,Teuchos::null,params));
+  schema2->set_ref_image(fileRef);
+  schema2->set_def_image(fileDef);
 
   // centroid 1
   schema2->local_field_value(0,DICe::COORDINATE_X) = 30;

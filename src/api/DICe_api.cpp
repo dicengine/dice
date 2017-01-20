@@ -96,15 +96,7 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate(scalar_t points[], int_t n_points
 
   // construct a schema:
   // make it static since we want the internal data to hang around
-  static DICe::Schema schema(ref_w,ref_h,refRCP,defRCP,params);
-  // call set_params on the schema in case the parameter have changed:
-  if(!initialized||update_params)
-    schema.set_params(params);
-
-  // set the deformed image manually in case this is not the first image in the set:
-  // the constructor won't get called on the static schema if this is not the first image since it's static
-  schema.set_def_image(def_w,def_h,defRCP);
-
+  static DICe::Schema schema;
   if(!initialized){
     // initialize the schema
     // since the input data array is of a different size and in a different
@@ -115,9 +107,17 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate(scalar_t points[], int_t n_points
       coords_x[i] = points[i*DICE_API_STRIDE + 0];
       coords_y[i] = points[i*DICE_API_STRIDE + 1];
     }
-    schema.initialize(coords_x,coords_y,subset_size);
+    schema = DICe::Schema(coords_x,coords_y,subset_size,Teuchos::null,Teuchos::null,params);
+    schema.set_ref_image(ref_w,ref_h,refRCP);
   }
+  // call set_params on the schema in case the parameter have changed:
+  if(!initialized||update_params)
+    schema.set_params(params);
+
   initialized = true;
+  // set the deformed image manually in case this is not the first image in the set:
+  // the constructor won't get called on the static schema if this is not the first image since it's static
+  schema.set_def_image(def_w,def_h,defRCP);
 
   // manually copy values into the schema's field values
   for(int_t i=0;i<n_points;++i){
@@ -197,11 +197,7 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
 
   // construct a schema:
   // make it static since we want the internal data to hang around
-  static DICe::Schema schema(ref_w,ref_h,refRCP,defRCP,corr_params);
-
-  // set the deformed image manually in case this is not the first image in the set:
-  // the constructor won't get called on the static schema if this is not the first image since it's static
-  schema.set_def_image(ref_w,ref_h,defRCP);
+  static DICe::Schema schema;
 
   // if a subset file is specified, copy over the subset centroids into the data array (replacing values)
   static Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
@@ -214,7 +210,7 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
     // get the conformal subset defs, blocking subset ids, and coordinates
     // TODO enable seed and sweep in dice_correlate_conformal
     Teuchos::RCP<DICe::Subset_File_Info> subset_info = DICe::read_subset_file(subset_file,ref_w,ref_h);
-    Teuchos::RCP<std::vector<int_t> > subset_centroids = subset_info->coordinates_vector;
+    Teuchos::RCP<std::vector<scalar_t> > subset_centroids = subset_info->coordinates_vector;
     conformal_area_defs = subset_info->conformal_area_defs;
     blocking_subset_ids = subset_info->id_sets_map;
     n_points = subset_info->coordinates_vector->size()/dim; // divide by three because the striding is x, y, neighbor_id
@@ -227,9 +223,6 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
       points[i*DICE_API_STRIDE+0] = (*subset_centroids)[i*dim+0];
       points[i*DICE_API_STRIDE+1] = (*subset_centroids)[i*dim+1];
     }
-  }
-
-  if(!initialized){
     // initialize the schema
     // since the input data array is of a different size and in a different
     // order, we have to manually plug the values in
@@ -240,9 +233,13 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
       coords_x[i] = points[i*DICE_API_STRIDE + 0];
       coords_y[i] = points[i*DICE_API_STRIDE + 1];
     }
-    schema.initialize(coords_x,coords_y,-1,conformal_area_defs);
+    schema = DICe::Schema(coords_x,coords_y,-1,conformal_area_defs,Teuchos::null,corr_params);
+    schema.set_ref_image(ref_w,ref_h,refRCP);
     schema.set_obstructing_subset_ids(blocking_subset_ids);
   }
+  // set the deformed image manually in case this is not the first image in the set:
+  // the constructor won't get called on the static schema if this is not the first image since it's static
+  schema.set_def_image(ref_w,ref_h,defRCP);
 
   initialized = true;
 

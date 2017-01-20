@@ -68,7 +68,6 @@ int main(int argc, char *argv[]) {
     outStream = Teuchos::rcp(&bhs, false);
 
   int_t errorFlag  = 0;
-  scalar_t errtol  = 1.0E-4;
 
   *outStream << "--- Begin test ---" << std::endl;
 
@@ -78,13 +77,11 @@ int main(int argc, char *argv[]) {
   std::string cine_input_file = ".\\decomp\\cine_input.xml";
   std::string params_file = ".\\decomp\\params.xml";
   std::string cine_params_file = ".\\decomp\\cine_params.xml";
-  std::string image_file = ".\\images\\GT4-0000_0.tif";
 #else
   std::string input_file = "./decomp/input.xml";
   std::string cine_input_file = "./decomp/cine_input.xml";
   std::string params_file = "./decomp/params.xml";
   std::string cine_params_file = "./decomp/cine_params.xml";
-  std::string image_file = "./images/GT4-0000_0.tif";
 #endif
 
   Teuchos::RCP<Teuchos::ParameterList> inputParams = Teuchos::rcp(new Teuchos::ParameterList());
@@ -97,7 +94,12 @@ int main(int argc, char *argv[]) {
   Teuchos::updateParametersFromXmlFile(params_file, correlationParamsPtr);
   TEUCHOS_TEST_FOR_EXCEPTION(correlationParams==Teuchos::null,std::runtime_error,"");
 
-  Teuchos::RCP<Decomp> decomp = Teuchos::rcp(new Decomp(image_file,inputParams,correlationParams));
+  Teuchos::RCP<Decomp> decomp = Teuchos::rcp(new Decomp(inputParams,correlationParams));
+
+  if(decomp->num_global_subsets()!=123){
+    errorFlag++;
+    *outStream << "Error, wrong number of global subsets" << std::endl;
+  }
 
   Teuchos::RCP<Teuchos::ParameterList> cineInputParams = Teuchos::rcp(new Teuchos::ParameterList());
   Teuchos::Ptr<Teuchos::ParameterList> cineInputParamsPtr(cineInputParams.get());
@@ -109,7 +111,12 @@ int main(int argc, char *argv[]) {
   Teuchos::updateParametersFromXmlFile(cine_params_file, cineCorrelationParamsPtr);
   TEUCHOS_TEST_FOR_EXCEPTION(cineCorrelationParams==Teuchos::null,std::runtime_error,"");
 
-  Teuchos::RCP<Decomp> cine_decomp = Teuchos::rcp(new Decomp(DICe::cine_file,cineInputParams,cineCorrelationParams));
+  Teuchos::RCP<Decomp> cine_decomp = Teuchos::rcp(new Decomp(cineInputParams,cineCorrelationParams));
+
+  if(cine_decomp->num_global_subsets()!=168){
+    errorFlag++;
+    *outStream << "Error, wrong number of global subsets" << std::endl;
+  }
 
   *outStream << "--- End test ---" << std::endl;
 

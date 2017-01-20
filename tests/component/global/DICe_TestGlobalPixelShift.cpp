@@ -82,6 +82,8 @@ int main(int argc, char *argv[]) {
   input_params->set(DICe::subset_file,"pixel_shift_roi.txt");
   input_params->set(DICe::output_folder,"");
   input_params->set(DICe::output_prefix,"pixel_shift");
+  input_params->set(DICe::image_folder,"");
+
   corr_params->set(DICe::use_global_dic,true);
   corr_params->set(DICe::global_solver,GMRES_SOLVER);
   corr_params->set(DICe::max_solver_iterations_fast,200);
@@ -132,6 +134,10 @@ int main(int argc, char *argv[]) {
     //std::stringstream def_name;
     //def_name << "def_pixel_shift_" << shift << ".tif";
     //def->write(def_name.str());
+    input_params->set(DICe::reference_image,ref_name.str());
+    Teuchos::ParameterList def_img_params;
+    def_img_params.set(ref_name.str(),true);
+    input_params->set(DICe::deformed_images,def_img_params);
 
     *outStream << "creating the global roi file" << std::endl;
 
@@ -165,8 +171,9 @@ int main(int argc, char *argv[]) {
 
     *outStream << "constructing a schema" << std::endl;
 
-    DICe::Schema schema(ref,def,corr_params);
-    schema.initialize(input_params);
+    DICe::Schema schema(input_params,corr_params);
+    schema.set_ref_image(ref);
+    schema.set_def_image(def);
 
     *outStream << "creating and populating the exact solution fields" << std::endl;
     //  schema->global_algorithm()->mesh()->create_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);

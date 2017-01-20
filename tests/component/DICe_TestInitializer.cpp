@@ -210,8 +210,9 @@ int main(int argc, char *argv[]) {
       params->set(DICe::correlation_routine,corr_routines[corr_i]);
       params->set(DICe::disp_jump_tol,500.0);
       params->set(DICe::theta_jump_tol,100.0);
-      Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema("./images/InitRef.tif","./images/InitDef.tif",params));
-      schema->initialize(coords_x,coords_y,subset_size,Teuchos::null,neighbor_ids);
+      Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema(coords_x,coords_y,subset_size,Teuchos::null,neighbor_ids,params));
+      schema->set_ref_image("./images/InitRef.tif");
+      schema->set_def_image("./images/InitDef.tif");
       if(init_methods[init_i]==INITIALIZATION_METHOD_NOT_APPLICABLE)
         schema->set_path_file_names(path_file_names);
       for(int_t i=0;i<num_subsets;++i){

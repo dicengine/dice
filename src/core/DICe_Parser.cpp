@@ -731,9 +731,9 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            else if(block_tokens[0]==parser_end) break; // end of the list
            else if(is_number(block_tokens[0])){ // set of coordinates
              if(block_tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid coordinate (not enough values)" << fileName);}
-             info->coordinates_vector->push_back(std::atoi(block_tokens[0].c_str()));
+             info->coordinates_vector->push_back(strtod(block_tokens[0].c_str(),NULL));
              if(block_tokens[1]==parser_comment_char){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: invalid coordinate (not enough values)" << fileName);}
-             info->coordinates_vector->push_back(std::atoi(block_tokens[1].c_str()));
+             info->coordinates_vector->push_back(strtod(block_tokens[1].c_str(),NULL));
              info->neighbor_vector->push_back(-1); // neighbor_id
            }
            else{ // or error
@@ -1247,7 +1247,6 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
   // The reference image will be the first image in the vector, the rest are the deformed
   image_files.clear();
   stereo_image_files.clear();
-
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::image_folder),std::runtime_error,
     "Error, image folder was not specified");
   std::string folder = params->get<std::string>(DICe::image_folder);
@@ -1508,7 +1507,7 @@ bool valid_correlation_point(const int_t x_coord,
 
 DICE_LIB_DLL_EXPORT
 void
-create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_points,
+create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_points,
   std::vector<int_t> & neighbor_ids,
   Teuchos::RCP<Teuchos::ParameterList> params,
   Teuchos::RCP<Image> image,
@@ -1620,8 +1619,8 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
       x_coord = subset_size-1 + seed_col*step_size;
       y_coord = subset_size-1 + seed_row*step_size;
     if(valid_correlation_point(x_coord,y_coord,image,subset_size,coords,excluded_coords,grad_threshold)){
-      correlation_points.push_back(x_coord);
-      correlation_points.push_back(y_coord);
+      correlation_points.push_back((scalar_t)x_coord);
+      correlation_points.push_back((scalar_t)y_coord);
       //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding seed correlation point " << x_coord << " " << y_coord);
       if(seed_was_specified&&this_roi_has_seed){
         seed_subset_id = current_subset_id;
@@ -1650,8 +1649,8 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
       x_coord = subset_size - 1 + col*step_size;
       y_coord = subset_size - 1 + row*step_size;
       if(valid_correlation_point(x_coord,y_coord,image,subset_size,coords,excluded_coords,grad_threshold)){
-        correlation_points.push_back(x_coord);
-        correlation_points.push_back(y_coord);
+        correlation_points.push_back((scalar_t)x_coord);
+        correlation_points.push_back((scalar_t)y_coord);
         //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding snake right correlation point " << x_coord << " " << y_coord);
         if(current_subset_id==right_start_subset_id)
           neighbor_ids.push_back(seed_subset_id);
@@ -1677,8 +1676,8 @@ create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_point
       x_coord = subset_size - 1 + col*step_size;
       y_coord = subset_size - 1 + row*step_size;
       if(valid_correlation_point(x_coord,y_coord,image,subset_size,coords,excluded_coords,grad_threshold)){
-        correlation_points.push_back(x_coord);
-        correlation_points.push_back(y_coord);
+        correlation_points.push_back((scalar_t)x_coord);
+        correlation_points.push_back((scalar_t)y_coord);
         //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding snake left correlation point " << x_coord << " " << y_coord);
         if(current_subset_id==left_start_subset_id)
           neighbor_ids.push_back(seed_subset_id);

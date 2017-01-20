@@ -27,8 +27,8 @@ int main(int argc, char *argv[]) {
   // If later, the parameters should change for the analysis, use the set_params(file_name)
   // or set_params(parameterlist) methods to change the parameters
   //
-  // Using the parameters file method to create a schema (See params.xml for the parameters)
-  DICe::Schema schema("ref.tif","def.tif","params.xml");
+  // Using the parameters file method to create a schema (See params.xml for the correlation parameters and input.xml for the subset locations, etc.)
+  DICe::Schema schema("input.xml","params.xml");
   //
   // There are two different ways to set the parameters in the constructor, using an xml file (used here, see above)
   // or by creating a Teuchos::ParameterList manually and setting the parameters.
@@ -45,24 +45,16 @@ int main(int argc, char *argv[]) {
   //
   // DICe::Schema("ref.tif","def.tif",params);
   //
-  // There are also constructors that take DICe::Images as input arguments or pointers to arrays of intensity values.
-  // See DICe::Schema.h for these constructors
-
-  //
   // STEP 2:
   //
-  // Initialize the Schema in terms of number of subsets and their locations.
+  // set the reference and deformed images
   //
-  schema.initialize("input.xml");
+  schema.set_ref_image("ref.tif");
+  schema.set_def_image("def.tif");
   //
-  // A simple alternative way to initialize the schema is based on the step_size and subset_size.
-  //
-  // const int step_size_x = 20; // pixels
-  // const int step_size_y = 20; // pixels
-  // schema.initialize(step_size_x,step_size_y,subset_size);
-
+  // There are also set methods that take DICe::Images as input arguments or pointers to arrays of intensity values.
+  // See DICe::Schema.h for these methods
   schema.print_fields();
-
   //
   // STEP 3:
   //
@@ -71,7 +63,6 @@ int main(int argc, char *argv[]) {
   schema.execute_correlation();
   // post process the strain, etc.
   schema.execute_post_processors();
-
   //
   // STEP 4:
   //

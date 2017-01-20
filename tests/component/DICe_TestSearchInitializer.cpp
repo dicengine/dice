@@ -80,7 +80,9 @@ int main(int argc, char *argv[]) {
   const int_t cx = 151,cy=277;
   const scalar_t u_exact = 138.0;
   const scalar_t v_exact = -138.0;
-  Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema("./images/InitRef.tif","./images/InitDef.tif"));
+  Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema());
+  schema->set_ref_image("./images/InitRef.tif");
+  schema->set_def_image("./images/InitDef.tif");
   Teuchos::RCP<DICe::Subset> subset = Teuchos::rcp(new Subset(cx,cy,subset_size,subset_size));
   subset->initialize(schema->ref_img(),REF_INTENSITIES);
   const scalar_t step_size_xy = 1.0;

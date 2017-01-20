@@ -190,8 +190,9 @@ int main(int argc, char *argv[]) {
   const bool inner_init_required = var_name=="subset_size"||var_name=="step_size"||var_name2=="subset_size"||var_name2=="step_size";
 
   if(!inner_init_required){
-    schema = Teuchos::rcp(new DICe::Schema(dummy_img,dummy_img));
-    schema->initialize(step_size,step_size,subset_size);
+    schema = Teuchos::rcp(new DICe::Schema(L,L,step_size,step_size,subset_size));
+    schema->set_ref_image(dummy_img);
+    schema->set_def_image(dummy_img);
   }
 
   for(scalar_t val1=start_val;val1<=end_val;val1+=step_val){
@@ -258,8 +259,9 @@ int main(int argc, char *argv[]) {
       *outStream << "subset " << subset_size << " step " << step_size << " phi_period " << phi_period << " b_period " << b_period << " b_amp " << b_amp << std::endl;
 
       if(inner_init_required){
-        schema = Teuchos::rcp(new DICe::Schema(dummy_img,dummy_img));
-        schema->initialize(step_size,step_size,subset_size);
+        schema = Teuchos::rcp(new DICe::Schema(L,L,step_size,step_size,subset_size));
+        schema->set_ref_image(dummy_img);
+        schema->set_def_image(dummy_img);
       }
       const int_t fw = (L-2.0*subset_size)/step_size + 1;
       const int_t fh = (L-2.0*subset_size)/step_size + 1;

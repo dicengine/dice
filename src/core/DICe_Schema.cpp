@@ -48,13 +48,14 @@
 #include <DICe_FFT.h>
 #include <DICe_Triangulation.h>
 #include <DICe_Simplex.h>
+#include <DICe_Cine.h>
 #ifdef DICE_ENABLE_GLOBAL
-#include <DICe_MeshIO.h>
-#include <DICe_MeshIOUtils.h>
+  #include <DICe_MeshIO.h>
+  #include <DICe_MeshIOUtils.h>
 #endif
 #ifdef DICE_ENABLE_NETCDF
-#include <DICe_NetCDF.h>
-#include <DICe_ImageIO.h>
+  #include <DICe_NetCDF.h>
+  #include <DICe_ImageIO.h>
 #endif
 
 #include <Teuchos_XMLParameterListHelpers.hpp>
@@ -70,211 +71,86 @@
 #include <cassert>
 #include <set>
 
-#ifndef   DICE_DISABLE_BOOST_FILESYSTEM
-#include    <boost/filesystem.hpp>
+#ifndef DICE_DISABLE_BOOST_FILESYSTEM
+  #include <boost/filesystem.hpp>
 #endif
 
 namespace DICe {
 
-Schema::Schema(const int_t img_width,
-  const int_t img_height,
-  const intensity_t initial_intensity_value,
-  const Teuchos::RCP<Teuchos::ParameterList> & params){
-  default_constructor_tasks(params);
-  ref_img_ = Teuchos::rcp( new Image(img_width,img_height,initial_intensity_value));
-  Teuchos::RCP<Image> def_img = Teuchos::rcp( new Image(img_width,img_height,initial_intensity_value));
-  def_imgs_.push_back(def_img);
-  Teuchos::RCP<Image> prev_img = Teuchos::rcp( new Image(img_width,img_height,initial_intensity_value));
-  prev_imgs_.push_back(prev_img);
-  // require that the images are the same size
-  TEUCHOS_TEST_FOR_EXCEPTION(ref_img_->width()<=0||ref_img_->width()!=def_imgs_[0]->width(),std::runtime_error,
-    "Error: Images must be the same width and nonzero.");
-  TEUCHOS_TEST_FOR_EXCEPTION(ref_img_->height()<=0||ref_img_->height()!=def_imgs_[0]->height(),std::runtime_error,
-    "Error: Images must be the same height and nonzero.");
+Schema::Schema(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+  const Teuchos::RCP<Teuchos::ParameterList> & correlation_params){
+  default_constructor_tasks(correlation_params);
+  initialize(input_params,correlation_params);
 }
 
-Schema::Schema(const std::string & refName,
-  const std::string & defName,
+Schema::Schema(const std::string & input_file_name,
   const std::string & params_file_name){
   // create a parameter list from the selected file
   Teuchos::RCP<Teuchos::ParameterList> params = read_correlation_params(params_file_name);
-  construct_schema(refName,defName,params);
-}
-
-Schema::Schema(const std::string & refName,
-  const std::string & defName,
-  const Teuchos::RCP<Teuchos::ParameterList> & params){
-  construct_schema(refName,defName,params);
-}
-
-void
-Schema::construct_schema(const std::string & refName,
-  const std::string & defName,
-  const Teuchos::RCP<Teuchos::ParameterList> & params){
   default_constructor_tasks(params);
-
-  Teuchos::RCP<Teuchos::ParameterList> imgParams;
-  if(params!=Teuchos::null) imgParams = params;
-  else imgParams = Teuchos::rcp(new Teuchos::ParameterList());
-  // construct the images
-  // (the compute_image_gradients param is used by the image constructor)
-  imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_);
-  imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
-  imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
-  imgParams->set(DICe::gradient_method,gradient_method_);
-
-#ifdef DICE_ENABLE_NETCDF
-  /// check if the file is a netcdf file
-  Image_File_Type type = DICe::utils::image_file_type(refName.c_str());
-  Teuchos::RCP<netcdf::NetCDF_Reader> netcdf_reader;
-  if(type==NETCDF){
-    netcdf_reader = Teuchos::rcp(new netcdf::NetCDF_Reader());
-    ref_img_ = netcdf_reader->get_image(refName,imgParams);
-  }
-  else
-#endif
-  ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
-
-  Teuchos::RCP<Image> prev_img;
-#ifdef DICE_ENABLE_NETCDF
-  if(type==NETCDF){
-    prev_img = netcdf_reader->get_image(refName,imgParams);
-  }
-  else
-#endif
-  prev_img = Teuchos::rcp( new Image(refName.c_str(),imgParams));
-
-  if(prev_imgs_.size()==0) prev_imgs_.push_back(prev_img);
-  else prev_imgs_[0] = prev_img;
-  // (the compute_image_gradients param is used by the image constructor)
-  imgParams->set(DICe::compute_image_gradients,compute_def_gradients_);
-
-  Teuchos::RCP<Image> def_img;
-#ifdef DICE_ENABLE_NETCDF
-  if(type==NETCDF){
-    def_img = netcdf_reader->get_image(defName,imgParams);
-  }
-  else
-#endif
-  def_img = Teuchos::rcp( new Image(defName.c_str(),imgParams));
-  if(def_imgs_.size()==0) def_imgs_.push_back(def_img);
-  else def_imgs_[0] = def_img;
-  if(ref_image_rotation_!=ZERO_DEGREES){
-    ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
-    prev_imgs_[0] = prev_imgs_[0]->apply_rotation(ref_image_rotation_,imgParams);
-  }
-  if(def_image_rotation_!=ZERO_DEGREES){
-    def_imgs_[0] = def_imgs_[0]->apply_rotation(def_image_rotation_,imgParams);
-  }
-  const int_t width = ref_img_->width();
-  const int_t height = ref_img_->height();
-  // require that the images are the same size
-  TEUCHOS_TEST_FOR_EXCEPTION(width!=def_imgs_[0]->width(),std::runtime_error,"Error, Images must be the same width.");
-  TEUCHOS_TEST_FOR_EXCEPTION(height!=def_imgs_[0]->height(),std::runtime_error,"Error, Images must be the same height.");
-}
-
-Schema::Schema(const int_t img_width,
-  const int_t img_height,
-  const Teuchos::ArrayRCP<intensity_t> refRCP,
-  const Teuchos::ArrayRCP<intensity_t> defRCP,
-  const std::string & params_file_name){
   // create a parameter list from the selected file
-  Teuchos::RCP<Teuchos::ParameterList> params = read_correlation_params(params_file_name);
-  construct_schema(img_width,img_height,refRCP,defRCP,params);
+  Teuchos::RCP<Teuchos::ParameterList> input_params = Teuchos::rcp( new Teuchos::ParameterList() );
+  Teuchos::Ptr<Teuchos::ParameterList> inputParamsPtr(input_params.get());
+  Teuchos::updateParametersFromXmlFile(input_file_name,inputParamsPtr);
+  initialize(input_params,params);
 }
 
-Schema::Schema(const int_t img_width,
-  const int_t img_height,
-  const Teuchos::ArrayRCP<intensity_t> refRCP,
-  const Teuchos::ArrayRCP<intensity_t> defRCP,
-  const Teuchos::RCP<Teuchos::ParameterList> & params){
-  construct_schema(img_width,img_height,refRCP,defRCP,params);
+Schema::Schema(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+  const Teuchos::RCP<Teuchos::ParameterList> & correlation_params,
+  const Teuchos::RCP<Schema> & schema){
+  default_constructor_tasks(correlation_params);
+  initialize(input_params,schema);
 }
 
-void
-Schema::construct_schema(const int_t img_width,
-  const int_t img_height,
-  const Teuchos::ArrayRCP<intensity_t> refRCP,
-  const Teuchos::ArrayRCP<intensity_t> defRCP,
+Schema::Schema(const int_t roi_width,
+  const int_t roi_height,
+  const int_t step_size_x,
+  const int_t step_size_y,
+  const int_t subset_size,
   const Teuchos::RCP<Teuchos::ParameterList> & params){
-
   default_constructor_tasks(params);
+  TEUCHOS_TEST_FOR_EXCEPTION(is_initialized_,std::runtime_error,"Error: this schema is already initialized.");
+  TEUCHOS_TEST_FOR_EXCEPTION(subset_size<=0,std::runtime_error,"Error: width cannot be equal to or less than zero.");
+  step_size_x_ = step_size_x;
+  step_size_y_ = step_size_y;
 
-  Teuchos::RCP<Teuchos::ParameterList> imgParams;
-  if(params!=Teuchos::null) imgParams = params;
-  else imgParams = Teuchos::rcp(new Teuchos::ParameterList());
+  // create a buffer the size of one view along all edges
+  const int_t trimmedWidth = roi_width - 2*subset_size;
+  const int_t trimmedHeight = roi_height - 2*subset_size;
+  // set up the control points
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size_x<=0,std::runtime_error,"Error, step size x is <= 0");
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size_y<=0,std::runtime_error,"Error, step size y is <= 0");
+  const int_t numPointsX = trimmedWidth  / step_size_x + 1;
+  const int_t numPointsY = trimmedHeight / step_size_y + 1;
+  TEUCHOS_TEST_FOR_EXCEPTION(numPointsX<=0,std::runtime_error,"Error, numPointsX <= 0.");
+  TEUCHOS_TEST_FOR_EXCEPTION(numPointsY<=0,std::runtime_error,"Error, numPointsY <= 0.");
 
-  // (the compute_image_gradients param is used by the image constructor)
-  imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_);
-  imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
-  imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
-  imgParams->set(DICe::gradient_method,gradient_method_);
-  ref_img_ = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
-  Teuchos::RCP<Image> prev_img = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
-  if(prev_imgs_.size()==0) prev_imgs_.push_back(prev_img);
-  else prev_imgs_[0] = prev_img;
-  imgParams->set(DICe::compute_image_gradients,compute_def_gradients_);
-  Teuchos::RCP<Image> def_img = Teuchos::rcp( new Image(img_width,img_height,defRCP,imgParams));
-  if(def_imgs_.size()==0) def_imgs_.push_back(def_img);
-  else def_imgs_[0] = def_img;
-  if(ref_image_rotation_!=ZERO_DEGREES){
-    ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
-    prev_imgs_[0] = prev_imgs_[0]->apply_rotation(ref_image_rotation_,imgParams);
+  const int_t num_pts = numPointsX * numPointsY;
+
+  Teuchos::ArrayRCP<scalar_t> coords_x(num_pts,0.0);
+  Teuchos::ArrayRCP<scalar_t> coords_y(num_pts,0.0);
+  int_t x_it=0, y_it=0;
+  for (int_t i=0;i<num_pts;++i)
+  {
+     y_it = i / numPointsX;
+     x_it = i - (y_it*numPointsX);
+     coords_x[i] = subset_size + x_it * step_size_x_ -1;
+     coords_y[i] = subset_size + y_it * step_size_y_ -1;
   }
-  if(def_image_rotation_!=ZERO_DEGREES){
-    def_imgs_[0] = def_imgs_[0]->apply_rotation(def_image_rotation_,imgParams);
-  }
-  // require that the images are the same size
-  TEUCHOS_TEST_FOR_EXCEPTION(ref_img_->width()<=0||ref_img_->width()!=def_imgs_[0]->width(),std::runtime_error,
-    "Error: Images must be the same width and nonzero.");
-  TEUCHOS_TEST_FOR_EXCEPTION(ref_img_->height()<=0||ref_img_->height()!=def_imgs_[0]->height(),std::runtime_error,
-    "Error: Images must be the same height and nonzero.");
+  Teuchos::RCP<Decomp> decomp = Teuchos::rcp(new Decomp(coords_x,coords_y,Teuchos::null,Teuchos::null,params));
+  initialize(decomp,subset_size);
+  assert(global_num_subsets_==num_pts);
 }
 
-Schema::Schema(Teuchos::RCP<Image> ref_img,
-  Teuchos::RCP<Image> def_img,
-  const std::string & params_file_name){
-  // create a parameter list from the selected file
-  Teuchos::RCP<Teuchos::ParameterList> params = read_correlation_params(params_file_name);
-  construct_schema(ref_img,def_img,params);
-}
-
-Schema::Schema(Teuchos::RCP<Image> ref_img,
-  Teuchos::RCP<Image> def_img,
+Schema::Schema(Teuchos::ArrayRCP<scalar_t> coords_x,
+  Teuchos::ArrayRCP<scalar_t> coords_y,
+  const int_t subset_size,
+  Teuchos::RCP<std::map<int_t,Conformal_Area_Def> > conformal_subset_defs,
+  Teuchos::RCP<std::vector<int_t> > neighbor_ids,
   const Teuchos::RCP<Teuchos::ParameterList> & params){
-  construct_schema(ref_img,def_img,params);
-}
-
-void
-Schema::construct_schema(Teuchos::RCP<Image> ref_img,
-  Teuchos::RCP<Image> def_img,
-  const Teuchos::RCP<Teuchos::ParameterList> & params)
-{
   default_constructor_tasks(params);
-  if(gauss_filter_images_){
-    if(!ref_img->has_gauss_filter()) // the filter may have alread been applied to the image
-      ref_img->gauss_filter(gauss_filter_mask_size_);
-    if(!def_img->has_gauss_filter())
-      def_img->gauss_filter(gauss_filter_mask_size_);
-  }
-  ref_img_ = ref_img;
-  if(def_imgs_.size()==0) def_imgs_.push_back(def_img);
-  else def_imgs_[0] = def_img;
-  if(prev_imgs_.size()==0) prev_imgs_.push_back(ref_img);
-  else prev_imgs_[0] = ref_img;
-  if(ref_image_rotation_!=ZERO_DEGREES){
-    ref_img_ = ref_img_->apply_rotation(ref_image_rotation_);
-    prev_imgs_[0] = prev_imgs_[0]->apply_rotation(ref_image_rotation_);
-  }
-  if(def_image_rotation_!=ZERO_DEGREES){
-    def_imgs_[0] = def_imgs_[0]->apply_rotation(def_image_rotation_);
-  }
-  if(compute_ref_gradients_&&!ref_img_->has_gradients()){
-    ref_img_->compute_gradients();
-  }
-  if(compute_def_gradients_&&!def_imgs_[0]->has_gradients()){
-    def_imgs_[0]->compute_gradients();
-  }
+  Teuchos::RCP<Decomp> decomp = Teuchos::rcp(new Decomp(coords_x,coords_y,neighbor_ids,Teuchos::null,params));
+  initialize(decomp,subset_size,conformal_subset_defs);
 }
 
 void
@@ -320,6 +196,36 @@ Schema::set_def_image(Teuchos::RCP<Image> img,
   assert(def_imgs_.size()>0);
   assert(id<(int_t)def_imgs_.size());
   def_imgs_[id] = img;
+  if(gauss_filter_images_&&!def_imgs_[id]->has_gauss_filter()){ // the filter may have alread been applied to the image
+      def_imgs_[id]->gauss_filter(gauss_filter_mask_size_);
+  }
+  if(compute_def_gradients_&&!def_imgs_[id]->has_gradients()){
+    def_imgs_[id]->compute_gradients();
+  }
+  if(def_image_rotation_!=ZERO_DEGREES){
+    Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
+    imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
+    imgParams->set(DICe::gradient_method,gradient_method_);
+    def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_,imgParams);
+  }
+}
+
+void
+Schema::set_def_image(const int_t img_width,
+  const int_t img_height,
+  const Teuchos::ArrayRCP<intensity_t> defRCP,
+  const int_t id){
+  DEBUG_MSG("Schema:  Resetting the deformed image");
+  assert(def_imgs_.size()>0);
+  assert(id<(int_t)def_imgs_.size());
+  TEUCHOS_TEST_FOR_EXCEPTION(img_width<=0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(img_height<=0,std::runtime_error,"");
+  Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
+  imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_); // automatically compute the gradients if the ref image is changed
+  imgParams->set(DICe::gradient_method,gradient_method_);
+  imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
+  imgParams->set(DICe::gradient_method,gradient_method_);
+  def_imgs_[id] = Teuchos::rcp( new Image(img_width,img_height,defRCP,imgParams));
   if(def_image_rotation_!=ZERO_DEGREES){
     def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);
   }
@@ -335,42 +241,41 @@ Schema::set_prev_image(Teuchos::RCP<Image> img,
 }
 
 void
-Schema::set_def_image(const int_t img_width,
-  const int_t img_height,
-  const Teuchos::ArrayRCP<intensity_t> defRCP,
-  const int_t id){
-  DEBUG_MSG("Schema:  Resetting the deformed image");
-  assert(def_imgs_.size()>0);
-  assert(id<(int_t)def_imgs_.size());
-  TEUCHOS_TEST_FOR_EXCEPTION(img_width<=0,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(img_height<=0,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(img_width!=ref_img_->width()||img_height!=ref_img_->height(),
-    std::runtime_error,"Error, ref and def images must have the same dimensions");
-  def_imgs_[id] = Teuchos::rcp( new Image(img_width,img_height,defRCP));
-  if(def_image_rotation_!=ZERO_DEGREES){
-    def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);
-  }
-}
-
-void
 Schema::set_ref_image(const std::string & refName){
   DEBUG_MSG("Schema:  Resetting the reference image");
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
-  imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
+  imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_); // automatically compute the gradients if the ref image is changed
+  imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
+  imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
+
 #ifdef DICE_ENABLE_NETCDF
   /// check if the file is a netcdf file
   Image_File_Type type = DICe::utils::image_file_type(refName.c_str());
+  Teuchos::RCP<netcdf::NetCDF_Reader> netcdf_reader;
   if(type==NETCDF){
-    Teuchos::RCP<netcdf::NetCDF_Reader> netcdf_reader = Teuchos::rcp(new netcdf::NetCDF_Reader());
+    netcdf_reader = Teuchos::rcp(new netcdf::NetCDF_Reader());
     ref_img_ = netcdf_reader->get_image(refName,imgParams);
   }
   else
 #endif
-  ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
+    ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
   }
+  if(prev_imgs_[0]==Teuchos::null){
+#ifdef DICE_ENABLE_NETCDF
+    /// check if the file is a netcdf file
+    if(type==NETCDF){
+      prev_imgs_[0] = netcdf_reader->get_image(refName,imgParams);
+    }
+    else
+#endif
+      prev_imgs_[0] = Teuchos::rcp( new Image(refName.c_str(),imgParams));
+    if(ref_image_rotation_!=ZERO_DEGREES){
+      prev_imgs_[0] = prev_imgs_[0]->apply_rotation(ref_image_rotation_,imgParams);
+    }
+  }// end prev img is null
 }
 
 void
@@ -381,11 +286,19 @@ Schema::set_ref_image(const int_t img_width,
   TEUCHOS_TEST_FOR_EXCEPTION(img_width<=0,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(img_height<=0,std::runtime_error,"");
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
-  imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
+  imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_);
+  imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
+  imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
   ref_img_ = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
+  }
+  if(prev_imgs_[0]==Teuchos::null){
+    prev_imgs_[0] = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
+    if(ref_image_rotation_!=ZERO_DEGREES){
+      prev_imgs_[0] = prev_imgs_[0]->apply_rotation(ref_image_rotation_,imgParams);
+    }
   }
 }
 
@@ -393,11 +306,21 @@ void
 Schema::set_ref_image(Teuchos::RCP<Image> img){
   DEBUG_MSG("Schema::set_ref_image() Resetting the reference image");
   ref_img_ = img;
+  if(gauss_filter_images_){
+    if(!ref_img_->has_gauss_filter()) // the filter may have alread been applied to the image
+      ref_img_->gauss_filter(gauss_filter_mask_size_);
+  }
+  if(compute_ref_gradients_&&!ref_img_->has_gradients()){
+    ref_img_->compute_gradients();
+  }
   if(ref_image_rotation_!=ZERO_DEGREES){
     Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
     imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
     imgParams->set(DICe::gradient_method,gradient_method_);
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
+  }
+  if(prev_imgs_[0]==Teuchos::null){
+    prev_imgs_[0] = ref_img_;
   }
 }
 
@@ -432,6 +355,8 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   use_nonlinear_projection_ = false;
   sort_txt_output_ = false;
   set_params(params);
+  prev_imgs_.push_back(Teuchos::null);
+  def_imgs_.push_back(Teuchos::null);
 }
 
 void
@@ -726,75 +651,9 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
 }
 
 void
-Schema::initialize(const int_t step_size_x,
-  const int_t step_size_y,
-  const int_t subset_size){
+Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+  const Teuchos::RCP<Teuchos::ParameterList> & correlation_params){
 
-  TEUCHOS_TEST_FOR_EXCEPTION(is_initialized_,std::runtime_error,"Error: this schema is already initialized.");
-  TEUCHOS_TEST_FOR_EXCEPTION(subset_size<=0,std::runtime_error,"Error: width cannot be equal to or less than zero.");
-  step_size_x_ = step_size_x;
-  step_size_y_ = step_size_y;
-
-  const int_t img_width = ref_img_->width();
-  const int_t img_height = ref_img_->height();
-  // create a buffer the size of one view along all edges
-  const int_t trimmedWidth = img_width - 2*subset_size;
-  const int_t trimmedHeight = img_height - 2*subset_size;
-  // set up the control points
-  TEUCHOS_TEST_FOR_EXCEPTION(step_size_x<=0,std::runtime_error,"Error, step size x is <= 0");
-  TEUCHOS_TEST_FOR_EXCEPTION(step_size_y<=0,std::runtime_error,"Error, step size y is <= 0");
-  const int_t numPointsX = trimmedWidth  / step_size_x + 1;
-  const int_t numPointsY = trimmedHeight / step_size_y + 1;
-  TEUCHOS_TEST_FOR_EXCEPTION(numPointsX<=0,std::runtime_error,"Error, numPointsX <= 0.");
-  TEUCHOS_TEST_FOR_EXCEPTION(numPointsY<=0,std::runtime_error,"Error, numPointsY <= 0.");
-
-  const int_t num_pts = numPointsX * numPointsY;
-
-  Teuchos::ArrayRCP<scalar_t> coords_x(num_pts,0.0);
-  Teuchos::ArrayRCP<scalar_t> coords_y(num_pts,0.0);
-  int_t x_it=0, y_it=0;
-  for (int_t i=0;i<num_pts;++i)
-  {
-     y_it = i / numPointsX;
-     x_it = i - (y_it*numPointsX);
-     coords_x[i] = subset_size + x_it * step_size_x_ -1;
-     coords_y[i] = subset_size + y_it * step_size_y_ -1;
-  }
-
-  initialize(coords_x,coords_y,subset_size);
-  assert(global_num_subsets_==num_pts);
-}
-
-void
-Schema::initialize(const std::string & params_file_name){
-  // create a parameter list from the selected file
-  Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp( new Teuchos::ParameterList() );
-  Teuchos::Ptr<Teuchos::ParameterList> paramsPtr(params.get());
-  Teuchos::updateParametersFromXmlFile(params_file_name,paramsPtr);
-  initialize(params);
-}
-
-void
-Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
-  const int_t dim = 2;
-  const int_t proc_rank = comm_->get_rank();
-  // if the subset locations are specified in an input file, read them in (else they will be defined later)
-  Teuchos::RCP<std::vector<int_t> > subset_centroids;
-  Teuchos::RCP<std::vector<int_t> > neighbor_ids;
-  Teuchos::RCP<DICe::Subset_File_Info> subset_info;
-  int_t step_size = -1;
-  int_t subset_size = -1;
-  int_t num_subsets = -1;
-  Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
-  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > blocking_subset_ids;
-  Teuchos::RCP<std::set<int_t> > force_simplex;
-  const bool has_subset_file = input_params->isParameter(DICe::subset_file);
-  DICe::Subset_File_Info_Type subset_info_type = DICe::SUBSET_INFO;
-  if(has_subset_file){
-    std::string fileName = input_params->get<std::string>(DICe::subset_file);
-    subset_info = DICe::read_subset_file(fileName,img_width(),img_height());
-    subset_info_type = subset_info->type;
-  }
   const std::string output_folder = input_params->get<std::string>(DICe::output_folder,"");
   const std::string output_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
   init_params_->set(DICe::output_prefix,output_prefix);
@@ -816,61 +675,53 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
 #endif
     return;
   }
-  else if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
+
+  Teuchos::RCP<Decomp> decomp = Teuchos::rcp(new Decomp(input_params,correlation_params));
+  const int_t proc_rank = comm_->get_rank();
+
+  // if the subset locations are specified in an input file, read them in (else they will be defined later)
+  Teuchos::RCP<DICe::Subset_File_Info> subset_info;
+  int_t step_size = -1;
+  int_t subset_size = -1;
+  Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
+  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > blocking_subset_ids;
+  Teuchos::RCP<std::set<int_t> > force_simplex;
+  const bool has_subset_file = input_params->isParameter(DICe::subset_file);
+  DICe::Subset_File_Info_Type subset_info_type = DICe::SUBSET_INFO;
+  if(has_subset_file){
+    std::string fileName = input_params->get<std::string>(DICe::subset_file);
+    subset_info = DICe::read_subset_file(fileName,decomp->image_width(),decomp->image_height());
+    subset_info_type = subset_info->type;
+  }
+  if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
     TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::step_size),std::runtime_error,
       "Error, step size has not been specified");
     step_size = input_params->get<int_t>(DICe::step_size);
     DEBUG_MSG("Correlation point centroids were not specified by the user. \nThey will be evenly distrubed in the region"
         " of interest with separation (step_size) of " << step_size << " pixels.");
-    subset_centroids = Teuchos::rcp(new std::vector<int_t>());
-    neighbor_ids = Teuchos::rcp(new std::vector<int_t>());
-    if(optimization_method_==GRADIENT_BASED || optimization_method_==GRADIENT_BASED_THEN_SIMPLEX){
-      const scalar_t grad_threshold = 50.0; // threshold determined from example images
-      DICe::create_regular_grid_of_correlation_points(*subset_centroids,*neighbor_ids,input_params,ref_img_,subset_info,grad_threshold);
-    }
-    else
-      DICe::create_regular_grid_of_correlation_points(*subset_centroids,*neighbor_ids,input_params,ref_img_,subset_info);
-    // check all the subsets and eliminate ones with a gradient ratio too low
-    num_subsets = subset_centroids->size()/dim; // divide by three because the stride is x y neighbor_id
-    assert(neighbor_ids->size()==subset_centroids->size()/2);
     TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_size),std::runtime_error,
       "Error, the subset size has not been specified"); // required for all square subsets case
     subset_size = input_params->get<int_t>(DICe::subset_size);
-
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(subset_info==Teuchos::null,std::runtime_error,"");
-    subset_centroids = subset_info->coordinates_vector;
-    neighbor_ids = subset_info->neighbor_vector;
     conformal_area_defs = subset_info->conformal_area_defs;
     blocking_subset_ids = subset_info->id_sets_map;
     force_simplex = subset_info->force_simplex;
-    num_subsets = subset_info->coordinates_vector->size()/dim;
-    if((int_t)subset_info->conformal_area_defs->size()<num_subsets){
+    if((int_t)subset_info->conformal_area_defs->size()<decomp->num_global_subsets()){
       // Only require this if not all subsets are conformal:
       TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_size),std::runtime_error,
         "Error, the subset size has not been specified");
       subset_size = input_params->get<int_t>(DICe::subset_size);
     }
   }
-  TEUCHOS_TEST_FOR_EXCEPTION(subset_centroids->size()<=0,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(num_subsets<=0,std::runtime_error,"");
-
   set_step_size(step_size); // this is done just so the step_size appears in the output file header (it's not actually used)
-  // let the schema know how many images there are in the sequence:
-
   // set the blocking subset ids if they exist
   set_obstructing_subset_ids(blocking_subset_ids);
   // set the subsets that should force the simplex method
   set_force_simplex(force_simplex);
   // initialize the schema
-  Teuchos::ArrayRCP<scalar_t> coords_x(num_subsets,0.0);
-  Teuchos::ArrayRCP<scalar_t> coords_y(num_subsets,0.0);
-  for(int_t i=0;i<num_subsets;++i){
-    coords_x[i] = (*subset_centroids)[i*dim + 0];
-    coords_y[i] = (*subset_centroids)[i*dim + 1];
-  }
-  initialize(coords_x,coords_y,subset_size,conformal_area_defs,neighbor_ids);
+  initialize(decomp,subset_size,conformal_area_defs);
 
   // set the seed value if they exist
   if(subset_info!=Teuchos::null){
@@ -982,21 +833,10 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   TEUCHOS_TEST_FOR_EXCEPTION(schema->motion_window_params()->size()>0,std::runtime_error,"Error motion windows cannot be used in stereo");
   Teuchos::RCP<MultiField> stereo_coords_x = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::STEREO_COORDINATES_X_FS);
   Teuchos::RCP<MultiField> stereo_coords_y = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::STEREO_COORDINATES_Y_FS);
-  //Teuchos::RCP<MultiField> neighbors = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::NEIGHBOR_ID_FS);
-
-  assert(def_imgs_.size()>0);
-  TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[0]->width()!=ref_img_->width(),std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[0]->height()!=ref_img_->height(),std::runtime_error,"");
   global_num_subsets_ = schema->mesh()->get_scalar_node_dist_map()->get_num_global_elements();
   TEUCHOS_TEST_FOR_EXCEPTION(global_num_subsets_<=0,std::runtime_error,"");
   subset_dim_ = schema->subset_dim();
   this_proc_gid_order_ = schema->this_proc_gid_order();
-
-//  // create an evenly split map to start:
-//  Teuchos::RCP<MultiField_Map> id_decomp_map = schema->mesh()->get_scalar_node_dist_map();
-//  this_proc_gid_order_ = std::vector<int_t>(id_decomp_map->get_num_local_elements(),-1);
-//  for(int_t i=0;i<id_decomp_map->get_num_local_elements();++i)
-//    this_proc_gid_order_[i] = id_decomp_map->get_global_element(i);
 
   const int_t num_overlap_coords = schema->mesh()->get_scalar_node_overlap_map()->get_num_local_elements();
   Teuchos::ArrayRCP<scalar_t> overlap_coords_x(num_overlap_coords,0.0);
@@ -1058,58 +898,28 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   mesh_->get_field(DICe::mesh::field_enums::NEIGHBOR_ID_FS)->update(1.0,*schema->mesh()->get_field(DICe::mesh::field_enums::NEIGHBOR_ID_FS),0.0);
 
   DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] right schema initialized");
-
-//  const int_t global_num_subsets = schema->global_num_subsets();
-//  const int_t num_overlap_subsets = stereo_coords_x->get_map()->get_num_local_elements();
-//  Teuchos::ArrayRCP<scalar_t> coords_x(global_num_subsets,0.0);
-//  Teuchos::ArrayRCP<scalar_t> coords_y(global_num_subsets,0.0);
-//  Teuchos::RCP<std::vector<int_t> > neighbor_ids = Teuchos::rcp(new std::vector<int_t>(global_num_subsets,-1));
-//  for(int_t i=0;i<num_overlap_subsets;++i){
-//    int_t global_id = stereo_coords_x->get_map()->get_global_element(i);
-//    coords_x[global_id] = std::round(stereo_coords_x->local_value(i));
-//    coords_y[global_id] = std::round(stereo_coords_y->local_value(i));
-//    (*neighbor_ids)[global_id] = neighbors->local_value(i);
-//  }
-//  initialize(coords_x,coords_y,schema->subset_dim(),Teuchos::null,neighbor_ids);
 }
 
 
 void
-Schema::initialize(Teuchos::ArrayRCP<scalar_t> coords_x,
-  Teuchos::ArrayRCP<scalar_t> coords_y,
+Schema::initialize(Teuchos::RCP<Decomp> decomp,
   const int_t subset_size,
-  Teuchos::RCP<std::map<int_t,Conformal_Area_Def> > conformal_subset_defs,
-  Teuchos::RCP<std::vector<int_t> > neighbor_ids){
-  assert(def_imgs_.size()>0);
-  TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[0]->width()!=ref_img_->width(),std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[0]->height()!=ref_img_->height(),std::runtime_error,"");
+  Teuchos::RCP<std::map<int_t,Conformal_Area_Def> > conformal_subset_defs){
   if(is_initialized_){
     assert(global_num_subsets_>0);
     assert(local_num_subsets_>0);
-    //assert(fields_->get_num_fields()==MAX_FIELD_NAME);
-    //assert(fields_nm1_->get_num_fields()==MAX_FIELD_NAME);
     return;  // no need to initialize if already done
   }
-  TEUCHOS_TEST_FOR_EXCEPTION(coords_x==Teuchos::null || coords_y==Teuchos::null,std::runtime_error,"Error, invalid pointers for coordinates");
-  TEUCHOS_TEST_FOR_EXCEPTION(coords_x.size() <= 0,std::runtime_error,"Error, invalid x coordinates");
-  global_num_subsets_ = coords_x.size();
-  TEUCHOS_TEST_FOR_EXCEPTION(coords_x.size() != coords_y.size(),std::runtime_error,"Error, size of the coords arrays must match");
+  TEUCHOS_TEST_FOR_EXCEPTION(decomp==Teuchos::null,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(decomp->overlap_coords_x().size() <= 0,std::runtime_error,"Error, invalid x coordinates");
+  global_num_subsets_ = decomp->num_global_subsets();
   subset_dim_ = subset_size;
 
   // create an evenly split map to start:
-  Teuchos::RCP<MultiField_Map> id_decomp_map = Teuchos::rcp(new MultiField_Map(global_num_subsets_,0,*comm_));
-  this_proc_gid_order_ = std::vector<int_t>(id_decomp_map->get_num_local_elements(),-1);
-  for(int_t i=0;i<id_decomp_map->get_num_local_elements();++i)
-    this_proc_gid_order_[i] = id_decomp_map->get_global_element(i);
-
-  // if there are blocking subsets, they need to be on the same processor and put in order:
-  create_obstruction_dist_map(id_decomp_map);
-
-  // if there are seeds involved, the decomp must respect these
-  create_seed_dist_map(id_decomp_map,neighbor_ids);
+  this_proc_gid_order_ = decomp->this_proc_gid_order();
 
   // create an exodus mesh for output
-  create_mesh(coords_x,coords_y,id_decomp_map);
+  create_mesh(decomp);
 
   DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] num local subsets: " << local_num_subsets_);
   // initialize the conformal subset map to avoid havng to check if its null always
@@ -1137,107 +947,37 @@ Schema::initialize(Teuchos::ArrayRCP<scalar_t> coords_x,
 
   is_initialized_ = true;
 
-  if(neighbor_ids!=Teuchos::null)
+  if(decomp->neighbor_ids()!=Teuchos::null)
     for(int_t i=0;i<local_num_subsets_;++i){
-      local_field_value(i,DICe::NEIGHBOR_ID)  = subset_global_id((*neighbor_ids)[i]);
+      const int_t gid = subset_global_id(i);
+      const int_t olid = mesh_->get_scalar_node_overlap_map()->get_local_element(gid);
+      local_field_value(i,DICe::NEIGHBOR_ID) = (*decomp->neighbor_ids())[olid];
     }
+
   DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] schema initialized");
 }
 
 void
-Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
-  Teuchos::ArrayRCP<scalar_t> coords_y,
-  Teuchos::RCP<MultiField_Map> dist_map){
+Schema::create_mesh(Teuchos::RCP<Decomp> decomp){
 
   int proc_rank=0;
 #if DICE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
 #endif
 
-  Teuchos::ArrayRCP<scalar_t> overlap_coords_x;
-  Teuchos::ArrayRCP<scalar_t> overlap_coords_y;
-  Teuchos::ArrayRCP<int_t> node_map;
-  const bool is_parallel = dist_map->get_comm().get_size() > 1;
-  if(is_parallel){
-
-    // collect all the ids local to this processor already:
-    std::set<int_t> id_list;
-    Teuchos::ArrayView<const int_t> my_gids = dist_map->get_global_element_list();
-    for(int_t i=0;i<my_gids.size();++i){
-      id_list.insert(my_gids[i]);
-    }
-
-    // determine the max strain window size:
-    scalar_t max_strain_window_size = 0.0;
-    for(size_t i=0;i<post_processors_.size();++i)
-      if(post_processors_[i]->strain_window_size() > max_strain_window_size)
-        max_strain_window_size = post_processors_[i]->strain_window_size();
-    DEBUG_MSG("max strain window size " << max_strain_window_size);
-
-    // Do a neighborhood search for all possible neighbors for post-processors
-
-    Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud<scalar_t>());
-    point_cloud->pts.resize(coords_x.size());
-    for(int_t i=0;i<coords_x.size();++i){
-      point_cloud->pts[i].x = coords_x[i];
-      point_cloud->pts[i].y = coords_y[i];
-      point_cloud->pts[i].z = 0.0;
-    }
-    DEBUG_MSG("building the kd-tree");
-    Teuchos::RCP<my_kd_tree_t> kd_tree = Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
-    kd_tree->buildIndex();
-    DEBUG_MSG("kd-tree completed");
-    std::vector<std::pair<size_t,scalar_t> > ret_matches;
-    nanoflann::SearchParams params;
-    params.sorted = true; // sort by distance in ascending order
-    const scalar_t tiny = 1.0E-5;
-    scalar_t neigh_rad_2 = (scalar_t)max_strain_window_size/2.0;
-    neigh_rad_2 *= neigh_rad_2;
-    neigh_rad_2 += tiny;
-    scalar_t query_pt[3];
-    for(int_t i=0;i<my_gids.size();++i){
-      const int_t gid = my_gids[i];
-      assert(gid>=0&&gid<coords_x.size());
-      query_pt[0] = coords_x[gid];
-      query_pt[1] = coords_y[gid];
-      query_pt[2] = 0.0;
-      kd_tree->radiusSearch(&query_pt[0],neigh_rad_2,ret_matches,params);
-      for(size_t j=0;j<ret_matches.size();++j){
-        id_list.insert(ret_matches[j].first);
-      }
-    }
-    DEBUG_MSG("neighbor list constructed");
-
-    // at this point, the max neighbors should be included so create a reduced set of coordinates
-    const int_t num_overlap_points = id_list.size();
-    node_map.resize(num_overlap_points,0);
-    overlap_coords_x.resize(num_overlap_points,0.0);
-    overlap_coords_y.resize(num_overlap_points,0.0);
-    std::set<int_t>::iterator list_it = id_list.begin();
-    std::set<int_t>::iterator list_end = id_list.end();
-    int_t ii=0;
-    for(;list_it!=list_end;++list_it){
-      overlap_coords_x[ii] = coords_x[*list_it];
-      overlap_coords_y[ii] = coords_y[*list_it];
-      node_map[ii++] = *list_it;
-    }
-    DEBUG_MSG("coordinate list has been trimmed");
-  }
-  else{
-    overlap_coords_x = coords_x;
-    overlap_coords_y = coords_y;
-    node_map.resize(coords_x.size(),0);
-    for(int_t i=0;i<node_map.size();++i)
-      node_map[i] = i;
+  const int_t num_overlap_coords = decomp->id_decomp_overlap_map()->get_num_local_elements();
+  const int_t num_coords = decomp->id_decomp_map()->get_num_local_elements();
+  Teuchos::ArrayRCP<int_t> node_map(num_overlap_coords,0);
+  for(int_t i=0;i<num_overlap_coords;++i){
+    node_map[i] = decomp->id_decomp_overlap_map()->get_global_element(i);
   }
 
   // create a  DICe::mesh::Mesh that has a connectivity with only one node per elem
   //const int_t num_points = coords_x.size();
   // the subset ownership is dictated by the dist_map
   // the overlap map for is dictated by which neighbors are needed to access
-  const int_t num_elem = dist_map->get_global_element_list().size();
-  Teuchos::ArrayRCP<int_t> connectivity(num_elem,0);
-  Teuchos::ArrayRCP<int_t> elem_map(num_elem,0);
+  Teuchos::ArrayRCP<int_t> connectivity(num_coords,0);
+  Teuchos::ArrayRCP<int_t> elem_map(num_coords,0);
   // note: this assumes the elements are contiguous in terms of ids and that the overlap ids
   // are in ascending order
   int_t overlap_offset = 0;
@@ -1247,12 +987,12 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   //  overlap_offset++;
   //}
   for(int_t i=0;i<node_map.size();++i){
-    if(dist_map->get_global_element_list()[0] <= node_map[i]) break;
+    if(decomp->id_decomp_map()->get_global_element_list()[0] <= node_map[i]) break;
     overlap_offset++;
   }
-  for(int_t i=0;i<num_elem;++i){
+  for(int_t i=0;i<num_coords;++i){
     connectivity[i] = overlap_offset + i + 1; // + 1 because exodus elem ids are 1-based
-    elem_map[i] = dist_map->get_global_element_list()[i];
+    elem_map[i] = decomp->id_decomp_map()->get_global_element_list()[i];
   }
   // filename for output
   std::stringstream exo_name;
@@ -1266,8 +1006,8 @@ Schema::create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
   std::set<int_t> neumann_boundary_nodes;
   std::set<int_t> lagrange_boundary_nodes;
   mesh_ = DICe::mesh::create_point_or_tri_mesh(DICe::mesh::MESHLESS,
-    overlap_coords_x,
-    overlap_coords_y,
+    decomp->overlap_coords_x(),
+    decomp->overlap_coords_y(),
     connectivity,
     node_map,
     elem_map,

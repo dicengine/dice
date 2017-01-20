@@ -51,6 +51,7 @@
   #include <DICe_Global.h>
 #endif
 #include <DICe_Mesh.h>
+#include <DICe_Decomp.h>
 
 #ifdef DICE_TPETRA
   #include "DICe_MultiFieldTpetra.h"
@@ -207,105 +208,61 @@ public:
   /// Communicator RCP
   typedef Teuchos::RCP<MultiField_Comm> comm_rcp;
 
-  /// \brief Constructor that initializes empty images of the dimensions given
-  /// \param img_width Image width (must be the same for the reference and deformed images)
-  /// \param img_height Image height (must be the same for the reference and deformed images)
-  /// \param initial_intensity_value value to populate the pixel values with
-  /// \param params Correlation parameters
-  Schema(const int_t img_width,
-    const int_t img_height,
-    const intensity_t initial_intensity_value,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+  /// \brief do nothing constructor
+  Schema(const Teuchos::RCP<Teuchos::ParameterList> & correlation_params=Teuchos::null){
+    default_constructor_tasks(correlation_params);
+  };
 
-  /// \brief Constructor that takes string names of images as inputs
-  /// \param refName String name of reference image
-  /// \param defName String name of deformed image
-  /// \param params Correlation parameters
-  Schema(const std::string & refName,
-    const std::string & defName,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+  /// \brief Constructor that takes a parameter list
+  /// \param input_params the input parameters contain the image file names and subset size and spacing, etc.
+  /// \param correlation_params the correlation parameters determine the dic algorithm options
+  Schema(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+    const Teuchos::RCP<Teuchos::ParameterList> & correlation_params);
 
-  /// \brief Constructor that takes string names of images as inputs
-  /// \param refName String name of reference image
-  /// \param defName String name of deformed image
-  /// \param params_file_name File name of the parameters file
-  Schema(const std::string & refName,
-    const std::string & defName,
+  /// \brief Constructor that takes string name of a parameter list file
+  /// \param input_file_name file name of the input.xml file that contains subset locations file names, etc.
+  /// \param params_file_name file name of the correlation parameters file
+  Schema(const std::string & input_file_name,
     const std::string & params_file_name);
 
-  /// \brief Constructor that takes arrays of intensity values as inputs
-  /// \param img_width Image width (must be the same for the reference and deformed images)
-  /// \param img_height Image height (must be the same for the reference and deformed images)
-  /// \param refRCP Array of intensity values for the reference image
-  /// \param defRCP Array of intensity values for deformed image
+  /// \brief Constructor that takes a parameter list
+  /// \param input_params the input parameters contain the image file names and subset size and spacing, etc.
+  /// \param correlation_params the correlation parameters determine the dic algorithm options
+  /// \param schema pointer to another schema
+  Schema(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+    const Teuchos::RCP<Teuchos::ParameterList> & correlation_params,
+    const Teuchos::RCP<Schema> & schema);
+
+  /// \brief Constructor that takes a parameter list and equally spaced subsets
+  /// \param roi_width the region of interest width
+  /// \param roi_height the region of interest height
+  /// \param step_size_x Spacing of the correlation points in x
+  /// \param step_size_y Spacing of the correlation points in y
+  /// \param subset_size int_t of the square subsets in pixels
   /// \param params Correlation parameters
-  Schema(const int_t img_width,
-    const int_t img_height,
-    const Teuchos::ArrayRCP<intensity_t> refRCP,
-    const Teuchos::ArrayRCP<intensity_t> defRCP,
+  Schema(const int_t roi_width,
+    const int_t roi_height,
+    const int_t step_size_x,
+    const int_t step_size_y,
+    const int_t subset_size,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
-  /// \brief Constructor that takes arrays of intensity values as inputs
-  /// \param img_width Image width (must be the same for the reference and deformed images)
-  /// \param img_height Image height (must be the same for the reference and deformed images)
-  /// \param refRCP Array of intensity values for the reference image
-  /// \param defRCP Array of intensity values for deformed image
-  /// \param params_file_name File name of parameters file
-  Schema(const int_t img_width,
-    const int_t img_height,
-    const Teuchos::ArrayRCP<intensity_t> refRCP,
-    const Teuchos::ArrayRCP<intensity_t> defRCP,
-    const std::string & params_file_name);
-
-  /// \brief Constructor that takes already instantiated images as inputs
-  /// \param ref_img Reference DICe::Image
-  /// \param def_img Deformed DICe::Image
-  /// \param params_file_name File name of parameters file
-  Schema(Teuchos::RCP<Image> ref_img,
-    Teuchos::RCP<Image> def_img,
-    const std::string & params_file_name);
-
-  /// \brief Constructor that takes already instantiated images as inputs
-  /// \param ref_img Reference DICe::Image
-  /// \param def_img Deformed DICe::Image
-  /// \param params Correlation Parameters
-  Schema(Teuchos::RCP<Image> ref_img,
-    Teuchos::RCP<Image> def_img,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
-
-  /// \brief Helper method to enable creating a schema with a parameter list or a file name
-  /// \param refName String name of reference image
-  /// \param defName String name of deformed image
-  /// \param params Correlation parameters
-  void construct_schema(const std::string & refName,
-    const std::string & defName,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
-
-  /// \brief Helper method to enable creating a schema with a parameter list or a file name
-  /// \param img_width Image width (must be the same for the reference and deformed images)
-  /// \param img_height Image height (must be the same for the reference and deformed images)
-  /// \param refRCP Array of intensity values for the reference image
-  /// \param defRCP Array of intensity values for deformed image
-  /// \param params Correlation parameters
-  void construct_schema(const int_t img_width,
-    const int_t img_height,
-    const Teuchos::ArrayRCP<intensity_t> refRCP,
-    const Teuchos::ArrayRCP<intensity_t> defRCP,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
-
-  /// \brief Helper method to enable creating a schema with a parameter list or a file name
-  /// \param ref_img Reference DICe::Image
-  /// \param def_img Deformed DICe::Image
-  /// \param params Correlation Parameters
-  void construct_schema(Teuchos::RCP<Image> ref_img,
-    Teuchos::RCP<Image> def_img,
+  /// \brief Constructor that takes a set of coordinates for the subsets and conformal definitions
+  /// \param coords_x the x positions of the subset centroids
+  /// \param coords_y the y positions of the subset centroids
+  /// \param subset_size int_t of the subsets, (use -1 if conformals are defined for all subsets, otherwise all subsets without a
+  /// conformal subset def will be square and assigned this subset size.
+  /// \param conformal_subset_defs Optional definition of conformal subsets
+  /// \param neighbor_ids A vector (of length num_pts) that contains the neighbor id to use when initializing the solution by neighbor value
+  /// \param params correlation parameters
+  Schema(Teuchos::ArrayRCP<scalar_t> coords_x,
+    Teuchos::ArrayRCP<scalar_t> coords_y,
+    const int_t subset_size,
+    Teuchos::RCP<std::map<int_t,Conformal_Area_Def> > conformal_subset_defs=Teuchos::null,
+    Teuchos::RCP<std::vector<int_t> > neighbor_ids=Teuchos::null,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   virtual ~Schema(){};
-
-  /// \brief Sets the default values for the schema's member data and other initialization tasks
-  /// \param params Optional correlation parameters
-  void default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params);
 
   /// If a schema's parameters are changed, set_params() must be called again
   /// any params that aren't set are reset to the default value (so this method
@@ -349,58 +306,6 @@ public:
   /// Replace the reference image using an image
   void set_ref_image(Teuchos::RCP<Image> img);
 
-  /// \brief Initializes the data structures for the schema
-  /// \param input_params pointer to the initialization parameters
-  void initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params);
-
-  /// \brief Initializes the data structures for the schema using another schema
-  /// \param input_params pointer to the initialization parameters
-  /// \param schema pointer to another schema
-  void initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
-    const Teuchos::RCP<Schema> schema);
-
-  /// \brief Initializes the data structures for the schema
-  /// \param params_file_name String name of the parameters file
-  void initialize(const std::string & params_file_name);
-
-  /// \brief Initializes the data structures for the schema
-  /// \param coords_x the x positions of the subset centroids
-  /// \param coords_y the y positions of the subset centroids
-  /// \param subset_size int_t of the subsets, (use -1 if conformals are defined for all subsets, otherwise all subsets without a
-  /// conformal subset def will be square and assigned this subset size.
-  /// \param conformal_subset_defs Optional definition of conformal subsets
-  /// \param neighbor_ids A vector (of length num_pts) that contains the neighbor id to use when initializing the solution by neighbor value
-  void initialize(Teuchos::ArrayRCP<scalar_t> coords_x,
-    Teuchos::ArrayRCP<scalar_t> coords_y,
-    const int_t subset_size,
-    Teuchos::RCP<std::map<int_t,Conformal_Area_Def> > conformal_subset_defs=Teuchos::null,
-    Teuchos::RCP<std::vector<int_t> > neighbor_ids=Teuchos::null);
-
-  /// \brief Simple initialization routine that sets up a regular grid of correlation points throughout the image spaced according to the step sizes
-  /// \param step_size_x Spacing of the correlation points in x
-  /// \param step_size_y Spacing of the correlation points in y
-  /// \param subset_size int_t of the square subsets in pixels
-  void initialize(const int_t step_size_x,
-    const int_t step_size_y,
-    const int_t subset_size);
-
-  /// \brief Create an exodus mesh for output
-  /// \param coords_x array of x coordinates for the subset centroids
-  /// \param coords_y array of y coordinates for the subset centroids
-  /// \param elem_map the distributed map of how elements are partitioned
-  /// note: the current parallel design for the subset-based methods is that
-  /// all subsets are owned by all elements, this enables using the overlap
-  /// map to collect the solution from other procs because the overlap map and the
-  /// all owned map are the same. The dist_map is used to define the distributed
-  /// ownership for which procs will correlate a given subset. This map is one-to-one
-  /// with no overlap
-  void create_mesh(Teuchos::ArrayRCP<scalar_t> coords_x,
-    Teuchos::ArrayRCP<scalar_t> coords_y,
-    Teuchos::RCP<MultiField_Map> dist_map);
-
-  /// create all of the fields necessary on the mesh
-  void create_mesh_fields();
-
   /// Conduct the correlation
   /// returns 0 if successful
   int_t execute_correlation();
@@ -426,7 +331,6 @@ public:
 
   /// Save off the q and r fields once the mapping from left to right image is known
   void save_cross_correlation_fields();
-
 
   /// Triangulate the current positions of the subset centroids
   /// returns 0 if successful
@@ -1170,6 +1074,45 @@ public:
   }
 
 private:
+  /// \brief Initializes the data structures for the schema
+  /// \param input_params pointer to the initialization parameters
+  /// \param correlation_params pointer to the correlation parameters
+  void initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+    const Teuchos::RCP<Teuchos::ParameterList> & correlation_params);
+
+  /// \brief Initializes the data structures for the schema using another schema
+  /// \param input_params pointer to the initialization parameters
+  /// \param schema pointer to another schema
+  void initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+    const Teuchos::RCP<Schema> schema);
+
+  /// \brief Initializes the data structures for the schema
+  /// \param decomp pointer to the decomposition class object
+  /// \param subset_size int_t of the subsets, (use -1 if conformals are defined for all subsets, otherwise all subsets without a
+  /// conformal subset def will be square and assigned this subset size.
+  /// \param conformal_subset_defs Optional definition of conformal subsets
+  /// \param neighbor_ids A vector (of length num_pts) that contains the neighbor id to use when initializing the solution by neighbor value
+  void initialize(Teuchos::RCP<Decomp> decomp,
+    const int_t subset_size,
+    Teuchos::RCP<std::map<int_t,Conformal_Area_Def> > conformal_subset_defs=Teuchos::null);
+
+  /// \brief Sets the default values for the schema's member data and other initialization tasks
+  /// \param params Optional correlation parameters
+  void default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params);
+
+  /// \brief Create an exodus mesh for output
+  /// \param decomp pointer to a decomposition
+  /// note: the current parallel design for the subset-based methods is that
+  /// all subsets are owned by all elements, this enables using the overlap
+  /// map to collect the solution from other procs because the overlap map and the
+  /// all owned map are the same. The dist_map is used to define the distributed
+  /// ownership for which procs will correlate a given subset. This map is one-to-one
+  /// with no overlap
+  void create_mesh(Teuchos::RCP<Decomp> decomp);
+
+  /// create all of the fields necessary on the mesh
+  void create_mesh_fields();
+
   /// Pointer to communicator (can be serial)
   comm_rcp comm_;
   /// The mesh holds the fields and subsets or elements and nodes

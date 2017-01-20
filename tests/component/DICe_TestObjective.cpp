@@ -113,12 +113,11 @@ int main(int argc, char *argv[]) {
     }
     Teuchos::RCP<DICe::Image> defImg = Teuchos::rcp(new DICe::Image(img_width,img_height,intensitiesShift));
     // create a temp schema:
-    DICe::Schema * schema = new DICe::Schema(img_width,img_height,intensities,intensitiesShift);
     Teuchos::ArrayRCP<scalar_t> coords_x(1,100);
     Teuchos::ArrayRCP<scalar_t> coords_y(1,100);
-    schema->initialize(coords_x,coords_y,99);
-    schema->local_field_value(0,DICe::COORDINATE_X) = 100;
-    schema->local_field_value(0,DICe::COORDINATE_Y) = 100;
+    DICe::Schema * schema = new DICe::Schema(coords_x,coords_y,99);
+    schema->set_ref_image(img_width,img_height,intensities);
+    schema->set_def_image(img_width,img_height,intensitiesShift);
     //schema->sync_fields_all_to_dist(); // distribute the fields across processors if necessary
     // create an objective:
     Teuchos::RCP<DICe::Objective_ZNSSD> obj = Teuchos::rcp(new DICe::Objective_ZNSSD(schema,0));

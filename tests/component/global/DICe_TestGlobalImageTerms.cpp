@@ -83,6 +83,7 @@ int main(int argc, char *argv[]) {
   input_params->set(DICe::subset_file,"image_terms_roi.txt");
   input_params->set(DICe::output_folder,"");
   input_params->set(DICe::output_prefix,"image_terms");
+  input_params->set(DICe::image_folder,"");
   corr_params->set(DICe::use_global_dic,true);
   corr_params->set(DICe::global_formulation,UNREGULARIZED);
   corr_params->set(DICe::global_solver,GMRES_SOLVER);
@@ -118,6 +119,11 @@ int main(int argc, char *argv[]) {
   ref->write("ref_image_terms.tif");
   Teuchos::RCP<Image> def = Teuchos::rcp(new Image(w,h,def_intens));
   def->write("def_image_terms.tif");
+  input_params->set(DICe::reference_image,"ref_image_terms.tif");
+  Teuchos::ParameterList def_img_params;
+  def_img_params.set("def_image_terms.tif",true);
+  input_params->set(DICe::deformed_images,def_img_params);
+
 
   *outStream << "creating the global roi file" << std::endl;
 
@@ -144,8 +150,9 @@ int main(int argc, char *argv[]) {
 
   *outStream << "constructing a schema" << std::endl;
 
-  Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema(ref,def,corr_params));
-  schema->initialize(input_params);
+  Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema(input_params,corr_params));
+  schema->set_ref_image(ref);
+  schema->set_def_image(def);
 
   *outStream << "creating and populating the exact solution fields" << std::endl;
 //  schema->global_algorithm()->mesh()->create_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);

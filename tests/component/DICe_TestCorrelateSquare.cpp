@@ -79,11 +79,17 @@ int main(int argc, char *argv[]) {
   params->set(DICe::interpolation_method,DICe::KEYS_FOURTH);
   params->set(DICe::robust_solver_tolerance,1.0E-4);
 
+
+  // get the dimensions of the images and set up an array of points
+  Image img("./images/refSpeckled.tif");
+  const int_t roi_w = img.width();
+  const int_t roi_h = img.height();
   const int_t multiple_step_size_x = 101;
   const int_t multiple_step_size_y = 51;
   const int_t multiple_subset_size = 31;
-  Teuchos::RCP<DICe::Schema> schemaMultiple = Teuchos::rcp(new DICe::Schema("./images/refSpeckled.tif","./images/defSpeckled.tif",params));
-  schemaMultiple->initialize(multiple_step_size_x,multiple_step_size_y,multiple_subset_size);
+  Teuchos::RCP<DICe::Schema> schemaMultiple = Teuchos::rcp(new DICe::Schema(roi_w,roi_h,multiple_step_size_x,multiple_step_size_y,multiple_subset_size,params));
+  schemaMultiple->set_ref_image("./images/refSpeckled.tif");
+  schemaMultiple->set_def_image("./images/defSpeckled.tif");
   schemaMultiple->execute_correlation();
   schemaMultiple->write_control_points_image("schemaMultipleControlPoints.tif");
 

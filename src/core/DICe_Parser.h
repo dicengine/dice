@@ -230,7 +230,7 @@ Subset_File_Info {
   /// \param info_type optional type argument (assumes SUBSET_INFO)
   Subset_File_Info(const Subset_File_Info_Type info_type=SUBSET_INFO){
     conformal_area_defs = Teuchos::rcp(new std::map<int_t,DICe::Conformal_Area_Def>());
-    coordinates_vector = Teuchos::rcp(new std::vector<int_t>());
+    coordinates_vector = Teuchos::rcp(new std::vector<scalar_t>());
     neighbor_vector = Teuchos::rcp(new std::vector<int_t>());
     id_sets_map = Teuchos::rcp(new std::map<int_t,std::vector<int_t> >());
     force_simplex = Teuchos::rcp(new std::set<int_t>());
@@ -255,7 +255,7 @@ Subset_File_Info {
   /// Pointer to map of conformal subset defs (these are used to define conformal subsets)
   Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
   /// Pointer to the vector of subset centroid coordinates
-  Teuchos::RCP<std::vector<int_t> > coordinates_vector;
+  Teuchos::RCP<std::vector<scalar_t> > coordinates_vector;
   /// Pointer to the vector of neighbor ids
   Teuchos::RCP<std::vector<int_t> > neighbor_vector;
   /// Pointer to a map that has vectos of subset ids (used to denote blocking subsets)
@@ -360,7 +360,7 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
 /// \param subset_file_info Optional information from the subset file (ROIs, etc.)
 /// \param grad_threshold subsets with a gradiend SSSIG lower than this will be removed
 DICE_LIB_DLL_EXPORT
-void create_regular_grid_of_correlation_points(std::vector<int_t> & correlation_points,
+void create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_points,
   std::vector<int_t> & neighbor_ids,
   Teuchos::RCP<Teuchos::ParameterList> params,
   Teuchos::RCP<Image> ref_image,

@@ -211,7 +211,11 @@ int main(int argc, char *argv[]) {
     else  // non-cine input
     {
       num_images = image_files.size() - 1; // the first file is the reference image
-      first_frame_index = input_params->get<int_t>(DICe::reference_image_index,0)+1;
+      if(input_params->isParameter(DICe::reference_image_index)){
+        first_frame_index = input_params->get<int_t>(DICe::reference_image_index)+1;
+      }else{
+        first_frame_index = 1;
+      }
       TEUCHOS_TEST_FOR_EXCEPTION(num_images<=0,std::runtime_error,"");
       *outStream << "Reference image: " << image_files[0] << std::endl;
       for(int_t i=1;i<=num_images;++i){
@@ -254,16 +258,17 @@ int main(int argc, char *argv[]) {
       else{
         ref_image = cine_reader->get_frame(cine_ref_index,true,filter_failed_pixels,correlation_params);
       }
-      schema = Teuchos::rcp(new DICe::Schema(ref_image,ref_image,correlation_params));
+      schema = Teuchos::rcp(new DICe::Schema(input_params,correlation_params));
+      schema->set_ref_image(ref_image);
+      schema->set_def_image(ref_image);
     }
     else{
       const std::string ref_image_string = image_files[0];
-      schema = Teuchos::rcp(new DICe::Schema(ref_image_string,ref_image_string,correlation_params));
+      schema = Teuchos::rcp(new DICe::Schema(input_params,correlation_params));
+      schema->set_ref_image(ref_image_string);
+      schema->set_def_image(ref_image_string);
     }
-
     schema->set_first_frame_index(cine_start_index + first_frame_index);
-
-    schema->initialize(input_params);
 
     bool has_motion_windows = false;
     if(schema->analysis_type()==LOCAL_DIC){
@@ -327,27 +332,37 @@ int main(int argc, char *argv[]) {
         else
           right_image = stereo_cine_reader->get_frame(start_frame,true,filter_failed_pixels,correlation_params);
         schema->set_def_image(right_image);
-        stereo_schema = Teuchos::rcp(new DICe::Schema(right_image,right_image,correlation_params));
+        schema->initialize_cross_correlation(triangulation);
+        if(schema->use_nonlinear_projection()){
+          schema->project_right_image_into_left_frame(triangulation,false);
+        }
+        schema->execute_cross_correlation();
+        schema->save_cross_correlation_fields();
+        stereo_schema = Teuchos::rcp(new DICe::Schema(input_params,correlation_params,schema));
+        stereo_schema->set_ref_image(right_image);
+        stereo_schema->set_def_image(right_image);
       } // end is_cine
       else{
         const std::string right_image_string = stereo_image_files[start_frame];
         schema->set_def_image(right_image_string);
-        stereo_schema = Teuchos::rcp(new DICe::Schema(right_image_string,right_image_string,correlation_params));
+        schema->initialize_cross_correlation(triangulation);
+        if(schema->use_nonlinear_projection()){
+          schema->project_right_image_into_left_frame(triangulation,false);
+        }
+        schema->execute_cross_correlation();
+        schema->save_cross_correlation_fields();
+        stereo_schema = Teuchos::rcp(new DICe::Schema(input_params,correlation_params,schema));
+        stereo_schema->set_ref_image(right_image_string);
+        stereo_schema->set_def_image(right_image_string);
       }
-      schema->initialize_cross_correlation(triangulation);
-      if(stereo_schema->use_nonlinear_projection()){
-        schema->project_right_image_into_left_frame(triangulation,false);
-      }
-      schema->execute_cross_correlation();
-      schema->save_cross_correlation_fields();
       assert(stereo_schema!=Teuchos::null);
       if(stereo_schema->use_nonlinear_projection())
         stereo_schema->project_right_image_into_left_frame(triangulation,true);
       stereo_schema->set_first_frame_index(cine_start_index + first_frame_index);
-      stereo_schema->initialize(input_params,schema);
+      //stereo_schema->initialize(input_params,schema);
       stereo_schema->set_num_image_frames(num_images);
       cross_corr_time = t.elapsed();
-    }
+    } // end is stereo
 
     // iterate through the images and perform the correlation:
     scalar_t corr_time = 0.0;

@@ -114,11 +114,21 @@ class DICE_LIB_DLL_EXPORT
 Decomp {
 public:
   /// constructor
-  /// \param image_file_name the file name for the image that will be decomposed
   /// \param input_params the input parameters
   /// \param correlation_params the correlation parameters
-  Decomp(const std::string & image_file_name,
-    const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+  Decomp(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+    const Teuchos::RCP<Teuchos::ParameterList> & correlation_params);
+
+  /// constructor that splits up an already populated set of correlation points
+  /// \param subset_centroids_x x coordinates of all global points
+  /// \param subset_centroids_y y coordinates of all global points prior to decomposition
+  /// \param neighbor_ids the neighbors in global ids to use for initialization of the solution if neighbor values are used
+  /// \param obstructing_subset_ids obstructions listed for each subset if necessary
+  /// \param correlation_params pointer to the parameters used for the correlation
+  Decomp(const Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
+    const Teuchos::ArrayRCP<scalar_t> subset_centroids_y,
+    const Teuchos::RCP<std::vector<int_t> > neighbor_ids,
+    const Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids,
     const Teuchos::RCP<Teuchos::ParameterList> & correlation_params);
 
   /// destructor
@@ -129,13 +139,68 @@ public:
     return num_global_subsets_;
   }
 
+  /// returns a copy of the execution ordering
+  std::vector<int_t> this_proc_gid_order()const{
+    return this_proc_gid_order_;
+  }
+
+  /// returns the one to one decomp map
+  Teuchos::RCP<MultiField_Map> id_decomp_map(){
+    return id_decomp_map_;
+  }
+
+  /// return the non one-to-one decomposition map (some ids are ghosted across processors)
+  Teuchos::RCP<MultiField_Map> id_decomp_overlap_map(){
+    return id_decomp_overlap_map_;
+  }
+
+  /// returns a pointer to the trimmed set of overlap x coordinates
+  Teuchos::ArrayRCP<scalar_t> overlap_coords_x()const{
+    return overlap_coords_x_;
+  }
+
+  /// returns a pointer to the trimmed set of overlap y coordinates
+  Teuchos::ArrayRCP<scalar_t> overlap_coords_y()const{
+    return overlap_coords_y_;
+  }
+
+  /// returns a pointer to the neighbor ids vector
+  Teuchos::RCP<std::vector<int_t> > neighbor_ids()const{
+    return neighbor_ids_;
+  }
+
+  /// returns the image width
+  int_t image_width()const{
+    return image_width_;
+  }
+
+  /// returns the image width
+  int_t image_height()const{
+    return image_height_;
+  }
+
+private:
+  /// initialize all the maps and split up the subsets across processors preserving obstructions and seeds
+  /// \param subset_centroids_x x coordinates of all global points
+  /// \param subset_centroids_y y coordinates of all global points prior to decomposition
+  /// \param neighbor_ids the neighbors in global ids to use for initialization of the solution if neighbor values are used
+  /// \param obstructing_subset_ids obstructions listed for each subset if necessary
+  /// \param correlation_params pointer to the parameters used for the correlation
+  void initialize(const Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
+    const Teuchos::ArrayRCP<scalar_t> subset_centroids_y,
+    const Teuchos::RCP<std::vector<int_t> > neighbor_ids,
+    const Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids,
+    const Teuchos::RCP<Teuchos::ParameterList> & correlation_params);
+
   /// populates the coordinates of all global points
-  /// \param subset_centroids vector that gets populated with all global subset coordinates
+  /// \param subset_centroids_x vector that gets populated with all global subset x coordinates
+  /// \param subset_centroids_y vector that gets populated with all global subset y coordinates
   /// \param neighbor_ids vector with the neighbor ids for each subset
   /// \param image_file_name name of the image to read for computing SSSIG if necessary
   /// \param input_params input parameters from xml file
   /// \param correlation_params correlation parameters from xml file
-  void populate_global_coordinate_vector(Teuchos::RCP<std::vector<int_t> > & subset_centroids,
+  void populate_global_coordinate_vector(Teuchos::ArrayRCP<scalar_t> & subset_centroids_x,
+    Teuchos::ArrayRCP<scalar_t> & subset_centroids_y,
     Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
     Teuchos::RCP<std::map<int_t,std::vector<int_t> > > & obstructing_subset_ids,
     const std::string & image_file_name,
@@ -154,9 +219,12 @@ public:
     Teuchos::RCP<std::map<int_t,std::vector<int_t> > > & obstructing_subset_ids,
     const Teuchos::RCP<Teuchos::ParameterList> & correlation_params);
 
-private:
   /// total number of points in the discretization
   int_t num_global_subsets_;
+  /// image width of reference image (used for filtering points out of bounds)
+  int_t image_width_;
+  /// image height of reference image (used for filtering points out of bounds)
+  int_t image_height_;
   /// global mpi communicator
   Teuchos::RCP<MultiField_Comm> comm_;
   /// one-to-one decomposition map (all ids are only onwned by one processor)
@@ -169,8 +237,8 @@ private:
   Teuchos::ArrayRCP<scalar_t> overlap_coords_x_;
   /// all the local and ghosted point y coordinates for this processor
   Teuchos::ArrayRCP<scalar_t> overlap_coords_y_;
-
-
+  /// trimmed list of neighbor ids
+  Teuchos::RCP<std::vector<int_t> > neighbor_ids_;
 };
 
 }// End DICe Namespace

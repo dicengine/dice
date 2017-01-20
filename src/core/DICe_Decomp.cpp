@@ -44,23 +44,56 @@
 #include <DICe_ParameterUtilities.h>
 #include <DICe_Cine.h>
 #include <DICe_PostProcessor.h>
+#include <DICe_ImageIO.h>
+#include <DICe_NetCDF.h>
 
 #include <Teuchos_oblackholestream.hpp>
 
 namespace DICe {
 
-Decomp::Decomp(const std::string & image_file_name,
-  const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+Decomp::Decomp(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   const Teuchos::RCP<Teuchos::ParameterList> & correlation_params):
-  num_global_subsets_(0){
-
+    num_global_subsets_(0),
+    image_width_(-1),
+    image_height_(-1){
   comm_ = Teuchos::rcp(new MultiField_Comm());
 
+  std::vector<std::string> image_files;
+  std::vector<std::string> stereo_image_files;
+  DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
+
   // set up the positions of all the mesh points or subsets
-  Teuchos::RCP<std::vector<int_t> > subset_centroids;
+  Teuchos::ArrayRCP<scalar_t> subset_centroids_x;
+  Teuchos::ArrayRCP<scalar_t> subset_centroids_y;
   Teuchos::RCP<std::vector<int_t> > neighbor_ids;
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids;
-  populate_global_coordinate_vector(subset_centroids,neighbor_ids,obstructing_subset_ids,image_file_name,input_params,correlation_params);
+  populate_global_coordinate_vector(subset_centroids_x,subset_centroids_y,neighbor_ids,obstructing_subset_ids,image_files[0],input_params,correlation_params);
+  initialize(subset_centroids_x,subset_centroids_y,neighbor_ids,obstructing_subset_ids,correlation_params);
+}
+
+Decomp::Decomp(Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
+  Teuchos::ArrayRCP<scalar_t> subset_centroids_y,
+  Teuchos::RCP<std::vector<int_t> > neighbor_ids,
+  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids,
+  const Teuchos::RCP<Teuchos::ParameterList> & correlation_params):
+    num_global_subsets_(0),
+    image_width_(-1),
+    image_height_(-1){
+  TEUCHOS_TEST_FOR_EXCEPTION(subset_centroids_x.size()<=0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(subset_centroids_x.size()!=subset_centroids_y.size(),std::runtime_error,"");
+  comm_ = Teuchos::rcp(new MultiField_Comm());
+  num_global_subsets_ = subset_centroids_x.size();
+  initialize(subset_centroids_x,subset_centroids_y,neighbor_ids,obstructing_subset_ids,correlation_params);
+}
+
+void
+Decomp::initialize(Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
+  Teuchos::ArrayRCP<scalar_t> subset_centroids_y,
+  Teuchos::RCP<std::vector<int_t> > neighbor_ids,
+  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids,
+  const Teuchos::RCP<Teuchos::ParameterList> & correlation_params){
+
+  DEBUG_MSG("Decomp::initialize(): num global subsets: " << num_global_subsets_);
 
   // create an evenly split map to start:
   id_decomp_map_ = Teuchos::rcp(new MultiField_Map(num_global_subsets_,0,*comm_));
@@ -81,10 +114,21 @@ Decomp::Decomp(const std::string & image_file_name,
   // TODO find a way to make sure all strain window sizes are captured here
   //      as it is not, it only checks for NLVC and VSG sizes
   scalar_t max_strain_window_size = 0.0;
-  scalar_t tmp_strain_window_size = correlation_params->get<int>(DICe::strain_window_size_in_pixels,0.0);
-  if(tmp_strain_window_size > max_strain_window_size) max_strain_window_size = tmp_strain_window_size;
-  tmp_strain_window_size = correlation_params->get<int>(DICe::horizon_diameter_in_pixels,0.0);
-  if(tmp_strain_window_size > max_strain_window_size) max_strain_window_size = tmp_strain_window_size;
+  scalar_t tmp_strain_window_size = 0.0;
+  if(correlation_params!=Teuchos::null){
+    if(correlation_params->isParameter(DICe::post_process_vsg_strain)){
+      Teuchos::ParameterList vsg_sublist = correlation_params->sublist(DICe::post_process_vsg_strain);
+      TEUCHOS_TEST_FOR_EXCEPTION(!vsg_sublist.isParameter(DICe::strain_window_size_in_pixels),std::runtime_error,"");
+      scalar_t tmp_strain_window_size = vsg_sublist.get<int_t>(DICe::strain_window_size_in_pixels);
+      if(tmp_strain_window_size > max_strain_window_size) max_strain_window_size = tmp_strain_window_size;
+    }
+    if(correlation_params->isParameter(DICe::post_process_nlvc_strain)){
+      Teuchos::ParameterList nlvc_sublist = correlation_params->sublist(DICe::post_process_nlvc_strain);
+      TEUCHOS_TEST_FOR_EXCEPTION(!nlvc_sublist.isParameter(DICe::horizon_diameter_in_pixels),std::runtime_error,"");
+      tmp_strain_window_size = nlvc_sublist.get<int_t>(DICe::horizon_diameter_in_pixels);
+      if(tmp_strain_window_size > max_strain_window_size) max_strain_window_size = tmp_strain_window_size;
+    }
+  }
   DEBUG_MSG("Decomp::Decomp(): max strain window size " << max_strain_window_size);
 
   // only do the neighbor searching if neighbors are needed:
@@ -99,8 +143,8 @@ Decomp::Decomp(const std::string & image_file_name,
     Teuchos::RCP<Decomp_Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Decomp_Point_Cloud<scalar_t>());
     point_cloud->pts.resize(num_global_subsets_);
     for(int_t i=0;i<num_global_subsets_;++i){
-      point_cloud->pts[i].x = (*subset_centroids)[i*2+0];
-      point_cloud->pts[i].y = (*subset_centroids)[i*2+1];
+      point_cloud->pts[i].x = subset_centroids_x[i];
+      point_cloud->pts[i].y = subset_centroids_y[i];
     }
     DEBUG_MSG("Decomp::Decomp(): building the kd-tree");
     Teuchos::RCP<decomp_kd_tree_t> kd_tree = Teuchos::rcp(new decomp_kd_tree_t(2 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
@@ -117,8 +161,8 @@ Decomp::Decomp(const std::string & image_file_name,
     for(int_t i=0;i<my_gids.size();++i){
       const int_t gid = my_gids[i];
       assert(gid>=0&&gid<num_global_subsets_);
-      query_pt[0] = (*subset_centroids)[gid*2+0];
-      query_pt[1] = (*subset_centroids)[gid*2+1];
+      query_pt[0] = subset_centroids_x[gid];
+      query_pt[1] = subset_centroids_y[gid];
       kd_tree->radiusSearch(&query_pt[0],neigh_rad_2,ret_matches,params);
       for(size_t j=0;j<ret_matches.size();++j){
         id_list.insert(ret_matches[j].first);
@@ -128,6 +172,7 @@ Decomp::Decomp(const std::string & image_file_name,
 
     // at this point, the max neighbors should be included so create a reduced set of coordinates
     const int_t num_overlap_points = id_list.size();
+    neighbor_ids_ = Teuchos::rcp(new std::vector<int_t>(num_overlap_points,-1));
     overlap_coords_x_.resize(num_overlap_points,0.0);
     overlap_coords_y_.resize(num_overlap_points,0.0);
     std::set<int_t>::iterator list_it = id_list.begin();
@@ -135,21 +180,28 @@ Decomp::Decomp(const std::string & image_file_name,
     std::vector<int_t> id_list_vec(id_list.size(),-1);
     int_t ii=0;
     for(;list_it!=list_end;++list_it){
-      overlap_coords_x_[ii] = (*subset_centroids)[*list_it*2+0];
-      overlap_coords_y_[ii] = (*subset_centroids)[*list_it*2+1];
+      overlap_coords_x_[ii] = subset_centroids_x[*list_it];
+      overlap_coords_y_[ii] = subset_centroids_y[*list_it];
+      if(neighbor_ids!=Teuchos::null)
+        (*neighbor_ids_)[ii] = (*neighbor_ids)[*list_it];
       id_list_vec[ii] = *list_it;
+      ii++;
     }
     Teuchos::ArrayView<const int_t> id_list_array(&id_list_vec[0],id_list.size());
-    id_decomp_overlap_map_ = Teuchos::rcp(new MultiField_Map(num_global_subsets_,id_list_array,0,*comm_));
+    id_decomp_overlap_map_ = Teuchos::rcp(new MultiField_Map(-1,id_list_array,0,*comm_));
     DEBUG_MSG("Decomp::Decomp(): coordinate list has been trimmed");
   } // end has strain windows && is parallel
   else{
+    // set the neighbor ids
+    neighbor_ids_ = Teuchos::rcp(new std::vector<int_t>(id_decomp_map_->get_num_local_elements(),-1));
     overlap_coords_x_.resize(id_decomp_map_->get_num_local_elements(),0.0);
     overlap_coords_y_.resize(id_decomp_map_->get_num_local_elements(),0.0);
     for(int_t i=0;i<id_decomp_map_->get_num_local_elements();++i){
       const int_t gid = id_decomp_map_->get_global_element(i);
-      overlap_coords_x_[i] = (*subset_centroids)[gid*2+0];
-      overlap_coords_y_[i] = (*subset_centroids)[gid*2+1];
+      overlap_coords_x_[i] = subset_centroids_x[gid];
+      overlap_coords_y_[i] = subset_centroids_y[gid];
+      if(neighbor_ids!=Teuchos::null)
+        (*neighbor_ids_)[i] = (*neighbor_ids)[gid];
     }
     id_decomp_overlap_map_ = id_decomp_map_;
   }
@@ -310,8 +362,18 @@ void
 Decomp::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > & obstructing_subset_ids,
   const Teuchos::RCP<Teuchos::ParameterList> & correlation_params){
-  std::string init_string = correlation_params->get<std::string>(DICe::initialization_method,"USE_FIELD_VALUES");
-  const Initialization_Method init_method = DICe::string_to_initialization_method(init_string);
+  Initialization_Method init_method = USE_FIELD_VALUES;
+  if(correlation_params!=Teuchos::null){
+    if(correlation_params->isParameter(DICe::initialization_method)){
+      if(correlation_params->isType<std::string>(DICe::initialization_method)){
+        std::string init_string = correlation_params->get<std::string>(DICe::initialization_method,"USE_FIELD_VALUES");
+        init_method = DICe::string_to_initialization_method(init_string);
+      }
+      else{
+        init_method = correlation_params->get<DICe::Initialization_Method>(DICe::initialization_method);
+      }
+    }
+  }
   if(init_method!=USE_NEIGHBOR_VALUES&&init_method!=USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY) return;
   // distribution according to seeds map (one-to-one, not all procs have entries)
   // If the initialization method is USE_NEIGHBOR_VALUES or USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY, the
@@ -399,12 +461,13 @@ Decomp::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
 }
 
 void
-Decomp::populate_global_coordinate_vector(Teuchos::RCP<std::vector<int_t> > & subset_centroids,
-    Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
-    Teuchos::RCP<std::map<int_t,std::vector<int_t> > > & obstructing_subset_ids,
-    const std::string & image_file_name,
-    const Teuchos::RCP<Teuchos::ParameterList> & input_params,
-    const Teuchos::RCP<Teuchos::ParameterList> & correlation_params){;
+Decomp::populate_global_coordinate_vector(Teuchos::ArrayRCP<scalar_t> & subset_centroids_x,
+  Teuchos::ArrayRCP<scalar_t> & subset_centroids_y,
+  Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
+  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > & obstructing_subset_ids,
+  const std::string & image_file_name,
+  const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+  const Teuchos::RCP<Teuchos::ParameterList> & correlation_params){;
 
   const int_t dim = 2;
   const int_t proc_rank = comm_->get_rank();
@@ -412,8 +475,8 @@ Decomp::populate_global_coordinate_vector(Teuchos::RCP<std::vector<int_t> > & su
   Teuchos::ArrayRCP<scalar_t> coords_x;
   Teuchos::ArrayRCP<scalar_t> coords_y;
   int_t num_global_subsets = 0;
-  int_t image_width = -1;
-  int_t image_height = -1;
+  image_width_ = -1;
+  image_height_ = -1;
 
   if(proc_rank==0){
     // only proc 0 reads the image:
@@ -443,10 +506,16 @@ Decomp::populate_global_coordinate_vector(Teuchos::RCP<std::vector<int_t> > & su
     }
     else{
       DEBUG_MSG("Decomp::Decomp(): reading image from file: " << image_file_name);
-      image = Teuchos::rcp( new Image(image_file_name.c_str(),imgParams));
+      Image_File_Type type = DICe::utils::image_file_type(image_file_name.c_str());
+      if(type==NETCDF){
+        Teuchos::RCP<netcdf::NetCDF_Reader> netcdf_reader = Teuchos::rcp(new netcdf::NetCDF_Reader());
+        image = netcdf_reader->get_image(image_file_name,imgParams);
+      }
+      else
+        image = Teuchos::rcp( new Image(image_file_name.c_str(),imgParams));
     }
-    image_width = image->width();
-    image_height = image->height();
+    image_width_ = image->width();
+    image_height_ = image->height();
   } // end proc 0 reads image
   assert((proc_rank==0&&image!=Teuchos::null)||(proc_rank>0&&image==Teuchos::null)); // only proc 0 should have an image
   // communicate the image width and height to all processes:
@@ -465,38 +534,36 @@ Decomp::populate_global_coordinate_vector(Teuchos::RCP<std::vector<int_t> > & su
   Teuchos::RCP<MultiField> zero_data = Teuchos::rcp(new MultiField(zero_map,1,true));
   Teuchos::RCP<MultiField> all_data = Teuchos::rcp(new MultiField(all_map,1,true));
   if(proc_rank==0){
-    zero_data->local_value(0) = image_width;
-    zero_data->local_value(1) = image_height;
+    zero_data->local_value(0) = image_width_;
+    zero_data->local_value(1) = image_height_;
   }
   // now export the zero owned values to all
   MultiField_Exporter exporter(*all_map,*zero_data->get_map());
   all_data->do_import(zero_data,exporter,INSERT);
   if(proc_rank!=0){
-    image_width = all_data->local_value(0);
-    image_height = all_data->local_value(1);
+    image_width_ = all_data->local_value(0);
+    image_height_ = all_data->local_value(1);
   }
-  DEBUG_MSG("[PROC "<<proc_rank <<"] image width:  " << image_width);
-  DEBUG_MSG("[PROC "<<proc_rank <<"] image height: " << image_height);
+  DEBUG_MSG("[PROC "<<proc_rank <<"] image width:  " << image_width_);
+  DEBUG_MSG("[PROC "<<proc_rank <<"] image height: " << image_height_);
 
   // now determine the list of coordinates:
   Teuchos::RCP<DICe::Subset_File_Info> subset_info;
 
   // if the subset locations are specified in an input file, read them in (else they will be defined later)
   int_t step_size = -1;
-  int_t subset_size = -1;
   Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > blocking_subset_ids;
+  Teuchos::RCP<std::vector<scalar_t> > subset_centroids_on_0 = Teuchos::rcp(new std::vector<scalar_t>());
   Teuchos::RCP<std::set<int_t> > force_simplex;
   const bool has_subset_file = input_params->isParameter(DICe::subset_file);
   DICe::Subset_File_Info_Type subset_info_type = DICe::SUBSET_INFO;
   if(has_subset_file){
     std::string fileName = input_params->get<std::string>(DICe::subset_file);
-    subset_info = DICe::read_subset_file(fileName,image_width,image_height);
+    subset_info = DICe::read_subset_file(fileName,image_width_,image_height_);
     subset_info_type = subset_info->type;
   }
-  // TODO TODO TODO deal with global DIC here
-  // if global return?...
-  if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
+ if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
     TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::step_size),std::runtime_error,
       "Error, step size has not been specified");
     step_size = input_params->get<int_t>(DICe::step_size);
@@ -504,13 +571,22 @@ Decomp::populate_global_coordinate_vector(Teuchos::RCP<std::vector<int_t> > & su
       " of interest with separation (step_size) of " << step_size << " pixels.");
     TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_size),std::runtime_error,
       "Error, the subset size has not been specified"); // required for all square subsets case
-    subset_size = input_params->get<int_t>(DICe::subset_size);
+    //subset_size = input_params->get<int_t>(DICe::subset_size);
     // only processor 0 reads the image and constructs/checks the points for SSSIG and the results are communicated to the rest of the procs
-    Teuchos::RCP<std::vector<int_t> > subset_centroids_on_0 = Teuchos::rcp(new std::vector<int_t>());
     Teuchos::RCP<std::vector<int_t> > neighbor_ids_on_0 = Teuchos::rcp(new std::vector<int_t>());
     if(proc_rank==0){
-      std::string opt_string = correlation_params->get<std::string>(DICe::optimization_method,"GRADIENT_BASED");
-      const Optimization_Method optimization_method = DICe::string_to_optimization_method(opt_string);
+      Optimization_Method optimization_method = GRADIENT_BASED;
+      if(correlation_params!=Teuchos::null){
+        if(correlation_params->isParameter(DICe::optimization_method)){
+          if(correlation_params->isType<std::string>(DICe::optimization_method)){
+            std::string opt_string = correlation_params->get<std::string>(DICe::optimization_method,"GRADIENT_BASED");
+            optimization_method = DICe::string_to_optimization_method(opt_string);
+          }
+          else{
+            optimization_method = correlation_params->get<DICe::Optimization_Method>(DICe::optimization_method);
+          }
+        }
+      }
       if(optimization_method==GRADIENT_BASED || optimization_method==GRADIENT_BASED_THEN_SIMPLEX){
         const scalar_t grad_threshold = 50.0; // threshold determined from example images
         DICe::create_regular_grid_of_correlation_points(*subset_centroids_on_0,*neighbor_ids_on_0,input_params,image,subset_info,grad_threshold);
@@ -560,32 +636,40 @@ Decomp::populate_global_coordinate_vector(Teuchos::RCP<std::vector<int_t> > & su
     // now export the zero owned values to all
     MultiField_Exporter field_exporter(*field_all_map,*field_zero_data->get_map());
     field_all_data->do_import(field_zero_data,field_exporter,INSERT);
-    subset_centroids = Teuchos::rcp(new std::vector<int_t>(num_global_subsets*2));
+    subset_centroids_x.resize(num_global_subsets,0.0);
+    subset_centroids_y.resize(num_global_subsets,0.0);
     neighbor_ids = Teuchos::rcp(new std::vector<int_t>(num_global_subsets));
     for(int_t i=0;i<num_global_subsets;++i){
-      (*subset_centroids)[i*2+0] = field_all_data->local_value(i,0);
-      (*subset_centroids)[i*2+1] = field_all_data->local_value(i,1);
+      subset_centroids_x[i] = field_all_data->local_value(i,0);
+      subset_centroids_y[i] = field_all_data->local_value(i,1);
       (*neighbor_ids)[i] = field_all_data->local_value(i,2);
     }
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(subset_info==Teuchos::null,std::runtime_error,"");
-    subset_centroids = subset_info->coordinates_vector;
+    subset_centroids_on_0 = subset_info->coordinates_vector;
+    num_global_subsets = subset_centroids_on_0->size()/dim;
+    subset_centroids_x.resize(num_global_subsets,0.0);
+    subset_centroids_y.resize(num_global_subsets,0.0);
+    for(int_t i=0;i<num_global_subsets;++i){
+      subset_centroids_x[i] = (*subset_centroids_on_0)[i*2+0];
+      subset_centroids_y[i] = (*subset_centroids_on_0)[i*2+1];
+    }
     neighbor_ids = subset_info->neighbor_vector;
     conformal_area_defs = subset_info->conformal_area_defs;
     obstructing_subset_ids = subset_info->id_sets_map;
     force_simplex = subset_info->force_simplex;
-    num_global_subsets = subset_info->coordinates_vector->size()/dim;
     if((int_t)subset_info->conformal_area_defs->size()<num_global_subsets){
       // Only require this if not all subsets are conformal:
       TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_size),std::runtime_error,
         "Error, the subset size has not been specified");
-      subset_size = input_params->get<int_t>(DICe::subset_size);
+      //subset_size = input_params->get<int_t>(DICe::subset_size);
     }
   }
-  TEUCHOS_TEST_FOR_EXCEPTION(subset_centroids->size()<=0,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(num_global_subsets<=0,std::runtime_error,"");
-  num_global_subsets_ = num_global_subsets;
+ TEUCHOS_TEST_FOR_EXCEPTION(subset_centroids_x.size()!=num_global_subsets,std::runtime_error,"");
+ TEUCHOS_TEST_FOR_EXCEPTION(subset_centroids_y.size()!=num_global_subsets,std::runtime_error,"");
+ TEUCHOS_TEST_FOR_EXCEPTION(num_global_subsets<=0,std::runtime_error,"");
+ num_global_subsets_ = num_global_subsets;
 
   // at this point we should have the global list of valid points on all processors with only proc 0 having read the image
 
@@ -599,8 +683,5 @@ Decomp::populate_global_coordinate_vector(Teuchos::RCP<std::vector<int_t> > & su
 //    DEBUG_MSG("[PROC "<<proc_rank <<"] "<< i << " " << (*neighbor_ids)[i]);
 //  }
 }
-
-
-
 
 }// End DICe Namespace
