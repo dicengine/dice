@@ -76,11 +76,22 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Image> gold_img = Teuchos::rcp(new Image("../images/netcdf.rawi"));
   const scalar_t diff = img->diff(gold_img);
   *outStream << "gold diff " << diff << std::endl;
-
   if(std::abs(diff) > errorTol){
     errorFlag++;
     *outStream << "Error, the NetCDF image was not read correctly" << std::endl;
   }
+
+  Image subImg("../images/goes14.2016.222.215844.BAND_01.nc",1235,491,496,370);
+  //subImg.write("netcdf_sub_image.tif");
+  //subImg.write("netcdf_sub_image.rawi");
+  Teuchos::RCP<Image> gold_sub_img = Teuchos::rcp(new Image("../images/netcdf_sub_image.rawi"));
+  const scalar_t sub_diff = subImg.diff(gold_sub_img);
+  *outStream << "sub gold diff " << sub_diff << std::endl;
+  if(std::abs(sub_diff) > errorTol){
+    errorFlag++;
+    *outStream << "Error, the NetCDF sub image was not read correctly" << std::endl;
+  }
+
 
   *outStream << "--- End test ---" << std::endl;
 

@@ -80,6 +80,26 @@ public:
   Teuchos::RCP<Image> get_image(const std::string & file_name,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
+  /// read the intensities from the netcdf file:
+  /// \param file_name the name of the file to read
+  /// \param intensities pointer to the intensity array (must be pre-allocated)
+  /// \param is_layout_right true if the arrays are oriented layout right in memory
+  void read_netcdf_image(const char * file_name,
+    intensity_t * intensities,
+    const bool is_layout_right = true);
+
+  /// read the intensities from the netcdf file:
+  /// \param file_name the name of the file to read
+  /// \param intensities pointer to the intensity array (must be pre-allocated)
+  /// \param is_layout_right true if the arrays are oriented layout right in memory
+  void read_netcdf_image(const char * file_name,
+    const int_t offset_x,
+    const int_t offset_y,
+    const int_t width,
+    const int_t height,
+    intensity_t * intensities,
+    const bool is_layout_right = true);
+
   /// retrive the image dimensions of a NetCDF file
   /// \param file_name the name of the file to get dims for
   /// \param width the width of the image
@@ -91,6 +111,7 @@ public:
 private:
 
 };
+
 
 }// end netcdf namespace
 }// end DICe namespace

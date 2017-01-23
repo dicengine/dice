@@ -53,10 +53,6 @@
   #include <DICe_MeshIO.h>
   #include <DICe_MeshIOUtils.h>
 #endif
-#ifdef DICE_ENABLE_NETCDF
-  #include <DICe_NetCDF.h>
-  #include <DICe_ImageIO.h>
-#endif
 
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <Teuchos_ArrayRCP.hpp>
@@ -172,15 +168,6 @@ Schema::set_def_image(const std::string & defName,
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
-#ifdef DICE_ENABLE_NETCDF
-  /// check if the file is a netcdf file
-  Image_File_Type type = DICe::utils::image_file_type(defName.c_str());
-  if(type==NETCDF){
-    Teuchos::RCP<netcdf::NetCDF_Reader> netcdf_reader = Teuchos::rcp(new netcdf::NetCDF_Reader());
-    def_imgs_[id] = netcdf_reader->get_image(defName,imgParams);
-  }
-  else
-#endif
   def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
   //TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[id]->width()!=ref_img_->width()||def_imgs_[id]->height()!=ref_img_->height(),
   //  std::runtime_error,"Error, ref and def images must have the same dimensions");
@@ -249,29 +236,12 @@ Schema::set_ref_image(const std::string & refName){
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
 
-#ifdef DICE_ENABLE_NETCDF
-  /// check if the file is a netcdf file
-  Image_File_Type type = DICe::utils::image_file_type(refName.c_str());
-  Teuchos::RCP<netcdf::NetCDF_Reader> netcdf_reader;
-  if(type==NETCDF){
-    netcdf_reader = Teuchos::rcp(new netcdf::NetCDF_Reader());
-    ref_img_ = netcdf_reader->get_image(refName,imgParams);
-  }
-  else
-#endif
-    ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
+  ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
   }
   if(prev_imgs_[0]==Teuchos::null){
-#ifdef DICE_ENABLE_NETCDF
-    /// check if the file is a netcdf file
-    if(type==NETCDF){
-      prev_imgs_[0] = netcdf_reader->get_image(refName,imgParams);
-    }
-    else
-#endif
-      prev_imgs_[0] = Teuchos::rcp( new Image(refName.c_str(),imgParams));
+    prev_imgs_[0] = Teuchos::rcp( new Image(refName.c_str(),imgParams));
     if(ref_image_rotation_!=ZERO_DEGREES){
       prev_imgs_[0] = prev_imgs_[0]->apply_rotation(ref_image_rotation_,imgParams);
     }

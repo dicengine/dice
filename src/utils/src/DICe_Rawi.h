@@ -71,6 +71,15 @@ void read_rawi_image(const char * file_name,
   intensity_t * intensities,
   const bool is_layout_right = true);
 
+/// Read an image into the host memory
+/// \param file_name the name of the netcdf file
+/// \param intensities [out] populated with the pixel intensity values
+/// \param is_layout_right [optional] memory layout is LayoutRight (row-major)
+DICE_LIB_DLL_EXPORT
+void read_netcdf_image(const char * file_name,
+  intensity_t * intensities,
+  const bool is_layout_right = true);
+
 // TODO read portions of a .rawi file
 
 // TODO write a function that reads into the device memory directly

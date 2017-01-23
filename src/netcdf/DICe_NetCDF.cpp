@@ -87,25 +87,18 @@ NetCDF_Reader::get_image_dimensions(const std::string & file_name,
   nc_close(ncid);
 }
 
-Teuchos::RCP<Image>
-NetCDF_Reader::get_image(const std::string & file_name,
-  const Teuchos::RCP<Teuchos::ParameterList> & params){
+void
+NetCDF_Reader::read_netcdf_image(const char * file_name,
+  intensity_t * intensities,
+  const bool is_layout_right){
 
-  // *** Note: use native types for calls to netcdf, otherwise the array sizes and allocations may be off
-  // nc_type 5 = float, 4 = int, 2 = char
-  // assumes that there is only one time per file and one band per file
-
-  int error_int = 0;
-
-  // get the image dimensions
   int_t width = 0;
   int_t height = 0;
   get_image_dimensions(file_name,width,height);
 
-
   // Open the file for read access
   int ncid;
-  error_int = nc_open(file_name.c_str(), 0, &ncid);
+  int_t error_int = nc_open(file_name, 0, &ncid);
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::runtime_error,"Error, could not open NetCDF file " << file_name);
 
   int num_vars = 0;
@@ -151,22 +144,137 @@ NetCDF_Reader::get_image(const std::string & file_name,
   TEUCHOS_TEST_FOR_EXCEPTION(data_var_index <=0, std::runtime_error,"Error, could not find data variable in NetCDF file " << file_name);
 
   // read the intensities
-  Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
+  //Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
   float * data = new float[width*height];
   nc_get_var_float (ncid,data_var_index,data);
   float min_intensity = std::numeric_limits<float>::max();
   float max_intensity = std::numeric_limits<float>::min();
-  for(int_t i=0;i<width*height;++i){
-    intensities[i] = data[i]; // convert and store as intensity_t
-    if(data[i] > max_intensity) max_intensity = data[i];
-    if(data[i] < min_intensity) min_intensity = data[i];
-  }
+
+  int_t index = 0;
+  for (int_t y=0; y<height; ++y) {
+    if(is_layout_right)
+      for (int_t x=0; x<width;++x){
+        intensities[y*width+x] = data[index];
+        index++;
+      }
+    else // otherwise assume layout left
+      for (int_t x=0; x<width;++x){
+        intensities[x*height+y] = data[index];
+        index++;
+      } // end x
+    if(data[index] > max_intensity) max_intensity = data[index];
+    if(data[index] < min_intensity) min_intensity = data[index];
+  } // end y
   DEBUG_MSG("NetCDF_Reader::get_image(): intensity range " << min_intensity << " to " << max_intensity);
-  Teuchos::RCP<Image> img = Teuchos::rcp(new Image(width,height,intensities,params));
   delete [] data;
   // close the nc_file
   nc_close(ncid);
+}
 
+void
+NetCDF_Reader::read_netcdf_image(const char * file_name,
+  const int_t offset_x,
+  const int_t offset_y,
+  const int_t width,
+  const int_t height,
+  intensity_t * intensities,
+  const bool is_layout_right){
+
+  int_t img_width = 0;
+  int_t img_height = 0;
+  get_image_dimensions(file_name,img_width,img_height);
+
+  // Open the file for read access
+  int ncid;
+  int_t error_int = nc_open(file_name, 0, &ncid);
+  TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::runtime_error,"Error, could not open NetCDF file " << file_name);
+
+  int num_vars = 0;
+  nc_inq_nvars(ncid, &num_vars);
+  DEBUG_MSG("NetCDF_Reader::get_image(): number of variables in the file: " << num_vars);
+
+  // get the variable names
+  int data_var_index = -1;
+  for(int_t i=0;i<num_vars;++i){
+    char var_name[100];
+    int nc_type;
+    int num_dims = 0;
+    int dim_ids[NC_MAX_VAR_DIMS]; // assume less than 100 ids
+    int num_var_attr = 0;
+    nc_inq_var(ncid,i, &var_name[0], &nc_type,&num_dims, dim_ids, &num_var_attr);
+    nc_inq_varname(ncid, i, &var_name[0]);
+    std::string var_name_str = var_name;
+    DEBUG_MSG("NetCDF_Reader::get_image(): found variable " << var_name_str << " type " << nc_type << " num dims " << num_dims << " num attributes " << num_var_attr);
+    if(strcmp(var_name, "data") == 0){
+      data_var_index = i;
+      assert(num_dims == 3);
+      assert(nc_type == 5);
+    }
+    if(strcmp(var_name, "dataWidth") == 0){
+      int data_width = 0;
+      nc_get_var1_int(ncid,i,0,&data_width);
+      DEBUG_MSG("NetCDF_Reader::get_image(): memory storage size per pixel " << data_width << " (bytes)");
+      DEBUG_MSG("NetCDF_Reader::get_image(): total data memory storage " << data_width * img_width * img_height / 1000000.0 << " (Mb)");
+      assert(num_dims == 0);
+      assert(nc_type == 4);
+    }
+    if(strcmp(var_name, "lineRes") == 0){
+      int line_res = 0;
+      nc_get_var1_int(ncid,i,0,&line_res);
+      DEBUG_MSG("NetCDF_Reader::get_image(): line resolution " << line_res << " (km)");
+    }
+    if(strcmp(var_name, "elemRes") == 0){
+      int elem_res = 0;
+      nc_get_var1_int(ncid,i,0,&elem_res);
+      DEBUG_MSG("NetCDF_Reader::get_image(): element resolution " << elem_res << " (km)");
+    }
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(data_var_index <=0, std::runtime_error,"Error, could not find data variable in NetCDF file " << file_name);
+
+  // read the intensities
+  //Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
+  float * data = new float[img_width*img_height];
+  nc_get_var_float (ncid,data_var_index,data);
+  float min_intensity = std::numeric_limits<float>::max();
+  float max_intensity = std::numeric_limits<float>::min();
+
+  for (int_t y=offset_y; y<offset_y+height; ++y) {
+    if(is_layout_right)
+      for (int_t x=offset_x; x<offset_x+width;++x){
+        intensities[(y-offset_y)*width+x-offset_x] = data[y*img_width+x];
+        if(data[y*img_width+x] > max_intensity) max_intensity = data[y*img_width+x];
+        if(data[y*img_width+x] < min_intensity) min_intensity = data[y*img_width+x];
+      }
+    else // otherwise assume layout left
+      for (int_t x=offset_x; x<offset_x+width;++x){
+        intensities[(x-offset_x)*height+y-offset_y] = data[y*img_width+x];
+        if(data[y*img_width+x] > max_intensity) max_intensity = data[y*img_width+x];
+        if(data[y*img_width+x] < min_intensity) min_intensity = data[y*img_width+x];
+      } // end x
+  } // end y
+  DEBUG_MSG("NetCDF_Reader::get_image(): intensity range " << min_intensity << " to " << max_intensity);
+  delete [] data;
+  // close the nc_file
+  nc_close(ncid);
+}
+
+
+
+Teuchos::RCP<Image>
+NetCDF_Reader::get_image(const std::string & file_name,
+  const Teuchos::RCP<Teuchos::ParameterList> & params){
+
+  // *** Note: use native types for calls to netcdf, otherwise the array sizes and allocations may be off
+  // nc_type 5 = float, 4 = int, 2 = char
+  // assumes that there is only one time per file and one band per file
+
+  // get the image dimensions
+  int_t width = 0;
+  int_t height = 0;
+  get_image_dimensions(file_name,width,height);
+  Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
+  read_netcdf_image(file_name.c_str(),intensities.getRawPtr());
+  Teuchos::RCP<Image> img = Teuchos::rcp(new Image(width,height,intensities,params));
   return img;
 }
 

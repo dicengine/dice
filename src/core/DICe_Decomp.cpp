@@ -44,8 +44,6 @@
 #include <DICe_ParameterUtilities.h>
 #include <DICe_Cine.h>
 #include <DICe_PostProcessor.h>
-#include <DICe_ImageIO.h>
-#include <DICe_NetCDF.h>
 
 #include <Teuchos_oblackholestream.hpp>
 
@@ -506,13 +504,7 @@ Decomp::populate_global_coordinate_vector(Teuchos::ArrayRCP<scalar_t> & subset_c
     }
     else{
       DEBUG_MSG("Decomp::Decomp(): reading image from file: " << image_file_name);
-      Image_File_Type type = DICe::utils::image_file_type(image_file_name.c_str());
-      if(type==NETCDF){
-        Teuchos::RCP<netcdf::NetCDF_Reader> netcdf_reader = Teuchos::rcp(new netcdf::NetCDF_Reader());
-        image = netcdf_reader->get_image(image_file_name,imgParams);
-      }
-      else
-        image = Teuchos::rcp( new Image(image_file_name.c_str(),imgParams));
+      image = Teuchos::rcp( new Image(image_file_name.c_str(),imgParams));
     }
     image_width_ = image->width();
     image_height_ = image->height();
