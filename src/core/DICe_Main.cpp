@@ -246,25 +246,31 @@ int main(int argc, char *argv[]) {
     }
 
     // create schemas:
-    Teuchos::RCP<DICe::Schema> schema;
+    Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema(input_params,correlation_params));
+    //schema->set_ref_extents(image_width,image_height);
     Teuchos::RCP<DICe::Schema> stereo_schema;
     if(is_cine){
       // read in the reference image from the cine file and create the schema:
       Teuchos::RCP<DICe::Image> ref_image;
+      //std::vector<int_t> ref_extents = schema->ref_extents();
       if(input_params->isParameter(DICe::time_average_cine_ref_frame)){
         const int_t num_avg_frames = input_params->get<int_t>(DICe::time_average_cine_ref_frame,1);
-        ref_image = cine_reader->get_average_frame(cine_ref_index,cine_ref_index+num_avg_frames,true,filter_failed_pixels,correlation_params);
+        ref_image = cine_reader->get_average_frame(cine_ref_index,cine_ref_index+num_avg_frames,
+          true,filter_failed_pixels,correlation_params);
+//        ref_image = cine_reader->get_average_frame(cine_ref_index,cine_ref_index+num_avg_frames,
+//          ref_extents[0],ref_extents[2],ref_extents[1]-1,ref_extents[3]-1,
+//          true,filter_failed_pixels,correlation_params);
       }
       else{
+//        ref_image = cine_reader->get_frame(cine_ref_index,ref_extents[0],ref_extents[2],ref_extents[1]-1,ref_extents[3]-1,
+//          true,filter_failed_pixels,correlation_params);
         ref_image = cine_reader->get_frame(cine_ref_index,true,filter_failed_pixels,correlation_params);
       }
-      schema = Teuchos::rcp(new DICe::Schema(input_params,correlation_params));
       schema->set_ref_image(ref_image);
       schema->set_def_image(ref_image);
     }
     else{
       const std::string ref_image_string = image_files[0];
-      schema = Teuchos::rcp(new DICe::Schema(input_params,correlation_params));
       schema->set_ref_image(ref_image_string);
       schema->set_def_image(ref_image_string);
     }
@@ -332,7 +338,7 @@ int main(int argc, char *argv[]) {
         else
           right_image = stereo_cine_reader->get_frame(start_frame,true,filter_failed_pixels,correlation_params);
         schema->set_def_image(right_image);
-        schema->initialize_cross_correlation(triangulation);
+        schema->initialize_cross_correlation(triangulation,input_params);
         if(schema->use_nonlinear_projection()){
           schema->project_right_image_into_left_frame(triangulation,false);
         }
@@ -345,7 +351,7 @@ int main(int argc, char *argv[]) {
       else{
         const std::string right_image_string = stereo_image_files[start_frame];
         schema->set_def_image(right_image_string);
-        schema->initialize_cross_correlation(triangulation);
+        schema->initialize_cross_correlation(triangulation,input_params);
         if(schema->use_nonlinear_projection()){
           schema->project_right_image_into_left_frame(triangulation,false);
         }

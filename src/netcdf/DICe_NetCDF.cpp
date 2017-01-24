@@ -57,7 +57,6 @@ NetCDF_Reader::get_image_dimensions(const std::string & file_name,
   int ncid;
   error_int = nc_open(file_name.c_str(), 0, &ncid);
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::runtime_error,"Error, could not open NetCDF file " << file_name);
-
   // acquire the dimensions of the file
   int num_data_dims = 0;
   height = -1;

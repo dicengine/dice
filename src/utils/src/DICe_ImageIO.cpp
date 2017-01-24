@@ -97,8 +97,10 @@ DICE_LIB_DLL_EXPORT
 void read_image_dimensions(const char * file_name,
   int_t & width,
   int_t & height){
+
   // determine the file type based on the file_name
   Image_File_Type file_type = image_file_type(file_name);
+
   if(file_type==NO_SUCH_IMAGE_FILE_TYPE){
     std::cerr << "Error, unrecognized image file type for file: " << file_name << "\n";
     throw std::exception();

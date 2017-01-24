@@ -274,6 +274,35 @@ public:
   /// \param params_file_name File name of the paramteres file
   void set_params(const std::string & params_file_name);
 
+  /// \brief set the extents of the image to be used when only reading a portion of the image
+  /// \param image_width the width of the master image in total
+  /// \param image_height the height of the master image in total
+  void set_ref_extents(const int_t image_width,
+    const int_t image_height);
+
+  /// \brief set the extents of the image to be used when only reading a portion of the image
+  /// \param image_width the width of the master image in total
+  /// \param image_height the height of the master image in total
+  void set_def_extents(const int_t image_width,
+    const int_t image_height);
+
+  /// returns true if image extents are being used
+  bool has_extents()const{
+    return has_extents_;
+  }
+
+  /// returns the local reference extents of the schema on this processor (defines how much of an image is actually used)
+  std::vector<int_t> ref_extents()const{
+    TEUCHOS_TEST_FOR_EXCEPTION(!has_extents_,std::runtime_error,"");
+    return ref_extents_;
+  }
+
+  /// returns the local deformed extents of the schema on this processor (defines how much of an image is actually used)
+  std::vector<int_t> def_extents()const{
+    TEUCHOS_TEST_FOR_EXCEPTION(!has_extents_,std::runtime_error,"");
+    return def_extents_;
+  }
+
   /// Replace the deformed image for this Schema
   void set_def_image(const std::string & defName,
     const int_t id=0);
@@ -327,7 +356,9 @@ public:
   /// and the camera parameters
   /// returns 0 if successful
   /// \param tri Triangulation that contains the camera params
-  int_t initialize_cross_correlation(Teuchos::RCP<Triangulation> tri);
+  /// \param input_params the input params are needed to load the right image for processor 0
+  int_t initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
+    const Teuchos::RCP<Teuchos::ParameterList> & input_params);
 
   /// Save off the q and r fields once the mapping from left to right image is known
   void save_cross_correlation_fields();
@@ -1298,6 +1329,12 @@ private:
   std::string initial_condition_file_;
   /// project the right image onto the left frame of reference using a nonlinear projection
   bool use_nonlinear_projection_;
+  /// true if only certain portions of the images should be loaded (for example in parallel for large images)
+  bool has_extents_;
+  /// vector that contains the x and y extents for the reference images (x_start_ref, x_end_ref, y_start_ref, y_end_ref)
+  std::vector<int_t> ref_extents_;
+  /// vector that contains the x and y extents for the deformed images (x_start_def, x_end_def, y_start_def, y_end_def)
+  std::vector<int_t> def_extents_;
 };
 
 /// \class DICe::Output_Spec

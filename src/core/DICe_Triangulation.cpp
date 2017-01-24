@@ -800,57 +800,57 @@ Triangulation::correct_lens_distortion_radial(scalar_t & x_s,
   y_s = y_s - factor*r2*cal_intrinsics_[camera_id][1];
 }
 
-void
-Triangulation::project_camera_0_to_sensor_1(const scalar_t & xc,
-  const scalar_t & yc,
-  const scalar_t & zc,
-  scalar_t & xs2_out,
-  scalar_t & ys2_out){
-
-  Teuchos::SerialDenseMatrix<int_t,double> F2(3,4,true);
-  F2(0,0) = cal_intrinsics_[1][2];
-  F2(0,1) = cal_intrinsics_[1][4];
-  F2(0,2) = cal_intrinsics_[1][0];
-  F2(1,1) = cal_intrinsics_[1][3];
-  F2(1,2) = cal_intrinsics_[1][1];
-  F2(2,2) = 1.0;
-
-  Teuchos::SerialDenseMatrix<int_t,double> F2_T(3,4,true);
-  for(int_t j=0;j<3;++j){
-    for(int_t k=0;k<4;++k){
-      for(int_t i=0;i<4;++i){
-        F2_T(j,k) += F2(j,i)*cal_extrinsics_[i][k];
-      }
-    }
-  }
-//  std::cout << " F2 " << std::endl;
+//void
+//Triangulation::project_camera_0_to_sensor_1(const scalar_t & xc,
+//  const scalar_t & yc,
+//  const scalar_t & zc,
+//  scalar_t & xs2_out,
+//  scalar_t & ys2_out){
+//
+//  Teuchos::SerialDenseMatrix<int_t,double> F2(3,4,true);
+//  F2(0,0) = cal_intrinsics_[1][2];
+//  F2(0,1) = cal_intrinsics_[1][4];
+//  F2(0,2) = cal_intrinsics_[1][0];
+//  F2(1,1) = cal_intrinsics_[1][3];
+//  F2(1,2) = cal_intrinsics_[1][1];
+//  F2(2,2) = 1.0;
+//
+//  Teuchos::SerialDenseMatrix<int_t,double> F2_T(3,4,true);
 //  for(int_t j=0;j<3;++j){
 //    for(int_t k=0;k<4;++k){
-//      std::cout << F2(j,k) << " ";
+//      for(int_t i=0;i<4;++i){
+//        F2_T(j,k) += F2(j,i)*cal_extrinsics_[i][k];
+//      }
 //    }
-//    std::cout << std::endl;
 //  }
-//  std::cout << " T " << std::endl;
-//  for(int_t j=0;j<4;++j){
-//    for(int_t k=0;k<4;++k){
-//      std::cout << cal_extrinsics_[j][k] << " ";
-//    }
-//    std::cout << std::endl;
-//  }
-//  std::cout << " F2T " << std::endl;
-//  for(int_t j=0;j<3;++j){
-//    for(int_t k=0;k<4;++k){
-//      std::cout << F2_T(j,k) << " ";
-//    }
-//    std::cout << std::endl;
-//  }
-  const scalar_t psi2 = cal_extrinsics_[2][0]*xc + cal_extrinsics_[2][1]*yc + cal_extrinsics_[2][2]*zc + cal_extrinsics_[2][3];
-  assert(psi2!=0.0);
-  xs2_out = 1.0/psi2*(F2_T(0,0)*xc + F2_T(0,1)*yc + F2_T(0,2)*zc + F2_T(0,3));
-  ys2_out = 1.0/psi2*(F2_T(1,0)*xc + F2_T(1,1)*yc + F2_T(1,2)*zc + F2_T(1,3));
-  scalar_t z2 = 1.0/psi2*(F2_T(2,0)*xc + F2_T(2,1)*yc + F2_T(2,2)*zc + F2_T(2,3));
-  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(z2-1.0) > 0.1,std::runtime_error,"");
-}
+////  std::cout << " F2 " << std::endl;
+////  for(int_t j=0;j<3;++j){
+////    for(int_t k=0;k<4;++k){
+////      std::cout << F2(j,k) << " ";
+////    }
+////    std::cout << std::endl;
+////  }
+////  std::cout << " T " << std::endl;
+////  for(int_t j=0;j<4;++j){
+////    for(int_t k=0;k<4;++k){
+////      std::cout << cal_extrinsics_[j][k] << " ";
+////    }
+////    std::cout << std::endl;
+////  }
+////  std::cout << " F2T " << std::endl;
+////  for(int_t j=0;j<3;++j){
+////    for(int_t k=0;k<4;++k){
+////      std::cout << F2_T(j,k) << " ";
+////    }
+////    std::cout << std::endl;
+////  }
+//  const scalar_t psi2 = cal_extrinsics_[2][0]*xc + cal_extrinsics_[2][1]*yc + cal_extrinsics_[2][2]*zc + cal_extrinsics_[2][3];
+//  assert(psi2!=0.0);
+//  xs2_out = 1.0/psi2*(F2_T(0,0)*xc + F2_T(0,1)*yc + F2_T(0,2)*zc + F2_T(0,3));
+//  ys2_out = 1.0/psi2*(F2_T(1,0)*xc + F2_T(1,1)*yc + F2_T(1,2)*zc + F2_T(1,3));
+//  scalar_t z2 = 1.0/psi2*(F2_T(2,0)*xc + F2_T(2,1)*yc + F2_T(2,2)*zc + F2_T(2,3));
+//  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(z2-1.0) > 0.1,std::runtime_error,"");
+//}
 
 /// estimate the projective transform from the left to right image
 int_t // returns 0 if successful -1 means linear projection failed, -2 means nonlinear projection failed

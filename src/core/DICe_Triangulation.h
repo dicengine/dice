@@ -131,17 +131,17 @@ public:
     scalar_t & zw_out,
     const bool correct_lens_distortion = false);
 
-  /// project camera 0 coordinates to sensor 1 coordinates
-  /// \param xc camera 0 x coordinate
-  /// \param yc camera 0 y coordinate
-  /// \param zc camera 0 z coordinate
-  /// \param xs1_out [out] computed sensor 1 coordinate
-  /// \param ys1_out [out] computed sensor 1 coordinate
-  void project_camera_0_to_sensor_1(const scalar_t & xc,
-    const scalar_t & yc,
-    const scalar_t & zc,
-    scalar_t & xs2_out,
-    scalar_t & ys2_out);
+//  /// project camera 0 coordinates to sensor 1 coordinates
+//  /// \param xc camera 0 x coordinate
+//  /// \param yc camera 0 y coordinate
+//  /// \param zc camera 0 z coordinate
+//  /// \param xs1_out [out] computed sensor 1 coordinate
+//  /// \param ys1_out [out] computed sensor 1 coordinate
+//  void project_camera_0_to_sensor_1(const scalar_t & xc,
+//    const scalar_t & yc,
+//    const scalar_t & zc,
+//    scalar_t & xs2_out,
+//    scalar_t & ys2_out);
 
   /// convert Cardan-Bryant angles and offsets to T matrix format
   /// \param alpha euler angle in degrees
@@ -199,11 +199,21 @@ public:
     warp_params_ = params;
   }
 
+  /// return a pointer to the warp parameters
+  Teuchos::RCP<std::vector<scalar_t> > warp_params()const{
+    return warp_params_;
+  }
+
   /// set the projective parameter vector of the triangulation
   /// \param params the projective parameters
   void set_projective_params(Teuchos::RCP<std::vector<scalar_t> > & params){
     TEUCHOS_TEST_FOR_EXCEPTION(params->size()!=9,std::runtime_error,"Error, params vector is the wrong size");
     projective_params_ = params;
+  }
+
+  /// return a pointer to the projective parameters
+  Teuchos::RCP<std::vector<scalar_t> > projective_params()const{
+    return projective_params_;
   }
 
   /// determine the best fit plane to the complete set of X Y Z coordinates (excluding any failed points)

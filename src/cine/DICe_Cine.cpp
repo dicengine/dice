@@ -144,10 +144,27 @@ Cine_Reader::get_average_frame(const int_t frame_start,
   const bool filter_failed_pixels,
   const Teuchos::RCP<Teuchos::ParameterList> & params){
 
+  return get_average_frame(frame_start,frame_end,0,0,
+    cine_header_->bitmap_header_.biWidth-1,cine_header_->bitmap_header_.biHeight-1,
+    convert_to_8_bit,filter_failed_pixels,params);
+}
+
+Teuchos::RCP<Image>
+Cine_Reader::get_average_frame(const int_t frame_start,
+  const int_t frame_end,
+  const int_t start_x,
+  const int_t start_y,
+  const int_t end_x,
+  const int_t end_y,
+  const bool convert_to_8_bit,
+  const bool filter_failed_pixels,
+  const Teuchos::RCP<Teuchos::ParameterList> & params){
+
   TEUCHOS_TEST_FOR_EXCEPTION(frame_start>frame_end,std::runtime_error,"Error, invalid frame range");
   const int_t num_frames = frame_end - frame_start + 1;
 
   Teuchos::RCP<Image> base_frame = get_frame(frame_start,
+    start_x,start_y,end_x,end_y,
     convert_to_8_bit,
     filter_failed_pixels);
   const int_t img_w = base_frame->width();
@@ -158,7 +175,11 @@ Cine_Reader::get_average_frame(const int_t frame_start,
     avg_intens[px] += (*base_frame)(px);
 
   for(int_t i=frame_start+1;i<=frame_end;++i){
-    Teuchos::RCP<Image> frame = get_frame(i,convert_to_8_bit,filter_failed_pixels);
+    Teuchos::RCP<Image> frame = get_frame(i,
+      start_x,
+      start_y,
+      end_x,
+      end_y,convert_to_8_bit,filter_failed_pixels);
     for(int_t px=0;px<num_pixels;++px)
       avg_intens[px] += (*frame)(px);
   }
@@ -169,6 +190,7 @@ Cine_Reader::get_average_frame(const int_t frame_start,
   Teuchos::RCP<Image> avg_image = Teuchos::rcp(new DICe::Image(img_w,img_h,avg_intens,params));
   return avg_image;
 }
+
 
 Teuchos::RCP<Image>
 Cine_Reader::get_frame(const int_t frame_index,

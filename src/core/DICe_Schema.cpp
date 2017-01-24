@@ -168,7 +168,13 @@ Schema::set_def_image(const std::string & defName,
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
-  def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
+  if(has_extents_){
+    const int_t sub_w = def_extents_[1] - def_extents_[0];
+    const int_t sub_h = def_extents_[3] - def_extents_[2];
+    def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),def_extents_[0],def_extents_[2],sub_w,sub_h,imgParams));
+  }
+  else
+    def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
   //TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[id]->width()!=ref_img_->width()||def_imgs_[id]->height()!=ref_img_->height(),
   //  std::runtime_error,"Error, ref and def images must have the same dimensions");
   if(def_image_rotation_!=ZERO_DEGREES){
@@ -235,8 +241,13 @@ Schema::set_ref_image(const std::string & refName){
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
-
-  ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
+  if(has_extents_){
+    const int_t sub_w = ref_extents_[1] - ref_extents_[0];
+    const int_t sub_h = ref_extents_[3] - ref_extents_[2];
+    ref_img_ = Teuchos::rcp( new Image(refName.c_str(),ref_extents_[0],ref_extents_[2],sub_w,sub_h,imgParams));
+  }
+  else
+    ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
   }
@@ -265,10 +276,11 @@ Schema::set_ref_image(const int_t img_width,
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
   }
   if(prev_imgs_[0]==Teuchos::null){
-    prev_imgs_[0] = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
-    if(ref_image_rotation_!=ZERO_DEGREES){
-      prev_imgs_[0] = prev_imgs_[0]->apply_rotation(ref_image_rotation_,imgParams);
-    }
+    prev_imgs_[0] = ref_img_;//Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
+    // dont apply the rotation because the pointer is set to the ref image which has already been rotated
+//    if(ref_image_rotation_!=ZERO_DEGREES){
+//      prev_imgs_[0] = prev_imgs_[0]->apply_rotation(ref_image_rotation_,imgParams);
+//    }
   }
 }
 
@@ -327,6 +339,9 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   set_params(params);
   prev_imgs_.push_back(Teuchos::null);
   def_imgs_.push_back(Teuchos::null);
+  has_extents_ = false;
+  ref_extents_.resize(4,-1);
+  def_extents_.resize(4,-1);
 }
 
 void
@@ -618,6 +633,108 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   const bool omit_row_id = diceParams->get<bool>(DICe::omit_output_row_id,false);
   output_spec_ = Teuchos::rcp(new DICe::Output_Spec(this,omit_row_id,outputParams,delimiter));
   has_output_spec_ = true;
+}
+
+void
+Schema::set_ref_extents(const int_t image_width,
+  const int_t image_height){
+  TEUCHOS_TEST_FOR_EXCEPTION(image_width<=0||image_height<=0,std::runtime_error,"");
+  scalar_t min_x = image_width;
+  scalar_t max_x = 0.0;
+  scalar_t min_y = image_height;
+  scalar_t max_y = 0.0;
+  if(motion_window_params_->size()==0){ // only change the extents if there are no motion windows
+    TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"");
+    Teuchos::RCP<MultiField> coords = mesh_->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
+    for(int_t i=0;i<local_num_subsets_;++i){
+      if(coords->local_value(i*2+0) < min_x) min_x = coords->local_value(i*2+0);
+      if(coords->local_value(i*2+0) > max_x) max_x = coords->local_value(i*2+0);
+      if(coords->local_value(i*2+1) < min_y) min_y = coords->local_value(i*2+1);
+      if(coords->local_value(i*2+1) > max_y) max_y = coords->local_value(i*2+1);
+    }
+    const int_t buffer = 100;
+    min_x -= buffer; min_y -= buffer;
+    max_x += buffer; max_y += buffer;
+    min_x = min_x < buffer ? 0 : std::round(min_x);
+    min_y = min_y < buffer ? 0 : std::round(min_y);
+    max_x = max_x >= image_width-buffer  ? image_width : max_x;
+    max_y = max_y >= image_height-buffer ? image_height : max_y;
+    has_extents_ = true;
+  }
+  ref_extents_[0] = min_x;
+  ref_extents_[1] = max_x;
+  ref_extents_[2] = min_y;
+  ref_extents_[3] = max_y;
+  DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] Setting REFERENCE domain extents:");
+  DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] x " << ref_extents_[0] << " to " << ref_extents_[1]);
+  DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] y " << ref_extents_[2] << " to " << ref_extents_[3]);
+  // go ahead and set the ref extents in case they don't manually get set
+  if(def_extents_[0]==-1){
+    def_extents_[0] = min_x;
+    def_extents_[1] = max_x;
+    def_extents_[2] = min_y;
+    def_extents_[3] = max_y;
+  }
+}
+
+void
+Schema::set_def_extents(const int_t image_width,
+  const int_t image_height){
+  TEUCHOS_TEST_FOR_EXCEPTION(image_width<=0||image_height<=0,std::runtime_error,"");
+  scalar_t min_x = image_width;
+  scalar_t max_x = 0.0;
+  scalar_t min_y = image_height;
+  scalar_t max_y = 0.0;
+
+  if(motion_window_params_->size()==0){ // only change the extents if there are no motion windows
+    TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"");
+    Teuchos::RCP<MultiField> coords = mesh_->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
+    Teuchos::RCP<MultiField> disp;
+    Teuchos::RCP<MultiField_Map> map = mesh_->get_vector_node_dist_map();
+    if(analysis_type_ == LOCAL_DIC){
+      const int_t spa_dim = 2;
+      Teuchos::RCP<MultiField> disp_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+      Teuchos::RCP<MultiField> disp_y = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+      disp = Teuchos::rcp( new MultiField(map,1,true));
+      for(int_t i=0;i<local_num_subsets_;++i){
+        disp->local_value(i*spa_dim+0) = disp_x->local_value(i);
+        disp->local_value(i*spa_dim+1) = disp_y->local_value(i);
+      }
+    }else{
+      disp = mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS);
+    }
+    Teuchos::RCP<MultiField> current_coords = Teuchos::rcp( new MultiField(map,1,true));
+    current_coords->update(1.0,*disp,1.0);
+
+    for(int_t i=0;i<local_num_subsets_;++i){
+      if(current_coords->local_value(i*2+0) < min_x) min_x = current_coords->local_value(i*2+0);
+      if(current_coords->local_value(i*2+0) > max_x) max_x = current_coords->local_value(i*2+0);
+      if(current_coords->local_value(i*2+1) < min_y) min_y = current_coords->local_value(i*2+1);
+      if(current_coords->local_value(i*2+1) > max_y) max_y = current_coords->local_value(i*2+1);
+    }
+    const int_t buffer = 100;
+    min_x -= buffer; min_y -= buffer;
+    max_x += buffer; max_y += buffer;
+    min_x = min_x < buffer ? 0 : std::round(min_x);
+    min_y = min_y < buffer ? 0 : std::round(min_y);
+    max_x = max_x >= image_width-buffer  ? image_width : max_x;
+    max_y = max_y >= image_height-buffer ? image_height : max_y;
+    has_extents_ = true;
+  }
+  def_extents_[0] = min_x;
+  def_extents_[1] = max_x;
+  def_extents_[2] = min_y;
+  def_extents_[3] = max_y;
+  DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] Setting DEFORMED domain extents:");
+  DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] x " << def_extents_[0] << " to " << def_extents_[1]);
+  DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] y " << def_extents_[2] << " to " << def_extents_[3]);
+  // go ahead and set the ref extents in case they don't manually get set
+  if(ref_extents_[0]==-1){
+    ref_extents_[0] = min_x;
+    ref_extents_[1] = max_x;
+    ref_extents_[2] = min_y;
+    ref_extents_[3] = max_y;
+  }
 }
 
 void
@@ -2607,14 +2724,122 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
 }
 
 int_t
-Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri){
+Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
+  const Teuchos::RCP<Teuchos::ParameterList> & input_params){
   DEBUG_MSG("Schema::initialize_cross_correlation(): estimating the projective transform from left to right camera");
 
-  // note: we try to avoid feature matching approaches here because the speckle pattern
-  // may be repeating which would lead to false positives
-  const bool write_images = comm_->get_rank() == 0;
-  const int_t success = tri->estimate_projective_transform(ref_img_,def_imgs_[0],write_images,use_nonlinear_projection_);
-  TEUCHOS_TEST_FOR_EXCEPTION(success!=0,std::runtime_error,"Error, Schema::initialize_cross_correlation(): estimate_projective_transform failed");
+  const int_t proc_rank = comm_->get_rank();
+
+  // if you are processor 0 load the ref and def images and call the estimate routine
+  if(proc_rank==0){
+    // decypher the image names from the input files
+    std::vector<std::string> image_files;
+    std::vector<std::string> stereo_image_files;
+    DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
+
+    Teuchos::RCP<DICe::Image> left_image;
+    Teuchos::RCP<DICe::Image> right_image;
+    Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
+    //imgParams->set(DICe::compute_image_gradients,compute_def_gradients_); // dont need gradients for this
+    //imgParams->set(DICe::gradient_method,gradient_method_);
+    imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
+    imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
+    // load the left and right reference images
+    if(image_files[0]==DICe::cine_file){
+      Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader;
+      Teuchos::RCP<DICe::cine::Cine_Reader> stereo_cine_reader;
+      int_t cine_num_images = -1;
+      int_t cine_first_frame_index = -1;
+      int_t cine_ref_index = -1;
+      const std::string cine_file_name = input_params->get<std::string>(DICe::cine_file);
+      std::stringstream cine_name;
+      cine_name << input_params->get<std::string>(DICe::image_folder) << cine_file_name;
+      const std::string stereo_cine_file_name = input_params->get<std::string>(DICe::stereo_cine_file);
+      std::stringstream stereo_cine_name;
+      stereo_cine_name << input_params->get<std::string>(DICe::image_folder) << stereo_cine_file_name;
+      Teuchos::oblackholestream bhs; // outputs nothing
+      cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(cine_name.str(),&bhs,false));
+      stereo_cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(stereo_cine_name.str(),&bhs,false));
+      cine_num_images = cine_reader->num_frames();
+      cine_first_frame_index = cine_reader->first_image_number();
+      DEBUG_MSG("Schema::initialize_cross_correlation: cine first frame index: " << cine_first_frame_index);
+      cine_ref_index = input_params->get<int_t>(DICe::cine_ref_index,cine_first_frame_index);
+      TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index < cine_first_frame_index,std::invalid_argument,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index - cine_first_frame_index > cine_num_images,std::invalid_argument,"");
+      // convert the cine ref, start and end index to the DICe indexing, not cine indexing (begins with zero)
+      cine_ref_index = cine_ref_index - cine_first_frame_index;
+      DEBUG_MSG("Schema::initialize_cross_correlation(): reading cine image from file: " << cine_file_name << " index " << cine_ref_index);
+      DEBUG_MSG("Schema::initialize_cross_correlation(): reading stereo cine image from file: " << stereo_cine_file_name << " index " << cine_ref_index);
+      if(input_params->isParameter(DICe::time_average_cine_ref_frame)){
+        const int_t num_avg_frames = input_params->get<int_t>(DICe::time_average_cine_ref_frame);
+        left_image = cine_reader->get_average_frame(cine_ref_index,cine_ref_index+num_avg_frames,true,true,imgParams);
+        right_image = stereo_cine_reader->get_average_frame(cine_ref_index,cine_ref_index+num_avg_frames,true,true,imgParams);
+      }
+      else{
+        left_image = cine_reader->get_frame(cine_ref_index,true,true,imgParams);
+        right_image = stereo_cine_reader->get_frame(cine_ref_index,true,true,imgParams);
+      }
+    } // end is_cine
+    else{
+      const std::string left_image_string = image_files[0];
+      const std::string right_image_string = stereo_image_files[0];
+      left_image = Teuchos::rcp(new Image(left_image_string.c_str(),imgParams));
+      right_image = Teuchos::rcp(new Image(right_image_string.c_str(),imgParams));
+    }
+    const int_t success = tri->estimate_projective_transform(left_image,right_image,true,use_nonlinear_projection_);
+    TEUCHOS_TEST_FOR_EXCEPTION(success!=0,std::runtime_error,"Error, Schema::initialize_cross_correlation(): estimate_projective_transform failed");
+  }
+
+  // communicate the triangulation params to all other procs from 0 (9 projective parameters followed by 12 warp parameters in one vector)
+  Teuchos::Array<int_t> zero_owned_ids;
+  const int_t num_proj_params = 9;
+  const int_t num_warp_params = 12;
+  const int_t num_params = num_proj_params + num_warp_params;
+  if(proc_rank==0){
+    for(int_t i=0;i<num_params;++i)
+      zero_owned_ids.push_back(i);
+  }
+  Teuchos::Array<int_t> all_owned_ids;
+  for(int_t i=0;i<num_params;++i)
+    all_owned_ids.push_back(i);
+  Teuchos::RCP<MultiField_Map> zero_map = Teuchos::rcp (new MultiField_Map(-1, zero_owned_ids,0,*comm_));
+  Teuchos::RCP<MultiField_Map> all_map = Teuchos::rcp (new MultiField_Map(-1, all_owned_ids,0,*comm_));
+  Teuchos::RCP<MultiField> zero_data = Teuchos::rcp(new MultiField(zero_map,1,true));
+  Teuchos::RCP<MultiField> all_data = Teuchos::rcp(new MultiField(all_map,1,true));
+  if(proc_rank==0){
+    for(int_t i=0;i<num_proj_params;++i){
+      zero_data->local_value(i) = (*tri->projective_params())[i];
+      DEBUG_MSG("[PROC " << proc_rank << "] projective_param " << i << " " << (*tri->projective_params())[i]);
+    }
+    for(int_t i=0;i<num_warp_params;++i){
+      DEBUG_MSG("[PROC " << proc_rank << "] warp_param " << i << " " << (*tri->warp_params())[i]);
+      zero_data->local_value(i+num_proj_params) = (*tri->warp_params())[i];
+    }
+  }
+  // now export the zero owned values to all
+  MultiField_Exporter exporter(*all_map,*zero_data->get_map());
+  all_data->do_import(zero_data,exporter,INSERT);
+  // each processor sets its parameters given the ones determined on processor 0
+  if(proc_rank!=0){
+    Teuchos::RCP<std::vector<scalar_t> > proj_params = Teuchos::rcp(new std::vector<scalar_t>(num_proj_params,0.0));
+    Teuchos::RCP<std::vector<scalar_t> > warp_params = Teuchos::rcp(new std::vector<scalar_t>(num_warp_params,0.0));
+    for(int_t i=0;i<num_proj_params;++i){
+      (*proj_params)[i] = all_data->local_value(i);
+    }
+    for(int_t i=0;i<num_warp_params;++i){
+      (*warp_params)[i] = all_data->local_value(i+num_proj_params);
+    }
+    tri->set_projective_params(proj_params);
+    tri->set_warp_params(warp_params);
+    for(int_t i=0;i<num_proj_params;++i){
+      DEBUG_MSG("[PROC " << proc_rank << "] projective_param " << i << " " << (*tri->projective_params())[i]);
+    }
+    for(int_t i=0;i<num_warp_params;++i){
+      DEBUG_MSG("[PROC " << proc_rank << "] warp_param " << i << " " << (*tri->warp_params())[i]);
+    }
+  }
+
+  // the rest of this is done on all processors:
 
   // only do this if the analysis does not ask for right to left projection
   // otherwise, leave these field uninitialized
