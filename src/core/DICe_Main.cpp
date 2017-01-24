@@ -122,6 +122,15 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> image_files;
     std::vector<std::string> stereo_image_files;
     DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
+
+//    for(int_t i=0;i<image_files.size();++i)
+//      std::cout << "image file " << i << " " << image_files[i] << std::endl;
+//
+//    for(int_t i=0;i<stereo_image_files.size();++i)
+//      std::cout << "stereo image file " << i << " " << stereo_image_files[i] << std::endl;
+//    assert(false);
+
+
     const bool is_stereo = stereo_image_files.size() > 0;
     if(is_stereo){
       TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::calibration_parameters_file),std::runtime_error,

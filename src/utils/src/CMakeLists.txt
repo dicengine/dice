@@ -12,6 +12,7 @@ include_directories(
     .
     ../../core
     ../../base
+    ../../cine
     ${DICE_HEADER_DIRS}
     ${Boost_INCLUDE_DIRS}
     ${DICE_TRILINOS_HEADERS}

@@ -281,33 +281,114 @@ public:
     const bool filter_failed_pixels=false,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
-
-  /// \brief 8 bit frame fetch
-  /// \param image the image to populate
+  /// \brief generic frame fetch
+  /// \param offset_x offset to first pixel in x
+  /// \param offset_y offset to first pixel in y
+  /// \param width the width of the image or subimage
+  /// \param height the height of the image or subimage (intensities must be pre-allocated as a widthxheight array)
+  /// \param intensities the intensity array
+  /// \param is_layout_right colum or row oriented storage flag (not used yet for cine)
   /// \param frame_index the frame to gather
   /// \param filter_failed_pixels get rid of outlier pixels or failed pixels
-  void get_frame_8_bit(const Teuchos::RCP<Image> & image,
+  /// \param convert_to_8_bit true if the values should be scaled to 8 bit
+  void get_frame(const int_t offset_x,
+    const int_t offset_y,
+    const int_t width,
+    const int_t height,
+    intensity_t * intensities,
+    const bool is_layout_right,
     const int_t frame_index,
-  const bool filter_failed_pixels);
+    const bool filter_failed_pixels,
+    const bool convert_to_8_bit);
+
+  /// \brief generic frame fetch with averaging across frames
+  /// \param frame_start the initial frame to start averaging with
+  /// \param frame_end the end of the section of frames to average
+  /// \param offset_x offset to first pixel in x
+  /// \param offset_y offset to first pixel in y
+  /// \param width the width of the image or subimage
+  /// \param height the height of the image or subimage (intensities must be pre-allocated as a widthxheight array)
+  /// \param intensities the intensity array
+  /// \param is_layout_right colum or row oriented storage flag (not used yet for cine)
+  /// \param filter_failed_pixels get rid of outlier pixels or failed pixels
+  /// \param convert_to_8_bit true if the values should be scaled to 8 bit range
+  void get_average_frame(const int_t frame_start,
+    const int_t frame_end,
+    const int_t offset_x,
+    const int_t offset_y,
+    const int_t width,
+    const int_t height,
+    intensity_t * intensities,
+    const bool is_layout_right,
+    const bool filter_failed_pixels,
+    const bool convert_to_8_bit);
+
+  /// \brief 8 bit frame fetch
+  /// \param offset_x offset to first pixel in x
+  /// \param offset_y offset to first pixel in y
+  /// \param width the width of the image or subimage
+  /// \param height the height of the image or subimage (intensities must be pre-allocated as a widthxheight array)
+  /// \param intensities the intensity array
+  /// \param is_layout_right colum or row oriented storage flag (not used yet for cine)
+  /// \param frame_index the frame to gather
+  /// \param filter_failed_pixels get rid of outlier pixels or failed pixels
+  void get_frame_8_bit(const int_t offset_x,
+    const int_t offset_y,
+    const int_t width,
+    const int_t height,
+    intensity_t * intensities,
+    const bool is_layout_right,
+    const int_t frame_index,
+    const bool filter_failed_pixels);
 
   /// \brief 10 bit frame fetch
-  /// \param image the image to populate
+  /// \param offset_x offset to first pixel in x
+  /// \param offset_y offset to first pixel in y
+  /// \param width the width of the image or subimage
+  /// \param height the height of the image or subimage (intensities must be pre-allocated as a widthxheight array)
+  /// \param intensities the intensity array
+  /// \param is_layout_right colum or row oriented storage flag (not used yet for cine)
   /// \param frame_index the frame to gather
-  void get_frame_10_bit(Teuchos::RCP<Image> image,
+  void get_frame_10_bit(const int_t offset_x,
+    const int_t offset_y,
+    const int_t width,
+    const int_t height,
+    intensity_t * intensities,
+    const bool is_layout_right,
     const int_t frame_index);
 
   /// \brief 10 bit frame fetch with filtering
   /// separate function to avoid if statement for each pixel (optimization)
-  /// \param image the image to populate
+  /// \param offset_x offset to first pixel in x
+  /// \param offset_y offset to first pixel in y
+  /// \param width the width of the image or subimage
+  /// \param height the height of the image or subimage (intensities must be pre-allocated as a widthxheight array)
+  /// \param intensities the intensity array
+  /// \param is_layout_right colum or row oriented storage flag (not used yet for cine)
   /// \param frame_index the frame to gather
-  void get_frame_10_bit_filtered(Teuchos::RCP<Image> image,
+  void get_frame_10_bit_filtered(const int_t offset_x,
+    const int_t offset_y,
+    const int_t width,
+    const int_t height,
+    intensity_t * intensities,
+    const bool is_layout_right,
     const int_t frame_index);
 
   /// \brief 16 bit frame fetch
-  /// \param image the image to populate
+  /// \param offset_x offset to first pixel in x
+  /// \param offset_y offset to first pixel in y
+  /// \param width the width of the image or subimage
+  /// \param height the height of the image or subimage (intensities must be pre-allocated as a widthxheight array)
+  /// \param intensities the intensity array
+  /// \param is_layout_right colum or row oriented storage flag (not used yet for cine)
   /// \param frame_index the frame to gather
   /// \param filter_failed_pixels get rid of outlier pixels or failed pixels
-  void get_frame_16_bit(const Teuchos::RCP<Image> & image,
+  void get_frame_16_bit(const int_t offset_x,
+    const int_t offset_y,
+    const int_t width,
+    const int_t height,
+    intensity_t * intensities,
+    const bool is_layout_right,
     const int_t frame_index,
     const bool filter_failed_pixels);
 

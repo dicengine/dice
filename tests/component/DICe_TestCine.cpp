@@ -40,6 +40,7 @@
 // @HEADER
 #include <DICe.h>
 #include <DICe_Cine.h>
+#include <DICe_ImageIO.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -243,6 +244,54 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   *outStream << "16 bit motion window values have been checked" << std::endl;
+
+
+  int_t test_w = 0;
+  int_t test_h = 0;
+  DICe::utils::read_image_dimensions("./images/phantom_v1610_16bpp_0.cine",test_w,test_h);
+  *outStream << "read cine via utils method w: " << test_w << " h: " << test_h << std::endl;
+  if(test_w!=256||test_h!=128){
+    *outStream << "Error, the image dimensions are wrong" << std::endl;
+    errorFlag++;
+  }
+
+  // test the indexing from a cine file name
+  int_t end_index = 0;
+  int_t start_index = 0;
+  bool is_avg = false;
+  DICe::utils::cine_index("./images/phantom_v1610_16bpp_avg-345to-12.cine",start_index,end_index,is_avg);
+  *outStream << "decypher cine index range start " << start_index << " end " << end_index << std::endl;
+  if(start_index!=-345||end_index!=-12){
+    *outStream << "Error, the image indices are not correct" << std::endl;
+    errorFlag++;
+  }
+  if(!is_avg){
+    *outStream << "Error, should have been flagged as an average image" << std::endl;
+    errorFlag++;
+  }
+
+  DICe::utils::cine_index("./images/phantom_v1610_16bpp_23.cine",start_index,end_index,is_avg);
+  *outStream << "decypher cine index range start " << start_index << " end " << end_index << std::endl;
+  if(start_index!=23||end_index!=-1){
+    *outStream << "Error, the image indices are not correct" << std::endl;
+    errorFlag++;
+  }
+  if(is_avg){
+    *outStream << "Error, should not have been flagged as an average image" << std::endl;
+    errorFlag++;
+  }
+
+  // try creating a cine image using the standard image interface without a reader constructed manually:
+  Teuchos::RCP<DICe::Image> img_cine_0 = Teuchos::rcp(new Image("./images/phantom_v1610_16bpp_-85.cine"));
+  Teuchos::RCP<DICe::Image> img_cine_0_gold = Teuchos::rcp(new Image("./images/image_cine_-85.rawi"));
+  const scalar_t diff = img_cine_0->diff(img_cine_0_gold);
+  *outStream << "diff cine made without manual header creation vs gold: " << diff << std::endl;
+  if(diff > 0.001){
+    *outStream << "Error, the images do not match" << std::endl;
+    errorFlag++;
+  }
+  //img_cine_0->write("image_cine_-85.rawi");
+
 
   *outStream << "--- End test ---" << std::endl;
 

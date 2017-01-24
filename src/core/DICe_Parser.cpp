@@ -44,6 +44,7 @@
 #include <DICe_XMLUtils.h>
 #include <DICe_ParameterUtilities.h>
 #include <DICe.h>
+//#include <DICe_Cine.h>
 
 #include <Teuchos_oblackholestream.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
@@ -1338,15 +1339,82 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
       "Error, cannot specify stereo_left_suffix and cine_file");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_right_suffix),std::runtime_error,
       "Error, cannot specify stereo_right_suffix and cine_file");
-    // flag that this analysis is a cine file
-    // the first two strings will be "cine_file"
+
     image_files.push_back(DICe::cine_file);
     image_files.push_back(DICe::cine_file);
     if(params->isParameter(DICe::stereo_cine_file)){
-      stereo_image_files.push_back(DICe::cine_file); // push back cine_file not stereo_cine_file because this is the flag that main uses to denote cine input
+      stereo_image_files.push_back(DICe::cine_file);
       stereo_image_files.push_back(DICe::cine_file);
     }
-  }
+
+//    std::stringstream cine_name;
+//    std::string cine_file_name = params->get<std::string>(DICe::cine_file);
+//    cine_name << params->get<std::string>(DICe::image_folder) << cine_file_name;
+//    Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
+//    Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(cine_name.str(),bhs.getRawPtr(),false));
+//    // read the image data for a frame
+//    const int_t num_images = cine_reader->num_frames();
+//    const int_t first_frame_index = cine_reader->first_image_number();
+//    //TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::cine_ref_index),std::runtime_error,
+//    //  "Error, the reference index for the cine file has not been specified");
+//    const int_t cine_ref_index = params->get<int_t>(DICe::cine_ref_index,first_frame_index);
+//    const int_t cine_start_index = params->get<int_t>(DICe::cine_start_index,first_frame_index);
+//    const int_t cine_end_index = params->get<int_t>(DICe::cine_end_index,first_frame_index + num_images -1);
+//    // check if the reference frame should be averaged:
+//    int_t num_avg_frames = -1;
+//    if(params->isParameter(DICe::time_average_cine_ref_frame))
+//      num_avg_frames = params->get<int_t>(DICe::time_average_cine_ref_frame,1);
+//    // strip the .cine part from the end of the cine file:
+//    std::string trimmed_cine_name = cine_name.str();
+//    const std::string ext(".cine");
+//    if(trimmed_cine_name.size() > ext.size() && trimmed_cine_name.substr(trimmed_cine_name.size() - ext.size()) == ".cine" )
+//    {
+//       trimmed_cine_name = trimmed_cine_name.substr(0, trimmed_cine_name.size() - ext.size());
+//    }else{
+//      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid cine file: " << cine_file_name);
+//    }
+//    std::stringstream ref_cine_ss;
+//    ref_cine_ss << trimmed_cine_name << "_";
+//    if(num_avg_frames>0)
+//      ref_cine_ss << "avg" << cine_ref_index << "-" << cine_ref_index + num_avg_frames;
+//    else
+//      ref_cine_ss << cine_ref_index;
+//    ref_cine_ss << ".cine";
+//    image_files.push_back(ref_cine_ss.str());
+//    for(int_t i=cine_start_index;i<=cine_end_index;++i){
+//      std::stringstream def_cine_ss;
+//      def_cine_ss << trimmed_cine_name << "_" << i << ".cine";
+//      image_files.push_back(def_cine_ss.str());
+//    }
+    //    if(params->isParameter(DICe::stereo_cine_file)){
+//      std::stringstream stereo_cine_name;
+//      std::string stereo_cine_file_name = params->get<std::string>(DICe::stereo_cine_file);
+//      stereo_cine_name << params->get<std::string>(DICe::image_folder) << stereo_cine_file_name;
+//      Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
+//      Teuchos::RCP<DICe::cine::Cine_Reader> stereo_cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(stereo_cine_name.str(),bhs.getRawPtr(),false));
+//      // strip the .cine part from the end of the cine file:
+//      std::string stereo_trimmed_cine_name = stereo_cine_name.str();
+//      if(stereo_trimmed_cine_name.size() > ext.size() && stereo_trimmed_cine_name.substr(stereo_trimmed_cine_name.size() - ext.size()) == ".cine" )
+//      {
+//         stereo_trimmed_cine_name = stereo_trimmed_cine_name.substr(0, stereo_trimmed_cine_name.size() - ext.size());
+//      }else{
+//        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid stereo cine file: " << stereo_cine_file_name);
+//      }
+//      std::stringstream stereo_ref_cine_ss;
+//      stereo_ref_cine_ss << stereo_trimmed_cine_name << "_";
+//      if(num_avg_frames>0)
+//        stereo_ref_cine_ss << "avg" << cine_ref_index << "-" << cine_ref_index + num_avg_frames;
+//      else
+//        stereo_ref_cine_ss << cine_ref_index;
+//      stereo_ref_cine_ss << ".cine";
+//      stereo_image_files.push_back(stereo_ref_cine_ss.str());
+//      for(int_t i=cine_start_index;i<=cine_end_index;++i){
+//        std::stringstream stereo_def_cine_ss;
+//        stereo_def_cine_ss << stereo_trimmed_cine_name << "_" << i << ".cine";
+//        stereo_image_files.push_back(stereo_def_cine_ss.str());
+//      }
+//    }
+  } // end cine file
   // User specified an image sequence:
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image),std::runtime_error,

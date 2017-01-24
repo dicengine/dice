@@ -43,8 +43,12 @@
 #define DICE_IMAGEIO_H
 
 #include <DICe.h>
+#include <DICe_Cine.h>
+
+#include <Teuchos_RCP.hpp>
 
 #include <string>
+#include <map>
 
 namespace DICe{
 /*!
@@ -53,6 +57,26 @@ namespace DICe{
  */
 /// utilities that wont build with NVCC so they are separated out into another namespace
 namespace utils{
+
+/// returns the name of a cine file given a decorated cine string
+/// \param cine_string the decorated string that contains the name
+DICE_LIB_DLL_EXPORT
+std::string cine_file_name(const std::string & cine_string);
+
+/// returns the start index decyphered from the cine file descriptor passed in
+/// \param decorated_cine_file the descriptor that has the cine name and index concatendated
+/// \param start_index [out] the start index requested
+/// \param end_index [out] returned as -1 unless the descriptor has an "avg" tag appended
+/// \param is_avg true if more than one frame gets averaged together
+/// The convention is as follows cine_file_0.cine would lead to a file name of cine_file.cine and an index of 0
+/// Another example would be cine_file_avg45to51.cine that would lead to a file name of cine_file.cine and
+/// averaging of frames 45 through 51 inclusive.
+/// negative numbers are okay e.g. cine_file_avg-12to-10.cine or cine_file_-500.cine
+DICE_LIB_DLL_EXPORT
+void cine_index(const char * decorated_cine_file,
+  int_t & start_index,
+  int_t & end_index,
+  bool & is_avg);
 
 /// returns the type of file based on the name
 /// \param file_name the name of the file
@@ -126,6 +150,45 @@ void write_color_overlap_image(const char * file_name,
   const int_t height,
   intensity_t * bottom_intensities,
   intensity_t * top_intensities);
+
+
+// singleton class to keep track of image readers from high speed video or netcdf files:
+/// \class Image_Reader_Cache
+/// used for file reads and getting image dimensions without having to reload the header every time
+class Image_Reader_Cache{
+public:
+  /// return an instance of the singleton
+  static Image_Reader_Cache &instance(){
+    static Image_Reader_Cache instance_;
+    return instance_;
+  }
+
+  /// filters failed pixels from the images
+  void set_filter_failed_pixels(const bool flag){
+    filter_failed_pixels_ = flag;
+  }
+
+  /// filters failed pixels from the images
+  bool filter_failed_pixels()const{
+    return filter_failed_pixels_;
+  }
+
+  /// add a cine reader to the map
+  /// \param id the string name of the reader in case multiple headers are loaded (for example in stereo)
+  /// if the reader doesn't exist, it gets created
+  Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader(const std::string & id);
+private:
+  /// constructor
+  Image_Reader_Cache():filter_failed_pixels_(false){};
+  /// copy constructor
+  Image_Reader_Cache(Image_Reader_Cache const&);
+  /// asignment operator
+  void operator=(Image_Reader_Cache const &);
+  /// map of cine readers
+  std::map<std::string,Teuchos::RCP<DICe::cine::Cine_Reader> > cine_reader_map_;
+  /// filter failed pixels from images as they are loaded
+  bool filter_failed_pixels_;
+};
 
 
 } // end namespace utils
