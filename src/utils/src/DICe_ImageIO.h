@@ -61,7 +61,7 @@ namespace utils{
 /// returns the name of a cine file given a decorated cine string
 /// \param cine_string the decorated string that contains the name
 DICE_LIB_DLL_EXPORT
-std::string cine_file_name(const std::string & cine_string);
+std::string cine_file_name(const char * decorated_cine_file);
 
 /// returns the start index decyphered from the cine file descriptor passed in
 /// \param decorated_cine_file the descriptor that has the cine name and index concatendated

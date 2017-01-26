@@ -79,7 +79,11 @@ int main(int argc, char *argv[]) {
   // create a triangulation
   Teuchos::RCP<Triangulation> triang = Teuchos::rcp(new Triangulation());
   const int_t ret_val = triang->estimate_projective_transform(left_img,right_img,true,use_nonlin);
+  if(ret_val!=0){
+    assert(false);
+  }
   DEBUG_MSG("CrossInit(): estimate_projective_transform() return value " << ret_val);
+
 
   DICe::finalize();
 

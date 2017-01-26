@@ -5,7 +5,8 @@
   <Parameter name="output_folder" type="string" value="./results/" />
   <Parameter name="image_folder" type="string" value="./images/" />
   <Parameter name="reference_image_index" type="int" value="0"  />
-  <Parameter name="last_image_index" type="int" value="11" />
+  <Parameter name="start_image_index" type="int" value="1"  />
+  <Parameter name="end_image_index" type="int" value="11" />
   <Parameter name="num_file_suffix_digits" type="int" value="2" />
   <Parameter name="image_file_extension" type="string" value=".tiff" />
   <Parameter name="image_file_prefix" type="string" value="oht_cfrp_" />  

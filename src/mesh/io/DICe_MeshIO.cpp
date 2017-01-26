@@ -973,9 +973,10 @@ exodus_output_dump(Teuchos::RCP<Mesh> mesh,
   const int_t & time_step_num,
   const float & time_value)
 {
+  DEBUG_MSG("exodus_output_dump(): time_step_num: " << time_step_num << " time: " << time_value);
   int error_int = 0;
   error_int = ex_put_time(mesh->get_output_exoid(), time_step_num, &time_value);
-  TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_time(): Failure");
+  TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_time(): Failure " << error_int);
 
   // write fields
   DICe::mesh::field_registry::iterator field_it = mesh->get_field_registry()->begin();

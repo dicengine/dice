@@ -8,5 +8,5 @@
   <Parameter name="cine_file" type="string" value="packed_12bpp.cine" /> 
   <Parameter name="cine_ref_index" type="int" value="60" /> 
   <Parameter name="cine_start_index" type="int" value="60" /> 
-  <Parameter name="cine_end_index" type="int" value="5" /> 
+  <Parameter name="cine_end_index" type="int" value="61" /> 
 </ParameterList>

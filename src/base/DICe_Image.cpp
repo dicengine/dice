@@ -113,6 +113,17 @@ Image::post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params
     compute_gradients(image_grad_use_hierarchical_parallelism,image_grad_team_size);
 }
 
+/// returns true if the image is a frame from a video sequence cine or netcdf file
+bool
+Image::is_video_frame()const{
+  Image_File_Type type = utils::image_file_type(file_name_.c_str());
+  if(type==CINE||type==NETCDF)
+    return true;
+  else
+    return false;
+}
+
+
 scalar_t
 Image::diff(Teuchos::RCP<Image> rhs) const{
   if(rhs->width()!=width_||rhs->height()!=height_)

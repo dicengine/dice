@@ -481,31 +481,31 @@ Decomp::populate_global_coordinate_vector(Teuchos::ArrayRCP<scalar_t> & subset_c
     Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
     imgParams->set(DICe::compute_image_gradients,true);
     // determine if the image is from cine high speed video file:
-    if(image_file_name==DICe::cine_file){
-      Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader;
-      int_t cine_num_images = -1;
-      int_t cine_first_frame_index = -1;
-      int_t cine_ref_index = -1;
-      const std::string cine_file_name = input_params->get<std::string>(DICe::cine_file);
-      std::stringstream cine_name;
-      cine_name << input_params->get<std::string>(DICe::image_folder) << cine_file_name;
-      Teuchos::oblackholestream bhs; // outputs nothing
-      cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(cine_name.str(),&bhs,false));
-      cine_num_images = cine_reader->num_frames();
-      cine_first_frame_index = cine_reader->first_image_number();
-      DEBUG_MSG("Decomp::Decomp(): cine first frame index: " << cine_first_frame_index);
-      cine_ref_index = input_params->get<int_t>(DICe::cine_ref_index,cine_first_frame_index);
-      TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index < cine_first_frame_index,std::invalid_argument,"");
-      TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index - cine_first_frame_index > cine_num_images,std::invalid_argument,"");
-      // convert the cine ref, start and end index to the DICe indexing, not cine indexing (begins with zero)
-      cine_ref_index = cine_ref_index - cine_first_frame_index;
-      DEBUG_MSG("Decomp::Decomp(): reading cine image from file: " << cine_file_name << " index " << cine_ref_index);
-      image = cine_reader->get_frame(cine_ref_index,true,false,imgParams);
-    }
-    else{
+//    if(image_file_name==DICe::cine_file){
+//      Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader;
+//      int_t cine_num_images = -1;
+//      int_t cine_first_frame_index = -1;
+//      int_t cine_ref_index = -1;
+//      const std::string cine_file_name = input_params->get<std::string>(DICe::cine_file);
+//      std::stringstream cine_name;
+//      cine_name << input_params->get<std::string>(DICe::image_folder) << cine_file_name;
+//      Teuchos::oblackholestream bhs; // outputs nothing
+//      cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(cine_name.str(),&bhs,false));
+//      cine_num_images = cine_reader->num_frames();
+//      cine_first_frame_index = cine_reader->first_image_number();
+//      DEBUG_MSG("Decomp::Decomp(): cine first frame index: " << cine_first_frame_index);
+//      cine_ref_index = input_params->get<int_t>(DICe::cine_ref_index,cine_first_frame_index);
+//      TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index < cine_first_frame_index,std::invalid_argument,"");
+//      TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index - cine_first_frame_index > cine_num_images,std::invalid_argument,"");
+//      // convert the cine ref, start and end index to the DICe indexing, not cine indexing (begins with zero)
+//      cine_ref_index = cine_ref_index - cine_first_frame_index;
+//      DEBUG_MSG("Decomp::Decomp(): reading cine image from file: " << cine_file_name << " index " << cine_ref_index);
+//      image = cine_reader->get_frame(cine_ref_index,true,false,imgParams);
+//    }
+//    else{
       DEBUG_MSG("Decomp::Decomp(): reading image from file: " << image_file_name);
       image = Teuchos::rcp( new Image(image_file_name.c_str(),imgParams));
-    }
+//    }
     image_width_ = image->width();
     image_height_ = image->height();
   } // end proc 0 reads image
@@ -543,7 +543,6 @@ Decomp::populate_global_coordinate_vector(Teuchos::ArrayRCP<scalar_t> & subset_c
   Teuchos::RCP<DICe::Subset_File_Info> subset_info;
 
   // if the subset locations are specified in an input file, read them in (else they will be defined later)
-  int_t step_size = -1;
   Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > blocking_subset_ids;
   Teuchos::RCP<std::vector<scalar_t> > subset_centroids_on_0 = Teuchos::rcp(new std::vector<scalar_t>());
@@ -558,9 +557,8 @@ Decomp::populate_global_coordinate_vector(Teuchos::ArrayRCP<scalar_t> & subset_c
  if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
     TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::step_size),std::runtime_error,
       "Error, step size has not been specified");
-    step_size = input_params->get<int_t>(DICe::step_size);
     DEBUG_MSG("Correlation point centroids were not specified by the user. \nThey will be evenly distrubed in the region"
-      " of interest with separation (step_size) of " << step_size << " pixels.");
+      " of interest with separation (step_size) of " << input_params->get<int_t>(DICe::step_size) << " pixels.");
     TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_size),std::runtime_error,
       "Error, the subset size has not been specified"); // required for all square subsets case
     //subset_size = input_params->get<int_t>(DICe::subset_size);

@@ -122,15 +122,6 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> image_files;
     std::vector<std::string> stereo_image_files;
     DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
-
-//    for(int_t i=0;i<image_files.size();++i)
-//      std::cout << "image file " << i << " " << image_files[i] << std::endl;
-//
-//    for(int_t i=0;i<stereo_image_files.size();++i)
-//      std::cout << "stereo image file " << i << " " << stereo_image_files[i] << std::endl;
-//    assert(false);
-
-
     const bool is_stereo = stereo_image_files.size() > 0;
     if(is_stereo){
       TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::calibration_parameters_file),std::runtime_error,
@@ -138,110 +129,43 @@ int main(int argc, char *argv[]) {
       TEUCHOS_TEST_FOR_EXCEPTION(triangulation==Teuchos::null,std::runtime_error,
         "Error, triangulation should be instantiated at this point");
     }
-    int_t num_images = 0;
-    int_t cine_ref_index = -1;
-    int_t cine_start_index = -1;
-    int_t cine_end_index = -1;
+    const int_t num_frames = image_files.size()-1;
+    int_t first_frame_id = 0;
     int_t image_width = 0;
     int_t image_height = 0;
-    int_t first_frame_index = 1;
-    bool is_cine = false;
+    const bool is_cine = utils::image_file_type(image_files[0].c_str()) == CINE;
     bool filter_failed_pixels = false;
-    Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader;
-    Teuchos::RCP<DICe::cine::Cine_Reader> stereo_cine_reader;
-    if(image_files[0]==DICe::cine_file){
-      is_cine = true;
-      // read the file_name from the input_parasm
-      TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::cine_file),std::runtime_error,
-        "Error, the file name of the cine file has not been specified");
-      std::string cine_file_name = input_params->get<std::string>(DICe::cine_file);
-      std::string stereo_cine_file_name;
-      if(is_stereo){
-        TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::stereo_cine_file),std::runtime_error,
-          "Error, the file name of the cine file has not been specified");
-        stereo_cine_file_name = input_params->get<std::string>(DICe::stereo_cine_file);
-      }
-      // add the directory to the name:
-      std::stringstream cine_name;
-      std::stringstream stereo_cine_name;
-      cine_name << input_params->get<std::string>(DICe::image_folder) << cine_file_name;
-      if(is_stereo)
-        *outStream << "stereo left cine file name: " << cine_name.str() << std::endl;
-      else
-        *outStream << "cine file name: " << cine_name.str() << std::endl;
-      stereo_cine_name << input_params->get<std::string>(DICe::image_folder) << stereo_cine_file_name;
-      if(is_stereo)
-      *outStream << "stereo right cine file name: " << stereo_cine_name.str() << std::endl;
-      // read the cine header info:
+    if(is_cine){
+      int_t s_id = 0, e_id = 0;
+      bool is_avg = false;
+      utils::cine_index(image_files[0].c_str(),s_id,e_id,is_avg);
+      first_frame_id = s_id;
       filter_failed_pixels = correlation_params->get<bool>(DICe::filter_failed_cine_pixels,false);
-      cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(cine_name.str(),outStream.getRawPtr(),filter_failed_pixels));
-      if(is_stereo)
-        stereo_cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(stereo_cine_name.str(),outStream.getRawPtr(),filter_failed_pixels));
-      // read the image data for a frame
-      num_images = cine_reader->num_frames();
-      image_width = cine_reader->width();
-      image_height = cine_reader->height();
-      first_frame_index = cine_reader->first_image_number();
-      *outStream << "number of frames in cine file: " << num_images << std::endl;
-      //TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::cine_ref_index),std::runtime_error,
-      //  "Error, the reference index for the cine file has not been specified");
-      cine_ref_index = input_params->get<int_t>(DICe::cine_ref_index,first_frame_index);
-      *outStream << "cine ref index: " << cine_ref_index << std::endl;
-      cine_start_index = input_params->get<int_t>(DICe::cine_start_index,first_frame_index);
-      *outStream << "cine start index: " << cine_start_index << std::endl;
-      cine_end_index = input_params->get<int_t>(DICe::cine_end_index,first_frame_index + num_images -1);
-      *outStream << "cine end index: " << cine_end_index << std::endl;
-      num_images = cine_end_index - cine_start_index + 1;
-      *outStream << "number of frames to analyze: " << num_images << std::endl;
-
-      // sanity checks
-      if(is_stereo){
-        TEUCHOS_TEST_FOR_EXCEPTION(cine_reader->num_frames()!=stereo_cine_reader->num_frames(),std::runtime_error,
-          "Error, incompatible left and right cine files, num frames left " << cine_reader->num_frames() << " num frames right " << stereo_cine_reader->num_frames());
-        TEUCHOS_TEST_FOR_EXCEPTION(image_width!=stereo_cine_reader->width(),std::runtime_error,
-          "Error, incompatible left and right cine files, image width left " << image_width << " image width right " << stereo_cine_reader->width());
-        TEUCHOS_TEST_FOR_EXCEPTION(image_height!=stereo_cine_reader->height(),std::runtime_error,
-          "Error, incompatible left and right cine files, image height left " << image_height << " image height right " << stereo_cine_reader->height());
-      }
-      TEUCHOS_TEST_FOR_EXCEPTION(cine_start_index > cine_end_index,std::invalid_argument,"Error, the cine start index is > the cine end index");
-      TEUCHOS_TEST_FOR_EXCEPTION(cine_start_index < first_frame_index,std::invalid_argument,"Error, the cine start index is < the first frame index");
-      TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index > cine_end_index,std::invalid_argument,"Error, the cine ref index is > the cine end index");
-      TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index < first_frame_index,std::invalid_argument,"Error, the cine ref index is < the first frame index");
-      TEUCHOS_TEST_FOR_EXCEPTION(cine_end_index < cine_start_index,std::invalid_argument,"Error, the cine end index is < the cine start index");
-      TEUCHOS_TEST_FOR_EXCEPTION(cine_end_index < cine_ref_index,std::invalid_argument,"Error, the cine end index is < the ref index");
-
-      // convert the cine ref, start and end index to the DICe indexing, not cine indexing
-      cine_start_index = cine_start_index - first_frame_index;
-      cine_ref_index = cine_ref_index - first_frame_index;
-      cine_end_index = cine_end_index - first_frame_index;
-
-      *outStream << "\n--- Cine file information read successfuly ---\n" << std::endl;
+      utils::Image_Reader_Cache::instance().set_filter_failed_pixels(filter_failed_pixels);
     }
     else  // non-cine input
     {
-      num_images = image_files.size() - 1; // the first file is the reference image
-      if(input_params->isParameter(DICe::reference_image_index)){
-        first_frame_index = input_params->get<int_t>(DICe::reference_image_index)+1;
-      }else{
-        first_frame_index = 1;
+      if(input_params->isParameter(DICe::start_image_index)){
+        first_frame_id = input_params->get<int_t>(DICe::start_image_index);
+      }else if(input_params->isParameter(DICe::reference_image_index)){
+        first_frame_id = input_params->get<int_t>(DICe::reference_image_index);
       }
-      TEUCHOS_TEST_FOR_EXCEPTION(num_images<=0,std::runtime_error,"");
-      *outStream << "Reference image: " << image_files[0] << std::endl;
-      for(int_t i=1;i<=num_images;++i){
-        if(i==10&&num_images!=10) *outStream << "..." << std::endl;
-        else if(i>10&&i<num_images) continue;
-        else
-          *outStream << "Deformed image: " << image_files[i] << std::endl;
-      }
-      *outStream << "\n--- List of images constructed successfuly ---\n" << std::endl;
-      // get width and heigh of reference image to use in setting up the subets
-      utils::read_image_dimensions(image_files[0].c_str(),image_width,image_height);
-    }  // end non-cine input
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(num_frames<=0,std::runtime_error,"");
+    *outStream << "Reference image: " << image_files[0] << std::endl;
+    for(int_t i=1;i<=num_frames;++i){
+      if(i==10&&num_frames!=10) *outStream << "..." << std::endl;
+      else if(i>10&&i<num_frames) continue;
+      else
+        *outStream << "Deformed image: " << image_files[i] << std::endl;
+    }
+    *outStream << "\n--- List of images constructed successfuly ---\n" << std::endl;
+    // get width and heigh of reference image to use in setting up the subets
+    utils::read_image_dimensions(image_files[0].c_str(),image_width,image_height);
     *outStream << "Image dimensions: " << image_width << " x " << image_height << std::endl;
 
     // set up output files
     std::string output_folder = input_params->get<std::string>(DICe::output_folder);
-
     const bool separate_output_file_for_each_subset = input_params->get<bool>(DICe::separate_output_file_for_each_subset,false);
     if(separate_output_file_for_each_subset){
       *outStream << "Output will be written to separate output files for each subset" << std::endl;
@@ -256,34 +180,11 @@ int main(int argc, char *argv[]) {
 
     // create schemas:
     Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema(input_params,correlation_params));
-    //schema->set_ref_extents(image_width,image_height);
     Teuchos::RCP<DICe::Schema> stereo_schema;
-    if(is_cine){
-      // read in the reference image from the cine file and create the schema:
-      Teuchos::RCP<DICe::Image> ref_image;
-      //std::vector<int_t> ref_extents = schema->ref_extents();
-      if(input_params->isParameter(DICe::time_average_cine_ref_frame)){
-        const int_t num_avg_frames = input_params->get<int_t>(DICe::time_average_cine_ref_frame,1);
-        ref_image = cine_reader->get_average_frame(cine_ref_index,cine_ref_index+num_avg_frames,
-          true,filter_failed_pixels,correlation_params);
-//        ref_image = cine_reader->get_average_frame(cine_ref_index,cine_ref_index+num_avg_frames,
-//          ref_extents[0],ref_extents[2],ref_extents[1]-1,ref_extents[3]-1,
-//          true,filter_failed_pixels,correlation_params);
-      }
-      else{
-//        ref_image = cine_reader->get_frame(cine_ref_index,ref_extents[0],ref_extents[2],ref_extents[1]-1,ref_extents[3]-1,
-//          true,filter_failed_pixels,correlation_params);
-        ref_image = cine_reader->get_frame(cine_ref_index,true,filter_failed_pixels,correlation_params);
-      }
-      schema->set_ref_image(ref_image);
-      schema->set_def_image(ref_image);
-    }
-    else{
-      const std::string ref_image_string = image_files[0];
-      schema->set_ref_image(ref_image_string);
-      schema->set_def_image(ref_image_string);
-    }
-    schema->set_first_frame_index(cine_start_index + first_frame_index);
+    schema->set_ref_image(image_files[0]);
+    schema->set_def_image(image_files[0]);
+    // let the schema know how many images there are in the sequence and the first frame id:
+    schema->set_frame_range(first_frame_id,num_frames);
 
     bool has_motion_windows = false;
     if(schema->analysis_type()==LOCAL_DIC){
@@ -297,7 +198,7 @@ int main(int argc, char *argv[]) {
           "," << schema->local_field_value(i,COORDINATE_Y) << ")" << std::endl;
       }
       *outStream << std::endl;
-    }
+    } // end local dic
     else if(schema->analysis_type()==GLOBAL_DIC){
 #ifdef DICE_ENABLE_GLOBAL
       *outStream << "Using qaudratic tri 6 elements" << std::endl;
@@ -305,10 +206,7 @@ int main(int argc, char *argv[]) {
       *outStream << "Number of nodes:    " << schema->global_algorithm()->mesh()->num_nodes() << std::endl;
       *outStream << "Number of elements: " << schema->global_algorithm()->mesh()->num_elem() << std::endl;
 #endif
-    }
-
-    // let the schema know how many images there are in the sequence:
-    schema->set_num_image_frames(num_images);
+    }  // end global dic
     std::string file_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
     std::string stereo_file_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
     stereo_file_prefix += "_stereo";
@@ -329,53 +227,27 @@ int main(int argc, char *argv[]) {
       return 0;
     }
 
-    // TODO find a more straightforward way to do the indexing
-    const int_t start_frame = cine_start_index==-1 ? 1 : cine_start_index;
-    const int_t end_frame = cine_end_index==-1 ? num_images : cine_end_index;
     // if this is a stereo analysis do the initial cross correlation:
     scalar_t cross_corr_time = 0.0;
     if(is_stereo){
       boost::timer t;
       TEUCHOS_TEST_FOR_EXCEPTION(schema->analysis_type()==GLOBAL_DIC,std::runtime_error,"Error, global stereo not enabled yet");
       *outStream << "Processing cross correlation between left and right images" << std::endl;
-      if(is_cine){
-        Teuchos::RCP<DICe::Image> right_image;
-        if(input_params->isParameter(DICe::time_average_cine_ref_frame)){
-          const int_t num_avg_frames = input_params->get<int_t>(DICe::time_average_cine_ref_frame,1);
-          right_image = stereo_cine_reader->get_average_frame(start_frame,start_frame+num_avg_frames,true,filter_failed_pixels,correlation_params);
-        }
-        else
-          right_image = stereo_cine_reader->get_frame(start_frame,true,filter_failed_pixels,correlation_params);
-        schema->set_def_image(right_image);
-        schema->initialize_cross_correlation(triangulation,input_params);
-        if(schema->use_nonlinear_projection()){
-          schema->project_right_image_into_left_frame(triangulation,false);
-        }
-        schema->execute_cross_correlation();
-        schema->save_cross_correlation_fields();
-        stereo_schema = Teuchos::rcp(new DICe::Schema(input_params,correlation_params,schema));
-        stereo_schema->set_ref_image(right_image);
-        stereo_schema->set_def_image(right_image);
-      } // end is_cine
-      else{
-        const std::string right_image_string = stereo_image_files[start_frame];
-        schema->set_def_image(right_image_string);
-        schema->initialize_cross_correlation(triangulation,input_params);
-        if(schema->use_nonlinear_projection()){
-          schema->project_right_image_into_left_frame(triangulation,false);
-        }
-        schema->execute_cross_correlation();
-        schema->save_cross_correlation_fields();
-        stereo_schema = Teuchos::rcp(new DICe::Schema(input_params,correlation_params,schema));
-        stereo_schema->set_ref_image(right_image_string);
-        stereo_schema->set_def_image(right_image_string);
+      const std::string right_image_string = stereo_image_files[0];//start_frame];
+      schema->set_def_image(right_image_string);
+      schema->initialize_cross_correlation(triangulation,input_params);
+      if(schema->use_nonlinear_projection()){
+        schema->project_right_image_into_left_frame(triangulation,false);
       }
+      schema->execute_cross_correlation();
+      schema->save_cross_correlation_fields();
+      stereo_schema = Teuchos::rcp(new DICe::Schema(input_params,correlation_params,schema));
+      stereo_schema->set_ref_image(right_image_string);
+      stereo_schema->set_def_image(right_image_string);
       assert(stereo_schema!=Teuchos::null);
       if(stereo_schema->use_nonlinear_projection())
         stereo_schema->project_right_image_into_left_frame(triangulation,true);
-      stereo_schema->set_first_frame_index(cine_start_index + first_frame_index);
-      //stereo_schema->initialize(input_params,schema);
-      stereo_schema->set_num_image_frames(num_images);
+      stereo_schema->set_frame_range(first_frame_id,num_frames);
       cross_corr_time = t.elapsed();
     } // end is stereo
 
@@ -387,10 +259,12 @@ int main(int argc, char *argv[]) {
     scalar_t min_time = 1.0E10;
     scalar_t avg_time = 0.0;
     bool failed_step = false;
-    for(int_t image_it=start_frame;image_it<=end_frame;++image_it){
-      if(is_cine){
-        *outStream << "Processing Image: " << image_it - start_frame + 1 << " of " << num_images << " frame id: " << first_frame_index + image_it << std::endl;
+
+    for(int_t image_it=1;image_it<=num_frames;++image_it){
+      *outStream << "Processing frame: " << image_it << " of " << num_frames << ", " << image_files[image_it] << std::endl;
+      if(is_cine && has_motion_windows && schema->analysis_type()!=GLOBAL_DIC){
         if(has_motion_windows&&schema->analysis_type()!=GLOBAL_DIC){
+          Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader = utils::Image_Reader_Cache::instance().cine_reader(utils::cine_file_name(image_files[0].c_str()));
           std::map<int_t,Motion_Window_Params>::iterator map_it = schema->motion_window_params()->begin();
           for(;map_it!=schema->motion_window_params()->end();++map_it){
             if(schema->subset_local_id(map_it->first)<0) continue;
@@ -403,33 +277,16 @@ int main(int argc, char *argv[]) {
             const int_t end_x = schema->motion_window_params()->find(use_subset_id)->second.end_x_;
             const int_t start_y = schema->motion_window_params()->find(use_subset_id)->second.start_y_;
             const int_t end_y = schema->motion_window_params()->find(use_subset_id)->second.end_y_;
-            Teuchos::RCP<DICe::Image> def_img = cine_reader->get_frame(image_it,start_x,start_y,end_x,end_y,true,filter_failed_pixels,correlation_params);
+            Teuchos::RCP<DICe::Image> def_img = cine_reader->get_frame(schema->frame_id(),start_x,start_y,end_x,end_y,true,filter_failed_pixels,correlation_params);
             schema->set_def_image(def_img,sub_image_id);
-            if(image_it==start_frame){ // initially populate the previous frame
+            if(image_it==0){
               schema->set_prev_image(def_img,sub_image_id);
             }
           }
         } // end has_motion_windows
-        else{
-          Teuchos::RCP<DICe::Image> def_image = cine_reader->get_frame(image_it,true,filter_failed_pixels,correlation_params);
-          if(schema->use_incremental_formulation()){
-            schema->set_ref_image(schema->def_img());
-          }
-          schema->set_def_image(def_image);
-          if(is_stereo){
-            Teuchos::RCP<DICe::Image> right_def_image = stereo_cine_reader->get_frame(image_it,true,filter_failed_pixels,correlation_params);
-            if(stereo_schema->use_incremental_formulation()){
-              stereo_schema->set_ref_image(stereo_schema->def_img());
-            }
-            stereo_schema->set_def_image(right_def_image);
-            if(stereo_schema->use_nonlinear_projection())
-              stereo_schema->project_right_image_into_left_frame(triangulation,false);
-          }
-        }
-      } // end is_cine
+      }
       else{
         const std::string def_image_string = image_files[image_it];
-        *outStream << "Processing frame: " << image_it << " of " << num_images << ", " << def_image_string << std::endl;
         if(schema->use_incremental_formulation()){
           schema->set_ref_image(schema->def_img());
         }
@@ -481,8 +338,6 @@ int main(int argc, char *argv[]) {
           stereo_schema->write_output(output_folder,stereo_file_prefix,separate_output_file_for_each_subset,separate_header_file,no_text_output);
         }
         stereo_schema->post_execution_tasks();
-        // TODO MOVE execute post processors to after this step
-        // TODO refactor post processors to use the X and Y fields for strain
       }
       write_time = write_t.elapsed();
     } // image loop
@@ -491,7 +346,7 @@ int main(int argc, char *argv[]) {
     if(is_stereo)
       stereo_schema->write_stats(output_folder,stereo_file_prefix);
 
-    avg_time = corr_time / num_images;
+    avg_time = corr_time / num_frames;
 
     if(failed_step)
       *outStream << "\n--- Failed Step Occurred ---\n" << std::endl;

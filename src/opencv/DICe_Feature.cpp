@@ -138,13 +138,14 @@ void match_features(Teuchos::RCP<Image> left_image,
   const float & feature_tol,
   const std::string & result_image_name){
 
-  if(left_image->has_file_name()&&right_image->has_file_name()){
-    // see if the image has a valid file name
-    match_features(left_image->file_name(),right_image->file_name(),left_x,left_y,right_x,right_y,feature_tol,result_image_name);
-  }else{
+  if(left_image->is_video_frame()&&right_image->is_video_frame()){
     left_image->write("left_image.tif");
     right_image->write("right_image.tif");
     match_features("left_image.tif","right_image.tif",left_x,left_y,right_x,right_y,feature_tol,result_image_name);
+  }
+  else{
+    // see if the image has a valid file name
+    match_features(left_image->file_name(),right_image->file_name(),left_x,left_y,right_x,right_y,feature_tol,result_image_name);
   }
     //TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Feature detection only enabled for images read from file, not array images");
 //#if DICE_USE_DOUBLE
@@ -163,14 +164,11 @@ void match_features(Teuchos::RCP<Image> left_image,
 //#endif
 //    cv::Mat img1 = cv::Mat(left_image->width(),left_image->height(),CV_32F,left_intensities.getRawPtr());
 //    cv::Mat img2 = cv::Mat(right_image->width(),right_image->height(),CV_32F,right_intensities.getRawPtr());
-  if(!(left_image->has_file_name()&&right_image->has_file_name())){
+  if(left_image->is_video_frame()||right_image->is_video_frame()){
     // remove the left and right image temp files:
     std::remove("left_image.tif"); // delete file
     std::remove("right_image.tif"); // delete file
   }
 }
-
-
-
 
 }// End DICe Namespace

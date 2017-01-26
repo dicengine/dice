@@ -948,7 +948,7 @@ Global_Algorithm::execute(){
       disp->put_scalar(0.0);
       disp_nm1->put_scalar(0.0);
     }
-    if(schema_->has_initial_condition_file()&&schema_->image_frame()==0){
+    if(schema_->has_initial_condition_file()&&schema_->frame_id()==schema_->first_frame_id()){
       Teuchos::RCP<DICe::mesh::Importer_Projector> importer =
           Teuchos::rcp(new DICe::mesh::Importer_Projector(schema_->initial_condition_file(),mesh_));
       TEUCHOS_TEST_FOR_EXCEPTION(importer->num_target_pts()!=(int_t)mesh_->num_nodes(),std::runtime_error,"");

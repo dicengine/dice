@@ -285,7 +285,7 @@ int main(int argc, char *argv[]) {
       Teuchos::RCP<MultiField> error_x = schema->mesh()->get_field(DICe::mesh::field_enums::FIELD_5_FS);
       Teuchos::RCP<MultiField> error_y = schema->mesh()->get_field(DICe::mesh::field_enums::FIELD_6_FS);
 
-      schema->update_image_frame();
+      schema->update_frame_id();
 
       int N = 2;
       int *IPIV = new int[N+1];

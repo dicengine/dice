@@ -179,7 +179,7 @@ Path_Initializer::write_to_text_file(const std::string & file_name)const{
 Status_Flag
 Path_Initializer::initial_guess(const int_t subset_gid,
   Teuchos::RCP<std::vector<scalar_t> > deformation){
-  bool global_path_search_required = schema_->global_field_value(subset_gid,SIGMA)==-1.0 || schema_->image_frame()==0;
+  bool global_path_search_required = schema_->global_field_value(subset_gid,SIGMA)==-1.0 || schema_->frame_id()==schema_->first_frame_id();
   if(global_path_search_required){
     initial_guess(schema_->def_img(),deformation);
   }
@@ -381,7 +381,7 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
   int_t sid = subset_gid;
   // logic for using neighbor values
   if(schema_->initialization_method()==DICe::USE_NEIGHBOR_VALUES ||
-      (schema_->initialization_method()==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && schema_->image_frame()==0)){
+      (schema_->initialization_method()==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && schema_->frame_id()==schema_->first_frame_id())){
     sid = schema_->global_field_value(subset_gid,DICe::NEIGHBOR_ID);
   }
 
@@ -398,7 +398,7 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
     const Projection_Method projection = schema_->projection_method();
     if(schema_->translation_enabled()){
       DEBUG_MSG("Subset " << subset_gid << " Translation is enabled.");
-      if(schema_->image_frame() > 2 && projection == VELOCITY_BASED){
+      if(schema_->frame_id() > schema_->first_frame_id()+2 && projection == VELOCITY_BASED){
         (*deformation)[DICe::DISPLACEMENT_X] = schema_->global_field_value(sid,DICe::DISPLACEMENT_X) +
             (schema_->global_field_value(sid,DICe::DISPLACEMENT_X)-schema_->global_field_value_nm1(sid,DICe::DISPLACEMENT_X));
         (*deformation)[DICe::DISPLACEMENT_Y] = schema_->global_field_value(sid,DICe::DISPLACEMENT_Y) +
@@ -411,7 +411,7 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
     }
     if(schema_->rotation_enabled()){
       DEBUG_MSG("Subset " << subset_gid << " Rotation is enabled.");
-      if(schema_->image_frame() > 2 && projection == VELOCITY_BASED){
+      if(schema_->frame_id() > schema_->first_frame_id()+2 && projection == VELOCITY_BASED){
         (*deformation)[DICe::ROTATION_Z] = schema_->global_field_value(sid,DICe::ROTATION_Z) +
             (schema_->global_field_value(sid,DICe::ROTATION_Z)-schema_->global_field_value_nm1(sid,DICe::ROTATION_Z));
       }
@@ -878,8 +878,7 @@ Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
   bool skip_solve = false;
 
   if(schema_->skip_solve_flags()->find(subset_gid)!=schema_->skip_solve_flags()->end()){
-    const int_t trigger_based_frame = schema_->image_frame() + schema_->first_frame_index();
-    skip_solve = frame_should_be_skipped(trigger_based_frame,schema_->skip_solve_flags()->find(subset_gid)->second);
+    skip_solve = frame_should_be_skipped(schema_->frame_id(),schema_->skip_solve_flags()->find(subset_gid)->second);
   }
   if(schema_->skip_all_solves())
     skip_solve = true;

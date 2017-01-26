@@ -682,16 +682,6 @@ public:
   Status_Flag initial_guess(const int_t subset_gid,
     Teuchos::RCP<std::vector<scalar_t> > deformation);
 
-  /// set up the distributed map so that it respects dependencies among obstructions
-  /// \param map a map of ids split by obstruction groupings
-  void create_obstruction_dist_map(Teuchos::RCP<MultiField_Map> & map);
-
-  /// set up the distributed map so that it respects dependencies among seeds
-  /// \param map a map of ids split by seeds
-  /// \param neighbor_ids a vector of neighbor ids for each id
-  void create_seed_dist_map(Teuchos::RCP<MultiField_Map> & map,
-    Teuchos::RCP<std::vector<int_t> > neighbor_ids);
-
   /// \brief Create an image that shows the correlation points
   /// \param fileName String name of file to for output
   /// \param use_def_image True if the deformed image should be used, otherwise the reference image is used
@@ -908,35 +898,34 @@ public:
   }
 
   /// Updates the current image frame number
-  void update_image_frame(){
-    image_frame_++;
+  void update_frame_id(){
+    frame_id_++;
   }
 
   /// Returns the current image frame (Nonzero only if multiple images are included in the sequence)
-  int_t image_frame()const{
-    return image_frame_;
+  int_t frame_id()const{
+    return frame_id_;
+  }
+
+  /// Returns the first image frame (Nonzero only if multiple images are included in the sequence)
+  int_t first_frame_id()const{
+    return first_frame_id_;
   }
 
   /// Sets the first frame's index
-  /// \param index the index of the first frame (useful for cine files)
-  void set_first_frame_index(const int_t index){
-    first_frame_index_ = index;
-  }
-
-  /// Returns the offset to the first frame
-  int_t first_frame_index()const{
-    return first_frame_index_;
+  /// \param start_id the index of the first frame (useful for cine files)
+  /// \param num_frames the total number of frames in the analysis
+  void set_frame_range(const int_t start_id, const int_t num_frames){
+    first_frame_id_ = start_id;
+    frame_id_ = first_frame_id_;
+    num_frames_ = num_frames;
   }
 
   /// Returns the number of images in the set (-1 if it has not been set)
-  int_t num_image_frames() const{
-    return num_image_frames_;
+  int_t num_frames() const{
+    return num_frames_;
   }
 
-  /// Set the number of images in the sequence (defualts to -1 if not set)
-  void set_num_image_frames(const int_t num_frames){
-    num_image_frames_ = num_frames;
-  }
 
   /// Returns true if the output has a specific order to the fields
   bool has_output_spec()const{
@@ -1217,11 +1206,11 @@ private:
   /// Determines how the output is formatted
   Teuchos::RCP<DICe::Output_Spec> output_spec_;
   /// Stores current fame number for a sequence of images
-  int_t image_frame_;
+  int_t frame_id_;
   /// Stores the offset to the first image's index (cine files can start with a negative index)
-  int_t first_frame_index_;
+  int_t first_frame_id_;
   /// Stores the number of images in the sequence
-  int_t num_image_frames_;
+  int_t num_frames_;
   /// Displacement jump tolerance. If the displacement solution is larger than this from the previous frame
   /// it is rejected
   double disp_jump_tol_;

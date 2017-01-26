@@ -215,10 +215,10 @@ int main(int argc, char *argv[]) {
     schema->set_ref_image(ref_img);
     schema->set_def_image(ref_img);
     // initialize the schema with the subset coordinates
-    schema->set_first_frame_index(0);
+    schema->set_frame_range(0,num_time_steps);
 
     for(int_t time_step=0;time_step<num_time_steps;++time_step){
-      schema->update_image_frame();
+      schema->update_frame_id();
 
       // fill the displacement values of the schema:
       Teuchos::RCP<MultiField> disp_x = schema->mesh()->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);

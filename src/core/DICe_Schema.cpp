@@ -313,9 +313,9 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   subset_dim_ = -1;
   step_size_x_ = -1;
   step_size_y_ = -1;
-  image_frame_ = 0;
-  first_frame_index_ = 1;
-  num_image_frames_ = -1;
+  frame_id_ = 0;
+  first_frame_id_ = 0;
+  num_frames_ = -1;
   has_output_spec_ = false;
   is_initialized_ = false;
   analysis_type_ = LOCAL_DIC;
@@ -1174,247 +1174,10 @@ Schema::create_mesh_fields(){
 }
 
 void
-Schema::create_obstruction_dist_map(Teuchos::RCP<MultiField_Map> & map){
-  if(obstructing_subset_ids_==Teuchos::null) return;
-  if(obstructing_subset_ids_->size()==0) return;
-
-  const int_t proc_id = comm_->get_rank();
-  const int_t num_procs = comm_->get_size();
-
-  if(proc_id == 0) DEBUG_MSG("Subsets have obstruction dependencies.");
-  // set up the groupings of subset ids that have to stay together:
-  // Note: this assumes that the obstructions are only one relation deep
-  // i.e. the blocking subset cannot itself have a subset that blocks it
-  // TODO address this to make it more general
-  std::set<int_t> eligible_ids;
-  for(int_t i=0;i<global_num_subsets_;++i)
-    eligible_ids.insert(i);
-  std::vector<std::set<int_t> > obstruction_groups;
-  std::map<int_t,int_t> earliest_id_can_appear;
-  std::set<int_t> assigned_to_a_group;
-  std::map<int_t,std::vector<int_t> >::iterator map_it = obstructing_subset_ids_->begin();
-  for(;map_it!=obstructing_subset_ids_->end();++map_it){
-    int_t greatest_subset_id_among_obst = 0;
-    for(size_t j=0;j<map_it->second.size();++j)
-      if(map_it->second[j] > greatest_subset_id_among_obst) greatest_subset_id_among_obst = map_it->second[j];
-    earliest_id_can_appear.insert(std::pair<int_t,int_t>(map_it->first,greatest_subset_id_among_obst));
-
-    if(assigned_to_a_group.find(map_it->first)!=assigned_to_a_group.end()) continue;
-    std::set<int_t> dependencies;
-    dependencies.insert(map_it->first);
-    eligible_ids.erase(map_it->first);
-    // gather for all the dependencies for this subset
-    for(size_t j=0;j<map_it->second.size();++j){
-      dependencies.insert(map_it->second[j]);
-      eligible_ids.erase(map_it->second[j]);
-    }
-    // no search all the other obstruction sets for any ids currently in the dependency list
-    std::set<int_t>::iterator dep_it = dependencies.begin();
-    for(;dep_it!=dependencies.end();++dep_it){
-      std::map<int_t,std::vector<int_t> >::iterator search_it = obstructing_subset_ids_->begin();
-      for(;search_it!=obstructing_subset_ids_->end();++search_it){
-        if(assigned_to_a_group.find(search_it->first)!=assigned_to_a_group.end()) continue;
-        // if any of the ids are in the current dependency list, add the whole set:
-        bool match_found = false;
-        if(*dep_it==search_it->first) match_found = true;
-        for(size_t k=0;k<search_it->second.size();++k){
-          if(*dep_it==search_it->second[k]) match_found = true;
-        }
-        if(match_found){
-          dependencies.insert(search_it->first);
-          eligible_ids.erase(search_it->first);
-          for(size_t k=0;k<search_it->second.size();++k){
-            dependencies.insert(search_it->second[k]);
-            eligible_ids.erase(search_it->second[k]);
-          }
-          // reset the dependency index because more items were added to the list
-          dep_it = dependencies.begin();
-          // remove this set of obstruction ids since they have already been added to a group
-          assigned_to_a_group.insert(search_it->first);
-        } // match found
-      } // obstruction set
-    } // dependency it
-    obstruction_groups.push_back(dependencies);
-  } // outer obstruction set it
-  if(proc_id == 0) DEBUG_MSG("[PROC " << proc_id << "] There are " << obstruction_groups.size() << " obstruction groupings: ");
-//  std::stringstream ss;
-//  for(size_t i=0;i<obstruction_groups.size();++i){
-//    ss << "[PROC " << proc_id << "] Group: " << i << std::endl;
-//    std::set<int_t>::iterator j = obstruction_groups[i].begin();
-//    for(;j!=obstruction_groups[i].end();++j){
-//      ss << "[PROC " << proc_id << "]   id: " << *j << std::endl;
-//    }
-//  }
-//  ss << "[PROC " << proc_id << "] Eligible ids: " << std::endl;
-//  for(std::set<int_t>::iterator elig_it=eligible_ids.begin();elig_it!=eligible_ids.end();++elig_it){
-//    ss << "[PROC " << proc_id << "]   " << *elig_it << std::endl;
-//  }
-//  if(proc_id == 0) DEBUG_MSG(ss.str());
-
-  // divy up the obstruction groups among the processors:
-  int_t obst_group_gid = 0;
-  std::vector<std::set<int_t> > local_subset_gids(num_procs);
-  while(obst_group_gid < (int_t)obstruction_groups.size()){
-    for(int_t p_id=0;p_id<num_procs;++p_id){
-      if(obst_group_gid < (int_t)obstruction_groups.size()){
-        //if(p_id==proc_id){
-        local_subset_gids[p_id].insert(obstruction_groups[obst_group_gid].begin(),obstruction_groups[obst_group_gid].end());
-        //}
-        obst_group_gid++;
-      }
-      else break;
-    }
-  }
-  // assign the rest based on who has the least amount of subsets
-  for(std::set<int_t>::iterator elig_it = eligible_ids.begin();elig_it!=eligible_ids.end();++elig_it){
-    int_t proc_with_fewest_subsets = 0;
-    int_t lowest_num_subsets = global_num_subsets_;
-    for(int_t i=0;i<num_procs;++i){
-      if((int_t)local_subset_gids[i].size() <= lowest_num_subsets){
-        lowest_num_subsets = local_subset_gids[i].size();
-        proc_with_fewest_subsets = i;
-      }
-    }
-    local_subset_gids[proc_with_fewest_subsets].insert(*elig_it);
-  }
-  // order the subset ids so that they respect the dependencies:
-  std::vector<int_t> local_gids;
-  std::set<int_t>::iterator set_it = local_subset_gids[proc_id].begin();
-  for(;set_it!=local_subset_gids[proc_id].end();++set_it){
-    // not in the list of subsets with blockers
-    if(obstructing_subset_ids_->find(*set_it)==obstructing_subset_ids_->end()){
-      local_gids.push_back(*set_it);
-    }
-    // in the list of subsets with blockers, but has no blocking ids
-    else if(obstructing_subset_ids_->find(*set_it)->second.size()==0){
-      local_gids.push_back(*set_it);
-    }
-
-  }
-  set_it = local_subset_gids[proc_id].begin();
-  for(;set_it!=local_subset_gids[proc_id].end();++set_it){
-    if(obstructing_subset_ids_->find(*set_it)!=obstructing_subset_ids_->end()){
-      if(obstructing_subset_ids_->find(*set_it)->second.size()>0){
-        TEUCHOS_TEST_FOR_EXCEPTION(earliest_id_can_appear.find(*set_it)==earliest_id_can_appear.end(),
-          std::runtime_error,"");
-        local_gids.push_back(*set_it);
-      }
-    }
-  }
-
-//  ss.str(std::string());
-//  ss.clear();
-//  ss << "[PROC " << proc_id << "] Has the following subset ids: " << std::endl;
-//  for(size_t i=0;i<local_gids.size();++i){
-//    ss << "[PROC " << proc_id << "] " << local_gids[i] <<  std::endl;
-//  }
-//  DEBUG_MSG(ss.str());
-
-  // copy the ids in order to the schema storage
-  this_proc_gid_order_ = std::vector<int_t>(local_gids.size(),-1);
-  for(size_t i=0;i<local_gids.size();++i)
-    this_proc_gid_order_[i] = local_gids[i];
-
-  // sort the vector so the map is not in execution order
-  std::sort(local_gids.begin(),local_gids.end());
-  Teuchos::ArrayView<const int_t> lids_grouped_by_obstruction(&local_gids[0],local_gids.size());
-  map = Teuchos::rcp(new MultiField_Map(global_num_subsets_,lids_grouped_by_obstruction,0,*comm_));
-}
-
-void
-Schema::create_seed_dist_map(Teuchos::RCP<MultiField_Map> & map,
-  Teuchos::RCP<std::vector<int_t> > neighbor_ids){
-  if(initialization_method_!=USE_NEIGHBOR_VALUES&&initialization_method_!=USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY) return;
-  // distribution according to seeds map (one-to-one, not all procs have entries)
-  // If the initialization method is USE_NEIGHBOR_VALUES or USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY, the
-  // first step has to have a special map that keeps all subsets that use a particular seed
-  // on the same processor (the parallelism is limited to the number of seeds).
-  const int_t proc_id = comm_->get_rank();
-  const int_t num_procs = comm_->get_size();
-
-  if(neighbor_ids!=Teuchos::null){
-    // catch the case that this is an TRACKING_ROUTINE run, but seed values were specified for
-    // the individual subsets. In that case, the seed map is not necessary because there are
-    // no initializiation dependencies among subsets, but the seed map will still be used since it
-    // will be activated when seeds are specified for a subset.
-    if(obstructing_subset_ids_!=Teuchos::null){
-      if(obstructing_subset_ids_->size()>0){
-        bool print_warning = false;
-        for(size_t i=0;i<neighbor_ids->size();++i){
-          if((*neighbor_ids)[i]!=-1) print_warning = true;
-        }
-        if(print_warning && proc_id==0){
-          std::cout << "*** Waring: Seed values were specified for an analysis with obstructing subsets. " << std::endl;
-          std::cout << "            These values will be used to initialize subsets for which a seed has been specified, but the seed map " << std::endl;
-          std::cout << "            will be set to the distributed map because grouping subsets by obstruction trumps seed ordering." << std::endl;
-          std::cout << "            Seed dependencies between neighbors will not be enforced." << std::endl;
-        }
-        return;
-      }
-    }
-    std::vector<int_t> local_subset_gids_grouped_by_roi;
-    TEUCHOS_TEST_FOR_EXCEPTION((int_t)neighbor_ids->size()!=global_num_subsets_,std::runtime_error,"");
-    std::vector<int_t> this_group_gids;
-    std::vector<std::vector<int_t> > seed_groupings;
-    std::vector<std::vector<int_t> > local_seed_groupings;
-    for(int_t i=global_num_subsets_-1;i>=0;--i){
-      this_group_gids.push_back(i);
-      // if this subset is a seed, break this grouping and insert it in the set
-      if((*neighbor_ids)[i]==-1){
-        seed_groupings.push_back(this_group_gids);
-        this_group_gids.clear();
-      }
-    }
-    // TODO order the sets by their sizes and load balance better:
-    // divy up the seed_groupings round-robin style:
-    int_t group_gid = 0;
-    int_t local_total_id_list_size = 0;
-    while(group_gid < (int_t)seed_groupings.size()){
-      // reverse the order so the subsets are computed from the seed out
-      for(int_t p_id=0;p_id<num_procs;++p_id){
-        if(group_gid < (int_t)seed_groupings.size()){
-          if(p_id==proc_id){
-            std::reverse(seed_groupings[group_gid].begin(), seed_groupings[group_gid].end());
-            local_seed_groupings.push_back(seed_groupings[group_gid]);
-            local_total_id_list_size += seed_groupings[group_gid].size();
-          }
-          group_gid++;
-        }
-        else break;
-      }
-    }
-    DEBUG_MSG("[PROC " << proc_id << "] Has " << local_seed_groupings.size() << " local seed grouping(s)");
-    for(size_t i=0;i<local_seed_groupings.size();++i){
-      DEBUG_MSG("[PROC " << proc_id << "] local group id: " << i);
-      for(size_t j=0;j<local_seed_groupings[i].size();++j){
-        DEBUG_MSG("[PROC " << proc_id << "] gid: " << local_seed_groupings[i][j] );
-      }
-    }
-    // concat local subset ids:
-    local_subset_gids_grouped_by_roi.reserve(local_total_id_list_size);
-    for(size_t i=0;i<local_seed_groupings.size();++i){
-      local_subset_gids_grouped_by_roi.insert( local_subset_gids_grouped_by_roi.end(),
-        local_seed_groupings[i].begin(),
-        local_seed_groupings[i].end());
-    }
-
-    // copy the ids in order to the schema storage
-    this_proc_gid_order_ = std::vector<int_t>(local_subset_gids_grouped_by_roi.size(),-1);
-    for(size_t i=0;i<local_subset_gids_grouped_by_roi.size();++i)
-      this_proc_gid_order_[i] = local_subset_gids_grouped_by_roi[i];
-
-    // sort the vector so the map is not in execution order
-    std::sort(local_subset_gids_grouped_by_roi.begin(),local_subset_gids_grouped_by_roi.end());
-    Teuchos::ArrayView<const int_t> lids_grouped_by_roi(&local_subset_gids_grouped_by_roi[0],local_total_id_list_size);
-    map = Teuchos::rcp(new MultiField_Map(global_num_subsets_,lids_grouped_by_roi,0,*comm_));
-  }
-}
-
-void
 Schema::post_execution_tasks(){
   if(analysis_type_==GLOBAL_DIC){
 #ifdef DICE_ENABLE_GLOBAL
-    global_algorithm_->post_execution_tasks(image_frame_);
+    global_algorithm_->post_execution_tasks(frame_id_);
 #endif
   }
 }
@@ -1551,7 +1314,7 @@ Schema::execute_correlation(){
     Status_Flag global_status = CORRELATION_FAILED;
     try{
       global_status = global_algorithm_->execute();
-      update_image_frame();
+      update_frame_id();
     }
     catch(std::exception & e){
       std::cout << "Error, global correlation failed: " << e.what() << std::endl;
@@ -1572,9 +1335,9 @@ Schema::execute_correlation(){
 
   DEBUG_MSG("********************");
   std::stringstream progress;
-  progress << "[PROC " << proc_id << " of " << num_procs << "] IMAGE " << image_frame_ + 1;
-  if(num_image_frames_>0)
-    progress << " of " << num_image_frames_;
+  progress << "[PROC " << proc_id << " of " << num_procs << "] IMAGE " << frame_id_ - first_frame_id_ + 1;
+  if(num_frames_>0)
+    progress << " of " << num_frames_;
   DEBUG_MSG(progress.str());
   DEBUG_MSG("********************");
 
@@ -1600,7 +1363,7 @@ Schema::execute_correlation(){
     mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS)->put_scalar(0.0);
   }
 #ifdef DICE_ENABLE_GLOBAL
-  if(has_initial_condition_file()&&image_frame_==0){
+  if(has_initial_condition_file()&&frame_id_==first_frame_id_){
     TEUCHOS_TEST_FOR_EXCEPTION(initialization_method_!=USE_FIELD_VALUES,std::runtime_error,
       "Initialization method must be USE_FIELD_VALUES if an initial condition file is specified");
     Teuchos::RCP<DICe::mesh::Importer_Projector> importer = Teuchos::rcp(new DICe::mesh::Importer_Projector(initial_condition_file_,mesh_));
@@ -1693,7 +1456,7 @@ Schema::execute_correlation(){
       accumulated_disp->local_value(i*spa_dim+1) += local_field_value(i,DISPLACEMENT_Y);
     }
   }
-  update_image_frame();
+  update_frame_id();
   return 0;
 };
 
@@ -1943,9 +1706,8 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   if(skip_solve_flags_->find(subset_gid)!=skip_solve_flags_->end()||skip_all_solves_){
     if(skip_solve_flags_->find(subset_gid)!=skip_solve_flags_->end()){
       // determine for this subset id if it should be skipped:
-      const int_t trigger_based_frame = image_frame_ + first_frame_index_;
-      DEBUG_MSG("Subset " << subset_gid << " checking skip solve for trigger based frame id " << trigger_based_frame);
-      skip_frame = frame_should_be_skipped(trigger_based_frame,skip_solve_flags_->find(subset_gid)->second);
+      DEBUG_MSG("Subset " << subset_gid << " checking skip solve for trigger based frame id " << frame_id_);
+      skip_frame = frame_should_be_skipped(frame_id_,skip_solve_flags_->find(subset_gid)->second);
       DEBUG_MSG("Subset " << subset_gid << " frame_should_be_skipped return value: " << skip_frame);
     }
   }
@@ -1983,7 +1745,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   if(init_status==INITIALIZE_FAILED){
     // try again with a search initializer
     if(correlation_routine_==TRACKING_ROUTINE && use_search_initialization_for_failed_steps_){
-      stat_container_->register_search_call(subset_gid,first_frame_index_+image_frame_-1);
+      stat_container_->register_search_call(subset_gid,frame_id_);
       // before giving up, try a search initialization, then simplex, then give up if it still can't track:
       const scalar_t search_step_xy = 1.0; // pixels
       const scalar_t search_dim_xy = 10.0; // pixels
@@ -1999,7 +1761,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       init_status = searcher.initial_guess(subset_gid,deformation);
     }
     if(init_status==INITIALIZE_FAILED){
-      if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_failed_init(subset_gid,first_frame_index_+image_frame_-1);
+      if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_failed_init(subset_gid,frame_id_);
       record_failed_step(subset_gid,static_cast<int_t>(init_status),num_iterations);
       return;
     }
@@ -2024,7 +1786,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       noise_std_dev,contrast,active_pixels,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
     // evolve the subsets and output the images requested as well
     // turn on pixels that at the beginning were hidden behind an obstruction
-    if(use_subset_evolution_&&image_frame_>1){
+    if(use_subset_evolution_&&frame_id_>first_frame_id_+1){
       DEBUG_MSG("[PROC " << comm_->get_rank() << "] Evolving subset " << subset_gid << " using newly exposed pixels for intensity values");
       obj->subset()->turn_on_previously_obstructed_pixels();
     }
@@ -2108,7 +1870,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   scalar_t diffT = ((*deformation)[ROTATION_Z] - prev_t);
   DEBUG_MSG("Subset " << subset_gid << " U jump: " << diffU << " V jump: " << diffV << " T jump: " << diffT);
   if(std::abs(diffU) > disp_jump_tol_ || std::abs(diffV) > disp_jump_tol_ || std::abs(diffT) > theta_jump_tol_){
-    if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_jump_exceeded(subset_gid,first_frame_index_+image_frame_-1);
+    if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_jump_exceeded(subset_gid,frame_id_);
     jump_pass = false;
   }
   DEBUG_MSG("Subset " << subset_gid << " jump pass: " << jump_pass);
@@ -2118,7 +1880,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       second_attempt_failed = true;
     }
     else if(optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX){
-      if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_backup_opt_call(subset_gid,first_frame_index_+image_frame_-1);
+      if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_backup_opt_call(subset_gid,frame_id_);
       // try again using simplex
       init_status = initial_guess(subset_gid,deformation);
       try{
@@ -2132,7 +1894,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       }
     }
     else if(optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED){
-      if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_backup_opt_call(subset_gid,first_frame_index_+image_frame_-1);
+      if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_backup_opt_call(subset_gid,frame_id_);
       // try again using gradient based
       init_status = initial_guess(subset_gid,deformation);
       try{
@@ -2146,7 +1908,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       }
     }
     if(second_attempt_failed){
-//      if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_search_call(subset_gid,first_frame_index_+image_frame_-1);
+//      if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_search_call(subset_gid,frame_id_);
 //      // before giving up, try a search initialization, then simplex, then give up if it still can't track:
 //      const scalar_t search_step_xy = 1.0; // pixels
 //      const scalar_t search_dim_xy = 10.0; // pixels
@@ -2240,7 +2002,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   //  turn on pixels that at the beginning were hidden behind an obstruction
   //
-  if(use_subset_evolution_&&image_frame_>1){
+  if(use_subset_evolution_&&frame_id_>first_frame_id_+1){
     DEBUG_MSG("[PROC " << comm_->get_rank() << "] Evolving subset " << subset_gid << " using newly exposed pixels for intensity values");
     obj->subset()->turn_on_previously_obstructed_pixels();
   }
@@ -2263,11 +2025,11 @@ Schema::write_deformed_subset_intensity_image(Teuchos::RCP<Objective> obj){
       DEBUG_MSG("[PROC " << comm_->get_rank() << "] Directory successfully created");
     }
     int_t num_zeros = 0;
-    if(num_image_frames_>0){
+    if(num_frames_>0){
       int_t num_digits_total = 0;
       int_t num_digits_image = 0;
-      int_t decrement_total = first_frame_index_ + num_image_frames_;
-      int_t decrement_image = first_frame_index_ + image_frame_;
+      int_t decrement_total = first_frame_id_ + num_frames_;
+      int_t decrement_image = frame_id_;
       while (decrement_total){decrement_total /= 10; num_digits_total++;}
       if(decrement_image==0) num_digits_image = 1;
       else
@@ -2278,7 +2040,7 @@ Schema::write_deformed_subset_intensity_image(Teuchos::RCP<Objective> obj){
     ss << dirStr << "deformedSubset_" << obj->correlation_point_global_id() << "_";
     for(int_t i=0;i<num_zeros;++i)
       ss << "0";
-    ss << first_frame_index_ + image_frame_ << ".tif";
+    ss << frame_id_ << ".tif";
     obj->subset()->write_tiff(ss.str(),true);
 #endif
 }
@@ -2293,11 +2055,11 @@ Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
       DEBUG_MSG("[PROC " << comm_->get_rank() << "[ Directory successfully created");
     }
     int_t num_zeros = 0;
-    if(num_image_frames_>0){
+    if(num_frames_>0){
       int_t num_digits_total = 0;
       int_t num_digits_image = 0;
-      int_t decrement_total = first_frame_index_ + num_image_frames_;
-      int_t decrement_image = first_frame_index_ + image_frame_;
+      int_t decrement_total = first_frame_id_ + num_frames_;
+      int_t decrement_image = frame_id_;
       while (decrement_total){decrement_total /= 10; num_digits_total++;}
       if(decrement_image==0) num_digits_image = 1;
       else
@@ -2308,7 +2070,7 @@ Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
     ss << dirStr << "evolvedSubset_" << obj->correlation_point_global_id() << "_";
     for(int_t i=0;i<num_zeros;++i)
       ss << "0";
-    ss << first_frame_index_ + image_frame_ << ".tif";
+    ss << frame_id_ << ".tif";
     obj->subset()->write_tiff(ss.str());
 #endif
 }
@@ -2736,56 +2498,13 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
     std::vector<std::string> image_files;
     std::vector<std::string> stereo_image_files;
     DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
-
-    Teuchos::RCP<DICe::Image> left_image;
-    Teuchos::RCP<DICe::Image> right_image;
     Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
-    //imgParams->set(DICe::compute_image_gradients,compute_def_gradients_); // dont need gradients for this
-    //imgParams->set(DICe::gradient_method,gradient_method_);
     imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
     imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
-    // load the left and right reference images
-    if(image_files[0]==DICe::cine_file){
-      Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader;
-      Teuchos::RCP<DICe::cine::Cine_Reader> stereo_cine_reader;
-      int_t cine_num_images = -1;
-      int_t cine_first_frame_index = -1;
-      int_t cine_ref_index = -1;
-      const std::string cine_file_name = input_params->get<std::string>(DICe::cine_file);
-      std::stringstream cine_name;
-      cine_name << input_params->get<std::string>(DICe::image_folder) << cine_file_name;
-      const std::string stereo_cine_file_name = input_params->get<std::string>(DICe::stereo_cine_file);
-      std::stringstream stereo_cine_name;
-      stereo_cine_name << input_params->get<std::string>(DICe::image_folder) << stereo_cine_file_name;
-      Teuchos::oblackholestream bhs; // outputs nothing
-      cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(cine_name.str(),&bhs,false));
-      stereo_cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(stereo_cine_name.str(),&bhs,false));
-      cine_num_images = cine_reader->num_frames();
-      cine_first_frame_index = cine_reader->first_image_number();
-      DEBUG_MSG("Schema::initialize_cross_correlation: cine first frame index: " << cine_first_frame_index);
-      cine_ref_index = input_params->get<int_t>(DICe::cine_ref_index,cine_first_frame_index);
-      TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index < cine_first_frame_index,std::invalid_argument,"");
-      TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index - cine_first_frame_index > cine_num_images,std::invalid_argument,"");
-      // convert the cine ref, start and end index to the DICe indexing, not cine indexing (begins with zero)
-      cine_ref_index = cine_ref_index - cine_first_frame_index;
-      DEBUG_MSG("Schema::initialize_cross_correlation(): reading cine image from file: " << cine_file_name << " index " << cine_ref_index);
-      DEBUG_MSG("Schema::initialize_cross_correlation(): reading stereo cine image from file: " << stereo_cine_file_name << " index " << cine_ref_index);
-      if(input_params->isParameter(DICe::time_average_cine_ref_frame)){
-        const int_t num_avg_frames = input_params->get<int_t>(DICe::time_average_cine_ref_frame);
-        left_image = cine_reader->get_average_frame(cine_ref_index,cine_ref_index+num_avg_frames,true,true,imgParams);
-        right_image = stereo_cine_reader->get_average_frame(cine_ref_index,cine_ref_index+num_avg_frames,true,true,imgParams);
-      }
-      else{
-        left_image = cine_reader->get_frame(cine_ref_index,true,true,imgParams);
-        right_image = stereo_cine_reader->get_frame(cine_ref_index,true,true,imgParams);
-      }
-    } // end is_cine
-    else{
-      const std::string left_image_string = image_files[0];
-      const std::string right_image_string = stereo_image_files[0];
-      left_image = Teuchos::rcp(new Image(left_image_string.c_str(),imgParams));
-      right_image = Teuchos::rcp(new Image(right_image_string.c_str(),imgParams));
-    }
+    const std::string left_image_string = image_files[0];
+    const std::string right_image_string = stereo_image_files[0];
+    Teuchos::RCP<DICe::Image> left_image = Teuchos::rcp(new Image(left_image_string.c_str(),imgParams));
+    Teuchos::RCP<DICe::Image> right_image = Teuchos::rcp(new Image(right_image_string.c_str(),imgParams));
     const int_t success = tri->estimate_projective_transform(left_image,right_image,true,use_nonlinear_projection_);
     TEUCHOS_TEST_FOR_EXCEPTION(success!=0,std::runtime_error,"Error, Schema::initialize_cross_correlation(): estimate_projective_transform failed");
   }
@@ -2859,12 +2578,6 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       local_field_value(i,DISPLACEMENT_Y) = py - cy;
     }
   }
-  //Teuchos::RCP<MultiField> ux = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-  //Teuchos::RCP<MultiField> uy = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
-  //Teuchos::RCP<DICe::MultiField> cross_q = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_Q_FS);
-  //Teuchos::RCP<DICe::MultiField> cross_r = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_R_FS);
-  //cross_q->update(1.0,*ux,0.0);
-  //cross_r->update(1.0,*uy,0.0);
   DEBUG_MSG("Schema::initialize_cross_correlation(): projective transform estimation successful");
   return 0;
 }
@@ -2990,7 +2703,7 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
   // if this is the first frame and a best fit plane is being used, clear the transform entries in case they have already been specified by the user
 
   bool best_fit = false;
-  if(image_frame_==1){
+  if(frame_id_==first_frame_id_+1){
     std::ifstream f("best_fit_plane.dat");
     // if there is a best fit plane file, determine the best fit plane
     // this has to be done after the inital 3d coords are established
@@ -3006,7 +2719,7 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
     xr = stereo_coords_x->local_value(i) + my_stereo_disp_x->local_value(i);
     yr = stereo_coords_y->local_value(i) + my_stereo_disp_y->local_value(i);
     tri->triangulate(xl,yl,xr,yr,X,Y,Z,Xw,Yw,Zw);
-    if(image_frame_==1){
+    if(frame_id_==first_frame_id_+1){
       model_x->local_value(i) = Xw; // w-coordinates have been transformed by a user defined transform to world or model coords
       model_y->local_value(i) = Yw;
       model_z->local_value(i) = Zw;
@@ -3018,7 +2731,7 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
     }
     //std::cout << " xl " << xl << " yl " << yl << " xr " << xr << " yr " << yr << " X " << Xw << " Y " << Yw << " Z " << Zw << std::endl;
   }
-  if(image_frame_==1 && best_fit){
+  if(frame_id_==first_frame_id_+1 && best_fit){
     Teuchos::RCP<MultiField> sigma = mesh_->get_field(DICe::mesh::field_enums::SIGMA_FS);
     tri->best_fit_plane(model_x,model_y,model_z,sigma);
     // retriangulate the coordinate in the first frame
@@ -3120,14 +2833,14 @@ Schema::write_output(const std::string & output_folder,
   int_t proc_size = comm_->get_size();
 
 #ifdef DICE_ENABLE_GLOBAL
-  if(image_frame_==1){
+  if(frame_id_==first_frame_id_+1){
     std::string output_dir= "";
     if(init_params_!=Teuchos::null)
       output_dir = init_params_->get<std::string>(DICe::output_folder,"");
     DICe::mesh::create_output_exodus_file(mesh_,output_dir);
     DICe::mesh::create_exodus_output_variable_names(mesh_);
   }
-  DICe::mesh::exodus_output_dump(mesh_,image_frame_,image_frame_);
+  DICe::mesh::exodus_output_dump(mesh_,frame_id_-first_frame_id_,frame_id_-first_frame_id_);
 #endif
 
   if(no_text_output) return;
@@ -3163,7 +2876,7 @@ Schema::write_output(const std::string & output_folder,
       if(proc_size>1)
         fName << "." << proc_size << "." << my_proc;
       fName << ".txt";
-      if(image_frame_==1){
+      if(frame_id_==first_frame_id_+1){
         std::FILE * filePtr = fopen(fName.str().c_str(),"w"); // overwrite the file if it exists
         if(separate_header_file&&my_proc==0){
           std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"w"); // overwrite the file if it exists
@@ -3178,7 +2891,7 @@ Schema::write_output(const std::string & output_folder,
       }
       // append the latest result to the file
       std::FILE * filePtr = fopen(fName.str().c_str(),"a");
-      output_spec_->write_frame(filePtr,first_frame_index_+image_frame_-1,subset_global_id(subset));
+      output_spec_->write_frame(filePtr,frame_id_-1,subset_global_id(subset)); // frame is decremented because write gets called after update_frame
       fclose (filePtr);
     } // subset loop
   }
@@ -3187,11 +2900,11 @@ Schema::write_output(const std::string & output_folder,
     std::stringstream infofName;
     // determine the number of digits to append:
     int_t num_zeros = 0;
-    if(num_image_frames_>0){
+    if(num_frames_>0){
       int_t num_digits_total = 0;
       int_t num_digits_image = 0;
-      int_t decrement_total = first_frame_index_+num_image_frames_;
-      int_t decrement_image = first_frame_index_+image_frame_-1;
+      int_t decrement_total = first_frame_id_+num_frames_;
+      int_t decrement_image = frame_id_-1; // decremented because the frame was updated before write was called
       while (decrement_total){decrement_total /= 10; num_digits_total++;}
       if(decrement_image==0)
         num_digits_image = 1;
@@ -3203,12 +2916,12 @@ Schema::write_output(const std::string & output_folder,
     infofName << output_folder << prefix << ".txt";
     for(int_t i=0;i<num_zeros;++i)
       fName << "0";
-    fName << first_frame_index_ + image_frame_ - 1;
+    fName << frame_id_-1;
     if(proc_size >1)
       fName << "." << proc_size << "." << my_proc;
     fName << ".txt";
     std::FILE * filePtr = fopen(fName.str().c_str(),"w");
-    if(separate_header_file && image_frame_<=1 && my_proc==0){
+    if(separate_header_file && frame_id_<= first_frame_id_+1 && my_proc==0){
       std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"w"); // overwrite the file if it exists
       output_spec_->write_info(infoFilePtr,true);
       fclose(infoFilePtr);
@@ -3349,11 +3062,11 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
     DEBUG_MSG("Directory successfully created");
   }
   int_t num_zeros = 0;
-  if(num_image_frames_>0){
+  if(num_frames_>0){
     int_t num_digits_total = 0;
     int_t num_digits_image = 0;
-    int_t decrement_total = first_frame_index_ + num_image_frames_;
-    int_t decrement_image = first_frame_index_ + image_frame_;
+    int_t decrement_total = first_frame_id_ + num_frames_;
+    int_t decrement_image = frame_id_;
     while (decrement_total){decrement_total /= 10; num_digits_total++;}
     if(decrement_image==0)
       num_digits_image = 1;
@@ -3366,7 +3079,7 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
   ss << dirStr << "def_subsets_p_" << proc_id << "_";
   for(int_t i=0;i<num_zeros;++i)
     ss << "0";
-  ss << first_frame_index_ + image_frame_ << ".tif";
+  ss << frame_id_ << ".tif";
 
   const int_t w = ref_img_->width();
   const int_t h = ref_img_->height();
