@@ -857,7 +857,8 @@ int_t // returns 0 if successful -1 means linear projection failed, -2 means non
 Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
   Teuchos::RCP<Image> right_img,
   const bool output_projected_image,
-  const bool use_nonlinear_projection){
+  const bool use_nonlinear_projection,
+  const int_t processor_id){
 
   scalar_t error = 0.0;
 
@@ -944,11 +945,13 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
 #ifdef DICE_ENABLE_OPENCV
     DEBUG_MSG("Triangulation::estimate_projective_transform(): begin matching features");
     float feature_tol = 0.005f;
-    match_features(left_img,right_img,proj_xl,proj_yl,proj_xr,proj_yr,feature_tol,"fm_projective_trans.png");
+    std::stringstream outname;
+    outname << "fm_projective_trans_" << processor_id << ".png";
+    match_features(left_img,right_img,proj_xl,proj_yl,proj_xr,proj_yr,feature_tol,outname.str());
     if(proj_xl.size() < 5){
       DEBUG_MSG("Triangulation::estimate_projective_transform(): initial attempt failed with tol = 0.005f, setting to 0.001f and trying again.");
       feature_tol = 0.001f;
-      match_features(left_img,right_img,proj_xl,proj_yl,proj_xr,proj_yr,feature_tol,"fm_projective_trans.png");
+      match_features(left_img,right_img,proj_xl,proj_yl,proj_xr,proj_yr,feature_tol,outname.str());
     }
     DEBUG_MSG("Triangulation::estimate_projective_transform(): matching features complete");
 #else
@@ -1270,7 +1273,9 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     DEBUG_MSG("Triangulation::estimate_projective_transform(): begin matching features for warp parameters");
     Teuchos::RCP<Image> projection_opt_img = Teuchos::rcp(new Image("right_projected_to_left_proj_opt.tif"));
     const float tol = 0.001f;
-    match_features(left_img,projection_opt_img,warp_xl,warp_yl,warp_xr,warp_yr,tol,"fm_nonlinear_proj_trans.png");
+    std::stringstream outname_nonlin;
+    outname_nonlin << "fm_nonlinear_proj_trans_" << processor_id << ".png";
+    match_features(left_img,projection_opt_img,warp_xl,warp_yl,warp_xr,warp_yr,tol,outname_nonlin.str());
     DEBUG_MSG("Triangulation::estimate_projective_transform(): matching warp features complete");
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,"Error, OpeCV required for cross correlation initialization.");

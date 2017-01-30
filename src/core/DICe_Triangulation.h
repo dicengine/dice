@@ -175,11 +175,13 @@ public:
   /// \param right_img pointer to the right image
   /// \param output_projected_image true if an image should be output using the solution projection parameters
   /// \param use_nonlinear_projection true if an additional 12 nonlinear parameter projection model should be used
+  /// \param processor_id the id of the process calling this routine
   /// returns 0 if successful -1 if the linear projection failed -2 if the nonlinear projection fails, -3 for other error
   int_t estimate_projective_transform(Teuchos::RCP<Image> left_img,
     Teuchos::RCP<Image> right_img,
     const bool output_projected_image = false,
-    const bool use_nonlinear_projection = false);
+    const bool use_nonlinear_projection = false,
+    const int_t processor_id = 0);
 
   /// determine the corresponding right sensor coordinates given the left
   /// using the projective transform

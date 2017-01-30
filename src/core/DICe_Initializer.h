@@ -412,7 +412,7 @@ public:
   /// \param schema the parent schema
   Feature_Matching_Initializer(Schema * schema):
     Initializer(schema),
-    prev_img_name_(""),
+//    prev_img_name_(""),
     first_call_(true){};
 
   /// virtual destructor
@@ -437,7 +437,7 @@ protected:
   /// previous image pointer (used if the images are constructed from an array)
   Teuchos::RCP<Image> prev_img_;
   /// previous image name (used if the images are constructed from file rather than array)
-  std::string prev_img_name_;
+//  std::string prev_img_name_;
   /// first time the pre execution tasks are called
   bool first_call_;
 };

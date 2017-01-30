@@ -50,8 +50,8 @@
 namespace DICe {
 
 DICE_LIB_DLL_EXPORT
-void match_features(const std::string & left_file_name,
-  const std::string & right_file_name,
+void match_features(Teuchos::RCP<Image> left_image,
+  Teuchos::RCP<Image> right_image,
   std::vector<scalar_t> & left_x,
   std::vector<scalar_t> & left_y,
   std::vector<scalar_t> & right_x,
@@ -65,12 +65,13 @@ void match_features(const std::string & left_file_name,
   right_y.clear();
 
   DEBUG_MSG("match_features(): initializing OpenCV Mats");
-  cv::Mat img1;
-  cv::Mat img2;
-  img1 = cv::imread(left_file_name.c_str(), cv::IMREAD_GRAYSCALE);
-  img2 = cv::imread(right_file_name.c_str(), cv::IMREAD_GRAYSCALE);
+  unsigned char * left_array = new unsigned char[left_image->width()*left_image->height()];
+  unsigned char * right_array = new unsigned char[right_image->width()*right_image->height()];
+  opencv_8UC1(left_image,left_array);
+  opencv_8UC1(right_image,right_array);
+  cv::Mat img1 =   cv::Mat(left_image->height(),left_image->width(),CV_8U,left_array);
+  cv::Mat img2 =   cv::Mat(right_image->height(),right_image->width(),CV_8U,right_array);
   const float nn_match_ratio = 0.6f;   // Nearest neighbor matching ratio
-
   DEBUG_MSG("match_features(): detect and compute features");
 
   std::vector<cv::KeyPoint> kpts1, kpts2;
@@ -90,13 +91,13 @@ void match_features(const std::string & left_file_name,
   std::vector<cv::KeyPoint> matched1, matched2, inliers1, inliers2;
   std::vector<cv::DMatch> good_matches;
   for(size_t i = 0; i < nn_matches.size(); i++) {
-      cv::DMatch first = nn_matches[i][0];
-      float dist1 = nn_matches[i][0].distance;
-      float dist2 = nn_matches[i][1].distance;
-      if(dist1 < nn_match_ratio * dist2) {
-          matched1.push_back(kpts1[first.queryIdx]);
-          matched2.push_back(kpts2[first.trainIdx]);
-      }
+    cv::DMatch first = nn_matches[i][0];
+    float dist1 = nn_matches[i][0].distance;
+    float dist2 = nn_matches[i][1].distance;
+    if(dist1 < nn_match_ratio * dist2) {
+      matched1.push_back(kpts1[first.queryIdx]);
+      matched2.push_back(kpts2[first.trainIdx]);
+    }
   }
 
   for(unsigned i = 0; i < matched1.size(); i++) {
@@ -113,11 +114,15 @@ void match_features(const std::string & left_file_name,
   left_y.resize(inliers1.size(),0.0);
   right_x.resize(inliers1.size(),0.0);
   right_y.resize(inliers1.size(),0.0);
+  const scalar_t lox = left_image->offset_x();
+  const scalar_t loy = left_image->offset_y();
+  const scalar_t rox = right_image->offset_x();
+  const scalar_t roy = right_image->offset_y();
   for(unsigned i = 0; i < left_x.size(); i++) {
-    left_x[i] = inliers1[i].pt.x;
-    left_y[i] = inliers1[i].pt.y;
-    right_x[i] = inliers2[i].pt.x;
-    right_y[i] = inliers2[i].pt.y;
+    left_x[i] = inliers1[i].pt.x + lox;
+    left_y[i] = inliers1[i].pt.y + loy;
+    right_x[i] = inliers2[i].pt.x + rox;
+    right_y[i] = inliers2[i].pt.y + roy;
   }
   // draw results image if requested
   if(result_image_name!=""){
@@ -125,49 +130,35 @@ void match_features(const std::string & left_file_name,
     cv::drawMatches(img1, inliers1, img2, inliers2, good_matches, res);
     cv::imwrite(result_image_name.c_str(), res);
   }
+
+  delete [] left_array;
 }
 
-
-DICE_LIB_DLL_EXPORT
-void match_features(Teuchos::RCP<Image> left_image,
-  Teuchos::RCP<Image> right_image,
-  std::vector<scalar_t> & left_x,
-  std::vector<scalar_t> & left_y,
-  std::vector<scalar_t> & right_x,
-  std::vector<scalar_t> & right_y,
-  const float & feature_tol,
-  const std::string & result_image_name){
-
-  if(left_image->is_video_frame()&&right_image->is_video_frame()){
-    left_image->write("left_image.tif");
-    right_image->write("right_image.tif");
-    match_features("left_image.tif","right_image.tif",left_x,left_y,right_x,right_y,feature_tol,result_image_name);
+void opencv_8UC1(Teuchos::RCP<Image> image, unsigned char * array){
+  Teuchos::ArrayRCP<intensity_t> intensities = image->intensities();
+  // need to scale the vaues to 0-255
+  const int_t w = image->width();
+  const int_t h = image->height();
+  const int_t num_px = w*h;
+  intensity_t max_intensity = -1.0E10;
+  intensity_t min_intensity = 1.0E10;
+  for(int_t i=0; i<num_px; ++i){
+    if(intensities[i] > max_intensity) max_intensity = intensities[i];
+    if(intensities[i] < min_intensity) min_intensity = intensities[i];
   }
-  else{
-    // see if the image has a valid file name
-    match_features(left_image->file_name(),right_image->file_name(),left_x,left_y,right_x,right_y,feature_tol,result_image_name);
-  }
-    //TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Feature detection only enabled for images read from file, not array images");
-//#if DICE_USE_DOUBLE
-//    // need to convert the double array to a float array
-//    Teuchos::ArrayRCP<intensity_t> left_intensities_dbl = left_image->intensities();
-//    Teuchos::ArrayRCP<intensity_t> right_intensities_dbl = right_image->intensities();
-//    Teuchos::ArrayRCP<float> left_intensities(left_image->width()*left_image->height(),0.0);
-//    Teuchos::ArrayRCP<float> right_intensities(right_image->width()*right_image->height(),0.0);
-//    for(int_t i=0;i<left_intensities_dbl.size();++i)
-//      left_intensities[i] = static_cast<float>(left_intensities_dbl[i]);
-//    for(int_t i=0;i<right_intensities_dbl.size();++i)
-//      right_intensities[i] = static_cast<float>(right_intensities_dbl[i]);
-//#else
-//    Teuchos::ArrayRCP<intensity_t> left_intensities = left_image->intensities();
-//    Teuchos::ArrayRCP<intensity_t> right_intensities = right_image->intensities();
-//#endif
-//    cv::Mat img1 = cv::Mat(left_image->width(),left_image->height(),CV_32F,left_intensities.getRawPtr());
-//    cv::Mat img2 = cv::Mat(right_image->width(),right_image->height(),CV_32F,right_intensities.getRawPtr());
-  if(left_image->is_video_frame()||right_image->is_video_frame()){
-    // remove the left and right image temp files:
-    std::remove("left_image.tif"); // delete file
-    std::remove("right_image.tif"); // delete file
+  assert(max_intensity >= min_intensity);
+  if(max_intensity <= 255 && min_intensity >=0){ // already in 8 bit range, no need to convert
+    for(int_t i=0; i<num_px; ++i)
+      array[i] = std::floor(intensities[i]);
+  }else{
+    intensity_t fac = 1.0;
+    if((max_intensity - min_intensity) != 0.0)
+      fac = 255.0 / (max_intensity - min_intensity);
+    DEBUG_MSG("opencv_8UC1(): max intensity: " << max_intensity << " min intensity: " << min_intensity << " converted max " << (std::floor((max_intensity-min_intensity)*fac)) <<
+      " converted min " << (std::floor((min_intensity-min_intensity)*fac)));
+    assert(std::floor((max_intensity-min_intensity)*fac)<=255);
+    for(int_t i=0; i<num_px; ++i)
+      array[i] = std::floor((intensities[i]-min_intensity)*fac);
   }
 }
 

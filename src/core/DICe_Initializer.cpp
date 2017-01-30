@@ -467,21 +467,8 @@ Feature_Matching_Initializer::pre_execution_tasks(){
   assert(schema_->ref_img()!=Teuchos::null);
   assert(schema_->def_img()!=Teuchos::null);
   if(first_call_){
-    if(schema_->ref_img()->has_file_name()){
-      prev_img_name_ = schema_->ref_img()->file_name();
-      prev_img_ = Teuchos::null;
-    }
-    else{
-      prev_img_name_ = "";
-      prev_img_ = Teuchos::rcp(new Image(schema_->ref_img()));
-    }
+    prev_img_ = schema_->ref_img();
   }
-//  static int_t num_calls;
-//  num_calls++;
-//  std::stringstream file_name;
-//  file_name << "prev_image_" << num_calls << ".tif";
-//  prev_img_->write(file_name.str());
-
   // read both images and match features between them
   std::vector<scalar_t> left_x;
   std::vector<scalar_t> left_y;
@@ -490,11 +477,9 @@ Feature_Matching_Initializer::pre_execution_tasks(){
   {
     boost::timer t;
     const float tol = 0.005f;
-    if(schema_->ref_img()->has_file_name()){
-      match_features(prev_img_name_,schema_->def_img(0)->file_name(),left_x,left_y,right_x,right_y,tol,"fm_initializer.png");
-    }else{
-      match_features(prev_img_,schema_->def_img(0),left_x,left_y,right_x,right_y,tol,"fm_initializer.png");
-    }
+    std::stringstream outname;
+    outname << "fm_initializer_" << schema_->mesh()->get_comm()->get_rank() << ".png";
+    match_features(prev_img_,schema_->def_img(0),left_x,left_y,right_x,right_y,tol,outname.str());
     const int_t num_matches = left_x.size();
     DEBUG_MSG("number of features matched: " << num_matches);
     DEBUG_MSG("time to compute features: "  << t.elapsed());
@@ -517,12 +502,7 @@ Feature_Matching_Initializer::pre_execution_tasks(){
     u_[i] = right_x[i] - left_x[i];
     v_[i] = right_y[i] - left_y[i];
   }
-  if(schema_->ref_img()->has_file_name()){
-    prev_img_name_ = schema_->def_img(0)->file_name();
-  }
-  else{
-    prev_img_ = Teuchos::rcp(new Image(schema_->def_img(0)));
-  }
+  prev_img_ = schema_->def_img(0);
   first_call_ = false;
 }
 

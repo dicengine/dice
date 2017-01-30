@@ -2498,7 +2498,7 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
     const std::string right_image_string = stereo_image_files[0];
     Teuchos::RCP<DICe::Image> left_image = Teuchos::rcp(new Image(left_image_string.c_str(),imgParams));
     Teuchos::RCP<DICe::Image> right_image = Teuchos::rcp(new Image(right_image_string.c_str(),imgParams));
-    const int_t success = tri->estimate_projective_transform(left_image,right_image,true,use_nonlinear_projection_);
+    const int_t success = tri->estimate_projective_transform(left_image,right_image,true,use_nonlinear_projection_,proc_rank);
     TEUCHOS_TEST_FOR_EXCEPTION(success!=0,std::runtime_error,"Error, Schema::initialize_cross_correlation(): estimate_projective_transform failed");
   }
 

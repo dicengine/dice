@@ -68,24 +68,12 @@ void match_features(Teuchos::RCP<Image> left_image,
   const float & feature_tol=0.001f,
   const std::string & result_image_name="");
 
-/// Free function to match features from one DICe image to another
-/// \param left_file_name file name of the left image
-/// \param right_file_name file name of the right image
-/// \param left_x [out] image x coordinates in the left image for features
-/// \param left_y [out] image y coordinate in the left image for features
-/// \param right_x [out] image x coordinates in the right image for features
-/// \param right_y [out] image y coordinate in the right image for features
-/// \param feature_tol tolerance to use for AKAZE features
-/// \param result_image_name output an image showing the matched features with this filename
+/// convert a DICe Image to an opencv 8uc1 type array
+/// \param image pointer to a DICe::Image
+/// \param array pointer to the value array (assumes already allocated)
 DICE_LIB_DLL_EXPORT
-void match_features(const std::string & left_file_name,
-  const std::string & right_file_name,
-  std::vector<scalar_t> & left_x,
-  std::vector<scalar_t> & left_y,
-  std::vector<scalar_t> & right_x,
-  std::vector<scalar_t> & right_y,
-  const float & feature_tol=0.001f,
-  const std::string & result_image_name="");
+void opencv_8UC1(Teuchos::RCP<Image> image, unsigned char * array);
+
 
 
 }// End DICe Namespace

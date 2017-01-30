@@ -46,7 +46,6 @@
   #include <DICe_Kokkos.h>
 #endif
 #include <Teuchos_ParameterList.hpp>
-
 namespace DICe {
 
 /// forward declaration of the conformal_area_def
