@@ -234,7 +234,7 @@ int main(int argc, char *argv[]) {
       TEUCHOS_TEST_FOR_EXCEPTION(schema->analysis_type()==GLOBAL_DIC,std::runtime_error,"Error, global stereo not enabled yet");
       *outStream << "Processing cross correlation between left and right images" << std::endl;
       schema->initialize_cross_correlation(triangulation,input_params); // images don't need to be loaded by here they get loaded in this routine based on the input params
-      // TODO set the schema ref and def extents here
+      schema->update_extents();
       schema->set_ref_image(image_files[0]);
       schema->set_def_image(stereo_image_files[0]);
       if(schema->use_nonlinear_projection()){
@@ -243,9 +243,8 @@ int main(int argc, char *argv[]) {
       schema->execute_cross_correlation();
       schema->save_cross_correlation_fields();
       stereo_schema = Teuchos::rcp(new DICe::Schema(input_params,correlation_params,schema));
-      // TODO set the ref extents for the stereo schema
+      stereo_schema->update_extents();
       stereo_schema->set_ref_image(stereo_image_files[0]);
-      //stereo_schema->set_def_image(right_image_string);
       assert(stereo_schema!=Teuchos::null);
       if(stereo_schema->use_nonlinear_projection())
         stereo_schema->project_right_image_into_left_frame(triangulation,true);
@@ -253,7 +252,7 @@ int main(int argc, char *argv[]) {
       cross_corr_time = t.elapsed();
     } // end is stereo
     else{ // only the ref image needs to be set
-      // TODO set the schema ref extents here
+      schema->update_extents();
       schema->set_ref_image(image_files[0]);
     }
 
@@ -292,19 +291,17 @@ int main(int argc, char *argv[]) {
         } // end has_motion_windows
       }
       else{
-        const std::string def_image_string = image_files[image_it];
         if(schema->use_incremental_formulation()){
           schema->set_ref_image(schema->def_img());
         }
-        // TODO set the def extents of the schema
-        schema->set_def_image(def_image_string);
+        schema->update_extents();
+        schema->set_def_image(image_files[image_it]);
         if(is_stereo){
-          const std::string right_def_image_string = stereo_image_files[image_it];
           if(stereo_schema->use_incremental_formulation()){
             stereo_schema->set_ref_image(stereo_schema->def_img());
           }
-          // TODO set the def extents of the stereo schema
-          stereo_schema->set_def_image(right_def_image_string);
+          stereo_schema->update_extents();
+          stereo_schema->set_def_image(stereo_image_files[image_it]);
           if(stereo_schema->use_nonlinear_projection())
             stereo_schema->project_right_image_into_left_frame(triangulation,false);
         }

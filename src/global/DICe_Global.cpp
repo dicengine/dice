@@ -169,6 +169,9 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     mesh_ = DICe::generate_tri_mesh(element_type_,subset_file,mesh_size_,output_file_name_);
   }
   TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"Error, mesh should not be a null pointer here.");
+  if(schema_)
+    schema_->mesh() = mesh_;
+
   DICe::mesh::create_output_exodus_file(mesh_,output_folder);
   if(is_mixed_formulation())
     mesh_->create_mixed_node_field_maps(mesh_);

@@ -636,105 +636,77 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
 }
 
 void
-Schema::set_ref_extents(const int_t image_width,
-  const int_t image_height){
-  TEUCHOS_TEST_FOR_EXCEPTION(image_width<=0||image_height<=0,std::runtime_error,"");
-  scalar_t min_x = image_width;
-  scalar_t max_x = 0.0;
-  scalar_t min_y = image_height;
-  scalar_t max_y = 0.0;
-  if(motion_window_params_->size()==0){ // only change the extents if there are no motion windows
-    TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"");
-    Teuchos::RCP<MultiField> coords = mesh_->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
+Schema::update_extents(){
+  TEUCHOS_TEST_FOR_EXCEPTION(motion_window_params_->size()>0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"");
+  Teuchos::RCP<MultiField> coords = mesh_->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField> disp;
+  Teuchos::RCP<MultiField_Map> map = mesh_->get_vector_node_dist_map();
+  if(analysis_type_ == LOCAL_DIC){
+    const int_t spa_dim = 2;
+    Teuchos::RCP<MultiField> disp_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
+    Teuchos::RCP<MultiField> disp_y = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+    disp = Teuchos::rcp( new MultiField(map,1,true));
     for(int_t i=0;i<local_num_subsets_;++i){
-      if(coords->local_value(i*2+0) < min_x) min_x = coords->local_value(i*2+0);
-      if(coords->local_value(i*2+0) > max_x) max_x = coords->local_value(i*2+0);
-      if(coords->local_value(i*2+1) < min_y) min_y = coords->local_value(i*2+1);
-      if(coords->local_value(i*2+1) > max_y) max_y = coords->local_value(i*2+1);
+      disp->local_value(i*spa_dim+0) = disp_x->local_value(i);
+      disp->local_value(i*spa_dim+1) = disp_y->local_value(i);
     }
-    const int_t buffer = 100;
-    min_x -= buffer; min_y -= buffer;
-    max_x += buffer; max_y += buffer;
-    min_x = min_x < buffer ? 0 : std::round(min_x);
-    min_y = min_y < buffer ? 0 : std::round(min_y);
-    max_x = max_x >= image_width-buffer  ? image_width : max_x;
-    max_y = max_y >= image_height-buffer ? image_height : max_y;
-    has_extents_ = true;
+  }else{
+    disp = mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS);
   }
-  ref_extents_[0] = min_x;
-  ref_extents_[1] = max_x;
-  ref_extents_[2] = min_y;
-  ref_extents_[3] = max_y;
+  Teuchos::RCP<MultiField> current_coords = Teuchos::rcp( new MultiField(map,1,true));
+  current_coords->update(1.0,*coords,1.0);
+  current_coords->update(1.0,*disp,1.0);
+//  std::cout << " COORDS " << std::endl;
+//  coords->describe();
+//  std::cout << " DISPLACEMENT " << std::endl;
+//  disp->describe();
+//  std::cout << " CURRENT COORDS " << std::endl;
+//  current_coords->describe();
+
+  scalar_t min_x_ref = std::numeric_limits<int_t>::max();
+  scalar_t max_x_ref = 0.0;
+  scalar_t min_y_ref = std::numeric_limits<int_t>::max();
+  scalar_t max_y_ref = 0.0;
+  scalar_t min_x_def = std::numeric_limits<int_t>::max();
+  scalar_t max_x_def = 0.0;
+  scalar_t min_y_def = std::numeric_limits<int_t>::max();
+  scalar_t max_y_def = 0.0;
+
+  for(int_t i=0;i<local_num_subsets_;++i){
+    if(coords->local_value(i*2+0) < min_x_ref) min_x_ref = coords->local_value(i*2+0);
+    if(coords->local_value(i*2+0) > max_x_ref) max_x_ref = coords->local_value(i*2+0);
+    if(coords->local_value(i*2+1) < min_y_ref) min_y_ref = coords->local_value(i*2+1);
+    if(coords->local_value(i*2+1) > max_y_ref) max_y_ref = coords->local_value(i*2+1);
+    if(current_coords->local_value(i*2+0) < min_x_def) min_x_def = current_coords->local_value(i*2+0);
+    if(current_coords->local_value(i*2+0) > max_x_def) max_x_def = current_coords->local_value(i*2+0);
+    if(current_coords->local_value(i*2+1) < min_y_def) min_y_def = current_coords->local_value(i*2+1);
+    if(current_coords->local_value(i*2+1) > max_y_def) max_y_def = current_coords->local_value(i*2+1);
+  }
+  const int_t buffer = 100;
+  min_x_ref -= buffer; min_y_ref -= buffer;
+  max_x_ref += buffer; max_y_ref += buffer;
+  min_x_ref = min_x_ref < buffer ? 0 : std::round(min_x_ref);
+  min_y_ref = min_y_ref < buffer ? 0 : std::round(min_y_ref);
+  min_x_def -= buffer; min_y_def -= buffer;
+  max_x_def += buffer; max_y_def += buffer;
+  min_x_def = min_x_def < buffer ? 0 : std::round(min_x_def);
+  min_y_def = min_y_def < buffer ? 0 : std::round(min_y_def);
+  has_extents_ = true;
+  ref_extents_[0] = min_x_ref;
+  ref_extents_[1] = max_x_ref;
+  ref_extents_[2] = min_y_ref;
+  ref_extents_[3] = max_y_ref;
   DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] Setting REFERENCE domain extents:");
   DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] x " << ref_extents_[0] << " to " << ref_extents_[1]);
   DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] y " << ref_extents_[2] << " to " << ref_extents_[3]);
-  // go ahead and set the ref extents in case they don't manually get set
-  if(def_extents_[0]==-1){
-    def_extents_[0] = min_x;
-    def_extents_[1] = max_x;
-    def_extents_[2] = min_y;
-    def_extents_[3] = max_y;
-  }
-}
-
-void
-Schema::set_def_extents(const int_t image_width,
-  const int_t image_height){
-  TEUCHOS_TEST_FOR_EXCEPTION(image_width<=0||image_height<=0,std::runtime_error,"");
-  scalar_t min_x = image_width;
-  scalar_t max_x = 0.0;
-  scalar_t min_y = image_height;
-  scalar_t max_y = 0.0;
-
-  if(motion_window_params_->size()==0){ // only change the extents if there are no motion windows
-    TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"");
-    Teuchos::RCP<MultiField> coords = mesh_->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
-    Teuchos::RCP<MultiField> disp;
-    Teuchos::RCP<MultiField_Map> map = mesh_->get_vector_node_dist_map();
-    if(analysis_type_ == LOCAL_DIC){
-      const int_t spa_dim = 2;
-      Teuchos::RCP<MultiField> disp_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-      Teuchos::RCP<MultiField> disp_y = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
-      disp = Teuchos::rcp( new MultiField(map,1,true));
-      for(int_t i=0;i<local_num_subsets_;++i){
-        disp->local_value(i*spa_dim+0) = disp_x->local_value(i);
-        disp->local_value(i*spa_dim+1) = disp_y->local_value(i);
-      }
-    }else{
-      disp = mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS);
-    }
-    Teuchos::RCP<MultiField> current_coords = Teuchos::rcp( new MultiField(map,1,true));
-    current_coords->update(1.0,*disp,1.0);
-
-    for(int_t i=0;i<local_num_subsets_;++i){
-      if(current_coords->local_value(i*2+0) < min_x) min_x = current_coords->local_value(i*2+0);
-      if(current_coords->local_value(i*2+0) > max_x) max_x = current_coords->local_value(i*2+0);
-      if(current_coords->local_value(i*2+1) < min_y) min_y = current_coords->local_value(i*2+1);
-      if(current_coords->local_value(i*2+1) > max_y) max_y = current_coords->local_value(i*2+1);
-    }
-    const int_t buffer = 100;
-    min_x -= buffer; min_y -= buffer;
-    max_x += buffer; max_y += buffer;
-    min_x = min_x < buffer ? 0 : std::round(min_x);
-    min_y = min_y < buffer ? 0 : std::round(min_y);
-    max_x = max_x >= image_width-buffer  ? image_width : max_x;
-    max_y = max_y >= image_height-buffer ? image_height : max_y;
-    has_extents_ = true;
-  }
-  def_extents_[0] = min_x;
-  def_extents_[1] = max_x;
-  def_extents_[2] = min_y;
-  def_extents_[3] = max_y;
+  def_extents_[0] = min_x_def;
+  def_extents_[1] = max_x_def;
+  def_extents_[2] = min_y_def;
+  def_extents_[3] = max_y_def;
   DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] Setting DEFORMED domain extents:");
   DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] x " << def_extents_[0] << " to " << def_extents_[1]);
   DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] y " << def_extents_[2] << " to " << def_extents_[3]);
-  // go ahead and set the ref extents in case they don't manually get set
-  if(ref_extents_[0]==-1){
-    ref_extents_[0] = min_x;
-    ref_extents_[1] = max_x;
-    ref_extents_[2] = min_y;
-    ref_extents_[3] = max_y;
-  }
 }
 
 void
@@ -1295,7 +1267,7 @@ Schema::execute_cross_correlation(){
     }
   }
   for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
-    DEBUG_MSG("[PROC " << proc_id << "] global subset id " << subset_global_id(subset_index) << " post execute_correlation() field values, u: " <<
+    DEBUG_MSG("[PROC " << proc_id << "] global subset id " << subset_global_id(subset_index) << " post execute_cross_correlation() field values, u: " <<
       local_field_value(subset_index,DISPLACEMENT_X) << " v: " << local_field_value(subset_index,DISPLACEMENT_Y)
       << " theta: " << local_field_value(subset_index,ROTATION_Z) << " sigma: " << local_field_value(subset_index,SIGMA) << " gamma: " <<
       local_field_value(subset_index,GAMMA) << " beta: " << local_field_value(subset_index,BETA));

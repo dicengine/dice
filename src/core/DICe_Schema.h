@@ -275,16 +275,7 @@ public:
   void set_params(const std::string & params_file_name);
 
   /// \brief set the extents of the image to be used when only reading a portion of the image
-  /// \param image_width the width of the master image in total
-  /// \param image_height the height of the master image in total
-  void set_ref_extents(const int_t image_width,
-    const int_t image_height);
-
-  /// \brief set the extents of the image to be used when only reading a portion of the image
-  /// \param image_width the width of the master image in total
-  /// \param image_height the height of the master image in total
-  void set_def_extents(const int_t image_width,
-    const int_t image_height);
+  void update_extents();
 
   /// returns true if image extents are being used
   bool has_extents()const{
@@ -1084,7 +1075,7 @@ public:
   }
 
   /// return a pointer to the mesh object that holds all the fields and maps
-  Teuchos::RCP<DICe::mesh::Mesh> mesh(){
+  Teuchos::RCP<DICe::mesh::Mesh> & mesh(){
     return mesh_;
   }
 
