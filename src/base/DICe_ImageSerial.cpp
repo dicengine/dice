@@ -247,6 +247,8 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
 
 const intensity_t&
 Image::operator()(const int_t x, const int_t y) const {
+  TEUCHOS_TEST_FOR_EXCEPTION(x<0||x>=width_,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(y<0||y>=height_,std::runtime_error,"");
   return intensities_[y*width_+x];
 }
 

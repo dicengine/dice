@@ -168,12 +168,12 @@ Schema::set_def_image(const std::string & defName,
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
-  if(has_extents_){
-    const int_t sub_w = def_extents_[1] - def_extents_[0];
-    const int_t sub_h = def_extents_[3] - def_extents_[2];
-    def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),def_extents_[0],def_extents_[2],sub_w,sub_h,imgParams));
-  }
-  else
+//  if(has_extents_){
+//    const int_t sub_w = def_extents_[1] - def_extents_[0];
+//    const int_t sub_h = def_extents_[3] - def_extents_[2];
+//    def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),def_extents_[0],def_extents_[2],sub_w,sub_h,imgParams));
+//  }
+//  else
     def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
   //TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[id]->width()!=ref_img_->width()||def_imgs_[id]->height()!=ref_img_->height(),
   //  std::runtime_error,"Error, ref and def images must have the same dimensions");
@@ -241,12 +241,12 @@ Schema::set_ref_image(const std::string & refName){
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
-  if(has_extents_){
-    const int_t sub_w = ref_extents_[1] - ref_extents_[0];
-    const int_t sub_h = ref_extents_[3] - ref_extents_[2];
-    ref_img_ = Teuchos::rcp( new Image(refName.c_str(),ref_extents_[0],ref_extents_[2],sub_w,sub_h,imgParams));
-  }
-  else
+//  if(has_extents_){
+//    const int_t sub_w = ref_extents_[1] - ref_extents_[0];
+//    const int_t sub_h = ref_extents_[3] - ref_extents_[2];
+//    ref_img_ = Teuchos::rcp( new Image(refName.c_str(),ref_extents_[0],ref_extents_[2],sub_w,sub_h,imgParams));
+//  }
+//  else
     ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
@@ -1245,12 +1245,20 @@ Schema::execute_cross_correlation(){
       scalar_t search_radius_x = 20.0;
       //scalar_t search_radius_y = 25.0;
       scalar_t search_step = 1.0;
-      Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,subset_global_id(subset_index)));
+      bool init_success = true;
+      Teuchos::RCP<Objective> obj;
+      try{
+        obj = Teuchos::rcp(new Objective_ZNSSD(this,subset_global_id(subset_index)));
+      }
+      catch(std::exception & e){
+        init_success = false;
+      }
+
       //for(scalar_t v=-search_radius_y;v<search_radius_y;v+=search_step){
         for(scalar_t u=-search_radius_x;u<search_radius_x;u+=search_step){
           (*def)[DISPLACEMENT_X] = u; // note: value already in disp u is not added here
           //(*def)[DISPLACEMENT_Y] = v;
-          const scalar_t gamma = obj->gamma(def);
+          const scalar_t gamma = init_success ? obj->gamma(def) : 100.0;
           if(gamma > 0.0 && gamma < best_gamma){
             best_gamma = gamma;
             min_u = u;
@@ -1276,11 +1284,16 @@ Schema::execute_cross_correlation(){
 
   prepare_optimization_initializers();
   for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
-    Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,
-      this_proc_gid_order_[subset_index]));
-    generic_correlation_routine(obj);
+    try{
+      Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,
+        this_proc_gid_order_[subset_index]));
+      generic_correlation_routine(obj);
+    }
+    catch(std::exception & e){
+      DEBUG_MSG("Schema::execute_cross_correlation(): subset " << this_proc_gid_order_[subset_index] << " failed");
+      record_failed_step(this_proc_gid_order_[subset_index],static_cast<int_t>(INITIALIZE_FAILED_BY_EXCEPTION),-1);
+    }
   }
-
   for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
     DEBUG_MSG("[PROC " << proc_id << "] global subset id " << subset_global_id(subset_index) << " post execute_correlation() field values, u: " <<
       local_field_value(subset_index,DISPLACEMENT_X) << " v: " << local_field_value(subset_index,DISPLACEMENT_Y)
@@ -1396,9 +1409,17 @@ Schema::execute_correlation(){
       "Error, motion windows are intended only for the TRACKING_ROUTINE");
     prepare_optimization_initializers();
     for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
-      Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,
-        this_proc_gid_order_[subset_index]));
-      generic_correlation_routine(obj);
+      DEBUG_MSG("Schema::execute_correlation(): creating Objective_ZNSSD for subset " << this_proc_gid_order_[subset_index]);
+      try{
+        Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,
+          this_proc_gid_order_[subset_index]));
+        DEBUG_MSG("Schema::execute_correlation(): Objective_ZNSSD creation successful");
+        generic_correlation_routine(obj);
+      }
+      catch(std::exception & e){
+        DEBUG_MSG("Schema::execute_correlation(): subset " << this_proc_gid_order_[subset_index] << " failed");
+        record_failed_step(this_proc_gid_order_[subset_index],static_cast<int_t>(INITIALIZE_FAILED_BY_EXCEPTION),-1);
+      }
     }
   }
   // In this routine there are usually only a handful of subsets, but thousands of images.

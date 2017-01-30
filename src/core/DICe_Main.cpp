@@ -181,8 +181,6 @@ int main(int argc, char *argv[]) {
     // create schemas:
     Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema(input_params,correlation_params));
     Teuchos::RCP<DICe::Schema> stereo_schema;
-    schema->set_ref_image(image_files[0]);
-    schema->set_def_image(image_files[0]);
     // let the schema know how many images there are in the sequence and the first frame id:
     schema->set_frame_range(first_frame_id,num_frames);
 
@@ -214,6 +212,8 @@ int main(int argc, char *argv[]) {
     // if the user selects predict_resolution_error option, an error analysis is performed and the actual analysis is skipped
     if(correlation_params->get<bool>(DICe::estimate_resolution_error,false)){
       file_prefix = "DICe_error_estimation_solution";
+      schema->set_ref_image(image_files[0]);
+      schema->set_def_image(image_files[0]);
       const scalar_t min_period = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_min_period,25);
       const scalar_t max_period = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_max_period,100);
       const scalar_t period_factor = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_period_factor,0.5);
@@ -233,23 +233,29 @@ int main(int argc, char *argv[]) {
       boost::timer t;
       TEUCHOS_TEST_FOR_EXCEPTION(schema->analysis_type()==GLOBAL_DIC,std::runtime_error,"Error, global stereo not enabled yet");
       *outStream << "Processing cross correlation between left and right images" << std::endl;
-      const std::string right_image_string = stereo_image_files[0];//start_frame];
-      schema->set_def_image(right_image_string);
-      schema->initialize_cross_correlation(triangulation,input_params);
+      schema->initialize_cross_correlation(triangulation,input_params); // images don't need to be loaded by here they get loaded in this routine based on the input params
+      // TODO set the schema ref and def extents here
+      schema->set_ref_image(image_files[0]);
+      schema->set_def_image(stereo_image_files[0]);
       if(schema->use_nonlinear_projection()){
         schema->project_right_image_into_left_frame(triangulation,false);
       }
       schema->execute_cross_correlation();
       schema->save_cross_correlation_fields();
       stereo_schema = Teuchos::rcp(new DICe::Schema(input_params,correlation_params,schema));
-      stereo_schema->set_ref_image(right_image_string);
-      stereo_schema->set_def_image(right_image_string);
+      // TODO set the ref extents for the stereo schema
+      stereo_schema->set_ref_image(stereo_image_files[0]);
+      //stereo_schema->set_def_image(right_image_string);
       assert(stereo_schema!=Teuchos::null);
       if(stereo_schema->use_nonlinear_projection())
         stereo_schema->project_right_image_into_left_frame(triangulation,true);
       stereo_schema->set_frame_range(first_frame_id,num_frames);
       cross_corr_time = t.elapsed();
     } // end is stereo
+    else{ // only the ref image needs to be set
+      // TODO set the schema ref extents here
+      schema->set_ref_image(image_files[0]);
+    }
 
     // iterate through the images and perform the correlation:
     scalar_t corr_time = 0.0;
@@ -290,12 +296,14 @@ int main(int argc, char *argv[]) {
         if(schema->use_incremental_formulation()){
           schema->set_ref_image(schema->def_img());
         }
+        // TODO set the def extents of the schema
         schema->set_def_image(def_image_string);
         if(is_stereo){
           const std::string right_def_image_string = stereo_image_files[image_it];
           if(stereo_schema->use_incremental_formulation()){
             stereo_schema->set_ref_image(stereo_schema->def_img());
           }
+          // TODO set the def extents of the stereo schema
           stereo_schema->set_def_image(right_def_image_string);
           if(stereo_schema->use_nonlinear_projection())
             stereo_schema->project_right_image_into_left_frame(triangulation,false);

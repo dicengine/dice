@@ -99,6 +99,7 @@ public:
         static_cast<int_t>(global_field_value(COORDINATE_Y)),
         schema_->subset_dim(),schema_->subset_dim()));
     }
+    assert(schema_->ref_img()!=Teuchos::null);
     subset_->initialize(schema_->ref_img());
 }
 

@@ -302,6 +302,8 @@ Phase_Correlation_Initializer::initial_guess(const int_t subset_gid,
 
 void
 Phase_Correlation_Initializer::pre_execution_tasks(){
+  assert(schema_->prev_img()!=Teuchos::null);
+  assert(schema_->def_img()!=Teuchos::null);
   DICe::phase_correlate_x_y(schema_->prev_img(),schema_->def_img(),phase_cor_u_x_,phase_cor_u_y_);
   DEBUG_MSG("Phase_Correlation_Initializer::pre_execution_tasks(): initial displacements ux: " << phase_cor_u_x_ << " uy: " << phase_cor_u_y_);
 }
@@ -462,7 +464,8 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
 
 void
 Feature_Matching_Initializer::pre_execution_tasks(){
-
+  assert(schema_->ref_img()!=Teuchos::null);
+  assert(schema_->def_img()!=Teuchos::null);
   if(first_call_){
     if(schema_->ref_img()->has_file_name()){
       prev_img_name_ = schema_->ref_img()->file_name();
@@ -748,6 +751,7 @@ Optical_Flow_Initializer::best_optical_flow_point(scalar_t & best_grad,
 
 Status_Flag
 Optical_Flow_Initializer::set_locations(const int_t subset_gid){
+  assert(schema_->prev_img()!=Teuchos::null);
   DEBUG_MSG("Optical_Flow_Initializer::set_locations() called");
   static scalar_t grad_coeffs[5] = {-1.0,8.0,0.0,-8.0,1.0};
   Teuchos::ArrayRCP<scalar_t> gx(subset_->num_pixels(),0.0);
@@ -850,6 +854,7 @@ Optical_Flow_Initializer::set_locations(const int_t subset_gid){
 Status_Flag
 Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
   Teuchos::RCP<std::vector<scalar_t> > deformation){
+  assert(schema_->prev_img()!=Teuchos::null);
   TEUCHOS_TEST_FOR_EXCEPTION(deformation->size()!=DICE_DEFORMATION_SIZE,std::runtime_error,"");
   DEBUG_MSG("Optical_Flow_Initializer::initial_guess() Subset " << subset_gid);
 
@@ -1081,6 +1086,7 @@ Motion_Test_Utility::Motion_Test_Utility(Schema * schema,
 
 bool
 Motion_Test_Utility::motion_detected(const int_t sub_image_id){
+  assert(schema_->prev_img()!=Teuchos::null);
   // make sure the id is valid
   TEUCHOS_TEST_FOR_EXCEPTION(sub_image_id<0||sub_image_id>=(int_t)schema_->def_imgs()->size(),
     std::runtime_error,"Error, ivalid sub_image_id " << sub_image_id);
