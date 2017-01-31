@@ -1165,9 +1165,11 @@ Schema::project_right_image_into_left_frame(Teuchos::RCP<Triangulation> tri,
   Teuchos::ArrayRCP<intensity_t> intens = proj_img->intensities();
   scalar_t xr = 0.0;
   scalar_t yr = 0.0;
+  const scalar_t ox = ref_img_->offset_x();
+  const scalar_t oy = ref_img_->offset_y();
   for(int_t j=0;j<h;++j){
     for(int_t i=0;i<w;++i){
-      tri->project_left_to_right_sensor_coords(i,j,xr,yr);
+      tri->project_left_to_right_sensor_coords(i+ox,j+oy,xr,yr);
       intens[j*w+i] = img->interpolate_keys_fourth(xr,yr);
     }
   }
