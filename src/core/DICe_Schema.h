@@ -1007,25 +1007,11 @@ public:
   }
 
   /// estimate the error in the displacement resolution and strain
-  /// \param speckle_size to use instead of the reference image speckles (creates a new synthetic image)
-  /// \param noise_percent amount of image noise to add to the deformed images (given in percent of counts so 2% of 255 would be specified as 2.0)
-  /// \param min_period minimum period in the imposed deformation
-  /// \param max_period maximum period in the imposed deformation
-  /// \param period_factor reduction factor applied to period between each step
-  /// \param min_amp minimum amplitude level in the imposed deformation
-  /// \param max_amp maximum amplitude level in the imposed deformation
-  /// \param amp_step amplitude added to the current amplitude between each step
+  /// \param correlation_params parameters to apply to the resolution estimation
   /// \param output_folder where to place the output files
   /// \param prefix the file prefix to use for output files
   /// \param outStream output stream to write screen output to
-  void estimate_resolution_error(const scalar_t & speckle_size,
-    const scalar_t & noise_percent,
-    const scalar_t & min_period,
-    const scalar_t & max_period,
-    const scalar_t & period_factor,
-    const scalar_t & min_amp,
-    const scalar_t & max_amp,
-    const scalar_t & amp_step,
+  void estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & correlation_params,
     std::string & output_folder,
     std::string & prefix,
     Teuchos::RCP<std::ostream> & outStream);

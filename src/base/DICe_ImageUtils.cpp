@@ -256,11 +256,12 @@ SinCos_Image_Deformer::deform_image(Teuchos::RCP<Image> ref_image){
 
 DICE_LIB_DLL_EXPORT
 int_t compute_speckle_stats(const std::string & output_dir,
-  Teuchos::RCP<Image> & image){
+  Teuchos::RCP<Image> & image,
+  const int_t processor_id){
 
   // estimate the speckle period of the reference image:
   std::stringstream speckle_stats_name;
-  speckle_stats_name << output_dir << "speckle_stats.txt";
+  speckle_stats_name << output_dir << "speckle_stats_" << processor_id << ".txt";
   std::FILE * speckleFilePtr = fopen(speckle_stats_name.str().c_str(),"w");
 
   // compute the mean intensity
@@ -353,7 +354,7 @@ int_t compute_speckle_stats(const std::string & output_dir,
       avg_speckle_size = speckle_interval;
     }
     prev_coverage = coverage;
-    DEBUG_MSG("Speckle size " << speckle_interval << " coverage " << coverage << " num speckles " << num_speckles);
+    DEBUG_MSG("[PROC " << processor_id << "]: Speckle size " << speckle_interval << " coverage " << coverage << " num speckles " << num_speckles);
     fprintf(speckleFilePtr,"%i %f %i\n",speckle_interval,coverage,num_speckles);
 //    std::stringstream dil_name;
 //    dil_name << "dil_img_" << speckle_interval << ".tif";
@@ -363,7 +364,7 @@ int_t compute_speckle_stats(const std::string & output_dir,
 //    er_morf_img->write(er_name.str());
   } // end speckle interval
   fclose(speckleFilePtr);
-  DEBUG_MSG("Characteristic speckle size: " << avg_speckle_size - 1 << " to " << avg_speckle_size);
+  DEBUG_MSG("[PROC " << processor_id << "]: Characteristic speckle size: " << avg_speckle_size - 1 << " to " << avg_speckle_size);
 
   return avg_speckle_size;
 
@@ -552,6 +553,8 @@ void compute_roll_off_stats(const scalar_t & period,
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Image> create_synthetic_speckle_image(const int_t w,
   const int_t h,
+  const int_t offset_x,
+  const int_t offset_y,
   const scalar_t & speckle_size,
   const Teuchos::RCP<Teuchos::ParameterList> & params){
 
@@ -564,10 +567,10 @@ Teuchos::RCP<Image> create_synthetic_speckle_image(const int_t w,
   Teuchos::ArrayRCP<intensity_t> intensities(w*h,0.0);
   for(int_t y=0;y<h;++y){
     for(int_t x=0;x<w;++x){
-      intensities[y*w+x] = mag + mag*std::cos(gamma*x)*std::cos(gamma*y);
+      intensities[y*w+x] = mag + mag*std::cos(gamma*(x+offset_x))*std::cos(gamma*(y+offset_y));
     }
   }
-  Teuchos::RCP<Image> img = Teuchos::rcp(new Image(w,h,intensities,params));
+  Teuchos::RCP<Image> img = Teuchos::rcp(new Image(w,h,intensities,params,offset_x,offset_y));
   return img;
 }
 

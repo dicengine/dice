@@ -212,17 +212,10 @@ int main(int argc, char *argv[]) {
     // if the user selects predict_resolution_error option, an error analysis is performed and the actual analysis is skipped
     if(correlation_params->get<bool>(DICe::estimate_resolution_error,false)){
       file_prefix = "DICe_error_estimation_solution";
+      schema->update_extents();
       schema->set_ref_image(image_files[0]);
       schema->set_def_image(image_files[0]);
-      const scalar_t min_period = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_min_period,25);
-      const scalar_t max_period = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_max_period,100);
-      const scalar_t period_factor = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_period_factor,0.5);
-      const scalar_t min_amp = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_min_amplitude,0.5);
-      const scalar_t max_amp = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_max_amplitude,4.0);
-      const scalar_t amp_step = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_amplitude_step,0.5);
-      const scalar_t speckle_size = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_speckle_size,-1.0);
-      const scalar_t noise_percent = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_noise_percent,-1.0);
-      schema->estimate_resolution_error(speckle_size,noise_percent,min_period,max_period,period_factor,min_amp,max_amp,amp_step,output_folder,file_prefix,outStream);
+      schema->estimate_resolution_error(correlation_params,output_folder,file_prefix,outStream);
       DICe::finalize();
       return 0;
     }

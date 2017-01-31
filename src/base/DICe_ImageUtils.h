@@ -108,11 +108,15 @@ void compute_roll_off_stats(const scalar_t & period,
 /// free function to create a synthetically speckled image with perfectly smooth and regular speckles of a certain size
 /// \param w width of the image
 /// \param h height of the image
+/// \param offset_x the x offset for a sub image
+/// \param offset_y the y offset for a sub image
 /// \param speckle_size size of the speckles to create
 /// \param params set of image parameters (compute gradients, etc)
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Image> create_synthetic_speckle_image(const int_t w,
   const int_t h,
+  const int_t offset_x,
+  const int_t offset_y,
   const scalar_t & speckle_size,
   const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
@@ -127,9 +131,11 @@ void add_noise_to_image(Teuchos::RCP<Image> & image,
 /// returns the next largest odd integer size (so if the pattern predominant size is 6, the function returns 7)
 /// \param output_dir the directory to save the statistics file in
 /// \param image the image containing the speckle pattern
+/// \param processor_id the process this routine is running on
 DICE_LIB_DLL_EXPORT
 int_t compute_speckle_stats(const std::string & output_dir,
-  Teuchos::RCP<Image> & image);
+  Teuchos::RCP<Image> & image,
+  const int_t processor_id);
 
 /// \class SinCos_Image_Deformer
 /// \brief a class that deformed an input image according to a sin()*cos() function

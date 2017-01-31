@@ -111,10 +111,14 @@ public:
   /// \param height image height
   /// \param intensities image intensity values
   /// \param params optional image parameters
+  /// \param offset_x the x offset for a sub image
+  /// \param offset_y the y offset for a sub image
   Image(const int_t width,
     const int_t height,
     Teuchos::ArrayRCP<intensity_t> intensities,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null,
+    const int_t offset_x = 0,
+    const int_t offset_y = 0);
 
   //
   // Empty (zero) image

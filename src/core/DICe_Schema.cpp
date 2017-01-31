@@ -2071,20 +2071,21 @@ Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
 }
 
 void
-Schema::estimate_resolution_error(const scalar_t & speckle_size,
-  const scalar_t & noise_percent,
-  const scalar_t & min_period,
-  const scalar_t & max_period,
-  const scalar_t & period_factor,
-  const scalar_t & min_amp,
-  const scalar_t & max_amp,
-  const scalar_t & amp_step,
+Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & correlation_params,
   std::string & output_folder,
   std::string & prefix,
   Teuchos::RCP<std::ostream> & outStream){
 #if DICE_KOKKOS
 #else
   const int_t proc_id = comm_->get_rank();
+  const scalar_t min_period = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_min_period,25);
+  const scalar_t max_period = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_max_period,100);
+  const scalar_t period_factor = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_period_factor,0.5);
+  const scalar_t min_amp = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_min_amplitude,0.5);
+  const scalar_t max_amp = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_max_amplitude,4.0);
+  const scalar_t amp_step = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_amplitude_step,0.5);
+  const scalar_t speckle_size = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_speckle_size,-1.0);
+  const scalar_t noise_percent = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_noise_percent,-1.0);
 
   // search the mesh fields to see if vsg or nlvc strain exist:
   const bool has_vsg = mesh_->has_field(DICe::mesh::field_enums::VSG_STRAIN_XX);
@@ -2196,11 +2197,13 @@ Schema::estimate_resolution_error(const scalar_t & speckle_size,
     Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
     imgParams->set(DICe::compute_image_gradients,true);
     imgParams->set(DICe::gradient_method,gradient_method_);
-    Teuchos::RCP<Image> speckled_ref = create_synthetic_speckle_image(ref_img()->width(),ref_img()->height(),speckle_size,imgParams);
+    Teuchos::RCP<Image> speckled_ref = create_synthetic_speckle_image(ref_img_->width(),ref_img_->height(),
+      ref_img_->offset_x(),ref_img_->offset_y(),speckle_size,imgParams);
     set_ref_image(speckled_ref);
   }
 
-  const int_t avg_speckle_size = compute_speckle_stats(data_dir_str,ref_img_);
+  // TODO fix this to communicate the speckle stats across all processors not just each individual proc
+  const int_t avg_speckle_size = compute_speckle_stats(data_dir_str,ref_img_,proc_id);
 
   std::stringstream data_name;
   data_name << data_dir_str << "spatial_resolution.txt";
