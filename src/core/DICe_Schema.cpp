@@ -45,6 +45,7 @@
 #include <DICe_PostProcessor.h>
 #include <DICe_ParameterUtilities.h>
 #include <DICe_ImageUtils.h>
+#include <DICe_ImageIO.h>
 #include <DICe_FFT.h>
 #include <DICe_Triangulation.h>
 #include <DICe_Simplex.h>
@@ -168,12 +169,22 @@ Schema::set_def_image(const std::string & defName,
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
-//  if(has_extents_){
-//    const int_t sub_w = def_extents_[1] - def_extents_[0];
-//    const int_t sub_h = def_extents_[3] - def_extents_[2];
-//    def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),def_extents_[0],def_extents_[2],sub_w,sub_h,imgParams));
-//  }
-//  else
+
+  // query the image dimensions:
+  if(has_extents_){
+    int_t w = 0;
+    int_t h = 0;
+    utils::read_image_dimensions(defName.c_str(),w,h);
+    const int_t buffer = 100; // if the extents are within 100 pixels of the image boundary use the whole image
+    const int_t offset_x = def_extents_[0] > buffer && def_extents_[0] < w - buffer ? def_extents_[0] : 0;
+    const int_t offset_y = def_extents_[2] > buffer && def_extents_[2] < h - buffer ? def_extents_[2] : 0;
+    const int_t end_x = def_extents_[1] > buffer && def_extents_[1] < w - buffer ? def_extents_[1] : w;
+    const int_t end_y = def_extents_[3] > buffer && def_extents_[3] < h - buffer ? def_extents_[3] : h;
+    const int_t width = end_x - offset_x;
+    const int_t height = end_y - offset_y;
+    def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),offset_x,offset_y,width,height,imgParams));
+  }
+  else
     def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
   //TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[id]->width()!=ref_img_->width()||def_imgs_[id]->height()!=ref_img_->height(),
   //  std::runtime_error,"Error, ref and def images must have the same dimensions");
@@ -241,12 +252,18 @@ Schema::set_ref_image(const std::string & refName){
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
-//  if(has_extents_){
-//    const int_t sub_w = ref_extents_[1] - ref_extents_[0];
-//    const int_t sub_h = ref_extents_[3] - ref_extents_[2];
-//    ref_img_ = Teuchos::rcp( new Image(refName.c_str(),ref_extents_[0],ref_extents_[2],sub_w,sub_h,imgParams));
-//  }
-//  else
+  if(has_extents_){
+    utils::read_image_dimensions(refName.c_str(),full_ref_img_width_,full_ref_img_height_);
+    const int_t buffer = 100; // if the extents are within 100 pixels of the image boundary use the whole image
+    const int_t offset_x = ref_extents_[0] > buffer && ref_extents_[0] < full_ref_img_width_ - buffer ? ref_extents_[0] : 0;
+    const int_t offset_y = ref_extents_[2] > buffer && ref_extents_[2] < full_ref_img_height_ - buffer ? ref_extents_[2] : 0;
+    const int_t end_x = ref_extents_[1] > buffer && ref_extents_[1] < full_ref_img_width_ - buffer ? ref_extents_[1] : full_ref_img_width_;
+    const int_t end_y = ref_extents_[3] > buffer && ref_extents_[3] < full_ref_img_height_ - buffer ? ref_extents_[3] : full_ref_img_height_;
+    const int_t width = end_x - offset_x;
+    const int_t height = end_y - offset_y;
+    ref_img_ = Teuchos::rcp( new Image(refName.c_str(),offset_x,offset_y,width,height,imgParams));
+  }
+  else
     ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
@@ -342,6 +359,8 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   has_extents_ = false;
   ref_extents_.resize(4,-1);
   def_extents_.resize(4,-1);
+  full_ref_img_width_ = -1;
+  full_ref_img_height_ = -1;
 }
 
 void
@@ -1688,9 +1707,12 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   if(subset_dim_ > 0){
     const scalar_t current_pos_x = global_field_value(subset_gid,DICe::COORDINATE_X) + global_field_value(subset_gid,DICe::DISPLACEMENT_X);
     const scalar_t current_pos_y = global_field_value(subset_gid,DICe::COORDINATE_Y) + global_field_value(subset_gid,DICe::DISPLACEMENT_Y);
-    if(current_pos_x < subset_dim_/2 || current_pos_x > ref_img_->width() - subset_dim_/2 ||
-        current_pos_y < subset_dim_/2 || current_pos_y > ref_img_->height() - subset_dim_/2){
-      DEBUG_MSG("Invalid subset origin (probably from stereo projection of the left subset not being in the right image)");
+    if(current_pos_x < def_imgs_[0]->offset_x()+subset_dim_/2 || current_pos_x > def_imgs_[0]->width()+def_imgs_[0]->offset_x() - subset_dim_/2 ||
+        current_pos_y < def_imgs_[0]->offset_y()+subset_dim_/2 || current_pos_y > def_imgs_[0]->height()+def_imgs_[0]->offset_y() - subset_dim_/2){
+      DEBUG_MSG("Invalid subset origin (probably from stereo projection of the left subset not being in the right image)" <<
+        " current pos " << current_pos_x << " " << current_pos_y << " limits x " << def_imgs_[0]->offset_x()+subset_dim_/2 << " to " <<
+        def_imgs_[0]->width()+def_imgs_[0]->offset_x() - subset_dim_/2 << " limits y " << def_imgs_[0]->offset_y()+subset_dim_/2 << " to " <<
+        def_imgs_[0]->height()+def_imgs_[0]->offset_y() - subset_dim_/2);
       record_failed_step(subset_gid,static_cast<int_t>(INITIALIZE_FAILED_BY_EXCEPTION),-1);
       return;
     }
@@ -2087,6 +2109,9 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
   const scalar_t speckle_size = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_speckle_size,-1.0);
   const scalar_t noise_percent = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_noise_percent,-1.0);
 
+  // the full image width and height must be set
+  TEUCHOS_TEST_FOR_EXCEPTION(full_ref_img_width_<=0||full_ref_img_height_<=0,std::runtime_error,"");
+
   // search the mesh fields to see if vsg or nlvc strain exist:
   const bool has_vsg = mesh_->has_field(DICe::mesh::field_enums::VSG_STRAIN_XX);
   const bool has_nlvc = mesh_->has_field(DICe::mesh::field_enums::NLVC_STRAIN_XX);
@@ -2112,22 +2137,24 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
     Teuchos::ParameterList sublist = init_params_->sublist(DICe::post_process_nlvc_strain);
     nlvc_size = sublist.get<int_t>(DICe::horizon_diameter_in_pixels,-1);
   }
-  DEBUG_MSG("****************************************************************");
-  DEBUG_MSG("Schema::estimate_resolution_error(): ");
-  DEBUG_MSG("****************************************************************");
-  DEBUG_MSG("subset or element size:    " << subset_elem_size << " pixels");
-  DEBUG_MSG("step size:                 " << step_size << " pixels");
-  DEBUG_MSG("strain window size:        " << vsg_size << " pixels");
-  DEBUG_MSG("nonlocal horizon diameter: " << nlvc_size << " pixels");
-  DEBUG_MSG("minumum motion period:     " << min_period << " pixels");
-  DEBUG_MSG("maximum motion period:     " << max_period << " pixels");
-  DEBUG_MSG("period factor:             " << period_factor);
-  DEBUG_MSG("minimum motion amplitude:  " << min_amp << " pixels");
-  DEBUG_MSG("maximum motion amplitude:  " << max_amp << " pixels");
-  DEBUG_MSG("amplitude step:            " << amp_step << " pixels");
-  DEBUG_MSG("speckle size:              " << speckle_size << " pixels (negative means not specified)");
-  DEBUG_MSG("noise level:               " << noise_percent << "% of 255 counts (negative means not specified)");
-  DEBUG_MSG("****************************************************************");
+  if(proc_id==0){
+    DEBUG_MSG("****************************************************************");
+    DEBUG_MSG("Schema::estimate_resolution_error(): ");
+    DEBUG_MSG("****************************************************************");
+    DEBUG_MSG("subset or element size:    " << subset_elem_size << " pixels");
+    DEBUG_MSG("step size:                 " << step_size << " pixels");
+    DEBUG_MSG("strain window size:        " << vsg_size << " pixels");
+    DEBUG_MSG("nonlocal horizon diameter: " << nlvc_size << " pixels");
+    DEBUG_MSG("minumum motion period:     " << min_period << " pixels");
+    DEBUG_MSG("maximum motion period:     " << max_period << " pixels");
+    DEBUG_MSG("period factor:             " << period_factor);
+    DEBUG_MSG("minimum motion amplitude:  " << min_amp << " pixels");
+    DEBUG_MSG("maximum motion amplitude:  " << max_amp << " pixels");
+    DEBUG_MSG("amplitude step:            " << amp_step << " pixels");
+    DEBUG_MSG("speckle size:              " << speckle_size << " pixels (negative means not specified)");
+    DEBUG_MSG("noise level:               " << noise_percent << "% of 255 counts (negative means not specified)");
+    DEBUG_MSG("****************************************************************");
+  }
   TEUCHOS_TEST_FOR_EXCEPTION(min_period <= 0.0,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(min_amp <= 0.0,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(max_period < min_period,std::runtime_error,"");
@@ -2203,7 +2230,17 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
   }
 
   // TODO fix this to communicate the speckle stats across all processors not just each individual proc
-  const int_t avg_speckle_size = compute_speckle_stats(data_dir_str,ref_img_,proc_id);
+  int_t avg_speckle_size = -1;
+  if(speckle_size>=1.0)
+    avg_speckle_size = speckle_size;
+  else{
+    if(proc_id==0){ // other procs don't need to report speckle size
+      // have to build full images for this step on process zero
+      TEUCHOS_TEST_FOR_EXCEPTION(!ref_img_->has_file_name(),std::runtime_error,"");
+      Teuchos::RCP<Image> full_ref = Teuchos::rcp(new Image(ref_img_->file_name().c_str()));
+      avg_speckle_size = compute_speckle_stats(data_dir_str,full_ref);
+    }
+  }
 
   std::stringstream data_name;
   data_name << data_dir_str << "spatial_resolution.txt";
@@ -2253,7 +2290,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
       per_ss << deformer->period();
       std::string per_s = per_ss.str();
       std::replace( per_s.begin(), per_s.end(), '.', 'p'); // replace dots with p for file name
-      sincos_name << image_dir_str << "amp_" << std::setprecision(4) << amp_s << "_period_" << std::setprecision(4) << per_s << ".tif";
+      sincos_name << image_dir_str << "amp_" << std::setprecision(4) << amp_s << "_period_" << std::setprecision(4) << per_s << "_proc_" << proc_id << ".tif";
 
       // check to see if the deformed image already exists:
       std::ifstream f(sincos_name.str().c_str());
@@ -2266,9 +2303,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
         if(noise_percent > 0.0){
           add_noise_to_image(def_img,noise_percent);
         }
-        if(proc_id==0){
-          def_img->write(sincos_name.str());
-        }
+        def_img->write(sincos_name.str());
       //}
 
       // set the deformed image for the schema
@@ -2380,7 +2415,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
       scalar_t peaks_avg_error_y = 0.0;
       scalar_t peaks_std_dev_error_y = 0.0;
       // analyze the peaks of the output to evaluate the roll off
-      compute_roll_off_stats(period,def_img->width(),def_img->height(),coords,disp,exact_disp,disp_error,
+      compute_roll_off_stats(period,full_ref_img_width_,full_ref_img_height_,coords,disp,exact_disp,disp_error,
         peaks_avg_error_x,peaks_std_dev_error_x,peaks_avg_error_y,peaks_std_dev_error_y);
       result_stream << " " << peaks_avg_error_x << " " << peaks_std_dev_error_x << " " << peaks_avg_error_y << " " << peaks_std_dev_error_y;
 
@@ -2421,7 +2456,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
           strain_error->local_value(i*spa_dim+1) = vsg_error_yy->local_value(i);
         }
         // analyze the peaks of the output to evaluate the roll off
-        compute_roll_off_stats(period,def_img->width(),def_img->height(),coords,strain,exact_strain,strain_error,
+        compute_roll_off_stats(period,full_ref_img_width_,full_ref_img_height_,coords,strain,exact_strain,strain_error,
           strain_peaks_avg_error_x,strain_peaks_std_dev_error_x,strain_peaks_avg_error_y,strain_peaks_std_dev_error_y);
         result_stream << " " << strain_peaks_avg_error_x << " " << strain_peaks_std_dev_error_x << " " << strain_peaks_avg_error_y << " " << strain_peaks_std_dev_error_y;
       }
@@ -2462,7 +2497,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
           strain_error->local_value(i*spa_dim+1) = nlvc_error_yy->local_value(i);
         }
         // analyze the peaks of the output to evaluate the roll off
-        compute_roll_off_stats(period,def_img->width(),def_img->height(),coords,strain,exact_strain,strain_error,
+        compute_roll_off_stats(period,full_ref_img_width_,full_ref_img_height_,coords,strain,exact_strain,strain_error,
           strain_peaks_avg_error_x,strain_peaks_std_dev_error_x,strain_peaks_avg_error_y,strain_peaks_std_dev_error_y);
         result_stream << " " << strain_peaks_avg_error_x << " " << strain_peaks_std_dev_error_x << " " << strain_peaks_avg_error_y << " " << strain_peaks_std_dev_error_y;
       }
@@ -2758,6 +2793,8 @@ Schema::write_control_points_image(const std::string & fileName,
 
   const int_t width = img->width();
   const int_t height = img->height();
+  const int_t ox = img->offset_x();
+  const int_t oy = img->offset_y();
 
   // first, create new intensities based on the old
   Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
@@ -2772,8 +2809,8 @@ Schema::write_control_points_image(const std::string & fileName,
   const int_t i_end = use_one_point ? i_start + 1 : numLocalControlPts;
   const int_t color = use_one_point ? 255 : 0;
   for (int_t i=i_start;i<i_end;++i){
-    x = local_field_value(i,COORDINATE_X);
-    y = local_field_value(i,COORDINATE_Y);
+    x = local_field_value(i,COORDINATE_X) - ox;
+    y = local_field_value(i,COORDINATE_Y) - oy;
     for(int_t j=0;j<subset_dim_;++j){
       xAlt = x - subset_dim_/2 + j;
       intensities[(y+subset_dim_/2)*width+xAlt] = color;
@@ -2787,8 +2824,8 @@ Schema::write_control_points_image(const std::string & fileName,
   }
   // place white plus signs at the control points
   for (int_t i=0;i<numLocalControlPts;++i){
-    x = local_field_value(i,COORDINATE_X);
-    y = local_field_value(i,COORDINATE_Y);
+    x = local_field_value(i,COORDINATE_X) - ox;
+    y = local_field_value(i,COORDINATE_Y) - oy;
     intensities[y*width+x] = 255;
     for(int_t j=0;j<3;++j){
       intensities[y*width+(x+j)] = 255;
@@ -2800,8 +2837,8 @@ Schema::write_control_points_image(const std::string & fileName,
   // place black plus signs at the control points that were successful
   for (int_t i=0;i<numLocalControlPts;++i){
     if(local_field_value(i,SIGMA)<=0) return;
-    x = local_field_value(i,COORDINATE_X);
-    y = local_field_value(i,COORDINATE_Y);
+    x = local_field_value(i,COORDINATE_X) - ox;
+    y = local_field_value(i,COORDINATE_Y) - oy;
     intensities[y*width+x] = 0;
     for(int_t j=0;j<2;++j){
       intensities[y*width+(x+j)] = 0;

@@ -259,6 +259,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
 
     // compute the mean value of the subsets:
     const scalar_t meanG = subset_->mean(DEF_INTENSITIES);
+    //DEBUG_MSG("Subset " << correlation_point_global_id_ << " def mean: " << meanG);
 
     // the gradients are taken from the def images rather than the ref
     const bool use_ref_grads = schema_->def_img()->has_gradients() ? false : true;

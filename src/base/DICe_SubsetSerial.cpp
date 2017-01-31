@@ -232,7 +232,7 @@ Subset::mean(const Subset_View_Target target){
         mean += def_intensities_[i];
       }
   }
-  return mean/num_active;
+  return num_active != 0 ? mean/num_active : 0.0;
 }
 
 scalar_t

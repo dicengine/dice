@@ -192,6 +192,8 @@ Teuchos::RCP<Image>
 SinCos_Image_Deformer::deform_image(Teuchos::RCP<Image> ref_image){
   const int_t w = ref_image->width();
   const int_t h = ref_image->height();
+  const int_t ox = ref_image->offset_x();
+  const int_t oy = ref_image->offset_y();
 //  // Note: uses 5 x 5 point sampling grid to evaluate the deformed intensity
 //  const int_t num_pts = 5;
 //  static scalar_t coeffs[5] = {0.0014,0.1574,0.62825,0.1574,0.0014};
@@ -232,7 +234,7 @@ SinCos_Image_Deformer::deform_image(Teuchos::RCP<Image> ref_image){
       for(int_t pt=0;pt<num_pts;++pt){
         const scalar_t sample_x = i - offsets_x[pt];
         const scalar_t sample_y = j - offsets_y[pt];
-        compute_deformation(sample_x,sample_y,bx,by);
+        compute_deformation(sample_x+ox,sample_y+oy,bx,by);
         scalar_t intens = ref_image->interpolate_keys_fourth(sample_x-bx,sample_y-by);
         avg_intens += intens;
       } // end avg points
@@ -250,18 +252,17 @@ SinCos_Image_Deformer::deform_image(Teuchos::RCP<Image> ref_image){
 //      def_intens[j*w+i] = intens;
 //    } // end pixel i
 //  } // ens pixel j
-  Teuchos::RCP<Image> def_img = Teuchos::rcp(new Image(w,h,def_intens));
+  Teuchos::RCP<Image> def_img = Teuchos::rcp(new Image(w,h,def_intens,Teuchos::null,ox,oy));
   return def_img;
 }
 
 DICE_LIB_DLL_EXPORT
 int_t compute_speckle_stats(const std::string & output_dir,
-  Teuchos::RCP<Image> & image,
-  const int_t processor_id){
+  Teuchos::RCP<Image> & image){
 
   // estimate the speckle period of the reference image:
   std::stringstream speckle_stats_name;
-  speckle_stats_name << output_dir << "speckle_stats_" << processor_id << ".txt";
+  speckle_stats_name << output_dir << "speckle_stats.txt";
   std::FILE * speckleFilePtr = fopen(speckle_stats_name.str().c_str(),"w");
 
   // compute the mean intensity
@@ -354,7 +355,7 @@ int_t compute_speckle_stats(const std::string & output_dir,
       avg_speckle_size = speckle_interval;
     }
     prev_coverage = coverage;
-    DEBUG_MSG("[PROC " << processor_id << "]: Speckle size " << speckle_interval << " coverage " << coverage << " num speckles " << num_speckles);
+    DEBUG_MSG("Speckle size " << speckle_interval << " coverage " << coverage << " num speckles " << num_speckles);
     fprintf(speckleFilePtr,"%i %f %i\n",speckle_interval,coverage,num_speckles);
 //    std::stringstream dil_name;
 //    dil_name << "dil_img_" << speckle_interval << ".tif";
@@ -364,7 +365,7 @@ int_t compute_speckle_stats(const std::string & output_dir,
 //    er_morf_img->write(er_name.str());
   } // end speckle interval
   fclose(speckleFilePtr);
-  DEBUG_MSG("[PROC " << processor_id << "]: Characteristic speckle size: " << avg_speckle_size - 1 << " to " << avg_speckle_size);
+  DEBUG_MSG("Characteristic speckle size: " << avg_speckle_size - 1 << " to " << avg_speckle_size);
 
   return avg_speckle_size;
 

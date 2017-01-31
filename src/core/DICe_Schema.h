@@ -1301,6 +1301,10 @@ private:
   std::vector<int_t> ref_extents_;
   /// vector that contains the x and y extents for the deformed images (x_start_def, x_end_def, y_start_def, y_end_def)
   std::vector<int_t> def_extents_;
+  /// store the total image dims (the image size before decomposition across processors)
+  int_t full_ref_img_width_;
+  /// store the total image dims (the image size before decomposition across processors)
+  int_t full_ref_img_height_;
 };
 
 /// \class DICe::Output_Spec
