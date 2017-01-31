@@ -1363,6 +1363,7 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
     const int_t cine_ref_index = params->get<int_t>(DICe::cine_ref_index,first_frame_index);
     const int_t cine_start_index = params->get<int_t>(DICe::cine_start_index,first_frame_index);
     const int_t cine_end_index = params->get<int_t>(DICe::cine_end_index,first_frame_index + num_images -1);
+    const int_t cine_skip_index = params->get<int_t>(DICe::cine_skip_index,1);
     TEUCHOS_TEST_FOR_EXCEPTION(cine_start_index > cine_end_index,std::invalid_argument,"Error, the cine start index is > the cine end index");
     TEUCHOS_TEST_FOR_EXCEPTION(cine_start_index < first_frame_index,std::invalid_argument,"Error, the cine start index is < the first frame index");
     TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index > cine_end_index,std::invalid_argument,"Error, the cine ref index is > the cine end index");
@@ -1390,14 +1391,16 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
     else
       ref_cine_ss << cine_ref_index;
     ref_cine_ss << ".cine";
-    image_files.resize(cine_end_index-cine_start_index+2);
+    const int_t total_num_frames = std::floor((cine_end_index-cine_start_index)/cine_skip_index) + 2;
+    image_files.resize(total_num_frames);
     image_files[0] = ref_cine_ss.str();
-    for(int_t i=cine_start_index;i<=cine_end_index;++i){
+    int_t current_index = 1;
+    for(int_t i=cine_start_index;i<=cine_end_index;i+=cine_skip_index){
       std::stringstream def_cine_ss;
       def_cine_ss << trimmed_cine_name << "_" << i << ".cine";
-      image_files[i-cine_start_index+1] = def_cine_ss.str();
+      image_files[current_index++] = def_cine_ss.str();
     }
-        if(params->isParameter(DICe::stereo_cine_file)){
+    if(params->isParameter(DICe::stereo_cine_file)){
       std::stringstream stereo_cine_name;
       std::string stereo_cine_file_name = params->get<std::string>(DICe::stereo_cine_file);
       stereo_cine_name << params->get<std::string>(DICe::image_folder) << stereo_cine_file_name;
@@ -1418,12 +1421,13 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
       else
         stereo_ref_cine_ss << cine_ref_index;
       stereo_ref_cine_ss << ".cine";
-      stereo_image_files.resize(cine_end_index-cine_start_index+2);
+      stereo_image_files.resize(total_num_frames);
       stereo_image_files[0] = stereo_ref_cine_ss.str();
-      for(int_t i=cine_start_index;i<=cine_end_index;++i){
+      int_t current_stereo_index = 1;
+      for(int_t i=cine_start_index;i<=cine_end_index;i+=cine_skip_index){
         std::stringstream stereo_def_cine_ss;
         stereo_def_cine_ss << stereo_trimmed_cine_name << "_" << i << ".cine";
-        stereo_image_files[i-cine_start_index+1] = stereo_def_cine_ss.str();
+        stereo_image_files[current_stereo_index++] = stereo_def_cine_ss.str();
       }
     }
   } // end cine file
@@ -1452,6 +1456,9 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::end_image_index),std::runtime_error,
       "Error, the end image index was not specified");
     const int_t lastImageIndex = params->get<int_t>(DICe::end_image_index);
+    int_t imageSkip = 1;
+    if(params->isParameter(DICe::skip_image_index))
+      imageSkip = params->get<int_t>(DICe::skip_image_index);
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::image_file_prefix),std::runtime_error,
       "Error, the image file prefix was not specified");
     const std::string prefix = params->get<std::string>(DICe::image_file_prefix);
@@ -1473,7 +1480,7 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
     }
     TEUCHOS_TEST_FOR_EXCEPTION(startImageIndex > lastImageIndex,std::runtime_error,"Error invalid start image index");
     TEUCHOS_TEST_FOR_EXCEPTION(startImageIndex < 0,std::runtime_error,"Error invalid start image index");
-    const int_t numImages = lastImageIndex - startImageIndex + 1;
+    const int_t numImages = std::floor((lastImageIndex - startImageIndex)/imageSkip) + 1;
     TEUCHOS_TEST_FOR_EXCEPTION(numImages<=0,std::runtime_error,"");
     std::string stereo_left_suffix = "";
     std::string stereo_right_suffix = "";
@@ -1511,7 +1518,7 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
     }
 
     // determine the deformed images
-    for(int_t i=startImageIndex;i<=lastImageIndex;++i){
+    for(int_t i=startImageIndex;i<=lastImageIndex;i+=imageSkip){
       std::stringstream def_name;
       def_name << folder << prefix;
       int_t tmpNum = i;
