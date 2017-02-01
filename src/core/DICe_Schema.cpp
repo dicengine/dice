@@ -655,12 +655,19 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
 }
 
 void
-Schema::update_extents(){
+Schema::update_extents(const bool use_transformation_augmentation){
   TEUCHOS_TEST_FOR_EXCEPTION(motion_window_params_->size()>0,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"");
   Teuchos::RCP<MultiField> coords = mesh_->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
   Teuchos::RCP<MultiField> disp;
   Teuchos::RCP<MultiField_Map> map = mesh_->get_vector_node_dist_map();
+  Teuchos::RCP<MultiField> proj_aug_x;
+  Teuchos::RCP<MultiField> proj_aug_y;
+  if(use_nonlinear_projection_){
+    proj_aug_x = mesh_->get_field(DICe::mesh::field_enums::PROJECTION_AUG_X_FS);
+    proj_aug_y = mesh_->get_field(DICe::mesh::field_enums::PROJECTION_AUG_Y_FS);
+  }
+  Teuchos::RCP<MultiField> aug = Teuchos::rcp( new MultiField(map,1,true));
   if(analysis_type_ == LOCAL_DIC){
     const int_t spa_dim = 2;
     Teuchos::RCP<MultiField> disp_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
@@ -669,6 +676,10 @@ Schema::update_extents(){
     for(int_t i=0;i<local_num_subsets_;++i){
       disp->local_value(i*spa_dim+0) = disp_x->local_value(i);
       disp->local_value(i*spa_dim+1) = disp_y->local_value(i);
+      if(use_nonlinear_projection_){
+        aug->local_value(i*spa_dim+0) = proj_aug_x->local_value(i);
+        aug->local_value(i*spa_dim+1) = proj_aug_y->local_value(i);
+      }
     }
   }else{
     disp = mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS);
@@ -676,6 +687,8 @@ Schema::update_extents(){
   Teuchos::RCP<MultiField> current_coords = Teuchos::rcp( new MultiField(map,1,true));
   current_coords->update(1.0,*coords,1.0);
   current_coords->update(1.0,*disp,1.0);
+  if(use_transformation_augmentation&&use_nonlinear_projection_)
+    current_coords->update(1.0,*aug,1.0);
 //  std::cout << " COORDS " << std::endl;
 //  coords->describe();
 //  std::cout << " DISPLACEMENT " << std::endl;
@@ -702,7 +715,7 @@ Schema::update_extents(){
     if(current_coords->local_value(i*2+1) < min_y_def) min_y_def = current_coords->local_value(i*2+1);
     if(current_coords->local_value(i*2+1) > max_y_def) max_y_def = current_coords->local_value(i*2+1);
   }
-  const int_t buffer = 100;
+  const int_t buffer = use_transformation_augmentation&&use_nonlinear_projection_ ? 500 : 100;
   min_x_ref -= buffer; min_y_ref -= buffer;
   max_x_ref += buffer; max_y_ref += buffer;
   min_x_ref = min_x_ref < buffer ? 0 : std::round(min_x_ref);
@@ -1180,16 +1193,18 @@ Schema::project_right_image_into_left_frame(Teuchos::RCP<Triangulation> tri,
   const int_t w = ref_img_->width();
   const int_t h = ref_img_->height();
   Teuchos::RCP<Image> img = reference ? ref_img_ : def_imgs_[0];
-  Teuchos::RCP<Image> proj_img = Teuchos::rcp(new Image(w,h,0.0));
+  const int_t olx = ref_img_->offset_x();
+  const int_t oly = ref_img_->offset_y();
+  const int_t orx = reference ? ref_img_->offset_x() : def_imgs_[0]->offset_x();
+  const int_t ory = reference ? ref_img_->offset_y() : def_imgs_[0]->offset_y();
+  Teuchos::RCP<Image> proj_img = Teuchos::rcp(new Image(w,h,0.0,olx,oly));
   Teuchos::ArrayRCP<intensity_t> intens = proj_img->intensities();
   scalar_t xr = 0.0;
   scalar_t yr = 0.0;
-  const scalar_t ox = ref_img_->offset_x();
-  const scalar_t oy = ref_img_->offset_y();
   for(int_t j=0;j<h;++j){
     for(int_t i=0;i<w;++i){
-      tri->project_left_to_right_sensor_coords(i+ox,j+oy,xr,yr);
-      intens[j*w+i] = img->interpolate_keys_fourth(xr,yr);
+      tri->project_left_to_right_sensor_coords(i+olx,j+oly,xr,yr);
+      intens[j*w+i] = img->interpolate_keys_fourth(xr-orx,yr-ory);
     }
   }
   if(reference){

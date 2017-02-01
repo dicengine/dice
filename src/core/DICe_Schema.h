@@ -275,7 +275,9 @@ public:
   void set_params(const std::string & params_file_name);
 
   /// \brief set the extents of the image to be used when only reading a portion of the image
-  void update_extents();
+  /// \param use_transformation_augmentation true if the right image is being projected into
+  /// the left frame of reference for each frame (typicaly only set to true for nonlinear projection in the cross correlation)
+  void update_extents(const bool use_transformation_augmentation=false);
 
   /// returns true if image extents are being used
   bool has_extents()const{

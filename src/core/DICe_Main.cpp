@@ -227,7 +227,7 @@ int main(int argc, char *argv[]) {
       TEUCHOS_TEST_FOR_EXCEPTION(schema->analysis_type()==GLOBAL_DIC,std::runtime_error,"Error, global stereo not enabled yet");
       *outStream << "Processing cross correlation between left and right images" << std::endl;
       schema->initialize_cross_correlation(triangulation,input_params); // images don't need to be loaded by here they get loaded in this routine based on the input params
-      schema->update_extents();
+      schema->update_extents(true);
       schema->set_ref_image(image_files[0]);
       schema->set_def_image(stereo_image_files[0]);
       if(schema->use_nonlinear_projection()){
@@ -239,8 +239,8 @@ int main(int argc, char *argv[]) {
       stereo_schema->update_extents();
       stereo_schema->set_ref_image(stereo_image_files[0]);
       assert(stereo_schema!=Teuchos::null);
-      if(stereo_schema->use_nonlinear_projection())
-        stereo_schema->project_right_image_into_left_frame(triangulation,true);
+      //if(stereo_schema->use_nonlinear_projection())
+      //  stereo_schema->project_right_image_into_left_frame(triangulation,true);
       stereo_schema->set_frame_range(first_frame_id,num_frames);
       cross_corr_time = t.elapsed();
     } // end is stereo
@@ -295,8 +295,8 @@ int main(int argc, char *argv[]) {
           }
           stereo_schema->update_extents();
           stereo_schema->set_def_image(stereo_image_files[image_it]);
-          if(stereo_schema->use_nonlinear_projection())
-            stereo_schema->project_right_image_into_left_frame(triangulation,false);
+          //if(stereo_schema->use_nonlinear_projection())
+          //  stereo_schema->project_right_image_into_left_frame(triangulation,false);
         }
       }
       { // start the timer
