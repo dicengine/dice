@@ -1203,7 +1203,7 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     scalar_t comp_right_x = 0.0;
     scalar_t comp_right_y = 0.0;
     project_left_to_right_sensor_coords(proj_xl[i],proj_yl[i],comp_right_x,comp_right_y);
-    DEBUG_MSG("input left x: " << proj_xl[i] << " y: " << proj_yl[i] << " right x: " << proj_xr[i] << " y: " << proj_yr[i] << " computed right x: " << comp_right_x << " y: " << comp_right_y);
+    //DEBUG_MSG("input left x: " << proj_xl[i] << " y: " << proj_yl[i] << " right x: " << proj_xr[i] << " y: " << proj_yr[i] << " computed right x: " << comp_right_x << " y: " << comp_right_y);
     error+=(comp_right_x - proj_xr[i])*(comp_right_x - proj_xr[i]) + (comp_right_y - proj_yr[i])*(comp_right_y - proj_yr[i]);
   }
   error = std::sqrt(error)/num_coords;
