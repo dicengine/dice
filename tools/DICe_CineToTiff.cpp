@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<std::ostream> outStream = Teuchos::rcp(&std::cout, false);
   std::string delimiter = " ,\r";
 
+  // if the output prefix has an extension and the frame range is one frame, then the output prefix is used as the full filename
   if(argc==2){
     std::string help = argv[1];
     if(help=="-h"){
@@ -123,6 +124,14 @@ int main(int argc, char *argv[]) {
   assert(end_frame<num_images);
   *outStream << "Start frame:    " << start_frame << std::endl;
   *outStream << "End frame:      " << end_frame << std::endl;
+  *outStream << "Output frames:  " << end_frame-start_frame+1 << std::endl;
+  const std::string tif("tif");
+  const std::string tiff("tiff");
+  bool full_output_name_given = false;
+  if((prefix.find(tif)!=std::string::npos||prefix.find(tiff)!=std::string::npos)&&end_frame-start_frame+1==1){
+    full_output_name_given = true;
+    *outStream << "Full output filename given " << std::endl;
+  }
 
   for(int_t i=start_frame;i<=end_frame;++i){
     int_t num_digits_total = 0;
@@ -135,12 +144,15 @@ int main(int argc, char *argv[]) {
       while (decrement_subset){decrement_subset /= 10; num_digits_frame++;}
     int_t num_zeros = num_digits_total - num_digits_frame;
     // determine the file name for this subset
+
     std::stringstream fName;
     fName << prefix;
-    for(int_t j=0;j<num_zeros;++j)
-      fName << "0";
-    fName << i << suffix << ".tif";
-     Teuchos::RCP<DICe::Image> image = cine_reader->get_frame(i);
+    if(!full_output_name_given){
+      for(int_t j=0;j<num_zeros;++j)
+        fName << "0";
+      fName << i << suffix << ".tif";
+    }
+    Teuchos::RCP<DICe::Image> image = cine_reader->get_frame(i);
     if(rotation!=0){
       if(rotation==90){
         image = image->apply_rotation(NINTY_DEGREES);
