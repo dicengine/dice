@@ -94,6 +94,7 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
                        ("input,i",po::value<std::string>(),"XML input file name <filename>.xml")
                        ("generate,g",po::value<std::string>()->implicit_value("dice"),"Create XML input file templates")
                        ("stats,s","Print field statistics to screen")
+                       ("ss_locs","Print a file (ss_locs.txt) with the subset locations and exit before analysis")
                        ;
 
   // Parse the command line options
@@ -154,6 +155,11 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   // Print timing statistics?
   if(vm.count("timing")){
     inputParams->set(DICe::print_timing,true);
+  }
+
+  // Print subset locations and exit?
+  if(vm.count("ss_locs")){
+    inputParams->set(DICe::print_subset_locations_and_exit,true);
   }
 
   // Print timing statistics?

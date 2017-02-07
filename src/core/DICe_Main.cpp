@@ -170,6 +170,32 @@ int main(int argc, char *argv[]) {
     // let the schema know how many images there are in the sequence and the first frame id:
     schema->set_frame_range(first_frame_id,num_frames);
 
+    if(input_params->get<bool>(DICe::print_subset_locations_and_exit,false)){
+      // write out the subset locations for left camera and exit
+      Teuchos::RCP<MultiField> coords = schema->mesh()->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
+      const int_t ss_locs_size = proc_rank==0 ?
+          coords->get_map()->get_num_global_elements() : 0; // both x and y coords
+      Teuchos::Array<int_t> owned_ids(ss_locs_size);
+      for(int_t i=0;i<ss_locs_size;++i)
+          owned_ids[i] = i;
+      Teuchos::RCP<MultiField_Map> zero_map = Teuchos::rcp (new MultiField_Map(-1, owned_ids,0,*schema->mesh()->get_comm()));
+      Teuchos::RCP<MultiField> all_on_zero_coords = Teuchos::rcp( new MultiField(zero_map,1,true));
+      // all to zero gather of coordinates
+      MultiField_Exporter exporter(*zero_map,*coords->get_map());
+      // export the field to zero
+      all_on_zero_coords->do_import(coords,exporter);
+      //all_on_zero_coords->describe();
+      if(proc_rank==0){
+        std::FILE * ssFile = fopen("subset_locs.txt","w");
+        for(int_t i=0;i<ss_locs_size/2;++i){
+          fprintf(ssFile,"%i %i\n",(int_t)all_on_zero_coords->local_value(i*2+0),(int_t)all_on_zero_coords->local_value(i*2+1));
+        }
+        fclose(ssFile);
+      }
+      DICe::finalize();
+      return 0;
+    }
+
     bool has_motion_windows = false;
     if(schema->analysis_type()==LOCAL_DIC){
       has_motion_windows = schema->motion_window_params()->size()>0;
@@ -194,6 +220,9 @@ int main(int argc, char *argv[]) {
     std::string file_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
     std::string stereo_file_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
     stereo_file_prefix += "_stereo";
+
+
+
 
     // if the user selects predict_resolution_error option, an error analysis is performed and the actual analysis is skipped
     if(correlation_params->get<bool>(DICe::estimate_resolution_error,false)){

@@ -81,6 +81,8 @@ const char* const image_edge_buffer_size = "image_edge_buffer_size";
 /// Input parameter
 const char* const print_timing = "print_timing";
 /// Input parameter
+const char* const print_subset_locations_and_exit = "print_subset_locations_and_exit";
+/// Input parameter
 const char* const print_stats = "print_stats";
 /// Input parameter
 const char* const output_stereo_files = "output_stereo_files";
