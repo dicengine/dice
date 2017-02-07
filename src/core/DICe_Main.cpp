@@ -96,15 +96,6 @@ int main(int argc, char *argv[]) {
     else{
       *outStream << "Correlation parameters not specified by user" << std::endl;
     }
-    Teuchos::RCP<DICe::Triangulation> triangulation;
-    if(input_params->isParameter(DICe::calibration_parameters_file)){
-      const std::string cal_file_name = input_params->get<std::string>(DICe::calibration_parameters_file);
-      triangulation = Teuchos::rcp(new DICe::Triangulation(cal_file_name));
-      *outStream << "\n--- Calibration parameters read successfully ---\n" << std::endl;
-    }
-    else{
-      *outStream << "Calibration parameters not specified by user" << std::endl;
-    }
 
     // if the mesh size was specified in the input params set the use_global_dic flag
     if(input_params->isParameter(DICe::mesh_size)){
@@ -123,12 +114,7 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> stereo_image_files;
     DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
     const bool is_stereo = stereo_image_files.size() > 0;
-    if(is_stereo){
-      TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::calibration_parameters_file),std::runtime_error,
-        "Error, calibration_parameters_file required for stereo");
-      TEUCHOS_TEST_FOR_EXCEPTION(triangulation==Teuchos::null,std::runtime_error,
-        "Error, triangulation should be instantiated at this point");
-    }
+
     const int_t num_frames = image_files.size()-1;
     int_t first_frame_id = 0;
     int_t image_width = 0;
@@ -219,6 +205,20 @@ int main(int argc, char *argv[]) {
       DICe::finalize();
       return 0;
     }
+
+    TEUCHOS_TEST_FOR_EXCEPTION(is_stereo&&!input_params->isParameter(DICe::calibration_parameters_file),std::runtime_error,
+      "Error, calibration_parameters_file required for stereo");
+    Teuchos::RCP<DICe::Triangulation> triangulation;
+    if(input_params->isParameter(DICe::calibration_parameters_file)){
+      const std::string cal_file_name = input_params->get<std::string>(DICe::calibration_parameters_file);
+      triangulation = Teuchos::rcp(new DICe::Triangulation(cal_file_name));
+      *outStream << "\n--- Calibration parameters read successfully ---\n" << std::endl;
+    }
+    else{
+      *outStream << "Calibration parameters not specified by user" << std::endl;
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(is_stereo&&triangulation==Teuchos::null,std::runtime_error,
+      "Error, triangulation should be instantiated at this point");
 
     // if this is a stereo analysis do the initial cross correlation:
     scalar_t cross_corr_time = 0.0;
