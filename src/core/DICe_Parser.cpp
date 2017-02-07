@@ -1554,7 +1554,6 @@ bool valid_correlation_point(const int_t x_coord,
   std::set<std::pair<int_t,int_t> > & coords,
   std::set<std::pair<int_t,int_t> > & excluded_coords,
   const scalar_t & grad_threshold){
-
   // need to check if the point is interior to the image by at least one subset_size
   if(x_coord<subset_size-1) return false;
   if(x_coord>image->width()-subset_size) return false;

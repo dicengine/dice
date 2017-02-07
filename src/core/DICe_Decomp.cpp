@@ -577,12 +577,9 @@ Decomp::populate_global_coordinate_vector(Teuchos::ArrayRCP<scalar_t> & subset_c
           }
         }
       }
-      if(optimization_method==GRADIENT_BASED || optimization_method==GRADIENT_BASED_THEN_SIMPLEX){
-        const scalar_t grad_threshold = 50.0; // threshold determined from example images
-        DICe::create_regular_grid_of_correlation_points(*subset_centroids_on_0,*neighbor_ids_on_0,input_params,image,subset_info,grad_threshold);
-      }
-      else
-        DICe::create_regular_grid_of_correlation_points(*subset_centroids_on_0,*neighbor_ids_on_0,input_params,image,subset_info);
+      const scalar_t default_threshold = optimization_method==GRADIENT_BASED || optimization_method==GRADIENT_BASED_THEN_SIMPLEX ? 50.0: -1.0;
+      const scalar_t grad_threshold = correlation_params->get<double>(DICe::sssig_threshold,default_threshold);
+      DICe::create_regular_grid_of_correlation_points(*subset_centroids_on_0,*neighbor_ids_on_0,input_params,image,subset_info,grad_threshold);
       // check all the subsets and eliminate ones with a gradient ratio too low
       num_global_subsets = subset_centroids_on_0->size()/dim; // divide by three because the stride is x y neighbor_id
       assert(neighbor_ids_on_0->size()==subset_centroids_on_0->size()/2);

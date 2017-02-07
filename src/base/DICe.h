@@ -177,6 +177,8 @@ const char* const max_solver_iterations_robust = "max_solver_iterations_robust";
 /// String parameter name
 const char* const robust_solver_tolerance = "robust_solver_tolerance";
 /// String parameter name
+const char* const sssig_threshold = "sssig_threshold";
+/// String parameter name
 const char* const initial_gamma_threshold = "initial_gamma_threshold";
 /// String parameter name
 const char* const final_gamma_threshold = "final_gamma_threshold";
@@ -996,6 +998,8 @@ const Correlation_Parameter skip_solve_gamma_threshold_param(skip_solve_gamma_th
 /// Correlation parameter and properties
 const Correlation_Parameter initial_gamma_threshold_param(initial_gamma_threshold,SCALAR_PARAM,true,
   "If the gamma evaluation for the initial deformation guess is not below this value, initialization will fail");
+const Correlation_Parameter sssig_threshold_param(sssig_threshold,SCALAR_PARAM,true,
+  "filters out areas of the image with low gradients, if a subset has an SSSIG below this value it gets excluded");
 /// Correlation parameter and properties
 const Correlation_Parameter final_gamma_threshold_param(final_gamma_threshold,SCALAR_PARAM,true,
   "If the gamma evaluation for the final deformation guess is not below this value, the step will fail for this subset");
@@ -1168,7 +1172,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 79;
+const int_t num_valid_correlation_params = 80;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1194,6 +1198,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   skip_all_solves_param,
   skip_solve_gamma_threshold_param,
   initial_gamma_threshold_param,
+  sssig_threshold_param,
   final_gamma_threshold_param,
   path_distance_threshold_param,
   disp_jump_tol_param,
