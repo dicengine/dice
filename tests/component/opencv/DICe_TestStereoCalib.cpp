@@ -91,13 +91,9 @@ int main(int argc, char *argv[]) {
     *outStream << image_list[i] << std::endl;
   }
 
-  cv::Size board_size;
-  board_size.width = 9;
-  board_size.height = 6;
-
   const float square_size = 1.0;
   int mode = 0; // checkerboard
-  const float rms = StereoCalib(mode, image_list, board_size, square_size, true, false, "checkerboard_cal.txt");
+  const float rms = StereoCalib(mode, image_list, 6, 9, square_size, true, false, "checkerboard_cal.txt");
 
   if(rms <0.0 || rms > 0.75){
     *outStream << "Error, rms error too high or negative: " << rms << std::endl;
@@ -128,13 +124,9 @@ int main(int argc, char *argv[]) {
     *outStream << image_list_circ[i] << std::endl;
   }
 
-  cv::Size board_size_circ;
-  board_size_circ.width = 6;
-  board_size_circ.height = 4;
-
   const float circ_size = 10.0;
   mode = 1; // vic3d circle grid with marker dots and possible other random dots in the pattern
-  const float rms_circ = StereoCalib(mode,image_list_circ, board_size_circ, circ_size, true, false, "circle_cal.txt");
+  const float rms_circ = StereoCalib(mode,image_list_circ, 6, 4, circ_size, true, false, "circle_cal.txt");
 
   if(rms_circ <0.0 || rms_circ > 0.75){
     *outStream << "Error, rms error too high or negative for circle grid: " << rms_circ << std::endl;

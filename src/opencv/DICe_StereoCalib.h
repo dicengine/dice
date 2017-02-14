@@ -57,7 +57,8 @@ namespace DICe {
 /// \param mode grid pattern type
 /// mode = 0: checkerboard, 1: dot grid with marker dots (vic3d targets), 2: dot grid, no marker dots
 /// \param imagelist the list of images
-/// \param boardSize the dimensions of the grid
+/// \param board_width the dimensions of the grid
+/// \param board_height the dimensions of the grid
 /// \param squareSize the spacing dimension
 /// \param useCalibrated
 /// \param showRectified
@@ -66,7 +67,8 @@ DICE_LIB_DLL_EXPORT
 float
 StereoCalib(const int mode,
   const std::vector<std::string>& imagelist,
-  const cv::Size boardSize,
+  const int board_width,
+  const int board_height,
   const float & squareSize,
   const bool useCalibrated,
   const bool showRectified,

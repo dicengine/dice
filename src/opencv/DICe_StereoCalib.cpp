@@ -68,7 +68,8 @@ DICE_LIB_DLL_EXPORT
 float
 StereoCalib(const int mode,
   const vector<string>& imagelist,
-  const Size boardSize,
+  const int board_width,
+  const int board_height,
   const float & squareSize,
   const bool useCalibrated,
   const bool showRectified,
@@ -79,9 +80,11 @@ StereoCalib(const int mode,
     cout << "Error: the image list contains odd (non-even) number of elements\n";
     return -1.0;
   }
-
   const int maxScale = 2;
   // ARRAY AND VECTOR STORAGE:
+  cv::Size boardSize;
+  boardSize.width = board_width;
+  boardSize.height = board_height;
 
   vector<vector<Point2f> > imagePoints[2];
   vector<vector<Point3f> > objectPoints;
@@ -98,7 +101,7 @@ StereoCalib(const int mode,
     for( k = 0; k < 2; k++ )
     {
       const string& filename = imagelist[i*2+k];
-      //std::cout << "checking image " << filename << std::endl;
+      std::cout << "processimg cal image " << filename << std::endl;
       Mat img = imread(filename, IMREAD_GRAYSCALE);
       if(img.empty()){
         std::cout << "image mat is empty " << std::endl;

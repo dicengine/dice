@@ -11,6 +11,7 @@ SET(DICE_TEST_LIBRARIES
    dicecore
    dicefft
    dicecine
+   dicestereocalib
 )
 
 if(DICE_ENABLE_GLOBAL)
@@ -79,7 +80,14 @@ install(TARGETS DICe_CrossInit
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
 )
 
-set_target_properties(DICe_CineToTiff DICe_CineStat DICe_Diff DICe_DiffAvg DICe_CrossInit
+add_executable(DICe_Cal           DICe_Cal.cpp)
+target_link_libraries(DICe_Cal    ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
+
+install(TARGETS DICe_Cal
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+)
+
+set_target_properties(DICe_CineToTiff DICe_CineStat DICe_Diff DICe_DiffAvg DICe_CrossInit DICe_Cal
   PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
   ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
