@@ -203,45 +203,113 @@ Triangulation::load_calibration_parameters(const std::string & param_file_name){
   else if(param_file_name.find(txt)!=std::string::npos){
     DEBUG_MSG("Triangulation::load_calibration_parameters(): calibration file is generic txt format");
     const int_t num_values_expected = 22;
-    const int_t num_values_with_custom_transform = 28;
-    int_t num_values = 0;
+    const int_t num_values_expected_with_R = 28;
+    //const int_t num_values_with_custom_transform = 28;
+    int_t total_num_values = 0;
     for(int_t i=0;i<4;++i){
       trans_extrinsics_[i][i] = 1.0; // default transformation is the identity tensor
     }
     std::vector<scalar_t> extrinsics(6,0.0);
     std::vector<scalar_t> trans_extrinsics(6,0.0);
+    bool has_transform = false;
+
     while (!dataFile.eof())
     {
       Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \t<>");
       if(tokens.size()==0) continue;
       if(tokens[0]=="#") continue;
+      if(tokens[0]=="TRANSFORM") {has_transform=true; break;}
+      total_num_values++;
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(total_num_values!=num_values_expected&&total_num_values!=num_values_expected_with_R,std::runtime_error,
+      "Error, wrong number of parameters in calibration file: " << param_file_name);
+
+    // return to start of file:
+    dataFile.clear();
+    dataFile.seekg(0, std::ios::beg);
+
+    std::vector<int_t> id_to_array_loc_i;
+    std::vector<int_t> id_to_array_loc_j;
+    id_to_array_loc_i.push_back(0);
+    id_to_array_loc_i.push_back(0);
+    id_to_array_loc_i.push_back(0);
+    id_to_array_loc_i.push_back(1);
+    id_to_array_loc_i.push_back(1);
+    id_to_array_loc_i.push_back(1);
+    id_to_array_loc_i.push_back(2);
+    id_to_array_loc_i.push_back(2);
+    id_to_array_loc_i.push_back(2);
+    id_to_array_loc_j.push_back(0);
+    id_to_array_loc_j.push_back(1);
+    id_to_array_loc_j.push_back(2);
+    id_to_array_loc_j.push_back(0);
+    id_to_array_loc_j.push_back(1);
+    id_to_array_loc_j.push_back(2);
+    id_to_array_loc_j.push_back(0);
+    id_to_array_loc_j.push_back(1);
+    id_to_array_loc_j.push_back(2);
+
+    int_t num_values = 0;
+    while (!dataFile.eof())
+    {
+      Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \t<>");
+      if(tokens.size()==0) continue;
+      if(tokens[0]=="#") continue;
+      if(tokens[0]=="TRANSFORM") {has_transform=true; break;}
       if(tokens.size() > 1){
         assert(tokens[1]=="#"); // only one entry per line plus comments
       }
       const int_t camera_index = num_values >= 8 ? 1 : 0;
       if(num_values < 16)
         cal_intrinsics_[camera_index][num_values - camera_index*8] = strtod(tokens[0].c_str(),NULL);
-      else if(num_values < 22)
+      else if(num_values < 22 && total_num_values == num_values_expected)
         extrinsics[num_values - 16] = strtod(tokens[0].c_str(),NULL);
-      else
-        trans_extrinsics[num_values - 22] = strtod(tokens[0].c_str(),NULL);
+      else if(num_values < 25 && total_num_values == num_values_expected_with_R)
+        cal_extrinsics_[id_to_array_loc_i[num_values-16]][id_to_array_loc_j[num_values-16]] = strtod(tokens[0].c_str(),NULL);
+      else if(num_values < 28 && total_num_values == num_values_expected_with_R)
+        cal_extrinsics_[num_values-25][3] = strtod(tokens[0].c_str(),NULL);
+      else{
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+      }
       num_values++;
     }
-    TEUCHOS_TEST_FOR_EXCEPTION(num_values!=num_values_expected&&num_values!=num_values_with_custom_transform,std::runtime_error,
-      "Error reading calibration text file " << param_file_name);
-    Teuchos::SerialDenseMatrix<int_t,double> converted_extrinsics(4,4,true);
-    convert_CB_angles_to_T(extrinsics[0],
-      extrinsics[1],
-      extrinsics[2],
-      extrinsics[3],
-      extrinsics[4],
-      extrinsics[5],
-      converted_extrinsics);
-    for(int_t i=0;i<4;++i)
-      for(int_t j=0;j<4;++j)
-        cal_extrinsics_[i][j] = converted_extrinsics(i,j);
+    num_values = 0;
+    if(has_transform){
+      while (!dataFile.eof())
+      {
+        Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \t<>");
+        if(tokens.size()==0) continue;
+        if(tokens[0]=="#") continue;
+        if(tokens.size() > 1){
+          assert(tokens[1]=="#"); // only one entry per line plus comments
+        }
+        trans_extrinsics[num_values] = strtod(tokens[0].c_str(),NULL);
+        num_values++;
+      }
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(num_values!=0&&num_values!=6,std::runtime_error,"");
 
-    if(num_values==num_values_with_custom_transform){
+
+    //TEUCHOS_TEST_FOR_EXCEPTION(num_values!=num_values_expected&&num_values!=num_values_with_custom_transform,std::runtime_error,
+    //  "Error reading calibration text file " << param_file_name);
+    if(total_num_values==num_values_expected){ // not needed if R is specified explicitly
+      Teuchos::SerialDenseMatrix<int_t,double> converted_extrinsics(4,4,true);
+      convert_CB_angles_to_T(extrinsics[0],
+        extrinsics[1],
+        extrinsics[2],
+        extrinsics[3],
+        extrinsics[4],
+        extrinsics[5],
+        converted_extrinsics);
+      for(int_t i=0;i<4;++i)
+        for(int_t j=0;j<4;++j)
+          cal_extrinsics_[i][j] = converted_extrinsics(i,j);
+    }
+    else{
+      cal_extrinsics_[3][3] = 1.0;
+    }
+
+    if(has_transform){
       DEBUG_MSG("Triangulation::load_calibration_parameters(): loading custom transform from camera 0 to world coordinates");
       Teuchos::SerialDenseMatrix<int_t,double> converted_extrinsics(4,4,true);
       convert_CB_angles_to_T(trans_extrinsics[0],

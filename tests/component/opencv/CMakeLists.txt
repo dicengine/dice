@@ -6,6 +6,7 @@ SET(DICE_OPENCV_LIBS
   dicebase
   dicecore
   dicefeature
+  dicestereocalib
 )
 FILE ( GLOB test_opencv_cpp_files "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 FOREACH ( test_file ${test_opencv_cpp_files})

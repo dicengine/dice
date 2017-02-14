@@ -451,6 +451,58 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  *outStream << "testing cal file with R written explicitly instead of Euler angles" << std::endl;
+
+  Teuchos::RCP<Triangulation> triangulation_with_R = Teuchos::rcp(new Triangulation("./cal/cal_a_with_R.txt"));
+  std::vector<std::vector<scalar_t> > & calibration_intrinsics_with_R = *triangulation_with_R->cal_intrinsics();
+  std::vector<std::vector<scalar_t> > & calibration_T_mat_with_R = * triangulation_with_R->cal_extrinsics();
+
+  *outStream << "testing intrinsics from txt format with explicit R" << std::endl;
+
+  if(calibration_intrinsics_with_R.size()!=2){
+    errorFlag++;
+    *outStream << "Error, intrinsics array is the wrong length, should be 2 and is " << calibration_intrinsics_with_R.size() << std::endl;
+  }
+  else{
+    if(calibration_intrinsics_with_R[0].size()!=8){
+      errorFlag++;
+      *outStream << "Error, intrinsics array is the wrong width, should be 8 and is " << calibration_intrinsics_with_R[0].size() << std::endl;
+    }
+    else{
+      for(size_t i=0;i<intrinsic_gold.size();++i){
+        for(size_t j=0;j<intrinsic_gold[0].size();++j){
+          if(std::abs(calibration_intrinsics_with_R[i][j]-intrinsic_gold[i][j])>errorTol){
+            *outStream << "Error, intrinsic value " << i << " " << j << " is not correct. Should be " << intrinsic_gold[i][j] << " is " << calibration_intrinsics_with_R[i][j] << std::endl;
+            errorFlag++;
+          }
+        }
+      }
+    }
+  }
+
+  *outStream << "testing T_mat from txt format" << std::endl;
+
+  if(calibration_T_mat_with_R.size()!=4){
+    errorFlag++;
+    *outStream << "Error, T_mat array is the wrong length, should be 4 and is " << calibration_T_mat_with_R.size() << std::endl;
+  }
+  else{
+    if(calibration_T_mat_with_R[0].size()!=4){
+      errorFlag++;
+      *outStream << "Error, T_mat array is the wrong width, should be 4 and is " << calibration_T_mat_with_R[0].size() << std::endl;
+    }
+    else{
+      for(size_t i=0;i<T_mat_gold.size();++i){
+        for(size_t j=0;j<T_mat_gold[0].size();++j){
+          if(std::abs(calibration_T_mat_with_R[i][j]-T_mat_gold[i][j])>errorTol){
+            *outStream << "Error, T_mat value " << i << " " << j << " is not correct. Should be " << T_mat_gold[i][j] << " is " << calibration_T_mat_with_R[i][j] << std::endl;
+            errorFlag++;
+          }
+        }
+      }
+    }
+  }
+
   *outStream << "--- End test ---" << std::endl;
 
   DICe::finalize();
