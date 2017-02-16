@@ -15,7 +15,7 @@ include_directories (
 
 add_library(dicefeature ${DICE_SOURCES} ${DICE_HEADERS})
 
-target_link_libraries(dicefeature ${DICE_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(dicefeature ${DICE_LIBRARIES} ${OpenCV_LIBRARIES} dicebase)
 
 target_compile_definitions(dicefeature PRIVATE -D DICE_LIB_EXPORTS_MODE)
 

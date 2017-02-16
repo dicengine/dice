@@ -24,8 +24,6 @@ BEGIN CONFORMAL_SUBSET
     END polygon
   END boundary
   
-MOTION_WINDOW 230 328 299 430
-
 skip_solve subset_0_skips.txt
 
 END CONFORMAL_SUBSET
@@ -39,8 +37,6 @@ begin conformal_subset
       height 13
     end
   end
-
-MOTION_WINDOW 226 17 300 70
 
 skip_SOLVE 4903 4912 4915
 

@@ -9,11 +9,6 @@ add_subdirectory(base)
 add_subdirectory(core)
 
 #
-#  Cine File Reader
-#
-add_subdirectory(cine)
-
-#
 #  Netcdf File Reader
 #
 IF(DICE_ENABLE_NETCDF)

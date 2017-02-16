@@ -11,7 +11,6 @@ SET(DICE_COMP_LIBS
   dicecore
   diceutils
   dicefft
-  dicecine
 )
 IF(DICE_ENABLE_OPENCV)
   SET(DICE_COMP_LIBS

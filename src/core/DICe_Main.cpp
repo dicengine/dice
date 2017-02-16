@@ -44,7 +44,7 @@
 #include <DICe_Image.h>
 #include <DICe_ImageIO.h>
 #include <DICe_Schema.h>
-#include <DICe_Cine.h>
+//#include <DICe_Cine.h>
 #include <DICe_Triangulation.h>
 
 #include <boost/timer.hpp>
@@ -196,9 +196,7 @@ int main(int argc, char *argv[]) {
       return 0;
     }
 
-    bool has_motion_windows = false;
     if(schema->analysis_type()==LOCAL_DIC){
-      has_motion_windows = schema->motion_window_params()->size()>0;
       *outStream << "Number of global subsets: " << schema->global_num_subsets() << std::endl;
       for(int_t i=0;i<schema->local_num_subsets();++i){
         if(i==10&&schema->local_num_subsets()!=11) *outStream << "..." << std::endl;
@@ -220,9 +218,6 @@ int main(int argc, char *argv[]) {
     std::string file_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
     std::string stereo_file_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
     stereo_file_prefix += "_stereo";
-
-
-
 
     // if the user selects predict_resolution_error option, an error analysis is performed and the actual analysis is skipped
     if(correlation_params->get<bool>(DICe::estimate_resolution_error,false)){
@@ -289,45 +284,19 @@ int main(int argc, char *argv[]) {
 
     for(int_t image_it=1;image_it<=num_frames;++image_it){
       *outStream << "Processing frame: " << image_it << " of " << num_frames << ", " << image_files[image_it] << std::endl;
-      if(is_cine && has_motion_windows && schema->analysis_type()!=GLOBAL_DIC){
-        if(has_motion_windows&&schema->analysis_type()!=GLOBAL_DIC){
-          Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader = utils::Image_Reader_Cache::instance().cine_reader(utils::cine_file_name(image_files[0].c_str()));
-          std::map<int_t,Motion_Window_Params>::iterator map_it = schema->motion_window_params()->begin();
-          for(;map_it!=schema->motion_window_params()->end();++map_it){
-            if(schema->subset_local_id(map_it->first)<0) continue;
-            DEBUG_MSG("[PROC " << proc_rank << "] Reading motion window for subset " << map_it->first);
-            if(map_it->second.use_subset_id_!=-1&&schema->subset_local_id(map_it->second.use_subset_id_)>=0) continue;
-            const int_t use_subset_id = map_it->second.use_subset_id_!=-1 ? map_it->second.use_subset_id_ : map_it->first;
-            const int_t sub_image_id = map_it->second.sub_image_id_;
-            DEBUG_MSG("[PROC " << proc_rank << "] Reading motion window sub_image " << sub_image_id);
-            const int_t start_x = schema->motion_window_params()->find(use_subset_id)->second.start_x_;
-            const int_t end_x = schema->motion_window_params()->find(use_subset_id)->second.end_x_;
-            const int_t start_y = schema->motion_window_params()->find(use_subset_id)->second.start_y_;
-            const int_t end_y = schema->motion_window_params()->find(use_subset_id)->second.end_y_;
-            Teuchos::RCP<DICe::Image> def_img = Teuchos::rcp(new DICe::Image(image_files[image_it].c_str(),start_x,start_y,end_x-start_x+1,end_y-start_y+1,correlation_params));
-            //Teuchos::RCP<DICe::Image> def_img = cine_reader->get_frame(schema->frame_id(),start_x,start_y,end_x,end_y,true,filter_failed_pixels,correlation_params);
-            schema->set_def_image(def_img,sub_image_id);
-            if(image_it==0){
-              schema->set_prev_image(def_img,sub_image_id);
-            }
-          }
-        } // end has_motion_windows
+      if(schema->use_incremental_formulation()){
+        schema->set_ref_image(schema->def_img());
       }
-      else{
-        if(schema->use_incremental_formulation()){
-          schema->set_ref_image(schema->def_img());
+      schema->update_extents();
+      schema->set_def_image(image_files[image_it]);
+      if(is_stereo){
+        if(stereo_schema->use_incremental_formulation()){
+          stereo_schema->set_ref_image(stereo_schema->def_img());
         }
-        schema->update_extents();
-        schema->set_def_image(image_files[image_it]);
-        if(is_stereo){
-          if(stereo_schema->use_incremental_formulation()){
-            stereo_schema->set_ref_image(stereo_schema->def_img());
-          }
-          stereo_schema->update_extents();
-          stereo_schema->set_def_image(stereo_image_files[image_it]);
-          //if(stereo_schema->use_nonlinear_projection())
-          //  stereo_schema->project_right_image_into_left_frame(triangulation,false);
-        }
+        stereo_schema->update_extents();
+        stereo_schema->set_def_image(stereo_image_files[image_it]);
+        //if(stereo_schema->use_nonlinear_projection())
+        //  stereo_schema->project_right_image_into_left_frame(triangulation,false);
       }
       { // start the timer
         boost::timer t;

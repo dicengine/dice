@@ -37,7 +37,10 @@ include_directories(${Boost_INCLUDE_DIRS} COMPONENTS gil program_options REQUIRE
 #MESSAGE(STATUS "Boost_INCLUDE_DIRS:${Boost_INCLUDE_DIRS}")
 
 add_library(dicecore ${DICE_SOURCES} ${DICE_HEADERS})
-target_link_libraries(dicecore ${Boost_LIBRARIES} ${DICE_LIBRARIES} dicebase diceutils dicefft dicemesh dicecine)
+target_link_libraries(dicecore ${Boost_LIBRARIES} ${DICE_LIBRARIES} dicebase diceutils dicefft dicemesh)
+IF(DICE_ENABLE_OPENCV)
+  target_link_libraries(dicecore dicefeature)
+ENDIF()
 IF(DICE_ENABLE_GLOBAL)
   target_link_libraries(dicecore diceglobal dicemeshio)
 ENDIF()
@@ -58,7 +61,7 @@ install(TARGETS dicecore
 #
 add_executable(dice_main DICe_Main.cpp)
 set_target_properties(dice_main PROPERTIES OUTPUT_NAME "dice")
-target_link_libraries(dice_main ${DICE_LIBRARIES} ${Boost_LIBRARIES} dicebase dicecore dicecine)
+target_link_libraries(dice_main ${DICE_LIBRARIES} ${Boost_LIBRARIES} dicebase dicecore diceutils)
 IF(DICE_ENABLE_OPENCV)
   target_link_libraries(dice_main dicefeature)
 ENDIF()

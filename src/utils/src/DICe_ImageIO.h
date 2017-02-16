@@ -163,6 +163,7 @@ void write_color_overlap_image(const char * file_name,
 // singleton class to keep track of image readers from high speed video or netcdf files:
 /// \class Image_Reader_Cache
 /// used for file reads and getting image dimensions without having to reload the header every time
+DICE_LIB_DLL_EXPORT
 class Image_Reader_Cache{
 public:
   /// return an instance of the singleton

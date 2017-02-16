@@ -1,11 +1,13 @@
 SET(DICE_UTILS_SOURCES
   DICe_ImageIO.cpp
   DICe_Rawi.cpp
+  ../../cine/DICe_Cine.cpp
 )
 
 SET(DICE_UTILS_HEADERS
   DICe_ImageIO.h
   DICe_Rawi.h
+  ../../cine/DICe_Cine.h
 )
 
 include_directories(
