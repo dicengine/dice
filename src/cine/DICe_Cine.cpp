@@ -39,6 +39,7 @@
 // ************************************************************************
 // @HEADER
 #include <DICe_Cine.h>
+#include <Teuchos_ArrayRCP.hpp>
 
 #include <fstream>
 #include <stdint.h>
@@ -118,9 +119,12 @@ Cine_Reader::initialize_cine_filter(const int_t frame_index){
   // get a frame with no windows
   const int_t w = cine_header_->bitmap_header_.biWidth;
   const int_t h = cine_header_->bitmap_header_.biHeight;
-  Teuchos::RCP<Image> base_img = get_frame(frame_index,0,0,w-1,h-1,false,false);
+  Teuchos::ArrayRCP<intensity_t> intensities(w*h,0.0);
+  get_frame(0,0,w,h,intensities.getRawPtr(),true,frame_index,false,false);
+  //Teuchos::RCP<Image> base_img = get_frame(frame_index,0,0,w-1,h-1,false,false);
   // create a std::vector from the image intensity values
-  std::vector<intensity_t> intensities_sorted(base_img->intensities().get(),base_img->intensities().get() + base_img()->intensities().size());
+  //std::vector<intensity_t> intensities_sorted(base_img->intensities().get(),base_img->intensities().get() + base_img()->intensities().size());
+  std::vector<intensity_t> intensities_sorted(intensities.get(),intensities.get() + intensities.size());
   // sort the intensities
   std::sort(intensities_sorted.begin(),intensities_sorted.end());
   // create the bins
@@ -135,45 +139,6 @@ Cine_Reader::initialize_cine_filter(const int_t frame_index){
   DEBUG_MSG("Cine_Reader::intialize_cine_filter(): filter intensity value " << avg_intens);
   filter_value_ = avg_intens;
   conversion_factor_ = 255.0 / filter_value_;
-}
-
-Teuchos::RCP<Image>
-Cine_Reader::get_average_frame(const int_t frame_start,
-  const int_t frame_end,
-  const bool convert_to_8_bit,
-  const bool filter_failed_pixels,
-  const Teuchos::RCP<Teuchos::ParameterList> & params){
-
-  return get_average_frame(frame_start,frame_end,0,0,
-    cine_header_->bitmap_header_.biWidth-1,cine_header_->bitmap_header_.biHeight-1,
-    convert_to_8_bit,filter_failed_pixels,params);
-}
-
-Teuchos::RCP<Image>
-Cine_Reader::get_average_frame(const int_t frame_start,
-  const int_t frame_end,
-  const int_t start_x,
-  const int_t start_y,
-  const int_t end_x,
-  const int_t end_y,
-  const bool convert_to_8_bit,
-  const bool filter_failed_pixels,
-  const Teuchos::RCP<Teuchos::ParameterList> & params){
-
-  if(frame_start > frame_end){
-    std::cerr << "Error, invalid frame range" << std::endl;
-    throw std::exception();
-  }
-
-  const int_t img_w = end_x - start_x + 1;
-  const int_t img_h = end_y - start_y + 1;
-  Teuchos::RCP<Image> image = Teuchos::rcp(new Image(img_w,img_h,0.0,start_x,start_y));
-
-  get_average_frame(frame_start,frame_end,start_x,start_y,img_w,img_h,
-    image->intensities().getRawPtr(),true,filter_failed_pixels,convert_to_8_bit);
-
-  image->post_allocation_tasks(params);
-  return image;
 }
 
 void
@@ -235,24 +200,6 @@ Cine_Reader::get_frame(const int_t offset_x,
   }
   // replace the conversion factor if it was deactivated
   conversion_factor_ = conversion_factor_temp;
-}
-
-Teuchos::RCP<Image>
-Cine_Reader::get_frame(const int_t frame_index,
-  const int_t start_x,
-  const int_t start_y,
-  const int_t end_x,
-  const int_t end_y,
-  const bool convert_to_8_bit,
-  const bool filter_failed_pixels,
-  const Teuchos::RCP<Teuchos::ParameterList> & params){
-
-  const int_t img_w = end_x - start_x + 1;
-  const int_t img_h = end_y - start_y + 1;
-  Teuchos::RCP<Image> image = Teuchos::rcp(new Image(img_w,img_h,0.0,start_x,start_y));
-  get_frame(start_x,start_y,img_w,img_h,image->intensities().getRawPtr(),true,frame_index,filter_failed_pixels,convert_to_8_bit);
-  image->post_allocation_tasks(params);
-  return image;
 }
 
 void

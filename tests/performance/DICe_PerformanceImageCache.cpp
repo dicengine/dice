@@ -77,20 +77,21 @@ int main(int argc, char *argv[]) {
   // get the cine file name from the command line
   std::string cine_file = argv[1];
   *outStream << "reading cine file: " << cine_file << std::endl;
-
-  cine::Cine_Reader cine(cine_file.c_str());//,outStream.getRawPtr());
+  std::string stripped_fileName = cine_file;
+  stripped_fileName.erase(stripped_fileName.length()-5,5);
+  *outStream << "Cine file base name: " << stripped_fileName << std::endl;
 
   int_t start_frame = std::atoi(argv[2]);
   int_t end_frame = std::atoi(argv[3]);
   *outStream << "start frame:       " << start_frame << std::endl;
   *outStream << "end frame:         " << end_frame << std::endl;
-  const int_t total_width = cine.width();
-  const int_t total_height = cine.height();
-  *outStream << "width:             " << total_width << std::endl;
-  *outStream << "height:            " << total_height << std::endl;
+  //const int_t total_width = cine.width();
+  //const int_t total_height = cine.height();
+  //*outStream << "width:             " << total_width << std::endl;
+  //*outStream << "height:            " << total_height << std::endl;
   // The sub-regions of the images are hard coded in terms of size and location so the cine size is constrained
-  TEUCHOS_TEST_FOR_EXCEPTION(total_width < 800,std::runtime_error,"Error the cine file frame width is too low");
-  TEUCHOS_TEST_FOR_EXCEPTION(total_height < 390,std::runtime_error,"Error the cine file frame height is too low");
+  //TEUCHOS_TEST_FOR_EXCEPTION(total_width < 800,std::runtime_error,"Error the cine file frame width is too low");
+  //TEUCHOS_TEST_FOR_EXCEPTION(total_height < 390,std::runtime_error,"Error the cine file frame height is too low");
 
   std::random_device rd; // obtain a random number from hardware
   std::mt19937 eng(rd()); // seed the generator
@@ -114,7 +115,10 @@ int main(int argc, char *argv[]) {
         read_total_timer.start();
       else
         read_total_timer.resume();
-      Teuchos::RCP<Image> image = cine.get_frame(i,true,false);
+      std::stringstream name;
+      name << stripped_fileName << "_" << i << ".cine";
+
+      Teuchos::RCP<Image> image = Teuchos::rcp(new Image(name.str().c_str()));//cine.get_frame(i,true,false);
       read_total_timer.stop();
 
       scalar_t coord_x = 0.0;
@@ -144,7 +148,10 @@ int main(int argc, char *argv[]) {
       else
         read_timer.resume();
       //images = cine.get_frame(i,param_set,true,false,Teuchos::null);
-      Teuchos::RCP<Image> image = cine.get_frame(i,window_start_x,window_start_y,window_end_x,window_end_y,true,false);
+      std::stringstream name;
+      name << stripped_fileName << "_" << i << ".cine";
+      Teuchos::RCP<Image> image = Teuchos::rcp(new Image(name.str().c_str(),window_start_x,window_start_y,window_end_x-window_start_x+1,window_end_y-window_start_y+1));
+      //cine.get_frame(i,window_start_x,window_start_y,window_end_x,window_end_y,true,false);
       read_timer.stop();
 
       scalar_t coord_x = 0.0;

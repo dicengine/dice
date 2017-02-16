@@ -69,12 +69,18 @@ Image::Image(const char * file_name,
   has_file_name_(true),
   gradient_method_(FINITE_DIFFERENCE)
 {
+  bool filter_failed = false;
+  bool convert_to_8_bit = true;
+  if(params!=Teuchos::null){
+    filter_failed = params->get<bool>(DICe::filter_failed_cine_pixels,false);
+    convert_to_8_bit = params->get<bool>(DICe::convert_cine_to_8_bit,true);
+  }
   try{
     utils::read_image_dimensions(file_name,width_,height_);
     TEUCHOS_TEST_FOR_EXCEPTION(width_<=0,std::runtime_error,"");
     TEUCHOS_TEST_FOR_EXCEPTION(height_<=0,std::runtime_error,"");
     intensities_ = Teuchos::ArrayRCP<intensity_t>(width_*height_,0.0);
-    utils::read_image(file_name,intensities_.getRawPtr());
+    utils::read_image(file_name,intensities_.getRawPtr(),true,convert_to_8_bit,filter_failed);
   }
   catch(std::exception & e){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, image file read failure");
@@ -100,6 +106,12 @@ Image::Image(const char * file_name,
   has_file_name_(true),
   gradient_method_(FINITE_DIFFERENCE)
 {
+  bool filter_failed = false;
+  bool convert_to_8_bit = true;
+  if(params!=Teuchos::null){
+    filter_failed = params->get<bool>(DICe::filter_failed_cine_pixels,false);
+    convert_to_8_bit = params->get<bool>(DICe::convert_cine_to_8_bit,true);
+  }
   // get the image dims
   int_t img_width = 0;
   int_t img_height = 0;
@@ -113,7 +125,7 @@ Image::Image(const char * file_name,
     utils::read_image(file_name,
       offset_x,offset_y,
       width_,height_,
-      intensities_.getRawPtr());
+      intensities_.getRawPtr(),true,convert_to_8_bit,filter_failed);
   }
   catch(std::exception & e){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, image file read failure");

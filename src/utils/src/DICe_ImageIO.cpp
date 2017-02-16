@@ -195,7 +195,9 @@ void read_image_dimensions(const char * file_name,
 DICE_LIB_DLL_EXPORT
 void read_image(const char * file_name,
   intensity_t * intensities,
-  const bool is_layout_right){
+  const bool is_layout_right,
+    const bool convert_to_8_bit,
+    const bool filter_failed_pixels){
   // determine the file type based on the file_name
   Image_File_Type file_type = image_file_type(file_name);
   if(file_type==NO_SUCH_IMAGE_FILE_TYPE){
@@ -217,8 +219,7 @@ void read_image(const char * file_name,
     Teuchos::RCP<DICe::cine::Cine_Reader> reader = Image_Reader_Cache::instance().cine_reader(cine_file);
     const int_t width = reader->width();
     const int_t height = reader->height();
-    const bool filter_failed = Image_Reader_Cache::instance().filter_failed_pixels();
-    const bool convert_to_8_bit = true;
+    Image_Reader_Cache::instance().set_filter_failed_pixels(filter_failed_pixels);
     if(start_index < reader->first_image_number() || start_index > reader->first_image_number() + reader->num_frames()){
       std::cerr << "Error, invalid start index " << start_index <<", less than first frame in cine file " << reader->first_image_number() <<
           " or greater than last frame " << reader->first_image_number() + reader->num_frames() << std::endl;
@@ -231,9 +232,9 @@ void read_image(const char * file_name,
     }
     if(is_avg){
       reader->get_average_frame(start_index-reader->first_image_number(),end_index-reader->first_image_number(),
-        0,0,width,height,intensities,is_layout_right,filter_failed,convert_to_8_bit);
+        0,0,width,height,intensities,is_layout_right,filter_failed_pixels,convert_to_8_bit);
     }else{
-      reader->get_frame(0,0,width,height,intensities,is_layout_right,start_index-reader->first_image_number(),filter_failed,convert_to_8_bit);
+      reader->get_frame(0,0,width,height,intensities,is_layout_right,start_index-reader->first_image_number(),filter_failed_pixels,convert_to_8_bit);
     }
   }
 #ifdef DICE_ENABLE_NETCDF
@@ -287,7 +288,9 @@ void read_image(const char * file_name,
   int_t width,
   int_t height,
   intensity_t * intensities,
-  const bool is_layout_right){
+  const bool is_layout_right,
+  const bool convert_to_8_bit,
+  const bool filter_failed_pixels){
   // determine the file type based on the file_name
   Image_File_Type file_type = image_file_type(file_name);
   if(file_type==NO_SUCH_IMAGE_FILE_TYPE){
@@ -307,13 +310,12 @@ void read_image(const char * file_name,
     cine_index(file_name,start_index,end_index,is_avg);
     // get the image dimensions
     Teuchos::RCP<DICe::cine::Cine_Reader> reader = Image_Reader_Cache::instance().cine_reader(cine_file);
-    const bool filter_failed = Image_Reader_Cache::instance().filter_failed_pixels();
-    const bool convert_to_8_bit = true;
+    Image_Reader_Cache::instance().set_filter_failed_pixels(filter_failed_pixels);
     if(is_avg){
       reader->get_average_frame(start_index-reader->first_image_number(),end_index-reader->first_image_number(),
-        offset_x,offset_y,width,height,intensities,is_layout_right,filter_failed,convert_to_8_bit);
+        offset_x,offset_y,width,height,intensities,is_layout_right,filter_failed_pixels,convert_to_8_bit);
     }else{
-      reader->get_frame(offset_x,offset_y,width,height,intensities,is_layout_right,start_index-reader->first_image_number(),filter_failed,convert_to_8_bit);
+      reader->get_frame(offset_x,offset_y,width,height,intensities,is_layout_right,start_index-reader->first_image_number(),filter_failed_pixels,convert_to_8_bit);
     }
   }
 #ifdef DICE_ENABLE_NETCDF

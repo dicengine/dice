@@ -86,7 +86,9 @@ int main(int argc, char *argv[]) {
     DEBUG_MSG(argv[i]);
   }
   std::string fileName = argv[1];
-  *outStream << "Cine file name: " << fileName << std::endl;
+  std::string stripped_fileName = fileName;
+  stripped_fileName.erase(stripped_fileName.length()-5,5);
+  *outStream << "Cine file base name: " << stripped_fileName << std::endl;
   std::string prefix = argv[4];
   *outStream << "Tiff prefix: " << prefix << std::endl;
   std::string suffix = "";
@@ -152,7 +154,9 @@ int main(int argc, char *argv[]) {
         fName << "0";
       fName << i << suffix << ".tif";
     }
-    Teuchos::RCP<DICe::Image> image = cine_reader->get_frame(i);
+    std::stringstream cName;
+    cName << stripped_fileName << "_" << i << ".cine";
+    Teuchos::RCP<DICe::Image> image = Teuchos::rcp(new Image(cName.str().c_str()));//cine_reader->get_frame(i);
     if(rotation!=0){
       if(rotation==90){
         image = image->apply_rotation(NINTY_DEGREES);

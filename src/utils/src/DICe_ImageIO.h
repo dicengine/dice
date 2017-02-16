@@ -96,10 +96,14 @@ void read_image_dimensions(const char * file_name,
 /// \param file_name the name of the file
 /// \param intensities [out] populated with the pixel intensity values
 /// \param is_layout_right true if the arrays are row-major
+/// \param convert_to_8_bit if true the values will be scaled to fit in the 8 bit range (0-255)
+/// \param filter failed pixels (only works for .cine file format) if true failed pixels will be replaced with neighbor values
 DICE_LIB_DLL_EXPORT
 void read_image(const char * file_name,
   intensity_t * intensities,
-  const bool is_layout_right = true);
+  const bool is_layout_right = true,
+  const bool convert_to_8_bit = true,
+  const bool filter_failed_pixels = false);
 
 /// Read an image into the host memory
 /// \param file_name the name of the file
@@ -109,6 +113,8 @@ void read_image(const char * file_name,
 /// \param height height of the portion of the image to read (must be smaller than the global image height)
 /// \param intensities [out] populated with the image intensities
 /// \param is_layout_right [optional] memory layout is LayoutRight (row-major)
+/// \param convert_to_8_bit if true the values will be scaled to fit in the 8 bit range (0-255)
+/// \param filter failed pixels (only works for .cine file format) if true failed pixels will be replaced with neighbor values
 DICE_LIB_DLL_EXPORT
 void read_image(const char * file_name,
   int_t offset_x,
@@ -116,7 +122,9 @@ void read_image(const char * file_name,
   int_t width,
   int_t height,
   intensity_t * intensities,
-  const bool is_layout_right = true);
+  const bool is_layout_right = true,
+  const bool convert_to_8_bit = true,
+  const bool filter_failed_pixels = false);
 
 // TODO write a function that reads into the device memory directly
 

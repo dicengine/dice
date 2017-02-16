@@ -23,7 +23,7 @@ include_directories(
 link_directories (
     ${TIFF_LIB_DIR}
 )
-SET(DICE_UTILS_LIBRARIES tiff)
+SET(DICE_UTILS_LIBRARIES tiff teuchoscore)
 if(DICE_HAS_JPEG)
   SET(DICE_UTILS_LIBRARIES ${DICE_UTILS_LIBRARIES} jpeg)
 endif()

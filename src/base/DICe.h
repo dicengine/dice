@@ -159,6 +159,8 @@ const char* const compute_image_gradients = "compute_image_gradients";
 /// String parameter name
 const char* const filter_failed_cine_pixels = "filter_failed_cine_pixels";
 /// String parameter name
+const char* const convert_cine_to_8_bit = "convert_cine_to_8_bit";
+/// String parameter name
 const char* const initial_condition_file = "initial_condition_file";
 /// String parameter name
 const char* const enable_translation = "enable_translation";

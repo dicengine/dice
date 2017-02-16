@@ -304,7 +304,8 @@ int main(int argc, char *argv[]) {
             const int_t end_x = schema->motion_window_params()->find(use_subset_id)->second.end_x_;
             const int_t start_y = schema->motion_window_params()->find(use_subset_id)->second.start_y_;
             const int_t end_y = schema->motion_window_params()->find(use_subset_id)->second.end_y_;
-            Teuchos::RCP<DICe::Image> def_img = cine_reader->get_frame(schema->frame_id(),start_x,start_y,end_x,end_y,true,filter_failed_pixels,correlation_params);
+            Teuchos::RCP<DICe::Image> def_img = Teuchos::rcp(new DICe::Image(image_files[image_it].c_str(),start_x,start_y,end_x-start_x+1,end_y-start_y+1,correlation_params));
+            //Teuchos::RCP<DICe::Image> def_img = cine_reader->get_frame(schema->frame_id(),start_x,start_y,end_x,end_y,true,filter_failed_pixels,correlation_params);
             schema->set_def_image(def_img,sub_image_id);
             if(image_it==0){
               schema->set_prev_image(def_img,sub_image_id);

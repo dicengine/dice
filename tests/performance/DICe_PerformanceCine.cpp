@@ -40,6 +40,7 @@
 // @HEADER
 
 #include <DICe.h>
+#include <DICe_Image.h>
 #include <DICe_Cine.h>
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -74,8 +75,9 @@ int main(int argc, char *argv[]) {
   // get the cine file name from the command line
   std::string cine_file = argv[1];
   *outStream << "reading cine file: " << cine_file << std::endl;
-
-  cine::Cine_Reader cine(cine_file.c_str());//,outStream.getRawPtr());
+  std::string stripped_fileName = cine_file;
+  stripped_fileName.erase(stripped_fileName.length()-5,5);
+  *outStream << "Cine file base name: " << stripped_fileName << std::endl;
 
   int_t start_frame = std::atoi(argv[2]);
   int_t end_frame = std::atoi(argv[3]);
@@ -86,7 +88,10 @@ int main(int argc, char *argv[]) {
   {
     thread_timer.start();
     for(int_t i = start_frame; i<end_frame; ++i){
-      Teuchos::RCP<Image> image = cine.get_frame(i);
+      std::stringstream name;
+      name << stripped_fileName << "_" << i << ".cine";
+      //image->write(name.str());
+      Teuchos::RCP<Image> image = Teuchos::rcp(new Image(name.str().c_str()));
       //std::stringstream name;
       //name << "./frame_images/frame_" << i << ".tif";
       //image->write(name.str());
