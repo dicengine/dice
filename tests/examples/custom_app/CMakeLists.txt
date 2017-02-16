@@ -76,6 +76,23 @@ else (Boost_FOUND)
   MESSAGE(FATAL_ERROR "BOOST is required, but not found")
 endif (Boost_FOUND)
 
+# base data type:
+if(DICE_USE_DOUBLE)
+  ADD_DEFINITIONS(-DDICE_USE_DOUBLE=1)
+  MESSAGE(STATUS "Image intensity and scalar type will be: DOUBLE")
+else()
+  MESSAGE(STATUS "Image intensity and scalar type will be: FLOAT (default)")
+endif()
+
+set(DICE_ENABLE_NETCDF OFF)
+if(DEFINED NetCDF_DIR)
+  set(DICE_ENABLE_NETCDF ON)
+  MESSAGE(STATUS "Using NetCDF from dir: ${NetCDF_DIR}")
+  ADD_DEFINITIONS(-DDICE_ENABLE_NETCDF=1)
+else()
+  MESSAGE(STATUS "NetCDF will NOT be enabled")
+endif()
+
 #
 # Define the location of the dice libraries, DICE_LIB_DIR:
 #
@@ -103,7 +120,6 @@ MESSAGE(STATUS "Using DICe headers from: ${DICE_HEADER_DIR}")
 include_directories(${DICE_HEADER_DIR})
 
 add_executable(main main.cpp)
-
 #
 # Define the location of lib tiff, jpeg, and png:
 #
@@ -138,14 +154,49 @@ if(png_lib)
   target_link_libraries(main ${png_lib})
 endif()
 
+# find OpenCV
+message(STATUS "Looking for OpenCV in dir: ${OpenCV_DIR}")
+find_package( OpenCV NO_DEFAULT_PATH PATHS ${OpenCV_DIR} )
+IF(OpenCV_FOUND)
+  set(DICE_ENABLE_OPENCV ON)
+ELSE()
+  message(STATUS "OpenCV not found")
+ENDIF()
+
+IF(DICE_ENABLE_OPENCV)
+  SET(DICE_HEADER_DIRS
+      ${DICE_HEADER_DIRS}
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/opencv
+  )
+  add_definitions(-DDICE_ENABLE_OPENCV=1)
+ENDIF()
+
 # add the dice libraries
 target_link_libraries(main
   dicecore
   dicebase
   dicefft
-  diceutils
-  dicecine
+  diceutils)
+
+IF(DICE_ENABLE_GLOBAL)
+  target_link_libraries(main
+  diceglobal
+  dicemesh
+  dicemeshio
+  triangle)
+ELSE()
+  target_link_libraries(main
   dicemesh)
+ENDIF()
+
+IF(DICE_ENABLE_NETCDF)
+  target_link_libraries(main dicenetcdf)
+ENDIF()
+
+IF(DICE_ENABLE_OPENCV)
+  target_link_libraries(main
+    dicefeature ${OpenCV_LIBRARIES})
+ENDIF()
   
 # add the other libraries needed
 target_link_libraries(main
@@ -153,6 +204,7 @@ target_link_libraries(main
   teuchosnumerics
   teuchoscomm
   teuchosparameterlist
+  exodus
   ${tiff_lib}
   ${Boost_LIBRARIES})
 
@@ -160,8 +212,15 @@ IF(DICE_ENABLE_MANYCORE)
   target_link_libraries(main
     tpetra
     kokkoscore
+    ifpack
+    belos
+    belostpetra
   )
   ADD_DEFINITIONS(-DDICE_KOKKOS=1 -DDICE_TPETRA=1)
 ELSE()
-  target_link_libraries(main epetra)
+  target_link_libraries(main
+  ifpack
+  epetra
+  belos
+  belosepetra)
 ENDIF()

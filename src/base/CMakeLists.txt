@@ -51,6 +51,7 @@ include_directories(${Boost_INCLUDE_DIRS} COMPONENTS gil program_options REQUIRE
 add_library(dicebase ${DICE_SOURCES} ${DICE_HEADERS})
 target_link_libraries(dicebase ${Boost_LIBRARIES} ${DICE_LIBRARIES} diceutils)
 target_compile_definitions(dicebase PRIVATE -D DICE_LIB_EXPORTS_MODE)
+add_dependencies(dicebase DICe_utils)
 
 install(FILES ${DICE_HEADERS}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include

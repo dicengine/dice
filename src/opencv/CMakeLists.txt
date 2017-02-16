@@ -21,7 +21,7 @@ target_compile_definitions(dicefeature PRIVATE -D DICE_LIB_EXPORTS_MODE)
 
 add_library(dicestereocalib DICe_StereoCalib.cpp)
 
-target_link_libraries(dicestereocalib ${DICE_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(dicestereocalib ${DICE_LIBRARIES} ${OpenCV_LIBRARIES} dicebase)
 
 target_compile_definitions(dicestereocalib PRIVATE -D DICE_LIB_EXPORTS_MODE)
 

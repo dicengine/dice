@@ -79,6 +79,6 @@ ENDFOREACH ( )
 #
 #  These tests are used as tutorial examples
 #
-iF(NOT DICE_ENABLE_GLOBAL)
+#iF(NOT DICE_ENABLE_GLOBAL)
   add_subdirectory(examples)
-endif()
+#endif()

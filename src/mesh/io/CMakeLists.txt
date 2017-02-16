@@ -10,3 +10,8 @@ target_link_libraries(dicemeshio ${DICE_LIBRARIES} ${Boost_LIBRARIES} dicemesh)
 install(TARGETS dicemeshio
   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
+set_target_properties(dicemeshio PROPERTIES
+  LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
+  ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
+  RUNTIME_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/bin"
+)
