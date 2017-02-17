@@ -4,7 +4,6 @@
 SET(DICE_NETCDF_LIBS
   dicecore
   dicebase
-  dicenetcdf
 )
 FILE ( GLOB test_netcdf_cpp_files "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 FOREACH ( test_file ${test_netcdf_cpp_files})

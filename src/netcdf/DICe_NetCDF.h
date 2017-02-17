@@ -42,8 +42,7 @@
 #ifndef DICE_NETCDF_H
 #define DICE_NETCDF_H
 
-#include <DICe_Image.h>
-#include <DICe_Parser.h>
+#include <DICe.h>
 
 #include <cassert>
 #include <iostream>
@@ -51,8 +50,6 @@
 #if defined(WIN32)
   #include <cstdint>
 #endif
-
-#include <Teuchos_RCP.hpp>
 
 namespace DICe {
 /*!
@@ -73,12 +70,6 @@ public:
   NetCDF_Reader(){};
   /// default destructor
   virtual ~NetCDF_Reader(){};
-
-  /// retrieve a DICe image from a netcdf file
-  /// \param file_name name of the netcdf file to read
-  /// \param params image parameters
-  Teuchos::RCP<Image> get_image(const std::string & file_name,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// read the intensities from the netcdf file:
   /// \param file_name the name of the file to read

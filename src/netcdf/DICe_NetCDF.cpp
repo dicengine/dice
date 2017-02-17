@@ -40,6 +40,8 @@
 // @HEADER
 #include <DICe_NetCDF.h>
 
+#include <Teuchos_RCP.hpp>
+
 #include <iostream>
 #include <netcdf.h>
 
@@ -255,26 +257,6 @@ NetCDF_Reader::read_netcdf_image(const char * file_name,
   delete [] data;
   // close the nc_file
   nc_close(ncid);
-}
-
-
-
-Teuchos::RCP<Image>
-NetCDF_Reader::get_image(const std::string & file_name,
-  const Teuchos::RCP<Teuchos::ParameterList> & params){
-
-  // *** Note: use native types for calls to netcdf, otherwise the array sizes and allocations may be off
-  // nc_type 5 = float, 4 = int, 2 = char
-  // assumes that there is only one time per file and one band per file
-
-  // get the image dimensions
-  int_t width = 0;
-  int_t height = 0;
-  get_image_dimensions(file_name,width,height);
-  Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
-  read_netcdf_image(file_name.c_str(),intensities.getRawPtr());
-  Teuchos::RCP<Image> img = Teuchos::rcp(new Image(width,height,intensities,params));
-  return img;
 }
 
 } // end netcdf namespace

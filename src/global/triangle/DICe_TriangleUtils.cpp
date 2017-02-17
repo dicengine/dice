@@ -683,7 +683,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri_mesh(const DICe::mesh::Base_
       // lower row of tris
       const int_t lower_id = j*(num_col_x*2) + i;
       //std::cout << " lower id " << lower_id << std::endl;
-      int_t lower_nodes[num_nodes_per_elem];
+      std::vector<int_t> lower_nodes(num_nodes_per_elem,-1);
       lower_nodes[0] = j*num_nodes_x + i;
       lower_nodes[1] = j*num_nodes_x + i + 1;
       lower_nodes[2] = (j+1)*num_nodes_x + i;
@@ -701,7 +701,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri_mesh(const DICe::mesh::Base_
       // upper row of tris
       const int_t upper_id = j*(num_col_x*2) + num_col_x + i;
       //std::cout << " upper id " << upper_id << std::endl;
-      int_t upper_nodes[num_nodes_per_elem];
+      std::vector<int_t> upper_nodes(num_nodes_per_elem,-1);
       upper_nodes[2] = j*num_nodes_x + i + 1;
       upper_nodes[0] = (j+1)*num_nodes_x + i + 1;
       upper_nodes[1] = (j+1)*num_nodes_x + i;

@@ -85,7 +85,7 @@ else()
 endif()
 
 set(DICE_ENABLE_NETCDF OFF)
-if(DEFINED NetCDF_DIR)
+if(DEFINED NetCDF_DIR AND NOT "${NetCDF_DIR}" STREQUAL "")
   set(DICE_ENABLE_NETCDF ON)
   MESSAGE(STATUS "Using NetCDF from dir: ${NetCDF_DIR}")
   ADD_DEFINITIONS(-DDICE_ENABLE_NETCDF=1)
@@ -188,10 +188,6 @@ IF(DICE_ENABLE_GLOBAL)
 ELSE()
   target_link_libraries(main
   dicemesh)
-ENDIF()
-
-IF(DICE_ENABLE_NETCDF)
-  target_link_libraries(main dicenetcdf)
 ENDIF()
 
 IF(DICE_ENABLE_OPENCV)

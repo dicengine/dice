@@ -9,12 +9,6 @@ add_subdirectory(base)
 add_subdirectory(core)
 
 #
-#  Netcdf File Reader
-#
-IF(DICE_ENABLE_NETCDF)
-  add_subdirectory(netcdf)
-ENDIF()
-#
 # FFT utilities
 #
 add_subdirectory(fft)

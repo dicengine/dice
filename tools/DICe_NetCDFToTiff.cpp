@@ -95,10 +95,10 @@ int main(int argc, char *argv[]) {
       is_file_name = true;
     }
   }
-  Teuchos::RCP<DICe::netcdf::NetCDF_Reader> netcdf_reader = Teuchos::rcp(new netcdf::NetCDF_Reader());
+  //Teuchos::RCP<DICe::netcdf::NetCDF_Reader> netcdf_reader = Teuchos::rcp(new netcdf::NetCDF_Reader());
 
   if(is_file_name){
-    Teuchos::RCP<Image> img = netcdf_reader->get_image(name);
+    Teuchos::RCP<Image> img = Teuchos::rcp(new Image(name.c_str()));//netcdf_reader->get_image(name);
     std::string old_name = name;
     name.replace(len-3,3,".tif");
     DEBUG_MSG("Converting file: " << old_name << " to " << name);
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
       const size_t name_len = file_name.length();
       std::string substr = file_name.substr(name_len-3,name_len);
       if(strcmp(substr.c_str(),".nc")==0){
-        Teuchos::RCP<Image> img = netcdf_reader->get_image(file_name);
+        Teuchos::RCP<Image> img = Teuchos::rcp(new Image(file_name.c_str()));//netcdf_reader->get_image(file_name);
         std::string old_name = file_name;
         file_name.replace(name_len-3,3,".tif");
         DEBUG_MSG("Converting file: " << old_name << " to " << file_name);

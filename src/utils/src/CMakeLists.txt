@@ -3,6 +3,12 @@ SET(DICE_UTILS_SOURCES
   DICe_Rawi.cpp
   ../../cine/DICe_Cine.cpp
 )
+IF(DICE_ENABLE_NETCDF)
+SET(DICE_UTILS_SOURCES
+  ${DICE_UTILS_SOURCES}
+  ../../netcdf/DICe_NetCDF.cpp
+)
+ENDIF()
 
 SET(DICE_UTILS_HEADERS
   DICe_ImageIO.h
@@ -10,11 +16,19 @@ SET(DICE_UTILS_HEADERS
   ../../cine/DICe_Cine.h
 )
 
+IF(DICE_ENABLE_NETCDF)
+SET(DICE_UTILS_HEADERS
+  ${DICE_UTILS_HEADERS}
+  ../../netcdf/DICe_NetCDF.h
+)
+ENDIF()
+
 include_directories(
     .
     ../../core
     ../../base
     ../../cine
+    ../../netcdf
     ${DICE_HEADER_DIRS}
     ${Boost_INCLUDE_DIRS}
     ${DICE_TRILINOS_HEADERS}

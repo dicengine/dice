@@ -40,6 +40,7 @@
 // @HEADER
 #include <DICe.h>
 #include <DICe_NetCDF.h>
+#include <DICe_Image.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -67,8 +68,7 @@ int main(int argc, char *argv[]) {
   *outStream << "--- Begin test ---" << std::endl;
 
   // create a netcdf reader:
-  Teuchos::RCP<netcdf::NetCDF_Reader> netcdf = Teuchos::rcp(new netcdf::NetCDF_Reader());
-  Teuchos::RCP<Image> img = netcdf->get_image("../images/goes14.2016.222.215844.BAND_01.nc");
+  Teuchos::RCP<Image> img = Teuchos::rcp(new Image("../images/goes14.2016.222.215844.BAND_01.nc"));
   //img->write("netcdf_image.tif");
   //img->write("netcdf.rawi");
 
