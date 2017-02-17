@@ -74,22 +74,20 @@
 
 namespace DICe {
 
+Schema::Schema(const std::string & input_file_name,
+  const std::string & params_file_name){
+  // create a parameter list from the selected file
+  Teuchos::RCP<Teuchos::ParameterList> corr_params = DICe::read_correlation_params(params_file_name);
+  default_constructor_tasks(corr_params);
+  // create a parameter list from the selected file
+  Teuchos::RCP<Teuchos::ParameterList> input_params = DICe::read_input_params(input_file_name);
+  initialize(input_params,corr_params);
+}
+
 Schema::Schema(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   const Teuchos::RCP<Teuchos::ParameterList> & correlation_params){
   default_constructor_tasks(correlation_params);
   initialize(input_params,correlation_params);
-}
-
-Schema::Schema(const std::string & input_file_name,
-  const std::string & params_file_name){
-  // create a parameter list from the selected file
-  Teuchos::RCP<Teuchos::ParameterList> params = read_correlation_params(params_file_name);
-  default_constructor_tasks(params);
-  // create a parameter list from the selected file
-  Teuchos::RCP<Teuchos::ParameterList> input_params = Teuchos::rcp( new Teuchos::ParameterList() );
-  Teuchos::Ptr<Teuchos::ParameterList> inputParamsPtr(input_params.get());
-  Teuchos::updateParametersFromXmlFile(input_file_name,inputParamsPtr);
-  initialize(input_params,params);
 }
 
 Schema::Schema(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
@@ -340,7 +338,8 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   normalize_gamma_with_active_pixels_ = false;
   gauss_filter_images_ = false;
   gauss_filter_mask_size_ = 7;
-  init_params_ = params;
+  init_params_ = params==Teuchos::null ? Teuchos::rcp(new Teuchos::ParameterList()):
+    Teuchos::rcp(new Teuchos::ParameterList(*params));
   comm_ = Teuchos::rcp(new MultiField_Comm());
   path_file_names_ = Teuchos::rcp(new std::map<int_t,std::string>());
   optical_flow_flags_ = Teuchos::rcp(new std::map<int_t,bool>());

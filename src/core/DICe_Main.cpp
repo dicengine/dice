@@ -44,7 +44,6 @@
 #include <DICe_Image.h>
 #include <DICe_ImageIO.h>
 #include <DICe_Schema.h>
-//#include <DICe_Cine.h>
 #include <DICe_Triangulation.h>
 
 #include <boost/timer.hpp>
@@ -220,15 +219,16 @@ int main(int argc, char *argv[]) {
     stereo_file_prefix += "_stereo";
 
     // if the user selects predict_resolution_error option, an error analysis is performed and the actual analysis is skipped
-    if(correlation_params->get<bool>(DICe::estimate_resolution_error,false)){
-      file_prefix = "DICe_error_estimation_solution";
-      schema->update_extents();
-      schema->set_ref_image(image_files[0]);
-      schema->set_def_image(image_files[0]);
-      schema->estimate_resolution_error(correlation_params,output_folder,file_prefix,outStream);
-      DICe::finalize();
-      return 0;
-    }
+    if(correlation_params!=Teuchos::null)
+      if(correlation_params->get<bool>(DICe::estimate_resolution_error,false)){
+        file_prefix = "DICe_error_estimation_solution";
+        schema->update_extents();
+        schema->set_ref_image(image_files[0]);
+        schema->set_def_image(image_files[0]);
+        schema->estimate_resolution_error(correlation_params,output_folder,file_prefix,outStream);
+        DICe::finalize();
+        return 0;
+      }
 
     TEUCHOS_TEST_FOR_EXCEPTION(is_stereo&&!input_params->isParameter(DICe::calibration_parameters_file),std::runtime_error,
       "Error, calibration_parameters_file required for stereo");

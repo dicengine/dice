@@ -1,4 +1,9 @@
 <ParameterList>
+  <Parameter name="image_folder" type="string" value="" />
+  <Parameter name="reference_image" type="string" value="ref.tif" />
+  <ParameterList name="deformed_images">
+    <Parameter name="def.tif" type="bool" value="true" />
+  </ParameterList>
   <Parameter name="subset_file" type="string" value="./subsets.txt" />
   <Parameter name="subset_size" type="int" value="27" />
 </ParameterList>

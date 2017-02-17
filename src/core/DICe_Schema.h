@@ -1158,8 +1158,6 @@ private:
   int_t step_size_x_;
   /// Regular grid subset spacing in y direction (used only if subsets are not conformal)
   int_t step_size_y_;
-  /// Generic strain window size (horizon for nlvc, convolution support for keys, strain window size for vsg)
-  int_t strain_window_size_;
   /// Map of subset id and geometry definition
   Teuchos::RCP<std::map<int_t,Conformal_Area_Def> > conformal_subset_defs_;
   /// Maximum number of iterations in the subset evolution routine

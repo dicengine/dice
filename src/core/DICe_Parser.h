@@ -163,6 +163,11 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> read_correlation_params(const std::string & paramFileName);
 
+/// \brief Read the input parameters from a file
+/// \param paramFileName File name of the input parameters file
+DICE_LIB_DLL_EXPORT
+Teuchos::RCP<Teuchos::ParameterList> read_input_params(const std::string & paramFileName);
+
 /// \brief Read the physics parameters from a file
 /// \param paramFileName File name of the physics parameters file
 DICE_LIB_DLL_EXPORT

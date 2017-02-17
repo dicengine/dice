@@ -322,6 +322,23 @@ Teuchos::RCP<Teuchos::ParameterList> read_physics_params(const std::string & par
 }
 
 DICE_LIB_DLL_EXPORT
+Teuchos::RCP<Teuchos::ParameterList> read_input_params(const std::string & paramFileName){
+  int proc_rank = 0;
+#if DICE_MPI
+  int mpi_is_initialized = 0;
+  MPI_Initialized(&mpi_is_initialized);
+  if(mpi_is_initialized)
+    MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
+#endif
+
+  if(proc_rank==0) DEBUG_MSG("Parsing input parameters from file: " << paramFileName);
+  Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp( new Teuchos::ParameterList() );
+  Teuchos::Ptr<Teuchos::ParameterList> paramsPtr(params.get());
+  Teuchos::updateParametersFromXmlFile(paramFileName, paramsPtr);
+  return params;
+}
+
+DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> read_correlation_params(const std::string & paramFileName){
 
   int proc_rank = 0;

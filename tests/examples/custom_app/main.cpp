@@ -7,6 +7,7 @@
 // DICe includes for classes used below:
 #include <DICe.h>
 #include <DICe_Schema.h>
+#include <DICe_Parser.h>
 
 // See the custom_app example in the tutorial for more information about the code below
 
@@ -67,7 +68,7 @@ int main(int argc, char *argv[]) {
   // STEP 4:
   //
   // Write the output
-  schema.write_output("custom_app_output.txt");
+  schema.write_output("","custom_app_output");
 
   std::cout << "End custom_app example\n";
 
@@ -80,7 +81,7 @@ int main(int argc, char *argv[]) {
   // Examples of other operations
   //
   // Change the deformed image
-  schema.set_def_image("def2.tif");
+  //schema.set_def_image("def2.tif");
   // after this, execute_correlation can be called again on this image without having to re-init the schema
   //
   // Direct access to field values in the schema

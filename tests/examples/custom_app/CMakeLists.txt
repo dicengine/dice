@@ -179,6 +179,7 @@ target_link_libraries(main
   diceutils)
 
 IF(DICE_ENABLE_GLOBAL)
+  add_definitions(-DDICE_ENABLE_GLOBAL=1)
   target_link_libraries(main
   diceglobal
   dicemesh

@@ -222,10 +222,10 @@ int main(int argc, char *argv[]) {
       *outStream << "Error, the solution error is too high" << std::endl;
       errorFlag++;
     }
-    corr_params->remove(DICe::mesh_size);
-    corr_params->remove(DICe::subset_file);
-    corr_params->remove(DICe::output_folder);
-    corr_params->remove(DICe::output_prefix);
+//    corr_params->remove(DICe::mesh_size);
+//    corr_params->remove(DICe::subset_file);
+//    corr_params->remove(DICe::output_folder);
+//    corr_params->remove(DICe::output_prefix);
   } // end shift loop
 
   *outStream << "-----------------------------------------------------------------------------------------------------------" << std::endl;

@@ -1,8 +1,8 @@
 ***
 *** Digital Image Correlation Engine (DICe), (git sha1: v1.0-beta.10-9-gd0eb4e) Copyright 2015 Sandia Corporation
 ***
-*** Reference image: (from array) 
-*** Deformed image: (from array) 
+*** Reference image: ./mechanism_4837.cine
+*** Deformed image: ./mechanism_4837.cine
 *** DIC method : local 
 *** Correlation method: ZNSSD
 *** Interpolation method: KEYS_FOURTH
