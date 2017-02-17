@@ -36,6 +36,10 @@ include_directories (
 include_directories(${Boost_INCLUDE_DIRS} COMPONENTS gil program_options REQUIRED)
 #MESSAGE(STATUS "Boost_INCLUDE_DIRS:${Boost_INCLUDE_DIRS}")
 
+IF(DICE_ENABLE_NETCDF)
+  link_directories( ${NetCDF_DIR}/../lib )
+ENDIF()
+
 add_library(dicecore ${DICE_SOURCES} ${DICE_HEADERS})
 target_link_libraries(dicecore ${Boost_LIBRARIES} ${DICE_LIBRARIES} dicebase diceutils dicefft dicemesh)
 IF(DICE_ENABLE_OPENCV)

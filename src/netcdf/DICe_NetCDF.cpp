@@ -43,7 +43,7 @@
 #include <Teuchos_RCP.hpp>
 
 #include <iostream>
-#include <netcdf.h>
+#include "netcdf.h"
 
 namespace DICe {
 namespace netcdf {

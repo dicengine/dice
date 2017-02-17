@@ -26,6 +26,10 @@ SET(DICE_TEST_LIBRARIES
   dicefeature)
 ENDIF()
 
+IF(DICE_ENABLE_NETCDF)
+  link_directories( ${NetCDF_DIR}/../lib )
+ENDIF()
+
 # DICE_LIBRARIES has the Trilinos libs (teuchos, tiff)
 # DICE_TEST_LIBRARIES has dicecore (Image, Subset, Schema...)
 

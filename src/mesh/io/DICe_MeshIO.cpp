@@ -525,12 +525,13 @@ read_exodus_field(const std::string & file_name,
   ex_inquire(input_exoid, EX_INQ_NODES, &num_nodes, &ret_float, &ret_char);
   DEBUG_MSG("read_exodus_field(): number of nodes " << num_nodes);
 
-  float ex_result[num_nodes];
+  float * ex_result = new float[num_nodes];
   std::vector<scalar_t> result(num_nodes,0.0);
   ex_get_nodal_var(input_exoid,step,var_index,result.size(),&ex_result[0]);
   for(int_t i=0;i<num_nodes;++i){
     result[i] = ex_result[i];
   }
+  delete [] ex_result;
   return result;
 }
 
@@ -648,7 +649,7 @@ read_exodus_coordinates(Teuchos::RCP<Mesh> mesh){
   for(;elem_it!=elem_end;++elem_it)
   {
     const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
-    scalar_t centroid[num_dim];
+    std::vector<scalar_t> centroid(num_dim);
     for(int_t i=0;i<num_dim;++i) centroid[i]=0.0;
     for(size_t node_it=0;node_it<connectivity.size();++node_it)
     {
@@ -725,9 +726,9 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
 
   //  write initial coordinates and node/element maps
 
-  float x[num_nodes];
-  float y[num_nodes];
-  float z[num_nodes];
+  float * x = new float[num_nodes];
+  float * y = new float[num_nodes];
+  float * z = new float[num_nodes];
 
   Teuchos::RCP<MultiField > coords = mesh->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
 
@@ -781,6 +782,9 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   error_int = ex_put_node_num_map(output_exoid, node_map);
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_node_num_map(): Failure");
   delete[] elem_map;
+  delete[] x;
+  delete[] y;
+  delete[] z;
 
 
   //  write elem blocks
@@ -1003,7 +1007,7 @@ exodus_output_dump(Teuchos::RCP<Mesh> mesh,
         {
           const int_t num_elements = mesh->num_elem_in_block(block_type_map_it->first);
           if(num_elements==0) continue;
-          float values[num_elements];
+          float * values = new float[num_elements];
           DICe::mesh::element_set::const_iterator elem_it = mesh->get_element_set()->begin();
           DICe::mesh::element_set::const_iterator elem_end = mesh->get_element_set()->end();
           for(;elem_it!=elem_end;++elem_it)
@@ -1014,13 +1018,14 @@ exodus_output_dump(Teuchos::RCP<Mesh> mesh,
           const int_t var_index = get_var_index(mesh, tostring(field_it->first.get_name()), components[comp], field_it->first.get_rank());
           error_int = ex_put_elem_var(mesh->get_output_exoid(), time_step_num, var_index, block_type_map_it->first, mesh->num_elem_in_block(block_type_map_it->first),values);
           TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"Failure ex_put_elem_var(): " + tostring(field_it->first.get_name()));
+          delete [] values;
         }
       }
     }
     else if(field_it->first.get_rank()==field_enums::NODE_RANK)
     {
       Teuchos::RCP<MultiField > field = mesh->get_overlap_field(field_it->first);
-      float values[mesh->num_nodes()];
+      float * values = new float[mesh->num_nodes()];
       std::string components[3];
       components[0] = (field_it->first.get_field_type()==field_enums::VECTOR_FIELD_TYPE) ? "X" : "";
       components[1] = "Y";
@@ -1036,6 +1041,7 @@ exodus_output_dump(Teuchos::RCP<Mesh> mesh,
         const int_t var_index = get_var_index(mesh, tostring(field_it->first.get_name()), components[comp], field_it->first.get_rank());
         error_int = ex_put_nodal_var(mesh->get_output_exoid(), time_step_num, var_index,mesh->num_nodes(), values);
       }
+      delete [] values;
     }
 //    else
 //    {
@@ -1071,7 +1077,7 @@ exodus_face_edge_output_dump(Teuchos::RCP<Mesh> mesh,
     const int_t comp_stride = (field_it->first.get_field_type()==field_enums::VECTOR_FIELD_TYPE) ? spa_dim : 1;
     MultiField & field = *mesh->get_field(field_it->first);
     Teuchos::ArrayRCP<const scalar_t> field_values = field.get_1d_view();
-    float values[num_values];
+    float * values = new float[num_values];
     std::string components[3];
     components[0] = (field_it->first.get_field_type()==field_enums::VECTOR_FIELD_TYPE) ? "X" : "";
     components[1] = "Y";
@@ -1097,6 +1103,7 @@ exodus_face_edge_output_dump(Teuchos::RCP<Mesh> mesh,
       const int_t var_index = get_var_index(mesh, tostring(field_it->first.get_name()), components[comp], field_it->first.get_rank(),true,false);
       error_int = ex_put_nodal_var(mesh->get_face_edge_output_exoid(), time_step_num, var_index, num_values, values);
     }
+    delete [] values;
   }
   error_int = ex_update(mesh->get_face_edge_output_exoid());
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_update(): Failure");
@@ -1167,7 +1174,7 @@ create_face_edge_output_variable_names(Teuchos::RCP<Mesh> mesh)
   int_t num_element_vector_variables = element_vector_fields.size();
   int_t num_element_variables = num_element_scalar_variables
       + num_element_vector_variables * spatial_dimension;
-  char* ele_var_names[num_element_variables];
+  char ** ele_var_names = new char*[num_element_variables];
   std::vector<std::string> element_string_type_names;
   for (int_t i = 0; i < num_element_scalar_variables; ++i)
   {
@@ -1191,7 +1198,7 @@ create_face_edge_output_variable_names(Teuchos::RCP<Mesh> mesh)
   error_int = ex_put_var_names(output_exoid, (char*) "n", num_element_variables,  // even though internally they are element fields
     ele_var_names);
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_var_names(): Failure");
-
+  delete [] ele_var_names;
 }
 
 void
@@ -1219,9 +1226,9 @@ create_face_edge_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_init(): Failure");
 
   //  write initial coordinates and node/element maps
-  float x[num_elem];
-  float y[num_elem];
-  float z[num_elem];
+  float * x = new float[num_elem];
+  float * y = new float[num_elem];
+  float * z = new float[num_elem];
 
   Teuchos::RCP<MultiField > internal_coords = mesh->get_field(field_enums::INTERNAL_FACE_EDGE_COORDINATES_FS);
   Teuchos::ArrayRCP<const scalar_t> internal_coords_values = internal_coords->get_1d_view();
@@ -1274,6 +1281,9 @@ create_face_edge_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_node_num_map(): Failure");
   delete[] elem_map;
   delete[] node_map;
+  delete[] x;
+  delete[] y;
+  delete[] z;
 
   //  write elem blocks
   int_t num_nodes_per_elem = 1;
@@ -1323,7 +1333,7 @@ create_exodus_output_variable_names(Teuchos::RCP<Mesh> mesh)
   int_t num_nodal_variables = num_nodal_scalar_variables
       + num_nodal_vector_variables * spatial_dimension;
   std::vector<std::string> nodal_string_type_names;
-  char* nodal_var_names[num_nodal_variables];
+  char** nodal_var_names = new char*[num_nodal_variables];
   for (int_t i = 0; i < num_nodal_scalar_variables; ++i)
   {
 
@@ -1347,6 +1357,7 @@ create_exodus_output_variable_names(Teuchos::RCP<Mesh> mesh)
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_var_param(): Failure");
   error_int = ex_put_var_names(output_exoid, (char*) "n", num_nodal_variables,nodal_var_names);
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_var_names     (): Failure");
+  delete [] nodal_var_names;
 
   // ELEMENT fields
   const std::vector<std::string> element_scalar_fields = mesh->get_field_names(field_enums::ELEMENT_RANK,field_enums::SCALAR_FIELD_TYPE,true);
@@ -1355,7 +1366,7 @@ create_exodus_output_variable_names(Teuchos::RCP<Mesh> mesh)
   int_t num_element_vector_variables = element_vector_fields.size();
   int_t num_element_variables = num_element_scalar_variables
       + num_element_vector_variables * spatial_dimension;
-  char* ele_var_names[num_element_variables];
+  char** ele_var_names = new char*[num_element_variables];
   std::vector<std::string> element_string_type_names;
   for (int_t i = 0; i < num_element_scalar_variables; ++i)
   {
@@ -1377,6 +1388,7 @@ create_exodus_output_variable_names(Teuchos::RCP<Mesh> mesh)
   error_int = ex_put_var_param(output_exoid, (char*) "e", num_element_variables);
   error_int = ex_put_var_names(output_exoid, (char*) "e", num_element_variables,
     ele_var_names);
+  delete [] ele_var_names;
 }
 
 void
@@ -2247,11 +2259,11 @@ hex8_volume_radius(Teuchos::RCP<Mesh> mesh,
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
   }
 
-  scalar_t x[num_nodes];
+  std::vector<scalar_t> x(num_nodes);
   for(int_t i=0;i<num_nodes;++i) x[i]=0.0;
-  scalar_t y[num_nodes];
+  std::vector<scalar_t> y(num_nodes);
   for(int_t i=0;i<num_nodes;++i) y[i]=0.0;
-  scalar_t z[num_nodes];
+  std::vector<scalar_t> z(num_nodes);
   for(int_t i=0;i<num_nodes;++i) z[i]=0.0;
 
   //std::stringstream oss;
@@ -2455,7 +2467,7 @@ quad4_area_radius(Teuchos::RCP<Mesh> mesh,
   cross_prod = cross(&C[0],&B[0],&D[0]);
   area += 0.5 * std::abs(cross_prod);
 
-  const scalar_t radius = std::sqrt(area/M_PI);
+  const scalar_t radius = std::sqrt(area/3.14159265358979323846264338327950288);
 
   cell_size.local_value(element.get()->local_id()) = area;
   cell_radius.local_value(element.get()->local_id()) = radius;
@@ -2483,7 +2495,7 @@ tri3_area_radius(Teuchos::RCP<Mesh> mesh,
   node_C = connectivity[2];
 
   const scalar_t area = tri3_area(coords_values,node_A,node_B,node_C);
-  const scalar_t radius = std::sqrt(area/M_PI);
+  const scalar_t radius = std::sqrt(area/3.14159265358979323846264338327950288);
 
   cell_size.local_value(element.get()->local_id()) = area;
   cell_radius.local_value(element.get()->local_id()) = radius;

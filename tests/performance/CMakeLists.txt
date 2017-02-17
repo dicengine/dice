@@ -6,6 +6,9 @@ include_directories (
     ${Boost_INCLUDE_DIRS}
 )
 
+IF(DICE_ENABLE_NETCDF)
+  link_directories( ${NetCDF_DIR}/../lib )
+ENDIF()
 
 # glob all the cpp files
 FILE ( GLOB test_cpp_files "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")

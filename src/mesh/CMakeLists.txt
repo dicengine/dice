@@ -13,6 +13,7 @@ include_directories (
     .
     ${DICE_HEADER_DIRS}
     ${DICE_TRILINOS_HEADERS}
+    ${NetCDF_DIR}
 )
 
 include_directories(${Boost_INCLUDE_DIRS})

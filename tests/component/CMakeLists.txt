@@ -22,6 +22,9 @@ IF(DICE_ENABLE_GLOBAL)
     ${DICE_COMP_LIBS}
     diceglobal)
 ENDIF()
+IF(DICE_ENABLE_NETCDF)
+  link_directories( ${NetCDF_DIR}/../lib )
+ENDIF()
 
 include_directories(${Boost_INCLUDE_DIRS} COMPONENTS gil program_options REQUIRED)
 
