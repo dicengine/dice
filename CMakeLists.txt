@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.4)
 MESSAGE("\nConfiguring DICe...\n")
 
 MESSAGE(STATUS "Using Trilinos installed in: ${DICE_TRILINOS_DIR}")
