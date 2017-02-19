@@ -40,6 +40,7 @@
 // @HEADER
 
 #include <DICe_Parser.h>
+#include <DICe_ParserUtils.h>
 #include <DICe_Image.h>
 #include <DICe_XMLUtils.h>
 #include <DICe_ParameterUtilities.h>
@@ -426,7 +427,7 @@ Teuchos::RCP<Circle> read_circle(std::fstream &dataFile){
   int_t cy = -1;
   scalar_t radius = -1.0;
   while(!dataFile.eof()){
-    Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile);
+    std::vector<std::string> tokens = tokenize_line(dataFile);
     if(tokens.size()==0) continue; // comment or blank line
     if(tokens[0]==parser_end) break;
     else if(tokens[0]==parser_center){
@@ -474,7 +475,7 @@ Teuchos::RCP<DICe::Rectangle> read_rectangle(std::fstream &dataFile){
   int_t lower_right_y = -1;
   bool has_upper_left_lower_right = false;
   while(!dataFile.eof()){
-    Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile);
+    std::vector<std::string> tokens = tokenize_line(dataFile);
     if(tokens.size()==0) continue; // comment or blank line
     if(tokens[0]==parser_end) break;
     if(tokens[0]==parser_center||tokens[0]==parser_width||tokens[0]==parser_height){
@@ -561,7 +562,7 @@ Teuchos::RCP<DICe::Polygon> read_polygon(std::fstream &dataFile){
   std::vector<int_t> vertices_x;
   std::vector<int_t> vertices_y;
   while(!dataFile.eof()){
-    Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile);
+    std::vector<std::string> tokens = tokenize_line(dataFile);
     if(tokens.size()==0) continue; // comment or blank line
     if(tokens[0]==parser_end) break;
     TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()<2,std::runtime_error,"");
@@ -570,7 +571,7 @@ Teuchos::RCP<DICe::Polygon> read_polygon(std::fstream &dataFile){
     TEUCHOS_TEST_FOR_EXCEPTION(tokens[1]!=parser_vertices,std::runtime_error,"");
     // read the vertices
     while(!dataFile.eof()){
-      Teuchos::ArrayRCP<std::string> vertex_tokens = tokenize_line(dataFile);
+      std::vector<std::string> vertex_tokens = tokenize_line(dataFile);
       if(vertex_tokens.size()==0)continue;
       if(vertex_tokens[0]==parser_end) break;
       TEUCHOS_TEST_FOR_EXCEPTION(vertex_tokens.size()<2,std::runtime_error,"");
@@ -595,7 +596,7 @@ DICE_LIB_DLL_EXPORT
 multi_shape read_shapes(std::fstream & dataFile){
   DICe::multi_shape multi_shape;
   while(!dataFile.eof()){
-    Teuchos::ArrayRCP<std::string> shape_tokens = tokenize_line(dataFile);
+    std::vector<std::string> shape_tokens = tokenize_line(dataFile);
     if(shape_tokens.size()==0)continue;
     if(shape_tokens[0]==parser_end) break;
     TEUCHOS_TEST_FOR_EXCEPTION(shape_tokens.size()<2,std::runtime_error,"");
@@ -619,89 +620,6 @@ multi_shape read_shapes(std::fstream & dataFile){
   TEUCHOS_TEST_FOR_EXCEPTION(multi_shape.size()<=0,std::runtime_error,"");
   return multi_shape;
 }
-
-std::istream & safeGetline(std::istream& is, std::string& t)
-{
-    t.clear();
-    // The characters in the stream are read one-by-one using a std::streambuf.
-    // That is faster than reading them one-by-one using the std::istream.
-    // Code that uses streambuf this way must be guarded by a sentry object.
-    // The sentry object performs various tasks,
-    // such as thread synchronization and updating the stream state.
-    std::istream::sentry se(is, true);
-    std::streambuf* sb = is.rdbuf();
-    for(;;) {
-        int c = sb->sbumpc();
-        switch (c) {
-        case '\n':
-            return is;
-        case '\r':
-            if(sb->sgetc() == '\n')
-                sb->sbumpc();
-            return is;
-        case EOF:
-            // Also handle the case when the last line has no line ending
-            if(t.empty())
-                is.setstate(std::ios::eofbit);
-            return is;
-        default:
-            t += (char)c;
-        }
-    }
-}
-
-DICE_LIB_DLL_EXPORT
-Teuchos::ArrayRCP<std::string> tokenize_line(std::istream &dataFile,
-  const std::string & delim,
-  const bool capitalize){
-//  static int_t MAX_CHARS_PER_LINE = 512;
-  static int_t MAX_TOKENS_PER_LINE = 100;
-
-  Teuchos::ArrayRCP<std::string> tokens(MAX_TOKENS_PER_LINE,"");
-
-  // read an entire line into memory
-  std::string buf_str;
-  safeGetline(dataFile, buf_str);
-  char *buf = new char[buf_str.length() + 1];
-  strcpy(buf, buf_str.c_str());
-
-  // parse the line into blank-delimited tokens
-  int_t n = 0; // a for-loop index
-
-  // parse the line
-  char * token;
-  token = strtok(buf, delim.c_str());
-  tokens[0] = token ? token : ""; // first token
-  if(capitalize)
-    stringToUpper(tokens[0]);
-  bool first_char_is_pound = tokens[0].find("#") == 0;
-  if (tokens[0] != "" && tokens[0]!=parser_comment_char && !first_char_is_pound) // zero if line is blank or starts with a comment char
-  {
-    for (n = 1; n < MAX_TOKENS_PER_LINE; n++)
-    {
-      token = strtok(0, delim.c_str());
-      tokens[n] = token ? token : ""; // subsequent tokens
-      if (tokens[n]=="") break; // no more tokens
-      if(capitalize)
-        stringToUpper(tokens[n]); // convert the string to upper case
-    }
-  }
-  tokens.resize(n);
-  delete [] buf;
-
-  return tokens;
-
-}
-
-DICE_LIB_DLL_EXPORT
-bool is_number(const std::string& s)
-{
-  std::string::const_iterator it = s.begin();
-  while (it != s.end() && (std::isdigit(*it) || *it=='+' || *it=='-' || *it=='e' || *it=='E' || *it=='.'))
-    ++it;
-  return !s.empty() && it == s.end();
-}
-
 
 DICE_LIB_DLL_EXPORT
 const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileName,
@@ -733,13 +651,13 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
   // read each line of the file
    while (!dataFile.eof())
    {
-     Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile);
+     std::vector<std::string> tokens = tokenize_line(dataFile);
      if(tokens.size()==0) continue;
-     for (int i = 0; i < tokens.size(); i++)
+     for (size_t i = 0; i < tokens.size(); i++)
        if(proc_rank==0) DEBUG_MSG("Tokens[" << i << "] = " << tokens[i]);
      if(tokens.size()<2){
        std::cout << "Error reading subset file, invalid entry: " << fileName << " "  << std::endl;
-       for (int i = 0; i < tokens.size(); i++)
+       for (size_t i = 0; i < tokens.size(); i++)
          std::cout << "Tokens[" << i << "] = " << tokens[i] << std::endl;
        std::cout << std::endl;
        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
@@ -750,7 +668,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          coordinates_defined = true;
          // read more lines until parser end is reached
          while(!dataFile.eof()){
-           Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile);
+           std::vector<std::string> block_tokens = tokenize_line(dataFile);
            if(block_tokens.size()==0) continue; // blank line or comment
            else if(block_tokens[0]==parser_end) break; // end of the list
            else if(is_number(block_tokens[0])){ // set of coordinates
@@ -785,7 +703,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          info->type=REGION_OF_INTEREST_INFO;
          roi_defined = true;
          while(!dataFile.eof()){
-           Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile);
+           std::vector<std::string> block_tokens = tokenize_line(dataFile);
            if(block_tokens.size()==0) continue; // blank line or comment
            else if(block_tokens[0]==parser_end) break; // end of the defs
            // force the triangulation to be a regular grid rather than delaunay
@@ -902,7 +820,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                scalar_t seed_rotation = 0.0;
                if(proc_rank==0) DEBUG_MSG("Reading seed information");
                while(!dataFile.eof()){
-                 Teuchos::ArrayRCP<std::string> seed_tokens = tokenize_line(dataFile);
+                 std::vector<std::string> seed_tokens = tokenize_line(dataFile);
                  if(seed_tokens.size()==0) continue; // blank line or comment
                  else if(seed_tokens[0]==parser_end) break; // end of the defs
                  else if(seed_tokens[0]==parser_location){
@@ -999,7 +917,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          std::string path_file_name;
          while(!dataFile.eof()){
            std::streampos pos = dataFile.tellg();
-           Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile);
+           std::vector<std::string> block_tokens = tokenize_line(dataFile);
            if(block_tokens.size()==0) continue; // blank line or comment
            else if(block_tokens[0]==parser_end) break; // end of the defs
            // SUBSET ID
@@ -1048,7 +966,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              if(block_tokens.size()>1){
                if(!is_number(block_tokens[1])){
                  dataFile.seekg(pos,std::ios::beg);
-                 Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile," ",false);
+                 std::vector<std::string> block_tokens = tokenize_line(dataFile," ",false);
                  std::string skip_solves_file_name = block_tokens[1];
                  if(proc_rank==0) DEBUG_MSG("Skip solves file name: " << skip_solves_file_name);
                  std::fstream skip_file(skip_solves_file_name.c_str(), std::ios_base::in);
@@ -1060,7 +978,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                }
                else{
                  // all other numbers are ids to turn solving on or off
-                 for(int_t id=1;id<block_tokens.size();++id){
+                 for(size_t id=1;id<block_tokens.size();++id){
                    TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[id]),std::runtime_error,"");
                    DEBUG_MSG("Skip solve id : " << block_tokens[id]);
                    skip_solve_ids.push_back(atoi(block_tokens[id].c_str()));
@@ -1080,7 +998,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            else if(block_tokens[0]==parser_use_path_file){
              // need to re-read the line again without converting to capital case
              dataFile.seekg(pos, std::ios::beg);
-             Teuchos::ArrayRCP<std::string> block_tokens = tokenize_line(dataFile," ",false);
+             std::vector<std::string> block_tokens = tokenize_line(dataFile," ",false);
              TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<2,std::runtime_error,"");
              TEUCHOS_TEST_FOR_EXCEPTION(is_number(block_tokens[1]),std::runtime_error,"");
              path_file_name = block_tokens[1];
@@ -1095,7 +1013,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              has_seed = true;
              if(proc_rank==0) DEBUG_MSG("Reading seed information for conformal subset");
              while(!dataFile.eof()){
-               Teuchos::ArrayRCP<std::string> seed_tokens = tokenize_line(dataFile);
+               std::vector<std::string> seed_tokens = tokenize_line(dataFile);
                if(seed_tokens.size()==0) continue; // blank line or comment
                else if(seed_tokens[0]==parser_end) break; // end of the defs
                else if(seed_tokens[0]==parser_location){
@@ -1169,7 +1087,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              else if(block_tokens[1]==parser_blocking_subsets){
                if(proc_rank==0) DEBUG_MSG("Reading blocking subsets");
                while(!dataFile.eof()){
-                 Teuchos::ArrayRCP<std::string> id_tokens = tokenize_line(dataFile);
+                 std::vector<std::string> id_tokens = tokenize_line(dataFile);
                  if(id_tokens.size()==0) continue;
                  if(id_tokens[0]==parser_end) break;
                  TEUCHOS_TEST_FOR_EXCEPTION(!is_number(id_tokens[0]),std::runtime_error,"");

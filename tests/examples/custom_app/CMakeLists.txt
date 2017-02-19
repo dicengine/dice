@@ -176,7 +176,8 @@ target_link_libraries(main
   dicecore
   dicebase
   dicefft
-  diceutils)
+  diceutils
+  diceparserutils)
 
 IF(DICE_ENABLE_GLOBAL)
   add_definitions(-DDICE_ENABLE_GLOBAL=1)

@@ -44,7 +44,8 @@
 */
 
 #include <DICe.h>
-#include <DICe_Parser.h>
+#include <DICe_Image.h>
+#include <DICe_ParserUtils.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -141,11 +142,11 @@ int main(int argc, char *argv[]) {
 
   if(num_procs > 1){
     // read all of the number line from A and store in a map
-    std::map<int_t,Teuchos::ArrayRCP<std::string> > fileASolutions;
+    std::map<int_t,std::vector<std::string> > fileASolutions;
     std::fstream dataFileA(fileA.c_str(), std::ios_base::in | std::ios_base::binary);
     while (!dataFileA.eof())
     {
-      Teuchos::ArrayRCP<std::string> tokens = DICe::tokenize_line(dataFileA,delimiter);
+      std::vector<std::string> tokens = DICe::tokenize_line(dataFileA,delimiter);
       if(tokens.size()==0) continue;
       if(!DICe::is_number(tokens[0])) continue;
       // check that the first number is an integer (presumed an id)
@@ -154,7 +155,7 @@ int main(int argc, char *argv[]) {
       TEUCHOS_TEST_FOR_EXCEPTION(remainder!=0.0,std::runtime_error,
         "Error, first column in the output file must be the subset or node id "
         "(cannot ommit the id in the output parameters to compare parallel files)");
-      fileASolutions.insert(std::pair<int_t,Teuchos::ArrayRCP<std::string> >(std::atoi(tokens[0].c_str()),tokens));
+      fileASolutions.insert(std::pair<int_t,std::vector<std::string> >(std::atoi(tokens[0].c_str()),tokens));
     }
     dataFileA.close();
     // now that the offsets are set up, compare the files one processor chunk at a time
@@ -171,7 +172,7 @@ int main(int argc, char *argv[]) {
         bool line_diff = false;
         std::vector<int_t> badTokenIds;
         std::vector<std::string> badTokenTypes;
-        Teuchos::ArrayRCP<std::string> tokensB = DICe::tokenize_line(dataFileB,delimiter);
+        std::vector<std::string> tokensB = DICe::tokenize_line(dataFileB,delimiter);
         if(tokensB.size()==0) continue;
         if(!DICe::is_number(tokensB[0])) continue;
         const scalar_t remainder = strtod(tokensB[0].c_str(),NULL) - std::floor(strtod(tokensB[0].c_str(),NULL));
@@ -182,7 +183,7 @@ int main(int argc, char *argv[]) {
         // find that row in the saved data:
         TEUCHOS_TEST_FOR_EXCEPTION(fileASolutions.find(subset_id)==fileASolutions.end(),std::runtime_error,
           "Error could not find parallel subset " << subset_id << " in serial file");
-        Teuchos::ArrayRCP<std::string> tokensA = fileASolutions.find(subset_id)->second;
+        std::vector<std::string> tokensA = fileASolutions.find(subset_id)->second;
         compared_ids.insert(subset_id);
         if(tokensB.size()==0) break;
         bool read_error = false;
@@ -196,7 +197,7 @@ int main(int argc, char *argv[]) {
           errorFlag++;
           break;
         }
-        for(int_t i=0;i<tokensA.size();++i){
+        for(size_t i=0;i<tokensA.size();++i){
           // number
           if(DICe::is_number(tokensA[i])){
             assert(DICe::is_number(tokensB[i]));
@@ -229,7 +230,7 @@ int main(int argc, char *argv[]) {
             *outStream << badTokenIds[i] << "[" << badTokenTypes[i] << "] ";
           }
           *outStream  << "): ";
-          for(int_t i=0;i<tokensA.size();++i)
+          for(size_t i=0;i<tokensA.size();++i)
             *outStream << tokensA[i] << " ";
           *outStream << std::endl;
           *outStream << "> " << par_line << " (";
@@ -237,7 +238,7 @@ int main(int argc, char *argv[]) {
             *outStream << badTokenIds[i] << "[" << badTokenTypes[i] << "] ";
           }
           *outStream  << "): ";
-          for(int_t i=0;i<tokensB.size();++i)
+          for(size_t i=0;i<tokensB.size();++i)
             *outStream << tokensB[i] << " ";
           *outStream << std::endl;
         } // end line diff
@@ -248,8 +249,8 @@ int main(int argc, char *argv[]) {
       dataFileB.close();
     } // end of parallel loop
     // check that all the ids were compared
-    std::map<int_t,Teuchos::ArrayRCP<std::string> >::iterator it=fileASolutions.begin();
-    std::map<int_t,Teuchos::ArrayRCP<std::string> >::iterator it_end=fileASolutions.end();
+    std::map<int_t,std::vector<std::string> >::iterator it=fileASolutions.begin();
+    std::map<int_t,std::vector<std::string> >::iterator it_end=fileASolutions.end();
     bool missing_value = false;
     for(;it!=it_end;++it){
       if(compared_ids.find(it->first)==compared_ids.end())missing_value = true;
@@ -279,8 +280,8 @@ int main(int argc, char *argv[]) {
         errorFlag++;
         break;
       }
-      Teuchos::ArrayRCP<std::string> tokensA = DICe::tokenize_line(dataFileA,delimiter);
-      Teuchos::ArrayRCP<std::string> tokensB = DICe::tokenize_line(dataFileB,delimiter);
+      std::vector<std::string> tokensA = DICe::tokenize_line(dataFileA,delimiter);
+      std::vector<std::string> tokensB = DICe::tokenize_line(dataFileB,delimiter);
       if(tokensA.size()>=2){
         if(tokensA[1].find(masthead)!=std::string::npos){ // skip the masthead
           line++;
@@ -292,7 +293,7 @@ int main(int argc, char *argv[]) {
         errorFlag++;
         break;
       }
-      for(int_t i=0;i<tokensA.size();++i){
+      for(size_t i=0;i<tokensA.size();++i){
         // number
         if(DICe::is_number(tokensA[i])){
           assert(DICe::is_number(tokensB[i]));
@@ -325,7 +326,7 @@ int main(int argc, char *argv[]) {
           *outStream << badTokenIds[i] << "[" << badTokenTypes[i] << "] ";
         }
         *outStream  << "): ";
-        for(int_t i=0;i<tokensA.size();++i)
+        for(size_t i=0;i<tokensA.size();++i)
           *outStream << tokensA[i] << " ";
         *outStream << std::endl;
         *outStream << "> " << line << " (";
@@ -333,7 +334,7 @@ int main(int argc, char *argv[]) {
           *outStream << badTokenIds[i] << "[" << badTokenTypes[i] << "] ";
         }
         *outStream  << "): ";
-        for(int_t i=0;i<tokensB.size();++i)
+        for(size_t i=0;i<tokensB.size();++i)
           *outStream << tokensB[i] << " ";
         *outStream << std::endl;
       }

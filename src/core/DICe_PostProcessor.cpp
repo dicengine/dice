@@ -152,15 +152,14 @@ Post_Processor::initialize_neighborhood(const scalar_t & neighborhood_radius){
   }
   // create neighborhood lists using nanoflann:
   DEBUG_MSG("creating the point cloud using nanoflann");
-  point_cloud_ = Teuchos::rcp(new Point_Cloud<scalar_t>());
+  point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
   point_cloud_->pts.resize(overlap_num_points_);
   for(int_t i=0;i<overlap_num_points_;++i){
     point_cloud_->pts[i].x = coords->local_value(i*spa_dim+0);
     point_cloud_->pts[i].y = coords->local_value(i*spa_dim+1);
-    point_cloud_->pts[i].z = 0.0;
   }
   DEBUG_MSG("building the kd-tree");
-  Teuchos::RCP<my_kd_tree_t> kd_tree = Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud_.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+  Teuchos::RCP<kd_tree_2d_t> kd_tree = Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud_.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
   kd_tree->buildIndex();
   DEBUG_MSG("kd-tree completed");
 
@@ -174,7 +173,7 @@ Post_Processor::initialize_neighborhood(const scalar_t & neighborhood_radius){
   neighbor_list_.resize(local_num_points_);
   neighbor_dist_x_.resize(local_num_points_);
   neighbor_dist_y_.resize(local_num_points_);
-  scalar_t query_pt[3];
+  scalar_t query_pt[2];
   for(int_t i=0;i<local_num_points_;++i){
     // get the gid of the point
     const int_t gid = mesh_->get_scalar_node_dist_map()->get_global_element(i);
@@ -183,7 +182,6 @@ Post_Processor::initialize_neighborhood(const scalar_t & neighborhood_radius){
     assert(olid<overlap_num_points_);
     query_pt[0] = point_cloud_->pts[olid].x;
     query_pt[1] = point_cloud_->pts[olid].y;
-    query_pt[2] = 0.0;
     kd_tree->radiusSearch(&query_pt[0],neigh_rad_2,ret_matches,params);
     for(size_t j=0;j<ret_matches.size();++j){
       const int_t neigh_olid = ret_matches[j].first;

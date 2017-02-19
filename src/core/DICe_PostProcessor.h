@@ -44,7 +44,7 @@
 
 #include <DICe.h>
 #include <DICe_Mesh.h>
-#include <DICe_Initializer.h>
+#include <DICe_PointCloud.h>
 
 #include <Teuchos_ParameterList.hpp>
 
@@ -163,7 +163,7 @@ protected:
   /// The collection of field names specific to this post processor
   std::vector<DICe::mesh::field_enums::Field_Spec> field_specs_;
   /// pointer to the point cloud used for the neighbor searching
-  Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud_;
+  Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud_;
   /// array holding the number of neighbors for each point
   std::vector<std::vector<int_t> > neighbor_list_;
   /// array holding the signed x distances for each neighbor in one long strided array

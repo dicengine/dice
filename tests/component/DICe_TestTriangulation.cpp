@@ -41,7 +41,7 @@
 
 #include <DICe.h>
 #include <DICe_Triangulation.h>
-#include <DICe_Parser.h>
+#include <DICe_ParserUtils.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -428,7 +428,7 @@ int main(int argc, char *argv[]) {
     -2.825277e-02,-6.278393e-01,-1.298937e+02};
   std::vector<scalar_t> fit_comp;
   while(!bestFitDataFile.eof()){
-    Teuchos::ArrayRCP<std::string> tokens = tokenize_line(bestFitDataFile);
+    std::vector<std::string> tokens = tokenize_line(bestFitDataFile);
     if(tokens.size()==0) continue;
     TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()!=1,std::runtime_error,
       "Error reading best_fit_plane.dat, should be 1 values per line");

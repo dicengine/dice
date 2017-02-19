@@ -138,14 +138,14 @@ Decomp::initialize(Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
       id_list.insert(my_gids[i]);
     }
     // Do a neighborhood search for all possible neighbors for post-processors
-    Teuchos::RCP<Decomp_Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Decomp_Point_Cloud<scalar_t>());
+    Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
     point_cloud->pts.resize(num_global_subsets_);
     for(int_t i=0;i<num_global_subsets_;++i){
       point_cloud->pts[i].x = subset_centroids_x[i];
       point_cloud->pts[i].y = subset_centroids_y[i];
     }
     DEBUG_MSG("Decomp::Decomp(): building the kd-tree");
-    Teuchos::RCP<decomp_kd_tree_t> kd_tree = Teuchos::rcp(new decomp_kd_tree_t(2 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+    Teuchos::RCP<kd_tree_2d_t> kd_tree = Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
     kd_tree->buildIndex();
     DEBUG_MSG("Decomp::Decomp(): kd-tree completed");
     std::vector<std::pair<size_t,scalar_t> > ret_matches;

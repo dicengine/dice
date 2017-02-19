@@ -41,14 +41,12 @@
 
 #include <DICe_MeshIO.h>
 #include <DICe_MeshIOUtils.h>
-#include <DICe_Parser.h>
-#include <DICe_Initializer.h>
+#include <DICe_ParserUtils.h>
+#include <DICe_PointCloud.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_LAPACK.hpp>
 #include <Teuchos_SerialDenseMatrix.hpp>
-
-#include <nanoflann.hpp>
 
 #ifdef HAVE_MPI
 #  include <mpi.h>
@@ -103,7 +101,7 @@ Importer_Projector::initialize_source_points(const std::string & source_file_nam
   if(source_file_name.find(text_ext)!=std::string::npos){
     std::fstream dataFile(source_file_name.c_str(), std::ios_base::in);
     TEUCHOS_TEST_FOR_EXCEPTION(!dataFile.good(),std::runtime_error,"Error reading file " << source_file_name);
-    Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \r\n,");
+    std::vector<std::string> tokens = tokenize_line(dataFile," \r\n,");
     TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()<4,std::runtime_error,"Error, invalid source file " << source_file_name << ". must have at least 4 cols, (x,y,u,v)");
     dataFile.close();
   }
@@ -136,16 +134,15 @@ Importer_Projector::initialize_source_points(const std::string & source_file_nam
   TEUCHOS_TEST_FOR_EXCEPTION(source_pts_y_.size()!=source_pts_x_.size(),std::runtime_error,"");
   // set up the neighbor lists for projection
   if(projection_required_){
-    Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud<scalar_t>());
+    Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
     point_cloud->pts.resize(source_pts_x_.size());
     for(size_t i=0;i<source_pts_x_.size();++i){
       point_cloud->pts[i].x = source_pts_x_[i];
       point_cloud->pts[i].y = source_pts_y_[i];
-      point_cloud->pts[i].z = 0.0;
     }
     DEBUG_MSG("Importer_Projector::Importer_Projector(): building the kd-tree");
-    Teuchos::RCP<my_kd_tree_t> kd_tree =
-        Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+    Teuchos::RCP<kd_tree_2d_t> kd_tree =
+        Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
     kd_tree->buildIndex();
     DEBUG_MSG("Importer_Projector::Importer_Projector(): kd-tree completed");
     std::vector<std::pair<size_t,scalar_t> > ret_matches;
@@ -160,11 +157,10 @@ Importer_Projector::initialize_source_points(const std::string & source_file_nam
     }
     std::vector<size_t> ret_index(num_neigh_);
     std::vector<scalar_t> out_dist_sqr(num_neigh_);
-    std::vector<scalar_t> query_pt(3,0.0);
+    std::vector<scalar_t> query_pt(2,0.0);
     for(size_t i=0;i<target_pts_x_.size();++i){
       query_pt[0] = target_pts_x_[i];
       query_pt[1] = target_pts_y_[i];
-      query_pt[2] = 0.0;
       kd_tree->knnSearch(&query_pt[0], num_neigh_, &ret_index[0], &out_dist_sqr[0]);
       for(int_t neigh = 0;neigh<num_neigh_;++neigh){
         neighbors_[i][neigh] = ret_index[neigh];
@@ -324,7 +320,7 @@ Importer_Projector::read_vector_field(const std::string & file_name,
     // read the first line of the file
     std::fstream dataFile(file_name.c_str(), std::ios_base::in);
     TEUCHOS_TEST_FOR_EXCEPTION(!dataFile.good(),std::runtime_error,"Error reading file " << file_name);
-    Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \r\n,");
+    std::vector<std::string> tokens = tokenize_line(dataFile," \r\n,");
     // DICe text output file
     DEBUG_MSG("Importer_Projector::read_vector_field(): reading vector field from DICe text results file: " << file_name);
     int_t x_var_index = -1;
@@ -345,9 +341,9 @@ Importer_Projector::read_vector_field(const std::string & file_name,
     TEUCHOS_TEST_FOR_EXCEPTION(y_var_index < 0,std::runtime_error,"Error could not find " << field_name_y);
     while (!dataFile.eof())
     {
-      Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \r\n,");
+      std::vector<std::string> tokens = tokenize_line(dataFile," \r\n,");
       if(tokens.size()==0)continue;
-      TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()!=num_values_per_line,std::runtime_error,"Invalid line in file (inconsistent number of values per line)");
+      TEUCHOS_TEST_FOR_EXCEPTION((int_t)tokens.size()!=num_values_per_line,std::runtime_error,"Invalid line in file (inconsistent number of values per line)");
       for(int_t i=0;i<num_values_per_line;++i){
         TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[i]),std::runtime_error,"Invalid (non-numeric) line entry in file");
       }
@@ -386,7 +382,7 @@ Importer_Projector::is_valid_vector_source_field(const std::string & file_name,
     // read the first line of the file
     std::fstream dataFile(file_name.c_str(), std::ios_base::in);
     TEUCHOS_TEST_FOR_EXCEPTION(!dataFile.good(),std::runtime_error,"Error reading file " << file_name);
-    Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \r\n,");
+    std::vector<std::string> tokens = tokenize_line(dataFile," \r\n,");
     int_t num_values_per_line = tokens.size();
     for(int_t i=0;i<num_values_per_line;++i){
       DEBUG_MSG("Importer_Projector::read_vector_field(): found field " << tokens[i] << " in results file");
@@ -429,7 +425,7 @@ Importer_Projector::read_coordinates(const std::string & file_name,
     // read the first line of the file
     std::fstream dataFile(file_name.c_str(), std::ios_base::in);
     TEUCHOS_TEST_FOR_EXCEPTION(!dataFile.good(),std::runtime_error,"Error reading file " << file_name);
-    Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \r\n,");
+    std::vector<std::string> tokens = tokenize_line(dataFile," \r\n,");
 
     // locations file
     if(file_name.find(csv_ext)!=std::string::npos||tokens.size()==2){
@@ -440,7 +436,7 @@ Importer_Projector::read_coordinates(const std::string & file_name,
       // read each line of the file
       while (!dataFile.eof())
       {
-        Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \r\n,");
+        std::vector<std::string> tokens = tokenize_line(dataFile," \r\n,");
         if(tokens.size()==0)continue;
         TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()!=2,std::runtime_error,"Invalid line in file (should be two values per line)");
         TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[0])||!is_number(tokens[1]),std::runtime_error,"Invalid line in file (non-numeric entry)");

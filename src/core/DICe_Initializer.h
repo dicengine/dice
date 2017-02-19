@@ -45,6 +45,7 @@
 #include <DICe.h>
 #include <DICe_Image.h>
 #include <DICe_Subset.h>
+#include <DICe_PointCloud.h>
 
 #include <Teuchos_RCP.hpp>
 
@@ -53,57 +54,6 @@
 #include <set>
 #include <cassert>
 
-using namespace nanoflann;
-
-/// point clouds
-template <typename T>
-struct Point_Cloud
-{
-  /// point struct
-  struct Point
-  {
-    /// data x
-    T x;
-    /// data y
-    T y;
-    /// data z
-    T z;
-  };
-  /// vector of points
-  std::vector<Point>  pts;
-  /// Must return the number of data points
-  inline size_t kdtree_get_point_count() const { return pts.size(); }
-  /// Returns the distance between the vector "p1[0:size-1]" and the data point with index "idx_p2" stored in the class:
-  inline T kdtree_distance(const T *p1, const size_t idx_p2,size_t /*size*/) const
-  {
-    const T d0=p1[0]-pts[idx_p2].x;
-    const T d1=p1[1]-pts[idx_p2].y;
-    const T d2=p1[2]-pts[idx_p2].z;
-    return d0*d0+d1*d1+d2*d2;
-  }
-  /// Returns the dim'th component of the idx'th point in the class:
-  /// Since this is inlined and the "dim" argument is typically an immediate value, the
-  ///  "if/else's" are actually solved at compile time.
-  inline T kdtree_get_pt(const size_t idx, int dim) const
-  {
-    if (dim==0) return pts[idx].x;
-    else if(dim==1) return pts[idx].y;
-    else return pts[idx].z;
-  }
-  /// Optional bounding-box computation: return false to default to a standard bbox computation loop.
-  ///   Return true if the BBOX was already computed by the class and returned in "bb" so it can be avoided to redo it again.
-  ///   Look at bb.size() to find out the expected dimensionality (e.g. 2 or 3 for point clouds)
-  template <class BBOX>
-  bool kdtree_get_bbox(BBOX& /*bb*/) const { return false; }
-};
-
-
-/// a kd-tree index:
-typedef KDTreeSingleIndexAdaptor<
-  L2_Simple_Adaptor<DICe::scalar_t, Point_Cloud<DICe::scalar_t> > ,
-  Point_Cloud<DICe::scalar_t>,
-  3 /* dim */
-  > my_kd_tree_t;
 
 /*!
  *  \namespace DICe
@@ -290,9 +240,9 @@ private:
   /// a strided array of neighbor ids
   std::vector<size_t> neighbors_;
   /// pointer to the kd-tree used for searching
-  Teuchos::RCP<my_kd_tree_t> kd_tree_;
+  Teuchos::RCP<kd_tree_3d_t> kd_tree_;
   /// pointer to the point cloud used for the neighbor searching
-  Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud_;
+  Teuchos::RCP<Point_Cloud_3D<scalar_t> > point_cloud_;
 };
 
 /// \class DICe::Phase_Correlation_Initializer
@@ -427,9 +377,9 @@ public:
 
 protected:
   /// pointer to the kd-tree used for searching
-  Teuchos::RCP<my_kd_tree_t> kd_tree_;
+  Teuchos::RCP<kd_tree_2d_t> kd_tree_;
   /// pointer to the point cloud used for the neighbor searching
-  Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud_;
+  Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud_;
   /// storage for displacements of feautures
   std::vector<scalar_t> u_;
   /// storage for displacements of features
@@ -547,9 +497,9 @@ protected:
   /// a strided array of neighbor ids
   std::vector<size_t> neighbors_;
   /// pointer to the kd-tree used for searching
-  Teuchos::RCP<my_kd_tree_t> kd_tree_;
+  Teuchos::RCP<kd_tree_2d_t> kd_tree_;
   /// pointer to the point cloud used for the neighbor searching
-  Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud_;
+  Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud_;
   /// Gauss filter coefficients
   scalar_t window_coeffs_[13][13]; // the optical flow window is 13 pixels wide
   /// x coord of reference position for optical flow 1

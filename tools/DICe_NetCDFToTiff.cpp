@@ -44,7 +44,6 @@
 */
 
 #include <DICe.h>
-#include <DICe_Parser.h>
 #include <DICe_Image.h>
 #include <DICe_NetCDF.h>
 

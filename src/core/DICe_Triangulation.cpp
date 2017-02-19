@@ -43,6 +43,7 @@
 #include <DICe_Feature.h>
 #include <DICe_Simplex.h>
 #include <DICe_Parser.h>
+#include <DICe_ParserUtils.h>
 
 #include <Teuchos_LAPACK.hpp>
 #include <fstream>
@@ -144,7 +145,7 @@ Triangulation::load_calibration_parameters(const std::string & param_file_name){
     // read each line of the file
     while (!dataFile.eof())
     {
-      Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \t<>");
+      std::vector<std::string> tokens = tokenize_line(dataFile," \t<>");
       if(tokens.size()==0) continue;
       if(tokens[0]!="CAMERA") continue;
       assert(camera_index<2);
@@ -215,7 +216,7 @@ Triangulation::load_calibration_parameters(const std::string & param_file_name){
 
     while (!dataFile.eof())
     {
-      Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \t<>");
+      std::vector<std::string> tokens = tokenize_line(dataFile," \t<>");
       if(tokens.size()==0) continue;
       if(tokens[0]=="#") continue;
       if(tokens[0]=="TRANSFORM") {has_transform=true; break;}
@@ -252,7 +253,7 @@ Triangulation::load_calibration_parameters(const std::string & param_file_name){
     int_t num_values = 0;
     while (!dataFile.eof())
     {
-      Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \t<>");
+      std::vector<std::string> tokens = tokenize_line(dataFile," \t<>");
       if(tokens.size()==0) continue;
       if(tokens[0]=="#") continue;
       if(tokens[0]=="TRANSFORM") {has_transform=true; break;}
@@ -277,7 +278,7 @@ Triangulation::load_calibration_parameters(const std::string & param_file_name){
     if(has_transform){
       while (!dataFile.eof())
       {
-        Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \t<>");
+        std::vector<std::string> tokens = tokenize_line(dataFile," \t<>");
         if(tokens.size()==0) continue;
         if(tokens[0]=="#") continue;
         if(tokens.size() > 1){
@@ -480,7 +481,7 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
       "Error, could not open file best_fit_plane.dat (required to project output to best fit plane)");
     int_t line = 0;
     while(!bestFitDataFile.eof()){
-      Teuchos::ArrayRCP<std::string> tokens = tokenize_line(bestFitDataFile);
+      std::vector<std::string> tokens = tokenize_line(bestFitDataFile);
       if(tokens.size()==0) continue;
       if(tokens.size()>2){
         if(tokens[2] == "YAXIS"){
@@ -979,7 +980,7 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     TEUCHOS_TEST_FOR_EXCEPTION(!projDataFile.good(),std::runtime_error,
       "Error, could not open file projection_points.dat (required for cross-correlation)");
     while(!projDataFile.eof()){
-      Teuchos::ArrayRCP<std::string> tokens = tokenize_line(projDataFile);
+      std::vector<std::string> tokens = tokenize_line(projDataFile);
       if(tokens.size()==0) continue;
       TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()!=4,std::runtime_error,
         "Error reading projection_points.dat, should be 4 values per line (x_left y_left x_righ y_right),"
@@ -997,7 +998,7 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     projDataFile.seekg(0, std::ios::beg);
     int_t coord_index = 0;
     while(!projDataFile.eof()){
-      Teuchos::ArrayRCP<std::string> tokens = tokenize_line(projDataFile);
+      std::vector<std::string> tokens = tokenize_line(projDataFile);
       if(tokens.size()==0) continue;
       assert(tokens.size()==4);
       proj_xl[coord_index] = strtod(tokens[0].c_str(),NULL);

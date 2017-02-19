@@ -1,4 +1,9 @@
-
+SET(DICE_SOURCES_UTIL
+  DICe_ParserUtils.cpp
+)
+SET(DICE_HEADERS_UTIL
+  DICe_ParserUtils.h
+)
 
 SET(DICE_SOURCES
   DICe_Simplex.cpp
@@ -40,8 +45,20 @@ IF(DICE_ENABLE_NETCDF)
   link_directories( ${NetCDF_DIR}/../lib )
 ENDIF()
 
+add_library(diceparserutils ${DICE_SOURCES_UTIL} ${DICE_HEADERS_UTIL})
+#target_link_libraries(diceparserutils teuchoscore)
+target_compile_definitions(diceparserutils PRIVATE -D DICE_LIB_EXPORTS_MODE)
+install(TARGETS diceparserutils
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)
+set_target_properties(diceparserutils PROPERTIES
+  LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
+  ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
+  RUNTIME_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/bin"
+)
+
 add_library(dicecore ${DICE_SOURCES} ${DICE_HEADERS})
-target_link_libraries(dicecore ${Boost_LIBRARIES} ${DICE_LIBRARIES} dicebase diceutils dicefft dicemesh)
+target_link_libraries(dicecore ${Boost_LIBRARIES} ${DICE_LIBRARIES} dicebase diceutils dicefft dicemesh diceparserutils)
 IF(DICE_ENABLE_OPENCV)
   target_link_libraries(dicecore dicefeature)
 ENDIF()

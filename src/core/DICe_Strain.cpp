@@ -46,6 +46,7 @@
 #include <DICe_Schema.h>
 #include <DICe_PostProcessor.h>
 #include <DICe_Image.h>
+#include <DICe_ParserUtils.h>
 
 #include <Teuchos_RCP.hpp>
 
@@ -149,8 +150,8 @@ int main(int argc, char *argv[]) {
       // read the first line of the source file to get the field names
       std::fstream dataFile(source_files[0].c_str(), std::ios_base::in);
       TEUCHOS_TEST_FOR_EXCEPTION(!dataFile.good(),std::runtime_error,"Error reading file " << source_files[0]);
-      Teuchos::ArrayRCP<std::string> tokens = tokenize_line(dataFile," \r\n,");
-      for(int_t i=0;i<tokens.size();++i){
+      std::vector<std::string> tokens = tokenize_line(dataFile," \r\n,");
+      for(size_t i=0;i<tokens.size();++i){
         if(tokens[i]=="DISPLACEMENT_X"||tokens[i]=="DISPLACEMENT_Y"){
           disp_field_name = "DISPLACEMENT";
         }

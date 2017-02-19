@@ -119,7 +119,7 @@ Path_Initializer::Path_Initializer(Schema * schema,
   if(num_triads_<num_neighbors_) num_neighbors_ = num_triads_;
 
   DEBUG_MSG("creating the point cloud");
-  point_cloud_ = Teuchos::rcp(new Point_Cloud<scalar_t>());
+  point_cloud_ = Teuchos::rcp(new Point_Cloud_3D<scalar_t>());
   point_cloud_->pts.resize(num_triads_);
   std::set<def_triad>::iterator it = triads_.begin();
   int_t id = 0;
@@ -130,7 +130,7 @@ Path_Initializer::Path_Initializer(Schema * schema,
     id++;
   }
   DEBUG_MSG("building the kd-tree");
-  kd_tree_ = Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud_.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+  kd_tree_ = Teuchos::rcp(new kd_tree_3d_t(3 /*dim*/, *point_cloud_.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
   kd_tree_->buildIndex();
 
   // now set up the neighbor list for each triad:
@@ -486,15 +486,14 @@ Feature_Matching_Initializer::pre_execution_tasks(){
     TEUCHOS_TEST_FOR_EXCEPTION(num_matches < 10,std::runtime_error,"Error, not enough features matched for feature matching initializer");
   }
   // create a point cloud and find the nearest neighbor:
-  point_cloud_ = Teuchos::rcp(new Point_Cloud<scalar_t>());
+  point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
   point_cloud_->pts.resize(left_x.size());
   for(size_t i=0;i<left_x.size();++i){
     point_cloud_->pts[i].x = left_x[i];
     point_cloud_->pts[i].y = left_y[i];
-    point_cloud_->pts[i].z = 0.0;
   }
   DEBUG_MSG("Feature_Matching_Initializer: building the kd-tree");
-  kd_tree_ = Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud_.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+  kd_tree_ = Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud_.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
   kd_tree_->buildIndex();
   u_.resize(left_x.size());
   v_.resize(left_x.size());
@@ -519,12 +518,11 @@ Feature_Matching_Initializer::initial_guess(const int_t subset_gid,
   //std::vector<size_t>(subset_->num_pixels()*num_neighbors_,0);
   const scalar_t current_loc_x = schema_->global_field_value(subset_gid,COORDINATE_X) + schema_->global_field_value(subset_gid,DISPLACEMENT_X);
   const scalar_t current_loc_y = schema_->global_field_value(subset_gid,COORDINATE_Y) + schema_->global_field_value(subset_gid,DISPLACEMENT_Y);
-  scalar_t query_pt[3];
+  scalar_t query_pt[2];
   std::vector<size_t> ret_index(num_neighbors);
   std::vector<scalar_t> out_dist_sqr(num_neighbors);
   query_pt[0] = current_loc_x;
   query_pt[1] = current_loc_y;
-  query_pt[2] = 0.0;
   kd_tree_->knnSearch(&query_pt[0], num_neighbors, &ret_index[0], &out_dist_sqr[0]);
   const int_t nearest_feature_id = ret_index[0];
   TEUCHOS_TEST_FOR_EXCEPTION((int_t)u_.size()<=nearest_feature_id,std::runtime_error,"");
@@ -576,26 +574,24 @@ Optical_Flow_Initializer::Optical_Flow_Initializer(Schema * schema,
  {
   DEBUG_MSG("Optical_Flow_Initializer::Optical_Flow_Initializer()");
   DEBUG_MSG("Optical_Flow_Initializer: creating the point cloud");
-  point_cloud_ = Teuchos::rcp(new Point_Cloud<scalar_t>());
+  point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
   point_cloud_->pts.resize(subset_->num_pixels());
   for(int_t i=0;i<subset_->num_pixels();++i){
     point_cloud_->pts[i].x = subset_->x(i);
     point_cloud_->pts[i].y = subset_->y(i);
-    point_cloud_->pts[i].z = 0.0;
   }
   DEBUG_MSG("Optical_Flow_Initializer: building the kd-tree");
-  kd_tree_ = Teuchos::rcp(new my_kd_tree_t(3 /*dim*/, *point_cloud_.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+  kd_tree_ = Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud_.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
   kd_tree_->buildIndex();
 
   // now set up the neighbor list for each triad:
   neighbors_ = std::vector<size_t>(subset_->num_pixels()*num_neighbors_,0);
-  scalar_t query_pt[3];
+  scalar_t query_pt[2];
   std::vector<size_t> ret_index(num_neighbors_);
   std::vector<scalar_t> out_dist_sqr(num_neighbors_);
   for(int_t i=0;i<subset_->num_pixels();++i){
     query_pt[0] = point_cloud_->pts[i].x;
     query_pt[1] = point_cloud_->pts[i].y;
-    query_pt[2] = point_cloud_->pts[i].z;
     kd_tree_->knnSearch(&query_pt[0], num_neighbors_, &ret_index[0], &out_dist_sqr[0]);
     for(size_t j=0;j<num_neighbors_;++j){
       neighbors_[i*num_neighbors_ + j] = ret_index[j];

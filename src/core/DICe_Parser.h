@@ -53,7 +53,6 @@ namespace DICe {
 // forward declaration of an Image
 class Image;
 
-
 // input parameter names
 // using globals here to avoid misspellings
 /// Input parameter, location to place the output files
@@ -329,21 +328,6 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
   const int_t width=-1,
   const int_t height=-1);
 
-DICE_LIB_DLL_EXPORT
-/// safe getline that works with windows and linux line endings
-/// \param is input stream
-/// \param t [out] string from getline
-std::istream& safeGetline(std::istream& is, std::string& t);
-
-/// \brief Turns a string read from getline() into tokens
-/// \param dataFile fstream file to read line from (assumed to be open)
-/// \param delim Delimiter character
-/// \param capitalize true if the tokens should be automatically capitalized
-DICE_LIB_DLL_EXPORT
-Teuchos::ArrayRCP<std::string> tokenize_line(std::istream &dataFile,
-  const std::string & delim=" \t",
-  const bool capitalize = true);
-
 /// \brief Read a circle from the input file
 /// \param dataFile fstream file to read line from (assumed to be open)
 DICE_LIB_DLL_EXPORT
@@ -410,13 +394,6 @@ bool valid_correlation_point(const int_t x_coord,
 DICE_LIB_DLL_EXPORT
 void generate_template_input_files(const std::string & file_prefix);
 
-/// \brief Determines if a string is a number
-/// \param s Input string
-DICE_LIB_DLL_EXPORT
-bool is_number(const std::string& s);
-
-/// Parser string
-const char* const parser_comment_char = "#";
 /// Parser string
 const char* const parser_begin = "BEGIN";
 /// Parser string
