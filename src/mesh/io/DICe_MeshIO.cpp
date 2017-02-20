@@ -51,6 +51,7 @@
 namespace DICe {
 namespace mesh {
 
+DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
   const std::string & serial_output_filename)
 {
@@ -445,11 +446,13 @@ Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
   return mesh;
 }
 
+DICE_LIB_DLL_EXPORT
 int_t
 read_exodus_num_steps(Teuchos::RCP<Mesh> mesh){
   return read_exodus_num_steps(mesh->get_input_filename());
 }
 
+DICE_LIB_DLL_EXPORT
 int_t
 read_exodus_num_steps(const std::string & file_name){
   int_t num_steps = 0;
@@ -473,7 +476,7 @@ read_exodus_num_steps(const std::string & file_name){
   return num_steps;
 }
 
-
+DICE_LIB_DLL_EXPORT
 std::vector<scalar_t>
 read_exodus_field(const std::string & file_name,
   const std::string & field_name,
@@ -490,6 +493,7 @@ read_exodus_field(const std::string & file_name,
   return read_exodus_field(file_name,var_index,step);
 }
 
+DICE_LIB_DLL_EXPORT
 std::vector<scalar_t>
 read_exodus_field(Teuchos::RCP<Mesh> mesh,
   const int_t var_index,
@@ -497,6 +501,7 @@ read_exodus_field(Teuchos::RCP<Mesh> mesh,
   return read_exodus_field(mesh->get_input_filename(),var_index,step);
 }
 
+DICE_LIB_DLL_EXPORT
 std::vector<scalar_t>
 read_exodus_field(const std::string & file_name,
   const int_t var_index,
@@ -535,11 +540,13 @@ read_exodus_field(const std::string & file_name,
   return result;
 }
 
+DICE_LIB_DLL_EXPORT
 std::vector<std::string>
 read_exodus_field_names(Teuchos::RCP<Mesh> mesh){
   return read_exodus_field_names(mesh->get_input_filename());
 }
 
+DICE_LIB_DLL_EXPORT
 std::vector<std::string>
 read_exodus_field_names(const std::string & file_name){
   float version;
@@ -573,6 +580,7 @@ read_exodus_field_names(const std::string & file_name){
   return field_names;
 }
 
+DICE_LIB_DLL_EXPORT
 void
 read_exodus_coordinates(Teuchos::RCP<Mesh> mesh){
   int error_int;
@@ -677,6 +685,7 @@ read_exodus_coordinates(Teuchos::RCP<Mesh> mesh){
   }
 }
 
+DICE_LIB_DLL_EXPORT
 void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   const std::string & output_folder){
 
@@ -972,6 +981,7 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   delete[] dist_fact;
 }
 
+DICE_LIB_DLL_EXPORT
 void
 exodus_output_dump(Teuchos::RCP<Mesh> mesh,
   const int_t & time_step_num,
@@ -1054,7 +1064,7 @@ exodus_output_dump(Teuchos::RCP<Mesh> mesh,
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_update(): Failure");
 }
 
-
+DICE_LIB_DLL_EXPORT
 void
 exodus_face_edge_output_dump(Teuchos::RCP<Mesh> mesh,
   const int_t & time_step_num,
@@ -1109,6 +1119,7 @@ exodus_face_edge_output_dump(Teuchos::RCP<Mesh> mesh,
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_update(): Failure");
 }
 
+DICE_LIB_DLL_EXPORT
 int_t
 get_var_index(Teuchos::RCP<Mesh> mesh,
   const std::string & name,
@@ -1148,17 +1159,19 @@ get_var_index(Teuchos::RCP<Mesh> mesh,
   return -1;
 }
 
+DICE_LIB_DLL_EXPORT
 void
 close_exodus_output(Teuchos::RCP<Mesh> mesh){
   ex_close(mesh->get_output_exoid());
 }
 
+DICE_LIB_DLL_EXPORT
 void
 close_face_edge_exodus_output(Teuchos::RCP<Mesh> mesh){
   ex_close(mesh->get_face_edge_output_exoid());
 }
 
-
+DICE_LIB_DLL_EXPORT
 void
 create_face_edge_output_variable_names(Teuchos::RCP<Mesh> mesh)
 {
@@ -1201,6 +1214,7 @@ create_face_edge_output_variable_names(Teuchos::RCP<Mesh> mesh)
   delete [] ele_var_names;
 }
 
+DICE_LIB_DLL_EXPORT
 void
 create_face_edge_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   const std::string & output_folder)
@@ -1317,7 +1331,7 @@ create_face_edge_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   delete[] block_connect;
 }
 
-
+DICE_LIB_DLL_EXPORT
 void
 create_exodus_output_variable_names(Teuchos::RCP<Mesh> mesh)
 {
@@ -1391,6 +1405,7 @@ create_exodus_output_variable_names(Teuchos::RCP<Mesh> mesh)
   delete [] ele_var_names;
 }
 
+DICE_LIB_DLL_EXPORT
 void
 initialize_control_volumes(Teuchos::RCP<Mesh> mesh){
 
@@ -1766,6 +1781,7 @@ initialize_control_volumes(Teuchos::RCP<Mesh> mesh){
 // Create the internal faces and edges for control volume calculations
 // Only the right hand boundary object is computed for each subelement
 // since every boundary object is shared by two nodes.
+DICE_LIB_DLL_EXPORT
 void
 tri3_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
   Teuchos::ArrayRCP<const scalar_t> coords_values,
@@ -1862,6 +1878,7 @@ tri3_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
    }
 }
 
+DICE_LIB_DLL_EXPORT
 void
 compute_submesh_obj_from_tri3(Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> node_A,
@@ -1904,7 +1921,7 @@ compute_submesh_obj_from_tri3(Teuchos::ArrayRCP<const scalar_t> coords_values,
   subtri_edge_centroid[1] = (mpIAy + parent_centroid[1]) / 2.0;
 }
 
-
+DICE_LIB_DLL_EXPORT
 void
 compute_centroid_of_tri(
   Teuchos::ArrayRCP<const scalar_t> coords_values,
@@ -1928,6 +1945,7 @@ compute_centroid_of_tri(
   cntrd[1] = (Ay + By + Iy)/3.0;
 }
 
+DICE_LIB_DLL_EXPORT
 void
 compute_centroid_of_tet(
   Teuchos::ArrayRCP<const scalar_t> coords_values,
@@ -1961,6 +1979,7 @@ compute_centroid_of_tet(
   cntrd[2] = (Az + Bz + Cz + Iz)/4.0;
 }
 
+DICE_LIB_DLL_EXPORT
 void
 tetra4_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
   Teuchos::ArrayRCP<const scalar_t> coords_values,
@@ -2074,6 +2093,7 @@ tetra4_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
   }
 }
 
+DICE_LIB_DLL_EXPORT
 void
 compute_submesh_obj_from_tet4(
   Teuchos::ArrayRCP<const scalar_t> coords_values,
@@ -2155,6 +2175,7 @@ compute_submesh_obj_from_tet4(
     std::logic_error,"Normals that should be equal are not. ");// + oss.str());
 }
 
+DICE_LIB_DLL_EXPORT
 scalar_t
 tri3_area(Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> node_A,
@@ -2173,6 +2194,7 @@ tri3_area(Teuchos::ArrayRCP<const scalar_t> coords_values,
   return 0.5 * std::abs(cross_prod);
 }
 
+DICE_LIB_DLL_EXPORT
 scalar_t
 tetra4_volume(Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> node_A,
@@ -2201,7 +2223,7 @@ tetra4_volume(Teuchos::ArrayRCP<const scalar_t> coords_values,
   return std::abs(det) / 6.0;
 }
 
-
+DICE_LIB_DLL_EXPORT
 void
 create_cell_size_and_radius(Teuchos::RCP<Mesh> mesh)
 {
@@ -2240,7 +2262,7 @@ create_cell_size_and_radius(Teuchos::RCP<Mesh> mesh)
   mesh->set_cell_sizes_are_initialized();
 }
 
-
+DICE_LIB_DLL_EXPORT
 void
 hex8_volume_radius(Teuchos::RCP<Mesh> mesh,
   Teuchos::ArrayRCP<const scalar_t> coords_values,
@@ -2318,6 +2340,7 @@ hex8_volume_radius(Teuchos::RCP<Mesh> mesh,
   cell_radius.local_value(element.get()->local_id()) = radius;
 }
 
+DICE_LIB_DLL_EXPORT
 void
 tetra4_volume_radius(Teuchos::RCP<Mesh> mesh,
   Teuchos::ArrayRCP<const scalar_t> coords_values,
@@ -2346,6 +2369,7 @@ tetra4_volume_radius(Teuchos::RCP<Mesh> mesh,
   cell_radius.local_value(element.get()->local_id()) = radius;
 }
 
+DICE_LIB_DLL_EXPORT
 void
 pyramid5_volume_radius(Teuchos::RCP<Mesh> mesh,
   Teuchos::ArrayRCP<const scalar_t> coords_values,
@@ -2422,6 +2446,7 @@ pyramid5_volume_radius(Teuchos::RCP<Mesh> mesh,
   cell_radius.local_value(element.get()->local_id()) = radius;
 }
 
+DICE_LIB_DLL_EXPORT
 void
 quad4_area_radius(Teuchos::RCP<Mesh> mesh,
   Teuchos::ArrayRCP<const scalar_t> coords_values,
@@ -2473,6 +2498,7 @@ quad4_area_radius(Teuchos::RCP<Mesh> mesh,
   cell_radius.local_value(element.get()->local_id()) = radius;
 }
 
+DICE_LIB_DLL_EXPORT
 void
 tri3_area_radius(Teuchos::RCP<Mesh> mesh,
   Teuchos::ArrayRCP<const scalar_t> coords_values,

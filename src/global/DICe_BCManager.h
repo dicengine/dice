@@ -81,9 +81,7 @@ public:
 
 protected:
   /// Protect the default constructor
-  Boundary_Condition(const Boundary_Condition &);
-  /// Comparison operator
-  Boundary_Condition & operator=(const Boundary_Condition &);
+  Boundary_Condition(const Boundary_Condition &):is_mixed_(false){};
   /// pointer to the mesh
   Teuchos::RCP<DICe::mesh::Mesh> mesh_;
   /// true if this is a mixed formulation

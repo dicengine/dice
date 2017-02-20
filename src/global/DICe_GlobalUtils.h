@@ -167,9 +167,7 @@ public:
 
 protected:
   /// Protect the default constructor
-  MMS_Problem(const MMS_Problem&);
-  /// Comparison operator
-  MMS_Problem& operator=(const MMS_Problem&);
+  MMS_Problem(const MMS_Problem&):dim_x_(0),dim_y_(0){};
   /// size of the domain in x
   const scalar_t dim_x_;
   /// size of the domain in y
