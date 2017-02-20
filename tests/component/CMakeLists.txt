@@ -18,11 +18,6 @@ IF(DICE_ENABLE_OPENCV)
     ${DICE_COMP_LIBS}
     dicefeature)
 ENDIF()
-IF(DICE_ENABLE_GLOBAL)
-  SET(DICE_COMP_LIBS
-    ${DICE_COMP_LIBS}
-    diceglobal)
-ENDIF()
 IF(DICE_ENABLE_NETCDF)
   link_directories( ${NetCDF_DIR}/../lib )
 ENDIF()
@@ -38,10 +33,6 @@ FOREACH ( test_file ${test_cpp_files})
     target_link_libraries(${name} ${DICE_LIBRARIES} ${DICE_COMP_LIBS})
 ENDFOREACH()
 
-IF(DICE_ENABLE_GLOBAL)
-  add_subdirectory(global)
-ENDIF()
-
 IF(DICE_ENABLE_NETCDF)
   add_subdirectory(netcdf)
 ENDIF()
@@ -50,3 +41,6 @@ IF(DICE_ENABLE_OPENCV)
   add_subdirectory(opencv)
 ENDIF()
 
+IF(DICE_ENABLE_GLOBAL)
+  add_subdirectory(global)
+ENDIF()

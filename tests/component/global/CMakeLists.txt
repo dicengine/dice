@@ -5,7 +5,6 @@ SET(DICE_GLOBAL_LIBS
   dicemesh
   dicecore
   dicebase
-  diceglobal
   triangle
 )
 FILE ( GLOB test_global_cpp_files "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")

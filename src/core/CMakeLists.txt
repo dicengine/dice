@@ -31,6 +31,23 @@ SET(DICE_HEADERS
   DICe_Decomp.h
   )
 
+IF(DICE_ENABLE_GLOBAL)
+  SET(DICE_SOURCES
+    ${DICE_SOURCES}
+    ../global/DICe_Global.cpp
+    ../global/DICe_GlobalUtils.cpp
+    ../global/DICe_Preconditioner.cpp
+    ../global/DICe_BCManager.cpp
+  )
+  SET(DICE_HEADERS
+    ${DICE_HEADERS}
+    ../global/DICe_Global.h
+    ../global/DICe_GlobalUtils.h
+    ../global/DICe_Preconditioner.h
+    ../global/DICe_BCManager.h
+  )
+ENDIF()
+
 include_directories (
     .
     ${DICE_HEADER_DIRS}
@@ -61,7 +78,7 @@ IF(DICE_ENABLE_OPENCV)
   target_link_libraries(dicecore dicefeature)
 ENDIF()
 IF(DICE_ENABLE_GLOBAL)
-  target_link_libraries(dicecore diceglobal dicemeshio)
+  target_link_libraries(dicecore dicemeshio triangle)
 ENDIF()
 target_compile_definitions(dicecore PRIVATE -D DICE_LIB_EXPORTS_MODE)
 
@@ -81,9 +98,6 @@ target_link_libraries(dice_main ${DICE_LIBRARIES} ${Boost_LIBRARIES} dicebase di
 IF(DICE_ENABLE_OPENCV)
   target_link_libraries(dice_main dicefeature)
 ENDIF()
-IF(DICE_ENABLE_GLOBAL)
-  target_link_libraries(dice_main diceglobal)
-ENDIF()
 target_compile_definitions(dice_main PRIVATE -D DICE_LIB_EXPORTS_MODE)
 
 install(TARGETS dice_main DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
@@ -101,7 +115,7 @@ IF(DICE_ENABLE_GLOBAL)
 #
 add_executable(dice_strain DICe_Strain.cpp)
 set_target_properties(dice_strain PROPERTIES OUTPUT_NAME "dice_strain")
-target_link_libraries(dice_strain ${DICE_LIBRARIES} ${Boost_LIBRARIES} dicebase dicecore diceglobal dicefeature diceparser)
+target_link_libraries(dice_strain ${DICE_LIBRARIES} ${Boost_LIBRARIES} dicebase dicecore dicefeature diceparser)
 IF(DICE_ENABLE_OPENCV)
   target_link_libraries(dice_strain dicefeature)
 ENDIF()
