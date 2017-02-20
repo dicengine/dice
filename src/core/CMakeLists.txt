@@ -44,7 +44,7 @@ IF(DICE_ENABLE_NETCDF)
 ENDIF()
 
 add_library(diceparser ${DICE_SOURCES_UTIL} ${DICE_HEADERS_UTIL})
-#target_link_libraries(diceparser ${Boost_LIBRARIES} teuchoscore)
+target_link_libraries(diceparser ${Boost_LIBRARIES} teuchoscore teuchosparameterlist dicebase)
 target_compile_definitions(diceparser PRIVATE -D DICE_LIB_EXPORTS_MODE)
 install(TARGETS diceparser
   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib

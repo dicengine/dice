@@ -446,17 +446,17 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
       shape_func_eval_factory.create(DICe::mesh::TRI6):
       shape_func_eval_factory.create(DICe::mesh::TRI3);
   const int_t num_funcs = shape_func_evaluator->num_functions();
-  scalar_t N[num_funcs];
-  scalar_t DN[num_funcs*spa_dim];
-  int_t node_ids[num_funcs];
-  scalar_t nodal_coords[num_funcs*spa_dim];
-  scalar_t nodal_disp[num_funcs*spa_dim];
-  scalar_t jac[spa_dim*spa_dim];
-  scalar_t inv_jac[spa_dim*spa_dim];
+  std::vector<scalar_t> N(num_funcs);
+  std::vector<scalar_t> DN(num_funcs*spa_dim);
+  std::vector<int_t> node_ids(num_funcs);
+  std::vector<scalar_t> nodal_coords(num_funcs*spa_dim);
+  std::vector<scalar_t> nodal_disp(num_funcs*spa_dim);
+  std::vector<scalar_t> jac(spa_dim*spa_dim);
+  std::vector<scalar_t> inv_jac(spa_dim*spa_dim);
   scalar_t J =0.0;
-  scalar_t elem_stiffness[num_funcs*spa_dim*num_funcs*spa_dim];
-  scalar_t elem_div_stiffness[num_funcs*spa_dim*num_funcs];
-  scalar_t elem_stab_stiffness[num_funcs*num_funcs];
+  std::vector<scalar_t> elem_stiffness(num_funcs*spa_dim*num_funcs*spa_dim);
+  std::vector<scalar_t> elem_div_stiffness(num_funcs*spa_dim*num_funcs);
+  std::vector<scalar_t> elem_stab_stiffness(num_funcs*num_funcs);
 
   //scalar_t grad_phi[spa_dim];
   scalar_t x=0.0,y=0.0;
@@ -469,7 +469,7 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
   int_t num_integration_points = -1;
   shape_func_evaluator->get_natural_integration_points(integration_order,gp_locs,gp_weights,num_integration_points);
   const int_t natural_coord_dim = gp_locs[0].size();
-  scalar_t natural_coords[natural_coord_dim];
+  std::vector<scalar_t> natural_coords(natural_coord_dim);
 
   const int_t image_integration_order = num_image_integration_points_;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > image_gp_locs;
@@ -520,8 +520,8 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
         //std::cout << " natural coords " << dim << " " << natural_coords[dim] << std::endl;
       }
       // evaluate the shape functions and derivatives:
-      shape_func_evaluator->evaluate_shape_functions(natural_coords,N);
-      shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN);
+      shape_func_evaluator->evaluate_shape_functions(&natural_coords[0],&N[0]);
+      shape_func_evaluator->evaluate_shape_function_derivatives(&natural_coords[0],&DN[0]);
 
       // physical gp location
       x = 0.0; y=0.0;
@@ -532,35 +532,35 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
       //std::cout << " physical coords " << x << " " << y << std::endl;
 
       // compute the jacobian for this element:
-      DICe::global::calc_jacobian(nodal_coords,DN,jac,inv_jac,J,num_funcs,spa_dim);
+      DICe::global::calc_jacobian(&nodal_coords[0],&DN[0],&jac[0],&inv_jac[0],J,num_funcs,spa_dim);
 
       scalar_t tau = 0.0;
       if(is_mixed_formulation()){
-        tau = stabilization_tau_ == -1.0 ? compute_tau_tri3(global_formulation_,alpha2_,natural_coords,J,inv_jac) :
+        tau = stabilization_tau_ == -1.0 ? compute_tau_tri3(global_formulation_,alpha2_,&natural_coords[0],J,&inv_jac[0]) :
             stabilization_tau_;
       }
 
       // grad(phi) tensor_prod grad(phi)
       if(has_term(MMS_IMAGE_GRAD_TENSOR))
-        mms_image_grad_tensor(mms_problem_,spa_dim,num_funcs,x,y,J,gp_weights[gp],N,elem_stiffness);
+        mms_image_grad_tensor(mms_problem_,spa_dim,num_funcs,x,y,J,gp_weights[gp],&N[0],&elem_stiffness[0]);
 
       // alpha^2 * div(0.5*(grad(b) + grad(b)^T))
       if(has_term(DIV_SYMMETRIC_STRAIN_REGULARIZATION))
-        div_symmetric_strain(spa_dim,num_funcs,alpha2_,J,gp_weights[gp],inv_jac,DN,elem_stiffness);
+        div_symmetric_strain(spa_dim,num_funcs,alpha2_,J,gp_weights[gp],&inv_jac[0],&DN[0],&elem_stiffness[0]);
 
       // alpha^2 * b
       if(has_term(TIKHONOV_REGULARIZATION))
-        tikhonov_tensor(this,spa_dim,num_funcs,J,gp_weights[gp],N,tau,elem_stiffness);
+        tikhonov_tensor(this,spa_dim,num_funcs,J,gp_weights[gp],&N[0],tau,&elem_stiffness[0]);
       //lumped_tikhonov_tensor(this,spa_dim,tri6_num_funcs,J,gp_weights[gp],N6,elem_stiffness);
 
       // mixed formulation stiffness terms
 
       // grad(lambda)
       if(has_term(DIV_VELOCITY))
-        div_velocity(spa_dim,num_funcs,J,gp_weights[gp],inv_jac,DN,N,alpha2_,tau,elem_div_stiffness);
+        div_velocity(spa_dim,num_funcs,J,gp_weights[gp],&inv_jac[0],&DN[0],&N[0],alpha2_,tau,&elem_div_stiffness[0]);
 
       if(has_term(STAB_LAGRANGE))
-        stab_lagrange(spa_dim,num_funcs,J,gp_weights[gp],inv_jac,DN,tau,elem_stab_stiffness);
+        stab_lagrange(spa_dim,num_funcs,J,gp_weights[gp],&inv_jac[0],&DN[0],tau,&elem_stab_stiffness[0]);
 
       //      std::cout << "INT div stiff " << std::endl;
       //      for(int_t j=0;j<lag_num_funcs;++j){
@@ -615,8 +615,8 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
         //std::cout << " natural coords " << dim << " " << natural_coords[dim] << std::endl;
       }
       // evaluate the shape functions and derivatives:
-      shape_func_evaluator->evaluate_shape_functions(natural_coords,N);
-      shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN);
+      shape_func_evaluator->evaluate_shape_functions(&natural_coords[0],&N[0]);
+      shape_func_evaluator->evaluate_shape_function_derivatives(&natural_coords[0],&DN[0]);
 
       // physical gp location
       x = 0.0; y=0.0;
@@ -632,11 +632,11 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
       //std::cout << " physical coords " << x << " " << y << std::endl;
 
       // compute the jacobian for this element:
-      DICe::global::calc_jacobian(nodal_coords,DN,jac,inv_jac,J,num_funcs,spa_dim);
+      DICe::global::calc_jacobian(&nodal_coords[0],&DN[0],&jac[0],&inv_jac[0],J,num_funcs,spa_dim);
 
       // grad(phi) tensor_prod grad(phi)
       if(has_term(IMAGE_GRAD_TENSOR))
-        image_grad_tensor(this,spa_dim,num_funcs,x,y,bx,by,J,image_gp_weights[gp],N,elem_stiffness);
+        image_grad_tensor(this,spa_dim,num_funcs,x,y,bx,by,J,image_gp_weights[gp],&N[0],&elem_stiffness[0]);
 
     } // image gp loop
 
@@ -769,14 +769,14 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
       shape_func_eval_factory.create(DICe::mesh::TRI6) :
       shape_func_eval_factory.create(DICe::mesh::TRI3);
   const int_t num_funcs = shape_func_evaluator->num_functions();
-  scalar_t N[num_funcs];
-  scalar_t DN[num_funcs*spa_dim];
-  scalar_t nodal_coords[num_funcs*spa_dim];
-  scalar_t nodal_disp[num_funcs*spa_dim];
-  scalar_t jac[spa_dim*spa_dim];
-  scalar_t inv_jac[spa_dim*spa_dim];
+  std::vector<scalar_t> N(num_funcs);
+  std::vector<scalar_t> DN(num_funcs*spa_dim);
+  std::vector<scalar_t> nodal_coords(num_funcs*spa_dim);
+  std::vector<scalar_t> nodal_disp(num_funcs*spa_dim);
+  std::vector<scalar_t> jac(spa_dim*spa_dim);
+  std::vector<scalar_t> inv_jac(spa_dim*spa_dim);
   scalar_t J =0.0;
-  scalar_t elem_force[num_funcs*spa_dim];
+  std::vector<scalar_t> elem_force(num_funcs*spa_dim);
   scalar_t x=0.0,y=0.0,bx=0.0,by=0.0;
 
   // get the natural integration points for this element:
@@ -786,7 +786,7 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
   int_t num_integration_points = -1;
   shape_func_evaluator->get_natural_integration_points(integration_order,gp_locs,gp_weights,num_integration_points);
   const int_t natural_coord_dim = gp_locs[0].size();
-  scalar_t natural_coords[natural_coord_dim];
+  std::vector<scalar_t> natural_coords(natural_coord_dim);
 
   const int_t image_integration_order = num_image_integration_points_;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > image_gp_locs;
@@ -832,8 +832,8 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
           //std::cout << " natural coords " << dim << " " << natural_coords[dim] << std::endl;
         }
         // evaluate the shape functions and derivatives:
-        shape_func_evaluator->evaluate_shape_functions(natural_coords,N);
-        shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN);
+        shape_func_evaluator->evaluate_shape_functions(&natural_coords[0],&N[0]);
+        shape_func_evaluator->evaluate_shape_function_derivatives(&natural_coords[0],&DN[0]);
 
         // physical gp location
         x = 0.0; y=0.0;
@@ -844,15 +844,15 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
         //std::cout << " physical coords " << x << " " << y << std::endl;
 
         // compute the jacobian for this element:
-        DICe::global::calc_jacobian(nodal_coords,DN,jac,inv_jac,J,num_funcs,spa_dim);
+        DICe::global::calc_jacobian(&nodal_coords[0],&DN[0],&jac[0],&inv_jac[0],J,num_funcs,spa_dim);
 
         // mms force
         if(has_term(MMS_FORCE))
-          mms_force(mms_problem_,spa_dim,num_funcs,x,y,alpha2_,J,gp_weights[gp],N,this->eq_terms(),elem_force);
+          mms_force(mms_problem_,spa_dim,num_funcs,x,y,alpha2_,J,gp_weights[gp],&N[0],this->eq_terms(),&elem_force[0]);
 
         // d_dt(phi) * grad(phi)
         if(has_term(MMS_IMAGE_TIME_FORCE))
-          mms_image_time_force(mms_problem_,spa_dim,num_funcs,x,y,J,gp_weights[gp],N,elem_force);
+          mms_image_time_force(mms_problem_,spa_dim,num_funcs,x,y,J,gp_weights[gp],&N[0],&elem_force[0]);
 
       } // gp loop
     } // has mms_problem
@@ -866,8 +866,8 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
         //std::cout << " natural coords " << dim << " " << natural_coords[dim] << std::endl;
       }
       // evaluate the shape functions and derivatives:
-      shape_func_evaluator->evaluate_shape_functions(natural_coords,N);
-      shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN);
+      shape_func_evaluator->evaluate_shape_functions(&natural_coords[0],&N[0]);
+      shape_func_evaluator->evaluate_shape_function_derivatives(&natural_coords[0],&DN[0]);
 
       // physical gp location
       x = 0.0; y=0.0;
@@ -884,11 +884,11 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
       //std::cout << " physical coords " << x << " " << y << std::endl;
 
       // compute the jacobian for this element:
-      DICe::global::calc_jacobian(nodal_coords,DN,jac,inv_jac,J,num_funcs,spa_dim);
+      DICe::global::calc_jacobian(&nodal_coords[0],&DN[0],&jac[0],&inv_jac[0],J,num_funcs,spa_dim);
 
       // d_dt(phi) * grad(phi)
       if(has_term(IMAGE_TIME_FORCE))
-        image_time_force(this,spa_dim,num_funcs,x,y,bx,by,J,image_gp_weights[gp],N,elem_force);
+        image_time_force(this,spa_dim,num_funcs,x,y,bx,by,J,image_gp_weights[gp],&N[0],&elem_force[0]);
 
       //if(use_fixed_point)
       //  image_grad_force(this,spa_dim,tri6_num_funcs,x,y,bx,by,J,image_gp_weights[gp],N6,elem_force);
@@ -1155,13 +1155,13 @@ Global_Algorithm::compute_strains(){
       shape_func_eval_factory.create(DICe::mesh::TRI6) : // linear strains
       shape_func_eval_factory.create(DICe::mesh::TRI3); // constant strains
   const int_t num_funcs = shape_func_evaluator->num_functions();
-  scalar_t DN[num_funcs*spa_dim];
-  scalar_t nodal_coords[num_funcs*spa_dim];
-  scalar_t nodal_disp[num_funcs*spa_dim];
-  scalar_t jac[spa_dim*spa_dim];
-  scalar_t inv_jac[spa_dim*spa_dim];
+  std::vector<scalar_t> DN(num_funcs*spa_dim);
+  std::vector<scalar_t> nodal_coords(num_funcs*spa_dim);
+  std::vector<scalar_t> nodal_disp(num_funcs*spa_dim);
+  std::vector<scalar_t> jac(spa_dim*spa_dim);
+  std::vector<scalar_t> inv_jac(spa_dim*spa_dim);
   scalar_t J =0.0;
-  scalar_t natural_coords[spa_dim];
+  std::vector<scalar_t> natural_coords(spa_dim);
   scalar_t node_nat_x[] = {0.0, 1.0, 0.0, 0.5, 0.5, 0.0}; // If the elem is TRI6 the last three are not used
   scalar_t node_nat_y[] = {0.0, 0.0, 1.0, 0.0, 0.5, 0.5};
 
@@ -1187,10 +1187,10 @@ Global_Algorithm::compute_strains(){
       natural_coords[1] = node_nat_y[nd];
 
       // evaluate the shape functions and derivatives:
-      shape_func_evaluator->evaluate_shape_function_derivatives(natural_coords,DN);
+      shape_func_evaluator->evaluate_shape_function_derivatives(&natural_coords[0],&DN[0]);
 
       // compute the jacobian for this element:
-      DICe::global::calc_jacobian(nodal_coords,DN,jac,inv_jac,J,num_funcs,spa_dim);
+      DICe::global::calc_jacobian(&nodal_coords[0],&DN[0],&jac[0],&inv_jac[0],J,num_funcs,spa_dim);
 
       for(int_t i=0;i<num_funcs;++i){
         int_t local_index = connectivity[nd]->overlap_local_id();
