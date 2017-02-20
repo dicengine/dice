@@ -68,10 +68,10 @@ void div_symmetric_strain(const int_t spa_dim,
   const scalar_t * DN,
   scalar_t * elem_stiffness){
   const int_t B_dim = 2*spa_dim - 1;
-  scalar_t B[B_dim*num_funcs*spa_dim];
+  std::vector<scalar_t> B(B_dim*num_funcs*spa_dim);
 
   // compute the B matrix
-  DICe::global::calc_B(DN,inv_jac,num_funcs,spa_dim,B);
+  DICe::global::calc_B(DN,inv_jac,num_funcs,spa_dim,&B[0]);
 
   // compute B'*B
   for(int_t i=0;i<num_funcs*spa_dim;++i){
@@ -339,7 +339,7 @@ void div_velocity(const int_t spa_dim,
   const scalar_t & alpha2,
   const scalar_t & tau,
   scalar_t * elem_div_stiffness){
-  scalar_t vec_invjTDNT[num_funcs*spa_dim];
+  std::vector<scalar_t> vec_invjTDNT(num_funcs*spa_dim);
   for(int_t n=0;n<num_funcs;++n){
     vec_invjTDNT[n*spa_dim+0] = inv_jac[0]*DN[n*spa_dim+0] + inv_jac[2]*DN[n*spa_dim+1];
     vec_invjTDNT[n*spa_dim+1] = inv_jac[1]*DN[n*spa_dim+0] + inv_jac[3]*DN[n*spa_dim+1];
@@ -371,7 +371,7 @@ void stab_lagrange(const int_t spa_dim,
   const scalar_t * DN,
   const scalar_t & tau,
   scalar_t * elem_stab_stiffness){
-  scalar_t invjTDNT[num_funcs*spa_dim];
+  std::vector<scalar_t> invjTDNT(num_funcs*spa_dim);
   for(int_t n=0;n<num_funcs;++n){
     invjTDNT[n*spa_dim+0] = inv_jac[0]*DN[n*spa_dim+0] + inv_jac[2]*DN[n*spa_dim+1];
     invjTDNT[n*spa_dim+1] = inv_jac[1]*DN[n*spa_dim+0] + inv_jac[3]*DN[n*spa_dim+1];
@@ -693,7 +693,7 @@ void calc_B(const scalar_t * DN,
   const int_t dim,
   scalar_t * solid_B){
 
-  scalar_t dN[dim*num_elem_nodes];
+  std::vector<scalar_t> dN(dim*num_elem_nodes);
   for(int_t i=0;i<dim*num_elem_nodes;++i)
     dN[i] = 0.0;
 
