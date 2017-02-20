@@ -9,7 +9,7 @@ include_directories (
 SET(DICE_TEST_LIBRARIES
    dicebase
    dicecore
-   diceparserutils
+   diceparser
    dicefft
    dicestereocalib
 )

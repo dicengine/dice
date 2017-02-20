@@ -671,4 +671,239 @@ Decomp::populate_global_coordinate_vector(Teuchos::ArrayRCP<scalar_t> & subset_c
 //  }
 }
 
+DICE_LIB_DLL_EXPORT
+void
+create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_points,
+  std::vector<int_t> & neighbor_ids,
+  Teuchos::RCP<Teuchos::ParameterList> params,
+  Teuchos::RCP<Image> image,
+  Teuchos::RCP<DICe::Subset_File_Info> subset_file_info,
+  const scalar_t & grad_threshold){
+  int proc_rank = 0;
+#if DICE_MPI
+  int mpi_is_initialized = 0;
+  MPI_Initialized(&mpi_is_initialized);
+  if(mpi_is_initialized)
+    MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
+#endif
+
+  if(proc_rank==0) DEBUG_MSG("Creating a grid of regular correlation points");
+  // note: assumes two dimensional
+  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::step_size),std::runtime_error,
+    "Error, the step size was not specified");
+  const int_t step_size = params->get<int_t>(DICe::step_size);
+  // set up the control points
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size<=0,std::runtime_error,"Error: step size is <= 0");
+  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::subset_size),std::runtime_error,
+    "Error, the subset size was not specified");
+  const int_t subset_size = params->get<int_t>(DICe::subset_size);
+  correlation_points.clear();
+  neighbor_ids.clear();
+
+  const int_t width = image->width();
+  const int_t height = image->height();
+
+  bool seed_was_specified = false;
+  Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > roi_defs;
+  if(subset_file_info!=Teuchos::null){
+    if(subset_file_info->conformal_area_defs!=Teuchos::null){
+      if(proc_rank==0) DEBUG_MSG("Using ROIs from a subset file");
+      roi_defs = subset_file_info->conformal_area_defs;
+      if(proc_rank==0) DEBUG_MSG("create_regular_grid_of_correlation_points(): user requested " << roi_defs->size() <<  " ROI(s)");
+      seed_was_specified = subset_file_info->size_map->size() > 0;
+      if(seed_was_specified){
+        TEUCHOS_TEST_FOR_EXCEPTION(subset_file_info->size_map->size()!=subset_file_info->displacement_map->size(),
+          std::runtime_error,"Error the number of displacement guesses and seed locations must be the same");
+      }
+    }
+    else{
+      if(proc_rank==0) DEBUG_MSG("create_regular_grid_of_correlation_points(): subset file exists, but has no ROIs");
+    }
+  }
+  if(roi_defs==Teuchos::null){ // wasn't populated above so create a dummy roi with the whole image:
+    if(proc_rank==0) DEBUG_MSG("create_regular_grid_of_correlation_points(): creating dummy ROI of the entire image");
+    Teuchos::RCP<DICe::Rectangle> rect = Teuchos::rcp(new DICe::Rectangle(width/2,height/2,width,height));
+    DICe::multi_shape boundary_multi_shape;
+    boundary_multi_shape.push_back(rect);
+    DICe::Conformal_Area_Def conformal_area_def(boundary_multi_shape);
+    roi_defs = Teuchos::rcp(new std::map<int_t,DICe::Conformal_Area_Def> ());
+    roi_defs->insert(std::pair<int_t,DICe::Conformal_Area_Def>(0,conformal_area_def));
+  }
+
+  // if no ROI is specified, the whole image is the ROI
+
+  int_t current_subset_id = 0;
+
+  std::map<int_t,DICe::Conformal_Area_Def>::iterator map_it=roi_defs->begin();
+  for(;map_it!=roi_defs->end();++map_it){
+
+    std::set<std::pair<int_t,int_t> > coords;
+    std::set<std::pair<int_t,int_t> > excluded_coords;
+    // collect the coords of all the boundary shapes
+    for(size_t i=0;i<map_it->second.boundary()->size();++i){
+      std::set<std::pair<int_t,int_t> > shapeCoords = (*map_it->second.boundary())[i]->get_owned_pixels();
+      coords.insert(shapeCoords.begin(),shapeCoords.end());
+    }
+    // collect the coords of all the exclusions
+    if(map_it->second.has_excluded_area()){
+      for(size_t i=0;i<map_it->second.excluded_area()->size();++i){
+        std::set<std::pair<int_t,int_t> > shapeCoords = (*map_it->second.excluded_area())[i]->get_owned_pixels();
+        excluded_coords.insert(shapeCoords.begin(),shapeCoords.end());
+      }
+    }
+    int_t num_rows = 0;
+    int_t num_cols = 0;
+    int_t seed_row = 0;
+    int_t seed_col = 0;
+    int_t x_coord = subset_size-1;
+    int_t y_coord = subset_size-1;
+    int_t seed_location_x = 0;
+    int_t seed_location_y = 0;
+    int_t seed_subset_id = -1;
+
+    bool this_roi_has_seed = false;
+    if(seed_was_specified){
+      if(subset_file_info->size_map->find(map_it->first)!=subset_file_info->size_map->end()){
+        seed_location_x = subset_file_info->size_map->find(map_it->first)->second.first;
+        seed_location_y = subset_file_info->size_map->find(map_it->first)->second.second;
+        if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " seed x: " << seed_location_x << " seed_y: " << seed_location_y);
+        this_roi_has_seed = true;
+      }
+    }
+    while(x_coord < width - subset_size) {
+      if(x_coord + step_size/2 < seed_location_x) seed_col++;
+      x_coord+=step_size;
+      num_cols++;
+    }
+    while(y_coord < height - subset_size) {
+      if(y_coord + step_size/2 < seed_location_y) seed_row++;
+      y_coord+=step_size;
+      num_rows++;
+    }
+    if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " has " << num_rows << " rows and " << num_cols << " cols, seed row " << seed_row << " seed col " << seed_col);
+    //if(seed_was_specified&&this_roi_has_seed){
+      x_coord = subset_size-1 + seed_col*step_size;
+      y_coord = subset_size-1 + seed_row*step_size;
+    if(valid_correlation_point(x_coord,y_coord,image,subset_size,coords,excluded_coords,grad_threshold)){
+      correlation_points.push_back((scalar_t)x_coord);
+      correlation_points.push_back((scalar_t)y_coord);
+      //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding seed correlation point " << x_coord << " " << y_coord);
+      if(seed_was_specified&&this_roi_has_seed){
+        seed_subset_id = current_subset_id;
+        subset_file_info->seed_subset_ids->insert(std::pair<int_t,int_t>(seed_subset_id,map_it->first));
+      }
+      neighbor_ids.push_back(-1); // seed point cannot have a neighbor
+      current_subset_id++;
+    }
+    else if(!(seed_row==0&&seed_col==0)){
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, seed specified does not meet the SSSIG criteria for suffient image gradients");
+    }
+
+    // snake right from seed
+    const int_t right_start_subset_id = current_subset_id;
+    int_t direction = 1; // sign needs to be flipped if the seed row is the first row
+    int_t row = seed_row;
+    int_t col = seed_col;
+    while(row>=0&&row<num_rows){
+      if((direction==1&&row+1>=num_rows)||(direction==-1&&row-1<0)){
+        direction *= -1;
+        col++;
+      }else{
+        row += direction;
+      }
+      if(col>=num_cols)break;
+      x_coord = subset_size - 1 + col*step_size;
+      y_coord = subset_size - 1 + row*step_size;
+      if(valid_correlation_point(x_coord,y_coord,image,subset_size,coords,excluded_coords,grad_threshold)){
+        correlation_points.push_back((scalar_t)x_coord);
+        correlation_points.push_back((scalar_t)y_coord);
+        //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding snake right correlation point " << x_coord << " " << y_coord);
+        if(current_subset_id==right_start_subset_id)
+          neighbor_ids.push_back(seed_subset_id);
+        else
+          neighbor_ids.push_back(current_subset_id - 1);
+        current_subset_id++;
+      }  // end valid point
+    }  // end snake right
+    // snake left from seed
+    const int_t left_start_subset_id = current_subset_id;
+    direction = -1;
+    row = seed_row;
+    col = seed_col;
+    while(row>=0&&row<num_rows){
+      if((direction==1&&row+1>=num_rows)||(direction==-1&&row-1<0)){
+        direction *= -1;
+        col--;
+      }
+      else{
+        row += direction;
+      }
+      if(col<0)break;
+      x_coord = subset_size - 1 + col*step_size;
+      y_coord = subset_size - 1 + row*step_size;
+      if(valid_correlation_point(x_coord,y_coord,image,subset_size,coords,excluded_coords,grad_threshold)){
+        correlation_points.push_back((scalar_t)x_coord);
+        correlation_points.push_back((scalar_t)y_coord);
+        //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding snake left correlation point " << x_coord << " " << y_coord);
+        if(current_subset_id==left_start_subset_id)
+          neighbor_ids.push_back(seed_subset_id);
+        else
+          neighbor_ids.push_back(current_subset_id-1);
+        current_subset_id++;
+      }  // valid point
+    }  // end snake left
+  }  // conformal area map
+  DEBUG_MSG("create_regular_grid_of_correlation_points(): complete, created " << correlation_points.size() << " points");
+}
+
+DICE_LIB_DLL_EXPORT
+bool valid_correlation_point(const int_t x_coord,
+  const int_t y_coord,
+  Teuchos::RCP<Image> image,
+  const int_t subset_size,
+  std::set<std::pair<int_t,int_t> > & coords,
+  std::set<std::pair<int_t,int_t> > & excluded_coords,
+  const scalar_t & grad_threshold){
+  // need to check if the point is interior to the image by at least one subset_size
+  if(x_coord<subset_size-1) return false;
+  if(x_coord>image->width()-subset_size) return false;
+  if(y_coord<subset_size-1) return false;
+  if(y_coord>image->height()-subset_size) return false;
+
+  // only the centroid has to be inside the ROI
+  if(coords.find(std::pair<int_t,int_t>(y_coord,x_coord))==coords.end()) return false;
+
+  static std::vector<int_t> corners_x(4);
+  static std::vector<int_t> corners_y(4);
+  corners_x[0] = x_coord - subset_size/2;  corners_y[0] = y_coord - subset_size/2;
+  corners_x[1] = corners_x[0]+subset_size; corners_y[1] = corners_y[0];
+  corners_x[2] = corners_x[0]+subset_size; corners_y[2] = corners_y[0] + subset_size;
+  corners_x[3] = corners_x[0];             corners_y[3] = corners_y[0] + subset_size;
+  // check four points to see if any of the corners fall in an excluded region
+  bool all_corners_in = true;
+  for(int_t i=0;i<4;++i){
+    if(excluded_coords.find(std::pair<int_t,int_t>(corners_y[i],corners_x[i]))!=excluded_coords.end())
+      all_corners_in = false;
+  }
+  if(!all_corners_in) return false;
+
+  // check the gradient SSSIG threshold
+  if(grad_threshold > 0.0){
+    TEUCHOS_TEST_FOR_EXCEPTION(!image->has_gradients(),std::runtime_error,
+      "Error, testing valid points for SSSIG tol, but image gradients have not been computed");
+    scalar_t SSSIG = 0.0;
+    for(int_t y=corners_y[0];y<corners_y[2];++y){
+      for(int_t x=corners_x[0];x<corners_x[1];++x){
+        SSSIG += image->grad_x(x,y)*image->grad_x(x,y) + image->grad_x(x,y)*image->grad_x(x,y);
+      }
+    }
+    SSSIG /= (subset_size*subset_size);
+    //std::cout << "x " << x_coord << " y " << y_coord << " SSSIG: " << SSSIG << " threshold " << grad_threshold << std::endl;
+    if(SSSIG < grad_threshold) return false;
+  }
+  return true;
+}
+
+
+
 }// End DICe Namespace

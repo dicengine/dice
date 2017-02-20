@@ -10,6 +10,7 @@ SET(DICE_COMP_LIBS
   dicebase
   dicecore
   diceutils
+  diceparser
   dicefft
 )
 IF(DICE_ENABLE_OPENCV)

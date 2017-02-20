@@ -44,6 +44,7 @@
 
 #include <DICe.h>
 #include <DICe_Image.h>
+#include <DICe_Parser.h>
 #include <DICe_PointCloud.h>
 #ifdef DICE_TPETRA
   #include "DICe_MultiFieldTpetra.h"
@@ -192,6 +193,40 @@ private:
   /// trimmed list of neighbor ids
   Teuchos::RCP<std::vector<int_t> > neighbor_ids_;
 };
+
+// free functions to help with creating grids:
+/// \brief Creates a regular square grid of correlation points
+/// \param correlation_points Vector of global point coordinates
+/// \param neighbor_ids Vector of neighbor ids (established if there is a seed)
+/// \param params Used to determine the step size (spacing of points)
+/// \param pointer to a DICe::Image
+/// \param subset_file_info Optional information from the subset file (ROIs, etc.)
+/// \param grad_threshold subsets with a gradiend SSSIG lower than this will be removed
+DICE_LIB_DLL_EXPORT
+void create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_points,
+  std::vector<int_t> & neighbor_ids,
+  Teuchos::RCP<Teuchos::ParameterList> params,
+  Teuchos::RCP<Image> ref_image,
+  Teuchos::RCP<DICe::Subset_File_Info> subset_file_info=Teuchos::null,
+  const scalar_t & grad_threshold = -1.0);
+
+/// \brief Test to see that the point falls with the boundary of a conformal def and not in the excluded area
+/// \param x_coord X coordinate of the point in question
+/// \param y_coord Y coordinate of the point in question
+/// \param image pointer to an image
+/// \param subset_size Size of the subset
+/// \param coords Set of valid coordinates in the area
+/// \param excluded_coords Set of coordinates that should be excluded
+/// \param grad_threshold the SSSIG threshold to eliminate a subset without enough gradients to correlate
+DICE_LIB_DLL_EXPORT
+bool valid_correlation_point(const int_t x_coord,
+  const int_t y_coord,
+  Teuchos::RCP<Image> image,
+  const int_t subset_size,
+  std::set<std::pair<int_t,int_t> > & coords,
+  std::set<std::pair<int_t,int_t> > & excluded_coords,
+  const scalar_t & grad_threshold);
+
 
 }// End DICe Namespace
 

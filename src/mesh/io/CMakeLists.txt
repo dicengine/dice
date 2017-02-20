@@ -7,7 +7,7 @@ include_directories (
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${NetCDF_DIR}/../lib)
 add_library(dicemeshio DICe_MeshIO.cpp DICe_MeshIOUtils.cpp DICe_MeshIO.h DICe_MeshIOUtils.h)
-target_link_libraries(dicemeshio ${DICE_LIBRARIES} ${Boost_LIBRARIES} dicemesh diceparserutils)
+target_link_libraries(dicemeshio ${DICE_LIBRARIES} ${Boost_LIBRARIES} dicemesh diceparser)
 IF(DICE_ENABLE_NETCDF)
   target_link_libraries(dicemeshio netcdf)
 ENDIF()

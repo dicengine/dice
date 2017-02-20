@@ -43,7 +43,6 @@
 #include <DICe_Feature.h>
 #include <DICe_Simplex.h>
 #include <DICe_Parser.h>
-#include <DICe_ParserUtils.h>
 
 #include <Teuchos_LAPACK.hpp>
 #include <fstream>

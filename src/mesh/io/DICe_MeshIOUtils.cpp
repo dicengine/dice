@@ -41,7 +41,7 @@
 
 #include <DICe_MeshIO.h>
 #include <DICe_MeshIOUtils.h>
-#include <DICe_ParserUtils.h>
+#include <DICe_Parser.h>
 #include <DICe_PointCloud.h>
 
 #include <Teuchos_RCP.hpp>

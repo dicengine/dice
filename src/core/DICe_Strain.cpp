@@ -46,7 +46,6 @@
 #include <DICe_Schema.h>
 #include <DICe_PostProcessor.h>
 #include <DICe_Image.h>
-#include <DICe_ParserUtils.h>
 
 #include <Teuchos_RCP.hpp>
 

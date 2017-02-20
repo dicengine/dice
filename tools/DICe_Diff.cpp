@@ -45,7 +45,7 @@
 
 #include <DICe.h>
 #include <DICe_Image.h>
-#include <DICe_ParserUtils.h>
+#include <DICe_Parser.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>

@@ -40,8 +40,6 @@
 // @HEADER
 
 #include <DICe_Parser.h>
-#include <DICe_ParserUtils.h>
-#include <DICe_Image.h>
 #include <DICe_XMLUtils.h>
 #include <DICe_ParameterUtilities.h>
 #include <DICe.h>
@@ -292,37 +290,6 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
 }
 
 DICE_LIB_DLL_EXPORT
-Teuchos::RCP<Teuchos::ParameterList> read_physics_params(const std::string & paramFileName){
-
-  int proc_rank = 0;
-#if DICE_MPI
-  int mpi_is_initialized = 0;
-  MPI_Initialized(&mpi_is_initialized);
-  if(mpi_is_initialized)
-    MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
-#endif
-
-  if(proc_rank==0) DEBUG_MSG("Parsing physics parameters from file: " << paramFileName);
-  Teuchos::RCP<Teuchos::ParameterList> stringParams = Teuchos::rcp( new Teuchos::ParameterList() );
-  Teuchos::Ptr<Teuchos::ParameterList> stringParamsPtr(stringParams.get());
-  Teuchos::updateParametersFromXmlFile(paramFileName, stringParamsPtr);
-  TEUCHOS_TEST_FOR_EXCEPTION(stringParams==Teuchos::null,std::runtime_error,"");
-
-
-  // The string params are what as given by the user. These are string values because things like correlation method
-  // are not recognized by the xml parser. Only the string values need to be converted into DICe types.
-  Teuchos::RCP<Teuchos::ParameterList> diceParams = Teuchos::rcp( new Teuchos::ParameterList() );
-  // iterate through the params and copy over all non-string types:
-  for(Teuchos::ParameterList::ConstIterator it=stringParams->begin();it!=stringParams->end();++it){
-    std::string paramName = it->first;
-    if(proc_rank==0) DEBUG_MSG("Found user specified physics parameter: " << paramName);
-    stringToLower(paramName); // string parameter names are lower case
-    diceParams->setEntry(it->first,it->second);
-  }
-  return diceParams;
-}
-
-DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> read_input_params(const std::string & paramFileName){
   int proc_rank = 0;
 #if DICE_MPI
@@ -363,7 +330,7 @@ Teuchos::RCP<Teuchos::ParameterList> read_correlation_params(const std::string &
   for(Teuchos::ParameterList::ConstIterator it=stringParams->begin();it!=stringParams->end();++it){
     std::string paramName = it->first;
     if(proc_rank==0) DEBUG_MSG("Found user specified correlation parameter: " << paramName);
-    stringToLower(paramName); // string parameter names are lower case
+    to_lower(paramName); // string parameter names are lower case
     if(DICe::is_string_param(paramName)){
       if(proc_rank==0) DEBUG_MSG("This is a string parameter so it may need to be translated");
       // make sure it's one of the valid entries below:
@@ -413,7 +380,9 @@ Teuchos::RCP<Teuchos::ParameterList> read_correlation_params(const std::string &
 }
 
 DICE_LIB_DLL_EXPORT
-Teuchos::RCP<Circle> read_circle(std::fstream &dataFile){
+void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
+  std::vector<std::string> & image_files,
+  std::vector<std::string> & stereo_image_files){
   int proc_rank = 0;
 #if DICE_MPI
   int mpi_is_initialized = 0;
@@ -422,134 +391,309 @@ Teuchos::RCP<Circle> read_circle(std::fstream &dataFile){
     MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
 #endif
 
-  if(proc_rank==0) DEBUG_MSG("Reading a circle");
-  int_t cx = -1;
-  int_t cy = -1;
-  scalar_t radius = -1.0;
-  while(!dataFile.eof()){
-    std::vector<std::string> tokens = tokenize_line(dataFile);
-    if(tokens.size()==0) continue; // comment or blank line
-    if(tokens[0]==parser_end) break;
-    else if(tokens[0]==parser_center){
-      if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define circle center point ");}
-      TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]) || !is_number(tokens[2]),std::runtime_error,
-        "Error, both tokens should be a number");
-      cx = atoi(tokens[1].c_str());
-      cy = atoi(tokens[2].c_str());
+  // The reference image will be the first image in the vector, the rest are the deformed
+  image_files.clear();
+  stereo_image_files.clear();
+  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::image_folder),std::runtime_error,
+    "Error, image folder was not specified");
+  std::string folder = params->get<std::string>(DICe::image_folder);
+  // Requires that the user add the appropriate slash or backslash as denoted in the template file creator
+  if(proc_rank==0) DEBUG_MSG("Image folder prefix: " << folder );
+
+  // User specified a ref and def image alone (not a sequence)
+  if(params->isParameter(DICe::reference_image)){
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image_index),std::runtime_error,
+      "Error, cannot specify reference_image_index and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::start_image_index),std::runtime_error,
+      "Error, cannot specify start_image_index and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::end_image_index),std::runtime_error,
+      "Error, cannot specify end_image_index and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::image_file_prefix),std::runtime_error,
+      "Error, cannot specify image_file_prefix and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::image_file_extension),std::runtime_error,
+      "Error, cannot specify image_file_prefix and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::num_file_suffix_digits),std::runtime_error,
+      "Error, cannot specify image_file_prefix and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_left_suffix),std::runtime_error,
+      "Error, cannot specify stereo_left_suffix and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_right_suffix),std::runtime_error,
+      "Error, cannot specify stereo_right_suffix and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::cine_file),std::runtime_error,
+      "Error, cannot specify cine_file and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_cine_file),std::runtime_error,
+      "Error, cannot specify stereo_cine_file and reference_image");
+
+    std::string ref_file_name = params->get<std::string>(DICe::reference_image);
+    std::stringstream ref_name;
+    ref_name << folder << ref_file_name;
+    image_files.push_back(ref_name.str());
+    if(params->isParameter(DICe::stereo_reference_image)){
+      std::string stereo_ref_file_name = params->get<std::string>(DICe::stereo_reference_image);
+      std::stringstream stereo_ref_name;
+      stereo_ref_name << folder << stereo_ref_file_name;
+      stereo_image_files.push_back(stereo_ref_name.str());
     }
-    else if(tokens[0]==parser_radius){
-      if(tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define circle radius ");}
-      TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]),std::runtime_error,"Error, token should be a number");
-      radius = strtod(tokens[1].c_str(),NULL);
+
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::deformed_images),std::runtime_error,
+      "Error, the deformed images were not specified");
+    // create a sublist of the deformed images:
+    Teuchos::ParameterList def_image_sublist = params->sublist(DICe::deformed_images);
+    // iterate the sublis and add the params to the output params:
+    for(Teuchos::ParameterList::ConstIterator it=def_image_sublist.begin();it!=def_image_sublist.end();++it){
+      const bool active = def_image_sublist.get<bool>(it->first);
+      if(active){
+        std::stringstream def_name;
+        def_name << folder << it->first;
+        image_files.push_back(def_name.str());
+      }
     }
-    else{
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid token in circle definition " << tokens[0]);
+    if(params->isParameter(DICe::stereo_reference_image)){
+      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::stereo_deformed_images),std::runtime_error,
+        "Error, the stereo deformed images were not specified");
+      Teuchos::ParameterList stereo_def_image_sublist = params->sublist(DICe::stereo_deformed_images);
+      // iterate the sublis and add the params to the output params:
+      for(Teuchos::ParameterList::ConstIterator it=stereo_def_image_sublist.begin();it!=stereo_def_image_sublist.end();++it){
+        const bool active = stereo_def_image_sublist.get<bool>(it->first);
+        if(active){
+          std::stringstream def_name;
+          def_name << folder << it->first;
+          stereo_image_files.push_back(def_name.str());
+        }
+      }
+      TEUCHOS_TEST_FOR_EXCEPTION(stereo_image_files.size()!=image_files.size(),std::runtime_error,
+        "Error, the number of deformed images and stereo deformed images must be the same");
     }
   }
-  TEUCHOS_TEST_FOR_EXCEPTION(radius==-1.0,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(cx==-1,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(cy==-1,std::runtime_error,"");
-  if(proc_rank==0) DEBUG_MSG("Creating a circle with center " << cx << " " << cy << " and radius " << radius);
-  Teuchos::RCP<DICe::Circle> shape = Teuchos::rcp(new DICe::Circle(cx,cy,radius));
-  return shape;
-}
+  else if(params->isParameter(DICe::cine_file)){
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image),std::runtime_error,
+      "Error, cannot specify reference_image and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::deformed_images),std::runtime_error,
+      "Error, cannot specify deformed_images and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_reference_image),std::runtime_error,
+      "Error, cannot specify stereo_reference_image and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_deformed_images),std::runtime_error,
+      "Error, cannot specify stereo_deformed_images and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image_index),std::runtime_error,
+      "Error, cannot specify reference_image_index and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::end_image_index),std::runtime_error,
+      "Error, cannot specify end_image_index and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::start_image_index),std::runtime_error,
+      "Error, cannot specify start_image_index and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::image_file_prefix),std::runtime_error,
+      "Error, cannot specify image_file_prefix and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::image_file_extension),std::runtime_error,
+      "Error, cannot specify image_file_prefix and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::num_file_suffix_digits),std::runtime_error,
+      "Error, cannot specify image_file_prefix and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_left_suffix),std::runtime_error,
+      "Error, cannot specify stereo_left_suffix and cine_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_right_suffix),std::runtime_error,
+      "Error, cannot specify stereo_right_suffix and cine_file");
 
-DICE_LIB_DLL_EXPORT
-Teuchos::RCP<DICe::Rectangle> read_rectangle(std::fstream &dataFile){
-  int proc_rank = 0;
-#if DICE_MPI
-  int mpi_is_initialized = 0;
-  MPI_Initialized(&mpi_is_initialized);
-  if(mpi_is_initialized)
-    MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
-#endif
+//    image_files.push_back(DICe::cine_file);
+//    image_files.push_back(DICe::cine_file);
+//    if(params->isParameter(DICe::stereo_cine_file)){
+//      stereo_image_files.push_back(DICe::cine_file);
+//      stereo_image_files.push_back(DICe::cine_file);
+//    }
+    std::stringstream cine_name;
+    std::string cine_file_name = params->get<std::string>(DICe::cine_file);
+    cine_name << params->get<std::string>(DICe::image_folder) << cine_file_name;
+    Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
+    Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(cine_name.str(),bhs.getRawPtr(),false));
+    // read the image data for a frame
+    const int_t num_images = cine_reader->num_frames();
+    const int_t first_frame_index = cine_reader->first_image_number();
+    //TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::cine_ref_index),std::runtime_error,
+    //  "Error, the reference index for the cine file has not been specified");
+    const int_t cine_ref_index = params->get<int_t>(DICe::cine_ref_index,first_frame_index);
+    const int_t cine_start_index = params->get<int_t>(DICe::cine_start_index,first_frame_index);
+    const int_t cine_end_index = params->get<int_t>(DICe::cine_end_index,first_frame_index + num_images -1);
+    const int_t cine_skip_index = params->get<int_t>(DICe::cine_skip_index,1);
+    TEUCHOS_TEST_FOR_EXCEPTION(cine_start_index > cine_end_index,std::invalid_argument,"Error, the cine start index is > the cine end index");
+    TEUCHOS_TEST_FOR_EXCEPTION(cine_start_index < first_frame_index,std::invalid_argument,"Error, the cine start index is < the first frame index");
+    TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index > cine_end_index,std::invalid_argument,"Error, the cine ref index is > the cine end index");
+    TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index < first_frame_index,std::invalid_argument,"Error, the cine ref index is < the first frame index");
+    TEUCHOS_TEST_FOR_EXCEPTION(cine_end_index < cine_start_index,std::invalid_argument,"Error, the cine end index is < the cine start index");
+    TEUCHOS_TEST_FOR_EXCEPTION(cine_end_index < cine_ref_index,std::invalid_argument,"Error, the cine end index is < the ref index");
 
-  if(proc_rank==0) DEBUG_MSG("Reading a rectangle");
-  int_t cx = -1;
-  int_t cy = -1;
-  int_t width = -1.0;
-  int_t height = -1.0;
-  int_t upper_left_x = -1;
-  int_t upper_left_y = -1;
-  int_t lower_right_x = -1;
-  int_t lower_right_y = -1;
-  bool has_upper_left_lower_right = false;
-  while(!dataFile.eof()){
-    std::vector<std::string> tokens = tokenize_line(dataFile);
-    if(tokens.size()==0) continue; // comment or blank line
-    if(tokens[0]==parser_end) break;
-    if(tokens[0]==parser_center||tokens[0]==parser_width||tokens[0]==parser_height){
-      if(tokens[0]==parser_center){
-        if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define circle center point ");}
-        TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]) || !is_number(tokens[2]),std::runtime_error,
-          "Error, both tokens should be a number");
-        cx = atoi(tokens[1].c_str());
-        cy = atoi(tokens[2].c_str());
+    // check if the reference frame should be averaged:
+    int_t num_avg_frames = -1;
+    if(params->isParameter(DICe::time_average_cine_ref_frame))
+      num_avg_frames = params->get<int_t>(DICe::time_average_cine_ref_frame,1);
+    // strip the .cine part from the end of the cine file:
+    std::string trimmed_cine_name = cine_name.str();
+    const std::string ext(".cine");
+    if(trimmed_cine_name.size() > ext.size() && trimmed_cine_name.substr(trimmed_cine_name.size() - ext.size()) == ".cine" )
+    {
+       trimmed_cine_name = trimmed_cine_name.substr(0, trimmed_cine_name.size() - ext.size());
+    }else{
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid cine file: " << cine_file_name);
+    }
+    std::stringstream ref_cine_ss;
+    ref_cine_ss << trimmed_cine_name << "_";
+    if(num_avg_frames>0)
+      ref_cine_ss << "avg" << cine_ref_index << "to" << cine_ref_index + num_avg_frames;
+    else
+      ref_cine_ss << cine_ref_index;
+    ref_cine_ss << ".cine";
+    const int_t total_num_frames = std::floor((cine_end_index-cine_start_index)/cine_skip_index) + 2;
+    image_files.resize(total_num_frames);
+    image_files[0] = ref_cine_ss.str();
+    int_t current_index = 1;
+    for(int_t i=cine_start_index;i<=cine_end_index;i+=cine_skip_index){
+      std::stringstream def_cine_ss;
+      def_cine_ss << trimmed_cine_name << "_" << i << ".cine";
+      image_files[current_index++] = def_cine_ss.str();
+    }
+    if(params->isParameter(DICe::stereo_cine_file)){
+      std::stringstream stereo_cine_name;
+      std::string stereo_cine_file_name = params->get<std::string>(DICe::stereo_cine_file);
+      stereo_cine_name << params->get<std::string>(DICe::image_folder) << stereo_cine_file_name;
+      Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
+      Teuchos::RCP<DICe::cine::Cine_Reader> stereo_cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(stereo_cine_name.str(),bhs.getRawPtr(),false));
+      // strip the .cine part from the end of the cine file:
+      std::string stereo_trimmed_cine_name = stereo_cine_name.str();
+      if(stereo_trimmed_cine_name.size() > ext.size() && stereo_trimmed_cine_name.substr(stereo_trimmed_cine_name.size() - ext.size()) == ".cine" )
+      {
+         stereo_trimmed_cine_name = stereo_trimmed_cine_name.substr(0, stereo_trimmed_cine_name.size() - ext.size());
+      }else{
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid stereo cine file: " << stereo_cine_file_name);
       }
-      else if(tokens[0]==parser_width){
-        if(tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define the width ");}
-        TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]),std::runtime_error,"Error, token should be a number");
-        width = strtod(tokens[1].c_str(),NULL);
+      std::stringstream stereo_ref_cine_ss;
+      stereo_ref_cine_ss << stereo_trimmed_cine_name << "_";
+      if(num_avg_frames>0)
+        stereo_ref_cine_ss << "avg" << cine_ref_index << "to" << cine_ref_index + num_avg_frames;
+      else
+        stereo_ref_cine_ss << cine_ref_index;
+      stereo_ref_cine_ss << ".cine";
+      stereo_image_files.resize(total_num_frames);
+      stereo_image_files[0] = stereo_ref_cine_ss.str();
+      int_t current_stereo_index = 1;
+      for(int_t i=cine_start_index;i<=cine_end_index;i+=cine_skip_index){
+        std::stringstream stereo_def_cine_ss;
+        stereo_def_cine_ss << stereo_trimmed_cine_name << "_" << i << ".cine";
+        stereo_image_files[current_stereo_index++] = stereo_def_cine_ss.str();
       }
-      else if(tokens[0]==parser_height){
-        if(tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define the height ");}
-        TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]),std::runtime_error,"Error, token should be a number");
-        height = strtod(tokens[1].c_str(),NULL);
+    }
+  } // end cine file
+  // User specified an image sequence:
+  else{
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image),std::runtime_error,
+      "Error, cannot specify reference_image and reference_image_index");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::deformed_images),std::runtime_error,
+      "Error, cannot specify deformed_images and reference_image_index");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_reference_image),std::runtime_error,
+      "Error, cannot specify stereo_reference_image and reference_image_index");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_deformed_images),std::runtime_error,
+      "Error, cannot specify stereo_deformed_images and reference_image_index");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image),std::runtime_error,
+      "Error, cannot specify reference_image and reference_image_index");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::deformed_images),std::runtime_error,
+      "Error, cannot specify deformed_images and reference_image_index");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_reference_image),std::runtime_error,
+      "Error, cannot specify stereo_reference_image and reference_image_index");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_deformed_images),std::runtime_error,
+      "Error, cannot specify stereo_deformed_images and reference_image_index");
+
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::reference_image_index),std::runtime_error,
+      "Error, the reference image index was not specified");
+    // pull the parameters out
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::end_image_index),std::runtime_error,
+      "Error, the end image index was not specified");
+    const int_t lastImageIndex = params->get<int_t>(DICe::end_image_index);
+    int_t imageSkip = 1;
+    if(params->isParameter(DICe::skip_image_index))
+      imageSkip = params->get<int_t>(DICe::skip_image_index);
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::image_file_prefix),std::runtime_error,
+      "Error, the image file prefix was not specified");
+    const std::string prefix = params->get<std::string>(DICe::image_file_prefix);
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::image_file_extension),std::runtime_error,
+      "Error, the image file extension was not specified");
+    const std::string fileType = params->get<std::string>(DICe::image_file_extension);
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::num_file_suffix_digits),std::runtime_error,
+      "Error, the number of file suffix digits was not specified");
+    const int_t digits = params->get<int_t>(DICe::num_file_suffix_digits);
+    TEUCHOS_TEST_FOR_EXCEPTION(digits<=0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::reference_image_index),std::runtime_error,
+      "Error, the reference image index was not specified");
+    const int_t refId = params->get<int_t>(DICe::reference_image_index);
+    TEUCHOS_TEST_FOR_EXCEPTION(lastImageIndex < refId,std::runtime_error,"Error invalid reference image index");
+
+    int_t startImageIndex = refId;
+    if(params->isParameter(DICe::start_image_index)){
+      startImageIndex = params->get<int_t>(DICe::start_image_index);
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(startImageIndex > lastImageIndex,std::runtime_error,"Error invalid start image index");
+    TEUCHOS_TEST_FOR_EXCEPTION(startImageIndex < 0,std::runtime_error,"Error invalid start image index");
+    const int_t numImages = std::floor((lastImageIndex - startImageIndex)/imageSkip) + 1;
+    TEUCHOS_TEST_FOR_EXCEPTION(numImages<=0,std::runtime_error,"");
+    std::string stereo_left_suffix = "";
+    std::string stereo_right_suffix = "";
+    const bool is_stereo = params->isParameter(DICe::stereo_left_suffix) || params->isParameter(DICe::stereo_right_suffix);
+    if(is_stereo){
+      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::stereo_left_suffix),std::runtime_error,"Error, for stereo the stereo_left_suffix parameter must be set");
+      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::stereo_right_suffix),std::runtime_error,"Error, for stereo the stereo_right_suffix parameter must be set");
+      stereo_left_suffix = params->get<std::string>(DICe::stereo_left_suffix);
+      stereo_right_suffix = params->get<std::string>(DICe::stereo_right_suffix);
+    }
+
+    // determine the reference image
+    int_t number = refId;
+    int_t refDig = 0;
+    if(refId==0)
+      refDig = 1;
+    else{
+      while (number) {number /= 10; refDig++;}
+    }
+    std::stringstream ref_name;
+    ref_name << folder << prefix;
+    if(digits > 1){
+      for(int_t i=0;i<digits - refDig;++i) ref_name << "0";
+    }
+    ref_name << refId << stereo_left_suffix << fileType;
+    image_files.push_back(ref_name.str());
+    if(is_stereo){
+      std::stringstream stereo_ref_name;
+      stereo_ref_name << folder << prefix;
+      if(digits > 1){
+        for(int_t i=0;i<digits - refDig;++i) stereo_ref_name << "0";
       }
+      stereo_ref_name << refId << stereo_right_suffix << fileType;
+      stereo_image_files.push_back(stereo_ref_name.str());
+    }
+
+    // determine the deformed images
+    for(int_t i=startImageIndex;i<=lastImageIndex;i+=imageSkip){
+      std::stringstream def_name;
+      def_name << folder << prefix;
+      int_t tmpNum = i;
+      int_t defDig = 0;
+      if(tmpNum==0)
+        defDig = 1;
       else{
-        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid token in rectangle definition by center, width, height " << tokens[0]);
+        while (tmpNum) {tmpNum /= 10; defDig++;}
+      }
+      if(digits > 1)
+        for(int_t j=0;j<digits - defDig;++j) def_name << "0";
+      def_name << i << stereo_left_suffix << fileType;
+      image_files.push_back(def_name.str());
+      if(is_stereo){
+        std::stringstream stereo_def_name;
+        stereo_def_name << folder << prefix;
+        if(digits > 1)
+          for(int_t j=0;j<digits - defDig;++j) stereo_def_name << "0";
+        stereo_def_name << i << stereo_right_suffix << fileType;
+        stereo_image_files.push_back(stereo_def_name.str());
       }
     }
-    else if(tokens[0]==parser_upper_left||tokens[0]==parser_lower_right){
-      if(tokens[0]==parser_upper_left){
-        if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define rectangle upper left ");}
-        TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]) || !is_number(tokens[2]),std::runtime_error,
-          "Error, both tokens should be numbers");
-        has_upper_left_lower_right = true;
-        upper_left_x = atoi(tokens[1].c_str());
-        upper_left_y = atoi(tokens[2].c_str());
-      }
-      else if(tokens[0]==parser_lower_right){
-        if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define rectangle lower right ");}
-        TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]) || !is_number(tokens[2]),std::runtime_error,
-          "Error, both tokens should be a number");
-        has_upper_left_lower_right = true;
-        lower_right_x = atoi(tokens[1].c_str());
-        lower_right_y = atoi(tokens[2].c_str());
-      }
-      else{
-        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid token in rectangle definition by upper left, lower right " << tokens[0]);
-      }
-    }
-    else{
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid token in rectangle definition " << tokens[0]);
-    }
+    TEUCHOS_TEST_FOR_EXCEPTION(is_stereo && image_files.size()!=stereo_image_files.size(),std::runtime_error,"");
   }
-  if(has_upper_left_lower_right){
-    if(proc_rank==0) DEBUG_MSG("Rectangle has upper left_x " << upper_left_x << " upper_left_y " << upper_left_y <<
-      " lower_right_x " << lower_right_x << " lower_right_y " << lower_right_y);
-    TEUCHOS_TEST_FOR_EXCEPTION(upper_left_x <0,std::runtime_error,"");
-    TEUCHOS_TEST_FOR_EXCEPTION(upper_left_y <0,std::runtime_error,"");
-    TEUCHOS_TEST_FOR_EXCEPTION(lower_right_x <0,std::runtime_error,"");
-    TEUCHOS_TEST_FOR_EXCEPTION(lower_right_y <0,std::runtime_error,"");
-    TEUCHOS_TEST_FOR_EXCEPTION(lower_right_x < upper_left_x,std::runtime_error,"Error: Rectangle inverted or zero width");
-    TEUCHOS_TEST_FOR_EXCEPTION(lower_right_y < upper_left_y,std::runtime_error,"Error: Rectangle inverted or zero height");
-    width = lower_right_x - upper_left_x;
-    height = lower_right_y - upper_left_y;
-    cx = width/2 + upper_left_x;
-    cy = height/2 + upper_left_y;
-  }
-  TEUCHOS_TEST_FOR_EXCEPTION(width<=0,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(height<=0,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(cx<0,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(cy<0,std::runtime_error,"");
-  if(proc_rank==0) DEBUG_MSG("Creating a rectangle with center " << cx << " " << cy << " width " << width << " height " << height);
-  Teuchos::RCP<DICe::Rectangle> shape = Teuchos::rcp(new DICe::Rectangle(cx,cy,width,height));
-  return shape;
+  TEUCHOS_TEST_FOR_EXCEPTION(image_files.size()<=1,std::runtime_error,"");
 }
 
 DICE_LIB_DLL_EXPORT
-Teuchos::RCP<DICe::Polygon> read_polygon(std::fstream &dataFile){
+void generate_template_input_files(const std::string & file_prefix){
   int proc_rank = 0;
 #if DICE_MPI
   int mpi_is_initialized = 0;
@@ -558,68 +702,222 @@ Teuchos::RCP<DICe::Polygon> read_polygon(std::fstream &dataFile){
     MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
 #endif
 
-  if(proc_rank==0) DEBUG_MSG("Reading a Polygon");
-  std::vector<int_t> vertices_x;
-  std::vector<int_t> vertices_y;
-  while(!dataFile.eof()){
-    std::vector<std::string> tokens = tokenize_line(dataFile);
-    if(tokens.size()==0) continue; // comment or blank line
-    if(tokens[0]==parser_end) break;
-    TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()<2,std::runtime_error,"");
-    // only other valid option is BEGIN VERTICES
-    TEUCHOS_TEST_FOR_EXCEPTION(tokens[0]!=parser_begin,std::runtime_error,"");
-    TEUCHOS_TEST_FOR_EXCEPTION(tokens[1]!=parser_vertices,std::runtime_error,"");
-    // read the vertices
-    while(!dataFile.eof()){
-      std::vector<std::string> vertex_tokens = tokenize_line(dataFile);
-      if(vertex_tokens.size()==0)continue;
-      if(vertex_tokens[0]==parser_end) break;
-      TEUCHOS_TEST_FOR_EXCEPTION(vertex_tokens.size()<2,std::runtime_error,"");
-      TEUCHOS_TEST_FOR_EXCEPTION(!is_number(vertex_tokens[0]),std::runtime_error,"");
-      TEUCHOS_TEST_FOR_EXCEPTION(!is_number(vertex_tokens[1]),std::runtime_error,"");
-      vertices_x.push_back(atoi(vertex_tokens[0].c_str()));
-      vertices_y.push_back(atoi(vertex_tokens[1].c_str()));
+  if(proc_rank==0) DEBUG_MSG("generate_template_input_files() was called.");
+  std::stringstream fileNameInput;
+  fileNameInput << file_prefix << "_input.xml";
+  const std::string inputFile = fileNameInput.str();
+  std::stringstream fileNameParams;
+  fileNameParams << file_prefix << "_params.xml";
+  const std::string paramsFile = fileNameParams.str();
+  if(proc_rank==0) DEBUG_MSG("Input file: " << fileNameInput.str() << " Params file: " << fileNameParams.str());
+
+  // clear the files if they exist
+  initialize_xml_file(fileNameInput.str());
+  initialize_xml_file(fileNameParams.str());
+
+  // write the input file parameters:
+
+  write_xml_comment(inputFile,"Note: this template assumes local DIC algorithm to be used");
+  write_xml_string_param(inputFile,DICe::output_folder,"<path>",false);
+  write_xml_comment(inputFile,"Note: the output folder needs the trailing slash \"/\" or backslash \"\\\"");
+  write_xml_string_param(inputFile,DICe::output_prefix,"<prefix>",true);
+  write_xml_comment(inputFile,"Optional prefix to use in the output file name (default is \"DICe_solution\"");
+  write_xml_string_param(inputFile,DICe::image_folder,"<path>",false);
+  write_xml_comment(inputFile,"Note: the image folder needs the trailing slash \"/\" or backslash \"\\\"");
+  write_xml_string_param(inputFile,DICe::correlation_parameters_file,paramsFile,true);
+  write_xml_comment(inputFile,"The user can set specific correlation parameters in the file above");
+  write_xml_comment(inputFile,"These parameters are activated by uncommenting the correlation_parameters_file option");
+  write_xml_string_param(inputFile,DICe::physics_parameters_file,paramsFile,true);
+  write_xml_comment(inputFile,"The user can set specific parameters for the physics involved if integrated DIC is used (experimental and not default)");
+  write_xml_comment(inputFile,"These parameters are activated by uncommenting the physics_parameters_file option and if the dice_integrated executable is used");
+  write_xml_size_param(inputFile,DICe::subset_size,"<value>",false);
+  write_xml_size_param(inputFile,DICe::step_size,"<value>",false);
+  write_xml_comment(inputFile,"Note: if a subset file is used to below to specify subset centroids, this option should not be used");
+  write_xml_bool_param(inputFile,DICe::separate_output_file_for_each_subset,"false",false);
+  write_xml_comment(inputFile,"Write a separate output file for each subset with all frames in that file (default is to write one file per frame with all subsets)");
+  write_xml_bool_param(inputFile,DICe::create_separate_run_info_file,"false",false);
+  write_xml_comment(inputFile,"Write a separate output file that has the header information rather than place it at the top of the output files");
+  write_xml_string_param(inputFile,DICe::subset_file,"<path>");
+  write_xml_comment(inputFile,"Optional file to specify the coordinates of the subset centroids (cannot be used with step_size param)");
+  write_xml_comment(inputFile,"The subset file should be space separated (no commas) with one integer value for the number of subsets on the first line");
+  write_xml_comment(inputFile,"and a set of global x and y coordinates for each subset centroid, one point per line.");
+  write_xml_comment(inputFile,"There are two ways to specify the deformed images, first by listing them or by providing tokens to create a file sequence (see below)");
+  write_xml_string_param(inputFile,DICe::reference_image,"<file_name>",false);
+  write_xml_comment(inputFile,"If the images are not grayscale, they will be automatically converted to 8-bit grayscale.");
+  write_xml_param_list_open(inputFile,DICe::deformed_images,false);
+  write_xml_bool_param(inputFile,"<file_name>","true",false);
+  write_xml_param_list_close(inputFile,false);
+  write_xml_comment(inputFile,"The correlation evaluation order of the deformed image files will be according the order in the list above.");
+  write_xml_comment(inputFile,"The boolean value activates or deactivates the image.");
+  write_xml_comment(inputFile,"");
+  write_xml_comment(inputFile,"Consider instead an image sequence of files named with the pattern Image_0001.tif, Image_0002.tif, ..., Image_1000.tif");
+  write_xml_comment(inputFile,"For an image sequence, remove the two options above (reference_image and deformed_image) and use the following:");
+  write_xml_size_param(inputFile,DICe::reference_image_index,"<value>");
+  write_xml_comment(inputFile,"The index of the file to use as the reference image (no preceeding zeros). For the example above this would be \"1\" if the first image should be used");
+  write_xml_size_param(inputFile,DICe::end_image_index);
+  write_xml_comment(inputFile,"The index of the last image in the sequence to analyze. For the example above this would be 1000");
+  write_xml_size_param(inputFile,DICe::num_file_suffix_digits);
+  write_xml_comment(inputFile,"The number of digits in the file suffix. For the example above this would be 4");
+  write_xml_string_param(inputFile,DICe::image_file_extension);
+  write_xml_comment(inputFile,"The file extension type. For the example above this would be \".tif\" (Currently, only .tif or .tiff files are allowed.)");
+  write_xml_string_param(inputFile,DICe::image_file_prefix);
+  write_xml_comment(inputFile,"The tag at the front of the file names. For the example above this would be \"Image_\"");
+  write_xml_comment(inputFile,"");
+  write_xml_comment(inputFile,"Another option is to read frames from a cine file. In that case, the following parameters are used");
+  write_xml_comment(inputFile,"Note that all of the values for indexing are in terms of the cine file's first frame number (which may be negative due to trigger)");
+  write_xml_comment(inputFile,"For example, if the trigger image number is -100, the ref_index would be -100 as well as the start index");
+  write_xml_comment(inputFile,"The end index would be the trigger index + the number of frames to analyze, the default is the entire video.");
+  write_xml_string_param(inputFile,DICe::cine_file);
+  write_xml_size_param(inputFile,DICe::cine_ref_index);
+  write_xml_size_param(inputFile,DICe::cine_start_index);
+  write_xml_size_param(inputFile,DICe::cine_end_index);
+
+  // write the correlation parameters
+
+  write_xml_comment(paramsFile,"Uncomment lines below that begin with \"<Parameter name=...\"\n to specify that parameter. Otherwise, default values will be used");
+  for(int_t i=0;i<DICe::num_valid_correlation_params;++i){
+    if(valid_correlation_params[i].expose_to_user_ == false) continue;
+    // write comment with all possible options
+    if(valid_correlation_params[i].type_==STRING_PARAM){
+      write_xml_comment(paramsFile,"");
+      write_xml_string_param(paramsFile,valid_correlation_params[i].name_);
+      write_xml_comment(paramsFile,valid_correlation_params[i].desc_);
+      write_xml_comment(paramsFile,"Possible options include:");
+      const char ** possibleValues = valid_correlation_params[i].stringNamePtr_;
+      for(int_t j=0;j<valid_correlation_params[i].size_;++j){
+        write_xml_comment(paramsFile,possibleValues[j]);
+      }
+    }
+    else if(valid_correlation_params[i].type_==SCALAR_PARAM){
+      write_xml_comment(paramsFile,"");
+      write_xml_real_param(paramsFile,valid_correlation_params[i].name_);
+      write_xml_comment(paramsFile,valid_correlation_params[i].desc_);
+    }
+    else if(valid_correlation_params[i].type_==SIZE_PARAM){
+      write_xml_comment(paramsFile,"");
+      write_xml_size_param(paramsFile,valid_correlation_params[i].name_);
+      write_xml_comment(paramsFile,valid_correlation_params[i].desc_);
+    }
+    else if(valid_correlation_params[i].type_==BOOL_PARAM){
+      write_xml_comment(paramsFile,"");
+      write_xml_bool_param(paramsFile,valid_correlation_params[i].name_);
+      write_xml_comment(paramsFile,valid_correlation_params[i].desc_);
+    }
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: Unknown parameter type");
     }
   }
-  TEUCHOS_TEST_FOR_EXCEPTION(vertices_x.empty(),std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(vertices_y.empty(),std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(vertices_x.size()!=vertices_y.size(),std::runtime_error,"");
-  if(proc_rank==0) DEBUG_MSG("Creating a polygon with " << vertices_x.size() << " vertices");
-  for(size_t i=0;i<vertices_x.size();++i){
-    if(proc_rank==0) DEBUG_MSG("vx " << vertices_x[i] << " vy " << vertices_y[i] );
+  // Write a sample output spec
+  write_xml_comment(paramsFile,"");
+  write_xml_comment(paramsFile,"");
+  write_xml_comment(paramsFile,"Uncomment the ParameterList below to request specific fields in the output files.");
+  write_xml_comment(paramsFile,"The order in the list represents the column order in the data output.");
+  write_xml_param_list_open(paramsFile,DICe::output_spec);
+  for(int_t i=0;i<MAX_FIELD_NAME;++i){
+    std::stringstream iToStr;
+    iToStr << i;
+    write_xml_bool_param(paramsFile,to_string(static_cast<Field_Name>(i)),"true");
   }
-  Teuchos::RCP<DICe::Polygon> shape = Teuchos::rcp(new DICe::Polygon(vertices_x,vertices_y));
-  return shape;
+  write_xml_param_list_close(paramsFile);
+
+  finalize_xml_file(fileNameInput.str());
+  finalize_xml_file(fileNameParams.str());
+}
+
+
+DICE_LIB_DLL_EXPORT
+void to_upper(std::string &s){
+  std::transform(s.begin(), s.end(),s.begin(), ::toupper);
 }
 
 DICE_LIB_DLL_EXPORT
-multi_shape read_shapes(std::fstream & dataFile){
-  DICe::multi_shape multi_shape;
-  while(!dataFile.eof()){
-    std::vector<std::string> shape_tokens = tokenize_line(dataFile);
-    if(shape_tokens.size()==0)continue;
-    if(shape_tokens[0]==parser_end) break;
-    TEUCHOS_TEST_FOR_EXCEPTION(shape_tokens.size()<2,std::runtime_error,"");
-    TEUCHOS_TEST_FOR_EXCEPTION(shape_tokens[0]!=parser_begin,std::runtime_error,"");
-    if(shape_tokens[1]==parser_circle){
-      Teuchos::RCP<DICe::Circle> shape = read_circle(dataFile);
-      multi_shape.push_back(shape);
+void to_lower(std::string &s){
+  std::transform(s.begin(), s.end(),s.begin(), ::tolower);
+}
+
+DICE_LIB_DLL_EXPORT
+std::istream & safeGetline(std::istream& is, std::string& t)
+{
+    t.clear();
+    // The characters in the stream are read one-by-one using a std::streambuf.
+    // That is faster than reading them one-by-one using the std::istream.
+    // Code that uses streambuf this way must be guarded by a sentry object.
+    // The sentry object performs various tasks,
+    // such as thread synchronization and updating the stream state.
+    std::istream::sentry se(is, true);
+    std::streambuf* sb = is.rdbuf();
+    for(;;) {
+        int c = sb->sbumpc();
+        switch (c) {
+        case '\n':
+            return is;
+        case '\r':
+            if(sb->sgetc() == '\n')
+                sb->sbumpc();
+            return is;
+        case EOF:
+            // Also handle the case when the last line has no line ending
+            if(t.empty())
+                is.setstate(std::ios::eofbit);
+            return is;
+        default:
+            t += (char)c;
+        }
     }
-    else if(shape_tokens[1]==parser_polygon){
-      Teuchos::RCP<DICe::Polygon> shape = read_polygon(dataFile);
-      multi_shape.push_back(shape);
-    }
-    else if(shape_tokens[1]==parser_rectangle){
-      Teuchos::RCP<DICe::Rectangle> shape = read_rectangle(dataFile);
-      multi_shape.push_back(shape);
-    }
-    else{
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, unrecognized shape : " << shape_tokens[1]);
+}
+
+DICE_LIB_DLL_EXPORT
+std::vector<std::string> tokenize_line(std::istream &dataFile,
+  const std::string & delim,
+  const bool capitalize){
+//  static int_t MAX_CHARS_PER_LINE = 512;
+  static int_t MAX_TOKENS_PER_LINE = 100;
+
+  std::vector<std::string> tokens(MAX_TOKENS_PER_LINE,"");
+
+  // read an entire line into memory
+  std::string buf_str;
+  safeGetline(dataFile, buf_str);
+  char *buf = new char[buf_str.length() + 1];
+  strcpy(buf, buf_str.c_str());
+
+  // parse the line into blank-delimited tokens
+  int_t n = 0; // a for-loop index
+
+  // parse the line
+  char * token;
+  token = strtok(buf, delim.c_str());
+  tokens[0] = token ? token : ""; // first token
+  if(capitalize)
+    to_upper(tokens[0]);
+  bool first_char_is_pound = tokens[0].find("#") == 0;
+  if (tokens[0] != "" && tokens[0]!=parser_comment_char && !first_char_is_pound) // zero if line is blank or starts with a comment char
+  {
+    for (n = 1; n < MAX_TOKENS_PER_LINE; n++)
+    {
+      token = strtok(0, delim.c_str());
+      tokens[n] = token ? token : ""; // subsequent tokens
+      if (tokens[n]=="") break; // no more tokens
+      if(capitalize)
+        to_upper(tokens[n]); // convert the string to upper case
     }
   }
-  TEUCHOS_TEST_FOR_EXCEPTION(multi_shape.size()<=0,std::runtime_error,"");
-  return multi_shape;
+  tokens.resize(n);
+  delete [] buf;
+
+  return tokens;
+
 }
+
+DICE_LIB_DLL_EXPORT
+bool is_number(const std::string& s)
+{
+  std::string::const_iterator it = s.begin();
+  while (it != s.end() && (std::isdigit(*it) || *it=='+' || *it=='-' || *it=='e' || *it=='E' || *it=='.'))
+    ++it;
+  return !s.empty() && it == s.end();
+}
+
 
 DICE_LIB_DLL_EXPORT
 const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileName,
@@ -1175,9 +1473,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
 }
 
 DICE_LIB_DLL_EXPORT
-void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
-  std::vector<std::string> & image_files,
-  std::vector<std::string> & stereo_image_files){
+Teuchos::RCP<Circle> read_circle(std::fstream &dataFile){
   int proc_rank = 0;
 #if DICE_MPI
   int mpi_is_initialized = 0;
@@ -1186,366 +1482,40 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
     MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
 #endif
 
-  // The reference image will be the first image in the vector, the rest are the deformed
-  image_files.clear();
-  stereo_image_files.clear();
-  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::image_folder),std::runtime_error,
-    "Error, image folder was not specified");
-  std::string folder = params->get<std::string>(DICe::image_folder);
-  // Requires that the user add the appropriate slash or backslash as denoted in the template file creator
-  if(proc_rank==0) DEBUG_MSG("Image folder prefix: " << folder );
-
-  // User specified a ref and def image alone (not a sequence)
-  if(params->isParameter(DICe::reference_image)){
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image_index),std::runtime_error,
-      "Error, cannot specify reference_image_index and reference_image");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::start_image_index),std::runtime_error,
-      "Error, cannot specify start_image_index and reference_image");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::end_image_index),std::runtime_error,
-      "Error, cannot specify end_image_index and reference_image");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::image_file_prefix),std::runtime_error,
-      "Error, cannot specify image_file_prefix and reference_image");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::image_file_extension),std::runtime_error,
-      "Error, cannot specify image_file_prefix and reference_image");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::num_file_suffix_digits),std::runtime_error,
-      "Error, cannot specify image_file_prefix and reference_image");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_left_suffix),std::runtime_error,
-      "Error, cannot specify stereo_left_suffix and reference_image");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_right_suffix),std::runtime_error,
-      "Error, cannot specify stereo_right_suffix and reference_image");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::cine_file),std::runtime_error,
-      "Error, cannot specify cine_file and reference_image");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_cine_file),std::runtime_error,
-      "Error, cannot specify stereo_cine_file and reference_image");
-
-    std::string ref_file_name = params->get<std::string>(DICe::reference_image);
-    std::stringstream ref_name;
-    ref_name << folder << ref_file_name;
-    image_files.push_back(ref_name.str());
-    if(params->isParameter(DICe::stereo_reference_image)){
-      std::string stereo_ref_file_name = params->get<std::string>(DICe::stereo_reference_image);
-      std::stringstream stereo_ref_name;
-      stereo_ref_name << folder << stereo_ref_file_name;
-      stereo_image_files.push_back(stereo_ref_name.str());
+  if(proc_rank==0) DEBUG_MSG("Reading a circle");
+  int_t cx = -1;
+  int_t cy = -1;
+  scalar_t radius = -1.0;
+  while(!dataFile.eof()){
+    std::vector<std::string> tokens = tokenize_line(dataFile);
+    if(tokens.size()==0) continue; // comment or blank line
+    if(tokens[0]==parser_end) break;
+    else if(tokens[0]==parser_center){
+      if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define circle center point ");}
+      TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]) || !is_number(tokens[2]),std::runtime_error,
+        "Error, both tokens should be a number");
+      cx = atoi(tokens[1].c_str());
+      cy = atoi(tokens[2].c_str());
     }
-
-    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::deformed_images),std::runtime_error,
-      "Error, the deformed images were not specified");
-    // create a sublist of the deformed images:
-    Teuchos::ParameterList def_image_sublist = params->sublist(DICe::deformed_images);
-    // iterate the sublis and add the params to the output params:
-    for(Teuchos::ParameterList::ConstIterator it=def_image_sublist.begin();it!=def_image_sublist.end();++it){
-      const bool active = def_image_sublist.get<bool>(it->first);
-      if(active){
-        std::stringstream def_name;
-        def_name << folder << it->first;
-        image_files.push_back(def_name.str());
-      }
+    else if(tokens[0]==parser_radius){
+      if(tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define circle radius ");}
+      TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]),std::runtime_error,"Error, token should be a number");
+      radius = strtod(tokens[1].c_str(),NULL);
     }
-    if(params->isParameter(DICe::stereo_reference_image)){
-      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::stereo_deformed_images),std::runtime_error,
-        "Error, the stereo deformed images were not specified");
-      Teuchos::ParameterList stereo_def_image_sublist = params->sublist(DICe::stereo_deformed_images);
-      // iterate the sublis and add the params to the output params:
-      for(Teuchos::ParameterList::ConstIterator it=stereo_def_image_sublist.begin();it!=stereo_def_image_sublist.end();++it){
-        const bool active = stereo_def_image_sublist.get<bool>(it->first);
-        if(active){
-          std::stringstream def_name;
-          def_name << folder << it->first;
-          stereo_image_files.push_back(def_name.str());
-        }
-      }
-      TEUCHOS_TEST_FOR_EXCEPTION(stereo_image_files.size()!=image_files.size(),std::runtime_error,
-        "Error, the number of deformed images and stereo deformed images must be the same");
-    }
-  }
-  else if(params->isParameter(DICe::cine_file)){
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image),std::runtime_error,
-      "Error, cannot specify reference_image and cine_file");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::deformed_images),std::runtime_error,
-      "Error, cannot specify deformed_images and cine_file");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_reference_image),std::runtime_error,
-      "Error, cannot specify stereo_reference_image and cine_file");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_deformed_images),std::runtime_error,
-      "Error, cannot specify stereo_deformed_images and cine_file");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image_index),std::runtime_error,
-      "Error, cannot specify reference_image_index and cine_file");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::end_image_index),std::runtime_error,
-      "Error, cannot specify end_image_index and cine_file");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::start_image_index),std::runtime_error,
-      "Error, cannot specify start_image_index and cine_file");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::image_file_prefix),std::runtime_error,
-      "Error, cannot specify image_file_prefix and cine_file");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::image_file_extension),std::runtime_error,
-      "Error, cannot specify image_file_prefix and cine_file");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::num_file_suffix_digits),std::runtime_error,
-      "Error, cannot specify image_file_prefix and cine_file");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_left_suffix),std::runtime_error,
-      "Error, cannot specify stereo_left_suffix and cine_file");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_right_suffix),std::runtime_error,
-      "Error, cannot specify stereo_right_suffix and cine_file");
-
-//    image_files.push_back(DICe::cine_file);
-//    image_files.push_back(DICe::cine_file);
-//    if(params->isParameter(DICe::stereo_cine_file)){
-//      stereo_image_files.push_back(DICe::cine_file);
-//      stereo_image_files.push_back(DICe::cine_file);
-//    }
-    std::stringstream cine_name;
-    std::string cine_file_name = params->get<std::string>(DICe::cine_file);
-    cine_name << params->get<std::string>(DICe::image_folder) << cine_file_name;
-    Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
-    Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(cine_name.str(),bhs.getRawPtr(),false));
-    // read the image data for a frame
-    const int_t num_images = cine_reader->num_frames();
-    const int_t first_frame_index = cine_reader->first_image_number();
-    //TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::cine_ref_index),std::runtime_error,
-    //  "Error, the reference index for the cine file has not been specified");
-    const int_t cine_ref_index = params->get<int_t>(DICe::cine_ref_index,first_frame_index);
-    const int_t cine_start_index = params->get<int_t>(DICe::cine_start_index,first_frame_index);
-    const int_t cine_end_index = params->get<int_t>(DICe::cine_end_index,first_frame_index + num_images -1);
-    const int_t cine_skip_index = params->get<int_t>(DICe::cine_skip_index,1);
-    TEUCHOS_TEST_FOR_EXCEPTION(cine_start_index > cine_end_index,std::invalid_argument,"Error, the cine start index is > the cine end index");
-    TEUCHOS_TEST_FOR_EXCEPTION(cine_start_index < first_frame_index,std::invalid_argument,"Error, the cine start index is < the first frame index");
-    TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index > cine_end_index,std::invalid_argument,"Error, the cine ref index is > the cine end index");
-    TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index < first_frame_index,std::invalid_argument,"Error, the cine ref index is < the first frame index");
-    TEUCHOS_TEST_FOR_EXCEPTION(cine_end_index < cine_start_index,std::invalid_argument,"Error, the cine end index is < the cine start index");
-    TEUCHOS_TEST_FOR_EXCEPTION(cine_end_index < cine_ref_index,std::invalid_argument,"Error, the cine end index is < the ref index");
-
-    // check if the reference frame should be averaged:
-    int_t num_avg_frames = -1;
-    if(params->isParameter(DICe::time_average_cine_ref_frame))
-      num_avg_frames = params->get<int_t>(DICe::time_average_cine_ref_frame,1);
-    // strip the .cine part from the end of the cine file:
-    std::string trimmed_cine_name = cine_name.str();
-    const std::string ext(".cine");
-    if(trimmed_cine_name.size() > ext.size() && trimmed_cine_name.substr(trimmed_cine_name.size() - ext.size()) == ".cine" )
-    {
-       trimmed_cine_name = trimmed_cine_name.substr(0, trimmed_cine_name.size() - ext.size());
-    }else{
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid cine file: " << cine_file_name);
-    }
-    std::stringstream ref_cine_ss;
-    ref_cine_ss << trimmed_cine_name << "_";
-    if(num_avg_frames>0)
-      ref_cine_ss << "avg" << cine_ref_index << "to" << cine_ref_index + num_avg_frames;
-    else
-      ref_cine_ss << cine_ref_index;
-    ref_cine_ss << ".cine";
-    const int_t total_num_frames = std::floor((cine_end_index-cine_start_index)/cine_skip_index) + 2;
-    image_files.resize(total_num_frames);
-    image_files[0] = ref_cine_ss.str();
-    int_t current_index = 1;
-    for(int_t i=cine_start_index;i<=cine_end_index;i+=cine_skip_index){
-      std::stringstream def_cine_ss;
-      def_cine_ss << trimmed_cine_name << "_" << i << ".cine";
-      image_files[current_index++] = def_cine_ss.str();
-    }
-    if(params->isParameter(DICe::stereo_cine_file)){
-      std::stringstream stereo_cine_name;
-      std::string stereo_cine_file_name = params->get<std::string>(DICe::stereo_cine_file);
-      stereo_cine_name << params->get<std::string>(DICe::image_folder) << stereo_cine_file_name;
-      Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
-      Teuchos::RCP<DICe::cine::Cine_Reader> stereo_cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(stereo_cine_name.str(),bhs.getRawPtr(),false));
-      // strip the .cine part from the end of the cine file:
-      std::string stereo_trimmed_cine_name = stereo_cine_name.str();
-      if(stereo_trimmed_cine_name.size() > ext.size() && stereo_trimmed_cine_name.substr(stereo_trimmed_cine_name.size() - ext.size()) == ".cine" )
-      {
-         stereo_trimmed_cine_name = stereo_trimmed_cine_name.substr(0, stereo_trimmed_cine_name.size() - ext.size());
-      }else{
-        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid stereo cine file: " << stereo_cine_file_name);
-      }
-      std::stringstream stereo_ref_cine_ss;
-      stereo_ref_cine_ss << stereo_trimmed_cine_name << "_";
-      if(num_avg_frames>0)
-        stereo_ref_cine_ss << "avg" << cine_ref_index << "to" << cine_ref_index + num_avg_frames;
-      else
-        stereo_ref_cine_ss << cine_ref_index;
-      stereo_ref_cine_ss << ".cine";
-      stereo_image_files.resize(total_num_frames);
-      stereo_image_files[0] = stereo_ref_cine_ss.str();
-      int_t current_stereo_index = 1;
-      for(int_t i=cine_start_index;i<=cine_end_index;i+=cine_skip_index){
-        std::stringstream stereo_def_cine_ss;
-        stereo_def_cine_ss << stereo_trimmed_cine_name << "_" << i << ".cine";
-        stereo_image_files[current_stereo_index++] = stereo_def_cine_ss.str();
-      }
-    }
-  } // end cine file
-  // User specified an image sequence:
-  else{
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image),std::runtime_error,
-      "Error, cannot specify reference_image and reference_image_index");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::deformed_images),std::runtime_error,
-      "Error, cannot specify deformed_images and reference_image_index");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_reference_image),std::runtime_error,
-      "Error, cannot specify stereo_reference_image and reference_image_index");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_deformed_images),std::runtime_error,
-      "Error, cannot specify stereo_deformed_images and reference_image_index");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image),std::runtime_error,
-      "Error, cannot specify reference_image and reference_image_index");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::deformed_images),std::runtime_error,
-      "Error, cannot specify deformed_images and reference_image_index");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_reference_image),std::runtime_error,
-      "Error, cannot specify stereo_reference_image and reference_image_index");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_deformed_images),std::runtime_error,
-      "Error, cannot specify stereo_deformed_images and reference_image_index");
-
-    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::reference_image_index),std::runtime_error,
-      "Error, the reference image index was not specified");
-    // pull the parameters out
-    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::end_image_index),std::runtime_error,
-      "Error, the end image index was not specified");
-    const int_t lastImageIndex = params->get<int_t>(DICe::end_image_index);
-    int_t imageSkip = 1;
-    if(params->isParameter(DICe::skip_image_index))
-      imageSkip = params->get<int_t>(DICe::skip_image_index);
-    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::image_file_prefix),std::runtime_error,
-      "Error, the image file prefix was not specified");
-    const std::string prefix = params->get<std::string>(DICe::image_file_prefix);
-    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::image_file_extension),std::runtime_error,
-      "Error, the image file extension was not specified");
-    const std::string fileType = params->get<std::string>(DICe::image_file_extension);
-    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::num_file_suffix_digits),std::runtime_error,
-      "Error, the number of file suffix digits was not specified");
-    const int_t digits = params->get<int_t>(DICe::num_file_suffix_digits);
-    TEUCHOS_TEST_FOR_EXCEPTION(digits<=0,std::runtime_error,"");
-    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::reference_image_index),std::runtime_error,
-      "Error, the reference image index was not specified");
-    const int_t refId = params->get<int_t>(DICe::reference_image_index);
-    TEUCHOS_TEST_FOR_EXCEPTION(lastImageIndex < refId,std::runtime_error,"Error invalid reference image index");
-
-    int_t startImageIndex = refId;
-    if(params->isParameter(DICe::start_image_index)){
-      startImageIndex = params->get<int_t>(DICe::start_image_index);
-    }
-    TEUCHOS_TEST_FOR_EXCEPTION(startImageIndex > lastImageIndex,std::runtime_error,"Error invalid start image index");
-    TEUCHOS_TEST_FOR_EXCEPTION(startImageIndex < 0,std::runtime_error,"Error invalid start image index");
-    const int_t numImages = std::floor((lastImageIndex - startImageIndex)/imageSkip) + 1;
-    TEUCHOS_TEST_FOR_EXCEPTION(numImages<=0,std::runtime_error,"");
-    std::string stereo_left_suffix = "";
-    std::string stereo_right_suffix = "";
-    const bool is_stereo = params->isParameter(DICe::stereo_left_suffix) || params->isParameter(DICe::stereo_right_suffix);
-    if(is_stereo){
-      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::stereo_left_suffix),std::runtime_error,"Error, for stereo the stereo_left_suffix parameter must be set");
-      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::stereo_right_suffix),std::runtime_error,"Error, for stereo the stereo_right_suffix parameter must be set");
-      stereo_left_suffix = params->get<std::string>(DICe::stereo_left_suffix);
-      stereo_right_suffix = params->get<std::string>(DICe::stereo_right_suffix);
-    }
-
-    // determine the reference image
-    int_t number = refId;
-    int_t refDig = 0;
-    if(refId==0)
-      refDig = 1;
     else{
-      while (number) {number /= 10; refDig++;}
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid token in circle definition " << tokens[0]);
     }
-    std::stringstream ref_name;
-    ref_name << folder << prefix;
-    if(digits > 1){
-      for(int_t i=0;i<digits - refDig;++i) ref_name << "0";
-    }
-    ref_name << refId << stereo_left_suffix << fileType;
-    image_files.push_back(ref_name.str());
-    if(is_stereo){
-      std::stringstream stereo_ref_name;
-      stereo_ref_name << folder << prefix;
-      if(digits > 1){
-        for(int_t i=0;i<digits - refDig;++i) stereo_ref_name << "0";
-      }
-      stereo_ref_name << refId << stereo_right_suffix << fileType;
-      stereo_image_files.push_back(stereo_ref_name.str());
-    }
-
-    // determine the deformed images
-    for(int_t i=startImageIndex;i<=lastImageIndex;i+=imageSkip){
-      std::stringstream def_name;
-      def_name << folder << prefix;
-      int_t tmpNum = i;
-      int_t defDig = 0;
-      if(tmpNum==0)
-        defDig = 1;
-      else{
-        while (tmpNum) {tmpNum /= 10; defDig++;}
-      }
-      if(digits > 1)
-        for(int_t j=0;j<digits - defDig;++j) def_name << "0";
-      def_name << i << stereo_left_suffix << fileType;
-      image_files.push_back(def_name.str());
-      if(is_stereo){
-        std::stringstream stereo_def_name;
-        stereo_def_name << folder << prefix;
-        if(digits > 1)
-          for(int_t j=0;j<digits - defDig;++j) stereo_def_name << "0";
-        stereo_def_name << i << stereo_right_suffix << fileType;
-        stereo_image_files.push_back(stereo_def_name.str());
-      }
-    }
-    TEUCHOS_TEST_FOR_EXCEPTION(is_stereo && image_files.size()!=stereo_image_files.size(),std::runtime_error,"");
   }
-  TEUCHOS_TEST_FOR_EXCEPTION(image_files.size()<=1,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(radius==-1.0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(cx==-1,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(cy==-1,std::runtime_error,"");
+  if(proc_rank==0) DEBUG_MSG("Creating a circle with center " << cx << " " << cy << " and radius " << radius);
+  Teuchos::RCP<DICe::Circle> shape = Teuchos::rcp(new DICe::Circle(cx,cy,radius));
+  return shape;
 }
 
 DICE_LIB_DLL_EXPORT
-bool valid_correlation_point(const int_t x_coord,
-  const int_t y_coord,
-  Teuchos::RCP<Image> image,
-  const int_t subset_size,
-  std::set<std::pair<int_t,int_t> > & coords,
-  std::set<std::pair<int_t,int_t> > & excluded_coords,
-  const scalar_t & grad_threshold){
-  // need to check if the point is interior to the image by at least one subset_size
-  if(x_coord<subset_size-1) return false;
-  if(x_coord>image->width()-subset_size) return false;
-  if(y_coord<subset_size-1) return false;
-  if(y_coord>image->height()-subset_size) return false;
-
-  // only the centroid has to be inside the ROI
-  if(coords.find(std::pair<int_t,int_t>(y_coord,x_coord))==coords.end()) return false;
-
-  static std::vector<int_t> corners_x(4);
-  static std::vector<int_t> corners_y(4);
-  corners_x[0] = x_coord - subset_size/2;  corners_y[0] = y_coord - subset_size/2;
-  corners_x[1] = corners_x[0]+subset_size; corners_y[1] = corners_y[0];
-  corners_x[2] = corners_x[0]+subset_size; corners_y[2] = corners_y[0] + subset_size;
-  corners_x[3] = corners_x[0];             corners_y[3] = corners_y[0] + subset_size;
-  // check four points to see if any of the corners fall in an excluded region
-  bool all_corners_in = true;
-  for(int_t i=0;i<4;++i){
-    if(excluded_coords.find(std::pair<int_t,int_t>(corners_y[i],corners_x[i]))!=excluded_coords.end())
-      all_corners_in = false;
-  }
-  if(!all_corners_in) return false;
-
-  // check the gradient SSSIG threshold
-  if(grad_threshold > 0.0){
-    TEUCHOS_TEST_FOR_EXCEPTION(!image->has_gradients(),std::runtime_error,
-      "Error, testing valid points for SSSIG tol, but image gradients have not been computed");
-    scalar_t SSSIG = 0.0;
-    for(int_t y=corners_y[0];y<corners_y[2];++y){
-      for(int_t x=corners_x[0];x<corners_x[1];++x){
-        SSSIG += image->grad_x(x,y)*image->grad_x(x,y) + image->grad_x(x,y)*image->grad_x(x,y);
-      }
-    }
-    SSSIG /= (subset_size*subset_size);
-    //std::cout << "x " << x_coord << " y " << y_coord << " SSSIG: " << SSSIG << " threshold " << grad_threshold << std::endl;
-    if(SSSIG < grad_threshold) return false;
-  }
-
-
-  return true;
-
-}
-
-DICE_LIB_DLL_EXPORT
-void
-create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_points,
-  std::vector<int_t> & neighbor_ids,
-  Teuchos::RCP<Teuchos::ParameterList> params,
-  Teuchos::RCP<Image> image,
-  Teuchos::RCP<DICe::Subset_File_Info> subset_file_info,
-  const scalar_t & grad_threshold){
+Teuchos::RCP<DICe::Rectangle> read_rectangle(std::fstream &dataFile){
   int proc_rank = 0;
 #if DICE_MPI
   int mpi_is_initialized = 0;
@@ -1554,177 +1524,92 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
     MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
 #endif
 
-  if(proc_rank==0) DEBUG_MSG("Creating a grid of regular correlation points");
-  // note: assumes two dimensional
-  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::step_size),std::runtime_error,
-    "Error, the step size was not specified");
-  const int_t step_size = params->get<int_t>(DICe::step_size);
-  // set up the control points
-  TEUCHOS_TEST_FOR_EXCEPTION(step_size<=0,std::runtime_error,"Error: step size is <= 0");
-  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::subset_size),std::runtime_error,
-    "Error, the subset size was not specified");
-  const int_t subset_size = params->get<int_t>(DICe::subset_size);
-  correlation_points.clear();
-  neighbor_ids.clear();
-
-  const int_t width = image->width();
-  const int_t height = image->height();
-
-  bool seed_was_specified = false;
-  Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > roi_defs;
-  if(subset_file_info!=Teuchos::null){
-    if(subset_file_info->conformal_area_defs!=Teuchos::null){
-      if(proc_rank==0) DEBUG_MSG("Using ROIs from a subset file");
-      roi_defs = subset_file_info->conformal_area_defs;
-      if(proc_rank==0) DEBUG_MSG("create_regular_grid_of_correlation_points(): user requested " << roi_defs->size() <<  " ROI(s)");
-      seed_was_specified = subset_file_info->size_map->size() > 0;
-      if(seed_was_specified){
-        TEUCHOS_TEST_FOR_EXCEPTION(subset_file_info->size_map->size()!=subset_file_info->displacement_map->size(),
-          std::runtime_error,"Error the number of displacement guesses and seed locations must be the same");
+  if(proc_rank==0) DEBUG_MSG("Reading a rectangle");
+  int_t cx = -1;
+  int_t cy = -1;
+  int_t width = -1.0;
+  int_t height = -1.0;
+  int_t upper_left_x = -1;
+  int_t upper_left_y = -1;
+  int_t lower_right_x = -1;
+  int_t lower_right_y = -1;
+  bool has_upper_left_lower_right = false;
+  while(!dataFile.eof()){
+    std::vector<std::string> tokens = tokenize_line(dataFile);
+    if(tokens.size()==0) continue; // comment or blank line
+    if(tokens[0]==parser_end) break;
+    if(tokens[0]==parser_center||tokens[0]==parser_width||tokens[0]==parser_height){
+      if(tokens[0]==parser_center){
+        if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define circle center point ");}
+        TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]) || !is_number(tokens[2]),std::runtime_error,
+          "Error, both tokens should be a number");
+        cx = atoi(tokens[1].c_str());
+        cy = atoi(tokens[2].c_str());
       }
-    }
-    else{
-      if(proc_rank==0) DEBUG_MSG("create_regular_grid_of_correlation_points(): subset file exists, but has no ROIs");
-    }
-  }
-  if(roi_defs==Teuchos::null){ // wasn't populated above so create a dummy roi with the whole image:
-    if(proc_rank==0) DEBUG_MSG("create_regular_grid_of_correlation_points(): creating dummy ROI of the entire image");
-    Teuchos::RCP<DICe::Rectangle> rect = Teuchos::rcp(new DICe::Rectangle(width/2,height/2,width,height));
-    DICe::multi_shape boundary_multi_shape;
-    boundary_multi_shape.push_back(rect);
-    DICe::Conformal_Area_Def conformal_area_def(boundary_multi_shape);
-    roi_defs = Teuchos::rcp(new std::map<int_t,DICe::Conformal_Area_Def> ());
-    roi_defs->insert(std::pair<int_t,DICe::Conformal_Area_Def>(0,conformal_area_def));
-  }
-
-  // if no ROI is specified, the whole image is the ROI
-
-  int_t current_subset_id = 0;
-
-  std::map<int_t,DICe::Conformal_Area_Def>::iterator map_it=roi_defs->begin();
-  for(;map_it!=roi_defs->end();++map_it){
-
-    std::set<std::pair<int_t,int_t> > coords;
-    std::set<std::pair<int_t,int_t> > excluded_coords;
-    // collect the coords of all the boundary shapes
-    for(size_t i=0;i<map_it->second.boundary()->size();++i){
-      std::set<std::pair<int_t,int_t> > shapeCoords = (*map_it->second.boundary())[i]->get_owned_pixels();
-      coords.insert(shapeCoords.begin(),shapeCoords.end());
-    }
-    // collect the coords of all the exclusions
-    if(map_it->second.has_excluded_area()){
-      for(size_t i=0;i<map_it->second.excluded_area()->size();++i){
-        std::set<std::pair<int_t,int_t> > shapeCoords = (*map_it->second.excluded_area())[i]->get_owned_pixels();
-        excluded_coords.insert(shapeCoords.begin(),shapeCoords.end());
+      else if(tokens[0]==parser_width){
+        if(tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define the width ");}
+        TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]),std::runtime_error,"Error, token should be a number");
+        width = strtod(tokens[1].c_str(),NULL);
       }
-    }
-    int_t num_rows = 0;
-    int_t num_cols = 0;
-    int_t seed_row = 0;
-    int_t seed_col = 0;
-    int_t x_coord = subset_size-1;
-    int_t y_coord = subset_size-1;
-    int_t seed_location_x = 0;
-    int_t seed_location_y = 0;
-    int_t seed_subset_id = -1;
-
-    bool this_roi_has_seed = false;
-    if(seed_was_specified){
-      if(subset_file_info->size_map->find(map_it->first)!=subset_file_info->size_map->end()){
-        seed_location_x = subset_file_info->size_map->find(map_it->first)->second.first;
-        seed_location_y = subset_file_info->size_map->find(map_it->first)->second.second;
-        if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " seed x: " << seed_location_x << " seed_y: " << seed_location_y);
-        this_roi_has_seed = true;
-      }
-    }
-    while(x_coord < width - subset_size) {
-      if(x_coord + step_size/2 < seed_location_x) seed_col++;
-      x_coord+=step_size;
-      num_cols++;
-    }
-    while(y_coord < height - subset_size) {
-      if(y_coord + step_size/2 < seed_location_y) seed_row++;
-      y_coord+=step_size;
-      num_rows++;
-    }
-    if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " has " << num_rows << " rows and " << num_cols << " cols, seed row " << seed_row << " seed col " << seed_col);
-    //if(seed_was_specified&&this_roi_has_seed){
-      x_coord = subset_size-1 + seed_col*step_size;
-      y_coord = subset_size-1 + seed_row*step_size;
-    if(valid_correlation_point(x_coord,y_coord,image,subset_size,coords,excluded_coords,grad_threshold)){
-      correlation_points.push_back((scalar_t)x_coord);
-      correlation_points.push_back((scalar_t)y_coord);
-      //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding seed correlation point " << x_coord << " " << y_coord);
-      if(seed_was_specified&&this_roi_has_seed){
-        seed_subset_id = current_subset_id;
-        subset_file_info->seed_subset_ids->insert(std::pair<int_t,int_t>(seed_subset_id,map_it->first));
-      }
-      neighbor_ids.push_back(-1); // seed point cannot have a neighbor
-      current_subset_id++;
-    }
-    else if(!(seed_row==0&&seed_col==0)){
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, seed specified does not meet the SSSIG criteria for suffient image gradients");
-    }
-
-    // snake right from seed
-    const int_t right_start_subset_id = current_subset_id;
-    int_t direction = 1; // sign needs to be flipped if the seed row is the first row
-    int_t row = seed_row;
-    int_t col = seed_col;
-    while(row>=0&&row<num_rows){
-      if((direction==1&&row+1>=num_rows)||(direction==-1&&row-1<0)){
-        direction *= -1;
-        col++;
-      }else{
-        row += direction;
-      }
-      if(col>=num_cols)break;
-      x_coord = subset_size - 1 + col*step_size;
-      y_coord = subset_size - 1 + row*step_size;
-      if(valid_correlation_point(x_coord,y_coord,image,subset_size,coords,excluded_coords,grad_threshold)){
-        correlation_points.push_back((scalar_t)x_coord);
-        correlation_points.push_back((scalar_t)y_coord);
-        //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding snake right correlation point " << x_coord << " " << y_coord);
-        if(current_subset_id==right_start_subset_id)
-          neighbor_ids.push_back(seed_subset_id);
-        else
-          neighbor_ids.push_back(current_subset_id - 1);
-        current_subset_id++;
-      }  // end valid point
-    }  // end snake right
-    // snake left from seed
-    const int_t left_start_subset_id = current_subset_id;
-    direction = -1;
-    row = seed_row;
-    col = seed_col;
-    while(row>=0&&row<num_rows){
-      if((direction==1&&row+1>=num_rows)||(direction==-1&&row-1<0)){
-        direction *= -1;
-        col--;
+      else if(tokens[0]==parser_height){
+        if(tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define the height ");}
+        TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]),std::runtime_error,"Error, token should be a number");
+        height = strtod(tokens[1].c_str(),NULL);
       }
       else{
-        row += direction;
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid token in rectangle definition by center, width, height " << tokens[0]);
       }
-      if(col<0)break;
-      x_coord = subset_size - 1 + col*step_size;
-      y_coord = subset_size - 1 + row*step_size;
-      if(valid_correlation_point(x_coord,y_coord,image,subset_size,coords,excluded_coords,grad_threshold)){
-        correlation_points.push_back((scalar_t)x_coord);
-        correlation_points.push_back((scalar_t)y_coord);
-        //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding snake left correlation point " << x_coord << " " << y_coord);
-        if(current_subset_id==left_start_subset_id)
-          neighbor_ids.push_back(seed_subset_id);
-        else
-          neighbor_ids.push_back(current_subset_id-1);
-        current_subset_id++;
-      }  // valid point
-    }  // end snake left
-  }  // conformal area map
-  DEBUG_MSG("create_regular_grid_of_correlation_points(): complete, created " << correlation_points.size() << " points");
+    }
+    else if(tokens[0]==parser_upper_left||tokens[0]==parser_lower_right){
+      if(tokens[0]==parser_upper_left){
+        if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define rectangle upper left ");}
+        TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]) || !is_number(tokens[2]),std::runtime_error,
+          "Error, both tokens should be numbers");
+        has_upper_left_lower_right = true;
+        upper_left_x = atoi(tokens[1].c_str());
+        upper_left_y = atoi(tokens[2].c_str());
+      }
+      else if(tokens[0]==parser_lower_right){
+        if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define rectangle lower right ");}
+        TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]) || !is_number(tokens[2]),std::runtime_error,
+          "Error, both tokens should be a number");
+        has_upper_left_lower_right = true;
+        lower_right_x = atoi(tokens[1].c_str());
+        lower_right_y = atoi(tokens[2].c_str());
+      }
+      else{
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid token in rectangle definition by upper left, lower right " << tokens[0]);
+      }
+    }
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid token in rectangle definition " << tokens[0]);
+    }
+  }
+  if(has_upper_left_lower_right){
+    if(proc_rank==0) DEBUG_MSG("Rectangle has upper left_x " << upper_left_x << " upper_left_y " << upper_left_y <<
+      " lower_right_x " << lower_right_x << " lower_right_y " << lower_right_y);
+    TEUCHOS_TEST_FOR_EXCEPTION(upper_left_x <0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(upper_left_y <0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(lower_right_x <0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(lower_right_y <0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(lower_right_x < upper_left_x,std::runtime_error,"Error: Rectangle inverted or zero width");
+    TEUCHOS_TEST_FOR_EXCEPTION(lower_right_y < upper_left_y,std::runtime_error,"Error: Rectangle inverted or zero height");
+    width = lower_right_x - upper_left_x;
+    height = lower_right_y - upper_left_y;
+    cx = width/2 + upper_left_x;
+    cy = height/2 + upper_left_y;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(width<=0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(height<=0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(cx<0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(cy<0,std::runtime_error,"");
+  if(proc_rank==0) DEBUG_MSG("Creating a rectangle with center " << cx << " " << cy << " width " << width << " height " << height);
+  Teuchos::RCP<DICe::Rectangle> shape = Teuchos::rcp(new DICe::Rectangle(cx,cy,width,height));
+  return shape;
 }
 
 DICE_LIB_DLL_EXPORT
-void generate_template_input_files(const std::string & file_prefix){
+Teuchos::RCP<DICe::Polygon> read_polygon(std::fstream &dataFile){
   int proc_rank = 0;
 #if DICE_MPI
   int mpi_is_initialized = 0;
@@ -1733,126 +1618,68 @@ void generate_template_input_files(const std::string & file_prefix){
     MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
 #endif
 
-  if(proc_rank==0) DEBUG_MSG("generate_template_input_files() was called.");
-  std::stringstream fileNameInput;
-  fileNameInput << file_prefix << "_input.xml";
-  const std::string inputFile = fileNameInput.str();
-  std::stringstream fileNameParams;
-  fileNameParams << file_prefix << "_params.xml";
-  const std::string paramsFile = fileNameParams.str();
-  if(proc_rank==0) DEBUG_MSG("Input file: " << fileNameInput.str() << " Params file: " << fileNameParams.str());
-
-  // clear the files if they exist
-  initialize_xml_file(fileNameInput.str());
-  initialize_xml_file(fileNameParams.str());
-
-  // write the input file parameters:
-
-  write_xml_comment(inputFile,"Note: this template assumes local DIC algorithm to be used");
-  write_xml_string_param(inputFile,DICe::output_folder,"<path>",false);
-  write_xml_comment(inputFile,"Note: the output folder needs the trailing slash \"/\" or backslash \"\\\"");
-  write_xml_string_param(inputFile,DICe::output_prefix,"<prefix>",true);
-  write_xml_comment(inputFile,"Optional prefix to use in the output file name (default is \"DICe_solution\"");
-  write_xml_string_param(inputFile,DICe::image_folder,"<path>",false);
-  write_xml_comment(inputFile,"Note: the image folder needs the trailing slash \"/\" or backslash \"\\\"");
-  write_xml_string_param(inputFile,DICe::correlation_parameters_file,paramsFile,true);
-  write_xml_comment(inputFile,"The user can set specific correlation parameters in the file above");
-  write_xml_comment(inputFile,"These parameters are activated by uncommenting the correlation_parameters_file option");
-  write_xml_string_param(inputFile,DICe::physics_parameters_file,paramsFile,true);
-  write_xml_comment(inputFile,"The user can set specific parameters for the physics involved if integrated DIC is used (experimental and not default)");
-  write_xml_comment(inputFile,"These parameters are activated by uncommenting the physics_parameters_file option and if the dice_integrated executable is used");
-  write_xml_size_param(inputFile,DICe::subset_size,"<value>",false);
-  write_xml_size_param(inputFile,DICe::step_size,"<value>",false);
-  write_xml_comment(inputFile,"Note: if a subset file is used to below to specify subset centroids, this option should not be used");
-  write_xml_bool_param(inputFile,DICe::separate_output_file_for_each_subset,"false",false);
-  write_xml_comment(inputFile,"Write a separate output file for each subset with all frames in that file (default is to write one file per frame with all subsets)");
-  write_xml_bool_param(inputFile,DICe::create_separate_run_info_file,"false",false);
-  write_xml_comment(inputFile,"Write a separate output file that has the header information rather than place it at the top of the output files");
-  write_xml_string_param(inputFile,DICe::subset_file,"<path>");
-  write_xml_comment(inputFile,"Optional file to specify the coordinates of the subset centroids (cannot be used with step_size param)");
-  write_xml_comment(inputFile,"The subset file should be space separated (no commas) with one integer value for the number of subsets on the first line");
-  write_xml_comment(inputFile,"and a set of global x and y coordinates for each subset centroid, one point per line.");
-  write_xml_comment(inputFile,"There are two ways to specify the deformed images, first by listing them or by providing tokens to create a file sequence (see below)");
-  write_xml_string_param(inputFile,DICe::reference_image,"<file_name>",false);
-  write_xml_comment(inputFile,"If the images are not grayscale, they will be automatically converted to 8-bit grayscale.");
-  write_xml_param_list_open(inputFile,DICe::deformed_images,false);
-  write_xml_bool_param(inputFile,"<file_name>","true",false);
-  write_xml_param_list_close(inputFile,false);
-  write_xml_comment(inputFile,"The correlation evaluation order of the deformed image files will be according the order in the list above.");
-  write_xml_comment(inputFile,"The boolean value activates or deactivates the image.");
-  write_xml_comment(inputFile,"");
-  write_xml_comment(inputFile,"Consider instead an image sequence of files named with the pattern Image_0001.tif, Image_0002.tif, ..., Image_1000.tif");
-  write_xml_comment(inputFile,"For an image sequence, remove the two options above (reference_image and deformed_image) and use the following:");
-  write_xml_size_param(inputFile,DICe::reference_image_index,"<value>");
-  write_xml_comment(inputFile,"The index of the file to use as the reference image (no preceeding zeros). For the example above this would be \"1\" if the first image should be used");
-  write_xml_size_param(inputFile,DICe::end_image_index);
-  write_xml_comment(inputFile,"The index of the last image in the sequence to analyze. For the example above this would be 1000");
-  write_xml_size_param(inputFile,DICe::num_file_suffix_digits);
-  write_xml_comment(inputFile,"The number of digits in the file suffix. For the example above this would be 4");
-  write_xml_string_param(inputFile,DICe::image_file_extension);
-  write_xml_comment(inputFile,"The file extension type. For the example above this would be \".tif\" (Currently, only .tif or .tiff files are allowed.)");
-  write_xml_string_param(inputFile,DICe::image_file_prefix);
-  write_xml_comment(inputFile,"The tag at the front of the file names. For the example above this would be \"Image_\"");
-  write_xml_comment(inputFile,"");
-  write_xml_comment(inputFile,"Another option is to read frames from a cine file. In that case, the following parameters are used");
-  write_xml_comment(inputFile,"Note that all of the values for indexing are in terms of the cine file's first frame number (which may be negative due to trigger)");
-  write_xml_comment(inputFile,"For example, if the trigger image number is -100, the ref_index would be -100 as well as the start index");
-  write_xml_comment(inputFile,"The end index would be the trigger index + the number of frames to analyze, the default is the entire video.");
-  write_xml_string_param(inputFile,DICe::cine_file);
-  write_xml_size_param(inputFile,DICe::cine_ref_index);
-  write_xml_size_param(inputFile,DICe::cine_start_index);
-  write_xml_size_param(inputFile,DICe::cine_end_index);
-
-  // write the correlation parameters
-
-  write_xml_comment(paramsFile,"Uncomment lines below that begin with \"<Parameter name=...\"\n to specify that parameter. Otherwise, default values will be used");
-  for(int_t i=0;i<DICe::num_valid_correlation_params;++i){
-    if(valid_correlation_params[i].expose_to_user_ == false) continue;
-    // write comment with all possible options
-    if(valid_correlation_params[i].type_==STRING_PARAM){
-      write_xml_comment(paramsFile,"");
-      write_xml_string_param(paramsFile,valid_correlation_params[i].name_);
-      write_xml_comment(paramsFile,valid_correlation_params[i].desc_);
-      write_xml_comment(paramsFile,"Possible options include:");
-      const char ** possibleValues = valid_correlation_params[i].stringNamePtr_;
-      for(int_t j=0;j<valid_correlation_params[i].size_;++j){
-        write_xml_comment(paramsFile,possibleValues[j]);
-      }
+  if(proc_rank==0) DEBUG_MSG("Reading a Polygon");
+  std::vector<int_t> vertices_x;
+  std::vector<int_t> vertices_y;
+  while(!dataFile.eof()){
+    std::vector<std::string> tokens = tokenize_line(dataFile);
+    if(tokens.size()==0) continue; // comment or blank line
+    if(tokens[0]==parser_end) break;
+    TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()<2,std::runtime_error,"");
+    // only other valid option is BEGIN VERTICES
+    TEUCHOS_TEST_FOR_EXCEPTION(tokens[0]!=parser_begin,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(tokens[1]!=parser_vertices,std::runtime_error,"");
+    // read the vertices
+    while(!dataFile.eof()){
+      std::vector<std::string> vertex_tokens = tokenize_line(dataFile);
+      if(vertex_tokens.size()==0)continue;
+      if(vertex_tokens[0]==parser_end) break;
+      TEUCHOS_TEST_FOR_EXCEPTION(vertex_tokens.size()<2,std::runtime_error,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(!is_number(vertex_tokens[0]),std::runtime_error,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(!is_number(vertex_tokens[1]),std::runtime_error,"");
+      vertices_x.push_back(atoi(vertex_tokens[0].c_str()));
+      vertices_y.push_back(atoi(vertex_tokens[1].c_str()));
     }
-    else if(valid_correlation_params[i].type_==SCALAR_PARAM){
-      write_xml_comment(paramsFile,"");
-      write_xml_real_param(paramsFile,valid_correlation_params[i].name_);
-      write_xml_comment(paramsFile,valid_correlation_params[i].desc_);
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(vertices_x.empty(),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(vertices_y.empty(),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(vertices_x.size()!=vertices_y.size(),std::runtime_error,"");
+  if(proc_rank==0) DEBUG_MSG("Creating a polygon with " << vertices_x.size() << " vertices");
+  for(size_t i=0;i<vertices_x.size();++i){
+    if(proc_rank==0) DEBUG_MSG("vx " << vertices_x[i] << " vy " << vertices_y[i] );
+  }
+  Teuchos::RCP<DICe::Polygon> shape = Teuchos::rcp(new DICe::Polygon(vertices_x,vertices_y));
+  return shape;
+}
+
+DICE_LIB_DLL_EXPORT
+multi_shape read_shapes(std::fstream & dataFile){
+  DICe::multi_shape multi_shape;
+  while(!dataFile.eof()){
+    std::vector<std::string> shape_tokens = tokenize_line(dataFile);
+    if(shape_tokens.size()==0)continue;
+    if(shape_tokens[0]==parser_end) break;
+    TEUCHOS_TEST_FOR_EXCEPTION(shape_tokens.size()<2,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(shape_tokens[0]!=parser_begin,std::runtime_error,"");
+    if(shape_tokens[1]==parser_circle){
+      Teuchos::RCP<DICe::Circle> shape = read_circle(dataFile);
+      multi_shape.push_back(shape);
     }
-    else if(valid_correlation_params[i].type_==SIZE_PARAM){
-      write_xml_comment(paramsFile,"");
-      write_xml_size_param(paramsFile,valid_correlation_params[i].name_);
-      write_xml_comment(paramsFile,valid_correlation_params[i].desc_);
+    else if(shape_tokens[1]==parser_polygon){
+      Teuchos::RCP<DICe::Polygon> shape = read_polygon(dataFile);
+      multi_shape.push_back(shape);
     }
-    else if(valid_correlation_params[i].type_==BOOL_PARAM){
-      write_xml_comment(paramsFile,"");
-      write_xml_bool_param(paramsFile,valid_correlation_params[i].name_);
-      write_xml_comment(paramsFile,valid_correlation_params[i].desc_);
+    else if(shape_tokens[1]==parser_rectangle){
+      Teuchos::RCP<DICe::Rectangle> shape = read_rectangle(dataFile);
+      multi_shape.push_back(shape);
     }
     else{
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: Unknown parameter type");
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, unrecognized shape : " << shape_tokens[1]);
     }
   }
-  // Write a sample output spec
-  write_xml_comment(paramsFile,"");
-  write_xml_comment(paramsFile,"");
-  write_xml_comment(paramsFile,"Uncomment the ParameterList below to request specific fields in the output files.");
-  write_xml_comment(paramsFile,"The order in the list represents the column order in the data output.");
-  write_xml_param_list_open(paramsFile,DICe::output_spec);
-  for(int_t i=0;i<MAX_FIELD_NAME;++i){
-    std::stringstream iToStr;
-    iToStr << i;
-    write_xml_bool_param(paramsFile,to_string(static_cast<Field_Name>(i)),"true");
-  }
-  write_xml_param_list_close(paramsFile);
-
-  finalize_xml_file(fileNameInput.str());
-  finalize_xml_file(fileNameParams.str());
+  TEUCHOS_TEST_FOR_EXCEPTION(multi_shape.size()<=0,std::runtime_error,"");
+  return multi_shape;
 }
+
 
 }// End DICe Namespace
