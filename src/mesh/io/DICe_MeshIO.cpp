@@ -771,20 +771,35 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
     const int_t local_id = elem_it->get()->local_id();
     elem_map[local_id]=elem_it->get()->global_id() + 1;
   }
-
   error_int = ex_put_coord(output_exoid, x, y, z);
   char * coord_names[3];
+  std::string mcx,mcy,mcz;
   if(use_model_coordinates){
-    coord_names[0] = (char*) "MODEL_COORDINATES_X";
-    coord_names[1] = (char*) "MODEL_COORDINATES_Y";
-    coord_names[2] = (char*) "MODEL_COORDINATES_Z";
+    mcx = "MODEL_COORDINATES_X";
+    mcy = "MODEL_COORDINATES_Y";
+    mcz = "MODEL_COORDINATES_Z";
   }
   else{
-    coord_names[0] = (char*) "INITIAL_COORDINATES_X";
-    coord_names[1] = (char*) "INITIAL_COORDINATES_Y";
-    coord_names[2] = (char*) "INITIAL_COORDINATES_Z";
+    mcx = "INITIAL_COORDINATES_X";
+    mcy = "INITIAL_COORDINATES_Y";
+    mcz = "INITIAL_COORDINATES_Z";
   }
+  char * wmcx = new char[mcx.size()+1];
+  char * wmcy = new char[mcy.size()+1];
+  char * wmcz = new char[mcz.size()+1];
+  std::copy(mcx.begin(), mcx.end(), wmcx);
+  wmcx[mcx.size()] = '\0';
+  std::copy(mcy.begin(), mcy.end(), wmcy);
+  wmcy[mcy.size()] = '\0';
+  std::copy(mcz.begin(), mcz.end(), wmcz);
+  wmcz[mcz.size()] = '\0';
+  coord_names[0] = wmcx;
+  coord_names[1] = wmcy;
+  coord_names[2] = wmcz;
   error_int = ex_put_coord_names(output_exoid, coord_names);
+  delete[] wmcx;
+  delete[] wmcy;
+  delete[] wmcz;
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_coord_names(): Failure");
   error_int = ex_put_elem_num_map(output_exoid, elem_map);
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_elem_num_map(): Failure");
@@ -1284,10 +1299,26 @@ create_face_edge_output_exodus_file(Teuchos::RCP<Mesh> mesh,
 
   error_int = ex_put_coord(output_exoid, x, y, z);
   char * coord_names[3];
-  coord_names[0] = (char*) "INTERNAL_FACE_EDGE_COORDINATES_X";
-  coord_names[1] = (char*) "INTERNAL_FACE_EDGE_COORDINATES_Y";
-  coord_names[2] = (char*) "INTERNAL_FACE_EDGE_COORDINATES_Z";
+  std::string mcx,mcy,mcz;
+  mcx = "INTERNAL_FACE_EDGE_COORDINATES_X";
+  mcy = "INTERNAL_FACE_EDGE_COORDINATES_Y";
+  mcz = "INTERNAL_FACE_EDGE_COORDINATES_Z";
+  char * wmcx = new char[mcx.size()+1];
+  char * wmcy = new char[mcy.size()+1];
+  char * wmcz = new char[mcz.size()+1];
+  std::copy(mcx.begin(), mcx.end(), wmcx);
+  wmcx[mcx.size()] = '\0';
+  std::copy(mcy.begin(), mcy.end(), wmcy);
+  wmcy[mcy.size()] = '\0';
+  std::copy(mcz.begin(), mcz.end(), wmcz);
+  wmcz[mcz.size()] = '\0';
+  coord_names[0] = wmcx;
+  coord_names[1] = wmcy;
+  coord_names[2] = wmcz;
   error_int = ex_put_coord_names(output_exoid, coord_names);
+  delete[] wmcx;
+  delete[] wmcy;
+  delete[] wmcz;
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_coord_names(): Failure");
   error_int = ex_put_elem_num_map(output_exoid, elem_map);
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_elem_num_map(): Failure");
