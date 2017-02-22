@@ -139,9 +139,13 @@ StereoCalib(const int mode,
           std::vector<KeyPoint> keypoints;
           detector->detect( not_src, keypoints );
           // draw result of dots with holes keypoints
-          //Mat im_with_keypoints;
-          //drawKeypoints( not_src, keypoints, im_with_keypoints, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
-          //imwrite("corner_point_res.png", im_with_keypoints);
+//          static int id_num = 0;
+//          id_num++;
+//          std::stringstream filename;
+//          filename << "corner_point_res_" << id_num << ".png";
+//          Mat im_with_keypoints;
+//          drawKeypoints( not_src, keypoints, im_with_keypoints, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+//          imwrite(filename.str().c_str(), im_with_keypoints);
           //for(size_t i=0;i<keypoints.size();++i)
           //  std::cout << "keypoint " << keypoints[i].pt.x << " " << keypoints[i].pt.y << std::endl;
           if(keypoints.size()!=3){
@@ -202,10 +206,12 @@ StereoCalib(const int mode,
           // Detect blobs.
           std::vector<KeyPoint> dots;
           detector->detect( bi_src, dots );
-          //Mat im_with_dots;
-          //drawKeypoints( bi_src, dots, im_with_dots, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
-          // Show blobs
-          //imwrite("dots.png", im_with_dots);
+//          Mat im_with_dots;
+//          drawKeypoints( bi_src, dots, im_with_dots, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+//          // Show blobs
+//          std::stringstream dotname;
+//          dotname << "dots_" << id_num << ".png";
+//          imwrite(dotname.str().c_str(), im_with_dots);
 
           // compute the average dot size:
           float avg_dot_size = 0.0;
@@ -219,16 +225,22 @@ StereoCalib(const int mode,
 
           // filter dots based on avg size and whether the dots fall in the central box
           std::vector<Point2f> keep_dots;
+          std::vector<KeyPoint> keep_keypoints;
+          keep_keypoints.push_back(keypoints[pt1_id]);
           keep_dots.push_back(Point2f(keypoints[pt1_id].pt.x,keypoints[pt1_id].pt.y));
           for(size_t i=0;i<dots.size();++i){
             if(dots[i].size < 0.8f*avg_dot_size) continue;
             if(!is_in_quadrilateral(dots[i].pt.x,dots[i].pt.y,box_x,box_y)) continue;
             //std::cout << "keep dot " << keep_dots.size() << " size " << dots[i].size << " " << dots[i].pt.x << " " << dots[i].pt.y << std::endl;
             keep_dots.push_back(Point2f(dots[i].pt.x,dots[i].pt.y));
-            if((int)keep_dots.size()==(int)(boardSize.width)-1)
+            keep_keypoints.push_back(dots[i]);
+            if((int)keep_dots.size()==(int)(boardSize.width)-1){
               keep_dots.push_back(Point2f(keypoints[pt0_id].pt.x,keypoints[pt0_id].pt.y));
+              keep_keypoints.push_back(keypoints[pt0_id]);
+            }
           }
           keep_dots.push_back(Point2f(keypoints[pt2_id].pt.x,keypoints[pt2_id].pt.y));
+          keep_keypoints.push_back(keypoints[pt2_id]);
           //for(size_t i=0;i<keep_dots.size();++i){
           //  std::cout << " keep dot " << keep_dots[i].x << " "<< keep_dots[i].y << std::endl;
           //}
@@ -238,6 +250,14 @@ StereoCalib(const int mode,
             found = false;
             break;
           }
+//          Mat im_with_keep_dots;
+//          drawKeypoints( bi_src, keep_keypoints, im_with_keep_dots, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+//          // Show blobs
+//          std::stringstream keepdotname;
+//          keepdotname << "keepdots_" << id_num << ".png";
+//          imwrite(keepdotname.str().c_str(), im_with_keep_dots);
+
+
           Mat(keep_dots).copyTo(corners);
           found = true;
 //          SimpleBlobDetector::Params params;
@@ -290,7 +310,7 @@ StereoCalib(const int mode,
       j++;
     }
   }
-  //cout << j << " pairs have been successfully detected.\n";
+  cout << j << " pairs have been successfully detected.\n";
   nimages = j;
   if( nimages < 2 )
   {
@@ -305,15 +325,51 @@ StereoCalib(const int mode,
   for( i = 0; i < nimages; i++ )
   {
     for( j = 0; j < boardSize.height; j++ )
-      for( k = 0; k < boardSize.width; k++ )
-        objectPoints[i].push_back(Point3f(k*squareSize, j*squareSize, 0));
+      for( k = 0; k < boardSize.width; k++ ){
+        if(mode==0){
+          objectPoints[i].push_back(Point3f(k*squareSize, j*squareSize, 0));
+        } else {
+          objectPoints[i].push_back(Point3f((boardSize.width-1-k)*squareSize,(boardSize.height-1-j)*squareSize, 0));
+        }
+      }
   }
 
   cout << "Running stereo calibration ...\n";
 
+//  std::cout << "object points has num entries " << objectPoints[0].size() << std::endl;
+//  for(int i=0;i<objectPoints[0].size(); ++i)
+//    std::cout << objectPoints[0][i].x << " " << objectPoints[0][i].y << std::endl;
+//  std::cout << "image points has num entries " << imagePoints[0][0].size() << std::endl;
+//  for(int i=0;i<imagePoints[0][0].size(); ++i)
+//    std::cout << imagePoints[0][0][i].x << " " << imagePoints[0][0][i].y << " " << imagePoints[1][0][i].x << " " << imagePoints[1][0][i].y << std::endl;
+
   Mat cameraMatrix[2], distCoeffs[2];
   cameraMatrix[0] = initCameraMatrix2D(objectPoints,imagePoints[0],imageSize,0);
   cameraMatrix[1] = initCameraMatrix2D(objectPoints,imagePoints[1],imageSize,0);
+
+//  std::cout << cameraMatrix[0] << std::endl;
+//  std::cout << cameraMatrix[1] << std::endl;
+
+//  Mat leftCameraMatrix, leftDistCoeffs, rvecs, tvecs;
+//  std::cout << " image size " << imageSize.width << " x " << imageSize.height << std::endl;
+//  double rms_left = calibrateCamera(objectPoints, imagePoints[0], imageSize, leftCameraMatrix,
+//                              leftDistCoeffs, rvecs, tvecs, CV_CALIB_ZERO_TANGENT_DIST|CV_CALIB_FIX_K2|CV_CALIB_FIX_K3|CV_CALIB_FIX_K4|CV_CALIB_FIX_K5|CV_CALIB_FIX_K6);
+//
+//  std::cout << leftCameraMatrix << std::endl;
+//  std::cout << leftDistCoeffs << std::endl;
+//
+//
+//  Mat rightCameraMatrix, rightDistCoeffs, rvecs_r, tvecs_r;
+//  double rms_right = calibrateCamera(objectPoints, imagePoints[1], imageSize, rightCameraMatrix,
+//                              rightDistCoeffs, rvecs_r, tvecs_r, CV_CALIB_ZERO_TANGENT_DIST|CV_CALIB_FIX_K2|CV_CALIB_FIX_K3|CV_CALIB_FIX_K4|CV_CALIB_FIX_K5|CV_CALIB_FIX_K6);
+//
+//  std::cout << rightCameraMatrix << std::endl;
+//  std::cout << rightDistCoeffs << std::endl;
+
+  //assert(false);
+  //Mat cameraMatrix[2], distCoeffs[2];
+  //cameraMatrix[0] = initCameraMatrix2D(objectPoints,imagePoints[0],imageSize,0);
+  //cameraMatrix[1] = initCameraMatrix2D(objectPoints,imagePoints[1],imageSize,0);
   Mat R, T, E, F;
 
   double rms = stereoCalibrate(objectPoints, imagePoints[0], imagePoints[1],
@@ -321,13 +377,18 @@ StereoCalib(const int mode,
     cameraMatrix[1], distCoeffs[1],
     imageSize, R, T, E, F,
     CALIB_FIX_ASPECT_RATIO +
-    CALIB_ZERO_TANGENT_DIST +
     CALIB_USE_INTRINSIC_GUESS +
     CALIB_SAME_FOCAL_LENGTH +
+    CALIB_ZERO_TANGENT_DIST +
     CALIB_RATIONAL_MODEL +
     CALIB_FIX_K3 + CALIB_FIX_K4 + CALIB_FIX_K5,
     TermCriteria(TermCriteria::COUNT+TermCriteria::EPS, 100, 1e-5) );
   cout << "done with RMS error=" << rms << endl;
+
+  std::cout << cameraMatrix[0] << std::endl;
+  std::cout << distCoeffs[0] << std::endl;
+  std::cout << cameraMatrix[1] << std::endl;
+  std::cout << distCoeffs[1] << std::endl;
 
   // CALIBRATION QUALITY CHECK
   // because the output fundamental matrix implicitly
@@ -347,6 +408,7 @@ StereoCalib(const int mode,
       undistortPoints(imgpt[k], imgpt[k], cameraMatrix[k], distCoeffs[k], Mat(), cameraMatrix[k]);
       computeCorrespondEpilines(imgpt[k], k+1, F, lines[k]);
     }
+    double imgErr = 0.0;
     for( j = 0; j < npt; j++ )
     {
       double errij = fabs(imagePoints[0][i][j].x*lines[1][j][0] +
@@ -354,7 +416,10 @@ StereoCalib(const int mode,
             fabs(imagePoints[1][i][j].x*lines[0][j][0] +
               imagePoints[1][i][j].y*lines[0][j][1] + lines[0][j][2]);
       err += errij;
+      imgErr += errij;
     }
+    cout << "image: " << goodImageList[i*2] << " error " << imgErr << endl;
+
     npoints += npt;
   }
   cout << "average epipolar err = " <<  err/npoints << endl;

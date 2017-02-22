@@ -116,10 +116,14 @@ int main(int argc, char *argv[]) {
 
   DICe::finalize();
 
-  if(rms > 1.0)
+  if(rms < 0.0){
+    std::cout << "Error, stereo calibration failed" << std::endl;
     return -1;
-
+  }
+  if(rms > 1.0){
+    std::cout << "Error, RMS error is too large: " << rms << ". Should be under 0.5." << std::endl;
+    return -1;
+  }
   return 0;
-
 }
 

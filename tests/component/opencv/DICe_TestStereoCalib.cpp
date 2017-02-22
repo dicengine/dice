@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
     *outStream << image_list_circ[i] << std::endl;
   }
 
-  const float circ_size = 10.0;
+  const float circ_size = 3.5;
   mode = 1; // vic3d circle grid with marker dots and possible other random dots in the pattern
   const float rms_circ = StereoCalib(mode,image_list_circ, 6, 4, circ_size, true, false, "circle_cal.txt");
 
