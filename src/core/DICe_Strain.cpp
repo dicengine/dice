@@ -49,22 +49,11 @@
 
 #include <Teuchos_RCP.hpp>
 
-#if DICE_MPI
-#  include <mpi.h>
-#endif
-
 using namespace DICe;
 
 int main(int argc, char *argv[]) {
   try{
     DICe::initialize(argc,argv);
-
-    int_t proc_size = 1;
-    int_t proc_rank = 0;
-#if DICE_MPI
-    MPI_Comm_size(MPI_COMM_WORLD,&proc_size);
-    MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
-#endif
 
     Teuchos::RCP<std::ostream> outStream = Teuchos::rcp(&std::cout, false);
 

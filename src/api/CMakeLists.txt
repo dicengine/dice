@@ -15,9 +15,6 @@ include_directories (
 
 # Now build executables from this library, tailored main()s, and Trilinos
 
-IF(DICE_ENABLE_NETCDF)
-  link_directories( ${NetCDF_DIR}/../lib )
-ENDIF()
 
 add_library(dice ${SOURCES} ${HEADERS})
 target_link_libraries(dice ${DICE_LIBRARIES} dicecore) 

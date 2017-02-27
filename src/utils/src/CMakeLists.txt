@@ -36,20 +36,16 @@ include_directories(
     ${NetCDF_DIR}
 )
 
-link_directories (
-    ${TIFF_LIB_DIR}
-)
 SET(DICE_UTILS_LIBRARIES tiff teuchoscore)
-IF(DICE_ENABLE_NETCDF)
-  SET(DICE_UTILS_LIBRARIES ${DICE_UTILS_LIBRARIES} netcdf)
-  link_directories( ${NetCDF_DIR}/../lib )
-ENDIF()
 if(DICE_HAS_JPEG)
   SET(DICE_UTILS_LIBRARIES ${DICE_UTILS_LIBRARIES} jpeg)
 endif()
 if(DICE_HAS_PNG)
   SET(DICE_UTILS_LIBRARIES ${DICE_UTILS_LIBRARIES} png)
 endif()
+if(DICE_ENABLE_NETCDF)
+  SET(DICE_UTILS_LIBRARIES ${DICE_UTILS_LIBRARIES} netcdf)
+ENDIF()
 
 # Specify target & source files to compile it from
 add_library(

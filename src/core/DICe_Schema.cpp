@@ -1050,11 +1050,6 @@ Schema::initialize(Teuchos::RCP<Decomp> decomp,
 void
 Schema::create_mesh(Teuchos::RCP<Decomp> decomp){
 
-  int proc_rank=0;
-#if DICE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
-#endif
-
   const int_t num_overlap_coords = decomp->id_decomp_overlap_map()->get_num_local_elements();
   const int_t num_coords = decomp->id_decomp_map()->get_num_local_elements();
   Teuchos::ArrayRCP<int_t> node_map(num_overlap_coords,0);
@@ -2114,6 +2109,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
 #if DICE_KOKKOS
 #else
   const int_t proc_id = comm_->get_rank();
+
   const scalar_t min_period = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_min_period,25);
   const scalar_t max_period = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_max_period,100);
   const scalar_t period_factor = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_period_factor,0.5);

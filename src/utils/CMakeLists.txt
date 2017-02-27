@@ -73,6 +73,7 @@ ENDIF()
 
 if(DICE_ENABLE_NETCDF)
   ADD_DEFINITIONS(-DDICE_ENABLE_NETCDF=1)
+  include_directories(${NetCDF_DIR}/../include)
 endif()
 
 # FIND BOOST
@@ -83,14 +84,14 @@ ELSE()
 ENDIF()
 
 if (Boost_FOUND)
-  find_library(tiff_lib NAMES tiff PATHS ${TIFF_DIR}/lib)
+  find_library(tiff_lib NAMES libtiff.a tiff PATHS ${TIFF_DIR}/lib)
   if(tiff_lib)
     MESSAGE(STATUS "Tiff file format enabled. Using tiff library from ${tiff_lib}")
     SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${tiff_lib})
   else()
     MESSAGE(FATAL_ERROR "Could not find required tiff library.")
   endif()
-  find_library(jpeg_lib NAMES jpeg PATHS ${JPEG_DIR}/lib)
+  find_library(jpeg_lib NAMES libjpeg.a jpeg PATHS ${JPEG_DIR}/lib)
   if(jpeg_lib)
     MESSAGE(STATUS "Jpeg file format enabled. Using jpeg library from ${jpeg_lib}")
     SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${jpeg_lib})
@@ -99,7 +100,7 @@ if (Boost_FOUND)
   else()
     MESSAGE(STATUS "Could not find jpeg library. Jpeg file format is NOT enabled")
   endif()
-  find_library(png_lib NAMES png PATHS ${PNG_DIR}/lib)
+  find_library(png_lib NAMES libpng.a png PATHS ${PNG_DIR}/lib)
   if(png_lib)
     MESSAGE(STATUS "Png file format enabled. Using png library from ${png_lib}")
     SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${png_lib})
@@ -123,10 +124,6 @@ SET(DICE_TRILINOS_LIB_DIRS
     ${Trilinos_LIBRARY_DIRS}
     ${Trilinos_TPL_LIBRARY_DIRS}
   )
-
-link_directories(${TIFF_DIR}/lib
-  ${JPEG_DIR}/lib
-  ${PNG_DIR}/lib)
 SET(DICE_HEADER_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/../netcdf
