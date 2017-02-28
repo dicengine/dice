@@ -465,7 +465,8 @@ void compute_roll_off_stats(const scalar_t & period,
     // now sort the approximate points to pick out the peaks
     int_t num_peaks = ((int_t)(img_w/period)-2)*((int_t)(img_h/period)-2);
     if(num_peaks > 100) num_peaks=100;
-    TEUCHOS_TEST_FOR_EXCEPTION(num_peaks<=5,std::runtime_error,"");
+    if(num_peaks < 5) std::cout << "WARNING: the spatial resolution statistics are based on a small number of peaks, use with caution" << std::endl;
+    //TEUCHOS_TEST_FOR_EXCEPTION(num_peaks<=4,std::runtime_error,"");
     // bx-sort
     std::sort(std::begin(approx_points), std::end(approx_points), [](const computed_point& a, const computed_point& b)
       {

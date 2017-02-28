@@ -2109,9 +2109,12 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
 #if DICE_KOKKOS
 #else
   const int_t proc_id = comm_->get_rank();
-
+  assert(ref_img_->width()>0);
+  assert(ref_img_->height()>0);
+  const scalar_t min_dim = ref_img_->width() < ref_img_->height() ? ref_img_->width() : ref_img_->height();
   const scalar_t min_period = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_min_period,25);
-  const scalar_t max_period = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_max_period,100);
+  const scalar_t max_period = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_max_period,min_dim/3.0);
+  TEUCHOS_TEST_FOR_EXCEPTION(min_period > max_period,std::runtime_error," min period " << min_period << " max period: " << max_period);
   const scalar_t period_factor = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_period_factor,0.5);
   const scalar_t min_amp = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_min_amplitude,0.5);
   const scalar_t max_amp = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_max_amplitude,4.0);
