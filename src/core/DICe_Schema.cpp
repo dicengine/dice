@@ -2290,7 +2290,8 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
     }
     mesh_->get_field(DICe::mesh::field_enums::SIGMA_FS)->put_scalar(0.0);
     for(scalar_t amplitude=min_amp;amplitude<=max_amp;amplitude+=amp_step){
-      DEBUG_MSG("processing period " << period << " amplitude " << amplitude);
+      if(proc_id==0)
+        std::cout << "processing resolution error for period " << period << " amplitude " << amplitude << std::endl;
       // create an image deformer class
       Teuchos::RCP<SinCos_Image_Deformer> deformer = Teuchos::rcp(new SinCos_Image_Deformer(period,amplitude));
       std::stringstream sincos_name;
