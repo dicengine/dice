@@ -633,6 +633,15 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     Teuchos::RCP<NLVC_Strain_Post_Processor> nlvc_ptr = Teuchos::rcp (new NLVC_Strain_Post_Processor(ppParams));
     post_processors_.push_back(nlvc_ptr);
   }
+  if(diceParams->isParameter(DICe::post_process_altitude)){
+    Teuchos::ParameterList sublist = diceParams->sublist(DICe::post_process_altitude);
+    Teuchos::RCP<Teuchos::ParameterList> ppParams = Teuchos::rcp( new Teuchos::ParameterList());
+    for(Teuchos::ParameterList::ConstIterator it=sublist.begin();it!=sublist.end();++it){
+      ppParams->setEntry(it->first,it->second);
+    }
+    Teuchos::RCP<Altitude_Post_Processor> alt_ptr = Teuchos::rcp (new Altitude_Post_Processor(ppParams));
+    post_processors_.push_back(alt_ptr);
+  }
   if(post_processors_.size()>0) has_post_processor_ = true;
 
   Teuchos::RCP<Teuchos::ParameterList> outputParams;

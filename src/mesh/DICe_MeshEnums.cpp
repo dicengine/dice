@@ -201,6 +201,9 @@ void create_string_maps()
   field_name_string[field_enums::VSG_DUDY]                                           = "VSG_DUDY";
   field_name_string[field_enums::VSG_DVDX]                                           = "VSG_DVDX";
   field_name_string[field_enums::VSG_DVDY]                                           = "VSG_DVDY";
+  field_name_string[field_enums::ALTITUDE]                                           = "ALTITUDE";
+  field_name_string[field_enums::ALTITUDE_ABOVE_GROUND]                              = "ALTITUDE_ABOVE_GROUND";
+  field_name_string[field_enums::GROUND_LEVEL]                                       = "GROUND_LEVEL";
   field_name_string[field_enums::NLVC_STRAIN_XX]                                     = "NLVC_STRAIN_XX";
   field_name_string[field_enums::NLVC_STRAIN_YY]                                     = "NLVC_STRAIN_YY";
   field_name_string[field_enums::NLVC_STRAIN_XY]                                     = "NLVC_STRAIN_XY";

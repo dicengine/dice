@@ -651,4 +651,163 @@ NLVC_Strain_Post_Processor::execute(){
   DEBUG_MSG("NLVC_Strain_Post_Processor execute() end");
 }
 
+Altitude_Post_Processor::Altitude_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params) :
+  Post_Processor(post_process_altitude),
+  radius_of_earth_(6371000.0),
+  apogee_(35800000.0),
+  ground_level_initialized_(false)
+{
+  field_specs_.push_back(DICe::mesh::field_enums::ALTITUDE_FS);
+  field_specs_.push_back(DICe::mesh::field_enums::ALTITUDE_ABOVE_GROUND_FS);
+  field_specs_.push_back(DICe::mesh::field_enums::GROUND_LEVEL_FS);
+  DEBUG_MSG("Enabling post processor Altitude_Post_Processor with associated fields:");
+  for(size_t i=0;i<field_specs_.size();++i){
+    DEBUG_MSG(field_specs_[i].get_name_label());
+  }
+  set_params(params);
+}
+
+void
+Altitude_Post_Processor::execute(){
+  DEBUG_MSG("Altitude_Post_Processor::execute(): begin");
+
+  Teuchos::RCP<DICe::MultiField> ground_level_rcp = mesh_->get_field(DICe::mesh::field_enums::GROUND_LEVEL_FS);
+  // if this is the first time called, check for an elevations file and interpolate the ground level from that:
+  // Note: all processors read the elevations file
+  if(!ground_level_initialized_){
+    // see if the file exists
+    std::ifstream elev_file("elevation_data.txt", std::ios_base::in);
+    if(elev_file.good()){
+      // parse the file to read in the elevations
+      DEBUG_MSG("Altitude_Post_Processor::execute(): found elevations file: elevation_data.txt");
+      std::vector<scalar_t> xs;
+      std::vector<scalar_t> ys;
+      std::vector<scalar_t> elevs;
+      int_t line = 0;
+      while(!elev_file.eof()){
+        std::vector<std::string> tokens = tokenize_line(elev_file);
+        if(tokens.size()==0) continue;
+        TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()!=5,std::runtime_error,"Error, invalid number of tokens for line " << line <<
+          " of file elevation_data.txt. Has " << tokens.size() << " tokens, but should have 5");
+        scalar_t elev = strtod(tokens[2].c_str(),NULL);
+        if(elev < 0.0) elev = 0.0; // prevent negative ground heights
+        elevs.push_back(elev + radius_of_earth_);
+        xs.push_back(strtod(tokens[3].c_str(),NULL));
+        ys.push_back(strtod(tokens[4].c_str(),NULL));
+        line++;
+      }
+      const int_t num_elev_pts = xs.size();
+      DEBUG_MSG("Altitude_Post_Processor::execute(): found " << num_elev_pts << " points in elevation_data.txt");
+      // create a point cloud
+      TEUCHOS_TEST_FOR_EXCEPTION(neighborhood_initialized_,std::runtime_error,"");
+      DEBUG_MSG("creating the point cloud using nanoflann");
+      point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
+      point_cloud_->pts.resize(num_elev_pts);
+      for(int_t i=0;i<num_elev_pts;++i){
+        point_cloud_->pts[i].x = xs[i];
+        point_cloud_->pts[i].y = ys[i];
+      }
+      DEBUG_MSG("building the kd-tree");
+      Teuchos::RCP<kd_tree_2d_t> kd_tree = Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud_.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+      kd_tree->buildIndex();
+      DEBUG_MSG("kd-tree completed");
+
+      // compute the 5 nearest neighbors for each subset and interpolate the ground height from them.
+      Teuchos::RCP<MultiField> subset_coords_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
+      Teuchos::RCP<MultiField> subset_coords_y = mesh_->get_field(DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS);
+      const int_t num_neigh = 5;
+      scalar_t query_pt[2];
+      std::vector<size_t> ret_index(num_neigh);
+      std::vector<scalar_t> out_dist_sqr(num_neigh);
+
+      const int_t N = 3;
+      int *IPIV = new int[N+1];
+      int LWORK = N*N;
+      int INFO = 0;
+      double *WORK = new double[LWORK];
+      double *GWORK = new double[10*N];
+      int *IWORK = new int[LWORK];
+      // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
+      Teuchos::LAPACK<int,double> lapack;
+
+      for(int_t subset=0;subset<local_num_points_;++subset){
+        Teuchos::ArrayRCP<double> neigh_elevs(num_neigh,0.0);
+        Teuchos::ArrayRCP<double> X_t_u_x(N,0.0);
+        Teuchos::ArrayRCP<double> coeffs(N,0.0);
+        Teuchos::SerialDenseMatrix<int_t,double> X_t(N,num_neigh, true);
+        Teuchos::SerialDenseMatrix<int_t,double> X_t_X(N,N,true);
+
+        query_pt[0] = subset_coords_x->local_value(subset);
+        query_pt[1] = subset_coords_y->local_value(subset);
+        kd_tree->knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
+        for(size_t i=0;i<num_neigh;++i){
+          const int_t neigh_id = ret_index[i];
+          neigh_elevs[i] = elevs[neigh_id];
+          // set up the X^T matrix
+          X_t(0,i) = 1.0;
+          X_t(1,i) = xs[neigh_id] - query_pt[0];
+          X_t(2,i) = ys[neigh_id] - query_pt[1];
+        }
+
+        // set up X^T*X
+        for(int_t k=0;k<N;++k){
+          for(int_t m=0;m<N;++m){
+            for(int_t j=0;j<num_neigh;++j){
+              X_t_X(k,m) += X_t(k,j)*X_t(m,j);
+            }
+          }
+        }
+        lapack.GETRF(X_t_X.numRows(),X_t_X.numCols(),X_t_X.values(),X_t_X.numRows(),IPIV,&INFO);
+        lapack.GETRI(X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),IPIV,WORK,LWORK,&INFO);
+
+        // compute X^T*u
+        for(int_t i=0;i<N;++i){
+          for(int_t j=0;j<num_neigh;++j){
+            X_t_u_x[i] += X_t(i,j)*neigh_elevs[j];
+          }
+        }
+        // compute the coeffs
+        for(int_t i=0;i<N;++i){
+          for(int_t j=0;j<N;++j){
+            coeffs[i] += X_t_X(i,j)*X_t_u_x[j];
+          }
+        }
+        ground_level_rcp->local_value(subset) = coeffs[0];
+      } // end local num points
+      delete [] WORK;
+      delete [] GWORK;
+      delete [] IWORK;
+      delete [] IPIV;
+    } // end has elevations file
+    else{
+      DEBUG_MSG("Altitude_Post_Processor::execute(): elevations file: elevation_data.txt not found, using radius of the earth as ground level");
+      for(int_t subset=0;subset<local_num_points_;++subset){
+        ground_level_rcp->local_value(subset) = radius_of_earth_;
+      }
+    }
+    ground_level_initialized_ = true;
+  } // end !ground level initialized
+
+  // gather the X Y and Z model coordinates:
+  Teuchos::RCP<DICe::MultiField> X_rcp = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_X_FS);
+  Teuchos::RCP<DICe::MultiField> Y_rcp = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_Y_FS);
+  Teuchos::RCP<DICe::MultiField> Z_rcp = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_Z_FS);
+  Teuchos::RCP<DICe::MultiField> altitude_rcp = mesh_->get_field(DICe::mesh::field_enums::ALTITUDE_FS);
+  Teuchos::RCP<DICe::MultiField> altitude_above_ground_rcp = mesh_->get_field(DICe::mesh::field_enums::ALTITUDE_ABOVE_GROUND_FS);
+  TEUCHOS_TEST_FOR_EXCEPTION(altitude_rcp==Teuchos::null || altitude_above_ground_rcp==Teuchos::null, std::runtime_error,"");
+  for(int_t subset=0;subset<local_num_points_;++subset){
+    DEBUG_MSG("Processing altitude subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << ", " << subset + 1 << " of " << local_num_points_);
+    // at this point, X Y and Z are in terms of camera 0, convert back to center of the earth coords
+    scalar_t X = X_rcp->local_value(subset);
+    scalar_t Y = Y_rcp->local_value(subset);
+    scalar_t Z = Z_rcp->local_value(subset) - apogee_;
+    // convert X Y Z to raius
+    altitude_rcp->local_value(subset) = std::sqrt(X*X + Y*Y + Z*Z);
+    altitude_above_ground_rcp->local_value(subset) = altitude_rcp->local_value(subset) - ground_level_rcp->local_value(subset);
+  }
+  DEBUG_MSG("Altitude_Post_Processor::execute(): end");
+}
+
+
+
 }// End DICe Namespace

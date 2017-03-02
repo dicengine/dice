@@ -57,6 +57,8 @@ const char * const post_process_vsg_strain = "post_process_vsg_strain";
 /// String parameter name
 const char * const post_process_nlvc_strain = "post_process_nlvc_strain";
 /// String Parameter name
+const char * const post_process_altitude = "post_process_altitude";
+/// String parameter name
 const char * const strain_window_size_in_pixels = "strain_window_size_in_pixels";
 /// String Parameter name
 const char * const horizon_diameter_in_pixels = "horizon_diameter_in_pixels";
@@ -71,13 +73,16 @@ const char * const displacement_y_field_name = "displacement_y_field_name";
 
 
 /// Number of post processor options
-const int_t num_valid_post_processor_params = 2;
+const int_t num_valid_post_processor_params = 3;
 /// Set of all the valid post processors
 const char * const valid_post_processor_params[num_valid_post_processor_params] = {
   post_process_vsg_strain,
-  post_process_nlvc_strain
+  post_process_nlvc_strain,
+  post_process_altitude
 };
 
+/// String field name
+const char * const altitude = "ALTITUDE";
 /// String field name
 const char * const vsg_strain_xx = "VSG_STRAIN_XX";
 /// String field name
@@ -282,6 +287,46 @@ private:
   /// Neighborhood diameter (circular distance around the point of interest where the interaction is non-negligible)
   int_t horizon_;
 };
+
+/// \class DICe::Altitude_Post_Processor
+/// \brief A specific instance of post processor that computes the altitude of each subset in reference
+/// to the center of the Earth. Used for satellite stereo correlation only.
+class DICE_LIB_DLL_EXPORT
+Altitude_Post_Processor : public Post_Processor{
+
+public:
+
+  /// Default constructor
+  /// \param params the parameters to use for this post processor
+  Altitude_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params);
+
+  /// Virtual destructor
+  virtual ~Altitude_Post_Processor(){};
+
+  /// Set the parameters for this post processor
+  virtual void set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){}; // do nothing for this PP
+
+  /// Collect the neighborhoods of each of the points
+  virtual void pre_execution_tasks(){}; // do nothing for this PP
+
+  /// See base clase docutmentation
+  virtual int_t strain_window_size(){return -1.0;}
+
+  /// Execute the post processor
+  virtual void execute();
+
+  /// See base class documentation
+  using Post_Processor::field_specs;
+
+private:
+  /// radius of the earth in meters
+  scalar_t radius_of_earth_;
+  /// apogee of the satellite in meters
+  scalar_t apogee_;
+  /// true if the ground level has been initialized
+  bool ground_level_initialized_;
+};
+
 
 }// End DICe Namespace
 
