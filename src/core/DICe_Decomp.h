@@ -75,13 +75,13 @@ public:
   /// constructor that splits up an already populated set of correlation points
   /// \param subset_centroids_x x coordinates of all global points
   /// \param subset_centroids_y y coordinates of all global points prior to decomposition
-  /// \param neighbor_ids the neighbors in global ids to use for initialization of the solution if neighbor values are used
+  /// \param neighbor_ids neighbor id to use for initialization if USE_NEIGHBOR_VALUES is selected
   /// \param obstructing_subset_ids obstructions listed for each subset if necessary
   /// \param correlation_params pointer to the parameters used for the correlation
-  Decomp(const Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
-    const Teuchos::ArrayRCP<scalar_t> subset_centroids_y,
-    const Teuchos::RCP<std::vector<int_t> > neighbor_ids,
-    const Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids,
+  Decomp(Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
+    Teuchos::ArrayRCP<scalar_t> subset_centroids_y,
+    Teuchos::RCP<std::vector<int_t> > neighbor_ids,
+    Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids,
     const Teuchos::RCP<Teuchos::ParameterList> & correlation_params);
 
   /// destructor
@@ -122,6 +122,11 @@ public:
     return neighbor_ids_;
   }
 
+  /// returns a pointer to the subset info
+  Teuchos::RCP<DICe::Subset_File_Info> subset_info()const{
+    return subset_info_;
+  }
+
   /// returns the image width
   int_t image_width()const{
     return image_width_;
@@ -141,24 +146,26 @@ private:
   /// \param correlation_params pointer to the parameters used for the correlation
   void initialize(const Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
     const Teuchos::ArrayRCP<scalar_t> subset_centroids_y,
-    const Teuchos::RCP<std::vector<int_t> > neighbor_ids,
-    const Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids,
+    Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
+    Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids,
     const Teuchos::RCP<Teuchos::ParameterList> & correlation_params);
 
-  /// populates the coordinates of all global points
-  /// \param subset_centroids_x vector that gets populated with all global subset x coordinates
-  /// \param subset_centroids_y vector that gets populated with all global subset y coordinates
-  /// \param neighbor_ids vector with the neighbor ids for each subset
+  /// populate the coordinate vectors
+  /// note: all other procs besides proc 0 get an empty vector for coords_x and coords_y
   /// \param image_file_name name of the image to read for computing SSSIG if necessary
   /// \param input_params input parameters from xml file
   /// \param correlation_params correlation parameters from xml file
-  void populate_global_coordinate_vector(Teuchos::ArrayRCP<scalar_t> & subset_centroids_x,
+  /// \param subset_centroids_x vector that gets populated with all global subset x coordinates
+  /// \param subset_centroids_y vector that gets populated with all global subset y coordinates
+  /// \param neighbor_ids list of neighbors to use if USE_NEIGHBOR_VALUES is the initialization type
+  /// \param obstructing_subset_ids list of obstructions
+  void populate_coordinate_vectors(const std::string & image_file_name,
+    const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+    const Teuchos::RCP<Teuchos::ParameterList> & correlation_params,
+    Teuchos::ArrayRCP<scalar_t> & subset_centroids_x,
     Teuchos::ArrayRCP<scalar_t> & subset_centroids_y,
     Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
-    Teuchos::RCP<std::map<int_t,std::vector<int_t> > > & obstructing_subset_ids,
-    const std::string & image_file_name,
-    const Teuchos::RCP<Teuchos::ParameterList> & input_params,
-    const Teuchos::RCP<Teuchos::ParameterList> & correlation_params);
+    Teuchos::RCP<std::map<int_t,std::vector<int_t> > > & obstructing_subset_ids);
 
   /// redo the ordering and decomposition of points if there are obstructions involved
   /// \param obstructing_subset_ids map giving the obstructions for each subset
@@ -192,40 +199,44 @@ private:
   Teuchos::ArrayRCP<scalar_t> overlap_coords_y_;
   /// trimmed list of neighbor ids
   Teuchos::RCP<std::vector<int_t> > neighbor_ids_;
+  /// info about ROI's, etc
+  Teuchos::RCP<DICe::Subset_File_Info> subset_info_;
 };
 
 // free functions to help with creating grids:
 /// \brief Creates a regular square grid of correlation points
 /// \param correlation_points Vector of global point coordinates
-/// \param neighbor_ids Vector of neighbor ids (established if there is a seed)
+/// \param neighbor_ids list the neighbor to use for initialization if done with USE_NEIGHBOR_VALUES
 /// \param params Used to determine the step size (spacing of points)
-/// \param pointer to a DICe::Image
+/// \param img_w width of the image
+/// \param img_h height of the image
 /// \param subset_file_info Optional information from the subset file (ROIs, etc.)
 /// \param grad_threshold subsets with a gradiend SSSIG lower than this will be removed
 DICE_LIB_DLL_EXPORT
 void create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_points,
   std::vector<int_t> & neighbor_ids,
   Teuchos::RCP<Teuchos::ParameterList> params,
-  Teuchos::RCP<Image> ref_image,
-  Teuchos::RCP<DICe::Subset_File_Info> subset_file_info=Teuchos::null,
-  const scalar_t & grad_threshold = -1.0);
+  const int_t img_w,
+  const int_t img_h,
+  Teuchos::RCP<DICe::Subset_File_Info> subset_file_info=Teuchos::null);
 
 /// \brief Test to see that the point falls with the boundary of a conformal def and not in the excluded area
 /// \param x_coord X coordinate of the point in question
 /// \param y_coord Y coordinate of the point in question
-/// \param image pointer to an image
 /// \param subset_size Size of the subset
+/// \param img_w width of the image
+/// \param img_h height of the image
 /// \param coords Set of valid coordinates in the area
 /// \param excluded_coords Set of coordinates that should be excluded
 /// \param grad_threshold the SSSIG threshold to eliminate a subset without enough gradients to correlate
 DICE_LIB_DLL_EXPORT
 bool valid_correlation_point(const int_t x_coord,
   const int_t y_coord,
-  Teuchos::RCP<Image> image,
   const int_t subset_size,
+  const int_t img_w,
+  const int_t img_h,
   std::set<std::pair<int_t,int_t> > & coords,
-  std::set<std::pair<int_t,int_t> > & excluded_coords,
-  const scalar_t & grad_threshold);
+  std::set<std::pair<int_t,int_t> > & excluded_coords);
 
 
 }// End DICe Namespace

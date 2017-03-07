@@ -44,6 +44,7 @@
 #include <DICe_ParameterUtilities.h>
 #include <DICe_Cine.h>
 #include <DICe_PostProcessor.h>
+#include <DICe_ImageIO.h>
 
 #include <Teuchos_oblackholestream.hpp>
 
@@ -59,13 +60,21 @@ Decomp::Decomp(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   std::vector<std::string> image_files;
   std::vector<std::string> stereo_image_files;
   DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
+  TEUCHOS_TEST_FOR_EXCEPTION(image_files.size()<=0,std::runtime_error,"");
 
   // set up the positions of all the mesh points or subsets
   Teuchos::ArrayRCP<scalar_t> subset_centroids_x;
   Teuchos::ArrayRCP<scalar_t> subset_centroids_y;
   Teuchos::RCP<std::vector<int_t> > neighbor_ids;
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids;
-  populate_global_coordinate_vector(subset_centroids_x,subset_centroids_y,neighbor_ids,obstructing_subset_ids,image_files[0],input_params,correlation_params);
+  populate_coordinate_vectors(image_files[0],input_params,correlation_params,
+      subset_centroids_x,subset_centroids_y,neighbor_ids,obstructing_subset_ids);
+  // only proc 0 should have the global coords at this point
+  TEUCHOS_TEST_FOR_EXCEPTION(comm_->get_rank()==0&&subset_centroids_x.size()<=0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(comm_->get_rank()==0&&subset_centroids_y.size()<=0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(comm_->get_rank()!=0&&subset_centroids_x.size()!=0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(comm_->get_rank()!=0&&subset_centroids_y.size()!=0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(num_global_subsets_<=0,std::runtime_error,"");
   initialize(subset_centroids_x,subset_centroids_y,neighbor_ids,obstructing_subset_ids,correlation_params);
 }
 
@@ -85,9 +94,9 @@ Decomp::Decomp(Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
 }
 
 void
-Decomp::initialize(Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
-  Teuchos::ArrayRCP<scalar_t> subset_centroids_y,
-  Teuchos::RCP<std::vector<int_t> > neighbor_ids,
+Decomp::initialize(const Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
+  const Teuchos::ArrayRCP<scalar_t> subset_centroids_y,
+  Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids,
   const Teuchos::RCP<Teuchos::ParameterList> & correlation_params){
 
@@ -106,7 +115,10 @@ Decomp::initialize(Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
   // if there are seeds involved, the decomp must respect these
   create_seed_dist_map(neighbor_ids,obstructing_subset_ids,correlation_params);
 
-  // lastly, create the overlap vectors of points needed for computing neighbor values, etc.
+  // at this point the id_decomp_map should be one-to-one in all circumstances
+  TEUCHOS_TEST_FOR_EXCEPTION(!id_decomp_map_->is_one_to_one(),std::runtime_error,"");
+
+  // lastly, create the overlap vectors of points needed for computing VSG strain, etc.
   const bool is_parallel = comm_->get_size() > 1;
   // determine the max strain window size:
   // TODO find a way to make sure all strain window sizes are captured here
@@ -130,65 +142,149 @@ Decomp::initialize(Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
   DEBUG_MSG("Decomp::Decomp(): max strain window size " << max_strain_window_size);
 
   // only do the neighbor searching if neighbors are needed:
-  if(max_strain_window_size > 0.0 && is_parallel){
-    // collect all the ids local to this processor already:
-    std::set<int_t> id_list;
-    Teuchos::ArrayView<const int_t> my_gids = id_decomp_map_->get_global_element_list();
-    for(int_t i=0;i<my_gids.size();++i){
-      id_list.insert(my_gids[i]);
+  if(is_parallel){
+    Teuchos::Array<int_t> field_zero_owned_ids;
+    // communicate the number of global subsets to all processors:
+    // this is a dummy field that is used to communicate a value from proc 0 to all procs
+    Teuchos::Array<int_t> zero_owned_ids;
+    if(comm_->get_rank()==0){
+      for(int_t i=0;i<comm_->get_size();++i)
+        zero_owned_ids.push_back(i); // one begin index and end index for all processors
     }
-    // Do a neighborhood search for all possible neighbors for post-processors
-    Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
-    point_cloud->pts.resize(num_global_subsets_);
-    for(int_t i=0;i<num_global_subsets_;++i){
-      point_cloud->pts[i].x = subset_centroids_x[i];
-      point_cloud->pts[i].y = subset_centroids_y[i];
-    }
-    DEBUG_MSG("Decomp::Decomp(): building the kd-tree");
-    Teuchos::RCP<kd_tree_2d_t> kd_tree = Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
-    kd_tree->buildIndex();
-    DEBUG_MSG("Decomp::Decomp(): kd-tree completed");
-    std::vector<std::pair<size_t,scalar_t> > ret_matches;
-    nanoflann::SearchParams params;
-    params.sorted = true; // sort by distance in ascending order
-    const scalar_t tiny = 1.0E-5;
-    scalar_t neigh_rad_2 = (scalar_t)max_strain_window_size/2.0;
-    neigh_rad_2 *= neigh_rad_2;
-    neigh_rad_2 += tiny;
-    scalar_t query_pt[2];
-    for(int_t i=0;i<my_gids.size();++i){
-      const int_t gid = my_gids[i];
-      assert(gid>=0&&gid<num_global_subsets_);
-      query_pt[0] = subset_centroids_x[gid];
-      query_pt[1] = subset_centroids_y[gid];
-      kd_tree->radiusSearch(&query_pt[0],neigh_rad_2,ret_matches,params);
-      for(size_t j=0;j<ret_matches.size();++j){
-        id_list.insert(ret_matches[j].first);
+    Teuchos::Array<int_t> all_owned_ids;
+    all_owned_ids.push_back(comm_->get_rank());
+    Teuchos::RCP<MultiField_Map> zero_map = Teuchos::rcp (new MultiField_Map(-1, zero_owned_ids,0,*comm_));
+    Teuchos::RCP<MultiField_Map> all_map = Teuchos::rcp (new MultiField_Map(-1, all_owned_ids,0,*comm_));
+    Teuchos::RCP<MultiField> zero_data = Teuchos::rcp(new MultiField(zero_map,2,true));
+    Teuchos::RCP<MultiField> all_data = Teuchos::rcp(new MultiField(all_map,2,true));
+    int_t num_ids_to_get = comm_->get_rank()==0 ? num_global_subsets_ : 1;
+    Teuchos::Array<int_t> remote_gids(num_ids_to_get);
+    for(int_t i=0;i<num_ids_to_get;++i)
+      remote_gids[i] = i;
+    Teuchos::Array<int_t> remote_proc_ids(num_ids_to_get);
+    id_decomp_map_->get_remote_index_list(remote_gids,remote_proc_ids);
+//    for(int_t i=0;i<remote_proc_ids.size();++i)
+//      std::cout << comm_->get_rank() << " gid " << remote_gids[i] << " pid " <<  remote_proc_ids[i] << std::endl;
+    std::vector<std::set<int_t> > owned_ids_on_each_proc(comm_->get_size(),std::set<int_t>());
+    if(comm_->get_rank()==0){
+      // get the ids on each proc from the id_decomp_map
+      for(int_t i=0;i<num_global_subsets_;++i){
+        owned_ids_on_each_proc[remote_proc_ids[i]].insert(remote_gids[i]);
       }
-    }
-    DEBUG_MSG("Decomp::Decomp(): neighbor list constructed");
 
-    // at this point, the max neighbors should be included so create a reduced set of coordinates
-    const int_t num_overlap_points = id_list.size();
-    neighbor_ids_ = Teuchos::rcp(new std::vector<int_t>(num_overlap_points,-1));
-    overlap_coords_x_.resize(num_overlap_points,0.0);
-    overlap_coords_y_.resize(num_overlap_points,0.0);
-    std::set<int_t>::iterator list_it = id_list.begin();
-    std::set<int_t>::iterator list_end = id_list.end();
-    std::vector<int_t> id_list_vec(id_list.size(),-1);
-    int_t ii=0;
-    for(;list_it!=list_end;++list_it){
-      overlap_coords_x_[ii] = subset_centroids_x[*list_it];
-      overlap_coords_y_[ii] = subset_centroids_y[*list_it];
-      if(neighbor_ids!=Teuchos::null)
-        (*neighbor_ids_)[ii] = (*neighbor_ids)[*list_it];
-      id_list_vec[ii] = *list_it;
-      ii++;
+      if(max_strain_window_size > 0.0){
+        // processor 0 does a neighborhood search and scatters the results to all processors
+        TEUCHOS_TEST_FOR_EXCEPTION(subset_centroids_x.size()!=num_global_subsets_||subset_centroids_y.size()!=num_global_subsets_,std::runtime_error,"");
+        Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
+        point_cloud->pts.resize(num_global_subsets_);
+        for(int_t i=0;i<num_global_subsets_;++i){
+          point_cloud->pts[i].x = subset_centroids_x[i];
+          point_cloud->pts[i].y = subset_centroids_y[i];
+        }
+        DEBUG_MSG("Decomp::Decomp(): building the kd-tree");
+        Teuchos::RCP<kd_tree_2d_t> kd_tree = Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+        kd_tree->buildIndex();
+        DEBUG_MSG("Decomp::Decomp(): kd-tree completed");
+        std::vector<std::pair<size_t,scalar_t> > ret_matches;
+        nanoflann::SearchParams params;
+        params.sorted = true; // sort by distance in ascending order
+        const scalar_t tiny = 1.0E-5;
+        scalar_t neigh_rad_2 = (scalar_t)max_strain_window_size/2.0;
+        neigh_rad_2 *= neigh_rad_2;
+        neigh_rad_2 += tiny;
+        scalar_t query_pt[2];
+        for(int_t proc=0;proc<comm_->get_size();++proc){
+          std::set<int_t> neighbors_to_add;
+          // iterate all the ids local to this processor and find all the neighbors
+          for(std::set<int_t>::const_iterator it=owned_ids_on_each_proc[proc].begin();it!=owned_ids_on_each_proc[proc].end();++it){
+            assert(*it>=0&&*it<num_global_subsets_);
+            query_pt[0] = subset_centroids_x[*it];
+            query_pt[1] = subset_centroids_y[*it];
+            kd_tree->radiusSearch(&query_pt[0],neigh_rad_2,ret_matches,params);
+            for(size_t j=0;j<ret_matches.size();++j){
+              neighbors_to_add.insert(ret_matches[j].first);
+//              if(neighbor_ids!=Teuchos::null){
+//                if(j==1&&(int_t)neighbor_ids->size()>*it&&(*neighbor_ids)[*it]>0){ // check for rebalance needed, and that this is not a seed subset
+//                  (*neighbor_ids)[*it] = ret_matches[j].first;
+//                }
+//              }
+            } // loop over all neighbors
+          } // loop over all dist ids on that processor
+          // add all the neighbors to the id list
+          for(std::set<int_t>::const_iterator it = neighbors_to_add.begin(); it!=neighbors_to_add.end(); ++it)
+            owned_ids_on_each_proc[proc].insert(*it);
+        } // loop over each processor
+        DEBUG_MSG("Decomp::Decomp(): neighbor list constructed");
+      } // end window_size > 0
+      // determine the size of the mega position vector with all the overlap coords
+      int_t total_num_overlap_pts = 0;
+      for(int_t proc=0;proc<comm_->get_size();++proc){
+        total_num_overlap_pts+=owned_ids_on_each_proc[proc].size();
+      }
+
+      DEBUG_MSG("Decomp::Decomp(): total number of overlap points: " << total_num_overlap_pts);
+      field_zero_owned_ids = Teuchos::Array<int_t>(total_num_overlap_pts);
+      for(int_t i=0;i<field_zero_owned_ids.size();++i){
+        field_zero_owned_ids[i] = i;
+      }
+      // scatter the bounds to all procs
+      int_t current_index = 0;
+      for(int_t proc=0;proc<comm_->get_size();++proc){
+        zero_data->local_value(proc,0) = current_index; // start index
+        zero_data->local_value(proc,1) = current_index+owned_ids_on_each_proc[proc].size()-1; // end index
+        current_index += owned_ids_on_each_proc[proc].size();
+      }
+    } // end processor 0
+    // now export the zero owned values to all
+    MultiField_Exporter exporter(*all_map,*zero_data->get_map());
+    all_data->do_import(zero_data,exporter,INSERT);
+    const int_t start_index = all_data->local_value(0);
+    const int_t end_index = all_data->local_value(1);
+    const int_t num_overlap = end_index - start_index + 1;
+    DEBUG_MSG("[PROC "<< comm_->get_rank() <<"] subset index range " << start_index << " to " << end_index);
+    Teuchos::RCP<MultiField_Map> field_zero_map = Teuchos::rcp (new MultiField_Map(-1, field_zero_owned_ids,0,*comm_));
+    Teuchos::Array<int_t> field_dist_owned_ids(num_overlap);
+    for(int_t i=0;i<num_overlap;++i)
+      field_dist_owned_ids[i] = start_index + i;
+    Teuchos::RCP<MultiField_Map> field_dist_map =  Teuchos::rcp(new MultiField_Map(-1,field_dist_owned_ids,0,*comm_));
+    Teuchos::RCP<MultiField> field_zero_data = Teuchos::rcp(new MultiField(field_zero_map,4,true)); // the cols are x, y, gid, neigh_id
+    Teuchos::RCP<MultiField> field_dist_data = Teuchos::rcp(new MultiField(field_dist_map,4,true));
+    if(comm_->get_rank()==0){
+      int_t current_index = 0;
+      for(int_t proc=0;proc<comm_->get_size();++proc){
+        for(std::set<int_t>::const_iterator it=owned_ids_on_each_proc[proc].begin();it!=owned_ids_on_each_proc[proc].end();++it){
+          field_zero_data->local_value(current_index,0) = subset_centroids_x[*it];
+          field_zero_data->local_value(current_index,1) = subset_centroids_y[*it];
+          field_zero_data->local_value(current_index,2) = *it;
+          if(neighbor_ids!=Teuchos::null){
+            field_zero_data->local_value(current_index,3) = (int_t)neighbor_ids->size() > *it ? (*neighbor_ids)[*it]: -1;
+          }
+          else
+            field_zero_data->local_value(current_index,3) = -1;
+          current_index ++;
+        }
+      }
+      TEUCHOS_TEST_FOR_EXCEPTION(current_index!=field_zero_owned_ids.size(),std::runtime_error,"");
+    } // end proc 0
+    MultiField_Exporter field_exporter(*field_dist_map,*field_zero_data->get_map());
+    field_dist_data->do_import(field_zero_data,field_exporter,INSERT);
+    Teuchos::Array<int_t> field_dist_owned_gids(num_overlap);
+    for(int_t i=0;i<num_overlap;++i){
+      field_dist_owned_gids[i] = field_dist_data->local_value(i,2);
+      //  DEBUG_MSG("[PROC "<< comm_->get_rank() <<"] has a subset at " << field_dist_data->local_value(i,0) << " " << field_dist_data->local_value(i,1));
     }
-    Teuchos::ArrayView<const int_t> id_list_array(&id_list_vec[0],id_list.size());
-    id_decomp_overlap_map_ = Teuchos::rcp(new MultiField_Map(-1,id_list_array,0,*comm_));
+    // now that the coords have been communicated, store them in the overlap coords vectors
+    overlap_coords_x_.resize(num_overlap,0.0);
+    overlap_coords_y_.resize(num_overlap,0.0);
+    neighbor_ids_ = Teuchos::rcp(new std::vector<int_t>(num_overlap,-1));
+    for(int_t i=0;i<num_overlap;++i){
+      overlap_coords_x_[i] = field_dist_data->local_value(i,0);
+      overlap_coords_y_[i] = field_dist_data->local_value(i,1);
+      (*neighbor_ids_)[i] = field_dist_data->local_value(i,3);
+    }
+    id_decomp_overlap_map_ = Teuchos::rcp(new MultiField_Map(-1,field_dist_owned_gids,0,*comm_));
     DEBUG_MSG("Decomp::Decomp(): coordinate list has been trimmed");
-  } // end has strain windows && is parallel
+  } // end is parallel
   else{
     // set the neighbor ids
     neighbor_ids_ = Teuchos::rcp(new std::vector<int_t>(id_decomp_map_->get_num_local_elements(),-1));
@@ -196,6 +292,7 @@ Decomp::initialize(Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
     overlap_coords_y_.resize(id_decomp_map_->get_num_local_elements(),0.0);
     for(int_t i=0;i<id_decomp_map_->get_num_local_elements();++i){
       const int_t gid = id_decomp_map_->get_global_element(i);
+      assert(gid<subset_centroids_x.size());
       overlap_coords_x_[i] = subset_centroids_x[gid];
       overlap_coords_y_[i] = subset_centroids_y[gid];
       if(neighbor_ids!=Teuchos::null)
@@ -360,6 +457,9 @@ void
 Decomp::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > & obstructing_subset_ids,
   const Teuchos::RCP<Teuchos::ParameterList> & correlation_params){
+
+  if(neighbor_ids==Teuchos::null) return;
+
   Initialization_Method init_method = USE_FIELD_VALUES;
   if(correlation_params!=Teuchos::null){
     if(correlation_params->isParameter(DICe::initialization_method)){
@@ -380,31 +480,55 @@ Decomp::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
   const int_t proc_id = comm_->get_rank();
   const int_t num_procs = comm_->get_size();
 
-  if(neighbor_ids!=Teuchos::null){
-    // catch the case that this is an TRACKING_ROUTINE run, but seed values were specified for
-    // the individual subsets. In that case, the seed map is not necessary because there are
-    // no initializiation dependencies among subsets, but the seed map will still be used since it
-    // will be activated when seeds are specified for a subset.
-    if(obstructing_subset_ids!=Teuchos::null){
-      if(obstructing_subset_ids->size()>0){
-        bool print_warning = false;
-        for(size_t i=0;i<neighbor_ids->size();++i){
-          if((*neighbor_ids)[i]!=-1) print_warning = true;
-        }
-        if(print_warning && proc_id==0){
-          std::cout << "*** Waring: Seed values were specified for an analysis with obstructing subsets. " << std::endl;
-          std::cout << "            These values will be used to initialize subsets for which a seed has been specified, but the seed map " << std::endl;
-          std::cout << "            will be set to the distributed map because grouping subsets by obstruction trumps seed ordering." << std::endl;
-          std::cout << "            Seed dependencies between neighbors will not be enforced." << std::endl;
-        }
-        return;
+  // catch the case that this is an TRACKING_ROUTINE run, but seed values were specified for
+  // the individual subsets. In that case, the seed map is not necessary because there are
+  // no initializiation dependencies among subsets, but the seed map will still be used since it
+  // will be activated when seeds are specified for a subset.
+  if(obstructing_subset_ids!=Teuchos::null){
+    if(obstructing_subset_ids->size()>0){
+      bool print_warning = false;
+      for(size_t i=0;i<neighbor_ids->size();++i){
+        if((*neighbor_ids)[i]!=-1) print_warning = true;
       }
+      if(print_warning && proc_id==0){
+        std::cout << "*** Waring: Seed values were specified for an analysis with obstructing subsets. " << std::endl;
+        std::cout << "            These values will be used to initialize subsets for which a seed has been specified, but the seed map " << std::endl;
+        std::cout << "            will be set to the distributed map because grouping subsets by obstruction trumps seed ordering." << std::endl;
+        std::cout << "            Seed dependencies between neighbors will not be enforced." << std::endl;
+      }
+      return;
     }
+  }
+
+  // process zero divies up the subsets:
+  Teuchos::Array<int_t> field_zero_owned_ids;
+  if(proc_id==0){
+    field_zero_owned_ids = Teuchos::Array<int_t>(num_global_subsets_);
+  }
+  for(int_t i=0;i<field_zero_owned_ids.size();++i){
+    field_zero_owned_ids[i] = i;
+  }
+  Teuchos::RCP<MultiField_Map> field_zero_map = Teuchos::rcp (new MultiField_Map(-1, field_zero_owned_ids,0,*comm_));
+  Teuchos::RCP<MultiField> field_zero_data = Teuchos::rcp(new MultiField(field_zero_map,1,true));
+
+  // dummy field to communicate the extents to each processor
+  Teuchos::Array<int_t> zero_owned_ids;
+  if(proc_id==0){
+    for(int_t i=0;i<num_procs;++i)
+      zero_owned_ids.push_back(i);
+  }
+  Teuchos::Array<int_t> all_owned_ids;
+  all_owned_ids.push_back(proc_id);
+  Teuchos::RCP<MultiField_Map> zero_map = Teuchos::rcp (new MultiField_Map(-1, zero_owned_ids,0,*comm_));
+  Teuchos::RCP<MultiField_Map> all_map = Teuchos::rcp (new MultiField_Map(-1, all_owned_ids,0,*comm_));
+  Teuchos::RCP<MultiField> zero_data = Teuchos::rcp(new MultiField(zero_map,2,true));
+  Teuchos::RCP<MultiField> all_data = Teuchos::rcp(new MultiField(all_map,2,true));
+
+  if(proc_id==0){
     std::vector<int_t> local_subset_gids_grouped_by_roi;
     TEUCHOS_TEST_FOR_EXCEPTION((int_t)neighbor_ids->size()!=num_global_subsets_,std::runtime_error,"");
     std::vector<int_t> this_group_gids;
     std::vector<std::vector<int_t> > seed_groupings;
-    std::vector<std::vector<int_t> > local_seed_groupings;
     for(int_t i=num_global_subsets_-1;i>=0;--i){
       this_group_gids.push_back(i);
       // if this subset is a seed, break this grouping and insert it in the set
@@ -413,262 +537,331 @@ Decomp::create_seed_dist_map(Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
         this_group_gids.clear();
       }
     }
-    // TODO order the sets by their sizes and load balance better:
-    // divy up the seed_groupings round-robin style:
-    int_t group_gid = 0;
-    int_t local_total_id_list_size = 0;
-    while(group_gid < (int_t)seed_groupings.size()){
-      // reverse the order so the subsets are computed from the seed out
-      for(int_t p_id=0;p_id<num_procs;++p_id){
-        if(group_gid < (int_t)seed_groupings.size()){
-          if(p_id==proc_id){
-            std::reverse(seed_groupings[group_gid].begin(), seed_groupings[group_gid].end());
-            local_seed_groupings.push_back(seed_groupings[group_gid]);
-            local_total_id_list_size += seed_groupings[group_gid].size();
+    // reverse all the seed groupings:
+    for(size_t i=0;i<seed_groupings.size();++i){
+      std::reverse(seed_groupings[i].begin(), seed_groupings[i].end());
+    }
+    // split the groups among processors
+    std::vector<int_t> send_to_proc(seed_groupings.size(),0);
+    int_t p_id = 0;
+    for(size_t i=0;i<seed_groupings.size();++i){
+      send_to_proc[i] = p_id++;
+      if(p_id==num_procs) p_id=0;
+    }
+    // restack the ids in processor order
+    int_t id_count = 0;
+    for(int_t proc=0;proc<num_procs;++proc){
+      zero_data->local_value(proc,0) = id_count;
+      for(size_t i=0;i<seed_groupings.size();++i){
+        if(send_to_proc[i]==(int_t)proc){
+          for(size_t j=0;j<seed_groupings[i].size();++j){
+            field_zero_data->local_value(id_count++) = seed_groupings[i][j];
           }
-          group_gid++;
-        }
-        else break;
-      }
-    }
-    DEBUG_MSG("[PROC " << proc_id << "] Has " << local_seed_groupings.size() << " local seed grouping(s)");
-    for(size_t i=0;i<local_seed_groupings.size();++i){
-      DEBUG_MSG("[PROC " << proc_id << "] local group id: " << i);
-      for(size_t j=0;j<local_seed_groupings[i].size();++j){
-        DEBUG_MSG("[PROC " << proc_id << "] gid: " << local_seed_groupings[i][j] );
-      }
-    }
-    // concat local subset ids:
-    local_subset_gids_grouped_by_roi.reserve(local_total_id_list_size);
-    for(size_t i=0;i<local_seed_groupings.size();++i){
-      local_subset_gids_grouped_by_roi.insert( local_subset_gids_grouped_by_roi.end(),
-        local_seed_groupings[i].begin(),
-        local_seed_groupings[i].end());
-    }
+        } // end proc id matches
+      } // end loop over seed groupings
+      zero_data->local_value(proc,1) = id_count - 1;
+    } // end proc loop
+    // now field zero list is ordered by groupings and processors
+  }// end processor 0
 
-    // copy the ids in order
-    this_proc_gid_order_ = std::vector<int_t>(local_subset_gids_grouped_by_roi.size(),-1);
-    for(size_t i=0;i<local_subset_gids_grouped_by_roi.size();++i)
-      this_proc_gid_order_[i] = local_subset_gids_grouped_by_roi[i];
+  // communicate the extents of the ordered list to all procs:
+  MultiField_Exporter exporter(*all_map,*zero_data->get_map());
+  all_data->do_import(zero_data,exporter,INSERT);
+  const int_t start_id = all_data->local_value(0,0);
+  const int_t end_id = all_data->local_value(0,1);
+  const int_t num_ids = end_id - start_id + 1;
+  DEBUG_MSG("[PROC "<<proc_id <<"] Decomp::create_seed_dist_map(): owns neigbor id list elements " << start_id << " through " << end_id << " num ids " << num_ids);
 
-    // sort the vector so the map is not in execution order
-    std::sort(local_subset_gids_grouped_by_roi.begin(),local_subset_gids_grouped_by_roi.end());
-    Teuchos::ArrayView<const int_t> lids_grouped_by_roi(&local_subset_gids_grouped_by_roi[0],local_total_id_list_size);
-    id_decomp_map_ = Teuchos::rcp(new MultiField_Map(num_global_subsets_,lids_grouped_by_roi,0,*comm_));
+  // create the dist map for the neigh ids:
+  Teuchos::Array<int_t> field_all_owned_ids(num_ids);
+  for(int_t i=0;i<field_all_owned_ids.size();++i){
+    field_all_owned_ids[i] = start_id + i;
   }
+  Teuchos::RCP<MultiField_Map> field_all_map = Teuchos::rcp (new MultiField_Map(-1, field_all_owned_ids,0,*comm_));
+  Teuchos::RCP<MultiField> field_all_data = Teuchos::rcp(new MultiField(field_all_map,1,true));
+  // import the neigh ids local to this processor:
+  MultiField_Exporter field_exporter(*field_all_map,*field_zero_data->get_map());
+  field_all_data->do_import(field_zero_data,field_exporter,INSERT);
+  const int_t num_local_subsets = field_all_data->get_map()->get_num_local_elements();
+  for(int_t i=0;i<num_local_subsets;++i)
+    DEBUG_MSG("[PROC " << proc_id << "] Decomp::create_seed_dist_map(): proc has subset id " << field_all_data->local_value(i));
+
+  // copy the ids in order
+  this_proc_gid_order_ = std::vector<int_t>(num_local_subsets,-1);
+  for(int_t i=0;i<num_local_subsets;++i)
+    this_proc_gid_order_[i] = field_all_data->local_value(i);
+
+  std::vector<int_t> ordered_local_list(num_local_subsets);
+  for(int_t i=0;i<num_local_subsets;++i)
+    ordered_local_list[i] = field_all_data->local_value(i);
+
+  // sort the vector so the map is not in execution order
+  std::sort(ordered_local_list.begin(),ordered_local_list.end());
+  Teuchos::ArrayView<const int_t> lids_grouped_by_roi(&ordered_local_list[0],num_local_subsets);
+  id_decomp_map_ = Teuchos::rcp(new MultiField_Map(num_global_subsets_,lids_grouped_by_roi,0,*comm_));
 }
 
 void
-Decomp::populate_global_coordinate_vector(Teuchos::ArrayRCP<scalar_t> & subset_centroids_x,
-  Teuchos::ArrayRCP<scalar_t> & subset_centroids_y,
-  Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
-  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > & obstructing_subset_ids,
-  const std::string & image_file_name,
-  const Teuchos::RCP<Teuchos::ParameterList> & input_params,
-  const Teuchos::RCP<Teuchos::ParameterList> & correlation_params){;
+Decomp::populate_coordinate_vectors(const std::string & image_file_name,
+    const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+    const Teuchos::RCP<Teuchos::ParameterList> & correlation_params,
+    Teuchos::ArrayRCP<scalar_t> & subset_centroids_x,
+    Teuchos::ArrayRCP<scalar_t> & subset_centroids_y,
+    Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
+    Teuchos::RCP<std::map<int_t,std::vector<int_t> > > & obstructing_subset_ids){
 
-  const int_t dim = 2;
+  subset_centroids_x.clear();
+  subset_centroids_y.clear();
+  neighbor_ids = Teuchos::rcp(new std::vector<int_t>()); // initialize to zero length
+
+  //const int_t num_procs = comm_->get_size();
   const int_t proc_rank = comm_->get_rank();
-  Teuchos::RCP<Image> image;
-  Teuchos::ArrayRCP<scalar_t> coords_x;
-  Teuchos::ArrayRCP<scalar_t> coords_y;
-  int_t num_global_subsets = 0;
-  image_width_ = -1;
-  image_height_ = -1;
+  const int_t dim = 2;
 
-  if(proc_rank==0){
-    // only proc 0 reads the image:
+  // read the image dimensions on all processors
+  int_t img_w = -1;
+  int_t img_h = -1;
+  int_t subset_size = -1;
+  if(input_params->isParameter(DICe::subset_size)){
+    subset_size = input_params->get<int_t>(DICe::subset_size);
+  }
+  utils::read_image_dimensions(image_file_name.c_str(),img_w,img_h);
+  DEBUG_MSG("[PROC "<<proc_rank <<"] Decomp::populate_coordinate_vectors(): image width:  " << img_w);
+  DEBUG_MSG("[PROC "<<proc_rank <<"] Decomp::populate_coordinate_vectors(): image height: " << img_h);
+  image_width_ = img_w;
+  image_height_ = img_h;
+
+  // processor 0 creates the list of correlation points and divys them up for checking the SSSIG if necessary...
+  Teuchos::RCP<std::vector<scalar_t> > subset_centroids = Teuchos::rcp(new std::vector<scalar_t>());
+  std::vector<int_t> neigh_ids_on_0;
+  int_t num_global_subsets_pre_sssig = 0;
+//  if(proc_rank==0){
+    // now determine the list of coordinates:
+    // if the subset locations are specified in an input file, read them in (else they will be defined later)
+    Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
+    //Teuchos::RCP<std::map<int_t,std::vector<int_t> > > blocking_subset_ids;
+    const bool has_subset_file = input_params->isParameter(DICe::subset_file);
+    DICe::Subset_File_Info_Type subset_info_type = DICe::SUBSET_INFO;
+    if(has_subset_file){
+      std::string fileName = input_params->get<std::string>(DICe::subset_file);
+      subset_info_ = DICe::read_subset_file(fileName,img_w,img_h);
+      subset_info_type = subset_info_->type;
+    }
+    if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
+      TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::step_size),std::runtime_error,
+        "Error, step size has not been specified");
+      DEBUG_MSG("Correlation point centroids were not specified by the user. \nThey will be evenly distrubed in the region"
+        " of interest with separation (step_size) of " << input_params->get<int_t>(DICe::step_size) << " pixels.");
+      TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_size),std::runtime_error,
+        "Error, the subset size has not been specified"); // required for all square subsets case
+      DICe::create_regular_grid_of_correlation_points(*subset_centroids,neigh_ids_on_0,input_params,img_w,img_h,subset_info_);
+    }
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION(subset_info_==Teuchos::null,std::runtime_error,"");
+      subset_centroids = subset_info_->coordinates_vector;
+      conformal_area_defs = subset_info_->conformal_area_defs;
+      obstructing_subset_ids = subset_info_->id_sets_map;
+      if(subset_info_->conformal_area_defs->size()<subset_centroids->size()/dim){
+        // Only require this if not all subsets are conformal:
+        TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_size),std::runtime_error,
+          "Error, the subset size has not been specified");
+      }
+    }
+    num_global_subsets_pre_sssig = subset_centroids->size()/dim; // divide by three because the stride is x y neighbor_id
+    DEBUG_MSG("[PROC "<<proc_rank <<"] Decomp::populate_coordinate_vectors(): num global subsets before SSSIG:  " << num_global_subsets_pre_sssig);
+    //for(int_t i=0;i<num_global_subsets_pre_sssig;++i){
+    //  std::cout << "subset " << i << " " << (*subset_centroids_on_0)[i*2+0] << " " << (*subset_centroids_on_0)[i*2+1] << std::endl;
+    //}
+//  } // end processor 0
+
+  // check the SSSIG criteria if necessary:
+  bool sssig_check_done = false;
+  Teuchos::RCP<MultiField> field_zero_data;
+  Optimization_Method optimization_method = GRADIENT_BASED;
+  if(correlation_params!=Teuchos::null){
+    if(correlation_params->isParameter(DICe::optimization_method)){
+      if(correlation_params->isType<std::string>(DICe::optimization_method)){
+        std::string opt_string = correlation_params->get<std::string>(DICe::optimization_method,"GRADIENT_BASED");
+        optimization_method = DICe::string_to_optimization_method(opt_string);
+      }
+      else{
+        optimization_method = correlation_params->get<DICe::Optimization_Method>(DICe::optimization_method);
+      }
+    }
+  }
+  const scalar_t grad_threshold = correlation_params->get<double>(DICe::sssig_threshold,50.0);
+  if((optimization_method==GRADIENT_BASED || optimization_method==GRADIENT_BASED_THEN_SIMPLEX)&&grad_threshold > 0.0&&subset_size>0){
+    sssig_check_done = true;
+    // split up the points across processors and check the SSSIG:
+
+    // communicate the number of global subsets to all processors:
+    // this is a dummy field that is used to communicate a value from proc 0 to all procs
+    Teuchos::Array<int_t> zero_owned_ids;
+    if(proc_rank==0){
+      zero_owned_ids.push_back(0); // both entries of this field are owned by proc zero in this map
+    }
+    Teuchos::Array<int_t> all_owned_ids;
+    all_owned_ids.push_back(0);
+    Teuchos::RCP<MultiField_Map> zero_map = Teuchos::rcp (new MultiField_Map(-1, zero_owned_ids,0,*comm_));
+    Teuchos::RCP<MultiField_Map> all_map = Teuchos::rcp (new MultiField_Map(-1, all_owned_ids,0,*comm_));
+    Teuchos::RCP<MultiField> zero_data = Teuchos::rcp(new MultiField(zero_map,1,true));
+    Teuchos::RCP<MultiField> all_data = Teuchos::rcp(new MultiField(all_map,1,true));
+    if(proc_rank==0){
+      zero_data->local_value(0) = num_global_subsets_pre_sssig;
+    }
+    // now export the zero owned values to all
+    MultiField_Exporter exporter(*all_map,*zero_data->get_map());
+    all_data->do_import(zero_data,exporter,INSERT);
+    if(proc_rank!=0){
+      num_global_subsets_pre_sssig = all_data->local_value(0);
+    }
+    DEBUG_MSG("[PROC "<<proc_rank <<"] Decomp::populate_coordinate_vectors(): num global subsets before SSSIG (post comm):  " << num_global_subsets_pre_sssig);
+
+    Teuchos::Array<int_t> field_zero_owned_ids;
+    if(proc_rank==0){
+      field_zero_owned_ids = Teuchos::Array<int_t>(num_global_subsets_pre_sssig);
+    }
+    for(int_t i=0;i<field_zero_owned_ids.size();++i){
+      field_zero_owned_ids[i] = i;
+    }
+    Teuchos::RCP<MultiField_Map> field_zero_map = Teuchos::rcp (new MultiField_Map(-1, field_zero_owned_ids,0,*comm_));
+    Teuchos::RCP<MultiField_Map> field_dist_map =  Teuchos::rcp(new MultiField_Map(num_global_subsets_pre_sssig,0,*comm_));
+    field_zero_data = Teuchos::rcp(new MultiField(field_zero_map,4,true));
+    Teuchos::RCP<MultiField> field_dist_data = Teuchos::rcp(new MultiField(field_dist_map,4,true));
+    // fields are 0: coord_x, 1: coord_y, 2: neigh_id 3: is_valid 1.0 for true (sssig)
+    if(proc_rank==0){
+      for(int_t i=0;i<num_global_subsets_pre_sssig;++i){
+        field_zero_data->local_value(i,0) = (*subset_centroids)[i*2+0];
+        field_zero_data->local_value(i,1) = (*subset_centroids)[i*2+1];
+        field_zero_data->local_value(i,2) = (int_t)neigh_ids_on_0.size() > i ? neigh_ids_on_0[i]: -1;
+        field_zero_data->local_value(i,3) = 1.0;
+      }
+    }
+    // now export the zero owned values to all
+    MultiField_Exporter field_exporter(*field_dist_map,*field_zero_data->get_map());
+    field_dist_data->do_import(field_zero_data,field_exporter,INSERT);
+    const int_t num_check_points = field_dist_data->get_map()->get_num_local_elements();
+    DEBUG_MSG("[PROC "<<proc_rank <<"] Decomp::populate_coordinate_vectors(): num points to check for sssig: " << num_check_points);
+    // determine the image extents needed for this processor:
+    int_t min_x = img_w;
+    int_t min_y = img_h;
+    int_t max_x = 0;
+    int_t max_y = 0;
+    for(int_t i=0;i<num_check_points;++i){
+      if(field_dist_data->local_value(i,0)<min_x) min_x = field_dist_data->local_value(i,0);
+      if(field_dist_data->local_value(i,0)>max_x) max_x = field_dist_data->local_value(i,0);
+      if(field_dist_data->local_value(i,1)<min_y) min_y = field_dist_data->local_value(i,1);
+      if(field_dist_data->local_value(i,1)>max_y) max_y = field_dist_data->local_value(i,1);
+    }
+    min_x = min_x - subset_size > 0 ? min_x - subset_size : 0;
+    max_x = max_x + subset_size < img_w ? max_x + subset_size : img_w;
+    min_y = min_y - subset_size >0 ? min_y - subset_size : 0;
+    max_y = max_y + subset_size < img_h ? max_y + subset_size : img_h;
+    DEBUG_MSG("[PROC "<<proc_rank <<"] Decomp::populate_coordinate_vectors(): image extents " << min_x << " " << max_x << " " << min_y << " " << max_y);
+    // load images for each processor
     Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
     imgParams->set(DICe::compute_image_gradients,true);
-    // determine if the image is from cine high speed video file:
-//    if(image_file_name==DICe::cine_file){
-//      Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader;
-//      int_t cine_num_images = -1;
-//      int_t cine_first_frame_index = -1;
-//      int_t cine_ref_index = -1;
-//      const std::string cine_file_name = input_params->get<std::string>(DICe::cine_file);
-//      std::stringstream cine_name;
-//      cine_name << input_params->get<std::string>(DICe::image_folder) << cine_file_name;
-//      Teuchos::oblackholestream bhs; // outputs nothing
-//      cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(cine_name.str(),&bhs,false));
-//      cine_num_images = cine_reader->num_frames();
-//      cine_first_frame_index = cine_reader->first_image_number();
-//      DEBUG_MSG("Decomp::Decomp(): cine first frame index: " << cine_first_frame_index);
-//      cine_ref_index = input_params->get<int_t>(DICe::cine_ref_index,cine_first_frame_index);
-//      TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index < cine_first_frame_index,std::invalid_argument,"");
-//      TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index - cine_first_frame_index > cine_num_images,std::invalid_argument,"");
-//      // convert the cine ref, start and end index to the DICe indexing, not cine indexing (begins with zero)
-//      cine_ref_index = cine_ref_index - cine_first_frame_index;
-//      DEBUG_MSG("Decomp::Decomp(): reading cine image from file: " << cine_file_name << " index " << cine_ref_index);
-//      image = cine_reader->get_frame(cine_ref_index,true,false,imgParams);
-//    }
-//    else{
-      DEBUG_MSG("Decomp::Decomp(): reading image from file: " << image_file_name);
-      image = Teuchos::rcp( new Image(image_file_name.c_str(),imgParams));
-//    }
-    image_width_ = image->width();
-    image_height_ = image->height();
-  } // end proc 0 reads image
-  assert((proc_rank==0&&image!=Teuchos::null)||(proc_rank>0&&image==Teuchos::null)); // only proc 0 should have an image
-  // communicate the image width and height to all processes:
-  // this is a dummy field that is used to communicate up to two values from proc 0 to all procs
-  // this may be used for only one value with one dummy value passed along
+    Teuchos::RCP<Image> sssig_image = Teuchos::rcp( new Image(image_file_name.c_str(),min_x,min_y,max_x-min_x+1,max_y-min_y+1,imgParams));
+    TEUCHOS_TEST_FOR_EXCEPTION(!sssig_image->has_gradients(),std::runtime_error,
+      "Error, testing valid points for SSSIG tol, but image gradients have not been computed");
+    //std::vector<bool> sssig_pass(num_check_points,true);
+    for(int_t i=0;i<num_check_points;++i){
+      const int_t cx = field_dist_data->local_value(i,0);
+      const int_t cy = field_dist_data->local_value(i,1);
+      //DEBUG_MSG("[PROC "<<proc_rank <<"] Decomp::populate_coordinate_vectors(): checking ssig for point " << field_dist_data->local_value(i,0) << " " << field_dist_data->local_value(i,1));
+      // check the gradient SSSIG threshold
+      scalar_t SSSIG = 0.0;
+      const int_t left_x = cx - subset_size/2;
+      const int_t right_x = left_x + subset_size;
+      const int_t top_y = cy - subset_size/2;
+      const int_t bottom_y = top_y + subset_size;
+      for(int_t y=top_y;y<bottom_y;++y){
+        for(int_t x=left_x;x<right_x;++x){
+          SSSIG += sssig_image->grad_x(x-min_x,y-min_y)*sssig_image->grad_x(x-min_x,y-min_y) +
+              sssig_image->grad_x(x-min_x,y-min_y)*sssig_image->grad_x(x-min_x,y-min_y);
+        }
+      }
+      SSSIG /= (subset_size*subset_size);
+      if(SSSIG < grad_threshold) field_dist_data->local_value(i,3) = 0.0;
+      //DEBUG_MSG("[PROC "<<proc_rank <<"] x " << cx << " y " << cy << " SSSIG: " << SSSIG << " threshold " << grad_threshold << " pass " << field_dist_data->local_value(i,2));
+      //if(field_dist_data->local_value(i,2))
+      //  sssig_image->intensities()[(cy-sssig_image->offset_y())*sssig_image->width() + (cx-sssig_image->offset_x())] = 255;
+    } // end subset check loop
+//    std::stringstream name;
+//    name << "ssig_image_" << proc_rank << ".tif";
+//    sssig_image->write(name.str());
+
+    // communicate the valid subsets back to process 0
+    MultiField_Exporter field_exporter_rev(*field_zero_map,*field_dist_map);
+    field_zero_data->do_import(field_dist_data,field_exporter_rev,INSERT);
+  } // end sssig needs to be checked
+
+  if(proc_rank==0){
+    // collect only the valid subsets (that pass sssig if necessary)
+    int_t num_valid_points = subset_centroids->size()/2;
+    if(sssig_check_done){
+      TEUCHOS_TEST_FOR_EXCEPTION(field_zero_data==Teuchos::null,std::runtime_error,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(field_zero_data->get_map()->get_num_local_elements()<=0,std::runtime_error,"");
+      num_valid_points = 0;
+      for(int_t i=0;i<field_zero_data->get_map()->get_num_local_elements();++i){
+        if(field_zero_data->local_value(i,3)>0.0)
+          num_valid_points++;
+      }
+    }
+    DEBUG_MSG("[PROC "<<proc_rank <<"] Decomp::populate_coordinate_vectors(): num global subsets post sssig check " << num_valid_points);
+    // check if the neighbor ids need to be rebalanced (some may have been invalidated by the sssig check)
+    bool has_seeds = false;
+    if(subset_info_!=Teuchos::null)
+      if(subset_info_->size_map->size() > 0)
+        has_seeds = true;
+    if(num_valid_points!=num_global_subsets_pre_sssig && has_seeds){
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, seeds and SSSIG thresholding cannot be used simultaneously.");
+    }
+    neighbor_ids = Teuchos::rcp(new std::vector<int_t>(num_valid_points));
+    subset_centroids_x.resize(num_valid_points);
+    subset_centroids_y.resize(num_valid_points);
+    int_t valid_index=0;
+    if(sssig_check_done){
+      for(int_t i=0;i<field_zero_data->get_map()->get_num_local_elements();++i){
+        if(field_zero_data->local_value(i,3)>0.0){
+          subset_centroids_x[valid_index] = field_zero_data->local_value(i,0);
+          subset_centroids_y[valid_index] = field_zero_data->local_value(i,1);
+          (*neighbor_ids)[valid_index] = field_zero_data->local_value(i,2);
+          valid_index++;
+        }
+      }
+    } // end sssig_check_done
+    else{
+      for(int_t i=0;i<num_valid_points;++i){
+        subset_centroids_x[i] = (*subset_centroids)[i*2+0];
+        subset_centroids_y[i] = (*subset_centroids)[i*2+1];
+        (*neighbor_ids)[i] = (int_t)neigh_ids_on_0.size() > i ? neigh_ids_on_0[i] : -1;
+      }
+    }
+  } // end proc==0
+  else{
+    subset_centroids->clear();
+  }
+
+  // communicate the number of global subsets to all procs
+  // this is a dummy field that is used to communicate a value from proc 0 to all procs
   Teuchos::Array<int_t> zero_owned_ids;
   if(proc_rank==0){
     zero_owned_ids.push_back(0); // both entries of this field are owned by proc zero in this map
-    zero_owned_ids.push_back(1);
   }
   Teuchos::Array<int_t> all_owned_ids;
   all_owned_ids.push_back(0);
-  all_owned_ids.push_back(1);
   Teuchos::RCP<MultiField_Map> zero_map = Teuchos::rcp (new MultiField_Map(-1, zero_owned_ids,0,*comm_));
   Teuchos::RCP<MultiField_Map> all_map = Teuchos::rcp (new MultiField_Map(-1, all_owned_ids,0,*comm_));
   Teuchos::RCP<MultiField> zero_data = Teuchos::rcp(new MultiField(zero_map,1,true));
   Teuchos::RCP<MultiField> all_data = Teuchos::rcp(new MultiField(all_map,1,true));
   if(proc_rank==0){
-    zero_data->local_value(0) = image_width_;
-    zero_data->local_value(1) = image_height_;
+    zero_data->local_value(0) = subset_centroids_x.size();
   }
   // now export the zero owned values to all
   MultiField_Exporter exporter(*all_map,*zero_data->get_map());
   all_data->do_import(zero_data,exporter,INSERT);
-  if(proc_rank!=0){
-    image_width_ = all_data->local_value(0);
-    image_height_ = all_data->local_value(1);
-  }
-  DEBUG_MSG("[PROC "<<proc_rank <<"] image width:  " << image_width_);
-  DEBUG_MSG("[PROC "<<proc_rank <<"] image height: " << image_height_);
-
-  // now determine the list of coordinates:
-  Teuchos::RCP<DICe::Subset_File_Info> subset_info;
-
-  // if the subset locations are specified in an input file, read them in (else they will be defined later)
-  Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
-  Teuchos::RCP<std::map<int_t,std::vector<int_t> > > blocking_subset_ids;
-  Teuchos::RCP<std::vector<scalar_t> > subset_centroids_on_0 = Teuchos::rcp(new std::vector<scalar_t>());
-  Teuchos::RCP<std::set<int_t> > force_simplex;
-  const bool has_subset_file = input_params->isParameter(DICe::subset_file);
-  DICe::Subset_File_Info_Type subset_info_type = DICe::SUBSET_INFO;
-  if(has_subset_file){
-    std::string fileName = input_params->get<std::string>(DICe::subset_file);
-    subset_info = DICe::read_subset_file(fileName,image_width_,image_height_);
-    subset_info_type = subset_info->type;
-  }
- if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
-    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::step_size),std::runtime_error,
-      "Error, step size has not been specified");
-    DEBUG_MSG("Correlation point centroids were not specified by the user. \nThey will be evenly distrubed in the region"
-      " of interest with separation (step_size) of " << input_params->get<int_t>(DICe::step_size) << " pixels.");
-    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_size),std::runtime_error,
-      "Error, the subset size has not been specified"); // required for all square subsets case
-    //subset_size = input_params->get<int_t>(DICe::subset_size);
-    // only processor 0 reads the image and constructs/checks the points for SSSIG and the results are communicated to the rest of the procs
-    Teuchos::RCP<std::vector<int_t> > neighbor_ids_on_0 = Teuchos::rcp(new std::vector<int_t>());
-    if(proc_rank==0){
-      Optimization_Method optimization_method = GRADIENT_BASED;
-      if(correlation_params!=Teuchos::null){
-        if(correlation_params->isParameter(DICe::optimization_method)){
-          if(correlation_params->isType<std::string>(DICe::optimization_method)){
-            std::string opt_string = correlation_params->get<std::string>(DICe::optimization_method,"GRADIENT_BASED");
-            optimization_method = DICe::string_to_optimization_method(opt_string);
-          }
-          else{
-            optimization_method = correlation_params->get<DICe::Optimization_Method>(DICe::optimization_method);
-          }
-        }
-      }
-      const scalar_t default_threshold = optimization_method==GRADIENT_BASED || optimization_method==GRADIENT_BASED_THEN_SIMPLEX ? 50.0: -1.0;
-      const scalar_t grad_threshold = correlation_params->get<double>(DICe::sssig_threshold,default_threshold);
-      DICe::create_regular_grid_of_correlation_points(*subset_centroids_on_0,*neighbor_ids_on_0,input_params,image,subset_info,grad_threshold);
-      // check all the subsets and eliminate ones with a gradient ratio too low
-      num_global_subsets = subset_centroids_on_0->size()/dim; // divide by three because the stride is x y neighbor_id
-      assert(neighbor_ids_on_0->size()==subset_centroids_on_0->size()/2);
-    } // end proc 0
-
-    // communicate the number of global subsets to all procs:
-    if(proc_rank==0){
-      zero_data->local_value(0) = num_global_subsets;
-      zero_data->local_value(1) = -1;
-    }
-    // now export the zero owned values to all
-    all_data->do_import(zero_data,exporter,INSERT);
-    if(proc_rank!=0){
-      num_global_subsets = all_data->local_value(0);
-    }
-    DEBUG_MSG("[PROC "<<proc_rank <<"] num_global_subsets:  " << num_global_subsets);
-
-    // communicate a size three multifield to all procs with field 0 being x coords 1 being y coords and 2 being neigh ids
-    Teuchos::Array<int_t> field_zero_owned_ids;
-    if(proc_rank==0){
-      field_zero_owned_ids = Teuchos::Array<int_t>(num_global_subsets);
-    }
-    for(int_t i=0;i<field_zero_owned_ids.size();++i){
-      field_zero_owned_ids[i] = i;
-    }
-    Teuchos::Array<int_t> field_all_owned_ids(num_global_subsets);
-    for(int_t i=0;i<field_all_owned_ids.size();++i){
-      field_all_owned_ids[i] = i;
-    }
-    Teuchos::RCP<MultiField_Map> field_zero_map = Teuchos::rcp (new MultiField_Map(-1, field_zero_owned_ids,0,*comm_));
-    Teuchos::RCP<MultiField_Map> field_all_map = Teuchos::rcp (new MultiField_Map(-1, field_all_owned_ids,0,*comm_));
-    Teuchos::RCP<MultiField> field_zero_data = Teuchos::rcp(new MultiField(field_zero_map,3,true));
-    Teuchos::RCP<MultiField> field_all_data = Teuchos::rcp(new MultiField(field_all_map,3,true));
-    if(proc_rank==0){
-      for(int_t i=0;i<num_global_subsets;++i){
-        field_zero_data->local_value(i,0) = (*subset_centroids_on_0)[i*2+0];
-        field_zero_data->local_value(i,1) = (*subset_centroids_on_0)[i*2+1];
-        field_zero_data->local_value(i,2) = (*neighbor_ids_on_0)[i];
-      }
-    }
-    // now export the zero owned values to all
-    MultiField_Exporter field_exporter(*field_all_map,*field_zero_data->get_map());
-    field_all_data->do_import(field_zero_data,field_exporter,INSERT);
-    subset_centroids_x.resize(num_global_subsets,0.0);
-    subset_centroids_y.resize(num_global_subsets,0.0);
-    neighbor_ids = Teuchos::rcp(new std::vector<int_t>(num_global_subsets));
-    for(int_t i=0;i<num_global_subsets;++i){
-      subset_centroids_x[i] = field_all_data->local_value(i,0);
-      subset_centroids_y[i] = field_all_data->local_value(i,1);
-      (*neighbor_ids)[i] = field_all_data->local_value(i,2);
-    }
-  }
-  else{
-    TEUCHOS_TEST_FOR_EXCEPTION(subset_info==Teuchos::null,std::runtime_error,"");
-    subset_centroids_on_0 = subset_info->coordinates_vector;
-    num_global_subsets = subset_centroids_on_0->size()/dim;
-    subset_centroids_x.resize(num_global_subsets,0.0);
-    subset_centroids_y.resize(num_global_subsets,0.0);
-    for(int_t i=0;i<num_global_subsets;++i){
-      subset_centroids_x[i] = (*subset_centroids_on_0)[i*2+0];
-      subset_centroids_y[i] = (*subset_centroids_on_0)[i*2+1];
-    }
-    neighbor_ids = subset_info->neighbor_vector;
-    conformal_area_defs = subset_info->conformal_area_defs;
-    obstructing_subset_ids = subset_info->id_sets_map;
-    force_simplex = subset_info->force_simplex;
-    if((int_t)subset_info->conformal_area_defs->size()<num_global_subsets){
-      // Only require this if not all subsets are conformal:
-      TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_size),std::runtime_error,
-        "Error, the subset size has not been specified");
-      //subset_size = input_params->get<int_t>(DICe::subset_size);
-    }
-  }
- TEUCHOS_TEST_FOR_EXCEPTION(subset_centroids_x.size()!=num_global_subsets,std::runtime_error,"");
- TEUCHOS_TEST_FOR_EXCEPTION(subset_centroids_y.size()!=num_global_subsets,std::runtime_error,"");
- TEUCHOS_TEST_FOR_EXCEPTION(num_global_subsets<=0,std::runtime_error,"");
- num_global_subsets_ = num_global_subsets;
-
-  // at this point we should have the global list of valid points on all processors with only proc 0 having read the image
-
-//
-//  DEBUG_MSG("[PROC "<<proc_rank <<"] SUBSET_COORDS: ");
-//  for(int_t i=0;i<subset_centroids->size()/2;++i){
-//    DEBUG_MSG("[PROC "<<proc_rank <<"] "<< i << " x " << (*subset_centroids)[i*2+0] << " y " << (*subset_centroids)[i*2+1]);
-//  }
-//  DEBUG_MSG("[PROC "<<proc_rank <<"] NEIGH_IDS: ");
-//  for(int_t i=0;i<subset_centroids->size()/2;++i){
-//    DEBUG_MSG("[PROC "<<proc_rank <<"] "<< i << " " << (*neighbor_ids)[i]);
-//  }
+  num_global_subsets_ = all_data->local_value(0);
 }
 
 DICE_LIB_DLL_EXPORT
@@ -676,9 +869,9 @@ void
 create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_points,
   std::vector<int_t> & neighbor_ids,
   Teuchos::RCP<Teuchos::ParameterList> params,
-  Teuchos::RCP<Image> image,
-  Teuchos::RCP<DICe::Subset_File_Info> subset_file_info,
-  const scalar_t & grad_threshold){
+  const int_t img_w,
+  const int_t img_h,
+  Teuchos::RCP<DICe::Subset_File_Info> subset_file_info){
   int proc_rank = 0;
 #if DICE_MPI
   int mpi_is_initialized = 0;
@@ -699,10 +892,6 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
   const int_t subset_size = params->get<int_t>(DICe::subset_size);
   correlation_points.clear();
   neighbor_ids.clear();
-
-  const int_t width = image->width();
-  const int_t height = image->height();
-
   bool seed_was_specified = false;
   Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > roi_defs;
   if(subset_file_info!=Teuchos::null){
@@ -722,7 +911,7 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
   }
   if(roi_defs==Teuchos::null){ // wasn't populated above so create a dummy roi with the whole image:
     if(proc_rank==0) DEBUG_MSG("create_regular_grid_of_correlation_points(): creating dummy ROI of the entire image");
-    Teuchos::RCP<DICe::Rectangle> rect = Teuchos::rcp(new DICe::Rectangle(width/2,height/2,width,height));
+    Teuchos::RCP<DICe::Rectangle> rect = Teuchos::rcp(new DICe::Rectangle(img_w/2,img_h/2,img_w,img_h));
     DICe::multi_shape boundary_multi_shape;
     boundary_multi_shape.push_back(rect);
     DICe::Conformal_Area_Def conformal_area_def(boundary_multi_shape);
@@ -751,6 +940,7 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
         excluded_coords.insert(shapeCoords.begin(),shapeCoords.end());
       }
     }
+
     int_t num_rows = 0;
     int_t num_cols = 0;
     int_t seed_row = 0;
@@ -770,12 +960,12 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
         this_roi_has_seed = true;
       }
     }
-    while(x_coord < width - subset_size) {
+    while(x_coord < img_w - subset_size) {
       if(x_coord + step_size/2 < seed_location_x) seed_col++;
       x_coord+=step_size;
       num_cols++;
     }
-    while(y_coord < height - subset_size) {
+    while(y_coord < img_h - subset_size) {
       if(y_coord + step_size/2 < seed_location_y) seed_row++;
       y_coord+=step_size;
       num_rows++;
@@ -784,7 +974,7 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
     //if(seed_was_specified&&this_roi_has_seed){
       x_coord = subset_size-1 + seed_col*step_size;
       y_coord = subset_size-1 + seed_row*step_size;
-    if(valid_correlation_point(x_coord,y_coord,image,subset_size,coords,excluded_coords,grad_threshold)){
+    if(valid_correlation_point(x_coord,y_coord,subset_size,img_w,img_h,coords,excluded_coords)){
       correlation_points.push_back((scalar_t)x_coord);
       correlation_points.push_back((scalar_t)y_coord);
       //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding seed correlation point " << x_coord << " " << y_coord);
@@ -814,7 +1004,7 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
       if(col>=num_cols)break;
       x_coord = subset_size - 1 + col*step_size;
       y_coord = subset_size - 1 + row*step_size;
-      if(valid_correlation_point(x_coord,y_coord,image,subset_size,coords,excluded_coords,grad_threshold)){
+      if(valid_correlation_point(x_coord,y_coord,subset_size,img_w,img_h,coords,excluded_coords)){
         correlation_points.push_back((scalar_t)x_coord);
         correlation_points.push_back((scalar_t)y_coord);
         //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding snake right correlation point " << x_coord << " " << y_coord);
@@ -841,7 +1031,7 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
       if(col<0)break;
       x_coord = subset_size - 1 + col*step_size;
       y_coord = subset_size - 1 + row*step_size;
-      if(valid_correlation_point(x_coord,y_coord,image,subset_size,coords,excluded_coords,grad_threshold)){
+      if(valid_correlation_point(x_coord,y_coord,subset_size,img_w,img_h,coords,excluded_coords)){
         correlation_points.push_back((scalar_t)x_coord);
         correlation_points.push_back((scalar_t)y_coord);
         //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding snake left correlation point " << x_coord << " " << y_coord);
@@ -853,22 +1043,43 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
       }  // valid point
     }  // end snake left
   }  // conformal area map
-  DEBUG_MSG("create_regular_grid_of_correlation_points(): complete, created " << correlation_points.size() << " points");
+  TEUCHOS_TEST_FOR_EXCEPTION(neighbor_ids.size()!=correlation_points.size()/2,std::runtime_error,"");
+  DEBUG_MSG("create_regular_grid_of_correlation_points(): complete, created " << correlation_points.size()/2 << " points");
+
+
+// code t create simple grid of points, no snaking
+
+//    int_t y_coord = subset_size-1;
+//    while(y_coord < img_h - subset_size) {
+//      int_t x_coord = subset_size-1;
+//      while(x_coord < img_w - subset_size) {
+//        if(valid_correlation_point(x_coord,y_coord,subset_size,img_w,img_h,coords,excluded_coords)){
+//          correlation_points.push_back((scalar_t)x_coord);
+//          correlation_points.push_back((scalar_t)y_coord);
+//          //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding seed correlation point " << x_coord << " " << y_coord);
+//        }
+//        x_coord+=step_size;
+//      } // end x loop
+//      y_coord+=step_size;
+//    } // end y loop
+
+//  } // end roi loop
+//  DEBUG_MSG("create_regular_grid_of_correlation_points(): complete, created " << correlation_points.size()/2 << " points");
 }
 
 DICE_LIB_DLL_EXPORT
 bool valid_correlation_point(const int_t x_coord,
   const int_t y_coord,
-  Teuchos::RCP<Image> image,
   const int_t subset_size,
+  const int_t img_w,
+  const int_t img_h,
   std::set<std::pair<int_t,int_t> > & coords,
-  std::set<std::pair<int_t,int_t> > & excluded_coords,
-  const scalar_t & grad_threshold){
+  std::set<std::pair<int_t,int_t> > & excluded_coords){
   // need to check if the point is interior to the image by at least one subset_size
   if(x_coord<subset_size-1) return false;
-  if(x_coord>image->width()-subset_size) return false;
+  if(x_coord>img_w-subset_size) return false;
   if(y_coord<subset_size-1) return false;
-  if(y_coord>image->height()-subset_size) return false;
+  if(y_coord>img_h-subset_size) return false;
 
   // only the centroid has to be inside the ROI
   if(coords.find(std::pair<int_t,int_t>(y_coord,x_coord))==coords.end()) return false;
@@ -887,20 +1098,20 @@ bool valid_correlation_point(const int_t x_coord,
   }
   if(!all_corners_in) return false;
 
-  // check the gradient SSSIG threshold
-  if(grad_threshold > 0.0){
-    TEUCHOS_TEST_FOR_EXCEPTION(!image->has_gradients(),std::runtime_error,
-      "Error, testing valid points for SSSIG tol, but image gradients have not been computed");
-    scalar_t SSSIG = 0.0;
-    for(int_t y=corners_y[0];y<corners_y[2];++y){
-      for(int_t x=corners_x[0];x<corners_x[1];++x){
-        SSSIG += image->grad_x(x,y)*image->grad_x(x,y) + image->grad_x(x,y)*image->grad_x(x,y);
-      }
-    }
-    SSSIG /= (subset_size*subset_size);
-    //std::cout << "x " << x_coord << " y " << y_coord << " SSSIG: " << SSSIG << " threshold " << grad_threshold << std::endl;
-    if(SSSIG < grad_threshold) return false;
-  }
+//  // check the gradient SSSIG threshold
+//  if(grad_threshold > 0.0){
+//    TEUCHOS_TEST_FOR_EXCEPTION(!image->has_gradients(),std::runtime_error,
+//      "Error, testing valid points for SSSIG tol, but image gradients have not been computed");
+//    scalar_t SSSIG = 0.0;
+//    for(int_t y=corners_y[0];y<corners_y[2];++y){
+//      for(int_t x=corners_x[0];x<corners_x[1];++x){
+//        SSSIG += image->grad_x(x,y)*image->grad_x(x,y) + image->grad_x(x,y)*image->grad_x(x,y);
+//      }
+//    }
+//    SSSIG /= (subset_size*subset_size);
+//    //std::cout << "x " << x_coord << " y " << y_coord << " SSSIG: " << SSSIG << " threshold " << grad_threshold << std::endl;
+//    if(SSSIG < grad_threshold) return false;
+//  }
   return true;
 }
 

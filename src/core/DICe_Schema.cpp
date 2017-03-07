@@ -789,7 +789,7 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   DICe::Subset_File_Info_Type subset_info_type = DICe::SUBSET_INFO;
   if(has_subset_file){
     std::string fileName = input_params->get<std::string>(DICe::subset_file);
-    subset_info = DICe::read_subset_file(fileName,decomp->image_width(),decomp->image_height());
+    subset_info = decomp->subset_info();//sDICe::read_subset_file(fileName,decomp->image_width(),decomp->image_height());
     subset_info_type = subset_info->type;
   }
   if(!has_subset_file || subset_info_type==DICe::REGION_OF_INTEREST_INFO){
@@ -1075,11 +1075,6 @@ Schema::create_mesh(Teuchos::RCP<Decomp> decomp){
   // note: this assumes the elements are contiguous in terms of ids and that the overlap ids
   // are in ascending order
   int_t overlap_offset = 0;
-  //list_it = id_list.begin();
-  //for(;list_it!=list_end;++list_it){
-  //  if(dist_map->get_global_element_list()[0] <= *list_it) break;
-  //  overlap_offset++;
-  //}
   for(int_t i=0;i<node_map.size();++i){
     if(decomp->id_decomp_map()->get_global_element_list()[0] <= node_map[i]) break;
     overlap_offset++;
