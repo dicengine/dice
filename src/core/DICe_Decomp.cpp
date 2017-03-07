@@ -764,7 +764,6 @@ Decomp::populate_coordinate_vectors(const std::string & image_file_name,
     Teuchos::RCP<Image> sssig_image = Teuchos::rcp( new Image(image_file_name.c_str(),min_x,min_y,max_x-min_x+1,max_y-min_y+1,imgParams));
     TEUCHOS_TEST_FOR_EXCEPTION(!sssig_image->has_gradients(),std::runtime_error,
       "Error, testing valid points for SSSIG tol, but image gradients have not been computed");
-    //std::vector<bool> sssig_pass(num_check_points,true);
     for(int_t i=0;i<num_check_points;++i){
       const int_t cx = field_dist_data->local_value(i,0);
       const int_t cy = field_dist_data->local_value(i,1);
@@ -778,18 +777,13 @@ Decomp::populate_coordinate_vectors(const std::string & image_file_name,
       for(int_t y=top_y;y<bottom_y;++y){
         for(int_t x=left_x;x<right_x;++x){
           SSSIG += sssig_image->grad_x(x-min_x,y-min_y)*sssig_image->grad_x(x-min_x,y-min_y) +
-              sssig_image->grad_x(x-min_x,y-min_y)*sssig_image->grad_x(x-min_x,y-min_y);
+              sssig_image->grad_y(x-min_x,y-min_y)*sssig_image->grad_y(x-min_x,y-min_y);
         }
       }
       SSSIG /= (subset_size*subset_size);
       if(SSSIG < grad_threshold) field_dist_data->local_value(i,3) = 0.0;
       //DEBUG_MSG("[PROC "<<proc_rank <<"] x " << cx << " y " << cy << " SSSIG: " << SSSIG << " threshold " << grad_threshold << " pass " << field_dist_data->local_value(i,2));
-      //if(field_dist_data->local_value(i,2))
-      //  sssig_image->intensities()[(cy-sssig_image->offset_y())*sssig_image->width() + (cx-sssig_image->offset_x())] = 255;
     } // end subset check loop
-//    std::stringstream name;
-//    name << "ssig_image_" << proc_rank << ".tif";
-//    sssig_image->write(name.str());
 
     // communicate the valid subsets back to process 0
     MultiField_Exporter field_exporter_rev(*field_zero_map,*field_dist_map);
