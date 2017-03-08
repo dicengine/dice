@@ -57,6 +57,8 @@ class Image;
 // using globals here to avoid misspellings
 /// Input parameter, location to place the output files
 const char* const output_folder = "output_folder";
+/// Input parameter, location to place the output files
+const char* const resolution_output_folder = "resolution_output_folder";
 /// Input parameter to specify output prefix
 const char* const output_prefix = "output_prefix";
 /// Input parameter, location of the input images

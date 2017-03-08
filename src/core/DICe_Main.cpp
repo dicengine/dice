@@ -221,11 +221,19 @@ int main(int argc, char *argv[]) {
     // if the user selects predict_resolution_error option, an error analysis is performed and the actual analysis is skipped
     if(correlation_params!=Teuchos::null)
       if(correlation_params->get<bool>(DICe::estimate_resolution_error,false)){
+        std::string resolution_output_folder;
+#if defined(WIN32)
+        resolution_output_folder = ".\\";
+#else
+        resolution_output_folder + "./";
+#endif
+        if(input_params->isParameter(DICe::resolution_output_folder))
+          resolution_output_folder = input_params->get<std::string>(DICe::resolution_output_folder);
         file_prefix = "DICe_error_estimation_solution";
         schema->update_extents();
         schema->set_ref_image(image_files[0]);
         schema->set_def_image(image_files[0]);
-        schema->estimate_resolution_error(correlation_params,output_folder,file_prefix,outStream);
+        schema->estimate_resolution_error(correlation_params,output_folder,resolution_output_folder,file_prefix,outStream);
         DICe::finalize();
         return 0;
       }

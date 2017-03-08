@@ -2108,6 +2108,7 @@ Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
 void
 Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & correlation_params,
   std::string & output_folder,
+  std::string & resolution_output_folder,
   std::string & prefix,
   Teuchos::RCP<std::ostream> & outStream){
 #if DICE_KOKKOS
@@ -2181,9 +2182,9 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
 
   // create the images folder if it doesn't exist
 #if defined(WIN32)
-  std::string image_dir_str = ".\\synthetic_images\\";
+  std::string image_dir_str = resolution_output_folder + "synthetic_images\\";
 #else
-  std::string image_dir_str = "./synthetic_images/";
+  std::string image_dir_str = resolution_output_folder + "synthetic_images/";
 #endif
   DEBUG_MSG("Attempting to create directory : " << image_dir_str);
   boost::filesystem::path image_dir(image_dir_str);
@@ -2192,9 +2193,9 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
   }
   // create the results folder if it doesn't exist
 #if defined(WIN32)
-  std::string data_dir_str = ".\\synthetic_results\\";
+  std::string data_dir_str = resolution_output_folder + "synthetic_results\\";
 #else
-  std::string data_dir_str = "./synthetic_results/";
+  std::string data_dir_str = resolution_output_folder + "synthetic_results/";
 #endif
   DEBUG_MSG("Attempting to create directory : " << data_dir_str);
   boost::filesystem::path data_dir(data_dir_str);

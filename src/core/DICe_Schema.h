@@ -1011,10 +1011,12 @@ public:
   /// estimate the error in the displacement resolution and strain
   /// \param correlation_params parameters to apply to the resolution estimation
   /// \param output_folder where to place the output files
+  /// \param resolution_output_folder where to place the spatial resolution output
   /// \param prefix the file prefix to use for output files
   /// \param outStream output stream to write screen output to
   void estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & correlation_params,
     std::string & output_folder,
+    std::string & resolution_output_folder,
     std::string & prefix,
     Teuchos::RCP<std::ostream> & outStream);
 
