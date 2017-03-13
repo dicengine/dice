@@ -1141,6 +1141,7 @@ Schema::create_mesh_fields(){
   mesh_->create_field(mesh::field_enums::SIGMA_FS);
   mesh_->create_field(mesh::field_enums::GAMMA_FS);
   mesh_->create_field(mesh::field_enums::BETA_FS);
+  mesh_->create_field(mesh::field_enums::OMEGA_FS);
   mesh_->create_field(mesh::field_enums::NOISE_LEVEL_FS);
   mesh_->create_field(mesh::field_enums::CONTRAST_LEVEL_FS);
   mesh_->create_field(mesh::field_enums::ACTIVE_PIXELS_FS);
@@ -1304,7 +1305,7 @@ Schema::execute_cross_correlation(){
     DEBUG_MSG("[PROC " << proc_id << "] global subset id " << subset_global_id(subset_index) << " post execute_cross_correlation() field values, u: " <<
       local_field_value(subset_index,DISPLACEMENT_X) << " v: " << local_field_value(subset_index,DISPLACEMENT_Y)
       << " theta: " << local_field_value(subset_index,ROTATION_Z) << " sigma: " << local_field_value(subset_index,SIGMA) << " gamma: " <<
-      local_field_value(subset_index,GAMMA) << " beta: " << local_field_value(subset_index,BETA));
+      local_field_value(subset_index,GAMMA) << " beta: " << local_field_value(subset_index,BETA) << " omega: " << local_field_value(subset_index,OMEGA));
   }
 
   // add the projection fields back to the output for the total u/v, etc.
@@ -1471,7 +1472,7 @@ Schema::execute_correlation(){
     DEBUG_MSG("[PROC " << proc_id << "] global subset id " << subset_global_id(subset_index) << " post execute_correlation() field values, u: " <<
       local_field_value(subset_index,DISPLACEMENT_X) << " v: " << local_field_value(subset_index,DISPLACEMENT_Y)
       << " theta: " << local_field_value(subset_index,ROTATION_Z) << " sigma: " << local_field_value(subset_index,SIGMA) << " gamma: " <<
-      local_field_value(subset_index,GAMMA) << " beta: " << local_field_value(subset_index,BETA));
+      local_field_value(subset_index,GAMMA) << " beta: " << local_field_value(subset_index,BETA) << " omega: " << local_field_value(subset_index,OMEGA));
   }
 
   // accumulate the displacements
@@ -1655,6 +1656,7 @@ Schema::record_failed_step(const int_t subset_gid,
   global_field_value(subset_gid,MATCH) = -1.0;
   global_field_value(subset_gid,GAMMA) = -1.0;
   global_field_value(subset_gid,BETA) = -1.0;
+  global_field_value(subset_gid,OMEGA) = -1.0;
   global_field_value(subset_gid,NOISE_LEVEL) = -1.0;
   global_field_value(subset_gid,CONTRAST_LEVEL) = -1.0;
   global_field_value(subset_gid,ACTIVE_PIXELS) = -1.0;

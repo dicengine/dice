@@ -144,6 +144,7 @@ void create_string_maps()
   field_name_string[field_enums::SIGMA]                                              = "SIGMA";
   field_name_string[field_enums::GAMMA]                                              = "GAMMA";
   field_name_string[field_enums::BETA]                                               = "BETA";
+  field_name_string[field_enums::OMEGA]                                              = "OMEGA";
   field_name_string[field_enums::NOISE_LEVEL]                                        = "NOISE_LEVEL";
   field_name_string[field_enums::CONTRAST_LEVEL]                                     = "CONTRAST_LEVEL";
   field_name_string[field_enums::ACTIVE_PIXELS]                                      = "ACTIVE_PIXELS";

@@ -546,6 +546,7 @@ public:
       DICe::mesh::field_enums::SIGMA_FS,
       DICe::mesh::field_enums::GAMMA_FS,
       DICe::mesh::field_enums::BETA_FS,
+      DICe::mesh::field_enums::OMEGA_FS,
       DICe::mesh::field_enums::NOISE_LEVEL_FS,
       DICe::mesh::field_enums::CONTRAST_LEVEL_FS,
       DICe::mesh::field_enums::ACTIVE_PIXELS_FS,

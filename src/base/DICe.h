@@ -367,24 +367,26 @@ enum Field_Name {
   // 23
   BETA,              // sensitivity of the cost function to small perturbations in the displacement solution
   // 24
-  NOISE_LEVEL,       // estimated std. dev. of the image noise
+  OMEGA,             // residual magnitude for the optimal motion solution
   // 25
-  CONTRAST_LEVEL,    // estimated std. dev. of the image intensity values
+  NOISE_LEVEL,       // estimated std. dev. of the image noise
   // 26
-  ACTIVE_PIXELS,     // number of active pixels for the subset
+  CONTRAST_LEVEL,    // estimated std. dev. of the image intensity values
   // 27
-  MATCH,             // 0 means match was found -1 means match failed
+  ACTIVE_PIXELS,     // number of active pixels for the subset
   // 28
-  ITERATIONS,        // number of iterations taken by the solution algorithm
+  MATCH,             // 0 means match was found -1 means match failed
   // 29
-  STATUS_FLAG,       // information about the initialization method or error flags on failed steps
+  ITERATIONS,        // number of iterations taken by the solution algorithm
   // 30
-  NEIGHBOR_ID,       // the global id of the neighboring subset to use for initialization by neighbor value
+  STATUS_FLAG,       // information about the initialization method or error flags on failed steps
   // 31
-  CONDITION_NUMBER,  // quality metric for the pseudoinverse matrix in the gradient-based method
+  NEIGHBOR_ID,       // the global id of the neighboring subset to use for initialization by neighbor value
   // 32
-  CROSS_CORR_Q,      // cross correlation Q coordinate
+  CONDITION_NUMBER,  // quality metric for the pseudoinverse matrix in the gradient-based method
   // 33
+  CROSS_CORR_Q,      // cross correlation Q coordinate
+  // 34
   CROSS_CORR_R,      // cross correlation R coordinate
   // *** DO NOT PUT ANY FIELDS UNDER THIS ONE ***
   // (this is how the field stride is automatically set if another field is added)

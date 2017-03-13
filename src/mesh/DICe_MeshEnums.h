@@ -190,6 +190,7 @@ Field_Name
   SIGMA,
   GAMMA,
   BETA,
+  OMEGA,
   NOISE_LEVEL,
   CONTRAST_LEVEL,
   ACTIVE_PIXELS,
@@ -568,6 +569,8 @@ const Field_Spec GAMMA_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::GAMMA,fiel
 /// field spec
 const Field_Spec BETA_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::BETA,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
+const Field_Spec OMEGA_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::OMEGA,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
 const Field_Spec NOISE_LEVEL_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NOISE_LEVEL,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec CONTRAST_LEVEL_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::CONTRAST_LEVEL,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
@@ -697,7 +700,7 @@ const Field_Spec NLVC_STRAIN_XY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_en
 const Field_Spec NLVC_STRAIN_YY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_YY_ERROR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 107;
+const int_t num_fields_defined = 108;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -735,6 +738,7 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     SIGMA_FS,
     GAMMA_FS,
     BETA_FS,
+    OMEGA_FS,
     NOISE_LEVEL_FS,
     CONTRAST_LEVEL_FS,
     ACTIVE_PIXELS_FS,

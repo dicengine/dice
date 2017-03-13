@@ -486,6 +486,8 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
         " v " << (*deformation)[DICe::DISPLACEMENT_Y] <<
         " theta " << (*deformation)[DICe::ROTATION_Z]  << " ex " << (*deformation)[DICe::NORMAL_STRAIN_X] <<
         " ey " << (*deformation)[DICe::NORMAL_STRAIN_Y] << " gxy " << (*deformation)[DICe::SHEAR_STRAIN_XY]);
+      const scalar_t omega = std::sqrt((*def_update)[0]*(*def_update)[0] + (*def_update)[1]*(*def_update)[1]);
+      schema_->global_field_value(correlation_point_global_id_,DICe::OMEGA) = omega;
       break;
     }
 
