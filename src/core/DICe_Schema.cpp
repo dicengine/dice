@@ -2300,15 +2300,15 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
       if(proc_id==0)
         std::cout << "processing resolution error for period " << period << " amplitude " << amplitude << std::endl;
       // create an image deformer class
-      Teuchos::RCP<SinCos_Image_Deformer> deformer = Teuchos::rcp(new SinCos_Image_Deformer(period,amplitude));
+      image_deformer_ = Teuchos::rcp(new SinCos_Image_Deformer(period,amplitude));
       std::stringstream sincos_name;
       Teuchos::RCP<Image> def_img;
       std::stringstream amp_ss;
       std::stringstream per_ss;
-      amp_ss << deformer->amplitude();
+      amp_ss << image_deformer_->amplitude();
       std::string amp_s = amp_ss.str();
       std::replace( amp_s.begin(), amp_s.end(), '.', 'p'); // replace dots with p for file name
-      per_ss << deformer->period();
+      per_ss << image_deformer_->period();
       std::string per_s = per_ss.str();
       std::replace( per_s.begin(), per_s.end(), '.', 'p'); // replace dots with p for file name
       sincos_name << image_dir_str << "amp_" << std::setprecision(4) << amp_s << "_period_" << std::setprecision(4) << per_s << "_proc_" << proc_id << ".tif";
@@ -2320,7 +2320,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
       //  def_img = Teuchos::rcp(new DICe::Image(sincos_name.str().c_str()));
       //}else{
         DEBUG_MSG("generating new synthetic image");
-        def_img = deformer->deform_image(ref_img());
+        def_img = image_deformer_->deform_image(ref_img());
         if(noise_percent > 0.0){
           add_noise_to_image(def_img,noise_percent);
         }
@@ -2374,18 +2374,18 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
         const scalar_t v = disp->local_value(i*spa_dim+1);
         scalar_t exact_u = 0.0;
         scalar_t exact_v = 0.0;
-        deformer->compute_deformation(x,y,exact_u,exact_v);
+        image_deformer_->compute_deformation(x,y,exact_u,exact_v);
         exact_disp->local_value(i*spa_dim+0) = exact_u;
         exact_disp->local_value(i*spa_dim+1) = exact_v;
         scalar_t error_v = 0.0;
         scalar_t error_u = 0.0;
-        deformer->compute_displacement_error(x,y,u,v,error_u,error_v);
+        image_deformer_->compute_displacement_error(x,y,u,v,error_u,error_v);
         disp_error->local_value(i*spa_dim+0) = std::abs(error_u);
         disp_error->local_value(i*spa_dim+1) = std::abs(error_v);
         scalar_t strain_xx = 0.0;
         scalar_t strain_xy = 0.0;
         scalar_t strain_yy = 0.0;
-        deformer->compute_lagrange_strain(x,y,strain_xx,strain_xy,strain_yy);
+        image_deformer_->compute_lagrange_strain(x,y,strain_xx,strain_xy,strain_yy);
         exact_strain_xx->local_value(i) = strain_xx;
         exact_strain_xy->local_value(i) = strain_xy;
         exact_strain_yy->local_value(i) = strain_yy;
@@ -2396,7 +2396,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
           scalar_t error_xx = 0.0;
           scalar_t error_xy = 0.0;
           scalar_t error_yy = 0.0;
-          deformer->compute_lagrange_strain_error(x,y,e_xx,e_xy,e_yy,error_xx,error_xy,error_yy);
+          image_deformer_->compute_lagrange_strain_error(x,y,e_xx,e_xy,e_yy,error_xx,error_xy,error_yy);
           vsg_error_xx->local_value(i) = std::abs(error_xx);
           vsg_error_xy->local_value(i) = std::abs(error_xy);
           vsg_error_yy->local_value(i) = std::abs(error_yy);
@@ -2408,7 +2408,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
           scalar_t error_xx = 0.0;
           scalar_t error_xy = 0.0;
           scalar_t error_yy = 0.0;
-          deformer->compute_lagrange_strain_error(x,y,e_xx,e_xy,e_yy,error_xx,error_xy,error_yy);
+          image_deformer_->compute_lagrange_strain_error(x,y,e_xx,e_xy,e_yy,error_xx,error_xy,error_yy);
           nlvc_error_xx->local_value(i) = std::abs(error_xx);
           nlvc_error_xy->local_value(i) = std::abs(error_xy);
           nlvc_error_yy->local_value(i) = std::abs(error_yy);
@@ -2428,7 +2428,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
       scalar_t std_dev_error_v = 0.0;
       mesh_->field_stats(DICe::mesh::field_enums::DISP_ERROR_FS,min_error_u,max_error_u,avg_error_u,std_dev_error_u,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
       mesh_->field_stats(DICe::mesh::field_enums::DISP_ERROR_FS,min_error_v,max_error_v,avg_error_v,std_dev_error_v,1,DICe::mesh::field_enums::SIGMA_FS,-1.0);
-      result_stream << " " << std::setprecision(4) << deformer->period() << " "<< std::setprecision(4) << deformer->amplitude()
+      result_stream << " " << std::setprecision(4) << image_deformer_->period() << " "<< std::setprecision(4) << image_deformer_->amplitude()
           << " " << min_error_u << " " << max_error_u << " " << avg_error_u << " " << std_dev_error_u << " " << min_error_v << " " << max_error_v << " " << avg_error_v << " " << std_dev_error_v;
 
       scalar_t peaks_avg_error_x = 0.0;

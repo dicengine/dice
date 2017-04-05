@@ -78,6 +78,9 @@ class Post_Processor;
 // forward dec for a triangulation
 class Triangulation;
 
+// forward dec of image deformer
+class SinCos_Image_Deformer;
+
 
 /// container class that holds information about a tracking analysis
 class
@@ -1075,6 +1078,11 @@ public:
     return this_proc_gid_order_;
   }
 
+  /// returns a pointer to the image deformer used for error estimation
+  Teuchos::RCP<SinCos_Image_Deformer> image_deformer() const{
+    return image_deformer_;
+  }
+
 private:
   /// \brief Initializes the data structures for the schema
   /// \param input_params pointer to the initialization parameters
@@ -1308,6 +1316,8 @@ private:
   int_t full_ref_img_width_;
   /// store the total image dims (the image size before decomposition across processors)
   int_t full_ref_img_height_;
+  /// store a pointer to the image deformer if this is a error estimation run
+  Teuchos::RCP<SinCos_Image_Deformer> image_deformer_;
 };
 
 /// \class DICe::Output_Spec
