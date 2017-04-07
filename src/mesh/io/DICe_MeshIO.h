@@ -63,6 +63,16 @@ Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
 DICE_LIB_DLL_EXPORT
 void read_exodus_coordinates(Teuchos::RCP<Mesh> mesh);
 
+/// Read the coordinates of the nodes from the mesh
+/// \param coords_x vector that will be populated with the x values
+/// \param coords_y vector that will be populated with the y values
+/// \param coords_z vector that will be populated with the z values
+DICE_LIB_DLL_EXPORT
+void read_exodus_coordinates(const std::string & exo_file,
+  std::vector<scalar_t> & coords_x,
+  std::vector<scalar_t> & coords_y,
+  std::vector<scalar_t> & coords_z);
+
 /// Read the nodal field names of from the mesh
 /// \param mesh The mesh to use for this function
 /// returns a vector of the field names

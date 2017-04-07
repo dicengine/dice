@@ -581,6 +581,62 @@ read_exodus_field_names(const std::string & file_name){
 }
 
 DICE_LIB_DLL_EXPORT
+void read_exodus_coordinates(const std::string & exo_file,
+  std::vector<scalar_t> & coords_x,
+  std::vector<scalar_t> & coords_y,
+  std::vector<scalar_t> & coords_z){
+
+  coords_x.clear();
+  coords_y.clear();
+  coords_z.clear();
+
+  int error_int;
+  float version;
+  int_t CPU_word_size = 0;
+  int_t IO_word_size = 0;
+  std::vector<char> writable(exo_file.size() + 1);
+  std::copy(exo_file.begin(), exo_file.end(), writable.begin());
+  const int input_exoid = ex_open(&writable[0],EX_READ,&CPU_word_size,&IO_word_size,&version);
+  if (input_exoid < 0)
+  {
+    std::stringstream oss;
+    oss << "Reading mesh failure: " << exo_file;
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
+  }
+  /* read database parameters */
+  char title[MAX_LINE_LENGTH + 1];
+  int_t num_dim, num_nodes, num_elem, num_elem_blk, num_node_sets, num_side_sets;
+  error_int  = ex_get_init(input_exoid, title, &num_dim, &num_nodes, &num_elem,
+    &num_elem_blk, &num_node_sets, &num_side_sets);
+
+   /* read nodal coordinates values and names from database */
+   float * temp_x = new float[num_nodes];
+   float * temp_y = new float[num_nodes];
+   float * temp_z = (num_dim >= 3) ? new float[num_nodes] : 0;
+   error_int = ex_get_coord(input_exoid, temp_x, temp_y, temp_z);
+   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_get_coord(): Failure");
+
+   coords_x.resize(num_nodes);
+   coords_y.resize(num_nodes);
+   coords_z.resize(num_nodes);
+
+   // put coords in a tpetra vector
+   for(int_t i=0;i<num_nodes;++i)  // i represents the local_id
+   {
+     coords_x[i] = temp_x[i];
+     coords_y[i] = temp_y[i];
+     if (num_dim >= 3)
+     {
+       coords_z[i] = temp_z[i];
+     }
+   }
+   delete[] temp_x;
+   delete[] temp_y;
+   if(num_dim>2)
+     delete[] temp_z;
+}
+
+DICE_LIB_DLL_EXPORT
 void
 read_exodus_coordinates(Teuchos::RCP<Mesh> mesh){
   int error_int;
