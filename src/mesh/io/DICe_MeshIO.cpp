@@ -537,6 +537,7 @@ read_exodus_field(const std::string & file_name,
     result[i] = ex_result[i];
   }
   delete [] ex_result;
+  ex_close(input_exoid);
   return result;
 }
 

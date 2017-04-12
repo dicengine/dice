@@ -48,6 +48,8 @@
 
 #include <iostream>
 
+#include "netcdf.h"
+
 using namespace DICe;
 
 int main(int argc, char *argv[]) {
@@ -86,10 +88,35 @@ int main(int argc, char *argv[]) {
   //subImg.write("netcdf_sub_image.rawi");
   Teuchos::RCP<Image> gold_sub_img = Teuchos::rcp(new Image("../images/netcdf_sub_image.rawi"));
   const scalar_t sub_diff = subImg.diff(gold_sub_img);
+  //gold_sub_img->write("gold.tif");
   *outStream << "sub gold diff " << sub_diff << std::endl;
   if(std::abs(sub_diff) > errorTol){
     errorFlag++;
     *outStream << "Error, the NetCDF sub image was not read correctly" << std::endl;
+  }
+
+  // test writing fields out to a netcdf file:
+  int_t img_w = gold_sub_img->width();
+  int_t img_h = gold_sub_img->height();
+  // create an array that's of the dims of the image ...
+  std::vector<float> data_vec(img_h*img_w);
+  for(int_t j=0;j<img_h;++j){
+    for(int_t i=0;i<img_w;++i){
+      data_vec[j*img_w+i] = (*gold_sub_img)(i,j);
+    }
+  }
+  std::vector<std::string> var_names;
+  var_names.push_back("data");
+  Teuchos::RCP<DICe::netcdf::NetCDF_Writer> netcdf_writer = Teuchos::rcp(new DICe::netcdf::NetCDF_Writer("test.nc",img_w,img_h,var_names));
+  netcdf_writer->write_float_array("data",data_vec);
+
+  Teuchos::RCP<Image> test_img = Teuchos::rcp(new Image("./test.nc"));
+  test_img->write("test_img.tif");
+  const scalar_t test_diff = test_img->diff(gold_sub_img);
+  *outStream << "test diff " << test_diff << std::endl;
+  if(std::abs(test_diff) > errorTol){
+    errorFlag++;
+    *outStream << "Error, the NetCDF image created from scratch was not read correctly" << std::endl;
   }
 
 

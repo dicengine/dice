@@ -120,7 +120,7 @@ NetCDF_Reader::read_netcdf_image(const char * file_name,
     DEBUG_MSG("NetCDF_Reader::get_image(): found variable " << var_name_str << " type " << nc_type << " num dims " << num_dims << " num attributes " << num_var_attr);
     if(strcmp(var_name, "data") == 0){
       data_var_index = i;
-      assert(num_dims == 3);
+      assert(num_dims == 3 || num_dims == 2);
       assert(nc_type == 5);
     }
     if(strcmp(var_name, "dataWidth") == 0){
@@ -142,31 +142,38 @@ NetCDF_Reader::read_netcdf_image(const char * file_name,
       DEBUG_MSG("NetCDF_Reader::get_image(): element resolution " << elem_res << " (km)");
     }
   }
-  TEUCHOS_TEST_FOR_EXCEPTION(data_var_index <=0, std::runtime_error,"Error, could not find data variable in NetCDF file " << file_name);
+  TEUCHOS_TEST_FOR_EXCEPTION(data_var_index<0, std::runtime_error,"Error, could not find data variable in NetCDF file " << file_name);
 
   // read the intensities
   //Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
   float * data = new float[width*height];
-  nc_get_var_float (ncid,data_var_index,data);
-  float min_intensity = std::numeric_limits<float>::max();
-  float max_intensity = std::numeric_limits<float>::min();
+  DEBUG_MSG("NetCDF_Reader::get_image(): ncid " << ncid << " data_var_index " << data_var_index);
+  int_t ret_val = nc_get_var_float (ncid,data_var_index,data);
+  TEUCHOS_TEST_FOR_EXCEPTION(ret_val,std::runtime_error,"");
+  //float min_intensity = std::numeric_limits<float>::max();
+  //float max_intensity = std::numeric_limits<float>::min();
 
   int_t index = 0;
   for (int_t y=0; y<height; ++y) {
-    if(is_layout_right)
+    if(is_layout_right){
       for (int_t x=0; x<width;++x){
         intensities[y*width+x] = data[index];
+        //if(data[index] > max_intensity) max_intensity = data[index];
+        //if(data[index] < min_intensity) min_intensity = data[index];
         index++;
       }
-    else // otherwise assume layout left
+    }
+    else{ // otherwise assume layout left
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
       for (int_t x=0; x<width;++x){
         intensities[x*height+y] = data[index];
+        //if(data[index] > max_intensity) max_intensity = data[index];
+        //if(data[index] < min_intensity) min_intensity = data[index];
         index++;
       } // end x
-    if(data[index] > max_intensity) max_intensity = data[index];
-    if(data[index] < min_intensity) min_intensity = data[index];
+    }
   } // end y
-  DEBUG_MSG("NetCDF_Reader::get_image(): intensity range " << min_intensity << " to " << max_intensity);
+  //DEBUG_MSG("NetCDF_Reader::get_image(): intensity range " << min_intensity << " to " << max_intensity);
   delete [] data;
   // close the nc_file
   nc_close(ncid);
@@ -208,7 +215,7 @@ NetCDF_Reader::read_netcdf_image(const char * file_name,
     DEBUG_MSG("NetCDF_Reader::get_image(): found variable " << var_name_str << " type " << nc_type << " num dims " << num_dims << " num attributes " << num_var_attr);
     if(strcmp(var_name, "data") == 0){
       data_var_index = i;
-      assert(num_dims == 3);
+      assert(num_dims == 3 || num_dims == 2);
       assert(nc_type == 5);
     }
     if(strcmp(var_name, "dataWidth") == 0){
@@ -258,6 +265,104 @@ NetCDF_Reader::read_netcdf_image(const char * file_name,
   // close the nc_file
   nc_close(ncid);
 }
+
+NetCDF_Writer::NetCDF_Writer(const std::string & file_name,
+  const int_t & width,
+  const int_t & height,
+  const std::vector<std::string> & var_names,
+  const bool use_double):
+  file_name_(file_name),
+  dim_x_(width),
+  dim_y_(height),
+  var_names_(var_names){
+
+  // create a netcdf file:
+  int_t retval = 0;
+  int_t ncid = -1;
+  const int_t num_dims = 2;
+  retval = nc_create(file_name.c_str(),NC_CLOBBER, &ncid);
+  TEUCHOS_TEST_FOR_EXCEPTION(retval,std::runtime_error,"");
+  DEBUG_MSG("created file " << file_name << " with id: " << ncid);
+  int_t xdim_id = -1;
+  int_t ydim_id = -1;
+  int_t data_id = -1;
+  retval = nc_def_dim(ncid, "xc", width, &xdim_id);
+  TEUCHOS_TEST_FOR_EXCEPTION(retval,std::runtime_error,"");
+  retval = nc_def_dim(ncid, "yc", height, &ydim_id);
+  TEUCHOS_TEST_FOR_EXCEPTION(retval,std::runtime_error,"");
+  std::vector<int_t> dim_ids(2);
+  dim_ids[0] = ydim_id; dim_ids[1] = xdim_id;
+  var_ids_.resize(var_names_.size());
+  for(size_t i=0;i<var_names.size();++i){
+    /* Define the data variable. The type of the variable in this case is
+     * NC_INT (4-byte integer). */
+    std::string var_str = var_names[i];
+    char * var_char = new char[var_str.size()+1];
+    std::copy(var_str.begin(), var_str.end(), var_char);
+    var_char[var_str.size()] = '\0';
+    if(use_double)
+      retval = nc_def_var(ncid, var_char, NC_DOUBLE, num_dims, &dim_ids[0], &data_id);
+    else
+      retval = nc_def_var(ncid, var_char, NC_FLOAT, num_dims, &dim_ids[0], &data_id);
+    TEUCHOS_TEST_FOR_EXCEPTION(retval,std::runtime_error,"");
+    DEBUG_MSG("created variable " << var_char << " with id: " << data_id);
+    var_ids_[i] = data_id;
+  }
+  /* End define mode. This tells netCDF we are done defining
+   * metadata. */
+  retval = nc_enddef(ncid);
+  TEUCHOS_TEST_FOR_EXCEPTION(retval,std::runtime_error,"");
+  nc_close(ncid);
+}
+
+void
+NetCDF_Writer::write_float_array(const std::string var_name,
+  const std::vector<float> & array){
+  // search the list of names to ensure that one matches and get the id:
+  int_t var_id = -1;
+  for(size_t i=0;i<var_names_.size();++i){
+    if(var_names_[i]==var_name)
+      var_id = var_ids_[i];
+  }
+  DEBUG_MSG("writing variable " << var_name << " with id: " << var_id << " to file " << file_name_);
+  TEUCHOS_TEST_FOR_EXCEPTION(var_id<0,std::runtime_error,"");
+  // check that the dimensions are correct
+  TEUCHOS_TEST_FOR_EXCEPTION(dim_x_*dim_y_!=(int_t)array.size(),std::runtime_error,"");
+  int_t ncid = -1;
+  int_t retval = 0;
+  retval = nc_open(file_name_.c_str(),NC_WRITE,&ncid);
+  TEUCHOS_TEST_FOR_EXCEPTION(ncid<0,std::runtime_error,"error: " << retval);
+  /* Write the data to the file.  */
+  retval = nc_put_var_float(ncid, var_id, &array[0]);
+  TEUCHOS_TEST_FOR_EXCEPTION(retval,std::runtime_error,"");
+  nc_close(ncid);
+}
+
+void
+NetCDF_Writer::write_double_array(const std::string var_name,
+  const std::vector<double> & array){
+
+  // search the list of names to ensure that one matches and get the id:
+  int_t var_id = -1;
+  for(size_t i=0;i<var_names_.size();++i){
+    if(var_names_[i]==var_name)
+      var_id = var_ids_[i];
+  }
+  DEBUG_MSG("writing variable " << var_name << " with id: " << var_id << " to file " << file_name_);
+  TEUCHOS_TEST_FOR_EXCEPTION(var_id<0,std::runtime_error,"");
+  // check that the dimensions are correct
+  TEUCHOS_TEST_FOR_EXCEPTION(dim_x_*dim_y_!=(int_t)array.size(),std::runtime_error,"");
+  int_t ncid = -1;
+  int_t retval = 0;
+  retval = nc_open(file_name_.c_str(),NC_WRITE,&ncid);
+  TEUCHOS_TEST_FOR_EXCEPTION(ncid<0,std::runtime_error,"");
+  /* Write the data to the file.  */
+  retval = nc_put_var_double(ncid, var_id, &array[0]);
+  TEUCHOS_TEST_FOR_EXCEPTION(retval,std::runtime_error,"");
+  nc_close(ncid);
+}
+
+
 
 } // end netcdf namespace
 } // end DICe Namespace

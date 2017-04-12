@@ -113,11 +113,13 @@ endif()
 if(DICE_ENABLE_NETCDF)
   add_executable(DICe_NetCDFToTiff DICe_NetCDFToTiff.cpp)
   target_link_libraries(DICe_NetCDFToTiff ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES} dicebase)
+  add_executable(DICe_ExoToNetCDF DICe_ExoToNetCDF.cpp)
+  target_link_libraries(DICe_ExoToNetCDF ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES} dicebase)
 
-  install(TARGETS DICe_NetCDFToTiff
+  install(TARGETS DICe_NetCDFToTiff DICe_ExoToNetCDF
     DESTINATION ${CMAKE_INSTALL_PREFIX}/bin 
   )
-  set_target_properties(DICe_NetCDFToTiff
+  set_target_properties(DICe_NetCDFToTiff DICe_ExoToNetCDF
     PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
     ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"

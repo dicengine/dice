@@ -46,6 +46,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <vector>
 
 #if defined(WIN32)
   #include <cstdint>
@@ -101,6 +102,52 @@ public:
 
 private:
 
+};
+
+
+/// class to write float arrays out a netcdf file
+class DICE_LIB_DLL_EXPORT
+NetCDF_Writer
+{
+public:
+  /// constructor
+  /// \param file_name the name of the file to create
+  /// \param width the width of the data array
+  /// \param height the height of the data array
+  /// \param var_names vector with the names of the varibles to save
+  /// \param use_double forces output to be in double, not float
+  NetCDF_Writer(const std::string & file_name,
+    const int_t & width,
+    const int_t & height,
+    const std::vector<std::string> & var_names,
+    const bool use_double = false);
+  /// default destructor
+  virtual ~NetCDF_Writer(){};
+
+  /// write an array to the file
+  /// if the file exists, overwrite
+  /// \param var_name the name of the variable to write
+  /// \param vector of float values to write
+  void write_float_array(const std::string var_name,
+    const std::vector<float> & array);
+
+  /// write an array to the file
+  /// if the file exists, overwrite
+  /// \param var_name the name of the variable to write
+  /// \param vector of double values to write
+  void write_double_array(const std::string var_name,
+    const std::vector<double> & array);
+
+private:
+  const std::string file_name_;
+  /// x dimension of the array
+  const int_t dim_x_;
+  /// y dimension of the array
+  const int_t dim_y_;
+  /// collection of all the varible names
+  std::vector<std::string> var_names_;
+  /// collection of the variable ids
+  std::vector<int_t> var_ids_;
 };
 
 
