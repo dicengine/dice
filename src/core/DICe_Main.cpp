@@ -292,13 +292,13 @@ int main(int argc, char *argv[]) {
 
     for(int_t image_it=1;image_it<=num_frames;++image_it){
       *outStream << "Processing frame: " << image_it << " of " << num_frames << ", " << image_files[image_it] << std::endl;
-      if(schema->use_incremental_formulation()){
+      if(schema->use_incremental_formulation()&&image_it>1){
         schema->set_ref_image(schema->def_img());
       }
       schema->update_extents();
       schema->set_def_image(image_files[image_it]);
       if(is_stereo){
-        if(stereo_schema->use_incremental_formulation()){
+        if(stereo_schema->use_incremental_formulation()&&image_it>1){
           stereo_schema->set_ref_image(stereo_schema->def_img());
         }
         stereo_schema->update_extents();
