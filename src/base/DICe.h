@@ -353,40 +353,54 @@ enum Field_Name {
   // 17
   MODEL_DISPLACEMENT_Z,// z displacement in world or physical coordinates
   // 18
-  VAR_X,             // auxiliary variable
+  FIELD_1,             // auxiliary variable
   // 19
-  VAR_Y,             // auxiliary variable
+  FIELD_2,             // auxiliary variable
   // 20
-  VAR_Z,             // auxiliary varaible
+  FIELD_3,             // auxiliary variable
   // 21
+  FIELD_4,             // auxiliary variable
+  // 22
+  FIELD_5,             // auxiliary variable
+  // 23
+  FIELD_6,             // auxiliary variable
+  // 24
+  FIELD_7,             // auxiliary variable
+  // 25
+  FIELD_8,             // auxiliary variable
+  // 26
+  FIELD_9,             // auxiliary variable
+  // 27
+  FIELD_10,             // auxiliary variable
+  // 28
   SIGMA,             // predicted std. dev. of the displacement solution given std. dev. of image
                      // noise and interpolation bias, smaller sigma is better
-  // 22
+  // 29
   GAMMA,             // template match quality (value of the cost function),
                      // smaller gamma is better, 0.0 is perfect match
-  // 23
-  BETA,              // sensitivity of the cost function to small perturbations in the displacement solution
-  // 24
-  OMEGA,             // residual magnitude for the optimal motion solution
-  // 25
-  NOISE_LEVEL,       // estimated std. dev. of the image noise
-  // 26
-  CONTRAST_LEVEL,    // estimated std. dev. of the image intensity values
-  // 27
-  ACTIVE_PIXELS,     // number of active pixels for the subset
-  // 28
-  MATCH,             // 0 means match was found -1 means match failed
-  // 29
-  ITERATIONS,        // number of iterations taken by the solution algorithm
   // 30
-  STATUS_FLAG,       // information about the initialization method or error flags on failed steps
+  BETA,              // sensitivity of the cost function to small perturbations in the displacement solution
   // 31
-  NEIGHBOR_ID,       // the global id of the neighboring subset to use for initialization by neighbor value
+  OMEGA,             // residual magnitude for the optimal motion solution
   // 32
-  CONDITION_NUMBER,  // quality metric for the pseudoinverse matrix in the gradient-based method
+  NOISE_LEVEL,       // estimated std. dev. of the image noise
   // 33
-  CROSS_CORR_Q,      // cross correlation Q coordinate
+  CONTRAST_LEVEL,    // estimated std. dev. of the image intensity values
   // 34
+  ACTIVE_PIXELS,     // number of active pixels for the subset
+  // 35
+  MATCH,             // 0 means match was found -1 means match failed
+  // 36
+  ITERATIONS,        // number of iterations taken by the solution algorithm
+  // 37
+  STATUS_FLAG,       // information about the initialization method or error flags on failed steps
+  // 38
+  NEIGHBOR_ID,       // the global id of the neighboring subset to use for initialization by neighbor value
+  // 39
+  CONDITION_NUMBER,  // quality metric for the pseudoinverse matrix in the gradient-based method
+  // 40
+  CROSS_CORR_Q,      // cross correlation Q coordinate
+  // 41
   CROSS_CORR_R,      // cross correlation R coordinate
   // *** DO NOT PUT ANY FIELDS UNDER THIS ONE ***
   // (this is how the field stride is automatically set if another field is added)

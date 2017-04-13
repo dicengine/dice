@@ -552,6 +552,8 @@ Objective_ZNSSD::computeErrorFields(Teuchos::RCP<std::vector<scalar_t> > & defor
   for(int_t i=0;i<subset_->num_pixels();++i){
     scalar_t x = subset_->x(i);
     scalar_t y = subset_->y(i);
+    const int_t offset_x = schema_->ref_img()->offset_x();
+    const int_t offset_y = schema_->ref_img()->offset_y();
     scalar_t bx = 0.0;
     scalar_t by = 0.0;
     scalar_t bxx = 0.0;
@@ -585,7 +587,7 @@ Objective_ZNSSD::computeErrorFields(Teuchos::RCP<std::vector<scalar_t> > & defor
 
     int_ut_dot_g += (bx*gx + by*gy)/std::sqrt(mag_grad_phi_2);
     int_uhat_minus_ut_dot_g += ((u-bx)*gx + (v-by)*gy)/std::sqrt(mag_grad_phi_2);
-    scalar_t sub_r = schema_->def_img()->interpolate_keys_fourth(x + u,y + v) - (*schema_->ref_img())((int_t)x,(int_t)y);
+    scalar_t sub_r = schema_->def_img()->interpolate_keys_fourth(x - offset_x + u,y - offset_y + v) - (*schema_->ref_img())((int_t)(x-offset_x),(int_t)(y-offset_y));
     //scalar_t lap = grad_x_img->grad_x((int_t)x,(int_t)y) + grad_y_img->grad_y((int_t)x,(int_t)y);
     //sub_r -= sig*lap;
     //scalar_t sub_r = (*schema_->def_img())((int_t)x,(int_t)y) - schema_->ref_img()->interpolate_keys_fourth(x - u,y - v);
@@ -594,7 +596,7 @@ Objective_ZNSSD::computeErrorFields(Teuchos::RCP<std::vector<scalar_t> > & defor
     //int_r += (sub_r - sig*lap)*(sub_r - sig*lap)/(gx*gx + gy*gy);
     int_sub_r += sub_r;
     //int_r += sub_r*sub_r;
-    scalar_t sub_r_exact = schema_->def_img()->interpolate_keys_fourth(x + bx,y + by) - (*schema_->ref_img())((int_t)x,(int_t)y);
+    scalar_t sub_r_exact = schema_->def_img()->interpolate_keys_fourth(x-offset_x + bx,y-offset_y + by) - (*schema_->ref_img())((int_t)(x-offset_x),(int_t)(y-offset_y));
     //scalar_t sub_r_exact = (*schema_->def_img())((int_t)x,(int_t)y) - schema_->ref_img()->interpolate_keys_fourth(x - bx,y - by);
     int_sub_r_exact += sub_r_exact;
     int_sub_r_total += sub_r - sub_r_exact;
