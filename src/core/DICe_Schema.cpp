@@ -250,6 +250,7 @@ Schema::set_ref_image(const std::string & refName){
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
+  imgParams->set(DICe::compute_laplacian_image,compute_laplacian_image_);
   if(has_extents_){
     utils::read_image_dimensions(refName.c_str(),full_ref_img_width_,full_ref_img_height_);
     const int_t buffer = 100; // if the extents are within 100 pixels of the image boundary use the whole image
@@ -493,6 +494,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   gauss_filter_mask_size_ = diceParams->get<int_t>(DICe::gauss_filter_mask_size,7);
   compute_ref_gradients_ = diceParams->get<bool>(DICe::compute_ref_gradients,true);
   compute_def_gradients_ = diceParams->get<bool>(DICe::compute_def_gradients,false);
+  compute_laplacian_image_ = diceParams->get<bool>(DICe::compute_laplacian_image,false);
   if(diceParams->get<bool>(DICe::compute_image_gradients,false)) { // this flag turns them both on
     compute_ref_gradients_ = true;
     compute_def_gradients_ = true;

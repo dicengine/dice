@@ -113,6 +113,21 @@ Image::post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params
   const int image_grad_team_size = params->get<int>(DICe::image_grad_team_size,256);
   if(compute_image_gradients)
     compute_gradients(image_grad_use_hierarchical_parallelism,image_grad_team_size);
+  if(params->isParameter(DICe::compute_laplacian_image)){
+    if(params->get<bool>(DICe::compute_laplacian_image)==true){
+      TEUCHOS_TEST_FOR_EXCEPTION(laplacian_==Teuchos::null,std::runtime_error,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(laplacian_.size()!=width_*height_,std::runtime_error,"");
+      Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
+      imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
+      Teuchos::RCP<Image> grad_x_img = Teuchos::rcp(new Image(width_,height_,grad_x_,imgParams));
+      Teuchos::RCP<Image> grad_y_img = Teuchos::rcp(new Image(width_,height_,grad_y_,imgParams));
+      for(int_t y=0;y<height_;++y){
+        for(int_t x=0;x<width_;++x){
+          laplacian_[y*width_ + x] = grad_x_img->grad_x(x,y) + grad_y_img->grad_y(x,y);
+        }
+      }
+    }
+  }
 }
 
 /// returns true if the image is a frame from a video sequence cine or netcdf file

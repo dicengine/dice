@@ -145,6 +145,8 @@ const char* const interpolation_method = "interpolation_method";
 /// String parameter name
 const char* const gradient_method = "gradient_method";
 /// String parameter name
+const char* const compute_laplacian_image = "compute_laplacian_image";
+/// String parameter name
 const char* const initialization_method = "initialization_method";
 /// String parameter name
 const char* const optimization_method = "optimization_method";
@@ -1182,6 +1184,11 @@ const Correlation_Parameter compute_image_gradients_param(compute_image_gradient
   false,
   "Compute image gradients");
 /// Correlation parameter and properties
+const Correlation_Parameter compute_laplacian_image_param(compute_laplacian_image,
+  BOOL_PARAM,
+  false,
+  "Compute the laplacian of the image");
+/// Correlation parameter and properties
 const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_pixels,
   BOOL_PARAM,
   false,
@@ -1190,7 +1197,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 80;
+const int_t num_valid_correlation_params = 81;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1272,7 +1279,8 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   global_solver_param,
   global_element_type_param,
   num_image_integration_points_param,
-  use_fixed_point_iterations_param
+  use_fixed_point_iterations_param,
+  compute_laplacian_image_param
 };
 
 // TODO don't forget to update this when adding a new one

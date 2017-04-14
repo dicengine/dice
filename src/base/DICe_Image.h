@@ -349,6 +349,14 @@ public:
   const scalar_t& grad_y(const int_t x,
     const int_t y) const ;
 
+  /// laplacian accessor:
+  /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
+  /// y is row, x is column
+  /// \param x image coordinate x
+  /// \param y image coordinate y
+  const scalar_t& laplacian(const int_t x,
+    const int_t y) const;
+
   /// mask value accessor
   /// \param x image coordinate x
   /// \param y image coordinate y
@@ -525,6 +533,8 @@ private:
   scalar_dual_view_2d grad_x_;
   /// image gradient y container
   scalar_dual_view_2d grad_y_;
+  /// image laplacian container
+  scalar_dual_view_2d laplacian_;
 #else
   /// pixel container
   Teuchos::ArrayRCP<intensity_t> intensities_;
@@ -536,6 +546,8 @@ private:
   Teuchos::ArrayRCP<scalar_t> grad_x_;
   /// image gradient y container
   Teuchos::ArrayRCP<scalar_t> grad_y_;
+  /// image gradient y container
+  Teuchos::ArrayRCP<scalar_t> laplacian_;
 #endif
   /// flag that the gradients have been computed
   bool has_gradients_;

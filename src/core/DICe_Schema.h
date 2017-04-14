@@ -1325,6 +1325,8 @@ private:
   int_t full_ref_img_height_;
   /// store a pointer to the image deformer if this is a error estimation run
   Teuchos::RCP<SinCos_Image_Deformer> image_deformer_;
+  /// true if the laplacian images should be computed
+  bool compute_laplacian_image_;
 };
 
 /// \class DICe::Output_Spec

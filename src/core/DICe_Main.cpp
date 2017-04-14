@@ -84,12 +84,18 @@ int main(int argc, char *argv[]) {
 
     // correlation parameters
 
+    bool is_error_est_run = false;
     Teuchos::RCP<Teuchos::ParameterList> correlation_params;
     if(input_params->isParameter(DICe::correlation_parameters_file)){
       const std::string paramsFileName = input_params->get<std::string>(DICe::correlation_parameters_file);
       correlation_params = DICe::read_correlation_params(paramsFileName);
       *outStream << "User specified correlation Parameters: " << std::endl;
       correlation_params->print(*outStream);
+      is_error_est_run = correlation_params->get<bool>(DICe::estimate_resolution_error,false);
+      if(is_error_est_run){
+        // force the computing of the image laplacian for the reference image:
+        correlation_params->set(DICe::compute_laplacian_image,true);
+      }
       *outStream << "\n--- Correlation parameters read successfully ---\n" << std::endl;
     }
     else{
@@ -219,24 +225,23 @@ int main(int argc, char *argv[]) {
     stereo_file_prefix += "_stereo";
 
     // if the user selects predict_resolution_error option, an error analysis is performed and the actual analysis is skipped
-    if(correlation_params!=Teuchos::null)
-      if(correlation_params->get<bool>(DICe::estimate_resolution_error,false)){
-        std::string resolution_output_folder;
+    if(is_error_est_run){
+      std::string resolution_output_folder;
 #if defined(WIN32)
-        resolution_output_folder = ".\\";
+      resolution_output_folder = ".\\";
 #else
-        resolution_output_folder + "./";
+      resolution_output_folder + "./";
 #endif
-        if(input_params->isParameter(DICe::resolution_output_folder))
-          resolution_output_folder = input_params->get<std::string>(DICe::resolution_output_folder);
-        file_prefix = "DICe_error_estimation_solution";
-        schema->update_extents();
-        schema->set_ref_image(image_files[0]);
-        schema->set_def_image(image_files[0]);
-        schema->estimate_resolution_error(correlation_params,output_folder,resolution_output_folder,file_prefix,outStream);
-        DICe::finalize();
-        return 0;
-      }
+      if(input_params->isParameter(DICe::resolution_output_folder))
+        resolution_output_folder = input_params->get<std::string>(DICe::resolution_output_folder);
+      file_prefix = "DICe_error_estimation_solution";
+      schema->update_extents();
+      schema->set_ref_image(image_files[0]);
+      schema->set_def_image(image_files[0]);
+      schema->estimate_resolution_error(correlation_params,output_folder,resolution_output_folder,file_prefix,outStream);
+      DICe::finalize();
+      return 0;
+    }
 
     TEUCHOS_TEST_FOR_EXCEPTION(is_stereo&&!input_params->isParameter(DICe::calibration_parameters_file),std::runtime_error,
       "Error, calibration_parameters_file required for stereo");

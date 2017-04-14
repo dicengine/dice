@@ -251,6 +251,13 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
   grad_y_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   intensities_temp_ = Teuchos::ArrayRCP<intensity_t>(height_*width_,0.0);
   mask_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
+  if(params!=Teuchos::null){
+    if(params->isParameter(DICe::compute_laplacian_image)){
+      if(params->get<bool>(DICe::compute_laplacian_image)==true){
+        laplacian_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
+      }
+    }
+  }
   // image gradient coefficients
   grad_c1_ = 1.0/12.0;
   grad_c2_ = -8.0/12.0;
@@ -295,6 +302,12 @@ const scalar_t&
 Image::mask(const int_t x,
   const int_t y) const {
   return mask_[y*width_+x];
+}
+
+const scalar_t&
+Image::laplacian(const int_t x,
+  const int_t y) const {
+  return laplacian_[y*width_+x];
 }
 
 Teuchos::ArrayRCP<intensity_t>
