@@ -205,8 +205,8 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
   int LWORK = N*N;
   int INFO = 0;
   double *WORK = new double[LWORK];
-  double *GWORK = new double[10*N];
-  int *IWORK = new int[LWORK];
+  //double *GWORK = new double[10*N];
+  //int *IWORK = new int[LWORK];
   Teuchos::LAPACK<int_t,double> lapack;
   assert(N==6 && "  DICe ERROR: this DIC method is currently only approprate for 6 variables.");
 
@@ -342,6 +342,15 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
       H(5,5) += delGxy*delGxy;
     }
 
+    // compute the norm of H prior to taking the inverse:
+    const scalar_t det_h = H(0,0)*H(1,1) - H(1,0)*H(0,1);
+    const scalar_t norm_H = std::sqrt(H(0,0)*H(0,0) + H(0,1)*H(0,1) + H(1,0)*H(1,0) + H(1,1)*H(1,1));
+    scalar_t cond_2x2 = -1.0;
+    if(det_h !=0.0){
+      const scalar_t norm_Hi = std::sqrt((1.0/(det_h*det_h))*(H(0,0)*H(0,0) + H(0,1)*H(0,1) + H(1,0)*H(1,0) + H(1,1)*H(1,1)));
+      cond_2x2 = norm_H * norm_Hi;
+    }
+
     if(schema_->use_objective_regularization()){
       // add the penalty terms
       const scalar_t alpha = schema_->levenberg_marquardt_regularization_factor();
@@ -397,30 +406,31 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
 
     // TODO: remove for performance?
     // compute the 1-norm of H:
-    std::vector<scalar_t> colTotals(N,0.0);
-    for(int_t i=0;i<H.numCols();++i){
-      for(int_t j=0;j<H.numRows();++j){
-        colTotals[i]+=std::abs(H(j,i));
-      }
-    }
-    double anorm = 0.0;
-    for(int_t i=0;i<N;++i){
-      if(colTotals[i] > anorm) anorm = colTotals[i];
-    }
+    //std::vector<scalar_t> colTotals(N,0.0);
+    //for(int_t i=0;i<H.numCols();++i){
+    //  for(int_t j=0;j<H.numRows();++j){
+    //    colTotals[i]+=std::abs(H(j,i));
+    //  }
+    //}
+    //double anorm = 0.0;
+    //for(int_t i=0;i<N;++i){
+    //  if(colTotals[i] > anorm) anorm = colTotals[i];
+    //}
 
     // clear temp storage
     for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
-    for(int_t i=0;i<10*N;++i) GWORK[i] = 0.0;
-    for(int_t i=0;i<LWORK;++i) IWORK[i] = 0;
+    //for(int_t i=0;i<10*N;++i) GWORK[i] = 0.0;
+    //for(int_t i=0;i<LWORK;++i) IWORK[i] = 0;
     for(int_t i=0;i<N+1;++i) {IPIV[i] = 0;}
-    double rcond=0.0; // reciporical condition number
+    //double rcond=0.0; // reciporical condition number
     try
     {
       lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
-      lapack.GECON('1',N,H.values(),N,anorm,&rcond,GWORK,IWORK,&INFO);
+      //lapack.GECON('1',N,H.values(),N,anorm,&rcond,GWORK,IWORK,&INFO);
       //DEBUG_MSG("Subset " << correlation_point_global_id_ << "    RCOND(H): "<< rcond);
-      schema_->global_field_value(correlation_point_global_id_,DICe::CONDITION_NUMBER) = (rcond !=0.0) ? 1.0/rcond : 0.0;
-      if(rcond < 1.0E-12) return HESSIAN_SINGULAR;
+      schema_->global_field_value(correlation_point_global_id_,DICe::CONDITION_NUMBER) = cond_2x2;
+      //schema_->global_field_value(correlation_point_global_id_,DICe::CONDITION_NUMBER) = (rcond !=0.0) ? 1.0/rcond : 0.0;
+      //if(rcond < 1.0E-12) return HESSIAN_SINGULAR;
     }
     catch(std::exception &e){
       DEBUG_MSG( e.what() << '\n');
@@ -500,8 +510,8 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
 
   // clean up storage for lapack:
   delete [] WORK;
-  delete [] GWORK;
-  delete [] IWORK;
+  //delete [] GWORK;
+  //delete [] IWORK;
   delete [] IPIV;
 
   if(solve_it>max_solve_its){
@@ -512,12 +522,6 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
 
 void
 Objective_ZNSSD::computeErrorFields(Teuchos::RCP<std::vector<scalar_t> > & deformation){
-
-  // generate a laplacian image:
-  //Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
-  //imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
-  //Teuchos::RCP<Image> grad_x_img = Teuchos::rcp(new Image(schema_->ref_img()->width(),schema_->ref_img()->height(),schema_->ref_img()->grad_x_array(),imgParams));
-  //Teuchos::RCP<Image> grad_y_img = Teuchos::rcp(new Image(schema_->ref_img()->width(),schema_->ref_img()->height(),schema_->ref_img()->grad_y_array(),imgParams));
 
   scalar_t norm_grad_ut_2 = 0.0;
   scalar_t norm_ut_2 = 0.0;
@@ -542,10 +546,11 @@ Objective_ZNSSD::computeErrorFields(Teuchos::RCP<std::vector<scalar_t> > & defor
   scalar_t int_uhat_dot_jg = 0.0;
   scalar_t int_sub_r = 0.0;
   scalar_t int_sub_r_exact = 0.0;
+  scalar_t int_sub_r_approx = 0.0;
   scalar_t int_sub_r_total = 0.0;
 
-  // scalar_t int_laplacian = 0.0;
-  //scalar_t sig = 0.15;
+  scalar_t sig = 0.15;
+  scalar_t sssig = 0.0;
 
   Teuchos::ArrayRCP<intensity_t> ref_intens = schema_->ref_img()->intensities();
   Teuchos::ArrayRCP<intensity_t> def_intens = schema_->def_img()->intensities();
@@ -566,6 +571,7 @@ Objective_ZNSSD::computeErrorFields(Teuchos::RCP<std::vector<scalar_t> > & defor
     schema_->image_deformer()->compute_deriv_deformation(x,y,bxx,bxy,byx,byy);
     scalar_t gx = subset_->grad_x(i);
     scalar_t gy = subset_->grad_y(i);
+    sssig += gx*gx + gy*gy;
 
     norm_grad_ut_2 += (bxx*bxx + bxy*bxy + byx*byx + byy*byy);
     scalar_t mag_ut_2 = bx*bx + by*by;
@@ -588,31 +594,27 @@ Objective_ZNSSD::computeErrorFields(Teuchos::RCP<std::vector<scalar_t> > & defor
     int_ut_dot_g += (bx*gx + by*gy)/std::sqrt(mag_grad_phi_2);
     int_uhat_minus_ut_dot_g += ((u-bx)*gx + (v-by)*gy)/std::sqrt(mag_grad_phi_2);
     scalar_t sub_r = schema_->def_img()->interpolate_keys_fourth(x - offset_x + u,y - offset_y + v) - (*schema_->ref_img())((int_t)(x-offset_x),(int_t)(y-offset_y));
-    //scalar_t lap = grad_x_img->grad_x((int_t)x,(int_t)y) + grad_y_img->grad_y((int_t)x,(int_t)y);
-    //sub_r -= sig*lap;
-    //scalar_t sub_r = (*schema_->def_img())((int_t)x,(int_t)y) - schema_->ref_img()->interpolate_keys_fourth(x - u,y - v);
-    //scalar_t sub_r = subset_->def_intensities(i) - subset_->ref_intensities(i);
     int_r += sub_r*sub_r/(gx*gx + gy*gy);
     //int_r += (sub_r - sig*lap)*(sub_r - sig*lap)/(gx*gx + gy*gy);
     int_sub_r += sub_r;
-    //int_r += sub_r*sub_r;
     scalar_t sub_r_exact = schema_->def_img()->interpolate_keys_fourth(x-offset_x + bx,y-offset_y + by) - (*schema_->ref_img())((int_t)(x-offset_x),(int_t)(y-offset_y));
     //scalar_t sub_r_exact = (*schema_->def_img())((int_t)x,(int_t)y) - schema_->ref_img()->interpolate_keys_fourth(x - bx,y - by);
-    int_sub_r_exact += sub_r_exact;
+    int_sub_r_exact += sub_r_exact*sub_r_exact;
+    int_sub_r_approx += (sig * schema_->ref_img()->laplacian(x,y))*(sig * schema_->ref_img()->laplacian(x,y));
     int_sub_r_total += sub_r - sub_r_exact;
     int_r_total_2 += (sub_r - sub_r_exact)*(sub_r - sub_r_exact)/mag_grad_phi_2;
     int_uhat_dot_g += (u*gx + v*gy)/std::sqrt(gx*gx + gy*gy);
     int_uhat_dot_jg += (-1.0*u*gy + v*gx);
-    //int_laplacian += lap;
   }
+  sssig /= subset_->num_pixels();
 
   // populate the fields:
   // field 1: the total error magnitude:
   schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_1_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_error_dot_gphi_2 + norm_error_dot_jgphi_2);
   // field 2: the error mag in direction of grad phi:
   schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_2_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_error_dot_gphi_2);
-  // field 3: the error mag in direction orthogonal to grad phi:
-  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_3_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_error_dot_jgphi_2);
+  // field 3: error from the discretization:
+  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_3_FS)->global_value(correlation_point_global_id_) = std::sqrt(int_sub_r_exact);
   // field 4: cos of angle between the true motion and grad phi
   const scalar_t cos_theta = std::sqrt(norm_ut_dot_gphi_2/norm_ut_2);
   schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_4_FS)->global_value(correlation_point_global_id_) = cos_theta;
@@ -623,31 +625,11 @@ Objective_ZNSSD::computeErrorFields(Teuchos::RCP<std::vector<scalar_t> > & defor
   // field 7: cos of angle between ut and uhat
   schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_7_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_ut_dot_uhat_2/norm_ut_2);
   // field 8: cos of angle between ut and grad_phi
-  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_8_FS)->global_value(correlation_point_global_id_) = std::cos(std::abs(std::acos(std::sqrt(norm_ut_dot_uhat_2/norm_ut_2))) + std::abs(std::acos(std::sqrt(norm_uhat_dot_gphi_2/norm_uhat_2))));
+  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_8_FS)->global_value(correlation_point_global_id_) = std::sqrt(int_r_total_2);
   // field 9: cos of angle between error and ut
-  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_9_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_error_dot_ut_2/norm_error_2);
+  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_9_FS)->global_value(correlation_point_global_id_) = sssig;
   // field 10: cos of angle between error and uhat
-  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_10_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_error_dot_uhat_2/norm_error_2);
-
-  // field 7: estimate of the error in dir of grad phi using exact noise for ut (no model)
-  // schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_7_FS)->global_value(correlation_point_global_id_) = std::sqrt(int_r_total_2);
-  // field 8: estimate of the total error using exact noise for ut (no model)
-  // schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_8_FS)->global_value(correlation_point_global_id_) = cos_theta != 0.0 ? 1.0/cos_theta * std::sqrt(int_r_total_2) : -1.0;
-
-  // spatially varying sigma
-//  const scalar_t sigma = int_sub_r_exact / int_laplacian;
-//  const scalar_t theta = std::sqrt(mag_ut_dot_gradphi_2/mag_grad_phi_2);
-//  const scalar_t theta_old_and_wrong = std::abs(int_ut_dot_g) / (std::sqrt(mag_grad_phi_2)*std::sqrt(mag_ut_2));
-//  const scalar_t theta_est = std::abs(int_sub_r_total - int_uhat_dot_g)/(25.0*std::sqrt(mag_grad_ut_2)*std::sqrt(mag_grad_phi_2));
-//  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_4_FS)->global_value(correlation_point_global_id_) = int_r_total;//norm_ut*norm_ut;//int_sub_r_exact/int_laplacian;
-//  schema_->global_field_value(correlation_point_global_id_,DICe::OMEGA) = mag_ut_dot_jgradphi_2;// int_r_total; //test_e_dot_gphi;// + test_e_dot_jgphi; //(int_r/47.71)*(int_r/47.71);//e_bound;
-//  schema_->global_field_value(correlation_point_global_id_,DICe::VAR_X) = theta;//test_e_dot_gphi + test_e_dot_jgphi; //theta_est;//int_laplacian*0.15;//test_e_dot_jgphi;//int_r_exact; //theta;//exact_resid;//std::abs(int_r);//theta;//mag_grad_u*13.5;
-//  schema_->global_field_value(correlation_point_global_id_,DICe::VAR_Y) = mag_ut_dot_gradphi_2;//test_e_dot_gphi + test_e_dot_jgphi; //theta;//int_sub_r;//test_e_dot_gphi + test_e_dot_jgphi; //mag_error*mag_error;//*mag_error_dot;//mag_error;
-//  schema_->global_field_value(correlation_point_global_id_,DICe::VAR_Z) = (1.0/(theta*theta) - 1.0)*mag_ut_dot_gradphi_2;//int_sub_r_exact;//mag_error*mag_error; //1.7*std::abs(std::abs(int_ut_dot_g)/(norm_g*theta) - mag_bh);//std::abs(int_ut_dot_g - int_uhat_dot_g);//mag_grad_u;//gamma_zncc*schema_->global_field_value(correlation_point_global_id_,DICe::CONDITION_NUMBER);///(sum_grad*mag_b);
-//  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_7_FS)->global_value(correlation_point_global_id_) = int_uhat_dot_g;//(1.0/(theta*theta) - 1.0)*mag_ut_dot_gradphi + add_error*add_error;
-//  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_8_FS)->global_value(correlation_point_global_id_) = int_uhat_minus_ut_dot_g;//std::sqrt(test_e_dot_gphi/(test_e_dot_gphi + test_e_dot_jgphi));
-//  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_9_FS)->global_value(correlation_point_global_id_) = int_ut_dot_g;//std::sqrt(u_dot_error/(mag_bh*mag_bh));
-
+  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_10_FS)->global_value(correlation_point_global_id_) = std::sqrt(int_sub_r_approx);
 }
 
 }// End DICe Namespace

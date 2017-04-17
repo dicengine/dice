@@ -235,6 +235,10 @@ int main(int argc, char *argv[]) {
       if(input_params->isParameter(DICe::resolution_output_folder))
         resolution_output_folder = input_params->get<std::string>(DICe::resolution_output_folder);
       file_prefix = "DICe_error_estimation_solution";
+      if(input_params->isParameter(DICe::output_prefix)){
+        if(input_params->get<std::string>(DICe::output_prefix)!="DICe_solution")
+          file_prefix = input_params->get<std::string>(DICe::output_prefix);
+      }
       schema->update_extents();
       schema->set_ref_image(image_files[0]);
       schema->set_def_image(image_files[0]);
