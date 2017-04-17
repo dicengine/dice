@@ -136,49 +136,29 @@ DICE_LIB_DLL_EXPORT
 int_t compute_speckle_stats(const std::string & output_dir,
   Teuchos::RCP<Image> & image);
 
-/// \class SinCos_Image_Deformer
-/// \brief a class that deformed an input image according to a sin()*cos() function
+/// \class Image_Deformer
+/// \brief base class that deformes an input image according to an analytical function
 class
 DICE_LIB_DLL_EXPORT
-SinCos_Image_Deformer{
+Image_Deformer{
 public:
 
   /// constructor
-  /// \param period the period of the motion in pixels
-  /// \param amplitude the amplitude of the motion in pixels
-  SinCos_Image_Deformer(const scalar_t & period,
-    const scalar_t & amplitude):
-      period_(period),
-      amplitude_(amplitude){};
-
-  /// parameterless constructor
-  SinCos_Image_Deformer():
-    period_(100),
-    amplitude_(1){};
-
-  /// returns the current amplitude
-  scalar_t amplitude(){
-    return amplitude_;
-  }
-  /// returns the current period
-  scalar_t period(){
-    return period_;
-  }
-
-  /// perform deformation on the image
-  /// returns a pointer to the deformed image
-  /// \param ref_image the reference image
-  Teuchos::RCP<Image> deform_image(Teuchos::RCP<Image> ref_image);
+  Image_Deformer(const scalar_t & rel_factor_disp,
+    const scalar_t & rel_factor_strain):
+  rel_factor_disp_(rel_factor_disp),
+  rel_factor_strain_(rel_factor_strain){};
+  virtual ~Image_Deformer(){};
 
   /// compute the analytical displacement at the given coordinates
   /// \param coord_x the x-coordinate for the evaluation location
   /// \param coord_y the y-coordinate
   /// \param bx [out] the x displacement
   /// \param by [out] the y displacement
-  void compute_deformation(const scalar_t & coord_x,
+  virtual void compute_deformation(const scalar_t & coord_x,
     const scalar_t & coord_y,
     scalar_t & bx,
-    scalar_t & by);
+    scalar_t & by){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Cannot call this base class method")};
 
   /// compute the analytical derivatives at the given coordinates
   /// \param coord_x the x-coordinate for the evaluation location
@@ -187,12 +167,17 @@ public:
   /// \param bxy [out] the xy deriv
   /// \param byx [out] the yx deriv
   /// \param byy [out] the yy deriv
-  void compute_deriv_deformation(const scalar_t & coord_x,
+  virtual void compute_deriv_deformation(const scalar_t & coord_x,
     const scalar_t & coord_y,
     scalar_t & bxx,
     scalar_t & bxy,
     scalar_t & byx,
-    scalar_t & byy);
+    scalar_t & byy){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Cannot call this base class method")};
+
+  /// perform deformation on the image
+  /// returns a pointer to the deformed image
+  /// \param ref_image the reference image
+  Teuchos::RCP<Image> deform_image(Teuchos::RCP<Image> ref_image);
 
   /// compute the error of a given solution at the given coords
   /// \param coord_x the x coordinate
@@ -245,9 +230,72 @@ public:
     scalar_t & strain_xx,
     scalar_t & strain_xy,
     scalar_t & strain_yy);
+private:
+  /// factor to use when computing the relative values of disp error
+  scalar_t rel_factor_disp_;
+  /// factor to use when computing the relative values of strain error
+  scalar_t rel_factor_strain_;
+};
+
+
+/// \class SinCos_Image_Deformer
+/// \brief a class that deformed an input image according to a sin()*cos() function
+class
+DICE_LIB_DLL_EXPORT
+SinCos_Image_Deformer : public Image_Deformer
+{
+public:
+
+  /// constructor
+  /// \param period the period of the motion in pixels
+  /// \param amplitude the amplitude of the motion in pixels
+  SinCos_Image_Deformer(const scalar_t & period,
+    const scalar_t & amplitude):
+      Image_Deformer(amplitude/200.0,(1.0/period)*DICE_TWOPI*amplitude/200.0),
+      period_(period),
+      amplitude_(amplitude){};
+
+  /// parameterless constructor
+  SinCos_Image_Deformer():
+    Image_Deformer(1.0/200.0,(1.0/100.0)*DICE_TWOPI*1.0/200.0),
+    period_(100),
+    amplitude_(1){};
+
+  /// returns the current amplitude
+  scalar_t amplitude(){
+    return amplitude_;
+  }
+  /// returns the current period
+  scalar_t period(){
+    return period_;
+  }
+
+  /// compute the analytical displacement at the given coordinates
+  /// \param coord_x the x-coordinate for the evaluation location
+  /// \param coord_y the y-coordinate
+  /// \param bx [out] the x displacement
+  /// \param by [out] the y displacement
+  virtual void compute_deformation(const scalar_t & coord_x,
+    const scalar_t & coord_y,
+    scalar_t & bx,
+    scalar_t & by);
+
+  /// compute the analytical derivatives at the given coordinates
+  /// \param coord_x the x-coordinate for the evaluation location
+  /// \param coord_y the y-coordinate
+  /// \param bxx [out] the xx deriv
+  /// \param bxy [out] the xy deriv
+  /// \param byx [out] the yx deriv
+  /// \param byy [out] the yy deriv
+  virtual void compute_deriv_deformation(const scalar_t & coord_x,
+    const scalar_t & coord_y,
+    scalar_t & bxx,
+    scalar_t & bxy,
+    scalar_t & byx,
+    scalar_t & byy);
 
   /// destructor
-  ~SinCos_Image_Deformer(){};
+  virtual ~SinCos_Image_Deformer(){};
 
 private:
   /// period of the motion
@@ -257,6 +305,64 @@ private:
 
 };
 
+/// \class ConstantValue_Image_Deformer
+/// \brief a class that provides an exact solution that is constant valued
+/// The image deforming
+class
+DICE_LIB_DLL_EXPORT
+ConstantValue_Image_Deformer: public Image_Deformer
+{
+public:
+
+  /// constructor
+  /// \param value value of the motion in pixels
+  ConstantValue_Image_Deformer(const scalar_t & value):
+    Image_Deformer(1.0,1.0),
+    value_(value){};
+
+  /// parameterless constructor
+  ConstantValue_Image_Deformer():
+    Image_Deformer(1.0,1.0),
+    value_(0.5){};
+
+  /// compute the analytical displacement at the given coordinates
+  /// \param coord_x the x-coordinate for the evaluation location
+  /// \param coord_y the y-coordinate
+  /// \param bx [out] the x displacement
+  /// \param by [out] the y displacement
+  virtual void compute_deformation(const scalar_t & coord_x,
+    const scalar_t & coord_y,
+    scalar_t & bx,
+    scalar_t & by){
+    bx = value_;
+    by = value_;
+  }
+  /// compute the analytical derivatives at the given coordinates
+  /// \param coord_x the x-coordinate for the evaluation location
+  /// \param coord_y the y-coordinate
+  /// \param bxx [out] the xx deriv
+  /// \param bxy [out] the xy deriv
+  /// \param byx [out] the yx deriv
+  /// \param byy [out] the yy deriv
+  virtual void compute_deriv_deformation(const scalar_t & coord_x,
+    const scalar_t & coord_y,
+    scalar_t & bxx,
+    scalar_t & bxy,
+    scalar_t & byx,
+    scalar_t & byy){
+    bxx = 0.0;
+    bxy = 0.0;
+    byx = 0.0;
+    byy = 0.0;
+  }
+
+  /// destructor
+  virtual ~ConstantValue_Image_Deformer(){};
+
+private:
+  /// magnitude of the motion
+  scalar_t value_;
+};
 
 
 

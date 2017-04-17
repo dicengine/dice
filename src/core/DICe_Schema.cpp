@@ -662,6 +662,13 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   const bool omit_row_id = diceParams->get<bool>(DICe::omit_output_row_id,false);
   output_spec_ = Teuchos::rcp(new DICe::Output_Spec(this,omit_row_id,outputParams,delimiter));
   has_output_spec_ = true;
+
+  if(diceParams->isParameter(DICe::exact_solution_constant_value)){
+    TEUCHOS_TEST_FOR_EXCEPTION(diceParams->get<bool>(DICe::estimate_resolution_error,false),std::runtime_error,"");
+    const scalar_t value = diceParams->get<scalar_t>(DICe::exact_solution_constant_value);
+    compute_laplacian_image_ = true;
+    image_deformer_ = Teuchos::rcp(new ConstantValue_Image_Deformer(value));
+  }
 }
 
 void
@@ -2307,10 +2314,10 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
       Teuchos::RCP<Image> def_img;
       std::stringstream amp_ss;
       std::stringstream per_ss;
-      amp_ss << image_deformer_->amplitude();
+      amp_ss << amplitude;
       std::string amp_s = amp_ss.str();
       std::replace( amp_s.begin(), amp_s.end(), '.', 'p'); // replace dots with p for file name
-      per_ss << image_deformer_->period();
+      per_ss << period;
       std::string per_s = per_ss.str();
       std::replace( per_s.begin(), per_s.end(), '.', 'p'); // replace dots with p for file name
       sincos_name << image_dir_str << "amp_" << std::setprecision(4) << amp_s << "_period_" << std::setprecision(4) << per_s << "_proc_" << proc_id << ".tif";
@@ -2430,7 +2437,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
       scalar_t std_dev_error_v = 0.0;
       mesh_->field_stats(DICe::mesh::field_enums::DISP_ERROR_FS,min_error_u,max_error_u,avg_error_u,std_dev_error_u,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
       mesh_->field_stats(DICe::mesh::field_enums::DISP_ERROR_FS,min_error_v,max_error_v,avg_error_v,std_dev_error_v,1,DICe::mesh::field_enums::SIGMA_FS,-1.0);
-      result_stream << " " << std::setprecision(4) << image_deformer_->period() << " "<< std::setprecision(4) << image_deformer_->amplitude()
+      result_stream << " " << std::setprecision(4) << period << " "<< std::setprecision(4) << amplitude
           << " " << min_error_u << " " << max_error_u << " " << avg_error_u << " " << std_dev_error_u << " " << min_error_v << " " << max_error_v << " " << avg_error_v << " " << std_dev_error_v;
 
       scalar_t peaks_avg_error_x = 0.0;

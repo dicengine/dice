@@ -110,7 +110,7 @@ void SinCos_Image_Deformer::compute_deriv_deformation(const scalar_t & coord_x,
   byy = -beta*cos(beta*coord_x)*cos(beta*coord_y)*0.5*amplitude_;
 }
 
-void SinCos_Image_Deformer::compute_displacement_error(const scalar_t & coord_x,
+void Image_Deformer::compute_displacement_error(const scalar_t & coord_x,
   const scalar_t & coord_y,
   const scalar_t & sol_x,
   const scalar_t & sol_y,
@@ -130,13 +130,13 @@ void SinCos_Image_Deformer::compute_displacement_error(const scalar_t & coord_x,
     error_y = sol_y - out_y;
   }
   if(relative){
-    error_x /= amplitude_/200.0; // convert to percent (multiplied by two to account for top and bottom roll-off)
-    error_y /= amplitude_/200.0;
+    error_x /= rel_factor_disp_; // convert to percent (multiplied by two to account for top and bottom roll-off)
+    error_y /= rel_factor_disp_;
   }
 }
 
 
-void SinCos_Image_Deformer::compute_lagrange_strain(const scalar_t & coord_x,
+void Image_Deformer::compute_lagrange_strain(const scalar_t & coord_x,
   const scalar_t & coord_y,
   scalar_t & strain_xx,
   scalar_t & strain_xy,
@@ -154,7 +154,7 @@ void SinCos_Image_Deformer::compute_lagrange_strain(const scalar_t & coord_x,
 }
 
 
-void SinCos_Image_Deformer::compute_lagrange_strain_error(const scalar_t & coord_x,
+void Image_Deformer::compute_lagrange_strain_error(const scalar_t & coord_x,
   const scalar_t & coord_y,
   const scalar_t & sol_xx,
   const scalar_t & sol_xy,
@@ -181,15 +181,14 @@ void SinCos_Image_Deformer::compute_lagrange_strain_error(const scalar_t & coord
     error_yy = sol_yy - strain_yy;
   }
   if(relative){
-    scalar_t rel = (1.0/period_)*DICE_TWOPI*amplitude_/200.0;
-    error_xx /= rel;
-    error_xy /= rel;
-    error_yy /= rel;
+    error_xx /= rel_factor_strain_;
+    error_xy /= rel_factor_strain_;
+    error_yy /= rel_factor_strain_;
   }
 }
 
 Teuchos::RCP<Image>
-SinCos_Image_Deformer::deform_image(Teuchos::RCP<Image> ref_image){
+Image_Deformer::deform_image(Teuchos::RCP<Image> ref_image){
   const int_t w = ref_image->width();
   const int_t h = ref_image->height();
   const int_t ox = ref_image->offset_x();

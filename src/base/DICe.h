@@ -257,6 +257,8 @@ const char* const rotate_ref_image_270 = "rotate_ref_image_270";
 /// String parameter name
 const char* const rotate_def_image_270 = "rotate_def_image_270";
 /// String parameter name
+const char* const exact_solution_constant_value = "exact_solution_constant_value";
+/// String parameter name
 const char* const estimate_resolution_error = "estimate_resolution_error";
 /// String parameter name
 const char* const estimate_resolution_error_min_period = "estimate_resolution_error_min_period";
@@ -843,6 +845,11 @@ const Correlation_Parameter obstruction_skin_factor_param(obstruction_skin_facto
   "Stretches the obstruction subsets to make them larger (factor > 1.0) or smaller (factor < 1.0) than they actually are.");
 
 /// Correlation parameter and properties
+const Correlation_Parameter exact_solution_constant_value_param(exact_solution_constant_value,
+  SCALAR_PARAM,
+  true,
+  "Compute the error between the solution and an analytical solution of this constant value");
+/// Correlation parameter and properties
 const Correlation_Parameter estimate_resolution_error_param(estimate_resolution_error,
   BOOL_PARAM,
   true,
@@ -1197,7 +1204,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 81;
+const int_t num_valid_correlation_params = 82;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1239,6 +1246,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   output_delimiter_param,
   omit_output_row_id_param,
   obstruction_skin_factor_param,
+  exact_solution_constant_value_param,
   estimate_resolution_error_param,
   estimate_resolution_error_min_period_param,
   estimate_resolution_error_max_period_param,
