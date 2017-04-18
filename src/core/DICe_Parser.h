@@ -84,6 +84,8 @@ const char* const print_timing = "print_timing";
 /// Input parameter
 const char* const cal_target_width = "cal_target_width";
 /// Input parameter
+const char* const cal_binary_threshold = "cal_binary_threshold";
+/// Input parameter
 const char* const cal_target_height = "cal_target_height";
 /// Input parameter
 const char* const cal_target_spacing_size = "cal_target_spacing_size";

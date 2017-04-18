@@ -24,6 +24,7 @@
 
 #include <DICe_StereoCalib.h>
 #include <DICe_Shape.h>
+#include <DICe_PointCloud.h>
 
 #include <string>
 #include <algorithm>
@@ -71,6 +72,7 @@ StereoCalib(const int mode,
   const int board_width,
   const int board_height,
   const float & squareSize,
+  const int binary_threshold,
   const bool useCalibrated,
   const bool showRectified,
   const std::string & output_filename)
@@ -123,11 +125,11 @@ StereoCalib(const int mode,
           timg = img;
         else
           resize(img, timg, Size(), scale, scale);
-        if(mode==1){
+        if(mode==1||2){
           // binary image
           Mat bi_src(timg.size(), timg.type());
           // apply thresholding
-          threshold(timg, bi_src, 30, 255, cv::THRESH_BINARY);
+          threshold(timg, bi_src, binary_threshold, 255, cv::THRESH_BINARY);
           // invert the source image
           Mat not_src(bi_src.size(), bi_src.type());
           bitwise_not(bi_src, not_src);
@@ -137,81 +139,124 @@ StereoCalib(const int mode,
           params.minArea = 100;
           cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
           std::vector<KeyPoint> keypoints;
-          detector->detect( not_src, keypoints );
+          if(mode==1){ // base image is white on black so invert to make the white dots black
+            detector->detect( not_src, keypoints );
+          }else{
+            detector->detect( bi_src, keypoints );
+          }
           // draw result of dots with holes keypoints
-//          static int id_num = 0;
-//          id_num++;
-//          std::stringstream filename;
-//          filename << "corner_point_res_" << id_num << ".png";
-//          Mat im_with_keypoints;
-//          drawKeypoints( not_src, keypoints, im_with_keypoints, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
-//          imwrite(filename.str().c_str(), im_with_keypoints);
-          //for(size_t i=0;i<keypoints.size();++i)
-          //  std::cout << "keypoint " << keypoints[i].pt.x << " " << keypoints[i].pt.y << std::endl;
+          std::stringstream corner_filename;
+          // strip off the extention from the original file name
+          size_t lastindex = filename.find_last_of(".");
+          string rawname = filename.substr(0, lastindex);
+          corner_filename << rawname << "_markers.png";
+          Mat im_with_keypoints;
+          if(mode==1){
+            drawKeypoints( not_src, keypoints, im_with_keypoints, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+          }else{
+            drawKeypoints( bi_src, keypoints, im_with_keypoints, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+          }
+          imwrite(corner_filename.str().c_str(), im_with_keypoints);
+          for(size_t i=0;i<keypoints.size();++i)
+            std::cout << "keypoint " << keypoints[i].pt.x << " " << keypoints[i].pt.y << std::endl;
           if(keypoints.size()!=3){
-            std::cout << "only three keypoints should be found for circle grids, but found " << keypoints.size() << std::endl;
+            std::cout << "Error: only three marker dots should be found for circle grids, but found " << keypoints.size() << std::endl;
             found = false;
             break;
           }
-          //TEUCHOS_TEST_FOR_EXCEPTION(keypoints.size()!=3,std::runtime_error,"Error, only three keypoints should have been found for the calibration");
+          // squared distance between key point 0 and kp1:
+          float dist_01 = (keypoints[1].pt.x - keypoints[0].pt.x)*(keypoints[1].pt.x - keypoints[0].pt.x) + (keypoints[1].pt.y - keypoints[0].pt.y)*(keypoints[1].pt.y - keypoints[0].pt.y);
+          // squared distance between key point 1 and kp2:
+          float dist_12 = (keypoints[2].pt.x - keypoints[1].pt.x)*(keypoints[2].pt.x - keypoints[1].pt.x) + (keypoints[2].pt.y - keypoints[1].pt.y)*(keypoints[2].pt.y - keypoints[1].pt.y);
+          // squared distance between key point 0 and kp2:
+          float dist_02 = (keypoints[2].pt.x - keypoints[0].pt.x)*(keypoints[2].pt.x - keypoints[0].pt.x) + (keypoints[2].pt.y - keypoints[0].pt.y)*(keypoints[2].pt.y - keypoints[0].pt.y);
+          //std::cout << "distances: " << dist_01 << " " << dist_12 << " " << dist_02 << std::endl;
+          // determine the corner opposite the hypot:
+          float opposite_corner_x = 0.0;
+          float opposite_corner_y = 0.0;
+          int origin_id = 0;
+          int y_axis_id = 0;
+          int x_axis_id = 0;
+          if(dist_01 > dist_12 && dist_01 > dist_02){
+            float dx = keypoints[2].pt.x - keypoints[0].pt.x;
+            float dy = keypoints[2].pt.y - keypoints[0].pt.y;
+            opposite_corner_x = keypoints[1].pt.x - dx;
+            opposite_corner_y = keypoints[1].pt.y - dy;
+            origin_id = 2;
+            x_axis_id = 0;
+            y_axis_id = 1;
+          }else if(dist_12 > dist_01 && dist_12 > dist_02){
+            float dx = keypoints[0].pt.x - keypoints[1].pt.x;
+            float dy = keypoints[0].pt.y - keypoints[1].pt.y;
+            opposite_corner_x = keypoints[2].pt.x - dx;
+            opposite_corner_y = keypoints[2].pt.y - dy;
+            origin_id = 0;
+            x_axis_id = 1;
+            y_axis_id = 2;
+          }else{
+            float dx = keypoints[1].pt.x - keypoints[0].pt.x;
+            float dy = keypoints[1].pt.y - keypoints[0].pt.y;
+            opposite_corner_x = keypoints[2].pt.x - dx;
+            opposite_corner_y = keypoints[2].pt.y - dy;
+            origin_id = 1;
+            x_axis_id = 0;
+            y_axis_id = 2;
+          }
+          // compute the centroid of the box:
+          float cx = (keypoints[0].pt.x + keypoints[1].pt.x + keypoints[2].pt.x + opposite_corner_x)/4.0;
+          float cy = (keypoints[0].pt.y + keypoints[1].pt.y + keypoints[2].pt.y + opposite_corner_y)/4.0;
+          // determine the blob spacing in pixels
+          float blob_dim = boardSize.height > boardSize.width ? boardSize.height -1 : boardSize.width - 1;
+          if(blob_dim==0.0){
+            std::cout << "Error: invalid board size " << std::endl;
+            found = false;
+            break;
+          }
+          float factor = 1.0/blob_dim;
+          //std::cout << "factor " << factor << std::endl;
 
+          // determine the y axis point and the x axis point, now that the origin is known
+          float cross = keypoints[x_axis_id].pt.x*keypoints[y_axis_id].pt.y - keypoints[x_axis_id].pt.y*keypoints[y_axis_id].pt.x;
+          if(cross < 0.0){
+            int x_temp = x_axis_id;
+            x_axis_id = y_axis_id;
+            y_axis_id = x_temp;
+          }
+          //std::cout << " origin: " << keypoints[origin_id].pt.x << " " << keypoints[origin_id].pt.y << std::endl;
+          //std::cout << " x axis: " << keypoints[x_axis_id].pt.x << " " << keypoints[x_axis_id].pt.y << std::endl;
+          //std::cout << " y axis: " << keypoints[y_axis_id].pt.x << " " << keypoints[y_axis_id].pt.y << std::endl;
 
-          // determine which points are 0, 1, and 2   2
-          //                                          |
-          //                                          0--1
-          float max_x = 0.0;
-          float min_y = 1000000;
-          int pt0_id = -1;
-          int pt1_id = -1;
-          int pt2_id = -1;
-          for(size_t i=0;i<keypoints.size();++i)
-            if(keypoints[i].pt.x > max_x) {max_x = keypoints[i].pt.x; pt1_id=i;}
-          for(size_t i=0;i<keypoints.size();++i)
-            if(keypoints[i].pt.y < min_y) {min_y = keypoints[i].pt.y; pt2_id=i;}
-          std::set<int> ids_left;
-          for(int i=0;i<3;++i)
-            ids_left.insert(i);
-          ids_left.erase(pt1_id);
-          ids_left.erase(pt2_id);
-          assert(ids_left.size()==1);
-          pt0_id = *ids_left.begin();
-          //std::cout << " 0 is " << pt0_id << " 1 is " << pt1_id << " 2 is " << pt2_id << std::endl;
-          // determine the vector 0->2
-          float dx = keypoints[pt2_id].pt.x - keypoints[pt0_id].pt.x;
-          float dy = keypoints[pt2_id].pt.y - keypoints[pt0_id].pt.y;
-          float pt3x = keypoints[pt1_id].pt.x + dx;
-          float pt3y = keypoints[pt1_id].pt.y + dy;
-          //std::cout << "opposite corner: " << pt3x << " " << pt3y << std::endl;
-          // determine the spacing of points in pixels
-          float half_blob_spacing = 0.5*std::abs(dy/(boardSize.height-1));
-          //std::cout << "blob spacing " << 2.0*half_blob_spacing << std::endl;
-          // increase the four points to an extra half nominal blob spacing
+          // expand the four corners by the factor
           std::vector<float> box_x;
-          box_x.push_back(keypoints[pt0_id].pt.x - half_blob_spacing);
-          box_x.push_back(keypoints[pt1_id].pt.x + half_blob_spacing);
-          box_x.push_back(pt3x + half_blob_spacing);
-          box_x.push_back(keypoints[pt2_id].pt.x - half_blob_spacing);
-          box_x.push_back(keypoints[pt0_id].pt.x - half_blob_spacing); // first point is repeated for in_polygon test
+          box_x.push_back(factor*(keypoints[y_axis_id].pt.x - cx) + keypoints[y_axis_id].pt.x);
+          box_x.push_back(factor*(keypoints[origin_id].pt.x - cx) + keypoints[origin_id].pt.x);
+          box_x.push_back(factor*(keypoints[x_axis_id].pt.x - cx) + keypoints[x_axis_id].pt.x);
+          box_x.push_back(factor*(opposite_corner_x - cx) + opposite_corner_x);
+          box_x.push_back(factor*(keypoints[y_axis_id].pt.x - cx) + keypoints[y_axis_id].pt.x);
           std::vector<float> box_y;
-          box_y.push_back(keypoints[pt0_id].pt.y + half_blob_spacing);
-          box_y.push_back(keypoints[pt1_id].pt.y + half_blob_spacing);
-          box_y.push_back(pt3y - half_blob_spacing);
-          box_y.push_back(keypoints[pt2_id].pt.y - half_blob_spacing);
-          box_y.push_back(keypoints[pt0_id].pt.y + half_blob_spacing);
-          //for(size_t i=0;i<box_x.size();++i){
-          //  std::cout << "box corner " << box_x[i] << " " << box_y[i] << std::endl;
-          //}
+          box_y.push_back(factor*(keypoints[y_axis_id].pt.y - cy) + keypoints[y_axis_id].pt.y);
+          box_y.push_back(factor*(keypoints[origin_id].pt.y - cy) + keypoints[origin_id].pt.y);
+          box_y.push_back(factor*(keypoints[x_axis_id].pt.y - cy) + keypoints[x_axis_id].pt.y);
+          box_y.push_back(factor*(opposite_corner_y - cy) + opposite_corner_y);
+          box_y.push_back(factor*(keypoints[y_axis_id].pt.y - cy) + keypoints[y_axis_id].pt.y);
+//          for(int_t i=0;i<5;++i){
+//            std::cout << "box corner: " << box_x[i] << " " << box_y[i] << std::endl;
+//          }
 
           // now detect the blobs in the original binary src image
-          // Detect blobs.
           std::vector<KeyPoint> dots;
-          detector->detect( bi_src, dots );
-//          Mat im_with_dots;
-//          drawKeypoints( bi_src, dots, im_with_dots, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
-//          // Show blobs
-//          std::stringstream dotname;
-//          dotname << "dots_" << id_num << ".png";
-//          imwrite(dotname.str().c_str(), im_with_dots);
+          if(mode==1){
+            detector->detect( bi_src, dots );
+          }
+          else{
+            detector->detect( not_src, dots );
+          }
+          Mat im_with_dots;
+          drawKeypoints( bi_src, dots, im_with_dots, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+          // Show blobs
+          std::stringstream dots_filename;
+          dots_filename << rawname << "_dots.png";
+          imwrite(dots_filename.str().c_str(), im_with_dots);
 
           // compute the average dot size:
           float avg_dot_size = 0.0;
@@ -224,58 +269,87 @@ StereoCalib(const int mode,
           //std::cout << " average dot size " << avg_dot_size << std::endl;
 
           // filter dots based on avg size and whether the dots fall in the central box
-          std::vector<Point2f> keep_dots;
-          std::vector<KeyPoint> keep_keypoints;
-          keep_keypoints.push_back(keypoints[pt1_id]);
-          keep_dots.push_back(Point2f(keypoints[pt1_id].pt.x,keypoints[pt1_id].pt.y));
+          // create a point cloud
+          Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
+          point_cloud->pts.resize(boardSize.width*boardSize.height);
+          // add the axes keypoints:
+          int_t pt_index = 0;
+          for(;pt_index<3;++pt_index){
+            point_cloud->pts[pt_index].x = keypoints[pt_index].pt.x;
+            point_cloud->pts[pt_index].y = keypoints[pt_index].pt.y;
+          }
           for(size_t i=0;i<dots.size();++i){
             if(dots[i].size < 0.8f*avg_dot_size) continue;
             if(!is_in_quadrilateral(dots[i].pt.x,dots[i].pt.y,box_x,box_y)) continue;
-            //std::cout << "keep dot " << keep_dots.size() << " size " << dots[i].size << " " << dots[i].pt.x << " " << dots[i].pt.y << std::endl;
-            keep_dots.push_back(Point2f(dots[i].pt.x,dots[i].pt.y));
-            keep_keypoints.push_back(dots[i]);
-            if((int)keep_dots.size()==(int)(boardSize.width)-1){
-              keep_dots.push_back(Point2f(keypoints[pt0_id].pt.x,keypoints[pt0_id].pt.y));
-              keep_keypoints.push_back(keypoints[pt0_id]);
-            }
+            point_cloud->pts[pt_index].x = dots[i].pt.x;
+            point_cloud->pts[pt_index++].y = dots[i].pt.y;
           }
-          keep_dots.push_back(Point2f(keypoints[pt2_id].pt.x,keypoints[pt2_id].pt.y));
-          keep_keypoints.push_back(keypoints[pt2_id]);
-          //for(size_t i=0;i<keep_dots.size();++i){
-          //  std::cout << " keep dot " << keep_dots[i].x << " "<< keep_dots[i].y << std::endl;
-          //}
-          if((int)keep_dots.size()!=(int)boardSize.area()){
-            std::cout << "Error, the number of keep dots " << keep_dots.size() << " does not match the pattern size " <<
-                boardSize.width << " x " << boardSize.height << std::endl;
+          if(pt_index!=boardSize.height*boardSize.width){
+            std::cout << "Error: needed to find " << boardSize.height*boardSize.width << " dots, but found " << pt_index << " instead" << std::endl;
             found = false;
             break;
           }
-//          Mat im_with_keep_dots;
-//          drawKeypoints( bi_src, keep_keypoints, im_with_keep_dots, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
-//          // Show blobs
-//          std::stringstream keepdotname;
-//          keepdotname << "keepdots_" << id_num << ".png";
-//          imwrite(keepdotname.str().c_str(), im_with_keep_dots);
-
+          DEBUG_MSG("building the kd-tree");
+          Teuchos::RCP<kd_tree_2d_t> kd_tree =
+              Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+          kd_tree->buildIndex();
+          DEBUG_MSG("kd-tree completed");
+          scalar_t query_pt[2];
+          const int_t num_neigh = 1;
+          std::vector<size_t> ret_index(num_neigh);
+          std::vector<scalar_t> out_dist_sqr(num_neigh);
+          // iterate all points in the grid and find the closest dot
+          float total_height = keypoints[y_axis_id].pt.y - keypoints[origin_id].pt.y;
+          float offset_x = keypoints[y_axis_id].pt.x - keypoints[origin_id].pt.x;
+          float delta_h = total_height / (boardSize.height - 1);
+          float delta_ox = offset_x / (boardSize.height - 1);
+          float total_width = keypoints[x_axis_id].pt.x - keypoints[origin_id].pt.x;
+          float offset_y = keypoints[x_axis_id].pt.y - keypoints[origin_id].pt.y;
+          float delta_w = total_width / (boardSize.width - 1);
+          float delta_oy = offset_y / (boardSize.width - 1);
+          std::vector<Point2f> keep_dots;
+          for(int_t j=0;j<boardSize.height;++j){
+            float row_origin_x = keypoints[x_axis_id].pt.x + delta_ox * j;
+            float row_origin_y = keypoints[x_axis_id].pt.y + delta_h * j;
+            for(int_t i=0;i<boardSize.width;++i){
+              query_pt[0] = row_origin_x - delta_w * i;
+              query_pt[1] = row_origin_y - delta_oy * i;
+              //std::cout << " point " << j*boardSize.width + i << " " << ptx << " " << pty << std::endl;
+              // find the closest dot to this point and add it to the ordered list:
+              kd_tree->knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
+              keep_dots.push_back(Point2f((float)point_cloud->pts[ret_index[0]].x,(float)point_cloud->pts[ret_index[0]].y));
+            }
+          }
+          if((int_t)keep_dots.size()!=boardSize.height*boardSize.width){
+            std::cout << "Error: needed to find " << boardSize.height*boardSize.width << " dots, but found " << keep_dots.size() << " instead" << std::endl;
+            found = false;
+            break;
+          }
+          //          Mat im_with_keep_dots;
+          //          drawKeypoints( bi_src, keep_keypoints, im_with_keep_dots, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+          //          // Show blobs
+          //          std::stringstream keepdotname;
+          //          keepdotname << "keepdots_" << id_num << ".png";
+          //          imwrite(keepdotname.str().c_str(), im_with_keep_dots);
 
           Mat(keep_dots).copyTo(corners);
           found = true;
-//          SimpleBlobDetector::Params params;
-//          params.maxArea = 10e4;
-//          Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
-//          found = findCirclesGrid( timg, boardSize, corners, CALIB_CB_ASYMMETRIC_GRID, detector);//, blobDetector);//CALIB_CB_ASYMMETRIC_GRID + CALIB_CB_CLUSTERING);//,
-//          //  // Draw detected blobs as red circles.
-//          //  // DrawMatchesFlags::DRAW_RICH_KEYPOINTS flag ensures the size of the circle corresponds to the size of blob
-////            Mat im_with_keypoints;
-////            drawKeypoints( img, corners, im_with_keypoints, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
-////          //
-////            static int_t image_id = 0;
-////            image_id++;
-////            std::stringstream image_name;
-////            image_name << "res_keypoints_" << image_id << ".png";
-////          //  // Show blobs
-////          //  //imshow("keypoints", im_with_keypoints );
-////            imwrite(image_name.str().c_str(), im_with_keypoints);
+          //          SimpleBlobDetector::Params params;
+          //          params.maxArea = 10e4;
+          //          Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
+          //          found = findCirclesGrid( timg, boardSize, corners, CALIB_CB_ASYMMETRIC_GRID, detector);//, blobDetector);//CALIB_CB_ASYMMETRIC_GRID + CALIB_CB_CLUSTERING);//,
+          //          //  // Draw detected blobs as red circles.
+          //          //  // DrawMatchesFlags::DRAW_RICH_KEYPOINTS flag ensures the size of the circle corresponds to the size of blob
+          ////            Mat im_with_keypoints;
+          ////            drawKeypoints( img, corners, im_with_keypoints, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+          ////          //
+          ////            static int_t image_id = 0;
+          ////            image_id++;
+          ////            std::stringstream image_name;
+          ////            image_name << "res_keypoints_" << image_id << ".png";
+          ////          //  // Show blobs
+          ////          //  //imshow("keypoints", im_with_keypoints );
+          ////            imwrite(image_name.str().c_str(), im_with_keypoints);
         }else if(mode==0){
           found = findChessboardCorners(timg, boardSize, corners,
             CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE);

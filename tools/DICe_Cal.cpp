@@ -111,8 +111,9 @@ int main(int argc, char *argv[]) {
   const int_t target_width = inputParams->get<int_t>(DICe::cal_target_width);
   const int_t target_height = inputParams->get<int_t>(DICe::cal_target_height);
   const double spacing_size = inputParams->get<double>(DICe::cal_target_spacing_size);
+  const int_t threshold = inputParams->get<int_t>(DICe::cal_binary_threshold,30);
 
-  const float rms = StereoCalib(mode, images, target_width, target_height, spacing_size, true, false, output_file);
+  const float rms = StereoCalib(mode, images, target_width, target_height, spacing_size, threshold, true, false, output_file);
 
   DICe::finalize();
 

@@ -70,6 +70,7 @@ StereoCalib(const int mode,
   const int board_width,
   const int board_height,
   const float & squareSize,
+  const int_t binary_threshold,
   const bool useCalibrated,
   const bool showRectified,
   const std::string & output_filename);
