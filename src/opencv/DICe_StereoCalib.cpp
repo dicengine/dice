@@ -103,7 +103,7 @@ StereoCalib(const int mode,
     for( k = 0; k < 2; k++ )
     {
       const string& filename = imagelist[i*2+k];
-      std::cout << "processimg cal image " << filename << std::endl;
+      std::cout << "processing cal image " << filename << std::endl;
       Mat img = imread(filename, IMREAD_GRAYSCALE);
       if(img.empty()){
         std::cout << "image mat is empty " << std::endl;
