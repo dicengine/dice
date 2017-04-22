@@ -111,6 +111,8 @@ int main(int argc, char *argv[]) {
   const std::string output_image_name = params->get<std::string>("output_image_name");
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("exodus_step"),std::runtime_error,"");
   const int_t exo_step = params->get<int_t>("exodus_step");
+  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("plot_disp_threshold"),std::runtime_error,"");
+  const scalar_t plot_thresh = params->get<double>("plot_disp_threshold");
 
   // read the exodus file to get the displacement field and coordinates
 
@@ -143,6 +145,22 @@ int main(int argc, char *argv[]) {
     point_cloud->pts[i].x = coords_x[i];
     point_cloud->pts[i].y = coords_y[i];
   }
+
+  std::stringstream csv_exo_filename;
+  // strip off the extention from the original file name
+  size_t lastindex = output_image_name.find_last_of(".");
+  std::string rawname = output_image_name.substr(0, lastindex);
+  csv_exo_filename << rawname << ".csv";
+
+  // output a csv file with the exodus points
+  std::FILE * infoFilePtr = fopen(csv_exo_filename.str().c_str(),"w");
+  fprintf(infoFilePtr,"X,Y,Z,U,V\n");
+  for(int_t i=0;i<num_nodes;++i){
+    fprintf(infoFilePtr,"%4.4E,%4.4E,%4.4E,%4.4E,%4.4E\n",coords_x[i],coords_y[i],coords_z[i],exo_ux[i],exo_uy[i]);
+  }
+  fclose(infoFilePtr);
+
+
   DEBUG_MSG("building the kd-tree");
   Teuchos::RCP<kd_tree_2d_t> kd_tree =
       Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
@@ -165,6 +183,13 @@ int main(int argc, char *argv[]) {
   int *IWORK = new int[LWORK];
   // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
   Teuchos::LAPACK<int,double> lapack;
+
+  // output a csv file with the image points
+  std::stringstream img_pts_filename;
+  img_pts_filename << rawname << "_img.csv";
+
+  std::FILE * imgFilePtr = fopen(img_pts_filename.str().c_str(),"w");
+  fprintf(imgFilePtr,"X,Y,Z,U,V\n");
 
   for(int_t py=0;py<img_h;++py){
     for(int_t px=0;px<img_w;++px){
@@ -224,11 +249,17 @@ int main(int argc, char *argv[]) {
       // convert the displacement back to image coordinates
       const scalar_t bx = ls_ux / scale_factor;
       const scalar_t by = ls_uy / scale_factor;
+      scalar_t out_bx = std::abs(ls_ux) < plot_thresh ? ls_ux : 0.0;
+      scalar_t out_by = std::abs(ls_uy) < plot_thresh ? ls_uy : 0.0;
+      fprintf(imgFilePtr,"%4.4E,%4.4E,%4.4E,%4.4E,%4.4E\n",mx,my,0.0,out_bx,out_by);
+
       // apply the displacement to the image
       const intensity_t intens = ref_img->interpolate_keys_fourth(px-bx,py-by);
       def_intens[py*img_w+px] = intens > 0.0 ? intens : 0.0;
     } // end px
   } // end py
+
+  fclose(imgFilePtr);
 
   // output the deformed image:
   Teuchos::RCP<Image> def_img = Teuchos::rcp(new Image(img_w,img_h,def_intens));
