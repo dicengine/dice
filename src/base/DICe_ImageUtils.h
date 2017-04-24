@@ -316,14 +316,17 @@ public:
 
   /// constructor
   /// \param value value of the motion in pixels
-  ConstantValue_Image_Deformer(const scalar_t & value):
+  ConstantValue_Image_Deformer(const scalar_t & value_x,
+    const scalar_t & value_y):
     Image_Deformer(1.0,1.0),
-    value_(value){};
+    value_x_(value_x),
+    value_y_(value_y){};
 
   /// parameterless constructor
   ConstantValue_Image_Deformer():
     Image_Deformer(1.0,1.0),
-    value_(0.5){};
+    value_x_(0.5),
+    value_y_(0.5){};
 
   /// compute the analytical displacement at the given coordinates
   /// \param coord_x the x-coordinate for the evaluation location
@@ -334,8 +337,8 @@ public:
     const scalar_t & coord_y,
     scalar_t & bx,
     scalar_t & by){
-    bx = value_;
-    by = value_;
+    bx = value_x_;
+    by = value_y_;
   }
   /// compute the analytical derivatives at the given coordinates
   /// \param coord_x the x-coordinate for the evaluation location
@@ -361,7 +364,8 @@ public:
 
 private:
   /// magnitude of the motion
-  scalar_t value_;
+  scalar_t value_x_;
+  scalar_t value_y_;
 };
 
 

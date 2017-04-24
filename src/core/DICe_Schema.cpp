@@ -663,11 +663,12 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   output_spec_ = Teuchos::rcp(new DICe::Output_Spec(this,omit_row_id,outputParams,delimiter));
   has_output_spec_ = true;
 
-  if(diceParams->isParameter(DICe::exact_solution_constant_value)){
+  if(diceParams->isParameter(DICe::exact_solution_constant_value_x)||diceParams->isParameter(DICe::exact_solution_constant_value_y)){
     TEUCHOS_TEST_FOR_EXCEPTION(diceParams->get<bool>(DICe::estimate_resolution_error,false),std::runtime_error,"");
-    const scalar_t value = diceParams->get<scalar_t>(DICe::exact_solution_constant_value);
+    const scalar_t value_x = diceParams->get<scalar_t>(DICe::exact_solution_constant_value_x,0.0);
+    const scalar_t value_y = diceParams->get<scalar_t>(DICe::exact_solution_constant_value_y,0.0);
     compute_laplacian_image_ = true;
-    image_deformer_ = Teuchos::rcp(new ConstantValue_Image_Deformer(value));
+    image_deformer_ = Teuchos::rcp(new ConstantValue_Image_Deformer(value_x,value_y));
   }
 }
 
