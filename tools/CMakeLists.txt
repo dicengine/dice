@@ -114,7 +114,7 @@ if(DICE_ENABLE_NETCDF)
   add_executable(DICe_NetCDFToTiff DICe_NetCDFToTiff.cpp)
   target_link_libraries(DICe_NetCDFToTiff ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES} dicebase)
   add_executable(DICe_ExoToNetCDF DICe_ExoToNetCDF.cpp)
-  target_link_libraries(DICe_ExoToNetCDF ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES} dicebase)
+  target_link_libraries(DICe_ExoToNetCDF ${DICE_LIBRARIES} diceutils ${DICE_TEST_LIBRARIES} dicebase)
 
   install(TARGETS DICe_NetCDFToTiff DICe_ExoToNetCDF
     DESTINATION ${CMAKE_INSTALL_PREFIX}/bin 
