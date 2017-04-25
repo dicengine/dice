@@ -594,7 +594,7 @@ Objective_ZNSSD::computeErrorFields(Teuchos::RCP<std::vector<scalar_t> > & defor
     int_ut_dot_g += (bx*gx + by*gy)/std::sqrt(mag_grad_phi_2);
     int_uhat_minus_ut_dot_g += ((u-bx)*gx + (v-by)*gy)/std::sqrt(mag_grad_phi_2);
     scalar_t sub_r = schema_->def_img()->interpolate_keys_fourth(x - offset_x + u,y - offset_y + v) - (*schema_->ref_img())((int_t)(x-offset_x),(int_t)(y-offset_y));
-    int_r += sub_r*sub_r/(gx*gx + gy*gy);
+    int_r += sub_r*sub_r;///(gx*gx + gy*gy);
     //int_r += (sub_r - sig*lap)*(sub_r - sig*lap)/(gx*gx + gy*gy);
     int_sub_r += sub_r;
     scalar_t sub_r_exact = schema_->def_img()->interpolate_keys_fourth(x-offset_x + bx,y-offset_y + by) - (*schema_->ref_img())((int_t)(x-offset_x),(int_t)(y-offset_y));
@@ -629,7 +629,7 @@ Objective_ZNSSD::computeErrorFields(Teuchos::RCP<std::vector<scalar_t> > & defor
   // field 9: cos of angle between error and ut
   schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_9_FS)->global_value(correlation_point_global_id_) = sssig;
   // field 10: cos of angle between error and uhat
-  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_10_FS)->global_value(correlation_point_global_id_) = std::sqrt(int_sub_r_approx);
+  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_10_FS)->global_value(correlation_point_global_id_) = std::sqrt(int_r);
 }
 
 }// End DICe Namespace

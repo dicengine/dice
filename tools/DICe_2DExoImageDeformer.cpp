@@ -113,6 +113,8 @@ int main(int argc, char *argv[]) {
   const int_t exo_step = params->get<int_t>("exodus_step");
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("plot_disp_threshold"),std::runtime_error,"");
   const scalar_t plot_thresh = params->get<double>("plot_disp_threshold");
+  TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("convert_to_eulerian"),std::runtime_error,"");
+  const bool convert_to_eulerian = params->get<bool>("convert_to_eulerian");
 
   // read the exodus file to get the displacement field and coordinates
 
@@ -142,8 +144,8 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
   point_cloud->pts.resize(num_nodes);
   for(int_t i=0;i<num_nodes;++i){
-    point_cloud->pts[i].x = coords_x[i];
-    point_cloud->pts[i].y = coords_y[i];
+    point_cloud->pts[i].x = convert_to_eulerian ? coords_x[i] + exo_ux[i]: coords_x[i];
+    point_cloud->pts[i].y = convert_to_eulerian ? coords_y[i] + exo_uy[i]: coords_y[i];
   }
 
   std::stringstream csv_exo_filename;
@@ -156,7 +158,7 @@ int main(int argc, char *argv[]) {
   std::FILE * infoFilePtr = fopen(csv_exo_filename.str().c_str(),"w");
   fprintf(infoFilePtr,"X,Y,Z,U,V\n");
   for(int_t i=0;i<num_nodes;++i){
-    fprintf(infoFilePtr,"%4.4E,%4.4E,%4.4E,%4.4E,%4.4E\n",coords_x[i],coords_y[i],coords_z[i],exo_ux[i],exo_uy[i]);
+    fprintf(infoFilePtr,"%4.4E,%4.4E,%4.4E,%4.4E,%4.4E\n",point_cloud->pts[i].x,point_cloud->pts[i].y,coords_z[i],exo_ux[i],exo_uy[i]);
   }
   fclose(infoFilePtr);
 
@@ -196,7 +198,7 @@ int main(int argc, char *argv[]) {
       // compute the model location for this pixel:
       // remove the model offsets and scale the positions
       scalar_t mx = (px - ox)*scale_factor;
-      scalar_t my = ((img_h - py - 1) - oy)*scale_factor; // y pixel has to be flipped to match the model coordiantes which are y up instead of y down like the image
+      scalar_t my = (oy - py)*scale_factor; // y pixel has to be flipped to match the model coordiantes which are y up instead of y down like the image
       query_pt[0] = mx;
       query_pt[1] = my;
       kd_tree->knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
@@ -215,8 +217,8 @@ int main(int argc, char *argv[]) {
         u_x[j] = exo_ux[neigh_id];
         u_y[j] = exo_uy[neigh_id];
         X_t(0,j) = 1.0;
-        X_t(1,j) = coords_x[neigh_id] - mx;
-        X_t(2,j) = coords_y[neigh_id] - my;
+        X_t(1,j) = point_cloud->pts[neigh_id].x - mx;
+        X_t(2,j) = point_cloud->pts[neigh_id].y - my;
       }
       // set up X^T*X
       for(int_t k=0;k<N;++k){
