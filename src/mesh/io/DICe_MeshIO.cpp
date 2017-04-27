@@ -473,6 +473,7 @@ read_exodus_num_steps(const std::string & file_name){
   float ret_float;
   char ret_char;
   ex_inquire(input_exoid,EX_INQ_TIME,&num_steps,&ret_float,&ret_char);
+  ex_close(input_exoid);
   return num_steps;
 }
 
@@ -578,6 +579,7 @@ read_exodus_field_names(const std::string & file_name){
     std::string var_name = nodal_var_name;
     field_names.push_back(var_name);
   }
+  ex_close(input_exoid);
   return field_names;
 }
 
@@ -635,6 +637,7 @@ void read_exodus_coordinates(const std::string & exo_file,
    delete[] temp_y;
    if(num_dim>2)
      delete[] temp_z;
+   ex_close(input_exoid);
 }
 
 DICE_LIB_DLL_EXPORT
@@ -740,6 +743,7 @@ read_exodus_coordinates(Teuchos::RCP<Mesh> mesh){
   for(;elem_it!=elem_end;++elem_it){
     proc_id.local_value(elem_it->get()->local_id()) = p_rank;
   }
+  ex_close(input_exoid);
 }
 
 DICE_LIB_DLL_EXPORT
