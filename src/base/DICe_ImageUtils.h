@@ -305,6 +305,62 @@ private:
 
 };
 
+
+/// \class DICChallenge14_Image_Deformer
+/// \brief a class that deformed an input image according to a sin() function in y
+class
+DICE_LIB_DLL_EXPORT
+DICChallenge14_Image_Deformer : public Image_Deformer
+{
+public:
+
+  /// constructor
+  /// \param period the period of the motion in pixels
+  /// \param amplitude the amplitude of the motion in pixels
+  DICChallenge14_Image_Deformer(const scalar_t & coeff):
+      Image_Deformer(1.0,1.0),
+      coeff_(coeff){};
+
+  /// constructor
+  /// \param period the period of the motion in pixels
+  /// \param amplitude the amplitude of the motion in pixels
+  DICChallenge14_Image_Deformer():
+      Image_Deformer(1.0,1.0),
+      coeff_(3.32E-6){};
+
+  /// compute the analytical displacement at the given coordinates
+  /// \param coord_x the x-coordinate for the evaluation location
+  /// \param coord_y the y-coordinate
+  /// \param bx [out] the x displacement
+  /// \param by [out] the y displacement
+  virtual void compute_deformation(const scalar_t & coord_x,
+    const scalar_t & coord_y,
+    scalar_t & bx,
+    scalar_t & by);
+
+  /// compute the analytical derivatives at the given coordinates
+  /// \param coord_x the x-coordinate for the evaluation location
+  /// \param coord_y the y-coordinate
+  /// \param bxx [out] the xx deriv
+  /// \param bxy [out] the xy deriv
+  /// \param byx [out] the yx deriv
+  /// \param byy [out] the yy deriv
+  virtual void compute_deriv_deformation(const scalar_t & coord_x,
+    const scalar_t & coord_y,
+    scalar_t & bxx,
+    scalar_t & bxy,
+    scalar_t & byx,
+    scalar_t & byy);
+
+  /// destructor
+  virtual ~DICChallenge14_Image_Deformer(){};
+
+private:
+  // coefficient for the sin curve
+  scalar_t coeff_;
+};
+
+
 /// \class ConstantValue_Image_Deformer
 /// \brief a class that provides an exact solution that is constant valued
 /// The image deforming

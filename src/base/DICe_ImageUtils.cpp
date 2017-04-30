@@ -110,6 +110,30 @@ void SinCos_Image_Deformer::compute_deriv_deformation(const scalar_t & coord_x,
   byy = -beta*cos(beta*coord_x)*cos(beta*coord_y)*0.5*amplitude_;
 }
 
+void DICChallenge14_Image_Deformer::compute_deformation(const scalar_t & coord_x,
+  const scalar_t & coord_y,
+  scalar_t & bx,
+  scalar_t & by){
+  bx = 0.0;
+  by = 0.0;
+  if(coord_x < 100.0) return;
+  bx = 0.1*std::sin(coeff_*(coord_x-100.0)*(coord_x-100.0));
+  by = 0.0;
+}
+
+void DICChallenge14_Image_Deformer::compute_deriv_deformation(const scalar_t & coord_x,
+  const scalar_t & coord_y,
+  scalar_t & bxx,
+  scalar_t & bxy,
+  scalar_t & byx,
+  scalar_t & byy){
+  bxx = 0.1*std::cos(coeff_*(coord_x-100.0)*(coord_x-100.0))*2.0*coeff_*(coord_x-100.0);
+  bxy = 0.0;
+  byx = 0.0;
+  byy = 0.0;
+}
+
+
 void Image_Deformer::compute_displacement_error(const scalar_t & coord_x,
   const scalar_t & coord_y,
   const scalar_t & sol_x,

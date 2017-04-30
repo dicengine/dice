@@ -644,6 +644,9 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     Teuchos::RCP<Altitude_Post_Processor> alt_ptr = Teuchos::rcp (new Altitude_Post_Processor(ppParams));
     post_processors_.push_back(alt_ptr);
   }
+  // automatically add the uncertainty post processor:
+  Teuchos::RCP<Uncertainty_Post_Processor> uncertainty_ptr = Teuchos::rcp(new Uncertainty_Post_Processor(Teuchos::null));
+  post_processors_.push_back(uncertainty_ptr);
   if(post_processors_.size()>0) has_post_processor_ = true;
 
   Teuchos::RCP<Teuchos::ParameterList> outputParams;
@@ -669,6 +672,12 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     const scalar_t value_y = diceParams->get<scalar_t>(DICe::exact_solution_constant_value_y,0.0);
     compute_laplacian_image_ = true;
     image_deformer_ = Teuchos::rcp(new ConstantValue_Image_Deformer(value_x,value_y));
+  }
+  if(diceParams->isParameter(DICe::exact_solution_dic_challenge_14)){
+    TEUCHOS_TEST_FOR_EXCEPTION(diceParams->get<bool>(DICe::estimate_resolution_error,false),std::runtime_error,"");
+    const scalar_t value = diceParams->get<scalar_t>(DICe::exact_solution_dic_challenge_14,0.0);
+    compute_laplacian_image_ = true;
+    image_deformer_ = Teuchos::rcp(new DICChallenge14_Image_Deformer(value));
   }
 }
 
