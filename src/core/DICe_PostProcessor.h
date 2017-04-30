@@ -58,6 +58,8 @@ const char * const post_process_vsg_strain = "post_process_vsg_strain";
 const char * const post_process_nlvc_strain = "post_process_nlvc_strain";
 /// String Parameter name
 const char * const post_process_altitude = "post_process_altitude";
+/// String Parameter name
+const char * const post_process_uncertainty = "post_process_uncertainty";
 /// String parameter name
 const char * const strain_window_size_in_pixels = "strain_window_size_in_pixels";
 /// String Parameter name
@@ -326,6 +328,37 @@ private:
   /// true if the ground level has been initialized
   bool ground_level_initialized_;
 };
+
+/// \class DICe::Uncertainty_Post_Processor
+/// \brief A specific instance of post processor that computes the uncertainty in the DIC displacement estimate
+class DICE_LIB_DLL_EXPORT
+Uncertainty_Post_Processor : public Post_Processor{
+
+public:
+
+  /// Default constructor
+  /// \param params the parameters to use for this post processor
+  Uncertainty_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params);
+
+  /// Virtual destructor
+  virtual ~Uncertainty_Post_Processor(){};
+
+  /// Set the parameters for this post processor
+  virtual void set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){}; // do nothing for this PP
+
+  /// Collect the neighborhoods of each of the points
+  virtual void pre_execution_tasks(){}; // do nothing for this PP
+
+  /// See base clase docutmentation
+  virtual int_t strain_window_size(){return -1.0;}
+
+  /// Execute the post processor
+  virtual void execute();
+
+  /// See base class documentation
+  using Post_Processor::field_specs;
+};
+
 
 
 }// End DICe Namespace

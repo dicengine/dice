@@ -223,6 +223,8 @@ void create_string_maps()
   field_name_string[field_enums::NLVC_STRAIN_XX_ERROR]                               = "NLVC_STRAIN_XX_ERROR";
   field_name_string[field_enums::NLVC_STRAIN_XY_ERROR]                               = "NLVC_STRAIN_XY_ERROR";
   field_name_string[field_enums::NLVC_STRAIN_YY_ERROR]                               = "NLVC_STRAIN_YY_ERROR";
+  field_name_string[field_enums::UNCERTAINTY]                                        = "UNCERTAINTY";
+  field_name_string[field_enums::UNCERTAINTY_ANGLE]                                  = "UNCERTAINTY_ANGLE";
 
   for (std::map<field_enums::Field_Type,std::string>::iterator pos = field_type_string.begin(); pos != field_type_string.end(); ++pos){
     string_field_type[pos->second] = pos->first;

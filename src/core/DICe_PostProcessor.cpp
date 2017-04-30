@@ -808,6 +808,34 @@ Altitude_Post_Processor::execute(){
   DEBUG_MSG("Altitude_Post_Processor::execute(): end");
 }
 
+Uncertainty_Post_Processor::Uncertainty_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params) :
+  Post_Processor(post_process_uncertainty)
+{
+  field_specs_.push_back(DICe::mesh::field_enums::UNCERTAINTY_FS);
+  field_specs_.push_back(DICe::mesh::field_enums::UNCERTAINTY_ANGLE_FS);
+  DEBUG_MSG("Enabling post processor Uncertainty_Post_Processor with associated fields:");
+  for(size_t i=0;i<field_specs_.size();++i){
+    DEBUG_MSG(field_specs_[i].get_name_label());
+  }
+  set_params(params);
+}
 
+void
+Uncertainty_Post_Processor::execute(){
+  DEBUG_MSG("Uncertainty_Post_Processor::execute(): begin");
+
+  Teuchos::RCP<DICe::MultiField> sigma_rcp = mesh_->get_field(DICe::mesh::field_enums::SIGMA_FS);
+  // cosine of the angle goes into field_1 by convention (See DICe_ObjectiveZNSSD.cpp)
+  Teuchos::RCP<DICe::MultiField> field1_rcp = mesh_->get_field(DICe::mesh::field_enums::FIELD_1_FS);
+  Teuchos::RCP<DICe::MultiField> uncertainty_rcp = mesh_->get_field(DICe::mesh::field_enums::UNCERTAINTY_FS);
+  Teuchos::RCP<DICe::MultiField> uncertainty_angle_rcp = mesh_->get_field(DICe::mesh::field_enums::UNCERTAINTY_ANGLE_FS);
+  TEUCHOS_TEST_FOR_EXCEPTION(uncertainty_rcp==Teuchos::null || uncertainty_angle_rcp==Teuchos::null, std::runtime_error,"");
+  for(int_t subset=0;subset<local_num_points_;++subset){
+    const scalar_t angle = field1_rcp->local_value(subset);
+    uncertainty_angle_rcp->local_value(subset) = field1_rcp->local_value(subset);
+    uncertainty_rcp->local_value(subset) = angle == 0.0 ? -1.0 : 1.0 / angle * sigma_rcp->local_value(subset);
+  }
+  DEBUG_MSG("Uncertainty_Post_Processor::execute(): end");
+}
 
 }// End DICe Namespace

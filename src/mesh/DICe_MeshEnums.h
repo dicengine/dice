@@ -271,7 +271,9 @@ Field_Name
   VSG_STRAIN_YY_ERROR,
   NLVC_STRAIN_XX_ERROR,
   NLVC_STRAIN_XY_ERROR,
-  NLVC_STRAIN_YY_ERROR
+  NLVC_STRAIN_YY_ERROR,
+  UNCERTAINTY,
+  UNCERTAINTY_ANGLE
 };
 /// The location that the fields live
 enum
@@ -657,6 +659,10 @@ const Field_Spec VSG_DVDX_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::VSG_DVD
 /// field spec
 const Field_Spec VSG_DVDY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::VSG_DVDY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
+const Field_Spec UNCERTAINTY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::UNCERTAINTY,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec UNCERTAINTY_ANGLE_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::UNCERTAINTY_ANGLE,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
 const Field_Spec ALTITUDE_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ALTITUDE,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec ALTITUDE_ABOVE_GROUND_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ALTITUDE_ABOVE_GROUND,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
@@ -700,7 +706,7 @@ const Field_Spec NLVC_STRAIN_XY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_en
 const Field_Spec NLVC_STRAIN_YY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_YY_ERROR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 108;
+const int_t num_fields_defined = 110;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -793,6 +799,8 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     VSG_DVDY_FS,
     ALTITUDE_FS,
     ALTITUDE_ABOVE_GROUND_FS,
+    UNCERTAINTY_FS,
+    UNCERTAINTY_ANGLE_FS,
     GROUND_LEVEL_FS,
     NLVC_STRAIN_XX_FS,
     NLVC_STRAIN_YY_FS,

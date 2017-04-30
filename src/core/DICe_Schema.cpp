@@ -644,9 +644,11 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     Teuchos::RCP<Altitude_Post_Processor> alt_ptr = Teuchos::rcp (new Altitude_Post_Processor(ppParams));
     post_processors_.push_back(alt_ptr);
   }
-  // automatically add the uncertainty post processor:
-  Teuchos::RCP<Uncertainty_Post_Processor> uncertainty_ptr = Teuchos::rcp(new Uncertainty_Post_Processor(Teuchos::null));
-  post_processors_.push_back(uncertainty_ptr);
+  // automatically add the uncertainty post processor if not global:
+  if(analysis_type_!=GLOBAL_DIC){
+    Teuchos::RCP<Uncertainty_Post_Processor> uncertainty_ptr = Teuchos::rcp(new Uncertainty_Post_Processor(Teuchos::null));
+    post_processors_.push_back(uncertainty_ptr);
+  }
   if(post_processors_.size()>0) has_post_processor_ = true;
 
   Teuchos::RCP<Teuchos::ParameterList> outputParams;
@@ -3417,6 +3419,8 @@ Output_Spec::write_info(std::FILE * file,
   fprintf(file,"*** Subset size: %i\n",schema_->subset_dim());
   fprintf(file,"*** Step size: x %i y %i (-1 implies not regular grid)\n",schema_->step_size_x(),schema_->step_size_y());
   if(schema_->post_processors()->size()==0)
+    fprintf(file,"*** Strain window: N/A\n");
+  else if(schema_->strain_window_size(0)==-1)
     fprintf(file,"*** Strain window: N/A\n");
   else
     fprintf(file,"*** Strain window size in pixels: %i (only first strain post-processor is reported)\n",schema_->strain_window_size(0));

@@ -145,7 +145,7 @@ public:
 private:
   /// Computes the difference from the exact solution and associated fields
   /// \param deformation pointer to the deformation parameters
-  void computeErrorFields(Teuchos::RCP<std::vector<scalar_t> > & deformation);
+  void computeUncertaintyFields(Teuchos::RCP<std::vector<scalar_t> > & deformation);
 };
 
 }// End DICe Namespace
