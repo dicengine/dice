@@ -832,8 +832,13 @@ Uncertainty_Post_Processor::execute(){
   TEUCHOS_TEST_FOR_EXCEPTION(uncertainty_rcp==Teuchos::null || uncertainty_angle_rcp==Teuchos::null, std::runtime_error,"");
   for(int_t subset=0;subset<local_num_points_;++subset){
     const scalar_t angle = field1_rcp->local_value(subset);
+    const scalar_t sig = sigma_rcp->local_value(subset);
+    if(sig < 0.0){ // filter failed subsets
+      uncertainty_rcp->local_value(subset) = 0.0;
+      continue;
+    }
     uncertainty_angle_rcp->local_value(subset) = field1_rcp->local_value(subset);
-    uncertainty_rcp->local_value(subset) = angle == 0.0 ? -1.0 : 1.0 / angle * sigma_rcp->local_value(subset);
+    uncertainty_rcp->local_value(subset) = angle == 0.0 ? 0.0 : 1.0 / angle * sig;
   }
   DEBUG_MSG("Uncertainty_Post_Processor::execute(): end");
 }
