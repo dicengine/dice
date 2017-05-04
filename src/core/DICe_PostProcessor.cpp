@@ -829,16 +829,26 @@ Uncertainty_Post_Processor::execute(){
   Teuchos::RCP<DICe::MultiField> field1_rcp = mesh_->get_field(DICe::mesh::field_enums::FIELD_1_FS);
   Teuchos::RCP<DICe::MultiField> uncertainty_rcp = mesh_->get_field(DICe::mesh::field_enums::UNCERTAINTY_FS);
   Teuchos::RCP<DICe::MultiField> uncertainty_angle_rcp = mesh_->get_field(DICe::mesh::field_enums::UNCERTAINTY_ANGLE_FS);
+  Teuchos::RCP<DICe::MultiField> noise_rcp = mesh_->get_field(DICe::mesh::field_enums::NOISE_LEVEL_FS);
+  Teuchos::RCP<DICe::MultiField> max_m_rcp = mesh_->get_field(DICe::mesh::field_enums::STEREO_M_MAX_FS);
   TEUCHOS_TEST_FOR_EXCEPTION(uncertainty_rcp==Teuchos::null || uncertainty_angle_rcp==Teuchos::null, std::runtime_error,"");
   for(int_t subset=0;subset<local_num_points_;++subset){
     const scalar_t angle = field1_rcp->local_value(subset);
     const scalar_t sig = sigma_rcp->local_value(subset);
+    uncertainty_angle_rcp->local_value(subset) = field1_rcp->local_value(subset);
     if(sig < 0.0){ // filter failed subsets
       uncertainty_rcp->local_value(subset) = 0.0;
       continue;
     }
-    uncertainty_angle_rcp->local_value(subset) = field1_rcp->local_value(subset);
-    uncertainty_rcp->local_value(subset) = angle == 0.0 ? 0.0 : 1.0 / angle * sig;
+    // relying on the max-m field to be zero for 2D and have a non-zero value for stereo
+    scalar_t max_m  = max_m_rcp->local_value(subset);
+    if(max_m > 0.0){
+      scalar_t noise_level = noise_rcp->local_value(subset);
+      uncertainty_rcp->local_value(subset) = std::sqrt(2.0*noise_level*noise_level/max_m);
+    }
+    else{
+      uncertainty_rcp->local_value(subset) = angle == 0.0 ? 0.0 : 1.0 / angle * sig;
+    }
   }
   DEBUG_MSG("Uncertainty_Post_Processor::execute(): end");
 }

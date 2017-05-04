@@ -1183,6 +1183,7 @@ Schema::create_mesh_fields(){
   mesh_->create_field(mesh::field_enums::FIELD_8_FS);
   mesh_->create_field(mesh::field_enums::FIELD_9_FS);
   mesh_->create_field(mesh::field_enums::FIELD_10_FS);
+  mesh_->create_field(mesh::field_enums::STEREO_M_MAX_FS);
 
   if(use_incremental_formulation_){
     mesh_->create_field(mesh::field_enums::ACCUMULATED_DISP_FS);
@@ -2675,6 +2676,8 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
   Teuchos::RCP<MultiField> match_left = mesh_->get_field(DICe::mesh::field_enums::MATCH_FS);
   Teuchos::RCP<MultiField> sigma_right = right_schema->mesh()->get_field(DICe::mesh::field_enums::SIGMA_FS);
 
+  Teuchos::RCP<MultiField> max_m = mesh_->get_field(DICe::mesh::field_enums::STEREO_M_MAX_FS);
+
 //  // set up a neighbor search tree:
 //  Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud<scalar_t>());
 //  point_cloud->pts.resize(local_num_subsets_);
@@ -2775,6 +2778,7 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
   scalar_t Xw=0.0,Yw=0.0,Zw=0.0;
   scalar_t xl=0.0,yl=0.0;
   scalar_t xr=0.0,yr=0.0;
+  scalar_t max_m_value = 0.0;
   // if this is the first frame and a best fit plane is being used, clear the transform entries in case they have already been specified by the user
 
   bool best_fit = false;
@@ -2793,7 +2797,8 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
     yl = coords_y->local_value(i) + disp_y->local_value(i);
     xr = stereo_coords_x->local_value(i) + my_stereo_disp_x->local_value(i);
     yr = stereo_coords_y->local_value(i) + my_stereo_disp_y->local_value(i);
-    tri->triangulate(xl,yl,xr,yr,X,Y,Z,Xw,Yw,Zw);
+    max_m_value = tri->triangulate(xl,yl,xr,yr,X,Y,Z,Xw,Yw,Zw);
+    max_m->local_value(i) = max_m_value;
     if(frame_id_==first_frame_id_+1){
       model_x->local_value(i) = Xw; // w-coordinates have been transformed by a user defined transform to world or model coords
       model_y->local_value(i) = Yw;

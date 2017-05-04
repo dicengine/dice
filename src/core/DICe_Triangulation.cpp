@@ -704,7 +704,7 @@ Triangulation::cosine_of_two_vectors(const std::vector<scalar_t> & a,
 }
 
 
-void Triangulation::triangulate(const scalar_t & x0,
+scalar_t Triangulation::triangulate(const scalar_t & x0,
   const scalar_t & y0,
   const scalar_t & x1,
   const scalar_t & y1,
@@ -805,6 +805,7 @@ void Triangulation::triangulate(const scalar_t & x0,
       }
     }
   }
+
   // compute the inverse of M^TM
   lapack.GETRF(3,3,MTM.values(),3,IPIV_ptr,&INFO);
   try
@@ -825,6 +826,10 @@ void Triangulation::triangulate(const scalar_t & x0,
       }
     }
   }
+
+  scalar_t max_m = std::abs(M(0,0));
+  if(std::abs(M(1,1)) > max_m) max_m = std::abs(M(1,1));
+  if(std::abs(M(2,2)) > max_m) max_m = std::abs(M(2,2));
 
   // compute the 3d point
   for(int_t i=0;i<3;++i){
@@ -848,6 +853,7 @@ void Triangulation::triangulate(const scalar_t & x0,
   yw_out = XYZ[1];
   zw_out = XYZ[2];
   DEBUG_MSG("Triangulation::triangulate(): world coordinates X " << xw_out << " Y " << yw_out << " Z "  << zw_out);
+  return max_m;
 }
 
 void

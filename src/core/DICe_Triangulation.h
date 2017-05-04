@@ -106,6 +106,7 @@ public:
   }
 
   /// triangulate the optimal point in 3D.
+  /// returns the the max value of the psuedo matrix
   /// global coordinates are always defined with camera 0 as the origin
   /// unless another transformation is requested by specifying a transformation file
   /// \param x0 sensor x coordinate of the point in camera 0
@@ -119,7 +120,7 @@ public:
   /// \param yw_out global y position in world coords
   /// \param zw_out global z position in world coords
   /// \param correct_lens_distortion correct for lens distortion
-  void triangulate(const scalar_t & x0,
+  scalar_t triangulate(const scalar_t & x0,
     const scalar_t & y0,
     const scalar_t & x1,
     const scalar_t & y1,
