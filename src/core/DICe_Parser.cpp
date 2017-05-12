@@ -44,6 +44,7 @@
 #include <DICe_ParameterUtilities.h>
 #include <DICe.h>
 #include <DICe_Cine.h>
+#include <DICe_NetCDF.h>
 
 #include <Teuchos_oblackholestream.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
@@ -219,9 +220,9 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
       required_param_missing = true;
     }
   }
-  if(!inputParams->isParameter(DICe::reference_image_index)&&!inputParams->isParameter(DICe::reference_image)&&!inputParams->isParameter(DICe::cine_file)){
+  if(!inputParams->isParameter(DICe::reference_image_index)&&!inputParams->isParameter(DICe::reference_image)&&!inputParams->isParameter(DICe::cine_file)&&!inputParams->isParameter(DICe::netcdf_file)){
     std::cout << "Error: Either the parameter " << DICe:: reference_image_index << " or " <<
-        DICe::reference_image << " or " << DICe::cine_file << " needs to be specified in " << input_file << std::endl;
+        DICe::reference_image << " or " << DICe::cine_file << " or " << DICe::netcdf_file << " needs to be specified in " << input_file << std::endl;
     required_param_missing = true;
   }
   // specifying a simple two image correlation
@@ -420,6 +421,8 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
       "Error, cannot specify stereo_right_suffix and reference_image");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::cine_file),std::runtime_error,
       "Error, cannot specify cine_file and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::netcdf_file),std::runtime_error,
+      "Error, cannot specify netcdf_file and reference_image");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_cine_file),std::runtime_error,
       "Error, cannot specify stereo_cine_file and reference_image");
 
@@ -577,6 +580,67 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
       }
     }
   } // end cine file
+  else if(params->isParameter(DICe::netcdf_file)){
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image),std::runtime_error,
+      "Error, cannot specify reference_image and netcdf_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::deformed_images),std::runtime_error,
+      "Error, cannot specify deformed_images and netcdf_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_reference_image),std::runtime_error,
+      "Error, cannot specify stereo_reference_image and netcdf_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_deformed_images),std::runtime_error,
+      "Error, cannot specify stereo_deformed_images and netcdf_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image_index),std::runtime_error,
+      "Error, cannot specify reference_image_index and netcdf_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::end_image_index),std::runtime_error,
+      "Error, cannot specify end_image_index and netcdf_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::start_image_index),std::runtime_error,
+      "Error, cannot specify start_image_index and netcdf_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::image_file_prefix),std::runtime_error,
+      "Error, cannot specify image_file_prefix and netcdf_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::image_file_extension),std::runtime_error,
+      "Error, cannot specify image_file_prefix and netcdf_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::num_file_suffix_digits),std::runtime_error,
+      "Error, cannot specify image_file_prefix and netcdf_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_left_suffix),std::runtime_error,
+      "Error, cannot specify stereo_left_suffix and netcdf_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_right_suffix),std::runtime_error,
+      "Error, cannot specify stereo_right_suffix and netcdf_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::cine_file),std::runtime_error,
+      "Error, cannot specify cine_file and netcdf_file");
+
+    std::stringstream netcdf_name;
+    std::string netcdf_file_name = params->get<std::string>(DICe::netcdf_file);
+    netcdf_name << params->get<std::string>(DICe::image_folder) << netcdf_file_name;
+    Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
+
+    Teuchos::RCP<DICe::netcdf::NetCDF_Reader> netcdf_reader = Teuchos::rcp(new DICe::netcdf::NetCDF_Reader());
+    int_t netcdf_width = 0;
+    int_t netcdf_height = 0;
+    int_t netcdf_num_time_steps = 0;
+    netcdf_reader->get_image_dimensions(netcdf_name.str(),netcdf_width,netcdf_height,netcdf_num_time_steps);
+    TEUCHOS_TEST_FOR_EXCEPTION(netcdf_num_time_steps <=0, std::runtime_error,"");
+
+    // strip the .nc part from the end of the file_name:
+    std::string trimmed_name = netcdf_name.str();
+    const std::string ext(".nc");
+    if(trimmed_name.size() > ext.size() && trimmed_name.substr(trimmed_name.size() - ext.size()) == ".nc" )
+    {
+       trimmed_name = trimmed_name.substr(0, trimmed_name.size() - ext.size());
+    }else{
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid netcdf file: " << netcdf_file_name);
+    }
+    std::stringstream ref_netcdf_ss;
+    ref_netcdf_ss << trimmed_name << "_frame_0.nc"; // always use the 0th frame for the reference for netcdf files
+    image_files.resize(netcdf_num_time_steps+1);
+    image_files[0] = ref_netcdf_ss.str();
+    int_t current_index = 1;
+    for(int_t i=0;i<netcdf_num_time_steps;i++){
+      std::stringstream def_netcdf_ss;
+      def_netcdf_ss << trimmed_name << "_frame_" << i << ".nc";
+      image_files[current_index++] = def_netcdf_ss.str();
+    }
+    // TODO add stereo netcdf files processed in batch
+  } // end netcdf file
   // User specified an image sequence:
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image),std::runtime_error,

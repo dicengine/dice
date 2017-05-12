@@ -119,6 +119,8 @@ const char* const stereo_reference_image = "stereo_reference_image";
 /// Input parameter
 const char* const stereo_deformed_images = "stereo_deformed_images";
 /// Input parameter
+const char* const netcdf_file = "netcdf_file";
+/// Input parameter
 const char* const cine_file = "cine_file";
 /// Input parameter
 const char* const cine_ref_index = "cine_ref_index";

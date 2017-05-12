@@ -63,6 +63,20 @@ namespace DICe{
 namespace utils{
 
 DICE_LIB_DLL_EXPORT
+std::string netcdf_file_name(const char * decorated_netcdf_file){
+  std::string netcdf_string(decorated_netcdf_file);
+  // trim off the last underscore and the rest
+  size_t found = netcdf_string.find("_frame_");
+  if(found==std::string::npos){
+    return netcdf_string;
+  }
+  std::string file_name = netcdf_string.substr(0,found);
+  // add the .cine extension back
+  file_name+=".nc";
+  return file_name;
+}
+
+DICE_LIB_DLL_EXPORT
 std::string cine_file_name(const char * decorated_cine_file){
   std::string cine_string(decorated_cine_file);
   // trim off the last underscore and the rest
@@ -71,6 +85,19 @@ std::string cine_file_name(const char * decorated_cine_file){
   // add the .cine extension back
   file_name+=".cine";
   return file_name;
+}
+
+DICE_LIB_DLL_EXPORT
+int_t netcdf_index(const char * decorated_netcdf_file){
+  std::string netcdf_string(decorated_netcdf_file);
+  // trim off the last underscore and the rest
+  size_t found = netcdf_string.find("_frame_");
+  if(found==std::string::npos) return 0;
+  size_t found_underscore = netcdf_string.find_last_of("_");
+  size_t found_ext = netcdf_string.find(".nc");
+  std::string first_num_str = netcdf_string.substr(found_underscore+1,found_ext - found_underscore - 1);
+  DEBUG_MSG("netcdf_index(): " << first_num_str);
+  return std::atoi(first_num_str.c_str());
 }
 
 DICE_LIB_DLL_EXPORT
@@ -188,7 +215,9 @@ void read_image_dimensions(const char * file_name,
   else if(file_type==NETCDF){
     netcdf::NetCDF_Reader netcdf_reader;
     int_t num_time_steps = 0;
-    netcdf_reader.get_image_dimensions(file_name,width,height,num_time_steps);
+    const std::string netcdf_file = netcdf_file_name(file_name);
+    DEBUG_MSG("read_image_dimensions(): netcdf file name: " << netcdf_file);
+    netcdf_reader.get_image_dimensions(netcdf_file,width,height,num_time_steps);
   }
 #endif
 }
@@ -242,7 +271,9 @@ void read_image(const char * file_name,
   /// check if the file is a netcdf file
   else if(file_type==NETCDF){
     netcdf::NetCDF_Reader netcdf_reader;
-    netcdf_reader.read_netcdf_image(file_name,intensities,0,is_layout_right);
+    const std::string netcdf_file = netcdf_file_name(file_name);
+    const int_t index = netcdf_index(file_name);
+    netcdf_reader.read_netcdf_image(netcdf_file.c_str(),intensities,index,is_layout_right);
   }
 #endif
   else if(file_type==TIFF||file_type==TIFF||file_type==JPEG||file_type==PNG){
@@ -323,7 +354,9 @@ void read_image(const char * file_name,
   /// check if the file is a netcdf file
     else if(file_type==NETCDF){
       netcdf::NetCDF_Reader netcdf_reader;
-      netcdf_reader.read_netcdf_image(file_name,offset_x,offset_y,width,height,0,intensities,is_layout_right);
+      const std::string netcdf_file = netcdf_file_name(file_name);
+      const int_t index = netcdf_index(file_name);
+      netcdf_reader.read_netcdf_image(netcdf_file.c_str(),offset_x,offset_y,width,height,index,intensities,is_layout_right);
     }
 #endif
   else if(file_type==TIFF||file_type==TIFF||file_type==JPEG||file_type==PNG){

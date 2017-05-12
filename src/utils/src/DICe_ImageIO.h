@@ -58,8 +58,18 @@ namespace DICe{
 /// utilities that wont build with NVCC so they are separated out into another namespace
 namespace utils{
 
-/// returns the name of a cine file given a decorated cine string
-/// \param cine_string the decorated string that contains the name
+/// returns the name of a netcdf file given a decorated cine string
+/// \param decorated_netcdf_file_string the decorated string that contains the name
+DICE_LIB_DLL_EXPORT
+std::string netcdf_file_name(const char * decorated_netcdf_file);
+
+/// returns the frame index decyphered from the netcdf file descriptor passed in
+/// \param decorated_netcdf_file the descriptor that has the netcdf name and index concatendated
+DICE_LIB_DLL_EXPORT
+int_t netcdf_index(const char * decorated_netcdf_file);
+
+/// returns the name of a file given a decorated file name string
+/// \param decorated_cine_file the decorated string that contains the name
 DICE_LIB_DLL_EXPORT
 std::string cine_file_name(const char * decorated_cine_file);
 

@@ -72,21 +72,19 @@ int main(int argc, char *argv[]) {
   std::string delimiter = " ,\r";
 
   // determine if the second argument is help, file name or folder name
-  if(argc!=6){
+  if(argc!=5){
     std::cout << " DICe_ExoToNetCDF (exports a serial exodus file to NetCDF) " << std::endl;
-    std::cout << " Syntax: DICe_ExoToNetCDF <exodus_file_name> <netcdf_file_previx (no index or extension)> <num_digits in netcdf index> <output_prefix (no extension)> <num_neighbors>" << std::endl;
+    std::cout << " Syntax: DICe_ExoToNetCDF <exodus_file_name> <netcdf_file_name> <output_file_name> <num_neighbors>" << std::endl;
     exit(-1);
   }
   std::string exo_name = argv[1];
   std::string netcdf_input_name = argv[2];
-  const int_t num_digits = std::atoi(argv[3]);
-  std::string output_prefix = argv[4];
-  const int_t num_neigh = std::atoi(argv[5]);
+  std::string output_name = argv[3];
+  const int_t num_neigh = std::atoi(argv[4]);
 
   *outStream << "exodus input file:          " << exo_name << std::endl;
-  *outStream << "netcdf input file prefix:   " << netcdf_input_name << std::endl;
-  *outStream << "num digits in netcdf index: " << num_digits << std::endl;
-  *outStream << "output file prefix:         " << output_prefix << std::endl;
+  *outStream << "netcdf input file:          " << netcdf_input_name << std::endl;
+  *outStream << "output file:                " << output_name << std::endl;
   *outStream << "num neighbors to use for surface fit: " << num_neigh << std::endl;
 
   // read the properties of the exodus file:
@@ -111,12 +109,11 @@ int main(int argc, char *argv[]) {
   int_t img_w = 0;
   int_t img_h = 0;
   int_t num_netcdf_time_steps = 0;
-  std::stringstream netcdf_zero;
-  netcdf_zero << netcdf_input_name;
-  for(int_t i=0;i<num_digits;++i) netcdf_zero << "0";
-  netcdf_zero << ".nc";
-  netcdf_reader->get_image_dimensions(netcdf_zero.str(),img_w,img_h,num_netcdf_time_steps);
-  *outStream << "image dimensions: " << img_w << " x " << img_h << std::endl;
+  netcdf_reader->get_image_dimensions(netcdf_input_name,img_w,img_h,num_netcdf_time_steps);
+  *outStream << "image dimensions: " << img_w << " x " << img_h << " num frames: " << num_netcdf_time_steps << std::endl;
+
+  TEUCHOS_TEST_FOR_EXCEPTION(num_time_steps!=num_netcdf_time_steps,std::runtime_error,
+    "Incompatible netcdf and exodus input files. Time steps in exodus " << num_time_steps << " time steps in netcdf " << num_netcdf_time_steps );
 
   std::vector<std::string> output_field_names;
   output_field_names.push_back("data"); // holds the image intensities
@@ -181,38 +178,23 @@ int main(int argc, char *argv[]) {
   int *IWORK = new int[LWORK];
   Teuchos::LAPACK<int,double> lapack;
 
+  Teuchos::RCP<DICe::netcdf::NetCDF_Writer> netcdf_writer =
+      Teuchos::rcp(new DICe::netcdf::NetCDF_Writer(output_name.c_str(),img_w,img_h,num_netcdf_time_steps,output_field_names));
+
   // iterate each step in the exodus file:
   for(int_t step=0;step<num_time_steps;++step){
-    int_t pad = num_digits - 1;
-    if(step >= 10 && step < 100) pad -= 1;
-    else if(step >= 100 && step < 1000) pad -= 2;
-    else if(step >= 1000 && step < 10000) pad -= 3;
-    TEUCHOS_TEST_FOR_EXCEPTION(step > 99999,std::runtime_error,"Error, exodus file has too many steps");
 
-    std::stringstream netcdf_name;
-    netcdf_name << output_prefix << "_";
-    for(int_t i=0;i<pad;++i)
-      netcdf_name << "0";
-    netcdf_name << step << ".nc";
-    *outStream << "processing output file " << netcdf_name.str() << std::endl;
-
-    std::stringstream netcdf_image;
-    netcdf_image << netcdf_input_name;
-    for(int_t i=0;i<pad;++i) netcdf_image << "0";
-    netcdf_image << step << ".nc";
-    *outStream << "using intensities from file " << netcdf_image.str() << std::endl;
+    *outStream << "processing step: " << step << std::endl;
 
     std::vector<intensity_t> intensities(img_w*img_h);
-    netcdf_reader->read_netcdf_image(netcdf_image.str().c_str(),&intensities[0],0);
+    netcdf_reader->read_netcdf_image(netcdf_input_name.c_str(),&intensities[0],step);
     // convert the intensities to floats to save space:
     std::vector<float> intens_float(img_w*img_h);
     for(int_t i=0;i<img_w*img_h;++i)
       intens_float[i] = (float)intensities[i];
 
-    Teuchos::RCP<DICe::netcdf::NetCDF_Writer> netcdf_writer =
-        Teuchos::rcp(new DICe::netcdf::NetCDF_Writer(netcdf_name.str().c_str(),img_w,img_h,1,output_field_names));
     // add the image intensities to the output file
-    netcdf_writer->write_float_array("data",0,intens_float);
+    netcdf_writer->write_float_array("data",step,intens_float);
 
     // get each of the fields from the exodus mesh
     std::vector<std::vector<scalar_t> > exo_fields(output_field_names.size()-1);
@@ -286,7 +268,7 @@ int main(int argc, char *argv[]) {
     } // end y pixel loop
     // save off the resulting pixel values
     for(size_t f=0;f<pixel_fields.size();++f){
-      netcdf_writer->write_float_array(output_field_names[f+1],0,pixel_fields[f]);
+      netcdf_writer->write_float_array(output_field_names[f+1],step,pixel_fields[f]);
     }
   } // end step loop
 
