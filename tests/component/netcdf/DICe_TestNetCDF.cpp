@@ -69,6 +69,9 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- Begin test ---" << std::endl;
 
+  Teuchos::RCP<Image> multi_image = Teuchos::rcp(new Image("/Users/dzturne/problems/dic_netcdf/goes14.2016.042.214517_2016.042.221115.c2428.r1387.n26.BAND_01.nc"));
+  multi_image->write("multi_image.tif");
+
   // create a netcdf reader:
   Teuchos::RCP<Image> img = Teuchos::rcp(new Image("../images/goes14.2016.222.215844.BAND_01.nc"));
   //img->write("netcdf_image.tif");
@@ -107,8 +110,9 @@ int main(int argc, char *argv[]) {
   }
   std::vector<std::string> var_names;
   var_names.push_back("data");
-  Teuchos::RCP<DICe::netcdf::NetCDF_Writer> netcdf_writer = Teuchos::rcp(new DICe::netcdf::NetCDF_Writer("test.nc",img_w,img_h,var_names));
-  netcdf_writer->write_float_array("data",data_vec);
+  Teuchos::RCP<DICe::netcdf::NetCDF_Writer> netcdf_writer = Teuchos::rcp(new DICe::netcdf::NetCDF_Writer("test.nc",img_w,img_h,1,var_names));
+  *outStream << "created output netcdf file " << std::endl;
+  netcdf_writer->write_float_array("data",0,data_vec);
 
   Teuchos::RCP<Image> test_img = Teuchos::rcp(new Image("./test.nc"));
   test_img->write("test_img.tif");

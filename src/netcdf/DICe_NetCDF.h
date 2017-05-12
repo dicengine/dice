@@ -75,13 +75,20 @@ public:
   /// read the intensities from the netcdf file:
   /// \param file_name the name of the file to read
   /// \param intensities pointer to the intensity array (must be pre-allocated)
+  /// \param time_index the time step to read
   /// \param is_layout_right true if the arrays are oriented layout right in memory
   void read_netcdf_image(const char * file_name,
     intensity_t * intensities,
+    const size_t time_index,
     const bool is_layout_right = true);
 
   /// read the intensities from the netcdf file:
   /// \param file_name the name of the file to read
+  /// \param offset_x offset in x direction
+  /// \param offset_y offset in y direction
+  /// \param width width of the sub frame
+  /// \param height height of the subframe
+  /// \param time_index the time frame to retrieve
   /// \param intensities pointer to the intensity array (must be pre-allocated)
   /// \param is_layout_right true if the arrays are oriented layout right in memory
   void read_netcdf_image(const char * file_name,
@@ -89,6 +96,7 @@ public:
     const int_t offset_y,
     const int_t width,
     const int_t height,
+    const size_t time_index,
     intensity_t * intensities,
     const bool is_layout_right = true);
 
@@ -96,9 +104,11 @@ public:
   /// \param file_name the name of the file to get dims for
   /// \param width the width of the image
   /// \param height the height of the image
+  /// \param num_time_steps the number of time steps in this file
   void get_image_dimensions(const std::string & file_name,
     int_t & width,
-    int_t & height);
+    int_t & height,
+    int_t & num_time_steps);
 
 private:
 
@@ -114,11 +124,13 @@ public:
   /// \param file_name the name of the file to create
   /// \param width the width of the data array
   /// \param height the height of the data array
+  /// \param num_time_steps the number of time steps to include in the file
   /// \param var_names vector with the names of the varibles to save
   /// \param use_double forces output to be in double, not float
   NetCDF_Writer(const std::string & file_name,
     const int_t & width,
     const int_t & height,
+    const int_t & num_time_steps,
     const std::vector<std::string> & var_names,
     const bool use_double = false);
   /// default destructor
@@ -127,15 +139,19 @@ public:
   /// write an array to the file
   /// if the file exists, overwrite
   /// \param var_name the name of the variable to write
+  /// \param time_index the time frame to write
   /// \param vector of float values to write
   void write_float_array(const std::string var_name,
+    const size_t time_index,
     const std::vector<float> & array);
 
   /// write an array to the file
   /// if the file exists, overwrite
   /// \param var_name the name of the variable to write
+  /// \param time_index the time frame to write
   /// \param vector of double values to write
   void write_double_array(const std::string var_name,
+    const size_t time_index,
     const std::vector<double> & array);
 
 private:
@@ -144,6 +160,8 @@ private:
   const int_t dim_x_;
   /// y dimension of the array
   const int_t dim_y_;
+  /// the number of time steps
+  const int_t num_time_steps_;
   /// collection of all the varible names
   std::vector<std::string> var_names_;
   /// collection of the variable ids

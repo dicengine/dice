@@ -110,11 +110,12 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<DICe::netcdf::NetCDF_Reader> netcdf_reader = Teuchos::rcp(new DICe::netcdf::NetCDF_Reader());
   int_t img_w = 0;
   int_t img_h = 0;
+  int_t num_netcdf_time_steps = 0;
   std::stringstream netcdf_zero;
   netcdf_zero << netcdf_input_name;
   for(int_t i=0;i<num_digits;++i) netcdf_zero << "0";
   netcdf_zero << ".nc";
-  netcdf_reader->get_image_dimensions(netcdf_zero.str(),img_w,img_h);
+  netcdf_reader->get_image_dimensions(netcdf_zero.str(),img_w,img_h,num_netcdf_time_steps);
   *outStream << "image dimensions: " << img_w << " x " << img_h << std::endl;
 
   std::vector<std::string> output_field_names;
@@ -202,16 +203,16 @@ int main(int argc, char *argv[]) {
     *outStream << "using intensities from file " << netcdf_image.str() << std::endl;
 
     std::vector<intensity_t> intensities(img_w*img_h);
-    netcdf_reader->read_netcdf_image(netcdf_image.str().c_str(),&intensities[0]);
+    netcdf_reader->read_netcdf_image(netcdf_image.str().c_str(),&intensities[0],0);
     // convert the intensities to floats to save space:
     std::vector<float> intens_float(img_w*img_h);
     for(int_t i=0;i<img_w*img_h;++i)
       intens_float[i] = (float)intensities[i];
 
     Teuchos::RCP<DICe::netcdf::NetCDF_Writer> netcdf_writer =
-        Teuchos::rcp(new DICe::netcdf::NetCDF_Writer(netcdf_name.str().c_str(),img_w,img_h,output_field_names));
+        Teuchos::rcp(new DICe::netcdf::NetCDF_Writer(netcdf_name.str().c_str(),img_w,img_h,1,output_field_names));
     // add the image intensities to the output file
-    netcdf_writer->write_float_array("data",intens_float);
+    netcdf_writer->write_float_array("data",0,intens_float);
 
     // get each of the fields from the exodus mesh
     std::vector<std::vector<scalar_t> > exo_fields(output_field_names.size()-1);
@@ -285,7 +286,7 @@ int main(int argc, char *argv[]) {
     } // end y pixel loop
     // save off the resulting pixel values
     for(size_t f=0;f<pixel_fields.size();++f){
-      netcdf_writer->write_float_array(output_field_names[f+1],pixel_fields[f]);
+      netcdf_writer->write_float_array(output_field_names[f+1],0,pixel_fields[f]);
     }
   } // end step loop
 

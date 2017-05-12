@@ -187,7 +187,8 @@ void read_image_dimensions(const char * file_name,
 #if DICE_ENABLE_NETCDF
   else if(file_type==NETCDF){
     netcdf::NetCDF_Reader netcdf_reader;
-    netcdf_reader.get_image_dimensions(file_name,width,height);
+    int_t num_time_steps = 0;
+    netcdf_reader.get_image_dimensions(file_name,width,height,num_time_steps);
   }
 #endif
 }
@@ -241,7 +242,7 @@ void read_image(const char * file_name,
   /// check if the file is a netcdf file
   else if(file_type==NETCDF){
     netcdf::NetCDF_Reader netcdf_reader;
-    netcdf_reader.read_netcdf_image(file_name,intensities,is_layout_right);
+    netcdf_reader.read_netcdf_image(file_name,intensities,0,is_layout_right);
   }
 #endif
   else if(file_type==TIFF||file_type==TIFF||file_type==JPEG||file_type==PNG){
@@ -322,7 +323,7 @@ void read_image(const char * file_name,
   /// check if the file is a netcdf file
     else if(file_type==NETCDF){
       netcdf::NetCDF_Reader netcdf_reader;
-      netcdf_reader.read_netcdf_image(file_name,offset_x,offset_y,width,height,intensities,is_layout_right);
+      netcdf_reader.read_netcdf_image(file_name,offset_x,offset_y,width,height,0,intensities,is_layout_right);
     }
 #endif
   else if(file_type==TIFF||file_type==TIFF||file_type==JPEG||file_type==PNG){
