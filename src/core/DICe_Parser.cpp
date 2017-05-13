@@ -580,6 +580,7 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
       }
     }
   } // end cine file
+#if DICE_ENABLE_NETCDF
   else if(params->isParameter(DICe::netcdf_file)){
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image),std::runtime_error,
       "Error, cannot specify reference_image and netcdf_file");
@@ -641,6 +642,7 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
     }
     // TODO add stereo netcdf files processed in batch
   } // end netcdf file
+#endif
   // User specified an image sequence:
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image),std::runtime_error,
