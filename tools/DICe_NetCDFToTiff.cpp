@@ -97,11 +97,57 @@ int main(int argc, char *argv[]) {
   //Teuchos::RCP<DICe::netcdf::NetCDF_Reader> netcdf_reader = Teuchos::rcp(new netcdf::NetCDF_Reader());
 
   if(is_file_name){
-    Teuchos::RCP<Image> img = Teuchos::rcp(new Image(name.c_str()));//netcdf_reader->get_image(name);
-    std::string old_name = name;
-    name.replace(len-3,3,".tif");
-    DEBUG_MSG("Converting file: " << old_name << " to " << name);
-    img->write(name);
+    // determine if this is a block .nc with multiple images:
+    netcdf::NetCDF_Reader netcdf_reader;
+    int_t num_time_steps = 0;
+    int_t width = 0;
+    int_t height = 0;
+    netcdf_reader.get_image_dimensions(name,width,height,num_time_steps);
+
+    // strip the .nc part from the end of the file_name:
+    std::string trimmed_name = name;
+    const std::string ext(".nc");
+    if(trimmed_name.size() > ext.size() && trimmed_name.substr(trimmed_name.size() - ext.size()) == ".nc" )
+    {
+       trimmed_name = trimmed_name.substr(0, trimmed_name.size() - ext.size());
+    }else{
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid netcdf file: " << name);
+    }
+    if(num_time_steps > 1){
+      // determine the total number of digits:
+      int_t num_digits_total = 0;
+      int_t decrement_total = num_time_steps;
+      while (decrement_total){decrement_total /= 10; num_digits_total++;}
+
+      for(int_t i=0;i<num_time_steps;++i){
+        // decorate the file name
+        int_t num_digits_image = 0;
+        int_t decrement_image = i;
+        if(decrement_image==0) num_digits_image = 1;
+        else
+          while (decrement_image){decrement_image /= 10; num_digits_image++;}
+        int_t num_zeros = num_digits_total - num_digits_image;
+
+        std::stringstream netcdf_ss;
+        netcdf_ss << trimmed_name << "_frame_";
+        for(int_t z=0;z<num_zeros;++z)
+          netcdf_ss << "0";
+        netcdf_ss << i << ".nc";
+        Teuchos::RCP<Image> img = Teuchos::rcp(new Image(netcdf_ss.str().c_str()));//netcdf_reader->get_image(name);
+        std::string new_name = netcdf_ss.str();
+        const size_t new_len = new_name.length();
+        new_name.replace(new_len-3,3,".tif");
+        DEBUG_MSG("Converting file: " << netcdf_ss.str() << " to " << new_name);
+        img->write(new_name);
+      }
+    }
+    else{
+      Teuchos::RCP<Image> img = Teuchos::rcp(new Image(name.c_str()));//netcdf_reader->get_image(name);
+      std::string old_name = name;
+      name.replace(len-3,3,".tif");
+      DEBUG_MSG("Converting file: " << old_name << " to " << name);
+      img->write(name);
+    }
   }
   else{
 #ifndef   DICE_DISABLE_BOOST_FILESYSTEM
