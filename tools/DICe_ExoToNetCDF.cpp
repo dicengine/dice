@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
   netcdf_reader->get_image_dimensions(netcdf_input_name,img_w,img_h,num_netcdf_time_steps);
   *outStream << "image dimensions: " << img_w << " x " << img_h << " num frames: " << num_netcdf_time_steps << std::endl;
 
-  TEUCHOS_TEST_FOR_EXCEPTION(num_time_steps!=num_netcdf_time_steps,std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(num_time_steps>num_netcdf_time_steps,std::runtime_error,
     "Incompatible netcdf and exodus input files. Time steps in exodus " << num_time_steps << " time steps in netcdf " << num_netcdf_time_steps );
 
   std::vector<std::string> output_field_names;

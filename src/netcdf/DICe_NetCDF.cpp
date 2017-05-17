@@ -394,7 +394,7 @@ NetCDF_Writer::NetCDF_Writer(const std::string & file_name,
   TEUCHOS_TEST_FOR_EXCEPTION(retval,std::runtime_error,"");
   retval = nc_def_dim(ncid, "yc", height, &ydim_id);
   TEUCHOS_TEST_FOR_EXCEPTION(retval,std::runtime_error,"");
-  retval = nc_def_dim(ncid, "time", num_time_steps, &timedim_id);
+  retval = nc_def_dim(ncid, "time", NC_UNLIMITED, &timedim_id);//num_time_steps, &timedim_id);
   TEUCHOS_TEST_FOR_EXCEPTION(retval,std::runtime_error,"");
   std::vector<int_t> dim_ids(3);
   dim_ids[1] = ydim_id; dim_ids[2] = xdim_id; dim_ids[0] = timedim_id;
@@ -417,7 +417,7 @@ NetCDF_Writer::NetCDF_Writer(const std::string & file_name,
   /* End define mode. This tells netCDF we are done defining
    * metadata. */
   retval = nc_enddef(ncid);
-  TEUCHOS_TEST_FOR_EXCEPTION(retval,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(retval,std::runtime_error,retval);
   nc_close(ncid);
 }
 
