@@ -95,12 +95,14 @@ int main(int argc, char *argv[]) {
   bool has_strain = false;
   bool has_acc_disp = false;
   bool has_uncertainty = false;
+  bool has_model_coords = false;
   for(size_t i=0;i<mesh_fields.size();++i){
     *outStream << mesh_fields[i] << std::endl;
     if(mesh_fields[i] == "ALTITUDE_ABOVE_GROUND") has_altitude = true;
     if(mesh_fields[i] == "VSG_STRAIN_XX") has_strain = true;
     if(mesh_fields[i] == "ACCUMULATED_DISP_X") has_acc_disp = true;
     if(mesh_fields[i] == "UNCERTAINTY") has_uncertainty = true;
+    if(mesh_fields[i] == "MODEL_COORDINATES_X") has_model_coords = true;
   }
   int_t num_time_steps = DICe::mesh::read_exodus_num_steps(mesh);
   *outStream << "number of time steps " << num_time_steps << std::endl;
@@ -130,6 +132,11 @@ int main(int argc, char *argv[]) {
   if(has_acc_disp){
     output_field_names.push_back("ACCUMULATED_DISP_X");
     output_field_names.push_back("ACCUMULATED_DISP_Y");
+  }
+  if(has_model_coords){
+    output_field_names.push_back("MODEL_COORDINATES_X");
+    output_field_names.push_back("MODEL_COORDINATES_Y");
+    output_field_names.push_back("MODEL_COORDINATES_Z");
   }
   if(has_altitude)
     output_field_names.push_back("ALTITUDE_ABOVE_GROUND");
