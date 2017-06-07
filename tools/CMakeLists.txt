@@ -126,3 +126,16 @@ if(DICE_ENABLE_NETCDF)
     RUNTIME_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/bin"
   )
 endif()
+if(DICE_ENABLE_OPENCV)
+  add_executable(DICe_OpenCVServer DICe_OpenCVServer.cpp)
+  target_link_libraries(DICe_OpenCVServer ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
+  install(TARGETS DICe_OpenCVServer
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/bin 
+  )
+  set_target_properties(DICe_OpenCVServer
+    PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
+    ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
+    RUNTIME_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/bin"
+  )
+endif()
