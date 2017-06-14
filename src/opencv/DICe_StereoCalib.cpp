@@ -150,13 +150,13 @@ StereoCalib(const int mode,
           size_t lastindex = filename.find_last_of(".");
           string rawname = filename.substr(0, lastindex);
           corner_filename << rawname << "_markers.png";
-          Mat im_with_keypoints;
-          if(mode==1){
-            drawKeypoints( not_src, keypoints, im_with_keypoints, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
-          }else{
-            drawKeypoints( bi_src, keypoints, im_with_keypoints, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
-          }
-          imwrite(corner_filename.str().c_str(), im_with_keypoints);
+          //Mat im_with_keypoints;
+          //if(mode==1){
+          //  drawKeypoints( not_src, keypoints, im_with_keypoints, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+          //}else{
+          //  drawKeypoints( bi_src, keypoints, im_with_keypoints, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+          //}
+          //imwrite(corner_filename.str().c_str(), im_with_keypoints);
           for(size_t i=0;i<keypoints.size();++i)
             std::cout << "keypoint " << keypoints[i].pt.x << " " << keypoints[i].pt.y << std::endl;
           if(keypoints.size()!=3){
@@ -251,12 +251,12 @@ StereoCalib(const int mode,
           else{
             detector->detect( not_src, dots );
           }
-          Mat im_with_dots;
-          drawKeypoints( bi_src, dots, im_with_dots, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+          //Mat im_with_dots;
+          //drawKeypoints( bi_src, dots, im_with_dots, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
           // Show blobs
-          std::stringstream dots_filename;
-          dots_filename << rawname << "_dots.png";
-          imwrite(dots_filename.str().c_str(), im_with_dots);
+          //std::stringstream dots_filename;
+          //dots_filename << rawname << "_dots.png";
+          //imwrite(dots_filename.str().c_str(), im_with_dots);
 
           // compute the average dot size:
           float avg_dot_size = 0.0;
