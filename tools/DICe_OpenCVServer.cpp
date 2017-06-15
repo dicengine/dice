@@ -75,18 +75,36 @@ int main(int argc, char *argv[]) {
   //}
 
   // read the list of images:
-  // all the arguments that start with a dot are images
-  std::vector<std::string> images;
+  // all the arguments that have a file extension and are not a number or filter are images
+  // the ordering of images is in input/output pairs ...
+  std::vector<std::string> input_images;
+  std::vector<std::string> output_images;
   int_t end_images = 0;
+  bool i_o_flag = true;
   for(int_t i=1;i<argc;++i){
     std::string arg = argv[i];
-    if(arg[0]=='.'){
-      images.push_back(arg);
-      DEBUG_MSG("Adding image: " << arg);
+    if(arg.find('.')!=std::string::npos&&!std::isdigit(arg[0])&&arg.find(':')==std::string::npos){
+      if(i_o_flag){
+        input_images.push_back(arg);
+        DEBUG_MSG("Adding input image: " << arg);
+      }else{
+        if(arg.find(".png")==std::string::npos){
+          std::cout << "error, invalid output image format, (only .png is allowed)" << std::endl;
+          return -1;
+        }
+        output_images.push_back(arg);
+        DEBUG_MSG("Adding output image: " << arg);
+      }
+      i_o_flag = !i_o_flag;
     }else{
       end_images = i;
       break;
     }
+  }
+  // make sure that end_images is odd at this point since the i/o image names have to come in pairs
+  if(input_images.size()==0||input_images.size()!=output_images.size()||!end_images%2){
+    std::cout << "error, invalid input/output images, num input " << input_images.size() << " num output " << output_images.size() << " " << end_images%2 << std::endl;
+    return -1;
   }
 
   std::vector<std::string> filters;
@@ -113,7 +131,7 @@ int main(int argc, char *argv[]) {
 
   DEBUG_MSG("number of filters: " << filters.size());
   if(filters.size()!=filter_params.size()){
-    std::cout << "filters vec and filter params vec are not the same size" << std::endl;
+    std::cout << "error, filters vec and filter params vec are not the same size" << std::endl;
     return -1;
   }
   for(size_t i=0;i<filters.size();++i){
@@ -122,17 +140,17 @@ int main(int argc, char *argv[]) {
       DEBUG_MSG("    parameter: " << filter_params[i][j]);
   }
 
-  for(size_t image_it=0;image_it<images.size();++image_it){
-    DEBUG_MSG("processing image " << images[image_it]);
+  for(size_t image_it=0;image_it<input_images.size();++image_it){
+    DEBUG_MSG("processing image " << input_images[image_it]);
 
     // load the image as an openCV mat
-    Mat img = imread(images[image_it], IMREAD_GRAYSCALE);
+    Mat img = imread(input_images[image_it], IMREAD_GRAYSCALE);
     if(img.empty()){
-      std::cout << "the image is empty" << std::endl;
+      std::cout << "error, the image is empty" << std::endl;
       return -1;
     }
     if(!img.data){
-      std::cout << "the image failed to load" << std::endl;
+      std::cout << "error, the image failed to load" << std::endl;
       return -1;
     }
     for(size_t filter_it=0;filter_it<filters.size();++filter_it){
@@ -141,7 +159,7 @@ int main(int argc, char *argv[]) {
       if(filters[filter_it]=="Filter:BinaryThreshold"){
         // set the parameters
         if(filter_params[filter_it].size()!=4){
-          std::cout << "the number of parameters for a binary filter should be 4, not " << filter_params[filter_it].size() << std::endl;
+          std::cout << "error, the number of parameters for a binary filter should be 4, not " << filter_params[filter_it].size() << std::endl;
           return -1;
         }
         int filterMode = CV_ADAPTIVE_THRESH_GAUSSIAN_C;
@@ -157,7 +175,7 @@ int main(int argc, char *argv[]) {
 
       if(filters[filter_it]=="Filter:Blob"){
         if(filter_params[filter_it].size()!=12){
-          std::cout << "the number of parameters for a blob filter should be 12, not " << filter_params[filter_it].size() << std::endl;
+          std::cout << "error, the number of parameters for a blob filter should be 12, not " << filter_params[filter_it].size() << std::endl;
           return -1;
         }
         // find the dots with holes as blobs
@@ -193,10 +211,10 @@ int main(int argc, char *argv[]) {
       } // end blob filter
 
     } // end filters
-    size_t lastindex = images[image_it].find_last_of(".");
-    std::string rawname = images[image_it].substr(0, lastindex);
-    rawname += "_filter.png";
-    imwrite(rawname, img);
+    //size_t lastindex = input_images[image_it].find_last_of(".");
+    //std::string rawname = images[image_it].substr(0, lastindex);
+    //rawname += "_filter.png";
+    imwrite(output_images[image_it], img);
   } // end images
 
 
