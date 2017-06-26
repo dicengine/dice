@@ -44,6 +44,10 @@
 
 #include <DICe.h>
 
+#include <Teuchos_RCP.hpp>
+#include <Teuchos_ParameterList.hpp>
+
+#include "opencv2/core/core.hpp"
 #include "opencv2/calib3d.hpp"
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/highgui.hpp"
@@ -52,6 +56,32 @@
 #include <vector>
 
 namespace DICe {
+
+/// pre-processing for CalPreview
+///
+/// Here's the way the dot cal target dots are located in the image:
+/// First a binary threshold is applied to the image.
+/// Then the three marker dots (the doughnut dots) are located in the image.
+/// Once the three marker dots are located, the closest two, non-colinear regular dots are found for each marker,
+/// these dots define the cardinal directions for each marker dot.
+/// Next, the origin, xaxis, and yaxis marker dots are assigned in the following way: the origin is the marker dot
+/// that is closest in terms of perpendicular distance from the lines created by the cardinal direction dots and the marker dots.
+/// That leaves two marker dots to identify as the x and y axis dots. the xaxis dot is the marker dot furthest from the origin.
+/// The same process that was used to identify the origin marker dot is used to identify the regular dot that is opposite the origin
+/// in the box defined by the three marker dots. These four points are then used to determine the affine transform from a
+/// regular grid to the image locations of the dots. The number of dots in x and y is determined by finding all the dots
+/// within a tolerance of the x and y axis created by the origin and the other marker dots.
+/// \param image_filename the name of the image to search for cal target points in
+/// \param output_image_filename the name of the debugging output file that shows the location of the dots
+/// \param pre_process_params parameters that define the binary threshold, etc.
+/// \param image_points [out] returns the coordinates of the cal dots in image space
+/// \param object_points [out] returns the coordinates of the cal dots on the board (physical or model space)
+DICE_LIB_DLL_EXPORT
+int pre_process_cal_image(const std::string & image_filename,
+  const std::string & output_image_filename,
+  Teuchos::RCP<Teuchos::ParameterList> pre_process_params,
+  std::vector<cv::Point2f> & image_points,
+  std::vector<cv::Point3f> & object_points);
 
 /// free function to perform stereo calibration using opencv
 /// \param mode grid pattern type

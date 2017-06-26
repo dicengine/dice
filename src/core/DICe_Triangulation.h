@@ -57,6 +57,19 @@
 
 namespace DICe {
 
+/// free function to estimate a 9 parameter affine projection
+/// \param proj_xl x coordinates of the points in the left image or coordinate system
+/// \param proj_yl y coordinates of the points in the left image or coordinate system
+/// \param proj_xr x coordinates of the points in the right image or coordinate system
+/// \param proj_yr y coordinates of the points in the right image or coordinate system
+/// return value affine_matrix storage for the affine parameters (must be 3x3)
+DICE_LIB_DLL_EXPORT
+Teuchos::SerialDenseMatrix<int_t,double>
+compute_affine_matrix(const std::vector<scalar_t> proj_xl,
+  const std::vector<scalar_t> proj_yl,
+  const std::vector<scalar_t> proj_xr,
+  const std::vector<scalar_t> proj_yr);
+
 /// \class DICe::Triangulation
 /// \brief A class for computing the triangulation of 3d points from two correlation and a calibration file
 ///

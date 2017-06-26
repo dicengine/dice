@@ -49,6 +49,220 @@
 
 namespace DICe {
 
+DICE_LIB_DLL_EXPORT
+Teuchos::SerialDenseMatrix<int_t,double>
+compute_affine_matrix(const std::vector<scalar_t> proj_xl,
+  const std::vector<scalar_t> proj_yl,
+  const std::vector<scalar_t> proj_xr,
+  const std::vector<scalar_t> proj_yr){
+  DEBUG_MSG("compute_affine_matrix(): begin");
+  Teuchos::SerialDenseMatrix<int_t,double> affine_matrix(3,3,true);
+  const size_t num_coords = proj_xl.size();
+  assert(num_coords >= 4);
+  assert(proj_yl.size()==num_coords);
+  assert(proj_xr.size()==num_coords);
+  assert(proj_yr.size()==num_coords);
+  // normalize the points by centering on 0,0 and scaling so that the average distance from center is sqrt(2):
+  DEBUG_MSG("compute_affine_matrix(): normalizing feature points");
+  // compute the centroids
+  scalar_t cl_x = 0.0;
+  scalar_t cl_y = 0.0;
+  scalar_t cr_x = 0.0;
+  scalar_t cr_y = 0.0;
+  for(size_t i=0;i<num_coords;++i){
+    cl_x += proj_xl[i];
+    cl_y += proj_yl[i];
+    cr_x += proj_xr[i];
+    cr_y += proj_yr[i];
+  }
+  cl_x /= num_coords;
+  cl_y /= num_coords;
+  cr_x /= num_coords;
+  cr_y /= num_coords;
+  // compute the average distances:
+  scalar_t dl_x = 0.0;
+  scalar_t dl_y = 0.0;
+  scalar_t dr_x = 0.0;
+  scalar_t dr_y = 0.0;
+  for(size_t i=0;i<num_coords;++i){
+    dl_x += std::abs(proj_xl[i] - cl_x);
+    dl_y += std::abs(proj_yl[i] - cl_y);
+    dr_x += std::abs(proj_xr[i] - cr_x);
+    dr_y += std::abs(proj_yr[i] - cr_y);
+  }
+  dl_x /= num_coords;
+  dl_y /= num_coords;
+  dr_x /= num_coords;
+  dr_y /= num_coords;
+
+  assert(dl_x != 0.0);
+  assert(dl_y != 0.0);
+  assert(dr_x != 0.0);
+  assert(dr_y != 0.0);
+  scalar_t sl_x = 1.0 / dl_x;
+  scalar_t sl_y = 1.0 / dl_y;
+  scalar_t sr_x = 1.0 / dr_x;
+  scalar_t sr_y = 1.0 / dr_y;
+
+  // compute the similarity transform
+  Teuchos::SerialDenseMatrix<int_t,double> Tl(3,3,true);
+  Tl(0,0) = sl_x;
+  Tl(0,2) = -sl_x*cl_x;
+  Tl(1,1) = sl_y;
+  Tl(1,2) = -sl_y*cl_y;
+  Tl(2,2) = 1.0;
+  Teuchos::SerialDenseMatrix<int_t,double> Tr(3,3,true);
+  Tr(0,0) = sr_x;
+  Tr(0,2) = -sr_x*cr_x;
+  Tr(1,1) = sr_y;
+  Tr(1,2) = -sr_y*cr_y;
+  Tr(2,2) = 1.0;
+
+  // check the centroid of the new points and average distance:
+  std::vector<scalar_t> mod_xl(num_coords,0.0);
+  std::vector<scalar_t> mod_yl(num_coords,0.0);
+  std::vector<scalar_t> mod_xr(num_coords,0.0);
+  std::vector<scalar_t> mod_yr(num_coords,0.0);
+
+  for(size_t i=0;i<num_coords;++i){
+    mod_xl[i] = Tl(0,0)*proj_xl[i] + Tl(0,1)*proj_yl[i] + Tl(0,2);
+    mod_yl[i] = Tl(1,0)*proj_xl[i] + Tl(1,1)*proj_yl[i] + Tl(1,2);
+    mod_xr[i] = Tr(0,0)*proj_xr[i] + Tr(0,1)*proj_yr[i] + Tr(0,2);
+    mod_yr[i] = Tr(1,0)*proj_xr[i] + Tr(1,1)*proj_yr[i] + Tr(1,2);
+  }
+
+  scalar_t mcl_x = 0.0;
+  scalar_t mcl_y = 0.0;
+  scalar_t mcr_x = 0.0;
+  scalar_t mcr_y = 0.0;
+  for(size_t i=0;i<num_coords;++i){
+    mcl_x += mod_xl[i];
+    mcl_y += mod_yl[i];
+    mcr_x += mod_xr[i];
+    mcr_y += mod_yr[i];
+  }
+  mcl_x /= num_coords;
+  mcl_y /= num_coords;
+  mcr_x /= num_coords;
+  mcr_y /= num_coords;
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mcl_x)>1.0E-3,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mcl_y)>1.0E-3,std::runtime_error,"");
+  // compute the average distances:
+  scalar_t mdl_x = 0.0;
+  scalar_t mdl_y = 0.0;
+  scalar_t mdr_x = 0.0;
+  scalar_t mdr_y = 0.0;
+  for(size_t i=0;i<num_coords;++i){
+    mdl_x += std::abs(mod_xl[i] - mcl_x);
+    mdl_y += std::abs(mod_yl[i] - mcl_y);
+    mdr_x += std::abs(mod_xr[i] - mcr_x);
+    mdr_y += std::abs(mod_yr[i] - mcr_y);
+  }
+  mdl_x /= num_coords;
+  mdl_y /= num_coords;
+  mdr_x /= num_coords;
+  mdr_y /= num_coords;
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mdl_x-1.0)>1.0E-3,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mdl_y-1.0)>1.0E-3,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mdr_x-1.0)>1.0E-3,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mdr_y-1.0)>1.0E-3,std::runtime_error,"");
+
+  // compute the inverse of Tr
+  int *IPIV = new int[4];
+  int TIWORK = 9;
+  int TINFO = 0;
+  double *TWORK = new double[TIWORK];
+  // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
+  Teuchos::LAPACK<int,double> lapack;
+  DEBUG_MSG("compute_affine_matrix(): inverting for projection parameters");
+
+  // invert the KTK matrix
+  lapack.GETRF(Tr.numRows(),Tr.numCols(),Tr.values(),Tr.numRows(),IPIV,&TINFO);
+  lapack.GETRI(Tr.numRows(),Tr.values(),Tr.numRows(),IPIV,TWORK,TIWORK,&TINFO);
+  // now Tr is inverted
+
+  int N = 9;
+  Teuchos::SerialDenseMatrix<int_t,double> K(num_coords*2,N,true);
+  Teuchos::SerialDenseMatrix<int_t,double> KTK(N,N,true);
+  Teuchos::ArrayRCP<scalar_t> u(N,0.0);
+  for(size_t i=0;i<num_coords;++i){
+    K(i*2+0,0) = -mod_xl[i];
+    K(i*2+0,1) = -mod_yl[i];
+    K(i*2+0,2) = -1.0;
+    K(i*2+0,6) = mod_xr[i]*mod_xl[i];
+    K(i*2+0,7) = mod_xr[i]*mod_yl[i];
+    K(i*2+0,8) = mod_xr[i];
+    K(i*2+1,3) = -mod_xl[i];
+    K(i*2+1,4) = -mod_yl[i];
+    K(i*2+1,5) = -1.0;
+    K(i*2+1,6) = mod_yr[i]*mod_xl[i];
+    K(i*2+1,7) = mod_yr[i]*mod_yl[i];
+    K(i*2+1,8) = mod_yr[i];
+  }
+  // set up K^T*K
+  for(int_t k=0;k<N;++k){
+    for(int_t m=0;m<N;++m){
+      for(size_t j=0;j<num_coords*2;++j){
+        KTK(k,m) += K(j,k)*K(j,m);
+      }
+    }
+  }
+  int LWORK = N*N;
+  int INFO = 0;
+  double *WORK = new double[LWORK];
+  for(int_t j=0;j<9;++j){
+    for(int_t i=0;i<j;++i){
+      KTK(j,i) = 0.0;
+    }
+  }
+  double *EIGS = new double[N];
+  //Teuchos::LAPACK<int,double> lapack;
+  lapack.SYEV('V','U',N,KTK.values(),N,EIGS,WORK,LWORK,&INFO);
+
+  DEBUG_MSG("compute_affine_matrix(): Smallest eigenvalue: " << EIGS[0] );
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(EIGS[0]) > 1.0,std::runtime_error,
+    "Error, too much noise in the projection estimation points");
+
+  for(int_t i=0;i<N;++i){
+    DEBUG_MSG("compute_affine_matrix(): Eigenvector: " << KTK(i,0) );
+  }
+
+  // convert the H back to the original coordinate system (post similarity transforms)
+  Teuchos::SerialDenseMatrix<int_t,double> Htilde(3,3,true);
+  Htilde(0,0) = KTK(0,0);
+  Htilde(0,1) = KTK(1,0);
+  Htilde(0,2) = KTK(2,0);
+  Htilde(1,0) = KTK(3,0);
+  Htilde(1,1) = KTK(4,0);
+  Htilde(1,2) = KTK(5,0);
+  Htilde(2,0) = KTK(6,0);
+  Htilde(2,1) = KTK(7,0);
+  Htilde(2,2) = KTK(8,0);
+  // compute Tr^-1 Htilde Tl
+  Teuchos::SerialDenseMatrix<int_t,double> HtildeTl(3,3,true);
+  for(int_t i=0;i<3;++i){
+    for(int_t j=0;j<3;++j){
+      for(int_t k=0;k<3;++k){
+        HtildeTl(i,j) += Htilde(i,k)*Tl(k,j);
+      }
+    }
+  }
+//  Teuchos::SerialDenseMatrix<int_t,double> proj_matrix(3,3,true);
+  for(int_t i=0;i<3;++i){
+    for(int_t j=0;j<3;++j){
+      for(int_t k=0;k<3;++k){
+        affine_matrix(i,j) += Tr(i,k)*HtildeTl(k,j);
+      }
+    }
+  }
+  delete [] WORK;
+  delete [] EIGS;
+  delete [] TWORK;
+  delete [] IPIV;
+  DEBUG_MSG("compute_affine_matrix(): end");
+  return affine_matrix;
+}
+
 void
 Triangulation::convert_CB_angles_to_T(const scalar_t & alpha,
   const scalar_t & beta,
@@ -1030,7 +1244,7 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     }
     DEBUG_MSG("Triangulation::estimate_projective_transform(): matching features complete");
 #else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,"Error, OpeCV required for cross correlation initialization.");
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,"Error, OpenCV required for cross correlation initialization.");
 #endif
     if(proj_xl.size() < 5){
       return -1;
@@ -1038,202 +1252,8 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     //TEUCHOS_TEST_FOR_EXCEPTION(proj_xl.size()<5, std::runtime_error,"Error, not enough features matched to estimate projection parameters");
     num_coords = proj_xl.size();
   }
-  // normalize the points by centering on 0,0 and scaling so that the average distance from center is sqrt(2):
-  DEBUG_MSG("Triangulation::estimate_projective_transform(): normalizing feature points");
 
-  // compute the centroids
-  scalar_t cl_x = 0.0;
-  scalar_t cl_y = 0.0;
-  scalar_t cr_x = 0.0;
-  scalar_t cr_y = 0.0;
-  for(int_t i=0;i<num_coords;++i){
-    cl_x += proj_xl[i];
-    cl_y += proj_yl[i];
-    cr_x += proj_xr[i];
-    cr_y += proj_yr[i];
-  }
-  cl_x /= num_coords;
-  cl_y /= num_coords;
-  cr_x /= num_coords;
-  cr_y /= num_coords;
-
-  // compute the average distances:
-  scalar_t dl_x = 0.0;
-  scalar_t dl_y = 0.0;
-  scalar_t dr_x = 0.0;
-  scalar_t dr_y = 0.0;
-  for(int_t i=0;i<num_coords;++i){
-    dl_x += std::abs(proj_xl[i] - cl_x);
-    dl_y += std::abs(proj_yl[i] - cl_y);
-    dr_x += std::abs(proj_xr[i] - cr_x);
-    dr_y += std::abs(proj_yr[i] - cr_y);
-  }
-  dl_x /= num_coords;
-  dl_y /= num_coords;
-  dr_x /= num_coords;
-  dr_y /= num_coords;
-
-  assert(dl_x != 0.0);
-  assert(dl_y != 0.0);
-  assert(dr_x != 0.0);
-  assert(dr_y != 0.0);
-  scalar_t sl_x = 1.0 / dl_x;
-  scalar_t sl_y = 1.0 / dl_y;
-  scalar_t sr_x = 1.0 / dr_x;
-  scalar_t sr_y = 1.0 / dr_y;
-
-  // compute the similarity transform
-  Teuchos::SerialDenseMatrix<int_t,double> Tl(3,3,true);
-  Tl(0,0) = sl_x;
-  Tl(0,2) = -sl_x*cl_x;
-  Tl(1,1) = sl_y;
-  Tl(1,2) = -sl_y*cl_y;
-  Tl(2,2) = 1.0;
-  Teuchos::SerialDenseMatrix<int_t,double> Tr(3,3,true);
-  Tr(0,0) = sr_x;
-  Tr(0,2) = -sr_x*cr_x;
-  Tr(1,1) = sr_y;
-  Tr(1,2) = -sr_y*cr_y;
-  Tr(2,2) = 1.0;
-
-  // check the centroid of the new points and average distance:
-  std::vector<scalar_t> mod_xl(num_coords,0.0);
-  std::vector<scalar_t> mod_yl(num_coords,0.0);
-  std::vector<scalar_t> mod_xr(num_coords,0.0);
-  std::vector<scalar_t> mod_yr(num_coords,0.0);
-
-  for(int_t i=0;i<num_coords;++i){
-    mod_xl[i] = Tl(0,0)*proj_xl[i] + Tl(0,1)*proj_yl[i] + Tl(0,2);
-    mod_yl[i] = Tl(1,0)*proj_xl[i] + Tl(1,1)*proj_yl[i] + Tl(1,2);
-    mod_xr[i] = Tr(0,0)*proj_xr[i] + Tr(0,1)*proj_yr[i] + Tr(0,2);
-    mod_yr[i] = Tr(1,0)*proj_xr[i] + Tr(1,1)*proj_yr[i] + Tr(1,2);
-  }
-
-  scalar_t mcl_x = 0.0;
-  scalar_t mcl_y = 0.0;
-  scalar_t mcr_x = 0.0;
-  scalar_t mcr_y = 0.0;
-  for(int_t i=0;i<num_coords;++i){
-    mcl_x += mod_xl[i];
-    mcl_y += mod_yl[i];
-    mcr_x += mod_xr[i];
-    mcr_y += mod_yr[i];
-  }
-  mcl_x /= num_coords;
-  mcl_y /= num_coords;
-  mcr_x /= num_coords;
-  mcr_y /= num_coords;
-  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mcl_x)>1.0E-3,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mcl_y)>1.0E-3,std::runtime_error,"");
-  // compute the average distances:
-  scalar_t mdl_x = 0.0;
-  scalar_t mdl_y = 0.0;
-  scalar_t mdr_x = 0.0;
-  scalar_t mdr_y = 0.0;
-  for(int_t i=0;i<num_coords;++i){
-    mdl_x += std::abs(mod_xl[i] - mcl_x);
-    mdl_y += std::abs(mod_yl[i] - mcl_y);
-    mdr_x += std::abs(mod_xr[i] - mcr_x);
-    mdr_y += std::abs(mod_yr[i] - mcr_y);
-  }
-  mdl_x /= num_coords;
-  mdl_y /= num_coords;
-  mdr_x /= num_coords;
-  mdr_y /= num_coords;
-  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mdl_x-1.0)>1.0E-3,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mdl_y-1.0)>1.0E-3,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mdr_x-1.0)>1.0E-3,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mdr_y-1.0)>1.0E-3,std::runtime_error,"");
-
-  // compute the inverse of Tr
-  int *IPIV = new int[4];
-  int TIWORK = 9;
-  int TINFO = 0;
-  double *TWORK = new double[TIWORK];
-  // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
-  Teuchos::LAPACK<int,double> lapack;
-  DEBUG_MSG("Triangulation::estimate_projective_transform(): inverting for projection parameters");
-
-  // invert the KTK matrix
-  lapack.GETRF(Tr.numRows(),Tr.numCols(),Tr.values(),Tr.numRows(),IPIV,&TINFO);
-  lapack.GETRI(Tr.numRows(),Tr.values(),Tr.numRows(),IPIV,TWORK,TIWORK,&TINFO);
-  // now Tr is inverted
-
-  int N = 9;
-  Teuchos::SerialDenseMatrix<int_t,double> K(num_coords*2,N,true);
-  Teuchos::SerialDenseMatrix<int_t,double> KTK(N,N,true);
-  Teuchos::ArrayRCP<scalar_t> u(N,0.0);
-  for(int_t i=0;i<num_coords;++i){
-    K(i*2+0,0) = -mod_xl[i];
-    K(i*2+0,1) = -mod_yl[i];
-    K(i*2+0,2) = -1.0;
-    K(i*2+0,6) = mod_xr[i]*mod_xl[i];
-    K(i*2+0,7) = mod_xr[i]*mod_yl[i];
-    K(i*2+0,8) = mod_xr[i];
-    K(i*2+1,3) = -mod_xl[i];
-    K(i*2+1,4) = -mod_yl[i];
-    K(i*2+1,5) = -1.0;
-    K(i*2+1,6) = mod_yr[i]*mod_xl[i];
-    K(i*2+1,7) = mod_yr[i]*mod_yl[i];
-    K(i*2+1,8) = mod_yr[i];
-  }
-  // set up K^T*K
-  for(int_t k=0;k<N;++k){
-    for(int_t m=0;m<N;++m){
-      for(int_t j=0;j<num_coords*2;++j){
-        KTK(k,m) += K(j,k)*K(j,m);
-      }
-    }
-  }
-  int LWORK = N*N;
-  int INFO = 0;
-  double *WORK = new double[LWORK];
-  for(int_t j=0;j<9;++j){
-    for(int_t i=0;i<j;++i){
-      KTK(j,i) = 0.0;
-    }
-  }
-  double *EIGS = new double[N];
-  //Teuchos::LAPACK<int,double> lapack;
-  lapack.SYEV('V','U',N,KTK.values(),N,EIGS,WORK,LWORK,&INFO);
-
-  DEBUG_MSG("Triangulation::estimate_projective_transform(): Smallest eigenvalue: " << EIGS[0] );
-  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(EIGS[0]) > 1.0,std::runtime_error,
-    "Error, too much noise in the projection estimation points");
-
-  for(int_t i=0;i<N;++i){
-    DEBUG_MSG("Triangulation::estimate_projective_transform(): Eigenvector: " << KTK(i,0) );
-  }
-
-  // convert the H back to the original coordinate system (post similarity transforms)
-  Teuchos::SerialDenseMatrix<int_t,double> Htilde(3,3,true);
-  Htilde(0,0) = KTK(0,0);
-  Htilde(0,1) = KTK(1,0);
-  Htilde(0,2) = KTK(2,0);
-  Htilde(1,0) = KTK(3,0);
-  Htilde(1,1) = KTK(4,0);
-  Htilde(1,2) = KTK(5,0);
-  Htilde(2,0) = KTK(6,0);
-  Htilde(2,1) = KTK(7,0);
-  Htilde(2,2) = KTK(8,0);
-  // compute Tr^-1 Htilde Tl
-  Teuchos::SerialDenseMatrix<int_t,double> HtildeTl(3,3,true);
-  for(int_t i=0;i<3;++i){
-    for(int_t j=0;j<3;++j){
-      for(int_t k=0;k<3;++k){
-        HtildeTl(i,j) += Htilde(i,k)*Tl(k,j);
-      }
-    }
-  }
-  Teuchos::SerialDenseMatrix<int_t,double> TrHtildeTl(3,3,true);
-  for(int_t i=0;i<3;++i){
-    for(int_t j=0;j<3;++j){
-      for(int_t k=0;k<3;++k){
-        TrHtildeTl(i,j) += Tr(i,k)*HtildeTl(k,j);
-      }
-    }
-  }
-
+  Teuchos::SerialDenseMatrix<int_t,double> TrHtildeTl = compute_affine_matrix(proj_xl,proj_yl,proj_xr,proj_yr);
   (*projective_params_)[0] = TrHtildeTl(0,0);
   (*projective_params_)[1] = TrHtildeTl(0,1);
   (*projective_params_)[2] = TrHtildeTl(0,2);
@@ -1243,11 +1263,6 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
   (*projective_params_)[6] = TrHtildeTl(2,0);
   (*projective_params_)[7] = TrHtildeTl(2,1);
   (*projective_params_)[8] = TrHtildeTl(2,2);
-
-  delete [] WORK;
-  delete [] EIGS;
-  delete [] TWORK;
-  delete [] IPIV;
 
   // create an output file with the initial solution and final solution for projection params
   std::FILE * filePtr = fopen("projection_out.dat","w");
@@ -1396,6 +1411,7 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     int WINFO = 0;
     double *WWORK = new double[WLWORK];
     // invert the WKTK matrix
+    static Teuchos::LAPACK<int_t,double> lapack;
     lapack.GETRF(WKTK.numRows(),WKTK.numCols(),WKTK.values(),WKTK.numRows(),WIPIV,&WINFO);
     lapack.GETRI(WKTK.numRows(),WKTK.values(),WKTK.numRows(),WIPIV,WWORK,WLWORK,&WINFO);
     // compute K^T*F

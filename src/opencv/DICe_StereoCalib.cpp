@@ -1,30 +1,50 @@
-/* This is sample from the OpenCV book. The copyright notice is below */
-
-/* *************** License:**************************
-   Oct. 3, 2008
-   Right to use this code in any way you want without warranty, support or any guarantee of it working.
-
-   BOOK: It would be nice if you cited it:
-   Learning OpenCV: Computer Vision with the OpenCV Library
-     by Gary Bradski and Adrian Kaehler
-     Published by O'Reilly Media, October 3, 2008
-
-   AVAILABLE AT:
-     http://www.amazon.com/Learning-OpenCV-Computer-Vision-Library/dp/0596516134
-     Or: http://oreilly.com/catalog/9780596516130/
-     ISBN-10: 0596516134 or: ISBN-13: 978-0596516130
-
-   OPENCV WEBSITES:
-     Homepage:      http://opencv.org
-     Online docs:   http://docs.opencv.org
-     Q&A forum:     http://answers.opencv.org
-     Issue tracker: http://code.opencv.org
-     GitHub:        https://github.com/opencv/opencv/
- ************************************************** */
+// @HEADER
+// ************************************************************************
+//
+//               Digital Image Correlation Engine (DICe)
+//                 Copyright 2015 Sandia Corporation.
+//
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+// the U.S. Government retains certain rights in this software.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact: Dan Turner (dzturne@sandia.gov)
+//
+// ************************************************************************
+// @HEADER
 
 #include <DICe_StereoCalib.h>
 #include <DICe_Shape.h>
 #include <DICe_PointCloud.h>
+#include <DICe_Triangulation.h>
+
+#include <Teuchos_SerialDenseMatrix.hpp>
 
 #include <string>
 #include <algorithm>
@@ -63,6 +83,478 @@ is_in_quadrilateral(const float & x,
     return true;
   }
   return false;
+}
+
+/// free function to compute the distance from a point (x,y) to a line
+/// defined by two points (x1,y1), (x2,y2). The sign determines which side
+/// of the line the point is on.
+DICE_LIB_DLL_EXPORT
+float dist_from_line(const float & x,
+  const float & y,
+  const float & x1,
+  const float & y1,
+  const float & x2,
+  const float & y2){
+  float s = (y2 - y1) * x + (x1 - x2) * y + (x2 * y1 - x1 * y2);
+  return s/std::sqrt((y2-y1)*(y2-y1) + (x2-x1)*(x2-x1));
+};
+
+/// free function to compare std::pair to enable vector sorting
+DICE_LIB_DLL_EXPORT
+bool pair_compare(const std::pair<int,float>& left, const std::pair<int,float>& right) {
+  return left.second < right.second;
+}
+
+///// free function to compare std::pair to enable vector sorting
+//DICE_LIB_DLL_EXPORT
+//bool pair_compare_inv(const std::pair<int,float>& left, const std::pair<int,float>& right) {
+//  return left.second > right.second;
+//}
+
+/// free function to compare std::tuple to enable vector sorting
+DICE_LIB_DLL_EXPORT
+bool tuple_compare(const std::tuple<int,float,float>& left, const std::tuple<int,float,float>& right) {
+  if (std::get<1>(left) < std::get<1>(right))
+    return true;
+  else if (std::get<1>(left) > std::get<1>(right))
+    return false;
+  else
+    return std::get<2>(left) < std::get<2>(right);
+}
+
+/// free function to compare std::tuple to enable vector sorting by second element (index 1)
+DICE_LIB_DLL_EXPORT
+bool tuple_second_compare(const std::tuple<int,float,float>& left, const std::tuple<int,float,float>& right) {
+  return std::get<1>(left) < std::get<1>(right);
+}
+
+/// free function to compare std::tuple to enable vector sorting by third element (index 2)
+DICE_LIB_DLL_EXPORT
+bool tuple_third_compare(const std::tuple<int,float,float>& left, const std::tuple<int,float,float>& right) {
+  return std::get<2>(left) < std::get<2>(right);
+}
+
+/// free function to project a point from a grid to the affine transformed point in an image
+DICE_LIB_DLL_EXPORT
+void project_grid_to_image(const Teuchos::SerialDenseMatrix<int_t,double> & proj_matrix,
+  const float & xl,
+  const float & yl,
+  float & xr,
+  float & yr){
+  // first apply the quadratic warp transform
+  assert(proj_matrix.numRows()==3&&proj_matrix.numCols()==3);
+  xr = (proj_matrix(0,0)*xl + proj_matrix(0,1)*yl + proj_matrix(0,2))/(proj_matrix(2,0)*xl + proj_matrix(2,1)*yl + proj_matrix(2,2));
+  yr = (proj_matrix(1,0)*xl + proj_matrix(1,1)*yl + proj_matrix(1,2))/(proj_matrix(2,0)*xl + proj_matrix(2,1)*yl + proj_matrix(2,2));
+}
+
+DICE_LIB_DLL_EXPORT
+int pre_process_cal_image(const std::string & image_filename,
+  const std::string & output_image_filename,
+  Teuchos::RCP<Teuchos::ParameterList> pre_process_params,
+  std::vector<Point2f> & image_points,
+  std::vector<Point3f> & object_points){
+  if(pre_process_params==Teuchos::null){
+    std::cout << "error, pre_process_params is null" << std::endl;
+    return -1;
+  }
+  image_points.clear();
+  object_points.clear();
+  const bool preview_thresh = pre_process_params->get<bool>("preview_thresh",false);
+  const bool has_adaptive = pre_process_params->get<bool>("has_adaptive",false);
+  const int filterMode = pre_process_params->get<int>("filterMode",CV_ADAPTIVE_THRESH_GAUSSIAN_C);
+  const int invertedMode = pre_process_params->get<int>("invertedMode",CV_THRESH_BINARY);
+  //const int antiInvertedMode = pre_process_params->get<int>("antiInvertedMode",CV_THRESH_BINARY_INV);
+  if(!pre_process_params->isParameter("pattern_spacing")){
+    std::cout << "error, pattern_spacing is missing from parameters" << std::endl;
+    return -1;
+  }
+  const float pattern_size = pre_process_params->get<float>("pattern_spacing");
+  if(!pre_process_params->isParameter("blockSize")){
+    std::cout << "error, blockSize is missing from parameters" << std::endl;
+    return -1;
+  }
+  const double blockSize = pre_process_params->get<double>("blockSize");
+  if(!pre_process_params->isParameter("binaryConstant")){
+    std::cout << "error, binaryConstant is missing from parameters" << std::endl;
+    return -1;
+  }
+  const double binaryConstant = pre_process_params->get<double>("binaryConstant");
+
+  // load the image as an openCV mat
+  Mat img = imread(image_filename, IMREAD_GRAYSCALE);
+  Mat binary_img(img.size(),CV_8UC3);
+  Mat out_img(img.size(), CV_8UC3);
+  //Mat bi_copy_img(img.size(), CV_8UC3);
+  cvtColor(img, out_img, CV_GRAY2RGB);
+  if(img.empty()){
+    std::cout << "error, the image is empty" << std::endl;
+    return -4;
+  }
+  if(!img.data){
+    std::cout << "error, the image failed to load" << std::endl;
+    return -4;
+  }
+  // blur the image to remove noise
+  GaussianBlur(img, binary_img, Size(9, 9), 2, 2 );
+  //medianBlur ( median_img, median_img, 7 );
+  // binary threshold to create black and white image
+  if(has_adaptive)
+    adaptiveThreshold(binary_img,binary_img,255,filterMode,invertedMode,blockSize,binaryConstant);
+  else
+    threshold(binary_img, binary_img, binaryConstant, 255, invertedMode);
+  //threshold(binary_img, binary_img, 0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
+  // output the preview images using the thresholded image as the background
+  if(preview_thresh){
+    cvtColor(binary_img, out_img, CV_GRAY2RGB);
+  }
+
+  // find the contours in the image with parents and children to locate the doughnut looking dots
+  std::vector<std::vector<Point> > contours;
+  std::vector<std::vector<Point> > trimmed_contours;
+  std::vector<Vec4i> hierarchy;
+  findContours(binary_img.clone(), contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE );
+
+  // make sure the vectors are the same size:
+  if(hierarchy.size()!=contours.size()){
+    std::cout << "error, hierarchy and contours vectors are not the same size" << std::endl;
+    return -1;
+  }
+  // count up the number of potential candidates for marker blobs
+  std::vector<KeyPoint> potential_markers;
+  // global centroids of the potential markers
+  for(size_t idx=0; idx<hierarchy.size(); ++idx){
+      if(hierarchy[idx][3]!=-1&&hierarchy[idx][2]!=-1){//&&contours[idx].size()>min_marker_blob_size){
+        // compute the centroid of this marker
+        float cx = 0.0;
+        float cy = 0.0;
+        for(size_t i=0;i<contours[idx].size();++i){
+          cx += contours[idx][i].x;
+          cy += contours[idx][i].y;
+        }
+        float denom = (float)contours[idx].size();
+        cx /= denom;
+        cy /= denom;
+        potential_markers.push_back(KeyPoint(cx,cy,contours[idx].size()));
+        trimmed_contours.push_back(contours[idx]);
+      }
+  }
+  //imwrite(output_image_filename, out_img);
+  //return -2;
+  if(potential_markers.size()!=trimmed_contours.size()){
+    std::cout << "error, potential markers and trimmed contours should be the same size" << std::endl;
+    return -1;
+  }
+  if(potential_markers.size()<3){
+    // output the image with markers located
+    for(size_t i=0;i<potential_markers.size();++i)
+      circle(out_img,potential_markers[i].pt,10,Scalar(255,100,255),-1);
+    imwrite(output_image_filename, out_img);
+    std::cout << "error, not enough marker dots could be located (need three)" << std::endl;
+    return -2;
+  }
+  // final set of marker dots
+  std::vector<KeyPoint> marker_dots(3);
+  for(size_t i=0;i<3;++i)
+    marker_dots[i] = potential_markers[i];
+  // if there are more than three potential marker dots, use the fact that the markers are
+  // surrounded by white space on the cal board to distinguish from background dots that may have been picked up
+  if(potential_markers.size()>3){
+    std::vector<std::pair<int,float> > id_quant;
+    for(size_t idx=0;idx<trimmed_contours.size();++idx){
+      // determine the ratio of the min enclosing circle size and the size of the contour
+      Point2f center(0.0,0.0);
+      float radius = 0.0;
+      minEnclosingCircle(trimmed_contours[idx],center,radius);
+      float circleArea = DICE_PI*radius*radius;
+      float contArea = contourArea(trimmed_contours[idx]);
+      if(contArea == 0.0)contArea = 1.0E-3;
+      float areaRatio = circleArea / contArea;
+      id_quant.push_back(std::pair<int,float>(idx,areaRatio));
+    }
+    // order the vector by smallest quantity
+    std::sort(id_quant.begin(), id_quant.end(), pair_compare);
+    // take the top three as the markers:
+    for(size_t i=0;i<3;++i){
+      marker_dots[i] = potential_markers[id_quant[i].first];
+    }
+  }
+
+  // now that the marker dots are found, look for the rest of the regular dots.
+  // the regular dots are filtered from the contours collected in the previous steps
+  // by checking the size of the dot. It's a valid dot if the hierarchy is right and the size is between
+  // 0.8 and 1.2 times the median dot size.
+  // while iterating the dots, determine the centroid of the contours or dots.
+  std::vector<float> trimmed_dot_cx;
+  std::vector<float> trimmed_dot_cy;
+
+  // limit the blob sizes based on the marker dot sizes
+  size_t min_blob_size = (size_t)marker_dots[0].size * 0.5;
+
+  // compute the median dot size:
+  std::vector<std::pair<int,float> > id_size;
+  for(size_t idx=0; idx<hierarchy.size(); ++idx){
+    if(hierarchy[idx][3]!=-1&&hierarchy[idx][2]==-1&&contours[idx].size()>min_blob_size){
+      id_size.push_back(std::pair<int,float>(idx,(float)contours[idx].size()));
+    }
+  }
+  int median_id = id_size.size()/2;
+  std::sort(id_size.begin(), id_size.end(), pair_compare);
+  const float median_size = id_size[median_id].second;
+  for(size_t idx=0; idx<hierarchy.size(); ++idx){
+    if(hierarchy[idx][3]!=-1&&hierarchy[idx][2]==-1&&(float)contours[idx].size()>0.8*median_size&&(float)contours[idx].size()<1.2*median_size){
+      float cx = 0.0;
+      float cy = 0.0;
+      for(size_t i=0;i<contours[idx].size();++i){
+        cx += contours[idx][i].x;
+        cy += contours[idx][i].y;
+      }
+      float denom = (float)contours[idx].size();
+      cx /= denom;
+      cy /= denom;
+      trimmed_dot_cx.push_back(cx);
+      trimmed_dot_cy.push_back(cy);
+      //drawContours(out_img, contours, idx, Scalar(255,0,0), CV_FILLED, 8);
+    }
+  }
+
+  if(trimmed_dot_cy.size()!=trimmed_dot_cx.size()){
+    std::cout << "error, dot centroid vectors are the wrong size" << std::endl;
+    return -1;
+  }
+
+  // at this point, we take the three marker dots and determine which one is the origin, which is the xaxis
+  // and which is the yaxis. We use subtle trick to determine the origin: we find the closest regular dots
+  // to each marker dot and use them to define the cardinal directions for each marker dot. The origin will be the
+  // dot that is closes to the axis lines of the other two marker dots
+
+  // iterate the marker dots and gather the closest two non-colinear points
+  Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
+  point_cloud->pts.resize(trimmed_dot_cx.size());
+  for(size_t i=0;i<trimmed_dot_cx.size();++i){
+    point_cloud->pts[i].x = trimmed_dot_cx[i];
+    point_cloud->pts[i].y = trimmed_dot_cy[i];
+  }
+  DEBUG_MSG("building the kd-tree");
+  Teuchos::RCP<kd_tree_2d_t> kd_tree =
+      Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+  kd_tree->buildIndex();
+  DEBUG_MSG("kd-tree completed");
+  scalar_t query_pt[2];
+  int_t num_neigh = 4;
+  std::vector<size_t> ret_index(num_neigh);
+  std::vector<scalar_t> out_dist_sqr(num_neigh);
+  std::vector<std::vector<Point> > marker_line_dots(3);
+  for(size_t i=0;i<marker_dots.size();++i){
+    query_pt[0] = marker_dots[i].pt.x;
+    query_pt[1] = marker_dots[i].pt.y;
+    // find the closest dots to this point
+    kd_tree->knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
+    // let the first closest dot define one of the cardinal directions for this marker dot
+    marker_line_dots[i].push_back(Point(trimmed_dot_cx[ret_index[0]],trimmed_dot_cy[ret_index[0]]));
+    // get another dot that is not colinear to define the second cardinal direction for this marker
+
+    // compute the slope of the first line:
+    // prevent vertical slope
+    const float slope_tol = 1.0E-3;
+    float run = std::abs(marker_line_dots[i][0].x - marker_dots[i].pt.x)<slope_tol ? slope_tol : (marker_line_dots[i][0].x -  marker_dots[i].pt.x);
+    const float slope_0 =  (marker_line_dots[i][0].y - marker_dots[i].pt.y)/run;
+    // compute the slope of the other lines:
+    run = std::abs(trimmed_dot_cx[ret_index[1]]-marker_dots[i].pt.x)<slope_tol ? slope_tol : (trimmed_dot_cx[ret_index[1]]-marker_dots[i].pt.x);
+    const float slope_1 =  (trimmed_dot_cy[ret_index[1]]-marker_dots[i].pt.y)/run;
+    run = std::abs(trimmed_dot_cx[ret_index[2]]-marker_dots[i].pt.x)<slope_tol ? slope_tol : (trimmed_dot_cx[ret_index[2]]-marker_dots[i].pt.x);
+    const float slope_2 =  (trimmed_dot_cy[ret_index[2]]-marker_dots[i].pt.y)/run;
+    run = std::abs(trimmed_dot_cx[ret_index[3]]-marker_dots[i].pt.x)<slope_tol ? slope_tol : (trimmed_dot_cx[ret_index[3]]-marker_dots[i].pt.x);
+    const float slope_3 =  (trimmed_dot_cy[ret_index[3]]-marker_dots[i].pt.y)/run;
+    const float angle_1 = std::abs(std::atan((slope_0 - slope_1)/(1.0 + slope_0*slope_1)));
+    const float angle_2 = std::abs(std::atan((slope_0 - slope_2)/(1.0 + slope_0*slope_2)));
+    const float angle_3 = std::abs(std::atan((slope_0 - slope_3)/(1.0 + slope_0*slope_3)));
+    if(angle_1>=angle_2&&angle_1>=angle_3)
+      marker_line_dots[i].push_back(Point(trimmed_dot_cx[ret_index[1]],trimmed_dot_cy[ret_index[1]]));
+    else if(angle_2>=angle_1&&angle_2>=angle_3)
+      marker_line_dots[i].push_back(Point(trimmed_dot_cx[ret_index[2]],trimmed_dot_cy[ret_index[2]]));
+    else
+      marker_line_dots[i].push_back(Point(trimmed_dot_cx[ret_index[3]],trimmed_dot_cy[ret_index[3]]));
+    //circle(out_img,marker_line_dots[i][0],25,Scalar(255,0,0),2.0);
+    //circle(out_img,marker_line_dots[i][1],25,Scalar(255,0,0),2.0);
+    if(marker_line_dots[i].size()!=2){
+      std::cout << "error, marker line dots vector is the wrong size" << std::endl;
+      return -1;
+    }
+  } // end marker dot loop
+  float min_dist = 0.0;
+  int origin_id = 0;
+  for(size_t i=0;i<marker_dots.size();++i){
+    float total_dist = 0.0;
+    for(size_t j=0;j<marker_dots.size();++j){
+      if(i==j)continue;
+      float dist_1 = std::abs(dist_from_line(marker_dots[i].pt.x,marker_dots[i].pt.y,marker_dots[j].pt.x,marker_dots[j].pt.y,marker_line_dots[j][0].x,marker_line_dots[j][0].y));
+      float dist_2 = std::abs(dist_from_line(marker_dots[i].pt.x,marker_dots[i].pt.y,marker_dots[j].pt.x,marker_dots[j].pt.y,marker_line_dots[j][1].x,marker_line_dots[j][1].y));
+      total_dist += dist_1 + dist_2;
+    }
+    if(total_dist < min_dist || i==0){
+      min_dist = total_dist;
+      origin_id = i;
+    }
+  }
+  // draw the origin marker dot
+  circle(out_img,marker_dots[origin_id].pt,20,Scalar(0,255,255),-1);
+  // compute the distance between the origin and the other marker dots to get x and y axes
+  // note: shortest distance is always y
+  float max_dist = 0.0;
+  int xaxis_id = 0;
+  int yaxis_id = 0;
+  std::set<int> ids_left_over;
+  for(size_t i=0;i<3;++i) ids_left_over.insert(i);
+  for(size_t i=0;i<marker_dots.size();++i){
+    if((int)i==origin_id) continue;
+    float dist = (marker_dots[origin_id].pt.x - marker_dots[i].pt.x)*(marker_dots[origin_id].pt.x - marker_dots[i].pt.x) +
+        (marker_dots[origin_id].pt.y - marker_dots[i].pt.y)*(marker_dots[origin_id].pt.y - marker_dots[i].pt.y);
+    if(dist>max_dist){
+      max_dist = dist;
+      xaxis_id = i;
+    }
+  }
+  ids_left_over.erase(origin_id);
+  ids_left_over.erase(xaxis_id);
+  yaxis_id = *ids_left_over.begin();
+  circle(out_img,marker_dots[xaxis_id].pt,20,Scalar(255,255,100),-1);
+  circle(out_img,marker_dots[yaxis_id].pt,20,Scalar(0,0,255),-1);
+
+  // find the opposite corner dot...
+  // it will be the closest combined distance from the x/y axis that is not the origin dot
+  float opp_dist = 1.0E10;
+  int opp_id = 0;
+  for(size_t i=0;i<trimmed_dot_cx.size();++i){
+    float dist_11 = std::abs(dist_from_line(trimmed_dot_cx[i],trimmed_dot_cy[i],marker_dots[xaxis_id].pt.x,marker_dots[xaxis_id].pt.y,marker_line_dots[xaxis_id][0].x,marker_line_dots[xaxis_id][0].y));
+    float dist_12 = std::abs(dist_from_line(trimmed_dot_cx[i],trimmed_dot_cy[i],marker_dots[xaxis_id].pt.x,marker_dots[xaxis_id].pt.y,marker_line_dots[xaxis_id][1].x,marker_line_dots[xaxis_id][1].y));
+    // take the smaller of the two
+    float dist_1 = dist_11 < dist_12 ? dist_11 : dist_12;
+    float dist_21 = std::abs(dist_from_line(trimmed_dot_cx[i],trimmed_dot_cy[i],marker_dots[yaxis_id].pt.x,marker_dots[yaxis_id].pt.y,marker_line_dots[yaxis_id][0].x,marker_line_dots[yaxis_id][0].y));
+    float dist_22 = std::abs(dist_from_line(trimmed_dot_cx[i],trimmed_dot_cy[i],marker_dots[yaxis_id].pt.x,marker_dots[yaxis_id].pt.y,marker_line_dots[yaxis_id][1].x,marker_line_dots[yaxis_id][1].y));
+    // take the smaller of the two
+    float dist_2 = dist_21 < dist_22 ? dist_21 : dist_22;
+    float total_dist = dist_1 + dist_2;
+    if(total_dist <= opp_dist){
+      opp_dist = total_dist;
+      opp_id = i;
+    }
+  }
+  circle(out_img,Point(trimmed_dot_cx[opp_id],trimmed_dot_cy[opp_id]),20,Scalar(100,255,100),-1);
+
+  // determine the pattern size
+  float axis_tol = 10.0;
+  int pattern_width = 0;
+  int pattern_height = 0;
+  const float dist_xaxis_dot = dist_from_line(marker_dots[xaxis_id].pt.x,marker_dots[xaxis_id].pt.y,marker_dots[yaxis_id].pt.x,marker_dots[yaxis_id].pt.y,marker_dots[origin_id].pt.x,marker_dots[origin_id].pt.y);
+  const float dist_yaxis_dot = dist_from_line(marker_dots[yaxis_id].pt.x,marker_dots[yaxis_id].pt.y,marker_dots[origin_id].pt.x,marker_dots[origin_id].pt.y,marker_dots[xaxis_id].pt.x,marker_dots[xaxis_id].pt.y);
+  for(size_t i=0;i<trimmed_dot_cx.size();++i){
+    float dist_from_y_axis = dist_from_line(trimmed_dot_cx[i],trimmed_dot_cy[i],marker_dots[yaxis_id].pt.x,marker_dots[yaxis_id].pt.y,marker_dots[origin_id].pt.x,marker_dots[origin_id].pt.y);
+    float dist_from_x_axis = dist_from_line(trimmed_dot_cx[i],trimmed_dot_cy[i],marker_dots[origin_id].pt.x,marker_dots[origin_id].pt.y,marker_dots[xaxis_id].pt.x,marker_dots[xaxis_id].pt.y);
+//    std::stringstream dot_text;
+//    dot_text << dist_from_x_axis;
+//    putText(out_img, dot_text.str(), Point2f(trimmed_dot_cx[i],trimmed_dot_cy[i]) + Point2f(20,20),
+//      FONT_HERSHEY_COMPLEX_SMALL, 0.5, cvScalar(255,0,0), 1.5, CV_AA);
+    const float min_x_range = dist_xaxis_dot < 0.0 ? dist_xaxis_dot : 0.0;
+    const float max_x_range = dist_xaxis_dot < 0.0 ? 0.0 : dist_xaxis_dot;
+    const float min_y_range = dist_yaxis_dot < 0.0 ? dist_yaxis_dot : 0.0;
+    const float max_y_range = dist_yaxis_dot < 0.0 ? 0.0 : dist_yaxis_dot;
+    if(std::abs(dist_from_x_axis) < axis_tol && dist_from_y_axis > min_x_range && dist_from_y_axis < max_x_range){
+      circle(out_img,Point(trimmed_dot_cx[i],trimmed_dot_cy[i]),20,Scalar(200,200,200),-1);
+      pattern_width++;
+    }
+    else if(std::abs(dist_from_y_axis) < axis_tol && dist_from_x_axis > min_y_range && dist_from_x_axis < max_y_range){
+      circle(out_img,Point(trimmed_dot_cx[i],trimmed_dot_cy[i]),20,Scalar(200,200,200),-1);
+      pattern_height++;
+    }
+  }
+  if(pattern_width<=1||pattern_height<=1){
+    std::cout << "error, could not determine the pattern size" << std::endl;
+    imwrite(output_image_filename, out_img);
+    return -3;
+  }
+  // add the marker dots
+  pattern_width += 2;
+  pattern_height += 2;
+  std::cout << "pattern size: " << pattern_width << " x " << pattern_height << std::endl;
+  const float rough_grid_spacing = dist_xaxis_dot / (pattern_width-1);
+
+  // now determine the 6 parameter image warp using the four corners
+  std::vector<scalar_t> proj_xl(4,0.0);
+  std::vector<scalar_t> proj_yl(4,0.0);
+  std::vector<scalar_t> proj_xr(4,0.0);
+  std::vector<scalar_t> proj_yr(4,0.0);
+  // board space coords for the three marker dots and the opposite corner dot
+  proj_xl[0] = 0.0;               proj_yl[0] = 0.0;
+  proj_xl[1] = pattern_width-1.0; proj_yl[1] = 0.0;
+  proj_xl[2] = pattern_width-1.0; proj_yl[2] = pattern_height-1.0;
+  proj_xl[3] = 0.0;               proj_yl[3] = pattern_height-1.0;
+  // image coords for the marker dots
+  proj_xr[0] = marker_dots[origin_id].pt.x; proj_yr[0] = marker_dots[origin_id].pt.y;
+  proj_xr[1] = marker_dots[xaxis_id].pt.x;  proj_yr[1] = marker_dots[xaxis_id].pt.y;
+  proj_xr[2] = trimmed_dot_cx[opp_id]; proj_yr[2] = trimmed_dot_cy[opp_id];
+  proj_xr[3] = marker_dots[yaxis_id].pt.x;  proj_yr[3] = marker_dots[yaxis_id].pt.y;
+  Teuchos::SerialDenseMatrix<int_t,double> proj_matrix = compute_affine_matrix(proj_xl,proj_yl,proj_xr,proj_yr);
+
+  // convert all the points in the grid to the image and draw a dot in the image:
+  std::vector<size_t> closest_neigh_id(1);
+  std::vector<scalar_t> neigh_dist_2(1);
+
+  // add the marker dots to the return data
+  image_points.push_back(Point2f(marker_dots[origin_id].pt.x,marker_dots[origin_id].pt.y));
+  object_points.push_back(Point3f(0,0,0));
+  image_points.push_back(Point2f(marker_dots[xaxis_id].pt.x,marker_dots[xaxis_id].pt.y));
+  object_points.push_back(Point3f((pattern_width-1)*pattern_size,0,0));
+  image_points.push_back(Point2f(marker_dots[yaxis_id].pt.x,marker_dots[yaxis_id].pt.y));
+  object_points.push_back(Point3f(0,(pattern_height-1)*pattern_size,0));
+
+  // make sure that a dot is only found once
+  std::set<int> found_list;
+  // make sure all the dots inside the marker dots are found
+  bool interior_dot_failed = false;
+  for(int j=-2;j<pattern_height+2;++j){
+    for(int i=-2;i<pattern_width+2;++i){
+      float grid_x = i;
+      float grid_y = j;
+      float image_x = 0.0;
+      float image_y = 0.0;
+      project_grid_to_image(proj_matrix,grid_x,grid_y,image_x,image_y);
+      if(image_x<=5||image_y<=5||image_x>=img.cols-5||image_y>=img.rows-5) continue;
+      // skip the axis and origin points
+      if(i==0&&j==0) continue;
+      if(i==pattern_width-1&&j==0) continue;
+      if(i==0&&j==pattern_height-1) continue;
+      // find the closest contour near this grid point and
+      query_pt[0] = image_x;
+      query_pt[1] = image_y;
+      // find the closest dots to this point
+      kd_tree->knnSearch(&query_pt[0], 1, &closest_neigh_id[0], &neigh_dist_2[0]);
+      int neigh_id = closest_neigh_id[0];
+      if(neigh_dist_2[0]<=(0.5*rough_grid_spacing)*(0.5*rough_grid_spacing)&&found_list.find(neigh_id)==found_list.end()){
+        found_list.insert(neigh_id);
+        image_points.push_back(Point2f(trimmed_dot_cx[neigh_id],trimmed_dot_cy[neigh_id]));
+        object_points.push_back(Point3f(i*pattern_size,j*pattern_size,0));
+        std::stringstream dot_text;
+        dot_text << i << "," << j;
+        putText(out_img, dot_text.str(), Point2f(trimmed_dot_cx[neigh_id],trimmed_dot_cy[neigh_id]) + Point2f(20,20),
+          FONT_HERSHEY_COMPLEX_SMALL, 1.0, cvScalar(255,0,0), 1.5, CV_AA);
+        circle(out_img,Point(trimmed_dot_cx[neigh_id],trimmed_dot_cy[neigh_id]),10,Scalar(255,0,255),-1);
+      } else if (i>=0&&i<pattern_width&&j>=0&&j<pattern_height){
+        interior_dot_failed = true;
+      }
+    }
+  }
+  DEBUG_MSG("Found " << image_points.size() << " cal dots");
+  imwrite(output_image_filename, out_img);
+  // check that there are the proper number of points:
+  if(interior_dot_failed){
+    std::cout << "error, all interior dots could not be located" << std::endl;
+    return -3;
+  }
+  if((int)image_points.size()<pattern_width*pattern_height||(image_points.size()!=object_points.size())){
+    std::cout << "error, not enough points located" << std::endl;
+    return -3;
+  }
+  return 0;
 }
 
 DICE_LIB_DLL_EXPORT
