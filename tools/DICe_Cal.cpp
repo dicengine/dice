@@ -84,9 +84,13 @@ int main(int argc, char *argv[]) {
   TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::reference_image_index),std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::start_image_index),std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::end_image_index),std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::cal_target_width),std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::cal_target_height),std::runtime_error,"");
+  //TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::cal_target_width),std::runtime_error,"");
+  //TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::cal_target_height),std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::cal_target_spacing_size),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::cal_target_has_adaptive),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::cal_target_is_inverted),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::cal_target_block_size),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::cal_target_binary_constant),std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::cal_mode),std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::skip_image_index),std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::stereo_left_suffix),std::runtime_error,"");
@@ -107,13 +111,14 @@ int main(int argc, char *argv[]) {
     images[i*2+1] = stereo_image_files[i+1];
     DEBUG_MSG("cal file left: " << images[i*2+0] << " right: " << images[i*2+1]);
   }
-  const int_t mode = inputParams->get<int_t>(DICe::cal_mode);
-  const int_t target_width = inputParams->get<int_t>(DICe::cal_target_width);
-  const int_t target_height = inputParams->get<int_t>(DICe::cal_target_height);
-  const double spacing_size = inputParams->get<double>(DICe::cal_target_spacing_size);
-  const int_t threshold = inputParams->get<int_t>(DICe::cal_binary_threshold,30);
+//  const int_t mode = inputParams->get<int_t>(DICe::cal_mode);
+//  const int_t target_width = inputParams->get<int_t>(DICe::cal_target_width);
+//  const int_t target_height = inputParams->get<int_t>(DICe::cal_target_height);
+//  const double spacing_size = inputParams->get<double>(DICe::cal_target_spacing_size);
+//  const int_t threshold = inputParams->get<int_t>(DICe::cal_binary_threshold,30);
 
-  const float rms = StereoCalib(mode, images, target_width, target_height, spacing_size, threshold, true, false, output_file);
+  const float rms = StereoCalibDotTarget(inputParams,images,output_file);
+//  const float rms = StereoCalib(mode, images, target_width, target_height, spacing_size, threshold, true, false, output_file);
 
   DICe::finalize();
 
@@ -122,8 +127,7 @@ int main(int argc, char *argv[]) {
     return -1;
   }
   if(rms > 1.0){
-    std::cout << "Error, RMS error is too large: " << rms << ". Should be under 0.5." << std::endl;
-    return -1;
+    std::cout << "Warning, RMS error is large: " << rms << ". Should be under 0.5." << std::endl;
   }
   return 0;
 }

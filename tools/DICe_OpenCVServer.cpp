@@ -141,12 +141,13 @@ int main(int argc, char *argv[]) {
   // filter parameters:
   int filterMode = -1;
   int invertedMode = -1;
+  bool cal_target_is_inverted = false;
   //int antiInvertedMode = -1;
   double blockSize = -1.0;
   double binaryConstant = -1.0;
   int board_width = 0;
   int board_height = 0;
-  float pattern_spacing = 0.0;
+  double pattern_spacing = 0.0;
   SimpleBlobDetector::Params params;
 
   // check if this is a calibration preview and also the filters applied:
@@ -190,6 +191,7 @@ int main(int argc, char *argv[]) {
       //antiInvertedMode = CV_THRESH_BINARY_INV;
       if(filter_params[i][3]==1.0){
         invertedMode = CV_THRESH_BINARY_INV;
+        cal_target_is_inverted = true;
         //antiInvertedMode = CV_THRESH_BINARY;
       }
       blockSize = filter_params[i][1];
@@ -248,13 +250,13 @@ int main(int argc, char *argv[]) {
 
   Teuchos::RCP<Teuchos::ParameterList> preview_params = rcp(new Teuchos::ParameterList());
   preview_params->set("preview_thresh",preview_thresh);
-  preview_params->set("has_adaptive",has_adaptive);
-  preview_params->set("filterMode",filterMode);
-  preview_params->set("invertedMode",invertedMode);
+  preview_params->set("cal_target_has_adaptive",has_adaptive);
+  //preview_params->set("filterMode",filterMode);
+  preview_params->set("cal_target_is_inverted",cal_target_is_inverted);
   //preview_params->set("antiInvertedMode",antiInvertedMode);
-  preview_params->set("blockSize",blockSize);
-  preview_params->set("binaryConstant",binaryConstant);
-  preview_params->set("pattern_spacing",pattern_spacing);
+  preview_params->set("cal_target_block_size",blockSize);
+  preview_params->set("cal_target_binary_constant",binaryConstant);
+  preview_params->set("cal_target_spacing_size",pattern_spacing);
 
   for(size_t image_it=0;image_it<input_images.size();++image_it){
     DEBUG_MSG("processing image " << input_images[image_it]);
@@ -266,9 +268,10 @@ int main(int argc, char *argv[]) {
       }
       std::vector<Point2f> image_points;
       std::vector<Point3f> object_points;
+      Size imageSize;
       // find the cal dot points and check show a preview of their locations
       const int pre_code = pre_process_cal_image(input_images[image_it],output_images[image_it],preview_params,
-        image_points,object_points);
+        image_points,object_points,imageSize);
       DEBUG_MSG("pre_process_cal_image return value: " << pre_code);
       if(pre_code==-1)
         return -1;

@@ -82,13 +82,21 @@ const char* const image_edge_buffer_size = "image_edge_buffer_size";
 /// Input parameter
 const char* const print_timing = "print_timing";
 /// Input parameter
-const char* const cal_target_width = "cal_target_width";
+const char* const cal_target_has_adaptive = "cal_target_has_adaptive";
 /// Input parameter
-const char* const cal_binary_threshold = "cal_binary_threshold";
+const char* const cal_target_is_inverted = "cal_target_is_inverted";
+/// Input parameter
+const char* const cal_target_block_size = "cal_target_block_size";
+/// Input parameter
+const char* const cal_target_binary_constant = "cal_target_binary_constant";
+/// Input parameter
+const char* const cal_target_width = "cal_target_width";
 /// Input parameter
 const char* const cal_target_height = "cal_target_height";
 /// Input parameter
 const char* const cal_target_spacing_size = "cal_target_spacing_size";
+/// Input parameter
+const char* const cal_manual_skip_images = "cal_manual_skip_images";
 /// Input parameter
 const char* const cal_mode = "cal_mode";
 /// Input parameter

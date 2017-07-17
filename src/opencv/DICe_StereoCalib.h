@@ -76,12 +76,29 @@ namespace DICe {
 /// \param pre_process_params parameters that define the binary threshold, etc.
 /// \param image_points [out] returns the coordinates of the cal dots in image space
 /// \param object_points [out] returns the coordinates of the cal dots on the board (physical or model space)
+/// \param imageSize [out] returns the size of the images
 DICE_LIB_DLL_EXPORT
 int pre_process_cal_image(const std::string & image_filename,
   const std::string & output_image_filename,
   Teuchos::RCP<Teuchos::ParameterList> pre_process_params,
   std::vector<cv::Point2f> & image_points,
-  std::vector<cv::Point3f> & object_points);
+  std::vector<cv::Point3f> & object_points,
+  cv::Size & imageSize);
+
+/// free function to compute the calibration matrices
+/// \param object_points the cal target dot coordinates
+/// \param image_points_left the location of the dots in the left image
+/// \param image_points_right the location of the dots in the right image
+/// \param imageSize the dimensions of the images
+/// \param cal_qualities [out] returns the epipolar error for each image
+/// \param output_filename the file to print the debugging results to
+DICE_LIB_DLL_EXPORT
+float compute_cal_matrices(std::vector<std::vector<cv::Point3f> > & object_points,
+  std::vector<std::vector<cv::Point2f> > & image_points_left,
+  std::vector<std::vector<cv::Point2f> > & image_points_right,
+  cv::Size & imageSize,
+  std::vector<scalar_t> & cal_qualities,
+  const std::string & output_filename);
 
 /// free function to perform stereo calibration using opencv
 /// \param mode grid pattern type
@@ -103,6 +120,16 @@ StereoCalib(const int mode,
   const int_t binary_threshold,
   const bool useCalibrated,
   const bool showRectified,
+  const std::string & output_filename);
+
+/// calibrate a dot target
+/// \param pre_params the parameters to use in collecting the target dots
+/// \param imagelist the list of images
+/// \param output_filename the log file to write the results to
+DICE_LIB_DLL_EXPORT
+float
+StereoCalibDotTarget(Teuchos::RCP<Teuchos::ParameterList> pre_params,
+  const std::vector<std::string>& imagelist,
   const std::string & output_filename);
 
 }// End DICe Namespace

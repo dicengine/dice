@@ -41,6 +41,7 @@
 
 #include <DICe_StereoCalib.h>
 #include <DICe_Shape.h>
+#include <DICe_Parser.h>
 #include <DICe_PointCloud.h>
 #include <DICe_Triangulation.h>
 
@@ -148,37 +149,273 @@ void project_grid_to_image(const Teuchos::SerialDenseMatrix<int_t,double> & proj
 }
 
 DICE_LIB_DLL_EXPORT
+float
+StereoCalibDotTarget(Teuchos::RCP<Teuchos::ParameterList> pre_params,
+  const std::vector<std::string>& imagelist,
+  const std::string & output_filename){
+
+  DEBUG_MSG("StereoCalibDotTarget(): begin");
+  assert(imagelist.size()>1&&imagelist.size()%2==0);
+
+  // get the ids of images that have been manually turned off to get a better cal:
+  Teuchos::ParameterList skip_sublist;
+  std::set<int> skip_ids;
+  if(pre_params->isParameter(DICe::cal_manual_skip_images)){
+    skip_sublist = pre_params->sublist(DICe::cal_manual_skip_images);
+    for(Teuchos::ParameterList::ConstIterator it=skip_sublist.begin();it!=skip_sublist.end();++it){
+      std::string string_id = it->first;
+      size_t found = string_id.find_last_of("_");
+      string_id = string_id.substr(found+1,string_id.length());
+      const int id = std::stoi(string_id);
+      DEBUG_MSG("StereoCalibDotTarget: manually turning off image " << id);
+      skip_ids.insert(id);
+    }
+  }
+  const int_t num_images = imagelist.size()/2;
+  std::vector<bool> image_success(num_images,true);
+
+  std::vector<std::vector<Point2f> > image_points_left;
+  std::vector<std::vector<Point2f> > image_points_right;
+  std::vector<std::vector<Point3f> > object_points;
+  Size imageSize;
+
+  // iterate all the images in the set
+  for(int_t i=0;i<num_images;++i){
+    if(skip_ids.find(i)!=skip_ids.end()) continue;
+    std::vector<Point2f> pre_image_points_left;
+    std::vector<Point3f> pre_object_points_left;
+    std::vector<Point2f> pre_image_points_right;
+    std::vector<Point3f> pre_object_points_right;
+
+    for(int_t k=0;k<2;k++){ // k represents 0 for the left image 1 for the right
+      const string& filename = imagelist[i*2+k];
+      std::cout << "processing cal image " << filename << std::endl;
+
+      // find the cal dot points and check show a preview of their locations
+      int pre_code = 0;
+
+      if(k==0)
+        pre_code = pre_process_cal_image(filename,"",pre_params,pre_image_points_left,pre_object_points_left,imageSize);
+      else
+        pre_code = pre_process_cal_image(filename,"",pre_params,pre_image_points_right,pre_object_points_right,imageSize);
+
+      DEBUG_MSG("pre_process_cal_image return value: " << pre_code);
+      if(pre_code!=0){
+        std::cout << "error, pre-processing image for cal dot locations failed" << std::endl;
+        image_success[i] = false;
+        break;
+      }
+      if((k==0&&pre_object_points_left.size()<4)||(k==1&&pre_object_points_right.size()<4)){
+        std::cout << "error, failed to locate enough dots" << std::endl;
+        image_success[i] = false;
+        break;
+      }
+      if(k==1){
+        image_points_left.resize(image_points_left.size()+1);
+        image_points_right.resize(image_points_right.size()+1);
+        object_points.resize(object_points.size()+1);
+        // check for matching points between the two images and push those back on the accumulated set of points
+        for(size_t n=0;n<pre_object_points_left.size();++n){
+          for(size_t m=0;m<pre_object_points_right.size();++m){
+            if(pre_object_points_left[n]==pre_object_points_right[m]){
+                image_points_left[image_points_left.size()-1].push_back(pre_image_points_left[n]);
+                image_points_right[image_points_right.size()-1].push_back(pre_image_points_right[m]);
+                object_points[object_points.size()-1].push_back(pre_object_points_right[m]);
+                break;
+            }
+          } // loop over right image points
+        } // loop over left image points
+      } // end is left image
+    } // loop over left and right
+  } // loop over images
+
+  std::cout << "successfully found points in " << object_points.size() << " images" << std::endl;
+  for(size_t i=0;i<object_points.size();++i){
+    std::cout << "image index " << i << " num points " << object_points[i].size() << std::endl;
+//    for(size_t j=0;j<object_points[i].size();++j){
+//      std::cout << "point " << j << " " << object_points[i][j].x << " " << object_points[i][j].y << " "
+//          << image_points_left[i][j].x << " " << image_points_left[i][j].y << " "
+//          << image_points_right[i][j].x << " " << image_points_right[i][j].y << std::endl;
+//    }
+  }
+  std::vector<scalar_t> cal_qualities;
+  const float rms = compute_cal_matrices(object_points,image_points_left,image_points_right,imageSize,cal_qualities,output_filename);
+
+  // create an output file with corresponding errors for each image in the selectable list:
+  // save intrinsic parameters
+  std::FILE * filePtr = fopen("cal_errors.txt","w");
+  DEBUG_MSG("StereoCalibDotTarget(): writing cal_errors.txt");
+  size_t quality_index = 0;
+  for(int i=0;i<num_images;++i){
+    if(!image_success[i])
+      fprintf(filePtr,"failed\n");
+    else if(skip_ids.find(i)!=skip_ids.end())
+      fprintf(filePtr,"skipped\n");
+    else{
+      assert(quality_index<cal_qualities.size());
+      fprintf(filePtr,"%.4f\n",cal_qualities[quality_index]);
+      quality_index++;
+    }
+  }
+  fclose (filePtr);
+  DEBUG_MSG("StereoCalibDotTarget(): end");
+  return rms;
+}
+
+DICE_LIB_DLL_EXPORT
+float compute_cal_matrices(std::vector<std::vector<Point3f> > & object_points,
+  std::vector<std::vector<Point2f> > & image_points_left,
+  std::vector<std::vector<Point2f> > & image_points_right,
+  Size & imageSize,
+  std::vector<scalar_t> & cal_qualities,
+  const std::string & output_filename){
+  DEBUG_MSG("compute_cal_matrices(): begin");
+
+  cal_qualities.clear();
+  cal_qualities.resize(object_points.size());
+  const size_t nimages = object_points.size();
+  Mat cameraMatrix[2], distCoeffs[2];
+  cameraMatrix[0] = initCameraMatrix2D(object_points,image_points_left,imageSize,0);
+  cameraMatrix[1] = initCameraMatrix2D(object_points,image_points_right,imageSize,0);
+  Mat R, T, E, F;
+  double rms = stereoCalibrate(object_points, image_points_left, image_points_right,
+    cameraMatrix[0], distCoeffs[0],
+    cameraMatrix[1], distCoeffs[1],
+    imageSize, R, T, E, F,
+    CALIB_FIX_ASPECT_RATIO +
+    CALIB_USE_INTRINSIC_GUESS +
+    CALIB_SAME_FOCAL_LENGTH +
+    CALIB_ZERO_TANGENT_DIST +
+    CALIB_RATIONAL_MODEL +
+    CALIB_FIX_K3 + CALIB_FIX_K4 + CALIB_FIX_K5,
+    TermCriteria(TermCriteria::COUNT+TermCriteria::EPS, 100, 1e-5) );
+  cout << "done with RMS error=" << rms << endl;
+
+  std::cout << cameraMatrix[0] << std::endl;
+  std::cout << distCoeffs[0] << std::endl;
+  std::cout << cameraMatrix[1] << std::endl;
+  std::cout << distCoeffs[1] << std::endl;
+
+  // CALIBRATION QUALITY CHECK
+  // because the output fundamental matrix implicitly
+  // includes all the output information,
+  // we can check the quality of calibration using the
+  // epipolar geometry constraint: m2^t*F*m1=0
+  double err = 0;
+  int npoints = 0;
+  std::vector<Vec3f> lines[2];
+  for(size_t i = 0; i < nimages; i++ )
+  {
+    int npt = (int)image_points_left[i].size();
+    Mat imgpt[2];
+    for( size_t k = 0; k < 2; k++ )
+    {
+      if(k==0)
+        imgpt[k] = Mat(image_points_left[i]);
+      else
+        imgpt[k] = Mat(image_points_right[i]);
+      undistortPoints(imgpt[k], imgpt[k], cameraMatrix[k], distCoeffs[k], Mat(), cameraMatrix[k]);
+      computeCorrespondEpilines(imgpt[k], k+1, F, lines[k]);
+    }
+    double imgErr = 0.0;
+    for(int j = 0; j < npt; j++ )
+    {
+      double errij = fabs(image_points_left[i][j].x*lines[1][j][0] +
+        image_points_left[i][j].y*lines[1][j][1] + lines[1][j][2]) +
+            fabs(image_points_right[i][j].x*lines[0][j][0] +
+              image_points_right[i][j].y*lines[0][j][1] + lines[0][j][2]);
+      err += errij;
+      imgErr += errij;
+    }
+    cal_qualities[i] = imgErr;
+    npoints += npt;
+  }
+  std::cout << "average epipolar err = " <<  err/npoints << endl;
+
+  // save intrinsic parameters
+  std::FILE * filePtr = fopen(output_filename.c_str(),"w");
+  fprintf(filePtr,"%4.12E # cx\n",cameraMatrix[0].at<double>(0,2));
+  fprintf(filePtr,"%4.12E # cy\n",cameraMatrix[0].at<double>(1,2));
+  fprintf(filePtr,"%4.12E # fx\n",cameraMatrix[0].at<double>(0,0));
+  fprintf(filePtr,"%4.12E # fy\n",cameraMatrix[0].at<double>(1,1));
+  fprintf(filePtr,"%4.12E # fs\n",cameraMatrix[0].at<double>(0,1));
+  fprintf(filePtr,"%4.12E # k1\n",distCoeffs[0].at<double>(0,0)); //
+  fprintf(filePtr,"%4.12E # k2\n",distCoeffs[0].at<double>(0,1)); //
+  fprintf(filePtr,"%4.12E # k6\n",distCoeffs[0].at<double>(0,7)); //
+  fprintf(filePtr,"%4.12E # cx\n",cameraMatrix[1].at<double>(0,2));
+  fprintf(filePtr,"%4.12E # cy\n",cameraMatrix[1].at<double>(1,2));
+  fprintf(filePtr,"%4.12E # fx\n",cameraMatrix[1].at<double>(0,0));
+  fprintf(filePtr,"%4.12E # fy\n",cameraMatrix[1].at<double>(1,1));
+  fprintf(filePtr,"%4.12E # fs\n",cameraMatrix[1].at<double>(0,1));
+  fprintf(filePtr,"%4.12E # k1\n",distCoeffs[1].at<double>(0,0)); //
+  fprintf(filePtr,"%4.12E # k2\n",distCoeffs[1].at<double>(0,1)); //
+  fprintf(filePtr,"%4.12E # k6\n",distCoeffs[1].at<double>(0,7)); //
+
+  Mat R1, R2, P1, P2, Q;
+  Rect validRoi[2];
+
+  stereoRectify(cameraMatrix[0], distCoeffs[0],
+    cameraMatrix[1], distCoeffs[1],
+    imageSize, R, T, R1, R2, P1, P2, Q,
+    CALIB_ZERO_DISPARITY, 1, imageSize, &validRoi[0], &validRoi[1]);
+  // rotation matrix
+  fprintf(filePtr,"%4.12E # R11\n",R.at<double>(0,0));
+  fprintf(filePtr,"%4.12E # R12\n",R.at<double>(0,1));
+  fprintf(filePtr,"%4.12E # R13\n",R.at<double>(0,2));
+  fprintf(filePtr,"%4.12E # R21\n",R.at<double>(1,0));
+  fprintf(filePtr,"%4.12E # R22\n",R.at<double>(1,1));
+  fprintf(filePtr,"%4.12E # R23\n",R.at<double>(1,2));
+  fprintf(filePtr,"%4.12E # R31\n",R.at<double>(2,0));
+  fprintf(filePtr,"%4.12E # R32\n",R.at<double>(2,1));
+  fprintf(filePtr,"%4.12E # R33\n",R.at<double>(2,2));
+  // translations
+  fprintf(filePtr,"%4.12E # tx\n",T.at<double>(0,0));
+  fprintf(filePtr,"%4.12E # ty\n",T.at<double>(1,0));
+  fprintf(filePtr,"%4.12E # tz\n",T.at<double>(2,0));
+
+  fclose (filePtr);
+
+  DEBUG_MSG("compute_cal_matrices(): end");
+  return rms;
+}
+
+DICE_LIB_DLL_EXPORT
 int pre_process_cal_image(const std::string & image_filename,
   const std::string & output_image_filename,
   Teuchos::RCP<Teuchos::ParameterList> pre_process_params,
   std::vector<Point2f> & image_points,
-  std::vector<Point3f> & object_points){
+  std::vector<Point3f> & object_points,
+  Size & imageSize){
   if(pre_process_params==Teuchos::null){
     std::cout << "error, pre_process_params is null" << std::endl;
     return -1;
   }
   image_points.clear();
   object_points.clear();
+  const bool output_preview_images = output_image_filename != "";
   const bool preview_thresh = pre_process_params->get<bool>("preview_thresh",false);
-  const bool has_adaptive = pre_process_params->get<bool>("has_adaptive",false);
-  const int filterMode = pre_process_params->get<int>("filterMode",CV_ADAPTIVE_THRESH_GAUSSIAN_C);
-  const int invertedMode = pre_process_params->get<int>("invertedMode",CV_THRESH_BINARY);
+  const bool has_adaptive = pre_process_params->get<bool>("cal_target_has_adaptive",false);
+  const int filterMode = CV_ADAPTIVE_THRESH_MEAN_C;//pre_process_params->get<int>("filterMode",CV_ADAPTIVE_THRESH_GAUSSIAN_C);
+  int invertedMode = CV_THRESH_BINARY;
+  if(pre_process_params->get<bool>("cal_target_is_inverted",false))
+    invertedMode = CV_THRESH_BINARY_INV;
+  //const int invertedMode = pre_process_params->get<int>("invertedMode",CV_THRESH_BINARY);
   //const int antiInvertedMode = pre_process_params->get<int>("antiInvertedMode",CV_THRESH_BINARY_INV);
-  if(!pre_process_params->isParameter("pattern_spacing")){
+  if(!pre_process_params->isParameter("cal_target_spacing_size")){
     std::cout << "error, pattern_spacing is missing from parameters" << std::endl;
     return -1;
   }
-  const float pattern_size = pre_process_params->get<float>("pattern_spacing");
-  if(!pre_process_params->isParameter("blockSize")){
-    std::cout << "error, blockSize is missing from parameters" << std::endl;
+  const float pattern_size = (float)pre_process_params->get<double>("cal_target_spacing_size");
+  if(!pre_process_params->isParameter("cal_target_block_size")){
+    std::cout << "error, cal_target_block_size is missing from parameters" << std::endl;
     return -1;
   }
-  const double blockSize = pre_process_params->get<double>("blockSize");
-  if(!pre_process_params->isParameter("binaryConstant")){
-    std::cout << "error, binaryConstant is missing from parameters" << std::endl;
+  const double blockSize = pre_process_params->get<double>("cal_target_block_size");
+  if(!pre_process_params->isParameter("cal_target_binary_constant")){
+    std::cout << "error, cal_target_binary_constant is missing from parameters" << std::endl;
     return -1;
   }
-  const double binaryConstant = pre_process_params->get<double>("binaryConstant");
+  const double binaryConstant = pre_process_params->get<double>("cal_target_binary_constant");
 
   // load the image as an openCV mat
   Mat img = imread(image_filename, IMREAD_GRAYSCALE);
@@ -194,6 +431,7 @@ int pre_process_cal_image(const std::string & image_filename,
     std::cout << "error, the image failed to load" << std::endl;
     return -4;
   }
+  imageSize = img.size();
   // blur the image to remove noise
   GaussianBlur(img, binary_img, Size(9, 9), 2, 2 );
   //medianBlur ( median_img, median_img, 7 );
@@ -248,7 +486,8 @@ int pre_process_cal_image(const std::string & image_filename,
     // output the image with markers located
     for(size_t i=0;i<potential_markers.size();++i)
       circle(out_img,potential_markers[i].pt,10,Scalar(255,100,255),-1);
-    imwrite(output_image_filename, out_img);
+    if(output_preview_images)
+      imwrite(output_image_filename, out_img);
     std::cout << "error, not enough marker dots could be located (need three)" << std::endl;
     return -2;
   }
@@ -469,7 +708,8 @@ int pre_process_cal_image(const std::string & image_filename,
   }
   if(pattern_width<=1||pattern_height<=1){
     std::cout << "error, could not determine the pattern size" << std::endl;
-    imwrite(output_image_filename, out_img);
+    if(output_preview_images)
+      imwrite(output_image_filename, out_img);
     return -3;
   }
   // add the marker dots
@@ -544,7 +784,11 @@ int pre_process_cal_image(const std::string & image_filename,
     }
   }
   DEBUG_MSG("Found " << image_points.size() << " cal dots");
-  imwrite(output_image_filename, out_img);
+//  for(size_t i=0;i<image_points.size();++i){
+//    DEBUG_MSG(object_points[i].x << " " << object_points[i].y << " " << image_points[i].x << " " << image_points[i].y);
+//  }
+  if(output_preview_images)
+    imwrite(output_image_filename, out_img);
   // check that there are the proper number of points:
   if(interior_dot_failed){
     std::cout << "error, all interior dots could not be located" << std::endl;
