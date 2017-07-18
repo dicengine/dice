@@ -2,9 +2,9 @@
 // ************************************************************************
 //
 //               Digital Image Correlation Engine (DICe)
-//                 Copyright 2015 Sandia Corporation.
+//                 Copyright 2015 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
 //
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+// Under the terms of Contract DE-NA0003525 with NTESS,
 // the U.S. Government retains certain rights in this software.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -22,10 +22,10 @@
 // contributors may be used to endorse or promote products derived from
 // this software without specific prior written permission.
 //
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// THIS SOFTWARE IS PROVIDED BY NTESS "AS IS" AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL NTESS OR THE
 // CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 // EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
 // PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
@@ -3393,7 +3393,7 @@ Output_Spec::write_info(std::FILE * file,
   TEUCHOS_TEST_FOR_EXCEPTION(schema_->analysis_type()==GLOBAL_DIC,std::runtime_error,
     "Error, write_info is not intended to be used for global DIC");
   fprintf(file,"***\n");
-  fprintf(file,"*** Digital Image Correlation Engine (DICe), (git sha1: %s) Copyright 2015 Sandia Corporation\n",GITSHA1);
+  fprintf(file,"*** Digital Image Correlation Engine (DICe), (git sha1: %s) Copyright 2015 National Technology & Engineering Solutions of Sandia, LLC (NTESS)\n",GITSHA1);
   fprintf(file,"***\n");
   fprintf(file,"*** Reference image: %s \n",schema_->ref_img()->file_name().c_str());
   fprintf(file,"*** Deformed image: %s \n",schema_->def_img(0)->file_name().c_str());

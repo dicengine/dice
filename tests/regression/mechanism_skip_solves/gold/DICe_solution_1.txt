@@ -1,5 +1,5 @@
 ***
-*** Digital Image Correlation Engine (DICe), (git sha1: v1.0-35-g8c3317-dirty) Copyright 2015 Sandia Corporation
+*** Digital Image Correlation Engine (DICe), (git sha1: v1.0-35-g8c3317-dirty) Copyright 2015 National Technology & Engineering Solutions of Sandia, LLC (NTESS)
 ***
 *** Reference image: (from array) 
 *** Deformed image: (from array) 
