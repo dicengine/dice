@@ -220,7 +220,7 @@ compute_affine_matrix(const std::vector<scalar_t> proj_xl,
   lapack.SYEV('V','U',N,KTK.values(),N,EIGS,WORK,LWORK,&INFO);
 
   DEBUG_MSG("compute_affine_matrix(): Smallest eigenvalue: " << EIGS[0] );
-  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(EIGS[0]) > 1.0,std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(EIGS[0]) > 10.0,std::runtime_error,
     "Error, too much noise in the projection estimation points");
 
   for(int_t i=0;i<N;++i){

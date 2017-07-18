@@ -327,7 +327,7 @@ float compute_cal_matrices(std::vector<std::vector<Point3f> > & object_points,
       err += errij;
       imgErr += errij;
     }
-    cal_qualities[i] = imgErr;
+    cal_qualities[i] = imgErr/npt;
     npoints += npt;
   }
   std::cout << "average epipolar err = " <<  err/npoints << endl;
@@ -715,7 +715,7 @@ int pre_process_cal_image(const std::string & image_filename,
   // add the marker dots
   pattern_width += 2;
   pattern_height += 2;
-  std::cout << "pattern size: " << pattern_width << " x " << pattern_height << std::endl;
+  DEBUG_MSG("pattern size: " << pattern_width << " x " << pattern_height);
   const float rough_grid_spacing = dist_xaxis_dot / (pattern_width-1);
 
   // now determine the 6 parameter image warp using the four corners

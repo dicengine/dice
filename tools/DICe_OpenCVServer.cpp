@@ -212,7 +212,7 @@ int main(int argc, char *argv[]) {
         return -1;
       }
       pattern_spacing = filter_params[i][0];
-      std::cout << "pattern spacing " << pattern_spacing << std::endl;
+      //std::cout << "pattern spacing " << pattern_spacing << std::endl;
     }
     if(filters[i]=="Filter:Blob"){
       has_blob = true;
