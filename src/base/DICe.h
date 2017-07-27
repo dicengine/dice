@@ -508,6 +508,7 @@ const static char * initializationMethodStrings[] = {
 enum Optimization_Method {
   SIMPLEX=0,
   GRADIENT_BASED,
+  GRADIENT_THEN_SEARCH,
   SIMPLEX_THEN_GRADIENT_BASED,
   GRADIENT_BASED_THEN_SIMPLEX,
   OPTIMIZATION_METHOD_NOT_APPLICABLE,
@@ -519,6 +520,7 @@ enum Optimization_Method {
 const static char * optimizationMethodStrings[] = {
   "SIMPLEX",
   "GRADIENT_BASED",
+  "GRADIENT_THEN_SEARCH",
   "SIMPLEX_THEN_GRADIENT_BASED",
   "GRADIENT_BASED_THEN_SIMPLEX",
   "OPTIMIZATION_METHOD_NOT_APPLICABLE"

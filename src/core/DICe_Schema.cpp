@@ -1258,10 +1258,13 @@ Schema::execute_cross_correlation(){
   // keep track of the original parameters
   const Initialization_Method orig_init_method = initialization_method_;
   const Optimization_Method orig_opt_method = optimization_method_;
+  const double orig_jump_tol = disp_jump_tol_;
+  disp_jump_tol_ = 100.0;
 
   // change the parameters for cross-correlation
-  initialization_method_ = USE_FIELD_VALUES;
-  //optimization_method_ = SIMPLEX;
+  initialization_method_ = USE_FIELD_VALUES; //USE_FEATURE_MATCHING;
+  if(optimization_method_==GRADIENT_BASED||optimization_method_==GRADIENT_BASED_THEN_SIMPLEX)
+    optimization_method_=GRADIENT_THEN_SEARCH;
 
   // project the right image onto the left if requested
   if(use_nonlinear_projection_){
@@ -1323,6 +1326,13 @@ Schema::execute_cross_correlation(){
       record_failed_step(this_proc_gid_order_[subset_index],static_cast<int_t>(INITIALIZE_FAILED_BY_EXCEPTION),-1);
     }
   }
+  // check the percentage of successful subsets:
+  int_t num_successful = 0;
+  for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
+    if(local_field_value(subset_index,SIGMA) > 0.0)
+      num_successful++;
+  }
+  DEBUG_MSG("[PROC " << proc_id << "]: success rate: " << (scalar_t)num_successful/(scalar_t)local_num_subsets_);
   for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
     DEBUG_MSG("[PROC " << proc_id << "] global subset id " << subset_global_id(subset_index) << " post execute_cross_correlation() field values, u: " <<
       local_field_value(subset_index,DISPLACEMENT_X) << " v: " << local_field_value(subset_index,DISPLACEMENT_Y)
@@ -1343,6 +1353,7 @@ Schema::execute_cross_correlation(){
   //neigh_ids->update(1.0,*original_neigh_ids,0.0);
   initialization_method_ = orig_init_method;
   optimization_method_ = orig_opt_method;
+  disp_jump_tol_ = orig_jump_tol;
   // clear the optimization initializers so that the correlation in time uses the user requested one
   opt_initializers_.clear();
 
@@ -1906,7 +1917,8 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       corr_status = CORRELATION_FAILED_BY_EXCEPTION;
     };
   }
-  else if(optimization_method_==DICe::GRADIENT_BASED||optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX){
+  else if(optimization_method_==DICe::GRADIENT_BASED||optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX||
+      optimization_method_==DICe::GRADIENT_THEN_SEARCH){
     try{
       corr_status = obj->computeUpdateFast(deformation,num_iterations);
     }
@@ -1933,19 +1945,44 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::GRADIENT_BASED||force_simplex){
       second_attempt_failed = true;
     }
-    else if(optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX){
+    else if(optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX||optimization_method_==DICe::GRADIENT_THEN_SEARCH){
       if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_backup_opt_call(subset_gid,frame_id_);
       // try again using simplex
       init_status = initial_guess(subset_gid,deformation);
-      try{
-        corr_status = obj->computeUpdateRobust(deformation,num_iterations);
+      if(optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX){
+        try{
+          corr_status = obj->computeUpdateRobust(deformation,num_iterations);
+        }
+        catch (std::logic_error &err) { //a non-graceful exception occurred
+          corr_status = CORRELATION_FAILED_BY_EXCEPTION;
+        };
       }
-      catch (std::logic_error &err) { //a non-graceful exception occurred
-        corr_status = CORRELATION_FAILED_BY_EXCEPTION;
-      };
-      if(corr_status!=CORRELATION_SUCCESSFUL){
+      else if(optimization_method_==DICe::GRADIENT_THEN_SEARCH){
+        // search farther in x because we assume that the cross correlation is between two cameras with the same y
+        scalar_t best_gamma = 100.0;
+        scalar_t min_u = 0.0;
+        scalar_t search_radius_x = 50.0;
+        scalar_t search_step = 1.0;
+        scalar_t def_orig_x = (*deformation)[DICe::DISPLACEMENT_X];
+        for(scalar_t u=-search_radius_x;u<search_radius_x;u+=search_step){
+          (*deformation)[DISPLACEMENT_X] = def_orig_x + u;
+          const scalar_t gamma = obj->gamma(deformation);
+          if(gamma > 0.0 && gamma < best_gamma){
+            best_gamma = gamma;
+            min_u = def_orig_x + u;
+          }
+        } // end search x loop
+        DEBUG_MSG("Subset " << subset_gid << " GRADIENT_THEN_SEARCH method used, search-based initial u: " << min_u);// << " v: " << min_v);
+        (*deformation)[DICe::DISPLACEMENT_X] = min_u;
+        try{
+          corr_status = obj->computeUpdateFast(deformation,num_iterations);
+        }
+        catch (std::logic_error &err) { //a non-graceful exception occurred
+          corr_status = CORRELATION_FAILED_BY_EXCEPTION;
+        };
+      } // end gradient then search
+      if(corr_status!=CORRELATION_SUCCESSFUL)
         second_attempt_failed = true;
-      }
     }
     else if(optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED){
       if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_backup_opt_call(subset_gid,frame_id_);
@@ -2654,6 +2691,7 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       local_field_value(i,DISPLACEMENT_Y) = py - cy;
     }
   }
+
   DEBUG_MSG("Schema::initialize_cross_correlation(): projective transform estimation successful");
   return 0;
 }
