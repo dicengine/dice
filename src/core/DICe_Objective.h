@@ -107,17 +107,17 @@ public:
 
   /// \brief Correlation criteria
   /// \param deformation The deformation values for which to evaluate the correlation. These values define the mapping.
-  virtual scalar_t gamma( Teuchos::RCP<std::vector<scalar_t> > & deformation) const = 0;
+  scalar_t gamma( Teuchos::RCP<std::vector<scalar_t> > & deformation) const;
 
   /// \brief Uncertainty measure for solution
   /// \param deformation The deformation map parameters for the current guess
   /// \param noise_level [out] Returned as the standard deviation estimate of the image noise sigma_g from Sutton et.al.
-  virtual scalar_t sigma( Teuchos::RCP<std::vector<scalar_t> > & deformation,
-    scalar_t & noise_level) const = 0;
+  scalar_t sigma( Teuchos::RCP<std::vector<scalar_t> > & deformation,
+    scalar_t & noise_level) const;
 
   /// \brief Measure of the slope of the optimization landscape or how deep the minimum well is
   /// \param deformation The deformation map parameters for the current guess
-  virtual scalar_t beta( Teuchos::RCP<std::vector<scalar_t> > & deformation) const = 0;
+  scalar_t beta( Teuchos::RCP<std::vector<scalar_t> > & deformation) const;
 
   /// \brief Gradient based optimization algorithm
   /// \param deformation [out] The deformation map parameters taken as input as the initial guess and returned as the converged solution
@@ -140,7 +140,7 @@ public:
 
   /// \brief Returns the map of degree of freedom field names (see dof_map_ description below)
   /// \param index The index of the degree of freedom map
-  Field_Name dof_map(const size_t index)const{
+  int_t dof_map(const size_t index)const{
       assert(index<dof_map_.size());
       return dof_map_[index];
   }
@@ -174,6 +174,10 @@ public:
 
 protected:
 
+  /// Computes the difference from the exact solution and associated fields
+  /// \param deformation pointer to the deformation parameters
+  void computeUncertaintyFields(Teuchos::RCP<std::vector<scalar_t> > & deformation);
+
   /// Pointer to the schema for this analysis
   Schema * schema_;
   /// Correlation point global id
@@ -182,7 +186,81 @@ protected:
   Teuchos::RCP<Subset> subset_;
   /// Degree of freedom map. For most objectives, not all displacemen, rotation, etc. parameters are needed. This stores the index
   /// of only the degrees of freedom used in the current objective. The index maps the degree of freedom to the full set from DICe.h
-  std::vector<Field_Name> dof_map_;
+  std::vector<int_t> dof_map_;
+};
+
+/// \class DICe::Objective_ZNSSD
+/// \brief Sum squared differences DICe::Objective (with and without zero normalization)
+/// the criteria is \f$ \gamma = \sum_i (\frac{G_i - \bar{G}}{\sqrt(\sum_i(G_i - \bar{G})^2)} - \frac{F_i - \bar{F}}{\sqrt(\sum_i(F_i - \bar{F})^2)})^2 \f$.
+/// Normalization is activated when the user selects ZNSSD as the correlation_criteria. ZNSSD performs more
+/// robustly in image sets where the lighting changes between frames.
+///
+class DICE_LIB_DLL_EXPORT
+Objective_ZNSSD : public Objective
+{
+
+public:
+  /// \brief Same constructor as for the base class (see base class documentation)
+  ///
+  /// The dof map for Objective_ZNSSD is set depending on which degrees of freedom the user has enabled (via setting an enable_<dof> parameter in the Schema).
+  Objective_ZNSSD(Schema * schema,
+    const int_t correlation_point_global_id):
+    Objective(schema,correlation_point_global_id){
+    // check that at least one of the shape functions is in use:
+    TEUCHOS_TEST_FOR_EXCEPTION(!schema_->translation_enabled()&&
+      !schema_->rotation_enabled()&&
+      !schema_->normal_strain_enabled()&&
+      !schema_->shear_strain_enabled(),std::runtime_error,"Error, no shape functions are activated");
+    TEUCHOS_TEST_FOR_EXCEPTION(subset_==Teuchos::null,std::runtime_error,"");
+    // populate the dof map since not all deformation dofs are used
+    if(schema_->translation_enabled()){
+      dof_map_.push_back(DISPLACEMENT_X);
+      dof_map_.push_back(DISPLACEMENT_Y);
+    }
+    if(schema_->rotation_enabled())
+      dof_map_.push_back(ROTATION_Z);
+    if(schema_->normal_strain_enabled()){
+      dof_map_.push_back(NORMAL_STRAIN_X);
+      dof_map_.push_back(NORMAL_STRAIN_Y);
+    }
+    if(schema_->shear_strain_enabled())
+      dof_map_.push_back(SHEAR_STRAIN_XY);
+  }
+
+  virtual ~Objective_ZNSSD(){}
+
+  /// See base class documentation
+  virtual Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+    int_t & num_iterations);
+
+  /// See base class documentation
+  virtual Status_Flag computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+    int_t & num_iterations,
+    const scalar_t & override_tol = -1.0);
+
+  /// See base class documentation
+  using Objective::sigma;
+
+  /// See base class documentation
+  using Objective::beta;
+
+  /// See base class documentation
+  using Objective::gamma;
+
+  /// See base class documentation
+  using Objective::global_field_value;
+
+  /// See base class documentation
+  using Objective::global_field_value_nm1;
+
+  /// See base class documentation
+  using Objective::num_dofs;
+
+  /// See base class documentation
+  using Objective::dof_map;
+
+  /// See base class documentation
+  using Objective::sub_image_id;
 };
 
 }// End DICe Namespace

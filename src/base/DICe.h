@@ -70,7 +70,6 @@
 // includes fields below from 0 to (DICE_DEFORMATION_SIZE-1)
 #define DICE_DEFORMATION_SIZE 6
 
-
 #include <string>
 
 /*!

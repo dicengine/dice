@@ -45,7 +45,7 @@
 */
 
 #include <DICe_Schema.h>
-#include <DICe_ObjectiveZNSSD.h>
+#include <DICe_Objective.h>
 #include <DICe.h>
 
 #include <Teuchos_oblackholestream.hpp>

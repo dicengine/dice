@@ -12,7 +12,7 @@ SET(DICE_HEADERS_UTIL
 SET(DICE_SOURCES
   DICe_Simplex.cpp
   DICe_Schema.cpp
-  DICe_ObjectiveZNSSD.cpp
+  DICe_Objective.cpp
   DICe_Triangulation.cpp
   DICe_PostProcessor.cpp
   DICe_Initializer.cpp
@@ -22,7 +22,6 @@ SET(DICE_SOURCES
 SET(DICE_HEADERS
   DICe_Simplex.h
   DICe_Objective.h
-  DICe_ObjectiveZNSSD.h
   DICe_Schema.h
   DICe_Triangulation.h
   DICe_PostProcessor.h

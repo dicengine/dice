@@ -41,7 +41,7 @@
 
 #include <DICe.h>
 #include <DICe_Schema.h>
-#include <DICe_ObjectiveZNSSD.h>
+#include <DICe_Objective.h>
 #include <DICe_PostProcessor.h>
 #include <DICe_ParameterUtilities.h>
 #include <DICe_ImageUtils.h>
