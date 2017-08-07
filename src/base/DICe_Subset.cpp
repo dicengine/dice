@@ -83,45 +83,72 @@ Subset::deformed_shapes(Teuchos::RCP<const std::vector<scalar_t> > deformation,
 void
 Subset::turn_off_obstructed_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation){
   assert(deformation!=Teuchos::null);
-  const scalar_t u     = (*deformation)[DICe::DISPLACEMENT_X];
-  const scalar_t v     = (*deformation)[DICe::DISPLACEMENT_Y];
-  const scalar_t theta = (*deformation)[DICe::ROTATION_Z];
-  const scalar_t dudx  = (*deformation)[DICe::NORMAL_STRAIN_X];
-  const scalar_t dvdy  = (*deformation)[DICe::NORMAL_STRAIN_Y];
-  const scalar_t gxy   = (*deformation)[DICe::SHEAR_STRAIN_XY];
-  scalar_t Dx=0.0,Dy=0.0;
-  scalar_t dx=0.0, dy=0.0;
+
   scalar_t X=0.0,Y=0.0;
   int_t px=0,py=0;
-  scalar_t cos_t = std::cos(theta);
-  scalar_t sin_t = std::sin(theta);
-  reset_is_deactivated_this_step();
   const bool has_blocks = !pixels_blocked_by_other_subsets_.empty();
-  for(int_t i=0;i<num_pixels_;++i){
-    dx = (scalar_t)(x(i)) - cx_;
-    dy = (scalar_t)(y(i)) - cy_;
-    Dx = (1.0+dudx)*dx + gxy*dy;
-    Dy = (1.0+dvdy)*dy + gxy*dx;
-    // mapped location
-    X = cos_t*Dx - sin_t*Dy + u + cx_;
-    Y = sin_t*Dx + cos_t*Dy + v + cy_;
+  reset_is_deactivated_this_step();
 
-    if(is_obstructed_pixel(X,Y)){
-      is_deactivated_this_step(i) = true;
-    }
-    else{
-      is_deactivated_this_step(i) = false;
-    }
-    // pixels blocked by other subsets:
-    if(has_blocks){
-      px = ((int_t)(X + 0.5) == (int_t)(X)) ? (int_t)(X) : (int_t)(X) + 1;
-      py = ((int_t)(Y + 0.5) == (int_t)(Y)) ? (int_t)(Y) : (int_t)(Y) + 1;
-      if(pixels_blocked_by_other_subsets_.find(std::pair<int_t,int_t>(py,px))
-          !=pixels_blocked_by_other_subsets_.end()){
+  if(deformation->size()==DICE_DEFORMATION_SIZE){
+    const scalar_t u     = (*deformation)[DICe::DISPLACEMENT_X];
+    const scalar_t v     = (*deformation)[DICe::DISPLACEMENT_Y];
+    const scalar_t theta = (*deformation)[DICe::ROTATION_Z];
+    const scalar_t dudx  = (*deformation)[DICe::NORMAL_STRAIN_X];
+    const scalar_t dvdy  = (*deformation)[DICe::NORMAL_STRAIN_Y];
+    const scalar_t gxy   = (*deformation)[DICe::SHEAR_STRAIN_XY];
+    scalar_t Dx=0.0,Dy=0.0;
+    scalar_t dx=0.0, dy=0.0;
+    scalar_t cos_t = std::cos(theta);
+    scalar_t sin_t = std::sin(theta);
+    for(int_t i=0;i<num_pixels_;++i){
+      dx = (scalar_t)(x(i)) - cx_;
+      dy = (scalar_t)(y(i)) - cy_;
+      Dx = (1.0+dudx)*dx + gxy*dy;
+      Dy = (1.0+dvdy)*dy + gxy*dx;
+      // mapped location
+      X = cos_t*Dx - sin_t*Dy + u + cx_;
+      Y = sin_t*Dx + cos_t*Dy + v + cy_;
+
+      if(is_obstructed_pixel(X,Y)){
         is_deactivated_this_step(i) = true;
       }
-    }
-  } // pixel loop
+      else{
+        is_deactivated_this_step(i) = false;
+      }
+      // pixels blocked by other subsets:
+      if(has_blocks){
+        px = ((int_t)(X + 0.5) == (int_t)(X)) ? (int_t)(X) : (int_t)(X) + 1;
+        py = ((int_t)(Y + 0.5) == (int_t)(Y)) ? (int_t)(Y) : (int_t)(Y) + 1;
+        if(pixels_blocked_by_other_subsets_.find(std::pair<int_t,int_t>(py,px))
+            !=pixels_blocked_by_other_subsets_.end()){
+          is_deactivated_this_step(i) = true;
+        }
+      }
+    } // pixel loop
+  }
+  else if(deformation->size()==DICE_DEFORMATION_SIZE_AFFINE){
+    TEUCHOS_TEST_FOR_EXCEPTION((*deformation)[8]==0.0,std::runtime_error,"");
+    for(int_t i=0;i<num_pixels_;++i){
+      // mapped location
+      map_affine(x(i),y(i),X,Y,deformation);
+      if(is_obstructed_pixel(X,Y)){
+        is_deactivated_this_step(i) = true;
+      }
+      else{
+        is_deactivated_this_step(i) = false;
+      }
+      // pixels blocked by other subsets:
+      if(has_blocks){
+        px = ((int_t)(X + 0.5) == (int_t)(X)) ? (int_t)(X) : (int_t)(X) + 1;
+        py = ((int_t)(Y + 0.5) == (int_t)(Y)) ? (int_t)(Y) : (int_t)(Y) + 1;
+        if(pixels_blocked_by_other_subsets_.find(std::pair<int_t,int_t>(py,px))
+            !=pixels_blocked_by_other_subsets_.end()){
+          is_deactivated_this_step(i) = true;
+        }
+      }
+    } // pixel loop
+
+  }
 #if DICE_KOKKOS
   is_deactivated_this_step_.modify<host_space>();
   is_deactivated_this_step_.sync<device_space>();
@@ -158,7 +185,10 @@ Subset::write_subset_on_image(const std::string & file_name,
       intensities[m*w+n] = (*image)(n,m);
     }
   }
-  if(deformation!=Teuchos::null){
+  scalar_t mapped_x=0.0,mapped_y=0.0;
+  scalar_t x_prime=0.0,y_prime=0.0;
+  int_t px=0,py=0;
+  if(deformation!=Teuchos::null && deformation->size()==DICE_DEFORMATION_SIZE){
     const scalar_t u = (*deformation)[DISPLACEMENT_X];
     const scalar_t v = (*deformation)[DISPLACEMENT_Y];
     const scalar_t t = (*deformation)[ROTATION_Z];
@@ -167,8 +197,6 @@ Subset::write_subset_on_image(const std::string & file_name,
     const scalar_t g = (*deformation)[SHEAR_STRAIN_XY];
     scalar_t dx=0.0,dy=0.0;
     scalar_t Dx=0.0,Dy=0.0;
-    scalar_t mapped_x=0.0,mapped_y=0.0;
-    int_t px=0,py=0;
     for(int_t i=0;i<num_pixels_;++i){
       // compute the deformed shape:
       // need to cast the x_ and y_ values since the resulting value could be negative
@@ -179,6 +207,24 @@ Subset::write_subset_on_image(const std::string & file_name,
       // mapped location
       mapped_x = std::cos(t)*Dx - std::sin(t)*Dy + u + cx_ - ox;
       mapped_y = std::sin(t)*Dx + std::cos(t)*Dy + v + cy_ - oy;
+      // get the nearest pixel location:
+      px = (int_t)mapped_x;
+      if(mapped_x - (int_t)mapped_x >= 0.5) px++;
+      py = (int_t)mapped_y;
+      if(mapped_y - (int_t)mapped_y >= 0.5) py++;
+      intensities[py*w+px] = !is_active(i) ? 255
+          : is_deactivated_this_step(i) ?  0
+          : std::abs((def_intensities(i) - ref_intensities(i))*2);
+    }
+  }
+  else if(deformation!=Teuchos::null && deformation->size()==DICE_DEFORMATION_SIZE_AFFINE){
+    TEUCHOS_TEST_FOR_EXCEPTION((*deformation)[8]==0.0,std::runtime_error,"");
+    // mapped location
+    for(int_t i=0;i<num_pixels_;++i){
+      // compute the deformed shape:
+      map_affine(x(i),y(i),x_prime,y_prime,deformation);
+      mapped_x = x_prime - ox;
+      mapped_y = y_prime - oy;
       // get the nearest pixel location:
       px = (int_t)mapped_x;
       if(mapped_x - (int_t)mapped_x >= 0.5) px++;
@@ -274,9 +320,21 @@ Subset::noise_std_dev(Teuchos::RCP<Image> image,
     if(y(i) > max_y) max_y = y(i);
   }
 
-  // move the window to the deformed location using u and v
-  const scalar_t u = (*deformation)[DISPLACEMENT_X];
-  const scalar_t v = (*deformation)[DISPLACEMENT_Y];
+  scalar_t u = 0.0;
+  scalar_t v = 0.0;
+  scalar_t x_prime = 0.0;
+  scalar_t y_prime = 0.0;
+  if(deformation->size()==DICE_DEFORMATION_SIZE){
+    u = (*deformation)[DISPLACEMENT_X];
+    v = (*deformation)[DISPLACEMENT_Y];
+  }else if(deformation->size()==DICE_DEFORMATION_SIZE_AFFINE){
+    TEUCHOS_TEST_FOR_EXCEPTION((*deformation)[8]==0.0,std::runtime_error,"");
+    map_affine(cx_,cy_,x_prime,y_prime,deformation);
+    u = x_prime - cx_;
+    v = y_prime - cy_;
+  }else{
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, unknown deformation vector size.");
+  }
   min_x += u; max_x += u;
   min_y += v; max_y += v;
 

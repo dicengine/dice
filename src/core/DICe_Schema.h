@@ -786,7 +786,7 @@ public:
     const int_t num_iterations);
 
   /// Record the solution in the field arrays
-  /// \param subset_gid the global id of the subset to record
+  /// \param obj pointer to an objective class
   /// \param deformation the deformation vector
   /// \param sigma sigma value
   /// \param match match value
@@ -797,7 +797,7 @@ public:
   /// \param active_pixels the number of active pixels for this subset
   /// \param status status flag
   /// \param num_iterations the number of iterations
-  void record_step(const int_t subset_gid,
+  void record_step(Teuchos::RCP<Objective> obj,
     Teuchos::RCP<std::vector<scalar_t> > & deformation,
     const scalar_t & sigma,
     const scalar_t & match,
@@ -825,6 +825,11 @@ public:
   }
 
   // shape function controls:
+  /// Returns true if all affine shape functions are enabled by matrix at once
+  bool affine_matrix_enabled() const {
+    return enable_affine_matrix_;
+  }
+
   /// Returns true if translation shape functions are enabled
   bool translation_enabled() const {
     return enable_translation_;
@@ -879,6 +884,11 @@ public:
   /// \param flag true if the gamma values should be normalized by the number of active pixels
   void set_normalize_gamma_with_active_pixels(const bool flag){
     normalize_gamma_with_active_pixels_ = flag;
+  }
+
+  /// Enable translation shape functions
+  void enable_affine_matrix(const bool flag){
+    enable_affine_matrix_ = flag;
   }
 
   /// Enable translation shape functions
@@ -1234,6 +1244,8 @@ private:
   Projection_Method projection_method_;
   /// Analysis type
   Analysis_Type analysis_type_;
+  /// Enable the affine shape functions all together as a matrix rather than individual components
+  bool enable_affine_matrix_;
   /// Enable translation
   bool enable_translation_;
   /// Enable rotation

@@ -54,6 +54,15 @@
 
 namespace DICe {
 
+/// Objective Factory
+/// \param schema pointer to a schema
+/// \param correlation_point_global_id the global id of the correlation point
+/// returns a pointer to an objective
+DICE_LIB_DLL_EXPORT
+Teuchos::RCP<Objective> objective_factory(Schema * schema,
+  const int_t correlation_point_global_id);
+
+
 /// \class DICe::Objective
 /// \brief A container class for the subsets, optimization algorithm and initialization routine used to correlate a single point
 ///
@@ -129,9 +138,9 @@ public:
   /// \param deformation [out] The deformation map parameters taken as input as the initial guess and returned as the converged solution
   /// \param num_iterations [out] The number of interations a particular frame took to execute
   /// \param override_tol set this value if for this particular subset, the tolerance should be changed
-  virtual Status_Flag computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  Status_Flag computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & deformation,
     int_t & num_iterations,
-    const scalar_t & override_tol = -1.0) = 0;
+    const scalar_t & override_tol = -1.0);
 
   /// The number of degrees of freedom in the deformation vector
   int_t num_dofs()const{
@@ -234,9 +243,7 @@ public:
     int_t & num_iterations);
 
   /// See base class documentation
-  virtual Status_Flag computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & deformation,
-    int_t & num_iterations,
-    const scalar_t & override_tol = -1.0);
+  using Objective::computeUpdateRobust;
 
   /// See base class documentation
   using Objective::sigma;
@@ -262,6 +269,80 @@ public:
   /// See base class documentation
   using Objective::sub_image_id;
 };
+
+
+
+/// \class DICe::Objective_ZNSSD
+/// \brief Sum squared differences DICe::Objective (with and without zero normalization) with AFFINE shape funcs
+///
+/// In the case of zero nomalization (ZNSSD),
+/// the criteria is \f$ \gamma = \sum_i (\frac{G_i - \bar{G}}{\sqrt(\sum_i(G_i - \bar{G})^2)} - \frac{F_i - \bar{F}}{\sqrt(\sum_i(F_i - \bar{F})^2)})^2 \f$.
+/// Normalization is activated when the user selects ZNSSD as the correlation_criteria. ZNSSD performs more
+/// robustly in image sets where the lighting changes between frames.
+
+class DICE_LIB_DLL_EXPORT
+Objective_ZNSSD_Affine : public Objective
+{
+
+public:
+  /// \brief Same constructor as for the base class (see base class documentation)
+  ///
+  /// The dof map for Objective_ZNSSD is set depending on which degrees of freedom the user has enabled (via setting an enable_<dof> parameter in the Schema).
+  Objective_ZNSSD_Affine(Schema * schema,
+    const int_t correlation_point_global_id):
+    Objective(schema,correlation_point_global_id){
+    // check that at least one of the shape functions is in use:
+    TEUCHOS_TEST_FOR_EXCEPTION(!schema_->translation_enabled()&&
+      !schema_->rotation_enabled()&&
+      !schema_->normal_strain_enabled()&&
+      !schema_->shear_strain_enabled(),std::runtime_error,"Error, no shape functions are activated");
+    TEUCHOS_TEST_FOR_EXCEPTION(subset_==Teuchos::null,std::runtime_error,"");
+    dof_map_.push_back(AFFINE_A);
+    dof_map_.push_back(AFFINE_B);
+    dof_map_.push_back(AFFINE_C);
+    dof_map_.push_back(AFFINE_D);
+    dof_map_.push_back(AFFINE_E);
+    dof_map_.push_back(AFFINE_F);
+    dof_map_.push_back(AFFINE_G);
+    dof_map_.push_back(AFFINE_H);
+    dof_map_.push_back(AFFINE_I);
+  }
+
+  virtual ~Objective_ZNSSD_Affine(){}
+
+  /// See base class documentation
+  virtual Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+    int_t & num_iterations);
+
+  /// See base class documentation
+  using Objective::computeUpdateRobust;
+
+  /// See base class documentation
+  using Objective::sigma;
+
+  /// See base class documentation
+  using Objective::beta;
+
+  /// See base class documentation
+  using Objective::gamma;
+
+  /// See base class documentation
+  using Objective::global_field_value;
+
+  /// See base class documentation
+  using Objective::global_field_value_nm1;
+
+  /// See base class documentation
+  using Objective::num_dofs;
+
+  /// See base class documentation
+  using Objective::dof_map;
+
+  /// See base class documentation
+  using Objective::sub_image_id;
+};
+
+
 
 }// End DICe Namespace
 

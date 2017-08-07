@@ -47,11 +47,9 @@
 namespace DICe {
 
 Simplex::Simplex(const  int_t num_dofs,
-  const int_t num_variables,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
   max_iterations_(1000),
   num_dofs_(num_dofs),
-  num_variables_(num_variables),
   tolerance_(1.0E-8),
   tiny_(1.0E-10)
 {
@@ -60,7 +58,6 @@ Simplex::Simplex(const  int_t num_dofs,
     if(params->isParameter(DICe::tolerance)) tolerance_ = params->get<double>(DICe::tolerance);
   }
   assert(num_dofs_!=0);
-  assert(num_dofs_<=num_variables_);
 }
 
 Status_Flag
@@ -69,15 +66,16 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & variables,
   int_t & num_iterations,
   const scalar_t & threshold){
 
-  assert((int_t)variables->size()==num_variables_);
+  const int_t num_variables = variables->size();
   assert((int_t)deltas->size()==num_dofs_);
+  assert(num_dofs_<=num_variables);
 
   DEBUG_MSG("Conducting multidimensional simplex minimization");
   DEBUG_MSG("Max iterations: " << max_iterations_ << " tolerance: " << tolerance_);
   DEBUG_MSG("Initial guess: ");
 #ifdef DICE_DEBUG_MSG
   std::cout << " POINT 0: ";
-  for(int_t j=0;j<num_variables_;++j) std::cout << " " << (*variables)[j];
+  for(int_t j=0;j<num_variables;++j) std::cout << " " << (*variables)[j];
   std::cout << std::endl;
 #endif
 
@@ -87,16 +85,16 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & variables,
   scalar_t * gamma_values = new scalar_t[mpts];
   std::vector< Teuchos::RCP<std::vector<scalar_t> > > points(mpts);
   for(int_t i=0;i<mpts;++i){
-    points[i] = Teuchos::rcp(new std::vector<scalar_t>(num_variables_,0.0));
+    points[i] = Teuchos::rcp(new std::vector<scalar_t>(num_variables,0.0));
     // set the points for the initial bounding simplex
-    for(int_t j=0;j<num_variables_;++j){
+    for(int_t j=0;j<num_variables;++j){
       (*points[i])[j] = (*variables)[j];
     }
     if(i>0)
       (*points[i])[dof_map(i-1)] += (*deltas)[i-1];
 #ifdef DICE_DEBUG_MSG
     std::cout << " SIMPLEX POINT: ";
-    for(int_t j=0;j<num_variables_;++j) std::cout << " " << (*points[i])[j];
+    for(int_t j=0;j<num_variables;++j) std::cout << " " << (*points[i])[j];
     std::cout << std::endl;
 #endif
     // evaluate gamma at these points
@@ -263,7 +261,7 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & variables,
     gamma_new = objective(variables);
 #ifdef DICE_DEBUG_MSG
     std::cout << "Iteration " << iteration;
-    for(int_t i=0;i<num_variables_;++i) std::cout << " " << (*variables)[i];
+    for(int_t i=0;i<num_variables;++i) std::cout << " " << (*variables)[i];
     std::cout << " nfunk: " << nfunk << " gamma: " << gamma_new << " rtol: " << rtol << " tol: " << tolerance_ << std::endl;
 #endif
   }
@@ -277,8 +275,7 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & variables,
 
 Subset_Simplex::Subset_Simplex(const DICe::Objective * const obj,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
-  Simplex(obj->num_dofs(),
-    DICE_DEFORMATION_SIZE,params),
+  Simplex(obj->num_dofs(),params),
   obj_(obj)
 {
   // get num dims from the objective
@@ -294,7 +291,7 @@ Homography_Simplex::Homography_Simplex(Teuchos::RCP<Image> left_img,
   Teuchos::RCP<Image> right_img,
   Triangulation * tri,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
-  Simplex(9,9,params),
+  Simplex(9,params),
   tri_(tri){
 
 //  // median filter the images:
@@ -361,7 +358,7 @@ Warp_Simplex::Warp_Simplex(Teuchos::RCP<Image> left_img,
   Teuchos::RCP<Image> right_img,
   Triangulation * tri,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
-  Simplex(12,12,params),
+  Simplex(12,params),
   tri_(tri){
 
 //  // median filter the images:

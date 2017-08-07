@@ -164,6 +164,30 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, the def intensity values for the initialized square subset are wrong" << std::endl;
     errorFlag++;
   }
+  // initialize the deformed values
+  *outStream << "constructing a simple deformed subset using an affine deformation vector" << std::endl;
+  Teuchos::RCP<std::vector<scalar_t> > affine_map = Teuchos::rcp (new std::vector<scalar_t>(DICE_DEFORMATION_SIZE_AFFINE,0.0));
+  (*affine_map)[AFFINE_A] = 1;
+  (*affine_map)[AFFINE_C] = 5;
+  (*affine_map)[AFFINE_E] = 1;
+  (*affine_map)[AFFINE_F] = 10;
+  (*affine_map)[AFFINE_I] = 1;
+  square.initialize(image,DEF_INTENSITIES,affine_map,BILINEAR);
+  square.write_tiff("squareAffineSubsetRef.tif",false);
+  square.write_tiff("squareAffineSubsetDef.tif",true);
+  square.write_subset_on_image("squareAffineSubsetMapped.tif",image,affine_map);
+  // check simple motion intensity values
+  *outStream << "checking the bilinear interpolation" << std::endl;
+  def_values_error = false;
+  for(int_t i=0;i<square.num_pixels();++i){
+    if(square.def_intensities(i)!=(*image)(square.x(i)+(*affine_map)[AFFINE_C],square.y(i)+(*affine_map)[AFFINE_F]))
+      def_values_error = true;
+  }
+  if(def_values_error){
+    *outStream << "Error, the def intensity values for the affine initialized square subset are wrong" << std::endl;
+    errorFlag++;
+  }
+
   *outStream << "checking the keys fourth order interpolant" << std::endl;
   (*map)[DISPLACEMENT_X] = 15;
   (*map)[DISPLACEMENT_Y] = 12;

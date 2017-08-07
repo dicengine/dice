@@ -69,6 +69,7 @@
 // size of the deformation vectors used in the correlation
 // includes fields below from 0 to (DICE_DEFORMATION_SIZE-1)
 #define DICE_DEFORMATION_SIZE 6
+#define DICE_DEFORMATION_SIZE_AFFINE 9
 
 #include <string>
 
@@ -163,6 +164,8 @@ const char* const filter_failed_cine_pixels = "filter_failed_cine_pixels";
 const char* const convert_cine_to_8_bit = "convert_cine_to_8_bit";
 /// String parameter name
 const char* const initial_condition_file = "initial_condition_file";
+/// String parameter name
+const char* const enable_affine_matrix = "enable_affine_matrix";
 /// String parameter name
 const char* const enable_translation = "enable_translation";
 /// String parameter name
@@ -313,6 +316,28 @@ enum Subset_View_Target{
   // (this is used for striding and converting enums to strings)
   MAX_SUBSET_VIEW_TARGET,
   NO_SUCH_SUBSET_VIEW_TARGET,
+};
+
+/// For the affine shape function these define the degrees of freedon
+enum Affine_Field_Name {
+  // 0
+  AFFINE_A=0,
+  // 1
+  AFFINE_B,
+  // 2
+  AFFINE_C,
+  // 3
+  AFFINE_D,
+  // 4
+  AFFINE_E,
+  // 5
+  AFFINE_F,
+  // 6
+  AFFINE_G,
+  // 7
+  AFFINE_H,
+  // 8
+  AFFINE_I
 };
 
 /// Valid names for fields
@@ -994,6 +1019,11 @@ const Correlation_Parameter initial_condition_file_param(initial_condition_file,
   true,
   "Denotes a file to read the solution from as the initial condition");
 /// Correlation parameter and properties
+const Correlation_Parameter enable_affine_matrix_param(enable_affine_matrix,
+  BOOL_PARAM,
+  true,
+  "Enables the affine shape function degrees of freedom using a matrix (all components are activiated and individual components like rotation or shear cannot be disabled)");
+/// Correlation parameter and properties
 const Correlation_Parameter enable_translation_param(enable_translation,
   BOOL_PARAM,
   true,
@@ -1219,7 +1249,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 84;
+const int_t num_valid_correlation_params = 85;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1233,6 +1263,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   compute_image_gradients_param,
   gauss_filter_images_param,
   initial_condition_file_param,
+  enable_affine_matrix_param,
   enable_translation_param,
   enable_rotation_param,
   enable_normal_strain_param,

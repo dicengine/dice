@@ -552,6 +552,8 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   enable_normal_strain_ = diceParams->get<bool>(DICe::enable_normal_strain);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::enable_shear_strain),std::runtime_error,"");
   enable_shear_strain_ = diceParams->get<bool>(DICe::enable_shear_strain);
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::enable_affine_matrix),std::runtime_error,"");
+  enable_affine_matrix_ = diceParams->get<bool>(DICe::enable_affine_matrix);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::output_deformed_subset_images),std::runtime_error,"");
   output_deformed_subset_images_ = diceParams->get<bool>(DICe::output_deformed_subset_images);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::output_deformed_subset_intensity_images),std::runtime_error,"");
@@ -883,6 +885,7 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
       }
     }
     if(subset_info->seed_subset_ids->size()>0){
+      TEUCHOS_TEST_FOR_EXCEPTION(enable_affine_matrix_,std::runtime_error,"Error, seeds can't be used with the affine matrix enabled");
       //has_seed(true);
       TEUCHOS_TEST_FOR_EXCEPTION(subset_info->displacement_map->size()<=0,std::runtime_error,"");
       std::map<int_t,int_t>::iterator it=subset_info->seed_subset_ids->begin();
@@ -1280,7 +1283,7 @@ Schema::execute_cross_correlation(){
       bool init_success = true;
       Teuchos::RCP<Objective> obj;
       try{
-        obj = Teuchos::rcp(new Objective_ZNSSD(this,subset_global_id(subset_index)));
+        obj = objective_factory(this,subset_global_id(subset_index));
       }
       catch(std::exception & e){
         init_success = false;
@@ -1317,8 +1320,7 @@ Schema::execute_cross_correlation(){
   prepare_optimization_initializers();
   for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
     try{
-      Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,
-        this_proc_gid_order_[subset_index]));
+      Teuchos::RCP<Objective> obj = objective_factory(this,this_proc_gid_order_[subset_index]);
       generic_correlation_routine(obj);
     }
     catch(std::exception & e){
@@ -1449,11 +1451,10 @@ Schema::execute_correlation(){
       "Error, motion windows are intended only for the TRACKING_ROUTINE");
     prepare_optimization_initializers();
     for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
-      DEBUG_MSG("Schema::execute_correlation(): creating Objective_ZNSSD for subset " << this_proc_gid_order_[subset_index]);
+      DEBUG_MSG("Schema::execute_correlation(): creating Objective for subset " << this_proc_gid_order_[subset_index]);
       try{
-        Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,
-          this_proc_gid_order_[subset_index]));
-        DEBUG_MSG("Schema::execute_correlation(): Objective_ZNSSD creation successful");
+        Teuchos::RCP<Objective> obj = objective_factory(this,this_proc_gid_order_[subset_index]);
+        DEBUG_MSG("Schema::execute_correlation(): Objective creation successful");
         generic_correlation_routine(obj);
       }
       catch(std::exception & e){
@@ -1472,8 +1473,7 @@ Schema::execute_correlation(){
         const int_t subset_gid = subset_global_id(subset_index);
         //const int_t subset_gid = this_proc_gid_order_[subset_index];
         DEBUG_MSG("[PROC " << proc_id << "] Adding objective to obj_vec_ " << subset_gid);
-        obj_vec_.push_back(Teuchos::rcp(new Objective_ZNSSD(this,
-          subset_gid)));
+        obj_vec_.push_back(objective_factory(this,subset_gid));
         // set the sub_image id for each subset:
         if(motion_window_params_->find(subset_gid)!=motion_window_params_->end()){
           const int_t use_subset_id = motion_window_params_->find(subset_gid)->second.use_subset_id_;
@@ -1698,7 +1698,7 @@ Schema::record_failed_step(const int_t subset_gid,
 }
 
 void
-Schema::record_step(const int_t subset_gid,
+Schema::record_step(Teuchos::RCP<Objective> obj,
   Teuchos::RCP<std::vector<scalar_t> > & deformation,
   const scalar_t & sigma,
   const scalar_t & match,
@@ -1709,6 +1709,7 @@ Schema::record_step(const int_t subset_gid,
   const int_t active_pixels,
   const int_t status,
   const int_t num_iterations){
+  const int_t subset_gid = obj->correlation_point_global_id();
   DEBUG_MSG("Subset " << subset_gid << " record step");
   global_field_value(subset_gid,DISPLACEMENT_X) = (*deformation)[DISPLACEMENT_X];
   global_field_value(subset_gid,DISPLACEMENT_Y) = (*deformation)[DISPLACEMENT_Y];
@@ -1796,6 +1797,8 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   Status_Flag init_status = INITIALIZE_SUCCESSFUL;
   Status_Flag corr_status = CORRELATION_FAILED;
   int_t num_iterations = -1;
+  TEUCHOS_TEST_FOR_EXCEPTION(enable_affine_matrix_&&correlation_routine_==TRACKING_ROUTINE,std::runtime_error,
+    "Error, can't use affine matrix and tracking routine at the same time");
   Teuchos::RCP<std::vector<scalar_t> > deformation = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
   try{
     init_status = initial_guess(subset_gid,deformation);
@@ -1810,6 +1813,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   if(init_status==INITIALIZE_FAILED){
     // try again with a search initializer
     if(correlation_routine_==TRACKING_ROUTINE && use_search_initialization_for_failed_steps_){
+      // already checked above that affine matrix is not enabled so DICE_DEFORMATION_SIZE is correct
       stat_container_->register_search_call(subset_gid,frame_id_);
       // before giving up, try a search initialization, then simplex, then give up if it still can't track:
       const scalar_t search_step_xy = 1.0; // pixels
@@ -1846,7 +1850,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     const scalar_t initial_beta = output_beta_ ? obj->beta(deformation) : 0.0;
     const scalar_t contrast = obj->subset()->contrast_std_dev();
     const int_t active_pixels = obj->subset()->num_active_pixels();
-    record_step(subset_gid,
+    record_step(obj,
       deformation,initial_sigma,0.0,initial_gamma,initial_beta,
       noise_std_dev,contrast,active_pixels,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
     // evolve the subsets and output the images requested as well
@@ -1933,7 +1937,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   bool jump_pass = true;
   scalar_t diffU = ((*deformation)[DISPLACEMENT_X] - prev_u);
   scalar_t diffV = ((*deformation)[DISPLACEMENT_Y] - prev_v);
-  scalar_t diffT = ((*deformation)[ROTATION_Z] - prev_t);
+  scalar_t diffT = enable_affine_matrix_ ? 0.0 : ((*deformation)[ROTATION_Z] - prev_t);
   DEBUG_MSG("Subset " << subset_gid << " U jump: " << diffU << " V jump: " << diffV << " T jump: " << diffT);
   if(std::abs(diffU) > disp_jump_tol_ || std::abs(diffV) > disp_jump_tol_ || std::abs(diffT) > theta_jump_tol_){
     if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_jump_exceeded(subset_gid,frame_id_);
@@ -2051,6 +2055,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   const bool has_path_file = path_file_names_->find(subset_gid)!=path_file_names_->end();
   if(path_distance_threshold_!=-1.0&&has_path_file){
+    TEUCHOS_TEST_FOR_EXCEPTION(enable_affine_matrix_,std::runtime_error,"Error, affine matrix cannot be used here");
     scalar_t path_distance = 0.0;
     size_t id = 0;
     // dynamic cast the pointer to get access to the derived class methods
@@ -2072,7 +2077,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   diffU = ((*deformation)[DISPLACEMENT_X] - prev_u);
   diffV = ((*deformation)[DISPLACEMENT_Y] - prev_v);
-  diffT = ((*deformation)[ROTATION_Z] - prev_t);
+  diffT = enable_affine_matrix_ ? 0.0 : ((*deformation)[ROTATION_Z] - prev_t);
   DEBUG_MSG("Subset " << subset_gid << " U jump: " << diffU << " V jump: " << diffV << " T jump: " << diffT);
   if(std::abs(diffU) > disp_jump_tol_ || std::abs(diffV) > disp_jump_tol_ || std::abs(diffT) > theta_jump_tol_){
     DEBUG_MSG("Subset " << subset_gid << " FAILS jump test: ");
@@ -2087,7 +2092,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   if(projection_method_==VELOCITY_BASED) save_off_fields(subset_gid);
   const scalar_t contrast = obj->subset()->contrast_std_dev();
   const int_t active_pixels = obj->subset()->num_active_pixels();
-  record_step(subset_gid,
+  record_step(obj,
     deformation,sigma,0.0,gamma,beta,noise_std_dev,contrast,active_pixels,
     static_cast<int_t>(init_status),num_iterations);
   //
@@ -3137,6 +3142,7 @@ Schema::check_for_blocking_subsets(const int_t subset_global_id){
   if(obstructing_subset_ids_==Teuchos::null) return;
   if(obstructing_subset_ids_->find(subset_global_id)==obstructing_subset_ids_->end()) return;
   if(obstructing_subset_ids_->find(subset_global_id)->second.size()==0) return;
+  if(enable_affine_matrix_) return;
 
   const int_t subset_lid = subset_local_id(subset_global_id);
 
@@ -3172,6 +3178,7 @@ void
 Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
 #ifndef DICE_DISABLE_BOOST_FILESYSTEM
   if(obj_vec_.empty()) return;
+  if(enable_affine_matrix_)return;
   // if the subset_images folder does not exist, create it
   // TODO allow user to specify where this goes
   // If the dir is already there this step becomes a no-op
@@ -3322,10 +3329,12 @@ Output_Spec::Output_Spec(Schema * schema,
     field_names_.push_back(to_string(DICe::COORDINATE_Y));
     field_names_.push_back(to_string(DICe::DISPLACEMENT_X));
     field_names_.push_back(to_string(DICe::DISPLACEMENT_Y));
-    field_names_.push_back(to_string(DICe::ROTATION_Z));
-    field_names_.push_back(to_string(DICe::NORMAL_STRAIN_X));
-    field_names_.push_back(to_string(DICe::NORMAL_STRAIN_Y));
-    field_names_.push_back(to_string(DICe::SHEAR_STRAIN_XY));
+    if(!schema->affine_matrix_enabled()){
+      field_names_.push_back(to_string(DICe::ROTATION_Z));
+      field_names_.push_back(to_string(DICe::NORMAL_STRAIN_X));
+      field_names_.push_back(to_string(DICe::NORMAL_STRAIN_Y));
+      field_names_.push_back(to_string(DICe::SHEAR_STRAIN_XY));
+    }
     field_names_.push_back(to_string(DICe::SIGMA));
     field_names_.push_back(to_string(DICe::STATUS_FLAG));
   }
@@ -3449,14 +3458,18 @@ Output_Spec::write_info(std::FILE * file,
   fprintf(file,"*** Guess initialization method: %s\n",init_method.c_str());
   fprintf(file,"*** Seed location: N/A\n");
   fprintf(file,"*** Shape functions: ");
-  if(schema_->translation_enabled())
-    fprintf(file,"Translation (u,v) ");
-  if(schema_->rotation_enabled())
-    fprintf(file,"Rotation (theta) ");
-  if(schema_->normal_strain_enabled())
-    fprintf(file,"Normal Strain (ex,ey) ");
-  if(schema_->shear_strain_enabled())
-    fprintf(file,"Shear Strain (gamma_xy) ");
+  if(schema_->affine_matrix_enabled()){
+    fprintf(file,"Affine matrix (A,B,C,D,E,F,G,H,I)");
+  }else{
+    if(schema_->translation_enabled())
+      fprintf(file,"Translation (u,v) ");
+    if(schema_->rotation_enabled())
+      fprintf(file,"Rotation (theta) ");
+    if(schema_->normal_strain_enabled())
+      fprintf(file,"Normal Strain (ex,ey) ");
+    if(schema_->shear_strain_enabled())
+      fprintf(file,"Shear Strain (gamma_xy) ");
+  }
   fprintf(file,"\n");
   fprintf(file,"*** Incremental correlation: false\n");
   fprintf(file,"*** Subset size: %i\n",schema_->subset_dim());

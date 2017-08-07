@@ -69,10 +69,8 @@ public:
 
   /// \brief Default constructor
   /// \param num_dofs the number of degrees of freedom (must be less than num_variables)
-  /// \param num_variables the total number of variables (not all degrees of freedom for simplex optimization)
   /// \param params Paramters that define the varaitions on the initial guess, convergence tolerance and max number of iterations
   Simplex(const int_t num_dofs,
-    const int_t num_variables,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// destructor
@@ -103,8 +101,6 @@ protected:
   int_t max_iterations_;
   /// The dimension of the simplex (one dim for each free parameter)
   int_t num_dofs_;
-  /// The total number of parameters (not all degrees of freedom, some can be fixed)
-  int_t num_variables_;
   /// Convergence tolerance
   double tolerance_;
   /// Numerically small value

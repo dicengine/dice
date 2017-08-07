@@ -709,7 +709,7 @@ const Field_Spec NLVC_STRAIN_XY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_en
 const Field_Spec NLVC_STRAIN_YY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_YY_ERROR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 111;
+const int_t num_fields_defined = 114;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -759,6 +759,9 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     SHEAR_STRETCH_XY_FS,
     NORMAL_STRETCH_XX_FS,
     NORMAL_STRETCH_YY_FS,
+    SHEAR_STRETCH_XY_NM1_FS,
+    NORMAL_STRETCH_XX_NM1_FS,
+    NORMAL_STRETCH_YY_NM1_FS,
     LHS_FS,
     LAGRANGE_MULTIPLIER_FS,
     MIXED_RESIDUAL_FS,
