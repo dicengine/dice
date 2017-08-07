@@ -58,6 +58,7 @@
 #include <cassert>
 
 using namespace DICe;
+using namespace DICe::mesh::field_enums;
 
 int main(int argc, char *argv[]) {
 
@@ -216,11 +217,11 @@ int main(int argc, char *argv[]) {
       if(init_methods[init_i]==INITIALIZATION_METHOD_NOT_APPLICABLE)
         schema->set_path_file_names(path_file_names);
       for(int_t i=0;i<num_subsets;++i){
-        schema->local_field_value(i,DICe::COORDINATE_X) = coords_x[i];
-        schema->local_field_value(i,DICe::COORDINATE_Y) = coords_y[i];
+        schema->local_field_value(i,SUBSET_COORDINATES_X_FS) = coords_x[i];
+        schema->local_field_value(i,SUBSET_COORDINATES_Y_FS) = coords_y[i];
         if(init_methods[init_i] == USE_FIELD_VALUES){
-          schema->local_field_value(i,DICe::DISPLACEMENT_X) = u_exact;
-          schema->local_field_value(i,DICe::DISPLACEMENT_Y) = v_exact;
+          schema->local_field_value(i,SUBSET_DISPLACEMENT_X_FS) = u_exact;
+          schema->local_field_value(i,SUBSET_DISPLACEMENT_Y_FS) = v_exact;
         }
       }
       bool exception_thrown = false;
@@ -243,8 +244,8 @@ int main(int argc, char *argv[]) {
       }
       //schema->print_fields();
       for(int_t i=0;i<schema->local_num_subsets();++i){
-        const scalar_t u = schema->local_field_value(i,DISPLACEMENT_X);
-        const scalar_t v = schema->local_field_value(i,DISPLACEMENT_Y);
+        const scalar_t u = schema->local_field_value(i,SUBSET_DISPLACEMENT_X_FS);
+        const scalar_t v = schema->local_field_value(i,SUBSET_DISPLACEMENT_Y_FS);
         *outStream << i << " u: " << u << " v: " << v << std::endl;
         if(std::abs(u-u_exact) > errorTol || std::abs(v-v_exact) > errorTol){
           *outStream << "Error, the displacement values are not correct" << std::endl;

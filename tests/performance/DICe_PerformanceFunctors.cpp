@@ -104,12 +104,12 @@ int main(int argc, char *argv[]) {
   //Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
   //params->set(DICe::gauss_filter_mask_size,13);
   Teuchos::RCP<std::vector<scalar_t> > map = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-  (*map)[DISPLACEMENT_X] = 1.25; // TODO randomize deformation map
-  (*map)[DISPLACEMENT_Y] = -1.456; // needs to remain inside the current image
-  (*map)[ROTATION_Z] = 0.001;
-  (*map)[NORMAL_STRAIN_X] = 0.002;
-  (*map)[NORMAL_STRAIN_Y] = 0.001;
-  (*map)[SHEAR_STRAIN_XY] = 0.0;
+  (*map)[DOF_U] = 1.25; // TODO randomize deformation map
+  (*map)[DOF_V] = -1.456; // needs to remain inside the current image
+  (*map)[DOF_THETA] = 0.001;
+  (*map)[DOF_EX] = 0.002;
+  (*map)[DOF_EY] = 0.001;
+  (*map)[DOF_GXY] = 0.0;
   Teuchos::RCP<Subset> subset;
   const int_t subset_edge_buffer = 10; // must be larger than the deformations above
 

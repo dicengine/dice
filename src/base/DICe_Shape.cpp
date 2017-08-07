@@ -145,12 +145,12 @@ Polygon::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation
   int_t max_y = max_y_;
 
   if(deformation!=Teuchos::null){
-    scalar_t u     = (*deformation)[DICe::DISPLACEMENT_X];
-    scalar_t v     = (*deformation)[DICe::DISPLACEMENT_Y];
-    scalar_t theta = (*deformation)[DICe::ROTATION_Z];
-    scalar_t dudx  = (*deformation)[DICe::NORMAL_STRAIN_X];
-    scalar_t dvdy  = (*deformation)[DICe::NORMAL_STRAIN_Y];
-    scalar_t gxy   = (*deformation)[DICe::SHEAR_STRAIN_XY];
+    scalar_t u     = (*deformation)[DICe::DOF_U];
+    scalar_t v     = (*deformation)[DICe::DOF_V];
+    scalar_t theta = (*deformation)[DICe::DOF_THETA];
+    scalar_t dudx  = (*deformation)[DICe::DOF_EX];
+    scalar_t dvdy  = (*deformation)[DICe::DOF_EY];
+    scalar_t gxy   = (*deformation)[DICe::DOF_GXY];
     scalar_t dx=0.0,dy=0.0;
     scalar_t X=0.0,Y=0.0;
     int_t new_x=0,new_y=0;
@@ -338,12 +338,12 @@ Rectangle::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformati
     int_t min_y = 0;
     int_t max_x = 0;
     int_t max_y = 0;
-    scalar_t u     = (*deformation)[DICe::DISPLACEMENT_X];
-    scalar_t v     = (*deformation)[DICe::DISPLACEMENT_Y];
-    scalar_t theta = (*deformation)[DICe::ROTATION_Z];
-    scalar_t dudx  = (*deformation)[DICe::NORMAL_STRAIN_X];
-    scalar_t dvdy  = (*deformation)[DICe::NORMAL_STRAIN_Y];
-    scalar_t gxy   = (*deformation)[DICe::SHEAR_STRAIN_XY];
+    scalar_t u     = (*deformation)[DICe::DOF_U];
+    scalar_t v     = (*deformation)[DICe::DOF_V];
+    scalar_t theta = (*deformation)[DICe::DOF_THETA];
+    scalar_t dudx  = (*deformation)[DICe::DOF_EX];
+    scalar_t dvdy  = (*deformation)[DICe::DOF_EY];
+    scalar_t gxy   = (*deformation)[DICe::DOF_GXY];
     scalar_t dx=0.0,dy=0.0;
     scalar_t X=0.0,Y=0.0;
     int_t new_x=0,new_y=0;

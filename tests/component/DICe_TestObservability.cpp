@@ -53,6 +53,7 @@
 #include <random>
 
 using namespace DICe;
+using namespace DICe::mesh::field_enums;
 
 intensity_t phi(const scalar_t & x, const scalar_t & y, const scalar_t & period, const scalar_t & L){
   const scalar_t freq = 1.0/period;
@@ -313,8 +314,8 @@ int main(int argc, char *argv[]) {
         scalar_t b_dot_grad_phi = 0.0;
         scalar_t bx = 0.0;
         scalar_t by = 0.0;
-        const int_t xc = schema->local_field_value(sub,COORDINATE_X);
-        const int_t yc = schema->local_field_value(sub,COORDINATE_Y);
+        const int_t xc = schema->local_field_value(sub,SUBSET_COORDINATES_X_FS);
+        const int_t yc = schema->local_field_value(sub,SUBSET_COORDINATES_Y_FS);
         for(int_t j=yc-subset_size/2;j<yc+subset_size/2;++j){
           for(int_t i=xc-subset_size/2;i<xc+subset_size/2;++i){
             H(0,0) += img->grad_x(i,j)*img->grad_x(i,j);
@@ -378,8 +379,8 @@ int main(int argc, char *argv[]) {
       int_t subset_index = 0;
       for(int_t j=0;j<fh;++j){
         for(int_t i=0;i<fw;++i){
-          const scalar_t x = schema->local_field_value(subset_index,COORDINATE_X);
-          const scalar_t y = schema->local_field_value(subset_index,COORDINATE_Y);
+          const scalar_t x = schema->local_field_value(subset_index,SUBSET_COORDINATES_X_FS);
+          const scalar_t y = schema->local_field_value(subset_index,SUBSET_COORDINATES_Y_FS);
           approx_points[subset_index].x_ = x;
           approx_points[subset_index].y_ = y;
           approx_points[subset_index].bx_ = bx_computed->local_value(subset_index);

@@ -58,51 +58,15 @@ void stringToLower(std::string &s){
 }
 
 DICE_LIB_DLL_EXPORT
-const std::string to_string(Field_Name in){
-  assert(in < MAX_FIELD_NAME);
+const std::string to_string(Affine_Dof in){
+  assert(in < MAX_AFFINE_DOF);
   static const char * fieldNameStrings[] = {
-    "DISPLACEMENT_X",
-    "DISPLACEMENT_Y",
-    "ROTATION_Z",
-    "NORMAL_STRAIN_X",
-    "NORMAL_STRAIN_Y",
-    "SHEAR_STRAIN_XY",
-    "COORDINATE_X",
-    "COORDINATE_Y",
-    "STEREO_COORDINATE_X",
-    "STEREO_COORDINATE_Y",
-    "MODEL_COORDINATE_X",
-    "MODEL_COORDINATE_Y",
-    "MODEL_COORDINATE_Z",
-    "STEREO_DISPLACEMENT_X",
-    "STEREO_DISPLACEMENT_Y",
-    "MODEL_DISPLACEMENT_X",
-    "MODEL_DISPLACEMENT_Y",
-    "MODEL_DISPLACEMENT_Z",
-    "FIELD_1",
-    "FIELD_2",
-    "FIELD_3",
-    "FIELD_4",
-    "FIELD_5",
-    "FIELD_6",
-    "FIELD_7",
-    "FIELD_8",
-    "FIELD_9",
-    "FIELD_10",
-    "SIGMA",
-    "GAMMA",
-    "BETA",
-    "OMEGA",
-    "NOISE_LEVEL",
-    "CONTRAST_LEVEL",
-    "ACTIVE_PIXELS",
-    "MATCH",
-    "ITERATIONS",
-    "STATUS_FLAG",
-    "NEIGHBOR_ID",
-    "CONDITION_NUMBER",
-    "CROSS_CORR_Q",
-    "CROSS_CORR_R"
+    "DOF_U",
+    "DOF_V",
+    "DOF_THETA",
+    "DOF_EX",
+    "DOF_EY",
+    "DOF_GXY"
   };
   return fieldNameStrings[in];
 }
@@ -235,15 +199,15 @@ Global_Solver string_to_global_solver(std::string & in){
 }
 
 DICE_LIB_DLL_EXPORT
-Field_Name string_to_field_name(std::string & in){
+Affine_Dof string_to_affine_dof(std::string & in){
   // convert the string to uppercase
   stringToUpper(in);
-  for(int_t i=0;i<MAX_FIELD_NAME;++i){
-    if(to_string(static_cast<Field_Name>(i))==in) return static_cast<Field_Name>(i);
+  for(int_t i=0;i<MAX_AFFINE_DOF;++i){
+    if(to_string(static_cast<Affine_Dof>(i))==in) return static_cast<Affine_Dof>(i);
   }
-  //std::cout << "Error: Field_Name " << in << " does not exist." << std::endl;
+  //std::cout << "Error: Affine_Dof " << in << " does not exist." << std::endl;
   //TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
-  return NO_SUCH_FIELD_NAME; // prevent no return errors
+  return NO_SUCH_AFFINE_DOF; // prevent no return errors
 }
 
 DICE_LIB_DLL_EXPORT

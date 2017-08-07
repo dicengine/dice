@@ -53,6 +53,8 @@
 
 namespace DICe {
 
+using namespace mesh::field_enums;
+
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Objective> objective_factory(Schema * schema,
   const int_t correlation_point_global_id){
@@ -99,10 +101,10 @@ Objective::beta(Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
   factor[0] = 1.0E-3;
   factor[1] = 1.0E-3;
   factor[2] = 1.0E-1;
-  std::vector<DICe::Field_Name> fields(3);
-  fields[0] = DISPLACEMENT_X;
-  fields[1] = DISPLACEMENT_Y;
-  fields[2] = ROTATION_Z;
+  std::vector<Affine_Dof> fields(3);
+  fields[0] = DOF_U;
+  fields[1] = DOF_V;
+  fields[2] = DOF_THETA;
   const scalar_t gamma_0 = gamma(deformation);
   std::vector<scalar_t> dir_beta(3,0.0);
   Teuchos::RCP<std::vector<scalar_t> > temp_def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE));
@@ -193,11 +195,11 @@ Objective::computeUncertaintyFields(Teuchos::RCP<std::vector<scalar_t> > & defor
   scalar_t v = 0.0;
   scalar_t x_prime = 0.0;
   scalar_t y_prime = 0.0;
-  const scalar_t cx = schema_->global_field_value(correlation_point_global_id_,DICe::COORDINATE_X);
-  const scalar_t cy = schema_->global_field_value(correlation_point_global_id_,DICe::COORDINATE_Y);
+  const scalar_t cx = schema_->global_field_value(correlation_point_global_id_,SUBSET_COORDINATES_X_FS);
+  const scalar_t cy = schema_->global_field_value(correlation_point_global_id_,SUBSET_COORDINATES_Y_FS);
   if(deformation->size()==DICE_DEFORMATION_SIZE){
-    u = (*deformation)[DISPLACEMENT_X];
-    v = (*deformation)[DISPLACEMENT_Y];
+    u = (*deformation)[DOF_U];
+    v = (*deformation)[DOF_V];
   }else if(deformation->size()==DICE_DEFORMATION_SIZE_AFFINE){
     TEUCHOS_TEST_FOR_EXCEPTION((*deformation)[8]==0.0,std::runtime_error,"");
     map_affine(cx,cy,x_prime,y_prime,deformation);
@@ -214,8 +216,8 @@ Objective::computeUncertaintyFields(Teuchos::RCP<std::vector<scalar_t> > & defor
     scalar_t exact_u = 0.0;
     scalar_t exact_v = 0.0;
     schema_->image_deformer()->compute_deformation(cx,cy,exact_u,exact_v);
-    schema_->mesh()->get_field(DICe::mesh::field_enums::MODEL_DISPLACEMENT_X_FS)->global_value(correlation_point_global_id_) = exact_u;
-    schema_->mesh()->get_field(DICe::mesh::field_enums::MODEL_DISPLACEMENT_Y_FS)->global_value(correlation_point_global_id_) = exact_v;
+    schema_->mesh()->get_field(DICe::mesh::field_enums::MODEL_SUBSET_DISPLACEMENT_X_FS)->global_value(correlation_point_global_id_) = exact_u;
+    schema_->mesh()->get_field(DICe::mesh::field_enums::MODEL_SUBSET_DISPLACEMENT_Y_FS)->global_value(correlation_point_global_id_) = exact_v;
     // field 8: subset error at center in x direction
     schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_8_FS)->global_value(correlation_point_global_id_) = std::abs(exact_u - u);
     // field 9: subset error at center in x direction
@@ -305,15 +307,15 @@ Objective::computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & deformatio
   Teuchos::RCP<std::vector<scalar_t> > deltas = Teuchos::rcp(new std::vector<scalar_t>(num_dofs(),0.0));
 
   if(num_dofs()==DICE_DEFORMATION_SIZE_AFFINE){
-    (*deltas)[AFFINE_A] = 0.0001;
-    (*deltas)[AFFINE_B] = 1.0E-5;
-    (*deltas)[AFFINE_C] = 1.0;
-    (*deltas)[AFFINE_D] = 1.0E-5;
-    (*deltas)[AFFINE_E] = 0.0001;
-    (*deltas)[AFFINE_F] = 1.0;
-    (*deltas)[AFFINE_G] = 1.0E-5;
-    (*deltas)[AFFINE_H] = 1.0E-5;
-    (*deltas)[AFFINE_I] = 1.0E-5;
+    (*deltas)[DOF_A] = 0.0001;
+    (*deltas)[DOF_B] = 1.0E-5;
+    (*deltas)[DOF_C] = 1.0;
+    (*deltas)[DOF_D] = 1.0E-5;
+    (*deltas)[DOF_E] = 0.0001;
+    (*deltas)[DOF_F] = 1.0;
+    (*deltas)[DOF_G] = 1.0E-5;
+    (*deltas)[DOF_H] = 1.0E-5;
+    (*deltas)[DOF_I] = 1.0E-5;
     //    for(int_t i=0;i<num_dofs();++i)
     //      (*deltas)[i] = 0.00001;
     //    (*deltas)[AFFINE_C] = schema_->robust_delta_disp();
@@ -371,9 +373,9 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
   const scalar_t cy = subset_->centroid_y();
   const scalar_t meanF = subset_->mean(REF_INTENSITIES);
   // these are used for regularization below
-  //const scalar_t prev_u = (*deformation)[DISPLACEMENT_X];
-  //const scalar_t prev_v = (*deformation)[DISPLACEMENT_Y];
-  //const scalar_t prev_theta = (*deformation)[ROTATION_Z];
+  //const scalar_t prev_u = (*deformation)[DOF_U];
+  //const scalar_t prev_v = (*deformation)[DOF_V];
+  //const scalar_t prev_theta = (*deformation)[DOF_THETA];
 
   // SOLVER ---------------------------------------------------------
   DEBUG_MSG(std::setw(5) << "Iter" <<
@@ -414,10 +416,10 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
     scalar_t dx=0.0,dy=0.0,Dx=0.0,Dy=0.0,delTheta=0.0,delEx=0.0,delEy=0.0,delGxy=0.0;
     scalar_t gx = 0.0, gy= 0.0;
     scalar_t Gx=0.0,Gy=0.0, GmF=0.0;
-    const scalar_t theta = (*deformation)[DICe::ROTATION_Z];
-    const scalar_t dudx = (*deformation)[DICe::NORMAL_STRAIN_X];
-    const scalar_t dvdy = (*deformation)[DICe::NORMAL_STRAIN_Y];
-    const scalar_t gxy = (*deformation)[DICe::SHEAR_STRAIN_XY];
+    const scalar_t theta = (*deformation)[DICe::DOF_THETA];
+    const scalar_t dudx = (*deformation)[DICe::DOF_EX];
+    const scalar_t dvdy = (*deformation)[DICe::DOF_EY];
+    const scalar_t gxy = (*deformation)[DICe::DOF_GXY];
     const scalar_t cosTheta = std::cos(theta);
     const scalar_t sinTheta = std::sin(theta);
 
@@ -501,9 +503,9 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
     if(schema_->use_objective_regularization()){
       // add the penalty terms
       const scalar_t alpha = schema_->levenberg_marquardt_regularization_factor();
-      //q[0] += alpha * ((*deformation)[DICe::DISPLACEMENT_X] - prev_u);
-      //q[1] += alpha * ((*deformation)[DICe::DISPLACEMENT_Y] - prev_v);
-      //q[2] += alpha * ((*deformation)[DICe::ROTATION_Z] - prev_theta);
+      //q[0] += alpha * ((*deformation)[DICe::DOF_U] - prev_u);
+      //q[1] += alpha * ((*deformation)[DICe::DOF_V] - prev_v);
+      //q[2] += alpha * ((*deformation)[DICe::DOF_THETA] - prev_theta);
       H(0,0) += alpha;
       H(1,1) += alpha;
       // H(2,2) += alpha;
@@ -575,7 +577,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
       lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
       //lapack.GECON('1',N,H.values(),N,anorm,&rcond,GWORK,IWORK,&INFO);
       //DEBUG_MSG("Subset " << correlation_point_global_id_ << "    RCOND(H): "<< rcond);
-      schema_->global_field_value(correlation_point_global_id_,DICe::CONDITION_NUMBER) = cond_2x2;
+      schema_->global_field_value(correlation_point_global_id_,CONDITION_NUMBER_FS) = cond_2x2;
       //schema_->global_field_value(correlation_point_global_id_,DICe::CONDITION_NUMBER) = (rcond !=0.0) ? 1.0/rcond : 0.0;
       //if(rcond < 1.0E-12) return HESSIAN_SINGULAR;
     }
@@ -608,12 +610,12 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
     //DEBUG_MSG("    Iterative updates: u " << (*def_update)[0] << " v " << (*def_update)[1] << " theta " <<
     //  (*def_update)[2] << " ex " << (*def_update)[3] << " ey " << (*def_update)[4] << " gxy " << (*def_update)[5]);
 
-    (*deformation)[DICe::DISPLACEMENT_X] += (*def_update)[0];
-    (*deformation)[DICe::DISPLACEMENT_Y] += (*def_update)[1];
-    (*deformation)[DICe::ROTATION_Z] += (*def_update)[2];
-    (*deformation)[DICe::NORMAL_STRAIN_X] += (*def_update)[3];
-    (*deformation)[DICe::NORMAL_STRAIN_Y] += (*def_update)[4];
-    (*deformation)[DICe::SHEAR_STRAIN_XY] += (*def_update)[5];
+    (*deformation)[DICe::DOF_U] += (*def_update)[0];
+    (*deformation)[DICe::DOF_V] += (*def_update)[1];
+    (*deformation)[DICe::DOF_THETA] += (*def_update)[2];
+    (*deformation)[DICe::DOF_EX] += (*def_update)[3];
+    (*deformation)[DICe::DOF_EY] += (*def_update)[4];
+    (*deformation)[DICe::DOF_GXY] += (*def_update)[5];
 
     std::ios  state(NULL);
     state.copyfmt(std::cout);
@@ -622,27 +624,27 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
       std::setw(12) << std::scientific << std::setprecision(4) << q[0] <<
       std::setw(12) << q[1] <<
       std::setw(12) << q[2] <<
-      std::setw(12) << (*deformation)[DICe::DISPLACEMENT_X] <<
+      std::setw(12) << (*deformation)[DICe::DOF_U] <<
       std::setw(12) << (*def_update)[0] <<
-      std::setw(12) << (*deformation)[DICe::DISPLACEMENT_Y] <<
+      std::setw(12) << (*deformation)[DICe::DOF_V] <<
       std::setw(12) << (*def_update)[1] <<
-      std::setw(12) << (*deformation)[DICe::ROTATION_Z] <<
+      std::setw(12) << (*deformation)[DICe::DOF_THETA] <<
       std::setw(12) << (*def_update)[2]);
     std::cout.copyfmt(state);
 
-    //DEBUG_MSG("Subset " << correlation_point_global_id_ << " -- iteration: " << solve_it << " u " << (*deformation)[DICe::DISPLACEMENT_X] <<
-    //  " v " << (*deformation)[DICe::DISPLACEMENT_Y] << " theta " << (*deformation)[DICe::ROTATION_Z] <<
-    //  " ex " << (*deformation)[DICe::NORMAL_STRAIN_X] << " ey " << (*deformation)[DICe::NORMAL_STRAIN_Y] <<
-    //  " gxy " << (*deformation)[DICe::SHEAR_STRAIN_XY] <<
+    //DEBUG_MSG("Subset " << correlation_point_global_id_ << " -- iteration: " << solve_it << " u " << (*deformation)[DICe::DOF_U] <<
+    //  " v " << (*deformation)[DICe::DOF_V] << " theta " << (*deformation)[DICe::DOF_THETA] <<
+    //  " ex " << (*deformation)[DICe::DOF_EX] << " ey " << (*deformation)[DICe::DOF_EY] <<
+    //  " gxy " << (*deformation)[DICe::DOF_GXY] <<
     //  " residual: (" << q[0] << "," << q[1] << "," << q[2] << ")");
 
-    if(std::abs((*deformation)[DICe::DISPLACEMENT_X] - (*def_old)[DICe::DISPLACEMENT_X]) < solve_tol_disp
-        && std::abs((*deformation)[DICe::DISPLACEMENT_Y] - (*def_old)[DICe::DISPLACEMENT_Y]) < solve_tol_disp
-        && std::abs((*deformation)[DICe::ROTATION_Z] - (*def_old)[DICe::ROTATION_Z]) < solve_tol_theta){
-      DEBUG_MSG("Subset " << correlation_point_global_id_ << " ** CONVERGED SOLUTION, u " << (*deformation)[DICe::DISPLACEMENT_X] <<
-        " v " << (*deformation)[DICe::DISPLACEMENT_Y] <<
-        " theta " << (*deformation)[DICe::ROTATION_Z]  << " ex " << (*deformation)[DICe::NORMAL_STRAIN_X] <<
-        " ey " << (*deformation)[DICe::NORMAL_STRAIN_Y] << " gxy " << (*deformation)[DICe::SHEAR_STRAIN_XY]);
+    if(std::abs((*deformation)[DICe::DOF_U] - (*def_old)[DICe::DOF_U]) < solve_tol_disp
+        && std::abs((*deformation)[DICe::DOF_V] - (*def_old)[DICe::DOF_V]) < solve_tol_disp
+        && std::abs((*deformation)[DICe::DOF_THETA] - (*def_old)[DICe::DOF_THETA]) < solve_tol_theta){
+      DEBUG_MSG("Subset " << correlation_point_global_id_ << " ** CONVERGED SOLUTION, u " << (*deformation)[DICe::DOF_U] <<
+        " v " << (*deformation)[DICe::DOF_V] <<
+        " theta " << (*deformation)[DICe::DOF_THETA]  << " ex " << (*deformation)[DICe::DOF_EX] <<
+        " ey " << (*deformation)[DICe::DOF_EY] << " gxy " << (*deformation)[DICe::DOF_GXY]);
       //if(schema_->image_deformer()!=Teuchos::null && schema_->mesh()->get_comm()->get_size()==1){
       computeUncertaintyFields(deformation);
       //}
@@ -735,15 +737,15 @@ Objective_ZNSSD_Affine::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > &
     scalar_t Gx=0.0,Gy=0.0, GmF=0.0;
     Teuchos::ArrayRCP<double> resids(N,0.0);
 
-    const scalar_t A = (*deformation)[DICe::AFFINE_A];
-    const scalar_t B = (*deformation)[DICe::AFFINE_B];
-    const scalar_t C = (*deformation)[DICe::AFFINE_C];
-    const scalar_t D = (*deformation)[DICe::AFFINE_D];
-    const scalar_t E = (*deformation)[DICe::AFFINE_E];
-    const scalar_t F = (*deformation)[DICe::AFFINE_F];
-    const scalar_t G = (*deformation)[DICe::AFFINE_G];
-    const scalar_t H = (*deformation)[DICe::AFFINE_H];
-    const scalar_t I = (*deformation)[DICe::AFFINE_I];
+    const scalar_t A = (*deformation)[DOF_A];
+    const scalar_t B = (*deformation)[DOF_B];
+    const scalar_t C = (*deformation)[DOF_C];
+    const scalar_t D = (*deformation)[DOF_D];
+    const scalar_t E = (*deformation)[DOF_E];
+    const scalar_t F = (*deformation)[DOF_F];
+    const scalar_t G = (*deformation)[DOF_G];
+    const scalar_t H = (*deformation)[DOF_H];
+    const scalar_t I = (*deformation)[DOF_I];
     TEUCHOS_TEST_FOR_EXCEPTION(I==0.0,std::runtime_error,"");
 
     for(int_t index=0;index<subset_->num_pixels();++index){
@@ -794,7 +796,7 @@ Objective_ZNSSD_Affine::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > &
     try
     {
       lapack.GETRF(N,N,tangent.values(),N,IPIV,&INFO);
-      schema_->global_field_value(correlation_point_global_id_,DICe::CONDITION_NUMBER) = -1.0;
+      schema_->global_field_value(correlation_point_global_id_,CONDITION_NUMBER_FS) = -1.0;
     }
     catch(std::exception &e){
       DEBUG_MSG( e.what() << '\n');
@@ -827,15 +829,15 @@ Objective_ZNSSD_Affine::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > &
     state.copyfmt(std::cout);
     DEBUG_MSG(std::setw(5) << solve_it <<
       //std::setw(15) << resid_norm <<
-      std::setw(12) << std::scientific << std::setprecision(4) << (*deformation)[DICe::AFFINE_A] <<
-      std::setw(12) << (*deformation)[DICe::AFFINE_B] <<
-      std::setw(12) << (*deformation)[DICe::AFFINE_C] <<
-      std::setw(12) << (*deformation)[DICe::AFFINE_D] <<
-      std::setw(12) << (*deformation)[DICe::AFFINE_E] <<
-      std::setw(12) << (*deformation)[DICe::AFFINE_F] <<
-      std::setw(12) << (*deformation)[DICe::AFFINE_G] <<
-      std::setw(12) << (*deformation)[DICe::AFFINE_H] <<
-      std::setw(12) << (*deformation)[DICe::AFFINE_I]);
+      std::setw(12) << std::scientific << std::setprecision(4) << (*deformation)[DOF_A] <<
+      std::setw(12) << (*deformation)[DOF_B] <<
+      std::setw(12) << (*deformation)[DOF_C] <<
+      std::setw(12) << (*deformation)[DOF_D] <<
+      std::setw(12) << (*deformation)[DOF_E] <<
+      std::setw(12) << (*deformation)[DOF_F] <<
+      std::setw(12) << (*deformation)[DOF_G] <<
+      std::setw(12) << (*deformation)[DOF_H] <<
+      std::setw(12) << (*deformation)[DOF_I]);
     std::cout.copyfmt(state);
 
     bool all_converged = true;
@@ -844,15 +846,15 @@ Objective_ZNSSD_Affine::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > &
         all_converged = false;
 
     if(all_converged){
-      DEBUG_MSG("Subset " << correlation_point_global_id_ << " ** CONVERGED SOLUTION, a " << (*deformation)[DICe::AFFINE_A] <<
-        " b " << (*deformation)[DICe::AFFINE_B] <<
-        " c " << (*deformation)[DICe::AFFINE_C] <<
-        " d " << (*deformation)[DICe::AFFINE_D] <<
-        " e " << (*deformation)[DICe::AFFINE_E] <<
-        " f " << (*deformation)[DICe::AFFINE_F] <<
-        " g " << (*deformation)[DICe::AFFINE_G] <<
-        " h " << (*deformation)[DICe::AFFINE_H] <<
-        " i " << (*deformation)[DICe::AFFINE_I]);
+      DEBUG_MSG("Subset " << correlation_point_global_id_ << " ** CONVERGED SOLUTION, a " << (*deformation)[DOF_A] <<
+        " b " << (*deformation)[DOF_B] <<
+        " c " << (*deformation)[DOF_C] <<
+        " d " << (*deformation)[DOF_D] <<
+        " e " << (*deformation)[DOF_E] <<
+        " f " << (*deformation)[DOF_F] <<
+        " g " << (*deformation)[DOF_G] <<
+        " h " << (*deformation)[DOF_H] <<
+        " i " << (*deformation)[DOF_I]);
       computeUncertaintyFields(deformation);
       //}
       break;

@@ -416,10 +416,10 @@ void subset_velocity(Global_Algorithm * alg,
   Teuchos::RCP<std::vector<scalar_t> > def_old     = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0)); // save off the previous value to test for convergence
   Teuchos::RCP<std::vector<scalar_t> > def_update  = Teuchos::rcp(new std::vector<scalar_t>(N,0.0)); // save off the previous value to test for convergence
   // initialize the displacement field with the incoming values
-  (*deformation)[DISPLACEMENT_X] = b_x;
-  (*deformation)[DISPLACEMENT_Y] = b_y;
-  (*def_old)[DISPLACEMENT_X] = b_x;
-  (*def_old)[DISPLACEMENT_Y] = b_y;
+  (*deformation)[DOF_U] = b_x;
+  (*deformation)[DOF_V] = b_y;
+  (*def_old)[DOF_U] = b_x;
+  (*def_old)[DOF_V] = b_y;
 
   Teuchos::ArrayRCP<scalar_t> gradGx = subset->grad_x_array();
   Teuchos::ArrayRCP<scalar_t> gradGy = subset->grad_y_array();
@@ -510,18 +510,18 @@ void subset_velocity(Global_Algorithm * alg,
 
     //DEBUG_MSG("    Iterative updates: u " << (*def_update)[0] << " v " << (*def_update)[1]);
 
-    (*deformation)[DICe::DISPLACEMENT_X] += (*def_update)[0];
-    (*deformation)[DICe::DISPLACEMENT_Y] += (*def_update)[1];
+    (*deformation)[DICe::DOF_U] += (*def_update)[0];
+    (*deformation)[DICe::DOF_V] += (*def_update)[1];
 
-    //DEBUG_MSG("Subset at cx " << c_x << " cy " << c_y  << " -- iteration: " << solve_it << " u " << (*deformation)[DICe::DISPLACEMENT_X] <<
-    //  " v " << (*deformation)[DICe::DISPLACEMENT_Y] << " theta " << (*deformation)[DICe::ROTATION_Z] <<
-    //  " ex " << (*deformation)[DICe::NORMAL_STRAIN_X] << " ey " << (*deformation)[DICe::NORMAL_STRAIN_Y] <<
-    //  " gxy " << (*deformation)[DICe::SHEAR_STRAIN_XY] << ")");
+    //DEBUG_MSG("Subset at cx " << c_x << " cy " << c_y  << " -- iteration: " << solve_it << " u " << (*deformation)[DICe::DOF_U] <<
+    //  " v " << (*deformation)[DICe::DOF_V] << " theta " << (*deformation)[DICe::DOF_THETA] <<
+    //  " ex " << (*deformation)[DICe::DOF_EX] << " ey " << (*deformation)[DICe::DOF_EY] <<
+    //  " gxy " << (*deformation)[DICe::DOF_GXY] << ")");
 
-    if(std::abs((*deformation)[DICe::DISPLACEMENT_X] - (*def_old)[DICe::DISPLACEMENT_X]) < solve_tol_disp
-        && std::abs((*deformation)[DICe::DISPLACEMENT_Y] - (*def_old)[DICe::DISPLACEMENT_Y]) < solve_tol_disp){
-      DEBUG_MSG("subset_velocity(): solution at cx " << c_x << " cy " << c_y << ": b_x_in " << b_x << " b_x " << (*deformation)[DICe::DISPLACEMENT_X] <<
-        " b_y_in " << b_y << " b_y " << (*deformation)[DICe::DISPLACEMENT_Y]);
+    if(std::abs((*deformation)[DICe::DOF_U] - (*def_old)[DICe::DOF_U]) < solve_tol_disp
+        && std::abs((*deformation)[DICe::DOF_V] - (*def_old)[DICe::DOF_V]) < solve_tol_disp){
+      DEBUG_MSG("subset_velocity(): solution at cx " << c_x << " cy " << c_y << ": b_x_in " << b_x << " b_x " << (*deformation)[DICe::DOF_U] <<
+        " b_y_in " << b_y << " b_y " << (*deformation)[DICe::DOF_V]);
       break;
     }
 
@@ -541,8 +541,8 @@ void subset_velocity(Global_Algorithm * alg,
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Subset_velocity(): max iterations reached");
   }
 
-  b_x = (*deformation)[DICe::DISPLACEMENT_X];
-  b_y = (*deformation)[DICe::DISPLACEMENT_Y];
+  b_x = (*deformation)[DICe::DOF_U];
+  b_y = (*deformation)[DICe::DOF_V];
 }
 
 DICE_LIB_DLL_EXPORT

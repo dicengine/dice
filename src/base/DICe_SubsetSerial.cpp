@@ -312,12 +312,12 @@ Subset::initialize(Teuchos::RCP<Image> image,
     scalar_t mapped_x = 0.0;
     scalar_t mapped_y = 0.0;
     if(deformation->size()==DICE_DEFORMATION_SIZE){
-      u = (*deformation)[DISPLACEMENT_X];
-      v = (*deformation)[DISPLACEMENT_Y];
-      t = (*deformation)[ROTATION_Z];
-      ex = (*deformation)[NORMAL_STRAIN_X];
-      ey = (*deformation)[NORMAL_STRAIN_Y];
-      g = (*deformation)[SHEAR_STRAIN_XY];
+      u = (*deformation)[DOF_U];
+      v = (*deformation)[DOF_V];
+      t = (*deformation)[DOF_THETA];
+      ex = (*deformation)[DOF_EX];
+      ey = (*deformation)[DOF_EY];
+      g = (*deformation)[DOF_GXY];
       cos_t = std::cos(t);
       sin_t = std::sin(t);
     }

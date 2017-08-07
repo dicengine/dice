@@ -221,12 +221,12 @@ struct Subset_Init_Functor{
       offset_y_(image->offset_y()),
       tol_(0.00001){
     if(deformation!=Teuchos::null){
-      u_ = (*deformation)[DISPLACEMENT_X];
-      v_ = (*deformation)[DISPLACEMENT_Y];
-      t_ = (*deformation)[ROTATION_Z];
-      ex_ = (*deformation)[NORMAL_STRAIN_X];
-      ey_ = (*deformation)[NORMAL_STRAIN_Y];
-      g_ = (*deformation)[SHEAR_STRAIN_XY];
+      u_ = (*deformation)[DOF_U];
+      v_ = (*deformation)[DOF_V];
+      t_ = (*deformation)[DOF_THETA];
+      ex_ = (*deformation)[DOF_EX];
+      ey_ = (*deformation)[DOF_EY];
+      g_ = (*deformation)[DOF_GXY];
     }
     cos_t_ = std::cos(t_);
     sin_t_ = std::sin(t_);

@@ -41,6 +41,7 @@
 
 #include <DICe_Initializer.h>
 #include <DICe_Schema.h>
+#include <DICe_MeshEnums.h>
 #include <DICe_FFT.h>
 #include <DICe_Feature.h>
 
@@ -54,6 +55,8 @@
 #include <cassert>
 
 #include <boost/timer.hpp>
+
+using namespace DICe::mesh::field_enums;
 
 namespace DICe {
 
@@ -179,14 +182,14 @@ Path_Initializer::write_to_text_file(const std::string & file_name)const{
 Status_Flag
 Path_Initializer::initial_guess(const int_t subset_gid,
   Teuchos::RCP<std::vector<scalar_t> > deformation){
-  bool global_path_search_required = schema_->global_field_value(subset_gid,SIGMA)==-1.0 || schema_->frame_id()==schema_->first_frame_id();
+  bool global_path_search_required = schema_->global_field_value(subset_gid,SIGMA_FS)==-1.0 || schema_->frame_id()==schema_->first_frame_id();
   if(global_path_search_required){
     initial_guess(schema_->def_img(),deformation);
   }
   else{
-    const scalar_t prev_u = schema_->global_field_value(subset_gid,DICe::DISPLACEMENT_X);
-    const scalar_t prev_v = schema_->global_field_value(subset_gid,DICe::DISPLACEMENT_Y);
-    const scalar_t prev_t = schema_->global_field_value(subset_gid,DICe::ROTATION_Z);
+    const scalar_t prev_u = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+    const scalar_t prev_v = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
+    const scalar_t prev_t = schema_->global_field_value(subset_gid,ROTATION_Z_FS);
     initial_guess(schema_->def_img(),deformation,prev_u,prev_v,prev_t);
   }
   return INITIALIZE_SUCCESSFUL;
@@ -206,9 +209,9 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
   scalar_t dist = 0.0;
   // iterate over the closest 6 triads to this one to see which one is best:
   // start with the given guess
-  (*deformation)[DISPLACEMENT_X] = u;
-  (*deformation)[DISPLACEMENT_Y] = v;
-  (*deformation)[ROTATION_Z] = t;
+  (*deformation)[DOF_U] = u;
+  (*deformation)[DOF_V] = v;
+  (*deformation)[DOF_THETA] = t;
   // TODO what to do with the rest of the deformation entries (zero them)?
   subset_->initialize(def_image,DEF_INTENSITIES,deformation);
   // assumes that the reference subset has already been initialized
@@ -225,11 +228,11 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
   for(size_t neigh = 0;neigh<num_neighbors_;++neigh){
     const size_t neigh_id = neighbor(id,neigh);
     DEBUG_MSG("neigh id: " << neigh_id);
-    (*deformation)[DISPLACEMENT_X] = point_cloud_->pts[neigh_id].x;
-    (*deformation)[DISPLACEMENT_Y] = point_cloud_->pts[neigh_id].y;
-    (*deformation)[ROTATION_Z] = point_cloud_->pts[neigh_id].z;
-    DEBUG_MSG("checking triad id: " << neigh_id << " " << (*deformation)[DISPLACEMENT_X] << " " <<
-      (*deformation)[DISPLACEMENT_Y] << " " << (*deformation)[ROTATION_Z]);
+    (*deformation)[DOF_U] = point_cloud_->pts[neigh_id].x;
+    (*deformation)[DOF_V] = point_cloud_->pts[neigh_id].y;
+    (*deformation)[DOF_THETA] = point_cloud_->pts[neigh_id].z;
+    DEBUG_MSG("checking triad id: " << neigh_id << " " << (*deformation)[DOF_U] << " " <<
+      (*deformation)[DOF_V] << " " << (*deformation)[DOF_THETA]);
     // TODO what to do with the rest of the deformation entries (zero them)?
     subset_->initialize(def_image,DEF_INTENSITIES,deformation);
     // assumes that the reference subset has already been initialized
@@ -238,14 +241,14 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
     if(gamma<0.0) gamma = 4.0; // catch a failed gamma eval
     if(gamma < best_gamma){
       best_gamma = gamma;
-      best_u = (*deformation)[DISPLACEMENT_X];
-      best_v = (*deformation)[DISPLACEMENT_Y];
-      best_t = (*deformation)[ROTATION_Z];
+      best_u = (*deformation)[DOF_U];
+      best_v = (*deformation)[DOF_V];
+      best_t = (*deformation)[DOF_THETA];
     }
   }
-  (*deformation)[DISPLACEMENT_X] = best_u;
-  (*deformation)[DISPLACEMENT_Y] = best_v;
-  (*deformation)[ROTATION_Z] = best_t;
+  (*deformation)[DOF_U] = best_u;
+  (*deformation)[DOF_V] = best_v;
+  (*deformation)[DOF_THETA] = best_t;
   return best_gamma;
 }
 
@@ -265,11 +268,11 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
   DEBUG_MSG("Path_Initializer::initial_guess(deformation) point cloud has " << point_cloud_->pts.size() << " points");
   // iterate the entire set of triads:
   for(size_t id = 0;id<num_triads_;++id){
-    (*deformation)[DISPLACEMENT_X] = point_cloud_->pts[id].x;
-    (*deformation)[DISPLACEMENT_Y] = point_cloud_->pts[id].y;
-    (*deformation)[ROTATION_Z] = point_cloud_->pts[id].z;
-    DEBUG_MSG("checking triad id: " << id << " " << (*deformation)[DISPLACEMENT_X] << " " <<
-      (*deformation)[DISPLACEMENT_Y] << " " << (*deformation)[ROTATION_Z]);
+    (*deformation)[DOF_U] = point_cloud_->pts[id].x;
+    (*deformation)[DOF_V] = point_cloud_->pts[id].y;
+    (*deformation)[DOF_THETA] = point_cloud_->pts[id].z;
+    DEBUG_MSG("checking triad id: " << id << " " << (*deformation)[DOF_U] << " " <<
+      (*deformation)[DOF_V] << " " << (*deformation)[DOF_THETA]);
     // TODO what to do with the rest of the deformation entries (zero them)?
     subset_->initialize(def_image,DEF_INTENSITIES,deformation);
     // assumes that the reference subset has already been initialized
@@ -278,14 +281,14 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
     if(gamma<0.0) gamma = 4.0; // catch a failed gamma eval
     if(gamma < best_gamma){
       best_gamma = gamma;
-      best_u = (*deformation)[DISPLACEMENT_X];
-      best_v = (*deformation)[DISPLACEMENT_Y];
-      best_t = (*deformation)[ROTATION_Z];
+      best_u = (*deformation)[DOF_U];
+      best_v = (*deformation)[DOF_V];
+      best_t = (*deformation)[DOF_THETA];
     }
   }
-  (*deformation)[DISPLACEMENT_X] = best_u;
-  (*deformation)[DISPLACEMENT_Y] = best_v;
-  (*deformation)[ROTATION_Z] = best_t;
+  (*deformation)[DOF_U] = best_u;
+  (*deformation)[DOF_V] = best_v;
+  (*deformation)[DOF_THETA] = best_t;
   return best_gamma;
 }
 
@@ -293,9 +296,9 @@ Status_Flag
 Phase_Correlation_Initializer::initial_guess(const int_t subset_gid,
   Teuchos::RCP<std::vector<scalar_t> > deformation){
 
-  (*deformation)[DISPLACEMENT_X] = phase_cor_u_x_ + schema_->global_field_value(subset_gid,DISPLACEMENT_X);
-  (*deformation)[DISPLACEMENT_Y] = phase_cor_u_y_ + schema_->global_field_value(subset_gid,DISPLACEMENT_Y);
-  (*deformation)[ROTATION_Z] = schema_->global_field_value(subset_gid,ROTATION_Z);
+  (*deformation)[DOF_U] = phase_cor_u_x_ + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+  (*deformation)[DOF_V] = phase_cor_u_y_ + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
+  (*deformation)[DOF_THETA] = schema_->global_field_value(subset_gid,ROTATION_Z_FS);
   // TODO zero out the rest?
   return INITIALIZE_SUCCESSFUL;
 };
@@ -318,9 +321,9 @@ Search_Initializer::initial_guess(const int_t subset_gid,
   TEUCHOS_TEST_FOR_EXCEPTION(step_size_theta_<=0.0,std::runtime_error,"Error, step size theta must be > 0");
 
   // start with the input deformation
-  const scalar_t orig_x = (*deformation)[DISPLACEMENT_X];
-  const scalar_t orig_y = (*deformation)[DISPLACEMENT_Y];
-  const scalar_t orig_t = (*deformation)[ROTATION_Z];
+  const scalar_t orig_x = (*deformation)[DOF_U];
+  const scalar_t orig_y = (*deformation)[DOF_V];
+  const scalar_t orig_t = (*deformation)[DOF_THETA];
   const scalar_t start_x = orig_x - search_dim_xy_;
   const scalar_t start_y = orig_y - search_dim_xy_;
   const scalar_t start_t = orig_t - search_dim_theta_;
@@ -335,9 +338,9 @@ Search_Initializer::initial_guess(const int_t subset_gid,
   for(scalar_t pos_y = start_y;pos_y<=end_y;pos_y+=step_size_xy_){
     for(scalar_t pos_x = start_x;pos_x<=end_x;pos_x+=step_size_xy_){
       for(scalar_t pos_t = start_t;pos_t<=end_t;pos_t+=step_size_theta_){
-        (*deformation)[DISPLACEMENT_X] = pos_x;
-        (*deformation)[DISPLACEMENT_Y] = pos_y;
-        (*deformation)[ROTATION_Z] = pos_t;
+        (*deformation)[DOF_U] = pos_x;
+        (*deformation)[DOF_V] = pos_y;
+        (*deformation)[DOF_THETA] = pos_t;
         subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation);
         // assumes that the reference subset has already been initialized
         scalar_t gamma = 100.0;
@@ -357,8 +360,8 @@ Search_Initializer::initial_guess(const int_t subset_gid,
         }
         if(gamma < gamma_good_enough){
           DEBUG_MSG("Found very small gamma: " << gamma << " skipping the rest of the search");
-          DEBUG_MSG("Search initialization values: " << (*deformation)[DISPLACEMENT_X] << " "
-            << (*deformation)[DISPLACEMENT_Y] << " " << (*deformation)[ROTATION_Z]);
+          DEBUG_MSG("Search initialization values: " << (*deformation)[DOF_U] << " "
+            << (*deformation)[DOF_V] << " " << (*deformation)[DOF_THETA]);
           return INITIALIZE_SUCCESSFUL;
         }
       }
@@ -366,9 +369,9 @@ Search_Initializer::initial_guess(const int_t subset_gid,
   }
 
   DEBUG_MSG("Search initialization values: " << min_x << " " << min_y << " " << min_theta << " gamma: " << min_gamma);
-  (*deformation)[DISPLACEMENT_X] = min_x;
-  (*deformation)[DISPLACEMENT_Y] = min_y;
-  (*deformation)[ROTATION_Z] = min_theta;
+  (*deformation)[DOF_U] = min_x;
+  (*deformation)[DOF_V] = min_y;
+  (*deformation)[DOF_THETA] = min_theta;
 
   if(min_gamma < 1.0)
     return INITIALIZE_SUCCESSFUL;
@@ -384,7 +387,7 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
   // logic for using neighbor values
   if(schema_->initialization_method()==DICe::USE_NEIGHBOR_VALUES ||
       (schema_->initialization_method()==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && schema_->frame_id()==schema_->first_frame_id())){
-    sid = schema_->global_field_value(subset_gid,DICe::NEIGHBOR_ID);
+    sid = schema_->global_field_value(subset_gid,NEIGHBOR_ID_FS);
   }
 
   if(sid==-1) // catch case that subset does not have a neighbor
@@ -395,65 +398,65 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
     "Error: Only subset ids on this processor can be used for initialization");
 
   // 1: check if there exists a value from the previous step (image in a series)
-  const scalar_t sigma = schema_->global_field_value(sid,DICe::SIGMA);
+  const scalar_t sigma = schema_->global_field_value(sid,SIGMA_FS);
   if(sigma!=-1.0){// && sigma!=0.0)
     const Projection_Method projection = schema_->projection_method();
     if(schema_->translation_enabled()){
       DEBUG_MSG("Subset " << subset_gid << " Translation is enabled.");
       if(schema_->frame_id() > schema_->first_frame_id()+2 && projection == VELOCITY_BASED){
-        (*deformation)[DICe::DISPLACEMENT_X] = schema_->global_field_value(sid,DICe::DISPLACEMENT_X) +
-            (schema_->global_field_value(sid,DICe::DISPLACEMENT_X)-schema_->global_field_value_nm1(sid,DICe::DISPLACEMENT_X));
-        (*deformation)[DICe::DISPLACEMENT_Y] = schema_->global_field_value(sid,DICe::DISPLACEMENT_Y) +
-            (schema_->global_field_value(sid,DICe::DISPLACEMENT_Y)-schema_->global_field_value_nm1(sid,DICe::DISPLACEMENT_Y));
+        (*deformation)[DICe::DOF_U] = schema_->global_field_value(sid,SUBSET_DISPLACEMENT_X_FS) +
+            (schema_->global_field_value(sid,SUBSET_DISPLACEMENT_X_FS)-schema_->global_field_value(sid,SUBSET_DISPLACEMENT_X_NM1_FS));
+        (*deformation)[DICe::DOF_V] = schema_->global_field_value(sid,SUBSET_DISPLACEMENT_Y_FS) +
+            (schema_->global_field_value(sid,SUBSET_DISPLACEMENT_Y_FS)-schema_->global_field_value(sid,SUBSET_DISPLACEMENT_Y_NM1_FS));
       }
       else{
-        (*deformation)[DICe::DISPLACEMENT_X] = schema_->global_field_value(sid,DICe::DISPLACEMENT_X);
-        (*deformation)[DICe::DISPLACEMENT_Y] = schema_->global_field_value(sid,DICe::DISPLACEMENT_Y);
+        (*deformation)[DICe::DOF_U] = schema_->global_field_value(sid,SUBSET_DISPLACEMENT_X_FS);
+        (*deformation)[DICe::DOF_V] = schema_->global_field_value(sid,SUBSET_DISPLACEMENT_Y_FS);
       }
     }
     if(schema_->rotation_enabled()){
       DEBUG_MSG("Subset " << subset_gid << " Rotation is enabled.");
       if(schema_->frame_id() > schema_->first_frame_id()+2 && projection == VELOCITY_BASED){
-        (*deformation)[DICe::ROTATION_Z] = schema_->global_field_value(sid,DICe::ROTATION_Z) +
-            (schema_->global_field_value(sid,DICe::ROTATION_Z)-schema_->global_field_value_nm1(sid,DICe::ROTATION_Z));
+        (*deformation)[DICe::DOF_THETA] = schema_->global_field_value(sid,ROTATION_Z_FS) +
+            (schema_->global_field_value(sid,ROTATION_Z_FS)-schema_->global_field_value(sid,ROTATION_Z_NM1_FS));
       }
       else{
-        (*deformation)[DICe::ROTATION_Z] = schema_->global_field_value(sid,DICe::ROTATION_Z);
+        (*deformation)[DICe::DOF_THETA] = schema_->global_field_value(sid,ROTATION_Z_FS);
       }
     }
     if(schema_->normal_strain_enabled()){
       DEBUG_MSG("Subset " << subset_gid << " Normal strain is enabled.");
-      (*deformation)[DICe::NORMAL_STRAIN_X] = schema_->global_field_value(sid,DICe::NORMAL_STRAIN_X);
-      (*deformation)[DICe::NORMAL_STRAIN_Y] = schema_->global_field_value(sid,DICe::NORMAL_STRAIN_Y);
+      (*deformation)[DICe::DOF_EX] = schema_->global_field_value(sid,NORMAL_STRETCH_XX_FS);
+      (*deformation)[DICe::DOF_EY] = schema_->global_field_value(sid,NORMAL_STRETCH_YY_FS);
     }
     if(schema_->shear_strain_enabled()){
       DEBUG_MSG("Subset " << subset_gid << " Shear strain is enabled.");
-      (*deformation)[DICe::SHEAR_STRAIN_XY] = schema_->global_field_value(sid,DICe::SHEAR_STRAIN_XY);
+      (*deformation)[DICe::DOF_GXY] = schema_->global_field_value(sid,SHEAR_STRETCH_XY_FS);
     }
 
     if(sid!=subset_gid)
       DEBUG_MSG("Subset " << subset_gid << " was initialized from the field values of subset " << sid);
     else{
       DEBUG_MSG("Projection Method: " << projection);
-      DEBUG_MSG("Subset " << subset_gid << " solution from prev. step: u " << schema_->global_field_value(subset_gid,DICe::DISPLACEMENT_X) <<
-        " v " << schema_->global_field_value(subset_gid,DICe::DISPLACEMENT_Y) <<
-        " theta " << schema_->global_field_value(subset_gid,DICe::ROTATION_Z) <<
-        " e_x " << schema_->global_field_value(subset_gid,DICe::NORMAL_STRAIN_X) <<
-        " e_y " << schema_->global_field_value(subset_gid,DICe::NORMAL_STRAIN_Y) <<
-        " g_xy " << schema_->global_field_value(subset_gid,DICe::SHEAR_STRAIN_XY));
-      DEBUG_MSG("Subset " << subset_gid << " solution from nm1 step: u " << schema_->global_field_value_nm1(subset_gid,DICe::DISPLACEMENT_X) <<
-        " v " << schema_->global_field_value_nm1(subset_gid,DICe::DISPLACEMENT_Y) <<
-        " theta " << schema_->global_field_value_nm1(subset_gid,DICe::ROTATION_Z) <<
-        " e_x " << schema_->global_field_value_nm1(subset_gid,DICe::NORMAL_STRAIN_X) <<
-        " e_y " << schema_->global_field_value_nm1(subset_gid,DICe::NORMAL_STRAIN_Y) <<
-        " g_xy " << schema_->global_field_value_nm1(subset_gid,DICe::SHEAR_STRAIN_XY));
+      DEBUG_MSG("Subset " << subset_gid << " solution from prev. step: u " << schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) <<
+        " v " << schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) <<
+        " theta " << schema_->global_field_value(subset_gid,ROTATION_Z_FS) <<
+        " e_x " << schema_->global_field_value(subset_gid,NORMAL_STRETCH_XX_FS) <<
+        " e_y " << schema_->global_field_value(subset_gid,NORMAL_STRETCH_YY_FS) <<
+        " g_xy " << schema_->global_field_value(subset_gid,SHEAR_STRETCH_XY_FS));
+      DEBUG_MSG("Subset " << subset_gid << " solution from nm1 step: u " << schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_NM1_FS) <<
+        " v " << schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_NM1_FS) <<
+        " theta " << schema_->global_field_value(subset_gid,ROTATION_Z_NM1_FS) <<
+        " e_x " << schema_->global_field_value(subset_gid,NORMAL_STRETCH_XX_NM1_FS) <<
+        " e_y " << schema_->global_field_value(subset_gid,NORMAL_STRETCH_YY_NM1_FS) <<
+        " g_xy " << schema_->global_field_value(subset_gid,SHEAR_STRETCH_XY_NM1_FS));
     }
-    DEBUG_MSG("Subset " << subset_gid << " init. with values: u " << (*deformation)[DICe::DISPLACEMENT_X] <<
-      " v " << (*deformation)[DICe::DISPLACEMENT_Y] <<
-      " theta " << (*deformation)[DICe::ROTATION_Z] <<
-      " e_x " << (*deformation)[DICe::NORMAL_STRAIN_X] <<
-      " e_y " << (*deformation)[DICe::NORMAL_STRAIN_Y] <<
-      " g_xy " << (*deformation)[DICe::SHEAR_STRAIN_XY]);
+    DEBUG_MSG("Subset " << subset_gid << " init. with values: u " << (*deformation)[DICe::DOF_U] <<
+      " v " << (*deformation)[DICe::DOF_V] <<
+      " theta " << (*deformation)[DICe::DOF_THETA] <<
+      " e_x " << (*deformation)[DICe::DOF_EX] <<
+      " e_y " << (*deformation)[DICe::DOF_EY] <<
+      " g_xy " << (*deformation)[DICe::DOF_GXY]);
     if(sid==subset_gid)
       return INITIALIZE_USING_PREVIOUS_FRAME_SUCCESSFUL;
     else
@@ -509,15 +512,15 @@ Status_Flag
 Feature_Matching_Initializer::initial_guess(const int_t subset_gid,
   Teuchos::RCP<std::vector<scalar_t> > deformation){
 
-  if(schema_->global_field_value(subset_gid,DICe::SIGMA)<0)
+  if(schema_->global_field_value(subset_gid,SIGMA_FS)<0)
     return INITIALIZE_FAILED;
 
   TEUCHOS_TEST_FOR_EXCEPTION(deformation->size()!=DICE_DEFORMATION_SIZE,std::runtime_error,"");
   const int_t num_neighbors = 1;
   // now set up the neighbor list for each triad:
   //std::vector<size_t>(subset_->num_pixels()*num_neighbors_,0);
-  const scalar_t current_loc_x = schema_->global_field_value(subset_gid,COORDINATE_X) + schema_->global_field_value(subset_gid,DISPLACEMENT_X);
-  const scalar_t current_loc_y = schema_->global_field_value(subset_gid,COORDINATE_Y) + schema_->global_field_value(subset_gid,DISPLACEMENT_Y);
+  const scalar_t current_loc_x = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS) + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+  const scalar_t current_loc_y = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS) + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
   scalar_t query_pt[2];
   std::vector<size_t> ret_index(num_neighbors);
   std::vector<scalar_t> out_dist_sqr(num_neighbors);
@@ -527,10 +530,10 @@ Feature_Matching_Initializer::initial_guess(const int_t subset_gid,
   const int_t nearest_feature_id = ret_index[0];
   TEUCHOS_TEST_FOR_EXCEPTION((int_t)u_.size()<=nearest_feature_id,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION((int_t)v_.size()<=nearest_feature_id,std::runtime_error,"");
-  (*deformation)[DISPLACEMENT_X] = u_[nearest_feature_id] + schema_->global_field_value(subset_gid,DISPLACEMENT_X);
-  (*deformation)[DISPLACEMENT_Y] = v_[nearest_feature_id] + schema_->global_field_value(subset_gid,DISPLACEMENT_Y);
-  DEBUG_MSG("Subset " << subset_gid << " init. with values: u " << (*deformation)[DICe::DISPLACEMENT_X] <<
-    " v " << (*deformation)[DICe::DISPLACEMENT_Y] << " dist from nearest feature: " << std::sqrt(out_dist_sqr[0]) << " px");
+  (*deformation)[DOF_U] = u_[nearest_feature_id] + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+  (*deformation)[DOF_V] = v_[nearest_feature_id] + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
+  DEBUG_MSG("Subset " << subset_gid << " init. with values: u " << (*deformation)[DICe::DOF_U] <<
+    " v " << (*deformation)[DICe::DOF_V] << " dist from nearest feature: " << std::sqrt(out_dist_sqr[0]) << " px");
 
   return INITIALIZE_SUCCESSFUL;
 };
@@ -734,15 +737,15 @@ Optical_Flow_Initializer::set_locations(const int_t subset_gid){
   Teuchos::ArrayRCP<scalar_t> gy(subset_->num_pixels(),0.0);
   Teuchos::ArrayRCP<int_t> def_x(subset_->num_pixels(),0);
   Teuchos::ArrayRCP<int_t> def_y(subset_->num_pixels(),0);
-  const scalar_t u = schema_->global_field_value(subset_gid,DISPLACEMENT_X);
+  const scalar_t u = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
   initial_u_ = u;
-  const scalar_t v = schema_->global_field_value(subset_gid,DISPLACEMENT_Y);
+  const scalar_t v = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
   initial_v_ = v;
-  const scalar_t t = schema_->global_field_value(subset_gid,ROTATION_Z);
+  const scalar_t t = schema_->global_field_value(subset_gid,ROTATION_Z_FS);
   initial_t_ = t;
-  const scalar_t ex = schema_->global_field_value(subset_gid,NORMAL_STRAIN_X);
-  const scalar_t ey = schema_->global_field_value(subset_gid,NORMAL_STRAIN_Y);
-  const scalar_t g = schema_->global_field_value(subset_gid,SHEAR_STRAIN_XY);
+  const scalar_t ex = schema_->global_field_value(subset_gid,NORMAL_STRETCH_XX_FS);
+  const scalar_t ey = schema_->global_field_value(subset_gid,NORMAL_STRETCH_YY_FS);
+  const scalar_t g = schema_->global_field_value(subset_gid,SHEAR_STRETCH_XY_FS);
   scalar_t dx=0.0,dy=0.0;
   scalar_t Dx=0.0,Dy=0.0;
   scalar_t mapped_x=0.0,mapped_y=0.0;
@@ -777,12 +780,12 @@ Optical_Flow_Initializer::set_locations(const int_t subset_gid){
   }
   // get the current pixels for this subset, used to check if the OF point is inside the subset
   Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-  (*def)[DISPLACEMENT_X] = u;
-  (*def)[DISPLACEMENT_Y] = v;
-  (*def)[ROTATION_Z] = t;
-  (*def)[NORMAL_STRAIN_X] = ex;
-  (*def)[NORMAL_STRAIN_Y] = ey;
-  (*def)[SHEAR_STRAIN_XY] = g;
+  (*def)[DOF_U] = u;
+  (*def)[DOF_V] = v;
+  (*def)[DOF_THETA] = t;
+  (*def)[DOF_EX] = ex;
+  (*def)[DOF_EY] = ey;
+  (*def)[DOF_GXY] = g;
   std::set<std::pair<int_t,int_t> > subset_pixels = subset_->deformed_shapes(def,cx,cy,1.0);
   scalar_t best_grad = 0.0;
   ids_[0] = best_optical_flow_point(best_grad,def_x,def_y,gx,gy,subset_pixels);
@@ -847,9 +850,9 @@ Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
     Status_Flag location_flag = set_locations(subset_gid);
     if(location_flag!=INITIALIZE_SUCCESSFUL) {
       DEBUG_MSG("Optical_Flow_Initializer::initial_guess() set_locations FAILURE, using field values to initialize");
-      (*deformation)[DISPLACEMENT_X] = schema_->global_field_value(subset_gid,DISPLACEMENT_X);
-      (*deformation)[DISPLACEMENT_Y] = schema_->global_field_value(subset_gid,DISPLACEMENT_Y);
-      (*deformation)[ROTATION_Z] = schema_->global_field_value(subset_gid,ROTATION_Z);
+      (*deformation)[DOF_U] = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+      (*deformation)[DOF_V] = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
+      (*deformation)[DOF_THETA] = schema_->global_field_value(subset_gid,ROTATION_Z_FS);
       return INITIALIZE_SUCCESSFUL;
     }
   }
@@ -866,12 +869,12 @@ Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
 
   // reset the current locations of the optical flow points based on the last solution
   if(!skip_solve){
-    const scalar_t u = schema_->global_field_value(subset_gid,DISPLACEMENT_X);
-    const scalar_t v = schema_->global_field_value(subset_gid,DISPLACEMENT_Y);
-    const scalar_t t = schema_->global_field_value(subset_gid,ROTATION_Z);
-    const scalar_t ex = schema_->global_field_value(subset_gid,NORMAL_STRAIN_X);
-    const scalar_t ey = schema_->global_field_value(subset_gid,NORMAL_STRAIN_Y);
-    const scalar_t g = schema_->global_field_value(subset_gid,SHEAR_STRAIN_XY);
+    const scalar_t u = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+    const scalar_t v = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
+    const scalar_t t = schema_->global_field_value(subset_gid,ROTATION_Z_FS);
+    const scalar_t ex = schema_->global_field_value(subset_gid,NORMAL_STRETCH_XX_FS);
+    const scalar_t ey = schema_->global_field_value(subset_gid,NORMAL_STRETCH_YY_FS);
+    const scalar_t g = schema_->global_field_value(subset_gid,SHEAR_STRETCH_XY_FS);
     scalar_t dx=0.0,dy=0.0;
     scalar_t Dx=0.0,Dy=0.0;
     const int_t cx = subset_->centroid_x();
@@ -1043,9 +1046,9 @@ Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
 //  out.write(filename.str());
 
   // Note: these are additive displacements from the previous frame so add them to what's already in the array
-  (*deformation)[DISPLACEMENT_X] = initial_u_ + disp_x;
-  (*deformation)[DISPLACEMENT_Y] = initial_v_ + disp_y;
-  (*deformation)[ROTATION_Z] = initial_t_+ theta_12;
+  (*deformation)[DOF_U] = initial_u_ + disp_x;
+  (*deformation)[DOF_V] = initial_v_ + disp_y;
+  (*deformation)[DOF_THETA] = initial_t_+ theta_12;
   // leave the rest alone...
 
   return INITIALIZE_SUCCESSFUL;

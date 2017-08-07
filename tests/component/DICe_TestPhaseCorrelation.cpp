@@ -166,9 +166,9 @@ int main(int argc, char *argv[]) {
 
     // transform the image by the computed rotation angle
     Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-    (*def)[ROTATION_Z] = theta;
+    (*def)[DOF_THETA] = theta;
     Teuchos::RCP<std::vector<scalar_t> > def180 = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-    (*def180)[ROTATION_Z] = theta_180;
+    (*def180)[DOF_THETA] = theta_180;
     Teuchos::RCP<Image> rot_ref_0 = ref->apply_transformation(def,ref->width()/2,ref->height()/2);
     Teuchos::RCP<Image> rot_ref_180 = ref->apply_transformation(def180,ref->width()/2,ref->height()/2);
     std::stringstream transName0;

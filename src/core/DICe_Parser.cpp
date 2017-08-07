@@ -45,6 +45,7 @@
 #include <DICe.h>
 #include <DICe_Cine.h>
 #include <DICe_NetCDF.h>
+#include <DICe_MeshEnums.h>
 
 #include <Teuchos_oblackholestream.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
@@ -879,10 +880,10 @@ void generate_template_input_files(const std::string & file_prefix){
   write_xml_comment(paramsFile,"Uncomment the ParameterList below to request specific fields in the output files.");
   write_xml_comment(paramsFile,"The order in the list represents the column order in the data output.");
   write_xml_param_list_open(paramsFile,DICe::output_spec);
-  for(int_t i=0;i<MAX_FIELD_NAME;++i){
+  for(int_t i=0;i<DICe::mesh::field_enums::num_fields_defined;++i){
     std::stringstream iToStr;
     iToStr << i;
-    write_xml_bool_param(paramsFile,to_string(static_cast<Field_Name>(i)),"true");
+    write_xml_bool_param(paramsFile,DICe::mesh::field_enums::fs_spec_vec[i].get_name_label(),"true");
   }
   write_xml_param_list_close(paramsFile);
 

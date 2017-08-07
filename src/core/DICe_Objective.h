@@ -97,15 +97,15 @@ public:
     // create the refSubset as member data
     // check to see if the schema has multishapes:
     if((*schema_->conformal_subset_defs()).find(correlation_point_global_id_)!=(*schema_->conformal_subset_defs()).end()){
-      subset_ = Teuchos::rcp(new Subset(static_cast<int_t>(global_field_value(COORDINATE_X)),
-        static_cast<int_t>(global_field_value(COORDINATE_Y)),
+      subset_ = Teuchos::rcp(new Subset(static_cast<int_t>(global_field_value(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS)),
+        static_cast<int_t>(global_field_value(DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS)),
         (*schema_->conformal_subset_defs()).find(correlation_point_global_id_)->second));
     }
     // otherwise build up the subsets from x/y and w/h:
     else{
       assert(schema_->subset_dim()>0);
-      subset_ = Teuchos::rcp(new Subset(static_cast<int_t>(global_field_value(COORDINATE_X)),
-        static_cast<int_t>(global_field_value(COORDINATE_Y)),
+      subset_ = Teuchos::rcp(new Subset(static_cast<int_t>(global_field_value(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS)),
+        static_cast<int_t>(global_field_value(DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS)),
         schema_->subset_dim(),schema_->subset_dim()));
     }
     assert(schema_->ref_img()!=Teuchos::null);
@@ -155,16 +155,10 @@ public:
   }
 
   /// \brief Returns the current value of the field specified. These values are stored in the schema
-  /// \param name String name of the field (must match a valid enum in DICe.h)
-  const mv_scalar_type & global_field_value(const Field_Name name)const{
-    return schema_->global_field_value(correlation_point_global_id_,name);}
+  /// \param spec Field_Spec that defines the requested field
+  const mv_scalar_type & global_field_value(const DICe::mesh::field_enums::Field_Spec spec)const{
+    return schema_->global_field_value(correlation_point_global_id_,spec);}
 
-  /// \brief Returns the previous frame's value of the field specified. These values are stored in the schema.
-  ///
-  /// The solution at frame n - 1 is only stored for projection_method==VELCOITY_BASED
-  /// \param name String name of the field (must match a valid enum in DICe.h)
-  const mv_scalar_type & global_field_value_nm1(const Field_Name name)const{
-    return schema_->global_field_value_nm1(correlation_point_global_id_,name);}
 
   /// Returns a pointer to the subset
   Teuchos::RCP<Subset> subset()const{
@@ -223,17 +217,17 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION(subset_==Teuchos::null,std::runtime_error,"");
     // populate the dof map since not all deformation dofs are used
     if(schema_->translation_enabled()){
-      dof_map_.push_back(DISPLACEMENT_X);
-      dof_map_.push_back(DISPLACEMENT_Y);
+      dof_map_.push_back(DOF_U);
+      dof_map_.push_back(DOF_V);
     }
     if(schema_->rotation_enabled())
-      dof_map_.push_back(ROTATION_Z);
+      dof_map_.push_back(DOF_THETA);
     if(schema_->normal_strain_enabled()){
-      dof_map_.push_back(NORMAL_STRAIN_X);
-      dof_map_.push_back(NORMAL_STRAIN_Y);
+      dof_map_.push_back(DOF_EX);
+      dof_map_.push_back(DOF_EY);
     }
     if(schema_->shear_strain_enabled())
-      dof_map_.push_back(SHEAR_STRAIN_XY);
+      dof_map_.push_back(DOF_GXY);
   }
 
   virtual ~Objective_ZNSSD(){}
@@ -256,9 +250,6 @@ public:
 
   /// See base class documentation
   using Objective::global_field_value;
-
-  /// See base class documentation
-  using Objective::global_field_value_nm1;
 
   /// See base class documentation
   using Objective::num_dofs;
@@ -297,15 +288,15 @@ public:
       !schema_->normal_strain_enabled()&&
       !schema_->shear_strain_enabled(),std::runtime_error,"Error, no shape functions are activated");
     TEUCHOS_TEST_FOR_EXCEPTION(subset_==Teuchos::null,std::runtime_error,"");
-    dof_map_.push_back(AFFINE_A);
-    dof_map_.push_back(AFFINE_B);
-    dof_map_.push_back(AFFINE_C);
-    dof_map_.push_back(AFFINE_D);
-    dof_map_.push_back(AFFINE_E);
-    dof_map_.push_back(AFFINE_F);
-    dof_map_.push_back(AFFINE_G);
-    dof_map_.push_back(AFFINE_H);
-    dof_map_.push_back(AFFINE_I);
+    dof_map_.push_back(DOF_A);
+    dof_map_.push_back(DOF_B);
+    dof_map_.push_back(DOF_C);
+    dof_map_.push_back(DOF_D);
+    dof_map_.push_back(DOF_E);
+    dof_map_.push_back(DOF_F);
+    dof_map_.push_back(DOF_G);
+    dof_map_.push_back(DOF_H);
+    dof_map_.push_back(DOF_I);
   }
 
   virtual ~Objective_ZNSSD_Affine(){}
@@ -328,9 +319,6 @@ public:
 
   /// See base class documentation
   using Objective::global_field_value;
-
-  /// See base class documentation
-  using Objective::global_field_value_nm1;
 
   /// See base class documentation
   using Objective::num_dofs;

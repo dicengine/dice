@@ -99,15 +99,15 @@ int main(int argc, char *argv[]) {
   ref_image.write("shape_ref.tif");
   *outStream << "creating a deformation map" << std::endl;
   Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-  (*def)[DISPLACEMENT_X] = 25;
-  (*def)[DISPLACEMENT_Y] = -30;
+  (*def)[DOF_U] = 25;
+  (*def)[DOF_V] = -30;
   std::set<std::pair<int_t,int_t> > def_owned_pixels = poly1->get_owned_pixels(def,cx,cy);
   std::set<std::pair<int_t,int_t> >::iterator def_set_it = def_owned_pixels.begin();
   for(ref_set_it = ref_owned_pixels.begin();ref_set_it!=ref_owned_pixels.end();++ref_set_it){
-    if(def_owned_pixels.find(std::pair<int_t,int_t>(ref_set_it->first+(*def)[DISPLACEMENT_Y],ref_set_it->second+(*def)[DISPLACEMENT_X]))==def_owned_pixels.end()){
+    if(def_owned_pixels.find(std::pair<int_t,int_t>(ref_set_it->first+(*def)[DOF_V],ref_set_it->second+(*def)[DOF_U]))==def_owned_pixels.end()){
       *outStream << "Error, owned pixels are not right for the deformed image" << std::endl;
       *outStream << "    Point was not found (ref) " << ref_set_it->second << " " << ref_set_it->first <<
-          " (def) " << ref_set_it->second + (*def)[DISPLACEMENT_X] << " " << ref_set_it->first + (*def)[DISPLACEMENT_Y] << std::endl;
+          " (def) " << ref_set_it->second + (*def)[DOF_U] << " " << ref_set_it->first + (*def)[DOF_V] << std::endl;
       errorFlag++;
     }
   }
@@ -139,12 +139,12 @@ int main(int argc, char *argv[]) {
     large_skin_intensities[large_skin_set_it->first*imgW + large_skin_set_it->second] = 255;
   }
   for(size_t i=0;i<shape_coords_x.size();++i){
-    if(large_skin_owned_pixels.find(std::pair<int_t,int_t>((int_t)((shape_coords_y[i]-cy)*large_skin_factor*0.9 + cy) + (*def)[DISPLACEMENT_Y],
-      (int_t)((shape_coords_x[i]-cx)*large_skin_factor*0.9 + cx) + (*def)[DISPLACEMENT_X]))==large_skin_owned_pixels.end()){
+    if(large_skin_owned_pixels.find(std::pair<int_t,int_t>((int_t)((shape_coords_y[i]-cy)*large_skin_factor*0.9 + cy) + (*def)[DOF_V],
+      (int_t)((shape_coords_x[i]-cx)*large_skin_factor*0.9 + cx) + (*def)[DOF_U]))==large_skin_owned_pixels.end()){
       *outStream << "Error, large skin owned pixels are not right" << std::endl;
       *outStream << "    Point was not found (ref) " << shape_coords_x[i] << " " << shape_coords_y[i] <<
-          " (def) " << (int_t)((shape_coords_x[i]-cx)*large_skin_factor*0.9 + cx) + (*def)[DISPLACEMENT_X] <<
-          " " << (int_t)((shape_coords_y[i]-cy)*large_skin_factor*0.9 + cy) + (*def)[DISPLACEMENT_Y] << std::endl;
+          " (def) " << (int_t)((shape_coords_x[i]-cx)*large_skin_factor*0.9 + cx) + (*def)[DOF_U] <<
+          " " << (int_t)((shape_coords_y[i]-cy)*large_skin_factor*0.9 + cy) + (*def)[DOF_V] << std::endl;
       errorFlag++;
     }
   }

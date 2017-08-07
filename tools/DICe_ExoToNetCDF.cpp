@@ -62,7 +62,7 @@ using namespace DICe;
 
 int main(int argc, char *argv[]) {
 
-  /// usage 1: ./DICe_ExoToNetCDF <exo_file_name> <input_netcdf_file> <netcdf_output_file_name>
+  /// usage 1: ./DICe_ExoToNetCDF <exo_file_name> <input_netcdf_file> <netcdf_output_file_name> <number of neighbors>
   /// only works for serial exo file, only converts nodal variables
 
 
@@ -121,8 +121,8 @@ int main(int argc, char *argv[]) {
 
   std::vector<std::string> output_field_names;
   output_field_names.push_back("data"); // holds the image intensities
-  output_field_names.push_back("SUBSET_DISPLACEMENT_X");
-  output_field_names.push_back("SUBSET_DISPLACEMENT_Y");
+  output_field_names.push_back("DISPLACEMENT_X");
+  output_field_names.push_back("DISPLACEMENT_Y");
   output_field_names.push_back("SIGMA");
   if(has_strain){
     output_field_names.push_back("VSG_STRAIN_XX");

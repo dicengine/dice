@@ -58,6 +58,7 @@
 #include <cassert>
 
 using namespace DICe;
+using namespace DICe::mesh::field_enums;
 
 int main(int argc, char *argv[]) {
 
@@ -84,11 +85,11 @@ int main(int argc, char *argv[]) {
   // note: deformation vectors are a subset of the schema's data vector so DICe_DEFORMATION_SIZE != DICe::MAX_FIELD_NAME
   // the first DICe_DEFORMATION_SIZE values of the schema's data vector are the deformation values
   std::vector<scalar_t>defExact(DICE_DEFORMATION_SIZE,0.0);
-  defExact[DICe::NORMAL_STRAIN_X] = 0.121;
-  defExact[DICe::NORMAL_STRAIN_Y] = 0.121;
-  defExact[DICe::ROTATION_Z] = 0.262;
-  defExact[DICe::DISPLACEMENT_X] = 9.8;
-  defExact[DICe::DISPLACEMENT_Y] = -7.62;
+  defExact[DICe::DOF_EX] = 0.121;
+  defExact[DICe::DOF_EY] = 0.121;
+  defExact[DICe::DOF_THETA] = 0.262;
+  defExact[DICe::DOF_U] = 9.8;
+  defExact[DICe::DOF_V] = -7.62;
 
   *outStream << "testing square subset param combinations" << std::endl;
   const int_t subset_size = 21;
@@ -153,30 +154,30 @@ int main(int argc, char *argv[]) {
       schemaSquare->set_params(params);
 
       // reset the initial guess
-      schemaSquare->local_field_value(0,DICe::COORDINATE_X) = 30;
-      schemaSquare->local_field_value(0,DICe::COORDINATE_Y) = 30;
-      schemaSquare->local_field_value(0,DICe::SIGMA) = 0.0;
-      schemaSquare->local_field_value(0,DICe::GAMMA) = 0.0;
-      schemaSquare->local_field_value(0,DICe::STATUS_FLAG) = 0;
-      schemaSquare->local_field_value(0,DICe::DISPLACEMENT_X) = defExact[DICe::DISPLACEMENT_X] - 0.25;
-      schemaSquare->local_field_value(0,DICe::DISPLACEMENT_Y) = defExact[DICe::DISPLACEMENT_Y] - 0.25;
-      schemaSquare->local_field_value(0,DICe::ROTATION_Z)     = defExact[DICe::ROTATION_Z]     - 0.05;
-      schemaSquare->local_field_value(0,DICe::NORMAL_STRAIN_X) = 0.0;
-      schemaSquare->local_field_value(0,DICe::NORMAL_STRAIN_Y) = 0.0;
-      schemaSquare->local_field_value(0,DICe::SHEAR_STRAIN_XY) = 0.0;
+      schemaSquare->local_field_value(0,SUBSET_COORDINATES_X_FS) = 30;
+      schemaSquare->local_field_value(0,SUBSET_COORDINATES_Y_FS) = 30;
+      schemaSquare->local_field_value(0,SIGMA_FS) = 0.0;
+      schemaSquare->local_field_value(0,GAMMA_FS) = 0.0;
+      schemaSquare->local_field_value(0,STATUS_FLAG_FS) = 0;
+      schemaSquare->local_field_value(0,SUBSET_DISPLACEMENT_X_FS) = defExact[DICe::DOF_U] - 0.25;
+      schemaSquare->local_field_value(0,SUBSET_DISPLACEMENT_Y_FS) = defExact[DICe::DOF_V] - 0.25;
+      schemaSquare->local_field_value(0,ROTATION_Z_FS)     = defExact[DICe::DOF_THETA]     - 0.05;
+      schemaSquare->local_field_value(0,NORMAL_STRETCH_XX_FS) = 0.0;
+      schemaSquare->local_field_value(0,NORMAL_STRETCH_YY_FS) = 0.0;
+      schemaSquare->local_field_value(0,SHEAR_STRETCH_XY_FS) = 0.0;
 
       schemaSquare->execute_correlation();
 
       // check the solution to ensure the error is small:
       bool valueError = false;
-      if(std::abs(schemaSquare->local_field_value(0,DICe::DISPLACEMENT_X) - defExact[DICe::DISPLACEMENT_X]) > errtol) valueError = true;
-      if(std::abs(schemaSquare->local_field_value(0,DICe::DISPLACEMENT_Y) - defExact[DICe::DISPLACEMENT_Y]) > errtol) valueError = true;
-      if(std::abs(schemaSquare->local_field_value(0,DICe::ROTATION_Z) - defExact[DICe::ROTATION_Z]) > errtol) valueError = true;
-      if(std::abs(schemaSquare->local_field_value(0,DICe::NORMAL_STRAIN_X) - defExact[DICe::NORMAL_STRAIN_X]) > errtol) valueError = true;
-      if(std::abs(schemaSquare->local_field_value(0,DICe::NORMAL_STRAIN_Y) - defExact[DICe::NORMAL_STRAIN_Y]) > errtol) valueError = true;
-      if(std::abs(schemaSquare->local_field_value(0,DICe::SHEAR_STRAIN_XY) - defExact[DICe::SHEAR_STRAIN_XY]) > errtol) valueError = true;
-      if(std::abs(schemaSquare->local_field_value(0,DICe::STATUS_FLAG) - DICe::INITIALIZE_USING_PREVIOUS_FRAME_SUCCESSFUL) > errtol) valueError = true;
-      if(std::abs(schemaSquare->local_field_value(0,DICe::SIGMA) + 1) < errtol) valueError = true; // check that sigma != -1
+      if(std::abs(schemaSquare->local_field_value(0,SUBSET_DISPLACEMENT_X_FS) - defExact[DICe::DOF_U]) > errtol) valueError = true;
+      if(std::abs(schemaSquare->local_field_value(0,SUBSET_DISPLACEMENT_Y_FS) - defExact[DICe::DOF_V]) > errtol) valueError = true;
+      if(std::abs(schemaSquare->local_field_value(0,ROTATION_Z_FS) - defExact[DICe::DOF_THETA]) > errtol) valueError = true;
+      if(std::abs(schemaSquare->local_field_value(0,NORMAL_STRETCH_XX_FS) - defExact[DICe::DOF_EX]) > errtol) valueError = true;
+      if(std::abs(schemaSquare->local_field_value(0,NORMAL_STRETCH_YY_FS) - defExact[DICe::DOF_EY]) > errtol) valueError = true;
+      if(std::abs(schemaSquare->local_field_value(0,SHEAR_STRETCH_XY_FS) - defExact[DICe::DOF_GXY]) > errtol) valueError = true;
+      if(std::abs(schemaSquare->local_field_value(0,STATUS_FLAG_FS) - DICe::INITIALIZE_USING_PREVIOUS_FRAME_SUCCESSFUL) > errtol) valueError = true;
+      if(std::abs(schemaSquare->local_field_value(0,SIGMA_FS) + 1) < errtol) valueError = true; // check that sigma != -1
 
       std::string statusStr = valueError ? "FAIL": "PASS";
       if(valueError) errorFlag++;
@@ -188,15 +189,15 @@ int main(int argc, char *argv[]) {
       *outStream << std::setw(7)  << schemaSquare->interpolation_method();
       *outStream << std::setw(7)  << schemaSquare->initialization_method();
       *outStream << std::setw(7)  << schemaSquare->optimization_method();
-      *outStream << std::setw(7)  << std::setprecision(3) << schemaSquare->local_field_value(0,DICe::DISPLACEMENT_X);
-      *outStream << std::setw(7)  << std::setprecision(3) << schemaSquare->local_field_value(0,DICe::DISPLACEMENT_Y);
-      *outStream << std::setw(7)  << std::setprecision(3) << schemaSquare->local_field_value(0,DICe::ROTATION_Z);
-      *outStream << std::setw(7)  << std::setprecision(3) << schemaSquare->local_field_value(0,DICe::NORMAL_STRAIN_X);
-      *outStream << std::setw(7)  << std::setprecision(3) << schemaSquare->local_field_value(0,DICe::NORMAL_STRAIN_Y);
-      *outStream << std::setw(12) << std::setprecision(2) << schemaSquare->local_field_value(0,DICe::SHEAR_STRAIN_XY);
-      *outStream << std::setw(12) << std::setprecision(3) << std::setiosflags(std::ios::scientific) <<  schemaSquare->local_field_value(0,DICe::SIGMA);
-      *outStream << std::setw(12) <<  schemaSquare->local_field_value(0,DICe::GAMMA);
-      *outStream << std::setw(7)  << std::setiosflags(std::ios_base::fixed) << schemaSquare->local_field_value(0,DICe::STATUS_FLAG);
+      *outStream << std::setw(7)  << std::setprecision(3) << schemaSquare->local_field_value(0,SUBSET_DISPLACEMENT_X_FS);
+      *outStream << std::setw(7)  << std::setprecision(3) << schemaSquare->local_field_value(0,SUBSET_DISPLACEMENT_Y_FS);
+      *outStream << std::setw(7)  << std::setprecision(3) << schemaSquare->local_field_value(0,ROTATION_Z_FS);
+      *outStream << std::setw(7)  << std::setprecision(3) << schemaSquare->local_field_value(0,NORMAL_STRETCH_XX_FS);
+      *outStream << std::setw(7)  << std::setprecision(3) << schemaSquare->local_field_value(0,NORMAL_STRETCH_YY_FS);
+      *outStream << std::setw(12) << std::setprecision(2) << schemaSquare->local_field_value(0,SHEAR_STRETCH_XY_FS);
+      *outStream << std::setw(12) << std::setprecision(3) << std::setiosflags(std::ios::scientific) <<  schemaSquare->local_field_value(0,SIGMA_FS);
+      *outStream << std::setw(12) <<  schemaSquare->local_field_value(0,GAMMA_FS);
+      *outStream << std::setw(7)  << std::setiosflags(std::ios_base::fixed) << schemaSquare->local_field_value(0,STATUS_FLAG_FS);
       *outStream << std::endl;
       outStream->flags(f); // reset the cout flags to the original state
     }

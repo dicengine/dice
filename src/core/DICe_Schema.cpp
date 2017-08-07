@@ -74,6 +74,8 @@
 
 namespace DICe {
 
+using namespace mesh::field_enums;
+
 Schema::Schema(const std::string & input_file_name,
   const std::string & params_file_name){
   // create a parameter list from the selected file
@@ -895,25 +897,25 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
         const int_t roi_id = it->second;
         TEUCHOS_TEST_FOR_EXCEPTION(subset_info->displacement_map->find(roi_id)==subset_info->displacement_map->end(),
           std::runtime_error,"");
-        global_field_value(subset_id,DICe::DISPLACEMENT_X) = subset_info->displacement_map->find(roi_id)->second.first;
-        global_field_value(subset_id,DICe::DISPLACEMENT_Y) = subset_info->displacement_map->find(roi_id)->second.second;
+        global_field_value(subset_id,SUBSET_DISPLACEMENT_X_FS) = subset_info->displacement_map->find(roi_id)->second.first;
+        global_field_value(subset_id,SUBSET_DISPLACEMENT_Y_FS) = subset_info->displacement_map->find(roi_id)->second.second;
         if(proc_rank==0) DEBUG_MSG("Seeding the displacement solution for subset " << subset_id << " with ux: " <<
-          global_field_value(subset_id,DICe::DISPLACEMENT_X) << " uy: " << global_field_value(subset_id,DICe::DISPLACEMENT_Y));
+          global_field_value(subset_id,SUBSET_DISPLACEMENT_X_FS) << " uy: " << global_field_value(subset_id,SUBSET_DISPLACEMENT_Y_FS));
         if(subset_info->normal_strain_map->find(roi_id)!=subset_info->normal_strain_map->end()){
-          global_field_value(subset_id,DICe::NORMAL_STRAIN_X) = subset_info->normal_strain_map->find(roi_id)->second.first;
-          global_field_value(subset_id,DICe::NORMAL_STRAIN_Y) = subset_info->normal_strain_map->find(roi_id)->second.second;
+          global_field_value(subset_id,NORMAL_STRETCH_XX_FS) = subset_info->normal_strain_map->find(roi_id)->second.first;
+          global_field_value(subset_id,NORMAL_STRETCH_YY_FS) = subset_info->normal_strain_map->find(roi_id)->second.second;
           if(proc_rank==0) DEBUG_MSG("Seeding the normal strain solution for subset " << subset_id << " with ex: " <<
-            global_field_value(subset_id,DICe::NORMAL_STRAIN_X) << " ey: " << global_field_value(subset_id,DICe::NORMAL_STRAIN_Y));
+            global_field_value(subset_id,NORMAL_STRETCH_XX_FS) << " ey: " << global_field_value(subset_id,NORMAL_STRETCH_YY_FS));
         }
         if(subset_info->shear_strain_map->find(roi_id)!=subset_info->shear_strain_map->end()){
-          global_field_value(subset_id,DICe::SHEAR_STRAIN_XY) = subset_info->shear_strain_map->find(roi_id)->second;
+          global_field_value(subset_id,SHEAR_STRETCH_XY_FS) = subset_info->shear_strain_map->find(roi_id)->second;
           if(proc_rank==0) DEBUG_MSG("Seeding the shear strain solution for subset " << subset_id << " with gamma_xy: " <<
-            global_field_value(subset_id,DICe::SHEAR_STRAIN_XY));
+            global_field_value(subset_id,SHEAR_STRETCH_XY_FS));
         }
         if(subset_info->rotation_map->find(roi_id)!=subset_info->rotation_map->end()){
-          global_field_value(subset_id,DICe::ROTATION_Z) = subset_info->rotation_map->find(roi_id)->second;
+          global_field_value(subset_id,ROTATION_Z_FS) = subset_info->rotation_map->find(roi_id)->second;
           if(proc_rank==0) DEBUG_MSG("Seeding the rotation solution for subset " << subset_id << " with theta_z: " <<
-            global_field_value(subset_id,DICe::ROTATION_Z));
+            global_field_value(subset_id,ROTATION_Z_FS));
         }
       }
     }
@@ -1074,7 +1076,7 @@ Schema::initialize(Teuchos::RCP<Decomp> decomp,
     for(int_t i=0;i<local_num_subsets_;++i){
       const int_t gid = subset_global_id(i);
       const int_t olid = mesh_->get_scalar_node_overlap_map()->get_local_element(gid);
-      local_field_value(i,DICe::NEIGHBOR_ID) = (*decomp->neighbor_ids())[olid];
+      local_field_value(i,NEIGHBOR_ID_FS) = (*decomp->neighbor_ids())[olid];
     }
 
   DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] schema initialized");
@@ -1142,10 +1144,10 @@ Schema::create_mesh_fields(){
   mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_X_NM1_FS);
   mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
   mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_Y_NM1_FS);
-  mesh_->create_field(mesh::field_enums::STEREO_DISPLACEMENT_X_FS);
-  mesh_->create_field(mesh::field_enums::STEREO_DISPLACEMENT_Y_FS);
-  mesh_->create_field(mesh::field_enums::MODEL_DISPLACEMENT_X_FS);
-  mesh_->create_field(mesh::field_enums::MODEL_DISPLACEMENT_Y_FS);
+  mesh_->create_field(mesh::field_enums::STEREO_SUBSET_DISPLACEMENT_X_FS);
+  mesh_->create_field(mesh::field_enums::STEREO_SUBSET_DISPLACEMENT_Y_FS);
+  mesh_->create_field(mesh::field_enums::MODEL_SUBSET_DISPLACEMENT_X_FS);
+  mesh_->create_field(mesh::field_enums::MODEL_SUBSET_DISPLACEMENT_Y_FS);
   mesh_->create_field(mesh::field_enums::MODEL_DISPLACEMENT_Z_FS);
   mesh_->create_field(mesh::field_enums::SUBSET_COORDINATES_X_FS);
   mesh_->create_field(mesh::field_enums::SUBSET_COORDINATES_Y_FS);
@@ -1196,8 +1198,8 @@ Schema::create_mesh_fields(){
   // fill the subset coordinates field:
   Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
   for(int_t i=0;i<local_num_subsets_;++i){
-    local_field_value(i,COORDINATE_X) = coords->local_value(i*2+0);
-    local_field_value(i,COORDINATE_Y) = coords->local_value(i*2+1);
+    local_field_value(i,SUBSET_COORDINATES_X_FS) = coords->local_value(i*2+0);
+    local_field_value(i,SUBSET_COORDINATES_Y_FS) = coords->local_value(i*2+1);
   }
 }
 
@@ -1291,8 +1293,8 @@ Schema::execute_cross_correlation(){
 
       //for(scalar_t v=-search_radius_y;v<search_radius_y;v+=search_step){
         for(scalar_t u=-search_radius_x;u<search_radius_x;u+=search_step){
-          (*def)[DISPLACEMENT_X] = u; // note: value already in disp u is not added here
-          //(*def)[DISPLACEMENT_Y] = v;
+          (*def)[DOF_U] = u; // note: value already in disp u is not added here
+          //(*def)[DOF_V] = v;
           const scalar_t gamma = init_success ? obj->gamma(def) : 100.0;
           if(gamma > 0.0 && gamma < best_gamma){
             best_gamma = gamma;
@@ -1301,7 +1303,7 @@ Schema::execute_cross_correlation(){
           }
         } // end search x loop
       //} // end search y loop
-      local_field_value(subset_index,DISPLACEMENT_X) = min_u;
+      local_field_value(subset_index,SUBSET_DISPLACEMENT_X_FS) = min_u;
       //local_field_value(subset_index,DISPLACEMENT_Y) = min_v;
       //DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " v " << min_v << " gamma " << best_gamma);
       DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " gamma " << best_gamma);
@@ -1312,7 +1314,7 @@ Schema::execute_cross_correlation(){
   std::stringstream message;
   message << std::endl;
   for(int_t i=0;i<local_num_subsets_;++i){
-    message << "[PROC " << proc_id << "] Owns subset global id (in cross-correlation order): " << this_proc_gid_order_[i] << " neighbor id: " << global_field_value(this_proc_gid_order_[i],NEIGHBOR_ID) << std::endl;
+    message << "[PROC " << proc_id << "] Owns subset global id (in cross-correlation order): " << this_proc_gid_order_[i] << " neighbor id: " << global_field_value(this_proc_gid_order_[i],NEIGHBOR_ID_FS) << std::endl;
   }
   DEBUG_MSG(message.str());
 #endif
@@ -1331,15 +1333,15 @@ Schema::execute_cross_correlation(){
   // check the percentage of successful subsets:
   int_t num_successful = 0;
   for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
-    if(local_field_value(subset_index,SIGMA) > 0.0)
+    if(local_field_value(subset_index,SIGMA_FS) > 0.0)
       num_successful++;
   }
   DEBUG_MSG("[PROC " << proc_id << "]: success rate: " << (scalar_t)num_successful/(scalar_t)local_num_subsets_);
   for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
     DEBUG_MSG("[PROC " << proc_id << "] global subset id " << subset_global_id(subset_index) << " post execute_cross_correlation() field values, u: " <<
-      local_field_value(subset_index,DISPLACEMENT_X) << " v: " << local_field_value(subset_index,DISPLACEMENT_Y)
-      << " theta: " << local_field_value(subset_index,ROTATION_Z) << " sigma: " << local_field_value(subset_index,SIGMA) << " gamma: " <<
-      local_field_value(subset_index,GAMMA) << " beta: " << local_field_value(subset_index,BETA) << " omega: " << local_field_value(subset_index,OMEGA));
+      local_field_value(subset_index,SUBSET_DISPLACEMENT_X_FS) << " v: " << local_field_value(subset_index,SUBSET_DISPLACEMENT_Y_FS)
+      << " theta: " << local_field_value(subset_index,ROTATION_Z_FS) << " sigma: " << local_field_value(subset_index,SIGMA_FS) << " gamma: " <<
+      local_field_value(subset_index,GAMMA_FS) << " beta: " << local_field_value(subset_index,BETA_FS) << " omega: " << local_field_value(subset_index,OMEGA_FS));
   }
 
   // add the projection fields back to the output for the total u/v, etc.
@@ -1407,7 +1409,7 @@ Schema::execute_correlation(){
   std::stringstream message;
   message << std::endl;
   for(int_t i=0;i<local_num_subsets_;++i){
-    message << "[PROC " << proc_id << "] Owns subset global id (in order): " << this_proc_gid_order_[i] << " neighbor id: " << global_field_value(this_proc_gid_order_[i],NEIGHBOR_ID) << std::endl;
+    message << "[PROC " << proc_id << "] Owns subset global id (in order): " << this_proc_gid_order_[i] << " neighbor id: " << global_field_value(this_proc_gid_order_[i],NEIGHBOR_ID_FS) << std::endl;
   }
   DEBUG_MSG(message.str());
 #endif
@@ -1503,9 +1505,9 @@ Schema::execute_correlation(){
 
   for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
     DEBUG_MSG("[PROC " << proc_id << "] global subset id " << subset_global_id(subset_index) << " post execute_correlation() field values, u: " <<
-      local_field_value(subset_index,DISPLACEMENT_X) << " v: " << local_field_value(subset_index,DISPLACEMENT_Y)
-      << " theta: " << local_field_value(subset_index,ROTATION_Z) << " sigma: " << local_field_value(subset_index,SIGMA) << " gamma: " <<
-      local_field_value(subset_index,GAMMA) << " beta: " << local_field_value(subset_index,BETA) << " omega: " << local_field_value(subset_index,OMEGA));
+      local_field_value(subset_index,SUBSET_DISPLACEMENT_X_FS) << " v: " << local_field_value(subset_index,SUBSET_DISPLACEMENT_Y_FS)
+      << " theta: " << local_field_value(subset_index,ROTATION_Z_FS) << " sigma: " << local_field_value(subset_index,SIGMA_FS) << " gamma: " <<
+      local_field_value(subset_index,GAMMA_FS) << " beta: " << local_field_value(subset_index,BETA_FS) << " omega: " << local_field_value(subset_index,OMEGA_FS));
   }
 
   // accumulate the displacements
@@ -1513,8 +1515,8 @@ Schema::execute_correlation(){
     const int_t spa_dim = mesh_->spatial_dimension();
     Teuchos::RCP<DICe::MultiField> accumulated_disp = mesh_->get_field(DICe::mesh::field_enums::ACCUMULATED_DISP_FS);
     for(int_t i=0;i<local_num_subsets_;++i){
-      accumulated_disp->local_value(i*spa_dim+0) += local_field_value(i,DISPLACEMENT_X);
-      accumulated_disp->local_value(i*spa_dim+1) += local_field_value(i,DISPLACEMENT_Y);
+      accumulated_disp->local_value(i*spa_dim+0) += local_field_value(i,SUBSET_DISPLACEMENT_X_FS);
+      accumulated_disp->local_value(i*spa_dim+1) += local_field_value(i,SUBSET_DISPLACEMENT_Y_FS);
     }
   }
   update_frame_id();
@@ -1535,16 +1537,16 @@ Schema::save_cross_correlation_fields(){
   int_t num_failures = 0;
   scalar_t worst_gamma = 0.0;
   for(int_t i=0;i<local_num_subsets_;++i){
-    local_field_value(i,NORMAL_STRAIN_X) = 0.0;
-    local_field_value(i,NORMAL_STRAIN_Y) = 0.0;
-    local_field_value(i,SHEAR_STRAIN_XY) = 0.0;
-    local_field_value(i,ROTATION_Z) = 0.0;
-    local_field_value(i,STEREO_COORDINATE_X) = local_field_value(i,COORDINATE_X) + cross_q->local_value(i);
-    local_field_value(i,STEREO_COORDINATE_Y) = local_field_value(i,COORDINATE_Y) + cross_r->local_value(i);
-    if(local_field_value(i,SIGMA) < 0.0)
+    local_field_value(i,NORMAL_STRETCH_XX_FS) = 0.0;
+    local_field_value(i,NORMAL_STRETCH_YY_FS) = 0.0;
+    local_field_value(i,SHEAR_STRETCH_XY_FS) = 0.0;
+    local_field_value(i,ROTATION_Z_FS) = 0.0;
+    local_field_value(i,STEREO_COORDINATES_X_FS) = local_field_value(i,SUBSET_COORDINATES_X_FS) + cross_q->local_value(i);
+    local_field_value(i,STEREO_COORDINATES_Y_FS) = local_field_value(i,SUBSET_COORDINATES_Y_FS) + cross_r->local_value(i);
+    if(local_field_value(i,SIGMA_FS) < 0.0)
       num_failures++;
-    if(local_field_value(i,GAMMA) > worst_gamma)
-      worst_gamma = local_field_value(i,GAMMA);
+    if(local_field_value(i,GAMMA_FS) > worst_gamma)
+      worst_gamma = local_field_value(i,GAMMA_FS);
   }
   std::FILE * filePtr = fopen("projection_out.dat","a");
   fprintf(filePtr,"# Number of failed cross-correlation points: %i\n",num_failures);
@@ -1685,16 +1687,16 @@ Schema::record_failed_step(const int_t subset_gid,
   const int_t status,
   const int_t num_iterations){
   DEBUG_MSG("Subset " << subset_gid << " record failed step");
-  global_field_value(subset_gid,SIGMA) = -1.0;
-  global_field_value(subset_gid,MATCH) = -1.0;
-  global_field_value(subset_gid,GAMMA) = -1.0;
-  global_field_value(subset_gid,BETA) = -1.0;
-  global_field_value(subset_gid,OMEGA) = -1.0;
-  global_field_value(subset_gid,NOISE_LEVEL) = -1.0;
-  global_field_value(subset_gid,CONTRAST_LEVEL) = -1.0;
-  global_field_value(subset_gid,ACTIVE_PIXELS) = -1.0;
-  global_field_value(subset_gid,STATUS_FLAG) = status;
-  global_field_value(subset_gid,ITERATIONS) = num_iterations;
+  global_field_value(subset_gid,SIGMA_FS) = -1.0;
+  global_field_value(subset_gid,MATCH_FS) = -1.0;
+  global_field_value(subset_gid,GAMMA_FS) = -1.0;
+  global_field_value(subset_gid,BETA_FS) = -1.0;
+  global_field_value(subset_gid,OMEGA_FS) = -1.0;
+  global_field_value(subset_gid,NOISE_LEVEL_FS) = -1.0;
+  global_field_value(subset_gid,CONTRAST_LEVEL_FS) = -1.0;
+  global_field_value(subset_gid,ACTIVE_PIXELS_FS) = -1.0;
+  global_field_value(subset_gid,STATUS_FLAG_FS) = status;
+  global_field_value(subset_gid,ITERATIONS_FS) = num_iterations;
 }
 
 void
@@ -1711,21 +1713,21 @@ Schema::record_step(Teuchos::RCP<Objective> obj,
   const int_t num_iterations){
   const int_t subset_gid = obj->correlation_point_global_id();
   DEBUG_MSG("Subset " << subset_gid << " record step");
-  global_field_value(subset_gid,DISPLACEMENT_X) = (*deformation)[DISPLACEMENT_X];
-  global_field_value(subset_gid,DISPLACEMENT_Y) = (*deformation)[DISPLACEMENT_Y];
-  global_field_value(subset_gid,NORMAL_STRAIN_X) = (*deformation)[NORMAL_STRAIN_X];
-  global_field_value(subset_gid,NORMAL_STRAIN_Y) = (*deformation)[NORMAL_STRAIN_Y];
-  global_field_value(subset_gid,SHEAR_STRAIN_XY) = (*deformation)[SHEAR_STRAIN_XY];
-  global_field_value(subset_gid,ROTATION_Z) = (*deformation)[DICe::ROTATION_Z];
-  global_field_value(subset_gid,SIGMA) = sigma;
-  global_field_value(subset_gid,MATCH) = match; // 0 means data is successful
-  global_field_value(subset_gid,GAMMA) = gamma;
-  global_field_value(subset_gid,BETA) = beta;
-  global_field_value(subset_gid,NOISE_LEVEL) = noise;
-  global_field_value(subset_gid,CONTRAST_LEVEL) = contrast;
-  global_field_value(subset_gid,ACTIVE_PIXELS) = active_pixels;
-  global_field_value(subset_gid,STATUS_FLAG) = status;
-  global_field_value(subset_gid,ITERATIONS) = num_iterations;
+  global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) = (*deformation)[DOF_U];
+  global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) = (*deformation)[DOF_V];
+  global_field_value(subset_gid,NORMAL_STRETCH_XX_FS) = (*deformation)[DOF_EX];
+  global_field_value(subset_gid,NORMAL_STRETCH_YY_FS) = (*deformation)[DOF_EY];
+  global_field_value(subset_gid,SHEAR_STRETCH_XY_FS) = (*deformation)[DOF_GXY];
+  global_field_value(subset_gid,ROTATION_Z_FS) = (*deformation)[DOF_THETA];
+  global_field_value(subset_gid,SIGMA_FS) = sigma;
+  global_field_value(subset_gid,MATCH_FS) = match; // 0 means data is successful
+  global_field_value(subset_gid,GAMMA_FS) = gamma;
+  global_field_value(subset_gid,BETA_FS) = beta;
+  global_field_value(subset_gid,NOISE_LEVEL_FS) = noise;
+  global_field_value(subset_gid,CONTRAST_LEVEL_FS) = contrast;
+  global_field_value(subset_gid,ACTIVE_PIXELS_FS) = active_pixels;
+  global_field_value(subset_gid,STATUS_FLAG_FS) = status;
+  global_field_value(subset_gid,ITERATIONS_FS) = num_iterations;
 }
 
 Status_Flag
@@ -1748,14 +1750,14 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   const int_t subset_gid = obj->correlation_point_global_id();
   TEUCHOS_TEST_FOR_EXCEPTION(subset_local_id(subset_gid)==-1,std::runtime_error,
     "Error: subset id is not local to this process.");
-  DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " (" << global_field_value(subset_gid,DICe::COORDINATE_X) <<
-    "," << global_field_value(subset_gid,DICe::COORDINATE_Y) << ")");
+  DEBUG_MSG("[PROC " << comm_->get_rank() << "] SUBSET " << subset_gid << " (" << global_field_value(subset_gid,SUBSET_COORDINATES_X_FS) <<
+    "," << global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS) << ")");
 
   // if for some reason the coordinates of this subset are outside the image domain, record a failed step,
   // this may have occurred for a subset in the left image projected to the right that is not in the right image
   if(subset_dim_ > 0){
-    const scalar_t current_pos_x = global_field_value(subset_gid,DICe::COORDINATE_X) + global_field_value(subset_gid,DICe::DISPLACEMENT_X);
-    const scalar_t current_pos_y = global_field_value(subset_gid,DICe::COORDINATE_Y) + global_field_value(subset_gid,DICe::DISPLACEMENT_Y);
+    const scalar_t current_pos_x = global_field_value(subset_gid,SUBSET_COORDINATES_X_FS) + global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+    const scalar_t current_pos_y = global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS) + global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
     if(current_pos_x < def_imgs_[0]->offset_x()+subset_dim_/2 || current_pos_x > def_imgs_[0]->width()+def_imgs_[0]->offset_x() - subset_dim_/2 ||
         current_pos_y < def_imgs_[0]->offset_y()+subset_dim_/2 || current_pos_y > def_imgs_[0]->height()+def_imgs_[0]->offset_y() - subset_dim_/2){
       DEBUG_MSG("Invalid subset origin (probably from stereo projection of the left subset not being in the right image)" <<
@@ -1786,9 +1788,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   if(!motion){
     DEBUG_MSG("Subset " << subset_gid << " skipping frame due to no motion");
     // only change the match value and the status flag
-    global_field_value(subset_gid,MATCH) = 0.0;
-    global_field_value(subset_gid,STATUS_FLAG) = static_cast<int_t>(FRAME_SKIPPED_DUE_TO_NO_MOTION);
-    global_field_value(subset_gid,ITERATIONS) = 0;
+    global_field_value(subset_gid,MATCH_FS) = 0.0;
+    global_field_value(subset_gid,STATUS_FLAG_FS) = static_cast<int_t>(FRAME_SKIPPED_DUE_TO_NO_MOTION);
+    global_field_value(subset_gid,ITERATIONS_FS) = 0;
     return;
   }
   //
@@ -1823,9 +1825,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       // reset the deformation position to the previous step's value
       for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i)
         (*deformation)[i] = 0.0;
-      (*deformation)[DISPLACEMENT_X] = global_field_value(subset_gid,DICe::DISPLACEMENT_X);
-      (*deformation)[DISPLACEMENT_Y] = global_field_value(subset_gid,DICe::DISPLACEMENT_Y);
-      (*deformation)[ROTATION_Z] = global_field_value(subset_gid,DICe::ROTATION_Z);
+      (*deformation)[DOF_U] = global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+      (*deformation)[DOF_V] = global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
+      (*deformation)[DOF_THETA] = global_field_value(subset_gid,ROTATION_Z_FS);
       Search_Initializer searcher(this,obj->subset(),search_step_xy,search_dim_xy,search_step_theta,search_dim_theta);
       init_status = searcher.initial_guess(subset_gid,deformation);
     }
@@ -1907,9 +1909,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       }
     } // loop over obstructing subset ids
   } // end !override force simplex
-  const scalar_t prev_u = global_field_value(subset_gid,DICe::DISPLACEMENT_X);
-  const scalar_t prev_v = global_field_value(subset_gid,DICe::DISPLACEMENT_Y);
-  const scalar_t prev_t = global_field_value(subset_gid,DICe::ROTATION_Z);
+  const scalar_t prev_u = global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+  const scalar_t prev_v = global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
+  const scalar_t prev_t = global_field_value(subset_gid,ROTATION_Z_FS);
   //
   // perform the correlation
   //
@@ -1935,9 +1937,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   // test for jump failure (too high displacement or rotation from last step due to subset getting lost)
   bool jump_pass = true;
-  scalar_t diffU = ((*deformation)[DISPLACEMENT_X] - prev_u);
-  scalar_t diffV = ((*deformation)[DISPLACEMENT_Y] - prev_v);
-  scalar_t diffT = enable_affine_matrix_ ? 0.0 : ((*deformation)[ROTATION_Z] - prev_t);
+  scalar_t diffU = ((*deformation)[DOF_U] - prev_u);
+  scalar_t diffV = ((*deformation)[DOF_V] - prev_v);
+  scalar_t diffT = enable_affine_matrix_ ? 0.0 : ((*deformation)[DOF_THETA] - prev_t);
   DEBUG_MSG("Subset " << subset_gid << " U jump: " << diffU << " V jump: " << diffV << " T jump: " << diffT);
   if(std::abs(diffU) > disp_jump_tol_ || std::abs(diffV) > disp_jump_tol_ || std::abs(diffT) > theta_jump_tol_){
     if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_jump_exceeded(subset_gid,frame_id_);
@@ -1967,9 +1969,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
         scalar_t min_u = 0.0;
         scalar_t search_radius_x = 50.0;
         scalar_t search_step = 1.0;
-        scalar_t def_orig_x = (*deformation)[DICe::DISPLACEMENT_X];
+        scalar_t def_orig_x = (*deformation)[DICe::DOF_U];
         for(scalar_t u=-search_radius_x;u<search_radius_x;u+=search_step){
-          (*deformation)[DISPLACEMENT_X] = def_orig_x + u;
+          (*deformation)[DOF_U] = def_orig_x + u;
           const scalar_t gamma = obj->gamma(deformation);
           if(gamma > 0.0 && gamma < best_gamma){
             best_gamma = gamma;
@@ -1977,7 +1979,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
           }
         } // end search x loop
         DEBUG_MSG("Subset " << subset_gid << " GRADIENT_THEN_SEARCH method used, search-based initial u: " << min_u);// << " v: " << min_v);
-        (*deformation)[DICe::DISPLACEMENT_X] = min_u;
+        (*deformation)[DICe::DOF_U] = min_u;
         try{
           corr_status = obj->computeUpdateFast(deformation,num_iterations);
         }
@@ -2012,9 +2014,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
 //      // reset the deformation position to the previous step's value
 //      for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i)
 //        (*deformation)[i] = 0.0;
-//      (*deformation)[DISPLACEMENT_X] = prev_u;
-//      (*deformation)[DISPLACEMENT_Y] = prev_v;
-//      (*deformation)[ROTATION_Z] = prev_t;
+//      (*deformation)[DOF_U] = prev_u;
+//      (*deformation)[DOF_V] = prev_v;
+//      (*deformation)[DOF_THETA] = prev_t;
 //      Search_Initializer searcher(this,obj->subset(),search_step_xy,search_dim_xy,search_step_theta,search_dim_theta);
 //      searcher.initial_guess(subset_gid,deformation);
 //      try{
@@ -2061,8 +2063,8 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     // dynamic cast the pointer to get access to the derived class methods
     Teuchos::RCP<Path_Initializer> path_initializer =
         Teuchos::rcp_dynamic_cast<Path_Initializer>(opt_initializers_.find(subset_gid)->second);
-    path_initializer->closest_triad((*deformation)[DISPLACEMENT_X],
-      (*deformation)[DISPLACEMENT_Y],(*deformation)[ROTATION_Z],id,path_distance);
+    path_initializer->closest_triad((*deformation)[DOF_U],
+      (*deformation)[DOF_V],(*deformation)[DOF_THETA],id,path_distance);
     DEBUG_MSG("Subset " << subset_gid << " path distance: " << path_distance);
     if(path_distance > path_distance_threshold_)
     {
@@ -2075,9 +2077,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   //  Test jumps again
   //
-  diffU = ((*deformation)[DISPLACEMENT_X] - prev_u);
-  diffV = ((*deformation)[DISPLACEMENT_Y] - prev_v);
-  diffT = enable_affine_matrix_ ? 0.0 : ((*deformation)[ROTATION_Z] - prev_t);
+  diffU = ((*deformation)[DOF_U] - prev_u);
+  diffV = ((*deformation)[DOF_V] - prev_v);
+  diffT = enable_affine_matrix_ ? 0.0 : ((*deformation)[DOF_THETA] - prev_t);
   DEBUG_MSG("Subset " << subset_gid << " U jump: " << diffU << " V jump: " << diffV << " T jump: " << diffT);
   if(std::abs(diffU) > disp_jump_tol_ || std::abs(diffV) > disp_jump_tol_ || std::abs(diffT) > theta_jump_tol_){
     DEBUG_MSG("Subset " << subset_gid << " FAILS jump test: ");
@@ -2683,8 +2685,8 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
   Teuchos::RCP<MultiField> proj_aug_x = mesh_->get_field(DICe::mesh::field_enums::PROJECTION_AUG_X_FS);
   Teuchos::RCP<MultiField> proj_aug_y = mesh_->get_field(DICe::mesh::field_enums::PROJECTION_AUG_Y_FS);
   for(int_t i=0;i<local_num_subsets_;++i){
-    scalar_t cx = local_field_value(i,COORDINATE_X);
-    scalar_t cy = local_field_value(i,COORDINATE_Y);
+    scalar_t cx = local_field_value(i,SUBSET_COORDINATES_X_FS);
+    scalar_t cy = local_field_value(i,SUBSET_COORDINATES_Y_FS);
     scalar_t px = 0.0;
     scalar_t py = 0.0;
     tri->project_left_to_right_sensor_coords(cx,cy,px,py);
@@ -2692,8 +2694,8 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       proj_aug_x->local_value(i) = px - cx;
       proj_aug_y->local_value(i) = py - cy;
     }else{
-      local_field_value(i,DISPLACEMENT_X) = px - cx;
-      local_field_value(i,DISPLACEMENT_Y) = py - cy;
+      local_field_value(i,SUBSET_DISPLACEMENT_X_FS) = px - cx;
+      local_field_value(i,SUBSET_DISPLACEMENT_Y_FS) = py - cy;
     }
   }
 
@@ -2807,15 +2809,15 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
   TEUCHOS_TEST_FOR_EXCEPTION(stereo_coords_y->norm()==0.0,std::runtime_error,"");
 
   // copy the stereo displacement field into place
-  Teuchos::RCP<MultiField> my_stereo_disp_x = mesh_->get_field(DICe::mesh::field_enums::STEREO_DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> my_stereo_disp_y = mesh_->get_field(DICe::mesh::field_enums::STEREO_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> my_stereo_disp_x = mesh_->get_field(DICe::mesh::field_enums::STEREO_SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> my_stereo_disp_y = mesh_->get_field(DICe::mesh::field_enums::STEREO_SUBSET_DISPLACEMENT_Y_FS);
   my_stereo_disp_x->update(1.0,*stereo_disp_x,0.0);
   my_stereo_disp_y->update(1.0,*stereo_disp_y,0.0);
   Teuchos::RCP<MultiField> model_x = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_X_FS);
   Teuchos::RCP<MultiField> model_y = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_Y_FS);
   Teuchos::RCP<MultiField> model_z = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_Z_FS);
-  Teuchos::RCP<MultiField> model_disp_x = mesh_->get_field(DICe::mesh::field_enums::MODEL_DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> model_disp_y = mesh_->get_field(DICe::mesh::field_enums::MODEL_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> model_disp_x = mesh_->get_field(DICe::mesh::field_enums::MODEL_SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> model_disp_y = mesh_->get_field(DICe::mesh::field_enums::MODEL_SUBSET_DISPLACEMENT_Y_FS);
   Teuchos::RCP<MultiField> model_disp_z = mesh_->get_field(DICe::mesh::field_enums::MODEL_DISPLACEMENT_Z_FS);
   scalar_t X=0.0,Y=0.0,Z=0.0;
   scalar_t Xw=0.0,Yw=0.0,Zw=0.0;
@@ -2899,8 +2901,8 @@ Schema::write_control_points_image(const std::string & fileName,
   const int_t i_end = use_one_point ? i_start + 1 : numLocalControlPts;
   const int_t color = use_one_point ? 255 : 0;
   for (int_t i=i_start;i<i_end;++i){
-    x = local_field_value(i,COORDINATE_X) - ox;
-    y = local_field_value(i,COORDINATE_Y) - oy;
+    x = local_field_value(i,SUBSET_COORDINATES_X_FS) - ox;
+    y = local_field_value(i,SUBSET_COORDINATES_Y_FS) - oy;
     for(int_t j=0;j<subset_dim_;++j){
       xAlt = x - subset_dim_/2 + j;
       intensities[(y+subset_dim_/2)*width+xAlt] = color;
@@ -2914,8 +2916,8 @@ Schema::write_control_points_image(const std::string & fileName,
   }
   // place white plus signs at the control points
   for (int_t i=0;i<numLocalControlPts;++i){
-    x = local_field_value(i,COORDINATE_X) - ox;
-    y = local_field_value(i,COORDINATE_Y) - oy;
+    x = local_field_value(i,SUBSET_COORDINATES_X_FS) - ox;
+    y = local_field_value(i,SUBSET_COORDINATES_Y_FS) - oy;
     intensities[y*width+x] = 255;
     for(int_t j=0;j<3;++j){
       intensities[y*width+(x+j)] = 255;
@@ -2926,9 +2928,9 @@ Schema::write_control_points_image(const std::string & fileName,
   }
   // place black plus signs at the control points that were successful
   for (int_t i=0;i<numLocalControlPts;++i){
-    if(local_field_value(i,SIGMA)<=0) return;
-    x = local_field_value(i,COORDINATE_X) - ox;
-    y = local_field_value(i,COORDINATE_Y) - oy;
+    if(local_field_value(i,SIGMA_FS)<=0) return;
+    x = local_field_value(i,SUBSET_COORDINATES_X_FS) - ox;
+    y = local_field_value(i,SUBSET_COORDINATES_Y_FS) - oy;
     intensities[y*width+x] = 0;
     for(int_t j=0;j<2;++j){
       intensities[y*width+(x+j)] = 0;
@@ -3105,6 +3107,7 @@ Schema::write_stats(const std::string & output_folder,
   fclose(infoFilePtr);
 }
 
+// NOTE: only prints scalar fields
 void
 Schema::print_fields(const std::string & fileName){
 
@@ -3113,13 +3116,14 @@ Schema::print_fields(const std::string & fileName){
     return;
   }
   const int_t proc_id = comm_->get_rank();
+  std::vector<std::string> field_names = mesh_->get_field_names(DICe::NODE_RANK,DICe::SCALAR_FIELD_TYPE,false);
   if(fileName==""){
     std::cout << "[PROC " << proc_id << "] DICE::Schema Fields and Values: " << std::endl;
     for(int_t i=0;i<local_num_subsets_;++i){
       std::cout << "[PROC " << proc_id << "] subset global id: " << subset_global_id(i) << std::endl;
-      for(int_t j=0;j<DICe::MAX_FIELD_NAME;++j){
-        std::cout << "[PROC " << proc_id << "]   " << to_string(static_cast<Field_Name>(j)) <<  " " <<
-            local_field_value(i,static_cast<Field_Name>(j)) << std::endl;
+      for(size_t j=0;j<field_names.size();++j){
+        std::cout << "[PROC " << proc_id << "]   " << field_names[j] <<  " " <<
+            local_field_value(i,mesh_->get_field_spec(field_names[j])) << std::endl;
       }
     }
   }
@@ -3128,8 +3132,8 @@ Schema::print_fields(const std::string & fileName){
     outFile = fopen(fileName.c_str(),"a");
     for(int_t i=0;i<local_num_subsets_;++i){
       fprintf(outFile,"%i ",subset_global_id(i));
-      for(int_t j=0;j<DICe::MAX_FIELD_NAME;++j){
-        fprintf(outFile," %4.4E ",local_field_value(i,static_cast<Field_Name>(j)));
+      for(size_t j=0;j<field_names.size();++j){
+        fprintf(outFile,"%s %4.4E ",field_names[j].c_str(),local_field_value(i,mesh_->get_field_spec(field_names[j])));
       }
       fprintf(outFile,"\n");
     }
@@ -3162,12 +3166,12 @@ Schema::check_for_blocking_subsets(const int_t subset_global_id){
     int_t cx = obj_vec_[local_ss]->subset()->centroid_x();
     int_t cy = obj_vec_[local_ss]->subset()->centroid_y();
     Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-    (*def)[DICe::DISPLACEMENT_X]  = global_field_value(global_ss,DICe::DISPLACEMENT_X);
-    (*def)[DICe::DISPLACEMENT_Y]  = global_field_value(global_ss,DICe::DISPLACEMENT_Y);
-    (*def)[DICe::ROTATION_Z]      = global_field_value(global_ss,DICe::ROTATION_Z);
-    (*def)[DICe::NORMAL_STRAIN_X] = global_field_value(global_ss,DICe::NORMAL_STRAIN_X);
-    (*def)[DICe::NORMAL_STRAIN_Y] = global_field_value(global_ss,DICe::NORMAL_STRAIN_Y);
-    (*def)[DICe::SHEAR_STRAIN_XY] = global_field_value(global_ss,DICe::SHEAR_STRAIN_XY);
+    (*def)[DICe::DOF_U]  = global_field_value(global_ss,SUBSET_DISPLACEMENT_X_FS);
+    (*def)[DICe::DOF_V]  = global_field_value(global_ss,SUBSET_DISPLACEMENT_Y_FS);
+    (*def)[DICe::DOF_THETA]      = global_field_value(global_ss,ROTATION_Z_FS);
+    (*def)[DICe::DOF_EX] = global_field_value(global_ss,NORMAL_STRETCH_XX_FS);
+    (*def)[DICe::DOF_EY] = global_field_value(global_ss,NORMAL_STRETCH_YY_FS);
+    (*def)[DICe::DOF_GXY] = global_field_value(global_ss,SHEAR_STRETCH_XY_FS);
     std::set<std::pair<int_t,int_t> > subset_pixels =
         obj_vec_[local_ss]->subset()->deformed_shapes(def,cx,cy,obstruction_skin_factor_);
     blocked_pixels.insert(subset_pixels.begin(),subset_pixels.end());
@@ -3239,12 +3243,12 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
 
     //if(gid==1) continue;
     // get the deformation vector for each subset
-    const scalar_t u     = global_field_value(gid,DICe::DISPLACEMENT_X);
-    const scalar_t v     = global_field_value(gid,DICe::DISPLACEMENT_Y);
-    const scalar_t theta = global_field_value(gid,DICe::ROTATION_Z);
-    const scalar_t dudx  = global_field_value(gid,DICe::NORMAL_STRAIN_X);
-    const scalar_t dvdy  = global_field_value(gid,DICe::NORMAL_STRAIN_Y);
-    const scalar_t gxy   = global_field_value(gid,DICe::SHEAR_STRAIN_XY);
+    const scalar_t u     = global_field_value(gid,SUBSET_DISPLACEMENT_X_FS);
+    const scalar_t v     = global_field_value(gid,SUBSET_DISPLACEMENT_Y_FS);
+    const scalar_t theta = global_field_value(gid,ROTATION_Z_FS);
+    const scalar_t dudx  = global_field_value(gid,NORMAL_STRETCH_XX_FS);
+    const scalar_t dvdy  = global_field_value(gid,NORMAL_STRETCH_YY_FS);
+    const scalar_t gxy   = global_field_value(gid,SHEAR_STRETCH_XY_FS);
     DEBUG_MSG("Write deformed subset " << gid << " u " << u << " v " << v << " theta " << theta << " dudx " << dudx << " dvdy " << dvdy << " gxy " << gxy);
     Teuchos::RCP<DICe::Subset> ref_subset = obj_vec_[subset]->subset();
     ox = ref_subset->centroid_x();
@@ -3325,18 +3329,18 @@ Output_Spec::Output_Spec(Schema * schema,
 
   // default output format
   if(params == Teuchos::null){
-    field_names_.push_back(to_string(DICe::COORDINATE_X));
-    field_names_.push_back(to_string(DICe::COORDINATE_Y));
-    field_names_.push_back(to_string(DICe::DISPLACEMENT_X));
-    field_names_.push_back(to_string(DICe::DISPLACEMENT_Y));
+    field_names_.push_back(SUBSET_COORDINATES_X_FS.get_name_label());
+    field_names_.push_back(SUBSET_COORDINATES_Y_FS.get_name_label());
+    field_names_.push_back(SUBSET_DISPLACEMENT_X_FS.get_name_label());
+    field_names_.push_back(SUBSET_DISPLACEMENT_Y_FS.get_name_label());
     if(!schema->affine_matrix_enabled()){
-      field_names_.push_back(to_string(DICe::ROTATION_Z));
-      field_names_.push_back(to_string(DICe::NORMAL_STRAIN_X));
-      field_names_.push_back(to_string(DICe::NORMAL_STRAIN_Y));
-      field_names_.push_back(to_string(DICe::SHEAR_STRAIN_XY));
+      field_names_.push_back(ROTATION_Z_FS.get_name_label());
+      field_names_.push_back(NORMAL_STRETCH_XX_FS.get_name_label());
+      field_names_.push_back(NORMAL_STRETCH_YY_FS.get_name_label());
+      field_names_.push_back(SHEAR_STRETCH_XY_FS.get_name_label());
     }
-    field_names_.push_back(to_string(DICe::SIGMA));
-    field_names_.push_back(to_string(DICe::STATUS_FLAG));
+    field_names_.push_back(SIGMA_FS.get_name_label());
+    field_names_.push_back(STATUS_FLAG_FS.get_name_label());
   }
   else{
     // get the total number of field names
@@ -3367,8 +3371,8 @@ Output_Spec::Output_Spec(Schema * schema,
       std::string string_field_name = it->first;
       stringToUpper(string_field_name);
       bool paramValid = false;
-      for(int_t j=0;j<MAX_FIELD_NAME;++j){
-        if(string_field_name==to_string(static_cast<Field_Name>(j)))
+      for(int_t j=0;j<num_fields_defined;++j){
+        if(string_field_name==fs_spec_vec[j].get_name_label())
           paramValid = true;
       }
       // see if this field is in one of the post processors instead
@@ -3422,14 +3426,8 @@ Output_Spec::gather_fields(){
   field_vec_.clear();
   field_vec_.resize(field_names_.size());
   for(size_t i=0;i<field_names_.size();++i){
-    Field_Name fn = string_to_field_name(field_names_[i]);
-    // test if the fn is not one of the cardinal schema fields but a mesh field added by a post processor
-    if(fn==NO_SUCH_FIELD_NAME){
-      field_vec_[i] = schema_->mesh()->get_field(schema_->mesh()->get_field_spec(field_names_[i]));
-    }
-    else{
-      field_vec_[i] = schema_->mesh()->get_field(schema_->field_name_to_spec(string_to_field_name(field_names_[i])));
-    }
+    // check for the legacy fields form old input decks:
+    field_vec_[i] = schema_->mesh()->get_field(schema_->mesh()->get_field_spec(field_names_[i]));
   }
 }
 

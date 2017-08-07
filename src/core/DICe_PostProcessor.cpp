@@ -119,8 +119,8 @@ Post_Processor::set_stereo_field_names(){
   if(!use_model_coordinates) return;  // no op
   coords_x_name_ = DICe::mesh::field_enums::MODEL_COORDINATES_X_FS.get_name_label();
   coords_y_name_ = DICe::mesh::field_enums::MODEL_COORDINATES_Y_FS.get_name_label();
-  disp_x_name_ = DICe::mesh::field_enums::MODEL_DISPLACEMENT_X_FS.get_name_label();
-  disp_y_name_ = DICe::mesh::field_enums::MODEL_DISPLACEMENT_Y_FS.get_name_label();
+  disp_x_name_ = DICe::mesh::field_enums::MODEL_SUBSET_DISPLACEMENT_X_FS.get_name_label();
+  disp_y_name_ = DICe::mesh::field_enums::MODEL_SUBSET_DISPLACEMENT_Y_FS.get_name_label();
   DEBUG_MSG("Setting the coords x field to " << coords_x_name_ << " for post processor " << name_);
   DEBUG_MSG("Setting the coords y field to " << coords_y_name_ << " for post processor " << name_);
   DEBUG_MSG("Setting the displacement x field to " << disp_x_name_ << " for post processor " << name_);

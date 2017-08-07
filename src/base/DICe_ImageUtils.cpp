@@ -57,12 +57,12 @@ void apply_transform(Teuchos::RCP<Image> image_in,
   TEUCHOS_TEST_FOR_EXCEPTION(width!=image_out->width(),std::runtime_error,"Dimensions must be the same");
   TEUCHOS_TEST_FOR_EXCEPTION(height!=image_out->height(),std::runtime_error,"Dimensions must be the same");
   TEUCHOS_TEST_FOR_EXCEPTION(deformation==Teuchos::null,std::runtime_error,"");
-  const scalar_t u = (*deformation)[DISPLACEMENT_X];
-  const scalar_t v = (*deformation)[DISPLACEMENT_Y];
-  const scalar_t t = (*deformation)[ROTATION_Z];
-  const scalar_t ex = (*deformation)[NORMAL_STRAIN_X];
-  const scalar_t ey = (*deformation)[NORMAL_STRAIN_Y];
-  const scalar_t g = (*deformation)[SHEAR_STRAIN_XY];
+  const scalar_t u = (*deformation)[DOF_U];
+  const scalar_t v = (*deformation)[DOF_V];
+  const scalar_t t = (*deformation)[DOF_THETA];
+  const scalar_t ex = (*deformation)[DOF_EX];
+  const scalar_t ey = (*deformation)[DOF_EY];
+  const scalar_t g = (*deformation)[DOF_GXY];
   const scalar_t cos_t = std::cos(t);
   const scalar_t sin_t = std::sin(t);
   const scalar_t CX = cx + u;

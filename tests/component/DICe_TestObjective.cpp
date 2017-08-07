@@ -171,24 +171,24 @@ int main(int argc, char *argv[]) {
   const int_t affine_w = affineRef->width();
   const int_t affine_h = affineRef->height();
   Teuchos::RCP<std::vector<scalar_t> > exact_affine_def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE_AFFINE,0.0));
-  (*exact_affine_def)[AFFINE_A] = 1.00123;
-  (*exact_affine_def)[AFFINE_B] = 0.000035;
-  (*exact_affine_def)[AFFINE_C] = 1.892;
-  (*exact_affine_def)[AFFINE_D] = 0.000068;
-  (*exact_affine_def)[AFFINE_E] = 1.0005;
-  (*exact_affine_def)[AFFINE_F] = -0.987;
-  (*exact_affine_def)[AFFINE_G] = 0.0;
-  (*exact_affine_def)[AFFINE_H] = 0.000023;
-  (*exact_affine_def)[AFFINE_I] = 1.0;
-  scalar_t A = (*exact_affine_def)[AFFINE_A];
-  scalar_t  B = (*exact_affine_def)[AFFINE_B];
-  scalar_t C = (*exact_affine_def)[AFFINE_C];
-  scalar_t D = (*exact_affine_def)[AFFINE_D];
-  scalar_t E = (*exact_affine_def)[AFFINE_E];
-  scalar_t F = (*exact_affine_def)[AFFINE_F];
-  scalar_t G = (*exact_affine_def)[AFFINE_G];
-  scalar_t H = (*exact_affine_def)[AFFINE_H];
-  scalar_t I = (*exact_affine_def)[AFFINE_I];
+  (*exact_affine_def)[DOF_A] = 1.00123;
+  (*exact_affine_def)[DOF_B] = 0.000035;
+  (*exact_affine_def)[DOF_C] = 1.892;
+  (*exact_affine_def)[DOF_D] = 0.000068;
+  (*exact_affine_def)[DOF_E] = 1.0005;
+  (*exact_affine_def)[DOF_F] = -0.987;
+  (*exact_affine_def)[DOF_G] = 0.0;
+  (*exact_affine_def)[DOF_H] = 0.000023;
+  (*exact_affine_def)[DOF_I] = 1.0;
+  scalar_t A = (*exact_affine_def)[DOF_A];
+  scalar_t  B = (*exact_affine_def)[DOF_B];
+  scalar_t C = (*exact_affine_def)[DOF_C];
+  scalar_t D = (*exact_affine_def)[DOF_D];
+  scalar_t E = (*exact_affine_def)[DOF_E];
+  scalar_t F = (*exact_affine_def)[DOF_F];
+  scalar_t G = (*exact_affine_def)[DOF_G];
+  scalar_t H = (*exact_affine_def)[DOF_H];
+  scalar_t I = (*exact_affine_def)[DOF_I];
   Teuchos::ArrayRCP<intensity_t> intensitiesMod(affine_w*affine_h,0.0);
   scalar_t mapped_x=0.0,mapped_y=0.0;
   for(int_t y=0;y<affine_h;++y){
@@ -214,9 +214,9 @@ int main(int argc, char *argv[]) {
   // create an objective:
   Teuchos::RCP<DICe::Objective_ZNSSD_Affine> obj = Teuchos::rcp(new DICe::Objective_ZNSSD_Affine(schema,0));
   Teuchos::RCP<std::vector<scalar_t> > def_guess = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE_AFFINE,0.0));
-  (*def_guess)[AFFINE_A] = 1.0;
-  (*def_guess)[AFFINE_E] = 1.0;
-  (*def_guess)[AFFINE_I] = 1.0;
+  (*def_guess)[DOF_A] = 1.0;
+  (*def_guess)[DOF_E] = 1.0;
+  (*def_guess)[DOF_I] = 1.0;
   int_t num_iterations = 0;
   obj->computeUpdateRobust(def_guess,num_iterations);
   //obj->subset()->write_tiff("affineDeformedSubset.tif");
@@ -229,9 +229,9 @@ int main(int argc, char *argv[]) {
   }
   for(size_t i=0;i<def_guess->size();++i)
     (*def_guess)[i] = 0.0;
-  (*def_guess)[AFFINE_A] = 1.0;
-  (*def_guess)[AFFINE_E] = 1.0;
-  (*def_guess)[AFFINE_I] = 1.0;
+  (*def_guess)[DOF_A] = 1.0;
+  (*def_guess)[DOF_E] = 1.0;
+  (*def_guess)[DOF_I] = 1.0;
   num_iterations = 0;
   obj->computeUpdateFast(def_guess,num_iterations);
   obj->subset()->write_tiff("affineDeformedSubset.tif");

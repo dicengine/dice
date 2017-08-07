@@ -94,9 +94,9 @@ int main(int argc, char *argv[]) {
   const scalar_t u = 0.3589;
   const scalar_t v = -2.89478;
   const scalar_t t = 0.262;
-  (*def)[DISPLACEMENT_X] = u;
-  (*def)[DISPLACEMENT_Y] = v;
-  (*def)[ROTATION_Z]     = t;
+  (*def)[DOF_U] = u;
+  (*def)[DOF_V] = v;
+  (*def)[DOF_THETA]     = t;
   subset_bi.initialize(array_img,DEF_INTENSITIES,def,BILINEAR);
   subset_keys.initialize(array_img,DEF_INTENSITIES,def,KEYS_FOURTH);
 
@@ -108,8 +108,8 @@ int main(int argc, char *argv[]) {
     const scalar_t dy = subset_bi.y(i) - cy;
     const scalar_t px = std::cos(t)*dx - std::sin(t)*dy + u + cx;
     const scalar_t py = std::sin(t)*dx + std::cos(t)*dy + v + cy;
-//    const scalar_t px = subset_bi.x(i) + (*def)[DISPLACEMENT_X];
-//    const scalar_t py = subset_bi.y(i) + (*def)[DISPLACEMENT_Y];
+//    const scalar_t px = subset_bi.x(i) + (*def)[DOF_U];
+//    const scalar_t py = subset_bi.y(i) + (*def)[DOF_V];
     x_val = 255.0*px/(scalar_t)array_w;
     y_val = 255.0*py/(scalar_t)array_h;
     const scalar_t exact = x_val*y_val;

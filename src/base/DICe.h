@@ -319,125 +319,50 @@ enum Subset_View_Target{
 };
 
 /// For the affine shape function these define the degrees of freedon
-enum Affine_Field_Name {
+enum Affine_Matrix_Dof {
   // 0
-  AFFINE_A=0,
+  DOF_A=0,
   // 1
-  AFFINE_B,
+  DOF_B,
   // 2
-  AFFINE_C,
+  DOF_C,
   // 3
-  AFFINE_D,
+  DOF_D,
   // 4
-  AFFINE_E,
+  DOF_E,
   // 5
-  AFFINE_F,
+  DOF_F,
   // 6
-  AFFINE_G,
+  DOF_G,
   // 7
-  AFFINE_H,
+  DOF_H,
   // 8
-  AFFINE_I
+  DOF_I,
+  // *** DO NOT PUT ANY UNDER THESE TWO ***
+  MAX_AFFINE_MATRIX_DOF,
+  NO_SUCH_AFFINE_MATRIX_DOF
 };
 
 /// Valid names for fields
-enum Field_Name {
-  // *** DON'T FORGET TO ADD A STRING TO THE to_string(Field_name) function ***
-  //
-  // *** ALSO UPDATE THE SIZE OF THE DEFORMATION GIVEN IN #define DICE_DEFORMATION_SIZE
-  //     IF MORE DEFORMATION FIELDS ARE ADDED
+enum Affine_Dof {
+  // *** THE SIZE OF #define DICE_DEFORMATION_SIZE
+  //     SHOULD MATCH THE FIELDS LISTED HERE
   // 0
-  DISPLACEMENT_X=0,  // u
+  DOF_U=0,  // displacement x
   // 1
-  DISPLACEMENT_Y,    // v
+  DOF_V,    // displacement y
   // 2
-  ROTATION_Z,        // (theta) rotation about the z-axis, z is out of the plane
+  DOF_THETA,// (theta) rotation about the z-axis, z is out of the plane
   // 3
-  NORMAL_STRAIN_X,   // stretch in the x direction
+  DOF_EX,   // stretch in the x direction
   // 4
-  NORMAL_STRAIN_Y,   // stretch in the y direction
+  DOF_EY,   // stretch in the y direction
   // 5
-  SHEAR_STRAIN_XY,   // shear strain in the x-y plane
-  // *** Fields >= DICE_DEFORMATION_SIZE are not part of the deformation state of a subset
-  //     but used elsewhere in the schema
-  // 6
-  COORDINATE_X,      // x position of the subset in sensor (image) coordinates
-  // 7
-  COORDINATE_Y,      // y position of the subset in sensor (image) coordinates
-  // 8
-  STEREO_COORDINATE_X,// x position of the stereo subset in sensor (right image) coordinates (used for stereo only)
-  // 9
-  STEREO_COORDINATE_Y,// y position of the stereo subset in sensor (right image) coordinates (used for stereo only)
-  // 10
-  MODEL_COORDINATE_X, // x position in world or physical coordinates (used for stereo only)
-  // 11
-  MODEL_COORDINATE_Y,// y position in world or physical coordinates (used for stereo only)
-  // 12
-  MODEL_COORDINATE_Z,// z position in world or physical coordinates (used for stereo only)
-  // 13
-  STEREO_DISPLACEMENT_X,// right image u (used for stereo only)
-  // 14
-  STEREO_DISPLACEMENT_Y,// right image v (used for stereo only)
-  // 15
-  MODEL_DISPLACEMENT_X,// x displacement in world or physical coordinates
-  // 16
-  MODEL_DISPLACEMENT_Y,// y displacement in world or physical coordinates
-  // 17
-  MODEL_DISPLACEMENT_Z,// z displacement in world or physical coordinates
-  // 18
-  FIELD_1,             // auxiliary variable
-  // 19
-  FIELD_2,             // auxiliary variable
-  // 20
-  FIELD_3,             // auxiliary variable
-  // 21
-  FIELD_4,             // auxiliary variable
-  // 22
-  FIELD_5,             // auxiliary variable
-  // 23
-  FIELD_6,             // auxiliary variable
-  // 24
-  FIELD_7,             // auxiliary variable
-  // 25
-  FIELD_8,             // auxiliary variable
-  // 26
-  FIELD_9,             // auxiliary variable
-  // 27
-  FIELD_10,             // auxiliary variable
-  // 28
-  SIGMA,             // predicted std. dev. of the displacement solution given std. dev. of image
-                     // noise and interpolation bias, smaller sigma is better
-  // 29
-  GAMMA,             // template match quality (value of the cost function),
-                     // smaller gamma is better, 0.0 is perfect match
-  // 30
-  BETA,              // sensitivity of the cost function to small perturbations in the displacement solution
-  // 31
-  OMEGA,             // residual magnitude for the optimal motion solution
-  // 32
-  NOISE_LEVEL,       // estimated std. dev. of the image noise
-  // 33
-  CONTRAST_LEVEL,    // estimated std. dev. of the image intensity values
-  // 34
-  ACTIVE_PIXELS,     // number of active pixels for the subset
-  // 35
-  MATCH,             // 0 means match was found -1 means match failed
-  // 36
-  ITERATIONS,        // number of iterations taken by the solution algorithm
-  // 37
-  STATUS_FLAG,       // information about the initialization method or error flags on failed steps
-  // 38
-  NEIGHBOR_ID,       // the global id of the neighboring subset to use for initialization by neighbor value
-  // 39
-  CONDITION_NUMBER,  // quality metric for the pseudoinverse matrix in the gradient-based method
-  // 40
-  CROSS_CORR_Q,      // cross correlation Q coordinate
-  // 41
-  CROSS_CORR_R,      // cross correlation R coordinate
-  // *** DO NOT PUT ANY FIELDS UNDER THIS ONE ***
+  DOF_GXY,   // shear strain in the x-y plane
+  // *** DO NOT PUT ANY FIELDS UNDER THESE TWO ***
   // (this is how the field stride is automatically set if another field is added)
-  MAX_FIELD_NAME,
-  NO_SUCH_FIELD_NAME
+  MAX_AFFINE_DOF,
+  NO_SUCH_AFFINE_DOF
 };
 
 /// Subset_File_Info types

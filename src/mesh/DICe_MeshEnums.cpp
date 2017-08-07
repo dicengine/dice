@@ -118,8 +118,8 @@ void create_string_maps()
   field_name_string[field_enums::INITIAL_COORDINATES]                                = "INITIAL_COORDINATES";
   field_name_string[field_enums::CROSS_CORR_Q]                                       = "CROSS_CORR_Q";
   field_name_string[field_enums::CROSS_CORR_R]                                       = "CROSS_CORR_R";
-  field_name_string[field_enums::SUBSET_COORDINATES_X]                               = "SUBSET_COORDINATES_X";
-  field_name_string[field_enums::SUBSET_COORDINATES_Y]                               = "SUBSET_COORDINATES_Y";
+  field_name_string[field_enums::SUBSET_COORDINATES_X]                               = "COORDINATE_X";  // the string is different from the enum because of legacy field names
+  field_name_string[field_enums::SUBSET_COORDINATES_Y]                               = "COORDINATE_Y";  // the string is different from the enum because of legacy field names
   field_name_string[field_enums::STEREO_COORDINATES_X]                               = "STEREO_COORDINATES_X";
   field_name_string[field_enums::STEREO_COORDINATES_Y]                               = "STEREO_COORDINATES_Y";
   field_name_string[field_enums::MODEL_COORDINATES_X]                                = "MODEL_COORDINATES_X";
@@ -133,8 +133,8 @@ void create_string_maps()
   field_name_string[field_enums::DISPLACEMENT]                                       = "DISPLACEMENT";
   field_name_string[field_enums::PROJECTION_AUG_X]                                   = "PROJECTION_AUG_X";
   field_name_string[field_enums::PROJECTION_AUG_Y]                                   = "PROJECTION_AUG_Y";
-  field_name_string[field_enums::SUBSET_DISPLACEMENT_X]                              = "SUBSET_DISPLACEMENT_X";
-  field_name_string[field_enums::SUBSET_DISPLACEMENT_Y]                              = "SUBSET_DISPLACEMENT_Y";
+  field_name_string[field_enums::SUBSET_DISPLACEMENT_X]                              = "DISPLACEMENT_X"; // the string is different from the enum because of legacy field names
+  field_name_string[field_enums::SUBSET_DISPLACEMENT_Y]                              = "DISPLACEMENT_Y"; // the string is different from the enum because of legacy field names
   field_name_string[field_enums::STEREO_DISPLACEMENT_X]                              = "STEREO_DISPLACEMENT_X";
   field_name_string[field_enums::STEREO_DISPLACEMENT_Y]                              = "STEREO_DISPLACEMENT_Y";
   field_name_string[field_enums::MODEL_DISPLACEMENT_X]                               = "MODEL_DISPLACEMENT_X";
@@ -153,9 +153,9 @@ void create_string_maps()
   field_name_string[field_enums::STATUS_FLAG]                                        = "STATUS_FLAG";
   field_name_string[field_enums::NEIGHBOR_ID]                                        = "NEIGHBOR_ID";
   field_name_string[field_enums::CONDITION_NUMBER]                                   = "CONDITION_NUMBER";
-  field_name_string[field_enums::SHEAR_STRETCH_XY]                                   = "SHEAR_STRETCH_XY";
-  field_name_string[field_enums::NORMAL_STRETCH_XX]                                  = "NORMAL_STRETCH_XX";
-  field_name_string[field_enums::NORMAL_STRETCH_YY]                                  = "NORMAL_STRETCH_YY";
+  field_name_string[field_enums::SHEAR_STRETCH_XY]                                   = "SHEAR_STRAIN_XY"; // the string is different from the enum because of legacy field names
+  field_name_string[field_enums::NORMAL_STRETCH_XX]                                  = "NORMAL_STRAIN_X"; // the string is different from the enum because of legacy field names
+  field_name_string[field_enums::NORMAL_STRETCH_YY]                                  = "NORMAL_STRAIN_Y"; // the string is different from the enum because of legacy field names
   field_name_string[field_enums::LAGRANGE_MULTIPLIER]                                = "LAGRANGE_MULTIPLIER";
   field_name_string[field_enums::RESIDUAL]                                           = "RESIDUAL";
   field_name_string[field_enums::LHS]                                                = "LHS";

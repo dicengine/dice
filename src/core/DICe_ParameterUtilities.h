@@ -59,9 +59,9 @@ void stringToUpper(std::string &s);
 DICE_LIB_DLL_EXPORT
 void stringToLower(std::string &s);
 
-/// Convert a DICe::Field_Name to string
+/// Convert a DICe::Affine_Dof to string
 DICE_LIB_DLL_EXPORT
-const std::string to_string(Field_Name in);
+const std::string to_string(Affine_Dof in);
 
 /// Convert the status flag to a string
 DICE_LIB_DLL_EXPORT
@@ -103,9 +103,9 @@ const std::string to_string(Global_EQ_Term in);
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Global_Solver in);
 
-/// Convert a string to a DICe::Field_Name
+/// Convert a string to a DICe::Affine_Dof
 DICE_LIB_DLL_EXPORT
-Field_Name string_to_field_name(std::string & in);
+Affine_Dof string_to_affine_dof(std::string & in);
 
 /// Convert a string to a DICe::Global_Solver
 DICE_LIB_DLL_EXPORT

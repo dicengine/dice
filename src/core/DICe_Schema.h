@@ -51,6 +51,7 @@
   #include <DICe_Global.h>
 #endif
 #include <DICe_Mesh.h>
+#include <DICe_MeshEnums.h>
 #include <DICe_Decomp.h>
 
 #ifdef DICE_TPETRA
@@ -518,120 +519,34 @@ public:
   }
 #endif
 
-  /// Returns a field spec for a given field name
-  /// A helper function that converts the schema field names to a mesh field
-  /// \param name the field name
-  DICe::mesh::field_enums::Field_Spec field_name_to_spec(const Field_Name name) const{
-    // table to convert a field name to a field spec with an offset
-    assert(name<MAX_FIELD_NAME);
-    static std::vector<DICe::mesh::field_enums::Field_Spec> spec_table = {
-      DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS,
-      DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS,
-      DICe::mesh::field_enums::ROTATION_Z_FS,
-      DICe::mesh::field_enums::NORMAL_STRETCH_XX_FS,
-      DICe::mesh::field_enums::NORMAL_STRETCH_YY_FS,
-      DICe::mesh::field_enums::SHEAR_STRETCH_XY_FS,
-      DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS,
-      DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS,
-      DICe::mesh::field_enums::STEREO_COORDINATES_X_FS,
-      DICe::mesh::field_enums::STEREO_COORDINATES_Y_FS,
-      DICe::mesh::field_enums::MODEL_COORDINATES_X_FS,
-      DICe::mesh::field_enums::MODEL_COORDINATES_Y_FS,
-      DICe::mesh::field_enums::MODEL_COORDINATES_Z_FS,
-      DICe::mesh::field_enums::STEREO_DISPLACEMENT_X_FS,
-      DICe::mesh::field_enums::STEREO_DISPLACEMENT_Y_FS,
-      DICe::mesh::field_enums::MODEL_DISPLACEMENT_X_FS,
-      DICe::mesh::field_enums::MODEL_DISPLACEMENT_Y_FS,
-      DICe::mesh::field_enums::MODEL_DISPLACEMENT_Z_FS,
-      DICe::mesh::field_enums::FIELD_1_FS,
-      DICe::mesh::field_enums::FIELD_2_FS,
-      DICe::mesh::field_enums::FIELD_3_FS,
-      DICe::mesh::field_enums::FIELD_4_FS,
-      DICe::mesh::field_enums::FIELD_5_FS,
-      DICe::mesh::field_enums::FIELD_6_FS,
-      DICe::mesh::field_enums::FIELD_7_FS,
-      DICe::mesh::field_enums::FIELD_8_FS,
-      DICe::mesh::field_enums::FIELD_9_FS,
-      DICe::mesh::field_enums::FIELD_10_FS,
-      DICe::mesh::field_enums::SIGMA_FS,
-      DICe::mesh::field_enums::GAMMA_FS,
-      DICe::mesh::field_enums::BETA_FS,
-      DICe::mesh::field_enums::OMEGA_FS,
-      DICe::mesh::field_enums::NOISE_LEVEL_FS,
-      DICe::mesh::field_enums::CONTRAST_LEVEL_FS,
-      DICe::mesh::field_enums::ACTIVE_PIXELS_FS,
-      DICe::mesh::field_enums::MATCH_FS,
-      DICe::mesh::field_enums::ITERATIONS_FS,
-      DICe::mesh::field_enums::STATUS_FLAG_FS,
-      DICe::mesh::field_enums::NEIGHBOR_ID_FS,
-      DICe::mesh::field_enums::CONDITION_NUMBER_FS,
-      DICe::mesh::field_enums::CROSS_CORR_Q_FS,
-      DICe::mesh::field_enums::CROSS_CORR_R_FS
-    };
-    return spec_table[name];
-  }
-
-  /// Return a field spec for an input field name
-  /// \param name field name
-  DICe::mesh::field_enums::Field_Spec field_name_to_nm1_spec(const Field_Name name) const{
-    // table to convert a field name to a field spec with an offset
-    assert(name<=SHEAR_STRAIN_XY);
-    // table to convert a field name to a field spec with an offset
-    static std::vector<DICe::mesh::field_enums::Field_Spec> spec_table = {
-      DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_NM1_FS,
-      DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_NM1_FS,
-      DICe::mesh::field_enums::ROTATION_Z_NM1_FS,
-      DICe::mesh::field_enums::NORMAL_STRETCH_XX_NM1_FS,
-      DICe::mesh::field_enums::NORMAL_STRETCH_YY_NM1_FS,
-      DICe::mesh::field_enums::SHEAR_STRETCH_XY_NM1_FS,
-    };
-    return spec_table[name];
-  }
-
   /// \brief Return the value of the given field at the given global id (must be local to this process)
   /// \param global_id Global ID of the element
-  /// \param name Field name (see DICe_Types.h for valid field names)
+  /// \param spec the Field_Spec of the field to get the value for
   mv_scalar_type & global_field_value(const int_t global_id,
-    const Field_Name name){
-    return local_field_value(subset_local_id(global_id),name);
-  }
-
-  /// \brief Return the value of the given field at the given global id (must be local to this process)
-  /// for the previous frame
-  /// \param global_id Global ID of the subset
-  /// \param name Field name (see DICe_Types.h for valid field names)
-  mv_scalar_type & global_field_value_nm1(const int_t global_id,
-    const Field_Name name){
-    return local_field_value_nm1(subset_local_id(global_id),name);
+    const DICe::mesh::field_enums::Field_Spec spec){
+    return local_field_value(subset_local_id(global_id),spec);
   }
 
   /// \brief Return the value of the given field at the given local id (must be local to this process)
   /// \param local_id local ID of the subset
-  /// \param name Field name (see DICe_Types.h for valid field names)
+  /// \param spec the Field_Spec of the requested field
   mv_scalar_type & local_field_value(const int_t local_id,
-    const Field_Name name){
+    const DICe::mesh::field_enums::Field_Spec spec){
     assert(local_id<local_num_subsets_);
     assert(local_id>=0);
-    return mesh_->get_field(field_name_to_spec(name))->local_value(local_id);
-  }
-
-  /// \brief Return the value of the given field at the given local id (must be local to this process)
-  /// for the previous frame
-  /// \param global_id Global ID of the element
-  /// \param name Field name (see DICe_Types.h for valid field names)
-  mv_scalar_type & local_field_value_nm1(const int_t local_id,
-    const Field_Name name){
-    assert(local_id<local_num_subsets_);
-    assert(local_id>=0);
-    return mesh_->get_field(field_name_to_nm1_spec(name))->local_value(local_id);
+    return mesh_->get_field(spec)->local_value(local_id);
   }
 
   /// \brief Save off the current solution into the storage for frame n - 1 (only used if projection_method is VELOCITY_BASED)
   /// \param global_id global ID of correlation point
   void save_off_fields(const int_t global_id){
     DEBUG_MSG("Saving off solution nm1 for subset (global id) " << global_id);
-    for(int_t i=0;i<MAX_FIELD_NAME;++i){
-      global_field_value_nm1(global_id,static_cast<Field_Name>(i)) = global_field_value(global_id,static_cast<Field_Name>(i));
+    for(int_t i=0;i<DICe::mesh::field_enums::num_fields_defined;++i){
+      DICe::mesh::field_enums::Field_Spec fs_nm1 = DICe::mesh::field_enums::fs_spec_vec[i];
+      if(fs_nm1.get_state()!=DICe::mesh::field_enums::STATE_N_MINUS_ONE) continue;
+      // build up a field spec for a no state field corresponding to the nm1 field
+      DICe::mesh::field_enums::Field_Spec fs(fs_nm1.get_field_type(),fs_nm1.get_name(),fs_nm1.get_rank(),DICe::mesh::field_enums::NO_FIELD_STATE,true,true);
+      global_field_value(global_id,fs_nm1) = global_field_value(global_id,fs);
     }
   };
 
@@ -1396,7 +1311,7 @@ public:
   void gather_fields();
 
 private:
-  /// Vector of Field_Names that will be output to file
+  /// Vector of field names that will be output to file
   std::vector<std::string> field_names_;
   /// Pointer to the parent schema (used to obtain field values)
   Schema * schema_;

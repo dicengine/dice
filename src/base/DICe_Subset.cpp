@@ -90,12 +90,12 @@ Subset::turn_off_obstructed_pixels(Teuchos::RCP<const std::vector<scalar_t> > de
   reset_is_deactivated_this_step();
 
   if(deformation->size()==DICE_DEFORMATION_SIZE){
-    const scalar_t u     = (*deformation)[DICe::DISPLACEMENT_X];
-    const scalar_t v     = (*deformation)[DICe::DISPLACEMENT_Y];
-    const scalar_t theta = (*deformation)[DICe::ROTATION_Z];
-    const scalar_t dudx  = (*deformation)[DICe::NORMAL_STRAIN_X];
-    const scalar_t dvdy  = (*deformation)[DICe::NORMAL_STRAIN_Y];
-    const scalar_t gxy   = (*deformation)[DICe::SHEAR_STRAIN_XY];
+    const scalar_t u     = (*deformation)[DICe::DOF_U];
+    const scalar_t v     = (*deformation)[DICe::DOF_V];
+    const scalar_t theta = (*deformation)[DICe::DOF_THETA];
+    const scalar_t dudx  = (*deformation)[DICe::DOF_EX];
+    const scalar_t dvdy  = (*deformation)[DICe::DOF_EY];
+    const scalar_t gxy   = (*deformation)[DICe::DOF_GXY];
     scalar_t Dx=0.0,Dy=0.0;
     scalar_t dx=0.0, dy=0.0;
     scalar_t cos_t = std::cos(theta);
@@ -189,12 +189,12 @@ Subset::write_subset_on_image(const std::string & file_name,
   scalar_t x_prime=0.0,y_prime=0.0;
   int_t px=0,py=0;
   if(deformation!=Teuchos::null && deformation->size()==DICE_DEFORMATION_SIZE){
-    const scalar_t u = (*deformation)[DISPLACEMENT_X];
-    const scalar_t v = (*deformation)[DISPLACEMENT_Y];
-    const scalar_t t = (*deformation)[ROTATION_Z];
-    const scalar_t ex = (*deformation)[NORMAL_STRAIN_X];
-    const scalar_t ey = (*deformation)[NORMAL_STRAIN_Y];
-    const scalar_t g = (*deformation)[SHEAR_STRAIN_XY];
+    const scalar_t u = (*deformation)[DOF_U];
+    const scalar_t v = (*deformation)[DOF_V];
+    const scalar_t t = (*deformation)[DOF_THETA];
+    const scalar_t ex = (*deformation)[DOF_EX];
+    const scalar_t ey = (*deformation)[DOF_EY];
+    const scalar_t g = (*deformation)[DOF_GXY];
     scalar_t dx=0.0,dy=0.0;
     scalar_t Dx=0.0,Dy=0.0;
     for(int_t i=0;i<num_pixels_;++i){
@@ -325,8 +325,8 @@ Subset::noise_std_dev(Teuchos::RCP<Image> image,
   scalar_t x_prime = 0.0;
   scalar_t y_prime = 0.0;
   if(deformation->size()==DICE_DEFORMATION_SIZE){
-    u = (*deformation)[DISPLACEMENT_X];
-    v = (*deformation)[DISPLACEMENT_Y];
+    u = (*deformation)[DOF_U];
+    v = (*deformation)[DOF_V];
   }else if(deformation->size()==DICE_DEFORMATION_SIZE_AFFINE){
     TEUCHOS_TEST_FOR_EXCEPTION((*deformation)[8]==0.0,std::runtime_error,"");
     map_affine(cx_,cy_,x_prime,y_prime,deformation);

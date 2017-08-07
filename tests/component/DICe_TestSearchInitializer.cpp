@@ -92,9 +92,9 @@ int main(int argc, char *argv[]) {
   Search_Initializer searcher(schema.getRawPtr(),subset,step_size_xy,search_dim_xy,step_size_theta,search_dim_theta);
   Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
   searcher.initial_guess(-1,def);
-  if(std::abs((*def)[DISPLACEMENT_X] - u_exact) > errorTol || std::abs((*def)[DISPLACEMENT_Y] - v_exact) > errorTol){
+  if(std::abs((*def)[DOF_U] - u_exact) > errorTol || std::abs((*def)[DOF_V] - v_exact) > errorTol){
     *outStream << "Error, the initialized value is not correct" << std::endl;
-    *outStream << "       should be 138,-138 and is " << (*def)[DISPLACEMENT_X] << "," << (*def)[DISPLACEMENT_Y] << std::endl;
+    *outStream << "       should be 138,-138 and is " << (*def)[DOF_U] << "," << (*def)[DOF_V] << std::endl;
     errorFlag++;
   }
 

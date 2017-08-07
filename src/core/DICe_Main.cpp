@@ -208,8 +208,8 @@ int main(int argc, char *argv[]) {
         if(i==10&&schema->local_num_subsets()!=11) *outStream << "..." << std::endl;
         else if(i>10&&i<schema->local_num_subsets()-1) continue;
         else
-          *outStream << "Proc 0: subset global id: " << schema->subset_global_id(i) << " global coordinates (" << schema->local_field_value(i,COORDINATE_X) <<
-          "," << schema->local_field_value(i,COORDINATE_Y) << ")" << std::endl;
+          *outStream << "Proc 0: subset global id: " << schema->subset_global_id(i) << " global coordinates (" << schema->local_field_value(i,DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS) <<
+          "," << schema->local_field_value(i,DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS) << ")" << std::endl;
       }
       *outStream << std::endl;
     } // end local dic
