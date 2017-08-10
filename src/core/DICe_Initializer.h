@@ -287,20 +287,26 @@ public:
   /// constructor
   /// \param schema the parent schema
   /// \param subset pointer to a subset
-  /// \param step_size_xy the search step size in u and v
-  /// \param search_dim_xy the extents of the search in u and v
-  /// \param step_size_theta the angle step size
+  /// \param step_size_u the search step size in u (negative 1 means don't search in this dim)
+  /// \param search_dim_u the extents of the search in u
+  /// \param step_size_v the search step size in v (negative 1 means don't search in this dim)
+  /// \param search_dim_v the extents of the search in v
+  /// \param step_size_theta the angle step size (negative 1 means don't search in this dim)
   /// \param search_dim_theta the extents of the search in angle
   Search_Initializer(Schema * schema,
     Teuchos::RCP<Subset> subset,
-    const scalar_t & step_size_xy,
-    const scalar_t & search_dim_xy,
+    const scalar_t & step_size_u,
+    const scalar_t & search_dim_u,
+    const scalar_t & step_size_v,
+    const scalar_t & search_dim_v,
     const scalar_t & step_size_theta,
     const scalar_t & search_dim_theta):
   Initializer(schema),
   subset_(subset),
-  step_size_xy_(step_size_xy),
-  search_dim_xy_(search_dim_xy),
+  step_size_u_(step_size_u),
+  step_size_v_(step_size_v),
+  search_dim_u_(search_dim_u),
+  search_dim_v_(search_dim_v),
   step_size_theta_(step_size_theta),
   search_dim_theta_(search_dim_theta){};
 
@@ -318,9 +324,11 @@ protected:
   /// pointer to a specific subset
   Teuchos::RCP<Subset> subset_;
   /// search step size in x and y
-  scalar_t step_size_xy_;
+  scalar_t step_size_u_;
+  scalar_t step_size_v_;
   /// extent of search in x and y (added and substracted from input to get extents)
-  scalar_t search_dim_xy_;
+  scalar_t search_dim_u_;
+  scalar_t search_dim_v_;
   /// search step size in theta
   scalar_t step_size_theta_;
   /// extent of search in theta

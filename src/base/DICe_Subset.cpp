@@ -49,6 +49,51 @@
 
 namespace DICe {
 
+DICE_LIB_DLL_EXPORT
+void affine_map_to_motion( const scalar_t & x,
+  const scalar_t & y,
+  scalar_t & out_u,
+  scalar_t & out_v,
+  scalar_t & out_theta,
+  const Teuchos::RCP<const std::vector<scalar_t> > & def){
+  if(def->size()==DICE_DEFORMATION_SIZE){
+    out_u = (*def)[DOF_U];
+    out_v = (*def)[DOF_V];
+    out_theta = (*def)[DOF_THETA];
+  }else if(def->size()==DICE_DEFORMATION_SIZE_AFFINE){
+    scalar_t x_prime = 0.0;
+    scalar_t y_prime = 0.0;
+    map_affine(x,y,x_prime,y_prime,def);
+    out_u = x_prime - x;
+    out_v = y_prime - y;
+    // estimate the rotation using the atan2 function (TODO this could be improved)
+    out_theta = std::atan2((*def)[DOF_B],(*def)[DOF_A]);
+  }
+}
+
+DICE_LIB_DLL_EXPORT
+void affine_add_translation( const scalar_t & u,
+  const scalar_t & v,
+  Teuchos::RCP<std::vector<scalar_t> > & def){
+  assert(def->size()==DICE_DEFORMATION_SIZE_AFFINE);
+  const scalar_t A = (*def)[DOF_A];
+  const scalar_t B = (*def)[DOF_B];
+  const scalar_t C = (*def)[DOF_C];
+  const scalar_t D = (*def)[DOF_D];
+  const scalar_t E = (*def)[DOF_E];
+  const scalar_t F = (*def)[DOF_F];
+  const scalar_t G = (*def)[DOF_G];
+  const scalar_t H = (*def)[DOF_H];
+  const scalar_t I = (*def)[DOF_I];
+  (*def)[DOF_A] = A + u*G;
+  (*def)[DOF_B] = B + u*H;
+  (*def)[DOF_C] = C + u*I;
+  (*def)[DOF_D] = D + v*G;
+  (*def)[DOF_E] = E + v*H;
+  (*def)[DOF_F] = F + v*I;
+}
+
+
 bool
 Subset::is_obstructed_pixel(const scalar_t & coord_x,
   const scalar_t & coord_y) const {

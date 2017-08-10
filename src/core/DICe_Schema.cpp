@@ -79,10 +79,10 @@ using namespace mesh::field_enums;
 Schema::Schema(const std::string & input_file_name,
   const std::string & params_file_name){
   // create a parameter list from the selected file
-  Teuchos::RCP<Teuchos::ParameterList> corr_params = DICe::read_correlation_params(params_file_name);
+  Teuchos::RCP<Teuchos::ParameterList> corr_params = read_correlation_params(params_file_name);
   default_constructor_tasks(corr_params);
   // create a parameter list from the selected file
-  Teuchos::RCP<Teuchos::ParameterList> input_params = DICe::read_input_params(input_file_name);
+  Teuchos::RCP<Teuchos::ParameterList> input_params = read_input_params(input_file_name);
   initialize(input_params,corr_params);
 }
 
@@ -612,12 +612,12 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
       ppParams->setEntry(it->first,it->second);
     }
     if(!ppParams->isParameter(displacement_x_field_name)&&analysis_type_==LOCAL_DIC){
-      ppParams->set<std::string>(displacement_x_field_name,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS.get_name_label());
-      ppParams->set<std::string>(displacement_y_field_name,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS.get_name_label());
+      ppParams->set<std::string>(displacement_x_field_name,SUBSET_DISPLACEMENT_X_FS.get_name_label());
+      ppParams->set<std::string>(displacement_y_field_name,SUBSET_DISPLACEMENT_Y_FS.get_name_label());
     }
     if(!ppParams->isParameter(coordinates_x_field_name)&&analysis_type_==LOCAL_DIC){
-      ppParams->set<std::string>(coordinates_x_field_name,DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS.get_name_label());
-      ppParams->set<std::string>(coordinates_y_field_name,DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS.get_name_label());
+      ppParams->set<std::string>(coordinates_x_field_name,SUBSET_COORDINATES_X_FS.get_name_label());
+      ppParams->set<std::string>(coordinates_y_field_name,SUBSET_COORDINATES_Y_FS.get_name_label());
     }
     Teuchos::RCP<VSG_Strain_Post_Processor> vsg_ptr = Teuchos::rcp (new VSG_Strain_Post_Processor(ppParams));
     post_processors_.push_back(vsg_ptr);
@@ -629,12 +629,12 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
       ppParams->setEntry(it->first,it->second);
     }
     if(!ppParams->isParameter(displacement_x_field_name)&&analysis_type_==LOCAL_DIC){
-      ppParams->set<std::string>(displacement_x_field_name,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS.get_name_label());
-      ppParams->set<std::string>(displacement_y_field_name,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS.get_name_label());
+      ppParams->set<std::string>(displacement_x_field_name,SUBSET_DISPLACEMENT_X_FS.get_name_label());
+      ppParams->set<std::string>(displacement_y_field_name,SUBSET_DISPLACEMENT_Y_FS.get_name_label());
     }
     if(!ppParams->isParameter(coordinates_x_field_name)&&analysis_type_==LOCAL_DIC){
-      ppParams->set<std::string>(coordinates_x_field_name,DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS.get_name_label());
-      ppParams->set<std::string>(coordinates_y_field_name,DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS.get_name_label());
+      ppParams->set<std::string>(coordinates_x_field_name,SUBSET_COORDINATES_X_FS.get_name_label());
+      ppParams->set<std::string>(coordinates_y_field_name,SUBSET_COORDINATES_Y_FS.get_name_label());
     }
     Teuchos::RCP<NLVC_Strain_Post_Processor> nlvc_ptr = Teuchos::rcp (new NLVC_Strain_Post_Processor(ppParams));
     post_processors_.push_back(nlvc_ptr);
@@ -691,20 +691,20 @@ void
 Schema::update_extents(const bool use_transformation_augmentation){
   TEUCHOS_TEST_FOR_EXCEPTION(motion_window_params_->size()>0,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"");
-  Teuchos::RCP<MultiField> coords = mesh_->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField> coords = mesh_->get_field(INITIAL_COORDINATES_FS);
   Teuchos::RCP<MultiField> disp;
   Teuchos::RCP<MultiField_Map> map = mesh_->get_vector_node_dist_map();
   Teuchos::RCP<MultiField> proj_aug_x;
   Teuchos::RCP<MultiField> proj_aug_y;
   if(use_nonlinear_projection_){
-    proj_aug_x = mesh_->get_field(DICe::mesh::field_enums::PROJECTION_AUG_X_FS);
-    proj_aug_y = mesh_->get_field(DICe::mesh::field_enums::PROJECTION_AUG_Y_FS);
+    proj_aug_x = mesh_->get_field(PROJECTION_AUG_X_FS);
+    proj_aug_y = mesh_->get_field(PROJECTION_AUG_Y_FS);
   }
   Teuchos::RCP<MultiField> aug = Teuchos::rcp( new MultiField(map,1,true));
   if(analysis_type_ == LOCAL_DIC){
     const int_t spa_dim = 2;
-    Teuchos::RCP<MultiField> disp_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-    Teuchos::RCP<MultiField> disp_y = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+    Teuchos::RCP<MultiField> disp_x = mesh_->get_field(SUBSET_DISPLACEMENT_X_FS);
+    Teuchos::RCP<MultiField> disp_y = mesh_->get_field(SUBSET_DISPLACEMENT_Y_FS);
     disp = Teuchos::rcp( new MultiField(map,1,true));
     for(int_t i=0;i<local_num_subsets_;++i){
       disp->local_value(i*spa_dim+0) = disp_x->local_value(i);
@@ -715,7 +715,7 @@ Schema::update_extents(const bool use_transformation_augmentation){
       }
     }
   }else{
-    disp = mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS);
+    disp = mesh_->get_field(DISPLACEMENT_FS);
   }
   Teuchos::RCP<MultiField> current_coords = Teuchos::rcp( new MultiField(map,1,true));
   current_coords->update(1.0,*coords,1.0);
@@ -956,8 +956,8 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   // the size of the coords vector needs to be the global number of elements, but only the locally used elements need values
   TEUCHOS_TEST_FOR_EXCEPTION(schema->skip_solve_flags()->size()>0,std::runtime_error,"Error skip solves cannot be used in stereo");
   TEUCHOS_TEST_FOR_EXCEPTION(schema->motion_window_params()->size()>0,std::runtime_error,"Error motion windows cannot be used in stereo");
-  Teuchos::RCP<MultiField> stereo_coords_x = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::STEREO_COORDINATES_X_FS);
-  Teuchos::RCP<MultiField> stereo_coords_y = schema->mesh()->get_overlap_field(DICe::mesh::field_enums::STEREO_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> stereo_coords_x = schema->mesh()->get_overlap_field(STEREO_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> stereo_coords_y = schema->mesh()->get_overlap_field(STEREO_COORDINATES_Y_FS);
   global_num_subsets_ = schema->mesh()->get_scalar_node_dist_map()->get_num_global_elements();
   TEUCHOS_TEST_FOR_EXCEPTION(global_num_subsets_<=0,std::runtime_error,"");
   subset_dim_ = schema->subset_dim();
@@ -1020,7 +1020,7 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   local_num_subsets_ = mesh_->get_scalar_node_dist_map()->get_num_local_elements();
   create_mesh_fields();
 
-  mesh_->get_field(DICe::mesh::field_enums::NEIGHBOR_ID_FS)->update(1.0,*schema->mesh()->get_field(DICe::mesh::field_enums::NEIGHBOR_ID_FS),0.0);
+  mesh_->get_field(NEIGHBOR_ID_FS)->update(1.0,*schema->mesh()->get_field(NEIGHBOR_ID_FS),0.0);
 
   DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] right schema initialized");
 }
@@ -1158,12 +1158,38 @@ Schema::create_mesh_fields(){
   mesh_->create_field(mesh::field_enums::MODEL_COORDINATES_Z_FS);
   mesh_->create_field(mesh::field_enums::ROTATION_Z_FS);
   mesh_->create_field(mesh::field_enums::ROTATION_Z_NM1_FS);
+if(enable_affine_matrix_){
+  mesh_->create_field(mesh::field_enums::AFFINE_A_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_A_NM1_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_B_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_B_NM1_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_C_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_C_NM1_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_D_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_D_NM1_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_E_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_E_NM1_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_F_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_F_NM1_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_G_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_G_NM1_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_H_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_H_NM1_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_I_FS);
+  mesh_->create_field(mesh::field_enums::AFFINE_I_NM1_FS);
+  // initialize the affine shape functions with the right values
+  mesh_->get_field(AFFINE_A_FS)->put_scalar(1.0);
+  mesh_->get_field(AFFINE_E_FS)->put_scalar(1.0);
+  mesh_->get_field(AFFINE_I_FS)->put_scalar(1.0);
+}
+else{
   mesh_->create_field(mesh::field_enums::SHEAR_STRETCH_XY_FS);
   mesh_->create_field(mesh::field_enums::SHEAR_STRETCH_XY_NM1_FS);
   mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_XX_FS);
   mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_XX_NM1_FS);
   mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_YY_FS);
   mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_YY_NM1_FS);
+}
   mesh_->create_field(mesh::field_enums::SIGMA_FS);
   mesh_->create_field(mesh::field_enums::GAMMA_FS);
   mesh_->create_field(mesh::field_enums::BETA_FS);
@@ -1274,14 +1300,9 @@ Schema::execute_cross_correlation(){
   // project the right image onto the left if requested
   if(use_nonlinear_projection_){
     // the nonlinear projection may not be good enough to initialize so start with a search window
-    Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+    const int_t def_size = enable_affine_matrix_ ? DICE_DEFORMATION_SIZE_AFFINE : DICE_DEFORMATION_SIZE;
+    Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(def_size,0.0));
     for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
-      scalar_t best_gamma = 100.0;
-      scalar_t min_u = 0.0;
-      //scalar_t min_v = 0.0;
-      scalar_t search_radius_x = 20.0;
-      //scalar_t search_radius_y = 25.0;
-      scalar_t search_step = 1.0;
       bool init_success = true;
       Teuchos::RCP<Objective> obj;
       try{
@@ -1290,24 +1311,22 @@ Schema::execute_cross_correlation(){
       catch(std::exception & e){
         init_success = false;
       }
-
-      //for(scalar_t v=-search_radius_y;v<search_radius_y;v+=search_step){
-        for(scalar_t u=-search_radius_x;u<search_radius_x;u+=search_step){
-          (*def)[DOF_U] = u; // note: value already in disp u is not added here
-          //(*def)[DOF_V] = v;
-          const scalar_t gamma = init_success ? obj->gamma(def) : 100.0;
-          if(gamma > 0.0 && gamma < best_gamma){
-            best_gamma = gamma;
-            min_u = u;
-            //min_v = v;
-          }
-        } // end search x loop
-      //} // end search y loop
-      local_field_value(subset_index,SUBSET_DISPLACEMENT_X_FS) = min_u;
-      //local_field_value(subset_index,DISPLACEMENT_Y) = min_v;
-      //DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " v " << min_v << " gamma " << best_gamma);
-      DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " gamma " << best_gamma);
-    } // end subset loop
+      if(init_success){
+        // search farther in x because we assume that the cross correlation is between two cameras with the same y
+        const scalar_t search_step_u = 1.0; // pixels
+        const scalar_t search_dim_u = 50.0; // pixels
+        const int_t subset_gid = subset_global_id(subset_index);
+        Search_Initializer searcher(this,obj->subset(),search_step_u,search_dim_u,-1.0,0.0,-1.0,0.0);
+        searcher.initial_guess(subset_gid,def);
+        scalar_t min_u = 0.0,min_v = 0.0, min_t = 0.0;
+        affine_map_to_motion(global_field_value(subset_gid,SUBSET_COORDINATES_X_FS),global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS),
+          min_u,min_v,min_t,def);
+        local_field_value(subset_index,SUBSET_DISPLACEMENT_X_FS) = min_u;
+        //local_field_value(subset_index,DISPLACEMENT_Y) = min_v;
+        //DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " v " << min_v << " gamma " << best_gamma);
+        DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " gamma " << obj->gamma(def));
+      } // end subset loop
+    }
   }
 
 #ifdef DICE_DEBUG_MSG
@@ -1347,10 +1366,10 @@ Schema::execute_cross_correlation(){
   // add the projection fields back to the output for the total u/v, etc.
   if(use_nonlinear_projection_){
     // the original projective transform has to be added to the displacements
-    Teuchos::RCP<MultiField> proj_aug_x = mesh_->get_field(DICe::mesh::field_enums::PROJECTION_AUG_X_FS);
-    Teuchos::RCP<MultiField> proj_aug_y = mesh_->get_field(DICe::mesh::field_enums::PROJECTION_AUG_Y_FS);
-    mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS)->update(1.0,*proj_aug_x,1.0);
-    mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS)->update(1.0,*proj_aug_y,1.0);
+    Teuchos::RCP<MultiField> proj_aug_x = mesh_->get_field(PROJECTION_AUG_X_FS);
+    Teuchos::RCP<MultiField> proj_aug_y = mesh_->get_field(PROJECTION_AUG_Y_FS);
+    mesh_->get_field(SUBSET_DISPLACEMENT_X_FS)->update(1.0,*proj_aug_x,1.0);
+    mesh_->get_field(SUBSET_DISPLACEMENT_Y_FS)->update(1.0,*proj_aug_y,1.0);
   }
 
   // reset the neighbor ids fiel and initialization method
@@ -1416,8 +1435,8 @@ Schema::execute_correlation(){
 
   // if the formulation is incremental, clear the displacement fields
   if(use_incremental_formulation_){
-    mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS)->put_scalar(0.0);
-    mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS)->put_scalar(0.0);
+    mesh_->get_field(SUBSET_DISPLACEMENT_X_FS)->put_scalar(0.0);
+    mesh_->get_field(SUBSET_DISPLACEMENT_Y_FS)->put_scalar(0.0);
   }
 #ifdef DICE_ENABLE_GLOBAL
   if(has_initial_condition_file()&&frame_id_==first_frame_id_){
@@ -1434,8 +1453,8 @@ Schema::execute_correlation(){
       importer->import_vector_field(initial_condition_file_,"DISPLACEMENT",disp_x,disp_y);
     }
     TEUCHOS_TEST_FOR_EXCEPTION((int_t)disp_x.size()!=local_num_subsets_||(int_t)disp_y.size()!=local_num_subsets_,std::runtime_error,"");
-    Teuchos::RCP<MultiField> ux = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-    Teuchos::RCP<MultiField> uy = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+    Teuchos::RCP<MultiField> ux = mesh_->get_field(SUBSET_DISPLACEMENT_X_FS);
+    Teuchos::RCP<MultiField> uy = mesh_->get_field(SUBSET_DISPLACEMENT_Y_FS);
     for(int_t i=0;i<local_num_subsets_;++i){
       ux->local_value(i) = disp_x[i];
       uy->local_value(i) = disp_y[i];
@@ -1513,7 +1532,7 @@ Schema::execute_correlation(){
   // accumulate the displacements
   if(use_incremental_formulation_){
     const int_t spa_dim = mesh_->spatial_dimension();
-    Teuchos::RCP<DICe::MultiField> accumulated_disp = mesh_->get_field(DICe::mesh::field_enums::ACCUMULATED_DISP_FS);
+    Teuchos::RCP<DICe::MultiField> accumulated_disp = mesh_->get_field(ACCUMULATED_DISP_FS);
     for(int_t i=0;i<local_num_subsets_;++i){
       accumulated_disp->local_value(i*spa_dim+0) += local_field_value(i,SUBSET_DISPLACEMENT_X_FS);
       accumulated_disp->local_value(i*spa_dim+1) += local_field_value(i,SUBSET_DISPLACEMENT_Y_FS);
@@ -1525,10 +1544,10 @@ Schema::execute_correlation(){
 
 void
 Schema::save_cross_correlation_fields(){
-  Teuchos::RCP<MultiField> ux = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> uy = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
-  Teuchos::RCP<MultiField> cross_q = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_Q_FS);
-  Teuchos::RCP<MultiField> cross_r = mesh_->get_field(DICe::mesh::field_enums::CROSS_CORR_R_FS);
+  Teuchos::RCP<MultiField> ux = mesh_->get_field(SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> uy = mesh_->get_field(SUBSET_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> cross_q = mesh_->get_field(CROSS_CORR_Q_FS);
+  Teuchos::RCP<MultiField> cross_r = mesh_->get_field(CROSS_CORR_R_FS);
   cross_q->update(1.0,*ux,0.0);
   cross_r->update(1.0,*uy,0.0);
   // clear the deformation fields and update the initial positions of the cross corr subsets
@@ -1536,11 +1555,23 @@ Schema::save_cross_correlation_fields(){
   uy->put_scalar(0.0);
   int_t num_failures = 0;
   scalar_t worst_gamma = 0.0;
+  mesh_->get_field(ROTATION_Z_FS)->put_scalar(0.0);
+  if(enable_affine_matrix_){
+    mesh_->get_field(AFFINE_A_FS)->put_scalar(1.0);
+    mesh_->get_field(AFFINE_B_FS)->put_scalar(0.0);
+    mesh_->get_field(AFFINE_C_FS)->put_scalar(0.0);
+    mesh_->get_field(AFFINE_D_FS)->put_scalar(0.0);
+    mesh_->get_field(AFFINE_E_FS)->put_scalar(1.0);
+    mesh_->get_field(AFFINE_F_FS)->put_scalar(0.0);
+    mesh_->get_field(AFFINE_G_FS)->put_scalar(0.0);
+    mesh_->get_field(AFFINE_H_FS)->put_scalar(0.0);
+    mesh_->get_field(AFFINE_I_FS)->put_scalar(1.0);
+  }else{
+    mesh_->get_field(NORMAL_STRETCH_XX_FS)->put_scalar(0.0);
+    mesh_->get_field(NORMAL_STRETCH_YY_FS)->put_scalar(0.0);
+    mesh_->get_field(SHEAR_STRETCH_XY_FS)->put_scalar(0.0);
+  }
   for(int_t i=0;i<local_num_subsets_;++i){
-    local_field_value(i,NORMAL_STRETCH_XX_FS) = 0.0;
-    local_field_value(i,NORMAL_STRETCH_YY_FS) = 0.0;
-    local_field_value(i,SHEAR_STRETCH_XY_FS) = 0.0;
-    local_field_value(i,ROTATION_Z_FS) = 0.0;
     local_field_value(i,STEREO_COORDINATES_X_FS) = local_field_value(i,SUBSET_COORDINATES_X_FS) + cross_q->local_value(i);
     local_field_value(i,STEREO_COORDINATES_Y_FS) = local_field_value(i,SUBSET_COORDINATES_Y_FS) + cross_r->local_value(i);
     if(local_field_value(i,SIGMA_FS) < 0.0)
@@ -1713,12 +1744,32 @@ Schema::record_step(Teuchos::RCP<Objective> obj,
   const int_t num_iterations){
   const int_t subset_gid = obj->correlation_point_global_id();
   DEBUG_MSG("Subset " << subset_gid << " record step");
-  global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) = (*deformation)[DOF_U];
-  global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) = (*deformation)[DOF_V];
-  global_field_value(subset_gid,NORMAL_STRETCH_XX_FS) = (*deformation)[DOF_EX];
-  global_field_value(subset_gid,NORMAL_STRETCH_YY_FS) = (*deformation)[DOF_EY];
-  global_field_value(subset_gid,SHEAR_STRETCH_XY_FS) = (*deformation)[DOF_GXY];
-  global_field_value(subset_gid,ROTATION_Z_FS) = (*deformation)[DOF_THETA];
+  if(enable_affine_matrix_){
+    global_field_value(subset_gid,AFFINE_A_FS) = (*deformation)[DOF_A];
+    global_field_value(subset_gid,AFFINE_B_FS) = (*deformation)[DOF_B];
+    global_field_value(subset_gid,AFFINE_C_FS) = (*deformation)[DOF_C];
+    global_field_value(subset_gid,AFFINE_D_FS) = (*deformation)[DOF_D];
+    global_field_value(subset_gid,AFFINE_E_FS) = (*deformation)[DOF_E];
+    global_field_value(subset_gid,AFFINE_F_FS) = (*deformation)[DOF_F];
+    global_field_value(subset_gid,AFFINE_G_FS) = (*deformation)[DOF_G];
+    global_field_value(subset_gid,AFFINE_H_FS) = (*deformation)[DOF_H];
+    global_field_value(subset_gid,AFFINE_I_FS) = (*deformation)[DOF_I];
+    const scalar_t x = global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
+    const scalar_t y = global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
+    scalar_t u = 0.0,v=0.0,theta=0.0;
+    affine_map_to_motion(x,y,u,v,theta,deformation);
+    global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) = u;
+    global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) = v;
+    global_field_value(subset_gid,ROTATION_Z_FS) = theta;
+  }
+  else{
+    global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) = (*deformation)[DOF_U];
+    global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) = (*deformation)[DOF_V];
+    global_field_value(subset_gid,NORMAL_STRETCH_XX_FS) = (*deformation)[DOF_EX];
+    global_field_value(subset_gid,NORMAL_STRETCH_YY_FS) = (*deformation)[DOF_EY];
+    global_field_value(subset_gid,SHEAR_STRETCH_XY_FS) = (*deformation)[DOF_GXY];
+    global_field_value(subset_gid,ROTATION_Z_FS) = (*deformation)[DOF_THETA];
+  }
   global_field_value(subset_gid,SIGMA_FS) = sigma;
   global_field_value(subset_gid,MATCH_FS) = match; // 0 means data is successful
   global_field_value(subset_gid,GAMMA_FS) = gamma;
@@ -1799,9 +1850,11 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   Status_Flag init_status = INITIALIZE_SUCCESSFUL;
   Status_Flag corr_status = CORRELATION_FAILED;
   int_t num_iterations = -1;
+  const int_t def_size = enable_affine_matrix_ ? DICE_DEFORMATION_SIZE_AFFINE : DICE_DEFORMATION_SIZE;
   TEUCHOS_TEST_FOR_EXCEPTION(enable_affine_matrix_&&correlation_routine_==TRACKING_ROUTINE,std::runtime_error,
     "Error, can't use affine matrix and tracking routine at the same time");
-  Teuchos::RCP<std::vector<scalar_t> > deformation = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+
+  Teuchos::RCP<std::vector<scalar_t> > deformation = Teuchos::rcp(new std::vector<scalar_t>(def_size,0.0));
   try{
     init_status = initial_guess(subset_gid,deformation);
   }
@@ -1828,7 +1881,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       (*deformation)[DOF_U] = global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
       (*deformation)[DOF_V] = global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
       (*deformation)[DOF_THETA] = global_field_value(subset_gid,ROTATION_Z_FS);
-      Search_Initializer searcher(this,obj->subset(),search_step_xy,search_dim_xy,search_step_theta,search_dim_theta);
+      Search_Initializer searcher(this,obj->subset(),search_step_xy,search_dim_xy,search_step_xy,search_dim_xy,search_step_theta,search_dim_theta);
       init_status = searcher.initial_guess(subset_gid,deformation);
     }
     if(init_status==INITIALIZE_FAILED){
@@ -1881,8 +1934,6 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       return;
     }
   }
-  // TODO how to respond to bad initialization
-  // TODO add a search-based method to initialize if other methods failed
   // determine if the subset is a blocker and if so, force it to use simplex method:
   // also force simplex if it is a blocked subset (not enough speckles to use grad-based method)
   bool force_simplex = false;
@@ -1937,9 +1988,12 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   // test for jump failure (too high displacement or rotation from last step due to subset getting lost)
   bool jump_pass = true;
-  scalar_t diffU = ((*deformation)[DOF_U] - prev_u);
-  scalar_t diffV = ((*deformation)[DOF_V] - prev_v);
-  scalar_t diffT = enable_affine_matrix_ ? 0.0 : ((*deformation)[DOF_THETA] - prev_t);
+  scalar_t new_u = 0.0,new_v = 0.0, new_t = 0.0;
+  affine_map_to_motion(global_field_value(subset_gid,SUBSET_COORDINATES_X_FS),global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS),
+    new_u,new_v,new_t,deformation);
+  scalar_t diffU = new_u - prev_u;
+  scalar_t diffV = new_v - prev_v;
+  scalar_t diffT = new_t - prev_t;
   DEBUG_MSG("Subset " << subset_gid << " U jump: " << diffU << " V jump: " << diffV << " T jump: " << diffT);
   if(std::abs(diffU) > disp_jump_tol_ || std::abs(diffV) > disp_jump_tol_ || std::abs(diffT) > theta_jump_tol_){
     if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_jump_exceeded(subset_gid,frame_id_);
@@ -1965,21 +2019,14 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       }
       else if(optimization_method_==DICe::GRADIENT_THEN_SEARCH){
         // search farther in x because we assume that the cross correlation is between two cameras with the same y
-        scalar_t best_gamma = 100.0;
-        scalar_t min_u = 0.0;
-        scalar_t search_radius_x = 50.0;
-        scalar_t search_step = 1.0;
-        scalar_t def_orig_x = (*deformation)[DICe::DOF_U];
-        for(scalar_t u=-search_radius_x;u<search_radius_x;u+=search_step){
-          (*deformation)[DOF_U] = def_orig_x + u;
-          const scalar_t gamma = obj->gamma(deformation);
-          if(gamma > 0.0 && gamma < best_gamma){
-            best_gamma = gamma;
-            min_u = def_orig_x + u;
-          }
-        } // end search x loop
+        const scalar_t search_step_u = 1.0; // pixels
+        const scalar_t search_dim_u = 50.0; // pixels
+        Search_Initializer searcher(this,obj->subset(),search_step_u,search_dim_u,-1.0,0.0,-1.0,0.0);
+        init_status = searcher.initial_guess(subset_gid,deformation);
+        scalar_t min_u = 0.0,min_v = 0.0, min_t = 0.0;
+        affine_map_to_motion(global_field_value(subset_gid,SUBSET_COORDINATES_X_FS),global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS),
+          min_u,min_v,min_t,deformation);
         DEBUG_MSG("Subset " << subset_gid << " GRADIENT_THEN_SEARCH method used, search-based initial u: " << min_u);// << " v: " << min_v);
-        (*deformation)[DICe::DOF_U] = min_u;
         try{
           corr_status = obj->computeUpdateFast(deformation,num_iterations);
         }
@@ -2077,9 +2124,12 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   //  Test jumps again
   //
-  diffU = ((*deformation)[DOF_U] - prev_u);
-  diffV = ((*deformation)[DOF_V] - prev_v);
-  diffT = enable_affine_matrix_ ? 0.0 : ((*deformation)[DOF_THETA] - prev_t);
+  new_u = 0.0;new_v = 0.0;new_t = 0.0;
+  affine_map_to_motion(global_field_value(subset_gid,SUBSET_COORDINATES_X_FS),global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS),
+    new_u,new_v,new_t,deformation);
+  diffU = new_u - prev_u;
+  diffV = new_v - prev_v;
+  diffT = new_t - prev_t;
   DEBUG_MSG("Subset " << subset_gid << " U jump: " << diffU << " V jump: " << diffV << " T jump: " << diffT);
   if(std::abs(diffU) > disp_jump_tol_ || std::abs(diffV) > disp_jump_tol_ || std::abs(diffT) > theta_jump_tol_){
     DEBUG_MSG("Subset " << subset_gid << " FAILS jump test: ");
@@ -2199,8 +2249,8 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
   TEUCHOS_TEST_FOR_EXCEPTION(full_ref_img_width_<=0||full_ref_img_height_<=0,std::runtime_error,"");
 
   // search the mesh fields to see if vsg or nlvc strain exist:
-  const bool has_vsg = mesh_->has_field(DICe::mesh::field_enums::VSG_STRAIN_XX);
-  const bool has_nlvc = mesh_->has_field(DICe::mesh::field_enums::NLVC_STRAIN_XX);
+  const bool has_vsg = mesh_->has_field(VSG_STRAIN_XX);
+  const bool has_nlvc = mesh_->has_field(NLVC_STRAIN_XX);
   const bool is_subset_based = analysis_type_ == LOCAL_DIC;
 
   scalar_t subset_elem_size = 0.0;
@@ -2274,33 +2324,33 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
   std::stringstream result_stream;
 
   // populate the exact sol, etc
-  mesh_->create_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);
-  Teuchos::RCP<MultiField> exact_disp = mesh_->get_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);
-  mesh_->create_field(DICe::mesh::field_enums::EXACT_STRAIN_XX_FS);
-  Teuchos::RCP<MultiField> exact_strain_xx = mesh_->get_field(DICe::mesh::field_enums::EXACT_STRAIN_XX_FS);
-  mesh_->create_field(DICe::mesh::field_enums::EXACT_STRAIN_YY_FS);
-  Teuchos::RCP<MultiField> exact_strain_yy = mesh_->get_field(DICe::mesh::field_enums::EXACT_STRAIN_YY_FS);
-  mesh_->create_field(DICe::mesh::field_enums::EXACT_STRAIN_XY_FS);
-  Teuchos::RCP<MultiField> exact_strain_xy = mesh_->get_field(DICe::mesh::field_enums::EXACT_STRAIN_XY_FS);
+  mesh_->create_field(EXACT_SOL_VECTOR_FS);
+  Teuchos::RCP<MultiField> exact_disp = mesh_->get_field(EXACT_SOL_VECTOR_FS);
+  mesh_->create_field(EXACT_STRAIN_XX_FS);
+  Teuchos::RCP<MultiField> exact_strain_xx = mesh_->get_field(EXACT_STRAIN_XX_FS);
+  mesh_->create_field(EXACT_STRAIN_YY_FS);
+  Teuchos::RCP<MultiField> exact_strain_yy = mesh_->get_field(EXACT_STRAIN_YY_FS);
+  mesh_->create_field(EXACT_STRAIN_XY_FS);
+  Teuchos::RCP<MultiField> exact_strain_xy = mesh_->get_field(EXACT_STRAIN_XY_FS);
   // create the error fields
-  mesh_->create_field(DICe::mesh::field_enums::DISP_ERROR_FS);
-  Teuchos::RCP<MultiField> disp_error = mesh_->get_field(DICe::mesh::field_enums::DISP_ERROR_FS);
+  mesh_->create_field(DISP_ERROR_FS);
+  Teuchos::RCP<MultiField> disp_error = mesh_->get_field(DISP_ERROR_FS);
   Teuchos::RCP<MultiField> vsg_error_xx, vsg_error_xy, vsg_error_yy, nlvc_error_xx, nlvc_error_xy, nlvc_error_yy;
   if(has_vsg){
-    mesh_->create_field(DICe::mesh::field_enums::VSG_STRAIN_XX_ERROR_FS);
-    vsg_error_xx = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_XX_ERROR_FS);
-    mesh_->create_field(DICe::mesh::field_enums::VSG_STRAIN_XY_ERROR_FS);
-    vsg_error_xy = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_XY_ERROR_FS);
-    mesh_->create_field(DICe::mesh::field_enums::VSG_STRAIN_YY_ERROR_FS);
-    vsg_error_yy = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_YY_ERROR_FS);
+    mesh_->create_field(VSG_STRAIN_XX_ERROR_FS);
+    vsg_error_xx = mesh_->get_field(VSG_STRAIN_XX_ERROR_FS);
+    mesh_->create_field(VSG_STRAIN_XY_ERROR_FS);
+    vsg_error_xy = mesh_->get_field(VSG_STRAIN_XY_ERROR_FS);
+    mesh_->create_field(VSG_STRAIN_YY_ERROR_FS);
+    vsg_error_yy = mesh_->get_field(VSG_STRAIN_YY_ERROR_FS);
   }
   if(has_nlvc){
-    mesh_->create_field(DICe::mesh::field_enums::NLVC_STRAIN_XX_ERROR_FS);
-    nlvc_error_xx = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_XX_ERROR_FS);
-    mesh_->create_field(DICe::mesh::field_enums::NLVC_STRAIN_XY_ERROR_FS);
-    nlvc_error_xy = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_XY_ERROR_FS);
-    mesh_->create_field(DICe::mesh::field_enums::NLVC_STRAIN_YY_ERROR_FS);
-    nlvc_error_yy = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_YY_ERROR_FS);
+    mesh_->create_field(NLVC_STRAIN_XX_ERROR_FS);
+    nlvc_error_xx = mesh_->get_field(NLVC_STRAIN_XX_ERROR_FS);
+    mesh_->create_field(NLVC_STRAIN_XY_ERROR_FS);
+    nlvc_error_xy = mesh_->get_field(NLVC_STRAIN_XY_ERROR_FS);
+    mesh_->create_field(NLVC_STRAIN_YY_ERROR_FS);
+    nlvc_error_yy = mesh_->get_field(NLVC_STRAIN_YY_ERROR_FS);
   }
 
   // generate synthetic speckled image instead of using the reference image
@@ -2356,12 +2406,12 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
   for(scalar_t period=max_period;period>=min_period;period*=period_factor){
     // reset the displacements between frequency updates, otherwise the existing solution makes a nice initial guess
     if(is_subset_based){
-      mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS)->put_scalar(0.0);
-      mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS)->put_scalar(0.0);
+      mesh_->get_field(SUBSET_DISPLACEMENT_X_FS)->put_scalar(0.0);
+      mesh_->get_field(SUBSET_DISPLACEMENT_Y_FS)->put_scalar(0.0);
     }else{
-      mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS)->put_scalar(0.0);
+      mesh_->get_field(DISPLACEMENT_FS)->put_scalar(0.0);
     }
-    mesh_->get_field(DICe::mesh::field_enums::SIGMA_FS)->put_scalar(0.0);
+    mesh_->get_field(SIGMA_FS)->put_scalar(0.0);
     for(scalar_t amplitude=min_amp;amplitude<=max_amp;amplitude+=amp_step){
       if(proc_id==0)
         std::cout << "processing resolution error for period " << period << " amplitude " << amplitude << std::endl;
@@ -2402,11 +2452,11 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
       post_execution_tasks();
 
       // gather all owned fields here
-      Teuchos::RCP<MultiField> coords = mesh_->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
+      Teuchos::RCP<MultiField> coords = mesh_->get_field(INITIAL_COORDINATES_FS);
       Teuchos::RCP<MultiField> disp;
       if(is_subset_based){
-        Teuchos::RCP<MultiField> disp_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-        Teuchos::RCP<MultiField> disp_y = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+        Teuchos::RCP<MultiField> disp_x = mesh_->get_field(SUBSET_DISPLACEMENT_X_FS);
+        Teuchos::RCP<MultiField> disp_y = mesh_->get_field(SUBSET_DISPLACEMENT_Y_FS);
         Teuchos::RCP<MultiField_Map> map = mesh_->get_vector_node_dist_map();
         disp = Teuchos::rcp( new MultiField(map,1,true));
         for(int_t i=0;i<local_num_subsets_;++i){
@@ -2414,7 +2464,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
           disp->local_value(i*spa_dim+1) = disp_y->local_value(i);
         }
       }else{
-        disp = mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS);
+        disp = mesh_->get_field(DISPLACEMENT_FS);
       }
       Teuchos::RCP<MultiField> vsg_xx;
       Teuchos::RCP<MultiField> vsg_xy;
@@ -2423,14 +2473,14 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
       Teuchos::RCP<MultiField> nlvc_xy;
       Teuchos::RCP<MultiField> nlvc_yy;
       if(has_vsg){
-        vsg_xx = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_XX_FS);
-        vsg_xy = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_XY_FS);
-        vsg_yy = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_YY_FS);
+        vsg_xx = mesh_->get_field(VSG_STRAIN_XX_FS);
+        vsg_xy = mesh_->get_field(VSG_STRAIN_XY_FS);
+        vsg_yy = mesh_->get_field(VSG_STRAIN_YY_FS);
       }
       if(has_nlvc){
-        nlvc_xx = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_XX_FS);
-        nlvc_xy = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_XY_FS);
-        nlvc_yy = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_YY_FS);
+        nlvc_xx = mesh_->get_field(NLVC_STRAIN_XX_FS);
+        nlvc_xy = mesh_->get_field(NLVC_STRAIN_XY_FS);
+        nlvc_yy = mesh_->get_field(NLVC_STRAIN_YY_FS);
       }
       // compute the error fields
       for(int_t i=0;i<local_num_subsets_;++i){
@@ -2492,8 +2542,8 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
       scalar_t max_error_v = 0.0;
       scalar_t avg_error_v = 0.0;
       scalar_t std_dev_error_v = 0.0;
-      mesh_->field_stats(DICe::mesh::field_enums::DISP_ERROR_FS,min_error_u,max_error_u,avg_error_u,std_dev_error_u,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
-      mesh_->field_stats(DICe::mesh::field_enums::DISP_ERROR_FS,min_error_v,max_error_v,avg_error_v,std_dev_error_v,1,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+      mesh_->field_stats(DISP_ERROR_FS,min_error_u,max_error_u,avg_error_u,std_dev_error_u,0,SIGMA_FS,-1.0);
+      mesh_->field_stats(DISP_ERROR_FS,min_error_v,max_error_v,avg_error_v,std_dev_error_v,1,SIGMA_FS,-1.0);
       result_stream << " " << std::setprecision(4) << period << " "<< std::setprecision(4) << amplitude
           << " " << min_error_u << " " << max_error_u << " " << avg_error_u << " " << std_dev_error_u << " " << min_error_v << " " << max_error_v << " " << avg_error_v << " " << std_dev_error_v;
 
@@ -2519,9 +2569,9 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
         scalar_t max_vsg_yy = 0.0;
         scalar_t avg_vsg_yy = 0.0;
         scalar_t std_dev_vsg_yy = 0.0;
-        mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_XX_ERROR_FS,min_vsg_xx,max_vsg_xx,avg_vsg_xx,std_dev_vsg_xx,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
-        mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_XY_ERROR_FS,min_vsg_xy,max_vsg_xy,avg_vsg_xy,std_dev_vsg_xy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
-        mesh_->field_stats(DICe::mesh::field_enums::VSG_STRAIN_YY_ERROR_FS,min_vsg_yy,max_vsg_yy,avg_vsg_yy,std_dev_vsg_yy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+        mesh_->field_stats(VSG_STRAIN_XX_ERROR_FS,min_vsg_xx,max_vsg_xx,avg_vsg_xx,std_dev_vsg_xx,0,SIGMA_FS,-1.0);
+        mesh_->field_stats(VSG_STRAIN_XY_ERROR_FS,min_vsg_xy,max_vsg_xy,avg_vsg_xy,std_dev_vsg_xy,0,SIGMA_FS,-1.0);
+        mesh_->field_stats(VSG_STRAIN_YY_ERROR_FS,min_vsg_yy,max_vsg_yy,avg_vsg_yy,std_dev_vsg_yy,0,SIGMA_FS,-1.0);
         result_stream << " " << min_vsg_xx << " " << max_vsg_xx << " " << avg_vsg_xx << " " << std_dev_vsg_xx;
         result_stream << " " << min_vsg_xy << " " << max_vsg_xy << " " << avg_vsg_xy << " " << std_dev_vsg_xy;
         result_stream << " " << min_vsg_yy << " " << max_vsg_yy << " " << avg_vsg_yy << " " << std_dev_vsg_yy;
@@ -2560,9 +2610,9 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
         scalar_t max_nlvc_yy = 0.0;
         scalar_t avg_nlvc_yy = 0.0;
         scalar_t std_dev_nlvc_yy = 0.0;
-        mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_XX_ERROR_FS,min_nlvc_xx,max_nlvc_xx,avg_nlvc_xx,std_dev_nlvc_xx,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
-        mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_XY_ERROR_FS,min_nlvc_xy,max_nlvc_xy,avg_nlvc_xy,std_dev_nlvc_xy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
-        mesh_->field_stats(DICe::mesh::field_enums::NLVC_STRAIN_YY_ERROR_FS,min_nlvc_yy,max_nlvc_yy,avg_nlvc_yy,std_dev_nlvc_yy,0,DICe::mesh::field_enums::SIGMA_FS,-1.0);
+        mesh_->field_stats(NLVC_STRAIN_XX_ERROR_FS,min_nlvc_xx,max_nlvc_xx,avg_nlvc_xx,std_dev_nlvc_xx,0,SIGMA_FS,-1.0);
+        mesh_->field_stats(NLVC_STRAIN_XY_ERROR_FS,min_nlvc_xy,max_nlvc_xy,avg_nlvc_xy,std_dev_nlvc_xy,0,SIGMA_FS,-1.0);
+        mesh_->field_stats(NLVC_STRAIN_YY_ERROR_FS,min_nlvc_yy,max_nlvc_yy,avg_nlvc_yy,std_dev_nlvc_yy,0,SIGMA_FS,-1.0);
         result_stream << " " << min_nlvc_xx << " " << max_nlvc_xx << " " << avg_nlvc_xx << " " << std_dev_nlvc_xx;
         result_stream << " " << min_nlvc_xy << " " << max_nlvc_xy << " " << avg_nlvc_xy << " " << std_dev_nlvc_xy;
         result_stream << " " << min_nlvc_yy << " " << max_nlvc_yy << " " << avg_nlvc_yy << " " << std_dev_nlvc_yy;
@@ -2682,8 +2732,8 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
 
   // only do this if the analysis does not ask for right to left projection
   // otherwise, leave these field uninitialized
-  Teuchos::RCP<MultiField> proj_aug_x = mesh_->get_field(DICe::mesh::field_enums::PROJECTION_AUG_X_FS);
-  Teuchos::RCP<MultiField> proj_aug_y = mesh_->get_field(DICe::mesh::field_enums::PROJECTION_AUG_Y_FS);
+  Teuchos::RCP<MultiField> proj_aug_x = mesh_->get_field(PROJECTION_AUG_X_FS);
+  Teuchos::RCP<MultiField> proj_aug_y = mesh_->get_field(PROJECTION_AUG_Y_FS);
   for(int_t i=0;i<local_num_subsets_;++i){
     scalar_t cx = local_field_value(i,SUBSET_COORDINATES_X_FS);
     scalar_t cy = local_field_value(i,SUBSET_COORDINATES_Y_FS);
@@ -2710,18 +2760,18 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
   TEUCHOS_TEST_FOR_EXCEPTION(right_schema->local_num_subsets()!=local_num_subsets_,std::runtime_error,
     "Error, incompatible schemas: left number of subsets " << local_num_subsets_ << " right " << right_schema->local_num_subsets());
 
-  Teuchos::RCP<MultiField> disp_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> disp_y = mesh_->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
-  Teuchos::RCP<MultiField> stereo_disp_x = right_schema->mesh()->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> stereo_disp_y = right_schema->mesh()->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> disp_x = mesh_->get_field(SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> disp_y = mesh_->get_field(SUBSET_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> stereo_disp_x = right_schema->mesh()->get_field(SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> stereo_disp_y = right_schema->mesh()->get_field(SUBSET_DISPLACEMENT_Y_FS);
 
   // for all the failed points, average the nearest neighbor result so that the plotting
   // doesn't get ruined, but still record a -1 for sigma and match fields
-  Teuchos::RCP<MultiField> sigma_left = mesh_->get_field(DICe::mesh::field_enums::SIGMA_FS);
-  Teuchos::RCP<MultiField> match_left = mesh_->get_field(DICe::mesh::field_enums::MATCH_FS);
-  Teuchos::RCP<MultiField> sigma_right = right_schema->mesh()->get_field(DICe::mesh::field_enums::SIGMA_FS);
+  Teuchos::RCP<MultiField> sigma_left = mesh_->get_field(SIGMA_FS);
+  Teuchos::RCP<MultiField> match_left = mesh_->get_field(MATCH_FS);
+  Teuchos::RCP<MultiField> sigma_right = right_schema->mesh()->get_field(SIGMA_FS);
 
-  Teuchos::RCP<MultiField> max_m = mesh_->get_field(DICe::mesh::field_enums::STEREO_M_MAX_FS);
+  Teuchos::RCP<MultiField> max_m = mesh_->get_field(STEREO_M_MAX_FS);
 
 //  // set up a neighbor search tree:
 //  Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud<scalar_t>());
@@ -2800,25 +2850,25 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
   } // end subset loop
 
   // make sure the stereo coords fields are populated
-  Teuchos::RCP<MultiField> coords_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
-  Teuchos::RCP<MultiField> coords_y = mesh_->get_field(DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> coords_x = mesh_->get_field(SUBSET_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> coords_y = mesh_->get_field(SUBSET_COORDINATES_Y_FS);
   // the coordinates of the stereo subsets already got copied over at the end of the cross corr execution
-  Teuchos::RCP<MultiField> stereo_coords_x = mesh_->get_field(DICe::mesh::field_enums::STEREO_COORDINATES_X_FS);
-  Teuchos::RCP<MultiField> stereo_coords_y = mesh_->get_field(DICe::mesh::field_enums::STEREO_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> stereo_coords_x = mesh_->get_field(STEREO_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> stereo_coords_y = mesh_->get_field(STEREO_COORDINATES_Y_FS);
   TEUCHOS_TEST_FOR_EXCEPTION(stereo_coords_x->norm()==0.0,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(stereo_coords_y->norm()==0.0,std::runtime_error,"");
 
   // copy the stereo displacement field into place
-  Teuchos::RCP<MultiField> my_stereo_disp_x = mesh_->get_field(DICe::mesh::field_enums::STEREO_SUBSET_DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> my_stereo_disp_y = mesh_->get_field(DICe::mesh::field_enums::STEREO_SUBSET_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> my_stereo_disp_x = mesh_->get_field(STEREO_SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> my_stereo_disp_y = mesh_->get_field(STEREO_SUBSET_DISPLACEMENT_Y_FS);
   my_stereo_disp_x->update(1.0,*stereo_disp_x,0.0);
   my_stereo_disp_y->update(1.0,*stereo_disp_y,0.0);
-  Teuchos::RCP<MultiField> model_x = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_X_FS);
-  Teuchos::RCP<MultiField> model_y = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_Y_FS);
-  Teuchos::RCP<MultiField> model_z = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_Z_FS);
-  Teuchos::RCP<MultiField> model_disp_x = mesh_->get_field(DICe::mesh::field_enums::MODEL_SUBSET_DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> model_disp_y = mesh_->get_field(DICe::mesh::field_enums::MODEL_SUBSET_DISPLACEMENT_Y_FS);
-  Teuchos::RCP<MultiField> model_disp_z = mesh_->get_field(DICe::mesh::field_enums::MODEL_DISPLACEMENT_Z_FS);
+  Teuchos::RCP<MultiField> model_x = mesh_->get_field(MODEL_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> model_y = mesh_->get_field(MODEL_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> model_z = mesh_->get_field(MODEL_COORDINATES_Z_FS);
+  Teuchos::RCP<MultiField> model_disp_x = mesh_->get_field(MODEL_SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> model_disp_y = mesh_->get_field(MODEL_SUBSET_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> model_disp_z = mesh_->get_field(MODEL_DISPLACEMENT_Z_FS);
   scalar_t X=0.0,Y=0.0,Z=0.0;
   scalar_t Xw=0.0,Yw=0.0,Zw=0.0;
   scalar_t xl=0.0,yl=0.0;
@@ -2857,7 +2907,7 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
     //std::cout << " xl " << xl << " yl " << yl << " xr " << xr << " yr " << yr << " X " << Xw << " Y " << Yw << " Z " << Zw << std::endl;
   }
   if(frame_id_==first_frame_id_+1 && best_fit){
-    Teuchos::RCP<MultiField> sigma = mesh_->get_field(DICe::mesh::field_enums::SIGMA_FS);
+    Teuchos::RCP<MultiField> sigma = mesh_->get_field(SIGMA_FS);
     tri->best_fit_plane(model_x,model_y,model_z,sigma);
     // retriangulate the coordinate in the first frame
     for(int_t i=0;i<local_num_subsets_;++i){
@@ -3061,8 +3111,8 @@ Schema::write_output(const std::string & output_folder,
     // determine the sort order
     if(sort_txt_output_){
       // gather the coordinates fields
-      Teuchos::RCP<MultiField> subset_coords_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
-      Teuchos::RCP<MultiField> subset_coords_y = mesh_->get_field(DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS);
+      Teuchos::RCP<MultiField> subset_coords_x = mesh_->get_field(SUBSET_COORDINATES_X_FS);
+      Teuchos::RCP<MultiField> subset_coords_y = mesh_->get_field(SUBSET_COORDINATES_Y_FS);
       std::vector<std::tuple<int_t,scalar_t,scalar_t> >
         data(local_num_subsets_,std::tuple<int_t,scalar_t,scalar_t>(0,0.0,0.0));
       for(int_t i=0;i<local_num_subsets_;++i){
@@ -3333,8 +3383,8 @@ Output_Spec::Output_Spec(Schema * schema,
     field_names_.push_back(SUBSET_COORDINATES_Y_FS.get_name_label());
     field_names_.push_back(SUBSET_DISPLACEMENT_X_FS.get_name_label());
     field_names_.push_back(SUBSET_DISPLACEMENT_Y_FS.get_name_label());
+    field_names_.push_back(ROTATION_Z_FS.get_name_label());
     if(!schema->affine_matrix_enabled()){
-      field_names_.push_back(ROTATION_Z_FS.get_name_label());
       field_names_.push_back(NORMAL_STRETCH_XX_FS.get_name_label());
       field_names_.push_back(NORMAL_STRETCH_YY_FS.get_name_label());
       field_names_.push_back(SHEAR_STRETCH_XY_FS.get_name_label());

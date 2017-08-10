@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
   const scalar_t step_size_theta = 0.5;
   const scalar_t search_dim_xy = 140;
   const scalar_t search_dim_theta = 1;
-  Search_Initializer searcher(schema.getRawPtr(),subset,step_size_xy,search_dim_xy,step_size_theta,search_dim_theta);
+  Search_Initializer searcher(schema.getRawPtr(),subset,step_size_xy,search_dim_xy,step_size_xy,search_dim_xy,step_size_theta,search_dim_theta);
   Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
   searcher.initial_guess(-1,def);
   if(std::abs((*def)[DOF_U] - u_exact) > errorTol || std::abs((*def)[DOF_V] - v_exact) > errorTol){

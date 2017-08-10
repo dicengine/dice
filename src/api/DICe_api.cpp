@@ -113,6 +113,8 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate(scalar_t points[], int_t n_points
   // call set_params on the schema in case the parameter have changed:
   if(!initialized||update_params)
     schema.set_params(params);
+  TEUCHOS_TEST_FOR_EXCEPTION(schema.affine_matrix_enabled(),std::runtime_error,"Error, cannot use affine matrix for the api routines");
+
 
   initialized = true;
   // set the deformed image manually in case this is not the first image in the set:
@@ -256,6 +258,7 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
     schema.local_field_value(i,DICe::mesh::field_enums::BETA_FS)           = points[i*DICE_API_STRIDE + 7];
     schema.local_field_value(i,DICe::mesh::field_enums::STATUS_FLAG_FS)    = points[i*DICE_API_STRIDE + 8];
   }
+  TEUCHOS_TEST_FOR_EXCEPTION(schema.affine_matrix_enabled(),std::runtime_error,"Error, cannot use affine matrix for the api routines");
 
   schema.execute_correlation();
 

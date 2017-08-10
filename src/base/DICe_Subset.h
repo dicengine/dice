@@ -77,6 +77,30 @@ inline void map_affine( const scalar_t & x,
   out_y = ((*def)[3]*x + (*def)[4]*y + (*def)[5])/((*def)[6]*x + (*def)[7]*y + (*def)[8]);
 }
 
+/// computes u, v, and theta for an affine matrix deformation mapping
+/// \param x input x coord
+/// \param y input y coord
+/// \param out_u output u displacement
+/// \param out_v output v displacement
+/// \param out_theta output rotation
+/// \param def deformation vector
+DICE_LIB_DLL_EXPORT
+void affine_map_to_motion( const scalar_t & x,
+  const scalar_t & y,
+  scalar_t & out_u,
+  scalar_t & out_v,
+  scalar_t & out_theta,
+  const Teuchos::RCP<const std::vector<scalar_t> > & def);
+
+/// adds a translation to an affine mapping
+/// \param u displacement x to add
+/// \param v displacement y to add
+/// \param def deformation vector to update
+DICE_LIB_DLL_EXPORT
+void affine_add_translation( const scalar_t & u,
+  const scalar_t & v,
+  Teuchos::RCP<std::vector<scalar_t> > & def);
+
 
 /// \class DICe::Subset
 /// \brief Subsets are used to store temporary collections of pixels for comparison between the

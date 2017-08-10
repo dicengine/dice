@@ -173,6 +173,15 @@ void create_string_maps()
   field_name_string[field_enums::EXTERNAL_FACE_EDGE_SIZE]                            = "EXTERNAL_FACE_EDGE_SIZE";
   field_name_string[field_enums::INTERNAL_CELL_COORDINATES]                          = "INTERNAL_CELL_COORDINATES";
   field_name_string[field_enums::INTERNAL_CELL_SIZE]                                 = "INTERNAL_CELL_SIZE";
+  field_name_string[field_enums::AFFINE_A]                                           = "AFFINE_A";
+  field_name_string[field_enums::AFFINE_B]                                           = "AFFINE_B";
+  field_name_string[field_enums::AFFINE_C]                                           = "AFFINE_C";
+  field_name_string[field_enums::AFFINE_D]                                           = "AFFINE_D";
+  field_name_string[field_enums::AFFINE_E]                                           = "AFFINE_E";
+  field_name_string[field_enums::AFFINE_F]                                           = "AFFINE_F";
+  field_name_string[field_enums::AFFINE_G]                                           = "AFFINE_G";
+  field_name_string[field_enums::AFFINE_H]                                           = "AFFINE_H";
+  field_name_string[field_enums::AFFINE_I]                                           = "AFFINE_I";
   field_name_string[field_enums::FIELD_1]                                            = "FIELD_1";
   field_name_string[field_enums::FIELD_2]                                            = "FIELD_2";
   field_name_string[field_enums::FIELD_3]                                            = "FIELD_3";

@@ -182,6 +182,7 @@ Path_Initializer::write_to_text_file(const std::string & file_name)const{
 Status_Flag
 Path_Initializer::initial_guess(const int_t subset_gid,
   Teuchos::RCP<std::vector<scalar_t> > deformation){
+  TEUCHOS_TEST_FOR_EXCEPTION(schema_->affine_matrix_enabled(),std::runtime_error,"Error, affine matrix shape functions cannot be used with path initializer");
   bool global_path_search_required = schema_->global_field_value(subset_gid,SIGMA_FS)==-1.0 || schema_->frame_id()==schema_->first_frame_id();
   if(global_path_search_required){
     initial_guess(schema_->def_img(),deformation);
@@ -295,7 +296,17 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
 Status_Flag
 Phase_Correlation_Initializer::initial_guess(const int_t subset_gid,
   Teuchos::RCP<std::vector<scalar_t> > deformation){
-
+  if(schema_->affine_matrix_enabled()){
+    (*deformation)[DOF_A] = 1.0;
+    (*deformation)[DOF_B] = 0.0;
+    (*deformation)[DOF_C] = phase_cor_u_x_ + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+    (*deformation)[DOF_D] = 0.0;
+    (*deformation)[DOF_E] = 1.0;
+    (*deformation)[DOF_F] = phase_cor_u_y_ + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
+    (*deformation)[DOF_G] = 0.0;
+    (*deformation)[DOF_H] = 0.0;
+    (*deformation)[DOF_I] = 1.0;
+  }
   (*deformation)[DOF_U] = phase_cor_u_x_ + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
   (*deformation)[DOF_V] = phase_cor_u_y_ + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
   (*deformation)[DOF_THETA] = schema_->global_field_value(subset_gid,ROTATION_Z_FS);
@@ -317,30 +328,55 @@ Search_Initializer::initial_guess(const int_t subset_gid,
 
   DEBUG_MSG("Search_Initializer::initial_guess(): called for subset " << subset_gid);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(step_size_xy_<=0.0,std::runtime_error,"Error, step xy size must be > 0");
-  TEUCHOS_TEST_FOR_EXCEPTION(step_size_theta_<=0.0,std::runtime_error,"Error, step size theta must be > 0");
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size_u_==0.0,std::runtime_error,"Error, step x size must not be 0");
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size_v_==0.0,std::runtime_error,"Error, step y size must not be 0");
+  TEUCHOS_TEST_FOR_EXCEPTION(step_size_theta_==0.0,std::runtime_error,"Error, step size theta must not be 0");
+
+  // save off the original deformation
+  Teuchos::RCP<std::vector<scalar_t> > def_orig = Teuchos::rcp(new std::vector<scalar_t>(deformation->size(),0.0));
+  for(size_t i=0;i<deformation->size();++i)
+    (*def_orig)[i] = (*deformation)[i];
 
   // start with the input deformation
-  const scalar_t orig_x = (*deformation)[DOF_U];
-  const scalar_t orig_y = (*deformation)[DOF_V];
-  const scalar_t orig_t = (*deformation)[DOF_THETA];
-  const scalar_t start_x = orig_x - search_dim_xy_;
-  const scalar_t start_y = orig_y - search_dim_xy_;
-  const scalar_t start_t = orig_t - search_dim_theta_;
-  const scalar_t end_x = orig_x + search_dim_xy_;
-  const scalar_t end_y = orig_y + search_dim_xy_;
-  const scalar_t end_t = orig_t + search_dim_theta_;
+  scalar_t orig_u = 0.0,orig_v=0.0,orig_t=0.0;
+  if(schema_->affine_matrix_enabled()){
+    TEUCHOS_TEST_FOR_EXCEPTION(step_size_theta_ > 0.0,std::runtime_error,"Error, can't search in theta with affine matrix shape functions enabled");
+    const scalar_t x = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
+    const scalar_t y = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
+    affine_map_to_motion(x,y,orig_u,orig_v,orig_t,deformation);
+  }else{
+    orig_u = (*deformation)[DOF_U];
+    orig_v = (*deformation)[DOF_V];
+    orig_t = (*deformation)[DOF_THETA];
+  }
+  const scalar_t start_u = step_size_u_ < 0.0 ? orig_u : orig_u - search_dim_u_;
+  const scalar_t start_v = step_size_v_ < 0.0 ? orig_v : orig_v - search_dim_v_;
+  const scalar_t start_t = step_size_theta_ < 0.0 ? orig_t : orig_t - search_dim_theta_;
+  const scalar_t end_u = step_size_u_ < 0.0 ? orig_u : orig_u + search_dim_u_;
+  const scalar_t end_v = step_size_v_ < 0.0 ? orig_v : orig_v + search_dim_v_;
+  const scalar_t end_t = step_size_theta_ < 0.0 ? orig_t : orig_t + search_dim_theta_;
+  if(step_size_u_ < 0.0) step_size_u_ = 1.0;
+  if(step_size_v_ < 0.0) step_size_v_ = 1.0;
+  if(step_size_theta_ < 0.0) step_size_theta_ = 1.0;
   const scalar_t gamma_good_enough = 1.0E-4;
   scalar_t min_gamma = 100.0;
-  scalar_t min_x = 0.0;
-  scalar_t min_y = 0.0;
+  scalar_t min_u = 0.0;
+  scalar_t min_v = 0.0;
   scalar_t min_theta = 0.0;
-  for(scalar_t pos_y = start_y;pos_y<=end_y;pos_y+=step_size_xy_){
-    for(scalar_t pos_x = start_x;pos_x<=end_x;pos_x+=step_size_xy_){
-      for(scalar_t pos_t = start_t;pos_t<=end_t;pos_t+=step_size_theta_){
-        (*deformation)[DOF_U] = pos_x;
-        (*deformation)[DOF_V] = pos_y;
-        (*deformation)[DOF_THETA] = pos_t;
+  // search in u, v, and theta
+  TEUCHOS_TEST_FOR_EXCEPTION(schema_->affine_matrix_enabled(),std::runtime_error,"Error, cant search on theta with affine matrix enabled.");
+  for(scalar_t trial_v = start_v;trial_v<=end_v;trial_v+=step_size_u_){
+    for(scalar_t trial_u = start_u;trial_u<=end_u;trial_u+=step_size_v_){
+      for(scalar_t trial_t = start_t;trial_t<=end_t;trial_t+=step_size_theta_){
+        if(schema_->affine_matrix_enabled()){
+          for(size_t i=0;i<deformation->size();++i)
+            (*deformation)[i] = (*def_orig)[i];
+          affine_add_translation(trial_u,trial_v,deformation);
+        }else{
+          (*deformation)[DOF_U] = trial_u;
+          (*deformation)[DOF_V] = trial_v;
+          (*deformation)[DOF_THETA] = trial_t;
+        }
         subset_->initialize(schema_->def_img(),DEF_INTENSITIES,deformation);
         // assumes that the reference subset has already been initialized
         scalar_t gamma = 100.0;
@@ -354,25 +390,35 @@ Search_Initializer::initial_guess(const int_t subset_gid,
         //DEBUG_MSG("search pos " << pos_x << " " << pos_y << " " << pos_t << " gamma " << gamma);
         if(gamma < min_gamma){
           min_gamma = gamma;
-          min_x = pos_x;
-          min_y = pos_y;
-          min_theta = pos_t;
+          min_u = trial_u;
+          min_v = trial_v;
+          min_theta = trial_t;
         }
         if(gamma < gamma_good_enough){
           DEBUG_MSG("Found very small gamma: " << gamma << " skipping the rest of the search");
-          DEBUG_MSG("Search initialization values: " << (*deformation)[DOF_U] << " "
-            << (*deformation)[DOF_V] << " " << (*deformation)[DOF_THETA]);
+          if(schema_->affine_matrix_enabled()){
+            scalar_t affine_u = 0.0,affine_v = 0.0,affine_theta = 0.0;
+            affine_map_to_motion(subset_->centroid_x(),subset_->centroid_y(),affine_u,affine_v,affine_theta,deformation);
+            DEBUG_MSG("Search initialization values: u, " << affine_u << " v, " << affine_v << " theta, " << affine_theta);
+          }else{
+            DEBUG_MSG("Search initialization values: u, " << (*deformation)[DOF_U] << " v, "
+              << (*deformation)[DOF_V] << " theta, " << (*deformation)[DOF_THETA]);
+          }
           return INITIALIZE_SUCCESSFUL;
         }
-      }
-    }
+      } // theta loop
+    } // u loop
+  } // v loop
+  DEBUG_MSG("Search initialization values: " << min_u << " " << min_v << " " << min_theta << " gamma: " << min_gamma);
+  if(schema_->affine_matrix_enabled()){
+    for(size_t i=0;i<deformation->size();++i)
+      (*deformation)[i] = (*def_orig)[i];
+    affine_add_translation(min_u,min_v,deformation);
+  }else{
+    (*deformation)[DOF_U] = min_u;
+    (*deformation)[DOF_V] = min_v;
+    (*deformation)[DOF_THETA] = min_theta;
   }
-
-  DEBUG_MSG("Search initialization values: " << min_x << " " << min_y << " " << min_theta << " gamma: " << min_gamma);
-  (*deformation)[DOF_U] = min_x;
-  (*deformation)[DOF_V] = min_y;
-  (*deformation)[DOF_THETA] = min_theta;
-
   if(min_gamma < 1.0)
     return INITIALIZE_SUCCESSFUL;
   else
@@ -382,7 +428,8 @@ Search_Initializer::initial_guess(const int_t subset_gid,
 Status_Flag
 Field_Value_Initializer::initial_guess(const int_t subset_gid,
   Teuchos::RCP<std::vector<scalar_t> > deformation){
-  TEUCHOS_TEST_FOR_EXCEPTION(deformation->size()!=DICE_DEFORMATION_SIZE,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(deformation->size()!=DICE_DEFORMATION_SIZE&&
+    deformation->size()!=DICE_DEFORMATION_SIZE_AFFINE,std::runtime_error,"");
   int_t sid = subset_gid;
   // logic for using neighbor values
   if(schema_->initialization_method()==DICe::USE_NEIGHBOR_VALUES ||
@@ -397,66 +444,91 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
   TEUCHOS_TEST_FOR_EXCEPTION(schema_->subset_local_id(sid)<0,std::runtime_error,
     "Error: Only subset ids on this processor can be used for initialization");
 
+  const Projection_Method projection = schema_->projection_method();
+  TEUCHOS_TEST_FOR_EXCEPTION(projection==VELOCITY_BASED&&schema_->affine_matrix_enabled(),std::runtime_error,"Error, cannot use affine matrix shape functions and velocity projection.");
+
   // 1: check if there exists a value from the previous step (image in a series)
   const scalar_t sigma = schema_->global_field_value(sid,SIGMA_FS);
   if(sigma!=-1.0){// && sigma!=0.0)
-    const Projection_Method projection = schema_->projection_method();
-    if(schema_->translation_enabled()){
-      DEBUG_MSG("Subset " << subset_gid << " Translation is enabled.");
-      if(schema_->frame_id() > schema_->first_frame_id()+2 && projection == VELOCITY_BASED){
-        (*deformation)[DICe::DOF_U] = schema_->global_field_value(sid,SUBSET_DISPLACEMENT_X_FS) +
-            (schema_->global_field_value(sid,SUBSET_DISPLACEMENT_X_FS)-schema_->global_field_value(sid,SUBSET_DISPLACEMENT_X_NM1_FS));
-        (*deformation)[DICe::DOF_V] = schema_->global_field_value(sid,SUBSET_DISPLACEMENT_Y_FS) +
-            (schema_->global_field_value(sid,SUBSET_DISPLACEMENT_Y_FS)-schema_->global_field_value(sid,SUBSET_DISPLACEMENT_Y_NM1_FS));
+    if(schema_->affine_matrix_enabled()){
+      (*deformation)[DOF_A] = schema_->global_field_value(sid,AFFINE_A_FS);
+      (*deformation)[DOF_B] = schema_->global_field_value(sid,AFFINE_B_FS);
+      (*deformation)[DOF_C] = schema_->global_field_value(sid,AFFINE_C_FS);
+      (*deformation)[DOF_D] = schema_->global_field_value(sid,AFFINE_D_FS);
+      (*deformation)[DOF_E] = schema_->global_field_value(sid,AFFINE_E_FS);
+      (*deformation)[DOF_F] = schema_->global_field_value(sid,AFFINE_F_FS);
+      (*deformation)[DOF_G] = schema_->global_field_value(sid,AFFINE_G_FS);
+      (*deformation)[DOF_H] = schema_->global_field_value(sid,AFFINE_H_FS);
+      (*deformation)[DOF_I] = schema_->global_field_value(sid,AFFINE_I_FS);
+      if(sid!=subset_gid)
+        DEBUG_MSG("Subset " << subset_gid << " was initialized from the field values of subset " << sid);
+      DEBUG_MSG("Subset " << subset_gid << " init. with values: A " << (*deformation)[DICe::DOF_A] <<
+        " B " << (*deformation)[DICe::DOF_B] <<
+        " C " << (*deformation)[DICe::DOF_C] <<
+        " D " << (*deformation)[DICe::DOF_D] <<
+        " E " << (*deformation)[DICe::DOF_E] <<
+        " F " << (*deformation)[DICe::DOF_F] <<
+        " G " << (*deformation)[DICe::DOF_G] <<
+        " H " << (*deformation)[DICe::DOF_H] <<
+        " I " << (*deformation)[DICe::DOF_I]);
+    }else{
+      if(schema_->translation_enabled()){
+        DEBUG_MSG("Subset " << subset_gid << " Translation is enabled.");
+        if(schema_->frame_id() > schema_->first_frame_id()+2 && projection == VELOCITY_BASED){
+          (*deformation)[DICe::DOF_U] = schema_->global_field_value(sid,SUBSET_DISPLACEMENT_X_FS) +
+              (schema_->global_field_value(sid,SUBSET_DISPLACEMENT_X_FS)-schema_->global_field_value(sid,SUBSET_DISPLACEMENT_X_NM1_FS));
+          (*deformation)[DICe::DOF_V] = schema_->global_field_value(sid,SUBSET_DISPLACEMENT_Y_FS) +
+              (schema_->global_field_value(sid,SUBSET_DISPLACEMENT_Y_FS)-schema_->global_field_value(sid,SUBSET_DISPLACEMENT_Y_NM1_FS));
+        }
+        else{
+          (*deformation)[DICe::DOF_U] = schema_->global_field_value(sid,SUBSET_DISPLACEMENT_X_FS);
+          (*deformation)[DICe::DOF_V] = schema_->global_field_value(sid,SUBSET_DISPLACEMENT_Y_FS);
+        }
       }
+      if(schema_->rotation_enabled()){
+        DEBUG_MSG("Subset " << subset_gid << " Rotation is enabled.");
+        if(schema_->frame_id() > schema_->first_frame_id()+2 && projection == VELOCITY_BASED){
+          (*deformation)[DICe::DOF_THETA] = schema_->global_field_value(sid,ROTATION_Z_FS) +
+              (schema_->global_field_value(sid,ROTATION_Z_FS)-schema_->global_field_value(sid,ROTATION_Z_NM1_FS));
+        }
+        else{
+          (*deformation)[DICe::DOF_THETA] = schema_->global_field_value(sid,ROTATION_Z_FS);
+        }
+      }
+      if(schema_->normal_strain_enabled()){
+        DEBUG_MSG("Subset " << subset_gid << " Normal strain is enabled.");
+        (*deformation)[DICe::DOF_EX] = schema_->global_field_value(sid,NORMAL_STRETCH_XX_FS);
+        (*deformation)[DICe::DOF_EY] = schema_->global_field_value(sid,NORMAL_STRETCH_YY_FS);
+      }
+      if(schema_->shear_strain_enabled()){
+        DEBUG_MSG("Subset " << subset_gid << " Shear strain is enabled.");
+        (*deformation)[DICe::DOF_GXY] = schema_->global_field_value(sid,SHEAR_STRETCH_XY_FS);
+      }
+      if(sid!=subset_gid)
+        DEBUG_MSG("Subset " << subset_gid << " was initialized from the field values of subset " << sid);
       else{
-        (*deformation)[DICe::DOF_U] = schema_->global_field_value(sid,SUBSET_DISPLACEMENT_X_FS);
-        (*deformation)[DICe::DOF_V] = schema_->global_field_value(sid,SUBSET_DISPLACEMENT_Y_FS);
+        DEBUG_MSG("Projection Method: " << projection);
+        DEBUG_MSG("Subset " << subset_gid << " solution from prev. step: u " << schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) <<
+          " v " << schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) <<
+          " theta " << schema_->global_field_value(subset_gid,ROTATION_Z_FS) <<
+          " e_x " << schema_->global_field_value(subset_gid,NORMAL_STRETCH_XX_FS) <<
+          " e_y " << schema_->global_field_value(subset_gid,NORMAL_STRETCH_YY_FS) <<
+          " g_xy " << schema_->global_field_value(subset_gid,SHEAR_STRETCH_XY_FS));
+        DEBUG_MSG("Subset " << subset_gid << " solution from nm1 step: u " << schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_NM1_FS) <<
+          " v " << schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_NM1_FS) <<
+          " theta " << schema_->global_field_value(subset_gid,ROTATION_Z_NM1_FS) <<
+          " e_x " << schema_->global_field_value(subset_gid,NORMAL_STRETCH_XX_NM1_FS) <<
+          " e_y " << schema_->global_field_value(subset_gid,NORMAL_STRETCH_YY_NM1_FS) <<
+          " g_xy " << schema_->global_field_value(subset_gid,SHEAR_STRETCH_XY_NM1_FS));
       }
-    }
-    if(schema_->rotation_enabled()){
-      DEBUG_MSG("Subset " << subset_gid << " Rotation is enabled.");
-      if(schema_->frame_id() > schema_->first_frame_id()+2 && projection == VELOCITY_BASED){
-        (*deformation)[DICe::DOF_THETA] = schema_->global_field_value(sid,ROTATION_Z_FS) +
-            (schema_->global_field_value(sid,ROTATION_Z_FS)-schema_->global_field_value(sid,ROTATION_Z_NM1_FS));
-      }
-      else{
-        (*deformation)[DICe::DOF_THETA] = schema_->global_field_value(sid,ROTATION_Z_FS);
-      }
-    }
-    if(schema_->normal_strain_enabled()){
-      DEBUG_MSG("Subset " << subset_gid << " Normal strain is enabled.");
-      (*deformation)[DICe::DOF_EX] = schema_->global_field_value(sid,NORMAL_STRETCH_XX_FS);
-      (*deformation)[DICe::DOF_EY] = schema_->global_field_value(sid,NORMAL_STRETCH_YY_FS);
-    }
-    if(schema_->shear_strain_enabled()){
-      DEBUG_MSG("Subset " << subset_gid << " Shear strain is enabled.");
-      (*deformation)[DICe::DOF_GXY] = schema_->global_field_value(sid,SHEAR_STRETCH_XY_FS);
-    }
+      DEBUG_MSG("Subset " << subset_gid << " init. with values: u " << (*deformation)[DICe::DOF_U] <<
+        " v " << (*deformation)[DICe::DOF_V] <<
+        " theta " << (*deformation)[DICe::DOF_THETA] <<
+        " e_x " << (*deformation)[DICe::DOF_EX] <<
+        " e_y " << (*deformation)[DICe::DOF_EY] <<
+        " g_xy " << (*deformation)[DICe::DOF_GXY]);
+    } // end not affine matrix subsets
 
-    if(sid!=subset_gid)
-      DEBUG_MSG("Subset " << subset_gid << " was initialized from the field values of subset " << sid);
-    else{
-      DEBUG_MSG("Projection Method: " << projection);
-      DEBUG_MSG("Subset " << subset_gid << " solution from prev. step: u " << schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) <<
-        " v " << schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) <<
-        " theta " << schema_->global_field_value(subset_gid,ROTATION_Z_FS) <<
-        " e_x " << schema_->global_field_value(subset_gid,NORMAL_STRETCH_XX_FS) <<
-        " e_y " << schema_->global_field_value(subset_gid,NORMAL_STRETCH_YY_FS) <<
-        " g_xy " << schema_->global_field_value(subset_gid,SHEAR_STRETCH_XY_FS));
-      DEBUG_MSG("Subset " << subset_gid << " solution from nm1 step: u " << schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_NM1_FS) <<
-        " v " << schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_NM1_FS) <<
-        " theta " << schema_->global_field_value(subset_gid,ROTATION_Z_NM1_FS) <<
-        " e_x " << schema_->global_field_value(subset_gid,NORMAL_STRETCH_XX_NM1_FS) <<
-        " e_y " << schema_->global_field_value(subset_gid,NORMAL_STRETCH_YY_NM1_FS) <<
-        " g_xy " << schema_->global_field_value(subset_gid,SHEAR_STRETCH_XY_NM1_FS));
-    }
-    DEBUG_MSG("Subset " << subset_gid << " init. with values: u " << (*deformation)[DICe::DOF_U] <<
-      " v " << (*deformation)[DICe::DOF_V] <<
-      " theta " << (*deformation)[DICe::DOF_THETA] <<
-      " e_x " << (*deformation)[DICe::DOF_EX] <<
-      " e_y " << (*deformation)[DICe::DOF_EY] <<
-      " g_xy " << (*deformation)[DICe::DOF_GXY]);
     if(sid==subset_gid)
       return INITIALIZE_USING_PREVIOUS_FRAME_SUCCESSFUL;
     else
@@ -530,10 +602,25 @@ Feature_Matching_Initializer::initial_guess(const int_t subset_gid,
   const int_t nearest_feature_id = ret_index[0];
   TEUCHOS_TEST_FOR_EXCEPTION((int_t)u_.size()<=nearest_feature_id,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION((int_t)v_.size()<=nearest_feature_id,std::runtime_error,"");
-  (*deformation)[DOF_U] = u_[nearest_feature_id] + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
-  (*deformation)[DOF_V] = v_[nearest_feature_id] + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
-  DEBUG_MSG("Subset " << subset_gid << " init. with values: u " << (*deformation)[DICe::DOF_U] <<
-    " v " << (*deformation)[DICe::DOF_V] << " dist from nearest feature: " << std::sqrt(out_dist_sqr[0]) << " px");
+  if(schema_->affine_matrix_enabled()){
+    (*deformation)[DOF_C] = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+    (*deformation)[DOF_F] = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
+    affine_add_translation(u_[nearest_feature_id],v_[nearest_feature_id],deformation);
+    DEBUG_MSG("Subset " << subset_gid << " init. with values: A " << (*deformation)[DICe::DOF_A] <<
+      " B " << (*deformation)[DICe::DOF_B] <<
+      " C " << (*deformation)[DICe::DOF_C] <<
+      " D " << (*deformation)[DICe::DOF_D] <<
+      " E " << (*deformation)[DICe::DOF_E] <<
+      " F " << (*deformation)[DICe::DOF_F] <<
+      " G " << (*deformation)[DICe::DOF_G] <<
+      " H " << (*deformation)[DICe::DOF_H] <<
+      " I " << (*deformation)[DICe::DOF_I]);
+  }else{
+    (*deformation)[DOF_U] = u_[nearest_feature_id] + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+    (*deformation)[DOF_V] = v_[nearest_feature_id] + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
+    DEBUG_MSG("Subset " << subset_gid << " init. with values: u " << (*deformation)[DICe::DOF_U] <<
+      " v " << (*deformation)[DICe::DOF_V] << " dist from nearest feature: " << std::sqrt(out_dist_sqr[0]) << " px");
+  }
 
   return INITIALIZE_SUCCESSFUL;
 };
@@ -575,6 +662,7 @@ Optical_Flow_Initializer::Optical_Flow_Initializer(Schema * schema,
   initial_v_(0.0),
   initial_t_(0.0)
  {
+  TEUCHOS_TEST_FOR_EXCEPTION(schema_->affine_matrix_enabled(),std::runtime_error,"Error, affine matrix shape functions cannot be used with optical flow initializer.");
   DEBUG_MSG("Optical_Flow_Initializer::Optical_Flow_Initializer()");
   DEBUG_MSG("Optical_Flow_Initializer: creating the point cloud");
   point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
