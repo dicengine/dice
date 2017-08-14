@@ -53,6 +53,7 @@
 #include <DICe_Mesh.h>
 #include <DICe_MeshEnums.h>
 #include <DICe_Decomp.h>
+#include <DICe_LocalShapeFunction.h>
 
 #ifdef DICE_TPETRA
   #include "DICe_MultiFieldTpetra.h"
@@ -599,7 +600,7 @@ public:
   /// \param subset_gid the global id of the subset to initialize
   /// \param deformation [out] vector containing the intial guess
   Status_Flag initial_guess(const int_t subset_gid,
-    Teuchos::RCP<std::vector<scalar_t> > deformation);
+    Teuchos::RCP<Local_Shape_Function> shape_function);
 
   /// \brief Create an image that shows the correlation points
   /// \param fileName String name of file to for output
@@ -702,7 +703,7 @@ public:
 
   /// Record the solution in the field arrays
   /// \param obj pointer to an objective class
-  /// \param deformation the deformation vector
+  /// \param shape_function pointer to a shape function
   /// \param sigma sigma value
   /// \param match match value
   /// \param gamma gamma value
@@ -713,7 +714,7 @@ public:
   /// \param status status flag
   /// \param num_iterations the number of iterations
   void record_step(Teuchos::RCP<Objective> obj,
-    Teuchos::RCP<std::vector<scalar_t> > & deformation,
+    Teuchos::RCP<Local_Shape_Function> shape_function,
     const scalar_t & sigma,
     const scalar_t & match,
     const scalar_t & gamma,

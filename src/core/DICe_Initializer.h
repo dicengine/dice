@@ -46,6 +46,7 @@
 #include <DICe_Image.h>
 #include <DICe_Subset.h>
 #include <DICe_PointCloud.h>
+#include <DICe_LocalShapeFunction.h>
 
 #include <Teuchos_RCP.hpp>
 
@@ -118,9 +119,9 @@ public:
 
   /// Initialize method, called by the objective function to start the optimization with a good first guess.
   /// \param subset_gid the global id of the subset being initialized
-  /// \param deformation [out] the deformation vector returned with the initial guess
+  /// \param shape_function [out] the shape function returned with the initial guess
   virtual Status_Flag initial_guess(const int_t subset_gid,
-    Teuchos::RCP<std::vector<scalar_t> > deformation){
+    Teuchos::RCP<Local_Shape_Function> shape_function){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Base class method should never be called.");
   };
 
@@ -204,26 +205,26 @@ public:
 
   /// see base class description
   virtual Status_Flag initial_guess(const int_t subset_gid,
-    Teuchos::RCP<std::vector<scalar_t> > deformation);
+    Teuchos::RCP<Local_Shape_Function> shape_function);
 
   /// Initialize the subset in the vicinity of the previous guess
   /// \param def_image the deformed image
-  /// \param deformation [out] the deformation vector to initialize
+  /// \param shape_function [out] the shape function to initialize
   /// \param u previous displacemcent x
   /// \param v previous displacement y
   /// \param t previous theta
   /// in this case only the closest k-neighbors will be searched for the best solution
   scalar_t initial_guess(Teuchos::RCP<Image> def_image,
-    Teuchos::RCP<std::vector<scalar_t> > deformation,
+    Teuchos::RCP<Local_Shape_Function> shape_function,
     const scalar_t & u,
     const scalar_t & v,
     const scalar_t & t);
 
   /// Initializer where the entire set of path triads will be searched for the best solution
   /// \param def_image pointer to the deformed image
-  /// \param deformation [out] the deformation vector
+  /// \param shape_function [out] the shape function to initialize
   scalar_t initial_guess(Teuchos::RCP<Image> def_image,
-    Teuchos::RCP<std::vector<scalar_t> > deformation);
+    Teuchos::RCP<Local_Shape_Function> shape_function);
 
   /// write the filtered set of points out to an output file
   void write_to_text_file(const std::string & file_name)const;
@@ -269,7 +270,7 @@ public:
 
   /// see base class description
   virtual Status_Flag initial_guess(const int_t subset_gid,
-    Teuchos::RCP<std::vector<scalar_t> > deformation);
+    Teuchos::RCP<Local_Shape_Function> shape_function);
 
 protected:
   /// phase correlation displacement x estimate from previous frame
@@ -318,7 +319,7 @@ public:
 
   /// see base class description
   virtual Status_Flag initial_guess(const int_t subset_gid,
-    Teuchos::RCP<std::vector<scalar_t> > deformation);
+    Teuchos::RCP<Local_Shape_Function> shape_function);
 
 protected:
   /// pointer to a specific subset
@@ -357,7 +358,7 @@ public:
 
   /// see base class description
   virtual Status_Flag initial_guess(const int_t subset_gid,
-    Teuchos::RCP<std::vector<scalar_t> > deformation);
+    Teuchos::RCP<Local_Shape_Function> shape_function);
 };
 
 /// \class DICe::Feature_Matching_Initializer
@@ -381,7 +382,7 @@ public:
 
   /// see base class description
   virtual Status_Flag initial_guess(const int_t subset_gid,
-    Teuchos::RCP<std::vector<scalar_t> > deformation);
+    Teuchos::RCP<Local_Shape_Function> shape_function);
 
 protected:
   /// pointer to the kd-tree used for searching
@@ -421,7 +422,7 @@ public:
 
   /// see base class description
   virtual Status_Flag initial_guess(const int_t subset_gid,
-    Teuchos::RCP<std::vector<scalar_t> > deformation);
+    Teuchos::RCP<Local_Shape_Function> shape_function);
 };
 
 /// \class DICe::Optical_Flow_Initializer
@@ -454,7 +455,7 @@ public:
 
   /// see base class description
   virtual Status_Flag initial_guess(const int_t subset_gid,
-    Teuchos::RCP<std::vector<scalar_t> > deformation);
+    Teuchos::RCP<Local_Shape_Function> shape_function);
 
   /// returns the id of the neighbor pixel
   /// \param pixel_id the id of the pixel to gather a neighbor for

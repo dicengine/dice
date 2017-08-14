@@ -682,14 +682,7 @@ void
 Mesh::create_field(const field_enums::Field_Spec & field_spec)
 {
   // only one field is allowed per field spec
-  if(field_registry_.find(field_spec)!=field_registry_.end())
-  {
-    std::cout << field_spec.get_name_label() << " " << field_spec.get_state() << std::endl;
-    std::cout << field_registry_.find(field_spec)->first.get_name_label() << " " << field_registry_.find(field_spec)->first.get_state() << std::endl;
-    std::stringstream oss;
-    oss << " MG_Mesh::create_field(): duplicate request: " << field_spec.get_name_label() << std::endl;
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
-  }
+  if(field_registry_.find(field_spec)!=field_registry_.end()) return;
   Teuchos::RCP<MultiField_Map> map;
   if(field_spec.get_rank()==field_enums::NODE_RANK && field_spec.get_field_type()==field_enums::SCALAR_FIELD_TYPE)
     map = scalar_node_dist_map_;

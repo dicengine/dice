@@ -116,29 +116,29 @@ public:
 
   /// \brief Correlation criteria
   /// \param deformation The deformation values for which to evaluate the correlation. These values define the mapping.
-  scalar_t gamma( Teuchos::RCP<std::vector<scalar_t> > & deformation) const;
+  scalar_t gamma( Teuchos::RCP<std::vector<scalar_t> > deformation) const;
 
   /// \brief Uncertainty measure for solution
   /// \param deformation The deformation map parameters for the current guess
   /// \param noise_level [out] Returned as the standard deviation estimate of the image noise sigma_g from Sutton et.al.
-  scalar_t sigma( Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  scalar_t sigma( Teuchos::RCP<std::vector<scalar_t> > deformation,
     scalar_t & noise_level) const;
 
   /// \brief Measure of the slope of the optimization landscape or how deep the minimum well is
   /// \param deformation The deformation map parameters for the current guess
-  scalar_t beta( Teuchos::RCP<std::vector<scalar_t> > & deformation) const;
+  scalar_t beta( Teuchos::RCP<std::vector<scalar_t> > deformation) const;
 
   /// \brief Gradient based optimization algorithm
   /// \param deformation [out] The deformation map parameters taken as input as the initial guess and returned as the converged solution
   /// \param num_iterations [out] The number of interations a particular frame took to execute
-  virtual Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  virtual Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformation,
     int_t & num_iterations) = 0;
 
   /// \brief Simplex based optimization algorithm
   /// \param deformation [out] The deformation map parameters taken as input as the initial guess and returned as the converged solution
   /// \param num_iterations [out] The number of interations a particular frame took to execute
   /// \param override_tol set this value if for this particular subset, the tolerance should be changed
-  Status_Flag computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  Status_Flag computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > deformation,
     int_t & num_iterations,
     const scalar_t & override_tol = -1.0);
 
@@ -179,7 +179,7 @@ protected:
 
   /// Computes the difference from the exact solution and associated fields
   /// \param deformation pointer to the deformation parameters
-  void computeUncertaintyFields(Teuchos::RCP<std::vector<scalar_t> > & deformation);
+  void computeUncertaintyFields(Teuchos::RCP<std::vector<scalar_t> > deformation);
 
   /// Pointer to the schema for this analysis
   Schema * schema_;
@@ -233,7 +233,7 @@ public:
   virtual ~Objective_ZNSSD(){}
 
   /// See base class documentation
-  virtual Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  virtual Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformation,
     int_t & num_iterations);
 
   /// See base class documentation
@@ -302,7 +302,7 @@ public:
   virtual ~Objective_ZNSSD_Affine(){}
 
   /// See base class documentation
-  virtual Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  virtual Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformation,
     int_t & num_iterations);
 
   /// See base class documentation

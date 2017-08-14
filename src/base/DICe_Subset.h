@@ -92,14 +92,14 @@ void affine_map_to_motion( const scalar_t & x,
   scalar_t & out_theta,
   const Teuchos::RCP<const std::vector<scalar_t> > & def);
 
-/// adds a translation to an affine mapping
-/// \param u displacement x to add
-/// \param v displacement y to add
-/// \param def deformation vector to update
-DICE_LIB_DLL_EXPORT
-void affine_add_translation( const scalar_t & u,
-  const scalar_t & v,
-  Teuchos::RCP<std::vector<scalar_t> > & def);
+///// adds a translation to an affine mapping
+///// \param u displacement x to add
+///// \param v displacement y to add
+///// \param def deformation vector to update
+//DICE_LIB_DLL_EXPORT
+//void affine_add_translation( const scalar_t & u,
+//  const scalar_t & v,
+//  Teuchos::RCP<std::vector<scalar_t> > & def);
 
 
 /// \class DICe::Subset

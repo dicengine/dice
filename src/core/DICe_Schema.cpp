@@ -887,7 +887,6 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
       }
     }
     if(subset_info->seed_subset_ids->size()>0){
-      TEUCHOS_TEST_FOR_EXCEPTION(enable_affine_matrix_,std::runtime_error,"Error, seeds can't be used with the affine matrix enabled");
       //has_seed(true);
       TEUCHOS_TEST_FOR_EXCEPTION(subset_info->displacement_map->size()<=0,std::runtime_error,"");
       std::map<int_t,int_t>::iterator it=subset_info->seed_subset_ids->begin();
@@ -902,12 +901,14 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
         if(proc_rank==0) DEBUG_MSG("Seeding the displacement solution for subset " << subset_id << " with ux: " <<
           global_field_value(subset_id,SUBSET_DISPLACEMENT_X_FS) << " uy: " << global_field_value(subset_id,SUBSET_DISPLACEMENT_Y_FS));
         if(subset_info->normal_strain_map->find(roi_id)!=subset_info->normal_strain_map->end()){
+          TEUCHOS_TEST_FOR_EXCEPTION(enable_affine_matrix_,std::runtime_error,"Error, seeds can't be used with the affine matrix enabled");
           global_field_value(subset_id,NORMAL_STRETCH_XX_FS) = subset_info->normal_strain_map->find(roi_id)->second.first;
           global_field_value(subset_id,NORMAL_STRETCH_YY_FS) = subset_info->normal_strain_map->find(roi_id)->second.second;
           if(proc_rank==0) DEBUG_MSG("Seeding the normal strain solution for subset " << subset_id << " with ex: " <<
             global_field_value(subset_id,NORMAL_STRETCH_XX_FS) << " ey: " << global_field_value(subset_id,NORMAL_STRETCH_YY_FS));
         }
         if(subset_info->shear_strain_map->find(roi_id)!=subset_info->shear_strain_map->end()){
+          TEUCHOS_TEST_FOR_EXCEPTION(enable_affine_matrix_,std::runtime_error,"Error, seeds can't be used with the affine matrix enabled");
           global_field_value(subset_id,SHEAR_STRETCH_XY_FS) = subset_info->shear_strain_map->find(roi_id)->second;
           if(proc_rank==0) DEBUG_MSG("Seeding the shear strain solution for subset " << subset_id << " with gamma_xy: " <<
             global_field_value(subset_id,SHEAR_STRETCH_XY_FS));
@@ -1158,38 +1159,8 @@ Schema::create_mesh_fields(){
   mesh_->create_field(mesh::field_enums::MODEL_COORDINATES_Z_FS);
   mesh_->create_field(mesh::field_enums::ROTATION_Z_FS);
   mesh_->create_field(mesh::field_enums::ROTATION_Z_NM1_FS);
-if(enable_affine_matrix_){
-  mesh_->create_field(mesh::field_enums::AFFINE_A_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_A_NM1_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_B_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_B_NM1_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_C_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_C_NM1_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_D_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_D_NM1_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_E_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_E_NM1_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_F_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_F_NM1_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_G_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_G_NM1_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_H_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_H_NM1_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_I_FS);
-  mesh_->create_field(mesh::field_enums::AFFINE_I_NM1_FS);
-  // initialize the affine shape functions with the right values
-  mesh_->get_field(AFFINE_A_FS)->put_scalar(1.0);
-  mesh_->get_field(AFFINE_E_FS)->put_scalar(1.0);
-  mesh_->get_field(AFFINE_I_FS)->put_scalar(1.0);
-}
-else{
-  mesh_->create_field(mesh::field_enums::SHEAR_STRETCH_XY_FS);
-  mesh_->create_field(mesh::field_enums::SHEAR_STRETCH_XY_NM1_FS);
-  mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_XX_FS);
-  mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_XX_NM1_FS);
-  mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_YY_FS);
-  mesh_->create_field(mesh::field_enums::NORMAL_STRETCH_YY_NM1_FS);
-}
+  Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory(this);
+  shape_function->create_fields(this);
   mesh_->create_field(mesh::field_enums::SIGMA_FS);
   mesh_->create_field(mesh::field_enums::GAMMA_FS);
   mesh_->create_field(mesh::field_enums::BETA_FS);
@@ -1300,8 +1271,7 @@ Schema::execute_cross_correlation(){
   // project the right image onto the left if requested
   if(use_nonlinear_projection_){
     // the nonlinear projection may not be good enough to initialize so start with a search window
-    const int_t def_size = enable_affine_matrix_ ? DICE_DEFORMATION_SIZE_AFFINE : DICE_DEFORMATION_SIZE;
-    Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(def_size,0.0));
+    Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory(this);
     for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
       bool init_success = true;
       Teuchos::RCP<Objective> obj;
@@ -1317,14 +1287,14 @@ Schema::execute_cross_correlation(){
         const scalar_t search_dim_u = 50.0; // pixels
         const int_t subset_gid = subset_global_id(subset_index);
         Search_Initializer searcher(this,obj->subset(),search_step_u,search_dim_u,-1.0,0.0,-1.0,0.0);
-        searcher.initial_guess(subset_gid,def);
+        searcher.initial_guess(subset_gid,shape_function);
         scalar_t min_u = 0.0,min_v = 0.0, min_t = 0.0;
-        affine_map_to_motion(global_field_value(subset_gid,SUBSET_COORDINATES_X_FS),global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS),
-          min_u,min_v,min_t,def);
+        shape_function->map_to_u_v_theta(global_field_value(subset_gid,SUBSET_COORDINATES_X_FS),global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS),
+          min_u,min_v,min_t);
         local_field_value(subset_index,SUBSET_DISPLACEMENT_X_FS) = min_u;
         //local_field_value(subset_index,DISPLACEMENT_Y) = min_v;
         //DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " v " << min_v << " gamma " << best_gamma);
-        DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " gamma " << obj->gamma(def));
+        DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " gamma " << obj->gamma(shape_function->rcp()));
       } // end subset loop
     }
   }
@@ -1551,26 +1521,10 @@ Schema::save_cross_correlation_fields(){
   cross_q->update(1.0,*ux,0.0);
   cross_r->update(1.0,*uy,0.0);
   // clear the deformation fields and update the initial positions of the cross corr subsets
-  ux->put_scalar(0.0);
-  uy->put_scalar(0.0);
+  Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory(this);
+  shape_function->reset_fields(this);
   int_t num_failures = 0;
   scalar_t worst_gamma = 0.0;
-  mesh_->get_field(ROTATION_Z_FS)->put_scalar(0.0);
-  if(enable_affine_matrix_){
-    mesh_->get_field(AFFINE_A_FS)->put_scalar(1.0);
-    mesh_->get_field(AFFINE_B_FS)->put_scalar(0.0);
-    mesh_->get_field(AFFINE_C_FS)->put_scalar(0.0);
-    mesh_->get_field(AFFINE_D_FS)->put_scalar(0.0);
-    mesh_->get_field(AFFINE_E_FS)->put_scalar(1.0);
-    mesh_->get_field(AFFINE_F_FS)->put_scalar(0.0);
-    mesh_->get_field(AFFINE_G_FS)->put_scalar(0.0);
-    mesh_->get_field(AFFINE_H_FS)->put_scalar(0.0);
-    mesh_->get_field(AFFINE_I_FS)->put_scalar(1.0);
-  }else{
-    mesh_->get_field(NORMAL_STRETCH_XX_FS)->put_scalar(0.0);
-    mesh_->get_field(NORMAL_STRETCH_YY_FS)->put_scalar(0.0);
-    mesh_->get_field(SHEAR_STRETCH_XY_FS)->put_scalar(0.0);
-  }
   for(int_t i=0;i<local_num_subsets_;++i){
     local_field_value(i,STEREO_COORDINATES_X_FS) = local_field_value(i,SUBSET_COORDINATES_X_FS) + cross_q->local_value(i);
     local_field_value(i,STEREO_COORDINATES_Y_FS) = local_field_value(i,SUBSET_COORDINATES_Y_FS) + cross_r->local_value(i);
@@ -1732,7 +1686,7 @@ Schema::record_failed_step(const int_t subset_gid,
 
 void
 Schema::record_step(Teuchos::RCP<Objective> obj,
-  Teuchos::RCP<std::vector<scalar_t> > & deformation,
+  Teuchos::RCP<Local_Shape_Function> shape_function,
   const scalar_t & sigma,
   const scalar_t & match,
   const scalar_t & gamma,
@@ -1744,32 +1698,7 @@ Schema::record_step(Teuchos::RCP<Objective> obj,
   const int_t num_iterations){
   const int_t subset_gid = obj->correlation_point_global_id();
   DEBUG_MSG("Subset " << subset_gid << " record step");
-  if(enable_affine_matrix_){
-    global_field_value(subset_gid,AFFINE_A_FS) = (*deformation)[DOF_A];
-    global_field_value(subset_gid,AFFINE_B_FS) = (*deformation)[DOF_B];
-    global_field_value(subset_gid,AFFINE_C_FS) = (*deformation)[DOF_C];
-    global_field_value(subset_gid,AFFINE_D_FS) = (*deformation)[DOF_D];
-    global_field_value(subset_gid,AFFINE_E_FS) = (*deformation)[DOF_E];
-    global_field_value(subset_gid,AFFINE_F_FS) = (*deformation)[DOF_F];
-    global_field_value(subset_gid,AFFINE_G_FS) = (*deformation)[DOF_G];
-    global_field_value(subset_gid,AFFINE_H_FS) = (*deformation)[DOF_H];
-    global_field_value(subset_gid,AFFINE_I_FS) = (*deformation)[DOF_I];
-    const scalar_t x = global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
-    const scalar_t y = global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
-    scalar_t u = 0.0,v=0.0,theta=0.0;
-    affine_map_to_motion(x,y,u,v,theta,deformation);
-    global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) = u;
-    global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) = v;
-    global_field_value(subset_gid,ROTATION_Z_FS) = theta;
-  }
-  else{
-    global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) = (*deformation)[DOF_U];
-    global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) = (*deformation)[DOF_V];
-    global_field_value(subset_gid,NORMAL_STRETCH_XX_FS) = (*deformation)[DOF_EX];
-    global_field_value(subset_gid,NORMAL_STRETCH_YY_FS) = (*deformation)[DOF_EY];
-    global_field_value(subset_gid,SHEAR_STRETCH_XY_FS) = (*deformation)[DOF_GXY];
-    global_field_value(subset_gid,ROTATION_Z_FS) = (*deformation)[DOF_THETA];
-  }
+  shape_function->save_fields(this,subset_gid);
   global_field_value(subset_gid,SIGMA_FS) = sigma;
   global_field_value(subset_gid,MATCH_FS) = match; // 0 means data is successful
   global_field_value(subset_gid,GAMMA_FS) = gamma;
@@ -1783,7 +1712,7 @@ Schema::record_step(Teuchos::RCP<Objective> obj,
 
 Status_Flag
 Schema::initial_guess(const int_t subset_gid,
-  Teuchos::RCP<std::vector<scalar_t> > deformation){
+  Teuchos::RCP<Local_Shape_Function> shape_function){
   // for non-tracking routines, there is only the zero-th entry in the initializers map
   int_t sid = 0;
   // tracking routine has a different initializer for each subset
@@ -1792,7 +1721,7 @@ Schema::initial_guess(const int_t subset_gid,
   }
   TEUCHOS_TEST_FOR_EXCEPTION(opt_initializers_.find(sid)==opt_initializers_.end(),std::runtime_error,
     "Initializer does not exist, but should here");
-  return opt_initializers_.find(sid)->second->initial_guess(subset_gid,deformation);
+  return opt_initializers_.find(sid)->second->initial_guess(subset_gid,shape_function);
 }
 
 void
@@ -1850,13 +1779,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   Status_Flag init_status = INITIALIZE_SUCCESSFUL;
   Status_Flag corr_status = CORRELATION_FAILED;
   int_t num_iterations = -1;
-  const int_t def_size = enable_affine_matrix_ ? DICE_DEFORMATION_SIZE_AFFINE : DICE_DEFORMATION_SIZE;
-  TEUCHOS_TEST_FOR_EXCEPTION(enable_affine_matrix_&&correlation_routine_==TRACKING_ROUTINE,std::runtime_error,
-    "Error, can't use affine matrix and tracking routine at the same time");
-
-  Teuchos::RCP<std::vector<scalar_t> > deformation = Teuchos::rcp(new std::vector<scalar_t>(def_size,0.0));
+  Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory(this);
   try{
-    init_status = initial_guess(subset_gid,deformation);
+    init_status = initial_guess(subset_gid,shape_function);
   }
   catch (std::logic_error &err) { // a non-graceful exception occurred in initialization
     record_failed_step(subset_gid,static_cast<int_t>(INITIALIZE_FAILED_BY_EXCEPTION),num_iterations);
@@ -1876,13 +1801,11 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       const scalar_t search_step_theta = 0.01; // radians (keep theta the same)
       const scalar_t search_dim_theta = 0.0;
       // reset the deformation position to the previous step's value
-      for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i)
-        (*deformation)[i] = 0.0;
-      (*deformation)[DOF_U] = global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
-      (*deformation)[DOF_V] = global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
-      (*deformation)[DOF_THETA] = global_field_value(subset_gid,ROTATION_Z_FS);
+      shape_function->clear();
+      shape_function->insert_motion(global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS),global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS),
+        global_field_value(subset_gid,ROTATION_Z_FS));
       Search_Initializer searcher(this,obj->subset(),search_step_xy,search_dim_xy,search_step_xy,search_dim_xy,search_step_theta,search_dim_theta);
-      init_status = searcher.initial_guess(subset_gid,deformation);
+      init_status = searcher.initial_guess(subset_gid,shape_function);
     }
     if(init_status==INITIALIZE_FAILED){
       if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_failed_init(subset_gid,frame_id_);
@@ -1900,13 +1823,13 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       DEBUG_MSG("Subset " << subset_gid << " skip solve (as requested in the subset file via SKIP_SOLVE keyword)");
     }
     scalar_t noise_std_dev = 0.0;
-    const scalar_t initial_sigma = obj->sigma(deformation,noise_std_dev);
-    const scalar_t initial_gamma = obj->gamma(deformation);
-    const scalar_t initial_beta = output_beta_ ? obj->beta(deformation) : 0.0;
+    const scalar_t initial_sigma = obj->sigma(shape_function->rcp(),noise_std_dev);
+    const scalar_t initial_gamma = obj->gamma(shape_function->rcp());
+    const scalar_t initial_beta = output_beta_ ? obj->beta(shape_function->rcp()) : 0.0;
     const scalar_t contrast = obj->subset()->contrast_std_dev();
     const int_t active_pixels = obj->subset()->num_active_pixels();
     record_step(obj,
-      deformation,initial_sigma,0.0,initial_gamma,initial_beta,
+      shape_function,initial_sigma,0.0,initial_gamma,initial_beta,
       noise_std_dev,contrast,active_pixels,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
     // evolve the subsets and output the images requested as well
     // turn on pixels that at the beginning were hidden behind an obstruction
@@ -1926,7 +1849,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //  if user requested testing the initial value of gamma, do that here
   //
   if(initial_gamma_threshold_!=-1.0){
-    const scalar_t initial_gamma = obj->gamma(deformation);
+    const scalar_t initial_gamma = obj->gamma(shape_function->rcp());
     if(initial_gamma > initial_gamma_threshold_ || initial_gamma < 0.0){
       DEBUG_MSG("Subset " << subset_gid << " initial gamma value FAILS threshold test, gamma: " <<
         initial_gamma << " (threshold: " << initial_gamma_threshold_ << ")");
@@ -1968,7 +1891,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED||force_simplex){
     try{
-      corr_status = obj->computeUpdateRobust(deformation,num_iterations);
+      corr_status = obj->computeUpdateRobust(shape_function->rcp(),num_iterations);
     }
     catch (std::logic_error &err) { //a non-graceful exception occurred
       corr_status = CORRELATION_FAILED_BY_EXCEPTION;
@@ -1977,7 +1900,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   else if(optimization_method_==DICe::GRADIENT_BASED||optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX||
       optimization_method_==DICe::GRADIENT_THEN_SEARCH){
     try{
-      corr_status = obj->computeUpdateFast(deformation,num_iterations);
+      corr_status = obj->computeUpdateFast(shape_function->rcp(),num_iterations);
     }
     catch (std::logic_error &err) { //a non-graceful exception occurred
       corr_status = CORRELATION_FAILED_BY_EXCEPTION;
@@ -1989,8 +1912,8 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   // test for jump failure (too high displacement or rotation from last step due to subset getting lost)
   bool jump_pass = true;
   scalar_t new_u = 0.0,new_v = 0.0, new_t = 0.0;
-  affine_map_to_motion(global_field_value(subset_gid,SUBSET_COORDINATES_X_FS),global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS),
-    new_u,new_v,new_t,deformation);
+  shape_function->map_to_u_v_theta(global_field_value(subset_gid,SUBSET_COORDINATES_X_FS),global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS),
+    new_u,new_v,new_t);
   scalar_t diffU = new_u - prev_u;
   scalar_t diffV = new_v - prev_v;
   scalar_t diffT = new_t - prev_t;
@@ -2008,10 +1931,10 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     else if(optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX||optimization_method_==DICe::GRADIENT_THEN_SEARCH){
       if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_backup_opt_call(subset_gid,frame_id_);
       // try again using simplex
-      init_status = initial_guess(subset_gid,deformation);
+      init_status = initial_guess(subset_gid,shape_function);
       if(optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX){
         try{
-          corr_status = obj->computeUpdateRobust(deformation,num_iterations);
+          corr_status = obj->computeUpdateRobust(shape_function->rcp(),num_iterations);
         }
         catch (std::logic_error &err) { //a non-graceful exception occurred
           corr_status = CORRELATION_FAILED_BY_EXCEPTION;
@@ -2022,13 +1945,13 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
         const scalar_t search_step_u = 1.0; // pixels
         const scalar_t search_dim_u = 50.0; // pixels
         Search_Initializer searcher(this,obj->subset(),search_step_u,search_dim_u,-1.0,0.0,-1.0,0.0);
-        init_status = searcher.initial_guess(subset_gid,deformation);
+        init_status = searcher.initial_guess(subset_gid,shape_function);
         scalar_t min_u = 0.0,min_v = 0.0, min_t = 0.0;
-        affine_map_to_motion(global_field_value(subset_gid,SUBSET_COORDINATES_X_FS),global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS),
-          min_u,min_v,min_t,deformation);
+        shape_function->map_to_u_v_theta(global_field_value(subset_gid,SUBSET_COORDINATES_X_FS),global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS),
+          min_u,min_v,min_t);
         DEBUG_MSG("Subset " << subset_gid << " GRADIENT_THEN_SEARCH method used, search-based initial u: " << min_u);// << " v: " << min_v);
         try{
-          corr_status = obj->computeUpdateFast(deformation,num_iterations);
+          corr_status = obj->computeUpdateFast(shape_function->rcp(),num_iterations);
         }
         catch (std::logic_error &err) { //a non-graceful exception occurred
           corr_status = CORRELATION_FAILED_BY_EXCEPTION;
@@ -2040,9 +1963,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     else if(optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED){
       if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_backup_opt_call(subset_gid,frame_id_);
       // try again using gradient based
-      init_status = initial_guess(subset_gid,deformation);
+      init_status = initial_guess(subset_gid,shape_function);
       try{
-          corr_status = obj->computeUpdateFast(deformation,num_iterations);
+          corr_status = obj->computeUpdateFast(shape_function->rcp(),num_iterations);
       }
       catch (std::logic_error &err) { //a non-graceful exception occurred
         corr_status = CORRELATION_FAILED_BY_EXCEPTION;
@@ -2082,7 +2005,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //  test final gamma if user requested
   //
   scalar_t noise_std_dev = 0.0;
-  const scalar_t sigma = obj->sigma(deformation,noise_std_dev);
+  const scalar_t sigma = obj->sigma(shape_function->rcp(),noise_std_dev);
   if(sigma < 0.0){
     DEBUG_MSG("Subset " << subset_gid << " final sigma value FAILS threshold test, sigma: " <<
       sigma << " (threshold: " << 0.0 << ")");
@@ -2090,8 +2013,8 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     record_failed_step(subset_gid,static_cast<int_t>(FRAME_FAILED_DUE_TO_NEGATIVE_SIGMA),num_iterations);
     return;
   }
-  const scalar_t gamma = obj->gamma(deformation);
-  const scalar_t beta = output_beta_ ? obj->beta(deformation) : 0.0;
+  const scalar_t gamma = obj->gamma(shape_function->rcp());
+  const scalar_t beta = output_beta_ ? obj->beta(shape_function->rcp()) : 0.0;
   if((final_gamma_threshold_!=-1.0 && gamma > final_gamma_threshold_)||gamma < 0.0){
     DEBUG_MSG("Subset " << subset_gid << " final gamma value " << gamma << " FAILS threshold test or is negative, gamma: " <<
       gamma << " (threshold: " << final_gamma_threshold_ << ")");
@@ -2104,14 +2027,15 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   const bool has_path_file = path_file_names_->find(subset_gid)!=path_file_names_->end();
   if(path_distance_threshold_!=-1.0&&has_path_file){
-    TEUCHOS_TEST_FOR_EXCEPTION(enable_affine_matrix_,std::runtime_error,"Error, affine matrix cannot be used here");
     scalar_t path_distance = 0.0;
     size_t id = 0;
     // dynamic cast the pointer to get access to the derived class methods
     Teuchos::RCP<Path_Initializer> path_initializer =
         Teuchos::rcp_dynamic_cast<Path_Initializer>(opt_initializers_.find(subset_gid)->second);
-    path_initializer->closest_triad((*deformation)[DOF_U],
-      (*deformation)[DOF_V],(*deformation)[DOF_THETA],id,path_distance);
+    scalar_t pt_u = 0.0,pt_v = 0.0,pt_t=0.0;
+    shape_function->map_to_u_v_theta(global_field_value(subset_gid,SUBSET_COORDINATES_X_FS),global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS),
+      pt_u,pt_v,pt_t);
+    path_initializer->closest_triad(pt_u,pt_v,pt_t,id,path_distance);
     DEBUG_MSG("Subset " << subset_gid << " path distance: " << path_distance);
     if(path_distance > path_distance_threshold_)
     {
@@ -2125,8 +2049,8 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //  Test jumps again
   //
   new_u = 0.0;new_v = 0.0;new_t = 0.0;
-  affine_map_to_motion(global_field_value(subset_gid,SUBSET_COORDINATES_X_FS),global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS),
-    new_u,new_v,new_t,deformation);
+  shape_function->map_to_u_v_theta(global_field_value(subset_gid,SUBSET_COORDINATES_X_FS),global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS),
+    new_u,new_v,new_t);
   diffU = new_u - prev_u;
   diffV = new_v - prev_v;
   diffT = new_t - prev_t;
@@ -2145,7 +2069,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   const scalar_t contrast = obj->subset()->contrast_std_dev();
   const int_t active_pixels = obj->subset()->num_active_pixels();
   record_step(obj,
-    deformation,sigma,0.0,gamma,beta,noise_std_dev,contrast,active_pixels,
+    shape_function,sigma,0.0,gamma,beta,noise_std_dev,contrast,active_pixels,
     static_cast<int_t>(init_status),num_iterations);
   //
   //  turn on pixels that at the beginning were hidden behind an obstruction
@@ -3196,7 +3120,6 @@ Schema::check_for_blocking_subsets(const int_t subset_global_id){
   if(obstructing_subset_ids_==Teuchos::null) return;
   if(obstructing_subset_ids_->find(subset_global_id)==obstructing_subset_ids_->end()) return;
   if(obstructing_subset_ids_->find(subset_global_id)->second.size()==0) return;
-  if(enable_affine_matrix_) return;
 
   const int_t subset_lid = subset_local_id(subset_global_id);
 
@@ -3215,15 +3138,10 @@ Schema::check_for_blocking_subsets(const int_t subset_global_id){
     assert(local_ss>=0);
     int_t cx = obj_vec_[local_ss]->subset()->centroid_x();
     int_t cy = obj_vec_[local_ss]->subset()->centroid_y();
-    Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-    (*def)[DICe::DOF_U]  = global_field_value(global_ss,SUBSET_DISPLACEMENT_X_FS);
-    (*def)[DICe::DOF_V]  = global_field_value(global_ss,SUBSET_DISPLACEMENT_Y_FS);
-    (*def)[DICe::DOF_THETA]      = global_field_value(global_ss,ROTATION_Z_FS);
-    (*def)[DICe::DOF_EX] = global_field_value(global_ss,NORMAL_STRETCH_XX_FS);
-    (*def)[DICe::DOF_EY] = global_field_value(global_ss,NORMAL_STRETCH_YY_FS);
-    (*def)[DICe::DOF_GXY] = global_field_value(global_ss,SHEAR_STRETCH_XY_FS);
+    Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory(this);
+    shape_function->initialize_parameters_from_fields(this,global_ss);
     std::set<std::pair<int_t,int_t> > subset_pixels =
-        obj_vec_[local_ss]->subset()->deformed_shapes(def,cx,cy,obstruction_skin_factor_);
+        obj_vec_[local_ss]->subset()->deformed_shapes(shape_function->rcp(),cx,cy,obstruction_skin_factor_);
     blocked_pixels.insert(subset_pixels.begin(),subset_pixels.end());
   } // blocking subsets loop
 }
@@ -3231,8 +3149,8 @@ Schema::check_for_blocking_subsets(const int_t subset_global_id){
 void
 Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
 #ifndef DICE_DISABLE_BOOST_FILESYSTEM
+  DEBUG_MSG("Schema::write_deformed_subset_image(): called");
   if(obj_vec_.empty()) return;
-  if(enable_affine_matrix_)return;
   // if the subset_images folder does not exist, create it
   // TODO allow user to specify where this goes
   // If the dir is already there this step becomes a no-op
@@ -3279,27 +3197,15 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
       }
     }
   }
-
-  scalar_t dx=0,dy=0;
   int_t ox=0,oy=0;
-  int_t Dx=0,Dy=0;
   scalar_t X=0.0,Y=0.0;
   int_t px=0,py=0;
-
+  Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory(this);
   // create output for each subset
-  //for(int_t subset=0;subset<1;++subset){
   for(size_t subset=0;subset<obj_vec_.size();++subset){
     const int_t gid = obj_vec_[subset]->correlation_point_global_id();
-
-    //if(gid==1) continue;
-    // get the deformation vector for each subset
-    const scalar_t u     = global_field_value(gid,SUBSET_DISPLACEMENT_X_FS);
-    const scalar_t v     = global_field_value(gid,SUBSET_DISPLACEMENT_Y_FS);
-    const scalar_t theta = global_field_value(gid,ROTATION_Z_FS);
-    const scalar_t dudx  = global_field_value(gid,NORMAL_STRETCH_XX_FS);
-    const scalar_t dvdy  = global_field_value(gid,NORMAL_STRETCH_YY_FS);
-    const scalar_t gxy   = global_field_value(gid,SHEAR_STRETCH_XY_FS);
-    DEBUG_MSG("Write deformed subset " << gid << " u " << u << " v " << v << " theta " << theta << " dudx " << dudx << " dvdy " << dvdy << " gxy " << gxy);
+    shape_function->initialize_parameters_from_fields(this,gid);
+    shape_function->print_parameters();
     Teuchos::RCP<DICe::Subset> ref_subset = obj_vec_[subset]->subset();
     ox = ref_subset->centroid_x();
     oy = ref_subset->centroid_y();
@@ -3316,14 +3222,7 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
     // loop over each pixel in the subset
     scalar_t pixel_gamma = 0.0;
     for(int_t i=0;i<ref_subset->num_pixels();++i){
-      dx = ref_subset->x(i) - ox;
-      dy = ref_subset->y(i) - oy;
-      // stretch and shear the coordinate
-      Dx = (1.0+dudx)*dx + gxy*dy;
-      Dy = (1.0+dvdy)*dy + gxy*dx;
-      //  Rotation                                  // translation // convert to global coordinates
-      X = std::cos(theta)*Dx - std::sin(theta)*Dy + u            + ox;
-      Y = std::sin(theta)*Dx + std::cos(theta)*Dy + v            + oy;
+      shape_function->map(ref_subset->x(i),ref_subset->y(i),ox,oy,X,Y);
       // get the nearest pixel location:
       px = (int_t)X;
       if(X - (int_t)X >= 0.5) px++;

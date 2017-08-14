@@ -66,7 +66,7 @@ Teuchos::RCP<Objective> objective_factory(Schema * schema,
 
 
 scalar_t
-Objective::gamma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
+Objective::gamma( Teuchos::RCP<std::vector<scalar_t> > deformation) const {
   try{
     subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,deformation,schema_->interpolation_method());
   }
@@ -85,7 +85,7 @@ Objective::gamma( Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
 }
 
 scalar_t
-Objective::beta(Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
+Objective::beta(Teuchos::RCP<std::vector<scalar_t> > deformation) const {
   // for now return -1 for beta if affine shape functions are used
   // TODO hook beta up for affine shape functions
   if(deformation->size()!=DICE_DEFORMATION_SIZE) return -1.0;
@@ -151,7 +151,7 @@ Objective::beta(Teuchos::RCP<std::vector<scalar_t> > &deformation) const {
 }
 
 scalar_t
-Objective::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation,
+Objective::sigma( Teuchos::RCP<std::vector<scalar_t> > deformation,
   scalar_t & noise_level) const {
   // if the gradients don't exist:
   if(!subset_->has_gradients())
@@ -175,7 +175,7 @@ Objective::sigma( Teuchos::RCP<std::vector<scalar_t> > &deformation,
 }
 
 void
-Objective::computeUncertaintyFields(Teuchos::RCP<std::vector<scalar_t> > & deformation){
+Objective::computeUncertaintyFields(Teuchos::RCP<std::vector<scalar_t> > deformation){
 
   scalar_t norm_ut_2 = 0.0;
   scalar_t norm_uhat_2 = 0.0;
@@ -292,7 +292,7 @@ Objective::computeUncertaintyFields(Teuchos::RCP<std::vector<scalar_t> > & defor
 }
 
 Status_Flag
-Objective::computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+Objective::computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > deformation,
   int_t & num_iterations,
   const scalar_t & override_tol){
 
@@ -337,7 +337,7 @@ Objective::computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > & deformatio
 }
 
 Status_Flag
-Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformation,
   int_t & num_iterations){
   assert(deformation->size()==DICE_DEFORMATION_SIZE);
 
@@ -671,7 +671,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deform
 
 
 Status_Flag
-Objective_ZNSSD_Affine::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > & deformation,
+Objective_ZNSSD_Affine::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformation,
   int_t & num_iterations){
   // using type double here a lot because LAPACK doesn't support float.
   int_t N = DICE_DEFORMATION_SIZE_AFFINE; // [ AFFINE_A ... AFFINE_I ]

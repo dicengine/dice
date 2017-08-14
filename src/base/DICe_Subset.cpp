@@ -71,27 +71,27 @@ void affine_map_to_motion( const scalar_t & x,
   }
 }
 
-DICE_LIB_DLL_EXPORT
-void affine_add_translation( const scalar_t & u,
-  const scalar_t & v,
-  Teuchos::RCP<std::vector<scalar_t> > & def){
-  assert(def->size()==DICE_DEFORMATION_SIZE_AFFINE);
-  const scalar_t A = (*def)[DOF_A];
-  const scalar_t B = (*def)[DOF_B];
-  const scalar_t C = (*def)[DOF_C];
-  const scalar_t D = (*def)[DOF_D];
-  const scalar_t E = (*def)[DOF_E];
-  const scalar_t F = (*def)[DOF_F];
-  const scalar_t G = (*def)[DOF_G];
-  const scalar_t H = (*def)[DOF_H];
-  const scalar_t I = (*def)[DOF_I];
-  (*def)[DOF_A] = A + u*G;
-  (*def)[DOF_B] = B + u*H;
-  (*def)[DOF_C] = C + u*I;
-  (*def)[DOF_D] = D + v*G;
-  (*def)[DOF_E] = E + v*H;
-  (*def)[DOF_F] = F + v*I;
-}
+//DICE_LIB_DLL_EXPORT
+//void affine_add_translation( const scalar_t & u,
+//  const scalar_t & v,
+//  Teuchos::RCP<std::vector<scalar_t> > & def){
+//  assert(def->size()==DICE_DEFORMATION_SIZE_AFFINE);
+//  const scalar_t A = (*def)[DOF_A];
+//  const scalar_t B = (*def)[DOF_B];
+//  const scalar_t C = (*def)[DOF_C];
+//  const scalar_t D = (*def)[DOF_D];
+//  const scalar_t E = (*def)[DOF_E];
+//  const scalar_t F = (*def)[DOF_F];
+//  const scalar_t G = (*def)[DOF_G];
+//  const scalar_t H = (*def)[DOF_H];
+//  const scalar_t I = (*def)[DOF_I];
+//  (*def)[DOF_A] = A + u*G;
+//  (*def)[DOF_B] = B + u*H;
+//  (*def)[DOF_C] = C + u*I;
+//  (*def)[DOF_D] = D + v*G;
+//  (*def)[DOF_E] = E + v*H;
+//  (*def)[DOF_F] = F + v*I;
+//}
 
 
 bool

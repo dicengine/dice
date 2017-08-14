@@ -90,11 +90,14 @@ int main(int argc, char *argv[]) {
   const scalar_t search_dim_xy = 140;
   const scalar_t search_dim_theta = 1;
   Search_Initializer searcher(schema.getRawPtr(),subset,step_size_xy,search_dim_xy,step_size_xy,search_dim_xy,step_size_theta,search_dim_theta);
-  Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-  searcher.initial_guess(-1,def);
-  if(std::abs((*def)[DOF_U] - u_exact) > errorTol || std::abs((*def)[DOF_V] - v_exact) > errorTol){
+  Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory(schema.getRawPtr());
+  shape_function->clear();
+  searcher.initial_guess(-1,shape_function);
+  scalar_t out_u=0.0,out_v=0.0,out_t=0.0;
+  shape_function->map_to_u_v_theta(subset->centroid_x(),subset->centroid_y(),out_u,out_v,out_t);
+  if(std::abs(out_u - u_exact) > errorTol || std::abs(out_v - v_exact) > errorTol){
     *outStream << "Error, the initialized value is not correct" << std::endl;
-    *outStream << "       should be 138,-138 and is " << (*def)[DOF_U] << "," << (*def)[DOF_V] << std::endl;
+    *outStream << "       should be 138,-138 and is " << out_u << "," << out_v << std::endl;
     errorFlag++;
   }
 
