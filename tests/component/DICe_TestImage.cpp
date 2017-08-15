@@ -42,6 +42,7 @@
 #include <DICe.h>
 #include <DICe_Image.h>
 #include <DICe_Shape.h>
+#include <DICe_LocalShapeFunction.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -260,12 +261,12 @@ int main(int argc, char *argv[]) {
   const scalar_t u = 25.0;
   const scalar_t v = -15.2;
   const scalar_t theta = 22.8*DICE_PI/180.0;
-  Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-  (*def)[DOF_U] = u;
-  (*def)[DOF_V] = v;
-  (*def)[DOF_THETA] = theta;
-  Teuchos::RCP<Image> trans_baboon = baboon.apply_transformation(def,cx,cy,false);
-  //trans_baboon->write("baboon_trans.rawi");
+
+  Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory();
+  shape_function->insert_motion(u,v,theta);
+  Teuchos::RCP<Image> trans_baboon = baboon.apply_transformation(shape_function,cx,cy,false);
+  //trans_baboon->write("baboon_trans.tiff");
+  //baboon.write("baboon.tiff");
   //trans_baboon->write("baboon_trans_d.rawi");
 #ifdef DICE_USE_DOUBLE
   Teuchos::RCP<Image> trans_baboon_exact = Teuchos::rcp(new Image("./images/baboon_trans_d.rawi"));

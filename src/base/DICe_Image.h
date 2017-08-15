@@ -50,7 +50,7 @@ namespace DICe {
 
 /// forward declaration of the conformal_area_def
 class Conformal_Area_Def;
-
+class Local_Shape_Function;
 
 /// \class DICe::Image
 /// A container class to hold the pixel intensity information and provide some basic methods
@@ -393,12 +393,12 @@ public:
   void apply_mask(const bool smooth_edges);
 
   /// apply a transformation to this image to create another image
-  /// \param deformation the deformation mapping parameters u,v,theta,...
+  /// \param shape_function the deformation mapping parameters u,v,theta,...
   /// (in this case return is null pointer)
   /// \param cx centroid of mapping in the current image (used when applying rotation)
   /// \param cy centroid of mapping in the current image (used when applying rotation)
   /// \param apply_in_place true if the mapped intensity values should replace the existing values in the image
-  Teuchos::RCP<Image> apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformation,
+  Teuchos::RCP<Image> apply_transformation(Teuchos::RCP<Local_Shape_Function> shape_function,
     const int_t cx,
     const int_t cy,
     const bool apply_in_place=false);

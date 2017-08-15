@@ -60,19 +60,20 @@ namespace DICe {
 
 // forward declaration of DICe::Image
 class Image;
+class Local_Shape_Function;
 
 /// free function to apply a transformation to an image:
 /// \param image_in the image where the intensities are taken
 /// \param image_out the output image
 /// \param cx the centroid x coordiante
 /// \param cy the centroid y coordinate
-/// \param deformation a vector that defines the deformation map parameters
+/// \param shape_function stores the vector that defines the deformation map parameters
 DICE_LIB_DLL_EXPORT
 void apply_transform(Teuchos::RCP<Image> image_in,
   Teuchos::RCP<Image> image_out,
   const int_t cx,
   const int_t cy,
-  Teuchos::RCP<const std::vector<scalar_t> > deformation);
+  Teuchos::RCP<Local_Shape_Function> shape_function);
 
 /// struct used to sort solutions by peak values
 struct computed_point

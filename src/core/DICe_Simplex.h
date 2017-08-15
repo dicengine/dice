@@ -83,8 +83,8 @@ public:
   /// \param threshold if the initial evaluation of gamma is below this value, the analysis will be skipped
   /// A return value of MAX_ITERATIONS_REACHED means that convergence did not occur in the allowed number of iterations.
   /// A return value of CORRELATION_SUCCESSFUL means that convergence was obtained for the solution stored in the variables vector
-  Status_Flag minimize(Teuchos::RCP<std::vector<scalar_t> > & variables,
-    Teuchos::RCP<std::vector<scalar_t> > & deltas,
+  Status_Flag minimize(Teuchos::RCP<std::vector<scalar_t> > variables,
+    Teuchos::RCP<std::vector<scalar_t> > deltas,
     int_t & num_iterations,
     const scalar_t & threshold = 1.0E-10);
 

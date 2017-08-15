@@ -61,13 +61,12 @@ Simplex::Simplex(const  int_t num_dofs,
 }
 
 Status_Flag
-Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & variables,
-  Teuchos::RCP<std::vector<scalar_t> > & deltas,
+Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > variables,
+  Teuchos::RCP<std::vector<scalar_t> > deltas,
   int_t & num_iterations,
   const scalar_t & threshold){
 
   const int_t num_variables = variables->size();
-  assert((int_t)deltas->size()==num_dofs_);
   assert(num_dofs_<=num_variables);
 
   DEBUG_MSG("Conducting multidimensional simplex minimization");
@@ -91,7 +90,7 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > & variables,
       (*points[i])[j] = (*variables)[j];
     }
     if(i>0)
-      (*points[i])[dof_map(i-1)] += (*deltas)[i-1];
+      (*points[i])[dof_map(i-1)] += (*deltas)[dof_map(i-1)];
 #ifdef DICE_DEBUG_MSG
     std::cout << " SIMPLEX POINT: ";
     for(int_t j=0;j<num_variables;++j) std::cout << " " << (*points[i])[j];
@@ -284,7 +283,11 @@ Subset_Simplex::Subset_Simplex(const DICe::Objective * const obj,
 
 scalar_t
 Subset_Simplex::objective(Teuchos::RCP<std::vector<scalar_t> > & variables){
-  return obj_->gamma(variables);
+  Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory(obj_->schema());
+  assert(shape_function->num_params()==(int_t)variables->size());
+  for(int_t i=0;i<shape_function->num_params();++i)
+    (*shape_function->parameters())[i] = (*variables)[i];
+  return obj_->gamma(shape_function);
 }
 
 Homography_Simplex::Homography_Simplex(Teuchos::RCP<Image> left_img,

@@ -146,18 +146,17 @@ int main(int argc, char *argv[]) {
   }
   // initialize the deformed values
   *outStream << "constructing a simple deformed subset" << std::endl;
-  Teuchos::RCP<std::vector<scalar_t> > map = Teuchos::rcp (new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-  (*map)[DOF_U] = 5;
-  (*map)[DOF_V] = 10;
-  square.initialize(image,DEF_INTENSITIES,map,BILINEAR);
+  Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory();
+  shape_function->insert_motion(5.0,10.0);
+  square.initialize(image,DEF_INTENSITIES,shape_function,BILINEAR);
   square.write_tiff("squareSubsetRef.tif",false);
   square.write_tiff("squareSubsetDef.tif",true);
-  square.write_subset_on_image("squareSubsetMapped.tif",image,map);
+  square.write_subset_on_image("squareSubsetMapped.tif",image,shape_function);
   // check simple motion intensity values
   *outStream << "checking the bilinear interpolation" << std::endl;
   bool def_values_error = false;
   for(int_t i=0;i<square.num_pixels();++i){
-    if(square.def_intensities(i)!=(*image)(square.x(i)+(*map)[DOF_U],square.y(i)+(*map)[DOF_V]))
+    if(square.def_intensities(i)!=(*image)(square.x(i)+5.0,square.y(i)+10.0))
       def_values_error = true;
   }
   if(def_values_error){
@@ -165,37 +164,36 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   // initialize the deformed values
-  *outStream << "constructing a simple deformed subset using an affine deformation vector" << std::endl;
-  Teuchos::RCP<std::vector<scalar_t> > affine_map = Teuchos::rcp (new std::vector<scalar_t>(DICE_DEFORMATION_SIZE_AFFINE,0.0));
-  (*affine_map)[DOF_A] = 1;
-  (*affine_map)[DOF_C] = 5;
-  (*affine_map)[DOF_E] = 1;
-  (*affine_map)[DOF_F] = 10;
-  (*affine_map)[DOF_I] = 1;
-  square.initialize(image,DEF_INTENSITIES,affine_map,BILINEAR);
-  square.write_tiff("squareAffineSubsetRef.tif",false);
-  square.write_tiff("squareAffineSubsetDef.tif",true);
-  square.write_subset_on_image("squareAffineSubsetMapped.tif",image,affine_map);
-  // check simple motion intensity values
-  *outStream << "checking the bilinear interpolation" << std::endl;
-  def_values_error = false;
-  for(int_t i=0;i<square.num_pixels();++i){
-    if(square.def_intensities(i)!=(*image)(square.x(i)+(*affine_map)[DOF_C],square.y(i)+(*affine_map)[DOF_F]))
-      def_values_error = true;
-  }
-  if(def_values_error){
-    *outStream << "Error, the def intensity values for the affine initialized square subset are wrong" << std::endl;
-    errorFlag++;
-  }
+//  *outStream << "constructing a simple deformed subset using an affine deformation vector" << std::endl;
+//  Teuchos::RCP<std::vector<scalar_t> > affine_map = Teuchos::rcp (new std::vector<scalar_t>(DICE_DEFORMATION_SIZE_AFFINE,0.0));
+//  (*affine_map)[DOF_A] = 1;
+//  (*affine_map)[DOF_C] = 5;
+//  (*affine_map)[DOF_E] = 1;
+//  (*affine_map)[DOF_F] = 10;
+//  (*affine_map)[DOF_I] = 1;
+//  square.initialize(image,DEF_INTENSITIES,affine_map,BILINEAR);
+//  square.write_tiff("squareAffineSubsetRef.tif",false);
+//  square.write_tiff("squareAffineSubsetDef.tif",true);
+//  square.write_subset_on_image("squareAffineSubsetMapped.tif",image,affine_map);
+//  // check simple motion intensity values
+//  *outStream << "checking the bilinear interpolation" << std::endl;
+//  def_values_error = false;
+//  for(int_t i=0;i<square.num_pixels();++i){
+//    if(square.def_intensities(i)!=(*image)(square.x(i)+(*affine_map)[DOF_C],square.y(i)+(*affine_map)[DOF_F]))
+//      def_values_error = true;
+//  }
+//  if(def_values_error){
+//    *outStream << "Error, the def intensity values for the affine initialized square subset are wrong" << std::endl;
+//    errorFlag++;
+//  }
 
   *outStream << "checking the keys fourth order interpolant" << std::endl;
-  (*map)[DOF_U] = 15;
-  (*map)[DOF_V] = 12;
-  square.initialize(image,DEF_INTENSITIES,map,KEYS_FOURTH);
+  shape_function->insert_motion(15.0,12.0);
+  square.initialize(image,DEF_INTENSITIES,shape_function,KEYS_FOURTH);
   square.write_tiff("squareSubsetDefKeys.tif",true);
   bool keys_values_error = false;
   for(int_t i=0;i<square.num_pixels();++i){
-    if(std::abs(square.def_intensities(i)-(*image)(square.x(i)+(*map)[DOF_U],square.y(i)+(*map)[DOF_V]))>0.001)
+    if(std::abs(square.def_intensities(i)-(*image)(square.x(i)+15.0,square.y(i)+12.0))>0.001)
       keys_values_error = true;
   }
   if(keys_values_error){

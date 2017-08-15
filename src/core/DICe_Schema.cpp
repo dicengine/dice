@@ -1294,7 +1294,7 @@ Schema::execute_cross_correlation(){
         local_field_value(subset_index,SUBSET_DISPLACEMENT_X_FS) = min_u;
         //local_field_value(subset_index,DISPLACEMENT_Y) = min_v;
         //DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " v " << min_v << " gamma " << best_gamma);
-        DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " gamma " << obj->gamma(shape_function->rcp()));
+        DEBUG_MSG("Schema::execute_cross_correlation(): subest gid " << subset_global_id(subset_index) << " search min u " << min_u << " gamma " << obj->gamma(shape_function));
       } // end subset loop
     }
   }
@@ -1823,9 +1823,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       DEBUG_MSG("Subset " << subset_gid << " skip solve (as requested in the subset file via SKIP_SOLVE keyword)");
     }
     scalar_t noise_std_dev = 0.0;
-    const scalar_t initial_sigma = obj->sigma(shape_function->rcp(),noise_std_dev);
-    const scalar_t initial_gamma = obj->gamma(shape_function->rcp());
-    const scalar_t initial_beta = output_beta_ ? obj->beta(shape_function->rcp()) : 0.0;
+    const scalar_t initial_sigma = obj->sigma(shape_function,noise_std_dev);
+    const scalar_t initial_gamma = obj->gamma(shape_function);
+    const scalar_t initial_beta = output_beta_ ? obj->beta(shape_function) : 0.0;
     const scalar_t contrast = obj->subset()->contrast_std_dev();
     const int_t active_pixels = obj->subset()->num_active_pixels();
     record_step(obj,
@@ -1849,7 +1849,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //  if user requested testing the initial value of gamma, do that here
   //
   if(initial_gamma_threshold_!=-1.0){
-    const scalar_t initial_gamma = obj->gamma(shape_function->rcp());
+    const scalar_t initial_gamma = obj->gamma(shape_function);
     if(initial_gamma > initial_gamma_threshold_ || initial_gamma < 0.0){
       DEBUG_MSG("Subset " << subset_gid << " initial gamma value FAILS threshold test, gamma: " <<
         initial_gamma << " (threshold: " << initial_gamma_threshold_ << ")");
@@ -1891,7 +1891,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   if(optimization_method_==DICe::SIMPLEX||optimization_method_==DICe::SIMPLEX_THEN_GRADIENT_BASED||force_simplex){
     try{
-      corr_status = obj->computeUpdateRobust(shape_function->rcp(),num_iterations);
+      corr_status = obj->computeUpdateRobust(shape_function,num_iterations);
     }
     catch (std::logic_error &err) { //a non-graceful exception occurred
       corr_status = CORRELATION_FAILED_BY_EXCEPTION;
@@ -1900,7 +1900,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   else if(optimization_method_==DICe::GRADIENT_BASED||optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX||
       optimization_method_==DICe::GRADIENT_THEN_SEARCH){
     try{
-      corr_status = obj->computeUpdateFast(shape_function->rcp(),num_iterations);
+      corr_status = obj->computeUpdateFast(shape_function,num_iterations);
     }
     catch (std::logic_error &err) { //a non-graceful exception occurred
       corr_status = CORRELATION_FAILED_BY_EXCEPTION;
@@ -1934,7 +1934,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       init_status = initial_guess(subset_gid,shape_function);
       if(optimization_method_==DICe::GRADIENT_BASED_THEN_SIMPLEX){
         try{
-          corr_status = obj->computeUpdateRobust(shape_function->rcp(),num_iterations);
+          corr_status = obj->computeUpdateRobust(shape_function,num_iterations);
         }
         catch (std::logic_error &err) { //a non-graceful exception occurred
           corr_status = CORRELATION_FAILED_BY_EXCEPTION;
@@ -1951,7 +1951,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
           min_u,min_v,min_t);
         DEBUG_MSG("Subset " << subset_gid << " GRADIENT_THEN_SEARCH method used, search-based initial u: " << min_u);// << " v: " << min_v);
         try{
-          corr_status = obj->computeUpdateFast(shape_function->rcp(),num_iterations);
+          corr_status = obj->computeUpdateFast(shape_function,num_iterations);
         }
         catch (std::logic_error &err) { //a non-graceful exception occurred
           corr_status = CORRELATION_FAILED_BY_EXCEPTION;
@@ -1965,7 +1965,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       // try again using gradient based
       init_status = initial_guess(subset_gid,shape_function);
       try{
-          corr_status = obj->computeUpdateFast(shape_function->rcp(),num_iterations);
+          corr_status = obj->computeUpdateFast(shape_function,num_iterations);
       }
       catch (std::logic_error &err) { //a non-graceful exception occurred
         corr_status = CORRELATION_FAILED_BY_EXCEPTION;
@@ -2005,7 +2005,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //  test final gamma if user requested
   //
   scalar_t noise_std_dev = 0.0;
-  const scalar_t sigma = obj->sigma(shape_function->rcp(),noise_std_dev);
+  const scalar_t sigma = obj->sigma(shape_function,noise_std_dev);
   if(sigma < 0.0){
     DEBUG_MSG("Subset " << subset_gid << " final sigma value FAILS threshold test, sigma: " <<
       sigma << " (threshold: " << 0.0 << ")");
@@ -2013,8 +2013,8 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     record_failed_step(subset_gid,static_cast<int_t>(FRAME_FAILED_DUE_TO_NEGATIVE_SIGMA),num_iterations);
     return;
   }
-  const scalar_t gamma = obj->gamma(shape_function->rcp());
-  const scalar_t beta = output_beta_ ? obj->beta(shape_function->rcp()) : 0.0;
+  const scalar_t gamma = obj->gamma(shape_function);
+  const scalar_t beta = output_beta_ ? obj->beta(shape_function) : 0.0;
   if((final_gamma_threshold_!=-1.0 && gamma > final_gamma_threshold_)||gamma < 0.0){
     DEBUG_MSG("Subset " << subset_gid << " final gamma value " << gamma << " FAILS threshold test or is negative, gamma: " <<
       gamma << " (threshold: " << final_gamma_threshold_ << ")");
@@ -3141,7 +3141,7 @@ Schema::check_for_blocking_subsets(const int_t subset_global_id){
     Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory(this);
     shape_function->initialize_parameters_from_fields(this,global_ss);
     std::set<std::pair<int_t,int_t> > subset_pixels =
-        obj_vec_[local_ss]->subset()->deformed_shapes(shape_function->rcp(),cx,cy,obstruction_skin_factor_);
+        obj_vec_[local_ss]->subset()->deformed_shapes(shape_function,cx,cy,obstruction_skin_factor_);
     blocked_pixels.insert(subset_pixels.begin(),subset_pixels.end());
   } // blocking subsets loop
 }

@@ -43,6 +43,7 @@
 #include <DICe_Image.h>
 #include <DICe_Shape.h>
 #include <DICe_FFT.h>
+#include <DICe_LocalShapeFunction.h>
 
 #include <iostream>
 #include <fstream>
@@ -165,12 +166,12 @@ int main(int argc, char *argv[]) {
     //*outStream << "***orig: " << theta_orig <<  " theta: " << theta*180.0/DICE_PI << " theta_180: " << theta_180*180.0/DICE_PI << std::endl;
 
     // transform the image by the computed rotation angle
-    Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-    (*def)[DOF_THETA] = theta;
-    Teuchos::RCP<std::vector<scalar_t> > def180 = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-    (*def180)[DOF_THETA] = theta_180;
-    Teuchos::RCP<Image> rot_ref_0 = ref->apply_transformation(def,ref->width()/2,ref->height()/2);
-    Teuchos::RCP<Image> rot_ref_180 = ref->apply_transformation(def180,ref->width()/2,ref->height()/2);
+    Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory();
+    Teuchos::RCP<Local_Shape_Function> shape_function_180 = shape_function_factory();
+    shape_function->insert_motion(0.0,0.0,theta);
+    shape_function_180->insert_motion(0.0,0.0,theta_180);
+    Teuchos::RCP<Image> rot_ref_0 = ref->apply_transformation(shape_function,ref->width()/2,ref->height()/2);
+    Teuchos::RCP<Image> rot_ref_180 = ref->apply_transformation(shape_function_180,ref->width()/2,ref->height()/2);
     std::stringstream transName0;
     //transName0 << "trans0_" << i << ".tif";
     //std::stringstream transName180;

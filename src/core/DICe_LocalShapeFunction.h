@@ -172,14 +172,49 @@ public:
     return parameters_[spec_map_.find(spec)->second];
   }
 
+  /// method that computes the residuals for this shape function
+  /// \param x x-coordinate of the point to compute for
+  /// \param y y-coordinate of the point to compute for
+  /// \param cx input centroid coordinate (dummy variable for some shape functions)
+  /// \param cy input centroid coordinate (dummy variable for some shape functions)
+  /// \param gx x image gradient
+  /// \param gy y image gradient
+  /// \param residuals [out] the vector to store the residuals in
+  /// \param use_ref_grads true if the gradients should be used from the reference image (so they need to be adjusted for the current def map)
+  virtual void residuals(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    const scalar_t & gx,
+    const scalar_t & gy,
+    std::vector<scalar_t> & residuals,
+    const bool use_ref_grads=false)=0;
+
+  /// update the parameter values based on an input vector
+  /// \param update reference to the update vector
+  void update(const std::vector<scalar_t> & update);
+
+  /// returns true if the solution is converged
+  /// \param old_parameters vector of the previous guess for the parameters
+  /// \param tol the solution tolerance
+  virtual bool test_for_convergence(const std::vector<scalar_t> & old_parameters,
+    const scalar_t & tol)=0;
+
   // TODO remove this (provided now for convenience)
   Teuchos::RCP<std::vector<scalar_t> > rcp(){
     return Teuchos::rcp(&parameters_,false);
   }
 
+  /// returns a pointer to the vector of delta values for this shape function
+  Teuchos::RCP<std::vector<scalar_t> > deltas(){
+    return Teuchos::rcp(&deltas_,false);
+  }
+
 protected:
   /// a vector that holds the parameters of the shape function
   std::vector<scalar_t> parameters_;
+  /// a vector that holds the deltas to use for a simplex method
+  std::vector<scalar_t> deltas_;
   /// the total number of degrees of freedom
   int_t num_params_;
   /// stores the associated field with each DOF and the corresponding parameter index
@@ -196,13 +231,8 @@ Affine_Shape_Function : public Local_Shape_Function{
 public:
 
   /// constructor
-  /// \param params parameters that define which components are active, etc.
-  /// \param enable_rotation true if theta is enabled
-  /// \param enable_normal_strain true if normal stretching is enabled
-  /// \param enable_shear_strain true if shear stretching is enabled
-  Affine_Shape_Function(const bool enable_rotation,
-    const bool enable_normal_strain,
-    const bool enable_shear_strain);
+  /// \param schema pointer to a schema used to initialize the shape function
+  Affine_Shape_Function(Schema * schema);
 
   /// virtual destructor
   virtual ~Affine_Shape_Function(){};
@@ -244,13 +274,27 @@ public:
   virtual void insert_motion(const scalar_t & u,
     const scalar_t & v);
 
+  /// see base class description
+  virtual void residuals(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    const scalar_t & gx,
+    const scalar_t & gy,
+    std::vector<scalar_t> & residuals,
+    const bool use_ref_grads=false);
+
+  /// see base class description
+  virtual bool test_for_convergence(const std::vector<scalar_t> & old_parameters,
+    const scalar_t & tol);
+
 private:
 };
 
 /// factory to create the right shape function
 /// \param schema pointer to a schema to use to initialize the shape function
 DICE_LIB_DLL_EXPORT
-Teuchos::RCP<Local_Shape_Function> shape_function_factory(Schema * schema);
+Teuchos::RCP<Local_Shape_Function> shape_function_factory(Schema * schema=NULL);
 
 }// End DICe Namespace
 

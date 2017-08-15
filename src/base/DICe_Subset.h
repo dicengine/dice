@@ -45,6 +45,7 @@
 #include <DICe.h>
 #include <DICe_Shape.h>
 #include <DICe_Image.h>
+#include <DICe_LocalShapeFunction.h>
 #if DICE_KOKKOS
   #include <DICe_Kokkos.h>
 #endif
@@ -91,15 +92,6 @@ void affine_map_to_motion( const scalar_t & x,
   scalar_t & out_v,
   scalar_t & out_theta,
   const Teuchos::RCP<const std::vector<scalar_t> > & def);
-
-///// adds a translation to an affine mapping
-///// \param u displacement x to add
-///// \param v displacement y to add
-///// \param def deformation vector to update
-//DICE_LIB_DLL_EXPORT
-//void affine_add_translation( const scalar_t & u,
-//  const scalar_t & v,
-//  Teuchos::RCP<std::vector<scalar_t> > & def);
 
 
 /// \class DICe::Subset
@@ -206,11 +198,11 @@ public:
   /// initialization method:
   /// \param image the image to get the intensity values from
   /// \param target the initialization mode (put the values in the ref or def intensities)
-  /// \param deformation the deformation map (optional)
+  /// \param shape_function contains the deformation map (optional)
   /// \param interp interpolation method (optional)
   void initialize(Teuchos::RCP<Image> image,
     const Subset_View_Target target=REF_INTENSITIES,
-    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
+    Teuchos::RCP<Local_Shape_Function> shape_function=Teuchos::null,
     const Interpolation_Method interp=KEYS_FOURTH);
 
   /// write the subset intensity values to a tif file
@@ -222,10 +214,10 @@ public:
   /// draw the subset over an image
   /// \param file_name the name of the tif file to write
   /// \param image pointer to the image to use as the background
-  /// \param deformation deform the subset on the image (rather than its original shape)
+  /// \param shape_function contains the deformation map (optional)
   void write_subset_on_image(const std::string & file_name,
     Teuchos::RCP<Image> image,
-    Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null);
+    Teuchos::RCP<Local_Shape_Function> shape_function=Teuchos::null);
 
   /// returns the mean intensity value
   /// \param target either the reference or deformed intensity values
@@ -280,22 +272,22 @@ public:
   /// Image Understanding, Vol. 64, No. 2, pp. 300-302, Sep. 1996
   /// The estimate is computed for a rectangular window that encompases the entire subset if the subset is conformal
   /// \param image the image for which to estimate the noise for this subset
-  /// \param deformation the current deformation of the subset
+  /// \param shape_function contains the deformation map (optional)
   scalar_t noise_std_dev(Teuchos::RCP<Image> image,
-    Teuchos::RCP<const std::vector<scalar_t> > deformation);
+    Teuchos::RCP<Local_Shape_Function> shape_function);
 
   /// \brief Returns the std deviation of the image intensity values
   scalar_t contrast_std_dev();
 
   /// \brief EXPERIMENTAL Check the deformed position of the pixel to see if it falls inside an obstruction, if so, turn it off
-  /// \param deformation Deformation to use in determining the current position of all the pixels in the subset
+  /// \param shape_function contains the deformation map (optional)
   ///
-  /// This method uses the specified deformation vector to deform the subset to the current position. It then
+  /// This method uses the specified deformation map to deform the subset to the current position. It then
   /// checks to see if any of the deformed pixels fall behind an obstruction. These obstructed pixels
   /// are turned off by setting the is_deactivated_this_step_[i] flag to true. These flags are reset on every frame.
   /// When methods like gamma() are called on an objective, these pixels get skipped so they do not contribute to
   /// the correlation or the optimization routine.
-  void turn_off_obstructed_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation);
+  void turn_off_obstructed_pixels(Teuchos::RCP<Local_Shape_Function> shape_function);
 
   /// \brief EXPERIMENTAL See if any pixels that were obstructed to begin with are now in view, if so use the
   /// newly visible intensity values to reconstruct the subset
@@ -321,7 +313,7 @@ public:
   }
 
   /// \brief EXPERIMENTAL Return the deformed geometry information for the subset boundary
-  std::set<std::pair<int_t,int_t> > deformed_shapes(Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
+  std::set<std::pair<int_t,int_t> > deformed_shapes(Teuchos::RCP<Local_Shape_Function> shape_function=Teuchos::null,
     const int_t cx=0,
     const int_t cy=0,
     const scalar_t & skin_factor=1.0);

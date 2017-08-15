@@ -409,15 +409,18 @@ void subset_velocity(Global_Algorithm * alg,
   int *IWORK = new int[LWORK];
   Teuchos::LAPACK<int_t,double> lapack;
 
+  Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory();
+
   // Initialize storage:
   Teuchos::SerialDenseMatrix<int_t,double> H(N,N, true);
   Teuchos::ArrayRCP<double> q(N,0.0);
-  Teuchos::RCP<std::vector<scalar_t> > deformation = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0)); // save off the previous value to test for convergence
+//  Teuchos::RCP<std::vector<scalar_t> > deformation = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0)); // save off the previous value to test for convergence
   Teuchos::RCP<std::vector<scalar_t> > def_old     = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0)); // save off the previous value to test for convergence
   Teuchos::RCP<std::vector<scalar_t> > def_update  = Teuchos::rcp(new std::vector<scalar_t>(N,0.0)); // save off the previous value to test for convergence
   // initialize the displacement field with the incoming values
-  (*deformation)[DOF_U] = b_x;
-  (*deformation)[DOF_V] = b_y;
+  shape_function->insert_motion(b_x,b_y);
+//  (*deformation)[DOF_U] = b_x;
+//  (*deformation)[DOF_V] = b_y;
   (*def_old)[DOF_U] = b_x;
   (*def_old)[DOF_V] = b_y;
 
@@ -431,7 +434,7 @@ void subset_velocity(Global_Algorithm * alg,
   for(;solve_it<=max_solve_its;++solve_it)
   {
     // update the deformed image with the new deformation:
-    subset->initialize(alg->schema()->def_img(),DEF_INTENSITIES,deformation); // get the schema def image rather than the alg since the alg is already normalized
+    subset->initialize(alg->schema()->def_img(),DEF_INTENSITIES,shape_function); // get the schema def image rather than the alg since the alg is already normalized
 
     // compute the mean value of the subsets:
     const scalar_t meanG = subset->mean(DEF_INTENSITIES);
@@ -499,7 +502,7 @@ void subset_velocity(Global_Algorithm * alg,
 
     // save off last step d
     for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i)
-      (*def_old)[i] = (*deformation)[i];
+      (*def_old)[i] = (*shape_function->parameters())[i];
 
     for(int_t i=0;i<N;++i)
       (*def_update)[i] = 0.0;
@@ -509,19 +512,21 @@ void subset_velocity(Global_Algorithm * alg,
         (*def_update)[i] += H(i,j)*(-1.0)*q[j];
 
     //DEBUG_MSG("    Iterative updates: u " << (*def_update)[0] << " v " << (*def_update)[1]);
-
-    (*deformation)[DICe::DOF_U] += (*def_update)[0];
-    (*deformation)[DICe::DOF_V] += (*def_update)[1];
+    shape_function->add_translation((*def_update)[0],(*def_update)[1]);
+//    (*deformation)[DICe::DOF_U] += ;
+//    (*deformation)[DICe::DOF_V] += (*def_update)[1];
 
     //DEBUG_MSG("Subset at cx " << c_x << " cy " << c_y  << " -- iteration: " << solve_it << " u " << (*deformation)[DICe::DOF_U] <<
     //  " v " << (*deformation)[DICe::DOF_V] << " theta " << (*deformation)[DICe::DOF_THETA] <<
     //  " ex " << (*deformation)[DICe::DOF_EX] << " ey " << (*deformation)[DICe::DOF_EY] <<
     //  " gxy " << (*deformation)[DICe::DOF_GXY] << ")");
 
-    if(std::abs((*deformation)[DICe::DOF_U] - (*def_old)[DICe::DOF_U]) < solve_tol_disp
-        && std::abs((*deformation)[DICe::DOF_V] - (*def_old)[DICe::DOF_V]) < solve_tol_disp){
-      DEBUG_MSG("subset_velocity(): solution at cx " << c_x << " cy " << c_y << ": b_x_in " << b_x << " b_x " << (*deformation)[DICe::DOF_U] <<
-        " b_y_in " << b_y << " b_y " << (*deformation)[DICe::DOF_V]);
+    scalar_t print_u=0.0,print_v=0.0,print_t=0.0;
+    shape_function->map_to_u_v_theta(subset->centroid_x(),subset->centroid_y(),print_u,print_v,print_t);
+    if(std::abs(print_u - (*def_old)[DICe::DOF_U]) < solve_tol_disp
+        && std::abs(print_v - (*def_old)[DICe::DOF_V]) < solve_tol_disp){
+      DEBUG_MSG("subset_velocity(): solution at cx " << c_x << " cy " << c_y << ": b_x_in " << b_x << " b_x " << print_u <<
+        " b_y_in " << b_y << " b_y " << print_v);
       break;
     }
 
@@ -540,9 +545,10 @@ void subset_velocity(Global_Algorithm * alg,
   if(solve_it>=max_solve_its){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Subset_velocity(): max iterations reached");
   }
-
-  b_x = (*deformation)[DICe::DOF_U];
-  b_y = (*deformation)[DICe::DOF_V];
+  scalar_t out_u=0.0,out_v=0.0,out_t=0.0;
+  shape_function->map_to_u_v_theta(subset->centroid_x(),subset->centroid_y(),out_u,out_v,out_t);
+  b_x = out_u;
+  b_y = out_v;
 }
 
 DICE_LIB_DLL_EXPORT

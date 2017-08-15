@@ -41,6 +41,7 @@
 
 #include <DICe.h>
 #include <DICe_Shape.h>
+#include <DICe_LocalShapeFunction.h>
 
 #include <cassert>
 
@@ -132,7 +133,7 @@ Polygon::deactivate_pixels(const int_t size,
 
 // NOTE: The pair is (y,x) not (x,y) so that the ordering in the set will match loops over y then x
 std::set<std::pair<int_t,int_t> >
-Polygon::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation,
+Polygon::get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function,
   const int_t cx,
   const int_t cy,
   const scalar_t skin_factor)const{
@@ -144,24 +145,14 @@ Polygon::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation
   int_t max_x = max_x_;
   int_t max_y = max_y_;
 
-  if(deformation!=Teuchos::null){
-    scalar_t u     = (*deformation)[DICe::DOF_U];
-    scalar_t v     = (*deformation)[DICe::DOF_V];
-    scalar_t theta = (*deformation)[DICe::DOF_THETA];
-    scalar_t dudx  = (*deformation)[DICe::DOF_EX];
-    scalar_t dvdy  = (*deformation)[DICe::DOF_EY];
-    scalar_t gxy   = (*deformation)[DICe::DOF_GXY];
-    scalar_t dx=0.0,dy=0.0;
+  if(shape_function!=Teuchos::null){
     scalar_t X=0.0,Y=0.0;
     int_t new_x=0,new_y=0;
     for(size_t i=0;i<vertex_coordinates_x_.size();++i){
       int_t x = vertex_coordinates_x_[i];
       int_t y = vertex_coordinates_y_[i];
       // iterate over all the pixels in the reference blocking subset and compute the current position
-      dx = (1.0+dudx)*(x-cx) + gxy*(y-cy);
-      dy = (1.0+dvdy)*(y-cy) + gxy*(x-cx);
-      X = std::cos(theta)*dx - std::sin(theta)*dy + u + cx;
-      Y = std::sin(theta)*dx + std::cos(theta)*dy + v + cy;
+      shape_function->map(x,y,cx,cy,X,Y);
       new_x = (int_t)X;
       if(X - (int_t)X >= 0.5) new_x++;
       new_y = (int_t)Y;
@@ -265,11 +256,11 @@ Circle::deactivate_pixels(const int_t size,
 
 // NOTE: The pair is (y,x) not (x,y) so that the ordering in the set will match loops over y then x
 std::set<std::pair<int_t,int_t> >
-Circle::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation,
+Circle::get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function,
   const int_t cx,
   const int_t cy,
   const scalar_t skin_factor)const{
-  TEUCHOS_TEST_FOR_EXCEPTION(deformation!=Teuchos::null,std::runtime_error,"Error, circle deformation has not been implemented yet");
+  TEUCHOS_TEST_FOR_EXCEPTION(shape_function!=Teuchos::null,std::runtime_error,"Error, circle deformation has not been implemented yet");
   std::set<std::pair<int_t,int_t> > coordSet;
 
   scalar_t dx=0,dy=0;
@@ -326,25 +317,18 @@ Rectangle::deactivate_pixels(const int_t size,
 
 // NOTE: The pair is (y,x) not (x,y) so that the ordering in the set will match loops over y then x
 std::set<std::pair<int_t,int_t> >
-Rectangle::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation,
+Rectangle::get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function,
   const int_t cx,
   const int_t cy,
   const scalar_t skin_factor)const{
 
   std::set<std::pair<int_t,int_t> > coordSet;
 
-  if(deformation!=Teuchos::null){
+  if(shape_function!=Teuchos::null){
     int_t min_x = 0;
     int_t min_y = 0;
     int_t max_x = 0;
     int_t max_y = 0;
-    scalar_t u     = (*deformation)[DICe::DOF_U];
-    scalar_t v     = (*deformation)[DICe::DOF_V];
-    scalar_t theta = (*deformation)[DICe::DOF_THETA];
-    scalar_t dudx  = (*deformation)[DICe::DOF_EX];
-    scalar_t dvdy  = (*deformation)[DICe::DOF_EY];
-    scalar_t gxy   = (*deformation)[DICe::DOF_GXY];
-    scalar_t dx=0.0,dy=0.0;
     scalar_t X=0.0,Y=0.0;
     int_t new_x=0,new_y=0;
     std::vector<int_t> vertex_coordinates_x(5,0.0);
@@ -365,11 +349,8 @@ Rectangle::get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformati
     for(size_t i=0;i<vertex_coordinates_x.size();++i){
       int_t x = vertex_coordinates_x[i];
       int_t y = vertex_coordinates_y[i];
+      shape_function->map(x,y,cx,cy,X,Y);
       // iterate over all the pixels in the reference blocking subset and compute the current position
-      dx = (1.0+dudx)*(x-cx) + gxy*(y-cy);
-      dy = (1.0+dvdy)*(y-cy) + gxy*(x-cx);
-      X = std::cos(theta)*dx - std::sin(theta)*dy + u + cx;
-      Y = std::sin(theta)*dx + std::cos(theta)*dy + v + cy;
       new_x = (int_t)X;
       if(X - (int_t)X >= 0.5) new_x++;
       new_y = (int_t)Y;

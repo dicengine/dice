@@ -66,9 +66,9 @@ Teuchos::RCP<Objective> objective_factory(Schema * schema,
 
 
 scalar_t
-Objective::gamma( Teuchos::RCP<std::vector<scalar_t> > deformation) const {
+Objective::gamma( Teuchos::RCP<Local_Shape_Function> shape_function) const {
   try{
-    subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,deformation,schema_->interpolation_method());
+    subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,shape_function,schema_->interpolation_method());
   }
   catch (std::logic_error & err) {
     return -1.0;
@@ -85,10 +85,8 @@ Objective::gamma( Teuchos::RCP<std::vector<scalar_t> > deformation) const {
 }
 
 scalar_t
-Objective::beta(Teuchos::RCP<std::vector<scalar_t> > deformation) const {
+Objective::beta(Teuchos::RCP<Local_Shape_Function> shape_function) const {
   // for now return -1 for beta if affine shape functions are used
-  // TODO hook beta up for affine shape functions
-  if(deformation->size()!=DICE_DEFORMATION_SIZE) return -1.0;
 
   // for beta we don't want the gamma values normalized by the number of pixels:
   const bool original_normalize_flag = schema_->normalize_gamma_with_active_pixels();
@@ -101,32 +99,40 @@ Objective::beta(Teuchos::RCP<std::vector<scalar_t> > deformation) const {
   factor[0] = 1.0E-3;
   factor[1] = 1.0E-3;
   factor[2] = 1.0E-1;
-  std::vector<Affine_Dof> fields(3);
-  fields[0] = DOF_U;
-  fields[1] = DOF_V;
-  fields[2] = DOF_THETA;
-  const scalar_t gamma_0 = gamma(deformation);
+  scalar_t temp_u=0.0,temp_v=0.0,temp_t=0.0;
+  const scalar_t gamma_0 = gamma(shape_function);
   std::vector<scalar_t> dir_beta(3,0.0);
-  Teuchos::RCP<std::vector<scalar_t> > temp_def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE));
-  for(size_t i=0;i<fields.size();++i){
+  Teuchos::RCP<Local_Shape_Function> temp_lsf = shape_function_factory(schema_);
+  for(size_t i=0;i<3;++i){
+    temp_lsf->clone(shape_function);
+    temp_lsf->map_to_u_v_theta(subset_->centroid_x(),subset_->centroid_y(),temp_u,temp_v,temp_t);
     if(!schema_->rotation_enabled()&&i==2) continue;
-    // reset def vector
-    for(size_t j=0;j<DICE_DEFORMATION_SIZE;++j)
-      (*temp_def)[j] = (*deformation)[j];
-    // mod the def vector +
-    (*temp_def)[fields[i]] += epsilon[i];
-    const scalar_t gamma_p = gamma(temp_def);
+    if(i==0){
+      temp_u += epsilon[i];
+    }else if(i==1){
+      temp_v += epsilon[i];
+    }else if(i==2){
+      temp_t += epsilon[i];
+    }
+    temp_lsf->insert_motion(temp_u,temp_v,temp_t);
+    const scalar_t gamma_p = gamma(temp_lsf);
+    if(i==0){
+      temp_u -= 2*epsilon[i];
+    }else if(i==1){
+      temp_v -= 2*epsilon[i];
+    }else if(i==2){
+      temp_t -= 2*epsilon[i];
+    }
+    temp_lsf->insert_motion(temp_u,temp_v,temp_t);
     // mod the def vector -
-    (*temp_def)[fields[i]] -= 2.0*epsilon[i];
-    const scalar_t gamma_m = gamma(temp_def);
-
+    const scalar_t gamma_m = gamma(temp_lsf);
     if(std::abs(gamma_m - gamma_0)<1.0E-10||std::abs(gamma_p - gamma_0)<1.0E-10){
       // abort because the slope is so bad that beta is infinite
       DEBUG_MSG("Objective::beta(): return value -1.0");
       // replace the correct normalization flag:
       schema_->set_normalize_gamma_with_active_pixels(original_normalize_flag);
       // re-initialize the subset with the original deformation solution
-      subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,deformation,schema_->interpolation_method());
+      subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,shape_function,schema_->interpolation_method());
       return -1.0;
     }
     const scalar_t slope_m = std::abs(epsilon[i] / (gamma_m - gamma_0))*factor[i];
@@ -146,19 +152,19 @@ Objective::beta(Teuchos::RCP<std::vector<scalar_t> > deformation) const {
   schema_->set_normalize_gamma_with_active_pixels(original_normalize_flag);
 
   // re-initialize the subset with the original deformation solution
-  subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,deformation,schema_->interpolation_method());
+  subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,shape_function,schema_->interpolation_method());
   return mag_dir_beta;
 }
 
 scalar_t
-Objective::sigma( Teuchos::RCP<std::vector<scalar_t> > deformation,
+Objective::sigma( Teuchos::RCP<Local_Shape_Function> shape_function,
   scalar_t & noise_level) const {
   // if the gradients don't exist:
   if(!subset_->has_gradients())
     return 0.0;
 
   // compute the noise std dev. of the image:
-  noise_level = subset_->noise_std_dev(schema_->def_img(subset_->sub_image_id()),deformation);
+  noise_level = subset_->noise_std_dev(schema_->def_img(subset_->sub_image_id()),shape_function);
   // sum up the grads in x and y:
   scalar_t sum_gx = 0.0;
   scalar_t sum_gy = 0.0;
@@ -175,7 +181,7 @@ Objective::sigma( Teuchos::RCP<std::vector<scalar_t> > deformation,
 }
 
 void
-Objective::computeUncertaintyFields(Teuchos::RCP<std::vector<scalar_t> > deformation){
+Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_function){
 
   scalar_t norm_ut_2 = 0.0;
   scalar_t norm_uhat_2 = 0.0;
@@ -193,24 +199,11 @@ Objective::computeUncertaintyFields(Teuchos::RCP<std::vector<scalar_t> > deforma
 
   scalar_t u = 0.0;
   scalar_t v = 0.0;
-  scalar_t x_prime = 0.0;
-  scalar_t y_prime = 0.0;
+  scalar_t t = 0.0;
   const scalar_t cx = schema_->global_field_value(correlation_point_global_id_,SUBSET_COORDINATES_X_FS);
   const scalar_t cy = schema_->global_field_value(correlation_point_global_id_,SUBSET_COORDINATES_Y_FS);
-  if(deformation->size()==DICE_DEFORMATION_SIZE){
-    u = (*deformation)[DOF_U];
-    v = (*deformation)[DOF_V];
-  }else if(deformation->size()==DICE_DEFORMATION_SIZE_AFFINE){
-    TEUCHOS_TEST_FOR_EXCEPTION((*deformation)[8]==0.0,std::runtime_error,"");
-    map_affine(cx,cy,x_prime,y_prime,deformation);
-    u = x_prime - cx;
-    v = y_prime - cy;
-  }else{
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, unknown deformation vector size.");
-  }
-
+  shape_function->map_to_u_v_theta(cx,cy,u,v,t);
   const bool has_image_deformer = schema_->image_deformer()!=Teuchos::null;
-
   // put the exact solution into the n minus 1 field in case it didn't get populated by an image deformer
   if(has_image_deformer){
     scalar_t exact_u = 0.0;
@@ -292,7 +285,7 @@ Objective::computeUncertaintyFields(Teuchos::RCP<std::vector<scalar_t> > deforma
 }
 
 Status_Flag
-Objective::computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > deformation,
+Objective::computeUpdateRobust(Teuchos::RCP<Local_Shape_Function> shape_function,
   int_t & num_iterations,
   const scalar_t & override_tol){
 
@@ -303,32 +296,9 @@ Objective::computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > deformation,
   params->set(DICe::max_iterations,  schema_->max_solver_iterations_robust());
   params->set(DICe::tolerance, schema_->robust_solver_tolerance());
   DICe::Subset_Simplex simplex(this,params);
-
-  Teuchos::RCP<std::vector<scalar_t> > deltas = Teuchos::rcp(new std::vector<scalar_t>(num_dofs(),0.0));
-
-  if(num_dofs()==DICE_DEFORMATION_SIZE_AFFINE){
-    (*deltas)[DOF_A] = 0.0001;
-    (*deltas)[DOF_B] = 1.0E-5;
-    (*deltas)[DOF_C] = 1.0;
-    (*deltas)[DOF_D] = 1.0E-5;
-    (*deltas)[DOF_E] = 0.0001;
-    (*deltas)[DOF_F] = 1.0;
-    (*deltas)[DOF_G] = 1.0E-5;
-    (*deltas)[DOF_H] = 1.0E-5;
-    (*deltas)[DOF_I] = 1.0E-5;
-    //    for(int_t i=0;i<num_dofs();++i)
-    //      (*deltas)[i] = 0.00001;
-    //    (*deltas)[AFFINE_C] = schema_->robust_delta_disp();
-    //    (*deltas)[AFFINE_F] = schema_->robust_delta_disp();
-  }else{
-    for(int_t i=0;i<num_dofs();++i){
-      if(i<2) (*deltas)[i] = schema_->robust_delta_disp();
-      else
-        (*deltas)[i] = schema_->robust_delta_theta();
-    }
-  }
+  Teuchos::RCP<std::vector<scalar_t> > deltas = shape_function->deltas();
   try{
-    status_flag = simplex.minimize(deformation,deltas,num_iterations,skip_threshold);
+    status_flag = simplex.minimize(shape_function->rcp(),deltas,num_iterations,skip_threshold);
   }
   catch (std::logic_error &err) {
     return CORRELATION_FAILED;
@@ -337,33 +307,27 @@ Objective::computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > deformation,
 }
 
 Status_Flag
-Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformation,
+Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_function,
   int_t & num_iterations){
-  assert(deformation->size()==DICE_DEFORMATION_SIZE);
-
   TEUCHOS_TEST_FOR_EXCEPTION(!subset_->has_gradients(),std::runtime_error,"Error, image gradients have not been computed but are needed here.");
-
   // TODO catch the case where the initial gamma is good enough (possibly do this at the image level, not subset?):
-
-  // using type double here a lot because LAPACK doesn't support float.
-  int_t N = 6; // [ u_x u_y theta dudx dvdy gxy ]
-  scalar_t solve_tol_disp = schema_->fast_solver_tolerance();
-  scalar_t solve_tol_theta = schema_->fast_solver_tolerance();
+  int_t N = shape_function->num_params(); // one degree of freedom for each shape function parameter
+  assert(N>=2);
+  scalar_t tolerance = schema_->fast_solver_tolerance();
   const int_t max_solve_its = schema_->max_solver_iterations_fast();
   int *IPIV = new int[N+1];
   int LWORK = N*N;
   int INFO = 0;
+  // using type double here because LAPACK doesn't support float.
   double *WORK = new double[LWORK];
-  //double *GWORK = new double[10*N];
-  //int *IWORK = new int[LWORK];
   Teuchos::LAPACK<int_t,double> lapack;
-  assert(N==6 && "  DICe ERROR: this DIC method is currently only approprate for 6 variables.");
 
   // Initialize storage:
   Teuchos::SerialDenseMatrix<int_t,double> H(N,N, true);
   Teuchos::ArrayRCP<double> q(N,0.0);
-  Teuchos::RCP<std::vector<scalar_t> > def_old    = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0)); // save off the previous value to test for convergence
-  Teuchos::RCP<std::vector<scalar_t> > def_update = Teuchos::rcp(new std::vector<scalar_t>(N,0.0)); // save off the previous value to test for convergence
+  std::vector<scalar_t> residuals(N,0.0);
+  std::vector<scalar_t> def_old(N,0.0);    // save off the previous value to test for convergence
+  std::vector<scalar_t> def_update(N,0.0); // save off the previous value to test for convergence
 
   // note this creates a pointer to the array so
   // the values are updated each frame if compute_grad_def_images is on
@@ -372,10 +336,10 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformat
   const scalar_t cx = subset_->centroid_x();
   const scalar_t cy = subset_->centroid_y();
   const scalar_t meanF = subset_->mean(REF_INTENSITIES);
-  // these are used for regularization below
-  //const scalar_t prev_u = (*deformation)[DOF_U];
-  //const scalar_t prev_v = (*deformation)[DOF_V];
-  //const scalar_t prev_theta = (*deformation)[DOF_THETA];
+
+  scalar_t old_u=0.0,old_v=0.0,old_t=0.0;
+  shape_function->map_to_u_v_theta(cx,cy,old_u,old_v,old_t);
+
 
   // SOLVER ---------------------------------------------------------
   DEBUG_MSG(std::setw(5) << "Iter" <<
@@ -390,12 +354,12 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformat
     std::setw(12) << " dt");
 
   int_t solve_it = 0;
-  for(;solve_it<=max_solve_its;++solve_it)
-  {
+  for(;solve_it<=max_solve_its;++solve_it){
     num_iterations = solve_it;
+
     // update the deformed image with the new deformation:
     try{
-      subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,deformation,schema_->interpolation_method());
+      subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,shape_function,schema_->interpolation_method());
       //#ifdef DICE_DEBUG_MSG
       //    std::stringstream fileName;
       //    fileName << "defSubset_" << correlation_point_global_id_ << "_" << solve_it;
@@ -405,93 +369,27 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformat
     catch (std::logic_error & err) {
       return SUBSET_CONSTRUCTION_FAILED;
     }
-
     // compute the mean value of the subsets:
     const scalar_t meanG = subset_->mean(DEF_INTENSITIES);
-    //DEBUG_MSG("Subset " << correlation_point_global_id_ << " def mean: " << meanG);
-
     // the gradients are taken from the def images rather than the ref
     const bool use_ref_grads = schema_->def_img()->has_gradients() ? false : true;
 
-    scalar_t dx=0.0,dy=0.0,Dx=0.0,Dy=0.0,delTheta=0.0,delEx=0.0,delEy=0.0,delGxy=0.0;
-    scalar_t gx = 0.0, gy= 0.0;
-    scalar_t Gx=0.0,Gy=0.0, GmF=0.0;
-    const scalar_t theta = (*deformation)[DICe::DOF_THETA];
-    const scalar_t dudx = (*deformation)[DICe::DOF_EX];
-    const scalar_t dvdy = (*deformation)[DICe::DOF_EY];
-    const scalar_t gxy = (*deformation)[DICe::DOF_GXY];
-    const scalar_t cosTheta = std::cos(theta);
-    const scalar_t sinTheta = std::sin(theta);
-
+    scalar_t GmF = 0.0;
     for(int_t index=0;index<subset_->num_pixels();++index){
       if(subset_->is_deactivated_this_step(index)||!subset_->is_active(index)) continue;
-      dx = subset_->x(index) - cx;
-      dy = subset_->y(index) - cy;
-      Dx = (1.0+dudx)*(dx) + gxy*(dy);
-      Dy = (1.0+dvdy)*(dy) + gxy*(dx);
       GmF = (subset_->def_intensities(index) - meanG) - (subset_->ref_intensities(index) - meanF);
-      gx = gradGx[index];
-      gy = gradGy[index];
-      Gx = use_ref_grads ? cosTheta*gx - sinTheta*gy : gx;
-      Gy = use_ref_grads ? sinTheta*gx + cosTheta*gy : gy;
-
-      delTheta = Gx*(-sinTheta*Dx - cosTheta*Dy) + Gy*(cosTheta*Dx - sinTheta*Dy);
-      //deldelTheta = Gx*(-cosTheta*Dx + sinTheta*Dy) + Gy*(-sinTheta*Dx - cosTheta*Dy);
-      delEx = Gx*dx*cosTheta + Gy*dx*sinTheta;
-      delEy = -Gx*dy*sinTheta + Gy*dy*cosTheta;
-      delGxy = Gx*(cosTheta*dy - sinTheta*dx) + Gy*(sinTheta*dy + cosTheta*dx);
-
-      q[0] += Gx*GmF;
-      q[1] += Gy*GmF;
-      q[2] += delTheta*GmF;
-      q[3] += delEx*GmF;
-      q[4] += delEy*GmF;
-      q[5] += delGxy*GmF;
-
-      H(0,0) += Gx*Gx;
-      H(1,0) += Gy*Gx;
-      H(2,0) += delTheta*Gx;
-      H(3,0) += delEx*Gx;
-      H(4,0) += delEy*Gx;
-      H(5,0) += delGxy*Gx;
-
-      H(0,1) += Gx*Gy;
-      H(1,1) += Gy*Gy;
-      H(2,1) += delTheta*Gy;
-      H(3,1) += delEx*Gy;
-      H(4,1) += delEy*Gy;
-      H(5,1) += delGxy*Gy;
-
-      H(0,2) += Gx*delTheta;
-      H(1,2) += Gy*delTheta;
-      H(2,2) += delTheta*delTheta;// + delTheta*deldelTheta;
-      H(3,2) += delEx*delTheta;
-      H(4,2) += delEy*delTheta;
-      H(5,2) += delGxy*delTheta;
-
-      H(0,3) += Gx*delEx;
-      H(1,3) += Gy*delEx;
-      H(2,3) += delTheta*delEx;
-      H(3,3) += delEx*delEx;
-      H(4,3) += delEy*delEx;
-      H(5,3) += delGxy*delEx;
-
-      H(0,4) += Gx*delEy;
-      H(1,4) += Gy*delEy;
-      H(2,4) += delTheta*delEy;
-      H(3,4) += delEx*delEy;
-      H(4,4) += delEy*delEy;
-      H(5,4) += delGxy*delEy;
-
-      H(0,5) += Gx*delGxy;
-      H(1,5) += Gy*delGxy;
-      H(2,5) += delTheta*delGxy;
-      H(3,5) += delEx*delGxy;
-      H(4,5) += delEy*delGxy;
-      H(5,5) += delGxy*delGxy;
+      for(int_t i=0;i<N;++i)
+        residuals[i] = 0.0;
+      shape_function->residuals(subset_->x(index),subset_->y(index),cx,cy,gradGx[index],gradGy[index],residuals,use_ref_grads);
+      for(int_t i=0;i<N;++i){
+        q[i] += GmF*residuals[i];
+        for(int_t j=0;j<N;++j)
+          H(i,j) += residuals[i]*residuals[j];
+      }
     }
 
     // compute the norm of H prior to taking the inverse:
+    // FIXME get this working for other shape functions
     const scalar_t det_h = H(0,0)*H(1,1) - H(1,0)*H(0,1);
     const scalar_t norm_H = std::sqrt(H(0,0)*H(0,0) + H(0,1)*H(0,1) + H(1,0)*H(1,0) + H(1,1)*H(1,1));
     scalar_t cond_2x2 = -1.0;
@@ -500,22 +398,13 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformat
       cond_2x2 = norm_H * norm_Hi;
     }
 
-    if(schema_->use_objective_regularization()){
-      // add the penalty terms
-      const scalar_t alpha = schema_->levenberg_marquardt_regularization_factor();
-      //q[0] += alpha * ((*deformation)[DICe::DOF_U] - prev_u);
-      //q[1] += alpha * ((*deformation)[DICe::DOF_V] - prev_v);
-      //q[2] += alpha * ((*deformation)[DICe::DOF_THETA] - prev_theta);
-      H(0,0) += alpha;
-      H(1,1) += alpha;
-      // H(2,2) += alpha;
-    }
-
     // determine the max value in the matrix:
     scalar_t maxH = 0.0;
     for(int_t i=0;i<H.numCols();++i)
       for(int_t j=0;j<H.numRows();++j)
         if(std::abs(H(i,j))>maxH) maxH = std::abs(H(i,j));
+
+    // TODO TODO TODO remove this once the parameters vector is dynamically sized
 
     // add ones for rows and columns of inactive shape functions
     if(!schema_->translation_enabled()){
@@ -553,33 +442,14 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformat
       q[4] = 0.0;
     }
 
-    // TODO: remove for performance?
-    // compute the 1-norm of H:
-    //std::vector<scalar_t> colTotals(N,0.0);
-    //for(int_t i=0;i<H.numCols();++i){
-    //  for(int_t j=0;j<H.numRows();++j){
-    //    colTotals[i]+=std::abs(H(j,i));
-    //  }
-    //}
-    //double anorm = 0.0;
-    //for(int_t i=0;i<N;++i){
-    //  if(colTotals[i] > anorm) anorm = colTotals[i];
-    //}
-
     // clear temp storage
     for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
-    //for(int_t i=0;i<10*N;++i) GWORK[i] = 0.0;
-    //for(int_t i=0;i<LWORK;++i) IWORK[i] = 0;
     for(int_t i=0;i<N+1;++i) {IPIV[i] = 0;}
-    //double rcond=0.0; // reciporical condition number
     try
     {
       lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
-      //lapack.GECON('1',N,H.values(),N,anorm,&rcond,GWORK,IWORK,&INFO);
-      //DEBUG_MSG("Subset " << correlation_point_global_id_ << "    RCOND(H): "<< rcond);
       schema_->global_field_value(correlation_point_global_id_,CONDITION_NUMBER_FS) = cond_2x2;
-      //schema_->global_field_value(correlation_point_global_id_,DICe::CONDITION_NUMBER) = (rcond !=0.0) ? 1.0/rcond : 0.0;
-      //if(rcond < 1.0E-12) return HESSIAN_SINGULAR;
+      if(cond_2x2 > 1.0E12) return HESSIAN_SINGULAR;
     }
     catch(std::exception &e){
       DEBUG_MSG( e.what() << '\n');
@@ -594,60 +464,38 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformat
       DEBUG_MSG( e.what() << '\n');
       return LINEAR_SOLVE_FAILED;
     }
-
-
-    // save off last step d
-    for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i)
-      (*def_old)[i] = (*deformation)[i];
-
+    // save off last step
     for(int_t i=0;i<N;++i)
-      (*def_update)[i] = 0.0;
-
+      def_old[i] = (*shape_function->rcp())[i];
+    for(int_t i=0;i<N;++i)
+      def_update[i] = 0.0;
     for(int_t i=0;i<N;++i)
       for(int_t j=0;j<N;++j)
-        (*def_update)[i] += H(i,j)*(-1.0)*q[j];
+        def_update[i] += H(i,j)*(-1.0)*q[j];
+    shape_function->update(def_update);
 
-    //DEBUG_MSG("    Iterative updates: u " << (*def_update)[0] << " v " << (*def_update)[1] << " theta " <<
-    //  (*def_update)[2] << " ex " << (*def_update)[3] << " ey " << (*def_update)[4] << " gxy " << (*def_update)[5]);
-
-    (*deformation)[DICe::DOF_U] += (*def_update)[0];
-    (*deformation)[DICe::DOF_V] += (*def_update)[1];
-    (*deformation)[DICe::DOF_THETA] += (*def_update)[2];
-    (*deformation)[DICe::DOF_EX] += (*def_update)[3];
-    (*deformation)[DICe::DOF_EY] += (*def_update)[4];
-    (*deformation)[DICe::DOF_GXY] += (*def_update)[5];
-
+    scalar_t guess_u = 0.0,guess_v=0.0,guess_t=0.0;
+    shape_function->map_to_u_v_theta(cx,cy,guess_u,guess_v,guess_t);
     std::ios  state(NULL);
     state.copyfmt(std::cout);
     DEBUG_MSG(std::setw(5) << solve_it <<
-      //std::setw(15) << resid_norm <<
       std::setw(12) << std::scientific << std::setprecision(4) << q[0] <<
       std::setw(12) << q[1] <<
       std::setw(12) << q[2] <<
-      std::setw(12) << (*deformation)[DICe::DOF_U] <<
-      std::setw(12) << (*def_update)[0] <<
-      std::setw(12) << (*deformation)[DICe::DOF_V] <<
-      std::setw(12) << (*def_update)[1] <<
-      std::setw(12) << (*deformation)[DICe::DOF_THETA] <<
-      std::setw(12) << (*def_update)[2]);
+      std::setw(12) << guess_u <<
+      std::setw(12) << guess_u - old_u <<
+      std::setw(12) << guess_v <<
+      std::setw(12) << guess_v - old_v <<
+      std::setw(12) << guess_t <<
+      std::setw(12) << guess_t - old_t);
     std::cout.copyfmt(state);
+    shape_function->map_to_u_v_theta(cx,cy,old_u,old_v,old_t);
 
-    //DEBUG_MSG("Subset " << correlation_point_global_id_ << " -- iteration: " << solve_it << " u " << (*deformation)[DICe::DOF_U] <<
-    //  " v " << (*deformation)[DICe::DOF_V] << " theta " << (*deformation)[DICe::DOF_THETA] <<
-    //  " ex " << (*deformation)[DICe::DOF_EX] << " ey " << (*deformation)[DICe::DOF_EY] <<
-    //  " gxy " << (*deformation)[DICe::DOF_GXY] <<
-    //  " residual: (" << q[0] << "," << q[1] << "," << q[2] << ")");
-
-    if(std::abs((*deformation)[DICe::DOF_U] - (*def_old)[DICe::DOF_U]) < solve_tol_disp
-        && std::abs((*deformation)[DICe::DOF_V] - (*def_old)[DICe::DOF_V]) < solve_tol_disp
-        && std::abs((*deformation)[DICe::DOF_THETA] - (*def_old)[DICe::DOF_THETA]) < solve_tol_theta){
-      DEBUG_MSG("Subset " << correlation_point_global_id_ << " ** CONVERGED SOLUTION, u " << (*deformation)[DICe::DOF_U] <<
-        " v " << (*deformation)[DICe::DOF_V] <<
-        " theta " << (*deformation)[DICe::DOF_THETA]  << " ex " << (*deformation)[DICe::DOF_EX] <<
-        " ey " << (*deformation)[DICe::DOF_EY] << " gxy " << (*deformation)[DICe::DOF_GXY]);
-      //if(schema_->image_deformer()!=Teuchos::null && schema_->mesh()->get_comm()->get_size()==1){
-      computeUncertaintyFields(deformation);
-      //}
+    const bool converged = shape_function->test_for_convergence(def_old,tolerance);
+    if(converged){
+      DEBUG_MSG("Subset " << correlation_point_global_id_ << " ** CONVERGED SOLUTION ");
+      shape_function->print_parameters();
+      computeUncertaintyFields(shape_function);
       break;
     }
 
@@ -655,12 +503,10 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformat
     H.putScalar(0.0);
     for(int_t i=0;i<N;++i)
       q[i] = 0.0;
-  }
+  } // end solve iteration loop
 
   // clean up storage for lapack:
   delete [] WORK;
-  //delete [] GWORK;
-  //delete [] IWORK;
   delete [] IPIV;
 
   if(solve_it>max_solve_its){
@@ -671,11 +517,11 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformat
 
 
 Status_Flag
-Objective_ZNSSD_Affine::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformation,
+Objective_ZNSSD_Affine::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_function,
   int_t & num_iterations){
   // using type double here a lot because LAPACK doesn't support float.
   int_t N = DICE_DEFORMATION_SIZE_AFFINE; // [ AFFINE_A ... AFFINE_I ]
-  assert((int_t)deformation->size()==N);
+  assert((int_t)shape_function->rcp()->size()==N);
   TEUCHOS_TEST_FOR_EXCEPTION(!subset_->has_gradients(),std::runtime_error,"Error, image gradients have not been computed but are needed here.");
 
   scalar_t solve_tol = schema_->fast_solver_tolerance();
@@ -716,7 +562,7 @@ Objective_ZNSSD_Affine::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > d
     num_iterations = solve_it;
     // update the deformed image with the new deformation:
     try{
-      subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,deformation,schema_->interpolation_method());
+      subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,shape_function,schema_->interpolation_method());
     }
     catch (std::logic_error & err) {
       return SUBSET_CONSTRUCTION_FAILED;
@@ -737,15 +583,15 @@ Objective_ZNSSD_Affine::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > d
     scalar_t Gx=0.0,Gy=0.0, GmF=0.0;
     Teuchos::ArrayRCP<double> resids(N,0.0);
 
-    const scalar_t A = (*deformation)[DOF_A];
-    const scalar_t B = (*deformation)[DOF_B];
-    const scalar_t C = (*deformation)[DOF_C];
-    const scalar_t D = (*deformation)[DOF_D];
-    const scalar_t E = (*deformation)[DOF_E];
-    const scalar_t F = (*deformation)[DOF_F];
-    const scalar_t G = (*deformation)[DOF_G];
-    const scalar_t H = (*deformation)[DOF_H];
-    const scalar_t I = (*deformation)[DOF_I];
+    const scalar_t A = (*shape_function->rcp())[DOF_A];
+    const scalar_t B = (*shape_function->rcp())[DOF_B];
+    const scalar_t C = (*shape_function->rcp())[DOF_C];
+    const scalar_t D = (*shape_function->rcp())[DOF_D];
+    const scalar_t E = (*shape_function->rcp())[DOF_E];
+    const scalar_t F = (*shape_function->rcp())[DOF_F];
+    const scalar_t G = (*shape_function->rcp())[DOF_G];
+    const scalar_t H = (*shape_function->rcp())[DOF_H];
+    const scalar_t I = (*shape_function->rcp())[DOF_I];
     TEUCHOS_TEST_FOR_EXCEPTION(I==0.0,std::runtime_error,"");
 
     for(int_t index=0;index<subset_->num_pixels();++index){
@@ -813,7 +659,7 @@ Objective_ZNSSD_Affine::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > d
     }
     // save off last step d
     for(int_t i=0;i<N;++i)
-      (*def_old)[i] = (*deformation)[i];
+      (*def_old)[i] = (*shape_function->rcp())[i];
 
     for(int_t i=0;i<N;++i)
       (*def_update)[i] = 0.0;
@@ -823,39 +669,39 @@ Objective_ZNSSD_Affine::computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > d
         (*def_update)[i] += tangent(i,j)*(-1.0)*q[j];
 
     for(int_t i=0;i<N;++i)
-      (*deformation)[i] += (*def_update)[i];
+      (*shape_function->rcp())[i] += (*def_update)[i];
 
     std::ios  state(NULL);
     state.copyfmt(std::cout);
     DEBUG_MSG(std::setw(5) << solve_it <<
       //std::setw(15) << resid_norm <<
-      std::setw(12) << std::scientific << std::setprecision(4) << (*deformation)[DOF_A] <<
-      std::setw(12) << (*deformation)[DOF_B] <<
-      std::setw(12) << (*deformation)[DOF_C] <<
-      std::setw(12) << (*deformation)[DOF_D] <<
-      std::setw(12) << (*deformation)[DOF_E] <<
-      std::setw(12) << (*deformation)[DOF_F] <<
-      std::setw(12) << (*deformation)[DOF_G] <<
-      std::setw(12) << (*deformation)[DOF_H] <<
-      std::setw(12) << (*deformation)[DOF_I]);
+      std::setw(12) << std::scientific << std::setprecision(4) << (*shape_function->rcp())[DOF_A] <<
+      std::setw(12) << (*shape_function->rcp())[DOF_B] <<
+      std::setw(12) << (*shape_function->rcp())[DOF_C] <<
+      std::setw(12) << (*shape_function->rcp())[DOF_D] <<
+      std::setw(12) << (*shape_function->rcp())[DOF_E] <<
+      std::setw(12) << (*shape_function->rcp())[DOF_F] <<
+      std::setw(12) << (*shape_function->rcp())[DOF_G] <<
+      std::setw(12) << (*shape_function->rcp())[DOF_H] <<
+      std::setw(12) << (*shape_function->rcp())[DOF_I]);
     std::cout.copyfmt(state);
 
     bool all_converged = true;
     for(int_t i=0;i<N;++i)
-      if(std::abs((*deformation)[i] - (*def_old)[i]) > solve_tol)
+      if(std::abs((*shape_function->rcp())[i] - (*def_old)[i]) > solve_tol)
         all_converged = false;
 
     if(all_converged){
-      DEBUG_MSG("Subset " << correlation_point_global_id_ << " ** CONVERGED SOLUTION, a " << (*deformation)[DOF_A] <<
-        " b " << (*deformation)[DOF_B] <<
-        " c " << (*deformation)[DOF_C] <<
-        " d " << (*deformation)[DOF_D] <<
-        " e " << (*deformation)[DOF_E] <<
-        " f " << (*deformation)[DOF_F] <<
-        " g " << (*deformation)[DOF_G] <<
-        " h " << (*deformation)[DOF_H] <<
-        " i " << (*deformation)[DOF_I]);
-      computeUncertaintyFields(deformation);
+      DEBUG_MSG("Subset " << correlation_point_global_id_ << " ** CONVERGED SOLUTION, a " << (*shape_function->rcp())[DOF_A] <<
+        " b " << (*shape_function->rcp())[DOF_B] <<
+        " c " << (*shape_function->rcp())[DOF_C] <<
+        " d " << (*shape_function->rcp())[DOF_D] <<
+        " e " << (*shape_function->rcp())[DOF_E] <<
+        " f " << (*shape_function->rcp())[DOF_F] <<
+        " g " << (*shape_function->rcp())[DOF_G] <<
+        " h " << (*shape_function->rcp())[DOF_H] <<
+        " i " << (*shape_function->rcp())[DOF_I]);
+      computeUncertaintyFields(shape_function);
       //}
       break;
     }

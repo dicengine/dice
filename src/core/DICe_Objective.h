@@ -75,9 +75,9 @@ Teuchos::RCP<Objective> objective_factory(Schema * schema,
 /// An objective has, as part of its member data, a reference DICe::Subset and a deformed DICe::Subset. These subsets represent
 /// a small subsection of the image.
 ///
-/// The degrees of freedom for an objective are the elements of the deformation map (displacement, rotation, stretch, etc.). A deformation
-/// vector of size DICe_DEFORMATION_SIZE (see DICe.h for the ordering of the values) gets initialized in the initialize_from_previous_frame() or search()
-/// methods of an objective. These values are then passed to the computeUpdateRobust() or computeUpdateFast() methods which contain
+/// The degrees of freedom for an objective are the elements of the shape function parameters (displacement, rotation, stretch, etc.).
+/// The shape function parameters are initialized outside of the objective class.
+/// These values are then passed to the computeUpdateRobust() or computeUpdateFast() methods which contain
 /// the bulk of the optimization algorithm. The sigma() function provides a representation of the uncertainty of the solution.
 
 class DICE_LIB_DLL_EXPORT
@@ -115,30 +115,30 @@ public:
   virtual ~Objective(){}
 
   /// \brief Correlation criteria
-  /// \param deformation The deformation values for which to evaluate the correlation. These values define the mapping.
-  scalar_t gamma( Teuchos::RCP<std::vector<scalar_t> > deformation) const;
+  /// \param shape_function pointer to the class that holds the deformation parameter values
+  scalar_t gamma( Teuchos::RCP<Local_Shape_Function> shape_function) const;
 
   /// \brief Uncertainty measure for solution
-  /// \param deformation The deformation map parameters for the current guess
+  /// \param shape_function [out] pointer to the class that holds the deformation parameter values
   /// \param noise_level [out] Returned as the standard deviation estimate of the image noise sigma_g from Sutton et.al.
-  scalar_t sigma( Teuchos::RCP<std::vector<scalar_t> > deformation,
+  scalar_t sigma( Teuchos::RCP<Local_Shape_Function> shape_function,
     scalar_t & noise_level) const;
 
   /// \brief Measure of the slope of the optimization landscape or how deep the minimum well is
-  /// \param deformation The deformation map parameters for the current guess
-  scalar_t beta( Teuchos::RCP<std::vector<scalar_t> > deformation) const;
+  /// \param shape_function pointer to the class that holds the deformation parameter values
+  scalar_t beta( Teuchos::RCP<Local_Shape_Function> shape_function) const;
 
   /// \brief Gradient based optimization algorithm
-  /// \param deformation [out] The deformation map parameters taken as input as the initial guess and returned as the converged solution
+  /// \param shape_function pointer to the class that holds the deformation parameter values
   /// \param num_iterations [out] The number of interations a particular frame took to execute
-  virtual Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformation,
+  virtual Status_Flag computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_function,
     int_t & num_iterations) = 0;
 
   /// \brief Simplex based optimization algorithm
-  /// \param deformation [out] The deformation map parameters taken as input as the initial guess and returned as the converged solution
+  /// \param shape_function pointer to the class that holds the deformation parameter values
   /// \param num_iterations [out] The number of interations a particular frame took to execute
   /// \param override_tol set this value if for this particular subset, the tolerance should be changed
-  Status_Flag computeUpdateRobust(Teuchos::RCP<std::vector<scalar_t> > deformation,
+  Status_Flag computeUpdateRobust(Teuchos::RCP<Local_Shape_Function> shape_function,
     int_t & num_iterations,
     const scalar_t & override_tol = -1.0);
 
@@ -165,6 +165,11 @@ public:
     return subset_;
   }
 
+  /// Returns a pointer to the schema
+  Schema * schema()const{
+    return schema_;
+  }
+
   /// Returns the sub image id of the subset
   int_t sub_image_id()const{
     return subset_->sub_image_id();
@@ -178,8 +183,8 @@ public:
 protected:
 
   /// Computes the difference from the exact solution and associated fields
-  /// \param deformation pointer to the deformation parameters
-  void computeUncertaintyFields(Teuchos::RCP<std::vector<scalar_t> > deformation);
+  /// \param shape_function pointer to the class that holds the deformation parameter values
+  void computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_function);
 
   /// Pointer to the schema for this analysis
   Schema * schema_;
@@ -233,7 +238,7 @@ public:
   virtual ~Objective_ZNSSD(){}
 
   /// See base class documentation
-  virtual Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformation,
+  virtual Status_Flag computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_function,
     int_t & num_iterations);
 
   /// See base class documentation
@@ -302,7 +307,7 @@ public:
   virtual ~Objective_ZNSSD_Affine(){}
 
   /// See base class documentation
-  virtual Status_Flag computeUpdateFast(Teuchos::RCP<std::vector<scalar_t> > deformation,
+  virtual Status_Flag computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_function,
     int_t & num_iterations);
 
   /// See base class documentation

@@ -41,6 +41,7 @@
 
 #include <DICe_ImageUtils.h>
 #include <DICe_Image.h>
+#include <DICe_LocalShapeFunction.h>
 
 #include <random>
 
@@ -51,36 +52,27 @@ void apply_transform(Teuchos::RCP<Image> image_in,
   Teuchos::RCP<Image> image_out,
   const int_t cx,
   const int_t cy,
-  Teuchos::RCP<const std::vector<scalar_t> > deformation){
+  Teuchos::RCP<Local_Shape_Function > shape_function){
+
+
   const int_t width = image_in->width();
   const int_t height = image_in->height();
   TEUCHOS_TEST_FOR_EXCEPTION(width!=image_out->width(),std::runtime_error,"Dimensions must be the same");
   TEUCHOS_TEST_FOR_EXCEPTION(height!=image_out->height(),std::runtime_error,"Dimensions must be the same");
-  TEUCHOS_TEST_FOR_EXCEPTION(deformation==Teuchos::null,std::runtime_error,"");
-  const scalar_t u = (*deformation)[DOF_U];
-  const scalar_t v = (*deformation)[DOF_V];
-  const scalar_t t = (*deformation)[DOF_THETA];
-  const scalar_t ex = (*deformation)[DOF_EX];
-  const scalar_t ey = (*deformation)[DOF_EY];
-  const scalar_t g = (*deformation)[DOF_GXY];
-  const scalar_t cos_t = std::cos(t);
-  const scalar_t sin_t = std::sin(t);
+  TEUCHOS_TEST_FOR_EXCEPTION(shape_function==Teuchos::null,std::runtime_error,"");
+  scalar_t u =0.0,v=0.0,t=0.0;
+  shape_function->map_to_u_v_theta(cx,cy,u,v,t);
+  shape_function->insert_motion(-u,-v);
   const scalar_t CX = cx + u;
   const scalar_t CY = cy + v;
-  scalar_t dX=0.0, dY=0.0;
-  scalar_t Dx=0.0, Dy=0.0;
   scalar_t mapped_x=0.0, mapped_y=0.0;
   for(int_t y=0;y<height;++y){
     for(int_t x=0;x<width;++x){
-      dX = x - CX;
-      dY = y - CY;
-      Dx = (1.0-ex)*dX - g*dY;
-      Dy = (1.0-ey)*dY - g*dX;
-      mapped_x = cos_t*Dx - sin_t*Dy - u + CX;
-      mapped_y = sin_t*Dx + cos_t*Dy - v + CY;
+      shape_function->map(x,y,CX,CY,mapped_x,mapped_y);
       image_out->intensities()[y*width+x] = image_in->interpolate_keys_fourth(mapped_x,mapped_y);
     }// x
   }// y
+  shape_function->insert_motion(u,v);
 }
 
 void SinCos_Image_Deformer::compute_deformation(const scalar_t & coord_x,

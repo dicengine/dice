@@ -46,6 +46,7 @@
 #include <DICe_Shape.h>
 #include <DICe_Image.h>
 #include <DICe.h>
+#include <DICe_LocalShapeFunction.h>
 
 #include <Teuchos_oblackholestream.hpp>
 
@@ -98,16 +99,16 @@ int main(int argc, char *argv[]) {
   DICe::Image ref_image(imgW,imgW,ref_intensities);
   ref_image.write("shape_ref.tif");
   *outStream << "creating a deformation map" << std::endl;
-  Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-  (*def)[DOF_U] = 25;
-  (*def)[DOF_V] = -30;
-  std::set<std::pair<int_t,int_t> > def_owned_pixels = poly1->get_owned_pixels(def,cx,cy);
+  Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory();
+  const scalar_t u = 25.0, v=-30.0;
+  shape_function->insert_motion(u,v);
+  std::set<std::pair<int_t,int_t> > def_owned_pixels = poly1->get_owned_pixels(shape_function,cx,cy);
   std::set<std::pair<int_t,int_t> >::iterator def_set_it = def_owned_pixels.begin();
   for(ref_set_it = ref_owned_pixels.begin();ref_set_it!=ref_owned_pixels.end();++ref_set_it){
-    if(def_owned_pixels.find(std::pair<int_t,int_t>(ref_set_it->first+(*def)[DOF_V],ref_set_it->second+(*def)[DOF_U]))==def_owned_pixels.end()){
+    if(def_owned_pixels.find(std::pair<int_t,int_t>(ref_set_it->first+v,ref_set_it->second+u))==def_owned_pixels.end()){
       *outStream << "Error, owned pixels are not right for the deformed image" << std::endl;
       *outStream << "    Point was not found (ref) " << ref_set_it->second << " " << ref_set_it->first <<
-          " (def) " << ref_set_it->second + (*def)[DOF_U] << " " << ref_set_it->first + (*def)[DOF_V] << std::endl;
+          " (def) " << ref_set_it->second + u << " " << ref_set_it->first + v << std::endl;
       errorFlag++;
     }
   }
@@ -127,7 +128,7 @@ int main(int argc, char *argv[]) {
 
   *outStream << "testing deformed shape with larger skin" << std::endl;
   const scalar_t large_skin_factor = 1.5;
-  std::set<std::pair<int_t,int_t> > large_skin_owned_pixels = poly1->get_owned_pixels(def,cx,cy,large_skin_factor);
+  std::set<std::pair<int_t,int_t> > large_skin_owned_pixels = poly1->get_owned_pixels(shape_function,cx,cy,large_skin_factor);
   Teuchos::ArrayRCP<scalar_t> large_skin_intensities(imgW*imgW,0.0);
   *outStream << "large skin shape has " << large_skin_owned_pixels.size() << " pixels" << std::endl;
   if(large_skin_owned_pixels.size() <= ref_owned_pixels.size()){
@@ -139,12 +140,12 @@ int main(int argc, char *argv[]) {
     large_skin_intensities[large_skin_set_it->first*imgW + large_skin_set_it->second] = 255;
   }
   for(size_t i=0;i<shape_coords_x.size();++i){
-    if(large_skin_owned_pixels.find(std::pair<int_t,int_t>((int_t)((shape_coords_y[i]-cy)*large_skin_factor*0.9 + cy) + (*def)[DOF_V],
-      (int_t)((shape_coords_x[i]-cx)*large_skin_factor*0.9 + cx) + (*def)[DOF_U]))==large_skin_owned_pixels.end()){
+    if(large_skin_owned_pixels.find(std::pair<int_t,int_t>((int_t)((shape_coords_y[i]-cy)*large_skin_factor*0.9 + cy) + v,
+      (int_t)((shape_coords_x[i]-cx)*large_skin_factor*0.9 + cx) + u))==large_skin_owned_pixels.end()){
       *outStream << "Error, large skin owned pixels are not right" << std::endl;
       *outStream << "    Point was not found (ref) " << shape_coords_x[i] << " " << shape_coords_y[i] <<
-          " (def) " << (int_t)((shape_coords_x[i]-cx)*large_skin_factor*0.9 + cx) + (*def)[DOF_U] <<
-          " " << (int_t)((shape_coords_y[i]-cy)*large_skin_factor*0.9 + cy) + (*def)[DOF_V] << std::endl;
+          " (def) " << (int_t)((shape_coords_x[i]-cx)*large_skin_factor*0.9 + cx) + u <<
+          " " << (int_t)((shape_coords_y[i]-cy)*large_skin_factor*0.9 + cy) + v << std::endl;
       errorFlag++;
     }
   }
@@ -153,7 +154,7 @@ int main(int argc, char *argv[]) {
 
   *outStream << "testing deformed shape with smaller skin" << std::endl;
   const scalar_t small_skin_factor = 0.75;
-  std::set<std::pair<int_t,int_t> > small_skin_owned_pixels = poly1->get_owned_pixels(def,cx,cy,small_skin_factor);
+  std::set<std::pair<int_t,int_t> > small_skin_owned_pixels = poly1->get_owned_pixels(shape_function,cx,cy,small_skin_factor);
   Teuchos::ArrayRCP<scalar_t> small_skin_intensities(imgW*imgW,0.0);
   *outStream << "the small skin shape has " << small_skin_owned_pixels.size() << " pixels" << std::endl;
   if(small_skin_owned_pixels.size() >= ref_owned_pixels.size()){

@@ -52,6 +52,8 @@
 
 namespace DICe {
 
+class Local_Shape_Function;
+
 /// \class DICe::Shape
 /// \brief Generic class for defining regions in an image
 ///
@@ -70,11 +72,11 @@ public:
 
   /// \brief Returns a set of the coordinates of all pixels interior to this shape.
   /// NOTE: The pair is (y,x) not (x,y) so that the ordering in the set will match with loops over y then x
-  /// \param deformation Optional mapping to the deformed shape, otherwise reference map is used
+  /// \param shape_function Optional mapping to the deformed shape, otherwise reference map is used
   /// \param cx Optional x centroid of the map
   /// \param cy Optional y centroid of the map
   /// \param skin_factor Optional padding added to the outside of the shape to make it larger or smaller
-  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
+  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function=Teuchos::null,
     const int_t cx=0,
     const int_t cy=0,
     const scalar_t skin_factor=1.0)const{
@@ -127,7 +129,7 @@ public:
 
   /// See base class documentation
   // NOTE: The pair is (y,x) not (x,y) so that the ordering in the set will match loops over y then x
-  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
+  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function=Teuchos::null,
     const int_t cx=0,
     const int_t cy=0,
     const scalar_t skin_factor=1.0)const;
@@ -222,7 +224,7 @@ public:
   virtual ~Circle(){};
 
   /// See base class documentation
-  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
+  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function=Teuchos::null,
     const int_t cx=0,
     const int_t cy=0,
     const scalar_t skin_factor=1.0)const;
@@ -272,7 +274,7 @@ public:
   virtual ~Rectangle(){};
 
   /// See base class documentation
-  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<const std::vector<scalar_t> > deformation=Teuchos::null,
+  virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function=Teuchos::null,
     const int_t cx=0,
     const int_t cy=0,
     const scalar_t skin_factor=1.0)const;

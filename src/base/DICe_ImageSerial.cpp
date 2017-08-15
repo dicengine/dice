@@ -41,6 +41,7 @@
 
 #include <DICe_Image.h>
 #include <DICe_ImageUtils.h>
+#include <DICe_LocalShapeFunction.h>
 #include <DICe_ImageIO.h>
 #include <DICe_Shape.h>
 
@@ -814,19 +815,19 @@ Image::create_mask(const Conformal_Area_Def & area_def,
 }
 
 Teuchos::RCP<Image>
-Image::apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformation,
+Image::apply_transformation(Teuchos::RCP<Local_Shape_Function> shape_function,
   const int_t cx,
   const int_t cy,
   const bool apply_in_place){
   Teuchos::RCP<Image> this_img = Teuchos::rcp(this,false);
   if(apply_in_place){
     Teuchos::RCP<Image> temp_img = Teuchos::rcp(new Image(this_img));
-    apply_transform(temp_img,this_img,cx,cy,deformation);
+    apply_transform(temp_img,this_img,cx,cy,shape_function);
     return Teuchos::null;
   }
   else{
     Teuchos::RCP<Image> result = Teuchos::rcp(new Image(width_,height_));
-    apply_transform(this_img,result,cx,cy,deformation);
+    apply_transform(this_img,result,cx,cy,shape_function);
     return result;
   }
 }

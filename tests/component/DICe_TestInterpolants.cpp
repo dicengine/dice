@@ -90,15 +90,13 @@ int main(int argc, char *argv[]) {
   *outStream << "creating a subset" << std::endl;
   Subset subset_bi(cx,cy,10,10);
   Subset subset_keys(cx,cy,10,10);
-  Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
+  Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory();
   const scalar_t u = 0.3589;
   const scalar_t v = -2.89478;
   const scalar_t t = 0.262;
-  (*def)[DOF_U] = u;
-  (*def)[DOF_V] = v;
-  (*def)[DOF_THETA]     = t;
-  subset_bi.initialize(array_img,DEF_INTENSITIES,def,BILINEAR);
-  subset_keys.initialize(array_img,DEF_INTENSITIES,def,KEYS_FOURTH);
+  shape_function->insert_motion(u,v,t);
+  subset_bi.initialize(array_img,DEF_INTENSITIES,shape_function,BILINEAR);
+  subset_keys.initialize(array_img,DEF_INTENSITIES,shape_function,KEYS_FOURTH);
 
   *outStream << "testing the intensity values" << std::endl;
   scalar_t error_bi = 0.0;

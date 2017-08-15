@@ -49,16 +49,20 @@ using namespace DICe::mesh::field_enums;
 
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Local_Shape_Function> shape_function_factory(Schema * schema){
-  if(schema->affine_matrix_enabled()){
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, this method is not ready yet, yo!");
+  if(!schema){
+    return Teuchos::rcp(new Affine_Shape_Function(schema));
+  }
+  else if(schema->affine_matrix_enabled()){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, this method is not ready yet!");
   }else{
-    return Teuchos::rcp(new Affine_Shape_Function(schema->rotation_enabled(),schema->normal_strain_enabled(),schema->shear_strain_enabled()));
+    return Teuchos::rcp(new Affine_Shape_Function(schema));
   }
 }
 
 void
 Local_Shape_Function::save_fields(Schema * schema,
   const int_t subset_gid){
+  assert(schema);
   // iterate the fields and save off the values
   std::map<Field_Spec,size_t>::const_iterator it = spec_map_.begin();
   const std::map<Field_Spec,size_t>::const_iterator it_end = spec_map_.end();
@@ -68,6 +72,7 @@ Local_Shape_Function::save_fields(Schema * schema,
 
 void
 Local_Shape_Function::create_fields(Schema * schema){
+  assert(schema);
   // iterate the field specs and create the necessary fields
   std::map<Field_Spec,size_t>::const_iterator it = spec_map_.begin();
   const std::map<Field_Spec,size_t>::const_iterator it_end = spec_map_.end();
@@ -80,35 +85,59 @@ Local_Shape_Function::create_fields(Schema * schema){
 }
 
 void
+Local_Shape_Function::update(const std::vector<scalar_t> & update){
+  assert(update.size()==parameters_.size());
+  for(size_t i=0;i<parameters_.size();++i)
+    parameters_[i] += update[i];
+}
+
+Affine_Shape_Function::Affine_Shape_Function(Schema * schema):
+  Local_Shape_Function()
+{
+  bool rotation_enabled = true;
+  bool normal_strain_enabled = true;
+  bool shear_strain_enabled = true;
+  scalar_t delta_disp = 1.0;
+  scalar_t delta_theta = 0.1;
+  if(schema){
+    rotation_enabled = schema->rotation_enabled();
+    normal_strain_enabled = schema->normal_strain_enabled();
+    shear_strain_enabled = schema->shear_strain_enabled();
+    delta_disp = schema->robust_delta_disp();
+    delta_theta = schema->robust_delta_theta();
+  }
+
+  // translation is required
+  spec_map_.insert(std::pair<Field_Spec,size_t>(SUBSET_DISPLACEMENT_X_FS,spec_map_.size()));
+  spec_map_.insert(std::pair<Field_Spec,size_t>(SUBSET_DISPLACEMENT_Y_FS,spec_map_.size()));
+  //if(rotation_enabled)
+  spec_map_.insert(std::pair<Field_Spec,size_t>(ROTATION_Z_FS,spec_map_.size()));
+  //if(normal_strain_enabled){
+  spec_map_.insert(std::pair<Field_Spec,size_t>(NORMAL_STRETCH_XX_FS,spec_map_.size()));
+  spec_map_.insert(std::pair<Field_Spec,size_t>(NORMAL_STRETCH_YY_FS,spec_map_.size()));
+  //}
+  //if(shear_strain_enabled)
+  spec_map_.insert(std::pair<Field_Spec,size_t>(SHEAR_STRETCH_XY_FS,spec_map_.size()));
+  num_params_ = spec_map_.size();
+  assert(num_params_==DICE_DEFORMATION_SIZE);
+  parameters_.resize(num_params_);
+  deltas_.resize(num_params_);
+  // initialize the parameter values
+  clear();
+  for(int_t i=0;i<num_params_;++i)
+    deltas_[i] = delta_theta;
+  deltas_[spec_map_.find(SUBSET_DISPLACEMENT_X_FS)->second] = delta_disp;
+  deltas_[spec_map_.find(SUBSET_DISPLACEMENT_Y_FS)->second] = delta_disp;
+}
+
+void
 Affine_Shape_Function::reset_fields(Schema * schema){
+  assert(schema);
   // iterate the fields and save off the values
   std::map<Field_Spec,size_t>::const_iterator it = spec_map_.begin();
   const std::map<Field_Spec,size_t>::const_iterator it_end = spec_map_.end();
   for(;it!=it_end;++it)
     schema->mesh()->get_field(it->first)->put_scalar(0.0);
-}
-
-Affine_Shape_Function::Affine_Shape_Function(const bool enable_rotation,
-  const bool enable_normal_strain,
-  const bool enable_shear_strain):
-  Local_Shape_Function()
-{
-  // translation is required
-  spec_map_.insert(std::pair<Field_Spec,size_t>(SUBSET_DISPLACEMENT_X_FS,spec_map_.size()));
-  spec_map_.insert(std::pair<Field_Spec,size_t>(SUBSET_DISPLACEMENT_Y_FS,spec_map_.size()));
-  //if(enable_rotation)
-  spec_map_.insert(std::pair<Field_Spec,size_t>(ROTATION_Z_FS,spec_map_.size()));
-  //if(enable_normal_strain){
-  spec_map_.insert(std::pair<Field_Spec,size_t>(NORMAL_STRETCH_XX_FS,spec_map_.size()));
-  spec_map_.insert(std::pair<Field_Spec,size_t>(NORMAL_STRETCH_YY_FS,spec_map_.size()));
-  //}
-  //if(enable_shear_strain)
-  spec_map_.insert(std::pair<Field_Spec,size_t>(SHEAR_STRETCH_XY_FS,spec_map_.size()));
-  num_params_ = spec_map_.size();
-  assert(num_params_==DICE_DEFORMATION_SIZE);
-  parameters_.resize(num_params_);
-  // initialize the parameter values
-  clear();
 }
 
 void
@@ -121,8 +150,10 @@ Affine_Shape_Function::map(const scalar_t & x,
 
   static scalar_t dx=0.0,dy=0.0;
   static scalar_t Dx=0.0,Dy=0.0;
-  static scalar_t cost = std::cos(parameter(ROTATION_Z_FS));
-  static scalar_t sint = std::sin(parameter(ROTATION_Z_FS));
+  static scalar_t cost;
+  static scalar_t sint;
+  cost = std::cos(parameter(ROTATION_Z_FS));
+  sint = std::sin(parameter(ROTATION_Z_FS));
   dx = x - cx;
   dy = y - cy;
   Dx = (1.0+parameter(NORMAL_STRETCH_XX_FS))*dx + parameter(SHEAR_STRETCH_XY_FS)*dy;
@@ -142,6 +173,7 @@ Affine_Shape_Function::clear(){
 void
 Affine_Shape_Function::initialize_parameters_from_fields(Schema * schema,
   const int_t subset_gid){
+  assert(schema);
   const Projection_Method projection = schema->projection_method();
   if(schema->translation_enabled()){
     DEBUG_MSG("Subset " << subset_gid << " Translation is enabled.");
@@ -237,7 +269,97 @@ Affine_Shape_Function::map_to_u_v_theta(const scalar_t & x,
   out_theta = spec_map_.find(ROTATION_Z_FS)!=spec_map_.end() ? parameter(ROTATION_Z_FS) : 0.0;
 }
 
+void
+Affine_Shape_Function::residuals(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & cx,
+  const scalar_t & cy,
+  const scalar_t & gx,
+  const scalar_t & gy,
+  std::vector<scalar_t> & residuals,
+  const bool use_ref_grads){
+  assert((int_t)residuals.size()==num_params_);
+
+  static scalar_t dx=0.0,dy=0.0,Dx=0.0,Dy=0.0,delTheta=0.0,delEx=0.0,delEy=0.0,delGxy=0.0;
+  static scalar_t Gx=0.0,Gy=0.0;
+  static scalar_t theta=0.0,dudx=0.0,dvdy=0.0,gxy=0.0,cosTheta=0.0,sinTheta=0.0;
+  theta = spec_map_.find(ROTATION_Z_FS)!=spec_map_.end() ? parameter(ROTATION_Z_FS) : 0.0;
+  dudx  = spec_map_.find(NORMAL_STRETCH_XX_FS)!=spec_map_.end() ? parameter(NORMAL_STRETCH_XX_FS) : 0.0;
+  dvdy  = spec_map_.find(NORMAL_STRETCH_YY_FS)!=spec_map_.end() ? parameter(NORMAL_STRETCH_YY_FS) : 0.0;
+  gxy   = spec_map_.find(SHEAR_STRETCH_XY_FS)!=spec_map_.end() ? parameter(SHEAR_STRETCH_XY_FS) : 0.0;
+  cosTheta = std::cos(theta);
+  sinTheta = std::sin(theta);
+
+  dx = x - cx;
+  dy = y - cy;
+  Dx = (1.0+dudx)*(dx) + gxy*(dy);
+  Dy = (1.0+dvdy)*(dy) + gxy*(dx);
+  Gx = use_ref_grads ? cosTheta*gx - sinTheta*gy : gx;
+  Gy = use_ref_grads ? sinTheta*gx + cosTheta*gy : gy;
+
+  delTheta = Gx*(-sinTheta*Dx - cosTheta*Dy) + Gy*(cosTheta*Dx - sinTheta*Dy);
+  //deldelTheta = Gx*(-cosTheta*Dx + sinTheta*Dy) + Gy*(-sinTheta*Dx - cosTheta*Dy);
+  delEx = Gx*dx*cosTheta + Gy*dx*sinTheta;
+  delEy = -Gx*dy*sinTheta + Gy*dy*cosTheta;
+  delGxy = Gx*(cosTheta*dy - sinTheta*dx) + Gy*(sinTheta*dy + cosTheta*dx);
+
+  if(spec_map_.find(SUBSET_DISPLACEMENT_X_FS)!=spec_map_.end())
+    residuals[spec_map_.find(SUBSET_DISPLACEMENT_X_FS)->second] = Gx;
+  if(spec_map_.find(SUBSET_DISPLACEMENT_Y_FS)!=spec_map_.end())
+    residuals[spec_map_.find(SUBSET_DISPLACEMENT_Y_FS)->second] = Gy;
+  if(spec_map_.find(ROTATION_Z_FS)!=spec_map_.end())
+    residuals[spec_map_.find(ROTATION_Z_FS)->second] = delTheta;
+  if(spec_map_.find(NORMAL_STRETCH_XX_FS)!=spec_map_.end())
+    residuals[spec_map_.find(NORMAL_STRETCH_XX_FS)->second] = delEx;
+  if(spec_map_.find(NORMAL_STRETCH_YY_FS)!=spec_map_.end())
+    residuals[spec_map_.find(NORMAL_STRETCH_YY_FS)->second] = delEy;
+  if(spec_map_.find(SHEAR_STRETCH_XY_FS)!=spec_map_.end())
+    residuals[spec_map_.find(SHEAR_STRETCH_XY_FS)->second] = delGxy;
+}
+
+
+bool
+Affine_Shape_Function::test_for_convergence(const std::vector<scalar_t> & old_parameters,
+  const scalar_t & tol){
+  // only tests the displacement and rotation fields
+  assert(old_parameters.size()==parameters_.size());
+  assert(spec_map_.find(SUBSET_DISPLACEMENT_X_FS)!=spec_map_.end());
+  assert(spec_map_.find(SUBSET_DISPLACEMENT_Y_FS)!=spec_map_.end());
+  const int_t u_id = spec_map_.find(SUBSET_DISPLACEMENT_X_FS)->second;
+  const int_t v_id = spec_map_.find(SUBSET_DISPLACEMENT_Y_FS)->second;
+  assert(u_id<num_params_);
+  assert(v_id<num_params_);
+  bool converged = true;
+  if(std::abs(parameters_[u_id] - old_parameters[u_id]) >= tol){
+    converged = false;
+  }
+  if(std::abs(parameters_[v_id] - old_parameters[v_id]) >= tol){
+    converged = false;
+  }
+  if(spec_map_.find(ROTATION_Z_FS)!=spec_map_.end()){
+    const int_t t_id = spec_map_.find(ROTATION_Z_FS)->second;
+    assert(t_id<num_params_);
+    if(std::abs(parameters_[t_id] - old_parameters[t_id]) >= tol){
+      converged = false;
+    }
+  }
+  return converged;
+}
+
+
+
 // TODO for Affine map, remember to create a virtual function save_fields that calls Local_Shape_Function::save_fields() then sets rotation and displacement as is done below
+
+//(*deltas)[DOF_A] = 0.0001;
+//(*deltas)[DOF_B] = 1.0E-5;
+//(*deltas)[DOF_C] = 1.0;
+//(*deltas)[DOF_D] = 1.0E-5;
+//(*deltas)[DOF_E] = 0.0001;
+//(*deltas)[DOF_F] = 1.0;
+//(*deltas)[DOF_G] = 1.0E-5;
+//(*deltas)[DOF_H] = 1.0E-5;
+//(*deltas)[DOF_I] = 1.0E-5;
+
 
 //global_field_value(subset_gid,AFFINE_A_FS) = (*deformation)[DOF_A];
 //global_field_value(subset_gid,AFFINE_B_FS) = (*deformation)[DOF_B];

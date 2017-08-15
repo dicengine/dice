@@ -476,10 +476,13 @@ Image::create_mask(const Conformal_Area_Def & area_def,
 }
 
 Teuchos::RCP<Image>
-Image::apply_transformation(Teuchos::RCP<const std::vector<scalar_t> > deformation,
+Image::apply_transformation(Teuchos::RCP<Local_Shape_Function> shape_function,
   const int_t cx,
   const int_t cy,
   const bool apply_in_place){
+
+  assert(shape_function->num_params()==DICE_DEFORMATION_SIZE);
+  Teuchos::RCP<std::vector<scalar_t> > deformation = shape_function->rcp();
 
   if(apply_in_place){
     // deep copy the intesity array to the device temporary container

@@ -211,7 +211,7 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
   // start with the given guess
   shape_function->insert_motion(u,v,t);
   // TODO what to do with the rest of the deformation entries (zero them)?
-  subset_->initialize(def_image,DEF_INTENSITIES,shape_function->rcp());
+  subset_->initialize(def_image,DEF_INTENSITIES,shape_function);
   // assumes that the reference subset has already been initialized
   scalar_t gamma = subset_->gamma();
   DEBUG_MSG("input u: " << u << " v: " << v << " theta: " << t << " gamma: " << gamma);
@@ -230,7 +230,7 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
     DEBUG_MSG("checking triad id: " << neigh_id << " " << point_cloud_->pts[neigh_id].x << " " <<
       point_cloud_->pts[neigh_id].y << " " << point_cloud_->pts[neigh_id].z);
     // TODO what to do with the rest of the deformation entries (zero them)?
-    subset_->initialize(def_image,DEF_INTENSITIES,shape_function->rcp());
+    subset_->initialize(def_image,DEF_INTENSITIES,shape_function);
     // assumes that the reference subset has already been initialized
     gamma = subset_->gamma();
     DEBUG_MSG("gamma value " << gamma);
@@ -264,7 +264,7 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
     DEBUG_MSG("checking triad id: " << id << " " << point_cloud_->pts[id].x << " " <<
       point_cloud_->pts[id].y << " " << point_cloud_->pts[id].z);
     // TODO what to do with the rest of the deformation entries (zero them)?
-    subset_->initialize(def_image,DEF_INTENSITIES,shape_function->rcp());
+    subset_->initialize(def_image,DEF_INTENSITIES,shape_function);
     // assumes that the reference subset has already been initialized
     gamma = subset_->gamma();
     DEBUG_MSG("gamma value " << std::setprecision(6) << gamma);
@@ -323,12 +323,13 @@ Search_Initializer::initial_guess(const int_t subset_gid,
   scalar_t min_v = 0.0;
   scalar_t min_theta = 0.0;
   // search in u, v, and theta
+  DEBUG_MSG("Search ranges " << start_u << " to " << end_u << " " << start_v << " to " << end_v << " " << start_t << " to " << end_t);
   TEUCHOS_TEST_FOR_EXCEPTION(schema_->affine_matrix_enabled(),std::runtime_error,"Error, cant search on theta with affine matrix enabled.");
   for(scalar_t trial_v = start_v;trial_v<=end_v;trial_v+=step_size_u_){
     for(scalar_t trial_u = start_u;trial_u<=end_u;trial_u+=step_size_v_){
       for(scalar_t trial_t = start_t;trial_t<=end_t;trial_t+=step_size_theta_){
         shape_function->insert_motion(trial_u,trial_v,trial_t);
-        subset_->initialize(schema_->def_img(),DEF_INTENSITIES,shape_function->rcp());
+        subset_->initialize(schema_->def_img(),DEF_INTENSITIES,shape_function);
         // assumes that the reference subset has already been initialized
         scalar_t gamma = 100.0;
         try{
@@ -338,7 +339,7 @@ Search_Initializer::initial_guess(const int_t subset_gid,
         catch(std::exception & e){
           gamma = 100.0;
         }
-        //DEBUG_MSG("search pos " << pos_x << " " << pos_y << " " << pos_t << " gamma " << gamma);
+        //DEBUG_MSG("search pos " << trial_u << " " << trial_v << " " << trial_t << " gamma " << gamma);
         if(gamma < min_gamma){
           min_gamma = gamma;
           min_u = trial_u;
@@ -714,7 +715,7 @@ Optical_Flow_Initializer::set_locations(const int_t subset_gid){
 //  (*def)[DOF_EY] = ey;
 //  (*def)[DOF_GXY] = g;
 
-  std::set<std::pair<int_t,int_t> > subset_pixels = subset_->deformed_shapes(shape_function->rcp(),cx,cy,1.0);
+  std::set<std::pair<int_t,int_t> > subset_pixels = subset_->deformed_shapes(shape_function,cx,cy,1.0);
   scalar_t best_grad = 0.0;
   ids_[0] = best_optical_flow_point(best_grad,def_x,def_y,gx,gy,subset_pixels);
   if(ids_[0] == -1){

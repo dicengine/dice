@@ -288,7 +288,7 @@ Subset::grad_y_array()const{
 void
 Subset::initialize(Teuchos::RCP<Image> image,
   const Subset_View_Target target,
-  Teuchos::RCP<const std::vector<scalar_t> > deformation,
+  Teuchos::RCP<Local_Shape_Function> shape_function,
   const Interpolation_Method interp){
 
   // coordinates for points x and y are always in global coordinates
@@ -299,7 +299,7 @@ Subset::initialize(Teuchos::RCP<Image> image,
   const int_t h = image->height();
   Teuchos::ArrayRCP<intensity_t> intensities_ = target==REF_INTENSITIES ? ref_intensities_ : def_intensities_;
   // assume if the map is null, use the no_map_tag in the parrel for call of the functor
-  if(deformation==Teuchos::null){
+  if(shape_function==Teuchos::null){
     for(int_t i=0;i<num_pixels_;++i)
       intensities_[i] = (*image)(x_[i]-offset_x,y_[i]-offset_y);
   }
@@ -307,39 +307,11 @@ Subset::initialize(Teuchos::RCP<Image> image,
     int_t px,py;
     const bool has_blocks = !pixels_blocked_by_other_subsets_.empty();
     // initialize the work variables
-    scalar_t dx = 0.0,dy=0.0,Dx=0.0,Dy=0.0;
-    scalar_t u=0.0,v=0.0,t=0.0,ex=0.0,ey=0.0,g=0.0,cos_t=0.0,sin_t=0.0;
     scalar_t mapped_x = 0.0;
     scalar_t mapped_y = 0.0;
-    if(deformation->size()==DICE_DEFORMATION_SIZE){
-      u = (*deformation)[DOF_U];
-      v = (*deformation)[DOF_V];
-      t = (*deformation)[DOF_THETA];
-      ex = (*deformation)[DOF_EX];
-      ey = (*deformation)[DOF_EY];
-      g = (*deformation)[DOF_GXY];
-      cos_t = std::cos(t);
-      sin_t = std::sin(t);
-    }
-    else if(deformation->size()==DICE_DEFORMATION_SIZE_AFFINE){
-      TEUCHOS_TEST_FOR_EXCEPTION((*deformation)[8]==0.0,std::runtime_error,"");
-    }
-    else{
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, unknown deformation vector size.");
-    }
     const scalar_t ox=(scalar_t)offset_x,oy=(scalar_t)offset_y;
     for(int_t i=0;i<num_pixels_;++i){
-      if(deformation->size()==DICE_DEFORMATION_SIZE){
-        dx = (scalar_t)(x_[i]) - cx_;
-        dy = (scalar_t)(y_[i]) - cy_;
-        Dx = (1.0+ex)*dx + g*dy;
-        Dy = (1.0+ey)*dy + g*dx;
-        // mapped location
-        mapped_x = cos_t*Dx - sin_t*Dy + u + cx_;
-        mapped_y = sin_t*Dx + cos_t*Dy + v + cy_;
-      }else if(deformation->size()==DICE_DEFORMATION_SIZE_AFFINE){
-        map_affine(x(i),y(i),mapped_x,mapped_y,deformation);
-      } // already checked for other def size error
+      shape_function->map(x_[i],y_[i],cx_,cy_,mapped_x,mapped_y);
       px = ((int_t)(mapped_x + 0.5) == (int_t)(mapped_x)) ? (int_t)(mapped_x) : (int_t)(mapped_x) + 1;
       py = ((int_t)(mapped_y + 0.5) == (int_t)(mapped_y)) ? (int_t)(mapped_y) : (int_t)(mapped_y) + 1;
       // out of image bounds ( 4 pixel buffer to ensure enough room to interpolate away from the sub image boundary)
