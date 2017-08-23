@@ -58,19 +58,6 @@ void stringToLower(std::string &s){
 }
 
 DICE_LIB_DLL_EXPORT
-const std::string to_string(Affine_Dof in){
-  assert(in < MAX_AFFINE_DOF);
-  static const char * fieldNameStrings[] = {
-    "DOF_U",
-    "DOF_V",
-    "DOF_THETA",
-    "DOF_EX",
-    "DOF_EY",
-    "DOF_GXY"
-  };
-  return fieldNameStrings[in];
-}
-DICE_LIB_DLL_EXPORT
 const std::string to_string(Status_Flag in){
   assert(in < MAX_STATUS_FLAG);
   const static char * statusFlagStrings[] = {
@@ -196,18 +183,6 @@ Global_Solver string_to_global_solver(std::string & in){
   std::cout << "Error: Global_Solver " << in << " does not exist." << std::endl;
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
   return NO_SUCH_GLOBAL_SOLVER; // prevent no return errors
-}
-
-DICE_LIB_DLL_EXPORT
-Affine_Dof string_to_affine_dof(std::string & in){
-  // convert the string to uppercase
-  stringToUpper(in);
-  for(int_t i=0;i<MAX_AFFINE_DOF;++i){
-    if(to_string(static_cast<Affine_Dof>(i))==in) return static_cast<Affine_Dof>(i);
-  }
-  //std::cout << "Error: Affine_Dof " << in << " does not exist." << std::endl;
-  //TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
-  return NO_SUCH_AFFINE_DOF; // prevent no return errors
 }
 
 DICE_LIB_DLL_EXPORT

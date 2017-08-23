@@ -398,31 +398,28 @@ void subset_velocity(Global_Algorithm * alg,
   subset->initialize(alg->schema()->ref_img(),REF_INTENSITIES); // get the schema ref image rather than the alg since the alg is already normalized
 
   // using type double here a lot because LAPACK doesn't support float.
-  int_t N = 2; // [ u_x u_y ]
+  Teuchos::RCP<Local_Shape_Function> shape_function = Teuchos::rcp(new Affine_Shape_Function(false,false,false));
+  int_t N = shape_function->num_params();
   scalar_t solve_tol_disp = alg->schema()->fast_solver_tolerance();
   const int_t max_solve_its = alg->schema()->max_solver_iterations_fast();
   int *IPIV = new int[N+1];
   int LWORK = N*N;
   int INFO = 0;
   double *WORK = new double[LWORK];
-  double *GWORK = new double[10*N];
   int *IWORK = new int[LWORK];
   Teuchos::LAPACK<int_t,double> lapack;
 
-  Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory();
 
   // Initialize storage:
   Teuchos::SerialDenseMatrix<int_t,double> H(N,N, true);
   Teuchos::ArrayRCP<double> q(N,0.0);
-//  Teuchos::RCP<std::vector<scalar_t> > deformation = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0)); // save off the previous value to test for convergence
-  Teuchos::RCP<std::vector<scalar_t> > def_old     = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0)); // save off the previous value to test for convergence
-  Teuchos::RCP<std::vector<scalar_t> > def_update  = Teuchos::rcp(new std::vector<scalar_t>(N,0.0)); // save off the previous value to test for convergence
+  std::vector<scalar_t> def_old(N,0.0); // save off the previous value to test for convergence
+  std::vector<scalar_t> def_update(N,0.0); // save off the previous value to test for convergence
+  std::vector<scalar_t> residuals(N,0.0);
   // initialize the displacement field with the incoming values
   shape_function->insert_motion(b_x,b_y);
-//  (*deformation)[DOF_U] = b_x;
-//  (*deformation)[DOF_V] = b_y;
-  (*def_old)[DOF_U] = b_x;
-  (*def_old)[DOF_V] = b_y;
+  for(int_t i=0;i<N;++i)
+    def_old[i] = (*shape_function)(i);
 
   Teuchos::ArrayRCP<scalar_t> gradGx = subset->grad_x_array();
   Teuchos::ArrayRCP<scalar_t> gradGy = subset->grad_y_array();
@@ -445,46 +442,21 @@ void subset_velocity(Global_Algorithm * alg,
       GmF = (subset->def_intensities(index) - meanG) - (subset->ref_intensities(index) - meanF);
       Gx = gradGx[index];
       Gy = gradGy[index];
-
-      q[0] += Gx*GmF;
-      q[1] += Gy*GmF;
-      H(0,0) += Gx*Gx;
-      H(0,1) += Gx*Gy;
-      H(1,0) += Gy*Gx;
-      H(1,1) += Gy*Gy;
-    }
-
-    // determine the max value in the matrix:
-    scalar_t maxH = 0.0;
-    for(int_t i=0;i<H.numCols();++i)
-      for(int_t j=0;j<H.numRows();++j)
-        if(std::abs(H(i,j))>maxH) maxH = std::abs(H(i,j));
-
-    // TODO: remove for performance?
-    // compute the 1-norm of H:
-    std::vector<scalar_t> colTotals(N,0.0);
-    for(int_t i=0;i<H.numCols();++i){
-      for(int_t j=0;j<H.numRows();++j){
-        colTotals[i]+=std::abs(H(j,i));
+      shape_function->residuals(subset->x(index),subset->y(index),subset->centroid_x(),subset->centroid_y(),Gx,Gy,residuals,false);
+      for(int_t i=0;i<N;++i){
+        q[i] += GmF*residuals[i];
+        for(int_t j=0;j<N;++j)
+          H(i,j) += residuals[i]*residuals[j];
       }
-    }
-    double anorm = 0.0;
-    for(int_t i=0;i<N;++i){
-      if(colTotals[i] > anorm) anorm = colTotals[i];
     }
 
     // clear temp storage
     for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
-    for(int_t i=0;i<10*N;++i) GWORK[i] = 0.0;
     for(int_t i=0;i<LWORK;++i) IWORK[i] = 0;
     for(int_t i=0;i<N+1;++i) {IPIV[i] = 0;}
-    double rcond=0.0; // reciporical condition number
     try
     {
       lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
-      lapack.GECON('1',N,H.values(),N,anorm,&rcond,GWORK,IWORK,&INFO);
-      //DEBUG_MSG("Subset at cx " << c_x << " cy " << c_y  << "    RCOND(H): "<< rcond);
-      TEUCHOS_TEST_FOR_EXCEPTION(rcond < 1.0E-12,std::runtime_error,"Hessian singular");
     }
     catch(std::exception &e){
       DEBUG_MSG( e.what() << '\n');
@@ -501,30 +473,18 @@ void subset_velocity(Global_Algorithm * alg,
     }
 
     // save off last step d
-    for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i)
-      (*def_old)[i] = (*shape_function->parameters())[i];
-
     for(int_t i=0;i<N;++i)
-      (*def_update)[i] = 0.0;
-
+      def_old[i] = (*shape_function)(i);
+    for(int_t i=0;i<N;++i)
+      def_update[i] = 0.0;
     for(int_t i=0;i<N;++i)
       for(int_t j=0;j<N;++j)
-        (*def_update)[i] += H(i,j)*(-1.0)*q[j];
-
-    //DEBUG_MSG("    Iterative updates: u " << (*def_update)[0] << " v " << (*def_update)[1]);
-    shape_function->add_translation((*def_update)[0],(*def_update)[1]);
-//    (*deformation)[DICe::DOF_U] += ;
-//    (*deformation)[DICe::DOF_V] += (*def_update)[1];
-
-    //DEBUG_MSG("Subset at cx " << c_x << " cy " << c_y  << " -- iteration: " << solve_it << " u " << (*deformation)[DICe::DOF_U] <<
-    //  " v " << (*deformation)[DICe::DOF_V] << " theta " << (*deformation)[DICe::DOF_THETA] <<
-    //  " ex " << (*deformation)[DICe::DOF_EX] << " ey " << (*deformation)[DICe::DOF_EY] <<
-    //  " gxy " << (*deformation)[DICe::DOF_GXY] << ")");
+        def_update[i] += H(i,j)*(-1.0)*q[j];
+    shape_function->update(def_update);
 
     scalar_t print_u=0.0,print_v=0.0,print_t=0.0;
     shape_function->map_to_u_v_theta(subset->centroid_x(),subset->centroid_y(),print_u,print_v,print_t);
-    if(std::abs(print_u - (*def_old)[DICe::DOF_U]) < solve_tol_disp
-        && std::abs(print_v - (*def_old)[DICe::DOF_V]) < solve_tol_disp){
+    if(shape_function->test_for_convergence(def_old,solve_tol_disp)){
       DEBUG_MSG("subset_velocity(): solution at cx " << c_x << " cy " << c_y << ": b_x_in " << b_x << " b_x " << print_u <<
         " b_y_in " << b_y << " b_y " << print_v);
       break;
@@ -538,7 +498,6 @@ void subset_velocity(Global_Algorithm * alg,
 
   // clean up storage for lapack:
   delete [] WORK;
-  delete [] GWORK;
   delete [] IWORK;
   delete [] IPIV;
 

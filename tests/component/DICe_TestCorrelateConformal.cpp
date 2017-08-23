@@ -82,15 +82,11 @@ int main(int argc, char *argv[]) {
   std::string fileRef("./images/TestSubsetConstructionRef.tif");
   std::string fileDef("./images/TestSubsetConstructionNormalRotDisp.tif");
 
-  // exact solution
-  // note: deformation vectors are a subset of the schema's data vector so DICe_DEFORMATION_SIZE != DICe::MAX_FIELD_NAME
-  // the first DICE_DEFORMATION_SIZE values of the schema's data vector are the deformation values
-  std::vector<scalar_t>defExact(DICE_DEFORMATION_SIZE,0.0);
-  defExact[DICe::DOF_EX] = 0.121;
-  defExact[DICe::DOF_EY] = 0.121;
-  defExact[DICe::DOF_THETA] = 0.262;
-  defExact[DICe::DOF_U] = 9.8;
-  defExact[DICe::DOF_V] = -7.62;
+  const scalar_t ex_exact = 0.121;
+  const scalar_t ey_exact = 0.121;
+  const scalar_t t_exact = 0.262;
+  const scalar_t u_exact = 9.8;
+  const scalar_t v_exact = -7.62;
 
   *outStream << "testing conformal subset param combinations" << std::endl;
 
@@ -179,9 +175,9 @@ int main(int argc, char *argv[]) {
       schema->local_field_value(0,SIGMA_FS) = 0.0;
       schema->local_field_value(0,GAMMA_FS) = 0.0;
       schema->local_field_value(0,STATUS_FLAG_FS) = 0;
-      schema->local_field_value(0,SUBSET_DISPLACEMENT_X_FS) = defExact[DICe::DOF_U] - 0.25;
-      schema->local_field_value(0,SUBSET_DISPLACEMENT_Y_FS) = defExact[DICe::DOF_V] - 0.25;
-      schema->local_field_value(0,ROTATION_Z_FS)     = defExact[DICe::DOF_THETA]     - 0.05;
+      schema->local_field_value(0,SUBSET_DISPLACEMENT_X_FS) = u_exact - 0.25;
+      schema->local_field_value(0,SUBSET_DISPLACEMENT_Y_FS) = v_exact - 0.25;
+      schema->local_field_value(0,ROTATION_Z_FS)     = t_exact     - 0.05;
       schema->local_field_value(0,NORMAL_STRETCH_XX_FS) = 0.0;
       schema->local_field_value(0,NORMAL_STRETCH_YY_FS) = 0.0;
       schema->local_field_value(0,SHEAR_STRETCH_XY_FS) = 0.0;
@@ -190,12 +186,12 @@ int main(int argc, char *argv[]) {
 
       // check the solution to ensure the error is small:
       bool valueError = false;
-      if(std::abs(schema->local_field_value(0,SUBSET_DISPLACEMENT_X_FS) - defExact[DICe::DOF_U]) > errtol) valueError = true;
-      if(std::abs(schema->local_field_value(0,SUBSET_DISPLACEMENT_Y_FS) - defExact[DICe::DOF_V]) > errtol) valueError = true;
-      if(std::abs(schema->local_field_value(0,ROTATION_Z_FS) - defExact[DICe::DOF_THETA]) > errtol) valueError = true;
-      if(std::abs(schema->local_field_value(0,NORMAL_STRETCH_XX_FS) - defExact[DICe::DOF_EX]) > errtol) valueError = true;
-      if(std::abs(schema->local_field_value(0,NORMAL_STRETCH_YY_FS) - defExact[DICe::DOF_EY]) > errtol) valueError = true;
-      if(std::abs(schema->local_field_value(0,SHEAR_STRETCH_XY_FS) - defExact[DICe::DOF_GXY]) > errtol) valueError = true;
+      if(std::abs(schema->local_field_value(0,SUBSET_DISPLACEMENT_X_FS) - u_exact) > errtol) valueError = true;
+      if(std::abs(schema->local_field_value(0,SUBSET_DISPLACEMENT_Y_FS) - v_exact) > errtol) valueError = true;
+      if(std::abs(schema->local_field_value(0,ROTATION_Z_FS) - t_exact) > errtol) valueError = true;
+      if(std::abs(schema->local_field_value(0,NORMAL_STRETCH_XX_FS) - ex_exact) > errtol) valueError = true;
+      if(std::abs(schema->local_field_value(0,NORMAL_STRETCH_YY_FS) - ey_exact) > errtol) valueError = true;
+      if(std::abs(schema->local_field_value(0,SHEAR_STRETCH_XY_FS)) > errtol) valueError = true;
       if(std::abs(schema->local_field_value(0,STATUS_FLAG_FS) - DICe::INITIALIZE_USING_PREVIOUS_FRAME_SUCCESSFUL) > errtol) valueError = true;
       if(std::abs(schema->local_field_value(0,SIGMA_FS) + 1) < errtol) valueError = true; // check that sigma != -1
 
@@ -266,9 +262,9 @@ int main(int argc, char *argv[]) {
     schema2->local_field_value(i,SIGMA_FS) = 0.0;
     schema2->local_field_value(i,GAMMA_FS) = 0.0;
     schema2->local_field_value(i,STATUS_FLAG_FS) = 0;
-    schema2->local_field_value(i,SUBSET_DISPLACEMENT_X_FS) = defExact[DICe::DOF_U] - 0.25;
-    schema2->local_field_value(i,SUBSET_DISPLACEMENT_Y_FS) = defExact[DICe::DOF_V] - 0.25;
-    schema2->local_field_value(i,ROTATION_Z_FS)     = defExact[DICe::DOF_THETA]     - 0.05;
+    schema2->local_field_value(i,SUBSET_DISPLACEMENT_X_FS) = u_exact - 0.25;
+    schema2->local_field_value(i,SUBSET_DISPLACEMENT_Y_FS) = v_exact - 0.25;
+    schema2->local_field_value(i,ROTATION_Z_FS)            = t_exact - 0.05;
     schema2->local_field_value(i,NORMAL_STRETCH_XX_FS) = 0.0;
     schema2->local_field_value(i,NORMAL_STRETCH_YY_FS) = 0.0;
     schema2->local_field_value(i,SHEAR_STRETCH_XY_FS) = 0.0;
@@ -291,12 +287,12 @@ int main(int argc, char *argv[]) {
     *outStream << " Gamma[" << i << "] " <<  schema2->local_field_value(i,GAMMA_FS);
     *outStream << " Status[" << i << "] " << schema2->local_field_value(i,STATUS_FLAG_FS) << std::endl;
 
-    if(std::abs(schema2->local_field_value(i,SUBSET_DISPLACEMENT_X_FS) - defExact[DICe::DOF_U]) > errtolSoft) valueError = true;
-    if(std::abs(schema2->local_field_value(i,SUBSET_DISPLACEMENT_Y_FS) - defExact[DICe::DOF_V]) > errtolSoft) valueError = true;
-    if(std::abs(schema2->local_field_value(i,ROTATION_Z_FS) - defExact[DICe::DOF_THETA]) > errtolSoft) valueError = true;
-    if(std::abs(schema2->local_field_value(i,NORMAL_STRETCH_XX_FS) - defExact[DICe::DOF_EX]) > errtol) valueError = true;
-    if(std::abs(schema2->local_field_value(i,NORMAL_STRETCH_YY_FS) - defExact[DICe::DOF_EY]) > errtol) valueError = true;
-    if(std::abs(schema2->local_field_value(i,SHEAR_STRETCH_XY_FS) - defExact[DICe::DOF_GXY]) > errtol) valueError = true;
+    if(std::abs(schema2->local_field_value(i,SUBSET_DISPLACEMENT_X_FS) - u_exact) > errtolSoft) valueError = true;
+    if(std::abs(schema2->local_field_value(i,SUBSET_DISPLACEMENT_Y_FS) - v_exact) > errtolSoft) valueError = true;
+    if(std::abs(schema2->local_field_value(i,ROTATION_Z_FS) - t_exact) > errtolSoft) valueError = true;
+    if(std::abs(schema2->local_field_value(i,NORMAL_STRETCH_XX_FS) - ex_exact) > errtol) valueError = true;
+    if(std::abs(schema2->local_field_value(i,NORMAL_STRETCH_YY_FS) - ey_exact) > errtol) valueError = true;
+    if(std::abs(schema2->local_field_value(i,SHEAR_STRETCH_XY_FS)) > errtol) valueError = true;
     if(std::abs(schema2->local_field_value(i,STATUS_FLAG_FS) - DICe::INITIALIZE_USING_PREVIOUS_FRAME_SUCCESSFUL) > errtol) valueError = true;
     if(std::abs(schema2->local_field_value(i,SIGMA_FS) + 1) < errtol) valueError = true; // check that sigma != -1
   }

@@ -68,10 +68,8 @@ Simplex {
 public:
 
   /// \brief Default constructor
-  /// \param num_dofs the number of degrees of freedom (must be less than num_variables)
   /// \param params Paramters that define the varaitions on the initial guess, convergence tolerance and max number of iterations
-  Simplex(const int_t num_dofs,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+  Simplex(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// destructor
   virtual ~Simplex(){};
@@ -83,24 +81,18 @@ public:
   /// \param threshold if the initial evaluation of gamma is below this value, the analysis will be skipped
   /// A return value of MAX_ITERATIONS_REACHED means that convergence did not occur in the allowed number of iterations.
   /// A return value of CORRELATION_SUCCESSFUL means that convergence was obtained for the solution stored in the variables vector
-  Status_Flag minimize(Teuchos::RCP<std::vector<scalar_t> > variables,
+  virtual Status_Flag minimize(Teuchos::RCP<std::vector<scalar_t> > variables,
     Teuchos::RCP<std::vector<scalar_t> > deltas,
     int_t & num_iterations,
     const scalar_t & threshold = 1.0E-10);
 
   /// \brief the objective function that the simplex method is optimizing
   /// \param variables the current guess at which to evaluate the objective
-  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > & variables)=0;
-
-  /// \brief a function to map a vector index to a degree of freedom
-  /// used when not every element of the variables vector is a degree of freedom
-  virtual int_t dof_map(const int_t index)=0;
+  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > variables)=0;
 
 protected:
   /// Maximum allowed iterations for convergence
   int_t max_iterations_;
-  /// The dimension of the simplex (one dim for each free parameter)
-  int_t num_dofs_;
   /// Convergence tolerance
   double tolerance_;
   /// Numerically small value
@@ -124,18 +116,21 @@ public:
 
   /// \brief the objective function that the simplex method is optimizing
   /// \param variables the current guess at which to evaluate the objective
-  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > & variables);
+  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > variables);
 
-  /// \brief the mapping from degrees of freedom to the control vector
-  virtual int_t dof_map(const int_t index){
-    return obj_->dof_map(index);
-  }
-
-  using Simplex::minimize;
+  /// call the minimization routine
+  /// \param shape_function pointer to a shape function
+  /// \param num_iterations the number of iterations
+  /// \param threshold the convergence threshold
+  Status_Flag minimize(Teuchos::RCP<Local_Shape_Function> shape_function,
+    int_t & num_iterations,
+    const scalar_t & threshold = 1.0E-10);
 
 protected:
   /// Pointer to a DICe::Objective, used to gain access to objective methods like gamma()
   const DICe::Objective * const obj_;
+  /// Pointer to a shape function class
+  Teuchos::RCP<Local_Shape_Function> shape_function_;
 };
 
 
@@ -159,15 +154,7 @@ public:
 
   /// \brief the objective function that the simplex method is optimizing
   /// \param variables the current guess at which to evaluate the objective
-  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > & variables);
-
-  /// \brief the mapping from degrees of freedom to the control vector
-  /// \param index the dof to map
-  virtual int_t dof_map(const int_t index){
-    return index;
-  }
-
-  using Simplex::minimize;
+  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > variables);
 
 protected:
   /// Pointer to the left image
@@ -198,15 +185,7 @@ public:
 
   /// \brief the objective function that the simplex method is optimizing
   /// \param variables the current guess at which to evaluate the objective
-  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > & variables);
-
-  /// \brief the mapping from degrees of freedom to the control vector
-  /// \param index the dof to map
-  virtual int_t dof_map(const int_t index){
-    return index;
-  }
-
-  using Simplex::minimize;
+  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > variables);
 
 protected:
   /// Pointer to the left image
@@ -216,8 +195,6 @@ protected:
   /// Pointer to a triangulation
   Triangulation * tri_;
 };
-
-
 
 }// End DICe Namespace
 

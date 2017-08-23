@@ -1276,7 +1276,7 @@ Schema::execute_cross_correlation(){
       bool init_success = true;
       Teuchos::RCP<Objective> obj;
       try{
-        obj = objective_factory(this,subset_global_id(subset_index));
+        obj = Teuchos::rcp(new Objective_ZNSSD(this,subset_global_id(subset_index)));
       }
       catch(std::exception & e){
         init_success = false;
@@ -1311,7 +1311,7 @@ Schema::execute_cross_correlation(){
   prepare_optimization_initializers();
   for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
     try{
-      Teuchos::RCP<Objective> obj = objective_factory(this,this_proc_gid_order_[subset_index]);
+      Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,this_proc_gid_order_[subset_index]));
       generic_correlation_routine(obj);
     }
     catch(std::exception & e){
@@ -1444,7 +1444,7 @@ Schema::execute_correlation(){
     for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
       DEBUG_MSG("Schema::execute_correlation(): creating Objective for subset " << this_proc_gid_order_[subset_index]);
       try{
-        Teuchos::RCP<Objective> obj = objective_factory(this,this_proc_gid_order_[subset_index]);
+        Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,this_proc_gid_order_[subset_index]));
         DEBUG_MSG("Schema::execute_correlation(): Objective creation successful");
         generic_correlation_routine(obj);
       }
@@ -1464,7 +1464,7 @@ Schema::execute_correlation(){
         const int_t subset_gid = subset_global_id(subset_index);
         //const int_t subset_gid = this_proc_gid_order_[subset_index];
         DEBUG_MSG("[PROC " << proc_id << "] Adding objective to obj_vec_ " << subset_gid);
-        obj_vec_.push_back(objective_factory(this,subset_gid));
+        obj_vec_.push_back(Teuchos::rcp(new Objective_ZNSSD(this,subset_gid)));
         // set the sub_image id for each subset:
         if(motion_window_params_->find(subset_gid)!=motion_window_params_->end()){
           const int_t use_subset_id = motion_window_params_->find(subset_gid)->second.use_subset_id_;
@@ -1793,7 +1793,6 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   if(init_status==INITIALIZE_FAILED){
     // try again with a search initializer
     if(correlation_routine_==TRACKING_ROUTINE && use_search_initialization_for_failed_steps_){
-      // already checked above that affine matrix is not enabled so DICE_DEFORMATION_SIZE is correct
       stat_container_->register_search_call(subset_gid,frame_id_);
       // before giving up, try a search initialization, then simplex, then give up if it still can't track:
       const scalar_t search_step_xy = 1.0; // pixels
@@ -1975,26 +1974,6 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       }
     }
     if(second_attempt_failed){
-//      if(correlation_routine_==TRACKING_ROUTINE) stat_container_->register_search_call(subset_gid,frame_id_);
-//      // before giving up, try a search initialization, then simplex, then give up if it still can't track:
-//      const scalar_t search_step_xy = 1.0; // pixels
-//      const scalar_t search_dim_xy = 10.0; // pixels
-//      const scalar_t search_step_theta = 0.0; // radians (keep theta the same)
-//      const scalar_t search_dim_theta = 0.0;
-//      // reset the deformation position to the previous step's value
-//      for(int_t i=0;i<DICE_DEFORMATION_SIZE;++i)
-//        (*deformation)[i] = 0.0;
-//      (*deformation)[DOF_U] = prev_u;
-//      (*deformation)[DOF_V] = prev_v;
-//      (*deformation)[DOF_THETA] = prev_t;
-//      Search_Initializer searcher(this,obj->subset(),search_step_xy,search_dim_xy,search_step_theta,search_dim_theta);
-//      searcher.initial_guess(subset_gid,deformation);
-//      try{
-//          corr_status = obj->computeUpdateRobust(deformation,num_iterations);
-//      }
-//      catch (std::logic_error &err) { //a non-graceful exception occurred
-//        corr_status = CORRELATION_FAILED_BY_EXCEPTION;
-//      };
       if(corr_status!=CORRELATION_SUCCESSFUL){
         record_failed_step(subset_gid,static_cast<int_t>(corr_status),num_iterations);
         return;
@@ -3376,7 +3355,15 @@ Output_Spec::gather_fields(){
   field_vec_.resize(field_names_.size());
   for(size_t i=0;i<field_names_.size();++i){
     // check for the legacy fields form old input decks:
-    field_vec_[i] = schema_->mesh()->get_field(schema_->mesh()->get_field_spec(field_names_[i]));
+    DICe::mesh::field_enums::Field_Spec fs = NO_SUCH_FS;
+    // for fields that have been requested, but don't exist, just return a null pointer
+    // so that the output will be zeros
+    try{
+      fs = schema_->mesh()->get_field_spec(field_names_[i]);
+    }
+    catch(std::exception & e){
+    }
+    field_vec_[i] = schema_->mesh()->get_field(fs);
   }
 }
 
@@ -3515,7 +3502,8 @@ Output_Spec::write_frame(std::FILE * file,
   {
     // if the field_name is from one of the schema fields, get the information from the schema
     scalar_t value = 0.0;
-    value = field_vec_[i]->local_value(field_value_index);
+    if(field_vec_[i]!=Teuchos::null)
+      value = field_vec_[i]->local_value(field_value_index);
     if(i==0)
       fprintf(file,"%4.4E",value);
     else{

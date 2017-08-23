@@ -59,41 +59,6 @@
 /// generic DICe classes and functions
 namespace DICe {
 
-/// maps an input point to an output point given the affine parameters
-/// as defined by the affine matrix
-/// \param x input x coord
-/// \param y input y coord
-/// \param out_x output x coord
-/// \param out_y output y coord
-/// \param def deformation vector
-DICE_LIB_DLL_EXPORT
-inline void map_affine( const scalar_t & x,
-  const scalar_t & y,
-  scalar_t & out_x,
-  scalar_t & out_y,
-  const Teuchos::RCP<const std::vector<scalar_t> > & def){
-  assert(def->size()==DICE_DEFORMATION_SIZE_AFFINE);
-  assert((*def)[6]*x + (*def)[7]*y + (*def)[8]!=0.0);
-  out_x = ((*def)[0]*x + (*def)[1]*y + (*def)[2])/((*def)[6]*x + (*def)[7]*y + (*def)[8]);
-  out_y = ((*def)[3]*x + (*def)[4]*y + (*def)[5])/((*def)[6]*x + (*def)[7]*y + (*def)[8]);
-}
-
-/// computes u, v, and theta for an affine matrix deformation mapping
-/// \param x input x coord
-/// \param y input y coord
-/// \param out_u output u displacement
-/// \param out_v output v displacement
-/// \param out_theta output rotation
-/// \param def deformation vector
-DICE_LIB_DLL_EXPORT
-void affine_map_to_motion( const scalar_t & x,
-  const scalar_t & y,
-  scalar_t & out_u,
-  scalar_t & out_v,
-  scalar_t & out_theta,
-  const Teuchos::RCP<const std::vector<scalar_t> > & def);
-
-
 /// \class DICe::Subset
 /// \brief Subsets are used to store temporary collections of pixels for comparison between the
 /// reference and deformed images. The data that is stored by a subset is a list of x and y

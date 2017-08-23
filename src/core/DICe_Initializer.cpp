@@ -664,32 +664,14 @@ Optical_Flow_Initializer::set_locations(const int_t subset_gid){
   Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory(schema_);
   shape_function->initialize_parameters_from_fields(schema_,subset_gid);
   shape_function->map_to_u_v_theta(subset_->centroid_x(),subset_->centroid_y(),initial_u_,initial_v_,initial_t_);
-//  const scalar_t u = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
-//  initial_u_ = u;
-//  const scalar_t v = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
-//  initial_v_ = v;
-//  const scalar_t t = schema_->global_field_value(subset_gid,ROTATION_Z_FS);
-//  initial_t_ = t;
-//  const scalar_t ex = schema_->global_field_value(subset_gid,NORMAL_STRETCH_XX_FS);
-//  const scalar_t ey = schema_->global_field_value(subset_gid,NORMAL_STRETCH_YY_FS);
-//  const scalar_t g = schema_->global_field_value(subset_gid,SHEAR_STRETCH_XY_FS);
-//  scalar_t dx=0.0,dy=0.0;
-//  scalar_t Dx=0.0,Dy=0.0;
   scalar_t mapped_x=0.0,mapped_y=0.0;
   int_t px=0,py=0;
   const int_t cx = subset_->centroid_x();
   const int_t cy = subset_->centroid_y();
   for(int_t i=0;i<subset_->num_pixels();++i){
     // compute the deformed shape:
-    // need to cast the x_ and y_ values since the resulting value could be negative
+    // mapped location
     shape_function->map(subset_->x(i),subset_->y(i),cx,cy,mapped_x,mapped_y);
-//    dx = (scalar_t)(subset_->x(i)) - cx;
-//    dy = (scalar_t)(subset_->y(i)) - cy;
-//    Dx = (1.0+ex)*dx + g*dy;
-//    Dy = (1.0+ey)*dy + g*dx;
-//    // mapped location
-//    mapped_x = std::cos(t)*Dx - std::sin(t)*Dy + u + cx;
-//    mapped_y = std::sin(t)*Dx + std::cos(t)*Dy + v + cy;
     // get the nearest pixel location:
     px = (int_t)mapped_x;
     if(mapped_x - (int_t)mapped_x >= 0.5) px++;
@@ -702,19 +684,7 @@ Optical_Flow_Initializer::set_locations(const int_t subset_gid){
       gx[i] += (-1.0/12.0)*grad_coeffs[j]*(*schema_->prev_img())(px-2+j,py);
       gy[i] += (-1.0/12.0)*grad_coeffs[j]*(*schema_->prev_img())(px,py-2+j);
     }
-    //std::cout << i << " x " << subset_->x(i) << " " << px << " y " << subset_->y(i) << " " << py <<
-    //    " intens " <<(*schema_->ref_img())(subset_->x(i),subset_->y(i)) << " " << (*schema_->prev_img())(px,py) <<
-    //    " gx " << gx[i] << " " << subset_->grad_x(i) << " gy " << gy[i] << " " << subset_->grad_y(i) << std::endl;
   }
-  // get the current pixels for this subset, used to check if the OF point is inside the subset
-//  Teuchos::RCP<std::vector<scalar_t> > def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE,0.0));
-//  (*def)[DOF_U] = u;
-//  (*def)[DOF_V] = v;
-//  (*def)[DOF_THETA] = t;
-//  (*def)[DOF_EX] = ex;
-//  (*def)[DOF_EY] = ey;
-//  (*def)[DOF_GXY] = g;
-
   std::set<std::pair<int_t,int_t> > subset_pixels = subset_->deformed_shapes(shape_function,cx,cy,1.0);
   scalar_t best_grad = 0.0;
   ids_[0] = best_optical_flow_point(best_grad,def_x,def_y,gx,gy,subset_pixels);
@@ -797,33 +767,13 @@ Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
 
   // reset the current locations of the optical flow points based on the last solution
   if(!skip_solve){
-//    const scalar_t u = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
-//    const scalar_t v = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
-//    const scalar_t t = schema_->global_field_value(subset_gid,ROTATION_Z_FS);
-//    const scalar_t ex = schema_->global_field_value(subset_gid,NORMAL_STRETCH_XX_FS);
-//    const scalar_t ey = schema_->global_field_value(subset_gid,NORMAL_STRETCH_YY_FS);
-//    const scalar_t g = schema_->global_field_value(subset_gid,SHEAR_STRETCH_XY_FS);
-//    scalar_t dx=0.0,dy=0.0;
-//    scalar_t Dx=0.0,Dy=0.0;
     const int_t cx = subset_->centroid_x();
     const int_t cy = subset_->centroid_y();
     // compute the deformed shape:
-//    dx = (scalar_t)(subset_->x(ids_[0])) - cx;
-//    dy = (scalar_t)(subset_->y(ids_[0])) - cy;
-//    Dx = (1.0+ex)*dx + g*dy;
-//    Dy = (1.0+ey)*dy + g*dx;
     // mapped location
     shape_function->map(subset_->x(ids_[0]),subset_->y(ids_[0]),cx,cy,current_pt1_x_,current_pt1_y_);
-//    current_pt1_x_ = std::cos(t)*Dx - std::sin(t)*Dy + u + cx;
-//    current_pt1_y_ = std::sin(t)*Dx + std::cos(t)*Dy + v + cy;
-//    dx = (scalar_t)(subset_->x(ids_[1])) - cx;
-//    dy = (scalar_t)(subset_->y(ids_[1])) - cy;
-//    Dx = (1.0+ex)*dx + g*dy;
-//    Dy = (1.0+ey)*dy + g*dx;
     // mapped location
     shape_function->map(subset_->x(ids_[1]),subset_->y(ids_[1]),cx,cy,current_pt2_x_,current_pt2_y_);
-//    current_pt2_x_ = std::cos(t)*Dx - std::sin(t)*Dy + u + cx;
-//    current_pt2_y_ = std::sin(t)*Dx + std::cos(t)*Dy + v + cy;
   }
 
   int_t pt_def_x[2] = {0,0};

@@ -84,7 +84,7 @@ public:
     std::stringstream dbg_msg;
     dbg_msg << "deformation parameters: ";
     for(;it!=it_end;++it)
-      dbg_msg << it->first.get_name_label() << " " << parameters_[it->second];
+      dbg_msg << it->first.get_name_label() << " " << parameters_[it->second] << " ";
     DEBUG_MSG(dbg_msg.str());
   }
 
@@ -107,7 +107,7 @@ public:
   void clone(Teuchos::RCP<Local_Shape_Function> shape_function){
     assert(shape_function->num_params()==num_params_);
     for(int_t i=0;i<num_params_;++i)
-      parameters_[i] = (*shape_function->parameters())[i];
+      (*this)(i) = (*shape_function)(i);
   }
 
   /// gather the field values for each parameter
@@ -167,9 +167,27 @@ public:
 
   /// returns a reference to the given field spec location in the parameter vector
   /// \param spec the field spec
-  scalar_t & parameter(const DICe::mesh::field_enums::Field_Spec & spec){
+  scalar_t & operator()(const DICe::mesh::field_enums::Field_Spec & spec){
     assert(spec_map_.find(spec)!=spec_map_.end());
     return parameters_[spec_map_.find(spec)->second];
+  }
+
+  /// returns a reference to the given field spec location in the parameter vector
+  /// \param index index of the vector entry
+  scalar_t & operator()(const size_t index){
+    assert(index<parameters_.size());
+    return parameters_[index];
+  }
+
+  /// returns the value the given field spec location in the parameter vector if it exists
+  /// or zero if it does not
+  /// \param spec the field spec
+  scalar_t parameter(const DICe::mesh::field_enums::Field_Spec & spec)const{
+    if(spec_map_.find(spec)==spec_map_.end()){
+      return 0.0;
+    }
+    else
+      return parameters_[spec_map_.find(spec)->second];
   }
 
   /// method that computes the residuals for this shape function
@@ -233,6 +251,28 @@ public:
   /// constructor
   /// \param schema pointer to a schema used to initialize the shape function
   Affine_Shape_Function(Schema * schema);
+
+  /// constructor with no schema, but boolean flags instead
+  /// \param enable_rotation true if rotation parameter should be included
+  /// \param enable_normal_strain true if normal strain should be included
+  /// \param enable_shear_strain true if shear strain should be included
+  Affine_Shape_Function(const bool enable_rotation,
+    const bool enable_normal_strain,
+    const bool enable_shear_strain,
+    const scalar_t & delta_disp=1.0,
+    const scalar_t & delta_theta=0.1);
+
+  /// initializes the affine shape function
+  /// \param enable_rotation true if rotation parameter should be included
+  /// \param enable_normal_strain true if normal strain should be included
+  /// \param enable_shear_strain true if shear strain should be included
+  /// \param delta_disp the displacement delta to use for simplex optimization
+  /// \param delta_theta the rotation delta to use for simplex optimization
+  void init(const bool enable_rotation,
+    const bool enable_normal_strain,
+    const bool enable_shear_strain,
+    const scalar_t & delta_disp=1.0,
+    const scalar_t & delta_theta=0.1);
 
   /// virtual destructor
   virtual ~Affine_Shape_Function(){};

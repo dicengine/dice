@@ -10,6 +10,8 @@
 
 // See the custom_app example in the tutorial for more information about the code below
 
+using namespace DICe::mesh::field_enums;
+
 int main(int argc, char *argv[]) {
 
   std::cout << "Begin custom_app example\n";
@@ -85,10 +87,10 @@ int main(int argc, char *argv[]) {
   //
   // Direct access to field values in the schema
   // schema.field_value( global_subset_id, field_name)
-  std::cout << "The DISPLACEMENT_X field value for subset 0 is " << schema.local_field_value(0,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS) << std::endl;
+  std::cout << "The DISPLACEMENT_X field value for subset 0 is " << schema.local_field_value(0,SUBSET_DISPLACEMENT_X_FS) << std::endl;
   // The field_value() method can be used to set the value as well,
   // for example if you wanted to move subset 0 to a new x-location, the syntax would be
-  schema.local_field_value(0,DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS) = 150;
+  schema.local_field_value(0,SUBSET_COORDINATES_X_FS) = 150;
 
   //
   // Test the computed values to make sure this example is working properly
@@ -102,7 +104,7 @@ int main(int argc, char *argv[]) {
   }
   // check that the solution displacements in x are in the vicinity of 0.4 pixels
   for(int i=0;i<schema.local_num_subsets();++i){
-    if(std::abs(schema.local_field_value(i,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS)-0.4) > errorTol){
+    if(std::abs(schema.local_field_value(i,SUBSET_DISPLACEMENT_X_FS)-0.4) > errorTol){
       std::cout << "Error, the displacement solution is not correct" << std::endl;
       errorFlag++;
     }

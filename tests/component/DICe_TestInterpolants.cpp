@@ -101,13 +101,9 @@ int main(int argc, char *argv[]) {
   *outStream << "testing the intensity values" << std::endl;
   scalar_t error_bi = 0.0;
   scalar_t error_keys = 0.0;
+  scalar_t px=0.0,py=0.0;
   for(int_t i=0;i<subset_bi.num_pixels();++i){
-    const scalar_t dx = subset_bi.x(i) - cx;
-    const scalar_t dy = subset_bi.y(i) - cy;
-    const scalar_t px = std::cos(t)*dx - std::sin(t)*dy + u + cx;
-    const scalar_t py = std::sin(t)*dx + std::cos(t)*dy + v + cy;
-//    const scalar_t px = subset_bi.x(i) + (*def)[DOF_U];
-//    const scalar_t py = subset_bi.y(i) + (*def)[DOF_V];
+    shape_function->map(subset_bi.x(i),subset_bi.y(i),cx,cy,px,py);
     x_val = 255.0*px/(scalar_t)array_w;
     y_val = 255.0*py/(scalar_t)array_h;
     const scalar_t exact = x_val*y_val;

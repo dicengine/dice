@@ -66,10 +66,6 @@
 #ifndef GITSHA1
   #define GITSHA1 "not available"
 #endif
-// size of the deformation vectors used in the correlation
-// includes fields below from 0 to (DICE_DEFORMATION_SIZE-1)
-#define DICE_DEFORMATION_SIZE 6
-#define DICE_DEFORMATION_SIZE_AFFINE 9
 
 #include <string>
 
@@ -316,53 +312,6 @@ enum Subset_View_Target{
   // (this is used for striding and converting enums to strings)
   MAX_SUBSET_VIEW_TARGET,
   NO_SUCH_SUBSET_VIEW_TARGET,
-};
-
-/// For the affine shape function these define the degrees of freedon
-enum Affine_Matrix_Dof {
-  // 0
-  DOF_A=0,
-  // 1
-  DOF_B,
-  // 2
-  DOF_C,
-  // 3
-  DOF_D,
-  // 4
-  DOF_E,
-  // 5
-  DOF_F,
-  // 6
-  DOF_G,
-  // 7
-  DOF_H,
-  // 8
-  DOF_I,
-  // *** DO NOT PUT ANY UNDER THESE TWO ***
-  MAX_AFFINE_MATRIX_DOF,
-  NO_SUCH_AFFINE_MATRIX_DOF
-};
-
-/// Valid names for fields
-enum Affine_Dof {
-  // *** THE SIZE OF #define DICE_DEFORMATION_SIZE
-  //     SHOULD MATCH THE FIELDS LISTED HERE
-  // 0
-  DOF_U=0,  // displacement x
-  // 1
-  DOF_V,    // displacement y
-  // 2
-  DOF_THETA,// (theta) rotation about the z-axis, z is out of the plane
-  // 3
-  DOF_EX,   // stretch in the x direction
-  // 4
-  DOF_EY,   // stretch in the y direction
-  // 5
-  DOF_GXY,   // shear strain in the x-y plane
-  // *** DO NOT PUT ANY FIELDS UNDER THESE TWO ***
-  // (this is how the field stride is automatically set if another field is added)
-  MAX_AFFINE_DOF,
-  NO_SUCH_AFFINE_DOF
 };
 
 /// Subset_File_Info types

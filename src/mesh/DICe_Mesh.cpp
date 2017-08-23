@@ -791,11 +791,11 @@ Mesh::get_field_spec(const std::string & field_name,
     if(multi_state_field) fs.set_state(state);
     return fs;
   }
-  if(comm_->get_rank()==0) std::cout << " The following fields are defined: "  << std::endl;
-  for(reg_it = field_registry_.begin();reg_it!=reg_end;++reg_it)
-  {
-    if(comm_->get_rank()==0) std::cout << "  " << reg_it->first.get_name_label() << std::endl;
-  }
+//  if(comm_->get_rank()==0) std::cout << " The following fields are defined: "  << std::endl;
+//  for(reg_it = field_registry_.begin();reg_it!=reg_end;++reg_it)
+//  {
+//    if(comm_->get_rank()==0) std::cout << "  " << reg_it->first.get_name_label() << std::endl;
+//  }
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"Field was not found in the registry: " + field_name);
 }
 

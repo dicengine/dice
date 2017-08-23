@@ -177,16 +177,16 @@ struct Transform_Functor{
     Teuchos::RCP<const std::vector<scalar_t> > def):
     intensities_from_(intensities_from),
     intensities_to_(intensities_to),
-    cx_(cx + (*def)[DOF_U]),
-    cy_(cy + (*def)[DOF_V]),
+    cx_(cx + (*def)[0]),
+    cy_(cy + (*def)[1]),
     width_(width),
     height_(height),
-    u_((*def)[DOF_U]),
-    v_((*def)[DOF_V]),
-    t_((*def)[DOF_THETA]),
-    ex_((*def)[DOF_EX]),
-    ey_((*def)[DOF_EY]),
-    g_((*def)[DOF_GXY]),
+    u_((*def)[2]),
+    v_((*def)[3]),
+    t_((*def)[4]),
+    ex_((*def)[5]),
+    ey_((*def)[6]),
+    g_((*def)[7]),
     tol_(0.00001){
     cost_ = std::cos(t_);
     sint_ = std::sin(t_);

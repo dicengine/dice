@@ -481,7 +481,7 @@ Image::apply_transformation(Teuchos::RCP<Local_Shape_Function> shape_function,
   const int_t cy,
   const bool apply_in_place){
 
-  assert(shape_function->num_params()==DICE_DEFORMATION_SIZE);
+  assert(shape_function->num_params()==6);
   Teuchos::RCP<std::vector<scalar_t> > deformation = shape_function->rcp();
 
   if(apply_in_place){
