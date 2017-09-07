@@ -103,6 +103,26 @@ public:
     subset_->initialize(schema_->ref_img());
 }
 
+  /// \brief Base class constructor uses a DICe::Schema to get parameter values and coordinates to denote the centroid of the subset
+  /// \param schema a DICe::Schema that holds all the correlation parameters
+  /// \param x x-coordinate of the centroid
+  /// \param y y-coordinate of the centroid
+  Objective(Schema * schema,
+const int_t x,
+const int_t y):
+    schema_(schema),
+    correlation_point_global_id_(-1)
+{
+    // create the refSubset as member data from x/y and w/h:
+    assert(schema_->is_initialized());
+    assert(schema_->subset_dim()>0);
+    assert(x>=0&&x<schema_->ref_img()->width());
+    assert(y>=0&&y<schema_->ref_img()->height());
+    assert(schema_->ref_img()!=Teuchos::null);
+    subset_ = Teuchos::rcp(new Subset(x,y,schema_->subset_dim(),schema_->subset_dim()));
+    subset_->initialize(schema_->ref_img());
+}
+
   virtual ~Objective(){}
 
   /// \brief Correlation criteria
@@ -136,6 +156,7 @@ public:
   /// \brief Returns the current value of the field specified. These values are stored in the schema
   /// \param spec Field_Spec that defines the requested field
   const mv_scalar_type & global_field_value(const DICe::mesh::field_enums::Field_Spec spec)const{
+    assert(correlation_point_global_id_>=0);
     return schema_->global_field_value(correlation_point_global_id_,spec);}
 
   /// Returns a pointer to the subset
@@ -187,6 +208,19 @@ public:
   Objective_ZNSSD(Schema * schema,
     const int_t correlation_point_global_id):
     Objective(schema,correlation_point_global_id){
+    // check that at least one of the shape functions is in use:
+    TEUCHOS_TEST_FOR_EXCEPTION(!schema_->translation_enabled()&&
+      !schema_->rotation_enabled()&&
+      !schema_->normal_strain_enabled()&&
+      !schema_->shear_strain_enabled(),std::runtime_error,"Error, no shape functions are activated");
+    TEUCHOS_TEST_FOR_EXCEPTION(subset_==Teuchos::null,std::runtime_error,"");
+  }
+
+  /// \brief Same constructor as for the base class (see base class documentation)
+  Objective_ZNSSD(Schema * schema,
+    const int_t x,
+    const int_t y):
+    Objective(schema,x,y){
     // check that at least one of the shape functions is in use:
     TEUCHOS_TEST_FOR_EXCEPTION(!schema_->translation_enabled()&&
       !schema_->rotation_enabled()&&

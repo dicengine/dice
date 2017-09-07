@@ -173,6 +173,8 @@ Objective::sigma( Teuchos::RCP<Local_Shape_Function> shape_function,
 void
 Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_function){
 
+  if(correlation_point_global_id_<0)return;
+
   scalar_t norm_ut_2 = 0.0;
   scalar_t norm_uhat_2 = 0.0;
   scalar_t norm_error_dot_gphi_2 = 0.0;
@@ -389,7 +391,8 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
     try
     {
       lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
-      schema_->global_field_value(correlation_point_global_id_,CONDITION_NUMBER_FS) = cond_2x2;
+      if(correlation_point_global_id_>=0)
+        schema_->global_field_value(correlation_point_global_id_,CONDITION_NUMBER_FS) = cond_2x2;
       if(cond_2x2 > 1.0E12) return HESSIAN_SINGULAR;
     }
     catch(std::exception &e){
