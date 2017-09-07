@@ -166,6 +166,79 @@ protected:
 };
 
 class DICE_LIB_DLL_EXPORT
+Affine_Homography_Simplex : public Simplex {
+
+public:
+
+  /// \brief Default constructor
+  /// \param left_img the left image
+  /// \param right_img the right image
+  /// \param tri pointer to a triangulation class
+  /// \param params Paramters that define the varaitions on the initial guess, convergence tolerance and max number of iterations
+  Affine_Homography_Simplex(Teuchos::RCP<Image> left_img,
+    Teuchos::RCP<Image> right_img,
+    Triangulation * tri,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
+  /// destructor
+  virtual ~Affine_Homography_Simplex(){};
+
+  /// \brief the objective function that the simplex method is optimizing
+  /// \param variables the current guess at which to evaluate the objective
+  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > variables);
+
+protected:
+  /// Pointer to the left image
+  Teuchos::RCP<Image> left_img_;
+  /// Pointer to the right image
+  Teuchos::RCP<Image> right_img_;
+  /// Pointer to a triangulation
+  Triangulation * tri_;
+};
+
+class DICE_LIB_DLL_EXPORT
+Quadratic_Homography_Simplex : public Simplex {
+
+public:
+
+  /// \brief Default constructor
+  /// \param left_img the left image
+  /// \param right_img the right image
+  /// \param ulx x coordinate of the upper left corner
+  /// \param uly y coordinate of the upper left corner
+  /// \param lrx x coordinate of the lower right corner
+  /// \param lry y coordinate of the lower right corner (note: in loops the extents are inclusive of the bounds)
+  /// \param params Paramters that define the varaitions on the initial guess, convergence tolerance and max number of iterations
+  Quadratic_Homography_Simplex(Teuchos::RCP<Image> left_img,
+    Teuchos::RCP<Image> right_img,
+    const int_t & ulx,
+    const int_t & uly,
+    const int_t & lrx,
+    const int_t & lry,
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
+  /// destructor
+  virtual ~Quadratic_Homography_Simplex(){};
+
+  /// \brief the objective function that the simplex method is optimizing
+  /// \param variables the current guess at which to evaluate the objective
+  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > variables);
+
+protected:
+  /// Pointer to the left image
+  Teuchos::RCP<Image> left_img_;
+  /// Pointer to the right image
+  Teuchos::RCP<Image> right_img_;
+  /// coordinates of the window corners to optimize
+  int_t ulx_;
+  int_t uly_;
+  int_t lrx_;
+  int_t lry_;
+};
+
+
+
+class DICE_LIB_DLL_EXPORT
 Warp_Simplex : public Simplex {
 
 public:

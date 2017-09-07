@@ -1448,19 +1448,6 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
       DEBUG_MSG("Triangulation::estimate_projective_transform(): initial least squares min value for param " << i << " " << (*warp_params_)[i]);
     }
 
-    //    (*warp_params_)[0]  = 125.165;
-    //    (*warp_params_)[1]  = 0.947267;
-    //    (*warp_params_)[2]  = -0.296303;
-    //    (*warp_params_)[3]  = 3.33705e-06;
-    //    (*warp_params_)[4]  = 3.06634e-06;
-    //    (*warp_params_)[5]  = 0.000240409;
-    //    (*warp_params_)[6]  = 3.26227;
-    //    (*warp_params_)[7]  = -0.0126405;
-    //    (*warp_params_)[8]  = 0.994763;
-    //    (*warp_params_)[9]  = -1.99295e-06;
-    //    (*warp_params_)[10] = 4.19527e-06;
-    //    (*warp_params_)[11] = 1.72733e-05;
-
     Teuchos::RCP<Teuchos::ParameterList> warp_params = rcp(new Teuchos::ParameterList());
     warp_params->set(DICe::max_iterations,500);
     warp_params->set(DICe::tolerance,0.00001);

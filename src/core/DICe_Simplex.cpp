@@ -368,6 +368,96 @@ Homography_Simplex::objective(Teuchos::RCP<std::vector<scalar_t> > variables){
   return value;
 }
 
+Affine_Homography_Simplex::Affine_Homography_Simplex(Teuchos::RCP<Image> left_img,
+  Teuchos::RCP<Image> right_img,
+  Triangulation * tri,
+  const Teuchos::RCP<Teuchos::ParameterList> & params):
+  Simplex(params),
+  tri_(tri){
+  left_img_ = left_img;
+  right_img_ = right_img;
+}
+
+scalar_t
+Affine_Homography_Simplex::objective(Teuchos::RCP<std::vector<scalar_t> > variables){
+
+  const int_t w = left_img_->width();
+  const int_t h = left_img_->height();
+
+  assert(variables->size()==6);
+  Teuchos::RCP<std::vector<scalar_t> > proj_vars = Teuchos::rcp(new std::vector<scalar_t>(9,0.0));
+  for(size_t i=0;i<variables->size();++i)
+  (*proj_vars)[i] = (*variables)[i];
+  (*proj_vars)[8] = 1.0;
+
+  tri_->set_projective_params(proj_vars);
+  scalar_t value = 0.0;
+  scalar_t xr = 0.0;
+  scalar_t yr = 0.0;
+  intensity_t left_intens = 0.0;
+  intensity_t right_intens = 0.0;
+  for(int_t j=0.1*h;j<0.9*h;++j){
+    for(int_t i=0.1*w;i<0.9*w;++i){
+      tri_->project_left_to_right_sensor_coords(i,j,xr,yr);
+      left_intens = (*left_img_)(i,j);
+      right_intens = right_img_->interpolate_keys_fourth(xr,yr);
+      //intens[j*w+i] = right_intens;
+      value += (left_intens - right_intens)*(left_intens - right_intens);
+    }
+  }
+  return value;
+}
+
+
+Quadratic_Homography_Simplex::Quadratic_Homography_Simplex(Teuchos::RCP<Image> left_img,
+  Teuchos::RCP<Image> right_img,
+  const int_t & ulx,
+  const int_t & uly,
+  const int_t & lrx,
+  const int_t & lry,
+  const Teuchos::RCP<Teuchos::ParameterList> & params):
+  Simplex(params),
+  ulx_(ulx),
+  uly_(uly),
+  lrx_(lrx),
+  lry_(lry){
+  left_img_ = left_img;
+  right_img_ = right_img;
+}
+
+scalar_t
+Quadratic_Homography_Simplex::objective(Teuchos::RCP<std::vector<scalar_t> > variables){
+  assert(variables->size()==12);
+  assert(ulx_<lrx_);
+  assert(uly_<lry_);
+  const int_t w = left_img_->width();
+  const int_t h = left_img_->height();
+  assert(ulx_>=0&&ulx_<w);
+  assert(uly_>=0&&uly_<h);
+  assert(lrx_>=0&&lrx_<w);
+  assert(lry_>=0&&lry_<h);
+
+  scalar_t value = 0.0;
+  scalar_t xr=0.0,yr=0.0,xl=0.0,yl=0.0;
+  intensity_t left_intens = 0.0;
+  intensity_t right_intens = 0.0;
+  for(int_t j=uly_;j<=lry_;++j){
+    yl = (scalar_t)j;
+    for(int_t i=ulx_;i<=lrx_;++i){
+      left_intens = (*left_img_)(i,j);
+      xl = (scalar_t)i;
+      // project the point to the right image using a quadratic interpolant
+      // TODO move this to a new local shape function...
+      xr = (*variables)[0]*xl + (*variables)[1]*yl + (*variables)[2]*xl*yl + (*variables)[3]*xl*xl + (*variables)[4]*yl*yl  + (*variables)[5];
+      yr = (*variables)[6]*xl + (*variables)[7]*yl + (*variables)[8]*xl*yl + (*variables)[9]*xl*xl + (*variables)[10]*yl*yl + (*variables)[11];
+      right_intens = right_img_->interpolate_keys_fourth(xr,yr);
+      value += (left_intens - right_intens)*(left_intens - right_intens);
+    }
+  }
+  return value;
+}
+
+
 Warp_Simplex::Warp_Simplex(Teuchos::RCP<Image> left_img,
   Teuchos::RCP<Image> right_img,
   Triangulation * tri,
