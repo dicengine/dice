@@ -89,10 +89,46 @@ int main(int argc, char *argv[]) {
   }
   *outStream << "reference striped image created successfuly\n";
 
+  // test moving the centroid of a quadratic shape function:
+  Teuchos::RCP<Local_Shape_Function> move_shape_func = Teuchos::rcp(new Quadratic_Shape_Function());
+  assert(move_shape_func->parameters()->size()==12);
+  //(*move_shape_func)(0)  = 1.0; // A (should already by 1.0 from constructor)
+  (*move_shape_func)(1)  = 0.0002; // B
+  (*move_shape_func)(2)  = 0.0003; // C
+  (*move_shape_func)(3)  = 0.0004; // D
+  (*move_shape_func)(4)  = 0.0005; // E
+  (*move_shape_func)(5)  = 1.352; // F
+  (*move_shape_func)(6)  = 0.0006; // G
+  //(*move_shape_func)(7)  = 1.0; // H (should already by 1.0 from constructor)
+  (*move_shape_func)(8)  = 0.0007; // I
+  (*move_shape_func)(9)  = 0.0008; // J
+  (*move_shape_func)(10) = 0.0009; // K
+  (*move_shape_func)(11) = -0.897; // L
+  const scalar_t cx_orig = 345.98;
+  const scalar_t cy_orig = 12.39;
+  const scalar_t pt_x = 45.289;
+  const scalar_t pt_y = -20.94;
+  scalar_t x_prime = 0.0,y_prime=0.0;
+  move_shape_func->map(pt_x,pt_y,cx_orig,cy_orig,x_prime,y_prime);
+  *outStream << " x_prime " << x_prime << " y_prime " << y_prime << std::endl;
+  const scalar_t cx_new = 56.98;
+  const scalar_t cy_new = -899.0;
+  const scalar_t delta_x = cx_new - cx_orig;
+  const scalar_t delta_y = cy_new - cy_orig;
+  move_shape_func->update_params_for_centroid_change(delta_x,delta_y);
+  scalar_t x_prime_new = 0.0,y_prime_new=0.0;
+  move_shape_func->map(pt_x,pt_y,cx_new,cy_new,x_prime_new,y_prime_new);
+  *outStream << " x_prime new " << x_prime_new << " y_prime new " << y_prime_new << std::endl;
+  if(std::abs(x_prime_new-x_prime) > 1.0E-4||std::abs(y_prime_new-y_prime) > 1.0E-4){
+    *outStream << "Error, change of centroid for shape function not correct" << std::endl;
+    errorFlag++;
+  }
+
   // testing objective gamma:
 
-  // dummy deformation vector to pass to objective
+  // dummy shape function to pass deformation map parameters to objective
   Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory();
+  Teuchos::RCP<Local_Shape_Function> quadratic_shape_function = Teuchos::rcp(new Quadratic_Shape_Function());
 
   *outStream << "testing ZNSSD correlation" << std::endl;
 
@@ -126,129 +162,136 @@ int main(int argc, char *argv[]) {
       *outStream << "Error, gamma is not " << shift*0.4 << " value=" << gamma << "\n";
       errorFlag++;
     }
+    Teuchos::RCP<DICe::Objective_ZNSSD> quadratic_obj = Teuchos::rcp(new DICe::Objective_ZNSSD(schema,0));
+    const scalar_t quadratic_gamma =  quadratic_obj->gamma(quadratic_shape_function);
+    *outStream << "quadratic gamma value: " << quadratic_gamma << std::endl;
+    if(std::abs(quadratic_gamma - shift*0.4)>errtol){
+      *outStream << "Error, gamma (for quadratic shape function) is not " << shift*0.4 << " value=" << quadratic_gamma << "\n";
+      errorFlag++;
+    }
     delete schema;
   }
 
-//  // dummy deformation vector to pass to objective
-//
-//  Teuchos::RCP<std::vector<scalar_t> > affine_deformation = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE_AFFINE,0.0));
-//  *outStream << "testing affine ZNSSD correlation" << std::endl;
-//  // track the correlation gamma for various pixel shifts:
-//  // no shift should result in gamma = 0.0 and when the images are opposite gamma should = 4.0
-//  for(int_t shift=0;shift<11;shift++){
-//    *outStream << "processing shift: " << shift*2 << "\n";
-//    Teuchos::ArrayRCP<intensity_t> intensitiesShift(img_width*img_height,0.0);
-//    for(int_t y=0;y<img_height;++y){
-//      for(int_t stripe=0;stripe<=num_stripes/2;++stripe){
-//        for(int_t x=stripe*(2*stripe_width) - shift*2;x<stripe*(2*stripe_width)+stripe_width - shift*2;++x){
-//          if(x>=img_width)continue;
-//          if(x<0)continue;
-//          intensitiesShift[y*img_width+x] = 255.0;
-//        }
-//      }
-//    }
-//    // create a temp schema:
-//    Teuchos::ArrayRCP<scalar_t> coords_x(1,100);
-//    Teuchos::ArrayRCP<scalar_t> coords_y(1,100);
-//    DICe::Schema * schema = new DICe::Schema(coords_x,coords_y,99);
-//    schema->set_ref_image(img_width,img_height,intensities);
-//    schema->set_def_image(img_width,img_height,intensitiesShift);
-//    //schema->sync_fields_all_to_dist(); // distribute the fields across processors if necessary
-//    // create an objective:
-//    Teuchos::RCP<DICe::Objective_ZNSSD_Affine> obj = Teuchos::rcp(new DICe::Objective_ZNSSD_Affine(schema,0));
-//    // evaluate the correlation value:
-//    const scalar_t gamma =  obj->gamma(deformation);
-//    *outStream << "gamma value: " << gamma << std::endl;
-//    if(std::abs(gamma - shift*0.4)>errtol){
-//      *outStream << "Error, gamma is not " << shift*0.4 << " value=" << gamma << "\n";
-//      errorFlag++;
-//    }
-//    delete schema;
-//  }
-//
-//  // dummy deformation vector to pass to objective
-//  *outStream << "testing complex affine ZNSSD correlation" << std::endl;
-//  Teuchos::RCP<DICe::Image> affineRef = Teuchos::rcp(new DICe::Image("./images/refSpeckled.tif"));
-//  const int_t affine_w = affineRef->width();
-//  const int_t affine_h = affineRef->height();
-//  Teuchos::RCP<std::vector<scalar_t> > exact_affine_def = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE_AFFINE,0.0));
-//  (*exact_affine_def)[DOF_A] = 1.00123;
-//  (*exact_affine_def)[DOF_B] = 0.000035;
-//  (*exact_affine_def)[DOF_C] = 1.892;
-//  (*exact_affine_def)[DOF_D] = 0.000068;
-//  (*exact_affine_def)[DOF_E] = 1.0005;
-//  (*exact_affine_def)[DOF_F] = -0.987;
-//  (*exact_affine_def)[DOF_G] = 0.0;
-//  (*exact_affine_def)[DOF_H] = 0.000023;
-//  (*exact_affine_def)[DOF_I] = 1.0;
-//  scalar_t A = (*exact_affine_def)[DOF_A];
-//  scalar_t  B = (*exact_affine_def)[DOF_B];
-//  scalar_t C = (*exact_affine_def)[DOF_C];
-//  scalar_t D = (*exact_affine_def)[DOF_D];
-//  scalar_t E = (*exact_affine_def)[DOF_E];
-//  scalar_t F = (*exact_affine_def)[DOF_F];
-//  scalar_t G = (*exact_affine_def)[DOF_G];
-//  scalar_t H = (*exact_affine_def)[DOF_H];
-//  scalar_t I = (*exact_affine_def)[DOF_I];
-//  Teuchos::ArrayRCP<intensity_t> intensitiesMod(affine_w*affine_h,0.0);
-//  scalar_t mapped_x=0.0,mapped_y=0.0;
-//  for(int_t y=0;y<affine_h;++y){
-//    for(int_t x=0;x<affine_w;++x){
-//      // determine the mapped x and y for each pixel
-//      mapped_x = (A*x + B*y + C)/(G*x + H*y + I);
-//      mapped_y = (D*x + E*y + F)/(G*x + H*y + I);
-//      //std::cout << "x " << x << " y " << y << " mapped x " << mapped_x << " mapped y " << mapped_y << std::endl;
-//      if(mapped_x>4.0&&mapped_x<affine_w-4.0&&mapped_y>4.0&&mapped_y<affine_h-4.0){
-//        intensitiesMod[y*affine_w+x] = affineRef->interpolate_keys_fourth(mapped_x,mapped_y);
-//      }
-//    } // end x pixel
-//  } // end y pixel
-//  Teuchos::RCP<DICe::Image> affineDef = Teuchos::rcp(new DICe::Image(affine_w,affine_h,intensitiesMod));
-//  affineRef->write("affineDefImage.tiff");
-//  affineDef->write("affineRefImage.tiff");
-//  Teuchos::ArrayRCP<scalar_t> coords_x(1,250);
-//  Teuchos::ArrayRCP<scalar_t> coords_y(1,250);
-//  DICe::Schema * schema = new DICe::Schema(coords_x,coords_y,99);
-//  schema->set_ref_image(affineDef); // these are switched on purpose
-//  schema->set_def_image(affineRef);
-//  //schema->sync_fields_all_to_dist(); // distribute the fields across processors if necessary
-//  // create an objective:
-//  Teuchos::RCP<DICe::Objective_ZNSSD_Affine> obj = Teuchos::rcp(new DICe::Objective_ZNSSD_Affine(schema,0));
-//  Teuchos::RCP<std::vector<scalar_t> > def_guess = Teuchos::rcp(new std::vector<scalar_t>(DICE_DEFORMATION_SIZE_AFFINE,0.0));
-//  (*def_guess)[DOF_A] = 1.0;
-//  (*def_guess)[DOF_E] = 1.0;
-//  (*def_guess)[DOF_I] = 1.0;
-//  int_t num_iterations = 0;
-//  obj->computeUpdateRobust(def_guess,num_iterations);
-//  //obj->subset()->write_tiff("affineDeformedSubset.tif");
-//  // check the values of def guess and gamma
-//  const scalar_t gamma_simplex =  obj->gamma(def_guess);
-//  *outStream << "gamma value: " << gamma_simplex << std::endl;
-//  if(std::abs(gamma_simplex)>1.0E-4){
-//    *outStream << "Error, gamma is too large\n";
-//    errorFlag++;
-//  }
-//  for(size_t i=0;i<def_guess->size();++i)
-//    (*def_guess)[i] = 0.0;
-//  (*def_guess)[DOF_A] = 1.0;
-//  (*def_guess)[DOF_E] = 1.0;
-//  (*def_guess)[DOF_I] = 1.0;
-//  num_iterations = 0;
-//  obj->computeUpdateFast(def_guess,num_iterations);
-//  obj->subset()->write_tiff("affineDeformedSubset.tif");
-//  // check the values of def guess and gamma
-//  const scalar_t gamma =  obj->gamma(def_guess);
-//  *outStream << "gamma value: " << gamma << std::endl;
-//  if(std::abs(gamma)>1.0E-4){
-//    *outStream << "Error, gamma is too large\n";
-//    errorFlag++;
-//  }
-//
-//
-//  delete schema;
-//
-//
+  // dummy deformation vector to pass to objective
+  *outStream << "testing quadratic deformation with ZNSSD correlation" << std::endl;
+  Teuchos::RCP<Local_Shape_Function> quad_shape_func_exact = Teuchos::rcp(new Quadratic_Shape_Function());
+  Teuchos::RCP<Local_Shape_Function> quad_shape_func = Teuchos::rcp(new Quadratic_Shape_Function());
+  assert(quad_shape_func_exact->parameters()->size()==12);
+  //(*quad_shape_func_exact)(0)  = 1.0; // A (should already by 1.0 from constructor)
+  (*quad_shape_func_exact)(1)  = 0.0002; // B
+  (*quad_shape_func_exact)(2)  = 0.0003; // C
+  (*quad_shape_func_exact)(3)  = 0.0004; // D
+  (*quad_shape_func_exact)(4)  = 0.0005; // E
+  (*quad_shape_func_exact)(5)  = 1.352; // F
+  (*quad_shape_func_exact)(6)  = 0.0006; // G
+  //(*quad_shape_func_exact)(7)  = 1.0; // H (should already by 1.0 from constructor)
+  (*quad_shape_func_exact)(8)  = 0.0007; // I
+  (*quad_shape_func_exact)(9)  = 0.0008; // J
+  (*quad_shape_func_exact)(10) = 0.0009; // K
+  (*quad_shape_func_exact)(11) = -0.897; // L
 
+  // initialize the solution to be close to the exact sol
+  (*quad_shape_func)(1)  = 0.0002; // B
+  (*quad_shape_func)(2)  = 0.0003; // C
+  (*quad_shape_func)(3)  = 0.0004; // D
+  (*quad_shape_func)(4)  = 0.0005; // E
+  (*quad_shape_func)(5)  = 1.0; // F
+  (*quad_shape_func)(6)  = 0.0006; // G
+  (*quad_shape_func)(8)  = 0.0007; // I
+  (*quad_shape_func)(9)  = 0.0008; // J
+  (*quad_shape_func)(10) = 0.0009; // K
+  (*quad_shape_func)(11) = -1.0; // L
+
+  // test the mapping function of the quadratic shape function
+  const scalar_t test_x=105, test_y=27;
+  const scalar_t cx = 250.0;
+  const scalar_t cy = 250.0;
+  scalar_t test_map_x=0.0, test_map_y=0.0;
+  quad_shape_func_exact->map(test_x,test_y,cx,cy,test_map_x,test_map_y);
+  const scalar_t exact_map_x = 149.282;
+  const scalar_t exact_map_y = 110.227;
+  if(std::abs(exact_map_x - test_map_x) > 1.0E-3 || std::abs(exact_map_y - test_map_y) > 1.0E-3){
+    *outStream << "Error, incorrect mapped location for quadratic shape function" << std::endl;
+    errorFlag++;
+  }
+
+  Teuchos::RCP<DICe::Image> affineRef = Teuchos::rcp(new DICe::Image("./images/refSpeckled.tif"));
+  const int_t affine_w = affineRef->width();
+  const int_t affine_h = affineRef->height();
+  Teuchos::ArrayRCP<intensity_t> intensitiesMod(affine_w*affine_h,0.0);
+  scalar_t mapped_x=0.0,mapped_y=0.0;
+  for(int_t y=0;y<affine_h;++y){
+    for(int_t x=0;x<affine_w;++x){
+      quad_shape_func_exact->map(x,y,cx,cy,mapped_x,mapped_y);
+      if(mapped_x>4.0&&mapped_x<affine_w-4.0&&mapped_y>4.0&&mapped_y<affine_h-4.0){
+        intensitiesMod[y*affine_w+x] = affineRef->interpolate_keys_fourth(mapped_x,mapped_y);
+      }
+    } // end x pixel
+  } // end y pixel
+  Teuchos::RCP<DICe::Image> affineDef = Teuchos::rcp(new DICe::Image(affine_w,affine_h,intensitiesMod));
+  affineRef->write("affineDefImage.tiff");
+  affineDef->write("affineRefImage.tiff");
+  Teuchos::ArrayRCP<scalar_t> coords_x(1,250);
+  Teuchos::ArrayRCP<scalar_t> coords_y(1,250);
+  DICe::Schema * schema = new DICe::Schema(coords_x,coords_y,99);
+  schema->set_ref_image(affineDef); // these are switched on purpose
+  schema->set_def_image(affineRef);
+  //schema->sync_fields_all_to_dist(); // distribute the fields across processors if necessary
+  // create an objective:
+  Teuchos::RCP<DICe::Objective_ZNSSD> obj = Teuchos::rcp(new DICe::Objective_ZNSSD(schema,0));
+
+  int_t num_iterations = 0;
+  obj->computeUpdateFast(quad_shape_func,num_iterations);
+  // check the values of def guess and gamma
+  const scalar_t gamma =  obj->gamma(quad_shape_func);
+  *outStream << "gradient-based gamma value: " << gamma << std::endl;
+  if(std::abs(gamma)>1.0E-4){
+    *outStream << "Error, gamma is too large\n";
+    errorFlag++;
+  }
+  bool grad_converged = quad_shape_func->test_for_convergence(*quad_shape_func_exact->parameters(),1.0E-3);
+  if(!grad_converged){
+    *outStream << "Error, gradient optimized solution is not correct" << std::endl;
+    *outStream << "Quad shape function parameter values" << std::endl;
+    quad_shape_func->print_parameters();
+    *outStream << "Exact values" << std::endl;
+    quad_shape_func_exact->print_parameters();
+    errorFlag++;
+  }
+
+  // initialize the solution to be close to the exact sol
+  quad_shape_func->clear();
+  (*quad_shape_func)(1)  = 0.0002; // B
+  (*quad_shape_func)(2)  = 0.0003; // C
+  (*quad_shape_func)(3)  = 0.0004; // D
+  (*quad_shape_func)(4)  = 0.0005; // E
+  (*quad_shape_func)(5)  = 1.0; // F
+  (*quad_shape_func)(6)  = 0.0006; // G
+  (*quad_shape_func)(8)  = 0.0007; // I
+  (*quad_shape_func)(9)  = 0.0008; // J
+  (*quad_shape_func)(10) = 0.0009; // K
+  (*quad_shape_func)(11) = -1.0; // L
+
+  num_iterations = 0;
+  obj->computeUpdateRobust(quad_shape_func,num_iterations);
+  bool simplex_converged = quad_shape_func->test_for_convergence(*quad_shape_func_exact->parameters(),1.0E-3);
+  if(!simplex_converged){
+    *outStream << "Error, simplex optimized solution is not correct" << std::endl;
+    *outStream << "Quad shape function parameter values" << std::endl;
+    quad_shape_func->print_parameters();
+    *outStream << "Exact values" << std::endl;
+    quad_shape_func_exact->print_parameters();
+    errorFlag++;
+  }
+  const scalar_t gamma_simplex =  obj->gamma(quad_shape_func);
+  *outStream << "simplex gamma value: " << gamma_simplex << std::endl;
+  if(std::abs(gamma_simplex)>1.0E-4){
+    *outStream << "Error, gamma is too large\n";
+    errorFlag++;
+  }
+
+
+  delete schema;
 
   *outStream << "--- End test ---" << std::endl;
 

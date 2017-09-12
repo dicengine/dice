@@ -91,6 +91,50 @@ Local_Shape_Function::update(const std::vector<scalar_t> & update){
     parameters_[i] += update[i];
 }
 
+bool
+Local_Shape_Function::test_for_convergence(const std::vector<scalar_t> & old_parameters,
+  const scalar_t & tol){
+  assert(old_parameters.size()==parameters_.size());
+  bool converged = true;
+  for(int_t i=0;i<num_params_;++i){
+    if(std::abs(parameters_[i] - old_parameters[i]) >= tol){
+      converged = false;
+    }
+  }
+  return converged;
+}
+
+void
+Local_Shape_Function::reset_fields(Schema * schema){
+  assert(schema);
+  // iterate the fields and save off the values
+  std::map<Field_Spec,size_t>::const_iterator it = spec_map_.begin();
+  const std::map<Field_Spec,size_t>::const_iterator it_end = spec_map_.end();
+  for(;it!=it_end;++it)
+    schema->mesh()->get_field(it->first)->put_scalar(0.0);
+}
+
+void
+Local_Shape_Function::clear(){
+  for(int_t i=0;i<num_params_;++i)
+    parameters_[i] = 0.0;
+}
+
+void
+Local_Shape_Function::initialize_parameters_from_fields(Schema * schema,
+  const int_t subset_gid){
+  assert(schema);
+  std::map<Field_Spec,size_t>::const_iterator it = spec_map_.begin();
+  const std::map<Field_Spec,size_t>::const_iterator it_end = spec_map_.end();
+  std::stringstream dbg_str;
+  dbg_str << "Subset initialized from subset gid " << subset_gid << " with values:";
+  for(;it!=it_end;++it){
+    (*this)(it->first) = schema->global_field_value(subset_gid,it->first);
+    dbg_str << " " << parameter(it->first);
+  }
+  DEBUG_MSG(dbg_str.str());
+}
+
 Affine_Shape_Function::Affine_Shape_Function(const bool enable_rotation,
   const bool enable_normal_strain,
   const bool enable_shear_strain,
@@ -147,16 +191,6 @@ Affine_Shape_Function::init(const bool enable_rotation,
 }
 
 void
-Affine_Shape_Function::reset_fields(Schema * schema){
-  assert(schema);
-  // iterate the fields and save off the values
-  std::map<Field_Spec,size_t>::const_iterator it = spec_map_.begin();
-  const std::map<Field_Spec,size_t>::const_iterator it_end = spec_map_.end();
-  for(;it!=it_end;++it)
-    schema->mesh()->get_field(it->first)->put_scalar(0.0);
-}
-
-void
 Affine_Shape_Function::map(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & cx,
@@ -177,13 +211,6 @@ Affine_Shape_Function::map(const scalar_t & x,
   // mapped location
   out_x = cost*Dx - sint*Dy + parameter(SUBSET_DISPLACEMENT_X_FS) + cx;
   out_y = sint*Dx + cost*Dy + parameter(SUBSET_DISPLACEMENT_Y_FS) + cy;
-}
-
-
-void
-Affine_Shape_Function::clear(){
-  for(int_t i=0;i<num_params_;++i)
-    parameters_[i] = 0.0;
 }
 
 //FIXME make these check the field exists rather than if the schema has them enabled
@@ -275,11 +302,12 @@ Affine_Shape_Function::insert_motion(const scalar_t & u,
 }
 
 void
-Affine_Shape_Function::map_to_u_v_theta(const scalar_t & x,
-  const scalar_t & y,
+Affine_Shape_Function::map_to_u_v_theta(const scalar_t & cx,
+  const scalar_t & cy,
   scalar_t & out_u,
   scalar_t & out_v,
   scalar_t & out_theta){
+  // note cx and cy not used for this shape function
   out_u = parameter(SUBSET_DISPLACEMENT_X_FS);
   out_v = parameter(SUBSET_DISPLACEMENT_Y_FS);
   out_theta = parameter(ROTATION_Z_FS);
@@ -362,6 +390,198 @@ Affine_Shape_Function::test_for_convergence(const std::vector<scalar_t> & old_pa
   return converged;
 }
 
+Quadratic_Shape_Function::Quadratic_Shape_Function(){
+  spec_map_.insert(std::pair<Field_Spec,size_t>(QUAD_A_FS,spec_map_.size()));
+  spec_map_.insert(std::pair<Field_Spec,size_t>(QUAD_B_FS,spec_map_.size()));
+  spec_map_.insert(std::pair<Field_Spec,size_t>(QUAD_C_FS,spec_map_.size()));
+  spec_map_.insert(std::pair<Field_Spec,size_t>(QUAD_D_FS,spec_map_.size()));
+  spec_map_.insert(std::pair<Field_Spec,size_t>(QUAD_E_FS,spec_map_.size()));
+  spec_map_.insert(std::pair<Field_Spec,size_t>(QUAD_F_FS,spec_map_.size()));
+  spec_map_.insert(std::pair<Field_Spec,size_t>(QUAD_G_FS,spec_map_.size()));
+  spec_map_.insert(std::pair<Field_Spec,size_t>(QUAD_H_FS,spec_map_.size()));
+  spec_map_.insert(std::pair<Field_Spec,size_t>(QUAD_I_FS,spec_map_.size()));
+  spec_map_.insert(std::pair<Field_Spec,size_t>(QUAD_J_FS,spec_map_.size()));
+  spec_map_.insert(std::pair<Field_Spec,size_t>(QUAD_K_FS,spec_map_.size()));
+  spec_map_.insert(std::pair<Field_Spec,size_t>(QUAD_L_FS,spec_map_.size()));
+  num_params_ = spec_map_.size();
+  assert(num_params_==12);
+  parameters_.resize(num_params_);
+  deltas_.resize(num_params_);
+  // initialize the parameter values
+  clear();
+  // initialize the deltas:
+  deltas_[0]  = 0.001;
+  deltas_[1]  = 0.001;
+  deltas_[2]  = 1.0E-6;
+  deltas_[3]  = 1.0E-6;
+  deltas_[4]  = 1.0E-6;
+  deltas_[5]  = 1.0;
+  deltas_[6]  = 0.001;
+  deltas_[7]  = 0.001;
+  deltas_[8]  = 1.0E-6;
+  deltas_[9]  = 1.0E-6;
+  deltas_[10] = 1.0E-6;
+  deltas_[11] = 1.0;
+}
+
+void
+Quadratic_Shape_Function::clear(){
+  Local_Shape_Function::clear();
+  (*this)(QUAD_A_FS) = 1.0;
+  (*this)(QUAD_H_FS) = 1.0;
+}
+
+void
+Quadratic_Shape_Function::reset_fields(Schema * schema){
+  Local_Shape_Function::clear();
+  schema->mesh()->get_field(QUAD_A_FS)->put_scalar(1.0);
+  schema->mesh()->get_field(QUAD_H_FS)->put_scalar(1.0);
+}
+
+void
+Quadratic_Shape_Function::map(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & cx,
+  const scalar_t & cy,
+  scalar_t & out_x,
+  scalar_t & out_y){
+  const scalar_t dx = x - cx;
+  const scalar_t dy = y - cy;
+  out_x = parameter(QUAD_A_FS)*dx + parameter(QUAD_B_FS)*dy + parameter(QUAD_C_FS)*dx*dy + parameter(QUAD_D_FS)*dx*dx + parameter(QUAD_E_FS)*dy*dy + parameter(QUAD_F_FS) + cx;
+  out_y = parameter(QUAD_G_FS)*dx + parameter(QUAD_H_FS)*dy + parameter(QUAD_I_FS)*dx*dy + parameter(QUAD_J_FS)*dx*dx + parameter(QUAD_K_FS)*dy*dy + parameter(QUAD_L_FS) + cy;
+}
+
+void
+Quadratic_Shape_Function::add_translation(const scalar_t & u,
+  const scalar_t & v){
+  (*this)(QUAD_F_FS) += u;
+  (*this)(QUAD_L_FS) += v;
+}
+
+void
+Quadratic_Shape_Function::insert_motion(const scalar_t & u,
+  const scalar_t & v,
+  const scalar_t & theta){
+  // clear the other parameters:
+  clear();
+  (*this)(QUAD_F_FS) = u;
+  (*this)(QUAD_L_FS) = v;
+  (*this)(QUAD_A_FS) = std::cos(theta);
+  (*this)(QUAD_B_FS) = -std::sin(theta);
+  (*this)(QUAD_G_FS) = std::sin(theta);
+  (*this)(QUAD_H_FS) = std::cos(theta);
+}
+
+void
+Quadratic_Shape_Function::insert_motion(const scalar_t & u,
+  const scalar_t & v){
+  // clear the other parameters:
+  clear();
+  (*this)(QUAD_F_FS) = u;
+  (*this)(QUAD_L_FS) = v;
+}
+
+void
+Quadratic_Shape_Function::map_to_u_v_theta(const scalar_t & cx,
+  const scalar_t & cy,
+  scalar_t & out_u,
+  scalar_t & out_v,
+  scalar_t & out_theta){
+  scalar_t cxp=0.0,cyp=0.0;
+  // map the centroid
+  map(cx,cy,cx,cy,cxp,cyp);
+  out_u = cxp - cx;
+  out_v = cyp - cy;
+  // map a point 5 pixels to the right of the centroid
+  // the 5 is arbitrary
+  scalar_t rxp=0.0,ryp=0.0;
+  map(cx+5.0,cy,cx,cy,rxp,ryp);
+  // get the angle between two rays...
+  const scalar_t ax = rxp - cxp;
+  const scalar_t ay = ryp - cyp;
+  const scalar_t mag_a = std::sqrt(ax*ax+ay*ay);
+  const scalar_t bx = 5.0;
+  const scalar_t by = 0.0;
+  const scalar_t mag_b = 5.0;
+  const scalar_t a_dot_b_over_mags = (ax*bx + ay*by)/(mag_a*mag_b);
+  // if the change in y is negative, have to add pi to account for accute angle measured
+  // from the other direction in terms of clockwise
+  out_theta = ay < 0.0 ? DICE_TWOPI - std::acos(a_dot_b_over_mags) : std::acos(a_dot_b_over_mags);
+}
+
+void
+Quadratic_Shape_Function::residuals(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & cx,
+  const scalar_t & cy,
+  const scalar_t & gx,
+  const scalar_t & gy,
+  std::vector<scalar_t> & residuals,
+  const bool use_ref_grads){
+  const scalar_t dx = x - cx;
+  const scalar_t dy = y - cy;
+  assert((int_t)residuals.size()==num_params_);
+  scalar_t Gx = gx;
+  scalar_t Gy = gy;
+  if(use_ref_grads){
+    scalar_t u=0.0,v=0.0,theta=0.0;
+    map_to_u_v_theta(cx,cy,u,v,theta);
+    scalar_t cosTheta = std::cos(theta);
+    scalar_t sinTheta = std::sin(theta);
+    Gx = cosTheta*gx - sinTheta*gy;
+    Gy = sinTheta*gx + cosTheta*gy;
+  }
+  residuals[spec_map_.find(QUAD_A_FS)->second] = Gx*dx;
+  residuals[spec_map_.find(QUAD_B_FS)->second] = Gx*dy;
+  residuals[spec_map_.find(QUAD_C_FS)->second] = Gx*dx*dy;
+  residuals[spec_map_.find(QUAD_D_FS)->second] = Gx*dx*dx;
+  residuals[spec_map_.find(QUAD_E_FS)->second] = Gx*dy*dy;
+  residuals[spec_map_.find(QUAD_F_FS)->second] = Gx;
+  residuals[spec_map_.find(QUAD_G_FS)->second] = Gy*dx;
+  residuals[spec_map_.find(QUAD_H_FS)->second] = Gy*dy;
+  residuals[spec_map_.find(QUAD_I_FS)->second] = Gy*dx*dy;
+  residuals[spec_map_.find(QUAD_J_FS)->second] = Gy*dx*dx;
+  residuals[spec_map_.find(QUAD_K_FS)->second] = Gy*dy*dy;
+  residuals[spec_map_.find(QUAD_L_FS)->second] = Gy;
+}
+
+void
+Quadratic_Shape_Function::save_fields(Schema * schema,
+  const int_t subset_gid){
+  Local_Shape_Function::save_fields(schema,subset_gid);
+  // since u, v, and theta are not explicitly parameters, need to save them
+  // manually here
+  scalar_t u=0.0,v=0.0,theta=0.0;
+  const scalar_t cx = schema->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
+  const scalar_t cy = schema->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
+  map_to_u_v_theta(cx,cy,u,v,theta);
+  schema->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) = u;
+  schema->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) = v;
+  schema->global_field_value(subset_gid,ROTATION_Z_FS) = theta;
+}
+
+void
+Quadratic_Shape_Function::update_params_for_centroid_change(const scalar_t & delta_x,
+  const scalar_t & delta_y){
+  const scalar_t A = parameter(QUAD_A_FS);
+  const scalar_t B = parameter(QUAD_B_FS);
+  const scalar_t C = parameter(QUAD_C_FS);
+  const scalar_t D = parameter(QUAD_D_FS);
+  const scalar_t E = parameter(QUAD_E_FS);
+  const scalar_t G = parameter(QUAD_G_FS);
+  const scalar_t H = parameter(QUAD_H_FS);
+  const scalar_t I = parameter(QUAD_I_FS);
+  const scalar_t J = parameter(QUAD_J_FS);
+  const scalar_t K = parameter(QUAD_K_FS);
+
+  (*this)(QUAD_A_FS) += C*delta_y + 2.0*D*delta_x;
+  (*this)(QUAD_B_FS) += C*delta_x + 2.0*E*delta_y;
+  (*this)(QUAD_F_FS) += A*delta_x + B*delta_y + C*delta_x*delta_y + D*delta_x*delta_x + E*delta_y*delta_y - delta_x;
+  (*this)(QUAD_G_FS) += I*delta_y + 2.0*J*delta_x;
+  (*this)(QUAD_H_FS) += I*delta_x + 2.0*K*delta_y;
+  (*this)(QUAD_L_FS) += G*delta_x + H*delta_y + I*delta_x*delta_y + J*delta_x*delta_x + K*delta_y*delta_y - delta_y;
+}
+
 
 
 // TODO for Affine map, remember to create a virtual function save_fields that calls Local_Shape_Function::save_fields() then sets rotation and displacement as is done below
@@ -375,7 +595,6 @@ Affine_Shape_Function::test_for_convergence(const std::vector<scalar_t> & old_pa
 //(*deltas)[DOF_G] = 1.0E-5;
 //(*deltas)[DOF_H] = 1.0E-5;
 //(*deltas)[DOF_I] = 1.0E-5;
-
 
 //global_field_value(subset_gid,AFFINE_A_FS) = (*deformation)[DOF_A];
 //global_field_value(subset_gid,AFFINE_B_FS) = (*deformation)[DOF_B];

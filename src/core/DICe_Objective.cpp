@@ -330,7 +330,6 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
 
   scalar_t old_u=0.0,old_v=0.0,old_t=0.0;
   shape_function->map_to_u_v_theta(cx,cy,old_u,old_v,old_t);
-
   DEBUG_MSG(std::setw(5) << "Iter" <<
     std::setw(12) << " u"  <<
     std::setw(12) << " du" <<
@@ -372,6 +371,13 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
         for(int_t j=0;j<N;++j)
           H(i,j) += residuals[i]*residuals[j];
       }
+    }
+
+    if(schema_->use_objective_regularization()){ // TODO test for affine shape functions too
+      // add the penalty terms
+      const scalar_t alpha = schema_->levenberg_marquardt_regularization_factor();
+      H(0,0) += alpha;
+      H(1,1) += alpha;
     }
 
     // compute the norm of H prior to taking the inverse:

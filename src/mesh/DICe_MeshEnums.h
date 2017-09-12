@@ -231,6 +231,18 @@ Field_Name
   AFFINE_G,
   AFFINE_H,
   AFFINE_I,
+  QUAD_A,
+  QUAD_B,
+  QUAD_C,
+  QUAD_D,
+  QUAD_E,
+  QUAD_F,
+  QUAD_G,
+  QUAD_H,
+  QUAD_I,
+  QUAD_J,
+  QUAD_K,
+  QUAD_L,
   FIELD_1,
   FIELD_2,
   FIELD_3,
@@ -647,6 +659,54 @@ const Field_Spec AFFINE_I_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::AFFINE_
 /// field spec
 const Field_Spec AFFINE_I_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::AFFINE_I,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
 /// field spec
+const Field_Spec QUAD_A_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_A,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec QUAD_A_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_A,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec QUAD_B_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_B,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec QUAD_B_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_B,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec QUAD_C_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_C,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec QUAD_C_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_C,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec QUAD_D_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_D,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec QUAD_D_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_D,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec QUAD_E_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_E,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec QUAD_E_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_E,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec QUAD_F_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_F,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec QUAD_F_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_F,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec QUAD_G_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_G,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec QUAD_G_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_G,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec QUAD_H_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_H,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec QUAD_H_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_H,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec QUAD_I_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_I,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec QUAD_I_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_I,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec QUAD_J_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_J,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec QUAD_J_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_J,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec QUAD_K_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_K,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec QUAD_K_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_K,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
+const Field_Spec QUAD_L_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_L,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec QUAD_L_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_L,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
+/// field spec
 const Field_Spec FIELD_1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_1,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec FIELD_2_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_2,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
@@ -754,7 +814,7 @@ const Field_Spec NLVC_STRAIN_XY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_en
 const Field_Spec NLVC_STRAIN_YY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_YY_ERROR,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 132;
+const int_t num_fields_defined = 156;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -823,6 +883,30 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     BLOCK_ID_FS,
     PROCESSOR_ID_FS,
     MASTER_NODE_ID_FS,
+    QUAD_A_FS,
+    QUAD_A_NM1_FS,
+    QUAD_B_FS,
+    QUAD_B_NM1_FS,
+    QUAD_C_FS,
+    QUAD_C_NM1_FS,
+    QUAD_D_FS,
+    QUAD_D_NM1_FS,
+    QUAD_E_FS,
+    QUAD_E_NM1_FS,
+    QUAD_F_FS,
+    QUAD_F_NM1_FS,
+    QUAD_G_FS,
+    QUAD_G_NM1_FS,
+    QUAD_H_FS,
+    QUAD_H_NM1_FS,
+    QUAD_I_FS,
+    QUAD_I_NM1_FS,
+    QUAD_J_FS,
+    QUAD_J_NM1_FS,
+    QUAD_K_FS,
+    QUAD_K_NM1_FS,
+    QUAD_L_FS,
+    QUAD_L_NM1_FS,
     AFFINE_A_FS,
     AFFINE_A_NM1_FS,
     AFFINE_B_FS,

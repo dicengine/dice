@@ -100,7 +100,7 @@ public:
 
   /// clears all the fields associated with this shape function
   /// \param schema pointer to a schema that holds the mesh with the fields
-  virtual void reset_fields(Schema * schema)=0;
+  virtual void reset_fields(Schema * schema);
 
   /// clone the parameters values of another shape function
   /// \param shape_function the shape function to clone
@@ -114,7 +114,7 @@ public:
   /// \param schema pointer to a schema that has the fields
   /// \param subset_gid the id of the subset to use
   virtual void initialize_parameters_from_fields(Schema * schema,
-    const int_t subset_gid)=0;
+    const int_t subset_gid);
 
   /// map the input coordinates to the output coordinates
   /// \param x input x coordinate
@@ -151,19 +151,25 @@ public:
     const scalar_t & v)=0;
 
   /// clear the parameters
-  virtual void clear()=0;
+  virtual void clear();
 
   /// converts the current map parameters to u, v, and theta
-  /// \param x coordinate x (only used for some shape functions)
-  /// \param y coordinate y (only used for some shape functions)
+  /// \param cx input centroid coordinate (dummy variable for some shape functions)
+  /// \param cy input centroid coordinate (dummy variable for some shape functions)
   /// \param out_u returns the displacement x value
   /// \param out_v returns the displacement y value
   /// \param out_theta returns the rotation
-  virtual void map_to_u_v_theta(const scalar_t & x,
-    const scalar_t & y,
+  virtual void map_to_u_v_theta(const scalar_t & cx,
+    const scalar_t & cy,
     scalar_t & out_u,
     scalar_t & out_v,
     scalar_t & out_theta)=0;
+
+  /// converts the mapping from referencing one centroid to another
+  /// \param delta_x change in centroid x location
+  /// \param delta_y change in centroid y location
+  virtual void update_params_for_centroid_change(const scalar_t & delta_x,
+    const scalar_t & delta_y)=0;
 
   /// returns a reference to the given field spec location in the parameter vector
   /// \param spec the field spec
@@ -216,7 +222,7 @@ public:
   /// \param old_parameters vector of the previous guess for the parameters
   /// \param tol the solution tolerance
   virtual bool test_for_convergence(const std::vector<scalar_t> & old_parameters,
-    const scalar_t & tol)=0;
+    const scalar_t & tol);
 
   // TODO remove this (provided now for convenience)
   Teuchos::RCP<std::vector<scalar_t> > rcp(){
@@ -277,14 +283,9 @@ public:
   /// virtual destructor
   virtual ~Affine_Shape_Function(){};
 
-  virtual void clear();
-
   /// see base class description
   virtual void initialize_parameters_from_fields(Schema * schema,
     const int_t subset_gid);
-
-  /// see base class description
-  virtual void reset_fields(Schema * schema);
 
   /// see base class description
   virtual void map(const scalar_t & x,
@@ -299,8 +300,8 @@ public:
     const scalar_t & v);
 
   /// see base class description
-  virtual void map_to_u_v_theta(const scalar_t & x,
-    const scalar_t & y,
+  virtual void map_to_u_v_theta(const scalar_t & cx,
+    const scalar_t & cy,
     scalar_t & out_u,
     scalar_t & out_v,
     scalar_t & out_theta);
@@ -327,6 +328,82 @@ public:
   /// see base class description
   virtual bool test_for_convergence(const std::vector<scalar_t> & old_parameters,
     const scalar_t & tol);
+
+  /// see base class description
+  virtual void update_params_for_centroid_change(const scalar_t & delta_x,
+    const scalar_t & delta_y){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, this method has not been implemented yet for Affine_Shape_Function");
+  };
+
+
+private:
+};
+
+/// \class DICe::Quadratic_Shape_Function
+/// \brief 12 parameter quadratic mapping for local shape function
+
+class DICE_LIB_DLL_EXPORT
+Quadratic_Shape_Function : public Local_Shape_Function{
+public:
+
+  /// constructor
+  Quadratic_Shape_Function();
+
+  /// virtual destructor
+  virtual ~Quadratic_Shape_Function(){};
+
+  /// clear the parameters
+  virtual void clear();
+
+  /// clears all the fields associated with this shape function
+  /// \param schema pointer to a schema that holds the mesh with the fields
+  virtual void reset_fields(Schema * schema);
+
+  /// see base class description
+  virtual void map(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & out_x,
+    scalar_t & out_y);
+
+  /// see base class description
+  virtual void add_translation(const scalar_t & u,
+    const scalar_t & v);
+
+  /// see base class description
+  virtual void map_to_u_v_theta(const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & out_u,
+    scalar_t & out_v,
+    scalar_t & out_theta);
+
+  /// see base class description
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v,
+    const scalar_t & theta);
+
+  /// see base class description
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v);
+
+  /// see base class description
+  virtual void residuals(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    const scalar_t & gx,
+    const scalar_t & gy,
+    std::vector<scalar_t> & residuals,
+    const bool use_ref_grads=false);
+
+  /// see base class description
+  virtual void save_fields(Schema * schema,
+    const int_t subset_gid);
+
+  /// see base class description
+  virtual void update_params_for_centroid_change(const scalar_t & delta_x,
+    const scalar_t & delta_y);
 
 private:
 };
