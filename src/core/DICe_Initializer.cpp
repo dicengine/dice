@@ -324,7 +324,6 @@ Search_Initializer::initial_guess(const int_t subset_gid,
   scalar_t min_theta = 0.0;
   // search in u, v, and theta
   DEBUG_MSG("Search ranges " << start_u << " to " << end_u << " " << start_v << " to " << end_v << " " << start_t << " to " << end_t);
-  TEUCHOS_TEST_FOR_EXCEPTION(schema_->affine_matrix_enabled(),std::runtime_error,"Error, cant search on theta with affine matrix enabled.");
   for(scalar_t trial_v = start_v;trial_v<=end_v;trial_v+=step_size_u_){
     for(scalar_t trial_u = start_u;trial_u<=end_u;trial_u+=step_size_v_){
       for(scalar_t trial_t = start_t;trial_t<=end_t;trial_t+=step_size_theta_){
@@ -385,8 +384,18 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
     shape_function->initialize_parameters_from_fields(schema_,sid);
     if(sid==subset_gid)
       return INITIALIZE_USING_PREVIOUS_FRAME_SUCCESSFUL;
-    else
+    else{
+      // if using a neighbor's value, the parameters have to be adjusted to account
+      // for the change in centroids
+      if(schema_->quadratic_shape_function_enabled()){
+        scalar_t cx = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
+        scalar_t cy = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
+        scalar_t cx_neigh = schema_->global_field_value(sid,SUBSET_COORDINATES_X_FS);
+        scalar_t cy_neigh = schema_->global_field_value(sid,SUBSET_COORDINATES_Y_FS);
+        shape_function->update_params_for_centroid_change(cx - cx_neigh,cy - cy_neigh);
+      }
       return INITIALIZE_USING_NEIGHBOR_VALUE_SUCCESSFUL;
+    }
   }
   return INITIALIZE_FAILED;
 };
@@ -497,7 +506,6 @@ Optical_Flow_Initializer::Optical_Flow_Initializer(Schema * schema,
   initial_v_(0.0),
   initial_t_(0.0)
  {
-  TEUCHOS_TEST_FOR_EXCEPTION(schema_->affine_matrix_enabled(),std::runtime_error,"Error, affine matrix shape functions cannot be used with optical flow initializer.");
   DEBUG_MSG("Optical_Flow_Initializer::Optical_Flow_Initializer()");
   DEBUG_MSG("Optical_Flow_Initializer: creating the point cloud");
   point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());

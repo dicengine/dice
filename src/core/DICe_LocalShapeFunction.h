@@ -104,11 +104,7 @@ public:
 
   /// clone the parameters values of another shape function
   /// \param shape_function the shape function to clone
-  void clone(Teuchos::RCP<Local_Shape_Function> shape_function){
-    assert(shape_function->num_params()==num_params_);
-    for(int_t i=0;i<num_params_;++i)
-      (*this)(i) = (*shape_function)(i);
-  }
+  void clone(Teuchos::RCP<Local_Shape_Function> shape_function);
 
   /// gather the field values for each parameter
   /// \param schema pointer to a schema that has the fields

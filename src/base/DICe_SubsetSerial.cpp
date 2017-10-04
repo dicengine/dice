@@ -285,6 +285,17 @@ Subset::grad_y_array()const{
   return grad_y_;
 }
 
+scalar_t
+Subset::sssig(){
+  // assumes obstructed pixels are already turned off
+  scalar_t sssig = 0.0;
+  for(int_t i=0;i<num_pixels_;++i){
+    sssig += grad_x_[i]*grad_x_[i] + grad_y_[i]*grad_y_[i];
+  }
+  sssig /= num_pixels_;
+  return sssig;
+}
+
 void
 Subset::initialize(Teuchos::RCP<Image> image,
   const Subset_View_Target target,

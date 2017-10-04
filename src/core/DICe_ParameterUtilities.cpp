@@ -294,7 +294,7 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::projection_method,DICe::DISPLACEMENT_BASED);
   defaultParams->set(DICe::disp_jump_tol,8.0);
   defaultParams->set(DICe::theta_jump_tol,0.1);
-  defaultParams->set(DICe::enable_affine_matrix,false);
+  defaultParams->set(DICe::enable_quadratic_shape_function,false);
   defaultParams->set(DICe::enable_translation,true);
   defaultParams->set(DICe::enable_rotation,true);
   defaultParams->set(DICe::enable_normal_strain,false);
@@ -355,7 +355,7 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::use_search_initialization_for_failed_steps,false);
   defaultParams->set(DICe::disp_jump_tol,25.0);
   defaultParams->set(DICe::theta_jump_tol,2.0);
-  defaultParams->set(DICe::enable_affine_matrix,false);
+  defaultParams->set(DICe::enable_quadratic_shape_function,false);
   defaultParams->set(DICe::enable_translation,true);
   defaultParams->set(DICe::enable_rotation,false);
   defaultParams->set(DICe::enable_normal_strain,false);

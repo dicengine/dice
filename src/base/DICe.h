@@ -161,7 +161,7 @@ const char* const convert_cine_to_8_bit = "convert_cine_to_8_bit";
 /// String parameter name
 const char* const initial_condition_file = "initial_condition_file";
 /// String parameter name
-const char* const enable_affine_matrix = "enable_affine_matrix";
+const char* const enable_quadratic_shape_function = "enable_quadratic_shape_function";
 /// String parameter name
 const char* const enable_translation = "enable_translation";
 /// String parameter name
@@ -220,6 +220,8 @@ const char* const global_stabilization_tau = "global_stabilization_tau";
 const char* const max_iterations = "max_iterations";
 /// String parameter name
 const char* const tolerance = "tolerance";
+/// String parameter name
+const char* const gamma_criteria = "gamma_criteria";
 /// String parameter name
 const char* const output_spec = "output_spec";
 /// String parameter name
@@ -893,10 +895,10 @@ const Correlation_Parameter initial_condition_file_param(initial_condition_file,
   true,
   "Denotes a file to read the solution from as the initial condition");
 /// Correlation parameter and properties
-const Correlation_Parameter enable_affine_matrix_param(enable_affine_matrix,
+const Correlation_Parameter enable_quadratic_shape_function_param(enable_quadratic_shape_function,
   BOOL_PARAM,
   true,
-  "Enables the affine shape function degrees of freedom using a matrix (all components are activiated and individual components like rotation or shear cannot be disabled)");
+  "Enables the quadratic shape function degrees of freedom (all components are activiated and individual components like rotation or shear cannot be disabled)");
 /// Correlation parameter and properties
 const Correlation_Parameter enable_translation_param(enable_translation,
   BOOL_PARAM,
@@ -1137,7 +1139,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   compute_image_gradients_param,
   gauss_filter_images_param,
   initial_condition_file_param,
-  enable_affine_matrix_param,
+  enable_quadratic_shape_function_param,
   enable_translation_param,
   enable_rotation_param,
   enable_normal_strain_param,

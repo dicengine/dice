@@ -52,8 +52,8 @@ Teuchos::RCP<Local_Shape_Function> shape_function_factory(Schema * schema){
   if(!schema){
     return Teuchos::rcp(new Affine_Shape_Function(schema));
   }
-  else if(schema->affine_matrix_enabled()){
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, this method is not ready yet!");
+  else if(schema->quadratic_shape_function_enabled()){
+    return Teuchos::rcp(new Quadratic_Shape_Function());
   }else{
     return Teuchos::rcp(new Affine_Shape_Function(schema));
   }
@@ -118,6 +118,13 @@ void
 Local_Shape_Function::clear(){
   for(int_t i=0;i<num_params_;++i)
     parameters_[i] = 0.0;
+}
+
+void
+Local_Shape_Function::clone(Teuchos::RCP<Local_Shape_Function> shape_function){
+  assert(shape_function->num_params()==num_params_);
+  for(int_t i=0;i<num_params_;++i)
+    (*this)(i) = (*shape_function)(i);
 }
 
 void
@@ -433,7 +440,7 @@ Quadratic_Shape_Function::clear(){
 
 void
 Quadratic_Shape_Function::reset_fields(Schema * schema){
-  Local_Shape_Function::clear();
+  Local_Shape_Function::reset_fields(schema);
   schema->mesh()->get_field(QUAD_A_FS)->put_scalar(1.0);
   schema->mesh()->get_field(QUAD_H_FS)->put_scalar(1.0);
 }

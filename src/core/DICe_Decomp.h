@@ -211,6 +211,7 @@ private:
 /// \param img_w width of the image
 /// \param img_h height of the image
 /// \param subset_file_info Optional information from the subset file (ROIs, etc.)
+/// \param pointer to an image to use for checking SSSIG
 /// \param grad_threshold subsets with a gradiend SSSIG lower than this will be removed
 DICE_LIB_DLL_EXPORT
 void create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_points,
@@ -218,7 +219,9 @@ void create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlati
   Teuchos::RCP<Teuchos::ParameterList> params,
   const int_t img_w,
   const int_t img_h,
-  Teuchos::RCP<DICe::Subset_File_Info> subset_file_info=Teuchos::null);
+  Teuchos::RCP<DICe::Subset_File_Info> subset_file_info=Teuchos::null,
+  Teuchos::RCP<DICe::Image> image=Teuchos::null,
+  const scalar_t & grad_threshold=0.0);
 
 /// \brief Test to see that the point falls with the boundary of a conformal def and not in the excluded area
 /// \param x_coord X coordinate of the point in question
@@ -228,6 +231,7 @@ void create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlati
 /// \param img_h height of the image
 /// \param coords Set of valid coordinates in the area
 /// \param excluded_coords Set of coordinates that should be excluded
+/// \param pointer to an image to use for checking SSSIG
 /// \param grad_threshold the SSSIG threshold to eliminate a subset without enough gradients to correlate
 DICE_LIB_DLL_EXPORT
 bool valid_correlation_point(const int_t x_coord,
@@ -236,7 +240,9 @@ bool valid_correlation_point(const int_t x_coord,
   const int_t img_w,
   const int_t img_h,
   std::set<std::pair<int_t,int_t> > & coords,
-  std::set<std::pair<int_t,int_t> > & excluded_coords);
+  std::set<std::pair<int_t,int_t> > & excluded_coords,
+  Teuchos::RCP<DICe::Image> image=Teuchos::null,
+  const scalar_t & grad_threshold=0.0);
 
 
 }// End DICe Namespace

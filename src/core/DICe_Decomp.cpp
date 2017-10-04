@@ -865,7 +865,9 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
   Teuchos::RCP<Teuchos::ParameterList> params,
   const int_t img_w,
   const int_t img_h,
-  Teuchos::RCP<DICe::Subset_File_Info> subset_file_info){
+  Teuchos::RCP<DICe::Subset_File_Info> subset_file_info,
+  Teuchos::RCP<DICe::Image> image,
+  const scalar_t & grad_threshold){
   int proc_rank = 0;
 #if DICE_MPI
   int mpi_is_initialized = 0;
@@ -968,7 +970,7 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
     //if(seed_was_specified&&this_roi_has_seed){
       x_coord = subset_size-1 + seed_col*step_size;
       y_coord = subset_size-1 + seed_row*step_size;
-    if(valid_correlation_point(x_coord,y_coord,subset_size,img_w,img_h,coords,excluded_coords)){
+    if(valid_correlation_point(x_coord,y_coord,subset_size,img_w,img_h,coords,excluded_coords,image,grad_threshold)){
       correlation_points.push_back((scalar_t)x_coord);
       correlation_points.push_back((scalar_t)y_coord);
       //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding seed correlation point " << x_coord << " " << y_coord);
@@ -998,7 +1000,7 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
       if(col>=num_cols)break;
       x_coord = subset_size - 1 + col*step_size;
       y_coord = subset_size - 1 + row*step_size;
-      if(valid_correlation_point(x_coord,y_coord,subset_size,img_w,img_h,coords,excluded_coords)){
+      if(valid_correlation_point(x_coord,y_coord,subset_size,img_w,img_h,coords,excluded_coords,image,grad_threshold)){
         correlation_points.push_back((scalar_t)x_coord);
         correlation_points.push_back((scalar_t)y_coord);
         //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding snake right correlation point " << x_coord << " " << y_coord);
@@ -1025,7 +1027,7 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
       if(col<0)break;
       x_coord = subset_size - 1 + col*step_size;
       y_coord = subset_size - 1 + row*step_size;
-      if(valid_correlation_point(x_coord,y_coord,subset_size,img_w,img_h,coords,excluded_coords)){
+      if(valid_correlation_point(x_coord,y_coord,subset_size,img_w,img_h,coords,excluded_coords,image,grad_threshold)){
         correlation_points.push_back((scalar_t)x_coord);
         correlation_points.push_back((scalar_t)y_coord);
         //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding snake left correlation point " << x_coord << " " << y_coord);
@@ -1068,7 +1070,9 @@ bool valid_correlation_point(const int_t x_coord,
   const int_t img_w,
   const int_t img_h,
   std::set<std::pair<int_t,int_t> > & coords,
-  std::set<std::pair<int_t,int_t> > & excluded_coords){
+  std::set<std::pair<int_t,int_t> > & excluded_coords,
+  Teuchos::RCP<DICe::Image> image,
+  const scalar_t & grad_threshold){
   // need to check if the point is interior to the image by at least one subset_size
   if(x_coord<subset_size-1) return false;
   if(x_coord>img_w-subset_size) return false;
@@ -1092,20 +1096,22 @@ bool valid_correlation_point(const int_t x_coord,
   }
   if(!all_corners_in) return false;
 
-//  // check the gradient SSSIG threshold
-//  if(grad_threshold > 0.0){
-//    TEUCHOS_TEST_FOR_EXCEPTION(!image->has_gradients(),std::runtime_error,
-//      "Error, testing valid points for SSSIG tol, but image gradients have not been computed");
-//    scalar_t SSSIG = 0.0;
-//    for(int_t y=corners_y[0];y<corners_y[2];++y){
-//      for(int_t x=corners_x[0];x<corners_x[1];++x){
-//        SSSIG += image->grad_x(x,y)*image->grad_x(x,y) + image->grad_x(x,y)*image->grad_x(x,y);
-//      }
-//    }
-//    SSSIG /= (subset_size*subset_size);
-//    //std::cout << "x " << x_coord << " y " << y_coord << " SSSIG: " << SSSIG << " threshold " << grad_threshold << std::endl;
-//    if(SSSIG < grad_threshold) return false;
-//  }
+  if(image!=Teuchos::null){
+    // check the gradient SSSIG threshold
+    if(grad_threshold > 0.0){
+      TEUCHOS_TEST_FOR_EXCEPTION(!image->has_gradients(),std::runtime_error,
+        "Error, testing valid points for SSSIG tol, but image gradients have not been computed");
+      scalar_t SSSIG = 0.0;
+      for(int_t y=corners_y[0];y<corners_y[2];++y){
+        for(int_t x=corners_x[0];x<corners_x[1];++x){
+          SSSIG += image->grad_x(x,y)*image->grad_x(x,y) + image->grad_x(x,y)*image->grad_x(x,y);
+        }
+      }
+      SSSIG /= (subset_size*subset_size);
+      //std::cout << "x " << x_coord << " y " << y_coord << " SSSIG: " << SSSIG << " threshold " << grad_threshold << std::endl;
+      if(SSSIG < grad_threshold) return false;
+    }
+  }
   return true;
 }
 

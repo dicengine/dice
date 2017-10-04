@@ -741,9 +741,9 @@ public:
   }
 
   // shape function controls:
-  /// Returns true if all affine shape functions are enabled by matrix at once
-  bool affine_matrix_enabled() const {
-    return enable_affine_matrix_;
+  /// Returns true if all quadratic shape functions are enabled
+  bool quadratic_shape_function_enabled() const {
+    return enable_quadratic_shape_function_;
   }
 
   /// Returns true if translation shape functions are enabled
@@ -803,8 +803,8 @@ public:
   }
 
   /// Enable translation shape functions
-  void enable_affine_matrix(const bool flag){
-    enable_affine_matrix_ = flag;
+  void enable_quadratic_shape_function(const bool flag){
+    enable_quadratic_shape_function_ = flag;
   }
 
   /// Enable translation shape functions
@@ -1160,8 +1160,8 @@ private:
   Projection_Method projection_method_;
   /// Analysis type
   Analysis_Type analysis_type_;
-  /// Enable the affine shape functions all together as a matrix rather than individual components
-  bool enable_affine_matrix_;
+  /// Enable the quadratic shape functions all together rather than individual components
+  bool enable_quadratic_shape_function_;
   /// Enable translation
   bool enable_translation_;
   /// Enable rotation

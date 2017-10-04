@@ -197,6 +197,9 @@ public:
   /// returns the ZNSSD gamma correlation value between the reference and deformed subsets
   scalar_t gamma();
 
+  /// returns the SSSIG value for the reference intensities
+  scalar_t sssig();
+
   /// reset the is_active bool for each pixel to true;
   void reset_is_active();
 
