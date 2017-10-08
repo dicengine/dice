@@ -100,6 +100,8 @@ protected:
 
 };
 
+
+/// a class that peforms a Nelde-Mead type optimization
 class DICE_LIB_DLL_EXPORT
 Subset_Simplex : public Simplex {
 
@@ -133,7 +135,7 @@ protected:
   Teuchos::RCP<Local_Shape_Function> shape_function_;
 };
 
-
+/// a derived optimization class specific for image homography between two cameras
 class DICE_LIB_DLL_EXPORT
 Homography_Simplex : public Simplex {
 
@@ -165,6 +167,7 @@ protected:
   Triangulation * tri_;
 };
 
+/// a simplex that performs an affine homography transformation
 class DICE_LIB_DLL_EXPORT
 Affine_Homography_Simplex : public Simplex {
 
@@ -196,6 +199,8 @@ protected:
   Triangulation * tri_;
 };
 
+
+/// a simplex that performs a quadratic homography transformation
 class DICE_LIB_DLL_EXPORT
 Quadratic_Homography_Simplex : public Simplex {
 
@@ -236,8 +241,7 @@ protected:
   int_t lry_;
 };
 
-
-
+/// a simplex that performs a nonlinear warp
 class DICE_LIB_DLL_EXPORT
 Warp_Simplex : public Simplex {
 

@@ -1,8 +1,7 @@
-Copyright 2015 Sandia Corporation.  Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-the U.S. Government retains certain rights in this software.
+Copyright 2015 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
 SAND number for the information contained in the documentation and tutorials: SAND2015-10606 O
 
-[DICe Home Page] (http://dice.sandia.gov)
+[DICe Home Page] (https://github.com/dicengine)
 
 [Getting Started] (#GettingStarted)
 
@@ -636,39 +635,32 @@ The user can also request that the row id in the output files be omitted with
 
 ### Fields
 
-The following fields are available for output:
+For almost any analysis, the following fields are available for output:
 
-    DISPLACEMENT_X    // u
-    DISPLACEMENT_Y    // v
-    DISPLACEMENT_Z    // w (used for stereo only)
-    ROTATION_X        // rotation about the x-axis (used for stereo only)
-    ROTATION_Y        // rotation about the y-axis (used for stero only)
-    ROTATION_Z        // (theta) rotation about the z-axis, z is out of the plane
-    NORMAL_STRAIN_X   // stretch in the x direction
-    NORMAL_STRAIN_Y   // stretch in the y direction
-    NORMAL_STRAIN_Z   // stretch in the z direction (used for stero only)
-    SHEAR_STRAIN_XY   // shear strain in the x-y plane
-    SHEAR_STRAIN_YZ   // shear strain in th y-z plane (not currently used)
-    SHEAR_STRAIN_XZ   // shear strain in the x-z plane (not currently used)
-    COORDINATE_X      // x position in space
-    COORDINATE_Y      // y position in space
-    COORDINATE_Z      // z position in space (not currently used)
-    VAR_X             // auxiliary variable
-    VAR_Y             // auxiliary variable
-    VAR_Z             // auxiliary varaible
-    SIGMA             // predicted std. dev. of the displacement solution given std. dev. of image
-                      // noise and interpolation bias, smaller sigma is better
-    GAMMA             // template match quality (value of the cost function),
-                      // smaller gamma is better, 0.0 is perfect match
-    BETA              // sensitivity of the cost function to small perturbations in the displacement solution
-    NOISE_LEVEL       // estimated std. dev. of the image noise
-    CONSTRAST_LEVEL   // std. dev. of the subset image intensity values
-    ACTIVE_PIXELS     // number of pixels that are active (not obstructed or deactivated for this step)
-    MATCH             // 0 means match was found -1 means match failed
-    ITERATIONS        // number of iterations taken by the solution algorithm
-    STATUS_FLAG       // information about the initialization method or error flags on failed steps
-    NEIGHBOR_ID       // the global id of the neighboring subset to use for initialization by neighbor value
-    CONDITION_NUMBER  // quality metric for the psuedoinverse matrix in the gradient-based method
+    DISPLACEMENT_X          // u
+    DISPLACEMENT_Y          // v
+    ROTATION_Z              // (theta) rotation about the z-axis, z is out of the plane
+    NORMAL_STRAIN_X         // normal stretch in the x direction (of the subset shape function)
+    NORMAL_STRAIN_Y         // normal stretch in the y direction (of the subset shape function)
+    SHEAR_STRAIN_XY         // shear strain in the x-y plane (of the subset shape function)
+    COORDINATE_X            // x position in image space
+    COORDINATE_Y            // y position in image space
+    MODEL_COORDINATES_X     // model x position in physical space (for stereo only)
+    MODEL_COORDINATES_Y     // model x position in physical space (for stereo only)
+    MODEL_COORDINATES_Z     // model x position in physical space (for stereo only)
+    SIGMA                   // predicted std. dev. of the displacement solution given std. dev. of image
+                            // noise and interpolation bias, smaller sigma is better
+    GAMMA                   // template match quality (value of the cost function),
+                            // smaller gamma is better, 0.0 is perfect match
+    BETA                    // sensitivity of the cost function to small perturbations in the displacement solution
+    NOISE_LEVEL             // estimated std. dev. of the image noise
+    CONSTRAST_LEVEL         // std. dev. of the subset image intensity values
+    ACTIVE_PIXELS           // number of pixels that are active (not obstructed or deactivated for this step)
+    MATCH                   // 0 means match was found -1 means match failed
+    ITERATIONS              // number of iterations taken by the solution algorithm
+    STATUS_FLAG             // information about the initialization method or error flags on failed steps
+    NEIGHBOR_ID             // the global id of the neighboring subset to use for initialization by neighbor value
+    CONDITION_NUMBER        // quality metric for the psuedoinverse matrix in the gradient-based method
 
 Some of the parameters require activation in the correlation parameters. To output `BETA` the following parameter must be set in the correlation parameters file
     
@@ -676,7 +668,9 @@ Some of the parameters require activation in the correlation parameters. To outp
 
 If all zeros are reported for a certain field, for example `SHEAR_STRAIN_XY`, it usually means that particular shape function is not activated in the correlation paramters. The `CONDITION_NUMBER` field is not used in the `SIMPLEX` optimization method so all zeros will be reported for `SIMPLEX`. Values of `-1.0` typically imply failure of some kind. For example if the `NEIGHBOR_ID` field is `-1.0` the subset corresponding to that field value does not have a neighbor. Another example would be if `SIGMA` is `-1.0` it implies that the correlation failed for that particular step.
 
-**Coordinate system and positive rotation:** Coordinates are measured from the top left corner of the image with `x` positive to the right and `y` positive downward. Rotations are positive clockwise (opposite of the right-hand rule).
+**Coordinate system and positive rotation:** Image coordinates are measured from the top left corner of the image with `x` positive to the right and `y` positive downward. Rotations are positive clockwise (opposite of the right-hand rule).
+
+To see a complete list of available fields for output see the field_name_strings here: https://github.com/dicengine/dice/blob/master/src/mesh/DICe_MeshEnums.cpp. Note that fields are only available for output if they have been generated by the parameters of the analysis.  
 
 ### Determining the quality of the solution
 
@@ -856,9 +850,7 @@ Trilinos can be downloaded from http://trilinos.org and build
 instructions can be found on the getting started page. DICe requires
 that Trilinos be built with the following packages enabled:
 
--   Epetra or Tpetra (default is Epetra, Tpetra is needed for `MANYCORE`)
-
--   Kokkos (optionally needed for `MANYCORE`)
+-   Epetra 
 
 -   BLAS
 
@@ -871,8 +863,6 @@ that Trilinos be built with the following packages enabled:
 -   TeuchosParameterList
 
 -   TeuchosNumerics
-
-There are two standard build configurations for DICe, both of which support MPI parallelism. The standard build configuration computes the DIC components like computing image gradients and differencing images in serial. The `MANYCORE` configuration enables threading of all the DIC components. Two build configurations are supported because the `MANYCORE` configuration does not compile properly on Windows due to bugs in both the MSVC and Intel compilers. The compiler issues on Windows for `MANYCORE` are currently being addressed. See the section on Configuration Options for more information about the `MANYCORE` option.
 
 <a name="DICeSource"></a>Obtaining DICe source code
 --------------------------
@@ -981,12 +971,6 @@ This option, when activated, outputs large quantities of debugging information a
 
 The default data type in DICe is `float`, `double` can be used by activating this option.
 
-    DICE_ENABLE_MANYCORE:BOOL=<ON\OFF> (default is OFF)
-
-Turing on `MANYCORE` will enable threading of the image operations like computing gradients or differencing images. All of the subset and image operations support threading. In some cases, enabling `MANYCORE` speeds up the analysis by up to 50x. If this option is used, special care should be given to the Trilinos build configuration options to tune the threading to the architecture on which DICe is executed. To help with this tuning, a performance test is included in the test folder that times the execution of several DICe operations. The test is located in `dice\tests\performance`.
-
-This option requires Tpetra and Kokkos in Trilinos. Windows not currently supported.
-
 Testing
 -------
 
@@ -1024,17 +1008,17 @@ via the interface.
 <a name="Legal"></a>Legal
 =====
 
-Sandia National Laboratories is a multi-program laboratory managed and
-operated by Sandia Corporation, a wholly owned subsidiary of Lockheed
-Martin Corporation, for the U.S. Department of Energy’s National Nuclear
-Security Administration under contract DE-AC04-94AL85000.
+Sandia National Laboratories is a multi-mission laboratory managed and operated by
+National Technology and Engineering Solutions of Sandia, LLC., a wholly owned subsidiary
+of Honeywell International, Inc., for the U.S. Department of Energy’s National Nuclear
+Security Administration under contract DE-NA0003525.
 
 License
 -------
 
-Copyright 2015 Sandia Corporation.
+Copyright 2015 National Technology & Engineering Solutions of Sandia, LLC (NTESS)
 
-Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+Under the terms of Contract DE-NA0003525 with NTESS,
 the U.S. Government retains certain rights in this software.
 
 Redistribution and use in source and binary forms, with or without
@@ -1052,10 +1036,10 @@ met:
     contributors may be used to endorse or promote products derived from
     this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION “AS IS” AND ANY EXPRESS
+THIS SOFTWARE IS PROVIDED BY NTESS “AS IS” AND ANY EXPRESS
 OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE CONTRIBUTORS BE
+DISCLAIMED. IN NO EVENT SHALL NTESS OR THE CONTRIBUTORS BE
 LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS

@@ -1,6 +1,8 @@
 Copyright 2015 Sandia Corporation.  Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 the U.S. Government retains certain rights in this software.
 
+The tutorial for using the DICe GUI and stereo DIC has not yet been released. Below are some tutorials for 2D full-field DIC and object tracking using the command line interface for DICe.
+
 Introduction
 ============
 

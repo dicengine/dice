@@ -18,7 +18,7 @@ DICe also incudes a robust simplex optimization method that does not use image g
 
 Lastly, DICe also includes a well-posed global DIC formulation that addresses instabilities associated with the saddle-point problem in DIC (This capability will be released later this year).
 
-For more information visit: https://dice.sandia.gov
+For more technical information see: https://github.com/dicengine/dice/tree/master/doc/reports
 
 Documentation
 -------------
