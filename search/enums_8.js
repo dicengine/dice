@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['projection_5fmethod',['Projection_Method',['../namespace_d_i_ce.html#a1825f42ed4e16298862803148811ef08',1,'DICe']]]
+  ['rotation_5fvalue',['Rotation_Value',['../class_d_i_ce.html#ab06b9b53f802eaa6bcb71be18ae9ec5d',1,'DICe']]]
 ];

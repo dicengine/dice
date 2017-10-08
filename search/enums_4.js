@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['global_5feq_5fterm',['Global_EQ_Term',['../namespace_d_i_ce.html#afbcedf0ca816ecd5b8cbae8c90ae5b2c',1,'DICe']]],
-  ['global_5fformulation',['Global_Formulation',['../namespace_d_i_ce.html#a5a76c4a8dd8f7d42821205cf649b51e5',1,'DICe']]],
-  ['global_5fsolver',['Global_Solver',['../namespace_d_i_ce.html#aa2386a0bf2c19101664a693dcec78a5f',1,'DICe']]],
-  ['gradient_5fmethod',['Gradient_Method',['../namespace_d_i_ce.html#af68eb788cf1c6c98857451bf859d552d',1,'DICe']]]
+  ['image_5ffile_5ftype',['Image_File_Type',['../class_d_i_ce.html#ac9e56ca8b0324ffc892642104e8fa302',1,'DICe']]],
+  ['initialization_5fmethod',['Initialization_Method',['../class_d_i_ce.html#a99d433faada808c451d06feceebfd054',1,'DICe']]],
+  ['interpolation_5fmethod',['Interpolation_Method',['../class_d_i_ce.html#a6f5cb0968c11707aa2e6d86802eb2938',1,'DICe']]]
 ];

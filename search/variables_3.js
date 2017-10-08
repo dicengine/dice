@@ -1,20 +1,27 @@
 var searchData=
 [
-  ['data_5fnum_5fpoints_5f',['data_num_points_',['../class_d_i_ce_1_1_post___processor.html#a2a4417d44543fa928070b5620da7f102',1,'DICe::Post_Processor::data_num_points_()'],['../class_d_i_ce_1_1_schema.html#ab7bb581c57e03e41c395506e78160f41',1,'DICe::Schema::data_num_points_()']]],
+  ['deep_5fbond_5frelations_5f',['deep_bond_relations_',['../class_d_i_ce_1_1mesh_1_1_mesh___object.html#a9dcba2d0543ba28ee27da51dbbe6a9c3',1,'DICe::mesh::Mesh_Object']]],
+  ['deep_5frelations_5fmap_5f',['deep_relations_map_',['../class_d_i_ce_1_1mesh_1_1_mesh___object.html#a1cade3a0ec5ee3913e7f431f47faf6d4',1,'DICe::mesh::Mesh_Object']]],
+  ['def_5fextents_5f',['def_extents_',['../class_d_i_ce_1_1_schema.html#ab8b12f3c66e8a179add9b58f41ef9fe1',1,'DICe::Schema']]],
   ['def_5fimage_5frotation_5f',['def_image_rotation_',['../class_d_i_ce_1_1_schema.html#a61f3686183d46a4f5a9705e5aac631d9',1,'DICe::Schema']]],
   ['def_5fimgs_5f',['def_imgs_',['../class_d_i_ce_1_1_schema.html#ad9d39888b1b1cf3f407943b6413fd092',1,'DICe::Schema']]],
   ['def_5fintensities_5f',['def_intensities_',['../class_d_i_ce_1_1_subset.html#ab8c6818ddacf93c67796eca3620fe72f',1,'DICe::Subset::def_intensities_()'],['../struct_d_i_ce_1_1_z_n_s_s_d___gamma___functor.html#a8fc6b98f18047a420439663a8ae71b79',1,'DICe::ZNSSD_Gamma_Functor::def_intensities_()']]],
-  ['deformed_5fimages',['deformed_images',['../namespace_d_i_ce.html#a9241fc5b15e6a6c8f087413e7bfda982',1,'DICe']]],
+  ['deformed_5fimages',['deformed_images',['../class_d_i_ce.html#a9241fc5b15e6a6c8f087413e7bfda982',1,'DICe']]],
   ['delimiter_5f',['delimiter_',['../class_d_i_ce_1_1_output___spec.html#a19bf90a1133a4f10122a34a53b16e301',1,'DICe::Output_Spec']]],
   ['delta_5f12_5fx_5f',['delta_12_x_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a19b12ea84f09e37ebf129cdc9c464bc8',1,'DICe::Optical_Flow_Initializer']]],
   ['delta_5f12_5fy_5f',['delta_12_y_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a4c1c3c35e1a726b8786354ea17e8f6af',1,'DICe::Optical_Flow_Initializer']]],
   ['delta_5f1c_5fx_5f',['delta_1c_x_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a913e87e3ab25281f7ff2a096f7a3b70a',1,'DICe::Optical_Flow_Initializer']]],
   ['delta_5f1c_5fy_5f',['delta_1c_y_',['../class_d_i_ce_1_1_optical___flow___initializer.html#a845b6180454a4a6af4260945aed59f04',1,'DICe::Optical_Flow_Initializer']]],
+  ['deltas_5f',['deltas_',['../class_d_i_ce_1_1_local___shape___function.html#a3f2e76eb28cd37244987109e5912105f',1,'DICe::Local_Shape_Function']]],
   ['desc_5f',['desc_',['../struct_d_i_ce_1_1_correlation___parameter.html#a31715b9f9c64730941b7bdddcdeb8c3a',1,'DICe::Correlation_Parameter']]],
-  ['disp_5fjump_5ftol',['disp_jump_tol',['../namespace_d_i_ce.html#a84bc45629ee12e5289688f141fd90064',1,'DICe']]],
+  ['df_5find',['df_ind',['../struct_d_i_ce_1_1mesh_1_1side__set__info.html#a1f6eeb3f4c6dc001bcc44454d0f9a705',1,'DICe::mesh::side_set_info']]],
+  ['dimension_5f',['dimension_',['../class_d_i_ce_1_1mesh_1_1_shape___function___evaluator.html#a6dc79b53678fbb8ce27527921e396edc',1,'DICe::mesh::Shape_Function_Evaluator']]],
+  ['disp_5fjump_5ftol',['disp_jump_tol',['../class_d_i_ce.html#a84bc45629ee12e5289688f141fd90064',1,'DICe']]],
   ['disp_5fjump_5ftol_5f',['disp_jump_tol_',['../class_d_i_ce_1_1_schema.html#aae2f49c3f835ef9e8292d697ba968746',1,'DICe::Schema']]],
+  ['disp_5fx_5fname_5f',['disp_x_name_',['../class_d_i_ce_1_1_post___processor.html#a97a66c23fc508af081418fe1f813b325',1,'DICe::Post_Processor']]],
+  ['disp_5fy_5fname_5f',['disp_y_name_',['../class_d_i_ce_1_1_post___processor.html#a0f601da6cb7dceafdfce6cc9b9c6adef',1,'DICe::Post_Processor']]],
   ['displacement_5fmap',['displacement_map',['../struct_d_i_ce_1_1_subset___file___info.html#a58a3e9d79f4992e83d00092e5fa7b67c',1,'DICe::Subset_File_Info']]],
-  ['dist_5fmap_5f',['dist_map_',['../class_d_i_ce_1_1_schema.html#a2357133642592e8d85ea990d927d71dd',1,'DICe::Schema']]],
-  ['distributed_5ffields_5fbeing_5fmodified_5f',['distributed_fields_being_modified_',['../class_d_i_ce_1_1_schema.html#a67365bc703b6f3879a472bf284051066',1,'DICe::Schema']]],
-  ['dof_5fmap_5f',['dof_map_',['../class_d_i_ce_1_1_objective.html#ae04f004c4f49867af3c21c02d83e2545',1,'DICe::Objective']]]
+  ['displacement_5fx_5ffield_5fname',['displacement_x_field_name',['../class_d_i_ce.html#a606e23885bf8a4e2e254e48c283607e1',1,'DICe']]],
+  ['displacement_5fy_5ffield_5fname',['displacement_y_field_name',['../class_d_i_ce.html#ad4d2422b19434cc9268acaf85497c2d6',1,'DICe']]],
+  ['dist_5ffactors',['dist_factors',['../struct_d_i_ce_1_1mesh_1_1side__set__info.html#a0b9f1ad2ecb46de5129f40eca64d7493',1,'DICe::mesh::side_set_info']]]
 ];

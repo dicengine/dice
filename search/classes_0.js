@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['bitmap_5finfo_5fheader',['bitmap_info_header',['../struct_d_i_ce_1_1cine_1_1bitmap__info__header.html',1,'DICe::cine']]],
-  ['boundary_5fcondition_5fdef',['Boundary_Condition_Def',['../struct_d_i_ce_1_1_boundary___condition___def.html',1,'DICe']]]
+  ['affine_5fhomography_5fsimplex',['Affine_Homography_Simplex',['../class_d_i_ce_1_1_affine___homography___simplex.html',1,'DICe']]],
+  ['affine_5fshape_5ffunction',['Affine_Shape_Function',['../class_d_i_ce_1_1_affine___shape___function.html',1,'DICe']]],
+  ['altitude_5fpost_5fprocessor',['Altitude_Post_Processor',['../class_d_i_ce_1_1_altitude___post___processor.html',1,'DICe']]]
 ];

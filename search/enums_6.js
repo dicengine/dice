@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['motion_5fstate',['Motion_State',['../namespace_d_i_ce.html#af2450d134804caa716f61b5504bb34f6',1,'DICe']]]
+  ['optimization_5fmethod',['Optimization_Method',['../class_d_i_ce.html#a181b304ab7fb88726f025b726e6ae2cf',1,'DICe']]]
 ];

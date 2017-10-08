@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['pfractions',['PFRACTIONS',['../namespace_d_i_ce_1_1cine.html#acb4ab1c7b65028c72ed9e37f21aedfc7',1,'DICe::cine']]],
-  ['pixel_5fcoord_5fdevice_5fview_5f1d',['pixel_coord_device_view_1d',['../namespace_d_i_ce.html#a36bc31fb0604e5a17ee3214a4c1b3cbd',1,'DICe']]],
-  ['pixel_5fcoord_5fdual_5fview_5f1d',['pixel_coord_dual_view_1d',['../namespace_d_i_ce.html#a32c04dbd537f736602e2bb562993273b',1,'DICe']]],
-  ['pixel_5fcoord_5fhost_5fview_5f1d',['pixel_coord_host_view_1d',['../namespace_d_i_ce.html#a8c597ec6b084e846f7210f70945f3594',1,'DICe']]]
+  ['operator_5ftype',['operator_type',['../class_d_i_ce.html#afbd8404541815757aa2fe53be8da7905',1,'DICe']]],
+  ['ordinal_5fset',['ordinal_set',['../namespace_d_i_ce_1_1mesh.html#a5954244169d7241d7b75407c68ae61f2',1,'DICe::mesh']]]
 ];

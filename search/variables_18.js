@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['z',['z',['../struct_point___cloud_1_1_point.html#ab5906223bc2bb4395007863b35360137',1,'Point_Cloud::Point']]]
+  ['z',['z',['../struct_point___cloud__3_d_1_1_point.html#a15da28404fb411dea70c543a7414af59',1,'Point_Cloud_3D::Point']]]
 ];

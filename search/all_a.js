@@ -1,19 +1,11 @@
 var searchData=
 [
-  ['kd_5ftree_5f',['kd_tree_',['../class_d_i_ce_1_1_path___initializer.html#a6a5cc52b67f9be1519c897a371454e51',1,'DICe::Path_Initializer::kd_tree_()'],['../class_d_i_ce_1_1_optical___flow___initializer.html#a46ee6f36009d6e7e7c621afbbc398ae0',1,'DICe::Optical_Flow_Initializer::kd_tree_()']]],
-  ['kdtree_5fdistance',['kdtree_distance',['../struct_point___cloud.html#a677ecb37241ebfc8b9a36b60c3672ec4',1,'Point_Cloud']]],
-  ['kdtree_5fget_5fbbox',['kdtree_get_bbox',['../struct_point___cloud.html#a6129f549df3103a54925aee2bde34ebf',1,'Point_Cloud']]],
-  ['kdtree_5fget_5fpoint_5fcount',['kdtree_get_point_count',['../struct_point___cloud.html#a4376b24eb225231710c77a6eec791546',1,'Point_Cloud']]],
-  ['kdtree_5fget_5fpt',['kdtree_get_pt',['../struct_point___cloud.html#ab6514b367ad110904876fcbf5b4ed892',1,'Point_Cloud']]],
-  ['keys4_5fdudx',['keys4_dudx',['../namespace_d_i_ce.html#a51e35fb9c0bd1a44815488904cde6f3f',1,'DICe']]],
-  ['keys4_5fdudy',['keys4_dudy',['../namespace_d_i_ce.html#a7a9874138c348f7b92b57ca631e02bf5',1,'DICe']]],
-  ['keys4_5fdvdx',['keys4_dvdx',['../namespace_d_i_ce.html#a4337da9155ed0cc3010cb7f7fab93630',1,'DICe']]],
-  ['keys4_5fdvdy',['keys4_dvdy',['../namespace_d_i_ce.html#a845e9d001f2c3f6dbb63ae8ae4280447',1,'DICe']]],
-  ['keys4_5fstrain_5fpost_5fprocessor',['Keys4_Strain_Post_Processor',['../class_d_i_ce_1_1_keys4___strain___post___processor.html#ad152c05cba3507f476b30f411f4cd43b',1,'DICe::Keys4_Strain_Post_Processor']]],
-  ['keys4_5fstrain_5fpost_5fprocessor',['Keys4_Strain_Post_Processor',['../class_d_i_ce_1_1_keys4___strain___post___processor.html',1,'DICe']]],
-  ['keys4_5fstrain_5fxx',['keys4_strain_xx',['../namespace_d_i_ce.html#aee08a50a149c2bfb4b1005c37684c201',1,'DICe']]],
-  ['keys4_5fstrain_5fxy',['keys4_strain_xy',['../namespace_d_i_ce.html#a1e0777faae1db9bc54d8887c82d1a108',1,'DICe']]],
-  ['keys4_5fstrain_5fyy',['keys4_strain_yy',['../namespace_d_i_ce.html#a281a1b86db6b803ab9f801fa82bd0e04',1,'DICe']]],
+  ['kd_5ftree_5f',['kd_tree_',['../class_d_i_ce_1_1_path___initializer.html#aa8735c3561976526e6d22584613cac65',1,'DICe::Path_Initializer::kd_tree_()'],['../class_d_i_ce_1_1_feature___matching___initializer.html#ae36faaeed507a40da2cf4bb4645895c2',1,'DICe::Feature_Matching_Initializer::kd_tree_()'],['../class_d_i_ce_1_1_optical___flow___initializer.html#af81445f7f5fa744acfdc3b12545a49a8',1,'DICe::Optical_Flow_Initializer::kd_tree_()']]],
+  ['kdtree_5fdistance',['kdtree_distance',['../struct_point___cloud__2_d.html#ac87ed556b97915c20eb8eb56c9fa6dae',1,'Point_Cloud_2D::kdtree_distance()'],['../struct_point___cloud__3_d.html#a865bb8341121d8198f51931970b248ed',1,'Point_Cloud_3D::kdtree_distance()']]],
+  ['kdtree_5fget_5fbbox',['kdtree_get_bbox',['../struct_point___cloud__2_d.html#a7170e54465cc24e2cc25c31f5b14aa44',1,'Point_Cloud_2D::kdtree_get_bbox()'],['../struct_point___cloud__3_d.html#a0cbbb4d86dc7c36f35585c002d7fc8f5',1,'Point_Cloud_3D::kdtree_get_bbox()']]],
+  ['kdtree_5fget_5fpoint_5fcount',['kdtree_get_point_count',['../struct_point___cloud__2_d.html#a4d58ad10c65ef9c4fab08dd0e5d64862',1,'Point_Cloud_2D::kdtree_get_point_count()'],['../struct_point___cloud__3_d.html#ade2368217d9b3452bb42dc6c3c1a432c',1,'Point_Cloud_3D::kdtree_get_point_count()']]],
+  ['kdtree_5fget_5fpt',['kdtree_get_pt',['../struct_point___cloud__2_d.html#a5f1596982d556dbb2224975755226048',1,'Point_Cloud_2D::kdtree_get_pt()'],['../struct_point___cloud__3_d.html#a99847d79831a82d374accdcb8920476f',1,'Point_Cloud_3D::kdtree_get_pt()']]],
   ['kiss_5ffft_5fcpx',['kiss_fft_cpx',['../structkiss__fft__cpx.html',1,'']]],
-  ['kiss_5ffft_5fstate',['kiss_fft_state',['../structkiss__fft__state.html',1,'']]]
+  ['kiss_5ffft_5fstate',['kiss_fft_state',['../structkiss__fft__state.html',1,'']]],
+  ['kronecker',['kronecker',['../namespace_d_i_ce.html#a61e0ec0f1d1a575222f4a52daa666a03',1,'DICe']]]
 ];
