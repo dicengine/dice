@@ -190,7 +190,10 @@ IF(DICE_ENABLE_GLOBAL)
   target_link_libraries(main
   dicemesh
   dicemeshio
-  triangle)
+  triangle
+  exodus
+  ifpack
+  belos)
 ELSE()
   target_link_libraries(main
   dicemesh)
@@ -207,7 +210,6 @@ target_link_libraries(main
   teuchosnumerics
   teuchoscomm
   teuchosparameterlist
-  exodus
   ${tiff_lib}
   ${Boost_LIBRARIES})
 
@@ -216,14 +218,14 @@ IF(DICE_ENABLE_MANYCORE)
     tpetra
     kokkoscore
     ifpack
-    belos
     belostpetra
   )
   ADD_DEFINITIONS(-DDICE_KOKKOS=1 -DDICE_TPETRA=1)
 ELSE()
   target_link_libraries(main
-  ifpack
-  epetra
-  belos
-  belosepetra)
+  epetra)
+  IF(DICE_ENABLE_GLOBAL)
+    target_link_libraries(main
+      belosepetra)
+  ENDIF()
 ENDIF()

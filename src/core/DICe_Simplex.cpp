@@ -430,12 +430,10 @@ Quadratic_Homography_Simplex::objective(Teuchos::RCP<std::vector<scalar_t> > var
   assert(variables->size()==12);
   assert(ulx_<lrx_);
   assert(uly_<lry_);
-  const int_t w = left_img_->width();
-  const int_t h = left_img_->height();
-  assert(ulx_>=0&&ulx_<w);
-  assert(uly_>=0&&uly_<h);
-  assert(lrx_>=0&&lrx_<w);
-  assert(lry_>=0&&lry_<h);
+  assert(ulx_>=0&&ulx_<left_img_->width());
+  assert(uly_>=0&&uly_<left_img_->height());
+  assert(lrx_>=0&&lrx_<left_img_->width());
+  assert(lry_>=0&&lry_<left_img_->height());
 
   scalar_t value = 0.0;
   scalar_t xr=0.0,yr=0.0,xl=0.0,yl=0.0;

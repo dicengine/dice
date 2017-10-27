@@ -114,7 +114,6 @@ int main(int argc, char *argv[]) {
   const int_t num_images = cine_reader->num_frames();
   const int_t image_width = cine_reader->width();
   const int_t image_height = cine_reader->height();
-  const int_t first_frame = cine_reader->first_image_number();
 
   *outStream << "Num frames:     " << num_images << std::endl;
   *outStream << "Width:          " << image_width << std::endl;
@@ -122,10 +121,10 @@ int main(int argc, char *argv[]) {
 
   const int_t start_frame = std::stoi(argv[2]);
   const int_t end_frame = std::stoi(argv[3]);
-  assert(start_frame>=first_frame);
-  assert(start_frame<=first_frame+num_images);
+  assert(start_frame>=cine_reader->first_image_number());
+  assert(start_frame<=cine_reader->first_image_number()+num_images);
   assert(end_frame>=start_frame);
-  assert(end_frame<=first_frame+num_images);
+  assert(end_frame<=cine_reader->first_image_number()+num_images);
   *outStream << "Start frame:    " << start_frame << std::endl;
   *outStream << "End frame:      " << end_frame << std::endl;
   *outStream << "Output frames:  " << end_frame-start_frame+1 << std::endl;
