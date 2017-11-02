@@ -10,7 +10,7 @@
 
 // See the custom_app example in the tutorial for more information about the code below
 
-using namespace DICe::mesh::field_enums;
+using namespace DICe::field_enums;
 
 int main(int argc, char *argv[]) {
 

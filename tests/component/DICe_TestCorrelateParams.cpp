@@ -58,7 +58,7 @@
 #include <cassert>
 
 using namespace DICe;
-using namespace DICe::mesh::field_enums;
+using namespace DICe::field_enums;
 
 int main(int argc, char *argv[]) {
 

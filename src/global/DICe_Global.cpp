@@ -177,47 +177,47 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
     mesh_->create_mixed_node_field_maps(mesh_);
 
   // create the necessary fields:
-  mesh_->create_field(mesh::field_enums::DISPLACEMENT_FS);
-  mesh_->create_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
-  Teuchos::RCP<MultiField> disp = mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
-  Teuchos::RCP<MultiField> disp_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
+  mesh_->create_field(field_enums::DISPLACEMENT_FS);
+  mesh_->create_field(field_enums::DISPLACEMENT_NM1_FS);
+  Teuchos::RCP<MultiField> disp = mesh_->get_field(field_enums::DISPLACEMENT_FS);
+  Teuchos::RCP<MultiField> disp_nm1 = mesh_->get_field(field_enums::DISPLACEMENT_NM1_FS);
   disp->put_scalar(0.0);
   disp_nm1->put_scalar(0.0);
   if(schema_)
     if(schema_->use_incremental_formulation())
-      mesh_->create_field(mesh::field_enums::ACCUMULATED_DISP_FS);
+      mesh_->create_field(field_enums::ACCUMULATED_DISP_FS);
 
-  mesh_->create_field(mesh::field_enums::RESIDUAL_FS);
-  mesh_->create_field(mesh::field_enums::LHS_FS);
-  Teuchos::RCP<MultiField> lhs = mesh_->get_field(mesh::field_enums::LHS_FS);
+  mesh_->create_field(field_enums::RESIDUAL_FS);
+  mesh_->create_field(field_enums::LHS_FS);
+  Teuchos::RCP<MultiField> lhs = mesh_->get_field(field_enums::LHS_FS);
   lhs->put_scalar(0.0);
   // create the strain fields
-  mesh_->create_field(mesh::field_enums::DU_DX_FS);
-  mesh_->create_field(mesh::field_enums::DU_DY_FS);
-  mesh_->create_field(mesh::field_enums::DV_DX_FS);
-  mesh_->create_field(mesh::field_enums::DV_DY_FS);
-  mesh_->create_field(mesh::field_enums::STRAIN_CONTRIBS_FS);
-  mesh_->create_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_XX_FS);
-  mesh_->create_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_YY_FS);
-  mesh_->create_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_XY_FS);
-  mesh_->create_field(mesh::field_enums::EXACT_SOL_VECTOR_FS); // zeros if not an mms problem
+  mesh_->create_field(field_enums::DU_DX_FS);
+  mesh_->create_field(field_enums::DU_DY_FS);
+  mesh_->create_field(field_enums::DV_DX_FS);
+  mesh_->create_field(field_enums::DV_DY_FS);
+  mesh_->create_field(field_enums::STRAIN_CONTRIBS_FS);
+  mesh_->create_field(field_enums::GREEN_LAGRANGE_STRAIN_XX_FS);
+  mesh_->create_field(field_enums::GREEN_LAGRANGE_STRAIN_YY_FS);
+  mesh_->create_field(field_enums::GREEN_LAGRANGE_STRAIN_XY_FS);
+  mesh_->create_field(field_enums::EXACT_SOL_VECTOR_FS); // zeros if not an mms problem
   // create the MMS fields if necessary
   if(mms_problem_!=Teuchos::null){
-    mesh_->create_field(mesh::field_enums::DU_DX_EXACT_FS);
-    mesh_->create_field(mesh::field_enums::DU_DY_EXACT_FS);
-    mesh_->create_field(mesh::field_enums::DV_DX_EXACT_FS);
-    mesh_->create_field(mesh::field_enums::DV_DY_EXACT_FS);
-    mesh_->create_field(mesh::field_enums::IMAGE_PHI_FS);
-    mesh_->create_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
+    mesh_->create_field(field_enums::DU_DX_EXACT_FS);
+    mesh_->create_field(field_enums::DU_DY_EXACT_FS);
+    mesh_->create_field(field_enums::DV_DX_EXACT_FS);
+    mesh_->create_field(field_enums::DV_DY_EXACT_FS);
+    mesh_->create_field(field_enums::IMAGE_PHI_FS);
+    mesh_->create_field(field_enums::IMAGE_GRAD_PHI_FS);
   }
   if(is_mixed_formulation()){
-    mesh_->create_field(mesh::field_enums::MIXED_LHS_FS);
-    Teuchos::RCP<MultiField> mixed_lhs = mesh_->get_field(mesh::field_enums::MIXED_LHS_FS);
+    mesh_->create_field(field_enums::MIXED_LHS_FS);
+    Teuchos::RCP<MultiField> mixed_lhs = mesh_->get_field(field_enums::MIXED_LHS_FS);
     mixed_lhs->put_scalar(0.0);
-    mesh_->create_field(mesh::field_enums::MIXED_RESIDUAL_FS);
-    mesh_->create_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
+    mesh_->create_field(field_enums::MIXED_RESIDUAL_FS);
+    mesh_->create_field(field_enums::LAGRANGE_MULTIPLIER_FS);
     if(mms_problem_!=Teuchos::null){
-      mesh_->create_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
+      mesh_->create_field(field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
     }
   }
   DICe::mesh::create_exodus_output_variable_names(mesh_);
@@ -478,10 +478,10 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
   tri2d_nonexact_integration_points(image_integration_order,image_gp_locs,image_gp_weights,num_image_integration_points);
 
   // gather the OVERLAP fields
-  Teuchos::RCP<MultiField> overlap_coords_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField> overlap_coords_ptr = mesh_->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
   MultiField & overlap_coords = *overlap_coords_ptr;
   Teuchos::ArrayRCP<const scalar_t> coords_values = overlap_coords.get_1d_view();
-  Teuchos::RCP<MultiField> overlap_disp_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_FS);
+  Teuchos::RCP<MultiField> overlap_disp_ptr = mesh_->get_overlap_field(field_enums::DISPLACEMENT_FS);
   MultiField & overlap_disp = *overlap_disp_ptr;
   Teuchos::ArrayRCP<const scalar_t> disp_values = overlap_disp.get_1d_view();
 
@@ -758,9 +758,9 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
 
   Teuchos::RCP<MultiField> residual;
   if(is_mixed_formulation())
-    residual = mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS);
+    residual = mesh_->get_field(field_enums::MIXED_RESIDUAL_FS);
   else
-    residual = mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
+    residual = mesh_->get_field(field_enums::RESIDUAL_FS);
   residual->put_scalar(0.0);
 
   // establish the shape functions (using P2-P1 element for velocity pressure, or P2 velocity if no constraint):
@@ -793,14 +793,14 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
   Teuchos::ArrayRCP<scalar_t> image_gp_weights;
   int_t num_image_integration_points = -1;
   tri2d_nonexact_integration_points(image_integration_order,image_gp_locs,image_gp_weights,num_image_integration_points);
-//  Teuchos::RCP<MultiField> overlap_residual_ptr = is_mixed_formulation() ? mesh_->get_overlap_field(mesh::field_enums::MIXED_RESIDUAL_FS):
-//      mesh_->get_overlap_field(mesh::field_enums::RESIDUAL_FS);
+//  Teuchos::RCP<MultiField> overlap_residual_ptr = is_mixed_formulation() ? mesh_->get_overlap_field(field_enums::MIXED_RESIDUAL_FS):
+//      mesh_->get_overlap_field(field_enums::RESIDUAL_FS);
 //  MultiField & overlap_residual = *overlap_residual_ptr;
 //  overlap_residual.put_scalar(0.0);
-  Teuchos::RCP<MultiField> overlap_coords_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField> overlap_coords_ptr = mesh_->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
   MultiField & overlap_coords = *overlap_coords_ptr;
   Teuchos::ArrayRCP<const scalar_t> coords_values = overlap_coords.get_1d_view();
-  Teuchos::RCP<MultiField> overlap_disp_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_FS);
+  Teuchos::RCP<MultiField> overlap_disp_ptr = mesh_->get_overlap_field(field_enums::DISPLACEMENT_FS);
   MultiField & overlap_disp = *overlap_disp_ptr;
   Teuchos::ArrayRCP<const scalar_t> disp_values = overlap_disp.get_1d_view();
 
@@ -935,17 +935,17 @@ Global_Algorithm::execute(){
   Teuchos::RCP<MultiField> lhs;
   Teuchos::RCP<MultiField> lagrange_multiplier;
   if(is_mixed_formulation()){
-    residual = mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS);
-    lhs = mesh_->get_field(mesh::field_enums::MIXED_LHS_FS);
-    lagrange_multiplier = mesh_->get_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
+    residual = mesh_->get_field(field_enums::MIXED_RESIDUAL_FS);
+    lhs = mesh_->get_field(field_enums::MIXED_LHS_FS);
+    lagrange_multiplier = mesh_->get_field(field_enums::LAGRANGE_MULTIPLIER_FS);
     lagrange_multiplier->put_scalar(0.0);
   }
   else{
-    residual = mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
-    lhs = mesh_->get_field(mesh::field_enums::LHS_FS);
+    residual = mesh_->get_field(field_enums::RESIDUAL_FS);
+    lhs = mesh_->get_field(field_enums::LHS_FS);
   }
-  Teuchos::RCP<MultiField> disp = mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
-  Teuchos::RCP<MultiField> disp_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
+  Teuchos::RCP<MultiField> disp = mesh_->get_field(field_enums::DISPLACEMENT_FS);
+  Teuchos::RCP<MultiField> disp_nm1 = mesh_->get_field(field_enums::DISPLACEMENT_NM1_FS);
   if(schema_){
     if(schema_->use_incremental_formulation()){
       disp->put_scalar(0.0);
@@ -1054,16 +1054,16 @@ Global_Algorithm::execute(){
     scalar_t lhs_max_x = 0.0, lhs_max_y = 0.0;
     scalar_t lhs_avg_x = 0.0, lhs_avg_y = 0.0;
     scalar_t lhs_std_dev_x = 0.0, lhs_std_dev_y = 0.0;
-    mesh_->field_stats(DICe::mesh::field_enums::LHS_FS,lhs_min_x,lhs_max_x,lhs_avg_x,lhs_std_dev_x,0);
-    mesh_->field_stats(DICe::mesh::field_enums::LHS_FS,lhs_min_y,lhs_max_y,lhs_avg_y,lhs_std_dev_y,1);
+    mesh_->field_stats(DICe::field_enums::LHS_FS,lhs_min_x,lhs_max_x,lhs_avg_x,lhs_std_dev_x,0);
+    mesh_->field_stats(DICe::field_enums::LHS_FS,lhs_min_y,lhs_max_y,lhs_avg_y,lhs_std_dev_y,1);
     DEBUG_MSG("DISPLACEMENT UPDATE: min_x " << lhs_min_x << " max_x " << lhs_max_x << " avg_x " << lhs_avg_x << " std_dev_x " << lhs_std_dev_x);
     DEBUG_MSG("DISPLACEMENT UPDATE: min_y " << lhs_min_y << " max_y " << lhs_max_y << " avg_y " << lhs_avg_y << " std_dev_y " << lhs_std_dev_y);
     scalar_t disp_min_x = 0.0, disp_min_y = 0.0;
     scalar_t disp_max_x = 0.0, disp_max_y = 0.0;
     scalar_t disp_avg_x = 0.0, disp_avg_y = 0.0;
     scalar_t disp_std_dev_x = 0.0, disp_std_dev_y = 0.0;
-    mesh_->field_stats(DICe::mesh::field_enums::DISPLACEMENT_FS,disp_min_x,disp_max_x,disp_avg_x,disp_std_dev_x,0);
-    mesh_->field_stats(DICe::mesh::field_enums::DISPLACEMENT_FS,disp_min_y,disp_max_y,disp_avg_y,disp_std_dev_y,1);
+    mesh_->field_stats(DICe::field_enums::DISPLACEMENT_FS,disp_min_x,disp_max_x,disp_avg_x,disp_std_dev_x,0);
+    mesh_->field_stats(DICe::field_enums::DISPLACEMENT_FS,disp_min_y,disp_max_y,disp_avg_y,disp_std_dev_y,1);
     DEBUG_MSG("DISPLACEMENT: min_x " << disp_min_x << " max_x " << disp_max_x << " avg_x " << disp_avg_x << " std_dev_x " << disp_std_dev_x);
     DEBUG_MSG("DISPLACEMENT: min_y " << disp_min_y << " max_y " << disp_max_y << " avg_y " << disp_avg_y << " std_dev_y " << disp_std_dev_y);
 
@@ -1089,7 +1089,7 @@ Global_Algorithm::execute(){
     // accumulate the displacements
     if(schema_)
       if(schema_->use_incremental_formulation()){
-        mesh_->get_field(DICe::mesh::field_enums::ACCUMULATED_DISP_FS)->update(1.0,*mesh_->get_field(DICe::mesh::field_enums::DISPLACEMENT_FS),1.0);
+        mesh_->get_field(DICe::field_enums::ACCUMULATED_DISP_FS)->update(1.0,*mesh_->get_field(DICe::field_enums::DISPLACEMENT_FS),1.0);
       }
   }
   //TEUCHOS_TEST_FOR_EXCEPTION(it>=max_its,std::runtime_error,"Error, max iterations reached.");
@@ -1109,42 +1109,42 @@ Global_Algorithm::execute(){
 void
 Global_Algorithm::compute_strains(){
   DEBUG_MSG("Global_Algiorithm::compute_strains(): computing the Green-Lagrange strains");
-  Teuchos::RCP<MultiField> du_dx = mesh_->get_field(mesh::field_enums::DU_DX_FS);
+  Teuchos::RCP<MultiField> du_dx = mesh_->get_field(field_enums::DU_DX_FS);
   du_dx->put_scalar(0.0);
-  Teuchos::RCP<MultiField> du_dy = mesh_->get_field(mesh::field_enums::DU_DY_FS);
+  Teuchos::RCP<MultiField> du_dy = mesh_->get_field(field_enums::DU_DY_FS);
   du_dy->put_scalar(0.0);
-  Teuchos::RCP<MultiField> dv_dx = mesh_->get_field(mesh::field_enums::DV_DX_FS);
+  Teuchos::RCP<MultiField> dv_dx = mesh_->get_field(field_enums::DV_DX_FS);
   dv_dx->put_scalar(0.0);
-  Teuchos::RCP<MultiField> dv_dy = mesh_->get_field(mesh::field_enums::DV_DY_FS);
+  Teuchos::RCP<MultiField> dv_dy = mesh_->get_field(field_enums::DV_DY_FS);
   dv_dy->put_scalar(0.0);
-  Teuchos::RCP<MultiField> strain_contribs = mesh_->get_field(mesh::field_enums::STRAIN_CONTRIBS_FS);
-  Teuchos::RCP<MultiField> gl_xx = mesh_->get_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_XX_FS);
-  Teuchos::RCP<MultiField> gl_yy = mesh_->get_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_YY_FS);
-  Teuchos::RCP<MultiField> gl_xy = mesh_->get_field(mesh::field_enums::GREEN_LAGRANGE_STRAIN_XY_FS);
-  Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
-  Teuchos::RCP<MultiField> overlap_coords_ptr = mesh_->get_overlap_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField> strain_contribs = mesh_->get_field(field_enums::STRAIN_CONTRIBS_FS);
+  Teuchos::RCP<MultiField> gl_xx = mesh_->get_field(field_enums::GREEN_LAGRANGE_STRAIN_XX_FS);
+  Teuchos::RCP<MultiField> gl_yy = mesh_->get_field(field_enums::GREEN_LAGRANGE_STRAIN_YY_FS);
+  Teuchos::RCP<MultiField> gl_xy = mesh_->get_field(field_enums::GREEN_LAGRANGE_STRAIN_XY_FS);
+  Teuchos::RCP<MultiField> coords = mesh_->get_field(field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField> overlap_coords_ptr = mesh_->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
   MultiField & overlap_coords = *overlap_coords_ptr;
   Teuchos::ArrayRCP<const scalar_t> coords_values = overlap_coords.get_1d_view();
-  Teuchos::RCP<MultiField> overlap_disp_ptr = mesh_->get_overlap_field(mesh::field_enums::DISPLACEMENT_FS);
+  Teuchos::RCP<MultiField> overlap_disp_ptr = mesh_->get_overlap_field(field_enums::DISPLACEMENT_FS);
   MultiField & overlap_disp = *overlap_disp_ptr;
   Teuchos::ArrayRCP<const scalar_t> disp_values = overlap_disp.get_1d_view();
-  Teuchos::RCP<MultiField> overlap_strain_contribs_ptr = mesh_->get_overlap_field(mesh::field_enums::STRAIN_CONTRIBS_FS);
+  Teuchos::RCP<MultiField> overlap_strain_contribs_ptr = mesh_->get_overlap_field(field_enums::STRAIN_CONTRIBS_FS);
   overlap_strain_contribs_ptr->put_scalar(0.0);
   //MultiField & overlap_strain_contribs = *overlap_strain_contribs_ptr;
   //Teuchos::ArrayRCP<const scalar_t> strain_contribs_values = overlap_strain_contribs.get_1d_view();
-  Teuchos::RCP<MultiField> overlap_dudx_ptr = mesh_->get_overlap_field(mesh::field_enums::DU_DX_FS);
+  Teuchos::RCP<MultiField> overlap_dudx_ptr = mesh_->get_overlap_field(field_enums::DU_DX_FS);
   overlap_dudx_ptr->put_scalar(0.0);
   //MultiField & overlap_dudx = *overlap_dudx_ptr;
   //Teuchos::ArrayRCP<const scalar_t> dudx_values = overlap_dudx.get_1d_view();
-  Teuchos::RCP<MultiField> overlap_dudy_ptr = mesh_->get_overlap_field(mesh::field_enums::DU_DY_FS);
+  Teuchos::RCP<MultiField> overlap_dudy_ptr = mesh_->get_overlap_field(field_enums::DU_DY_FS);
   overlap_dudy_ptr->put_scalar(0.0);
   //MultiField & overlap_dudy = *overlap_dudy_ptr;
   //Teuchos::ArrayRCP<const scalar_t> dudy_values = overlap_dudy.get_1d_view();
-  Teuchos::RCP<MultiField> overlap_dvdx_ptr = mesh_->get_overlap_field(mesh::field_enums::DV_DX_FS);
+  Teuchos::RCP<MultiField> overlap_dvdx_ptr = mesh_->get_overlap_field(field_enums::DV_DX_FS);
   overlap_dvdx_ptr->put_scalar(0.0);
   //MultiField & overlap_dvdx = *overlap_dvdx_ptr;
   //Teuchos::ArrayRCP<const scalar_t> dvdx_values = overlap_dvdx.get_1d_view();
-  Teuchos::RCP<MultiField> overlap_dvdy_ptr = mesh_->get_overlap_field(mesh::field_enums::DV_DY_FS);
+  Teuchos::RCP<MultiField> overlap_dvdy_ptr = mesh_->get_overlap_field(field_enums::DV_DY_FS);
   overlap_dvdy_ptr->put_scalar(0.0);
   //MultiField & overlap_dvdy = *overlap_dvdy_ptr;
   //Teuchos::ArrayRCP<const scalar_t> dvdy_values = overlap_dvdy.get_1d_view();
@@ -1204,21 +1204,21 @@ Global_Algorithm::compute_strains(){
   }  // elem
 
   // export the fields
-  mesh_->field_overlap_export(overlap_dudx_ptr,DICe::mesh::field_enums::DU_DX_FS, ADD);
-  mesh_->field_overlap_export(overlap_dudy_ptr,DICe::mesh::field_enums::DU_DY_FS, ADD);
-  mesh_->field_overlap_export(overlap_dvdx_ptr,DICe::mesh::field_enums::DV_DX_FS, ADD);
-  mesh_->field_overlap_export(overlap_dvdy_ptr,DICe::mesh::field_enums::DV_DY_FS, ADD);
-  mesh_->field_overlap_export(overlap_strain_contribs_ptr,DICe::mesh::field_enums::STRAIN_CONTRIBS_FS, ADD);
+  mesh_->field_overlap_export(overlap_dudx_ptr,DICe::field_enums::DU_DX_FS, ADD);
+  mesh_->field_overlap_export(overlap_dudy_ptr,DICe::field_enums::DU_DY_FS, ADD);
+  mesh_->field_overlap_export(overlap_dvdx_ptr,DICe::field_enums::DV_DX_FS, ADD);
+  mesh_->field_overlap_export(overlap_dvdy_ptr,DICe::field_enums::DV_DY_FS, ADD);
+  mesh_->field_overlap_export(overlap_strain_contribs_ptr,DICe::field_enums::STRAIN_CONTRIBS_FS, ADD);
 
   Teuchos::RCP<MultiField> du_dx_exact;
   Teuchos::RCP<MultiField> du_dy_exact;
   Teuchos::RCP<MultiField> dv_dx_exact;
   Teuchos::RCP<MultiField> dv_dy_exact;
   if(mms_problem_!=Teuchos::null){
-    du_dx_exact = mesh_->get_field(mesh::field_enums::DU_DX_EXACT_FS);
-    du_dy_exact = mesh_->get_field(mesh::field_enums::DU_DY_EXACT_FS);
-    dv_dx_exact = mesh_->get_field(mesh::field_enums::DV_DX_EXACT_FS);
-    dv_dy_exact = mesh_->get_field(mesh::field_enums::DV_DY_EXACT_FS);
+    du_dx_exact = mesh_->get_field(field_enums::DU_DX_EXACT_FS);
+    du_dy_exact = mesh_->get_field(field_enums::DU_DY_EXACT_FS);
+    dv_dx_exact = mesh_->get_field(field_enums::DV_DX_EXACT_FS);
+    dv_dy_exact = mesh_->get_field(field_enums::DV_DY_EXACT_FS);
   }
 
   for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
@@ -1307,8 +1307,8 @@ Global_Algorithm::evaluate_mms_error(scalar_t & error_bx,
   max_error_lambda = 0.0;
 
 
-  MultiField & disp = *mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
-  MultiField & exact_sol = *mesh_->get_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
+  MultiField & disp = *mesh_->get_field(field_enums::DISPLACEMENT_FS);
+  MultiField & exact_sol = *mesh_->get_field(field_enums::EXACT_SOL_VECTOR_FS);
 
   for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
     int_t ix = i*2+0;
@@ -1330,8 +1330,8 @@ Global_Algorithm::evaluate_mms_error(scalar_t & error_bx,
   error_by = std::sqrt(error_by);
 
   if(is_mixed_formulation()){
-    MultiField & l_exact_sol = *mesh_->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
-    MultiField & l_field = *mesh_->get_field(mesh::field_enums::LAGRANGE_MULTIPLIER_FS);
+    MultiField & l_exact_sol = *mesh_->get_field(field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
+    MultiField & l_field = *mesh_->get_field(field_enums::LAGRANGE_MULTIPLIER_FS);
     for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
       const scalar_t l = l_field.local_value(i);
       const scalar_t l_exact = l_exact_sol.local_value(i);

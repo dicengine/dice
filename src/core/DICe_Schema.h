@@ -51,7 +51,7 @@
   #include <DICe_Global.h>
 #endif
 #include <DICe_Mesh.h>
-#include <DICe_MeshEnums.h>
+#include <DICe_FieldEnums.h>
 #include <DICe_Decomp.h>
 #include <DICe_LocalShapeFunction.h>
 
@@ -524,7 +524,7 @@ public:
   /// \param global_id Global ID of the element
   /// \param spec the Field_Spec of the field to get the value for
   mv_scalar_type & global_field_value(const int_t global_id,
-    const DICe::mesh::field_enums::Field_Spec spec){
+    const DICe::field_enums::Field_Spec spec){
     return local_field_value(subset_local_id(global_id),spec);
   }
 
@@ -532,7 +532,7 @@ public:
   /// \param local_id local ID of the subset
   /// \param spec the Field_Spec of the requested field
   mv_scalar_type & local_field_value(const int_t local_id,
-    const DICe::mesh::field_enums::Field_Spec spec){
+    const DICe::field_enums::Field_Spec spec){
     assert(local_id<local_num_subsets_);
     assert(local_id>=0);
     return mesh_->get_field(spec)->local_value(local_id);
@@ -542,11 +542,11 @@ public:
   /// \param global_id global ID of correlation point
   void save_off_fields(const int_t global_id){
     DEBUG_MSG("Saving off solution nm1 for subset (global id) " << global_id);
-    for(int_t i=0;i<DICe::mesh::field_enums::num_fields_defined;++i){
-      DICe::mesh::field_enums::Field_Spec fs_nm1 = DICe::mesh::field_enums::fs_spec_vec[i];
-      if(fs_nm1.get_state()!=DICe::mesh::field_enums::STATE_N_MINUS_ONE) continue;
+    for(int_t i=0;i<DICe::field_enums::num_fields_defined;++i){
+      DICe::field_enums::Field_Spec fs_nm1 = DICe::field_enums::fs_spec_vec[i];
+      if(fs_nm1.get_state()!=DICe::field_enums::STATE_N_MINUS_ONE) continue;
       // build up a field spec for a no state field corresponding to the nm1 field
-      DICe::mesh::field_enums::Field_Spec fs(fs_nm1.get_field_type(),fs_nm1.get_name(),fs_nm1.get_rank(),DICe::mesh::field_enums::NO_FIELD_STATE,true,true);
+      DICe::field_enums::Field_Spec fs(fs_nm1.get_field_type(),fs_nm1.get_name(),fs_nm1.get_rank(),DICe::field_enums::NO_FIELD_STATE,true,true);
       global_field_value(global_id,fs_nm1) = global_field_value(global_id,fs);
     }
   };

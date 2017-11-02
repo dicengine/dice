@@ -61,7 +61,7 @@ Importer_Projector::Importer_Projector(const std::string & source_file_name,
   num_neigh_(5){
 
   const int_t spa_dim = target_mesh->spatial_dimension();
-  Teuchos::RCP<MultiField> coords = target_mesh->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField> coords = target_mesh->get_field(DICe::field_enums::INITIAL_COORDINATES_FS);
   target_pts_x_.resize(target_mesh->num_nodes());
   target_pts_y_.resize(target_mesh->num_nodes());
   for(size_t i=0;i<target_mesh->num_nodes();++i){

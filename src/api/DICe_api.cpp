@@ -124,15 +124,15 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate(scalar_t points[], int_t n_points
   // manually copy values into the schema's field values
   for(int_t i=0;i<n_points;++i){
     // leave the coordinates alone
-    schema.local_field_value(i,DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS)   = points[i*DICE_API_STRIDE + 0];
-    schema.local_field_value(i,DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS)   = points[i*DICE_API_STRIDE + 1];
-    schema.local_field_value(i,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS) = points[i*DICE_API_STRIDE + 2];
-    schema.local_field_value(i,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS) = points[i*DICE_API_STRIDE + 3];
-    schema.local_field_value(i,DICe::mesh::field_enums::ROTATION_Z_FS)     = points[i*DICE_API_STRIDE + 4];
-    schema.local_field_value(i,DICe::mesh::field_enums::SIGMA_FS)          = points[i*DICE_API_STRIDE + 5];
-    schema.local_field_value(i,DICe::mesh::field_enums::GAMMA_FS)          = points[i*DICE_API_STRIDE + 6];
-    schema.local_field_value(i,DICe::mesh::field_enums::BETA_FS)           = points[i*DICE_API_STRIDE + 7];
-    schema.local_field_value(i,DICe::mesh::field_enums::STATUS_FLAG_FS)    = points[i*DICE_API_STRIDE + 8];
+    schema.local_field_value(i,DICe::field_enums::SUBSET_COORDINATES_X_FS)   = points[i*DICE_API_STRIDE + 0];
+    schema.local_field_value(i,DICe::field_enums::SUBSET_COORDINATES_Y_FS)   = points[i*DICE_API_STRIDE + 1];
+    schema.local_field_value(i,DICe::field_enums::SUBSET_DISPLACEMENT_X_FS) = points[i*DICE_API_STRIDE + 2];
+    schema.local_field_value(i,DICe::field_enums::SUBSET_DISPLACEMENT_Y_FS) = points[i*DICE_API_STRIDE + 3];
+    schema.local_field_value(i,DICe::field_enums::ROTATION_Z_FS)     = points[i*DICE_API_STRIDE + 4];
+    schema.local_field_value(i,DICe::field_enums::SIGMA_FS)          = points[i*DICE_API_STRIDE + 5];
+    schema.local_field_value(i,DICe::field_enums::GAMMA_FS)          = points[i*DICE_API_STRIDE + 6];
+    schema.local_field_value(i,DICe::field_enums::BETA_FS)           = points[i*DICE_API_STRIDE + 7];
+    schema.local_field_value(i,DICe::field_enums::STATUS_FLAG_FS)    = points[i*DICE_API_STRIDE + 8];
   }
 
   schema.execute_correlation();
@@ -140,13 +140,13 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate(scalar_t points[], int_t n_points
   // extract the values from the correlation and put it back in the data array:
   for(int_t i=0;i<n_points;++i){
     // leave the coordinates alone
-    points[i*DICE_API_STRIDE + 2] = schema.local_field_value(i,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-    points[i*DICE_API_STRIDE + 3] = schema.local_field_value(i,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
-    points[i*DICE_API_STRIDE + 4] = schema.local_field_value(i,DICe::mesh::field_enums::ROTATION_Z_FS);
-    points[i*DICE_API_STRIDE + 5] = schema.local_field_value(i,DICe::mesh::field_enums::SIGMA_FS);
-    points[i*DICE_API_STRIDE + 6] = schema.local_field_value(i,DICe::mesh::field_enums::GAMMA_FS);
-    points[i*DICE_API_STRIDE + 7] = schema.local_field_value(i,DICe::mesh::field_enums::BETA_FS);
-    points[i*DICE_API_STRIDE + 8] = schema.local_field_value(i,DICe::mesh::field_enums::STATUS_FLAG_FS);
+    points[i*DICE_API_STRIDE + 2] = schema.local_field_value(i,DICe::field_enums::SUBSET_DISPLACEMENT_X_FS);
+    points[i*DICE_API_STRIDE + 3] = schema.local_field_value(i,DICe::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+    points[i*DICE_API_STRIDE + 4] = schema.local_field_value(i,DICe::field_enums::ROTATION_Z_FS);
+    points[i*DICE_API_STRIDE + 5] = schema.local_field_value(i,DICe::field_enums::SIGMA_FS);
+    points[i*DICE_API_STRIDE + 6] = schema.local_field_value(i,DICe::field_enums::GAMMA_FS);
+    points[i*DICE_API_STRIDE + 7] = schema.local_field_value(i,DICe::field_enums::BETA_FS);
+    points[i*DICE_API_STRIDE + 8] = schema.local_field_value(i,DICe::field_enums::STATUS_FLAG_FS);
   }
 
   return 0;
@@ -248,15 +248,15 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
   // manually copy values into the schema's field values
   for(int_t i=0;i<n_points;++i){
     // leave the coordinates alone
-    schema.local_field_value(i,DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS)   = points[i*DICE_API_STRIDE + 0];
-    schema.local_field_value(i,DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS)   = points[i*DICE_API_STRIDE + 1];
-    schema.local_field_value(i,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS) = points[i*DICE_API_STRIDE + 2];
-    schema.local_field_value(i,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS) = points[i*DICE_API_STRIDE + 3];
-    schema.local_field_value(i,DICe::mesh::field_enums::ROTATION_Z_FS)     = points[i*DICE_API_STRIDE + 4];
-    schema.local_field_value(i,DICe::mesh::field_enums::SIGMA_FS)          = points[i*DICE_API_STRIDE + 5];
-    schema.local_field_value(i,DICe::mesh::field_enums::GAMMA_FS)          = points[i*DICE_API_STRIDE + 6];
-    schema.local_field_value(i,DICe::mesh::field_enums::BETA_FS)           = points[i*DICE_API_STRIDE + 7];
-    schema.local_field_value(i,DICe::mesh::field_enums::STATUS_FLAG_FS)    = points[i*DICE_API_STRIDE + 8];
+    schema.local_field_value(i,DICe::field_enums::SUBSET_COORDINATES_X_FS)   = points[i*DICE_API_STRIDE + 0];
+    schema.local_field_value(i,DICe::field_enums::SUBSET_COORDINATES_Y_FS)   = points[i*DICE_API_STRIDE + 1];
+    schema.local_field_value(i,DICe::field_enums::SUBSET_DISPLACEMENT_X_FS) = points[i*DICE_API_STRIDE + 2];
+    schema.local_field_value(i,DICe::field_enums::SUBSET_DISPLACEMENT_Y_FS) = points[i*DICE_API_STRIDE + 3];
+    schema.local_field_value(i,DICe::field_enums::ROTATION_Z_FS)     = points[i*DICE_API_STRIDE + 4];
+    schema.local_field_value(i,DICe::field_enums::SIGMA_FS)          = points[i*DICE_API_STRIDE + 5];
+    schema.local_field_value(i,DICe::field_enums::GAMMA_FS)          = points[i*DICE_API_STRIDE + 6];
+    schema.local_field_value(i,DICe::field_enums::BETA_FS)           = points[i*DICE_API_STRIDE + 7];
+    schema.local_field_value(i,DICe::field_enums::STATUS_FLAG_FS)    = points[i*DICE_API_STRIDE + 8];
   }
   TEUCHOS_TEST_FOR_EXCEPTION(schema.quadratic_shape_function_enabled(),std::runtime_error,"Error, cannot use quadratic shape function for the api routines");
 
@@ -267,15 +267,15 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
 
   // extract the values from the correlation and put it back in the data array:
   for(int_t i=0;i<n_points;++i){
-    points[i*DICE_API_STRIDE + 0] = schema.local_field_value(i,DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
-    points[i*DICE_API_STRIDE + 1] = schema.local_field_value(i,DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS);
-    points[i*DICE_API_STRIDE + 2] = schema.local_field_value(i,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-    points[i*DICE_API_STRIDE + 3] = schema.local_field_value(i,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
-    points[i*DICE_API_STRIDE + 4] = schema.local_field_value(i,DICe::mesh::field_enums::ROTATION_Z_FS);
-    points[i*DICE_API_STRIDE + 5] = schema.local_field_value(i,DICe::mesh::field_enums::SIGMA_FS);
-    points[i*DICE_API_STRIDE + 6] = schema.local_field_value(i,DICe::mesh::field_enums::GAMMA_FS);
-    points[i*DICE_API_STRIDE + 7] = schema.local_field_value(i,DICe::mesh::field_enums::BETA_FS);
-    points[i*DICE_API_STRIDE + 8] = schema.local_field_value(i,DICe::mesh::field_enums::STATUS_FLAG_FS);
+    points[i*DICE_API_STRIDE + 0] = schema.local_field_value(i,DICe::field_enums::SUBSET_COORDINATES_X_FS);
+    points[i*DICE_API_STRIDE + 1] = schema.local_field_value(i,DICe::field_enums::SUBSET_COORDINATES_Y_FS);
+    points[i*DICE_API_STRIDE + 2] = schema.local_field_value(i,DICe::field_enums::SUBSET_DISPLACEMENT_X_FS);
+    points[i*DICE_API_STRIDE + 3] = schema.local_field_value(i,DICe::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+    points[i*DICE_API_STRIDE + 4] = schema.local_field_value(i,DICe::field_enums::ROTATION_Z_FS);
+    points[i*DICE_API_STRIDE + 5] = schema.local_field_value(i,DICe::field_enums::SIGMA_FS);
+    points[i*DICE_API_STRIDE + 6] = schema.local_field_value(i,DICe::field_enums::GAMMA_FS);
+    points[i*DICE_API_STRIDE + 7] = schema.local_field_value(i,DICe::field_enums::BETA_FS);
+    points[i*DICE_API_STRIDE + 8] = schema.local_field_value(i,DICe::field_enums::STATUS_FLAG_FS);
   }
 
   return 0;

@@ -214,8 +214,8 @@ void
 Lagrange_BC::apply(const bool first_iteration){
   if(!is_mixed_) return;
   // get the residual field
-  Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
-      mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
+  Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(field_enums::MIXED_RESIDUAL_FS) :
+      mesh_->get_field(field_enums::RESIDUAL_FS);
 
   const int_t node_set_id = -1; // lagrangian nodes are all in set -1
   const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_max_global_index();
@@ -232,9 +232,9 @@ Lagrange_BC::apply(const bool first_iteration){
 void
 Dirichlet_BC::apply(const bool first_iteration){
   // get the residual field
-  Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
-      mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
-  Teuchos::RCP<MultiField> disp = mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
+  Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(field_enums::MIXED_RESIDUAL_FS) :
+      mesh_->get_field(field_enums::RESIDUAL_FS);
+  Teuchos::RCP<MultiField> disp = mesh_->get_field(field_enums::DISPLACEMENT_FS);
 
   const int_t spa_dim = mesh_->spatial_dimension();
   // iterate the boudnary condition def
@@ -269,10 +269,10 @@ Dirichlet_BC::apply(const bool first_iteration){
 void
 Subset_BC::apply(const bool first_iteration){
   // get the residual field
-  Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
-      mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
-  Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
-  Teuchos::RCP<MultiField> disp = mesh_->get_field(mesh::field_enums::DISPLACEMENT_FS);
+  Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(field_enums::MIXED_RESIDUAL_FS) :
+      mesh_->get_field(field_enums::RESIDUAL_FS);
+  Teuchos::RCP<MultiField> coords = mesh_->get_field(field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField> disp = mesh_->get_field(field_enums::DISPLACEMENT_FS);
 
   const int_t spa_dim = mesh_->spatial_dimension();
   // iterate the boudnary condition def
@@ -348,12 +348,12 @@ Subset_BC::apply(const bool first_iteration){
 void
 MMS_BC::apply(const bool first_iteration){
   // get the residual field
-  Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
-      mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
-  Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
-  Teuchos::RCP<MultiField> exact_sol = mesh_->get_field(mesh::field_enums::EXACT_SOL_VECTOR_FS);
-  Teuchos::RCP<MultiField> image_phi = mesh_->get_field(mesh::field_enums::IMAGE_PHI_FS);
-  Teuchos::RCP<MultiField> image_grad_phi = mesh_->get_field(mesh::field_enums::IMAGE_GRAD_PHI_FS);
+  Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(field_enums::MIXED_RESIDUAL_FS) :
+      mesh_->get_field(field_enums::RESIDUAL_FS);
+  Teuchos::RCP<MultiField> coords = mesh_->get_field(field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField> exact_sol = mesh_->get_field(field_enums::EXACT_SOL_VECTOR_FS);
+  Teuchos::RCP<MultiField> image_phi = mesh_->get_field(field_enums::IMAGE_PHI_FS);
+  Teuchos::RCP<MultiField> image_grad_phi = mesh_->get_field(field_enums::IMAGE_GRAD_PHI_FS);
   const int_t spa_dim = mesh_->spatial_dimension();
 
   TEUCHOS_TEST_FOR_EXCEPTION(alg_->mms_problem()==Teuchos::null,std::runtime_error,"Error, mms_problem should not be null");
@@ -378,7 +378,7 @@ MMS_BC::apply(const bool first_iteration){
       exact_sol->local_value(iy) = b_y;
     }
     if(is_mixed_){
-      Teuchos::RCP<MultiField> exact_lag = alg_->mesh()->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
+      Teuchos::RCP<MultiField> exact_lag = alg_->mesh()->get_field(field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
       for(int_t i=0;i<alg_->mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
         const scalar_t x = coords->local_value(i*2+0);
         const scalar_t y = coords->local_value(i*2+1);
@@ -426,15 +426,15 @@ MMS_BC::apply(const bool first_iteration){
 void
 MMS_Lagrange_BC::apply(const bool first_iteration){
   // get the residual field
-  Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
-      mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
-  Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(field_enums::MIXED_RESIDUAL_FS) :
+      mesh_->get_field(field_enums::RESIDUAL_FS);
+  Teuchos::RCP<MultiField> coords = mesh_->get_field(field_enums::INITIAL_COORDINATES_FS);
   TEUCHOS_TEST_FOR_EXCEPTION(alg_->mms_problem()==Teuchos::null,std::runtime_error,"Error, mms_problem should not be null");
   //TEUCHOS_TEST_FOR_EXCEPTION(alg_->mesh()==Teuchos::null,std::runtime_error,
   //  "Error, mesh pointer should not be null");
   const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_max_global_index();
 //  if(first_iteration){ // populate the exact solution fields
-//    Teuchos::RCP<MultiField> exact_lag = alg_->l_mesh()->get_field(mesh::field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
+//    Teuchos::RCP<MultiField> exact_lag = alg_->l_mesh()->get_field(field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
 //    for(int_t i=0;i<alg_->l_mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
 //      int_t ix = i*2+0;
 //      int_t iy = i*2+1;
@@ -469,8 +469,8 @@ MMS_Lagrange_BC::apply(const bool first_iteration){
 void
 Corner_BC::apply(const bool first_iteration){
   // get the residual field
-  Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_RESIDUAL_FS) :
-      mesh_->get_field(mesh::field_enums::RESIDUAL_FS);
+  Teuchos::RCP<MultiField> residual = is_mixed_ ? mesh_->get_field(field_enums::MIXED_RESIDUAL_FS) :
+      mesh_->get_field(field_enums::RESIDUAL_FS);
   const int_t mixed_global_offset = mesh_->get_vector_node_dist_map()->get_max_global_index();
   DEBUG_MSG("Corner_BC::apply(): applying 0.0 constraint to node 1");
   const int_t node_gid = 1;
@@ -481,9 +481,9 @@ void
 Constant_IC::apply(const bool first_iteration){
   if(!first_iteration) return; // only apply this ic on the first it
   // get the residual field
-  Teuchos::RCP<MultiField> lhs = is_mixed_ ? mesh_->get_field(mesh::field_enums::MIXED_LHS_FS):
-      mesh_->get_field(mesh::field_enums::LHS_FS);
-  Teuchos::RCP<MultiField> disp_nm1 = mesh_->get_field(mesh::field_enums::DISPLACEMENT_NM1_FS);
+  Teuchos::RCP<MultiField> lhs = is_mixed_ ? mesh_->get_field(field_enums::MIXED_LHS_FS):
+      mesh_->get_field(field_enums::LHS_FS);
+  Teuchos::RCP<MultiField> disp_nm1 = mesh_->get_field(field_enums::DISPLACEMENT_NM1_FS);
   const int_t spa_dim = mesh_->spatial_dimension();
 
   // populate the image and solution fields
@@ -509,7 +509,7 @@ Constant_IC::apply(const bool first_iteration){
 //    // set up the neighbor list for each boundary node
 //    DEBUG_MSG("Global_Algorithm::pre_execution_tasks(): creating the point cloud");
 //    /// pointer to the point cloud used for the neighbor searching
-//    MultiField & coords = *mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+//    MultiField & coords = *mesh_->get_field(field_enums::INITIAL_COORDINATES_FS);
 //    Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud<scalar_t>());
 //    std::vector<int_t> node_map(num_bc_nodes);
 //    point_cloud->pts.resize(num_bc_nodes);

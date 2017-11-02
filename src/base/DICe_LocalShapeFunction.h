@@ -43,8 +43,9 @@
 #define DICE_LOCALSHAPEFUNCTION_H
 
 #include <DICe.h>
-#include <DICe_Mesh.h>
+#include <DICe_FieldEnums.h>
 
+#include <Teuchos_RCP.hpp>
 /*!
  *  \namespace DICe
  *  @{
@@ -79,8 +80,8 @@ public:
 
   /// print the parameter values to DEBUG_MSG
   void print_parameters()const{
-    std::map<DICe::mesh::field_enums::Field_Spec,size_t>::const_iterator it = spec_map_.begin();
-    const std::map<DICe::mesh::field_enums::Field_Spec,size_t>::const_iterator it_end = spec_map_.end();
+    std::map<DICe::field_enums::Field_Spec,size_t>::const_iterator it = spec_map_.begin();
+    const std::map<DICe::field_enums::Field_Spec,size_t>::const_iterator it_end = spec_map_.end();
     std::stringstream dbg_msg;
     dbg_msg << "deformation parameters: ";
     for(;it!=it_end;++it)
@@ -93,10 +94,6 @@ public:
   /// \param subset_gid the global id of the subset to save the fields for
   virtual void save_fields(Schema * schema,
     const int_t subset_gid);
-
-  /// create the necessary fields for this shape function
-  /// \param schema pointer to a schema
-  void create_fields(Schema * schema);
 
   /// clears all the fields associated with this shape function
   /// \param schema pointer to a schema that holds the mesh with the fields
@@ -169,7 +166,7 @@ public:
 
   /// returns a reference to the given field spec location in the parameter vector
   /// \param spec the field spec
-  scalar_t & operator()(const DICe::mesh::field_enums::Field_Spec & spec){
+  scalar_t & operator()(const DICe::field_enums::Field_Spec & spec){
     assert(spec_map_.find(spec)!=spec_map_.end());
     return parameters_[spec_map_.find(spec)->second];
   }
@@ -184,7 +181,7 @@ public:
   /// returns the value the given field spec location in the parameter vector if it exists
   /// or zero if it does not
   /// \param spec the field spec
-  scalar_t parameter(const DICe::mesh::field_enums::Field_Spec & spec)const{
+  scalar_t parameter(const DICe::field_enums::Field_Spec & spec)const{
     if(spec_map_.find(spec)==spec_map_.end()){
       return 0.0;
     }
@@ -230,6 +227,11 @@ public:
     return Teuchos::rcp(&deltas_,false);
   }
 
+  /// returns a pointer to the spec map
+  std::map<DICe::field_enums::Field_Spec,size_t> * spec_map(){
+    return &spec_map_;
+  }
+
 protected:
   /// a vector that holds the parameters of the shape function
   std::vector<scalar_t> parameters_;
@@ -238,7 +240,7 @@ protected:
   /// the total number of degrees of freedom
   int_t num_params_;
   /// stores the associated field with each DOF and the corresponding parameter index
-  std::map<DICe::mesh::field_enums::Field_Spec,size_t> spec_map_;
+  std::map<DICe::field_enums::Field_Spec,size_t> spec_map_;
 };
 
 

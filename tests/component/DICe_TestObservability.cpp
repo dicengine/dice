@@ -53,7 +53,7 @@
 #include <random>
 
 using namespace DICe;
-using namespace DICe::mesh::field_enums;
+using namespace DICe::field_enums;
 
 intensity_t phi(const scalar_t & x, const scalar_t & y, const scalar_t & period, const scalar_t & L){
   const scalar_t freq = 1.0/period;
@@ -279,12 +279,12 @@ int main(int argc, char *argv[]) {
       Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
       params->set(DICe::compute_image_gradients,true);
       Teuchos::RCP<Image> img = Teuchos::rcp(new Image(L,L,intensities,params));
-      Teuchos::RCP<MultiField> bx_command = schema->mesh()->get_field(DICe::mesh::field_enums::FIELD_1_FS);
-      Teuchos::RCP<MultiField> by_command = schema->mesh()->get_field(DICe::mesh::field_enums::FIELD_2_FS);
-      Teuchos::RCP<MultiField> bx_computed = schema->mesh()->get_field(DICe::mesh::field_enums::FIELD_3_FS);
-      Teuchos::RCP<MultiField> by_computed = schema->mesh()->get_field(DICe::mesh::field_enums::FIELD_4_FS);
-      Teuchos::RCP<MultiField> error_x = schema->mesh()->get_field(DICe::mesh::field_enums::FIELD_5_FS);
-      Teuchos::RCP<MultiField> error_y = schema->mesh()->get_field(DICe::mesh::field_enums::FIELD_6_FS);
+      Teuchos::RCP<MultiField> bx_command = schema->mesh()->get_field(DICe::field_enums::FIELD_1_FS);
+      Teuchos::RCP<MultiField> by_command = schema->mesh()->get_field(DICe::field_enums::FIELD_2_FS);
+      Teuchos::RCP<MultiField> bx_computed = schema->mesh()->get_field(DICe::field_enums::FIELD_3_FS);
+      Teuchos::RCP<MultiField> by_computed = schema->mesh()->get_field(DICe::field_enums::FIELD_4_FS);
+      Teuchos::RCP<MultiField> error_x = schema->mesh()->get_field(DICe::field_enums::FIELD_5_FS);
+      Teuchos::RCP<MultiField> error_y = schema->mesh()->get_field(DICe::field_enums::FIELD_6_FS);
 
       schema->update_frame_id();
 
@@ -438,8 +438,8 @@ int main(int argc, char *argv[]) {
 
 //      scalar_t min_ex=0.0,max_ex=0.0,avg_ex=0.0,std_dev_x=0.0;
 //      scalar_t min_ey=0.0,max_ey=0.0,avg_ey=0.0,std_dev_y=0.0;
-//      schema->mesh()->field_stats(DICe::mesh::field_enums::FIELD_5_FS,min_ex,max_ex,avg_ex,std_dev_x,0);
-//      schema->mesh()->field_stats(DICe::mesh::field_enums::FIELD_6_FS,min_ey,max_ey,avg_ey,std_dev_y,0);
+//      schema->mesh()->field_stats(DICe::field_enums::FIELD_5_FS,min_ex,max_ex,avg_ex,std_dev_x,0);
+//      schema->mesh()->field_stats(DICe::field_enums::FIELD_6_FS,min_ey,max_ey,avg_ey,std_dev_y,0);
 
       *outStream << " avg peak rel error x: " << avg_error_x << "% y: " << avg_error_y << "%" << std::endl;
       if(std::abs(avg_error_x) > errorTol){

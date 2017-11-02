@@ -44,6 +44,7 @@
 
 #include <DICe.h>
 #include <DICe_MeshEnums.h>
+#include <DICe_FieldEnums.h>
 #include <DICe_Parser.h>
 #ifdef DICE_TPETRA
   #include "DICe_MultiFieldTpetra.h"
@@ -1004,7 +1005,7 @@ public:
     scalar_t & avg,
     scalar_t & std_dev,
     const int_t comp,
-    const field_enums::Field_Spec & marker_spec = DICe::mesh::field_enums::NO_SUCH_FS,
+    const field_enums::Field_Spec & marker_spec = DICe::field_enums::NO_SUCH_FS,
     const scalar_t & threshold = -1.0);
 
   /// Returns a pointer to the communication map

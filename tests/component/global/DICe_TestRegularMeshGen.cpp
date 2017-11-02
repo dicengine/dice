@@ -42,7 +42,7 @@
 #include <DICe.h>
 #include <DICe_Mesh.h>
 #include <DICe_MeshIO.h>
-#include <DICe_MeshEnums.h>
+#include <DICe_FieldEnums.h>
 #include <DICe_TriangleUtils.h>
 
 #include <Teuchos_RCP.hpp>
@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   if(errorFlag==0){
-    Teuchos::RCP<MultiField> coords = mesh->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
+    Teuchos::RCP<MultiField> coords = mesh->get_field(DICe::field_enums::INITIAL_COORDINATES_FS);
     const scalar_t tol = 1.0E-5;
     for(int_t i=0;i<num_nodes;++i){
       scalar_t error_x = std::abs(coords->local_value(i*2+0) - x_coords[i]);

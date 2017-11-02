@@ -74,7 +74,7 @@
 
 namespace DICe {
 
-using namespace mesh::field_enums;
+using namespace field_enums;
 
 Schema::Schema(const std::string & input_file_name,
   const std::string & params_file_name){
@@ -1139,62 +1139,69 @@ Schema::create_mesh(Teuchos::RCP<Decomp> decomp){
 
 void
 Schema::create_mesh_fields(){
-  mesh_->create_field(mesh::field_enums::CROSS_CORR_Q_FS);
-  mesh_->create_field(mesh::field_enums::CROSS_CORR_R_FS);
-  mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-  mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_X_NM1_FS);
-  mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
-  mesh_->create_field(mesh::field_enums::SUBSET_DISPLACEMENT_Y_NM1_FS);
-  mesh_->create_field(mesh::field_enums::STEREO_SUBSET_DISPLACEMENT_X_FS);
-  mesh_->create_field(mesh::field_enums::STEREO_SUBSET_DISPLACEMENT_Y_FS);
-  mesh_->create_field(mesh::field_enums::MODEL_SUBSET_DISPLACEMENT_X_FS);
-  mesh_->create_field(mesh::field_enums::MODEL_SUBSET_DISPLACEMENT_Y_FS);
-  mesh_->create_field(mesh::field_enums::MODEL_DISPLACEMENT_Z_FS);
-  mesh_->create_field(mesh::field_enums::SUBSET_COORDINATES_X_FS);
-  mesh_->create_field(mesh::field_enums::SUBSET_COORDINATES_Y_FS);
-  mesh_->create_field(mesh::field_enums::STEREO_COORDINATES_X_FS);
-  mesh_->create_field(mesh::field_enums::STEREO_COORDINATES_Y_FS);
-  mesh_->create_field(mesh::field_enums::MODEL_COORDINATES_X_FS);
-  mesh_->create_field(mesh::field_enums::MODEL_COORDINATES_Y_FS);
-  mesh_->create_field(mesh::field_enums::MODEL_COORDINATES_Z_FS);
-  mesh_->create_field(mesh::field_enums::ROTATION_Z_FS);
-  mesh_->create_field(mesh::field_enums::ROTATION_Z_NM1_FS);
+  mesh_->create_field(field_enums::CROSS_CORR_Q_FS);
+  mesh_->create_field(field_enums::CROSS_CORR_R_FS);
+  mesh_->create_field(field_enums::SUBSET_DISPLACEMENT_X_FS);
+  mesh_->create_field(field_enums::SUBSET_DISPLACEMENT_X_NM1_FS);
+  mesh_->create_field(field_enums::SUBSET_DISPLACEMENT_Y_FS);
+  mesh_->create_field(field_enums::SUBSET_DISPLACEMENT_Y_NM1_FS);
+  mesh_->create_field(field_enums::STEREO_SUBSET_DISPLACEMENT_X_FS);
+  mesh_->create_field(field_enums::STEREO_SUBSET_DISPLACEMENT_Y_FS);
+  mesh_->create_field(field_enums::MODEL_SUBSET_DISPLACEMENT_X_FS);
+  mesh_->create_field(field_enums::MODEL_SUBSET_DISPLACEMENT_Y_FS);
+  mesh_->create_field(field_enums::MODEL_DISPLACEMENT_Z_FS);
+  mesh_->create_field(field_enums::SUBSET_COORDINATES_X_FS);
+  mesh_->create_field(field_enums::SUBSET_COORDINATES_Y_FS);
+  mesh_->create_field(field_enums::STEREO_COORDINATES_X_FS);
+  mesh_->create_field(field_enums::STEREO_COORDINATES_Y_FS);
+  mesh_->create_field(field_enums::MODEL_COORDINATES_X_FS);
+  mesh_->create_field(field_enums::MODEL_COORDINATES_Y_FS);
+  mesh_->create_field(field_enums::MODEL_COORDINATES_Z_FS);
+  mesh_->create_field(field_enums::ROTATION_Z_FS);
+  mesh_->create_field(field_enums::ROTATION_Z_NM1_FS);
   Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory(this);
-  shape_function->create_fields(this);
+  std::map<Field_Spec,size_t>::const_iterator it = shape_function->spec_map()->begin();
+  const std::map<Field_Spec,size_t>::const_iterator it_end = shape_function->spec_map()->end();
+  for(;it!=it_end;++it){
+    mesh_->create_field(it->first);
+    // creat the nm1 field as well
+    DICe::field_enums::Field_Spec fs_nm1(it->first.get_field_type(),it->first.get_name(),it->first.get_rank(),DICe::field_enums::STATE_N_MINUS_ONE,false,true);
+    mesh_->create_field(fs_nm1);
+  }
   shape_function->reset_fields(this);
-  mesh_->create_field(mesh::field_enums::SIGMA_FS);
-  mesh_->create_field(mesh::field_enums::GAMMA_FS);
-  mesh_->create_field(mesh::field_enums::BETA_FS);
-  mesh_->create_field(mesh::field_enums::OMEGA_FS);
-  mesh_->create_field(mesh::field_enums::NOISE_LEVEL_FS);
-  mesh_->create_field(mesh::field_enums::CONTRAST_LEVEL_FS);
-  mesh_->create_field(mesh::field_enums::ACTIVE_PIXELS_FS);
-  mesh_->create_field(mesh::field_enums::MATCH_FS);
-  mesh_->create_field(mesh::field_enums::ITERATIONS_FS);
-  mesh_->create_field(mesh::field_enums::STATUS_FLAG_FS);
-  mesh_->create_field(mesh::field_enums::NEIGHBOR_ID_FS);
-  mesh_->create_field(mesh::field_enums::CONDITION_NUMBER_FS);
-  mesh_->create_field(mesh::field_enums::PROJECTION_AUG_X_FS);
-  mesh_->create_field(mesh::field_enums::PROJECTION_AUG_Y_FS);
-  mesh_->create_field(mesh::field_enums::FIELD_1_FS);
-  mesh_->create_field(mesh::field_enums::FIELD_2_FS);
-  mesh_->create_field(mesh::field_enums::FIELD_3_FS);
-  mesh_->create_field(mesh::field_enums::FIELD_4_FS);
-  mesh_->create_field(mesh::field_enums::FIELD_5_FS);
-  mesh_->create_field(mesh::field_enums::FIELD_6_FS);
-  mesh_->create_field(mesh::field_enums::FIELD_7_FS);
-  mesh_->create_field(mesh::field_enums::FIELD_8_FS);
-  mesh_->create_field(mesh::field_enums::FIELD_9_FS);
-  mesh_->create_field(mesh::field_enums::FIELD_10_FS);
-  mesh_->create_field(mesh::field_enums::STEREO_M_MAX_FS);
+  mesh_->create_field(field_enums::SIGMA_FS);
+  mesh_->create_field(field_enums::GAMMA_FS);
+  mesh_->create_field(field_enums::BETA_FS);
+  mesh_->create_field(field_enums::OMEGA_FS);
+  mesh_->create_field(field_enums::NOISE_LEVEL_FS);
+  mesh_->create_field(field_enums::CONTRAST_LEVEL_FS);
+  mesh_->create_field(field_enums::ACTIVE_PIXELS_FS);
+  mesh_->create_field(field_enums::MATCH_FS);
+  mesh_->create_field(field_enums::ITERATIONS_FS);
+  mesh_->create_field(field_enums::STATUS_FLAG_FS);
+  mesh_->create_field(field_enums::NEIGHBOR_ID_FS);
+  mesh_->create_field(field_enums::CONDITION_NUMBER_FS);
+  mesh_->create_field(field_enums::PROJECTION_AUG_X_FS);
+  mesh_->create_field(field_enums::PROJECTION_AUG_Y_FS);
+  mesh_->create_field(field_enums::FIELD_1_FS);
+  mesh_->create_field(field_enums::FIELD_2_FS);
+  mesh_->create_field(field_enums::FIELD_3_FS);
+  mesh_->create_field(field_enums::FIELD_4_FS);
+  mesh_->create_field(field_enums::FIELD_5_FS);
+  mesh_->create_field(field_enums::FIELD_6_FS);
+  mesh_->create_field(field_enums::FIELD_7_FS);
+  mesh_->create_field(field_enums::FIELD_8_FS);
+  mesh_->create_field(field_enums::FIELD_9_FS);
+  mesh_->create_field(field_enums::FIELD_10_FS);
+  mesh_->create_field(field_enums::STEREO_M_MAX_FS);
 
   if(use_incremental_formulation_){
-    mesh_->create_field(mesh::field_enums::ACCUMULATED_DISP_FS);
-    mesh_->get_field(mesh::field_enums::ACCUMULATED_DISP_FS)->put_scalar(0.0);
+    mesh_->create_field(field_enums::ACCUMULATED_DISP_FS);
+    mesh_->get_field(field_enums::ACCUMULATED_DISP_FS)->put_scalar(0.0);
   }
 
   // fill the subset coordinates field:
-  Teuchos::RCP<MultiField> coords = mesh_->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  Teuchos::RCP<MultiField> coords = mesh_->get_field(field_enums::INITIAL_COORDINATES_FS);
   for(int_t i=0;i<local_num_subsets_;++i){
     local_field_value(i,SUBSET_COORDINATES_X_FS) = coords->local_value(i*2+0);
     local_field_value(i,SUBSET_COORDINATES_Y_FS) = coords->local_value(i*2+1);
@@ -3357,7 +3364,7 @@ Output_Spec::gather_fields(){
   field_vec_.resize(field_names_.size());
   for(size_t i=0;i<field_names_.size();++i){
     // check for the legacy fields form old input decks:
-    DICe::mesh::field_enums::Field_Spec fs = NO_SUCH_FS;
+    DICe::field_enums::Field_Spec fs = NO_SUCH_FS;
     // for fields that have been requested, but don't exist, just return a null pointer
     // so that the output will be zeros
     try{

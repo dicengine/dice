@@ -53,7 +53,7 @@
 
 namespace DICe {
 
-using namespace mesh::field_enums;
+using namespace field_enums;
 
 scalar_t
 Objective::gamma( Teuchos::RCP<Local_Shape_Function> shape_function) const {
@@ -201,12 +201,12 @@ Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_fun
     scalar_t exact_u = 0.0;
     scalar_t exact_v = 0.0;
     schema_->image_deformer()->compute_deformation(cx,cy,exact_u,exact_v);
-    schema_->mesh()->get_field(DICe::mesh::field_enums::MODEL_SUBSET_DISPLACEMENT_X_FS)->global_value(correlation_point_global_id_) = exact_u;
-    schema_->mesh()->get_field(DICe::mesh::field_enums::MODEL_SUBSET_DISPLACEMENT_Y_FS)->global_value(correlation_point_global_id_) = exact_v;
+    schema_->mesh()->get_field(DICe::field_enums::MODEL_SUBSET_DISPLACEMENT_X_FS)->global_value(correlation_point_global_id_) = exact_u;
+    schema_->mesh()->get_field(DICe::field_enums::MODEL_SUBSET_DISPLACEMENT_Y_FS)->global_value(correlation_point_global_id_) = exact_v;
     // field 8: subset error at center in x direction
-    schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_8_FS)->global_value(correlation_point_global_id_) = std::abs(exact_u - u);
+    schema_->mesh()->get_field(DICe::field_enums::FIELD_8_FS)->global_value(correlation_point_global_id_) = std::abs(exact_u - u);
     // field 9: subset error at center in x direction
-    schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_9_FS)->global_value(correlation_point_global_id_) = std::abs(exact_v - v);
+    schema_->mesh()->get_field(DICe::field_enums::FIELD_9_FS)->global_value(correlation_point_global_id_) = std::abs(exact_v - v);
   }
 
   for(int_t i=0;i<subset_->num_pixels();++i){
@@ -252,28 +252,28 @@ Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_fun
   // populate the fields:
   // field 1: cos of angle between uhat and grad phi
   const scalar_t cos_theta_hat = norm_uhat_2 == 0.0 ? 1.0 : std::sqrt(norm_uhat_dot_gphi_2/norm_uhat_2);
-  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_1_FS)->global_value(correlation_point_global_id_) = cos_theta_hat;
+  schema_->mesh()->get_field(DICe::field_enums::FIELD_1_FS)->global_value(correlation_point_global_id_) = cos_theta_hat;
   // field 2: cos of angle between the true motion and grad phi
   const scalar_t cos_theta = norm_ut_2 == 0.0 ? 1.0 : std::sqrt(norm_ut_dot_gphi_2/norm_ut_2);
-  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_2_FS)->global_value(correlation_point_global_id_) = cos_theta;
+  schema_->mesh()->get_field(DICe::field_enums::FIELD_2_FS)->global_value(correlation_point_global_id_) = cos_theta;
   // field 3: the total L2 error magnitude:
-  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_3_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_error_dot_gphi_2 + norm_error_dot_jgphi_2);
+  schema_->mesh()->get_field(DICe::field_enums::FIELD_3_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_error_dot_gphi_2 + norm_error_dot_jgphi_2);
   // field 4: residual based exact error estimate in the direction of grad phi
-  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_4_FS)->global_value(correlation_point_global_id_) = 1.0/cos_theta_hat * std::sqrt(int_r_total_2);
+  schema_->mesh()->get_field(DICe::field_enums::FIELD_4_FS)->global_value(correlation_point_global_id_) = 1.0/cos_theta_hat * std::sqrt(int_r_total_2);
   // field 5: the L2 error mag in direction of grad phi:
-  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_5_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_error_dot_gphi_2);
+  schema_->mesh()->get_field(DICe::field_enums::FIELD_5_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_error_dot_gphi_2);
   // field 6: residual based exact error estimate in the direction of grad phi
-  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_6_FS)->global_value(correlation_point_global_id_) = std::sqrt(int_r_total_2);
+  schema_->mesh()->get_field(DICe::field_enums::FIELD_6_FS)->global_value(correlation_point_global_id_) = std::sqrt(int_r_total_2);
   // field 7: SSSIG field
-  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_7_FS)->global_value(correlation_point_global_id_) = sssig;
+  schema_->mesh()->get_field(DICe::field_enums::FIELD_7_FS)->global_value(correlation_point_global_id_) = sssig;
 // field 8: cos of angle between the error and grad phi
-//  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_8_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_error_dot_gphi_2/norm_error_2);
+//  schema_->mesh()->get_field(DICe::field_enums::FIELD_8_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_error_dot_gphi_2/norm_error_2);
 //  // field 9: cos of angle between ut and uhat
-//  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_9_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_ut_dot_uhat_2/norm_ut_2);
+//  schema_->mesh()->get_field(DICe::field_enums::FIELD_9_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_ut_dot_uhat_2/norm_ut_2);
 //  // field 10: cos of angle between ut and grad_phi
-//  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_10_FS)->global_value(correlation_point_global_id_) = std::sqrt(int_r_total_2);
+//  schema_->mesh()->get_field(DICe::field_enums::FIELD_10_FS)->global_value(correlation_point_global_id_) = std::sqrt(int_r_total_2);
 //  // field 10: cos of angle between error and ut
-//  schema_->mesh()->get_field(DICe::mesh::field_enums::FIELD_10_FS)->global_value(correlation_point_global_id_) = std::sqrt(int_sub_r_approx);
+//  schema_->mesh()->get_field(DICe::field_enums::FIELD_10_FS)->global_value(correlation_point_global_id_) = std::sqrt(int_sub_r_approx);
 }
 
 Status_Flag

@@ -40,12 +40,11 @@
 // @HEADER
 
 #include <DICe_LocalShapeFunction.h>
-#include <DICe_MeshEnums.h>
 #include <DICe_Schema.h>
 
 namespace DICe {
 
-using namespace DICe::mesh::field_enums;
+using namespace DICe::field_enums;
 
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Local_Shape_Function> shape_function_factory(Schema * schema){
@@ -68,20 +67,6 @@ Local_Shape_Function::save_fields(Schema * schema,
   const std::map<Field_Spec,size_t>::const_iterator it_end = spec_map_.end();
   for(;it!=it_end;++it)
     schema->global_field_value(subset_gid,it->first) = parameters_[it->second];
-}
-
-void
-Local_Shape_Function::create_fields(Schema * schema){
-  assert(schema);
-  // iterate the field specs and create the necessary fields
-  std::map<Field_Spec,size_t>::const_iterator it = spec_map_.begin();
-  const std::map<Field_Spec,size_t>::const_iterator it_end = spec_map_.end();
-  for(;it!=it_end;++it){
-    schema->mesh()->create_field(it->first);
-    // creat the nm1 field as well
-    DICe::mesh::field_enums::Field_Spec fs_nm1(it->first.get_field_type(),it->first.get_name(),it->first.get_rank(),DICe::mesh::field_enums::STATE_N_MINUS_ONE,false,true);
-    schema->mesh()->create_field(fs_nm1);
-  }
 }
 
 void

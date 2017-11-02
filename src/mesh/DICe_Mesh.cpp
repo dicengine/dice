@@ -713,7 +713,7 @@ Mesh::create_field(const field_enums::Field_Spec & field_spec)
   else
   {
     std::stringstream oss;
-    oss << " MG_Mesh::create_field(): unknown rank and tensor order combination specified: " << tostring(field_spec.get_rank()) << " " << tostring(field_spec.get_field_type()) << std::endl;
+    oss << " MG_Mesh::create_field(): unknown rank and tensor order combination specified: " << DICe::tostring(field_spec.get_rank()) << " " << DICe::tostring(field_spec.get_field_type()) << std::endl;
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
   }
   Teuchos::RCP<MultiField> field_ptr = Teuchos::rcp(new MultiField(map,1,true));
@@ -832,7 +832,7 @@ Mesh::get_overlap_field(const field_enums::Field_Spec & field_spec)
   else
   {
     std::stringstream oss;
-    oss << " MG_Mesh::get_overlap_field(): unknown rank and tensor order combination specified: " << tostring(field_spec.get_rank()) << " " << tostring(field_spec.get_field_type()) << std::endl;
+    oss << " MG_Mesh::get_overlap_field(): unknown rank and tensor order combination specified: " << DICe::tostring(field_spec.get_rank()) << " " << DICe::tostring(field_spec.get_field_type()) << std::endl;
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
   }
   const Teuchos::RCP<MultiField > to_field = field_import(field_spec,map);
@@ -867,7 +867,7 @@ Mesh::field_overlap_export(const Teuchos::RCP<MultiField > from_field,
     map = mixed_vector_node_overlap_map_;
   else{
     std::stringstream oss;
-    oss << " MG_Mesh::field_overlap_export(): unknown rank and tensor order combination specified: " << tostring(to_field_spec.get_rank()) << " " << tostring(to_field_spec.get_field_type()) << std::endl;
+    oss << " MG_Mesh::field_overlap_export(): unknown rank and tensor order combination specified: " << DICe::tostring(to_field_spec.get_rank()) << " " << DICe::tostring(to_field_spec.get_field_type()) << std::endl;
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
   }
   if(field_registry_.find(to_field_spec)==field_registry_.end()){
@@ -961,7 +961,7 @@ Mesh::field_stats(const field_enums::Field_Spec & field_spec,
 
   const int_t p_rank = comm_->get_rank();
 
-  const bool has_marker = marker_spec != DICe::mesh::field_enums::NO_SUCH_FS;
+  const bool has_marker = marker_spec != DICe::field_enums::NO_SUCH_FS;
 
   scalar_t failure_rate = 0.0;
   max = std::numeric_limits<scalar_t>::lowest();
@@ -998,7 +998,7 @@ Mesh::field_stats(const field_enums::Field_Spec & field_spec,
       "Error, invalid marker field " << marker_spec.get_name_label());
     Teuchos::RCP<MultiField> marker_field = marker_it->second;
     // for a scalar field the array list above can be reused
-    if(field_spec.get_field_type()==DICe::mesh::field_enums::SCALAR_FIELD_TYPE){
+    if(field_spec.get_field_type()==DICe::field_enums::SCALAR_FIELD_TYPE){
       marker_on_zero_map = Teuchos::rcp (new MultiField_Map(-1, all_on_zero_ids, 0, *comm_));
     }else{
       if(p_rank==0){
@@ -1020,7 +1020,7 @@ Mesh::field_stats(const field_enums::Field_Spec & field_spec,
   int_t num_failed = 0;
   const int_t num_points = all_on_zero_field->get_map()->get_num_local_elements();
   TEUCHOS_TEST_FOR_EXCEPTION(num_points > 0 && p_rank > 0,std::runtime_error,"Error, only process zero should have any points here");
-  if(field_spec.get_field_type()==DICe::mesh::field_enums::SCALAR_FIELD_TYPE){
+  if(field_spec.get_field_type()==DICe::field_enums::SCALAR_FIELD_TYPE){
     TEUCHOS_TEST_FOR_EXCEPTION(comp!=0,std::runtime_error,"Error, invalid comp for scalar field")
     TEUCHOS_TEST_FOR_EXCEPTION(p_rank==0 && num_points<=0,std::runtime_error,"Error, num_points = 0");
     for(int_t i=0;i<num_points;++i){
@@ -1047,7 +1047,7 @@ Mesh::field_stats(const field_enums::Field_Spec & field_spec,
     if(num_points-num_failed > 0)
       std_dev = std::sqrt(std_dev/(num_points-num_failed));
   }
-  else if(field_spec.get_field_type()==DICe::mesh::field_enums::VECTOR_FIELD_TYPE){
+  else if(field_spec.get_field_type()==DICe::field_enums::VECTOR_FIELD_TYPE){
     TEUCHOS_TEST_FOR_EXCEPTION(comp!=0&&comp!=1,std::runtime_error,"Error, invalid comp for scalar field")
     for(int_t i=0;i<num_points/2;++i){
       if(has_marker){
@@ -1161,7 +1161,7 @@ Mesh::print_field_stats()
   for(;field_it!=field_end;++field_it)
   {
     if(!field_it->first.is_printable())continue;
-    if(field_it->first.get_field_type()==DICe::mesh::field_enums::SCALAR_FIELD_TYPE){
+    if(field_it->first.get_field_type()==DICe::field_enums::SCALAR_FIELD_TYPE){
       scalar_t max = 0.0;
       scalar_t min = 0.0;
       scalar_t avg = 0.0;
@@ -1178,7 +1178,7 @@ Mesh::print_field_stats()
       std::cout.width(15);
       std::cout << std_dev << std::endl;
     }
-    else if(field_it->first.get_field_type()==DICe::mesh::field_enums::VECTOR_FIELD_TYPE){
+    else if(field_it->first.get_field_type()==DICe::field_enums::VECTOR_FIELD_TYPE){
       for(int_t dim=0;dim<spatial_dimension();++dim){
         scalar_t max = 0.0;
         scalar_t min = 0.0;

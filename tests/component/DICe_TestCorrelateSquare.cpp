@@ -143,9 +143,9 @@ int main(int argc, char *argv[]) {
   bool error_y_occurred = false;
   bool error_flag = false;
   for(int_t i=0;i<schemaMultiple->local_num_subsets();++i){
-    const scalar_t disp_x = schemaMultiple->local_field_value(i,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-    const scalar_t disp_y = schemaMultiple->local_field_value(i,DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
-    const scalar_t flag = schemaMultiple->local_field_value(i,DICe::mesh::field_enums::STATUS_FLAG_FS);
+    const scalar_t disp_x = schemaMultiple->local_field_value(i,DICe::field_enums::SUBSET_DISPLACEMENT_X_FS);
+    const scalar_t disp_y = schemaMultiple->local_field_value(i,DICe::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+    const scalar_t flag = schemaMultiple->local_field_value(i,DICe::field_enums::STATUS_FLAG_FS);
     if(disp_x<0.1||disp_x>0.8) error_x_occurred = true;
     if(disp_y<0.1||disp_y>0.8) error_y_occurred = true;
     if(flag!=DICe::INITIALIZE_USING_PREVIOUS_FRAME_SUCCESSFUL&&flag!=DICe::INITIALIZE_USING_NEIGHBOR_VALUE_SUCCESSFUL) error_flag = true;

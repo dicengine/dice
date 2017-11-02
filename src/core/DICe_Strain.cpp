@@ -210,8 +210,8 @@ int main(int argc, char *argv[]) {
       schema->update_frame_id();
 
       // fill the displacement values of the schema:
-      Teuchos::RCP<MultiField> disp_x = schema->mesh()->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS);
-      Teuchos::RCP<MultiField> disp_y = schema->mesh()->get_field(DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+      Teuchos::RCP<MultiField> disp_x = schema->mesh()->get_field(DICe::field_enums::SUBSET_DISPLACEMENT_X_FS);
+      Teuchos::RCP<MultiField> disp_y = schema->mesh()->get_field(DICe::field_enums::SUBSET_DISPLACEMENT_Y_FS);
       TEUCHOS_TEST_FOR_EXCEPTION(disp_x->get_map()->get_num_global_elements()!=importer->num_target_pts(),std::runtime_error,"");
 
       std::vector<scalar_t> proj_disp_x(importer->num_target_pts(),0.0);

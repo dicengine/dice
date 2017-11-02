@@ -1101,9 +1101,9 @@ exodus_output_dump(Teuchos::RCP<Mesh> mesh,
             if(elem_it->get()->block_id()!=block_type_map_it->first)continue; // filter out the elements not from this block
             values[elem_it->get()->index_in_block()] = field.local_value(elem_it->get()->local_id()*num_comps+comp);  // this may not work since the elements are in a set rather than a vector, may have to re-order them
           }
-          const int_t var_index = get_var_index(mesh, tostring(field_it->first.get_name()), components[comp], field_it->first.get_rank());
+          const int_t var_index = get_var_index(mesh, DICe::tostring(field_it->first.get_name()), components[comp], field_it->first.get_rank());
           error_int = ex_put_elem_var(mesh->get_output_exoid(), time_step_num, var_index, block_type_map_it->first, mesh->num_elem_in_block(block_type_map_it->first),values);
-          TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"Failure ex_put_elem_var(): " + tostring(field_it->first.get_name()));
+          TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"Failure ex_put_elem_var(): " + DICe::tostring(field_it->first.get_name()));
           delete [] values;
         }
       }
@@ -1124,7 +1124,7 @@ exodus_output_dump(Teuchos::RCP<Mesh> mesh,
         {
           values[node_it->second->overlap_local_id()] = field->local_value(node_it->second->overlap_local_id()*num_comps+comp);
         }
-        const int_t var_index = get_var_index(mesh, tostring(field_it->first.get_name()), components[comp], field_it->first.get_rank());
+        const int_t var_index = get_var_index(mesh, DICe::tostring(field_it->first.get_name()), components[comp], field_it->first.get_rank());
         error_int = ex_put_nodal_var(mesh->get_output_exoid(), time_step_num, var_index,mesh->num_nodes(), values);
       }
       delete [] values;
@@ -1186,7 +1186,7 @@ exodus_face_edge_output_dump(Teuchos::RCP<Mesh> mesh,
 //        else
 //          values[face_it->get()->local_id()] = field_values[face_it->get()->local_id()*comp_stride+comp];
 //      }
-      const int_t var_index = get_var_index(mesh, tostring(field_it->first.get_name()), components[comp], field_it->first.get_rank(),true,false);
+      const int_t var_index = get_var_index(mesh, DICe::tostring(field_it->first.get_name()), components[comp], field_it->first.get_rank(),true,false);
       error_int = ex_put_nodal_var(mesh->get_face_edge_output_exoid(), time_step_num, var_index, num_values, values);
     }
     delete [] values;

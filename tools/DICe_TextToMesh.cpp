@@ -185,17 +185,17 @@ int main(int argc, char *argv[]) {
 
   DICe::mesh::create_output_exodus_file(mesh,"");
 
-  std::vector<DICe::mesh::field_enums::Field_Spec> field_specs;
-  field_specs.push_back(DICe::mesh::field_enums::FIELD_1_FS);
-  field_specs.push_back(DICe::mesh::field_enums::FIELD_2_FS);
-  field_specs.push_back(DICe::mesh::field_enums::FIELD_3_FS);
-  field_specs.push_back(DICe::mesh::field_enums::FIELD_4_FS);
-  field_specs.push_back(DICe::mesh::field_enums::FIELD_5_FS);
-  field_specs.push_back(DICe::mesh::field_enums::FIELD_6_FS);
-  field_specs.push_back(DICe::mesh::field_enums::FIELD_7_FS);
-  field_specs.push_back(DICe::mesh::field_enums::FIELD_8_FS);
-  field_specs.push_back(DICe::mesh::field_enums::FIELD_9_FS);
-  field_specs.push_back(DICe::mesh::field_enums::FIELD_10_FS);
+  std::vector<DICe::field_enums::Field_Spec> field_specs;
+  field_specs.push_back(DICe::field_enums::FIELD_1_FS);
+  field_specs.push_back(DICe::field_enums::FIELD_2_FS);
+  field_specs.push_back(DICe::field_enums::FIELD_3_FS);
+  field_specs.push_back(DICe::field_enums::FIELD_4_FS);
+  field_specs.push_back(DICe::field_enums::FIELD_5_FS);
+  field_specs.push_back(DICe::field_enums::FIELD_6_FS);
+  field_specs.push_back(DICe::field_enums::FIELD_7_FS);
+  field_specs.push_back(DICe::field_enums::FIELD_8_FS);
+  field_specs.push_back(DICe::field_enums::FIELD_9_FS);
+  field_specs.push_back(DICe::field_enums::FIELD_10_FS);
 
   // populate the various fields
   // create a field for each column

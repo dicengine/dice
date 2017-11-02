@@ -176,9 +176,9 @@ int main(int argc, char *argv[]) {
     schema.set_def_image(def);
 
     *outStream << "creating and populating the exact solution fields" << std::endl;
-    //  schema->global_algorithm()->mesh()->create_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);
-    Teuchos::RCP<MultiField> coords = schema.global_algorithm()->mesh()->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
-    Teuchos::RCP<MultiField> exact_sol = schema.global_algorithm()->mesh()->get_field(DICe::mesh::field_enums::EXACT_SOL_VECTOR_FS);
+    //  schema->global_algorithm()->mesh()->create_field(DICe::field_enums::EXACT_SOL_VECTOR_FS);
+    Teuchos::RCP<MultiField> coords = schema.global_algorithm()->mesh()->get_field(DICe::field_enums::INITIAL_COORDINATES_FS);
+    Teuchos::RCP<MultiField> exact_sol = schema.global_algorithm()->mesh()->get_field(DICe::field_enums::EXACT_SOL_VECTOR_FS);
     for(int_t i=0;i<schema.global_algorithm()->mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
       const int_t ix = i*2+0;
       const int_t iy = i*2+1;
@@ -202,7 +202,7 @@ int main(int argc, char *argv[]) {
     scalar_t error_bx = 0.0;
     scalar_t error_by = 0.0;
 
-    Teuchos::RCP<MultiField> disp = schema.global_algorithm()->mesh()->get_field(mesh::field_enums::DISPLACEMENT_FS);
+    Teuchos::RCP<MultiField> disp = schema.global_algorithm()->mesh()->get_field(field_enums::DISPLACEMENT_FS);
     for(int_t i=0;i<schema.global_algorithm()->mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
       const scalar_t b_x = disp->local_value(i*2+0);
       const scalar_t b_y = disp->local_value(i*2+1);

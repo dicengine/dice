@@ -42,6 +42,7 @@
 #include <DICe.h>
 #include <DICe_Mesh.h>
 #include <DICe_MeshIO.h>
+#include <DICe_FieldEnums.h>
 #include <DICe_MeshEnums.h>
 
 #include <Teuchos_RCP.hpp>
@@ -150,10 +151,10 @@ int main(int argc, char *argv[]) {
   *outStream << "internal faces and cells have been checked" << std::endl;
 
   *outStream << "creating some fields on the mesh" << std::endl;
-  mesh->create_field(mesh::field_enums::FIELD_1_FS);
+  mesh->create_field(field_enums::FIELD_1_FS);
   *outStream << "populating values for phi field" << std::endl;
-  MultiField & phi = *mesh->get_field(mesh::field_enums::FIELD_1_FS);
-  MultiField & coords = *mesh->get_field(mesh::field_enums::INITIAL_COORDINATES_FS);
+  MultiField & phi = *mesh->get_field(field_enums::FIELD_1_FS);
+  MultiField & coords = *mesh->get_field(field_enums::INITIAL_COORDINATES_FS);
   Teuchos::ArrayRCP<const scalar_t> coords_values = coords.get_1d_view();
   for(size_t i=0;i<mesh->num_nodes();++i){
     phi.local_value(i) = coords_values[i]*10.0;
@@ -196,7 +197,7 @@ int main(int argc, char *argv[]) {
   *outStream << "output mesh properties have been checked" << std::endl;
 // TODO test the fields in the output mesh
 //  *outStream << "checking the output file for correct fields" << std::endl;
-//  MultiField & phi_out = *mesh_out->get_field(mesh::field_enums::FIELD_1_FS);
+//  MultiField & phi_out = *mesh_out->get_field(field_enums::FIELD_1_FS);
 //  bool field_value_error = false;
 //  for(int_t i=0;i<mesh_out->num_nodes();++i){
 //    if(std::abs(phi_out.local_value(i)-coords_values[i*spa_dim]*10.0)>1.0E-3){

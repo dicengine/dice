@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
 
     if(input_params->get<bool>(DICe::print_subset_locations_and_exit,false)){
       // write out the subset locations for left camera and exit
-      Teuchos::RCP<MultiField> coords = schema->mesh()->get_field(DICe::mesh::field_enums::INITIAL_COORDINATES_FS);
+      Teuchos::RCP<MultiField> coords = schema->mesh()->get_field(DICe::field_enums::INITIAL_COORDINATES_FS);
       const int_t ss_locs_size = proc_rank==0 ?
           coords->get_map()->get_num_global_elements() : 0; // both x and y coords
       Teuchos::Array<int_t> owned_ids(ss_locs_size);
@@ -208,8 +208,8 @@ int main(int argc, char *argv[]) {
         if(i==10&&schema->local_num_subsets()!=11) *outStream << "..." << std::endl;
         else if(i>10&&i<schema->local_num_subsets()-1) continue;
         else
-          *outStream << "Proc 0: subset global id: " << schema->subset_global_id(i) << " global coordinates (" << schema->local_field_value(i,DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS) <<
-          "," << schema->local_field_value(i,DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS) << ")" << std::endl;
+          *outStream << "Proc 0: subset global id: " << schema->subset_global_id(i) << " global coordinates (" << schema->local_field_value(i,DICe::field_enums::SUBSET_COORDINATES_X_FS) <<
+          "," << schema->local_field_value(i,DICe::field_enums::SUBSET_COORDINATES_Y_FS) << ")" << std::endl;
       }
       *outStream << std::endl;
     } // end local dic

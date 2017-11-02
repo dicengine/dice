@@ -51,10 +51,10 @@ Post_Processor::Post_Processor(const std::string & name) :
   local_num_points_(0),
   overlap_num_points_(0),
   neighborhood_initialized_(false),
-  coords_x_name_(DICe::mesh::field_enums::INITIAL_COORDINATES_FS.get_name_label()),
-  coords_y_name_(DICe::mesh::field_enums::INITIAL_COORDINATES_FS.get_name_label()),
-  disp_x_name_(DICe::mesh::field_enums::DISPLACEMENT_FS.get_name_label()),
-  disp_y_name_(DICe::mesh::field_enums::DISPLACEMENT_FS.get_name_label()),
+  coords_x_name_(DICe::field_enums::INITIAL_COORDINATES_FS.get_name_label()),
+  coords_y_name_(DICe::field_enums::INITIAL_COORDINATES_FS.get_name_label()),
+  disp_x_name_(DICe::field_enums::DISPLACEMENT_FS.get_name_label()),
+  disp_y_name_(DICe::field_enums::DISPLACEMENT_FS.get_name_label()),
   has_custom_field_names_(false)
 {}
 
@@ -75,22 +75,22 @@ Post_Processor::set_field_names(const Teuchos::RCP<Teuchos::ParameterList> & par
   // change the field specs for disp and coords if provided
   if(params->isParameter(coordinates_x_field_name)){
     coords_x_name_ = params->get<std::string>(coordinates_x_field_name);
-    if(coords_x_name_!=DICe::mesh::field_enums::INITIAL_COORDINATES_FS.get_name_label()&&coords_x_name_!=DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS.get_name_label())
+    if(coords_x_name_!=DICe::field_enums::INITIAL_COORDINATES_FS.get_name_label()&&coords_x_name_!=DICe::field_enums::SUBSET_COORDINATES_X_FS.get_name_label())
       has_custom_field_names_ = true;
   }
   if(params->isParameter(coordinates_y_field_name)){
     coords_y_name_ = params->get<std::string>(coordinates_y_field_name);
-    if(coords_y_name_!=DICe::mesh::field_enums::INITIAL_COORDINATES_FS.get_name_label()&&coords_y_name_!=DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS.get_name_label())
+    if(coords_y_name_!=DICe::field_enums::INITIAL_COORDINATES_FS.get_name_label()&&coords_y_name_!=DICe::field_enums::SUBSET_COORDINATES_Y_FS.get_name_label())
       has_custom_field_names_ = true;
   }
   if(params->isParameter(displacement_x_field_name)){
     disp_x_name_ = params->get<std::string>(displacement_x_field_name);
-    if(disp_x_name_!=DICe::mesh::field_enums::DISPLACEMENT_FS.get_name_label()&&disp_x_name_!=DICe::mesh::field_enums::SUBSET_DISPLACEMENT_X_FS.get_name_label())
+    if(disp_x_name_!=DICe::field_enums::DISPLACEMENT_FS.get_name_label()&&disp_x_name_!=DICe::field_enums::SUBSET_DISPLACEMENT_X_FS.get_name_label())
       has_custom_field_names_ = true;
   }
   if(params->isParameter(displacement_y_field_name)){
     disp_y_name_ = params->get<std::string>(displacement_y_field_name);
-    if(disp_y_name_!=DICe::mesh::field_enums::DISPLACEMENT_FS.get_name_label()&&disp_y_name_!=DICe::mesh::field_enums::SUBSET_DISPLACEMENT_Y_FS.get_name_label())
+    if(disp_y_name_!=DICe::field_enums::DISPLACEMENT_FS.get_name_label()&&disp_y_name_!=DICe::field_enums::SUBSET_DISPLACEMENT_Y_FS.get_name_label())
       has_custom_field_names_ = true;
   }
   DEBUG_MSG("Setting the coords x field to " << coords_x_name_ << " for post processor " << name_);
@@ -106,21 +106,21 @@ Post_Processor::set_stereo_field_names(){
   // test to see if the analysis is stereo and therefor the model coordinates are populated
   bool use_model_coordinates = false;
   try{
-    mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_X_FS);
+    mesh_->get_field(DICe::field_enums::MODEL_COORDINATES_X_FS);
     use_model_coordinates = true;
   }catch(std::exception & e){
     use_model_coordinates = false;
   }
   if(use_model_coordinates){
-    Teuchos::RCP<DICe::MultiField> model_x_coords = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_X_FS);
+    Teuchos::RCP<DICe::MultiField> model_x_coords = mesh_->get_field(DICe::field_enums::MODEL_COORDINATES_X_FS);
     if(model_x_coords->norm() < 1.0E-8) // also check that the field has values, not just zeros
       use_model_coordinates = false;
   }
   if(!use_model_coordinates) return;  // no op
-  coords_x_name_ = DICe::mesh::field_enums::MODEL_COORDINATES_X_FS.get_name_label();
-  coords_y_name_ = DICe::mesh::field_enums::MODEL_COORDINATES_Y_FS.get_name_label();
-  disp_x_name_ = DICe::mesh::field_enums::MODEL_SUBSET_DISPLACEMENT_X_FS.get_name_label();
-  disp_y_name_ = DICe::mesh::field_enums::MODEL_SUBSET_DISPLACEMENT_Y_FS.get_name_label();
+  coords_x_name_ = DICe::field_enums::MODEL_COORDINATES_X_FS.get_name_label();
+  coords_y_name_ = DICe::field_enums::MODEL_COORDINATES_Y_FS.get_name_label();
+  disp_x_name_ = DICe::field_enums::MODEL_SUBSET_DISPLACEMENT_X_FS.get_name_label();
+  disp_y_name_ = DICe::field_enums::MODEL_SUBSET_DISPLACEMENT_Y_FS.get_name_label();
   DEBUG_MSG("Setting the coords x field to " << coords_x_name_ << " for post processor " << name_);
   DEBUG_MSG("Setting the coords y field to " << coords_y_name_ << " for post processor " << name_);
   DEBUG_MSG("Setting the displacement x field to " << disp_x_name_ << " for post processor " << name_);
@@ -134,10 +134,10 @@ Post_Processor::initialize_neighborhood(const scalar_t & neighborhood_radius){
 
   // gather an all owned field here
   const int_t spa_dim = mesh_->spatial_dimension();
-  DICe::mesh::field_enums::Field_Spec coords_x_spec = mesh_->get_field_spec(coords_x_name_);
-  DICe::mesh::field_enums::Field_Spec coords_y_spec = mesh_->get_field_spec(coords_y_name_);
+  DICe::field_enums::Field_Spec coords_x_spec = mesh_->get_field_spec(coords_x_name_);
+  DICe::field_enums::Field_Spec coords_y_spec = mesh_->get_field_spec(coords_y_name_);
   Teuchos::RCP<MultiField> coords;
-  if(coords_x_spec.get_field_type()==DICe::mesh::field_enums::SCALAR_FIELD_TYPE){
+  if(coords_x_spec.get_field_type()==DICe::field_enums::SCALAR_FIELD_TYPE){
     Teuchos::RCP<MultiField> coords_x = mesh_->get_overlap_field(coords_x_spec);
     Teuchos::RCP<MultiField> coords_y = mesh_->get_overlap_field(coords_y_spec);
     Teuchos::RCP<MultiField_Map> overlap_map = mesh_->get_vector_node_overlap_map();
@@ -196,13 +196,13 @@ Post_Processor::initialize_neighborhood(const scalar_t & neighborhood_radius){
 
 VSG_Strain_Post_Processor::VSG_Strain_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params) :
   Post_Processor(post_process_vsg_strain){
-  field_specs_.push_back(DICe::mesh::field_enums::VSG_STRAIN_XX_FS);
-  field_specs_.push_back(DICe::mesh::field_enums::VSG_STRAIN_YY_FS);
-  field_specs_.push_back(DICe::mesh::field_enums::VSG_STRAIN_XY_FS);
-  field_specs_.push_back(DICe::mesh::field_enums::VSG_DUDX_FS);
-  field_specs_.push_back(DICe::mesh::field_enums::VSG_DUDY_FS);
-  field_specs_.push_back(DICe::mesh::field_enums::VSG_DVDX_FS);
-  field_specs_.push_back(DICe::mesh::field_enums::VSG_DVDY_FS);
+  field_specs_.push_back(DICe::field_enums::VSG_STRAIN_XX_FS);
+  field_specs_.push_back(DICe::field_enums::VSG_STRAIN_YY_FS);
+  field_specs_.push_back(DICe::field_enums::VSG_STRAIN_XY_FS);
+  field_specs_.push_back(DICe::field_enums::VSG_DUDX_FS);
+  field_specs_.push_back(DICe::field_enums::VSG_DUDY_FS);
+  field_specs_.push_back(DICe::field_enums::VSG_DVDX_FS);
+  field_specs_.push_back(DICe::field_enums::VSG_DVDY_FS);
   DEBUG_MSG("Enabling post processor VSG_Strain_Post_Processor with associated fields:");
   for(size_t i=0;i<field_specs_.size();++i){
     DEBUG_MSG(field_specs_[i].get_name_label());
@@ -232,10 +232,10 @@ VSG_Strain_Post_Processor::pre_execution_tasks(){
   TEUCHOS_TEST_FOR_EXCEPTION(!neighborhood_initialized_,std::runtime_error,"Error, neighborhoods should be initialized here.");
   DEBUG_MSG("VSG_Strain_Post_Processor pre_execution_tasks() end");
   set_stereo_field_names();
-  DICe::mesh::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
-  DICe::mesh::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
-  DICe::mesh::field_enums::Field_Spec coords_x_spec = mesh_->get_field_spec(coords_x_name_);
-  DICe::mesh::field_enums::Field_Spec coords_y_spec = mesh_->get_field_spec(coords_y_name_);
+  DICe::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
+  DICe::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
+  DICe::field_enums::Field_Spec coords_x_spec = mesh_->get_field_spec(coords_x_name_);
+  DICe::field_enums::Field_Spec coords_y_spec = mesh_->get_field_spec(coords_y_name_);
   TEUCHOS_TEST_FOR_EXCEPTION(disp_x_spec.get_field_type()!=disp_y_spec.get_field_type(),
     std::runtime_error,"Error: invalid field selections");
   TEUCHOS_TEST_FOR_EXCEPTION(disp_x_spec.get_rank()!=disp_y_spec.get_rank(),
@@ -252,11 +252,11 @@ VSG_Strain_Post_Processor::execute(){
   if(!neighborhood_initialized_) pre_execution_tasks();
 
   // gather an all owned fields here
-  DICe::mesh::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
-  DICe::mesh::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
+  DICe::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
+  DICe::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
   const int_t spa_dim = mesh_->spatial_dimension();
   Teuchos::RCP<MultiField> disp;
-  if(disp_x_spec.get_field_type()==DICe::mesh::field_enums::SCALAR_FIELD_TYPE){
+  if(disp_x_spec.get_field_type()==DICe::field_enums::SCALAR_FIELD_TYPE){
     Teuchos::RCP<MultiField> disp_x = mesh_->get_overlap_field(disp_x_spec);
     Teuchos::RCP<MultiField> disp_y = mesh_->get_overlap_field(disp_y_spec);
     Teuchos::RCP<MultiField_Map> overlap_map = mesh_->get_vector_node_overlap_map();
@@ -270,16 +270,16 @@ VSG_Strain_Post_Processor::execute(){
     disp = mesh_->get_overlap_field(disp_x_spec);
   }
   // get the sigma field:
-  Teuchos::RCP<MultiField> sigma = mesh_->get_overlap_field(DICe::mesh::field_enums::SIGMA_FS);
+  Teuchos::RCP<MultiField> sigma = mesh_->get_overlap_field(DICe::field_enums::SIGMA_FS);
   // get pointers to the local fields
-  Teuchos::RCP<DICe::MultiField> vsg_strain_xx_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_XX_FS);
-  Teuchos::RCP<DICe::MultiField> vsg_strain_yy_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_YY_FS);
-  Teuchos::RCP<DICe::MultiField> vsg_strain_xy_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_STRAIN_XY_FS);
-  Teuchos::RCP<DICe::MultiField> vsg_dudx_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_DUDX_FS);
-  Teuchos::RCP<DICe::MultiField> vsg_dudy_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_DUDY_FS);
-  Teuchos::RCP<DICe::MultiField> vsg_dvdx_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_DVDX_FS);
-  Teuchos::RCP<DICe::MultiField> vsg_dvdy_rcp = mesh_->get_field(DICe::mesh::field_enums::VSG_DVDY_FS);
-  Teuchos::RCP<DICe::MultiField> match = mesh_->get_field(DICe::mesh::field_enums::MATCH_FS);
+  Teuchos::RCP<DICe::MultiField> vsg_strain_xx_rcp = mesh_->get_field(DICe::field_enums::VSG_STRAIN_XX_FS);
+  Teuchos::RCP<DICe::MultiField> vsg_strain_yy_rcp = mesh_->get_field(DICe::field_enums::VSG_STRAIN_YY_FS);
+  Teuchos::RCP<DICe::MultiField> vsg_strain_xy_rcp = mesh_->get_field(DICe::field_enums::VSG_STRAIN_XY_FS);
+  Teuchos::RCP<DICe::MultiField> vsg_dudx_rcp = mesh_->get_field(DICe::field_enums::VSG_DUDX_FS);
+  Teuchos::RCP<DICe::MultiField> vsg_dudy_rcp = mesh_->get_field(DICe::field_enums::VSG_DUDY_FS);
+  Teuchos::RCP<DICe::MultiField> vsg_dvdx_rcp = mesh_->get_field(DICe::field_enums::VSG_DVDX_FS);
+  Teuchos::RCP<DICe::MultiField> vsg_dvdy_rcp = mesh_->get_field(DICe::field_enums::VSG_DVDY_FS);
+  Teuchos::RCP<DICe::MultiField> match = mesh_->get_field(DICe::field_enums::MATCH_FS);
 
   const int_t N = 3;
   int *IPIV = new int[N+1];
@@ -458,13 +458,13 @@ VSG_Strain_Post_Processor::execute(){
 NLVC_Strain_Post_Processor::NLVC_Strain_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params) :
   Post_Processor(post_process_nlvc_strain)
 {
-  field_specs_.push_back(DICe::mesh::field_enums::NLVC_STRAIN_XX_FS);
-  field_specs_.push_back(DICe::mesh::field_enums::NLVC_STRAIN_YY_FS);
-  field_specs_.push_back(DICe::mesh::field_enums::NLVC_STRAIN_XY_FS);
-  field_specs_.push_back(DICe::mesh::field_enums::NLVC_DUDX_FS);
-  field_specs_.push_back(DICe::mesh::field_enums::NLVC_DUDY_FS);
-  field_specs_.push_back(DICe::mesh::field_enums::NLVC_DVDX_FS);
-  field_specs_.push_back(DICe::mesh::field_enums::NLVC_DVDY_FS);
+  field_specs_.push_back(DICe::field_enums::NLVC_STRAIN_XX_FS);
+  field_specs_.push_back(DICe::field_enums::NLVC_STRAIN_YY_FS);
+  field_specs_.push_back(DICe::field_enums::NLVC_STRAIN_XY_FS);
+  field_specs_.push_back(DICe::field_enums::NLVC_DUDX_FS);
+  field_specs_.push_back(DICe::field_enums::NLVC_DUDY_FS);
+  field_specs_.push_back(DICe::field_enums::NLVC_DVDX_FS);
+  field_specs_.push_back(DICe::field_enums::NLVC_DVDY_FS);
   DEBUG_MSG("Enabling post processor NLVC_Strain_Post_Processor with associated fields:");
   for(size_t i=0;i<field_specs_.size();++i){
     DEBUG_MSG(field_specs_[i].get_name_label());
@@ -495,10 +495,10 @@ NLVC_Strain_Post_Processor::pre_execution_tasks(){
   TEUCHOS_TEST_FOR_EXCEPTION(!neighborhood_initialized_,std::runtime_error,"Error, neighborhoods should be initialized here.");
   DEBUG_MSG("NLVC_Strain_Post_Processor pre_execution_tasks() end");
   set_stereo_field_names();
-  DICe::mesh::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
-  DICe::mesh::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
-  DICe::mesh::field_enums::Field_Spec coords_x_spec = mesh_->get_field_spec(coords_x_name_);
-  DICe::mesh::field_enums::Field_Spec coords_y_spec = mesh_->get_field_spec(coords_y_name_);
+  DICe::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
+  DICe::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
+  DICe::field_enums::Field_Spec coords_x_spec = mesh_->get_field_spec(coords_x_name_);
+  DICe::field_enums::Field_Spec coords_y_spec = mesh_->get_field_spec(coords_y_name_);
   TEUCHOS_TEST_FOR_EXCEPTION(disp_x_spec.get_field_type()!=disp_y_spec.get_field_type(),
     std::runtime_error,"Error: invalid field selections");
   TEUCHOS_TEST_FOR_EXCEPTION(disp_x_spec.get_rank()!=disp_y_spec.get_rank(),
@@ -528,11 +528,11 @@ NLVC_Strain_Post_Processor::execute(){
   if(!neighborhood_initialized_) pre_execution_tasks();
 
   // gather an all owned field here
-  DICe::mesh::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
-  DICe::mesh::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
+  DICe::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
+  DICe::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
   const int_t spa_dim = mesh_->spatial_dimension();
   Teuchos::RCP<MultiField> disp;
-  if(disp_x_spec.get_field_type()==DICe::mesh::field_enums::SCALAR_FIELD_TYPE){
+  if(disp_x_spec.get_field_type()==DICe::field_enums::SCALAR_FIELD_TYPE){
     Teuchos::RCP<MultiField> disp_x = mesh_->get_overlap_field(disp_x_spec);
     Teuchos::RCP<MultiField> disp_y = mesh_->get_overlap_field(disp_y_spec);
     Teuchos::RCP<MultiField_Map> overlap_map = mesh_->get_vector_node_overlap_map();
@@ -546,18 +546,18 @@ NLVC_Strain_Post_Processor::execute(){
     disp = mesh_->get_overlap_field(disp_x_spec);
   }
   // get the sigma field:
-  Teuchos::RCP<MultiField> sigma = mesh_->get_overlap_field(DICe::mesh::field_enums::SIGMA_FS);
+  Teuchos::RCP<MultiField> sigma = mesh_->get_overlap_field(DICe::field_enums::SIGMA_FS);
   // get pointers to the local fields
-  Teuchos::RCP<DICe::MultiField> nlvc_strain_xx_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_XX_FS);
-  Teuchos::RCP<DICe::MultiField> nlvc_strain_yy_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_YY_FS);
-  Teuchos::RCP<DICe::MultiField> nlvc_strain_xy_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_STRAIN_XY_FS);
-  Teuchos::RCP<DICe::MultiField> nlvc_dudx_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_DUDX_FS);
-  Teuchos::RCP<DICe::MultiField> nlvc_dudy_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_DUDY_FS);
-  Teuchos::RCP<DICe::MultiField> nlvc_dvdx_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_DVDX_FS);
-  Teuchos::RCP<DICe::MultiField> nlvc_dvdy_rcp = mesh_->get_field(DICe::mesh::field_enums::NLVC_DVDY_FS);
-  Teuchos::RCP<DICe::MultiField> f9_rcp = mesh_->get_field(DICe::mesh::field_enums::FIELD_9_FS);
-  Teuchos::RCP<DICe::MultiField> f10_rcp = mesh_->get_field(DICe::mesh::field_enums::FIELD_10_FS);
-  Teuchos::RCP<DICe::MultiField> match = mesh_->get_field(DICe::mesh::field_enums::MATCH_FS);
+  Teuchos::RCP<DICe::MultiField> nlvc_strain_xx_rcp = mesh_->get_field(DICe::field_enums::NLVC_STRAIN_XX_FS);
+  Teuchos::RCP<DICe::MultiField> nlvc_strain_yy_rcp = mesh_->get_field(DICe::field_enums::NLVC_STRAIN_YY_FS);
+  Teuchos::RCP<DICe::MultiField> nlvc_strain_xy_rcp = mesh_->get_field(DICe::field_enums::NLVC_STRAIN_XY_FS);
+  Teuchos::RCP<DICe::MultiField> nlvc_dudx_rcp = mesh_->get_field(DICe::field_enums::NLVC_DUDX_FS);
+  Teuchos::RCP<DICe::MultiField> nlvc_dudy_rcp = mesh_->get_field(DICe::field_enums::NLVC_DUDY_FS);
+  Teuchos::RCP<DICe::MultiField> nlvc_dvdx_rcp = mesh_->get_field(DICe::field_enums::NLVC_DVDX_FS);
+  Teuchos::RCP<DICe::MultiField> nlvc_dvdy_rcp = mesh_->get_field(DICe::field_enums::NLVC_DVDY_FS);
+  Teuchos::RCP<DICe::MultiField> f9_rcp = mesh_->get_field(DICe::field_enums::FIELD_9_FS);
+  Teuchos::RCP<DICe::MultiField> f10_rcp = mesh_->get_field(DICe::field_enums::FIELD_10_FS);
+  Teuchos::RCP<DICe::MultiField> match = mesh_->get_field(DICe::field_enums::MATCH_FS);
 
   std::vector<bool> neigh_valid;
   for(int_t subset=0;subset<local_num_points_;++subset){
@@ -657,9 +657,9 @@ Altitude_Post_Processor::Altitude_Post_Processor(const Teuchos::RCP<Teuchos::Par
   apogee_(35800000.0),
   ground_level_initialized_(false)
 {
-  field_specs_.push_back(DICe::mesh::field_enums::ALTITUDE_FS);
-  field_specs_.push_back(DICe::mesh::field_enums::ALTITUDE_ABOVE_GROUND_FS);
-  field_specs_.push_back(DICe::mesh::field_enums::GROUND_LEVEL_FS);
+  field_specs_.push_back(DICe::field_enums::ALTITUDE_FS);
+  field_specs_.push_back(DICe::field_enums::ALTITUDE_ABOVE_GROUND_FS);
+  field_specs_.push_back(DICe::field_enums::GROUND_LEVEL_FS);
   DEBUG_MSG("Enabling post processor Altitude_Post_Processor with associated fields:");
   for(size_t i=0;i<field_specs_.size();++i){
     DEBUG_MSG(field_specs_[i].get_name_label());
@@ -671,7 +671,7 @@ void
 Altitude_Post_Processor::execute(){
   DEBUG_MSG("Altitude_Post_Processor::execute(): begin");
 
-  Teuchos::RCP<DICe::MultiField> ground_level_rcp = mesh_->get_field(DICe::mesh::field_enums::GROUND_LEVEL_FS);
+  Teuchos::RCP<DICe::MultiField> ground_level_rcp = mesh_->get_field(DICe::field_enums::GROUND_LEVEL_FS);
   // if this is the first time called, check for an elevations file and interpolate the ground level from that:
   // Note: all processors read the elevations file
   if(!ground_level_initialized_){
@@ -713,8 +713,8 @@ Altitude_Post_Processor::execute(){
       DEBUG_MSG("kd-tree completed");
 
       // compute the 5 nearest neighbors for each subset and interpolate the ground height from them.
-      Teuchos::RCP<MultiField> subset_coords_x = mesh_->get_field(DICe::mesh::field_enums::SUBSET_COORDINATES_X_FS);
-      Teuchos::RCP<MultiField> subset_coords_y = mesh_->get_field(DICe::mesh::field_enums::SUBSET_COORDINATES_Y_FS);
+      Teuchos::RCP<MultiField> subset_coords_x = mesh_->get_field(DICe::field_enums::SUBSET_COORDINATES_X_FS);
+      Teuchos::RCP<MultiField> subset_coords_y = mesh_->get_field(DICe::field_enums::SUBSET_COORDINATES_Y_FS);
       const int_t num_neigh = 5;
       scalar_t query_pt[2];
       std::vector<size_t> ret_index(num_neigh);
@@ -789,11 +789,11 @@ Altitude_Post_Processor::execute(){
   } // end !ground level initialized
 
   // gather the X Y and Z model coordinates:
-  Teuchos::RCP<DICe::MultiField> X_rcp = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_X_FS);
-  Teuchos::RCP<DICe::MultiField> Y_rcp = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_Y_FS);
-  Teuchos::RCP<DICe::MultiField> Z_rcp = mesh_->get_field(DICe::mesh::field_enums::MODEL_COORDINATES_Z_FS);
-  Teuchos::RCP<DICe::MultiField> altitude_rcp = mesh_->get_field(DICe::mesh::field_enums::ALTITUDE_FS);
-  Teuchos::RCP<DICe::MultiField> altitude_above_ground_rcp = mesh_->get_field(DICe::mesh::field_enums::ALTITUDE_ABOVE_GROUND_FS);
+  Teuchos::RCP<DICe::MultiField> X_rcp = mesh_->get_field(DICe::field_enums::MODEL_COORDINATES_X_FS);
+  Teuchos::RCP<DICe::MultiField> Y_rcp = mesh_->get_field(DICe::field_enums::MODEL_COORDINATES_Y_FS);
+  Teuchos::RCP<DICe::MultiField> Z_rcp = mesh_->get_field(DICe::field_enums::MODEL_COORDINATES_Z_FS);
+  Teuchos::RCP<DICe::MultiField> altitude_rcp = mesh_->get_field(DICe::field_enums::ALTITUDE_FS);
+  Teuchos::RCP<DICe::MultiField> altitude_above_ground_rcp = mesh_->get_field(DICe::field_enums::ALTITUDE_ABOVE_GROUND_FS);
   TEUCHOS_TEST_FOR_EXCEPTION(altitude_rcp==Teuchos::null || altitude_above_ground_rcp==Teuchos::null, std::runtime_error,"");
   for(int_t subset=0;subset<local_num_points_;++subset){
     DEBUG_MSG("Processing altitude subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << ", " << subset + 1 << " of " << local_num_points_);
@@ -811,8 +811,8 @@ Altitude_Post_Processor::execute(){
 Uncertainty_Post_Processor::Uncertainty_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params) :
   Post_Processor(post_process_uncertainty)
 {
-  field_specs_.push_back(DICe::mesh::field_enums::UNCERTAINTY_FS);
-  field_specs_.push_back(DICe::mesh::field_enums::UNCERTAINTY_ANGLE_FS);
+  field_specs_.push_back(DICe::field_enums::UNCERTAINTY_FS);
+  field_specs_.push_back(DICe::field_enums::UNCERTAINTY_ANGLE_FS);
   DEBUG_MSG("Enabling post processor Uncertainty_Post_Processor with associated fields:");
   for(size_t i=0;i<field_specs_.size();++i){
     DEBUG_MSG(field_specs_[i].get_name_label());
@@ -824,13 +824,13 @@ void
 Uncertainty_Post_Processor::execute(){
   DEBUG_MSG("Uncertainty_Post_Processor::execute(): begin");
 
-  Teuchos::RCP<DICe::MultiField> sigma_rcp = mesh_->get_field(DICe::mesh::field_enums::SIGMA_FS);
+  Teuchos::RCP<DICe::MultiField> sigma_rcp = mesh_->get_field(DICe::field_enums::SIGMA_FS);
   // cosine of the angle goes into field_1 by convention (See DICe_ObjectiveZNSSD.cpp)
-  Teuchos::RCP<DICe::MultiField> field1_rcp = mesh_->get_field(DICe::mesh::field_enums::FIELD_1_FS);
-  Teuchos::RCP<DICe::MultiField> uncertainty_rcp = mesh_->get_field(DICe::mesh::field_enums::UNCERTAINTY_FS);
-  Teuchos::RCP<DICe::MultiField> uncertainty_angle_rcp = mesh_->get_field(DICe::mesh::field_enums::UNCERTAINTY_ANGLE_FS);
-  Teuchos::RCP<DICe::MultiField> noise_rcp = mesh_->get_field(DICe::mesh::field_enums::NOISE_LEVEL_FS);
-  Teuchos::RCP<DICe::MultiField> max_m_rcp = mesh_->get_field(DICe::mesh::field_enums::STEREO_M_MAX_FS);
+  Teuchos::RCP<DICe::MultiField> field1_rcp = mesh_->get_field(DICe::field_enums::FIELD_1_FS);
+  Teuchos::RCP<DICe::MultiField> uncertainty_rcp = mesh_->get_field(DICe::field_enums::UNCERTAINTY_FS);
+  Teuchos::RCP<DICe::MultiField> uncertainty_angle_rcp = mesh_->get_field(DICe::field_enums::UNCERTAINTY_ANGLE_FS);
+  Teuchos::RCP<DICe::MultiField> noise_rcp = mesh_->get_field(DICe::field_enums::NOISE_LEVEL_FS);
+  Teuchos::RCP<DICe::MultiField> max_m_rcp = mesh_->get_field(DICe::field_enums::STEREO_M_MAX_FS);
   TEUCHOS_TEST_FOR_EXCEPTION(uncertainty_rcp==Teuchos::null || uncertainty_angle_rcp==Teuchos::null, std::runtime_error,"");
   for(int_t subset=0;subset<local_num_points_;++subset){
     const scalar_t angle = field1_rcp->local_value(subset);

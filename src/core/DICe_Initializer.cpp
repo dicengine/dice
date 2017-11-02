@@ -41,7 +41,7 @@
 
 #include <DICe_Initializer.h>
 #include <DICe_Schema.h>
-#include <DICe_MeshEnums.h>
+#include <DICe_FieldEnums.h>
 #include <DICe_FFT.h>
 #include <DICe_Feature.h>
 
@@ -56,7 +56,7 @@
 
 #include <boost/timer.hpp>
 
-using namespace DICe::mesh::field_enums;
+using namespace DICe::field_enums;
 
 namespace DICe {
 

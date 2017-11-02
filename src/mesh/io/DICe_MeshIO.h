@@ -45,6 +45,7 @@
 #include <DICe.h>
 #include <DICe_Mesh.h>
 #include <DICe_MeshEnums.h>
+#include <DICe_FieldEnums.h>
 
 #include <Teuchos_RCP.hpp>
 

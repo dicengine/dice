@@ -154,7 +154,7 @@ public:
   virtual void execute()=0;
 
   /// Return a pointer to the field spec vector
-  std::vector<DICe::mesh::field_enums::Field_Spec> * field_specs(){
+  std::vector<DICe::field_enums::Field_Spec> * field_specs(){
     return & field_specs_;
   }
 
@@ -168,7 +168,7 @@ protected:
   /// Number of overalp points
   int_t overlap_num_points_;
   /// The collection of field names specific to this post processor
-  std::vector<DICe::mesh::field_enums::Field_Spec> field_specs_;
+  std::vector<DICe::field_enums::Field_Spec> field_specs_;
   /// pointer to the point cloud used for the neighbor searching
   Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud_;
   /// array holding the number of neighbors for each point

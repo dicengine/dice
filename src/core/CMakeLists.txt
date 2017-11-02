@@ -16,7 +16,6 @@ SET(DICE_SOURCES
   DICe_Triangulation.cpp
   DICe_PostProcessor.cpp
   DICe_Initializer.cpp
-  DICe_LocalShapeFunction.cpp
   DICe_Decomp.cpp
   )
 
@@ -27,7 +26,6 @@ SET(DICE_HEADERS
   DICe_Triangulation.h
   DICe_PostProcessor.h
   DICe_Initializer.h
-  DICe_LocalShapeFunction.h
   DICe_Utilities.h
   DICe_Decomp.h
   )
