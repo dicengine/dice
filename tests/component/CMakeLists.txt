@@ -7,17 +7,8 @@ include_directories (
 
 SET(DICE_COMP_LIBS
   dice
-  dicebase
-  dicecore
-  diceutils
-  diceparser
-  dicefft
+  diceapi
 )
-IF(DICE_ENABLE_OPENCV)
-  SET(DICE_COMP_LIBS
-    ${DICE_COMP_LIBS}
-    dicefeature)
-ENDIF()
 
 include_directories(${Boost_INCLUDE_DIRS} COMPONENTS gil program_options REQUIRED)
 

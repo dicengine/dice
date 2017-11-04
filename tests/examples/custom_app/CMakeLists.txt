@@ -179,29 +179,21 @@ ENDIF()
 
 # add the dice libraries
 target_link_libraries(main
-  dicecore
-  dicebase
-  dicefft
+  dice
   diceutils
-  diceparser)
+)
 
 IF(DICE_ENABLE_GLOBAL)
   add_definitions(-DDICE_ENABLE_GLOBAL=1)
   target_link_libraries(main
-  dicemesh
-  dicemeshio
-  triangle
   exodus
   ifpack
   belos)
-ELSE()
-  target_link_libraries(main
-  dicemesh)
 ENDIF()
 
 IF(DICE_ENABLE_OPENCV)
   target_link_libraries(main
-    dicefeature ${OpenCV_LIBRARIES})
+    ${OpenCV_LIBRARIES})
 ENDIF()
   
 # add the other libraries needed
