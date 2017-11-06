@@ -17,7 +17,7 @@ include_directories (
 
 
 add_library(diceapi ${SOURCES} ${HEADERS})
-target_link_libraries(diceapi ${DICE_LIBRARIES} dice) 
+target_link_libraries(diceapi ${DICE_LIBRARIES} dicecore) 
 target_compile_definitions(diceapi PRIVATE -D DICE_LIB_EXPORTS_MODE)
 
 install(TARGETS diceapi
@@ -27,7 +27,7 @@ install(FILES ${HEADERS}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include
 )
 
-set_target_properties(diceapi dice PROPERTIES
+set_target_properties(diceapi PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
   ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
   RUNTIME_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/bin"

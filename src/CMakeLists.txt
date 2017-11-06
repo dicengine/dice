@@ -131,23 +131,23 @@ include_directories (
 include_directories(${Boost_INCLUDE_DIRS} COMPONENTS gil program_options REQUIRED)
 #MESSAGE(STATUS "Boost_INCLUDE_DIRS:${Boost_INCLUDE_DIRS}")
 
-add_library(dice ${DICE_SOURCES} ${DICE_HEADERS})
-target_link_libraries(dice ${Boost_LIBRARIES} ${DICE_LIBRARIES} diceutils)
+add_library(dicecore ${DICE_SOURCES} ${DICE_HEADERS})
+target_link_libraries(dicecore ${Boost_LIBRARIES} ${DICE_LIBRARIES} diceutils)
 IF(DICE_ENABLE_OPENCV)
-  target_link_libraries(dice ${OpenCV_LIBRARIES})
+  target_link_libraries(dicecore ${OpenCV_LIBRARIES})
 ENDIF()
 
 
-target_compile_definitions(dice PRIVATE -D DICE_LIB_EXPORTS_MODE)
-add_dependencies(dice DICe_utils)
+target_compile_definitions(dicecore PRIVATE -D DICE_LIB_EXPORTS_MODE)
+add_dependencies(dicecore DICe_utils)
 
 install(FILES ${DICE_HEADERS}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include
 )
-install(TARGETS dice
+install(TARGETS dicecore
   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
-set_target_properties(dice PROPERTIES
+set_target_properties(dicecore PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
   ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
   RUNTIME_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/bin"

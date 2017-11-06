@@ -7,7 +7,7 @@ include_directories (
 )
 
 SET(DICE_TEST_LIBRARIES
-   dice
+   dicecore
 )
 
 # DICE_LIBRARIES has the Trilinos libs (teuchos, tiff)

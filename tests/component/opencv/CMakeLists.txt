@@ -3,7 +3,7 @@
 #
 SET(DICE_OPENCV_LIBS
   ${OpenCV_LIBRARIES}
-  dice
+  dicecore
 )
 FILE ( GLOB test_opencv_cpp_files "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 FOREACH ( test_file ${test_opencv_cpp_files})

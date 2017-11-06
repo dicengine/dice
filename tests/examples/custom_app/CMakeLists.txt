@@ -179,7 +179,7 @@ ENDIF()
 
 # add the dice libraries
 target_link_libraries(main
-  dice
+  dicecore
   diceutils
 )
 

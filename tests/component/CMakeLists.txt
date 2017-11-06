@@ -6,7 +6,7 @@ include_directories (
 )
 
 SET(DICE_COMP_LIBS
-  dice
+  dicecore
   diceapi
 )
 
