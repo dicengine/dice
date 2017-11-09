@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
   bool i_o_flag = true;
   for(int_t i=1;i<argc;++i){
     std::string arg = argv[i];
-    if(arg.find('.')!=std::string::npos&&!std::isdigit(arg[0])&&arg.find(':')==std::string::npos){
+    if(arg.find('.')!=std::string::npos&&!std::isdigit(arg[0])&&(arg.find(':')==std::string::npos||arg.find(':')==1)){ // on win there is a ':' in the file path!
       if(i_o_flag){
         input_images.push_back(arg);
         DEBUG_MSG("Adding input image: " << arg);
