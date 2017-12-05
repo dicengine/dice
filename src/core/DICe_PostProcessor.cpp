@@ -44,6 +44,8 @@
 #include <Teuchos_LAPACK.hpp>
 #include <Teuchos_SerialDenseMatrix.hpp>
 
+#include <fstream>
+
 namespace DICe {
 
 Post_Processor::Post_Processor(const std::string & name) :

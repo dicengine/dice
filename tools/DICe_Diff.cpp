@@ -52,6 +52,7 @@
 
 #include <cassert>
 #include <map>
+#include <fstream>
 
 using namespace DICe;
 

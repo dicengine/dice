@@ -48,6 +48,7 @@
 #include <Teuchos_ParameterList.hpp>
 
 #include <iostream>
+#include <fstream>
 
 using namespace DICe;
 

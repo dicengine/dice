@@ -51,6 +51,7 @@
 
 #include <iostream>
 #include <random>
+#include <fstream>
 
 using namespace DICe;
 using namespace DICe::field_enums;
