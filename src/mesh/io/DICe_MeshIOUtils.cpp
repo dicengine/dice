@@ -48,6 +48,7 @@
 #include <Teuchos_LAPACK.hpp>
 #include <Teuchos_SerialDenseMatrix.hpp>
 
+#include <fstream>
 #ifdef HAVE_MPI
 #  include <mpi.h>
 #endif

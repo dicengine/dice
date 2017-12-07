@@ -49,6 +49,8 @@
 
 #include <Teuchos_RCP.hpp>
 
+#include <fstream>
+
 using namespace DICe;
 
 int main(int argc, char *argv[]) {

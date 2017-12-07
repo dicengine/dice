@@ -53,6 +53,7 @@
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
 
+#include <fstream>
 #include <cassert>
 
 using namespace DICe;
