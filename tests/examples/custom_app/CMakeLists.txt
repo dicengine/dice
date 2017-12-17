@@ -120,6 +120,10 @@ MESSAGE(STATUS "Using DICe headers from: ${DICE_HEADER_DIR}")
 include_directories(${DICE_HEADER_DIR})
 
 add_executable(main main.cpp)
+# add the dice libraries
+target_link_libraries(main
+  dicecore
+)
 #
 # Define the location of lib tiff, jpeg, and png:
 #
@@ -132,6 +136,7 @@ if(NOT tiff_lib)
   MESSAGE(FATAL_ERROR "Tiff library is required, but not found")
 else()
   MESSAGE(STATUS "Using tiff library from: ${tiff_lib}")
+  target_link_libraries(main diceutils ${tiff_lib})
 endif()
 
 # NOTE: If this example is used as a template, the optional JPEG_DIR variable can be defined
@@ -177,11 +182,6 @@ IF(DICE_ENABLE_NETCDF)
   target_link_libraries(main ${HDF5_lib} ${HDF5_hl_lib})
 ENDIF()
 
-# add the dice libraries
-target_link_libraries(main
-  dicecore
-  diceutils
-)
 
 IF(DICE_ENABLE_GLOBAL)
   add_definitions(-DDICE_ENABLE_GLOBAL=1)
@@ -221,3 +221,18 @@ ELSE()
       belosepetra)
   ENDIF()
 ENDIF()
+find_library(jbig_lib libjbig.a)
+if(jbig_lib)
+  MESSAGE(STATUS "Using lib jbig from: ${jbig_lib}")
+  target_link_libraries(main jbig)
+endif()
+find_library(lzma_lib liblzma.a)
+if(lzma_lib)
+  MESSAGE(STATUS "Using lib lzma from: ${lzma_lib}")
+  target_link_libraries(main lzma)
+endif()
+find_library(z_lib libz.a)
+if(z_lib)
+  MESSAGE(STATUS "Using lib z from: ${z_lib}")
+  target_link_libraries(main z)
+endif()

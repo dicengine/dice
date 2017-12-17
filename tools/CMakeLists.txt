@@ -9,6 +9,13 @@ include_directories (
 SET(DICE_TEST_LIBRARIES
    dicecore
 )
+if(DICE_ENABLE_NETCDF)
+  SET(DICE_TEST_LIBRARIES
+    ${DICE_TEST_LIBRARIES}
+    diceutils
+    ${NetCDF_lib}
+  )
+ENDIF()
 
 # DICE_LIBRARIES has the Trilinos libs (teuchos, tiff)
 # DICE_TEST_LIBRARIES has dice (Image, Subset, Schema...)
@@ -112,7 +119,7 @@ if(DICE_ENABLE_NETCDF)
   add_executable(DICe_NetCDFToTiff DICe_NetCDFToTiff.cpp)
   target_link_libraries(DICe_NetCDFToTiff ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
   add_executable(DICe_ExoToNetCDF DICe_ExoToNetCDF.cpp)
-  target_link_libraries(DICe_ExoToNetCDF ${DICE_LIBRARIES} diceutils ${DICE_TEST_LIBRARIES})
+  target_link_libraries(DICe_ExoToNetCDF ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
 
   install(TARGETS DICe_NetCDFToTiff DICe_ExoToNetCDF
     DESTINATION ${CMAKE_INSTALL_PREFIX}/bin 

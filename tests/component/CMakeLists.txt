@@ -10,6 +10,14 @@ SET(DICE_COMP_LIBS
   diceapi
 )
 
+if(DICE_ENABLE_NETCDF)
+  SET(DICE_COMP_LIBS
+    ${DICE_COMP_LIBS}
+    diceutils
+    ${NetCDF_lib}
+  )
+ENDIF()
+
 include_directories(${Boost_INCLUDE_DIRS} COMPONENTS gil program_options REQUIRED)
 
 # glob all the cpp files
