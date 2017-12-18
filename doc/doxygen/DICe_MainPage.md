@@ -809,6 +809,8 @@ sophisticated plots.
 <a name="BuildingDICe"></a>Building DICe
 =============
 
+The easiest way to get started with DICe is to use the package installers on the releases page of the github site. Pre-built binaries of the command line executables and the GUI combined are available for Mac OS X and Windows. For a linux distribution (or to make custom mods to the executables or GUI) one has to build DICe from source. The instructions below provide a means to build the command line executables and libraries for DICe. To build the GUI from source a separate step is necessary and the details are provided below. 
+
 Requirements
 ------------
 
@@ -1016,6 +1018,36 @@ Once CLAPACK has built, Trilinos must be built. A sample
 folder. The same process for building CLAPACK can be used to build
 Trilinos and eventually DICe. A sample `do-dice-cmake-win.bat` file is
 also included in the repository in the `\dice\scripts` folder.
+
+### Building the GUI from source
+
+To build the DICe gui from source, four steps are required. First a separate DICe_gui repo needs to be cloned. Then nodejs has to be installed. After this, a pre-built binary for electron needs to be installed. The paths to the DICe executables needs to be set in a javascript file. At this point, the gui is ready to run. Detailed instructions are provided for Ubuntu linux, but the instructions for other operating systems can easily be replicated.
+
+First clone the DICe_gui repo
+
+    $ git clone git@github.com:dicengine/dicegui.git ./DICe_gui
+
+Next install nodejs, either by downloading the package installer from nodejs.org or using apt-get
+
+    $ sudo apt-get install curl #only necessary if you haven't already got curl installed
+    $ curl -sL https://dep.nodesource.com/setup_8.x | sudo -E bash -
+    $ sudo apt-get install nodejs
+
+Then download the pre-build electron binary from https://github.com/electron/electron/releases. For our Ubuntu example, we download electron-v1.7.10-linux-x64.zip. Unpack the zip file and inside is an electron executable file. Note the path to this executable, which we will call electron_exec below.
+
+Open the global.js file in the DICe_gui repo and modify the linux_path variable.
+
+     $ cd DICe_gui/js
+     $ emacs -nw global.js
+     # change linux_path to <DICe_path>\build\bin\
+
+The DICe_path in the variable above should point to the DICe command line executables and libraries that you built in the steps above (the DICe repo build folder, not the DICe_gui repo).
+
+Next, simply cd into the DICe_gui folder and run the electron executable
+
+      $ cd DICe_gui
+      $ <path_to_electron_exec>/electron .
+
 
 Tiff
 ----
