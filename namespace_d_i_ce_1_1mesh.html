@@ -65,7 +65,6 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#namespaces">Namespaces</a> &#124;
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
 <a href="#func-members">Functions</a>  </div>
@@ -77,12 +76,6 @@ $(function() {
 <p>computational mesh utilities associated with the global DIC method and physics  
 <a href="#details">More...</a></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
-Namespaces</h2></td></tr>
-<tr class="memitem:namespace_d_i_ce_1_1mesh_1_1field__enums"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh_1_1field__enums.html">field_enums</a></td></tr>
-<tr class="memdesc:namespace_d_i_ce_1_1mesh_1_1field__enums"><td class="mdescLeft">&#160;</td><td class="mdescRight">Field names and properties. <br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1mesh_1_1_bond.html">Bond</a></td></tr>
@@ -162,15 +155,15 @@ typedef std::map&lt; <a class="el" href="class_d_i_ce.html#a2c6297e4a786e5275491
 <tr class="memdesc:a9b04c6a96bfe98f18836dfba53c88db0"><td class="mdescLeft">&#160;</td><td class="mdescRight">typedef <br /></td></tr>
 <tr class="separator:a9b04c6a96bfe98f18836dfba53c88db0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab41005affa99a2b7a6403b69b7b9e879"><td class="memItemLeft" align="right" valign="top"><a id="ab41005affa99a2b7a6403b69b7b9e879"></a>
-typedef std::map&lt; field_enums::Entity_Rank, std::set&lt; <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#ab41005affa99a2b7a6403b69b7b9e879">shallow_relations_map</a></td></tr>
+typedef std::map&lt; <a class="el" href="namespace_d_i_ce_1_1field__enums.html#af6adf950211e11c5639cb571634aa5aa">field_enums::Entity_Rank</a>, std::set&lt; <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#ab41005affa99a2b7a6403b69b7b9e879">shallow_relations_map</a></td></tr>
 <tr class="memdesc:ab41005affa99a2b7a6403b69b7b9e879"><td class="mdescLeft">&#160;</td><td class="mdescRight">typedef <br /></td></tr>
 <tr class="separator:ab41005affa99a2b7a6403b69b7b9e879"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9434725bc7dee9434a099a905ef5821f"><td class="memItemLeft" align="right" valign="top"><a id="a9434725bc7dee9434a099a905ef5821f"></a>
-typedef std::map&lt; field_enums::Entity_Rank, std::vector&lt; Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1mesh_1_1_mesh___object.html">Mesh_Object</a> &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#a9434725bc7dee9434a099a905ef5821f">deep_relations_map</a></td></tr>
+typedef std::map&lt; <a class="el" href="namespace_d_i_ce_1_1field__enums.html#af6adf950211e11c5639cb571634aa5aa">field_enums::Entity_Rank</a>, std::vector&lt; Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1mesh_1_1_mesh___object.html">Mesh_Object</a> &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#a9434725bc7dee9434a099a905ef5821f">deep_relations_map</a></td></tr>
 <tr class="memdesc:a9434725bc7dee9434a099a905ef5821f"><td class="mdescLeft">&#160;</td><td class="mdescRight">typedef <br /></td></tr>
 <tr class="separator:a9434725bc7dee9434a099a905ef5821f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a063cf22b5308babb00379c16b1909163"><td class="memItemLeft" align="right" valign="top"><a id="a063cf22b5308babb00379c16b1909163"></a>
-typedef std::map&lt; const <a class="el" href="struct_d_i_ce_1_1mesh_1_1field__enums_1_1_field___spec.html">field_enums::Field_Spec</a>, const Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#a063cf22b5308babb00379c16b1909163">field_registry</a></td></tr>
+typedef std::map&lt; const <a class="el" href="struct_d_i_ce_1_1field__enums_1_1_field___spec.html">field_enums::Field_Spec</a>, const Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_multi_field.html">MultiField</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#a063cf22b5308babb00379c16b1909163">field_registry</a></td></tr>
 <tr class="memdesc:a063cf22b5308babb00379c16b1909163"><td class="mdescLeft">&#160;</td><td class="mdescRight">typedef <br /></td></tr>
 <tr class="separator:a063cf22b5308babb00379c16b1909163"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af492bc358384655e18ef199e5a4bd772"><td class="memItemLeft" align="right" valign="top"><a id="af492bc358384655e18ef199e5a4bd772"></a>
@@ -228,35 +221,12 @@ Functions</h2></td></tr>
 <tr class="separator:ac872732ea0b8b0e2024c5257b141232a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae1b745168c39ff680c94da5987e07ea8"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT Base_Element_Type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#ae1b745168c39ff680c94da5987e07ea8">string_to_base_element_type</a> (const std::string &amp;input_string)</td></tr>
 <tr class="separator:ae1b745168c39ff680c94da5987e07ea8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66a2dba0b7bb7b4f1bc07efb3558b8b1"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#a66a2dba0b7bb7b4f1bc07efb3558b8b1">toindex</a> (const Component comp)</td></tr>
+<tr class="separator:a66a2dba0b7bb7b4f1bc07efb3558b8b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a94de48c13d544975733eeb85c9179b51"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#a94de48c13d544975733eeb85c9179b51">tostring</a> (const Physics_Term &amp;physics_term)</td></tr>
 <tr class="separator:a94de48c13d544975733eeb85c9179b51"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a42b5bda709f9009ba93343f0c03744bc"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT Physics_Term&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#a42b5bda709f9009ba93343f0c03744bc">string_to_physics_term</a> (const std::string &amp;input_string)</td></tr>
 <tr class="separator:a42b5bda709f9009ba93343f0c03744bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr><td colspan="2"><div class="groupHeader"></div></td></tr>
-<tr class="memitem:a4097aab73e1a8b36982a57154231cf74"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#a4097aab73e1a8b36982a57154231cf74">tostring</a> (const field_enums::Field_Type &amp;field_type)</td></tr>
-<tr class="separator:a4097aab73e1a8b36982a57154231cf74"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a64a81cdc418b8d42dffcc6c0361aea88"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#a64a81cdc418b8d42dffcc6c0361aea88">tostring</a> (const field_enums::Field_Name &amp;field_name)</td></tr>
-<tr class="separator:a64a81cdc418b8d42dffcc6c0361aea88"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa13b0a66f01fec31314876a9d9c9533b"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#aa13b0a66f01fec31314876a9d9c9533b">tostring</a> (const field_enums::Entity_Rank &amp;field_rank)</td></tr>
-<tr class="separator:aa13b0a66f01fec31314876a9d9c9533b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a66a2dba0b7bb7b4f1bc07efb3558b8b1"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#a66a2dba0b7bb7b4f1bc07efb3558b8b1">toindex</a> (const Component comp)</td></tr>
-<tr class="separator:a66a2dba0b7bb7b4f1bc07efb3558b8b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a63ea0a11be33bc50e589629f11940f51"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT field_enums::Field_Type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#a63ea0a11be33bc50e589629f11940f51">string_to_field_type</a> (const std::string &amp;input_string)</td></tr>
-<tr class="separator:a63ea0a11be33bc50e589629f11940f51"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a92f82e0320a588fe97679b9eebc22072"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT field_enums::Field_Name&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#a92f82e0320a588fe97679b9eebc22072">string_to_field_name</a> (const std::string &amp;input_string)</td></tr>
-<tr class="separator:a92f82e0320a588fe97679b9eebc22072"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6e28981c141794ff441cb51382829b9c"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#a6e28981c141794ff441cb51382829b9c">update_field_names</a> (const field_enums::Field_Name &amp;field_name, const std::string &amp;input_string)</td></tr>
-<tr class="separator:a6e28981c141794ff441cb51382829b9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a47910a03acbd1ee812dd409bdcfc7f0a"><td class="memItemLeft" align="right" valign="top"><a id="a47910a03acbd1ee812dd409bdcfc7f0a"></a>
-DICE_LIB_DLL_EXPORT <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#a47910a03acbd1ee812dd409bdcfc7f0a">num_field_names</a> ()</td></tr>
-<tr class="memdesc:a47910a03acbd1ee812dd409bdcfc7f0a"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns the number of field names <br /></td></tr>
-<tr class="separator:a47910a03acbd1ee812dd409bdcfc7f0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2df3fa086a18029fa5333ecc436040c6"><td class="memItemLeft" align="right" valign="top"><a id="a2df3fa086a18029fa5333ecc436040c6"></a>
-DICE_LIB_DLL_EXPORT std::list&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#a2df3fa086a18029fa5333ecc436040c6">get_reverse_sorted_field_names</a> ()</td></tr>
-<tr class="memdesc:a2df3fa086a18029fa5333ecc436040c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns a list of the fields in reverse order <br /></td></tr>
-<tr class="separator:a2df3fa086a18029fa5333ecc436040c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac23b39b2399acfeec9fb320a7a80452e"><td class="memItemLeft" align="right" valign="top">DICE_LIB_DLL_EXPORT field_enums::Entity_Rank&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_d_i_ce_1_1mesh.html#ac23b39b2399acfeec9fb320a7a80452e">string_to_entity_rank</a> (const std::string &amp;input_string)</td></tr>
-<tr class="separator:ac23b39b2399acfeec9fb320a7a80452e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>computational mesh utilities associated with the global DIC method and physics </p>
@@ -483,78 +453,6 @@ DICE_LIB_DLL_EXPORT std::list&lt; std::string &gt;&#160;</td><td class="memItemR
 
 </div>
 </div>
-<a id="ac23b39b2399acfeec9fb320a7a80452e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac23b39b2399acfeec9fb320a7a80452e">&#9670;&nbsp;</a></span>string_to_entity_rank()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">DICE_LIB_DLL_EXPORT field_enums::Entity_Rank DICe::mesh::string_to_entity_rank </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>input_string</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>converts a string to entity rank </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">input_string</td><td>the input string </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a92f82e0320a588fe97679b9eebc22072"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a92f82e0320a588fe97679b9eebc22072">&#9670;&nbsp;</a></span>string_to_field_name()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">DICE_LIB_DLL_EXPORT field_enums::Field_Name DICe::mesh::string_to_field_name </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>input_string</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>converts a string to a field name </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">input_string</td><td>the input string </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a63ea0a11be33bc50e589629f11940f51"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a63ea0a11be33bc50e589629f11940f51">&#9670;&nbsp;</a></span>string_to_field_type()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">DICE_LIB_DLL_EXPORT field_enums::Field_Type DICe::mesh::string_to_field_type </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>input_string</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>converts a string to a field type </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">input_string</td><td>the input string </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <a id="a42b5bda709f9009ba93343f0c03744bc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a42b5bda709f9009ba93343f0c03744bc">&#9670;&nbsp;</a></span>string_to_physics_term()</h2>
 
@@ -604,7 +502,7 @@ DICE_LIB_DLL_EXPORT std::list&lt; std::string &gt;&#160;</td><td class="memItemR
 </div>
 </div>
 <a id="af3c97a0bac4addabf2c743b85cd5a42d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af3c97a0bac4addabf2c743b85cd5a42d">&#9670;&nbsp;</a></span>tostring() <span class="overload">[1/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#af3c97a0bac4addabf2c743b85cd5a42d">&#9670;&nbsp;</a></span>tostring() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -628,7 +526,7 @@ DICE_LIB_DLL_EXPORT std::list&lt; std::string &gt;&#160;</td><td class="memItemR
 </div>
 </div>
 <a id="ac872732ea0b8b0e2024c5257b141232a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac872732ea0b8b0e2024c5257b141232a">&#9670;&nbsp;</a></span>tostring() <span class="overload">[2/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ac872732ea0b8b0e2024c5257b141232a">&#9670;&nbsp;</a></span>tostring() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -652,7 +550,7 @@ DICE_LIB_DLL_EXPORT std::list&lt; std::string &gt;&#160;</td><td class="memItemR
 </div>
 </div>
 <a id="a94de48c13d544975733eeb85c9179b51"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a94de48c13d544975733eeb85c9179b51">&#9670;&nbsp;</a></span>tostring() <span class="overload">[3/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a94de48c13d544975733eeb85c9179b51">&#9670;&nbsp;</a></span>tostring() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -675,117 +573,10 @@ DICE_LIB_DLL_EXPORT std::list&lt; std::string &gt;&#160;</td><td class="memItemR
 
 </div>
 </div>
-<a id="a4097aab73e1a8b36982a57154231cf74"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4097aab73e1a8b36982a57154231cf74">&#9670;&nbsp;</a></span>tostring() <span class="overload">[4/6]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">DICE_LIB_DLL_EXPORT std::string DICe::mesh::tostring </td>
-          <td>(</td>
-          <td class="paramtype">const field_enums::Field_Type &amp;&#160;</td>
-          <td class="paramname"><em>field_type</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>converts a field type to string </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">field_type</td><td>the field type </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a64a81cdc418b8d42dffcc6c0361aea88"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a64a81cdc418b8d42dffcc6c0361aea88">&#9670;&nbsp;</a></span>tostring() <span class="overload">[5/6]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">DICE_LIB_DLL_EXPORT std::string DICe::mesh::tostring </td>
-          <td>(</td>
-          <td class="paramtype">const field_enums::Field_Name &amp;&#160;</td>
-          <td class="paramname"><em>field_name</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>converts a field name to a string </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">field_name</td><td>the field name </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="aa13b0a66f01fec31314876a9d9c9533b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa13b0a66f01fec31314876a9d9c9533b">&#9670;&nbsp;</a></span>tostring() <span class="overload">[6/6]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">DICE_LIB_DLL_EXPORT std::string DICe::mesh::tostring </td>
-          <td>(</td>
-          <td class="paramtype">const field_enums::Entity_Rank &amp;&#160;</td>
-          <td class="paramname"><em>field_rank</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>converts a field rank to string </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">field_rank</td><td>the field rank </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a6e28981c141794ff441cb51382829b9c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6e28981c141794ff441cb51382829b9c">&#9670;&nbsp;</a></span>update_field_names()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">DICE_LIB_DLL_EXPORT void DICe::mesh::update_field_names </td>
-          <td>(</td>
-          <td class="paramtype">const field_enums::Field_Name &amp;&#160;</td>
-          <td class="paramname"><em>field_name</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>input_string</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>updates the field names by adding the given field to the list </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">field_name</td><td>the name of the field to add </td></tr>
-    <tr><td class="paramname">input_string</td><td>the string name of the field </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Oct 8 2017 07:07:41 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Dec 18 2017 08:07:16 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.13
 </small></address>
