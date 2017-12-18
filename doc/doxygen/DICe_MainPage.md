@@ -921,6 +921,81 @@ Edit the script to have the correct path locations. Then build DICe
 
 It is important to execute the install target to put all of the dice libraries in one folder. This is helpful when incorporating dice in an external application since all the libraries will be in one place.
 
+### Ubuntu
+
+Several users have had problems installing DICe on Ubuntu linux. For that reason, we include a detailed set of instructions to build the command line executable for DICe on Ubuntu here. We will add the GUI build instructions for linux later. Example configuration scripts for opencv, trilinos, and DICe on Ubuntu are located in the /scripts/ubuntu folder. The build configuration from these scripts will include the global methods, and opencv features. These instructions have been tested on Ubuntu 16.04.3 LTS. These instructions also work for RHEL if you change the apt-get commands to the corresponding rpm commands.
+
+First, set up your package installer if not already updated.
+
+    $ sudo apt-get update
+
+Install git if not already installed. After installing git, follow the instructions above to set up your git configuration (username, ssh-keys, etc.).
+
+    $ sudo apt-get install git
+
+Install an openmpi compiler.
+
+    $ sudo apt-get install openmpi-bin openmpi-dev
+
+Install cmake, if not already installed.
+
+    $ sudo apt-get install cmake
+
+Install the BLAS and LAPACK libraries.
+
+    $ sudo apt-get install libblas-dev liblapack-dev
+
+Install the image libraries.
+
+    $ sudo apt-get install libtiff-dev libpng-dev libjpeg-dev
+
+Install boost.
+
+    $ sudo apt-get install libboost-all-dev
+
+Install NetCDF. After installing netcdf, change some of the defaults in /usr/include/netcdf.h.
+
+    $ sudo apt-get install libnetcdf-dev
+    $ emacs -nw /usr/include/netcdf.h
+Set the variables NC_MAX_DIMS to 65536, NC_MAX_ATTRS to 8192, NC_MAX_VARS to 524288, and NC_MAX_NAME to 256
+
+Download Trilinos 12.4.2 from trilinos.org and create a build folder in the top of the directory tree of the source code. Place the do-trilinos-cmake file inside this build folder and change the path variables in the do-trilinos-cmake file.
+
+    $ cd <trilinos_source_path>
+    $ mkdir build
+    $ cd build
+    $ cp <path_to_DICe>/scripts/ubuntu/do-trilinos-cmake .
+    # change the path variables
+    $ chmod +x do-trilinos-cmake
+    $ ./do-trilinos-cmake
+    $ make all install
+
+Download OpenCV 3.2.0 from [here](https://github.com/opencv/opencv/releases/tag/3.2.0). Create a build folder in the top level of the source code and copy the sample do-opencv-cmake script to this folder. Change the path variables and run the configuration and build.
+
+    $ cd <opencv_source_path>
+    $ mkdir build
+    $ cd build
+    $ cp <path_to_DICe>/scripts/ubuntu/do-opencv-cmake .
+    # change the path variables
+    $ chmod +x do-opencv-cmake
+    $ ./do-opencv-cmake
+    $ make all install
+
+Clone DICe and build.
+
+    $ git clone git@github.com:dicengine/dice.git ./DICe
+    $ cd DICe
+    $ mkdir build
+    $ cd build
+    $ cp <path_to_DICe>/scripts/ubuntu/do-dice-cmake .
+    # change the path variables
+    $ chmod +x do-opencv-cmake
+    $ ./do-dice-cmake
+    $ make all
+    # test your build of DICe
+    $ cd tests
+    $ ctest
+    
 ### Windows
 
 First, download and install CLAPACK from
