@@ -1,0 +1,16 @@
+#!/bin/bash
+
+rm -f CMakeCache.txt
+rm -rf CMakeFiles
+
+cmake \
+    -D CMAKE_BUILD_TYPE=RELEASE \
+    -D CMAKE_INSTALL_PREFIX:FILEPATH=<path>/opencv-3.2.0/build/install \
+    -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+    -D CMAKE_CXX_COMPILER:STRING=mpicxx \
+    -D CMAKE_C_COMPILER:STRING=mpicc \
+    -D BUILD_opencv_videoio=OFF \
+    -D BUILD_opencv_static=ON \
+    -D BUILD_EXAMPLES=ON \
+    -D ENABLE_PRECOMPILED_HEADERS:BOOL=OFF \
+    ../
