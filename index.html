@@ -511,6 +511,7 @@ for i in range(0,NUM_SUBSETS):
 #show()   
 </pre><p>The python scripts above are only meant to provide a simple example. Obviously, there are many ways python can be used to generate more sophisticated plots.</p>
 <h1><a class="anchor" id="BuildingDICe"></a>Building <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function. ">DICe</a> </h1>
+<p>The easiest way to get started with <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function. ">DICe</a> is to use the package installers on the releases page of the github site. Pre-built binaries of the command line executables and the GUI combined are available for Mac OS X and Windows. For a linux distribution (or to make custom mods to the executables or GUI) one has to build <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function. ">DICe</a> from source. The instructions below provide a means to build the command line executables and libraries for <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function. ">DICe</a>. To build the GUI from source a separate step is necessary and the details are provided below.</p>
 <h2>Requirements </h2>
 <p><a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function. ">DICe</a> can be built and run on Mac OS X, Windows, and Linux. The prerequisite dependencies required for installing <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function. ">DICe</a> include:</p>
 <ul>
@@ -605,7 +606,20 @@ $ ctest
 </pre><p>Note that the entire do-cmake file should be a single line with no carriage returns. Then execute </p><pre class="fragment">$ do-cmake.bat
 $ nmake
 </pre><p>Once CLAPACK has built, Trilinos must be built. A sample <code>do-trilinos-cmake-win.bat</code> file is provided in the <code>\dice\scripts</code> folder. The same process for building CLAPACK can be used to build Trilinos and eventually <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function. ">DICe</a>. A sample <code>do-dice-cmake-win.bat</code> file is also included in the repository in the <code>\dice\scripts</code> folder.</p>
-<h2>Tiff </h2>
+<h3>Building the GUI from source</h3>
+<p>To build the <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function. ">DICe</a> gui from source, four steps are required. First a separate DICe_gui repo needs to be cloned. Then nodejs has to be installed. After this, a pre-built binary for electron needs to be installed. The paths to the <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function. ">DICe</a> executables needs to be set in a javascript file. At this point, the gui is ready to run. Detailed instructions are provided for Ubuntu linux, but the instructions for other operating systems can easily be replicated.</p>
+<p>First clone the DICe_gui repo </p><pre class="fragment">$ git clone git@github.com:dicengine/dicegui.git ./DICe_gui
+</pre><p>Next install nodejs, either by downloading the package installer from nodejs.org or using apt-get </p><pre class="fragment">$ sudo apt-get install curl #only necessary if you haven't already got curl installed
+$ curl -sL https://dep.nodesource.com/setup_8.x | sudo -E bash -
+$ sudo apt-get install nodejs
+</pre><p>Then download the pre-build electron binary from <a href="https://github.com/electron/electron/releases">https://github.com/electron/electron/releases</a>. For our Ubuntu example, we download electron-v1.7.10-linux-x64.zip. Unpack the zip file and inside is an electron executable file. Note the path to this executable, which we will call electron_exec below.</p>
+<p>Open the global.js file in the DICe_gui repo and modify the linux_path variable. </p><pre class="fragment"> $ cd DICe_gui/js
+ $ emacs -nw global.js
+ # change linux_path to &lt;DICe_path&gt;\build\bin\
+</pre><p>The DICe_path in the variable above should point to the <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function. ">DICe</a> command line executables and libraries that you built in the steps above (the <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function. ">DICe</a> repo build folder, not the DICe_gui repo).</p>
+<p>Next, simply cd into the DICe_gui folder and run the electron executable </p><pre class="fragment">  $ cd DICe_gui
+  $ &lt;electron_exec&gt; .
+</pre><h2>Tiff </h2>
 <p>LibTiff must be installed before building <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function. ">DICe</a>. LibTiff is used in the reading of <code>.tiff</code> images. There are many ways to install LibTiff, see <a href="http://www.remotesensing.org/libtiff/">here</a> for more information. If the tiff library is not in the system path, the user can set the <code>TIFF_DIR</code> variabe in the <code>do-cmake</code> configuration script to help CMake find the library.</p>
 <h2>Jpeg and Png </h2>
 <p>The optional <code>.jpeg</code> or <code>.jpg</code> and <code>.png</code> file formats will automatically be enabled if the jpeg and png libraries are in the system path. Otherwise, the <code>JPEG_DIR</code> or <code>PNG_DIR</code> variables must be set in the <code>do-cmake</code> script in order for CMake to find these libraries.</p>
@@ -637,7 +651,7 @@ $ nmake
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Dec 18 2017 08:07:18 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Dec 18 2017 15:40:55 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.13
 </small></address>
