@@ -34,7 +34,7 @@ Tutorials
 
 Releases (and Installers)
 -------------------------
-Windows 7 and Mac OSX Yosemite  package installers for DICe can be found [here](https://github.com/dicengine/dice/releases)
+Windows and Mac OS package installers for DICe can be found [here](https://github.com/dicengine/dice/releases). To install DICe on Linux, it must be built from source following the instructions [here](http://dicengine.github.io/dice).
 
 Contributing to DICe
 --------------------
