@@ -102,13 +102,15 @@ set_target_properties(DICe_CineToTiff DICe_CineStat DICe_Diff DICe_DiffAvg DICe_
 if(DICE_ENABLE_GLOBAL)
   add_executable(DICe_ExoDiff DICe_ExoDiff.cpp)
   target_link_libraries(DICe_ExoDiff ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
+  add_executable(DICe_ExoToFFT DICe_ExoToFFT.cpp)
+  target_link_libraries(DICe_ExoToFFT ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
   add_executable(DICe_2DExoImageDeformer DICe_2DExoImageDeformer.cpp)
   target_link_libraries(DICe_2DExoImageDeformer ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
 
-  install(TARGETS DICe_ExoDiff DICe_2DExoImageDeformer
+  install(TARGETS DICe_ExoDiff DICe_2DExoImageDeformer DICe_ExoToFFT
     DESTINATION ${CMAKE_INSTALL_PREFIX}/bin 
   )
-  set_target_properties(DICe_ExoDiff DICe_2DExoImageDeformer
+  set_target_properties(DICe_ExoDiff DICe_2DExoImageDeformer DICe_ExoToFFT
     PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
     ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
