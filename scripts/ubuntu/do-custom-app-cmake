@@ -1,0 +1,18 @@
+#!/bin/bash
+
+rm -f CMakeCache.txt
+rm -rf CMakeFiles
+
+cmake \
+    -D CMAKE_BUILD_TYPE:STRING=RELEASE \
+    -D DICE_TRILINOS_DIR:FILEPATH=<path_to_trilinos>/build/install \
+    -D CMAKE_CXX_FLAGS:STRING="-Wno-deprecated-declarations -Wno-format-security" \
+    -D CMAKE_EXE_LINKER_FLAGS:STRING="-ljbig -llzma -lz" \
+    -D DICE_LIB_DIR:FILEPATH=<path>/DICe/build/install/lib \
+    -D DICE_HEADER_DIR:FILEPATH=<path>/DICe/build/install/include \
+    -D DICE_ENABLE_GLOBAL:BOOL=ON \
+    -D NetCDF_DIR:PATH=<path>/netcdf-4.3.0/install/lib \
+    -D HDF5_DIR:PATH=<path>/hdf5-1.10.1/install/lib \
+    -D OpenCV_DIR:PATH=<path>/opencv-3.2.0/build/install \
+    -D BOOST_ROOT:PATH=<path>/boost_1_55_0/build \
+    ../
