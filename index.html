@@ -618,7 +618,7 @@ $ sudo apt-get install nodejs
  # change linux_path to &lt;DICe_path&gt;\build\bin\
 </pre><p>The DICe_path in the variable above should point to the <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function. ">DICe</a> command line executables and libraries that you built in the steps above (the <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function. ">DICe</a> repo build folder, not the DICe_gui repo).</p>
 <p>Next, simply cd into the DICe_gui folder and run the electron executable </p><pre class="fragment">  $ cd DICe_gui
-  $ &lt;electron_exec&gt; .
+  $ &lt;path_to_electron_exec&gt;/electron .
 </pre><h2>Tiff </h2>
 <p>LibTiff must be installed before building <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function. ">DICe</a>. LibTiff is used in the reading of <code>.tiff</code> images. There are many ways to install LibTiff, see <a href="http://www.remotesensing.org/libtiff/">here</a> for more information. If the tiff library is not in the system path, the user can set the <code>TIFF_DIR</code> variabe in the <code>do-cmake</code> configuration script to help CMake find the library.</p>
 <h2>Jpeg and Png </h2>
@@ -651,7 +651,7 @@ $ sudo apt-get install nodejs
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Dec 18 2017 15:40:55 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Jan 2 2018 10:54:38 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.13
 </small></address>
