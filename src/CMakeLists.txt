@@ -31,6 +31,7 @@ SET(DICE_HEADERS
   ./base/DICe_LocalShapeFunction.h
   ./core/DICe_Parser.h
   ./core/DICe_XMLUtils.h
+  ./core/DICe_PointCloud.h
   ./core/DICe_ParameterUtilities.h
   ./core/DICe_Simplex.h
   ./core/DICe_Objective.h
