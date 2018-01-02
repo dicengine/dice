@@ -55,6 +55,12 @@ When developing a custom application using DICe, keep the following points in mi
 Custom DIC Application Example
 ------------------------------
 
+Before building the custom app example, make sure that when the DICe source was built, the
+
+    $ make install
+
+command was called. This will ensure that the libraries and header files are grouped together in the install directory to be referenced in the do-custom-app-cmake file below for the DICE_HEADER_DIR and DICE_LIB_DIR variables. 
+
 An example project which can be used to build a custom DIC application using DICe methods is
 provided in the examples directory in the folder
 
@@ -62,36 +68,20 @@ provided in the examples directory in the folder
 
 To use this folder as a starting point for a new project, copy the folder and its contents to a new location.
 
-    cp dice/tests/examples/custom_app ./<new_project_location>
+    cp -r dice/tests/examples/custom_app ./<new_project_location>
 
-Inside the project folder is a `src` directory which can be removed, this was an artifact of including the `custom_app` example in the regression tests for DICe. It is not needed for building a custom application outside of DICe.
+Inside the project folder there may exist a `src` directory which can be removed, this was an artifact of including the `custom_app` example in the regression tests for DICe. It is not needed for building a custom application outside of DICe.
 
 Create a `build` directory in the top level of the project and change directories into it.
 
     mkdir build
     cd build
 
-Inside the build directory, create a CMake script similar to the example given below called `do-cmake` on Linux or `do-cmake.bat` on Windows:
-
-    #!/bin/bash
-
-    rm -f CMakeCache.txt
-    rm -rf CMakeFiles
-
-    cmake \
-        -D CMAKE_BUILD_TYPE=RELEASE \
-        -D DICE_TRILINOS_DIR:FILEPATH=<location_of_trilinos_install> \
-        -D DICE_LIB_DIR:FILEPATH=<location_of_dice_installed_libraries> \
-        -D DICE_HEADER_DIR:FILEPATH=<location_of_dice_headers> \
-        -D CMAKE_CXX_FLAGS:STRING="-Wall" \
-        ../
-	
-    # define the tiff directory if libtiff is installed in another location than the system path
-    # add "-D TIFF_DIR:FILEPATH="<libtiff_location>" \" to the variables above
+Inside the build directory, create a CMake script similar to the example given in /DICe/scripts/ubuntu/do-custom-app-cmake on Linux or a `do-cmake.bat` file on Windows. Note that some variables, like DICE_ENABLE_GLOBAL have to match the CMake settings used for the DICe source build.
 
 Then, run the configuration
 
-    $ ./do-cmake
+    $ ./do-custom-app-cmake
 
 Here we again use the `$` symbol to denote the command line prompt. After the project is configured, build it with 
 
