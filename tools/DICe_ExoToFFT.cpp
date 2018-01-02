@@ -68,9 +68,9 @@ int main(int argc, char *argv[]) {
   std::string delimiter = " ,\r";
 
   // determine if the second argument is help, file name or folder name
-  if(argc!=6){
+  if(argc!=6&&argc!=7){
     std::cout << " DICe_ExoToFFT (exports a serial exodus file to FFT) " << std::endl;
-    std::cout << " Syntax: DICe_ExoToFFT <exodus_file_name> <field_name> <num_neigh> <mm_per_pixel> <frequency_thresh>" << std::endl;
+    std::cout << " Syntax: DICe_ExoToFFT <exodus_file_name> <field_name> <num_neigh> <mm_per_pixel> <frequency_thresh> <output_debug_images_flag>" << std::endl;
     exit(-1);
   }
   std::string exo_name = argv[1];
@@ -78,6 +78,7 @@ int main(int argc, char *argv[]) {
   const int_t num_neigh = std::atoi(argv[3]);
   const scalar_t mm_per_pixel = std::atof(argv[4]);
   const scalar_t freq_thresh = std::atof(argv[5]);
+  bool output_debug_images = argc == 7;
 
   *outStream << "exodus input file:          " << exo_name << std::endl;
   *outStream << "requested field:            " << field_name << std::endl;
@@ -340,10 +341,16 @@ int main(int argc, char *argv[]) {
         intensities[px_j*img_w+px_i] = count_value;
       } // end image i
     } // end image j
-    //image->write("test_image.tif");
+    std::stringstream out_name;
+    out_name << "step_" << step << ".tif";
+    if(output_debug_images)
+      image->write(out_name.str());
     Teuchos::RCP<Image> image_fft = DICe::image_fft(image);
     Teuchos::ArrayRCP<intensity_t> fft_intensities = image_fft->intensities();
-    //image_fft->write("test_image_fft.tif");
+    std::stringstream out_name_fft;
+    out_name_fft << "fft_step_" << step << ".tif";
+    if(output_debug_images)
+      image_fft->write(out_name_fft.str());
     // convert the frequency threshold to pixel limits
     const int_t px_thresh_top_i = img_w/2 + (int_t)(freq_thresh*img_w);
     const int_t px_thresh_bottom_i = img_w/2 - (int_t)(freq_thresh*img_w);
