@@ -201,8 +201,8 @@ Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_fun
     scalar_t exact_u = 0.0;
     scalar_t exact_v = 0.0;
     schema_->image_deformer()->compute_deformation(cx,cy,exact_u,exact_v);
-    schema_->mesh()->get_field(DICe::field_enums::MODEL_SUBSET_DISPLACEMENT_X_FS)->global_value(correlation_point_global_id_) = exact_u;
-    schema_->mesh()->get_field(DICe::field_enums::MODEL_SUBSET_DISPLACEMENT_Y_FS)->global_value(correlation_point_global_id_) = exact_v;
+    schema_->mesh()->get_field(DICe::field_enums::MODEL_DISPLACEMENT_X_FS)->global_value(correlation_point_global_id_) = exact_u;
+    schema_->mesh()->get_field(DICe::field_enums::MODEL_DISPLACEMENT_Y_FS)->global_value(correlation_point_global_id_) = exact_v;
     // field 8: subset error at center in x direction
     schema_->mesh()->get_field(DICe::field_enums::FIELD_8_FS)->global_value(correlation_point_global_id_) = std::abs(exact_u - u);
     // field 9: subset error at center in x direction

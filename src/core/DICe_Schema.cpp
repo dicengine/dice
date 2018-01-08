@@ -653,6 +653,12 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     Teuchos::RCP<Uncertainty_Post_Processor> uncertainty_ptr = Teuchos::rcp(new Uncertainty_Post_Processor(Teuchos::null));
     post_processors_.push_back(uncertainty_ptr);
   }
+  // check for live_plot file and add them to the end of the PP list:
+  std::fstream livePlotDataFile("live_plot.dat", std::ios_base::in);
+  if(livePlotDataFile.good()){
+    Teuchos::RCP<Live_Plot_Post_Processor> lp_ptr = Teuchos::rcp (new Live_Plot_Post_Processor());
+    post_processors_.push_back(lp_ptr);
+  }
   if(post_processors_.size()>0) has_post_processor_ = true;
 
   Teuchos::RCP<Teuchos::ParameterList> outputParams;
@@ -1147,8 +1153,8 @@ Schema::create_mesh_fields(){
   mesh_->create_field(field_enums::SUBSET_DISPLACEMENT_Y_NM1_FS);
   mesh_->create_field(field_enums::STEREO_SUBSET_DISPLACEMENT_X_FS);
   mesh_->create_field(field_enums::STEREO_SUBSET_DISPLACEMENT_Y_FS);
-  mesh_->create_field(field_enums::MODEL_SUBSET_DISPLACEMENT_X_FS);
-  mesh_->create_field(field_enums::MODEL_SUBSET_DISPLACEMENT_Y_FS);
+  mesh_->create_field(field_enums::MODEL_DISPLACEMENT_X_FS);
+  mesh_->create_field(field_enums::MODEL_DISPLACEMENT_Y_FS);
   mesh_->create_field(field_enums::MODEL_DISPLACEMENT_Z_FS);
   mesh_->create_field(field_enums::SUBSET_COORDINATES_X_FS);
   mesh_->create_field(field_enums::SUBSET_COORDINATES_Y_FS);
@@ -2778,8 +2784,8 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
   Teuchos::RCP<MultiField> model_x = mesh_->get_field(MODEL_COORDINATES_X_FS);
   Teuchos::RCP<MultiField> model_y = mesh_->get_field(MODEL_COORDINATES_Y_FS);
   Teuchos::RCP<MultiField> model_z = mesh_->get_field(MODEL_COORDINATES_Z_FS);
-  Teuchos::RCP<MultiField> model_disp_x = mesh_->get_field(MODEL_SUBSET_DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> model_disp_y = mesh_->get_field(MODEL_SUBSET_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> model_disp_x = mesh_->get_field(MODEL_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> model_disp_y = mesh_->get_field(MODEL_DISPLACEMENT_Y_FS);
   Teuchos::RCP<MultiField> model_disp_z = mesh_->get_field(MODEL_DISPLACEMENT_Z_FS);
   scalar_t X=0.0,Y=0.0,Z=0.0;
   scalar_t Xw=0.0,Yw=0.0,Zw=0.0;

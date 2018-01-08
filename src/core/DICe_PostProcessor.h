@@ -72,6 +72,8 @@ const char * const coordinates_y_field_name = "coordinates_y_field_name";
 const char * const displacement_x_field_name = "displacement_x_field_name";
 /// String Parameter name
 const char * const displacement_y_field_name = "displacement_y_field_name";
+/// String parameter name
+const char * const post_process_live_plots = "post_process_live_plots";
 
 
 /// Number of post processor options
@@ -133,6 +135,8 @@ public:
 
   /// set up the neighbor lists for each point
   /// \param neighborhood_radius inclusive radius of a point's neighborhood
+  /// if the radius is positive a radius search is used to construct the neighbors
+  /// if the radius is negative, the search is k-nearest neighbors with the k being (int)(-1*radius)
   void initialize_neighborhood(const scalar_t & neighborhood_radius);
 
   /// Tasks that are done once after initialization, but before execution
@@ -359,6 +363,57 @@ public:
   using Post_Processor::field_specs;
 };
 
+/// \class DICe::Live_Plot_Post_Processor
+/// \brief A specific instance of post processor that computes values of key quantities at specified points
+class DICE_LIB_DLL_EXPORT
+Live_Plot_Post_Processor : public Post_Processor{
+
+public:
+
+  /// Default constructor
+  /// \param params the parameters to use for this post processor
+  Live_Plot_Post_Processor();
+
+  /// Virtual destructor
+  virtual ~Live_Plot_Post_Processor(){};
+
+  /// Set the parameters for this post processor
+  virtual void set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){};
+
+  /// Collect the neighborhoods of each of the points
+  virtual void pre_execution_tasks();
+
+  /// See base clase docutmentation
+  virtual int_t strain_window_size(){return -1.0;}
+
+  /// Execute the post processor
+  virtual void execute();
+
+  /// See base class documentation
+  using Post_Processor::field_specs;
+
+private:
+  // number of neighbors to use in interpolating the values
+  int_t num_neigh_;
+  // number of individual points
+  int_t num_individual_pts_;
+  // count the current frame
+  int_t frame_index_;
+  // vector of x-coordinates for points
+  std::vector<scalar_t> pts_x_;
+  // vector of y-coordinates for points
+  std::vector<scalar_t> pts_y_;
+  // vector of the indices that this processor owns
+  std::vector<int_t> local_indices_;
+  // map with all fields for all points on processor 0
+  Teuchos::RCP<MultiField_Map> zero_map_;
+  // corresponding field for proc zero
+  Teuchos::RCP<MultiField> zero_data_;
+  // distributed 1 to 1 map with all points on processor with the closest node to the point
+  Teuchos::RCP<MultiField_Map> dist_map_;
+  // corresponding field for dist procs
+  Teuchos::RCP<MultiField> dist_data_;
+};
 
 
 }// End DICe Namespace

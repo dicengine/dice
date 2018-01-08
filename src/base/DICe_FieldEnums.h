@@ -468,9 +468,9 @@ const Field_Spec STEREO_SUBSET_DISPLACEMENT_X_FS(field_enums::SCALAR_FIELD_TYPE,
 /// field spec
 const Field_Spec STEREO_SUBSET_DISPLACEMENT_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::STEREO_DISPLACEMENT_Y,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
 /// field spec
-const Field_Spec MODEL_SUBSET_DISPLACEMENT_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::MODEL_DISPLACEMENT_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+const Field_Spec MODEL_DISPLACEMENT_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::MODEL_DISPLACEMENT_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
 /// field spec
-const Field_Spec MODEL_SUBSET_DISPLACEMENT_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::MODEL_DISPLACEMENT_Y,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+const Field_Spec MODEL_DISPLACEMENT_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::MODEL_DISPLACEMENT_Y,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
 /// field spec
 const Field_Spec MODEL_DISPLACEMENT_Z_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::MODEL_DISPLACEMENT_Z,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
 /// field spec
@@ -752,8 +752,8 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     SUBSET_DISPLACEMENT_Y_NM1_FS,
     STEREO_SUBSET_DISPLACEMENT_X_FS,
     STEREO_SUBSET_DISPLACEMENT_Y_FS,
-    MODEL_SUBSET_DISPLACEMENT_X_FS,
-    MODEL_SUBSET_DISPLACEMENT_Y_FS,
+    MODEL_DISPLACEMENT_X_FS,
+    MODEL_DISPLACEMENT_Y_FS,
     MODEL_DISPLACEMENT_Z_FS,
     ROTATION_Z_FS,
     ROTATION_Z_NM1_FS,
