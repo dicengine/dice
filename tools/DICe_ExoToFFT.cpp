@@ -48,15 +48,25 @@
 #include <DICe_MeshIO.h>
 #include <DICe_PointCloud.h>
 #include <DICe_FFT.h>
+#include <DICe_GlobalUtils.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
 #include <Teuchos_LAPACK.hpp>
 #include <Teuchos_SerialDenseMatrix.hpp>
 
+#include "opencv2/core/core.hpp"
+#include "opencv2/calib3d.hpp"
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/photo.hpp"
+
 #include <cassert>
 #include <string>
 #include <iostream>
+
+using namespace cv;
 
 using namespace DICe;
 
@@ -88,6 +98,10 @@ int main(int argc, char *argv[]) {
 
   if(freq_thresh > 0.5){
     std::cout << "Error, frequency threshold is too high (>0.5)" << std::endl;
+    exit(-1);
+  }
+  if(num_neigh<3){
+    std::cout << "Error, num neighbors too small (need at least 3)" << std::endl;
     exit(-1);
   }
 
@@ -209,6 +223,21 @@ int main(int argc, char *argv[]) {
   kd_tree->buildIndex();
   *outStream << "kd-tree completed" << std::endl;
 
+  // compute the average distance between nodes:
+  scalar_t avg_dist_between_nodes = 0.0;
+  scalar_t query_pt_pre[3];
+  std::vector<size_t> ret_index_pre(2);
+  std::vector<scalar_t> out_dist_sqr_pre(2);
+  for(int_t i=0;i<num_nodes;++i){
+    query_pt_pre[0] = coords_x[i];
+    query_pt_pre[1] = coords_y[i];
+    query_pt_pre[2] = coords_z[i];
+    kd_tree->knnSearch(&query_pt_pre[0], 2, &ret_index_pre[0], &out_dist_sqr_pre[0]);
+    avg_dist_between_nodes += std::sqrt(out_dist_sqr_pre[1]);
+  }
+  avg_dist_between_nodes/=num_nodes;
+  std::cout << "average distance between nodes: " << avg_dist_between_nodes << std::endl;
+
   // create a regular grid (in this case, an image)
 
   // determine the two longest dimensions
@@ -258,8 +287,6 @@ int main(int argc, char *argv[]) {
   std::FILE * resultsFilePtr = fopen("results.txt","w");
 
   // create an image to store the values for each step
-  Teuchos::RCP<DICe::Image> image = Teuchos::rcp(new DICe::Image(img_w,img_h,0.0));
-  Teuchos::ArrayRCP<intensity_t> intensities = image->intensities();
 
   scalar_t query_pt[3];
   std::vector<size_t> ret_index(num_neigh);
@@ -278,6 +305,14 @@ int main(int argc, char *argv[]) {
   Teuchos::SerialDenseMatrix<int_t,double> X_t(N,num_neigh, true);
   Teuchos::SerialDenseMatrix<int_t,double> X_t_X(N,N,true);
 
+  // break the image mapping up into two steps
+  // the first populates the portions of an image that are near the nodes (excluding gaps)
+
+  std::vector<scalar_t> projected_values(img_w*img_h,0.0);
+  std::vector<bool> on_part(img_w*img_h,false);
+
+  bool all_steps_passed = true;
+  //for(int_t step=50;step<=50;++step){
   for(int_t step=1;step<=num_time_steps;++step){
     std::cout << "*** processing step: " << step << std::endl;
     values = mesh::read_exodus_field(exo_name,field_name,step);
@@ -299,11 +334,15 @@ int main(int argc, char *argv[]) {
           coeffs[i] = 0.0;
         }
         scalar_t my_x = min_i + px_i*mm_per_pixel;
-        scalar_t my_y = min_j + px_j*mm_per_pixel;
+        scalar_t my_y = min_j + (img_h-px_j-1)*mm_per_pixel; // flipped because image coords are from the top down
         query_pt[0] = my_x;
         query_pt[1] = my_y;
         query_pt[2] = avg_k;
         kd_tree->knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
+
+        // check if the nearest neighbor is more than the node spacing away
+        if(std::sqrt(out_dist_sqr[0]) > avg_dist_between_nodes*1.1) continue;
+
         // iterate the neighbors and fit the data
         for(int_t neigh = 0;neigh<num_neigh; ++neigh){
           const int_t neigh_id = ret_index[neigh];
@@ -335,39 +374,130 @@ int main(int argc, char *argv[]) {
             coeffs[i] += X_t_X(i,j)*X_t_u[j];
           }
         }
-        scalar_t value = coeffs[0];
-        // convert the value to counts and put it in the image:
-        scalar_t count_value = (value - min_value)*counts_per_unit;
-        intensities[px_j*img_w+px_i] = count_value;
+        projected_values[px_j*img_w+px_i] = coeffs[0];
+        on_part[px_j*img_w+px_i] = true;
       } // end image i
     } // end image j
+
+    Teuchos::RCP<DICe::Image> image = Teuchos::rcp(new DICe::Image(img_w,img_h,0.0));
+    Teuchos::ArrayRCP<intensity_t> intensities = image->intensities();
+
+    Mat cv_img, cv_mask, cv_inpainted;
+    cv_img.create(img_h, img_w, CV_8UC(1));
+    cv_mask.create(img_h, img_w, CV_8UC(1));
+    cv_inpainted.create(img_h, img_w, CV_8UC(1));
+
+    // step two is to convert the projected values of the field to image intensity values
+    // populate the image values:
+    for(int_t px_j=0;px_j<img_h;++px_j){
+      for(int_t px_i=0;px_i<img_w;++px_i){
+        // convert the value to counts and put it in the image:
+        intensity_t count_value = (projected_values[px_j*img_w+px_i] - min_value)*counts_per_unit;
+        cv_img.at<uchar>(px_j,px_i) = count_value;
+        cv_mask.at<uchar>(px_j,px_i) = 0;
+        if(!on_part[px_j*img_w+px_i]){
+          cv_mask.at<uchar>(px_j,px_i) = 255;
+        }
+      }
+    }
+
+    //int_t largest_dim = img_w > img_h ? img_w : img_h;
+    //inpaint(cv_img,cv_mask,cv_inpainted,largest_dim/16,INPAINT_TELEA);
+    inpaint(cv_img,cv_mask,cv_inpainted,31,INPAINT_TELEA);
+
+    for(int_t px_j=0;px_j<img_h;++px_j){
+      for(int_t px_i=0;px_i<img_w;++px_i){
+        intensities[px_j*img_w+px_i] = cv_inpainted.at<uchar>(px_j,px_i);
+      }
+    }
+    // filter to remove interpolation artifacts
+    image->gauss_filter(13);
+    image->gauss_filter(13);
+    //image->gauss_filter(13);
+
+    // window the time to exclude the boundary:
+    const int_t buffer = 10; //px
+    const int_t buf_img_w = img_w - 2*buffer;
+    const int_t buf_img_h = img_h - 2*buffer;
+    Teuchos::RCP<DICe::Image> buf_image = Teuchos::rcp(new DICe::Image(buf_img_w,buf_img_h,0.0));
+    Teuchos::ArrayRCP<intensity_t> buf_intensities = buf_image->intensities();
+    for(int_t px_j=0;px_j<buf_img_h;++px_j){
+      for(int_t px_i=0;px_i<buf_img_w;++px_i){
+        buf_intensities[px_j*buf_img_w+px_i] = intensities[(px_j+buffer)*img_w+px_i+buffer];
+      }
+    }
+
     std::stringstream out_name;
     out_name << "step_" << step << ".tif";
+    //imwrite("cv_field.tif",cv_img);
+    //imwrite("cv_field_mask.tif",cv_mask);
+    //imwrite("cv_field_inpaint.tif",cv_inpainted);
     if(output_debug_images)
-      image->write(out_name.str());
-    Teuchos::RCP<Image> image_fft = DICe::image_fft(image);
+      buf_image->write(out_name.str());
+//    image->write(out_name.str());
+    Teuchos::RCP<Image> image_fft = DICe::image_fft(buf_image);
     Teuchos::ArrayRCP<intensity_t> fft_intensities = image_fft->intensities();
     std::stringstream out_name_fft;
     out_name_fft << "fft_step_" << step << ".tif";
     if(output_debug_images)
       image_fft->write(out_name_fft.str());
-    // convert the frequency threshold to pixel limits
-    const int_t px_thresh_top_i = img_w/2 + (int_t)(freq_thresh*img_w);
-    const int_t px_thresh_bottom_i = img_w/2 - (int_t)(freq_thresh*img_w);
-    const int_t px_thresh_top_j = img_h/2 + (int_t)(freq_thresh*img_h);
-    const int_t px_thresh_bottom_j = img_h/2 - (int_t)(freq_thresh*img_h);
+
+    // compute how much of the power spectra is below the threshold
+    std::stringstream power_x_name;
+    std::stringstream power_y_name;
+    power_x_name << "fft_power_x_" << step << ".txt";
+    power_y_name << "fft_power_y_" << step << ".txt";
+    std::FILE * powerXFilePtr = fopen(power_x_name.str().c_str(),"w");
+    std::FILE * powerYFilePtr = fopen(power_y_name.str().c_str(),"w");
+    scalar_t max_power_x = 0.0;
+    scalar_t max_freq_x = 0.0;
+    scalar_t max_power_y = 0.0;
+    scalar_t max_freq_y = 0.0;
+
     scalar_t total_power = 0.0;
-    scalar_t exceed_power = 0.0;
-    for(int_t px_j=0;px_j<img_h;++px_j){
-      for(int_t px_i=0;px_i<img_w;++px_i){
-        total_power += fft_intensities[px_j*img_w+px_i];
-        if(px_j>px_thresh_top_j||px_j<px_thresh_bottom_j||px_i>px_thresh_top_i||px_i<px_thresh_bottom_i)
-          exceed_power += fft_intensities[px_j*img_w+px_i];
+    for(int_t px_j=buf_img_h/2;px_j<buf_img_h;++px_j){
+      for(int_t px_i=buf_img_w/2;px_i<buf_img_w;++px_i){
+        total_power += fft_intensities[px_j*buf_img_w+px_i];
       }
     }
-    const scalar_t ratio = exceed_power / total_power;
-    fprintf(resultsFilePtr,"%i,%f,%f\n",step,freq_thresh,ratio);
-    std::cout << "*** power ratio: " << ratio << std::endl;
+
+    for(int_t px_j=buf_img_h/2;px_j<buf_img_h;++px_j){
+      scalar_t power_y = 0.0;
+      scalar_t freq = 0.5 * (px_j-buf_img_h/2)*2.0/buf_img_h;
+      for(int_t px_i=buf_img_w/2;px_i<buf_img_w;++px_i){
+        power_y += fft_intensities[px_j*buf_img_w+px_i];
+      }
+      if(power_y > max_power_y){
+        max_power_y = power_y;
+        max_freq_y = freq;
+      }
+      fprintf(powerYFilePtr,"%f,%f\n",freq,power_y/total_power);
+    }
+    for(int_t px_i=buf_img_w/2;px_i<buf_img_w;++px_i){
+      scalar_t power_x = 0.0;
+      scalar_t freq = 0.5 * (px_i-buf_img_w/2)*2.0/buf_img_w;
+      for(int_t px_j=buf_img_h/2;px_j<buf_img_h;++px_j){
+        power_x += fft_intensities[px_j*buf_img_w+px_i];
+      }
+      if(power_x > max_power_x){
+        max_power_x = power_x;
+        max_freq_x = freq;
+      }
+      fprintf(powerXFilePtr,"%f,%f\n",freq,power_x/total_power);
+    }
+    fclose(powerXFilePtr);
+    fclose(powerYFilePtr);
+
+    std::cout << "*** max power x: " << max_power_x/total_power << " at freq " << max_freq_x << " to " << max_freq_x + 1.0/buf_img_w << std::endl;
+    std::cout << "*** max power y: " << max_power_y/total_power << " at freq " << max_freq_y << " to " << max_freq_y + 1.0/buf_img_h << std::endl;
+
+    if(max_freq_x < freq_thresh && max_freq_y < freq_thresh)
+      std::cout << "*** STEP PASSED! ***" << std::endl;
+    else{
+      std::cout << "*** STEP FAILED! ***" << std::endl;
+      all_steps_passed = false;
+    }
+
   } // end step loop
   delete [] WORK;
   delete [] IPIV;
@@ -375,6 +505,9 @@ int main(int argc, char *argv[]) {
   fclose(resultsFilePtr);
 
   DICe::finalize();
+
+  if(!all_steps_passed)
+    return -1;
 
   return 0;
 }
