@@ -458,8 +458,8 @@ image_fft(Teuchos::RCP<Image> image,
   image_fft(image,real,complex,0,hamming_filter);
   assert(real.size()==w*h);
   assert(complex.size()==w*h);
-  scalar_t max_mag = 0.0;
-  scalar_t min_mag = 1.0E12;
+  scalar_t max_mag = std::numeric_limits<scalar_t>::min();
+  scalar_t min_mag = std::numeric_limits<scalar_t>::max();
 
   int_t index = 0;
   Teuchos::ArrayRCP<intensity_t> mag(w*h,0.0);

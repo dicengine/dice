@@ -78,9 +78,9 @@ int main(int argc, char *argv[]) {
   std::string delimiter = " ,\r";
 
   // determine if the second argument is help, file name or folder name
-  if(argc!=6&&argc!=7){
+  if(argc<6||argc>8){
     std::cout << " DICe_ExoToFFT (exports a serial exodus file to FFT) " << std::endl;
-    std::cout << " Syntax: DICe_ExoToFFT <exodus_file_name> <field_name> <num_neigh> <mm_per_pixel> <frequency_thresh> <output_debug_images_flag>" << std::endl;
+    std::cout << " Syntax: DICe_ExoToFFT <exodus_file_name> <field_name> <num_neigh> <mm_per_pixel> <frequency_thresh> [final_step] [output_debug_images_flag]" << std::endl;
     exit(-1);
   }
   std::string exo_name = argv[1];
@@ -88,7 +88,8 @@ int main(int argc, char *argv[]) {
   const int_t num_neigh = std::atoi(argv[3]);
   const scalar_t mm_per_pixel = std::atof(argv[4]);
   const scalar_t freq_thresh = std::atof(argv[5]);
-  bool output_debug_images = argc == 7;
+  int_t final_step = argc >=7 ? std::atoi(argv[6]) : -1;
+  bool output_debug_images = argc == 8;
 
   *outStream << "exodus input file:          " << exo_name << std::endl;
   *outStream << "requested field:            " << field_name << std::endl;
@@ -189,6 +190,9 @@ int main(int argc, char *argv[]) {
   scalar_t min_value = std::numeric_limits<scalar_t>::max();
   scalar_t max_value = std::numeric_limits<scalar_t>::min();
   std::vector<scalar_t> values;
+  if(final_step<0)
+    final_step = num_time_steps;
+
   for(int_t step=1;step<=num_time_steps;++step){
     values = mesh::read_exodus_field(exo_name,field_name,step);
     if(values.size()<=0){
@@ -313,7 +317,7 @@ int main(int argc, char *argv[]) {
 
   bool all_steps_passed = true;
   //for(int_t step=50;step<=50;++step){
-  for(int_t step=1;step<=num_time_steps;++step){
+  for(int_t step=1;step<=final_step;++step){
     std::cout << "*** processing step: " << step << std::endl;
     values = mesh::read_exodus_field(exo_name,field_name,step);
     if(values.size()<=0){
@@ -324,6 +328,15 @@ int main(int argc, char *argv[]) {
       std::cout << "Error, values vector is the wrong size" << std::endl;
       exit(-1);
     }
+    // check for a null field
+    scalar_t field_sum = 0.0;
+    for(size_t i=0;i<values.size();++i)
+      field_sum += values[i];
+    if(field_sum==0.0){
+      std::cout << "*** NULL STEP" << std::endl;
+      continue;
+    }
+
     // populate the image values:
     for(int_t px_j=0;px_j<img_h;++px_j){
       for(int_t px_i=0;px_i<img_w;++px_i){
@@ -393,6 +406,8 @@ int main(int argc, char *argv[]) {
       for(int_t px_i=0;px_i<img_w;++px_i){
         // convert the value to counts and put it in the image:
         intensity_t count_value = (projected_values[px_j*img_w+px_i] - min_value)*counts_per_unit;
+        if(on_part[px_j*img_w+px_i])
+          intensities[px_j*img_w+px_i] = count_value;
         cv_img.at<uchar>(px_j,px_i) = count_value;
         cv_mask.at<uchar>(px_j,px_i) = 0;
         if(!on_part[px_j*img_w+px_i]){
@@ -407,7 +422,8 @@ int main(int argc, char *argv[]) {
 
     for(int_t px_j=0;px_j<img_h;++px_j){
       for(int_t px_i=0;px_i<img_w;++px_i){
-        intensities[px_j*img_w+px_i] = cv_inpainted.at<uchar>(px_j,px_i);
+        if(!on_part[px_j*img_w+px_i])
+          intensities[px_j*img_w+px_i] = cv_inpainted.at<uchar>(px_j,px_i);
       }
     }
     // filter to remove interpolation artifacts
@@ -460,6 +476,7 @@ int main(int argc, char *argv[]) {
         total_power += fft_intensities[px_j*buf_img_w+px_i];
       }
     }
+    if(total_power==0.0) total_power = 1.0;
 
     for(int_t px_j=buf_img_h/2;px_j<buf_img_h;++px_j){
       scalar_t power_y = 0.0;
@@ -506,9 +523,12 @@ int main(int argc, char *argv[]) {
 
   DICe::finalize();
 
-  if(!all_steps_passed)
+  if(!all_steps_passed){
+    std::cout << "\n******************* FAILED ****************************\n" << std::endl;
     return -1;
+  }
 
+  std::cout << "\n******************* PASSED ****************************\n" << std::endl;
   return 0;
 }
 

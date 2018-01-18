@@ -837,7 +837,10 @@ Image::gauss_filter(const int_t mask_size,const bool use_hierarchical_parallelis
   const int_t team_size){
   DEBUG_MSG("Image::gauss_filter: mask_size " << gauss_filter_mask_size_);
 
-  if(mask_size>0) gauss_filter_mask_size_=mask_size;
+  if(mask_size>0){
+    gauss_filter_mask_size_=mask_size;
+    gauss_filter_half_mask_ = gauss_filter_mask_size_/2+1;
+  }
 
   std::vector<scalar_t> coeffs(13,0.0);
 
