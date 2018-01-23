@@ -177,8 +177,11 @@ IF(DICE_ENABLE_OPENCV)
 ENDIF()
 
 IF(DICE_ENABLE_NETCDF)
+  find_library(HDF5_lib NAMES libhdf5.a hdf5 PATHS ${HDF5_DIR} NO_DEFAULT_PATH)
   find_library(HDF5_lib NAMES libhdf5.a hdf5 PATHS ${HDF5_DIR})
+  find_library(HDF5_hl_lib NAMES libhdf5_hl.a hdf5_hl PATHS ${HDF5_DIR} NO_DEFAULT_PATH)
   find_library(HDF5_hl_lib NAMES libhdf5_hl.a hdf5_hl PATHS ${HDF5_DIR})
+  MESSAGE(STATUS "Using HDF5 libs: ${HDF5_lib} ${HDF5_hl_lib}")
   target_link_libraries(main ${HDF5_lib} ${HDF5_hl_lib})
 ENDIF()
 
