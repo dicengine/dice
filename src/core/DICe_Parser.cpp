@@ -96,6 +96,7 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
                        ("generate,g",po::value<std::string>()->implicit_value("dice"),"Create XML input file templates")
                        ("stats,s","Print field statistics to screen")
                        ("ss_locs","Print a file (ss_locs.txt) with the subset locations and exit before analysis")
+                       ("debug_msg_on,d","Returns 1 if debugging messages are on, 0 if off")
                        ;
 
   // Parse the command line options
@@ -118,6 +119,17 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
     if(proc_rank==0)
       print_banner();
     force_exit = true;
+    return inputParams;
+  }
+
+  // Handle debug message on or off requests
+  if(vm.count("debug_msg_on")){
+    force_exit = true;
+#ifdef DICE_DEBUG_MSG
+    inputParams->set("debug_msg_on",true);
+#else
+    inputParams->set("debug_msg_on",false);
+#endif
     return inputParams;
   }
 

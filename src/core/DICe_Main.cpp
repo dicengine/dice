@@ -76,6 +76,11 @@ int main(int argc, char *argv[]) {
     if(force_exit){
       // exit gracefully:
       DICe::finalize();
+      if(input_params->isParameter("debug_msg_on")){
+        if(input_params->get<bool>("debug_msg_on")){
+          return 1;
+        }
+      }
       return 0;
     }
     *outStream << "Input Parameters: " << std::endl;
