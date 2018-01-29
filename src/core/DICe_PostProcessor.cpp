@@ -956,15 +956,17 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
         scalar_t dy = by - ay;
         scalar_t mag = std::sqrt(dx*dx+dy*dy);
         TEUCHOS_TEST_FOR_EXCEPTION(mag==0,std::runtime_error,"");
-        scalar_t nx = 1.0/mag * dx;
-        scalar_t ny = 1.0/mag * dy;
+        scalar_t nx = dx/mag;
+        scalar_t ny = dy/mag;
         scalar_t arc_length = 2.0; // pixels
         scalar_t px = ax;
         scalar_t py = ay;
         int_t s = 1;
-        while(px <= bx){
+        while(true){
           px += arc_length*nx;
           py += arc_length*ny;
+          scalar_t len = ((px-ax)*(px-ax) + (py-ay)*(py-ay));
+          if(len >= mag*mag) break;
           pts_x_.push_back(px);
           pts_y_.push_back(py);
           //DEBUG_MSG("Live_Plot_Post_Processor::pre_execution_tasks(): adding line point " << pts_x_[pts_x_.size()-1] << " " << pts_y_[pts_y_.size()-1]);
@@ -979,6 +981,7 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
   const int_t num_pts = pts_x_.size();
   std::vector<scalar_t> closest_distances_this_proc(num_pts,0.0);
 
+  DEBUG_MSG("Live_Plot_Post_Processor::pre_execution_tasks(): coord x field " << coords_x_name_ << " y " << coords_y_name_);
   // do a nearest neighbor search to see which processor this point is on:
   const int_t spa_dim = mesh_->spatial_dimension();
   DICe::field_enums::Field_Spec coords_x_spec = mesh_->get_field_spec(coords_x_name_);
