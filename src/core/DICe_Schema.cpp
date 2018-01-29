@@ -2795,7 +2795,7 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
   // if this is the first frame and a best fit plane is being used, clear the transform entries in case they have already been specified by the user
 
   bool best_fit = false;
-  if(frame_id_==first_frame_id_+1){
+  if(frame_id_==first_frame_id_){
     std::ifstream f("best_fit_plane.dat");
     // if there is a best fit plane file, determine the best fit plane
     // this has to be done after the inital 3d coords are established
@@ -2812,7 +2812,7 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
     yr = stereo_coords_y->local_value(i) + my_stereo_disp_y->local_value(i);
     max_m_value = tri->triangulate(xl,yl,xr,yr,X,Y,Z,Xw,Yw,Zw);
     max_m->local_value(i) = max_m_value;
-    if(frame_id_==first_frame_id_+1){
+    if(frame_id_==first_frame_id_){
       model_x->local_value(i) = Xw; // w-coordinates have been transformed by a user defined transform to world or model coords
       model_y->local_value(i) = Yw;
       model_z->local_value(i) = Zw;
@@ -2824,7 +2824,7 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
     }
     //std::cout << " xl " << xl << " yl " << yl << " xr " << xr << " yr " << yr << " X " << Xw << " Y " << Yw << " Z " << Zw << std::endl;
   }
-  if(frame_id_==first_frame_id_+1 && best_fit){
+  if(frame_id_==first_frame_id_ && best_fit){
     Teuchos::RCP<MultiField> sigma = mesh_->get_field(SIGMA_FS);
     tri->best_fit_plane(model_x,model_y,model_z,sigma);
     // retriangulate the coordinate in the first frame

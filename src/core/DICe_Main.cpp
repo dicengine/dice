@@ -289,6 +289,8 @@ int main(int argc, char *argv[]) {
       //if(stereo_schema->use_nonlinear_projection())
       //  stereo_schema->project_right_image_into_left_frame(triangulation,true);
       stereo_schema->set_frame_range(first_frame_id,num_frames);
+      // go ahead and set up the model coordinates field
+      schema->execute_triangulation(triangulation,stereo_schema);
       cross_corr_time = t.elapsed();
     } // end is stereo
     else{ // only the ref image needs to be set
