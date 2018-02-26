@@ -346,7 +346,9 @@ int main(int argc, char *argv[]) {
           lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
         }
         catch(std::exception &e){
-          DEBUG_MSG( e.what() << '\n');
+          if(&e!=0){
+            DEBUG_MSG( e.what() << '\n');
+          }
           return LINEAR_SOLVE_FAILED;
         }
         for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
@@ -355,7 +357,9 @@ int main(int argc, char *argv[]) {
           lapack.GETRI(N,H.values(),N,IPIV,WORK,LWORK,&INFO);
         }
         catch(std::exception &e){
-          DEBUG_MSG( e.what() << '\n');
+          if(&e!=0){
+            DEBUG_MSG( e.what() << '\n');
+          }
           return LINEAR_SOLVE_FAILED;
         }
 

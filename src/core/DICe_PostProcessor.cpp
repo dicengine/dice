@@ -420,7 +420,9 @@ VSG_Strain_Post_Processor::execute(){
         }
       }
       catch(std::exception &e){
-        DEBUG_MSG( e.what() << '\n');
+        if(&e!=0){
+          DEBUG_MSG( e.what() << '\n');
+        }
         std::cout << "Error: Something went wrong in the condition number calculation" << std::endl;
         TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
       }
@@ -429,7 +431,9 @@ VSG_Strain_Post_Processor::execute(){
         lapack.GETRI(X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),IPIV,WORK,LWORK,&INFO);
       }
       catch(std::exception &e){
-        DEBUG_MSG( e.what() << '\n');
+        if(&e!=0){
+          DEBUG_MSG( e.what() << '\n');
+        }
         std::cout << "Error: Something went wrong in the inverse calculation of X^T*X " << std::endl;
       }
 

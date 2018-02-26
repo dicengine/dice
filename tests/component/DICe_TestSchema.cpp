@@ -152,9 +152,11 @@ int main(int argc, char *argv[]) {
   try{
     Teuchos::RCP<DICe::Schema> schemaTextBadParams = Teuchos::rcp(new DICe::Schema(badParams));
   }
-  catch (std::logic_error &err) {
+  catch (std::logic_error &e) {
     exception_thrown_as_it_should = true;
-    *outStream << err.what() << "\n";
+    if(&e!=0){
+      *outStream << e.what() << "\n";
+    }
   }; // end try
   if (!exception_thrown_as_it_should) {
     *outStream << "Error, An exception should have been thrown for invalid parameters but was not.\n";

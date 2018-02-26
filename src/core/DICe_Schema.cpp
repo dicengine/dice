@@ -1377,7 +1377,9 @@ Schema::execute_correlation(){
       update_frame_id();
     }
     catch(std::exception & e){
-      std::cout << "Error, global correlation failed: " << e.what() << std::endl;
+      if(&e!=0){
+        std::cout << "Error, global correlation failed: " << e.what() << std::endl;
+      }
     }
     if(global_status!=CORRELATION_SUCCESSFUL){
       std::cout << "********* Error, global correlation failed **************** " << std::endl;
