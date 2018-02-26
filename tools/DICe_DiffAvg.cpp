@@ -166,6 +166,7 @@ int main(int argc, char *argv[]) {
   std::map<int_t,std::vector<scalar_t> > ::iterator map_it = sortedMap.begin();
   for(;map_it!=sortedMap.end();++map_it){
     int_t num_values = map_it->second.size();
+    assert(num_values!=0);
     int_t coord = map_it->first;
     scalar_t avg_value = 0.0;
     for(int_t i=0;i<num_values;++i){

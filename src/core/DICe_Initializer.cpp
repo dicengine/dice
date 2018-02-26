@@ -884,7 +884,7 @@ Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
   const scalar_t a_dot_b = delta_12_x_*delta_12_x_def + delta_12_y_*delta_12_y_def;
   if(mag_ref_*mag_def==0.0) return INITIALIZE_FAILED; // FIXME use field_values here?
   // TODO check that the mag_ref and mag_def are about the same (should be rigid body motion?)
-  scalar_t value = a_dot_b/(mag_ref_*mag_def);
+  scalar_t value = mag_ref_*mag_def==0.0?0.0:a_dot_b/(mag_ref_*mag_def);
   if (value < -1.0) value = -1.0 ;
   else if (value > 1.0) value = 1.0 ;
   scalar_t theta_12 = 1.0*std::acos(value); // DICe measures theta in the other direction

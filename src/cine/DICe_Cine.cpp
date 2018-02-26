@@ -99,15 +99,15 @@ Cine_Reader::Cine_Reader(const std::string & file_name,
 
   if(cine_header_->bit_depth_==BIT_DEPTH_8){
     filter_value_ = filter_failed_pixels_ ?  250.0 : 255.0;
-    conversion_factor_ = 255.0/filter_value_;
+    conversion_factor_ = filter_value_=0.0?255.0:255.0/filter_value_;
   }
   else if(cine_header_->bit_depth_==BIT_DEPTH_16){
     filter_value_ = filter_failed_pixels_ ?  65500.0 : 65535.0;
-    conversion_factor_ = 255.0/filter_value_;
+    conversion_factor_ = filter_value_==0.0?255.0:255.0/filter_value_;
   }
   else if(cine_header_->bit_depth_==BIT_DEPTH_10_PACKED){
     filter_value_ = filter_failed_pixels_ ? 4090.0 : 4096.0;
-    conversion_factor_ = 255.0 / filter_value_;
+    conversion_factor_ = filter_value_=0.0?255.0:255.0 / filter_value_;
   }
   //if(filter_failed_pixels_) // use this filter to do a binning filter (turned off for now)
   //  initialize_cine_filter(0); // set up the filtering based on the 0th frame intensities
@@ -135,7 +135,7 @@ Cine_Reader::initialize_cine_filter(const int_t frame_index){
   intensity_t avg_intens = 0.0;
   for(int_t i=bin_8_start;i<bin_8_end;++i)
     avg_intens += intensities_sorted[i];
-  avg_intens /= bin_size;
+  avg_intens /= bin_size==0.0?1.0:bin_size;
   DEBUG_MSG("Cine_Reader::intialize_cine_filter(): filter intensity value " << avg_intens);
   filter_value_ = avg_intens;
   conversion_factor_ = 255.0 / filter_value_;
@@ -161,7 +161,7 @@ Cine_Reader::get_average_frame(const int_t frame_start,
     Teuchos::ArrayRCP<intensity_t> temp_intens(width*height,0.0);
     get_frame(offset_x,offset_y,width,height,temp_intens.getRawPtr(),is_layout_right,frame,filter_failed_pixels,convert_to_8_bit);
     for(int_t i=0;i<temp_intens.size();++i)
-      intensities[i] += temp_intens[i]/num_frames;
+      intensities[i] += num_frames==0.0?0.0:temp_intens[i]/num_frames;
   }
 }
 

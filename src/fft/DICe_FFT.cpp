@@ -59,14 +59,14 @@ complex_divide(kiss_fft_cpx * lhs,
     scalar_t f = 0.0;
     if( fabs(rhs[i].i)<fabs(rhs[i].r) )
     {
-        e = rhs[i].i/rhs[i].r;
+        e = rhs[i].r==0.0?0.0:rhs[i].i/rhs[i].r;
         f = rhs[i].r+rhs[i].i*e;
         lhs[i].r = (lhs[i].r+lhs[i].i*e)/f;
         lhs[i].i = (lhs[i].i-lhs[i].r*e)/f;
     }
     else
     {
-        e = rhs[i].r/rhs[i].i;
+        e = rhs[i].i==0.0?0.0:rhs[i].r/rhs[i].i;
         f = rhs[i].i+rhs[i].r*e;
         lhs[i].r = (lhs[i].i+lhs[i].r*e)/f;
         lhs[i].i = (-lhs[i].r+lhs[i].i*e)/f;
@@ -87,14 +87,14 @@ complex_divide(scalar_t & result_r,
   scalar_t f = 0.0;
   if( fabs(b_i)<fabs(b_r) )
   {
-    e = b_i/b_r;
+    e = b_r==0.0?0.0:b_i/b_r;
     f = b_r+b_i*e;
     result_r = (a_r+a_i*e)/f;
     result_i = (a_i-a_r*e)/f;
   }
   else
   {
-    e = b_r/b_i;
+    e = b_i==0.0?0.0:b_r/b_i;
     f = b_i+b_r*e;
     result_r = (a_i+a_r*e)/f;
     result_i = (-a_r+a_i*e)/f;
@@ -256,6 +256,8 @@ phase_correlate_x_y(Teuchos::RCP<Image> image_a,
     u_y = -u_y;
 
   if(convert_to_r_theta){
+    assert(w!=0);
+    assert(h!=0);
     const scalar_t t_size = DICE_TWOPI/w;
     const scalar_t r_size = std::sqrt((0.5*w)*(0.5*w) + (0.5*h)*(0.5*h)) / h;
     u_x *= t_size; // u_x is actually radius
@@ -287,6 +289,7 @@ phase_correlate_row(Teuchos::RCP<Image> image_a,
   assert(image_a->width()==image_b->width());
   assert(image_a->height()==image_b->height());
   int_t w = image_a->width();
+  assert(w>1);
 
   // compute the hamming filter
   Teuchos::ArrayRCP<scalar_t> x_ham(w,0.0);
@@ -379,8 +382,10 @@ Teuchos::RCP<Image>
 polar_transform(Teuchos::RCP<Image> image,
   bool high_pass_filter){
   const int_t w = image->width();
+  assert(w>0);
   const scalar_t w_2 = 0.5*w;
   const int_t h = image->height();
+  assert(h>0);
   const scalar_t h_2 = 0.5*h;
 
   assert(w>0);
@@ -452,6 +457,7 @@ image_fft(Teuchos::RCP<Image> image,
   const int_t w_4 = w/4;
   assert(w>0);
   assert(h>0);
+  assert(w_2>0);
   Teuchos::ArrayRCP<intensity_t> real;
   Teuchos::ArrayRCP<intensity_t> complex;
   // for now, disallow the use of the inverse fft
@@ -476,7 +482,7 @@ image_fft(Teuchos::RCP<Image> image,
 
   // scale the image to fit in 8-bit output range
   assert(max_mag - min_mag > 0);
-  scalar_t factor = 255.0/(max_mag - min_mag);
+  scalar_t factor = max_mag-min_mag==0.0?0.0:255.0/(max_mag - min_mag);
   for(int_t i=0;i<w*h;++i)
     mag[i] = (mag[i]-min_mag)*factor;
 
@@ -543,7 +549,9 @@ image_fft(Teuchos::RCP<Image> image,
   const bool hamming_filter){
 
   const int_t w = image->width();
+  assert(w>1);
   const int_t h = image->height();
+  assert(h>1);
   real = Teuchos::ArrayRCP<scalar_t> (w*h,0.0);
   complex = Teuchos::ArrayRCP<scalar_t> (w*h,0.0);
 

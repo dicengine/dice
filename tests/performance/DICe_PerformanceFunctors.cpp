@@ -72,6 +72,7 @@ int main(int argc, char *argv[]) {
   // optional argument for the number of image sizes
   int_t num_img_sizes = 5;
   if(argc>1) num_img_sizes = std::atoi(argv[1]);
+  assert(num_img_sizes!=0);
   int_t num_time_samples = 5;
   if(argc>2) num_time_samples = std::atoi(argv[2]);
 

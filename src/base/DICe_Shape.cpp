@@ -167,8 +167,8 @@ Polygon::get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function,
       centroid_x+=verts_x[i];
       centroid_y+=verts_y[i];
     }
-    centroid_x /= (verts_x.size()-1);
-    centroid_y /= (verts_y.size()-1);
+    centroid_x /= verts_x.size()-1==0.0?1.0:(verts_x.size()-1);
+    centroid_y /= verts_y.size()-1==0.0?1.0:(verts_y.size()-1);
     // apply the skin factor
     for(size_t i=0;i<verts_x.size();++i){
       // add the skin to the new vertex (applied as a stretch in x and y):
@@ -365,8 +365,8 @@ Rectangle::get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function,
       centroid_x+=verts_x[i];
       centroid_y+=verts_y[i];
     }
-    centroid_x /= (verts_x.size()-1);
-    centroid_y /= (verts_y.size()-1);
+    centroid_x /= verts_x.size()-1==0.0?1.0:(verts_x.size()-1);
+    centroid_y /= verts_y.size()-1==0.0?1.0:(verts_y.size()-1);
     // apply the skin factor
     for(size_t i=0;i<verts_x.size();++i){
       // add the skin to the new vertex (applied as a stretch in x and y):

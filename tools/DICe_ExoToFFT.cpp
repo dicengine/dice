@@ -87,6 +87,7 @@ int main(int argc, char *argv[]) {
   std::string field_name = argv[2];
   const int_t num_neigh = std::atoi(argv[3]);
   const scalar_t mm_per_pixel = std::atof(argv[4]);
+  assert(mm_per_pixel!=0.0);
   const scalar_t freq_thresh = std::atof(argv[5]);
   int_t final_step = argc >=7 ? std::atoi(argv[6]) : -1;
   bool output_debug_images = argc == 8;
@@ -206,6 +207,7 @@ int main(int argc, char *argv[]) {
   }
   // determine the conversion factor from the field values to image intensity counts:
   const scalar_t range = max_value - min_value;
+  assert(range!=0.0);
   const scalar_t counts_per_unit = 255/range;
   // value = (unit - min_unit)*counts_per_unit
   std::cout << "field stats on " << field_name << ": " << std::endl;
@@ -435,6 +437,8 @@ int main(int argc, char *argv[]) {
     const int_t buffer = 10; //px
     const int_t buf_img_w = img_w - 2*buffer;
     const int_t buf_img_h = img_h - 2*buffer;
+    assert(buf_img_h!=0);
+    assert(buf_img_w!=0);
     Teuchos::RCP<DICe::Image> buf_image = Teuchos::rcp(new DICe::Image(buf_img_w,buf_img_h,0.0));
     Teuchos::ArrayRCP<intensity_t> buf_intensities = buf_image->intensities();
     for(int_t px_j=0;px_j<buf_img_h;++px_j){

@@ -57,6 +57,7 @@ using namespace DICe;
 using namespace DICe::field_enums;
 
 intensity_t phi(const scalar_t & x, const scalar_t & y, const scalar_t & period, const scalar_t & L){
+  assert(period!=0.0);
   const scalar_t freq = 1.0/period;
   const scalar_t gamma = 2.0*freq*DICE_PI;
   return 255.0*0.5 + 0.5*255.0*std::cos(gamma*x)*std::cos(gamma*y);
@@ -66,6 +67,7 @@ void compute_b(const scalar_t & x, const scalar_t & y, const scalar_t & period, 
   scalar_t & bx, scalar_t & by){
   bx = 0.0;
   by = 0.0;
+  assert(period!=0.0);
   const scalar_t freq = 1.0/period;
   const scalar_t gamma = 2.0*freq*DICE_PI;
   bx = amplitude*0.5 + 0.5*amplitude*std::sin(gamma*x)*std::cos(gamma*y);
@@ -267,7 +269,9 @@ int main(int argc, char *argv[]) {
       }
       const int_t fw = (L-2.0*subset_size)/step_size + 1;
       const int_t fh = (L-2.0*subset_size)/step_size + 1;
+      assert(step_size!=0.0);
       const scalar_t sampling_b = 1.0/step_size;
+      assert(b_period!=0.0);
       const scalar_t nyquist_b = 2.0/b_period;
       //*outStream << "Nyquist b: " << nyquist_b << " sampling b: " << sampling_b << " sampling rate must be greater than Nyquist" << std::endl;
       TEUCHOS_TEST_FOR_EXCEPTION(nyquist_b >= sampling_b,std::runtime_error,"Error, sampling for b is below Nyquist freq.");
@@ -410,6 +414,7 @@ int main(int argc, char *argv[]) {
         //*outStream << "peak: " << i << " command bx: " << approx_points[i].sol_bx_ << " comp bx: " << approx_points[i].bx_ <<  " rel error bx: " << approx_points[i].error_bx_ << "%" <<  std::endl;
         avg_error_x += std::abs(approx_points[i].error_bx_);
       }
+      assert(num_peaks!=0);
       avg_error_x /= num_peaks;
       scalar_t std_dev_x = 0.0;
       for(int_t i=0;i<num_peaks;++i){

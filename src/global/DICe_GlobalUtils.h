@@ -208,6 +208,7 @@ public:
     const scalar_t & y,
     scalar_t & b_x,
     scalar_t & b_y){
+    assert(dim_x_!=0.0);
     static scalar_t beta = b_coeff_*DICE_PI/dim_x_;
     // div free part
     b_x = sin(beta*x)*cos(beta*y);
@@ -222,6 +223,7 @@ public:
     const scalar_t & y,
     scalar_t & lap_b_x,
     scalar_t & lap_b_y){
+    assert(dim_x_!=0.0);
     static scalar_t beta = b_coeff_*DICE_PI/dim_x_;
     lap_b_x = -beta*beta*cos(beta*y)*sin(beta*x);
     lap_b_y = beta*beta*cos(beta*x)*sin(beta*y);
@@ -238,6 +240,7 @@ public:
     scalar_t & b_x_y,
     scalar_t & b_y_x,
     scalar_t & b_y_y){
+    assert(dim_x_!=0.0);
     static scalar_t beta = b_coeff_*DICE_PI/dim_x_;
     b_x_x = beta*cos(beta*x)*cos(beta*y);
     b_x_y = -beta*sin(beta*x)*sin(beta*y);
@@ -253,6 +256,7 @@ public:
   virtual void lagrange(const scalar_t & x,
     const scalar_t & y,
     scalar_t & l_out){
+    assert(dim_x_!=0.0);
     static scalar_t beta = b_coeff_*DICE_PI/dim_x_;
     l_out = sin(beta*x)*cos(beta*y + 0.5*DICE_PI);
   }
@@ -262,6 +266,7 @@ public:
     const scalar_t & y,
     scalar_t & l_x,
     scalar_t & l_y){
+    assert(dim_x_!=0.0);
     static scalar_t beta = b_coeff_*DICE_PI/dim_x_;
     l_x = beta*cos(beta*x)*cos(beta*y+0.5*DICE_PI);
     l_y = -beta*sin(beta*x)*sin(beta*y+0.5*DICE_PI);
@@ -271,6 +276,7 @@ public:
   virtual void phi(const scalar_t & x,
     const scalar_t & y,
     scalar_t & phi){
+    assert(dim_x_!=0.0);
     static scalar_t gamma = phi_coeff_*DICE_PI/dim_x_;
     phi = sin(gamma*x)*cos(gamma*y+DICE_PI/2.0);
   }
@@ -291,6 +297,7 @@ public:
     scalar_t phi_cur = 0.0;
     phi(mod_x,mod_y,phi_cur);
     dphi_dt = phi_cur - phi_0;
+    assert(dim_x_!=0.0);
     static scalar_t gamma = phi_coeff_*DICE_PI/dim_x_;
     grad_phi_x = gamma*cos(gamma*x)*cos(DICE_PI/2.0 + gamma*y);
     grad_phi_y = -gamma*sin(gamma*x)*sin(DICE_PI/2.0 + gamma*y);
@@ -368,6 +375,8 @@ public:
     const scalar_t & y,
     scalar_t & b_x,
     scalar_t & b_y){
+    assert(dim_x_!=0.0);
+    assert(dim_y_!=0.0);
     b_x = -1.0/dim_x_*x;
     b_y = 1.0/dim_y_*y;
   }
@@ -388,6 +397,8 @@ public:
     scalar_t & b_x_y,
     scalar_t & b_y_x,
     scalar_t & b_y_y){
+    assert(dim_x_!=0.0);
+    assert(dim_y_!=0.0);
     b_x_x = -1.0/dim_x_;
     b_x_y = 0.0;
     b_y_x = 0.0;
@@ -466,6 +477,8 @@ public:
     const scalar_t & y,
     scalar_t & b_x,
     scalar_t & b_y){
+    assert(dim_x_!=0.0);
+    assert(dim_y_!=0.0);
     b_x = 1.0/dim_x_*x;
     b_y = -1.0/dim_y_*y;
   }
@@ -486,6 +499,8 @@ public:
     scalar_t & b_x_y,
     scalar_t & b_y_x,
     scalar_t & b_y_y){
+    assert(dim_x_!=0.0);
+    assert(dim_y_!=0.0);
     b_x_x = 1.0/dim_x_;
     b_x_y = 0.0;
     b_y_x = 0.0;
@@ -496,6 +511,8 @@ public:
   virtual void lagrange(const scalar_t & x,
     const scalar_t & y,
     scalar_t & l_out){
+    assert(dim_x_!=0.0);
+    assert(dim_y_!=0.0);
     l_out = coeff_*0.5*((-1.0/dim_x_)*x*x + (1.0/dim_y_)*y*y);
   }
 
@@ -504,6 +521,8 @@ public:
     const scalar_t & y,
     scalar_t & l_x,
     scalar_t & l_y){
+    assert(dim_x_!=0.0);
+    assert(dim_y_!=0.0);
     l_x = coeff_*(-1.0/dim_x_)*x;
     l_y = coeff_*(1.0/dim_y_)*y;
   }
@@ -616,6 +635,7 @@ public:
   virtual void phi(const scalar_t & x,
     const scalar_t & y,
     scalar_t & phi){
+    assert(dim_x_!=0.0);
     static scalar_t gamma = phi_coeff_*DICE_PI/dim_x_;
     phi = sin(gamma*x)*cos(gamma*y+DICE_PI/2.0);
   }
@@ -636,6 +656,7 @@ public:
     scalar_t phi_cur = 0.0;
     phi(mod_x,mod_y,phi_cur);
     dphi_dt = phi_cur - phi_0;
+    assert(dim_x_!=0.0);
     static scalar_t gamma = phi_coeff_*DICE_PI/dim_x_;
     grad_phi_x = gamma*cos(gamma*x)*cos(DICE_PI/2.0 + gamma*y);
     grad_phi_y = -gamma*sin(gamma*x)*sin(DICE_PI/2.0 + gamma*y);

@@ -97,6 +97,7 @@ float dist_from_line(const float & x,
   const float & x2,
   const float & y2){
   float s = (y2 - y1) * x + (x1 - x2) * y + (x2 * y1 - x1 * y2);
+  assert((y2-y1)*(y2-y1) + (x2-x1)*(x2-x1)!=0.0);
   return s/std::sqrt((y2-y1)*(y2-y1) + (x2-x1)*(x2-x1));
 };
 
@@ -307,6 +308,7 @@ float compute_cal_matrices(std::vector<std::vector<Point3f> > & object_points,
   for(size_t i = 0; i < nimages; i++ )
   {
     int npt = (int)image_points_left[i].size();
+    assert(npt!=0);
     Mat imgpt[2];
     for( size_t k = 0; k < 2; k++ )
     {
@@ -330,6 +332,7 @@ float compute_cal_matrices(std::vector<std::vector<Point3f> > & object_points,
     cal_qualities[i] = imgErr/npt;
     npoints += npt;
   }
+  assert(npoints!=0);
   std::cout << "average epipolar err = " <<  err/npoints << endl;
 
   // save intrinsic parameters
@@ -470,6 +473,7 @@ int pre_process_cal_image(const std::string & image_filename,
           cy += contours[idx][i].y;
         }
         float denom = (float)contours[idx].size();
+        assert(denom!=0.0);
         cx /= denom;
         cy /= denom;
         potential_markers.push_back(KeyPoint(cx,cy,contours[idx].size()));
@@ -548,6 +552,7 @@ int pre_process_cal_image(const std::string & image_filename,
         cy += contours[idx][i].y;
       }
       float denom = (float)contours[idx].size();
+      assert(denom!=0.0);
       cx /= denom;
       cy /= denom;
       trimmed_dot_cx.push_back(cx);
@@ -948,6 +953,7 @@ StereoCalib(const int mode,
             found = false;
             break;
           }
+          assert(blob_dim!=0.0);
           float factor = 1.0/blob_dim;
           //std::cout << "factor " << factor << std::endl;
 
@@ -1232,6 +1238,7 @@ StereoCalib(const int mode,
 
     npoints += npt;
   }
+  assert(npoints!=0);
   cout << "average epipolar err = " <<  err/npoints << endl;
 
   // save intrinsic parameters

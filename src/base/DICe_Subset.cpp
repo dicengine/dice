@@ -221,7 +221,7 @@ Subset::contrast_std_dev(){
       std_dev += (def_intensities(i) - mean_intensity)*(def_intensities(i) - mean_intensity);
     }
   }
-  std_dev = std::sqrt(std_dev/num_active);
+  std_dev = num_active==0.0?0.0:std::sqrt(std_dev/num_active);
   return std_dev;
 }
 

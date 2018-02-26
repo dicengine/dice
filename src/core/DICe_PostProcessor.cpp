@@ -545,8 +545,8 @@ NLVC_Strain_Post_Processor::compute_kernel(const scalar_t & dx,
   static scalar_t h = (scalar_t)horizon_*0.5;
   static scalar_t s = h / 3.0;
   const scalar_t r = std::sqrt(dx*dx+dy*dy);
-  kx = 1.0/(2*DICE_PI*s*s)*(-2*dx/(2*s*s))*exp(-(r*r/(2*s*s)));
-  ky = 1.0/(2*DICE_PI*s*s)*(-2*dy/(2*s*s))*exp(-(r*r/(2*s*s)));
+  kx = s==0.0?0.0:1.0/(2*DICE_PI*s*s)*(-2*dx/(2*s*s))*exp(-(r*r/(2*s*s)));
+  ky = s==0.0?0.0:1.0/(2*DICE_PI*s*s)*(-2*dy/(2*s*s))*exp(-(r*r/(2*s*s)));
 }
 
 
@@ -872,7 +872,7 @@ Uncertainty_Post_Processor::execute(){
     scalar_t max_m  = max_m_rcp->local_value(subset);
     if(max_m > 0.0){
       scalar_t noise_level = noise_rcp->local_value(subset);
-      uncertainty_rcp->local_value(subset) = std::sqrt(2.0*noise_level*noise_level/max_m);
+      uncertainty_rcp->local_value(subset) = max_m==0.0?0.0:std::sqrt(2.0*noise_level*noise_level/max_m);
     }
     else{
       uncertainty_rcp->local_value(subset) = angle == 0.0 ? 0.0 : 1.0 / angle * sig;
@@ -956,8 +956,8 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
         scalar_t dy = by - ay;
         scalar_t mag = std::sqrt(dx*dx+dy*dy);
         TEUCHOS_TEST_FOR_EXCEPTION(mag==0,std::runtime_error,"");
-        scalar_t nx = dx/mag;
-        scalar_t ny = dy/mag;
+        scalar_t nx = mag==0.0?0.0:dx/mag;
+        scalar_t ny = mag==0.0?0.0:dy/mag;
         scalar_t arc_length = 2.0; // pixels
         scalar_t px = ax;
         scalar_t py = ay;

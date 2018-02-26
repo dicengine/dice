@@ -104,6 +104,7 @@ int main(int argc, char *argv[]) {
     ++num_points;
   }
   DEBUG_MSG("number of points in the input path file: " << num_points);
+  assert(num_points>1);
   DEBUG_MSG("number of columns in the input path file: " << num_cols);
   data_file.clear();
   data_file.seekg(0,std::ios::beg);

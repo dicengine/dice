@@ -780,7 +780,7 @@ Decomp::populate_coordinate_vectors(const std::string & image_file_name,
               sssig_image->grad_y(x-min_x,y-min_y)*sssig_image->grad_y(x-min_x,y-min_y);
         }
       }
-      SSSIG /= (subset_size*subset_size);
+      SSSIG /= subset_size==0.0?1.0:(subset_size*subset_size);
       if(SSSIG < grad_threshold) field_dist_data->local_value(i,3) = 0.0;
       //DEBUG_MSG("[PROC "<<proc_rank <<"] x " << cx << " y " << cy << " SSSIG: " << SSSIG << " threshold " << grad_threshold << " pass " << field_dist_data->local_value(i,2));
     } // end subset check loop
@@ -1107,7 +1107,7 @@ bool valid_correlation_point(const int_t x_coord,
           SSSIG += image->grad_x(x,y)*image->grad_x(x,y) + image->grad_x(x,y)*image->grad_x(x,y);
         }
       }
-      SSSIG /= (subset_size*subset_size);
+      SSSIG /= subset_size==0.0?1.0:(subset_size*subset_size);
       //std::cout << "x " << x_coord << " y " << y_coord << " SSSIG: " << SSSIG << " threshold " << grad_threshold << std::endl;
       if(SSSIG < grad_threshold) return false;
     }

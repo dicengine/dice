@@ -69,7 +69,7 @@ Objective::gamma( Teuchos::RCP<Local_Shape_Function> shape_function) const {
     for(int_t i=0;i<subset_->num_pixels();++i)
       if(subset_->is_active(i)) num_active_pixels++;
     if(num_active_pixels > 0)
-      gamma /= num_active_pixels;
+      gamma /= num_active_pixels==0.0?1.0:num_active_pixels;
   }
   return gamma;
 }
@@ -247,7 +247,7 @@ Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_fun
     int_uhat_dot_g += (u*gx + v*gy)/std::sqrt(gx*gx + gy*gy);
     int_uhat_dot_jg += (-1.0*u*gy + v*gx);
   }
-  sssig /= subset_->num_pixels();
+  sssig /= subset_->num_pixels()==0.0?1.0:subset_->num_pixels();
 
   // populate the fields:
   // field 1: cos of angle between uhat and grad phi
@@ -259,7 +259,7 @@ Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_fun
   // field 3: the total L2 error magnitude:
   schema_->mesh()->get_field(DICe::field_enums::FIELD_3_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_error_dot_gphi_2 + norm_error_dot_jgphi_2);
   // field 4: residual based exact error estimate in the direction of grad phi
-  schema_->mesh()->get_field(DICe::field_enums::FIELD_4_FS)->global_value(correlation_point_global_id_) = 1.0/cos_theta_hat * std::sqrt(int_r_total_2);
+  schema_->mesh()->get_field(DICe::field_enums::FIELD_4_FS)->global_value(correlation_point_global_id_) = cos_theta_hat==0.0?0.0:1.0/cos_theta_hat * std::sqrt(int_r_total_2);
   // field 5: the L2 error mag in direction of grad phi:
   schema_->mesh()->get_field(DICe::field_enums::FIELD_5_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_error_dot_gphi_2);
   // field 6: residual based exact error estimate in the direction of grad phi
@@ -387,7 +387,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
     const scalar_t norm_H = std::sqrt(H(0,0)*H(0,0) + H(0,1)*H(0,1) + H(1,0)*H(1,0) + H(1,1)*H(1,1));
     scalar_t cond_2x2 = -1.0;
     if(det_h !=0.0){
-      const scalar_t norm_Hi = std::sqrt((1.0/(det_h*det_h))*(H(0,0)*H(0,0) + H(0,1)*H(0,1) + H(1,0)*H(1,0) + H(1,1)*H(1,1)));
+      const scalar_t norm_Hi = det_h==0.0?0.0:std::sqrt((1.0/(det_h*det_h))*(H(0,0)*H(0,0) + H(0,1)*H(0,1) + H(1,0)*H(1,0) + H(1,1)*H(1,1)));
       cond_2x2 = norm_H * norm_Hi;
     }
 

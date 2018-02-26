@@ -252,7 +252,7 @@ public:
   /// \param amplitude the amplitude of the motion in pixels
   SinCos_Image_Deformer(const scalar_t & period,
     const scalar_t & amplitude):
-      Image_Deformer(amplitude/200.0,(1.0/period)*DICE_TWOPI*amplitude/200.0),
+      Image_Deformer(amplitude/200.0,(period==0.0?0.0:1.0/period)*DICE_TWOPI*amplitude/200.0),
       period_(period),
       amplitude_(amplitude){};
 

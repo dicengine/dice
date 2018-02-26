@@ -323,7 +323,7 @@ void kf_factor(int n,int * facbuf)
             if (p > floor_sqrt)
                 p = n;          /* no more factors, skip to end */
         }
-        n /= p;
+        n /= p==0.0?1.0:p;
         *facbuf++ = p;
         *facbuf++ = n;
     } while (n > 1);

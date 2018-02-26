@@ -1035,7 +1035,7 @@ Mesh::field_stats(const field_enums::Field_Spec & field_spec,
       if(all_on_zero_field->local_value(i)<min) min = all_on_zero_field->local_value(i);
     }
     if(num_points - num_failed > 0)
-      avg /= (num_points-num_failed);
+      avg /= num_points-num_failed==0?1.0:(num_points-num_failed);
     for(int_t i=0;i<num_points;++i){
       if(has_marker){
         if(marker_on_zero_field->local_value(i)<=threshold){
@@ -1045,7 +1045,7 @@ Mesh::field_stats(const field_enums::Field_Spec & field_spec,
       std_dev += (all_on_zero_field->local_value(i)-avg)*(all_on_zero_field->local_value(i)-avg);
     }
     if(num_points-num_failed > 0)
-      std_dev = std::sqrt(std_dev/(num_points-num_failed));
+      std_dev = num_points-num_failed==0?0.0:std::sqrt(std_dev/(num_points-num_failed));
   }
   else if(field_spec.get_field_type()==DICe::field_enums::VECTOR_FIELD_TYPE){
     TEUCHOS_TEST_FOR_EXCEPTION(comp!=0&&comp!=1,std::runtime_error,"Error, invalid comp for scalar field")
@@ -1062,7 +1062,7 @@ Mesh::field_stats(const field_enums::Field_Spec & field_spec,
       if(all_on_zero_field->local_value(index)<min) min = all_on_zero_field->local_value(index);
     }
     if(num_points - num_failed> 0)
-      avg /= (num_points-num_failed)*0.5;
+      avg /= num_points-num_failed==0?1.0:(num_points-num_failed)*0.5;
     for(int_t i=0;i<num_points/2;++i){
       int_t index = i*spatial_dimension() + comp;
       if(has_marker){
@@ -1073,7 +1073,7 @@ Mesh::field_stats(const field_enums::Field_Spec & field_spec,
       std_dev += (all_on_zero_field->local_value(index)-avg)*(all_on_zero_field->local_value(index)-avg);
     }
     if(num_points - num_failed > 0)
-      std_dev = std::sqrt(std_dev/(0.5*(num_points-num_failed)));
+      std_dev = num_points-num_failed==0?0.0:std::sqrt(std_dev/(0.5*(num_points-num_failed)));
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error: unknown field type in stats call");
@@ -1328,6 +1328,7 @@ CVFEM_Linear_Tet4::evaluate_shape_functions(const scalar_t * nodal_coords,
   const scalar_t & coefficient,
   scalar_t * shape_function_values)
 {
+  assert(coefficient!=0.0);
   scalar_t volume = 0.0;
   scalar_t sum_volume = 0.0;
   scalar_t det = 0.0;
@@ -1496,7 +1497,7 @@ CVFEM_Linear_Tet4::evaluate_shape_function_derivatives(const scalar_t * nodal_co
   scalar_t C[3];
   scalar_t I[3];
   scalar_t cross[3];
-
+  assert(coefficient!=0.0);
   for(int_t i=0;i<3;++i)
   {
     I[i] = nodal_coords[i];
@@ -2135,6 +2136,7 @@ Teuchos::RCP<Mesh> create_point_or_tri_mesh(const DICe::mesh::Base_Element_Type 
   for(elem_it=mesh->get_element_set()->begin();elem_it!=elem_end;++elem_it)
   {
     const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
+    assert(connectivity.size()!=0);
     scalar_t centroid[num_dim];
     for(int_t i=0;i<num_dim;++i) centroid[i]=0.0;
     for(size_t node_it=0;node_it<connectivity.size();++node_it)
@@ -2377,6 +2379,7 @@ Teuchos::RCP<Mesh> create_tri3_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mesh,
   for(elem_it=mesh->get_element_set()->begin();elem_it!=elem_end;++elem_it)
   {
     const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
+    assert(connectivity.size()!=0);
     scalar_t centroid[num_dim];
     for(int_t i=0;i<num_dim;++i) centroid[i]=0.0;
     for(size_t node_it=0;node_it<connectivity.size();++node_it)
@@ -2745,7 +2748,7 @@ scalar_t cross3d_with_normal(const scalar_t * a_coords,
   const scalar_t cross_2 = AB[0] * AC[1] - AB[1] * AC[0];
 
   const scalar_t mag = std::sqrt(cross_0 * cross_0 + cross_1 * cross_1 + cross_2 * cross_2);
-
+  assert(mag!=0.0);
   normal[0] = cross_0/mag;
   normal[1] = cross_1/mag;
   normal[2] = cross_2/mag;

@@ -593,6 +593,7 @@ scalar_t compute_tau_tri3(const Global_Formulation & formulation,
   const scalar_t & J,
   scalar_t * inv_jac){
 
+  assert(alpha2!=0.0);
   const scalar_t tau_1 = 0.225*0.5*J;
   const scalar_t tau_2 = 0.14464285714286*0.5*J;
   const scalar_t tau_3 = (inv_jac[0]*inv_jac[0] + inv_jac[2]*inv_jac[2] + inv_jac[0]*inv_jac[1] +
@@ -716,6 +717,7 @@ void calc_mms_force_elasticity(const scalar_t & x,
   const scalar_t & m,
   scalar_t & force_x,
   scalar_t & force_y){
+  assert(L!=0.0);
   const scalar_t beta = m*DICE_PI/L;
   force_x = alpha*beta*beta*cos(beta*y)*sin(beta*x);
   force_y = -alpha*beta*beta*cos(beta*x)*sin(beta*y);
@@ -728,7 +730,7 @@ void calc_mms_vel_rich(const scalar_t & x,
   const scalar_t & m,
   scalar_t & b_x,
   scalar_t & b_y){
-
+  assert(L!=0.0);
   const scalar_t beta = m*DICE_PI/L;
   b_x = sin(beta*x)*cos(beta*y);
   b_y = -cos(beta*x)*sin(beta*y);
@@ -746,6 +748,7 @@ void calc_mms_lap_vel_rich(const scalar_t & x,
   const scalar_t & m,
   scalar_t & lap_b_x,
   scalar_t & lap_b_y){
+  assert(L!=0.0);
   const scalar_t beta = m*DICE_PI/L;
   lap_b_x = -beta*beta*cos(beta*y)*sin(beta*x);
   lap_b_y = beta*beta*cos(beta*x)*sin(beta*y);
@@ -761,6 +764,7 @@ void calc_mms_phi_rich(const scalar_t & x,
   const scalar_t & L,
   const scalar_t & g,
   scalar_t & phi){
+  assert(L!=0.0);
   const scalar_t gamma = g*DICE_PI/L;
   phi = sin(gamma*x)*cos(gamma*y+DICE_PI/2.0);
   //const scalar_t gamma = g*DICE_PI/L;
@@ -776,7 +780,7 @@ void calc_mms_phi_terms_rich(const scalar_t & x,
   scalar_t & d_phi_dt,
   scalar_t & grad_phi_x,
   scalar_t & grad_phi_y){
-
+  assert(L!=0.0);
   scalar_t b_x = 0.0;
   scalar_t b_y = 0.0;
   calc_mms_vel_rich(x,y,L,m,b_x,b_y);
@@ -813,6 +817,7 @@ void calc_mms_bc_2(const scalar_t & x,
   const scalar_t & L,
   scalar_t & b_x,
   scalar_t & b_y){
+  assert(L!=0.0);
   b_x = std::cos(x*DICE_PI/L);
   b_y = 0.0;
 }

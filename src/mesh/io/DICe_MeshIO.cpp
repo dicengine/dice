@@ -717,6 +717,7 @@ read_exodus_coordinates(Teuchos::RCP<Mesh> mesh){
   for(;elem_it!=elem_end;++elem_it)
   {
     const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
+    assert(connectivity.size()!=0);
     std::vector<scalar_t> centroid(num_dim);
     for(int_t i=0;i<num_dim;++i) centroid[i]=0.0;
     for(size_t node_it=0;node_it<connectivity.size();++node_it)
@@ -1755,6 +1756,7 @@ initialize_control_volumes(Teuchos::RCP<Mesh> mesh){
       const scalar_t rcy = -0.75*dy + ly;
       // length_total (divide by two for each side):
       const scalar_t edge_length = std::sqrt(dx*dx + dy*dy);
+      assert(edge_length!=0.0);
       //std::cout << " left centroid " << lcx << " " << lcy << " right centroid " << rcx << " " << rcy << " length " << edge_length << std::endl;
       // normal (same for both sides):
       TEUCHOS_TEST_FOR_EXCEPTION(edge_length<=0.0,std::runtime_error,"");
@@ -2003,6 +2005,7 @@ compute_submesh_obj_from_tri3(Teuchos::ArrayRCP<const scalar_t> coords_values,
   const scalar_t dy = parent_centroid[1] - mpIAy;
 
   edge_length = std::sqrt(dx*dx + dy*dy);
+  assert(edge_length!=0.0);
   normal[0] = dy/edge_length;
   normal[1] = dx/edge_length;
 

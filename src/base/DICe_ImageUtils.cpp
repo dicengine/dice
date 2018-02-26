@@ -79,8 +79,7 @@ void SinCos_Image_Deformer::compute_deformation(const scalar_t & coord_x,
   const scalar_t & coord_y,
   scalar_t & bx,
   scalar_t & by){
-  assert(period_>0.0);
-  const scalar_t beta = DICE_TWOPI*(1.0/period_);
+  const scalar_t beta = period_==0.0 ? 0.0 : DICE_TWOPI*(1.0/period_);
   bx = 0.5*amplitude_ + sin(beta*coord_x)*cos(beta*coord_y)*0.5*amplitude_;
   by = 0.5*amplitude_ - cos(beta*coord_x)*sin(beta*coord_y)*0.5*amplitude_;
 }
@@ -95,7 +94,7 @@ void SinCos_Image_Deformer::compute_deriv_deformation(const scalar_t & coord_x,
   bxy = 0.0;
   byx = 0.0;
   byy = 0.0;
-  const scalar_t beta = DICE_TWOPI*(1.0/period_);
+  const scalar_t beta = period_==0.0 ? 0.0 : DICE_TWOPI*(1.0/period_);
   bxx = beta*cos(beta*coord_x)*cos(beta*coord_y)*0.5*amplitude_;
   bxy = -beta*sin(beta*coord_x)*sin(beta*coord_y)*0.5*amplitude_;
   byx = beta*sin(beta*coord_x)*sin(beta*coord_y)*0.5*amplitude_;
@@ -146,8 +145,8 @@ void Image_Deformer::compute_displacement_error(const scalar_t & coord_x,
     error_y = sol_y - out_y;
   }
   if(relative){
-    error_x /= rel_factor_disp_; // convert to percent (multiplied by two to account for top and bottom roll-off)
-    error_y /= rel_factor_disp_;
+    error_x /= rel_factor_disp_==0.0?1.0:rel_factor_disp_; // convert to percent (multiplied by two to account for top and bottom roll-off)
+    error_y /= rel_factor_disp_==0.0?1.0:rel_factor_disp_;
   }
 }
 
@@ -197,9 +196,9 @@ void Image_Deformer::compute_lagrange_strain_error(const scalar_t & coord_x,
     error_yy = sol_yy - strain_yy;
   }
   if(relative){
-    error_xx /= rel_factor_strain_;
-    error_xy /= rel_factor_strain_;
-    error_yy /= rel_factor_strain_;
+    error_xx /= rel_factor_strain_==0.0?1.0:rel_factor_strain_;
+    error_xy /= rel_factor_strain_==0.0?1.0:rel_factor_strain_;
+    error_yy /= rel_factor_strain_==0.0?1.0:rel_factor_strain_;
   }
 }
 
@@ -253,7 +252,7 @@ Image_Deformer::deform_image(Teuchos::RCP<Image> ref_image){
         scalar_t intens = ref_image->interpolate_keys_fourth(sample_x-bx,sample_y-by);
         avg_intens += intens;
       } // end avg points
-      def_intens[j*w+i] = avg_intens/num_pts;
+      def_intens[j*w+i] = num_pts==0.0?0.0:avg_intens/num_pts;
     } // end pixel i
   } // ens pixel j
 
@@ -364,7 +363,7 @@ int_t compute_speckle_stats(const std::string & output_dir,
     for(int_t i=0;i<morf_w*morf_h;++i)
       dilation_count += dilation_flags[i];
     scalar_t coverage = dilation_count / (scalar_t)num_px;
-    int_t num_speckles = (coverage - prev_coverage)*num_px/(speckle_interval*speckle_interval);
+    int_t num_speckles = speckle_interval*speckle_interval==0.0?0.0:(coverage - prev_coverage)*num_px/(speckle_interval*speckle_interval);
     if(num_speckles > max_speckle_count){
       max_speckle_count = num_speckles;
       avg_speckle_size = speckle_interval;
@@ -478,7 +477,7 @@ void compute_roll_off_stats(const scalar_t & period,
   scalar_t std_dev_y = 0.0;
   if(p_rank==0){
     // now sort the approximate points to pick out the peaks
-    int_t num_peaks = ((int_t)(img_w/period)-2)*((int_t)(img_h/period)-2);
+    int_t num_peaks = period==0.0?0.0:((int_t)(img_w/period)-2)*((int_t)(img_h/period)-2);
     if(num_peaks > 100) num_peaks=100;
     if(num_peaks < 5)
       std::cout << "WARNING: the spatial resolution statistics (for period " << period << ") are based on a small number of peaks" << std::endl;
@@ -494,11 +493,11 @@ void compute_roll_off_stats(const scalar_t & period,
       //*outStream << "peak: " << i << " command bx: " << approx_points[i].sol_bx_ << " comp bx: " << approx_points[i].bx_ <<  " rel error bx: " << approx_points[i].error_bx_ << "%" <<  std::endl;
       avg_error_x += std::abs(approx_points[i].error_bx_);
     }
-    avg_error_x /= num_peaks;
+    avg_error_x /= num_peaks==0.0?1.0:num_peaks;
     for(int_t i=0;i<num_peaks;++i){
       std_dev_x += (approx_points[i].error_bx_-avg_error_x)*(approx_points[i].error_bx_-avg_error_x);
     }
-    std_dev_x /= num_peaks;
+    std_dev_x /= num_peaks==0.0?1.0:num_peaks;
     std_dev_x = std::sqrt(std_dev_x);
     // by-sort
     std::sort(std::begin(approx_points), std::end(approx_points), [](const computed_point& a, const computed_point& b)
@@ -511,11 +510,11 @@ void compute_roll_off_stats(const scalar_t & period,
       //*outStream << "peak: " << i << " command by: " << approx_points[i].sol_by_ << " rel error by: " << approx_points[i].error_by_ << std::endl;
       avg_error_y += std::abs(approx_points[i].error_by_);
     }
-    avg_error_y /= num_peaks;
+    avg_error_y /= num_peaks==0.0?1.0:num_peaks;
     for(int_t i=0;i<num_peaks;++i){
       std_dev_y += (approx_points[i].error_by_-avg_error_y)*(approx_points[i].error_by_-avg_error_y);
     }
-    std_dev_y /= num_peaks;
+    std_dev_y /= num_peaks==0.0?1.0:num_peaks;
     std_dev_y = std::sqrt(std_dev_y);
   }
   // communicate results back to dist procs
@@ -578,7 +577,7 @@ Teuchos::RCP<Image> create_synthetic_speckle_image(const int_t w,
 
   const scalar_t period = speckle_size * 2;
   assert(period > 0.0);
-  const scalar_t freq = 1.0/period;
+  const scalar_t freq = period==0.0?0.0:1.0/period;
   const scalar_t gamma = freq*DICE_TWOPI;
   const intensity_t mag = 255.0*0.5;
 

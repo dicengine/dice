@@ -75,6 +75,7 @@ compute_affine_matrix(const std::vector<scalar_t> proj_xl,
     cr_x += proj_xr[i];
     cr_y += proj_yr[i];
   }
+
   cl_x /= num_coords;
   cl_y /= num_coords;
   cr_x /= num_coords;

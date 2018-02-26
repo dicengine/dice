@@ -1223,6 +1223,7 @@ Global_Algorithm::compute_strains(){
 
   for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
     const scalar_t count = strain_contribs->local_value(i);
+    assert(count!=0.0);
     du_dx->local_value(i) /= count;
     du_dy->local_value(i) /= count;
     dv_dx->local_value(i) /= count;
