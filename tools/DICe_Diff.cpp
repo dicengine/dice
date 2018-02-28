@@ -105,24 +105,23 @@ int main(int argc, char *argv[]) {
 
   int_t num_procs = 1;
   for(int_t i=3;i<argc;++i){
-    std::string arg = argv[i];
-    if(arg=="-v"){
+    if(strcmp(argv[i],"-v")==0){
       outStream = Teuchos::rcp(&std::cout, false);
     }
-    else if(arg=="-n"){
+    else if(strcmp(argv[i],"-n")==0){
       numerical_values_only = true;
     }
-    else if(arg=="-t"){
+    else if(strcmp(argv[i],"-t")==0){
       assert(argc>i+1 && "Error, tolerance must be specified for -t option");
       relTol = strtod(argv[i+1],NULL);
       i++;
     }
-    else if(arg=="-p"){
+    else if(strcmp(argv[i],"-p")==0){
       assert(argc>i+1 && "Error, count must be specified for -p option");
       num_procs = atoi(argv[i+1]);
       i++;
     }
-    else if(arg=="-f"){
+    else if(strcmp(argv[i],"-f")==0){
       assert(argc>i+1 && "Error, floor value must be specified for -f option");
       floor = strtod(argv[i+1],NULL);
       use_floor = true;

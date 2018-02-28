@@ -454,7 +454,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
       arg_ss << "qpcDAea" << max_size_constraint;
     char args[1024];
     strncpy(args, arg_ss.str().c_str(), sizeof(args));
-    args[sizeof(args) - 1] = 0;
+    args[sizeof(args) - 1] = '\0';
     DEBUG_MSG("generate_tri_mesh() called with args: " << args);
     //  char args[] = arg_ss.str().c_str();
     triangulate(args,&in,&out,NULL);

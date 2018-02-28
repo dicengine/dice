@@ -97,8 +97,7 @@ void initialize(int argc,
 #endif
   bool verbose=false;
   for (int_t i = 1; i < argc; ++i) {
-    std::string arg = argv[i];
-    if ((arg == "-v") || (arg == "--verbose"))
+    if (strcmp(argv[i],"-v")==0 || strcmp(argv[i],"--verbose")==0)
       verbose=true;
   }
   if(verbose && proc_rank==0)

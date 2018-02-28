@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     TEUCHOS_TEST_FOR_EXCEPTION(argc<3,std::runtime_error,
       "Invalid command line. Syntax: dice_strain source_file_1 ... source_file_n strain_window_size_in_pixels [target_locations_file] [ouput_prefix] [1: for use_nonlocal_formulation]");
     std::vector<std::string> source_files;
-    for(int_t i=0;i<argc;++i){
+    for(int_t i=0;i<argc-1;++i){
       std::string res_file = argv[i+1];
       if(is_number(argv[i+1])) break;
       *outStream << "source file:        " << res_file << std::endl;
