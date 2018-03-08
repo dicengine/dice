@@ -42,6 +42,7 @@
 #include <DICe.h>
 
 #include <iostream>
+#include <string.h>
 
 #if DICE_KOKKOS
   #include <DICe_Kokkos.h>
