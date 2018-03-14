@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
   std::string exo_name = argv[1];
   std::string netcdf_input_name = argv[2];
   std::string output_name = argv[3];
-  const int_t num_neigh = std::atoi(argv[4]);
+  const int_t num_neigh = std::strtol(argv[4],NULL,0);
 
   *outStream << "exodus input file:          " << exo_name << std::endl;
   *outStream << "netcdf input file:          " << netcdf_input_name << std::endl;

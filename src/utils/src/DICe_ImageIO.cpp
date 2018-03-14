@@ -97,7 +97,7 @@ int_t netcdf_index(const char * decorated_netcdf_file){
   size_t found_ext = netcdf_string.find(".nc");
   std::string first_num_str = netcdf_string.substr(found_underscore+1,found_ext - found_underscore - 1);
   DEBUG_MSG("netcdf_index(): " << first_num_str);
-  return std::atoi(first_num_str.c_str());
+  return std::strtol(first_num_str.c_str(),NULL,0);
 }
 
 DICE_LIB_DLL_EXPORT
@@ -120,15 +120,15 @@ void cine_index(const char * decorated_cine_file,
     assert(found_ext!=std::string::npos);
     std::string index_str = tail.substr(1,found_ext-1);
     //DEBUG_MSG("cine_index(): index_str: " << index_str);
-    start_index = std::atoi(index_str.c_str());
+    start_index = std::strtol(index_str.c_str(),NULL,0);
   }
   else{
     size_t found_dash = tail.find("to");
     std::string first_num_str = tail.substr(found_avg+3,found_dash-found_avg-3);
     std::string second_num_str = tail.substr(found_dash+2,found_ext-found_dash-2);
     //DEBUG_MSG("cine_index(): first num " << first_num_str << " second num " << second_num_str);
-    start_index = std::atoi(first_num_str.c_str());
-    end_index = std::atoi(second_num_str.c_str());
+    start_index = std::strtol(first_num_str.c_str(),NULL,0);
+    end_index = std::strtol(second_num_str.c_str(),NULL,0);
     is_avg = true;
   }
 }

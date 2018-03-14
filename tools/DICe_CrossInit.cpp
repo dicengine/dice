@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
   DEBUG_MSG("left image: " << left_name);
   std::string right_name = argv[2];
   DEBUG_MSG("right image: " << right_name);
-  const int_t use_nonlinear = std::atoi(argv[3]);
+  const int_t use_nonlinear = std::strtol(argv[3],NULL,0);
   const bool use_nonlin = use_nonlinear==1;
   DEBUG_MSG("CrossInit(): use_nonlinear is " << use_nonlin);
 

@@ -711,8 +711,8 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
         "Error reading best_fit_plane.dat, should be 2 values per line (x_left y_left for origin and point on x axis),"
           " but found " << tokens.size() << " values on one line");
       assert(line<(int_t)fit_def_x_left.size());
-      fit_def_x_left[line] = atoi(tokens[0].c_str());
-      fit_def_y_left[line] = atoi(tokens[1].c_str());
+      fit_def_x_left[line] = strtol(tokens[0].c_str(),NULL,0);
+      fit_def_y_left[line] = strtol(tokens[1].c_str(),NULL,0);
       line++;
     }
     DEBUG_MSG("Best fit plane origin (left sensor coords):           " << fit_def_x_left[0] << " " << fit_def_y_left[0]);

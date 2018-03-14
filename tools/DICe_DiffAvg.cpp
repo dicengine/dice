@@ -143,13 +143,15 @@ int main(int argc, char *argv[]) {
   }
   *outStream << "Number of columns in data: " << results[0].size() << std::endl;
   *outStream << "Number of rows in data: " << results.size() << std::endl;
+  file.close();
+
 
   // sort the data according to either x or y:
   std::map<int_t,std::vector<scalar_t> > sortedMap;
   for(size_t row=0;row<results.size();++row){
     scalar_t coordReal = strtod(results[row][coord_col].c_str(),NULL);
     int_t coord = static_cast<int_t>(coordReal);
-    //int_t coord = atoi(results[row][coord_col].c_str());
+    //int_t coord = strtol(results[row][coord_col].c_str(),NULL,0);
     scalar_t value = strtod(results[row][data_col].c_str(),NULL);
     if(sortedMap.find(coord)==sortedMap.end()){
       std::vector<scalar_t> tmp_vec;
@@ -233,13 +235,14 @@ int main(int argc, char *argv[]) {
     cerr << "The last row does not have the right number of columns" << std::endl;
     assert(false);
   }
+  command_file.close();
 
   // sort the data according to either x or y:
   std::map<int_t,scalar_t> commandMap;
   for(size_t row=0;row<command.size();++row){
     scalar_t coordReal = strtod(command[row][command_coord_col].c_str(),NULL);
     int_t coord = static_cast<int_t>(coordReal);
-    //int_t coord = atoi(command[row][command_coord_col].c_str());
+    //int_t coord = strtol(command[row][command_coord_col].c_str(),NULL,0);
     scalar_t value = strtod(command[row][command_data_col].c_str(),NULL);
     commandMap.insert(std::pair<int_t,scalar_t >(coord,value));
   }

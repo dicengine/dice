@@ -129,4 +129,13 @@ bool default_is_layout_right(){
 #endif
 }
 
+/// copy a buffer and avoid buffer overflow
+DICE_LIB_DLL_EXPORT
+void safe_buffer_copy(char * input, char * output){
+  if (strnlen(input, MAX_BUFFER_SIZE) < sizeof(output)) {
+    strncpy(output, input, MAX_BUFFER_SIZE);
+  }
+  output[sizeof(output)-1] = '\0';
+}
+
 }// End DICe Namespace

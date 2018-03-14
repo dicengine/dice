@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
       source_files.push_back(res_file);
     }
     std::string target_file = source_files[0];
-    const int_t sg_size = std::atoi(argv[1 + source_files.size()]);
+    const int_t sg_size = std::strtol(argv[1 + source_files.size()],NULL,0);
     *outStream << "strain gauge size:  " << sg_size << " pixels" << std::endl;
     std::string opt_arg_1 = "";
     std::string opt_arg_2 = "";

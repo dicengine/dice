@@ -85,11 +85,11 @@ int main(int argc, char *argv[]) {
   }
   std::string exo_name = argv[1];
   std::string field_name = argv[2];
-  const int_t num_neigh = std::atoi(argv[3]);
+  const int_t num_neigh = std::strtol(argv[3],NULL,0);
   const scalar_t mm_per_pixel = std::atof(argv[4]);
   assert(mm_per_pixel!=0.0);
   const scalar_t freq_thresh = std::atof(argv[5]);
-  int_t final_step = argc >=7 ? std::atoi(argv[6]) : -1;
+  int_t final_step = argc >=7 ? std::strtol(argv[6],NULL,0) : -1;
   bool output_debug_images = argc == 8;
 
   *outStream << "exodus input file:          " << exo_name << std::endl;

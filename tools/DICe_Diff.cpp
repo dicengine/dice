@@ -105,31 +105,39 @@ int main(int argc, char *argv[]) {
 
   int_t num_procs = 1;
   for(int_t i=3;i<argc;++i){
-    if(strcmp(argv[i],"-v")==0){
+    char safe_argv[MAX_BUFFER_SIZE];
+    safe_buffer_copy(argv[i],safe_argv);
+    if(strcmp(safe_argv,"-v")==0){
       outStream = Teuchos::rcp(&std::cout, false);
     }
-    else if(strcmp(argv[i],"-n")==0){
+    else if(strcmp(safe_argv,"-n")==0){
       numerical_values_only = true;
     }
-    else if(strcmp(argv[i],"-t")==0){
+    else if(strcmp(safe_argv,"-t")==0){
       assert(argc>i+1 && "Error, tolerance must be specified for -t option");
-      relTol = strtod(argv[i+1],NULL);
+      char safe_argv_p1[MAX_BUFFER_SIZE];
+      safe_buffer_copy(argv[i+1],safe_argv_p1);
+      relTol = strtod(safe_argv_p1,NULL);
       i++;
     }
-    else if(strcmp(argv[i],"-p")==0){
+    else if(strcmp(safe_argv,"-p")==0){
       assert(argc>i+1 && "Error, count must be specified for -p option");
-      num_procs = atoi(argv[i+1]);
+      char safe_argv_p1[MAX_BUFFER_SIZE];
+      safe_buffer_copy(argv[i+1],safe_argv_p1);
+      num_procs = strtol(safe_argv_p1,NULL,0);
       i++;
     }
-    else if(strcmp(argv[i],"-f")==0){
+    else if(strcmp(safe_argv,"-f")==0){
       assert(argc>i+1 && "Error, floor value must be specified for -f option");
-      floor = strtod(argv[i+1],NULL);
+      char safe_argv_p1[MAX_BUFFER_SIZE];
+      safe_buffer_copy(argv[i+1],safe_argv_p1);
+      floor = strtod(safe_argv_p1,NULL);
       use_floor = true;
       i++;
     }
     else{
-      std::cout << "Error, unrecognized option: " << argv[i] << std::endl;
-      assert(false);
+      DEBUG_MSG(safe_argv);
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, unrecognized option");
     }
   }
   std::string fileA = argv[1];
@@ -155,7 +163,7 @@ int main(int argc, char *argv[]) {
       TEUCHOS_TEST_FOR_EXCEPTION(remainder!=0.0,std::runtime_error,
         "Error, first column in the output file must be the subset or node id "
         "(cannot ommit the id in the output parameters to compare parallel files)");
-      fileASolutions.insert(std::pair<int_t,std::vector<std::string> >(std::atoi(tokens[0].c_str()),tokens));
+      fileASolutions.insert(std::pair<int_t,std::vector<std::string> >(std::strtol(tokens[0].c_str(),NULL,0),tokens));
     }
     dataFileA.close();
     // now that the offsets are set up, compare the files one processor chunk at a time
@@ -179,7 +187,7 @@ int main(int argc, char *argv[]) {
         TEUCHOS_TEST_FOR_EXCEPTION(remainder!=0.0,std::runtime_error,
           "Error, first column in the parallel output file must be the subset or node id "
           "(cannot ommit the id in the output parameters to compare parallel files)");
-        const int_t subset_id = std::atoi(tokensB[0].c_str());
+        const int_t subset_id = std::strtol(tokensB[0].c_str(),NULL,0);
         // find that row in the saved data:
         TEUCHOS_TEST_FOR_EXCEPTION(fileASolutions.find(subset_id)==fileASolutions.end(),std::runtime_error,
           "Error could not find parallel subset " << subset_id << " in serial file");

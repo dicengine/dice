@@ -71,15 +71,15 @@ int main(int argc, char *argv[]) {
 
   // optional argument for the number of image sizes
   int_t num_img_sizes = 5;
-  if(argc>1) num_img_sizes = std::atoi(argv[1]);
+  if(argc>1) num_img_sizes = std::strtol(argv[1],NULL,0);
   assert(num_img_sizes!=0);
   int_t num_time_samples = 5;
-  if(argc>2) num_time_samples = std::atoi(argv[2]);
+  if(argc>2) num_time_samples = std::strtol(argv[2],NULL,0);
 
   // optional argument for the number of thread teams:
 
   int_t num_thread_teams = -1;
-  if(argc>3) num_thread_teams = std::atoi(argv[3]);
+  if(argc>3) num_thread_teams = std::strtol(argv[3],NULL,0);
   *outStream << "number of thread teams:   " << num_thread_teams << " (-1 means thread teams not used)" << std::endl;
   const bool use_hierarchical = num_thread_teams > 0;
   *outStream << "hierarchical parallelism: " << use_hierarchical << std::endl;

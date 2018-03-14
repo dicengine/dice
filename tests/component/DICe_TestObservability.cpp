@@ -374,6 +374,7 @@ int main(int argc, char *argv[]) {
         by_command->local_value(sub) = by;
         bx_computed->local_value(sub) = observed_b[0];
         by_computed->local_value(sub) = observed_b[1];
+        assert(b_amp!=0.0);
         error_x->local_value(sub) = (bx-observed_b[0])/b_amp*100.0;
         error_y->local_value(sub) = (by-observed_b[1])/b_amp*100.0;
         error_norm_x += (bx-observed_b[0])*(bx-observed_b[0]);

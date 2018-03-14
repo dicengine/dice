@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   // only print output if args are given (for testing the output is quiet)
-  if (std::atoi(argv[4]) == 1)
+  if (std::strtol(argv[4],NULL,0) == 1)
     outStream = Teuchos::rcp(&std::cout, false);
   else
     outStream = Teuchos::rcp(&bhs, false);
@@ -79,8 +79,8 @@ int main(int argc, char *argv[]) {
   stripped_fileName.erase(stripped_fileName.length()-5,5);
   *outStream << "Cine file base name: " << stripped_fileName << std::endl;
 
-  int_t start_frame = std::atoi(argv[2]);
-  int_t end_frame = std::atoi(argv[3]);
+  int_t start_frame = std::strtol(argv[2],NULL,0);
+  int_t end_frame = std::strtol(argv[3],NULL,0);
   *outStream << "start frame:       " << start_frame << std::endl;
   *outStream << "end frame:         " << end_frame << std::endl;
 

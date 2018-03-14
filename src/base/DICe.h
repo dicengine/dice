@@ -112,6 +112,11 @@ void finalize();
 DICE_LIB_DLL_EXPORT
 bool default_is_layout_right();
 
+/// safe copy of one buffer to another that's gauaranteed to be NULL terminated
+#define MAX_BUFFER_SIZE 256
+DICE_LIB_DLL_EXPORT
+void safe_buffer_copy(char * input, char * output);
+
 /// parameters (all lower case)
 
 /// String parameter names using globals to prevent misspelling in the parameter lists:

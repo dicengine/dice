@@ -1118,11 +1118,11 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              }
              TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[2]) || !is_number(block_tokens[3]) || !is_number(block_tokens[4]),std::runtime_error,"");
              Boundary_Condition_Def bc_def;
-             bc_def.shape_id_ = atoi(block_tokens[2].c_str());
-             bc_def.left_vertex_id_ = atoi(block_tokens[3].c_str());
-             bc_def.right_vertex_id_ = atoi(block_tokens[4].c_str());
+             bc_def.shape_id_ = strtol(block_tokens[2].c_str(),NULL,0);
+             bc_def.left_vertex_id_ = strtol(block_tokens[3].c_str(),NULL,0);
+             bc_def.right_vertex_id_ = strtol(block_tokens[4].c_str(),NULL,0);
              TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[5]),std::runtime_error,"");
-             bc_def.comp_ = atoi(block_tokens[5].c_str());
+             bc_def.comp_ = strtol(block_tokens[5].c_str(),NULL,0);
              if(is_number(block_tokens[6])){
                bc_def.has_value_ = true;
                bc_def.use_subsets_ = false;
@@ -1131,7 +1131,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              else if(block_tokens[6]==parser_use_subsets){
                bc_def.has_value_ = false;
                bc_def.use_subsets_ = true;
-               bc_def.subset_size_ = atoi(block_tokens[7].c_str());
+               bc_def.subset_size_ = strtol(block_tokens[7].c_str(),NULL,0);
              }
              else{
                TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
@@ -1156,9 +1156,9 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              }
              TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[2]) || !is_number(block_tokens[3]) || !is_number(block_tokens[4]),std::runtime_error,"");
              Boundary_Condition_Def bc_def;
-             bc_def.shape_id_ = atoi(block_tokens[2].c_str());
-             bc_def.left_vertex_id_ = atoi(block_tokens[3].c_str());
-             bc_def.right_vertex_id_ = atoi(block_tokens[4].c_str());
+             bc_def.shape_id_ = strtol(block_tokens[2].c_str(),NULL,0);
+             bc_def.left_vertex_id_ = strtol(block_tokens[3].c_str(),NULL,0);
+             bc_def.right_vertex_id_ = strtol(block_tokens[4].c_str(),NULL,0);
              bc_def.has_value_=false;
              bc_def.use_subsets_=false;
              bc_def.is_neumann_=true;
@@ -1203,8 +1203,8 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  else if(seed_tokens[0]==parser_location){
                    TEUCHOS_TEST_FOR_EXCEPTION(seed_tokens.size()<=2,std::runtime_error,"Error, not enough values specified for seed location (x and y are needed)." );
                    TEUCHOS_TEST_FOR_EXCEPTION(!is_number(seed_tokens[1]) || !is_number(seed_tokens[2]),std::runtime_error,"");
-                   seed_loc_x = atoi(seed_tokens[1].c_str());
-                   seed_loc_y = atoi(seed_tokens[2].c_str());
+                   seed_loc_x = strtol(seed_tokens[1].c_str(),NULL,0);
+                   seed_loc_y = strtol(seed_tokens[2].c_str(),NULL,0);
                    if(proc_rank==0) DEBUG_MSG("Seed location " << seed_loc_x << " " << seed_loc_y);
                    has_location = true;
                    info->size_map->insert(std::pair<int_t,std::pair<int_t,int_t> >(num_roi,std::pair<int_t,int_t>(seed_loc_x,seed_loc_y)));
@@ -1301,7 +1301,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            else if(block_tokens[0]==parser_subset_id){
              TEUCHOS_TEST_FOR_EXCEPTION(block_tokens.size()<2,std::runtime_error,"");
              TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[1]),std::runtime_error,"");
-             subset_id = atoi(block_tokens[1].c_str());
+             subset_id = strtol(block_tokens[1].c_str(),NULL,0);
              if(proc_rank==0) DEBUG_MSG("Conformal subset id: " << subset_id);
            }
            else if(block_tokens[0]==parser_test_for_motion){
@@ -1313,7 +1313,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
              has_motion_window = true;
              if(block_tokens.size()==2){
                TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[1]),std::runtime_error,"");
-               motion_window_params.use_subset_id_ = atoi(block_tokens[1].c_str());
+               motion_window_params.use_subset_id_ = strtol(block_tokens[1].c_str(),NULL,0);
                if(proc_rank==0) DEBUG_MSG("Conformal subset using the motion window defined by subset " <<
                  motion_window_params.use_subset_id_);
              }
@@ -1322,10 +1322,10 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  "usage: TEST_FOR_MOTION <origin_x> <origin_y> <width> <heigh> [tol], if tol is not set it will be computed automatically based on the first frame");
              for(int_t m=1;m<5;++m){TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[m]),std::invalid_argument,
                "Error, these parameters should be numbers here.");}
-             motion_window_params.start_x_ = atoi(block_tokens[1].c_str());
-             motion_window_params.start_y_ = atoi(block_tokens[2].c_str());
-             motion_window_params.end_x_ = atoi(block_tokens[3].c_str());
-             motion_window_params.end_y_ = atoi(block_tokens[4].c_str());
+             motion_window_params.start_x_ = strtol(block_tokens[1].c_str(),NULL,0);
+             motion_window_params.start_y_ = strtol(block_tokens[2].c_str(),NULL,0);
+             motion_window_params.end_x_ = strtol(block_tokens[3].c_str(),NULL,0);
+             motion_window_params.end_y_ = strtol(block_tokens[4].c_str(),NULL,0);
              motion_window_params.sub_image_id_ = num_motion_windows_defined++;
              if(block_tokens.size()>5)
                motion_window_params.tol_ = strtod(block_tokens[5].c_str(),NULL);
@@ -1358,7 +1358,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  for(size_t id=1;id<block_tokens.size();++id){
                    TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[id]),std::runtime_error,"");
                    DEBUG_MSG("Skip solve id : " << block_tokens[id]);
-                   skip_solve_ids.push_back(atoi(block_tokens[id].c_str()));
+                   skip_solve_ids.push_back(strtol(block_tokens[id].c_str(),NULL,0));
                  }
                }
              }
@@ -1468,7 +1468,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  if(id_tokens.size()==0) continue;
                  if(id_tokens[0]==parser_end) break;
                  TEUCHOS_TEST_FOR_EXCEPTION(!is_number(id_tokens[0]),std::runtime_error,"");
-                 blocking_ids.push_back(atoi(id_tokens[0].c_str()));
+                 blocking_ids.push_back(strtol(id_tokens[0].c_str(),NULL,0));
                }
                for(size_t i=0;i<blocking_ids.size();++i)
                  if(proc_rank==0) DEBUG_MSG("Subset is blocked by " << blocking_ids[i]);
@@ -1573,8 +1573,8 @@ Teuchos::RCP<Circle> read_circle(std::fstream &dataFile){
       if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define circle center point ");}
       TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]) || !is_number(tokens[2]),std::runtime_error,
         "Error, both tokens should be a number");
-      cx = atoi(tokens[1].c_str());
-      cy = atoi(tokens[2].c_str());
+      cx = strtol(tokens[1].c_str(),NULL,0);
+      cy = strtol(tokens[2].c_str(),NULL,0);
     }
     else if(tokens[0]==parser_radius){
       if(tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define circle radius ");}
@@ -1622,8 +1622,8 @@ Teuchos::RCP<DICe::Rectangle> read_rectangle(std::fstream &dataFile){
         if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define circle center point ");}
         TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]) || !is_number(tokens[2]),std::runtime_error,
           "Error, both tokens should be a number");
-        cx = atoi(tokens[1].c_str());
-        cy = atoi(tokens[2].c_str());
+        cx = strtol(tokens[1].c_str(),NULL,0);
+        cy = strtol(tokens[2].c_str(),NULL,0);
       }
       else if(tokens[0]==parser_width){
         if(tokens.size()<2){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define the width ");}
@@ -1645,16 +1645,16 @@ Teuchos::RCP<DICe::Rectangle> read_rectangle(std::fstream &dataFile){
         TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]) || !is_number(tokens[2]),std::runtime_error,
           "Error, both tokens should be numbers");
         has_upper_left_lower_right = true;
-        upper_left_x = atoi(tokens[1].c_str());
-        upper_left_y = atoi(tokens[2].c_str());
+        upper_left_x = strtol(tokens[1].c_str(),NULL,0);
+        upper_left_y = strtol(tokens[2].c_str(),NULL,0);
       }
       else if(tokens[0]==parser_lower_right){
         if(tokens.size()<3){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, not enough values to define rectangle lower right ");}
         TEUCHOS_TEST_FOR_EXCEPTION(!is_number(tokens[1]) || !is_number(tokens[2]),std::runtime_error,
           "Error, both tokens should be a number");
         has_upper_left_lower_right = true;
-        lower_right_x = atoi(tokens[1].c_str());
-        lower_right_y = atoi(tokens[2].c_str());
+        lower_right_x = strtol(tokens[1].c_str(),NULL,0);
+        lower_right_y = strtol(tokens[2].c_str(),NULL,0);
       }
       else{
         TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid token in rectangle definition by upper left, lower right " << tokens[0]);
@@ -1716,8 +1716,8 @@ Teuchos::RCP<DICe::Polygon> read_polygon(std::fstream &dataFile){
       TEUCHOS_TEST_FOR_EXCEPTION(vertex_tokens.size()<2,std::runtime_error,"");
       TEUCHOS_TEST_FOR_EXCEPTION(!is_number(vertex_tokens[0]),std::runtime_error,"");
       TEUCHOS_TEST_FOR_EXCEPTION(!is_number(vertex_tokens[1]),std::runtime_error,"");
-      vertices_x.push_back(atoi(vertex_tokens[0].c_str()));
-      vertices_y.push_back(atoi(vertex_tokens[1].c_str()));
+      vertices_x.push_back(strtol(vertex_tokens[0].c_str(),NULL,0));
+      vertices_y.push_back(strtol(vertex_tokens[1].c_str(),NULL,0));
     }
   }
   TEUCHOS_TEST_FOR_EXCEPTION(vertices_x.empty(),std::runtime_error,"");
