@@ -573,14 +573,14 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
     delete[] in.holelist;
     delete[] in.segmentlist;
     delete[] in.segmentmarkerlist;
-    delete[] out.pointlist;
-    delete[] out.pointmarkerlist;
-    delete[] out.trianglelist;
+    free(out.pointlist);
+    free(out.pointmarkerlist);
+    free(out.trianglelist);
     delete[] out.triangleattributelist;
-    delete[] out.segmentlist;
-    delete[] out.segmentmarkerlist;
-    delete[] out.edgelist;
-    delete[] out.edgemarkerlist;
+    free(out.segmentlist);
+    free(out.segmentmarkerlist);
+    free(out.edgelist);
+    free(out.edgemarkerlist);
   }
   return mesh;
 }
