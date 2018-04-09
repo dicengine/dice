@@ -32,12 +32,6 @@ Tutorials
 ---------
 [http://dicengine.github.io/dice/pages.html](http://dicengine.github.io/dice/pages.html)
 
-How To Videos
--------------
-[2D DIC](https://github.com/dicengine/dice/releases/download/v2.0-beta.8/DICe_Demo_2D.mp4)
-[Stereo DIC](https://github.com/dicengine/dice/releases/download/v2.0-beta.8/DICe_Demo_Stereo.mp4)
-[2D Tracking](https://github.com/dicengine/dice/releases/download/v2.0-beta.8/DICe_Demo_Tracking.mp4)
-
 Releases (and Installers)
 -------------------------
 Windows and Mac OS package installers for DICe can be found [here](https://github.com/dicengine/dice/releases). To install DICe on Linux, it must be built from source following the instructions [here](http://dicengine.github.io/dice).
