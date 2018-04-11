@@ -28,7 +28,15 @@ Documentation
 -------------
 [http://dicengine.github.io/dice](http://dicengine.github.io/dice)
 
-Tutorials
+How To Videos
+-------------
+2D analysis: https://youtu.be/TD7HDwPxx1Q
+
+Stereo analysis: https://youtu.be/8FGbIwk3fcU
+
+2D tracking: https://youtu.be/ZBhFYplj04g
+
+Command Line Use Tutorials
 ---------
 [http://dicengine.github.io/dice/pages.html](http://dicengine.github.io/dice/pages.html)
 
