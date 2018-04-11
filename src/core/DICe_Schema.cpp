@@ -695,6 +695,13 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
 
 void
 Schema::update_extents(const bool use_transformation_augmentation){
+  // don't use image extents when conformal subsets are used
+  if(conformal_subset_defs_!=Teuchos::null){
+    if(conformal_subset_defs_->size()>0){
+      has_extents_ = false;
+      return;
+    }
+  }
   TEUCHOS_TEST_FOR_EXCEPTION(motion_window_params_->size()>0,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"");
   Teuchos::RCP<MultiField> coords = mesh_->get_field(INITIAL_COORDINATES_FS);

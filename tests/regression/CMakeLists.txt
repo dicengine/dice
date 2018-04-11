@@ -210,11 +210,11 @@ if(DICE_MPI)
     # create a test
     ADD_TEST ( NAME "RUN_${test}_n2"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${test}
-      COMMAND ${DICE_MPI_EXEC} -n 2 ${CMAKE_CURRENT_BINARY_DIR}/../../bin/dice -i input.xml -v)
+      COMMAND ${DICE_MPI_EXEC} ${DICE_MPI_EXEC_OPTIONS} -n 2 ${CMAKE_CURRENT_BINARY_DIR}/../../bin/dice -i input.xml -v)
     # Separate test for each output file (could be more elegant way to do this...)
     ADD_TEST ( NAME "RUN_${test}_n4"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${test}
-      COMMAND ${DICE_MPI_EXEC} -n 4 ${CMAKE_CURRENT_BINARY_DIR}/../../bin/dice -i input.xml -v)
+      COMMAND ${DICE_MPI_EXEC} ${DICE_MPI_EXEC_OPTIONS} -n 4 ${CMAKE_CURRENT_BINARY_DIR}/../../bin/dice -i input.xml -v)
     # Separate test for each output file (could be more elegant way to do this...)
     # remove the results folder (to clear previous runs)
     FILE(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/${test}/results)
