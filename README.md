@@ -36,6 +36,12 @@ Stereo analysis: https://youtu.be/8FGbIwk3fcU
 
 2D tracking: https://youtu.be/ZBhFYplj04g
 
+General Use, Tips for DIC, and Other Resources
+----------------------------------------------
+
+The International DIC Society (iDICs) provides a number of helpful resources related to DIC, for example a comprehesive guide on best practives, www.idics.org/guide, as well as conferences and workshops related to DIC. Go to www.idics.org for more information. 
+
+
 Command Line Use Tutorials
 ---------
 [http://dicengine.github.io/dice/pages.html](http://dicengine.github.io/dice/pages.html)
