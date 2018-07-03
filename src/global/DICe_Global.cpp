@@ -778,6 +778,7 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
   scalar_t J =0.0;
   std::vector<scalar_t> elem_force(num_funcs*spa_dim);
   scalar_t x=0.0,y=0.0,bx=0.0,by=0.0;
+  std::vector<scalar_t> elem_stiffness(num_funcs*spa_dim*num_funcs*spa_dim);
 
   // get the natural integration points for this element:
   const int_t integration_order = 6;
@@ -899,6 +900,38 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
 
     } // image gp loop
 
+    if(has_term(DIV_SYMMETRIC_STRAIN_REGULARIZATION)) {
+      // clear stiffness
+      for(int_t i=0;i<num_funcs*spa_dim*num_funcs*spa_dim;++i)
+        elem_stiffness[i] = 0.0;
+      // low-order gauss point loop:
+      for(int_t gp=0;gp<num_integration_points;++gp){
+        // isoparametric coords of the gauss point
+        for(int_t dim=0;dim<natural_coord_dim;++dim){
+          natural_coords[dim] = gp_locs[gp][dim];
+        }
+        // evaluate the shape functions and derivatives:
+        shape_func_evaluator->evaluate_shape_functions(&natural_coords[0],&N[0]);
+        shape_func_evaluator->evaluate_shape_function_derivatives(&natural_coords[0],&DN[0]);
+        // compute the jacobian for this element:
+        DICe::global::calc_jacobian(&nodal_coords[0],&DN[0],&jac[0],&inv_jac[0],J,num_funcs,spa_dim);
+        // compute the elemental stiffness
+        div_symmetric_strain(spa_dim,num_funcs,alpha2_,J,gp_weights[gp],&inv_jac[0],&DN[0],&elem_stiffness[0]);
+      } // gp loop
+      //  compute the element force
+      for(int_t i=0;i<num_funcs;++i){
+        for(int_t m=0;m<spa_dim;++m){
+          for(int_t j=0;j<num_funcs;++j){
+            for(int_t n=0;n<spa_dim;++n){
+              elem_force[i*spa_dim + m] -= elem_stiffness[(i*spa_dim + m)*
+                                           num_funcs*spa_dim + j*spa_dim + n]*
+                                           nodal_disp[j*spa_dim + n];
+            }
+          }
+        }
+      }
+    } // if div_symmetric_strain_regularization
+
     // assemble the force terms
     // (note: no force terms for lagrange multiplier...so assembly is the same if mixed or not)
     for(int_t i=0;i<num_funcs;++i){
@@ -1004,9 +1037,12 @@ Global_Algorithm::execute(){
     //residual->describe();
 
     if(resid_norm < residual_tol && it!=0){
-      DEBUG_MSG("Iteration: " << it << " residual norm: " << resid_norm);
-      DEBUG_MSG("Global_Algorithm::execute(): * * * convergence successful * * *");
-      DEBUG_MSG("Global_Algorithm::execute(): criteria: residual_norm < tol (" << residual_tol << ")");
+      std::cout << "Global_Algorithm::execute(): * * * convergence successful * * *" << std::endl;
+      std::cout << "Global_Algorithm::execute(): criteria: residual_norm < tol (" << residual_tol << ")" << std::endl;
+      std::cout << "Iteration: " << it << " residual norm: " << resid_norm << std::endl;
+      //DEBUG_MSG("Iteration: " << it << " residual norm: " << resid_norm);
+      //DEBUG_MSG("Global_Algorithm::execute(): * * * convergence successful * * *");
+      //DEBUG_MSG("Global_Algorithm::execute(): criteria: residual_norm < tol (" << residual_tol << ")");
       for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
         disp->local_value(i*spa_dim+0) += lhs->local_value(i*spa_dim+0);
         disp->local_value(i*spa_dim+1) += lhs->local_value(i*spa_dim+1);
@@ -1075,11 +1111,15 @@ Global_Algorithm::execute(){
 
     // compute the change in disp from the last solution:
     const scalar_t delta_disp_norm = disp->norm(disp_nm1);
-    DEBUG_MSG("Iteration: " << it << " residual norm: " << resid_norm
-      << " disp norm: " << disp->norm() << " disp update norm: " << delta_disp_norm);
+    std::cout << "Iteration: " << it << " residual norm: " << resid_norm
+      << " disp norm: " << disp->norm() << " disp update norm: " << delta_disp_norm << std::endl;
+    //DEBUG_MSG("Iteration: " << it << " residual norm: " << resid_norm
+    //  << " disp norm: " << disp->norm() << " disp update norm: " << delta_disp_norm);
     if(delta_disp_norm < update_tol){
-      DEBUG_MSG("Global_Algorithm::execute(): * * * convergence successful * * *");
-      DEBUG_MSG("Global_Algorithm::execute(): criteria: delta_disp_norm < tol (" << update_tol << ")");
+      std::cout << "Global_Algorithm::execute(): * * * convergence successful * * *" << std::endl;
+      std::cout << "Global_Algorithm::execute(): criteria: delta_disp_norm < tol (" << update_tol << ")" << std::endl;
+      //DEBUG_MSG("Global_Algorithm::execute(): * * * convergence successful * * *");
+      //DEBUG_MSG("Global_Algorithm::execute(): criteria: delta_disp_norm < tol (" << update_tol << ")");
       break;
     }
     // copy the displacement solution to state n-1
