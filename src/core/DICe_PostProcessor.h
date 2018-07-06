@@ -372,7 +372,7 @@ public:
 
   /// Default constructor
   /// \param params the parameters to use for this post processor
-  Live_Plot_Post_Processor();
+  Live_Plot_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params);
 
   /// Virtual destructor
   virtual ~Live_Plot_Post_Processor(){};
@@ -399,6 +399,8 @@ private:
   int_t num_individual_pts_;
   // count the current frame
   int_t frame_index_;
+  // number of fields in the output
+  int_t num_field_entries_;
   // vector of x-coordinates for points
   std::vector<scalar_t> pts_x_;
   // vector of y-coordinates for points

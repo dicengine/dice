@@ -656,7 +656,14 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   // check for live_plot file and add them to the end of the PP list:
   std::fstream livePlotDataFile("live_plot.dat", std::ios_base::in);
   if(livePlotDataFile.good()){
-    Teuchos::RCP<Live_Plot_Post_Processor> lp_ptr = Teuchos::rcp (new Live_Plot_Post_Processor());
+    Teuchos::RCP<Teuchos::ParameterList> ppParams = Teuchos::rcp( new Teuchos::ParameterList());
+    if(analysis_type_==LOCAL_DIC){
+      ppParams->set<std::string>(displacement_x_field_name,SUBSET_DISPLACEMENT_X_FS.get_name_label());
+      ppParams->set<std::string>(displacement_y_field_name,SUBSET_DISPLACEMENT_Y_FS.get_name_label());
+      ppParams->set<std::string>(coordinates_x_field_name,SUBSET_COORDINATES_X_FS.get_name_label());
+      ppParams->set<std::string>(coordinates_y_field_name,SUBSET_COORDINATES_Y_FS.get_name_label());
+    }
+    Teuchos::RCP<Live_Plot_Post_Processor> lp_ptr = Teuchos::rcp (new Live_Plot_Post_Processor(ppParams));
     post_processors_.push_back(lp_ptr);
   }
   if(post_processors_.size()>0) has_post_processor_ = true;
@@ -810,6 +817,10 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
 #ifdef DICE_ENABLE_GLOBAL
     global_algorithm_ = Teuchos::rcp(new DICe::global::Global_Algorithm(this,init_params_));
 #endif
+    // initialize the post processors
+    for(size_t i=0;i<post_processors_.size();++i)
+      post_processors_[i]->initialize(mesh_);
+    is_initialized_ = true;
     return;
   }
 
@@ -2936,7 +2947,7 @@ Schema::write_output(const std::string & output_folder,
   int_t my_proc = comm_->get_rank();
   int_t proc_size = comm_->get_size();
 
-#ifdef DICE_ENABLE_GLOBAL
+#ifdef DICE_ENABLE_GLOBAL // global is enabled doesn't mean the analysis is global DIC it just means exodus is available as an output format
   if(frame_id_==first_frame_id_+1){
     std::string output_dir= "";
     if(init_params_!=Teuchos::null)

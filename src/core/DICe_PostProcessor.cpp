@@ -885,17 +885,13 @@ Uncertainty_Post_Processor::execute(){
   DEBUG_MSG("Uncertainty_Post_Processor::execute(): end");
 }
 
-Live_Plot_Post_Processor::Live_Plot_Post_Processor() :
+Live_Plot_Post_Processor::Live_Plot_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params) :
   Post_Processor(post_process_live_plots),
   num_neigh_(7),
   num_individual_pts_(0),
-  frame_index_(0){
-  // no extra fields need to be enabled
-  // make sure the x and y coords are the subset coordinates in the left image
-  Teuchos::RCP<Teuchos::ParameterList> field_params = Teuchos::rcp( new Teuchos::ParameterList() );
-  field_params->set(coordinates_x_field_name,DICe::field_enums::SUBSET_COORDINATES_X_FS.get_name_label());
-  field_params->set(coordinates_y_field_name,DICe::field_enums::SUBSET_COORDINATES_Y_FS.get_name_label());
-  set_field_names(field_params);
+  frame_index_(0),
+  num_field_entries_(0){
+  set_field_names(params);
 }
 
 void
@@ -904,23 +900,38 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
 
   // list of fields to output in the live plots
   // check if stereo or 2D
-  bool use_model_coordinates = false;
-  Teuchos::RCP<DICe::MultiField> model_x_coords = mesh_->get_field(DICe::field_enums::MODEL_COORDINATES_X_FS);
-  if(model_x_coords->norm() > 1.0E-8) // check that the field has values, not just zeros
-    use_model_coordinates = true;
-
-  if(use_model_coordinates){
+  bool has_model_coordinates = false;
+  if(mesh_->has_field(DICe::field_enums::MODEL_COORDINATES_X)){
+    Teuchos::RCP<DICe::MultiField> model_x_coords = mesh_->get_field(DICe::field_enums::MODEL_COORDINATES_X_FS);
+    if(model_x_coords->norm() > 1.0E-8) // check that the field has values, not just zeros
+      has_model_coordinates = true;
+  }
+  if(has_model_coordinates){
     field_specs_.push_back(DICe::field_enums::MODEL_DISPLACEMENT_X_FS);
     field_specs_.push_back(DICe::field_enums::MODEL_DISPLACEMENT_Y_FS);
     field_specs_.push_back(DICe::field_enums::MODEL_DISPLACEMENT_Z_FS);
-  }else{
+  }else if(mesh_->has_field(DICe::field_enums::SUBSET_DISPLACEMENT_X)){
     field_specs_.push_back(DICe::field_enums::SUBSET_DISPLACEMENT_X_FS);
     field_specs_.push_back(DICe::field_enums::SUBSET_DISPLACEMENT_Y_FS);
-    field_specs_.push_back(DICe::field_enums::ROTATION_Z_FS);
+  }else if(mesh_->has_field(DICe::field_enums::DISPLACEMENT)){
+    field_specs_.push_back(DICe::field_enums::DISPLACEMENT_FS);
   }
-  field_specs_.push_back(DICe::field_enums::SIGMA_FS);
-  field_specs_.push_back(DICe::field_enums::VSG_STRAIN_XX_FS);
-  field_specs_.push_back(DICe::field_enums::VSG_STRAIN_YY_FS);
+  if(mesh_->has_field(DICe::field_enums::ROTATION_Z)){
+      field_specs_.push_back(DICe::field_enums::ROTATION_Z_FS);
+  }
+  if(mesh_->has_field(DICe::field_enums::SIGMA)){
+      field_specs_.push_back(DICe::field_enums::SIGMA_FS);
+  }
+  if(mesh_->has_field(DICe::field_enums::VSG_STRAIN_XX)){
+    field_specs_.push_back(DICe::field_enums::VSG_STRAIN_XX_FS);
+    field_specs_.push_back(DICe::field_enums::VSG_STRAIN_XY_FS);
+    field_specs_.push_back(DICe::field_enums::VSG_STRAIN_YY_FS);
+  }
+  if(mesh_->has_field(DICe::field_enums::GREEN_LAGRANGE_STRAIN_XX)){
+    field_specs_.push_back(DICe::field_enums::GREEN_LAGRANGE_STRAIN_XX_FS);
+    field_specs_.push_back(DICe::field_enums::GREEN_LAGRANGE_STRAIN_XY_FS);
+    field_specs_.push_back(DICe::field_enums::GREEN_LAGRANGE_STRAIN_YY_FS);
+  }
 
   std::fstream livePlotDataFile("live_plot.dat", std::ios_base::in);
   TEUCHOS_TEST_FOR_EXCEPTION(!livePlotDataFile.good(),std::runtime_error,
@@ -1113,11 +1124,21 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
   Teuchos::Array<int_t> dist_ids;
   for(size_t i=0;i<local_indices_.size();++i)
     dist_ids.push_back(local_indices_[i]);
-  const int_t num_fields = field_specs_.size();
+  // count up the number of fields (note some are vector fields so can't just use field_specs_.size())
+  num_field_entries_ = 0;
+  for(size_t field_it=0;field_it<field_specs_.size();++field_it){
+    if(field_specs_[field_it].get_field_type()==DICe::field_enums::SCALAR_FIELD_TYPE){
+      num_field_entries_++;
+    }else if(field_specs_[field_it].get_field_type()==DICe::field_enums::VECTOR_FIELD_TYPE){
+      num_field_entries_+=spa_dim;
+    }else{
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid field type.");
+    }
+  }
   zero_map_  = Teuchos::rcp (new MultiField_Map(-1, zero_owned_ids,0,*mesh_->get_comm()));
-  zero_data_ = Teuchos::rcp(new MultiField(zero_map_,num_fields,true));
+  zero_data_ = Teuchos::rcp(new MultiField(zero_map_,num_field_entries_,true));
   dist_map_  = Teuchos::rcp (new MultiField_Map(-1, dist_ids,0,*mesh_->get_comm()));
-  dist_data_ = Teuchos::rcp(new MultiField(dist_map_,num_fields,true));
+  dist_data_ = Teuchos::rcp(new MultiField(dist_map_,num_field_entries_,true));
 
   //dist_map_->describe();
 
@@ -1161,8 +1182,16 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
       fileName << "live_plot_pt_" << i << ".txt";
       std::FILE * filePtr = fopen(fileName.str().c_str(),"w");
       fprintf(filePtr,"# point coordinates: %f %f\n",pts_x_[i],pts_y_[i]);
-      for(size_t field_it=0;field_it<field_specs_.size();++field_it)
-        fprintf(filePtr,"%s,",field_specs_[field_it].get_name_label().c_str());
+      for(size_t field_it=0;field_it<field_specs_.size();++field_it){
+        if(field_specs_[field_it].get_field_type()==DICe::field_enums::SCALAR_FIELD_TYPE)
+          fprintf(filePtr,"%s,",field_specs_[field_it].get_name_label().c_str());
+        else{
+          fprintf(filePtr,"%s",field_specs_[field_it].get_name_label().c_str());
+          fprintf(filePtr,"%s,","_X");
+          fprintf(filePtr,"%s",field_specs_[field_it].get_name_label().c_str());
+          fprintf(filePtr,"%s,","_Y");
+        }
+      }
       fprintf(filePtr,"\n");
       fclose(filePtr);
     }
@@ -1177,15 +1206,16 @@ Live_Plot_Post_Processor::execute(){
 
   if(local_indices_.size()==0)return;
 
-  Teuchos::RCP<MultiField> sigma = mesh_->get_overlap_field(DICe::field_enums::SIGMA_FS);
+  const int_t spa_dim = mesh_->spatial_dimension();
+  const bool has_sigma = mesh_->has_field(DICe::field_enums::SIGMA);
+  Teuchos::RCP<MultiField> sigma;
+  if(has_sigma) sigma = mesh_->get_overlap_field(DICe::field_enums::SIGMA_FS);
   // set up the fields
   std::vector<Teuchos::RCP<MultiField> > field_vec;
   for(size_t i=0;i<field_specs_.size();++i){
-    // all need to be scalar rank
-    assert(field_specs_[i].get_field_type()==DICe::field_enums::SCALAR_FIELD_TYPE);
     field_vec.push_back(mesh_->get_overlap_field(field_specs_[i]));
   }
-  const int_t num_fields = field_vec.size();
+  assert(field_vec.size()==field_specs_.size());
 
   const int_t N = 3;
   int *IPIV = new int[N+1];
@@ -1204,14 +1234,19 @@ Live_Plot_Post_Processor::execute(){
     //DEBUG_MSG("Processing live plot point " << pts_x_[pt] << " " << pts_y_[pt] );
     // search the neighbors to see how many valid neighbors exist:
     int_t num_valid_neigh = 0;
-    for(int_t j=0;j<num_neigh_;++j){
-      if(sigma->local_value(neighbor_list_[pt][j])>=0.0){
-        neigh_valid[j] = true;
-        num_valid_neigh++;
-      }else{
-        neigh_valid[j] = false;
-      }
-    }
+     for(int_t j=0;j<num_neigh_;++j){
+       if(has_sigma){
+         if(sigma->local_value(neighbor_list_[pt][j])>=0.0){
+           neigh_valid[j] = true;
+           num_valid_neigh++;
+         }else{
+           neigh_valid[j] = false;
+         }
+       }else{
+         neigh_valid[j] = true;
+         num_valid_neigh++;
+       }
+     }
     //DEBUG_MSG("Live plot point num valid neighbors: " << num_valid_neigh);
     if(num_valid_neigh < 3){
       DEBUG_MSG("Live plot point " << local_indices_[pt] << " does not have enough neighbors to calculate values.");
@@ -1220,7 +1255,7 @@ Live_Plot_Post_Processor::execute(){
       std::vector<Teuchos::ArrayRCP<double> > u;
       std::vector<Teuchos::ArrayRCP<double> > X_t_u;
       std::vector<Teuchos::ArrayRCP<double> > coeffs;
-      for(int_t i=0;i<num_fields;++i){
+      for(int_t i=0;i<num_field_entries_;++i){
         u.push_back(Teuchos::ArrayRCP<double>(num_valid_neigh,0.0));
         X_t_u.push_back(Teuchos::ArrayRCP<double>(N,0.0));
         coeffs.push_back(Teuchos::ArrayRCP<double>(N,0.0));
@@ -1233,8 +1268,18 @@ Live_Plot_Post_Processor::execute(){
       for(int_t j=0;j<num_neigh_;++j){
         if(!neigh_valid[j])continue;
         neigh_id = neighbor_list_[pt][j];
-        for(int_t field_it=0;field_it<num_fields;++field_it){
-          u[field_it][valid_id] = field_vec[field_it]->local_value(neigh_id);
+        int_t field_id = 0;
+        for(size_t field_it=0;field_it<field_specs_.size();++field_it){
+          if(field_specs_[field_it].get_field_type()==DICe::field_enums::SCALAR_FIELD_TYPE){
+            u[field_id][valid_id] = field_vec[field_it]->local_value(neigh_id);
+            field_id++;
+          }
+          else{
+            u[field_id][valid_id] = field_vec[field_it]->local_value(neigh_id*spa_dim+0);
+            field_id++;
+            u[field_id][valid_id] = field_vec[field_it]->local_value(neigh_id*spa_dim+1);
+            field_id++;
+          }
         }
         // set up the X^T matrix
         X_t(0,valid_id) = 1.0;
@@ -1257,7 +1302,7 @@ Live_Plot_Post_Processor::execute(){
       // compute X^T*u
       for(int_t i=0;i<N;++i){
         for(int_t j=0;j<num_valid_neigh;++j){
-          for(int_t field_it=0;field_it<num_fields;++field_it){
+          for(int_t field_it=0;field_it<num_field_entries_;++field_it){
             X_t_u[field_it][i] += X_t(i,j)*u[field_it][j];
           }
         }
@@ -1265,14 +1310,14 @@ Live_Plot_Post_Processor::execute(){
       // compute the coeffs
       for(int_t i=0;i<N;++i){
         for(int_t j=0;j<N;++j){
-          for(int_t field_it=0;field_it<num_fields;++field_it){
+          for(int_t field_it=0;field_it<num_field_entries_;++field_it){
             coeffs[field_it][i] += X_t_X(i,j)*X_t_u[field_it][j];
           }
         }
       }
       assert(dist_map_->is_node_global_elem(local_indices_[pt]));
       const int_t lid = dist_map_->get_local_element(local_indices_[pt]);
-      for(int_t field_it=0;field_it<num_fields;++field_it){
+      for(int_t field_it=0;field_it<num_field_entries_;++field_it){
         dist_data_->local_value(lid,field_it) = coeffs[field_it][0];
       }
     } // end has enough valid neighbors to compute a value
@@ -1291,7 +1336,7 @@ Live_Plot_Post_Processor::execute(){
       std::stringstream fileName;
       fileName << "live_plot_pt_" << i << ".txt";
       std::FILE * filePtr = fopen(fileName.str().c_str(),"a");
-      for(size_t field_it=0;field_it<field_specs_.size();++field_it)
+      for(int_t field_it=0;field_it<num_field_entries_;++field_it)
         fprintf(filePtr,"%f,",zero_data_->local_value(i,field_it));
       fprintf(filePtr,"\n");
       fclose(filePtr);
@@ -1301,12 +1346,21 @@ Live_Plot_Post_Processor::execute(){
     fileName << "live_plot_line_step_" << frame_index_++ << ".txt";
     std::FILE * filePtr = fopen(fileName.str().c_str(),"w");
     fprintf(filePtr,"X,Y,");
-    for(size_t field_it=0;field_it<field_specs_.size();++field_it)
-      fprintf(filePtr,"%s,",field_specs_[field_it].get_name_label().c_str());
+
+    for(size_t field_it=0;field_it<field_specs_.size();++field_it){
+      if(field_specs_[field_it].get_field_type()==DICe::field_enums::SCALAR_FIELD_TYPE)
+        fprintf(filePtr,"%s,",field_specs_[field_it].get_name_label().c_str());
+      else{
+        fprintf(filePtr,"%s",field_specs_[field_it].get_name_label().c_str());
+        fprintf(filePtr,"%s,","_X");
+        fprintf(filePtr,"%s",field_specs_[field_it].get_name_label().c_str());
+        fprintf(filePtr,"%s,","_Y");
+      }
+    }
     fprintf(filePtr,"\n");
     for(size_t pt=num_individual_pts_;pt<pts_x_.size();++pt){
       fprintf(filePtr,"%f,%f,",pts_x_[pt],pts_y_[pt]);
-      for(size_t field_it=0;field_it<field_specs_.size();++field_it)
+      for(int_t field_it=0;field_it<num_field_entries_;++field_it)
         fprintf(filePtr,"%f,",zero_data_->local_value(pt,field_it));
       fprintf(filePtr,"\n");
     }

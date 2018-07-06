@@ -91,6 +91,8 @@ BC_Manager::BC_Manager(Global_Algorithm * alg) :
           register_mixed_bc(row_id);
         }
       }
+    }else if((int_t)mesh_->bc_defs()->size() < boundary_node_set_id){ // if no bcs are specified, they are all neumann bcs by default
+      continue;
     }
     else{
       // make sure that a bc def exists for this nodes set
