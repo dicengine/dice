@@ -62,7 +62,7 @@
 #  define DEBUG_MSG(x) do {} while (0)
 #endif
 
-#define VERSION "v1.0"
+#define VERSION "v2.0"
 #ifndef GITSHA1
   #define GITSHA1 "not available"
 #endif
