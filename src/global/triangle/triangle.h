@@ -15,39 +15,6 @@
 /*                                                                           */
 /*****************************************************************************/
 
-/* For single precision (which will save some memory and reduce paging),     */
-/*   define the symbol SINGLE by using the -DSINGLE compiler switch or by    */
-/*   writing "#define SINGLE" below.                                         */
-/*                                                                           */
-/* For double precision (which will allow you to refine meshes to a smaller  */
-/*   edge length), leave SINGLE undefined.                                   */
-/*                                                                           */
-/* Double precision uses more memory, but improves the resolution of the     */
-/*   meshes you can generate with Triangle.  It also reduces the likelihood  */
-/*   of a floating exception due to overflow.  Finally, it is much faster    */
-/*   than single precision on 64-bit architectures like the DEC Alpha.  I    */
-/*   recommend double precision unless you want to generate a mesh for which */
-/*   you do not have enough memory.                                          */
-
-/* #define SINGLE */
-
-#if defined __cplusplus
-extern "C" {
-#endif
-
-#ifdef SINGLE
-#define REAL float
-#else /* not SINGLE */
-#define REAL double
-#endif /* not SINGLE */
-
-/* The next line is used to outsmart some very stupid compilers.  If your    */
-/*   compiler is smarter, feel free to replace the "int" with "void".        */
-/*   Not that it matters.                                                    */
-
-#define VOID int
-
-
 /*****************************************************************************/
 /*                                                                           */
 /*  How to call Triangle from another program                                */
@@ -281,6 +248,34 @@ extern "C" {
 /*                                                                           */
 /*****************************************************************************/
 
+/* For single precision (which will save some memory and reduce paging),     */
+/*   define the symbol SINGLE by using the -DSINGLE compiler switch or by    */
+/*   writing "#define SINGLE" below.                                         */
+/*                                                                           */
+/* For double precision (which will allow you to refine meshes to a smaller  */
+/*   edge length), leave SINGLE undefined.                                   */
+/*                                                                           */
+/* Double precision uses more memory, but improves the resolution of the     */
+/*   meshes you can generate with Triangle.  It also reduces the likelihood  */
+/*   of a floating exception due to overflow.  Finally, it is much faster    */
+/*   than single precision on 64-bit architectures like the DEC Alpha.  I    */
+/*   recommend double precision unless you want to generate a mesh for which */
+/*   you do not have enough memory.                                          */
+
+/* #define SINGLE */
+
+#ifdef SINGLE
+#define REAL float
+#else /* not SINGLE */
+#define REAL double
+#endif /* not SINGLE */
+
+#define VOID int
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct triangulateio {
   REAL *pointlist;                                               /* In / out */
   REAL *pointattributelist;                                      /* In / out */
@@ -312,27 +307,10 @@ struct triangulateio {
   int numberofedges;                                             /* Out only */
 };
 
-#if defined(WIN32)
-#  if defined(DICE_LIB_EXPORTS_MODE)
-#    define DICE_LIB_DLL_EXPORT __declspec(dllexport)
-#  else
-#    define DICE_LIB_DLL_EXPORT __declspec(dllimport)
-#  endif
-#else
-#  define DICE_LIB_DLL_EXPORT
-#endif
-
-#ifdef ANSI_DECLARATORS
-DICE_LIB_DLL_EXPORT
 void triangulate(char *, struct triangulateio *, struct triangulateio *,
                  struct triangulateio *);
-DICE_LIB_DLL_EXPORT
 void trifree(VOID *memptr);
-#else /* not ANSI_DECLARATORS */
-void triangulate();
-void trifree();
-#endif /* not ANSI_DECLARATORS */
 
-#if defined __cplusplus
+#ifdef __cplusplus
 };
 #endif
