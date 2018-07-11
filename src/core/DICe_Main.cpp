@@ -220,7 +220,7 @@ int main(int argc, char *argv[]) {
     } // end local dic
     else if(schema->analysis_type()==GLOBAL_DIC){
 #ifdef DICE_ENABLE_GLOBAL
-      *outStream << "Using qaudratic tri 6 elements" << std::endl;
+      *outStream << "Global formulation mesh stats:" << std::endl;
       *outStream << "Mesh size:          " << schema->global_algorithm()->mesh_size() << std::endl;
       *outStream << "Number of nodes:    " << schema->global_algorithm()->mesh()->num_nodes() << std::endl;
       *outStream << "Number of elements: " << schema->global_algorithm()->mesh()->num_elem() << std::endl;
