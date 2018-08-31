@@ -402,9 +402,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
       if(cond_2x2 > 1.0E12) return HESSIAN_SINGULAR;
     }
     catch(std::exception &e){
-      if(&e!=0){
-        DEBUG_MSG( e.what() << '\n');
-      }
+      DEBUG_MSG( e.what() << '\n');
       return LINEAR_SOLVE_FAILED;
     }
     for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
@@ -413,9 +411,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
       lapack.GETRI(N,H.values(),N,IPIV,WORK,LWORK,&INFO);
     }
     catch(std::exception &e){
-      if(&e!=0){
-        DEBUG_MSG( e.what() << '\n');
-      }
+      DEBUG_MSG( e.what() << '\n');
       return LINEAR_SOLVE_FAILED;
     }
     // save off last step

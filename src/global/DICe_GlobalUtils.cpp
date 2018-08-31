@@ -459,9 +459,7 @@ void subset_velocity(Global_Algorithm * alg,
       lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
     }
     catch(std::exception &e){
-      if(&e!=0){
-        DEBUG_MSG( e.what() << '\n');
-      }
+      DEBUG_MSG( e.what() << '\n');
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"subset boundary initializer condition number estimate failed");
     }
     for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
@@ -470,9 +468,7 @@ void subset_velocity(Global_Algorithm * alg,
       lapack.GETRI(N,H.values(),N,IPIV,WORK,LWORK,&INFO);
     }
     catch(std::exception &e){
-      if(&e!=0){
-        DEBUG_MSG( e.what() << '\n');
-      }
+      DEBUG_MSG( e.what() << '\n');
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"subset boundary initializer matrix solve failed");
     }
 

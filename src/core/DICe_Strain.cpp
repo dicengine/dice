@@ -244,9 +244,7 @@ int main(int argc, char *argv[]) {
     DICe::finalize();
   }
   catch(std::exception & e){
-    if(&e!=0){
-      std::cout << e.what() << std::endl;
-    }
+    std::cout << e.what() << std::endl;
     return 1;
   }
 

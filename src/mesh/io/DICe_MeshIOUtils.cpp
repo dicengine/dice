@@ -263,9 +263,7 @@ Importer_Projector::import_vector_field(const std::string & file_name,
         lapack.GETRF(X_t_X.numRows(),X_t_X.numCols(),X_t_X.values(),X_t_X.numRows(),&IPIV[0],&INFO);
       }
       catch(std::exception &e){
-        if(&e!=0){
-          DEBUG_MSG( e.what() << '\n');
-        }
+        DEBUG_MSG( e.what() << '\n');
         TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
       }
       try
@@ -273,9 +271,7 @@ Importer_Projector::import_vector_field(const std::string & file_name,
         lapack.GETRI(X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),&IPIV[0],&WORK[0],LWORK,&INFO);
       }
       catch(std::exception &e){
-        if(&e!=0){
-          DEBUG_MSG( e.what() << '\n');
-        }
+        DEBUG_MSG( e.what() << '\n');
         TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
       }
       // compute X^T*u

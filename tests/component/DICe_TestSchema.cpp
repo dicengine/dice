@@ -154,9 +154,7 @@ int main(int argc, char *argv[]) {
   }
   catch (std::logic_error &e) {
     exception_thrown_as_it_should = true;
-    if(&e!=0){
-      *outStream << e.what() << "\n";
-    }
+    *outStream << e.what() << "\n";
   }; // end try
   if (!exception_thrown_as_it_should) {
     *outStream << "Error, An exception should have been thrown for invalid parameters but was not.\n";
