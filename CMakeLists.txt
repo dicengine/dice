@@ -1,6 +1,39 @@
 cmake_minimum_required(VERSION 3.4)
 MESSAGE("\nConfiguring DICe...\n")
 
+# Try to find Trilinos, if path was not given
+IF (NOT DEFINED DICE_TRILINOS_DIR)
+  # Losely based on:
+  # https://github.com/trilinos/Trilinos_tutorial/wiki/CMakeFindPackageTrilinosExample
+  # /usr/share/doc/opencv-doc/examples/face/CMakeLists.txt
+  # * Find Trilinos
+  find_package(Trilinos REQUIRED)
+
+  IF(Trilinos_FOUND)
+    MESSAGE("\nFound Trilinos")
+    SET(DICE_TRILINOS_DIR ${Trilinos_DIR})
+    MESSAGE("Trilinos_DIR = ${DICE_TRILINOS_DIR}")
+  ELSE()
+    MESSAGE(FATAL_ERROR "Could not find Trilinos")
+  ENDIF()
+ENDIF()
+
+# Try to find Trilinos, if path was not given
+IF (NOT DEFINED OpenCV_DIR)
+  # Losely based on:
+  # https://github.com/trilinos/Trilinos_tutorial/wiki/CMakeFindPackageTrilinosExample
+  # /usr/share/doc/opencv-doc/examples/face/CMakeLists.txt
+  # * Find OpenCV
+  find_package(OpenCV REQUIRED)
+
+  IF(OpenCV_FOUND)
+    MESSAGE("\nFound OpenCV")
+    MESSAGE("OpenCV_DIR = ${OpenCV_DIR}")
+  ELSE()
+    MESSAGE(FATAL_ERROR "Could not find OpenCV")
+  ENDIF()
+ENDIF()
+
 MESSAGE(STATUS "Using Trilinos installed in: ${DICE_TRILINOS_DIR}")
 
 # If this is a windows build CLAPACK is required. Find package for
