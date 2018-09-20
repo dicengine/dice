@@ -182,6 +182,7 @@ Schema::set_def_image(const std::string & defName,
     const int_t end_y = def_extents_[3] > buffer && def_extents_[3] < h - buffer ? def_extents_[3] : h;
     const int_t width = end_x - offset_x;
     const int_t height = end_y - offset_y;
+    DEBUG_MSG("Setting the deformed image using extents x: " << offset_x << " to " << end_x << " y: " << offset_y << " to " << end_y);
     def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),offset_x,offset_y,width,height,imgParams));
   }
   else
@@ -262,6 +263,7 @@ Schema::set_ref_image(const std::string & refName){
     const int_t end_y = ref_extents_[3] > buffer && ref_extents_[3] < full_ref_img_height_ - buffer ? ref_extents_[3] : full_ref_img_height_;
     const int_t width = end_x - offset_x;
     const int_t height = end_y - offset_y;
+    DEBUG_MSG("Setting the reference image using extents x: " << offset_x << " to " << end_x << " y: " << offset_y << " to " << end_y);
     ref_img_ = Teuchos::rcp( new Image(refName.c_str(),offset_x,offset_y,width,height,imgParams));
   }
   else
@@ -742,12 +744,8 @@ Schema::update_extents(const bool use_transformation_augmentation){
   current_coords->update(1.0,*disp,1.0);
   if(use_transformation_augmentation&&use_nonlinear_projection_)
     current_coords->update(1.0,*aug,1.0);
-//  std::cout << " COORDS " << std::endl;
-//  coords->describe();
-//  std::cout << " DISPLACEMENT " << std::endl;
-//  disp->describe();
-//  std::cout << " CURRENT COORDS " << std::endl;
-//  current_coords->describe();
+  //std::cout << " COORDS " << std::endl;
+  //coords->describe();
 
   scalar_t min_x_ref = std::numeric_limits<int_t>::max();
   scalar_t max_x_ref = 0.0;
@@ -758,7 +756,11 @@ Schema::update_extents(const bool use_transformation_augmentation){
   scalar_t min_y_def = std::numeric_limits<int_t>::max();
   scalar_t max_y_def = 0.0;
 
-  for(int_t i=0;i<local_num_subsets_;++i){
+  const int_t num_pts = coords->get_map()->get_num_local_elements()/2;
+  assert(num_pts>0);
+  assert(current_coords->get_map()->get_num_local_elements()==coords->get_map()->get_num_local_elements());
+
+  for(int_t i=0;i<num_pts;++i){
     if(coords->local_value(i*2+0) < min_x_ref) min_x_ref = coords->local_value(i*2+0);
     if(coords->local_value(i*2+0) > max_x_ref) max_x_ref = coords->local_value(i*2+0);
     if(coords->local_value(i*2+1) < min_y_ref) min_y_ref = coords->local_value(i*2+1);
@@ -792,6 +794,10 @@ Schema::update_extents(const bool use_transformation_augmentation){
   DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] Setting DEFORMED domain extents:");
   DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] x " << def_extents_[0] << " to " << def_extents_[1]);
   DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] y " << def_extents_[2] << " to " << def_extents_[3]);
+  assert(min_x_ref<max_x_ref);
+  assert(min_y_ref<max_y_ref);
+  assert(min_x_def<max_x_def);
+  assert(min_y_def<max_y_def);
 }
 
 void
@@ -805,14 +811,22 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
 
   if(analysis_type_==GLOBAL_DIC){
     // create the computational mesh:
-    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::mesh_size),std::runtime_error,
-      "Error, missing required input parameter: mesh_size");
-    const scalar_t mesh_size = input_params->get<double>(DICe::mesh_size);
-    init_params_->set(DICe::mesh_size,mesh_size); // pass the mesh size to the stored parameters for this schema (used by global method)
-    TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_file),std::runtime_error,
-      "Error, missing required input parameter: subset_file");
-    const std::string subset_file = input_params->get<std::string>(DICe::subset_file);
-    init_params_->set(DICe::subset_file,subset_file);
+    //TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::mesh_size),std::runtime_error,
+    //  "Error, missing required input parameter: mesh_size");
+    if(input_params->isParameter(DICe::mesh_size)){
+      const scalar_t mesh_size = input_params->get<double>(DICe::mesh_size);
+      init_params_->set(DICe::mesh_size,mesh_size); // pass the mesh size to the stored parameters for this schema (used by global method)
+    }
+    //TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_file),std::runtime_error,
+    //  "Error, missing required input parameter: subset_file");
+    if(input_params->isParameter(DICe::subset_file)){
+      const std::string subset_file = input_params->get<std::string>(DICe::subset_file);
+      init_params_->set(DICe::subset_file,subset_file);
+    }
+    if(input_params->isParameter(DICe::mesh_file)){
+      const std::string mesh_file = input_params->get<std::string>(DICe::mesh_file);
+      init_params_->set(DICe::mesh_file,mesh_file);
+    }
     //init_params_->set(DICe::global_formulation,input_params->get<Global_Formulation>(DICe::global_formulation,HORN_SCHUNCK));
 #ifdef DICE_ENABLE_GLOBAL
     global_algorithm_ = Teuchos::rcp(new DICe::global::Global_Algorithm(this,init_params_));

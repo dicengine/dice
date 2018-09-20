@@ -1,0 +1,11 @@
+<!-- Auto generated input file from DICe GUI -->
+<ParameterList>
+<Parameter name="output_folder" type="string" value="./results/" /> 
+<Parameter name="correlation_parameters_file" type="string" value="params.xml" />
+<Parameter name="mesh_file" type="string" value="./dice_mesh_0.obj" />
+<Parameter name="image_folder" type="string" value="./images/" />
+<Parameter name="reference_image" type="string" value="DIC_Challenge_Wave_Reference_Noisy.tif" />
+<ParameterList name="deformed_images">
+  <Parameter name="DIC_Challenge_Wave_Deformed_Noisy.tif" type="bool" value="true" />
+</ParameterList>
+</ParameterList>

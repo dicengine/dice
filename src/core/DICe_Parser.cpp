@@ -181,8 +181,8 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   }
 
   Analysis_Type analysis_type = LOCAL_DIC;
-  if(inputParams->isParameter(DICe::mesh_size)){
-    DEBUG_MSG("Using GLOBAL DIC formulation since mesh_size parameter was specified.");
+  if(inputParams->isParameter(DICe::mesh_size)||inputParams->isParameter(DICe::mesh_file)){
+    DEBUG_MSG("Using GLOBAL DIC formulation since mesh_size or mesh_file parameter was specified.");
     analysis_type = GLOBAL_DIC;
   }
 
@@ -191,7 +191,7 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   required_params.push_back(std::pair<std::string,std::string>(DICe::image_folder,"string"));
   if(analysis_type==GLOBAL_DIC){
     required_params.push_back(std::pair<std::string,std::string>(DICe::output_folder,"string"));
-    required_params.push_back(std::pair<std::string,std::string>(DICe::mesh_size,"double"));
+    //required_params.push_back(std::pair<std::string,std::string>(DICe::mesh_size,"double"));
     //required_params.push_back(std::pair<std::string,std::string>(DICe::image_edge_buffer_size,"int"));
   }
   if(analysis_type==LOCAL_DIC){
@@ -228,8 +228,8 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
         required_param_missing = true;
       }
     }
-    if(!inputParams->isParameter(DICe::subset_file)){
-      std::cout << "Error: The parameter " << DICe::subset_file << " of type string must be defined  for global DIC in " << input_file << std::endl;
+    if(!inputParams->isParameter(DICe::subset_file)&&!inputParams->isParameter(DICe::mesh_file)){
+      std::cout << "Error: The parameter " << DICe::subset_file << " or " << DICe::mesh_file << " of type string must be defined for global DIC in " << input_file << std::endl;
       required_param_missing = true;
     }
   }

@@ -116,6 +116,8 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,"Error, invalid element type: " << elem_str);
     }
   }
+  // automatically change the element type to TRI3 if a mesh file was read:
+  if(params->isParameter(DICe::mesh_file)) element_type_=DICe::mesh::TRI3;
   DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): using element type " << tostring(element_type_));
 
   /// get the mesh size from the params
@@ -133,7 +135,11 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
   output_file_name_ss << output_prefix << ".e";
   output_file_name_ = output_file_name_ss.str();
   DEBUG_MSG("Global_Algorithm::default_constructor_tasks(): output file name: " << output_file_name_);
-  if(params->isParameter(DICe::mms_spec)){
+  if(params->isParameter(DICe::mesh_file)){
+    const std::string & mesh_file = params->get<std::string>(DICe::mesh_file);
+    mesh_ = generate_tri_mesh(mesh_file,output_file_name_);
+  }
+  else if(params->isParameter(DICe::mms_spec)){
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::subset_file),std::runtime_error,"Error, subset file cannot be defined"
       " in the parameters file for an mms problem");
     // carve off the mms_spec params:

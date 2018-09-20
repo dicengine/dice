@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
     }
 
     // if the mesh size was specified in the input params set the use_global_dic flag
-    if(input_params->isParameter(DICe::mesh_size)){
+    if(input_params->isParameter(DICe::mesh_size)||input_params->isParameter(DICe::mesh_file)){
 #ifdef DICE_ENABLE_GLOBAL
       if(correlation_params==Teuchos::null) correlation_params = Teuchos::rcp(new Teuchos::ParameterList());
       correlation_params->set(DICe::use_global_dic,true);

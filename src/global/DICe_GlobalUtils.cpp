@@ -626,8 +626,11 @@ void calc_jacobian(const scalar_t * xcap,
 
   if(dim==2){
     J = jacobian[0]*jacobian[3] - jacobian[1]*jacobian[2];
-    TEUCHOS_TEST_FOR_EXCEPTION(J<=0.0,std::runtime_error,
+    if(J<=0.0){
+      std::cout << "Error: invalid determinant, value = " << J << std::endl;
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,
       "Error: determinant 0.0 encountered or negative det");
+    }
     inv_jacobian[0] =  jacobian[3] / J;
     inv_jacobian[1] = -jacobian[1] / J;
     inv_jacobian[2] = -jacobian[2] / J;

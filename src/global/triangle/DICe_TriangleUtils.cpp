@@ -71,6 +71,87 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
 }
 
 DICE_LIB_DLL_EXPORT
+Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const std::string & mesh_file_name,
+  const std::string & output_file_name){
+
+  // read the obj files for vorocrust and store the info in the right arrays
+  std::fstream dataFile(mesh_file_name.c_str(), std::ios_base::in);
+  TEUCHOS_TEST_FOR_EXCEPTION(!dataFile.good(), std::runtime_error, "Error, the mesh file does not exist: " << mesh_file_name);
+  // read each line of the file
+
+  std::vector<scalar_t> x_coords;
+  std::vector<scalar_t> y_coords;
+  std::vector<int_t> conn;
+
+  while (!dataFile.eof())
+  {
+    std::vector<std::string> tokens = tokenize_line(dataFile);
+    if(tokens.size()==0) continue;
+    if(tokens.size()!=4){
+      std::cout << "Error reading mesh " << mesh_file_name << std::endl;
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+    }
+    if(tokens[0].compare("V")==0){
+      x_coords.push_back(strtod(tokens[1].c_str(),NULL));
+      y_coords.push_back(strtod(tokens[2].c_str(),NULL));
+    }
+    else if(tokens[0].compare("F")==0){ // swap order to prevent negative jacobians
+      for(size_t i=1;i<4;++i)
+        conn.push_back(strtol(tokens[i].c_str(),NULL,0));
+    }
+    else{
+      std::cout << "Error reading mesh " << mesh_file_name << " invalid line syntax" << std::endl;
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+    }
+  }
+  dataFile.close();
+  const int_t num_nodes = x_coords.size();
+  const int_t num_elem = conn.size()/3; // FIXME assumes TRI3 elements
+  DEBUG_MSG("Number of nodes in the mesh: " << num_nodes);
+  DEBUG_MSG("Number of elements in the mesh: " << num_elem);
+
+  // test for negative jacobians:
+  for(int_t i=0;i<num_elem;++i){
+    int_t node_i = conn[i*3+0]; // 1 based
+    int_t node_j = conn[i*3+1]; // 1 based
+    int_t node_k = conn[i*3+2]; // 1 based
+    scalar_t x1 = x_coords[node_i-1];
+    scalar_t x2 = x_coords[node_j-1];
+    scalar_t x3 = x_coords[node_k-1];
+    scalar_t y1 = y_coords[node_i-1];
+    scalar_t y2 = y_coords[node_j-1];
+    scalar_t y3 = y_coords[node_k-1];
+    scalar_t det = x1*(y2-y3) - y1*(x2-x3) + (x2*y3 - x3*y2);
+    TEUCHOS_TEST_FOR_EXCEPTION(det==0.0,std::runtime_error,"Invalid element, 0.0 determinant");
+    if(det<0.0){ // swap j and k if the det is negative
+      conn[i*3+1] = node_k;
+      conn[i*3+2] = node_j;
+    }
+  }
+
+  Teuchos::ArrayRCP<scalar_t> node_coords_x(&x_coords[0],0,x_coords.size(),false);
+  Teuchos::ArrayRCP<scalar_t> node_coords_y(&y_coords[0],0,y_coords.size(),false);
+  Teuchos::ArrayRCP<int_t> connectivity(&conn[0],0,conn.size(),false);
+
+  Teuchos::ArrayRCP<int_t> elem_map(num_elem);
+  for(int_t i=0;i<num_elem;++i)
+    elem_map[i] = i + 1;
+  Teuchos::ArrayRCP<int_t> node_map(num_nodes);
+  for(int_t i=0;i<num_nodes;++i)
+    node_map[i] = i + 1;
+
+  std::vector<std::pair<int_t,int_t>> dirichlet_boundary_nodes;
+  std::set<int_t> neumann_boundary_nodes;
+  std::set<int_t> lagrange_boundary_nodes;
+
+  // create a DICe mesh with this information
+  Teuchos::RCP<DICe::mesh::Mesh> mesh = DICe::mesh::create_point_or_tri_mesh(DICe::mesh::TRI3,node_coords_x,
+    node_coords_y,connectivity,node_map,elem_map,dirichlet_boundary_nodes,
+    neumann_boundary_nodes,lagrange_boundary_nodes,output_file_name);
+  return mesh;
+}
+
+DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
   const std::string & roi_file_name,
   const scalar_t & max_size_constraint,
