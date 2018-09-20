@@ -1075,7 +1075,7 @@ exodus_output_dump(Teuchos::RCP<Mesh> mesh,
   for(;field_it!=field_end;++field_it)
   {
     if(!field_it->first.is_printable()) continue;
-    if(!field_it->first.get_rank()==field_enums::ELEMENT_RANK && !field_it->first.get_rank()==field_enums::NODE_RANK) continue;
+    if(field_it->first.get_rank()!=field_enums::ELEMENT_RANK && field_it->first.get_rank()!=field_enums::NODE_RANK) continue;
     const int_t num_comps = (field_it->first.get_field_type()==field_enums::VECTOR_FIELD_TYPE) ? mesh->spatial_dimension(): 1;
 
     if(field_it->first.get_rank()==field_enums::ELEMENT_RANK)
