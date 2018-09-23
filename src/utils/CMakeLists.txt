@@ -27,6 +27,19 @@ IF(WIN32)
   ENDIF(NOT BUILD_SHARED_LIBS)
 ENDIF(WIN32)
 
+
+# find OpenCV
+message(STATUS "Looking for OpenCV in dir: ${OpenCV_DIR}")
+find_package( OpenCV NO_DEFAULT_PATH PATHS ${OpenCV_DIR} )
+IF(OpenCV_FOUND)
+   MESSAGE("\nFound OpenCV: ${OpenCV_DIR}")
+  set(DICE_ENABLE_OPENCV ON)
+ELSE()
+  message(STATUS "OpenCV not found")
+ENDIF()
+
+
+
 IF(BUILD_SHARED_LIBS)
 MESSAGE("BUILD_SHARED_LIBS is set to ON")
 ELSE(BUILD_SHARED_LIBS)
@@ -146,6 +159,14 @@ SET(DICE_HEADER_DIRS
   ${JPEG_DIR}/include/
   ${PNG_DIR}/include/
   )
+
+IF(DICE_ENABLE_OPENCV)
+  SET(DICE_HEADER_DIRS
+      ${DICE_HEADER_DIRS}
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/opencv
+  )
+  add_definitions(-DDICE_ENABLE_OPENCV=1)
+ENDIF()
 
 # if debug messages are turned on:
 IF(DICE_DEBUG_MSG)

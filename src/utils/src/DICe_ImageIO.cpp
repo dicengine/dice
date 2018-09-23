@@ -45,20 +45,13 @@
 #include <DICe_ImageIO.h>
 #include <DICe_Rawi.h>
 
-// This define resolves an issue with boost gil and libpng
-#define int_p_NULL (int*)NULL
-
-#include <boost/gil/gil_all.hpp>
-#include <boost/gil/extension/io/tiff_dynamic_io.hpp>
-#if DICE_JPEG
-  #include <boost/gil/extension/io/jpeg_dynamic_io.hpp>
-#endif
-#if DICE_PNG
-  #include <boost/gil/extension/io/png_dynamic_io.hpp>
-#endif
 #if DICE_ENABLE_NETCDF
   #include <DICe_NetCDF.h>
 #endif
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 namespace DICe{
 namespace utils{
 
@@ -149,22 +142,16 @@ Image_File_Type image_file_type(const char * file_name){
   const std::string tiff("tiff");
   if(file_str.find(tif)!=std::string::npos||file_str.find(tiff)!=std::string::npos)
     return TIFF;
-#if DICE_JPEG
   const std::string jpg("jpg");
   const std::string jpeg("jpeg");
   if(file_str.find(jpg)!=std::string::npos||file_str.find(jpeg)!=std::string::npos)
     return JPEG;
-#endif
-#if DICE_PNG
   const std::string png("png");
   if(file_str.find(png)!=std::string::npos)
     return PNG;
-#endif
-#if DICE_ENABLE_NETCDF
   const std::string nc(".nc");
   if(file_str.find(nc)!=std::string::npos)
     return NETCDF;
-#endif
   return file_type;
 }
 
@@ -191,26 +178,6 @@ void read_image_dimensions(const char * file_name,
     assert(width>0);
     assert(height>0);
   }
-  else if(file_type==TIFF){
-    TIFFSetWarningHandler(NULL);
-    boost::gil::point2<std::ptrdiff_t> pt = boost::gil::tiff_read_dimensions(file_name);
-    width = pt.x;
-    height = pt.y;
-  }
-#if DICE_JPEG
-  else if(file_type==JPEG){
-    boost::gil::point2<std::ptrdiff_t> pt = boost::gil::jpeg_read_dimensions(file_name);
-    width = pt.x;
-    height = pt.y;
-  }
-#endif
-#if DICE_PNG
-  else if(file_type==PNG){
-    boost::gil::point2<std::ptrdiff_t> pt = boost::gil::png_read_dimensions(file_name);
-    width = pt.x;
-    height = pt.y;
-  }
-#endif
 #if DICE_ENABLE_NETCDF
   else if(file_type==NETCDF){
     netcdf::NetCDF_Reader netcdf_reader;
@@ -220,6 +187,11 @@ void read_image_dimensions(const char * file_name,
     netcdf_reader.get_image_dimensions(netcdf_file,width,height,num_time_steps);
   }
 #endif
+  else{
+    cv::Mat image = cv::imread(file_name, CV_LOAD_IMAGE_GRAYSCALE);
+    height = image.rows;
+    width = image.cols;
+  }
 }
 
 DICE_LIB_DLL_EXPORT
@@ -276,41 +248,24 @@ void read_image(const char * file_name,
     netcdf_reader.read_netcdf_image(netcdf_file.c_str(),intensities,index,is_layout_right);
   }
 #endif
-  else if(file_type==TIFF||file_type==TIFF||file_type==JPEG||file_type==PNG){
-    boost::gil::gray8_image_t img;
-    if(file_type==TIFF){
-      TIFFSetWarningHandler(NULL);
-      boost::gil::tiff_read_and_convert_image(file_name,img);
-    }
-#if DICE_JPEG
-    else if(file_type==JPEG){
-      boost::gil::jpeg_read_and_convert_image(file_name,img);
-    }
-#endif
-#if DICE_PNG
-    else if(file_type==PNG){
-      boost::gil::png_read_and_convert_image(file_name,img);
-    }
-#endif
-    else{
-      std::cerr << "Error, unrecognized (or not enabled) image file type for file: " << file_name << "\n";
-      throw std::exception();
-    }
-    const int_t width = img.width();
-    const int_t height = img.height();
-    boost::gil::gray8c_view_t img_view = boost::gil::const_view(img);
-    for (int_t y=0; y<height; ++y) {
-      boost::gil::gray8c_view_t::x_iterator src_it = img_view.row_begin(y);
+  else{
+    // read the image using opencv:
+    cv::Mat image;
+    image = cv::imread(file_name, CV_LOAD_IMAGE_GRAYSCALE);
+    const int_t height = image.rows;
+    const int_t width = image.cols;
+    for(int_t y=0;y<height; ++y) {
+      uchar* p = image.ptr(y);
       if(is_layout_right)
         for (int_t x=0; x<width;++x){
-          intensities[y*width+x] = src_it[x];
+          intensities[y*width+x] = *p++;
         }
       else // otherwise assume LayoutLeft
         for (int_t x=0; x<width;++x){
-          intensities[x*height+y] = src_it[x];
+          intensities[x*height+y] = *p++;
         }
-    }
-  }
+    } //for
+  } // else
 }
 
 DICE_LIB_DLL_EXPORT
@@ -359,38 +314,24 @@ void read_image(const char * file_name,
       netcdf_reader.read_netcdf_image(netcdf_file.c_str(),offset_x,offset_y,width,height,index,intensities,is_layout_right);
     }
 #endif
-  else if(file_type==TIFF||file_type==TIFF||file_type==JPEG||file_type==PNG){
-    boost::gil::gray8_image_t img;
-    if(file_type==TIFF){
-      TIFFSetWarningHandler(NULL);
-      boost::gil::tiff_read_and_convert_image(file_name,img);
-    }
-#if DICE_JPEG
-    else if(file_type==JPEG){
-      boost::gil::jpeg_read_and_convert_image(file_name,img);
-    }
-#endif
-#if DICE_PNG
-    else if(file_type==PNG){
-      boost::gil::png_read_and_convert_image(file_name,img);
-    }
-#endif
-    else{
-      std::cerr << "Error, unrecognized image file type for file: " << file_name << "\n";
-      throw std::exception();
-    }
-    assert(width+offset_x <= img.width());
-    assert(height+offset_y <= img.height());
-    boost::gil::gray8c_view_t img_view = boost::gil::const_view(img);
+  else{
+    // read the image using opencv:
+    cv::Mat image;
+    image = cv::imread(file_name, CV_LOAD_IMAGE_GRAYSCALE);
+    //const int_t height = image.rows;
+    //const int_t width = image.cols;
+    assert(width+offset_x <= image.cols);
+    assert(height+offset_y <= image.rows);
     for (int_t y=offset_y; y<offset_y+height; ++y) {
-      boost::gil::gray8c_view_t::x_iterator src_it = img_view.row_begin(y);
+      uchar* p = image.ptr(y);
+      p+=offset_x;
       if(is_layout_right)
         for (int_t x=offset_x; x<offset_x+width;++x){
-          intensities[(y-offset_y)*width + x-offset_x] = src_it[x];
+          intensities[(y-offset_y)*width + x-offset_x] = *p++;
         }
       else // otherwise assume layout left
         for (int_t x=offset_x; x<offset_x+width;++x){
-          intensities[(x-offset_x)*height+y-offset_y] = src_it[x];
+          intensities[(x-offset_x)*height+y-offset_y] = *p++;
         }
     }
   }
@@ -420,17 +361,14 @@ void write_color_overlap_image(const char * file_name,
   if((top_max_intensity - top_min_intensity) != 0.0)
     top_fac = 0.5*255.0 / (top_max_intensity - top_min_intensity);
 
-  boost::gil::rgb8_image_t img(width,height);
-  boost::gil::rgb8_view_t img_view = boost::gil::view(img);
+  cv::Mat out_img(height,width,CV_8UC3,cv::Scalar(0,0,0));
   for (int_t y=0; y<height; ++y) {
-    boost::gil::rgb8_view_t::x_iterator src_it = img_view.row_begin(y);
       for (int_t x=0; x<width;++x){
-        boost::gil::rgb8_pixel_t pixel(std::floor((bottom_intensities[y*width + x]-bot_min_intensity)*bot_fac),
-          std::floor((top_intensities[y*width + x]-top_min_intensity)*top_fac),0);
-        src_it[x] = pixel;
+        out_img.at<uchar>(y,x,0) = std::floor((bottom_intensities[y*width + x]-bot_min_intensity)*bot_fac);
+        out_img.at<uchar>(y,x,1) = std::floor((top_intensities[y*width + x]-top_min_intensity)*top_fac);
       }
   }
-  boost::gil::tiff_write_view(file_name, img_view);
+  cv::imwrite(file_name,out_img);
 }
 
 
@@ -451,7 +389,7 @@ void write_image(const char * file_name,
   if(file_type==RAWI){
     write_rawi_image(file_name,width,height,intensities,is_layout_right);
   }
-  else if(file_type==TIFF||file_type==TIFF||file_type==JPEG||file_type==PNG){
+  else{
     // rip through the intensity values and determine if they need to be scaled to 8-bit range (0-255):
     // negative values are shifted to start at zero so all values will be positive
     intensity_t max_intensity = -1.0E10;
@@ -463,43 +401,24 @@ void write_image(const char * file_name,
     intensity_t fac = 1.0;
     if((max_intensity - min_intensity) != 0.0)
       fac = 255.0 / (max_intensity - min_intensity);
-
-    boost::gil::gray8_image_t img(width,height);
-    boost::gil::gray8_view_t img_view = boost::gil::view(img);
+    cv::Mat out_img(height,width,CV_8UC1,cv::Scalar(0));
     for (int_t y=0; y<height; ++y) {
-      boost::gil::gray8_view_t::x_iterator src_it = img_view.row_begin(y);
       if(is_layout_right)
         for (int_t x=0; x<width;++x){
           if(scale_to_8_bit)
-            src_it[x] = (boost::gil::gray8_pixel_t)(std::floor((intensities[y*width + x]-min_intensity)*fac));
+            out_img.at<uchar>(y,x) = std::floor((intensities[y*width + x]-min_intensity)*fac);
           else
-            src_it[x] = (boost::gil::gray8_pixel_t)(std::floor(intensities[y*width + x]));
+            out_img.at<uchar>(y,x) = std::floor(intensities[y*width + x]);
         }
       else
         for (int_t x=0; x<width;++x){
           if(scale_to_8_bit)
-            src_it[x] = (boost::gil::gray8_pixel_t)(std::floor((intensities[x*height+y]-min_intensity)*fac));
+            out_img.at<uchar>(y,x) = std::floor((intensities[x*height+y]-min_intensity)*fac);
           else
-            src_it[x] = (boost::gil::gray8_pixel_t)(std::floor(intensities[x*height+y]));
+            out_img.at<uchar>(y,x) = std::floor(intensities[x*height+y]);
         }
     }
-    if(file_type==TIFF){
-      boost::gil::tiff_write_view(file_name, img_view);
-    }
-#if DICE_JPEG
-    else if(file_type==JPEG){
-      boost::gil::jpeg_write_view(file_name, img_view);
-    }
-#endif
-#if DICE_PNG
-    else if(file_type==PNG){
-      boost::gil::png_write_view(file_name, img_view);
-    }
-#endif
-    else{
-      std::cerr << "Error, unrecognized (or not enabled) image file type for file: " << file_name << "\n";
-      throw std::exception();
-    }
+    cv::imwrite(file_name,out_img);
   }
 }
 

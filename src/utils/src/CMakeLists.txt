@@ -55,6 +55,9 @@ add_library(
 )
 
 target_link_libraries(diceutils ${DICE_UTILS_LIBRARIES} ${Boost_LIBRARIES})
+IF(DICE_ENABLE_OPENCV)
+  target_link_libraries(diceutils ${OpenCV_LIBRARIES})
+ENDIF()
 target_compile_definitions(diceutils PRIVATE -D DICE_LIB_EXPORTS_MODE)
 MESSAGE(STATUS "diceutils library will be output to location: ${DICE_LIB_INSTALL_PREFIX}")
 set_target_properties(diceutils PROPERTIES
