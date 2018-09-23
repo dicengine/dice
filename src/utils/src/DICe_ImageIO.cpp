@@ -364,8 +364,8 @@ void write_color_overlap_image(const char * file_name,
   cv::Mat out_img(height,width,CV_8UC3,cv::Scalar(0,0,0));
   for (int_t y=0; y<height; ++y) {
       for (int_t x=0; x<width;++x){
-        out_img.at<uchar>(y,x,0) = std::floor((bottom_intensities[y*width + x]-bot_min_intensity)*bot_fac);
-        out_img.at<uchar>(y,x,1) = std::floor((top_intensities[y*width + x]-top_min_intensity)*top_fac);
+        out_img.at<cv::Vec3b>(y,x)[1] = std::floor((bottom_intensities[y*width + x]-bot_min_intensity)*bot_fac);
+        out_img.at<cv::Vec3b>(y,x)[2] = std::floor((top_intensities[y*width + x]-top_min_intensity)*top_fac);
       }
   }
   cv::imwrite(file_name,out_img);

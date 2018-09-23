@@ -42,11 +42,11 @@
 #include <DICe.h>
 #include <DICe_Image.h>
 
-#include <boost/timer.hpp>
 #include <random>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
+#include <Teuchos_TimeMonitor.hpp>
 
 #include <iostream>
 
@@ -60,6 +60,10 @@ intensity_t intens(const scalar_t & x, const scalar_t & y){
 int main(int argc, char *argv[]) {
 
   DICe::initialize(argc, argv);
+
+  Teuchos::RCP<Teuchos::Time> bilinear_time  = Teuchos::TimeMonitor::getNewCounter("bilinear");
+  Teuchos::RCP<Teuchos::Time> bicubic_time   = Teuchos::TimeMonitor::getNewCounter("bicubic");
+  Teuchos::RCP<Teuchos::Time> keys_time      = Teuchos::TimeMonitor::getNewCounter("keys fourth");
 
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
@@ -95,7 +99,7 @@ int main(int argc, char *argv[]) {
   scalar_t error = 0.0;
   *outStream << "running bilinear" << std::endl;
   {
-    boost::timer t;
+    Teuchos::TimeMonitor bilinear_time_monitor(*bilinear_time);
     for(int_t it=0;it<100;++it){
       for(int_t j=10;j<h-10;++j){
         for(int_t i=10;i<h-10;++i){
@@ -108,10 +112,7 @@ int main(int argc, char *argv[]) {
       }
     }
     error = std::sqrt(error);
-    // timing info
-    const scalar_t elapsed_time = t.elapsed();
     *outStream << "error:        " << error << std::endl;
-    *outStream << "elapsed time: " << elapsed_time << std::endl;
   }
   if(error > 2000.0){
     *outStream << "Error: bilinear interpolant accumulated error too high" << std::endl;
@@ -120,7 +121,7 @@ int main(int argc, char *argv[]) {
   error = 0.0;
   *outStream << "running bicubic" << std::endl;
   {
-    boost::timer t;
+    Teuchos::TimeMonitor bicubic_time_monitor(*bicubic_time);
     for(int_t it=0;it<100;++it){
       for(int_t j=10;j<h-10;++j){
         for(int_t i=10;i<h-10;++i){
@@ -133,10 +134,7 @@ int main(int argc, char *argv[]) {
       }
     }
     error = std::sqrt(error);
-    // timing info
-    const scalar_t elapsed_time = t.elapsed();
     *outStream << "error:        " << error << std::endl;
-    *outStream << "elapsed time: " << elapsed_time << std::endl;
   }
   if(error > 50.0){
     *outStream << "Error: bicubic interpolant accumulated error too high" << std::endl;
@@ -145,7 +143,7 @@ int main(int argc, char *argv[]) {
   error = 0.0;
   *outStream << "running keys-fourth" << std::endl;
   {
-    boost::timer t;
+    Teuchos::TimeMonitor keys_time_monitor(*keys_time);
     for(int_t it=0;it<100;++it){
       for(int_t j=10;j<h-10;++j){
         for(int_t i=10;i<h-10;++i){
@@ -158,17 +156,15 @@ int main(int argc, char *argv[]) {
       }
     }
     error = std::sqrt(error);
-    // timing info
-    const scalar_t elapsed_time = t.elapsed();
     *outStream << "error:        " << error << std::endl;
-    *outStream << "elapsed time: " << elapsed_time << std::endl;
   }
   if(error > 2.0){
     *outStream << "Error: keys_fourth interpolant accumulated error too high" << std::endl;
     errorFlag++;
   }
-
   delete [] intensities;
+
+  Teuchos::TimeMonitor::summarize(*outStream,false,true,false/*zero timers*/);
 
   *outStream << "--- End test ---" << std::endl;
 

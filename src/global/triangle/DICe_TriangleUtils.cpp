@@ -43,6 +43,8 @@
 #include <DICe_Mesh.h>
 #include <DICe_Parser.h>
 
+#include <fstream>
+
 #include <triangle.h>
 
 namespace DICe {

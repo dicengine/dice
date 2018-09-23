@@ -47,19 +47,27 @@
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
 #include <Teuchos_ParameterList.hpp>
-
-#include <boost/timer/timer.hpp>
+#include <Teuchos_TimeMonitor.hpp>
 
 #include <iostream>
 
 using namespace DICe;
-using namespace boost::timer;
 
 // Usage DICe_PerformanceFunctors [<num_image_sizes> <num_time_samples> <num_thread_teams>]
 
 int main(int argc, char *argv[]) {
 
   DICe::initialize(argc, argv);
+
+  Teuchos::RCP<Teuchos::Time> read_time  = Teuchos::TimeMonitor::getNewCounter("read time");
+  Teuchos::RCP<Teuchos::Time> grad_time  = Teuchos::TimeMonitor::getNewCounter("grad time");
+  Teuchos::RCP<Teuchos::Time> filter_time  = Teuchos::TimeMonitor::getNewCounter("filter time");
+  Teuchos::RCP<Teuchos::Time> subset_time  = Teuchos::TimeMonitor::getNewCounter("subset construct time");
+  Teuchos::RCP<Teuchos::Time> subset_ref_time  = Teuchos::TimeMonitor::getNewCounter("subset set ref");
+  Teuchos::RCP<Teuchos::Time> subset_def_bilinear_time  = Teuchos::TimeMonitor::getNewCounter("subset set def bilinear");
+  Teuchos::RCP<Teuchos::Time> subset_def_keys_time  = Teuchos::TimeMonitor::getNewCounter("subset set def keys");
+  Teuchos::RCP<Teuchos::Time> subset_mean_time  = Teuchos::TimeMonitor::getNewCounter("subset mean");
+  Teuchos::RCP<Teuchos::Time> corr_time  = Teuchos::TimeMonitor::getNewCounter("correlate");
 
   // only print output if args are given (for testing the output is quiet)
   Teuchos::oblackholestream bhs; // outputs nothing
@@ -138,146 +146,84 @@ int main(int argc, char *argv[]) {
       Teuchos::RCP<Image> img;
       // read image
       *outStream << "reading the image" << std::endl;
-      cpu_timer read_timer;
       {
-        read_timer.start();
+        Teuchos::TimeMonitor read_time_monitor(*read_time);
         img = Teuchos::rcp(new Image(file_name.c_str(),0,0,w_it,h_it));
-        read_timer.stop();
       }
-      *outStream << "** read time" << read_timer.format();
-      read_times[size_it] += ((scalar_t)(read_timer.elapsed().wall)/1000000000)/num_time_samples;
 
       // gradient
       *outStream << "computing the image gradients" << std::endl;
-      cpu_timer grad_timer;
       {
+        Teuchos::TimeMonitor grad_time_monitor(*grad_time);
         if(use_hierarchical){
-          grad_timer.start();
           img->compute_gradients(true,num_thread_teams);
-          grad_timer.stop();
         }
         else{
-          grad_timer.start();
           img->compute_gradients();
-          grad_timer.stop();
         }
       }
-      *outStream << "** grad time" << grad_timer.format();
-      grad_times[size_it] += ((scalar_t)(grad_timer.elapsed().wall)/1000000000)/num_time_samples;
 
       // image filter
       *outStream << "computing convolution filter" << std::endl;
-      cpu_timer filter_timer;
       {
+        Teuchos::TimeMonitor filter_time_monitor(*filter_time);
         if(use_hierarchical){
-          filter_timer.start();
           img->gauss_filter(true,num_thread_teams);
-          filter_timer.stop();
         }
         else{
-          filter_timer.start();
           img->gauss_filter();
-          filter_timer.stop();
         }
       }
-      *outStream << "** filter time" << filter_timer.format();
-      filter_times[size_it] += ((scalar_t)(filter_timer.elapsed().wall)/1000000000)/num_time_samples;
 
       // create a subset
       *outStream << "creating a subset of size " << w_it-subset_edge_buffer << " x " << h_it-subset_edge_buffer << std::endl;
-      cpu_timer subset_construct_timer;
       {
-        subset_construct_timer.start();
+        Teuchos::TimeMonitor subset_time_monitor(*subset_time);
         subset = Teuchos::rcp(new Subset(w_it/2,h_it/2,w_it-subset_edge_buffer,h_it-subset_edge_buffer));
-        subset_construct_timer.stop();
       }
-      *outStream <<"** subset constructor time" << subset_construct_timer.format();
-      sub_construct_times[size_it] += ((scalar_t)(subset_construct_timer.elapsed().wall)/1000000000)/num_time_samples;
 
       // initialize the reference values (copy, no deformation involved)
       *outStream << "initializing the reference intensities" << std::endl;
-      cpu_timer subset_init_ref_timer;
       {
-        subset_init_ref_timer.start();
+        Teuchos::TimeMonitor subset_ref_time_monitor(*subset_ref_time);
         subset->initialize(img);
-        subset_init_ref_timer.stop();
       }
-      *outStream <<"** subset init ref time" << subset_init_ref_timer.format();
-      sub_init_times[size_it] += ((scalar_t)(subset_init_ref_timer.elapsed().wall)/1000000000)/num_time_samples;
 
       // initialize the deformed values (mapping involved as well as interpolation, cant separate these)
       *outStream << "initializing the deformed intensities (bilinear)" << std::endl;
-      cpu_timer subset_init_def_bilinear_timer;
       {
-        subset_init_def_bilinear_timer.start();
+        Teuchos::TimeMonitor subset_def_biliear_time_monitor(*subset_def_bilinear_time);
         subset->initialize(img,DEF_INTENSITIES,map,BILINEAR);
-        subset_init_def_bilinear_timer.stop();
       }
-      *outStream <<"** subset init def bilinear time" << subset_init_def_bilinear_timer.format();
-      sub_bilinear_times[size_it] += ((scalar_t)(subset_init_def_bilinear_timer.elapsed().wall)/1000000000)/num_time_samples;
 
       *outStream << "re-initializing the deformed intensities (Keys fourth-order)" << std::endl;
-      cpu_timer subset_init_def_keys_timer;
       {
-        subset_init_def_keys_timer.start();
+        Teuchos::TimeMonitor subset_def_keys_time_monitor(*subset_def_keys_time);
         subset->initialize(img,DEF_INTENSITIES,map,KEYS_FOURTH);
-        subset_init_def_keys_timer.stop();
       }
-      *outStream <<"** subset init def Keys time" << subset_init_def_keys_timer.format();
-      sub_keys_times[size_it] += ((scalar_t)(subset_init_def_keys_timer.elapsed().wall)/1000000000)/num_time_samples;
 
       // mean value
       *outStream << "computing the mean subset value" << std::endl;
-      cpu_timer subset_mean_timer;
       {
-        subset_mean_timer.start();
+        Teuchos::TimeMonitor subset_mean_time_monitor(*subset_mean_time);
         subset->mean(REF_INTENSITIES);
-        subset_mean_timer.stop();
       }
-      *outStream << "** subset mean intensity time" << subset_mean_timer.format();
-      mean_times[size_it] += ((scalar_t)(subset_mean_timer.elapsed().wall)/1000000000)/num_time_samples;
 
       // correlation
       *outStream << "computing the correlation between the ref and def intensities" << std::endl;
-      cpu_timer corr_timer;
       {
-        corr_timer.start();
+        Teuchos::TimeMonitor corr_time_monitor(*corr_time);
         subset->gamma();
-        corr_timer.stop();
       }
-      *outStream << "** correlation time" << corr_timer.format();
-      corr_times[size_it] += ((scalar_t)(corr_timer.elapsed().wall)/1000000000)/num_time_samples;
+
+      Teuchos::TimeMonitor::summarize(*outStream,false,true,false/*zero timers*/);
 
     } // end size loop
 
   } // end time sample loop
 
   *outStream << "\n\nTiming summary: " << std::endl;
-  *outStream << std::setw(15) << "size" <<
-      std::setw(15) << "read"<<
-      std::setw(15) << "grad" <<
-      std::setw(15) << "filter" <<
-      std::setw(15) << "subset" <<
-      std::setw(15) << "init ref" <<
-      std::setw(15) << "bilinear" <<
-      std::setw(15) << "keys" <<
-      std::setw(15) << "mean" <<
-      std::setw(15) << "correlation" <<
-      std::endl;
-  for(int_t i=0;i<num_img_sizes;++i){
-    *outStream << std::setw(15) <<
-        sizes[i] << std::setw(15) <<
-        read_times[i] << std::setw(15) <<
-        grad_times[i] << std::setw(15) <<
-        filter_times[i] << std::setw(15) <<
-        sub_construct_times[i] << std::setw(15) <<
-        sub_init_times[i] << std::setw(15) <<
-        sub_bilinear_times[i] << std::setw(15) <<
-        sub_keys_times[i] << std::setw(15) <<
-        mean_times[i] << std::setw(15) <<
-        corr_times[i] << std::setw(15) <<
-        std::endl;
-  }
+
 
   std::cout << "End Result: TEST PASSED\n";
 

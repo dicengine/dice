@@ -42,16 +42,15 @@
 #include <DICe.h>
 #include <DICe_Image.h>
 #include <DICe_Cine.h>
+
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
 #include <Teuchos_ParameterList.hpp>
-
-#include <boost/timer/timer.hpp>
+#include <Teuchos_TimeMonitor.hpp>
 
 #include <iostream>
 
 using namespace DICe;
-using namespace boost::timer;
 
 int main(int argc, char *argv[]) {
 
@@ -61,6 +60,8 @@ int main(int argc, char *argv[]) {
   }
 
   DICe::initialize(argc, argv);
+
+  Teuchos::RCP<Teuchos::Time> read_time  = Teuchos::TimeMonitor::getNewCounter("read time");
 
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
@@ -84,9 +85,8 @@ int main(int argc, char *argv[]) {
   *outStream << "start frame:       " << start_frame << std::endl;
   *outStream << "end frame:         " << end_frame << std::endl;
 
-  cpu_timer thread_timer;
   {
-    thread_timer.start();
+    Teuchos::TimeMonitor read_time_monitor(*read_time);
     for(int_t i = start_frame; i<end_frame; ++i){
       std::stringstream name;
       name << stripped_fileName << "_" << i << ".cine";
@@ -96,10 +96,9 @@ int main(int argc, char *argv[]) {
       //name << "./frame_images/frame_" << i << ".tif";
       //image->write(name.str());
     }
-    thread_timer.stop();
   }
-  *outStream << "** read time" << thread_timer.format();
 
+  Teuchos::TimeMonitor::summarize(*outStream,false,true,false/*zero timers*/);
 
   *outStream << "--- End performance test ---" << std::endl;
 

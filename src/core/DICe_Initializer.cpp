@@ -54,7 +54,7 @@
 #include <math.h>
 #include <cassert>
 
-#include <boost/timer.hpp>
+#include <Teuchos_TimeMonitor.hpp>
 
 using namespace DICe::field_enums;
 
@@ -412,15 +412,15 @@ Feature_Matching_Initializer::pre_execution_tasks(){
   std::vector<scalar_t> left_y;
   std::vector<scalar_t> right_x;
   std::vector<scalar_t> right_y;
+  Teuchos::RCP<Teuchos::Time> match_time  = Teuchos::TimeMonitor::getNewCounter("match features");
   {
-    boost::timer t;
+    Teuchos::TimeMonitor match_time_monitor(*match_time);
     const float tol = 0.005f;
     std::stringstream outname;
     outname << "fm_initializer_" << schema_->mesh()->get_comm()->get_rank() << ".png";
     match_features(prev_img_,schema_->def_img(0),left_x,left_y,right_x,right_y,tol,outname.str());
     const int_t num_matches = left_x.size();
     DEBUG_MSG("number of features matched: " << num_matches);
-    DEBUG_MSG("time to compute features: "  << t.elapsed());
     TEUCHOS_TEST_FOR_EXCEPTION(num_matches < 10,std::runtime_error,"Error, not enough features matched for feature matching initializer");
   }
   // create a point cloud and find the nearest neighbor:
@@ -918,20 +918,6 @@ Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
       }
     }
   }
-
-//  // uncomment to output images with dots where the optical flow points are
-//  // turn on boost filesystem above...
-//  std::stringstream dirname;
-//  dirname << "./of_imgs_" << subset_gid;
-//  DEBUG_MSG("Attempting to create directory : " << dirname.str());
-//  boost::filesystem::path dir(dirname.str());
-//  if(boost::filesystem::create_directory(dir)) {
-//    DEBUG_MSG("Directory successfully created");
-//  }
-//  Image out(schema_->prev_img()->width(),schema_->prev_img()->height(),output_img);
-//  std::stringstream filename;
-//  filename << "./of_imgs_" << subset_gid << "/img_" << schema_->image_frame() << ".tif";
-//  out.write(filename.str());
 
   // Note: these are additive displacements from the previous frame so add them to what's already in the array
   shape_function->insert_motion(initial_u_ + disp_x,initial_v_ + disp_y,initial_t_+ theta_12);
