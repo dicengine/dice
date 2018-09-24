@@ -53,8 +53,6 @@
 #ifndef DICE_DISABLE_BOOST_FILESYSTEM
   #include <boost/filesystem.hpp>
 #endif
-  #include <boost/program_options.hpp>
-namespace po = boost::program_options;
 
 #include <iostream>
 #include <fstream>
@@ -68,6 +66,30 @@ namespace po = boost::program_options;
 #endif
 
 namespace DICe {
+
+Command_Line_Parser::Command_Line_Parser (int &argc, char **argv){
+  for (int i=1; i < argc; ++i)
+    this->tokens.push_back(std::string(argv[i]));
+}
+
+const std::string&
+Command_Line_Parser::get_option(const std::string &option) const
+{
+  std::vector<std::string>::const_iterator itr;
+  itr =  std::find(this->tokens.begin(), this->tokens.end(), option);
+  if (itr != this->tokens.end() && ++itr != this->tokens.end()){
+    return *itr;
+  }
+  static const std::string empty_string("");
+  return empty_string;
+}
+
+bool
+Command_Line_Parser::option_exists(const std::string &option) const
+{
+  return std::find(this->tokens.begin(), this->tokens.end(), option)
+  != this->tokens.end();
+}
 
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
@@ -85,37 +107,33 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   Teuchos::RCP<Teuchos::ParameterList> inputParams = Teuchos::rcp( new Teuchos::ParameterList() );
   force_exit = false;
 
-  // Declare the supported options.
-  po::options_description desc("Allowed options");
+  Command_Line_Parser cmp(argc, argv);
 
-  desc.add_options()("help,h", "produce help message")
-                       ("verbose,v","Output log to screen")
-                       ("version","Output version information to screen")
-                       ("timing,t","Print timing statistics to screen")
-                       ("input,i",po::value<std::string>(),"XML input file name <filename>.xml")
-                       ("generate,g",po::value<std::string>()->implicit_value("dice"),"Create XML input file templates")
-                       ("stats,s","Print field statistics to screen")
-                       ("ss_locs","Print a file (ss_locs.txt) with the subset locations and exit before analysis")
-                       ("debug_msg_on,d","Returns 1 if debugging messages are on, 0 if off")
-                       ;
-
-  // Parse the command line options
-  po::variables_map vm;
-  // TODO add graceful exception catching for unrecognized options
-  // currently the executable crashes with a malloc error that is a little
-  // misleading
-  po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::notify(vm);
+  if(cmp.option_exists("-h")){
+    print_banner();
+    std::cout << "Valid options: " << std::endl;
+    std::cout << "h: produce help message" << std::endl;
+    std::cout << "v: output verbose log to screen" << std::endl;
+    std::cout << "t: print timing statistics to screen" << std::endl;
+    std::cout << "version: output version information to screen" << std::endl;
+    std::cout << "i <string>: XML input file name" << std::endl;
+    std::cout << "g <string>: create XML input file template" << std::endl;
+    std::cout << "s: print field statistics to the screen" << std::endl;
+    std::cout << "ss_locs: create a file (ss_locs.txt) with the subset locations and exit prior to executing the analysis" << std::endl;
+    std::cout << "d: returns 1 if the debugging messages are on, 0 if they are off" << std::endl;
+    force_exit = true;
+    return inputParams;
+  }
 
   Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
   outStream = Teuchos::rcp(&std::cout, false);
   // Print info to screen
-  if(!vm.count("verbose") || proc_rank!=0){
+  if(!cmp.option_exists("-v") || proc_rank!=0){
     outStream = bhs;
   }
 
   // Handle version requests
-  if(vm.count("version")){
+  if(cmp.option_exists("--version")){
     if(proc_rank==0)
       print_banner();
     force_exit = true;
@@ -123,7 +141,7 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   }
 
   // Handle debug message on or off requests
-  if(vm.count("debug_msg_on")){
+  if(cmp.option_exists("-d")){
     force_exit = true;
 #ifdef DICE_DEBUG_MSG
     inputParams->set("debug_msg_on",true);
@@ -133,28 +151,17 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
     return inputParams;
   }
 
-  // Handle help requests
-  if(vm.count("help")){
-    print_banner();
-    std::cout << desc << std::endl;
-    force_exit = true;
-    return inputParams;
-  }
-
   // Generate input file templates and exit
-  if(vm.count("generate")){
-    std::string templatePrefix = vm["generate"].as<std::string>();
-    if(proc_rank==0) DEBUG_MSG("Generating input file templates using prefix: " << templatePrefix);
-    generate_template_input_files(templatePrefix);
+  const std::string &generate_name = cmp.get_option("-g");
+  if (!generate_name.empty()){
+    if(proc_rank==0) DEBUG_MSG("Generating input file templates using prefix: " << generate_name);
+    generate_template_input_files(generate_name);
     force_exit = true;
     return inputParams;
   }
 
-  std::string input_file;
-  if(vm.count("input")){
-    input_file = vm["input"].as<std::string>();
-  }
-  else{
+  const std::string &input_file = cmp.get_option("-i");
+  if (input_file.empty()){
     std::cout << "Error: The XML input file must be specified on the command line with -i <filename>.xml" << std::endl;
     std::cout << "       (To generate template input files, specify -g [file_prefix] on the command line)" << std::endl;
     exit(1);
@@ -166,17 +173,17 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
   TEUCHOS_TEST_FOR_EXCEPTION(inputParams==Teuchos::null,std::runtime_error,"");
 
   // Print timing statistics?
-  if(vm.count("timing")){
+  if(cmp.option_exists("-t")){
     inputParams->set(DICe::print_timing,true);
   }
 
   // Print subset locations and exit?
-  if(vm.count("ss_locs")){
+  if(cmp.option_exists("--ss_locs")){
     inputParams->set(DICe::print_subset_locations_and_exit,true);
   }
 
   // Print timing statistics?
-  if(vm.count("stats")){
+  if(cmp.option_exists("-s")){
     inputParams->set(DICe::print_stats,true);
   }
 

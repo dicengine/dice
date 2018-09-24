@@ -486,6 +486,28 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
 DICE_LIB_DLL_EXPORT
 void generate_template_input_files(const std::string & file_prefix);
 
+/// \brief Parses the input options from the command line
+class DICE_LIB_DLL_EXPORT
+Command_Line_Parser {
+public:
+  /// \brief constructor
+  /// \param argc argc
+  /// \param argv argv
+  Command_Line_Parser (int &argc, char **argv);
+
+  /// \brief get the commend line options
+  /// \param option the option to get the command line values for
+  const std::string& get_option(const std::string &option) const;
+
+  /// \brief check if an option exists
+  /// \param option the option to test for
+  bool option_exists(const std::string &option) const;
+
+private:
+  /// vector of all the tokens in the command line
+  std::vector <std::string> tokens;
+
+};
 
 }// End DICe Namespace
 
