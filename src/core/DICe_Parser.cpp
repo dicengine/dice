@@ -50,10 +50,6 @@
 #include <Teuchos_oblackholestream.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
 
-#ifndef DICE_DISABLE_BOOST_FILESYSTEM
-  #include <boost/filesystem.hpp>
-#endif
-
 #include <iostream>
 #include <fstream>
 #include <cctype>
@@ -66,6 +62,15 @@
 #endif
 
 namespace DICe {
+
+DICE_LIB_DLL_EXPORT
+void create_directory(const std::string & folder){
+#if defined(WIN32)
+  CreateDirectory(folder.c_str(), NULL);
+#else
+  mkdir(folder.c_str(), 0777);
+#endif
+}
 
 Command_Line_Parser::Command_Line_Parser (int &argc, char **argv){
   for (int i=1; i < argc; ++i)
@@ -296,17 +301,10 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
 
   if(required_param_missing) exit(1);
 
-  // create the output folder if it does not exist
-#ifdef DICE_DISABLE_BOOST_FILESYSTEM
-  std::cout << "** WARNING: Boost filesystem has been disabled so files will be output to current execution directory " << std::endl;
-#else
   std::string output_folder = inputParams->get<std::string>(DICe::output_folder);
   if(proc_rank==0) DEBUG_MSG("Attempting to create directory : " << output_folder);
-  boost::filesystem::path dir(output_folder);
-  if(boost::filesystem::create_directory(dir)) {
-    if(proc_rank==0) DEBUG_MSG("Directory " << output_folder << " was successfully created");
-  }
-#endif
+  create_directory(output_folder);
+
   return inputParams;
 }
 

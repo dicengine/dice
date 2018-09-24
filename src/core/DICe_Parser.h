@@ -48,6 +48,14 @@
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ParameterList.hpp>
 
+
+#if defined(WIN32)
+  #include <windows.h>
+#else
+  #include <sys/stat.h>
+#endif
+
+
 namespace DICe {
 
 // forward declaration of an Image
@@ -508,6 +516,11 @@ private:
   std::vector <std::string> tokens;
 
 };
+
+/// \brief create a directory
+DICE_LIB_DLL_EXPORT
+void create_directory(const std::string & folder);
+
 
 }// End DICe Namespace
 

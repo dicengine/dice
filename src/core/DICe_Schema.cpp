@@ -68,10 +68,6 @@
 #include <cassert>
 #include <set>
 
-#ifndef DICE_DISABLE_BOOST_FILESYSTEM
-  #include <boost/filesystem.hpp>
-#endif
-
 namespace DICe {
 
 using namespace field_enums;
@@ -2115,62 +2111,52 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
 
 void
 Schema::write_deformed_subset_intensity_image(Teuchos::RCP<Objective> obj){
-#ifndef DICE_DISABLE_BOOST_FILESYSTEM
-    DEBUG_MSG("[PROC " << comm_->get_rank() << "] Attempting to create directory : ./deformed_subset_intensities/");
-    std::string dirStr = "./deformed_subset_intensities/";
-    boost::filesystem::path dir(dirStr);
-    if(boost::filesystem::create_directory(dir)) {
-      DEBUG_MSG("[PROC " << comm_->get_rank() << "] Directory successfully created");
-    }
-    int_t num_zeros = 0;
-    if(num_frames_>0){
-      int_t num_digits_total = 0;
-      int_t num_digits_image = 0;
-      int_t decrement_total = first_frame_id_ + num_frames_;
-      int_t decrement_image = frame_id_;
-      while (decrement_total){decrement_total /= 10; num_digits_total++;}
-      if(decrement_image==0) num_digits_image = 1;
-      else
-        while (decrement_image){decrement_image /= 10; num_digits_image++;}
-      num_zeros = num_digits_total - num_digits_image;
-    }
-    std::stringstream ss;
-    ss << dirStr << "deformedSubset_" << obj->correlation_point_global_id() << "_";
-    for(int_t i=0;i<num_zeros;++i)
-      ss << "0";
-    ss << frame_id_ << ".tif";
-    obj->subset()->write_tiff(ss.str(),true);
-#endif
+  DEBUG_MSG("[PROC " << comm_->get_rank() << "] Attempting to create directory : ./deformed_subset_intensities/");
+  std::string dirStr = "./deformed_subset_intensities/";
+  create_directory(dirStr);
+  int_t num_zeros = 0;
+  if(num_frames_>0){
+    int_t num_digits_total = 0;
+    int_t num_digits_image = 0;
+    int_t decrement_total = first_frame_id_ + num_frames_;
+    int_t decrement_image = frame_id_;
+    while (decrement_total){decrement_total /= 10; num_digits_total++;}
+    if(decrement_image==0) num_digits_image = 1;
+    else
+      while (decrement_image){decrement_image /= 10; num_digits_image++;}
+    num_zeros = num_digits_total - num_digits_image;
+  }
+  std::stringstream ss;
+  ss << dirStr << "deformedSubset_" << obj->correlation_point_global_id() << "_";
+  for(int_t i=0;i<num_zeros;++i)
+    ss << "0";
+  ss << frame_id_ << ".tif";
+  obj->subset()->write_tiff(ss.str(),true);
 }
 
 void
 Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
-#ifndef DICE_DISABLE_BOOST_FILESYSTEM
-    DEBUG_MSG("[PROC " << comm_->get_rank() << "] Attempting to create directory : ./evolved_subsets/");
-    std::string dirStr = "./evolved_subsets/";
-    boost::filesystem::path dir(dirStr);
-    if(boost::filesystem::create_directory(dir)) {
-      DEBUG_MSG("[PROC " << comm_->get_rank() << "[ Directory successfully created");
-    }
-    int_t num_zeros = 0;
-    if(num_frames_>0){
-      int_t num_digits_total = 0;
-      int_t num_digits_image = 0;
-      int_t decrement_total = first_frame_id_ + num_frames_;
-      int_t decrement_image = frame_id_;
-      while (decrement_total){decrement_total /= 10; num_digits_total++;}
-      if(decrement_image==0) num_digits_image = 1;
-      else
-        while (decrement_image){decrement_image /= 10; num_digits_image++;}
-      num_zeros = num_digits_total - num_digits_image;
-    }
-    std::stringstream ss;
-    ss << dirStr << "evolvedSubset_" << obj->correlation_point_global_id() << "_";
-    for(int_t i=0;i<num_zeros;++i)
-      ss << "0";
-    ss << frame_id_ << ".tif";
-    obj->subset()->write_tiff(ss.str());
-#endif
+  DEBUG_MSG("[PROC " << comm_->get_rank() << "] Attempting to create directory : ./evolved_subsets/");
+  std::string dirStr = "./evolved_subsets/";
+  create_directory(dirStr);
+  int_t num_zeros = 0;
+  if(num_frames_>0){
+    int_t num_digits_total = 0;
+    int_t num_digits_image = 0;
+    int_t decrement_total = first_frame_id_ + num_frames_;
+    int_t decrement_image = frame_id_;
+    while (decrement_total){decrement_total /= 10; num_digits_total++;}
+    if(decrement_image==0) num_digits_image = 1;
+    else
+      while (decrement_image){decrement_image /= 10; num_digits_image++;}
+    num_zeros = num_digits_total - num_digits_image;
+  }
+  std::stringstream ss;
+  ss << dirStr << "evolvedSubset_" << obj->correlation_point_global_id() << "_";
+  for(int_t i=0;i<num_zeros;++i)
+    ss << "0";
+  ss << frame_id_ << ".tif";
+  obj->subset()->write_tiff(ss.str());
 }
 
 void
@@ -2254,11 +2240,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
 #else
   std::string image_dir_str = resolution_output_folder + "synthetic_images/";
 #endif
-  DEBUG_MSG("Attempting to create directory : " << image_dir_str);
-  boost::filesystem::path image_dir(image_dir_str);
-  if(boost::filesystem::create_directory(image_dir)) {
-    DEBUG_MSG("Directory successfully created");
-  }
+  create_directory(image_dir_str);
   // create the results folder if it doesn't exist
 #if defined(WIN32)
   std::string data_dir_str = resolution_output_folder + "synthetic_results\\";
@@ -2266,10 +2248,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
   std::string data_dir_str = resolution_output_folder + "synthetic_results/";
 #endif
   DEBUG_MSG("Attempting to create directory : " << data_dir_str);
-  boost::filesystem::path data_dir(data_dir_str);
-  if(boost::filesystem::create_directory(data_dir)) {
-    DEBUG_MSG("Directory successfully created");
-  }
+  create_directory(data_dir_str);
 
   std::stringstream result_stream;
 
@@ -3174,7 +3153,6 @@ Schema::check_for_blocking_subsets(const int_t subset_global_id){
 
 void
 Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
-#ifndef DICE_DISABLE_BOOST_FILESYSTEM
   DEBUG_MSG("Schema::write_deformed_subset_image(): called");
   if(obj_vec_.empty()) return;
   // if the subset_images folder does not exist, create it
@@ -3182,10 +3160,7 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
   // If the dir is already there this step becomes a no-op
   DEBUG_MSG("Attempting to create directory : ./deformed_subsets/");
   std::string dirStr = "./deformed_subsets/";
-  boost::filesystem::path dir(dirStr);
-  if(boost::filesystem::create_directory(dir)) {
-    DEBUG_MSG("Directory successfully created");
-  }
+  create_directory(dirStr);
   int_t num_zeros = 0;
   if(num_frames_>0){
     int_t num_digits_total = 0;
@@ -3281,9 +3256,6 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
 
   Teuchos::RCP<Image> layer_0_image = Teuchos::rcp(new Image(w,h,intensities));
   layer_0_image->write(ss.str());
-#else
-  DEBUG_MSG("Warning, write_deformed_image() was called, but Boost::filesystem is not enabled making this a no-op.");
-#endif
 }
 
 
