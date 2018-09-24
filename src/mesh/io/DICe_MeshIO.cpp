@@ -40,8 +40,8 @@
 // @HEADER
 
 #include <DICe_MeshIO.h>
+#include <DICe_Parser.h>
 
-#include <boost/algorithm/string.hpp>
 #include <exodusII.h>
 
 #ifdef HAVE_MPI
@@ -187,8 +187,9 @@ Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
       &(num_elem_in_block[i]), &(num_nodes_per_elem[i]),
       &(num_attr[i]));
     TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_get_elem_block(): Failure");
-    boost::to_upper(elem_type_str);
-    const Base_Element_Type elem_type = string_to_base_element_type(elem_type_str);
+    std::string elem_type_string(elem_type_str);
+    to_upper(elem_type_string);
+    const Base_Element_Type elem_type = string_to_base_element_type(elem_type_string);
     mesh->get_block_type_map()->insert(std::pair<int_t,Base_Element_Type>(block_ids[i],elem_type));
   }
 
@@ -1207,7 +1208,7 @@ get_var_index(Teuchos::RCP<Mesh> mesh,
 {
   std::string comp = "";
   if (component != "") comp = "_" + component;
-  boost::to_upper(comp);
+  to_upper(comp);
   const int_t spatial_dimension = mesh->spatial_dimension();
   // this needs to be improved... right now the exodusII file does not differente between scalars and vectors for the variable names
   // so we have to concatinate the list like this:
