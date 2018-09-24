@@ -92,54 +92,6 @@ if(DICE_ENABLE_NETCDF)
     ENDIF()
 endif()
 
-# FIND BOOST
-IF(WIN32)
-  find_package(Boost 1.46.0) # find_package for boost works a little dif for Windows 
-ELSE()
-  find_package(Boost 1.46.0 COMPONENTS program_options system filesystem) 
-ENDIF()
-
-if (Boost_FOUND)
-  find_library(tiff_lib NAMES libtiff.a tiff PATHS ${TIFF_DIR}/lib)
-  if(tiff_lib)
-    MESSAGE(STATUS "Tiff file format enabled. Using tiff library from ${tiff_lib}")
-    SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${tiff_lib})
-    IF(WIN32)
-      link_directories(${TIFF_DIR}/lib)
-    ENDIF()
-  else()
-    MESSAGE(FATAL_ERROR "Could not find required tiff library.")
-  endif()
-  find_library(jpeg_lib NAMES libjpeg.a jpeg PATHS ${JPEG_DIR}/lib)
-  if(jpeg_lib)
-    MESSAGE(STATUS "Jpeg file format enabled. Using jpeg library from ${jpeg_lib}")
-    SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${jpeg_lib})
-    IF(WIN32)
-      link_directories(${JPEG_DIR}/lib)
-    ENDIF()
-    ADD_DEFINITIONS(-DDICE_JPEG=1)
-    SET(DICE_HAS_JPEG ON)
-  else()
-    MESSAGE(STATUS "Could not find jpeg library. Jpeg file format is NOT enabled")
-  endif()
-  find_library(png_lib NAMES libpng.a png PATHS ${PNG_DIR}/lib)
-  if(png_lib)
-    MESSAGE(STATUS "Png file format enabled. Using png library from ${png_lib}")
-    SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${png_lib})
-    ADD_DEFINITIONS(-DDICE_PNG=1)
-    SET(DICE_HAS_PNG ON)
-    IF(WIN32)
-      link_directories(${PNG_DIR}/lib)
-    ENDIF()
-  else()
-    MESSAGE("Could not find png library. Png file format is NOT enabled")
-  endif()
-  MESSAGE(STATUS "Using Boost libraries from: ${Boost_LIBRARY_DIRS} and inlcudes from: ${Boost_INCLUDE_DIRS}")
-  link_directories(${Boost_LIBRARY_DIRS})
-else (Boost_FOUND)
-  MESSAGE(FATAL_ERROR "BOOST is required, but not found")
-endif (Boost_FOUND)
-                                                                        
 SET(DICE_TRILINOS_HEADERS
     ${Trilinos_INCLUDE_DIRS}
     ${Trilinos_TPL_INCLUDE_DIRS}
@@ -152,12 +104,6 @@ SET(DICE_TRILINOS_LIB_DIRS
 SET(DICE_HEADER_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/../netcdf
-  ${TIFF_DIR}
-  ${JPEG_DIR}
-  ${PNG_DIR}
-  ${TIFF_DIR}/include/
-  ${JPEG_DIR}/include/
-  ${PNG_DIR}/include/
   )
 
 IF(DICE_ENABLE_OPENCV)

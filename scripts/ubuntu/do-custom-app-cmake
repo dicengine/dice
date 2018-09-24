@@ -14,5 +14,4 @@ cmake \
     -D NetCDF_DIR:PATH=<path>/netcdf-4.3.0/install/lib \
     -D HDF5_DIR:PATH=<path>/hdf5-1.10.1/install/lib \
     -D OpenCV_DIR:PATH=<path>/opencv-3.2.0/build/install \
-    -D BOOST_ROOT:PATH=<path>/boost_1_55_0/build \
     ../

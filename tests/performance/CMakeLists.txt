@@ -3,7 +3,6 @@ include_directories (
     ../../src/utils/src/
     ${DICE_HEADER_DIRS}
     ${DICE_TRILINOS_HEADERS}
-    ${Boost_INCLUDE_DIRS}
 )
 
 

@@ -322,7 +322,7 @@ public:
   /// Rotate the deformed image if requested
   void rotate_def_image();
 
-  /// Replace the deformed image for this Schema (only enabled with boost)
+  /// Replace the deformed image for this Schema
   void set_ref_image(const std::string & refName);
 
   /// Replace the deformed image using an intensity array
@@ -607,7 +607,6 @@ public:
   /// \param use_def_image True if the deformed image should be used, otherwise the reference image is used
   /// \param use_one_point True if only one correlation point should be used (helpful if the point density is high)
   ///
-  /// Only works if boost is enabled.
   /// WARNING: This only works for square subsets.
   // TODO this only works for square subsets, make it work for the conformal
   void write_control_points_image(const std::string & fileName,

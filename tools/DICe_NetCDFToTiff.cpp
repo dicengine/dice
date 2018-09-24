@@ -54,10 +54,6 @@
 #include <string>
 #include <iostream>
 
-#ifndef   DICE_DISABLE_BOOST_FILESYSTEM
-#include    <boost/filesystem.hpp>
-#endif
-
 using namespace DICe;
 
 int main(int argc, char *argv[]) {
@@ -150,30 +146,32 @@ int main(int argc, char *argv[]) {
     }
   }
   else{
-#ifndef   DICE_DISABLE_BOOST_FILESYSTEM
-    DEBUG_MSG("Converting all NetCDF files in folder: " << name);
-    boost::filesystem::path dir_path(name);
-    if ( !boost::filesystem::exists( dir_path ) ){
-      std::cout << "Directory does not exist: " << name << std::endl;
-      exit(-1);
-    }
-    boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
-    for ( boost::filesystem::directory_iterator itr( dir_path );itr != end_itr;++itr){
-      std::string file_name = itr->path().filename().string();
-      std::cout << "found file " << file_name << std::endl;
-      const size_t name_len = file_name.length();
-      std::string substr = file_name.substr(name_len-3,name_len);
-      if(strcmp(substr.c_str(),".nc")==0){
-        Teuchos::RCP<Image> img = Teuchos::rcp(new Image(file_name.c_str()));//netcdf_reader->get_image(file_name);
-        std::string old_name = file_name;
-        file_name.replace(name_len-3,3,".tif");
-        DEBUG_MSG("Converting file: " << old_name << " to " << file_name);
-        img->write(file_name);
-      }
-    }
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, boost filesystem required to convert all images in a directory");
-#endif
+    // removal of boost left this broken, will return to fix it later.
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"This method currently broken");
+//#ifndef   DICE_DISABLE_BOOST_FILESYSTEM
+//    DEBUG_MSG("Converting all NetCDF files in folder: " << name);
+//    boost::filesystem::path dir_path(name);
+//    if ( !boost::filesystem::exists( dir_path ) ){
+//      std::cout << "Directory does not exist: " << name << std::endl;
+//      exit(-1);
+//    }
+//    boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
+//    for ( boost::filesystem::directory_iterator itr( dir_path );itr != end_itr;++itr){
+//      std::string file_name = itr->path().filename().string();
+//      std::cout << "found file " << file_name << std::endl;
+//      const size_t name_len = file_name.length();
+//      std::string substr = file_name.substr(name_len-3,name_len);
+//      if(strcmp(substr.c_str(),".nc")==0){
+//        Teuchos::RCP<Image> img = Teuchos::rcp(new Image(file_name.c_str()));//netcdf_reader->get_image(file_name);
+//        std::string old_name = file_name;
+//        file_name.replace(name_len-3,3,".tif");
+//        DEBUG_MSG("Converting file: " << old_name << " to " << file_name);
+//        img->write(file_name);
+//      }
+//    }
+//#else
+//    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, boost filesystem required to convert all images in a directory");
+//#endif
   }
 
   DICe::finalize();

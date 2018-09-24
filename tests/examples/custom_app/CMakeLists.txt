@@ -59,23 +59,6 @@ SET(CMAKE_C_FLAGS ${Trilinos_C_COMPILER_FLAGS})
 MESSAGE(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 MESSAGE(STATUS "CMAKE_C_FLAGS: ${CMAKE_C_FLAGS}")
 
-#
-# Bring in boost
-#
-# FIND BOOST
-IF(WIN32)
-  find_package(Boost 1.46.0) # find_package for boost works a little dif for Windows
-ELSE()
-  set(Boost_USE_STATIC_LIBS   ON)
-  find_package(Boost 1.46.0 COMPONENTS program_options system filesystem timer)
-ENDIF()
-if (Boost_FOUND)
-  MESSAGE(STATUS "Using Boost libraries from: ${Boost_LIBRARY_DIRS} and inlcudes from: ${Boost_INCLUDE_DIRS}")
-  link_directories(${Boost_LIBRARY_DIRS})
-else (Boost_FOUND)
-  MESSAGE(FATAL_ERROR "BOOST is required, but not found")
-endif (Boost_FOUND)
-
 # base data type:
 if(DICE_USE_DOUBLE)
   ADD_DEFINITIONS(-DDICE_USE_DOUBLE=1)
@@ -131,33 +114,32 @@ target_link_libraries(main
 # NOTE: If this example is used as a template, the TIFF_DIR variable should be defined
 # in your do-cmake script with -D TIFF_DIR:STRING="<location>" only if libtiff is not
 # installed in a system path, otherwise it will get picked up by find_package
-find_library(tiff_lib NAMES libtiff.a tiff PATHS ${TIFF_DIR}/lib)
-if(NOT tiff_lib)
-  MESSAGE(FATAL_ERROR "Tiff library is required, but not found")
-else()
-  MESSAGE(STATUS "Using tiff library from: ${tiff_lib}")
-  target_link_libraries(main diceutils ${tiff_lib})
-endif()
+#find_library(tiff_lib NAMES libtiff.a tiff PATHS ${TIFF_DIR}/lib)
+#if(NOT tiff_lib)
+#  MESSAGE(FATAL_ERROR "Tiff library is required, but not found")
+#else()
+#  MESSAGE(STATUS "Using tiff library from: ${tiff_lib}")
+#  target_link_libraries(main diceutils ${tiff_lib})
+#endif()
+target_link_libraries(main diceutils)
 
 # NOTE: If this example is used as a template, the optional JPEG_DIR variable can be defined
 # in your do-cmake script with -D JPEG_DIR:STRING="<location>" only if libjpeg is not
 # installed in a system path, otherwise it will get picked up by find_package
-find_library(jpeg_lib NAMES libjpeg.a jpeg PATHS ${JPEG_DIR}/lib)
-if(jpeg_lib)
-  ADD_DEFINITIONS(-DDICE_JPEG=1)
-  MESSAGE(STATUS "Using jpeg library from: ${jpeg_lib}")
-  target_link_libraries(main ${jpeg_lib})
-endif()
+#find_library(jpeg_lib NAMES libjpeg.a jpeg PATHS ${JPEG_DIR}/lib)
+#if(jpeg_lib)
+#  MESSAGE(STATUS "Using jpeg library from: ${jpeg_lib}")
+#  target_link_libraries(main ${jpeg_lib})
+#endif()
 
 # NOTE: If this example is used as a template, the optional PNG_DIR variable can be defined
 # in your do-cmake script with -D PNG_DIR:STRING="<location>" only if libjpeg is not
 # installed in a system path, otherwise it will get picked up by find_package
-find_library(png_lib NAMES libpng.a png PATHS ${PNG_DIR}/lib)
-if(png_lib)
-  ADD_DEFINITIONS(-DDICE_PNG=1)
-  MESSAGE(STATUS "Using png library from: ${png_lib}")
-  target_link_libraries(main ${png_lib})
-endif()
+#find_library(png_lib NAMES libpng.a png PATHS ${PNG_DIR}/lib)
+#if(png_lib)
+#  MESSAGE(STATUS "Using png library from: ${png_lib}")
+#  target_link_libraries(main ${png_lib})
+#endif()
 
 # find OpenCV
 message(STATUS "Looking for OpenCV in dir: ${OpenCV_DIR}")
@@ -205,8 +187,8 @@ target_link_libraries(main
   teuchosnumerics
   teuchoscomm
   teuchosparameterlist
-  ${tiff_lib}
-  ${Boost_LIBRARIES})
+#  ${tiff_lib}
+)
 
 IF(DICE_ENABLE_MANYCORE)
   target_link_libraries(main
@@ -224,18 +206,18 @@ ELSE()
       belosepetra)
   ENDIF()
 ENDIF()
-find_library(jbig_lib libjbig.a)
-if(jbig_lib)
-  MESSAGE(STATUS "Using lib jbig from: ${jbig_lib}")
-  target_link_libraries(main jbig)
-endif()
-find_library(lzma_lib liblzma.a)
-if(lzma_lib)
-  MESSAGE(STATUS "Using lib lzma from: ${lzma_lib}")
-  target_link_libraries(main lzma)
-endif()
-find_library(z_lib libz.a)
-if(z_lib)
-  MESSAGE(STATUS "Using lib z from: ${z_lib}")
-  target_link_libraries(main z)
-endif()
+#find_library(jbig_lib libjbig.a)
+#if(jbig_lib)
+#  MESSAGE(STATUS "Using lib jbig from: ${jbig_lib}")
+#  target_link_libraries(main jbig)
+#endif()
+#find_library(lzma_lib liblzma.a)
+#if(lzma_lib)
+#  MESSAGE(STATUS "Using lib lzma from: ${lzma_lib}")
+#  target_link_libraries(main lzma)
+#endif()
+#find_library(z_lib libz.a)
+#if(z_lib)
+#  MESSAGE(STATUS "Using lib z from: ${z_lib}")
+#  target_link_libraries(main z)
+#endif()

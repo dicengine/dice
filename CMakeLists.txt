@@ -149,7 +149,7 @@ ExternalProject_Add(DICe_utils
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/utils
   BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/utils_build
   TMP_DIR ${CMAKE_CURRENT_BINARY_DIR}/utils_tmp
-  CMAKE_CACHE_ARGS -DDICE_TRILINOS_DIR:STRING=${DICE_TRILINOS_DIR} -DCMAKE_INSTALL_PREFIX:FILEPATH=${CMAKE_INSTALL_PREFIX} -DBOOST_ROOT:STRING=${BOOST_ROOT} -DBOOST_LIBRARYDIR:STRING=${BOOST_LIBRARYDIR} -DBOOST_INCLUDEDIR:STRING=${BOOST_INCLUDEDIR} -DDICE_ENABLE_NETCDF:STRING=${DICE_ENABLE_NETCDF} -DNetCDF_DIR:STRING=${NetCDF_DIR} -DHDF5_DIR:STRING=${HDF5_DIR} -DTIFF_DIR:STRING=${TIFF_DIR} -DJPEG_DIR:STRING=${JPEG_DIR} -DPNG_DIR:STRING=${PNG_DIR} -DDICE_DEBUG_MSG:BOOL=${DICE_DEBUG_MSG} -DCLAPACK_DIR:FILEPATH=${CLAPACK_DIR} -DOpenCV_DIR:STRING=${OpenCV_DIR} -DDICE_USE_DOUBLE:BOOL=${DICE_USE_DOUBLE} -DDICE_OUTPUT_PREFIX:FILEPATH=${DICE_OUTPUT_PREFIX} -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} -DCMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS} -DCMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
+  CMAKE_CACHE_ARGS -DDICE_TRILINOS_DIR:STRING=${DICE_TRILINOS_DIR} -DCMAKE_INSTALL_PREFIX:FILEPATH=${CMAKE_INSTALL_PREFIX} -DDICE_ENABLE_NETCDF:STRING=${DICE_ENABLE_NETCDF} -DNetCDF_DIR:STRING=${NetCDF_DIR} -DHDF5_DIR:STRING=${HDF5_DIR} -DDICE_DEBUG_MSG:BOOL=${DICE_DEBUG_MSG} -DCLAPACK_DIR:FILEPATH=${CLAPACK_DIR} -DOpenCV_DIR:STRING=${OpenCV_DIR} -DDICE_USE_DOUBLE:BOOL=${DICE_USE_DOUBLE} -DDICE_OUTPUT_PREFIX:FILEPATH=${DICE_OUTPUT_PREFIX} -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} -DCMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS} -DCMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
   )
 
 # base data type:
@@ -183,9 +183,6 @@ SET(DICE_TRILINOS_LIB_DIRS
   )
 
 link_directories(${DICE_TRILINOS_LIB_DIRS}
-  ${TIFF_DIR}/lib
-  ${JPEG_DIR}/lib
-  ${PNG_DIR}/lib
   ${CMAKE_INSTALL_PREFIX}/lib)
 
 SET(DICE_HEADER_DIRS
@@ -198,12 +195,6 @@ SET(DICE_HEADER_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/src
   ${CMAKE_CURRENT_SOURCE_DIR}/src/kdtree
   ${CMAKE_CURRENT_SOURCE_DIR}/src/mesh
-  ${TIFF_DIR}
-  ${JPEG_DIR}
-  ${PNG_DIR}
-  ${TIFF_DIR}/include
-  ${JPEG_DIR}/include
-  ${PNG_DIR}/include
   )
 
 IF(DICE_ENABLE_GLOBAL)
@@ -277,58 +268,6 @@ ENDIF()
 # f2clibs have to be added manually here
 IF(WIN32)
   SET(DICE_LIBRARIES ${DICE_LIBRARIES} libf2c)
-ENDIF()
-
-# FIND BOOST
-IF(WIN32)
-  find_package(Boost 1.46.0) # find_package for boost works a little dif for Windows
-ELSE()
-  set(Boost_USE_STATIC_LIBS   ON)
-  find_package(Boost 1.46.0 COMPONENTS program_options filesystem timer chrono system)
-ENDIF()
-
-if (Boost_FOUND)
-  find_library(tiff_lib NAMES libtiff.a tiff PATHS ${TIFF_DIR}/lib)
-  if(tiff_lib)
-    MESSAGE(STATUS "Tiff file format enabled. Using tiff library from ${tiff_lib}")
-    SET(DICE_LIBRARIES ${DICE_LIBRARIES} diceutils ${tiff_lib})
-    IF(WIN32)
-      FILE(COPY ${TIFF_DIR}/bin/tiff.dll DESTINATION ${DICE_OUTPUT_PREFIX}/bin)
-    ENDIF()
-  else()
-    MESSAGE(FATAL_ERROR "Could not find required tiff library.")
-  endif()
-  find_library(jpeg_lib NAMES libjpeg.a jpeg PATHS ${JPEG_DIR}/lib)
-  if(jpeg_lib)
-    MESSAGE(STATUS "Jpeg file format enabled. Using jpeg library from ${jpeg_lib}")
-    SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${jpeg_lib})
-    ADD_DEFINITIONS(-DDICE_JPEG=1)
-    SET(DICE_HAS_JPEG ON)
-  else()
-    MESSAGE(STATUS "Could not find jpeg library. Jpeg file format is NOT enabled")
-  endif()
-  find_library(png_lib NAMES libpng.a png PATHS ${PNG_DIR}/lib)
-  if(png_lib)
-    MESSAGE(STATUS "Png file format enabled. Using png library from ${png_lib}")
-    SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${png_lib})
-    IF(WIN32)
-      FILE(COPY ${PNG_DIR}/bin/libpng16.dll DESTINATION ${DICE_OUTPUT_PREFIX}/bin)
-      FILE(COPY ${ZLIB_DIR}/bin/zlib.dll DESTINATION ${DICE_OUTPUT_PREFIX}/bin)
-    ENDIF()
-    ADD_DEFINITIONS(-DDICE_PNG=1)
-    SET(DICE_HAS_PNG ON)
-  else()
-    MESSAGE("Could not find png library. Png file format is NOT enabled")
-  endif()
-  MESSAGE(STATUS "Using Boost libraries from: ${Boost_LIBRARY_DIRS} and inlcudes from: ${Boost_INCLUDE_DIRS}")
-  link_directories(${Boost_LIBRARY_DIRS})
-else (Boost_FOUND)
-  MESSAGE(FATAL_ERROR "BOOST is required, but not found")
-endif (Boost_FOUND)
-
-IF(DICE_DISABLE_BOOST_FILESYSTEM)
-  ADD_DEFINITIONS(-DDICE_DISABLE_BOOST_FILESYSTEM=1)
-  MESSAGE(STATUS "BOOST Filesystem has been disabled, output will be written to current execution directory")
 ENDIF()
 
 # if debug messages are turned on:

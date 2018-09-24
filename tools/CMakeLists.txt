@@ -3,7 +3,6 @@ include_directories (
     . 
     ${DICE_HEADER_DIRS}
     ${DICE_TRILINOS_HEADERS}
-    ${Boost_INCLUDE_DIRS}
 )
 
 SET(DICE_TEST_LIBRARIES

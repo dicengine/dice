@@ -129,11 +129,8 @@ include_directories (
     ${DICE_HEADER_DIRS}
     ${DICE_TRILINOS_HEADERS}
 )
-include_directories(${Boost_INCLUDE_DIRS} COMPONENTS gil program_options REQUIRED)
-#MESSAGE(STATUS "Boost_INCLUDE_DIRS:${Boost_INCLUDE_DIRS}")
-
 add_library(dicecore ${DICE_SOURCES} ${DICE_HEADERS})
-target_link_libraries(dicecore ${Boost_LIBRARIES} ${DICE_LIBRARIES})
+target_link_libraries(dicecore ${DICE_LIBRARIES})
 IF(DICE_ENABLE_OPENCV)
   target_link_libraries(dicecore ${OpenCV_LIBRARIES})
 ENDIF()

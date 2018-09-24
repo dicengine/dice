@@ -18,8 +18,6 @@ if(DICE_ENABLE_NETCDF)
   )
 ENDIF()
 
-include_directories(${Boost_INCLUDE_DIRS} COMPONENTS gil program_options REQUIRED)
-
 # glob all the cpp files
 FILE ( GLOB test_cpp_files "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 FOREACH ( test_file ${test_cpp_files})

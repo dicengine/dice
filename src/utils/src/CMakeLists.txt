@@ -30,19 +30,11 @@ include_directories(
     ../../cine
     ../../netcdf
     ${DICE_HEADER_DIRS}
-    ${Boost_INCLUDE_DIRS}
     ${DICE_TRILINOS_HEADERS}
-    ${TIFF_INCLUDE_DIR}
     ${NetCDF_DIR}
 )
 
-SET(DICE_UTILS_LIBRARIES tiff teuchoscore)
-if(DICE_HAS_JPEG)
-  SET(DICE_UTILS_LIBRARIES ${DICE_UTILS_LIBRARIES} jpeg)
-endif()
-if(DICE_HAS_PNG)
-  SET(DICE_UTILS_LIBRARIES ${DICE_UTILS_LIBRARIES} png)
-endif()
+SET(DICE_UTILS_LIBRARIES teuchoscore)
 if(DICE_ENABLE_NETCDF)
   SET(DICE_UTILS_LIBRARIES ${DICE_UTILS_LIBRARIES} netcdf)
 ENDIF()
@@ -54,7 +46,7 @@ add_library(
     ${DICE_UTILS_HEADERS}
 )
 
-target_link_libraries(diceutils ${DICE_UTILS_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(diceutils ${DICE_UTILS_LIBRARIES})
 IF(DICE_ENABLE_OPENCV)
   target_link_libraries(diceutils ${OpenCV_LIBRARIES})
 ENDIF()
