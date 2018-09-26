@@ -398,12 +398,12 @@ int pre_process_cal_image(const std::string & image_filename,
   const bool output_preview_images = output_image_filename != "";
   const bool preview_thresh = pre_process_params->get<bool>("preview_thresh",false);
   const bool has_adaptive = pre_process_params->get<bool>("cal_target_has_adaptive",false);
-  const int filterMode = CV_ADAPTIVE_THRESH_MEAN_C;//pre_process_params->get<int>("filterMode",CV_ADAPTIVE_THRESH_GAUSSIAN_C);
-  int invertedMode = CV_THRESH_BINARY;
+  const int filterMode = cv::ADAPTIVE_THRESH_MEAN_C;//pre_process_params->get<int>("filterMode",cv::ADAPTIVE_THRESH_GAUSSIAN_C);
+  int invertedMode = cv::THRESH_BINARY;
   if(pre_process_params->get<bool>("cal_target_is_inverted",false))
-    invertedMode = CV_THRESH_BINARY_INV;
-  //const int invertedMode = pre_process_params->get<int>("invertedMode",CV_THRESH_BINARY);
-  //const int antiInvertedMode = pre_process_params->get<int>("antiInvertedMode",CV_THRESH_BINARY_INV);
+    invertedMode = cv::THRESH_BINARY_INV;
+  //const int invertedMode = pre_process_params->get<int>("invertedMode",cv::THRESH_BINARY);
+  //const int antiInvertedMode = pre_process_params->get<int>("antiInvertedMode",cv::THRESH_BINARY_INV);
   if(!pre_process_params->isParameter("cal_target_spacing_size")){
     std::cout << "error, pattern_spacing is missing from parameters" << std::endl;
     return -1;
@@ -425,7 +425,7 @@ int pre_process_cal_image(const std::string & image_filename,
   Mat binary_img(img.size(),CV_8UC3);
   Mat out_img(img.size(), CV_8UC3);
   //Mat bi_copy_img(img.size(), CV_8UC3);
-  cvtColor(img, out_img, CV_GRAY2RGB);
+  cvtColor(img, out_img, cv::COLOR_GRAY2RGB);
   if(img.empty()){
     std::cout << "error, the image is empty" << std::endl;
     return -4;
@@ -443,17 +443,17 @@ int pre_process_cal_image(const std::string & image_filename,
     adaptiveThreshold(binary_img,binary_img,255,filterMode,invertedMode,blockSize,binaryConstant);
   else
     threshold(binary_img, binary_img, binaryConstant, 255, invertedMode);
-  //threshold(binary_img, binary_img, 0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
+  //threshold(binary_img, binary_img, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
   // output the preview images using the thresholded image as the background
   if(preview_thresh){
-    cvtColor(binary_img, out_img, CV_GRAY2RGB);
+    cvtColor(binary_img, out_img, cv::COLOR_GRAY2RGB);
   }
 
   // find the contours in the image with parents and children to locate the doughnut looking dots
   std::vector<std::vector<Point> > contours;
   std::vector<std::vector<Point> > trimmed_contours;
   std::vector<Vec4i> hierarchy;
-  findContours(binary_img.clone(), contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE );
+  findContours(binary_img.clone(), contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_NONE );
 
   // make sure the vectors are the same size:
   if(hierarchy.size()!=contours.size()){
@@ -781,7 +781,7 @@ int pre_process_cal_image(const std::string & image_filename,
         std::stringstream dot_text;
         dot_text << i << "," << j;
         putText(out_img, dot_text.str(), Point2f(trimmed_dot_cx[neigh_id],trimmed_dot_cy[neigh_id]) + Point2f(20,20),
-          FONT_HERSHEY_COMPLEX_SMALL, 1.0, cvScalar(255,0,0), 1.5, CV_AA);
+          FONT_HERSHEY_COMPLEX_SMALL, 1.0, Scalar(255,0,0), 1.5, cv::LINE_AA);
         circle(out_img,Point(trimmed_dot_cx[neigh_id],trimmed_dot_cy[neigh_id]),10,Scalar(255,0,255),-1);
       } else if (i>=0&&i<pattern_width&&j>=0&&j<pattern_height){
         interior_dot_failed = true;

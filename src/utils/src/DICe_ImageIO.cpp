@@ -51,6 +51,7 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 namespace DICe{
 namespace utils{
@@ -188,7 +189,7 @@ void read_image_dimensions(const char * file_name,
   }
 #endif
   else{
-    cv::Mat image = cv::imread(file_name, CV_LOAD_IMAGE_GRAYSCALE);
+    cv::Mat image = cv::imread(file_name, cv::ImreadModes::IMREAD_GRAYSCALE);
     height = image.rows;
     width = image.cols;
   }
@@ -251,7 +252,7 @@ void read_image(const char * file_name,
   else{
     // read the image using opencv:
     cv::Mat image;
-    image = cv::imread(file_name, CV_LOAD_IMAGE_GRAYSCALE);
+    image = cv::imread(file_name, cv::ImreadModes::IMREAD_GRAYSCALE);
     const int_t height = image.rows;
     const int_t width = image.cols;
     for(int_t y=0;y<height; ++y) {
@@ -317,7 +318,7 @@ void read_image(const char * file_name,
   else{
     // read the image using opencv:
     cv::Mat image;
-    image = cv::imread(file_name, CV_LOAD_IMAGE_GRAYSCALE);
+    image = cv::imread(file_name, cv::ImreadModes::IMREAD_GRAYSCALE);
     //const int_t height = image.rows;
     //const int_t width = image.cols;
     assert(width+offset_x <= image.cols);

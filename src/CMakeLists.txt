@@ -130,10 +130,7 @@ include_directories (
     ${DICE_TRILINOS_HEADERS}
 )
 add_library(dicecore ${DICE_SOURCES} ${DICE_HEADERS})
-target_link_libraries(dicecore ${DICE_LIBRARIES})
-IF(DICE_ENABLE_OPENCV)
-  target_link_libraries(dicecore ${OpenCV_LIBRARIES})
-ENDIF()
+target_link_libraries(dicecore ${DICE_LIBRARIES} ${OpenCV_LIBRARIES} diceutils)
 
 find_library(jbig_lib libjbig.a)
 if(jbig_lib)

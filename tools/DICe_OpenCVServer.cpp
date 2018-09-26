@@ -185,14 +185,14 @@ int main(int argc, char *argv[]) {
         std::cout << "error, the number of parameters for a binary filter should be 4, not " << filter_params[i].size() << std::endl;
         return -1;
       }
-      filterMode = CV_ADAPTIVE_THRESH_GAUSSIAN_C;
-      if(filter_params[i][0]==1.0) filterMode = CV_ADAPTIVE_THRESH_MEAN_C;
-      invertedMode = CV_THRESH_BINARY;
-      //antiInvertedMode = CV_THRESH_BINARY_INV;
+      filterMode = cv::ADAPTIVE_THRESH_GAUSSIAN_C;
+      if(filter_params[i][0]==1.0) filterMode = cv::ADAPTIVE_THRESH_MEAN_C;
+      invertedMode = cv::THRESH_BINARY;
+      //antiInvertedMode = cv::THRESH_BINARY_INV;
       if(filter_params[i][3]==1.0){
-        invertedMode = CV_THRESH_BINARY_INV;
+        invertedMode = cv::THRESH_BINARY_INV;
         cal_target_is_inverted = true;
-        //antiInvertedMode = CV_THRESH_BINARY;
+        //antiInvertedMode = cv::THRESH_BINARY;
       }
       blockSize = filter_params[i][1];
       binaryConstant = filter_params[i][2];
