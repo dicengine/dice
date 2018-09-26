@@ -33,7 +33,7 @@ var searchData=
   ['altitude_5fpost_5fprocessor',['Altitude_Post_Processor',['../class_d_i_ce_1_1_altitude___post___processor.html',1,'DICe::Altitude_Post_Processor'],['../class_d_i_ce_1_1_altitude___post___processor.html#a7d48b5c5b36a7e8d5ab67a67e7437be8',1,'DICe::Altitude_Post_Processor::Altitude_Post_Processor()']]],
   ['amplitude',['amplitude',['../class_d_i_ce_1_1_sin_cos___image___deformer.html#a8948d3c0096598ad75dfc569d5b814a4',1,'DICe::SinCos_Image_Deformer']]],
   ['amplitude_5f',['amplitude_',['../class_d_i_ce_1_1_sin_cos___image___deformer.html#abf29dadd3818203393a8eef72861172d',1,'DICe::SinCos_Image_Deformer']]],
-  ['analysis_5ftype',['analysis_type',['../class_d_i_ce_1_1_schema.html#acd82b378b0c46c7750bc2cc7cab1d22e',1,'DICe::Schema::analysis_type()'],['../class_d_i_ce.html#a3d0fc3803730befc657006c7f45bc7cd',1,'DICe::Analysis_Type()']]],
+  ['analysis_5ftype',['Analysis_Type',['../class_d_i_ce.html#a3d0fc3803730befc657006c7f45bc7cd',1,'DICe::Analysis_Type()'],['../class_d_i_ce_1_1_schema.html#acd82b378b0c46c7750bc2cc7cab1d22e',1,'DICe::Schema::analysis_type()']]],
   ['analysis_5ftype_5f',['analysis_type_',['../class_d_i_ce_1_1_schema.html#ac683ca06d6046e394c6c63cd4f93d4be',1,'DICe::Schema']]],
   ['angle_5f2d',['angle_2d',['../namespace_d_i_ce.html#a118c2de6ebfa1d620ebedc0baebee1b7',1,'DICe']]],
   ['apogee_5f',['apogee_',['../class_d_i_ce_1_1_altitude___post___processor.html#a833d738a7bc9b5745dd6945e464e0629',1,'DICe::Altitude_Post_Processor']]],

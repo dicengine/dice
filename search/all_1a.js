@@ -25,6 +25,7 @@ var searchData=
   ['_7einitializer',['~Initializer',['../class_d_i_ce_1_1_initializer.html#abcdc040222ae92bef63e73412ed364f6',1,'DICe::Initializer']]],
   ['_7einternal_5fcell',['~Internal_Cell',['../class_d_i_ce_1_1mesh_1_1_internal___cell.html#addfeea0db73a2ee03d8584c240af20da',1,'DICe::mesh::Internal_Cell']]],
   ['_7einternal_5fface_5fedge',['~Internal_Face_Edge',['../class_d_i_ce_1_1mesh_1_1_internal___face___edge.html#a05642ac8fa3453a1f473ff356509ef1c',1,'DICe::mesh::Internal_Face_Edge']]],
+  ['_7elive_5fplot_5fpost_5fprocessor',['~Live_Plot_Post_Processor',['../class_d_i_ce_1_1_live___plot___post___processor.html#a985960316332666525b7cde846dece4c',1,'DICe::Live_Plot_Post_Processor']]],
   ['_7elocal_5fshape_5ffunction',['~Local_Shape_Function',['../class_d_i_ce_1_1_local___shape___function.html#a3480a2f8e2c74518cc432c13e0a1605e',1,'DICe::Local_Shape_Function']]],
   ['_7emesh',['~Mesh',['../class_d_i_ce_1_1mesh_1_1_mesh.html#af6cf0d8fb73d533488f20c8457b9eafa',1,'DICe::mesh::Mesh']]],
   ['_7emesh_5fobject',['~Mesh_Object',['../class_d_i_ce_1_1mesh_1_1_mesh___object.html#acfa2961c5bd9c3ddc89c91eb32d3bd67',1,'DICe::mesh::Mesh_Object']]],

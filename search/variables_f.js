@@ -60,6 +60,7 @@ var searchData=
   ['pixels_5fowning_5felement_5fglobal_5fid_5f',['pixels_owning_element_global_id_',['../class_d_i_ce_1_1_schema.html#a9ddee5e08a84e6a8908bf684176357b5',1,'DICe::Schema']]],
   ['point_5fcloud_5f',['point_cloud_',['../class_d_i_ce_1_1_path___initializer.html#aff215770920a2a0c685a0a6c5721a92e',1,'DICe::Path_Initializer::point_cloud_()'],['../class_d_i_ce_1_1_feature___matching___initializer.html#afab008275865e240403baae4e82454c9',1,'DICe::Feature_Matching_Initializer::point_cloud_()'],['../class_d_i_ce_1_1_optical___flow___initializer.html#afa22986b180075644e42b41488bd1bc3',1,'DICe::Optical_Flow_Initializer::point_cloud_()'],['../class_d_i_ce_1_1_post___processor.html#ae4e0a9b18bf67752b9d416ad368132eb',1,'DICe::Post_Processor::point_cloud_()']]],
   ['post_5fprocess_5faltitude',['post_process_altitude',['../class_d_i_ce.html#a97c7cb7526e4a38d49c04708a547d88a',1,'DICe']]],
+  ['post_5fprocess_5flive_5fplots',['post_process_live_plots',['../class_d_i_ce.html#ac23094d203b3da987fbb3a38bc72db16',1,'DICe']]],
   ['post_5fprocess_5fnlvc_5fstrain',['post_process_nlvc_strain',['../class_d_i_ce.html#a0e5033b54e1e33195b6066d9912636f9',1,'DICe']]],
   ['post_5fprocess_5funcertainty',['post_process_uncertainty',['../class_d_i_ce.html#a90c7181e679794aaf97d96e80c9c3d9b',1,'DICe']]],
   ['post_5fprocess_5fvsg_5fstrain',['post_process_vsg_strain',['../class_d_i_ce.html#ae8e383d7046ca0be549491cd4f969f25',1,'DICe']]],
