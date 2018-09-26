@@ -823,16 +823,11 @@ The prerequisite dependencies required for installing DICe include:
 
 -   LAPACK or [CLAPACK] (http://www.netlib.org/clapack/) (for Windows, only CLAPACK is supported Version 3.2.1 or greater) 
 
--   [Boost] (http://www.boost.org) Version 1.55 or greater (tested with 1.55.0)
+-   [OpenCV] (https://opencv.org/) Version 3.2.0 or greater (tested with 3.2.0)
 
--   [LibTiff] (http://www.remotesensing.org/libtiff/) Version 4.0.6 (tested with 4.0.6)
+-   Boost is no longer a dependency. It was removed Sept. 2018
 
-Optionally, if jpeg or png files are used for input, the following libraries
-are needed:
-
--   [LibPng] (http://www.libpng.org/pub/png/libpng.html) Version 1.6.20
-
--   [LibJpeg] (http://libjpeg.sourceforge.net/) Version 6b
+-   LibTiff, LifJpeg, and LibPng are also not required anymore, they get built with OpenCV
 
 CMake
 -----
@@ -951,10 +946,6 @@ Install the image libraries.
 
     $ sudo apt-get install libtiff-dev libpng-dev libjpeg-dev
 
-Install boost.
-
-    $ sudo apt-get install libboost-all-dev
-
 Install NetCDF. After installing netcdf, change some of the defaults in /usr/include/netcdf.h.
 
     $ sudo apt-get install libnetcdf-dev
@@ -1048,22 +1039,6 @@ Next, simply cd into the DICe_gui folder and run the electron executable
       $ cd DICe_gui
       $ <path_to_electron_exec>/electron .
 
-
-Tiff
-----
-
-LibTiff must be installed before building DICe. LibTiff is used in the reading of `.tiff` images. There are many ways to install LibTiff, see [here](http://www.remotesensing.org/libtiff/) for more information. If the tiff library is not in the system path, the user can set the `TIFF_DIR` variabe in the `do-cmake` configuration script to help CMake find the library.
-
-Jpeg and Png
-------------
-
-The optional `.jpeg` or `.jpg` and `.png` file formats will automatically be enabled if the jpeg and png libraries are in the system path. Otherwise, the `JPEG_DIR` or `PNG_DIR` variables must be set in the `do-cmake` script in order for CMake to find these libraries.
-
-Boost
------
-
-Boost is also a required dependency.  DICe makes use of the graphics image library in
-boost. This enables reading standard image formats like `.tiff` files into DICe.
 
 DICe Configuration Options
 --------------------------
