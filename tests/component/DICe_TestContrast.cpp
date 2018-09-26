@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     subset->initialize(image,DEF_INTENSITIES);
     scalar_t contrast = subset->contrast_std_dev();
     *outStream << "input std-dev: " << std_dev << " computed: " << contrast << std::endl;
-    if(std::abs(std_dev - contrast) > 1.0){
+    if(std::abs(std_dev - contrast) > 2.0){
       *outStream << "Error, contrast value is not correct" << std::endl;
       errorFlag +=1;
     }
