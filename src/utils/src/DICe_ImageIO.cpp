@@ -147,6 +147,9 @@ Image_File_Type image_file_type(const char * file_name){
   const std::string jpeg("jpeg");
   if(file_str.find(jpg)!=std::string::npos||file_str.find(jpeg)!=std::string::npos)
     return JPEG;
+  const std::string bmp("bmp");
+  if(file_str.find(bmp)!=std::string::npos)
+    return BMP;
   const std::string png("png");
   if(file_str.find(png)!=std::string::npos)
     return PNG;

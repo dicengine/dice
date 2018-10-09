@@ -11,6 +11,7 @@ SET(REGRESSION_TESTS
   conformal_subset_def
   dic_challenge_12
   dic_challenge_12_sorted
+  bitmap_star
 )
 
 IF(NOT DICE_USE_DOUBLE)

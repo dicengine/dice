@@ -573,6 +573,7 @@ enum Image_File_Type{
   PNG,
   NETCDF,
   CINE,
+  BMP,
   MAX_IMAGE_FILE_TYPE,
   NO_SUCH_IMAGE_FILE_TYPE
 };

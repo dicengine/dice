@@ -442,8 +442,6 @@ int main(int argc, char *argv[]) {
   }
   *outStream << "hierarchical image filter has been checked" << std::endl;
 
-  bool exception_thrown = false;
-
   // create an image from jpeg file:
   *outStream << "creating an image from a jpeg file " << std::endl;
   Teuchos::RCP<Image> img_jpg = Teuchos::rcp(new Image("./images/ImageB.jpg"));
@@ -489,19 +487,6 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, the jpeg sub image does not have the right intensities." << std::endl;
     errorFlag++;
   }
-//  // test that unsupported file formats throw an exception
-//  exception_thrown = false;
-//  try{
-//    DICe::Image jpg("./images/invalid.jpg");
-//  }
-//  catch (const std::exception &e){
-//    exception_thrown = true;
-//    *outStream << ".jpg throws an exception as expected" << std::endl;
-//  }
-//  if(!exception_thrown){
-//    *outStream << "Error, an exception should have been thrown for unsupported .jpg file format, but was not" << std::endl;
-//    errorFlag++;
-//  }
   // create an image from jpeg file:
   *outStream << "creating an image from a png file " << std::endl;
   Teuchos::RCP<Image> img_png = Teuchos::rcp(new Image("./images/ImageB.png"));
@@ -545,31 +530,6 @@ int main(int argc, char *argv[]) {
   const scalar_t diff_png_sub = img_png_sub_exact->diff(img_sub_png);
   if(diff_png_sub > diff_tol){
     *outStream << "Error, the png sub image does not have the right intensities." << std::endl;
-    errorFlag++;
-  }
-//  // test that unsupported file formats throw an exception
-//  exception_thrown = false;
-//  try{
-//    DICe::Image png("./images/invalid.png");
-//  }
-//  catch (const std::exception &e){
-//    exception_thrown = true;
-//    *outStream << ".png throws an exception as expected" << std::endl;
-//  }
-//  if(!exception_thrown){
-//    *outStream << "Error, an exception should have been thrown for invalid .png file format, but was not" << std::endl;
-//    errorFlag++;
-//  }
-  // test that unsupported file formats throw an exception
-  try{
-    DICe::Image bmp("./images/invalid.bmp");
-  }
-  catch (const std::exception &e){
-    exception_thrown = true;
-    *outStream << ".bmp throws an exception as expected" << std::endl;
-  }
-  if(!exception_thrown){
-    *outStream << "Error, an exception should have been thrown for invalid .bmp file format, but was not" << std::endl;
     errorFlag++;
   }
 
