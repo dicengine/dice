@@ -45,6 +45,7 @@
 #include <DICe_ImageIO.h>
 #include <DICe_Schema.h>
 #include <DICe_Triangulation.h>
+#include <DICe_Cameras.h>
 
 #include <fstream>
 
@@ -74,6 +75,10 @@ int main(int argc, char *argv[]) {
 #endif
     { // scope for total time
       Teuchos::TimeMonitor total_time_monitor(*total_time);
+
+
+
+
       // Command line options
       if(proc_rank==0)  DEBUG_MSG("Parsing command line options");
       bool force_exit = false;
@@ -261,9 +266,11 @@ int main(int argc, char *argv[]) {
       TEUCHOS_TEST_FOR_EXCEPTION(is_stereo&&!input_params->isParameter(DICe::calibration_parameters_file),std::runtime_error,
         "Error, calibration_parameters_file required for stereo");
       Teuchos::RCP<DICe::Triangulation> triangulation;
-      if(input_params->isParameter(DICe::calibration_parameters_file)){
+			//Teuchos::RCP<DICe::Cameras> cameras;
+			if(input_params->isParameter(DICe::calibration_parameters_file)){
         const std::string cal_file_name = input_params->get<std::string>(DICe::calibration_parameters_file);
         triangulation = Teuchos::rcp(new DICe::Triangulation(cal_file_name));
+			//	cameras = Teuchos::rcp(new DICe::Cameras(cal_file_name));
         *outStream << "\n--- Calibration parameters read successfully ---\n" << std::endl;
       }
       else{

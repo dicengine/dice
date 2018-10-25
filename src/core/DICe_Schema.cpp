@@ -554,6 +554,8 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   enable_shear_strain_ = diceParams->get<bool>(DICe::enable_shear_strain);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::enable_quadratic_shape_function),std::runtime_error,"");
   enable_quadratic_shape_function_ = diceParams->get<bool>(DICe::enable_quadratic_shape_function);
+	TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::enable_projection_shape_function), std::runtime_error, "");
+	enable_projection_shape_function_ = diceParams->get<bool>(DICe::enable_projection_shape_function);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::output_deformed_subset_images),std::runtime_error,"");
   output_deformed_subset_images_ = diceParams->get<bool>(DICe::output_deformed_subset_images);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::output_deformed_subset_intensity_images),std::runtime_error,"");
@@ -3413,7 +3415,11 @@ Output_Spec::write_info(std::FILE * file,
   fprintf(file,"*** Shape functions: ");
   if(schema_->quadratic_shape_function_enabled()){
     fprintf(file,"quadratic (A,B,C,D,E,F,G,H,I,J,K,L)");
-  }else{
+  }
+//	else if(schema_->profile_shape_function_enabled()) {
+//		fprintf(file, "profile (Z, PHI, THETA)");
+//	}
+	else{
     if(schema_->translation_enabled())
       fprintf(file,"Translation (u,v) ");
     if(schema_->rotation_enabled())

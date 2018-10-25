@@ -41,6 +41,7 @@
 
 #include <DICe_Parser.h>
 #include <DICe_XMLUtils.h>
+
 #include <DICe_ParameterUtilities.h>
 #include <DICe.h>
 #include <DICe_Cine.h>
@@ -56,7 +57,6 @@
 #include <string>
 #include <algorithm>
 #include <vector>
-
 #if DICE_MPI
 #  include <mpi.h>
 #endif

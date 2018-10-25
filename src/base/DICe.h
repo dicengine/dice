@@ -168,6 +168,8 @@ const char* const initial_condition_file = "initial_condition_file";
 /// String parameter name
 const char* const enable_quadratic_shape_function = "enable_quadratic_shape_function";
 /// String parameter name
+const char* const enable_projection_shape_function = "enable_projection_shape_function";
+/// String parameter name
 const char* const enable_translation = "enable_translation";
 /// String parameter name
 const char* const enable_rotation = "enable_rotation";
@@ -309,7 +311,14 @@ const char* const num_image_integration_points = "num_image_integration_points";
 const char* const global_element_type = "global_element_type";
 /// String parameter name, only for global DIC
 const char* const use_fixed_point_iterations = "use_fixed_point_iterations";
-
+/// String parameter name
+const char* const system_type_3D = "system_type_3D";
+/// String parameter name
+const char* const lens_distortion_model = "lens_distortion_model";
+/// String parameter name
+const char* const cam_intrinsic_parms = "cam_intrinsic_parms";
+/// String parameter name
+const char* const cam_extrinsic_parms = "cam_extrinsic_parms";
 
 /// enums:
 enum Subset_View_Target{
@@ -479,6 +488,120 @@ const static char * correlationRoutineStrings[] = {
   "CORRELATION_ROUTINE_NOT_APPLICABLE"
 };
 
+
+enum System_Type_3D {
+	UNKNOWN = 0,
+	GENERIC_SYSTEM,
+	OPENCV,
+	VIC3D,
+	DICE,
+	//DON"T ADD ANY BELOW MAX
+	MAX_SYSTEM_TYPE_3D,
+	NO_SUCH_SYSTEM_TYPE_3D
+};
+const static char * systemType3DStrings[] = {
+	"UNKNOWN",
+	"GENERIC_SYSTEM",
+	"OPENCV",
+	"VIC3D",
+	"DICE"
+};
+
+enum Lens_Distortion_Model {
+	NONE = 0,
+	OPENCV_K3,
+	OPENCV_K6,
+	OPENCV_KP,
+	OPENCV_KPS,
+	OPENCV_KPST,
+	K1R1_K2R2_K3R3,
+	K1R2_K2R4_K3R6,
+	K1R3_K2R5_K3R7,
+	//DON"T ADD ANY BELOW MAX
+	MAX_LENS_DIS_MODEL,
+	NO_SUCH_LENS_DIS_MODEL
+};
+
+const static char * lensDistortionModelStrings[] = {
+	"NONE",
+	"OPENCV_K3",
+	"OPENCV_K6",
+	"OPENCV_KP",
+	"OPENCV_KPS",
+	"OPENCV_KPST",
+	"K1R1_K2R2_K3R3",
+	"K1R2_K2R4_K3R6",
+	"K1R3_K2R5_K3R7",
+};
+
+enum Cam_Intrinsic_Parms {
+	CX = 0,
+	CY,
+	FX,
+	FY,
+	FS,
+	K1,
+	K2,
+	K3,
+	K4,
+	K5,
+	K6,
+	S1,
+	S2,
+	S3,
+	S4,
+	T1,
+	T2,
+	LD_MODEL,
+	//DON"T ADD ANY BELOW MAX
+	MAX_CAM_INTRINSIC_PARMS,
+	NO_SUCH_CAM_INTRINSIC_PARMS
+};
+
+const static char * camIntrinsicParmsStrings[] = {
+	"CX",
+	"CY",
+	"FX",
+	"FY",
+	"FS",
+	"K1",
+	"K2",
+	"K3",
+	"K4",
+	"K5",
+	"K6",
+	"S1",
+	"S2",
+	"S3",
+	"S4",
+	"T1",
+	"T2",
+	"LD_MODEL"
+};
+
+
+enum Cam_Extrinsic_Parms {
+	ALPHA = 0,
+	BETA,
+	GAMMA,
+	TX,
+	TY,
+	TZ,
+	//DON"T ADD ANY BELOW MAX
+	MAX_CAM_EXTRINSIC_PARMS,
+	NO_SUCH_CAM_EXTRINSIC_PARMS
+};
+
+const static char * camExtrinsicParmsStrings[] = {
+	"ALPHA",
+	"BETA",
+	"GAMMA",
+	"TX",
+	"TY",
+	"TZ"
+};
+
+
 /// Status flags
 enum Status_Flag{
   // 0
@@ -578,6 +701,16 @@ enum Image_File_Type{
   NO_SUCH_IMAGE_FILE_TYPE
 };
 
+
+/// The type of cam system parameter, used for creating template input files
+enum Cam_Sys_Parameter_Type {
+	CAM_SYS_STRING_PARAM = 0,
+	CAM_SYS_PARAM_PARAM, // parameter that is another parameter list
+	CAM_SYS_SCALAR_PARAM,
+	CAM_SYS_SIZE_PARAM,
+	CAM_SYS_BOOL_PARAM
+};
+
 /// The type of correlation parameter, used for creating template input files
 enum Correlation_Parameter_Type{
   STRING_PARAM=0,
@@ -586,6 +719,7 @@ enum Correlation_Parameter_Type{
   SIZE_PARAM,
   BOOL_PARAM
 };
+
 
 /// Combine mode for fields
 enum Combine_Mode{
@@ -906,6 +1040,11 @@ const Correlation_Parameter enable_quadratic_shape_function_param(enable_quadrat
   true,
   "Enables the quadratic shape function degrees of freedom (all components are activiated and individual components like rotation or shear cannot be disabled)");
 /// Correlation parameter and properties
+const Correlation_Parameter enable_projection_shape_function_param(enable_projection_shape_function,
+	BOOL_PARAM,
+	true,
+	"Enables the projection based shape function (all components)");
+/// Correlation parameter and properties
 const Correlation_Parameter enable_translation_param(enable_translation,
   BOOL_PARAM,
   true,
@@ -1128,10 +1267,11 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
   false,
   "Filter out any pixels that failed during cine acquisition");
 
+
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 85;
+const int_t num_valid_correlation_params = 86;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1218,7 +1358,8 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   global_element_type_param,
   num_image_integration_points_param,
   use_fixed_point_iterations_param,
-  compute_laplacian_image_param
+  compute_laplacian_image_param,
+	enable_projection_shape_function_param
 };
 
 // TODO don't forget to update this when adding a new one
@@ -1257,6 +1398,67 @@ const Correlation_Parameter valid_global_correlation_params[num_valid_global_cor
   global_element_type_param,
   use_fixed_point_iterations_param,
   initial_condition_file_param
+};
+
+
+
+/// \class DICe::Cam_Sys_Parameter
+/// \brief Simple struct to hold information about 3D camera systems
+struct Cam_Sys_Parameter {
+	/// \brief Only constructor with several optional arguments
+	/// \param name The string name of the cam sys parameter
+	/// \param type Defines if this is a bool, string, integer value, etc.
+	/// \param expose_to_user Signifies that this should be included when template input files are made
+	/// \param desc cam sys description
+	/// \param stringNames Pointer to the array of string names for this parameter if this is a string parameter, otherwise null pointer
+	/// \param size The number of available options for this correlation parameter
+	Cam_Sys_Parameter(const std::string & name, const Cam_Sys_Parameter_Type & type,
+		const bool expose_to_user = true,
+		const std::string & desc = "No description",
+		const char ** stringNames = 0,
+		const int_t size = 0) {
+		name_ = name;
+		type_ = type;
+		desc_ = desc;
+		stringNamePtr_ = stringNames;
+		size_ = size;
+		expose_to_user_ = expose_to_user;
+	}
+	/// Name of the parameter (what will be used from the input file if specified)
+	std::string name_;
+	/// Type of parameter (bool, size, real, string)
+	Cam_Sys_Parameter_Type type_;
+	/// Pointer to the string names of all the options
+	const char ** stringNamePtr_;
+	/// The number of potential options
+	int_t size_;
+	/// Short description of the correlation parameter
+	std::string desc_;
+	/// Determines if this param shows up in the template input files exposed to the user
+	bool expose_to_user_;
+};
+
+/// Correlation parameter and properties
+const Cam_Sys_Parameter system_type_3D_param(system_type_3D,
+	CAM_SYS_STRING_PARAM,
+	false,
+	"the type of 3D system used for calibration",
+	systemType3DStrings,
+	MAX_SYSTEM_TYPE_3D);
+
+/// Correlation parameter and properties
+const Cam_Sys_Parameter lens_distortion_model_param(lens_distortion_model,
+	CAM_SYS_STRING_PARAM,
+	false,
+	"the type of lens distortion model used in the calibration",
+	lensDistortionModelStrings,
+	MAX_LENS_DIS_MODEL);
+
+const int_t num_valid_cam_sys_params = 2;
+/// Vector of valid parameter names
+const Cam_Sys_Parameter valid_cam_sys_params[num_valid_cam_sys_params] = {
+	system_type_3D_param,
+	lens_distortion_model_param
 };
 
 } // end DICe namespace

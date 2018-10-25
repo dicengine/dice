@@ -51,9 +51,13 @@ Teuchos::RCP<Local_Shape_Function> shape_function_factory(Schema * schema){
   if(!schema){
     return Teuchos::rcp(new Affine_Shape_Function(schema));
   }
-  else if(schema->quadratic_shape_function_enabled()){
-    return Teuchos::rcp(new Quadratic_Shape_Function());
-  }else{
+	else if (schema->quadratic_shape_function_enabled()) {
+		return Teuchos::rcp(new Quadratic_Shape_Function());
+	}
+//	else if (schema->projection_shape_function_enabled()) {
+//		return Teuchos::rcp(new Projection_Shape_Function());
+//	}
+	else{
     return Teuchos::rcp(new Affine_Shape_Function(schema));
   }
 }
@@ -573,6 +577,198 @@ Quadratic_Shape_Function::update_params_for_centroid_change(const scalar_t & del
   (*this)(QUAD_H_FS) += I*delta_x + 2.0*K*delta_y;
   (*this)(QUAD_L_FS) += G*delta_x + H*delta_y + I*delta_x*delta_y + J*delta_x*delta_x + K*delta_y*delta_y - delta_y;
 }
+
+
+
+/*
+
+Projection_Shape_Function::Quadratic_Shape_Function(){
+	spec_map_.insert(std::pair<Field_Spec,size_t>(PROJECTION_Z_FS,spec_map_.size()));
+	spec_map_.insert(std::pair<Field_Spec,size_t>(PROJECTION_PHI_FS,spec_map_.size()));
+	spec_map_.insert(std::pair<Field_Spec,size_t>(PROJECTION_THETA_FS,spec_map_.size()));
+	num_params_ = spec_map_.size();
+	assert(num_params_==3);
+	parameters_.resize(num_params_);
+	deltas_.resize(num_params_);
+	// initialize the parameter values
+	clear();
+	// initialize the deltas:
+	deltas_[0]  = 0.001;
+	deltas_[1]  = 0.001;
+	deltas_[2]  = 0.001;
+}
+
+/*
+void
+Projection_Shape_Function::clear(){
+	Local_Shape_Function::clear();
+	(*this)(PROJECTION_Z_FS) = 1.0;
+	(*this)(PROJECTION_PHI_FS) = 0.0;
+	(*this)(PROJECTION_THETA_FS) = 0.0;
+}
+
+
+void
+Projection_Shape_Function::reset_fields(Schema * schema){
+	Local_Shape_Function::reset_fields(schema);
+	schema->mesh()->get_field(PROJECTION_Z_FS)->put_scalar(1.0);
+	schema->mesh()->get_field(PROJECTION_PHI_FS)->put_scalar(0.0);
+	schema->mesh()->get_field(PROJECTION_THETA_FS)->put_scalar(0.0);
+}
+
+void
+Projection_Shape_Function::init_run() {
+	//get the cameras intrinsic and extrinsic parameters
+	//calculate the camera 0 to camera 1 transform values
+	//calculate the camera 1 to camera 0 transform values
+	//calculate the distortion corrected pixel locations cam 0
+	//calculate the distortion corrected pixel locations cam 1
+
+}
+
+
+void
+Projection_Shape_Function::init_iteration() {
+	//calculate the 10 projection parameters for Z, phi and theta
+
+}
+
+
+void
+Projection_Shape_Function::map(const scalar_t & x,
+	const scalar_t & y,
+	const scalar_t & cx,
+	const scalar_t & cy,
+	scalar_t & out_x,
+	scalar_t & out_y){
+
+
+	//basic framework to start
+	//should I write a seperate initialization routine? and one per subset?
+	//image to sensor transformation
+	const scalar_t dx = x - cx;
+	const scalar_t dy = y - cy;
+	//inverse lens distortion (may want to only calculate ones for each x,y location
+
+	//projection onto the plane in space
+	//back projection into cam 1
+	//correct for lens distortion
+	//sensor to image transformation
+
+}
+
+
+void
+Projection_Shape_Function::add_translation(const scalar_t & z){
+	(*this)(PROJECTION_Z) += z;
+}
+
+void
+Projection_Shape_Function::insert_motion(const scalar_t & z,
+	const scalar_t & phi,
+	const scalar_t & theta){
+	// clear the other parameters:
+	(*this)(PROJECTION_Z) = z;
+	(*this)(PROJECTION_PHI) = phi;
+	(*this)(PROJECTION_THETA) = theta;
+}
+
+void
+Projection_Shape_Function::insert_motion(const scalar_t & z){
+	// clear the other parameters:
+	clear();
+	(*this)(PROJECTION_Z) = z;
+}
+
+void
+Projection_Shape_Function::map_to_u_v_theta(const scalar_t & cx,
+	const scalar_t & cy,
+	scalar_t & out_u,
+	scalar_t & out_v,
+	scalar_t & out_theta){
+	scalar_t cxp=0.0,cyp=0.0;
+	// not applicable (remove?)
+}
+
+/*
+void
+Projection_Shape_Function::residuals(const scalar_t & x,
+	const scalar_t & y,
+	const scalar_t & cx,
+	const scalar_t & cy,
+	const scalar_t & gx,
+	const scalar_t & gy,
+	std::vector<scalar_t> & residuals,
+	const bool use_ref_grads){
+	const scalar_t dx = x - cx;
+	const scalar_t dy = y - cy;
+	assert((int_t)residuals.size()==num_params_);
+	scalar_t Gx = gx;
+	scalar_t Gy = gy;
+	if(use_ref_grads){
+		scalar_t u=0.0,v=0.0,theta=0.0;
+		map_to_u_v_theta(cx,cy,u,v,theta);
+		scalar_t cosTheta = std::cos(theta);
+		scalar_t sinTheta = std::sin(theta);
+		Gx = cosTheta*gx - sinTheta*gy;
+		Gy = sinTheta*gx + cosTheta*gy;
+	}
+	residuals[spec_map_.find(QUAD_A_FS)->second] = Gx*dx;
+	residuals[spec_map_.find(QUAD_B_FS)->second] = Gx*dy;
+	residuals[spec_map_.find(QUAD_C_FS)->second] = Gx*dx*dy;
+	residuals[spec_map_.find(QUAD_D_FS)->second] = Gx*dx*dx;
+	residuals[spec_map_.find(QUAD_E_FS)->second] = Gx*dy*dy;
+	residuals[spec_map_.find(QUAD_F_FS)->second] = Gx;
+	residuals[spec_map_.find(QUAD_G_FS)->second] = Gy*dx;
+	residuals[spec_map_.find(QUAD_H_FS)->second] = Gy*dy;
+	residuals[spec_map_.find(QUAD_I_FS)->second] = Gy*dx*dy;
+	residuals[spec_map_.find(QUAD_J_FS)->second] = Gy*dx*dx;
+	residuals[spec_map_.find(QUAD_K_FS)->second] = Gy*dy*dy;
+	residuals[spec_map_.find(QUAD_L_FS)->second] = Gy;
+}
+
+void
+Projection_Shape_Function::save_fields(Schema * schema,
+	const int_t subset_gid){
+	Local_Shape_Function::save_fields(schema,subset_gid);
+	// since u, v, and theta are not explicitly parameters, need to save them
+	// manually here
+	scalar_t u=0.0,v=0.0,theta=0.0;
+	const scalar_t cx = schema->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
+	const scalar_t cy = schema->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
+	map_to_u_v_theta(cx,cy,u,v,theta);
+	schema->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) = u;
+	schema->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) = v;
+	schema->global_field_value(subset_gid,ROTATION_Z_FS) = theta;
+}
+
+void
+Projection_Shape_Function::update_params_for_centroid_change(const scalar_t & delta_x,
+	const scalar_t & delta_y){
+	const scalar_t A = parameter(QUAD_A_FS);
+	const scalar_t B = parameter(QUAD_B_FS);
+	const scalar_t C = parameter(QUAD_C_FS);
+	const scalar_t D = parameter(QUAD_D_FS);
+	const scalar_t E = parameter(QUAD_E_FS);
+	const scalar_t G = parameter(QUAD_G_FS);
+	const scalar_t H = parameter(QUAD_H_FS);
+	const scalar_t I = parameter(QUAD_I_FS);
+	const scalar_t J = parameter(QUAD_J_FS);
+	const scalar_t K = parameter(QUAD_K_FS);
+
+	(*this)(QUAD_A_FS) += C*delta_y + 2.0*D*delta_x;
+	(*this)(QUAD_B_FS) += C*delta_x + 2.0*E*delta_y;
+	(*this)(QUAD_F_FS) += A*delta_x + B*delta_y + C*delta_x*delta_y + D*delta_x*delta_x + E*delta_y*delta_y - delta_x;
+	(*this)(QUAD_G_FS) += I*delta_y + 2.0*J*delta_x;
+	(*this)(QUAD_H_FS) += I*delta_x + 2.0*K*delta_y;
+	(*this)(QUAD_L_FS) += G*delta_x + H*delta_y + I*delta_x*delta_y + J*delta_x*delta_x + K*delta_y*delta_y - delta_y;
+}
+
+
+*/
+
+
+
 
 
 

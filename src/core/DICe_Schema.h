@@ -745,6 +745,11 @@ public:
     return enable_quadratic_shape_function_;
   }
 
+	/// Returns true if all quadratic shape functions are enabled
+	bool projection_shape_function_enabled() const {
+		return enable_projection_shape_function_;
+	}
+
   /// Returns true if translation shape functions are enabled
   bool translation_enabled() const {
     return enable_translation_;
@@ -805,6 +810,11 @@ public:
   void enable_quadratic_shape_function(const bool flag){
     enable_quadratic_shape_function_ = flag;
   }
+
+	/// Enable projection shape functions
+	void enable_projection_shape_function(const bool flag) {
+		enable_projection_shape_function_ = flag;
+	}
 
   /// Enable translation shape functions
   void enable_translation(const bool flag){
@@ -1161,6 +1171,8 @@ private:
   Analysis_Type analysis_type_;
   /// Enable the quadratic shape functions all together rather than individual components
   bool enable_quadratic_shape_function_;
+	/// Enable the projection shape functions
+	bool enable_projection_shape_function_;
   /// Enable translation
   bool enable_translation_;
   /// Enable rotation
