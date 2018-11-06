@@ -866,7 +866,7 @@ StereoCalib(const int mode,
           timg = img;
         else
           resize(img, timg, Size(), scale, scale);
-        if(mode==1||2){
+        if((mode==1)||(mode==2)){
           // binary image
           Mat bi_src(timg.size(), timg.type());
           // apply thresholding
@@ -1291,6 +1291,7 @@ StereoCalib(const int mode,
   fprintf(filePtr,"%4.12E # tx\n",T.at<double>(0,0));
   fprintf(filePtr,"%4.12E # ty\n",T.at<double>(1,0));
   fprintf(filePtr,"%4.12E # tz\n",T.at<double>(2,0));
+
 
 //  fs.open(extrinsic_filename.c_str(), FileStorage::WRITE);
 //  if( fs.isOpened() )

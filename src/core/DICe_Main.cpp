@@ -45,7 +45,7 @@
 #include <DICe_ImageIO.h>
 #include <DICe_Schema.h>
 #include <DICe_Triangulation.h>
-#include <DICe_Cameras.h>
+
 
 #include <fstream>
 

@@ -314,11 +314,16 @@ const char* const use_fixed_point_iterations = "use_fixed_point_iterations";
 /// String parameter name
 const char* const system_type_3D = "system_type_3D";
 /// String parameter name
-const char* const lens_distortion_model = "lens_distortion_model";
+const char* const cal_file_ID = "cal_file_ID";
 /// String parameter name
-const char* const cam_intrinsic_parms = "cam_intrinsic_parms";
+const char* const DICe_XML_Calibration_File = "DICe_XML_Calibration_File";
 /// String parameter name
-const char* const cam_extrinsic_parms = "cam_extrinsic_parms";
+const char* const user_6_param_transform = "user_6_param_transform";
+/// String parameter name
+const char* const user_4x4_param_transform = "user_4x4_param_transform";
+/// String parameter name
+const char* const openCV_3x4_rot_trans_matrix = "openCV_3x4_rot_trans_matrix";
+
 
 /// enums:
 enum Subset_View_Target{
@@ -499,6 +504,7 @@ enum System_Type_3D {
 	MAX_SYSTEM_TYPE_3D,
 	NO_SUCH_SYSTEM_TYPE_3D
 };
+
 const static char * systemType3DStrings[] = {
 	"UNKNOWN",
 	"GENERIC_SYSTEM",
@@ -509,11 +515,8 @@ const static char * systemType3DStrings[] = {
 
 enum Lens_Distortion_Model {
 	NONE = 0,
-	OPENCV_K3,
-	OPENCV_K6,
-	OPENCV_KP,
-	OPENCV_KPS,
-	OPENCV_KPST,
+	OPENCV_DIS,
+	VIC3D_DIS,
 	K1R1_K2R2_K3R3,
 	K1R2_K2R4_K3R6,
 	K1R3_K2R5_K3R7,
@@ -524,17 +527,29 @@ enum Lens_Distortion_Model {
 
 const static char * lensDistortionModelStrings[] = {
 	"NONE",
-	"OPENCV_K3",
-	"OPENCV_K6",
-	"OPENCV_KP",
-	"OPENCV_KPS",
-	"OPENCV_KPST",
+	"OPENCV_DIS",
+	"VIC3D_DIS",
 	"K1R1_K2R2_K3R3",
 	"K1R2_K2R4_K3R6",
-	"K1R3_K2R5_K3R7",
+	"K1R3_K2R5_K3R7"
 };
 
-enum Cam_Intrinsic_Parms {
+enum Projection_Params {
+	ZP = 0,
+	THETA,
+	PHI,
+	MAX_CAM_PROJECTION_PARAMS,
+	NO_SUCH_CAM_PROJECTION_PARAMS
+};
+
+const static char * projectionParamsStrings[] = {
+	"ZP",
+	"THETA",
+	"PHI"
+};
+
+
+enum Cam_Intrinsic_Params {
 	CX = 0,
 	CY,
 	FX,
@@ -546,6 +561,8 @@ enum Cam_Intrinsic_Parms {
 	K4,
 	K5,
 	K6,
+	P1,
+	P2,
 	S1,
 	S2,
 	S3,
@@ -554,11 +571,11 @@ enum Cam_Intrinsic_Parms {
 	T2,
 	LD_MODEL,
 	//DON"T ADD ANY BELOW MAX
-	MAX_CAM_INTRINSIC_PARMS,
-	NO_SUCH_CAM_INTRINSIC_PARMS
+	MAX_CAM_INTRINSIC_PARAMS,
+	NO_SUCH_CAM_INTRINSIC_PARAMS
 };
 
-const static char * camIntrinsicParmsStrings[] = {
+const static char * camIntrinsicParamsStrings[] = {
 	"CX",
 	"CY",
 	"FX",
@@ -570,6 +587,8 @@ const static char * camIntrinsicParmsStrings[] = {
 	"K4",
 	"K5",
 	"K6",
+	"P1",
+	"P2",
 	"S1",
 	"S2",
 	"S3",
@@ -580,7 +599,7 @@ const static char * camIntrinsicParmsStrings[] = {
 };
 
 
-enum Cam_Extrinsic_Parms {
+enum Cam_Extrinsic_Params {
 	ALPHA = 0,
 	BETA,
 	GAMMA,
@@ -588,11 +607,11 @@ enum Cam_Extrinsic_Parms {
 	TY,
 	TZ,
 	//DON"T ADD ANY BELOW MAX
-	MAX_CAM_EXTRINSIC_PARMS,
-	NO_SUCH_CAM_EXTRINSIC_PARMS
+	MAX_CAM_EXTRINSIC_PARAMS,
+	NO_SUCH_CAM_EXTRINSIC_PARAMS
 };
 
-const static char * camExtrinsicParmsStrings[] = {
+const static char * camExtrinsicParamsStrings[] = {
 	"ALPHA",
 	"BETA",
 	"GAMMA",
@@ -1400,66 +1419,6 @@ const Correlation_Parameter valid_global_correlation_params[num_valid_global_cor
   initial_condition_file_param
 };
 
-
-
-/// \class DICe::Cam_Sys_Parameter
-/// \brief Simple struct to hold information about 3D camera systems
-struct Cam_Sys_Parameter {
-	/// \brief Only constructor with several optional arguments
-	/// \param name The string name of the cam sys parameter
-	/// \param type Defines if this is a bool, string, integer value, etc.
-	/// \param expose_to_user Signifies that this should be included when template input files are made
-	/// \param desc cam sys description
-	/// \param stringNames Pointer to the array of string names for this parameter if this is a string parameter, otherwise null pointer
-	/// \param size The number of available options for this correlation parameter
-	Cam_Sys_Parameter(const std::string & name, const Cam_Sys_Parameter_Type & type,
-		const bool expose_to_user = true,
-		const std::string & desc = "No description",
-		const char ** stringNames = 0,
-		const int_t size = 0) {
-		name_ = name;
-		type_ = type;
-		desc_ = desc;
-		stringNamePtr_ = stringNames;
-		size_ = size;
-		expose_to_user_ = expose_to_user;
-	}
-	/// Name of the parameter (what will be used from the input file if specified)
-	std::string name_;
-	/// Type of parameter (bool, size, real, string)
-	Cam_Sys_Parameter_Type type_;
-	/// Pointer to the string names of all the options
-	const char ** stringNamePtr_;
-	/// The number of potential options
-	int_t size_;
-	/// Short description of the correlation parameter
-	std::string desc_;
-	/// Determines if this param shows up in the template input files exposed to the user
-	bool expose_to_user_;
-};
-
-/// Correlation parameter and properties
-const Cam_Sys_Parameter system_type_3D_param(system_type_3D,
-	CAM_SYS_STRING_PARAM,
-	false,
-	"the type of 3D system used for calibration",
-	systemType3DStrings,
-	MAX_SYSTEM_TYPE_3D);
-
-/// Correlation parameter and properties
-const Cam_Sys_Parameter lens_distortion_model_param(lens_distortion_model,
-	CAM_SYS_STRING_PARAM,
-	false,
-	"the type of lens distortion model used in the calibration",
-	lensDistortionModelStrings,
-	MAX_LENS_DIS_MODEL);
-
-const int_t num_valid_cam_sys_params = 2;
-/// Vector of valid parameter names
-const Cam_Sys_Parameter valid_cam_sys_params[num_valid_cam_sys_params] = {
-	system_type_3D_param,
-	lens_distortion_model_param
-};
 
 } // end DICe namespace
 
