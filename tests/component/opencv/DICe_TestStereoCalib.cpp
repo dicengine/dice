@@ -95,6 +95,7 @@ int main(int argc, char *argv[]) {
   int mode = 0; // checkerboard
   int threshold = 30;
   const float rms = StereoCalib(mode, image_list, 6, 9, square_size, threshold, true, false, "checkerboard_cal.txt");
+	*outStream << "Square target rms error: " << rms << std::endl;
 
   if(rms <0.0 || rms > 0.75){
     *outStream << "Error, rms error too high or negative: " << rms << std::endl;
