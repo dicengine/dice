@@ -866,7 +866,7 @@ StereoCalib(const int mode,
           timg = img;
         else
           resize(img, timg, Size(), scale, scale);
-        if(mode==1||2){
+        if(mode==1 || mode == 2){
           // binary image
           Mat bi_src(timg.size(), timg.type());
           // apply thresholding
