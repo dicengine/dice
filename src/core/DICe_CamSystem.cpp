@@ -66,14 +66,11 @@ namespace DICe {
 		}
 		has_4x4_transform_ = false;
 
-
-		openCV_rot_trans_3x4_params_.clear();
+		rotation_3x3_params_.clear();
 		for (int_t i = 0; i < 3; ++i) {
-			openCV_rot_trans_3x4_params_.push_back(std::vector<scalar_t>(4, 0.0));
+			rotation_3x3_params_.push_back(std::vector<scalar_t>(3, 0.0));
 		}
 		has_opencv_rot_trans_ = false;
-
-		
 
 		//clear the 6 parameter transform
 		user_trans_6_params_.assign(6, 0.0);
@@ -85,6 +82,11 @@ namespace DICe {
 		valid_cal_file_ = false;
 		cal_file_error_ = std::stringstream();
 	}
+
+
+
+
+
 
 
 	//*********************************load_calibration_parameters*********************************************
@@ -235,6 +237,21 @@ namespace DICe {
 								Cameras_[camera_index].set_Camera_Comments(param_text);
 							}
 
+							//does the camera have a 3x3 rotation transformation matrix?
+							if (camParams.isSublist(rotation_3x3_matrix)) {
+								DEBUG_MSG("CamSystem::load_calibration_parameters(): reading " << rotation_3x3_matrix);
+								Teuchos::ParameterList camRot = camParams.sublist(rotation_3x3_matrix);
+								Teuchos::Array<scalar_t>  tArray;
+								for (int j = 0; j < 3; j++) {
+									param_title = std::stringstream();
+									param_title << "LINE " << j;
+									param_text = camParams.get<std::string>(param_title.str());
+									tArray = Teuchos::fromStringToArray<scalar_t>(param_text);
+									for (int i = 0; i < 3; i++)
+										rotation_3x3_params_[j][i] = tArray[i];
+								}
+								Cameras_[camera_index].set_3x3_Rotation_Matrix(rotation_3x3_params_);
+							}
 
 							if (!Cameras_[camera_index].camera_valid(msg)) {
 								DEBUG_MSG("CamSystem::load_calibration_parameters(): camera " << camera_index << " is invalid");
@@ -243,8 +260,8 @@ namespace DICe {
 								cal_file_error_ << "CamSystem::load_calibration_parameters(): camera " << camera_index << " is invalid" << "\n";
 								cal_file_error_ << msg;
 							}
+							
 						}
-
 					}
 					//does the file have a 6 parameter transform?
 					if (sys_parms->isParameter(user_6_param_transform)) {
@@ -270,26 +287,6 @@ namespace DICe {
 							for (int i = 0; i < 4; i++)
 								user_trans_4x4_params_[j][i] = tArray[i];
 						}
-					}
-					//does the file have an openCV 3x4 rotation translation matrix?
-					if (sys_parms->isSublist(openCV_3x4_rot_trans_matrix)) {
-						DEBUG_MSG("CamSystem::load_calibration_parameters(): reading " << openCV_3x4_rot_trans_matrix);
-						has_opencv_rot_trans_ = true;
-						Teuchos::ParameterList camParams = sys_parms->sublist(openCV_3x4_rot_trans_matrix);
-						Teuchos::Array<scalar_t>  tArray;
-						for (int j = 0; j < 3; j++) {
-							param_title = std::stringstream();
-							param_title << "LINE " << j;
-							param_text = camParams.get<std::string>(param_title.str());
-							tArray = Teuchos::fromStringToArray<scalar_t>(param_text);
-							for (int i = 0; i < 3; i++)
-								openCV_rot_trans_3x4_params_[j][i] = tArray[i];
-						}
-						std::vector<scalar_t> extrinsics(MAX_CAM_EXTRINSIC_PARAMS, 0);
-						//with a 3x4 rotation translation array cam 0 extrinsics should be 0
-						Cameras_[0].set_Extrinsics(extrinsics);
-
-
 					}
 				}
 			}
@@ -546,7 +543,7 @@ namespace DICe {
 		//camera parameters
 		write_xml_comment(cal_file, "camera parameters (zero valued parameters don't need to be specified)");
 		if (all_fields) {
-			write_xml_comment(cal_file, "the file supports up to 10 cameras 0-9 each camera is a seperate sublist of parameters");
+			write_xml_comment(cal_file, "the file supports up to 16 cameras 0-15 each camera is a seperate sublist of parameters");
 			write_xml_comment(cal_file, "the sublist must be named CAMERA {#} with {#} the number of the camera starting at 0");
 			valid_fields = std::stringstream();
 			valid_fields << "valid camera parameter field names are: ";
@@ -568,6 +565,8 @@ namespace DICe {
 			write_xml_comment(cal_file, "K1R1_K2R2_K3R3 -> K1*R + K2*R^2 + K3*R^3");
 			write_xml_comment(cal_file, "K1R2_K2R4_K3R6 -> K1*R^2 + K2*R^4 + K3*R^6");
 			write_xml_comment(cal_file, "K1R3_K2R5_K3R7 -> K1*R^3 + K2*R^5 + K3*R^7");
+			write_xml_comment(cal_file, "each camera may also have a sublist with the values for the 3x3 rotation matrix");
+			write_xml_comment(cal_file, "if no matrix is given the rotation matrix is generated from the alph, beta, gamma values or given an identity matrix");
 
 			write_xml_comment(cal_file, "additional camera fields:");
 			write_xml_comment(cal_file, "CAMERA_ID: unique camera descripter, if not supplied CAMERA {#} is used");
@@ -618,6 +617,30 @@ namespace DICe {
 						param_val << extrinsics[j];
 						write_xml_real_param(cal_file, camExtrinsicParamsStrings[j], param_val.str(), false);
 					}
+				}
+
+
+				if (Cameras_[camera_index].camera_has_3x3_rotation() || all_fields) {
+					std::vector<std::vector<scalar_t>> rot_mat;
+					Cameras_[camera_index].get_3x3_Rotation_Matrix(rot_mat);
+					DEBUG_MSG("CamSystem::save_calibration_file(): writing 3x3 rotation matrix");
+					write_xml_comment(cal_file, "3x3 camera rotation matrix (world to cam transformation)");
+					if (all_fields) write_xml_comment(cal_file, "this is a 3x3 matrix that combined with TX, TY and TZ transform world coodinates to this camera's coordinates");
+					write_xml_param_list_open(cal_file, rotation_3x3_matrix, false);
+					for (int i = 0; i < 3; i++) {
+						param_val = std::stringstream();
+						param_title = std::stringstream();
+						param_title << "LINE " << i;
+						param_val << "{ ";
+						for (int j = 0; j < 2; j++)
+							param_val << rot_mat[i][j] << ", ";
+						param_val << rot_mat[i][2] << " }";
+						write_xml_string_param(cal_file, param_title.str(), param_val.str(), false);
+						if (all_fields && i == 0) write_xml_comment(cal_file, "R11 R12 R13");
+						if (all_fields && i == 1) write_xml_comment(cal_file, "R21 R22 R23");
+						if (all_fields && i == 2) write_xml_comment(cal_file, "R31 R32 R33");
+					}
+					write_xml_param_list_close(cal_file, false);
 				}
 
 				int_t img_width;
@@ -704,15 +727,15 @@ namespace DICe {
 			write_xml_comment(cal_file, "openCV rotation translation matrix from from cam0 to cam 1");
 			if (all_fields) write_xml_comment(cal_file, "this is the [R|t] rotation translation matrix from openCV");
 			if (all_fields) write_xml_comment(cal_file, "this is the basic output from openCV stereo calibration for R and t");
-			write_xml_param_list_open(cal_file, openCV_3x4_rot_trans_matrix, false);
+			write_xml_param_list_open(cal_file, rotation_3x3_matrix, false);
 			for (int i = 0; i < 3; i++) {
 				param_val = std::stringstream();
 				param_title = std::stringstream();
 				param_title << "LINE " << i;
 				param_val << "{ ";
 				for (int j = 0; j < 3; j++)
-					param_val << openCV_rot_trans_3x4_params_[i][j] << ", ";
-				param_val << openCV_rot_trans_3x4_params_[i][3] << " }";
+					param_val << rotation_3x3_params_[i][j] << ", ";
+				param_val << rotation_3x3_params_[i][3] << " }";
 				write_xml_string_param(cal_file, param_title.str(), param_val.str(), false);
 				if (all_fields && i == 0) write_xml_comment(cal_file, "R11 R12 R13 TX");
 				if (all_fields && i == 1) write_xml_comment(cal_file, "R21 R22 R23 TY");

@@ -322,7 +322,7 @@ const char* const user_6_param_transform = "user_6_param_transform";
 /// String parameter name
 const char* const user_4x4_param_transform = "user_4x4_param_transform";
 /// String parameter name
-const char* const openCV_3x4_rot_trans_matrix = "openCV_3x4_rot_trans_matrix";
+const char* const rotation_3x3_matrix = "rotation_3x3_matrix";
 
 
 /// enums:

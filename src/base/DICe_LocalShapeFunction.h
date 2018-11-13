@@ -44,6 +44,7 @@
 
 #include <DICe.h>
 #include <DICe_FieldEnums.h>
+#include <DICe_CamSystem.h>
 
 #include <Teuchos_RCP.hpp>
 /*!
@@ -404,76 +405,6 @@ public:
     const scalar_t & delta_y);
 private:
 };
-
-/*
-/// \class DICe::Projection_Shape_Function
-/// \three parameter projection based local shape function
-
-class DICE_LIB_DLL_EXPORT
-Projection_Shape_Function : public Local_Shape_Function{
-public:
-
-	/// constructor
-	Projection_Shape_Function();
-
-	/// virtual destructor
-	virtual ~Projection_Shape_Function(){};
-
-	/// clear the parameters
-	virtual void clear();
-
-	/// clears all the fields associated with this shape function
-	/// \param schema pointer to a schema that holds the mesh with the fields
-	virtual void reset_fields(Schema * schema);
-
-	/// see base class description
-	virtual void map(const scalar_t & x,
-		const scalar_t & y,
-		const scalar_t & cx,
-		const scalar_t & cy,
-		scalar_t & out_x,
-		scalar_t & out_y);
-
-	/// see base class description
-	virtual void add_translation(const scalar_t & u,
-		const scalar_t & v);
-
-	/// see base class description
-	virtual void map_to_u_v_theta(const scalar_t & cx,
-		const scalar_t & cy,
-		scalar_t & out_u,
-		scalar_t & out_v,
-		scalar_t & out_theta);
-
-	/// see base class description
-	virtual void insert_motion(const scalar_t & u,
-		const scalar_t & v,
-		const scalar_t & theta);
-
-	/// see base class description
-	virtual void insert_motion(const scalar_t & u,
-		const scalar_t & v);
-
-	/// see base class description
-	virtual void residuals(const scalar_t & x,
-		const scalar_t & y,
-		const scalar_t & cx,
-		const scalar_t & cy,
-		const scalar_t & gx,
-		const scalar_t & gy,
-		std::vector<scalar_t> & residuals,
-		const bool use_ref_grads=false);
-
-	/// see base class description
-	virtual void save_fields(Schema * schema,
-		const int_t subset_gid);
-
-	/// see base class description
-	virtual void update_params_for_centroid_change(const scalar_t & delta_x,
-		const scalar_t & delta_y);
-private:
-};
-*/
 
 
 /// factory to create the right shape function

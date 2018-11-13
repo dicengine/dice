@@ -97,6 +97,8 @@ namespace DICe {
 		virtual ~CamSystem() {}
 
 
+
+
 		/// \brief load the calibration parameters
 		/// \param param_file_name File name of the cal parameters file
 		void load_calibration_parameters(const std::string & param_file_name);
@@ -111,8 +113,6 @@ namespace DICe {
 
 	private:
 
-		//create an array of generic cameras
-		DICe::Camera Cameras_[10];
 
 		/// these are for compatibility with triangulation and only support 2 camera systems
 		/// 12 parameters that define a user supplied transforamation (independent from intrinsic and extrinsic parameters)
@@ -122,7 +122,7 @@ namespace DICe {
 		std::vector<scalar_t> user_trans_6_params_;
 
 		/// 3x3 openCV rotation parameters from sterio calibration
-		std::vector<std::vector<scalar_t>> openCV_rot_trans_3x4_params_;
+		std::vector<std::vector<scalar_t>> rotation_3x3_params_;
 
 
 		std::string cal_file_ID_ = "DICe XML Calibration File";
@@ -132,9 +132,12 @@ namespace DICe {
 		bool has_6_transform_ = false;
 		bool has_4x4_transform_ = false;
 		bool has_opencv_rot_trans_ = false;
-		const int_t MAX_NUM_CAMERAS_PER_SYSTEM = 10;
 		bool valid_cal_file_ = false;
 		std::stringstream cal_file_error_;
+
+		//create an array of generic cameras
+		const int_t MAX_NUM_CAMERAS_PER_SYSTEM = 16;
+		DICe::Camera Cameras_[16];
 
 	};
 
