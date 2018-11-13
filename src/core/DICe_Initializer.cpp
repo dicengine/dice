@@ -464,7 +464,8 @@ Feature_Matching_Initializer::initial_guess(const int_t subset_gid,
   TEUCHOS_TEST_FOR_EXCEPTION((int_t)u_.size()<=nearest_feature_id,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION((int_t)v_.size()<=nearest_feature_id,std::runtime_error,"");
   shape_function->insert_motion(u_[nearest_feature_id] + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS),
-    v_[nearest_feature_id] + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS));
+    v_[nearest_feature_id] + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS),
+    schema_->global_field_value(subset_gid,ROTATION_Z_FS));
   DEBUG_MSG("Subset " << subset_gid << " init. with values: u " << u_[nearest_feature_id] + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) <<
     " v " << v_[nearest_feature_id] + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) << " dist from nearest feature: " << std::sqrt(out_dist_sqr[0]) << " px");
   return INITIALIZE_SUCCESSFUL;
