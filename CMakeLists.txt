@@ -18,30 +18,6 @@ IF (NOT DEFINED DICE_TRILINOS_DIR)
   ENDIF()
 ENDIF()
 
-# Try to find OpenCV, if path was not given
-IF (NOT DEFINED OpenCV_DIR)
-  # Losely based on:
-  # https://github.com/trilinos/Trilinos_tutorial/wiki/CMakeFindPackageTrilinosExample
-  # /usr/share/doc/opencv-doc/examples/face/CMakeLists.txt
-  # * Find OpenCV
-  message(STATUS "OpenCV_DIR not specified, looking in default paths")
-  find_package(OpenCV REQUIRED)
-ELSE()
-  message(STATUS "Looking for OpenCV in dir: ${OpenCV_DIR}")
-  find_package( OpenCV NO_DEFAULT_PATH PATHS ${OpenCV_DIR} )
-ENDIF()
-IF(OpenCV_FOUND)
-  set(DICE_ENABLE_OPENCV ON)
-  IF(WIN32)
-    FILE(GLOB OPENCV_DLLS ${OpenCV_DIR}/x64/vc12/bin/*.dll)
-    FILE(COPY ${OPENCV_DLLS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
-    FILE(GLOB OPENCV_DLLS ${OpenCV_DIR}/x64/vc15/bin/*.dll)
-    FILE(COPY ${OPENCV_DLLS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
-  ENDIF()
-ELSE()
-  message(FATAL_ERROR "OpenCV not found. OpenCV is now a required package in DICe")
-ENDIF()
-
 MESSAGE(STATUS "Using Trilinos installed in: ${DICE_TRILINOS_DIR}")
 
 # If this is a windows build CLAPACK is required. Find package for
@@ -111,6 +87,30 @@ MESSAGE(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 SET(DICE_OUTPUT_PREFIX ${CMAKE_CURRENT_BINARY_DIR})
 MESSAGE(STATUS "The output directory for DICe libraries will be: ${DICE_OUTPUT_PREFIX}/lib")
 MESSAGE(STATUS "If 'make install' is exectued, the libraries will also be copied to: ${CMAKE_INSTALL_PREFIX}/lib")
+
+# Try to find OpenCV, if path was not given
+IF (NOT DEFINED OpenCV_DIR)
+  # Losely based on:
+  # https://github.com/trilinos/Trilinos_tutorial/wiki/CMakeFindPackageTrilinosExample
+  # /usr/share/doc/opencv-doc/examples/face/CMakeLists.txt
+  # * Find OpenCV
+  message(STATUS "OpenCV_DIR not specified, looking in default paths")
+  find_package(OpenCV REQUIRED)
+ELSE()
+  message(STATUS "Looking for OpenCV in dir: ${OpenCV_DIR}")
+  find_package( OpenCV NO_DEFAULT_PATH PATHS ${OpenCV_DIR} )
+ENDIF()
+IF(OpenCV_FOUND)
+  set(DICE_ENABLE_OPENCV ON)
+  IF(WIN32)
+    FILE(GLOB OPENCV_DLLS ${OpenCV_DIR}/x64/vc12/bin/*.dll)
+    FILE(COPY ${OPENCV_DLLS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
+    FILE(GLOB OPENCV_DLLS ${OpenCV_DIR}/x64/vc15/bin/*.dll)
+    FILE(COPY ${OPENCV_DLLS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
+  ENDIF()
+ELSE()
+  message(FATAL_ERROR "OpenCV not found. OpenCV is now a required package in DICe")
+ENDIF()
 
 # FIND NETCDF
 set(DICE_ENABLE_NETCDF OFF)
