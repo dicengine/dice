@@ -166,7 +166,7 @@ const char* const convert_cine_to_8_bit = "convert_cine_to_8_bit";
 /// String parameter name
 const char* const initial_condition_file = "initial_condition_file";
 /// String parameter name
-const char* const enable_quadratic_shape_function = "enable_quadratic_shape_function";
+const char* const shape_function_type = "shape_function_type";
 /// String parameter name
 const char* const enable_translation = "enable_translation";
 /// String parameter name
@@ -345,7 +345,7 @@ enum Analysis_Type {
   NO_SUCH_ANALYSIS_TYPE
 };
 
-/// Projection method
+/// Global formulation
 enum Global_Formulation {
   HORN_SCHUNCK=0,
   MIXED_HORN_SCHUNCK,
@@ -407,6 +407,22 @@ const static char * initializationMethodStrings[] = {
   "USE_ZEROS",
   "USE_FEATURE_MATCHING",
   "INITIALIZATION_METHOD_NOT_APPLICABLE"
+};
+
+/// Shape function type
+enum Shape_Function_Type {
+  AFFINE_SF=0,
+  QUADRATIC_SF,
+  PROJECTION_SF,
+  // DON'T ADD ANY BELOW MAX
+  MAX_SF,
+  NO_SUCH_SF
+};
+
+const static char * shapeFunctionTypeStrings[] = {
+  "AFFINE",
+  "QUADRATIC",
+  "PROJECTION"
 };
 
 /// Optimization method
@@ -901,10 +917,12 @@ const Correlation_Parameter initial_condition_file_param(initial_condition_file,
   true,
   "Denotes a file to read the solution from as the initial condition");
 /// Correlation parameter and properties
-const Correlation_Parameter enable_quadratic_shape_function_param(enable_quadratic_shape_function,
-  BOOL_PARAM,
+const Correlation_Parameter shape_function_type_param(shape_function_type,
+  STRING_PARAM,
   true,
-  "Enables the quadratic shape function degrees of freedom (all components are activiated and individual components like rotation or shear cannot be disabled)");
+  "Determines what type of shape function is used",
+  shapeFunctionTypeStrings,
+  MAX_SF);
 /// Correlation parameter and properties
 const Correlation_Parameter enable_translation_param(enable_translation,
   BOOL_PARAM,
@@ -1145,7 +1163,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   compute_image_gradients_param,
   gauss_filter_images_param,
   initial_condition_file_param,
-  enable_quadratic_shape_function_param,
+  shape_function_type_param,
   enable_translation_param,
   enable_rotation_param,
   enable_normal_strain_param,

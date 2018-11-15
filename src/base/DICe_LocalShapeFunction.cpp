@@ -50,11 +50,12 @@ DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Local_Shape_Function> shape_function_factory(Schema * schema){
   if(!schema){
     return Teuchos::rcp(new Affine_Shape_Function(schema));
-  }
-  else if(schema->quadratic_shape_function_enabled()){
+  }else if(schema->shape_function_type()==DICe::AFFINE_SF){
+    return Teuchos::rcp(new Affine_Shape_Function(schema));
+  }else if(schema->shape_function_type()==DICe::QUADRATIC_SF){
     return Teuchos::rcp(new Quadratic_Shape_Function());
   }else{
-    return Teuchos::rcp(new Affine_Shape_Function(schema));
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid shape function type");
   }
 }
 

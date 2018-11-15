@@ -123,6 +123,11 @@ const std::string to_string(Optimization_Method in){
   return optimizationMethodStrings[in];
 }
 DICE_LIB_DLL_EXPORT
+const std::string to_string(Shape_Function_Type in){
+  assert(in < MAX_SF);
+  return shapeFunctionTypeStrings[in];
+}
+DICE_LIB_DLL_EXPORT
 const std::string to_string(Interpolation_Method in){
   assert(in < MAX_INTERPOLATION_METHOD);
   return interpolationMethodStrings[in];
@@ -294,7 +299,7 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::projection_method,DICe::DISPLACEMENT_BASED);
   defaultParams->set(DICe::disp_jump_tol,8.0);
   defaultParams->set(DICe::theta_jump_tol,0.1);
-  defaultParams->set(DICe::enable_quadratic_shape_function,false);
+  defaultParams->set(DICe::shape_function_type,DICe::AFFINE_SF);
   defaultParams->set(DICe::enable_translation,true);
   defaultParams->set(DICe::enable_rotation,true);
   defaultParams->set(DICe::enable_normal_strain,false);
@@ -355,7 +360,7 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::use_search_initialization_for_failed_steps,false);
   defaultParams->set(DICe::disp_jump_tol,10000.0);
   defaultParams->set(DICe::theta_jump_tol,100.0);
-  defaultParams->set(DICe::enable_quadratic_shape_function,false);
+  defaultParams->set(DICe::shape_function_type,DICe::AFFINE_SF);
   defaultParams->set(DICe::enable_translation,true);
   defaultParams->set(DICe::enable_rotation,false);
   defaultParams->set(DICe::enable_normal_strain,false);

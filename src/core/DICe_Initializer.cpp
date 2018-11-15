@@ -386,8 +386,8 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
       return INITIALIZE_USING_PREVIOUS_FRAME_SUCCESSFUL;
     else{
       // if using a neighbor's value, the parameters have to be adjusted to account
-      // for the change in centroids
-      if(schema_->quadratic_shape_function_enabled()){
+      // for the change in centroids for the quadratic shape function
+      if(schema_->shape_function_type()==DICe::QUADRATIC_SF){
         scalar_t cx = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
         scalar_t cy = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
         scalar_t cx_neigh = schema_->global_field_value(sid,SUBSET_COORDINATES_X_FS);
