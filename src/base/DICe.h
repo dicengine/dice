@@ -495,129 +495,129 @@ const static char * correlationRoutineStrings[] = {
 
 
 enum System_Type_3D {
-	UNKNOWN = 0,
-	GENERIC_SYSTEM,
-	OPENCV,
-	VIC3D,
-	DICE,
-	//DON"T ADD ANY BELOW MAX
-	MAX_SYSTEM_TYPE_3D,
-	NO_SUCH_SYSTEM_TYPE_3D
+  UNKNOWN = 0,
+  GENERIC_SYSTEM,
+  OPENCV,
+  VIC3D,
+  DICE,
+  //DON"T ADD ANY BELOW MAX
+  MAX_SYSTEM_TYPE_3D,
+  NO_SUCH_SYSTEM_TYPE_3D
 };
 
 const static char * systemType3DStrings[] = {
-	"UNKNOWN",
-	"GENERIC_SYSTEM",
-	"OPENCV",
-	"VIC3D",
-	"DICE"
+  "UNKNOWN",
+  "GENERIC_SYSTEM",
+  "OPENCV",
+  "VIC3D",
+  "DICE"
 };
 
 enum Lens_Distortion_Model {
-	NONE = 0,
-	OPENCV_DIS,
-	VIC3D_DIS,
-	K1R1_K2R2_K3R3,
-	K1R2_K2R4_K3R6,
-	K1R3_K2R5_K3R7,
-	//DON"T ADD ANY BELOW MAX
-	MAX_LENS_DIS_MODEL,
-	NO_SUCH_LENS_DIS_MODEL
+  NONE = 0,
+  OPENCV_DIS,
+  VIC3D_DIS,
+  K1R1_K2R2_K3R3,
+  K1R2_K2R4_K3R6,
+  K1R3_K2R5_K3R7,
+  //DON"T ADD ANY BELOW MAX
+  MAX_LENS_DIS_MODEL,
+  NO_SUCH_LENS_DIS_MODEL
 };
 
 const static char * lensDistortionModelStrings[] = {
-	"NONE",
-	"OPENCV_DIS",
-	"VIC3D_DIS",
-	"K1R1_K2R2_K3R3",
-	"K1R2_K2R4_K3R6",
-	"K1R3_K2R5_K3R7"
+  "NONE",
+  "OPENCV_DIS",
+  "VIC3D_DIS",
+  "K1R1_K2R2_K3R3",
+  "K1R2_K2R4_K3R6",
+  "K1R3_K2R5_K3R7"
 };
 
 enum Projection_Params {
-	ZP = 0,
-	THETA,
-	PHI,
-	MAX_CAM_PROJECTION_PARAMS,
-	NO_SUCH_CAM_PROJECTION_PARAMS
+  ZP = 0,
+  THETA,
+  PHI,
+  MAX_CAM_PROJECTION_PARAMS,
+  NO_SUCH_CAM_PROJECTION_PARAMS
 };
 
 const static char * projectionParamsStrings[] = {
-	"ZP",
-	"THETA",
-	"PHI"
+  "ZP",
+  "THETA",
+  "PHI"
 };
 
 
 enum Cam_Intrinsic_Params {
-	CX = 0,
-	CY,
-	FX,
-	FY,
-	FS,
-	K1,
-	K2,
-	K3,
-	K4,
-	K5,
-	K6,
-	P1,
-	P2,
-	S1,
-	S2,
-	S3,
-	S4,
-	T1,
-	T2,
-	LD_MODEL,
-	//DON"T ADD ANY BELOW MAX
-	MAX_CAM_INTRINSIC_PARAMS,
-	NO_SUCH_CAM_INTRINSIC_PARAMS
+  CX = 0,
+  CY,
+  FX,
+  FY,
+  FS,
+  K1,
+  K2,
+  K3,
+  K4,
+  K5,
+  K6,
+  P1,
+  P2,
+  S1,
+  S2,
+  S3,
+  S4,
+  T1,
+  T2,
+  LD_MODEL,
+  //DON"T ADD ANY BELOW MAX
+  MAX_CAM_INTRINSIC_PARAMS,
+  NO_SUCH_CAM_INTRINSIC_PARAMS
 };
 
 const static char * camIntrinsicParamsStrings[] = {
-	"CX",
-	"CY",
-	"FX",
-	"FY",
-	"FS",
-	"K1",
-	"K2",
-	"K3",
-	"K4",
-	"K5",
-	"K6",
-	"P1",
-	"P2",
-	"S1",
-	"S2",
-	"S3",
-	"S4",
-	"T1",
-	"T2",
-	"LD_MODEL"
+  "CX",
+  "CY",
+  "FX",
+  "FY",
+  "FS",
+  "K1",
+  "K2",
+  "K3",
+  "K4",
+  "K5",
+  "K6",
+  "P1",
+  "P2",
+  "S1",
+  "S2",
+  "S3",
+  "S4",
+  "T1",
+  "T2",
+  "LD_MODEL"
 };
 
 
 enum Cam_Extrinsic_Params {
-	ALPHA = 0,
-	BETA,
-	GAMMA,
-	TX,
-	TY,
-	TZ,
-	//DON"T ADD ANY BELOW MAX
-	MAX_CAM_EXTRINSIC_PARAMS,
-	NO_SUCH_CAM_EXTRINSIC_PARAMS
+  ALPHA = 0,
+  BETA,
+  GAMMA,
+  TX,
+  TY,
+  TZ,
+  //DON"T ADD ANY BELOW MAX
+  MAX_CAM_EXTRINSIC_PARAMS,
+  NO_SUCH_CAM_EXTRINSIC_PARAMS
 };
 
 const static char * camExtrinsicParamsStrings[] = {
-	"ALPHA",
-	"BETA",
-	"GAMMA",
-	"TX",
-	"TY",
-	"TZ"
+  "ALPHA",
+  "BETA",
+  "GAMMA",
+  "TX",
+  "TY",
+  "TZ"
 };
 
 
@@ -723,11 +723,11 @@ enum Image_File_Type{
 
 /// The type of cam system parameter, used for creating template input files
 enum Cam_Sys_Parameter_Type {
-	CAM_SYS_STRING_PARAM = 0,
-	CAM_SYS_PARAM_PARAM, // parameter that is another parameter list
-	CAM_SYS_SCALAR_PARAM,
-	CAM_SYS_SIZE_PARAM,
-	CAM_SYS_BOOL_PARAM
+  CAM_SYS_STRING_PARAM = 0,
+  CAM_SYS_PARAM_PARAM, // parameter that is another parameter list
+  CAM_SYS_SCALAR_PARAM,
+  CAM_SYS_SIZE_PARAM,
+  CAM_SYS_BOOL_PARAM
 };
 
 /// The type of correlation parameter, used for creating template input files
@@ -1060,9 +1060,9 @@ const Correlation_Parameter enable_quadratic_shape_function_param(enable_quadrat
   "Enables the quadratic shape function degrees of freedom (all components are activiated and individual components like rotation or shear cannot be disabled)");
 /// Correlation parameter and properties
 const Correlation_Parameter enable_projection_shape_function_param(enable_projection_shape_function,
-	BOOL_PARAM,
-	true,
-	"Enables the projection based shape function (all components)");
+  BOOL_PARAM,
+  true,
+  "Enables the projection based shape function (all components)");
 /// Correlation parameter and properties
 const Correlation_Parameter enable_translation_param(enable_translation,
   BOOL_PARAM,
@@ -1378,7 +1378,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   num_image_integration_points_param,
   use_fixed_point_iterations_param,
   compute_laplacian_image_param,
-	enable_projection_shape_function_param
+  enable_projection_shape_function_param
 };
 
 // TODO don't forget to update this when adding a new one
