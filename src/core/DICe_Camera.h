@@ -74,6 +74,52 @@ namespace DICe {
 			clear_camera();
 		};
 
+		// minimun constructor for the entire camera
+		Camera(std::string cam_id, int_t image_width, int_t image_height, std::vector<scalar_t> intrinsics) {
+			clear_camera();
+			set_Identifier(cam_id);
+			set_Intrinsics(intrinsics);
+			set_Image_Height(image_height);
+			set_Image_Width(image_width);
+		}
+
+		// constructor for the entire camera with extrinsic parameters
+		Camera(std::string cam_id, int_t image_width, int_t image_height, std::vector<scalar_t> intrinsics, std::vector<scalar_t> extrinsics) {
+			clear_camera();
+			set_Identifier(cam_id);
+			set_Intrinsics(intrinsics);
+			set_Image_Height(image_height);
+			set_Image_Width(image_width);
+			set_Extrinsics(extrinsics);
+		}
+
+		// constructor for the entire camera with extrinsic parameters and rotation matrix
+		Camera(std::string cam_id, int_t image_width, int_t image_height, std::vector<scalar_t> intrinsics, std::vector<scalar_t> extrinsics,
+			std::vector<std::vector<scalar_t>> & rotation_3x3_matrix) {
+			clear_camera();
+			set_Identifier(cam_id);
+			set_Intrinsics(intrinsics);
+			set_Image_Height(image_height);
+			set_Image_Width(image_width);
+			set_Extrinsics(extrinsics);
+			set_3x3_Rotation_Matrix(rotation_3x3_matrix);
+		}
+
+		// full constructor for the entire camera
+		Camera(std::string cam_id, int_t image_width, int_t image_height, std::vector<scalar_t> intrinsics, std::vector<scalar_t> extrinsics,
+			std::vector<std::vector<scalar_t>> & rotation_3x3_matrix, std::string camera_lens = "", std::string camera_comments = "", 
+			int_t pixel_depth=0) {
+			clear_camera();
+			set_Identifier(cam_id);
+			set_Intrinsics(intrinsics);
+			set_Image_Height(image_height);
+			set_Image_Width(image_width);
+			set_Extrinsics(extrinsics);
+			set_3x3_Rotation_Matrix(rotation_3x3_matrix);
+			set_Camera_Lens(camera_lens);
+			set_Camera_Comments(camera_comments);
+		}
+
 		/// Pure virtual destructor
 		virtual ~Camera() {}
 
@@ -115,8 +161,8 @@ namespace DICe {
 		int_t get_Image_Width() { return image_width_; }
 
 		///gets/sets the pixel depth
-		void set_Pixel_Depth(int_t height) {
-			pixel_depth_ = height;
+		void set_Pixel_Depth(int_t pixel_depth) {
+			pixel_depth_ = pixel_depth;
 			camera_filled_ = true;
 		}
 		int_t get_Pixel_Depth() { return pixel_depth_; }
