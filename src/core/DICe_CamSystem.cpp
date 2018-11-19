@@ -805,8 +805,8 @@ namespace DICe {
 
   DICE_LIB_DLL_EXPORT
     void CamSystem::cross_projection_map(
-      scalar_t & img0_x, 
-      scalar_t & img0_y, 
+      const scalar_t & img0_x, 
+      const scalar_t & img0_y, 
       scalar_t & img1_x, 
       scalar_t & img1_y, 
       std::vector<scalar_t> & params) {
@@ -827,8 +827,8 @@ namespace DICe {
 
   DICE_LIB_DLL_EXPORT
     void CamSystem::cross_projection_map(
-      scalar_t & img0_x,
-      scalar_t & img0_y,
+      const scalar_t & img0_x,
+      const scalar_t & img0_y,
       scalar_t & img1_x,
       scalar_t & img1_y,
       std::vector<scalar_t> & params,
@@ -891,6 +891,111 @@ namespace DICe {
     Cameras_[def_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_, cam_dx_, cam_dy_, cam_dx_, sen_dx_, sen_dy_);
     Cameras_[def_cam_].sensor_to_image(sen_x_, sen_y_, img1_x, img1_y, sen_dx_, sen_dy_, img1_dx, img1_dy);
   }
+
+
+
+
+  //*****Fixed projection parametes free 3D rigid body motion (single camera 3D)
+  DICE_LIB_DLL_EXPORT
+    void CamSystem::fixed_proj_3DRB_map(
+      const scalar_t & img0_x,
+      const scalar_t & img0_y,
+      scalar_t & img1_x,
+      scalar_t & img1_y,
+      std::vector<scalar_t> & proj_params,
+      std::vector<scalar_t> & rigid_body_params) {
+
+    pre_projection_(1, 6, false);
+    img_x_[0] = img0_x;
+    img_y_[0] = img0_y;
+
+    Cameras_[undef_cam_].image_to_sensor(img_x_, img_y_, sen_x_, sen_y_);
+    Cameras_[undef_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, proj_params);
+    Cameras_[undef_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_);
+    rot_trans_3D(wld0_x_, wld0_y_, wld0_z_, wld1_x_, wld1_y_, wld1_z_, rigid_body_params);
+    Cameras_[def_cam_].world_to_cam(wld1_x_, wld1_y_, wld1_z_, cam_x_, cam_y_, cam_z_);
+    Cameras_[def_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_);
+    Cameras_[def_cam_].sensor_to_image(sen_x_, sen_y_, img_x_, img_y_);
+    img1_x = img_x_[0];
+    img1_y = img_y_[0];
+  }
+
+
+  DICE_LIB_DLL_EXPORT
+    void CamSystem::fixed_proj_3DRB_map(
+      const scalar_t & img0_x,
+      const scalar_t & img0_y,
+      scalar_t & img1_x,
+      scalar_t & img1_y,
+      std::vector <scalar_t> & proj_params,
+      std::vector <scalar_t> & rigid_body_params,
+      std::vector<scalar_t> & img1_dx,
+      std::vector<scalar_t> & img1_dy) {
+
+    pre_projection_(1, 6, false);
+    img_x_[0] = img0_x;
+    img_y_[0] = img0_y;
+
+    Cameras_[undef_cam_].image_to_sensor(img_x_, img_y_, sen_x_, sen_y_);
+    Cameras_[undef_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, proj_params);
+    Cameras_[undef_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_);
+    rot_trans_3D(wld0_x_, wld0_y_, wld0_z_, wld1_x_, wld1_y_, wld1_z_, rigid_body_params, wld1_dx_, wld1_dy_, wld1_dz_);
+    Cameras_[def_cam_].world_to_cam(wld1_x_, wld1_y_, wld1_z_, cam_x_, cam_y_, cam_z_, wld1_dx_, wld1_dy_, wld1_dz_, cam_dx_, cam_dy_, cam_dx_);
+    Cameras_[def_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_, cam_dx_, cam_dy_, cam_dx_, sen_dx_, sen_dy_);
+    Cameras_[def_cam_].sensor_to_image(sen_x_, sen_y_, img_x_, img_y_, sen_dx_, sen_dy_, img_dx_, img_dy_);
+
+    img1_x = img_x_[0];
+    img1_y = img_y_[0];
+    for (int_t j = 0; j < 6; j++) {
+      img1_dx[j] = img_dx_[j][0];
+      img1_dy[j] = img_dy_[j][0];
+    }
+
+  }
+
+  DICE_LIB_DLL_EXPORT
+    void CamSystem::fixed_proj_3DRB_map(
+      std::vector<scalar_t> & img0_x,
+      std::vector<scalar_t> & img0_y,
+      std::vector<scalar_t> & img1_x,
+      std::vector<scalar_t> & img1_y,
+      std::vector<scalar_t> & proj_params,
+      std::vector<scalar_t> & rigid_body_params) {
+
+    pre_projection_(img0_x.size(), 6, false);
+
+    Cameras_[undef_cam_].image_to_sensor(img0_x, img0_y, sen_x_, sen_y_);
+    Cameras_[undef_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, proj_params);
+    Cameras_[undef_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_);
+    rot_trans_3D(wld0_x_, wld0_y_, wld0_z_, wld1_x_, wld1_y_, wld1_z_, rigid_body_params);
+    Cameras_[def_cam_].world_to_cam(wld1_x_, wld1_y_, wld1_z_, cam_x_, cam_y_, cam_z_);
+    Cameras_[def_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_);
+    Cameras_[def_cam_].sensor_to_image(sen_x_, sen_y_, img1_x, img1_y);
+  }
+
+
+  DICE_LIB_DLL_EXPORT
+    void CamSystem::fixed_proj_3DRB_map(
+      std::vector<scalar_t> & img0_x,
+      std::vector<scalar_t> & img0_y,
+      std::vector<scalar_t> & img1_x,
+      std::vector<scalar_t> & img1_y,
+      std::vector<scalar_t> & proj_params,
+      std::vector<scalar_t> & rigid_body_params,
+      std::vector<std::vector<scalar_t>> & img1_dx,
+      std::vector<std::vector<scalar_t>> & img1_dy) {
+
+    pre_projection_(img0_x.size(), 6, false);
+
+    Cameras_[undef_cam_].image_to_sensor(img0_x, img0_y, sen_x_, sen_y_);
+    Cameras_[undef_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, proj_params);
+    Cameras_[undef_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_);
+    rot_trans_3D(wld0_x_, wld0_y_, wld0_z_, wld1_x_, wld1_y_, wld1_z_, rigid_body_params, wld1_dx_, wld1_dy_, wld1_dz_);
+    Cameras_[def_cam_].world_to_cam(wld1_x_, wld1_y_, wld1_z_, cam_x_, cam_y_, cam_z_, wld1_dx_, wld1_dy_, wld1_dz_, cam_dx_, cam_dy_, cam_dx_);
+    Cameras_[def_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_, cam_dx_, cam_dy_, cam_dx_, sen_dx_, sen_dy_);
+    Cameras_[def_cam_].sensor_to_image(sen_x_, sen_y_, img1_x, img1_y, sen_dx_, sen_dy_, img1_dx, img1_dy);
+  }
+
 
 
 
@@ -1047,6 +1152,67 @@ namespace DICe {
     wld1_dy[4] = 1.0;
     wld1_dz[5] = 1.0;
   }
+
+
+  void CamSystem::rot_trans_3D(std::vector<scalar_t> & wld0_x, std::vector<scalar_t> & wld0_y, std::vector<scalar_t> & wld0_z,
+    std::vector<scalar_t> & wld1_x, std::vector<scalar_t> & wld1_y, std::vector<scalar_t> & wld1_z, std::vector<scalar_t> & params,
+    std::vector < std::vector<scalar_t>> & wld0_dx, std::vector < std::vector<scalar_t>> & wld0_dy, std::vector < std::vector<scalar_t>> & wld0_dz,
+    std::vector < std::vector<scalar_t>> & wld1_dx, std::vector < std::vector<scalar_t>> & wld1_dy, std::vector < std::vector<scalar_t>> & wld1_dz) {
+    //This transformation assumes non zero incoming partials order is Zp, Theata, Phi, Ang X, Ang Y, Ang Z
+    //prep the rotation coefficients
+    pre_rot_trans_3D(params, true);
+    //transform the coordinates
+    for (int_t i = 0; i < wld0_x.size(); i++) {
+      wld1_x[i] = rot_trans_3D_x_[0] * wld0_x[i] + rot_trans_3D_x_[1] * wld0_y[i] + rot_trans_3D_x_[2] * wld0_z[i] + rot_trans_3D_x_[3];
+      wld1_y[i] = rot_trans_3D_y_[0] * wld0_x[i] + rot_trans_3D_y_[1] * wld0_y[i] + rot_trans_3D_y_[2] * wld0_z[i] + rot_trans_3D_y_[3];
+      wld1_z[i] = rot_trans_3D_z_[0] * wld0_x[i] + rot_trans_3D_z_[1] * wld0_y[i] + rot_trans_3D_z_[2] * wld0_z[i] + rot_trans_3D_z_[3];
+    }
+    //calculate the partials
+    for (int_t j = 0; j < 3; j++) {
+      for (int_t i = 0; i < wld0_x.size(); i++) {
+        wld1_dx[j][i] = rot_trans_3D_x_[0] * wld0_dx[j][i] + rot_trans_3D_x_[1] * wld0_dy[j][i] + rot_trans_3D_x_[2] * wld0_dz[j][i];
+        wld1_dy[j][i] = rot_trans_3D_y_[0] * wld0_dx[j][i] + rot_trans_3D_y_[1] * wld0_dy[j][i] + rot_trans_3D_y_[2] * wld0_dz[j][i];
+        wld1_dz[j][i] = rot_trans_3D_z_[0] * wld0_dx[j][i] + rot_trans_3D_z_[1] * wld0_dy[j][i] + rot_trans_3D_z_[2] * wld0_dz[j][i];
+        wld1_dx[j+3][i] = rot_trans_3D_dx_[j][0] * wld0_x[i] + rot_trans_3D_dx_[j][1] * wld0_y[i] + rot_trans_3D_dx_[j][2] * wld0_z[i];
+        wld1_dy[j+3][i] = rot_trans_3D_dy_[j][0] * wld0_x[i] + rot_trans_3D_dy_[j][1] * wld0_y[i] + rot_trans_3D_dy_[j][2] * wld0_z[i];
+        wld1_dz[j+3][i] = rot_trans_3D_dz_[j][0] * wld0_x[i] + rot_trans_3D_dz_[j][1] * wld0_y[i] + rot_trans_3D_dz_[j][2] * wld0_z[i];
+      }
+      wld1_dx[j + 6].assign(wld0_x.size(), 0.0);
+      wld1_dy[j + 6].assign(wld0_x.size(), 0.0);
+      wld1_dz[j + 6].assign(wld0_x.size(), 0.0);
+    }
+    wld1_dx[6].assign(wld0_x.size(), 1.0);
+    wld1_dy[7].assign(wld0_x.size(), 1.0);
+    wld1_dz[8].assign(wld0_x.size(), 1.0);
+  }
+
+  void CamSystem::rot_trans_3D(scalar_t & wld0_x, scalar_t & wld0_y, scalar_t & wld0_z, scalar_t & wld1_x, scalar_t & wld1_y, scalar_t & wld1_z, std::vector<scalar_t> & params,
+    std::vector<scalar_t> & wld0_dx, std::vector<scalar_t> & wld0_dy, std::vector<scalar_t> & wld0_dz,
+    std::vector<scalar_t> & wld1_dx, std::vector<scalar_t> & wld1_dy, std::vector<scalar_t> & wld1_dz) {
+    //This transformation assumes all partials coming into the function are 0
+    //prep the rotation coefficients
+    pre_rot_trans_3D(params, true);
+    //transform the coordinates
+    wld1_x = rot_trans_3D_x_[0] * wld0_x + rot_trans_3D_x_[1] * wld0_y + rot_trans_3D_x_[2] * wld0_z + rot_trans_3D_x_[3];
+    wld1_y = rot_trans_3D_y_[0] * wld0_x + rot_trans_3D_y_[1] * wld0_y + rot_trans_3D_y_[2] * wld0_z + rot_trans_3D_y_[3];
+    wld1_z = rot_trans_3D_z_[0] * wld0_x + rot_trans_3D_z_[1] * wld0_y + rot_trans_3D_z_[2] * wld0_z + rot_trans_3D_z_[3];
+    //calculate the partials
+    for (int_t j = 0; j < 3; j++) {
+      wld1_dx[j] = rot_trans_3D_x_[0] * wld0_dx[j] + rot_trans_3D_x_[1] * wld0_dy[j] + rot_trans_3D_x_[2] * wld0_dz[j];
+      wld1_dy[j] = rot_trans_3D_y_[0] * wld0_dx[j] + rot_trans_3D_y_[1] * wld0_dy[j] + rot_trans_3D_y_[2] * wld0_dz[j];
+      wld1_dz[j] = rot_trans_3D_z_[0] * wld0_dx[j] + rot_trans_3D_z_[1] * wld0_dy[j] + rot_trans_3D_z_[2] * wld0_dz[j];
+      wld1_dx[j+3] = rot_trans_3D_dx_[j][0] * wld0_x + rot_trans_3D_dx_[j][1] * wld0_y + rot_trans_3D_dx_[j][2] * wld0_z;
+      wld1_dy[j+3] = rot_trans_3D_dy_[j][0] * wld0_x + rot_trans_3D_dy_[j][1] * wld0_y + rot_trans_3D_dy_[j][2] * wld0_z;
+      wld1_dz[j+3] = rot_trans_3D_dz_[j][0] * wld0_x + rot_trans_3D_dz_[j][1] * wld0_y + rot_trans_3D_dz_[j][2] * wld0_z;
+      wld1_dx[j + 4] = 0.0;
+      wld1_dy[j + 5] = 0.0;
+      wld1_dz[j + 6] = 0.0;
+    }
+    wld1_dx[6] = 1.0;
+    wld1_dy[7] = 1.0;
+    wld1_dz[8] = 1.0;
+  }
+
 
 
 }// End DICe Namespace

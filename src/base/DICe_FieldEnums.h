@@ -211,7 +211,13 @@ Field_Name
   STEREO_M_MAX,
 	PROJECTION_Z,
 	PROJECTION_PHI,
-	PROJECTION_THETA
+	PROJECTION_THETA,
+  ROT_TRANS_3D_ANG_X,
+  ROT_TRANS_3D_ANG_Y,
+  ROT_TRANS_3D_ANG_Z,
+  ROT_TRANS_3D_TRANS_X,
+  ROT_TRANS_3D_TRANS_Y,
+  ROT_TRANS_3D_TRANS_Z
 };
 /// The location that the fields live
 enum
@@ -736,11 +742,21 @@ const Field_Spec PROJECTION_PHI_NM1_FS(field_enums::SCALAR_FIELD_TYPE, field_enu
 const Field_Spec PROJECTION_THETA_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::PROJECTION_THETA, field_enums::NODE_RANK, field_enums::NO_FIELD_STATE, true);
 /// field spec
 const Field_Spec PROJECTION_THETA_NM1_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::PROJECTION_THETA, field_enums::NODE_RANK, field_enums::STATE_N_MINUS_ONE, false, true);
-
-
+/// field spec
+const Field_Spec ROT_TRANS_3D_ANG_X_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::ROT_TRANS_3D_ANG_X, field_enums::NODE_RANK, field_enums::NO_FIELD_STATE, true);
+/// field spec
+const Field_Spec ROT_TRANS_3D_ANG_Y_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::ROT_TRANS_3D_ANG_Y, field_enums::NODE_RANK, field_enums::NO_FIELD_STATE, true);
+/// field spec
+const Field_Spec ROT_TRANS_3D_ANG_Z_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::ROT_TRANS_3D_ANG_Z, field_enums::NODE_RANK, field_enums::NO_FIELD_STATE, true);
+/// field spec
+const Field_Spec ROT_TRANS_3D_TRANS_X_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::ROT_TRANS_3D_TRANS_X, field_enums::NODE_RANK, field_enums::NO_FIELD_STATE, true);
+/// field spec
+const Field_Spec ROT_TRANS_3D_TRANS_Y_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::ROT_TRANS_3D_TRANS_Y, field_enums::NODE_RANK, field_enums::NO_FIELD_STATE, true);
+/// field spec
+const Field_Spec ROT_TRANS_3D_TRANS_Z_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::ROT_TRANS_3D_TRANS_Z, field_enums::NODE_RANK, field_enums::NO_FIELD_STATE, true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 162;
+const int_t num_fields_defined = 168;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -905,8 +921,14 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
 		PROJECTION_THETA_FS,
 		PROJECTION_Z_NM1_FS,
 		PROJECTION_PHI_NM1_FS,
-		PROJECTION_THETA_NM1_FS
-    // don't forget to add one to num_fields_defined
+		PROJECTION_THETA_NM1_FS,
+    ROT_TRANS_3D_ANG_X_FS,
+    ROT_TRANS_3D_ANG_Y_FS,
+    ROT_TRANS_3D_ANG_Z_FS,
+    ROT_TRANS_3D_TRANS_X_FS,
+    ROT_TRANS_3D_TRANS_Y_FS,
+    ROT_TRANS_3D_TRANS_Z_FS
+      // don't forget to add one to num_fields_defined
 };
 
 /// vector of all the field specs

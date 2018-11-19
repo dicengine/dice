@@ -64,6 +64,26 @@ namespace DICe_LocalShapeFunction {
     "PHI"
   };
 
+  enum Rot_Trans_3D_Params {
+    ANG_X = 0,
+    ANG_Y,
+    ANG_Z,
+    TRANS_X,
+    TRANS_Y,
+    TRANS_Z,
+    MAX_CAM_ROT_TRANS_3D_PARAMS,
+    NO_SUCH_CAM_ROT_TRANS_3D_PARAMS
+  };
+
+  const static char * rotTrans3DParamsStrings[] = {
+    "ANG X",
+    "ANG Y",
+    "ANG Z",
+    "TRANS X",
+    "TRANS Y",
+    "TRANS Z"
+  };
+
 }
 
 /*!
@@ -423,6 +443,256 @@ public:
   virtual void update_params_for_centroid_change(const scalar_t & delta_x,
     const scalar_t & delta_y);
 private:
+};
+
+
+//mimic the quadratic shape function for the projection shape function
+/// \class DICe::Quadratic_Shape_Function
+/// \brief 12 parameter quadratic mapping for local shape function
+
+class DICE_LIB_DLL_EXPORT
+  Projection_Shape_Function : public Local_Shape_Function {
+public:
+
+  /// constructor
+  Projection_Shape_Function();
+ 
+  /// constructor
+  /// \param schema pointer to a schema used to initialize the shape function
+  Projection_Shape_Function(CamSystem * camSystem, int_t undef_cam, int_t def_cam);
+
+  /// virtual destructor
+  virtual ~Projection_Shape_Function() {};
+
+  /// Set the camera system and the undeformed and deformed camera
+  virtual void set_system_cams(CamSystem * camSystem, int_t undef_cam, int_t def_cam);
+
+  /// initialize the parameter fields and deltas
+  virtual void init();
+
+  /// clear the parameters
+  virtual void clear();
+
+  /// clears all the fields associated with this shape function
+  /// \param schema pointer to a schema that holds the mesh with the fields
+  virtual void reset_fields(Schema * schema);
+
+  /// see base class description
+  virtual void map(const scalar_t & ximg0_x,
+    const scalar_t & ximg0_y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & ximg1_x,
+    scalar_t & ximg1_y);
+
+  virtual void map(std::vector<scalar_t> & img0_x,
+    std::vector<scalar_t> & img0_y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    std::vector<scalar_t> & img1_x,
+    std::vector<scalar_t> & img1_y);
+
+  /// see base class description
+  virtual void add_translation(const scalar_t & u,
+    const scalar_t & v);
+
+  /// see base class description
+  virtual void map_to_u_v_theta(const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & out_u,
+    scalar_t & out_v,
+    scalar_t & out_theta);
+
+  /// see base class description
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v,
+    const scalar_t & theta);
+
+  /// see base class description
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v);
+
+  /// see base class description
+  virtual void residuals(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    const scalar_t & gx,
+    const scalar_t & gy,
+    std::vector<scalar_t> & residuals,
+    const bool use_ref_grads = false);
+
+  //residuals with vectors
+  virtual void residuals(std::vector<scalar_t> & img0_x,
+    std::vector<scalar_t> & img0_y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    std::vector<scalar_t> & gx,
+    std::vector<scalar_t> & gy,
+    std::vector<std::vector<scalar_t>> & residuals,
+    const bool use_ref_grads);
+  
+  //residuals with vectors and deformed locations
+  virtual void residuals(std::vector<scalar_t> & img0_x,
+    std::vector<scalar_t> & img0_y,
+    std::vector<scalar_t> & img1_x,
+    std::vector<scalar_t> & img1_y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    std::vector<scalar_t> & gx,
+    std::vector<scalar_t> & gy,
+    std::vector<std::vector<scalar_t>> & residuals,
+    const bool use_ref_grads);
+
+  /// see base class description
+  virtual void save_fields(Schema * schema,
+    const int_t subset_gid);
+
+  /// see base class description
+  virtual void update_params_for_centroid_change(const scalar_t & delta_x,
+    const scalar_t & delta_y);
+private:
+  CamSystem * cam_system_;
+  int_t undef_cam_;
+  int_t def_cam_;
+  bool system_cams_set_ = false;
+  std::vector<scalar_t> proj_params_;
+  std::vector<scalar_t> img0_x_sng_;
+  std::vector<scalar_t> img0_y_sng_;
+  std::vector<scalar_t> img1_x_sng_;
+  std::vector<scalar_t> img1_y_sng_;
+  std::vector<std::vector<scalar_t>> img1_dx_sng_;
+  std::vector<std::vector<scalar_t>> img1_dy_sng_;
+  std::vector<scalar_t> img1_x_;
+  std::vector<scalar_t> img1_y_;
+  std::vector<std::vector<scalar_t>> img1_dx_;
+  std::vector<std::vector<scalar_t>> img1_dy_;
+};
+
+
+//mimic the quadratic shape function for the fixed projection 3D rigid body shape function
+
+class DICE_LIB_DLL_EXPORT
+  Fixed_Proj_3DRB_Shape_Function : public Local_Shape_Function {
+public:
+
+  /// constructor
+  Fixed_Proj_3DRB_Shape_Function();
+
+  /// constructor
+  /// \param schema pointer to a schema used to initialize the shape function
+  Fixed_Proj_3DRB_Shape_Function(CamSystem * camSystem, int_t undef_cam, int_t def_cam, std::vector<scalar_t> & proj_params);
+
+  /// virtual destructor
+  virtual ~Fixed_Proj_3DRB_Shape_Function() {};
+
+  /// Set the camera system and the undeformed and deformed camera
+  virtual void set_system_cams(CamSystem * camSystem, int_t undef_cam, int_t def_cam);
+
+  /// Set the fixed projection parameters
+  virtual void set_projection_params(std::vector<scalar_t> & proj_params);
+
+  /// initialize the parameter fields and deltas
+  virtual void init();
+
+  /// clear the parameters
+  virtual void clear();
+
+  /// clears all the fields associated with this shape function
+  /// \param schema pointer to a schema that holds the mesh with the fields
+  virtual void reset_fields(Schema * schema);
+
+  /// see base class description
+  virtual void map(const scalar_t & ximg0_x,
+    const scalar_t & ximg0_y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & ximg1_x,
+    scalar_t & ximg1_y);
+
+  virtual void map(std::vector<scalar_t> & img0_x,
+    std::vector<scalar_t> & img0_y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    std::vector<scalar_t> & img1_x,
+    std::vector<scalar_t> & img1_y);
+
+  /// see base class description
+  virtual void add_translation(const scalar_t & u,
+    const scalar_t & v);
+
+  /// see base class description
+  virtual void map_to_u_v_theta(const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & out_u,
+    scalar_t & out_v,
+    scalar_t & out_theta);
+
+  /// see base class description
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v,
+    const scalar_t & theta);
+
+  /// see base class description
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v);
+
+  /// see base class description
+  virtual void residuals(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    const scalar_t & gx,
+    const scalar_t & gy,
+    std::vector<scalar_t> & residuals,
+    const bool use_ref_grads = false);
+
+  //residuals with vectors
+  virtual void residuals(std::vector<scalar_t> & img0_x,
+    std::vector<scalar_t> & img0_y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    std::vector<scalar_t> & gx,
+    std::vector<scalar_t> & gy,
+    std::vector<std::vector<scalar_t>> & residuals,
+    const bool use_ref_grads);
+
+  //residuals with vectors and deformed locations
+  virtual void residuals(std::vector<scalar_t> & img0_x,
+    std::vector<scalar_t> & img0_y,
+    std::vector<scalar_t> & img1_x,
+    std::vector<scalar_t> & img1_y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    std::vector<scalar_t> & gx,
+    std::vector<scalar_t> & gy,
+    std::vector<std::vector<scalar_t>> & residuals,
+    const bool use_ref_grads);
+
+  /// see base class description
+  virtual void save_fields(Schema * schema,
+    const int_t subset_gid);
+
+  /// see base class description
+  virtual void update_params_for_centroid_change(const scalar_t & delta_x,
+    const scalar_t & delta_y);
+private:
+  CamSystem * cam_system_;
+  int_t undef_cam_;
+  int_t def_cam_;
+  bool system_cams_set_ = false;
+  std::vector<scalar_t> proj_params_;
+  std::vector<scalar_t> img0_x_sng_;
+  std::vector<scalar_t> img0_y_sng_;
+  std::vector<scalar_t> img1_x_sng_;
+  std::vector<scalar_t> img1_y_sng_;
+  std::vector<std::vector<scalar_t>> img1_dx_sng_;
+  std::vector<std::vector<scalar_t>> img1_dy_sng_;
+  std::vector<scalar_t> img1_x_;
+  std::vector<scalar_t> img1_y_;
+  std::vector<std::vector<scalar_t>> img1_dx_;
+  std::vector<std::vector<scalar_t>> img1_dy_;
+  std::vector<scalar_t>rot_trans_params_;
 };
 
 

@@ -388,7 +388,7 @@ namespace DICe {
     }
 
     /// does the camera have enough values to be valid
-    bool camera_valid(int_t cam_num, std::string & msg) {
+    bool camera_valid(int_t cam_num, std::string & msg = std::string()) {
       if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
         return Cameras_[cam_num].camera_valid(msg);
       return false;
@@ -410,25 +410,53 @@ namespace DICe {
     }
 
     //cross projection mapping and overloads
-    void cross_projection_map(scalar_t & img0_x, scalar_t & img0_y, scalar_t & img1_x, scalar_t & img1_y, std::vector<scalar_t> & params);
+    void cross_projection_map(const scalar_t & img0_x, const scalar_t & img0_y, scalar_t & img1_x, scalar_t & img1_y, std::vector<scalar_t> & params);
     void cross_projection_map(std::vector<scalar_t> & img0_x, std::vector<scalar_t> & img0_y, std::vector<scalar_t> & img1_x, 
       std::vector<scalar_t> & img1_y, std::vector<scalar_t> & params);
-    void cross_projection_map(scalar_t & img0_x, scalar_t & img0_y, scalar_t & img1_x, scalar_t & img1_y, std::vector<scalar_t> & params, 
+    void cross_projection_map(const scalar_t & img0_x, const scalar_t & img0_y, scalar_t & img1_x, scalar_t & img1_y, std::vector<scalar_t> & params, 
       std::vector<scalar_t> & img1_dx, std::vector<scalar_t> & img1_dy);
     void cross_projection_map(std::vector<scalar_t> & img0_x, std::vector<scalar_t> & img0_y, std::vector<scalar_t> & img1_x, 
       std::vector<scalar_t> & img1_y, std::vector<scalar_t> & params, std::vector<std::vector<scalar_t>> & img1_dx, std::vector<std::vector<scalar_t>> & img1_dy);
 
+    //fixed projection 3D rigid body mapping and overloads
+    void fixed_proj_3DRB_map(const scalar_t & img0_x, const scalar_t & img0_y, scalar_t & img1_x, scalar_t & img1_y, std::vector<scalar_t> & proj_params, std::vector<scalar_t> & rigid_body_params);
+    void fixed_proj_3DRB_map(std::vector<scalar_t> & img0_x, std::vector<scalar_t> & img0_y, std::vector<scalar_t> & img1_x,
+      std::vector<scalar_t> & img1_y, std::vector<scalar_t> & proj_params, std::vector<scalar_t> & rigid_body_params);
+    void fixed_proj_3DRB_map(const scalar_t & img0_x, const scalar_t & img0_y, scalar_t & img1_x, scalar_t & img1_y, std::vector<scalar_t> & proj_params, std::vector<scalar_t> & rigid_body_params,
+      std::vector<scalar_t> & img1_dx, std::vector<scalar_t> & img1_dy);
+    void fixed_proj_3DRB_map(std::vector<scalar_t> & img0_x, std::vector<scalar_t> & img0_y, std::vector<scalar_t> & img1_x,
+      std::vector<scalar_t> & img1_y, std::vector<scalar_t> & proj_params, std::vector<scalar_t> & rigid_body_params, std::vector<std::vector<scalar_t>> & img1_dx, 
+      std::vector<std::vector<scalar_t>> & img1_dy);
+
+
+
+
     //3D rotation/translation transformation and overloads
-    void rot_trans_3D(std::vector<scalar_t> & wld0_x, std::vector<scalar_t> & wld0_y, std::vector<scalar_t> & wld0_z, 
-      std::vector<scalar_t> & wld1_x, std::vector<scalar_t> & wld1_y, std::vector<scalar_t> & wld1_z, std::vector<scalar_t> & params);
+    //Scalar position inputs/outputs
+    //transformation only
     void rot_trans_3D(scalar_t & wld0_x, scalar_t & wld0_y, scalar_t & wld0_z,
       scalar_t & wld1_x, scalar_t & wld1_y, scalar_t & wld1_z, std::vector<scalar_t> & params);
+    //transform and partials with no incoming partials
+    void rot_trans_3D(scalar_t & wld0_x, scalar_t & wld0_y, scalar_t & wld0_z, scalar_t & wld1_x, scalar_t & wld1_y, scalar_t & wld1_z, std::vector <scalar_t> & params,
+      std::vector<scalar_t> & wld1_dx, std::vector<scalar_t> & wld1_dy, std::vector<scalar_t> & wld1_dz);
+    //transform and partials with incoming partials
+    void rot_trans_3D(scalar_t & wld0_x, scalar_t & wld0_y, scalar_t & wld0_z, scalar_t & wld1_x, scalar_t & wld1_y, scalar_t & wld1_z, std::vector <scalar_t> & params,
+      std::vector<scalar_t> & wld0_dx, std::vector<scalar_t> & wld0_dy, std::vector<scalar_t> & wld0_dz,
+      std::vector<scalar_t> & wld1_dx, std::vector<scalar_t> & wld1_dy, std::vector<scalar_t> & wld1_dz);
+
+    //Vector position inputs/outputs
+    //transformation only
+    void rot_trans_3D(std::vector<scalar_t> & wld0_x, std::vector<scalar_t> & wld0_y, std::vector<scalar_t> & wld0_z,
+      std::vector<scalar_t> & wld1_x, std::vector<scalar_t> & wld1_y, std::vector<scalar_t> & wld1_z, std::vector<scalar_t> & params);
+    //transform and partials with no incoming partials
     void rot_trans_3D(std::vector<scalar_t> & wld0_x, std::vector<scalar_t> & wld0_y, std::vector<scalar_t> & wld0_z,
       std::vector<scalar_t> & wld1_x, std::vector<scalar_t> & wld1_y, std::vector<scalar_t> & wld1_z, std::vector<scalar_t> & params,
       std::vector < std::vector<scalar_t>> & wld1_dx, std::vector < std::vector<scalar_t>> & wld1_dy, std::vector < std::vector<scalar_t>> & wld1_dz);
-    void rot_trans_3D(scalar_t & wld0_x, scalar_t & wld0_y, scalar_t & wld0_z, scalar_t & wld1_x, scalar_t & wld1_y, scalar_t & wld1_z, std::vector <scalar_t> & params,
-      std::vector<scalar_t> & wld1_dx, std::vector<scalar_t> & wld1_dy, std::vector<scalar_t> & wld1_dz);
-
+    //transform and partials with incoming partials
+    void rot_trans_3D(std::vector<scalar_t> & wld0_x, std::vector<scalar_t> & wld0_y, std::vector<scalar_t> & wld0_z,
+      std::vector<scalar_t> & wld1_x, std::vector<scalar_t> & wld1_y, std::vector<scalar_t> & wld1_z, std::vector<scalar_t> & params,
+      std::vector < std::vector<scalar_t>> & wld0_dx, std::vector < std::vector<scalar_t>> & wld0_dy, std::vector < std::vector<scalar_t>> & wld0_dz,
+      std::vector < std::vector<scalar_t>> & wld1_dx, std::vector < std::vector<scalar_t>> & wld1_dy, std::vector < std::vector<scalar_t>> & wld1_dz);
 
 
   private:
