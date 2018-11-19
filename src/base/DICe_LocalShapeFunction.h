@@ -47,6 +47,25 @@
 #include <DICe_CamSystem.h>
 
 #include <Teuchos_RCP.hpp>
+
+
+namespace DICe_LocalShapeFunction {
+  enum Projection_Params {
+    ZP = 0,
+    THETA,
+    PHI,
+    MAX_CAM_PROJECTION_PARAMS,
+    NO_SUCH_CAM_PROJECTION_PARAMS
+  };
+
+  const static char * projectionParamsStrings[] = {
+    "ZP",
+    "THETA",
+    "PHI"
+  };
+
+}
+
 /*!
  *  \namespace DICe
  *  @{

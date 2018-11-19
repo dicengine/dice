@@ -51,7 +51,8 @@
 
 
 namespace DICe {
-  
+  namespace CSys = DICe_CamSystem;
+  namespace CAM = DICe_Camera;
   DICE_LIB_DLL_EXPORT
     void CamSystem::clear_system() {
     //clear the cameras
@@ -77,7 +78,7 @@ namespace DICe {
     has_6_transform_ = false;
 
     //reset the system type and number of cameras
-    sys_type_ = UNKNOWN;
+    sys_type_ = CSys::UNKNOWN_SYSTEM;
     num_cams_ = 0;
     valid_cal_file_ = false;
     cal_file_error_ = std::stringstream();
@@ -139,8 +140,8 @@ namespace DICe {
         if (sys_parms->isParameter(system_type_3D)) {
           param_text = sys_parms->get<std::string>(system_type_3D);
           DEBUG_MSG("CamSystem::load_calibration_parameters(): " << system_type_3D << " = " << param_text);
-          for (int i = 0; i < MAX_SYSTEM_TYPE_3D; i++)
-            if (systemType3DStrings[i] == param_text)
+          for (int i = 0; i < CSys::MAX_SYSTEM_TYPE_3D; i++)
+            if (CSys::systemType3DStrings[i] == param_text)
               sys_type_ = i;
 
           //cycle through all the cameras to see if they are assigned
@@ -152,31 +153,31 @@ namespace DICe {
               //increment the number of cameras
               num_cams_++;
               //create vectors to hold the camera intrinsic and extrinsic parameters
-              std::vector<scalar_t> intrinsics(MAX_CAM_INTRINSIC_PARAMS, 0);
-              std::vector<scalar_t> extrinsics(MAX_CAM_EXTRINSIC_PARAMS, 0);
+              std::vector<scalar_t> intrinsics(CAM::MAX_CAM_INTRINSIC_PARAMS, 0);
+              std::vector<scalar_t> extrinsics(CAM::MAX_CAM_EXTRINSIC_PARAMS, 0);
               DEBUG_MSG("CamSystem::load_calibration_parameters(): reading " << param_title.str());
               //access the sublist of camera parameters
               Teuchos::ParameterList camParams = sys_parms->sublist(param_title.str());
               //fill the array with any intrinsic parameters
-              for (int i = 0; i < LD_MODEL; i++) {
-                if (camParams.isParameter(camIntrinsicParamsStrings[i])) {
-                  intrinsics[i] = camParams.get<std::double_t>(camIntrinsicParamsStrings[i]);
-                  DEBUG_MSG("CamSystem::load_calibration_parameters(): reading " << camIntrinsicParamsStrings[i]);
+              for (int i = 0; i < CAM::LD_MODEL; i++) {
+                if (camParams.isParameter(CAM::camIntrinsicParamsStrings[i])) {
+                  intrinsics[i] = camParams.get<std::double_t>(CAM::camIntrinsicParamsStrings[i]);
+                  DEBUG_MSG("CamSystem::load_calibration_parameters(): reading " << CAM::camIntrinsicParamsStrings[i]);
                 }
               }
               //the lens distorion model is handled here
-              if (camParams.isParameter(camIntrinsicParamsStrings[LD_MODEL])) {
-                param_text = camParams.get<std::string>(camIntrinsicParamsStrings[LD_MODEL]);
-                DEBUG_MSG("CamSystem::load_calibration_parameters(): reading " << camIntrinsicParamsStrings[LD_MODEL]);
-                for (int j = 0; j < MAX_LENS_DIS_MODEL; j++)
-                  if (lensDistortionModelStrings[j] == param_text)
-                    intrinsics[LD_MODEL] = j;
+              if (camParams.isParameter(CAM::camIntrinsicParamsStrings[CAM::LD_MODEL])) {
+                param_text = camParams.get<std::string>(CAM::camIntrinsicParamsStrings[CAM::LD_MODEL]);
+                DEBUG_MSG("CamSystem::load_calibration_parameters(): reading " << CAM::camIntrinsicParamsStrings[CAM::LD_MODEL]);
+                for (int j = 0; j < CAM::MAX_LENS_DIS_MODEL; j++)
+                  if (CAM::lensDistortionModelStrings[j] == param_text)
+                    intrinsics[CAM::LD_MODEL] = j;
               }
               //fill the array with any extrinsic parameters
-              for (int i = 0; i < MAX_CAM_EXTRINSIC_PARAMS; i++) {
-                if (camParams.isParameter(camExtrinsicParamsStrings[i])) {
-                  extrinsics[i] = camParams.get<std::double_t>(camExtrinsicParamsStrings[i]);
-                  DEBUG_MSG("CamSystem::load_calibration_parameters(): reading " << camExtrinsicParamsStrings[i]);
+              for (int i = 0; i < CAM::MAX_CAM_EXTRINSIC_PARAMS; i++) {
+                if (camParams.isParameter(CAM::camExtrinsicParamsStrings[i])) {
+                  extrinsics[i] = camParams.get<std::double_t>(CAM::camExtrinsicParamsStrings[i]);
+                  DEBUG_MSG("CamSystem::load_calibration_parameters(): reading " << CAM::camExtrinsicParamsStrings[i]);
                 }
               }
               //Save the parameters to the cameras
@@ -311,9 +312,9 @@ namespace DICe {
         // camera orientation for each camera in vic3d is in terms of the world to camera
         // orientation and the order of variables is alpha beta gamma tx ty tz (the Cardan Bryant angles + translations)
         // read each line of the file
-        sys_type_ = VIC3D;
-        std::vector<int_t> param_order_int = { CX, CY, FX, FY, FS, K1, K2, K3 };
-        std::vector<int_t> param_order_ext = { ALPHA, BETA, GAMMA, TX, TY, TZ };
+        sys_type_ = CSys::VIC3D;
+        std::vector<int_t> param_order_int = { CAM::CX, CAM::CY, CAM::FX, CAM::FY, CAM::FS, CAM::K1, CAM::K2, CAM::K3 };
+        std::vector<int_t> param_order_ext = { CAM::ALPHA, CAM::BETA, CAM::GAMMA, CAM::TX, CAM::TY, CAM::TZ };
 
         while (!dataFile.eof()) {
           std::vector<std::string> tokens = tokenize_line(dataFile, " \t<>\"");
@@ -325,8 +326,8 @@ namespace DICe {
           param_title << "CAMERA " << camera_index;
           Cameras_[camera_index].set_Identifier(param_title.str());
           //create the intrinsic and extrinsic arrays
-          std::vector<scalar_t> intrinsics(MAX_CAM_INTRINSIC_PARAMS, 0);
-          std::vector<scalar_t> extrinsics(MAX_CAM_EXTRINSIC_PARAMS, 0);
+          std::vector<scalar_t> intrinsics(CAM::MAX_CAM_INTRINSIC_PARAMS, 0);
+          std::vector<scalar_t> extrinsics(CAM::MAX_CAM_EXTRINSIC_PARAMS, 0);
 
           DEBUG_MSG("CamSystem::load_calibration_parameters(): reading camera " << camera_index << " parameters");
           assert(camera_index < 10);
@@ -334,7 +335,7 @@ namespace DICe {
           //Store the intrinsic parameters
           for (int i = 0; i < param_order_int.size(); ++i)
             intrinsics[param_order_int[i]] = strtod(tokens[i + 3].c_str(), NULL);
-          intrinsics[LD_MODEL] = K1R1_K2R2_K3R3;
+          intrinsics[CAM::LD_MODEL] = CAM::K1R1_K2R2_K3R3;
 
           //Store the extrinsic parameters
           assert(tokens[11].c_str() == "orientation");
@@ -357,20 +358,20 @@ namespace DICe {
       else if (cal_file.find(txt) != std::string::npos) {
         DEBUG_MSG("CamSystem::load_calibration_parameters(): calibration file is generic txt format");
         //may want to modify this file format to allow more than 2 cameras in the future
-        sys_type_ = GENERIC_SYSTEM;
+        sys_type_ = CSys::GENERIC_SYSTEM;
         num_cams_ = 2;
-        std::vector<int_t> param_order_int = { CX, CY, FX, FY, FS, K1, K2, K3 };
-        std::vector<int_t> param_order_ext = { ALPHA, BETA, GAMMA, TX, TY, TZ };
+        std::vector<int_t> param_order_int = { CAM::CX, CAM::CY, CAM::FX, CAM::FY, CAM::FS, CAM::K1, CAM::K2, CAM::K3 };
+        std::vector<int_t> param_order_ext = { CAM::ALPHA, CAM::BETA, CAM::GAMMA, CAM::TX, CAM::TY, CAM::TZ };
         const int_t num_values_base = 22;
         const int_t num_values_expected_with_R = 28;
         bool has_extrinsic = false;
         //const int_t num_values_with_custom_transform = 28;
         int_t total_num_values = 0;
         //create the intrinsic and extrinsic arrays
-        std::vector<scalar_t> intrinsics_c0(MAX_CAM_INTRINSIC_PARAMS, 0);
-        std::vector<scalar_t> extrinsics_c0(MAX_CAM_EXTRINSIC_PARAMS, 0);
-        std::vector<scalar_t> intrinsics_c1(MAX_CAM_INTRINSIC_PARAMS, 0);
-        std::vector<scalar_t> extrinsics_c1(MAX_CAM_EXTRINSIC_PARAMS, 0);
+        std::vector<scalar_t> intrinsics_c0(CAM::MAX_CAM_INTRINSIC_PARAMS, 0);
+        std::vector<scalar_t> extrinsics_c0(CAM::MAX_CAM_EXTRINSIC_PARAMS, 0);
+        std::vector<scalar_t> intrinsics_c1(CAM::MAX_CAM_INTRINSIC_PARAMS, 0);
+        std::vector<scalar_t> extrinsics_c1(CAM::MAX_CAM_EXTRINSIC_PARAMS, 0);
 
         //Run through the file to determine the format
         while (!dataFile.eof())
@@ -399,10 +400,10 @@ namespace DICe {
         dataFile.seekg(0, std::ios::beg);
 
         //text file has cam0 aligned with the world coordinates so all extrinsics are 0 for cam 0
-        for (int_t i = 0; i < MAX_CAM_EXTRINSIC_PARAMS; ++i)
+        for (int_t i = 0; i < CAM::MAX_CAM_EXTRINSIC_PARAMS; ++i)
           extrinsics_c0[i] = 0.0;
-        intrinsics_c0[LD_MODEL] = K1R1_K2R2_K3R3;
-        intrinsics_c1[LD_MODEL] = K1R1_K2R2_K3R3;
+        intrinsics_c0[CAM::LD_MODEL] = CAM::K1R1_K2R2_K3R3;
+        intrinsics_c1[CAM::LD_MODEL] = CAM::K1R1_K2R2_K3R3;
 
         // use default camera ID
         Cameras_[0].set_Identifier("CAMERA 0");
@@ -454,25 +455,25 @@ namespace DICe {
 
     if (num_cams_ != 0) {
       DEBUG_MSG("************************************************************************");
-      DEBUG_MSG("System type: " << systemType3DStrings[sys_type_]);
+      DEBUG_MSG("System type: " << CSys::systemType3DStrings[sys_type_]);
       DEBUG_MSG("Number of Cams: " << num_cams_);
       DEBUG_MSG(" ");
 
       for (int i = 0; i < 10; i++) {
         if (Cameras_[i].camera_filled()) {
-          std::vector<scalar_t> intrinsics(MAX_CAM_INTRINSIC_PARAMS, 0);
-          std::vector<scalar_t> extrinsics(MAX_CAM_EXTRINSIC_PARAMS, 0);
+          std::vector<scalar_t> intrinsics(CAM::MAX_CAM_INTRINSIC_PARAMS, 0);
+          std::vector<scalar_t> extrinsics(CAM::MAX_CAM_EXTRINSIC_PARAMS, 0);
           Cameras_[i].get_Intrinsics(intrinsics);
           Cameras_[i].get_Extrinsics(extrinsics);
 
           DEBUG_MSG("******************* CAMERA: " << i << " ******************************");
           DEBUG_MSG("CamSystem::load_calibration_parameters(): identifier: " << Cameras_[i].get_Identifier());
-          for (int j = 0; j < LD_MODEL; j++)
-            DEBUG_MSG("CamSystem::load_calibration_parameters(): " << camIntrinsicParamsStrings[j] << ": " << intrinsics[j]);
-          int j = LD_MODEL;
-          DEBUG_MSG("CamSystem::load_calibration_parameters(): " << camIntrinsicParamsStrings[j] << ": " << lensDistortionModelStrings[(int)intrinsics[j]]);
-          for (int j = 0; j < MAX_CAM_EXTRINSIC_PARAMS; j++)
-            DEBUG_MSG("CamSystem::load_calibration_parameters(): " << camExtrinsicParamsStrings[j] << ": " << extrinsics[j]);
+          for (int j = 0; j < CAM::LD_MODEL; j++)
+            DEBUG_MSG("CamSystem::load_calibration_parameters(): " << CAM::camIntrinsicParamsStrings[j] << ": " << intrinsics[j]);
+          int j = CAM::LD_MODEL;
+          DEBUG_MSG("CamSystem::load_calibration_parameters(): " << CAM::camIntrinsicParamsStrings[j] << ": " << CAM::lensDistortionModelStrings[(int)intrinsics[j]]);
+          for (int j = 0; j < CAM::MAX_CAM_EXTRINSIC_PARAMS; j++)
+            DEBUG_MSG("CamSystem::load_calibration_parameters(): " << CAM::camExtrinsicParamsStrings[j] << ": " << extrinsics[j]);
           DEBUG_MSG("CamSystem::load_calibration_parameters(): image height: " << Cameras_[i].get_Image_Height());
           DEBUG_MSG("CamSystem::load_calibration_parameters(): image width: " << Cameras_[i].get_Image_Width());
           DEBUG_MSG("CamSystem::load_calibration_parameters(): pixel depth: " << Cameras_[i].get_Pixel_Depth());
@@ -515,7 +516,7 @@ namespace DICe {
     DEBUG_MSG(" ");
     DEBUG_MSG("*****************************save_calibration_parameters**************************");
     DEBUG_MSG("CamSystem::save_calibration_file() was called.");
-    if (sys_type_ == UNKNOWN) {
+    if (sys_type_ == CSys::UNKNOWN_SYSTEM) {
       DEBUG_MSG("CamSystem::save_calibration_file(): the system type has not been set file write canceled");
       return;
     }
@@ -535,10 +536,10 @@ namespace DICe {
     if (all_fields) {
       valid_fields=std::stringstream();
       valid_fields << "type of 3D system valid field values are: ";
-      for (int n = 1; n < MAX_SYSTEM_TYPE_3D; n++) valid_fields << " " << systemType3DStrings[n];
+      for (int n = 1; n < CSys::MAX_SYSTEM_TYPE_3D; n++) valid_fields << " " << CSys::systemType3DStrings[n];
       write_xml_comment(cal_file, valid_fields.str());
     }
-    write_xml_string_param(cal_file, system_type_3D, systemType3DStrings[sys_type_], false);
+    write_xml_string_param(cal_file, system_type_3D, CSys::systemType3DStrings[sys_type_], false);
 
     //camera parameters
     write_xml_comment(cal_file, "camera parameters (zero valued parameters don't need to be specified)");
@@ -547,8 +548,8 @@ namespace DICe {
       write_xml_comment(cal_file, "the sublist must be named CAMERA {#} with {#} the number of the camera starting at 0");
       valid_fields = std::stringstream();
       valid_fields << "valid camera parameter field names are: ";
-      for (int n = 0; n < MAX_CAM_INTRINSIC_PARAMS; n++) valid_fields << " " << camIntrinsicParamsStrings[n];
-      for (int n = 0; n < MAX_CAM_EXTRINSIC_PARAMS; n++) valid_fields << " " << camExtrinsicParamsStrings[n];
+      for (int n = 0; n < CAM::MAX_CAM_INTRINSIC_PARAMS; n++) valid_fields << " " << CAM::camIntrinsicParamsStrings[n];
+      for (int n = 0; n < CAM::MAX_CAM_EXTRINSIC_PARAMS; n++) valid_fields << " " << CAM::camExtrinsicParamsStrings[n];
       write_xml_comment(cal_file, valid_fields.str());
 
       write_xml_comment(cal_file, "CX,CY-image center (pix), FX,FY-pin hole distances (pix), FS-skew (deg)");
@@ -557,7 +558,7 @@ namespace DICe {
 
       valid_fields = std::stringstream();
       valid_fields << "valid values for the lens distortion model are: ";
-      for (int n = 0; n < MAX_LENS_DIS_MODEL; n++) valid_fields << " " << lensDistortionModelStrings[n];
+      for (int n = 0; n < CAM::MAX_LENS_DIS_MODEL; n++) valid_fields << " " << CAM::lensDistortionModelStrings[n];
       write_xml_comment(cal_file, valid_fields.str());
       write_xml_comment(cal_file, "NONE no distortion model");
       write_xml_comment(cal_file, "OPENCV_DIS uses the model defined in openCV 3.4.1");
@@ -593,29 +594,29 @@ namespace DICe {
         param_val << Cameras_[camera_index].get_Identifier();
         write_xml_string_param(cal_file, param_title.str(), param_val.str(), false);
 
-        std::vector<scalar_t> intrinsics(MAX_CAM_INTRINSIC_PARAMS, 0);
+        std::vector<scalar_t> intrinsics(CAM::MAX_CAM_INTRINSIC_PARAMS, 0);
         Cameras_[camera_index].get_Intrinsics(intrinsics);
-        for (int j = 0; j < MAX_CAM_INTRINSIC_PARAMS; j++) {
+        for (int j = 0; j < CAM::MAX_CAM_INTRINSIC_PARAMS; j++) {
           if (intrinsics[j] != 0||all_fields) {
             param_val = std::stringstream();
-            if (j != LD_MODEL) {
+            if (j != CAM::LD_MODEL) {
               param_val << intrinsics[j];
-              write_xml_real_param(cal_file, camIntrinsicParamsStrings[j], param_val.str(), false);
+              write_xml_real_param(cal_file, CAM::camIntrinsicParamsStrings[j], param_val.str(), false);
             }
             else {
-              param_val << lensDistortionModelStrings[(int)intrinsics[j]];
-              write_xml_string_param(cal_file, camIntrinsicParamsStrings[j], param_val.str(), false);
+              param_val << CAM::lensDistortionModelStrings[(int)intrinsics[j]];
+              write_xml_string_param(cal_file, CAM::camIntrinsicParamsStrings[j], param_val.str(), false);
             }
           }
         }
 
-        std::vector<scalar_t> extrinsics(MAX_CAM_EXTRINSIC_PARAMS, 0);
+        std::vector<scalar_t> extrinsics(CAM::MAX_CAM_EXTRINSIC_PARAMS, 0);
         Cameras_[camera_index].get_Extrinsics(extrinsics);
-        for (int j = 0; j < MAX_CAM_EXTRINSIC_PARAMS; j++) {
+        for (int j = 0; j < CAM::MAX_CAM_EXTRINSIC_PARAMS; j++) {
           if (extrinsics[j] != 0 || all_fields) {
             param_val = std::stringstream();
             param_val << extrinsics[j];
-            write_xml_real_param(cal_file, camExtrinsicParamsStrings[j], param_val.str(), false);
+            write_xml_real_param(cal_file, CAM::camExtrinsicParamsStrings[j], param_val.str(), false);
           }
         }
 
@@ -907,15 +908,15 @@ namespace DICe {
     }
 
     scalar_t cx, cy, cz, sx, sy, sz, tx, ty, tz;
-    cx = cos(params[CAM_SYS__ANG_X]);
-    cy = cos(params[CAM_SYS__ANG_Y]);
-    cz = cos(params[CAM_SYS__ANG_Z]);
-    sx = sin(params[CAM_SYS__ANG_X]);
-    sy = sin(params[CAM_SYS__ANG_Y]);
-    sz = sin(params[CAM_SYS__ANG_Z]);
-    tx = params[CAM_SYS__T_X];
-    ty = params[CAM_SYS__T_Y];
-    tz = params[CAM_SYS__T_Z];
+    cx = cos(params[CSys::CAM_SYS__ANG_X]);
+    cy = cos(params[CSys::CAM_SYS__ANG_Y]);
+    cz = cos(params[CSys::CAM_SYS__ANG_Z]);
+    sx = sin(params[CSys::CAM_SYS__ANG_X]);
+    sy = sin(params[CSys::CAM_SYS__ANG_Y]);
+    sz = sin(params[CSys::CAM_SYS__ANG_Z]);
+    tx = params[CSys::CAM_SYS__T_X];
+    ty = params[CSys::CAM_SYS__T_Y];
+    tz = params[CSys::CAM_SYS__T_Z];
 
     rot_trans_3D_x_[0] = cy * cz;
     rot_trans_3D_x_[1] = sx * sy * cz - cx * sz;
@@ -931,44 +932,44 @@ namespace DICe {
     rot_trans_3D_z_[3] = tz;
 
     if (partials) {
-      rot_trans_3D_dx_[CAM_SYS__ANG_X][0] = 0;
-      rot_trans_3D_dx_[CAM_SYS__ANG_X][1] = cx * sy * cz + sx * sz;
-      rot_trans_3D_dx_[CAM_SYS__ANG_X][2] = -sx * sy * cz + cx * sz;
-      rot_trans_3D_dx_[CAM_SYS__ANG_X][3] = 0;
-      rot_trans_3D_dy_[CAM_SYS__ANG_X][0] = 0;
-      rot_trans_3D_dy_[CAM_SYS__ANG_X][1] = cx * sy * sz - sx * cz;
-      rot_trans_3D_dy_[CAM_SYS__ANG_X][2] = - sx * sy * sz - cx * cz;
-      rot_trans_3D_dy_[CAM_SYS__ANG_X][3] = 0;
-      rot_trans_3D_dz_[CAM_SYS__ANG_X][0] = 0;
-      rot_trans_3D_dz_[CAM_SYS__ANG_X][1] = cx * cy;
-      rot_trans_3D_dz_[CAM_SYS__ANG_X][2] = -sx * cy;
-      rot_trans_3D_dz_[CAM_SYS__ANG_X][3] = 0;
+      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_X][0] = 0;
+      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_X][1] = cx * sy * cz + sx * sz;
+      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_X][2] = -sx * sy * cz + cx * sz;
+      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_X][3] = 0;
+      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_X][0] = 0;
+      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_X][1] = cx * sy * sz - sx * cz;
+      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_X][2] = - sx * sy * sz - cx * cz;
+      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_X][3] = 0;
+      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_X][0] = 0;
+      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_X][1] = cx * cy;
+      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_X][2] = -sx * cy;
+      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_X][3] = 0;
 
-      rot_trans_3D_dx_[CAM_SYS__ANG_Y][0] = -sy * cz;
-      rot_trans_3D_dx_[CAM_SYS__ANG_Y][1] = sx * cy * cz;
-      rot_trans_3D_dx_[CAM_SYS__ANG_Y][2] = cx * cy * cz;
-      rot_trans_3D_dx_[CAM_SYS__ANG_Y][3] = 0;
-      rot_trans_3D_dy_[CAM_SYS__ANG_Y][0] = -sy * sz;
-      rot_trans_3D_dy_[CAM_SYS__ANG_Y][1] = sx * cy * sz;
-      rot_trans_3D_dy_[CAM_SYS__ANG_Y][2] = cx * cy * sz;
-      rot_trans_3D_dy_[CAM_SYS__ANG_Y][3] = 0;
-      rot_trans_3D_dz_[CAM_SYS__ANG_Y][0] = -cy;
-      rot_trans_3D_dz_[CAM_SYS__ANG_Y][1] = -sx * sy;
-      rot_trans_3D_dz_[CAM_SYS__ANG_Y][2] = -cx * sy;
-      rot_trans_3D_dz_[CAM_SYS__ANG_Y][3] = 0;
+      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_Y][0] = -sy * cz;
+      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_Y][1] = sx * cy * cz;
+      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_Y][2] = cx * cy * cz;
+      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_Y][3] = 0;
+      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_Y][0] = -sy * sz;
+      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_Y][1] = sx * cy * sz;
+      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_Y][2] = cx * cy * sz;
+      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_Y][3] = 0;
+      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_Y][0] = -cy;
+      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_Y][1] = -sx * sy;
+      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_Y][2] = -cx * sy;
+      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_Y][3] = 0;
 
-      rot_trans_3D_dx_[CAM_SYS__ANG_Z][0] = -cy * sz;
-      rot_trans_3D_dx_[CAM_SYS__ANG_Z][1] = -sx * sy * sz - cx * cz;
-      rot_trans_3D_dx_[CAM_SYS__ANG_Z][2] = -cx * sy * sz + sx * cz;
-      rot_trans_3D_dx_[CAM_SYS__ANG_Z][3] = 0;
-      rot_trans_3D_dy_[CAM_SYS__ANG_Z][0] = cy * cz;
-      rot_trans_3D_dy_[CAM_SYS__ANG_Z][1] = sx * sy * cz - cx * sz;
-      rot_trans_3D_dy_[CAM_SYS__ANG_Z][2] = cx * sy * cz + sx * sz;
-      rot_trans_3D_dy_[CAM_SYS__ANG_Z][3] = 0;
-      rot_trans_3D_dz_[CAM_SYS__ANG_Z][0] = 0;
-      rot_trans_3D_dz_[CAM_SYS__ANG_Z][1] = 0;
-      rot_trans_3D_dz_[CAM_SYS__ANG_Z][2] = 0;
-      rot_trans_3D_dz_[CAM_SYS__ANG_Z][3] = 0;
+      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_Z][0] = -cy * sz;
+      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_Z][1] = -sx * sy * sz - cx * cz;
+      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_Z][2] = -cx * sy * sz + sx * cz;
+      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_Z][3] = 0;
+      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_Z][0] = cy * cz;
+      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_Z][1] = sx * sy * cz - cx * sz;
+      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_Z][2] = cx * sy * cz + sx * sz;
+      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_Z][3] = 0;
+      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_Z][0] = 0;
+      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_Z][1] = 0;
+      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_Z][2] = 0;
+      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_Z][3] = 0;
 
     }
   }

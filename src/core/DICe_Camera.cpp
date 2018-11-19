@@ -39,6 +39,8 @@
 // ************************************************************************
 // @HEADER
 
+#include <DICe.h>
+#include <DICe_LocalShapeFunction.h>
 #include <DICe_Camera.h>
 #include <DICe_Parser.h>
 #include <fstream>
@@ -49,14 +51,17 @@
 #include <math.h>
 
 
-namespace DICe {
 
+
+namespace DICe {
+  namespace CAM = DICe_Camera;
+  namespace LSFunc = DICe_LocalShapeFunction;
   DICE_LIB_DLL_EXPORT
     void Camera::clear_camera() {
 
     //clear the intrinsic and extrinsic values
-    intrinsics_.assign(MAX_CAM_INTRINSIC_PARAMS, 0.0);
-    extrinsics_.assign(MAX_CAM_EXTRINSIC_PARAMS, 0.0);
+    intrinsics_.assign(CAM::MAX_CAM_INTRINSIC_PARAMS, 0.0);
+    extrinsics_.assign(CAM::MAX_CAM_EXTRINSIC_PARAMS, 0.0);
 
     //clear the camera to world coordinate transform values
     cam_world_trans_.clear();
@@ -121,12 +126,12 @@ namespace DICe {
     //create the matrix from the alpha, beta, gamma values if not filled or all zeros
     if (!nonzero_matrix || !rot_3x3_matrix_filled_) {
       scalar_t cx, cy, cz, sx, sy, sz;
-      cx = cos(extrinsics_[ALPHA] * DICE_PI / 180.0);
-      cy = cos(extrinsics_[BETA] * DICE_PI / 180.0);
-      cz = cos(extrinsics_[GAMMA] * DICE_PI / 180.0);
-      sx = sin(extrinsics_[ALPHA] * DICE_PI / 180.0);
-      sy = sin(extrinsics_[BETA] * DICE_PI / 180.0);
-      sz = sin(extrinsics_[GAMMA] * DICE_PI / 180.0);
+      cx = cos(extrinsics_[CAM::ALPHA] * DICE_PI / 180.0);
+      cy = cos(extrinsics_[CAM::BETA] * DICE_PI / 180.0);
+      cz = cos(extrinsics_[CAM::GAMMA] * DICE_PI / 180.0);
+      sx = sin(extrinsics_[CAM::ALPHA] * DICE_PI / 180.0);
+      sy = sin(extrinsics_[CAM::BETA] * DICE_PI / 180.0);
+      sz = sin(extrinsics_[CAM::GAMMA] * DICE_PI / 180.0);
 
       rotation_3x3_matrix_[0][0] = cy * cz;
       rotation_3x3_matrix_[0][1] = sx*sy*cz-sz*cx;
@@ -151,9 +156,9 @@ namespace DICe {
         world_cam_trans_[i][j] = rotation_3x3_matrix_[i][j];
       }
     }
-    world_cam_trans_[0][3] = extrinsics_[TX];
-    world_cam_trans_[1][3] = extrinsics_[TY];
-    world_cam_trans_[2][3] = extrinsics_[TZ];
+    world_cam_trans_[0][3] = extrinsics_[CAM::TX];
+    world_cam_trans_[1][3] = extrinsics_[CAM::TY];
+    world_cam_trans_[2][3] = extrinsics_[CAM::TZ];
     world_cam_trans_[3][3] = 1.0;
 
     //the cam to world transform will be the invers of the matrix
@@ -184,11 +189,11 @@ namespace DICe {
     bool end_loop;
 
     //get the needed intrinsic values
-    const scalar_t fx = intrinsics_[FX];
-    const scalar_t fy = intrinsics_[FY];
-    const scalar_t fs = intrinsics_[FS];
-    const scalar_t cx = intrinsics_[CX];
-    const scalar_t cy = intrinsics_[CY];
+    const scalar_t fx = intrinsics_[CAM::FX];
+    const scalar_t fy = intrinsics_[CAM::FY];
+    const scalar_t fs = intrinsics_[CAM::FS];
+    const scalar_t cx = intrinsics_[CAM::CX];
+    const scalar_t cy = intrinsics_[CAM::FY];
 
     //set the image size
     image_size = image_height_ * image_width_;
@@ -287,26 +292,26 @@ namespace DICe {
       std::vector<scalar_t> & image_y) {
     //converts sensor locations to image locations by applying lens distortions
     //scaling with fx and fy and shifting by cx, cy.
-    const scalar_t fx = intrinsics_[FX];
-    const scalar_t fy = intrinsics_[FY];
-    const scalar_t fs = intrinsics_[FS];
-    const scalar_t cx = intrinsics_[CX];
-    const scalar_t cy = intrinsics_[CY];
-    const scalar_t k1 = intrinsics_[K1];
-    const scalar_t k2 = intrinsics_[K2];
-    const scalar_t k3 = intrinsics_[K3];
-    const scalar_t k4 = intrinsics_[K4];
-    const scalar_t k5 = intrinsics_[K5];
-    const scalar_t k6 = intrinsics_[K6];
-    const scalar_t p1 = intrinsics_[P1];
-    const scalar_t p2 = intrinsics_[P2];
-    const scalar_t s1 = intrinsics_[S1];
-    const scalar_t s2 = intrinsics_[S2];
-    const scalar_t s3 = intrinsics_[S3];
-    const scalar_t s4 = intrinsics_[S4];
-    const scalar_t t1 = intrinsics_[T1];
-    const scalar_t t2 = intrinsics_[T2];
-    const int_t lens_dis_type = (int_t)intrinsics_[LD_MODEL];
+    const scalar_t fx = intrinsics_[CAM::FX];
+    const scalar_t fy = intrinsics_[CAM::FY];
+    const scalar_t fs = intrinsics_[CAM::FS];
+    const scalar_t cx = intrinsics_[CAM::CX];
+    const scalar_t cy = intrinsics_[CAM::FY];
+    const scalar_t k1 = intrinsics_[CAM::K1];
+    const scalar_t k2 = intrinsics_[CAM::K2];
+    const scalar_t k3 = intrinsics_[CAM::K3];
+    const scalar_t k4 = intrinsics_[CAM::K4];
+    const scalar_t k5 = intrinsics_[CAM::K5];
+    const scalar_t k6 = intrinsics_[CAM::K6];
+    const scalar_t p1 = intrinsics_[CAM::P1];
+    const scalar_t p2 = intrinsics_[CAM::P2];
+    const scalar_t s1 = intrinsics_[CAM::S1];
+    const scalar_t s2 = intrinsics_[CAM::S2];
+    const scalar_t s3 = intrinsics_[CAM::S3];
+    const scalar_t s4 = intrinsics_[CAM::S4];
+    const scalar_t t1 = intrinsics_[CAM::T1];
+    const scalar_t t2 = intrinsics_[CAM::T2];
+    const int_t lens_dis_type = (int_t)intrinsics_[CAM::LD_MODEL];
     scalar_t x_sen, y_sen, rad, dis_coef, rad_sqr;
     scalar_t x_temp, y_temp;
     int_t vect_size=0;
@@ -316,14 +321,14 @@ namespace DICe {
     //use the appropriate lens distortion model (only 8 parameter openCV has been tested)
     switch (lens_dis_type) {
 
-    case NONE:
+    case CAM::NO_DIS_MODEL:
       for (int_t i = 0; i < vect_size; i++) {
         image_x[i] = sen_x[i] * fx + cx;
         image_y[i] = sen_y[i] * fy + cy;
       }
     break;
 
-    case K1R1_K2R2_K3R3:
+    case CAM::K1R1_K2R2_K3R3:
       for (int_t i = 0; i < vect_size; i++) {
         x_sen = sen_x[i];
         y_sen = sen_y[i];
@@ -336,7 +341,7 @@ namespace DICe {
       }
     break;
 
-    case K1R2_K2R4_K3R6:
+    case CAM::K1R2_K2R4_K3R6:
       for (int_t i = 0; i < vect_size; i++) {
         x_sen = sen_x[i];
         y_sen = sen_y[i];
@@ -349,7 +354,7 @@ namespace DICe {
       }
     break;
 
-    case K1R3_K2R5_K3R7:
+    case CAM::K1R3_K2R5_K3R7:
       for (int_t i = 0; i < vect_size; i++) {
         x_sen = sen_x[i];
         y_sen = sen_y[i];
@@ -362,7 +367,7 @@ namespace DICe {
       }
     break;
 
-    case VIC3D_DIS:  //I believe it is K1R1_K2R2_K3R3 but need to confirm
+    case CAM::VIC3D_DIS:  //I believe it is K1R1_K2R2_K3R3 but need to confirm
       for (int_t i = 0; i < vect_size; i++) {
         x_sen = sen_x[i];
         y_sen = sen_y[i];
@@ -376,7 +381,7 @@ namespace DICe {
       }
     break;
 
-    case OPENCV_DIS:
+    case CAM::OPENCV_DIS:
       //equations from: https://docs.opencv.org/3.4.1/d9/d0c/group__calib3d.html
       {
         const bool has_denom = (k4 != 0 || k5 != 0 || k6 != 0);
@@ -491,9 +496,9 @@ namespace DICe {
     //and does not effect the derivities. The scaling factors and skew will.
     sensor_to_image(sen_x, sen_y, image_x, image_y);
 
-    const scalar_t fx = intrinsics_[FX];
-    const scalar_t fy = intrinsics_[FY];
-    const scalar_t fs = intrinsics_[FS];
+    const scalar_t fx = intrinsics_[CAM::FX];
+    const scalar_t fy = intrinsics_[CAM::FY];
+    const scalar_t fs = intrinsics_[CAM::FS];
     int_t vect_size = 0;
 
     vect_size = (int_t)(sen_x.size());
@@ -518,9 +523,9 @@ namespace DICe {
       std::vector<scalar_t> & params)
   {
     //project the sensor locations onto a plane in space defined by zp, theta, phi 
-    scalar_t zp = params[ZP];
-    scalar_t theta = params[THETA];
-    scalar_t phi = params[PHI];
+    scalar_t zp = params[LSFunc::ZP];
+    scalar_t theta = params[LSFunc::THETA];
+    scalar_t phi = params[LSFunc::PHI];
     scalar_t cos_theta, cos_phi, cos_xi;
     scalar_t x_sen, y_sen, denom;
     int_t vect_size;
@@ -553,9 +558,9 @@ namespace DICe {
       std::vector<std::vector<scalar_t>> & cam_dz)
   {
     //overloaded for first derivitives
-    scalar_t zp = params[ZP];
-    scalar_t theta = params[THETA];
-    scalar_t phi = params[PHI];
+    scalar_t zp = params[LSFunc::ZP];
+    scalar_t theta = params[LSFunc::THETA];
+    scalar_t phi = params[LSFunc::PHI];
     scalar_t cos_theta, cos_phi, cos_xi, sin_theta, sin_phi;
     scalar_t cos_xi_dzp, cos_xi_dtheta, cos_xi_dphi;
     scalar_t x_sen, y_sen, denom, denom2;
@@ -612,17 +617,17 @@ namespace DICe {
       cam_z[i] = uzcam / denom;
 
       //first derivities
-      cam_dx[ZP][i] = (denom * uxcam_dzp - uxcam * denom_dzp) / denom2;
-      cam_dx[THETA][i] = (denom * uxcam_dtheta - uxcam * denom_dtheta) / denom2;
-      cam_dx[PHI][i] = (denom * uxcam_dphi - uxcam * denom_dphi) / denom2;
+      cam_dx[LSFunc::ZP][i] = (denom * uxcam_dzp - uxcam * denom_dzp) / denom2;
+      cam_dx[LSFunc::THETA][i] = (denom * uxcam_dtheta - uxcam * denom_dtheta) / denom2;
+      cam_dx[LSFunc::PHI][i] = (denom * uxcam_dphi - uxcam * denom_dphi) / denom2;
 
-      cam_dy[ZP][i] = (denom * uycam_dzp - uycam * denom_dzp) / denom2;
-      cam_dy[THETA][i] = (denom * uycam_dtheta - uycam * denom_dtheta) / denom2;
-      cam_dy[PHI][i] = (denom * uycam_dphi - uycam * denom_dphi) / denom2;
+      cam_dy[LSFunc::ZP][i] = (denom * uycam_dzp - uycam * denom_dzp) / denom2;
+      cam_dy[LSFunc::THETA][i] = (denom * uycam_dtheta - uycam * denom_dtheta) / denom2;
+      cam_dy[LSFunc::PHI][i] = (denom * uycam_dphi - uycam * denom_dphi) / denom2;
 
-      cam_dz[ZP][i] = (denom * uzcam_dzp - uzcam * denom_dzp) / denom2;
-      cam_dz[THETA][i] = (denom * uzcam_dtheta - uzcam * denom_dtheta) / denom2;
-      cam_dz[PHI][i] = (denom * uzcam_dphi - uzcam * denom_dphi) / denom2;
+      cam_dz[LSFunc::ZP][i] = (denom * uzcam_dzp - uzcam * denom_dzp) / denom2;
+      cam_dz[LSFunc::THETA][i] = (denom * uzcam_dtheta - uzcam * denom_dtheta) / denom2;
+      cam_dz[LSFunc::PHI][i] = (denom * uzcam_dphi - uzcam * denom_dphi) / denom2;
 
     }
   }
@@ -771,11 +776,11 @@ namespace DICe {
     bool is_valid = true;
     std::stringstream message;
     message = std::stringstream();
-    if (intrinsics_[FX] <= 0) {
+    if (intrinsics_[CAM::FX] <= 0) {
       message << "fx must be greater than 0" << "\n";
       is_valid = false;
     }
-    if (intrinsics_[FY] <= 0) {
+    if (intrinsics_[CAM::FY] <= 0) {
       message << "fy must be greater than 0" << "\n";
       is_valid = false;
     }

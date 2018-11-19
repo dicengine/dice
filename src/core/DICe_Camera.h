@@ -57,6 +57,105 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
 
+namespace DICe_Camera {
+
+
+
+  enum Lens_Distortion_Model {
+    NO_DIS_MODEL = 0,
+    OPENCV_DIS,
+    VIC3D_DIS,
+    K1R1_K2R2_K3R3,
+    K1R2_K2R4_K3R6,
+    K1R3_K2R5_K3R7,
+    //DON"T ADD ANY BELOW MAX
+    MAX_LENS_DIS_MODEL,
+    NO_SUCH_LENS_DIS_MODEL
+  };
+
+  const static char * lensDistortionModelStrings[] = {
+    "NONE",
+    "OPENCV_DIS",
+    "VIC3D_DIS",
+    "K1R1_K2R2_K3R3",
+    "K1R2_K2R4_K3R6",
+    "K1R3_K2R5_K3R7"
+  };
+
+
+  enum Cam_Intrinsic_Params {
+    CX = 0,
+    CY,
+    FX,
+    FY,
+    FS,
+    K1,
+    K2,
+    K3,
+    K4,
+    K5,
+    K6,
+    P1,
+    P2,
+    S1,
+    S2,
+    S3,
+    S4,
+    T1,
+    T2,
+    LD_MODEL,
+    //DON"T ADD ANY BELOW MAX
+    MAX_CAM_INTRINSIC_PARAMS,
+    NO_SUCH_CAM_INTRINSIC_PARAMS
+  };
+
+  const static char * camIntrinsicParamsStrings[] = {
+    "CX",
+    "CY",
+    "FX",
+    "FY",
+    "FS",
+    "K1",
+    "K2",
+    "K3",
+    "K4",
+    "K5",
+    "K6",
+    "P1",
+    "P2",
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "T1",
+    "T2",
+    "LD_MODEL"
+  };
+
+
+  enum Cam_Extrinsic_Params {
+    ALPHA = 0,
+    BETA,
+    GAMMA,
+    TX,
+    TY,
+    TZ,
+    //DON"T ADD ANY BELOW MAX
+    MAX_CAM_EXTRINSIC_PARAMS,
+    NO_SUCH_CAM_EXTRINSIC_PARAMS
+  };
+
+  const static char * camExtrinsicParamsStrings[] = {
+    "ALPHA",
+    "BETA",
+    "GAMMA",
+    "TX",
+    "TY",
+    "TZ"
+  };
+}
+
+
 namespace DICe {
 
 
@@ -169,27 +268,27 @@ namespace DICe {
 
     ///gets/sets intrinsic values
     void set_Intrinsics(std::vector<scalar_t> & intrinsics) {
-      for (int_t i = 0; i < MAX_CAM_INTRINSIC_PARAMS; i++) {
+      for (int_t i = 0; i < DICe_Camera::MAX_CAM_INTRINSIC_PARAMS; i++) {
         if (intrinsics_[i] != intrinsics[i]) camera_prepped_ = false;
         intrinsics_[i] = intrinsics[i];
       }
       camera_filled_ = true;
     }
     void get_Intrinsics(std::vector<scalar_t> & intrinsics) {
-      for (int_t i = 0; i < MAX_CAM_INTRINSIC_PARAMS; i++)
+      for (int_t i = 0; i < DICe_Camera::MAX_CAM_INTRINSIC_PARAMS; i++)
         intrinsics[i] = intrinsics_[i];
     }
 
     ///gets/sets extrinsic values
     void set_Extrinsics(std::vector<scalar_t> & extrinsics) {
-      for (int_t i = 0; i < MAX_CAM_EXTRINSIC_PARAMS; i++) {
+      for (int_t i = 0; i < DICe_Camera::MAX_CAM_EXTRINSIC_PARAMS; i++) {
         if (extrinsics_[i] != extrinsics[i]) camera_prepped_ = false;
         extrinsics_[i] = extrinsics[i];
       }
       camera_filled_ = true;
     }
     void get_Extrinsics(std::vector<scalar_t> & extrinsics) {
-      for (int_t i = 0; i < MAX_CAM_EXTRINSIC_PARAMS; i++)
+      for (int_t i = 0; i < DICe_Camera::MAX_CAM_EXTRINSIC_PARAMS; i++)
         extrinsics[i] = extrinsics_[i];
     }
 

@@ -494,132 +494,6 @@ const static char * correlationRoutineStrings[] = {
 };
 
 
-enum System_Type_3D {
-  UNKNOWN = 0,
-  GENERIC_SYSTEM,
-  OPENCV,
-  VIC3D,
-  DICE,
-  //DON"T ADD ANY BELOW MAX
-  MAX_SYSTEM_TYPE_3D,
-  NO_SUCH_SYSTEM_TYPE_3D
-};
-
-const static char * systemType3DStrings[] = {
-  "UNKNOWN",
-  "GENERIC_SYSTEM",
-  "OPENCV",
-  "VIC3D",
-  "DICE"
-};
-
-enum Lens_Distortion_Model {
-  NONE = 0,
-  OPENCV_DIS,
-  VIC3D_DIS,
-  K1R1_K2R2_K3R3,
-  K1R2_K2R4_K3R6,
-  K1R3_K2R5_K3R7,
-  //DON"T ADD ANY BELOW MAX
-  MAX_LENS_DIS_MODEL,
-  NO_SUCH_LENS_DIS_MODEL
-};
-
-const static char * lensDistortionModelStrings[] = {
-  "NONE",
-  "OPENCV_DIS",
-  "VIC3D_DIS",
-  "K1R1_K2R2_K3R3",
-  "K1R2_K2R4_K3R6",
-  "K1R3_K2R5_K3R7"
-};
-
-enum Projection_Params {
-  ZP = 0,
-  THETA,
-  PHI,
-  MAX_CAM_PROJECTION_PARAMS,
-  NO_SUCH_CAM_PROJECTION_PARAMS
-};
-
-const static char * projectionParamsStrings[] = {
-  "ZP",
-  "THETA",
-  "PHI"
-};
-
-
-enum Cam_Intrinsic_Params {
-  CX = 0,
-  CY,
-  FX,
-  FY,
-  FS,
-  K1,
-  K2,
-  K3,
-  K4,
-  K5,
-  K6,
-  P1,
-  P2,
-  S1,
-  S2,
-  S3,
-  S4,
-  T1,
-  T2,
-  LD_MODEL,
-  //DON"T ADD ANY BELOW MAX
-  MAX_CAM_INTRINSIC_PARAMS,
-  NO_SUCH_CAM_INTRINSIC_PARAMS
-};
-
-const static char * camIntrinsicParamsStrings[] = {
-  "CX",
-  "CY",
-  "FX",
-  "FY",
-  "FS",
-  "K1",
-  "K2",
-  "K3",
-  "K4",
-  "K5",
-  "K6",
-  "P1",
-  "P2",
-  "S1",
-  "S2",
-  "S3",
-  "S4",
-  "T1",
-  "T2",
-  "LD_MODEL"
-};
-
-
-enum Cam_Extrinsic_Params {
-  ALPHA = 0,
-  BETA,
-  GAMMA,
-  TX,
-  TY,
-  TZ,
-  //DON"T ADD ANY BELOW MAX
-  MAX_CAM_EXTRINSIC_PARAMS,
-  NO_SUCH_CAM_EXTRINSIC_PARAMS
-};
-
-const static char * camExtrinsicParamsStrings[] = {
-  "ALPHA",
-  "BETA",
-  "GAMMA",
-  "TX",
-  "TY",
-  "TZ"
-};
-
 
 /// Status flags
 enum Status_Flag{
@@ -1421,5 +1295,12 @@ const Correlation_Parameter valid_global_correlation_params[num_valid_global_cor
 
 
 } // end DICe namespace
+
+
+
+
+
+
+
 
 #endif

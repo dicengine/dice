@@ -42,11 +42,10 @@
 #ifndef DICE_CAM_SYSTEM_H
 #define DICE_CAM_SYSTEM_H
 
-
-#include <DICe_Camera.h>
-
 #include <DICe.h>
+#include <DICe_Camera.h>
 #include <DICe_Image.h>
+
 #ifdef DICE_TPETRA
 #include "DICe_MultiFieldTpetra.h"
 #else
@@ -59,7 +58,40 @@
 #include <cassert>
 #include <vector>
 
+namespace DICe_CamSystem {
+  enum System_Type_3D {
+    UNKNOWN_SYSTEM = 0,
+    GENERIC_SYSTEM,
+    OPENCV,
+    VIC3D,
+    DICE,
+    //DON"T ADD ANY BELOW MAX
+    MAX_SYSTEM_TYPE_3D,
+    NO_SUCH_SYSTEM_TYPE_3D
+  };
+
+  const static char * systemType3DStrings[] = {
+    "UNKNOWN",
+    "GENERIC_SYSTEM",
+    "OPENCV",
+    "VIC3D",
+    "DICE"
+  };
+
+  enum Rot_Trans_3D_Params {
+    CAM_SYS__ANG_X = 0,
+    CAM_SYS__ANG_Y,
+    CAM_SYS__ANG_Z,
+    CAM_SYS__T_X,
+    CAM_SYS__T_Y,
+    CAM_SYS__T_Z
+  };
+
+}
+
 namespace DICe {
+
+
   /*  Keep as template for declarations for projection matricies
   /// free function to estimate a 9 parameter affine projection
   /// \param proj_xl x coordinates of the points in the left image or coordinate system
@@ -82,14 +114,7 @@ namespace DICe {
     CamSystem {
   public:
 
-    enum Rot_Trans_3D_Params {
-      CAM_SYS__ANG_X = 0,
-      CAM_SYS__ANG_Y,
-      CAM_SYS__ANG_Z,
-      CAM_SYS__T_X,
-      CAM_SYS__T_Y,
-      CAM_SYS__T_Z
-    };
+
 
     /// \brief Default constructor
     /// \param param_file_name the name of the file to parse the calibration parameters from
@@ -161,13 +186,13 @@ namespace DICe {
     //get the number of the first camera with a matching identifier
     int get_Camera_Num_From_ID(std::string cam_id) {
       stringToUpper(cam_id);
-      int_t cam_num = -1;
       std::string id_val;
       for (int_t i = 0; i < MAX_NUM_CAMERAS_PER_SYSTEM; i++) {
         id_val = Cameras_[i].get_Identifier();
         stringToUpper(id_val);
         if (id_val==cam_id)return i;
       }
+      return -1;
     }
 
     // minimun constructor for the entire camera
@@ -432,7 +457,7 @@ namespace DICe {
     std::string msg_;
 
 
-    int_t sys_type_ = UNKNOWN;
+    int_t sys_type_ = (int_t)DICe_CamSystem::UNKNOWN_SYSTEM;
     bool has_6_transform_ = false;
     bool has_4x4_transform_ = false;
     bool has_opencv_rot_trans_ = false;

@@ -41,54 +41,55 @@
 
 #include <DICe_CamSystem.h>
 
-using namespace DICe;
+namespace DICe {
 
-int main(int argc, char *argv[]) {
+  int main(int argc, char *argv[]) {
 
-  DICe::initialize(argc, argv);
+    DICe::initialize(argc, argv);
 
-  try {
-    bool allFields = true;
-    //temp for testing
-    std::string cal_file_name;
-    std::string cal_file_dir;
-    std::string cal_file;
-    std::string save_file;
-    std::vector<std::string> file_names;
-    file_names.push_back("VIC_cal_a.xml");
-    file_names.push_back("DICe_cal_a.xml");
-    file_names.push_back("TXT_cal_a.txt");
-    file_names.push_back("TXT_cal_a_with_R.txt");
-    file_names.push_back("TXT_cal_a_with_transform.txt");
-    for (int_t i = 0; i < 5; i++)
-    {
-      cal_file_dir = "C:\\Users\\jhelm\\Documents\\DICe\\DICecode\\tests\\component\\cal\\";
-      cal_file = cal_file_dir + file_names[i] + "";
-      Teuchos::RCP<CamSystem> cam_sys = Teuchos::rcp(new CamSystem());
-      cam_sys->load_calibration_parameters(cal_file);
+    try {
+      bool allFields = true;
+      //temp for testing
+      std::string cal_file_name;
+      std::string cal_file_dir;
+      std::string cal_file;
+      std::string save_file;
+      std::vector<std::string> file_names;
+      file_names.push_back("VIC_cal_a.xml");
+      file_names.push_back("DICe_cal_a.xml");
+      file_names.push_back("TXT_cal_a.txt");
+      file_names.push_back("TXT_cal_a_with_R.txt");
+      file_names.push_back("TXT_cal_a_with_transform.txt");
+      for (int_t i = 0; i < 5; i++)
+      {
+        cal_file_dir = "C:\\Users\\jhelm\\Documents\\DICe\\DICecode\\tests\\component\\cal\\";
+        cal_file = cal_file_dir + file_names[i] + "";
+        Teuchos::RCP<CamSystem> cam_sys = Teuchos::rcp(new CamSystem());
+        cam_sys->load_calibration_parameters(cal_file);
 
-      file_names[i].pop_back();
-      file_names[i].pop_back();
-      file_names[i].pop_back();
-      file_names[i].push_back('x');
-      file_names[i].push_back('m');
-      file_names[i].push_back('l');
+        file_names[i].pop_back();
+        file_names[i].pop_back();
+        file_names[i].pop_back();
+        file_names[i].push_back('x');
+        file_names[i].push_back('m');
+        file_names[i].push_back('l');
 
-      if (allFields)
-        save_file = cal_file_dir + "DICe_allFields_" + file_names[i];
-      else
-        save_file = cal_file_dir + "DICe_" + file_names[i];
+        if (allFields)
+          save_file = cal_file_dir + "DICe_allFields_" + file_names[i];
+        else
+          save_file = cal_file_dir + "DICe_" + file_names[i];
 
-      cam_sys->save_calibration_file(save_file, allFields);
+        cam_sys->save_calibration_file(save_file, allFields);
+      }
+
     }
+    catch (std::exception & e) {
+      std::cout << e.what() << std::endl;
+      return 1;
+    }
+    DICe::finalize();
+    return 0;
 
   }
-  catch (std::exception & e) {
-    std::cout << e.what() << std::endl;
-    return 1;
-  }
-  DICe::finalize();
-  return 0;
 
 }
-
