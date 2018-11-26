@@ -419,8 +419,15 @@ Feature_Matching_Initializer::pre_execution_tasks(){
     std::stringstream outname;
     outname << "fm_initializer_" << schema_->mesh()->get_comm()->get_rank() << ".png";
     match_features(prev_img_,schema_->def_img(0),left_x,left_y,right_x,right_y,tol,outname.str());
-    const int_t num_matches = left_x.size();
+    int_t num_matches = left_x.size();
     DEBUG_MSG("number of features matched: " << num_matches);
+    // test if not enough features were found, if so try a tighter tolerance
+    if(num_matches < 10){
+      DEBUG_MSG("did not find enough features, attempting again with tighter tolerance");
+      const float tight_tol = 0.001f;
+      match_features(prev_img_,schema_->def_img(0),left_x,left_y,right_x,right_y,tight_tol,outname.str());
+      num_matches = left_x.size();
+    }
     TEUCHOS_TEST_FOR_EXCEPTION(num_matches < 10,std::runtime_error,"Error, not enough features matched for feature matching initializer");
   }
   // create a point cloud and find the nearest neighbor:
