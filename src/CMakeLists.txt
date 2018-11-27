@@ -132,22 +132,6 @@ include_directories (
 add_library(dicecore ${DICE_SOURCES} ${DICE_HEADERS})
 target_link_libraries(dicecore ${DICE_LIBRARIES} ${OpenCV_LIBRARIES} diceutils)
 
-find_library(jbig_lib libjbig.a)
-if(jbig_lib)
-  MESSAGE(STATUS "Using lib jbig from: ${jbig_lib}")
-  target_link_libraries(dicecore jbig)
-endif()
-find_library(lzma_lib liblzma.a)
-if(lzma_lib)
-  MESSAGE(STATUS "Using lib lzma from: ${lzma_lib}")
-  target_link_libraries(dicecore lzma)
-endif()
-find_library(z_lib libz.a)
-if(z_lib)
-  MESSAGE(STATUS "Using lib z from: ${z_lib}")
-  target_link_libraries(dicecore z)
-endif()
-
 target_compile_definitions(dicecore PRIVATE -D DICE_LIB_EXPORTS_MODE)
 add_dependencies(dicecore DICe_utils)
 
