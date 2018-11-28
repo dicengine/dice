@@ -2573,7 +2573,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
       // write the results to the .info file
       if(proc_id==0){
         std::FILE * infoFilePtr = fopen(data_name.str().c_str(),"a");
-        fprintf(infoFilePtr,result_stream.str().c_str());
+        fprintf(infoFilePtr,"%s",result_stream.str().c_str());
         fclose(infoFilePtr);
         *outStream << result_stream.str();
       }
