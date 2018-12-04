@@ -422,7 +422,7 @@ Feature_Matching_Initializer::pre_execution_tasks(){
     int_t num_matches = left_x.size();
     DEBUG_MSG("number of features matched: " << num_matches);
     // test if not enough features were found, if so try a tighter tolerance
-    if(num_matches < 10){
+    if(num_matches < 50){
       DEBUG_MSG("did not find enough features, attempting again with tighter tolerance");
       const float tight_tol = 0.001f;
       match_features(prev_img_,schema_->def_img(0),left_x,left_y,right_x,right_y,tight_tol,outname.str());
@@ -454,9 +454,17 @@ Status_Flag
 Feature_Matching_Initializer::initial_guess(const int_t subset_gid,
   Teuchos::RCP<Local_Shape_Function> shape_function){
 
+  // open a file for the rotations output
+  //std::ofstream fout;
+  //std::stringstream output_file_name;
+  //output_file_name << "rotations_" << schema_->frame_id() << ".txt";
+  //fout.open(output_file_name.str(),std::ofstream::out | std::ofstream::app);
+
   if(schema_->global_field_value(subset_gid,SIGMA_FS)<0)
     return INITIALIZE_FAILED;
-  const int_t num_neighbors = 1;
+  int_t num_neighbors = 7;
+  const int_t num_outlier_remove = 2;
+  assert(num_neighbors>num_outlier_remove+1);
   // now set up the neighbor list for each triad:
   //std::vector<size_t>(subset_->num_pixels()*num_neighbors_,0);
   const scalar_t current_loc_x = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS) + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
@@ -467,14 +475,68 @@ Feature_Matching_Initializer::initial_guess(const int_t subset_gid,
   query_pt[0] = current_loc_x;
   query_pt[1] = current_loc_y;
   kd_tree_->knnSearch(&query_pt[0], num_neighbors, &ret_index[0], &out_dist_sqr[0]);
-  const int_t nearest_feature_id = ret_index[0];
-  TEUCHOS_TEST_FOR_EXCEPTION((int_t)u_.size()<=nearest_feature_id,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION((int_t)v_.size()<=nearest_feature_id,std::runtime_error,"");
-  shape_function->insert_motion(u_[nearest_feature_id] + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS),
-    v_[nearest_feature_id] + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS),
-    schema_->global_field_value(subset_gid,ROTATION_Z_FS));
-  DEBUG_MSG("Subset " << subset_gid << " init. with values: u " << u_[nearest_feature_id] + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) <<
-    " v " << v_[nearest_feature_id] + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) << " dist from nearest feature: " << std::sqrt(out_dist_sqr[0]) << " px");
+
+  // create a set of all the neighbors and filter out the ones that move the furthest since the last step
+  // TODO come up with a better outlier criteria (this is used to prevent the wild feature matches that
+  // sometimes show up)
+
+  // feature traslation distance is first, second is neighbor id
+  std::vector<std::pair<scalar_t,int_t> > dist_neighbors;
+  for(int_t neigh = 0;neigh<num_neighbors;++neigh){
+    const int_t feature_id = ret_index[neigh];
+    assert(feature_id>=0&&feature_id<u_.size());
+    const scalar_t dist_sq = u_[feature_id]*u_[feature_id]+v_[feature_id]*v_[feature_id];
+    dist_neighbors.push_back(std::pair<scalar_t,int_t>(dist_sq,feature_id));
+  }
+  std::sort(dist_neighbors.begin(),dist_neighbors.end());
+  scalar_t avg_u = 0.0;
+  scalar_t avg_v = 0.0;
+  scalar_t centroid_x = 0.0;
+  scalar_t centroid_y = 0.0;
+  // resize the num_neighbors to only include the trimmed sorted vector
+  num_neighbors = num_neighbors-num_outlier_remove;
+  for(int_t neigh=0;neigh<num_neighbors;++neigh){
+    const int_t feature_id = dist_neighbors[neigh].second;
+    avg_u += u_[feature_id];
+    avg_v += v_[feature_id];
+    centroid_x += point_cloud_->pts[feature_id].x;
+    centroid_y += point_cloud_->pts[feature_id].y;
+  }
+  avg_u/=num_neighbors;
+  avg_v/=num_neighbors;
+  centroid_x/=num_neighbors;
+  centroid_y/=num_neighbors;
+  const scalar_t centroid_x_prime = centroid_x + avg_u;
+  const scalar_t centroid_y_prime = centroid_y + avg_v;
+
+  // work out the average angle
+  scalar_t avg_theta = 0.0;
+  for(int_t neigh=0;neigh<num_neighbors;++neigh){
+    const int_t feature_id = dist_neighbors[neigh].second;
+    const scalar_t vec_a_x = point_cloud_->pts[feature_id].x - centroid_x;
+    const scalar_t vec_a_y = point_cloud_->pts[feature_id].y - centroid_y;
+    const scalar_t vec_b_x = point_cloud_->pts[feature_id].x + u_[feature_id] - centroid_x_prime;
+    const scalar_t vec_b_y = point_cloud_->pts[feature_id].y + v_[feature_id] - centroid_y_prime;
+    const scalar_t a_dot_b = vec_a_x*vec_b_x + vec_a_y*vec_b_y;
+    const scalar_t mag_a = std::sqrt(vec_a_x*vec_a_x + vec_a_y*vec_a_y);
+    const scalar_t mag_b = std::sqrt(vec_b_x*vec_b_x + vec_b_y*vec_b_y);
+    const scalar_t cross = vec_a_x*vec_b_y - vec_b_x*vec_a_y;
+    const scalar_t sign = cross > 0.0 ? 1.0 : -1.0;
+    scalar_t theta_pt = sign*std::acos(a_dot_b/(mag_a*mag_b)); // negative one added because of the sign convention in DICe
+    if(std::isnan(theta_pt))theta_pt = 0.0;
+    avg_theta+=theta_pt;
+  }
+  avg_theta/=num_neighbors;
+
+  //fout << subset_gid << " " << avg_u << " " << avg_v << " " << avg_theta << std::endl;
+  DEBUG_MSG("Subset " << subset_gid << " feature matched increments: u " << avg_u << " v " << avg_v << " theta " << avg_theta);
+  shape_function->insert_motion(avg_u + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS),
+    avg_v + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS),
+    avg_theta + schema_->global_field_value(subset_gid,ROTATION_Z_FS));
+  DEBUG_MSG("Subset " << subset_gid << " init. with values: u " << avg_u + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) <<
+    " v " << avg_v + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) <<
+    " theta " << avg_theta + schema_->global_field_value(subset_gid,ROTATION_Z_FS) <<
+    " dist from nearest feature: " << std::sqrt(out_dist_sqr[0]) << " px");
   return INITIALIZE_SUCCESSFUL;
 };
 
