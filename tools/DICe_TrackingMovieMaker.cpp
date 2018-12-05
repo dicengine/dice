@@ -260,7 +260,8 @@ int main(int argc, char *argv[]) {
   std::stringstream cine_ss_temp;
   cine_ss_temp << trimmed_cine_name << "_0.cine";
   DICe::utils::read_image_dimensions(cine_ss_temp.str().c_str(),img_w,img_h);
-  VideoWriter video(movie_name.str(),CV_FOURCC('M','J','P','G'),10, Size(img_w,img_h));
+  VideoWriter video(movie_name.str(),-1,10, Size(img_w,img_h));
+  //VideoWriter video(movie_name.str(),CV_FOURCC('M','J','P','G'),10, Size(img_w,img_h));
   for(int_t i=0;i<num_frames;++i){
     const int_t frame = frames[0][i];
     // load the cine image for each frame
