@@ -226,7 +226,7 @@ int main(int argc, char *argv[]) {
   int_t num_frames = frames[0].size();
   for(int_t roi=0;roi<num_roi;++roi){
     if((int_t)frames[roi].size()!=num_frames||(int_t)disp_x[roi].size()!=num_frames||
-        (int_t)disp_y[roi].size()!=num_frames||(int_t)rot_z[roi].size()!=num_frames||sigma[roi].size()!=num_frames){
+        (int_t)disp_y[roi].size()!=num_frames||(int_t)rot_z[roi].size()!=num_frames||(int_t)sigma[roi].size()!=num_frames){
       *outStream << "Error, not all of the results files have the same number of frames" << std::endl;
       return -1;
     }
