@@ -484,7 +484,7 @@ Feature_Matching_Initializer::initial_guess(const int_t subset_gid,
   std::vector<std::pair<scalar_t,int_t> > dist_neighbors;
   for(int_t neigh = 0;neigh<num_neighbors;++neigh){
     const int_t feature_id = ret_index[neigh];
-    assert(feature_id>=0&&(int_t)feature_id<u_.size());
+    assert(feature_id>=0&&feature_id<(int_t)u_.size());
     const scalar_t dist_sq = u_[feature_id]*u_[feature_id]+v_[feature_id]*v_[feature_id];
     dist_neighbors.push_back(std::pair<scalar_t,int_t>(dist_sq,feature_id));
   }
