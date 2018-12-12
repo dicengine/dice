@@ -57,10 +57,10 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
 
+/// \namespace holds the enumerated values and string representations for the Camera class members
 namespace DICe_Camera {
 
-
-
+  /// \enum Lens_Distortion_Model valid lens distortion model values
   enum Lens_Distortion_Model {
     NO_DIS_MODEL = 0,
     OPENCV_DIS,
@@ -73,6 +73,7 @@ namespace DICe_Camera {
     NO_SUCH_LENS_DIS_MODEL
   };
 
+  /// lensDistortionModelStrings string representations of the valid lens distortion model values
   const static char * lensDistortionModelStrings[] = {
     "NONE",
     "OPENCV_DIS",
@@ -82,7 +83,7 @@ namespace DICe_Camera {
     "K1R3_K2R5_K3R7"
   };
 
-
+  /// \enum Cam_Intrinsic_Params valid intrinsic parameters index values
   enum Cam_Intrinsic_Params {
     CX = 0,
     CY,
@@ -109,6 +110,7 @@ namespace DICe_Camera {
     NO_SUCH_CAM_INTRINSIC_PARAMS
   };
 
+  /// lensDistortionModelStrings string representations of the valid intrinsic parameters
   const static char * camIntrinsicParamsStrings[] = {
     "CX",
     "CY",
@@ -132,7 +134,7 @@ namespace DICe_Camera {
     "LD_MODEL"
   };
 
-
+  /// \enum Cam_Extrinsic_Params valid extrinsic parameters index values
   enum Cam_Extrinsic_Params {
     ALPHA = 0,
     BETA,
@@ -145,6 +147,7 @@ namespace DICe_Camera {
     NO_SUCH_CAM_EXTRINSIC_PARAMS
   };
 
+  /// lensDistortionModelStrings string representations of the valid extrinsic parameters
   const static char * camExtrinsicParamsStrings[] = {
     "ALPHA",
     "BETA",
@@ -160,20 +163,22 @@ namespace DICe {
 
 
   /// \class DICe::Camera
-  /// \brief A class for camera calibration parameters and computing single camera projection transformations
+  /// \brief A class for camera calibration parameters and computing single camera projection based transformations
   ///
   class DICE_LIB_DLL_EXPORT
     Camera {
   public:
-    /// \brief Default constructor
-    /// \param param_file_name the name of the file to parse the calibration parameters from
 
     /// \brief constructor with no args
     Camera() {
       clear_camera();
     };
 
-    // minimun constructor for the entire camera
+    /// \brief minimun constructor to specify only the required camera parameters
+    /// \param cam_id string identifier for the camera 
+    /// \param intrinsics intrinsic parameters ordered by DICe_Camera::Cam_Intrinsic_Params
+    /// \param image_height height of the image in pixels
+    /// \param image_width width of the image in pixels
     Camera(std::string cam_id, int_t image_width, int_t image_height, std::vector<scalar_t> intrinsics) {
       clear_camera();
       set_Identifier(cam_id);
@@ -182,7 +187,12 @@ namespace DICe {
       set_Image_Width(image_width);
     }
 
-    // constructor for the entire camera with extrinsic parameters
+    /// \brief constructor to specify the required camera parameters and extrincis parameters 
+    /// \param cam_id string identifier for the camera 
+    /// \param intrinsics intrinsic parameters ordered by DICe_Camera::Cam_Intrinsic_Params
+    /// \param image_height height of the image in pixels
+    /// \param image_width width of the image in pixels
+    /// \param extrinsics extrinsic parameters ordered by DICe_Camera::Cam_Extrinsic_Params
     Camera(std::string cam_id, int_t image_width, int_t image_height, std::vector<scalar_t> intrinsics, std::vector<scalar_t> extrinsics) {
       clear_camera();
       set_Identifier(cam_id);
@@ -192,7 +202,13 @@ namespace DICe {
       set_Extrinsics(extrinsics);
     }
 
-    // constructor for the entire camera with extrinsic parameters and rotation matrix
+    /// \brief constructor for the entire camera with extrinsic parameters and rotation matrix
+    /// \param cam_id string identifier for the camera 
+    /// \param intrinsics intrinsic parameters ordered by DICe_Camera::Cam_Intrinsic_Params
+    /// \param image_height height of the image in pixels
+    /// \param image_width width of the image in pixels
+    /// \param extrinsics extrinsic parameters ordered by DICe_Camera::Cam_Extrinsic_Params    
+    /// \param rotation_3x3_matrix [R] matrix transforming from the world coordinates to the camera coordinates
     Camera(std::string cam_id, int_t image_width, int_t image_height, std::vector<scalar_t> intrinsics, std::vector<scalar_t> extrinsics,
       std::vector<std::vector<scalar_t>> & rotation_3x3_matrix) {
       clear_camera();
@@ -204,7 +220,15 @@ namespace DICe {
       set_3x3_Rotation_Matrix(rotation_3x3_matrix);
     }
 
-    // full constructor for the entire camera
+    /// \brief full constructor for the entire camera
+    /// \param cam_id string identifier for the camera 
+    /// \param intrinsics intrinsic parameters ordered by DICe_Camera::Cam_Intrinsic_Params
+    /// \param image_height height of the image in pixels
+    /// \param image_width width of the image in pixels
+    /// \param extrinsics extrinsic parameters ordered by DICe_Camera::Cam_Extrinsic_Params    
+    /// \param rotation_3x3_matrix [R] matrix transforming from the world coordinates to the camera coordinates
+    /// \param camera_lens camera lens descripter
+    /// \param camera_comments camera comments
     Camera(std::string cam_id, int_t image_width, int_t image_height, std::vector<scalar_t> intrinsics, std::vector<scalar_t> extrinsics,
       std::vector<std::vector<scalar_t>> & rotation_3x3_matrix, std::string camera_lens = "", std::string camera_comments = "", 
       int_t pixel_depth=0) {
@@ -219,54 +243,73 @@ namespace DICe {
       set_Camera_Comments(camera_comments);
     }
 
-    /// Pure virtual destructor
+    // Pure virtual destructor
     virtual ~Camera() {}
 
-    ///gets/sets the camera identifier
+    ///sets the camera identifier
+    /// \param cam_id string descripter for the camera
     void set_Identifier(std::string cam_id) {
       camera_id_ = cam_id;
       camera_filled_ = true;
     }
+    ///gets the camera identifier
+    /// returns the camera identifier
     std::string get_Identifier() { return camera_id_; }
 
-    ///gets/sets the camera lens identifier
+    ///sets the camera lens identifier
+    /// \param camera_lens string descripter for the camera lens
     void set_Camera_Lens(std::string camera_lens) {
       camera_lens_ = camera_lens;
       camera_filled_ = true;
     }
+    ///gets the camera lens identifier
+    /// returns the camera lens description
     std::string get_Camera_Lens() { return camera_lens_; }
 
-    ///gets/sets the camera comment
+    ///sets the camera comments
+    /// \param camera_comments comments about the camera
     void set_Camera_Comments(std::string camera_comments) {
       camera_comments_ = camera_comments;
       camera_filled_ = true;
     }
+    ///gets the camera comments
+    /// returns the camera comments
     std::string get_Camera_Comments() { return camera_comments_; }
 
-    ///gets/sets the image height
+    /// \brief sets the image height
+    /// \param height height of the image in pixels
     void set_Image_Height(int_t height) {
       if (image_height_ != height) camera_prepped_ = false;
       image_height_ = height;
       camera_filled_ = true;
     }
+    /// \brief gets the image height
+    /// returns the height of the image in pixels
     int_t get_Image_Height() { return image_height_; }
 
-    ///gets/sets the image width
+    /// \brief sets the image width
+    /// \param width width of the image in pixels
     void set_Image_Width(int_t width) {
       if (image_width_ != width) camera_prepped_ = false;
       image_width_ = width;
       camera_filled_ = true;
     }
+    /// \brief gets the image width
+    /// returns the width of the image in pixels
     int_t get_Image_Width() { return image_width_; }
 
-    ///gets/sets the pixel depth
+    ///sets the pixel depth
+    /// \param pixel_depth depth of the pixel representation typically 8 for grayscale images
     void set_Pixel_Depth(int_t pixel_depth) {
       pixel_depth_ = pixel_depth;
       camera_filled_ = true;
     }
+    ///sets the pixel depth
+    /// returns the pixel depth
     int_t get_Pixel_Depth() { return pixel_depth_; }
 
-    ///gets/sets intrinsic values
+    ///sets the intrinsic camera parameter values
+    /// \param intrinsics intrinsic parameters ordered by DICe_Camera::Cam_Intrinsic_Params
     void set_Intrinsics(std::vector<scalar_t> & intrinsics) {
       for (int_t i = 0; i < DICe_Camera::MAX_CAM_INTRINSIC_PARAMS; i++) {
         if (intrinsics_[i] != intrinsics[i]) camera_prepped_ = false;
@@ -274,12 +317,15 @@ namespace DICe {
       }
       camera_filled_ = true;
     }
+    ///gets the intrinsic camera parameter values
+    /// \param intrinsics intrinsic parameters ordered by DICe_Camera::Cam_Intrinsic_Params
     void get_Intrinsics(std::vector<scalar_t> & intrinsics) {
       for (int_t i = 0; i < DICe_Camera::MAX_CAM_INTRINSIC_PARAMS; i++)
         intrinsics[i] = intrinsics_[i];
     }
 
-    ///gets/sets extrinsic values
+    ///sets extrinsic camera parameter values
+    /// \param extrinsics extrinsic parameters ordered by DICe_Camera::Cam_Extrinsic_Params    
     void set_Extrinsics(std::vector<scalar_t> & extrinsics) {
       for (int_t i = 0; i < DICe_Camera::MAX_CAM_EXTRINSIC_PARAMS; i++) {
         if (extrinsics_[i] != extrinsics[i]) camera_prepped_ = false;
@@ -287,12 +333,15 @@ namespace DICe {
       }
       camera_filled_ = true;
     }
+    ///gets extrinsic camera parameter values
+    /// \param extrinsics extrinsic parameters ordered by DICe_Camera::Cam_Extrinsic_Params    
     void get_Extrinsics(std::vector<scalar_t> & extrinsics) {
       for (int_t i = 0; i < DICe_Camera::MAX_CAM_EXTRINSIC_PARAMS; i++)
         extrinsics[i] = extrinsics_[i];
     }
 
-    ///gets/sets rotation matrix
+    ///sets 3x3 rotation matrix [R]
+    /// \param rotation_3x3_matrix [R] matrix transforming from the world coordinates to the camera coordinates
     void set_3x3_Rotation_Matrix(std::vector<std::vector<scalar_t>> & rotation_3x3_matrix) {
       for (int_t i = 0; i < 3; i++) {
         for (int_t j = 0; j < 3; j++) {
@@ -303,6 +352,8 @@ namespace DICe {
       camera_filled_ = true;
       rot_3x3_matrix_filled_ = true;
     }
+    ///gets 3x3 rotation matrix [R]
+    /// \param rotation_3x3_matrix [R] matrix transforming from the world coordinates to the camera coordinates
     void get_3x3_Rotation_Matrix(std::vector<std::vector<scalar_t>> & rotation_3x3_matrix) {
       for (int_t i = 0; i < 3; i++) {
         for (int_t j = 0; j < 3; j++) {
@@ -312,6 +363,7 @@ namespace DICe {
     }
     
     ///gets the camera to world transformation matrix
+    /// \param cam_world_trans 4x4 [R|T] transformation matrix {cam(x,y,z)}=[R|T]{world(x,y,z)}
     void get_Cam_World_Trans_Matrix(std::vector<std::vector<scalar_t>> & cam_world_trans) {
       for (int_t i = 0; i < 4; i++) {
         for (int_t j = 0; j < 4; j++) {
@@ -321,6 +373,7 @@ namespace DICe {
     }
 
     ///gets the world to camera transformation matrix
+    /// \param cam_world_trans 4x4 [R|T] transformation matrix {world(x,y,z)}=[R|T]{cam(x,y,z)}
     void get_World_Cam_Trans_Matrix(std::vector<std::vector<scalar_t>> & world_cam_trans) {
       for (int_t i = 0; i < 4; i++) {
         for (int_t j = 0; j < 4; j++) {
@@ -330,40 +383,55 @@ namespace DICe {
     }
 
     /// does the camera have enough values to be valid
+    /// \paqam msg return message with reason for invalid
     bool camera_valid(std::string & msg) {
       return check_valid_(msg);
     }
 
-    //have any of the parameters/fields been filled
+    ///have any of the parameters/fields been filled
     bool camera_filled() {
       return camera_filled_;
     }
 
-    //has the 3x3 rotation matrix been filled
+    ///has the 3x3 rotation matrix been filled
     bool camera_has_3x3_rotation() {
       return rot_3x3_matrix_filled_;
     }
 
-    //has the camera been prepped
+    ///prepares the tranfomation matricies
+    bool prep_camera();
+
+    ///has the camera been prepped. cameras must be prepped to establish the transformation matricies
     bool camera_prepped(){
       return camera_prepped_;
     }
 
-    /// \brief clear the values for all the cameras
+    /// \brief clear the parameter values for the camera
     /// \param
     void clear_camera();
 
-    //prepares the tranfomation matricies
-    bool prep_camera();
 
-    // convert sensor locations to image locations: applies lens distortion scales for fx,fy and 
-    // converts to image coordiates with cx, cy
+    /// convert sensor locations to image locations: applies lens distortion scales for fx,fy and 
+    /// converts to image coordiates with cx, cy
+    /// \param sen_x projected x sensor location
+    /// \param sen_y projected y sensor location
+    /// \param image_x x location after applied lens distortion
+    /// \param image_y y location after applied lens distortion
     void sensor_to_image(
       std::vector<scalar_t> & sen_x,
       std::vector<scalar_t> & sen_y,
       std::vector<scalar_t> & image_x,
       std::vector<scalar_t> & image_y);
-    //overloaded with first partials
+    /// convert sensor locations to image locations: applies lens distortion scales for fx,fy and 
+    /// converts to image coordiates with cx, cy with first partials
+    /// \param sen_x projected x sensor location
+    /// \param sen_y projected y sensor location
+    /// \param image_x x location after applied lens distortion
+    /// \param image_y y location after applied lens distortion
+    /// \param sen_dx incoming location partials
+    /// \param sen_dy incoming location partials
+    /// \param image_dx outgoing location partials lens distortion fixed value
+    /// \param image_dy outgoing location partials lens distortion fixed value
     void sensor_to_image(
       std::vector<scalar_t> & sen_x,
       std::vector<scalar_t> & sen_y,

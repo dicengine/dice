@@ -48,8 +48,14 @@
 
 #include <Teuchos_RCP.hpp>
 
-
+/*!
+ *  \namespace DICe_LocalShapeFunction
+ *  @{
+ */
+/// \brief enum and text array declarations for the new local shape function class members
 namespace DICe_LocalShapeFunction {
+
+  /// \enum Projection_Params the 3 parameters that govern the projection/back projection transform
   enum Projection_Params {
     ZP = 0,
     THETA,
@@ -64,6 +70,7 @@ namespace DICe_LocalShapeFunction {
     "PHI"
   };
 
+  /// \enum Rot_Trans_Params 6 rigid body motion parameters
   enum Rot_Trans_3D_Params {
     ANG_X = 0,
     ANG_Y,
@@ -85,6 +92,10 @@ namespace DICe_LocalShapeFunction {
   };
 
 }
+
+/*! @} End of Doxygen namespace*/
+
+
 
 /*!
  *  \namespace DICe
@@ -447,8 +458,8 @@ private:
 
 
 //mimic the quadratic shape function for the projection shape function
-/// \class DICe::Quadratic_Shape_Function
-/// \brief 12 parameter quadratic mapping for local shape function
+/// \class DICe::Projection_Shape_Function
+/// \brief 3 parameter projection from cam 0 to cam 1
 
 class DICE_LIB_DLL_EXPORT
   Projection_Shape_Function : public Local_Shape_Function {
@@ -457,14 +468,19 @@ public:
   /// constructor
   Projection_Shape_Function();
  
-  /// constructor
-  /// \param schema pointer to a schema used to initialize the shape function
+  /// \brief constructor with the parameters needed to setup the transformation
+  /// \param camSystem camera system object to use for camera to camera projections
+  /// \param undef_cam primary camera where the subset locations are specified
+  /// \param def_cam secondary camera to project to
   Projection_Shape_Function(CamSystem * camSystem, int_t undef_cam, int_t def_cam);
 
   /// virtual destructor
   virtual ~Projection_Shape_Function() {};
 
-  /// Set the camera system and the undeformed and deformed camera
+  /// \brief Set the camera system and the undeformed and deformed camera
+  /// \param camSystem camera system object to use for camera to camera projections
+  /// \param undef_cam primary camera where the subset locations are specified
+  /// \param def_cam secondary camera to project to
   virtual void set_system_cams(CamSystem * camSystem, int_t undef_cam, int_t def_cam);
 
   /// initialize the parameter fields and deltas
@@ -491,6 +507,7 @@ public:
     const scalar_t & cy,
     std::vector<scalar_t> & img1_x,
     std::vector<scalar_t> & img1_y);
+
 
   /// see base class description
   virtual void add_translation(const scalar_t & u,
@@ -522,7 +539,8 @@ public:
     std::vector<scalar_t> & residuals,
     const bool use_ref_grads = false);
 
-  //residuals with vectors
+  ///residuals with vectors
+  /// see base class description
   virtual void residuals(std::vector<scalar_t> & img0_x,
     std::vector<scalar_t> & img0_y,
     const scalar_t & cx,
@@ -532,7 +550,8 @@ public:
     std::vector<std::vector<scalar_t>> & residuals,
     const bool use_ref_grads);
   
-  //residuals with vectors and deformed locations
+  ///residuals with vectors and deformed locations
+  /// see base class description
   virtual void residuals(std::vector<scalar_t> & img0_x,
     std::vector<scalar_t> & img0_y,
     std::vector<scalar_t> & img1_x,
@@ -551,6 +570,7 @@ public:
   /// see base class description
   virtual void update_params_for_centroid_change(const scalar_t & delta_x,
     const scalar_t & delta_y);
+
 private:
   CamSystem * cam_system_;
   int_t undef_cam_;
@@ -576,20 +596,27 @@ class DICE_LIB_DLL_EXPORT
   Fixed_Proj_3DRB_Shape_Function : public Local_Shape_Function {
 public:
 
-  /// constructor
+  /// constructor with no arguments
   Fixed_Proj_3DRB_Shape_Function();
 
-  /// constructor
-  /// \param schema pointer to a schema used to initialize the shape function
+  /// \brief constructor with the parameters needed to setup the transformation
+  /// \param camSystem camera system object to use for camera to camera projections
+  /// \param undef_cam primary camera where the subset locations are specified
+  /// \param def_cam secondary camera to project to
+  /// \proj_params projection parameters (Zp, Ang1, Ang2) for the projections
   Fixed_Proj_3DRB_Shape_Function(CamSystem * camSystem, int_t undef_cam, int_t def_cam, std::vector<scalar_t> & proj_params);
 
-  /// virtual destructor
+  // virtual destructor
   virtual ~Fixed_Proj_3DRB_Shape_Function() {};
 
-  /// Set the camera system and the undeformed and deformed camera
+  /// \brief Set the camera system and the undeformed and deformed camera
+  /// \param camSystem camera system object to use for camera to camera projections
+  /// \param undef_cam primary camera where the subset locations are specified
+  /// \param def_cam secondary camera to project to
   virtual void set_system_cams(CamSystem * camSystem, int_t undef_cam, int_t def_cam);
 
-  /// Set the fixed projection parameters
+  /// \brief Set the fixed projection parameters
+  /// \proj_params projection parameters (Zp, Theta, Phi) for the projections
   virtual void set_projection_params(std::vector<scalar_t> & proj_params);
 
   /// initialize the parameter fields and deltas
@@ -647,7 +674,7 @@ public:
     std::vector<scalar_t> & residuals,
     const bool use_ref_grads = false);
 
-  //residuals with vectors
+  ///residuals with vectors
   virtual void residuals(std::vector<scalar_t> & img0_x,
     std::vector<scalar_t> & img0_y,
     const scalar_t & cx,
@@ -657,7 +684,7 @@ public:
     std::vector<std::vector<scalar_t>> & residuals,
     const bool use_ref_grads);
 
-  //residuals with vectors and deformed locations
+  ///residuals with vectors and deformed locations
   virtual void residuals(std::vector<scalar_t> & img0_x,
     std::vector<scalar_t> & img0_y,
     std::vector<scalar_t> & img1_x,

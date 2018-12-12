@@ -41,13 +41,16 @@
 
 #include <DICe_CamSystem.h>
 
-namespace DICe {
+using namespace DICe;
 
   int main(int argc, char *argv[]) {
 
-    DICe::initialize(argc, argv);
+    bool all_passed = true;
 
+    DICe::initialize(argc, argv);
+    
     try {
+      
       bool allFields = true;
       //temp for testing
       std::string cal_file_name;
@@ -65,7 +68,7 @@ namespace DICe {
         cal_file_dir = "C:\\Users\\jhelm\\Documents\\DICe\\DICecode\\tests\\component\\cal\\";
         cal_file = cal_file_dir + file_names[i] + "";
         Teuchos::RCP<CamSystem> cam_sys = Teuchos::rcp(new CamSystem());
-        cam_sys->load_calibration_parameters(cal_file);
+        cam_sys->read_calibration_parameters(cal_file);
 
         file_names[i].pop_back();
         file_names[i].pop_back();
@@ -79,17 +82,23 @@ namespace DICe {
         else
           save_file = cal_file_dir + "DICe_" + file_names[i];
 
-        cam_sys->save_calibration_file(save_file, allFields);
+        //cam_sys->write_calibration_file(save_file, allFields);
       }
 
     }
     catch (std::exception & e) {
       std::cout << e.what() << std::endl;
-      return 1;
+      all_passed = false;
     }
+    
     DICe::finalize();
+ 
+    if (!all_passed)
+      std::cout << "End Result: TEST FAILED\n";
+    else
+      std::cout << "End Result: TEST PASSED\n";
+
     return 0;
 
   }
 
-}

@@ -50,7 +50,7 @@
 
 
 
-namespace DICe {
+namespace DICe{
   namespace CSys = DICe_CamSystem;
   namespace CAM = DICe_Camera;
   DICE_LIB_DLL_EXPORT
@@ -92,7 +92,7 @@ namespace DICe {
 
   //*********************************load_calibration_parameters*********************************************
   DICE_LIB_DLL_EXPORT
-    void CamSystem::load_calibration_parameters(const std::string & cal_file) {
+    void CamSystem::read_calibration_parameters(const std::string & cal_file) {
     DEBUG_MSG(" ");
     DEBUG_MSG("*****************************load_calibration_parameters**************************");
     DEBUG_MSG("CamSystem::load_calibration_parameters() was called");
@@ -509,7 +509,7 @@ namespace DICe {
 
   //*********************************save_calibration_file*********************************************
   DICE_LIB_DLL_EXPORT
-    void CamSystem::save_calibration_file(const std::string & cal_file, bool all_fields) {
+    void CamSystem::write_calibration_file(const std::string & cal_file, bool all_fields) {
     std::stringstream param_title;
     std::stringstream param_val;
     std::stringstream valid_fields;
@@ -620,9 +620,12 @@ namespace DICe {
           }
         }
 
-
         if (Cameras_[camera_index].camera_has_3x3_rotation() || all_fields) {
           std::vector<std::vector<scalar_t>> rot_mat;
+          rot_mat.resize(3);
+          rot_mat[0].assign(3, 0.0);
+          rot_mat[1].assign(3, 0.0);
+          rot_mat[2].assign(3, 0.0);
           Cameras_[camera_index].get_3x3_Rotation_Matrix(rot_mat);
           DEBUG_MSG("CamSystem::save_calibration_file(): writing 3x3 rotation matrix");
           write_xml_comment(cal_file, "3x3 camera rotation matrix (world to cam transformation)");
@@ -752,8 +755,8 @@ namespace DICe {
   DICE_LIB_DLL_EXPORT
     void CamSystem::pre_projection_(int_t num_pnts, int_t num_params, bool partials) {
     //prep the cameras if not already done
-    if (!Cameras_[undef_cam_].camera_prepped())Cameras_[undef_cam_].prep_camera();
-    if (!Cameras_[def_cam_].camera_prepped())Cameras_[def_cam_].prep_camera();
+    if (!Cameras_[source_cam_].camera_prepped())Cameras_[source_cam_].prep_camera();
+    if (!Cameras_[target_cam_].camera_prepped())Cameras_[target_cam_].prep_camera();
 
     //resize the vectors if necessary
     if (img_x_.size() != num_pnts) {
@@ -815,12 +818,12 @@ namespace DICe {
 
     img_x_[0] = img0_x;
     img_y_[0] = img0_y;
-    Cameras_[undef_cam_].image_to_sensor(img_x_, img_y_, sen_x_, sen_y_);
-    Cameras_[undef_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, params);
-    Cameras_[undef_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_);
-    Cameras_[def_cam_].world_to_cam(wld0_x_, wld0_y_, wld0_z_, cam_x_, cam_y_, cam_z_);
-    Cameras_[def_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_);
-    Cameras_[def_cam_].sensor_to_image(sen_x_, sen_y_, img_x_, img_y_);
+    Cameras_[source_cam_].image_to_sensor(img_x_, img_y_, sen_x_, sen_y_);
+    Cameras_[source_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, params);
+    Cameras_[source_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_);
+    Cameras_[target_cam_].world_to_cam(wld0_x_, wld0_y_, wld0_z_, cam_x_, cam_y_, cam_z_);
+    Cameras_[target_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_);
+    Cameras_[target_cam_].sensor_to_image(sen_x_, sen_y_, img_x_, img_y_);
     img1_x = img_x_[0];
     img1_y = img_y_[0];
   }
@@ -839,12 +842,12 @@ namespace DICe {
     img_x_[0] = img0_x;
     img_y_[0] = img0_y;
 
-    Cameras_[undef_cam_].image_to_sensor(img_x_, img_y_, sen_x_, sen_y_);
-    Cameras_[undef_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, params, cam_dx_, cam_dy_, cam_dz_);
-    Cameras_[undef_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_, cam_dx_, cam_dy_, cam_dz_, wld0_dx_, wld0_dy_, wld0_dz_);
-    Cameras_[def_cam_].world_to_cam(wld0_x_, wld0_y_, wld0_z_, cam_x_, cam_y_, cam_z_, wld0_dx_, wld0_dy_, wld0_dz_, cam_dx_, cam_dy_, cam_dz_);
-    Cameras_[def_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_, cam_dx_, cam_dy_, cam_dz_, sen_dx_, sen_dy_);
-    Cameras_[def_cam_].sensor_to_image(sen_x_, sen_y_, img_x_, img_y_, sen_dx_, sen_dy_, img_dx_, img_dy_);
+    Cameras_[source_cam_].image_to_sensor(img_x_, img_y_, sen_x_, sen_y_);
+    Cameras_[source_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, params, cam_dx_, cam_dy_, cam_dz_);
+    Cameras_[source_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_, cam_dx_, cam_dy_, cam_dz_, wld0_dx_, wld0_dy_, wld0_dz_);
+    Cameras_[target_cam_].world_to_cam(wld0_x_, wld0_y_, wld0_z_, cam_x_, cam_y_, cam_z_, wld0_dx_, wld0_dy_, wld0_dz_, cam_dx_, cam_dy_, cam_dz_);
+    Cameras_[target_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_, cam_dx_, cam_dy_, cam_dz_, sen_dx_, sen_dy_);
+    Cameras_[target_cam_].sensor_to_image(sen_x_, sen_y_, img_x_, img_y_, sen_dx_, sen_dy_, img_dx_, img_dy_);
     img1_x = img_x_[0];
     img1_y = img_y_[0];
     for (int_t j = 0; j < 3; j++) {
@@ -864,12 +867,12 @@ namespace DICe {
 
     pre_projection_(img0_x.size(), 3, false);
 
-    Cameras_[undef_cam_].image_to_sensor(img0_x, img0_y, sen_x_, sen_y_);
-    Cameras_[undef_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, params);
-    Cameras_[undef_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_);
-    Cameras_[def_cam_].world_to_cam(wld0_x_, wld0_y_, wld0_z_, cam_x_, cam_y_, cam_z_);
-    Cameras_[def_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_);
-    Cameras_[def_cam_].sensor_to_image(sen_x_, sen_y_, img1_x, img1_y);
+    Cameras_[source_cam_].image_to_sensor(img0_x, img0_y, sen_x_, sen_y_);
+    Cameras_[source_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, params);
+    Cameras_[source_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_);
+    Cameras_[target_cam_].world_to_cam(wld0_x_, wld0_y_, wld0_z_, cam_x_, cam_y_, cam_z_);
+    Cameras_[target_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_);
+    Cameras_[target_cam_].sensor_to_image(sen_x_, sen_y_, img1_x, img1_y);
   }
 
   DICE_LIB_DLL_EXPORT
@@ -884,12 +887,12 @@ namespace DICe {
 
     pre_projection_(img0_x.size(), 3, true);
 
-    Cameras_[undef_cam_].image_to_sensor(img0_x, img0_y, sen_x_, sen_y_);
-    Cameras_[undef_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, params, cam_dx_, cam_dy_, cam_dx_);
-    Cameras_[undef_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_, cam_dx_, cam_dy_, cam_dx_, wld0_dx_, wld0_dy_, wld0_dz_);
-    Cameras_[def_cam_].world_to_cam(wld0_x_, wld0_y_, wld0_z_, cam_x_, cam_y_, cam_z_, wld0_dx_, wld0_dy_, wld0_dz_, cam_dx_, cam_dy_, cam_dx_);
-    Cameras_[def_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_, cam_dx_, cam_dy_, cam_dx_, sen_dx_, sen_dy_);
-    Cameras_[def_cam_].sensor_to_image(sen_x_, sen_y_, img1_x, img1_y, sen_dx_, sen_dy_, img1_dx, img1_dy);
+    Cameras_[source_cam_].image_to_sensor(img0_x, img0_y, sen_x_, sen_y_);
+    Cameras_[source_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, params, cam_dx_, cam_dy_, cam_dx_);
+    Cameras_[source_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_, cam_dx_, cam_dy_, cam_dx_, wld0_dx_, wld0_dy_, wld0_dz_);
+    Cameras_[target_cam_].world_to_cam(wld0_x_, wld0_y_, wld0_z_, cam_x_, cam_y_, cam_z_, wld0_dx_, wld0_dy_, wld0_dz_, cam_dx_, cam_dy_, cam_dx_);
+    Cameras_[target_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_, cam_dx_, cam_dy_, cam_dx_, sen_dx_, sen_dy_);
+    Cameras_[target_cam_].sensor_to_image(sen_x_, sen_y_, img1_x, img1_y, sen_dx_, sen_dy_, img1_dx, img1_dy);
   }
 
 
@@ -909,13 +912,13 @@ namespace DICe {
     img_x_[0] = img0_x;
     img_y_[0] = img0_y;
 
-    Cameras_[undef_cam_].image_to_sensor(img_x_, img_y_, sen_x_, sen_y_);
-    Cameras_[undef_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, proj_params);
-    Cameras_[undef_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_);
+    Cameras_[source_cam_].image_to_sensor(img_x_, img_y_, sen_x_, sen_y_);
+    Cameras_[source_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, proj_params);
+    Cameras_[source_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_);
     rot_trans_3D(wld0_x_, wld0_y_, wld0_z_, wld1_x_, wld1_y_, wld1_z_, rigid_body_params);
-    Cameras_[def_cam_].world_to_cam(wld1_x_, wld1_y_, wld1_z_, cam_x_, cam_y_, cam_z_);
-    Cameras_[def_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_);
-    Cameras_[def_cam_].sensor_to_image(sen_x_, sen_y_, img_x_, img_y_);
+    Cameras_[target_cam_].world_to_cam(wld1_x_, wld1_y_, wld1_z_, cam_x_, cam_y_, cam_z_);
+    Cameras_[target_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_);
+    Cameras_[target_cam_].sensor_to_image(sen_x_, sen_y_, img_x_, img_y_);
     img1_x = img_x_[0];
     img1_y = img_y_[0];
   }
@@ -936,13 +939,13 @@ namespace DICe {
     img_x_[0] = img0_x;
     img_y_[0] = img0_y;
 
-    Cameras_[undef_cam_].image_to_sensor(img_x_, img_y_, sen_x_, sen_y_);
-    Cameras_[undef_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, proj_params);
-    Cameras_[undef_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_);
+    Cameras_[source_cam_].image_to_sensor(img_x_, img_y_, sen_x_, sen_y_);
+    Cameras_[source_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, proj_params);
+    Cameras_[source_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_);
     rot_trans_3D(wld0_x_, wld0_y_, wld0_z_, wld1_x_, wld1_y_, wld1_z_, rigid_body_params, wld1_dx_, wld1_dy_, wld1_dz_);
-    Cameras_[def_cam_].world_to_cam(wld1_x_, wld1_y_, wld1_z_, cam_x_, cam_y_, cam_z_, wld1_dx_, wld1_dy_, wld1_dz_, cam_dx_, cam_dy_, cam_dx_);
-    Cameras_[def_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_, cam_dx_, cam_dy_, cam_dx_, sen_dx_, sen_dy_);
-    Cameras_[def_cam_].sensor_to_image(sen_x_, sen_y_, img_x_, img_y_, sen_dx_, sen_dy_, img_dx_, img_dy_);
+    Cameras_[target_cam_].world_to_cam(wld1_x_, wld1_y_, wld1_z_, cam_x_, cam_y_, cam_z_, wld1_dx_, wld1_dy_, wld1_dz_, cam_dx_, cam_dy_, cam_dx_);
+    Cameras_[target_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_, cam_dx_, cam_dy_, cam_dx_, sen_dx_, sen_dy_);
+    Cameras_[target_cam_].sensor_to_image(sen_x_, sen_y_, img_x_, img_y_, sen_dx_, sen_dy_, img_dx_, img_dy_);
 
     img1_x = img_x_[0];
     img1_y = img_y_[0];
@@ -964,13 +967,13 @@ namespace DICe {
 
     pre_projection_(img0_x.size(), 6, false);
 
-    Cameras_[undef_cam_].image_to_sensor(img0_x, img0_y, sen_x_, sen_y_);
-    Cameras_[undef_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, proj_params);
-    Cameras_[undef_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_);
+    Cameras_[source_cam_].image_to_sensor(img0_x, img0_y, sen_x_, sen_y_);
+    Cameras_[source_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, proj_params);
+    Cameras_[source_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_);
     rot_trans_3D(wld0_x_, wld0_y_, wld0_z_, wld1_x_, wld1_y_, wld1_z_, rigid_body_params);
-    Cameras_[def_cam_].world_to_cam(wld1_x_, wld1_y_, wld1_z_, cam_x_, cam_y_, cam_z_);
-    Cameras_[def_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_);
-    Cameras_[def_cam_].sensor_to_image(sen_x_, sen_y_, img1_x, img1_y);
+    Cameras_[target_cam_].world_to_cam(wld1_x_, wld1_y_, wld1_z_, cam_x_, cam_y_, cam_z_);
+    Cameras_[target_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_);
+    Cameras_[target_cam_].sensor_to_image(sen_x_, sen_y_, img1_x, img1_y);
   }
 
 
@@ -987,13 +990,13 @@ namespace DICe {
 
     pre_projection_(img0_x.size(), 6, false);
 
-    Cameras_[undef_cam_].image_to_sensor(img0_x, img0_y, sen_x_, sen_y_);
-    Cameras_[undef_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, proj_params);
-    Cameras_[undef_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_);
+    Cameras_[source_cam_].image_to_sensor(img0_x, img0_y, sen_x_, sen_y_);
+    Cameras_[source_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, proj_params);
+    Cameras_[source_cam_].cam_to_world(cam_x_, cam_y_, cam_z_, wld0_x_, wld0_y_, wld0_z_);
     rot_trans_3D(wld0_x_, wld0_y_, wld0_z_, wld1_x_, wld1_y_, wld1_z_, rigid_body_params, wld1_dx_, wld1_dy_, wld1_dz_);
-    Cameras_[def_cam_].world_to_cam(wld1_x_, wld1_y_, wld1_z_, cam_x_, cam_y_, cam_z_, wld1_dx_, wld1_dy_, wld1_dz_, cam_dx_, cam_dy_, cam_dx_);
-    Cameras_[def_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_, cam_dx_, cam_dy_, cam_dx_, sen_dx_, sen_dy_);
-    Cameras_[def_cam_].sensor_to_image(sen_x_, sen_y_, img1_x, img1_y, sen_dx_, sen_dy_, img1_dx, img1_dy);
+    Cameras_[target_cam_].world_to_cam(wld1_x_, wld1_y_, wld1_z_, cam_x_, cam_y_, cam_z_, wld1_dx_, wld1_dy_, wld1_dz_, cam_dx_, cam_dy_, cam_dx_);
+    Cameras_[target_cam_].cam_to_sensor(cam_x_, cam_y_, cam_z_, sen_x_, sen_y_, cam_dx_, cam_dy_, cam_dx_, sen_dx_, sen_dy_);
+    Cameras_[target_cam_].sensor_to_image(sen_x_, sen_y_, img1_x, img1_y, sen_dx_, sen_dy_, img1_dx, img1_dy);
   }
 
 
@@ -1013,15 +1016,15 @@ namespace DICe {
     }
 
     scalar_t cx, cy, cz, sx, sy, sz, tx, ty, tz;
-    cx = cos(params[CSys::CAM_SYS__ANG_X]);
-    cy = cos(params[CSys::CAM_SYS__ANG_Y]);
-    cz = cos(params[CSys::CAM_SYS__ANG_Z]);
-    sx = sin(params[CSys::CAM_SYS__ANG_X]);
-    sy = sin(params[CSys::CAM_SYS__ANG_Y]);
-    sz = sin(params[CSys::CAM_SYS__ANG_Z]);
-    tx = params[CSys::CAM_SYS__T_X];
-    ty = params[CSys::CAM_SYS__T_Y];
-    tz = params[CSys::CAM_SYS__T_Z];
+    cx = cos(params[CSys::ANG_X]);
+    cy = cos(params[CSys::ANG_Y]);
+    cz = cos(params[CSys::ANG_Z]);
+    sx = sin(params[CSys::ANG_X]);
+    sy = sin(params[CSys::ANG_Y]);
+    sz = sin(params[CSys::ANG_Z]);
+    tx = params[CSys::T_X];
+    ty = params[CSys::T_Y];
+    tz = params[CSys::T_Z];
 
     rot_trans_3D_x_[0] = cy * cz;
     rot_trans_3D_x_[1] = sx * sy * cz - cx * sz;
@@ -1037,44 +1040,44 @@ namespace DICe {
     rot_trans_3D_z_[3] = tz;
 
     if (partials) {
-      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_X][0] = 0;
-      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_X][1] = cx * sy * cz + sx * sz;
-      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_X][2] = -sx * sy * cz + cx * sz;
-      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_X][3] = 0;
-      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_X][0] = 0;
-      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_X][1] = cx * sy * sz - sx * cz;
-      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_X][2] = - sx * sy * sz - cx * cz;
-      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_X][3] = 0;
-      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_X][0] = 0;
-      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_X][1] = cx * cy;
-      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_X][2] = -sx * cy;
-      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_X][3] = 0;
+      rot_trans_3D_dx_[CSys::ANG_X][0] = 0;
+      rot_trans_3D_dx_[CSys::ANG_X][1] = cx * sy * cz + sx * sz;
+      rot_trans_3D_dx_[CSys::ANG_X][2] = -sx * sy * cz + cx * sz;
+      rot_trans_3D_dx_[CSys::ANG_X][3] = 0;
+      rot_trans_3D_dy_[CSys::ANG_X][0] = 0;
+      rot_trans_3D_dy_[CSys::ANG_X][1] = cx * sy * sz - sx * cz;
+      rot_trans_3D_dy_[CSys::ANG_X][2] = - sx * sy * sz - cx * cz;
+      rot_trans_3D_dy_[CSys::ANG_X][3] = 0;
+      rot_trans_3D_dz_[CSys::ANG_X][0] = 0;
+      rot_trans_3D_dz_[CSys::ANG_X][1] = cx * cy;
+      rot_trans_3D_dz_[CSys::ANG_X][2] = -sx * cy;
+      rot_trans_3D_dz_[CSys::ANG_X][3] = 0;
 
-      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_Y][0] = -sy * cz;
-      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_Y][1] = sx * cy * cz;
-      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_Y][2] = cx * cy * cz;
-      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_Y][3] = 0;
-      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_Y][0] = -sy * sz;
-      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_Y][1] = sx * cy * sz;
-      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_Y][2] = cx * cy * sz;
-      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_Y][3] = 0;
-      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_Y][0] = -cy;
-      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_Y][1] = -sx * sy;
-      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_Y][2] = -cx * sy;
-      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_Y][3] = 0;
+      rot_trans_3D_dx_[CSys::ANG_Y][0] = -sy * cz;
+      rot_trans_3D_dx_[CSys::ANG_Y][1] = sx * cy * cz;
+      rot_trans_3D_dx_[CSys::ANG_Y][2] = cx * cy * cz;
+      rot_trans_3D_dx_[CSys::ANG_Y][3] = 0;
+      rot_trans_3D_dy_[CSys::ANG_Y][0] = -sy * sz;
+      rot_trans_3D_dy_[CSys::ANG_Y][1] = sx * cy * sz;
+      rot_trans_3D_dy_[CSys::ANG_Y][2] = cx * cy * sz;
+      rot_trans_3D_dy_[CSys::ANG_Y][3] = 0;
+      rot_trans_3D_dz_[CSys::ANG_Y][0] = -cy;
+      rot_trans_3D_dz_[CSys::ANG_Y][1] = -sx * sy;
+      rot_trans_3D_dz_[CSys::ANG_Y][2] = -cx * sy;
+      rot_trans_3D_dz_[CSys::ANG_Y][3] = 0;
 
-      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_Z][0] = -cy * sz;
-      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_Z][1] = -sx * sy * sz - cx * cz;
-      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_Z][2] = -cx * sy * sz + sx * cz;
-      rot_trans_3D_dx_[CSys::CAM_SYS__ANG_Z][3] = 0;
-      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_Z][0] = cy * cz;
-      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_Z][1] = sx * sy * cz - cx * sz;
-      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_Z][2] = cx * sy * cz + sx * sz;
-      rot_trans_3D_dy_[CSys::CAM_SYS__ANG_Z][3] = 0;
-      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_Z][0] = 0;
-      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_Z][1] = 0;
-      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_Z][2] = 0;
-      rot_trans_3D_dz_[CSys::CAM_SYS__ANG_Z][3] = 0;
+      rot_trans_3D_dx_[CSys::ANG_Z][0] = -cy * sz;
+      rot_trans_3D_dx_[CSys::ANG_Z][1] = -sx * sy * sz - cx * cz;
+      rot_trans_3D_dx_[CSys::ANG_Z][2] = -cx * sy * sz + sx * cz;
+      rot_trans_3D_dx_[CSys::ANG_Z][3] = 0;
+      rot_trans_3D_dy_[CSys::ANG_Z][0] = cy * cz;
+      rot_trans_3D_dy_[CSys::ANG_Z][1] = sx * sy * cz - cx * sz;
+      rot_trans_3D_dy_[CSys::ANG_Z][2] = cx * sy * cz + sx * sz;
+      rot_trans_3D_dy_[CSys::ANG_Z][3] = 0;
+      rot_trans_3D_dz_[CSys::ANG_Z][0] = 0;
+      rot_trans_3D_dz_[CSys::ANG_Z][1] = 0;
+      rot_trans_3D_dz_[CSys::ANG_Z][2] = 0;
+      rot_trans_3D_dz_[CSys::ANG_Z][3] = 0;
 
     }
   }
@@ -1212,7 +1215,5 @@ namespace DICe {
     wld1_dy[7] = 1.0;
     wld1_dz[8] = 1.0;
   }
+} //end DICe namespace
 
-
-
-}// End DICe Namespace

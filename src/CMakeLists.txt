@@ -6,6 +6,8 @@ SET(DICE_SOURCES
   ./base/DICe_Shape.cpp
   ./base/DICe_FieldEnums.cpp
   ./base/DICe_LocalShapeFunction.cpp
+  ./core/DICe_Camera.cpp
+  ./core/DICe_CamSystem.cpp
   ./core/DICe_Parser.cpp
   ./core/DICe_XMLUtils.cpp
   ./core/DICe_ParameterUtilities.cpp
@@ -29,6 +31,8 @@ SET(DICE_HEADERS
   ./base/DICe_Shape.h
   ./base/DICe_FieldEnums.h
   ./base/DICe_LocalShapeFunction.h
+  ./core/DICe_Camera.h
+  ./core/DICe_CamSystem.h
   ./core/DICe_Parser.h
   ./core/DICe_XMLUtils.h
   ./core/DICe_PointCloud.h
@@ -107,11 +111,13 @@ IF(DICE_ENABLE_OPENCV)
     ${DICE_SOURCES}
     ./opencv/DICe_Feature.cpp
     ./opencv/DICe_StereoCalib.cpp
+    ./opencv/DICe_StereoCalib2.cpp
   )
   SET(DICE_HEADERS
     ${DICE_HEADERS}
     ./opencv/DICe_Feature.h
     ./opencv/DICe_StereoCalib.h
+    ./opencv/DICe_StereoCalib2.h
   )
 ENDIF()
 

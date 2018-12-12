@@ -733,15 +733,9 @@ const Field_Spec NLVC_STRAIN_YY_ERROR_FS(field_enums::SCALAR_FIELD_TYPE,field_en
 /// field spec
 const Field_Spec PROJECTION_Z_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::PROJECTION_Z, field_enums::NODE_RANK, field_enums::NO_FIELD_STATE, true);
 /// field spec
-const Field_Spec PROJECTION_Z_NM1_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::PROJECTION_Z, field_enums::NODE_RANK, field_enums::STATE_N_MINUS_ONE, false, true);
-/// field spec
 const Field_Spec PROJECTION_PHI_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::PROJECTION_PHI, field_enums::NODE_RANK, field_enums::NO_FIELD_STATE, true);
 /// field spec
-const Field_Spec PROJECTION_PHI_NM1_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::PROJECTION_PHI, field_enums::NODE_RANK, field_enums::STATE_N_MINUS_ONE, false, true);
-/// field spec
 const Field_Spec PROJECTION_THETA_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::PROJECTION_THETA, field_enums::NODE_RANK, field_enums::NO_FIELD_STATE, true);
-/// field spec
-const Field_Spec PROJECTION_THETA_NM1_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::PROJECTION_THETA, field_enums::NODE_RANK, field_enums::STATE_N_MINUS_ONE, false, true);
 /// field spec
 const Field_Spec ROT_TRANS_3D_ANG_X_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::ROT_TRANS_3D_ANG_X, field_enums::NODE_RANK, field_enums::NO_FIELD_STATE, true);
 /// field spec
@@ -756,7 +750,7 @@ const Field_Spec ROT_TRANS_3D_TRANS_Y_FS(field_enums::SCALAR_FIELD_TYPE, field_e
 const Field_Spec ROT_TRANS_3D_TRANS_Z_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::ROT_TRANS_3D_TRANS_Z, field_enums::NODE_RANK, field_enums::NO_FIELD_STATE, true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 168;
+const int_t num_fields_defined = 165;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -919,9 +913,6 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
 		PROJECTION_Z_FS,
 		PROJECTION_PHI_FS,
 		PROJECTION_THETA_FS,
-		PROJECTION_Z_NM1_FS,
-		PROJECTION_PHI_NM1_FS,
-		PROJECTION_THETA_NM1_FS,
     ROT_TRANS_3D_ANG_X_FS,
     ROT_TRANS_3D_ANG_Y_FS,
     ROT_TRANS_3D_ANG_Z_FS,

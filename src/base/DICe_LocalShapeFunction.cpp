@@ -582,7 +582,9 @@ Quadratic_Shape_Function::update_params_for_centroid_change(const scalar_t & del
 
 
 //********************projection shape function*****************************
-Projection_Shape_Function::Projection_Shape_Function() {
+Projection_Shape_Function::Projection_Shape_Function():
+  Local_Shape_Function() 
+{
   init();
 }
 
@@ -627,8 +629,8 @@ Projection_Shape_Function::set_system_cams(CamSystem * camSystem, int_t undef_ca
   system_cams_set_ = false;
   //check if the cameras are valid and if they are set the undeformed and deformed cameras
   if (cam_system_->camera_valid(undef_cam_) && cam_system_->camera_valid(def_cam_)) {
-    cam_system_->set_Undeformed_Camera(undef_cam_);
-    cam_system_->set_Deformed_Camera(def_cam_);
+    cam_system_->set_Source_Camera(undef_cam_);
+    cam_system_->set_Target_Camera(def_cam_);
     if (!cam_system_->cameras_prepped()) cam_system_->prep_cameras();
     system_cams_set_ = true;
   }
@@ -862,8 +864,8 @@ Fixed_Proj_3DRB_Shape_Function::set_system_cams(CamSystem * camSystem, int_t und
   system_cams_set_ = false;
   //check if the cameras are valid and if they are set the undeformed and deformed cameras
   if (cam_system_->camera_valid(undef_cam_) && cam_system_->camera_valid(def_cam_)) {
-    cam_system_->set_Undeformed_Camera(undef_cam_);
-    cam_system_->set_Deformed_Camera(def_cam_);
+    cam_system_->set_Source_Camera(undef_cam_);
+    cam_system_->set_Target_Camera(def_cam_);
     if (!cam_system_->cameras_prepped()) cam_system_->prep_cameras();
     system_cams_set_ = true;
   }

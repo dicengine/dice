@@ -52,10 +52,10 @@
 #include <iostream>
 #include <fstream>
 
+using namespace DICe;
 
-namespace DICe {
-  namespace LSFunc = DICe_LocalShapeFunction;
   int main(int argc, char *argv[]) {
+    namespace LSFunc = DICe_LocalShapeFunction;
     bool all_passed = true;
     DICe::initialize(argc, argv);
     try {
@@ -63,6 +63,7 @@ namespace DICe {
       namespace LSFunc = DICe_LocalShapeFunction;
       // only print output if args are given (for testing the output is quiet)
       int_t iprint = argc - 1;
+      iprint = 1; //change this to make all the outputs work correctly
       int_t errorFlag = 0;
       scalar_t errorTol = 1.0E-2;
       scalar_t strong_match = 1.0e-4;
@@ -948,10 +949,16 @@ namespace DICe {
 
     catch (std::exception & e) {
       std::cout << e.what() << std::endl;
-      return 1;
+      all_passed = false;
     }
     DICe::finalize();
-    return all_passed;
+    
+    if (!all_passed)
+      std::cout << "End Result: TEST FAILED\n";
+    else
+      std::cout << "End Result: TEST PASSED\n";
+
+    return 0;
 
   }
-}
+
