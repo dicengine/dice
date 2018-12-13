@@ -58,14 +58,14 @@ using namespace DICe;
       std::string cal_file;
       std::string save_file;
       std::vector<std::string> file_names;
-      file_names.push_back("VIC_cal_a.xml");
+      file_names.push_back("cal_a.xml");
       file_names.push_back("DICe_cal_a.xml");
-      file_names.push_back("TXT_cal_a.txt");
-      file_names.push_back("TXT_cal_a_with_R.txt");
-      file_names.push_back("TXT_cal_a_with_transform.txt");
+      file_names.push_back("cal_a.txt");
+      file_names.push_back("cal_a_with_R.txt");
+      file_names.push_back("cal_a_with_transform.txt");
       for (int_t i = 0; i < 5; i++)
       {
-        cal_file_dir = "C:\\Users\\jhelm\\Documents\\DICe\\DICecode\\tests\\component\\cal\\";
+        cal_file_dir = ".\\cal\\";
         cal_file = cal_file_dir + file_names[i] + "";
         Teuchos::RCP<CamSystem> cam_sys = Teuchos::rcp(new CamSystem());
         cam_sys->read_calibration_parameters(cal_file);

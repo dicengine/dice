@@ -745,11 +745,6 @@ public:
     return shape_function_type_;
   }
 
-	/// Returns true if all quadratic shape functions are enabled
-	bool projection_shape_function_enabled() const {
-		return enable_projection_shape_function_;
-	}
-
   /// Returns true if translation shape functions are enabled
   bool translation_enabled() const {
     return enable_translation_;
@@ -810,11 +805,6 @@ public:
   void set_shape_function_type(const Shape_Function_Type sft){
     shape_function_type_ = sft;
   }
-
-	/// Enable projection shape functions
-	void enable_projection_shape_function(const bool flag) {
-		enable_projection_shape_function_ = flag;
-	}
 
   /// Enable translation shape functions
   void enable_translation(const bool flag){

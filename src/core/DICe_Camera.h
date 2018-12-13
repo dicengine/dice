@@ -442,7 +442,12 @@ namespace DICe {
       std::vector<std::vector<scalar_t>> & image_dx,
       std::vector<std::vector<scalar_t>> & image_dy);
 
-    //converts image coordinates to sensor coordinates (lens distortion^-1, fx,fy,cx,cy)
+    ///converts image coordinates to sensor coordinates (lens distortion^-1, fx,fy,cx,cy)
+    /// \param image_x x location after applied lens distortion
+    /// \param image_y y location after applied lens distortion
+    /// \param sen_x projected x sensor location
+    /// \param sen_y projected y sensor location
+    /// \param integer_locs if all image points are integers setting this flag avoids interpolation overhead
     void image_to_sensor(
       std::vector<scalar_t> & image_x,
       std::vector<scalar_t> & image_y,
@@ -450,7 +455,13 @@ namespace DICe {
       std::vector<scalar_t> & sen_y,
       bool integer_locs = true);
 
-    //projects sensor coordinates onto a plane in space described by zp,theta,phi
+    ///projects sensor coordinates onto a plane in space described by zp,theta,phi
+    /// \param sen_x x sensor location
+    /// \param sen_y y sensor location
+    /// \param cam_x projected x location in cam x,y,z space
+    /// \param cam_y projected y location in cam x,y,z space
+    /// \param cam_z projected z location in cam x,y,z space
+    /// \param params projection parameters describing the plane in space (ZP, THETA, PHI)
     void sensor_to_cam(
       std::vector<scalar_t> & sen_x,
       std::vector<scalar_t> & sen_y,
@@ -458,7 +469,17 @@ namespace DICe {
       std::vector<scalar_t> & cam_y,
       std::vector<scalar_t> & cam_z,
       std::vector<scalar_t> & params);
-    //overloaded with first partials
+
+    ///projects sensor coordinates onto a plane in space described by zp,theta,phi overloaded for first partials
+    /// \param sen_x x sensor location
+    /// \param sen_y y sensor location
+    /// \param cam_x projected x location in cam x,y,z space
+    /// \param cam_y projected y location in cam x,y,z space
+    /// \param cam_z projected z location in cam x,y,z space
+    /// \param params projection parameters describing the plane in space (ZP, THETA, PHI)
+    /// \param cam_dx x location derivitives in cam x,y,z space partials wrt (ZP, THETA, PHI)
+    /// \param cam_dy y locatoin derivitives in cam x,y,z space partials wrt (ZP, THETA, PHI)
+    /// \param cam_dz z location derivitives in cam x,y,z space partials wrt (ZP, THETA, PHI)
     void sensor_to_cam(
       std::vector<scalar_t> & sen_x,
       std::vector<scalar_t> & sen_y,
@@ -470,14 +491,30 @@ namespace DICe {
       std::vector<std::vector<scalar_t>> & cam_dy,
       std::vector<std::vector<scalar_t>> & cam_dz);
 
-    //projects x,y,z locations back onto the sensor
+    ///projects camera x,y,z locations back onto the sensor
+    /// \param cam_x x location in cam x,y,z space
+    /// \param cam_y y location in cam x,y,z space
+    /// \param cam_z z location in cam x,y,z space
+    /// \param sen_x projected x sensor location
+    /// \param sen_y projected y sensor location
     void cam_to_sensor(
       std::vector<scalar_t> & cam_x,
       std::vector<scalar_t> & cam_y,
       std::vector<scalar_t> & cam_z,
       std::vector<scalar_t> & sen_x,
       std::vector<scalar_t> & sen_y);
-    //overloaded with first partials
+
+    ///projects camera x,y,z locations back onto the sensor overloaded with input and output first partials
+    /// \param cam_x x location in cam x,y,z space
+    /// \param cam_y y location in cam x,y,z space
+    /// \param cam_z z location in cam x,y,z space
+    /// \param sen_x projected x sensor location
+    /// \param sen_y projected y sensor location
+    /// \param cam_dx first partials of the cam locations from previous projections
+    /// \param cam_dy first partials of the cam locations from previous projections
+    /// \param cam_dz first partials of the cam locations from previous projections
+    /// \param sen_dx first partials of the projected x sensor location
+    /// \param sen_dy first partials of the projected y sensor location
     void cam_to_sensor(
       std::vector<scalar_t> & cam_x,
       std::vector<scalar_t> & cam_y,
@@ -490,7 +527,13 @@ namespace DICe {
       std::vector<std::vector<scalar_t>> & sen_dx,
       std::vector<std::vector<scalar_t>> & sen_dy);
 
-    //converts the camera x,y,z cooldinates to a world x,y,z coordinate system
+    ///converts the camera x,y,z cooldinates to a world x,y,z coordinate system
+    /// \param cam_x x location in cam x,y,z space
+    /// \param cam_y y location in cam x,y,z space
+    /// \param cam_z z location in cam x,y,z space
+    /// \param wrld_x x location in the world x,y,z space
+    /// \param wrld_y y location in the world x,y,z space
+    /// \param wrld_z z location in the world x,y,z space
     void cam_to_world(
       std::vector<scalar_t> & cam_x,
       std::vector<scalar_t> & cam_y,
@@ -500,7 +543,20 @@ namespace DICe {
       std::vector<scalar_t> & wrld_z) {
       rot_trans_transform_(cam_world_trans_, cam_x, cam_y, cam_z, wrld_x, wrld_y, wrld_z);
     }
-    //overloaded for first partials
+
+    ///converts the camera x,y,z cooldinates to a world x,y,z coordinate system overloaded with first partials
+    /// \param cam_x x location in cam x,y,z space
+    /// \param cam_y y location in cam x,y,z space
+    /// \param cam_z z location in cam x,y,z space
+    /// \param wrld_x x location in the world x,y,z space
+    /// \param wrld_y y location in the world x,y,z space
+    /// \param wrld_z z location in the world x,y,z space
+    /// \param cam_dx first partials of the x cam locations from previous projections
+    /// \param cam_dy first partials of the y cam locations from previous projections
+    /// \param cam_dz first partials of the z cam locations from previous projections
+    /// \param wrld_dx first partials of the x world locations
+    /// \param wrld_dy first partials of the y world locations
+    /// \param wrld_dz first partials of the z world locations
     void cam_to_world(
       std::vector<scalar_t> & cam_x,
       std::vector<scalar_t> & cam_y,
@@ -518,7 +574,13 @@ namespace DICe {
         cam_dx, cam_dy, cam_dz, wrld_dx, wrld_dy, wrld_dz);
     }
 
-    //converts world x,y,z coordinates to camera x,y,z coordinates
+    ///converts world x,y,z coordinates to camera x,y,z coordinates
+    /// \param wrld_x x location in the world x,y,z space
+    /// \param wrld_y y location in the world x,y,z space
+    /// \param wrld_z z location in the world x,y,z space
+    /// \param cam_x x location in cam x,y,z space
+    /// \param cam_y y location in cam x,y,z space
+    /// \param cam_z z location in cam x,y,z space
     void world_to_cam(
       std::vector<scalar_t> & wrld_x,
       std::vector<scalar_t> & wrld_y,
@@ -528,7 +590,20 @@ namespace DICe {
       std::vector<scalar_t> & cam_z) {
       rot_trans_transform_(world_cam_trans_, wrld_x, wrld_y, wrld_z, cam_x, cam_y, cam_z);
     }
-    //overloaded for first partials
+
+    ///converts world x,y,z coordinates to camera x,y,z coordinates overloaded with first partials
+    /// \param wrld_x x location in the world x,y,z space
+    /// \param wrld_y y location in the world x,y,z space
+    /// \param wrld_z z location in the world x,y,z space
+    /// \param cam_x x location in cam x,y,z space
+    /// \param cam_y y location in cam x,y,z space
+    /// \param cam_z z location in cam x,y,z space
+    /// \param wrld_dx first partials of the x world locations from previous transformations
+    /// \param wrld_dy first partials of the x world locations from previous transformations
+    /// \param wrld_dz first partials of the x world locations from previous transformations
+    /// \param cam_dx first partials of the x cam locations
+    /// \param cam_dy first partials of the y cam locations
+    /// \param cam_dz first partials of the z cam locations
     void world_to_cam(
       std::vector<scalar_t> & wrld_x,
       std::vector<scalar_t> & wrld_y,
@@ -548,7 +623,13 @@ namespace DICe {
 
 
   private:
-    //generic translation/rotation transform 
+    ///generic translation/rotation transform 
+    /// \param in_x input x location
+    /// \param in_y input y location
+    /// \param in_z input z location
+    /// \param out_x transformed x location
+    /// \param out_y transformed y location
+    /// \param out_z transformed z location
     void rot_trans_transform_(
       std::vector<std::vector<scalar_t>> & RT_matrix,
       std::vector<scalar_t> & in_x,
@@ -557,7 +638,20 @@ namespace DICe {
       std::vector<scalar_t> & out_x,
       std::vector<scalar_t> & out_y,
       std::vector<scalar_t> & out_z);
-    //overloaded for first partials
+
+    ///generic translation/rotation transform 
+    /// \param in_x input x location
+    /// \param in_y input y location
+    /// \param in_z input z location
+    /// \param out_x transformed x location
+    /// \param out_y transformed y location
+    /// \param out_z transformed z location
+    /// \param in_dx derivitives from previous transformations
+    /// \param in_dy derivitives from previous transformations
+    /// \param in_dz derivitives from previous transformations
+    /// \param out_dx derivitives modifiec by the transform
+    /// \param out_dy derivitives modifiec by the transform
+    /// \param out_dz derivitives modifiec by the transform
     void rot_trans_transform_(
       std::vector<std::vector<scalar_t>> & RT_matrix,
       std::vector<scalar_t> & in_x,
@@ -573,34 +667,34 @@ namespace DICe {
       std::vector<std::vector<scalar_t>> & out_dy,
       std::vector<std::vector<scalar_t>> & out_dz);
 
-    //routine to check for a valid camera
+    ///routine to check for a valid camera
     bool check_valid_(std::string & msg);
-    //creates the image values for the inverse lens distortion
+    ///creates the image values for the inverse lens distortion
     bool prep_lens_distortion_();
-    //creates the rotation/translation matricies and inverses
+    ///creates the rotation/translation matricies and inverses
     bool prep_transforms_();
 
-    //has the camera been filled with any parameters
+    ///has the camera been filled with any parameters
     bool camera_filled_ = false;
-    //has the camera prep been run
+    ///has the camera prep been run
     bool camera_prepped_ = false;
-    //did the user supply a rotation matrix
+    ///did the user supply a rotation matrix
     bool rot_3x3_matrix_filled_ = false;
 
-    /// 18 member array of camera intrinsics
-    /// first index is the camera id, second index is: 
-    ///   openCV_DIS - (cx cy fx fy k1 k2 p1 p2 [k3] [k4 k5 k6] [s1 s2 s3 s4] [tx ty])   4,5,8,12 or 14 distortion coef
-    ///		 Vic3D_DIS - (cx cy fx fy fs k1 k2 k3) 3 distortion coef (k1r1 k2r2 k3r3)
-    ///	    generic1 - (cx cy fx fy fs k1 k2 k3) 3 distortion coef (k1r1 k2r2 k3r3)
-    ///	    generic2 - (cx cy fx fy fs k1 k2 k3) 3 distortion coef (k1r2 k2r4 k3r6)
-    ///	    generic3 - (cx cy fx fy fs k1 k2 k3) 3 distortion coef (k1r3 k2r5 k3r7)
+    // 18 member array of camera intrinsics
+    // first index is the camera id, second index is: 
+    //   openCV_DIS - (cx cy fx fy k1 k2 p1 p2 [k3] [k4 k5 k6] [s1 s2 s3 s4] [tx ty])   4,5,8,12 or 14 distortion coef
+    //		 Vic3D_DIS - (cx cy fx fy fs k1 k2 k3) 3 distortion coef (k1r1 k2r2 k3r3)
+    //	    generic1 - (cx cy fx fy fs k1 k2 k3) 3 distortion coef (k1r1 k2r2 k3r3)
+    //	    generic2 - (cx cy fx fy fs k1 k2 k3) 3 distortion coef (k1r2 k2r4 k3r6)
+    //	    generic3 - (cx cy fx fy fs k1 k2 k3) 3 distortion coef (k1r3 k2r5 k3r7)
     std::vector<scalar_t> intrinsics_;
 
-    /// 6 member array of camera extrinsics
-    /// index is alpha beta gamma tx ty tz (the Euler angles + translations)
+    // 6 member array of camera extrinsics
+    // index is alpha beta gamma tx ty tz (the Euler angles + translations)
     std::vector<scalar_t> extrinsics_;
 
-    /// 3x3 rotation matrix
+    // 3x3 rotation matrix
     std::vector<std::vector<scalar_t>> rotation_3x3_matrix_;
 
     // Inverse lense distortion values for each pixel in an image
@@ -615,7 +709,6 @@ namespace DICe {
     int_t image_height_ = 0;
     int_t image_width_ = 0;
     int_t pixel_depth_ = 0;
-
     std::string camera_id_;
     std::string camera_lens_;
     std::string camera_comments_;
