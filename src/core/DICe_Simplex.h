@@ -124,6 +124,7 @@ public:
   /// \param shape_function pointer to a shape function
   /// \param num_iterations the number of iterations
   /// \param threshold the convergence threshold
+  using Simplex::minimize;
   Status_Flag minimize(Teuchos::RCP<Local_Shape_Function> shape_function,
     int_t & num_iterations,
     const scalar_t & threshold = 1.0E-10);

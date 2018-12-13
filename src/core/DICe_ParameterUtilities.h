@@ -83,6 +83,10 @@ const std::string to_string(Initialization_Method in);
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Optimization_Method in);
 
+/// Convert a DICe::Shape_Function_Type to string
+DICE_LIB_DLL_EXPORT
+const std::string to_string(Shape_Function_Type in);
+
 /// Convert a DICe::Interpolation_Method to string
 DICE_LIB_DLL_EXPORT
 const std::string to_string(Interpolation_Method in);

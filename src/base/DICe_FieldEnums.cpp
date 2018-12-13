@@ -156,15 +156,6 @@ void create_string_maps()
   field_name_string[field_enums::QUAD_J]                                             = "QUAD_J";
   field_name_string[field_enums::QUAD_K]                                             = "QUAD_K";
   field_name_string[field_enums::QUAD_L]                                             = "QUAD_L";
-  field_name_string[field_enums::AFFINE_A]                                           = "AFFINE_A";
-  field_name_string[field_enums::AFFINE_B]                                           = "AFFINE_B";
-  field_name_string[field_enums::AFFINE_C]                                           = "AFFINE_C";
-  field_name_string[field_enums::AFFINE_D]                                           = "AFFINE_D";
-  field_name_string[field_enums::AFFINE_E]                                           = "AFFINE_E";
-  field_name_string[field_enums::AFFINE_F]                                           = "AFFINE_F";
-  field_name_string[field_enums::AFFINE_G]                                           = "AFFINE_G";
-  field_name_string[field_enums::AFFINE_H]                                           = "AFFINE_H";
-  field_name_string[field_enums::AFFINE_I]                                           = "AFFINE_I";
   field_name_string[field_enums::FIELD_1]                                            = "FIELD_1";
   field_name_string[field_enums::FIELD_2]                                            = "FIELD_2";
   field_name_string[field_enums::FIELD_3]                                            = "FIELD_3";

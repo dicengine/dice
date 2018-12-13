@@ -552,10 +552,8 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   enable_normal_strain_ = diceParams->get<bool>(DICe::enable_normal_strain);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::enable_shear_strain),std::runtime_error,"");
   enable_shear_strain_ = diceParams->get<bool>(DICe::enable_shear_strain);
-  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::enable_quadratic_shape_function),std::runtime_error,"");
-  enable_quadratic_shape_function_ = diceParams->get<bool>(DICe::enable_quadratic_shape_function);
-	TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::enable_projection_shape_function), std::runtime_error, "");
-	enable_projection_shape_function_ = diceParams->get<bool>(DICe::enable_projection_shape_function);
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::shape_function_type),std::runtime_error,"");
+  shape_function_type_ = diceParams->get<Shape_Function_Type>(DICe::shape_function_type);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::output_deformed_subset_images),std::runtime_error,"");
   output_deformed_subset_images_ = diceParams->get<bool>(DICe::output_deformed_subset_images);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::output_deformed_subset_intensity_images),std::runtime_error,"");
@@ -937,14 +935,14 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
         if(proc_rank==0) DEBUG_MSG("Seeding the displacement solution for subset " << subset_id << " with ux: " <<
           global_field_value(subset_id,SUBSET_DISPLACEMENT_X_FS) << " uy: " << global_field_value(subset_id,SUBSET_DISPLACEMENT_Y_FS));
         if(subset_info->normal_strain_map->find(roi_id)!=subset_info->normal_strain_map->end()){
-          TEUCHOS_TEST_FOR_EXCEPTION(enable_quadratic_shape_function_,std::runtime_error,"Error, seeds can't be used with the quadratic shape function enabled");
+          TEUCHOS_TEST_FOR_EXCEPTION(shape_function_type_!=DICe::AFFINE_SF,std::runtime_error,"Error, seeds can only be used with the affine shape function");
           global_field_value(subset_id,NORMAL_STRETCH_XX_FS) = subset_info->normal_strain_map->find(roi_id)->second.first;
           global_field_value(subset_id,NORMAL_STRETCH_YY_FS) = subset_info->normal_strain_map->find(roi_id)->second.second;
           if(proc_rank==0) DEBUG_MSG("Seeding the normal strain solution for subset " << subset_id << " with ex: " <<
             global_field_value(subset_id,NORMAL_STRETCH_XX_FS) << " ey: " << global_field_value(subset_id,NORMAL_STRETCH_YY_FS));
         }
         if(subset_info->shear_strain_map->find(roi_id)!=subset_info->shear_strain_map->end()){
-          TEUCHOS_TEST_FOR_EXCEPTION(enable_quadratic_shape_function_,std::runtime_error,"Error, seeds can't be used with the quadratic shape function enabled");
+          TEUCHOS_TEST_FOR_EXCEPTION(shape_function_type_!=DICe::AFFINE_SF,std::runtime_error,"Error, seeds can only be used with the affine shape function");
           global_field_value(subset_id,SHEAR_STRETCH_XY_FS) = subset_info->shear_strain_map->find(roi_id)->second;
           if(proc_rank==0) DEBUG_MSG("Seeding the shear strain solution for subset " << subset_id << " with gamma_xy: " <<
             global_field_value(subset_id,SHEAR_STRETCH_XY_FS));
@@ -2575,7 +2573,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
       // write the results to the .info file
       if(proc_id==0){
         std::FILE * infoFilePtr = fopen(data_name.str().c_str(),"a");
-        fprintf(infoFilePtr,result_stream.str().c_str());
+        fprintf(infoFilePtr,"%s",result_stream.str().c_str());
         fclose(infoFilePtr);
         *outStream << result_stream.str();
       }
@@ -3283,7 +3281,7 @@ Output_Spec::Output_Spec(Schema * schema,
     field_names_.push_back(SUBSET_DISPLACEMENT_X_FS.get_name_label());
     field_names_.push_back(SUBSET_DISPLACEMENT_Y_FS.get_name_label());
     field_names_.push_back(ROTATION_Z_FS.get_name_label());
-    if(!schema->quadratic_shape_function_enabled()){
+    if(schema->shape_function_type()==DICe::AFFINE_SF){
       field_names_.push_back(NORMAL_STRETCH_XX_FS.get_name_label());
       field_names_.push_back(NORMAL_STRETCH_YY_FS.get_name_label());
       field_names_.push_back(SHEAR_STRETCH_XY_FS.get_name_label());
@@ -3413,7 +3411,7 @@ Output_Spec::write_info(std::FILE * file,
   fprintf(file,"*** Guess initialization method: %s\n",init_method.c_str());
   fprintf(file,"*** Seed location: N/A\n");
   fprintf(file,"*** Shape functions: ");
-  if(schema_->quadratic_shape_function_enabled()){
+  if(schema_->shape_function_type()==DICe::QUADRATIC_SF){
     fprintf(file,"quadratic (A,B,C,D,E,F,G,H,I,J,K,L)");
   }
 //	else if(schema_->profile_shape_function_enabled()) {

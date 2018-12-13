@@ -91,6 +91,7 @@ void match_features(Teuchos::RCP<Image> left_image,
   std::vector<cv::KeyPoint> matched1, matched2, inliers1, inliers2;
   std::vector<cv::DMatch> good_matches;
   for(size_t i = 0; i < nn_matches.size(); i++) {
+    if(nn_matches[i].size()<2)continue;
     cv::DMatch first = nn_matches[i][0];
     float dist1 = nn_matches[i][0].distance;
     float dist2 = nn_matches[i][1].distance;

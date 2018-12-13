@@ -781,7 +781,7 @@ int pre_process_cal_image(const std::string & image_filename,
         std::stringstream dot_text;
         dot_text << i << "," << j;
         putText(out_img, dot_text.str(), Point2f(trimmed_dot_cx[neigh_id],trimmed_dot_cy[neigh_id]) + Point2f(20,20),
-          FONT_HERSHEY_COMPLEX_SMALL, 1.0, Scalar(255,0,0), 1.5, cv::LINE_AA);
+          FONT_HERSHEY_COMPLEX_SMALL, 1.0, Scalar(255,0,0), 1, cv::LINE_AA);
         circle(out_img,Point(trimmed_dot_cx[neigh_id],trimmed_dot_cy[neigh_id]),10,Scalar(255,0,255),-1);
       } else if (i>=0&&i<pattern_width&&j>=0&&j<pattern_height){
         interior_dot_failed = true;
@@ -866,7 +866,7 @@ StereoCalib(const int mode,
           timg = img;
         else
           resize(img, timg, Size(), scale, scale);
-        if((mode==1)||(mode==2)){
+        if(mode==1 || mode == 2){
           // binary image
           Mat bi_src(timg.size(), timg.type());
           // apply thresholding

@@ -741,8 +741,8 @@ public:
 
   // shape function controls:
   /// Returns true if all quadratic shape functions are enabled
-  bool quadratic_shape_function_enabled() const {
-    return enable_quadratic_shape_function_;
+  Shape_Function_Type shape_function_type() const {
+    return shape_function_type_;
   }
 
 	/// Returns true if all quadratic shape functions are enabled
@@ -807,8 +807,8 @@ public:
   }
 
   /// Enable translation shape functions
-  void enable_quadratic_shape_function(const bool flag){
-    enable_quadratic_shape_function_ = flag;
+  void set_shape_function_type(const Shape_Function_Type sft){
+    shape_function_type_ = sft;
   }
 
 	/// Enable projection shape functions
@@ -1169,10 +1169,8 @@ private:
   Projection_Method projection_method_;
   /// Analysis type
   Analysis_Type analysis_type_;
-  /// Enable the quadratic shape functions all together rather than individual components
-  bool enable_quadratic_shape_function_;
-	/// Enable the projection shape functions
-	bool enable_projection_shape_function_;
+  /// Shape function type
+  Shape_Function_Type shape_function_type_;
   /// Enable translation
   bool enable_translation_;
   /// Enable rotation
