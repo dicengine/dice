@@ -55,6 +55,7 @@
 #include "opencv2/opencv.hpp"
 
 #include <cassert>
+#include <fstream>
 
 using namespace cv;
 using namespace DICe;
@@ -283,11 +284,11 @@ int main(int argc, char *argv[]) {
     std::stringstream banner3;
     banner3 << "frame " << frame;
     putText(out_img, banner1, Point(30,30),
-      FONT_HERSHEY_DUPLEX, 0.5, Scalar(255,255,255), 1, CV_AA);
+      FONT_HERSHEY_DUPLEX, 0.5, Scalar(255,255,255), 1, cv::LINE_AA);
     putText(out_img, banner2.str(), Point(30,50),
-      FONT_HERSHEY_DUPLEX, 0.5, Scalar(255,255,255), 1, CV_AA);
+      FONT_HERSHEY_DUPLEX, 0.5, Scalar(255,255,255), 1, cv::LINE_AA);
     putText(out_img, banner3.str(), Point(30,70),
-      FONT_HERSHEY_DUPLEX, 0.5, Scalar(255,255,255), 1, CV_AA);
+      FONT_HERSHEY_DUPLEX, 0.5, Scalar(255,255,255), 1, cv::LINE_AA);
 
     for(int_t roi=0;roi<num_roi;++roi){
       const scalar_t u = disp_x[roi][i];
@@ -319,7 +320,7 @@ int main(int argc, char *argv[]) {
                 true,       // draw closed contour (i.e. joint end to start)
                 roi_color,// colour BGR ordering
                 1,            // line thickness
-                CV_AA, 0);
+                cv::LINE_AA, 0);
       // draw any excluded regions as well
       int_t num_excluded = 0;
       if(conformal_area_defs->find(roi)->second.has_excluded_area())
@@ -342,14 +343,14 @@ int main(int argc, char *argv[]) {
           true,       // draw closed contour (i.e. joint end to start)
           Scalar(0,0,255),// colour RGB ordering
           1,            // line thickness
-          CV_AA, 0);
+          cv::LINE_AA, 0);
       }// end excluded shapes
       // draw centroids on the ROIs as a small circle
       circle(out_img,Point(cx+u,cy+v),2,Scalar(0,255,0),-1);
       std::stringstream pt_text;
       pt_text << roi;
       // denote the ROI ids
-      putText(out_img, pt_text.str(), Point(cx+u+5,cy+v+5),FONT_HERSHEY_DUPLEX,0.5,Scalar(0,255,0), 1, CV_AA);
+      putText(out_img, pt_text.str(), Point(cx+u+5,cy+v+5),FONT_HERSHEY_DUPLEX,0.5,Scalar(0,255,0), 1, cv::LINE_AA);
     }
     video.write(out_img);
   }
