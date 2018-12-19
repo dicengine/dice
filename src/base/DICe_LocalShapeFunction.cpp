@@ -586,14 +586,13 @@ Projection_Shape_Function::Projection_Shape_Function():
 }
 
 
-Projection_Shape_Function::Projection_Shape_Function(CamSystem * camSystem, int_t undef_cam, int_t def_cam) {
+Projection_Shape_Function::Projection_Shape_Function(Camera_System * camSystem, int_t undef_cam, int_t def_cam) {
   init();
   set_system_cams(camSystem, undef_cam, def_cam);
 }
 
 void
 Projection_Shape_Function::init() {
-  namespace LSF = DICe_LocalShapeFunction;
   spec_map_.insert(std::pair<Field_Spec, size_t>(PROJECTION_Z_FS, spec_map_.size()));
   spec_map_.insert(std::pair<Field_Spec, size_t>(PROJECTION_PHI_FS, spec_map_.size()));
   spec_map_.insert(std::pair<Field_Spec, size_t>(PROJECTION_THETA_FS, spec_map_.size()));
@@ -604,9 +603,9 @@ Projection_Shape_Function::init() {
   // initialize the parameter values
   clear();
   // initialize the deltas:
-  deltas_[LSF::ZP] = 0.005;
-  deltas_[LSF::THETA] = 0.001;
-  deltas_[LSF::PHI] = 0.001;
+  deltas_[ZP] = 0.005;
+  deltas_[THETA] = 0.001;
+  deltas_[PHI] = 0.001;
   img0_x_sng_.resize(1);
   img0_y_sng_.resize(1);
   img1_x_sng_.resize(1);
@@ -622,12 +621,12 @@ Projection_Shape_Function::init() {
 }
 
 void
-Projection_Shape_Function::set_system_cams(CamSystem * camSystem, int_t undef_cam, int_t def_cam) {
+Projection_Shape_Function::set_system_cams(Camera_System * camSystem, int_t undef_cam, int_t def_cam) {
   system_cams_set_ = false;
   //check if the cameras are valid and if they are set the undeformed and deformed cameras
   if (cam_system_->camera_valid(undef_cam_) && cam_system_->camera_valid(def_cam_)) {
-    cam_system_->set_Source_Camera(undef_cam_);
-    cam_system_->set_Target_Camera(def_cam_);
+    cam_system_->set_source_camera(undef_cam_);
+    cam_system_->set_target_camera(def_cam_);
     if (!cam_system_->cameras_prepped()) cam_system_->prep_cameras();
     system_cams_set_ = true;
   }
@@ -653,10 +652,9 @@ Projection_Shape_Function::map(const scalar_t & img0_x,
   const scalar_t & cy,
   scalar_t & img1_x,
   scalar_t & img1_y) {
-  namespace LSF = DICe_LocalShapeFunction;
-  proj_params_[LSF::ZP] = parameter(PROJECTION_Z_FS);
-  proj_params_[LSF::THETA] = parameter(PROJECTION_THETA_FS);
-  proj_params_[LSF::PHI] = parameter(PROJECTION_PHI_FS);
+  proj_params_[ZP] = parameter(PROJECTION_Z_FS);
+  proj_params_[THETA] = parameter(PROJECTION_THETA_FS);
+  proj_params_[PHI] = parameter(PROJECTION_PHI_FS);
   cam_system_->cross_projection_map(img0_x, img0_y, img1_x, img1_y, proj_params_);
 }
 
@@ -667,10 +665,9 @@ Projection_Shape_Function::map(std::vector<scalar_t> & img0_x,
   const scalar_t & cy,
   std::vector<scalar_t> & img1_x,
   std::vector<scalar_t> & img1_y) {
-  namespace LSF = DICe_LocalShapeFunction;
-  proj_params_[LSF::ZP] = parameter(PROJECTION_Z_FS);
-  proj_params_[LSF::THETA] = parameter(PROJECTION_THETA_FS);
-  proj_params_[LSF::PHI] = parameter(PROJECTION_PHI_FS);
+  proj_params_[ZP] = parameter(PROJECTION_Z_FS);
+  proj_params_[THETA] = parameter(PROJECTION_THETA_FS);
+  proj_params_[PHI] = parameter(PROJECTION_PHI_FS);
   cam_system_->cross_projection_map(img0_x, img0_y, img1_x, img1_y, proj_params_);
 }
 
@@ -684,17 +681,16 @@ Projection_Shape_Function::residuals(const scalar_t & img0_x,
   std::vector<scalar_t> & residuals,
   const bool use_ref_grads) {
 
-  namespace LSF = DICe_LocalShapeFunction;
-  proj_params_[LSF::ZP] = parameter(PROJECTION_Z_FS);
-  proj_params_[LSF::THETA] = parameter(PROJECTION_THETA_FS);
-  proj_params_[LSF::PHI] = parameter(PROJECTION_PHI_FS);
+  proj_params_[ZP] = parameter(PROJECTION_Z_FS);
+  proj_params_[THETA] = parameter(PROJECTION_THETA_FS);
+  proj_params_[PHI] = parameter(PROJECTION_PHI_FS);
   img0_x_sng_[0] = img0_x;
   img0_y_sng_[0] = img0_y;
   cam_system_->cross_projection_map(img0_x_sng_, img0_y_sng_, img1_x_sng_, img1_y_sng_, proj_params_, img1_dx_sng_, img1_dy_sng_);
 
-  residuals[spec_map_.find(PROJECTION_Z_FS)->second] = gx * img1_dx_sng_[LSF::ZP][0] + gy * img1_dy_sng_[LSF::ZP][0];
-  residuals[spec_map_.find(PROJECTION_THETA_FS)->second] = gx * img1_dx_sng_[LSF::THETA][0] + gy * img1_dy_sng_[LSF::THETA][0];
-  residuals[spec_map_.find(PROJECTION_PHI_FS)->second] = gx * img1_dx_sng_[LSF::PHI][0] + gy * img1_dy_sng_[LSF::PHI][0];
+  residuals[spec_map_.find(PROJECTION_Z_FS)->second] = gx * img1_dx_sng_[ZP][0] + gy * img1_dy_sng_[ZP][0];
+  residuals[spec_map_.find(PROJECTION_THETA_FS)->second] = gx * img1_dx_sng_[THETA][0] + gy * img1_dy_sng_[THETA][0];
+  residuals[spec_map_.find(PROJECTION_PHI_FS)->second] = gx * img1_dx_sng_[PHI][0] + gy * img1_dy_sng_[PHI][0];
 }
 
 void
@@ -704,13 +700,12 @@ Projection_Shape_Function::residuals(std::vector<scalar_t> & img0_x,
   const scalar_t & cy,
   std::vector<scalar_t> & gx,
   std::vector<scalar_t> & gy,
-  std::vector<std::vector<scalar_t>> & residuals,
+  std::vector<std::vector<scalar_t> > & residuals,
   const bool use_ref_grads) {
 
-  namespace LSF = DICe_LocalShapeFunction;
-  proj_params_[LSF::ZP] = parameter(PROJECTION_Z_FS);
-  proj_params_[LSF::THETA] = parameter(PROJECTION_THETA_FS);
-  proj_params_[LSF::PHI] = parameter(PROJECTION_PHI_FS);
+  proj_params_[ZP] = parameter(PROJECTION_Z_FS);
+  proj_params_[THETA] = parameter(PROJECTION_THETA_FS);
+  proj_params_[PHI] = parameter(PROJECTION_PHI_FS);
   int_t num_pnts = img0_x.size();
   img1_x_.resize(num_pnts);
   img1_y_.resize(num_pnts);
@@ -725,9 +720,9 @@ Projection_Shape_Function::residuals(std::vector<scalar_t> & img0_x,
   cam_system_->cross_projection_map(img0_x, img0_y, img1_x_, img1_y_, proj_params_, img1_dx_, img1_dy_);
 
   for (int_t i = 0; i < num_pnts; i++) {
-    residuals[spec_map_.find(PROJECTION_Z_FS)->second][i] = gx[i] * img1_dx_[LSF::ZP][i] + gy[i] * img1_dy_[LSF::ZP][i];
-    residuals[spec_map_.find(PROJECTION_THETA_FS)->second][i] = gx[i] * img1_dx_[LSF::THETA][i] + gy[i] * img1_dy_[LSF::THETA][i];
-    residuals[spec_map_.find(PROJECTION_PHI_FS)->second][i] = gx[i] * img1_dx_[LSF::PHI][i] + gy[i] * img1_dy_[LSF::PHI][i];
+    residuals[spec_map_.find(PROJECTION_Z_FS)->second][i] = gx[i] * img1_dx_[ZP][i] + gy[i] * img1_dy_[ZP][i];
+    residuals[spec_map_.find(PROJECTION_THETA_FS)->second][i] = gx[i] * img1_dx_[THETA][i] + gy[i] * img1_dy_[THETA][i];
+    residuals[spec_map_.find(PROJECTION_PHI_FS)->second][i] = gx[i] * img1_dx_[PHI][i] + gy[i] * img1_dy_[PHI][i];
   }
 }
 
@@ -741,12 +736,11 @@ Projection_Shape_Function::residuals(std::vector<scalar_t> & img0_x,
   const scalar_t & cy,
   std::vector<scalar_t> & gx,
   std::vector<scalar_t> & gy,
-  std::vector<std::vector<scalar_t>> & residuals,
+  std::vector<std::vector<scalar_t> > & residuals,
   const bool use_ref_grads) {
-  namespace LSF = DICe_LocalShapeFunction;
-  proj_params_[LSF::ZP] = parameter(PROJECTION_Z_FS);
-  proj_params_[LSF::THETA] = parameter(PROJECTION_THETA_FS);
-  proj_params_[LSF::PHI] = parameter(PROJECTION_PHI_FS);
+  proj_params_[ZP] = parameter(PROJECTION_Z_FS);
+  proj_params_[THETA] = parameter(PROJECTION_THETA_FS);
+  proj_params_[PHI] = parameter(PROJECTION_PHI_FS);
   int_t num_pnts = img0_x.size();
 
   img1_dx_.resize(3);
@@ -760,9 +754,9 @@ Projection_Shape_Function::residuals(std::vector<scalar_t> & img0_x,
   cam_system_->cross_projection_map(img0_x, img0_y, img1_x, img1_y, proj_params_, img1_dx_, img1_dy_);
 
   for (int_t i = 0; i < num_pnts; i++) {
-    residuals[spec_map_.find(PROJECTION_Z_FS)->second][i] = gx[i] * img1_dx_[LSF::ZP][i] + gy[i] * img1_dy_[LSF::ZP][i];
-    residuals[spec_map_.find(PROJECTION_THETA_FS)->second][i] = gx[i] * img1_dx_[LSF::THETA][i] + gy[i] * img1_dy_[LSF::THETA][i];
-    residuals[spec_map_.find(PROJECTION_PHI_FS)->second][i] = gx[i] * img1_dx_[LSF::PHI][i] + gy[i] * img1_dy_[LSF::PHI][i];
+    residuals[spec_map_.find(PROJECTION_Z_FS)->second][i] = gx[i] * img1_dx_[ZP][i] + gy[i] * img1_dy_[ZP][i];
+    residuals[spec_map_.find(PROJECTION_THETA_FS)->second][i] = gx[i] * img1_dx_[THETA][i] + gy[i] * img1_dy_[THETA][i];
+    residuals[spec_map_.find(PROJECTION_PHI_FS)->second][i] = gx[i] * img1_dx_[PHI][i] + gy[i] * img1_dy_[PHI][i];
   }
 }
 
@@ -813,7 +807,7 @@ Fixed_Proj_3DRB_Shape_Function::Fixed_Proj_3DRB_Shape_Function() {
 }
 
 
-Fixed_Proj_3DRB_Shape_Function::Fixed_Proj_3DRB_Shape_Function(CamSystem * camSystem, int_t undef_cam, int_t def_cam, std::vector<scalar_t> & proj_params) {
+Fixed_Proj_3DRB_Shape_Function::Fixed_Proj_3DRB_Shape_Function(Camera_System * camSystem, int_t undef_cam, int_t def_cam, std::vector<scalar_t> & proj_params) {
   init();
   set_system_cams(camSystem, undef_cam, def_cam);
   set_projection_params(proj_params);
@@ -821,7 +815,6 @@ Fixed_Proj_3DRB_Shape_Function::Fixed_Proj_3DRB_Shape_Function(CamSystem * camSy
 
 void
 Fixed_Proj_3DRB_Shape_Function::init() {
-  namespace LSF = DICe_LocalShapeFunction;
   spec_map_.insert(std::pair<Field_Spec, size_t>(ROT_TRANS_3D_ANG_X_FS, spec_map_.size()));
   spec_map_.insert(std::pair<Field_Spec, size_t>(ROT_TRANS_3D_ANG_Y_FS, spec_map_.size()));
   spec_map_.insert(std::pair<Field_Spec, size_t>(ROT_TRANS_3D_ANG_Z_FS, spec_map_.size()));
@@ -836,12 +829,12 @@ Fixed_Proj_3DRB_Shape_Function::init() {
   // initialize the parameter values
   clear();
   // initialize the deltas:
-  deltas_[LSF::ANG_X] = 0.005;
-  deltas_[LSF::ANG_Y] = 0.005;
-  deltas_[LSF::ANG_Z] = 0.005;
-  deltas_[LSF::TRANS_X] = 0.005;
-  deltas_[LSF::TRANS_Y] = 0.005;
-  deltas_[LSF::TRANS_Z] = 0.005;
+  deltas_[ANGLE_X] = 0.005;
+  deltas_[ANGLE_Y] = 0.005;
+  deltas_[ANGLE_Z] = 0.005;
+  deltas_[TRANS_X] = 0.005;
+  deltas_[TRANS_Y] = 0.005;
+  deltas_[TRANS_Z] = 0.005;
   img0_x_sng_.resize(1);
   img0_y_sng_.resize(1);
   img1_x_sng_.resize(1);
@@ -857,12 +850,12 @@ Fixed_Proj_3DRB_Shape_Function::init() {
 }
 
 void
-Fixed_Proj_3DRB_Shape_Function::set_system_cams(CamSystem * camSystem, int_t undef_cam, int_t def_cam) {
+Fixed_Proj_3DRB_Shape_Function::set_system_cams(Camera_System * camSystem, int_t undef_cam, int_t def_cam) {
   system_cams_set_ = false;
   //check if the cameras are valid and if they are set the undeformed and deformed cameras
   if (cam_system_->camera_valid(undef_cam_) && cam_system_->camera_valid(def_cam_)) {
-    cam_system_->set_Source_Camera(undef_cam_);
-    cam_system_->set_Target_Camera(def_cam_);
+    cam_system_->set_source_camera(undef_cam_);
+    cam_system_->set_target_camera(def_cam_);
     if (!cam_system_->cameras_prepped()) cam_system_->prep_cameras();
     system_cams_set_ = true;
   }
@@ -894,14 +887,13 @@ Fixed_Proj_3DRB_Shape_Function::map(const scalar_t & img0_x,
   const scalar_t & cy,
   scalar_t & img1_x,
   scalar_t & img1_y) {
-  namespace LSF = DICe_LocalShapeFunction;
   rot_trans_params_.assign(6, 0.0);
-  rot_trans_params_[LSF::ANG_X] = parameter(ROT_TRANS_3D_ANG_X_FS);
-  rot_trans_params_[LSF::ANG_Y] = parameter(ROT_TRANS_3D_ANG_Y_FS);
-  rot_trans_params_[LSF::ANG_Z] = parameter(ROT_TRANS_3D_ANG_Z_FS);
-  rot_trans_params_[LSF::TRANS_X] = parameter(ROT_TRANS_3D_TRANS_X_FS);
-  rot_trans_params_[LSF::TRANS_Y] = parameter(ROT_TRANS_3D_TRANS_Y_FS);
-  rot_trans_params_[LSF::TRANS_Z] = parameter(ROT_TRANS_3D_TRANS_Z_FS);
+  rot_trans_params_[ANGLE_X] = parameter(ROT_TRANS_3D_ANG_X_FS);
+  rot_trans_params_[ANGLE_Y] = parameter(ROT_TRANS_3D_ANG_Y_FS);
+  rot_trans_params_[ANGLE_Z] = parameter(ROT_TRANS_3D_ANG_Z_FS);
+  rot_trans_params_[TRANS_X] = parameter(ROT_TRANS_3D_TRANS_X_FS);
+  rot_trans_params_[TRANS_Y] = parameter(ROT_TRANS_3D_TRANS_Y_FS);
+  rot_trans_params_[TRANS_Z] = parameter(ROT_TRANS_3D_TRANS_Z_FS);
   cam_system_->fixed_proj_3DRB_map(img0_x, img0_y, img1_x, img1_y, proj_params_, rot_trans_params_);
 
 }
@@ -913,14 +905,13 @@ Fixed_Proj_3DRB_Shape_Function::map(std::vector<scalar_t> & img0_x,
   const scalar_t & cy,
   std::vector<scalar_t> & img1_x,
   std::vector<scalar_t> & img1_y) {
-  namespace LSF = DICe_LocalShapeFunction;
   rot_trans_params_.assign(6, 0.0);
-  rot_trans_params_[LSF::ANG_X] = parameter(ROT_TRANS_3D_ANG_X_FS);
-  rot_trans_params_[LSF::ANG_Y] = parameter(ROT_TRANS_3D_ANG_Y_FS);
-  rot_trans_params_[LSF::ANG_Z] = parameter(ROT_TRANS_3D_ANG_Z_FS);
-  rot_trans_params_[LSF::TRANS_X] = parameter(ROT_TRANS_3D_TRANS_X_FS);
-  rot_trans_params_[LSF::TRANS_Y] = parameter(ROT_TRANS_3D_TRANS_Y_FS);
-  rot_trans_params_[LSF::TRANS_Z] = parameter(ROT_TRANS_3D_TRANS_Z_FS);
+  rot_trans_params_[ANGLE_X] = parameter(ROT_TRANS_3D_ANG_X_FS);
+  rot_trans_params_[ANGLE_Y] = parameter(ROT_TRANS_3D_ANG_Y_FS);
+  rot_trans_params_[ANGLE_Z] = parameter(ROT_TRANS_3D_ANG_Z_FS);
+  rot_trans_params_[TRANS_X] = parameter(ROT_TRANS_3D_TRANS_X_FS);
+  rot_trans_params_[TRANS_Y] = parameter(ROT_TRANS_3D_TRANS_Y_FS);
+  rot_trans_params_[TRANS_Z] = parameter(ROT_TRANS_3D_TRANS_Z_FS);
   cam_system_->fixed_proj_3DRB_map(img0_x, img0_y, img1_x, img1_y, proj_params_, rot_trans_params_);
 }
 
@@ -934,24 +925,23 @@ Fixed_Proj_3DRB_Shape_Function::residuals(const scalar_t & img0_x,
   std::vector<scalar_t> & residuals,
   const bool use_ref_grads) {
 
-  namespace LSF = DICe_LocalShapeFunction;
   rot_trans_params_.assign(6, 0.0);
-  rot_trans_params_[LSF::ANG_X] = parameter(ROT_TRANS_3D_ANG_X_FS);
-  rot_trans_params_[LSF::ANG_Y] = parameter(ROT_TRANS_3D_ANG_Y_FS);
-  rot_trans_params_[LSF::ANG_Z] = parameter(ROT_TRANS_3D_ANG_Z_FS);
-  rot_trans_params_[LSF::TRANS_X] = parameter(ROT_TRANS_3D_TRANS_X_FS);
-  rot_trans_params_[LSF::TRANS_Y] = parameter(ROT_TRANS_3D_TRANS_Y_FS);
-  rot_trans_params_[LSF::TRANS_Z] = parameter(ROT_TRANS_3D_TRANS_Z_FS);
+  rot_trans_params_[ANGLE_X] = parameter(ROT_TRANS_3D_ANG_X_FS);
+  rot_trans_params_[ANGLE_Y] = parameter(ROT_TRANS_3D_ANG_Y_FS);
+  rot_trans_params_[ANGLE_Z] = parameter(ROT_TRANS_3D_ANG_Z_FS);
+  rot_trans_params_[TRANS_X] = parameter(ROT_TRANS_3D_TRANS_X_FS);
+  rot_trans_params_[TRANS_Y] = parameter(ROT_TRANS_3D_TRANS_Y_FS);
+  rot_trans_params_[TRANS_Z] = parameter(ROT_TRANS_3D_TRANS_Z_FS);
   img0_x_sng_[0] = img0_x;
   img0_y_sng_[0] = img0_y;
   cam_system_->fixed_proj_3DRB_map(img0_x_sng_, img0_y_sng_, img1_x_sng_, img1_y_sng_, proj_params_, rot_trans_params_, img1_dx_sng_, img1_dy_sng_);
 
-  residuals[spec_map_.find(ROT_TRANS_3D_ANG_X_FS)->second] = gx * img1_dx_sng_[LSF::ANG_X][0] + gy * img1_dy_sng_[LSF::ANG_X][0];
-  residuals[spec_map_.find(ROT_TRANS_3D_ANG_Y_FS)->second] = gx * img1_dx_sng_[LSF::ANG_Y][0] + gy * img1_dy_sng_[LSF::ANG_Y][0];
-  residuals[spec_map_.find(ROT_TRANS_3D_ANG_Z_FS)->second] = gx * img1_dx_sng_[LSF::ANG_Z][0] + gy * img1_dy_sng_[LSF::ANG_Z][0];
-  residuals[spec_map_.find(ROT_TRANS_3D_TRANS_X_FS)->second] = gx * img1_dx_sng_[LSF::TRANS_X][0] + gy * img1_dy_sng_[LSF::TRANS_X][0];
-  residuals[spec_map_.find(ROT_TRANS_3D_TRANS_Y_FS)->second] = gx * img1_dx_sng_[LSF::TRANS_Y][0] + gy * img1_dy_sng_[LSF::TRANS_Y][0];
-  residuals[spec_map_.find(ROT_TRANS_3D_TRANS_Z_FS)->second] = gx * img1_dx_sng_[LSF::TRANS_Z][0] + gy * img1_dy_sng_[LSF::TRANS_Z][0];
+  residuals[spec_map_.find(ROT_TRANS_3D_ANG_X_FS)->second] = gx * img1_dx_sng_[ANGLE_X][0] + gy * img1_dy_sng_[ANGLE_X][0];
+  residuals[spec_map_.find(ROT_TRANS_3D_ANG_Y_FS)->second] = gx * img1_dx_sng_[ANGLE_Y][0] + gy * img1_dy_sng_[ANGLE_Y][0];
+  residuals[spec_map_.find(ROT_TRANS_3D_ANG_Z_FS)->second] = gx * img1_dx_sng_[ANGLE_Z][0] + gy * img1_dy_sng_[ANGLE_Z][0];
+  residuals[spec_map_.find(ROT_TRANS_3D_TRANS_X_FS)->second] = gx * img1_dx_sng_[TRANS_X][0] + gy * img1_dy_sng_[TRANS_X][0];
+  residuals[spec_map_.find(ROT_TRANS_3D_TRANS_Y_FS)->second] = gx * img1_dx_sng_[TRANS_Y][0] + gy * img1_dy_sng_[TRANS_Y][0];
+  residuals[spec_map_.find(ROT_TRANS_3D_TRANS_Z_FS)->second] = gx * img1_dx_sng_[TRANS_Z][0] + gy * img1_dy_sng_[TRANS_Z][0];
 }
 
 void
@@ -961,17 +951,16 @@ Fixed_Proj_3DRB_Shape_Function::residuals(std::vector<scalar_t> & img0_x,
   const scalar_t & cy,
   std::vector<scalar_t> & gx,
   std::vector<scalar_t> & gy,
-  std::vector<std::vector<scalar_t>> & residuals,
+  std::vector<std::vector<scalar_t> > & residuals,
   const bool use_ref_grads) {
 
-  namespace LSF = DICe_LocalShapeFunction;
   rot_trans_params_.assign(6, 0.0);
-  rot_trans_params_[LSF::ANG_X] = parameter(ROT_TRANS_3D_ANG_X_FS);
-  rot_trans_params_[LSF::ANG_Y] = parameter(ROT_TRANS_3D_ANG_Y_FS);
-  rot_trans_params_[LSF::ANG_Z] = parameter(ROT_TRANS_3D_ANG_Z_FS);
-  rot_trans_params_[LSF::TRANS_X] = parameter(ROT_TRANS_3D_TRANS_X_FS);
-  rot_trans_params_[LSF::TRANS_Y] = parameter(ROT_TRANS_3D_TRANS_Y_FS);
-  rot_trans_params_[LSF::TRANS_Z] = parameter(ROT_TRANS_3D_TRANS_Z_FS);
+  rot_trans_params_[ANGLE_X] = parameter(ROT_TRANS_3D_ANG_X_FS);
+  rot_trans_params_[ANGLE_Y] = parameter(ROT_TRANS_3D_ANG_Y_FS);
+  rot_trans_params_[ANGLE_Z] = parameter(ROT_TRANS_3D_ANG_Z_FS);
+  rot_trans_params_[TRANS_X] = parameter(ROT_TRANS_3D_TRANS_X_FS);
+  rot_trans_params_[TRANS_Y] = parameter(ROT_TRANS_3D_TRANS_Y_FS);
+  rot_trans_params_[TRANS_Z] = parameter(ROT_TRANS_3D_TRANS_Z_FS);
   int_t num_pnts = img0_x.size();
   img1_x_.resize(num_pnts);
   img1_y_.resize(num_pnts);
@@ -986,12 +975,12 @@ Fixed_Proj_3DRB_Shape_Function::residuals(std::vector<scalar_t> & img0_x,
   cam_system_->fixed_proj_3DRB_map(img0_x, img0_y, img1_x_, img1_y_, proj_params_, rot_trans_params_, img1_dx_, img1_dy_);
 
   for (int_t i = 0; i < num_pnts; i++) {
-    residuals[spec_map_.find(ROT_TRANS_3D_ANG_X_FS)->second][i] = gx[i] * img1_dx_[LSF::ANG_X][i] + gy[i] * img1_dy_[LSF::ANG_X][i];
-    residuals[spec_map_.find(ROT_TRANS_3D_ANG_Y_FS)->second][i] = gx[i] * img1_dx_[LSF::ANG_Y][i] + gy[i] * img1_dy_[LSF::ANG_Y][i];
-    residuals[spec_map_.find(ROT_TRANS_3D_ANG_Z_FS)->second][i] = gx[i] * img1_dx_[LSF::ANG_Z][i] + gy[i] * img1_dy_[LSF::ANG_Z][i];
-    residuals[spec_map_.find(ROT_TRANS_3D_TRANS_X_FS)->second][i] = gx[i] * img1_dx_[LSF::TRANS_X][i] + gy[i] * img1_dy_[LSF::TRANS_X][i];
-    residuals[spec_map_.find(ROT_TRANS_3D_TRANS_Y_FS)->second][i] = gx[i] * img1_dx_[LSF::TRANS_Y][i] + gy[i] * img1_dy_[LSF::TRANS_Y][i];
-    residuals[spec_map_.find(ROT_TRANS_3D_TRANS_Z_FS)->second][i] = gx[i] * img1_dx_[LSF::TRANS_Z][i] + gy[i] * img1_dy_[LSF::TRANS_Z][i];
+    residuals[spec_map_.find(ROT_TRANS_3D_ANG_X_FS)->second][i] = gx[i] * img1_dx_[ANGLE_X][i] + gy[i] * img1_dy_[ANGLE_X][i];
+    residuals[spec_map_.find(ROT_TRANS_3D_ANG_Y_FS)->second][i] = gx[i] * img1_dx_[ANGLE_Y][i] + gy[i] * img1_dy_[ANGLE_Y][i];
+    residuals[spec_map_.find(ROT_TRANS_3D_ANG_Z_FS)->second][i] = gx[i] * img1_dx_[ANGLE_Z][i] + gy[i] * img1_dy_[ANGLE_Z][i];
+    residuals[spec_map_.find(ROT_TRANS_3D_TRANS_X_FS)->second][i] = gx[i] * img1_dx_[TRANS_X][i] + gy[i] * img1_dy_[TRANS_X][i];
+    residuals[spec_map_.find(ROT_TRANS_3D_TRANS_Y_FS)->second][i] = gx[i] * img1_dx_[TRANS_Y][i] + gy[i] * img1_dy_[TRANS_Y][i];
+    residuals[spec_map_.find(ROT_TRANS_3D_TRANS_Z_FS)->second][i] = gx[i] * img1_dx_[TRANS_Z][i] + gy[i] * img1_dy_[TRANS_Z][i];
   }
 }
 
@@ -1005,16 +994,15 @@ Fixed_Proj_3DRB_Shape_Function::residuals(std::vector<scalar_t> & img0_x,
   const scalar_t & cy,
   std::vector<scalar_t> & gx,
   std::vector<scalar_t> & gy,
-  std::vector<std::vector<scalar_t>> & residuals,
+  std::vector<std::vector<scalar_t> > & residuals,
   const bool use_ref_grads) {
-  namespace LSF = DICe_LocalShapeFunction;
   rot_trans_params_.assign(6, 0.0);
-  rot_trans_params_[LSF::ANG_X] = parameter(ROT_TRANS_3D_ANG_X_FS);
-  rot_trans_params_[LSF::ANG_Y] = parameter(ROT_TRANS_3D_ANG_Y_FS);
-  rot_trans_params_[LSF::ANG_Z] = parameter(ROT_TRANS_3D_ANG_Z_FS);
-  rot_trans_params_[LSF::TRANS_X] = parameter(ROT_TRANS_3D_TRANS_X_FS);
-  rot_trans_params_[LSF::TRANS_Y] = parameter(ROT_TRANS_3D_TRANS_Y_FS);
-  rot_trans_params_[LSF::TRANS_Z] = parameter(ROT_TRANS_3D_TRANS_Z_FS);
+  rot_trans_params_[ANGLE_X] = parameter(ROT_TRANS_3D_ANG_X_FS);
+  rot_trans_params_[ANGLE_Y] = parameter(ROT_TRANS_3D_ANG_Y_FS);
+  rot_trans_params_[ANGLE_Z] = parameter(ROT_TRANS_3D_ANG_Z_FS);
+  rot_trans_params_[TRANS_X] = parameter(ROT_TRANS_3D_TRANS_X_FS);
+  rot_trans_params_[TRANS_Y] = parameter(ROT_TRANS_3D_TRANS_Y_FS);
+  rot_trans_params_[TRANS_Z] = parameter(ROT_TRANS_3D_TRANS_Z_FS);
   int_t num_pnts = img0_x.size();
 
   img1_dx_.resize(3);
@@ -1028,12 +1016,12 @@ Fixed_Proj_3DRB_Shape_Function::residuals(std::vector<scalar_t> & img0_x,
   cam_system_->fixed_proj_3DRB_map(img0_x, img0_y, img1_x, img1_y, proj_params_, rot_trans_params_, img1_dx_, img1_dy_);
 
   for (int_t i = 0; i < num_pnts; i++) {
-    residuals[spec_map_.find(ROT_TRANS_3D_ANG_X_FS)->second][i] = gx[i] * img1_dx_[LSF::ANG_X][i] + gy[i] * img1_dy_[LSF::ANG_X][i];
-    residuals[spec_map_.find(ROT_TRANS_3D_ANG_Y_FS)->second][i] = gx[i] * img1_dx_[LSF::ANG_Y][i] + gy[i] * img1_dy_[LSF::ANG_Y][i];
-    residuals[spec_map_.find(ROT_TRANS_3D_ANG_Z_FS)->second][i] = gx[i] * img1_dx_[LSF::ANG_Z][i] + gy[i] * img1_dy_[LSF::ANG_Z][i];
-    residuals[spec_map_.find(ROT_TRANS_3D_TRANS_X_FS)->second][i] = gx[i] * img1_dx_[LSF::TRANS_X][i] + gy[i] * img1_dy_[LSF::TRANS_X][i];
-    residuals[spec_map_.find(ROT_TRANS_3D_TRANS_Y_FS)->second][i] = gx[i] * img1_dx_[LSF::TRANS_Y][i] + gy[i] * img1_dy_[LSF::TRANS_Y][i];
-    residuals[spec_map_.find(ROT_TRANS_3D_TRANS_Z_FS)->second][i] = gx[i] * img1_dx_[LSF::TRANS_Z][i] + gy[i] * img1_dy_[LSF::TRANS_Z][i];
+    residuals[spec_map_.find(ROT_TRANS_3D_ANG_X_FS)->second][i] = gx[i] * img1_dx_[ANGLE_X][i] + gy[i] * img1_dy_[ANGLE_X][i];
+    residuals[spec_map_.find(ROT_TRANS_3D_ANG_Y_FS)->second][i] = gx[i] * img1_dx_[ANGLE_Y][i] + gy[i] * img1_dy_[ANGLE_Y][i];
+    residuals[spec_map_.find(ROT_TRANS_3D_ANG_Z_FS)->second][i] = gx[i] * img1_dx_[ANGLE_Z][i] + gy[i] * img1_dy_[ANGLE_Z][i];
+    residuals[spec_map_.find(ROT_TRANS_3D_TRANS_X_FS)->second][i] = gx[i] * img1_dx_[TRANS_X][i] + gy[i] * img1_dy_[TRANS_X][i];
+    residuals[spec_map_.find(ROT_TRANS_3D_TRANS_Y_FS)->second][i] = gx[i] * img1_dx_[TRANS_Y][i] + gy[i] * img1_dy_[TRANS_Y][i];
+    residuals[spec_map_.find(ROT_TRANS_3D_TRANS_Z_FS)->second][i] = gx[i] * img1_dx_[TRANS_Z][i] + gy[i] * img1_dy_[TRANS_Z][i];
   }
 }
 

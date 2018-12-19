@@ -1028,7 +1028,7 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   else
     exo_name << "DICe_solution_stereo.e";
   // dummy arrays
-  std::vector<std::pair<int_t,int_t>> dirichlet_boundary_nodes;
+  std::vector<std::pair<int_t,int_t> > dirichlet_boundary_nodes;
   std::set<int_t> neumann_boundary_nodes;
   std::set<int_t> lagrange_boundary_nodes;
 
@@ -1152,7 +1152,7 @@ Schema::create_mesh(Teuchos::RCP<Decomp> decomp){
     exo_name << "DICe_solution.e";
 
   // dummy arrays
-  std::vector<std::pair<int_t,int_t>> dirichlet_boundary_nodes;
+  std::vector<std::pair<int_t,int_t> > dirichlet_boundary_nodes;
   std::set<int_t> neumann_boundary_nodes;
   std::set<int_t> lagrange_boundary_nodes;
   mesh_ = DICe::mesh::create_point_or_tri_mesh(DICe::mesh::MESHLESS,

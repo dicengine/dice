@@ -44,57 +44,9 @@
 
 #include <DICe.h>
 #include <DICe_FieldEnums.h>
-#include <DICe_CamSystem.h>
+#include <DICe_CameraSystem.h>
 
 #include <Teuchos_RCP.hpp>
-
-/*!
- *  \namespace DICe_LocalShapeFunction
- *  @{
- */
-/// \brief enum and text array declarations for the new local shape function class members
-namespace DICe_LocalShapeFunction {
-
-  /// \enum Projection_Params the 3 parameters that govern the projection/back projection transform
-  enum Projection_Params {
-    ZP = 0,
-    THETA,
-    PHI,
-    MAX_CAM_PROJECTION_PARAMS,
-    NO_SUCH_CAM_PROJECTION_PARAMS
-  };
-
-  const static char * projectionParamsStrings[] = {
-    "ZP",
-    "THETA",
-    "PHI"
-  };
-
-  /// \enum Rot_Trans_Params 6 rigid body motion parameters
-  enum Rot_Trans_3D_Params {
-    ANG_X = 0,
-    ANG_Y,
-    ANG_Z,
-    TRANS_X,
-    TRANS_Y,
-    TRANS_Z,
-    MAX_CAM_ROT_TRANS_3D_PARAMS,
-    NO_SUCH_CAM_ROT_TRANS_3D_PARAMS
-  };
-
-  const static char * rotTrans3DParamsStrings[] = {
-    "ANG X",
-    "ANG Y",
-    "ANG Z",
-    "TRANS X",
-    "TRANS Y",
-    "TRANS Z"
-  };
-
-}
-
-/*! @} End of Doxygen namespace*/
-
 
 
 /*!
@@ -107,11 +59,12 @@ namespace DICe {
 // forward declaration
 class Schema;
 
-/// \class DICe:::LocalShapeFunction
+/// \class DICe:::Local_Shape_Function
 /// \brief A generic class that provides an abstraction of the local DIC shape function
 class DICE_LIB_DLL_EXPORT
 Local_Shape_Function {
 public:
+
   /// base class constructor
   Local_Shape_Function():
   num_params_(0){};
@@ -465,6 +418,24 @@ class DICE_LIB_DLL_EXPORT
   Projection_Shape_Function : public Local_Shape_Function {
 public:
 
+  /// \enum Projection_Param the 3 parameters that govern the projection/back projection transform
+  enum Projection_Param {
+    ZP = 0,
+    THETA,
+    PHI
+  };
+
+  /// \enum Rot_Trans_Param 6 rigid body motion parameters
+  // made these class scope specific since they are used for vector index ordering
+  enum Rot_Trans_3D_Param {
+    ANGLE_X = 0,
+    ANGLE_Y,
+    ANGLE_Z,
+    TRANS_X,
+    TRANS_Y,
+    TRANS_Z
+  };
+
   /// constructor
   Projection_Shape_Function();
  
@@ -472,7 +443,7 @@ public:
   /// \param camSystem camera system object to use for camera to camera projections
   /// \param undef_cam primary camera where the subset locations are specified
   /// \param def_cam secondary camera to project to
-  Projection_Shape_Function(CamSystem * camSystem, int_t undef_cam, int_t def_cam);
+  Projection_Shape_Function(Camera_System * camSystem, int_t undef_cam, int_t def_cam);
 
   /// virtual destructor
   virtual ~Projection_Shape_Function() {};
@@ -481,7 +452,7 @@ public:
   /// \param camSystem camera system object to use for camera to camera projections
   /// \param undef_cam primary camera where the subset locations are specified
   /// \param def_cam secondary camera to project to
-  virtual void set_system_cams(CamSystem * camSystem, int_t undef_cam, int_t def_cam);
+  virtual void set_system_cams(Camera_System * camSystem, int_t undef_cam, int_t def_cam);
 
   /// initialize the parameter fields and deltas
   virtual void init();
@@ -547,7 +518,7 @@ public:
     const scalar_t & cy,
     std::vector<scalar_t> & gx,
     std::vector<scalar_t> & gy,
-    std::vector<std::vector<scalar_t>> & residuals,
+    std::vector<std::vector<scalar_t> > & residuals,
     const bool use_ref_grads);
   
   ///residuals with vectors and deformed locations
@@ -560,7 +531,7 @@ public:
     const scalar_t & cy,
     std::vector<scalar_t> & gx,
     std::vector<scalar_t> & gy,
-    std::vector<std::vector<scalar_t>> & residuals,
+    std::vector<std::vector<scalar_t> > & residuals,
     const bool use_ref_grads);
 
   /// see base class description
@@ -572,7 +543,7 @@ public:
     const scalar_t & delta_y);
 
 private:
-  CamSystem * cam_system_;
+  Camera_System * cam_system_;
   int_t undef_cam_;
   int_t def_cam_;
   bool system_cams_set_ = false;
@@ -581,12 +552,12 @@ private:
   std::vector<scalar_t> img0_y_sng_;
   std::vector<scalar_t> img1_x_sng_;
   std::vector<scalar_t> img1_y_sng_;
-  std::vector<std::vector<scalar_t>> img1_dx_sng_;
-  std::vector<std::vector<scalar_t>> img1_dy_sng_;
+  std::vector<std::vector<scalar_t> > img1_dx_sng_;
+  std::vector<std::vector<scalar_t> > img1_dy_sng_;
   std::vector<scalar_t> img1_x_;
   std::vector<scalar_t> img1_y_;
-  std::vector<std::vector<scalar_t>> img1_dx_;
-  std::vector<std::vector<scalar_t>> img1_dy_;
+  std::vector<std::vector<scalar_t> > img1_dx_;
+  std::vector<std::vector<scalar_t> > img1_dy_;
 };
 
 
@@ -596,6 +567,17 @@ class DICE_LIB_DLL_EXPORT
   Fixed_Proj_3DRB_Shape_Function : public Local_Shape_Function {
 public:
 
+  /// \enum Rot_Trans_Param 6 rigid body motion parameters
+  // made these class specific enums since they are used for vector ordering within the class
+  enum Rot_Trans_3D_Param {
+    ANGLE_X = 0,
+    ANGLE_Y,
+    ANGLE_Z,
+    TRANS_X,
+    TRANS_Y,
+    TRANS_Z
+  };
+
   /// constructor with no arguments
   Fixed_Proj_3DRB_Shape_Function();
 
@@ -604,7 +586,7 @@ public:
   /// \param undef_cam primary camera where the subset locations are specified
   /// \param def_cam secondary camera to project to
   /// \proj_params projection parameters (Zp, Ang1, Ang2) for the projections
-  Fixed_Proj_3DRB_Shape_Function(CamSystem * camSystem, int_t undef_cam, int_t def_cam, std::vector<scalar_t> & proj_params);
+  Fixed_Proj_3DRB_Shape_Function(Camera_System * camSystem, int_t undef_cam, int_t def_cam, std::vector<scalar_t> & proj_params);
 
   // virtual destructor
   virtual ~Fixed_Proj_3DRB_Shape_Function() {};
@@ -613,7 +595,7 @@ public:
   /// \param camSystem camera system object to use for camera to camera projections
   /// \param undef_cam primary camera where the subset locations are specified
   /// \param def_cam secondary camera to project to
-  virtual void set_system_cams(CamSystem * camSystem, int_t undef_cam, int_t def_cam);
+  virtual void set_system_cams(Camera_System * camSystem, int_t undef_cam, int_t def_cam);
 
   /// \brief Set the fixed projection parameters
   /// \proj_params projection parameters (Zp, Theta, Phi) for the projections
@@ -681,7 +663,7 @@ public:
     const scalar_t & cy,
     std::vector<scalar_t> & gx,
     std::vector<scalar_t> & gy,
-    std::vector<std::vector<scalar_t>> & residuals,
+    std::vector<std::vector<scalar_t> > & residuals,
     const bool use_ref_grads);
 
   ///residuals with vectors and deformed locations
@@ -693,7 +675,7 @@ public:
     const scalar_t & cy,
     std::vector<scalar_t> & gx,
     std::vector<scalar_t> & gy,
-    std::vector<std::vector<scalar_t>> & residuals,
+    std::vector<std::vector<scalar_t> > & residuals,
     const bool use_ref_grads);
 
   /// see base class description
@@ -704,7 +686,7 @@ public:
   virtual void update_params_for_centroid_change(const scalar_t & delta_x,
     const scalar_t & delta_y);
 private:
-  CamSystem * cam_system_;
+  Camera_System * cam_system_;
   int_t undef_cam_;
   int_t def_cam_;
   bool system_cams_set_ = false;
@@ -713,12 +695,12 @@ private:
   std::vector<scalar_t> img0_y_sng_;
   std::vector<scalar_t> img1_x_sng_;
   std::vector<scalar_t> img1_y_sng_;
-  std::vector<std::vector<scalar_t>> img1_dx_sng_;
-  std::vector<std::vector<scalar_t>> img1_dy_sng_;
+  std::vector<std::vector<scalar_t> > img1_dx_sng_;
+  std::vector<std::vector<scalar_t> > img1_dy_sng_;
   std::vector<scalar_t> img1_x_;
   std::vector<scalar_t> img1_y_;
-  std::vector<std::vector<scalar_t>> img1_dx_;
-  std::vector<std::vector<scalar_t>> img1_dy_;
+  std::vector<std::vector<scalar_t> > img1_dx_;
+  std::vector<std::vector<scalar_t> > img1_dy_;
   std::vector<scalar_t>rot_trans_params_;
 };
 

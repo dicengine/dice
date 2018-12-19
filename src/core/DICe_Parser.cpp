@@ -1511,7 +1511,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
          if(use_optical_flow)
            info->optical_flow_flags->insert(std::pair<int_t,bool>(subset_id,true));
          if(skip_solve)
-           info->skip_solve_flags->insert(std::pair<int_t,std::vector<int>>(subset_id,skip_solve_ids));
+           info->skip_solve_flags->insert(std::pair<int_t,std::vector<int> >(subset_id,skip_solve_ids));
          if(test_for_motion){ // make sure if motion detection is on, there is a corresponding motion window
            TEUCHOS_TEST_FOR_EXCEPTION(!has_motion_window,std::runtime_error,"Error, cannot test for motion without defining a motion window for subset " << subset_id);
          }

@@ -39,7 +39,7 @@
 // ************************************************************************
 // @HEADER
 
-#include <DICe_CamSystem.h>
+#include <DICe_CameraSystem.h>
 
 using namespace DICe;
 
@@ -65,9 +65,9 @@ using namespace DICe;
       file_names.push_back("cal_a_with_transform.txt");
       for (int_t i = 0; i < 5; i++)
       {
-        cal_file_dir = ".\\cal\\";
+        cal_file_dir = "./cal/";
         cal_file = cal_file_dir + file_names[i] + "";
-        Teuchos::RCP<CamSystem> cam_sys = Teuchos::rcp(new CamSystem());
+        Teuchos::RCP<Camera_System> cam_sys = Teuchos::rcp(new Camera_System());
         cam_sys->read_calibration_parameters(cal_file);
 
         file_names[i].pop_back();

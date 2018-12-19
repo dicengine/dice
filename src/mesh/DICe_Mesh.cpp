@@ -559,7 +559,7 @@ Mesh::create_face_cell_field_maps(){
 
   //int_t num_boundary_faces_this_proc = 0;
   // gather up all the external faces and add them to the list:
-  std::set<std::pair<int_t,int_t>> elem_face_pairs;
+  std::set<std::pair<int_t,int_t> > elem_face_pairs;
   const int_t num_sets = side_set_info_.ids.size();
   for(int_t id_it=1;id_it<=num_sets;++id_it){
     const int_t set_index = side_set_info_.get_set_index(id_it);

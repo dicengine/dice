@@ -8,7 +8,7 @@
   <!-- camera parameters (zero valued parameters don't need to be specified) -->
   <!-- the file supports up to 10 cameras 0-9 each camera is a seperate sublist of parameters -->
   <!-- the sublist must be named CAMERA {#} with {#} the number of the camera starting at 0 -->
-  <!-- valid camera parameter field names are:  CX CY FX FY FS K1 K2 K3 K4 K5 K6 P1 P2 S1 S2 S3 S4 T1 T2 LD_MODEL ALPHA BETA GAMMA TX TY TZ -->
+  <!-- valid camera parameter field names are:  CX CY FX FY FS K1 K2 K3 K4 K5 K6 P1 P2 S1 S2 S3 S4 T1 T2 LENS_DISTORTION_MODEL ALPHA BETA GAMMA TX TY TZ -->
   <!-- CX,CY-image center (pix), FX,FY-pin hole distances (pix), FS-skew (deg) -->
   <!-- K1-K6-lens distortion coefficients, P1-P2-tangential distortion(openCV), S1-S4 thin prism distortion(openCV), T1,T2-Scheimpfug correction (openCV) -->
   <!-- be aware that openCV gives the values in the following order: (K1,K2,P1,P2[,K3[,K4,K5,K6[,S1,S2,S3,S4[,TX,TY]]]]) -->
@@ -34,7 +34,7 @@
     <Parameter name="FY" type="double" value="2468.25" />
     <Parameter name="FS" type="double" value="-0.171198" />
     <Parameter name="K1" type="double" value="0.0638413" />
-    <Parameter name="LD_MODEL" type="string" value="K1R1_K2R2_K3R3" />
+    <Parameter name="LENS_DISTORTION_MODEL" type="string" value="K1R1_K2R2_K3R3" />
     <Parameter name="ALPHA" type="double" value="179.965" />
     <Parameter name="BETA" type="double" value="9.01516" />
     <Parameter name="GAMMA" type="double" value="0.033683" />
@@ -54,7 +54,7 @@
     <Parameter name="FY" type="double" value="2376.92" />
     <Parameter name="FS" type="double" value="0.0897842" />
     <Parameter name="K1" type="double" value="0.0619845" />
-    <Parameter name="LD_MODEL" type="string" value="K1R1_K2R2_K3R3" />
+    <Parameter name="LENS_DISTORTION_MODEL" type="string" value="K1R1_K2R2_K3R3" />
     <Parameter name="ALPHA" type="double" value="-179.959" />
     <Parameter name="BETA" type="double" value="-9.01513" />
     <Parameter name="GAMMA" type="double" value="-0.039688" />

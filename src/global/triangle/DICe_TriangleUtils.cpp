@@ -142,7 +142,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const std::string & mesh_file_n
   for(int_t i=0;i<num_nodes;++i)
     node_map[i] = i + 1;
 
-  std::vector<std::pair<int_t,int_t>> dirichlet_boundary_nodes;
+  std::vector<std::pair<int_t,int_t> > dirichlet_boundary_nodes;
   std::set<int_t> neumann_boundary_nodes;
   std::set<int_t> lagrange_boundary_nodes;
 
@@ -542,7 +542,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
     triangulate(args,&in,&out,NULL);
 
     DEBUG_MSG("generate_tri_mesh(): number of boundary segments: " << out.numberofsegments);
-    std::vector<std::pair<int_t,int_t>> dirichlet_boundary_nodes;
+    std::vector<std::pair<int_t,int_t> > dirichlet_boundary_nodes;
     std::set<int_t> neumann_boundary_nodes;
     std::set<int_t> lagrange_boundary_nodes;
     if(enforce_lagrange_bc){

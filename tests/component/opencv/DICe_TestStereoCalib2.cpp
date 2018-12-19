@@ -42,7 +42,7 @@
 #include <DICe.h>
 
 #include <DICe_StereoCalib2.h>
-#include <DICe_CamSystem.h>
+#include <DICe_CameraSystem.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -70,28 +70,27 @@ int main(int argc, char *argv[]) {
   int_t iprint = argc - 1;
   int_t error_flag = 0;
 
-  StereoCalib2 calibration;
-  CamSystem camera_system;
+  Stereo_Calib calibration;
+  Camera_System camera_system;
   std::vector<std::vector<std::string>> image_list;
   image_list.resize(2);
   std::string zero_pad;
   std::string arg = "";
   std::string calfile = "";
-  float rms;
-  bool test_passed = true;
+  scalar_t rms = 0.0;
   if (argc == 2) arg = argv[1];
 
-  calibration.set_Verbose(true);
+  calibration.set_verbose(true);
 
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0) {
     outStream = Teuchos::rcp(&std::cout, false);
-    calibration.set_Verbose(true);
+    calibration.set_verbose(true);
   }
   else {
     outStream = Teuchos::rcp(&bhs, false);
-    calibration.set_Verbose(false);
+    calibration.set_verbose(false);
   }
 
   *outStream << "--- Begin test ---" << std::endl;
@@ -119,23 +118,23 @@ int main(int argc, char *argv[]) {
       image_list[1].push_back(right_name.str());
     }
     //set the image list
-    calibration.set_Image_List(image_list, image_dir);
+    calibration.set_image_list(image_list, image_dir);
 
     //set the target information
-    int total_width = 9;
-    int total_height = 6;
-    double spacing = 10.0;
-    int marker_space_x = 0;
-    int marker_space_y = 0;
-    int orig_loc_x = 0;
-    int orig_loc_y = 0;
-    DICe_StereoCalib2::Target_Type target = DICe_StereoCalib2::CHECKER_BOARD;
+    int_t total_width = 9;
+    int_t total_height = 6;
+    scalar_t spacing = 10.0;
+    int_t marker_space_x = 0;
+    int_t marker_space_y = 0;
+    int_t orig_loc_x = 0;
+    int_t orig_loc_y = 0;
+    Stereo_Calib::Target_Type target = Stereo_Calib::CHECKER_BOARD;
     //set the target information
-    calibration.set_Target_Info(target, total_width, total_height, spacing, orig_loc_x, orig_loc_y, marker_space_x, marker_space_y);
+    calibration.set_target_info(target, total_width, total_height, spacing, orig_loc_x, orig_loc_y, marker_space_x, marker_space_y);
     //draw the intersection images
-    calibration.Draw_Intersection_Image(true, output_dir);
+    calibration.draw_intersection_image(true, output_dir);
     //extract the intersections and save
-    calibration.Extract_Target_Points();
+    calibration.extract_target_points();
     //write the intersection file
     calibration.write_intersection_file("checkerboard_intersections.xml", output_dir);
   }
@@ -173,22 +172,22 @@ int main(int argc, char *argv[]) {
       image_list[1].push_back(right_name.str());
     }
     //set the image list
-    calibration.set_Image_List(image_list, image_dir);
+    calibration.set_image_list(image_list, image_dir);
 
     //set the target information
-    int total_width = 10;
-    int total_height = 8;
-    double spacing = 3.5;
-    int marker_space_x = 6;
-    int marker_space_y = 4;
-    int orig_loc_x = 2;
-    int orig_loc_y = 2;
-    DICe_StereoCalib2::Target_Type target = DICe_StereoCalib2::BLACK_ON_WHITE_W_DONUT_DOTS;
-    calibration.set_Target_Info(target, total_width, total_height, spacing, orig_loc_x, orig_loc_y, marker_space_x, marker_space_y);
+    int_t total_width = 10;
+    int_t total_height = 8;
+    scalar_t spacing = 3.5;
+    int_t marker_space_x = 6;
+    int_t marker_space_y = 4;
+    int_t orig_loc_x = 2;
+    int_t orig_loc_y = 2;
+    Stereo_Calib::Target_Type target = Stereo_Calib::BLACK_ON_WHITE_W_DONUT_DOTS;
+    calibration.set_target_info(target, total_width, total_height, spacing, orig_loc_x, orig_loc_y, marker_space_x, marker_space_y);
     //draw the intersection images
-    calibration.Draw_Intersection_Image(true, output_dir);
+    calibration.draw_intersection_image(true, output_dir);
     //extract the intersections and save
-    calibration.Extract_Target_Points(30, 50);
+    calibration.extract_target_points(30, 50);
     //write the intersection file
     calibration.write_intersection_file("dot_intersections.xml", output_dir);
   }
@@ -223,23 +222,23 @@ int main(int argc, char *argv[]) {
       image_list[1].push_back(right_name.str());
     }
     //set the image list
-    calibration.set_Image_List(image_list, image_dir);
+    calibration.set_image_list(image_list, image_dir);
 
     //set the target information
-    int total_width = 14;
-    int total_height = 10;
-    double spacing = 10.0;
-    int marker_space_x = 10;
-    int marker_space_y = 6;
-    int orig_loc_x = 2;
-    int orig_loc_y = 2;
-    DICe_StereoCalib2::Target_Type target = DICe_StereoCalib2::BLACK_ON_WHITE_W_DONUT_DOTS;
+    int_t total_width = 14;
+    int_t total_height = 10;
+    scalar_t spacing = 10.0;
+    int_t marker_space_x = 10;
+    int_t marker_space_y = 6;
+    int_t orig_loc_x = 2;
+    int_t orig_loc_y = 2;
+    Stereo_Calib::Target_Type target = Stereo_Calib::BLACK_ON_WHITE_W_DONUT_DOTS;
     //set the target information
-    calibration.set_Target_Info(target, total_width, total_height, spacing, orig_loc_x, orig_loc_y, marker_space_x, marker_space_y);
+    calibration.set_target_info(target, total_width, total_height, spacing, orig_loc_x, orig_loc_y, marker_space_x, marker_space_y);
     //draw the intersection images
-    calibration.Draw_Intersection_Image(true, output_dir);
+    calibration.draw_intersection_image(true, output_dir);
     //extract the intersections and save
-    calibration.Extract_Target_Points();
+    calibration.extract_target_points();
     //write the intersection file
     calibration.write_intersection_file("DICe_chal_intersections.xml", output_dir);
   }
@@ -251,7 +250,7 @@ int main(int argc, char *argv[]) {
     //write the calibration file
     calfile = output_dir + "DICe_chal_calibration.xml";
     calibration.write_calibration_file(calfile, true, camera_system);
-    if (rms > 0.75) test_passed = false;
+    if (rms > 0.75) error_flag++;
   }
 
   *outStream << "--- End test ---" << std::endl;
