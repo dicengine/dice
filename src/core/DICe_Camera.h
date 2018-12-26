@@ -227,8 +227,11 @@ public:
   /// \param intrinsics intrinsic parameters ordered by DICe_Camera::Cam_Intrinsic_Params
   /// \param image_height height of the image in pixels
   /// \param image_width width of the image in pixels
-  Camera(std::string cam_id, int_t image_width, int_t image_height, std::vector<scalar_t> intrinsics) {
-    clear_camera();
+  Camera(std::string cam_id,
+    int_t image_width,
+    int_t image_height,
+    std::vector<scalar_t> intrinsics):
+    Camera(){
     set_identifier(cam_id);
     set_intrinsics(intrinsics);
     set_image_height(image_height);
@@ -241,8 +244,12 @@ public:
   /// \param image_height height of the image in pixels
   /// \param image_width width of the image in pixels
   /// \param extrinsics extrinsic parameters ordered by DICe_Camera::Cam_Extrinsic_Params
-  Camera(std::string cam_id, int_t image_width, int_t image_height, std::vector<scalar_t> intrinsics, std::vector<scalar_t> extrinsics) {
-    clear_camera();
+  Camera(std::string cam_id,
+    int_t image_width,
+    int_t image_height,
+    std::vector<scalar_t> intrinsics,
+    std::vector<scalar_t> extrinsics):
+    Camera(){
     set_identifier(cam_id);
     set_intrinsics(intrinsics);
     set_image_height(image_height);
@@ -257,9 +264,13 @@ public:
   /// \param image_width width of the image in pixels
   /// \param extrinsics extrinsic parameters ordered by DICe_Camera::Cam_Extrinsic_Params
   /// \param rotation_3x3_matrix [R] matrix transforming from the world coordinates to the camera coordinates
-  Camera(std::string cam_id, int_t image_width, int_t image_height, std::vector<scalar_t> intrinsics, std::vector<scalar_t> extrinsics,
-    std::vector<std::vector<scalar_t> > & rotation_3x3_matrix) {
-    clear_camera();
+  Camera(std::string cam_id,
+    int_t image_width,
+    int_t image_height,
+    std::vector<scalar_t> intrinsics,
+    std::vector<scalar_t> extrinsics,
+    std::vector<std::vector<scalar_t> > & rotation_3x3_matrix):
+    Camera(){
     set_identifier(cam_id);
     set_intrinsics(intrinsics);
     set_image_height(image_height);
@@ -277,10 +288,16 @@ public:
   /// \param rotation_3x3_matrix [R] matrix transforming from the world coordinates to the camera coordinates
   /// \param camera_lens camera lens descripter
   /// \param camera_comments camera comments
-  Camera(std::string cam_id, int_t image_width, int_t image_height, std::vector<scalar_t> intrinsics, std::vector<scalar_t> extrinsics,
-    std::vector<std::vector<scalar_t> > & rotation_3x3_matrix, std::string camera_lens = "", std::string camera_comments = "",
-    int_t pixel_depth=0) {
-    clear_camera();
+  Camera(std::string cam_id,
+    int_t image_width,
+    int_t image_height,
+    std::vector<scalar_t> intrinsics,
+    std::vector<scalar_t> extrinsics,
+    std::vector<std::vector<scalar_t> > & rotation_3x3_matrix,
+    std::string camera_lens = "",
+    std::string camera_comments = "",
+    int_t pixel_depth=0):
+    Camera(){
     set_identifier(cam_id);
     set_intrinsics(intrinsics);
     set_image_height(image_height);
