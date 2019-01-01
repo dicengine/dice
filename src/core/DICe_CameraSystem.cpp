@@ -41,12 +41,13 @@
 
 #include <DICe_CameraSystem.h>
 #include <DICe_Parser.h>
+#include <DICe_XMLUtils.h>
+
 #include <fstream>
 #include <Teuchos_XMLParameterListHelpers.hpp>
-#include <DICe_XMLUtils.h>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_Array.hpp>
-#include <DICe_Camera.h>
+#include <Teuchos_RCP.hpp>
 
 namespace DICe{
 

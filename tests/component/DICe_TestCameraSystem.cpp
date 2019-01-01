@@ -41,6 +41,8 @@
 
 #include <DICe_CameraSystem.h>
 
+#include <Teuchos_RCP.hpp>
+
 using namespace DICe;
 
   int main(int argc, char *argv[]) {

@@ -44,16 +44,8 @@
 
 #include <DICe.h>
 #include <DICe_Camera.h>
-#include <DICe_Image.h>
-
-#ifdef DICE_TPETRA
-#include "DICe_MultiFieldTpetra.h"
-#else
-#include "DICe_MultiFieldEpetra.h"
-#endif
 
 #include <Teuchos_SerialDenseMatrix.hpp>
-#include "DICe_ParameterUtilities.h"
 
 #include <cassert>
 #include <vector>
@@ -213,12 +205,12 @@ public:
 
   /// \brief returns the number of the first camera with a matching identifier
   /// \param cam_id camera identifying string
-  int get_camera_num_from_id(std::string cam_id) {
-    stringToUpper(cam_id);
+  int get_camera_num_from_id(std::string & cam_id) {
+    std::transform(cam_id.begin(), cam_id.end(),cam_id.begin(),::toupper);
     std::string id_val;
     for (int_t i = 0; i < MAX_NUM_CAMERAS_PER_SYSTEM; i++) {
       id_val = cameras_[i].get_identifier();
-      stringToUpper(id_val);
+      std::transform(id_val.begin(), id_val.end(),id_val.begin(),::toupper);
       if (id_val==cam_id)return i;
     }
     return -1;
@@ -230,7 +222,7 @@ public:
   /// \param image_height height of the image in pixels
   /// \param image_width width of the image in pixels
   /// \param intrinsics array of intrinsic values ordered by DICe_Camera::Cam_Intrinsic_Params
-  int_t add_camera(std::string cam_id,
+  int_t add_camera(std::string & cam_id,
     int_t image_width,
     int_t image_height,
     std::vector<scalar_t> intrinsics) {
@@ -256,11 +248,11 @@ public:
   /// \param image_width width of the image in pixels
   /// \param intrinsics array of intrinsic values ordered by DICe_Camera::Cam_Intrinsic_Params
   /// \param extrinsics array of extrinsic values ordered by DICe_Camera::Cam_Extrinsic_Params
-  int_t add_camera(std::string cam_id,
+  int_t add_camera(std::string & cam_id,
     int_t image_width,
     int_t image_height,
-    std::vector<scalar_t> intrinsics,
-    std::vector<scalar_t> extrinsics) {
+    std::vector<scalar_t> & intrinsics,
+    std::vector<scalar_t> & extrinsics) {
     int_t cam_num = -1;
     for (int_t i = 0; i < MAX_NUM_CAMERAS_PER_SYSTEM; i++) {
       if (!cameras_[i].camera_filled()) {
@@ -288,11 +280,11 @@ public:
   /// \param camera_lens description of the camera lens
   /// \param camera_comments other comments about the camera
   /// \param pixel_depth pixel depth of the images
-  int_t add_camera(std::string cam_id,
+  int_t add_camera(const std::string & cam_id,
     int_t image_width,
     int_t image_height,
-    std::vector<scalar_t> intrinsics,
-    std::vector<scalar_t> extrinsics,
+    std::vector<scalar_t> & intrinsics,
+    std::vector<scalar_t> & extrinsics,
     std::vector<std::vector<scalar_t> > & rotation_3x3_matrix,
     std::string camera_lens = "",
     std::string camera_comments = "",
@@ -348,7 +340,7 @@ public:
   /// \param cam_num number of the camera in the system
   /// \param camera_lens string descripter of the camera lens
   void set_camera_lens(int_t cam_num,
-    std::string camera_lens) {
+    std::string & camera_lens) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].set_camera_lens(camera_lens);
   }
@@ -365,7 +357,7 @@ public:
   /// \param cam_num number of the camera in the system
   /// \param camera_comments comments about the camera
   void set_camera_comments(int_t cam_num,
-    std::string camera_comments) {
+    std::string & camera_comments) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].set_camera_comments(camera_comments);
   }
@@ -519,7 +511,7 @@ public:
 
   /// were the cameras prepped after the camera values were extablished
   /// returns true or false
-  bool cameras_prepped() {
+  bool cameras_prepped() const {
     if (source_cam_ != -1 && target_cam_ != -1)
       return cameras_[source_cam_].camera_prepped() && cameras_[target_cam_].camera_prepped();
     return false;

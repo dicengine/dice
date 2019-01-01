@@ -42,12 +42,7 @@
 #ifndef DICE_CAMERA_H
 #define DICE_CAMERA_H
 #include <DICe.h>
-#include <DICe_Image.h>
-#ifdef DICE_TPETRA
-#include "DICe_MultiFieldTpetra.h"
-#else
-#include "DICe_MultiFieldEpetra.h"
-#endif
+
 #include <Teuchos_SerialDenseMatrix.hpp>
 #include <cassert>
 #include <vector>
@@ -313,33 +308,33 @@ public:
 
   ///sets the camera identifier
   /// \param cam_id string descripter for the camera
-  void set_identifier(std::string cam_id) {
+  void set_identifier(const std::string & cam_id) {
     camera_id_ = cam_id;
     camera_filled_ = true;
   }
   ///gets the camera identifier
   /// returns the camera identifier
-  std::string get_identifier() { return camera_id_; }
+  std::string get_identifier() const { return camera_id_; }
 
   ///sets the camera lens identifier
   /// \param camera_lens string descripter for the camera lens
-  void set_camera_lens(std::string camera_lens) {
+  void set_camera_lens(std::string & camera_lens) {
     camera_lens_ = camera_lens;
     camera_filled_ = true;
   }
   ///gets the camera lens identifier
   /// returns the camera lens description
-  std::string get_camera_lens() { return camera_lens_; }
+  std::string get_camera_lens() const { return camera_lens_; }
 
   ///sets the camera comments
   /// \param camera_comments comments about the camera
-  void set_camera_comments(std::string camera_comments) {
+  void set_camera_comments(std::string & camera_comments) {
     camera_comments_ = camera_comments;
     camera_filled_ = true;
   }
   ///gets the camera comments
   /// returns the camera comments
-  std::string get_camera_comments() { return camera_comments_; }
+  std::string get_camera_comments() const { return camera_comments_; }
 
   /// \brief sets the image height
   /// \param height height of the image in pixels
@@ -350,7 +345,7 @@ public:
   }
   /// \brief gets the image height
   /// returns the height of the image in pixels
-  int_t get_image_height() { return image_height_; }
+  int_t get_image_height() const { return image_height_; }
 
   /// \brief sets the image width
   /// \param width width of the image in pixels
@@ -361,7 +356,7 @@ public:
   }
   /// \brief gets the image width
   /// returns the width of the image in pixels
-  int_t get_image_width() { return image_width_; }
+  int_t get_image_width() const { return image_width_; }
 
   ///sets the pixel depth
   /// \param pixel_depth depth of the pixel representation typically 8 for grayscale images
@@ -371,7 +366,7 @@ public:
   }
   ///sets the pixel depth
   /// returns the pixel depth
-  int_t get_pixel_depth() { return pixel_depth_; }
+  int_t get_pixel_depth() const { return pixel_depth_; }
 
   ///sets the intrinsic camera parameter values
   /// \param intrinsics intrinsic parameters ordered by DICe_Camera::Cam_Intrinsic_Params
@@ -454,12 +449,12 @@ public:
   }
 
   ///have any of the parameters/fields been filled
-  bool camera_filled() {
+  bool camera_filled() const {
     return camera_filled_;
   }
 
   ///has the 3x3 rotation matrix been filled
-  bool camera_has_3x3_rotation() {
+  bool camera_has_3x3_rotation() const {
     return rot_3x3_matrix_filled_;
   }
 
@@ -467,7 +462,7 @@ public:
   bool prep_camera();
 
   ///has the camera been prepped. cameras must be prepped to establish the transformation matricies
-  bool camera_prepped(){
+  bool camera_prepped() const {
     return camera_prepped_;
   }
 
