@@ -29,6 +29,7 @@ SET(DICE_HEADERS
   ./base/DICe_Image.h
   ./base/DICe_Subset.h
   ./base/DICe_Shape.h
+  ./base/DICe_Matrix.h
   ./base/DICe_FieldEnums.h
   ./base/DICe_LocalShapeFunction.h
   ./core/DICe_Camera.h
@@ -43,7 +44,6 @@ SET(DICE_HEADERS
   ./core/DICe_Triangulation.h
   ./core/DICe_PostProcessor.h
   ./core/DICe_Initializer.h
-  ./core/DICe_Utilities.h
   ./core/DICe_Decomp.h
   ./kdtree/nanoflann.hpp
   ./fft/DICe_FFT.h
