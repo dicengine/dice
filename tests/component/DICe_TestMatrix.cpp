@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
   scalar_t cond_num = mat.condition_number();
   *outStream << "condition number: " << cond_num << std::endl;
   if(std::abs(cond_num - 11.538)>error_tol){
-    *outStream << "error: condition number incorrect " << std::endl;
+    *outStream << "***error: condition number incorrect " << std::endl;
     error_flag++;
   }
   *outStream << "testing inverse method" << std::endl;
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
   scalar_t mat_norm = norm(inverse - gold_inv);
   *outStream << "inv error norm: " << mat_norm << std::endl;
   if(mat_norm>error_tol){
-    *outStream << "error: inverse error norm too high" << std::endl;
+    *outStream << "***error: inverse error norm too high" << std::endl;
     error_flag++;
   }
   *outStream << "testing inverse for integers and array constructor" << std::endl;
@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
   cond_num = int_mat.condition_number();
   *outStream << "condition number: " << cond_num << std::endl;
   if(std::abs(cond_num)>error_tol){
-    *outStream << "error: condition number incorrect" << std::endl;
+    *outStream << "***error: condition number incorrect" << std::endl;
     error_flag++;
   }
   auto int_inverse = int_mat.inv();
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
   *outStream << "add subtract error norm: " << mat_norm << std::endl;
   if(mat_norm>error_tol){
     error_flag++;
-    *outStream << "error: add subtract error norm too high" << std::endl;
+    *outStream << "***error: add subtract error norm too high" << std::endl;
   }
 
   *outStream << "testing transpose" << std::endl;
@@ -149,16 +149,41 @@ int main(int argc, char *argv[]) {
   *outStream << "transpose error norm: " << mat_norm << std::endl;
   if(mat_norm>error_tol){
     error_flag++;
-    *outStream << "error: transpose error norm too high" << std::endl;
+    *outStream << "***error: transpose error norm too high" << std::endl;
   }
 
-  *outStream << "testing matrix vector multiple" << std::endl;
-  std::vector<int_t> rhs(4,1);
+  *outStream << "testing transpose for non-square matrix" << std::endl;
+  Vector<scalar_t> sample_vec(4);
+  sample_vec.put_value(23.45);
+  *outStream << sample_vec << std::endl;
+  auto sample_vec_trans = sample_vec.transpose();
+  *outStream << sample_vec_trans << std::endl;
+
+  if(sample_vec_trans.size()!=4){
+    *outStream << "***error: invalid size dimensions" << std::endl;
+    error_flag++;
+  }
+  if(sample_vec_trans.rows()!=1){
+    *outStream << "***error: invalid row dimensions" << std::endl;
+    error_flag++;
+  }
+  if(sample_vec_trans.cols()!=4){
+    *outStream << "***error: invalid col dimensions" << std::endl;
+    error_flag++;
+  }
+  if(sample_vec_trans.storage_size()!=16){
+    *outStream << "***error: invalid storage dimensions" << std::endl;
+    error_flag++;
+  }
+
+  *outStream << "testing matrix vector multiply" << std::endl;
+  Vector<int_t,4> rhs;
+  rhs.put_value(1);
   auto multiply = int_mat * rhs;
   *outStream << multiply << std::endl;
   std::vector<int_t> multiply_gold = {10,26,42,58};
   if(multiply.size()!=multiply_gold.size()){
-    *outStream << "error: multiply vector is the wrong size" << std::endl;
+    *outStream << "***error: multiply vector is the wrong size" << std::endl;
     error_flag++;
   }
   scalar_t vec_norm = 0.0;
@@ -166,12 +191,12 @@ int main(int argc, char *argv[]) {
     vec_norm += std::abs(multiply_gold[i] - multiply[i]);
   *outStream << "vec multiply error: " << vec_norm << std::endl;
   if(vec_norm > error_tol){
-    *outStream << "error: matrix multiply error too large" << std::endl;
+    *outStream << "***error: matrix multiply error too large" << std::endl;
     error_flag++;
   }
 
   *outStream << "testing multiply fails for wrong vector dims" << std::endl;
-  std::vector<int_t> rhs_wrong_size(5,1);
+  Vector<int_t,5> rhs_wrong_size;
   bool exception_thrown = false;
   try
   {
@@ -183,7 +208,7 @@ int main(int argc, char *argv[]) {
   }
   if(!exception_thrown){
     error_flag++;
-    *outStream << "error: calling matrix multiple on a vector of the wrong size should have thrown an exception" << std::endl;
+    *outStream << "***error: calling matrix multiple on a vector of the wrong size should have thrown an exception" << std::endl;
   }
 
   *outStream << "testing that calling inv() on non-square throws an exception" << std::endl;
@@ -199,7 +224,7 @@ int main(int argc, char *argv[]) {
   }
   if(!exception_thrown){
     error_flag++;
-    *outStream << "error: calling inv() on a non-square matrix should have thrown an exception" << std::endl;
+    *outStream << "***error: calling inv() on a non-square matrix should have thrown an exception" << std::endl;
   }
 
   // test matrix matrix multiply
@@ -209,7 +234,7 @@ int main(int argc, char *argv[]) {
   *outStream << Q << std::endl;
   mat_norm = norm(Q)-101.21;
   if(std::abs(mat_norm)>error_tol){
-    *outStream << "error: matrix matrix multiply incorrect" << std::endl;
+    *outStream << "***error: matrix matrix multiply incorrect" << std::endl;
     error_flag++;
   }
   auto mat_times_mat_inv = mat*inverse;
@@ -219,7 +244,42 @@ int main(int argc, char *argv[]) {
   mat_norm = norm(mat_times_mat_inv - identity);
   *outStream << "matrix times inverse error norm: " << mat_norm << std::endl;
   if(std::abs(mat_norm)>error_tol){
-    *outStream << "error: matrix times inverse incorrect" << std::endl;
+    *outStream << "***error: matrix times inverse incorrect" << std::endl;
+    error_flag++;
+  }
+
+  *outStream << "testing multiplying fixed size matrix with run-time sized matrix" << std::endl;
+
+  Matrix<int_t> runtime_mat;
+  runtime_mat = {{1,5,9},
+    {2,6,10},
+    {3,7,11},
+    {4,8,12}};
+  auto runtime_trans = runtime_mat.transpose();
+  *outStream << runtime_mat << std::endl;
+  auto runtime_times_fixed = int_mat * runtime_trans.transpose();
+  *outStream << runtime_times_fixed << std::endl;
+  Matrix<int_t,4,3> fixed_times_runtime_gold = {{30,70,110},{70,174,278},{110,278,446},{150,382,614}};
+  scalar_t fixed_runtime_norm = norm(fixed_times_runtime_gold - runtime_times_fixed);
+  *outStream << "fixed times runtime sized matrices error norm: " << fixed_runtime_norm << std::endl;
+  if(std::abs(fixed_runtime_norm)>error_tol){
+    *outStream << "***error: multiplying fixed times a runtime sized matrix failed" << std::endl;
+    error_flag++;
+  }
+
+  *outStream << "testing vector add operation" << std::endl;
+
+  Vector<int_t,4> int_vec = {{1},{2},{3},{4}};
+  Vector<int_t,4> int_vec_rhs;
+  int_vec_rhs(3) = 10;
+  int_vec_rhs(1) = 12;
+  auto result_int_add = int_vec + int_vec_rhs;
+  Matrix<int_t,4,1> result_int_add_gold = {{1},{14},{3},{14}};
+  *outStream << result_int_add << std::endl;
+  scalar_t int_vec_add_norm = norm(result_int_add_gold - result_int_add);
+  *outStream << "int add vector norm: " << int_vec_add_norm << std::endl;
+  if(std::abs(int_vec_add_norm)>error_tol){
+    *outStream << "***error: int vector add error" << std::endl;
     error_flag++;
   }
 
