@@ -60,6 +60,21 @@ namespace DICe {
 //  limit is used to ensure that a matrix is not constructed that is too large
 #define MAX_MATRIX_DIM 16
 
+/// helper function to turn a type into a string using type_to_string<type>();
+template <typename Type>
+std::string type_to_string(){
+  if (std::is_same<Type, int>::value)
+    return "int";
+  else if (std::is_same<Type,double>::value)
+    return "double";
+  else if (std::is_same<Type,bool>::value)
+    return "bool";
+  else if (std::is_same<Type,float>::value)
+    return "float";
+  else
+    return "unknown";
+}
+
 /// \class DICe::Matrix
 /// \brief Generic class for matrix storage and operations
 /// The idea behind this matrix class is to have a simple matrix (and vector) class
@@ -306,7 +321,7 @@ public:
     }else{
       os << std::endl << "--- Matrix  ---" << std::endl << std::endl;
     }
-    os << "    value type:   " << Teuchos::typeName(matrix[0]) << std::endl;
+    os << "    value type:   " << type_to_string<Type>() << std::endl;
     os << "    active dims:  ("<<matrix.rows()<<"x"<<matrix.cols()<<")" << std::endl;
     os << "    storage dims: ("<<Rows<<"x"<<Cols<<")" << std::endl << std::endl;
     for(size_t i=0;i<matrix.rows();++i){
