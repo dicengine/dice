@@ -136,7 +136,7 @@ public:
   /// \brief write the calibration parameters to an xml file
   /// \param calFile File name of the cal parameters file to write to
   void write_calibration_file(const std::string & calFile,
-    bool allFields = false);
+    const bool allFields = false);
 
   /// \brief clear all the parameter values for the system and all cameras
   /// \param
@@ -144,7 +144,7 @@ public:
 
   /// \brief set the system type
   /// \param system_type a System_Type_3D enum
-  void set_system_type(System_Type_3D system_type) {
+  void set_system_type(const System_Type_3D system_type) {
     sys_type_ = system_type;
   }
 
@@ -156,7 +156,7 @@ public:
 
   /// \brief set the source camera number
   /// \param cam_num number of the camera to set as the source
-  bool set_source_camera(int_t cam_num) {
+  bool set_source_camera(const int_t cam_num) {
     bool return_val = false;
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM) {
       if (cameras_[cam_num].camera_valid(msg_)) {
@@ -174,7 +174,7 @@ public:
 
   /// \brief set the target camera number
   /// \param cam_num number of the camera to set as the target
-  bool set_target_camera(int_t cam_num) {
+  bool set_target_camera(const int_t cam_num) {
     bool return_val = false;
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM) {
       if (cameras_[cam_num].camera_valid(msg_)) {
@@ -222,10 +222,10 @@ public:
   /// \param image_height height of the image in pixels
   /// \param image_width width of the image in pixels
   /// \param intrinsics array of intrinsic values ordered by DICe_Camera::Cam_Intrinsic_Params
-  int_t add_camera(std::string & cam_id,
+  int_t add_camera(const std::string & cam_id,
     int_t image_width,
     int_t image_height,
-    std::vector<scalar_t> intrinsics) {
+    const std::vector<scalar_t> & intrinsics) {
     int_t cam_num = -1;
     for (int_t i = 0; i < MAX_NUM_CAMERAS_PER_SYSTEM; i++) {
       if (!cameras_[i].camera_filled()) {
@@ -248,11 +248,11 @@ public:
   /// \param image_width width of the image in pixels
   /// \param intrinsics array of intrinsic values ordered by DICe_Camera::Cam_Intrinsic_Params
   /// \param extrinsics array of extrinsic values ordered by DICe_Camera::Cam_Extrinsic_Params
-  int_t add_camera(std::string & cam_id,
-    int_t image_width,
-    int_t image_height,
-    std::vector<scalar_t> & intrinsics,
-    std::vector<scalar_t> & extrinsics) {
+  int_t add_camera(const std::string & cam_id,
+    const int_t image_width,
+    const int_t image_height,
+    const std::vector<scalar_t> & intrinsics,
+    const std::vector<scalar_t> & extrinsics) {
     int_t cam_num = -1;
     for (int_t i = 0; i < MAX_NUM_CAMERAS_PER_SYSTEM; i++) {
       if (!cameras_[i].camera_filled()) {
@@ -281,14 +281,14 @@ public:
   /// \param camera_comments other comments about the camera
   /// \param pixel_depth pixel depth of the images
   int_t add_camera(const std::string & cam_id,
-    int_t image_width,
-    int_t image_height,
-    std::vector<scalar_t> & intrinsics,
-    std::vector<scalar_t> & extrinsics,
-    std::vector<std::vector<scalar_t> > & rotation_3x3_matrix,
-    std::string camera_lens = "",
-    std::string camera_comments = "",
-    int_t pixel_depth = 0) {
+    const int_t image_width,
+    const int_t image_height,
+    const std::vector<scalar_t> & intrinsics,
+    const std::vector<scalar_t> & extrinsics,
+    const std::vector<std::vector<scalar_t> > & rotation_3x3_matrix,
+    const std::string camera_lens = "",
+    const std::string camera_comments = "",
+    const int_t pixel_depth = 0) {
     int_t cam_num = -1;
     for (int_t i = 0; i < MAX_NUM_CAMERAS_PER_SYSTEM; i++) {
       if (!cameras_[i].camera_filled()) {
@@ -310,7 +310,7 @@ public:
 
   /// \brief remove a camera from the system
   /// \cam_num number of the camera to remove
-  void remove_camera(int_t cam_num)
+  void remove_camera(const int_t cam_num)
   {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].clear_camera();
@@ -322,15 +322,15 @@ public:
   ///sets a camera identifier
   /// \param cam_num number of the camera in the system
   /// \param cam_id string descripter of the camera
-  void set_cam_identifier(int_t cam_num,
-    std::string cam_id) {
+  void set_cam_identifier(const int_t cam_num,
+    const std::string & cam_id) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].set_identifier(cam_id);
   }
   ///gets a camera identifier
   /// \param cam_num number of the camera in the system
   /// \param cam_id string descripter of the camera
-  std::string get_cam_identifier(int_t cam_num) {
+  std::string get_cam_identifier(const int_t cam_num) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       return cameras_[cam_num].get_identifier();
     return "";
@@ -339,15 +339,15 @@ public:
   ///sets a camera lens identifier
   /// \param cam_num number of the camera in the system
   /// \param camera_lens string descripter of the camera lens
-  void set_camera_lens(int_t cam_num,
-    std::string & camera_lens) {
+  void set_camera_lens(const int_t cam_num,
+    const std::string & camera_lens) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].set_camera_lens(camera_lens);
   }
   ///gets a camera lens identifier
   /// \param cam_num number of the camera in the system
   /// \param camera_lens string descripter of the camera lens
-  std::string get_camera_lens(int_t cam_num) {
+  std::string get_camera_lens(const int_t cam_num) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       return cameras_[cam_num].get_camera_lens();
     return "";
@@ -356,15 +356,15 @@ public:
   ///sets a camera comment
   /// \param cam_num number of the camera in the system
   /// \param camera_comments comments about the camera
-  void set_camera_comments(int_t cam_num,
-    std::string & camera_comments) {
+  void set_camera_comments(const int_t cam_num,
+    const std::string & camera_comments) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].set_camera_comments(camera_comments);
   }
   ///gets a camera comment
   /// \param cam_num number of the camera in the system
   /// \param camera_comments comments about the camera
-  std::string get_camera_comments(int_t cam_num) {
+  std::string get_camera_comments(const int_t cam_num) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       return cameras_[cam_num].get_camera_comments();
     return "";
@@ -373,14 +373,14 @@ public:
   ///sets the image height
   /// \param cam_num number of the camera in the system
   /// \param height height of the image from this camera
-  void set_camera_image_height(int_t cam_num, int_t height) {
+  void set_camera_image_height(const int_t cam_num, const int_t height) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].set_image_height(height);
   }
   ///gets the image height
   /// \param cam_num number of the camera in the system
   /// \param height height of the image from this camera
-  int_t get_camera_image_height(int_t cam_num) {
+  int_t get_camera_image_height(const int_t cam_num) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       return cameras_[cam_num].get_image_height();
     return -1;
@@ -389,14 +389,14 @@ public:
   ///sets the image width
   /// \param cam_num number of the camera in the system
   /// \param width width of the image from this camera
-  void set_camera_image_width(int_t cam_num, int_t width) {
+  void set_camera_image_width(const int_t cam_num, const int_t width) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].set_image_width(width);
   }
   ///sets the image width
   /// \param cam_num number of the camera in the system
   /// \param width width of the image from this camera
-  int_t get_camera_image_width(int_t cam_num) {
+  int_t get_camera_image_width(const int_t cam_num) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       return cameras_[cam_num].get_image_width();
     return -1;
@@ -405,14 +405,14 @@ public:
   ///sets the pixel depth
   /// \param cam_num number of the camera in the system
   /// \param pixel_depth pixel_depth of the image from this camera
-  void set_camera_pixel_depth(int_t cam_num, int_t pixel_depth) {
+  void set_camera_pixel_depth(const int_t cam_num, const int_t pixel_depth) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].set_pixel_depth(pixel_depth);
   }
   ///gets the pixel depth
   /// \param cam_num number of the camera in the system
   /// \param pixel_depth pixel_depth of the image from this camera
-  int_t get_camera_pixel_depth(int_t cam_num) {
+  int_t get_camera_pixel_depth(const int_t cam_num) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       return cameras_[cam_num].get_pixel_depth();
     return -1;
@@ -422,15 +422,15 @@ public:
   /// sets intrinsic values for the camera
   /// \param cam_num number of the camera in the system
   /// \param intrinsics array of intrinsic values ordered by DICe_Camera::Cam_Intrinsic_Params
-  void set_camera_intrinsics(int_t cam_num,
-    std::vector<scalar_t> & intrinsics) {
+  void set_camera_intrinsics(const int_t cam_num,
+    const std::vector<scalar_t> & intrinsics) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].set_intrinsics(intrinsics);
   }
   /// gets intrinsic values for the camera
   /// \param cam_num number of the camera in the system
   /// \param intrinsics array of intrinsic values ordered by DICe_Camera::Cam_Intrinsic_Params
-  void get_camera_intrinsics(int_t cam_num,
+  void get_camera_intrinsics(const int_t cam_num,
     std::vector<scalar_t> & intrinsics) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].get_intrinsics(intrinsics);
@@ -439,15 +439,15 @@ public:
   /// sets extrinsic values for the camera
   /// \param cam_num number of the camera in the system
   /// \param extrinsics array of extrinsic values ordered by DICe_Camera::Cam_Extrinsic_Params
-  void set_camera_extrinsics(int_t cam_num,
-    std::vector<scalar_t> & extrinsics) {
+  void set_camera_extrinsics(const int_t cam_num,
+    const std::vector<scalar_t> & extrinsics) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].set_extrinsics(extrinsics);
   }
   /// gets extrinsic values for the camera
   /// \param cam_num number of the camera in the system
   /// \param extrinsics array of extrinsic values ordered by DICe_Camera::Cam_Extrinsic_Params
-  void get_camera_extrinsics(int_t cam_num,
+  void get_camera_extrinsics(const int_t cam_num,
     std::vector<scalar_t> & extrinsics) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].get_extrinsics(extrinsics);
@@ -456,15 +456,15 @@ public:
   /// sets the 3x3 rotation matrix for the camera
   /// \param cam_num number of the camera in the system
   /// \param rotation_3x3_matrix matrix describing the angular relationship between the camera and the world coordinates
-  void set_camera_3x3_rotation_matrix(int_t cam_num,
-    std::vector<std::vector<scalar_t> > & rotation_3x3_matrix) {
+  void set_camera_3x3_rotation_matrix(const int_t cam_num,
+    const std::vector<std::vector<scalar_t> > & rotation_3x3_matrix) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].set_3x3_rotation_matrix(rotation_3x3_matrix);
   }
   /// gets the 3x3 rotation matrix for the camera
   /// \param cam_num number of the camera in the system
   /// \param rotation_3x3_matrix matrix describing the angular relationship between the camera and the world coordinates
-  void get_3x3_rotation_matrix(int_t cam_num,
+  void get_3x3_rotation_matrix(const int_t cam_num,
     std::vector<std::vector<scalar_t> > & rotation_3x3_matrix) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].get_3x3_rotation_matrix(rotation_3x3_matrix);
@@ -473,7 +473,7 @@ public:
   ///gets the 4x4 camera to world transformation matrix
   /// \param cam_num number of the camera in the system
   /// \param cam_world_trans 4x4 [R|T] transformation array
-  void get_camera_cam_world_trans_matrix(int_t cam_num,
+  void get_camera_cam_world_trans_matrix(const int_t cam_num,
     std::vector<std::vector<scalar_t> > & cam_world_trans) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].get_cam_world_trans_matrix(cam_world_trans);
@@ -482,7 +482,7 @@ public:
   ///gets the 4x4 world to camera transformation matrix
   /// \param cam_num number of the camera in the system
   /// \param cam_world_trans 4x4 [R|T] transformation array
-  void get_camera_world_cam_trans_matrix(int_t cam_num,
+  void get_camera_world_cam_trans_matrix(const int_t cam_num,
     std::vector<std::vector<scalar_t> > & world_cam_trans) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       cameras_[cam_num].get_world_cam_trans_matrix(world_cam_trans);
@@ -492,7 +492,7 @@ public:
   /// returns true or false
   /// \param cam_num number of the camera in the system
   /// \msg text string with reason camera is not ready
-  bool camera_valid(int_t cam_num,
+  bool camera_valid(const int_t cam_num,
     std::string & msg) {
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       return cameras_[cam_num].camera_valid(msg);
@@ -502,7 +502,7 @@ public:
   /// does the camera have enough values to be valid
   /// returns true or false
   /// \param cam_num number of the camera in the system
-  bool camera_valid(int_t cam_num) {
+  bool camera_valid(const int_t cam_num) {
     std::string msg;
     if (cam_num > -1 && cam_num < MAX_NUM_CAMERAS_PER_SYSTEM)
       return cameras_[cam_num].camera_valid(msg);
@@ -536,7 +536,7 @@ public:
     const scalar_t & img0_y,
     scalar_t & img1_x,
     scalar_t & img1_y,
-    std::vector<scalar_t> & params);
+    const std::vector<scalar_t> & params);
 
   /// \brief 3 parameter projection routine from the source camera to the target camera
   /// \param img0_x array of x image location in the source camera
@@ -544,11 +544,11 @@ public:
   /// \param img1_x array of projected x image location in the target camera
   /// \param img1_y array of projected y image location in the target camera
   /// \param params array of ZP, THETA, PHI values that govern the projection
-  void cross_projection_map(std::vector<scalar_t> & img0_x,
-    std::vector<scalar_t> & img0_y,
+  void cross_projection_map(const std::vector<scalar_t> & img0_x,
+    const std::vector<scalar_t> & img0_y,
     std::vector<scalar_t> & img1_x,
     std::vector<scalar_t> & img1_y,
-    std::vector<scalar_t> & params);
+    const std::vector<scalar_t> & params);
 
   /// \brief 3 parameter projection routine from the source camera to the target camera with partials
   /// \param img0_x x image location in the source camera
@@ -562,7 +562,7 @@ public:
     const scalar_t & img0_y,
     scalar_t & img1_x,
     scalar_t & img1_y,
-    std::vector<scalar_t> & params,
+    const std::vector<scalar_t> & params,
     std::vector<scalar_t> & img1_dx,
     std::vector<scalar_t> & img1_dy);
 
@@ -574,11 +574,11 @@ public:
   /// \param params array of ZP, THETA, PHI values that govern the projection
   /// \param img1_dx array of arrays of the partials in the x location wrt (ZP, THETA, PHI)
   /// \param img1_dy array of arrays of the partials in the y location wrt (ZP, THETA, PHI)
-  void cross_projection_map(std::vector<scalar_t> & img0_x,
-    std::vector<scalar_t> & img0_y,
+  void cross_projection_map(const std::vector<scalar_t> & img0_x,
+    const std::vector<scalar_t> & img0_y,
     std::vector<scalar_t> & img1_x,
     std::vector<scalar_t> & img1_y,
-    std::vector<scalar_t> & params,
+    const std::vector<scalar_t> & params,
     std::vector<std::vector<scalar_t> > & img1_dx,
     std::vector<std::vector<scalar_t> > & img1_dy);
 
@@ -595,8 +595,8 @@ public:
     const scalar_t & img0_y,
     scalar_t & img1_x,
     scalar_t & img1_y,
-    std::vector<scalar_t> & proj_params,
-    std::vector<scalar_t> & rigid_body_params);
+    const std::vector<scalar_t> & proj_params,
+    const std::vector<scalar_t> & rigid_body_params);
 
   /// fixed projection, 3D rigid body mapping
   /// points in space are established by projecting them using the 3 parameter projection, they are then allowed to rotate/translate in a rigid body manner to a second location
@@ -607,12 +607,12 @@ public:
   /// \param img1_y array of projected y image location in the target camera
   /// \param proj_params fixed ZP, THETA, PHI values that govern the projection
   /// \param rigid_body_params 6 rotation/translation parameters to describe the rigid body motion
-  void fixed_proj_3DRB_map(std::vector<scalar_t> & img0_x,
-    std::vector<scalar_t> & img0_y,
+  void fixed_proj_3DRB_map(const std::vector<scalar_t> & img0_x,
+    const std::vector<scalar_t> & img0_y,
     std::vector<scalar_t> & img1_x,
     std::vector<scalar_t> & img1_y,
-    std::vector<scalar_t> & proj_params,
-    std::vector<scalar_t> & rigid_body_params);
+    const std::vector<scalar_t> & proj_params,
+    const std::vector<scalar_t> & rigid_body_params);
 
   /// fixed projection, 3D rigid body mapping with partials
   /// points in space are established by projecting them using the 3 parameter projection, they are then allowed to rotate/translate in a rigid body manner to a second location
@@ -629,8 +629,8 @@ public:
     const scalar_t & img0_y,
     scalar_t & img1_x,
     scalar_t & img1_y,
-    std::vector<scalar_t> & proj_params,
-    std::vector<scalar_t> & rigid_body_params,
+    const std::vector<scalar_t> & proj_params,
+    const std::vector<scalar_t> & rigid_body_params,
     std::vector<scalar_t> & img1_dx,
     std::vector<scalar_t> & img1_dy);
 
@@ -645,12 +645,12 @@ public:
   /// \param rigid_body_params 6 rotation/translation parameters to describe the rigid body motion
   /// \param img1_dx array of arrays of the partials in the x location wrt rigid_body_parms
   /// \param img1_dy array of arrays of the partials in the y location wrt rigid_body_parms
-  void fixed_proj_3DRB_map(std::vector<scalar_t> & img0_x,
-    std::vector<scalar_t> & img0_y,
+  void fixed_proj_3DRB_map(const std::vector<scalar_t> & img0_x,
+    const std::vector<scalar_t> & img0_y,
     std::vector<scalar_t> & img1_x,
     std::vector<scalar_t> & img1_y,
-    std::vector<scalar_t> & proj_params,
-    std::vector<scalar_t> & rigid_body_params,
+    const std::vector<scalar_t> & proj_params,
+    const std::vector<scalar_t> & rigid_body_params,
     std::vector<std::vector<scalar_t> > & img1_dx,
     std::vector<std::vector<scalar_t> > & img1_dy);
 
@@ -663,13 +663,13 @@ public:
   /// \param wld1_y y world position of the point after the transformation
   /// \param wld1_z z world position of the point after the transformation
   /// \param params 6 rotation/translation parameters to describe the rigid body motion
-  void rot_trans_3D(scalar_t & wld0_x,
-    scalar_t & wld0_y,
-    scalar_t & wld0_z,
+  void rot_trans_3D(const scalar_t & wld0_x,
+    const scalar_t & wld0_y,
+    const scalar_t & wld0_z,
     scalar_t & wld1_x,
     scalar_t & wld1_y,
     scalar_t & wld1_z,
-    std::vector<scalar_t> & params);
+    const std::vector<scalar_t> & params);
 
   ///rigid body 3D rotation/translation transformation
   /// \param wld0_x array of initial x world position of the point
@@ -679,13 +679,13 @@ public:
   /// \param wld1_y array of y world position of the point after the transformation
   /// \param wld1_z array of z world position of the point after the transformation
   /// \param params 6 rotation/translation parameters to describe the rigid body motion
-  void rot_trans_3D(std::vector<scalar_t> & wld0_x,
-    std::vector<scalar_t> & wld0_y,
-    std::vector<scalar_t> & wld0_z,
+  void rot_trans_3D(const std::vector<scalar_t> & wld0_x,
+    const std::vector<scalar_t> & wld0_y,
+    const std::vector<scalar_t> & wld0_z,
     std::vector<scalar_t> & wld1_x,
     std::vector<scalar_t> & wld1_y,
     std::vector<scalar_t> & wld1_z,
-    std::vector<scalar_t> & params);
+    const std::vector<scalar_t> & params);
 
   ///rigid body 3D rotation/translation transformation with no incoming partials and outgoing partials wrt params
   /// \param wld0_x initial x world position of the point
@@ -698,13 +698,13 @@ public:
   /// \param wld1_dx array of the partials in the x world location wrt params
   /// \param wld1_dy array of the partials in the y world location wrt params
   /// \param wld1_dy array of the partials in the z world location wrt params
-  void rot_trans_3D(scalar_t & wld0_x,
-    scalar_t & wld0_y,
-    scalar_t & wld0_z,
+  void rot_trans_3D(const scalar_t & wld0_x,
+    const scalar_t & wld0_y,
+    const scalar_t & wld0_z,
     scalar_t & wld1_x,
     scalar_t & wld1_y,
     scalar_t & wld1_z,
-    std::vector <scalar_t> & params,
+    const std::vector <scalar_t> & params,
     std::vector<scalar_t> & wld1_dx,
     std::vector<scalar_t> & wld1_dy,
     std::vector<scalar_t> & wld1_dz);
@@ -720,13 +720,13 @@ public:
   /// \param wld1_dx array of arrays of the partials in the x world location wrt params
   /// \param wld1_dy array of arrays of the partials in the y world location wrt params
   /// \param wld1_dy array of arrays of the partials in the z world location wrt params
-  void rot_trans_3D(std::vector<scalar_t> & wld0_x,
-    std::vector<scalar_t> & wld0_y,
-    std::vector<scalar_t> & wld0_z,
+  void rot_trans_3D(const std::vector<scalar_t> & wld0_x,
+    const std::vector<scalar_t> & wld0_y,
+    const std::vector<scalar_t> & wld0_z,
     std::vector<scalar_t> & wld1_x,
     std::vector<scalar_t> & wld1_y,
     std::vector<scalar_t> & wld1_z,
-    std::vector<scalar_t> & params,
+    const std::vector<scalar_t> & params,
     std::vector < std::vector<scalar_t> > & wld1_dx,
     std::vector < std::vector<scalar_t> > & wld1_dy,
     std::vector < std::vector<scalar_t> > & wld1_dz);
@@ -745,16 +745,16 @@ public:
   /// \param wld1_dx array of the partials in the x world location wrt the other parameters and params
   /// \param wld1_dy array of the partials in the y world location wrt the other parameters and params
   /// \param wld1_dy array of the partials in the z world location wrt the other parameters and params
-  void rot_trans_3D(scalar_t & wld0_x,
-    scalar_t & wld0_y,
-    scalar_t & wld0_z,
+  void rot_trans_3D(const scalar_t & wld0_x,
+    const scalar_t & wld0_y,
+    const scalar_t & wld0_z,
     scalar_t & wld1_x,
     scalar_t & wld1_y,
     scalar_t & wld1_z,
-    std::vector <scalar_t> & params,
-    std::vector<scalar_t> & wld0_dx,
-    std::vector<scalar_t> & wld0_dy,
-    std::vector<scalar_t> & wld0_dz,
+    const std::vector <scalar_t> & params,
+    const std::vector<scalar_t> & wld0_dx,
+    const std::vector<scalar_t> & wld0_dy,
+    const std::vector<scalar_t> & wld0_dz,
     std::vector<scalar_t> & wld1_dx,
     std::vector<scalar_t> & wld1_dy,
     std::vector<scalar_t> & wld1_dz);
@@ -773,29 +773,29 @@ public:
   /// \param wld1_dx array of of arrays the partials in the x world location wrt the other parameters and params
   /// \param wld1_dy array of of arrays the partials in the y world location wrt the other parameters and params
   /// \param wld1_dy array of of arrays the partials in the z world location wrt the other parameters and params
-  void rot_trans_3D(std::vector<scalar_t> & wld0_x,
-    std::vector<scalar_t> & wld0_y,
-    std::vector<scalar_t> & wld0_z,
+  void rot_trans_3D(const std::vector<scalar_t> & wld0_x,
+    const std::vector<scalar_t> & wld0_y,
+    const std::vector<scalar_t> & wld0_z,
     std::vector<scalar_t> & wld1_x,
     std::vector<scalar_t> & wld1_y,
     std::vector<scalar_t> & wld1_z,
-    std::vector<scalar_t> & params,
-    std::vector < std::vector<scalar_t> > & wld0_dx,
-    std::vector < std::vector<scalar_t> > & wld0_dy,
-    std::vector < std::vector<scalar_t> > & wld0_dz,
+    const std::vector<scalar_t> & params,
+    const std::vector < std::vector<scalar_t> > & wld0_dx,
+    const std::vector < std::vector<scalar_t> > & wld0_dy,
+    const std::vector < std::vector<scalar_t> > & wld0_dz,
     std::vector < std::vector<scalar_t> > & wld1_dx,
     std::vector < std::vector<scalar_t> > & wld1_dy,
     std::vector < std::vector<scalar_t> > & wld1_dz);
 
 private:
   /// \brief calculates the fixed coefficients prior to projection transformations
-  void pre_projection(int_t num_pnts,
-    int_t num_params,
-    bool partials);
+  void pre_projection(const int_t num_pnts,
+    const int_t num_params,
+    const bool partials);
 
   /// \brief prepares coefficients for the 3D rotation/translation transformation
-  void pre_rot_trans_3D(std::vector<scalar_t> params,
-    bool partials);
+  void pre_rot_trans_3D(const std::vector<scalar_t> & params,
+    const bool partials);
 
   // these are for compatibility with triangulation and only support 2 camera systems
   //12 parameters that define a user supplied transforamation (independent from intrinsic and extrinsic parameters)

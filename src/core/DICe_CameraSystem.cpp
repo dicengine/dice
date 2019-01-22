@@ -489,7 +489,7 @@ Camera_System::read_calibration_parameters(const std::string & cal_file) {
 //*********************************save_calibration_file*********************************************
 void
 Camera_System::write_calibration_file(const std::string & cal_file,
-  bool all_fields) {
+  const bool all_fields) {
   std::stringstream param_title;
   std::stringstream param_val;
   std::stringstream valid_fields;
@@ -729,9 +729,9 @@ Camera_System::write_calibration_file(const std::string & cal_file,
 }
 
 void
-Camera_System::pre_projection(int_t num_pnts,
-  int_t num_params,
-  bool partials) {
+Camera_System::pre_projection(const int_t num_pnts,
+  const int_t num_params,
+  const bool partials) {
   //prep the cameras if not already done
   if (!cameras_[source_cam_].camera_prepped())cameras_[source_cam_].prep_camera();
   if (!cameras_[target_cam_].camera_prepped())cameras_[target_cam_].prep_camera();
@@ -790,7 +790,7 @@ Camera_System::cross_projection_map(
   const scalar_t & img0_y,
   scalar_t & img1_x,
   scalar_t & img1_y,
-  std::vector<scalar_t> & params) {
+  const std::vector<scalar_t> & params) {
 
   pre_projection(1, 3, false);
 
@@ -812,7 +812,7 @@ Camera_System::cross_projection_map(
   const scalar_t & img0_y,
   scalar_t & img1_x,
   scalar_t & img1_y,
-  std::vector<scalar_t> & params,
+  const std::vector<scalar_t> & params,
   std::vector<scalar_t> & img1_dx,
   std::vector<scalar_t> & img1_dy) {
 
@@ -836,11 +836,11 @@ Camera_System::cross_projection_map(
 
 void
 Camera_System::cross_projection_map(
-  std::vector<scalar_t> & img0_x,
-  std::vector<scalar_t> & img0_y,
+  const std::vector<scalar_t> & img0_x,
+  const std::vector<scalar_t> & img0_y,
   std::vector<scalar_t> & img1_x,
   std::vector<scalar_t> & img1_y,
-  std::vector<scalar_t> & params) {
+  const std::vector<scalar_t> & params) {
 
   pre_projection(img0_x.size(), 3, false);
 
@@ -854,11 +854,11 @@ Camera_System::cross_projection_map(
 
 void
 Camera_System::cross_projection_map(
-  std::vector<scalar_t> & img0_x,
-  std::vector<scalar_t> & img0_y,
+  const std::vector<scalar_t> & img0_x,
+  const std::vector<scalar_t> & img0_y,
   std::vector<scalar_t> & img1_x,
   std::vector<scalar_t> & img1_y,
-  std::vector<scalar_t> & params,
+  const std::vector<scalar_t> & params,
   std::vector<std::vector<scalar_t> > & img1_dx,
   std::vector<std::vector<scalar_t> > & img1_dy) {
 
@@ -879,8 +879,8 @@ Camera_System::fixed_proj_3DRB_map(
   const scalar_t & img0_y,
   scalar_t & img1_x,
   scalar_t & img1_y,
-  std::vector<scalar_t> & proj_params,
-  std::vector<scalar_t> & rigid_body_params) {
+  const std::vector<scalar_t> & proj_params,
+  const std::vector<scalar_t> & rigid_body_params) {
 
   pre_projection(1, 6, false);
   img_x_[0] = img0_x;
@@ -903,8 +903,8 @@ Camera_System::fixed_proj_3DRB_map(
   const scalar_t & img0_y,
   scalar_t & img1_x,
   scalar_t & img1_y,
-  std::vector <scalar_t> & proj_params,
-  std::vector <scalar_t> & rigid_body_params,
+  const std::vector <scalar_t> & proj_params,
+  const std::vector <scalar_t> & rigid_body_params,
   std::vector<scalar_t> & img1_dx,
   std::vector<scalar_t> & img1_dy) {
 
@@ -930,12 +930,12 @@ Camera_System::fixed_proj_3DRB_map(
 
 void
 Camera_System::fixed_proj_3DRB_map(
-  std::vector<scalar_t> & img0_x,
-  std::vector<scalar_t> & img0_y,
+  const std::vector<scalar_t> & img0_x,
+  const std::vector<scalar_t> & img0_y,
   std::vector<scalar_t> & img1_x,
   std::vector<scalar_t> & img1_y,
-  std::vector<scalar_t> & proj_params,
-  std::vector<scalar_t> & rigid_body_params) {
+  const std::vector<scalar_t> & proj_params,
+  const std::vector<scalar_t> & rigid_body_params) {
 
   pre_projection(img0_x.size(), 6, false);
 
@@ -950,12 +950,12 @@ Camera_System::fixed_proj_3DRB_map(
 
 void
 Camera_System::fixed_proj_3DRB_map(
-  std::vector<scalar_t> & img0_x,
-  std::vector<scalar_t> & img0_y,
+  const std::vector<scalar_t> & img0_x,
+  const std::vector<scalar_t> & img0_y,
   std::vector<scalar_t> & img1_x,
   std::vector<scalar_t> & img1_y,
-  std::vector<scalar_t> & proj_params,
-  std::vector<scalar_t> & rigid_body_params,
+  const std::vector<scalar_t> & proj_params,
+  const std::vector<scalar_t> & rigid_body_params,
   std::vector<std::vector<scalar_t> > & img1_dx,
   std::vector<std::vector<scalar_t> > & img1_dy) {
 
@@ -971,8 +971,8 @@ Camera_System::fixed_proj_3DRB_map(
 }
 
 void
-Camera_System::pre_rot_trans_3D(std::vector<scalar_t> params,
-  bool partials) {
+Camera_System::pre_rot_trans_3D(const std::vector<scalar_t> & params,
+  const bool partials) {
   //if this is the first call to pre_rot_trans_3D assign the vectors
   if (rot_trans_3D_x_.size() != 4) {
     rot_trans_3D_x_.assign(4, 0.0);
@@ -1053,13 +1053,13 @@ Camera_System::pre_rot_trans_3D(std::vector<scalar_t> params,
 }
 
 void
-Camera_System::rot_trans_3D(std::vector<scalar_t> & wld0_x,
-  std::vector<scalar_t> & wld0_y,
-  std::vector<scalar_t> & wld0_z,
+Camera_System::rot_trans_3D(const std::vector<scalar_t> & wld0_x,
+  const std::vector<scalar_t> & wld0_y,
+  const std::vector<scalar_t> & wld0_z,
   std::vector<scalar_t> & wld1_x,
   std::vector<scalar_t> & wld1_y,
   std::vector<scalar_t> & wld1_z,
-  std::vector<scalar_t> & params) {
+  const std::vector<scalar_t> & params) {
   //prep the rotation coefficients
   pre_rot_trans_3D(params, false);
   //transform the coordinates
@@ -1071,13 +1071,13 @@ Camera_System::rot_trans_3D(std::vector<scalar_t> & wld0_x,
 }
 
 void
-Camera_System::rot_trans_3D(scalar_t & wld0_x,
-  scalar_t & wld0_y,
-  scalar_t & wld0_z,
+Camera_System::rot_trans_3D(const scalar_t & wld0_x,
+  const scalar_t & wld0_y,
+  const scalar_t & wld0_z,
   scalar_t & wld1_x,
   scalar_t & wld1_y,
   scalar_t & wld1_z,
-  std::vector<scalar_t> & params) {
+  const std::vector<scalar_t> & params) {
   //prep the rotation coefficients
   pre_rot_trans_3D(params, false);
   //transform the coordinates
@@ -1088,13 +1088,13 @@ Camera_System::rot_trans_3D(scalar_t & wld0_x,
 
 
 void
-Camera_System::rot_trans_3D(std::vector<scalar_t> & wld0_x,
-  std::vector<scalar_t> & wld0_y,
-  std::vector<scalar_t> & wld0_z,
+Camera_System::rot_trans_3D(const std::vector<scalar_t> & wld0_x,
+  const std::vector<scalar_t> & wld0_y,
+  const std::vector<scalar_t> & wld0_z,
   std::vector<scalar_t> & wld1_x,
   std::vector<scalar_t> & wld1_y,
   std::vector<scalar_t> & wld1_z,
-  std::vector<scalar_t> & params,
+  const std::vector<scalar_t> & params,
   std::vector < std::vector<scalar_t> > & wld1_dx,
   std::vector < std::vector<scalar_t> > & wld1_dy,
   std::vector < std::vector<scalar_t> > & wld1_dz) {
@@ -1124,13 +1124,13 @@ Camera_System::rot_trans_3D(std::vector<scalar_t> & wld0_x,
 }
 
 void
-Camera_System::rot_trans_3D(scalar_t & wld0_x,
-  scalar_t & wld0_y,
-  scalar_t & wld0_z,
+Camera_System::rot_trans_3D(const scalar_t & wld0_x,
+  const scalar_t & wld0_y,
+  const scalar_t & wld0_z,
   scalar_t & wld1_x,
   scalar_t & wld1_y,
   scalar_t & wld1_z,
-  std::vector<scalar_t> & params,
+  const std::vector<scalar_t> & params,
   std::vector<scalar_t> & wld1_dx,
   std::vector<scalar_t> & wld1_dy,
   std::vector<scalar_t> & wld1_dz) {
@@ -1156,16 +1156,16 @@ Camera_System::rot_trans_3D(scalar_t & wld0_x,
 }
 
 void
-Camera_System::rot_trans_3D(std::vector<scalar_t> & wld0_x,
-  std::vector<scalar_t> & wld0_y,
-  std::vector<scalar_t> & wld0_z,
+Camera_System::rot_trans_3D(const std::vector<scalar_t> & wld0_x,
+  const std::vector<scalar_t> & wld0_y,
+  const std::vector<scalar_t> & wld0_z,
   std::vector<scalar_t> & wld1_x,
   std::vector<scalar_t> & wld1_y,
   std::vector<scalar_t> & wld1_z,
-  std::vector<scalar_t> & params,
-  std::vector < std::vector<scalar_t> > & wld0_dx,
-  std::vector < std::vector<scalar_t> > & wld0_dy,
-  std::vector < std::vector<scalar_t> > & wld0_dz,
+  const std::vector<scalar_t> & params,
+  const std::vector < std::vector<scalar_t> > & wld0_dx,
+  const std::vector < std::vector<scalar_t> > & wld0_dy,
+  const std::vector < std::vector<scalar_t> > & wld0_dz,
   std::vector < std::vector<scalar_t> > & wld1_dx,
   std::vector < std::vector<scalar_t> > & wld1_dy,
   std::vector < std::vector<scalar_t> > & wld1_dz) {
@@ -1198,16 +1198,16 @@ Camera_System::rot_trans_3D(std::vector<scalar_t> & wld0_x,
 }
 
 void
-Camera_System::rot_trans_3D(scalar_t & wld0_x,
-  scalar_t & wld0_y,
-  scalar_t & wld0_z,
+Camera_System::rot_trans_3D(const scalar_t & wld0_x,
+  const scalar_t & wld0_y,
+  const scalar_t & wld0_z,
   scalar_t & wld1_x,
   scalar_t & wld1_y,
   scalar_t & wld1_z,
-  std::vector<scalar_t> & params,
-  std::vector<scalar_t> & wld0_dx,
-  std::vector<scalar_t> & wld0_dy,
-  std::vector<scalar_t> & wld0_dz,
+  const std::vector<scalar_t> & params,
+  const std::vector<scalar_t> & wld0_dx,
+  const std::vector<scalar_t> & wld0_dy,
+  const std::vector<scalar_t> & wld0_dz,
   std::vector<scalar_t> & wld1_dx,
   std::vector<scalar_t> & wld1_dy,
   std::vector<scalar_t> & wld1_dz) {

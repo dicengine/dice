@@ -227,11 +227,11 @@ Camera::prep_lens_distortion() {
 
 void
 Camera::image_to_sensor(
-  std::vector<scalar_t> & image_x,
-  std::vector<scalar_t> & image_y,
+  const std::vector<scalar_t> & image_x,
+  const std::vector<scalar_t> & image_y,
   std::vector<scalar_t> & sen_x,
   std::vector<scalar_t> & sen_y,
-  bool integer_locs) {
+  const bool integer_locs) {
   //transformation from distorted image locations to undistorted sensor locations
   int_t vect_size = 0;
   int_t index;
@@ -289,8 +289,8 @@ Camera::image_to_sensor(
 
 void
 Camera::sensor_to_image(
-  std::vector<scalar_t> & sen_x,
-  std::vector<scalar_t> & sen_y,
+  const std::vector<scalar_t> & sen_x,
+  const std::vector<scalar_t> & sen_y,
   std::vector<scalar_t> & image_x,
   std::vector<scalar_t> & image_y) {
   //converts sensor locations to image locations by applying lens distortions
@@ -486,12 +486,12 @@ Camera::sensor_to_image(
 
 void
 Camera::sensor_to_image(
-  std::vector<scalar_t> & sen_x,
-  std::vector<scalar_t> & sen_y,
+  const std::vector<scalar_t> & sen_x,
+  const std::vector<scalar_t> & sen_y,
   std::vector<scalar_t> & image_x,
   std::vector<scalar_t> & image_y,
-  std::vector<std::vector<scalar_t> > & sen_dx,
-  std::vector<std::vector<scalar_t> > & sen_dy,
+  const std::vector<std::vector<scalar_t> > & sen_dx,
+  const std::vector<std::vector<scalar_t> > & sen_dy,
   std::vector<std::vector<scalar_t> > & image_dx,
   std::vector<std::vector<scalar_t> > & image_dy) {
   //overload for derivitives
@@ -514,12 +514,12 @@ Camera::sensor_to_image(
 
 void
 Camera::sensor_to_cam(
-  std::vector<scalar_t> & sen_x,
-  std::vector<scalar_t> & sen_y,
+  const std::vector<scalar_t> & sen_x,
+  const std::vector<scalar_t> & sen_y,
   std::vector<scalar_t> & cam_x,
   std::vector<scalar_t> & cam_y,
   std::vector<scalar_t> & cam_z,
-  std::vector<scalar_t> & params)
+  const std::vector<scalar_t> & params)
 {
   //project the sensor locations onto a plane in space defined by zp, theta, phi
   scalar_t zp = params[Projection_Shape_Function::ZP];
@@ -546,12 +546,12 @@ Camera::sensor_to_cam(
 
 void
 Camera::sensor_to_cam(
-  std::vector<scalar_t> & sen_x,
-  std::vector<scalar_t> & sen_y,
+  const std::vector<scalar_t> & sen_x,
+  const std::vector<scalar_t> & sen_y,
   std::vector<scalar_t> & cam_x,
   std::vector<scalar_t> & cam_y,
   std::vector<scalar_t> & cam_z,
-  std::vector<scalar_t> & params,
+  const std::vector<scalar_t> & params,
   std::vector<std::vector<scalar_t> > & cam_dx,
   std::vector<std::vector<scalar_t> > & cam_dy,
   std::vector<std::vector<scalar_t> > & cam_dz)
@@ -633,9 +633,9 @@ Camera::sensor_to_cam(
 
 void
 Camera::cam_to_sensor(
-  std::vector<scalar_t> & cam_x,
-  std::vector<scalar_t> & cam_y,
-  std::vector<scalar_t> & cam_z,
+  const std::vector<scalar_t> & cam_x,
+  const std::vector<scalar_t> & cam_y,
+  const std::vector<scalar_t> & cam_z,
   std::vector<scalar_t> & sen_x,
   std::vector<scalar_t> & sen_y)
 {
@@ -652,14 +652,14 @@ Camera::cam_to_sensor(
 
 void
 Camera::cam_to_sensor(
-  std::vector<scalar_t> & cam_x,
-  std::vector<scalar_t> & cam_y,
-  std::vector<scalar_t> & cam_z,
+  const std::vector<scalar_t> & cam_x,
+  const std::vector<scalar_t> & cam_y,
+  const std::vector<scalar_t> & cam_z,
   std::vector<scalar_t> & sen_x,
   std::vector<scalar_t> & sen_y,
-  std::vector<std::vector<scalar_t> > & cam_dx,
-  std::vector<std::vector<scalar_t> > & cam_dy,
-  std::vector<std::vector<scalar_t> > & cam_dz,
+  const std::vector<std::vector<scalar_t> > & cam_dx,
+  const std::vector<std::vector<scalar_t> > & cam_dy,
+  const std::vector<std::vector<scalar_t> > & cam_dz,
   std::vector<std::vector<scalar_t> > & sen_dx,
   std::vector<std::vector<scalar_t> > & sen_dy)
 {
@@ -680,10 +680,10 @@ Camera::cam_to_sensor(
 
 void
 Camera::rot_trans_transform(
-  std::vector<std::vector<scalar_t> > & RT_matrix,
-  std::vector<scalar_t> & in_x,
-  std::vector<scalar_t> & in_y,
-  std::vector<scalar_t> & in_z,
+  const std::vector<std::vector<scalar_t> > & RT_matrix,
+  const std::vector<scalar_t> & in_x,
+  const std::vector<scalar_t> & in_y,
+  const std::vector<scalar_t> & in_z,
   std::vector<scalar_t> & out_x,
   std::vector<scalar_t> & out_y,
   std::vector<scalar_t> & out_z)
@@ -714,16 +714,16 @@ Camera::rot_trans_transform(
 
 void
 Camera::rot_trans_transform(
-  std::vector<std::vector<scalar_t> > & RT_matrix,
-  std::vector<scalar_t> & in_x,
-  std::vector<scalar_t> & in_y,
-  std::vector<scalar_t> & in_z,
+  const std::vector<std::vector<scalar_t> > & RT_matrix,
+  const std::vector<scalar_t> & in_x,
+  const std::vector<scalar_t> & in_y,
+  const std::vector<scalar_t> & in_z,
   std::vector<scalar_t> & out_x,
   std::vector<scalar_t> & out_y,
   std::vector<scalar_t> & out_z,
-  std::vector<std::vector<scalar_t> > & in_dx,
-  std::vector<std::vector<scalar_t> > & in_dy,
-  std::vector<std::vector<scalar_t> > & in_dz,
+  const std::vector<std::vector<scalar_t> > & in_dx,
+  const std::vector<std::vector<scalar_t> > & in_dy,
+  const std::vector<std::vector<scalar_t> > & in_dz,
   std::vector<std::vector<scalar_t> > & out_dx,
   std::vector<std::vector<scalar_t> > & out_dy,
   std::vector<std::vector<scalar_t> > & out_dz)

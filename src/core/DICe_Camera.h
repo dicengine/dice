@@ -222,10 +222,10 @@ public:
   /// \param intrinsics intrinsic parameters ordered by DICe_Camera::Cam_Intrinsic_Params
   /// \param image_height height of the image in pixels
   /// \param image_width width of the image in pixels
-  Camera(std::string cam_id,
+  Camera(const std::string & cam_id,
     int_t image_width,
     int_t image_height,
-    std::vector<scalar_t> intrinsics):
+    const std::vector<scalar_t> & intrinsics):
     Camera(){
     set_identifier(cam_id);
     set_intrinsics(intrinsics);
@@ -239,11 +239,11 @@ public:
   /// \param image_height height of the image in pixels
   /// \param image_width width of the image in pixels
   /// \param extrinsics extrinsic parameters ordered by DICe_Camera::Cam_Extrinsic_Params
-  Camera(std::string cam_id,
-    int_t image_width,
-    int_t image_height,
-    std::vector<scalar_t> intrinsics,
-    std::vector<scalar_t> extrinsics):
+  Camera(const std::string & cam_id,
+    const int_t image_width,
+    const int_t image_height,
+    const std::vector<scalar_t> & intrinsics,
+    const std::vector<scalar_t> & extrinsics):
     Camera(){
     set_identifier(cam_id);
     set_intrinsics(intrinsics);
@@ -259,12 +259,12 @@ public:
   /// \param image_width width of the image in pixels
   /// \param extrinsics extrinsic parameters ordered by DICe_Camera::Cam_Extrinsic_Params
   /// \param rotation_3x3_matrix [R] matrix transforming from the world coordinates to the camera coordinates
-  Camera(std::string cam_id,
-    int_t image_width,
-    int_t image_height,
-    std::vector<scalar_t> intrinsics,
-    std::vector<scalar_t> extrinsics,
-    std::vector<std::vector<scalar_t> > & rotation_3x3_matrix):
+  Camera(const std::string & cam_id,
+    const int_t image_width,
+    const int_t image_height,
+    const std::vector<scalar_t> & intrinsics,
+    const std::vector<scalar_t> & extrinsics,
+    const std::vector<std::vector<scalar_t> > & rotation_3x3_matrix):
     Camera(){
     set_identifier(cam_id);
     set_intrinsics(intrinsics);
@@ -283,14 +283,14 @@ public:
   /// \param rotation_3x3_matrix [R] matrix transforming from the world coordinates to the camera coordinates
   /// \param camera_lens camera lens descripter
   /// \param camera_comments camera comments
-  Camera(std::string cam_id,
-    int_t image_width,
-    int_t image_height,
-    std::vector<scalar_t> intrinsics,
-    std::vector<scalar_t> extrinsics,
-    std::vector<std::vector<scalar_t> > & rotation_3x3_matrix,
-    std::string camera_lens = "",
-    std::string camera_comments = "",
+  Camera(const std::string & cam_id,
+    const int_t image_width,
+    const int_t image_height,
+    const std::vector<scalar_t> & intrinsics,
+    const std::vector<scalar_t> & extrinsics,
+    const std::vector<std::vector<scalar_t> > & rotation_3x3_matrix,
+    const std::string camera_lens = "",
+    const std::string camera_comments = "",
     int_t pixel_depth=0):
     Camera(){
     set_identifier(cam_id);
@@ -318,7 +318,7 @@ public:
 
   ///sets the camera lens identifier
   /// \param camera_lens string descripter for the camera lens
-  void set_camera_lens(std::string & camera_lens) {
+  void set_camera_lens(const std::string & camera_lens) {
     camera_lens_ = camera_lens;
     camera_filled_ = true;
   }
@@ -328,7 +328,7 @@ public:
 
   ///sets the camera comments
   /// \param camera_comments comments about the camera
-  void set_camera_comments(std::string & camera_comments) {
+  void set_camera_comments(const std::string & camera_comments) {
     camera_comments_ = camera_comments;
     camera_filled_ = true;
   }
@@ -370,7 +370,7 @@ public:
 
   ///sets the intrinsic camera parameter values
   /// \param intrinsics intrinsic parameters ordered by DICe_Camera::Cam_Intrinsic_Params
-  void set_intrinsics(std::vector<scalar_t> & intrinsics) {
+  void set_intrinsics(const std::vector<scalar_t> & intrinsics) {
     for (int_t i = 0; i < MAX_CAM_INTRINSIC_PARAM; i++) {
       if (intrinsics_[i] != intrinsics[i]) camera_prepped_ = false;
       intrinsics_[i] = intrinsics[i];
@@ -386,7 +386,7 @@ public:
 
   ///sets extrinsic camera parameter values
   /// \param extrinsics extrinsic parameters ordered by DICe_Camera::Cam_Extrinsic_Params
-  void set_extrinsics(std::vector<scalar_t> & extrinsics) {
+  void set_extrinsics(const std::vector<scalar_t> & extrinsics) {
     for (int_t i = 0; i < MAX_CAM_EXTRINSIC_PARAM; i++) {
       if (extrinsics_[i] != extrinsics[i]) camera_prepped_ = false;
       extrinsics_[i] = extrinsics[i];
@@ -402,7 +402,7 @@ public:
 
   ///sets 3x3 rotation matrix [R]
   /// \param rotation_3x3_matrix [R] matrix transforming from the world coordinates to the camera coordinates
-  void set_3x3_rotation_matrix(std::vector<std::vector<scalar_t> > & rotation_3x3_matrix) {
+  void set_3x3_rotation_matrix(const std::vector<std::vector<scalar_t> > & rotation_3x3_matrix) {
     for (int_t i = 0; i < 3; i++) {
       for (int_t j = 0; j < 3; j++) {
         if (rotation_3x3_matrix_[i][j] != rotation_3x3_matrix[i][j]) camera_prepped_ = false;
@@ -478,8 +478,8 @@ public:
   /// \param image_x x location after applied lens distortion
   /// \param image_y y location after applied lens distortion
   void sensor_to_image(
-    std::vector<scalar_t> & sen_x,
-    std::vector<scalar_t> & sen_y,
+    const std::vector<scalar_t> & sen_x,
+    const std::vector<scalar_t> & sen_y,
     std::vector<scalar_t> & image_x,
     std::vector<scalar_t> & image_y);
   /// convert sensor locations to image locations: applies lens distortion scales for fx,fy and
@@ -493,12 +493,12 @@ public:
   /// \param image_dx outgoing location partials lens distortion fixed value
   /// \param image_dy outgoing location partials lens distortion fixed value
   void sensor_to_image(
-    std::vector<scalar_t> & sen_x,
-    std::vector<scalar_t> & sen_y,
+    const std::vector<scalar_t> & sen_x,
+    const std::vector<scalar_t> & sen_y,
     std::vector<scalar_t> & image_x,
     std::vector<scalar_t> & image_y,
-    std::vector<std::vector<scalar_t> > & sen_dx,
-    std::vector<std::vector<scalar_t> > & sen_dy,
+    const std::vector<std::vector<scalar_t> > & sen_dx,
+    const std::vector<std::vector<scalar_t> > & sen_dy,
     std::vector<std::vector<scalar_t> > & image_dx,
     std::vector<std::vector<scalar_t> > & image_dy);
 
@@ -509,11 +509,11 @@ public:
   /// \param sen_y projected y sensor location
   /// \param integer_locs if all image points are integers setting this flag avoids interpolation overhead
   void image_to_sensor(
-    std::vector<scalar_t> & image_x,
-    std::vector<scalar_t> & image_y,
+    const std::vector<scalar_t> & image_x,
+    const std::vector<scalar_t> & image_y,
     std::vector<scalar_t> & sen_x,
     std::vector<scalar_t> & sen_y,
-    bool integer_locs = true);
+    const bool integer_locs = true);
 
   ///projects sensor coordinates onto a plane in space described by zp,theta,phi
   /// \param sen_x x sensor location
@@ -523,12 +523,12 @@ public:
   /// \param cam_z projected z location in cam x,y,z space
   /// \param params projection parameters describing the plane in space (ZP, THETA, PHI)
   void sensor_to_cam(
-    std::vector<scalar_t> & sen_x,
-    std::vector<scalar_t> & sen_y,
+    const std::vector<scalar_t> & sen_x,
+    const std::vector<scalar_t> & sen_y,
     std::vector<scalar_t> & cam_x,
     std::vector<scalar_t> & cam_y,
     std::vector<scalar_t> & cam_z,
-    std::vector<scalar_t> & params);
+    const std::vector<scalar_t> & params);
 
   ///projects sensor coordinates onto a plane in space described by zp,theta,phi overloaded for first partials
   /// \param sen_x x sensor location
@@ -541,12 +541,12 @@ public:
   /// \param cam_dy y locatoin derivitives in cam x,y,z space partials wrt (ZP, THETA, PHI)
   /// \param cam_dz z location derivitives in cam x,y,z space partials wrt (ZP, THETA, PHI)
   void sensor_to_cam(
-    std::vector<scalar_t> & sen_x,
-    std::vector<scalar_t> & sen_y,
+    const std::vector<scalar_t> & sen_x,
+    const std::vector<scalar_t> & sen_y,
     std::vector<scalar_t> & cam_x,
     std::vector<scalar_t> & cam_y,
     std::vector<scalar_t> & cam_z,
-    std::vector<scalar_t> & params,
+    const std::vector<scalar_t> & params,
     std::vector<std::vector<scalar_t> > & cam_dx,
     std::vector<std::vector<scalar_t> > & cam_dy,
     std::vector<std::vector<scalar_t> > & cam_dz);
@@ -558,9 +558,9 @@ public:
   /// \param sen_x projected x sensor location
   /// \param sen_y projected y sensor location
   void cam_to_sensor(
-    std::vector<scalar_t> & cam_x,
-    std::vector<scalar_t> & cam_y,
-    std::vector<scalar_t> & cam_z,
+    const std::vector<scalar_t> & cam_x,
+    const std::vector<scalar_t> & cam_y,
+    const std::vector<scalar_t> & cam_z,
     std::vector<scalar_t> & sen_x,
     std::vector<scalar_t> & sen_y);
 
@@ -576,14 +576,14 @@ public:
   /// \param sen_dx first partials of the projected x sensor location
   /// \param sen_dy first partials of the projected y sensor location
   void cam_to_sensor(
-    std::vector<scalar_t> & cam_x,
-    std::vector<scalar_t> & cam_y,
-    std::vector<scalar_t> & cam_z,
+    const std::vector<scalar_t> & cam_x,
+    const std::vector<scalar_t> & cam_y,
+    const std::vector<scalar_t> & cam_z,
     std::vector<scalar_t> & sen_x,
     std::vector<scalar_t> & sen_y,
-    std::vector<std::vector<scalar_t> > & cam_dx,
-    std::vector<std::vector<scalar_t> > & cam_dy,
-    std::vector<std::vector<scalar_t> > & cam_dz,
+    const std::vector<std::vector<scalar_t> > & cam_dx,
+    const std::vector<std::vector<scalar_t> > & cam_dy,
+    const std::vector<std::vector<scalar_t> > & cam_dz,
     std::vector<std::vector<scalar_t> > & sen_dx,
     std::vector<std::vector<scalar_t> > & sen_dy);
 
@@ -595,9 +595,9 @@ public:
   /// \param wrld_y y location in the world x,y,z space
   /// \param wrld_z z location in the world x,y,z space
   void cam_to_world(
-    std::vector<scalar_t> & cam_x,
-    std::vector<scalar_t> & cam_y,
-    std::vector<scalar_t> & cam_z,
+    const std::vector<scalar_t> & cam_x,
+    const std::vector<scalar_t> & cam_y,
+    const std::vector<scalar_t> & cam_z,
     std::vector<scalar_t> & wrld_x,
     std::vector<scalar_t> & wrld_y,
     std::vector<scalar_t> & wrld_z) {
@@ -621,9 +621,9 @@ public:
     std::vector<scalar_t> & cam_x,
     std::vector<scalar_t> & cam_y,
     std::vector<scalar_t> & cam_z,
-    std::vector<scalar_t> & wrld_x,
-    std::vector<scalar_t> & wrld_y,
-    std::vector<scalar_t> & wrld_z,
+    const std::vector<scalar_t> & wrld_x,
+    const std::vector<scalar_t> & wrld_y,
+    const std::vector<scalar_t> & wrld_z,
     std::vector<std::vector<scalar_t> > & cam_dx,
     std::vector<std::vector<scalar_t> > & cam_dy,
     std::vector<std::vector<scalar_t> > & cam_dz,
@@ -642,9 +642,9 @@ public:
   /// \param cam_y y location in cam x,y,z space
   /// \param cam_z z location in cam x,y,z space
   void world_to_cam(
-    std::vector<scalar_t> & wrld_x,
-    std::vector<scalar_t> & wrld_y,
-    std::vector<scalar_t> & wrld_z,
+    const std::vector<scalar_t> & wrld_x,
+    const std::vector<scalar_t> & wrld_y,
+    const std::vector<scalar_t> & wrld_z,
     std::vector<scalar_t> & cam_x,
     std::vector<scalar_t> & cam_y,
     std::vector<scalar_t> & cam_z) {
@@ -665,15 +665,15 @@ public:
   /// \param cam_dy first partials of the y cam locations
   /// \param cam_dz first partials of the z cam locations
   void world_to_cam(
-    std::vector<scalar_t> & wrld_x,
-    std::vector<scalar_t> & wrld_y,
-    std::vector<scalar_t> & wrld_z,
+    const std::vector<scalar_t> & wrld_x,
+    const std::vector<scalar_t> & wrld_y,
+    const std::vector<scalar_t> & wrld_z,
     std::vector<scalar_t> & cam_x,
     std::vector<scalar_t> & cam_y,
     std::vector<scalar_t> & cam_z,
-    std::vector<std::vector<scalar_t> > & wrld_dx,
-    std::vector<std::vector<scalar_t> > & wrld_dy,
-    std::vector<std::vector<scalar_t> > & wrld_dz,
+    const std::vector<std::vector<scalar_t> > & wrld_dx,
+    const std::vector<std::vector<scalar_t> > & wrld_dy,
+    const std::vector<std::vector<scalar_t> > & wrld_dz,
     std::vector<std::vector<scalar_t> > & cam_dx,
     std::vector<std::vector<scalar_t> > & cam_dy,
     std::vector<std::vector<scalar_t> > & cam_dz) {
@@ -691,10 +691,10 @@ private:
   /// \param out_y transformed y location
   /// \param out_z transformed z location
   void rot_trans_transform(
-    std::vector<std::vector<scalar_t> > & RT_matrix,
-    std::vector<scalar_t> & in_x,
-    std::vector<scalar_t> & in_y,
-    std::vector<scalar_t> & in_z,
+    const std::vector<std::vector<scalar_t> > & RT_matrix,
+    const std::vector<scalar_t> & in_x,
+    const std::vector<scalar_t> & in_y,
+    const std::vector<scalar_t> & in_z,
     std::vector<scalar_t> & out_x,
     std::vector<scalar_t> & out_y,
     std::vector<scalar_t> & out_z);
@@ -713,16 +713,16 @@ private:
   /// \param out_dy derivitives modifiec by the transform
   /// \param out_dz derivitives modifiec by the transform
   void rot_trans_transform(
-    std::vector<std::vector<scalar_t> > & RT_matrix,
-    std::vector<scalar_t> & in_x,
-    std::vector<scalar_t> & in_y,
-    std::vector<scalar_t> & in_z,
+    const std::vector<std::vector<scalar_t> > & RT_matrix,
+    const std::vector<scalar_t> & in_x,
+    const std::vector<scalar_t> & in_y,
+    const std::vector<scalar_t> & in_z,
     std::vector<scalar_t> & out_x,
     std::vector<scalar_t> & out_y,
     std::vector<scalar_t> & out_z,
-    std::vector<std::vector<scalar_t> > & in_dx,
-    std::vector<std::vector<scalar_t> > & in_dy,
-    std::vector<std::vector<scalar_t> > & in_dz,
+    const std::vector<std::vector<scalar_t> > & in_dx,
+    const std::vector<std::vector<scalar_t> > & in_dy,
+    const std::vector<std::vector<scalar_t> > & in_dz,
     std::vector<std::vector<scalar_t> > & out_dx,
     std::vector<std::vector<scalar_t> > & out_dy,
     std::vector<std::vector<scalar_t> > & out_dz);
