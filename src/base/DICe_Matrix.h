@@ -87,7 +87,7 @@ std::string type_to_string(){
 /// dynamic sizing has been emulated by making a Matrix of MAX_MATRIX_DIM size and only uses a portion
 /// of that allocation.
 template <typename Type, size_t Rows=MAX_MATRIX_DIM, size_t Cols = Rows>
-class DICE_LIB_DLL_EXPORT
+class
 Matrix {
 public:
   /// convenience alias for vectors
