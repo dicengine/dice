@@ -445,7 +445,7 @@ public:
   /// does the camera have enough values to be valid
   /// \paqam msg return message with reason for invalid
   bool camera_valid(std::string & msg) {
-    return check_valid_(msg);
+    return check_valid(msg);
   }
 
   ///have any of the parameters/fields been filled
@@ -601,7 +601,7 @@ public:
     std::vector<scalar_t> & wrld_x,
     std::vector<scalar_t> & wrld_y,
     std::vector<scalar_t> & wrld_z) {
-    rot_trans_transform_(cam_world_trans_, cam_x, cam_y, cam_z, wrld_x, wrld_y, wrld_z);
+    rot_trans_transform(cam_world_trans_, cam_x, cam_y, cam_z, wrld_x, wrld_y, wrld_z);
   }
 
   ///converts the camera x,y,z cooldinates to a world x,y,z coordinate system overloaded with first partials
@@ -630,7 +630,7 @@ public:
     std::vector<std::vector<scalar_t> > & wrld_dx,
     std::vector<std::vector<scalar_t> > & wrld_dy,
     std::vector<std::vector<scalar_t> > & wrld_dz) {
-    rot_trans_transform_(cam_world_trans_, wrld_x, wrld_y, wrld_z, cam_x, cam_y, cam_z,
+    rot_trans_transform(cam_world_trans_, wrld_x, wrld_y, wrld_z, cam_x, cam_y, cam_z,
       cam_dx, cam_dy, cam_dz, wrld_dx, wrld_dy, wrld_dz);
   }
 
@@ -648,7 +648,7 @@ public:
     std::vector<scalar_t> & cam_x,
     std::vector<scalar_t> & cam_y,
     std::vector<scalar_t> & cam_z) {
-    rot_trans_transform_(world_cam_trans_, wrld_x, wrld_y, wrld_z, cam_x, cam_y, cam_z);
+    rot_trans_transform(world_cam_trans_, wrld_x, wrld_y, wrld_z, cam_x, cam_y, cam_z);
   }
 
   ///converts world x,y,z coordinates to camera x,y,z coordinates overloaded with first partials
@@ -677,7 +677,7 @@ public:
     std::vector<std::vector<scalar_t> > & cam_dx,
     std::vector<std::vector<scalar_t> > & cam_dy,
     std::vector<std::vector<scalar_t> > & cam_dz) {
-    rot_trans_transform_(world_cam_trans_, wrld_x, wrld_y, wrld_z, cam_x, cam_y, cam_z,
+    rot_trans_transform(world_cam_trans_, wrld_x, wrld_y, wrld_z, cam_x, cam_y, cam_z,
       wrld_dx, wrld_dy, wrld_dz, cam_dx, cam_dy, cam_dz);
   }
 
@@ -690,7 +690,7 @@ private:
   /// \param out_x transformed x location
   /// \param out_y transformed y location
   /// \param out_z transformed z location
-  void rot_trans_transform_(
+  void rot_trans_transform(
     std::vector<std::vector<scalar_t> > & RT_matrix,
     std::vector<scalar_t> & in_x,
     std::vector<scalar_t> & in_y,
@@ -712,7 +712,7 @@ private:
   /// \param out_dx derivitives modifiec by the transform
   /// \param out_dy derivitives modifiec by the transform
   /// \param out_dz derivitives modifiec by the transform
-  void rot_trans_transform_(
+  void rot_trans_transform(
     std::vector<std::vector<scalar_t> > & RT_matrix,
     std::vector<scalar_t> & in_x,
     std::vector<scalar_t> & in_y,
@@ -728,11 +728,11 @@ private:
     std::vector<std::vector<scalar_t> > & out_dz);
 
   ///routine to check for a valid camera
-  bool check_valid_(std::string & msg);
+  bool check_valid(std::string & msg);
   ///creates the image values for the inverse lens distortion
-  bool prep_lens_distortion_();
+  bool prep_lens_distortion();
   ///creates the rotation/translation matricies and inverses
-  bool prep_transforms_();
+  bool prep_transforms();
 
   ///has the camera been filled with any parameters
   bool camera_filled_;

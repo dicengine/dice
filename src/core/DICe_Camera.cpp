@@ -41,11 +41,8 @@
 
 #include <DICe_Camera.h>
 #include <DICe_LocalShapeFunction.h>
-//#include <DICe_XMLUtils.h>
-//#include <DICe_Parser.h>
+
 #include <fstream>
-//#include <Teuchos_XMLParameterListHelpers.hpp>
-//#include <Teuchos_ParameterList.hpp>
 #include <Teuchos_Array.hpp>
 #include <math.h>
 
@@ -97,13 +94,13 @@ Camera::prep_camera() {
   //run the pre-run functions
   //need to add more error handling into the functions
   bool return_val = false;
-  return_val = prep_lens_distortion_();
-  return_val = prep_transforms_();
+  return_val = prep_lens_distortion();
+  return_val = prep_transforms();
   return return_val;
 }
 
 bool
-Camera::prep_transforms_() {
+Camera::prep_transforms() {
   //if the rot_3x3_matrix is filled use those values
   //if the matrix is all zeros consider it unfilled
   bool nonzero_matrix = false;
@@ -170,7 +167,7 @@ Camera::prep_transforms_() {
 
 
 bool
-Camera::prep_lens_distortion_() {
+Camera::prep_lens_distortion() {
   //pre-run lens distortion function
   int_t image_size;
   scalar_t del_img_x;
@@ -682,7 +679,7 @@ Camera::cam_to_sensor(
 }
 
 void
-Camera::rot_trans_transform_(
+Camera::rot_trans_transform(
   std::vector<std::vector<scalar_t> > & RT_matrix,
   std::vector<scalar_t> & in_x,
   std::vector<scalar_t> & in_y,
@@ -716,7 +713,7 @@ Camera::rot_trans_transform_(
 }
 
 void
-Camera::rot_trans_transform_(
+Camera::rot_trans_transform(
   std::vector<std::vector<scalar_t> > & RT_matrix,
   std::vector<scalar_t> & in_x,
   std::vector<scalar_t> & in_y,
@@ -769,7 +766,7 @@ Camera::rot_trans_transform_(
 }
 
 bool
-Camera::check_valid_(std::string & msg) {
+Camera::check_valid(std::string & msg) {
   //quick check to see if the minimal required information is present
   bool is_valid = true;
   std::stringstream message;

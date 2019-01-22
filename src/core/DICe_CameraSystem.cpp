@@ -729,7 +729,7 @@ Camera_System::write_calibration_file(const std::string & cal_file,
 }
 
 void
-Camera_System::pre_projection_(int_t num_pnts,
+Camera_System::pre_projection(int_t num_pnts,
   int_t num_params,
   bool partials) {
   //prep the cameras if not already done
@@ -792,7 +792,7 @@ Camera_System::cross_projection_map(
   scalar_t & img1_y,
   std::vector<scalar_t> & params) {
 
-  pre_projection_(1, 3, false);
+  pre_projection(1, 3, false);
 
   img_x_[0] = img0_x;
   img_y_[0] = img0_y;
@@ -816,7 +816,7 @@ Camera_System::cross_projection_map(
   std::vector<scalar_t> & img1_dx,
   std::vector<scalar_t> & img1_dy) {
 
-  pre_projection_(1, 3, true);
+  pre_projection(1, 3, true);
   img_x_[0] = img0_x;
   img_y_[0] = img0_y;
 
@@ -842,7 +842,7 @@ Camera_System::cross_projection_map(
   std::vector<scalar_t> & img1_y,
   std::vector<scalar_t> & params) {
 
-  pre_projection_(img0_x.size(), 3, false);
+  pre_projection(img0_x.size(), 3, false);
 
   cameras_[source_cam_].image_to_sensor(img0_x, img0_y, sen_x_, sen_y_);
   cameras_[source_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, params);
@@ -862,7 +862,7 @@ Camera_System::cross_projection_map(
   std::vector<std::vector<scalar_t> > & img1_dx,
   std::vector<std::vector<scalar_t> > & img1_dy) {
 
-  pre_projection_(img0_x.size(), 3, true);
+  pre_projection(img0_x.size(), 3, true);
 
   cameras_[source_cam_].image_to_sensor(img0_x, img0_y, sen_x_, sen_y_);
   cameras_[source_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, params, cam_dx_, cam_dy_, cam_dx_);
@@ -882,7 +882,7 @@ Camera_System::fixed_proj_3DRB_map(
   std::vector<scalar_t> & proj_params,
   std::vector<scalar_t> & rigid_body_params) {
 
-  pre_projection_(1, 6, false);
+  pre_projection(1, 6, false);
   img_x_[0] = img0_x;
   img_y_[0] = img0_y;
 
@@ -908,7 +908,7 @@ Camera_System::fixed_proj_3DRB_map(
   std::vector<scalar_t> & img1_dx,
   std::vector<scalar_t> & img1_dy) {
 
-  pre_projection_(1, 6, false);
+  pre_projection(1, 6, false);
   img_x_[0] = img0_x;
   img_y_[0] = img0_y;
 
@@ -937,7 +937,7 @@ Camera_System::fixed_proj_3DRB_map(
   std::vector<scalar_t> & proj_params,
   std::vector<scalar_t> & rigid_body_params) {
 
-  pre_projection_(img0_x.size(), 6, false);
+  pre_projection(img0_x.size(), 6, false);
 
   cameras_[source_cam_].image_to_sensor(img0_x, img0_y, sen_x_, sen_y_);
   cameras_[source_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, proj_params);
@@ -959,7 +959,7 @@ Camera_System::fixed_proj_3DRB_map(
   std::vector<std::vector<scalar_t> > & img1_dx,
   std::vector<std::vector<scalar_t> > & img1_dy) {
 
-  pre_projection_(img0_x.size(), 6, false);
+  pre_projection(img0_x.size(), 6, false);
 
   cameras_[source_cam_].image_to_sensor(img0_x, img0_y, sen_x_, sen_y_);
   cameras_[source_cam_].sensor_to_cam(sen_x_, sen_y_, cam_x_, cam_y_, cam_z_, proj_params);

@@ -789,7 +789,7 @@ public:
 
 private:
   /// \brief calculates the fixed coefficients prior to projection transformations
-  void pre_projection_(int_t num_pnts,
+  void pre_projection(int_t num_pnts,
     int_t num_params,
     bool partials);
 
