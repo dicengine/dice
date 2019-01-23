@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {
     int_mat * rhs_wrong_size;
   }
   catch(std::exception &e){
-    DEBUG_MSG( e.what() << '\n');
+    std::cout << e.what() << '\n';
     exception_thrown = true;
   }
   if(!exception_thrown){
@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {
     non_square.inv();
   }
   catch(std::exception &e){
-    DEBUG_MSG( e.what() << '\n');
+    std::cout << e.what() << '\n';
     exception_thrown = true;
   }
   if(!exception_thrown){

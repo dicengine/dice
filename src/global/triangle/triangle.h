@@ -264,6 +264,21 @@
 
 /* #define SINGLE */
 
+
+#if defined(WIN32)
+// disable some common windows compiler warnings that we don't really care about
+#pragma warning(disable:4005)
+#pragma warning(disable:4091)
+#pragma warning(disable:4244)
+#pragma warning(disable:4251)
+#pragma warning(disable:4267)
+#pragma warning(disable:4297)
+#pragma warning(disable:4305)
+#pragma warning(disable:4800)
+#pragma warning(disable:4996)
+#endif
+
+
 #ifdef SINGLE
 #define REAL float
 #else /* not SINGLE */

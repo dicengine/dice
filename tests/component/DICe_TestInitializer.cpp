@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
   try{
     Path_Initializer bad_path(NULL,subset,"sample.txt");
   }
-  catch(std::exception &e){
+  catch(...){
     *outStream << "an exception was thrown as it should have been" << std::endl;
     exception_thrown = true;
   }
@@ -228,7 +228,7 @@ int main(int argc, char *argv[]) {
       try{
          schema->execute_correlation();
       }
-      catch(std::exception &e){
+      catch(...){
         exception_thrown = true;
       }
       // an error should have thrown for path files used with generic routine

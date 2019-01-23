@@ -46,6 +46,16 @@
 #define DICE_TWOPI 6.28318530717958647692
 
 #if defined(WIN32)
+// disable some common windows compiler warnings that we don't really care about
+#pragma warning(disable:4005)
+#pragma warning(disable:4091)
+#pragma warning(disable:4244)
+#pragma warning(disable:4251)
+#pragma warning(disable:4267)
+#pragma warning(disable:4297)
+#pragma warning(disable:4305)
+#pragma warning(disable:4800)
+#pragma warning(disable:4996)
 #  if defined(DICE_LIB_EXPORTS_MODE)
 #    define DICE_LIB_DLL_EXPORT __declspec(dllexport)
 #  else

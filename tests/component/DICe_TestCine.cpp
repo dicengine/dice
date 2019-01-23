@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
   try{
     DICe::cine::Cine_Reader cine_reader("./images/invalid_color.cine",outStream.getRawPtr());
   }
-  catch(const std::exception &e){
+  catch(...){
     exception_thrown = true;
     *outStream << "exception thrown as expected." << std::endl;
   }
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
     std::string file_name = "./images/packed_12bpp_1000.cine";
     Teuchos::RCP<Image> cine_img = Teuchos::rcp(new Image(file_name.c_str()));
   }
-  catch(const std::exception &e){
+  catch(...){
     exception_thrown=true;
     *outStream << "exception thrown as expected." << std::endl;
   }

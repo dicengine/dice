@@ -776,7 +776,7 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   try{
     mesh->get_field(field_enums::MODEL_COORDINATES_X_FS);
     use_model_coordinates = true;
-  }catch(std::exception & e){
+  }catch(...){
     use_model_coordinates = false;
   }
   if(use_model_coordinates){

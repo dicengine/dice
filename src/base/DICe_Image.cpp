@@ -219,7 +219,7 @@ Image::write(const std::string & file_name,
   try{
     utils::write_image(file_name.c_str(),width_,height_,intensities().getRawPtr(),default_is_layout_right(),scale_to_8_bit);
   }
-  catch(std::exception &e){
+  catch(...){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, write image failure.");
   }
 }
@@ -231,7 +231,7 @@ Image::write_overlap_image(const std::string & file_name,
   try{
     utils::write_color_overlap_image(file_name.c_str(),width_,height_,intensities().getRawPtr(),top_img->intensities().getRawPtr());
   }
-  catch(std::exception &e){
+  catch(...){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, write color overlap image failure.");
   }
 }
@@ -244,7 +244,7 @@ Image::write_grad_x(const std::string & file_name){
   try{
     utils::write_image(file_name.c_str(),width_,height_,grad_x_array().getRawPtr(),default_is_layout_right());
   }
-  catch(std::exception &e){
+  catch(...){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, write image grad_x failure.");
   }
 }
@@ -254,7 +254,7 @@ Image::write_grad_y(const std::string & file_name){
   try{
     utils::write_image(file_name.c_str(),width_,height_,grad_y_array().getRawPtr(),default_is_layout_right());
   }
-  catch(std::exception &e){
+  catch(...){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, write image grad_y failure.");
   }
 }

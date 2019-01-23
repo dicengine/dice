@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
     }
   }
   // make sure that end_images is odd at this point since the i/o image names have to come in pairs
-  if(input_images.size()==0||input_images.size()!=output_images.size()||!end_images%2){
+  if(input_images.size()==0||input_images.size()!=output_images.size()||(!(end_images%2))){
     std::cout << "error, invalid input/output images, num input " << input_images.size() << " num output " << output_images.size() << " " << end_images%2 << std::endl;
     return -1;
   }

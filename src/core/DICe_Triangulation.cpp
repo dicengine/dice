@@ -309,7 +309,7 @@ Triangulation::invert_transform(Teuchos::SerialDenseMatrix<int_t,double> & T_out
     lapack.GETRI(4,T_out.values(),4,IPIV,WORK,LWORK,&INFO);
   }
   catch(std::exception &e){
-    DEBUG_MSG( e.what() << '\n');
+    std::cout << e.what() << '\n';
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,
       "Error, could not invert the transformation matrix from camera 0");
   }
@@ -662,7 +662,7 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
       lapack.GETRI(3,K.values(),3,IPIV,WORK,LWORK,&INFO);
     }
     catch(std::exception &e){
-      DEBUG_MSG( e.what() << '\n');
+      std::cout << e.what() << '\n';
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,
         "Error, could not invert the K matrix in best fit plane");
     }
@@ -819,7 +819,7 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
       lapack.GETRI(4,TK.values(),4,TIPIV,TWORK,TLWORK,&TINFO);
     }
     catch(std::exception &e){
-      DEBUG_MSG( e.what() << '\n');
+      std::cout << e.what() << '\n';
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,
         "Error, could not invert the TK matrix in best fit plane");
     }
@@ -1028,7 +1028,7 @@ scalar_t Triangulation::triangulate(const scalar_t & x0,
     lapack.GETRI(3,MTM.values(),3,IPIV_ptr,WORK_ptr,LWORK,&INFO);
   }
   catch(std::exception &e){
-    DEBUG_MSG( e.what() << '\n');
+    std::cout << e.what() << '\n';
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,
       "Error, could not invert the M matrix in triangulation");
   }

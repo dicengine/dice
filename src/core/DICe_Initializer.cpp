@@ -335,7 +335,7 @@ Search_Initializer::initial_guess(const int_t subset_gid,
           gamma = subset_->gamma();
           if(gamma<0.0) gamma = 4.0; // catch a failed gamma eval
         }
-        catch(std::exception & e){
+        catch(...){
           gamma = 100.0;
         }
         //DEBUG_MSG("search pos " << trial_u << " " << trial_v << " " << trial_t << " gamma " << gamma);

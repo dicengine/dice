@@ -83,7 +83,7 @@ Image::Image(const char * file_name,
     intensities_ = Teuchos::ArrayRCP<intensity_t>(width_*height_,0.0);
     utils::read_image(file_name,intensities_.getRawPtr(),true,convert_to_8_bit,filter_failed);
   }
-  catch(std::exception & e){
+  catch(...){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, image file read failure");
   }
   // copy the image to the device (no-op for OpenMP, or serial)
@@ -128,7 +128,7 @@ Image::Image(const char * file_name,
       width_,height_,
       intensities_.getRawPtr(),true,convert_to_8_bit,filter_failed);
   }
-  catch(std::exception & e){
+  catch(...){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, image file read failure");
   }
   default_constructor_tasks(params);

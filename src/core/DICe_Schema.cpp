@@ -1320,7 +1320,7 @@ Schema::execute_cross_correlation(){
       try{
         obj = Teuchos::rcp(new Objective_ZNSSD(this,subset_global_id(subset_index)));
       }
-      catch(std::exception & e){
+      catch(...){
         init_success = false;
       }
       if(init_success){
@@ -1356,7 +1356,7 @@ Schema::execute_cross_correlation(){
       Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,this_proc_gid_order_[subset_index]));
       generic_correlation_routine(obj);
     }
-    catch(std::exception & e){
+    catch(...){
       DEBUG_MSG("Schema::execute_cross_correlation(): subset " << this_proc_gid_order_[subset_index] << " failed");
       record_failed_step(this_proc_gid_order_[subset_index],static_cast<int_t>(INITIALIZE_FAILED_BY_EXCEPTION),-1);
     }
@@ -1490,7 +1490,7 @@ Schema::execute_correlation(){
         DEBUG_MSG("Schema::execute_correlation(): Objective creation successful");
         generic_correlation_routine(obj);
       }
-      catch(std::exception & e){
+      catch(...){
         DEBUG_MSG("Schema::execute_correlation(): subset " << this_proc_gid_order_[subset_index] << " failed");
         record_failed_step(this_proc_gid_order_[subset_index],static_cast<int_t>(INITIALIZE_FAILED_BY_EXCEPTION),-1);
       }
@@ -1825,7 +1825,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   try{
     init_status = initial_guess(subset_gid,shape_function);
   }
-  catch (std::logic_error &err) { // a non-graceful exception occurred in initialization
+  catch (...) { // a non-graceful exception occurred in initialization
     record_failed_step(subset_gid,static_cast<int_t>(INITIALIZE_FAILED_BY_EXCEPTION),num_iterations);
     return;
   };
@@ -1935,7 +1935,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     try{
       corr_status = obj->computeUpdateRobust(shape_function,num_iterations);
     }
-    catch (std::logic_error &err) { //a non-graceful exception occurred
+    catch (...) { //a non-graceful exception occurred
       corr_status = CORRELATION_FAILED_BY_EXCEPTION;
     };
   }
@@ -1944,7 +1944,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     try{
       corr_status = obj->computeUpdateFast(shape_function,num_iterations);
     }
-    catch (std::logic_error &err) { //a non-graceful exception occurred
+    catch (...) { //a non-graceful exception occurred
       corr_status = CORRELATION_FAILED_BY_EXCEPTION;
     };
   }
@@ -1978,7 +1978,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
         try{
           corr_status = obj->computeUpdateRobust(shape_function,num_iterations);
         }
-        catch (std::logic_error &err) { //a non-graceful exception occurred
+        catch (...) { //a non-graceful exception occurred
           corr_status = CORRELATION_FAILED_BY_EXCEPTION;
         };
       }
@@ -1995,7 +1995,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
         try{
           corr_status = obj->computeUpdateFast(shape_function,num_iterations);
         }
-        catch (std::logic_error &err) { //a non-graceful exception occurred
+        catch (...) { //a non-graceful exception occurred
           corr_status = CORRELATION_FAILED_BY_EXCEPTION;
         };
       } // end gradient then search
@@ -2009,7 +2009,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       try{
           corr_status = obj->computeUpdateFast(shape_function,num_iterations);
       }
-      catch (std::logic_error &err) { //a non-graceful exception occurred
+      catch (...) { //a non-graceful exception occurred
         corr_status = CORRELATION_FAILED_BY_EXCEPTION;
       };
       if(corr_status!=CORRELATION_SUCCESSFUL){
@@ -3380,7 +3380,7 @@ Output_Spec::gather_fields(){
     try{
       fs = schema_->mesh()->get_field_spec(field_names_[i]);
     }
-    catch(std::exception & e){
+    catch(...){
     }
     field_vec_[i] = schema_->mesh()->get_field(fs);
   }

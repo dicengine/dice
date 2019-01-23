@@ -60,7 +60,7 @@ Objective::gamma( Teuchos::RCP<Local_Shape_Function> shape_function) const {
   try{
     subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,shape_function,schema_->interpolation_method());
   }
-  catch (std::logic_error & err) {
+  catch (...) {
     return -1.0;
   }
   scalar_t gamma = subset_->gamma();
@@ -291,7 +291,7 @@ Objective::computeUpdateRobust(Teuchos::RCP<Local_Shape_Function> shape_function
   try{
     status_flag = simplex.minimize(shape_function,num_iterations,skip_threshold);
   }
-  catch (std::logic_error &err) {
+  catch (...) {
     return CORRELATION_FAILED;
   }
   return status_flag;
@@ -351,7 +351,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
       //    def_subset_->write(fileName.str());
       //#endif
     }
-    catch (std::logic_error & err) {
+    catch (...) {
       return SUBSET_CONSTRUCTION_FAILED;
     }
     // compute the mean value of the subsets:
@@ -402,7 +402,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
       if(cond_2x2 > 1.0E12) return HESSIAN_SINGULAR;
     }
     catch(std::exception &e){
-      DEBUG_MSG( e.what() << '\n');
+      std::cout << e.what() << '\n';
       return LINEAR_SOLVE_FAILED;
     }
     for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
@@ -411,7 +411,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
       lapack.GETRI(N,H.values(),N,IPIV,WORK,LWORK,&INFO);
     }
     catch(std::exception &e){
-      DEBUG_MSG( e.what() << '\n');
+      std::cout << e.what() << '\n';
       return LINEAR_SOLVE_FAILED;
     }
     // save off last step
