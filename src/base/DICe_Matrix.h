@@ -265,6 +265,13 @@ public:
     return norm(*this);
   };
 
+  bool all_values_are_zero(){
+    for(size_t i=0;i<rows_*cols_;++i){
+      if(data_[i]!=0) return false;
+    }
+    return true;
+  }
+
   /// compute the inverse of a matrix and return as a new matrix
   // always has to be scalar type because of lapack
   Matrix<scalar_t,Rows,Cols> inv(){

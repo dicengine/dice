@@ -283,6 +283,19 @@ int main(int argc, char *argv[]) {
     error_flag++;
   }
 
+  *outStream << "testing all zero method" << std::endl;
+  Matrix<scalar_t,3,6> no_values;
+  if(!no_values.all_values_are_zero()){
+    *outStream << "***error: all_values_are_zero() error" << std::endl;
+    error_flag++;
+  }
+  Matrix<bool,3,6> some_bool_values;
+  some_bool_values(1,4) = true;
+  if(some_bool_values.all_values_are_zero()){
+    *outStream << "***error: all_values_are_zero() error" << std::endl;
+    error_flag++;
+  }
+
   *outStream << "--- End test ---" << std::endl;
 
   DICe::finalize();
