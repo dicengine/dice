@@ -53,7 +53,6 @@ using namespace DICe;
     
     try {
       
-      bool allFields = true;
       //temp for testing
       std::string cal_file_name;
       std::string cal_file_dir;
@@ -64,29 +63,23 @@ using namespace DICe;
       file_names.push_back("DICe_cal_a.xml");
       file_names.push_back("cal_a.txt");
       file_names.push_back("cal_a_with_R.txt");
-      file_names.push_back("cal_a_with_transform.txt");
-      for (int_t i = 0; i < 5; i++)
+      //file_names.push_back("cal_a_with_transform.txt");
+      for (size_t i = 0; i < file_names.size(); i++)
       {
         cal_file_dir = "./cal/";
         cal_file = cal_file_dir + file_names[i] + "";
-        Teuchos::RCP<Camera_System> cam_sys = Teuchos::rcp(new Camera_System());
-        cam_sys->read_calibration_parameters(cal_file);
-
+        Teuchos::RCP<Camera_System> cam_sys = Teuchos::rcp(new Camera_System(cal_file));
         file_names[i].pop_back();
         file_names[i].pop_back();
         file_names[i].pop_back();
         file_names[i].push_back('x');
         file_names[i].push_back('m');
         file_names[i].push_back('l');
+        save_file = cal_file_dir + "DICe_out_" + file_names[i];
+        cam_sys->write_calibration_file(save_file);
+        // FIXME test the files that were written
 
-        if (allFields)
-          save_file = cal_file_dir + "DICe_allFields_" + file_names[i];
-        else
-          save_file = cal_file_dir + "DICe_" + file_names[i];
-
-        //cam_sys->write_calibration_file(save_file, allFields);
       }
-
     }
     catch (std::exception & e) {
       std::cout << e.what() << std::endl;

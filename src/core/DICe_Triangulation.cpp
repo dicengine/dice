@@ -436,8 +436,8 @@ Triangulation::load_calibration_parameters(const std::string & param_file_name){
       if(tokens[0]=="TRANSFORM") {has_transform=true; break;}
       total_num_values++;
     }
-    TEUCHOS_TEST_FOR_EXCEPTION(total_num_values!=num_values_expected&&total_num_values!=num_values_expected_with_R,std::runtime_error,
-      "Error, wrong number of parameters in calibration file: " << param_file_name);
+    //TEUCHOS_TEST_FOR_EXCEPTION(total_num_values!=num_values_expected&&total_num_values!=num_values_expected_with_R,std::runtime_error,
+    //  "Error, wrong number of parameters in calibration file: " << param_file_name);
 
     // return to start of file:
     dataFile.clear();
@@ -477,14 +477,14 @@ Triangulation::load_calibration_parameters(const std::string & param_file_name){
       const int_t camera_index = num_values >= 8 ? 1 : 0;
       if(num_values < 16)
         cal_intrinsics_[camera_index][num_values - camera_index*8] = strtod(tokens[0].c_str(),NULL);
-      else if(num_values < 22 && total_num_values == num_values_expected)
+      else if(num_values < 22 && (total_num_values == num_values_expected || total_num_values == num_values_expected +2))
         extrinsics[num_values - 16] = strtod(tokens[0].c_str(),NULL);
-      else if(num_values < 25 && total_num_values == num_values_expected_with_R)
+      else if(num_values < 25 && (total_num_values == num_values_expected_with_R || total_num_values == num_values_expected_with_R + 2))
         cal_extrinsics_[id_to_array_loc_i[num_values-16]][id_to_array_loc_j[num_values-16]] = strtod(tokens[0].c_str(),NULL);
-      else if(num_values < 28 && total_num_values == num_values_expected_with_R)
+      else if(num_values < 28 && (total_num_values == num_values_expected_with_R || total_num_values == num_values_expected_with_R + 2))
         cal_extrinsics_[num_values-25][3] = strtod(tokens[0].c_str(),NULL);
       else{
-        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+//        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
       }
       num_values++;
     }
@@ -507,7 +507,7 @@ Triangulation::load_calibration_parameters(const std::string & param_file_name){
 
     //TEUCHOS_TEST_FOR_EXCEPTION(num_values!=num_values_expected&&num_values!=num_values_with_custom_transform,std::runtime_error,
     //  "Error reading calibration text file " << param_file_name);
-    if(total_num_values==num_values_expected){ // not needed if R is specified explicitly
+    if(total_num_values==num_values_expected || (total_num_values==num_values_expected +2)){ // not needed if R is specified explicitly
       Teuchos::SerialDenseMatrix<int_t,double> converted_extrinsics(4,4,true);
       convert_CB_angles_to_T(extrinsics[0],
         extrinsics[1],

@@ -436,26 +436,16 @@ public:
     TRANS_Z
   };
 
-  /// constructor
-  Projection_Shape_Function();
- 
   /// \brief constructor with the parameters needed to setup the transformation
-  /// \param camSystem camera system object to use for camera to camera projections
-  /// \param undef_cam primary camera where the subset locations are specified
-  /// \param def_cam secondary camera to project to
-  Projection_Shape_Function(Camera_System * camSystem, int_t undef_cam, int_t def_cam);
+  /// \param system_file file used to read in the camera and orientation parameters
+  /// \param source_camera_id primary camera where the subset locations are specified
+  /// \param target_camera_id secondary camera to project to
+  Projection_Shape_Function(const std::string & system_file,
+    const size_t source_camera_id,
+    const size_t target_camera_id);
 
   /// virtual destructor
   virtual ~Projection_Shape_Function() {};
-
-  /// \brief Set the camera system and the undeformed and deformed camera
-  /// \param camSystem camera system object to use for camera to camera projections
-  /// \param undef_cam primary camera where the subset locations are specified
-  /// \param def_cam secondary camera to project to
-  virtual void set_system_cams(Camera_System * camSystem, int_t undef_cam, int_t def_cam);
-
-  /// initialize the parameter fields and deltas
-  virtual void init();
 
   /// clear the parameters
   virtual void clear();
@@ -465,40 +455,12 @@ public:
   virtual void reset_fields(Schema * schema);
 
   /// see base class description
-  virtual void map(const scalar_t & ximg0_x,
-    const scalar_t & ximg0_y,
+  virtual void map(const scalar_t & x,
+    const scalar_t & y,
     const scalar_t & cx,
     const scalar_t & cy,
-    scalar_t & ximg1_x,
-    scalar_t & ximg1_y);
-
-  virtual void map(std::vector<scalar_t> & img0_x,
-    std::vector<scalar_t> & img0_y,
-    const scalar_t & cx,
-    const scalar_t & cy,
-    std::vector<scalar_t> & img1_x,
-    std::vector<scalar_t> & img1_y);
-
-
-  /// see base class description
-  virtual void add_translation(const scalar_t & u,
-    const scalar_t & v);
-
-  /// see base class description
-  virtual void map_to_u_v_theta(const scalar_t & cx,
-    const scalar_t & cy,
-    scalar_t & out_u,
-    scalar_t & out_v,
-    scalar_t & out_theta);
-
-  /// see base class description
-  virtual void insert_motion(const scalar_t & u,
-    const scalar_t & v,
-    const scalar_t & theta);
-
-  /// see base class description
-  virtual void insert_motion(const scalar_t & u,
-    const scalar_t & v);
+    scalar_t & out_x,
+    scalar_t & out_y);
 
   /// see base class description
   virtual void residuals(const scalar_t & x,
@@ -510,54 +472,50 @@ public:
     std::vector<scalar_t> & residuals,
     const bool use_ref_grads = false);
 
-  ///residuals with vectors
-  /// see base class description
-  virtual void residuals(std::vector<scalar_t> & img0_x,
-    std::vector<scalar_t> & img0_y,
-    const scalar_t & cx,
-    const scalar_t & cy,
-    std::vector<scalar_t> & gx,
-    std::vector<scalar_t> & gy,
-    std::vector<std::vector<scalar_t> > & residuals,
-    const bool use_ref_grads);
-  
-  ///residuals with vectors and deformed locations
-  /// see base class description
-  virtual void residuals(std::vector<scalar_t> & img0_x,
-    std::vector<scalar_t> & img0_y,
-    std::vector<scalar_t> & img1_x,
-    std::vector<scalar_t> & img1_y,
-    const scalar_t & cx,
-    const scalar_t & cy,
-    std::vector<scalar_t> & gx,
-    std::vector<scalar_t> & gy,
-    std::vector<std::vector<scalar_t> > & residuals,
-    const bool use_ref_grads);
-
   /// see base class description
   virtual void save_fields(Schema * schema,
     const int_t subset_gid);
 
   /// see base class description
+  virtual void add_translation(const scalar_t & u,
+    const scalar_t & v){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
+  }
+
+  /// see base class description
+  virtual void map_to_u_v_theta(const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & out_u,
+    scalar_t & out_v,
+    scalar_t & out_theta){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
+  }
+
+  /// see base class description
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v,
+    const scalar_t & theta){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
+  }
+
+  /// see base class description
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
+  }
+
+  /// see base class description
   virtual void update_params_for_centroid_change(const scalar_t & delta_x,
-    const scalar_t & delta_y);
+    const scalar_t & delta_y){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
+  }
 
 private:
-  Camera_System * cam_system_;
-  int_t undef_cam_;
-  int_t def_cam_;
-  bool system_cams_set_ = false;
-  std::vector<scalar_t> proj_params_;
-  std::vector<scalar_t> img0_x_sng_;
-  std::vector<scalar_t> img0_y_sng_;
-  std::vector<scalar_t> img1_x_sng_;
-  std::vector<scalar_t> img1_y_sng_;
-  std::vector<std::vector<scalar_t> > img1_dx_sng_;
-  std::vector<std::vector<scalar_t> > img1_dy_sng_;
-  std::vector<scalar_t> img1_x_;
-  std::vector<scalar_t> img1_y_;
-  std::vector<std::vector<scalar_t> > img1_dx_;
-  std::vector<std::vector<scalar_t> > img1_dy_;
+  /// camera to use as the source camera
+  size_t source_cam_id_;
+  size_t target_cam_id_;
+  /// camera system to apply all the transformations
+  Teuchos::RCP<Camera_System> camera_system_;
 };
 
 
@@ -578,31 +536,17 @@ public:
     TRANS_Z
   };
 
-  /// constructor with no arguments
-  Fixed_Proj_3DRB_Shape_Function();
-
   /// \brief constructor with the parameters needed to setup the transformation
-  /// \param camSystem camera system object to use for camera to camera projections
-  /// \param undef_cam primary camera where the subset locations are specified
-  /// \param def_cam secondary camera to project to
+  /// \param system file camera system definition file to use for camera to camera projections
+  /// \param source_camera_id primary camera where the subset locations are specified
+  /// there is no target camera id because for the rigid body motion, the source and target camera are the same
   /// \proj_params projection parameters (Zp, Ang1, Ang2) for the projections
-  Fixed_Proj_3DRB_Shape_Function(Camera_System * camSystem, int_t undef_cam, int_t def_cam, std::vector<scalar_t> & proj_params);
+  Fixed_Proj_3DRB_Shape_Function(const std::string & system_file,
+    const size_t source_camera_id,
+    const std::vector<scalar_t> & proj_params);
 
   // virtual destructor
   virtual ~Fixed_Proj_3DRB_Shape_Function() {};
-
-  /// \brief Set the camera system and the undeformed and deformed camera
-  /// \param camSystem camera system object to use for camera to camera projections
-  /// \param undef_cam primary camera where the subset locations are specified
-  /// \param def_cam secondary camera to project to
-  virtual void set_system_cams(Camera_System * camSystem, int_t undef_cam, int_t def_cam);
-
-  /// \brief Set the fixed projection parameters
-  /// \proj_params projection parameters (Zp, Theta, Phi) for the projections
-  virtual void set_projection_params(std::vector<scalar_t> & proj_params);
-
-  /// initialize the parameter fields and deltas
-  virtual void init();
 
   /// clear the parameters
   virtual void clear();
@@ -612,39 +556,12 @@ public:
   virtual void reset_fields(Schema * schema);
 
   /// see base class description
-  virtual void map(const scalar_t & ximg0_x,
-    const scalar_t & ximg0_y,
+  virtual void map(const scalar_t & x,
+    const scalar_t & y,
     const scalar_t & cx,
     const scalar_t & cy,
-    scalar_t & ximg1_x,
-    scalar_t & ximg1_y);
-
-  virtual void map(std::vector<scalar_t> & img0_x,
-    std::vector<scalar_t> & img0_y,
-    const scalar_t & cx,
-    const scalar_t & cy,
-    std::vector<scalar_t> & img1_x,
-    std::vector<scalar_t> & img1_y);
-
-  /// see base class description
-  virtual void add_translation(const scalar_t & u,
-    const scalar_t & v);
-
-  /// see base class description
-  virtual void map_to_u_v_theta(const scalar_t & cx,
-    const scalar_t & cy,
-    scalar_t & out_u,
-    scalar_t & out_v,
-    scalar_t & out_theta);
-
-  /// see base class description
-  virtual void insert_motion(const scalar_t & u,
-    const scalar_t & v,
-    const scalar_t & theta);
-
-  /// see base class description
-  virtual void insert_motion(const scalar_t & u,
-    const scalar_t & v);
+    scalar_t & out_x,
+    scalar_t & out_y);
 
   /// see base class description
   virtual void residuals(const scalar_t & x,
@@ -656,52 +573,52 @@ public:
     std::vector<scalar_t> & residuals,
     const bool use_ref_grads = false);
 
-  ///residuals with vectors
-  virtual void residuals(std::vector<scalar_t> & img0_x,
-    std::vector<scalar_t> & img0_y,
-    const scalar_t & cx,
-    const scalar_t & cy,
-    std::vector<scalar_t> & gx,
-    std::vector<scalar_t> & gy,
-    std::vector<std::vector<scalar_t> > & residuals,
-    const bool use_ref_grads);
-
-  ///residuals with vectors and deformed locations
-  virtual void residuals(std::vector<scalar_t> & img0_x,
-    std::vector<scalar_t> & img0_y,
-    std::vector<scalar_t> & img1_x,
-    std::vector<scalar_t> & img1_y,
-    const scalar_t & cx,
-    const scalar_t & cy,
-    std::vector<scalar_t> & gx,
-    std::vector<scalar_t> & gy,
-    std::vector<std::vector<scalar_t> > & residuals,
-    const bool use_ref_grads);
-
   /// see base class description
   virtual void save_fields(Schema * schema,
     const int_t subset_gid);
 
   /// see base class description
+  virtual void add_translation(const scalar_t & u,
+    const scalar_t & v){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
+  }
+
+  /// see base class description
+  virtual void map_to_u_v_theta(const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & out_u,
+    scalar_t & out_v,
+    scalar_t & out_theta){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
+  }
+
+  /// see base class description
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v,
+    const scalar_t & theta){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
+  }
+
+  /// see base class description
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
+  }
+
+  /// see base class description
   virtual void update_params_for_centroid_change(const scalar_t & delta_x,
-    const scalar_t & delta_y);
+    const scalar_t & delta_y){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
+  }
+
 private:
-  Camera_System * cam_system_;
-  int_t undef_cam_;
-  int_t def_cam_;
-  bool system_cams_set_ = false;
+  /// id of the source camera (for which to retrieve information from the calibration file)
+  size_t source_cam_id_;
+  /// Camera System to hold all the camera intrinsic and extrinsic information
+  Teuchos::RCP<Camera_System> camera_system_;
+  // there is no target camera id because for rigid body motion shape function, the source and target camera are the same
+  /// projection parameters that connect the world coordinates to the camera coordinates
   std::vector<scalar_t> proj_params_;
-  std::vector<scalar_t> img0_x_sng_;
-  std::vector<scalar_t> img0_y_sng_;
-  std::vector<scalar_t> img1_x_sng_;
-  std::vector<scalar_t> img1_y_sng_;
-  std::vector<std::vector<scalar_t> > img1_dx_sng_;
-  std::vector<std::vector<scalar_t> > img1_dy_sng_;
-  std::vector<scalar_t> img1_x_;
-  std::vector<scalar_t> img1_y_;
-  std::vector<std::vector<scalar_t> > img1_dx_;
-  std::vector<std::vector<scalar_t> > img1_dy_;
-  std::vector<scalar_t>rot_trans_params_;
 };
 
 

@@ -332,6 +332,8 @@ const char* const user_6_param_transform = "user_6_param_transform";
 /// String parameter name
 const char* const user_4x4_param_transform = "user_4x4_param_transform";
 /// String parameter name
+const char* const opencv_3x4_param_transform = "opencv_3x4_param_transform";
+/// String parameter name
 const char* const rotation_3x3_matrix = "rotation_3x3_matrix";
 
 

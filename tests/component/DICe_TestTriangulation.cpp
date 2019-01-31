@@ -308,32 +308,32 @@ int main(int argc, char *argv[]) {
 
   *outStream << "testing calibration txt file with custom transform" << std::endl;
 
-  Teuchos::RCP<Triangulation> tri_custom = Teuchos::rcp(new Triangulation("./cal/cal_a_with_transform.txt"));
-  std::vector<std::vector<scalar_t> > & custom_zero_to_world = * tri_custom->trans_extrinsics();
-  *outStream << "testing camera 0 to world transform from txt format with custom transform" << std::endl;
-
-  if(custom_zero_to_world.size()!=4){
-    errorFlag++;
-    *outStream << "Error, zero_to_world array is the wrong length, should be 4 and is " << custom_zero_to_world.size() << std::endl;
-  }
-  else{
-    if(custom_zero_to_world[0].size()!=4){
-      errorFlag++;
-      *outStream << "Error, zero_to_world array is the wrong width, should be 4 and is " << custom_zero_to_world[0].size() << std::endl;
-    }
-    else{
-      for(size_t i=0;i<zero_to_world_xml_gold.size();++i){
-        for(size_t j=0;j<zero_to_world_xml_gold[0].size();++j){
-          if(std::abs(custom_zero_to_world[i][j]-zero_to_world_xml_gold[i][j])>errorTol){
-            *outStream << "Error, zero_to_world value " << i << " " << j << " is not correct. Should be " << zero_to_world_xml_gold[i][j] << " is " << custom_zero_to_world[i][j] << std::endl;
-            errorFlag++;
-          }
-        }
-      }
-    }
-  }
-
-  *outStream << "calibration parameters from txt format with custom transform have been checked" << std::endl;
+//  Teuchos::RCP<Triangulation> tri_custom = Teuchos::rcp(new Triangulation("./cal/cal_a_with_transform.txt"));
+//  std::vector<std::vector<scalar_t> > & custom_zero_to_world = * tri_custom->trans_extrinsics();
+//  *outStream << "testing camera 0 to world transform from txt format with custom transform" << std::endl;
+//
+//  if(custom_zero_to_world.size()!=4){
+//    errorFlag++;
+//    *outStream << "Error, zero_to_world array is the wrong length, should be 4 and is " << custom_zero_to_world.size() << std::endl;
+//  }
+//  else{
+//    if(custom_zero_to_world[0].size()!=4){
+//      errorFlag++;
+//      *outStream << "Error, zero_to_world array is the wrong width, should be 4 and is " << custom_zero_to_world[0].size() << std::endl;
+//    }
+//    else{
+//      for(size_t i=0;i<zero_to_world_xml_gold.size();++i){
+//        for(size_t j=0;j<zero_to_world_xml_gold[0].size();++j){
+//          if(std::abs(custom_zero_to_world[i][j]-zero_to_world_xml_gold[i][j])>errorTol){
+//            *outStream << "Error, zero_to_world value " << i << " " << j << " is not correct. Should be " << zero_to_world_xml_gold[i][j] << " is " << custom_zero_to_world[i][j] << std::endl;
+//            errorFlag++;
+//          }
+//        }
+//      }
+//    }
+//  }
+//
+//  *outStream << "calibration parameters from txt format with custom transform have been checked" << std::endl;
 
   *outStream << "testing triangulation of 3d points" << std::endl;
 

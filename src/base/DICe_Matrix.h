@@ -165,20 +165,33 @@ public:
   }
 
   /// access operator
-  Type & operator()(size_t row, size_t col){
+  Type & operator()(const size_t row, const size_t col){
     assert(row>=0&&row<rows_); // assert used only in debug, the release build will skip this for opt
     assert(col>=0&&col<cols_);
     return data_[row*cols_+col];
   };
 
-  /// access operator
-  Type & operator()(size_t index){
+  /// const access operator
+  const Type & operator()(const size_t row, const size_t col) const {
+    assert(row>=0&&row<rows_); // assert used only in debug, the release build will skip this for opt
+    assert(col>=0&&col<cols_);
+    return data_[row*cols_+col];
+  };
+
+  /// const access operator
+  Type & operator()(const size_t index){
     assert(index>=0&&index<rows_*cols_);
     return data_[index];
   };
 
   /// const access operator
-  Type operator[](size_t index) const {
+  const Type & operator()(const size_t index)const{
+    assert(index>=0&&index<rows_*cols_);
+    return data_[index];
+  };
+
+  /// const access operator
+  const Type operator[](const size_t index) const {
     assert(index>=0&&index<rows_*cols_);
     return data_[index];
   };
@@ -198,6 +211,23 @@ public:
     for(size_t i=0;i<rows_*cols_;++i){
       data_[i] = static_cast<Type>(rhs[i]);
     }
+  }
+
+  /// comparison operator
+  template<size_t RRows, size_t RCols>
+  friend bool operator==(const Matrix<Type,Rows,Cols> & lhs,const Matrix<Type,RRows,RCols> & rhs){
+    if(lhs.rows()!=rhs.rows()) return false;
+    if(lhs.cols()!=rhs.cols()) return false;
+    bool equal = true;
+    for(size_t i=0;i<lhs.rows()*lhs.cols();++i)
+      if(lhs[i]!=rhs[i]) equal = false;
+    return equal;
+  }
+
+  /// comparison operator
+  template<size_t RRows, size_t RCols>
+  friend bool operator!=(const Matrix<Type,Rows,Cols> & lhs,const Matrix<Type,RRows,RCols> & rhs){
+    return !(lhs==rhs);
   }
 
   /// assignment operator
@@ -265,7 +295,7 @@ public:
     return norm(*this);
   };
 
-  bool all_values_are_zero(){
+  bool all_values_are_zero()const{
     for(size_t i=0;i<rows_*cols_;++i){
       if(data_[i]!=0) return false;
     }
