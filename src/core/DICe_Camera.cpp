@@ -56,6 +56,65 @@ Camera::Camera_Info::is_valid(){
   return true;
 };
 
+bool
+operator==(const Camera::Camera_Info & lhs,const Camera::Camera_Info & rhs){
+  bool is_equal = true;
+  const scalar_t tol = 1.0E-5;
+  std::ios_base::fmtflags f( std::cout.flags() );
+  std::cout.precision(6);
+  std::cout << std::scientific;
+  if(lhs.intrinsics_.size()!=rhs.intrinsics_.size()){
+    DEBUG_MSG("intrinsic vectors are different sizes");
+    std::cout.flags(f);
+    return false;
+  }
+  for(size_t i=0;i<lhs.intrinsics_.size();++i){
+    if(std::abs(lhs.intrinsics_[i]-rhs.intrinsics_[i])>tol){
+      DEBUG_MSG("Camera_Info intrinsics (index " << i <<  ")  are not equivalent, lhs " << lhs.intrinsics_[i] << " rhs " << rhs.intrinsics_[i]);
+      is_equal = false;
+    }
+  }
+  if(std::abs(lhs.tx_-rhs.tx_)>tol){
+    DEBUG_MSG("lhs.tx " << lhs.tx_ << " rhs.tx " << rhs.tx_);
+    is_equal = false;
+  }
+  if(std::abs(lhs.ty_-rhs.ty_)>tol){
+    DEBUG_MSG("lhs.ty " << lhs.ty_ << " rhs.ty " << rhs.ty_);
+    is_equal = false;
+  }
+  if(std::abs(lhs.tz_-rhs.tz_)>tol){
+    DEBUG_MSG("lhs.tz " << lhs.tz_ << " rhs.tz " << rhs.tz_);
+    is_equal = false;
+  }
+  if(lhs.image_width_!=rhs.image_width_){
+    DEBUG_MSG("lhs.image_width " << lhs.image_width_ << " rhs.image_width " << rhs.image_width_ );
+    is_equal = false;
+  }
+  if(lhs.image_height_!=rhs.image_height_){
+    DEBUG_MSG("lhs.image_height " << lhs.image_height_ << " rhs.image_height " << rhs.image_height_ );
+    is_equal = false;
+  }
+  if(lhs.pixel_depth_!=rhs.pixel_depth_){
+    DEBUG_MSG("lhs.pixel_depth " << lhs.pixel_depth_ << " rhs.pixel_depth " << rhs.pixel_depth_);
+    is_equal = false;
+  }
+  if(lhs.lens_distortion_model_!=rhs.lens_distortion_model_){
+    DEBUG_MSG("lhs.lens_distortion_model " << Camera::to_string(lhs.lens_distortion_model_) << " rhs.lens_distortion_model " << Camera::to_string(rhs.lens_distortion_model_));
+    is_equal = false;
+  }
+  if(lhs.rotation_matrix_!=rhs.rotation_matrix_){
+    DEBUG_MSG("rotation matrices don't match");
+#ifdef DICE_DEBUG_MSG
+    std::cout << lhs.rotation_matrix_ << std::endl;
+    std::cout << rhs.rotation_matrix_ << std::endl;
+#endif
+    is_equal = false;
+  }
+  std::cout.flags( f );
+  // dont compare the string fields
+  return is_equal;
+}
+
 void
 Camera::Camera_Info::set_rotation_matrix(const scalar_t & alpha,
   const scalar_t & beta,

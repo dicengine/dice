@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ParameterList>
   <!-- DICe formatted calibration file -->
-  <!-- cal_file_ID must be in the file with a value of DICe_XML_Calibration_File -->
-  <Parameter name="DICe_XML_Calibration_File" type="bool" value="true"/>
+  <!-- xml_file_format must be in the file with a value of DICe_XML_camera_system_file -->
+  <Parameter name="xml_file_format" type="string" value="DICe_xml_camera_system_file"/>
   <!-- type of 3D system valid field values are:  GENERIC_SYSTEM OPENCV VIC3D DICE -->
   <Parameter name="system_type_3D" type="string" value="VIC3D" />
   <!-- camera parameters (zero valued parameters don't need to be specified) -->

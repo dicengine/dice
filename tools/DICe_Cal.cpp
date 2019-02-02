@@ -91,7 +91,6 @@ int main(int argc, char *argv[]) {
   TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::cal_target_is_inverted),std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::cal_target_block_size),std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::cal_target_binary_constant),std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::cal_mode),std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::skip_image_index),std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::stereo_left_suffix),std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(!inputParams->isParameter(DICe::stereo_right_suffix),std::runtime_error,"");

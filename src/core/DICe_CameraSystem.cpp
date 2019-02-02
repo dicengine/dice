@@ -63,11 +63,11 @@ Camera_System::Camera_System():
 
 Camera_System::Camera_System(const std::string & param_file_name):
   Camera_System(){
-  read_calibration_file(param_file_name);
+  read_camera_system_file(param_file_name);
 };
 
 void
-Camera_System::read_calibration_file(const std::string & cal_file) {
+Camera_System::read_camera_system_file(const std::string & file) {
   DEBUG_MSG(" ");
   DEBUG_MSG("***************************** read calibration file **************************");
 
@@ -75,30 +75,33 @@ Camera_System::read_calibration_file(const std::string & cal_file) {
   const std::string txt("txt");
   bool valid_dice_xml = true;
 
-  DEBUG_MSG("Camera_System::read_calibration_file(): Trying to read file with Teuchos XML parser: " << cal_file);
+  DEBUG_MSG("Camera_System::read_camera_system_file(): Trying to read file with Teuchos XML parser: " << file);
   Teuchos::RCP<Teuchos::ParameterList> sys_params = Teuchos::rcp(new Teuchos::ParameterList());
   Teuchos::Ptr<Teuchos::ParameterList> sys_params_ptr(sys_params.get());
   try {
-    Teuchos::updateParametersFromXmlFile(cal_file, sys_params_ptr);
+    Teuchos::updateParametersFromXmlFile(file, sys_params_ptr);
   }
   catch (...) {
-    DEBUG_MSG("Camera_System::read_calibration_file(): Invalid DICe XML file: " << cal_file);
-    DEBUG_MSG("Camera_System::read_calibration_file(): Assuming another XML format (possibly VIC3d, etc)");
+    DEBUG_MSG("Camera_System::read_camera_system_file(): Invalid DICe XML file: " << file);
+    DEBUG_MSG("Camera_System::read_camera_system_file(): Assuming another XML format (possibly VIC3d, etc)");
     valid_dice_xml = false;
   }
 
   if (valid_dice_xml) {  //file read into parameters
-    DEBUG_MSG("Camera_System::read_calibration_file(): valid XML file for Teuchos parser");
-    const bool is_dice_xml_cal_file = sys_params->isParameter(DICe_XML_Calibration_File);
+    DEBUG_MSG("Camera_System::read_camera_system_file(): valid XML file for Teuchos parser");
+    bool is_dice_xml_cal_file = false;
+    if(sys_params->isParameter(DICe::xml_file_format)){
+      is_dice_xml_cal_file = sys_params->get<std::string>(DICe::xml_file_format) == DICe::DICe_xml_camera_system_file;
+    }
     if (!is_dice_xml_cal_file) {
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,
-        "Camera_System::read_calibration_file(): DICe XML calibration file not valid");
+        "Camera_System::read_camera_system_file(): DICe XML camera system file not valid");
     }
-    DEBUG_MSG("Camera_System::read_calibration_file(): DICe XML cal file format");
+    DEBUG_MSG("Camera_System::read_camera_system_file(): DICe XML camera system format");
     TEUCHOS_TEST_FOR_EXCEPTION(!sys_params->isParameter(system_type_3D),std::runtime_error,
       "calibration file missing " << system_type_3D);
     std::string sys_type_str = sys_params->get<std::string>(system_type_3D);
-    DEBUG_MSG("Camera_System::read_calibration_file(): " << system_type_3D << " = " << sys_type_str);
+    DEBUG_MSG("Camera_System::read_camera_system_file(): " << system_type_3D << " = " << sys_type_str);
     sys_type_ = string_to_system_type_3d(sys_type_str);
 
     //cycle through all the cameras to see if they are assigned
@@ -107,7 +110,7 @@ Camera_System::read_calibration_file(const std::string & cal_file) {
       std::stringstream camera_sublist_id;
       camera_sublist_id << "CAMERA " << i << std::endl;
       if (sys_params->isSublist(camera_sublist_id.str())) {
-        DEBUG_MSG("Camera_System::read_calibration_file(): reading " << camera_sublist_id.str());
+        DEBUG_MSG("Camera_System::read_camera_system_file(): reading " << camera_sublist_id.str());
         Teuchos::ParameterList camParams = sys_params->sublist(camera_sublist_id.str());
         // check that the camera parameters have everything needed
         TEUCHOS_TEST_FOR_EXCEPTION(!camParams.isParameter("IMAGE_HEIGHT_WIDTH"),std::runtime_error,
@@ -117,34 +120,34 @@ Camera_System::read_calibration_file(const std::string & cal_file) {
         Camera::Camera_Info camera_info;
         //the lens distorion model is handled here
         camera_info.lens_distortion_model_ = Camera::string_to_lens_distortion_model(camParams.get<std::string>("LENS_DISTORTION_MODEL"));
-        DEBUG_MSG("Camera_System::read_calibration_file(): found lens distortion model " << Camera::to_string(camera_info.lens_distortion_model_));
+        DEBUG_MSG("Camera_System::read_camera_system_file(): found lens distortion model " << Camera::to_string(camera_info.lens_distortion_model_));
         std::string height_width_text = camParams.get<std::string>("IMAGE_HEIGHT_WIDTH");
         Teuchos::Array<int_t>  tArray;
         tArray = Teuchos::fromStringToArray<int_t>(height_width_text);
         camera_info.image_height_ = tArray[0];
         camera_info.image_width_ = tArray[1];
-        DEBUG_MSG("Camera_System::read_calibration_file(): found image height: " << camera_info.image_height_);
-        DEBUG_MSG("Camera_System::read_calibration_file(): found image width: " << camera_info.image_width_);
+        DEBUG_MSG("Camera_System::read_camera_system_file(): found image height: " << camera_info.image_height_);
+        DEBUG_MSG("Camera_System::read_camera_system_file(): found image width: " << camera_info.image_width_);
         //fill the array with any intrinsic parameters
         for (int_t i = 0; i < Camera::MAX_CAM_INTRINSIC_PARAM; i++) {
           if (camParams.isParameter(Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(i)))) {
             camera_info.intrinsics_[i] = camParams.get<std::double_t>(Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(i)));
-            DEBUG_MSG("Camera_System::read_calibration_file(): found " << Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(i)) <<
+            DEBUG_MSG("Camera_System::read_camera_system_file(): found " << Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(i)) <<
               " value: " << camera_info.intrinsics_[i]);
           }
         }
         // read the extrinsic translations
         if (camParams.isParameter("TX")) {
           camera_info.tx_ = camParams.get<double>("TX");
-          DEBUG_MSG("Camera_System::read_calibration_file(): found extrinsic x translation: " << camera_info.tx_);
+          DEBUG_MSG("Camera_System::read_camera_system_file(): found extrinsic x translation: " << camera_info.tx_);
         }
         if (camParams.isParameter("TY")) {
           camera_info.ty_ = camParams.get<double>("TY");
-          DEBUG_MSG("Camera_System::read_calibration_file(): found extrinsic y translation: " << camera_info.ty_);
+          DEBUG_MSG("Camera_System::read_camera_system_file(): found extrinsic y translation: " << camera_info.ty_);
         }
         if (camParams.isParameter("TZ")) {
           camera_info.tz_ = camParams.get<double>("TZ");
-          DEBUG_MSG("Camera_System::read_calibration_file(): found extrinsic z translation: " << camera_info.tz_);
+          DEBUG_MSG("Camera_System::read_camera_system_file(): found extrinsic z translation: " << camera_info.tz_);
         }
         scalar_t alpha = 0;
         scalar_t beta = 0;
@@ -153,17 +156,17 @@ Camera_System::read_calibration_file(const std::string & cal_file) {
         if (camParams.isParameter("ALPHA")) {
           alpha = camParams.get<double>("ALPHA");
           has_eulers = true;
-          DEBUG_MSG("Camera_System::read_calibration_file(): found euler angle alpha: " << alpha);
+          DEBUG_MSG("Camera_System::read_camera_system_file(): found euler angle alpha: " << alpha);
         }
         if (camParams.isParameter("BETA")) {
           beta = camParams.get<double>("BETA");
           has_eulers = true;
-          DEBUG_MSG("Camera_System::read_calibration_file(): found euler angle beta: " << beta);
+          DEBUG_MSG("Camera_System::read_camera_system_file(): found euler angle beta: " << beta);
         }
         if (camParams.isParameter("GAMMA")) {
           gamma = camParams.get<double>("GAMMA");
           has_eulers = true;
-          DEBUG_MSG("Camera_System::read_calibration_file(): found euler angle gamma: " << gamma);
+          DEBUG_MSG("Camera_System::read_camera_system_file(): found euler angle gamma: " << gamma);
         }
         if(has_eulers){
           camera_info.set_rotation_matrix(alpha,beta,gamma);
@@ -172,32 +175,32 @@ Camera_System::read_calibration_file(const std::string & cal_file) {
         std::string camera_id;
         if (camParams.isParameter("CAMERA_ID")) {
           camera_id = camParams.get<std::string>("CAMERA_ID");
-          DEBUG_MSG("Camera_System::read_calibration_file(): found CAMERA_ID: " << camera_id);
+          DEBUG_MSG("Camera_System::read_camera_system_file(): found CAMERA_ID: " << camera_id);
         } else { //If not use the camera and number by default
           std::stringstream camera_id_ss;
           camera_id_ss << "CAMERA " << i;
           camera_id = camera_id_ss.str();
-          DEBUG_MSG("Camera_System::read_calibration_file(): CAMERA_ID not found using default: " << camera_id);
+          DEBUG_MSG("Camera_System::read_camera_system_file(): CAMERA_ID not found using default: " << camera_id);
         }
         camera_info.id_ = camera_id;
         //Get the pixel depth if it exists
         if (camParams.isParameter("PIXEL_DEPTH")) {
           camera_info.pixel_depth_ = camParams.get<int_t>("PIXEL_DEPTH");
-          DEBUG_MSG("Camera_System::read_calibration_file(): found PIXEL_DEPTH: " << camera_info.pixel_depth_);
+          DEBUG_MSG("Camera_System::read_camera_system_file(): found PIXEL_DEPTH: " << camera_info.pixel_depth_);
         }
         //get the lens comment if it exists
         if (camParams.isParameter("LENS")) {
           camera_info.lens_ = camParams.get<std::string>("LENS");
-          DEBUG_MSG("Camera_System::read_calibration_file(): found LENS: " << camera_info.lens_);
+          DEBUG_MSG("Camera_System::read_camera_system_file(): found LENS: " << camera_info.lens_);
         }
         //get the general comments if they exists
         if (camParams.isParameter("COMMENTS")) {
           camera_info.comments_ = camParams.get<std::string>("COMMENTS");
-          DEBUG_MSG("Camera_System::read_calibration_file(): found COMMENTS: " << camera_info.comments_);
+          DEBUG_MSG("Camera_System::read_camera_system_file(): found COMMENTS: " << camera_info.comments_);
         }
         //does the camera have a 3x3 rotation transformation matrix?
         if (camParams.isSublist(rotation_3x3_matrix)) {
-          DEBUG_MSG("Camera_System::read_calibration_file(): found " << rotation_3x3_matrix);
+          DEBUG_MSG("Camera_System::read_camera_system_file(): found " << rotation_3x3_matrix);
           TEUCHOS_TEST_FOR_EXCEPTION(has_eulers,std::runtime_error,"cannot specify euler angles and rotation matrix");
           Teuchos::ParameterList camRot = camParams.sublist(rotation_3x3_matrix);
           Teuchos::Array<scalar_t>  tArray;
@@ -214,7 +217,7 @@ Camera_System::read_calibration_file(const std::string & cal_file) {
         }
         Teuchos::RCP<DICe::Camera> camera_ptr = Teuchos::rcp(new DICe::Camera(camera_info));
         cameras_.push_back(camera_ptr);
-        DEBUG_MSG("Camera_System::read_calibration_file(): successfully loaded camera " << camera_id);
+        DEBUG_MSG("Camera_System::read_camera_system_file(): successfully loaded camera " << camera_id);
       }else{
         break;
       }
@@ -222,7 +225,7 @@ Camera_System::read_calibration_file(const std::string & cal_file) {
     // the new DICe XML format is the only format where the user can specify custom transforms
     // does the file have a 6 parameter transform?
     if (sys_params->isParameter(user_6_param_transform)) {
-      DEBUG_MSG("Camera_System::read_calibration_file(): found " << user_6_param_transform);
+      DEBUG_MSG("Camera_System::read_camera_system_file(): found " << user_6_param_transform);
       has_6_transform_ = true;
       std::string param_text = sys_params->get<std::string>(user_6_param_transform);
       Teuchos::Array<scalar_t>  tArray;
@@ -233,7 +236,7 @@ Camera_System::read_calibration_file(const std::string & cal_file) {
     } // end 6 param transform
     // does the file have a 4x4 parameter transform?
     if (sys_params->isSublist(user_4x4_param_transform)) {
-      DEBUG_MSG("Camera_System::read_calibration_file(): found " << user_4x4_param_transform);
+      DEBUG_MSG("Camera_System::read_camera_system_file(): found " << user_4x4_param_transform);
       has_4x4_transform_ = true;
       Teuchos::ParameterList camRow = sys_params->sublist(user_4x4_param_transform);
       Teuchos::Array<scalar_t>  tArray;
@@ -249,7 +252,7 @@ Camera_System::read_calibration_file(const std::string & cal_file) {
     } // end 4x4 transform
 //    //does the file have a 4x3 opencv parameter transform?
 //    if (sys_params->isSublist(opencv_3x4_param_transform)) {
-//      DEBUG_MSG("Camera_System::read_calibration_file(): found " << opencv_3x4_param_transform);
+//      DEBUG_MSG("Camera_System::read_camera_system_file(): found " << opencv_3x4_param_transform);
 //      has_opencv_rot_trans_ = true;
 //      Teuchos::ParameterList camRow = sys_params->sublist(opencv_3x4_param_transform);
 //      Teuchos::Array<scalar_t>  tArray;
@@ -265,15 +268,15 @@ Camera_System::read_calibration_file(const std::string & cal_file) {
 //    } // end opencv transform
   } // end valid DICe XML
   else { // must be an xml file from VIC3d or text file
-    DEBUG_MSG("Camera_System::read_calibration_file(): Parsing calibration parameters from file: " << cal_file);
-    std::fstream dataFile(cal_file.c_str(), std::ios_base::in);
+    DEBUG_MSG("Camera_System::read_camera_system_file(): Parsing calibration parameters from file: " << file);
+    std::fstream dataFile(file.c_str(), std::ios_base::in);
     if (!dataFile.good()) {
       TEUCHOS_TEST_FOR_EXCEPTION(!dataFile.good(), std::runtime_error,
-        "Error, the calibration file does not exist or is corrupt: " << cal_file);
+        "Error, the calibration file does not exist or is corrupt: " << file);
     }
     //check the file extension for xml or txt
-    if (cal_file.find(xml) != std::string::npos) {
-      DEBUG_MSG("Camera_System::read_calibration_file(): assuming calibration file is vic3D xml format");
+    if (file.find(xml) != std::string::npos) {
+      DEBUG_MSG("Camera_System::read_camera_system_file(): assuming calibration file is vic3D xml format");
       // cal.xml file can't be ready by Teuchos parser because it has a !DOCTYPE
       // have to manually read the file here, lots of assumptions in how the file is formatted
       // camera orientation for each camera in vic3d is in terms of the world to camera
@@ -301,7 +304,7 @@ Camera_System::read_calibration_file(const std::string & cal_file) {
         std::stringstream camera_title;
         camera_title << "CAMERA " << camera_index;
         camera_infos[current_camera].id_ = camera_title.str();
-        DEBUG_MSG("Camera_System::read_calibration_file(): found " << camera_infos[current_camera].id_);
+        DEBUG_MSG("Camera_System::read_camera_system_file(): found " << camera_infos[current_camera].id_);
         TEUCHOS_TEST_FOR_EXCEPTION(camera_index >= 10,std::runtime_error,"");
         TEUCHOS_TEST_FOR_EXCEPTION(tokens.size() <= 18,std::runtime_error,"");
         //Store the intrinsic parameters
@@ -320,7 +323,7 @@ Camera_System::read_calibration_file(const std::string & cal_file) {
         camera_infos[current_camera].tz_ = strtod(tokens[17].c_str(), NULL);
         // the camera constructor will check if it is valid
         current_camera++;
-        DEBUG_MSG("Camera_System::read_calibration_file(): successfully loaded VIC3D camera " << camera_index);
+        DEBUG_MSG("Camera_System::read_camera_system_file(): successfully loaded VIC3D camera " << camera_index);
       } // end file read
       TEUCHOS_TEST_FOR_EXCEPTION(xml_img_height<=0||xml_img_width<=0,std::runtime_error,"");
       for(size_t i=0;i<camera_infos.size();++i){
@@ -333,8 +336,8 @@ Camera_System::read_calibration_file(const std::string & cal_file) {
     }
     // old DICe text format, kept around so that the GUI generated files from long ago will still work without having to
     // re-run the calibrations
-    else if (cal_file.find(txt) != std::string::npos) {
-      DEBUG_MSG("Camera_System::read_calibration_file(): calibration file is generic txt format");
+    else if (file.find(txt) != std::string::npos) {
+      DEBUG_MSG("Camera_System::read_camera_system_file(): calibration file is generic txt format");
       //may want to modify this file format to allow more than 2 cameras in the future
       sys_type_ = GENERIC_SYSTEM;
       std::vector<int_t> param_order_int = { Camera::CX, Camera::CY, Camera::FX, Camera::FY, Camera::FS, Camera::K1, Camera::K2, Camera::K3 };
@@ -362,7 +365,7 @@ Camera_System::read_calibration_file(const std::string & cal_file) {
       TEUCHOS_TEST_FOR_EXCEPTION(total_num_values!=num_values_with_eulers&&total_num_values!=num_values_with_R,std::runtime_error,
         "Error, invalid number of paramers in txt calibration file.\n"
         "    This is likely due to the text file format changing to now\n"
-        "    require the image height and width to be specified in the file" << cal_file);
+        "    require the image height and width to be specified in the file" << file);
       const bool has_eulers = total_num_values==num_values_with_eulers;
       // return to start of file:
       dataFile.clear();
@@ -433,11 +436,11 @@ Camera_System::read_calibration_file(const std::string & cal_file) {
       cameras_.push_back(camera_0_ptr);
       Teuchos::RCP<DICe::Camera> camera_1_ptr = Teuchos::rcp(new DICe::Camera(camera_info_1));
       cameras_.push_back(camera_1_ptr);
-      DEBUG_MSG("Camera_System::read_calibration_file(): successfully loaded cameras from text file");
+      DEBUG_MSG("Camera_System::read_camera_system_file(): successfully loaded cameras from text file");
     }
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
-        "Error, unrecognized calibration parameters file format: " << cal_file);
+        "Error, unrecognized calibration parameters file format: " << file);
     }
   }
 
@@ -449,101 +452,101 @@ Camera_System::read_calibration_file(const std::string & cal_file) {
 
   for (size_t i = 0; i < cameras_.size(); i++) {
     DEBUG_MSG("******************* CAMERA: " << i << " ******************************");
-    DEBUG_MSG("Camera_System::read_calibration_file(): identifier: " << cameras_[i]->id());
+    DEBUG_MSG("Camera_System::read_camera_system_file(): identifier: " << cameras_[i]->id());
     for (size_t j = 0; j < cameras_[i]->intrinsics()->size(); j++)
-      DEBUG_MSG("Camera_System::read_calibration_file(): " << Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(j)) << ": " << (*cameras_[i]->intrinsics())[j]);
-    DEBUG_MSG("Camera_System::read_calibration_file(): lens distortion model: " << Camera::to_string(cameras_[i]->lens_distortion_model()));
-    DEBUG_MSG("Camera_System::read_calibration_file(): tx: " << cameras_[i]->tx());
-    DEBUG_MSG("Camera_System::read_calibration_file(): ty: " << cameras_[i]->ty());
-    DEBUG_MSG("Camera_System::read_calibration_file(): tz: " << cameras_[i]->tz());
-    DEBUG_MSG("Camera_System::read_calibration_file(): R11: " << (*cameras_[i]->rotation_matrix())(0,0));
-    DEBUG_MSG("Camera_System::read_calibration_file(): R12: " << (*cameras_[i]->rotation_matrix())(0,1));
-    DEBUG_MSG("Camera_System::read_calibration_file(): R13: " << (*cameras_[i]->rotation_matrix())(0,2));
-    DEBUG_MSG("Camera_System::read_calibration_file(): R21: " << (*cameras_[i]->rotation_matrix())(1,0));
-    DEBUG_MSG("Camera_System::read_calibration_file(): R22: " << (*cameras_[i]->rotation_matrix())(1,1));
-    DEBUG_MSG("Camera_System::read_calibration_file(): R23: " << (*cameras_[i]->rotation_matrix())(1,2));
-    DEBUG_MSG("Camera_System::read_calibration_file(): R31: " << (*cameras_[i]->rotation_matrix())(2,0));
-    DEBUG_MSG("Camera_System::read_calibration_file(): R32: " << (*cameras_[i]->rotation_matrix())(2,1));
-    DEBUG_MSG("Camera_System::read_calibration_file(): R33: " << (*cameras_[i]->rotation_matrix())(2,2));
-    DEBUG_MSG("Camera_System::read_calibration_file(): image height: " << cameras_[i]->image_height());
-    DEBUG_MSG("Camera_System::read_calibration_file(): image width: " << cameras_[i]->image_width());
-    DEBUG_MSG("Camera_System::read_calibration_file(): pixel depth: " << cameras_[i]->pixel_depth());
-    DEBUG_MSG("Camera_System::read_calibration_file(): lens: " << cameras_[i]->lens());
-    DEBUG_MSG("Camera_System::read_calibration_file(): comments: " << cameras_[i]->comments());
+      DEBUG_MSG("Camera_System::read_camera_system_file(): " << Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(j)) << ": " << (*cameras_[i]->intrinsics())[j]);
+    DEBUG_MSG("Camera_System::read_camera_system_file(): lens distortion model: " << Camera::to_string(cameras_[i]->lens_distortion_model()));
+    DEBUG_MSG("Camera_System::read_camera_system_file(): tx: " << cameras_[i]->tx());
+    DEBUG_MSG("Camera_System::read_camera_system_file(): ty: " << cameras_[i]->ty());
+    DEBUG_MSG("Camera_System::read_camera_system_file(): tz: " << cameras_[i]->tz());
+    DEBUG_MSG("Camera_System::read_camera_system_file(): R11: " << (*cameras_[i]->rotation_matrix())(0,0));
+    DEBUG_MSG("Camera_System::read_camera_system_file(): R12: " << (*cameras_[i]->rotation_matrix())(0,1));
+    DEBUG_MSG("Camera_System::read_camera_system_file(): R13: " << (*cameras_[i]->rotation_matrix())(0,2));
+    DEBUG_MSG("Camera_System::read_camera_system_file(): R21: " << (*cameras_[i]->rotation_matrix())(1,0));
+    DEBUG_MSG("Camera_System::read_camera_system_file(): R22: " << (*cameras_[i]->rotation_matrix())(1,1));
+    DEBUG_MSG("Camera_System::read_camera_system_file(): R23: " << (*cameras_[i]->rotation_matrix())(1,2));
+    DEBUG_MSG("Camera_System::read_camera_system_file(): R31: " << (*cameras_[i]->rotation_matrix())(2,0));
+    DEBUG_MSG("Camera_System::read_camera_system_file(): R32: " << (*cameras_[i]->rotation_matrix())(2,1));
+    DEBUG_MSG("Camera_System::read_camera_system_file(): R33: " << (*cameras_[i]->rotation_matrix())(2,2));
+    DEBUG_MSG("Camera_System::read_camera_system_file(): image height: " << cameras_[i]->image_height());
+    DEBUG_MSG("Camera_System::read_camera_system_file(): image width: " << cameras_[i]->image_width());
+    DEBUG_MSG("Camera_System::read_camera_system_file(): pixel depth: " << cameras_[i]->pixel_depth());
+    DEBUG_MSG("Camera_System::read_camera_system_file(): lens: " << cameras_[i]->lens());
+    DEBUG_MSG("Camera_System::read_camera_system_file(): comments: " << cameras_[i]->comments());
     DEBUG_MSG(" ");
   }
   // 4x4 independent transformation
   if (has_4x4_transform_) {
-    DEBUG_MSG("Camera_System::read_calibration_file(): 4x4 user transformation");
+    DEBUG_MSG("Camera_System::read_camera_system_file(): 4x4 user transformation");
     for (int_t i = 0; i < 4; ++i)
-      DEBUG_MSG("Camera_System::read_calibration_file(): " << user_4x4_trans_(i,0) <<
+      DEBUG_MSG("Camera_System::read_camera_system_file(): " << user_4x4_trans_(i,0) <<
         " " << user_4x4_trans_(i,1) << " " << user_4x4_trans_(i,2) << " " << user_4x4_trans_(i,3));
   }
   // 6 param independent transformation
   if (has_6_transform_) {
-    DEBUG_MSG("Camera_System::read_calibration_file(): 6 parameter user transformation");
-    DEBUG_MSG("Camera_System::read_calibration_file(): " << user_6x1_trans_[0] <<
+    DEBUG_MSG("Camera_System::read_camera_system_file(): 6 parameter user transformation");
+    DEBUG_MSG("Camera_System::read_camera_system_file(): " << user_6x1_trans_[0] <<
       " " << user_6x1_trans_[1] << " " << user_6x1_trans_[2] << " " << user_6x1_trans_[3] <<
       " " << user_6x1_trans_[4] << " " << user_6x1_trans_[5]);
   }
-  DEBUG_MSG("Camera_System::read_calibration_file(): end");
+  DEBUG_MSG("Camera_System::read_camera_system_file(): end");
 }
 
 void
-Camera_System::write_calibration_file(const std::string & cal_file){
+Camera_System::write_camera_system_file(const std::string & file){
   DEBUG_MSG(" ");
   DEBUG_MSG("*****************************  write calibration file **************************");
-  DEBUG_MSG("Camera_System::write_calibration_file(): output file: " << cal_file);
-  TEUCHOS_TEST_FOR_EXCEPTION(sys_type_==UNKNOWN_SYSTEM,std::runtime_error,"write_calibration_file() called for unknown system type");
+  DEBUG_MSG("Camera_System::write_camera_system_file(): output file: " << file);
+  TEUCHOS_TEST_FOR_EXCEPTION(sys_type_==UNKNOWN_SYSTEM,std::runtime_error,"write_camera_system_file() called for unknown system type");
   std::stringstream param_title;
   std::stringstream param_val;
   std::stringstream valid_fields;
 
   // clear the files if they exist
-  initialize_xml_file(cal_file);
+  initialize_xml_file(file);
 
   // write the header
-  DEBUG_MSG("Camera_System::write_calibration_file(): writing header");
-  write_xml_comment(cal_file, "DICe formatted calibration file");
-  write_xml_comment(cal_file, "DICe_XML_Calibration_File parameter with a value of true "
-      "denotes that this file is a DICe XML formatted calibration file");
-  write_xml_bool_param(cal_file, DICe_XML_Calibration_File, "true", false);
+  DEBUG_MSG("Camera_System::write_camera_system_file(): writing header");
+  write_xml_comment(file, "DICe formatted camera system file");
+  write_xml_comment(file, "xml_file_format identifies that this is an xml camera system file "
+      "denotes that this file is a DICe XML formatted camera system file");
+  write_xml_bool_param(file, xml_file_format, DICe_xml_camera_system_file, false);
 
   // system type
   valid_fields=std::stringstream();
   valid_fields << "type of 3D system valid field values are: ";
   for (int_t n = 1; n < MAX_SYSTEM_TYPE_3D; n++) valid_fields << " " << to_string(static_cast<System_Type_3D>(n));
-  write_xml_comment(cal_file, valid_fields.str());
-  write_xml_string_param(cal_file, system_type_3D, to_string(sys_type_), false);
+  write_xml_comment(file, valid_fields.str());
+  write_xml_string_param(file, system_type_3D, to_string(sys_type_), false);
 
   // camera intrinsic parameters
-  write_xml_comment(cal_file, "camera intrinsic parameters (zero valued parameters don't need to be specified)");
-  write_xml_comment(cal_file, "the file supports up to (max_num_cameras_allowed_) cameras, 0...max_num");
-  write_xml_comment(cal_file, "each camera is a seperate sublist of parameters");
-  write_xml_comment(cal_file, "the sublist must be named CAMERA <#> with # the integer id of the camera starting at 0");
+  write_xml_comment(file, "camera intrinsic parameters (zero valued parameters don't need to be specified)");
+  write_xml_comment(file, "the file supports up to (max_num_cameras_allowed_) cameras, 0...max_num");
+  write_xml_comment(file, "each camera is a seperate sublist of parameters");
+  write_xml_comment(file, "the sublist must be named CAMERA <#> with # the integer id of the camera starting at 0");
   valid_fields = std::stringstream();
   valid_fields << "valid camera intrinsic parameter field names are: ";
   for (int_t n = 0; n < Camera::MAX_CAM_INTRINSIC_PARAM; n++) valid_fields << " " << Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(n));
-  write_xml_comment(cal_file, valid_fields.str());
-  write_xml_comment(cal_file, "CX,CY-image center (pix), FX,FY-pin hole distances (pix), FS-skew (deg)");
-  write_xml_comment(cal_file, "K1-K6-lens distortion coefficients, P1-P2-tangential distortion(openCV), S1-S4 thin prism distortion(openCV), T1,T2-Scheimpfug correction (openCV)");
-  write_xml_comment(cal_file, "be aware that openCV gives the values in the following order: (K1,K2,P1,P2[,K3[,K4,K5,K6[,S1,S2,S3,S4[,TX,TY]]]])");
+  write_xml_comment(file, valid_fields.str());
+  write_xml_comment(file, "CX,CY-image center (pix), FX,FY-pin hole distances (pix), FS-skew (deg)");
+  write_xml_comment(file, "K1-K6-lens distortion coefficients, P1-P2-tangential distortion(openCV), S1-S4 thin prism distortion(openCV), T1,T2-Scheimpfug correction (openCV)");
+  write_xml_comment(file, "be aware that openCV gives the values in the following order: (K1,K2,P1,P2[,K3[,K4,K5,K6[,S1,S2,S3,S4[,TX,TY]]]])");
   valid_fields = std::stringstream();
   valid_fields << "valid values for the LENS_DISTORTION_MODEL are: ";
   //for (int_t n = 0; n < Camera::MAX_LENS_DISTORTION_MODEL; n++) valid_fields << " " << Camera::to_string(static_cast<Camera::Lens_Distortion_Model>(n));
-  write_xml_comment(cal_file, valid_fields.str());
-  write_xml_comment(cal_file, "NONE no distortion model");
-  write_xml_comment(cal_file, "OPENCV_DIS uses the model defined in openCV 3.4.1");
-  write_xml_comment(cal_file, "VIC3D_DIS uses the model defined for VIC3D");
-  write_xml_comment(cal_file, "K1R1_K2R2_K3R3 -> K1*R + K2*R^2 + K3*R^3");
-  write_xml_comment(cal_file, "K1R2_K2R4_K3R6 -> K1*R^2 + K2*R^4 + K3*R^6");
-  write_xml_comment(cal_file, "K1R3_K2R5_K3R7 -> K1*R^3 + K2*R^5 + K3*R^7");
+  write_xml_comment(file, valid_fields.str());
+  write_xml_comment(file, "NONE no distortion model");
+  write_xml_comment(file, "OPENCV_DIS uses the model defined in openCV 3.4.1");
+  write_xml_comment(file, "VIC3D_DIS uses the model defined for VIC3D");
+  write_xml_comment(file, "K1R1_K2R2_K3R3 -> K1*R + K2*R^2 + K3*R^3");
+  write_xml_comment(file, "K1R2_K2R4_K3R6 -> K1*R^2 + K2*R^4 + K3*R^6");
+  write_xml_comment(file, "K1R3_K2R5_K3R7 -> K1*R^3 + K2*R^5 + K3*R^7");
 
   // extrinsic parameters
-  write_xml_comment(cal_file, "camera extrinsic parameters (zero valued parameters don't need to be specified)");
-  write_xml_comment(cal_file, "extrinsic translations TX TY and TZ can be specified as separate parameters");
-  write_xml_comment(cal_file, "extrinsic rotations can be specified through a rotation matrix R, or the three euler angles, but not both");
-  write_xml_comment(cal_file, "if no matrix or euler angles are given the rotation matrix is set to the identity matrix");
+  write_xml_comment(file, "camera extrinsic parameters (zero valued parameters don't need to be specified)");
+  write_xml_comment(file, "extrinsic translations TX TY and TZ can be specified as separate parameters");
+  write_xml_comment(file, "extrinsic rotations can be specified through a rotation matrix R, or the three euler angles, but not both");
+  write_xml_comment(file, "if no matrix or euler angles are given the rotation matrix is set to the identity matrix");
   valid_fields = std::stringstream();
   valid_fields << "valid camera extrinsic parameter field names are: ";
   valid_fields << "TX TY TZ and \n";
@@ -554,56 +557,48 @@ Camera_System::write_calibration_file(const std::string & cal_file){
   valid_fields << "<Parameter name=\"ROW 2\" type=\"string\" value=\"{R31,R32,R33}\" />\n";
   valid_fields << "</ParameterList>\n";
 
-  write_xml_comment(cal_file, "additional camera fields:");
-  write_xml_comment(cal_file, "CAMERA_ID: unique camera descripter, if not supplied CAMERA {#} is used");
-  write_xml_comment(cal_file, "IMAGE_HEIGHT_WIDTH {h, w}");
-  write_xml_comment(cal_file, "PIXEL_DEPTH");
-  write_xml_comment(cal_file, "LENS");
-  write_xml_comment(cal_file, "COMMENTS");
-  write_xml_comment(cal_file, "any parameter with a value of 0 may simply be omitted from the calibration file");
+  write_xml_comment(file, "additional camera fields:");
+  write_xml_comment(file, "CAMERA_ID: unique camera descripter, if not supplied CAMERA {#} is used");
+  write_xml_comment(file, "IMAGE_HEIGHT_WIDTH {h, w}");
+  write_xml_comment(file, "PIXEL_DEPTH");
+  write_xml_comment(file, "LENS");
+  write_xml_comment(file, "COMMENTS");
+  write_xml_comment(file, "any parameter with a value of 0 may simply be omitted from the calibration file");
 
   for (size_t camera_index = 0; camera_index < cameras_.size(); camera_index++) {
     param_title = std::stringstream();
     param_title << "CAMERA " << camera_index;
-    DEBUG_MSG("Camera_System::write_calibration_file(): writing camera parameters:" << param_title.str());
-    write_xml_param_list_open(cal_file, param_title.str(), false);
+    DEBUG_MSG("Camera_System::write_camera_system_file(): writing camera parameters:" << param_title.str());
+    write_xml_param_list_open(file, param_title.str(), false);
 
     param_title = std::stringstream();
     param_title << "CAMERA_ID";
     param_val = std::stringstream();
     param_val << cameras_[camera_index]->id();
-    write_xml_string_param(cal_file, param_title.str(), param_val.str(), false);
+    write_xml_string_param(file, param_title.str(), param_val.str(), false);
 
     std::vector<scalar_t> & intrinsics = *cameras_[camera_index]->intrinsics();
     for (int_t j = 0; j < Camera::MAX_CAM_INTRINSIC_PARAM; j++) {
       if (intrinsics[j] != 0) {
-        param_val = std::stringstream();
-        param_val << intrinsics[j];
-        write_xml_real_param(cal_file, Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(j)), param_val.str(), false);
+        write_xml_real_param(file, Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(j)), intrinsics[j]);
       }
     }
-    write_xml_string_param(cal_file, "LENS_DISTORTION_MODEL", Camera::to_string(cameras_[camera_index]->lens_distortion_model()), false);
-    DEBUG_MSG("Camera_System::write_calibration_file(): writing the extrinsic translations");
-    if(cameras_[camera_index]->tx()!=0){
-      param_val = std::stringstream();
-      param_val << cameras_[camera_index]->tx();
-      write_xml_real_param(cal_file, "TX", param_val.str(), false);
-    }
-    if(cameras_[camera_index]->ty()!=0){
-      param_val = std::stringstream();
-      param_val << cameras_[camera_index]->ty();
-      write_xml_real_param(cal_file, "TY", param_val.str(), false);
-    }
-    if(cameras_[camera_index]->tz()!=0){
-      param_val = std::stringstream();
-      param_val << cameras_[camera_index]->tz();
-      write_xml_real_param(cal_file, "TZ", param_val.str(), false);
-    }
+    write_xml_string_param(file, "LENS_DISTORTION_MODEL", Camera::to_string(cameras_[camera_index]->lens_distortion_model()), false);
+    DEBUG_MSG("Camera_System::write_camera_system_file(): writing the extrinsic translations");
+    //if(cameras_[camera_index]->tx()!=0){
+    write_xml_real_param(file, "TX", cameras_[camera_index]->tx());
+    //}
+    //if(cameras_[camera_index]->ty()!=0){
+    write_xml_real_param(file, "TY", cameras_[camera_index]->ty());
+    //}
+    //if(cameras_[camera_index]->tz()!=0){
+    write_xml_real_param(file, "TZ", cameras_[camera_index]->tz());
+    //}
     // always write out the rotation matrix (euler angles aren't saved)
-    DEBUG_MSG("Camera_System::write_calibration_file(): writing 3x3 rotation matrix");
-    write_xml_comment(cal_file, "3x3 camera rotation matrix (world to cam transformation)");
-    write_xml_comment(cal_file, "this is a 3x3 matrix that combined with TX, TY and TZ transform world coodinates to this camera's coordinates");
-    write_xml_param_list_open(cal_file, rotation_3x3_matrix, false);
+    DEBUG_MSG("Camera_System::write_camera_system_file(): writing 3x3 rotation matrix");
+    write_xml_comment(file, "3x3 camera rotation matrix (world to cam transformation)");
+    write_xml_comment(file, "this is a 3x3 matrix that combined with TX, TY and TZ transform world coodinates to this camera's coordinates");
+    write_xml_param_list_open(file, rotation_3x3_matrix, false);
     for (size_t i = 0; i < 3; i++) {
       param_val = std::stringstream();
       param_title = std::stringstream();
@@ -612,12 +607,12 @@ Camera_System::write_calibration_file(const std::string & cal_file){
       for (size_t j = 0; j < 2; j++)
         param_val << (*cameras_[camera_index]->rotation_matrix())(i,j) << ", ";
       param_val << (*cameras_[camera_index]->rotation_matrix())(i,2) << " }";
-      write_xml_string_param(cal_file, param_title.str(), param_val.str(), false);
-      if (i==0) write_xml_comment(cal_file, "R11 R12 R13");
-      if (i==1) write_xml_comment(cal_file, "R21 R22 R23");
-      if (i==2) write_xml_comment(cal_file, "R31 R32 R33");
+      write_xml_string_param(file, param_title.str(), param_val.str(), false);
+      if (i==0) write_xml_comment(file, "R11 R12 R13");
+      if (i==1) write_xml_comment(file, "R21 R22 R23");
+      if (i==2) write_xml_comment(file, "R31 R32 R33");
     }
-    write_xml_param_list_close(cal_file, false);
+    write_xml_param_list_close(file, false);
 
     const int_t img_width = cameras_[camera_index]->image_width();
     const int_t img_height = cameras_[camera_index]->image_height();
@@ -626,16 +621,14 @@ Camera_System::write_calibration_file(const std::string & cal_file){
     if ((img_width != 0 && img_height != 0)) {
       param_title << "IMAGE_HEIGHT_WIDTH";
       param_val << "{ " << img_height << ", " << img_width << " }";
-      write_xml_string_param(cal_file, param_title.str(), param_val.str(), false);
+      write_xml_string_param(file, param_title.str(), param_val.str(), false);
     }
 
     const int_t pixel_depth = cameras_[camera_index]->pixel_depth();
     param_title = std::stringstream();
-    param_val = std::stringstream();
     if (pixel_depth != 0) {
       param_title << "PIXEL_DEPTH";
-      param_val << pixel_depth;
-      write_xml_size_param(cal_file, param_title.str(), param_val.str(), false);
+      write_xml_size_param(file, param_title.str(), pixel_depth);
     }
 
     param_title = std::stringstream();
@@ -643,7 +636,7 @@ Camera_System::write_calibration_file(const std::string & cal_file){
     param_val << cameras_[camera_index]->lens();
     if (param_val.str() != "") {
       param_title << "LENS";
-      write_xml_string_param(cal_file, param_title.str(), param_val.str(), false);
+      write_xml_string_param(file, param_title.str(), param_val.str(), false);
     }
 
     param_title = std::stringstream();
@@ -651,31 +644,31 @@ Camera_System::write_calibration_file(const std::string & cal_file){
     param_val << cameras_[camera_index]->comments();
     if (param_val.str() != "") {
       param_title << "COMMENTS";
-      write_xml_string_param(cal_file, param_title.str(), param_val.str(), false);
+      write_xml_string_param(file, param_title.str(), param_val.str(), false);
     }
 
-    write_xml_param_list_close(cal_file, false);
+    write_xml_param_list_close(file, false);
   }
 
   if (has_6_transform_) {
-    DEBUG_MSG("Camera_System::write_calibration_file(): writing user supplied 6 parameter transform");
-    write_xml_comment(cal_file, "user supplied 6 parameter transform");
-    write_xml_comment(cal_file, "this is a user supplied transform with 6 parameters seperate from the transforms determined by the camera parameters");
-    write_xml_comment(cal_file, "can used for non-projection transformations between images - optional");
+    DEBUG_MSG("Camera_System::write_camera_system_file(): writing user supplied 6 parameter transform");
+    write_xml_comment(file, "user supplied 6 parameter transform");
+    write_xml_comment(file, "this is a user supplied transform with 6 parameters seperate from the transforms determined by the camera parameters");
+    write_xml_comment(file, "can used for non-projection transformations between images - optional");
     param_val = std::stringstream();
     param_val << "{ ";
     for (int_t j = 0; j < 5; j++)
       param_val << user_6x1_trans_[j] << ", ";
     param_val << user_6x1_trans_[5] << " }";
-    write_xml_string_param(cal_file, user_6_param_transform, param_val.str(), false);
+    write_xml_string_param(file, user_6_param_transform, param_val.str(), false);
   }
 
   if (has_4x4_transform_) {
-    DEBUG_MSG("Camera_System::write_calibration_file(): writing user supplied 4x4 parameter transform");
-    write_xml_comment(cal_file, "user supplied 4x4 parameter transform");
-    write_xml_comment(cal_file, "this is a user supplied 4x4 array transform seperate from the transforms determined by the camera parameters");
-    write_xml_comment(cal_file, "typically includes a combined rotation and translation array  - optional");
-    write_xml_param_list_open(cal_file, user_4x4_param_transform, false);
+    DEBUG_MSG("Camera_System::write_camera_system_file(): writing user supplied 4x4 parameter transform");
+    write_xml_comment(file, "user supplied 4x4 parameter transform");
+    write_xml_comment(file, "this is a user supplied 4x4 array transform seperate from the transforms determined by the camera parameters");
+    write_xml_comment(file, "typically includes a combined rotation and translation array  - optional");
+    write_xml_param_list_open(file, user_4x4_param_transform, false);
     for (int_t i = 0; i < 4; i++) {
       param_val = std::stringstream();
       param_title = std::stringstream();
@@ -684,21 +677,21 @@ Camera_System::write_calibration_file(const std::string & cal_file){
       for (int_t j = 0; j < 3; j++)
         param_val << user_4x4_trans_(i,j) << ", ";
       param_val << user_4x4_trans_(i,3) << " }";
-      write_xml_string_param(cal_file, param_title.str(), param_val.str(), false);
-      if (i == 0) write_xml_comment(cal_file, "R11 R12 R13 TX");
-      if (i == 1) write_xml_comment(cal_file, "R21 R22 R23 TY");
-      if (i == 2) write_xml_comment(cal_file, "R31 R32 R33 TZ");
-      if (i == 3) write_xml_comment(cal_file, "0   0   0   1");
+      write_xml_string_param(file, param_title.str(), param_val.str(), false);
+      if (i == 0) write_xml_comment(file, "R11 R12 R13 TX");
+      if (i == 1) write_xml_comment(file, "R21 R22 R23 TY");
+      if (i == 2) write_xml_comment(file, "R31 R32 R33 TZ");
+      if (i == 3) write_xml_comment(file, "0   0   0   1");
     }
-    write_xml_param_list_close(cal_file, false);
+    write_xml_param_list_close(file, false);
   }
 
 //  if (has_opencv_rot_trans_ || all_fields) {
-//    DEBUG_MSG("Camera_System::write_calibration_file(): writing openCV rotation matrix");
-//    write_xml_comment(cal_file, "openCV rotation translation matrix from from cam0 to cam 1");
-//    if (all_fields) write_xml_comment(cal_file, "this is the [R|t] rotation translation matrix from openCV");
-//    if (all_fields) write_xml_comment(cal_file, "this is the basic output from openCV stereo calibration for R and t");
-//    write_xml_param_list_open(cal_file, opencv_3x4_param_transform, false);
+//    DEBUG_MSG("Camera_System::write_camera_system_file(): writing openCV rotation matrix");
+//    write_xml_comment(file, "openCV rotation translation matrix from from cam0 to cam 1");
+//    if (all_fields) write_xml_comment(file, "this is the [R|t] rotation translation matrix from openCV");
+//    if (all_fields) write_xml_comment(file, "this is the basic output from openCV stereo calibration for R and t");
+//    write_xml_param_list_open(file, opencv_3x4_param_transform, false);
 //    for (int_t i = 0; i < 3; i++) {
 //      param_val = std::stringstream();
 //      param_title = std::stringstream();
@@ -707,14 +700,14 @@ Camera_System::write_calibration_file(const std::string & cal_file){
 //      for (int_t j = 0; j < 3; j++)
 //        param_val << opencv_3x4_trans_(i,j) << ", ";
 //      param_val << opencv_3x4_trans_(i,3) << "}";
-//      write_xml_string_param(cal_file, param_title.str(), param_val.str(), false);
-//      if (all_fields && i == 0) write_xml_comment(cal_file, "R11 R12 R13 TX");
-//      if (all_fields && i == 1) write_xml_comment(cal_file, "R21 R22 R23 TY");
-//      if (all_fields && i == 2) write_xml_comment(cal_file, "R31 R32 R33 TZ");
+//      write_xml_string_param(file, param_title.str(), param_val.str(), false);
+//      if (all_fields && i == 0) write_xml_comment(file, "R11 R12 R13 TX");
+//      if (all_fields && i == 1) write_xml_comment(file, "R21 R22 R23 TY");
+//      if (all_fields && i == 2) write_xml_comment(file, "R31 R32 R33 TZ");
 //    }
-//    write_xml_param_list_close(cal_file, false);
+//    write_xml_param_list_close(file, false);
 //  }
-  finalize_xml_file(cal_file);
+  finalize_xml_file(file);
 }
 
 void
@@ -952,6 +945,35 @@ Camera_System::rot_trans_3D(const std::vector<scalar_t> & source_x,
     std::fill(target_dz[5].begin(),target_dz[5].end(),1.0);
   }
 }
+
+/// comparison operator
+bool
+operator==(const Camera_System & lhs,const Camera_System & rhs){
+  if(lhs.cameras_.size()!=rhs.cameras_.size()){
+    DEBUG_MSG("camara system camera vectors are different sizes, lhs size " << lhs.cameras_.size() << " rhs size " << rhs.cameras_.size());
+    return false;
+  }
+  bool is_equal = true;
+  for(size_t i=0;i<lhs.cameras_.size();++i)
+    if(*lhs.cameras_[i].get()!=*rhs.cameras_[i].get()){
+      DEBUG_MSG("camera system cameras are not equivalent");
+      is_equal = false;
+    }
+  if(lhs.sys_type_!=rhs.sys_type_){
+    DEBUG_MSG("system types do not match, lhs " << Camera_System::to_string(lhs.sys_type_) << " rhs " << Camera_System::to_string(rhs.sys_type_));
+    is_equal = false;
+  }
+  if(lhs.user_4x4_trans_!=rhs.user_4x4_trans_){
+    DEBUG_MSG("user 4x4 transforms do not match");
+    is_equal = false;
+  }
+  if(lhs.user_6x1_trans_!=rhs.user_6x1_trans_){
+    DEBUG_MSG("user 6x1 transforms do not match");
+    is_equal = false;
+  }
+  return is_equal;
+}
+
 
 //void
 //Camera_System::rot_trans_3D(const std::vector<scalar_t> & wld0_x,

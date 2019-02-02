@@ -349,7 +349,7 @@ public:
   }
 
   /// overload the ostream operator to enable std::cout << matrix << std::endl;, etc.
-  friend std::ostream & operator<<(std::ostream & os, Matrix<Type,Rows,Cols> & matrix){
+  friend std::ostream & operator<<(std::ostream & os, const Matrix<Type,Rows,Cols> & matrix){
     std::ios_base::fmtflags f( std::cout.flags() );
     os.precision(5);
     os << std::scientific;

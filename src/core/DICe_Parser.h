@@ -99,15 +99,9 @@ const char* const cal_target_block_size = "cal_target_block_size";
 /// Input parameter
 const char* const cal_target_binary_constant = "cal_target_binary_constant";
 /// Input parameter
-const char* const cal_target_width = "cal_target_width";
-/// Input parameter
-const char* const cal_target_height = "cal_target_height";
-/// Input parameter
 const char* const cal_target_spacing_size = "cal_target_spacing_size";
 /// Input parameter
 const char* const cal_manual_skip_images = "cal_manual_skip_images";
-/// Input parameter
-const char* const cal_mode = "cal_mode";
 /// Input parameter
 const char* const print_subset_locations_and_exit = "print_subset_locations_and_exit";
 /// Input parameter
@@ -165,9 +159,33 @@ const char* const image_file_extension = "image_file_extension";
 /// Input parameter
 const char* const image_file_prefix = "image_file_prefix";
 /// Input parameter
+const char* const stereo_left_file_prefix = "stereo_left_file_prefix";
+/// Input parameter
+const char* const stereo_right_file_prefix = "stereo_right_file_prefix";
+/// Input parameter
 const char* const separate_output_file_for_each_subset = "separate_output_file_for_each_subset";
 /// Input parameter
 const char* const create_separate_run_info_file = "create_separate_run_info_file";
+/// Input parameter
+const char* const num_cal_fiducials_x = "num_cal_fiducials_x";
+/// Input parameter
+const char* const num_cal_fiducials_y = "num_cal_fiducials_y";
+/// Input parameter
+const char* const cal_origin_x = "cal_origin_x";
+/// Input parameter
+const char* const cal_origin_y = "cal_origin_y";
+/// Input parameter
+const char* const num_cal_fiducials_origin_to_x_marker = "num_cal_fiducials_origin_to_x_marker";
+/// Input parameter
+const char* const num_cal_fiducials_origin_to_y_marker = "num_cal_fiducials_origin_to_y_marker";
+/// Input parameter
+const char* const cal_target_type = "cal_target_type";
+/// Input parameter
+const char* const draw_intersection_image = "draw_intersection_image";
+/// Input parameter
+const char* const cal_debug_folder = "cal_debug_folder";
+/// Input parameter
+const char* const cal_disable_image_indices_ = "cal_disable_image_indices";
 
 
 /// Parser string
@@ -458,7 +476,9 @@ Teuchos::RCP<DICe::Polygon> read_polygon(std::fstream &dataFile);
 DICE_LIB_DLL_EXPORT
 multi_shape read_shapes(std::fstream & dataFile);
 
-
+/// returns a string with only the name, no extension or directory
+DICE_LIB_DLL_EXPORT
+std::string file_name_no_dir_or_extension(const std::string & file_name);
 
 /// \brief Parses the options set in the command line when dice is invoked
 /// \param argc typical argument from main

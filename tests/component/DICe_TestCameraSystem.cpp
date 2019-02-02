@@ -76,7 +76,7 @@ using namespace DICe;
         file_names[i].push_back('m');
         file_names[i].push_back('l');
         save_file = cal_file_dir + "DICe_out_" + file_names[i];
-        cam_sys->write_calibration_file(save_file);
+        cam_sys->write_camera_system_file(save_file);
         // FIXME test the files that were written
 
       }

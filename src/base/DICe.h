@@ -326,7 +326,15 @@ const char* const system_type_3D = "system_type_3D";
 /// String parameter name
 const char* const cal_file_ID = "cal_file_ID";
 /// String parameter name
-const char* const DICe_XML_Calibration_File = "DICe_XML_Calibration_File";
+const char* const cal_opencv_options = "cal_opencv_options";
+/// String parameter name
+const char* const cal_image_intersections = "cal_image_intersections";
+/// String parameter name
+const char* const xml_file_format = "xml_file_format";
+/// String parameter name
+const char* const DICe_xml_camera_system_file = "DICe_xml_camera_system_file";
+/// String parameter name
+const char* const DICe_xml_calibration_file = "DICe_xml_calibration_file";
 /// String parameter name
 const char* const user_6_param_transform = "user_6_param_transform";
 /// String parameter name

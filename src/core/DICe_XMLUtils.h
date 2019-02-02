@@ -44,6 +44,8 @@
 
 #include <iostream>
 
+#include <Teuchos_ParameterList.hpp>
+
 namespace DICe {
 
 /// \brief Create the opening parameter syntax
@@ -106,6 +108,14 @@ void write_xml_size_param(const std::string & file_name,
   const std::string & value="<value>",
   const bool commented=true);
 
+/// \brief Write an integer valued parameter to file
+/// \param file_name The name of the xml file to write to
+/// \param name The name of the parameter
+/// \param value The string value of the parameter
+void write_xml_size_param(const std::string & file_name,
+  const std::string & name,
+  const int value);
+
 /// \brief Write a real valued parameter to file
 /// \param file_name The name of the xml file to write to
 /// \param name The name of the parameter
@@ -115,6 +125,14 @@ void write_xml_real_param(const std::string & file_name,
   const std::string & name,
   const std::string & value="<value>",
   const bool commented=true);
+
+/// \brief Write a real valued parameter to file
+/// \param file_name The name of the xml file to write to
+/// \param name The name of the parameter
+/// \param value The string value of the parameter
+void write_xml_real_param(const std::string & file_name,
+  const std::string & name,
+  const double & value);
 
 /// \brief Write a boolean valued parameter to file
 /// \param file_name The name of the xml file to write to
@@ -129,12 +147,37 @@ void write_xml_bool_param(const std::string & file_name,
 /// \brief Write a boolean valued parameter to file
 /// \param file_name The name of the xml file to write to
 /// \param name The name of the parameter
+/// \param value The string value of the parameter
+void write_xml_bool_param(const std::string & file_name,
+  const std::string & name,
+  const bool value);
+
+/// \brief Write a boolean valued parameter to file
+/// \param file_name The name of the xml file to write to
+/// \param name The name of the parameter
 /// \param value The bool value of the parameter
 /// \param commented Determines if this parameter should be commented out
 void write_xml_bool_literal_param(const std::string & file_name,
   const std::string & name,
   const bool value=true,
   const bool commented=true);
+
+/// \brief write an xml file based on a teuchos parameter list
+/// \param file_name the name of the output file
+/// \param params the Teuchos::ParameterList
+// providing an alternative to the teuchos writer since it dumps out a bunch of other fields like "is used", etc.
+void write_xml_file(const std::string & file_name,
+  const Teuchos::ParameterList & params);
+
+/// write an individual parameter to the file
+void write_teuchos_parameter(const std::string & file_name,
+  const Teuchos::ParameterList & params,
+  const Teuchos::ParameterList::ConstIterator & it);
+
+/// iterate a teuchos sublist and write all the parameters
+void write_teuchos_sublist(const std::string & file_name,
+  const Teuchos::ParameterList & params);
+
 
 }// End DICe Namespace
 

@@ -48,6 +48,48 @@
 
 namespace DICe {
 
+void write_xml_file(const std::string & file_name,
+  const Teuchos::ParameterList & params){
+  initialize_xml_file(file_name);
+  write_teuchos_sublist(file_name,params);
+  finalize_xml_file(file_name);
+}
+
+void write_teuchos_sublist(const std::string & file_name,
+  const Teuchos::ParameterList & params){
+  // iterate the parameter list and add a parameter for each param
+  for(Teuchos::ParameterList::ConstIterator it=params.begin();it!=params.end();++it){
+    write_teuchos_parameter(file_name,params,it);
+  }
+}
+
+void write_teuchos_parameter(const std::string & file_name,
+  const Teuchos::ParameterList & params,
+  const Teuchos::ParameterList::ConstIterator & it){
+  // check for sublist
+  if(it->second.isList()){
+    write_xml_comment(file_name,"");
+    write_xml_param_list_open(file_name,it->first,false);
+    write_teuchos_sublist(file_name,params.get<Teuchos::ParameterList>(it->first));
+    write_xml_param_list_close(file_name,false);
+  }
+  else if(it->second.isType<bool>()){
+    write_xml_bool_param(file_name,it->first,params.get<bool>(it->first));
+  }
+  else if(it->second.isType<int>()){
+    write_xml_size_param(file_name,it->first,params.get<int>(it->first));
+  }
+  else if(it->second.isType<double>()){
+    write_xml_real_param(file_name,it->first,params.get<double>(it->first));
+  }
+  else if(it->second.isType<std::string>()){
+    write_xml_string_param(file_name,it->first,params.get<std::string>(it->first),false);
+  }
+  else{
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"invalid parameter type");
+  }
+}
+
 void initialize_xml_file(const std::string & file_name){
   std::ofstream file;
   file.open(file_name.c_str());
@@ -105,6 +147,38 @@ void write_xml_param(const std::string & file_name, const std::string & name, co
   file << "<Parameter name=\"" << name << "\" type=\""<< type << "\" value=\"" << value << "\" />  ";
   if(commented)
     file << "-->";
+  file << std::endl;
+  file.close();
+}
+
+void write_xml_size_param(const std::string & file_name,
+  const std::string & name,
+  const int value){
+  std::ofstream file;
+  file.open(file_name.c_str(),std::ios::app);
+  file << "<Parameter name=\"" << name << "\" type=\"int\" value=\"" << value << "\" />  ";
+  file << std::endl;
+  file.close();
+}
+
+void write_xml_bool_param(const std::string & file_name,
+  const std::string & name,
+  const bool value){
+  std::ofstream file;
+  std::string value_str = value ? "true" : "false";
+  file.open(file_name.c_str(),std::ios::app);
+  file << "<Parameter name=\"" << name << "\" type=\"bool\" value=\"" << value_str << "\" />  ";
+  file << std::endl;
+  file.close();
+}
+
+
+void write_xml_real_param(const std::string & file_name,
+  const std::string & name,
+  const double & value){
+  std::ofstream file;
+  file.open(file_name.c_str(),std::ios::app);
+  file << "<Parameter name=\"" << name << "\" type=\"double\" value=\"" << value << "\" />  ";
   file << std::endl;
   file.close();
 }

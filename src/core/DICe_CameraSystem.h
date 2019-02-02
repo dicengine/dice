@@ -116,13 +116,13 @@ public:
   // Pure virtual destructor
   virtual ~Camera_System() {};
 
-  /// \brief read the calibration parameters
-  /// \param param_file_name File name of the cal parameters file
-  void read_calibration_file(const std::string & cal_file);
+  /// \brief read the camera system parameters
+  /// \param file File name of the parameters file
+  void read_camera_system_file(const std::string & file);
 
-  /// \brief write the calibration parameters to an xml file
-  /// \param calFile File name of the cal parameters file to write to
-  void write_calibration_file(const std::string & cal_file);
+  /// \brief write the camera system parameters to an xml file
+  /// \param file File name of the parameters file to write to
+  void write_camera_system_file(const std::string & file);
 
   /// \brief set the system type
   /// \param system_type a System_Type_3D enum
@@ -157,6 +157,13 @@ public:
   /// add a camera to the set
   void add_camera(Teuchos::RCP<Camera> camera_ptr){
     cameras_.push_back(camera_ptr);
+  }
+
+  /// comparison operator
+  friend bool operator==(const Camera_System & lhs,const Camera_System & rhs);
+  /// comparison operator
+  friend bool operator!=(const Camera_System & lhs,const Camera_System & rhs){
+    return !(lhs==rhs);
   }
 
   /// \brief 3 parameter projection routine from the one camera to another camera

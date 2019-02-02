@@ -220,6 +220,12 @@ public:
     void check_valid()const;
     // clears all the parameter values in a camera
     void clear();
+    /// comparison operator
+    friend bool operator==(const Camera_Info & lhs,const Camera_Info & rhs);
+    /// comparison operator
+    friend bool operator!=(const Camera_Info & lhs,const Camera_Info & rhs){
+      return !(lhs==rhs);
+    }
   };
 
   /// \brief constructor
@@ -300,6 +306,28 @@ public:
 
   ///prepares the tranfomation matricies
   void initialize();
+
+  /// comparison operator
+  friend bool operator==(const Camera & lhs,const Camera & rhs){
+    if(lhs.cam_world_trans_!=rhs.cam_world_trans_){
+      DEBUG_MSG("camera cam_world_trans matrices do not match");
+      return false;
+    }
+    if(lhs.world_cam_trans_!=rhs.world_cam_trans_){
+      DEBUG_MSG("camera world_cam_trans matrices do not match");
+      return false;
+    }
+    if(lhs.camera_info_!=rhs.camera_info_){
+      return false;
+    }
+    return true;
+  }
+
+  /// comparison operator
+  friend bool operator!=(const Camera & lhs,const Camera & rhs){
+    return !(lhs==rhs);
+  }
+
 
   /// convert sensor locations to image locations: applies lens distortion scales for fx,fy and
   /// converts to image coordiates with cx, cy with first partials

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ParameterList>
+  <Parameter name="xml_file_format" type="string" value="DICe_xml_calibration_file"/>
+  <Parameter name="image_folder" type="string" value="../images/"/>
+  <Parameter name="image_file_prefix" type="string" value="left"/>
+  <Parameter name="image_file_extension" type="string" value=".jpg"/>
+  <Parameter name="reference_image_index" type="int" value="1"/>
+  <Parameter name="start_image_index" type="int" value="1"/>
+  <Parameter name="end_image_index" type="int" value="14"/>
+  <Parameter name="num_file_suffix_digits" type="int" value="2"/>
+  <Parameter name="cal_target_type" type="string" value="CHECKER_BOARD"/>
+  <Parameter name="num_cal_fiducials_x" type="int" value="9"/>
+  <Parameter name="num_cal_fiducials_y" type="int" value="6"/>
+  <Parameter name="cal_target_spacing_size" type="double" value="10.0"/>
+  <Parameter name="draw_intersection_image" type="bool" value="true"/>
+  <Parameter name="cal_debug_folder" type="string" value="./debug_images/"/>
+</ParameterList>
