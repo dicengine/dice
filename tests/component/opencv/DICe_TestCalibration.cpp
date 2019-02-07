@@ -57,6 +57,7 @@ int main(int argc, char *argv[]) {
   int_t iprint = argc - 1;
   int_t error_flag = 0;
   const scalar_t error_tol = 1.0E-5;
+  const scalar_t max_rms = 0.75;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -88,6 +89,10 @@ int main(int argc, char *argv[]) {
       *outStream << "error, rms from checkerboard calibrations do not match" << std::endl;
       error_flag++;
     }
+    if(checkerboard_rms<0||checkerboard_rms>max_rms){
+      *outStream << "error, rms from checkerboard calibration does not meet tolerance" << std::endl;
+      error_flag++;
+    }
   }catch(std::exception & e){
     *outStream << e.what() << std::endl;
     *outStream << "error, single camera checkerboard case failed" << std::endl;
@@ -114,6 +119,10 @@ int main(int argc, char *argv[]) {
     }
     if(std::abs(stereo_checkerboard_rms-test_stereo_checkerboard_rms)>error_tol){
       *outStream << "error, rms from stereo_checkerboard calibrations do not match" << std::endl;
+      error_flag++;
+    }
+    if(stereo_checkerboard_rms<0||stereo_checkerboard_rms>max_rms){
+      *outStream << "error, rms from stereo checkerboard calibration does not meet tolerance" << std::endl;
       error_flag++;
     }
   }catch(std::exception & e){
@@ -144,6 +153,11 @@ int main(int argc, char *argv[]) {
       *outStream << "error, rms from stereo_marker_dots calibrations do not match" << std::endl;
       error_flag++;
     }
+    if(stereo_marker_dots_rms<0||stereo_marker_dots_rms>0.75){
+      *outStream << "error, rms from stereo marker dot calibration does not meet tolerance" << std::endl;
+      error_flag++;
+    }
+
   }catch(std::exception & e){
     *outStream << e.what() << std::endl;
     *outStream << "error, stereo marker dots case failed" << std::endl;
