@@ -109,9 +109,6 @@ IF(DICE_ENABLE_GLOBAL)
   link_directories(${NetCDF_DIR}/../lib)
 ENDIF()
 
-#    ./opencv/DICe_StereoCalib2.cpp
-#    ./opencv/DICe_StereoCalib2.h
-
 IF(DICE_ENABLE_OPENCV)
   SET(DICE_SOURCES
     ${DICE_SOURCES}
