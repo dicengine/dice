@@ -44,6 +44,8 @@
 
 #include <DICe.h>
 #include <DICe_Image.h>
+#include <DICe_Matrix.h>
+#include <DICe_Camera.h>
 #ifdef DICE_TPETRA
   #include "DICe_MultiFieldTpetra.h"
 #else
@@ -78,7 +80,13 @@ Triangulation{
 public:
   /// \brief Default constructor
   /// \param param_file_name the name of the file to parse the calibration parameters from
-  Triangulation(const std::string & param_file_name){
+  Triangulation(const std::string & param_file_name):
+  Triangulation(){
+    load_calibration_parameters(param_file_name);
+  };
+
+  /// \brief constructor with no args
+  Triangulation(){
     warp_params_ = Teuchos::rcp(new std::vector<scalar_t>(12,0.0)); /// at max there are 12 parameters that must be set (for the quadratic)
     (*warp_params_)[1] = 1.0;
     (*warp_params_)[8] = 1.0;
@@ -86,18 +94,11 @@ public:
     (*projective_params_)[0] = 1.0;
     (*projective_params_)[4] = 1.0;
     (*projective_params_)[8] = 1.0;
-    load_calibration_parameters(param_file_name);
-  };
-
-  /// \brief constructor with no args
-  Triangulation(){
-    warp_params_ = Teuchos::rcp(new std::vector<scalar_t>(12,0.0));
-    (*warp_params_)[1] = 1.0;
-    (*warp_params_)[8] = 1.0;
-    projective_params_ = Teuchos::rcp(new std::vector<scalar_t>(9,0.0));
-    (*projective_params_)[0] = 1.0;
-    (*projective_params_)[4] = 1.0;
-    (*projective_params_)[8] = 1.0;
+    cam_0_to_cam_1_ = Matrix<scalar_t,4>::identity();
+    cam_0_to_world_ = Matrix<scalar_t,4>::identity();
+    cal_intrinsics_.clear();
+    for(int_t i=0;i<2;++i) // one vec for each camera
+      cal_intrinsics_.push_back(std::vector<scalar_t>(Camera::MAX_CAM_INTRINSIC_PARAM,0.0));
   };
 
   /// Pure virtual destructor
@@ -108,14 +109,14 @@ public:
     return & cal_intrinsics_;
   }
 
-  /// returns a pointer to the calibration extrinsics
-  std::vector<std::vector<scalar_t> > * cal_extrinsics(){
-    return & cal_extrinsics_;
+  /// returns a pointer to the transform from camera 0 to camera 1
+  Matrix<scalar_t,4> * cam_0_to_cam_1(){
+    return & cam_0_to_cam_1_;
   }
 
   /// returns a pointer to the camera 0 to world extrinsics
-  std::vector<std::vector<scalar_t> > * trans_extrinsics(){
-    return & trans_extrinsics_;
+  Matrix<scalar_t,4> * cam_0_to_world(){
+    return & cam_0_to_world_;
   }
 
   /// triangulate the optimal point in 3D.
@@ -144,37 +145,6 @@ public:
     scalar_t & yw_out,
     scalar_t & zw_out,
     const bool correct_lens_distortion = false);
-
-//  /// project camera 0 coordinates to sensor 1 coordinates
-//  /// \param xc camera 0 x coordinate
-//  /// \param yc camera 0 y coordinate
-//  /// \param zc camera 0 z coordinate
-//  /// \param xs1_out [out] computed sensor 1 coordinate
-//  /// \param ys1_out [out] computed sensor 1 coordinate
-//  void project_camera_0_to_sensor_1(const scalar_t & xc,
-//    const scalar_t & yc,
-//    const scalar_t & zc,
-//    scalar_t & xs2_out,
-//    scalar_t & ys2_out);
-
-  /// convert Cardan-Bryant angles and offsets to T matrix format
-  /// \param alpha euler angle in degrees
-  /// \param beta euler angle in degrees
-  /// \param gamma euler angle in degrees
-  /// \param tx offset x
-  /// \param ty offset y
-  /// \param tz offset z
-  void convert_CB_angles_to_T(const scalar_t & alpha,
-    const scalar_t & beta,
-    const scalar_t & gamma,
-    const scalar_t & tx,
-    const scalar_t & ty,
-    const scalar_t & tz,
-    Teuchos::SerialDenseMatrix<int_t,double> & T_out);
-
-  /// computes and returns in place the inverse of a transform
-  /// \param T_out the matrix to invert
-  void invert_transform(Teuchos::SerialDenseMatrix<int_t,double> & T_out);
 
   /// correct the lens distortion with a radial model
   /// \param x_s x sensor coordinate to correct, modified in place
@@ -250,41 +220,37 @@ public:
     const std::vector<scalar_t> & b);
 
   /// set the transform to the identity matrix
-  void clear_trans_extrinsics(){
-    for(size_t i=0;i<4;++i)
-      for(size_t j=0;j<4;++j)
-        trans_extrinsics_[i][j] = i==j ? 1.0 : 0.0;
+  void reset_cam_0_to_world(){
+    cam_0_to_world_ = Matrix<scalar_t,4>::identity();
   }
-
 
 private:
   /// \brief load the calibration parameters
   /// \param param_file_name File name of the cal parameters file
   void load_calibration_parameters(const std::string & param_file_name);
 
-  /// 2 x 8 matrix of camera intrinsics
-  /// first index is the camera id, second index is cx cy fx fy fs k1 k2 k3
+  /// vector camera intrinsics vectors, one for camera 0 and one for camera 1
+  /// See Camera::Cam_Intrinsic_Param for the ordering of the parameters in the vector
   std::vector<std::vector<scalar_t> > cal_intrinsics_;
-  /// 4 x 4 matrix of calibration extrinsics
-  /// R11 R12 R13 tx
-  /// R21 R22 R23 ty
-  /// R31 R32 R33 tz
-  /// 0   0   0   1
-  std::vector<std::vector<scalar_t> > cal_extrinsics_;
-  /// 4 x 4 matrix to convert camera 0 coordinates to world coordinate system
-  /// with input values defined in terms of transforming from world to camera 0 coordinates
-  /// (the matrix gets inverted when stored so the transform is camera 0 to world when applied)
-  /// R11 R12 R13 tx
-  /// R21 R22 R23 ty
-  /// R31 R32 R33 tz
-  /// 0   0   0   1
-  std::vector<std::vector<scalar_t> > trans_extrinsics_;
+
+  /// transformation from camera 0 to camera 1 model/physical coordinates
+  Matrix<scalar_t,4> cam_0_to_cam_1_;
+
+  /// transformation from camera 0 to world model/physical coordinates
+  Matrix<scalar_t,4> cam_0_to_world_;
+
+  // both the warp_params and projective_params are for doing a global warp of the
+  // image from one camera to another to help initialize the cross-correlation, they are not
+  // associated with the calibration
 
   /// 12 parameters that define a warping (independent from intrinsic and extrinsic parameters)
   Teuchos::RCP<std::vector<scalar_t> > warp_params_;
   /// 8 parameters that define a projective transform (independent from intrinsic and extrinsic parameters)
   Teuchos::RCP<std::vector<scalar_t> > projective_params_;
 };
+
+DICE_LIB_DLL_EXPORT
+void update_legacy_txt_cal_input(const Teuchos::RCP<Teuchos::ParameterList> & input_params);
 
 }// End DICe Namespace
 

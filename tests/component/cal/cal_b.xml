@@ -4,3 +4,4 @@
   <camera id="1" >211.986 191.741 2479.9 2484.28 2.99616 0.112661 0 0 <orientation>179.77 14.7532 -0.617865 -1765.32 -49.9461 1075.75</orientation>
   </camera>
 </calibration>
+<polygonmask width="1280" height="800" lri="polygonmask">

@@ -115,6 +115,24 @@ operator==(const Camera::Camera_Info & lhs,const Camera::Camera_Info & rhs){
   return is_equal;
 }
 
+std::ostream & operator<<(std::ostream & os, const Camera::Camera_Info & info){
+  os << "id:                    " << info.id_ << std::endl;
+  os << "comments:              " << info.comments_ << std::endl;
+  os << "image height:          " << info.image_height_ << std::endl;
+  os << "image width:           " << info.image_width_ << std::endl;
+  os << "pixel depth:           " << info.pixel_depth_ << std::endl;
+  os << "lens:                  " << info.lens_ << std::endl;
+  os << "lens distortion model: " << Camera::to_string(info.lens_distortion_model_) << std::endl;
+  for(size_t i=0;i<info.intrinsics_.size();++i){
+    os << Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(i)) << " " << info.intrinsics_[i] << std::endl;
+  }
+  os << "rotation matrix:" << std::endl;
+  os << info.rotation_matrix_ << std::endl;
+  os << "ext translations:      " << info.tx_ << " " << info.ty_ << " " << info.tz_ << std::endl;
+  return os;
+};
+
+
 void
 Camera::Camera_Info::set_rotation_matrix(const scalar_t & alpha,
   const scalar_t & beta,
@@ -172,6 +190,7 @@ Camera::Camera_Info::clear(){
   id_.clear();
   lens_.clear();
   comments_.clear();
+  lens_distortion_model_ = NO_LENS_DISTORTION;
 }
 
 void
@@ -180,32 +199,36 @@ Camera::initialize() {
   // TODO need to add more error handling into the functions
   inv_lens_dis_x_.assign(camera_info_.image_height_*camera_info_.image_width_,0);
   inv_lens_dis_y_.assign(camera_info_.image_height_*camera_info_.image_width_,0);
+
   prep_lens_distortion();
   prep_transforms();
+}
+
+Matrix<scalar_t,4>
+Camera::transformation_matrix() const {
+  Matrix<scalar_t,4> trans;
+  for(size_t i=0;i<3;++i){
+    for(size_t j=0;j<3;++j){
+      trans(i,j) = (*rotation_matrix())(i,j);
+    }
+  }
+  trans(0,3) = tx(); trans(1,3) = ty(); trans(2,3) = tz();
+  trans(3,3) = 1.0;
+  return trans;
 }
 
 void
 Camera::prep_transforms() {
   camera_info_.check_valid();
   //clear the world to camera coordinate transform values
-  world_cam_trans_.put_value(0);
-  //create the 4x4 transformation matrix
-  for (size_t i = 0; i < rotation_matrix()->rows(); i++) {
-    for (size_t j = 0; j < rotation_matrix()->cols(); j++) {
-      world_cam_trans_(i,j) = (*rotation_matrix())(i,j);
-    }
-  }
-  world_cam_trans_(0,3) = tx();
-  world_cam_trans_(1,3) = ty();
-  world_cam_trans_(2,3) = tz();
-  world_cam_trans_(3,3) = 1.0;
+  world_cam_trans_ = transformation_matrix();
   cam_world_trans_ = world_cam_trans_.inv();
 }
-
 
 void
 Camera::prep_lens_distortion() {
   camera_info_.check_valid();
+  DEBUG_MSG("Camera::prep_lens_distortion(): initializing the inverse lense distortion values");
   //pre-run lens distortion function
   scalar_t del_img_x;
   scalar_t del_img_y;
@@ -230,35 +253,51 @@ Camera::prep_lens_distortion() {
   std::vector<scalar_t> image_y(image_size, 0.0);
   std::vector<scalar_t> targ_x(image_size, 0.0);
   std::vector<scalar_t> targ_y(image_size, 0.0);
-  std::vector<scalar_t> params(1, 0.0);
 
   for (size_t i = 0; i < image_size; i++) {
     //set the target value for x,y
     targ_x[i] = (scalar_t)(i % image_width());
     targ_y[i] = (scalar_t)(i / image_width());
-    //generate the initial guss for the inverted sensor position
+    //generate the initial guess for the inverted sensor position
     inv_lens_dis_x_[i] = (targ_x[i] - cx) / fx;
     inv_lens_dis_y_[i] = (targ_y[i] - cy) / fy;
   }
 
+  std::ios_base::fmtflags f( std::cout.flags() );
+  std::cout.precision(5);
+  DEBUG_MSG(std::setw(6) << std::left << "Iter"<< std::setw(15) << std::left << "x_error" <<
+    std::setw(15) << std::left << "y_error");
   //iterate until the inverted point is near the target location
   const size_t max_its = 60;
   for (size_t j = 0; j < max_its; j++) {
     TEUCHOS_TEST_FOR_EXCEPTION(j==max_its-1,std::runtime_error,"error: max iterations reached in inverse distortion prep loop");
     end_loop = true;
-    DEBUG_MSG("Inverse distortion prep iteration  " << j);
     //do the projection
     sensor_to_image(inv_lens_dis_x_, inv_lens_dis_y_, image_x, image_y);
     //apply the correction
+    scalar_t x_error = 0.0;
+    scalar_t y_error = 0.0;
     for (size_t i = 0; i < image_size; i++) {
       del_img_x = targ_x[i] - image_x[i];
       del_img_y = targ_y[i] - image_y[i];
+      TEUCHOS_TEST_FOR_EXCEPTION(std::isinf(del_img_x)||std::isinf(del_img_y),std::runtime_error,
+        "Note: this is likely due to the distortion parameters being unreasonable\n");
+      TEUCHOS_TEST_FOR_EXCEPTION(std::isnan(del_img_x)||std::isnan(del_img_y),std::runtime_error,
+        "Note: this is likely due to the distortion parameters being unreasonable\n");
+      x_error += del_img_x*del_img_x;
+      y_error += del_img_y*del_img_y;
       if ((abs(del_img_x) > end_crit) || (abs(del_img_y) > end_crit)) end_loop = false;
       inv_lens_dis_x_[i] += (del_img_x) / fx;
       inv_lens_dis_y_[i] += (del_img_y) / fy;
     }
+    x_error = x_error==0?0:std::sqrt(x_error)/image_size;
+    y_error = y_error==0?0:std::sqrt(y_error)/image_size;
+    DEBUG_MSG(std::setw(6) << std::left << std::fixed << j << std::setw(15) << std::scientific << x_error <<
+      std::setw(15) << std::scientific << y_error);
     if (end_loop) break;
   }
+  std::cout.flags( f );
+
 }
 
 
@@ -426,7 +465,10 @@ Camera::sensor_to_image(
         rad_sqr = x_sen * x_sen + y_sen * y_sen;
         rad = sqrt((double)rad_sqr);
         assert(rad!=0.0);
-        dis_coef = k1 * rad + k2 * pow(rad, 2) + k3 * pow(rad, 3);
+        // FIXME neglecting k3 for vic3d since it's usually a high number and makes this method crach
+        // FIXME we need to figure out what lens distortion model they are actually using so we can
+        // replicate it here.
+        dis_coef = k1 * rad + k2 * pow(rad, 2);// + k3 * pow(rad, 3);
         x_sen = (rad + dis_coef)*x_sen / rad;
         y_sen = (rad + dis_coef)*y_sen / rad;
         image_x[i] = x_sen * fx + y_sen * fs + cx;
@@ -805,5 +847,17 @@ Camera::rot_trans_transform(
     }
   }
 }
+
+std::ostream & operator<<(std::ostream & os, const Camera & camera){
+  os << "---------- Camera ----------" << std::endl;
+  os << camera.camera_info_ << std::endl;
+  os << "cam to world:" << std::endl;
+  os << camera.cam_world_trans_ << std::endl;
+  os << "world to cam:" << std::endl;
+  os << camera.world_cam_trans_ << std::endl;
+  os << "---------------------------------" << std::endl;
+  return os;
+};
+
 
 }// end DICe namespace

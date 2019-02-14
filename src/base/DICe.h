@@ -343,6 +343,8 @@ const char* const user_4x4_param_transform = "user_4x4_param_transform";
 const char* const opencv_3x4_param_transform = "opencv_3x4_param_transform";
 /// String parameter name
 const char* const rotation_3x3_matrix = "rotation_3x3_matrix";
+/// String parameter name
+const char* const extrinsics_relative_camera_to_camera = "extrinsics_relative_camera_to_camera";
 
 
 /// enums:

@@ -147,7 +147,7 @@ public:
   }
 
   /// overaload the ostream operator for a calibration class
-  /// overload the ostream operator to enable std::cout << matrix << std::endl;, etc.
+  /// overload the ostream operator to enable std::cout << Calibration << std::endl;, etc.
   friend std::ostream & operator<<(std::ostream & os, const Calibration & cal);
 
 private:

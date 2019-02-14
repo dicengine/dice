@@ -1,7 +1,7 @@
 <ParameterList>
   <Parameter name="subset_file" type="string" value="./roi.dat" />
   <Parameter name="correlation_parameters_file" type="string" value="params.xml" /> 
-  <Parameter name="calibration_parameters_file" type="string" value="cal.xml" />
+  <Parameter name="camera_system_file" type="string" value="cal.xml" />
   <Parameter name="subset_size" type="int" value="27" />
   <Parameter name="step_size" type="int" value="35" />
   <Parameter name="output_folder" type="string" value="./results/" />

@@ -1,6 +1,6 @@
 <ParameterList>
   <Parameter name="correlation_parameters_file" type="string" value="params.xml" /> 
-  <Parameter name="calibration_parameters_file" type="string" value="cal.xml" />
+  <Parameter name="camera_system_file" type="string" value="cal.xml" />
   <Parameter name="subset_size" type="int" value="25" />
   <Parameter name="step_size" type="int" value="100" />
   <Parameter name="output_folder" type="string" value="./results/" />

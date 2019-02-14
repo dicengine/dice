@@ -76,9 +76,6 @@ int main(int argc, char *argv[]) {
     { // scope for total time
       Teuchos::TimeMonitor total_time_monitor(*total_time);
 
-
-
-
       // Command line options
       if(proc_rank==0)  DEBUG_MSG("Parsing command line options");
       bool force_exit = false;
@@ -263,14 +260,20 @@ int main(int argc, char *argv[]) {
         return 0;
       }
 
-      TEUCHOS_TEST_FOR_EXCEPTION(is_stereo&&!input_params->isParameter(DICe::calibration_parameters_file),std::runtime_error,
-        "Error, calibration_parameters_file required for stereo");
+      // for backwards compatibility allow the user to specify either a calibration_parameters_file or a camera_system_file
+      // (camera_system_file is the new preferred way)
+      TEUCHOS_TEST_FOR_EXCEPTION(is_stereo&&(!input_params->isParameter(DICe::calibration_parameters_file)&&!input_params->isParameter(DICe::camera_system_file)),
+        std::runtime_error,
+        "Error, calibration_parameters_file or camera_system_file required for stereo");
+      TEUCHOS_TEST_FOR_EXCEPTION(input_params->isParameter(DICe::calibration_parameters_file)&&input_params->isParameter(DICe::camera_system_file),
+        std::runtime_error,
+        "Error, both calibration_parameters_file and camera_system_file cannot be specified");
       Teuchos::RCP<DICe::Triangulation> triangulation;
-			//Teuchos::RCP<DICe::Cameras> cameras;
-			if(input_params->isParameter(DICe::calibration_parameters_file)){
-        const std::string cal_file_name = input_params->get<std::string>(DICe::calibration_parameters_file);
+      if(input_params->isParameter(DICe::calibration_parameters_file)||input_params->isParameter(DICe::camera_system_file)){
+        update_legacy_txt_cal_input(input_params); // in case an old txt format cal input file is being used it needs to have width and height added to it
+        const std::string cal_file_name = input_params->isParameter(DICe::calibration_parameters_file) ? input_params->get<std::string>(DICe::calibration_parameters_file):
+            input_params->get<std::string>(DICe::camera_system_file);
         triangulation = Teuchos::rcp(new DICe::Triangulation(cal_file_name));
-			//	cameras = Teuchos::rcp(new DICe::Cameras(cal_file_name));
         *outStream << "\n--- Calibration parameters read successfully ---\n" << std::endl;
       }
       else{

@@ -136,6 +136,12 @@ public:
     return sys_type_;
   }
 
+  /// returns true if the extrinsic parameters are camera to camera relative rather
+  /// than from world to camera (if this is the case, the first camera's extrinsics
+  /// are world to camera 0, the second camera's extrinsics are the camera 0 to camera 1
+  /// transformation) This is included for legacy reasons
+  bool extrinsics_relative_camera_to_camera()const {return extrinsics_relative_camera_to_camera_;}
+
   /// \brief returns the number of the first camera with a matching identifier
   /// \param cam_id camera identifying string
   size_t get_camera_num_from_id(std::string & cam_id) const {
@@ -147,6 +153,12 @@ public:
       if (id_val==cam_id)return i;
     }
     return -1;
+  }
+
+  /// \brief return a pointer to the camera with this vector index
+  Teuchos::RCP<Camera> camera(const size_t i){
+    TEUCHOS_TEST_FOR_EXCEPTION(i>=num_cameras(),std::runtime_error,"");
+    return cameras_[i];
   }
 
   /// return the number of cameras
@@ -165,6 +177,9 @@ public:
   friend bool operator!=(const Camera_System & lhs,const Camera_System & rhs){
     return !(lhs==rhs);
   }
+
+  /// overaload the ostream operator for a camera system class
+  friend std::ostream & operator<<(std::ostream & os, const Camera_System & camera_system);
 
   /// \brief 3 parameter projection routine from the one camera to another camera
   /// \param source_id the number id of the source camera
@@ -284,31 +299,33 @@ private:
   /// sets the number of cameras that can be in an input file
   const size_t max_num_cameras_allowed_;
 
-  // these are for compatibility with triangulation and only support 2 camera systems
-  //12 parameters that define a user supplied transforamation (independent from intrinsic and extrinsic parameters)
+  /// these are for compatibility with triangulation and only support 2 camera systems
+  /// 12 parameters that define a user supplied transforamation (independent from intrinsic and extrinsic parameters)
   Matrix<scalar_t,4> user_4x4_trans_;
 
-  // 8 parameters that define a projective transform (independent from intrinsic and extrinsic parameters)
+  /// 8 parameters that define a projective transform (independent from intrinsic and extrinsic parameters)
   std::vector<scalar_t> user_6x1_trans_;
 
   // 3x4 openCV rotation parameters from stereo calibration
   //Matrix<scalar_t,3,4> opencv_3x4_trans_;
 
-  // defines the camera system type (OPENCV VIC3D...)
+  /// defines the camera system type (OPENCV VIC3D...)
   System_Type_3D sys_type_;
 
-  // the user defined a 6 parameter transform to modify the world coordinate system
+  /// the user defined a 6 parameter transform to modify the world coordinate system
   bool has_6_transform_;
 
-  // the user defined a 4x transform to another coordinate system to use for the world coordinates
+  /// the user defined a 4x transform to another coordinate system to use for the world coordinates
   bool has_4x4_transform_;
 
-  //bool has_opencv_rot_trans_;
+  /// the standard convention is to have the camera extrinsics be from world to camera
+  /// when this flag is true, the extrinsics are the transformation from the left camera to the right instead
+  bool extrinsics_relative_camera_to_camera_;
 
-  // cameras are stored in a map by indentifier
+  /// cameras are stored in a vector
   std::vector<Teuchos::RCP<DICe::Camera> > cameras_;
 
-  // storage for rigid body motion transformations
+  /// storage for rigid body motion transformations
   std::vector<scalar_t>  rot_trans_3D_x_;
   std::vector<scalar_t>  rot_trans_3D_y_;
   std::vector<scalar_t>  rot_trans_3D_z_;

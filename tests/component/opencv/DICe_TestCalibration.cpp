@@ -157,7 +157,9 @@ int main(int argc, char *argv[]) {
       *outStream << "error, rms from stereo marker dot calibration does not meet tolerance" << std::endl;
       error_flag++;
     }
-
+    test_stereo_marker_dots_cam_sys->write_camera_system_file("stereo_marker_dots_camera_system.xml");
+    // test creating a camera system with the file that was just output
+    Teuchos::RCP<Camera_System> trial_cam_sys = Teuchos::rcp(new Camera_System("stereo_marker_dots_camera_system.xml"));
   }catch(std::exception & e){
     *outStream << e.what() << std::endl;
     *outStream << "error, stereo marker dots case failed" << std::endl;

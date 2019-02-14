@@ -898,6 +898,43 @@ int main(int argc, char *argv[]) {
     ") Y: (" << der_aves[Projection_Shape_Function::PHI][1] << ", " << der_dels[Projection_Shape_Function::PHI][1] <<
     ") Z: (" << der_aves[Projection_Shape_Function::PHI][2] << ", " << der_dels[Projection_Shape_Function::PHI][2] << ")" << std::endl);
 
+
+  DEBUG_MSG("testing the inverse lens distortion methods");
+
+  DICe::Camera::Camera_Info ci;
+  ci.intrinsics_[Camera::CX] = 9.550537385e+02;
+  ci.intrinsics_[Camera::CY] = 6.452301624e+02;
+  ci.intrinsics_[Camera::FX] = 6.636033383e+03;
+  ci.intrinsics_[Camera::FY] = 6.636440175e+03;
+  ci.intrinsics_[Camera::FS] = -5.693077075e-04;
+  ci.intrinsics_[Camera::K1] = -1.957515272e-04;
+  ci.intrinsics_[Camera::K2] = 8.739544595e-01;
+  ci.intrinsics_[Camera::K3] = -2.691426143e+00;
+  ci.image_height_ = 1200;
+  ci.image_width_  = 1920;
+
+  DEBUG_MSG("NO LENS DISTORTION");
+  DICe::Camera dist_cam_no_lens_dist(ci);
+  DEBUG_MSG("K1R1_K2R2_K3R3 LENS DISTORTION");
+  ci.lens_distortion_model_ = Camera::K1R1_K2R2_K3R3;
+  DICe::Camera dist_cam_k1r1(ci);
+  DEBUG_MSG("K1R2_K2R4_K3R6 LENS DISTORTION");
+  ci.lens_distortion_model_ = Camera::K1R2_K2R4_K3R6;
+  DICe::Camera dist_cam_k1r2(ci);
+  DEBUG_MSG("K1R3_K2R5_K3R7 LENS DISTORTION");
+  ci.lens_distortion_model_ = Camera::K1R3_K2R5_K3R7;
+  DICe::Camera dist_cam_k1r3(ci);
+  DEBUG_MSG("VIC3D LENS DISTORTION");
+  ci.lens_distortion_model_ = Camera::VIC3D_LENS_DISTORTION;
+  DICe::Camera dist_cam_vic3d(ci);
+  DEBUG_MSG("OPENCV LENS DISTORTION");
+  ci.lens_distortion_model_ = Camera::OPENCV_LENS_DISTORTION;
+  DICe::Camera dist_cam_opencv(ci);
+
+
+
+ // TODO cycle through the lens distortion models
+
   DICe::finalize();
 
   if (!all_passed)

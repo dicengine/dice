@@ -226,6 +226,8 @@ public:
     friend bool operator!=(const Camera_Info & lhs,const Camera_Info & rhs){
       return !(lhs==rhs);
     }
+    /// overaload the ostream operator for a camera info class
+    friend std::ostream & operator<<(std::ostream & os, const Camera_Info & info);
   };
 
   /// \brief constructor
@@ -282,6 +284,11 @@ public:
     return camera_info_.lens_distortion_model_;
   }
 
+  /// returns a 4x4 matrix with the upper left block the rotation matrix,
+  /// the right side column vector as the translations and the lower right
+  /// entry as 1.0
+  Matrix<scalar_t,4> transformation_matrix()const;
+
   ///gets the intrinsic camera parameter values
   std::vector<scalar_t> * intrinsics() { return &camera_info_.intrinsics_;}
 
@@ -328,6 +335,8 @@ public:
     return !(lhs==rhs);
   }
 
+  /// overaload the ostream operator for a camera class
+  friend std::ostream & operator<<(std::ostream & os, const Camera & camera);
 
   /// convert sensor locations to image locations: applies lens distortion scales for fx,fy and
   /// converts to image coordiates with cx, cy with first partials

@@ -1,0 +1,27 @@
+<ParameterList>
+<!-- DICe formatted camera system file -->
+<!-- xml_file_format identifies that this is an xml camera system file denotes that this file is a DICe XML formatted camera system file -->
+<Parameter name="xml_file_format" type="string" value="DICe_xml_camera_system_file" />  
+<Parameter name="system_type_3D" type="string" value="OPENCV" />  
+<Parameter name="extrinsics_relative_camera_to_camera" type="bool" value="true" />  
+<ParameterList name="CAMERA 0">
+<Parameter name="CAMERA_ID" type="string" value="left" />  
+<Parameter name="CX" type="double" value="1214" />  
+<Parameter name="CY" type="double" value="693.5" />  
+<Parameter name="FX" type="double" value="30000" />  
+<Parameter name="FY" type="double" value="30000" />  
+<Parameter name="IMAGE_HEIGHT_WIDTH" type="string" value="{ 1387, 2428 }" />  
+</ParameterList>
+<ParameterList name="CAMERA 1">
+<Parameter name="CAMERA_ID" type="string" value="right" />  
+<Parameter name="CX" type="double" value="4156" />  
+<Parameter name="CY" type="double" value="1321" />  
+<Parameter name="FX" type="double" value="30000" />  
+<Parameter name="FY" type="double" value="30000" />  
+<Parameter name="TX" type="double" value="18531" />  
+<Parameter name="ALPHA" type="double" value="0.0" />  
+<Parameter name="BETA" type="double" value="30.0" />  
+<Parameter name="GAMMA" type="double" value="0.0" />  
+<Parameter name="IMAGE_HEIGHT_WIDTH" type="string" value="{ 2624, 8312 }" />  
+</ParameterList>
+</ParameterList>

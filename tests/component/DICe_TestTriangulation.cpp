@@ -40,6 +40,7 @@
 // @HEADER
 
 #include <DICe.h>
+#include <DICe_Matrix.h>
 #include <DICe_Triangulation.h>
 #include <DICe_Parser.h>
 
@@ -154,8 +155,8 @@ int main(int argc, char *argv[]) {
 
   Teuchos::RCP<Triangulation> triangulation_xml = Teuchos::rcp(new Triangulation("./cal/cal_a.xml"));
   std::vector<std::vector<scalar_t> > & calibration_intrinsics_xml = *triangulation_xml->cal_intrinsics();
-  std::vector<std::vector<scalar_t> > & calibration_T_mat_xml = * triangulation_xml->cal_extrinsics();
-  std::vector<std::vector<scalar_t> > & zero_to_world_xml = * triangulation_xml->trans_extrinsics();
+  Matrix<scalar_t,4> & calibration_T_mat_xml = * triangulation_xml->cam_0_to_cam_1();
+  Matrix<scalar_t,4> & zero_to_world_xml = * triangulation_xml->cam_0_to_world();
 
   *outStream << "testing intrinsics from vic3d format" << std::endl;
 
@@ -164,9 +165,9 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, intrinsics array is the wrong length, should be 2 and is " << calibration_intrinsics_xml.size() << std::endl;
   }
   else{
-    if(calibration_intrinsics_xml[0].size()!=8){
+    if(calibration_intrinsics_xml[0].size()!=19){
       errorFlag++;
-      *outStream << "Error, intrinsics array is the wrong width, should be 8 and is " << calibration_intrinsics_xml[0].size() << std::endl;
+      *outStream << "Error, intrinsics array is the wrong width, should be 19 and is " << calibration_intrinsics_xml[0].size() << std::endl;
     }
     else{
       for(size_t i=0;i<intrinsic_gold.size();++i){
@@ -182,20 +183,20 @@ int main(int argc, char *argv[]) {
 
   *outStream << "testing T_mat from vic3d format" << std::endl;
 
-  if(calibration_T_mat_xml.size()!=4){
+  if(calibration_T_mat_xml.rows()!=4){
     errorFlag++;
-    *outStream << "Error, T_mat array is the wrong length, should be 4 and is " << calibration_T_mat_xml.size() << std::endl;
+    *outStream << "Error, T_mat array is the wrong length, should be 4 and is " << calibration_T_mat_xml.rows() << std::endl;
   }
   else{
-    if(calibration_T_mat_xml[0].size()!=4){
+    if(calibration_T_mat_xml.cols()!=4){
       errorFlag++;
-      *outStream << "Error, T_mat array is the wrong width, should be 4 and is " << calibration_T_mat_xml[0].size() << std::endl;
+      *outStream << "Error, T_mat array is the wrong width, should be 4 and is " << calibration_T_mat_xml.cols() << std::endl;
     }
     else{
       for(size_t i=0;i<T_mat_gold.size();++i){
         for(size_t j=0;j<T_mat_gold[0].size();++j){
-          if(std::abs(calibration_T_mat_xml[i][j]-T_mat_gold[i][j])>errorTol){
-            *outStream << "Error, T_mat value " << i << " " << j << " is not correct. Should be " << T_mat_gold[i][j] << " is " << calibration_T_mat_xml[i][j] << std::endl;
+          if(std::abs(calibration_T_mat_xml(i,j)-T_mat_gold[i][j])>errorTol){
+            *outStream << "Error, T_mat value " << i << " " << j << " is not correct. Should be " << T_mat_gold[i][j] << " is " << calibration_T_mat_xml(i,j) << std::endl;
             errorFlag++;
           }
         }
@@ -205,20 +206,20 @@ int main(int argc, char *argv[]) {
 
   *outStream << "testing camera 0 to world transform from vic3d format" << std::endl;
 
-  if(zero_to_world_xml.size()!=4){
+  if(zero_to_world_xml.rows()!=4){
     errorFlag++;
-    *outStream << "Error, zero_to_world array is the wrong length, should be 4 and is " << zero_to_world_xml.size() << std::endl;
+    *outStream << "Error, zero_to_world array is the wrong length, should be 4 and is " << zero_to_world_xml.rows() << std::endl;
   }
   else{
-    if(zero_to_world_xml[0].size()!=4){
+    if(zero_to_world_xml.cols()!=4){
       errorFlag++;
-      *outStream << "Error, zero_to_world array is the wrong width, should be 4 and is " << zero_to_world_xml[0].size() << std::endl;
+      *outStream << "Error, zero_to_world array is the wrong width, should be 4 and is " << zero_to_world_xml.cols() << std::endl;
     }
     else{
       for(size_t i=0;i<zero_to_world_xml_gold.size();++i){
         for(size_t j=0;j<zero_to_world_xml_gold[0].size();++j){
-          if(std::abs(zero_to_world_xml[i][j]-zero_to_world_xml_gold[i][j])>errorTol){
-            *outStream << "Error, zero_to_world value " << i << " " << j << " is not correct. Should be " << zero_to_world_xml_gold[i][j] << " is " << zero_to_world_xml[i][j] << std::endl;
+          if(std::abs(zero_to_world_xml(i,j)-zero_to_world_xml_gold[i][j])>errorTol){
+            *outStream << "Error, zero_to_world value " << i << " " << j << " is not correct. Should be " << zero_to_world_xml_gold[i][j] << " is " << zero_to_world_xml(i,j) << std::endl;
             errorFlag++;
           }
         }
@@ -232,8 +233,8 @@ int main(int argc, char *argv[]) {
 
   Teuchos::RCP<Triangulation> triangulation_txt = Teuchos::rcp(new Triangulation("./cal/cal_a.txt"));
   std::vector<std::vector<scalar_t> > & calibration_intrinsics_txt = *triangulation_txt->cal_intrinsics();
-  std::vector<std::vector<scalar_t> > & calibration_T_mat_txt = * triangulation_txt->cal_extrinsics();
-  std::vector<std::vector<scalar_t> > & zero_to_world_txt = * triangulation_txt->trans_extrinsics();
+  Matrix<scalar_t,4> & calibration_T_mat_txt = * triangulation_txt->cam_0_to_cam_1();
+  Matrix<scalar_t,4> & zero_to_world_txt = * triangulation_txt->cam_0_to_world();
 
   *outStream << "testing intrinsics from txt format" << std::endl;
 
@@ -242,9 +243,9 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, intrinsics array is the wrong length, should be 2 and is " << calibration_intrinsics_txt.size() << std::endl;
   }
   else{
-    if(calibration_intrinsics_txt[0].size()!=8){
+    if(calibration_intrinsics_txt[0].size()!=19){
       errorFlag++;
-      *outStream << "Error, intrinsics array is the wrong width, should be 8 and is " << calibration_intrinsics_txt[0].size() << std::endl;
+      *outStream << "Error, intrinsics array is the wrong width, should be 19 and is " << calibration_intrinsics_txt[0].size() << std::endl;
     }
     else{
       for(size_t i=0;i<intrinsic_gold.size();++i){
@@ -260,20 +261,20 @@ int main(int argc, char *argv[]) {
 
   *outStream << "testing T_mat from txt format" << std::endl;
 
-  if(calibration_T_mat_txt.size()!=4){
+  if(calibration_T_mat_txt.rows()!=4){
     errorFlag++;
-    *outStream << "Error, T_mat array is the wrong length, should be 4 and is " << calibration_T_mat_txt.size() << std::endl;
+    *outStream << "Error, T_mat array is the wrong length, should be 4 and is " << calibration_T_mat_txt.rows() << std::endl;
   }
   else{
-    if(calibration_T_mat_txt[0].size()!=4){
+    if(calibration_T_mat_txt.cols()!=4){
       errorFlag++;
-      *outStream << "Error, T_mat array is the wrong width, should be 4 and is " << calibration_T_mat_txt[0].size() << std::endl;
+      *outStream << "Error, T_mat array is the wrong width, should be 4 and is " << calibration_T_mat_txt.cols() << std::endl;
     }
     else{
       for(size_t i=0;i<T_mat_gold.size();++i){
         for(size_t j=0;j<T_mat_gold[0].size();++j){
-          if(std::abs(calibration_T_mat_txt[i][j]-T_mat_gold[i][j])>errorTol){
-            *outStream << "Error, T_mat value " << i << " " << j << " is not correct. Should be " << T_mat_gold[i][j] << " is " << calibration_T_mat_txt[i][j] << std::endl;
+          if(std::abs(calibration_T_mat_txt(i,j)-T_mat_gold[i][j])>errorTol){
+            *outStream << "Error, T_mat value " << i << " " << j << " is not correct. Should be " << T_mat_gold[i][j] << " is " << calibration_T_mat_txt(i,j) << std::endl;
             errorFlag++;
           }
         }
@@ -283,20 +284,20 @@ int main(int argc, char *argv[]) {
 
   *outStream << "testing camera 0 to world transform from txt format" << std::endl;
 
-  if(zero_to_world_txt.size()!=4){
+  if(zero_to_world_txt.rows()!=4){
     errorFlag++;
-    *outStream << "Error, zero_to_world array is the wrong length, should be 4 and is " << zero_to_world_txt.size() << std::endl;
+    *outStream << "Error, zero_to_world array is the wrong length, should be 4 and is " << zero_to_world_txt.rows() << std::endl;
   }
   else{
-    if(zero_to_world_txt[0].size()!=4){
+    if(zero_to_world_txt.cols()!=4){
       errorFlag++;
-      *outStream << "Error, zero_to_world array is the wrong width, should be 4 and is " << zero_to_world_txt[0].size() << std::endl;
+      *outStream << "Error, zero_to_world array is the wrong width, should be 4 and is " << zero_to_world_txt.cols() << std::endl;
     }
     else{
       for(size_t i=0;i<zero_to_world_txt_gold.size();++i){
         for(size_t j=0;j<zero_to_world_txt_gold[0].size();++j){
-          if(std::abs(zero_to_world_txt[i][j]-zero_to_world_txt_gold[i][j])>errorTol){
-            *outStream << "Error, zero_to_world value " << i << " " << j << " is not correct. Should be " << zero_to_world_txt_gold[i][j] << " is " << zero_to_world_txt[i][j] << std::endl;
+          if(std::abs(zero_to_world_txt(i,j)-zero_to_world_txt_gold[i][j])>errorTol){
+            *outStream << "Error, zero_to_world value " << i << " " << j << " is not correct. Should be " << zero_to_world_txt_gold[i][j] << " is " << zero_to_world_txt(i,j) << std::endl;
             errorFlag++;
           }
         }
@@ -417,7 +418,7 @@ int main(int argc, char *argv[]) {
   fprintf(filePtr,"%i %i\n",550,195);
   fclose(filePtr);
 
-  fit_tri->clear_trans_extrinsics();
+  fit_tri->reset_cam_0_to_world();
   fit_tri->best_fit_plane(coords_x,coords_y,coords_z,sigma);
 
   std::fstream bestFitDataFile("best_fit_plane_out.dat", std::ios_base::in);
@@ -456,7 +457,7 @@ int main(int argc, char *argv[]) {
 
   Teuchos::RCP<Triangulation> triangulation_with_R = Teuchos::rcp(new Triangulation("./cal/cal_a_with_R.txt"));
   std::vector<std::vector<scalar_t> > & calibration_intrinsics_with_R = *triangulation_with_R->cal_intrinsics();
-  std::vector<std::vector<scalar_t> > & calibration_T_mat_with_R = * triangulation_with_R->cal_extrinsics();
+  Matrix<scalar_t,4> & calibration_T_mat_with_R = * triangulation_with_R->cam_0_to_cam_1();
 
   *outStream << "testing intrinsics from txt format with explicit R" << std::endl;
 
@@ -465,9 +466,9 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, intrinsics array is the wrong length, should be 2 and is " << calibration_intrinsics_with_R.size() << std::endl;
   }
   else{
-    if(calibration_intrinsics_with_R[0].size()!=8){
+    if(calibration_intrinsics_with_R[0].size()!=19){
       errorFlag++;
-      *outStream << "Error, intrinsics array is the wrong width, should be 8 and is " << calibration_intrinsics_with_R[0].size() << std::endl;
+      *outStream << "Error, intrinsics array is the wrong width, should be 19 and is " << calibration_intrinsics_with_R[0].size() << std::endl;
     }
     else{
       for(size_t i=0;i<intrinsic_gold.size();++i){
@@ -483,20 +484,20 @@ int main(int argc, char *argv[]) {
 
   *outStream << "testing T_mat from txt format" << std::endl;
 
-  if(calibration_T_mat_with_R.size()!=4){
+  if(calibration_T_mat_with_R.rows()!=4){
     errorFlag++;
-    *outStream << "Error, T_mat array is the wrong length, should be 4 and is " << calibration_T_mat_with_R.size() << std::endl;
+    *outStream << "Error, T_mat array is the wrong length, should be 4 and is " << calibration_T_mat_with_R.rows() << std::endl;
   }
   else{
-    if(calibration_T_mat_with_R[0].size()!=4){
+    if(calibration_T_mat_with_R.cols()!=4){
       errorFlag++;
-      *outStream << "Error, T_mat array is the wrong width, should be 4 and is " << calibration_T_mat_with_R[0].size() << std::endl;
+      *outStream << "Error, T_mat array is the wrong width, should be 4 and is " << calibration_T_mat_with_R.cols() << std::endl;
     }
     else{
       for(size_t i=0;i<T_mat_gold.size();++i){
         for(size_t j=0;j<T_mat_gold[0].size();++j){
-          if(std::abs(calibration_T_mat_with_R[i][j]-T_mat_gold[i][j])>errorTol){
-            *outStream << "Error, T_mat value " << i << " " << j << " is not correct. Should be " << T_mat_gold[i][j] << " is " << calibration_T_mat_with_R[i][j] << std::endl;
+          if(std::abs(calibration_T_mat_with_R(i,j)-T_mat_gold[i][j])>errorTol){
+            *outStream << "Error, T_mat value " << i << " " << j << " is not correct. Should be " << T_mat_gold[i][j] << " is " << calibration_T_mat_with_R(i,j) << std::endl;
             errorFlag++;
           }
         }

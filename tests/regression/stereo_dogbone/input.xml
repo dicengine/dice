@@ -1,5 +1,7 @@
 <ParameterList>
-  <Parameter name="correlation_parameters_file" type="string" value="params.xml" /> 
+  <Parameter name="correlation_parameters_file" type="string" value="params.xml" />
+<!-- NOTE: the calibration_parameters_file parameter is depricated (used here for legacy testing) -->
+<!--       please use the camera_system_file parameter instead --> 
   <Parameter name="calibration_parameters_file" type="string" value="cal.txt" />
   <Parameter name="subset_size" type="int" value="25" />
   <Parameter name="step_size" type="int" value="100" />

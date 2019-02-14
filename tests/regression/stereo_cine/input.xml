@@ -1,7 +1,7 @@
 <ParameterList>
   <Parameter name="subset_file" type="string" value="roi.dat" />
   <Parameter name="correlation_parameters_file" type="string" value="./params.xml" />
-  <Parameter name="calibration_parameters_file" type="string" value="cal.txt" />
+  <Parameter name="camera_system_file" type="string" value="cam_sys.xml" />
   <Parameter name="output_folder" type="string" value="./results/" />
   <Parameter name="output_prefix" type="string" value="DICe_solution_cine" />
   <Parameter name="image_folder" type="string" value="./images/" />  

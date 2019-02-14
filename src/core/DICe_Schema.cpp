@@ -2813,7 +2813,7 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
     if(f.good()){
       best_fit = true;
       DEBUG_MSG("Schema::execute_triangulation(): clearing the trans_extrinsics_ values");
-      tri->clear_trans_extrinsics();
+      tri->reset_cam_0_to_world();
     }
   }
   for(int_t i=0;i<local_num_subsets_;++i){

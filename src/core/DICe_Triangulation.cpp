@@ -43,6 +43,8 @@
 #include <DICe_Feature.h>
 #include <DICe_Simplex.h>
 #include <DICe_Parser.h>
+#include <DICe_CameraSystem.h>
+#include <DICe_ImageIO.h>
 
 #include <Teuchos_LAPACK.hpp>
 #include <fstream>
@@ -265,313 +267,40 @@ compute_affine_matrix(const std::vector<scalar_t> proj_xl,
 }
 
 void
-Triangulation::convert_CB_angles_to_T(const scalar_t & alpha,
-  const scalar_t & beta,
-  const scalar_t & gamma,
-  const scalar_t & tx,
-  const scalar_t & ty,
-  const scalar_t & tz,
-  Teuchos::SerialDenseMatrix<int_t,double> & T_out){
-  T_out.reshape(4,4);
-  T_out.putScalar(0.0);
-  scalar_t cx = std::cos(alpha*DICE_PI/180.0); // input as degrees, need radians
-  scalar_t sx = std::sin(alpha*DICE_PI/180.0);
-  scalar_t cy = std::cos(beta*DICE_PI/180.0);
-  scalar_t sy = std::sin(beta*DICE_PI/180.0);
-  scalar_t cz = std::cos(gamma*DICE_PI/180.0);
-  scalar_t sz = std::sin(gamma*DICE_PI/180.0);
-  T_out(0,0) = cy*cz;
-  T_out(0,1) = sx*sy*cz-cx*sz;
-  T_out(0,2) = cx*sy*cz+sx*sz;
-  T_out(1,0) = cy*sz;
-  T_out(1,1) = sx*sy*sz+cx*cz;
-  T_out(1,2) = cx*sy*sz-sx*cz;
-  T_out(2,0) = -sy;
-  T_out(2,1) = sx*cy;
-  T_out(2,2) = cx*cy;
-  T_out(0,3) = tx;
-  T_out(1,3) = ty;
-  T_out(2,3) = tz;
-  T_out(3,3) = 1.0;
-}
-
-void
-Triangulation::invert_transform(Teuchos::SerialDenseMatrix<int_t,double> & T_out){
-  Teuchos::LAPACK<int_t,double> lapack;
-  int *IPIV = new int[5];
-  int LWORK = 16;
-  int INFO = 0;
-  double *WORK = new double[LWORK];
-  lapack.GETRF(4,4,T_out.values(),4,IPIV,&INFO);
-  for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
-  try
-  {
-    lapack.GETRI(4,T_out.values(),4,IPIV,WORK,LWORK,&INFO);
-  }
-  catch(std::exception &e){
-    std::cout << e.what() << '\n';
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,
-      "Error, could not invert the transformation matrix from camera 0");
-  }
-  delete [] IPIV;
-  delete [] WORK;
-}
-
-void
 Triangulation::load_calibration_parameters(const std::string & param_file_name){
-  DEBUG_MSG("Triangulation::load_calibration_parameters(): begin");
   DEBUG_MSG("Triangulation::load_calibration_parameters(): Parsing calibration parameters from file: " << param_file_name);
-  std::fstream dataFile(param_file_name.c_str(), std::ios_base::in);
-  TEUCHOS_TEST_FOR_EXCEPTION(!dataFile.good(), std::runtime_error,
-    "Error, the calibration xml file does not exist or is corrupt: " << param_file_name);
 
-  cal_extrinsics_.clear();
-  for(int_t i=0;i<4;++i)
-    cal_extrinsics_.push_back(std::vector<scalar_t>(4,0.0));
+  Teuchos::RCP<Camera_System> camera_system = Teuchos::rcp(new Camera_System(param_file_name));
+  TEUCHOS_TEST_FOR_EXCEPTION(camera_system->num_cameras()!=2,std::runtime_error,
+    "triangulation routine requires exactly two cameras");
 
-  trans_extrinsics_.clear();
-  for(int_t i=0;i<4;++i){
-    trans_extrinsics_.push_back(std::vector<scalar_t>(4,0.0));
-    trans_extrinsics_[i][i] = 1.0; // initialize to the identity tensor (no transformation)
+  // the standard convention for camera extrinsics is stored from world to camera,
+  // for the triangulation code we need the extrinsics to be from camera 0 to world (trans extrinsics) and
+  // from camera 0 to camera 1 (cal_extrinsics)
+  // if the extrinsics_relative_camera_to_camera flag is set, this is already the case so no conversion necessary
+  // otherwise we invert the world to camera 0 extrinsics to be the trans extrinsics and combine this new inverted
+  // transform with the input world to camera 1 transform to be the cal_intrinsics
+  cam_0_to_world_ = camera_system->camera(0)->transformation_matrix();
+  cam_0_to_cam_1_ = camera_system->camera(1)->transformation_matrix();
+
+  // if the camera extrinsics were given as world to camera 0 and world to camera 1,
+  // they need to be converted to the first set of extrinsics as world to camera 0 and the
+  // second as camera 0 to camera 1
+  if(!camera_system->extrinsics_relative_camera_to_camera()){
+    cam_0_to_world_ = cam_0_to_world_.inv();
+    cam_0_to_cam_1_ = cam_0_to_cam_1_ * cam_0_to_world_;
   }
 
-  // intrinsic parameters from both vic3d and the generic text reader are the same and in this order
-  // cx cy fx fy fs k0 k1 k2
-  cal_intrinsics_.clear();
-  for(int_t i=0;i<2;++i)
-    cal_intrinsics_.push_back(std::vector<scalar_t>(8,0.0));
+  // set the camera intrinsic parameters
+  for(size_t i=0;i<camera_system->num_cameras();++i)
+    for(size_t j=0;j<Camera::MAX_CAM_INTRINSIC_PARAM;++j)
+    cal_intrinsics_[i][j] = (*camera_system->camera(i)->intrinsics())[j];
 
-//  Teuchos::LAPACK<int_t,double> lapack;
+#ifdef DICE_DEBUG_MSG
+  std::cout << *camera_system.get() << std::endl;
+#endif
 
-  const std::string xml("xml");
-  const std::string txt("txt");
-  if(param_file_name.find(xml)!=std::string::npos){
-    DEBUG_MSG("Triangulation::load_calibration_parameters(): calibration file is vic3D xml format");
-    // cal.xml file can't be ready by Teuchos parser because it has a !DOCTYPE
-    // have to manually read the file here, lots of assumptions in how the file is formatted
-    // FIXME do this a little more robustly
-    // camera orientation for each camera in vic3d is in terms of the world to camera
-    // orientation and the order of variables is alpha beta gamma tx ty tz (the Cardan Bryant angles + translations)
-    std::vector<std::vector<scalar_t> > cam_orientation(2,std::vector<scalar_t>(6,0.0));
-    // has to be double for lapack calls
-    std::vector<Teuchos::SerialDenseMatrix<int_t,double> > vec_of_Ts(2,Teuchos::SerialDenseMatrix<int_t,double>(4,4,true));
-    int_t camera_index = 0;
-    // read each line of the file
-    while (!dataFile.eof())
-    {
-      std::vector<std::string> tokens = tokenize_line(dataFile," \t<>");
-      if(tokens.size()==0) continue;
-      if(tokens[0]!="CAMERA") continue;
-      assert(camera_index<2);
-      assert(tokens.size()>17);
-      int_t coeff_index = 0;
-      for(int_t i=2;i<=9;++i)
-        cal_intrinsics_[camera_index][coeff_index++] = strtod(tokens[i].c_str(),NULL);
-      coeff_index = 0;
-      for(int_t i=11;i<=16;++i){
-        cam_orientation[camera_index][coeff_index] = strtod(tokens[i].c_str(),NULL);
-        DEBUG_MSG("Triangulation::load_calibration_parameters(): camera " << camera_index << " orientation " <<
-          coeff_index << " " << cam_orientation[camera_index][coeff_index]);
-        coeff_index++;
-      }
-      // convert the Cardan-Bryant angles to the rotation matrix for each camera
-      convert_CB_angles_to_T(cam_orientation[camera_index][0],
-        cam_orientation[camera_index][1],
-        cam_orientation[camera_index][2],
-        cam_orientation[camera_index][3],
-        cam_orientation[camera_index][4],
-        cam_orientation[camera_index][5],
-        vec_of_Ts[camera_index]);
-      camera_index++;
-    } // end file read
-//    std::cout << " R0 matrix " << std::endl;
-//    for(int_t i=0;i<4;++i){
-//      for(int_t j=0;j<4;++j){
-//        std::cout << vec_of_Ts[0](i,j) << " ";
-//      }
-//      std::cout << std::endl;
-//    }
-//    std::cout << " R1 matrix " << std::endl;
-//    for(int_t i=0;i<4;++i){
-//      for(int_t j=0;j<4;++j){
-//        std::cout << vec_of_Ts[1](i,j) << " ";
-//      }
-//      std::cout << std::endl;
-//    }
-    // compute the inverse of camera 0
-    invert_transform(vec_of_Ts[0]);
-    // store the T matrix from camera 0 post-inversion as the trans_extrinsics (the camera_0 to world coordinates transform)
-    for(int_t i=0;i<4;++i){
-      for(int_t j=0;j<4;++j){
-        trans_extrinsics_[i][j] = vec_of_Ts[0](i,j);
-      }
-    }
-    // multiply the two tranformation matrices to get the left to right transform
-    for(int_t i=0;i<4;++i){
-      for(int_t j=0;j<4;++j){
-        for(int_t k=0;k<4;++k){
-          cal_extrinsics_[i][j] += vec_of_Ts[1](i,k)*vec_of_Ts[0](k,j);
-        }
-      }
-    }
-  }
-  else if(param_file_name.find(txt)!=std::string::npos){
-    DEBUG_MSG("Triangulation::load_calibration_parameters(): calibration file is generic txt format");
-    const int_t num_values_expected = 22;
-    const int_t num_values_expected_with_R = 28;
-    //const int_t num_values_with_custom_transform = 28;
-    int_t total_num_values = 0;
-    for(int_t i=0;i<4;++i){
-      trans_extrinsics_[i][i] = 1.0; // default transformation is the identity tensor
-    }
-    std::vector<scalar_t> extrinsics(6,0.0);
-    std::vector<scalar_t> trans_extrinsics(6,0.0);
-    bool has_transform = false;
-
-    while (!dataFile.eof())
-    {
-      std::vector<std::string> tokens = tokenize_line(dataFile," \t<>");
-      if(tokens.size()==0) continue;
-      if(tokens[0]=="#") continue;
-      if(tokens[0]=="TRANSFORM") {has_transform=true; break;}
-      total_num_values++;
-    }
-    //TEUCHOS_TEST_FOR_EXCEPTION(total_num_values!=num_values_expected&&total_num_values!=num_values_expected_with_R,std::runtime_error,
-    //  "Error, wrong number of parameters in calibration file: " << param_file_name);
-
-    // return to start of file:
-    dataFile.clear();
-    dataFile.seekg(0, std::ios::beg);
-
-    std::vector<int_t> id_to_array_loc_i;
-    std::vector<int_t> id_to_array_loc_j;
-    id_to_array_loc_i.push_back(0);
-    id_to_array_loc_i.push_back(0);
-    id_to_array_loc_i.push_back(0);
-    id_to_array_loc_i.push_back(1);
-    id_to_array_loc_i.push_back(1);
-    id_to_array_loc_i.push_back(1);
-    id_to_array_loc_i.push_back(2);
-    id_to_array_loc_i.push_back(2);
-    id_to_array_loc_i.push_back(2);
-    id_to_array_loc_j.push_back(0);
-    id_to_array_loc_j.push_back(1);
-    id_to_array_loc_j.push_back(2);
-    id_to_array_loc_j.push_back(0);
-    id_to_array_loc_j.push_back(1);
-    id_to_array_loc_j.push_back(2);
-    id_to_array_loc_j.push_back(0);
-    id_to_array_loc_j.push_back(1);
-    id_to_array_loc_j.push_back(2);
-
-    int_t num_values = 0;
-    while (!dataFile.eof())
-    {
-      std::vector<std::string> tokens = tokenize_line(dataFile," \t<>");
-      if(tokens.size()==0) continue;
-      if(tokens[0]=="#") continue;
-      if(tokens[0]=="TRANSFORM") {has_transform=true; break;}
-      if(tokens.size() > 1){
-        assert(tokens[1]=="#"); // only one entry per line plus comments
-      }
-      const int_t camera_index = num_values >= 8 ? 1 : 0;
-      if(num_values < 16)
-        cal_intrinsics_[camera_index][num_values - camera_index*8] = strtod(tokens[0].c_str(),NULL);
-      else if(num_values < 22 && (total_num_values == num_values_expected || total_num_values == num_values_expected +2))
-        extrinsics[num_values - 16] = strtod(tokens[0].c_str(),NULL);
-      else if(num_values < 25 && (total_num_values == num_values_expected_with_R || total_num_values == num_values_expected_with_R + 2))
-        cal_extrinsics_[id_to_array_loc_i[num_values-16]][id_to_array_loc_j[num_values-16]] = strtod(tokens[0].c_str(),NULL);
-      else if(num_values < 28 && (total_num_values == num_values_expected_with_R || total_num_values == num_values_expected_with_R + 2))
-        cal_extrinsics_[num_values-25][3] = strtod(tokens[0].c_str(),NULL);
-      else{
-//        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
-      }
-      num_values++;
-    }
-    num_values = 0;
-    if(has_transform){
-      while (!dataFile.eof())
-      {
-        std::vector<std::string> tokens = tokenize_line(dataFile," \t<>");
-        if(tokens.size()==0) continue;
-        if(tokens[0]=="#") continue;
-        if(tokens.size() > 1){
-          assert(tokens[1]=="#"); // only one entry per line plus comments
-        }
-        trans_extrinsics[num_values] = strtod(tokens[0].c_str(),NULL);
-        num_values++;
-      }
-    }
-    TEUCHOS_TEST_FOR_EXCEPTION(num_values!=0&&num_values!=6,std::runtime_error,"");
-
-
-    //TEUCHOS_TEST_FOR_EXCEPTION(num_values!=num_values_expected&&num_values!=num_values_with_custom_transform,std::runtime_error,
-    //  "Error reading calibration text file " << param_file_name);
-    if(total_num_values==num_values_expected || (total_num_values==num_values_expected +2)){ // not needed if R is specified explicitly
-      Teuchos::SerialDenseMatrix<int_t,double> converted_extrinsics(4,4,true);
-      convert_CB_angles_to_T(extrinsics[0],
-        extrinsics[1],
-        extrinsics[2],
-        extrinsics[3],
-        extrinsics[4],
-        extrinsics[5],
-        converted_extrinsics);
-      for(int_t i=0;i<4;++i)
-        for(int_t j=0;j<4;++j)
-          cal_extrinsics_[i][j] = converted_extrinsics(i,j);
-    }
-    else{
-      cal_extrinsics_[3][3] = 1.0;
-    }
-
-    if(has_transform){
-      DEBUG_MSG("Triangulation::load_calibration_parameters(): loading custom transform from camera 0 to world coordinates");
-      Teuchos::SerialDenseMatrix<int_t,double> converted_extrinsics(4,4,true);
-      convert_CB_angles_to_T(trans_extrinsics[0],
-        trans_extrinsics[1],
-        trans_extrinsics[2],
-        trans_extrinsics[3],
-        trans_extrinsics[4],
-        trans_extrinsics[5],
-        converted_extrinsics);
-      invert_transform(converted_extrinsics);
-      for(int_t i=0;i<4;++i)
-        for(int_t j=0;j<4;++j)
-          trans_extrinsics_[i][j] = converted_extrinsics(i,j);
-    }
-  }
-  else{
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,
-      "Error, unrecognized calibration parameters file format: " << param_file_name);
-  }
-  // for the satellite images, cx and cy can be negative or off the image boundary
-//  TEUCHOS_TEST_FOR_EXCEPTION(cal_intrinsics_[0][0]<=0.0,std::runtime_error,"Error, invalid cx for camera 0" << cal_intrinsics_[0][0]);
-//  TEUCHOS_TEST_FOR_EXCEPTION(cal_intrinsics_[0][1]<=0.0,std::runtime_error,"Error, invalid cy for camera 0" << cal_intrinsics_[0][1]);
-//  TEUCHOS_TEST_FOR_EXCEPTION(cal_intrinsics_[1][0]<=0.0,std::runtime_error,"Error, invalid cx for camera 1" << cal_intrinsics_[1][0]);
-//  TEUCHOS_TEST_FOR_EXCEPTION(cal_intrinsics_[1][1]<=0.0,std::runtime_error,"Error, invalid cy for camera 1" << cal_intrinsics_[1][1]);
-
-  for(int_t i=0;i<2;++i){
-    DEBUG_MSG("Triangulation::load_calibration_parameters(): camera " << i << " intrinsic parameters");
-    DEBUG_MSG("Triangulation::load_calibration_parameters(): cx " << cal_intrinsics_[i][0]);
-    DEBUG_MSG("Triangulation::load_calibration_parameters(): cy " << cal_intrinsics_[i][1]);
-    DEBUG_MSG("Triangulation::load_calibration_parameters(): fx " << cal_intrinsics_[i][2]);
-    DEBUG_MSG("Triangulation::load_calibration_parameters(): fy " << cal_intrinsics_[i][3]);
-    DEBUG_MSG("Triangulation::load_calibration_parameters(): fs " << cal_intrinsics_[i][4]);
-    DEBUG_MSG("Triangulation::load_calibration_parameters(): k1 " << cal_intrinsics_[i][5]);
-    DEBUG_MSG("Triangulation::load_calibration_parameters(): k2 " << cal_intrinsics_[i][6]);
-    DEBUG_MSG("Triangulation::load_calibration_parameters(): k3 " << cal_intrinsics_[i][7]);
-  }
-  DEBUG_MSG("Triangulation::load_calibration_parameters(): extrinsic T mat from camera 0 to camera 1");
-  for(int_t i=0;i<4;++i){
-    DEBUG_MSG("Triangulation::load_calibration_parameters(): " << cal_extrinsics_[i][0] <<
-      " " << cal_extrinsics_[i][1] << " " << cal_extrinsics_[i][2] << " " << cal_extrinsics_[i][3]);
-  }
-  DEBUG_MSG("Triangulation::load_calibration_parameters(): transform mat from camera 0 to world");
-  for(int_t i=0;i<4;++i){
-    DEBUG_MSG("Triangulation::load_calibration_parameters(): " << trans_extrinsics_[i][0] <<
-      " " << trans_extrinsics_[i][1] << " " << trans_extrinsics_[i][2] << " " << trans_extrinsics_[i][3]);
-  }
-  DEBUG_MSG("Triangulation::load_calibration_parameters(): end");
+  DEBUG_MSG("Triangulation::load_calibration_parameters(): successfully loaded camera system");
 }
 
 
@@ -719,11 +448,11 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
     }
     // determine the corresponding point in the camera 0 coordinates, given the image coordinates of the origin:
     // this is done by using the psi[u,v,1] = [F]*[X,Y,Z] formula with Z = -1(u0*X+u1*Y+u2) to solve for X and Y
-    const scalar_t cx = cal_intrinsics_[0][0];
-    const scalar_t cy = cal_intrinsics_[0][1];
-    const scalar_t fx = cal_intrinsics_[0][2];
-    const scalar_t fy = cal_intrinsics_[0][3];
-    const scalar_t fs = cal_intrinsics_[0][4];
+    const scalar_t cx = cal_intrinsics_[0][Camera::CX];
+    const scalar_t cy = cal_intrinsics_[0][Camera::CY];
+    const scalar_t fx = cal_intrinsics_[0][Camera::FX];
+    const scalar_t fy = cal_intrinsics_[0][Camera::FY];
+    const scalar_t fs = cal_intrinsics_[0][Camera::FS];
     scalar_t U = fit_def_x_left[0];
     scalar_t V = fit_def_y_left[0];
     const scalar_t c0 = u[0];
@@ -880,19 +609,19 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
   DEBUG_MSG("[proc " << comm.get_rank() << "] best fit plane coeff tz: "  << all_coeffs->local_value(11));
 
   // set the new transformation matrix
-  trans_extrinsics_[0][0] = all_coeffs->local_value(0);
-  trans_extrinsics_[0][1] = all_coeffs->local_value(1);
-  trans_extrinsics_[0][2] = all_coeffs->local_value(2);
-  trans_extrinsics_[0][3] = all_coeffs->local_value(3);
-  trans_extrinsics_[1][0] = all_coeffs->local_value(4);
-  trans_extrinsics_[1][1] = all_coeffs->local_value(5);
-  trans_extrinsics_[1][2] = all_coeffs->local_value(6);
-  trans_extrinsics_[1][3] = all_coeffs->local_value(7);
-  trans_extrinsics_[2][0] = all_coeffs->local_value(8);
-  trans_extrinsics_[2][1] = all_coeffs->local_value(9);
-  trans_extrinsics_[2][2] = all_coeffs->local_value(10);
-  trans_extrinsics_[2][3] = all_coeffs->local_value(11);
-  trans_extrinsics_[3][3] = 1.0;
+  cam_0_to_world_(0,0) = all_coeffs->local_value(0);
+  cam_0_to_world_(0,1) = all_coeffs->local_value(1);
+  cam_0_to_world_(0,2) = all_coeffs->local_value(2);
+  cam_0_to_world_(0,3) = all_coeffs->local_value(3);
+  cam_0_to_world_(1,0) = all_coeffs->local_value(4);
+  cam_0_to_world_(1,1) = all_coeffs->local_value(5);
+  cam_0_to_world_(1,2) = all_coeffs->local_value(6);
+  cam_0_to_world_(1,3) = all_coeffs->local_value(7);
+  cam_0_to_world_(2,0) = all_coeffs->local_value(8);
+  cam_0_to_world_(2,1) = all_coeffs->local_value(9);
+  cam_0_to_world_(2,2) = all_coeffs->local_value(10);
+  cam_0_to_world_(2,3) = all_coeffs->local_value(11);
+  cam_0_to_world_(3,3) = 1.0;
 }
 
 scalar_t
@@ -980,29 +709,29 @@ scalar_t Triangulation::triangulate(const scalar_t & x0,
     WORK[i] = 0.0;
 
   // calculate the M matrix
-  M(0,0) = cal_intrinsics_[0][2]; // fx0
-  M(0,1) = cal_intrinsics_[0][4]; // fs0
-  M(0,2) = cal_intrinsics_[0][0] - xc0; // cx1 - xs1
-  M(1,1) = cal_intrinsics_[0][3]; // fy1
-  M(1,2) = cal_intrinsics_[0][1] - yc0; // cy1 - ys1
-  cmx = cal_intrinsics_[1][0] - xc1; // cx2 - xs2
-  cmy = cal_intrinsics_[1][1] - yc1; // cy2 - ys2
+  M(0,0) = cal_intrinsics_[0][Camera::FX]; // fx0
+  M(0,1) = cal_intrinsics_[0][Camera::FS]; // fs0
+  M(0,2) = cal_intrinsics_[0][Camera::CX] - xc0; // cx1 - xs1
+  M(1,1) = cal_intrinsics_[0][Camera::FY]; // fy1
+  M(1,2) = cal_intrinsics_[0][Camera::CY] - yc0; // cy1 - ys1
+  cmx = cal_intrinsics_[1][Camera::CX] - xc1; // cx2 - xs2
+  cmy = cal_intrinsics_[1][Camera::CY] - yc1; // cy2 - ys2
   // (cx2-xs2)*R31 + fx2*R11 + fs2*R21
-  M(2,0) = cmx*cal_extrinsics_[2][0] + cal_intrinsics_[1][2]*cal_extrinsics_[0][0] + cal_intrinsics_[1][4]*cal_extrinsics_[1][0];
+  M(2,0) = cmx*cam_0_to_cam_1_(2,0) + cal_intrinsics_[1][Camera::FX]*cam_0_to_cam_1_(0,0) + cal_intrinsics_[1][Camera::FS]*cam_0_to_cam_1_(1,0);
   // (cx2-xs2)*R32 + fx2*R12 + fs2*R22
-  M(2,1) = cmx*cal_extrinsics_[2][1] + cal_intrinsics_[1][2]*cal_extrinsics_[0][1] + cal_intrinsics_[1][4]*cal_extrinsics_[1][1];
+  M(2,1) = cmx*cam_0_to_cam_1_(2,1) + cal_intrinsics_[1][Camera::FX]*cam_0_to_cam_1_(0,1) + cal_intrinsics_[1][Camera::FS]*cam_0_to_cam_1_(1,1);
   // (cx2-xs2)*R33 + fx2*R13 + fs2*R23
-  M(2,2) = cmx*cal_extrinsics_[2][2] + cal_intrinsics_[1][2]*cal_extrinsics_[0][2] + cal_intrinsics_[1][4]*cal_extrinsics_[1][2];
+  M(2,2) = cmx*cam_0_to_cam_1_(2,2) + cal_intrinsics_[1][Camera::FX]*cam_0_to_cam_1_(0,2) + cal_intrinsics_[1][Camera::FS]*cam_0_to_cam_1_(1,2);
   // (cy2-ys2)*R31 + fy2*R21
-  M(3,0) = cmy*cal_extrinsics_[2][0] + cal_intrinsics_[1][3]*cal_extrinsics_[1][0];
+  M(3,0) = cmy*cam_0_to_cam_1_(2,0) + cal_intrinsics_[1][Camera::FY]*cam_0_to_cam_1_(1,0);
   // (cy2-ys2)*R32 + fy2*R22
-  M(3,1) = cmy*cal_extrinsics_[2][1] + cal_intrinsics_[1][3]*cal_extrinsics_[1][1];
+  M(3,1) = cmy*cam_0_to_cam_1_(2,1) + cal_intrinsics_[1][Camera::FY]*cam_0_to_cam_1_(1,1);
   // (cy2-ys2)*R33 + fy2*R23
-  M(3,2) = cmy*cal_extrinsics_[2][2] + cal_intrinsics_[1][3]*cal_extrinsics_[1][2];
+  M(3,2) = cmy*cam_0_to_cam_1_(2,2) + cal_intrinsics_[1][Camera::FY]*cam_0_to_cam_1_(1,2);
   //-fx2tx - fs2ty -(cx2-xs2)*tz
-  r[2] = -cal_intrinsics_[1][2]*cal_extrinsics_[0][3] - cal_intrinsics_[1][4]*cal_extrinsics_[1][3] - cmx*cal_extrinsics_[2][3];
+  r[2] = -cal_intrinsics_[1][Camera::FX]*cam_0_to_cam_1_(0,3) - cal_intrinsics_[1][Camera::FS]*cam_0_to_cam_1_(1,3) - cmx*cam_0_to_cam_1_(2,3);
   //-fy2ty -(cy2-ys2)*tz
-  r[3] = -cal_intrinsics_[1][3]*cal_extrinsics_[1][3] - cmy*cal_extrinsics_[2][3];
+  r[3] = -cal_intrinsics_[1][Camera::FY]*cam_0_to_cam_1_(1,3) - cmy*cam_0_to_cam_1_(2,3);
 
 //  std::cout << " M matrix: " << std::endl;
 //  for(int_t i=0;i<4;++i){
@@ -1061,7 +790,7 @@ scalar_t Triangulation::triangulate(const scalar_t & x0,
   // apply the camera 0 to world coord transform
   for(int_t i=0;i<4;++i){
     for(int_t j=0;j<4;++j){
-      XYZ[i] += trans_extrinsics_[i][j]*XYZc0[j];
+      XYZ[i] += cam_0_to_world_(i,j)*XYZc0[j];
     }
   }
   xw_out = XYZ[0];
@@ -1080,14 +809,14 @@ Triangulation::correct_lens_distortion_radial(scalar_t & x_s,
   static scalar_t r1 = 0.0;
   static scalar_t r2 = 0.0;
   static scalar_t factor = 0.0;
-  r1 = (x_s-cal_intrinsics_[camera_id][0])/cal_intrinsics_[camera_id][0]; // tested above to see that cx > 0 and cy > 0 when cal parameters loaded
-  r2 = (y_s-cal_intrinsics_[camera_id][1])/cal_intrinsics_[camera_id][1];
+  r1 = (x_s-cal_intrinsics_[camera_id][Camera::CX])/cal_intrinsics_[camera_id][Camera::CX]; // tested above to see that cx > 0 and cy > 0 when cal parameters loaded
+  r2 = (y_s-cal_intrinsics_[camera_id][Camera::CY])/cal_intrinsics_[camera_id][Camera::CY];
   rho_tilde = r1*r1 + r2*r2;
-  factor = (cal_intrinsics_[camera_id][5]*rho_tilde + cal_intrinsics_[camera_id][6]*rho_tilde*rho_tilde
-      + cal_intrinsics_[camera_id][7]*rho_tilde*rho_tilde*rho_tilde);
+  factor = (cal_intrinsics_[camera_id][Camera::K1]*rho_tilde + cal_intrinsics_[camera_id][Camera::K2]*rho_tilde*rho_tilde
+      + cal_intrinsics_[camera_id][Camera::K3]*rho_tilde*rho_tilde*rho_tilde);
   //DEBUG_MSG("Triangulation::correct_lens_distortion(): corrections x " << factor*r1*cal_intrinsics_[camera_id][0] << " y " << factor*r2*cal_intrinsics_[camera_id][1]);
-  x_s = x_s - factor*r1*cal_intrinsics_[camera_id][0];
-  y_s = y_s - factor*r2*cal_intrinsics_[camera_id][1];
+  x_s = x_s - factor*r1*cal_intrinsics_[camera_id][Camera::CX];
+  y_s = y_s - factor*r2*cal_intrinsics_[camera_id][Camera::CY];
 }
 
 //void
@@ -1526,5 +1255,47 @@ Triangulation::project_left_to_right_sensor_coords(const scalar_t & xl,
   xr = (pr[0]*xt + pr[1]*yt + pr[2])/(pr[6]*xt + pr[7]*yt + pr[8]);
   yr = (pr[3]*xt + pr[4]*yt + pr[5])/(pr[6]*xt + pr[7]*yt + pr[8]);
 }
+
+void update_legacy_txt_cal_input(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
+  DEBUG_MSG("update_legacy_txt_cal_input(): function called");
+  if(!input_params->isParameter(DICe::calibration_parameters_file)) return; // the legacy txt files would have had this as an input parameter
+  const std::string cal_file_name = input_params->get<std::string>(DICe::calibration_parameters_file);
+  if (cal_file_name.find(".txt") == std::string::npos) return; // not a text file
+  std::fstream dataFile(cal_file_name.c_str(), std::ios_base::in);
+  if (!dataFile.good()) {
+    TEUCHOS_TEST_FOR_EXCEPTION(!dataFile.good(), std::runtime_error,
+      "Error, the camera system file does not exist or is corrupt: " << cal_file_name);
+  }
+  int_t total_num_values = 0;
+  //Run through the file to determine the format
+  while (!dataFile.eof()){
+    std::vector<std::string>tokens = tokenize_line(dataFile, " \t<>");
+    if (tokens.size() == 0) continue;
+    if (tokens[0] == "#") continue;
+    if (tokens[0] == "TRANSFORM") {
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, custom transforms are no longer supported in the txt calibration file format");
+    }
+    total_num_values++;
+  }
+  dataFile.close();
+  if(total_num_values!=22&&total_num_values!=28){ // either an invalid file or the width and height have already been added
+    return;
+  }
+  int_t width = -1;
+  int_t height = -1;
+  std::vector<std::string> image_files;
+  std::vector<std::string> stereo_image_files;
+  DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
+  DICe::utils::read_image_dimensions(image_files[0].c_str(),width,height);
+  TEUCHOS_TEST_FOR_EXCEPTION(width<0||height<0,std::runtime_error,
+    "Error, invalid image dimensions");
+  DEBUG_MSG("update_legacy_txt_cal_input(): updating the legacy txt input file to include WIDTH " << width << " HEIGHT " << height);
+  std::fstream outFile(cal_file_name.c_str(), std::ios_base::app);
+  outFile << height << " # HEIGHT" << std::endl;
+  outFile << width << " # WIDTH" << std::endl;
+  outFile.close();
+}
+
+
 
 }// End DICe Namespace

@@ -115,6 +115,8 @@ const char* const correlation_parameters_file = "correlation_parameters_file";
 /// Input parameter
 const char* const calibration_parameters_file = "calibration_parameters_file";
 /// Input parameter
+const char* const camera_system_file = "camera_system_file";
+/// Input parameter
 const char* const physics_parameters_file = "physics_parameters_file";
 // For simple two image correlation
 /// Input parameter
