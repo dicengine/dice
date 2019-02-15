@@ -113,13 +113,11 @@ IF(DICE_ENABLE_OPENCV)
   SET(DICE_SOURCES
     ${DICE_SOURCES}
     ./opencv/DICe_Feature.cpp
-    ./opencv/DICe_StereoCalib.cpp
     ./opencv/DICe_Calibration.cpp
   )
   SET(DICE_HEADERS
     ${DICE_HEADERS}
     ./opencv/DICe_Feature.h
-    ./opencv/DICe_StereoCalib.h
     ./opencv/DICe_Calibration.h
   )
 ENDIF()

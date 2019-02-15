@@ -47,7 +47,7 @@
 //#include <DICe_Shape.h>
 //#include <DICe_PointCloud.h>
 //#include <DICe_Triangulation.h>
-#include <DICe_StereoCalib.h>
+//#include <DICe_StereoCalib.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -169,6 +169,7 @@ int main(int argc, char *argv[]) {
       DEBUG_MSG("    parameter: " << filter_params[i][j]);
     if(filters[i]=="Filter:CalPreview"){
       DEBUG_MSG("CalPreview filter is active");
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
       is_cal = true;
     }
     if(filters[i]=="Filter:PreviewThreshold"){
@@ -262,38 +263,38 @@ int main(int argc, char *argv[]) {
     DEBUG_MSG("processing image " << input_images[image_it]);
 
     if(is_cal){
-      if(!has_blob || !has_binary){
-        std::cout << "error, cal preview requires blob and binary filters to be active" << std::endl;
-        return -1;
-      }
-      std::vector<Point2f> image_points;
-      std::vector<Point3f> object_points;
-      Size imageSize;
-      // find the cal dot points and check show a preview of their locations
-      const int pre_code = pre_process_cal_image(input_images[image_it],output_images[image_it],preview_params,
-        image_points,object_points,imageSize);
-      DEBUG_MSG("pre_process_cal_image return value: " << pre_code);
-      if(pre_code==-1)
-        return -1;
-      else if(pre_code==-4) // image load failure
-        return 9;
-      else if(pre_code!=0){
-        if(image_it==0)
-          error_code = 2; // left alone
-        else if(image_it==1&&error_code==0)
-          error_code = 3; // right alone
-        else if(image_it==1&&error_code!=0)
-          error_code = 4; // left and right failed
-        else if(image_it==2&&error_code==0)
-          error_code = 5; // middle alone
-        else if(image_it==2&&error_code==2)
-          error_code = 6; // middle and left
-        else if(image_it==2&&error_code==3)
-          error_code = 7; // middle and right
-        else if(image_it==2&&error_code==4)
-          error_code = 8; // all
-        continue;
-      } // pre_code != 0
+//      if(!has_blob || !has_binary){
+//        std::cout << "error, cal preview requires blob and binary filters to be active" << std::endl;
+//        return -1;
+//      }
+//      std::vector<Point2f> image_points;
+//      std::vector<Point3f> object_points;
+//      Size imageSize;
+//      // find the cal dot points and check show a preview of their locations
+//      const int pre_code = pre_process_cal_image(input_images[image_it],output_images[image_it],preview_params,
+//        image_points,object_points,imageSize);
+//      DEBUG_MSG("pre_process_cal_image return value: " << pre_code);
+//      if(pre_code==-1)
+//        return -1;
+//      else if(pre_code==-4) // image load failure
+//        return 9;
+//      else if(pre_code!=0){
+//        if(image_it==0)
+//          error_code = 2; // left alone
+//        else if(image_it==1&&error_code==0)
+//          error_code = 3; // right alone
+//        else if(image_it==1&&error_code!=0)
+//          error_code = 4; // left and right failed
+//        else if(image_it==2&&error_code==0)
+//          error_code = 5; // middle alone
+//        else if(image_it==2&&error_code==2)
+//          error_code = 6; // middle and left
+//        else if(image_it==2&&error_code==3)
+//          error_code = 7; // middle and right
+//        else if(image_it==2&&error_code==4)
+//          error_code = 8; // all
+//        continue;
+//      } // pre_code != 0
     } // end is cal
     else{
       // load the image as an openCV mat
