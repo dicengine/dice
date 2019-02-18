@@ -152,8 +152,8 @@ int main(int argc, char *argv[]) {
 
   // check if this is a calibration preview and also the filters applied:
   bool is_cal = false;
-  bool has_binary = false;
-  bool has_blob = false;
+  //bool has_binary = false;
+  //bool has_blob = false;
   bool preview_thresh = false;
   bool has_adaptive = false;
 
@@ -181,7 +181,7 @@ int main(int argc, char *argv[]) {
       has_adaptive = true;
     }
     if(filters[i]=="Filter:BinaryThreshold"){
-      has_binary = true;
+      //has_binary = true;
       if(filter_params[i].size()!=4){
         std::cout << "error, the number of parameters for a binary filter should be 4, not " << filter_params[i].size() << std::endl;
         return -1;
@@ -216,7 +216,7 @@ int main(int argc, char *argv[]) {
       //std::cout << "pattern spacing " << pattern_spacing << std::endl;
     }
     if(filters[i]=="Filter:Blob"){
-      has_blob = true;
+      //has_blob = true;
       if(filter_params[i].size()!=12){
         std::cout << "error, the number of parameters for a blob filter should be 12, not " << filter_params[i].size() << std::endl;
         return -1;

@@ -52,6 +52,7 @@
 #include <iomanip>
 #include <cassert>
 #include <array>
+#include <vector>
 
 namespace DICe {
 
