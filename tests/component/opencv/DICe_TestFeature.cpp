@@ -75,11 +75,17 @@ int main(int argc, char *argv[]) {
   std::vector<scalar_t> right_x;
   std::vector<scalar_t> right_y;
 
+  const int_t num_expected_matches = 1800;
+  // set up a range of expected matches since the opencv feature matching changes frequently
+  // and leads to diffs
+  const int_t num_expected_min = num_expected_matches * 0.75;
+  const int_t num_expected_max = num_expected_matches * 1.25;
+
   const float tol = 0.001f;
   match_features(left_img,right_img,left_x,left_y,right_x,right_y,tol,"res.png");
   const int_t num_matches = left_x.size();
   *outStream << "number of features matched: " << num_matches << std::endl;
-  if(num_matches!=1962){
+  if(num_matches<num_expected_min||num_matches>num_expected_max){//!=1962){
     errorFlag++;
     *outStream << "Error wrong number of matching features detected. Should be 1962 and is " << num_matches << std::endl;
   }

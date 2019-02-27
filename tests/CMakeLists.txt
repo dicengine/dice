@@ -29,6 +29,30 @@ IF(DICE_ENABLE_GLOBAL)
   ENDFOREACH ( )
 ENDIF()
 
+IF(DICE_ENABLE_OPENCV)
+  FILE ( GLOB test_opencv_cpp_files "${CMAKE_CURRENT_SOURCE_DIR}/component/opencv/*.cpp")
+  FOREACH ( test_file ${test_opencv_cpp_files})
+    # get the name of the test from the cpp filename
+    GET_FILENAME_COMPONENT ( name ${test_file} NAME_WE)
+    add_test(NAME ${name}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/component/opencv/
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/component/opencv/${name})
+    set_tests_properties(${name} PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
+  ENDFOREACH ( )
+ENDIF()
+
+IF(DICE_ENABLE_NETCDF)
+  FILE ( GLOB test_netcdf_cpp_files "${CMAKE_CURRENT_SOURCE_DIR}/component/netcdf/*.cpp")
+  FOREACH ( test_file ${test_netcdf_cpp_files})
+    # get the name of the test from the cpp filename
+    GET_FILENAME_COMPONENT ( name ${test_file} NAME_WE)
+    add_test(NAME ${name}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/component/netcdf/
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/component/netcdf/${name})
+    set_tests_properties(${name} PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
+  ENDFOREACH ( )
+ENDIF()
+
 # copy the image files to the build dir
 FILE ( GLOB img_files "${CMAKE_CURRENT_SOURCE_DIR}/component/images/*.*")
 FOREACH ( img_file ${img_files} )

@@ -206,8 +206,8 @@ Camera_System::read_camera_system_file(const std::string & file) {
           for (int_t j = 0; j < 3; j++) {
             std::stringstream row_param;
             row_param << "ROW " << j;
-            TEUCHOS_TEST_FOR_EXCEPTION(camRot.isParameter(row_param.str()),std::runtime_error,
-              "cal file missing row for camera 3x3 rotation matrix");
+            TEUCHOS_TEST_FOR_EXCEPTION(!camRot.isParameter(row_param.str()),std::runtime_error,
+              "cal file missing row " << j << " for camera 3x3 rotation matrix");
             std::string row_text = camRot.get<std::string>(row_param.str());
             tArray = Teuchos::fromStringToArray<scalar_t>(row_text);
             for (int_t i = 0; i < 3; i++)
