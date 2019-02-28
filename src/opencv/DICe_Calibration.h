@@ -45,10 +45,6 @@
 #include <DICe.h>
 
 #include "opencv2/core/core.hpp"
-#include "opencv2/calib3d.hpp"
-#include "opencv2/imgcodecs.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/imgproc.hpp"
 
 #include <Teuchos_ParameterList.hpp>
 #include <cassert>
@@ -123,12 +119,7 @@ public:
   size_t num_cams() const { return image_list_.size(); };
 
   /// \brief extract the points from the calibration image
-  /// \param threshold_start Optional starting threshold when looking for the marker dots (only used for dot targets)
-  /// \param threshold_end Optional ending threshold when looking for the marker dots (only used for dot targets)
-  /// \param threshold_step Optional threshold step when looking for the marker dots (only used for dot targets)
-  void extract_target_points(const int_t threshold_start = 20,
-    const int_t threshold_end = 250,
-    const int_t threshold_step = 5);
+  void extract_target_points();
 
   /// \brief writes a file with the image list, parameters and all the intersection points from the calibration images
   /// \param filename the name of the file to write (should end in xml)
@@ -168,63 +159,7 @@ private:
   void assemble_intersection_object_points();
 
   /// \brief extract the points from the calibration image
-  /// \param threshold_start Optional starting threshold when looking for the marker dots (only used for dot targets)
-  /// \param threshold_end Optional ending threshold when looking for the marker dots (only used for dot targets)
-  /// \param threshold_step Optional threshold step when looking for the marker dots (only used for dot targets)
-  void extract_dot_target_points(const int_t threshold_start,
-    const int_t threshold_end,
-    const int_t threshold_step);
-
-  /// uses the openCV blob detector to get possible dot locations
-  void get_dot_markers(cv::Mat img,
-    std::vector<cv::KeyPoint> & keypoints,
-    int_t thresh,
-    bool invert);
-
-  /// calculates the image to grid and grid to images coefficients based on the current set of good points
-  void calc_trans_coeff(std::vector<cv::KeyPoint> & imgpoints,
-    std::vector<cv::KeyPoint> & grdpoints);
-
-  /// filters the possible dots by size, the bounding box and how close they are to the expected grid locations
-  void filter_dot_markers(int_t icam,
-    int_t i_img, std::vector<cv::KeyPoint> dots,
-    std::vector<cv::KeyPoint> & img_points,
-    std::vector<cv::KeyPoint> & grd_points,
-    float dot_tol,
-    cv::Mat out_img,
-    bool draw);
-
-  /// reorders the keypoints into origin, x dot, y dot based on the distances between them
-  void reorder_keypoints(std::vector<cv::KeyPoint> & keypoints);
-
-  /// creates a quadrilateral that describes the allowable area for valid dots
-  void create_bounding_box(std::vector<float> & box_x,
-    std::vector<float> & box_y);
-
-  /// transformation from grid location (interger location with (0,0) at the minimum x minimum y location) to image locations
-  void grid_to_image(const float & grid_x,
-    const float & grid_y,
-    float & img_x,
-    float & img_y);
-
-  /// transformation from image locations to integer grid locations (0,0) at the minimum x minimum y location
-  void image_to_grid(const float & img_x,
-    const float & img_y,
-    float & grid_x,
-    float & grid_y);
-
-  /// checks if a point is in the bounding box quadrilateral
-  bool is_in_quadrilateral(const float & x,
-    const float & y,
-    const std::vector<float> & box_x,
-    const std::vector<float> & box_y);
-
-  /// returns the squared distance between two keypoints
-  float dist2(cv::KeyPoint pnt1, cv::KeyPoint pnt2);
-
-  /// returns indicies of three distances sorted by decending magnitude
-  void order_dist3(std::vector<float> & dist,
-    std::vector<int> & dist_order);
+  void extract_dot_target_points();
 
   /// the type of calibration target plate
   Target_Type target_type_;
@@ -275,12 +210,6 @@ private:
 
   /// images to use for the calibration
   std::vector<std::vector<std::string> > image_list_;
-
-  /// 6 transformation coefficients
-  std::vector<scalar_t> img_to_grdx_;
-  std::vector<scalar_t> grd_to_imgx_;
-  std::vector<scalar_t> img_to_grdy_;
-  std::vector<scalar_t> grd_to_imgy_;
 
   // save a copy of the input params:
   Teuchos::ParameterList input_params_;

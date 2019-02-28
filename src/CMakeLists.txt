@@ -114,11 +114,13 @@ IF(DICE_ENABLE_OPENCV)
     ${DICE_SOURCES}
     ./opencv/DICe_Feature.cpp
     ./opencv/DICe_Calibration.cpp
+    ./opencv/DICe_OpenCVServerUtils.cpp
   )
   SET(DICE_HEADERS
     ${DICE_HEADERS}
     ./opencv/DICe_Feature.h
     ./opencv/DICe_Calibration.h
+    ./opencv/DICe_OpenCVServerUtils.h
   )
 ENDIF()
 
