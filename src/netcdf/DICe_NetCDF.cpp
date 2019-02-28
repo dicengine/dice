@@ -310,8 +310,8 @@ NetCDF_Reader::read_netcdf_image(const char * file_name,
   starts[2] = 0;
   std::vector<size_t> counts(3);
   counts[0] = 1;
-  counts[1] = height;
-  counts[2] = width;
+  counts[1] = img_height;
+  counts[2] = img_width;
 
   // read the intensities
   //Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
