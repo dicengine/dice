@@ -18,6 +18,7 @@
   <Parameter name="cal_origin_x" type="int" value="2"/>
   <Parameter name="cal_origin_y" type="int" value="2"/>
   <Parameter name="cal_target_spacing_size" type="double" value="3.5"/>
+  <Parameter name="preview_threshold" type="bool" value="true"/>
   <Parameter name="draw_intersection_image" type="bool" value="true"/>
   <Parameter name="cal_debug_folder" type="string" value="./debug_images/"/>
 </ParameterList>

@@ -220,13 +220,15 @@ public:
     void check_valid()const;
     // clears all the parameter values in a camera
     void clear();
-    /// comparison operator
+    // difference with another camera info
+    scalar_t diff(const Camera_Info & rhs) const;
+    // comparison operator
     friend bool operator==(const Camera_Info & lhs,const Camera_Info & rhs);
-    /// comparison operator
+    // comparison operator
     friend bool operator!=(const Camera_Info & lhs,const Camera_Info & rhs){
       return !(lhs==rhs);
     }
-    /// overaload the ostream operator for a camera info class
+    // overaload the ostream operator for a camera info class
     friend std::ostream & operator<<(std::ostream & os, const Camera_Info & info);
   };
 
@@ -531,6 +533,11 @@ public:
     std::vector<scalar_t> & cam_y,
     std::vector<scalar_t> & cam_z) {
     rot_trans_transform(world_cam_trans_, wrld_x, wrld_y, wrld_z, cam_x, cam_y, cam_z);
+  }
+
+  /// compare the intrinsics and extrinsic values for a camera
+  scalar_t diff(const Camera & rhs) const{
+    return camera_info_.diff(rhs.camera_info_);
   }
 
 private:

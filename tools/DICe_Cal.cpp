@@ -41,6 +41,7 @@
 
 #include <DICe.h>
 #include <DICe_Calibration.h>
+#include <DICe_CameraSystem.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ParameterList.hpp>
@@ -75,7 +76,10 @@ int main(int argc, char *argv[]) {
   scalar_t rms = 0.0;
   Teuchos::RCP<Camera_System> cam_sys = cal.calibrate(rms);
   // write the calibration parameters to file which includes the interesection points
-  cal.write_calibration_file(output_file);
+  cam_sys->write_camera_system_file(output_file);
+#ifdef DICE_DEBUG_MSG
+  std::cout << *cam_sys.get() << std::endl;
+#endif
 
   DICe::finalize();
 

@@ -58,6 +58,7 @@ int main(int argc, char *argv[]) {
   int_t error_flag = 0;
   const scalar_t error_tol = 1.0E-5;
   const scalar_t max_rms = 0.75;
+  const scalar_t max_cal_diff = 5.0; // loose tol due to only using a portion of the total cal image collection to save space
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -65,7 +66,7 @@ int main(int argc, char *argv[]) {
   else
     outStream = Teuchos::rcp(&bhs, false);
 
-  *outStream << "--- Begin test ---" << std::endl;
+  *outStream << "--- Begin test ---e" << std::endl;
 
   // SINGLE CAM CHECKERBOARD
   try{
@@ -131,6 +132,25 @@ int main(int argc, char *argv[]) {
     error_flag++;
   }
 
+  // SIMULATED CHECKERBOARD WITH COMPARISON TO OUTPUT FROM ANOTHER CODE'S CALIBRATION
+  try{
+    DICe::Calibration sim_checkerboard_cal("../cal/sim_checkerboard_input.xml");
+    // create the intersection points and generate a calibrated camera system
+    scalar_t sim_checkerboard_rms = 0.0;
+    Teuchos::RCP<Camera_System> sim_checkerboard_cam_sys = sim_checkerboard_cal.calibrate(sim_checkerboard_rms);
+    Camera_System sim_checkerboard_gold_cam_sys("../cal/sim_checkerboard_cal_gold.xml");
+    const scalar_t sim_diff = sim_checkerboard_cam_sys->diff(sim_checkerboard_gold_cam_sys);
+    *outStream << "sim checkerboard error norm: " << sim_diff << std::endl;
+    if(sim_diff>max_cal_diff){
+      *outStream << "error, simulated checkerboard calibration not correct" << std::endl;
+      error_flag++;
+    }
+  }catch(std::exception & e){
+    *outStream << e.what() << std::endl;
+    *outStream << "error, simulated checkerboard case failed" << std::endl;
+    error_flag++;
+  }
+
   // STEREO DONUT DOTS
   try{
     DICe::Calibration cal_stereo_marker_dots("../cal/stereo_marker_dots_input.xml");
@@ -163,6 +183,46 @@ int main(int argc, char *argv[]) {
   }catch(std::exception & e){
     *outStream << e.what() << std::endl;
     *outStream << "error, stereo marker dots case failed" << std::endl;
+    error_flag++;
+  }
+
+  // SIMULATED DOT WITH COMPARISON TO OUTPUT FROM ANOTHER CODE'S CALIBRATION
+  try{
+    DICe::Calibration sim_dot_cal("../cal/sim_dot_input.xml");
+    // create the intersection points and generate a calibrated camera system
+    scalar_t sim_dot_rms = 0.0;
+    Teuchos::RCP<Camera_System> sim_dot_cam_sys = sim_dot_cal.calibrate(sim_dot_rms);
+    //std::cout << *sim_dot_cam_sys.get() << std::endl;
+    Camera_System sim_dot_gold_cam_sys("../cal/sim_dot_cal_gold.xml");
+    const scalar_t sim_dot_diff = sim_dot_cam_sys->diff(sim_dot_gold_cam_sys);
+    *outStream << "sim dot error norm: " << sim_dot_diff << std::endl;
+    if(sim_dot_diff>max_cal_diff){
+      *outStream << "error, simulated dot calibration not correct" << std::endl;
+      error_flag++;
+    }
+  }catch(std::exception & e){
+    *outStream << e.what() << std::endl;
+    *outStream << "error, simulated dot case failed" << std::endl;
+    error_flag++;
+  }
+
+  // SIMULATED SINGLE CAMERA WHITE DOT ON BLACK BOARD WITH COMPARISON TO OUTPUT FROM ANOTHER CODE'S CALIBRATION
+  try{
+    DICe::Calibration sim_white_dot_cal("../cal/sim_white_dot_input.xml");
+    // create the intersection points and generate a calibrated camera system
+    scalar_t sim_white_dot_rms = 0.0;
+    Teuchos::RCP<Camera_System> sim_white_dot_cam_sys = sim_white_dot_cal.calibrate(sim_white_dot_rms);
+    //std::cout << *sim_dot_cam_sys.get() << std::endl;
+    Camera_System sim_white_dot_gold_cam_sys("../cal/sim_white_dot_cal_gold.xml"); // same gold file as black on white example
+    const scalar_t sim_white_dot_diff = sim_white_dot_cam_sys->diff(sim_white_dot_gold_cam_sys);
+    *outStream << "sim white dot error norm: " << sim_white_dot_diff << std::endl;
+    if(sim_white_dot_diff>max_cal_diff){
+      *outStream << "error, simulated white dot calibration not correct" << std::endl;
+      error_flag++;
+    }
+  }catch(std::exception & e){
+    *outStream << e.what() << std::endl;
+    *outStream << "error, simulated white dot case failed" << std::endl;
     error_flag++;
   }
 

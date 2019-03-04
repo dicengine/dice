@@ -242,7 +242,7 @@ public:
 
   /// add operator
   template <size_t RRows, size_t RCols>
-  Matrix<Type,Rows,Cols> operator+(const Matrix<Type,RRows,RCols> & rhs){
+  Matrix<Type,Rows,Cols> operator+(const Matrix<Type,RRows,RCols> & rhs)const{
     validate_dimensions(rhs);
     Matrix<Type,Rows,Cols> ans;
     for(size_t i=0;i<rows_;++i)
@@ -253,7 +253,7 @@ public:
 
   /// subtract operator
   template <size_t RRows, size_t RCols>
-  Matrix<Type,Rows,Cols> operator-(const Matrix<Type,RRows,RCols> & rhs){
+  Matrix<Type,Rows,Cols> operator-(const Matrix<Type,RRows,RCols> & rhs)const{
     validate_dimensions(rhs);
     Matrix<Type,Rows,Cols> ans;
     for(size_t i=0;i<rows_;++i)
@@ -264,7 +264,7 @@ public:
 
   /// matrix times a matrix
   template <typename RType,size_t RRows,size_t RCols>
-  Matrix<Type,Rows,RCols> operator*(const Matrix<RType,RRows,RCols> & rhs){
+  Matrix<Type,Rows,RCols> operator*(const Matrix<RType,RRows,RCols> & rhs)const{
     static_assert(std::is_same<Type,RType>::value,"scalar type must be the same to multiply matrices");
     TEUCHOS_TEST_FOR_EXCEPTION(cols_!=rhs.rows(),std::runtime_error,"matrix dimensions are not compatible");
     Matrix<Type,Rows,RCols> ans(rows_,rhs.cols());
@@ -281,7 +281,7 @@ public:
   };
 
   /// transpose of a matrix
-  Matrix<Type,Cols,Rows> transpose(){
+  Matrix<Type,Cols,Rows> transpose()const{
     Matrix<Type,Cols,Rows> trans(cols_,rows_);
     for(size_t i=0;i<rows_;++i){
       for(size_t j=0;j<cols_;++j){
@@ -292,7 +292,7 @@ public:
   };
 
   /// 2 norm of a matrix
-  scalar_t norm(){
+  scalar_t norm() const{
     return norm(*this);
   };
 

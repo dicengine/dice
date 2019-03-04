@@ -117,13 +117,20 @@ Teuchos::ParameterList parse_filter_string(int argc, char *argv[]){
     if(name_value_flag)
       temp_name_string = argv[i];
     else{
+      std::string arg_upper = arg;
+      std::transform(arg_upper.begin(),arg_upper.end(),arg_upper.begin(),::toupper);
       if(std::isdigit(arg[0])){ // is the string a number?
         if(arg.find('.')!=std::string::npos){ // is it a double
           filter_params.set(temp_name_string,std::strtod(arg.c_str(),NULL));
         }else{
           filter_params.set(temp_name_string,std::atoi(arg.c_str()));
         }
-      }else{ // otherwise add a string parameter
+      }else if(arg_upper.find("TRUE")!=std::string::npos){
+        filter_params.set(temp_name_string,true);
+      }else if(arg_upper.find("FALSE")!=std::string::npos){ // test for bools
+        filter_params.set(temp_name_string,false);
+      }
+      else{ // otherwise add a string parameter
         filter_params.set(temp_name_string,arg);
       }
     }
@@ -204,9 +211,9 @@ int_t opencv_adaptive_threshold(Mat & img, Teuchos::ParameterList & options){
   //  cv::THRESH_MASK = 7,
   //  cv::THRESH_OTSU = 8,
   //  cv::THRESH_TRIANGLE = 16
-  int threshold_mode = options.get<int_t>(opencv_server_threshold_mode,0.0);
+  int threshold_mode = options.get<int_t>(opencv_server_threshold_mode,0);
   DEBUG_MSG("option, threshold mode:   " << threshold_mode);
-  int block_size = options.get<int_t>(opencv_server_block_size,3.0);
+  int block_size = options.get<int_t>(opencv_server_block_size,3);
   DEBUG_MSG("option, block size:      " << block_size);
   double binary_constant = options.get<double>(opencv_server_binary_constant,100.0);
   DEBUG_MSG("option, binary constant: " << binary_constant);
@@ -224,7 +231,7 @@ int_t opencv_binary_threshold(Mat & img, Teuchos::ParameterList & options){
   //  cv::THRESH_MASK = 7,
   //  cv::THRESH_OTSU = 8,
   //  cv::THRESH_TRIANGLE = 16
-  int threshold_mode = options.get<int_t>(opencv_server_threshold_mode,0.0);
+  int threshold_mode = options.get<int_t>(opencv_server_threshold_mode,0);
   DEBUG_MSG("option, threshold mode:   " << threshold_mode);
   double binary_constant = options.get<double>(opencv_server_binary_constant,100.0);
   DEBUG_MSG("option, binary constant: " << binary_constant);
@@ -303,8 +310,29 @@ int_t opencv_dot_targets(Mat & img, Teuchos::ParameterList & options,
   Mat img_cpy = img.clone();
 
   const int_t threshold_start = options.get<int_t>(opencv_server_threshold_start,20);
+  DEBUG_MSG("option, threshold start:   " << threshold_start);
   const int_t threshold_end = options.get<int_t>(opencv_server_threshold_end,250);
+  DEBUG_MSG("option, threshold end:     " << threshold_end);
   const int_t threshold_step = options.get<int_t>(opencv_server_threshold_step,5);
+  DEBUG_MSG("option, threshold step:    " << threshold_step);
+  const bool preview_thresh = options.get<bool>(opencv_server_preview_threshold,false);
+  DEBUG_MSG("option, preview thresh:    " << preview_thresh);
+  const int_t block_size = options.get<int_t>(opencv_server_block_size,3); // The old method had default set to 75
+  DEBUG_MSG("option, block size:        " << block_size);
+  const bool use_adaptive = options.get<bool>(opencv_server_use_adaptive_threshold,false);
+  DEBUG_MSG("option, use adaptive:      " << use_adaptive);
+  int filter_mode = options.get<int_t>(opencv_server_filter_mode,1);
+  DEBUG_MSG("option, filter mode:       " << filter_mode);
+  //  cv::THRESH_BINARY = 0,
+  //  cv::THRESH_BINARY_INV = 1,
+  //  cv::THRESH_TRUNC = 2,
+  //  cv::THRESH_TOZERO = 3,
+  //  cv::THRESH_TOZERO_INV = 4,
+  //  cv::THRESH_MASK = 7,
+  //  cv::THRESH_OTSU = 8,
+  //  cv::THRESH_TRIANGLE = 16
+  int threshold_mode = options.get<int_t>(opencv_server_threshold_mode,0);
+  DEBUG_MSG("option, threshold mode:   " << threshold_mode);
 
   // establish the calibration plate properties
   TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(DICe::num_cal_fiducials_x),std::runtime_error,"");
@@ -339,7 +367,7 @@ int_t opencv_dot_targets(Mat & img, Teuchos::ParameterList & options,
   int_t i_thresh = 0;
   for (i_thresh = threshold_start; i_thresh <= threshold_end; i_thresh += threshold_step) {
     // get the dots using an inverted image to get the donut holes
-    get_dot_markers(img_cpy, key_points, i_thresh, invert);
+    get_dot_markers(img_cpy, key_points, i_thresh, invert,options);
     // were three keypoints found?
     if (key_points.size() != 3) {
       keypoints_found = false;
@@ -362,7 +390,7 @@ int_t opencv_dot_targets(Mat & img, Teuchos::ParameterList & options,
   i_thresh = (i_thresh_first + i_thresh_last) / 2;
 
   // get the key points at the average threshold value
-  get_dot_markers(img_cpy, key_points, i_thresh, invert);
+  get_dot_markers(img_cpy, key_points, i_thresh, invert,options);
   // it is possible that this threshold does not have 3 points.
   // chances are that this indicates p thresholding problem to begin with
   if (key_points.size() != 3) {
@@ -384,6 +412,14 @@ int_t opencv_dot_targets(Mat & img, Teuchos::ParameterList & options,
     DEBUG_MSG("      keypoint: " << key_points[i].pt.x << " " << key_points[i].pt.y);
 
   Point cvpoint;
+  if(preview_thresh){
+    if(use_adaptive){
+      adaptiveThreshold(img,img,255,filter_mode,threshold_mode,block_size,i_thresh);
+    }else{
+      // apply thresholding
+      threshold(img,img,i_thresh,255,cv::THRESH_BINARY);
+    }
+  }
   // copy the image into the output image
   cvtColor(img, img, cv::COLOR_GRAY2RGB);
   for (int_t n = 0; n < 3; n++) {
@@ -431,7 +467,7 @@ int_t opencv_dot_targets(Mat & img, Teuchos::ParameterList & options,
 
   // get the rest of the dots
   std::vector<KeyPoint> dots;
-  get_dot_markers(img_cpy, dots, i_thresh, !invert);
+  get_dot_markers(img_cpy, dots, i_thresh, !invert,options);
   DEBUG_MSG("    prospective grid points found: " << dots.size());
 
   // filter dots based on avg size and whether the dots fall in the central box
@@ -473,37 +509,54 @@ int_t opencv_dot_targets(Mat & img, Teuchos::ParameterList & options,
 void get_dot_markers(cv::Mat img,
   std::vector<KeyPoint> & keypoints,
   int_t thresh,
-  bool invert) {
+  bool invert,
+  Teuchos::ParameterList & options) {
   DEBUG_MSG("get_dot_markers(): thresh " << thresh << " invert " << invert);
+  const int_t block_size = options.get<int_t>(opencv_server_block_size,3); // The old method had default set to 75
+  DEBUG_MSG("option, block size:        " << block_size);
+  const bool use_adaptive = options.get<bool>(opencv_server_use_adaptive_threshold,false);
+  DEBUG_MSG("option, use adaptive:      " << use_adaptive);
+  int filter_mode = options.get<int_t>(opencv_server_filter_mode,1);
+  DEBUG_MSG("option, filter mode:       " << filter_mode);
+  //  cv::THRESH_BINARY = 0,
+  //  cv::THRESH_BINARY_INV = 1,
+  //  cv::THRESH_TRUNC = 2,
+  //  cv::THRESH_TOZERO = 3,
+  //  cv::THRESH_TOZERO_INV = 4,
+  //  cv::THRESH_MASK = 7,
+  //  cv::THRESH_OTSU = 8,
+  //  cv::THRESH_TRIANGLE = 16
+  int threshold_mode = options.get<int_t>(opencv_server_threshold_mode,0);
+  DEBUG_MSG("option, threshold mode:    " << threshold_mode);
+
   // setup the blob detector
   SimpleBlobDetector::Params params;
   params.maxArea = 10e4;
   params.minArea = 100;
   cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
 
-  //clear the points vector
+  // clear the points vector
   keypoints.clear();
 
-  //create a temporary image
+  // create a temporary image
   Mat timg;
   img.copyTo(timg);
   // setup the binary image
   Mat bi_src(timg.size(), timg.type());
+
   // apply thresholding
-  threshold(timg, bi_src, thresh, 255, cv::THRESH_BINARY);
+  if(use_adaptive){
+    adaptiveThreshold(img,img,255,filter_mode,threshold_mode,block_size,thresh);
+  }else{
+    threshold(timg, bi_src, thresh, 255, cv::THRESH_BINARY);
+  }
   // invert the source image
   Mat not_src(bi_src.size(), bi_src.type());
   bitwise_not(bi_src, not_src);
 
-//  //detect dots on the appropriately inverted image
-//  if (target_type_ == BLACK_ON_WHITE_W_DONUT_DOTS) {
+  // detect dots on the appropriately inverted image
   if (invert) detector->detect(not_src, keypoints);
   else detector->detect(bi_src, keypoints);
-//  }
-//  else {
-//    if (invert) detector->detect(bi_src, keypoints);
-//    if (!invert) detector->detect(not_src, keypoints);
-//  }
   DEBUG_MSG("get_dot_markers(): num keypoints " << keypoints.size());
 }
 
@@ -721,7 +774,9 @@ void filter_dot_markers(std::vector<cv::KeyPoint>  dots,
       cvkeypoint.pt.y = grid_iy;
       img_points.push_back(dots[n]);
       grd_points.push_back(cvkeypoint);
-      if(draw) circle(img, cvpoint, 12, Scalar(0, 255, 0), 4);
+      if(draw){
+        circle(img, cvpoint, 12, Scalar(0, 255, 0), 4);
+      }
     }
   }//end dots loop
 
@@ -733,6 +788,10 @@ void filter_dot_markers(std::vector<cv::KeyPoint>  dots,
         grid_to_image(i_x, i_y, imgx, imgy,grd_to_imgx,grd_to_imgy,img.size().width,img.size().height);
         cvpoint.x = imgx;
         cvpoint.y = imgy;
+        std::stringstream dot_text;
+        dot_text << "(" << (int)i_x << "," << (int)i_y << ")";
+        putText(img, dot_text.str(), cvpoint + Point(20,20),
+          FONT_HERSHEY_COMPLEX_SMALL, 1.5, cvScalar(255,0,255), 1, cv::LINE_AA);
         circle(img, cvpoint, 5, Scalar(255, 0, 255), -1);
       }
     }
@@ -769,6 +828,8 @@ void create_bounding_box(std::vector<float> & box_x,
   //close the loop
   box_x[4] = box_x[0];
   box_y[4] = box_y[0];
+  DEBUG_MSG("create_bounding_box(): (" << box_x[0] << "," << box_y[0] << ") (" << box_x[1] << "," << box_y[1] << ") (" <<
+    box_x[2] << "," << box_y[2] << ") (" << box_x[3] << "," << box_y[3] << ")");
 }
 
 void grid_to_image(const float & grid_x,

@@ -56,6 +56,26 @@ Camera::Camera_Info::is_valid(){
   return true;
 };
 
+scalar_t
+Camera::Camera_Info::diff(const Camera::Camera_Info & rhs) const {
+  // iterate the intrinsics
+  scalar_t intrinsics_norm = 0.0;
+  for(size_t i=0;i<intrinsics_.size();++i){
+    scalar_t intrinsic_diff = std::abs(rhs.intrinsics_[i] - intrinsics_[i]);
+    if(intrinsic_diff>1.0){
+      DEBUG_MSG("Camera::Camera_Info::diff(): large difference in intrinsic parameter " << to_string(static_cast<Cam_Intrinsic_Param>(i)) <<
+        " " << intrinsics_[i] << " vs (rhs) " << rhs.intrinsics_[i]);
+    }
+    intrinsics_norm += std::abs(rhs.intrinsics_[i] - intrinsics_[i]);
+  }
+  DEBUG_MSG("Camera::Camera_Info::diff(): intrinsics norm: " << intrinsics_norm);
+  scalar_t rotation_norm = norm(rhs.rotation_matrix_ - rotation_matrix_);
+  DEBUG_MSG("Camera::Camera_Info::diff(): rotation norm: " << rotation_norm);
+  scalar_t trans_norm = std::abs(rhs.tx_ - tx_) + std::abs(rhs.ty_ - ty_) + std::abs(rhs.tz_ - tz_);
+  DEBUG_MSG("Camera::Camera_Info::diff(): trans norm: " << trans_norm);
+  return intrinsics_norm + rotation_norm + trans_norm;
+}
+
 bool
 operator==(const Camera::Camera_Info & lhs,const Camera::Camera_Info & rhs){
   bool is_equal = true;

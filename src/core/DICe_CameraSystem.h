@@ -136,6 +136,15 @@ public:
     return sys_type_;
   }
 
+  /// diffs all the cameras that make up a camera system
+  scalar_t diff(const Camera_System & rhs) const{
+    TEUCHOS_TEST_FOR_EXCEPTION(rhs.num_cameras()!=num_cameras(),std::runtime_error,"");
+    scalar_t diff_ = 0.0;
+    for(size_t i=0;i<num_cameras();++i)
+      diff_ += camera(i)->diff(*(rhs.camera(i).get()));
+    return diff_;
+  }
+
   /// returns true if the extrinsic parameters are camera to camera relative rather
   /// than from world to camera (if this is the case, the first camera's extrinsics
   /// are world to camera 0, the second camera's extrinsics are the camera 0 to camera 1
@@ -156,7 +165,7 @@ public:
   }
 
   /// \brief return a pointer to the camera with this vector index
-  Teuchos::RCP<Camera> camera(const size_t i){
+  Teuchos::RCP<Camera> camera(const size_t i)const{
     TEUCHOS_TEST_FOR_EXCEPTION(i>=num_cameras(),std::runtime_error,"");
     return cameras_[i];
   }

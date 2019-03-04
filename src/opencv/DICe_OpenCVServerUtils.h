@@ -68,6 +68,7 @@ const char* const opencv_server_filter_dot_targets = "dot_targets";
 
 /// Filter parameters
 const char* const opencv_server_filter_mode = "filter_mode";
+const char* const opencv_server_preview_threshold = "preview_threshold";
 const char* const opencv_server_threshold_mode = "threshold_mode";
 const char* const opencv_server_threshold_start = "threshold_start";
 const char* const opencv_server_threshold_end = "threshold_end";
@@ -75,6 +76,7 @@ const char* const opencv_server_threshold_step = "threshold_step";
 const char* const opencv_server_block_size = "block_size";
 const char* const opencv_server_binary_constant = "binary_constant";
 const char* const opencv_server_dot_tol = "dot_tol";
+const char* const opencv_server_use_adaptive_threshold = "use_adaptive_threshold";
 
 /// parse the input string and return a Teuchos ParameterList
 DICE_LIB_DLL_EXPORT
@@ -111,7 +113,8 @@ int_t opencv_dot_targets(cv::Mat & img, Teuchos::ParameterList & options);
 void get_dot_markers(cv::Mat img,
   std::vector<cv::KeyPoint> & keypoints,
   int_t thresh,
-  bool invert);
+  bool invert,
+  Teuchos::ParameterList & options);
 /// calculates the image to grid and grid to images coefficients based on the current set of good points
 void calc_trans_coeff(std::vector<cv::KeyPoint> & imgpoints,
   std::vector<cv::KeyPoint> & grdpoints,

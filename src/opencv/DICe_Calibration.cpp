@@ -160,7 +160,7 @@ Calibration::init(const Teuchos::RCP<Teuchos::ParameterList> params){
 
   // initialize the image size
   Mat img = imread(image_list_[0][0], IMREAD_GRAYSCALE);
-  TEUCHOS_TEST_FOR_EXCEPTION(img.empty(),std::runtime_error,"image read failure");
+  TEUCHOS_TEST_FOR_EXCEPTION(img.empty(),std::runtime_error,"image read failure " << image_list_[0][0]);
   image_size_ = img.size();
 
   // read the images that have been turned off if the list exists
@@ -400,12 +400,6 @@ Calibration::extract_checkerboard_intersections(){
       //the image was found save the size for the calibration
       TEUCHOS_TEST_FOR_EXCEPTION(img.size()!=image_size_,std::runtime_error,"");
       const int_t error_code = opencv_checkerboard_targets(img,input_params_,corners);
-      if(error_code!=0){
-        //remove the image from the calibration and proceed with the next image
-        include_set_[i_image] = false;
-        DEBUG_MSG("warning: checkerboard intersections were not found, excluding image");
-        continue;
-      }
       // draw a debugging image if requested
       if (draw_intersection_image_){
         std::stringstream out_file_name;
@@ -415,6 +409,12 @@ Calibration::extract_checkerboard_intersections(){
         out_file_name << "_markers.png";
         DEBUG_MSG("writing intersections image: " << out_file_name.str());
         imwrite(out_file_name.str(), img);
+      }
+      if(error_code!=0){
+        //remove the image from the calibration and proceed with the next image
+        include_set_[i_image] = false;
+        DEBUG_MSG("warning: checkerboard intersections were not found, excluding image");
+        continue;
       }
       int_t i_pnt = 0;
       for (int_t i_y = 0; i_y < num_fiducials_y_; i_y++) {
@@ -499,11 +499,6 @@ Calibration::extract_dot_target_points(){
       std::vector<KeyPoint> grd_points;
       int_t error_code = opencv_dot_targets(img, input_params_,
         key_points,img_points,grd_points);
-      if(error_code!=0){
-        std::cout << image_list_[i_cam][i_image] << " failed dot extraction with error code: " << error_code << std::endl;
-        include_set_[i_image] = false;
-        continue;
-      }
       // draw a debugging image if requested
       if (draw_intersection_image_){
         std::stringstream out_file_name;
@@ -514,18 +509,23 @@ Calibration::extract_dot_target_points(){
         DEBUG_MSG("writing intersections image: " << out_file_name.str());
         imwrite(out_file_name.str(), img);
       }
+      if(error_code!=0){
+        std::cout << image_list_[i_cam][i_image] << " failed dot extraction with error code: " << error_code << std::endl;
+        include_set_[i_image] = false;
+        continue;
+      }
       TEUCHOS_TEST_FOR_EXCEPTION(i_cam>=image_points_.size(),
-        std::runtime_error,"cal target parameters likely incorrect");
+        std::runtime_error,"cal target parameters likely incorrect, invalid camera number");
       TEUCHOS_TEST_FOR_EXCEPTION(i_image>=image_points_[i_cam].size(),
-        std::runtime_error,"cal target parameters likely incorrect");
+        std::runtime_error,"cal target parameters likely incorrect, invalid image number");
       TEUCHOS_TEST_FOR_EXCEPTION(origin_loc_x_>=(int_t)image_points_[i_cam][i_image].size(),
-        std::runtime_error,"cal target parameters likely incorrect");
+        std::runtime_error,"cal target parameters likely incorrect, origin is off the grid");
       TEUCHOS_TEST_FOR_EXCEPTION(origin_loc_x_ + num_fiducials_origin_to_x_marker_-1>=(int_t)image_points_[i_cam][i_image].size(),
-        std::runtime_error,"cal target parameters likely incorrect");
+        std::runtime_error,"cal target parameters likely incorrect, x axis marker is off the grid");
       TEUCHOS_TEST_FOR_EXCEPTION(origin_loc_y_>=(int_t)image_points_[i_cam][i_image][origin_loc_x_+num_fiducials_origin_to_x_marker_-1].size(),
-        std::runtime_error,"cal target parameters likely incorrect");
-      TEUCHOS_TEST_FOR_EXCEPTION(origin_loc_x_+num_fiducials_origin_to_x_marker_-1>=(int_t)image_points_[i_cam][i_image][origin_loc_x_].size(),
-        std::runtime_error,"cal target parameters likely incorrect");
+        std::runtime_error,"cal target parameters likely incorrect, origin is off the grid");
+      TEUCHOS_TEST_FOR_EXCEPTION(origin_loc_y_+num_fiducials_origin_to_y_marker_-1>=(int_t)image_points_[i_cam][i_image][origin_loc_x_].size(),
+        std::runtime_error,"cal target parameters likely incorrect, y axis marker is off the grid");
 
       //add the keypoints to the found positions
       assert(key_points.size()==3);

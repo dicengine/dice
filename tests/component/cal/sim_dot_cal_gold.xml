@@ -1,0 +1,35 @@
+<ParameterList>
+  <Parameter name="xml_file_format" type="string" value="DICe_xml_camera_system_file" />  
+  <Parameter name="system_type_3D" type="string" value="OPENCV" />  
+  <Parameter name="extrinsics_relative_camera_to_camera" type="bool" value="true" />  
+  <ParameterList name="CAMERA 0">
+    <Parameter name="CAMERA_ID" type="string" value="" />  
+    <Parameter name="CX" type="double" value="872.1577" />  
+    <Parameter name="CY" type="double" value="579.955" />  
+    <Parameter name="FX" type="double" value="6673.3159" />  
+    <Parameter name="FY" type="double" value="6669.3027" />  
+    <Parameter name="K1" type="double" value="0.021682" />
+    <Parameter name="K2" type="double" value="-0.01028" />
+    <Parameter name="K3" type="double" value="2.0585" />
+    <Parameter name="LENS_DISTORTION_MODEL" type="string" value="OPENCV_LENS_DISTORTION" />  
+    <Parameter name="IMAGE_HEIGHT_WIDTH" type="string" value="{ 1200, 1920 }" />  
+  </ParameterList>
+  <ParameterList name="CAMERA 1">
+    <Parameter name="CAMERA_ID" type="string" value="" />  
+    <Parameter name="CX" type="double" value="917.973" />  
+    <Parameter name="CY" type="double" value="531.635" />  
+    <Parameter name="FX" type="double" value="6607.61" />  
+    <Parameter name="FY" type="double" value="6602.85" />  
+    <Parameter name="K1" type="double" value="0.052631" />
+    <Parameter name="K2" type="double" value="-3.4485" />
+    <Parameter name="K3" type="double" value="-0.91399" />
+    <Parameter name="LENS_DISTORTION_MODEL" type="string" value="OPENCV_LENS_DISTORTION" />  
+    <Parameter name="TX" type="double" value="122.2488" />  
+    <Parameter name="TY" type="double" value="1.84888" />   
+    <Parameter name="TZ" type="double" value="17.62463" />  
+    <Parameter name="ALPHA" type="double" value="0.13068954" />  
+    <Parameter name="BETA" type="double" value="-19.0676936" />  
+    <Parameter name="GAMMA" type="double" value="0.281404038" />  
+    <Parameter name="IMAGE_HEIGHT_WIDTH" type="string" value="{ 1200, 1920 }" />  
+  </ParameterList>
+</ParameterList>

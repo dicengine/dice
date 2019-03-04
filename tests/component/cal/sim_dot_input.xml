@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ParameterList>
+  <Parameter name="xml_file_format" type="string" value="DICe_xml_calibration_file"/>
+  <Parameter name="image_folder" type="string" value="../images/"/>
+  <Parameter name="image_file_prefix" type="string" value="dot_"/>
+  <Parameter name="stereo_left_suffix" type="string" value="_0"/>
+  <Parameter name="stereo_right_suffix" type="string" value="_1"/>
+  <Parameter name="image_file_extension" type="string" value=".jpeg"/>
+  <Parameter name="reference_image_index" type="int" value="0"/>
+  <Parameter name="start_image_index" type="int" value="0"/>
+  <Parameter name="end_image_index" type="int" value="20"/>
+  <Parameter name="num_file_suffix_digits" type="int" value="2"/>
+  <Parameter name="cal_target_type" type="string" value="BLACK_ON_WHITE_W_DONUT_DOTS"/>
+  <Parameter name="num_cal_fiducials_x" type="int" value="14"/>
+  <Parameter name="num_cal_fiducials_y" type="int" value="10"/>
+  <Parameter name="num_cal_fiducials_origin_to_x_marker" type="int" value="10"/>
+  <Parameter name="num_cal_fiducials_origin_to_y_marker" type="int" value="6"/>
+  <Parameter name="cal_origin_x" type="int" value="2"/>
+  <Parameter name="cal_origin_y" type="int" value="2"/>
+  <Parameter name="cal_target_spacing_size" type="double" value="7.0"/> <!--7mm-->
+  <Parameter name="draw_intersection_image" type="bool" value="false"/>
+  <Parameter name="threshold_start" type="int" value="100"/>
+  <Parameter name="threshold_end" type="int" value="100"/>
+</ParameterList>
