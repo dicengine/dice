@@ -338,6 +338,7 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::global_solver,CG_SOLVER);
   defaultParams->set(DICe::global_element_type,"TRI6");
   defaultParams->set(DICe::num_image_integration_points,20);
+  defaultParams->set(DICe::write_exodus_output,true);
 }
 
 DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultParams){
@@ -395,6 +396,7 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::global_element_type,"TRI6");
   defaultParams->set(DICe::global_solver,CG_SOLVER);
   defaultParams->set(DICe::num_image_integration_points,20);
+  defaultParams->set(DICe::write_exodus_output,true);
 }
 
 }// End DICe Namespace

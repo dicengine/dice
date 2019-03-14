@@ -309,6 +309,8 @@ const char* const num_image_integration_points = "num_image_integration_points";
 const char* const global_element_type = "global_element_type";
 /// String parameter name, only for global DIC
 const char* const use_fixed_point_iterations = "use_fixed_point_iterations";
+/// String parameter name, only for global DIC
+const char* const write_exodus_output = "write_exodus_output";
 
 
 /// enums:
@@ -1061,6 +1063,12 @@ const Correlation_Parameter use_fixed_point_iterations_param(use_fixed_point_ite
   "Used only for global, uses the fixed point iteration scheme for the global method."
 );
 /// Correlation parameter and properties
+const Correlation_Parameter write_exodus_output_param(write_exodus_output,
+  BOOL_PARAM,
+  true,
+  "Used when DICE_ENABLE_GLOBAL is true, writes an exodus output file."
+);
+/// Correlation parameter and properties
 const Correlation_Parameter global_element_type_param(global_element_type,
   STRING_PARAM,
   true,
@@ -1149,7 +1157,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 85;
+const int_t num_valid_correlation_params = 86;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1236,7 +1244,8 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   global_element_type_param,
   num_image_integration_points_param,
   use_fixed_point_iterations_param,
-  compute_laplacian_image_param
+  compute_laplacian_image_param,
+  write_exodus_output_param,
 };
 
 // TODO don't forget to update this when adding a new one
