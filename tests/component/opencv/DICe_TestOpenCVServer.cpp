@@ -65,8 +65,6 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- Begin test ---" << std::endl;
 
-  // TODO update the options and filters to be real filters and real options
-
   std::vector<std::string> arguments = {"./DICe_OpenCVServer",
     "../images/CalB-sys2-0001_0.jpeg",
     "./cal_0.png",

@@ -108,10 +108,12 @@ Teuchos::ParameterList parse_filter_string(int argc, char *argv[]){
     if(arg.find("filter:")!=std::string::npos){
       // remove the Filter: decorator
       arg.erase(0,7);
-      if(filter_params.numParams()>0)
+      if(filter_params.numParams()>0) // save off the previous filter's params
         filters.set(filter_name,filter_params);
       filter_params = Teuchos::ParameterList();
       filter_name = arg;
+      if(filter_name=="none") // save off an empty parameter list for filter:none
+        filters.set(filter_name,filter_params);
       continue;
     } // end found filter keyword
     if(name_value_flag)
@@ -176,7 +178,10 @@ int_t opencv_server(int argc, char *argv[]){
       DEBUG_MSG("Applying filter: " << filter);
       Teuchos::ParameterList options = filters.get<Teuchos::ParameterList>(filter,Teuchos::ParameterList());
       // switch statement on the filters, pass the options as an argument and the opencv image mat
-      if(filter==opencv_server_filter_binary_threshold){
+      if(filter==opencv_server_filter_none){
+        // no op
+      }
+      else if(filter==opencv_server_filter_binary_threshold){
         error_code = opencv_binary_threshold(img,options);
       }else if(filter==opencv_server_filter_adaptive_threshold){
         error_code = opencv_adaptive_threshold(img,options);
@@ -189,13 +194,14 @@ int_t opencv_server(int argc, char *argv[]){
         error_code = -1;
       }
     } // end filter iteration
-    if(error_code!=-1){
-      DEBUG_MSG("Writing output image: " << image_out_filename);
-      imwrite(image_out_filename, img);
-    }
+    //if(error_code!=-1){
+    DEBUG_MSG("Writing output image: " << image_out_filename);
+    imwrite(image_out_filename, img);
+    //}
+    if(error_code) // exit on the first error
+      return error_code;
   } // end file iteration
-
-  return error_code;
+  return 0;
 }
 
 DICE_LIB_DLL_EXPORT
@@ -213,7 +219,7 @@ int_t opencv_adaptive_threshold(Mat & img, Teuchos::ParameterList & options){
   //  cv::THRESH_TRIANGLE = 16
   int threshold_mode = options.get<int_t>(opencv_server_threshold_mode,0);
   DEBUG_MSG("option, threshold mode:   " << threshold_mode);
-  int block_size = options.get<int_t>(opencv_server_block_size,3);
+  int block_size = options.get<int_t>(opencv_server_block_size,75);
   DEBUG_MSG("option, block size:      " << block_size);
   double binary_constant = options.get<double>(opencv_server_binary_constant,100.0);
   DEBUG_MSG("option, binary constant: " << binary_constant);
@@ -262,8 +268,11 @@ int_t opencv_checkerboard_targets(Mat & img, Teuchos::ParameterList & options,
   //set the height and width of the board in intersections
   board_size.width = num_fiducials_x;
   board_size.height = num_fiducials_y;
-  // convert the image to color
+
+  // FIXME this method goes into an infinite loop if the number of corners in x and y is not correct
+  // come up with a way to detect this...
   const bool found = findChessboardCorners(img, board_size, corners, CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE);
+
   if(found){
     DEBUG_MSG("found " << corners.size() << " checkerboard intersections");
     // improve the locations with cornerSubPixel
@@ -317,10 +326,11 @@ int_t opencv_dot_targets(Mat & img, Teuchos::ParameterList & options,
   DEBUG_MSG("option, threshold step:    " << threshold_step);
   const bool preview_thresh = options.get<bool>(opencv_server_preview_threshold,false);
   DEBUG_MSG("option, preview thresh:    " << preview_thresh);
-  const int_t block_size = options.get<int_t>(opencv_server_block_size,3); // The old method had default set to 75
+  const int_t block_size = options.get<int_t>(opencv_server_block_size,75); // The old method had default set to 75
   DEBUG_MSG("option, block size:        " << block_size);
   const bool use_adaptive = options.get<bool>(opencv_server_use_adaptive_threshold,false);
   DEBUG_MSG("option, use adaptive:      " << use_adaptive);
+  TEUCHOS_TEST_FOR_EXCEPTION(!use_adaptive&&threshold_start<=0,std::runtime_error,"");
   int filter_mode = options.get<int_t>(opencv_server_filter_mode,1);
   DEBUG_MSG("option, filter mode:       " << filter_mode);
   //  cv::THRESH_BINARY = 0,
@@ -364,31 +374,32 @@ int_t opencv_dot_targets(Mat & img, Teuchos::ParameterList & options,
   //try to find the keypoints at different thresholds
   int_t i_thresh_first = 0;
   int_t i_thresh_last = 0;
-  int_t i_thresh = 0;
-  for (i_thresh = threshold_start; i_thresh <= threshold_end; i_thresh += threshold_step) {
-    // get the dots using an inverted image to get the donut holes
-    get_dot_markers(img_cpy, key_points, i_thresh, invert,options);
-    // were three keypoints found?
-    if (key_points.size() != 3) {
-      keypoints_found = false;
-      if (i_thresh_first != 0) {
-        keypoints_found = true; // keypoints found in a previous pass
-        break; // get out of threshold loop
+  int_t i_thresh = threshold_start;
+  if(threshold_start!=threshold_end){
+    for (; i_thresh <= threshold_end; i_thresh += threshold_step) {
+      // get the dots using an inverted image to get the donut holes
+      get_dot_markers(img_cpy, key_points, i_thresh, invert,options);
+      // were three keypoints found?
+      if (key_points.size() != 3) {
+        keypoints_found = false;
+        if (i_thresh_first != 0) {
+          keypoints_found = true; // keypoints found in a previous pass
+          break; // get out of threshold loop
+        }
       }
-    }
-    else
-    {
-      //save the threshold value if needed
-      if (i_thresh_first == 0) {
-        i_thresh_first = i_thresh;
+      else
+      {
+        //save the threshold value if needed
+        if (i_thresh_first == 0) {
+          i_thresh_first = i_thresh;
+        }
+        i_thresh_last = i_thresh;
+        keypoints_found = true;
       }
-      i_thresh_last = i_thresh;
-      keypoints_found = true;
-    }
-  } // end marker (donut) dot threshholding loop
-  // calculate the average threshold value
-  i_thresh = (i_thresh_first + i_thresh_last) / 2;
-
+    } // end marker (donut) dot threshholding loop
+    // calculate the average threshold value
+    i_thresh = (i_thresh_first + i_thresh_last) / 2;
+  }
   // get the key points at the average threshold value
   get_dot_markers(img_cpy, key_points, i_thresh, invert,options);
   // it is possible that this threshold does not have 3 points.
@@ -397,6 +408,15 @@ int_t opencv_dot_targets(Mat & img, Teuchos::ParameterList & options,
     DEBUG_MSG("warning: unable to identify three keypoints");
     DEBUG_MSG("         other points will not be extracted");
     keypoints_found = false;
+  }
+  Point cvpoint;
+  if(preview_thresh){
+    if(use_adaptive){
+      adaptiveThreshold(img,img,255,filter_mode,threshold_mode,block_size,i_thresh);
+    }else{
+      // apply thresholding
+      threshold(img,img,i_thresh,255,threshold_mode);
+    }
   }
   if(!keypoints_found) return -1;
 
@@ -411,15 +431,6 @@ int_t opencv_dot_targets(Mat & img, Teuchos::ParameterList & options,
   for (size_t i = 0; i < key_points.size(); ++i) //save and display the keypoints
     DEBUG_MSG("      keypoint: " << key_points[i].pt.x << " " << key_points[i].pt.y);
 
-  Point cvpoint;
-  if(preview_thresh){
-    if(use_adaptive){
-      adaptiveThreshold(img,img,255,filter_mode,threshold_mode,block_size,i_thresh);
-    }else{
-      // apply thresholding
-      threshold(img,img,i_thresh,255,cv::THRESH_BINARY);
-    }
-  }
   // copy the image into the output image
   cvtColor(img, img, cv::COLOR_GRAY2RGB);
   for (int_t n = 0; n < 3; n++) {
@@ -501,8 +512,11 @@ int_t opencv_dot_targets(Mat & img, Teuchos::ParameterList & options,
   // save the information about the found dots
   DEBUG_MSG("    good dots identified: " << new_dot_num);
   DEBUG_MSG("    filter passes: " << filter_passes);
-
-  return 0;
+  if(new_dot_num < num_fiducials_x*num_fiducials_y*0.75){ // TODO fix this hard coded tolerance
+    return 1;
+  }
+  else
+    return 0;
 }
 
 // get all the possible dot markers
@@ -512,7 +526,7 @@ void get_dot_markers(cv::Mat img,
   bool invert,
   Teuchos::ParameterList & options) {
   DEBUG_MSG("get_dot_markers(): thresh " << thresh << " invert " << invert);
-  const int_t block_size = options.get<int_t>(opencv_server_block_size,3); // The old method had default set to 75
+  const int_t block_size = options.get<int_t>(opencv_server_block_size,75); // The old method had default set to 75
   DEBUG_MSG("option, block size:        " << block_size);
   const bool use_adaptive = options.get<bool>(opencv_server_use_adaptive_threshold,false);
   DEBUG_MSG("option, use adaptive:      " << use_adaptive);
@@ -548,7 +562,7 @@ void get_dot_markers(cv::Mat img,
   if(use_adaptive){
     adaptiveThreshold(img,img,255,filter_mode,threshold_mode,block_size,thresh);
   }else{
-    threshold(timg, bi_src, thresh, 255, cv::THRESH_BINARY);
+    threshold(timg, bi_src, thresh, 255, threshold_mode);
   }
   // invert the source image
   Mat not_src(bi_src.size(), bi_src.type());
