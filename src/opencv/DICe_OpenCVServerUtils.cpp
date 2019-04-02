@@ -166,11 +166,11 @@ int_t opencv_server(int argc, char *argv[]){
     Mat img = imread(image_in_filename, IMREAD_GRAYSCALE);
     if(img.empty()){
       std::cout << "error, the image is empty" << std::endl;
-      return -1;
+      return 4;
     }
     if(!img.data){
       std::cout << "error, the image failed to load" << std::endl;
-      return -1;
+      return 4;
     }
     // iterate the selected filters
     for(Teuchos::ParameterList::ConstIterator filter_it=filters.begin();filter_it!=filters.end();++filter_it){
@@ -191,7 +191,7 @@ int_t opencv_server(int argc, char *argv[]){
         error_code = opencv_dot_targets(img,options);
       }else{
         std::cout << "error, unknown filter: " << filter << std::endl;
-        error_code = -1;
+        error_code = 5;
       }
     } // end filter iteration
     //if(error_code!=-1){
@@ -257,7 +257,7 @@ int_t opencv_checkerboard_targets(Mat & img, Teuchos::ParameterList & options,
   // establish the calibration plate properties
   if(!options.isParameter(DICe::num_cal_fiducials_x)||!options.isParameter(DICe::num_cal_fiducials_y)){
     std::cout << "error, missing checkerboard dimensions" << std::endl;
-    return -1;
+    return 2;
   }
   corners.clear();
   const int_t num_fiducials_x = options.get<int_t>(DICe::num_cal_fiducials_x);
@@ -290,7 +290,7 @@ int_t opencv_checkerboard_targets(Mat & img, Teuchos::ParameterList & options,
     } // end corner loop y
   }else{
     std::cout << "opencv_checkerboard(): failed" << std::endl;
-    return -1;
+    return 3;
   }
   return 0;
 }
@@ -418,7 +418,7 @@ int_t opencv_dot_targets(Mat & img, Teuchos::ParameterList & options,
       threshold(img,img,i_thresh,255,threshold_mode);
     }
   }
-  if(!keypoints_found) return -1;
+  if(!keypoints_found) return 1;
 
   // now that we have the keypoints try to get the rest of the dots
 
