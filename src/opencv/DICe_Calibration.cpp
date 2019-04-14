@@ -304,33 +304,40 @@ Calibration::calibrate(const std::string & output_file,
     double err = 0;
     int npoints = 0;
     std::vector<Vec3f> lines[2];
-    for(size_t i = 0; i < num_images(); i++ )
-    {
-      int npt = (int)intersection_points_[0][i].size();
+    size_t idx = 0;
+    for(size_t i = 0; i < num_images(); i++ ){
+      if(!include_set_[i]){
+        epipolar_file << "skipped" << std::endl;
+        continue;
+      }
+      assert(idx<=intersection_points_[0].size());
+      //for(size_t i = 0; i < intersection_points_[0].size(); i++ )
+      int npt = (int)intersection_points_[0][idx].size();
       assert(npt!=0);
       Mat imgpt[2];
       for( size_t k = 0; k < 2; k++ )
       {
         if(k==0)
-          imgpt[k] = Mat(intersection_points_[0][i]);
+          imgpt[k] = Mat(intersection_points_[0][idx]);
         else
-          imgpt[k] = Mat(intersection_points_[1][i]);
+          imgpt[k] = Mat(intersection_points_[1][idx]);
         undistortPoints(imgpt[k], imgpt[k], cameraMatrix[k], distCoeffs[k], Mat(), cameraMatrix[k]);
         computeCorrespondEpilines(imgpt[k], k+1, F, lines[k]);
       }
       double imgErr = 0.0;
       for(int j = 0; j < npt; j++ )
       {
-        double errij = fabs(intersection_points_[0][i][j].x*lines[1][j][0] +
-          intersection_points_[0][i][j].y*lines[1][j][1] + lines[1][j][2]) +
-              fabs(intersection_points_[1][i][j].x*lines[0][j][0] +
-                intersection_points_[1][i][j].y*lines[0][j][1] + lines[0][j][2]);
+        double errij = fabs(intersection_points_[0][idx][j].x*lines[1][j][0] +
+          intersection_points_[0][idx][j].y*lines[1][j][1] + lines[1][j][2]) +
+              fabs(intersection_points_[1][idx][j].x*lines[0][j][0] +
+                intersection_points_[1][idx][j].y*lines[0][j][1] + lines[0][j][2]);
         err += errij;
         imgErr += errij;
       }
       double epipolar = imgErr/npt;
       epipolar_file << epipolar << std::endl;
       npoints += npt;
+      idx++;
     }
     epipolar_file.close();
     assert(npoints!=0);
@@ -425,13 +432,19 @@ Calibration::extract_target_points(){
 void
 Calibration::extract_checkerboard_intersections(){
   std::vector<Point2f> corners; //found corner locations
-  std::fill(include_set_.begin(),include_set_.end(),1); // reset the include flags
+
+  //std::fill(include_set_.begin(),include_set_.end(),1); // reset the include flags
+
 
   for (size_t i_image = 0; i_image < num_images(); i_image++) {
     for (size_t i_cam = 0; i_cam < num_cams(); i_cam++) {
       //put together the file name
       const std::string & filename = image_list_[i_cam][i_image];
       DEBUG_MSG("processing checkerboard cal image: " << filename);
+      if(include_set_[i_image] == false){
+        DEBUG_MSG("skipping due to image being deactivated");
+        continue;
+      }
       //read the image
       Mat img = imread(filename, IMREAD_GRAYSCALE);
       if (img.empty()) {
@@ -524,12 +537,16 @@ Calibration::extract_dot_target_points(){
   scalar_t include_image_set_tol = 0.75; //the search must have found at least 75% of the total to be included
 
   //initialize the include set array
-  std::fill(include_set_.begin(),include_set_.end(),1); // reset the include flags
+  //std::fill(include_set_.begin(),include_set_.end(),1); // reset the include flags
 
   for (size_t i_image = 0; i_image < num_images(); i_image++){
     //go through each of the camera's images (note only two camera calibration is currently supported)
     for (size_t i_cam = 0; i_cam < num_cams(); i_cam++){
       DEBUG_MSG("processing cal image: " << image_list_[i_cam][i_image]);
+      if(include_set_[i_image] == false){
+        DEBUG_MSG("skipping due to image being deactivated");
+        continue;
+      }
       Mat img = imread(image_list_[i_cam][i_image], IMREAD_GRAYSCALE);
       if (img.empty()) {
         DEBUG_MSG("warning: image is empty or not found, excluding this image");

@@ -177,8 +177,8 @@ int main(int argc, char *argv[]) {
   tmp_bad_cb_argv.push_back(nullptr);
   *outStream << "this next call is supposed to error" << std::endl;
   error_code = opencv_server(tmp_bad_cb_argv.size()-1,tmp_bad_cb_argv.data());
-  if(error_code!=-1){
-    *outStream << "error, opencv server should have failed with error code -1, but instead returned code " << error_code << std::endl;
+  if(error_code!=2){
+    *outStream << "error, opencv server should have failed with error code 2, but instead returned code " << error_code << std::endl;
     error_flag++;
   }
 
