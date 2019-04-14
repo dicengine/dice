@@ -293,7 +293,50 @@ Calibration::calibrate(const std::string & output_file,
       image_size_, R, T, E, F,
       calib_options_,
       TermCriteria(TermCriteria::COUNT + TermCriteria::EPS, 1000, 1e-7));
+
+    // CALIBRATION QUALITY CHECK
+    // because the output fundamental matrix implicitly
+    // includes all the output information,
+    // we can check the quality of calibration using the
+    // epipolar geometry constraint: m2^t*F*m1=0
+    std::fstream epipolar_file("cal_errors.txt", std::ios_base::out);
+
+    double err = 0;
+    int npoints = 0;
+    std::vector<Vec3f> lines[2];
+    for(size_t i = 0; i < num_images(); i++ )
+    {
+      int npt = (int)intersection_points_[0][i].size();
+      assert(npt!=0);
+      Mat imgpt[2];
+      for( size_t k = 0; k < 2; k++ )
+      {
+        if(k==0)
+          imgpt[k] = Mat(intersection_points_[0][i]);
+        else
+          imgpt[k] = Mat(intersection_points_[1][i]);
+        undistortPoints(imgpt[k], imgpt[k], cameraMatrix[k], distCoeffs[k], Mat(), cameraMatrix[k]);
+        computeCorrespondEpilines(imgpt[k], k+1, F, lines[k]);
+      }
+      double imgErr = 0.0;
+      for(int j = 0; j < npt; j++ )
+      {
+        double errij = fabs(intersection_points_[0][i][j].x*lines[1][j][0] +
+          intersection_points_[0][i][j].y*lines[1][j][1] + lines[1][j][2]) +
+              fabs(intersection_points_[1][i][j].x*lines[0][j][0] +
+                intersection_points_[1][i][j].y*lines[0][j][1] + lines[0][j][2]);
+        err += errij;
+        imgErr += errij;
+      }
+      double epipolar = imgErr/npt;
+      epipolar_file << epipolar << std::endl;
+      npoints += npt;
+    }
+    epipolar_file.close();
+    assert(npoints!=0);
+    std::cout << "average epipolar error: " <<  err/npoints << std::endl;
   }
+
   Teuchos::RCP<DICe::Camera_System> camera_system = Teuchos::rcp(new DICe::Camera_System());
 
   for (size_t i_cam = 0; i_cam < num_cams(); i_cam++) {
@@ -342,7 +385,7 @@ Calibration::calibrate(const std::string & output_file,
   camera_system->set_system_type(Camera_System::OPENCV);
   if(!output_file.empty())
     camera_system->write_camera_system_file(output_file);
-  DEBUG_MSG("Calibration::calibrate(): RMS value: " << rms);
+  std::cout << "RMS error: " << rms << std::endl;
   rms_error = rms;
   DEBUG_MSG("Calibration::calibrate(): end");
   return camera_system;

@@ -198,10 +198,10 @@ int_t opencv_server(int argc, char *argv[]){
     DEBUG_MSG("Writing output image: " << image_out_filename);
     imwrite(image_out_filename, img);
     //}
-    if(error_code) // exit on the first error
-      return error_code;
+    //if(error_code) // exit on the first error
+    //  return error_code;
   } // end file iteration
-  return 0;
+  return error_code;
 }
 
 DICE_LIB_DLL_EXPORT
