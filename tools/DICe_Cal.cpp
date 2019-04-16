@@ -68,8 +68,10 @@ int main(int argc, char *argv[]) {
   std::string output_file = "cal.xml";
   if(argc==3)
     output_file = argv[2];
-  DEBUG_MSG("using input file " << input_file);
-  DEBUG_MSG("output will be written to " << output_file);
+  print_banner();
+  std::cout << "\nDICe_Cal begin\n" << std::endl;
+  std::cout << "input file:  " << input_file << std::endl;
+  std::cout << "output file: " << output_file << std::endl;
 
   DICe::Calibration cal(input_file);
   // create the intersection points and generate a calibrated camera system
@@ -77,18 +79,19 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Camera_System> cam_sys = cal.calibrate(rms);
   // write the calibration parameters to file which includes the interesection points
   cam_sys->write_camera_system_file(output_file);
-#ifdef DICE_DEBUG_MSG
+//#ifdef DICE_DEBUG_MSG
   std::cout << *cam_sys.get() << std::endl;
-#endif
+//#endif
+  std::cout << "\nDICe_Cal complete\n" << std::endl;
 
   DICe::finalize();
 
   if(rms < 0.0){
-    std::cout << "Error, stereo calibration failed" << std::endl;
+    std::cout << "\n*** Error, stereo calibration failed" << std::endl;
     return -1;
   }
   if(rms > 1.0){
-    std::cout << "Warning, RMS error is large: " << rms << ". Should be under 0.5." << std::endl;
+    std::cout << "\n*** Warning, RMS error is large: " << rms << ". Should be under 0.5." << std::endl;
   }
   return 0;
 }

@@ -66,7 +66,9 @@ int main(int argc, char *argv[]) {
   else
     outStream = Teuchos::rcp(&bhs, false);
 
-  *outStream << "--- Begin test ---e" << std::endl;
+  *outStream << "--- Begin test ---" << std::endl;
+
+  *outStream << "\n--- single camera checkerboard ---\n" << std::endl;
 
   // SINGLE CAM CHECKERBOARD
   try{
@@ -78,6 +80,9 @@ int main(int argc, char *argv[]) {
     cal_checkerboard.write_calibration_file("checkerboard_calibration.xml");
     // create a new calibration object that reads in the parameter file above with the intersection points
     DICe::Calibration cal_checkerboard_with_intersections("checkerboard_calibration.xml");
+
+    *outStream << "\n--- single camera checkerboard using pre-defined intersection points ---\n" << std::endl;
+
     // calibrate again using the intersection points read from file
     scalar_t test_checkerboard_rms = 0.0;
     Teuchos::RCP<Camera_System> test_checkerboard_cam_sys = cal_checkerboard_with_intersections.calibrate(test_checkerboard_rms);
@@ -100,6 +105,8 @@ int main(int argc, char *argv[]) {
     error_flag++;
   }
 
+  *outStream << "\n--- stereo checkerboard ---\n" << std::endl;
+
   // STEREO CHECKERBOARD
   try{
     DICe::Calibration cal_stereo_checkerboard("../cal/stereo_checkerboard_input.xml");
@@ -110,6 +117,9 @@ int main(int argc, char *argv[]) {
     cal_stereo_checkerboard.write_calibration_file("stereo_checkerboard_calibration.xml");
     // create a new calibration object that reads in the parameter file above with the intersection points
     DICe::Calibration cal_stereo_checkerboard_with_intersections("stereo_checkerboard_calibration.xml");
+
+    *outStream << "\n--- stereo checkerboard using pre-defined intersection points ---\n" << std::endl;
+
     // calibrate again using the intersection points read from file
     scalar_t test_stereo_checkerboard_rms = 0.0;
     Teuchos::RCP<Camera_System> test_stereo_checkerboard_cam_sys = cal_stereo_checkerboard_with_intersections.calibrate(test_stereo_checkerboard_rms);
@@ -132,6 +142,8 @@ int main(int argc, char *argv[]) {
     error_flag++;
   }
 
+  *outStream << "\n--- simulated checkerboard with validation ---\n" << std::endl;
+
   // SIMULATED CHECKERBOARD WITH COMPARISON TO OUTPUT FROM ANOTHER CODE'S CALIBRATION
   try{
     DICe::Calibration sim_checkerboard_cal("../cal/sim_checkerboard_input.xml");
@@ -150,6 +162,8 @@ int main(int argc, char *argv[]) {
     *outStream << "error, simulated checkerboard case failed" << std::endl;
     error_flag++;
   }
+
+  *outStream << "\n--- stereo donut dots ---\n" << std::endl;
 
   // STEREO DONUT DOTS
   try{
@@ -186,6 +200,8 @@ int main(int argc, char *argv[]) {
     error_flag++;
   }
 
+  *outStream << "\n--- simulated donut dots with validation ---\n" << std::endl;
+
   // SIMULATED DOT WITH COMPARISON TO OUTPUT FROM ANOTHER CODE'S CALIBRATION
   try{
     DICe::Calibration sim_dot_cal("../cal/sim_dot_input.xml");
@@ -205,6 +221,8 @@ int main(int argc, char *argv[]) {
     *outStream << "error, simulated dot case failed" << std::endl;
     error_flag++;
   }
+
+  *outStream << "\n--- simulated donut dots white on black background ---\n" << std::endl;
 
   // SIMULATED SINGLE CAMERA WHITE DOT ON BLACK BOARD WITH COMPARISON TO OUTPUT FROM ANOTHER CODE'S CALIBRATION
   try{

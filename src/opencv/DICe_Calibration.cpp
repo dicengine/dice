@@ -69,10 +69,10 @@ Calibration::Calibration(const std::string & cal_input_file){
 void
 Calibration::init(const Teuchos::RCP<Teuchos::ParameterList> params){
   // print out the parameters for debugging
-  DEBUG_MSG("user specified input parameters");
-#ifdef DICE_DEBUG_MSG
+  std::cout << "Calibration::init(): user specified input parameters:" << std::endl;
+//#ifdef DICE_DEBUG_MSG
   params->print(std::cout);
-#endif
+//#endif
   // save the parameters for output later if needed
   input_params_ = *params;
 
@@ -261,7 +261,7 @@ Calibration::calibrate(const std::string & output_file,
   scalar_t & rms_error){
   DEBUG_MSG("Calibration::calibrate(): begin");
   if(!has_intersection_points_){
-    DEBUG_MSG("Calibration::calibrate(): extracting the target points because they have not been initialized");
+    std::cout << "Calibration::calibrate(): extracting the target points because they have not been initialized" << std::endl;
     extract_target_points();
   }
   TEUCHOS_TEST_FOR_EXCEPTION(!has_intersection_points_, std::runtime_error,
@@ -270,6 +270,8 @@ Calibration::calibrate(const std::string & output_file,
 
   //assemble the intersection and object points from the grid and image points
   assemble_intersection_object_points();
+
+  std::cout << "Calibration::calibrate(): performing OpenCV calibration" << std::endl;
 
   //do the intrinsic calibration for the initial guess
   Mat cameraMatrix[2], distCoeffs[2];
@@ -307,6 +309,7 @@ Calibration::calibrate(const std::string & output_file,
     size_t idx = 0;
     for(size_t i = 0; i < num_images(); i++ ){
       if(!include_set_[i]){
+        std::cout << "Calibration::calibrate(): image set "<< i <<" skipped" << std::endl;
         epipolar_file << "skipped" << std::endl;
         continue;
       }
@@ -335,13 +338,14 @@ Calibration::calibrate(const std::string & output_file,
         imgErr += errij;
       }
       double epipolar = imgErr/npt;
+      std::cout << "Calibration::calibrate(): image set "<< i <<" epipolar error: " << epipolar << std::endl;
       epipolar_file << epipolar << std::endl;
       npoints += npt;
       idx++;
     }
     epipolar_file.close();
     assert(npoints!=0);
-    std::cout << "average epipolar error: " <<  err/npoints << std::endl;
+    std::cout << "Calibration::calibrate(): average epipolar error: " <<  err/npoints << std::endl;
   }
 
   Teuchos::RCP<DICe::Camera_System> camera_system = Teuchos::rcp(new DICe::Camera_System());
@@ -392,7 +396,7 @@ Calibration::calibrate(const std::string & output_file,
   camera_system->set_system_type(Camera_System::OPENCV);
   if(!output_file.empty())
     camera_system->write_camera_system_file(output_file);
-  std::cout << "RMS error: " << rms << std::endl;
+  std::cout << "\nRMS error: " << rms << "\n" << std::endl;
   rms_error = rms;
   DEBUG_MSG("Calibration::calibrate(): end");
   return camera_system;
@@ -405,6 +409,7 @@ Calibration::extract_target_points(){
     DEBUG_MSG("Calibration::extract_target_points(): has_intersection_points_ is true, aborting function");
     return;
   }
+  std::cout << "Calibration::extract_target_points(): target type is " << to_string(target_type_) << std::endl;
   //call the appropriate routine depending on the type of target
   switch (target_type_) {
     case CHECKER_BOARD:
@@ -432,24 +437,21 @@ Calibration::extract_target_points(){
 void
 Calibration::extract_checkerboard_intersections(){
   std::vector<Point2f> corners; //found corner locations
-
-  //std::fill(include_set_.begin(),include_set_.end(),1); // reset the include flags
-
-
+  std::cout << "Calibration::extract_checkerboard_intersections(): extracting intersections" << std::endl;
   for (size_t i_image = 0; i_image < num_images(); i_image++) {
     for (size_t i_cam = 0; i_cam < num_cams(); i_cam++) {
       //put together the file name
       const std::string & filename = image_list_[i_cam][i_image];
-      DEBUG_MSG("processing checkerboard cal image: " << filename);
+      std::cout << "Calibration::extract_checkerboard_intersections(): processing checkerboard cal image: " << filename << std::endl;
       if(include_set_[i_image] == false){
-        DEBUG_MSG("skipping due to image being deactivated");
+        std::cout << "Calibration::extract_checkerboard_intersections(): skipping due to image being deactivated" << std::endl;
         continue;
       }
       //read the image
       Mat img = imread(filename, IMREAD_GRAYSCALE);
       if (img.empty()) {
         //if the image is empth mark the set as not used an move on
-        DEBUG_MSG("warning: image is empty or not found, excluding ");
+        std::cout << "*** warning: image is empty or not found, excluding " << std::endl;
         include_set_[i_image] = false;
         continue;
       }
@@ -469,7 +471,7 @@ Calibration::extract_checkerboard_intersections(){
       if(error_code!=0){
         //remove the image from the calibration and proceed with the next image
         include_set_[i_image] = false;
-        DEBUG_MSG("warning: checkerboard intersections were not found, excluding image");
+        std::cout << "*** warning: checkerboard intersections were not found, excluding image" << std::endl;
         continue;
       }
       int_t i_pnt = 0;
@@ -533,23 +535,20 @@ Calibration::assemble_intersection_object_points() {
 //extract the dot locations from a dot target
 void
 Calibration::extract_dot_target_points(){
-
+  std::cout << "Calibration::extract_dot_target_points(): extracting dots" << std::endl;
   scalar_t include_image_set_tol = 0.75; //the search must have found at least 75% of the total to be included
-
-  //initialize the include set array
-  //std::fill(include_set_.begin(),include_set_.end(),1); // reset the include flags
-
   for (size_t i_image = 0; i_image < num_images(); i_image++){
     //go through each of the camera's images (note only two camera calibration is currently supported)
     for (size_t i_cam = 0; i_cam < num_cams(); i_cam++){
-      DEBUG_MSG("processing cal image: " << image_list_[i_cam][i_image]);
+      std::cout << "Calibration::extract_dot_target_points(): processing checkerboard cal image: " << image_list_[i_cam][i_image] << std::endl;
+      //DEBUG_MSG("processing cal image: " << image_list_[i_cam][i_image]);
       if(include_set_[i_image] == false){
-        DEBUG_MSG("skipping due to image being deactivated");
+        std::cout << "Calibration::extract_dot_target_points(): skipping due to image being deactivated" << std::endl;
         continue;
       }
       Mat img = imread(image_list_[i_cam][i_image], IMREAD_GRAYSCALE);
       if (img.empty()) {
-        DEBUG_MSG("warning: image is empty or not found, excluding this image");
+        std::cout << "*** warning: image is empty or not found, excluding this image" << std::endl;
         include_set_[i_image] = false;
         continue;
       }
@@ -570,7 +569,7 @@ Calibration::extract_dot_target_points(){
         imwrite(out_file_name.str(), img);
       }
       if(error_code!=0){
-        std::cout << image_list_[i_cam][i_image] << " failed dot extraction with error code: " << error_code << std::endl;
+        std::cout << "*** warning: " << image_list_[i_cam][i_image] << " failed dot extraction with error code: " << error_code << std::endl;
         include_set_[i_image] = false;
         continue;
       }
@@ -624,7 +623,7 @@ Calibration::extract_dot_target_points(){
     DEBUG_MSG("numer of common dots: " << num_common_pts);
     if (num_common_pts < (num_fiducials_x_*num_fiducials_y_*include_image_set_tol)){
       //exclude the set
-      DEBUG_MSG("warning: excluding this image set due to not enough dots common among all images");
+      std::cout << "*** warning: excluding this image set due to not enough dots common among all images" << std::endl;
       include_set_[i_image] = false;
     }
   }//end image loop
@@ -635,7 +634,7 @@ void
 Calibration::write_calibration_file(const std::string & filename) {
 
   TEUCHOS_TEST_FOR_EXCEPTION(filename.find("xml") == std::string::npos,std::runtime_error,"invalid file extension (should be .xml)");
-  DEBUG_MSG("Calibration::write_calibration_file(): writing calibration file: " << filename);
+  std::cout << "Calibration::write_calibration_file(): writing calibration file: " << filename << std::endl;
 
   Teuchos::ParameterList output_params = input_params_;
 
