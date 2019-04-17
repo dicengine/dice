@@ -122,6 +122,8 @@ const char* const physics_parameters_file = "physics_parameters_file";
 /// Input parameter
 const char* const reference_image = "reference_image";
 /// Input parameter
+const char* const file_suffix = "file_suffix";
+/// Input parameter
 const char* const stereo_left_suffix = "stereo_left_suffix";
 /// Input parameter
 const char* const stereo_right_suffix = "stereo_right_suffix";

@@ -693,6 +693,7 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
     // single camera only has a prefix
     // stereo can have a prefix with left and right suffix or left and right prefix with no suffix
     const bool has_prefix = params->isParameter(DICe::image_file_prefix);
+    std::string file_suffix = params->get<std::string>(DICe::file_suffix,"");
     const bool has_stereo_prefix = params->isParameter(DICe::stereo_left_file_prefix) &&
         params->isParameter(DICe::stereo_left_file_prefix);
     TEUCHOS_TEST_FOR_EXCEPTION(!has_prefix&&!has_stereo_prefix,std::runtime_error,
@@ -754,8 +755,8 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
         right_ref_name << "0";
       }
     }
-    left_ref_name << refId << left_suffix << fileType;
-    right_ref_name << refId << right_suffix << fileType;
+    left_ref_name << refId << left_suffix << file_suffix << fileType;
+    right_ref_name << refId << right_suffix << file_suffix << fileType;
     image_files.push_back(left_ref_name.str());
     if(is_stereo){
       stereo_image_files.push_back(right_ref_name.str());
@@ -778,8 +779,8 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
           left_def_name << "0";
           right_def_name << "0";
         }
-      left_def_name << i << left_suffix << fileType;
-      right_def_name << i << right_suffix << fileType;
+      left_def_name << i << left_suffix << file_suffix << fileType;
+      right_def_name << i << right_suffix << file_suffix << fileType;
       image_files.push_back(left_def_name.str());
       if(is_stereo){
         stereo_image_files.push_back(right_def_name.str());
