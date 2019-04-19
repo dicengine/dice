@@ -316,6 +316,40 @@ Image::intensities()const{
   return intensities_;
 }
 
+void 
+Image::interpolate_bilinear_all(intensity_t& intensity_val, 
+       scalar_t& grad_x_val, scalar_t& grad_y_val, const bool compute_gradient,
+       const scalar_t& local_x, const scalar_t& local_y) {
+  if(local_x<0.0||local_x>=width_-1.5||local_y<0.0||local_y>=height_-1.5) {
+    intensity_val = 0.0;
+    if (compute_gradient) {
+      grad_x_val = 0.0;
+      grad_y_val = 0.0;
+    }
+  }
+  else {
+    const int_t x1 = (int_t)local_x;
+    const int_t x2 = x1+1;
+    const int_t y1 = (int_t)local_y;
+    const int_t y2  = y1+1;
+    intensity_val = intensities_[y1*width_+x1]*(x2-local_x)*(y2-local_y)
+      +intensities_[y1*width_+x2]*(local_x-x1)*(y2-local_y)
+      +intensities_[y2*width_+x2]*(local_x-x1)*(local_y-y1)
+      +intensities_[y2*width_+x1]*(x2-local_x)*(local_y-y1);
+    if (compute_gradient) {
+      grad_x_val = grad_x_[y1*width_+x1]*(x2-local_x)*(y2-local_y)
+        +grad_x_[y1*width_+x2]*(local_x-x1)*(y2-local_y)
+        +grad_x_[y2*width_+x2]*(local_x-x1)*(local_y-y1)
+        +grad_x_[y2*width_+x1]*(x2-local_x)*(local_y-y1);
+
+      grad_y_val = grad_y_[y1*width_+x1]*(x2-local_x)*(y2-local_y)
+        +grad_y_[y1*width_+x2]*(local_x-x1)*(y2-local_y)
+        +grad_y_[y2*width_+x2]*(local_x-x1)*(local_y-y1)
+        +grad_y_[y2*width_+x1]*(x2-local_x)*(local_y-y1);
+    }
+  }
+}
+
 intensity_t
 Image::interpolate_bilinear(const scalar_t & local_x, const scalar_t & local_y){
 
@@ -346,7 +380,6 @@ Image::interpolate_grad_x_bilinear(const scalar_t & local_x, const scalar_t & lo
 
 scalar_t
 Image::interpolate_grad_y_bilinear(const scalar_t & local_x, const scalar_t & local_y){
-
   if(local_x<0.0||local_x>=width_-1.5||local_y<0.0||local_y>=height_-1.5) return 0.0;
   const int_t x1 = (int_t)local_x;
   const int_t x2 = x1+1;
@@ -356,6 +389,152 @@ Image::interpolate_grad_y_bilinear(const scalar_t & local_x, const scalar_t & lo
       +grad_y_[y1*width_+x2]*(local_x-x1)*(y2-local_y)
       +grad_y_[y2*width_+x2]*(local_x-x1)*(local_y-y1)
       +grad_y_[y2*width_+x1]*(x2-local_x)*(local_y-y1);
+}
+
+void
+Image::interpolate_bicubic_all(intensity_t& intensity_val, 
+       scalar_t& grad_x_val, scalar_t& grad_y_val, const bool compute_gradient,
+       const scalar_t& local_x, const scalar_t& local_y) {
+  if(local_x<1.0||local_x>=width_-2.0||local_y<1.0||local_y>=height_-2.0) {
+    intensity_val = this->interpolate_bilinear(local_x,local_y);
+    if (compute_gradient) {
+      grad_x_val = this->interpolate_grad_x_bilinear(local_x,local_y);
+      grad_y_val = this->interpolate_grad_y_bilinear(local_x,local_y);
+    }
+  }
+  const int_t x0  = (int_t)local_x;
+  const int_t x1  = x0+1;
+  const int_t x2  = x1+1;
+  const int_t xm1 = x0-1;
+  const int_t y0  = (int_t)local_y;
+  const int_t y1 = y0+1;
+  const int_t y2 = y1+1;
+  const int_t ym1 = y0-1;
+  const scalar_t x = local_x - x0;
+  const scalar_t y = local_y - y0;
+  const scalar_t x_2 = x * x;
+  const scalar_t x_3 = x_2 * x;
+  const scalar_t y_2 = y * y;
+  const scalar_t y_3 = y_2 * y;
+  // intensity
+  const intensity_t fm10  = intensities_[y0*width_+xm1];
+  const intensity_t f00   = intensities_[y0*width_+x0];
+  const intensity_t f10   = intensities_[y0*width_+x1];
+  const intensity_t f20   = intensities_[y0*width_+x2];
+  const intensity_t fm11  = intensities_[y1*width_+xm1];
+  const intensity_t f01   = intensities_[y1*width_+x0];
+  const intensity_t f11   = intensities_[y1*width_+x1];
+  const intensity_t f21   = intensities_[y1*width_+x2];
+  const intensity_t fm12  = intensities_[y2*width_+xm1];
+  const intensity_t f02   = intensities_[y2*width_+x0];
+  const intensity_t f12   = intensities_[y2*width_+x1];
+  const intensity_t f22   = intensities_[y2*width_+x2];
+  const intensity_t fm1m1 = intensities_[ym1*width_+xm1];
+  const intensity_t f0m1  = intensities_[ym1*width_+x0];
+  const intensity_t f1m1  = intensities_[ym1*width_+x1];
+  const intensity_t f2m1  = intensities_[ym1*width_+x2];
+  #ifdef DICE_USE_DOUBLE
+    intensity_val = f00 + (-0.5*f0m1 + .5*f01)*y + (f0m1 - 2.5*f00 + 2.0*f01 - .5*f02)*y_2 + (-0.5*f0m1 + 1.5*f00 - 1.5*f01 + .5*f02)*y_3
+      + ((-0.5*fm10 + .5*f10) + (0.25*fm1m1 - .25*fm11 - .25*f1m1 + .25*f11)*y + (-0.5*fm1m1 + 1.25*fm10 - fm11 + .25*fm12 +
+          0.5*f1m1 - 1.25*f10 + f11 - .25*f12)*y_2 + (0.25*fm1m1 - .75*fm10 + .75*fm11 - .25*fm12 - .25*f1m1 + .75*f10 - .75*f11 + .25*f12)*y_3) * x
+      +((fm10 - 2.5*f00 + 2.0*f10 - .5*f20) + (-0.5*fm1m1 + .5*fm11 + 1.25*f0m1 - 1.25*f01 - f1m1 + f11 + .25*f2m1 - .25*f21)*y + (fm1m1 - 2.5*fm10 + 2.0*fm11
+          - .5*fm12 - 2.5*f0m1 + 6.25*f00 - 5.0*f01 + 1.25*f02 + 2.0*f1m1 - 5.0*f10 + 4.0*f11 - f12 - .5*f2m1 + 1.25*f20 - f21 + .25*f22)*y_2 +
+          (-0.5*fm1m1 + 1.5*fm10 - 1.5*fm11 + .5*fm12 + 1.25*f0m1 - 3.75*f00 + 3.75*f01 - 1.25*f02 - f1m1 + 3.0*f10 - 3.0*f11 + f12 + .25*f2m1 - .75*f20 + .75*f21 - .25*f22)*y_3)*x_2
+      +((-.5*fm10 + 1.5*f00 - 1.5*f10 + .5*f20) + (0.25*fm1m1 - .25*fm11 - .75*f0m1 + .75*f01 + .75*f1m1 - .75*f11 - .25*f2m1 + .25*f21)*y +
+          (-.5*fm1m1 + 1.25*fm10 - fm11 + .25*fm12 + 1.5*f0m1 - 3.75*f00 + 3.0*f01 - .75*f02 - 1.5*f1m1 + 3.75*f10 - 3.0*f11 + .75*f12 + .5*f2m1 - 1.25*f20 + f21 - .25*f22)*y_2
+          + (0.25*fm1m1 - .75*fm10 + .75*fm11 - .25*fm12 - .75*f0m1 + 2.25*f00 - 2.25*f01 + .75*f02 + .75*f1m1 - 2.25*f10 + 2.25*f11 - .75*f12 - .25*f2m1 + .75*f20 - .75*f21 + .25*f22)*y_3)*x_3;
+  #else
+    intensity_val = f00 + (-0.5f*f0m1 + .5f*f01)*y + (f0m1 - 2.5f*f00 + 2.0f*f01 - .5f*f02)*y_2 + (-0.5f*f0m1 + 1.5f*f00 - 1.5f*f01 + .5f*f02)*y_3
+      + ((-0.5f*fm10 + .5f*f10) + (0.25f*fm1m1 - .25f*fm11 - .25f*f1m1 + .25f*f11)*y + (-0.5f*fm1m1 + 1.25f*fm10 - fm11 + .25f*fm12 +
+          0.5f*f1m1 - 1.25f*f10 + f11 - .25f*f12)*y_2 + (0.25f*fm1m1 - .75f*fm10 + .75f*fm11 - .25f*fm12 - .25f*f1m1 + .75f*f10 - .75f*f11 + .25f*f12)*y_3) * x
+      +((fm10 - 2.5f*f00 + 2.0f*f10 - .5f*f20) + (-0.5f*fm1m1 + .5f*fm11 + 1.25f*f0m1 - 1.25f*f01 - f1m1 + f11 + .25f*f2m1 - .25f*f21)*y + (fm1m1 - 2.5f*fm10 + 2.0f*fm11
+          - .5f*fm12 - 2.5f*f0m1 + 6.25f*f00 - 5.0f*f01 + 1.25f*f02 + 2.0f*f1m1 - 5.0f*f10 + 4.0f*f11 - f12 - .5f*f2m1 + 1.25f*f20 - f21 + .25f*f22)*y_2 +
+          (-0.5f*fm1m1 + 1.5f*fm10 - 1.5f*fm11 + .5f*fm12 + 1.25f*f0m1 - 3.75f*f00 + 3.75f*f01 - 1.25f*f02 - f1m1 + 3.0f*f10 - 3.0f*f11 + f12 + .25f*f2m1 - .75f*f20 + .75f*f21 - .25f*f22)*y_3)*x_2
+      +((-.5f*fm10 + 1.5f*f00 - 1.5f*f10 + .5f*f20) + (0.25f*fm1m1 - .25f*fm11 - .75f*f0m1 + .75f*f01 + .75f*f1m1 - .75f*f11 - .25f*f2m1 + .25f*f21)*y +
+          (-.5f*fm1m1 + 1.25f*fm10 - fm11 + .25f*fm12 + 1.5f*f0m1 - 3.75f*f00 + 3.0f*f01 - .75f*f02 - 1.5f*f1m1 + 3.75f*f10 - 3.0f*f11 + .75f*f12 + .5f*f2m1 - 1.25f*f20 + f21 - .25f*f22)*y_2
+          + (0.25f*fm1m1 - .75f*fm10 + .75f*fm11 - .25f*fm12 - .75f*f0m1 + 2.25f*f00 - 2.25f*f01 + .75f*f02 + .75f*f1m1 - 2.25f*f10 + 2.25f*f11 - .75f*f12 - .25f*f2m1 + .75f*f20 - .75f*f21 + .25f*f22)*y_3)*x_3;
+  #endif
+
+
+  if (compute_gradient) {
+    // grad_x
+    const intensity_t gxfm10  = grad_x_[y0*width_+xm1];
+    const intensity_t gxf00   = grad_x_[y0*width_+x0];
+    const intensity_t gxf10   = grad_x_[y0*width_+x1];
+    const intensity_t gxf20   = grad_x_[y0*width_+x2];
+    const intensity_t gxfm11  = grad_x_[y1*width_+xm1];
+    const intensity_t gxf01   = grad_x_[y1*width_+x0];
+    const intensity_t gxf11   = grad_x_[y1*width_+x1];
+    const intensity_t gxf21   = grad_x_[y1*width_+x2];
+    const intensity_t gxfm12  = grad_x_[y2*width_+xm1];
+    const intensity_t gxf02   = grad_x_[y2*width_+x0];
+    const intensity_t gxf12   = grad_x_[y2*width_+x1];
+    const intensity_t gxf22   = grad_x_[y2*width_+x2];
+    const intensity_t gxfm1m1 = grad_x_[ym1*width_+xm1];
+    const intensity_t gxf0m1  = grad_x_[ym1*width_+x0];
+    const intensity_t gxf1m1  = grad_x_[ym1*width_+x1];
+    const intensity_t gxf2m1  = grad_x_[ym1*width_+x2];
+    // grad_y
+    const intensity_t gyfm10  = grad_y_[y0*width_+xm1];
+    const intensity_t gyf00   = grad_y_[y0*width_+x0];
+    const intensity_t gyf10   = grad_y_[y0*width_+x1];
+    const intensity_t gyf20   = grad_y_[y0*width_+x2];
+    const intensity_t gyfm11  = grad_y_[y1*width_+xm1];
+    const intensity_t gyf01   = grad_y_[y1*width_+x0];
+    const intensity_t gyf11   = grad_y_[y1*width_+x1];
+    const intensity_t gyf21   = grad_y_[y1*width_+x2];
+    const intensity_t gyfm12  = grad_y_[y2*width_+xm1];
+    const intensity_t gyf02   = grad_y_[y2*width_+x0];
+    const intensity_t gyf12   = grad_y_[y2*width_+x1];
+    const intensity_t gyf22   = grad_y_[y2*width_+x2];
+    const intensity_t gyfm1m1 = grad_y_[ym1*width_+xm1];
+    const intensity_t gyf0m1  = grad_y_[ym1*width_+x0];
+    const intensity_t gyf1m1  = grad_y_[ym1*width_+x1];
+    const intensity_t gyf2m1  = grad_y_[ym1*width_+x2];
+
+    #ifdef DICE_USE_DOUBLE
+      grad_x_val = gxf00 + (-0.5*gxf0m1 + .5*gxf01)*y + (gxf0m1 - 2.5*gxf00 + 2.0*gxf01 - .5*gxf02)*y_2 + (-0.5*gxf0m1 + 1.5*gxf00 - 1.5*gxf01 + .5*gxf02)*y_3
+        + ((-0.5*gxfm10 + .5*gxf10) + (0.25*gxfm1m1 - .25*gxfm11 - .25*gxf1m1 + .25*gxf11)*y + (-0.5*gxfm1m1 + 1.25*gxfm10 - gxfm11 + .25*gxfm12 +
+            0.5*gxf1m1 - 1.25*gxf10 + gxf11 - .25*gxf12)*y_2 + (0.25*gxfm1m1 - .75*gxfm10 + .75*gxfm11 - .25*gxfm12 - .25*gxf1m1 + .75*gxf10 - .75*gxf11 + .25*gxf12)*y_3) * x
+        +((gxfm10 - 2.5*gxf00 + 2.0*gxf10 - .5*gxf20) + (-0.5*gxfm1m1 + .5*gxfm11 + 1.25*gxf0m1 - 1.25*gxf01 - gxf1m1 + gxf11 + .25*gxf2m1 - .25*gxf21)*y + (gxfm1m1 - 2.5*gxfm10 + 2.0*gxfm11
+            - .5*gxfm12 - 2.5*gxf0m1 + 6.25*gxf00 - 5.0*gxf01 + 1.25*gxf02 + 2.0*gxf1m1 - 5.0*gxf10 + 4.0*gxf11 - gxf12 - .5*gxf2m1 + 1.25*gxf20 - gxf21 + .25*gxf22)*y_2 +
+            (-0.5*gxfm1m1 + 1.5*gxfm10 - 1.5*gxfm11 + .5*gxfm12 + 1.25*gxf0m1 - 3.75*gxf00 + 3.75*gxf01 - 1.25*gxf02 - gxf1m1 + 3.0*gxf10 - 3.0*gxf11 + gxf12 + .25*gxf2m1 - .75*gxf20 + .75*gxf21 - .25*gxf22)*y_3)*x_2
+        +((-.5*gxfm10 + 1.5*gxf00 - 1.5*gxf10 + .5*gxf20) + (0.25*gxfm1m1 - .25*gxfm11 - .75*gxf0m1 + .75*gxf01 + .75*gxf1m1 - .75*gxf11 - .25*gxf2m1 + .25*gxf21)*y +
+            (-.5*gxfm1m1 + 1.25*gxfm10 - gxfm11 + .25*gxfm12 + 1.5*gxf0m1 - 3.75*gxf00 + 3.0*gxf01 - .75*gxf02 - 1.5*gxf1m1 + 3.75*gxf10 - 3.0*gxf11 + .75*gxf12 + .5*gxf2m1 - 1.25*gxf20 + gxf21 - .25*gxf22)*y_2
+            + (0.25*gxfm1m1 - .75*gxfm10 + .75*gxfm11 - .25*gxfm12 - .75*gxf0m1 + 2.25*gxf00 - 2.25*gxf01 + .75*gxf02 + .75*gxf1m1 - 2.25*gxf10 + 2.25*gxf11 - .75*gxf12 - .25*gxf2m1 + .75*gxf20 - .75*gxf21 + .25*gxf22)*y_3)*x_3;
+
+      grad_y_val = gyf00 + (-0.5*gyf0m1 + .5*gyf01)*y + (gyf0m1 - 2.5*gyf00 + 2.0*gyf01 - .5*gyf02)*y_2 + (-0.5*gyf0m1 + 1.5*gyf00 - 1.5*gyf01 + .5*gyf02)*y_3
+        + ((-0.5*gyfm10 + .5*gyf10) + (0.25*gyfm1m1 - .25*gyfm11 - .25*gyf1m1 + .25*gyf11)*y + (-0.5*gyfm1m1 + 1.25*gyfm10 - gyfm11 + .25*gyfm12 +
+            0.5*gyf1m1 - 1.25*gyf10 + gyf11 - .25*gyf12)*y_2 + (0.25*gyfm1m1 - .75*gyfm10 + .75*gyfm11 - .25*gyfm12 - .25*gyf1m1 + .75*gyf10 - .75*gyf11 + .25*gyf12)*y_3) * x
+        +((gyfm10 - 2.5*gyf00 + 2.0*gyf10 - .5*gyf20) + (-0.5*gyfm1m1 + .5*gyfm11 + 1.25*gyf0m1 - 1.25*gyf01 - gyf1m1 + gyf11 + .25*gyf2m1 - .25*gyf21)*y + (gyfm1m1 - 2.5*gyfm10 + 2.0*gyfm11
+            - .5*gyfm12 - 2.5*gyf0m1 + 6.25*gyf00 - 5.0*gyf01 + 1.25*gyf02 + 2.0*gyf1m1 - 5.0*gyf10 + 4.0*gyf11 - gyf12 - .5*gyf2m1 + 1.25*gyf20 - gyf21 + .25*gyf22)*y_2 +
+            (-0.5*gyfm1m1 + 1.5*gyfm10 - 1.5*gyfm11 + .5*gyfm12 + 1.25*gyf0m1 - 3.75*gyf00 + 3.75*gyf01 - 1.25*gyf02 - gyf1m1 + 3.0*gyf10 - 3.0*gyf11 + gyf12 + .25*gyf2m1 - .75*gyf20 + .75*gyf21 - .25*gyf22)*y_3)*x_2
+        +((-.5*gyfm10 + 1.5*gyf00 - 1.5*gyf10 + .5*gyf20) + (0.25*gyfm1m1 - .25*gyfm11 - .75*gyf0m1 + .75*gyf01 + .75*gyf1m1 - .75*gyf11 - .25*gyf2m1 + .25*gyf21)*y +
+            (-.5*gyfm1m1 + 1.25*gyfm10 - gyfm11 + .25*gyfm12 + 1.5*gyf0m1 - 3.75*gyf00 + 3.0*gyf01 - .75*gyf02 - 1.5*gyf1m1 + 3.75*gyf10 - 3.0*gyf11 + .75*gyf12 + .5*gyf2m1 - 1.25*gyf20 + gyf21 - .25*gyf22)*y_2
+            + (0.25*gyfm1m1 - .75*gyfm10 + .75*gyfm11 - .25*gyfm12 - .75*gyf0m1 + 2.25*gyf00 - 2.25*gyf01 + .75*gyf02 + .75*gyf1m1 - 2.25*gyf10 + 2.25*gyf11 - .75*gyf12 - .25*gyf2m1 + .75*gyf20 - .75*gyf21 + .25*gyf22)*y_3)*x_3;
+    #else
+      grad_x_val = gxf00 + (-0.5f*gxf0m1 + .5f*gxf01)*y + (gxf0m1 - 2.5f*gxf00 + 2.0f*gxf01 - .5f*gxf02)*y_2 + (-0.5f*gxf0m1 + 1.5f*gxf00 - 1.5f*gxf01 + .5f*gxf02)*y_3
+        + ((-0.5f*gxfm10 + .5f*gxf10) + (0.25f*gxfm1m1 - .25f*gxfm11 - .25f*gxf1m1 + .25f*gxf11)*y + (-0.5f*gxfm1m1 + 1.25f*gxfm10 - gxfm11 + .25f*gxfm12 +
+            0.5f*gxf1m1 - 1.25f*gxf10 + gxf11 - .25f*gxf12)*y_2 + (0.25f*gxfm1m1 - .75f*gxfm10 + .75f*gxfm11 - .25f*gxfm12 - .25f*gxf1m1 + .75f*gxf10 - .75f*gxf11 + .25f*gxf12)*y_3) * x
+        +((gxfm10 - 2.5f*gxf00 + 2.0f*gxf10 - .5f*gxf20) + (-0.5f*gxfm1m1 + .5f*gxfm11 + 1.25f*gxf0m1 - 1.25f*gxf01 - gxf1m1 + gxf11 + .25f*gxf2m1 - .25f*gxf21)*y + (gxfm1m1 - 2.5f*gxfm10 + 2.0f*gxfm11
+            - .5f*gxfm12 - 2.5f*gxf0m1 + 6.25f*gxf00 - 5.0f*gxf01 + 1.25f*gxf02 + 2.0f*gxf1m1 - 5.0f*gxf10 + 4.0f*gxf11 - gxf12 - .5f*gxf2m1 + 1.25f*gxf20 - gxf21 + .25f*gxf22)*y_2 +
+            (-0.5f*gxfm1m1 + 1.5f*gxfm10 - 1.5f*gxfm11 + .5f*gxfm12 + 1.25f*gxf0m1 - 3.75f*gxf00 + 3.75f*gxf01 - 1.25f*gxf02 - gxf1m1 + 3.0f*gxf10 - 3.0f*gxf11 + gxf12 + .25f*gxf2m1 - .75f*gxf20 + .75f*gxf21 - .25f*gxf22)*y_3)*x_2
+        +((-.5f*gxfm10 + 1.5f*gxf00 - 1.5f*gxf10 + .5f*gxf20) + (0.25f*gxfm1m1 - .25f*gxfm11 - .75f*gxf0m1 + .75f*gxf01 + .75f*gxf1m1 - .75f*gxf11 - .25f*gxf2m1 + .25f*gxf21)*y +
+            (-.5f*gxfm1m1 + 1.25f*gxfm10 - gxfm11 + .25f*gxfm12 + 1.5f*gxf0m1 - 3.75f*gxf00 + 3.0f*gxf01 - .75f*gxf02 - 1.5f*gxf1m1 + 3.75f*gxf10 - 3.0f*gxf11 + .75f*gxf12 + .5f*gxf2m1 - 1.25f*gxf20 + gxf21 - .25f*gxf22)*y_2
+            + (0.25f*gxfm1m1 - .75f*gxfm10 + .75f*gxfm11 - .25f*gxfm12 - .75f*gxf0m1 + 2.25f*gxf00 - 2.25f*gxf01 + .75f*gxf02 + .75f*gxf1m1 - 2.25f*gxf10 + 2.25f*gxf11 - .75f*gxf12 - .25f*gxf2m1 + .75f*gxf20 - .75f*gxf21 + .25f*gxf22)*y_3)*x_3;
+
+      grad_y_val = gyf00 + (-0.5f*gyf0m1 + .5f*gyf01)*y + (gyf0m1 - 2.5f*gyf00 + 2.0f*gyf01 - .5f*gyf02)*y_2 + (-0.5f*gyf0m1 + 1.5f*gyf00 - 1.5f*gyf01 + .5f*gyf02)*y_3
+        + ((-0.5f*gyfm10 + .5f*gyf10) + (0.25f*gyfm1m1 - .25f*gyfm11 - .25f*gyf1m1 + .25f*gyf11)*y + (-0.5f*gyfm1m1 + 1.25f*gyfm10 - gyfm11 + .25f*gyfm12 +
+            0.5f*gyf1m1 - 1.25f*gyf10 + gyf11 - .25f*gyf12)*y_2 + (0.25f*gyfm1m1 - .75f*gyfm10 + .75f*gyfm11 - .25f*gyfm12 - .25f*gyf1m1 + .75f*gyf10 - .75f*gyf11 + .25f*gyf12)*y_3) * x
+        +((gyfm10 - 2.5f*gyf00 + 2.0f*gyf10 - .5f*gyf20) + (-0.5f*gyfm1m1 + .5f*gyfm11 + 1.25f*gyf0m1 - 1.25f*gyf01 - gyf1m1 + gyf11 + .25f*gyf2m1 - .25f*gyf21)*y + (gyfm1m1 - 2.5f*gyfm10 + 2.0f*gyfm11
+            - .5f*gyfm12 - 2.5f*gyf0m1 + 6.25f*gyf00 - 5.0f*gyf01 + 1.25f*gyf02 + 2.0f*gyf1m1 - 5.0f*gyf10 + 4.0f*gyf11 - gyf12 - .5f*gyf2m1 + 1.25f*gyf20 - gyf21 + .25f*gyf22)*y_2 +
+            (-0.5f*gyfm1m1 + 1.5f*gyfm10 - 1.5f*gyfm11 + .5f*gyfm12 + 1.25f*gyf0m1 - 3.75f*gyf00 + 3.75f*gyf01 - 1.25f*gyf02 - gyf1m1 + 3.0f*gyf10 - 3.0f*gyf11 + gyf12 + .25f*gyf2m1 - .75f*gyf20 + .75f*gyf21 - .25f*gyf22)*y_3)*x_2
+        +((-.5f*gyfm10 + 1.5f*gyf00 - 1.5f*gyf10 + .5f*gyf20) + (0.25f*gyfm1m1 - .25f*gyfm11 - .75f*gyf0m1 + .75f*gyf01 + .75f*gyf1m1 - .75f*gyf11 - .25f*gyf2m1 + .25f*gyf21)*y +
+            (-.5f*gyfm1m1 + 1.25f*gyfm10 - gyfm11 + .25f*gyfm12 + 1.5f*gyf0m1 - 3.75f*gyf00 + 3.0f*gyf01 - .75f*gyf02 - 1.5f*gyf1m1 + 3.75f*gyf10 - 3.0f*gyf11 + .75f*gyf12 + .5f*gyf2m1 - 1.25f*gyf20 + gyf21 - .25f*gyf22)*y_2
+            + (0.25f*gyfm1m1 - .75f*gyfm10 + .75f*gyfm11 - .25f*gyfm12 - .75f*gyf0m1 + 2.25f*gyf00 - 2.25f*gyf01 + .75f*gyf02 + .75f*gyf1m1 - 2.25f*gyf10 + 2.25f*gyf11 - .75f*gyf12 - .25f*gyf2m1 + .75f*gyf20 - .75f*gyf21 + .25f*gyf22)*y_3)*x_3;
+    #endif
+  }
+
 }
 
 intensity_t
@@ -527,6 +706,58 @@ Image::interpolate_grad_y_bicubic(const scalar_t & local_x, const scalar_t & loc
           (-.5f*fm1m1 + 1.25f*fm10 - fm11 + .25f*fm12 + 1.5f*f0m1 - 3.75f*f00 + 3.0f*f01 - .75f*f02 - 1.5f*f1m1 + 3.75f*f10 - 3.0f*f11 + .75f*f12 + .5f*f2m1 - 1.25f*f20 + f21 - .25f*f22)*y_2
           + (0.25f*fm1m1 - .75f*fm10 + .75f*fm11 - .25f*fm12 - .75f*f0m1 + 2.25f*f00 - 2.25f*f01 + .75f*f02 + .75f*f1m1 - 2.25f*f10 + 2.25f*f11 - .75f*f12 - .25f*f2m1 + .75f*f20 - .75f*f21 + .25f*f22)*y_3)*x_3;
 #endif
+}
+
+void
+Image::interpolate_keys_fourth_all(intensity_t& intensity_val, 
+       scalar_t& grad_x_val, scalar_t& grad_y_val, const bool compute_gradient,
+       const scalar_t& local_x, const scalar_t& local_y) {
+  intensity_val = 0.0;
+  if (compute_gradient) {
+    grad_x_val = 0.0;
+    grad_y_val = 0.0;
+  }
+  static std::vector<scalar_t> coeffs_x(6,0.0);
+  static std::vector<scalar_t> coeffs_y(6,0.0);
+  static scalar_t dx = 0.0;
+  static scalar_t dy = 0.0;
+  static int_t ix=0,iy=0;
+  //static intensity_t value=0.0;
+  static intensity_t cc = 0.0;
+  ix = (int_t)local_x;
+  iy = (int_t)local_y;
+  if(local_x<=2.5||local_x>=width_-3.5||local_y<=2.5||local_y>=height_-3.5) {
+    intensity_val  =  this->interpolate_bilinear(local_x,local_y);
+    if (compute_gradient) {
+      grad_x_val = this->interpolate_grad_x_bilinear(local_x,local_y);
+      grad_y_val = this->interpolate_grad_y_bilinear(local_x,local_y);
+    }
+  }
+  dx = local_x - ix;
+  dy = local_y - iy;
+  coeffs_x[0] = keys_f2(dx+2.0);
+  coeffs_x[1] = keys_f1(dx+1.0);
+  coeffs_x[2] = keys_f0(dx);
+  coeffs_x[3] = keys_f0(1.0-dx);
+  coeffs_x[4] = keys_f1(2.0-dx);
+  coeffs_x[5] = keys_f2(3.0-dx);
+  coeffs_y[0] = keys_f2(dy+2.0);
+  coeffs_y[1] = keys_f1(dy+1.0);
+  coeffs_y[2] = keys_f0(dy);
+  coeffs_y[3] = keys_f0(1.0-dy);
+  coeffs_y[4] = keys_f1(2.0-dy);
+  coeffs_y[5] = keys_f2(3.0-dy);
+  //value = 0.0;
+  for(int_t m=0;m<6;++m){
+    for(int_t n=0;n<6;++n){
+      cc = coeffs_y[m]*coeffs_x[n];
+      intensity_val += cc*intensities_[(iy-2+m)*width_ + ix-2+n];
+      if (compute_gradient) {
+        grad_x_val += cc*grad_x_[(iy-2+m)*width_ + ix-2+n];
+        grad_y_val += cc*grad_y_[(iy-2+m)*width_ + ix-2+n];
+      }
+    }
+  }
 }
 
 
