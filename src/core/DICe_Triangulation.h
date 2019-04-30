@@ -46,6 +46,7 @@
 #include <DICe_Image.h>
 #include <DICe_Matrix.h>
 #include <DICe_Camera.h>
+#include <DICe_CameraSystem.h>
 #ifdef DICE_TPETRA
   #include "DICe_MultiFieldTpetra.h"
 #else
@@ -145,6 +146,20 @@ public:
     scalar_t & yw_out,
     scalar_t & zw_out,
     const bool correct_lens_distortion = false);
+
+  /// triangulate the optimal point in 3D (from 2d data with calibration).
+  /// global coordinates are always defined with camera 0 as the origin
+  /// unless another transformation is requested by specifying a transformation file
+  /// \param image_x vector of image x coordinates
+  /// \param image_y vector of image y coordinates
+  /// \param xw_out vector of global x positions in world coords
+  /// \param yw_out vector of global y positions in world coords
+  /// \param zw_out vector of global z positions in world coords
+  void triangulate(const std::vector<scalar_t> & image_x,
+    const std::vector<scalar_t> & image_y,
+    std::vector<scalar_t> & xw_out,
+    std::vector<scalar_t> & yw_out,
+    std::vector<scalar_t> & zw_out);
 
   /// correct the lens distortion with a radial model
   /// \param x_s x sensor coordinate to correct, modified in place
@@ -247,6 +262,10 @@ private:
   Teuchos::RCP<std::vector<scalar_t> > warp_params_;
   /// 8 parameters that define a projective transform (independent from intrinsic and extrinsic parameters)
   Teuchos::RCP<std::vector<scalar_t> > projective_params_;
+
+  /// save off a pointer to the camera system for use in the triangulation
+  Teuchos::RCP<Camera_System> camera_system_;
+
 };
 
 DICE_LIB_DLL_EXPORT

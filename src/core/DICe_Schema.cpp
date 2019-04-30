@@ -2683,8 +2683,52 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
 }
 
 int_t
+Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri){
+  Teuchos::RCP<MultiField> disp_x = mesh_->get_field(SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> disp_y = mesh_->get_field(SUBSET_DISPLACEMENT_Y_FS);
+  // for all the failed points, average the nearest neighbor result so that the plotting
+  // doesn't get ruined, but still record a -1 for sigma and match fields
+  Teuchos::RCP<MultiField> sigma = mesh_->get_field(SIGMA_FS);
+  Teuchos::RCP<MultiField> match = mesh_->get_field(MATCH_FS);
+  // make sure the stereo coords fields are populated
+  Teuchos::RCP<MultiField> coords_x = mesh_->get_field(SUBSET_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> coords_y = mesh_->get_field(SUBSET_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> model_x = mesh_->get_field(MODEL_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> model_y = mesh_->get_field(MODEL_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> model_z = mesh_->get_field(MODEL_COORDINATES_Z_FS);
+  Teuchos::RCP<MultiField> model_disp_x = mesh_->get_field(MODEL_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> model_disp_y = mesh_->get_field(MODEL_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> model_disp_z = mesh_->get_field(MODEL_DISPLACEMENT_Z_FS);
+  std::vector<scalar_t> world_x(local_num_subsets_,0.0);
+  std::vector<scalar_t> world_y(local_num_subsets_,0.0);
+  std::vector<scalar_t> world_z(local_num_subsets_,0.0);
+  std::vector<scalar_t> img_x(local_num_subsets_,0.0);
+  std::vector<scalar_t> img_y(local_num_subsets_,0.0);
+  for(int_t i=0;i<local_num_subsets_;++i){
+    img_x[i] = coords_x->local_value(i) + disp_x->local_value(i);
+    img_y[i] = coords_y->local_value(i) + disp_y->local_value(i);
+  }
+  tri->triangulate(img_x,img_y,world_x,world_y,world_z);
+  for(int_t i=0;i<local_num_subsets_;++i){
+    if(frame_id_==first_frame_id_){
+      model_x->local_value(i) = world_x[i];
+      model_y->local_value(i) = world_y[i];
+      model_z->local_value(i) = world_z[i];
+    }
+    else{
+      model_disp_x->local_value(i) = world_x[i] - model_x->local_value(i);
+      model_disp_y->local_value(i) = world_y[i] - model_y->local_value(i);
+      model_disp_z->local_value(i) = world_z[i] - model_z->local_value(i);
+    }
+  }
+  return 0;
+}
+
+int_t
 Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
   Teuchos::RCP<Schema> right_schema){
+  if(tri==Teuchos::null) return 0;
+  if(right_schema==Teuchos::null) return execute_triangulation(tri);
   TEUCHOS_TEST_FOR_EXCEPTION(right_schema==Teuchos::null,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(right_schema->local_num_subsets()!=local_num_subsets_,std::runtime_error,
     "Error, incompatible schemas: left number of subsets " << local_num_subsets_ << " right " << right_schema->local_num_subsets());

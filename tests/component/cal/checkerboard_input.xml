@@ -14,4 +14,5 @@
   <Parameter name="cal_target_spacing_size" type="double" value="10.0"/>
   <Parameter name="draw_intersection_image" type="bool" value="true"/>
   <Parameter name="cal_debug_folder" type="string" value="./debug_images/"/>
+  <Parameter name="pose_estimation_index" type="int" value="0"/>
 </ParameterList>

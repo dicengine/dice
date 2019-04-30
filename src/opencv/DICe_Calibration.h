@@ -177,6 +177,8 @@ private:
   int_t num_fiducials_origin_to_x_marker_;
   /// the number of fiducial markers or intersections between the origin and the marker dot on the y axis
   int_t num_fiducials_origin_to_y_marker_;
+  /// frame to use to estimate pose for 2d calibration
+  int_t pose_estimation_index_;
   /// true if an intersection image should be drawn
   bool draw_intersection_image_;
   /// if specified, the debug folder is where the debugging images are placed

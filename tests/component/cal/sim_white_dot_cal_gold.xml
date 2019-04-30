@@ -10,6 +10,14 @@
     <Parameter name="K1" type="double" value="0.021682" />
     <Parameter name="K2" type="double" value="-0.52467" />
     <Parameter name="K3" type="double" value="16.508" />
+    <Parameter name="TX" type="double" value="-18.9965" />
+    <Parameter name="TY" type="double" value="28.8823" />
+    <Parameter name="TZ" type="double" value="386.554" />
+    <ParameterList name="rotation_3x3_matrix">
+      <Parameter name="ROW 0" type="string" value="{ 0.96379, -0.266481, 0.00981836 }" />
+      <Parameter name="ROW 1" type="string" value="{ -0.249976, -0.915688, -0.314688 }" />
+      <Parameter name="ROW 2" type="string" value="{ 0.092849, 0.300839, -0.949144 }" />
+    </ParameterList>
     <Parameter name="LENS_DISTORTION_MODEL" type="string" value="OPENCV_LENS_DISTORTION" />  
     <Parameter name="IMAGE_HEIGHT_WIDTH" type="string" value="{ 1200, 1920 }" />  
   </ParameterList>

@@ -1,0 +1,24 @@
+<ParameterList>
+  <Parameter name="xml_file_format" type="string" value="DICe_xml_camera_system_file" />  
+  <Parameter name="system_type_3D" type="string" value="OPENCV" />  
+  <ParameterList name="CAMERA 0">
+    <Parameter name="CAMERA_ID" type="string" value="" />
+    <Parameter name="CX" type="double" value="872.326" />
+    <Parameter name="CY" type="double" value="580.379" />
+    <Parameter name="FX" type="double" value="6672.99" />
+    <Parameter name="FY" type="double" value="6668.94" />
+    <Parameter name="K1" type="double" value="0.0947892" />
+    <Parameter name="K2" type="double" value="-16.2235" />
+    <Parameter name="K3" type="double" value="1091.15" />  
+    <Parameter name="LENS_DISTORTION_MODEL" type="string" value="OPENCV_LENS_DISTORTION" />  
+    <Parameter name="TX" type="double" value="-32.8767" />
+    <Parameter name="TY" type="double" value="8.26281" />
+    <Parameter name="TZ" type="double" value="393.302" />
+  <ParameterList name="rotation_3x3_matrix">
+    <Parameter name="ROW 0" type="string" value="{ 0.963488, 0.171561, -0.205569 }" />
+    <Parameter name="ROW 1" type="string" value="{ 0.136979, -0.975507, -0.172111 }" />
+    <Parameter name="ROW 2" type="string" value="{ -0.230062, 0.137668, -0.963389 }" />
+  </ParameterList>
+    <Parameter name="IMAGE_HEIGHT_WIDTH" type="string" value="{ 1200, 1920 }" />  
+  </ParameterList>
+</ParameterList>

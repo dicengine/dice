@@ -368,6 +368,9 @@ public:
   int_t execute_triangulation(Teuchos::RCP<Triangulation> tri,
     Teuchos::RCP<Schema> right_schema);
 
+  // same as above, only for 2d analysis
+  int_t execute_triangulation(Teuchos::RCP<Triangulation> tri);
+
   /// do clean up tasks
   void post_execution_tasks();
 

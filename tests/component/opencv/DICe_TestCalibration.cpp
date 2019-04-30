@@ -230,7 +230,8 @@ int main(int argc, char *argv[]) {
     // create the intersection points and generate a calibrated camera system
     scalar_t sim_white_dot_rms = 0.0;
     Teuchos::RCP<Camera_System> sim_white_dot_cam_sys = sim_white_dot_cal.calibrate(sim_white_dot_rms);
-    //std::cout << *sim_dot_cam_sys.get() << std::endl;
+    sim_white_dot_cam_sys->write_camera_system_file("sim_white_dot_cal.xml");
+    std::cout << *sim_white_dot_cam_sys.get() << std::endl;
     Camera_System sim_white_dot_gold_cam_sys("../cal/sim_white_dot_cal_gold.xml"); // same gold file as black on white example
     const scalar_t sim_white_dot_diff = sim_white_dot_cam_sys->diff(sim_white_dot_gold_cam_sys);
     *outStream << "sim white dot error norm: " << sim_white_dot_diff << std::endl;

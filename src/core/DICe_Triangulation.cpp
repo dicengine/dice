@@ -270,9 +270,10 @@ void
 Triangulation::load_calibration_parameters(const std::string & param_file_name){
   DEBUG_MSG("Triangulation::load_calibration_parameters(): Parsing calibration parameters from file: " << param_file_name);
 
-  Teuchos::RCP<Camera_System> camera_system = Teuchos::rcp(new Camera_System(param_file_name));
-  TEUCHOS_TEST_FOR_EXCEPTION(camera_system->num_cameras()!=2,std::runtime_error,
-    "triangulation routine requires exactly two cameras");
+  camera_system_ = Teuchos::rcp(new Camera_System(param_file_name));
+  if(camera_system_->num_cameras()==1) return;
+
+  TEUCHOS_TEST_FOR_EXCEPTION(camera_system_->num_cameras()!=2,std::runtime_error,"");
 
   // the standard convention for camera extrinsics is stored from world to camera,
   // for the triangulation code we need the extrinsics to be from camera 0 to world (trans extrinsics) and
@@ -280,24 +281,24 @@ Triangulation::load_calibration_parameters(const std::string & param_file_name){
   // if the extrinsics_relative_camera_to_camera flag is set, this is already the case so no conversion necessary
   // otherwise we invert the world to camera 0 extrinsics to be the trans extrinsics and combine this new inverted
   // transform with the input world to camera 1 transform to be the cal_intrinsics
-  cam_0_to_world_ = camera_system->camera(0)->transformation_matrix();
-  cam_0_to_cam_1_ = camera_system->camera(1)->transformation_matrix();
+  cam_0_to_world_ = camera_system_->camera(0)->transformation_matrix();
+  cam_0_to_cam_1_ = camera_system_->camera(1)->transformation_matrix();
 
   // if the camera extrinsics were given as world to camera 0 and world to camera 1,
   // they need to be converted to the first set of extrinsics as world to camera 0 and the
   // second as camera 0 to camera 1
-  if(!camera_system->extrinsics_relative_camera_to_camera()){
+  if(!camera_system_->extrinsics_relative_camera_to_camera()){
     cam_0_to_world_ = cam_0_to_world_.inv();
     cam_0_to_cam_1_ = cam_0_to_cam_1_ * cam_0_to_world_;
   }
 
   // set the camera intrinsic parameters
-  for(size_t i=0;i<camera_system->num_cameras();++i)
+  for(size_t i=0;i<camera_system_->num_cameras();++i)
     for(size_t j=0;j<Camera::MAX_CAM_INTRINSIC_PARAM;++j)
-    cal_intrinsics_[i][j] = (*camera_system->camera(i)->intrinsics())[j];
+    cal_intrinsics_[i][j] = (*camera_system_->camera(i)->intrinsics())[j];
 
 #ifdef DICE_DEBUG_MSG
-  std::cout << *camera_system.get() << std::endl;
+  std::cout << *camera_system_.get() << std::endl;
 #endif
 
   DEBUG_MSG("Triangulation::load_calibration_parameters(): successfully loaded camera system");
@@ -647,6 +648,41 @@ Triangulation::cosine_of_two_vectors(const std::vector<scalar_t> & a,
   return result;
 }
 
+
+void
+Triangulation::triangulate(const std::vector<scalar_t> & image_x,
+  const std::vector<scalar_t> & image_y,
+  std::vector<scalar_t> & world_x,
+  std::vector<scalar_t> & world_y,
+  std::vector<scalar_t> & world_z){
+
+  TEUCHOS_TEST_FOR_EXCEPTION(camera_system_==Teuchos::null,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(camera_system_->num_cameras()!=1,std::runtime_error,"");
+  DEBUG_MSG("Triangulation::triangulate(): executing projection from image coordinates to world coordinates using calibration parameters");
+
+  // assume that the output vectors have been initialized
+  TEUCHOS_TEST_FOR_EXCEPTION(image_x.size()!=image_y.size(),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(image_x.size()!=world_x.size(),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(image_x.size()!=world_y.size(),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(image_x.size()!=world_z.size(),std::runtime_error,"");
+
+  Teuchos::RCP<DICe::Camera> cam = camera_system_->camera(0);
+  const size_t vec_size = image_x.size();
+  // create the reference image:
+  std::vector<scalar_t> cam_x(vec_size,0.0);
+  std::vector<scalar_t> cam_y(vec_size,0.0);
+  std::vector<scalar_t> cam_z(vec_size,0.0);
+  std::vector<scalar_t> sensor_x(vec_size,0.0);
+  std::vector<scalar_t> sensor_y(vec_size,0.0);
+  // for each pixel convert from image coordinates to world coordinates and get the intensity value:
+  cam->image_to_sensor(image_x,image_y,sensor_x,sensor_y);
+  std::vector<scalar_t> params(3,0.0);
+  params[Projection_Shape_Function::ZP] = cam->tz(); // these are fixed to have the camera coordinate system perpendicular to the camera
+  params[Projection_Shape_Function::THETA] = 1.57079633;
+  params[Projection_Shape_Function::PHI] = 1.57079633;
+  cam->sensor_to_cam(sensor_x,sensor_y,cam_x,cam_y,cam_z,params);
+  cam->cam_to_world(cam_x,cam_y,cam_z,world_x,world_y,world_z);
+}
 
 scalar_t Triangulation::triangulate(const scalar_t & x0,
   const scalar_t & y0,

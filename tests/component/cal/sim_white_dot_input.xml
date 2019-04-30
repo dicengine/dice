@@ -15,6 +15,7 @@
   <Parameter name="num_cal_fiducials_origin_to_y_marker" type="int" value="6"/>
   <Parameter name="cal_origin_x" type="int" value="2"/>
   <Parameter name="cal_origin_y" type="int" value="2"/>
+  <Parameter name="pose_estimation_index" type="int" value="0"/>
   <Parameter name="cal_target_spacing_size" type="double" value="7.0"/> <!--7mm-->
   <Parameter name="threshold_start" type="int" value="100"/>
   <Parameter name="threshold_end" type="int" value="100"/>

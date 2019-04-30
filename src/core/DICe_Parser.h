@@ -185,6 +185,8 @@ const char* const num_cal_fiducials_origin_to_y_marker = "num_cal_fiducials_orig
 /// Input parameter
 const char* const cal_target_type = "cal_target_type";
 /// Input parameter
+const char* const pose_estimation_index = "pose_estimation_index";
+/// Input parameter
 const char* const draw_intersection_image = "draw_intersection_image";
 /// Input parameter
 const char* const cal_debug_folder = "cal_debug_folder";

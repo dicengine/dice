@@ -48,6 +48,8 @@
 
 #include <Teuchos_XMLParameterListHelpers.hpp>
 
+#include <fstream>
+
 using namespace cv;
 
 namespace DICe {
@@ -113,6 +115,7 @@ Calibration::init(const Teuchos::RCP<Teuchos::ParameterList> params){
   if(params->isParameter(DICe::num_cal_fiducials_origin_to_y_marker))
     num_fiducials_origin_to_y_marker_ = params->get<int_t>(DICe::num_cal_fiducials_origin_to_y_marker);
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(DICe::cal_target_type),std::runtime_error,"");
+  pose_estimation_index_ = params->get<int_t>(DICe::pose_estimation_index,-1);
   target_type_ = Calibration::string_to_target_type(params->get<std::string>(DICe::cal_target_type));
   draw_intersection_image_ = false;
   if(params->isParameter(DICe::draw_intersection_image))
@@ -274,21 +277,36 @@ Calibration::calibrate(const std::string & output_file,
   std::cout << "Calibration::calibrate(): performing OpenCV calibration" << std::endl;
 
   //do the intrinsic calibration for the initial guess
+  int_t adjusted_pose_index = pose_estimation_index_;
   Mat cameraMatrix[2], distCoeffs[2];
   cameraMatrix[0] = initCameraMatrix2D(object_points_, intersection_points_[0], image_size_, 0);
   if(num_cams()==2)
     cameraMatrix[1] = initCameraMatrix2D(object_points_, intersection_points_[1], image_size_, 0);
-
+  else{
+    TEUCHOS_TEST_FOR_EXCEPTION(pose_estimation_index_<0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(pose_estimation_index_>=(int_t)num_images(),std::runtime_error,"error, invalid pose estimation index");
+    for(int_t i=0;i<pose_estimation_index_;++i){
+      if(!include_set_[i])
+        adjusted_pose_index--;
+    }
+    DEBUG_MSG("Calibration::calibrate(): pose estimation index: " << pose_estimation_index_);
+  }
   //do the openCV calibration
   Mat R, T, E, F;
+  std::vector< Mat > rvecs, tvecs;
 
   double rms = 0.0;
   if(num_cams()==1){
     rms = calibrateCamera(object_points_, intersection_points_[0],
       image_size_, cameraMatrix[0], distCoeffs[0],
-      R,T,calib_options_,
+      rvecs,tvecs,calib_options_,
       TermCriteria(TermCriteria::COUNT+TermCriteria::EPS, 1000, 1e-7));
+      assert(adjusted_pose_index>=0&&adjusted_pose_index<(int_t)tvecs.size());
+      assert(adjusted_pose_index>=0&&adjusted_pose_index<(int_t)rvecs.size());
+      Rodrigues(rvecs[adjusted_pose_index],R); // convert Rodrigues angles to R matrix
+      T = tvecs[adjusted_pose_index];
   }else{
+    assert(num_cams()==2);
     rms = stereoCalibrate(object_points_, intersection_points_[0], intersection_points_[1],
       cameraMatrix[0], distCoeffs[0],
       cameraMatrix[1], distCoeffs[1],
@@ -378,11 +396,10 @@ Calibration::calibrate(const std::string & output_file,
     if (distCoeffs[0].cols > 13) camera_info.intrinsics_[Camera::T2] = distCoeffs[i_cam].at<double>(13);
     camera_info.lens_distortion_model_ = Camera::OPENCV_LENS_DISTORTION;
 
-    if(i_cam==1){
+    if((i_cam==1&&num_cams()==2)||(i_cam==0&&num_cams()==1)){
       camera_info.tx_ = T.at<double>(0);
       camera_info.ty_ = T.at<double>(1);
       camera_info.tz_ = T.at<double>(2);
-
       for (size_t i_a = 0; i_a < 3; i_a++) {
         for (size_t i_b = 0; i_b < 3; i_b++) {
           camera_info.rotation_matrix_(i_a,i_b) = R.at<double>(i_a, i_b);

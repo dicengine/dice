@@ -307,13 +307,13 @@ int main(int argc, char *argv[]) {
         //if(stereo_schema->use_nonlinear_projection())
         //  stereo_schema->project_right_image_into_left_frame(triangulation,true);
         stereo_schema->set_frame_range(first_frame_id,num_frames);
-        // go ahead and set up the model coordinates field
-        schema->execute_triangulation(triangulation,stereo_schema);
       } // end is stereo
       else{ // only the ref image needs to be set
         schema->update_extents();
         schema->set_ref_image(image_files[0]);
       }
+      // go ahead and set up the model coordinates field
+      schema->execute_triangulation(triangulation,stereo_schema);
 
       // iterate through the images and perform the correlation:
       bool failed_step = false;
@@ -343,8 +343,8 @@ int main(int argc, char *argv[]) {
             corr_error = stereo_schema->execute_correlation();
             if(corr_error)
               failed_step = true;
-            schema->execute_triangulation(triangulation,stereo_schema);
           }
+          schema->execute_triangulation(triangulation,stereo_schema);
           schema->execute_post_processors();
         }
         // write the output
