@@ -463,12 +463,12 @@ public:
   /// \param wrld_dy first partials of the y world locations
   /// \param wrld_dz first partials of the z world locations
   void cam_to_world(
-    std::vector<scalar_t> & cam_x,
-    std::vector<scalar_t> & cam_y,
-    std::vector<scalar_t> & cam_z,
-    const std::vector<scalar_t> & wrld_x,
-    const std::vector<scalar_t> & wrld_y,
-    const std::vector<scalar_t> & wrld_z,
+    const std::vector<scalar_t> & cam_x,
+    const std::vector<scalar_t> & cam_y,
+    const std::vector<scalar_t> & cam_z,
+    std::vector<scalar_t> & wrld_x,
+    std::vector<scalar_t> & wrld_y,
+    std::vector<scalar_t> & wrld_z,
     std::vector<std::vector<scalar_t> > & cam_dx,
     std::vector<std::vector<scalar_t> > & cam_dy,
     std::vector<std::vector<scalar_t> > & cam_dz,
@@ -479,7 +479,7 @@ public:
     // and only allow the projection parameters, which have 3
     TEUCHOS_TEST_FOR_EXCEPTION(cam_dx.size()!=3,std::runtime_error,"");
     TEUCHOS_TEST_FOR_EXCEPTION(wrld_dx.size()!=3,std::runtime_error,"");
-    rot_trans_transform(cam_world_trans_, wrld_x, wrld_y, wrld_z, cam_x, cam_y, cam_z,
+    rot_trans_transform(cam_world_trans_, cam_x, cam_y, cam_z, wrld_x, wrld_y, wrld_z,
       cam_dx, cam_dy, cam_dz, wrld_dx, wrld_dy, wrld_dz);
   }
 
