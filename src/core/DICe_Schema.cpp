@@ -572,6 +572,8 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   levenberg_marquardt_regularization_factor_ = diceParams->get<double>(DICe::levenberg_marquardt_regularization_factor);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::output_beta),std::runtime_error,"");
   output_beta_ = diceParams->get<bool>(DICe::output_beta);
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::write_exodus_output),std::runtime_error,"");
+  write_exodus_output_ = diceParams->get<bool>(DICe::write_exodus_output);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::use_search_initialization_for_failed_steps),std::runtime_error,"");
   use_search_initialization_for_failed_steps_ = diceParams->get<bool>(DICe::use_search_initialization_for_failed_steps);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::normalize_gamma_with_active_pixels),std::runtime_error,"");
@@ -1617,6 +1619,10 @@ Schema::prepare_optimization_initializers(){
   else if(initialization_method_==USE_FEATURE_MATCHING){
     DEBUG_MSG("Default initializer is feature matching initializer");
     default_initializer = Teuchos::rcp(new Feature_Matching_Initializer(this));
+  }
+  else if(initialization_method_==USE_IMAGE_REGISTRATION){
+    DEBUG_MSG("Default initializer is image registration initializer");
+    default_initializer = Teuchos::rcp(new Image_Registration_Initializer(this));
   }
   else if(initialization_method_==USE_OPTICAL_FLOW){
     // make syre tga the correlation routine is tracking routine
@@ -2983,14 +2989,16 @@ Schema::write_output(const std::string & output_folder,
   int_t proc_size = comm_->get_size();
 
 #ifdef DICE_ENABLE_GLOBAL // global is enabled doesn't mean the analysis is global DIC it just means exodus is available as an output format
-  if(frame_id_==first_frame_id_+1){
-    std::string output_dir= "";
-    if(init_params_!=Teuchos::null)
-      output_dir = init_params_->get<std::string>(DICe::output_folder,"");
-    DICe::mesh::create_output_exodus_file(mesh_,output_dir);
-    DICe::mesh::create_exodus_output_variable_names(mesh_);
+  if (write_exodus_output_) {
+    if(frame_id_==first_frame_id_+1){
+      std::string output_dir= "";
+      if(init_params_!=Teuchos::null)
+        output_dir = init_params_->get<std::string>(DICe::output_folder,"");
+      DICe::mesh::create_output_exodus_file(mesh_,output_dir);
+      DICe::mesh::create_exodus_output_variable_names(mesh_);
+    }
+    DICe::mesh::exodus_output_dump(mesh_,frame_id_-first_frame_id_,frame_id_-first_frame_id_);
   }
-  DICe::mesh::exodus_output_dump(mesh_,frame_id_-first_frame_id_,frame_id_-first_frame_id_);
 #endif
 
   if(no_text_output) return;

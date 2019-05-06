@@ -783,6 +783,11 @@ public:
     return output_beta_;
   }
 
+  /// Returns true if exodus output should be written
+  bool write_exodus_output()const{
+    return write_exodus_output_;
+  }
+
   /// Evolve subsets as more pixels become visible that were previously obstructed
   bool use_subset_evolution()const{
     return use_subset_evolution_;
@@ -1227,6 +1232,8 @@ private:
   double path_distance_threshold_;
   /// true if the beta parameter should be computed by the objective
   bool output_beta_;
+  /// true if exodus output should be written
+  bool write_exodus_output_;
   /// true if search initialization should be used for failed steps (otherwise the subset is skipped)
   bool use_search_initialization_for_failed_steps_;
 #ifdef DICE_ENABLE_GLOBAL

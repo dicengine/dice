@@ -1,0 +1,29 @@
+# Auto generated subset file from DICe GUI
+begin region_of_interest
+  begin boundary
+    begin polygon
+      begin vertices
+        72 28
+        108 17
+        125 73
+        94 83
+      end vertices
+    end polygon
+    begin polygon
+      begin vertices
+        48 195
+        84 152
+        106 171
+        71 218
+      end vertices
+    end polygon
+    begin polygon
+      begin vertices
+        174 146
+        178 118
+        238 127
+        226 159
+      end vertices
+    end polygon
+  end boundary
+end region_of_interest

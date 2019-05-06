@@ -344,25 +344,16 @@ Subset::initialize(Teuchos::RCP<Image> image,
       // if the code got here, the pixel is not deactivated
       is_deactivated_this_step(i) = false;
       if(interp==BILINEAR){
-        intensities_[i] = image->interpolate_bilinear(mapped_x-ox,mapped_y-oy);
-        if(image->has_gradients()){
-          grad_x_[i] = image->interpolate_grad_x_bilinear(mapped_x-ox,mapped_y-oy);
-          grad_y_[i] = image->interpolate_grad_y_bilinear(mapped_x-ox,mapped_y-oy);
-        }
+        image->interpolate_bilinear_all(intensities_[i], grad_x_[i], grad_y_[i],
+               image->has_gradients(), mapped_x-ox, mapped_y-oy);
       }
       else if(interp==BICUBIC){
-        intensities_[i] = image->interpolate_bicubic(mapped_x-ox,mapped_y-oy);
-        if(image->has_gradients()){
-          grad_x_[i] = image->interpolate_grad_x_bicubic(mapped_x-ox,mapped_y-oy);
-          grad_y_[i] = image->interpolate_grad_y_bicubic(mapped_x-ox,mapped_y-oy);
-        }
+        image->interpolate_bicubic_all(intensities_[i], grad_x_[i], grad_y_[i],
+               image->has_gradients(), mapped_x-ox, mapped_y-oy);
       }
       else if(interp==KEYS_FOURTH){
-        intensities_[i] = image->interpolate_keys_fourth(mapped_x-ox,mapped_y-oy);
-        if(image->has_gradients()){
-          grad_x_[i] = image->interpolate_grad_x_keys_fourth(mapped_x-ox,mapped_y-oy);
-          grad_y_[i] = image->interpolate_grad_y_keys_fourth(mapped_x-ox,mapped_y-oy);
-        }
+        image->interpolate_keys_fourth_all(intensities_[i], grad_x_[i], grad_y_[i],
+               image->has_gradients(), mapped_x-ox, mapped_y-oy);
       }
       else{
         TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,
