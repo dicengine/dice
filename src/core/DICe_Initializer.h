@@ -52,6 +52,10 @@
 
 #include <nanoflann.hpp>
 
+#include <opencv2/features2d.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/opencv.hpp>
+
 #include <set>
 #include <cassert>
 
@@ -401,6 +405,39 @@ protected:
   bool first_call_;
 };
 
+/// \class DICe::Image_Registration_Initializer
+/// \brief an initializer that uses an ECC transform to initialize the fields
+class DICE_LIB_DLL_EXPORT
+Image_Registration_Initializer : public Initializer{
+public:
+
+  /// constructor
+  /// \param schema the parent schema
+  Image_Registration_Initializer(Schema * schema):
+    Initializer(schema),
+    theta_(0.0),
+    first_call_(true){};
+
+  /// virtual destructor
+  virtual ~Image_Registration_Initializer(){};
+
+  /// see base class description
+  virtual void pre_execution_tasks();
+
+  /// see base class description
+  virtual Status_Flag initial_guess(const int_t subset_gid,
+    Teuchos::RCP<Local_Shape_Function> shape_function);
+
+protected:
+  /// matrix to hold the tranform values
+  cv::Mat ecc_transform_;
+  /// storage for the rotation angle which should be the same for all points
+  scalar_t theta_;
+  /// previous image pointer (used if the images are constructed from an array)
+  Teuchos::RCP<Image> prev_img_;
+  /// first time the pre execution tasks are called
+  bool first_call_;
+};
 
 
 /// \class DICe::Zero_Value_Initializer

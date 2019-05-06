@@ -540,6 +540,62 @@ Feature_Matching_Initializer::initial_guess(const int_t subset_gid,
   return INITIALIZE_SUCCESSFUL;
 };
 
+void
+Image_Registration_Initializer::pre_execution_tasks(){
+  if(first_call_){
+    prev_img_ = schema_->ref_img();
+  }
+  assert(prev_img_!=Teuchos::null);
+  assert(schema_->def_img()!=Teuchos::null);
+  DEBUG_MSG("Image_Registration_Initializer::pre_execution_tasks(): prev image: " << prev_img_->file_name());
+  DEBUG_MSG("Image_Registration_Initializer::pre_execution_tasks(): def image: " << schema_->def_img()->file_name());
+  TEUCHOS_TEST_FOR_EXCEPTION(!prev_img_->has_file_name(),std::runtime_error,"error, image registration initializer requires the images to have file names");
+  TEUCHOS_TEST_FOR_EXCEPTION(!schema_->def_img()->has_file_name(),std::runtime_error,"error, image registration initializer requires the images to have file names");
+  cv::Mat temp = cv::imread(schema_->def_img()->file_name(), cv::ImreadModes::IMREAD_GRAYSCALE);
+  cv::Mat target = cv::imread(prev_img_->file_name(), cv::ImreadModes::IMREAD_GRAYSCALE);
+  int_t num_its = 500;
+  scalar_t term_eps = 1E-8;
+  cv::Mat warp =  cv::Mat::eye(2, 3, CV_32F);
+  findTransformECC (temp,target,warp,cv::MOTION_EUCLIDEAN,
+    cv::TermCriteria (cv::TermCriteria::COUNT+cv::TermCriteria::EPS,num_its, term_eps));
+  // convert the 2x3 warp to a square matrix for inversion
+  ecc_transform_ = cv::Mat::eye(3, 3, CV_32F);
+  for(int_t i=0;i<warp.rows;++i){
+    for(int_t j=0;j<warp.cols;++j){
+      ecc_transform_.at<float>(i,j) = warp.at<float>(i,j);
+    }
+  }
+  ecc_transform_ = ecc_transform_.inv();
+  //  std::cout << ecc_transform_ << std::endl;
+  theta_ = -1.0*std::asin(ecc_transform_.at<float>(0,1));
+  prev_img_ = schema_->def_img(0);
+  first_call_ = false;
+}
+
+Status_Flag
+Image_Registration_Initializer::initial_guess(const int_t subset_gid,
+  Teuchos::RCP<Local_Shape_Function> shape_function){
+
+  // For each point, use the coeffcients to figure out the updated point locations
+  scalar_t x = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS) + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+  scalar_t y = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS) + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
+
+  scalar_t xp = ecc_transform_.at<float>(0,0)*x + ecc_transform_.at<float>(0,1)*y + ecc_transform_.at<float>(0,2);
+  scalar_t yp = ecc_transform_.at<float>(1,0)*x + ecc_transform_.at<float>(1,1)*y + ecc_transform_.at<float>(1,2);
+
+  scalar_t u = xp - x; // incremental displacement
+  scalar_t v = yp - y;
+
+   DEBUG_MSG("Subset " << subset_gid << " image registration initializer increments: u " << u << " v " << v << " theta " << theta_);
+   shape_function->insert_motion(u + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS),
+     v + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS),
+     theta_ + schema_->global_field_value(subset_gid,ROTATION_Z_FS));
+   DEBUG_MSG("Subset " << subset_gid << " init. with values: u " << u + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) <<
+     " v " << v + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) <<
+     " theta " << theta_ + schema_->global_field_value(subset_gid,ROTATION_Z_FS));
+  return INITIALIZE_SUCCESSFUL;
+};
+
 
 Status_Flag
 Zero_Value_Initializer::initial_guess(const int_t subset_gid,

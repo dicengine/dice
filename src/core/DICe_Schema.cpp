@@ -1620,6 +1620,10 @@ Schema::prepare_optimization_initializers(){
     DEBUG_MSG("Default initializer is feature matching initializer");
     default_initializer = Teuchos::rcp(new Feature_Matching_Initializer(this));
   }
+  else if(initialization_method_==USE_IMAGE_REGISTRATION){
+    DEBUG_MSG("Default initializer is image registration initializer");
+    default_initializer = Teuchos::rcp(new Image_Registration_Initializer(this));
+  }
   else if(initialization_method_==USE_OPTICAL_FLOW){
     // make syre tga the correlation routine is tracking routine
     TEUCHOS_TEST_FOR_EXCEPTION(correlation_routine_!=TRACKING_ROUTINE,std::invalid_argument,"Error, USE_OPTICAL_FLOW "

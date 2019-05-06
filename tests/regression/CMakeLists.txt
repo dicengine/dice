@@ -12,6 +12,7 @@ SET(REGRESSION_TESTS
   dic_challenge_12
   dic_challenge_12_sorted
   bitmap_star
+  image_reg_init
 )
 
 IF(NOT DICE_USE_DOUBLE)
