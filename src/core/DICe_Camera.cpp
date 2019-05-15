@@ -152,9 +152,8 @@ std::ostream & operator<<(std::ostream & os, const Camera::Camera_Info & info){
   return os;
 };
 
-
-void
-Camera::Camera_Info::set_rotation_matrix(const scalar_t & alpha,
+Matrix<scalar_t,3>
+Camera::Camera_Info::eulers_to_rotation_matrix(const scalar_t & alpha,
   const scalar_t & beta,
   const scalar_t & gamma){
   const scalar_t cx = std::cos(alpha*DICE_PI/180.0); // input as degrees, need radians
@@ -163,15 +162,64 @@ Camera::Camera_Info::set_rotation_matrix(const scalar_t & alpha,
   const scalar_t sy = std::sin(beta*DICE_PI/180.0);
   const scalar_t cz = std::cos(gamma*DICE_PI/180.0);
   const scalar_t sz = std::sin(gamma*DICE_PI/180.0);
-  rotation_matrix_(0,0) = cy*cz;
-  rotation_matrix_(0,1) = sx*sy*cz-cx*sz;
-  rotation_matrix_(0,2) = cx*sy*cz+sx*sz;
-  rotation_matrix_(1,0) = cy*sz;
-  rotation_matrix_(1,1) = sx*sy*sz+cx*cz;
-  rotation_matrix_(1,2) = cx*sy*sz-sx*cz;
-  rotation_matrix_(2,0) = -sy;
-  rotation_matrix_(2,1) = sx*cy;
-  rotation_matrix_(2,2) = cx*cy;
+
+  Matrix<scalar_t,3> R;
+  R(0,0) = cy*cz;
+  R(0,1) = sx*sy*cz-cx*sz;
+  R(0,2) = cx*sy*cz+sx*sz;
+  R(1,0) = cy*sz;
+  R(1,1) = sx*sy*sz+cx*cz;
+  R(1,2) = cx*sy*sz-sx*cz;
+  R(2,0) = -sy;
+  R(2,1) = sx*cy;
+  R(2,2) = cx*cy;
+  return R;
+}
+
+void
+Camera::Camera_Info::eulers_to_rotation_matrix_partials(const scalar_t & alpha,
+  const scalar_t & beta,
+  const scalar_t & gamma,
+  Matrix<scalar_t,3,4> & R_dx,
+  Matrix<scalar_t,3,4> & R_dy,
+  Matrix<scalar_t,3,4> & R_dz){
+  const scalar_t cx = std::cos(alpha*DICE_PI/180.0); // input as degrees, need radians
+  const scalar_t sx = std::sin(alpha*DICE_PI/180.0);
+  const scalar_t cy = std::cos(beta*DICE_PI/180.0);
+  const scalar_t sy = std::sin(beta*DICE_PI/180.0);
+  const scalar_t cz = std::cos(gamma*DICE_PI/180.0);
+  const scalar_t sz = std::sin(gamma*DICE_PI/180.0);
+
+  R_dx(0,1) = cx * sy * cz + sx * sz;
+  R_dx(0,2) = -sx * sy * cz + cx * sz;
+  R_dy(0,1) = cx * sy * sz - sx * cz;
+  R_dy(0,2) = - sx * sy * sz - cx * cz;
+  R_dz(0,1) = cx * cy;
+  R_dz(0,2) = -sx * cy;
+
+  R_dx(1,0) = -sy * cz;
+  R_dx(1,1) = sx * cy * cz;
+  R_dx(1,2) = cx * cy * cz;
+  R_dy(1,0) = -sy * sz;
+  R_dy(1,1) = sx * cy * sz;
+  R_dy(1,2) = cx * cy * sz;
+  R_dz(1,0) = -cy;
+  R_dz(1,1) = -sx * sy;
+  R_dz(1,2) = -cx * sy;
+
+  R_dx(2,0) = -cy * sz;
+  R_dx(2,1) = -sx * sy * sz - cx * cz;
+  R_dx(2,2) = -cx * sy * sz + sx * cz;
+  R_dy(2,0) = cy * cz;
+  R_dy(2,1) = sx * sy * cz - cx * sz;
+  R_dy(2,2) = cx * sy * cz + sx * sz;
+}
+
+void
+Camera::Camera_Info::set_rotation_matrix(const scalar_t & alpha,
+  const scalar_t & beta,
+  const scalar_t & gamma){
+  rotation_matrix_ = eulers_to_rotation_matrix(alpha,beta,gamma);
 }
 
 void
@@ -214,6 +262,65 @@ Camera::Camera_Info::clear(){
 }
 
 void
+Camera::transform_coordinates_in_place(std::vector<scalar_t> & x,
+    std::vector<scalar_t> & y,
+    std::vector<scalar_t> & z,
+    const Matrix<scalar_t,4> & T){
+  const size_t vec_size = x.size();
+  TEUCHOS_TEST_FOR_EXCEPTION(y.size()!=vec_size,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(z.size()!=vec_size,std::runtime_error,"");
+  for(size_t i=0;i<vec_size;++i){
+    const scalar_t tmp_x = x[i];
+    const scalar_t tmp_y = y[i];
+    const scalar_t tmp_z = z[i];
+    x[i] = T(0,0) * tmp_x + T(0,1) * tmp_y + T(0,2) * tmp_z + T(0,3);
+    y[i] = T(1,0) * tmp_x + T(1,1) * tmp_y + T(1,2) * tmp_z + T(1,3);
+    z[i] = T(2,0) * tmp_x + T(2,1) * tmp_y + T(2,2) * tmp_z + T(2,3);
+  }
+}
+
+void
+Camera::transform_coordinates_in_place(std::vector<scalar_t> & x,
+    std::vector<scalar_t> & y,
+    std::vector<scalar_t> & z,
+    const Matrix<scalar_t,3> & R,
+    const scalar_t & tx,
+    const scalar_t & ty,
+    const scalar_t & tz){
+  Matrix<scalar_t,4> T;
+  for(size_t i=0;i<3;++i){
+    for(size_t j=0;j<3;++j){
+      T(i,j) = R(i,j);
+    }
+  }
+  T(0,3) = tx;
+  T(1,3) = ty;
+  T(2,3) = tz;
+  T(3,3) = 1.0;
+  transform_coordinates_in_place(x,y,z,T);
+}
+
+void
+Camera::transform_coordinates_in_place(std::vector<scalar_t> & x,
+  std::vector<scalar_t> & y,
+  std::vector<scalar_t> & z,
+  const std::vector<scalar_t> & rigid_body_params){
+  TEUCHOS_TEST_FOR_EXCEPTION(rigid_body_params.size()!=6,std::runtime_error,"");
+  Matrix<scalar_t,3> R = Camera_Info::eulers_to_rotation_matrix(rigid_body_params[0],rigid_body_params[1],rigid_body_params[2]);
+  Matrix<scalar_t,4> T;
+  for(size_t i=0;i<3;++i){
+    for(size_t j=0;j<3;++j){
+      T(i,j) = R(i,j);
+    }
+  }
+  T(0,3) = rigid_body_params[3];
+  T(1,3) = rigid_body_params[4];
+  T(2,3) = rigid_body_params[5];
+  T(3,3) = 1.0;
+  transform_coordinates_in_place(x,y,z,T);
+}
+
+void
 Camera::initialize() {
   //run the pre-run functions
   // TODO need to add more error handling into the functions
@@ -235,6 +342,68 @@ Camera::transformation_matrix() const {
   trans(0,3) = tx(); trans(1,3) = ty(); trans(2,3) = tz();
   trans(3,3) = 1.0;
   return trans;
+}
+
+std::vector<scalar_t>
+Camera::get_facet_params(){
+  std::vector<scalar_t> facet_params(3,0.0);
+  const scalar_t R02 = camera_info_.rotation_matrix_(0,2);
+  const scalar_t R12 = camera_info_.rotation_matrix_(1,2);
+  const scalar_t R22 = camera_info_.rotation_matrix_(2,2);
+  const scalar_t mag_R = std::sqrt(R02*R02 + R12*R12 + R22*R22);
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mag_R)<1.0E-8,std::runtime_error,"invalid facet orientation");
+  const scalar_t tx = camera_info_.tx_;
+  const scalar_t ty = camera_info_.ty_;
+  const scalar_t tz = camera_info_.tz_;
+
+  // cos theta = +/- R02/mag_r, don't know if plus or minus for both of these
+  // cos phi = +/- R12/mag_r
+  // try all four combos and see which one has the z vector oriented in the normal direction to the facet
+  // Z vector = R02,R12,R22
+  const scalar_t Qt = R02/mag_R;
+  const scalar_t Qp = R12/mag_R;
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(R22)<1.0E-8,std::runtime_error,"invalid facet orientation");
+  const scalar_t Zp = (R02*tx + R12*ty + R22*tz)/R22;
+  const std::vector<scalar_t> coeffs_t{1.0,1.0,-1.0,-1.0};
+  const std::vector<scalar_t> coeffs_p{1.0,-1.0,1.0,-1.0};
+  std::vector<scalar_t> residuals(4,0.0);
+  for(size_t i=0;i<coeffs_t.size();++i){
+    const scalar_t theta = std::acos(coeffs_t[i]*Qt);
+    const scalar_t phi   = std::acos(coeffs_p[i]*Qp);
+    const scalar_t n1 = std::cos(theta);
+    const scalar_t n2 = std::cos(phi);
+    TEUCHOS_TEST_FOR_EXCEPTION(1.0 - n1*n1 - n2*n2<0.0,std::runtime_error,"invalid facet orientation");
+    const scalar_t n3 = std::sqrt(1.0 - n1*n1 - n2*n2);
+    // find the first non-zero number for the normal to the plane
+    scalar_t factor = 0.0;
+    if(std::abs(n1)>1.0E-8){
+      factor = R02/n1;
+    }else if(std::abs(n2)>1.0E-8){
+      factor = R12/n2;
+    }else if(std::abs(n3)>1.0E-8){
+      factor = R22/n3;
+    }else{
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+    }
+    const scalar_t sum = (R02 - factor*n1) + (R12 - factor*n2) + (R22 - factor*n3);
+    residuals[i] = sum;
+  }
+  size_t coeff_index = residuals.size()+1;
+  for(size_t i=0;i<residuals.size();++i){
+    if(std::abs(residuals[i])<1.0E-8){
+      coeff_index = i;
+      break;
+    }
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(coeff_index >= residuals.size(),std::runtime_error,"invalid facet orientation");
+  facet_params[Projection_Shape_Function::THETA] = std::acos(coeffs_t[coeff_index]*Qt);
+  facet_params[Projection_Shape_Function::PHI] = std::acos(coeffs_p[coeff_index]*Qp);
+  // the zp param is always the same regardless of the plus or minus signs on theta and phi:
+  facet_params[Projection_Shape_Function::ZP] = Zp;
+  DEBUG_MSG("Camera::get_facet_params(): theta: " << facet_params[Projection_Shape_Function::THETA] <<
+    " phi: " << facet_params[Projection_Shape_Function::PHI] <<
+    " zp: " << facet_params[Projection_Shape_Function::ZP]);
+  return facet_params;
 }
 
 void
@@ -320,6 +489,38 @@ Camera::prep_lens_distortion() {
 
 }
 
+
+void
+Camera::image_to_world(const std::vector<scalar_t> & image_x,
+  const std::vector<scalar_t> & image_y,
+  const std::vector<scalar_t> & rigid_body_params,
+  std::vector<scalar_t> & world_x,
+  std::vector<scalar_t> & world_y,
+  std::vector<scalar_t> & world_z){
+
+  const size_t vec_size = image_x.size();
+  TEUCHOS_TEST_FOR_EXCEPTION(image_y.size()!=vec_size,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(world_x.size()!=vec_size,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(world_y.size()!=vec_size,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(world_z.size()!=vec_size,std::runtime_error,"");
+  std::vector<scalar_t> facet_params = get_facet_params();
+  TEUCHOS_TEST_FOR_EXCEPTION(facet_params.size()!=3,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(rigid_body_params.size()!=6,std::runtime_error,"");
+
+  // create the reference image:
+  std::vector<scalar_t> cam_x(vec_size,0.0);
+  std::vector<scalar_t> cam_y(vec_size,0.0);
+  std::vector<scalar_t> cam_z(vec_size,0.0);
+  std::vector<scalar_t> sensor_x(vec_size,0.0);
+  std::vector<scalar_t> sensor_y(vec_size,0.0);
+
+  // for each pixel convert from image coordinates to world coordinates and get the intensity value:
+  image_to_sensor(image_x,image_y,sensor_x,sensor_y);
+  sensor_to_cam(sensor_x,sensor_y,cam_x,cam_y,cam_z,facet_params);
+  transform_coordinates_in_place(world_x,world_y,world_z,rigid_body_params);
+  //cam_to_world(cam_x,cam_y,cam_z,world_x,world_y,world_z);
+  //transform_coordinates_in_place(world_x,world_y,world_z,rigid_body_params);
+}
 
 void
 Camera::image_to_sensor(
@@ -645,13 +846,13 @@ Camera::sensor_to_cam(
   std::vector<scalar_t> & cam_x,
   std::vector<scalar_t> & cam_y,
   std::vector<scalar_t> & cam_z,
-  const std::vector<scalar_t> & params,
+  const std::vector<scalar_t> & facet_params,
   std::vector<std::vector<scalar_t> > & cam_dx,
   std::vector<std::vector<scalar_t> > & cam_dy,
   std::vector<std::vector<scalar_t> > & cam_dz){
 
-  TEUCHOS_TEST_FOR_EXCEPTION(params.size()!=3,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(params.size()!=3,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(facet_params.size()!=3,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(facet_params.size()!=3,std::runtime_error,"");
   const size_t vec_size = sen_x.size();
   TEUCHOS_TEST_FOR_EXCEPTION(sen_y.size()!=vec_size,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(cam_x.size()!=vec_size,std::runtime_error,"");
@@ -676,9 +877,9 @@ Camera::sensor_to_cam(
   }
 
   //overloaded for first derivitives
-  scalar_t zp = params[Projection_Shape_Function::ZP];
-  scalar_t theta = params[Projection_Shape_Function::THETA];
-  scalar_t phi = params[Projection_Shape_Function::PHI];
+  scalar_t zp = facet_params[Projection_Shape_Function::ZP];
+  scalar_t theta = facet_params[Projection_Shape_Function::THETA];
+  scalar_t phi = facet_params[Projection_Shape_Function::PHI];
   scalar_t cos_theta, cos_phi, cos_xi, sin_theta, sin_phi;
   scalar_t cos_xi_dtheta, cos_xi_dphi;
   scalar_t x_sen, y_sen, denom, denom2;
@@ -694,7 +895,9 @@ Camera::sensor_to_cam(
   sin_phi = sin(phi);
   cos_xi = sqrt(1 - cos_theta * cos_theta - cos_phi * cos_phi);
   //cos_xi_dzp = 0;
-  assert(cos_xi!=0.0);
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(cos_xi) < 1.0E-8,std::runtime_error,"cos_xi near zero \n"
+    "(suggests an invalid transform to the facet surface, or facet surface parallel to the optical axis)");
+  //assert(cos_xi!=0.0);
   cos_xi_dtheta = cos_theta * sin_theta / cos_xi;
   cos_xi_dphi = cos_phi * sin_phi / cos_xi;
 

@@ -14,11 +14,14 @@
     <Parameter name="TX" type="double" value="-32.8767" />
     <Parameter name="TY" type="double" value="8.26281" />
     <Parameter name="TZ" type="double" value="393.302" />
-  <ParameterList name="rotation_3x3_matrix">
+    <Parameter name="ALPHA" type="double" value="171.87015" />
+    <Parameter name="BETA" type="double" value="13.30064226" />
+    <Parameter name="GAMMA" type="double" value="8.0913099" />
+<!--  <ParameterList name="rotation_3x3_matrix">
     <Parameter name="ROW 0" type="string" value="{ 0.963488, 0.171561, -0.205569 }" />
     <Parameter name="ROW 1" type="string" value="{ 0.136979, -0.975507, -0.172111 }" />
     <Parameter name="ROW 2" type="string" value="{ -0.230062, 0.137668, -0.963389 }" />
-  </ParameterList>
+  </ParameterList>-->
     <Parameter name="IMAGE_HEIGHT_WIDTH" type="string" value="{ 1200, 1920 }" />  
   </ParameterList>
 </ParameterList>

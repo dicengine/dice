@@ -679,11 +679,11 @@ Camera_System::camera_to_camera_projection(
   const std::vector<scalar_t> & img_source_y,
   std::vector<scalar_t> & img_target_x,
   std::vector<scalar_t> & img_target_y,
-  const std::vector<scalar_t> & params,
+  const std::vector<scalar_t> & facet_params,
   std::vector<std::vector<scalar_t> > & img_target_dx,
   std::vector<std::vector<scalar_t> > & img_target_dy,
   const std::vector<scalar_t> & rigid_body_params) {
-  TEUCHOS_TEST_FOR_EXCEPTION(params.size()!=3,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(facet_params.size()!=3,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(source_id<0||source_id>=num_cameras(),std::runtime_error,"invalid source id");
   //TEUCHOS_TEST_FOR_EXCEPTION(source_id==target_id,std::runtime_error,"source and target id are the same");
   TEUCHOS_TEST_FOR_EXCEPTION(target_id<0||target_id>=num_cameras(),std::runtime_error,"invalid target id");
@@ -738,13 +738,13 @@ Camera_System::camera_to_camera_projection(
   cameras_[source_id]->image_to_sensor(img_source_x,img_source_y,tmp_sensor_x,tmp_sensor_y);
   if(has_derivatives){
     if(has_rigid_body){
-      cameras_[source_id]->sensor_to_cam(tmp_sensor_x,tmp_sensor_y,tmp_cam_x,tmp_cam_y,tmp_cam_z,params);
+      cameras_[source_id]->sensor_to_cam(tmp_sensor_x,tmp_sensor_y,tmp_cam_x,tmp_cam_y,tmp_cam_z,facet_params);
       cameras_[source_id]->cam_to_world(tmp_cam_x,tmp_cam_y,tmp_cam_z,tmp_rb_world_x,tmp_rb_world_y,tmp_rb_world_z);
       // no derivatives come into play until the rotation and translation from the next call
       rot_trans_3D(tmp_rb_world_x,tmp_rb_world_y,tmp_rb_world_z,tmp_world_x,tmp_world_y,tmp_world_z,rigid_body_params,
         tmp_dx,tmp_dy,tmp_dz);
     }else{
-      cameras_[source_id]->sensor_to_cam(tmp_sensor_x,tmp_sensor_y,tmp_cam_x,tmp_cam_y,tmp_cam_z,params,tmp_cam_dx,tmp_cam_dy,tmp_cam_dz);
+      cameras_[source_id]->sensor_to_cam(tmp_sensor_x,tmp_sensor_y,tmp_cam_x,tmp_cam_y,tmp_cam_z,facet_params,tmp_cam_dx,tmp_cam_dy,tmp_cam_dz);
       cameras_[source_id]->cam_to_world(tmp_cam_x,tmp_cam_y,tmp_cam_z,tmp_world_x,tmp_world_y,tmp_world_z,
         tmp_cam_dx,tmp_cam_dy,tmp_cam_dz,tmp_dx,tmp_dy,tmp_dz);
     }
@@ -754,7 +754,7 @@ Camera_System::camera_to_camera_projection(
     cameras_[target_id]->cam_to_sensor(tmp_cam_x,tmp_cam_y,tmp_cam_z,tmp_sensor_x,tmp_sensor_y,tmp_cam_dx,tmp_cam_dy,tmp_cam_dz,tmp_dx,tmp_dy);
     cameras_[target_id]->sensor_to_image(tmp_sensor_x,tmp_sensor_y,img_target_x,img_target_y,tmp_dx,tmp_dy,img_target_dx,img_target_dy);
   }else{
-    cameras_[source_id]->sensor_to_cam(tmp_sensor_x,tmp_sensor_y,tmp_cam_x,tmp_cam_y,tmp_cam_z,params);
+    cameras_[source_id]->sensor_to_cam(tmp_sensor_x,tmp_sensor_y,tmp_cam_x,tmp_cam_y,tmp_cam_z,facet_params);
     if(has_rigid_body){
       cameras_[source_id]->cam_to_world(tmp_cam_x,tmp_cam_y,tmp_cam_z,tmp_rb_world_x,tmp_rb_world_y,tmp_rb_world_z);
       rot_trans_3D(tmp_rb_world_x,tmp_rb_world_y,tmp_rb_world_z,tmp_world_x,tmp_world_y,tmp_world_z,rigid_body_params);
@@ -769,97 +769,17 @@ Camera_System::camera_to_camera_projection(
 }
 
 void
-Camera_System::initialize_rot_trans_3D(const std::vector<scalar_t> & rigid_body_params,
-  const bool partials) {
-  //if this is the first call to pre_rot_trans_3D assign the vectors
-  if (rot_trans_3D_x_.size() != 4) {
-    rot_trans_3D_x_.assign(4, 0.0);
-    rot_trans_3D_y_.assign(4, 0.0);
-    rot_trans_3D_z_.assign(4, 0.0);
-    for (int_t i = 0; i < 6; i++) {
-      rot_trans_3D_dx_[i].assign(4, 0.0);
-      rot_trans_3D_dy_[i].assign(4, 0.0);
-      rot_trans_3D_dz_[i].assign(4, 0.0);
-    }
-  }
-  TEUCHOS_TEST_FOR_EXCEPTION(rigid_body_params.size()!=6,std::runtime_error,"");
-  scalar_t cx, cy, cz, sx, sy, sz, tx, ty, tz;
-  cx = cos(rigid_body_params[ANGLE_X]);
-  cy = cos(rigid_body_params[ANGLE_Y]);
-  cz = cos(rigid_body_params[ANGLE_Z]);
-  sx = sin(rigid_body_params[ANGLE_X]);
-  sy = sin(rigid_body_params[ANGLE_Y]);
-  sz = sin(rigid_body_params[ANGLE_Z]);
-  tx = rigid_body_params[TRANSLATION_X];
-  ty = rigid_body_params[TRANSLATION_Y];
-  tz = rigid_body_params[TRANSLATION_Z];
-
-  rot_trans_3D_x_[0] = cy * cz;
-  rot_trans_3D_x_[1] = sx * sy * cz - cx * sz;
-  rot_trans_3D_x_[2] = cx * sy * cz + sx * sz;
-  rot_trans_3D_x_[3] = tx;
-  rot_trans_3D_y_[0] = cy * sz;
-  rot_trans_3D_y_[1] = sx * sy * sz + cx * cz;
-  rot_trans_3D_y_[2] = cx * sy * sz - sx * cz;
-  rot_trans_3D_y_[3] = ty;
-  rot_trans_3D_z_[0] = -sy;
-  rot_trans_3D_z_[1] = sx * cy;
-  rot_trans_3D_z_[2] = cx * cy;
-  rot_trans_3D_z_[3] = tz;
-
-  if (partials) {
-    rot_trans_3D_dx_[ANGLE_X][0] = 0;
-    rot_trans_3D_dx_[ANGLE_X][1] = cx * sy * cz + sx * sz;
-    rot_trans_3D_dx_[ANGLE_X][2] = -sx * sy * cz + cx * sz;
-    rot_trans_3D_dx_[ANGLE_X][3] = 0;
-    rot_trans_3D_dy_[ANGLE_X][0] = 0;
-    rot_trans_3D_dy_[ANGLE_X][1] = cx * sy * sz - sx * cz;
-    rot_trans_3D_dy_[ANGLE_X][2] = - sx * sy * sz - cx * cz;
-    rot_trans_3D_dy_[ANGLE_X][3] = 0;
-    rot_trans_3D_dz_[ANGLE_X][0] = 0;
-    rot_trans_3D_dz_[ANGLE_X][1] = cx * cy;
-    rot_trans_3D_dz_[ANGLE_X][2] = -sx * cy;
-    rot_trans_3D_dz_[ANGLE_X][3] = 0;
-
-    rot_trans_3D_dx_[ANGLE_Y][0] = -sy * cz;
-    rot_trans_3D_dx_[ANGLE_Y][1] = sx * cy * cz;
-    rot_trans_3D_dx_[ANGLE_Y][2] = cx * cy * cz;
-    rot_trans_3D_dx_[ANGLE_Y][3] = 0;
-    rot_trans_3D_dy_[ANGLE_Y][0] = -sy * sz;
-    rot_trans_3D_dy_[ANGLE_Y][1] = sx * cy * sz;
-    rot_trans_3D_dy_[ANGLE_Y][2] = cx * cy * sz;
-    rot_trans_3D_dy_[ANGLE_Y][3] = 0;
-    rot_trans_3D_dz_[ANGLE_Y][0] = -cy;
-    rot_trans_3D_dz_[ANGLE_Y][1] = -sx * sy;
-    rot_trans_3D_dz_[ANGLE_Y][2] = -cx * sy;
-    rot_trans_3D_dz_[ANGLE_Y][3] = 0;
-
-    rot_trans_3D_dx_[ANGLE_Z][0] = -cy * sz;
-    rot_trans_3D_dx_[ANGLE_Z][1] = -sx * sy * sz - cx * cz;
-    rot_trans_3D_dx_[ANGLE_Z][2] = -cx * sy * sz + sx * cz;
-    rot_trans_3D_dx_[ANGLE_Z][3] = 0;
-    rot_trans_3D_dy_[ANGLE_Z][0] = cy * cz;
-    rot_trans_3D_dy_[ANGLE_Z][1] = sx * sy * cz - cx * sz;
-    rot_trans_3D_dy_[ANGLE_Z][2] = cx * sy * cz + sx * sz;
-    rot_trans_3D_dy_[ANGLE_Z][3] = 0;
-    rot_trans_3D_dz_[ANGLE_Z][0] = 0;
-    rot_trans_3D_dz_[ANGLE_Z][1] = 0;
-    rot_trans_3D_dz_[ANGLE_Z][2] = 0;
-    rot_trans_3D_dz_[ANGLE_Z][3] = 0;
-  }
-}
-
-void
 Camera_System::rot_trans_3D(const std::vector<scalar_t> & source_x,
   const std::vector<scalar_t> & source_y,
   const std::vector<scalar_t> & source_z,
   std::vector<scalar_t> & target_x,
   std::vector<scalar_t> & target_y,
   std::vector<scalar_t> & target_z,
-  const std::vector<scalar_t> & params,
+  const std::vector<scalar_t> & rigid_body_params,
   std::vector < std::vector<scalar_t> > & target_dx,
   std::vector < std::vector<scalar_t> > & target_dy,
   std::vector < std::vector<scalar_t> > & target_dz) {
+  TEUCHOS_TEST_FOR_EXCEPTION(rigid_body_params.size()!=6,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(source_x.size()!=0,std::runtime_error,"");
   const size_t vec_size = source_x.size();
   TEUCHOS_TEST_FOR_EXCEPTION(source_y.size()!=vec_size,std::runtime_error,"");
@@ -881,21 +801,25 @@ Camera_System::rot_trans_3D(const std::vector<scalar_t> & source_x,
     }
   }
   // this transformation assumes all shape function related partials coming into the function are 0
-  // prep the rotation coefficients
-  initialize_rot_trans_3D(params, has_derivatives);
   // transform the coordinates
+  Matrix<scalar_t,3> R = Camera::Camera_Info::eulers_to_rotation_matrix(rigid_body_params[0],rigid_body_params[1],rigid_body_params[2]);
+
   for (size_t i = 0; i < vec_size; i++) {
-    target_x[i] = rot_trans_3D_x_[0] * source_x[i] + rot_trans_3D_x_[1] * source_y[i] + rot_trans_3D_x_[2] * source_z[i] + rot_trans_3D_x_[3];
-    target_y[i] = rot_trans_3D_y_[0] * source_x[i] + rot_trans_3D_y_[1] * source_y[i] + rot_trans_3D_y_[2] * source_z[i] + rot_trans_3D_y_[3];
-    target_z[i] = rot_trans_3D_z_[0] * source_x[i] + rot_trans_3D_z_[1] * source_y[i] + rot_trans_3D_z_[2] * source_z[i] + rot_trans_3D_z_[3];
+    target_x[i] = R(0,0) * source_x[i] + R(0,1) * source_y[i] + R(0,2) * source_z[i] + rigid_body_params[3];
+    target_y[i] = R(1,0) * source_x[i] + R(1,1) * source_y[i] + R(1,2) * source_z[i] + rigid_body_params[4];
+    target_z[i] = R(2,0) * source_x[i] + R(1,2) * source_y[i] + R(2,2) * source_z[i] + rigid_body_params[5];
   }
   if(has_derivatives){
+    Matrix<scalar_t,3,4> R_dx;
+    Matrix<scalar_t,3,4> R_dy;
+    Matrix<scalar_t,3,4> R_dz;
+    Camera::Camera_Info::eulers_to_rotation_matrix_partials(rigid_body_params[0],rigid_body_params[1],rigid_body_params[2],R_dx,R_dy,R_dz);
     //calculate the partials
     for (size_t j = 0; j < 3; j++) {
       for (size_t i = 0; i < vec_size; i++) {
-        target_dx[j][i] = rot_trans_3D_dx_[j][0] * source_x[i] + rot_trans_3D_dx_[j][1] * source_y[i] + rot_trans_3D_dx_[j][2] * source_z[i];
-        target_dy[j][i] = rot_trans_3D_dy_[j][0] * source_x[i] + rot_trans_3D_dy_[j][1] * source_y[i] + rot_trans_3D_dy_[j][2] * source_z[i];
-        target_dz[j][i] = rot_trans_3D_dz_[j][0] * source_x[i] + rot_trans_3D_dz_[j][1] * source_y[i] + rot_trans_3D_dz_[j][2] * source_z[i];
+        target_dx[j][i] = R_dx(j,0) * source_x[i] + R_dx(j,1) * source_y[i] + R_dx(j,2) * source_z[i];
+        target_dy[j][i] = R_dy(j,0) * source_x[i] + R_dy(j,1) * source_y[i] + R_dy(j,2) * source_z[i];
+        target_dz[j][i] = R_dz(j,0) * source_x[i] + R_dz(j,1) * source_y[i] + R_dz(j,2) * source_z[i];
       }
       std::fill(target_dx[j+3].begin(),target_dx[j+3].end(),0);
       std::fill(target_dy[j+3].begin(),target_dy[j+3].end(),0);

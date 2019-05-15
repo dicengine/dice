@@ -157,6 +157,26 @@ public:
     return NO_SUCH_CAM_INTRINSIC_PARAM; // prevent no return errors
   }
 
+  /// transform coordinates according to the rbm parameters and replace input values
+  /// the rigid_body_paramers should be ordered according to three euler angles and three translations (x,y,z)
+  /// rigid_body_params version
+  static void transform_coordinates_in_place(std::vector<scalar_t> & x,
+    std::vector<scalar_t> & y,
+    std::vector<scalar_t> & z,
+    const std::vector<scalar_t> & rigid_body_params);
+  /// rotation matrix and translations version
+  static void transform_coordinates_in_place(std::vector<scalar_t> & x,
+    std::vector<scalar_t> & y,
+    std::vector<scalar_t> & z,
+    const Matrix<scalar_t,3> & R,
+    const scalar_t & tx,
+    const scalar_t & ty,
+    const scalar_t & tz);
+  /// transformation matrix version
+  static void transform_coordinates_in_place(std::vector<scalar_t> & x,
+    std::vector<scalar_t> & y,
+    std::vector<scalar_t> & z,
+    const Matrix<scalar_t,4> & T);
   /// helper struct for camera initialization (cleans up of the constructors for camera class so it only needs one)
   struct Camera_Info{
     // array of camera intrinsics (the distortion coeffs are not stored in the intrinsic array)
@@ -201,6 +221,17 @@ public:
       image_width_(-1),
       image_height_(-1),
       pixel_depth_(-1){};
+    // convert euler angles to rotation matrix
+    static Matrix<scalar_t,3> eulers_to_rotation_matrix(const scalar_t & alpha,
+      const scalar_t & beta,
+      const scalar_t & gamma);
+    // convert euler angles to rotation matrix partial derivatives
+    static void eulers_to_rotation_matrix_partials(const scalar_t & alpha,
+      const scalar_t & beta,
+      const scalar_t & gamma,
+      Matrix<scalar_t,3,4> & R_dx,
+      Matrix<scalar_t,3,4> & R_dy,
+      Matrix<scalar_t,3,4> & R_dz);
     // set the rotation matrix using the euler angles alpha, beta, and gamma
     void set_rotation_matrix(const scalar_t & alpha,
       const scalar_t & beta,
@@ -291,6 +322,11 @@ public:
   /// entry as 1.0
   Matrix<scalar_t,4> transformation_matrix()const;
 
+  /// returns the facet parameters from R and T (if they describe the pose estimation, likely from 2d calibration)
+  /// in 3d, R and T describe a coordinate transformation, not the pose estimation of the calibration plate so this is
+  /// only a useful method for 2d calibration
+  std::vector<scalar_t> get_facet_params();
+
   ///gets the intrinsic camera parameter values
   std::vector<scalar_t> * intrinsics() { return &camera_info_.intrinsics_;}
 
@@ -380,13 +416,27 @@ public:
     std::vector<scalar_t> & sen_y,
     const bool integer_locs = true);
 
+  /// helper function to convert image coordinates to world coordinates
+  /// \param image_x x location after applied lens distortion
+  /// \param image_y y location after applied lens distortion
+  /// \param rigid_body_params projection parameters that describe a rotation and traslation in space of a planar facet
+  /// \param world_x output world x coordinate
+  /// \param world_y output world y coordinate
+  /// \param world_z output world z coordinate
+  void image_to_world(const std::vector<scalar_t> & image_x,
+    const std::vector<scalar_t> & image_y,
+    const std::vector<scalar_t> & rigid_body_params,
+    std::vector<scalar_t> & world_x,
+    std::vector<scalar_t> & world_y,
+    std::vector<scalar_t> & world_z);
+
   ///projects sensor coordinates onto a plane in space described by zp,theta,phi overloaded for first partials
   /// \param sen_x x sensor location
   /// \param sen_y y sensor location
   /// \param cam_x projected x location in cam x,y,z space
   /// \param cam_y projected y location in cam x,y,z space
   /// \param cam_z projected z location in cam x,y,z space
-  /// \param params projection parameters describing the plane in space (ZP, THETA, PHI)
+  /// \param facet_params projection parameters describing the plane in space (ZP, THETA, PHI)
   /// \param cam_dx x location derivitives in cam x,y,z space partials wrt (ZP, THETA, PHI)
   /// \param cam_dy y locatoin derivitives in cam x,y,z space partials wrt (ZP, THETA, PHI)
   /// \param cam_dz z location derivitives in cam x,y,z space partials wrt (ZP, THETA, PHI)
@@ -396,7 +446,7 @@ public:
     std::vector<scalar_t> & cam_x,
     std::vector<scalar_t> & cam_y,
     std::vector<scalar_t> & cam_z,
-    const std::vector<scalar_t> & params,
+    const std::vector<scalar_t> & facet_params,
     std::vector<std::vector<scalar_t> > & cam_dx,
     std::vector<std::vector<scalar_t> > & cam_dy,
     std::vector<std::vector<scalar_t> > & cam_dz);
@@ -408,10 +458,10 @@ public:
     std::vector<scalar_t> & cam_x,
     std::vector<scalar_t> & cam_y,
     std::vector<scalar_t> & cam_z,
-    const std::vector<scalar_t> & params){
+    const std::vector<scalar_t> & facet_params){
     std::vector<std::vector<scalar_t> > dummy_vec;
     sensor_to_cam(sen_x,sen_y,cam_x,cam_y,cam_z,
-        params,dummy_vec,dummy_vec,dummy_vec);
+        facet_params,dummy_vec,dummy_vec,dummy_vec);
   }
 
   ///projects camera x,y,z locations back onto the sensor overloaded with input and output first partials

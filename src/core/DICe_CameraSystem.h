@@ -197,7 +197,7 @@ public:
   /// \param img_source_y array of y image location in the source camera
   /// \param img_targe_x array of projected x image location in the target camera
   /// \param img_target_y array of projected y image location in the target camera
-  /// \param params array of ZP, THETA, PHI values that govern the projection
+  /// \param facet_params array of ZP, THETA, PHI values that govern the projection
   /// \param img_target_dx array of arrays of the partials in the x location wrt (ZP, THETA, PHI)
   /// \param img_target_dy array of arrays of the partials in the y location wrt (ZP, THETA, PHI)
   /// \param rigid_body_params 6 rotation/translation parameters to describe the rigid body motion
@@ -212,7 +212,7 @@ public:
     const std::vector<scalar_t> & img_source_y,
     std::vector<scalar_t> & img_target_x,
     std::vector<scalar_t> & img_target_y,
-    const std::vector<scalar_t> & params,
+    const std::vector<scalar_t> & facet_params,
     std::vector<std::vector<scalar_t> > & img_target_dx,
     std::vector<std::vector<scalar_t> > & img_target_dy,
     const std::vector<scalar_t> & rigid_body_params = std::vector<scalar_t>());
@@ -225,13 +225,13 @@ public:
     const std::vector<scalar_t> & img_source_y,
     std::vector<scalar_t> & img_target_x,
     std::vector<scalar_t> & img_target_y,
-    const std::vector<scalar_t> & params,
+    const std::vector<scalar_t> & facet_params,
     const std::vector<scalar_t> & rigid_body_params = std::vector<scalar_t>()){
     std::vector<std::vector<scalar_t> > dummy_vec; // dummy vec of size zero to flag no deriv calcs
     camera_to_camera_projection(source_id,target_id,
       img_source_x,img_source_y,
       img_target_x,img_target_y,
-      params,dummy_vec,dummy_vec,rigid_body_params);
+      facet_params,dummy_vec,dummy_vec,rigid_body_params);
   }
 
   ///rigid body 3D rotation/translation transformation with no incoming partials and outgoing partials wrt params
@@ -301,10 +301,6 @@ public:
 
 private:
 
-  /// \brief prepares coefficients for the 3D rotation/translation transformation
-  void initialize_rot_trans_3D(const std::vector<scalar_t> & rigid_body_params,
-    const bool partials);
-
   /// sets the number of cameras that can be in an input file
   const size_t max_num_cameras_allowed_;
 
@@ -333,14 +329,6 @@ private:
 
   /// cameras are stored in a vector
   std::vector<Teuchos::RCP<DICe::Camera> > cameras_;
-
-  /// storage for rigid body motion transformations
-  std::vector<scalar_t>  rot_trans_3D_x_;
-  std::vector<scalar_t>  rot_trans_3D_y_;
-  std::vector<scalar_t>  rot_trans_3D_z_;
-  std::vector<std::vector<scalar_t> >  rot_trans_3D_dx_;
-  std::vector<std::vector<scalar_t> >  rot_trans_3D_dy_;
-  std::vector<std::vector<scalar_t> >  rot_trans_3D_dz_;
 
 };
 
