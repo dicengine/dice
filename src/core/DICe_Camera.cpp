@@ -152,6 +152,32 @@ std::ostream & operator<<(std::ostream & os, const Camera::Camera_Info & info){
   return os;
 };
 
+void
+Camera::Camera_Info::rotation_matrix_to_eulers(const Matrix<scalar_t,3> & R,
+  scalar_t & alpha,
+  scalar_t & beta,
+  scalar_t & gamma){
+
+  // first check that the rotation matrix is valid:
+  auto should_be_identity = R.transpose()*R;
+  const scalar_t resid = norm(should_be_identity - Matrix<scalar_t,3>::identity());
+  const scalar_t max_error = 1.0E-6;
+  TEUCHOS_TEST_FOR_EXCEPTION(resid>max_error,std::runtime_error,"invalid rotation matrix");
+
+  scalar_t sy = std::sqrt(R(0,0)*R(0,0) + R(1,0)*R(1,0));
+  bool singular = sy < max_error;
+  if (!singular){
+    alpha = std::atan2(R(2,1),R(2,2));
+    beta  = std::atan2(-1.0*R(2,0),sy);
+    gamma = std::atan2(R(1,0),R(0,0));
+  }else{
+    alpha = std::atan2(-1.0*R(1,2),R(1,1));
+    beta  = std::atan2(-1.0*R(2,0),sy);
+    gamma = 0.0;
+  }
+}
+
+
 Matrix<scalar_t,3>
 Camera::Camera_Info::eulers_to_rotation_matrix(const scalar_t & alpha,
   const scalar_t & beta,
@@ -489,7 +515,6 @@ Camera::prep_lens_distortion() {
 
 }
 
-
 void
 Camera::image_to_world(const std::vector<scalar_t> & image_x,
   const std::vector<scalar_t> & image_y,
@@ -517,9 +542,8 @@ Camera::image_to_world(const std::vector<scalar_t> & image_x,
   // for each pixel convert from image coordinates to world coordinates and get the intensity value:
   image_to_sensor(image_x,image_y,sensor_x,sensor_y);
   sensor_to_cam(sensor_x,sensor_y,cam_x,cam_y,cam_z,facet_params);
+  cam_to_world(cam_x,cam_y,cam_z,world_x,world_y,world_z);
   transform_coordinates_in_place(world_x,world_y,world_z,rigid_body_params);
-  //cam_to_world(cam_x,cam_y,cam_z,world_x,world_y,world_z);
-  //transform_coordinates_in_place(world_x,world_y,world_z,rigid_body_params);
 }
 
 void
@@ -880,14 +904,14 @@ Camera::sensor_to_cam(
   scalar_t zp = facet_params[Projection_Shape_Function::ZP];
   scalar_t theta = facet_params[Projection_Shape_Function::THETA];
   scalar_t phi = facet_params[Projection_Shape_Function::PHI];
-  scalar_t cos_theta, cos_phi, cos_xi, sin_theta, sin_phi;
-  scalar_t cos_xi_dtheta, cos_xi_dphi;
-  scalar_t x_sen, y_sen, denom, denom2;
-  scalar_t denom_dzp, denom_dtheta, denom_dphi;
-  scalar_t uxcam, uycam, uzcam;
-  scalar_t uxcam_dzp, uxcam_dtheta, uxcam_dphi;
-  scalar_t uycam_dzp, uycam_dtheta, uycam_dphi;
-  scalar_t uzcam_dzp, uzcam_dtheta, uzcam_dphi;
+  scalar_t cos_theta=0.0, cos_phi=0.0, cos_xi=0.0, sin_theta=0.0, sin_phi=0.0;
+  scalar_t cos_xi_dtheta=0.0, cos_xi_dphi=0.0;
+  scalar_t x_sen=0.0, y_sen=0.0, denom=0.0, denom2=0.0;
+  scalar_t denom_dzp=0.0, denom_dtheta=0.0, denom_dphi=0.0;
+  scalar_t uxcam=0.0, uycam=0.0, uzcam=0.0;
+  scalar_t uxcam_dzp=0.0, uxcam_dtheta=0.0, uxcam_dphi=0.0;
+  scalar_t uycam_dzp=0.0, uycam_dtheta=0.0, uycam_dphi=0.0;
+  scalar_t uzcam_dzp=0.0, uzcam_dtheta=0.0, uzcam_dphi=0.0;
 
   cos_theta = cos(theta);
   cos_phi = cos(phi);
@@ -989,14 +1013,14 @@ Camera::cam_to_sensor(
   }
 
   for (size_t i = 0; i < vec_size; i++) {
-    assert(cam_x[i]!=0.0);
+    assert(std::abs(cam_z[i])>1.0E-8); // cam z = 0 means the inside the pinhole camera, which is not okay
     sen_x[i] = cam_x[i] / cam_z[i];
     sen_y[i] = cam_y[i] / cam_z[i];
     if(has_derivatives){
       for (size_t j = 0; j < num_params; j++) {
-        assert(cam_z[j]!=0.0);
-        sen_dx[j][i] = (cam_dx[j][i] * cam_z[i] - cam_x[i] * cam_dz[j][i]) / (cam_z[j] * cam_z[j]);
-        sen_dy[j][i] = (cam_dy[j][i] * cam_z[i] - cam_y[i] * cam_dz[j][i]) / (cam_z[j] * cam_z[j]);
+        //assert(cam_z[j]!=0.0);
+        sen_dx[j][i] = (cam_dx[j][i] * cam_z[i] - cam_x[i] * cam_dz[j][i]) / (cam_z[i] * cam_z[i]);
+        sen_dy[j][i] = (cam_dy[j][i] * cam_z[i] - cam_y[i] * cam_dz[j][i]) / (cam_z[i] * cam_z[i]);
       }
     }
   }

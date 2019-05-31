@@ -459,6 +459,11 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
           diceParams->setEntry(it->first,it->second); // overwrite the default value with argument param specified values
           paramValid = true;
         }
+        // catch the camera system file sent to schema for camera-based shape functions like the rigid body one
+        if(it->first==camera_system_file){
+          diceParams->setEntry(it->first,it->second); // overwrite the default value with argument param specified values
+          paramValid = true;
+        }
         if(!paramValid){
           allParamsValid = false;
           if(proc_rank == 0) std::cout << "Error: Invalid parameter: " << it->first << std::endl;
@@ -806,6 +811,10 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   const std::string output_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
   init_params_->set(DICe::output_prefix,output_prefix);
   init_params_->set(DICe::output_folder,output_folder);
+  if(input_params->isParameter(DICe::camera_system_file)){
+    const std::string camera_sys_file = input_params->get<std::string>(DICe::camera_system_file);
+    init_params_->set(DICe::camera_system_file,camera_sys_file);
+  }
 
   if(analysis_type_==GLOBAL_DIC){
     // create the computational mesh:
@@ -1360,7 +1369,7 @@ Schema::execute_cross_correlation(){
     }
     catch(...){
       DEBUG_MSG("Schema::execute_cross_correlation(): subset " << this_proc_gid_order_[subset_index] << " failed");
-      record_failed_step(this_proc_gid_order_[subset_index],static_cast<int_t>(INITIALIZE_FAILED_BY_EXCEPTION),-1);
+      record_failed_step(this_proc_gid_order_[subset_index],static_cast<int_t>(CORRELATION_FAILED_BY_EXCEPTION),-1);
     }
   }
   // check the percentage of successful subsets:
@@ -1719,7 +1728,7 @@ void
 Schema::record_failed_step(const int_t subset_gid,
   const int_t status,
   const int_t num_iterations){
-  DEBUG_MSG("Subset " << subset_gid << " record failed step");
+  DEBUG_MSG("Subset " << subset_gid << " record failed step, status: " << status);
   global_field_value(subset_gid,SIGMA_FS) = -1.0;
   global_field_value(subset_gid,MATCH_FS) = -1.0;
   global_field_value(subset_gid,GAMMA_FS) = -1.0;
@@ -1841,6 +1850,8 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   if(init_status==INITIALIZE_FAILED){
     // try again with a search initializer
     if(correlation_routine_==TRACKING_ROUTINE && use_search_initialization_for_failed_steps_){
+      TEUCHOS_TEST_FOR_EXCEPTION(shape_function_type_==DICe::RIGID_BODY_SF,std::runtime_error,
+        "error, cannot use search initialization with rigid body shape function");
       stat_container_->register_search_call(subset_gid,frame_id_);
       // before giving up, try a search initialization, then simplex, then give up if it still can't track:
       const scalar_t search_step_xy = 1.0; // pixels

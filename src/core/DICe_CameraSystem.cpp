@@ -685,7 +685,6 @@ Camera_System::camera_to_camera_projection(
   const std::vector<scalar_t> & rigid_body_params) {
   TEUCHOS_TEST_FOR_EXCEPTION(facet_params.size()!=3,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(source_id<0||source_id>=num_cameras(),std::runtime_error,"invalid source id");
-  //TEUCHOS_TEST_FOR_EXCEPTION(source_id==target_id,std::runtime_error,"source and target id are the same");
   TEUCHOS_TEST_FOR_EXCEPTION(target_id<0||target_id>=num_cameras(),std::runtime_error,"invalid target id");
   const size_t vec_size = img_source_x.size();
   TEUCHOS_TEST_FOR_EXCEPTION(img_source_y.size()!=vec_size,std::runtime_error,"");
@@ -710,61 +709,66 @@ Camera_System::camera_to_camera_projection(
     TEUCHOS_TEST_FOR_EXCEPTION(rigid_body_params.size()!=6,std::runtime_error,"invalid rigid body parameter vector size");
   }
   // temporary vectors for traversing the projections
-  std::vector<scalar_t> tmp_sensor_x(vec_size,0);
-  std::vector<scalar_t> tmp_sensor_y(vec_size,0);
-  std::vector<scalar_t> tmp_cam_x(vec_size,0);
-  std::vector<scalar_t> tmp_cam_y(vec_size,0);
-  std::vector<scalar_t> tmp_cam_z(vec_size,0);
-  std::vector<scalar_t> tmp_world_x(vec_size,0);
-  std::vector<scalar_t> tmp_world_y(vec_size,0);
-  std::vector<scalar_t> tmp_world_z(vec_size,0);
-  std::vector<scalar_t> tmp_rb_world_x(vec_size,0);
-  std::vector<scalar_t> tmp_rb_world_y(vec_size,0);
-  std::vector<scalar_t> tmp_rb_world_z(vec_size,0);
-  std::vector<std::vector<scalar_t> > tmp_cam_dx, tmp_dx;
-  std::vector<std::vector<scalar_t> > tmp_cam_dy, tmp_dy;
-  std::vector<std::vector<scalar_t> > tmp_cam_dz, tmp_dz;
+  std::vector<scalar_t> sensor_x(vec_size,0);
+  std::vector<scalar_t> sensor_y(vec_size,0);
+  std::vector<scalar_t> cam_x(vec_size,0);
+  std::vector<scalar_t> cam_y(vec_size,0);
+  std::vector<scalar_t> cam_z(vec_size,0);
+  std::vector<scalar_t> world_x(vec_size,0);
+  std::vector<scalar_t> world_y(vec_size,0);
+  std::vector<scalar_t> world_z(vec_size,0);
+  std::vector<scalar_t> rb_world_x(vec_size,0);
+  std::vector<scalar_t> rb_world_y(vec_size,0);
+  std::vector<scalar_t> rb_world_z(vec_size,0);
+  std::vector<std::vector<scalar_t> > cam_dx, dx;
+  std::vector<std::vector<scalar_t> > cam_dy, dy;
+  std::vector<std::vector<scalar_t> > cam_dz, dz;
   if(has_derivatives){
     // these vectors either have 3 or 6 rows depending on if this is a rigid body motion projection or projection shape function based
-    tmp_cam_dx = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
-    tmp_cam_dy = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
-    tmp_cam_dz = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
-    tmp_dx = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
-    tmp_dy = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
-    tmp_dz = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
+    cam_dx = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
+    cam_dy = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
+    cam_dz = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
+    dx = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
+    dy = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
+    dz = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
   }
 
   // traverse the projections from image to world for the source camera ...
-  cameras_[source_id]->image_to_sensor(img_source_x,img_source_y,tmp_sensor_x,tmp_sensor_y);
+  cameras_[source_id]->image_to_sensor(img_source_x,img_source_y,sensor_x,sensor_y);
+//  std::cout << " ix " << img_source_x[0] << " iy " << img_source_y[0] << " sx " << sensor_x[0] << " sy " << sensor_y[0] << std::endl;
   if(has_derivatives){
     if(has_rigid_body){
-      cameras_[source_id]->sensor_to_cam(tmp_sensor_x,tmp_sensor_y,tmp_cam_x,tmp_cam_y,tmp_cam_z,facet_params);
-      cameras_[source_id]->cam_to_world(tmp_cam_x,tmp_cam_y,tmp_cam_z,tmp_rb_world_x,tmp_rb_world_y,tmp_rb_world_z);
+      cameras_[source_id]->sensor_to_cam(sensor_x,sensor_y,cam_x,cam_y,cam_z,facet_params);
+//      std::cout << " cx " << cam_x[0] << " cy " << cam_y[0] << " cz " << cam_z[0] << std::endl;
+      cameras_[source_id]->cam_to_world(cam_x,cam_y,cam_z,rb_world_x,rb_world_y,rb_world_z);
+//      std::cout << " wx " << rb_world_x[0] << " wy " << rb_world_y[0] << " wz " << rb_world_z[0] << std::endl;
       // no derivatives come into play until the rotation and translation from the next call
-      rot_trans_3D(tmp_rb_world_x,tmp_rb_world_y,tmp_rb_world_z,tmp_world_x,tmp_world_y,tmp_world_z,rigid_body_params,
-        tmp_dx,tmp_dy,tmp_dz);
+      rot_trans_3D(rb_world_x,rb_world_y,rb_world_z,world_x,world_y,world_z,rigid_body_params,dx,dy,dz);
+//      std::cout << " wpx " << world_x[0] << " wpy " << world_y[0] << " wpz " << world_z[0] << std::endl;
     }else{
-      cameras_[source_id]->sensor_to_cam(tmp_sensor_x,tmp_sensor_y,tmp_cam_x,tmp_cam_y,tmp_cam_z,facet_params,tmp_cam_dx,tmp_cam_dy,tmp_cam_dz);
-      cameras_[source_id]->cam_to_world(tmp_cam_x,tmp_cam_y,tmp_cam_z,tmp_world_x,tmp_world_y,tmp_world_z,
-        tmp_cam_dx,tmp_cam_dy,tmp_cam_dz,tmp_dx,tmp_dy,tmp_dz);
+      cameras_[source_id]->sensor_to_cam(sensor_x,sensor_y,cam_x,cam_y,cam_z,facet_params,cam_dx,cam_dy,cam_dz);
+      cameras_[source_id]->cam_to_world(cam_x,cam_y,cam_z,world_x,world_y,world_z,cam_dx,cam_dy,cam_dz,dx,dy,dz);
     }
     // traverse back through the projections from world source camera to image in the target camera
-    cameras_[target_id]->world_to_cam(tmp_world_x,tmp_world_y,tmp_world_z,tmp_cam_x,tmp_cam_y,tmp_cam_z,
-      tmp_dx,tmp_dy,tmp_dz,tmp_cam_dx,tmp_cam_dy,tmp_cam_dz);
-    cameras_[target_id]->cam_to_sensor(tmp_cam_x,tmp_cam_y,tmp_cam_z,tmp_sensor_x,tmp_sensor_y,tmp_cam_dx,tmp_cam_dy,tmp_cam_dz,tmp_dx,tmp_dy);
-    cameras_[target_id]->sensor_to_image(tmp_sensor_x,tmp_sensor_y,img_target_x,img_target_y,tmp_dx,tmp_dy,img_target_dx,img_target_dy);
+    cameras_[target_id]->world_to_cam(world_x,world_y,world_z,cam_x,cam_y,cam_z,dx,dy,dz,cam_dx,cam_dy,cam_dz);
+    cameras_[target_id]->cam_to_sensor(cam_x,cam_y,cam_z,sensor_x,sensor_y,cam_dx,cam_dy,cam_dz,dx,dy);
+    cameras_[target_id]->sensor_to_image(sensor_x,sensor_y,img_target_x,img_target_y,dx,dy,img_target_dx,img_target_dy);
   }else{
-    cameras_[source_id]->sensor_to_cam(tmp_sensor_x,tmp_sensor_y,tmp_cam_x,tmp_cam_y,tmp_cam_z,facet_params);
+    cameras_[source_id]->sensor_to_cam(sensor_x,sensor_y,cam_x,cam_y,cam_z,facet_params);
+//    std::cout << " cx " << cam_x[0] << " cy " << cam_y[0] << " cz " << cam_z[0] << std::endl;
     if(has_rigid_body){
-      cameras_[source_id]->cam_to_world(tmp_cam_x,tmp_cam_y,tmp_cam_z,tmp_rb_world_x,tmp_rb_world_y,tmp_rb_world_z);
-      rot_trans_3D(tmp_rb_world_x,tmp_rb_world_y,tmp_rb_world_z,tmp_world_x,tmp_world_y,tmp_world_z,rigid_body_params);
+      cameras_[source_id]->cam_to_world(cam_x,cam_y,cam_z,rb_world_x,rb_world_y,rb_world_z);
+//      std::cout << " wx " << rb_world_x[0] << " wy " << rb_world_y[0] << " wz " << rb_world_z[0] << std::endl;
+      rot_trans_3D(rb_world_x,rb_world_y,rb_world_z,world_x,world_y,world_z,rigid_body_params);
+//      std::cout << " wpx " << world_x[0] << " wpy " << world_y[0] << " wpz " << world_z[0] << std::endl;
     }else{
-      cameras_[source_id]->cam_to_world(tmp_cam_x,tmp_cam_y,tmp_cam_z,tmp_world_x,tmp_world_y,tmp_world_z);
+      cameras_[source_id]->cam_to_world(cam_x,cam_y,cam_z,world_x,world_y,world_z);
+//      std::cout << " wx " << rb_world_x[0] << " wy " << rb_world_y[0] << " wz " << rb_world_z[0] << std::endl;
     }
     // traverse back through the projections from world source camera to image in the target camera
-    cameras_[target_id]->world_to_cam(tmp_world_x,tmp_world_y,tmp_world_z,tmp_cam_x,tmp_cam_y,tmp_cam_z);
-    cameras_[target_id]->cam_to_sensor(tmp_cam_x,tmp_cam_y,tmp_cam_z,tmp_sensor_x,tmp_sensor_y);
-    cameras_[target_id]->sensor_to_image(tmp_sensor_x,tmp_sensor_y,img_target_x,img_target_y);
+    cameras_[target_id]->world_to_cam(world_x,world_y,world_z,cam_x,cam_y,cam_z);
+    cameras_[target_id]->cam_to_sensor(cam_x,cam_y,cam_z,sensor_x,sensor_y);
+    cameras_[target_id]->sensor_to_image(sensor_x,sensor_y,img_target_x,img_target_y);
   }
 }
 
@@ -780,7 +784,7 @@ Camera_System::rot_trans_3D(const std::vector<scalar_t> & source_x,
   std::vector < std::vector<scalar_t> > & target_dy,
   std::vector < std::vector<scalar_t> > & target_dz) {
   TEUCHOS_TEST_FOR_EXCEPTION(rigid_body_params.size()!=6,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(source_x.size()!=0,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(source_x.size()==0,std::runtime_error,"");
   const size_t vec_size = source_x.size();
   TEUCHOS_TEST_FOR_EXCEPTION(source_y.size()!=vec_size,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(source_z.size()!=vec_size,std::runtime_error,"");

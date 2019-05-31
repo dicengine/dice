@@ -518,17 +518,14 @@ private:
   Teuchos::RCP<Camera_System> camera_system_;
 };
 
-
-//mimic the quadratic shape function for the fixed projection 3D rigid body shape function
-
 class DICE_LIB_DLL_EXPORT
-  Fixed_Proj_3DRB_Shape_Function : public Local_Shape_Function {
+  Rigid_Body_Shape_Function : public Local_Shape_Function {
 public:
 
   /// \enum Rot_Trans_Param 6 rigid body motion parameters
   // made these class specific enums since they are used for vector ordering within the class
   enum Rot_Trans_3D_Param {
-    ANGLE_X = 0,
+    ANGLE_X = 0, // in degrees
     ANGLE_Y,
     ANGLE_Z,
     TRANS_X,
@@ -537,16 +534,11 @@ public:
   };
 
   /// \brief constructor with the parameters needed to setup the transformation
-  /// \param system file camera system definition file to use for camera to camera projections
-  /// \param source_camera_id primary camera where the subset locations are specified
-  /// there is no target camera id because for the rigid body motion, the source and target camera are the same
-  /// \proj_params projection parameters (Zp, Ang1, Ang2) for the projections
-  Fixed_Proj_3DRB_Shape_Function(const std::string & system_file,
-    const size_t source_camera_id,
-    const std::vector<scalar_t> & proj_params);
+  /// \param system file camera system definition file to use for camera to camera projections (now limited to only having one camera max)
+  Rigid_Body_Shape_Function(const std::string & system_file);
 
   // virtual destructor
-  virtual ~Fixed_Proj_3DRB_Shape_Function() {};
+  virtual ~Rigid_Body_Shape_Function() {};
 
   /// clear the parameters
   virtual void clear();
@@ -580,6 +572,7 @@ public:
   /// see base class description
   virtual void add_translation(const scalar_t & u,
     const scalar_t & v){
+    std::cout << "error: add_translation has not been implemented for rigid body shape functions" << std::endl;
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
   }
 
@@ -588,37 +581,35 @@ public:
     const scalar_t & cy,
     scalar_t & out_u,
     scalar_t & out_v,
-    scalar_t & out_theta){
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
-  }
+    scalar_t & out_theta);
 
   /// see base class description
   virtual void insert_motion(const scalar_t & u,
     const scalar_t & v,
     const scalar_t & theta){
+    std::cout << "error: insert_motion has not been implemented for rigid body shape functions" << std::endl;
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
   }
 
   /// see base class description
   virtual void insert_motion(const scalar_t & u,
     const scalar_t & v){
+    std::cout << "error: insert_motion has not been implemented for rigid body shape functions" << std::endl;
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
   }
 
   /// see base class description
   virtual void update_params_for_centroid_change(const scalar_t & delta_x,
     const scalar_t & delta_y){
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
+    // do nothing for this shape function
   }
 
 private:
-  /// id of the source camera (for which to retrieve information from the calibration file)
-  size_t source_cam_id_;
   /// Camera System to hold all the camera intrinsic and extrinsic information
   Teuchos::RCP<Camera_System> camera_system_;
   // there is no target camera id because for rigid body motion shape function, the source and target camera are the same
-  /// projection parameters that connect the world coordinates to the camera coordinates
-  std::vector<scalar_t> proj_params_;
+  /// projection parameters that connect the sensor coordinates to the camera zero coordinates of a facet in space
+  std::vector<scalar_t> facet_params_;
 };
 
 

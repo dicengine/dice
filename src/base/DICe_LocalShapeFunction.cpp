@@ -54,6 +54,9 @@ Teuchos::RCP<Local_Shape_Function> shape_function_factory(Schema * schema){
     return Teuchos::rcp(new Affine_Shape_Function(schema));
   }else if(schema->shape_function_type()==DICe::QUADRATIC_SF){
     return Teuchos::rcp(new Quadratic_Shape_Function());
+  }else if(schema->shape_function_type()==DICe::RIGID_BODY_SF){
+    TEUCHOS_TEST_FOR_EXCEPTION(!schema->get_params()->isParameter(DICe::camera_system_file),std::runtime_error,"");
+    return Teuchos::rcp(new Rigid_Body_Shape_Function(schema->get_params()->get<std::string>(DICe::camera_system_file)));
   }else{
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid shape function type");
   }
@@ -659,16 +662,12 @@ Projection_Shape_Function::save_fields(Schema * schema,
   Local_Shape_Function::save_fields(schema, subset_gid);
 }
 
-Fixed_Proj_3DRB_Shape_Function::Fixed_Proj_3DRB_Shape_Function(const std::string & system_file,
-  const size_t source_camera_id,
-  const std::vector<scalar_t> & proj_params):
+Rigid_Body_Shape_Function::Rigid_Body_Shape_Function(const std::string & system_file):
   Local_Shape_Function(),
-  source_cam_id_(source_camera_id),
   camera_system_(Teuchos::rcp(new Camera_System(system_file))){
-  TEUCHOS_TEST_FOR_EXCEPTION(proj_params.size()!=3,std::runtime_error,"");
-  proj_params_.assign(3,0);
-  for (size_t i = 0; i < proj_params.size(); ++i)
-    proj_params_[i] = proj_params[i];
+  TEUCHOS_TEST_FOR_EXCEPTION(camera_system_->num_cameras()!=1,std::runtime_error,"");
+  facet_params_ = camera_system_->camera(0)->get_facet_params();
+  TEUCHOS_TEST_FOR_EXCEPTION(facet_params_.size()!=3,std::runtime_error,"");
   spec_map_.insert(std::pair<Field_Spec, size_t>(ROT_TRANS_3D_ANG_X_FS, spec_map_.size()));
   spec_map_.insert(std::pair<Field_Spec, size_t>(ROT_TRANS_3D_ANG_Y_FS, spec_map_.size()));
   spec_map_.insert(std::pair<Field_Spec, size_t>(ROT_TRANS_3D_ANG_Z_FS, spec_map_.size()));
@@ -682,26 +681,26 @@ Fixed_Proj_3DRB_Shape_Function::Fixed_Proj_3DRB_Shape_Function(const std::string
   // initialize the parameter values
   clear();
   // initialize the deltas:
-  deltas_[ANGLE_X] = 0.005;
+  deltas_[ANGLE_X] = 0.005; // these are all in units of physical space (not pixels)
   deltas_[ANGLE_Y] = 0.005;
   deltas_[ANGLE_Z] = 0.005;
-  deltas_[TRANS_X] = 0.005;
-  deltas_[TRANS_Y] = 0.005;
-  deltas_[TRANS_Z] = 0.005;
+  deltas_[TRANS_X] = 0.1;
+  deltas_[TRANS_Y] = 0.1;
+  deltas_[TRANS_Z] = 0.1;
 }
 
 void
-Fixed_Proj_3DRB_Shape_Function::clear() {
+Rigid_Body_Shape_Function::clear() {
   Local_Shape_Function::clear();
 }
 
 void
-Fixed_Proj_3DRB_Shape_Function::reset_fields(Schema * schema) {
+Rigid_Body_Shape_Function::reset_fields(Schema * schema) {
   Local_Shape_Function::reset_fields(schema);
 }
 
 void
-Fixed_Proj_3DRB_Shape_Function::map(const scalar_t & x,
+Rigid_Body_Shape_Function::map(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & cx,
   const scalar_t & cy,
@@ -709,17 +708,23 @@ Fixed_Proj_3DRB_Shape_Function::map(const scalar_t & x,
   scalar_t & out_y) {
   const std::vector<scalar_t> source_x(1,x);
   const std::vector<scalar_t> source_y(1,y);
-  // cx and cy are not used
-  std::vector<scalar_t> mapped_x(1,0);
-  std::vector<scalar_t> mapped_y(1,0);
-  camera_system_->camera_to_camera_projection(source_cam_id_,source_cam_id_,
-    source_x,source_y,mapped_x,mapped_y,proj_params_,parameters_);
+  // cx and cy are not used (they are included to keep a consistent interfacet to the map method for all shape functions)
+  std::vector<scalar_t> mapped_x(1,0.0);
+  std::vector<scalar_t> mapped_y(1,0.0);
+  // project from the image out to the facet (which gives coordinates in terms of camera 0's coordinate system)
+  // then convert the camera 0 coordinates to the world coordinates (which correspond to the surface of the calibration plate or specimen surface)
+  // then apply a rigid body transformation to get the deformed coordinates, still in terms of the calibration plate's coordinate system
+  // then convert the world coordinates back to camera 0's coordinate system
+  // then convert from camera 0 coordinates to sensor coordinates
+  // then from sensor coordinates to the updated image coordinates
+  // all of this is accomplished with the following call
+  camera_system_->camera_to_camera_projection(0,0,source_x,source_y,mapped_x,mapped_y,facet_params_,parameters_);
   out_x = mapped_x[0];
   out_y = mapped_y[0];
 }
 
 void
-Fixed_Proj_3DRB_Shape_Function::residuals(const scalar_t & x,
+Rigid_Body_Shape_Function::residuals(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & cx,
   const scalar_t & cy,
@@ -727,7 +732,6 @@ Fixed_Proj_3DRB_Shape_Function::residuals(const scalar_t & x,
   const scalar_t & gy,
   std::vector<scalar_t> & residuals,
   const bool use_ref_grads) {
-
   const std::vector<scalar_t> source_x(1,x);
   const std::vector<scalar_t> source_y(1,y);
   // cx and cy are not used
@@ -736,10 +740,7 @@ Fixed_Proj_3DRB_Shape_Function::residuals(const scalar_t & x,
   std::vector<scalar_t> mapped_y(1,0);
   std::vector<std::vector<scalar_t> > dx(num_params_,std::vector<scalar_t>(1,0));
   std::vector<std::vector<scalar_t> > dy(num_params_,std::vector<scalar_t>(1,0));
-
-  camera_system_->camera_to_camera_projection(source_cam_id_,source_cam_id_,source_x,source_y,mapped_x,mapped_y,
-    proj_params_,dx,dy,parameters_);
-
+  camera_system_->camera_to_camera_projection(0,0,source_x,source_y,mapped_x,mapped_y,facet_params_,dx,dy,parameters_);
   residuals[spec_map_.find(ROT_TRANS_3D_ANG_X_FS)->second] = gx * dx[ANGLE_X][0] + gy * dy[ANGLE_X][0];
   residuals[spec_map_.find(ROT_TRANS_3D_ANG_Y_FS)->second] = gx * dx[ANGLE_Y][0] + gy * dy[ANGLE_Y][0];
   residuals[spec_map_.find(ROT_TRANS_3D_ANG_Z_FS)->second] = gx * dx[ANGLE_Z][0] + gy * dy[ANGLE_Z][0];
@@ -749,9 +750,46 @@ Fixed_Proj_3DRB_Shape_Function::residuals(const scalar_t & x,
 }
 
 void
-Fixed_Proj_3DRB_Shape_Function::save_fields(Schema * schema,
-  const int_t subset_gid) {
-  Local_Shape_Function::save_fields(schema, subset_gid);
+Rigid_Body_Shape_Function::save_fields(Schema * schema,
+  const int_t subset_gid){
+  Local_Shape_Function::save_fields(schema,subset_gid);
+  // since u, v, and theta are not explicitly parameters, need to save them
+  // manually here
+  scalar_t u=0.0,v=0.0,theta=0.0;
+  const scalar_t cx = schema->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
+  const scalar_t cy = schema->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
+  map_to_u_v_theta(cx,cy,u,v,theta);
+  schema->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) = u;
+  schema->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) = v;
+  schema->global_field_value(subset_gid,ROTATION_Z_FS) = theta;
+}
+
+void
+Rigid_Body_Shape_Function::map_to_u_v_theta(const scalar_t & cx,
+  const scalar_t & cy,
+  scalar_t & out_u,
+  scalar_t & out_v,
+  scalar_t & out_theta){
+  scalar_t cxp=0.0,cyp=0.0;
+  // map the centroid
+  map(cx,cy,cx,cy,cxp,cyp);
+  out_u = cxp - cx;
+  out_v = cyp - cy;
+  // map a point 5 pixels to the right of the centroid
+  // the 5 is arbitrary
+  scalar_t rxp=0.0,ryp=0.0;
+  map(cx+5.0,cy,cx,cy,rxp,ryp);
+  // get the angle between two rays...
+  const scalar_t ax = rxp - cxp;
+  const scalar_t ay = ryp - cyp;
+  const scalar_t mag_a = std::sqrt(ax*ax+ay*ay);
+  const scalar_t bx = 5.0;
+  const scalar_t by = 0.0;
+  const scalar_t mag_b = 5.0;
+  const scalar_t a_dot_b_over_mags = (ax*bx + ay*by)/(mag_a*mag_b);
+  // if the change in y is negative, have to add pi to account for accute angle measured
+  // from the other direction in terms of clockwise
+  out_theta = ay < 0.0 ? DICE_TWOPI - std::acos(a_dot_b_over_mags) : std::acos(a_dot_b_over_mags);
 }
 
 }// End DICe Namespace

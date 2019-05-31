@@ -225,6 +225,11 @@ public:
     static Matrix<scalar_t,3> eulers_to_rotation_matrix(const scalar_t & alpha,
       const scalar_t & beta,
       const scalar_t & gamma);
+    // convert euler angles to rotation matrix
+    static void rotation_matrix_to_eulers(const Matrix<scalar_t,3> & R,
+      scalar_t & alpha,
+      scalar_t & beta,
+      scalar_t & gamma);
     // convert euler angles to rotation matrix partial derivatives
     static void eulers_to_rotation_matrix_partials(const scalar_t & alpha,
       const scalar_t & beta,
@@ -429,6 +434,14 @@ public:
     std::vector<scalar_t> & world_x,
     std::vector<scalar_t> & world_y,
     std::vector<scalar_t> & world_z);
+  void image_to_world(const std::vector<scalar_t> & image_x,
+    const std::vector<scalar_t> & image_y,
+    std::vector<scalar_t> & world_x,
+    std::vector<scalar_t> & world_y,
+    std::vector<scalar_t> & world_z){
+    std::vector<scalar_t> dummy(6,0.0);
+    image_to_world(image_x,image_y,dummy,world_x,world_y,world_z);
+  }
 
   ///projects sensor coordinates onto a plane in space described by zp,theta,phi overloaded for first partials
   /// \param sen_x x sensor location

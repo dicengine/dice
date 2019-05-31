@@ -665,23 +665,8 @@ Triangulation::triangulate(const std::vector<scalar_t> & image_x,
   TEUCHOS_TEST_FOR_EXCEPTION(image_x.size()!=world_x.size(),std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(image_x.size()!=world_y.size(),std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(image_x.size()!=world_z.size(),std::runtime_error,"");
-
-  Teuchos::RCP<DICe::Camera> cam = camera_system_->camera(0);
-  const size_t vec_size = image_x.size();
-  // create the reference image:
-  std::vector<scalar_t> cam_x(vec_size,0.0);
-  std::vector<scalar_t> cam_y(vec_size,0.0);
-  std::vector<scalar_t> cam_z(vec_size,0.0);
-  std::vector<scalar_t> sensor_x(vec_size,0.0);
-  std::vector<scalar_t> sensor_y(vec_size,0.0);
-  // for each pixel convert from image coordinates to world coordinates and get the intensity value:
-  cam->image_to_sensor(image_x,image_y,sensor_x,sensor_y);
-  std::vector<scalar_t> params(3,0.0);
-  params[Projection_Shape_Function::ZP] = cam->tz(); // these are fixed to have the camera coordinate system perpendicular to the camera
-  params[Projection_Shape_Function::THETA] = 1.57079633;
-  params[Projection_Shape_Function::PHI] = 1.57079633;
-  cam->sensor_to_cam(sensor_x,sensor_y,cam_x,cam_y,cam_z,params);
-  cam->cam_to_world(cam_x,cam_y,cam_z,world_x,world_y,world_z);
+  // in this case, the world coordinate system is aligned with the calibration plate or specimen surface
+  camera_system_->camera(0)->image_to_world(image_x,image_y,world_x,world_y,world_z);
 }
 
 scalar_t Triangulation::triangulate(const scalar_t & x0,

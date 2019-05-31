@@ -84,6 +84,9 @@ Path_Initializer::Path_Initializer(Schema * schema,
   num_triads_(0),
   num_neighbors_(num_neighbors)
 {
+  if(schema)
+    TEUCHOS_TEST_FOR_EXCEPTION(schema->shape_function_type()==DICe::RIGID_BODY_SF,std::runtime_error,
+    "Path_Initializer cannot be used with rigid body shape function (only field value init is allowed)");
   DEBUG_MSG("Constructor for Path_Initializer with file: "  << file_name);
   TEUCHOS_TEST_FOR_EXCEPTION(num_neighbors_<=0,std::runtime_error,"");
   // read in the solution file:
@@ -278,6 +281,15 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
   return best_gamma;
 }
 
+Phase_Correlation_Initializer::Phase_Correlation_Initializer(Schema * schema):
+Initializer(schema),
+phase_cor_u_x_(0.0),
+phase_cor_u_y_(0.0){
+  if(schema)
+    TEUCHOS_TEST_FOR_EXCEPTION(schema->shape_function_type()==DICe::RIGID_BODY_SF,std::runtime_error,
+    "Phase_Correlation_Initializer cannot be used with rigid body shape function (only field value init is allowed)");
+};
+
 Status_Flag
 Phase_Correlation_Initializer::initial_guess(const int_t subset_gid,
   Teuchos::RCP<Local_Shape_Function> shape_function){
@@ -294,6 +306,27 @@ Phase_Correlation_Initializer::pre_execution_tasks(){
   DICe::phase_correlate_x_y(schema_->prev_img(),schema_->def_img(),phase_cor_u_x_,phase_cor_u_y_);
   DEBUG_MSG("Phase_Correlation_Initializer::pre_execution_tasks(): initial displacements ux: " << phase_cor_u_x_ << " uy: " << phase_cor_u_y_);
 }
+
+Search_Initializer::Search_Initializer(Schema * schema,
+  Teuchos::RCP<Subset> subset,
+  const scalar_t & step_size_u,
+  const scalar_t & search_dim_u,
+  const scalar_t & step_size_v,
+  const scalar_t & search_dim_v,
+  const scalar_t & step_size_theta,
+  const scalar_t & search_dim_theta):
+Initializer(schema),
+subset_(subset),
+step_size_u_(step_size_u),
+step_size_v_(step_size_v),
+search_dim_u_(search_dim_u),
+search_dim_v_(search_dim_v),
+step_size_theta_(step_size_theta),
+search_dim_theta_(search_dim_theta){
+  if(schema)
+    TEUCHOS_TEST_FOR_EXCEPTION(schema->shape_function_type()==DICe::RIGID_BODY_SF,std::runtime_error,
+    "Search_Initializer cannot be used with rigid body shape function (only field value init is allowed)");
+};
 
 Status_Flag
 Search_Initializer::initial_guess(const int_t subset_gid,
@@ -398,6 +431,14 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
     }
   }
   return INITIALIZE_FAILED;
+};
+
+Feature_Matching_Initializer::Feature_Matching_Initializer(Schema * schema):
+  Initializer(schema),
+  first_call_(true){
+  if(schema)
+    TEUCHOS_TEST_FOR_EXCEPTION(schema->shape_function_type()==DICe::RIGID_BODY_SF,std::runtime_error,
+    "Feature_Matching_Initializer cannot be used with rigid body shape function (only field value init is allowed)");
 };
 
 void
@@ -540,6 +581,15 @@ Feature_Matching_Initializer::initial_guess(const int_t subset_gid,
   return INITIALIZE_SUCCESSFUL;
 };
 
+Image_Registration_Initializer::Image_Registration_Initializer(Schema * schema):
+  Initializer(schema),
+  theta_(0.0),
+  first_call_(true){
+  if(schema)
+    TEUCHOS_TEST_FOR_EXCEPTION(schema->shape_function_type()==DICe::RIGID_BODY_SF,std::runtime_error,
+    "Image_Registration_Initializer cannot be used with rigid body shape function (only field value init is allowed)");
+};
+
 void
 Image_Registration_Initializer::pre_execution_tasks(){
   if(first_call_){
@@ -632,6 +682,9 @@ Optical_Flow_Initializer::Optical_Flow_Initializer(Schema * schema,
   initial_v_(0.0),
   initial_t_(0.0)
  {
+  if(schema)
+    TEUCHOS_TEST_FOR_EXCEPTION(schema->shape_function_type()==DICe::RIGID_BODY_SF,std::runtime_error,
+    "Path_Initializer cannot be used with rigid body shape function (only field value init is allowed)");
   DEBUG_MSG("Optical_Flow_Initializer::Optical_Flow_Initializer()");
   DEBUG_MSG("Optical_Flow_Initializer: creating the point cloud");
   point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());

@@ -261,10 +261,7 @@ public:
 
   /// constructor
   /// \param schema the parent schema
-  Phase_Correlation_Initializer(Schema * schema):
-  Initializer(schema),
-  phase_cor_u_x_(0.0),
-  phase_cor_u_y_(0.0){};
+  Phase_Correlation_Initializer(Schema * schema);
 
   /// virtual destructor
   virtual ~Phase_Correlation_Initializer(){};
@@ -305,15 +302,7 @@ public:
     const scalar_t & step_size_v,
     const scalar_t & search_dim_v,
     const scalar_t & step_size_theta,
-    const scalar_t & search_dim_theta):
-  Initializer(schema),
-  subset_(subset),
-  step_size_u_(step_size_u),
-  step_size_v_(step_size_v),
-  search_dim_u_(search_dim_u),
-  search_dim_v_(search_dim_v),
-  step_size_theta_(step_size_theta),
-  search_dim_theta_(search_dim_theta){};
+    const scalar_t & search_dim_theta);
 
   /// virtual destructor
   virtual ~Search_Initializer(){};
@@ -373,10 +362,7 @@ public:
 
   /// constructor
   /// \param schema the parent schema
-  Feature_Matching_Initializer(Schema * schema):
-    Initializer(schema),
-//    prev_img_name_(""),
-    first_call_(true){};
+  Feature_Matching_Initializer(Schema * schema);
 
   /// virtual destructor
   virtual ~Feature_Matching_Initializer(){};
@@ -413,10 +399,7 @@ public:
 
   /// constructor
   /// \param schema the parent schema
-  Image_Registration_Initializer(Schema * schema):
-    Initializer(schema),
-    theta_(0.0),
-    first_call_(true){};
+  Image_Registration_Initializer(Schema * schema);
 
   /// virtual destructor
   virtual ~Image_Registration_Initializer(){};

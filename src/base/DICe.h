@@ -454,6 +454,7 @@ enum Shape_Function_Type {
   AFFINE_SF=0,
   QUADRATIC_SF,
   PROJECTION_SF,
+  RIGID_BODY_SF,
   // DON'T ADD ANY BELOW MAX
   MAX_SF,
   NO_SUCH_SF
@@ -462,7 +463,8 @@ enum Shape_Function_Type {
 const static char * shapeFunctionTypeStrings[] = {
   "AFFINE",
   "QUADRATIC",
-  "PROJECTION"
+  "PROJECTION",
+  "RIGID_BODY"
 };
 
 /// Optimization method
