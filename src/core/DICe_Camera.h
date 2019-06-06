@@ -178,7 +178,7 @@ public:
     std::vector<scalar_t> & z,
     const Matrix<scalar_t,4> & T);
   /// helper struct for camera initialization (cleans up of the constructors for camera class so it only needs one)
-  struct Camera_Info{
+  struct DICE_LIB_DLL_EXPORT Camera_Info{
     // array of camera intrinsics (the distortion coeffs are not stored in the intrinsic array)
     //   openCV_DIS - (cx cy fx fy k1 k2 p1 p2 [k3] [k4 k5 k6] [s1 s2 s3 s4] [tx ty])   4,5,8,12 or 14 distortion coef
     //     Vic3D_DIS - (cx cy fx fy fs k1 k2 k3) 3 distortion coef (k1r1 k2r2 k3r3)
@@ -259,12 +259,15 @@ public:
     // difference with another camera info
     scalar_t diff(const Camera_Info & rhs) const;
     // comparison operator
+    DICE_LIB_DLL_EXPORT
     friend bool operator==(const Camera_Info & lhs,const Camera_Info & rhs);
     // comparison operator
+    DICE_LIB_DLL_EXPORT
     friend bool operator!=(const Camera_Info & lhs,const Camera_Info & rhs){
       return !(lhs==rhs);
     }
     // overaload the ostream operator for a camera info class
+    DICE_LIB_DLL_EXPORT
     friend std::ostream & operator<<(std::ostream & os, const Camera_Info & info);
   };
 

@@ -76,6 +76,7 @@ Camera::Camera_Info::diff(const Camera::Camera_Info & rhs) const {
   return intrinsics_norm + rotation_norm + trans_norm;
 }
 
+DICE_LIB_DLL_EXPORT
 bool
 operator==(const Camera::Camera_Info & lhs,const Camera::Camera_Info & rhs){
   bool is_equal = true;
@@ -135,6 +136,7 @@ operator==(const Camera::Camera_Info & lhs,const Camera::Camera_Info & rhs){
   return is_equal;
 }
 
+DICE_LIB_DLL_EXPORT
 std::ostream & operator<<(std::ostream & os, const Camera::Camera_Info & info){
   os << "id:                    " << info.id_ << std::endl;
   os << "comments:              " << info.comments_ << std::endl;
@@ -1095,6 +1097,7 @@ Camera::rot_trans_transform(
   }
 }
 
+DICE_LIB_DLL_EXPORT
 std::ostream & operator<<(std::ostream & os, const Camera & camera){
   os << "---------- Camera ----------" << std::endl;
   os << camera.camera_info_ << std::endl;

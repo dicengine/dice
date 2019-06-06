@@ -630,6 +630,7 @@ Decomp::populate_coordinate_vectors(const std::string & image_file_name,
   DEBUG_MSG("[PROC "<<proc_rank <<"] Decomp::populate_coordinate_vectors(): image height: " << img_h);
   image_width_ = img_w;
   image_height_ = img_h;
+  TEUCHOS_TEST_FOR_EXCEPTION(img_w<=0||img_h<=0,std::runtime_error,"invalid image dimensions, image load failure");
 
   // processor 0 creates the list of correlation points and divys them up for checking the SSSIG if necessary...
   Teuchos::RCP<std::vector<scalar_t> > subset_centroids = Teuchos::rcp(new std::vector<scalar_t>());

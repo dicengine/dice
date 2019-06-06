@@ -128,10 +128,10 @@ Camera_System::read_camera_system_file(const std::string & file) {
         //DEBUG_MSG("Camera_System::read_camera_system_file(): found image height: " << camera_info.image_height_);
         //DEBUG_MSG("Camera_System::read_camera_system_file(): found image width: " << camera_info.image_width_);
         //fill the array with any intrinsic parameters
-        for (int_t i = 0; i < Camera::MAX_CAM_INTRINSIC_PARAM; i++) {
-          if (camParams.isParameter(Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(i)))) {
-            camera_info.intrinsics_[i] = camParams.get<std::double_t>(Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(i)));
-            //DEBUG_MSG("Camera_System::read_camera_system_file(): found " << Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(i)) <<
+        for (int_t j = 0; j < Camera::MAX_CAM_INTRINSIC_PARAM; j++) {
+          if (camParams.isParameter(Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(j)))) {
+            camera_info.intrinsics_[j] = camParams.get<std::double_t>(Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(j)));
+            //DEBUG_MSG("Camera_System::read_camera_system_file(): found " << Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(j)) <<
             //  " value: " << camera_info.intrinsics_[i]);
           }
         }
@@ -836,6 +836,7 @@ Camera_System::rot_trans_3D(const std::vector<scalar_t> & source_x,
 }
 
 /// comparison operator
+DICE_LIB_DLL_EXPORT
 bool
 operator==(const Camera_System & lhs,const Camera_System & rhs){
   if(lhs.cameras_.size()!=rhs.cameras_.size()){
@@ -867,6 +868,7 @@ operator==(const Camera_System & lhs,const Camera_System & rhs){
   return is_equal;
 }
 
+DICE_LIB_DLL_EXPORT
 std::ostream & operator<<(std::ostream & os, const Camera_System & camera_system){
   os << "---------- Camera System ----------" << std::endl;
   os << "num cameras:             " << camera_system.num_cameras() << std::endl;

@@ -181,13 +181,16 @@ public:
   }
 
   /// comparison operator
+  DICE_LIB_DLL_EXPORT
   friend bool operator==(const Camera_System & lhs,const Camera_System & rhs);
   /// comparison operator
+  DICE_LIB_DLL_EXPORT
   friend bool operator!=(const Camera_System & lhs,const Camera_System & rhs){
     return !(lhs==rhs);
   }
 
   /// overaload the ostream operator for a camera system class
+  DICE_LIB_DLL_EXPORT
   friend std::ostream & operator<<(std::ostream & os, const Camera_System & camera_system);
 
   /// \brief 3 parameter projection routine from the one camera to another camera

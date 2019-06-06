@@ -287,6 +287,8 @@ Rectangle::Rectangle(const int_t centroid_x,
   width_(width),
   height_(height)
 {
+  DEBUG_MSG("Rectangle::Rectangle(): creating a rectangle of width " << width << " height " << height <<
+    " and centroid " << centroid_x_ << " " << centroid_y_);
   assert(centroid_x_>0);
   assert(centroid_y_>0);
   assert(width_>0);

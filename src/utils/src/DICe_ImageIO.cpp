@@ -192,6 +192,7 @@ void read_image_dimensions(const char * file_name,
   }
 #endif
   else{
+    DEBUG_MSG("read_image_dimensions(): (opencv) file name: " << file_name);
     cv::Mat image = cv::imread(file_name, cv::ImreadModes::IMREAD_GRAYSCALE);
     height = image.rows;
     width = image.cols;
