@@ -361,6 +361,7 @@ public:
   void initialize();
 
   /// comparison operator
+  DICE_LIB_DLL_EXPORT
   friend bool operator==(const Camera & lhs,const Camera & rhs){
     if(lhs.cam_world_trans_!=rhs.cam_world_trans_){
       DEBUG_MSG("camera cam_world_trans matrices do not match");
@@ -377,11 +378,13 @@ public:
   }
 
   /// comparison operator
+  DICE_LIB_DLL_EXPORT
   friend bool operator!=(const Camera & lhs,const Camera & rhs){
     return !(lhs==rhs);
   }
 
   /// overaload the ostream operator for a camera class
+  DICE_LIB_DLL_EXPORT
   friend std::ostream & operator<<(std::ostream & os, const Camera & camera);
 
   /// convert sensor locations to image locations: applies lens distortion scales for fx,fy and
