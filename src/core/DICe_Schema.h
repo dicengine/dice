@@ -1264,6 +1264,8 @@ private:
   Teuchos::RCP<Image_Deformer> image_deformer_;
   /// true if the laplacian images should be computed
   bool compute_laplacian_image_;
+  /// size of threshold to use for feature matching when thresholding is included
+  int_t threshold_block_size_;
 };
 
 /// \class DICe::Output_Spec

@@ -66,7 +66,8 @@ void match_features(Teuchos::RCP<Image> left_image,
   std::vector<scalar_t> & right_x,
   std::vector<scalar_t> & right_y,
   const float & feature_tol=0.001f,
-  const std::string & result_image_name="");
+  const std::string & result_image_name="",
+  const int_t threshold_block_size=-1);
 
 /// convert a DICe Image to an opencv 8uc1 type array
 /// \param image pointer to a DICe::Image

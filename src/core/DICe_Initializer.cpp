@@ -433,8 +433,10 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
   return INITIALIZE_FAILED;
 };
 
-Feature_Matching_Initializer::Feature_Matching_Initializer(Schema * schema):
+Feature_Matching_Initializer::Feature_Matching_Initializer(Schema * schema,
+  const int_t threshold_block_size):
   Initializer(schema),
+  threshold_block_size_(threshold_block_size),
   first_call_(true){
   if(schema)
     TEUCHOS_TEST_FOR_EXCEPTION(schema->shape_function_type()==DICe::RIGID_BODY_SF,std::runtime_error,
@@ -459,14 +461,14 @@ Feature_Matching_Initializer::pre_execution_tasks(){
     const float tol = 0.005f;
     std::stringstream outname;
     outname << "fm_initializer_" << schema_->mesh()->get_comm()->get_rank() << ".png";
-    match_features(prev_img_,schema_->def_img(0),left_x,left_y,right_x,right_y,tol,outname.str());
+    match_features(prev_img_,schema_->def_img(0),left_x,left_y,right_x,right_y,tol,outname.str(),threshold_block_size_);
     int_t num_matches = left_x.size();
     DEBUG_MSG("number of features matched: " << num_matches);
     // test if not enough features were found, if so try a tighter tolerance
     if(num_matches < 50){
       DEBUG_MSG("did not find enough features, attempting again with tighter tolerance");
       const float tight_tol = 0.001f;
-      match_features(prev_img_,schema_->def_img(0),left_x,left_y,right_x,right_y,tight_tol,outname.str());
+      match_features(prev_img_,schema_->def_img(0),left_x,left_y,right_x,right_y,tight_tol,outname.str(),threshold_block_size_);
       num_matches = left_x.size();
     }
     TEUCHOS_TEST_FOR_EXCEPTION(num_matches < 10,std::runtime_error,"Error, not enough features matched for feature matching initializer");

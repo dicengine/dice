@@ -362,7 +362,8 @@ public:
 
   /// constructor
   /// \param schema the parent schema
-  Feature_Matching_Initializer(Schema * schema);
+  Feature_Matching_Initializer(Schema * schema,
+    const int_t threshold_block_size=-1);
 
   /// virtual destructor
   virtual ~Feature_Matching_Initializer(){};
@@ -387,6 +388,7 @@ protected:
   Teuchos::RCP<Image> prev_img_;
   /// previous image name (used if the images are constructed from file rather than array)
 //  std::string prev_img_name_;
+  int_t threshold_block_size_;
   /// first time the pre execution tasks are called
   bool first_call_;
 };

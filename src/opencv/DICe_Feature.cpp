@@ -57,7 +57,8 @@ void match_features(Teuchos::RCP<Image> left_image,
   std::vector<scalar_t> & right_x,
   std::vector<scalar_t> & right_y,
   const float & feature_tol,
-  const std::string & result_image_name){
+  const std::string & result_image_name,
+  const int_t threshold_block_size){
 
   left_x.clear();
   left_y.clear();
@@ -73,6 +74,15 @@ void match_features(Teuchos::RCP<Image> left_image,
   cv::Mat img2 =   cv::Mat(right_image->height(),right_image->width(),CV_8U,right_array);
   const float nn_match_ratio = 0.6f;   // Nearest neighbor matching ratio
   DEBUG_MSG("match_features(): detect and compute features");
+
+  if(threshold_block_size>0){
+    DEBUG_MSG("match_features(): applying a pre-threshold to the image with block size " << threshold_block_size);
+    cv::equalizeHist(img1,img1);
+    cv::equalizeHist(img2,img2);
+    // the 1 represents ADAPTIVE_THRESH_GAUSSIAN, 0 is THRESH_BINARY
+    cv::adaptiveThreshold(img1,img1,255,1,0,threshold_block_size,2);
+    cv::adaptiveThreshold(img2,img2,255,1,0,threshold_block_size,2);
+  }
 
   std::vector<cv::KeyPoint> kpts1, kpts2;
   cv::Mat desc1, desc2;

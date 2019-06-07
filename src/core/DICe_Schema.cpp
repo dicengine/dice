@@ -353,6 +353,7 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   use_incremental_formulation_ = false;
   use_nonlinear_projection_ = false;
   sort_txt_output_ = false;
+  threshold_block_size_ = -1;
   set_params(params);
   prev_imgs_.push_back(Teuchos::null);
   def_imgs_.push_back(Teuchos::null);
@@ -579,6 +580,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   output_beta_ = diceParams->get<bool>(DICe::output_beta);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::write_exodus_output),std::runtime_error,"");
   write_exodus_output_ = diceParams->get<bool>(DICe::write_exodus_output);
+  threshold_block_size_ = diceParams->get<int>(DICe::threshold_block_size,-1);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::use_search_initialization_for_failed_steps),std::runtime_error,"");
   use_search_initialization_for_failed_steps_ = diceParams->get<bool>(DICe::use_search_initialization_for_failed_steps);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::normalize_gamma_with_active_pixels),std::runtime_error,"");
@@ -1627,7 +1629,7 @@ Schema::prepare_optimization_initializers(){
   }
   else if(initialization_method_==USE_FEATURE_MATCHING){
     DEBUG_MSG("Default initializer is feature matching initializer");
-    default_initializer = Teuchos::rcp(new Feature_Matching_Initializer(this));
+    default_initializer = Teuchos::rcp(new Feature_Matching_Initializer(this,threshold_block_size_));
   }
   else if(initialization_method_==USE_IMAGE_REGISTRATION){
     DEBUG_MSG("Default initializer is image registration initializer");

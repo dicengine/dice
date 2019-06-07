@@ -347,6 +347,8 @@ const char* const rotation_3x3_matrix = "rotation_3x3_matrix";
 const char* const extrinsics_relative_camera_to_camera = "extrinsics_relative_camera_to_camera";
 /// String parameter name, only for global DIC
 const char* const write_exodus_output = "write_exodus_output";
+/// String parameter name
+const char* const threshold_block_size = "threshold_block_size";
 
 
 /// enums:
@@ -820,6 +822,11 @@ const Correlation_Parameter pixel_integration_order_param(pixel_integration_orde
   SIZE_PARAM,
   true,
   "Specifies the integration order to use (number of subdivisions for each pixel). Used only in the constrained optimization formulation.");
+/// Correlation parameter and properties
+const Correlation_Parameter threshold_block_size_param(threshold_block_size,
+  SIZE_PARAM,
+  true,
+  "The block size to use for the feature matching initializer when thresholding is enabled.");
 
 /// Correlation parameter and properties
 const Correlation_Parameter obstruction_skin_factor_param(obstruction_skin_factor,
@@ -1216,7 +1223,7 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 87;
+const int_t num_valid_correlation_params = 88;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1305,7 +1312,8 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   use_fixed_point_iterations_param,
   compute_laplacian_image_param,
   enable_projection_shape_function_param,
-  write_exodus_output_param
+  write_exodus_output_param,
+  threshold_block_size_param
 };
 
 // TODO don't forget to update this when adding a new one
