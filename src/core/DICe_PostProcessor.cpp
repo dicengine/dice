@@ -1243,10 +1243,15 @@ Live_Plot_Post_Processor::execute(){
          num_valid_neigh++;
        }
      }
-    //DEBUG_MSG("Live plot point num valid neighbors: " << num_valid_neigh);
     if(num_valid_neigh < 3){
       DEBUG_MSG("Live plot point " << local_indices_[pt] << " does not have enough neighbors to calculate values.");
-      continue;
+      for(int_t field_it=0;field_it<num_field_entries_;++field_it){ // copy over the sigma value if sigma is one of the live plot fields
+        if(field_specs_[field_it]==DICe::field_enums::SIGMA_FS)
+          dist_data_->local_value(local_indices_[pt],field_it) = -1.0;
+        else
+          continue;
+      }
+      continue; // skip the rest
     }else{
       std::vector<Teuchos::ArrayRCP<double> > u;
       std::vector<Teuchos::ArrayRCP<double> > X_t_u;
