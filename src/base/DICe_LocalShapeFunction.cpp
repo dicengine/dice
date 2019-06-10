@@ -184,6 +184,29 @@ Affine_Shape_Function::init(const bool enable_rotation,
     deltas_[i] = delta_theta;
   deltas_[spec_map_.find(SUBSET_DISPLACEMENT_X_FS)->second] = delta_disp;
   deltas_[spec_map_.find(SUBSET_DISPLACEMENT_Y_FS)->second] = delta_disp;
+  // set the residual indicies
+  if(spec_map_.find(SUBSET_DISPLACEMENT_X_FS)!=spec_map_.end()) {
+    dx_ind = spec_map_.find(SUBSET_DISPLACEMENT_X_FS)->second;
+  }
+  if(spec_map_.find(SUBSET_DISPLACEMENT_Y_FS)!=spec_map_.end()) {
+    dy_ind = spec_map_.find(SUBSET_DISPLACEMENT_Y_FS)->second;
+  }
+  if(spec_map_.find(ROTATION_Z_FS)!=spec_map_.end()) {
+    has_rotz = true;
+    rotz_ind = spec_map_.find(ROTATION_Z_FS)->second;
+  }
+  if(spec_map_.find(NORMAL_STRETCH_XX_FS)!=spec_map_.end()) {
+    has_nsxx = true;
+    nsxx_ind = spec_map_.find(NORMAL_STRETCH_XX_FS)->second;
+  }
+  if(spec_map_.find(NORMAL_STRETCH_YY_FS)!=spec_map_.end()) {
+    has_nsyy = true;
+    nsyy_ind = spec_map_.find(NORMAL_STRETCH_YY_FS)->second;
+  }
+  if(spec_map_.find(SHEAR_STRETCH_XY_FS)!=spec_map_.end()) {
+    has_ssxy = true;
+    ssxy_ind = spec_map_.find(SHEAR_STRETCH_XY_FS)->second;
+  }
 }
 
 void
@@ -196,17 +219,26 @@ Affine_Shape_Function::map(const scalar_t & x,
 
   static scalar_t dx=0.0,dy=0.0;
   static scalar_t Dx=0.0,Dy=0.0;
-  static scalar_t cost;
-  static scalar_t sint;
-  cost = std::cos(parameter(ROTATION_Z_FS));
-  sint = std::sin(parameter(ROTATION_Z_FS));
+  static scalar_t dispx=0.0,dispy=0.0,theta=0.0,dudx=0.0,dvdy=0.0,gxy=0.0;
+  static scalar_t cost=0.0,sint=0.0;
+
+  dispx = parameters_[dx_ind];
+  dispy = parameters_[dy_ind];
+  theta = has_rotz ? parameters_[rotz_ind] : 0.0;
+  dudx  = has_nsxx ? parameters_[nsxx_ind] : 0.0;
+  dvdy  = has_nsyy ? parameters_[nsyy_ind] : 0.0;
+  gxy   = has_ssxy ? parameters_[ssxy_ind] : 0.0;
+
+  cost = cos(theta);
+  sint = sin(theta);
   dx = x - cx;
   dy = y - cy;
-  Dx = (1.0+parameter(NORMAL_STRETCH_XX_FS))*dx + parameter(SHEAR_STRETCH_XY_FS)*dy;
-  Dy = (1.0+parameter(NORMAL_STRETCH_YY_FS))*dy + parameter(SHEAR_STRETCH_XY_FS)*dx;
+  Dx = (1.0+dudx)*dx + gxy*dy;
+  Dy = (1.0+dvdy)*dy + gxy*dx;
+
   // mapped location
-  out_x = cost*Dx - sint*Dy + parameter(SUBSET_DISPLACEMENT_X_FS) + cx;
-  out_y = sint*Dx + cost*Dy + parameter(SUBSET_DISPLACEMENT_Y_FS) + cy;
+  out_x = cost*Dx - sint*Dy + dispx + cx;
+  out_y = sint*Dx + cost*Dy + dispy + cy;
 }
 
 //FIXME make these check the field exists rather than if the schema has them enabled
@@ -323,12 +355,21 @@ Affine_Shape_Function::residuals(const scalar_t & x,
   static scalar_t dx=0.0,dy=0.0,Dx=0.0,Dy=0.0,delTheta=0.0,delEx=0.0,delEy=0.0,delGxy=0.0;
   static scalar_t Gx=0.0,Gy=0.0;
   static scalar_t theta=0.0,dudx=0.0,dvdy=0.0,gxy=0.0,cosTheta=0.0,sinTheta=0.0;
-  theta = parameter(ROTATION_Z_FS);
-  dudx  = parameter(NORMAL_STRETCH_XX_FS);
-  dvdy  = parameter(NORMAL_STRETCH_YY_FS);
-  gxy   = parameter(SHEAR_STRETCH_XY_FS);
-  cosTheta = std::cos(theta);
-  sinTheta = std::sin(theta);
+
+  theta = has_rotz ? parameters_[rotz_ind] : 0.0;
+  dudx  = has_nsxx ? parameters_[nsxx_ind] : 0.0;
+  dvdy  = has_nsyy ? parameters_[nsyy_ind] : 0.0;
+  gxy   = has_ssxy ? parameters_[ssxy_ind] : 0.0;
+  cosTheta = cos(theta);
+  sinTheta = sin(theta);
+
+
+  //theta = parameter(ROTATION_Z_FS);
+  //dudx  = parameter(NORMAL_STRETCH_XX_FS);
+  //dvdy  = parameter(NORMAL_STRETCH_YY_FS);
+  //gxy   = parameter(SHEAR_STRETCH_XY_FS);
+  //cosTheta = std::cos(theta);
+  //sinTheta = std::sin(theta);
 
   dx = x - cx;
   dy = y - cy;
@@ -343,6 +384,20 @@ Affine_Shape_Function::residuals(const scalar_t & x,
   delEy = -Gx*dy*sinTheta + Gy*dy*cosTheta;
   delGxy = Gx*(cosTheta*dy - sinTheta*dx) + Gy*(sinTheta*dy + cosTheta*dx);
 
+  //if (has_dx)
+  residuals[dx_ind] = Gx;
+  //if (has_dy)
+  residuals[dy_ind] = Gy;
+  if (has_rotz)
+    residuals[rotz_ind] = delTheta;
+  if (has_nsxx)
+    residuals[nsxx_ind] = delEx;
+  if (has_nsyy)
+    residuals[nsyy_ind] = delEy;
+  if (has_ssxy)
+    residuals[ssxy_ind] = delGxy;
+
+  /*
   if(spec_map_.find(SUBSET_DISPLACEMENT_X_FS)!=spec_map_.end())
     residuals[spec_map_.find(SUBSET_DISPLACEMENT_X_FS)->second] = Gx;
   if(spec_map_.find(SUBSET_DISPLACEMENT_Y_FS)!=spec_map_.end())
@@ -355,6 +410,7 @@ Affine_Shape_Function::residuals(const scalar_t & x,
     residuals[spec_map_.find(NORMAL_STRETCH_YY_FS)->second] = delEy;
   if(spec_map_.find(SHEAR_STRETCH_XY_FS)!=spec_map_.end())
     residuals[spec_map_.find(SHEAR_STRETCH_XY_FS)->second] = delGxy;
+  */
 }
 
 

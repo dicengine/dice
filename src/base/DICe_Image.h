@@ -164,6 +164,10 @@ public:
   /// default constructor tasks
   void default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
+  /// update the fields in an existing image
+  void update_image_fields(const char * file_name,
+    const Teuchos::RCP<Teuchos::ParameterList> & params);
+
   /// post allocation tasks
   void post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
@@ -461,6 +465,11 @@ public:
   /// filter the image using a 7 point gauss filter
   void gauss_filter(const int_t mask_size=-1,const bool use_hierarchical_parallelism=false,
     const int_t team_size=256);
+
+  /// sets the file name of the deformed image
+  void set_file_name(const std::string & file_name) {
+    file_name_ = file_name;
+  }
 
   /// returns the name of the file if available
   std::string file_name()const{

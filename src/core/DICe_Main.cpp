@@ -317,6 +317,11 @@ int main(int argc, char *argv[]) {
 
       // iterate through the images and perform the correlation:
       bool failed_step = false;
+      
+      // flag for reusing a single deformed image class
+      bool reuse_def_image = (schema->initialization_method() != USE_IMAGE_REGISTRATION &&
+                              schema->initialization_method() != USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && 
+                              !is_stereo);
 
       for(int_t image_it=1;image_it<=num_frames;++image_it){
         *outStream << "Processing frame: " << image_it << " of " << num_frames << ", " << image_files[image_it] << std::endl;
@@ -324,7 +329,10 @@ int main(int argc, char *argv[]) {
           schema->set_ref_image(schema->def_img());
         }
         schema->update_extents();
-        schema->set_def_image(image_files[image_it]);
+        if (image_it > 1 && reuse_def_image)
+          schema->update_def_image(image_files[image_it]);
+        else
+          schema->set_def_image(image_files[image_it]);
         if(is_stereo){
           if(stereo_schema->use_incremental_formulation()&&image_it>1){
             stereo_schema->set_ref_image(stereo_schema->def_img());

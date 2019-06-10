@@ -155,6 +155,26 @@ Schema::rotate_def_image(){
 }
 
 void
+Schema::update_def_image(const std::string & defName,
+  const int_t id){
+  DEBUG_MSG("Schema: Updating an already allocated def image");
+  assert(def_imgs_.size()>0);
+  assert(id<(int_t)def_imgs_.size());
+  Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
+  imgParams->set(DICe::compute_image_gradients,compute_def_gradients_);
+  imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
+  imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
+  imgParams->set(DICe::gradient_method,gradient_method_);
+
+  def_imgs_[id]->update_image_fields(defName.c_str(),imgParams);
+  def_imgs_[id]->set_file_name(defName);
+
+  if(def_image_rotation_!=ZERO_DEGREES){
+    def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);
+  }
+}
+
+void
 Schema::set_def_image(const std::string & defName,
   const int_t id){
   DEBUG_MSG("Schema: Resetting the deformed image");

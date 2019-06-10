@@ -322,6 +322,12 @@ public:
   /// Rotate the deformed image if requested
   void rotate_def_image();
 
+  /// Update an exisiting deformed image class 
+  /// to avoid the overhead associated with creating
+  /// a new instance.
+  void update_def_image(const std::string & defName,
+  const int_t id=0);
+
   /// Replace the deformed image for this Schema
   void set_ref_image(const std::string & refName);
 

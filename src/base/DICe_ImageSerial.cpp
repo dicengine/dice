@@ -265,6 +265,25 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
   post_allocation_tasks(params);
 }
 
+void
+Image::update_image_fields(const char * file_name,
+  const Teuchos::RCP<Teuchos::ParameterList> & params) {
+  bool filter_failed = false;
+  bool convert_to_8_bit = true;
+  if(params!=Teuchos::null){
+    filter_failed = params->get<bool>(DICe::filter_failed_cine_pixels,false);
+    convert_to_8_bit = params->get<bool>(DICe::convert_cine_to_8_bit,true);
+  }
+  try{
+    utils::read_image(file_name,intensities_.getRawPtr(),true,convert_to_8_bit,filter_failed);
+  }
+  catch(...){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, image file read failure");
+  }
+  post_allocation_tasks(params);
+}
+
+
 const intensity_t&
 Image::operator()(const int_t x, const int_t y) const {
   TEUCHOS_TEST_FOR_EXCEPTION(x<0||x>=width_,std::runtime_error,"");

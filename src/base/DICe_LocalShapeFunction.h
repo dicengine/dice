@@ -339,6 +339,18 @@ public:
 
 
 private:
+  /// computed during initialization to avoid repeated field_spec find operation
+  bool has_rotz = false;
+  bool has_nsxx = false;
+  bool has_nsyy = false;
+  bool has_ssxy = false;
+
+  int dx_ind = -1;
+  int dy_ind = -1;
+  int rotz_ind = -1;
+  int nsxx_ind = -1;
+  int nsyy_ind = -1;
+  int ssxy_ind = -1;
 };
 
 /// \class DICe::Quadratic_Shape_Function
