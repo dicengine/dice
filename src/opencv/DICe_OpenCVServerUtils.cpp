@@ -802,7 +802,7 @@ void filter_dot_markers(std::vector<cv::KeyPoint>  dots,
         std::stringstream dot_text;
         dot_text << "(" << (int)i_x << "," << (int)i_y << ")";
         putText(img, dot_text.str(), cvpoint + Point(20,20),
-          FONT_HERSHEY_COMPLEX_SMALL, 1.5, cvScalar(255,0,255), 1, cv::LINE_AA);
+          FONT_HERSHEY_COMPLEX_SMALL, 1.5, Scalar(255,0,255), 1, cv::LINE_AA);
         circle(img, cvpoint, 5, Scalar(255, 0, 255), -1);
       }
     }
