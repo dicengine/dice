@@ -27,7 +27,7 @@ FOREACH ( test_file ${test_cpp_files})
     target_link_libraries(${name} ${DICE_LIBRARIES} ${DICE_COMP_LIBS})
 ENDFOREACH()
 
-IF(DICE_ENABLE_NETCDF)
+IF(DICE_ENABLE_NETCDF AND DICE_USE_DOUBLE)
   add_subdirectory(netcdf)
 ENDIF()
 

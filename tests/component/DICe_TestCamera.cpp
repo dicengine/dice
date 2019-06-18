@@ -61,7 +61,11 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint = argc - 1;
   scalar_t strong_match = 1.0e-4;
+#if DICE_USE_DOUBLE
   scalar_t soft_match = 0.005;
+#else
+  scalar_t soft_match = 0.5;
+#endif
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)

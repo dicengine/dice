@@ -670,6 +670,8 @@ private:
   // transformation coefficients
   Matrix<scalar_t,4> cam_world_trans_;
   Matrix<scalar_t,4> world_cam_trans_;
+
+  scalar_t zero_ish_;
 };
 
 }// End DICe Namespace

@@ -116,7 +116,7 @@ if(DICE_ENABLE_GLOBAL)
     RUNTIME_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/bin"
   )
 endif()
-if(DICE_ENABLE_NETCDF)
+if(DICE_ENABLE_NETCDF AND DICE_ENABLE_GLOBAL)
   add_executable(DICe_NetCDFToTiff DICe_NetCDFToTiff.cpp)
   target_link_libraries(DICe_NetCDFToTiff ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
   add_executable(DICe_ExoToNetCDF DICe_ExoToNetCDF.cpp)

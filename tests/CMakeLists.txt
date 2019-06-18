@@ -41,7 +41,7 @@ IF(DICE_ENABLE_OPENCV)
   ENDFOREACH ( )
 ENDIF()
 
-IF(DICE_ENABLE_NETCDF)
+IF(DICE_ENABLE_NETCDF AND DICE_USE_DOUBLE)
   FILE ( GLOB test_netcdf_cpp_files "${CMAKE_CURRENT_SOURCE_DIR}/component/netcdf/*.cpp")
   FOREACH ( test_file ${test_netcdf_cpp_files})
     # get the name of the test from the cpp filename

@@ -354,6 +354,11 @@ Camera::initialize() {
   // TODO need to add more error handling into the functions
   inv_lens_dis_x_.assign(camera_info_.image_height_*camera_info_.image_width_,0);
   inv_lens_dis_y_.assign(camera_info_.image_height_*camera_info_.image_width_,0);
+#if DICE_USE_DOUBLE
+  zero_ish_ = 1.0E-8;
+#else
+  zero_ish_ = 1.0E-6;
+#endif
 
   prep_lens_distortion();
   prep_transforms();
@@ -379,7 +384,7 @@ Camera::get_facet_params(){
   const scalar_t R12 = camera_info_.rotation_matrix_(1,2);
   const scalar_t R22 = camera_info_.rotation_matrix_(2,2);
   const scalar_t mag_R = std::sqrt(R02*R02 + R12*R12 + R22*R22);
-  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mag_R)<1.0E-8,std::runtime_error,"invalid facet orientation");
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mag_R)<zero_ish_,std::runtime_error,"invalid facet orientation");
   const scalar_t tx = camera_info_.tx_;
   const scalar_t ty = camera_info_.ty_;
   const scalar_t tz = camera_info_.tz_;
@@ -390,7 +395,7 @@ Camera::get_facet_params(){
   // Z vector = R02,R12,R22
   const scalar_t Qt = R02/mag_R;
   const scalar_t Qp = R12/mag_R;
-  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(R22)<1.0E-8,std::runtime_error,"invalid facet orientation");
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(R22)<zero_ish_,std::runtime_error,"invalid facet orientation");
   const scalar_t Zp = (R02*tx + R12*ty + R22*tz)/R22;
   const std::vector<scalar_t> coeffs_t{1.0,1.0,-1.0,-1.0};
   const std::vector<scalar_t> coeffs_p{1.0,-1.0,1.0,-1.0};
@@ -404,11 +409,11 @@ Camera::get_facet_params(){
     const scalar_t n3 = std::sqrt(1.0 - n1*n1 - n2*n2);
     // find the first non-zero number for the normal to the plane
     scalar_t factor = 0.0;
-    if(std::abs(n1)>1.0E-8){
+    if(std::abs(n1)>zero_ish_){
       factor = R02/n1;
-    }else if(std::abs(n2)>1.0E-8){
+    }else if(std::abs(n2)>zero_ish_){
       factor = R12/n2;
-    }else if(std::abs(n3)>1.0E-8){
+    }else if(std::abs(n3)>zero_ish_){
       factor = R22/n3;
     }else{
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
@@ -418,7 +423,7 @@ Camera::get_facet_params(){
   }
   size_t coeff_index = residuals.size()+1;
   for(size_t i=0;i<residuals.size();++i){
-    if(std::abs(residuals[i])<1.0E-8){
+    if(std::abs(residuals[i])<zero_ish_){
       coeff_index = i;
       break;
     }
@@ -485,9 +490,16 @@ Camera::prep_lens_distortion() {
   DEBUG_MSG(std::setw(6) << std::left << "Iter"<< std::setw(15) << std::left << "x_error" <<
     std::setw(15) << std::left << "y_error");
   //iterate until the inverted point is near the target location
+#if DICE_USE_DOUBLE
   const size_t max_its = 60;
+#else
+  const size_t max_its = 10;
+#endif
   for (size_t j = 0; j < max_its; j++) {
+    // only error out if the scalar type is double, for float simply use the max iterations and move on
+#if DICE_USE_DOUBLE
     TEUCHOS_TEST_FOR_EXCEPTION(j==max_its-1,std::runtime_error,"error: max iterations reached in inverse distortion prep loop");
+#endif
     end_loop = true;
     //do the projection
     sensor_to_image(inv_lens_dis_x_, inv_lens_dis_y_, image_x, image_y);
@@ -921,7 +933,7 @@ Camera::sensor_to_cam(
   sin_phi = sin(phi);
   cos_xi = sqrt(1 - cos_theta * cos_theta - cos_phi * cos_phi);
   //cos_xi_dzp = 0;
-  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(cos_xi) < 1.0E-8,std::runtime_error,"cos_xi near zero \n"
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(cos_xi) < zero_ish_,std::runtime_error,"cos_xi near zero \n"
     "(suggests an invalid transform to the facet surface, or facet surface parallel to the optical axis)");
   //assert(cos_xi!=0.0);
   cos_xi_dtheta = cos_theta * sin_theta / cos_xi;
@@ -1015,7 +1027,7 @@ Camera::cam_to_sensor(
   }
 
   for (size_t i = 0; i < vec_size; i++) {
-    assert(std::abs(cam_z[i])>1.0E-8); // cam z = 0 means the inside the pinhole camera, which is not okay
+    assert(std::abs(cam_z[i])>zero_ish_); // cam z = 0 means the inside the pinhole camera, which is not okay
     sen_x[i] = cam_x[i] / cam_z[i];
     sen_y[i] = cam_y[i] / cam_z[i];
     if(has_derivatives){

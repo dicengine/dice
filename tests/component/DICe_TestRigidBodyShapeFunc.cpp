@@ -59,7 +59,9 @@ intensity_t get_intensity_from_world_coords(Teuchos::RCP<Image> image,
   const scalar_t world_x,
   const scalar_t world_y,
   const scalar_t world_z){
+#if DICE_USE_DOUBLE
   TEUCHOS_TEST_FOR_EXCEPTION(std::abs(world_z)>1.0E-8,std::runtime_error,"world_z " << world_z);
+#endif
   const scalar_t facet_width = 100.0;
   const scalar_t factor_x = image->width()-1.0;
   const scalar_t factor_y = image->height()-1.0;

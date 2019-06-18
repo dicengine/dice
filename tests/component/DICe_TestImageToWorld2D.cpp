@@ -62,7 +62,13 @@ const int_t image_h = 1200;
 scalar_t world_ref_intensity_value(const scalar_t & world_x,
   const scalar_t & world_y,
   const scalar_t & world_z){
-  assert(std::abs(world_z)<1.0E-8);
+
+#if DICE_USE_DOUBLE
+  const scalar_t zero_ish = 1.0E-8;
+#else
+  const scalar_t zero_ish = 1.0E-4;
+#endif
+  assert(std::abs(world_z)<zero_ish);
   return 125.0 + 100.0*std::sin(freq*world_x)*std::sin(freq*world_y);
 }
 
@@ -70,7 +76,12 @@ scalar_t world_ref_intensity_value(const scalar_t & world_x,
 scalar_t world_def_intensity_value(const scalar_t & world_x,
   const scalar_t & world_y,
   const scalar_t & world_z){
-  assert(std::abs(world_z)<1.0E-8);
+#if DICE_USE_DOUBLE
+  const scalar_t zero_ish = 1.0E-8;
+#else
+  const scalar_t zero_ish = 1.0E-4;
+#endif
+  assert(std::abs(world_z)<zero_ish);
   return 125.0 + 100.0*std::sin(freq*(world_x-world_def_x))*std::sin(freq*(world_y-world_def_y));
 }
 
@@ -84,7 +95,11 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
+#if DICE_USE_DOUBLE
   scalar_t tol = 1.0E-3;
+#else
+  scalar_t tol = 0.5;
+#endif
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
