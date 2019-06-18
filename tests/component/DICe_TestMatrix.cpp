@@ -228,11 +228,11 @@ int main(int argc, char *argv[]) {
   }
 
   // test matrix matrix multiply
-  Matrix<scalar_t,1,4> M = {{1,2,3.9,9.0}};
-  Matrix<scalar_t,4,1> P = {{1},{2},{3.9},{9}};
+  Matrix<scalar_t,1,4> M = {{1,2,3.5,9.0}};
+  Matrix<scalar_t,4,1> P = {{1},{2},{3.5},{9}};
   auto Q = M*P;
   *outStream << Q << std::endl;
-  mat_norm = norm(Q)-101.21;
+  mat_norm = norm(Q)-98.25;
   if(std::abs(mat_norm)>error_tol){
     *outStream << "***error: matrix matrix multiply incorrect" << std::endl;
     error_flag++;

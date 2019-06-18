@@ -424,10 +424,28 @@ int main(int argc, char *argv[]) {
   std::fstream bestFitDataFile("best_fit_plane_out.dat", std::ios_base::in);
   TEUCHOS_TEST_FOR_EXCEPTION(!bestFitDataFile.good(),std::runtime_error,
     "Error, could not open file best_fit_plane_out.dat");
-  std::vector<scalar_t> fit_sol = {1.238900e+00,4.500000e-02,2.068900e+02,
-   8.853325e+00,1.881083e+01,-2.187049e+02,7.833042e+00,1.870169e+01,-2.174359e+02,
-    -6.252117e-01,-6.688012e-02,7.775843e-01,1.768548e+02,-6.395888e-02,9.973609e-01,3.435741e-02,-1.068081e+01,-7.778301e-01,
-    -2.825277e-02,-6.278393e-01,-1.298937e+02};
+  std::vector<scalar_t> fit_sol(21,0.0);
+  fit_sol[0] = 1.238900e+00;
+  fit_sol[1] = 4.500000e-02;
+  fit_sol[2] = 2.068900e+02;
+  fit_sol[3] = 8.853325e+00;
+  fit_sol[4] = 1.881083e+01;
+  fit_sol[5] = -2.187049e+02;
+  fit_sol[6] = 7.833042e+00;
+  fit_sol[7] = 1.870169e+01;
+  fit_sol[8] = -2.174359e+02;
+  fit_sol[9] = -6.252117e-01;
+  fit_sol[10] = -6.688012e-02;
+  fit_sol[11] = 7.775843e-01;
+  fit_sol[12] = 1.768548e+02;
+  fit_sol[13] = -6.395888e-02;
+  fit_sol[14] = 9.973609e-01;
+  fit_sol[15] = 3.435741e-02;
+  fit_sol[16] = -1.068081e+01;
+  fit_sol[17] = -7.778301e-01;
+  fit_sol[18] = -2.825277e-02;
+  fit_sol[19] = -6.278393e-01;
+  fit_sol[20] = -1.298937e+02;
   std::vector<scalar_t> fit_comp;
   while(!bestFitDataFile.eof()){
     std::vector<std::string> tokens = tokenize_line(bestFitDataFile);
