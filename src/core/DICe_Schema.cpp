@@ -181,13 +181,19 @@ Schema::set_def_image(const std::string & defName,
     DEBUG_MSG("Setting the deformed image using extents x: " << offset_x << " to " << end_x << " y: " << offset_y << " to " << end_y);
     def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),offset_x,offset_y,width,height,imgParams));
   }
-  else
-    def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
+  else{
+    // see if the image has already been allocated:
+    if(def_imgs_[id]==Teuchos::null)
+      def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
+    else
+      def_imgs_[id]->update_image_fields(defName.c_str(),imgParams);
+  }
   //TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[id]->width()!=ref_img_->width()||def_imgs_[id]->height()!=ref_img_->height(),
   //  std::runtime_error,"Error, ref and def images must have the same dimensions");
   if(def_image_rotation_!=ZERO_DEGREES){
     def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);
   }
+  def_imgs_[id]->set_file_name(defName);
 }
 
 void
