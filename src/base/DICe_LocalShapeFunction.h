@@ -337,8 +337,20 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, this method has not been implemented yet for Affine_Shape_Function");
   };
 
-
 private:
+  /// flags used to turn off certain parameters in the shape function
+  bool has_rotz_ = false;
+  bool has_nsxx_ = false;
+  bool has_nsyy_ = false;
+  bool has_ssxy_ = false;
+
+  /// index of the shape function parameter in the parameters list
+  int dx_ind_ = -1;
+  int dy_ind_ = -1;
+  int rotz_ind_ = -1;
+  int nsxx_ind_ = -1;
+  int nsyy_ind_ = -1;
+  int ssxy_ind_ = -1;
 };
 
 /// \class DICe::Quadratic_Shape_Function
