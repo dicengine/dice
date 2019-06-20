@@ -68,7 +68,7 @@ scalar_t world_ref_intensity_value(const scalar_t & world_x,
 #else
   const scalar_t zero_ish = 1.0E-4;
 #endif
-  assert(std::abs(world_z)<zero_ish);
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(world_z)>zero_ish,std::runtime_error,"");
   return 125.0 + 100.0*std::sin(freq*world_x)*std::sin(freq*world_y);
 }
 
@@ -81,7 +81,7 @@ scalar_t world_def_intensity_value(const scalar_t & world_x,
 #else
   const scalar_t zero_ish = 1.0E-4;
 #endif
-  assert(std::abs(world_z)<zero_ish);
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(world_z)>zero_ish,std::runtime_error,"");
   return 125.0 + 100.0*std::sin(freq*(world_x-world_def_x))*std::sin(freq*(world_y-world_def_y));
 }
 
