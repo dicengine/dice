@@ -49,10 +49,6 @@
   #include <DICe_NetCDF.h>
 #endif
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgcodecs.hpp>
-
 namespace DICe{
 namespace utils{
 
@@ -198,6 +194,30 @@ void read_image_dimensions(const char * file_name,
     width = image.cols;
   }
 }
+
+DICE_LIB_DLL_EXPORT
+cv::Mat read_image(const char * file_name){
+  if(image_file_type(file_name)==CINE){
+    // get the image dimensions
+    int_t width = 0;
+    int_t height = 0;
+    read_image_dimensions(file_name,width,height);
+    // read the cine
+    Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
+    read_image(file_name,intensities.getRawPtr());
+    // pipe the intensities into an opencv Mat
+    cv::Mat img(height,width,CV_8UC1,cv::Scalar(0));
+    for(int_t y=0;y<height;++y){
+      for(int_t x=0;x<width;++x){
+        img.at<uchar>(y,x) = intensities[y*width+x];
+      }
+    }
+    return img;
+  }else{
+    return cv::imread(file_name,cv::IMREAD_GRAYSCALE);
+  }
+}
+
 
 DICE_LIB_DLL_EXPORT
 void read_image(const char * file_name,

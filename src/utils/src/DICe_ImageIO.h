@@ -46,6 +46,11 @@
 #include <DICe_Cine.h>
 
 #include <Teuchos_RCP.hpp>
+#include <Teuchos_ArrayRCP.hpp>
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 #include <string>
 #include <map>
@@ -169,6 +174,10 @@ void write_color_overlap_image(const char * file_name,
   intensity_t * bottom_intensities,
   intensity_t * top_intensities);
 
+/// Read an image into the host memory returning an opencv Mat object
+/// \param file_name the name of the file
+DICE_LIB_DLL_EXPORT
+cv::Mat read_image(const char * file_name);
 
 // singleton class to keep track of image readers from high speed video or netcdf files:
 /// \class Image_Reader_Cache

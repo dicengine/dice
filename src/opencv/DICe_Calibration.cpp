@@ -45,6 +45,7 @@
 #include <DICe_Parser.h>
 #include <DICe_XMLUtils.h>
 #include <DICe_OpenCVServerUtils.h>
+#include <DICe_ImageIO.h>
 
 #include <Teuchos_XMLParameterListHelpers.hpp>
 
@@ -162,7 +163,7 @@ Calibration::init(const Teuchos::RCP<Teuchos::ParameterList> params){
   include_set_ = std::vector<bool>(num_images(),true);
 
   // initialize the image size
-  Mat img = imread(image_list_[0][0], IMREAD_GRAYSCALE);
+  Mat img = utils::read_image(image_list_[0][0].c_str());
   TEUCHOS_TEST_FOR_EXCEPTION(img.empty(),std::runtime_error,"image read failure " << image_list_[0][0]);
   image_size_ = img.size();
 
@@ -465,7 +466,7 @@ Calibration::extract_checkerboard_intersections(){
         continue;
       }
       //read the image
-      Mat img = imread(filename, IMREAD_GRAYSCALE);
+      Mat img = utils::read_image(filename.c_str());
       if (img.empty()) {
         //if the image is empth mark the set as not used an move on
         std::cout << "*** warning: image is empty or not found, excluding " << std::endl;
@@ -563,7 +564,7 @@ Calibration::extract_dot_target_points(){
         std::cout << "Calibration::extract_dot_target_points(): skipping due to image being deactivated" << std::endl;
         continue;
       }
-      Mat img = imread(image_list_[i_cam][i_image], IMREAD_GRAYSCALE);
+      Mat img = utils::read_image(image_list_[i_cam][i_image].c_str());
       if (img.empty()) {
         std::cout << "*** warning: image is empty or not found, excluding this image" << std::endl;
         include_set_[i_image] = false;
