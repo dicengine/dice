@@ -750,7 +750,7 @@ std::ostream & operator<<(std::ostream & os, const Calibration & cal){
     }
   }
   os << "grid points: " << std::endl;
-  os.precision(0);
+  os.precision(2);
   os << std::scientific;
   os << std::setw(10);
   os << std::left;

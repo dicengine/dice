@@ -432,7 +432,11 @@ int_t opencv_dot_targets(Mat & img, Teuchos::ParameterList & options,
   for (int_t n = 0; n < 3; n++) {
     cvpoint.x = key_points[n].pt.x;
     cvpoint.y = key_points[n].pt.y;
-    circle(img, cvpoint, 20, Scalar(0, 255, 255), 4);
+    if(img.size().height>800){
+      circle(img, cvpoint, 20, Scalar(0, 255, 255), 4);
+    }else{
+      circle(img, cvpoint, 10, Scalar(0, 255, 255), 4);
+    }
   }
 
   std::vector<scalar_t> img_to_grdx(6,0.0);
@@ -760,7 +764,11 @@ void filter_dot_markers(std::vector<cv::KeyPoint>  dots,
       cvpoint.x = dots[n].pt.x;
       cvpoint.y = dots[n].pt.y;
       //draw the white (found) circle
-      circle(img, cvpoint, 20, Scalar(0, 0, 255), 2);
+      if(img.size().height>800){
+        circle(img, cvpoint, 20, Scalar(0, 0, 255), 2);
+      }else{
+        circle(img, cvpoint, 10, Scalar(0, 0, 255), 2);
+      }
     }
 
     //is the point in an acceptable size range
@@ -786,7 +794,11 @@ void filter_dot_markers(std::vector<cv::KeyPoint>  dots,
       img_points.push_back(dots[n]);
       grd_points.push_back(cvkeypoint);
       if(draw){
-        circle(img, cvpoint, 12, Scalar(0, 255, 0), 4);
+        if(img.size().height>800){
+          circle(img, cvpoint, 12, Scalar(0, 255, 0), 4);
+        }else{
+          circle(img, cvpoint, 6, Scalar(0, 255, 0), 2);
+        }
       }
     }
   }//end dots loop
@@ -801,9 +813,15 @@ void filter_dot_markers(std::vector<cv::KeyPoint>  dots,
         cvpoint.y = imgy;
         std::stringstream dot_text;
         dot_text << "(" << (int)i_x << "," << (int)i_y << ")";
-        putText(img, dot_text.str(), cvpoint + Point(20,20),
-          FONT_HERSHEY_COMPLEX_SMALL, 1.5, Scalar(255,0,255), 1, cv::LINE_AA);
-        circle(img, cvpoint, 5, Scalar(255, 0, 255), -1);
+        if(img.size().height>800){
+          putText(img, dot_text.str(), cvpoint + Point(20,20),
+            FONT_HERSHEY_COMPLEX_SMALL, 1.5, Scalar(255,0,255), 1, cv::LINE_AA);
+          circle(img, cvpoint, 5, Scalar(255, 0, 255), -1);
+        }else{
+          putText(img, dot_text.str(), cvpoint + Point(8,20),
+            FONT_HERSHEY_COMPLEX_SMALL, 0.75, Scalar(255,0,255), 1, cv::LINE_AA);
+          circle(img, cvpoint, 3, Scalar(255, 0, 255), -1);
+        }
       }
     }
   }
