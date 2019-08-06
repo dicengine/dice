@@ -230,6 +230,12 @@ public:
       scalar_t & alpha,
       scalar_t & beta,
       scalar_t & gamma);
+    // return the euler angles for this camera
+    void eulers(scalar_t & alpha,
+      scalar_t & beta,
+      scalar_t & gamma) const {
+      rotation_matrix_to_eulers(rotation_matrix_,alpha,beta,gamma);
+    }
     // convert euler angles to rotation matrix partial derivatives
     static void eulers_to_rotation_matrix_partials(const scalar_t & alpha,
       const scalar_t & beta,
@@ -344,6 +350,10 @@ public:
   scalar_t ty()const {return camera_info_.ty_;}
   /// get the z extrinsic translation
   scalar_t tz()const {return camera_info_.tz_;}
+
+  const Camera_Info * camera_info()const{
+    return &camera_info_;
+  }
 
   ///gets 3x3 rotation matrix [R]
   /// \param rotation_3x3_matrix [R] matrix transforming from the world coordinates to the camera coordinates

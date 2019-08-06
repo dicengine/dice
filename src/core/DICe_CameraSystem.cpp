@@ -574,7 +574,18 @@ Camera_System::write_camera_system_file(const std::string & file){
       if (i==2) write_xml_comment(file, "R31 R32 R33");
     }
     write_xml_param_list_close(file, false);
-
+    // output the angles for debugging purposes
+    scalar_t alpha=0.0,beta=0.0,gamma=0.0;
+    try{
+      // put inside a try block in case the rotation matrix is not valid and eulers throws an exception
+      cameras_[camera_index]->camera_info()->eulers(alpha,beta,gamma);
+      std::stringstream angle_info_str;
+      angle_info_str << "Euler angles: ALPHA " << alpha << " BETA " << beta << " GAMMA " << gamma << " (radians)";
+      write_xml_comment(file, angle_info_str.str());
+    }
+      catch (std::exception & e) {
+        // no op
+    }
     const int_t img_width = cameras_[camera_index]->image_width();
     const int_t img_height = cameras_[camera_index]->image_height();
     param_title = std::stringstream();
