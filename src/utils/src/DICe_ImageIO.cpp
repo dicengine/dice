@@ -205,11 +205,23 @@ cv::Mat read_image(const char * file_name){
     // read the cine
     Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
     read_image(file_name,intensities.getRawPtr());
-    // pipe the intensities into an opencv Mat
+
+    // the GUI scales the intensities since it uses the CineToTiff tool to export a tiff to modify
+    // do the same here
+    // scale the intensities to spread them between 0 and 255
+    intensity_t max_intensity = -1.0E10;
+    intensity_t min_intensity = 1.0E10;
+    for(int_t i=0; i<width*height; ++i){
+      if(intensities[i] > max_intensity) max_intensity = intensities[i];
+      if(intensities[i] < min_intensity) min_intensity = intensities[i];
+    }
+    intensity_t fac = 1.0;
+    if((max_intensity - min_intensity) != 0.0)
+      fac = 255.0 / (max_intensity - min_intensity);
     cv::Mat img(height,width,CV_8UC1,cv::Scalar(0));
     for(int_t y=0;y<height;++y){
       for(int_t x=0;x<width;++x){
-        img.at<uchar>(y,x) = intensities[y*width+x];
+        img.at<uchar>(y,x) = (intensities[y*width + x]-min_intensity)*fac;
       }
     }
     return img;
