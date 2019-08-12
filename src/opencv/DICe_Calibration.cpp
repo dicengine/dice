@@ -554,6 +554,9 @@ Calibration::assemble_intersection_object_points() {
 void
 Calibration::extract_dot_target_points(){
   std::cout << "Calibration::extract_dot_target_points(): extracting dots" << std::endl;
+  const int_t orig_thresh_start = input_params_.get<int_t>(opencv_server_threshold_start,20);
+  const int_t orig_thresh_end =   input_params_.get<int_t>(opencv_server_threshold_end,250);
+  const int_t orig_thresh_step =  input_params_.get<int_t>(opencv_server_threshold_step,5);
   scalar_t include_image_set_tol = 0.75; //the search must have found at least 75% of the total to be included
   for (size_t i_image = 0; i_image < num_images(); i_image++){
     //go through each of the camera's images (note only two camera calibration is currently supported)
@@ -574,8 +577,27 @@ Calibration::extract_dot_target_points(){
       std::vector<KeyPoint> key_points;
       std::vector<KeyPoint> img_points;
       std::vector<KeyPoint> grd_points;
+      int_t return_thresh = orig_thresh_start;
       int_t error_code = opencv_dot_targets(img, input_params_,
-        key_points,img_points,grd_points);
+        key_points,img_points,grd_points,return_thresh);
+      // check if extraction failed
+      if(error_code==0){
+        input_params_.set(opencv_server_threshold_start,return_thresh);
+        input_params_.set(opencv_server_threshold_end,return_thresh);
+        input_params_.set(opencv_server_threshold_step,return_thresh);
+      }else if(i_image!=0){
+        input_params_.set(opencv_server_threshold_start,orig_thresh_start);
+        input_params_.set(opencv_server_threshold_end,orig_thresh_end);
+        input_params_.set(opencv_server_threshold_step,orig_thresh_step);
+        error_code = opencv_dot_targets(img, input_params_,
+          key_points,img_points,grd_points,return_thresh);
+        if(error_code==0){
+          input_params_.set(opencv_server_threshold_start,return_thresh);
+          input_params_.set(opencv_server_threshold_end,return_thresh);
+          input_params_.set(opencv_server_threshold_step,return_thresh);
+        }
+      }
+
       // draw a debugging image if requested
       if (draw_intersection_image_){
         std::stringstream out_file_name;
@@ -639,7 +661,7 @@ Calibration::extract_dot_target_points(){
       }
     }
     DEBUG_MSG("numer of common dots: " << num_common_pts);
-    if (num_common_pts < (num_fiducials_x_*num_fiducials_y_*include_image_set_tol)){
+    if (num_common_pts < (num_fiducials_x_*num_fiducials_y_*include_image_set_tol) && include_set_[i_image]){
       //exclude the set
       std::cout << "*** warning: excluding this image set due to not enough dots common among all images" << std::endl;
       include_set_[i_image] = false;

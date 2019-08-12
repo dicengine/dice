@@ -188,7 +188,8 @@ int_t opencv_server(int argc, char *argv[]){
       }else if(filter==opencv_server_filter_checkerboard_targets){
         error_code = opencv_checkerboard_targets(img,options);
       }else if(filter==opencv_server_filter_dot_targets){
-        error_code = opencv_dot_targets(img,options);
+        int_t return_thresh = 0.0;
+        error_code = opencv_dot_targets(img,options,return_thresh);
       }else{
         std::cout << "error, unknown filter: " << filter << std::endl;
         error_code = 5;
@@ -296,18 +297,22 @@ int_t opencv_checkerboard_targets(Mat & img, Teuchos::ParameterList & options,
 }
 
 DICE_LIB_DLL_EXPORT
-int_t opencv_dot_targets(cv::Mat & img, Teuchos::ParameterList & options){
+int_t opencv_dot_targets(cv::Mat & img,
+  Teuchos::ParameterList & options,
+  int_t & return_thresh){
   std::vector<cv::KeyPoint> key_points;
   std::vector<cv::KeyPoint> img_points;
   std::vector<cv::KeyPoint> grd_points;
-  return opencv_dot_targets(img,options,key_points,img_points,grd_points);
+  return opencv_dot_targets(img,options,key_points,img_points,grd_points, return_thresh);
 }
 
 DICE_LIB_DLL_EXPORT
-int_t opencv_dot_targets(Mat & img, Teuchos::ParameterList & options,
+int_t opencv_dot_targets(Mat & img,
+  Teuchos::ParameterList & options,
   std::vector<cv::KeyPoint> & key_points,
   std::vector<cv::KeyPoint> & img_points,
-  std::vector<cv::KeyPoint> & grd_points){
+  std::vector<cv::KeyPoint> & grd_points,
+  int_t & return_thresh){
   key_points.clear();
   img_points.clear();
   grd_points.clear();
@@ -423,6 +428,7 @@ int_t opencv_dot_targets(Mat & img, Teuchos::ParameterList & options,
 
   // report the results
   std::cout << "opencv_dot_targets():     using threshold: " << i_thresh << std::endl;
+  return_thresh = i_thresh;
   DEBUG_MSG("    ordered keypoints: ");
   for (size_t i = 0; i < key_points.size(); ++i) //save and display the keypoints
     DEBUG_MSG("      keypoint: " << key_points[i].pt.x << " " << key_points[i].pt.y);

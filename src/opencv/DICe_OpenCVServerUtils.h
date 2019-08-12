@@ -100,13 +100,17 @@ DICE_LIB_DLL_EXPORT
 int_t opencv_checkerboard_targets(cv::Mat & img, Teuchos::ParameterList & options,
   std::vector<cv::Point2f> & corners);
 DICE_LIB_DLL_EXPORT
-int_t opencv_dot_targets(cv::Mat & img, Teuchos::ParameterList & options,
+int_t opencv_dot_targets(cv::Mat & img,
+  Teuchos::ParameterList & options,
   std::vector<cv::KeyPoint> & key_points,
   std::vector<cv::KeyPoint> & img_points,
-  std::vector<cv::KeyPoint> & grd_points);
+  std::vector<cv::KeyPoint> & grd_points,
+  int_t & return_thresh);
 // overload that returns the keypoints found in the image
 DICE_LIB_DLL_EXPORT
-int_t opencv_dot_targets(cv::Mat & img, Teuchos::ParameterList & options);
+int_t opencv_dot_targets(cv::Mat & img,
+  Teuchos::ParameterList & options,
+  int_t & return_thresh);
 
 // utilities
 
