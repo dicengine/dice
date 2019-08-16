@@ -74,30 +74,20 @@ public:
 
   /// read the intensities from the netcdf file:
   /// \param file_name the name of the file to read
-  /// \param intensities pointer to the intensity array (must be pre-allocated)
-  /// \param time_index the time step to read
-  /// \param is_layout_right true if the arrays are oriented layout right in memory
-  void read_netcdf_image(const char * file_name,
-    intensity_t * intensities,
-    const size_t time_index,
-    const bool is_layout_right = true);
-
-  /// read the intensities from the netcdf file:
-  /// \param file_name the name of the file to read
-  /// \param offset_x offset in x direction
-  /// \param offset_y offset in y direction
-  /// \param width width of the sub frame
-  /// \param height height of the subframe
   /// \param time_index the time frame to retrieve
   /// \param intensities pointer to the intensity array (must be pre-allocated)
+  /// \param width width of the sub frame
+  /// \param height height of the subframe
+  /// \param offset_x offset in x direction
+  /// \param offset_y offset in y direction
   /// \param is_layout_right true if the arrays are oriented layout right in memory
   void read_netcdf_image(const char * file_name,
-    const int_t offset_x,
-    const int_t offset_y,
-    const int_t width,
-    const int_t height,
     const size_t time_index,
     intensity_t * intensities,
+    const int_t width=0,
+    const int_t height=0,
+    const int_t offset_x=0,
+    const int_t offset_y=0,
     const bool is_layout_right = true);
 
   /// retrive the image dimensions of a NetCDF file

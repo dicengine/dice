@@ -47,6 +47,7 @@
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ArrayRCP.hpp>
+#include <Teuchos_ParameterList.hpp>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -107,41 +108,26 @@ void read_image_dimensions(const char * file_name,
   int_t & width,
   int_t & height);
 
-/// Read an image into the host memory
-/// \param file_name the name of the file
-/// \param intensities [out] populated with the pixel intensity values
-/// \param is_layout_right true if the arrays are row-major
-/// \param convert_to_8_bit if true the values will be scaled to fit in the 8 bit range (0-255)
-/// \param filter failed pixels (only works for .cine file format) if true failed pixels will be replaced with neighbor values
-DICE_LIB_DLL_EXPORT
-void read_image(const char * file_name,
-  intensity_t * intensities,
-  const bool is_layout_right = true,
-  const bool convert_to_8_bit = true,
-  const bool filter_failed_pixels = false);
 
 /// Read an image into the host memory
 /// \param file_name the name of the file
-/// \param offset_x the upper left corner x-coordinate in global image coordinates
-/// \param offset_y the upper left corner y-coordinate in global image coordinates
-/// \param width width of the portion of the image to read (must be smaller than the global image width)
-/// \param height height of the portion of the image to read (must be smaller than the global image height)
 /// \param intensities [out] populated with the image intensities
-/// \param is_layout_right [optional] memory layout is LayoutRight (row-major)
-/// \param convert_to_8_bit if true the values will be scaled to fit in the 8 bit range (0-255)
-/// \param filter failed pixels (only works for .cine file format) if true failed pixels will be replaced with neighbor values
+/// \param params apply special filters or select sub portions of the image
 DICE_LIB_DLL_EXPORT
 void read_image(const char * file_name,
-  int_t offset_x,
-  int_t offset_y,
-  int_t width,
-  int_t height,
   intensity_t * intensities,
-  const bool is_layout_right = true,
-  const bool convert_to_8_bit = true,
-  const bool filter_failed_pixels = false);
+  const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
-// TODO write a function that reads into the device memory directly
+
+/// Spread the image intensity histogram if it's grouped in a cluster
+/// \param width
+/// \param height
+/// \param intensities
+DICE_LIB_DLL_EXPORT
+void spread_histogram(const int_t width,
+  const int_t height,
+  intensity_t * intensities);
+
 
 /// write an image to disk (always output as an 8-bit grayscale image)
 /// for more precise output, for example to read the intensity values in

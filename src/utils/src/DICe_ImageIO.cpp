@@ -196,6 +196,121 @@ void read_image_dimensions(const char * file_name,
 }
 
 DICE_LIB_DLL_EXPORT
+void read_image(const char * file_name,
+  intensity_t * intensities,
+  const Teuchos::RCP<Teuchos::ParameterList> & params){
+  int_t sub_w=0;
+  int_t sub_h=0;
+  int_t sub_offset_x=0;
+  int_t sub_offset_y=0;
+  bool layout_right=true;
+  bool is_subimage=false;
+  bool filter_failed_pixels=false;
+  bool convert_to_8_bit=true;
+  if(params!=Teuchos::null){
+    sub_w = params->get<int_t>(subimage_width,0);
+    sub_h = params->get<int_t>(subimage_height,0);
+    sub_offset_x = params->get<int_t>(subimage_offset_x,0);
+    sub_offset_y = params->get<int_t>(subimage_offset_y,0);
+    is_subimage=params->isParameter(subimage_width)||
+        params->isParameter(subimage_height)||
+        params->isParameter(subimage_offset_x)||
+        params->isParameter(subimage_offset_y);
+    layout_right = params->get<bool>(is_layout_right,true);
+    filter_failed_pixels = params->get<bool>(filter_failed_cine_pixels,filter_failed_pixels);
+    convert_to_8_bit = params->get<bool>(convert_cine_to_8_bit,convert_to_8_bit);
+  }
+  // determine the file type based on the file_name
+  Image_File_Type file_type = image_file_type(file_name);
+  if(file_type==NO_SUCH_IMAGE_FILE_TYPE){
+    std::cerr << "Error, unrecognized image file type for file: " << file_name << "\n";
+    throw std::exception();
+  }
+  if(file_type==RAWI){
+    if(is_subimage){
+      std::cerr << "Error, reading only a portion of an image is not supported for rawi, file name: " << file_name << "\n";
+      throw std::exception();
+    }
+    read_rawi_image(file_name,intensities,layout_right);
+  }
+  else if(file_type==CINE){
+    const std::string cine_file = cine_file_name(file_name);
+    DEBUG_MSG("read_image(): cine file name: " << cine_file);
+    int_t end_index = -1;
+    int_t start_index =-1;
+    bool is_avg = false;
+    cine_index(file_name,start_index,end_index,is_avg);
+    // get the image dimensions
+    Teuchos::RCP<DICe::cine::Cine_Reader> reader = Image_Reader_Cache::instance().cine_reader(cine_file);
+    const int_t width = sub_w==0?reader->width():sub_w;
+    const int_t height = sub_h==0?reader->height():sub_h;
+    Image_Reader_Cache::instance().set_filter_failed_pixels(filter_failed_pixels);
+    if(is_avg){
+      reader->get_average_frame(start_index-reader->first_image_number(),end_index-reader->first_image_number(),
+        sub_offset_x,sub_offset_y,width,height,intensities,layout_right,filter_failed_pixels,convert_to_8_bit);
+    }else{
+      reader->get_frame(sub_offset_x,sub_offset_y,width,height,intensities,layout_right,start_index-reader->first_image_number(),filter_failed_pixels,convert_to_8_bit);
+    }
+  }
+#ifdef DICE_ENABLE_NETCDF
+  /// check if the file is a netcdf file
+    else if(file_type==NETCDF){
+      netcdf::NetCDF_Reader netcdf_reader;
+      const std::string netcdf_file = netcdf_file_name(file_name);
+      const int_t index = netcdf_index(file_name);
+      netcdf_reader.read_netcdf_image(netcdf_file.c_str(),index,intensities,sub_w,sub_h,sub_offset_x,sub_offset_y,layout_right);
+    }
+#endif
+  else{
+    // read the image using opencv:
+    cv::Mat image;
+    image = cv::imread(file_name, cv::ImreadModes::IMREAD_GRAYSCALE);
+    const int_t height = sub_h==0?image.rows:sub_h;
+    const int_t width = sub_w==0?image.cols:sub_w;
+    assert(width+sub_offset_x <= image.cols);
+    assert(height+sub_offset_y <= image.rows);
+    for (int_t y=sub_offset_y; y<sub_offset_y+height; ++y) {
+      uchar* p = image.ptr(y);
+      p+=sub_offset_x;
+      if(layout_right)
+        for (int_t x=sub_offset_x; x<sub_offset_x+width;++x){
+          intensities[(y-sub_offset_y)*width + x-sub_offset_x] = *p++;
+        }
+      else // otherwise assume layout left
+        for (int_t x=sub_offset_x; x<sub_offset_x+width;++x){
+          intensities[(x-sub_offset_x)*height+y-sub_offset_y] = *p++;
+        }
+    }
+  }
+  // apply any post processing of the images as requested
+
+}
+
+DICE_LIB_DLL_EXPORT
+void spread_histogram(const int_t width,
+  const int_t height,
+  intensity_t * intensities){
+  intensity_t max_intensity = -1.0E10;
+  intensity_t min_intensity = 1.0E10;
+  for(int_t i=0; i<width*height; ++i){
+    if(intensities[i] > max_intensity) max_intensity = intensities[i];
+    if(intensities[i] < min_intensity) min_intensity = intensities[i];
+  }
+  intensity_t range = 255.0;
+  if(max_intensity > 255.0 && max_intensity <= 4096.0)
+    range = 4096.0;
+  else if(max_intensity > 4096)
+    range = 65535.0;
+  if((max_intensity - min_intensity) == 0.0) return;
+  const intensity_t fac = range / (max_intensity - min_intensity);
+  for(int_t y=0;y<height;++y){
+    for(int_t x=0;x<width;++x){
+      intensities[y*width + x] = (intensities[y*width + x]-min_intensity)*fac;
+    }
+  }
+}
+
+DICE_LIB_DLL_EXPORT
 cv::Mat read_image(const char * file_name){
   if(image_file_type(file_name)==CINE){
     // get the image dimensions
@@ -227,150 +342,6 @@ cv::Mat read_image(const char * file_name){
     return img;
   }else{
     return cv::imread(file_name,cv::IMREAD_GRAYSCALE);
-  }
-}
-
-
-DICE_LIB_DLL_EXPORT
-void read_image(const char * file_name,
-  intensity_t * intensities,
-  const bool is_layout_right,
-    const bool convert_to_8_bit,
-    const bool filter_failed_pixels){
-  // determine the file type based on the file_name
-  Image_File_Type file_type = image_file_type(file_name);
-  if(file_type==NO_SUCH_IMAGE_FILE_TYPE){
-    std::cerr << "Error, unrecognized image file type for file: " << file_name << "\n";
-    throw std::exception();
-  }
-  if(file_type==RAWI){
-    read_rawi_image(file_name,intensities,is_layout_right);
-  }
-  else if(file_type==CINE){
-    const std::string cine_file = cine_file_name(file_name);
-    DEBUG_MSG("read_image(): cine file name: " << cine_file);
-    int_t end_index = -1;
-    int_t start_index =-1;
-    bool is_avg = false;
-    cine_index(file_name,start_index,end_index,is_avg);
-    DEBUG_MSG("read_image(): start index : " << start_index << " end index " << end_index << " is avg: " << is_avg);
-    // get the image dimensions
-    Teuchos::RCP<DICe::cine::Cine_Reader> reader = Image_Reader_Cache::instance().cine_reader(cine_file);
-    const int_t width = reader->width();
-    const int_t height = reader->height();
-    Image_Reader_Cache::instance().set_filter_failed_pixels(filter_failed_pixels);
-    if(start_index < reader->first_image_number() || start_index > reader->first_image_number() + reader->num_frames()){
-      std::cerr << "Error, invalid start index " << start_index <<", less than first frame in cine file " << reader->first_image_number() <<
-          " or greater than last frame " << reader->first_image_number() + reader->num_frames() << std::endl;
-      throw std::exception();
-    }
-    if(is_avg && end_index > reader->first_image_number() + reader->num_frames()){
-      std::cerr << "Error, invalid end index " << end_index << ", greater than last frame in cine file " <<
-          reader->first_image_number() + reader->num_frames() << std::endl;
-      throw std::exception();
-    }
-    if(is_avg){
-      reader->get_average_frame(start_index-reader->first_image_number(),end_index-reader->first_image_number(),
-        0,0,width,height,intensities,is_layout_right,filter_failed_pixels,convert_to_8_bit);
-    }else{
-      reader->get_frame(0,0,width,height,intensities,is_layout_right,start_index-reader->first_image_number(),filter_failed_pixels,convert_to_8_bit);
-    }
-  }
-#ifdef DICE_ENABLE_NETCDF
-  /// check if the file is a netcdf file
-  else if(file_type==NETCDF){
-    netcdf::NetCDF_Reader netcdf_reader;
-    const std::string netcdf_file = netcdf_file_name(file_name);
-    const int_t index = netcdf_index(file_name);
-    netcdf_reader.read_netcdf_image(netcdf_file.c_str(),intensities,index,is_layout_right);
-  }
-#endif
-  else{
-    // read the image using opencv:
-    cv::Mat image;
-    image = cv::imread(file_name, cv::ImreadModes::IMREAD_GRAYSCALE);
-    const int_t height = image.rows;
-    const int_t width = image.cols;
-    for(int_t y=0;y<height; ++y) {
-      uchar* p = image.ptr(y);
-      if(is_layout_right)
-        for (int_t x=0; x<width;++x){
-          intensities[y*width+x] = *p++;
-        }
-      else // otherwise assume LayoutLeft
-        for (int_t x=0; x<width;++x){
-          intensities[x*height+y] = *p++;
-        }
-    } //for
-  } // else
-}
-
-DICE_LIB_DLL_EXPORT
-void read_image(const char * file_name,
-  int_t offset_x,
-  int_t offset_y,
-  int_t width,
-  int_t height,
-  intensity_t * intensities,
-  const bool is_layout_right,
-  const bool convert_to_8_bit,
-  const bool filter_failed_pixels){
-  // determine the file type based on the file_name
-  Image_File_Type file_type = image_file_type(file_name);
-  if(file_type==NO_SUCH_IMAGE_FILE_TYPE){
-    std::cerr << "Error, unrecognized image file type for file: " << file_name << "\n";
-    throw std::exception();
-  }
-  if(file_type==RAWI){
-    std::cerr << "Error, reading only a portion of an image is not supported for rawi, file name: " << file_name << "\n";
-    throw std::exception();
-  }
-  else if(file_type==CINE){
-    const std::string cine_file = cine_file_name(file_name);
-    DEBUG_MSG("read_image(): cine file name: " << cine_file);
-    int_t end_index = -1;
-    int_t start_index =-1;
-    bool is_avg = false;
-    cine_index(file_name,start_index,end_index,is_avg);
-    // get the image dimensions
-    Teuchos::RCP<DICe::cine::Cine_Reader> reader = Image_Reader_Cache::instance().cine_reader(cine_file);
-    Image_Reader_Cache::instance().set_filter_failed_pixels(filter_failed_pixels);
-    if(is_avg){
-      reader->get_average_frame(start_index-reader->first_image_number(),end_index-reader->first_image_number(),
-        offset_x,offset_y,width,height,intensities,is_layout_right,filter_failed_pixels,convert_to_8_bit);
-    }else{
-      reader->get_frame(offset_x,offset_y,width,height,intensities,is_layout_right,start_index-reader->first_image_number(),filter_failed_pixels,convert_to_8_bit);
-    }
-  }
-#ifdef DICE_ENABLE_NETCDF
-  /// check if the file is a netcdf file
-    else if(file_type==NETCDF){
-      netcdf::NetCDF_Reader netcdf_reader;
-      const std::string netcdf_file = netcdf_file_name(file_name);
-      const int_t index = netcdf_index(file_name);
-      netcdf_reader.read_netcdf_image(netcdf_file.c_str(),offset_x,offset_y,width,height,index,intensities,is_layout_right);
-    }
-#endif
-  else{
-    // read the image using opencv:
-    cv::Mat image;
-    image = cv::imread(file_name, cv::ImreadModes::IMREAD_GRAYSCALE);
-    //const int_t height = image.rows;
-    //const int_t width = image.cols;
-    assert(width+offset_x <= image.cols);
-    assert(height+offset_y <= image.rows);
-    for (int_t y=offset_y; y<offset_y+height; ++y) {
-      uchar* p = image.ptr(y);
-      p+=offset_x;
-      if(is_layout_right)
-        for (int_t x=offset_x; x<offset_x+width;++x){
-          intensities[(y-offset_y)*width + x-offset_x] = *p++;
-        }
-      else // otherwise assume layout left
-        for (int_t x=offset_x; x<offset_x+width;++x){
-          intensities[(x-offset_x)*height+y-offset_y] = *p++;
-        }
-    }
   }
 }
 

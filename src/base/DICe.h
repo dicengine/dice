@@ -349,7 +349,16 @@ const char* const extrinsics_relative_camera_to_camera = "extrinsics_relative_ca
 const char* const write_exodus_output = "write_exodus_output";
 /// String parameter name
 const char* const threshold_block_size = "threshold_block_size";
-
+/// String parameter name
+const char* const subimage_width = "subimage_width";
+/// String parameter name
+const char* const subimage_height = "subimage_height";
+/// String parameter name
+const char* const subimage_offset_x = "subimage_offset_x";
+/// String parameter name
+const char* const subimage_offset_y = "subimage_offset_y";
+/// String parameter name
+const char* const is_layout_right = "is_layout_right";
 
 /// enums:
 enum Subset_View_Target{
