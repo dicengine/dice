@@ -34,7 +34,7 @@ include_directories(
     ${NetCDF_DIR}
 )
 
-SET(DICE_UTILS_LIBRARIES teuchoscore)
+SET(DICE_UTILS_LIBRARIES teuchoscore teuchosparameterlist)
 if(DICE_ENABLE_NETCDF)
   SET(DICE_UTILS_LIBRARIES ${DICE_UTILS_LIBRARIES} netcdf)
 ENDIF()

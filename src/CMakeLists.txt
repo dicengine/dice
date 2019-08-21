@@ -139,7 +139,7 @@ include_directories (
     ${DICE_TRILINOS_HEADERS}
 )
 add_library(dicecore ${DICE_SOURCES} ${DICE_HEADERS})
-target_link_libraries(dicecore ${DICE_LIBRARIES} ${OpenCV_LIBRARIES} diceutils)
+target_link_libraries(dicecore ${DICE_LIBRARIES} diceutils ${OpenCV_LIBRARIES})
 
 target_compile_definitions(dicecore PRIVATE -D DICE_LIB_EXPORTS_MODE)
 add_dependencies(dicecore DICe_utils)
