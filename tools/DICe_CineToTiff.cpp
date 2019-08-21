@@ -136,6 +136,10 @@ int main(int argc, char *argv[]) {
     *outStream << "Full output filename given " << std::endl;
   }
 
+  // filter out failed cine pixels
+  Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
+  params->set(filter_failed_cine_pixels,true);
+
   for(int_t i=start_frame;i<=end_frame;++i){
     int_t num_digits_total = 0;
     int_t decrement_total = num_images;
@@ -157,7 +161,7 @@ int main(int argc, char *argv[]) {
     }
     std::stringstream cName;
     cName << stripped_fileName << "_" << i << ".cine";
-    Teuchos::RCP<DICe::Image> image = Teuchos::rcp(new Image(cName.str().c_str()));//cine_reader->get_frame(i);
+    Teuchos::RCP<DICe::Image> image = Teuchos::rcp(new Image(cName.str().c_str(),params));//cine_reader->get_frame(i);
     if(rotation!=0){
       if(rotation==90){
         image = image->apply_rotation(NINTY_DEGREES);

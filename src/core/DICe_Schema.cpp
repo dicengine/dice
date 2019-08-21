@@ -165,6 +165,7 @@ Schema::set_def_image(const std::string & defName,
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
+  imgParams->set(DICe::filter_failed_cine_pixels,filter_failed_cine_pixels_);
 
   // query the image dimensions:
   if(has_extents_){
@@ -232,6 +233,7 @@ Schema::set_def_image(const int_t img_width,
   imgParams->set(DICe::gradient_method,gradient_method_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
+  imgParams->set(DICe::filter_failed_cine_pixels,filter_failed_cine_pixels_);
   def_imgs_[id] = Teuchos::rcp( new Image(img_width,img_height,defRCP,imgParams));
   if(def_image_rotation_!=ZERO_DEGREES){
     def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);
@@ -256,6 +258,7 @@ Schema::set_ref_image(const std::string & refName){
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
   imgParams->set(DICe::compute_laplacian_image,compute_laplacian_image_);
+  imgParams->set(DICe::filter_failed_cine_pixels,filter_failed_cine_pixels_);
   if(has_extents_){
     utils::read_image_dimensions(refName.c_str(),full_ref_img_width_,full_ref_img_height_);
     const int_t buffer = 100; // if the extents are within 100 pixels of the image boundary use the whole image
@@ -293,6 +296,7 @@ Schema::set_ref_image(const int_t img_width,
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
+  imgParams->set(DICe::filter_failed_cine_pixels,filter_failed_cine_pixels_);
   ref_img_ = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
@@ -503,6 +507,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   use_nonlinear_projection_ = diceParams->get<bool>(DICe::use_nonlinear_projection,false);
   sort_txt_output_ = diceParams->get<bool>(DICe::sort_txt_output,false);
   gauss_filter_images_ = diceParams->get<bool>(DICe::gauss_filter_images,false);
+  filter_failed_cine_pixels_ = diceParams->get<bool>(DICe::filter_failed_cine_pixels,false);
   gauss_filter_mask_size_ = diceParams->get<int_t>(DICe::gauss_filter_mask_size,7);
   compute_ref_gradients_ = diceParams->get<bool>(DICe::compute_ref_gradients,true);
   compute_def_gradients_ = diceParams->get<bool>(DICe::compute_def_gradients,false);

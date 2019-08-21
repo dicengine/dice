@@ -254,7 +254,7 @@ Cine_Reader::get_frame_8_bit(const int_t offset_x,
   delete [] sub_buff_ptr_8;
   cine_file.close();
 #ifdef DICE_DEBUG_MSG
-  if(failed_pixels>0){
+  if(failed_pixels>0&&out_stream_){
     *out_stream_ << "*** Warning, this frame of .cine file: " << cine_header_->file_name_ << std::endl <<
         "             has " << failed_pixels << " failed pixels (" << failed_pixels*100.0/(w*h) << "% of the image)." << std::endl <<
         "             The intensity value for these pixels has been replaced with the neighbor value." << std::endl;
@@ -314,7 +314,7 @@ Cine_Reader::get_frame_16_bit(const int_t offset_x,
     }
   }
 #ifdef DICE_DEBUG_MSG
-  if(failed_pixels>0){
+  if(failed_pixels>0&&out_stream_){
     *out_stream_ << "*** Warning, this frame of .cine file: " << cine_header_->file_name_ << std::endl <<
         "             has " << failed_pixels << " failed pixels (" << failed_pixels*100.0/(w*h) << "% of the image)." << std::endl <<
         "             The intensity value for these pixels has been replaced with the neighbor value." << std::endl;
@@ -481,7 +481,7 @@ Cine_Reader::get_frame_10_bit_filtered(const int_t offset_x,
   cine_file.close();
   delete[] sub_buffer;
 #ifdef DICE_DEBUG_MSG
-  if(failed_pixels>0){
+  if(failed_pixels>0&&out_stream_){
     *out_stream_ << "*** Warning, this frame of .cine file: " << cine_header_->file_name_ << std::endl <<
         "             has " << failed_pixels << " failed pixels (" <<
         failed_pixels*100.0/(cine_header_->bitmap_header_.biWidth*cine_header_->bitmap_header_.biHeight) << "% of the image)." << std::endl <<
