@@ -180,9 +180,7 @@ public:
   /// and scale the image so that the histogram is spread over the entire 0-255 range.
   /// The rawi format saves the full intesity_t precision value to file
   /// \param file_name the name of the file to write to
-  /// \param scale_to_8_bit scale image to eight bit range if true
-  void write(const std::string & file_name,
-    const bool scale_to_8_bit=true);
+  void write(const std::string & file_name);
 
   /// write an image to file that combines this image and another of the same size
   /// with both overlayed using transparency

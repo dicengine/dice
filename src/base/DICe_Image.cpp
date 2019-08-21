@@ -214,10 +214,9 @@ Image::mean()const{
 }
 
 void
-Image::write(const std::string & file_name,
-  const bool scale_to_8_bit){
+Image::write(const std::string & file_name){
   try{
-    utils::write_image(file_name.c_str(),width_,height_,intensities().getRawPtr(),default_is_layout_right(),scale_to_8_bit);
+    utils::write_image(file_name.c_str(),width_,height_,intensities().getRawPtr(),default_is_layout_right());
   }
   catch(...){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, write image failure.");

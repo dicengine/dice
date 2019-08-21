@@ -121,6 +121,9 @@ public:
     return cy_;
   }
 
+  /// update the centroid of a subset
+  void update_centroid(const int_t cx, const int_t cy);
+
   /// x coordinate accessor
   /// \param pixel_index the pixel id
   /// note there is no bounds checking on the index
@@ -184,6 +187,14 @@ public:
     Teuchos::RCP<Image> image,
     Teuchos::RCP<Local_Shape_Function> shape_function=Teuchos::null);
 
+  /// returns the max intensity value
+  /// \param target either the reference or deformed intensity values
+  intensity_t max(const Subset_View_Target target=REF_INTENSITIES);
+
+  /// returns the min intensity value
+  /// \param target either the reference or deformed intensity values
+  intensity_t min(const Subset_View_Target target=REF_INTENSITIES);
+
   /// returns the mean intensity value
   /// \param target either the reference or deformed intensity values
   scalar_t mean(const Subset_View_Target target);
@@ -194,8 +205,14 @@ public:
   scalar_t mean(const Subset_View_Target target,
     scalar_t & sum);
 
+  /// round the values in the subset to the nearest integer number
+  void round(const Subset_View_Target target);
+
   /// returns the ZNSSD gamma correlation value between the reference and deformed subsets
   scalar_t gamma();
+
+  /// returns the un-normalized difference between the the reference and deformed intensity values
+  scalar_t diff_ref_def() const;
 
   /// returns the SSSIG value for the reference intensities
   scalar_t sssig();

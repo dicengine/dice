@@ -277,8 +277,11 @@ int main(int argc, char *argv[]) {
   conformal_subset.initialize(image);
   conformal_subset.write_tiff("conformal.tif");
   // read in the image that was just created and compare to a gold copy:
-  Image conf_img("./conformal.tif");
-  conf_img.write("conformal.rawi");
+  Teuchos::RCP<Teuchos::ParameterList> conf_params = rcp(new Teuchos::ParameterList());
+  conf_params->set(DICe::spread_intensity_histogram,true);
+  conf_params->set(DICe::floor_intensity_values,true);
+  Image conf_img("./conformal.tif",conf_params);
+  //conf_img.write("conformal.rawi");
 #ifdef DICE_USE_DOUBLE
   Image conf_img_exact("./images/conformal_d.rawi");
 #else

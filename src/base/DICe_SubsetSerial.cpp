@@ -163,6 +163,18 @@ Subset::Subset(const int_t cx,
   }
 }
 
+void
+Subset::update_centroid(const int_t cx, const int_t cy){
+  const int_t delta_x = cx - cx_;
+  const int_t delta_y = cy - cy_;
+  cx_ = cx;
+  cy_ = cy;
+  for(int_t i=0;i<num_pixels_;++i){
+    x_[i] += delta_x;
+    y_[i] += delta_y;
+  }
+}
+
 const int_t&
 Subset::x(const int_t pixel_index)const{
   return x_[pixel_index];
@@ -215,6 +227,55 @@ void
 Subset::reset_is_deactivated_this_step(){
   for(int_t i=0;i<num_pixels_;++i)
     is_deactivated_this_step_[i] = false;
+}
+
+intensity_t
+Subset::max(const Subset_View_Target target){
+  intensity_t max = -1.0E10;
+  if(target==REF_INTENSITIES){
+    for(int_t i=0;i<num_pixels_;++i){
+      if(is_active_[i]&!is_deactivated_this_step_[i])
+        if(ref_intensities_[i]>max)
+          max = ref_intensities_[i];
+    }
+  }else{
+    for(int_t i=0;i<num_pixels_;++i)
+      if(is_active_[i]&!is_deactivated_this_step_[i]){
+        if(def_intensities_[i]>max)
+          max = def_intensities_[i];
+      }
+  }
+  return max;
+}
+
+intensity_t
+Subset::min(const Subset_View_Target target){
+  intensity_t min = 1.0E10;
+  if(target==REF_INTENSITIES){
+    for(int_t i=0;i<num_pixels_;++i){
+      if(is_active_[i]&!is_deactivated_this_step_[i])
+        if(ref_intensities_[i]<min)
+          min = ref_intensities_[i];
+    }
+  }else{
+    for(int_t i=0;i<num_pixels_;++i)
+      if(is_active_[i]&!is_deactivated_this_step_[i]){
+        if(def_intensities_[i]<min)
+          min = def_intensities_[i];
+      }
+  }
+  return min;
+}
+
+void
+Subset::round(const Subset_View_Target target){
+  if(target==REF_INTENSITIES){
+    for(int_t i=0;i<num_pixels_;++i)
+      ref_intensities_[i] = std::round(ref_intensities_[i]);
+  }else{
+    for(int_t i=0;i<num_pixels_;++i)
+      def_intensities_[i] = std::round(def_intensities_[i]);
+  }
 }
 
 scalar_t
@@ -273,6 +334,16 @@ Subset::gamma(){
   }
   return gamma;
 }
+
+scalar_t
+Subset::diff_ref_def() const{
+  scalar_t diff = 0.0;
+  for(int_t i=0;i<num_pixels_;++i)
+    diff += (ref_intensities_[i]-def_intensities_[i])*(ref_intensities_[i]-def_intensities_[i]);
+  diff = std::sqrt(diff);
+  return diff;
+}
+
 
 Teuchos::ArrayRCP<scalar_t>
 Subset::grad_x_array()const{

@@ -265,7 +265,7 @@ int main(int argc, char *argv[]) {
 
   // output the deformed image:
   Teuchos::RCP<Image> def_img = Teuchos::rcp(new Image(img_w,img_h,def_intens));
-  def_img->write(output_image_name,false);
+  def_img->write(output_image_name);
 
   delete [] WORK;
   delete [] GWORK;

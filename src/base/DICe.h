@@ -359,6 +359,12 @@ const char* const subimage_offset_x = "subimage_offset_x";
 const char* const subimage_offset_y = "subimage_offset_y";
 /// String parameter name
 const char* const is_layout_right = "is_layout_right";
+/// String parameter name
+const char* const spread_intensity_histogram = "spread_intensity_histogram";
+/// String parameter name
+const char* const round_intensity_values = "round_intensity_values";
+/// String parameter name
+const char* const floor_intensity_values = "floor_intensity_values";
 
 /// enums:
 enum Subset_View_Target{

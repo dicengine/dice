@@ -220,6 +220,12 @@ void read_image(const char * file_name,
     filter_failed_pixels = params->get<bool>(filter_failed_cine_pixels,filter_failed_pixels);
     convert_to_8_bit = params->get<bool>(convert_cine_to_8_bit,convert_to_8_bit);
   }
+  DEBUG_MSG("utils::read_image(): sub_w: " << sub_w << " sub_h: " << sub_h << " offset_x: " << sub_offset_x << " offset_y: " << sub_offset_y);
+  DEBUG_MSG("utils::read_image(): is_layout_right: " << is_layout_right);
+  DEBUG_MSG("utils::read_image(): filter_failed_pixels: " << filter_failed_pixels);
+  DEBUG_MSG("utils::read_image(): convert_to_8_bit: " << convert_to_8_bit);
+  int_t width = 0;
+  int_t height = 0;
   // determine the file type based on the file_name
   Image_File_Type file_type = image_file_type(file_name);
   if(file_type==NO_SUCH_IMAGE_FILE_TYPE){
@@ -242,8 +248,8 @@ void read_image(const char * file_name,
     cine_index(file_name,start_index,end_index,is_avg);
     // get the image dimensions
     Teuchos::RCP<DICe::cine::Cine_Reader> reader = Image_Reader_Cache::instance().cine_reader(cine_file);
-    const int_t width = sub_w==0?reader->width():sub_w;
-    const int_t height = sub_h==0?reader->height():sub_h;
+    width = sub_w==0?reader->width():sub_w;
+    height = sub_h==0?reader->height():sub_h;
     Image_Reader_Cache::instance().set_filter_failed_pixels(filter_failed_pixels);
     if(is_avg){
       reader->get_average_frame(start_index-reader->first_image_number(),end_index-reader->first_image_number(),
@@ -265,8 +271,8 @@ void read_image(const char * file_name,
     // read the image using opencv:
     cv::Mat image;
     image = cv::imread(file_name, cv::ImreadModes::IMREAD_GRAYSCALE);
-    const int_t height = sub_h==0?image.rows:sub_h;
-    const int_t width = sub_w==0?image.cols:sub_w;
+    width = sub_w==0?image.cols:sub_w;
+    height = sub_h==0?image.rows:sub_h;
     assert(width+sub_offset_x <= image.cols);
     assert(height+sub_offset_y <= image.rows);
     for (int_t y=sub_offset_y; y<sub_offset_y+height; ++y) {
@@ -283,7 +289,39 @@ void read_image(const char * file_name,
     }
   }
   // apply any post processing of the images as requested
+  if(params!=Teuchos::null){
+    if(params->get<bool>(spread_intensity_histogram,false)){
+      spread_histogram(width,height,intensities);
+    }
+    if(params->get<bool>(round_intensity_values,false)){
+      round_intensities(width,height,intensities);
+    }
+    if(params->get<bool>(floor_intensity_values,false)){
+      floor_intensities(width,height,intensities);
+    }
+  }
+}
 
+DICE_LIB_DLL_EXPORT
+void round_intensities(const int_t width,
+  const int_t height,
+  intensity_t * intensities){
+  for(int_t y=0;y<height;++y){
+    for(int_t x=0;x<width;++x){
+      intensities[y*width + x] = std::round(intensities[y*width + x]);
+    }
+  }
+}
+
+DICE_LIB_DLL_EXPORT
+void floor_intensities(const int_t width,
+  const int_t height,
+  intensity_t * intensities){
+  for(int_t y=0;y<height;++y){
+    for(int_t x=0;x<width;++x){
+      intensities[y*width + x] = std::floor(intensities[y*width + x]);
+    }
+  }
 }
 
 DICE_LIB_DLL_EXPORT
@@ -301,48 +339,38 @@ void spread_histogram(const int_t width,
     range = 4096.0;
   else if(max_intensity > 4096)
     range = 65535.0;
+  DEBUG_MSG("utils::spread_histogram(): range: " << range);
+  DEBUG_MSG("utils::spread_histogram(): max intensity: " << max_intensity);
+  DEBUG_MSG("utils::spread_histogram(): min intensity: " << min_intensity);
   if((max_intensity - min_intensity) == 0.0) return;
   const intensity_t fac = range / (max_intensity - min_intensity);
   for(int_t y=0;y<height;++y){
-    for(int_t x=0;x<width;++x){
+    for(int_t x=0;x<width;++x)
       intensities[y*width + x] = (intensities[y*width + x]-min_intensity)*fac;
-    }
   }
 }
 
 DICE_LIB_DLL_EXPORT
 cv::Mat read_image(const char * file_name){
+  Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
   if(image_file_type(file_name)==CINE){
-    // get the image dimensions
-    int_t width = 0;
-    int_t height = 0;
-    read_image_dimensions(file_name,width,height);
-    // read the cine
-    Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
-    read_image(file_name,intensities.getRawPtr());
-
-    // the GUI scales the intensities since it uses the CineToTiff tool to export a tiff to modify
-    // do the same here
-    // scale the intensities to spread them between 0 and 255
-    intensity_t max_intensity = -1.0E10;
-    intensity_t min_intensity = 1.0E10;
-    for(int_t i=0; i<width*height; ++i){
-      if(intensities[i] > max_intensity) max_intensity = intensities[i];
-      if(intensities[i] < min_intensity) min_intensity = intensities[i];
-    }
-    intensity_t fac = 1.0;
-    if((max_intensity - min_intensity) != 0.0)
-      fac = 255.0 / (max_intensity - min_intensity);
-    cv::Mat img(height,width,CV_8UC1,cv::Scalar(0));
-    for(int_t y=0;y<height;++y){
-      for(int_t x=0;x<width;++x){
-        img.at<uchar>(y,x) = (intensities[y*width + x]-min_intensity)*fac;
-      }
-    }
-    return img;
-  }else{
-    return cv::imread(file_name,cv::IMREAD_GRAYSCALE);
+    params->set(spread_intensity_histogram,true);
+    params->set(filter_failed_cine_pixels,true);
+    params->set(convert_cine_to_8_bit,true);
   }
+  int_t width = 0;
+  int_t height = 0;
+  read_image_dimensions(file_name,width,height);
+  // read the cine
+  Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
+  read_image(file_name,intensities.getRawPtr(),params);
+  cv::Mat img(height,width,CV_8UC1,cv::Scalar(0));
+  for(int_t y=0;y<height;++y){
+    for(int_t x=0;x<width;++x){
+      img.at<uchar>(y,x) = intensities[y*width + x];
+    }
+  }
+  return img;
 }
 
 DICE_LIB_DLL_EXPORT
@@ -385,8 +413,7 @@ void write_image(const char * file_name,
   const int_t width,
   const int_t height,
   intensity_t * intensities,
-  const bool is_layout_right,
-  const bool scale_to_8_bit){
+  const bool is_layout_right){
   // determine the file type based on the file_name
   Image_File_Type file_type = image_file_type(file_name);
   if(file_type==NO_SUCH_IMAGE_FILE_TYPE){
@@ -398,32 +425,15 @@ void write_image(const char * file_name,
     write_rawi_image(file_name,width,height,intensities,is_layout_right);
   }
   else{
-    // rip through the intensity values and determine if they need to be scaled to 8-bit range (0-255):
-    // negative values are shifted to start at zero so all values will be positive
-    intensity_t max_intensity = -1.0E10;
-    intensity_t min_intensity = 1.0E10;
-    for(int_t i=0; i<width*height; ++i){
-      if(intensities[i] > max_intensity) max_intensity = intensities[i];
-      if(intensities[i] < min_intensity) min_intensity = intensities[i];
-    }
-    intensity_t fac = 1.0;
-    if((max_intensity - min_intensity) != 0.0)
-      fac = 255.0 / (max_intensity - min_intensity);
     cv::Mat out_img(height,width,CV_8UC1,cv::Scalar(0));
     for (int_t y=0; y<height; ++y) {
       if(is_layout_right)
         for (int_t x=0; x<width;++x){
-          if(scale_to_8_bit)
-            out_img.at<uchar>(y,x) = std::floor((intensities[y*width + x]-min_intensity)*fac);
-          else
-            out_img.at<uchar>(y,x) = std::floor(intensities[y*width + x]);
+          out_img.at<uchar>(y,x) = std::round(intensities[y*width + x]);
         }
       else
         for (int_t x=0; x<width;++x){
-          if(scale_to_8_bit)
-            out_img.at<uchar>(y,x) = std::floor((intensities[x*height+y]-min_intensity)*fac);
-          else
-            out_img.at<uchar>(y,x) = std::floor(intensities[x*height+y]);
+          out_img.at<uchar>(y,x) = std::round(intensities[x*height+y]);
         }
     }
     cv::imwrite(file_name,out_img);

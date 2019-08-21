@@ -59,6 +59,8 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
+  intensity_t max_intens = 260.0;
+  intensity_t min_intens = -5.0;
 #if DICE_USE_DOUBLE
   scalar_t errorTol = 1.0E-3;
 #else
@@ -73,23 +75,25 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- Begin test ---" << std::endl;
 
+  // for each of these cases, a mapped set of intensities is generated and stored in the def_intensities array
+  // the gold value of these intensities is loaded from an image and stored in the ref_intensities
+  // then the two are compared
+  // the subset centroids have to be updated because the reference image is larger than the subset bounds and the
+  // gold images contain only the subset bounds so there is an offset between the two
+
   // create a subset
 
   Teuchos::RCP<Image> image = Teuchos::rcp(new Image("./images/shapeFuncTestAngle.tif"));
   const int_t cx = 249;
   const int_t cy = 204;
-  const int_t subset_size = 301;
+  const int_t subset_size = 261;//301;
   Teuchos::RCP<Subset> subset = Teuchos::rcp(new Subset(cx,cy,subset_size,subset_size));
   subset->initialize(image);
-  subset->write_tiff("quadTestSubset.tif");
 
   // create a quadratic shape function
   Teuchos::RCP<Local_Shape_Function> shape_func = Teuchos::rcp(new Quadratic_Shape_Function());
-  subset->initialize(image,REF_INTENSITIES,shape_func);
-  subset->write_tiff("quadTestSubsetNoMap.tif");
-  Teuchos::RCP<Image> quad_img = Teuchos::rcp(new Image("./quadTestSubsetNoMap.tif"));
-  Teuchos::RCP<Image> quad_img_gold = Teuchos::rcp(new Image("./images/quadTestSubsetNoMap.tif"));
-  scalar_t no_map_diff = quad_img->diff(quad_img_gold);
+  subset->initialize(image,DEF_INTENSITIES,shape_func);
+  scalar_t no_map_diff = subset->diff_ref_def();
   *outStream << "no map diff: " << no_map_diff << std::endl;
   if(no_map_diff > errorTol){
     *outStream << "Error, no mapping subset incorrect" << std::endl;
@@ -99,11 +103,11 @@ int main(int argc, char *argv[]) {
   const scalar_t u = 63.0;
   const scalar_t v = -63.0;
   shape_func->insert_motion(u,v);
-  subset->initialize(image,REF_INTENSITIES,shape_func);
-  subset->write_tiff("quadTestSubsetTranslate.tif");
-  Teuchos::RCP<Image> quad_trans_img = Teuchos::rcp(new Image("./quadTestSubsetTranslate.tif"));
-  Teuchos::RCP<Image> quad_trans_img_gold = Teuchos::rcp(new Image("./images/quadTestSubsetTranslate.tif"));
-  scalar_t trans_diff = quad_trans_img->diff(quad_trans_img_gold);
+  subset->initialize(image,DEF_INTENSITIES,shape_func);
+  subset->update_centroid(130,130);
+  Teuchos::RCP<Image> quad_trans_img = Teuchos::rcp(new Image("./images/quadTestSubsetTranslate.tif"));
+  subset->initialize(quad_trans_img);
+  scalar_t trans_diff = subset->diff_ref_def();
   *outStream << "translate diff: " << trans_diff << std::endl;
   if(trans_diff > errorTol){
     *outStream << "Error, translation incorrect" << std::endl;
@@ -111,12 +115,20 @@ int main(int argc, char *argv[]) {
   }
 
   scalar_t rot = 0.785398;
+  subset->update_centroid(249,204);
   shape_func->insert_motion(0.0,0.0,rot);
-  subset->initialize(image,REF_INTENSITIES,shape_func);
-  subset->write_tiff("quadTestSubsetRot.tif");
-  Teuchos::RCP<Image> quad_rot_img = Teuchos::rcp(new Image("./quadTestSubsetRot.tif"));
-  Teuchos::RCP<Image> quad_rot_img_gold = Teuchos::rcp(new Image("./images/quadTestSubsetRot.tif"));
-  scalar_t rot_diff = quad_rot_img->diff(quad_rot_img_gold);
+  subset->initialize(image,DEF_INTENSITIES,shape_func,BILINEAR);
+  subset->round(DEF_INTENSITIES);
+  // test that the large rotations didn't get large overshoots and undershoots from the interpolation
+  *outStream << "max interpolated value: " << subset->max() << ", min interpolated value: " << subset->min() << std::endl;
+  if(subset->max()>max_intens || subset->min()<min_intens){
+    *outStream << "Error, interpolated intensity values out of range" << std::endl;
+    errorFlag++;
+  }
+  subset->update_centroid(130,130);
+  Teuchos::RCP<Image> quad_rot_img = Teuchos::rcp(new Image("./images/quadTestSubsetRot.tif"));
+  subset->initialize(quad_rot_img);
+  scalar_t rot_diff = subset->diff_ref_def();
   *outStream << "rotation diff: " << rot_diff << std::endl;
   if(rot_diff > errorTol){
     *outStream << "Error, rotation incorrect" << std::endl;

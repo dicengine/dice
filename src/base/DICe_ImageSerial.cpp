@@ -70,18 +70,12 @@ Image::Image(const char * file_name,
   has_file_name_(true),
   gradient_method_(FINITE_DIFFERENCE)
 {
-  bool filter_failed = false;
-  bool convert_to_8_bit = true;
-  if(params!=Teuchos::null){
-    filter_failed = params->get<bool>(DICe::filter_failed_cine_pixels,false);
-    convert_to_8_bit = params->get<bool>(DICe::convert_cine_to_8_bit,true);
-  }
   try{
     utils::read_image_dimensions(file_name,width_,height_);
     TEUCHOS_TEST_FOR_EXCEPTION(width_<=0,std::runtime_error,"");
     TEUCHOS_TEST_FOR_EXCEPTION(height_<=0,std::runtime_error,"");
     intensities_ = Teuchos::ArrayRCP<intensity_t>(width_*height_,0.0);
-    utils::read_image(file_name,intensities_.getRawPtr()); // TODO remove filter_failed, etc...
+    utils::read_image(file_name,intensities_.getRawPtr(),params);
   }
   catch(...){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, image file read failure");
@@ -107,13 +101,6 @@ Image::Image(const char * file_name,
   has_file_name_(true),
   gradient_method_(FINITE_DIFFERENCE)
 {
-  bool filter_failed = false;
-  bool convert_to_8_bit = true;
-  // TODO deal with this // TODO // TODO
-  if(params!=Teuchos::null){
-    filter_failed = params->get<bool>(DICe::filter_failed_cine_pixels,false);
-    convert_to_8_bit = params->get<bool>(DICe::convert_cine_to_8_bit,true);
-  }
   // get the image dims
   int_t img_width = 0;
   int_t img_height = 0;
@@ -124,13 +111,15 @@ Image::Image(const char * file_name,
     // initialize the pixel containers
     intensities_ = Teuchos::ArrayRCP<intensity_t>(height_*width_,0.0);
     // read in the image
-    Teuchos::RCP<Teuchos::ParameterList> subimage_params = Teuchos::rcp(new Teuchos::ParameterList());
+    Teuchos::RCP<Teuchos::ParameterList> subimage_params;
+    if(params!=Teuchos::null)
+      subimage_params = Teuchos::rcp(new Teuchos::ParameterList(*params.get())); // copy any existing parameters and add to them (catch convert_cine_to_8_bit, etc)
+    else
+      subimage_params = Teuchos::rcp(new Teuchos::ParameterList());
     subimage_params->set(subimage_width,width_);
     subimage_params->set(subimage_height,height_);
-    subimage_params->set(subimage_offset_x,offset_x);
-    subimage_params->set(subimage_offset_y,offset_y);
-    subimage_params->set(filter_failed_cine_pixels,filter_failed);
-    subimage_params->set(convert_cine_to_8_bit,convert_to_8_bit);
+    subimage_params->set(subimage_offset_x,offset_x_);
+    subimage_params->set(subimage_offset_y,offset_y_);
     utils::read_image(file_name,intensities_.getRawPtr(),subimage_params);
   }
   catch(...){
@@ -290,8 +279,8 @@ Image::update_image_fields(const char * file_name,
 
 const intensity_t&
 Image::operator()(const int_t x, const int_t y) const {
-  TEUCHOS_TEST_FOR_EXCEPTION(x<0||x>=width_,std::runtime_error,"");
-  TEUCHOS_TEST_FOR_EXCEPTION(y<0||y>=height_,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(x<0||x>=width_,std::runtime_error,"x = " << x);
+  TEUCHOS_TEST_FOR_EXCEPTION(y<0||y>=height_,std::runtime_error," y = " << y);
   return intensities_[y*width_+x];
 }
 

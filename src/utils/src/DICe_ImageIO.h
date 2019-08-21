@@ -128,6 +128,23 @@ void spread_histogram(const int_t width,
   const int_t height,
   intensity_t * intensities);
 
+/// Round the image intensity values to the nearest integer value
+/// \param width
+/// \param height
+/// \param intensities
+DICE_LIB_DLL_EXPORT
+void round_intensities(const int_t width,
+  const int_t height,
+  intensity_t * intensities);
+
+/// Round the image intensity values to the nearest integer value
+/// \param width
+/// \param height
+/// \param intensities
+DICE_LIB_DLL_EXPORT
+void floor_intensities(const int_t width,
+  const int_t height,
+  intensity_t * intensities);
 
 /// write an image to disk (always output as an 8-bit grayscale image)
 /// for more precise output, for example to read the intensity values in
@@ -137,14 +154,12 @@ void spread_histogram(const int_t width,
 /// \param height the height of the image
 /// \param intensities assumed to be an array of size width x height
 /// \param is_layout_right [optional] memory layout is LayoutRight (row-major)
-/// \param scale_to_8_bit scale the values to 8 bit range
 DICE_LIB_DLL_EXPORT
 void write_image(const char * file_name,
   const int_t width,
   const int_t height,
   intensity_t * intensities,
-  const bool is_layout_right = true,
-  const bool scale_to_8_bit = true);
+  const bool is_layout_right = true);
 
 
 /// write an image to disk with two base images overlayed with transparency
