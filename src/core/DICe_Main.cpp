@@ -137,14 +137,11 @@ int main(int argc, char *argv[]) {
       int_t image_width = 0;
       int_t image_height = 0;
       const bool is_cine = utils::image_file_type(image_files[0].c_str()) == CINE;
-      bool filter_failed_pixels = false;
       if(is_cine){
         int_t s_id = 0, e_id = 0;
         bool is_avg = false;
         utils::cine_index(image_files[0].c_str(),s_id,e_id,is_avg);
         first_frame_id = s_id;
-        filter_failed_pixels = correlation_params->get<bool>(DICe::filter_failed_cine_pixels,false);
-        utils::Image_Reader_Cache::instance().set_filter_failed_pixels(filter_failed_pixels);
       }
       else  // non-cine input
       {

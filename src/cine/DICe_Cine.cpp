@@ -80,65 +80,61 @@ const static uint16_t LinLUT[1024] =
  4064,4095,4095,4095,4095,4095,4095,4095,4095,4095 };
 
 Cine_Reader::Cine_Reader(const std::string & file_name,
-  std::ostream * out_stream,
-  const bool filter_failed_pixels):
+  std::ostream * out_stream):
   out_stream_(out_stream),
   bit_12_warning_(false),
-  filter_failed_pixels_(filter_failed_pixels),
-  filter_value_(0.0),
-  conversion_factor_(0.0)
+  filter_threshold_(1.0E10),
+  conversion_factor_(1.0),
+  filter_initialized_(false)
 {
   cine_header_ = read_cine_headers(file_name.c_str(),out_stream);
-
   const int64_t begin = cine_header_->image_offsets_[0];
   TEUCHOS_TEST_FOR_EXCEPTION(cine_header_->header_.ImageCount<=1,std::runtime_error,"Error, cine must have at least two images");
   const int64_t end = cine_header_->image_offsets_[1];
   long long int buffer_size = end - begin;
   TEUCHOS_TEST_FOR_EXCEPTION(buffer_size<=0,std::runtime_error,"Error, invalid buffer size");
   header_offset_ = (buffer_size - cine_header_->bitmap_header_.biSizeImage) / sizeof(uint8_t);
-
-  if(cine_header_->bit_depth_==BIT_DEPTH_8){
-    filter_value_ = filter_failed_pixels_ ?  250.0 : 255.0;
-    conversion_factor_ = filter_value_=0.0?255.0:255.0/filter_value_;
-  }
-  else if(cine_header_->bit_depth_==BIT_DEPTH_16){
-    filter_value_ = filter_failed_pixels_ ?  65500.0 : 65535.0;
-    conversion_factor_ = filter_value_==0.0?255.0:255.0/filter_value_;
-  }
-  else if(cine_header_->bit_depth_==BIT_DEPTH_10_PACKED){
-    filter_value_ = filter_failed_pixels_ ? 4090.0 : 4096.0;
-    conversion_factor_ = filter_value_=0.0?255.0:255.0 / filter_value_;
-  }
-  //if(filter_failed_pixels_) // use this filter to do a binning filter (turned off for now)
-  //  initialize_cine_filter(0); // set up the filtering based on the 0th frame intensities
 }
 
 void
-Cine_Reader::initialize_cine_filter(const int_t frame_index){
-
+Cine_Reader::initialize_filter(const bool filter_failed_pixels,
+  const bool convert_to_8_bit,
+  const int_t frame_index,
+  const bool reinit){
+  if(filter_initialized_&&!reinit) return;
   // get a frame with no windows
   const int_t w = cine_header_->bitmap_header_.biWidth;
   const int_t h = cine_header_->bitmap_header_.biHeight;
   Teuchos::ArrayRCP<intensity_t> intensities(w*h,0.0);
-  get_frame(0,0,w,h,intensities.getRawPtr(),true,frame_index,false,false);
-  //Teuchos::RCP<Image> base_img = get_frame(frame_index,0,0,w-1,h-1,false,false);
-  // create a std::vector from the image intensity values
-  //std::vector<intensity_t> intensities_sorted(base_img->intensities().get(),base_img->intensities().get() + base_img()->intensities().size());
+  // reset the parameters in case this gets called multiple times
+  filter_threshold_ = 1.0E10;
+  conversion_factor_ = 1.0;
+  get_frame(0,0,w,h,intensities.getRawPtr(),true,frame_index);
   std::vector<intensity_t> intensities_sorted(intensities.get(),intensities.get() + intensities.size());
-  // sort the intensities
+  // sort the intensities lowest to highest
   std::sort(intensities_sorted.begin(),intensities_sorted.end());
-  // create the bins
-  const int_t bin_size = w*h/10;
-  assert(bin_size>0);
-  const int_t bin_8_start = w*h - 2*bin_size;
-  const int_t bin_8_end = w*h - bin_size;
-  intensity_t avg_intens = 0.0;
-  for(int_t i=bin_8_start;i<bin_8_end;++i)
-    avg_intens += intensities_sorted[i];
-  avg_intens /= bin_size==0.0?1.0:bin_size;
-  DEBUG_MSG("Cine_Reader::intialize_cine_filter(): filter intensity value " << avg_intens);
-  filter_value_ = avg_intens;
-  conversion_factor_ = 255.0 / filter_value_;
+  DEBUG_MSG("Cine_Reader::intialize_cine_filter(): max intensity value: " << intensities_sorted[w*h-1]);
+  const intensity_t outlier_intensity = 0.98*intensities_sorted[w*h-1];
+  if(filter_failed_pixels){
+    for(int_t i=0;i<w*h;++i){
+      if(intensities_sorted[w*h-i-1] < outlier_intensity){
+        filter_threshold_ = intensities_sorted[w*h-i-1];
+        break;
+      }
+    }
+    if(convert_to_8_bit)
+      conversion_factor_ = 255.0/filter_threshold_;
+  }else if(convert_to_8_bit){
+     if(outlier_intensity>4096.0){
+       conversion_factor_ = 255.0/65535.0;
+     }
+     else if(outlier_intensity>255.0){
+       conversion_factor_ = 255.0/4096.0;
+     }
+  }
+  DEBUG_MSG("Cine_Reader::intialize_cine_filter(): filter intensity threshold: " << filter_threshold_);
+  DEBUG_MSG("Cine_Reader::intialize_cine_filter(): conversion factor: " << conversion_factor_);
+  filter_initialized_ = true;
 }
 
 void
@@ -149,9 +145,7 @@ Cine_Reader::get_average_frame(const int_t frame_start,
     const int_t width,
     const int_t height,
     intensity_t * intensities,
-    const bool is_layout_right,
-    const bool filter_failed_pixels,
-    const bool convert_to_8_bit){
+    const bool is_layout_right){
 
   for(int_t i=0;i<width*height;++i)
     intensities[i] = 0.0;
@@ -159,7 +153,7 @@ Cine_Reader::get_average_frame(const int_t frame_start,
   const int_t num_frames = frame_end - frame_start + 1;
   for(int_t frame=frame_start;frame<=frame_end;++frame){
     Teuchos::ArrayRCP<intensity_t> temp_intens(width*height,0.0);
-    get_frame(offset_x,offset_y,width,height,temp_intens.getRawPtr(),is_layout_right,frame,filter_failed_pixels,convert_to_8_bit);
+    get_frame(offset_x,offset_y,width,height,temp_intens.getRawPtr(),is_layout_right,frame);
     for(int_t i=0;i<temp_intens.size();++i)
       intensities[i] += num_frames==0.0?0.0:temp_intens[i]/num_frames;
   }
@@ -172,24 +166,12 @@ Cine_Reader::get_frame(const int_t offset_x,
   const int_t height,
   intensity_t * intensities,
   const bool is_layout_right,
-  const int_t frame_index,
-  const bool filter_failed_pixels,
-  const bool convert_to_8_bit){
-  if(filter_failed_pixels&!filter_failed_pixels_){
-    initialize_cine_filter(0);
-    filter_failed_pixels_ = true;
-  }
-  intensity_t conversion_factor_temp =  conversion_factor_;
-  if(!convert_to_8_bit) conversion_factor_ = 1.0;
-
+  const int_t frame_index){
   if(cine_header_->bit_depth_==BIT_DEPTH_8){
-    get_frame_8_bit(offset_x,offset_y,width,height,intensities,is_layout_right,frame_index,filter_failed_pixels);
+    get_frame_8_bit(offset_x,offset_y,width,height,intensities,is_layout_right,frame_index);
   }
   else if (cine_header_->bit_depth_==BIT_DEPTH_16){
-    get_frame_16_bit(offset_x,offset_y,width,height,intensities,is_layout_right,frame_index,filter_failed_pixels);
-  }
-  else if (cine_header_->bit_depth_==BIT_DEPTH_10_PACKED&&filter_failed_pixels){
-    get_frame_10_bit_filtered(offset_x,offset_y,width,height,intensities,is_layout_right,frame_index);
+    get_frame_16_bit(offset_x,offset_y,width,height,intensities,is_layout_right,frame_index);
   }
   else if (cine_header_->bit_depth_==BIT_DEPTH_10_PACKED){
     get_frame_10_bit(offset_x,offset_y,width,height,intensities,is_layout_right,frame_index);
@@ -198,8 +180,6 @@ Cine_Reader::get_frame(const int_t offset_x,
     std::cerr << "Error, invalid bit depth" << std::endl;
     throw std::exception();
   }
-  // replace the conversion factor if it was deactivated
-  conversion_factor_ = conversion_factor_temp;
 }
 
 void
@@ -209,9 +189,11 @@ Cine_Reader::get_frame_8_bit(const int_t offset_x,
   const int_t height,
   intensity_t * intensities,
   const bool is_layout_right,
-  const int_t frame_index,
-  const bool filter_failed_pixels){
+  const int_t frame_index){
   DEBUG_MSG("Cine_Reader::get_frame_8_bit(): frame index: " << frame_index);
+  DEBUG_MSG("Cine_Reader::get_frame_8_bit(): filter threshold: " << filter_threshold_);
+  DEBUG_MSG("Cine_Reader::get_frame_8_bit(): conversion factor: " << conversion_factor_);
+
   if(!is_layout_right){
     std::cerr << "Error, layout left is not implemented yet" << std::endl;
     throw std::exception();
@@ -243,9 +225,9 @@ Cine_Reader::get_frame_8_bit(const int_t offset_x,
   for(int_t y=0;y<height;++y){
     for(int_t x=offset_x;x<=end_x;++x){
       // the images are stored bottom up, not top down!
-      if(filter_failed_pixels && sub_buff_ptr_8[y*w+x] >= filter_value_ && !(x == offset_x && y == 0)){
+      if(sub_buff_ptr_8[y*w+x] >= filter_threshold_){
         failed_pixels++;
-        intensities[(height-y-1)*width + x-offset_x] = intensities[(height-y-1)*width+x-offset_x-1];
+        intensities[(height-y-1)*width + x-offset_x] = filter_threshold_*conversion_factor_;
       }
       else
         intensities[(height-y-1)*width + x-offset_x] = sub_buff_ptr_8[y*w+x]*conversion_factor_;
@@ -269,13 +251,15 @@ Cine_Reader::get_frame_16_bit(const int_t offset_x,
   const int_t height,
   intensity_t * intensities,
   const bool is_layout_right,
-  const int_t frame_index,
-  const bool filter_failed_pixels){
+  const int_t frame_index){
   if(!is_layout_right){
     std::cerr << "Error, layout left is not implemented yet" << std::endl;
     throw std::exception();
   }
   DEBUG_MSG("Cine_Reader::get_frame_16_bit(): frame index: " << frame_index);
+  DEBUG_MSG("Cine_Reader::get_frame_16_bit(): filter threshold: " << filter_threshold_);
+  DEBUG_MSG("Cine_Reader::get_frame_16_bit(): conversion factor: " << conversion_factor_);
+
   const int_t w = cine_header_->bitmap_header_.biWidth;
   const int_t h = cine_header_->bitmap_header_.biHeight;
   const int_t end_x = offset_x + width - 1;
@@ -304,9 +288,9 @@ Cine_Reader::get_frame_16_bit(const int_t offset_x,
     for(int_t x=offset_x;x<=end_x;++x){
       pixel_intensity = sub_buff_ptr_16[y*w+x];
       if(pixel_intensity > max_intens) max_intens = pixel_intensity;
-      if(filter_failed_pixels && pixel_intensity >= filter_value_ && !(x == offset_x && y == 0)){
+      if(pixel_intensity >= filter_threshold_){
         failed_pixels++;
-        intensities[(height-y-1)*width + x-offset_x] = intensities[(height-y-1)*width+(x-offset_x)-1];
+        intensities[(height-y-1)*width + x-offset_x] = filter_threshold_*conversion_factor_;
       }
       else{
         intensities[(height-y-1)*width + x-offset_x] = pixel_intensity * conversion_factor_;
@@ -322,21 +306,21 @@ Cine_Reader::get_frame_16_bit(const int_t offset_x,
 #endif
   // check to make sure the image is not 12bit stored as 16bit image:
   // if so, scale the numbers as if 12bit
-  if(max_intens < 4096){
+  if(max_intens < 4096 && conversion_factor_==1.0){
     if(out_stream_ && !bit_12_warning_){
       *out_stream_ << "*** Warning, .cine file: " << cine_header_->file_name_  << std::endl <<
           "             was detected to be 12bit depth, but stored and denoted in the header as 16bit." << std::endl <<
           "             The actual intensity value range is 0 to 4095, not 0 to 65535 as denoted in the header." << std::endl;
       bit_12_warning_ = true;
     }
-    if(conversion_factor_!=1.0){
-      for(int_t y=0;y<height;++y){
-        for(int_t x=0;x<width;++x){
-          intensities[y*w + x] *= (65535.0/4095.0);
-        }
-      }
-    }
   }
+//  if(conversion_factor_!=1.0){
+//    for(int_t y=0;y<height;++y){
+//      for(int_t x=0;x<width;++x){
+//        intensities[y*w + x] *= (65535.0/4095.0);
+//      }
+//    }
+//  }
 }
 
 void
@@ -352,6 +336,9 @@ Cine_Reader::get_frame_10_bit(const int_t offset_x,
     throw std::exception();
   }
   DEBUG_MSG("Cine_Reader::get_frame_10_bit(): frame index: " << frame_index);
+  DEBUG_MSG("Cine_Reader::get_frame_10_bit(): filter threshold: " << filter_threshold_);
+  DEBUG_MSG("Cine_Reader::get_frame_10_bit(): conversion factor: " << conversion_factor_);
+
   if(frame_index<0||frame_index>=(int_t)cine_header_->header_.ImageCount){
     std::cerr << "Error, invalid frame index " << std::endl;
     throw std::exception();
@@ -384,72 +371,6 @@ Cine_Reader::get_frame_10_bit(const int_t offset_x,
   uint16_t intensity_16 = 0.0;
   uint16_t intensity_16p1 = 0.0;
   uint16_t two_byte = 0;
-  for(int_t y=0;y<height;++y){
-    for(int_t x=offset_x;x<=end_x;++x){
-      const int_t slot = (y*w+x)*10/8;
-      const int_t chunk_offset = (y*w+x)%4; // 5 bytes per four pixels
-      // create the single 16 bit combo
-      intensity_16p1 = sub_buff_ptr_8[slot + 1];
-      intensity_16p1 <<= 8; // move the bits over to the beginning of the byte
-      intensity_16 = sub_buff_ptr_8[slot];
-      two_byte = intensity_16 | intensity_16p1;
-      endian_swap(two_byte);
-      // shift the 10 bits to the right side of the 16 bit data type;
-      two_byte = two_byte >> (6 - (chunk_offset*2));
-      // use a mask to zero out the left 6 bits
-      two_byte = two_byte & 0x3FF; // 16 bits with only the right 10 active;
-      // this next step is required because the original signal was companded from 12 bits to 10,
-      // now we are expanding it back to 12:
-      two_byte = LinLUT[two_byte];
-      // save off the pixel
-      intensities[y*width+(x-offset_x)] = two_byte * conversion_factor_;
-    }
-  }
-  cine_file.close();
-  delete[] sub_buffer;
-}
-
-void
-Cine_Reader::get_frame_10_bit_filtered(const int_t offset_x,
-  const int_t offset_y,
-  const int_t width,
-  const int_t height,
-  intensity_t * intensities,
-  const bool is_layout_right,
-  const int_t frame_index){
-  if(!is_layout_right){
-    std::cerr << "Error, layout left is not implemented yet" << std::endl;
-    throw std::exception();
-  }
-  DEBUG_MSG("Cine_Reader::get_frame_10_bit_filtered(): frame index: " << frame_index);
-  const int_t w = cine_header_->bitmap_header_.biWidth;
-  assert(width<=w);
-  assert(height<=cine_header_->bitmap_header_.biHeight);
-  assert(offset_x>=0&&offset_x<w);
-  const int_t end_x = offset_x + width - 1;
-  assert(offset_y>=0&&offset_y<cine_header_->bitmap_header_.biHeight);
-  /// buffer for sub_image reading
-  assert(w%8==0);
-  const int_t sub_buffer_size = (height+1) * w * 10 / 8;
-  char * sub_buffer = new char[sub_buffer_size]; // + 1 to oversize the buffer
-  DEBUG_MSG("Cine_Reader::get_frame_10_bit_filtered(): buffer_size: " << sub_buffer_size);
-  DEBUG_MSG("Cine_Reader::get_frame_10_bit_filtered(): start_x " << offset_x << " end_x " << end_x << " start_y " << offset_y << " end_y " << offset_y + height - 1);
-  uint8_t * sub_buff_ptr_8 = reinterpret_cast<uint8_t*>(sub_buffer);
-  // open the file
-  std::ifstream cine_file(cine_header_->file_name_.c_str(), std::ios::in | std::ios::binary);
-  if (cine_file.fail()){
-    std::cerr << "Error, can't open the file: " << cine_header_->file_name_ << std::endl;
-    throw std::exception();
-  }
-  // position to the first frame in this set:
-  const int64_t begin_frame = cine_header_->image_offsets_[frame_index] + header_offset_ + (offset_y * w * 10 / 8);
-  cine_file.seekg(begin_frame);
-  // read the buffer
-  cine_file.read(sub_buffer,sub_buffer_size);
-  // unpack the 10 bit image data from the array
-  uint16_t intensity_16 = 0.0;
-  uint16_t intensity_16p1 = 0.0;
-  uint16_t two_byte = 0;
   int_t failed_pixels=0;
   for(int_t y=0;y<height;++y){
     for(int_t x=offset_x;x<=end_x;++x){
@@ -469,10 +390,9 @@ Cine_Reader::get_frame_10_bit_filtered(const int_t offset_x,
       // now we are expanding it back to 12:
       two_byte = LinLUT[two_byte];
       // save off the pixel
-      intensities[y*width+(x-offset_x)] = two_byte * conversion_factor_;
-      if(two_byte >= filter_value_ && !(x == offset_x && y == 0)){
+      if(two_byte>=filter_threshold_){
         failed_pixels++;
-        intensities[y*width+(x-offset_x)] = intensities[y*width+(x-offset_x)-1];
+        intensities[y*width+(x-offset_x)] = filter_threshold_ * conversion_factor_;
       }
       else
         intensities[y*width+(x-offset_x)] = two_byte * conversion_factor_;

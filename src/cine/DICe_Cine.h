@@ -201,10 +201,10 @@ public:
   /// \brief default constructor
   /// \param file_name the name of the cine file
   /// \param out_stream (optional) output stream
-  /// \param filter_failed_pixels true if failed pixels should be filtered out by taking the neighbor value
+  /// \param filter_failed_pixels true if failed pixels should be filtered out by taking the next highest value
+  /// \param convert_to_8_bit true if the values should be scaled to 8 bit
   Cine_Reader(const std::string & file_name,
-    std::ostream * out_stream = NULL,
-    const bool filter_failed_pixels=false);
+    std::ostream * out_stream = NULL);
   /// default destructor
   virtual ~Cine_Reader(){};
 
@@ -216,17 +216,13 @@ public:
   /// \param intensities the intensity array
   /// \param is_layout_right colum or row oriented storage flag (not used yet for cine)
   /// \param frame_index the frame to gather
-  /// \param filter_failed_pixels get rid of outlier pixels or failed pixels
-  /// \param convert_to_8_bit true if the values should be scaled to 8 bit
   void get_frame(const int_t offset_x,
     const int_t offset_y,
     const int_t width,
     const int_t height,
     intensity_t * intensities,
     const bool is_layout_right,
-    const int_t frame_index,
-    const bool filter_failed_pixels,
-    const bool convert_to_8_bit);
+    const int_t frame_index);
 
   /// \brief generic frame fetch with averaging across frames
   /// \param frame_start the initial frame to start averaging with
@@ -237,8 +233,6 @@ public:
   /// \param height the height of the image or subimage (intensities must be pre-allocated as a widthxheight array)
   /// \param intensities the intensity array
   /// \param is_layout_right colum or row oriented storage flag (not used yet for cine)
-  /// \param filter_failed_pixels get rid of outlier pixels or failed pixels
-  /// \param convert_to_8_bit true if the values should be scaled to 8 bit range
   void get_average_frame(const int_t frame_start,
     const int_t frame_end,
     const int_t offset_x,
@@ -246,9 +240,7 @@ public:
     const int_t width,
     const int_t height,
     intensity_t * intensities,
-    const bool is_layout_right,
-    const bool filter_failed_pixels,
-    const bool convert_to_8_bit);
+    const bool is_layout_right);
 
   /// \brief 8 bit frame fetch
   /// \param offset_x offset to first pixel in x
@@ -258,15 +250,13 @@ public:
   /// \param intensities the intensity array
   /// \param is_layout_right colum or row oriented storage flag (not used yet for cine)
   /// \param frame_index the frame to gather
-  /// \param filter_failed_pixels get rid of outlier pixels or failed pixels
   void get_frame_8_bit(const int_t offset_x,
     const int_t offset_y,
     const int_t width,
     const int_t height,
     intensity_t * intensities,
     const bool is_layout_right,
-    const int_t frame_index,
-    const bool filter_failed_pixels);
+    const int_t frame_index);
 
   /// \brief 10 bit frame fetch
   /// \param offset_x offset to first pixel in x
@@ -284,23 +274,6 @@ public:
     const bool is_layout_right,
     const int_t frame_index);
 
-  /// \brief 10 bit frame fetch with filtering
-  /// separate function to avoid if statement for each pixel (optimization)
-  /// \param offset_x offset to first pixel in x
-  /// \param offset_y offset to first pixel in y
-  /// \param width the width of the image or subimage
-  /// \param height the height of the image or subimage (intensities must be pre-allocated as a widthxheight array)
-  /// \param intensities the intensity array
-  /// \param is_layout_right colum or row oriented storage flag (not used yet for cine)
-  /// \param frame_index the frame to gather
-  void get_frame_10_bit_filtered(const int_t offset_x,
-    const int_t offset_y,
-    const int_t width,
-    const int_t height,
-    intensity_t * intensities,
-    const bool is_layout_right,
-    const int_t frame_index);
-
   /// \brief 16 bit frame fetch
   /// \param offset_x offset to first pixel in x
   /// \param offset_y offset to first pixel in y
@@ -309,22 +282,22 @@ public:
   /// \param intensities the intensity array
   /// \param is_layout_right colum or row oriented storage flag (not used yet for cine)
   /// \param frame_index the frame to gather
-  /// \param filter_failed_pixels get rid of outlier pixels or failed pixels
   void get_frame_16_bit(const int_t offset_x,
     const int_t offset_y,
     const int_t width,
     const int_t height,
     intensity_t * intensities,
     const bool is_layout_right,
-    const int_t frame_index,
-    const bool filter_failed_pixels);
+    const int_t frame_index);
 
-  /// \brief bins the pixels and determines a filter value
-  /// The pixels are separated into 10 bins (0-9). The top bin
-  /// is discarded as too bright. The average of bin 8 is used as the
-  /// filter value. Every pixel above the filter value is replaced with
-  /// it's neighbor value. The filtered values are then converted to 8 bit
-  void initialize_cine_filter(const int_t frame_index);
+  /// \brief set up the filtering of failed pixels
+  /// \param filter_failed_pixels true if failed pixels should be filtered out by taking the next highest value
+  /// \param convert_to_8_bit true if the values should be scaled to 8 bit
+  /// \param frame index to use to set up the filtering
+  void initialize_filter(const bool filter_failed_pixels,
+    const bool convert_to_8_bit,
+    const int_t frame_index=0,
+    const bool reinit=false);
 
   /// returns the number of images in the cine file
   int_t num_frames()const{
@@ -349,14 +322,14 @@ private:
   std::ostream * out_stream_;
   /// flag to prevent warnings from appearing multiple times for each frame
   bool bit_12_warning_;
-  /// flag to filter out failed pixels
-  bool filter_failed_pixels_;
   /// file offset
   long long int header_offset_;
-  /// maximum value of intensity above which the values are filtered by taking nearest neighbor
-  intensity_t filter_value_;
+  /// maximum value of intensity above which the values are filtered (the value is set to the next highest intensity value)
+  intensity_t filter_threshold_;
   /// conversion factor for converting to 8 bit depth
   intensity_t conversion_factor_;
+  /// true if the filter has already been initialized
+  bool filter_initialized_;
 };
 
 }// end cine namespace

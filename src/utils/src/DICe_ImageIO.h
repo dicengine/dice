@@ -202,31 +202,21 @@ public:
     return instance_;
   }
 
-  /// filters failed pixels from the images
-  void set_filter_failed_pixels(const bool flag){
-    filter_failed_pixels_ = flag;
-  }
-
-  /// filters failed pixels from the images
-  bool filter_failed_pixels()const{
-    return filter_failed_pixels_;
-  }
-
   /// add a cine reader to the map
   /// \param id the string name of the reader in case multiple headers are loaded (for example in stereo)
   /// if the reader doesn't exist, it gets created
   Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader(const std::string & id);
+  /// clear the map
+  void clear(){cine_reader_map_.clear();}
 private:
   /// constructor
-  Image_Reader_Cache():filter_failed_pixels_(false){};
+  Image_Reader_Cache(){};
   /// copy constructor
   Image_Reader_Cache(Image_Reader_Cache const&);
   /// asignment operator
   void operator=(Image_Reader_Cache const &);
   /// map of cine readers
   std::map<std::string,Teuchos::RCP<DICe::cine::Cine_Reader> > cine_reader_map_;
-  /// filter failed pixels from images as they are loaded
-  bool filter_failed_pixels_;
 };
 
 

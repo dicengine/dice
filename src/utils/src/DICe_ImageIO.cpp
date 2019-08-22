@@ -205,7 +205,7 @@ void read_image(const char * file_name,
   int_t sub_offset_y=0;
   bool layout_right=true;
   bool is_subimage=false;
-  bool filter_failed_pixels=false;
+  bool filter_failed_pixels=true;
   bool convert_to_8_bit=true;
   if(params!=Teuchos::null){
     sub_w = params->get<int_t>(subimage_width,0);
@@ -221,9 +221,7 @@ void read_image(const char * file_name,
     convert_to_8_bit = params->get<bool>(convert_cine_to_8_bit,convert_to_8_bit);
   }
   DEBUG_MSG("utils::read_image(): sub_w: " << sub_w << " sub_h: " << sub_h << " offset_x: " << sub_offset_x << " offset_y: " << sub_offset_y);
-  DEBUG_MSG("utils::read_image(): is_layout_right: " << is_layout_right);
-  DEBUG_MSG("utils::read_image(): filter_failed_pixels: " << filter_failed_pixels);
-  DEBUG_MSG("utils::read_image(): convert_to_8_bit: " << convert_to_8_bit);
+  DEBUG_MSG("utils::read_image(): is_layout_right: " << layout_right);
   int_t width = 0;
   int_t height = 0;
   // determine the file type based on the file_name
@@ -240,22 +238,24 @@ void read_image(const char * file_name,
     read_rawi_image(file_name,intensities,layout_right);
   }
   else if(file_type==CINE){
+    DEBUG_MSG("utils::read_image(): filter_failed_pixels: " << filter_failed_pixels);
+    DEBUG_MSG("utils::read_image(): convert_to_8_bit: " << convert_to_8_bit);
     const std::string cine_file = cine_file_name(file_name);
-    DEBUG_MSG("read_image(): cine file name: " << cine_file);
+    DEBUG_MSG("utils::read_image(): cine file name: " << cine_file);
     int_t end_index = -1;
     int_t start_index =-1;
     bool is_avg = false;
     cine_index(file_name,start_index,end_index,is_avg);
     // get the image dimensions
     Teuchos::RCP<DICe::cine::Cine_Reader> reader = Image_Reader_Cache::instance().cine_reader(cine_file);
+    reader->initialize_filter(filter_failed_pixels,convert_to_8_bit);
     width = sub_w==0?reader->width():sub_w;
     height = sub_h==0?reader->height():sub_h;
-    Image_Reader_Cache::instance().set_filter_failed_pixels(filter_failed_pixels);
     if(is_avg){
       reader->get_average_frame(start_index-reader->first_image_number(),end_index-reader->first_image_number(),
-        sub_offset_x,sub_offset_y,width,height,intensities,layout_right,filter_failed_pixels,convert_to_8_bit);
+        sub_offset_x,sub_offset_y,width,height,intensities,layout_right);
     }else{
-      reader->get_frame(sub_offset_x,sub_offset_y,width,height,intensities,layout_right,start_index-reader->first_image_number(),filter_failed_pixels,convert_to_8_bit);
+      reader->get_frame(sub_offset_x,sub_offset_y,width,height,intensities,layout_right,start_index-reader->first_image_number());
     }
   }
 #ifdef DICE_ENABLE_NETCDF
@@ -291,7 +291,7 @@ void read_image(const char * file_name,
   // apply any post processing of the images as requested
   if(params!=Teuchos::null){
     if(params->get<bool>(remove_outlier_pixels,false)){
-      remove_outliers(width,height,intensities);
+      spread_histogram(width,height,intensities);
     }
     if(params->get<bool>(spread_intensity_histogram,false)){
       spread_histogram(width,height,intensities);
@@ -471,7 +471,7 @@ void write_image(const char * file_name,
 Teuchos::RCP<DICe::cine::Cine_Reader>
 Image_Reader_Cache::cine_reader(const std::string & id){
   if(cine_reader_map_.find(id)==cine_reader_map_.end()){
-    Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(id,NULL,filter_failed_pixels_));
+    Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(id,NULL));
     cine_reader_map_.insert(std::pair<std::string,Teuchos::RCP<DICe::cine::Cine_Reader> >(id,cine_reader));
     return cine_reader;
   }

@@ -521,7 +521,7 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
     std::string cine_file_name = params->get<std::string>(DICe::cine_file);
     cine_name << params->get<std::string>(DICe::image_folder) << cine_file_name;
     Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
-    Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(cine_name.str(),bhs.getRawPtr(),false));
+    Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(cine_name.str(),bhs.getRawPtr()));
     // read the image data for a frame
     const int_t num_images = cine_reader->num_frames();
     const int_t first_frame_index = cine_reader->first_image_number();
@@ -572,7 +572,7 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
       std::string stereo_cine_file_name = params->get<std::string>(DICe::stereo_cine_file);
       stereo_cine_name << params->get<std::string>(DICe::image_folder) << stereo_cine_file_name;
       Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
-      Teuchos::RCP<DICe::cine::Cine_Reader> stereo_cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(stereo_cine_name.str(),bhs.getRawPtr(),false));
+      Teuchos::RCP<DICe::cine::Cine_Reader> stereo_cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(stereo_cine_name.str(),bhs.getRawPtr()));
       // strip the .cine part from the end of the cine file:
       std::string stereo_trimmed_cine_name = stereo_cine_name.str();
       if(stereo_trimmed_cine_name.size() > ext.size() && stereo_trimmed_cine_name.substr(stereo_trimmed_cine_name.size() - ext.size()) == ".cine" )

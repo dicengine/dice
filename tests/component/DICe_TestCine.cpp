@@ -68,7 +68,6 @@ int main(int argc, char *argv[]) {
   *outStream << "--- Begin test ---" << std::endl;
 
   std::vector<std::string> cine_files;
-  // the bool is whether ot not to convert the frame to 8 bit
   cine_files.push_back("packed_12bpp");
   cine_files.push_back("packed_raw_12bpp");
   cine_files.push_back("phantom_v12_raw_16bpp");
@@ -80,6 +79,10 @@ int main(int argc, char *argv[]) {
   cine_files.push_back("phantom_v611_raw_16bpp");
   cine_files.push_back("phantom_v7_raw_16bpp");
   cine_files.push_back("phantom_v9_raw_16bpp");
+
+  Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
+  params->set(filter_failed_cine_pixels,false);
+  params->set(convert_cine_to_8_bit,true);
 
   // all of these cine files should be dimensions 128 x 256 and have 6 frames each
 
@@ -107,7 +110,7 @@ int main(int argc, char *argv[]) {
       std::stringstream markup_name;
       markup_name << "./images/" << cine_files[i] << "_" << frame + cine_reader.first_image_number() << ".cine";
       *outStream << "testing frame " << frame << std::endl;
-       Teuchos::RCP<Image> cine_img = Teuchos::rcp(new Image(markup_name.str().c_str()));
+       Teuchos::RCP<Image> cine_img = Teuchos::rcp(new Image(markup_name.str().c_str(),params));
       std::stringstream name;
       //std::stringstream outname;
       //std::stringstream tiffname;
@@ -124,8 +127,8 @@ int main(int argc, char *argv[]) {
       bool intensity_value_error = false;
       for(int_t y=0;y<cine_reader.height();++y){
         for(int_t x=0;x<cine_reader.width();++x){
-          if(std::abs((*cine_img)(x,y)-cine_img_exact(x,y)) > 0.05){
-            //std::cout << x << " " << y << " actual " << (*cine_img)(x,y) << " exptected " << cine_img_exact(x,y) << std::endl;
+          if(std::abs((*cine_img)(x,y)-cine_img_exact(x,y)) > 0.5){
+            std::cout << x << " " << y << " actual " << (*cine_img)(x,y) << " exptected " << cine_img_exact(x,y) << std::endl;
             intensity_value_error=true;
           }
         }
@@ -169,10 +172,13 @@ int main(int argc, char *argv[]) {
   }
 
   *outStream << "testing reading a set of sub regions from a 10 bit cine " << std::endl;
+  // clear any cine image reader instances lying around
+  utils::Image_Reader_Cache::instance().clear();
   DICe::cine::Cine_Reader cine_reader("./images/packed_12bpp.cine",outStream.getRawPtr());
   std::stringstream win_frame;
   win_frame << "./images/packed_12bpp_" << cine_reader.first_image_number() << ".cine";
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
+  imgParams->set(DICe::filter_failed_cine_pixels,false);
   imgParams->set(DICe::convert_cine_to_8_bit,false);
   Teuchos::RCP<Image> image_0_rcp = Teuchos::rcp(new Image(win_frame.str().c_str(),170,13,208-170+1,42-13+1,imgParams));
   //image_0_rcp->write("motion_window_12bpp.tif");
@@ -195,7 +201,7 @@ int main(int argc, char *argv[]) {
     for(int_t y=0;y<cine_img_exact.height();++y){
       for(int_t x=0;x<cine_img_exact.width();++x){
         if(std::abs((* image_rcps[i])(x,y)-cine_img_exact(x,y)) > 0.05){
-          //std::cout << x << " " << y << " actual " << (* image_rcps[i])(x,y) << " exptected " << cine_img_exact(x,y) << std::endl;
+          std::cout << x << " " << y << " actual " << (* image_rcps[i])(x,y) << " exptected " << cine_img_exact(x,y) << std::endl;
           intensity_value_error=true;
         }
       }
@@ -212,7 +218,7 @@ int main(int argc, char *argv[]) {
   const int_t frame_5_index = 5 + cine_reader_8.first_image_number();
   std::stringstream file_name_8;
   file_name_8 << "./images/phantom_v1610_" << frame_5_index << ".cine";
-  Teuchos::RCP<Image> image_8 = Teuchos::rcp(new Image(file_name_8.str().c_str(),158,15,196-158+1,45-15+1));
+  Teuchos::RCP<Image> image_8 = Teuchos::rcp(new Image(file_name_8.str().c_str(),158,15,196-158+1,45-15+1,imgParams));
   //image_8->write("motion_window_8.tif");
   bool intensity_value_error = false;
 #if DICE_USE_DOUBLE
@@ -224,7 +230,7 @@ int main(int argc, char *argv[]) {
   for(int_t y=0;y<image_8->height();++y){
     for(int_t x=0;x<image_8->width();++x){
       if(std::abs((*image_8)(x,y)-img_8_exact(x,y)) > 0.05){
-        //std::cout << x << " " << y << " " << std::abs((*image_8)(x,y)-img_8_exact(x,y)) <<std::endl;
+        std::cout << x << " " << y << " " << std::abs((*image_8)(x,y)-img_8_exact(x,y)) <<std::endl;
         intensity_value_error=true;
       }
     }
@@ -297,15 +303,28 @@ int main(int argc, char *argv[]) {
   }
 
 #if DICE_USE_DOUBLE
+  utils::Image_Reader_Cache::instance().clear();
   // try creating a cine image using the standard image interface without a reader constructed manually:
-  Teuchos::RCP<DICe::Image> img_cine_0 = Teuchos::rcp(new Image("./images/phantom_v1610_16bpp_-85.cine"));
+  Teuchos::RCP<DICe::Image> img_cine_0 = Teuchos::rcp(new Image("./images/phantom_v1610_16bpp_-85.cine",params));
   Teuchos::RCP<DICe::Image> img_cine_0_gold = Teuchos::rcp(new Image("./images/image_cine_-85.rawi"));
-  const scalar_t diff = img_cine_0->diff(img_cine_0_gold);
-  *outStream << "diff cine made without manual header creation vs gold: " << diff << std::endl;
-  if(diff > 0.001){
-    *outStream << "Error, the images do not match" << std::endl;
+  //const scalar_t diff = img_cine_0->diff(img_cine_0_gold);
+  //*outStream << "diff cine made without manual header creation vs gold: " << diff << std::endl;
+  //if(diff > 0.001){
+  intensity_value_error = false;
+  for(int_t y=0;y<img_cine_0->height();++y){
+    for(int_t x=0;x<img_cine_0->width();++x){
+      if(std::abs((*img_cine_0)(x,y)-(*img_cine_0_gold)(x,y)) > 0.5){
+        intensity_value_error=true;
+      }
+    }
+  }
+  if(intensity_value_error){
+    *outStream << "Error, the v1610 bit intensity values are not correct" << std::endl;
     errorFlag++;
   }
+//  *outStream << "Error, the images do not match" << std::endl;
+//  errorFlag++;
+  //}
   //img_cine_0->write("image_cine_-85.rawi");
 #endif
 
