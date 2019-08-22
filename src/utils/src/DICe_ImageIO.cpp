@@ -290,6 +290,9 @@ void read_image(const char * file_name,
   }
   // apply any post processing of the images as requested
   if(params!=Teuchos::null){
+    if(params->get<bool>(remove_outlier_pixels,false)){
+      remove_outliers(width,height,intensities);
+    }
     if(params->get<bool>(spread_intensity_histogram,false)){
       spread_histogram(width,height,intensities);
     }
@@ -310,6 +313,31 @@ void round_intensities(const int_t width,
     for(int_t x=0;x<width;++x){
       intensities[y*width + x] = std::round(intensities[y*width + x]);
     }
+  }
+}
+
+
+DICE_LIB_DLL_EXPORT
+void remove_outliers(const int_t width,
+  const int_t height,
+  intensity_t * intensities){
+
+  std::vector<intensity_t> sorted_intensities(width*height,0.0);
+  for(int_t i=0;i<width*height;++i)
+    sorted_intensities[i] = intensities[i];
+  std::sort(sorted_intensities.begin(),sorted_intensities.end());
+  const intensity_t outlier_intens = 0.98 * sorted_intensities[width*height-1];
+  intensity_t replacement_intens = 0.0;
+  for(int_t i=0;i<width*height;++i){
+    if(sorted_intensities[width*height-i-1] < outlier_intens){
+      replacement_intens = sorted_intensities[width*height-i-1];
+      break;
+    }
+  }
+  DEBUG_MSG("utils::remove_outliers(): outlier intensity value: " << outlier_intens << " to be replaced with intensity: " << replacement_intens);
+  for(int_t i=0;i<width*height;++i){
+      if(intensities[i]>=outlier_intens)
+        intensities[i] = replacement_intens;
   }
 }
 

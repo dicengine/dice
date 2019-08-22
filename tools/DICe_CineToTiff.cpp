@@ -138,7 +138,8 @@ int main(int argc, char *argv[]) {
 
   // filter out failed cine pixels
   Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
-  params->set(filter_failed_cine_pixels,true);
+  params->set(remove_outlier_pixels,true);
+  params->set(spread_intensity_histogram,true);
 
   for(int_t i=start_frame;i<=end_frame;++i){
     int_t num_digits_total = 0;

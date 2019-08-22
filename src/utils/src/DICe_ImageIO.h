@@ -137,6 +137,16 @@ void round_intensities(const int_t width,
   const int_t height,
   intensity_t * intensities);
 
+/// Set the intensity value for outlier pixels (the ones with the highest intensity value) to the second highest value
+/// This is helpful in removing failed cine pixels
+/// \param width
+/// \param height
+/// \param intensities
+DICE_LIB_DLL_EXPORT
+void remove_outliers(const int_t width,
+  const int_t height,
+  intensity_t * intensities);
+
 /// Round the image intensity values to the nearest integer value
 /// \param width
 /// \param height

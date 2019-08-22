@@ -172,6 +172,8 @@ const char* const compute_image_gradients = "compute_image_gradients";
 /// String parameter name
 const char* const filter_failed_cine_pixels = "filter_failed_cine_pixels";
 /// String parameter name
+const char* const remove_outlier_pixels = "remove_outlier_pixels";
+/// String parameter name
 const char* const convert_cine_to_8_bit = "convert_cine_to_8_bit";
 /// String parameter name
 const char* const initial_condition_file = "initial_condition_file";
@@ -1233,12 +1235,17 @@ const Correlation_Parameter filter_failed_cine_pixels_param(filter_failed_cine_p
   BOOL_PARAM,
   false,
   "Filter out any pixels that failed during cine acquisition");
+/// Correlation parameter and properties
+const Correlation_Parameter remove_outlier_pixels_param(remove_outlier_pixels,
+  BOOL_PARAM,
+  false,
+  "Remove outlier pixel intensities (usually due to failed pixels)");
 
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 88;
+const int_t num_valid_correlation_params = 89;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1317,6 +1324,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   rotate_def_image_270_param,
   levenberg_marquardt_regularization_factor_param,
   filter_failed_cine_pixels_param,
+  remove_outlier_pixels_param,
   time_average_cine_ref_frame_param,
   global_regularization_alpha_param,
   global_stabilization_tau_param,
