@@ -269,14 +269,7 @@ int main(int argc, char *argv[]) {
     std::stringstream cine_ss;
     cine_ss << trimmed_cine_name << "_" << frame << ".cine";
     DEBUG_MSG("Loading cine image " << cine_ss.str());
-    DICe::Image img(cine_ss.str().c_str());
-    // convert the image to an opencv mat:
-    Mat mat_img(img.height(),img.width(), CV_8UC1);
-    for(int_t y=0;y<img.height();++y){
-      for(int_t x=0;x<img.width();++x){
-        mat_img.at<uchar>(y,x) = std::floor(img(x,y));
-      }
-    }
+    Mat mat_img = utils::read_image(cine_ss.str().c_str());
     Mat out_img(mat_img.size(), CV_8UC3);
     cvtColor(mat_img, out_img, cv::COLOR_GRAY2RGB);
 

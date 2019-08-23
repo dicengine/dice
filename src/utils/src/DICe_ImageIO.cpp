@@ -382,7 +382,7 @@ DICE_LIB_DLL_EXPORT
 cv::Mat read_image(const char * file_name){
   Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
   if(image_file_type(file_name)==CINE){
-    params->set(spread_intensity_histogram,true);
+    //params->set(spread_intensity_histogram,true);
     params->set(filter_failed_cine_pixels,true);
     params->set(convert_cine_to_8_bit,true);
   }
