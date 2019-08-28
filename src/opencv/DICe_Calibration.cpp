@@ -481,10 +481,17 @@ Calibration::extract_checkerboard_intersections(){
         std::stringstream out_file_name;
         if(!debug_folder_.empty())
           out_file_name << debug_folder_;
-        out_file_name << file_name_no_dir_or_extension(image_list_[i_cam][i_image]);
-        out_file_name << "_markers.png";
+        //out_file_name << file_name_no_dir_or_extension(image_list_[i_cam][i_image]);
+        if(i_cam==0) out_file_name << ".cal_left.png";
+        else out_file_name << ".cal_right.png";
+        // copy the image:
+        Mat debug_img = img.clone();
+        std::stringstream banner;
+        banner << image_list_[i_cam][i_image];
+        cv::putText(debug_img, banner.str(), Point(30,30),
+          FONT_HERSHEY_DUPLEX, 0.7, Scalar(255,255,255), 1, cv::LINE_AA);
         DEBUG_MSG("writing intersections image: " << out_file_name.str());
-        imwrite(out_file_name.str(), img);
+        imwrite(out_file_name.str(), debug_img);
       }
       if(error_code!=0){
         //remove the image from the calibration and proceed with the next image
@@ -603,10 +610,17 @@ Calibration::extract_dot_target_points(){
         std::stringstream out_file_name;
         if(!debug_folder_.empty())
           out_file_name << debug_folder_;
-        out_file_name << file_name_no_dir_or_extension(image_list_[i_cam][i_image]);
-        out_file_name << "_markers.png";
+        //out_file_name << file_name_no_dir_or_extension(image_list_[i_cam][i_image]);
+        if(i_cam==0) out_file_name << ".cal_left.png";
+        else out_file_name << ".cal_right.png";
         DEBUG_MSG("writing intersections image: " << out_file_name.str());
-        imwrite(out_file_name.str(), img);
+        // copy the image:
+        Mat debug_img = img.clone();
+        std::stringstream banner;
+        banner << image_list_[i_cam][i_image];
+        cv::putText(debug_img, banner.str(), Point(30,30),
+          FONT_HERSHEY_DUPLEX, 0.7, Scalar(255,255,255), 1, cv::LINE_AA);
+        imwrite(out_file_name.str(), debug_img);
       }
       if(error_code!=0){
         std::cout << "*** warning: " << image_list_[i_cam][i_image] << " failed dot extraction with error code: " << error_code << std::endl;
