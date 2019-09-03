@@ -402,8 +402,10 @@ int_t opencv_dot_targets(Mat & img,
     // calculate the average threshold value
     i_thresh = (i_thresh_first + i_thresh_last) / 2;
   }
+
   // get the key points at the average threshold value
   get_dot_markers(img_cpy, key_points, i_thresh, invert,options);
+
   // it is possible that this threshold does not have 3 points.
   // chances are that this indicates p thresholding problem to begin with
   if (key_points.size() != 3) {
@@ -479,7 +481,8 @@ int_t opencv_dot_targets(Mat & img,
     }
   }
   i_thresh = (maxgray + mingray) / 2;
-  DEBUG_MSG("  getting the rest of the dots");
+  DEBUG_MSG("  min gray value (inside target keypoints): " << mingray << " max gray value: " << maxgray);
+  DEBUG_MSG("  getting the rest of the dots using average gray intensity value as threshold");
   DEBUG_MSG("    threshold to get dots: " << i_thresh);
 
   // get the rest of the dots
@@ -519,8 +522,8 @@ int_t opencv_dot_targets(Mat & img,
   std::cout << "opencv_dot_targets():     good dots identified: " << new_dot_num << std::endl;
   DEBUG_MSG("    filter passes: " << filter_passes);
   if(new_dot_num < num_fiducials_x*num_fiducials_y*0.75){ // TODO fix this hard coded tolerance
-    std::cout << "*** error: not enough dots found" << std::endl;
-    return 1;
+    std::cout << "*** warning: not enough (non-keypoint) dots found" << std::endl;
+    return 2; // not an issue with the thresholding (which would have resulted in error code 1)
   }
   else
     return 0;

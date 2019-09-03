@@ -592,7 +592,7 @@ Calibration::extract_dot_target_points(){
         input_params_.set(opencv_server_threshold_start,return_thresh);
         input_params_.set(opencv_server_threshold_end,return_thresh);
         input_params_.set(opencv_server_threshold_step,return_thresh);
-      }else if(i_image!=0){
+      }else if(i_image!=0&&error_code==1){
         input_params_.set(opencv_server_threshold_start,orig_thresh_start);
         input_params_.set(opencv_server_threshold_end,orig_thresh_end);
         input_params_.set(opencv_server_threshold_step,orig_thresh_step);
