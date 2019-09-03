@@ -568,7 +568,7 @@ Calibration::extract_dot_target_points(){
   for (size_t i_image = 0; i_image < num_images(); i_image++){
     //go through each of the camera's images (note only two camera calibration is currently supported)
     for (size_t i_cam = 0; i_cam < num_cams(); i_cam++){
-      std::cout << "Calibration::extract_dot_target_points(): processing checkerboard cal image: " << image_list_[i_cam][i_image] << std::endl;
+      std::cout << "Calibration::extract_dot_target_points(): processing cal image: " << image_list_[i_cam][i_image] << std::endl;
       //DEBUG_MSG("processing cal image: " << image_list_[i_cam][i_image]);
       if(include_set_[i_image] == false){
         std::cout << "Calibration::extract_dot_target_points(): skipping due to image being deactivated" << std::endl;
