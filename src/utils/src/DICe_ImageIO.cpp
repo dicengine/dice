@@ -137,17 +137,25 @@ Image_File_Type image_file_type(const char * file_name){
     return CINE;
   const std::string tif("tif");
   const std::string tiff("tiff");
-  if(file_str.find(tif)!=std::string::npos||file_str.find(tiff)!=std::string::npos)
+  const std::string tif_caps("TIF");
+  const std::string tiff_caps("TIFF");
+  if(file_str.find(tif)!=std::string::npos||file_str.find(tiff)!=std::string::npos||file_str.find(tif_caps)!=std::string::npos
+      ||file_str.find(tiff_caps)!=std::string::npos)
     return TIFF;
   const std::string jpg("jpg");
   const std::string jpeg("jpeg");
-  if(file_str.find(jpg)!=std::string::npos||file_str.find(jpeg)!=std::string::npos)
+  const std::string jpg_caps("JPG");
+  const std::string jpeg_caps("JPEG");
+  if(file_str.find(jpg)!=std::string::npos||file_str.find(jpeg)!=std::string::npos||file_str.find(jpg_caps)!=std::string::npos
+      ||file_str.find(jpeg_caps)!=std::string::npos)
     return JPEG;
   const std::string bmp("bmp");
-  if(file_str.find(bmp)!=std::string::npos)
+  const std::string bmp_caps("BMP");
+  if(file_str.find(bmp)!=std::string::npos||file_str.find(bmp_caps)!=std::string::npos)
     return BMP;
   const std::string png("png");
-  if(file_str.find(png)!=std::string::npos)
+  const std::string png_caps("PNG");
+  if(file_str.find(png)!=std::string::npos||file_str.find(png_caps)!=std::string::npos)
     return PNG;
   const std::string nc(".nc");
   if(file_str.find(nc)!=std::string::npos)
