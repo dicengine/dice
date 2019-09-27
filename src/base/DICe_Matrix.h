@@ -296,6 +296,31 @@ public:
     return norm(*this);
   };
 
+  /// largest value
+  scalar_t max() const{
+    scalar_t max = data_[0];
+    for(size_t i=0;i<rows_*cols_;++i){
+      if(data_[i]>max) max = data_[i];
+    }
+    return max;
+  };
+
+  /// smallest value
+  scalar_t min() const{
+    scalar_t min = data_[0];
+    for(size_t i=0;i<rows_*cols_;++i){
+      if(data_[i]<min) min = data_[i];
+    }
+    return min;
+  };
+
+  /// scale all values
+  void scale_by(const Type & value){
+    for(size_t i=0;i<rows_*cols_;++i)
+      data_[i]=data_[i]*value;
+  };
+
+
   bool all_values_are_zero()const{
     for(size_t i=0;i<rows_*cols_;++i){
       if(data_[i]!=0) return false;
