@@ -682,6 +682,50 @@ Camera_System::write_camera_system_file(const std::string & file){
   finalize_xml_file(file);
 }
 
+Matrix<scalar_t,3>
+Camera_System::fundamental_matrix(const size_t source_cam_id,
+  const size_t target_cam_id){
+  DEBUG_MSG("Camera_System::fundamental_matrix(): source camera id " << source_cam_id << " target camera id " << target_cam_id);
+  TEUCHOS_TEST_FOR_EXCEPTION(sys_type_!=OPENCV,std::runtime_error,"this method not implemented yet for this system type (only OPENCV for now) " << to_string(sys_type_));
+  TEUCHOS_TEST_FOR_EXCEPTION(source_cam_id<0 || source_cam_id>=num_cameras(),std::runtime_error,"invalid source camera id");
+  TEUCHOS_TEST_FOR_EXCEPTION(target_cam_id<0 || target_cam_id>=num_cameras(),std::runtime_error,"invalid target camera id");
+  Matrix<scalar_t,3> T;
+  Matrix<scalar_t,3> F;
+  Matrix<scalar_t,3> f_source;
+  Matrix<scalar_t,3> f_target;
+  const Matrix<scalar_t,3> R = *cameras_[target_cam_id]->rotation_matrix();
+  // TODO fix the rotation matrix for other camera system types like VIC3d
+  // where R is a sum of cam 0 to origin then from origin to cam 1
+  // same for tx, ty, tz
+  std::vector<scalar_t> & source_intrinsics = *cameras_[source_cam_id]->intrinsics();
+  std::vector<scalar_t> & target_intrinsics = *cameras_[target_cam_id]->intrinsics();
+  T(0,1) = -1.0*(*cameras_[target_cam_id]).tz();
+  T(0,2) = (*cameras_[target_cam_id]).ty();
+  T(1,0) = (*cameras_[target_cam_id]).tz();
+  T(1,2) = -1.0*(*cameras_[target_cam_id]).tx();
+  T(2,0) = -1.0*(*cameras_[target_cam_id]).ty();
+  T(2,1) = (*cameras_[target_cam_id]).tx();
+  f_source(0,0) = source_intrinsics[Camera::FX];
+  f_source(0,2) = source_intrinsics[Camera::CX];
+  f_source(1,1) = source_intrinsics[Camera::FY];
+  f_source(1,2) = source_intrinsics[Camera::CY];
+  f_source(2,2) = 1.0;
+  f_target(0,0) = target_intrinsics[Camera::FX];
+  f_target(0,2) = target_intrinsics[Camera::CX];
+  f_target(1,1) = target_intrinsics[Camera::FY];
+  f_target(1,2) = target_intrinsics[Camera::CY];
+  f_target(2,2) = 1.0;
+  f_source = f_source.inv();
+  f_target = f_target.inv();
+  f_target = f_target.transpose();
+
+  F = f_target*T*R*f_source;
+  // scale the F matrix to get a one in the lower right hand corner
+  TEUCHOS_TEST_FOR_EXCEPTION(F(2,2)==0.0,std::runtime_error,"");
+  F.scale_by(1.0/F(2,2));
+  return F;
+}
+
 void
 Camera_System::camera_to_camera_projection(
   const size_t source_id,

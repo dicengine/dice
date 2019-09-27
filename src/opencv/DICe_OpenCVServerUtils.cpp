@@ -47,6 +47,7 @@
 #include <DICe_OpenCVServerUtils.h>
 #include <DICe_Parser.h>
 #include <DICe_Calibration.h>
+#include <DICe_CameraSystem.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -190,6 +191,8 @@ int_t opencv_server(int argc, char *argv[]){
       }else if(filter==opencv_server_filter_dot_targets){
         int_t return_thresh = 0.0;
         error_code = opencv_dot_targets(img,options,return_thresh);
+      }else if(filter==opencv_server_filter_epipolar_line){
+        error_code = opencv_epipolar_line(img,options,file_it==io_files.begin());
       }else{
         std::cout << "error, unknown filter: " << filter << std::endl;
         error_code = 5;
@@ -225,6 +228,54 @@ int_t opencv_adaptive_threshold(Mat & img, Teuchos::ParameterList & options){
   double binary_constant = options.get<double>(opencv_server_binary_constant,100.0);
   DEBUG_MSG("option, binary constant: " << binary_constant);
   adaptiveThreshold(img,img,255.0,filter_mode,threshold_mode,block_size,binary_constant);
+  return 0;
+}
+
+DICE_LIB_DLL_EXPORT
+int_t opencv_epipolar_line(Mat & img,
+  Teuchos::ParameterList & options,
+  const bool first_image){
+  TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(opencv_server_epipolar_is_left),std::runtime_error,"");
+  const bool is_left = options.get<bool>(opencv_server_epipolar_is_left);
+  TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(opencv_server_epipolar_dot_x),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(opencv_server_epipolar_dot_y),std::runtime_error,"");
+  int dot_x = options.get<int_t>(opencv_server_epipolar_dot_x,0);
+  int dot_y = options.get<int_t>(opencv_server_epipolar_dot_y,0);
+  Point2f pt(dot_x,dot_y);
+  // if this is the dot image, draw a dot
+  if((first_image&&is_left)||((!first_image)&&(!is_left))){
+    DEBUG_MSG("drawing dot on image");
+    // get the location of the dot
+    DEBUG_MSG("option, dot location: " << dot_x << " " << dot_y);
+    cvtColor(img, img, cv::COLOR_GRAY2RGB);
+    circle(img, pt, 5, Scalar(0, 255, 255),-1);
+  }else{
+    DEBUG_MSG("drawing line on image");
+    TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(opencv_server_cal_file),std::runtime_error,"");
+    Teuchos::RCP<DICe::Camera_System> camera_system = Teuchos::rcp(new DICe::Camera_System(options.get<std::string>(opencv_server_cal_file)));
+    Matrix<scalar_t,3> F = camera_system->fundamental_matrix();
+    // TODO move this to a matrix method?
+    cv::Mat matF =  cv::Mat(3, 3, CV_32F);
+    for(int_t i=0;i<matF.rows;++i){
+      for(int_t j=0;j<matF.cols;++j){
+        matF.at<float>(i,j) = F(i,j);
+      }
+    }
+    Mat lines;
+    int whichImage = options.get<bool>(opencv_server_epipolar_is_left) ? 1:2;
+    std::vector<Point2f> points;
+    points.push_back(pt);
+    cv::computeCorrespondEpilines(points,whichImage,matF,lines);
+    scalar_t a = lines.at<float>(0);
+    scalar_t b = lines.at<float>(1);
+    scalar_t c = lines.at<float>(2);
+    TEUCHOS_TEST_FOR_EXCEPTION(b==0.0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(a==0.0,std::runtime_error,"");
+    Point2f ptX(0.0,-1.0*c/b);
+    Point2f ptY(img.cols,-1.0*(c + a*img.cols)/b);
+    cvtColor(img, img, cv::COLOR_GRAY2RGB);
+    cv::line(img,ptX,ptY,Scalar(0, 255, 255),2);
+  }
   return 0;
 }
 

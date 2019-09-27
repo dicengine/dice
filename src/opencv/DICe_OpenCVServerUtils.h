@@ -65,6 +65,7 @@ const char* const opencv_server_filter_adaptive_threshold = "adaptive_threshold"
 const char* const opencv_server_filter_binary_threshold = "binary_threshold";
 const char* const opencv_server_filter_checkerboard_targets = "checkerboard_targets";
 const char* const opencv_server_filter_dot_targets = "dot_targets";
+const char* const opencv_server_filter_epipolar_line = "epipolar_line";
 const char* const opencv_server_filter_none = "none"; // used to display the original image with no filter
 
 /// Filter parameters
@@ -78,6 +79,11 @@ const char* const opencv_server_block_size = "block_size";
 const char* const opencv_server_binary_constant = "binary_constant";
 const char* const opencv_server_dot_tol = "dot_tol";
 const char* const opencv_server_use_adaptive_threshold = "use_adaptive_threshold";
+const char* const opencv_server_epipolar_dot_x = "epipolar_dot_x";
+const char* const opencv_server_epipolar_dot_y = "epipolar_dot_y";
+const char* const opencv_server_epipolar_is_left = "epipolar_is_left";
+const char* const opencv_server_cal_file = "cal_file";
+
 
 /// parse the input string and return a Teuchos ParameterList
 DICE_LIB_DLL_EXPORT
@@ -111,6 +117,10 @@ DICE_LIB_DLL_EXPORT
 int_t opencv_dot_targets(cv::Mat & img,
   Teuchos::ParameterList & options,
   int_t & return_thresh);
+DICE_LIB_DLL_EXPORT
+int_t opencv_epipolar_line(cv::Mat & img,
+  Teuchos::ParameterList & options,
+  const bool first_image);
 
 // utilities
 

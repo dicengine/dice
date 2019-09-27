@@ -180,6 +180,10 @@ public:
     cameras_.push_back(camera_ptr);
   }
 
+  /// calculate the fundamental matrix for a set of cameras
+  Matrix<scalar_t,3> fundamental_matrix(const size_t source_cam_id=0,
+    const size_t target_cam_id=1);
+
   /// comparison operator
   DICE_LIB_DLL_EXPORT
   friend bool operator==(const Camera_System & lhs,const Camera_System & rhs);
