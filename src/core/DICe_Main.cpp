@@ -201,7 +201,8 @@ int main(int argc, char *argv[]) {
         all_on_zero_coords->do_import(coords,exporter);
         //all_on_zero_coords->describe();
         if(proc_rank==0){
-          std::FILE * ssFile = fopen(".subset_locs.txt","w");
+          create_directory(".dice");
+          std::FILE * ssFile = fopen(".dice/.subset_locs.txt","w");
           fprintf(ssFile,"BEGIN SUBSET_COORDINATES\n");
           for(int_t i=0;i<ss_locs_size/2;++i){
             fprintf(ssFile,"%i %i\n",(int_t)all_on_zero_coords->local_value(i*2+0),(int_t)all_on_zero_coords->local_value(i*2+1));

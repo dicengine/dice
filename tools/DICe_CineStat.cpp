@@ -92,7 +92,8 @@ int main(int argc, char *argv[]) {
   *outStream << "Last frame:     " << last_frame << std::endl;
 
   // write stats to file
-  std::FILE * filePtr = fopen("cine_stats.dat","w");
+  create_directory(".dice");
+  std::FILE * filePtr = fopen(".dice/.cine_stats.dat","w");
   fprintf(filePtr,"%i %i %i\n",num_images,first_frame,last_frame);
   fclose(filePtr);
 

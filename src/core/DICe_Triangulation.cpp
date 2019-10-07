@@ -943,6 +943,7 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
   std::vector<scalar_t> proj_xr;
   std::vector<scalar_t> proj_yr;
   int_t num_coords = 0;
+  create_directory(".dice");
 
   if(use_nonlinear_projection){
     DEBUG_MSG("Triangulation::estimate_projective_transform(): reading initial guess points from file: projection_points.dat");
@@ -986,7 +987,7 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     DEBUG_MSG("Triangulation::estimate_projective_transform(): begin matching features");
     float feature_tol = 0.005f;
     std::stringstream outname;
-    outname << "fm_projective_trans_" << processor_id << ".png";
+    outname << ".dice/fm_projective_trans_" << processor_id << ".png";
     match_features(left_img,right_img,proj_xl,proj_yl,proj_xr,proj_yr,feature_tol,outname.str());
     if(proj_xl.size() < 5){
       DEBUG_MSG("Triangulation::estimate_projective_transform(): initial attempt failed with tol = 0.005f, setting to 0.001f and trying again.");
@@ -1036,7 +1037,7 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
         intens[j*w+i] = right_img->interpolate_keys_fourth(xr,yr);
       }
     }
-    img->write("right_projected_to_left_initial.tif");
+    img->write(".dice/right_projected_to_left_initial.tif");
   }
 
   // for each point, plug in the left coords and compute the right
@@ -1101,7 +1102,7 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
         intens[j*w+i] = right_img->interpolate_keys_fourth(xr,yr);
       }
     }
-    proj_img->write("right_projected_to_left_proj_opt.tif");
+    proj_img->write(".dice/right_projected_to_left_proj_opt.tif");
   }
 
   if(use_nonlinear_projection){
@@ -1112,10 +1113,10 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     std::vector<scalar_t> warp_yr;
 #ifdef DICE_ENABLE_OPENCV
     DEBUG_MSG("Triangulation::estimate_projective_transform(): begin matching features for warp parameters");
-    Teuchos::RCP<Image> projection_opt_img = Teuchos::rcp(new Image("right_projected_to_left_proj_opt.tif"));
+    Teuchos::RCP<Image> projection_opt_img = Teuchos::rcp(new Image(".dice/right_projected_to_left_proj_opt.tif"));
     const float tol = 0.001f;
     std::stringstream outname_nonlin;
-    outname_nonlin << "fm_nonlinear_proj_trans_" << processor_id << ".png";
+    outname_nonlin << ".dice/fm_nonlinear_proj_trans_" << processor_id << ".png";
     match_features(left_img,projection_opt_img,warp_xl,warp_yl,warp_xr,warp_yr,tol,outname_nonlin.str());
     DEBUG_MSG("Triangulation::estimate_projective_transform(): matching warp features complete");
 #else
@@ -1247,9 +1248,9 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
         intens[j*w+i] = right_img->interpolate_keys_fourth(xr,yr);
       }
     }
-    diff_img->write("right_projected_to_left_diff.tif");
-    img->write("right_projected_to_left_final.tif");
-    left_img->write_overlap_image("right_projected_to_left_color.tif",img);
+    diff_img->write(".dice/right_projected_to_left_diff.tif");
+    img->write(".dice/right_projected_to_left_final.tif");
+    left_img->write_overlap_image(".dice/right_projected_to_left_color.tif",img);
   }
   return 0;
 }

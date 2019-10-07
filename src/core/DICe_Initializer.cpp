@@ -460,7 +460,8 @@ Feature_Matching_Initializer::pre_execution_tasks(){
     Teuchos::TimeMonitor match_time_monitor(*match_time);
     const float tol = 0.005f;
     std::stringstream outname;
-    outname << "fm_initializer_" << schema_->mesh()->get_comm()->get_rank() << ".png";
+    create_directory(".dice");
+    outname << ".dice/fm_initializer_" << schema_->mesh()->get_comm()->get_rank() << ".png";
     match_features(prev_img_,schema_->def_img(0),left_x,left_y,right_x,right_y,tol,outname.str(),threshold_block_size_);
     int_t num_matches = left_x.size();
     DEBUG_MSG("number of features matched: " << num_matches);
