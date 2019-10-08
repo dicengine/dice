@@ -270,8 +270,10 @@ int main(int argc, char *argv[]) {
         "Error, both calibration_parameters_file and camera_system_file cannot be specified");
       Teuchos::RCP<DICe::Triangulation> triangulation;
       if(input_params->isParameter(DICe::calibration_parameters_file)||input_params->isParameter(DICe::camera_system_file)){
-        if(proc_rank==0)
+        if(proc_rank==0){
+          update_vic3d_cal_input(input_params);
           update_legacy_txt_cal_input(input_params); // in case an old txt format cal input file is being used it needs to have width and height added to it
+        }
 #if DICE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
 #endif

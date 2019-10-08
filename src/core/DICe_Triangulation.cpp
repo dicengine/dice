@@ -1318,6 +1318,46 @@ void update_legacy_txt_cal_input(const Teuchos::RCP<Teuchos::ParameterList> & in
   outFile.close();
 }
 
+void update_vic3d_cal_input(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
+  bool has_cal_file = input_params->isParameter(DICe::calibration_parameters_file);
+  const std::string file = has_cal_file ? input_params->get<std::string>(DICe::calibration_parameters_file):
+      input_params->get<std::string>(DICe::camera_system_file);
+  DEBUG_MSG("update_vic3d_cal_input(): cal file: " << file);
+  const std::string xml("xml");
+  if(file.find(xml) == std::string::npos) return; // not an xml file
+
+  // check for INTRINSIC key word
+  std::ifstream t(file);
+  std::string str((std::istreambuf_iterator<char>(t)),
+                   std::istreambuf_iterator<char>());
+  std::transform(str.begin(), str.end(),str.begin(),::toupper);
+  //std::cout << str << std::endl;
+  const std::string intrinsics("INTRINSICS");
+  if(str.find(intrinsics)==std::string::npos) return; // not the new vic3d format
+  DEBUG_MSG("update_vic3d_cal_input(): found an xml file with the new VIC3d format: " << file);
+  create_directory(".dice");
+  std::ifstream  src(file,                 std::ios::binary);
+  std::ofstream  dst(".dice/.cal_copy.xml",std::ios::binary);
+  dst << src.rdbuf();
+
+  // get the width and height from an image
+  int_t width = -1;
+  int_t height = -1;
+  std::vector<std::string> image_files;
+  std::vector<std::string> stereo_image_files;
+  DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
+  DICe::utils::read_image_dimensions(image_files[0].c_str(),width,height);
+  dst << "<polygonmask width=\"" << width << "\" height=\"" << height << "\" lri=\"polygonmask\">\n";
+  dst.close();
+
+  if(has_cal_file)
+    input_params->set(calibration_parameters_file,".dice/.cal_copy.xml");
+  else
+    input_params->set(camera_system_file,".dice/.cal_copy.xml");
+
+  DEBUG_MSG("update_vic3d_cal_input(): updated file .dice/.cal_copy.xml");
+
+}
 
 
 }// End DICe Namespace

@@ -81,7 +81,7 @@ Camera_System::read_camera_system_file(const std::string & file) {
     Teuchos::updateParametersFromXmlFile(file, sys_params_ptr);
   }
   catch (std::exception & e) {
-    std::cout << e.what() << std::endl;
+    //std::cout << e.what() << std::endl;
     DEBUG_MSG("Camera_System::read_camera_system_file(): not teuchos XML file format, assuming another format (VIC3d or legacy .txt)");
     valid_dice_xml = false;
   }
@@ -291,6 +291,7 @@ Camera_System::read_camera_system_file(const std::string & file) {
       int_t xml_img_height = 0;
       int_t xml_img_width = 0;
       std::vector<int_t> param_order_int = { Camera::CX, Camera::CY, Camera::FX, Camera::FY, Camera::FS, Camera::K1, Camera::K2, Camera::K3 };
+      std::vector<int_t> param_order_int_new = { Camera::CX, Camera::CY, Camera::FX, Camera::FY, Camera::FS};
       while (!dataFile.eof()) {
         std::vector<std::string> tokens = tokenize_line(dataFile, " \t<>\"");
         if (tokens.size() == 0) continue;
@@ -301,32 +302,68 @@ Camera_System::read_camera_system_file(const std::string & file) {
           xml_img_height = std::atoi(tokens[4].c_str());
           continue;
         }
-        if (tokens[0] != "CAMERA") continue;
-        TEUCHOS_TEST_FOR_EXCEPTION(current_camera>1,std::runtime_error,"");// only allow 2 cameras
-        const int_t camera_index = std::atoi(tokens[2].c_str());
-        std::stringstream camera_title;
-        camera_title << "CAMERA " << camera_index;
-        camera_infos[current_camera].id_ = camera_title.str();
-        //DEBUG_MSG("Camera_System::read_camera_system_file(): found " << camera_infos[current_camera].id_);
-        TEUCHOS_TEST_FOR_EXCEPTION(camera_index >= 10,std::runtime_error,"");
-        TEUCHOS_TEST_FOR_EXCEPTION(tokens.size() <= 18,std::runtime_error,"");
-        //Store the intrinsic parameters
-        for (int_t i = 0; i < (int_t)param_order_int.size(); ++i)
-          camera_infos[current_camera].intrinsics_[param_order_int[i]] = strtod(tokens[i + 3].c_str(), NULL);
-        camera_infos[current_camera].lens_distortion_model_ = Camera::VIC3D_LENS_DISTORTION;
-        //Store the extrinsic parameters
-        assert(tokens.size()>=18);
-        TEUCHOS_TEST_FOR_EXCEPTION(tokens[11] != "ORIENTATION",std::runtime_error,"");
-        const scalar_t alpha = strtod(tokens[12].c_str(), NULL);
-        const scalar_t beta = strtod(tokens[13].c_str(), NULL);
-        const scalar_t gamma = strtod(tokens[14].c_str(), NULL);
-        camera_infos[current_camera].set_rotation_matrix(alpha,beta,gamma);
-        camera_infos[current_camera].tx_ = strtod(tokens[15].c_str(), NULL);
-        camera_infos[current_camera].ty_ = strtod(tokens[16].c_str(), NULL);
-        camera_infos[current_camera].tz_ = strtod(tokens[17].c_str(), NULL);
-        // the camera constructor will check if it is valid
-        current_camera++;
-        DEBUG_MSG("Camera_System::read_camera_system_file(): successfully loaded VIC3D camera " << camera_index);
+
+        // if not must be old Vic3d Format
+        if(tokens[0] == "CAMERA" && tokens.size()<18){
+          // if the camera line only has the camera key word, it's the new format for VIC3d
+          continue;
+        }
+        else if (tokens[0] == "INTRINSICS"){
+          TEUCHOS_TEST_FOR_EXCEPTION(current_camera>1,std::runtime_error,"");// only allow 2 cameras
+          assert(tokens.size()>param_order_int_new.size());
+          std::stringstream camera_title;
+          camera_title << "CAMERA " << current_camera;
+          camera_infos[current_camera].id_ = camera_title.str();
+          for (size_t i = 0; i < param_order_int_new.size(); ++i)
+            camera_infos[current_camera].intrinsics_[param_order_int_new[i]] = strtod(tokens[i + 1].c_str(), NULL);
+        }
+        else if (tokens[0] == "DISTORTION"){
+          assert(tokens.size()>=10);
+          camera_infos[current_camera].lens_distortion_model_ = Camera::VIC3D_LENS_DISTORTION;
+          for (size_t i = 0; i < 3; ++i)
+            camera_infos[current_camera].intrinsics_[param_order_int[i+5]] = strtod(tokens[i + 7].c_str(), NULL);
+        }
+        else if (tokens[0] == "ORIENTATION"){
+          assert(tokens.size()>=7);
+          // ++ the camera index on this one
+          const scalar_t alpha = strtod(tokens[1].c_str(), NULL);
+          const scalar_t beta = strtod(tokens[2].c_str(), NULL);
+          const scalar_t gamma = strtod(tokens[3].c_str(), NULL);
+          DEBUG_MSG("VIC3d orientation: alpha " << alpha << " beta " << beta << " gamma " << gamma);
+          camera_infos[current_camera].set_rotation_matrix(alpha,beta,gamma);
+          camera_infos[current_camera].tx_ = strtod(tokens[4].c_str(), NULL);
+          camera_infos[current_camera].ty_ = strtod(tokens[5].c_str(), NULL);
+          camera_infos[current_camera].tz_ = strtod(tokens[6].c_str(), NULL);
+          DEBUG_MSG("Camera_System::read_camera_system_file(): successfully loaded VIC3D camera " << current_camera);
+          current_camera++;
+        }
+        else if (tokens[0] == "CAMERA"){
+          TEUCHOS_TEST_FOR_EXCEPTION(current_camera>1,std::runtime_error,"");// only allow 2 cameras
+          const int_t camera_index = std::atoi(tokens[2].c_str());
+          std::stringstream camera_title;
+          camera_title << "CAMERA " << camera_index;
+          camera_infos[current_camera].id_ = camera_title.str();
+          //DEBUG_MSG("Camera_System::read_camera_system_file(): found " << camera_infos[current_camera].id_);
+          //TEUCHOS_TEST_FOR_EXCEPTION(camera_index >= 10,std::runtime_error,"");
+          TEUCHOS_TEST_FOR_EXCEPTION(tokens.size() <= 18,std::runtime_error,"");
+          //Store the intrinsic parameters
+          for (int_t i = 0; i < (int_t)param_order_int.size(); ++i)
+            camera_infos[current_camera].intrinsics_[param_order_int[i]] = strtod(tokens[i + 3].c_str(), NULL);
+          camera_infos[current_camera].lens_distortion_model_ = Camera::VIC3D_LENS_DISTORTION;
+          //Store the extrinsic parameters
+          assert(tokens.size()>=18);
+          TEUCHOS_TEST_FOR_EXCEPTION(tokens[11] != "ORIENTATION",std::runtime_error,"");
+          const scalar_t alpha = strtod(tokens[12].c_str(), NULL);
+          const scalar_t beta = strtod(tokens[13].c_str(), NULL);
+          const scalar_t gamma = strtod(tokens[14].c_str(), NULL);
+          camera_infos[current_camera].set_rotation_matrix(alpha,beta,gamma);
+          camera_infos[current_camera].tx_ = strtod(tokens[15].c_str(), NULL);
+          camera_infos[current_camera].ty_ = strtod(tokens[16].c_str(), NULL);
+          camera_infos[current_camera].tz_ = strtod(tokens[17].c_str(), NULL);
+          // the camera constructor will check if it is valid
+          current_camera++;
+          DEBUG_MSG("Camera_System::read_camera_system_file(): successfully loaded VIC3D camera " << camera_index);
+        }
       } // end file read
       TEUCHOS_TEST_FOR_EXCEPTION(xml_img_height<=0||xml_img_width<=0,std::runtime_error,"");
       for(size_t i=0;i<camera_infos.size();++i){

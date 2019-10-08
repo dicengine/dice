@@ -271,6 +271,10 @@ private:
 DICE_LIB_DLL_EXPORT
 void update_legacy_txt_cal_input(const Teuchos::RCP<Teuchos::ParameterList> & input_params);
 
+DICE_LIB_DLL_EXPORT
+void update_vic3d_cal_input(const Teuchos::RCP<Teuchos::ParameterList> & input_params);
+
+
 }// End DICe Namespace
 
 #endif
