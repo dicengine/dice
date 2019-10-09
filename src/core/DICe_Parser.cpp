@@ -126,6 +126,7 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
     std::cout << "s: print field statistics to the screen" << std::endl;
     std::cout << "ss_locs: create a file (ss_locs.txt) with the subset locations and exit prior to executing the analysis" << std::endl;
     std::cout << "d: returns 1 if the debugging messages are on, 0 if they are off" << std::endl;
+    std::cout << "tracklib: returns 1 if DICe was compiled with tracklib on, 0 if not" << std::endl;
     force_exit = true;
     return inputParams;
   }
@@ -150,8 +151,22 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
     force_exit = true;
 #ifdef DICE_DEBUG_MSG
     inputParams->set("debug_msg_on",true);
+    DEBUG_MSG("debugging messages are on");
 #else
     inputParams->set("debug_msg_on",false);
+    std::cout << "debugging messages are off" << std::endl;
+#endif
+    return inputParams;
+  }
+  // Determine if tracklib is available
+  if(cmp.option_exists("--tracklib")){
+    force_exit = true;
+#ifdef DICE_ENABLE_TRACKLIB
+    inputParams->set("tracklib_on",true);
+    DEBUG_MSG("tracklib is on");
+#else
+    inputParams->set("tracklib_on",false);
+    DEBUG_MSG("tracklib is off");
 #endif
     return inputParams;
   }

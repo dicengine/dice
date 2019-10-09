@@ -88,6 +88,15 @@ SET(DICE_OUTPUT_PREFIX ${CMAKE_CURRENT_BINARY_DIR})
 MESSAGE(STATUS "The output directory for DICe libraries will be: ${DICE_OUTPUT_PREFIX}/lib")
 MESSAGE(STATUS "If 'make install' is exectued, the libraries will also be copied to: ${CMAKE_INSTALL_PREFIX}/lib")
 
+# See if tracklib is available
+IF(DEFINED TRACKLIB_DIR)
+  MESSAGE(STATUS "TRACKLIB is ON")
+  MESSAGE(STATUS "TRACKLIB_DIR is set to: ${TRACKLIB_DIR}")
+  ADD_DEFINITIONS(-DDICE_ENABLE_TRACKLIB=1)
+ELSE()
+  MESSAGE(STATUS "TRACKLIB is OFF")
+ENDIF()
+
 # Try to find OpenCV, if path was not given
 IF (NOT DEFINED OpenCV_DIR)
   # Losely based on:

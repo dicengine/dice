@@ -85,10 +85,15 @@ int main(int argc, char *argv[]) {
         DICe::finalize();
         if(input_params->isParameter("debug_msg_on")){
           if(input_params->get<bool>("debug_msg_on")){
-            return 1;
+            return 0;
           }
         }
-        return 0;
+        if(input_params->isParameter("tracklib_on")){
+          if(input_params->get<bool>("tracklib_on")){
+            return 0;
+          }
+        }
+        return 1;
       }
       *outStream << "Input Parameters: " << std::endl;
       input_params->print(*outStream);
