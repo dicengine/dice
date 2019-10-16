@@ -823,7 +823,7 @@ The prerequisite dependencies required for installing DICe include:
 
 -   LAPACK or [CLAPACK] (http://www.netlib.org/clapack/) (for Windows, only CLAPACK is supported Version 3.2.1 or greater) 
 
--   [OpenCV] (https://opencv.org/) Version 3.2.0 or greater (tested with 3.2.0)
+-   [OpenCV] (https://opencv.org/) Version 3.2.0 (tested with 3.2.0, newer versions give configure errors on linux)
 
 -   Boost is no longer a dependency. It was removed Sept. 2018
 
