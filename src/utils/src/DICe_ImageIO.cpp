@@ -256,7 +256,11 @@ void read_image(const char * file_name,
     cine_index(file_name,start_index,end_index,is_avg);
     // get the image dimensions
     Teuchos::RCP<DICe::cine::Cine_Reader> reader = Image_Reader_Cache::instance().cine_reader(cine_file);
-    reader->initialize_filter(filter_failed_pixels,convert_to_8_bit);
+    bool reinit = false;
+    if(params!=Teuchos::null){
+      reinit = params->get(reinitialize_cine_reader_conversion_factor,false);
+    }
+    reader->initialize_filter(filter_failed_pixels,convert_to_8_bit,0,reinit);
     width = sub_w==0?reader->width():sub_w;
     height = sub_h==0?reader->height():sub_h;
     if(is_avg){

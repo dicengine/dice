@@ -83,6 +83,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
   params->set(filter_failed_cine_pixels,false);
   params->set(convert_cine_to_8_bit,true);
+  params->set(DICe::reinitialize_cine_reader_conversion_factor,true);
 
   // all of these cine files should be dimensions 128 x 256 and have 6 frames each
 
@@ -172,14 +173,13 @@ int main(int argc, char *argv[]) {
   }
 
   *outStream << "testing reading a set of sub regions from a 10 bit cine " << std::endl;
-  // clear any cine image reader instances lying around
-  utils::Image_Reader_Cache::instance().clear();
   DICe::cine::Cine_Reader cine_reader("./images/packed_12bpp.cine",outStream.getRawPtr());
   std::stringstream win_frame;
   win_frame << "./images/packed_12bpp_" << cine_reader.first_image_number() << ".cine";
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::filter_failed_cine_pixels,false);
   imgParams->set(DICe::convert_cine_to_8_bit,false);
+  imgParams->set(DICe::reinitialize_cine_reader_conversion_factor,true);
   Teuchos::RCP<Image> image_0_rcp = Teuchos::rcp(new Image(win_frame.str().c_str(),170,13,208-170+1,42-13+1,imgParams));
   //image_0_rcp->write("motion_window_12bpp.tif");
   Teuchos::RCP<Image> image_1_rcp = Teuchos::rcp(new Image(win_frame.str().c_str(),196,72,238-196+1,95-72+1,imgParams));
@@ -303,7 +303,6 @@ int main(int argc, char *argv[]) {
   }
 
 #if DICE_USE_DOUBLE
-  utils::Image_Reader_Cache::instance().clear();
   // try creating a cine image using the standard image interface without a reader constructed manually:
   Teuchos::RCP<DICe::Image> img_cine_0 = Teuchos::rcp(new Image("./images/phantom_v1610_16bpp_-85.cine",params));
   Teuchos::RCP<DICe::Image> img_cine_0_gold = Teuchos::rcp(new Image("./images/image_cine_-85.rawi"));

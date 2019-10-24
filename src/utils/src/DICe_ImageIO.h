@@ -206,8 +206,6 @@ public:
   /// \param id the string name of the reader in case multiple headers are loaded (for example in stereo)
   /// if the reader doesn't exist, it gets created
   Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader(const std::string & id);
-  /// clear the map
-  void clear(){cine_reader_map_.clear();}
 private:
   /// constructor
   Image_Reader_Cache(){};
