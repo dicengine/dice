@@ -1,6 +1,18 @@
 cmake_minimum_required(VERSION 3.4)
 MESSAGE("\nConfiguring DICe...\n")
 
+# check if the pre-compiled set of libraries and header for windows is being used:
+IF(DEFINED DICE_DEVPACK_DIR)
+  MESSAGE(STATUS "***Using DevPack from: ${DICE_DEVPACK_DIR}")
+  MESSAGE(STATUS "Note: if any of the following variables have been defined, they will be reset\n   DICE_TRILINOS_DIR\n   OpenCV_DIR\n   CLAPACK_DIR\n   NetCDF_DIR\n   HDF5_DIR")
+  SET(DICE_TRILINOS_DIR "${DICE_DEVPACK_DIR}/trilinos")
+  SET(OpenCV_DIR "${DICE_DEVPACK_DIR}/opencv")
+  SET(NetCDF_DIR "${DICE_DEVPACK_DIR}/netcdf/lib")
+  SET(HDF5_DIR "${DICE_DEVPACK_DIR}/netcdf/lib")
+  SET(CLAPACK_DIR "${DICE_DEVPACK_DIR}/lapack")
+  link_directories(${CLAPACK_DIR}/F2CLIBS)
+ENDIF()
+
 # Try to find Trilinos, if path was not given
 IF (NOT DEFINED DICE_TRILINOS_DIR)
   # Losely based on:
@@ -22,7 +34,7 @@ MESSAGE(STATUS "Using Trilinos installed in: ${DICE_TRILINOS_DIR}")
 
 # If this is a windows build CLAPACK is required. Find package for
 # clapack is automatically enabled by setting the CLAPACK_DIR variable
-IF(WIN32)
+IF(WIN32 AND NOT DEFINED DICE_DEVPACK_DIR)
    # must defined clapack_dir
   IF (NOT DEFINED CLAPACK_DIR)
     MESSAGE(FATAL_ERROR "\nDICe Error: this is a windows build, so cmake must define CLAPACK_DIR:
@@ -32,9 +44,11 @@ IF(WIN32)
   IF(clapack_FOUND)
     MESSAGE("\nFound CLAPACK in ${CLAPACK_DIR}")
     link_directories(${CLAPACK_DIR}/F2CLIBS/libf2c)
-  ELSE(clapack_FOUND)
+  ELSE()
     MESSAGE("\nERROR: could not find CLAPACK in the following directory: ${CLAPACK_DIR}")
-  ENDIF(clapack_FOUND)
+  ENDIF()
+ENDIF()
+IF(WIN32)
   IF(NOT BUILD_SHARED_LIBS)
     MESSAGE("\nWarning: This is a windows build, but BUILD_SHARED_LIBS is OFF. Setting BUILD_SHARED_LIBS on automatically.")
     SET(BUILD_SHARED_LIBS ON)

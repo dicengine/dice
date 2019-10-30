@@ -7,20 +7,7 @@ IF (NOT DEFINED DICE_TRILINOS_DIR)
   (-D DICE_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
 ENDIF()
 
-# If this is a windows build CLAPACK is required. Find package for
-# clapack is automatically enabled by setting the CLAPACK_DIR variable
 IF(WIN32)
-   # must defined clapack_dir
-  IF (NOT DEFINED CLAPACK_DIR)
-    MESSAGE(FATAL_ERROR "\nDICe Error: this is a windows build, so cmake must define CLAPACK_DIR:
-    (-D CLAPACK_DIR:FILEPATH=<clapack_install_prefix>)!")
-  ENDIF()
-  FIND_PACKAGE(clapack PATHS ${CLAPACK_DIR})
-  IF(clapack_FOUND)
-    MESSAGE("\nFound CLAPACK in ${CLAPACK_DIR}")
-  ELSE(clapack_FOUND)
-    MESSAGE("\nERROR: could not find CLAPACK in the following directory: ${CLAPACK_DIR}")
-  ENDIF(clapack_FOUND)
   IF(NOT BUILD_SHARED_LIBS)
     MESSAGE("\nWarning: This is a windows build, but BUILD_SHARED_LIBS is OFF. Setting BUILD_SHARED_LIBS on automatically.")
     SET(BUILD_SHARED_LIBS ON)
