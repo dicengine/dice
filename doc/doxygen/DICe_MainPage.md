@@ -87,7 +87,7 @@ Contact Information
 For questions, contact Dan Turner, email `dzturne@sandia.gov`,
 phone (505) 845-7446.
 
-<a name="GettingStarted"></a>Getting Started 
+Getting Started {#GettingStarted} 
 ===============
 
 There are three modes in which DICe can be used.
@@ -129,7 +129,7 @@ Where `num_procs` specifies the number of processors.
 
 Here is a helpful link for using MS-MPI on windows: [Microsoft MPI] (https://msdn.microsoft.com/en-us/library/windows/desktop/bb524831.aspx). **MPI must be installed to run in parallel**.
 
-### <a name="MPINotes"></a>Running DICe in parallel with MPI enabled
+### Running DICe in parallel with MPI enabled {#MPINotes} 
 
 To run DICe in parallel with MPI enabled, Trilinos must be installed with MPI enabled
 by setting the approprate flag in the trilinos CMake script
@@ -164,7 +164,7 @@ The file naming convention for timing files is
 
     timing.<num_procs>.<proc_id>.txt
 
-<a name="UserManual"></a>User Manual 
+User Manual {#UserManual} 
 ===============
 
 ### Input syntax
@@ -806,7 +806,7 @@ The python scripts above are only meant to provide a simple example.
 Obviously, there are many ways python can be used to generate more
 sophisticated plots.
 
-<a name="BuildingDICe"></a>Building DICe
+Building DICe {#BuildingDICe}
 =============
 
 The easiest way to get started with DICe is to use the package installers on the releases page of the github site. Pre-built binaries of the command line executables and the GUI combined are available for Mac OS X and Windows. For a linux distribution (or to make custom mods to the executables or GUI) one has to build DICe from source. The instructions below provide a means to build the command line executables and libraries for DICe. To build the GUI from source a separate step is necessary and the details are provided below. 
@@ -861,7 +861,7 @@ that Trilinos be built with the following packages enabled:
 
 -   TeuchosNumerics
 
-<a name="DICeSource"></a>Obtaining DICe source code
+Obtaining DICe source code {#DICeSource}
 --------------------------
 
 The central repository for the source code is on [GitHub](https://github.com/dicengine).
@@ -1087,7 +1087,7 @@ this interface is compiled as a library, it can be linked and used in an
 external application simply by calling the correlation function exposed
 via the interface.
 
-<a name="Legal"></a>Legal
+Legal {#Legal}
 =====
 
 Sandia National Laboratories is a multi-mission laboratory managed and operated by
