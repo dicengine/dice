@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['motion_5fstate',['Motion_State',['../class_d_i_ce.html#af2450d134804caa716f61b5504bb34f6',1,'DICe']]]
+  ['lens_5fdistortion_5fmodel_3895',['Lens_Distortion_Model',['../class_d_i_ce_1_1_camera.html#af8d5dcb3d2b0c44e1d6bcffa07dcebee',1,'DICe::Camera']]]
 ];
