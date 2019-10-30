@@ -68,11 +68,11 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>Copyright 2015 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains certain rights in this software.</p>
-<h1><a class="anchor" id="autotoc_md48"></a>
+<h1><a class="anchor" id="autotoc_md42"></a>
 Introduction</h1>
 <p>This section of the documentation describes how to write a custom DIC application with <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a>. For the example below, all of the steps assume that a Linux operating system is being used. For Windows, the cmake script needs to be modified to produce nmake makefiles, and the appropriate scripts should be exectuted as batch files.</p>
 <p>The files for this example are in the folder <code>dice/examples/custom_app</code>. The <code>main.cpp</code> file provides a simple example to follow when developing a more sophisticated application.</p>
-<h2><a class="anchor" id="autotoc_md49"></a>
+<h2><a class="anchor" id="autotoc_md43"></a>
 Code Design and Workflow</h2>
 <p>A basic outline for how <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a> performs a correlation is as follows. If more than one image is correlated, the basic workflow is the same, just applied numerous times.</p>
 <p>Initialization phase:</p>
@@ -88,7 +88,7 @@ Code Design and Workflow</h2>
 <li>The ref or def images can be changed and the execution phase repeated</li>
 </ul>
 <p>All of the initialization data and correlation parameters are stored in a <code><a class="el" href="class_d_i_ce_1_1_schema.html" title="The centralized container for the correlation plan and parameters.">DICe::Schema</a></code>, this class controls the algorithms, images, and subset locations. The <code><a class="el" href="class_d_i_ce_1_1_schema.html" title="The centralized container for the correlation plan and parameters.">DICe::Schema</a></code> also stores the correlation results and all other fields. An image is stored as an array in a <code><a class="el" href="class_d_i_ce_1_1_image.html">DICe::Image</a></code>. A copy of a portion of the image intensity array is made available through a <code><a class="el" href="class_d_i_ce_1_1_subset.html" title="Subsets are used to store temporary collections of pixels for comparison between the reference and de...">DICe::Subset</a></code>. The bulk of the correlation algorithm resides in a <code><a class="el" href="class_d_i_ce_1_1_objective.html" title="A container class for the subsets, optimization algorithm and initialization routine used to correlat...">DICe::Objective</a></code>. More details on each of these are provided in the class documentation.</p>
-<h2><a class="anchor" id="autotoc_md50"></a>
+<h2><a class="anchor" id="autotoc_md44"></a>
 Rules of Thumb</h2>
 <p>When developing a custom application using <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a>, keep the following points in mind:</p>
 <ul>
@@ -97,7 +97,7 @@ Rules of Thumb</h2>
 <li>New correlation parameters can be used for an old <a class="el" href="class_d_i_ce_1_1_schema.html" title="The centralized container for the correlation plan and parameters.">DICe::Schema</a> by calling the set_params() method and passing in the new parameters as a Teuchos::ParameterList</li>
 <li>The reference or deformed images can be changed after the <a class="el" href="class_d_i_ce_1_1_schema.html" title="The centralized container for the correlation plan and parameters.">DICe::Schema</a> is initialized with a call to <code>set_ref_image()</code> or <code>set_def_image()</code>. These ref and def images should be the same dimensions, and the new ref or def image cannot change the image dimensions</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md51"></a>
+<h2><a class="anchor" id="autotoc_md45"></a>
 Custom DIC Application Example</h2>
 <p>Before building the custom app example, make sure that when the <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a> source was built, the </p><pre class="fragment">$ make install
 </pre><p>command was called. This will ensure that the libraries and header files are grouped together in the install directory to be referenced in the do-custom-app-cmake file below for the DICE_HEADER_DIR and DICE_LIB_DIR variables.</p>
@@ -116,7 +116,7 @@ $ ./build/main
 </div><!-- PageDoc -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 30 2019 12:21:20 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Oct 30 2019 12:36:45 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.16
 </small></address>

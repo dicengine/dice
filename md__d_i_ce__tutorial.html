@@ -69,7 +69,7 @@ $(function() {
 <div class="contents">
 <div class="textblock"><p>Copyright 2015 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains certain rights in this software.</p>
 <p>The tutorial for using the <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a> GUI and stereo DIC has not yet been released. Below are some tutorials for 2D full-field DIC and object tracking using the command line interface for <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a>.</p>
-<h1><a class="anchor" id="autotoc_md43"></a>
+<h1><a class="anchor" id="autotoc_md37"></a>
 Introduction</h1>
 <p>This tutorial walks the user through several simple examples using <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a> to do the following</p>
 <ul>
@@ -78,7 +78,7 @@ Introduction</h1>
 <li>Compute strains in an object undergoing deformation</li>
 </ul>
 <p>In all cases, the input files for these examples are located in the <code>dice_root/examples</code> folder if a package installer was used ton install <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a>, or in the <code>dice_root/tests/examples</code> folder if referencing the source code. To experiment with these examples, these files should be copied to a temporary folder. Run the <code>dice</code> executable in the temporary folder rather than inside the repository or the system install directory.</p>
-<h1><a class="anchor" id="autotoc_md44"></a>
+<h1><a class="anchor" id="autotoc_md38"></a>
 Input Files</h1>
 <ul>
 <li><code>input.xml</code></li>
@@ -90,7 +90,7 @@ Input Files</h1>
 <p>To run any of the examples below, simply use a terminal or command line program to <code>cd</code> into the example directory and run the dice executable. On Mac the call would be: </p><pre class="fragment">&lt;path_to_dice_exec&gt;/dice -i input.xml -v -t
 </pre><p>On Windows the call is: </p><pre class="fragment">&lt;path_to_dice_exec&gt;\dice.exe -i input.xml -v -t
 </pre><p>The <code>-v</code> option turns on verbose output and the <code>-t</code> option will print the timing statistics.</p>
-<h3><a class="anchor" id="autotoc_md45"></a>
+<h3><a class="anchor" id="autotoc_md39"></a>
 Example 1: Mechanism</h3>
 <p>This example illustrates how to define conformal subsets and use them to track parts of a mechanism during operation.</p>
 <p>The image data for this example is a <code>.cine</code> video file. The <code>.cine</code> format is used for high speed video. There are a number of problems with the image data for this example: the speckle pattern is not evenly distributed; the speckles are of poor sizes; the parts in the video move in a jerky fashion; the center wheel has a lot of speckular reflection; some parts are too small for a proper subset; and some parts are of odd shapes, making square subsets difficult. This example is designed to show how to collect motion data, even with a terrible set of images. It is definitately not a good example to follow in terms of the experimental set up.</p>
@@ -102,7 +102,7 @@ Example 1: Mechanism</h3>
    <p></p>
 <p>Another thing to notice is that Subset 3 is defined in a region that does not have any speckles! The reason that Subset 3 tracks without the need for speckles is because the <code>SIMPLEX</code> method is used as the <code>correlation_method</code> in <code>params.xml</code>. The <code>SIMPLEX</code> method does not rely on image gradients, hence speckles are not necessary. Speckles do however provide more accuracy, when the <code>SIMPLEX</code> method is used because it increases the contrast variation in the subset. Also without speckles the results are more prone to speckular reflection as the parts move. We include this speckle free subset here to show how <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a> can be used to track motion without patterning.</p>
 <p>Also included in the examples folder is a python script that will plot the results for each frame and subset. The script serves as a template to plot the results of individual subset motions or the full-field displacements.</p>
-<h3><a class="anchor" id="autotoc_md46"></a>
+<h3><a class="anchor" id="autotoc_md40"></a>
 Example 2: Obstructions</h3>
 <p>The files for this example are in the <code>obstruction</code> folder of the <code>tests/examples/</code> directory.</p>
 <p>This example shows how to manage obstructions that may block the path of the object being tracked. In some instances a subset will partially disappear behind an object. Most tracking algorithms will fail if this happens for even part of the subset. In <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a>, these obstructions can be masked out (and even tracked themselves) so that the correlation only uses the visible portions of the subset.</p>
@@ -117,7 +117,7 @@ Example 2: Obstructions</h3>
 <p>As Subset 0 rotates behind the fixed obstruction, the pixels that become blocked are deactivated. If the user changes the parameter for <code>output_deformed_subset_images</code> to true, images will be written for each step that show the deactivated pixels as white in color. The same is true for the parts of Subset 0 that become blocked by Subset 1 in the later frames.</p>
 <p>The excluded area, shown in blue above, is also deactivated from the first frame because it is blocked by the fixed obstruction.</p>
 <p>In the results for this example, a separate output file was generated for each subset. To split the subset solutions into their own files the <code>separate_output_file_for_each_subset</code> was used in <code>input.xml</code>.</p>
-<h3><a class="anchor" id="autotoc_md47"></a>
+<h3><a class="anchor" id="autotoc_md41"></a>
 Example 3: Full-field displacements and strains</h3>
 <p>The files for this example are in the <code>full_field</code> folder of the <code>tests/examples/</code> directory.</p>
 <p>This example shows how to perform a standard full-field DIC analysis and compute strains based on the displacements using the virtual strain gauge (VSG).</p>
@@ -134,7 +134,7 @@ Example 3: Full-field displacements and strains</h3>
 </div><!-- PageDoc -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 30 2019 12:21:20 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Oct 30 2019 12:36:45 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.16
 </small></address>
