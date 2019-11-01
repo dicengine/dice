@@ -56,6 +56,17 @@ SET(DICE_HEADERS
   ./mesh/DICe_Mesh.h
   )
 
+IF(DEFINED TRACKLIB_DIR)
+  SET(DICE_SOURCES
+    ${DICE_SOURCES}
+    ${TRACKLIB_DIR}/src/TrackLib_Driver.cpp
+  )
+  SET(DICE_HEADERS
+    ${DICE_HEADERS}
+    ${TRACKLIB_DIR}/src/TrackLib_Driver.h
+  )
+ENDIF()
+
 IF(DICE_ENABLE_MANYCORE)
   SET(DICE_SOURCES
     ${DICE_SOURCES}

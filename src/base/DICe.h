@@ -148,6 +148,8 @@ const char* const correlation_routine = "correlation_routine";
 /// String parameter name
 const char* const use_global_dic = "use_global_dic";
 /// String parameter name
+const char* const use_tracklib = "use_tracklib";
+/// String parameter name
 const char* const use_constrained_opt_dic = "use_constrained_opt_dic";
 /// String parameter name
 const char* const use_integrated_dic = "use_integrated_dic";
@@ -399,6 +401,7 @@ enum Target_Field_Descriptor {
 enum Analysis_Type {
   LOCAL_DIC=0,
   GLOBAL_DIC,
+  TRACKLIB,
   // DON'T ADD ANY BELOW THIS
   MAX_ANALYSIS_TYPE,
   NO_SUCH_ANALYSIS_TYPE

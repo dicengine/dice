@@ -212,6 +212,10 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
     DEBUG_MSG("Using GLOBAL DIC formulation since mesh_size or mesh_file parameter was specified.");
     analysis_type = GLOBAL_DIC;
   }
+  else if(inputParams->get(DICe::use_tracklib,false)){
+    DEBUG_MSG("Using TRACKLIB formulation since use_tracklib was specified.");
+    analysis_type = TRACKLIB;
+  }
 
   // Test the input values
   std::vector<std::pair<std::string,std::string> > required_params;
@@ -222,6 +226,9 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
     //required_params.push_back(std::pair<std::string,std::string>(DICe::image_edge_buffer_size,"int"));
   }
   if(analysis_type==LOCAL_DIC){
+    required_params.push_back(std::pair<std::string,std::string>(DICe::output_folder,"string"));
+  }
+  if(analysis_type==TRACKLIB){
     required_params.push_back(std::pair<std::string,std::string>(DICe::output_folder,"string"));
   }
 
@@ -244,7 +251,7 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
       required_param_missing = true;
     }
   }
-  else{ // GLOBAL DIC
+  else if(analysis_type==GLOBAL_DIC){ // GLOBAL DIC
     std::vector<std::string> invalid_params;
     invalid_params.push_back(DICe::step_size);
     invalid_params.push_back(DICe::subset_size);

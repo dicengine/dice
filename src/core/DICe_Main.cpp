@@ -45,7 +45,9 @@
 #include <DICe_ImageIO.h>
 #include <DICe_Schema.h>
 #include <DICe_Triangulation.h>
-
+#ifdef DICE_ENABLE_TRACKLIB
+#include <TrackLib_Driver.h>
+#endif
 
 #include <fstream>
 
@@ -182,6 +184,17 @@ int main(int argc, char *argv[]) {
       const bool separate_header_file = input_params->get<bool>(DICe::create_separate_run_info_file,false);
       if(separate_header_file){
         *outStream << "Execution information will be written to a separate file (not placed in the output headers)" << std::endl;
+      }
+
+      // for tracklib use, execution gets handed over to tracklib here
+      if(input_params->get(DICe::use_tracklib,false)){
+#ifdef DICE_ENABLE_TRACKLIB
+        TrackLib::tracklib_driver(input_params,correlation_params,image_files);
+        DICe::finalize();
+        return 0;
+#else
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"use_tracklib option is only valid when DICe is built with tracklib on");
+#endif
       }
 
       // create schemas:
