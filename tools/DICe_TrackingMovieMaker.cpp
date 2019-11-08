@@ -269,7 +269,7 @@ int main(int argc, char *argv[]) {
     std::stringstream cine_ss;
     cine_ss << trimmed_cine_name << "_" << frame << ".cine";
     DEBUG_MSG("Loading cine image " << cine_ss.str());
-    Mat mat_img = utils::read_image(cine_ss.str().c_str());
+    Mat mat_img = DICe::utils::read_image(cine_ss.str().c_str());
     Mat out_img(mat_img.size(), CV_8UC3);
     cvtColor(mat_img, out_img, cv::COLOR_GRAY2RGB);
 
