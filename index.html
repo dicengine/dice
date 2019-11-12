@@ -556,6 +556,7 @@ Requirements</h2>
 <li>Boost is no longer a dependency. It was removed Sept. 2018</li>
 <li>LibTiff, LifJpeg, and LibPng are also not required anymore, they get built with OpenCV</li>
 </ul>
+<p>For windows users, see the instructions below for using the <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a> Developer Packs, which avoid having to build any of the dependencies listed above (Trilinos, OpenCV, or LAPACK).</p>
 <h2><a class="anchor" id="autotoc_md23"></a>
 CMake</h2>
 <p><a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a> makes use of CMake for build configuration. Sample CMake scripts for building Trilinos and <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a> are in the folder <code>dice\scripts</code></p>
@@ -639,11 +640,36 @@ $ cd tests
 $ ctest
 </pre><h3><a class="anchor" id="autotoc_md30"></a>
 Windows</h3>
-<p>First, download and install CLAPACK from <code><a href="http://www.netlib.org/clapack/">http://www.netlib.org/clapack/</a></code>. In the top level directory, create a file called <code>do-cmake.bat</code> with the contents: </p><pre class="fragment">cmake -D CMAKE_INSTALL_PREFIX:PATH=&lt;install prefix&gt; 
--D CMAKE_BUILD_TYPE:STRING=RELEASE -G "NMake Makefiles" .
-</pre><p>Note that the entire do-cmake file should be a single line with no carriage returns. Then execute </p><pre class="fragment">$ do-cmake.bat
-$ nmake
-</pre><p>Once CLAPACK has built, Trilinos must be built. A sample <code>do-trilinos-cmake-win.bat</code> file is provided in the <code>\dice\scripts</code> folder. The same process for building CLAPACK can be used to build Trilinos and eventually <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a>. A sample <code>do-dice-cmake-win.bat</code> file is also included in the repository in the <code>\dice\scripts</code> folder.</p>
+<p>Assumptions:</p><ol type="1">
+<li>You currently have CMake installed</li>
+<li>git is installed and available through Windows terminal</li>
+<li>The <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a> source code has been cloned</li>
+</ol>
+<p>Steps:</p>
+<ol type="1">
+<li>Download and extract the DICeDevPack (there are VS2013 and VS2017 options) - <a href="https://github.com/dicengine/dice/releases/tag/wdp1.0">https://github.com/dicengine/dice/releases/tag/wdp1.0</a></li>
+<li>(If you already have Visual Studio 13 or 17 installed with command line tools you can skip this step) Once extracted, open the dev pack and navigate to the vs2013 or vs2017 folder. Run the Visual Studio install executable.</li>
+<li>In the <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a> source code folder (cloned above, not the dev pack directory), add a new directory named "build" such that the structure is: ...\DICe\build</li>
+<li>Copy the following file from the DICeDevPack scripts folder into the build dir you just created: DICeDevPack/scripts/do-cmake.bat</li>
+<li>Open the "do-cmake.bat" that you just copied in a text editor and update the following information: a. "CMAKE_INSTALL_PREFIX:FILEPATH=" with the path to your dice install (for example: CMAKE_INSTALL_PREFIX:FILEPATH=C:\Users\user\software\DICe\build ) b. "DICE_DEVPACK_DIR:STRING=" with the path to your DICeDevPack (for example: DICE_DEVPACK_DIR:STRING="C:\Users\user\software\DICeDevPack")</li>
+<li>Launch Visual Studio's native tools command prompt. For example, on a 64 bit system with VS2013 installed: click the start button, scroll through the list of applications to "Visual Studio 2013", click the down arrow, and selected "Visual Studio Tools". From this directory, I select "VS2013 x64 Native Tools Command Prompt".</li>
+<li>From the VS Command prompt, navigate to the <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a>\build folder with do-cmake.bat file from step 4 and run the .bat file.</li>
+<li>Once complete, run the command "nmake" from the terminal.</li>
+<li>Update your PATH env variable to include the path to the <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a> build by entering the following at the command line:</li>
+</ol>
+<pre class="fragment">$ set PATH=%PATH%;&lt;path to DICe build&gt;\bin
+</pre><ol type="1">
+<li>cd into test directory that should be in the same dir as the do-cmake.bat you ran.</li>
+<li>From this directory, run ctest</li>
+</ol>
+<pre class="fragment">$ ctest
+</pre><p>If everything has been set up properly, all tests should pass.</p>
+<p>Troubleshooting:</p>
+<ol type="1">
+<li>If you received the error message: "CMake Error: The source directory "&lt;Path/to/DICeDevPack&gt;" does not appear to contain CMakeLists.txt." You didn't put the do-cmake.bat file in the <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a> dir in a build folder.</li>
+<li>Every test fails with an error message saying "Could not find executable &lt;Path/to/executable&gt;" Check to make sure the excutable is in the specified path. If not, rerun do-cmake.bat and nmake.</li>
+<li>If the first several tests fail you probably failed to set your PATH to include the bin. Verify you set it as outlined in step 8.</li>
+</ol>
 <h3><a class="anchor" id="autotoc_md31"></a>
 Building the GUI from source</h3>
 <p>To build the <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a> gui from source, four steps are required. First a separate DICe_gui repo needs to be cloned. Then nodejs has to be installed. After this, a pre-built binary for electron needs to be installed. The paths to the <a class="el" href="class_d_i_ce.html" title="A generic class that provides an abstraction of the local DIC shape function.">DICe</a> executables needs to be set in a javascript file. At this point, the gui is ready to run. Detailed instructions are provided for Ubuntu linux, but the instructions for other operating systems can easily be replicated.</p>
@@ -691,7 +717,7 @@ License</h2>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 30 2019 12:36:47 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Nov 12 2019 10:06:10 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.16
 </small></address>
