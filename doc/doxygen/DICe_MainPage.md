@@ -829,6 +829,9 @@ The prerequisite dependencies required for installing DICe include:
 
 -   LibTiff, LifJpeg, and LibPng are also not required anymore, they get built with OpenCV
 
+For windows users, see the instructions below for using the DICe Developer Packs, which avoid having to 
+build any of the dependencies listed above (Trilinos, OpenCV, or LAPACK).
+
 CMake
 -----
 
@@ -991,24 +994,60 @@ Clone DICe and build.
     
 ### Windows
 
-First, download and install CLAPACK from
-`http://www.netlib.org/clapack/`. In the top level directory, create a
-file called `do-cmake.bat` with the contents:
+Assumptions:
+1. You currently have CMake installed
+2. git is installed and available through Windows terminal
+3. The DICe source code has been cloned
 
-    cmake -D CMAKE_INSTALL_PREFIX:PATH=<install prefix> 
-    -D CMAKE_BUILD_TYPE:STRING=RELEASE -G "NMake Makefiles" .
+Steps:
 
-Note that the entire do-cmake file should be a single line with no
-carriage returns. Then execute
+1. Download and extract the DICeDevPack (there are VS2013 and VS2017 options) - https://github.com/dicengine/dice/releases/tag/wdp1.0
 
-    $ do-cmake.bat
-    $ nmake
+3. (If you already have Visual Studio 13 or 17 installed with command line tools you can skip this step)
+Once extracted, open the dev pack and navigate to the vs2013 or vs2017 folder. Run the Visual Studio install executable.
 
-Once CLAPACK has built, Trilinos must be built. A sample
-`do-trilinos-cmake-win.bat` file is provided in the `\dice\scripts`
-folder. The same process for building CLAPACK can be used to build
-Trilinos and eventually DICe. A sample `do-dice-cmake-win.bat` file is
-also included in the repository in the `\dice\scripts` folder.
+4. In the DICe source code folder (cloned above, not the dev pack directory), add a new directory named "build" such that the structure is: 
+   ...\DICe\build
+
+5. Copy the following file from the DICeDevPack scripts folder into the build dir you just created:
+   DICeDevPack/scripts/do-cmake.bat
+
+6. Open the "do-cmake.bat" that you just copied in a text editor and update the following information:
+   a. "CMAKE_INSTALL_PREFIX:FILEPATH=" with the path to your dice install (for example: CMAKE_INSTALL_PREFIX:FILEPATH=C:\Users\user\software\DICe\build )
+   b. "DICE_DEVPACK_DIR:STRING=" with the path to your DICeDevPack (for example: DICE_DEVPACK_DIR:STRING="C:\Users\user\software\DICeDevPack")
+
+7. Launch Visual Studio's native tools command prompt. For example, on a 64 bit system 
+   with VS2013 installed: click the start button, scroll through
+   the list of applications to "Visual Studio 2013", click the down arrow, and selected "Visual Studio Tools".
+   From this directory, I select "VS2013 x64 Native Tools Command Prompt".
+
+8. From the VS Command prompt, navigate to the DICe\build folder with do-cmake.bat file from step 4 and run the .bat file.
+
+9. Once complete, run the command "nmake" from the terminal.
+
+10. Update your PATH env variable to include the path to the DICe build by entering the following at the command line:
+
+
+    $ set PATH=%PATH%;<path to DICe build>\bin
+
+11. cd into test directory that should be in the same dir as the do-cmake.bat you ran. 
+
+12. From this directory, run ctest
+
+
+    $ ctest
+
+If everything has been set up properly, all tests should pass.
+
+Troubleshooting:
+
+1. If you received the error message: "CMake Error: The source directory "<Path/to/DICeDevPack>" does not appear to contain CMakeLists.txt."
+   You didn't put the do-cmake.bat file in the DICe dir in a build folder.
+2. Every test fails with an error message saying "Could not find executable <Path/to/executable>"
+   Check to make sure the excutable is in the specified path. If not, rerun do-cmake.bat and nmake.
+3. If the first several tests fail
+   you probably failed to set your PATH to include the bin. Verify you set it as outlined in step 8.
+
 
 ### Building the GUI from source
 
