@@ -559,7 +559,6 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
     TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index < first_frame_index,std::invalid_argument,"Error, the cine ref index is < the first frame index");
     TEUCHOS_TEST_FOR_EXCEPTION(cine_end_index < cine_start_index,std::invalid_argument,"Error, the cine end index is < the cine start index");
     TEUCHOS_TEST_FOR_EXCEPTION(cine_end_index < cine_ref_index,std::invalid_argument,"Error, the cine end index is < the ref index");
-
     // check if the reference frame should be averaged:
     int_t num_avg_frames = -1;
     if(params->isParameter(DICe::time_average_cine_ref_frame))
@@ -567,11 +566,15 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
     // strip the .cine part from the end of the cine file:
     std::string trimmed_cine_name = cine_name.str();
     const std::string ext(".cine");
-    if(trimmed_cine_name.size() > ext.size() && trimmed_cine_name.substr(trimmed_cine_name.size() - ext.size()) == ".cine" )
+	std::string szLowerCaseTrimmedCineName(trimmed_cine_name.substr(trimmed_cine_name.size() - ext.size()));
+	to_lower(szLowerCaseTrimmedCineName);
+    if(trimmed_cine_name.size() > ext.size() && szLowerCaseTrimmedCineName == ".cine")
     {
        trimmed_cine_name = trimmed_cine_name.substr(0, trimmed_cine_name.size() - ext.size());
-    }else{
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid cine file: " << cine_file_name);
+    }
+	else
+	{
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid cine file: " << cine_file_name); 
     }
     std::stringstream ref_cine_ss;
     ref_cine_ss << trimmed_cine_name << "_";
@@ -579,11 +582,13 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
       ref_cine_ss << "avg" << cine_ref_index << "to" << cine_ref_index + num_avg_frames;
     else
       ref_cine_ss << cine_ref_index;
+
     ref_cine_ss << ".cine";
     const int_t total_num_frames = std::floor((cine_end_index-cine_start_index)/cine_skip_index) + 2;
     image_files.resize(total_num_frames);
     image_files[0] = ref_cine_ss.str();
     int_t current_index = 1;
+
     for(int_t i=cine_start_index;i<=cine_end_index;i+=cine_skip_index){
       std::stringstream def_cine_ss;
       def_cine_ss << trimmed_cine_name << "_" << i << ".cine";
@@ -597,7 +602,9 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
       Teuchos::RCP<DICe::cine::Cine_Reader> stereo_cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(stereo_cine_name.str(),bhs.getRawPtr()));
       // strip the .cine part from the end of the cine file:
       std::string stereo_trimmed_cine_name = stereo_cine_name.str();
-      if(stereo_trimmed_cine_name.size() > ext.size() && stereo_trimmed_cine_name.substr(stereo_trimmed_cine_name.size() - ext.size()) == ".cine" )
+	  std::string szLowerCaseTrimmedCineName(stereo_trimmed_cine_name.substr(stereo_trimmed_cine_name.size() - ext.size()));
+	  to_lower(szLowerCaseTrimmedCineName);
+      if(stereo_trimmed_cine_name.size() > ext.size() && szLowerCaseTrimmedCineName == ".cine" )
       {
          stereo_trimmed_cine_name = stereo_trimmed_cine_name.substr(0, stereo_trimmed_cine_name.size() - ext.size());
       }else{
