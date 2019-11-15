@@ -566,9 +566,9 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
     // strip the .cine part from the end of the cine file:
     std::string trimmed_cine_name = cine_name.str();
     const std::string ext(".cine");
-	std::string szLowerCaseTrimmedCineName(trimmed_cine_name.substr(trimmed_cine_name.size() - ext.size()));
-	to_lower(szLowerCaseTrimmedCineName);
-    if(trimmed_cine_name.size() > ext.size() && szLowerCaseTrimmedCineName == ".cine")
+	std::string lower_case_trimmed_cine_ext(trimmed_cine_name.substr(trimmed_cine_name.size() - ext.size()));
+	to_lower(lower_case_trimmed_cine_ext);
+    if(trimmed_cine_name.size() > ext.size() && lower_case_trimmed_cine_ext == ".cine")
     {
        trimmed_cine_name = trimmed_cine_name.substr(0, trimmed_cine_name.size() - ext.size());
     }
@@ -602,9 +602,9 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
       Teuchos::RCP<DICe::cine::Cine_Reader> stereo_cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(stereo_cine_name.str(),bhs.getRawPtr()));
       // strip the .cine part from the end of the cine file:
       std::string stereo_trimmed_cine_name = stereo_cine_name.str();
-	  std::string szLowerCaseTrimmedCineName(stereo_trimmed_cine_name.substr(stereo_trimmed_cine_name.size() - ext.size()));
-	  to_lower(szLowerCaseTrimmedCineName);
-      if(stereo_trimmed_cine_name.size() > ext.size() && szLowerCaseTrimmedCineName == ".cine" )
+	  std::string lower_case_trimmed_cine_ext(stereo_trimmed_cine_name.substr(stereo_trimmed_cine_name.size() - ext.size()));
+	  to_lower(lower_case_trimmed_cine_ext);
+      if(stereo_trimmed_cine_name.size() > ext.size() && lower_case_trimmed_cine_ext == ".cine" )
       {
          stereo_trimmed_cine_name = stereo_trimmed_cine_name.substr(0, stereo_trimmed_cine_name.size() - ext.size());
       }else{
