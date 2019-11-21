@@ -48,6 +48,9 @@
 #include <DICe_Parser.h>
 #include <DICe_Calibration.h>
 #include <DICe_CameraSystem.h>
+#ifdef DICE_ENABLE_TRACKLIB
+#include <TrackLib_Driver.h>
+#endif
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -113,7 +116,8 @@ Teuchos::ParameterList parse_filter_string(int argc, char *argv[]){
         filters.set(filter_name,filter_params);
       filter_params = Teuchos::ParameterList();
       filter_name = arg;
-      if(filter_name=="none") // save off an empty parameter list for filter:none
+      // TODO remove the tracklib filter once it has parameters
+      if(filter_name=="none"||filter_name=="tracklib")  // save off an empty parameter list for filter:none
         filters.set(filter_name,filter_params);
       continue;
     } // end found filter keyword
@@ -148,6 +152,7 @@ Teuchos::ParameterList parse_filter_string(int argc, char *argv[]){
 
 DICE_LIB_DLL_EXPORT
 int_t opencv_server(int argc, char *argv[]){
+  DEBUG_MSG("opencv_server(): begin");
 
   int_t error_code = 0;
 
@@ -193,6 +198,13 @@ int_t opencv_server(int argc, char *argv[]){
         error_code = opencv_dot_targets(img,options,return_thresh);
       }else if(filter==opencv_server_filter_epipolar_line){
         error_code = opencv_epipolar_line(img,options,file_it==io_files.begin());
+      }else if(filter==opencv_server_filter_tracklib){
+        DEBUG_MSG("Applying TrackLib filter");
+#ifdef DICE_ENABLE_TRACKLIB
+        error_code = TrackLib::tracklib_preview(img,options);
+#else
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Filter tracklib is only available when tracklib is available");
+#endif
       }else{
         std::cout << "error, unknown filter: " << filter << std::endl;
         error_code = 5;
@@ -205,6 +217,7 @@ int_t opencv_server(int argc, char *argv[]){
     //if(error_code) // exit on the first error
     //  return error_code;
   } // end file iteration
+  DEBUG_MSG("opencv_server(): end");
   return error_code;
 }
 
