@@ -116,8 +116,7 @@ Teuchos::ParameterList parse_filter_string(int argc, char *argv[]){
         filters.set(filter_name,filter_params);
       filter_params = Teuchos::ParameterList();
       filter_name = arg;
-      // TODO remove the tracklib filter once it has parameters
-      if(filter_name=="none"||filter_name=="tracklib")  // save off an empty parameter list for filter:none
+      if(filter_name=="none")  // save off an empty parameter list for filter:none
         filters.set(filter_name,filter_params);
       continue;
     } // end found filter keyword
