@@ -162,6 +162,20 @@ int_t opencv_server(int argc, char *argv[]){
 #endif
   Teuchos::ParameterList io_files = input_params.get<Teuchos::ParameterList>(DICe::opencv_server_io_files,Teuchos::ParameterList());
   Teuchos::ParameterList filters = input_params.get<Teuchos::ParameterList>(DICe::opencv_server_filters,Teuchos::ParameterList());
+
+  // if the background filter is active, create a background image to pass to subsequent filters:
+  Mat background_img; // empty if no background image is available
+  for(Teuchos::ParameterList::ConstIterator filter_it=filters.begin();filter_it!=filters.end();++filter_it){
+    if(filter_it->first == "background"){
+      Teuchos::ParameterList options = filters.get<Teuchos::ParameterList>(filter_it->first,Teuchos::ParameterList());
+      if(options.get<int>(opencv_server_background_num_frames,0)==0) break; // zero means don't do background subtraction
+      opencv_create_cine_background_image(options);
+      const std::string background_file = options.get<std::string>(opencv_server_background_file_name); // the check that this param exists happens in function above
+      background_img = imread(background_file, IMREAD_GRAYSCALE);
+      break;
+    }
+  }
+
   // iterate the selected images
   for(Teuchos::ParameterList::ConstIterator file_it=io_files.begin();file_it!=io_files.end();++file_it){
     std::string image_in_filename = file_it->first;
@@ -183,7 +197,7 @@ int_t opencv_server(int argc, char *argv[]){
       DEBUG_MSG("Applying filter: " << filter);
       Teuchos::ParameterList options = filters.get<Teuchos::ParameterList>(filter,Teuchos::ParameterList());
       // switch statement on the filters, pass the options as an argument and the opencv image mat
-      if(filter==opencv_server_filter_none){
+      if(filter==opencv_server_filter_none||filter==opencv_server_filter_background){
         // no op
       }
       else if(filter==opencv_server_filter_binary_threshold){
@@ -200,7 +214,7 @@ int_t opencv_server(int argc, char *argv[]){
       }else if(filter==opencv_server_filter_tracklib){
         DEBUG_MSG("Applying TrackLib filter");
 #ifdef DICE_ENABLE_TRACKLIB
-        error_code = TrackLib::tracklib_preview(img,options);
+        error_code = TrackLib::tracklib_preview(img,background_img,options);
 #else
         TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Filter tracklib is only available when tracklib is available");
 #endif
@@ -240,6 +254,42 @@ int_t opencv_adaptive_threshold(Mat & img, Teuchos::ParameterList & options){
   double binary_constant = options.get<double>(opencv_server_binary_constant,100.0);
   DEBUG_MSG("option, binary constant: " << binary_constant);
   adaptiveThreshold(img,img,255.0,filter_mode,threshold_mode,block_size,binary_constant);
+  return 0;
+}
+
+DICE_LIB_DLL_EXPORT
+int_t opencv_create_cine_background_image(Teuchos::ParameterList & options){
+  TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(opencv_server_cine_file_name),std::runtime_error,"");
+  const std::string cine_file = options.get<std::string>(opencv_server_cine_file_name);
+  TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(opencv_server_background_file_name),std::runtime_error,"");
+  const std::string background_file = options.get<std::string>(opencv_server_background_file_name);
+  DEBUG_MSG("opencv_create_cine_background_image(): cine file:          " << cine_file);
+  TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(opencv_server_background_ref_frame),std::runtime_error,"");
+  const int_t ref_frame = options.get<int>(opencv_server_background_ref_frame);
+  DEBUG_MSG("opencv_create_cine_background_image(): cine ref frame:     " << ref_frame);
+  TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(opencv_server_background_num_frames),std::runtime_error,"");
+  const int_t num_frames_to_avg = options.get<int>(opencv_server_background_num_frames);
+  DEBUG_MSG("opencv_create_cine_background_image(): num frames to avg:  " << num_frames_to_avg);
+
+  // read the first cine frame in the file
+  Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
+  params->set(filter_failed_cine_pixels,true);
+  params->set(convert_cine_to_8_bit,true);
+  params->set(DICe::reinitialize_cine_reader_conversion_factor,true);
+  // insert the frame number before the extension
+  TEUCHOS_TEST_FOR_EXCEPTION(cine_file.find(".cine")==std::string::npos,std::runtime_error,"invalid cine file name");
+  size_t found_ext = cine_file.find(".cine");
+  std::stringstream zero_frame_ss; // decorate the cine file name to indicate averaging frames ref_frame to ref_frame + num_frames_to_avg
+  zero_frame_ss << "_avg" << ref_frame << "to" << ref_frame+num_frames_to_avg;
+  std::string cine_file_zero_frame = cine_file;
+  cine_file_zero_frame.insert(found_ext,zero_frame_ss.str());
+  Teuchos::RCP<Image> bg_img = Teuchos::rcp(new Image(cine_file_zero_frame.c_str(),params));
+  // write an output .tiff image
+  DEBUG_MSG("opencv_create_cine_background_image(): writing background file: " << background_file);
+  bg_img->write(background_file);
+
+  DEBUG_MSG("opencv_create_cine_background_image(): complete " << background_file);
+
   return 0;
 }
 

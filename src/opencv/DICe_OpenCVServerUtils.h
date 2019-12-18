@@ -68,6 +68,7 @@ const char* const opencv_server_filter_dot_targets = "dot_targets";
 const char* const opencv_server_filter_epipolar_line = "epipolar_line";
 const char* const opencv_server_filter_tracklib = "tracklib";
 const char* const opencv_server_filter_none = "none"; // used to display the original image with no filter
+const char* const opencv_server_filter_background = "background"; // create a background image to subtract from subsequent frames
 
 /// Filter parameters
 const char* const opencv_server_filter_mode = "filter_mode";
@@ -84,7 +85,10 @@ const char* const opencv_server_epipolar_dot_x = "epipolar_dot_x";
 const char* const opencv_server_epipolar_dot_y = "epipolar_dot_y";
 const char* const opencv_server_epipolar_is_left = "epipolar_is_left";
 const char* const opencv_server_cal_file = "cal_file";
-
+const char* const opencv_server_cine_file_name = "cine_file_name";
+const char* const opencv_server_background_file_name = "background_file_name";
+const char* const opencv_server_background_ref_frame = "background_ref_frame";
+const char* const opencv_server_background_num_frames = "background_num_frames";
 
 /// parse the input string and return a Teuchos ParameterList
 DICE_LIB_DLL_EXPORT
@@ -118,10 +122,14 @@ DICE_LIB_DLL_EXPORT
 int_t opencv_dot_targets(cv::Mat & img,
   Teuchos::ParameterList & options,
   int_t & return_thresh);
+
 DICE_LIB_DLL_EXPORT
 int_t opencv_epipolar_line(cv::Mat & img,
   Teuchos::ParameterList & options,
   const bool first_image);
+
+DICE_LIB_DLL_EXPORT
+int_t opencv_create_cine_background_image(Teuchos::ParameterList & options);
 
 // utilities
 

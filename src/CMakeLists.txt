@@ -56,15 +56,22 @@ SET(DICE_HEADERS
   ./mesh/DICe_Mesh.h
   )
 
+
 IF(DEFINED TRACKLIB_DIR)
-  SET(DICE_SOURCES
-    ${DICE_SOURCES}
-    ${TRACKLIB_DIR}/src/TrackLib_Driver.cpp
-  )
-  SET(DICE_HEADERS
-    ${DICE_HEADERS}
-    ${TRACKLIB_DIR}/src/TrackLib_Driver.h
-  )
+  FILE ( GLOB tracklib_files "${TRACKLIB_DIR}/src/*.cpp" )
+  FOREACH ( tracklib_file ${tracklib_files})
+    SET(DICE_SOURCES
+      ${DICE_SOURCES}
+      ${tracklib_file}
+    )
+  ENDFOREACH()
+  FILE ( GLOB tracklib_header_files "${TRACKLIB_DIR}/src/*.h" )
+  FOREACH ( tracklib_header_file ${tracklib_header_files})
+    SET(DICE_HEADERS
+      ${DICE_HEADERS}
+      ${tracklib_header_file}
+    )
+  ENDFOREACH()
 ENDIF()
 
 IF(DICE_ENABLE_MANYCORE)
