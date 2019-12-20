@@ -268,6 +268,17 @@ Gradient_Method string_to_gradient_method(std::string & in){
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
   return NO_SUCH_GRADIENT_METHOD; // prevent no return errors
 }
+DICE_LIB_DLL_EXPORT
+Shape_Function_Type string_to_shape_function_type(std::string & in){
+  // convert the string to uppercase
+  stringToUpper(in);
+  for(int_t i=0;i<MAX_SF;++i){
+    if(shapeFunctionTypeStrings[i]==in) return static_cast<Shape_Function_Type>(i);
+  }
+  std::cout << "Error: Shape_Function_Type " << in << " does not exist." << std::endl;
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"");
+  return NO_SUCH_SF; // prevent no return errors
+}
 
 /// Determine if the parameter is a string parameter
 DICE_LIB_DLL_EXPORT

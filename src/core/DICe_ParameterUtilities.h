@@ -131,6 +131,10 @@ Interpolation_Method string_to_interpolation_method(std::string & in);
 DICE_LIB_DLL_EXPORT
 Gradient_Method string_to_gradient_method(std::string & in);
 
+/// Convert a string to a DICe::Shape_Function_Type
+DICE_LIB_DLL_EXPORT
+Shape_Function_Type string_to_shape_function_type(std::string & in);
+
 /// Convert a string to a DICe::Optimization_Method
 DICE_LIB_DLL_EXPORT
 Optimization_Method string_to_optimization_method(std::string & in);
