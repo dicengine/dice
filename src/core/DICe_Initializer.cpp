@@ -472,7 +472,9 @@ Feature_Matching_Initializer::pre_execution_tasks(){
       match_features(prev_img_,schema_->def_img(0),left_x,left_y,right_x,right_y,tight_tol,outname.str(),threshold_block_size_);
       num_matches = left_x.size();
     }
-    TEUCHOS_TEST_FOR_EXCEPTION(num_matches < 10,std::runtime_error,"Error, not enough features matched for feature matching initializer");
+    TEUCHOS_TEST_FOR_EXCEPTION(num_matches < 10,std::runtime_error,"Error, not enough features matched for feature matching initializer./n"
+        "If the images have low contrast, consider using the feature matching initializer with thresholding by sepcifying a threshold block size > 0.\n"
+        "In the GUI there is another option for the initialization method that can be used to achieve this.");
   }
   // create a point cloud and find the nearest neighbor:
   point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
