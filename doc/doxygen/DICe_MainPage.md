@@ -544,7 +544,7 @@ Since there can potentially be several subsets inside of one window, many subset
          ...
       END
       TEST_FOR_MOTION
-      MOTION_WINDOW <test_window_upper_left_x> <test_window_upper_left_y> <width> <height> [tol]
+      MOTION_WINDOW <test_window_upper_left_x> <test_window_upper_left_y> <test_window_lower_righ_x> <test_window_lower_right_y> [tol]
     END CONFORMAL_SUBSET
 
     BEGIN CONFORMAL_SUBSET
