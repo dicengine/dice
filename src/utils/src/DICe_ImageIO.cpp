@@ -465,17 +465,26 @@ void write_image(const char * file_name,
     write_rawi_image(file_name,width,height,intensities,is_layout_right);
   }
   else{
+    // check the range of the values and scale to 8 bit
+    scalar_t max_value = 0.0;
+    for(int_t i=0;i<width*height;++i)
+      if(intensities[i]>max_value) max_value = intensities[i];
+    scalar_t conversion_factor = 1.0;
+    if(max_value > 255.0){
+      conversion_factor = 255.0 / max_value;
+    }
     cv::Mat out_img(height,width,CV_8UC1,cv::Scalar(0));
     for (int_t y=0; y<height; ++y) {
       if(is_layout_right)
         for (int_t x=0; x<width;++x){
-          out_img.at<uchar>(y,x) = std::round(intensities[y*width + x]);
+          out_img.at<uchar>(y,x) = std::round(intensities[y*width + x]*conversion_factor);
         }
       else
         for (int_t x=0; x<width;++x){
-          out_img.at<uchar>(y,x) = std::round(intensities[x*height+y]);
+          out_img.at<uchar>(y,x) = std::round(intensities[x*height+y]*conversion_factor);
         }
     }
+    out_img.convertTo(out_img,CV_8UC1);
     cv::imwrite(file_name,out_img);
   }
 }
