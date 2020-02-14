@@ -243,6 +243,7 @@ void read_image(const char * file_name,
       std::cerr << "Error, reading only a portion of an image is not supported for rawi, file name: " << file_name << "\n";
       throw std::exception();
     }
+    read_rawi_image_dimensions(file_name,width,height);
     read_rawi_image(file_name,intensities,layout_right);
   }
   else if(file_type==CINE){
@@ -276,6 +277,13 @@ void read_image(const char * file_name,
       netcdf::NetCDF_Reader netcdf_reader;
       const std::string netcdf_file = netcdf_file_name(file_name);
       const int_t index = netcdf_index(file_name);
+      if(sub_w>0||sub_h>0){
+        width = sub_w;
+        height = sub_h;
+      }else{
+        int_t num_time_steps = 0;
+        netcdf_reader.get_image_dimensions(netcdf_file.c_str(),width,height,num_time_steps);
+      }
       netcdf_reader.read_netcdf_image(netcdf_file.c_str(),index,intensities,sub_w,sub_h,sub_offset_x,sub_offset_y,layout_right);
     }
 #endif
@@ -303,7 +311,8 @@ void read_image(const char * file_name,
   // apply any post processing of the images as requested
   if(params!=Teuchos::null){
     if(params->get<bool>(remove_outlier_pixels,false)){
-      spread_histogram(width,height,intensities);
+      const intensity_t outlier_rep_value = params->get<double>(outlier_replacement_value,-1.0);
+      remove_outliers(width,height,intensities,outlier_rep_value);
     }
     if(params->get<bool>(spread_intensity_histogram,false)){
       spread_histogram(width,height,intensities);
@@ -332,7 +341,8 @@ void round_intensities(const int_t width,
 DICE_LIB_DLL_EXPORT
 void remove_outliers(const int_t width,
   const int_t height,
-  intensity_t * intensities){
+  intensity_t * intensities,
+  const intensity_t & rep_value){
 
   std::vector<intensity_t> sorted_intensities(width*height,0.0);
   for(int_t i=0;i<width*height;++i)
@@ -340,10 +350,14 @@ void remove_outliers(const int_t width,
   std::sort(sorted_intensities.begin(),sorted_intensities.end());
   const intensity_t outlier_intens = 0.98 * sorted_intensities[width*height-1];
   intensity_t replacement_intens = 0.0;
-  for(int_t i=0;i<width*height;++i){
-    if(sorted_intensities[width*height-i-1] < outlier_intens){
-      replacement_intens = sorted_intensities[width*height-i-1];
-      break;
+  if(rep_value>=0.0){
+    replacement_intens = rep_value;
+  }else{
+    for(int_t i=0;i<width*height;++i){
+      if(sorted_intensities[width*height-i-1] < outlier_intens){
+        replacement_intens = sorted_intensities[width*height-i-1];
+        break;
+      }
     }
   }
   DEBUG_MSG("utils::remove_outliers(): outlier intensity value: " << outlier_intens << " to be replaced with intensity: " << replacement_intens);

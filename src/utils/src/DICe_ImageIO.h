@@ -142,10 +142,12 @@ void round_intensities(const int_t width,
 /// \param width
 /// \param height
 /// \param intensities
+/// \param value replacement value
 DICE_LIB_DLL_EXPORT
 void remove_outliers(const int_t width,
   const int_t height,
-  intensity_t * intensities);
+  intensity_t * intensities,
+  const intensity_t & rep_value=-1.0);
 
 /// Round the image intensity values to the nearest integer value
 /// \param width

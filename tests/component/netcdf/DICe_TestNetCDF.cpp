@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
   }
 
   Image subImg("../images/goes14.2016.222.215844.BAND_01.nc",1235,491,496,370);
-  //subImg.write("netcdf_sub_image.tif");
+  subImg.write("netcdf_sub_image.tif");
   //subImg.write("netcdf_sub_image.rawi");
   Teuchos::RCP<Image> gold_sub_img = Teuchos::rcp(new Image("../images/netcdf_sub_image.rawi"));
   const scalar_t sub_diff = subImg.diff(gold_sub_img);
@@ -120,6 +120,14 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, the NetCDF image created from scratch was not read correctly" << std::endl;
   }
 
+//  Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
+//  params->set(remove_outlier_pixels,true);
+//  params->set(outlier_replacement_value,0.0);
+//  params->set(spread_intensity_histogram,true);
+//  Image goes16("PATH/goes16.nc",params);
+//  goes16.write("goes_16.tif");
+//  Image goes17("PATH/goes17.nc");
+//  goes17.write("goes_17.tif");
 
   *outStream << "--- End test ---" << std::endl;
 

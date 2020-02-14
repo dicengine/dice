@@ -176,6 +176,8 @@ const char* const filter_failed_cine_pixels = "filter_failed_cine_pixels";
 /// String parameter name
 const char* const remove_outlier_pixels = "remove_outlier_pixels";
 /// String parameter name
+const char* const outlier_replacement_value = "outlier_replacement_value";
+/// String parameter name
 const char* const convert_cine_to_8_bit = "convert_cine_to_8_bit";
 /// String parameter name
 const char* const reinitialize_cine_reader_conversion_factor = "reinitialize_cine_reader_conversion_factor";
