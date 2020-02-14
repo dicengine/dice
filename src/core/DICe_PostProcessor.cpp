@@ -152,13 +152,18 @@ Post_Processor::initialize_neighborhood(const scalar_t & neighborhood_radius){
     // note assumes that the same vector field spec was given for x and y
     coords = mesh_->get_overlap_field(coords_x_spec);
   }
+  Teuchos::RCP<MultiField> pixel_coords_x = mesh_->get_overlap_field(DICe::field_enums::SUBSET_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> pixel_coords_y = mesh_->get_overlap_field(DICe::field_enums::SUBSET_COORDINATES_Y_FS);
+
   // create neighborhood lists using nanoflann:
   DEBUG_MSG("creating the point cloud using nanoflann");
   point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
   point_cloud_->pts.resize(overlap_num_points_);
   for(int_t i=0;i<overlap_num_points_;++i){
-    point_cloud_->pts[i].x = coords->local_value(i*spa_dim+0);
-    point_cloud_->pts[i].y = coords->local_value(i*spa_dim+1);
+//    point_cloud_->pts[i].x = coords->local_value(i*spa_dim+0);
+//    point_cloud_->pts[i].y = coords->local_value(i*spa_dim+1);
+    point_cloud_->pts[i].x = pixel_coords_x->local_value(i);
+    point_cloud_->pts[i].y = pixel_coords_y->local_value(i);
   }
   DEBUG_MSG("building the kd-tree");
   Teuchos::RCP<kd_tree_2d_t> kd_tree = Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud_.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
@@ -188,6 +193,7 @@ Post_Processor::initialize_neighborhood(const scalar_t & neighborhood_radius){
       for(int_t j=0;j<num_neigh;++j){
         const int_t neigh_olid = ret_index[j];
         neighbor_list_[i].push_back(neigh_olid);
+        // distances are in pixel or physical units
         neighbor_dist_x_[i].push_back(coords->local_value(neigh_olid*spa_dim+0) - coords->local_value(olid*spa_dim+0));
         neighbor_dist_y_[i].push_back(coords->local_value(neigh_olid*spa_dim+1) - coords->local_value(olid*spa_dim+1));
       }
@@ -212,6 +218,7 @@ Post_Processor::initialize_neighborhood(const scalar_t & neighborhood_radius){
       for(size_t j=0;j<ret_matches.size();++j){
         const int_t neigh_olid = ret_matches[j].first;
         neighbor_list_[i].push_back(neigh_olid);
+        // distances are in pixel or physical units
         neighbor_dist_x_[i].push_back(coords->local_value(neigh_olid*spa_dim+0) - coords->local_value(olid*spa_dim+0));
         neighbor_dist_y_[i].push_back(coords->local_value(neigh_olid*spa_dim+1) - coords->local_value(olid*spa_dim+1));
       }
@@ -255,11 +262,10 @@ VSG_Strain_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList>
 void
 VSG_Strain_Post_Processor::pre_execution_tasks(){
   DEBUG_MSG("VSG_Strain_Post_Processor pre_execution_tasks() begin");
+  set_stereo_field_names();
   const scalar_t neigh_rad = (scalar_t)window_size_/2.0;
   initialize_neighborhood(neigh_rad);
   TEUCHOS_TEST_FOR_EXCEPTION(!neighborhood_initialized_,std::runtime_error,"Error, neighborhoods should be initialized here.");
-  DEBUG_MSG("VSG_Strain_Post_Processor pre_execution_tasks() end");
-  set_stereo_field_names();
   DICe::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
   DICe::field_enums::Field_Spec disp_y_spec = mesh_->get_field_spec(disp_y_name_);
   DICe::field_enums::Field_Spec coords_x_spec = mesh_->get_field_spec(coords_x_name_);
@@ -272,6 +278,7 @@ VSG_Strain_Post_Processor::pre_execution_tasks(){
     std::runtime_error,"Error: invalid field selections");
   TEUCHOS_TEST_FOR_EXCEPTION(coords_x_spec.get_rank()!=coords_y_spec.get_rank(),
     std::runtime_error,"Error: invalid field selections");
+  DEBUG_MSG("VSG_Strain_Post_Processor pre_execution_tasks() end");
 }
 
 void
