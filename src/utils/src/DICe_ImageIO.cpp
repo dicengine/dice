@@ -473,6 +473,8 @@ void write_image(const char * file_name,
     if(max_value > 255.0){
       conversion_factor = 255.0 / max_value;
     }
+    DEBUG_MSG("write_image(): max intensity value " << max_value);
+    DEBUG_MSG("write_image(): intensity value conversion factor " << conversion_factor);
     cv::Mat out_img(height,width,CV_8UC1,cv::Scalar(0));
     for (int_t y=0; y<height; ++y) {
       if(is_layout_right)
@@ -484,7 +486,6 @@ void write_image(const char * file_name,
           out_img.at<uchar>(y,x) = std::round(intensities[x*height+y]*conversion_factor);
         }
     }
-    out_img.convertTo(out_img,CV_8UC1);
     cv::imwrite(file_name,out_img);
   }
 }
