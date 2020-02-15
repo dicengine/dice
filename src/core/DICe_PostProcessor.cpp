@@ -254,7 +254,7 @@ VSG_Strain_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList>
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
   window_size_ = params->get<int_t>(strain_window_size_in_pixels);
-  TEUCHOS_TEST_FOR_EXCEPTION(window_size_<=0,std::runtime_error,"Error, window size must be greater than 0");
+  TEUCHOS_TEST_FOR_EXCEPTION(window_size_==0,std::runtime_error,"Error, strain_window_size_in_pixels must not be 0");
   DEBUG_MSG("VSG_Strain_Post_Processor strain window size: " << window_size_);
   set_field_names(params);
 }
@@ -263,7 +263,8 @@ void
 VSG_Strain_Post_Processor::pre_execution_tasks(){
   DEBUG_MSG("VSG_Strain_Post_Processor pre_execution_tasks() begin");
   set_stereo_field_names();
-  const scalar_t neigh_rad = (scalar_t)window_size_/2.0;
+  // negative window size is used to designate k-nearest neighbor searching so don't divide by 2 in that case
+  const scalar_t neigh_rad = window_size_<0?(scalar_t)window_size_:(scalar_t)window_size_/2.0;
   initialize_neighborhood(neigh_rad);
   TEUCHOS_TEST_FOR_EXCEPTION(!neighborhood_initialized_,std::runtime_error,"Error, neighborhoods should be initialized here.");
   DICe::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
