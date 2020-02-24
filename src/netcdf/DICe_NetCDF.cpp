@@ -136,8 +136,7 @@ NetCDF_Reader::read_netcdf_image(const char * file_name,
     nc_inq_var(ncid,i, &var_name[0], &nc_type,&num_dims, dim_ids, &num_var_attr);
     nc_inq_varname(ncid, i, &var_name[0]);
     std::string var_name_str = var_name;
-    // NetCDF 3 data_type: 1 byte, 2 char, 3 short, 4 int, 5 float, 6 double
-    // NetCDF 4 data_type: 1 byte, 2 unsigned byte, 3 char, 4 short, 5 unsigned short, 6 int, 7 unsinged int, 8 unsinged long long, 9 long long, 10 float, 11 double, 12 char**
+    // netcdf data types: 1: BYTE 2: CHAR 3: SHORT 4: INT 5: FLOAT 6: DOUBLE 7: UBYTE 8: USHORT 9: UINT 10: INT64 12: STRING
     DEBUG_MSG("NetCDF_Reader::get_image(): found variable " << var_name_str << " type " << nc_type << " num dims " << num_dims << " num attributes " << num_var_attr);
     if(strcmp(var_name, "data") == 0){
       data_var_index = i;
