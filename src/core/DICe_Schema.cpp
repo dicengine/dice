@@ -155,46 +155,64 @@ Schema::rotate_def_image(){
 }
 
 void
-Schema::set_def_image(const std::string & defName,
-  const int_t id){
+Schema::set_def_image(const std::string & defName){
   DEBUG_MSG("Schema: Resetting the deformed image");
   assert(def_imgs_.size()>0);
-  assert(id<(int_t)def_imgs_.size());
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::compute_image_gradients,compute_def_gradients_);
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
   imgParams->set(DICe::filter_failed_cine_pixels,filter_failed_cine_pixels_);
-
+  const bool has_motion_window = motion_window_params_->size()>0;
   // query the image dimensions:
-  if(has_extents_){
-    int_t w = 0;
-    int_t h = 0;
-    utils::read_image_dimensions(defName.c_str(),w,h);
-    const int_t buffer = 100; // if the extents are within 100 pixels of the image boundary use the whole image
-    const int_t offset_x = def_extents_[0] > buffer && def_extents_[0] < w - buffer ? def_extents_[0] : 0;
-    const int_t offset_y = def_extents_[2] > buffer && def_extents_[2] < h - buffer ? def_extents_[2] : 0;
-    const int_t end_x = def_extents_[1] > buffer && def_extents_[1] < w - buffer ? def_extents_[1] : w;
-    const int_t end_y = def_extents_[3] > buffer && def_extents_[3] < h - buffer ? def_extents_[3] : h;
-    const int_t width = end_x - offset_x;
-    const int_t height = end_y - offset_y;
-    DEBUG_MSG("Setting the deformed image using extents x: " << offset_x << " to " << end_x << " y: " << offset_y << " to " << end_y);
-    def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),offset_x,offset_y,width,height,imgParams));
+  for(size_t id=0;id<def_imgs_.size();++id){
+    if(has_extents_||has_motion_window){
+      int_t w = 0, h = 0;
+      int_t sub_width = 0, sub_height = 0;
+      int_t offset_x = 0, offset_y = 0;
+      int_t end_x = 0, end_y = 0;
+      utils::read_image_dimensions(defName.c_str(),w,h);
+      if(has_motion_window){
+        bool found_id = false;
+        for(std::map<int_t,Motion_Window_Params>::iterator it=motion_window_params_->begin();it!=motion_window_params_->end();++it){
+          if(it->second.sub_image_id_==(int_t)id){
+            offset_x = it->second.start_x_;
+            offset_y = it->second.start_y_;
+            end_x = it->second.end_x_;
+            end_y = it->second.end_y_;
+            found_id = true;
+            break;
+          }
+        }
+        if(!found_id){ // no motion window exists for this sub image id
+          TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,
+            "No motion window found for this sub image id, if motion windows are used, one must be set for each subset");
+        }
+      }else{
+        const int_t buffer = 100; // if the extents are within 100 pixels of the image boundary use the whole image
+        offset_x = def_extents_[0] > buffer && def_extents_[0] < w - buffer ? def_extents_[0] : 0;
+        offset_y = def_extents_[2] > buffer && def_extents_[2] < h - buffer ? def_extents_[2] : 0;
+        end_x = def_extents_[1] > buffer && def_extents_[1] < w - buffer ? def_extents_[1] : w;
+        end_y = def_extents_[3] > buffer && def_extents_[3] < h - buffer ? def_extents_[3] : h;
+      }
+      sub_width = end_x - offset_x;
+      sub_height = end_y - offset_y;
+      DEBUG_MSG("Setting the deformed image using extents x: " << offset_x << " to " << end_x <<
+        " y: " << offset_y << " to " << end_y << " width " << sub_width << " height " << sub_height);
+      def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),offset_x,offset_y,sub_width,sub_height,imgParams));
+    }else{
+      // see if the image has already been allocated:
+      if(def_imgs_[id]==Teuchos::null)
+        def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
+      else
+        def_imgs_[id]->update_image_fields(defName.c_str(),imgParams);
+    }
+    if(def_image_rotation_!=ZERO_DEGREES){
+      def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);
+    }
+    def_imgs_[id]->set_file_name(defName);
   }
-  else{
-    // see if the image has already been allocated:
-    if(def_imgs_[id]==Teuchos::null)
-      def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
-    else
-      def_imgs_[id]->update_image_fields(defName.c_str(),imgParams);
-  }
-  //TEUCHOS_TEST_FOR_EXCEPTION(def_imgs_[id]->width()!=ref_img_->width()||def_imgs_[id]->height()!=ref_img_->height(),
-  //  std::runtime_error,"Error, ref and def images must have the same dimensions");
-  if(def_image_rotation_!=ZERO_DEGREES){
-    def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);
-  }
-  def_imgs_[id]->set_file_name(defName);
 }
 
 void

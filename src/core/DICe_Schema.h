@@ -302,8 +302,7 @@ public:
   }
 
   /// Replace the deformed image for this Schema
-  void set_def_image(const std::string & defName,
-    const int_t id=0);
+  void set_def_image(const std::string & defName);
 
   /// Replace the deformed image using an intensity array
   void set_def_image(const int_t img_width,
