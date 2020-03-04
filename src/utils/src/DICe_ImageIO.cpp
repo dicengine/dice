@@ -41,6 +41,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <ctype.h>
 
 #include <DICe_ImageIO.h>
 #include <DICe_Rawi.h>
@@ -71,7 +72,13 @@ std::string cine_file_name(const char * decorated_cine_file){
   std::string cine_string(decorated_cine_file);
   // trim off the last underscore and the rest
   size_t found = cine_string.find_last_of("_");
-  std::string file_name = cine_string.substr(0,found);
+  std::string file_name;
+  if(found==std::string::npos||
+      (!std::isdigit(*(cine_string.substr(found+1).begin()))&&*(cine_string.substr(found+1).begin())!='-')){
+    file_name = cine_string;
+  }else{
+    file_name = cine_string.substr(0,found);
+  }
   // add the .cine extension back
   file_name+=".cine";
   return file_name;
