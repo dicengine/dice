@@ -134,6 +134,14 @@ void write_xml_real_param(const std::string & file_name,
   const std::string & name,
   const double & value);
 
+/// \brief Write a high precision real valued parameter to file
+/// \param file_name The name of the xml file to write to
+/// \param name The name of the parameter
+/// \param value The string value of the parameter
+void write_xml_high_precision_real_param(const std::string & file_name,
+  const std::string & name,
+  const double & value);
+
 /// \brief Write a boolean valued parameter to file
 /// \param file_name The name of the xml file to write to
 /// \param name The name of the parameter

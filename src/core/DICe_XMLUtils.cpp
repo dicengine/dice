@@ -173,6 +173,7 @@ void write_xml_bool_param(const std::string & file_name,
 }
 
 
+
 void write_xml_real_param(const std::string & file_name,
   const std::string & name,
   const double & value){
@@ -180,6 +181,19 @@ void write_xml_real_param(const std::string & file_name,
   file.open(file_name.c_str(),std::ios::app);
   file << "<Parameter name=\"" << name << "\" type=\"double\" value=\"" << value << "\" />  ";
   file << std::endl;
+  file.close();
+}
+
+void write_xml_high_precision_real_param(const std::string & file_name,
+  const std::string & name,
+  const double & value){
+  std::ofstream file;
+  file.open(file_name.c_str(),std::ios::app);
+  std::stringstream outputstream;
+  outputstream.precision(12);
+  outputstream << std::scientific;
+  outputstream << "<Parameter name=\"" << name << "\" type=\"double\" value=\"" << value << "\" />  ";
+  file <<outputstream.str() << std::endl;
   file.close();
 }
 

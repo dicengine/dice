@@ -578,19 +578,19 @@ Camera_System::write_camera_system_file(const std::string & file){
     std::vector<scalar_t> & intrinsics = *cameras_[camera_index]->intrinsics();
     for (int_t j = 0; j < Camera::MAX_CAM_INTRINSIC_PARAM; j++) {
       if (intrinsics[j] != 0) {
-        write_xml_real_param(file, Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(j)), intrinsics[j]);
+        write_xml_high_precision_real_param(file, Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(j)), intrinsics[j]);
       }
     }
     write_xml_string_param(file, "LENS_DISTORTION_MODEL", Camera::to_string(cameras_[camera_index]->lens_distortion_model()), false);
     //DEBUG_MSG("Camera_System::write_camera_system_file(): writing the extrinsic translations");
     //if(cameras_[camera_index]->tx()!=0){
-    write_xml_real_param(file, "TX", cameras_[camera_index]->tx());
+    write_xml_high_precision_real_param(file, "TX", cameras_[camera_index]->tx());
     //}
     //if(cameras_[camera_index]->ty()!=0){
-    write_xml_real_param(file, "TY", cameras_[camera_index]->ty());
+    write_xml_high_precision_real_param(file, "TY", cameras_[camera_index]->ty());
     //}
     //if(cameras_[camera_index]->tz()!=0){
-    write_xml_real_param(file, "TZ", cameras_[camera_index]->tz());
+    write_xml_high_precision_real_param(file, "TZ", cameras_[camera_index]->tz());
     //}
     // always write out the rotation matrix (euler angles aren't saved)
     //DEBUG_MSG("Camera_System::write_camera_system_file(): writing 3x3 rotation matrix");
@@ -599,6 +599,8 @@ Camera_System::write_camera_system_file(const std::string & file){
     write_xml_param_list_open(file, rotation_3x3_matrix, false);
     for (size_t i = 0; i < 3; i++) {
       param_val = std::stringstream();
+      param_val.precision(12);
+      param_val << std::scientific;
       param_title = std::stringstream();
       param_title << "ROW " << i;
       param_val << "{ ";
@@ -617,6 +619,7 @@ Camera_System::write_camera_system_file(const std::string & file){
       // put inside a try block in case the rotation matrix is not valid and eulers throws an exception
       cameras_[camera_index]->camera_info()->eulers(alpha,beta,gamma);
       std::stringstream angle_info_str;
+      angle_info_str.precision(6);
       angle_info_str << "Euler angles: ALPHA " << alpha << " BETA " << beta << " GAMMA " << gamma << " (radians)";
       write_xml_comment(file, angle_info_str.str());
     }
