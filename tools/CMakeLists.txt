@@ -86,12 +86,14 @@ install(TARGETS DICe_CrossInit
 
 add_executable(DICe_Cal           DICe_Cal.cpp)
 target_link_libraries(DICe_Cal    ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
+add_executable(DICe_CalSatellite           DICe_CalSatellite.cpp)
+target_link_libraries(DICe_CalSatellite    ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
 
-install(TARGETS DICe_Cal
+install(TARGETS DICe_Cal DICe_CalSatellite
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
 )
 
-set_target_properties(DICe_CineToTiff DICe_CineStat DICe_Diff DICe_DiffAvg DICe_CrossInit DICe_Cal
+set_target_properties(DICe_CineToTiff DICe_CineStat DICe_Diff DICe_DiffAvg DICe_CrossInit DICe_Cal DICe_CalSatellite
   PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
   ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
