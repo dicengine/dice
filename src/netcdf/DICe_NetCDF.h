@@ -44,6 +44,9 @@
 
 #include <DICe.h>
 
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_XMLParameterListHelpers.hpp>
+
 #include <cassert>
 #include <iostream>
 #include <vector>
@@ -158,6 +161,22 @@ private:
   std::vector<int_t> var_ids_;
 };
 
+// free function to take a .nc file (GOES formatted NetCDF4) and return a parameter list of important cal-related parameters
+DICE_LIB_DLL_EXPORT
+Teuchos::ParameterList netcdf_to_lat_long_projection_parameters(const std::string & left_file,
+  const std::string & right_file);
+
+// free function to convert left image pixel coordinates for full disk image to earth coordinate points
+// and right image pixel coordinates
+DICE_LIB_DLL_EXPORT
+void netcdf_left_pixel_points_to_earth_and_right_pxiel_coordinates(const Teuchos::ParameterList & params,
+  const std::vector<float> & left_pixel_x,
+  const std::vector<float> & left_pixel_y,
+  std::vector<float> & earth_x,
+  std::vector<float> & earth_y,
+  std::vector<float> & earth_z,
+  std::vector<float> & right_pixel_x,
+  std::vector<float> & right_pixel_y);
 
 }// end netcdf namespace
 }// end DICe namespace

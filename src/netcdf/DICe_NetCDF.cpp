@@ -316,6 +316,245 @@ NetCDF_Writer::write_double_array(const std::string var_name,
   nc_close(ncid);
 }
 
+DICE_LIB_DLL_EXPORT
+Teuchos::ParameterList netcdf_to_lat_long_projection_parameters(const std::string & left_file,
+  const std::string & right_file){
+
+  // Open the file for read access
+  int ncid_left = 0, ncid_right = 0;
+  int error_int = nc_open(left_file.c_str(), 0, &ncid_left);
+  TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::runtime_error,"Error, could not open NetCDF file " << left_file);
+  error_int = nc_open(right_file.c_str(), 0, &ncid_right);
+  TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::runtime_error,"Error, could not open NetCDF file " << right_file);
+  int num_vars_left = 0, num_vars_right = 0;
+  nc_inq_nvars(ncid_left, &num_vars_left);
+  nc_inq_nvars(ncid_right, &num_vars_right);
+  TEUCHOS_TEST_FOR_EXCEPTION(num_vars_left!=num_vars_right,std::runtime_error,"");
+
+  std::string coord_x_str = "x";
+  std::string coord_y_str = "y";
+  std::string scale_str = "scale_factor";
+  std::string offset_str = "add_offset";
+  std::string proj_str = "goes_imager_projection";
+  std::string proj_height = "perspective_point_height";
+  std::string proj_major = "semi_major_axis";
+  std::string proj_minor = "semi_minor_axis";
+  std::string proj_long_origin = "longitude_of_projection_origin";
+  float perspective_point_height_left = 0.0;
+  float semi_major_axis_left = 0.0;
+  float semi_minor_axis_left = 0.0;
+  float long_of_proj_origin_left = 0.0;
+  float coord_x_offset_left = 0.0;
+  float coord_y_offset_left = 0.0;
+  float coord_x_scale_factor_left = 0.0;
+  float coord_y_scale_factor_left = 0.0;
+  float perspective_point_height_right = 0.0;
+  float semi_major_axis_right = 0.0;
+  float semi_minor_axis_right = 0.0;
+  float long_of_proj_origin_right = 0.0;
+  float coord_x_offset_right = 0.0;
+  float coord_y_offset_right = 0.0;
+  float coord_x_scale_factor_right = 0.0;
+  float coord_y_scale_factor_right = 0.0;
+  float att_value = 0.0;
+  // harvest background info for both imagers:
+  for(int i=0;i<num_vars_left;++i){
+    char var_name[100];
+    int nc_type;
+    int num_dims = 0;
+    int dim_ids[NC_MAX_VAR_DIMS]; // assume less than 100 ids
+    int num_var_attr = 0;
+    nc_inq_var(ncid_left,i, &var_name[0], &nc_type,&num_dims, dim_ids, &num_var_attr);
+    nc_inq_varname(ncid_left, i, &var_name[0]);
+    std::string var_name_str = var_name;
+    if(strcmp(var_name, proj_str.c_str()) == 0){
+      nc_get_att_float(ncid_left,i,proj_height.c_str(),&att_value);
+      perspective_point_height_left = att_value;
+      nc_get_att_float(ncid_left,i,proj_major.c_str(),&att_value);
+      semi_major_axis_left = att_value;
+      nc_get_att_float(ncid_left,i,proj_minor.c_str(),&att_value);
+      semi_minor_axis_left = att_value;
+      nc_get_att_float(ncid_left,i,proj_long_origin.c_str(),&att_value);
+      long_of_proj_origin_left = att_value;
+    }else if(strcmp(var_name, coord_x_str.c_str()) == 0){
+      nc_get_att_float(ncid_left,i,scale_str.c_str(),&att_value);
+      coord_x_scale_factor_left = att_value;
+      nc_get_att_float(ncid_left,i,offset_str.c_str(),&att_value);
+      coord_x_offset_left = att_value;
+    }else if(strcmp(var_name, coord_y_str.c_str()) == 0){
+      nc_get_att_float(ncid_left,i,scale_str.c_str(),&att_value);
+      coord_y_scale_factor_left = att_value;
+      nc_get_att_float(ncid_left,i,offset_str.c_str(),&att_value);
+      coord_y_offset_left = att_value;
+    }
+  }
+  DEBUG_MSG("imager height left (m):           " << perspective_point_height_left);
+  DEBUG_MSG("earth major axis left (m):        " << semi_major_axis_left);
+  DEBUG_MSG("earth minor axis left (m):        " << semi_minor_axis_left);
+  DEBUG_MSG("longitude of left imager (deg):   " << long_of_proj_origin_left);
+  DEBUG_MSG("imager x scale factor left:       " << coord_x_scale_factor_left);
+  DEBUG_MSG("imager x offset left (rad):       " << coord_x_offset_left);
+  DEBUG_MSG("imager y scale factor left:       " << coord_y_scale_factor_left);
+  DEBUG_MSG("imager y offset left (rad):       " << coord_y_offset_left);
+  for(int i=0;i<num_vars_right;++i){
+    char var_name[100];
+    int nc_type;
+    int num_dims = 0;
+    int dim_ids[NC_MAX_VAR_DIMS]; // assume less than 100 ids
+    int num_var_attr = 0;
+    nc_inq_var(ncid_right,i, &var_name[0], &nc_type,&num_dims, dim_ids, &num_var_attr);
+    nc_inq_varname(ncid_right, i, &var_name[0]);
+    std::string var_name_str = var_name;
+    if(strcmp(var_name, proj_str.c_str()) == 0){
+      float att_value = 0.0;
+      nc_get_att_float(ncid_right,i,proj_height.c_str(),&att_value);
+      perspective_point_height_right = att_value;
+      nc_get_att_float(ncid_right,i,proj_major.c_str(),&att_value);
+      semi_major_axis_right = att_value;
+      nc_get_att_float(ncid_right,i,proj_minor.c_str(),&att_value);
+      semi_minor_axis_right = att_value;
+      nc_get_att_float(ncid_right,i,proj_long_origin.c_str(),&att_value);
+      long_of_proj_origin_right = att_value;
+    }else if(strcmp(var_name, coord_x_str.c_str()) == 0){
+      nc_get_att_float(ncid_right,i,scale_str.c_str(),&att_value);
+      coord_x_scale_factor_right = att_value;
+      nc_get_att_float(ncid_right,i,offset_str.c_str(),&att_value);
+      coord_x_offset_right = att_value;
+    }else if(strcmp(var_name, coord_y_str.c_str()) == 0){
+      nc_get_att_float(ncid_right,i,scale_str.c_str(),&att_value);
+      coord_y_scale_factor_right = att_value;
+      nc_get_att_float(ncid_right,i,offset_str.c_str(),&att_value);
+      coord_y_offset_right = att_value;
+    }
+  }
+  // close the nc_files
+  nc_close(ncid_left);
+  nc_close(ncid_right);
+  DEBUG_MSG("imager height right (m):          " << perspective_point_height_right);
+  DEBUG_MSG("earth major axis right (m):       " << semi_major_axis_right);
+  DEBUG_MSG("earth minor axis right (m):       " << semi_minor_axis_right);
+  DEBUG_MSG("longitude of imager right (deg):  " << long_of_proj_origin_right);
+  DEBUG_MSG("imager x scale factor right:      " << coord_x_scale_factor_right);
+  DEBUG_MSG("imager x offset right (rad):      " << coord_x_offset_right);
+  DEBUG_MSG("imager y scale factor right:      " << coord_y_scale_factor_right);
+  DEBUG_MSG("imager y offset right (rad):      " << coord_y_offset_right);
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(perspective_point_height_right-perspective_point_height_left)>0.1,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(semi_major_axis_right-semi_major_axis_left)>0.1,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(semi_minor_axis_right-semi_minor_axis_left)>0.1,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(coord_x_scale_factor_right-coord_x_scale_factor_left)>0.001,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(coord_y_scale_factor_right-coord_y_scale_factor_left)>0.001,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(coord_x_offset_right-coord_x_offset_left)>0.001,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(coord_y_offset_right-coord_y_offset_left)>0.001,std::runtime_error,"");
+  DEBUG_MSG("converting image scan angle in x and y to lat and long for both images");
+
+  // convert pixel coordinates to longitude and latitude:
+  const float H = perspective_point_height_right + semi_major_axis_right;
+  const float eccentricity = (semi_major_axis_right*semi_major_axis_right - semi_minor_axis_right*semi_minor_axis_right)
+      /(semi_major_axis_right*semi_major_axis_right);
+
+  Teuchos::ParameterList lat_long_params;
+  lat_long_params.set("r_eq",semi_major_axis_right);
+  lat_long_params.set("r_np",semi_minor_axis_right);
+  lat_long_params.set("H",H);
+  lat_long_params.set("scan_offset_x",coord_x_offset_left);
+  lat_long_params.set("scan_offset_y",coord_y_offset_left);
+  lat_long_params.set("scan_scale_x",coord_x_scale_factor_left);
+  lat_long_params.set("scan_scale_y",coord_y_scale_factor_left);
+  lat_long_params.set("earth_eccentricity",eccentricity);
+  lat_long_params.set("long_of_proj_origin_left",long_of_proj_origin_left);
+  lat_long_params.set("long_of_proj_origin_right",long_of_proj_origin_right);
+
+  return lat_long_params;
+}
+
+DICE_LIB_DLL_EXPORT
+void netcdf_left_pixel_points_to_earth_and_right_pxiel_coordinates(const Teuchos::ParameterList & params,
+  const std::vector<float> & left_pixel_x,
+  const std::vector<float> & left_pixel_y,
+  std::vector<float> & earth_x,
+  std::vector<float> & earth_y,
+  std::vector<float> & earth_z,
+  std::vector<float> & right_pixel_x,
+  std::vector<float> & right_pixel_y){
+  assert(left_pixel_x.size()>0);
+  assert(left_pixel_x.size()==left_pixel_y.size());
+  const int num_pts = left_pixel_x.size();
+  DEBUG_MSG("cal point grid num points:        " << num_pts);
+  earth_x.clear();
+  earth_x.resize(num_pts);
+  earth_y.clear();
+  earth_y.resize(num_pts);
+  earth_z.clear();
+  earth_z.resize(num_pts);
+  right_pixel_x.clear();
+  right_pixel_x.resize(num_pts);
+  right_pixel_y.clear();
+  right_pixel_y.resize(num_pts);
+
+  const float r_eq = params.get<float>("r_eq");
+  const float r_np = params.get<float>("r_np");
+  const float H = params.get<float>("H");
+  const float offset_x = params.get<float>("scan_offset_x");
+  const float offset_y = params.get<float>("scan_offset_y");
+  const float scale_x = params.get<float>("scan_scale_x");
+  const float scale_y =  params.get<float>("scan_scale_y");
+  const float eccentricity = params.get<float>("earth_eccentricity");
+  const float long_of_proj_origin_left = params.get<float>("long_of_proj_origin_left");
+  const float long_of_proj_origin_right = params.get<float>("long_of_proj_origin_right");
+
+  for(int i=0;i<num_pts;++i){
+    const float x_rad = left_pixel_x[i]*scale_x + offset_x;
+    const float y_rad = left_pixel_y[i]*scale_y + offset_y;
+    // convert from scan angle to satellite coords
+    const float sinx = std::sin(x_rad);
+    const float cosx = std::cos(x_rad);
+    const float cosy = std::cos(y_rad);
+    const float siny = std::sin(y_rad);
+    const float a = sinx*sinx + cosx*cosx*(cosy*cosy + r_eq*r_eq*siny*siny/(r_np*r_np));
+    const float b = -2.0*H*cosx*cosy;
+    const float c = H*H - r_eq*r_eq;
+    const float d = b*b - 4.0*a*c;
+    const float r_s = d > 0.0? (-1.0*b - std::sqrt(d))/(2.0*a):1.0;
+    const float sx = r_s*cosx*cosy;
+    const float sy = -1.0*r_s*sinx;
+    const float sz = r_s*cosx*siny;
+    // convert the satellite coordinates to lat and long
+    const float lat = d > 0.0? std::atan((r_eq*r_eq)/(r_np*r_np)*sz/std::sqrt((H-sx)*(H-sx)+sy*sy)) : -1.0;
+    const float lon_left = (DICE_PI/180.0)*long_of_proj_origin_left - std::atan(sy/(H-sx));
+    //const float lon_right = (DICE_PI/180.0)*long_of_proj_origin_right - std::atan(sy/(H-sx));
+    // convert lat and long to x y z on the surface of the earth (with earth centered coords)
+    const float sin_lat = std::sin(lat);
+    const float sin_lon_left = std::sin(lon_left);
+    const float cos_lat = std::cos(lat);
+    const float cos_lon_left = std::cos(lon_left);
+    const float N = r_eq/(std::sqrt(1.0 - eccentricity*sin_lat*sin_lat));
+    const float px = N*cos_lat*cos_lon_left;
+    const float py = N*cos_lat*sin_lon_left;
+    const float pz = (1.0-eccentricity*eccentricity)*N*sin_lat;
+    earth_x[i] = px;
+    earth_y[i] = py;
+    earth_z[i] = pz;
+    //std::cout << left_pixel_x.size() << " " << px << " " << py << " " << pz << std::endl;
+    // convert from earth-centered coords to right camera pixel
+    const float plen = std::sqrt(px*px+py*py);
+    const float cos_adiff = std::cos((DICE_PI/180.0)*long_of_proj_origin_right - lon_left);
+    const float sin_adiff = std::sin((DICE_PI/180.0)*long_of_proj_origin_right - lon_left);
+    const float psi = -1.0*std::tan(plen*sin_adiff/(H - plen*cos_adiff));
+    right_pixel_x[i] = (psi - offset_x)/scale_x;
+    right_pixel_y[i] = left_pixel_y[i]; // assume y pixel is the same for both imagers
+    //      right_x.push_back(N*cos_lat*cos_lon_right);
+    //      right_y.push_back(N*cos_lat*sin_lon_right);
+    //      right_z.push_back((1.0-eccentricity*eccentricity)*N*sin_lat);
+    //      latitude.push_back(lat);
+    //      longitude_left.push_back(long_of_proj_origin_left - std::atan(sy/(H-sx))*180.0/DICE_PI);
+    //      longitude_right.push_back(long_of_proj_origin_right - std::atan(sy/(H-sx))*180.0/DICE_PI);
+    //      std::cout << "point:  x " << left_x[left_x.size()-1] << " y " << left_y[left_y.size()-1] << " z " << left_z[left_z.size()-1] <<  " rpx "
+    //          << right_pixel_x[right_pixel_x.size()-1] << " rpy " << right_pixel_y[right_pixel_y.size()-1] << std::endl;
+    //      std::cout << " lpx " << left_pixel_x[left_pixel_x.size()-1] << " lpy " << left_pixel_y[left_pixel_y.size()-1] <<
+    //          " rpx " << right_pixel_x[right_pixel_x.size()-1] << " rpy " << right_pixel_y[right_pixel_y.size()-1] << std::endl;
+  }
+}
+
 
 
 } // end netcdf namespace
