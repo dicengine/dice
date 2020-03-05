@@ -330,6 +330,9 @@ void read_image(const char * file_name,
     if(params->get<bool>(floor_intensity_values,false)){
       floor_intensities(width,height,intensities);
     }
+    if(params->isParameter(undistort_images)){
+      undistort_intensities(width,height,intensities,params);
+    }
   }
 }
 
@@ -381,6 +384,62 @@ void floor_intensities(const int_t width,
   for(int_t y=0;y<height;++y){
     for(int_t x=0;x<width;++x){
       intensities[y*width + x] = std::floor(intensities[y*width + x]);
+    }
+  }
+}
+
+DICE_LIB_DLL_EXPORT
+void undistort_intensities(const int_t width,
+  const int_t height,
+  intensity_t * intensities,
+  const Teuchos::RCP<Teuchos::ParameterList> & params){
+
+  static bool first_run = true;
+  static cv::Mat intrinsics = cv::Mat(3, 3, CV_32FC1);
+  static cv::Mat dist_coeffs = cv::Mat(1,4,CV_32FC1);
+  if(first_run){
+    DEBUG_MSG("utils::undistort_intensities(): manually undistorting images");
+    // This param must exist, otherwise this method would not be called
+    TEUCHOS_TEST_FOR_EXCEPTION(params==Teuchos::null,std::runtime_error,"");
+    params->print(std::cout);
+    TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(undistort_images),std::runtime_error,"");
+    Teuchos::ParameterList cal_sublist = params->sublist(undistort_images);
+    TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("fx"),std::runtime_error,"");
+    const scalar_t fx = cal_sublist.get<double>("fx");
+    TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("fy"),std::runtime_error,"");
+    const scalar_t fy = cal_sublist.get<double>("fy");
+    TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("cx"),std::runtime_error,"");
+    const scalar_t cx = cal_sublist.get<double>("cx");
+    TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("cy"),std::runtime_error,"");
+    const scalar_t cy = cal_sublist.get<double>("cy");
+    TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("k1"),std::runtime_error,"");
+    const scalar_t k1 = cal_sublist.get<double>("k1");
+    TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("k2"),std::runtime_error,"");
+    const scalar_t k2 = cal_sublist.get<double>("k2");
+    intrinsics.at<float>(0,0) = fx;
+    intrinsics.at<float>(1,1) = fy;
+    intrinsics.at<float>(0,2) = cx;
+    intrinsics.at<float>(1,2) = cy;
+    intrinsics.at<float>(2,2) = 1.0;
+    dist_coeffs.at<float>(0,0) = k1;
+    dist_coeffs.at<float>(0,1) = k2;
+    dist_coeffs.at<float>(0,2) = 0.0;
+    dist_coeffs.at<float>(0,3) = 0.0;
+  }
+  first_run = false;
+  // convert intensity values to an opencv Mat
+  cv::Mat img(height,width,CV_8UC1,cv::Scalar(0));
+  cv::Mat out_img(height,width,CV_8UC1,cv::Scalar(0));
+  for(int_t y=0;y<height;++y){
+    for(int_t x=0;x<width;++x){
+      img.at<uchar>(y,x) = intensities[y*width + x];
+    }
+  }
+  // undistort the mat and replace the intensity values
+  cv::undistort(img,out_img,intrinsics,dist_coeffs);
+  for(int_t y=0;y<height;++y){
+    for(int_t x=0;x<width;++x){
+      intensities[y*width + x] = out_img.at<uchar>(y,x);
     }
   }
 }

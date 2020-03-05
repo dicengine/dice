@@ -373,6 +373,8 @@ const char* const spread_intensity_histogram = "spread_intensity_histogram";
 const char* const round_intensity_values = "round_intensity_values";
 /// String parameter name
 const char* const floor_intensity_values = "floor_intensity_values";
+/// String parameter name
+const char* const undistort_images = "undistort_images";
 
 /// enums:
 enum Subset_View_Target{
@@ -956,6 +958,11 @@ const Correlation_Parameter output_spec_param(output_spec,
   false, // turned off because this one is manually added to the template output files
   "Determines what output to write and in what order");
 /// Correlation parameter and properties
+const Correlation_Parameter undistort_images_param(undistort_images,
+  STRING_PARAM,
+  false, // turned off because this one is manually added to the template output files
+  "Used to undistort the images manually");
+/// Correlation parameter and properties
 const Correlation_Parameter correlation_routine_param(correlation_routine,
   STRING_PARAM,
   true,
@@ -1252,7 +1259,7 @@ const Correlation_Parameter remove_outlier_pixels_param(remove_outlier_pixels,
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 89;
+const int_t num_valid_correlation_params = 90;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1292,6 +1299,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   use_subset_evolution_param,
   output_beta_param,
   output_spec_param,
+  undistort_images_param,
   output_delimiter_param,
   omit_output_row_id_param,
   obstruction_skin_factor_param,

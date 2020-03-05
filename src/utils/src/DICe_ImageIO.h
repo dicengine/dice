@@ -52,6 +52,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 
 #include <string>
 #include <map>
@@ -157,6 +158,18 @@ DICE_LIB_DLL_EXPORT
 void floor_intensities(const int_t width,
   const int_t height,
   intensity_t * intensities);
+
+/// undistort image intensity values to correct for lens distortion
+/// \param width
+/// \param height
+/// \param intensities
+/// \param params
+DICE_LIB_DLL_EXPORT
+void undistort_intensities(const int_t width,
+  const int_t height,
+  intensity_t * intensities,
+  const Teuchos::RCP<Teuchos::ParameterList> & params);
+
 
 /// write an image to disk (always output as an 8-bit grayscale image)
 /// for more precise output, for example to read the intensity values in

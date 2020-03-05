@@ -164,6 +164,11 @@ Schema::set_def_image(const std::string & defName){
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
   imgParams->set(DICe::filter_failed_cine_pixels,filter_failed_cine_pixels_);
+  if(init_params_!=Teuchos::null){
+    if(init_params_->isSublist(undistort_images)){
+      imgParams->set(undistort_images,init_params_->sublist(undistort_images));
+    }
+  }
   const bool has_motion_window = motion_window_params_->size()>0;
   // query the image dimensions:
   for(size_t id=0;id<def_imgs_.size();++id){
@@ -277,6 +282,11 @@ Schema::set_ref_image(const std::string & refName){
   imgParams->set(DICe::gradient_method,gradient_method_);
   imgParams->set(DICe::compute_laplacian_image,compute_laplacian_image_);
   imgParams->set(DICe::filter_failed_cine_pixels,filter_failed_cine_pixels_);
+  if(init_params_!=Teuchos::null){
+    if(init_params_->isSublist(undistort_images)){
+      imgParams->set(undistort_images,init_params_->sublist(undistort_images));
+    }
+  }
   if(has_extents_){
     utils::read_image_dimensions(refName.c_str(),full_ref_img_width_,full_ref_img_height_);
     const int_t buffer = 100; // if the extents are within 100 pixels of the image boundary use the whole image
