@@ -50,6 +50,7 @@
 #include <DICe_Triangulation.h>
 #include <DICe_Simplex.h>
 #include <DICe_Cine.h>
+#include <DICe_NetCDF.h>
 #ifdef DICE_ENABLE_GLOBAL
   #include <DICe_MeshIO.h>
   #include <DICe_MeshIOUtils.h>
@@ -1364,6 +1365,7 @@ Schema::execute_cross_correlation(){
 
   // project the right image onto the left if requested
   if(use_nonlinear_projection_){
+    TEUCHOS_TEST_FOR_EXCEPTION(initialization_method_==USE_SATELLITE_GEOMETRY,std::runtime_error,"");
     // the nonlinear projection may not be good enough to initialize so start with a search window
     Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory(this);
     for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
@@ -1669,6 +1671,10 @@ Schema::prepare_optimization_initializers(){
   else if(initialization_method_==USE_FEATURE_MATCHING){
     DEBUG_MSG("Default initializer is feature matching initializer");
     default_initializer = Teuchos::rcp(new Feature_Matching_Initializer(this,threshold_block_size_));
+  }
+  else if(initialization_method_==USE_SATELLITE_GEOMETRY){
+    DEBUG_MSG("Default initializer is satelite geometry initializer");
+    default_initializer = Teuchos::rcp(new Satellite_Geometry_Initializer(this));
   }
   else if(initialization_method_==USE_IMAGE_REGISTRATION){
     DEBUG_MSG("Default initializer is image registration initializer");
@@ -2648,6 +2654,41 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
   DEBUG_MSG("Schema::initialize_cross_correlation(): estimating the projective transform from left to right camera");
 
   const int_t proc_rank = comm_->get_rank();
+
+  if(initialization_method_==USE_SATELLITE_GEOMETRY){
+    mesh_->create_field(field_enums::EARTH_SURFACE_X_FS);
+    mesh_->create_field(field_enums::EARTH_SURFACE_Y_FS);
+    mesh_->create_field(field_enums::EARTH_SURFACE_Z_FS);
+    std::vector<std::string> image_files;
+    std::vector<std::string> stereo_image_files;
+    DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
+    const std::string left_file = image_files[0];
+    const std::string right_file = stereo_image_files[0];
+    std::cout << " left file " << left_file << std::endl;
+    std::cout << " right file " << right_file << std::endl;
+    Teuchos::ParameterList lat_long_params = DICe::netcdf::netcdf_to_lat_long_projection_parameters(left_file,right_file);
+    std::vector<float> left_x(local_num_subsets_);
+    std::vector<float> left_y(local_num_subsets_);
+    std::vector<float> right_x;
+    std::vector<float> right_y;
+    std::vector<float> earth_x;
+    std::vector<float> earth_y;
+    std::vector<float> earth_z;
+    for(int_t i=0;i<local_num_subsets_;++i){
+      left_x[i] = local_field_value(i,SUBSET_COORDINATES_X_FS);
+      left_y[i] = local_field_value(i,SUBSET_COORDINATES_Y_FS);
+    }
+    DICe::netcdf::netcdf_left_pixel_points_to_earth_and_right_pxiel_coordinates(lat_long_params,left_x,left_y,earth_x,earth_y,earth_z,right_x,right_y);
+    for(int_t i=0;i<local_num_subsets_;++i){
+      local_field_value(i,SUBSET_DISPLACEMENT_X_FS) = right_x[i] - left_x[i];
+      local_field_value(i,SUBSET_DISPLACEMENT_Y_FS) = right_y[i] - left_y[i];
+      local_field_value(i,EARTH_SURFACE_X_FS) = earth_x[i];
+      local_field_value(i,EARTH_SURFACE_Y_FS) = earth_y[i];
+      local_field_value(i,EARTH_SURFACE_Z_FS) = earth_z[i];
+    }
+    return 0;
+  }
+
 
   // if you are processor 0 load the ref and def images and call the estimate routine
   if(proc_rank==0){

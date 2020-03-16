@@ -586,6 +586,53 @@ Feature_Matching_Initializer::initial_guess(const int_t subset_gid,
   return INITIALIZE_SUCCESSFUL;
 };
 
+Satellite_Geometry_Initializer::Satellite_Geometry_Initializer(Schema * schema):
+  Initializer(schema){
+  if(schema)
+    TEUCHOS_TEST_FOR_EXCEPTION(schema->shape_function_type()==DICe::RIGID_BODY_SF,std::runtime_error,
+    "Satellite_Geometry_Initializer cannot be used with rigid body shape function (only field value init is allowed)");
+};
+
+Status_Flag
+Satellite_Geometry_Initializer::initial_guess(const int_t subset_gid,
+  Teuchos::RCP<Local_Shape_Function> shape_function){
+  int_t sid = subset_gid;
+  // logic for using neighbor values
+  if(schema_->initialization_method()==DICe::USE_NEIGHBOR_VALUES ||
+      (schema_->initialization_method()==DICe::USE_NEIGHBOR_VALUES_FIRST_STEP_ONLY && schema_->frame_id()==schema_->first_frame_id())){
+    sid = schema_->global_field_value(subset_gid,NEIGHBOR_ID_FS);
+  }
+
+  if(sid==-1) // catch case that subset does not have a neighbor
+    sid=subset_gid;
+
+  // make sure the data lives on this processor
+  TEUCHOS_TEST_FOR_EXCEPTION(schema_->subset_local_id(sid)<0,std::runtime_error,
+    "Error: Only subset ids on this processor can be used for initialization");
+
+  const scalar_t sigma = schema_->global_field_value(sid,SIGMA_FS);
+  if(sigma!=-1.0){
+    shape_function->initialize_parameters_from_fields(schema_,sid);
+    if(sid==subset_gid)
+      return INITIALIZE_USING_PREVIOUS_FRAME_SUCCESSFUL;
+    else{
+      // if using a neighbor's value, the parameters have to be adjusted to account
+      // for the change in centroids for the quadratic shape function
+      if(schema_->shape_function_type()==DICe::QUADRATIC_SF){
+        scalar_t cx = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
+        scalar_t cy = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
+        scalar_t cx_neigh = schema_->global_field_value(sid,SUBSET_COORDINATES_X_FS);
+        scalar_t cy_neigh = schema_->global_field_value(sid,SUBSET_COORDINATES_Y_FS);
+        shape_function->update_params_for_centroid_change(cx - cx_neigh,cy - cy_neigh);
+      }
+      return INITIALIZE_USING_NEIGHBOR_VALUE_SUCCESSFUL;
+    }
+  }
+  return INITIALIZE_FAILED;
+};
+
+
+
 Image_Registration_Initializer::Image_Registration_Initializer(Schema * schema):
   Initializer(schema),
   theta_(0.0),

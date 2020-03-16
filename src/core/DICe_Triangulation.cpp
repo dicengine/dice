@@ -275,20 +275,24 @@ Triangulation::load_calibration_parameters(const std::string & param_file_name){
 
   TEUCHOS_TEST_FOR_EXCEPTION(camera_system_->num_cameras()!=2,std::runtime_error,"");
 
-  // the standard convention for camera extrinsics is stored from world to camera,
-  // for the triangulation code we need the extrinsics to be from camera 0 to world (trans extrinsics) and
-  // from camera 0 to camera 1 (cal_extrinsics)
-  // if the extrinsics_relative_camera_to_camera flag is set, this is already the case so no conversion necessary
-  // otherwise we invert the world to camera 0 extrinsics to be the trans extrinsics and combine this new inverted
-  // transform with the input world to camera 1 transform to be the cal_intrinsics
+  // The standard convention for cal extrinsics in DICeis to have two transforms, one transform from camera 0's coordinate
+  // system to the world or model coordinate system, the second from camera 0 to camera 1. Depending on which type of cal file
+  // is input, this may not be the convention. For example with OpenCV, the first transform is from world to camera 0 so this
+  // transform needs to be inverted. With VIC3D the first transform is from world to camera 0 and the second is from world to camera 1.
+  // In the VIC3D case, the first transform again needs to be inverted and the second (cam 0 to cam 1) becomes the product of the first
+  // inverted transform and the second transform (which combines camera 0 to world then world to camera 1 to result in cam 0 to cam 1)
+
+  // If the extrinsics_relative_camera_to_camera flag is set, the transformation matrices provided by the input
+  // parameters (the rotation matrices and t-veces for each camera) are already set up to match the triangulation convention
+  // so the only conversion necessary is to invert the first transform.
+
   cam_0_to_world_ = camera_system_->camera(0)->transformation_matrix();
+  cam_0_to_world_ = cam_0_to_world_.inv(); // assume camera 0's transformation matrix is always provided as world/model to camera 0 so it needs to be inverted
   cam_0_to_cam_1_ = camera_system_->camera(1)->transformation_matrix();
 
-  // if the camera extrinsics were given as world to camera 0 and world to camera 1,
-  // they need to be converted to the first set of extrinsics as world to camera 0 and the
-  // second as camera 0 to camera 1
+  // if the camera extrinsics were given as world to camera 0 and world to camera 1, (now with the first inverted above to be camera 0 to world)
+  // the second transform needs to be converted to combine the camera 0 to world and world to camera 1 transform
   if(!camera_system_->extrinsics_relative_camera_to_camera()){
-    cam_0_to_world_ = cam_0_to_world_.inv();
     cam_0_to_cam_1_ = cam_0_to_cam_1_ * cam_0_to_world_;
   }
 

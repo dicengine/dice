@@ -183,7 +183,9 @@ int main(int argc, char *argv[]) {
     camera_matrix[i].at<float>(1,2) = cy;
   }
   std::vector<cv::Mat> dist_coeffs(num_cams);
-  cv::Mat R, T, E, F;
+  std::vector<cv::Mat> Rs(num_cams);
+  std::vector<cv::Mat> Ts(num_cams);
+  cv::Mat E, F;
   const int options = cv::CALIB_ZERO_TANGENT_DIST
       + cv::CALIB_USE_INTRINSIC_GUESS;
 //      + cv::CALIB_FIX_INTRINSIC
@@ -194,25 +196,14 @@ int main(int argc, char *argv[]) {
   float rms = cv::stereoCalibrate(object_points, image_points_left, image_points_right,
         camera_matrix[0], dist_coeffs[0],
         camera_matrix[1], dist_coeffs[1],
-        img_size, R, T, E, F,
+        img_size, Rs[1], Ts[1], E, F, // Rs and Ts use the second entry because this method finds the transform from right to left
         options,
         cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 1000, 1e-7));
-
-  std::cout << "***RMS error: " << rms << std::endl;
-
-//  std::cout << " camera left " << camera_matrix_left << std::endl;
-//  std::cout << " camera right " << camera_matrix_right << std::endl;
-//  std::cout << " T " << T << std::endl;
-//  std::cout << " R " << R << std::endl;
-//  std::cout << " E " << E << std::endl;
-//  std::cout << " F " << F << std::endl;
-//  std::cout << " dist left " << dist_coeffs_left << std::endl;
-//  std::cout << " dist right " << dist_coeffs_right << std::endl;
 
   Matrix<scalar_t,3> dice_R;
   for (size_t i=0; i<3; i++) {
     for (size_t j=0; j<3; j++) {
-      dice_R(i,j) = R.at<double>(i,j);
+      dice_R(i,j) = Rs[1].at<double>(i,j);
     }
   }
 //  Matrix<scalar_t,3> R_prod = dice_R.transpose()*dice_R;
@@ -221,7 +212,51 @@ int main(int argc, char *argv[]) {
   scalar_t beta = 0.0;
   scalar_t gamma = 0.0;
   Camera::Camera_Info::rotation_matrix_to_eulers(dice_R,alpha,beta,gamma);
+  std::cout << "orientation of the right camera (GOES 16) to the left (GOES 17) defined by the Euler angles:" << std::endl;
   std::cout << "alpha " << alpha*180.0/DICE_PI << " (deg) beta " << beta*180.0/DICE_PI << " (deg) gamma " << gamma*180.0/DICE_PI << " (deg)" << std::endl;
+  std::cout << "*** RMS stereo error: " << rms << std::endl;
+  //  std::cout << " camera left " << camera_matrix_left << std::endl;
+  //  std::cout << " camera right " << camera_matrix_right << std::endl;
+  //  std::cout << " T " << T << std::endl;
+  //  std::cout << " R " << R << std::endl;
+  //  std::cout << " E " << E << std::endl;
+  //  std::cout << " F " << F << std::endl;
+  //  std::cout << " dist left " << dist_coeffs_left << std::endl;
+  //  std::cout << " dist right " << dist_coeffs_right << std::endl;
+
+  // the default output from opencv is to provide the world or model coordinates in terms of camera 0 so the
+  // R matrix for camera 0 is identity and the t-vecs are zeros. The R matrix output from stereocalibrate is from
+  // the left camera to the right camera. To get the transformation from camera 0 to the earth-centeted coordinate
+  // system we need to use calibrateCamera which provides the pose estimation of camera 0 (or the transform from world coords
+  // to camera_0 coords.
+
+  cv::Mat left_camera = camera_matrix[0].clone();
+  cv::Mat dummy_coeffs;
+  std::vector<cv::Mat> rvecs, tvecs;
+  float rms_mono = cv::calibrateCamera(object_points, image_points_left,img_size,
+    left_camera,dummy_coeffs,rvecs,tvecs,options,
+        cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 1000, 1e-7));
+  cv::Rodrigues(rvecs[0],Rs[0]);
+  Ts[0] = tvecs[0].clone();
+  std::cout << Rs[0] << std::endl;
+  std::cout << tvecs[0] << std::endl;
+
+  std::cout << "*** RMS mono error: " << rms_mono << std::endl;
+
+  Matrix<scalar_t,3> dice_R_;
+  for (size_t i=0; i<3; i++) {
+    for (size_t j=0; j<3; j++) {
+      dice_R_(i,j) = Rs[0].at<double>(i,j);
+    }
+  }
+//  Matrix<scalar_t,3> R_prod = dice_R.transpose()*dice_R;
+//  std::cout << " R " << dice_R << " R_prod " << R_prod << " " << dice_R.transpose() <<  std::endl;
+  scalar_t alpha_ = 0.0;
+  scalar_t beta_ = 0.0;
+  scalar_t gamma_ = 0.0;
+  Camera::Camera_Info::rotation_matrix_to_eulers(dice_R_,alpha_,beta_,gamma_);
+  std::cout << "orientation of the earth coords to left camera (GOES 17) defined by the Euler angles:" << std::endl;
+  std::cout << "alpha_ " << alpha_*180.0/DICE_PI << " (deg) beta_ " << beta_*180.0/DICE_PI << " (deg) gamma_ " << gamma_*180.0/DICE_PI << " (deg)" << std::endl;
 
   // create calibration file:
 
@@ -251,21 +286,21 @@ int main(int argc, char *argv[]) {
     if (dist_coeffs[i_cam].cols > 12) camera_info.intrinsics_[Camera::T1] = dist_coeffs[i_cam].at<double>(12);
     if (dist_coeffs[i_cam].cols > 13) camera_info.intrinsics_[Camera::T2] = dist_coeffs[i_cam].at<double>(13);
     camera_info.lens_distortion_model_ = Camera::OPENCV_LENS_DISTORTION;
-    if(i_cam==1){
-      camera_info.tx_ = T.at<double>(0);
-      camera_info.ty_ = T.at<double>(1);
-      camera_info.tz_ = T.at<double>(2);
+    //if(i_cam==1){
+      camera_info.tx_ = Ts[i_cam].at<double>(0);
+      camera_info.ty_ = Ts[i_cam].at<double>(1);
+      camera_info.tz_ = Ts[i_cam].at<double>(2);
       for (size_t i_a = 0; i_a < 3; i_a++) {
         for (size_t i_b = 0; i_b < 3; i_b++) {
-          camera_info.rotation_matrix_(i_a,i_b) = R.at<double>(i_a, i_b);
+          camera_info.rotation_matrix_(i_a,i_b) = Rs[i_cam].at<double>(i_a, i_b);
         }
       }
-    }
+    //}
     Teuchos::RCP<DICe::Camera> camera_ptr = Teuchos::rcp(new DICe::Camera(camera_info));
     camera_system->add_camera(camera_ptr);
   }
-  std::cout << camera_system << std::endl;
   camera_system->set_system_type(Camera_System::OPENCV);
+  std::cout << camera_system << std::endl;
   if(!output_file.empty())
     camera_system->write_camera_system_file(output_file);
 

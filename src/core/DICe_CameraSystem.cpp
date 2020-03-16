@@ -378,7 +378,7 @@ Camera_System::read_camera_system_file(const std::string & file) {
     // re-run the calibrations
     else if (file.find(txt) != std::string::npos) {
       DEBUG_MSG("Camera_System::read_camera_system_file(): reading generic txt format camera system file");
-      // txt files turn this flag on by defualt
+      // txt files turn this flag on by default
       extrinsics_relative_camera_to_camera_ = true;
       //may want to modify this file format to allow more than 2 cameras in the future
       sys_type_ = GENERIC_SYSTEM;

@@ -186,9 +186,11 @@ Field_Name
   NLVC_DUDY,
   NLVC_DVDX,
   NLVC_DVDY,
+  EARTH_SURFACE_X,
+  EARTH_SURFACE_Y,
+  EARTH_SURFACE_Z,
   ALTITUDE,
   ALTITUDE_ABOVE_GROUND,
-  GROUND_LEVEL,
   ACCUMULATED_DISP,
   DISP_ERROR,
   VSG_STRAIN_XX_ERROR,
@@ -620,11 +622,15 @@ const Field_Spec UNCERTAINTY_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::UNCE
 /// field spec
 const Field_Spec UNCERTAINTY_ANGLE_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::UNCERTAINTY_ANGLE,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
+const Field_Spec EARTH_SURFACE_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::EARTH_SURFACE_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec EARTH_SURFACE_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::EARTH_SURFACE_Y,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec EARTH_SURFACE_Z_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::EARTH_SURFACE_Z,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
 const Field_Spec ALTITUDE_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ALTITUDE,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec ALTITUDE_ABOVE_GROUND_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ALTITUDE_ABOVE_GROUND,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
-/// field spec
-const Field_Spec GROUND_LEVEL_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::GROUND_LEVEL,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec NLVC_STRAIN_XX_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::NLVC_STRAIN_XX,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
@@ -681,7 +687,7 @@ const Field_Spec ROT_TRANS_3D_TRANS_Y_FS(field_enums::SCALAR_FIELD_TYPE, field_e
 const Field_Spec ROT_TRANS_3D_TRANS_Z_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::ROT_TRANS_3D_TRANS_Z, field_enums::NODE_RANK, field_enums::NO_FIELD_STATE, true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 135;
+const int_t num_fields_defined = 137;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -787,12 +793,14 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     VSG_DUDY_FS,
     VSG_DVDX_FS,
     VSG_DVDY_FS,
+    EARTH_SURFACE_X_FS,
+    EARTH_SURFACE_Y_FS,
+    EARTH_SURFACE_Z_FS,
     ALTITUDE_FS,
     ALTITUDE_ABOVE_GROUND_FS,
     UNCERTAINTY_FS,
     UNCERTAINTY_ANGLE_FS,
     STEREO_M_MAX_FS,
-    GROUND_LEVEL_FS,
     NLVC_STRAIN_XX_FS,
     NLVC_STRAIN_YY_FS,
     NLVC_STRAIN_XY_FS,

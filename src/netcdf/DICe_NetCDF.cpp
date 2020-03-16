@@ -527,7 +527,7 @@ void netcdf_left_pixel_points_to_earth_and_right_pxiel_coordinates(const Teuchos
     const float sin_lon_left = std::sin(lon_left);
     const float cos_lat = std::cos(lat);
     const float cos_lon_left = std::cos(lon_left);
-    const float N = r_eq/(std::sqrt(1.0 - eccentricity*sin_lat*sin_lat));
+    const float N = r_eq/(std::sqrt(1.0 - eccentricity*eccentricity*sin_lat*sin_lat));
     const float px = N*cos_lat*cos_lon_left;
     const float py = N*cos_lat*sin_lon_left;
     const float pz = (1.0-eccentricity*eccentricity)*N*sin_lat;
@@ -548,8 +548,9 @@ void netcdf_left_pixel_points_to_earth_and_right_pxiel_coordinates(const Teuchos
     //      latitude.push_back(lat);
     //      longitude_left.push_back(long_of_proj_origin_left - std::atan(sy/(H-sx))*180.0/DICE_PI);
     //      longitude_right.push_back(long_of_proj_origin_right - std::atan(sy/(H-sx))*180.0/DICE_PI);
-    //      std::cout << "point:  x " << left_x[left_x.size()-1] << " y " << left_y[left_y.size()-1] << " z " << left_z[left_z.size()-1] <<  " rpx "
-    //          << right_pixel_x[right_pixel_x.size()-1] << " rpy " << right_pixel_y[right_pixel_y.size()-1] << std::endl;
+
+    //std::cout << "point:  left image x " << left_pixel_x[i] << " y " << left_pixel_y[i] << " left lat " << lat << " long " << lon_left << " earth x " << earth_x[i] << " y " << earth_y[i] << " z " << earth_z[i] << std::endl;
+
     //      std::cout << " lpx " << left_pixel_x[left_pixel_x.size()-1] << " lpy " << left_pixel_y[left_pixel_y.size()-1] <<
     //          " rpx " << right_pixel_x[right_pixel_x.size()-1] << " rpy " << right_pixel_y[right_pixel_y.size()-1] << std::endl;
   }

@@ -393,6 +393,30 @@ protected:
   bool first_call_;
 };
 
+/// \class DICe::Satellite_Geometry_Initializer
+/// \brief an initializer that uses camera angles to initialize the solution
+class DICE_LIB_DLL_EXPORT
+Satellite_Geometry_Initializer : public Initializer{
+public:
+
+  /// constructor
+  /// \param schema the parent schema
+  Satellite_Geometry_Initializer(Schema * schema);
+
+  /// virtual destructor
+  virtual ~Satellite_Geometry_Initializer(){};
+
+  /// see base class description
+  virtual void pre_execution_tasks(){};
+
+  /// see base class description
+  virtual Status_Flag initial_guess(const int_t subset_gid,
+    Teuchos::RCP<Local_Shape_Function> shape_function);
+
+};
+
+
+
 /// \class DICe::Image_Registration_Initializer
 /// \brief an initializer that uses an ECC transform to initialize the fields
 class DICE_LIB_DLL_EXPORT

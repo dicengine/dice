@@ -324,13 +324,6 @@ public:
   /// See base class documentation
   using Post_Processor::field_specs;
 
-private:
-  /// radius of the earth in meters
-  scalar_t radius_of_earth_;
-  /// apogee of the satellite in meters
-  scalar_t apogee_;
-  /// true if the ground level has been initialized
-  bool ground_level_initialized_;
 };
 
 /// \class DICe::Uncertainty_Post_Processor

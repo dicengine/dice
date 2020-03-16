@@ -127,6 +127,7 @@ public:
   /// \brief set the system type
   /// \param system_type a System_Type_3D enum
   void set_system_type(const System_Type_3D system_type) {
+    if(system_type==OPENCV) extrinsics_relative_camera_to_camera_ = true;
     sys_type_ = system_type;
   }
 

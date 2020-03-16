@@ -248,7 +248,7 @@ private:
   /// See Camera::Cam_Intrinsic_Param for the ordering of the parameters in the vector
   std::vector<std::vector<scalar_t> > cal_intrinsics_;
 
-  /// transformation from camera 0 to camera 1 model/physical coordinates
+  /// transformation from camera 0 to camera 1 coordinates
   Matrix<scalar_t,4> cam_0_to_cam_1_;
 
   /// transformation from camera 0 to world model/physical coordinates
