@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  DICe::netcdf::netcdf_left_pixel_points_to_earth_and_right_pxiel_coordinates(lat_long_params,
+  DICe::netcdf::netcdf_left_pixel_points_to_earth_and_right_pixel_coordinates(lat_long_params,
     left_pixel_x,
     left_pixel_y,
     earth_x,

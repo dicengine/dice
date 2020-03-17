@@ -468,7 +468,7 @@ Teuchos::ParameterList netcdf_to_lat_long_projection_parameters(const std::strin
 }
 
 DICE_LIB_DLL_EXPORT
-void netcdf_left_pixel_points_to_earth_and_right_pxiel_coordinates(const Teuchos::ParameterList & params,
+void netcdf_left_pixel_points_to_earth_and_right_pixel_coordinates(const Teuchos::ParameterList & params,
   const std::vector<float> & left_pixel_x,
   const std::vector<float> & left_pixel_y,
   std::vector<float> & earth_x,

@@ -169,7 +169,7 @@ Teuchos::ParameterList netcdf_to_lat_long_projection_parameters(const std::strin
 // free function to convert left image pixel coordinates for full disk image to earth coordinate points
 // and right image pixel coordinates
 DICE_LIB_DLL_EXPORT
-void netcdf_left_pixel_points_to_earth_and_right_pxiel_coordinates(const Teuchos::ParameterList & params,
+void netcdf_left_pixel_points_to_earth_and_right_pixel_coordinates(const Teuchos::ParameterList & params,
   const std::vector<float> & left_pixel_x,
   const std::vector<float> & left_pixel_y,
   std::vector<float> & earth_x,

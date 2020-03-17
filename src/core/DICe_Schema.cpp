@@ -50,7 +50,9 @@
 #include <DICe_Triangulation.h>
 #include <DICe_Simplex.h>
 #include <DICe_Cine.h>
-#include <DICe_NetCDF.h>
+#if DICE_ENABLE_NETCDF
+  #include <DICe_NetCDF.h>
+#endif
 #ifdef DICE_ENABLE_GLOBAL
   #include <DICe_MeshIO.h>
   #include <DICe_MeshIOUtils.h>
@@ -2656,6 +2658,7 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
   const int_t proc_rank = comm_->get_rank();
 
   if(initialization_method_==USE_SATELLITE_GEOMETRY){
+#if DICE_ENABLE_NETCDF
     mesh_->create_field(field_enums::EARTH_SURFACE_X_FS);
     mesh_->create_field(field_enums::EARTH_SURFACE_Y_FS);
     mesh_->create_field(field_enums::EARTH_SURFACE_Z_FS);
@@ -2678,7 +2681,7 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       left_x[i] = local_field_value(i,SUBSET_COORDINATES_X_FS);
       left_y[i] = local_field_value(i,SUBSET_COORDINATES_Y_FS);
     }
-    DICe::netcdf::netcdf_left_pixel_points_to_earth_and_right_pxiel_coordinates(lat_long_params,left_x,left_y,earth_x,earth_y,earth_z,right_x,right_y);
+    DICe::netcdf::netcdf_left_pixel_points_to_earth_and_right_pixel_coordinates(lat_long_params,left_x,left_y,earth_x,earth_y,earth_z,right_x,right_y);
     for(int_t i=0;i<local_num_subsets_;++i){
       local_field_value(i,SUBSET_DISPLACEMENT_X_FS) = right_x[i] - left_x[i];
       local_field_value(i,SUBSET_DISPLACEMENT_Y_FS) = right_y[i] - left_y[i];
@@ -2687,6 +2690,9 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       local_field_value(i,EARTH_SURFACE_Z_FS) = earth_z[i];
     }
     return 0;
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"USE_SATELLITE_GEOMETRY should only be used if NetCDF is on");
+#endif
   }
 
 
