@@ -74,7 +74,7 @@ std::string cine_file_name(const char * decorated_cine_file){
   size_t found = cine_string.find_last_of("_");
   std::string file_name;
   if(found==std::string::npos||
-      (!std::isdigit(*(cine_string.substr(found+1).begin()))&&*(cine_string.substr(found+1).begin())!='-')){
+      (!std::isdigit(*(cine_string.substr(found+1).begin()))&&*(cine_string.substr(found+1).begin())!='-'&&cine_string.substr(found+1,3)!="avg")){
     file_name = cine_string;
   }else{
     file_name = cine_string.substr(0,found);
