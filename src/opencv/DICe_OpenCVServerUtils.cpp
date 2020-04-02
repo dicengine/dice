@@ -125,7 +125,7 @@ Teuchos::ParameterList parse_filter_string(int argc, char *argv[]){
     else{
       std::string arg_upper = arg;
       std::transform(arg_upper.begin(),arg_upper.end(),arg_upper.begin(),::toupper);
-      if(std::isdigit(arg[0])){ // is the string a number?
+      if(std::isdigit(arg[0])||arg[0]=='-'){ // is the string a number?
         if(arg.find('.')!=std::string::npos){ // is it a double
           filter_params.set(temp_name_string,std::strtod(arg.c_str(),NULL));
         }else{
