@@ -182,7 +182,11 @@ int_t opencv_server(int argc, char *argv[]){
     std::string image_out_filename = io_files.get<std::string>(file_it->first);
     DEBUG_MSG("Processing image: " << image_in_filename << " output image " << image_out_filename);
     // load the image as an openCV mat
-    Mat img = imread(image_in_filename, IMREAD_GRAYSCALE);
+    Mat img;
+    if(image_in_filename.find("filter")!=std::string::npos)
+      img = imread(image_in_filename, IMREAD_COLOR); // if it's a filtered image it might have color annotations
+    else
+      img = imread(image_in_filename, IMREAD_GRAYSCALE);
     if(img.empty()){
       std::cout << "*** error, the image is empty" << std::endl;
       return 4;
@@ -303,14 +307,37 @@ int_t opencv_epipolar_line(Mat & img,
   TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(opencv_server_epipolar_dot_y),std::runtime_error,"");
   int dot_x = options.get<int_t>(opencv_server_epipolar_dot_x,0);
   int dot_y = options.get<int_t>(opencv_server_epipolar_dot_y,0);
-  Point2f pt(dot_x,dot_y);
+
+  cv::Scalar color = cv::Scalar(0, 255, 0);
+  cv::KeyPoint pt(cv::Point2f(dot_x,dot_y),1.0);
+  bool snap_point = false;
+#ifdef DICE_ENABLE_TRACKLIB
+  // find the nearest keypoint to the clicked point
+  const float distance_threshold = 250.0; //(squared_distance)
+  const std::string keypoint_filename = is_left ? ".dice/.keypoints_left.yml" : ".dice/.keypoints_right.yml";
+  DEBUG_MSG("keypoint filename: " << keypoint_filename);
+  cv::KeyPoint snap_kpt = TrackLib::snap_to_keypoint(pt,keypoint_filename,distance_threshold);
+  if(snap_kpt.pt.x >0){
+    DEBUG_MSG("original point: " << pt.pt.x << " " << pt.pt.y << " snapped point " << snap_kpt.pt.x << " " << snap_kpt.pt.y);
+    pt = snap_kpt;
+    snap_point = true;
+  }
+#endif
+
   // if this is the dot image, draw a dot
   if((first_image&&is_left)||((!first_image)&&(!is_left))){
     DEBUG_MSG("drawing dot on image");
     // get the location of the dot
     DEBUG_MSG("option, dot location: " << dot_x << " " << dot_y);
-    cvtColor(img, img, cv::COLOR_GRAY2RGB);
-    circle(img, pt, 5, Scalar(0, 255, 255),-1);
+    if(img.channels() == 1)
+      cvtColor(img, img, cv::COLOR_GRAY2RGB);
+    circle(img, pt.pt, 5, Scalar(0, 0, 255),-1);
+    if(snap_point){
+      int radius = std::max((int)pt.size/2, 15);
+      cv::circle(img, pt.pt, radius, color, 2, 8, 0);
+      cv::circle(img, pt.pt, 2, color, -1, 8, 0);
+    }
+
   }else{
     DEBUG_MSG("drawing line on image");
     TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(opencv_server_cal_file),std::runtime_error,"");
@@ -326,7 +353,7 @@ int_t opencv_epipolar_line(Mat & img,
     Mat lines;
     int whichImage = options.get<bool>(opencv_server_epipolar_is_left) ? 1:2;
     std::vector<Point2f> points;
-    points.push_back(pt);
+    points.push_back(pt.pt);
     cv::computeCorrespondEpilines(points,whichImage,matF,lines);
     scalar_t a = lines.at<float>(0);
     scalar_t b = lines.at<float>(1);
@@ -335,8 +362,23 @@ int_t opencv_epipolar_line(Mat & img,
     TEUCHOS_TEST_FOR_EXCEPTION(a==0.0,std::runtime_error,"");
     Point2f ptX(0.0,-1.0*c/b);
     Point2f ptY(img.cols,-1.0*(c + a*img.cols)/b);
-    cvtColor(img, img, cv::COLOR_GRAY2RGB);
-    cv::line(img,ptX,ptY,Scalar(0, 255, 255),2);
+    if(img.channels() == 1)
+      cvtColor(img, img, cv::COLOR_GRAY2RGB);
+    cv::line(img,ptX,ptY,Scalar(0, 0, 255),2);
+
+#ifdef DICE_ENABLE_TRACKLIB
+    const std::string stereo_keypoint_filename = is_left ? ".dice/.keypoints_right.yml" : ".dice/.keypoints_left.yml";
+    const float stereo_distance_threshold = 1.0;
+    DEBUG_MSG("stereo keypoint filename: " << stereo_keypoint_filename);
+    cv::KeyPoint corr_kpt = TrackLib::find_corresponding_keypoint(pt,stereo_keypoint_filename,lines,stereo_distance_threshold);
+    if(corr_kpt.pt.x>0){
+      int radius = std::max((int)corr_kpt.size/2, 15);
+      cv::circle(img, corr_kpt.pt, radius, color, 2, 8, 0);
+      cv::circle(img, corr_kpt.pt, 2, color, -1, 8, 0);
+    }
+#endif
+
+
   }
   return 0;
 }
