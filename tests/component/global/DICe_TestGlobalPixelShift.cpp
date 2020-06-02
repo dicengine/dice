@@ -196,7 +196,7 @@ int main(int argc, char *argv[]) {
     schema.execute_correlation();
 
     // write the output etc.
-    schema.post_execution_tasks();
+    // schema.post_execution_tasks();
 
     *outStream << "checking the output" << std::endl;
 
