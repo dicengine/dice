@@ -50,6 +50,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <stdio.h>
 
 using namespace DICe;
 using namespace DICe::global;
@@ -82,7 +83,6 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> corr_params = Teuchos::rcp(new Teuchos::ParameterList());
   input_params->set(DICe::subset_file,"pixel_shift_roi.txt");
   input_params->set(DICe::output_folder,"");
-  input_params->set(DICe::output_prefix,"pixel_shift");
   input_params->set(DICe::image_folder,"");
 
   corr_params->set(DICe::use_global_dic,true);
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
   // keep track of the errors
   std::vector<scalar_t> error_x;
   std::vector<scalar_t> error_y;
-
+  std::vector<std::string> files_to_remove;
 //  for(scalar_t shift = 0.0;shift<=1.0001;shift+=0.05){
   for(scalar_t shift = 0.0;shift<=1.0001;shift+=0.05){
     *outStream << "SHIFT " << shift << std::endl;
@@ -139,6 +139,11 @@ int main(int argc, char *argv[]) {
     Teuchos::ParameterList def_img_params;
     def_img_params.set(ref_name.str(),true);
     input_params->set(DICe::deformed_images,def_img_params);
+    std::stringstream outfile_name;
+    outfile_name << "pixel_shift_" << shift;
+    input_params->set(DICe::output_prefix,outfile_name.str());
+    outfile_name << ".e";
+    files_to_remove.push_back(outfile_name.str());
 
     *outStream << "creating the global roi file" << std::endl;
 
@@ -228,6 +233,9 @@ int main(int argc, char *argv[]) {
 //    corr_params->remove(DICe::output_folder);
 //    corr_params->remove(DICe::output_prefix);
   } // end shift loop
+
+  for(size_t i=0;i<files_to_remove.size();++i)
+    std::remove(files_to_remove[i].c_str());
 
   *outStream << "-----------------------------------------------------------------------------------------------------------" << std::endl;
   *outStream << "Results Summary:" << std::endl;
