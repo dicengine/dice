@@ -495,11 +495,15 @@ Camera::prep_lens_distortion() {
 #else
   const size_t max_its = 10;
 #endif
+  bool failed = false;
+
   for (size_t j = 0; j < max_its; j++) {
     // only error out if the scalar type is double, for float simply use the max iterations and move on
-#if DICE_USE_DOUBLE
-    TEUCHOS_TEST_FOR_EXCEPTION(j==max_its-1,std::runtime_error,"error: max iterations reached in inverse distortion prep loop");
-#endif
+    if(j==max_its-1){
+      failed=true;
+      std::cout << "*** WARNING: max iterations reached in inverse distortion prep loop" << std::endl;
+      std::cout << "Note: this is likely due to the distortion parameters being unreasonable\n" << std::endl;
+    }
     end_loop = true;
     //do the projection
     sensor_to_image(inv_lens_dis_x_, inv_lens_dis_y_, image_x, image_y);
@@ -509,10 +513,7 @@ Camera::prep_lens_distortion() {
     for (size_t i = 0; i < image_size; i++) {
       del_img_x = targ_x[i] - image_x[i];
       del_img_y = targ_y[i] - image_y[i];
-      TEUCHOS_TEST_FOR_EXCEPTION(std::isinf(del_img_x)||std::isinf(del_img_y),std::runtime_error,
-        "Note: this is likely due to the distortion parameters being unreasonable\n");
-      TEUCHOS_TEST_FOR_EXCEPTION(std::isnan(del_img_x)||std::isnan(del_img_y),std::runtime_error,
-        "Note: this is likely due to the distortion parameters being unreasonable\n");
+      if(std::isinf(del_img_x)||std::isinf(del_img_y)){failed = true; break;}
       x_error += del_img_x*del_img_x;
       y_error += del_img_y*del_img_y;
       if ((abs(del_img_x) > end_crit) || (abs(del_img_y) > end_crit)) end_loop = false;
@@ -524,8 +525,22 @@ Camera::prep_lens_distortion() {
     DEBUG_MSG(std::setw(6) << std::left << std::fixed << j << std::setw(15) << std::scientific << x_error <<
       std::setw(15) << std::scientific << y_error);
     if (end_loop) break;
+    if (failed) break;
   }
   std::cout.flags( f );
+
+  if(failed){
+    std::cout << "*** WARNING inverse lense distortion values could not be determined *** " << std::endl;
+    std::cout << "Note: this is likely due to the distortion parameters being unreasonable\n" << std::endl;
+    for (size_t i = 0; i < image_size; i++) {
+      //set the target value for x,y
+      targ_x[i] = (scalar_t)(i % image_width());
+      targ_y[i] = (scalar_t)(i / image_width());
+      //generate the initial guess for the inverted sensor position
+      inv_lens_dis_x_[i] = (targ_x[i] - cx) / fx;
+      inv_lens_dis_y_[i] = (targ_y[i] - cy) / fy;
+    }
+  }
 
 }
 
