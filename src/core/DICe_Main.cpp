@@ -46,7 +46,7 @@
 #include <DICe_Schema.h>
 #include <DICe_Triangulation.h>
 #ifdef DICE_ENABLE_TRACKLIB
-#include <TrackLib_Driver.h>
+#include <tracklib.h>
 #endif
 
 #include <fstream>

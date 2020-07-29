@@ -49,7 +49,7 @@
 #include <DICe_Calibration.h>
 #include <DICe_CameraSystem.h>
 #ifdef DICE_ENABLE_TRACKLIB
-#include <TrackLib_Driver.h>
+#include <tracklib.h>
 #endif
 
 #include <Teuchos_RCP.hpp>
@@ -318,16 +318,16 @@ int_t opencv_epipolar_line(Mat & img,
   cv::KeyPoint kpt(cv::Point2f(dot_x,dot_y),1.0);
   bool snap_point = false;
 #ifdef DICE_ENABLE_TRACKLIB
-  // find the nearest keypoint to the clicked point
-  const float distance_threshold = 250.0; //(squared_distance)
-  const std::string keypoint_filename = is_left ? yml_file_left.str() : yml_file_right.str();
-  DEBUG_MSG("keypoint filename: " << keypoint_filename);
-  cv::KeyPoint snap_kpt = TrackLib::snap_to_keypoint(kpt,keypoint_filename,distance_threshold);
-  if(snap_kpt.pt.x >0){
-    DEBUG_MSG("original point: " << kpt.pt.x << " " << kpt.pt.y << " snapped point " << snap_kpt.pt.x << " " << snap_kpt.pt.y);
-    kpt = snap_kpt;
-    snap_point = true;
-  }
+//  // find the nearest keypoint to the clicked point
+//  const float distance_threshold = 250.0; //(squared_distance)
+//  const std::string keypoint_filename = is_left ? yml_file_left.str() : yml_file_right.str();
+//  DEBUG_MSG("keypoint filename: " << keypoint_filename);
+//  cv::KeyPoint snap_kpt = TrackLib::snap_to_keypoint(kpt,keypoint_filename,distance_threshold);
+//  if(snap_kpt.pt.x >0){
+//    DEBUG_MSG("original point: " << kpt.pt.x << " " << kpt.pt.y << " snapped point " << snap_kpt.pt.x << " " << snap_kpt.pt.y);
+//    kpt = snap_kpt;
+//    snap_point = true;
+//  }
 #endif
 
   // if this is the dot image, draw a dot
