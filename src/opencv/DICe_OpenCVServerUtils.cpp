@@ -369,7 +369,7 @@ int_t opencv_epipolar_line(Mat & img,
     Point2f ptY(img.cols,-1.0*(c + a*img.cols)/b);
     if(img.channels() == 1)
       cvtColor(img, img, cv::COLOR_GRAY2RGB);
-    cv::line(img,ptX,ptY,Scalar(0,0,255),2);
+    cv::line(img,ptX,ptY,Scalar(0,0,255),1);
 
 //#ifdef DICE_ENABLE_TRACKLIB
 //    const std::string stereo_keypoint_filename = is_left ? yml_file_right.str() : yml_file_left.str();
