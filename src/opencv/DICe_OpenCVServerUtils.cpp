@@ -742,6 +742,7 @@ void get_dot_markers(cv::Mat img,
   // apply thresholding
   if(use_adaptive){
     adaptiveThreshold(img,img,255,filter_mode,threshold_mode,block_size,thresh);
+    img.copyTo(bi_src);
   }else{
     threshold(timg, bi_src, thresh, 255, threshold_mode);
   }
