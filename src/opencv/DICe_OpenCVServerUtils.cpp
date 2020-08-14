@@ -254,6 +254,7 @@ int_t opencv_adaptive_threshold(Mat & img, Teuchos::ParameterList & options){
   int threshold_mode = options.get<int_t>(opencv_server_threshold_mode,0);
   DEBUG_MSG("option, threshold mode:   " << threshold_mode);
   int block_size = options.get<int_t>(opencv_server_block_size,75);
+  if(block_size%2==0) block_size++; // block size has to be odd
   DEBUG_MSG("option, block size:      " << block_size);
   double binary_constant = options.get<double>(opencv_server_binary_constant,100.0);
   DEBUG_MSG("option, binary constant: " << binary_constant);
@@ -496,7 +497,8 @@ int_t opencv_dot_targets(Mat & img,
   //std::cout << "opencv_dot_targets(): option, threshold step:    " << threshold_step << std::endl;
   const bool preview_thresh = options.get<bool>(opencv_server_preview_threshold,false);
   //std::cout << "opencv_dot_targets(): option, preview thresh:    " << preview_thresh << std::endl;
-  const int_t block_size = options.get<int_t>(opencv_server_block_size,75); // The old method had default set to 75
+  int_t block_size = options.get<int_t>(opencv_server_block_size,75); // The old method had default set to 75
+  if(block_size%2==0) block_size++; // block size has to be odd
   //std::cout << "opencv_dot_targets(): option, block size:        " << block_size << std::endl;
   const bool use_adaptive = options.get<bool>(opencv_server_use_adaptive_threshold,false);
   //std::cout << "opencv_dot_targets(): option, use adaptive:      " << use_adaptive << std::endl;
@@ -704,7 +706,8 @@ void get_dot_markers(cv::Mat img,
   bool invert,
   Teuchos::ParameterList & options) {
   DEBUG_MSG("get_dot_markers(): thresh " << thresh << " invert " << invert);
-  const int_t block_size = options.get<int_t>(opencv_server_block_size,75); // The old method had default set to 75
+  int_t block_size = options.get<int_t>(opencv_server_block_size,75); // The old method had default set to 75
+  if(block_size%2==0) block_size++; // block size has to be odd
   DEBUG_MSG("option, block size:        " << block_size);
   const bool use_adaptive = options.get<bool>(opencv_server_use_adaptive_threshold,false);
   DEBUG_MSG("option, use adaptive:      " << use_adaptive);
@@ -742,6 +745,7 @@ void get_dot_markers(cv::Mat img,
   }else{
     threshold(timg, bi_src, thresh, 255, threshold_mode);
   }
+
   // invert the source image
   Mat not_src(bi_src.size(), bi_src.type());
   bitwise_not(bi_src, not_src);
