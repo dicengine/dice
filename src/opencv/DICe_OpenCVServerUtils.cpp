@@ -515,6 +515,7 @@ int_t opencv_dot_targets(Mat & img,
   //  cv::THRESH_TRIANGLE = 16
   int threshold_mode = options.get<int_t>(opencv_server_threshold_mode,0);
   //std::cout << "opencv_dot_targets(): option, threshold mode:   " << threshold_mode << std::endl;
+  int min_blob_size = 100;
 
   // establish the calibration plate properties
   TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(DICe::num_cal_fiducials_x),std::runtime_error,"");
@@ -550,7 +551,7 @@ int_t opencv_dot_targets(Mat & img,
   if(threshold_start!=threshold_end){
     for (; i_thresh <= threshold_end; i_thresh += threshold_step) {
       // get the dots using an inverted image to get the donut holes
-      get_dot_markers(img_cpy, key_points, i_thresh, invert,options);
+      get_dot_markers(img_cpy, key_points, i_thresh, invert,options,min_blob_size);
       // were three keypoints found?
       if (key_points.size() != 3) {
         keypoints_found = false;
@@ -574,13 +575,18 @@ int_t opencv_dot_targets(Mat & img,
   }
 
   // get the key points at the average threshold value
-  get_dot_markers(img_cpy, key_points, i_thresh, invert,options);
+  get_dot_markers(img_cpy, key_points, i_thresh, invert,options,min_blob_size);
 
   // it is possible that this threshold does not have 3 points.
   // chances are that this indicates p thresholding problem to begin with
   if (key_points.size() != 3) {
-    std::cout << "*** warning: unable to identify three keypoints, other points will not be extracted" << std::endl;
-    keypoints_found = false;
+    // try again to see if the markers a too small, if so enable smaller blob sizes and try again
+    min_blob_size = 10;
+    get_dot_markers(img_cpy,key_points,i_thresh,invert,options,min_blob_size);
+    if(key_points.size() !=3){
+      std::cout << "*** warning: unable to identify three keypoints, other points will not be extracted" << std::endl;
+      keypoints_found = false;
+    }
   }
   Point cvpoint;
   if(preview_thresh){
@@ -657,7 +663,7 @@ int_t opencv_dot_targets(Mat & img,
 
   // get the rest of the dots
   std::vector<KeyPoint> dots;
-  get_dot_markers(img_cpy, dots, i_thresh, !invert,options);
+  get_dot_markers(img_cpy, dots, i_thresh, !invert,options,min_blob_size);
   DEBUG_MSG("    prospective grid points found: " << dots.size());
 
   // filter dots based on avg size and whether the dots fall in the central box
@@ -704,7 +710,8 @@ void get_dot_markers(cv::Mat img,
   std::vector<KeyPoint> & keypoints,
   int_t thresh,
   bool invert,
-  Teuchos::ParameterList & options) {
+  Teuchos::ParameterList & options,
+  const int min_size) {
   DEBUG_MSG("get_dot_markers(): thresh " << thresh << " invert " << invert);
   int_t block_size = options.get<int_t>(opencv_server_block_size,75); // The old method had default set to 75
   if(block_size%2==0) block_size++; // block size has to be odd
@@ -723,11 +730,12 @@ void get_dot_markers(cv::Mat img,
   //  cv::THRESH_TRIANGLE = 16
   int threshold_mode = options.get<int_t>(opencv_server_threshold_mode,0);
   DEBUG_MSG("option, threshold mode:    " << threshold_mode);
+  DEBUG_MSG("min blob size:             " << min_size);
 
   // setup the blob detector
   SimpleBlobDetector::Params params;
   params.maxArea = 10e4;
-  params.minArea = 100;
+  params.minArea = min_size;
   cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
 
   // clear the points vector

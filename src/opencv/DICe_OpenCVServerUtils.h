@@ -138,7 +138,8 @@ void get_dot_markers(cv::Mat img,
   std::vector<cv::KeyPoint> & keypoints,
   int_t thresh,
   bool invert,
-  Teuchos::ParameterList & options);
+  Teuchos::ParameterList & options,
+  const int min_size=100);
 /// calculates the image to grid and grid to images coefficients based on the current set of good points
 void calc_trans_coeff(std::vector<cv::KeyPoint> & imgpoints,
   std::vector<cv::KeyPoint> & grdpoints,
