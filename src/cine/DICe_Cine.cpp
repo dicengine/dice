@@ -528,6 +528,12 @@ read_cine_headers(const char *file, std::ostream * out_stream){
   fileName << file;
   Teuchos::RCP<Cine_Header> cine_header = Teuchos::rcp(new Cine_Header(fileName.str(),header, bitmap_header));
 
+  cine_file.seekg(header.OffSetup);
+  uint16_t frame_rate;
+  cine_file.read(reinterpret_cast<char*>(&frame_rate), sizeof(frame_rate));
+  if(out_stream) *out_stream << "frame rate:      " << frame_rate << std::endl;
+  cine_header->frame_rate_ = frame_rate;
+
   // read the image offsets:
   cine_file.seekg(header.OffImageOffsets);
   for (size_t i=0;i<header.ImageCount;++i){

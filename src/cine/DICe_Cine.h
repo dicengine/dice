@@ -160,7 +160,8 @@ public:
   header_(header),
   bitmap_header_(bitmap_header),
   file_name_(file_name),
-  bit_depth_(NO_SUCH_BIT_DEPTH){
+  bit_depth_(NO_SUCH_BIT_DEPTH),
+  frame_rate_(0){
     image_offsets_ = new int64_t[header_.ImageCount];
     // set the bit depth of the images
     int_t bit_depth = (bitmap_header_.biSizeImage * 8) / (bitmap_header_.biWidth * bitmap_header_.biHeight);
@@ -185,6 +186,9 @@ public:
   std::string file_name_;
   /// bit depth of the file
   Bit_Depth bit_depth_;
+  /// frame rate
+  uint16_t frame_rate_;
+
 };
 /// function that reads the header information from the cine file
 Teuchos::RCP<Cine_Header>
@@ -303,6 +307,12 @@ public:
   int_t num_frames()const{
     return cine_header_->header_.ImageCount;
   }
+
+  /// returns the number of images in the cine file
+  int_t frame_rate()const{
+    return cine_header_->frame_rate_;
+  }
+
   /// returns the image width
   int_t width()const{
     return cine_header_->bitmap_header_.biWidth;

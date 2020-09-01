@@ -86,15 +86,17 @@ int main(int argc, char *argv[]) {
   const int_t num_images = cine_reader->num_frames();
   const int_t first_frame = cine_reader->first_image_number();
   const int_t last_frame = first_frame + num_images - 1;
+  const int_t frame_rate = cine_reader->frame_rate();
 
   *outStream << "Num frames:     " << num_images << std::endl;
   *outStream << "First frame:    " << first_frame << std::endl;
   *outStream << "Last frame:     " << last_frame << std::endl;
+  *outStream << "Frame rate:     " << frame_rate << std::endl;
 
   // write stats to file
   create_directory(".dice");
   std::FILE * filePtr = fopen(".dice/.cine_stats.dat","w");
-  fprintf(filePtr,"%i %i %i\n",num_images,first_frame,last_frame);
+  fprintf(filePtr,"%i %i %i %i\n",num_images,first_frame,last_frame,frame_rate);
   fclose(filePtr);
 
   DICe::finalize();
