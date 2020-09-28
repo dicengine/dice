@@ -57,7 +57,8 @@ Post_Processor::Post_Processor(const std::string & name) :
   coords_y_name_(DICe::field_enums::INITIAL_COORDINATES_FS.get_name_label()),
   disp_x_name_(DICe::field_enums::DISPLACEMENT_FS.get_name_label()),
   disp_y_name_(DICe::field_enums::DISPLACEMENT_FS.get_name_label()),
-  has_custom_field_names_(false)
+  has_custom_field_names_(false),
+  current_frame_id_(0)
 {}
 
 void
@@ -1188,6 +1189,7 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
       fileName << "live_plot_pt_" << i << ".txt";
       std::FILE * filePtr = fopen(fileName.str().c_str(),"w");
       fprintf(filePtr,"# point coordinates: %f %f\n",pts_x_[i],pts_y_[i]);
+      fprintf(filePtr,"FRAME,");
       for(size_t field_it=0;field_it<field_specs_.size();++field_it){
         if(field_specs_[field_it].get_field_type()==DICe::field_enums::SCALAR_FIELD_TYPE)
           fprintf(filePtr,"%s,",field_specs_[field_it].get_name_label().c_str());
@@ -1347,6 +1349,7 @@ Live_Plot_Post_Processor::execute(){
       std::stringstream fileName;
       fileName << "live_plot_pt_" << i << ".txt";
       std::FILE * filePtr = fopen(fileName.str().c_str(),"a");
+      fprintf(filePtr,"%i,",current_frame_id_);
       for(int_t field_it=0;field_it<num_field_entries_;++field_it)
         fprintf(filePtr,"%f,",zero_data_->local_value(i,field_it));
       fprintf(filePtr,"\n");
@@ -1356,8 +1359,7 @@ Live_Plot_Post_Processor::execute(){
     std::stringstream fileName;
     fileName << "live_plot_line_step_" << frame_index_++ << ".txt";
     std::FILE * filePtr = fopen(fileName.str().c_str(),"w");
-    fprintf(filePtr,"X,Y,");
-
+    fprintf(filePtr,"ARC_LENGTH,X,Y,");
     for(size_t field_it=0;field_it<field_specs_.size();++field_it){
       if(field_specs_[field_it].get_field_type()==DICe::field_enums::SCALAR_FIELD_TYPE)
         fprintf(filePtr,"%s,",field_specs_[field_it].get_name_label().c_str());
@@ -1369,7 +1371,10 @@ Live_Plot_Post_Processor::execute(){
       }
     }
     fprintf(filePtr,"\n");
+    const scalar_t px0 = pts_x_[num_individual_pts_];
+    const scalar_t py0 = pts_y_[num_individual_pts_];
     for(size_t pt=num_individual_pts_;pt<pts_x_.size();++pt){
+      fprintf(filePtr,"%f,",std::sqrt((pts_x_[pt]-px0)*(pts_x_[pt]-px0)+(pts_y_[pt]-py0)*(pts_y_[pt]-py0)));
       fprintf(filePtr,"%f,%f,",pts_x_[pt],pts_y_[pt]);
       for(int_t field_it=0;field_it<num_field_entries_;++field_it)
         fprintf(filePtr,"%f,",zero_data_->local_value(pt,field_it));

@@ -154,6 +154,11 @@ public:
   /// Default to the model fields for post processors
   void set_stereo_field_names();
 
+  /// update the id of the current frame
+  void update_current_frame_id(const int_t frame_id){
+    current_frame_id_ = frame_id;
+  }
+
   /// Execute the post processor
   virtual void execute()=0;
 
@@ -193,6 +198,8 @@ protected:
   std::string disp_y_name_;
   /// true if the fields have been customized
   bool has_custom_field_names_;
+  /// store the current frame number for output if needed
+  int current_frame_id_;
 };
 
 /// \class DICe::VSG_Strain_Post_Processor

@@ -1643,6 +1643,7 @@ void
 Schema::execute_post_processors(){
   // compute post-processed quantities
   for(size_t i=0;i<post_processors_.size();++i){
+    post_processors_[i]->update_current_frame_id(frame_id_-frame_skip_); // decrement frame skip since the frame id got updated by execute_correlation
     post_processors_[i]->execute();
   }
   DEBUG_MSG("[PROC " << comm_->get_rank() << "] post processing complete");
