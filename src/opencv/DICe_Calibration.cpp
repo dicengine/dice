@@ -82,7 +82,8 @@ Calibration::init(const Teuchos::RCP<Teuchos::ParameterList> params){
   // read in the image file names
   std::vector<std::string> left_images;
   std::vector<std::string> right_images;
-  DICe::decipher_image_file_names(params,left_images,right_images);
+  int_t frame_id_start=0,num_frames=1,frame_skip=1;
+  DICe::decipher_image_file_names(params,left_images,right_images,frame_id_start,num_frames,frame_skip);
   // the decipher image file names function automatically adds the reference image to the start of the vec
   // skip that image if it exists
   if(left_images.size()>1){

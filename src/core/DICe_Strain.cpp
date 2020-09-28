@@ -206,7 +206,7 @@ int main(int argc, char *argv[]) {
     schema->set_ref_image(ref_img);
     schema->set_def_image(ref_img);
     // initialize the schema with the subset coordinates
-    schema->set_frame_range(0,num_time_steps);
+    schema->set_frame_range(0,num_time_steps,1);
 
     for(int_t time_step=0;time_step<num_time_steps;++time_step){
       schema->update_frame_id();

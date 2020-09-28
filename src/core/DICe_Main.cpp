@@ -136,28 +136,11 @@ int main(int argc, char *argv[]) {
 
       std::vector<std::string> image_files;
       std::vector<std::string> stereo_image_files;
-      DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
+      int_t frame_id_start = 0, frame_skip = 1, num_frames = 0;
+      DICe::decipher_image_file_names(input_params,image_files,stereo_image_files,frame_id_start,num_frames,frame_skip);
       const bool is_stereo = stereo_image_files.size() > 0;
-
-      const int_t num_frames = image_files.size()-1;
-      int_t first_frame_id = 0;
       int_t image_width = 0;
       int_t image_height = 0;
-      const bool is_cine = utils::image_file_type(image_files[0].c_str()) == CINE;
-      if(is_cine){
-        int_t s_id = 0, e_id = 0;
-        bool is_avg = false;
-        utils::cine_index(image_files[0].c_str(),s_id,e_id,is_avg);
-        first_frame_id = s_id;
-      }
-      else  // non-cine input
-      {
-        if(input_params->isParameter(DICe::start_image_index)){
-          first_frame_id = input_params->get<int_t>(DICe::start_image_index);
-        }else if(input_params->isParameter(DICe::reference_image_index)){
-          first_frame_id = input_params->get<int_t>(DICe::reference_image_index);
-        }
-      }
       TEUCHOS_TEST_FOR_EXCEPTION(num_frames<=0,std::runtime_error,"");
       *outStream << "Reference image: " << image_files[0] << std::endl;
       for(int_t i=1;i<=num_frames;++i){
@@ -201,7 +184,7 @@ int main(int argc, char *argv[]) {
       Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema(input_params,correlation_params));
       Teuchos::RCP<DICe::Schema> stereo_schema;
       // let the schema know how many images there are in the sequence and the first frame id:
-      schema->set_frame_range(first_frame_id,num_frames);
+      schema->set_frame_range(frame_id_start,num_frames,frame_skip);
 
       if(input_params->get<bool>(DICe::print_subset_locations_and_exit,false)){
         // write out the subset locations for left camera and exit
@@ -326,7 +309,7 @@ int main(int argc, char *argv[]) {
         assert(stereo_schema!=Teuchos::null);
         //if(stereo_schema->use_nonlinear_projection())
         //  stereo_schema->project_right_image_into_left_frame(triangulation,true);
-        stereo_schema->set_frame_range(first_frame_id,num_frames);
+        stereo_schema->set_frame_range(frame_id_start,num_frames,frame_skip);
       } // end is stereo
       else{ // only the ref image needs to be set
         schema->update_extents();

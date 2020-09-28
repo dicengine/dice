@@ -59,7 +59,8 @@ Decomp::Decomp(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
 
   std::vector<std::string> image_files;
   std::vector<std::string> stereo_image_files;
-  DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
+  int_t frame_id_start=0,num_frames=1,frame_skip=1;
+  DICe::decipher_image_file_names(input_params,image_files,stereo_image_files,frame_id_start,num_frames,frame_skip);
   TEUCHOS_TEST_FOR_EXCEPTION(image_files.size()<=0,std::runtime_error,"");
 
   // set up the positions of all the mesh points or subsets

@@ -371,6 +371,7 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   step_size_x_ = -1;
   step_size_y_ = -1;
   frame_id_ = 0;
+  frame_skip_ = 1;
   first_frame_id_ = 0;
   num_frames_ = -1;
   has_output_spec_ = false;
@@ -1479,7 +1480,7 @@ Schema::execute_correlation(){
 
   DEBUG_MSG("********************");
   std::stringstream progress;
-  progress << "[PROC " << proc_id << " of " << num_procs << "] IMAGE " << frame_id_ - first_frame_id_ + 1;
+  progress << "[PROC " << proc_id << " of " << num_procs << "] IMAGE " << (frame_id_ - first_frame_id_)/frame_skip_ + 1;
   if(num_frames_>0)
     progress << " of " << num_frames_;
   DEBUG_MSG(progress.str());
@@ -1940,7 +1941,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
       noise_std_dev,contrast,active_pixels,static_cast<int_t>(FRAME_SKIPPED),num_iterations);
     // evolve the subsets and output the images requested as well
     // turn on pixels that at the beginning were hidden behind an obstruction
-    if(use_subset_evolution_&&frame_id_>first_frame_id_+1){
+    if(use_subset_evolution_&&frame_id_>first_frame_id_+frame_skip_){
       DEBUG_MSG("[PROC " << comm_->get_rank() << "] Evolving subset " << subset_gid << " using newly exposed pixels for intensity values");
       obj->subset()->turn_on_previously_obstructed_pixels();
     }
@@ -2162,7 +2163,7 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
   //
   //  turn on pixels that at the beginning were hidden behind an obstruction
   //
-  if(use_subset_evolution_&&frame_id_>first_frame_id_+1){
+  if(use_subset_evolution_&&frame_id_>first_frame_id_+frame_skip_){
     DEBUG_MSG("[PROC " << comm_->get_rank() << "] Evolving subset " << subset_gid << " using newly exposed pixels for intensity values");
     obj->subset()->turn_on_previously_obstructed_pixels();
   }
@@ -2184,7 +2185,7 @@ Schema::write_deformed_subset_intensity_image(Teuchos::RCP<Objective> obj){
   if(num_frames_>0){
     int_t num_digits_total = 0;
     int_t num_digits_image = 0;
-    int_t decrement_total = first_frame_id_ + num_frames_;
+    int_t decrement_total = first_frame_id_ + num_frames_*frame_skip_;
     int_t decrement_image = frame_id_;
     while (decrement_total){decrement_total /= 10; num_digits_total++;}
     if(decrement_image==0) num_digits_image = 1;
@@ -2209,7 +2210,7 @@ Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
   if(num_frames_>0){
     int_t num_digits_total = 0;
     int_t num_digits_image = 0;
-    int_t decrement_total = first_frame_id_ + num_frames_;
+    int_t decrement_total = first_frame_id_ + num_frames_*frame_skip_;
     int_t decrement_image = frame_id_;
     while (decrement_total){decrement_total /= 10; num_digits_total++;}
     if(decrement_image==0) num_digits_image = 1;
@@ -2664,7 +2665,8 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
     mesh_->create_field(field_enums::EARTH_SURFACE_Z_FS);
     std::vector<std::string> image_files;
     std::vector<std::string> stereo_image_files;
-    DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
+    int_t frame_id_start=0,num_frames=1,frame_skip=1;
+    DICe::decipher_image_file_names(input_params,image_files,stereo_image_files,frame_id_start,num_frames,frame_skip);
     const std::string left_file = image_files[0];
     const std::string right_file = stereo_image_files[0];
     std::cout << " left file " << left_file << std::endl;
@@ -2701,7 +2703,8 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
     // decypher the image names from the input files
     std::vector<std::string> image_files;
     std::vector<std::string> stereo_image_files;
-    DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
+    int_t frame_id_start=0,num_frames=1,frame_skip=1;
+    DICe::decipher_image_file_names(input_params,image_files,stereo_image_files,frame_id_start,num_frames,frame_skip);
     Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
     imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
     imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
@@ -3089,14 +3092,14 @@ Schema::write_output(const std::string & output_folder,
 
 #ifdef DICE_ENABLE_GLOBAL // global is enabled doesn't mean the analysis is global DIC it just means exodus is available as an output format
   if (write_exodus_output_) {
-    if(frame_id_==first_frame_id_+1){
+    if(frame_id_==first_frame_id_+frame_skip_){
       std::string output_dir= "";
       if(init_params_!=Teuchos::null)
         output_dir = init_params_->get<std::string>(DICe::output_folder,"");
       DICe::mesh::create_output_exodus_file(mesh_,output_dir);
       DICe::mesh::create_exodus_output_variable_names(mesh_);
     }
-    DICe::mesh::exodus_output_dump(mesh_,frame_id_-first_frame_id_,frame_id_-first_frame_id_);
+    DICe::mesh::exodus_output_dump(mesh_,(frame_id_-first_frame_id_)/frame_skip_,(frame_id_-first_frame_id_)/frame_skip_);
   }
 #endif
 
@@ -3133,7 +3136,7 @@ Schema::write_output(const std::string & output_folder,
       if(proc_size>1)
         fName << "." << proc_size << "." << my_proc;
       fName << ".txt";
-      if(frame_id_==first_frame_id_+1){
+      if(frame_id_==first_frame_id_+frame_skip_){
         std::FILE * filePtr = fopen(fName.str().c_str(),"w"); // overwrite the file if it exists
         if(separate_header_file&&my_proc==0){
           std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"w"); // overwrite the file if it exists
@@ -3160,7 +3163,7 @@ Schema::write_output(const std::string & output_folder,
     if(num_frames_>0){
       int_t num_digits_total = 0;
       int_t num_digits_image = 0;
-      int_t decrement_total = first_frame_id_+num_frames_;
+      int_t decrement_total = first_frame_id_+num_frames_*frame_skip_;
       int_t decrement_image = frame_id_-1; // decremented because the frame was updated before write was called
       while (decrement_total){decrement_total /= 10; num_digits_total++;}
       if(decrement_image==0)
@@ -3178,7 +3181,7 @@ Schema::write_output(const std::string & output_folder,
       fName << "." << proc_size << "." << my_proc;
     fName << ".txt";
     std::FILE * filePtr = fopen(fName.str().c_str(),"w");
-    if(separate_header_file && frame_id_<= first_frame_id_+1 && my_proc==0){
+    if(separate_header_file && frame_id_<= first_frame_id_+frame_skip_ && my_proc==0){
       std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"w"); // overwrite the file if it exists
       output_spec_->write_info(infoFilePtr,true);
       fclose(infoFilePtr);
@@ -3316,7 +3319,7 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
   if(num_frames_>0){
     int_t num_digits_total = 0;
     int_t num_digits_image = 0;
-    int_t decrement_total = first_frame_id_ + num_frames_;
+    int_t decrement_total = first_frame_id_ + num_frames_*frame_skip_;
     int_t decrement_image = frame_id_;
     while (decrement_total){decrement_total /= 10; num_digits_total++;}
     if(decrement_image==0)

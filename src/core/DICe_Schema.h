@@ -835,7 +835,7 @@ public:
 
   /// Updates the current image frame number
   void update_frame_id(){
-    frame_id_++;
+    frame_id_+=frame_skip_;
   }
 
   /// Returns the current image frame (Nonzero only if multiple images are included in the sequence)
@@ -851,8 +851,9 @@ public:
   /// Sets the first frame's index
   /// \param start_id the index of the first frame (useful for cine files)
   /// \param num_frames the total number of frames in the analysis
-  void set_frame_range(const int_t start_id, const int_t num_frames){
+  void set_frame_range(const int_t start_id, const int_t num_frames, const int_t frame_skip){
     first_frame_id_ = start_id;
+    frame_skip_ = frame_skip;
     frame_id_ = first_frame_id_;
     num_frames_ = num_frames;
   }
@@ -1136,6 +1137,8 @@ private:
   int_t frame_id_;
   /// Stores the offset to the first image's index (cine files can start with a negative index)
   int_t first_frame_id_;
+  /// Stores the striding of the frames
+  int_t frame_skip_;
   /// Stores the number of images in the sequence
   int_t num_frames_;
   /// Displacement jump tolerance. If the displacement solution is larger than this from the previous frame

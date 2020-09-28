@@ -1311,7 +1311,8 @@ void update_legacy_txt_cal_input(const Teuchos::RCP<Teuchos::ParameterList> & in
   int_t height = -1;
   std::vector<std::string> image_files;
   std::vector<std::string> stereo_image_files;
-  DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
+  int_t frame_id_start=0,num_frames=1,frame_skip=1;
+  DICe::decipher_image_file_names(input_params,image_files,stereo_image_files,frame_id_start,num_frames,frame_skip);
   DICe::utils::read_image_dimensions(image_files[0].c_str(),width,height);
   TEUCHOS_TEST_FOR_EXCEPTION(width<0||height<0,std::runtime_error,
     "Error, invalid image dimensions");
@@ -1349,7 +1350,8 @@ void update_vic3d_cal_input(const Teuchos::RCP<Teuchos::ParameterList> & input_p
   int_t height = -1;
   std::vector<std::string> image_files;
   std::vector<std::string> stereo_image_files;
-  DICe::decipher_image_file_names(input_params,image_files,stereo_image_files);
+  int_t frame_id_start=0,num_frames=1,frame_skip=1;
+  DICe::decipher_image_file_names(input_params,image_files,stereo_image_files,frame_id_start,num_frames,frame_skip);
   DICe::utils::read_image_dimensions(image_files[0].c_str(),width,height);
   dst << "<polygonmask width=\"" << width << "\" height=\"" << height << "\" lri=\"polygonmask\">\n";
   dst.close();

@@ -514,7 +514,10 @@ Teuchos::RCP<Teuchos::ParameterList> read_input_params(const std::string & param
 DICE_LIB_DLL_EXPORT
 void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
   std::vector<std::string> & image_files,
-  std::vector<std::string> & stero_image_files);
+  std::vector<std::string> & stero_image_files,
+  int_t & frame_id_start,
+  int_t & num_frames,
+  int_t & frame_skip);
 
 /// \brief Create template input files with lots of comments
 /// \param file_prefix The prefix used to name the template files
