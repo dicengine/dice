@@ -168,7 +168,7 @@ int_t opencv_server(int argc, char *argv[]){
   for(Teuchos::ParameterList::ConstIterator filter_it=filters.begin();filter_it!=filters.end();++filter_it){
     if(filter_it->first == "background"){
       Teuchos::ParameterList options = filters.get<Teuchos::ParameterList>(filter_it->first,Teuchos::ParameterList());
-      if(options.get<int>(opencv_server_background_num_frames,0)==0) break; // zero means don't do background subtraction
+      //if(options.get<int>(opencv_server_background_num_frames,1)<=1) break; // zero means don't do background subtraction
       opencv_create_cine_background_image(options);
       const std::string background_file = options.get<std::string>(opencv_server_background_file_name); // the check that this param exists happens in function above
       background_img = imread(background_file, IMREAD_GRAYSCALE);
@@ -275,6 +275,10 @@ int_t opencv_create_cine_background_image(Teuchos::ParameterList & options){
   TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(opencv_server_background_num_frames),std::runtime_error,"");
   const int_t num_frames_to_avg = options.get<int>(opencv_server_background_num_frames);
   DEBUG_MSG("opencv_create_cine_background_image(): num frames to avg:  " << num_frames_to_avg);
+  if(num_frames_to_avg < 1){
+    std::cout << "invalid number of background frames (must be >=1)" << std::endl;
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"invalid num background frames");
+  }
 
   // read the first cine frame in the file
   Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
