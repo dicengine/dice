@@ -3583,7 +3583,8 @@ Output_Spec::write_info(std::FILE * file,
       fprintf(file,"Shear Strain (gamma_xy) ");
   }
   fprintf(file,"\n");
-  fprintf(file,"*** Incremental correlation: false\n");
+  std::string inc_cor_string = schema_->use_incremental_formulation() ? "true" : "false";
+  fprintf(file,"*** Incremental correlation: %s\n", inc_cor_string.c_str());
   fprintf(file,"*** Subset size: %i\n",schema_->subset_dim());
   fprintf(file,"*** Step size: x %i y %i (-1 implies not regular grid)\n",schema_->step_size_x(),schema_->step_size_y());
   if(schema_->post_processors()->size()==0)
