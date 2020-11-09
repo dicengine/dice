@@ -19,10 +19,9 @@ var searchData=
   ['analysis_5ftype_16',['analysis_type',['../class_d_i_ce_1_1_schema.html#acd82b378b0c46c7750bc2cc7cab1d22e',1,'DICe::Schema::analysis_type()'],['../class_d_i_ce.html#a3d0fc3803730befc657006c7f45bc7cd',1,'DICe::Analysis_Type()']]],
   ['analysis_5ftype_5f_17',['analysis_type_',['../class_d_i_ce_1_1_schema.html#ac683ca06d6046e394c6c63cd4f93d4be',1,'DICe::Schema']]],
   ['angle_5f2d_18',['angle_2d',['../namespace_d_i_ce.html#a118c2de6ebfa1d620ebedc0baebee1b7',1,'DICe']]],
-  ['apogee_5f_19',['apogee_',['../class_d_i_ce_1_1_altitude___post___processor.html#a833d738a7bc9b5745dd6945e464e0629',1,'DICe::Altitude_Post_Processor']]],
-  ['apply_5fmask_20',['apply_mask',['../class_d_i_ce_1_1_image.html#a003ad1facb4073f852a17d84d88a6281',1,'DICe::Image::apply_mask(const Conformal_Area_Def &amp;area_def, const bool smooth_edges=true)'],['../class_d_i_ce_1_1_image.html#a9d898ba0b5588224af6a7af15dc0ac79',1,'DICe::Image::apply_mask(const bool smooth_edges)']]],
-  ['apply_5frotation_21',['apply_rotation',['../class_d_i_ce_1_1_image.html#a6ac253102ff5ef2cccd661565211c058',1,'DICe::Image']]],
-  ['apply_5ftransform_22',['apply_transform',['../namespace_d_i_ce.html#a3da895269bd37a7b3ce9ab47c06c6538',1,'DICe']]],
-  ['apply_5ftransformation_23',['apply_transformation',['../class_d_i_ce_1_1_image.html#a0d56090723e2cde6fe040c8ff199e9f4',1,'DICe::Image']]],
-  ['array_5f2d_5ffft_5fin_5fplace_24',['array_2d_fft_in_place',['../namespace_d_i_ce.html#a9fb038e6f1f2d6ba3f6868d84036561b',1,'DICe']]]
+  ['apply_5fmask_19',['apply_mask',['../class_d_i_ce_1_1_image.html#a003ad1facb4073f852a17d84d88a6281',1,'DICe::Image::apply_mask(const Conformal_Area_Def &amp;area_def, const bool smooth_edges=true)'],['../class_d_i_ce_1_1_image.html#a9d898ba0b5588224af6a7af15dc0ac79',1,'DICe::Image::apply_mask(const bool smooth_edges)']]],
+  ['apply_5frotation_20',['apply_rotation',['../class_d_i_ce_1_1_image.html#a6ac253102ff5ef2cccd661565211c058',1,'DICe::Image']]],
+  ['apply_5ftransform_21',['apply_transform',['../namespace_d_i_ce.html#a3da895269bd37a7b3ce9ab47c06c6538',1,'DICe']]],
+  ['apply_5ftransformation_22',['apply_transformation',['../class_d_i_ce_1_1_image.html#a0d56090723e2cde6fe040c8ff199e9f4',1,'DICe::Image']]],
+  ['array_5f2d_5ffft_5fin_5fplace_23',['array_2d_fft_in_place',['../namespace_d_i_ce.html#a9fb038e6f1f2d6ba3f6868d84036561b',1,'DICe']]]
 ];

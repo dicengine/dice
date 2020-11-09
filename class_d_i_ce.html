@@ -143,7 +143,8 @@ Public Types</h2></td></tr>
 <b>USE_FEATURE_MATCHING</b>, 
 <b>USE_IMAGE_REGISTRATION</b>, 
 <br />
-&#160;&#160;<b>INITIALIZATION_METHOD_NOT_APPLICABLE</b>, 
+&#160;&#160;<b>USE_SATELLITE_GEOMETRY</b>, 
+<b>INITIALIZATION_METHOD_NOT_APPLICABLE</b>, 
 <b>MAX_INITIALIZATION_METHOD</b>, 
 <b>NO_SUCH_INITIALIZATION_METHOD</b>
 <br />
@@ -1093,6 +1094,10 @@ const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="e
 const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce.html#aa59b9936d04b94135b7a9e4cde605532">remove_outlier_pixels</a> = &quot;remove_outlier_pixels&quot;</td></tr>
 <tr class="memdesc:aa59b9936d04b94135b7a9e4cde605532"><td class="mdescLeft">&#160;</td><td class="mdescRight">String parameter name. <br /></td></tr>
 <tr class="separator:aa59b9936d04b94135b7a9e4cde605532"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3bce2f67e39b885e8fc8575b3e31a490"><td class="memItemLeft" align="right" valign="top"><a id="a3bce2f67e39b885e8fc8575b3e31a490"></a>
+const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce.html#a3bce2f67e39b885e8fc8575b3e31a490">outlier_replacement_value</a> = &quot;outlier_replacement_value&quot;</td></tr>
+<tr class="memdesc:a3bce2f67e39b885e8fc8575b3e31a490"><td class="mdescLeft">&#160;</td><td class="mdescRight">String parameter name. <br /></td></tr>
+<tr class="separator:a3bce2f67e39b885e8fc8575b3e31a490"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af73df3ac525308cfbc2aba9962542494"><td class="memItemLeft" align="right" valign="top"><a id="af73df3ac525308cfbc2aba9962542494"></a>
 const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce.html#af73df3ac525308cfbc2aba9962542494">convert_cine_to_8_bit</a> = &quot;convert_cine_to_8_bit&quot;</td></tr>
 <tr class="memdesc:af73df3ac525308cfbc2aba9962542494"><td class="mdescLeft">&#160;</td><td class="mdescRight">String parameter name. <br /></td></tr>
@@ -1485,7 +1490,11 @@ const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="e
 const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce.html#a49efafe48cd9b9be7cab4c953baecb48">floor_intensity_values</a> = &quot;floor_intensity_values&quot;</td></tr>
 <tr class="memdesc:a49efafe48cd9b9be7cab4c953baecb48"><td class="mdescLeft">&#160;</td><td class="mdescRight">String parameter name. <br /></td></tr>
 <tr class="separator:a49efafe48cd9b9be7cab4c953baecb48"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aae4a57bb7f4d35bcb7c27305a00e3dff"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce.html#aae4a57bb7f4d35bcb7c27305a00e3dff">num_valid_correlation_params</a> = 89</td></tr>
+<tr class="memitem:a905c63f914708bcc70806593bc85afd0"><td class="memItemLeft" align="right" valign="top"><a id="a905c63f914708bcc70806593bc85afd0"></a>
+const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce.html#a905c63f914708bcc70806593bc85afd0">undistort_images</a> = &quot;undistort_images&quot;</td></tr>
+<tr class="memdesc:a905c63f914708bcc70806593bc85afd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">String parameter name. <br /></td></tr>
+<tr class="separator:a905c63f914708bcc70806593bc85afd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae4a57bb7f4d35bcb7c27305a00e3dff"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce.html#aae4a57bb7f4d35bcb7c27305a00e3dff">num_valid_correlation_params</a> = 90</td></tr>
 <tr class="separator:aae4a57bb7f4d35bcb7c27305a00e3dff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab32ae587d77b3525eda47832a8e32708"><td class="memItemLeft" align="right" valign="top"><a id="ab32ae587d77b3525eda47832a8e32708"></a>
 const <a class="el" href="struct_d_i_ce_1_1_correlation___parameter.html">Correlation_Parameter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce.html#ab32ae587d77b3525eda47832a8e32708">valid_correlation_params</a> [<a class="el" href="class_d_i_ce.html#aae4a57bb7f4d35bcb7c27305a00e3dff">num_valid_correlation_params</a>]</td></tr>
@@ -1716,6 +1725,7 @@ Static Public Attributes</h2></td></tr>
 <div class="line">  <span class="stringliteral">&quot;USE_ZEROS&quot;</span>,</div>
 <div class="line">  <span class="stringliteral">&quot;USE_FEATURE_MATCHING&quot;</span>,</div>
 <div class="line">  <span class="stringliteral">&quot;USE_IMAGE_REGISTRATION&quot;</span>,</div>
+<div class="line">  <span class="stringliteral">&quot;USE_SATELLITE_GEOMETRY&quot;</span>,</div>
 <div class="line">  <span class="stringliteral">&quot;INITIALIZATION_METHOD_NOT_APPLICABLE&quot;</span></div>
 <div class="line">}</div>
 </div><!-- fragment -->
@@ -1755,7 +1765,7 @@ Static Public Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">const <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> DICe::num_valid_correlation_params = 89</td>
+          <td class="memname">const <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> DICe::num_valid_correlation_params = 90</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1875,7 +1885,7 @@ Static Public Attributes</h2></td></tr>
 <div class="ttc" id="aclass_d_i_ce_html_a97c7cb7526e4a38d49c04708a547d88a"><div class="ttname"><a href="class_d_i_ce.html#a97c7cb7526e4a38d49c04708a547d88a">DICe::post_process_altitude</a></div><div class="ttdeci">const char *const post_process_altitude</div><div class="ttdoc">String Parameter name.</div><div class="ttdef"><b>Definition:</b> DICe_PostProcessor.h:60</div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Jan 31 2020 14:12:44 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Nov 9 2020 07:49:10 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.16
 </small></address>

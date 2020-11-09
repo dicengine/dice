@@ -147,10 +147,10 @@ std::vector&lt; <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b
 std::vector&lt; <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a356295fe035d62fdb68cac5157ebe45a">def_extents</a> () const</td></tr>
 <tr class="memdesc:a356295fe035d62fdb68cac5157ebe45a"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns the local deformed extents of the schema on this processor (defines how much of an image is actually used) <br /></td></tr>
 <tr class="separator:a356295fe035d62fdb68cac5157ebe45a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a99a4a130df7d006755879f106ec268b0"><td class="memItemLeft" align="right" valign="top"><a id="a99a4a130df7d006755879f106ec268b0"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a99a4a130df7d006755879f106ec268b0">set_def_image</a> (const std::string &amp;defName, const <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> id=0)</td></tr>
-<tr class="memdesc:a99a4a130df7d006755879f106ec268b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replace the deformed image for this <a class="el" href="class_d_i_ce_1_1_schema.html" title="The centralized container for the correlation plan and parameters.">Schema</a>. <br /></td></tr>
-<tr class="separator:a99a4a130df7d006755879f106ec268b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a845c3ae6b55c4e139612e13989ad3274"><td class="memItemLeft" align="right" valign="top"><a id="a845c3ae6b55c4e139612e13989ad3274"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a845c3ae6b55c4e139612e13989ad3274">set_def_image</a> (const std::string &amp;defName)</td></tr>
+<tr class="memdesc:a845c3ae6b55c4e139612e13989ad3274"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replace the deformed image for this <a class="el" href="class_d_i_ce_1_1_schema.html" title="The centralized container for the correlation plan and parameters.">Schema</a>. <br /></td></tr>
+<tr class="separator:a845c3ae6b55c4e139612e13989ad3274"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ef0d9740d8df6398116adb048122e84"><td class="memItemLeft" align="right" valign="top"><a id="a9ef0d9740d8df6398116adb048122e84"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a9ef0d9740d8df6398116adb048122e84">set_def_image</a> (const <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#afbe9143a60dee0981dbb705ec5fbf621">img_width</a>, const <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#a85104f5f9ac4d52e90c7529c3643c964">img_height</a>, const Teuchos::ArrayRCP&lt; <a class="el" href="class_d_i_ce.html#a138ceb69f1a2f75eea9a7ebed6d3cdef">intensity_t</a> &gt; defRCP, const <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> id=0)</td></tr>
 <tr class="memdesc:a9ef0d9740d8df6398116adb048122e84"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replace the deformed image using an intensity array. <br /></td></tr>
@@ -466,8 +466,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a2edf4561ff8cb98ed0beab29914a2f51">first_frame_id</a> () const</td></tr>
 <tr class="memdesc:a2edf4561ff8cb98ed0beab29914a2f51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the first image frame (Nonzero only if multiple images are included in the sequence) <br /></td></tr>
 <tr class="separator:a2edf4561ff8cb98ed0beab29914a2f51"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abf00386414094671eecca993a9ce3cfc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#abf00386414094671eecca993a9ce3cfc">set_frame_range</a> (const <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> start_id, const <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#ad13aee957fd41635717958ee9af76692">num_frames</a>)</td></tr>
-<tr class="separator:abf00386414094671eecca993a9ce3cfc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5579ce7941ec85642108992eb049ed91"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a5579ce7941ec85642108992eb049ed91">set_frame_range</a> (const <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> start_id, const <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> <a class="el" href="class_d_i_ce_1_1_schema.html#ad13aee957fd41635717958ee9af76692">num_frames</a>, const <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a> frame_skip)</td></tr>
+<tr class="separator:a5579ce7941ec85642108992eb049ed91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad13aee957fd41635717958ee9af76692"><td class="memItemLeft" align="right" valign="top"><a id="ad13aee957fd41635717958ee9af76692"></a>
 <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ad13aee957fd41635717958ee9af76692">num_frames</a> () const</td></tr>
 <tr class="memdesc:ad13aee957fd41635717958ee9af76692"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of images in the set (-1 if it has not been set) <br /></td></tr>
@@ -698,6 +698,10 @@ Teuchos::RCP&lt; <a class="el" href="class_d_i_ce_1_1_output___spec.html">DICe::
 <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#a833b00d80d61d0be4a97da18866d6744">first_frame_id_</a></td></tr>
 <tr class="memdesc:a833b00d80d61d0be4a97da18866d6744"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores the offset to the first image's index (cine files can start with a negative index) <br /></td></tr>
 <tr class="separator:a833b00d80d61d0be4a97da18866d6744"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf110bb3cd91e08bd702c8646b6b6f75"><td class="memItemLeft" align="right" valign="top"><a id="adf110bb3cd91e08bd702c8646b6b6f75"></a>
+<a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#adf110bb3cd91e08bd702c8646b6b6f75">frame_skip_</a></td></tr>
+<tr class="memdesc:adf110bb3cd91e08bd702c8646b6b6f75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores the striding of the frames. <br /></td></tr>
+<tr class="separator:adf110bb3cd91e08bd702c8646b6b6f75"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae689f9ffa16c76be486afd7512a12655"><td class="memItemLeft" align="right" valign="top"><a id="ae689f9ffa16c76be486afd7512a12655"></a>
 <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_d_i_ce_1_1_schema.html#ae689f9ffa16c76be486afd7512a12655">num_frames_</a></td></tr>
 <tr class="memdesc:ae689f9ffa16c76be486afd7512a12655"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores the number of images in the sequence. <br /></td></tr>
@@ -2027,8 +2031,8 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 
 </div>
 </div>
-<a id="abf00386414094671eecca993a9ce3cfc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abf00386414094671eecca993a9ce3cfc">&#9670;&nbsp;</a></span>set_frame_range()</h2>
+<a id="a5579ce7941ec85642108992eb049ed91"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5579ce7941ec85642108992eb049ed91">&#9670;&nbsp;</a></span>set_frame_range()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -2046,7 +2050,13 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
-          <td class="paramname"><em>num_frames</em>&#160;</td>
+          <td class="paramname"><em>num_frames</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_d_i_ce.html#a2c6297e4a786e52754918318b31daf75">int_t</a>&#160;</td>
+          <td class="paramname"><em>frame_skip</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -3046,7 +3056,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Jan 31 2020 14:12:45 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Nov 9 2020 07:49:16 for Digital Image Correlation Engine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.16
 </small></address>
