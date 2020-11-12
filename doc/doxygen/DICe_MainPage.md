@@ -639,7 +639,7 @@ For almost any analysis, the following fields are available for output:
 
     DISPLACEMENT_X          // u
     DISPLACEMENT_Y          // v
-    ROTATION_Z              // (theta) rotation about the z-axis, z is out of the plane
+    ROTATION_Z              // (theta) rotation about the z-axis, z is into the plane of the image
     NORMAL_STRAIN_X         // normal stretch in the x direction (of the subset shape function)
     NORMAL_STRAIN_Y         // normal stretch in the y direction (of the subset shape function)
     SHEAR_STRAIN_XY         // shear strain in the x-y plane (of the subset shape function)
