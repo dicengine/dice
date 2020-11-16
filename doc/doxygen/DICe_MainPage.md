@@ -1,5 +1,5 @@
-Copyright 2015 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
-SAND number for the information contained in the documentation and tutorials: SAND2015-10606 O
+Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
+SAND number for the information contained in the documentation and tutorials: SAND2020-12796 O
 
 [DICe Home Page] (https://github.com/dicengine)
 
