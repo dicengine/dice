@@ -3152,7 +3152,7 @@ Schema::write_output(const std::string & output_folder,
       }
       // append the latest result to the file
       std::FILE * filePtr = fopen(fName.str().c_str(),"a");
-      output_spec_->write_frame(filePtr,frame_id_-1,subset_global_id(subset)); // frame is decremented because write gets called after update_frame
+      output_spec_->write_frame(filePtr,frame_id_-frame_skip_,subset_global_id(subset)); // frame is decremented because write gets called after update_frame
       fclose (filePtr);
     } // subset loop
   }
@@ -3165,7 +3165,7 @@ Schema::write_output(const std::string & output_folder,
       int_t num_digits_total = 0;
       int_t num_digits_image = 0;
       int_t decrement_total = first_frame_id_+num_frames_*frame_skip_;
-      int_t decrement_image = frame_id_-1; // decremented because the frame was updated before write was called
+      int_t decrement_image = frame_id_-frame_skip_; // decremented because the frame was updated before write was called
       while (decrement_total){decrement_total /= 10; num_digits_total++;}
       if(decrement_image==0)
         num_digits_image = 1;
@@ -3177,7 +3177,7 @@ Schema::write_output(const std::string & output_folder,
     infofName << output_folder << prefix << ".txt";
     for(int_t i=0;i<num_zeros;++i)
       fName << "0";
-    fName << frame_id_-1;
+    fName << frame_id_-frame_skip_;
     if(proc_size >1)
       fName << "." << proc_size << "." << my_proc;
     fName << ".txt";
