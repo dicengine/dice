@@ -571,6 +571,7 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
     TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index < first_frame_index,std::invalid_argument,"Error, the cine ref index is < the first frame index");
     TEUCHOS_TEST_FOR_EXCEPTION(cine_end_index < cine_start_index,std::invalid_argument,"Error, the cine end index is < the cine start index");
     TEUCHOS_TEST_FOR_EXCEPTION(cine_end_index < cine_ref_index,std::invalid_argument,"Error, the cine end index is < the ref index");
+    TEUCHOS_TEST_FOR_EXCEPTION(cine_end_index >= first_frame_index + num_images,std::invalid_argument,"Error, the cine end index is >= first frame index + num_frames");
     // check if the reference frame should be averaged:
     int_t num_avg_frames = -1;
     if(params->isParameter(DICe::time_average_cine_ref_frame))
