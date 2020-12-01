@@ -71,6 +71,8 @@
 #else
 #  define DEBUG_MSG(x) do {} while (0)
 #endif
+// buffer output macros (for interfacing with javascript):
+#define BUFFER_MSG(var,val) do { std::cout << "[--BUFFER_OUT--]: " << var <<  " " << val << std::endl; } while (0)
 
 #define VERSION "v2.0"
 #ifndef GITSHA1

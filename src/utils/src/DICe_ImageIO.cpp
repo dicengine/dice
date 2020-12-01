@@ -477,20 +477,21 @@ cv::Mat read_image(const char * file_name){
     //params->set(spread_intensity_histogram,true);
     params->set(filter_failed_cine_pixels,true);
     params->set(convert_cine_to_8_bit,true);
-  }
-  int_t width = 0;
-  int_t height = 0;
-  read_image_dimensions(file_name,width,height);
-  // read the cine
-  Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
-  read_image(file_name,intensities.getRawPtr(),params);
-  cv::Mat img(height,width,CV_8UC1,cv::Scalar(0));
-  for(int_t y=0;y<height;++y){
-    for(int_t x=0;x<width;++x){
-      img.at<uchar>(y,x) = intensities[y*width + x];
+    int_t width = 0;
+    int_t height = 0;
+    read_image_dimensions(file_name,width,height);
+    // read the cine
+    Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
+    read_image(file_name,intensities.getRawPtr(),params);
+    cv::Mat img(height,width,CV_8UC1,cv::Scalar(0));
+    for(int_t y=0;y<height;++y){
+      for(int_t x=0;x<width;++x){
+        img.at<uchar>(y,x) = intensities[y*width + x];
+      }
     }
-  }
-  return img;
+    return img;
+  }else
+    return cv::imread(file_name,cv::IMREAD_GRAYSCALE);
 }
 
 DICE_LIB_DLL_EXPORT

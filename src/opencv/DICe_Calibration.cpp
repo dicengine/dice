@@ -485,8 +485,8 @@ Calibration::extract_checkerboard_intersections(){
           out_file_name << debug_folder_;
         //out_file_name << file_name_no_dir_or_extension(image_list_[i_cam][i_image]);
         create_directory(".dice");
-        if(i_cam==0) out_file_name << ".dice/.cal_left.png";
-        else out_file_name << ".dice/.cal_right.png";
+        if(i_cam==0) out_file_name << ".dice/.preview_cal_left.png";
+        else out_file_name << ".dice/.preview_cal_right.png";
         // copy the image:
         Mat debug_img = img.clone();
         std::stringstream banner;
@@ -615,8 +615,8 @@ Calibration::extract_dot_target_points(){
           out_file_name << debug_folder_;
         //out_file_name << file_name_no_dir_or_extension(image_list_[i_cam][i_image]);
         create_directory(".dice");
-        if(i_cam==0) out_file_name << ".dice/.cal_left.png";
-        else out_file_name << ".dice/.cal_right.png";
+        if(i_cam==0) out_file_name << ".dice/.preview_cal_left.png";
+        else out_file_name << ".dice/.preview_cal_right.png";
         DEBUG_MSG("writing intersections image: " << out_file_name.str());
         // copy the image:
         Mat debug_img = img.clone();

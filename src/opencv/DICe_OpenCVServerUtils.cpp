@@ -44,6 +44,7 @@
 */
 
 #include <DICe.h>
+#include <DICe_ImageIO.h>
 #include <DICe_OpenCVServerUtils.h>
 #include <DICe_Parser.h>
 #include <DICe_Calibration.h>
@@ -171,7 +172,8 @@ int_t opencv_server(int argc, char *argv[]){
       //if(options.get<int>(opencv_server_background_num_frames,1)<=1) break; // zero means don't do background subtraction
       opencv_create_cine_background_image(options);
       const std::string background_file = options.get<std::string>(opencv_server_background_file_name); // the check that this param exists happens in function above
-      background_img = imread(background_file, IMREAD_GRAYSCALE);
+//      background_img = imread(background_file, IMREAD_GRAYSCALE);
+      background_img = DICe::utils::read_image(background_file.c_str());
       break;
     }
   }
@@ -184,9 +186,11 @@ int_t opencv_server(int argc, char *argv[]){
     // load the image as an openCV mat
     Mat img;
     if(image_in_filename.find("filter")!=std::string::npos)
-      img = imread(image_in_filename, IMREAD_COLOR); // if it's a filtered image it might have color annotations
+      img = DICe::utils::read_image(image_in_filename.c_str()); // TODO if it's a filtered image it might have color annotations
+//    img = imread(image_in_filename, IMREAD_COLOR); // if it's a filtered image it might have color annotations
     else
-      img = imread(image_in_filename, IMREAD_GRAYSCALE);
+      img = DICe::utils::read_image(image_in_filename.c_str());
+//      img = imread(image_in_filename, IMREAD_GRAYSCALE);
     if(img.empty()){
       std::cout << "*** error, the image is empty" << std::endl;
       return 4;
@@ -194,6 +198,14 @@ int_t opencv_server(int argc, char *argv[]){
     if(!img.data){
       std::cout << "*** error, the image failed to load" << std::endl;
       return 4;
+    }
+    if(file_it==io_files.begin()){
+      BUFFER_MSG("IMAGE_WIDTH",img.cols);
+      BUFFER_MSG("IMAGE_HEIGHT",img.rows);
+      // if the input and the output images are the same, return without writing an output image
+      if(image_in_filename.compare(image_out_filename) == 0){
+        return error_code;
+      }
     }
     // iterate the selected filters
     for(Teuchos::ParameterList::ConstIterator filter_it=filters.begin();filter_it!=filters.end();++filter_it){
