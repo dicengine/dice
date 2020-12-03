@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
       // for tracklib use, execution gets handed over to tracklib here
       if(input_params->get(DICe::use_tracklib,false)){
 #ifdef DICE_ENABLE_TRACKLIB
-        TrackLib::tracklib_driver(input_params,correlation_params,image_files,stereo_image_files);
+        TrackLib::tracklib_driver(input_params,correlation_params);
         DICe::finalize();
         return 0;
 #else
