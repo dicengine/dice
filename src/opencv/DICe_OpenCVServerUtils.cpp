@@ -208,11 +208,20 @@ int_t opencv_server(int argc, char *argv[]){
     tracking_params->set("min_area",input_params.get<int>("min_area"));
     tracking_params->set("max_area",input_params.get<int>("max_area"));
     tracking_params->set("colocation_tol",input_params.get<double>("colocation_tol"));
-    tracking_params->set("match_tol",input_params.get<double>("match_tol"));
-    tracking_params->set("cross_match_tol",input_params.get<double>("cross_match_tol"));
     tracking_params->set("neighbor_radius",input_params.get<double>("neighbor_radius"));
+    tracking_params->set("num_search_frames",input_params.get<int>("num_search_frames"));
     tracking_params->set("min_pts_per_track",input_params.get<int>("min_pts_per_track"));
-    tracking_params->set("max_track_gap",input_params.get<int>("max_track_gap"));
+    tracking_params->set("area_tol",input_params.get<double>("area_tol"));
+    tracking_params->set("area_weight",input_params.get<double>("area_weight"));
+    tracking_params->set("gray_tol",input_params.get<int>("gray_tol"));
+    tracking_params->set("gray_weight",input_params.get<double>("gray_weight"));
+    tracking_params->set("dist_weight",input_params.get<double>("dist_weight"));
+    tracking_params->set("angle_tol",input_params.get<double>("angle_tol"));
+    tracking_params->set("angle_weight",input_params.get<double>("angle_weight"));
+    tracking_params->set("stereo_area_tol",input_params.get<double>("stereo_area_tol"));
+    tracking_params->set("stereo_area_weight",input_params.get<double>("stereo_area_weight"));
+    tracking_params->set("dist_from_epi_tol",input_params.get<double>("dist_from_epi_tol"));
+    tracking_params->set("dist_from_epi_weight",input_params.get<double>("dist_from_epi_weight"));
     tracking_params->set("num_background_frames",input_params.get<int>("num_background_frames"));
 
 #ifdef DICE_ENABLE_TRACKLIB
