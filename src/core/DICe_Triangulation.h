@@ -55,6 +55,12 @@
 
 #include <Teuchos_SerialDenseMatrix.hpp>
 
+#include "opencv2/core/core.hpp"
+#include "opencv2/calib3d.hpp"
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgproc.hpp"
+
 #include <cassert>
 #include <vector>
 
@@ -160,6 +166,18 @@ public:
     std::vector<scalar_t> & xw_out,
     std::vector<scalar_t> & yw_out,
     std::vector<scalar_t> & zw_out);
+
+  /// compute the fundamental matrix and return it as an opencv mat
+  cv::Mat fundamental_matrix(){
+    DICe::Matrix<DICe::scalar_t,3> F = camera_system_->fundamental_matrix();
+    cv::Mat matF(3, 3, CV_32F);
+    for(int_t i=0;i<matF.rows;++i){
+      for(int_t j=0;j<matF.cols;++j){
+        matF.at<float>(i,j) = F(i,j);
+      }
+    }
+    return matF;
+  }
 
   /// correct the lens distortion with a radial model
   /// \param x_s x sensor coordinate to correct, modified in place
