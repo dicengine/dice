@@ -89,6 +89,10 @@ Teuchos::ParameterList parse_filter_string(int argc, char *argv[]){
         }else{ // it must be an integer
           tracklib_params.set(arg,std::atoi(value.c_str()));
         }
+      }else if(value.find("true")!=std::string::npos){
+        tracklib_params.set(arg,true);
+      }else if(value.find("false")!=std::string::npos){ // test for bools
+        tracklib_params.set(arg,false);
       }else{ // otherwise add a string parameter
         tracklib_params.set(arg,value);
       }
