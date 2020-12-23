@@ -155,8 +155,8 @@ int main(int argc, char *argv[]) {
 
   Teuchos::RCP<Triangulation> triangulation_xml = Teuchos::rcp(new Triangulation("./cal/cal_a.xml"));
   std::vector<std::vector<scalar_t> > & calibration_intrinsics_xml = *triangulation_xml->cal_intrinsics();
-  Matrix<scalar_t,4> & calibration_T_mat_xml = * triangulation_xml->cam_0_to_cam_1();
-  Matrix<scalar_t,4> & zero_to_world_xml = * triangulation_xml->cam_0_to_world();
+  const Matrix<scalar_t,4> & calibration_T_mat_xml = * triangulation_xml->cam_0_to_cam_1();
+  const Matrix<scalar_t,4> & zero_to_world_xml = * triangulation_xml->cam_0_to_world();
 
   *outStream << "testing intrinsics from vic3d format" << std::endl;
 
@@ -233,8 +233,8 @@ int main(int argc, char *argv[]) {
 
   Teuchos::RCP<Triangulation> triangulation_txt = Teuchos::rcp(new Triangulation("./cal/cal_a.txt"));
   std::vector<std::vector<scalar_t> > & calibration_intrinsics_txt = *triangulation_txt->cal_intrinsics();
-  Matrix<scalar_t,4> & calibration_T_mat_txt = * triangulation_txt->cam_0_to_cam_1();
-  Matrix<scalar_t,4> & zero_to_world_txt = * triangulation_txt->cam_0_to_world();
+  const Matrix<scalar_t,4> & calibration_T_mat_txt = * triangulation_txt->cam_0_to_cam_1();
+  const Matrix<scalar_t,4> & zero_to_world_txt = * triangulation_txt->cam_0_to_world();
 
   *outStream << "testing intrinsics from txt format" << std::endl;
 
@@ -475,7 +475,7 @@ int main(int argc, char *argv[]) {
 
   Teuchos::RCP<Triangulation> triangulation_with_R = Teuchos::rcp(new Triangulation("./cal/cal_a_with_R.txt"));
   std::vector<std::vector<scalar_t> > & calibration_intrinsics_with_R = *triangulation_with_R->cal_intrinsics();
-  Matrix<scalar_t,4> & calibration_T_mat_with_R = * triangulation_with_R->cam_0_to_cam_1();
+  const Matrix<scalar_t,4> & calibration_T_mat_with_R = * triangulation_with_R->cam_0_to_cam_1();
 
   *outStream << "testing intrinsics from txt format with explicit R" << std::endl;
 

@@ -117,12 +117,12 @@ public:
   }
 
   /// returns a pointer to the transform from camera 0 to camera 1
-  Matrix<scalar_t,4> * cam_0_to_cam_1(){
+  const Matrix<scalar_t,4> * cam_0_to_cam_1() const {
     return & cam_0_to_cam_1_;
   }
 
   /// returns a pointer to the camera 0 to world extrinsics
-  Matrix<scalar_t,4> * cam_0_to_world(){
+  const Matrix<scalar_t,4> * cam_0_to_world() const {
     return & cam_0_to_world_;
   }
 
@@ -151,7 +151,7 @@ public:
     scalar_t & xw_out,
     scalar_t & yw_out,
     scalar_t & zw_out,
-    const bool correct_lens_distortion = false);
+    const bool correct_lens_distortion = false) const;
 
   /// triangulate the optimal point in 3D (from 2d data with calibration).
   /// global coordinates are always defined with camera 0 as the origin
@@ -165,10 +165,10 @@ public:
     const std::vector<scalar_t> & image_y,
     std::vector<scalar_t> & xw_out,
     std::vector<scalar_t> & yw_out,
-    std::vector<scalar_t> & zw_out);
+    std::vector<scalar_t> & zw_out) const;
 
   /// compute the fundamental matrix and return it as an opencv mat
-  cv::Mat fundamental_matrix(){
+  cv::Mat fundamental_matrix() const{
     DICe::Matrix<DICe::scalar_t,3> F = camera_system_->fundamental_matrix();
     cv::Mat matF(3, 3, CV_32F);
     for(int_t i=0;i<matF.rows;++i){
@@ -185,7 +185,7 @@ public:
   /// \param camera_id either 0 or 1
   void correct_lens_distortion_radial(scalar_t & x_s,
     scalar_t & y_s,
-    const int_t camera_id);
+    const int_t camera_id) const;
 
   /// estimate the projective transform from the left to right image
   /// \param left_img pointer to the left image

@@ -658,7 +658,7 @@ Triangulation::triangulate(const std::vector<scalar_t> & image_x,
   const std::vector<scalar_t> & image_y,
   std::vector<scalar_t> & world_x,
   std::vector<scalar_t> & world_y,
-  std::vector<scalar_t> & world_z){
+  std::vector<scalar_t> & world_z) const {
 
   TEUCHOS_TEST_FOR_EXCEPTION(camera_system_==Teuchos::null,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(camera_system_->num_cameras()!=1,std::runtime_error,"");
@@ -683,7 +683,7 @@ scalar_t Triangulation::triangulate(const scalar_t & x0,
   scalar_t & xw_out,
   scalar_t & yw_out,
   scalar_t & zw_out,
-  const bool correct_lens_distortion){
+  const bool correct_lens_distortion) const{
   DEBUG_MSG("Triangulation::triangulate(): camera 0 sensor coords " << x0 << " " << y0 << " camera 1 sensor coords " << x1 << " " << y1);
   static scalar_t xc0 = 0.0;
   static scalar_t yc0 = 0.0;
@@ -828,7 +828,7 @@ scalar_t Triangulation::triangulate(const scalar_t & x0,
 void
 Triangulation::correct_lens_distortion_radial(scalar_t & x_s,
   scalar_t & y_s,
-  const int_t camera_id){
+  const int_t camera_id) const{
   assert(cal_intrinsics_.size()>0);
   static scalar_t rho_tilde = 0.0; // = rho^2
   static scalar_t r1 = 0.0;
