@@ -228,6 +228,7 @@ int_t opencv_server(int argc, char *argv[]){
     tracking_params->set("dist_from_epi_tol",input_params.get<double>("dist_from_epi_tol"));
     tracking_params->set("dist_from_epi_weight",input_params.get<double>("dist_from_epi_weight"));
     tracking_params->set("num_background_frames",input_params.get<int>("num_background_frames"));
+    tracking_params->set("show_segmentation",input_params.get<bool>("show_segmentation",false));
     tracking_params->set("preview_mode",true);
 
 #ifdef DICE_ENABLE_TRACKLIB
