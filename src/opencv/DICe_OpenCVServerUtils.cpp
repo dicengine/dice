@@ -201,6 +201,7 @@ int_t opencv_server(int argc, char *argv[]){
     file_params->set("stereo_cine_file",input_params.get<std::string>("stereo_cine_file"));
     file_params->set("cine_ref_index",input_params.get<int>("cine_ref_index"));
     file_params->set("cine_start_index",input_params.get<int>("cine_start_index"));
+    file_params->set("cine_preview_index",input_params.get<int>("cine_preview_index"));
     file_params->set("cine_skip_index",input_params.get<int>("cine_skip_index"));
     file_params->set("cine_end_index",input_params.get<int>("cine_end_index"));
     file_params->set("camera_system_file",input_params.get<std::string>("camera_system_file"));
@@ -229,6 +230,7 @@ int_t opencv_server(int argc, char *argv[]){
     tracking_params->set("dist_from_epi_weight",input_params.get<double>("dist_from_epi_weight"));
     tracking_params->set("num_background_frames",input_params.get<int>("num_background_frames"));
     tracking_params->set("show_segmentation",input_params.get<bool>("show_segmentation",false));
+    tracking_params->set("write_results",input_params.get<bool>("write_results",true));
     tracking_params->set("preview_mode",true);
 
 #ifdef DICE_ENABLE_TRACKLIB

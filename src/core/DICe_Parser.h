@@ -142,6 +142,8 @@ const char* const cine_ref_index = "cine_ref_index";
 /// Input parameter
 const char* const cine_start_index = "cine_start_index";
 /// Input parameter
+const char* const cine_preview_index = "cine_preview_index";
+/// Input parameter
 const char* const cine_end_index = "cine_end_index";
 /// Input parameter
 const char* const cine_skip_index = "cine_skip_index";
