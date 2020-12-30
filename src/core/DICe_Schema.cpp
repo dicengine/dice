@@ -395,6 +395,7 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   use_incremental_formulation_ = false;
   use_nonlinear_projection_ = false;
   sort_txt_output_ = false;
+  write_json_output_ = false;
   threshold_block_size_ = -1;
   set_params(params);
   prev_imgs_.push_back(Teuchos::null);
@@ -538,6 +539,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   use_incremental_formulation_ = diceParams->get<bool>(DICe::use_incremental_formulation,false);
   use_nonlinear_projection_ = diceParams->get<bool>(DICe::use_nonlinear_projection,false);
   sort_txt_output_ = diceParams->get<bool>(DICe::sort_txt_output,false);
+  write_json_output_ = diceParams->get<bool>(DICe::write_json_output,false);
   gauss_filter_images_ = diceParams->get<bool>(DICe::gauss_filter_images,false);
   filter_failed_cine_pixels_ = diceParams->get<bool>(DICe::filter_failed_cine_pixels,false);
   gauss_filter_mask_size_ = diceParams->get<int_t>(DICe::gauss_filter_mask_size,7);
@@ -3158,6 +3160,7 @@ Schema::write_output(const std::string & output_folder,
   }
   else{
     std::stringstream fName;
+    std::stringstream jsonName;
     std::stringstream infofName;
     // determine the number of digits to append:
     int_t num_zeros = 0;
@@ -3174,14 +3177,22 @@ Schema::write_output(const std::string & output_folder,
       num_zeros = num_digits_total - num_digits_image;
     }
     fName << output_folder << prefix << "_";
+    jsonName << ".dice/.results_2d_";
     infofName << output_folder << prefix << ".txt";
     for(int_t i=0;i<num_zeros;++i)
       fName << "0";
     fName << frame_id_-frame_skip_;
+    jsonName << frame_id_-frame_skip_ << ".json";
     if(proc_size >1)
       fName << "." << proc_size << "." << my_proc;
     fName << ".txt";
     std::FILE * filePtr = fopen(fName.str().c_str(),"w");
+
+    if(write_json_output_){
+      std::ofstream json_out_file (jsonName.str());
+      output_spec_->write_json(json_out_file);
+      json_out_file.close();
+    }
     if(separate_header_file && frame_id_<= first_frame_id_+frame_skip_ && my_proc==0){
       std::FILE * infoFilePtr = fopen(infoName.str().c_str(),"w"); // overwrite the file if it exists
       output_spec_->write_info(infoFilePtr,true);
@@ -3668,6 +3679,52 @@ Output_Spec::write_header(std::FILE * file,
       fprintf(file,"%s%s",delimiter_.c_str(),field_names_[i].c_str());
   }
   fprintf(file,"\n");
+}
+
+void
+Output_Spec::write_json(std::ofstream & ostream){
+  assert(ostream.is_open());
+
+  Teuchos::RCP<MultiField> subset_coords_x = schema_->mesh()->get_field(SUBSET_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> subset_coords_y = schema_->mesh()->get_field(SUBSET_COORDINATES_Y_FS);
+
+  ostream << "{ \"data\": [{\n";
+  ostream << "\"text\":[";
+  for(int_t subset=0;subset<schema_->local_num_subsets();++subset){
+    ostream
+        << "\""
+        << "subset id: " << schema_->subset_global_id(subset);
+    ostream << "\"";
+    if(subset!=schema_->local_num_subsets()-1) ostream << ",";
+  }
+  ostream << "],\n";
+  ostream << "\"x\":[";
+  for(int_t subset=0;subset<schema_->local_num_subsets();++subset){
+    ostream << subset_coords_x->local_value(subset);
+    if(subset!=schema_->local_num_subsets()-1) ostream << ",";
+  }
+  ostream << "],\n";
+  ostream << "\"y\":[";
+  for(int_t subset=0;subset<schema_->local_num_subsets();++subset){
+    ostream << subset_coords_y->local_value(subset);
+    if(subset!=schema_->local_num_subsets()-1) ostream << ",";
+  }
+  ostream << "],\n";
+  for(size_t i=0;i<field_names_.size();++i){
+    ostream << "\"" << field_names_[i] << "\":[";
+    for(int_t subset=0;subset<schema_->local_num_subsets();++subset){
+      ostream << field_vec_[i]->local_value(subset);
+      if(subset!=schema_->local_num_subsets()-1) ostream << ",";
+    }
+    ostream << "],\n";
+  }
+  ostream << "\"name\":\"fullFieldContour\",\n";
+  ostream << "\"type\":\"contour\",\n";
+  ostream << "\"layer\":\"above\",\n";
+  ostream << "\"opacity\":0.7,\n";
+  ostream << "\"hovertemplate\": \"(%{x},%{y})<br>%{text}<extra></extra>\", \n";
+  ostream << "\"showlegend\":false\n";
+  ostream << "}]}";
 }
 
 void

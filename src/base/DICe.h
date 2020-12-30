@@ -313,6 +313,8 @@ const char* const use_incremental_formulation = "use_incremental_formulation";
 const char* const use_nonlinear_projection = "use_nonlinear_projection";
 /// String parameter name
 const char* const sort_txt_output = "sort_txt_output";
+/// String parameter name
+const char* const write_json_output = "write_json_output";
 /// String parameter name, only for global DIC
 const char* const global_solver = "global_solver";
 /// String parameter name, only for global DIC
@@ -941,6 +943,11 @@ const Correlation_Parameter sort_txt_output_param(sort_txt_output,
   true,
   "Sort the text output file according to the subset location in x then y for the full field results");
 /// Correlation parameter and properties
+const Correlation_Parameter write_json_output_param(write_json_output,
+  BOOL_PARAM,
+  true,
+  "Write the json output files for the GUI to use");
+/// Correlation parameter and properties
 const Correlation_Parameter output_delimiter_param(output_delimiter,
   STRING_PARAM,
   true,
@@ -1263,7 +1270,7 @@ const Correlation_Parameter remove_outlier_pixels_param(remove_outlier_pixels,
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 90;
+const int_t num_valid_correlation_params = 91;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1322,6 +1329,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   use_incremental_formulation_param,
   use_nonlinear_projection_param,
   sort_txt_output_param,
+  write_json_output_param,
   use_search_initialization_for_failed_steps_param,
   use_tracking_default_params_param,
   override_force_simplex_param,
@@ -1360,7 +1368,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
 
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
-const int_t num_valid_global_correlation_params = 31;
+const int_t num_valid_global_correlation_params = 32;
 /// Vector of valid parameter names
 const Correlation_Parameter valid_global_correlation_params[num_valid_global_correlation_params] = {
   use_global_dic_param,
@@ -1385,6 +1393,7 @@ const Correlation_Parameter valid_global_correlation_params[num_valid_global_cor
   use_incremental_formulation_param,
   use_nonlinear_projection_param,
   sort_txt_output_param,
+  write_json_output_param,
   global_regularization_alpha_param,
   global_stabilization_tau_param,
   global_formulation_param,

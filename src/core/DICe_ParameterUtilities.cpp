@@ -323,6 +323,7 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::use_incremental_formulation,false);
   defaultParams->set(DICe::use_nonlinear_projection,false);
   defaultParams->set(DICe::sort_txt_output,false);
+  defaultParams->set(DICe::write_json_output,false);
   defaultParams->set(DICe::use_search_initialization_for_failed_steps,false);
   defaultParams->set(DICe::output_beta,true);
   defaultParams->set(DICe::output_delimiter,",");
@@ -370,6 +371,7 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::use_incremental_formulation,false);
   defaultParams->set(DICe::use_nonlinear_projection,false);
   defaultParams->set(DICe::sort_txt_output,false);
+  defaultParams->set(DICe::write_json_output,false);
   defaultParams->set(DICe::use_search_initialization_for_failed_steps,false);
   defaultParams->set(DICe::disp_jump_tol,10000.0);
   defaultParams->set(DICe::theta_jump_tol,100.0);
