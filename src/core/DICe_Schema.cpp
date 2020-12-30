@@ -3687,34 +3687,37 @@ Output_Spec::write_json(std::ofstream & ostream){
 
   Teuchos::RCP<MultiField> subset_coords_x = schema_->mesh()->get_field(SUBSET_COORDINATES_X_FS);
   Teuchos::RCP<MultiField> subset_coords_y = schema_->mesh()->get_field(SUBSET_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> disp_x = schema_->mesh()->get_field(SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> disp_y = schema_->mesh()->get_field(SUBSET_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> sigma = schema_->mesh()->get_field(SIGMA_FS);
 
   ostream << "{ \"data\": [{\n";
   ostream << "\"text\":[";
+  bool first_value = true;
   for(int_t subset=0;subset<schema_->local_num_subsets();++subset){
+//    if(sigma->local_value(subset)<0.0) continue;
+    if(!first_value) ostream << ",";
     ostream
         << "\""
         << "subset id: " << schema_->subset_global_id(subset);
     ostream << "\"";
-    if(subset!=schema_->local_num_subsets()-1) ostream << ",";
-  }
-  ostream << "],\n";
-  ostream << "\"x\":[";
-  for(int_t subset=0;subset<schema_->local_num_subsets();++subset){
-    ostream << subset_coords_x->local_value(subset);
-    if(subset!=schema_->local_num_subsets()-1) ostream << ",";
-  }
-  ostream << "],\n";
-  ostream << "\"y\":[";
-  for(int_t subset=0;subset<schema_->local_num_subsets();++subset){
-    ostream << subset_coords_y->local_value(subset);
-    if(subset!=schema_->local_num_subsets()-1) ostream << ",";
+    first_value = false;
   }
   ostream << "],\n";
   for(size_t i=0;i<field_names_.size();++i){
+    first_value = true;
     ostream << "\"" << field_names_[i] << "\":[";
     for(int_t subset=0;subset<schema_->local_num_subsets();++subset){
-      ostream << field_vec_[i]->local_value(subset);
-      if(subset!=schema_->local_num_subsets()-1) ostream << ",";
+//      if(sigma->local_value(subset)<0.0) continue;
+      if(!first_value) ostream << ",";
+//      if(field_names_[i]=="COORDINATE_X"){
+//        ostream << std::round(field_vec_[i]->local_value(subset) + disp_x->local_value(subset)); // round values to pixel location
+//      }else if(field_names_[i]=="COORDINATE_Y"){
+//        ostream << std::round(field_vec_[i]->local_value(subset) + disp_y->local_value(subset));
+//      }else{
+        ostream << field_vec_[i]->local_value(subset);
+//      }
+      first_value = false;
     }
     ostream << "],\n";
   }
@@ -3722,7 +3725,7 @@ Output_Spec::write_json(std::ofstream & ostream){
   ostream << "\"type\":\"contour\",\n";
   ostream << "\"layer\":\"above\",\n";
   ostream << "\"opacity\":0.7,\n";
-  ostream << "\"hovertemplate\": \"(%{x},%{y})<br>%{text}<extra></extra>\", \n";
+  ostream << "\"hovertemplate\": \"(%{x},%{y})<br>%{z}<br>%{text}<extra></extra>\", \n";
   ostream << "\"showlegend\":false\n";
   ostream << "}]}";
 }
