@@ -1250,8 +1250,6 @@ private:
   bool use_incremental_formulation_;
   /// sort the txt output for full field results by coordinates so that they are in ascending order x, then y
   bool sort_txt_output_;
-  /// write json files for the GUI to use
-  bool write_json_output_;
   /// name of the file to read for the initial condition
   std::string initial_condition_file_;
   /// project the right image onto the left frame of reference using a nonlinear projection
@@ -1319,10 +1317,6 @@ public:
   void write_frame(std::FILE * file,
     const int_t row_index,
     const int_t field_value_index);
-
-  /// write results info as json file to be plotted by the GUI
-  /// \param ostream output stream ref
-  void write_json(std::ofstream & ostream);
 
   /// provide access to the field_vec
   std::vector<Teuchos::RCP<MultiField> > * field_vec(){

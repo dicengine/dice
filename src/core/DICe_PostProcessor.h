@@ -74,14 +74,19 @@ const char * const displacement_x_field_name = "displacement_x_field_name";
 const char * const displacement_y_field_name = "displacement_y_field_name";
 /// String parameter name
 const char * const post_process_live_plots = "post_process_live_plots";
+/// String parameter name
+const char * const post_process_plotly_contour = "post_process_plotly_contour";
+/// String parameter name
+const char * const plotly_contour_grid_step = "plotly_contour_grid_step";
 
 
 /// Number of post processor options
-const int_t num_valid_post_processor_params = 3;
+const int_t num_valid_post_processor_params = 4;
 /// Set of all the valid post processors
 const char * const valid_post_processor_params[num_valid_post_processor_params] = {
   post_process_vsg_strain,
   post_process_nlvc_strain,
+  post_process_plotly_contour,
   post_process_altitude
 };
 
@@ -331,6 +336,39 @@ public:
   /// See base class documentation
   using Post_Processor::field_specs;
 
+};
+
+/// \class DICe::Plotly_Contour_Post_Processor
+/// \brief A post processor to distill DICe output data to something Plotly could plot
+/// using a contour trace, which requires regularly spaced grid and a manageable number
+/// of points. The scattered dic data is interpolated using least-squares to a regular grid
+class DICE_LIB_DLL_EXPORT
+Plotly_Contour_Post_Processor : public Post_Processor {
+
+public:
+
+  /// Default constructor
+  /// \param params Pointer to the set of parameters for this post processor
+  Plotly_Contour_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params);
+
+  /// Virtual destructor
+  virtual ~Plotly_Contour_Post_Processor(){}
+
+  /// Set the parameters for this post processor
+  virtual void set_params(const Teuchos::RCP<Teuchos::ParameterList> & params);
+
+  /// Collect the neighborhoods of each of the points
+  virtual void pre_execution_tasks(){};
+
+  /// Execute the post processor
+  virtual void execute();
+
+  /// See base clase docutmentation
+  virtual int_t strain_window_size(){return -1.0;}
+
+private:
+  /// step to use for the regular grid
+  int_t grid_step_;
 };
 
 /// \class DICe::Uncertainty_Post_Processor

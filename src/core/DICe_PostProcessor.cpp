@@ -230,6 +230,299 @@ Post_Processor::initialize_neighborhood(const scalar_t & neighborhood_radius){
   DEBUG_MSG("Post_Processor::initialize_neighborhood(): end");
 }
 
+Plotly_Contour_Post_Processor::Plotly_Contour_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params) :
+  Post_Processor(post_process_plotly_contour){
+  // no new fields added since the post processor writes output files instead
+  DEBUG_MSG("Enabling post processor Plotly_Contour_Post_Processor with no new associated fields:");
+  set_params(params);
+}
+
+void
+Plotly_Contour_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
+  grid_step_ = params->get<int_t>(plotly_contour_grid_step,15);
+  DEBUG_MSG("Plotly_Contour_Post_Processor set_params(): using grid step " << grid_step_);
+}
+
+void
+Plotly_Contour_Post_Processor::execute(){
+  DEBUG_MSG("Plotly_Contour_Post_Processor execute() begin");
+
+  // ensure only in serial for now TODO enable parallel post processor for this
+  const int_t num_procs = mesh_->get_comm()->get_size();
+  TEUCHOS_TEST_FOR_EXCEPTION(num_procs!=1,std::runtime_error,"Plotly_Contour_Post_Processor only works in serial");
+
+  // gather the current coordinates of the subsets with sigma>=0 or all valid points
+  Teuchos::RCP<MultiField> coords_x = mesh_->get_field(DICe::field_enums::SUBSET_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> coords_y = mesh_->get_field(DICe::field_enums::SUBSET_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> disp_x = mesh_->get_field(DICe::field_enums::SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> disp_y = mesh_->get_field(DICe::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> sigma = mesh_->get_field(DICe::field_enums::SIGMA_FS);
+
+  // count the number of valid points
+  int_t num_valid_pts = 0;
+  for(int_t i=0;i<local_num_points_;++i)
+    if(sigma->local_value(i)>=0.0) num_valid_pts++;
+  std::vector<int_t> local_ids(num_valid_pts,0);
+
+  // create neighborhood lists using nanoflann:
+  DEBUG_MSG("creating the point cloud using nanoflann");
+  point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
+  point_cloud_->pts.resize(num_valid_pts);
+  int_t current_pt = 0;
+  int_t grid_x_begin = std::numeric_limits<int>::max();
+  int_t grid_x_end = std::numeric_limits<int>::min();
+  int_t grid_y_begin = std::numeric_limits<int>::max();
+  int_t grid_y_end = std::numeric_limits<int>::min();
+  for(int_t i=0;i<local_num_points_;++i){
+    if(sigma->local_value(i)<0.0) continue;
+    point_cloud_->pts[current_pt].x = coords_x->local_value(i) + disp_x->local_value(i);
+    point_cloud_->pts[current_pt].y = coords_y->local_value(i) + disp_y->local_value(i);
+    if(point_cloud_->pts[current_pt].x < grid_x_begin)
+      grid_x_begin = std::floor(point_cloud_->pts[current_pt].x);
+    if(point_cloud_->pts[current_pt].y < grid_y_begin)
+      grid_y_begin = std::floor(point_cloud_->pts[current_pt].y);
+    if(point_cloud_->pts[current_pt].x > grid_x_end)
+      grid_x_end = std::floor(point_cloud_->pts[current_pt].x);
+    if(point_cloud_->pts[current_pt].y > grid_y_end)
+      grid_y_end = std::floor(point_cloud_->pts[current_pt].y);
+    local_ids[current_pt++] = i;
+  }
+  const int_t num_grid_pts_x = (grid_x_end - grid_x_begin)/grid_step_ + 1;
+  const int_t num_grid_pts_y = (grid_y_end - grid_y_begin)/grid_step_ + 1;
+  const int_t total_grid_pts = num_grid_pts_x * num_grid_pts_y;
+  DEBUG_MSG("grid range x:[" << grid_x_begin << "," << grid_x_end << "] y:[" << grid_y_begin << "," << grid_y_end << "]");
+  DEBUG_MSG("grid pts x " << num_grid_pts_x << " y " << num_grid_pts_y << " total " << total_grid_pts);
+  DEBUG_MSG("building the kd-tree");
+  Teuchos::RCP<kd_tree_2d_t> kd_tree = Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud_.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+  kd_tree->buildIndex();
+  DEBUG_MSG("kd-tree completed");
+
+  std::vector<DICe::field_enums::Field_Spec> field_specs;
+  field_specs.push_back(mesh_->get_field_spec("COORDINATE_X"));
+  field_specs.push_back(mesh_->get_field_spec("COORDINATE_Y"));
+  field_specs.push_back(mesh_->get_field_spec("DISPLACEMENT_X"));
+  field_specs.push_back(mesh_->get_field_spec("DISPLACEMENT_Y"));
+  field_specs.push_back(mesh_->get_field_spec("SIGMA"));
+  field_specs.push_back(mesh_->get_field_spec("GAMMA"));
+  field_specs.push_back(mesh_->get_field_spec("BETA"));
+  field_specs.push_back(mesh_->get_field_spec("UNCERTAINTY"));
+  field_specs.push_back(mesh_->get_field_spec("VSG_STRAIN_XX"));
+  field_specs.push_back(mesh_->get_field_spec("VSG_STRAIN_YY"));
+  field_specs.push_back(mesh_->get_field_spec("VSG_STRAIN_XY"));
+  field_specs.push_back(mesh_->get_field_spec("STATUS_FLAG")); // used to denote points in the grid without enough neighbors
+  // when status flag is -1 in the GUI the point gets set to null
+
+  std::vector<Teuchos::RCP<MultiField> > fields(field_specs.size(),Teuchos::null);
+  for(size_t i=0;i<field_specs.size();++i){
+    fields[i] = mesh_->get_field(field_specs[i]);
+  }
+
+  const int_t N = 3;
+  int *IPIV = new int[N+1];
+  int LWORK = N*N;
+  int INFO = 0;
+  double *WORK = new double[LWORK];
+  double *GWORK = new double[10*N];
+  int *IWORK = new int[LWORK];
+  // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
+  Teuchos::LAPACK<int,double> lapack;
+  std::vector<std::pair<size_t,scalar_t> > ret_matches;
+  nanoflann::SearchParams params;
+  params.sorted = true; // sort by distance in ascending order
+  const double neigh_rad_sq = (grid_step_*2)*(grid_step_*2);
+  scalar_t query_pt[2];
+
+  // initialize value storage vector of vectors
+  std::vector<std::vector<scalar_t> > values(field_specs.size(),std::vector<scalar_t>(total_grid_pts,0.0));
+  int_t current_grid_pt = 0;
+  for(int_t gx = grid_x_begin; gx<=grid_x_end; gx+=grid_step_){
+    for(int_t gy = grid_y_begin; gy<=grid_y_end; gy+=grid_step_){
+      query_pt[0] = gx;
+      query_pt[1] = gy;
+      values[0][current_grid_pt] = gx;
+      values[1][current_grid_pt] = gy;
+      kd_tree->radiusSearch(&query_pt[0],neigh_rad_sq,ret_matches,params);
+      const int_t num_neigh = ret_matches.size();
+      if(num_neigh<=3){ // not enough points to do least-squares
+        values[field_specs.size()-1][current_grid_pt] = -1.0;
+        current_grid_pt++;
+        continue;
+      }
+//      // convert the ret_matches from local id in the point cloud to local ids since not all local ids were included in the point cloud
+//      for(size_t i=0;i<num_neigh;++i){
+//        ret_matches[i] = local_ids[i];
+//      }
+      // set up the X_t matrices
+      Teuchos::SerialDenseMatrix<int_t,double> X_t(N,num_neigh, true);
+      Teuchos::SerialDenseMatrix<int_t,double> X_t_X(N,N,true);
+      for(int_t i=0;i<num_neigh;++i){
+        X_t(0,i) = 1.0;
+        X_t(1,i) = coords_x->local_value(local_ids[ret_matches[i].first]) - gx;
+        X_t(2,i) = coords_y->local_value(local_ids[ret_matches[i].first]) - gy;
+      }
+      // set up X^T*X
+      for(int_t k=0;k<N;++k){
+        for(int_t m=0;m<N;++m){
+          for(int_t j=0;j<num_neigh;++j){
+            X_t_X(k,m) += X_t(k,j)*X_t(m,j);
+          }
+        }
+      }
+      // Invert X^T*X
+      // TODO: remove for performance?
+      // compute the 1-norm of H:
+      std::vector<double> colTotals(X_t_X.numCols(),0.0);
+      for(int_t i=0;i<X_t_X.numCols();++i){
+        for(int_t j=0;j<X_t_X.numRows();++j){
+          colTotals[i]+=std::abs(X_t_X(j,i));
+        }
+      }
+      double anorm = 0.0;
+      for(int_t i=0;i<X_t_X.numCols();++i){
+        if(colTotals[i] > anorm) anorm = colTotals[i];
+      }
+      lapack.GETRF(X_t_X.numRows(),X_t_X.numCols(),X_t_X.values(),X_t_X.numRows(),IPIV,&INFO);
+      double rcond=0.0; // reciporical condition number
+      lapack.GECON('1',X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),anorm,&rcond,GWORK,IWORK,&INFO);
+      if(rcond < 1.0E-12) {
+        values[field_specs.size()-1][current_grid_pt] = -1.0;
+        current_grid_pt++;
+        continue;
+      }
+      lapack.GETRI(X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),IPIV,WORK,LWORK,&INFO);
+
+      // iterate all the fields in the spec list and compute the least squares fit of each
+      for(size_t i=2;i<fields.size()-1;++i){ // avoid the coordinates fields and the last one which is the status_flag
+        Teuchos::ArrayRCP<double> u(num_neigh,0.0);
+        for(int_t j=0;j<num_neigh;++j){
+          u[j] = fields[i]->local_value(local_ids[ret_matches[j].first]);
+        }
+        // compute X^T*u
+        Teuchos::ArrayRCP<double> X_t_u(N,0.0);
+        for(int_t k=0;k<N;++k)
+          for(int_t j=0;j<num_neigh;++j)
+            X_t_u[k] += X_t(k,j)*u[j];
+
+        // compute the coeffs
+        Teuchos::ArrayRCP<double> coeffs(N,0.0);
+        for(int_t k=0;k<N;++k)
+          for(int_t j=0;j<N;++j)
+            coeffs[k] += X_t_X(k,j)*X_t_u[j];
+
+        values[i][current_grid_pt] = coeffs[0];
+      } // end field iteration loop
+      current_grid_pt++;
+    } // end gy loop
+  } // end gx loop
+
+  // TODO write the output json file
+  delete [] WORK;
+  delete [] GWORK;
+  delete [] IWORK;
+  delete [] IPIV;
+
+  DEBUG_MSG("Plotly_Contour_Post_Processor(): writing least-squares fit json file");
+
+  std::stringstream jsonName;
+  jsonName << ".dice/.results_2d_ls_";
+  jsonName << current_frame_id_ << ".json";
+  std::ofstream json_out_file (jsonName.str());
+  json_out_file << "{ \"data\": [{\n";
+  bool first_value = true;
+  for(size_t i=0;i<field_specs.size();++i){
+    first_value = true;
+    json_out_file << "\"" << field_specs[i].get_name_label() << "\":[";
+    for(int_t j=0;j<total_grid_pts;++j){
+      if(!first_value) json_out_file << ",";
+      json_out_file << values[i][j];
+      first_value = false;
+    }
+    json_out_file << "],\n";
+  }
+  json_out_file << "\"name\":\"fullFieldLSContour\",\n";
+  json_out_file << "\"type\":\"contour\",\n";
+  json_out_file << "\"colorscale\":\"Jet\",\n";
+  json_out_file << "\"layer\":\"above\",\n";
+  json_out_file << "\"connectgaps\":false,\n";
+  json_out_file << "\"hovertemplate\": \"(%{x},%{y})<br>%{z}<extra></extra>\",\n";
+  json_out_file << "\"hovermode\":false,\n";
+  json_out_file << "\"showlegend\":false\n";
+  json_out_file << "}]}";
+
+  json_out_file.close();
+
+  DEBUG_MSG("Plotly_Contour_Post_Processor(): writing uninterpolated data to json file");
+
+
+  std::stringstream jsonName2;
+  jsonName2 << ".dice/.results_2d_";
+  jsonName2 << current_frame_id_ << ".json";
+  std::ofstream json_out_file2 (jsonName2.str());
+  json_out_file2 << "{ \"data\": [{\n";
+
+
+  first_value = true;
+  json_out_file2 << "\"text\":[";
+  for(int_t j=0;j<local_num_points_;++j){
+    if(sigma->local_value(j)<0.0) continue;
+    if(!first_value) json_out_file2 << ",";
+    json_out_file2 << "\"";
+    json_out_file2 << "subset id: " << mesh_->get_scalar_node_dist_map()->get_global_element(j) << "<br>";
+    for(size_t i=2;i<field_specs.size();++i){
+      json_out_file2 << field_specs[i].get_name_label() << ": " << fields[i]->local_value(j);
+      if(i<field_specs.size()-1) json_out_file2 << "<br>";
+    }
+    json_out_file2 << "\"";
+    first_value = false;
+  }
+  json_out_file2 << "],\n";
+
+  first_value = true;
+  json_out_file2 << "\"x\":[";
+  for(int_t j=0;j<local_num_points_;++j){
+    if(sigma->local_value(j)<0.0) continue;
+    if(!first_value) json_out_file2 << ",";
+    json_out_file2 << fields[0]->local_value(j) + fields[2]->local_value(j);
+    first_value = false;
+  }
+  json_out_file2 << "],\n";
+  first_value = true;
+  json_out_file2 << "\"y\":[";
+  for(int_t j=0;j<local_num_points_;++j){
+    if(sigma->local_value(j)<0.0) continue;
+    if(!first_value) json_out_file2 << ",";
+    json_out_file2 << fields[1]->local_value(j) + fields[3]->local_value(j);
+    first_value = false;
+  }
+  json_out_file2 << "],\n";
+  for(size_t i=2;i<field_specs.size();++i){
+    first_value = true;
+    json_out_file2 << "\"" << field_specs[i].get_name_label() << "\":[";
+    for(int_t j=0;j<local_num_points_;++j){
+      if(sigma->local_value(j)<0.0) continue;
+      if(!first_value) json_out_file2 << ",";
+      json_out_file2 << fields[i]->local_value(j);
+      first_value = false;
+    }
+    json_out_file2 << "],\n";
+  }
+  json_out_file2 << "\"name\":\"subset results\",\n";
+  json_out_file2 << "\"type\":\"scatter\",\n";
+  json_out_file2 << "\"mode\":\"markers\",\n";
+  json_out_file2 << "\"hovermode\":\"closest\",\n";
+  json_out_file2 << "\"hovertemplate\": \"(%{x},%{y})<br>%{text}<extra></extra>\",\n";
+  json_out_file2  << "\"marker\":{\"color\":\"purple\",\"size\":3},\n";
+  json_out_file2 << "\"layer\":\"above\",\n";
+//  json_out_file2 << "\"showlegend\":false,\n";
+  json_out_file2 << "\"visible\":false\n";
+  json_out_file2 << "}]}";
+
+  json_out_file2.close();
+
+  DEBUG_MSG("Plotly_Contour_Post_Processor execute() end");
+}
+
+
 VSG_Strain_Post_Processor::VSG_Strain_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params) :
   Post_Processor(post_process_vsg_strain){
   field_specs_.push_back(DICe::field_enums::VSG_STRAIN_XX_FS);
