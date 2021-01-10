@@ -1189,7 +1189,6 @@ Live_Plot_Post_Processor::Live_Plot_Post_Processor(const Teuchos::RCP<Teuchos::P
   Post_Processor(post_process_live_plots),
   num_neigh_(7),
   num_individual_pts_(0),
-  frame_index_(0),
   num_field_entries_(0){
   set_field_names(params);
 }
@@ -1197,6 +1196,8 @@ Live_Plot_Post_Processor::Live_Plot_Post_Processor(const Teuchos::RCP<Teuchos::P
 void
 Live_Plot_Post_Processor::pre_execution_tasks(){
   DEBUG_MSG("Live_Plot_Post_Processor::pre_execution_tasks() begin");
+
+  DICe::create_directory("./results");
 
   // list of fields to output in the live plots
   // check if stereo or 2D
@@ -1479,7 +1480,7 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
   if(proc_id==0){
     for(int_t i=0;i<num_individual_pts_;++i){
       std::stringstream fileName;
-      fileName << "live_plot_pt_" << i << ".txt";
+      fileName << "./results/live_plot_pt_" << i << ".txt";
       std::FILE * filePtr = fopen(fileName.str().c_str(),"w");
       fprintf(filePtr,"# point coordinates: %f %f\n",pts_x_[i],pts_y_[i]);
       fprintf(filePtr,"FRAME,");
@@ -1640,7 +1641,7 @@ Live_Plot_Post_Processor::execute(){
     // append the file for individual files for individual points
     for(int_t i=0;i<num_individual_pts_;++i){
       std::stringstream fileName;
-      fileName << "live_plot_pt_" << i << ".txt";
+      fileName << "./results/live_plot_pt_" << i << ".txt";
       std::FILE * filePtr = fopen(fileName.str().c_str(),"a");
       fprintf(filePtr,"%i,",current_frame_id_);
       for(int_t field_it=0;field_it<num_field_entries_;++field_it)
@@ -1650,7 +1651,7 @@ Live_Plot_Post_Processor::execute(){
     }
     // print the line data for this step (create a new line file for each step)
     std::stringstream fileName;
-    fileName << "live_plot_line_step_" << frame_index_++ << ".txt";
+    fileName << "./results/live_plot_line_frame_" << current_frame_id_ << ".txt";
     std::FILE * filePtr = fopen(fileName.str().c_str(),"w");
     fprintf(filePtr,"ARC_LENGTH,X,Y,");
     for(size_t field_it=0;field_it<field_specs_.size();++field_it){

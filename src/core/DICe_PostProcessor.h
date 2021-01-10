@@ -435,8 +435,6 @@ private:
   int_t num_neigh_;
   // number of individual points
   int_t num_individual_pts_;
-  // count the current frame
-  int_t frame_index_;
   // number of fields in the output
   int_t num_field_entries_;
   // vector of x-coordinates for points
