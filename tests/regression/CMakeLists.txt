@@ -31,13 +31,6 @@ ELSE()
     # mechanism_optical_flow
     simple_obstruction
   )
-  #IF(NOT DICE_ENABLE_MANYCORE)
-  #  SET(REGRESSION_TESTS
-  #    ${REGRESSION_TESTS}
-  #    # this test is flakey so turning it off
-  #    mechanism_skip_solves 
-  #  )
-  #ENDIF()
 ENDIF()
 
 

@@ -42,9 +42,6 @@
 #define DICE_IMAGE_H
 
 #include <DICe.h>
-#if DICE_KOKKOS
-  #include <DICe_Kokkos.h>
-#endif
 #include <Teuchos_ParameterList.hpp>
 namespace DICe {
 
@@ -488,50 +485,6 @@ public:
     return gauss_filter_mask_size_;
   }
 
-#if DICE_KOKKOS
-  /// tag
-  struct Init_Mask_Tag {};
-  /// initialize a scalar dual view
-  KOKKOS_INLINE_FUNCTION
-  void operator()(const Init_Mask_Tag &, const int_t pixel_index) const;
-  /// tag
-  struct Grad_Flat_Tag {};
-  /// compute the image gradient using a flat algorithm (no hierarchical parallelism)
-  KOKKOS_INLINE_FUNCTION
-  void operator()(const Grad_Flat_Tag &, const int_t pixel_index)const;
-  /// tag
-  struct Grad_Tag {};
-  /// compute the image gradient using a heirarchical algorithm
-  KOKKOS_INLINE_FUNCTION
-  void operator()(const Grad_Tag &, const member_type team_member)const;
-  /// tag
-  struct Gauss_Flat_Tag{};
-  /// Gauss filter the image
-  KOKKOS_INLINE_FUNCTION
-  void operator()(const Gauss_Flat_Tag &, const int_t pixel_index)const;
-  /// tag
-  struct Gauss_Tag{};
-  /// Gauss filter the image
-  KOKKOS_INLINE_FUNCTION
-  void operator()(const Gauss_Tag &, const member_type team_member)const;
-  /// returns the view of the intensity values
-  intensity_dual_view_2d intensity_dual_view()const{
-    return intensities_;
-  }
-  /// gradient x dual view accessor
-  scalar_dual_view_2d grad_x()const{
-    return grad_x_;
-  }
-  /// gradient y dual view accessor
-  scalar_dual_view_2d grad_y()const{
-    return grad_y_;
-  }
-  /// mask dual view accessor
-  scalar_dual_view_2d mask() const{
-    return mask_;
-  }
-#endif
-
 private:
   /// pixel container width_
   int_t width_;
@@ -545,20 +498,6 @@ private:
   int_t offset_y_;
   /// rcp to the intensity array (used to ensure it doesn't get deallocated)
   Teuchos::ArrayRCP<intensity_t> intensity_rcp_;
-#if DICE_KOKKOS
-  /// pixel container
-  intensity_dual_view_2d intensities_;
-  /// device intensity work array
-  intensity_device_view_2d intensities_temp_;
-  /// mask coefficients
-  scalar_dual_view_2d mask_;
-  /// image gradient x container
-  scalar_dual_view_2d grad_x_;
-  /// image gradient y container
-  scalar_dual_view_2d grad_y_;
-  /// image laplacian container
-  scalar_dual_view_2d laplacian_;
-#else
   /// pixel container
   Teuchos::ArrayRCP<intensity_t> intensities_;
   /// device intensity work array
@@ -571,7 +510,6 @@ private:
   Teuchos::ArrayRCP<scalar_t> grad_y_;
   /// image gradient y container
   Teuchos::ArrayRCP<scalar_t> laplacian_;
-#endif
   /// flag that the gradients have been computed
   bool has_gradients_;
   /// flag that the image has been filtered

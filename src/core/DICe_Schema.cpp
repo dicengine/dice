@@ -2242,8 +2242,6 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
   std::string & resolution_output_folder,
   std::string & prefix,
   Teuchos::RCP<std::ostream> & outStream){
-#if DICE_KOKKOS
-#else
   const int_t proc_id = comm_->get_rank();
   assert(ref_img_->width()>0);
   assert(ref_img_->height()>0);
@@ -2658,7 +2656,6 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
       result_stream.str("");
     } // end step loop
   } // end mag loop
-#endif
 }
 
 int_t

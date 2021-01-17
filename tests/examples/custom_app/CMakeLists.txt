@@ -189,35 +189,8 @@ target_link_libraries(main
   teuchosparameterlist
 #  ${tiff_lib}
 )
-
-IF(DICE_ENABLE_MANYCORE)
+target_link_libraries(main epetra)
+IF(DICE_ENABLE_GLOBAL)
   target_link_libraries(main
-    tpetra
-    kokkoscore
-    ifpack
-    belostpetra
-  )
-  ADD_DEFINITIONS(-DDICE_KOKKOS=1 -DDICE_TPETRA=1)
-ELSE()
-  target_link_libraries(main
-  epetra)
-  IF(DICE_ENABLE_GLOBAL)
-    target_link_libraries(main
-      belosepetra)
-  ENDIF()
+    belosepetra)
 ENDIF()
-#find_library(jbig_lib libjbig.a)
-#if(jbig_lib)
-#  MESSAGE(STATUS "Using lib jbig from: ${jbig_lib}")
-#  target_link_libraries(main jbig)
-#endif()
-#find_library(lzma_lib liblzma.a)
-#if(lzma_lib)
-#  MESSAGE(STATUS "Using lib lzma from: ${lzma_lib}")
-#  target_link_libraries(main lzma)
-#endif()
-#find_library(z_lib libz.a)
-#if(z_lib)
-#  MESSAGE(STATUS "Using lib z from: ${z_lib}")
-#  target_link_libraries(main z)
-#endif()

@@ -109,14 +109,14 @@ typedef int int_t;
 DICE_LIB_DLL_EXPORT
 void print_banner();
 
-/// Initialization function (mpi and kokkos if enabled):
+/// Initialization function (mpi if enabled):
 /// \param argc argument count
 /// \param argv array of argument chars
 DICE_LIB_DLL_EXPORT
 void initialize(int argc,
   char *argv[]);
 
-/// Finalize function (mpi and kokkos if enabled):
+/// Finalize function (mpi if enabled):
 DICE_LIB_DLL_EXPORT
 void finalize();
 

@@ -44,10 +44,6 @@
 #include <iostream>
 #include <string.h>
 
-#if DICE_KOKKOS
-  #include <DICe_Kokkos.h>
-  #include <Kokkos_Core.hpp>
-#endif
 #if DICE_MPI
   #include <mpi.h>
 #endif
@@ -61,10 +57,6 @@ void print_banner(){
 #if DICE_MPI
   mpi_message = "** MPI: enabled";
 #endif
-  std::string kokkos_message = "** Manycore: disabled";
-#if DICE_KOKKOS
-  kokkos_message = "** Manycore: enabled";
-#endif
   std::string type_message = "** Data type: float";
 #if DICE_USE_DOUBLE
   type_message = "** Data type: double";
@@ -73,13 +65,12 @@ void print_banner(){
   std::cout << "** " << VERSION << std::endl;
   std::cout << "** git: " << GITSHA1 << std::endl;
   std::cout << mpi_message << std::endl;
-  std::cout << kokkos_message << std::endl;
   std::cout << type_message << std::endl;
   std::cout << "** Copyright 2015 National Technology & Engineering Solutions of Sandia, LLC (NTESS)" << std::endl;
   std::cout << "** Report bugs and feature requests as issues at https://github.com/dicengine/dice" << std::endl << std::endl;
 }
 
-/// Initialization function (mpi and kokkos if enabled):
+/// Initialization function (mpi if enabled):
 /// \param argc argument count
 /// \param argv array of argument chars
 DICE_LIB_DLL_EXPORT
@@ -91,11 +82,6 @@ void initialize(int argc,
   MPI_Init (&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD,&proc_rank);
 #endif
-  // initialize kokkos
-#if DICE_KOKKOS
-  Kokkos::initialize(argc, argv);
-  DEBUG_MSG("Kokkos has been initialized");
-#endif
   bool verbose=false;
   for (int_t i = 1; i < argc; ++i) {
     if (strcmp(argv[i],"-v")==0 || strcmp(argv[i],"--verbose")==0)
@@ -105,28 +91,19 @@ void initialize(int argc,
     print_banner();
 }
 
-/// Finalize function (mpi and kokkos if enabled):
+/// Finalize function (mpi if enabled):
 DICE_LIB_DLL_EXPORT
 void finalize(){
   // finalize mpi
 #if DICE_MPI
   (void) MPI_Finalize ();
 #endif
-  // finalize kokkos
-#if DICE_KOKKOS
-  Kokkos::finalize();
-#endif
 }
 
 /// returns true if the data layout is LayoutRight
 DICE_LIB_DLL_EXPORT
 bool default_is_layout_right(){
-#if DICE_KOKKOS
-  return Kokkos::Impl::is_same< intensity_dual_view_2d::array_layout ,
-      Kokkos::LayoutRight >::value;
-#else
   return true; // in all other cases beside CUDA (like serial , it's row-major or layout right)
-#endif
 }
 
 /// copy a buffer and avoid buffer overflow

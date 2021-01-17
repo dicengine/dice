@@ -259,19 +259,6 @@ SET(DICE_LIBRARIES
     teuchosparameterlist
  )
 
-# enable tpetra if chosen:
-IF(DICE_ENABLE_MANYCORE)
-  MESSAGE(STATUS "** MANYCORE enabled (uses Tpetra and Kokkos libraries) **")
-  SET(DICE_LIBRARIES
-    ${DICE_LIBRARIES}
-    kokkoscore
-    tpetra
-  )
-  ADD_DEFINITIONS(-DDICE_KOKKOS=1 -DDICE_TPETRA=1)
-ELSE()
-  MESSAGE(STATUS "MANYCORE disabled")
-ENDIF()
-
 IF(DICE_ENABLE_GLOBAL)
   MESSAGE(STATUS "*** Enabling Global DIC (requires the Tpetra (or Epetra), Seacas libraries, and Belos in Trilinos) ***")
   IF(DICE_USE_TPETRA)

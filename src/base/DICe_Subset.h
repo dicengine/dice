@@ -46,9 +46,6 @@
 #include <DICe_Shape.h>
 #include <DICe_Image.h>
 #include <DICe_LocalShapeFunction.h>
-#if DICE_KOKKOS
-  #include <DICe_Kokkos.h>
-#endif
 
 #include <Teuchos_ArrayRCP.hpp>
 
@@ -303,46 +300,9 @@ public:
     const int_t cy=0,
     const scalar_t & skin_factor=1.0);
 
-#if DICE_KOKKOS
-  /// x coordinate view accessor
-  pixel_coord_dual_view_1d x()const{
-    return x_;
-  }
-  /// y coordinate view accessor
-  pixel_coord_dual_view_1d y()const{
-    return y_;
-  }
-  /// ref intensities device view accessor
-  intensity_dual_view_1d ref_intensities()const{
-    return ref_intensities_;
-  }
-  /// ref intensities device view accessor
-  intensity_dual_view_1d def_intensities()const{
-    return def_intensities_;
-  }
-#endif
-
 private:
   /// number of pixels in the subset
   int_t num_pixels_;
-#if DICE_KOKKOS
-  /// pixel container
-  intensity_dual_view_1d ref_intensities_;
-  /// pixel container
-  intensity_dual_view_1d def_intensities_;
-  /// container for grad_x
-  scalar_dual_view_1d grad_x_;
-  /// container for grad_y
-  scalar_dual_view_1d grad_y_;
-  /// pixels can be deactivated by obstructions (persistent)
-  bool_dual_view_1d is_active_;
-  /// pixels can be deactivated for this frame only
-  bool_dual_view_1d is_deactivated_this_step_;
-  /// initial x position of the pixels in the reference image
-  pixel_coord_dual_view_1d x_;
-  /// initial x position of the pixels in the reference image
-  pixel_coord_dual_view_1d y_;
-#else
   /// pixel container
   Teuchos::ArrayRCP<intensity_t> ref_intensities_;
   /// pixel container
@@ -359,7 +319,6 @@ private:
   Teuchos::ArrayRCP<int_t> x_;
   /// initial x position of the pixels in the reference image
   Teuchos::ArrayRCP<int_t> y_;
-#endif
   /// \brief EXPERIMENTAL Holds the obstruction coordinates if they exist.
   /// NOTE: The coordinates are switched for this (i.e. (Y,X)) so that
   /// the loops over y then x will be more efficient

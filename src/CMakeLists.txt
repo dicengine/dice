@@ -4,6 +4,7 @@
 SET(DICE_SOURCES
   ./base/DICe.cpp
   ./base/DICe_Image.cpp
+  ./base/DICe_ImageUtils.cpp
   ./base/DICe_Subset.cpp
   ./base/DICe_Shape.cpp
   ./base/DICe_FieldEnums.cpp
@@ -30,10 +31,12 @@ SET(DICE_SOURCES
 SET(DICE_HEADERS
   ./base/DICe.h
   ./base/DICe_Image.h
+  ./base/DICe_ImageUtils.h
   ./base/DICe_Subset.h
   ./base/DICe_Shape.h
   ./base/DICe_Matrix.h
   ./base/DICe_FieldEnums.h
+  ./base/DICe_MultiFieldEpetra.h
   ./base/DICe_LocalShapeFunction.h
   ./core/DICe_Camera.h
   ./core/DICe_CameraSystem.h
@@ -72,33 +75,6 @@ IF(DEFINED TRACKLIB_DIR)
       ${tracklib_header_file}
     )
   ENDFOREACH()
-ENDIF()
-
-IF(DICE_ENABLE_MANYCORE)
-  SET(DICE_SOURCES
-    ${DICE_SOURCES}
-    ./base/DICe_SubsetKokkos.cpp
-    ./base/DICe_ImageKokkos.cpp
-  )
-  SET(DICE_HEADERS
-    ${DICE_HEADERS}
-    ./base/DICe_Kokkos.h
-    ./base/DICe_MultiFieldTpetra.h
-    ./base/DICe_SubsetFunctors.h
-    ./base/DICe_ImageFunctors.h
-  )
-ELSE()
-  SET(DICE_SOURCES
-    ${DICE_SOURCES}
-    ./base/DICe_SubsetSerial.cpp
-    ./base/DICe_ImageSerial.cpp
-    ./base/DICe_ImageUtils.cpp
-  )
-  SET(DICE_HEADERS
-    ${DICE_HEADERS}
-    ./base/DICe_ImageUtils.h
-    ./base/DICe_MultiFieldEpetra.h
-  )
 ENDIF()
 
 IF(DICE_ENABLE_GLOBAL)
