@@ -311,20 +311,16 @@ int main(int argc, char *argv[]) {
   *outStream << "creating an image from an array" << std::endl;
   const int_t array_w = 30;
   const int_t array_h = 20;
-  intensity_t * intensities = new intensity_t[array_w*array_h];
-  scalar_t * gx = new scalar_t[array_w*array_h];
-  scalar_t * gy = new scalar_t[array_w*array_h];
+  Teuchos::ArrayRCP<intensity_t> intensities(array_w*array_h,0.0);
   // populate the intensities with a sin/cos function
   for(int_t y=0;y<array_h;++y){
     for(int_t x=0;x<array_w;++x){
       intensities[y*array_w+x] = 255*std::cos(x/(4*DICE_PI))*std::sin(y/(4*DICE_PI));
-      gx[y*array_w+x] = -255*(1/(4*DICE_PI))*std::sin(x/(4*DICE_PI))*std::sin(y/(4*DICE_PI));
-      gy[y*array_w+x] = 255*(1/(4*DICE_PI))*std::cos(x/(4*DICE_PI))*std::cos(y/(4*DICE_PI));
     }
   }
   Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
   params->set(DICe::compute_image_gradients,true);
-  Teuchos::RCP<Image> array_img = Teuchos::rcp(new Image(intensities,array_w,array_h,params));
+  Teuchos::RCP<Image> array_img = Teuchos::rcp(new Image(array_w,array_h,intensities,params));
   *outStream << "creating a conformal subset" << std::endl;
   std::vector<int_t> shape_3_x(4);
   std::vector<int_t> shape_3_y(4);
@@ -355,9 +351,6 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   *outStream << "gradient values have been tested" << std::endl;
-  delete[] intensities;
-  delete[] gx;
-  delete[] gy;
 
   *outStream << "--- End test ---" << std::endl;
 

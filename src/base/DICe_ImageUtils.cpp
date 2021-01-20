@@ -266,7 +266,10 @@ Image_Deformer::deform_image(Teuchos::RCP<Image> ref_image){
 //      def_intens[j*w+i] = intens;
 //    } // end pixel i
 //  } // ens pixel j
-  Teuchos::RCP<Image> def_img = Teuchos::rcp(new Image(w,h,def_intens,Teuchos::null,ox,oy));
+  Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
+  imgParams->set(DICe::subimage_offset_x,ox);
+  imgParams->set(DICe::subimage_offset_y,oy);
+  Teuchos::RCP<Image> def_img = Teuchos::rcp(new Image(w,h,def_intens,imgParams));
   return def_img;
 }
 
@@ -587,7 +590,10 @@ Teuchos::RCP<Image> create_synthetic_speckle_image(const int_t w,
       intensities[y*w+x] = mag + mag*std::cos(gamma*(x+offset_x))*std::cos(gamma*(y+offset_y));
     }
   }
-  Teuchos::RCP<Image> img = Teuchos::rcp(new Image(w,h,intensities,params,offset_x,offset_y));
+  Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
+  imgParams->set(DICe::subimage_offset_x,offset_x);
+  imgParams->set(DICe::subimage_offset_y,offset_y);
+  Teuchos::RCP<Image> img = Teuchos::rcp(new Image(w,h,intensities,params));
   return img;
 }
 

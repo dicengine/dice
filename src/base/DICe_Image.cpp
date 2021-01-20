@@ -182,41 +182,14 @@ Image::Image(Teuchos::RCP<Image> img,
   }
 }
 
-Image::Image(intensity_t * intensities,
-  const int_t array_width,
+Image::Image(const int_t array_width,
   const int_t array_height,
+  Teuchos::ArrayRCP<intensity_t> intensities,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
   width_(array_width),
   height_(array_height),
   offset_x_(0),
   offset_y_(0),
-  intensity_rcp_(Teuchos::null),
-  has_gradients_(false),
-  has_gauss_filter_(false),
-  file_name_("(from raw array)"),
-  has_file_name_(false),
-  gradient_method_(FINITE_DIFFERENCE)
-{
-  if(params!=Teuchos::null){
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_offset_x),std::runtime_error,"cannot create subimage from intensity array");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_offset_y),std::runtime_error,"cannot create subimage from intensity array");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_width),std::runtime_error,"cannot create subimage from intensity array");
-    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_height),std::runtime_error,"cannot create subimage from intensity array");
-  }
-  initialize_array_image(intensities);
-  default_constructor_tasks(params);
-}
-
-Image::Image(const int_t width,
-  const int_t height,
-  Teuchos::ArrayRCP<intensity_t> intensities,
-  const Teuchos::RCP<Teuchos::ParameterList> & params,
-  const int_t offset_x,
-  const int_t offset_y):
-  width_(width),
-  height_(height),
-  offset_x_(offset_x),
-  offset_y_(offset_y),
   intensity_rcp_(intensities),
   has_gradients_(false),
   has_gauss_filter_(false),
@@ -224,6 +197,16 @@ Image::Image(const int_t width,
   has_file_name_(false),
   gradient_method_(FINITE_DIFFERENCE)
 {
+  if(params!=Teuchos::null){
+    // Note for an image constructed from array, the offsets simply set the offset_x_ and offset_y_ values for this instance of the class
+    // the full input array is still copied over (by reference) to the local intensity array.
+    if(params->isParameter(subimage_offset_x))
+      offset_x_ = params->get<int_t>(subimage_offset_x);
+    if(params->isParameter(subimage_offset_y))
+      offset_y_ = params->get<int_t>(subimage_offset_y);
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_width),std::runtime_error,"cannot create subimage from intensity array");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_height),std::runtime_error,"cannot create subimage from intensity array");
+  }
   initialize_array_image(intensities.getRawPtr());
   default_constructor_tasks(params);
 }

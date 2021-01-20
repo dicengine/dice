@@ -167,9 +167,9 @@ int main(int argc, char *argv[]) {
   *outStream << "creating an image from an array" << std::endl;
   const int_t array_w = 30;
   const int_t array_h = 20;
-  intensity_t * intensities = new intensity_t[array_w*array_h];
-  scalar_t * gx = new scalar_t[array_w*array_h];
-  scalar_t * gy = new scalar_t[array_w*array_h];
+  Teuchos::ArrayRCP<intensity_t> intensities(array_w*array_h,0.0);
+  Teuchos::ArrayRCP<intensity_t> gx(array_w*array_h,0.0);
+  Teuchos::ArrayRCP<intensity_t> gy(array_w*array_h,0.0);
   // populate the intensities with a sin/cos function
   for(int_t y=0;y<array_h;++y){
     for(int_t x=0;x<array_w;++x){
@@ -180,11 +180,7 @@ int main(int argc, char *argv[]) {
   }
   Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
   params->set(DICe::compute_image_gradients,true);
-  Image array_img(intensities,array_w,array_h,params);
-
-  *outStream << "creating an image from an array RCP" << std::endl;
-  Teuchos::ArrayRCP<intensity_t> intensityRCP(intensities,0,array_w*array_h,false);
-  Image rcp_img(array_w,array_h,intensityRCP);
+  Image array_img(array_w,array_h,intensities,params);
 
   bool intensity_value_error = false;
   bool grad_x_error = false;
@@ -237,23 +233,6 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   *outStream << "hierarchical image gradients have been checked" << std::endl;
-
-  // create an image with a teuchos array and compare the values
-  bool rcp_error = false;
-  for(int_t y=0;y<array_h;++y){
-    for(int_t x=0;x<array_w;++x){
-      if(rcp_img(x,y) != array_img(x,y))
-        rcp_error = true;
-    }
-  }
-  if(rcp_error){
-    *outStream << "Error, the rcp image was not created correctly" << std::endl;
-    errorFlag++;
-  }
-
-  delete[] intensities;
-  delete[] gx;
-  delete[] gy;
 
   // test image transform:
   *outStream << "testing an image transform" << std::endl;

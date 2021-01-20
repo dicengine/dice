@@ -81,14 +81,14 @@ int main(int argc, char *argv[]) {
   *outStream << "creating an image from intensity function" << std::endl;
   const int_t w = 1000;
   const int_t h = 500;
-  intensity_t * intensities = new intensity_t[w*h];
+  Teuchos::ArrayRCP<intensity_t> intensities(w*h,0.0);
   // populate the intensities with a sin/cos function
   for(int_t y=0;y<h;++y){
     for(int_t x=0;x<w;++x){
       intensities[y*w+x] = intens(x,y);
     }
   }
-  Teuchos::RCP<Image> img = Teuchos::rcp(new Image(intensities,w,h));
+  Teuchos::RCP<Image> img = Teuchos::rcp(new Image(w,h,intensities));
   //array_img->write("opt_interp_ref.tif");
 
   // do tons of interpolations at random points
@@ -162,8 +162,6 @@ int main(int argc, char *argv[]) {
     *outStream << "Error: keys_fourth interpolant accumulated error too high" << std::endl;
     errorFlag++;
   }
-  delete [] intensities;
-
   Teuchos::TimeMonitor::summarize(*outStream,false,true,false/*zero timers*/);
 
   *outStream << "--- End test ---" << std::endl;

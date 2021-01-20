@@ -70,14 +70,14 @@ int main(int argc, char *argv[]) {
   *outStream << "creating an image to test" << std::endl;
   const int_t array_w = 50;
   const int_t array_h = 20;
-  intensity_t * intensities = new intensity_t[array_w*array_h];
+  Teuchos::ArrayRCP<intensity_t> intensities(array_w*array_h,0.0);
   // populate the intensities with a sin/cos function
   for(int_t y=0;y<array_h;++y){
     for(int_t x=0;x<array_w;++x){
       intensities[y*array_w+x] = 255*std::cos(x/(4*DICE_PI))*std::sin(y/(4*DICE_PI));
     }
   }
-  Image array_img(intensities,array_w,array_h);
+  Image array_img(array_w,array_h,intensities);
   *outStream << "saving the test image to .rawi format" << std::endl;
   array_img.write("ArrayImg.rawi");
 

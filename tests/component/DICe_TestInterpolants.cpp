@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
   *outStream << "creating an image from an array" << std::endl;
   const int_t array_w = 40;
   const int_t array_h = 30;
-  intensity_t * intensities = new intensity_t[array_w*array_h];
+  Teuchos::ArrayRCP<intensity_t> intensities(array_w*array_h,0.0);
   // populate the intensities with a sin/cos function
   intensity_t x_val = 0.0, y_val = 0.0;
   for(int_t y=0;y<array_h;++y){
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
       intensities[y*array_w+x] = x_val*y_val;
     }
   }
-  Teuchos::RCP<Image> array_img = Teuchos::rcp(new Image(intensities,array_w,array_h));
+  Teuchos::RCP<Image> array_img = Teuchos::rcp(new Image(array_w,array_h,intensities));
   array_img->write("interp_array_img.tif");
 
   const int_t cx = array_w/2;

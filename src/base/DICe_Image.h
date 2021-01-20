@@ -70,21 +70,6 @@ public:
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   //
-  // pre allocated array image
-  //
-
-  /// constrtuctor that takes an array as input
-  /// note: assumes the input array is always stored LayoutRight or "row major"
-  /// \param intensities pre-allocated array of intensity values
-  /// \param array_width the width of the image
-  /// \param array_height the height of the image
-  /// \param params image parameters
-  Image(intensity_t * intensities,
-    const int_t array_width,
-    const int_t array_height,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
-
-  //
   // Teuchos::ArrayRCP image
   //
 
@@ -99,9 +84,7 @@ public:
   Image(const int_t width,
     const int_t height,
     Teuchos::ArrayRCP<intensity_t> intensities,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null,
-    const int_t offset_x = 0,
-    const int_t offset_y = 0);
+    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   //
   // Image from scalar
@@ -121,7 +104,7 @@ public:
   // Sub portion of another image constructor (deep copy constructor for default args)
   //
 
-  /// constructor that takes another image and dims of a sub portion
+  /// deep copy constructor that takes another image and dims of a sub portion
   /// note: no params arg because the parent image's are copied
   /// \param img the image to copy
   /// \param params image parameters (for example compute_gradients, subimage dims, etc.)
