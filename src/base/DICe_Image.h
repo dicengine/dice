@@ -104,22 +104,18 @@ public:
     const int_t offset_y = 0);
 
   //
-  // Empty (zero) image
+  // Image from scalar
   //
 
   /// constructor that creates a zero image
   /// \param width the width of the image
   /// \param height the height of the image
   /// \param intensity value to fill the array with
-  /// \param offset_x offset to upper left corner x coord if this is a subregion of a larger image
-  /// \param offset_y offset to upper left corner y coord if this is a subregion of a larger image
-  /// no params allowed since the intensity values are all zeros so gradients
+  /// no params allowed since the intensity values are all constant so gradients
   /// or filters would not make sense
   Image(const int_t width,
     const int_t height,
-    const intensity_t intensity=0.0,
-    const int_t offset_x = 0,
-    const int_t offset_y = 0);
+    const intensity_t intensity=0.0);
 
   //
   // Sub portion of another image constructor (deep copy constructor for default args)
@@ -128,17 +124,12 @@ public:
   /// constructor that takes another image and dims of a sub portion
   /// note: no params arg because the parent image's are copied
   /// \param img the image to copy
-  /// \param offset_x the upper left corner x-coord in image coordinates
-  /// \param offset_y the upper left corner y-coord in image coordinates
-  /// \param width the width of the sub image
-  /// \param height the height of the sub image
-  /// \param params image parameters (for example compute_gradients, etc.)
+  /// \param params image parameters (for example compute_gradients, subimage dims, etc.)
   Image(Teuchos::RCP<Image> img,
-    const int_t offset_x = 0,
-    const int_t offset_y = 0,
-    const int_t width = -1,
-    const int_t height = -1,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
+  /// helper function to convert param list to sub image dimensions
+  void subimage_dims_from_params(const Teuchos::RCP<Teuchos::ParameterList> & params);
 
   /// perform initialization of an image from an array
   /// \param intensities the array of intensity values

@@ -76,20 +76,7 @@ Image::Image(const char * file_name,
 {
   try{
     utils::read_image_dimensions(file_name,width_,height_);
-    if(params!=Teuchos::null){
-      if(params->isParameter(subimage_offset_x))
-        offset_x_ = params->get<int_t>(subimage_offset_x); // note using a default parameter for a param, adds that key to the list and sets it to the default
-      if(params->isParameter(subimage_offset_y))
-        offset_y_ = params->get<int_t>(subimage_offset_y);
-      TEUCHOS_TEST_FOR_EXCEPTION(offset_x_<0||offset_x_>=width_,std::runtime_error,"");
-      TEUCHOS_TEST_FOR_EXCEPTION(offset_y_<0||offset_y_>=height_,std::runtime_error,"");
-      const int_t sub_height = params->isParameter(subimage_height) ? params->get<int_t>(subimage_height) : height_;
-      const int_t sub_width = params->isParameter(subimage_width) ? params->get<int_t>(subimage_width) : width_;
-      TEUCHOS_TEST_FOR_EXCEPTION(sub_width<=0||offset_x_+sub_width>width_,std::runtime_error,"");
-      TEUCHOS_TEST_FOR_EXCEPTION(sub_height<=0||offset_y_+sub_height>height_,std::runtime_error,"");
-      width_ = sub_width;
-      height_ = sub_height;
-    }
+    subimage_dims_from_params(params);
     // initialize the pixel containers
     intensities_ = Teuchos::ArrayRCP<intensity_t>(height_*width_,0.0);
     // read in the image
@@ -103,36 +90,30 @@ Image::Image(const char * file_name,
 
 Image::Image(const int_t width,
   const int_t height,
-  const intensity_t intensity,
-  const int_t offset_x,
-  const int_t offset_y):
+  const intensity_t intensity):
   width_(width),
   height_(height),
-  offset_x_(offset_x),
-  offset_y_(offset_y),
+  offset_x_(0),
+  offset_y_(0),
   intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   has_gauss_filter_(false),
-  file_name_("(from array)"),
+  file_name_("(from scalar)"),
   has_file_name_(false),
   gradient_method_(FINITE_DIFFERENCE)
 {
-  assert(height_>0);
-  assert(width_>0);
+  TEUCHOS_TEST_FOR_EXCEPTION(width_<0,std::invalid_argument,"Error, width cannot be negative or zero.");
+  TEUCHOS_TEST_FOR_EXCEPTION(height_<0,std::invalid_argument,"Error, height cannot be negative or zero.");
   intensities_ = Teuchos::ArrayRCP<intensity_t>(height_*width_,intensity);
   default_constructor_tasks(Teuchos::null);
 }
 
 Image::Image(Teuchos::RCP<Image> img,
-  const int_t offset_x,
-  const int_t offset_y,
-  const int_t width,
-  const int_t height,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
-  width_(width),
-  height_(height),
-  offset_x_(offset_x),
-  offset_y_(offset_y),
+  width_(img->width()),
+  height_(img->height()),
+  offset_x_(img->offset_x()),
+  offset_y_(img->offset_y()),
   intensity_rcp_(Teuchos::null),
   has_gradients_(img->has_gradients()),
   has_gauss_filter_(img->has_gauss_filter()),
@@ -140,14 +121,9 @@ Image::Image(Teuchos::RCP<Image> img,
   has_file_name_(img->has_file_name()),
   gradient_method_(FINITE_DIFFERENCE)
 {
+  subimage_dims_from_params(params);
   TEUCHOS_TEST_FOR_EXCEPTION(offset_x_<0,std::invalid_argument,"Error, offset_x_ cannot be negative.");
   TEUCHOS_TEST_FOR_EXCEPTION(offset_y_<0,std::invalid_argument,"Error, offset_x_ cannot be negative.");
-  if(width_==-1)
-    width_ = img->width();
-  if(height_==-1)
-    height_ = img->height();
-  assert(width_>0);
-  assert(height_>0);
   const int_t src_width = img->width();
   const int_t src_height = img->height();
 
@@ -206,7 +182,6 @@ Image::Image(Teuchos::RCP<Image> img,
   }
 }
 
-
 Image::Image(intensity_t * intensities,
   const int_t array_width,
   const int_t array_height,
@@ -222,6 +197,12 @@ Image::Image(intensity_t * intensities,
   has_file_name_(false),
   gradient_method_(FINITE_DIFFERENCE)
 {
+  if(params!=Teuchos::null){
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_offset_x),std::runtime_error,"cannot create subimage from intensity array");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_offset_y),std::runtime_error,"cannot create subimage from intensity array");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_width),std::runtime_error,"cannot create subimage from intensity array");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_height),std::runtime_error,"cannot create subimage from intensity array");
+  }
   initialize_array_image(intensities);
   default_constructor_tasks(params);
 }
@@ -245,6 +226,24 @@ Image::Image(const int_t width,
 {
   initialize_array_image(intensities.getRawPtr());
   default_constructor_tasks(params);
+}
+
+void
+Image::subimage_dims_from_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
+  if(params!=Teuchos::null){
+    if(params->isParameter(subimage_offset_x))
+      offset_x_ = params->get<int_t>(subimage_offset_x); // note using a default parameter for a param, adds that key to the list and sets it to the default
+    if(params->isParameter(subimage_offset_y))
+      offset_y_ = params->get<int_t>(subimage_offset_y);
+    TEUCHOS_TEST_FOR_EXCEPTION(offset_x_<0||offset_x_>=width_,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(offset_y_<0||offset_y_>=height_,std::runtime_error,"");
+    const int_t sub_height = params->isParameter(subimage_height) ? params->get<int_t>(subimage_height) : height_;
+    const int_t sub_width = params->isParameter(subimage_width) ? params->get<int_t>(subimage_width) : width_;
+    TEUCHOS_TEST_FOR_EXCEPTION(sub_width<=0||offset_x_+sub_width>width_,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(sub_height<=0||offset_y_+sub_height>height_,std::runtime_error,"");
+    width_ = sub_width;
+    height_ = sub_height;
+  }
 }
 
 /// post allocation tasks

@@ -1335,7 +1335,7 @@ Schema::project_right_image_into_left_frame(Teuchos::RCP<Triangulation> tri,
   const int_t oly = ref_img_->offset_y();
   const int_t orx = reference ? ref_img_->offset_x() : def_imgs_[0]->offset_x();
   const int_t ory = reference ? ref_img_->offset_y() : def_imgs_[0]->offset_y();
-  Teuchos::RCP<Image> proj_img = Teuchos::rcp(new Image(w,h,0.0,olx,oly));
+  Teuchos::RCP<Image> proj_img = reference ? Teuchos::rcp(new Image(ref_img_)) : Teuchos::rcp(new Image(def_imgs_[0]));
   Teuchos::ArrayRCP<intensity_t> intens = proj_img->intensities();
   scalar_t xr = 0.0;
   scalar_t yr = 0.0;

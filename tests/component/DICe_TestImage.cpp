@@ -146,8 +146,11 @@ int main(int argc, char *argv[]) {
   }
 
   *outStream << "creating a sub-image" << std::endl;
-  // purposefully making the image extend beyond the bounds of the input image
-  Teuchos::RCP<Image> portion = Teuchos::rcp(new Image(img,img->width()/2,img->height()/2,img->width(),img->height()));
+  imgParams->set(DICe::subimage_width,img->width()/2);
+  imgParams->set(DICe::subimage_height,img->height()/2);
+  imgParams->set(DICe::subimage_offset_x,img->width()/2);
+  imgParams->set(DICe::subimage_offset_y,img->height()/2);
+  Teuchos::RCP<Image> portion = Teuchos::rcp(new Image(img,imgParams));
   //portion->write("portion_d.rawi");
 #ifdef DICE_USE_DOUBLE
   Teuchos::RCP<Image> portion_exact = Teuchos::rcp(new Image("./images/portion_d.rawi"));
