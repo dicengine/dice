@@ -206,9 +206,13 @@ Schema::set_def_image(const std::string & defName){
       }
       sub_width = end_x - offset_x;
       sub_height = end_y - offset_y;
+      imgParams->set(DICe::subimage_width,sub_width);
+      imgParams->set(DICe::subimage_height,sub_height);
+      imgParams->set(DICe::subimage_offset_x,offset_x);
+      imgParams->set(DICe::subimage_offset_y,offset_y);
       DEBUG_MSG("Setting the deformed image using extents x: " << offset_x << " to " << end_x <<
         " y: " << offset_y << " to " << end_y << " width " << sub_width << " height " << sub_height);
-      def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),offset_x,offset_y,sub_width,sub_height,imgParams));
+      def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
     }else{
       // see if the image has already been allocated:
       if(def_imgs_[id]==Teuchos::null)
@@ -297,10 +301,14 @@ Schema::set_ref_image(const std::string & refName){
     const int_t offset_y = ref_extents_[2] > buffer && ref_extents_[2] < full_ref_img_height_ - buffer ? ref_extents_[2] : 0;
     const int_t end_x = ref_extents_[1] > buffer && ref_extents_[1] < full_ref_img_width_ - buffer ? ref_extents_[1] : full_ref_img_width_;
     const int_t end_y = ref_extents_[3] > buffer && ref_extents_[3] < full_ref_img_height_ - buffer ? ref_extents_[3] : full_ref_img_height_;
-    const int_t width = end_x - offset_x;
-    const int_t height = end_y - offset_y;
+    const int_t sub_width = end_x - offset_x;
+    const int_t sub_height = end_y - offset_y;
+    imgParams->set(DICe::subimage_width,sub_width);
+    imgParams->set(DICe::subimage_height,sub_height);
+    imgParams->set(DICe::subimage_offset_x,offset_x);
+    imgParams->set(DICe::subimage_offset_y,offset_y);
     DEBUG_MSG("Setting the reference image using extents x: " << offset_x << " to " << end_x << " y: " << offset_y << " to " << end_y);
-    ref_img_ = Teuchos::rcp( new Image(refName.c_str(),offset_x,offset_y,width,height,imgParams));
+    ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
   }
   else
     ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));

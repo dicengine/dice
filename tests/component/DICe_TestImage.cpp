@@ -117,7 +117,12 @@ int main(int argc, char *argv[]) {
 
   // capture a portion of an image from file
   *outStream << "creating an image from a portion of a tiff file " << std::endl;
-  Image sub_img("./images/ImageA.tif",100,100,300,200);
+  Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
+  imgParams->set(DICe::subimage_width,300);
+  imgParams->set(DICe::subimage_height,200);
+  imgParams->set(DICe::subimage_offset_x,100);
+  imgParams->set(DICe::subimage_offset_y,100);
+  Image sub_img("./images/ImageA.tif",imgParams);
   //sub_img.write("outSubImageA.tif");
   if(sub_img.width()!=300){
     *outStream << "Error, the sub image width is not correct" << std::endl;
@@ -466,7 +471,11 @@ int main(int argc, char *argv[]) {
     errorFlag++;
  }
   *outStream << "creating a sub portion image from a jpeg file " << std::endl;
-  Teuchos::RCP<Image> img_sub_jpg = Teuchos::rcp(new Image("./images/ImageB.jpg",10,15,20,30));
+  imgParams->set(DICe::subimage_width,20);
+  imgParams->set(DICe::subimage_height,30);
+  imgParams->set(DICe::subimage_offset_x,10);
+  imgParams->set(DICe::subimage_offset_y,15);
+  Teuchos::RCP<Image> img_sub_jpg = Teuchos::rcp(new Image("./images/ImageB.jpg",imgParams));
   //img_sub_jpg->write("JpegImageBSub_d.rawi");
   //img_sub_jpg->write("JpegImageBSub.rawi");
   if(img_sub_jpg->width()!=20){
@@ -511,7 +520,7 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   *outStream << "creating a sub portion image from a png file " << std::endl;
-  Teuchos::RCP<Image> img_sub_png = Teuchos::rcp(new Image("./images/ImageB.jpg",10,15,20,30));
+  Teuchos::RCP<Image> img_sub_png = Teuchos::rcp(new Image("./images/ImageB.jpg",imgParams));
   //img_sub_png->write("PngImageBSub_d.rawi");
   //img_sub_png->write("PngImageBSub.rawi");
   if(img_sub_png->width()!=20){

@@ -763,7 +763,11 @@ Decomp::populate_coordinate_vectors(const std::string & image_file_name,
     // load images for each processor
     Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
     imgParams->set(DICe::compute_image_gradients,true);
-    Teuchos::RCP<Image> sssig_image = Teuchos::rcp( new Image(image_file_name.c_str(),min_x,min_y,max_x-min_x+1,max_y-min_y+1,imgParams));
+    imgParams->set(DICe::subimage_width,max_x-min_x+1);
+    imgParams->set(DICe::subimage_height,max_y-min_y+1);
+    imgParams->set(DICe::subimage_offset_x,min_x);
+    imgParams->set(DICe::subimage_offset_y,min_y);
+    Teuchos::RCP<Image> sssig_image = Teuchos::rcp( new Image(image_file_name.c_str(),imgParams));
     TEUCHOS_TEST_FOR_EXCEPTION(!sssig_image->has_gradients(),std::runtime_error,
       "Error, testing valid points for SSSIG tol, but image gradients have not been computed");
     for(int_t i=0;i<num_check_points;++i){

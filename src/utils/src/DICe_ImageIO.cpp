@@ -223,10 +223,10 @@ void read_image(const char * file_name,
   bool filter_failed_pixels=true;
   bool convert_to_8_bit=true;
   if(params!=Teuchos::null){
-    sub_w = params->get<int_t>(subimage_width,0);
-    sub_h = params->get<int_t>(subimage_height,0);
-    sub_offset_x = params->get<int_t>(subimage_offset_x,0);
-    sub_offset_y = params->get<int_t>(subimage_offset_y,0);
+    sub_w = params->isParameter(subimage_width) ? params->get<int_t>(subimage_width) : 0;
+    sub_h = params->isParameter(subimage_height) ? params->get<int_t>(subimage_height) : 0;
+    sub_offset_x = params->isParameter(subimage_offset_x) ? params->get<int_t>(subimage_offset_x) : 0;
+    sub_offset_y = params->isParameter(subimage_offset_y) ? params->get<int_t>(subimage_offset_y) : 0;
     is_subimage=params->isParameter(subimage_width)||
         params->isParameter(subimage_height)||
         params->isParameter(subimage_offset_x)||

@@ -63,6 +63,8 @@ inline scalar_t keys_f2(const scalar_t & s){
 
 Image::Image(const char * file_name,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
+  width_(0),
+  height_(0),
   offset_x_(0),
   offset_y_(0),
   intensity_rcp_(Teuchos::null),
@@ -74,55 +76,24 @@ Image::Image(const char * file_name,
 {
   try{
     utils::read_image_dimensions(file_name,width_,height_);
-    TEUCHOS_TEST_FOR_EXCEPTION(width_<=0,std::runtime_error,"");
-    TEUCHOS_TEST_FOR_EXCEPTION(height_<=0,std::runtime_error,"");
-    intensities_ = Teuchos::ArrayRCP<intensity_t>(width_*height_,0.0);
-    utils::read_image(file_name,intensities_.getRawPtr(),params);
-  }
-  catch(...){
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, image file read failure");
-  }
-  // copy the image to the device (no-op for OpenMP, or serial)
-  default_constructor_tasks(params);
-}
-
-Image::Image(const char * file_name,
-  const int_t offset_x,
-  const int_t offset_y,
-  const int_t width,
-  const int_t height,
-  const Teuchos::RCP<Teuchos::ParameterList> & params):
-  width_(width),
-  height_(height),
-  offset_x_(offset_x),
-  offset_y_(offset_y),
-  intensity_rcp_(Teuchos::null),
-  has_gradients_(false),
-  has_gauss_filter_(false),
-  file_name_(file_name),
-  has_file_name_(true),
-  gradient_method_(FINITE_DIFFERENCE)
-{
-  // get the image dims
-  int_t img_width = 0;
-  int_t img_height = 0;
-  try{
-    utils::read_image_dimensions(file_name,img_width,img_height);
-    TEUCHOS_TEST_FOR_EXCEPTION(width_<=0||offset_x_+width_>img_width,std::runtime_error,"");
-    TEUCHOS_TEST_FOR_EXCEPTION(height_<=0||offset_y_+height_>img_height,std::runtime_error,"");
+    if(params!=Teuchos::null){
+      if(params->isParameter(subimage_offset_x))
+        offset_x_ = params->get<int_t>(subimage_offset_x); // note using a default parameter for a param, adds that key to the list and sets it to the default
+      if(params->isParameter(subimage_offset_y))
+        offset_y_ = params->get<int_t>(subimage_offset_y);
+      TEUCHOS_TEST_FOR_EXCEPTION(offset_x_<0||offset_x_>=width_,std::runtime_error,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(offset_y_<0||offset_y_>=height_,std::runtime_error,"");
+      const int_t sub_height = params->isParameter(subimage_height) ? params->get<int_t>(subimage_height) : height_;
+      const int_t sub_width = params->isParameter(subimage_width) ? params->get<int_t>(subimage_width) : width_;
+      TEUCHOS_TEST_FOR_EXCEPTION(sub_width<=0||offset_x_+sub_width>width_,std::runtime_error,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(sub_height<=0||offset_y_+sub_height>height_,std::runtime_error,"");
+      width_ = sub_width;
+      height_ = sub_height;
+    }
     // initialize the pixel containers
     intensities_ = Teuchos::ArrayRCP<intensity_t>(height_*width_,0.0);
     // read in the image
-    Teuchos::RCP<Teuchos::ParameterList> subimage_params;
-    if(params!=Teuchos::null)
-      subimage_params = Teuchos::rcp(new Teuchos::ParameterList(*params.get())); // copy any existing parameters and add to them (catch convert_cine_to_8_bit, etc)
-    else
-      subimage_params = Teuchos::rcp(new Teuchos::ParameterList());
-    subimage_params->set(subimage_width,width_);
-    subimage_params->set(subimage_height,height_);
-    subimage_params->set(subimage_offset_x,offset_x_);
-    subimage_params->set(subimage_offset_y,offset_y_);
-    utils::read_image(file_name,intensities_.getRawPtr(),subimage_params);
+    utils::read_image(file_name,intensities_.getRawPtr(),params);
   }
   catch(...){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, image file read failure");
@@ -237,11 +208,11 @@ Image::Image(Teuchos::RCP<Image> img,
 
 
 Image::Image(intensity_t * intensities,
-  const int_t width,
-  const int_t height,
+  const int_t array_width,
+  const int_t array_height,
   const Teuchos::RCP<Teuchos::ParameterList> & params):
-  width_(width),
-  height_(height),
+  width_(array_width),
+  height_(array_height),
   offset_x_(0),
   offset_y_(0),
   intensity_rcp_(Teuchos::null),

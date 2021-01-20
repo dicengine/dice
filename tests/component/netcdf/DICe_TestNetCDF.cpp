@@ -82,8 +82,12 @@ int main(int argc, char *argv[]) {
     errorFlag++;
     *outStream << "Error, the NetCDF image was not read correctly" << std::endl;
   }
-
-  Image subImg("../images/goes14.2016.222.215844.BAND_01.nc",1235,491,496,370);
+  Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
+  imgParams->set(DICe::subimage_width,496);
+  imgParams->set(DICe::subimage_height,370);
+  imgParams->set(DICe::subimage_offset_x,1235);
+  imgParams->set(DICe::subimage_offset_y,491);
+  Image subImg("../images/goes14.2016.222.215844.BAND_01.nc",imgParams);
   subImg.write("netcdf_sub_image.tif");
   //subImg.write("netcdf_sub_image.rawi");
   Teuchos::RCP<Image> gold_sub_img = Teuchos::rcp(new Image("../images/netcdf_sub_image.rawi"));

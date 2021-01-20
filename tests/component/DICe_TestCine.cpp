@@ -180,9 +180,17 @@ int main(int argc, char *argv[]) {
   imgParams->set(DICe::filter_failed_cine_pixels,false);
   imgParams->set(DICe::convert_cine_to_8_bit,false);
   imgParams->set(DICe::reinitialize_cine_reader_conversion_factor,true);
-  Teuchos::RCP<Image> image_0_rcp = Teuchos::rcp(new Image(win_frame.str().c_str(),170,13,208-170+1,42-13+1,imgParams));
+  imgParams->set(DICe::subimage_width,208-170+1);
+  imgParams->set(DICe::subimage_height,42-13+1);
+  imgParams->set(DICe::subimage_offset_x,170);
+  imgParams->set(DICe::subimage_offset_y,13);
+  Teuchos::RCP<Image> image_0_rcp = Teuchos::rcp(new Image(win_frame.str().c_str(),imgParams));
   //image_0_rcp->write("motion_window_12bpp.tif");
-  Teuchos::RCP<Image> image_1_rcp = Teuchos::rcp(new Image(win_frame.str().c_str(),196,72,238-196+1,95-72+1,imgParams));
+  imgParams->set(DICe::subimage_width,238-196+1);
+  imgParams->set(DICe::subimage_height,95-72+1);
+  imgParams->set(DICe::subimage_offset_x,196);
+  imgParams->set(DICe::subimage_offset_y,72);
+  Teuchos::RCP<Image> image_1_rcp = Teuchos::rcp(new Image(win_frame.str().c_str(),imgParams));
   //image_1_rcp->write("motion_window_12bpp.tif");
   std::vector<Teuchos::RCP<Image> > image_rcps;
   image_rcps.push_back(image_0_rcp);
@@ -218,7 +226,11 @@ int main(int argc, char *argv[]) {
   const int_t frame_5_index = 5 + cine_reader_8.first_image_number();
   std::stringstream file_name_8;
   file_name_8 << "./images/phantom_v1610_" << frame_5_index << ".cine";
-  Teuchos::RCP<Image> image_8 = Teuchos::rcp(new Image(file_name_8.str().c_str(),158,15,196-158+1,45-15+1,imgParams));
+  imgParams->set(DICe::subimage_width,196-158+1);
+  imgParams->set(DICe::subimage_height,45-15+1);
+  imgParams->set(DICe::subimage_offset_x,158);
+  imgParams->set(DICe::subimage_offset_y,15);
+  Teuchos::RCP<Image> image_8 = Teuchos::rcp(new Image(file_name_8.str().c_str(),imgParams));
   //image_8->write("motion_window_8.tif");
   bool intensity_value_error = false;
 #if DICE_USE_DOUBLE
@@ -245,7 +257,11 @@ int main(int argc, char *argv[]) {
   DICe::cine::Cine_Reader cine_reader_16("./images/phantom_v1610_16bpp.cine",outStream.getRawPtr());
   std::stringstream file_name_16;
   file_name_16 << "./images/phantom_v1610_16bpp_" << 5 + cine_reader_16.first_image_number() << ".cine";
-  Teuchos::RCP<Image> image_16 = Teuchos::rcp(new Image(file_name_16.str().c_str(),95,83,128-95+1,116-83+1,imgParams));
+  imgParams->set(DICe::subimage_width,128-95+1);
+  imgParams->set(DICe::subimage_height,116-83+1);
+  imgParams->set(DICe::subimage_offset_x,95);
+  imgParams->set(DICe::subimage_offset_y,83);
+  Teuchos::RCP<Image> image_16 = Teuchos::rcp(new Image(file_name_16.str().c_str(),imgParams));
   //image_16->write("motion_window_d_16.rawi");
   intensity_value_error = false;
 #if DICE_USE_DOUBLE

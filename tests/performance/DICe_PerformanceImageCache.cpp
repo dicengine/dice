@@ -103,13 +103,18 @@ int main(int argc, char *argv[]) {
   //const int_t num_interp_evals = 100000; // (subset size 30x50 with roughly 50 evaluations)
   const int_t window_size = 120;
   const int_t window_start_x = 250;
-  const int_t window_end_x = window_start_x + window_size;
+//  const int_t window_end_x = window_start_x + window_size;
   const int_t window_start_y = 130;
-  const int_t window_end_y = window_start_y + window_size;
+//  const int_t window_end_y = window_start_y + window_size;
   const int_t subset_start_x = 290;
   const int_t subset_start_y = 150;
   const int_t subset_end_x = 320;
   const int_t subset_end_y = 220;
+  Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
+  imgParams->set(DICe::subimage_width,window_size);
+  imgParams->set(DICe::subimage_height,window_size);
+  imgParams->set(DICe::subimage_offset_x,window_start_x);
+  imgParams->set(DICe::subimage_offset_y,window_start_y);
   {
     for(int_t i = start_frame; i<=end_frame; ++i){
 
@@ -146,7 +151,7 @@ int main(int argc, char *argv[]) {
       Teuchos::RCP<Image> image;
       {
         Teuchos::TimeMonitor read_partial_time_monitor(*read_partial_time);
-        image = Teuchos::rcp(new Image(name.str().c_str(),window_start_x,window_start_y,window_end_x-window_start_x+1,window_end_y-window_start_y+1));
+        image = Teuchos::rcp(new Image(name.str().c_str(),imgParams));
       }
       //cine.get_frame(i,window_start_x,window_start_y,window_end_x,window_end_y,true,false);
 

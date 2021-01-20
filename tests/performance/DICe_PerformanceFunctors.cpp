@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
   std::vector<scalar_t> sub_keys_times(num_img_sizes,0.0);
   std::vector<scalar_t> mean_times(num_img_sizes,0.0);
   std::vector<scalar_t> corr_times(num_img_sizes,0.0);
-
+  Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
 
   // num timing samples loop
   for(int_t time_sample=0;time_sample<num_time_samples;++time_sample){
@@ -139,6 +139,9 @@ int main(int argc, char *argv[]) {
     for(int_t size_it=0;size_it<num_img_sizes;++size_it){
       const int_t w_it = widths[size_it];
       const int_t h_it = heights[size_it];
+      imgParams->set(DICe::subimage_width,w_it);
+      imgParams->set(DICe::subimage_height,h_it);
+
       *outStream << "---------------------------------------------------------------------------" << std::endl;
       *outStream << "image size: " << w_it << " x " << h_it << std::endl;
       if(time_sample==0) sizes[size_it] = w_it*h_it;
@@ -148,7 +151,7 @@ int main(int argc, char *argv[]) {
       *outStream << "reading the image" << std::endl;
       {
         Teuchos::TimeMonitor read_time_monitor(*read_time);
-        img = Teuchos::rcp(new Image(file_name.c_str(),0,0,w_it,h_it));
+        img = Teuchos::rcp(new Image(file_name.c_str(),imgParams));
       }
 
       // gradient

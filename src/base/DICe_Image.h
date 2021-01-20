@@ -60,27 +60,13 @@ class DICE_LIB_DLL_EXPORT
 Image {
 public:
   //
-  // tiff image constructors
+  // read from file image constructors
   //
 
-  /// constructor that reads in a whole tiff file
-  /// \param file_name the name of the tiff file
+  /// constructor that reads in an image from file
+  /// \param file_name the name of the file
   /// \param params image parameters
   Image(const char * file_name,
-    const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
-
-  /// constructor that stores only a portion of a tiff file given by the offset and dims
-  /// \param file_name the name of the tiff file
-  /// \param offset_x upper left corner x-coordinate
-  /// \param offset_y upper left corner y-coorindate
-  /// \param width x-dim of the image (offset_x + width must be < the global image width)
-  /// \param height y-dim of the image (offset_y + height must be < the global image height)
-  /// \param params image parameters
-  Image(const char * file_name,
-    const int_t offset_x,
-    const int_t offset_y,
-    const int_t width,
-    const int_t height,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   //
@@ -90,12 +76,12 @@ public:
   /// constrtuctor that takes an array as input
   /// note: assumes the input array is always stored LayoutRight or "row major"
   /// \param intensities pre-allocated array of intensity values
-  /// \param width the width of the image
-  /// \param height the height of the image
+  /// \param array_width the width of the image
+  /// \param array_height the height of the image
   /// \param params image parameters
   Image(intensity_t * intensities,
-    const int_t width,
-    const int_t height,
+    const int_t array_width,
+    const int_t array_height,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   //
