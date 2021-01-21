@@ -111,22 +111,9 @@ public:
   Image(Teuchos::RCP<Image> img,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
-  /// helper function to convert param list to sub image dimensions
-  void subimage_dims_from_params(const Teuchos::RCP<Teuchos::ParameterList> & params);
-
-  /// perform initialization of an image from an array
-  /// \param intensities the array of intensity values
-  void initialize_array_image(intensity_t * intensities);
-
-  /// default constructor tasks
-  void default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
-
   /// update an already allocated image class with new intensity field and gradients
   void update_image_fields(const char * file_name,
     const Teuchos::RCP<Teuchos::ParameterList> & params);
-
-  /// post allocation tasks
-  void post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// virtual destructor
   virtual ~Image(){};
@@ -220,7 +207,6 @@ public:
   void interpolate_keys_fourth_all(intensity_t& intensity_val,
        scalar_t& grad_x_val, scalar_t& grad_y_val, const bool compute_gradient,
        const scalar_t& local_x, const scalar_t& local_y);
-
 
   /// interpolant
   /// \param global_x global image coordinate x
@@ -431,12 +417,6 @@ public:
     return file_name_;
   }
 
-  /// set the filename for the image
-  /// \param file_name the string name to use
-  void set_file_name(std::string & file_name){
-    file_name_ = file_name;
-  }
-
   /// returns the difference of two images:
   scalar_t diff(Teuchos::RCP<Image> rhs)const;
 
@@ -446,6 +426,16 @@ public:
   }
 
 private:
+
+  /// post allocation tasks
+  void post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
+  /// helper function to convert param list to sub image dimensions
+  void subimage_dims_from_params(const Teuchos::RCP<Teuchos::ParameterList> & params);
+
+  /// default constructor tasks
+  void default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
+
   /// pixel container width_
   int_t width_;
   /// pixel container height_
@@ -456,8 +446,6 @@ private:
   /// offsets are used to convert to global image coordinates
   /// (the pixel container may be a subset of a larger image)
   int_t offset_y_;
-  /// rcp to the intensity array (used to ensure it doesn't get deallocated)
-  Teuchos::ArrayRCP<intensity_t> intensity_rcp_;
   /// pixel container
   Teuchos::ArrayRCP<intensity_t> intensities_;
   /// device intensity work array

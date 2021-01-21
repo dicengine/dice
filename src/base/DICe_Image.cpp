@@ -67,7 +67,6 @@ Image::Image(const char * file_name,
   height_(0),
   offset_x_(0),
   offset_y_(0),
-  intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   has_gauss_filter_(false),
   file_name_(file_name),
@@ -95,7 +94,6 @@ Image::Image(const int_t width,
   height_(height),
   offset_x_(0),
   offset_y_(0),
-  intensity_rcp_(Teuchos::null),
   has_gradients_(false),
   has_gauss_filter_(false),
   file_name_("(from scalar)"),
@@ -114,7 +112,6 @@ Image::Image(Teuchos::RCP<Image> img,
   height_(img->height()),
   offset_x_(img->offset_x()),
   offset_y_(img->offset_y()),
-  intensity_rcp_(Teuchos::null),
   has_gradients_(img->has_gradients()),
   has_gauss_filter_(img->has_gauss_filter()),
   file_name_(img->file_name()),
@@ -190,7 +187,7 @@ Image::Image(const int_t array_width,
   height_(array_height),
   offset_x_(0),
   offset_y_(0),
-  intensity_rcp_(intensities),
+  intensities_(intensities),
   has_gradients_(false),
   has_gauss_filter_(false),
   file_name_("(from array)"),
@@ -200,6 +197,7 @@ Image::Image(const int_t array_width,
   if(params!=Teuchos::null){
     // Note for an image constructed from array, the offsets simply set the offset_x_ and offset_y_ values for this instance of the class
     // the full input array is still copied over (by reference) to the local intensity array.
+    // This is mostly for propagating offsets if the intesity array RCP came from an image that was already a subimage
     if(params->isParameter(subimage_offset_x))
       offset_x_ = params->get<int_t>(subimage_offset_x);
     if(params->isParameter(subimage_offset_y))
@@ -207,7 +205,6 @@ Image::Image(const int_t array_width,
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_width),std::runtime_error,"cannot create subimage from intensity array");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_height),std::runtime_error,"cannot create subimage from intensity array");
   }
-  initialize_array_image(intensities.getRawPtr());
   default_constructor_tasks(params);
 }
 
@@ -265,14 +262,6 @@ Image::post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params
       }
     }
   }
-}
-
-
-void
-Image::initialize_array_image(intensity_t * intensities){
-  assert(width_>0);
-  assert(height_>0);
-  intensities_ = Teuchos::ArrayRCP<intensity_t>(intensities,0,width_*height_,false);
 }
 
 void
@@ -1241,17 +1230,6 @@ Image::normalize(const Teuchos::RCP<Teuchos::ParameterList> & params){
     normalized_intens[i] = ((*this)(i) - mean) / mean_sum;
    Teuchos::RCP<Image> result = Teuchos::rcp(new Image(width_,height_,normalized_intens,params));
    return result;
-}
-
-void
-Image::replace_intensities(Teuchos::ArrayRCP<intensity_t> intensities){
-  assert(intensities.size()==width_*height_);
-  intensity_rcp_ = intensities; // copy the pointer so the arrayRCP doesn't get deallocated;
-  // automatically re-compute the image gradients:
-  Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
-  params->set(DICe::compute_image_gradients,true);
-  initialize_array_image(intensities.getRawPtr());
-  default_constructor_tasks(params);
 }
 
 scalar_t
