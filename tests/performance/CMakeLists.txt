@@ -1,6 +1,5 @@
 include_directories (
     .
-    ../../src/utils/src/
     ${DICE_HEADER_DIRS}
     ${DICE_TRILINOS_HEADERS}
 )
@@ -14,7 +13,7 @@ FOREACH ( test_file ${test_cpp_files})
     add_executable(${name} ${test_file})
     target_link_libraries(${name} ${DICE_LIBRARIES} dicecore)
     IF(DICE_ENABLE_NETCDF)
-      target_link_libraries(${name} diceutils ${NetCDF_lib})
+      target_link_libraries(${name} diceioutils ${NetCDF_lib})
     ENDIF()
 ENDFOREACH ( )
 

@@ -119,9 +119,9 @@ target_link_libraries(main
 #  MESSAGE(FATAL_ERROR "Tiff library is required, but not found")
 #else()
 #  MESSAGE(STATUS "Using tiff library from: ${tiff_lib}")
-#  target_link_libraries(main diceutils ${tiff_lib})
+#  target_link_libraries(main diceioutils ${tiff_lib})
 #endif()
-target_link_libraries(main diceutils)
+target_link_libraries(main diceioutils)
 
 # NOTE: If this example is used as a template, the optional JPEG_DIR variable can be defined
 # in your do-cmake script with -D JPEG_DIR:STRING="<location>" only if libjpeg is not

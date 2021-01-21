@@ -1,34 +1,35 @@
 SET(DICE_UTILS_SOURCES
-  DICe_ImageIO.cpp
-  DICe_Rawi.cpp
-  ../../cine/DICe_Cine.cpp
+  ./DICe_ImageIO.cpp
+  ../rawi/DICe_Rawi.cpp
+  ../cine/DICe_Cine.cpp
 )
 IF(DICE_ENABLE_NETCDF)
 SET(DICE_UTILS_SOURCES
   ${DICE_UTILS_SOURCES}
-  ../../netcdf/DICe_NetCDF.cpp
+  ../netcdf/DICe_NetCDF.cpp
 )
 ENDIF()
 
 SET(DICE_UTILS_HEADERS
-  DICe_ImageIO.h
-  DICe_Rawi.h
-  ../../cine/DICe_Cine.h
+  ./DICe_ImageIO.h
+  ../rawi/DICe_Rawi.h
+  ../cine/DICe_Cine.h
 )
 
 IF(DICE_ENABLE_NETCDF)
 SET(DICE_UTILS_HEADERS
   ${DICE_UTILS_HEADERS}
-  ../../netcdf/DICe_NetCDF.h
+  ../netcdf/DICe_NetCDF.h
 )
 ENDIF()
 
 include_directories(
     .
-    ../../core
-    ../../base
-    ../../cine
-    ../../netcdf
+    ../core
+    ../base
+    ../cine
+    ../rawi
+    ../netcdf
     ${DICE_HEADER_DIRS}
     ${DICE_TRILINOS_HEADERS}
     ${NetCDF_DIR}
@@ -41,18 +42,17 @@ ENDIF()
 
 # Specify target & source files to compile it from
 add_library(
-    diceutils
+    diceioutils
     ${DICE_UTILS_SOURCES}
     ${DICE_UTILS_HEADERS}
 )
 
-target_link_libraries(diceutils ${DICE_UTILS_LIBRARIES})
+target_link_libraries(diceioutils ${DICE_UTILS_LIBRARIES})
 IF(DICE_ENABLE_OPENCV)
-  target_link_libraries(diceutils ${OpenCV_LIBRARIES})
+  target_link_libraries(diceioutils ${OpenCV_LIBRARIES})
 ENDIF()
-target_compile_definitions(diceutils PRIVATE -D DICE_LIB_EXPORTS_MODE)
-MESSAGE(STATUS "diceutils library will be output to location: ${DICE_LIB_INSTALL_PREFIX}")
-set_target_properties(diceutils PROPERTIES
+target_compile_definitions(diceioutils PRIVATE -D DICE_LIB_EXPORTS_MODE)
+set_target_properties(diceioutils PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
   ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
   RUNTIME_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/bin"
@@ -62,7 +62,7 @@ install(FILES ${DICE_UTILS_HEADERS}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include
 )
 
-install(TARGETS diceutils
+install(TARGETS diceioutils
   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
 

@@ -11,7 +11,7 @@ SET(DICE_TEST_LIBRARIES
 if(DICE_ENABLE_NETCDF)
   SET(DICE_TEST_LIBRARIES
     ${DICE_TEST_LIBRARIES}
-    diceutils
+    diceioutils
     ${NetCDF_lib}
   )
 ENDIF()

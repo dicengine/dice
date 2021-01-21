@@ -2,7 +2,6 @@ include_directories (
     .
     ${DICE_HEADER_DIRS}
     ${DICE_TRILINOS_HEADERS}
-    
 )
 
 SET(DICE_COMP_LIBS
@@ -13,7 +12,7 @@ SET(DICE_COMP_LIBS
 if(DICE_ENABLE_NETCDF)
   SET(DICE_COMP_LIBS
     ${DICE_COMP_LIBS}
-    diceutils
+    diceioutils
     ${NetCDF_lib}
   )
 ENDIF()

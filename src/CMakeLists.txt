@@ -133,10 +133,8 @@ include_directories (
     ${DICE_TRILINOS_HEADERS}
 )
 add_library(dicecore ${DICE_SOURCES} ${DICE_HEADERS})
-target_link_libraries(dicecore ${DICE_LIBRARIES} diceutils ${OpenCV_LIBRARIES})
-
+target_link_libraries(dicecore ${DICE_LIBRARIES} diceioutils ${OpenCV_LIBRARIES})
 target_compile_definitions(dicecore PRIVATE -D DICE_LIB_EXPORTS_MODE)
-add_dependencies(dicecore DICe_utils)
 
 install(FILES ${DICE_HEADERS}
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include
@@ -149,6 +147,11 @@ set_target_properties(dicecore PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
   RUNTIME_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/bin"
 )
+
+#
+#  Image I/O utils
+#
+add_subdirectory(ioutils)
 
 #
 #  Core (classes that build on the DICe base classes)
