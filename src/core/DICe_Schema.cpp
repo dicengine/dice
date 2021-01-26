@@ -177,11 +177,17 @@ Schema::set_def_image(const std::string & defName){
   // if the image is from a cine file, load the memory buffer for the cine
   if((frame_id_-first_frame_id_)%CINE_BUFFER_NUM_FRAMES==0){
     if(DICe::utils::image_file_type(defName.c_str())==CINE){
+      std::cout << std::endl << std::endl;
+      std::cout << "************ READING BUFFER ***********";
+      std::cout << std::endl << std::endl;
       // check if the window params are already set and just the frame needs to be updated
       std::string undecorated_cine_file = DICe::utils::cine_file_name(defName.c_str());
       Teuchos::RCP<hypercine::HyperCine> hc = DICe::utils::HyperCine_Singleton::instance().hypercine(undecorated_cine_file);
+      // get last frame of cine file:
+      const int_t frame_count = frame_id_ + CINE_BUFFER_NUM_FRAMES >= first_frame_id_ + num_frames_ ?
+          first_frame_id_+num_frames_-frame_id_ : CINE_BUFFER_NUM_FRAMES;
       if(hc->hyperframe()->num_windows()==0&&has_motion_window){
-        hypercine::HyperCine::HyperFrame hf(frame_id_,CINE_BUFFER_NUM_FRAMES);
+        hypercine::HyperCine::HyperFrame hf(frame_id_,frame_count);
         for(std::map<int_t,Motion_Window_Params>::iterator it=motion_window_params_->begin();it!=motion_window_params_->end();++it){
             hf.add_window(it->second.start_x_,
               it->second.end_x_-it->second.start_x_,
@@ -190,7 +196,7 @@ Schema::set_def_image(const std::string & defName){
         }
         hc->read_buffer(hf);
       }else{
-        hc->hyperframe()->update_frames(frame_id_,CINE_BUFFER_NUM_FRAMES);
+        hc->hyperframe()->update_frames(frame_id_,frame_count);
         hc->read_buffer();
       }
     }
@@ -241,7 +247,7 @@ Schema::set_def_image(const std::string & defName){
       if(def_imgs_[id]==Teuchos::null)
         def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
       else
-        def_imgs_[id]->update_image_fields(defName.c_str(),imgParams);
+        def_imgs_[id]->update(defName.c_str(),imgParams);
     }
     if(def_image_rotation_!=ZERO_DEGREES){
       def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);

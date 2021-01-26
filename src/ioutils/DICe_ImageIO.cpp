@@ -212,7 +212,7 @@ void read_image_dimensions(const char * file_name,
 
 DICE_LIB_DLL_EXPORT
 void read_image(const char * file_name,
-  intensity_t * intensities,
+  Teuchos::ArrayRCP<intensity_t> & intensities,
   const Teuchos::RCP<Teuchos::ParameterList> & params){
   int_t sub_w=0;
   int_t sub_h=0;
@@ -250,8 +250,11 @@ void read_image(const char * file_name,
       std::cerr << "Error, reading only a portion of an image is not supported for rawi, file name: " << file_name << "\n";
       throw std::exception();
     }
-    read_rawi_image_dimensions(file_name,width,height);
-    read_rawi_image(file_name,intensities,layout_right);
+    if(intensities.size()==0){
+      read_rawi_image_dimensions(file_name,width,height);
+      intensities = Teuchos::ArrayRCP<intensity_t>(width*height,0.0);
+    }
+    read_rawi_image(file_name,intensities.getRawPtr(),layout_right);
   }
   else if(file_type==CINE){
     DEBUG_MSG("utils::read_image(): filter_failed_pixels: " << filter_failed_pixels);
@@ -271,11 +274,13 @@ void read_image(const char * file_name,
     reader->initialize_filter(filter_failed_pixels,convert_to_8_bit,0,reinit);
     width = sub_w==0?reader->width():sub_w;
     height = sub_h==0?reader->height():sub_h;
+    if(intensities.size()==0)
+      intensities = Teuchos::ArrayRCP<intensity_t>(width*height,0.0);
     if(is_avg){
       reader->get_average_frame(start_index-reader->first_image_number(),end_index-reader->first_image_number(),
-        sub_offset_x,sub_offset_y,width,height,intensities,layout_right);
+        sub_offset_x,sub_offset_y,width,height,intensities.getRawPtr(),layout_right);
     }else{
-      reader->get_frame(sub_offset_x,sub_offset_y,width,height,intensities,layout_right,start_index-reader->first_image_number());
+      reader->get_frame(sub_offset_x,sub_offset_y,width,height,intensities.getRawPtr(),layout_right,start_index-reader->first_image_number());
     }
   }
 #ifdef DICE_ENABLE_NETCDF
@@ -291,7 +296,9 @@ void read_image(const char * file_name,
         int_t num_time_steps = 0;
         netcdf_reader.get_image_dimensions(netcdf_file.c_str(),width,height,num_time_steps);
       }
-      netcdf_reader.read_netcdf_image(netcdf_file.c_str(),index,intensities,sub_w,sub_h,sub_offset_x,sub_offset_y,layout_right);
+      if(intensities.size()==0)
+        intensities = Teuchos::ArrayRCP<intensity_t>(width*height,0.0);
+      netcdf_reader.read_netcdf_image(netcdf_file.c_str(),index,intensities.getRawPtr(),sub_w,sub_h,sub_offset_x,sub_offset_y,layout_right);
     }
 #endif
   else{
@@ -302,6 +309,8 @@ void read_image(const char * file_name,
     height = sub_h==0?image.rows:sub_h;
     assert(width+sub_offset_x <= image.cols);
     assert(height+sub_offset_y <= image.rows);
+    if(intensities.size()==0)
+      intensities = Teuchos::ArrayRCP<intensity_t>(width*height,0.0);
     for (int_t y=sub_offset_y; y<sub_offset_y+height; ++y) {
       uchar* p = image.ptr(y);
       p+=sub_offset_x;
@@ -319,19 +328,19 @@ void read_image(const char * file_name,
   if(params!=Teuchos::null){
     if(params->get<bool>(remove_outlier_pixels,false)){
       const intensity_t outlier_rep_value = params->get<double>(outlier_replacement_value,-1.0);
-      remove_outliers(width,height,intensities,outlier_rep_value);
+      remove_outliers(width,height,intensities.getRawPtr(),outlier_rep_value);
     }
     if(params->get<bool>(spread_intensity_histogram,false)){
-      spread_histogram(width,height,intensities);
+      spread_histogram(width,height,intensities.getRawPtr());
     }
     if(params->get<bool>(round_intensity_values,false)){
-      round_intensities(width,height,intensities);
+      round_intensities(width,height,intensities.getRawPtr());
     }
     if(params->get<bool>(floor_intensity_values,false)){
-      floor_intensities(width,height,intensities);
+      floor_intensities(width,height,intensities.getRawPtr());
     }
     if(params->isParameter(undistort_images)){
-      undistort_intensities(width,height,intensities,params);
+      undistort_intensities(width,height,intensities.getRawPtr(),params);
     }
   }
 }
@@ -482,7 +491,7 @@ cv::Mat read_image(const char * file_name){
     read_image_dimensions(file_name,width,height);
     // read the cine
     Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
-    read_image(file_name,intensities.getRawPtr(),params);
+    read_image(file_name,intensities,params);
     cv::Mat img(height,width,CV_8UC1,cv::Scalar(0));
     for(int_t y=0;y<height;++y){
       for(int_t x=0;x<width;++x){

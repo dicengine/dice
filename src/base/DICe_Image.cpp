@@ -77,9 +77,7 @@ Image::Image(const char * file_name,
     utils::read_image_dimensions(file_name,width_,height_);
     subimage_dims_from_params(params);
     // initialize the pixel containers
-    intensities_ = Teuchos::ArrayRCP<intensity_t>(height_*width_,0.0);
-    // read in the image
-    utils::read_image(file_name,intensities_.getRawPtr(),params);
+    utils::read_image(file_name,intensities_,params);
   }
   catch(...){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, image file read failure");
@@ -284,16 +282,10 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
 }
 
 void
-Image::update_image_fields(const char * file_name,
+Image::update(const char * file_name,
   const Teuchos::RCP<Teuchos::ParameterList> & params) {
-//  bool filter_failed = false;
-//  bool convert_to_8_bit = true;
-//  if(params!=Teuchos::null){
-//    filter_failed = params->get<bool>(DICe::filter_failed_cine_pixels,false);
-//    convert_to_8_bit = params->get<bool>(DICe::convert_cine_to_8_bit,true);
-//  }
   try{
-    utils::read_image(file_name,intensities_.getRawPtr(),params);
+    utils::read_image(file_name,intensities_,params);
   }
   catch(...){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, image file read failure");

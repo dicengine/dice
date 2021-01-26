@@ -114,11 +114,10 @@ void read_image_dimensions(const char * file_name,
 
 /// Read an image into the host memory
 /// \param file_name the name of the file
-/// \param intensities [out] populated with the image intensities
 /// \param params apply special filters or select sub portions of the image
 DICE_LIB_DLL_EXPORT
 void read_image(const char * file_name,
-  intensity_t * intensities,
+  Teuchos::ArrayRCP<intensity_t> & intensities,
   const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
 

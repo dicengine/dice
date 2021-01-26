@@ -112,7 +112,7 @@ public:
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// update an already allocated image class with new intensity field and gradients
-  void update_image_fields(const char * file_name,
+  void update(const char * file_name,
     const Teuchos::RCP<Teuchos::ParameterList> & params);
 
   /// virtual destructor
