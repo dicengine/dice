@@ -45,6 +45,8 @@
 #include <DICe.h>
 #include <DICe_Cine.h>
 
+#include <hypercine.h>
+
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ArrayRCP.hpp>
 #include <Teuchos_ParameterList.hpp>
@@ -231,6 +233,32 @@ private:
   /// map of cine readers
   std::map<std::string,Teuchos::RCP<DICe::cine::Cine_Reader> > cine_reader_map_;
 };
+
+// singleton class to keep track of image readers from cine files:
+/// \class HyperCine_Singleton
+DICE_LIB_DLL_EXPORT
+class HyperCine_Singleton{
+public:
+  /// return an instance of the singleton
+  static HyperCine_Singleton &instance(){
+    static HyperCine_Singleton instance_;
+    return instance_;
+  }
+
+  /// \param id the string name of the reader in case multiple headers are loaded (for example in stereo)
+  /// if the reader doesn't exist, it gets created
+  Teuchos::RCP<hypercine::HyperCine> hypercine(const std::string & id);
+private:
+  /// constructor
+  HyperCine_Singleton(){};
+  /// copy constructor
+  HyperCine_Singleton(HyperCine_Singleton const&);
+  /// asignment operator
+  void operator=(HyperCine_Singleton const &);
+  /// map of cine readers
+  std::map<std::string,Teuchos::RCP<hypercine::HyperCine> > hypercine_map_;
+};
+
 
 
 } // end namespace utils

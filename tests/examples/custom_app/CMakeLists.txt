@@ -101,12 +101,21 @@ IF (NOT DEFINED DICE_HEADER_DIR)
 ENDIF()
 MESSAGE(STATUS "Using DICe headers from: ${DICE_HEADER_DIR}")
 include_directories(${DICE_HEADER_DIR})
+link_directories(${CMAKE_INSTALL_PREFIX}/lib)
+set(libprefix "lib")
+set(libsuffix ".a")
+if(WIN32)
+  set(libprefix "")
+  set(libsuffix ".lib")
+endif()
 
 add_executable(main main.cpp)
 # add the dice libraries
 target_link_libraries(main
   dicecore
+  "${libprefix}hypercine${libsuffix}"
 )
+
 #
 # Define the location of lib tiff, jpeg, and png:
 #

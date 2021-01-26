@@ -46,6 +46,7 @@ add_library(
     ${DICE_UTILS_SOURCES}
     ${DICE_UTILS_HEADERS}
 )
+add_dependencies(diceioutils hypercine)
 
 target_link_libraries(diceioutils ${DICE_UTILS_LIBRARIES})
 IF(DICE_ENABLE_OPENCV)

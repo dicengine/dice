@@ -582,5 +582,17 @@ Image_Reader_Cache::cine_reader(const std::string & id){
     return cine_reader_map_.find(id)->second;
 }
 
+Teuchos::RCP<hypercine::HyperCine>
+HyperCine_Singleton::hypercine(const std::string & id){
+  if(hypercine_map_.find(id)==hypercine_map_.end()){
+    Teuchos::RCP<hypercine::HyperCine> hypercine = Teuchos::rcp(new hypercine::HyperCine(id.c_str()));
+    hypercine_map_.insert(std::pair<std::string,Teuchos::RCP<hypercine::HyperCine> >(id,hypercine));
+    return hypercine;
+  }
+  else
+    return hypercine_map_.find(id)->second;
+}
+
+
 } // end namespace utils
 } // end namespace DICe

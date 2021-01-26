@@ -167,6 +167,17 @@ else()
   MESSAGE(STATUS "NetCDF will NOT be enabled")
 endif()
 
+#
+# Hypercine library for reading cine files
+#
+include(ExternalProject)
+MESSAGE(STATUS "Configuring hypercine")
+ExternalProject_Add(hypercine
+  GIT_REPOSITORY git://github.com/dicengine/hypercine.git
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/hypercine
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX} -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} -DHYPERCINE_DEBUG_MSG:BOOL=${DICE_DEBUG_MSG} -DOpenCV_DIR:PATH=${OpenCV_DIR}
+)
+
 # base data type:
 if(DICE_USE_DOUBLE)
   ADD_DEFINITIONS(-DDICE_USE_DOUBLE=1)
@@ -198,6 +209,17 @@ SET(DICE_TRILINOS_LIB_DIRS
   )
 
 link_directories(${DICE_TRILINOS_LIB_DIRS})
+
+ExternalProject_Get_Property(hypercine source_dir)
+include_directories(${source_dir}/src)
+set(libprefix "lib")
+set(libsuffix ".a")
+if(WIN32)
+  set(libprefix "")
+  set(libsuffix ".lib")
+endif()
+set(DICE_LIBRARIES ${DICE_LIBRARIES} "${libprefix}hypercine${libsuffix}")
+link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 
 SET(DICE_HEADER_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}/src/api

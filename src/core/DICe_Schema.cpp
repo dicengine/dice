@@ -173,6 +173,29 @@ Schema::set_def_image(const std::string & defName){
     }
   }
   const bool has_motion_window = motion_window_params_->size()>0;
+
+  // if the image is from a cine file, load the memory buffer for the cine
+  if((frame_id_-first_frame_id_)%CINE_BUFFER_NUM_FRAMES==0){
+    if(DICe::utils::image_file_type(defName.c_str())==CINE){
+      // check if the window params are already set and just the frame needs to be updated
+      std::string undecorated_cine_file = DICe::utils::cine_file_name(defName.c_str());
+      Teuchos::RCP<hypercine::HyperCine> hc = DICe::utils::HyperCine_Singleton::instance().hypercine(undecorated_cine_file);
+      if(hc->hyperframe()->num_windows()==0&&has_motion_window){
+        hypercine::HyperCine::HyperFrame hf(frame_id_,CINE_BUFFER_NUM_FRAMES);
+        for(std::map<int_t,Motion_Window_Params>::iterator it=motion_window_params_->begin();it!=motion_window_params_->end();++it){
+            hf.add_window(it->second.start_x_,
+              it->second.end_x_-it->second.start_x_,
+              it->second.start_y_,
+              it->second.end_y_ - it->second.start_y_);
+        }
+        hc->read_buffer(hf);
+      }else{
+        hc->hyperframe()->update_frames(frame_id_,CINE_BUFFER_NUM_FRAMES);
+        hc->read_buffer();
+      }
+    }
+  }
+
   // query the image dimensions:
   for(size_t id=0;id<def_imgs_.size();++id){
     if(has_extents_||has_motion_window){

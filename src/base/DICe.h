@@ -45,6 +45,8 @@
 #define DICE_PI 3.14159265358979323846
 #define DICE_TWOPI 6.28318530717958647692
 
+#define CINE_BUFFER_NUM_FRAMES 500 // TODO make this an input param and try different defaults
+
 #if defined(WIN32)
 // disable some common windows compiler warnings that we don't really care about
 #pragma warning(disable:4005)
