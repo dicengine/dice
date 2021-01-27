@@ -157,9 +157,29 @@ Schema::rotate_def_image(){
   }
 }
 
+// Note: this is meant to be called at the beginning of set_def_image, and not really anywhere else
+void
+Schema::swap_def_prev_images(){
+  DEBUG_MSG("Schema::swap_def_prev_images() called");
+  // update the previous image storage points
+  assert(def_imgs_.size()==prev_imgs_.size());
+  for(size_t i=0;i<def_imgs_.size();++i){
+    if(def_imgs_[i]==Teuchos::null) continue;
+    // ensure that the prev img storage is allocated and the right size
+    if(prev_imgs_[i]==Teuchos::null||prev_imgs_[i]->width()!=def_imgs_[i]->width()||prev_imgs_[i]->height()!=def_imgs_[i]->height())
+      prev_imgs_[i] = Teuchos::rcp(new DICe::Image(def_imgs_[i]));
+    // swap the reference counted pointers on the image memory storage
+    Teuchos::RCP<Image> hold_rcp = prev_imgs_[i]; // increase the reference count so the memory doesn't get deallocated
+    prev_imgs_[i] = def_imgs_[i];
+    def_imgs_[i] = hold_rcp;
+    DEBUG_MSG("Schema::swap_def_prev_images() prev and def images " << i << " were swapped");
+  }
+}
+
 void
 Schema::set_def_image(const std::string & defName){
-  DEBUG_MSG("Schema: Resetting the deformed image");
+  DEBUG_MSG("Schema::set_def_image(): Resetting the deformed image using a file name " << defName);
+//  swap_def_prev_images();
   assert(def_imgs_.size()>0);
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::compute_image_gradients,compute_def_gradients_);
@@ -174,18 +194,16 @@ Schema::set_def_image(const std::string & defName){
   }
   const bool has_motion_window = motion_window_params_->size()>0;
 
-  // if the image is from a cine file, load the memory buffer for the cine
+  // if the image is from a cine file, load a large chunk of frames into the memory buffer
   if((frame_id_-first_frame_id_)%CINE_BUFFER_NUM_FRAMES==0){
     if(DICe::utils::image_file_type(defName.c_str())==CINE){
-      std::cout << std::endl << std::endl;
-      std::cout << "************ READING BUFFER ***********";
-      std::cout << std::endl << std::endl;
       // check if the window params are already set and just the frame needs to be updated
       std::string undecorated_cine_file = DICe::utils::cine_file_name(defName.c_str());
       Teuchos::RCP<hypercine::HyperCine> hc = DICe::utils::HyperCine_Singleton::instance().hypercine(undecorated_cine_file);
       // get last frame of cine file:
       const int_t frame_count = frame_id_ + CINE_BUFFER_NUM_FRAMES >= first_frame_id_ + num_frames_ ?
           first_frame_id_+num_frames_-frame_id_ : CINE_BUFFER_NUM_FRAMES;
+      DEBUG_MSG("Schema::set_def_image(): *** reading cine buffer frames " << frame_id_ << " count " << frame_count);
       if(hc->hyperframe()->num_windows()==0&&has_motion_window){
         hypercine::HyperCine::HyperFrame hf(frame_id_,frame_count);
         for(std::map<int_t,Motion_Window_Params>::iterator it=motion_window_params_->begin();it!=motion_window_params_->end();++it){
@@ -202,14 +220,16 @@ Schema::set_def_image(const std::string & defName){
     }
   }
 
+  int_t w = 0, h = 0;
+  utils::read_image_dimensions(defName.c_str(),w,h);
+  bool force_reallocation = false;
+
   // query the image dimensions:
   for(size_t id=0;id<def_imgs_.size();++id){
     if(has_extents_||has_motion_window){
-      int_t w = 0, h = 0;
       int_t sub_width = 0, sub_height = 0;
       int_t offset_x = 0, offset_y = 0;
       int_t end_x = 0, end_y = 0;
-      utils::read_image_dimensions(defName.c_str(),w,h);
       if(has_motion_window){
         bool found_id = false;
         for(std::map<int_t,Motion_Window_Params>::iterator it=motion_window_params_->begin();it!=motion_window_params_->end();++it){
@@ -241,14 +261,19 @@ Schema::set_def_image(const std::string & defName){
       imgParams->set(DICe::subimage_offset_y,offset_y);
       DEBUG_MSG("Setting the deformed image using extents x: " << offset_x << " to " << end_x <<
         " y: " << offset_y << " to " << end_y << " width " << sub_width << " height " << sub_height);
-      def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
+      if(def_imgs_[id]!=Teuchos::null)
+        if(def_imgs_[id]->width()!=sub_width||def_imgs_[id]->height()!=sub_height)
+          force_reallocation = true;
     }else{
-      // see if the image has already been allocated:
-      if(def_imgs_[id]==Teuchos::null)
-        def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
-      else
-        def_imgs_[id]->update(defName.c_str(),imgParams);
+      if(def_imgs_[id]!=Teuchos::null) // detect if the overall image dimensions changed
+        if(def_imgs_[id]->width()!=w || def_imgs_[id]->height()!=h)
+          force_reallocation = true;
     }
+    // see if the image has already been allocated:
+    if(def_imgs_[id]==Teuchos::null||force_reallocation)
+      def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
+    else
+      def_imgs_[id]->update(defName.c_str(),imgParams);
     if(def_image_rotation_!=ZERO_DEGREES){
       def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);
     }
@@ -259,7 +284,8 @@ Schema::set_def_image(const std::string & defName){
 void
 Schema::set_def_image(Teuchos::RCP<Image> img,
   const int_t id){
-  DEBUG_MSG("Schema::set_def_image() Resetting the deformed image for sub image id " << id);
+  DEBUG_MSG("Schema::set_def_image() Resetting the deformed image (using an Image object) for sub image id " << id);
+//  swap_def_prev_images();
   assert(def_imgs_.size()>0);
   assert(id<(int_t)def_imgs_.size());
   def_imgs_[id] = img;
@@ -282,7 +308,8 @@ Schema::set_def_image(const int_t img_width,
   const int_t img_height,
   const Teuchos::ArrayRCP<intensity_t> defRCP,
   const int_t id){
-  DEBUG_MSG("Schema:  Resetting the deformed image");
+  DEBUG_MSG("Schema::set_def_image() Resetting the deformed image using an ArrayRCP");
+//  swap_def_prev_images();
   assert(def_imgs_.size()>0);
   assert(id<(int_t)def_imgs_.size());
   TEUCHOS_TEST_FOR_EXCEPTION(img_width<=0,std::runtime_error,"");
@@ -297,15 +324,6 @@ Schema::set_def_image(const int_t img_width,
   if(def_image_rotation_!=ZERO_DEGREES){
     def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);
   }
-}
-
-void
-Schema::set_prev_image(Teuchos::RCP<Image> img,
-  const int_t id){
-  DEBUG_MSG("Schema::set_prev_image() Resetting the previous image for sub image id " << id);
-  assert(prev_imgs_.size()>0);
-  assert(id<(int_t)prev_imgs_.size());
-  prev_imgs_[id] = img;
 }
 
 void
@@ -370,7 +388,7 @@ Schema::set_ref_image(const int_t img_width,
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
   }
   if(prev_imgs_[0]==Teuchos::null){
-    prev_imgs_[0] = ref_img_;//Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
+    prev_imgs_[0] = Teuchos::rcp(new Image(ref_img_,imgParams));//Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
     // dont apply the rotation because the pointer is set to the ref image which has already been rotated
 //    if(ref_image_rotation_!=ZERO_DEGREES){
 //      prev_imgs_[0] = prev_imgs_[0]->apply_rotation(ref_image_rotation_,imgParams);
@@ -396,7 +414,7 @@ Schema::set_ref_image(Teuchos::RCP<Image> img){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
   }
   if(prev_imgs_[0]==Teuchos::null){
-    prev_imgs_[0] = ref_img_;
+    prev_imgs_[0] = Teuchos::rcp(new DICe::Image(ref_img_));
   }
 }
 
@@ -1351,6 +1369,7 @@ Schema::post_execution_tasks(){
     global_algorithm_->post_execution_tasks(frame_id_);
 #endif
   }
+  swap_def_prev_images();
 }
 
 void
@@ -1631,8 +1650,6 @@ Schema::execute_correlation(){
     }
     if(output_deformed_subset_images_)
       write_deformed_subsets_image();
-    for(size_t i=0;i<prev_imgs_.size();++i)
-      prev_imgs_[i]=def_imgs_[i];
   }
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: unknown correlation routine.");

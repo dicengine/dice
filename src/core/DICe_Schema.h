@@ -314,10 +314,6 @@ public:
   void set_def_image(Teuchos::RCP<Image> img,
     const int_t id=0);
 
-  /// Replace the previous image using an image
-  void set_prev_image(Teuchos::RCP<Image> img,
-    const int_t id=0);
-
   /// Rotate the deformed image if requested
   void rotate_def_image();
 
@@ -331,6 +327,9 @@ public:
 
   /// Replace the reference image using an image
   void set_ref_image(Teuchos::RCP<Image> img);
+
+  /// Swap the deformed and previous image in memory
+  void swap_def_prev_images();
 
   /// Conduct the correlation
   /// returns 0 if successful

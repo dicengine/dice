@@ -384,13 +384,8 @@ protected:
   std::vector<scalar_t> u_;
   /// storage for displacements of features
   std::vector<scalar_t> v_;
-  /// previous image pointer (used if the images are constructed from an array)
-  Teuchos::RCP<Image> prev_img_;
-  /// previous image name (used if the images are constructed from file rather than array)
-//  std::string prev_img_name_;
+  /// block size to use for thresholding
   int_t threshold_block_size_;
-  /// first time the pre execution tasks are called
-  bool first_call_;
 };
 
 /// \class DICe::Satellite_Geometry_Initializer
@@ -442,10 +437,6 @@ protected:
   cv::Mat ecc_transform_;
   /// storage for the rotation angle which should be the same for all points
   scalar_t theta_;
-  /// previous image pointer (used if the images are constructed from an array)
-  Teuchos::RCP<Image> prev_img_;
-  /// first time the pre execution tasks are called
-  bool first_call_;
 };
 
 

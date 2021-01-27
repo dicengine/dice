@@ -83,6 +83,7 @@ Image::Image(const char * file_name,
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, image file read failure");
   }
   default_constructor_tasks(params);
+  post_allocation_tasks(params);
 }
 
 Image::Image(const int_t width,
@@ -102,6 +103,7 @@ Image::Image(const int_t width,
   TEUCHOS_TEST_FOR_EXCEPTION(height_<0,std::invalid_argument,"Error, height cannot be negative or zero.");
   intensities_ = Teuchos::ArrayRCP<intensity_t>(height_*width_,intensity);
   default_constructor_tasks(Teuchos::null);
+  post_allocation_tasks(Teuchos::null);
 }
 
 Image::Image(Teuchos::RCP<Image> img,
@@ -204,6 +206,7 @@ Image::Image(const int_t array_width,
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_height),std::runtime_error,"cannot create subimage from intensity array");
   }
   default_constructor_tasks(params);
+  post_allocation_tasks(params);
 }
 
 void
@@ -231,22 +234,25 @@ Image::post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params
   gauss_filter_half_mask_ = 4;
   if(params==Teuchos::null) return;
   gradient_method_ = params->get<Gradient_Method>(DICe::gradient_method,FINITE_DIFFERENCE);
-  const bool gauss_filter_image =  params->get<bool>(DICe::gauss_filter_images,false);
-  const bool gauss_filter_use_hierarchical_parallelism = params->get<bool>(DICe::gauss_filter_use_hierarchical_parallelism,false);
-  const int gauss_filter_team_size = params->get<int>(DICe::gauss_filter_team_size,256);
+  has_gauss_filter_ =  params->get<bool>(DICe::gauss_filter_images,false);
   gauss_filter_mask_size_ = params->get<int>(DICe::gauss_filter_mask_size,7);
   gauss_filter_half_mask_ = gauss_filter_mask_size_/2+1;
-  if(gauss_filter_image){
+  if(has_gauss_filter_){
+    DEBUG_MSG("Image::post_allocation_tasks(): gauss filtering image");
+    const bool gauss_filter_use_hierarchical_parallelism = params->get<bool>(DICe::gauss_filter_use_hierarchical_parallelism,false);
+    const int gauss_filter_team_size = params->get<int>(DICe::gauss_filter_team_size,256);
     gauss_filter(-1,gauss_filter_use_hierarchical_parallelism,gauss_filter_team_size);
   }
-  const bool compute_image_gradients = params->get<bool>(DICe::compute_image_gradients,false);
-  DEBUG_MSG("Image::post_allocation_tasks(): compute_image_gradients is " << compute_image_gradients);
-  const bool image_grad_use_hierarchical_parallelism = params->get<bool>(DICe::image_grad_use_hierarchical_parallelism,false);
-  const int image_grad_team_size = params->get<int>(DICe::image_grad_team_size,256);
-  if(compute_image_gradients)
+  has_gradients_ = params->get<bool>(DICe::compute_image_gradients,false);
+  if(has_gradients_){
+    DEBUG_MSG("Image::post_allocation_tasks(): computing image gradients");
+    const bool image_grad_use_hierarchical_parallelism = params->get<bool>(DICe::image_grad_use_hierarchical_parallelism,false);
+    const int image_grad_team_size = params->get<int>(DICe::image_grad_team_size,256);
     compute_gradients(image_grad_use_hierarchical_parallelism,image_grad_team_size);
+  }
   if(params->isParameter(DICe::compute_laplacian_image)){
     if(params->get<bool>(DICe::compute_laplacian_image)==true){
+      DEBUG_MSG("Image::post_allocation_tasks(): computing image laplacian");
       TEUCHOS_TEST_FOR_EXCEPTION(laplacian_==Teuchos::null,std::runtime_error,"");
       TEUCHOS_TEST_FOR_EXCEPTION(laplacian_.size()!=width_*height_,std::runtime_error,"");
       Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
@@ -264,6 +270,7 @@ Image::post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params
 
 void
 Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params){
+  DEBUG_MSG("Image::default_contructor_tasks(): allocating image storage");
   grad_x_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   grad_y_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   intensities_temp_ = Teuchos::ArrayRCP<intensity_t>(height_*width_,0.0);
@@ -278,12 +285,29 @@ Image::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
   // image gradient coefficients
   grad_c1_ = 1.0/12.0;
   grad_c2_ = -8.0/12.0;
-  post_allocation_tasks(params);
 }
 
 void
 Image::update(const char * file_name,
   const Teuchos::RCP<Teuchos::ParameterList> & params) {
+  DEBUG_MSG("Image::update(): update called for image " << file_name);
+  // check the dimensions of the incoming intensities
+  if(params!=Teuchos::null){
+    if(params->isParameter(subimage_offset_x))
+      offset_x_ = params->get<int_t>(subimage_offset_x);
+    if(params->isParameter(subimage_offset_y))
+      offset_y_ = params->get<int_t>(subimage_offset_y);
+    if(params->isParameter(subimage_width)){
+      int_t tmp_width = params->get<int_t>(subimage_width);
+      int_t tmp_height = params->get<int_t>(subimage_height);
+      if(tmp_width!=width_||tmp_height!=height_){
+        DEBUG_MSG("*** Image::update(): re-allocating image fields becuase image dims have changed ***");
+        width_ = tmp_width;
+        height_ = tmp_height;
+        default_constructor_tasks(params);
+      }
+    }
+  }
   try{
     utils::read_image(file_name,intensities_,params);
   }
