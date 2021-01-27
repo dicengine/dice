@@ -214,8 +214,7 @@ int main(int argc, char *argv[]) {
   grad_x_error = false;
   grad_y_error = false;
   // check the hierarchical gradients:
-  const int_t team_size = 256;
-  array_img.compute_gradients(true,team_size);
+  array_img.compute_gradients();
   for(int_t y=2;y<array_h-2;++y){
     for(int_t x=2;x<array_w-2;++x){
       if(std::abs(gx[y*array_w+x] - array_img.grad_x(x,y)) > grad_tol)
@@ -407,27 +406,6 @@ int main(int argc, char *argv[]) {
     *outStream << "Error, the 13 pixel filter image does not have the right intensities." << std::endl;
     errorFlag++;
   }
-
-  *outStream << "creating gauss filtered image filter size 13 (with hierarchical parallelism) to compare to flat filter functor" << std::endl;
-  Teuchos::RCP<Teuchos::ParameterList> filter_h_params = rcp(new Teuchos::ParameterList());
-  filter_h_params->set(DICe::gauss_filter_images,true);
-  filter_h_params->set(DICe::gauss_filter_use_hierarchical_parallelism,true);
-  filter_h_params->set(DICe::gauss_filter_team_size,256);
-  filter_h_params->set(DICe::gauss_filter_mask_size,13);
-  Image filter_h_img("./images/ImageB.tif",filter_h_params);
-
-  bool filter_error = false;
-  for(int_t y=0;y<filter_h_img.height();++y){
-    for(int_t x=0;x<filter_h_img.width();++x){
-      if(std::abs(filter_h_img(x,y) - (*filter_13_img)(x,y)) > grad_tol)
-        filter_error = true;
-    }
-  }
-  if(filter_error){
-    *outStream << "Error, the filtered image using the flat functor does not match the hierarchical one" << std::endl;
-    errorFlag++;
-  }
-  *outStream << "hierarchical image filter has been checked" << std::endl;
 
   // create an image from jpeg file:
   *outStream << "creating an image from a jpeg file " << std::endl;

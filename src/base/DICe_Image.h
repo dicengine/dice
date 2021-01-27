@@ -376,8 +376,7 @@ public:
       const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
   /// compute the image gradients
-  void compute_gradients(const bool use_hierarchical_parallelism=false,
-    const int_t team_size=256);
+  void compute_gradients();
 
   /// compute the image gradients
   void smooth_gradients_convolution_5_point();
@@ -404,8 +403,7 @@ public:
   }
 
   /// filter the image using a 7 point gauss filter
-  void gauss_filter(const int_t mask_size=-1,const bool use_hierarchical_parallelism=false,
-    const int_t team_size=256);
+  void gauss_filter(const int_t mask_size=-1);
 
   /// sets the file name of the image
   void set_file_name(const std::string & file_name) {

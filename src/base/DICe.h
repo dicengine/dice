@@ -133,18 +133,10 @@ void safe_buffer_copy(char * input, char * output);
 
 /// parameters (all lower case)
 
-/// String parameter names using globals to prevent misspelling in the parameter lists:
-const char* const image_grad_use_hierarchical_parallelism = "image_grad_use_hierarchical_parallelism";
-/// String parameter name
-const char* const image_grad_team_size = "image_grad_team_size";
 /// String parameter name
 const char* const gauss_filter_images = "gauss_filter_images";
 /// String parameter name
 const char* const time_average_cine_ref_frame = "time_average_cine_ref_frame";
-/// String parameter name
-const char* const gauss_filter_use_hierarchical_parallelism = "gauss_filter_use_hierarchical_parallelism";
-/// String parameter name
-const char* const gauss_filter_team_size = "gauss_filter_team_size";
 /// String parameter name
 const char* const gauss_filter_mask_size = "gauss_filter_mask_size";
 /// String parameter name
@@ -827,26 +819,6 @@ const Correlation_Parameter rotate_def_image_270_param(rotate_def_image_270,
   true,
   "True if deformed image(s) should be rotated 270 degrees.");
 /// Correlation parameter and properties
-const Correlation_Parameter image_grad_use_hierarchical_parallelism_param(image_grad_use_hierarchical_parallelism,
-  BOOL_PARAM,
-  true,
-  "True if higherarchical parallelism should be used when computing image gradients (parallel in x and y)");
-/// Correlation parameter and properties
-const Correlation_Parameter image_grad_team_size_param(image_grad_team_size,
-  SIZE_PARAM,
-  true,
-  "The team size to use for thread teams when computing image gradients.");
-/// Correlation parameter and properties
-const Correlation_Parameter gauss_filter_use_hierarchical_parallelism_param(gauss_filter_use_hierarchical_parallelism,
-  BOOL_PARAM,
-  true,
-  "True if higherarchical parallelism should be used when computing image Gaussian filter (parallel in x and y)");
-/// Correlation parameter and properties
-const Correlation_Parameter gauss_filter_team_size_param(gauss_filter_team_size,
-  SIZE_PARAM,
-  true,
-  "The team size to use for thread teams when computing Gaussian filter.");
-/// Correlation parameter and properties
 const Correlation_Parameter gauss_filter_mask_size_param(gauss_filter_mask_size,
   SIZE_PARAM,
   true,
@@ -1272,7 +1244,7 @@ const Correlation_Parameter remove_outlier_pixels_param(remove_outlier_pixels,
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 91;
+const int_t num_valid_correlation_params = 87;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1340,10 +1312,6 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   use_constrained_opt_dic_param,
   use_integrated_dic_param,
   pixel_integration_order_param,
-  image_grad_use_hierarchical_parallelism_param,
-  image_grad_team_size_param,
-  gauss_filter_use_hierarchical_parallelism_param,
-  gauss_filter_team_size_param,
   gauss_filter_mask_size_param,
   rotate_ref_image_90_param,
   rotate_def_image_90_param,

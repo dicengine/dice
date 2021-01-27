@@ -86,11 +86,11 @@ int main(int argc, char *argv[]) {
 
   // optional argument for the number of thread teams:
 
-  int_t num_thread_teams = -1;
-  if(argc>3) num_thread_teams = std::strtol(argv[3],NULL,0);
-  *outStream << "number of thread teams:   " << num_thread_teams << " (-1 means thread teams not used)" << std::endl;
-  const bool use_hierarchical = num_thread_teams > 0;
-  *outStream << "hierarchical parallelism: " << use_hierarchical << std::endl;
+//  int_t num_thread_teams = -1;
+//  if(argc>3) num_thread_teams = std::strtol(argv[3],NULL,0);
+//  *outStream << "number of thread teams:   " << num_thread_teams << " (-1 means thread teams not used)" << std::endl;
+//  const bool use_hierarchical = num_thread_teams > 0;
+//  *outStream << "hierarchical parallelism: " << use_hierarchical << std::endl;
 
   // create a vector of image sizes to use
   int_t width = 0;
@@ -158,24 +158,24 @@ int main(int argc, char *argv[]) {
       *outStream << "computing the image gradients" << std::endl;
       {
         Teuchos::TimeMonitor grad_time_monitor(*grad_time);
-        if(use_hierarchical){
-          img->compute_gradients(true,num_thread_teams);
-        }
-        else{
+//        if(use_hierarchical){
+//          img->compute_gradients(true,num_thread_teams);
+//        }
+//        else{
           img->compute_gradients();
-        }
+//        }
       }
 
       // image filter
       *outStream << "computing convolution filter" << std::endl;
       {
         Teuchos::TimeMonitor filter_time_monitor(*filter_time);
-        if(use_hierarchical){
-          img->gauss_filter(true,num_thread_teams);
-        }
-        else{
+//        if(use_hierarchical){
+//          img->gauss_filter(true,num_thread_teams);
+//        }
+//        else{
           img->gauss_filter();
-        }
+//        }
       }
 
       // create a subset

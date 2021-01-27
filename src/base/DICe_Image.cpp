@@ -239,16 +239,12 @@ Image::post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params
   gauss_filter_half_mask_ = gauss_filter_mask_size_/2+1;
   if(has_gauss_filter_){
     DEBUG_MSG("Image::post_allocation_tasks(): gauss filtering image");
-    const bool gauss_filter_use_hierarchical_parallelism = params->get<bool>(DICe::gauss_filter_use_hierarchical_parallelism,false);
-    const int gauss_filter_team_size = params->get<int>(DICe::gauss_filter_team_size,256);
-    gauss_filter(-1,gauss_filter_use_hierarchical_parallelism,gauss_filter_team_size);
+    gauss_filter(-1);
   }
   has_gradients_ = params->get<bool>(DICe::compute_image_gradients,false);
   if(has_gradients_){
     DEBUG_MSG("Image::post_allocation_tasks(): computing image gradients");
-    const bool image_grad_use_hierarchical_parallelism = params->get<bool>(DICe::image_grad_use_hierarchical_parallelism,false);
-    const int image_grad_team_size = params->get<int>(DICe::image_grad_team_size,256);
-    compute_gradients(image_grad_use_hierarchical_parallelism,image_grad_team_size);
+    compute_gradients();
   }
   if(params->isParameter(DICe::compute_laplacian_image)){
     if(params->get<bool>(DICe::compute_laplacian_image)==true){
@@ -919,7 +915,7 @@ Image::interpolate_grad_y_keys_fourth(const scalar_t & local_x, const scalar_t &
 }
 
 void
-Image::compute_gradients(const bool use_hierarchical_parallelism, const int_t team_size){
+Image::compute_gradients(){
   if(gradient_method_==FINITE_DIFFERENCE){
     DEBUG_MSG("Image::compute_gradients(): using FINITE_DIFFERENCE");
     compute_gradients_finite_difference();
@@ -1116,8 +1112,7 @@ Image::apply_transformation(Teuchos::RCP<Local_Shape_Function> shape_function,
 }
 
 void
-Image::gauss_filter(const int_t mask_size,const bool use_hierarchical_parallelism,
-  const int_t team_size){
+Image::gauss_filter(const int_t mask_size){
   DEBUG_MSG("Image::gauss_filter: mask_size " << gauss_filter_mask_size_);
 
   if(mask_size>0){
