@@ -188,8 +188,9 @@ void read_image_dimensions(const char * file_name,
   else if(file_type==CINE){
     const std::string cine_file = cine_file_name(file_name);
     DEBUG_MSG("read_image_dimensions(): cine file name: " << cine_file);
-    width = Image_Reader_Cache::instance().cine_reader(cine_file)->width();
-    height = Image_Reader_Cache::instance().cine_reader(cine_file)->height();
+    Teuchos::RCP<hypercine::HyperCine> hc;
+    width = DICe::utils::HyperCine_Singleton::instance().hypercine(cine_file)->width();
+    height = DICe::utils::HyperCine_Singleton::instance().hypercine(cine_file)->height();
     assert(width>0);
     assert(height>0);
   }
@@ -220,8 +221,6 @@ void read_image(const char * file_name,
   int_t sub_offset_y=0;
   bool layout_right=true;
   bool is_subimage=false;
-  bool filter_failed_pixels=true;
-  bool convert_to_8_bit=true;
   if(params!=Teuchos::null){
     sub_w = params->isParameter(subimage_width) ? params->get<int_t>(subimage_width) : 0;
     sub_h = params->isParameter(subimage_height) ? params->get<int_t>(subimage_height) : 0;
@@ -232,8 +231,6 @@ void read_image(const char * file_name,
         params->isParameter(subimage_offset_x)||
         params->isParameter(subimage_offset_y);
     layout_right = params->get<bool>(is_layout_right,true);
-    filter_failed_pixels = params->get<bool>(filter_failed_cine_pixels,filter_failed_pixels);
-    convert_to_8_bit = params->get<bool>(convert_cine_to_8_bit,convert_to_8_bit);
   }
   DEBUG_MSG("utils::read_image(): sub_w: " << sub_w << " sub_h: " << sub_h << " offset_x: " << sub_offset_x << " offset_y: " << sub_offset_y);
   DEBUG_MSG("utils::read_image(): is_layout_right: " << layout_right);
@@ -257,8 +254,17 @@ void read_image(const char * file_name,
     read_rawi_image(file_name,intensities.getRawPtr(),layout_right);
   }
   else if(file_type==CINE){
+    bool filter_failed_pixels = true;
+    bool convert_to_8_bit = true;
+    bool reinit = false;
+    if(params!=Teuchos::null){
+      reinit = params->get(reinitialize_cine_reader_conversion_factor,reinit); // TODO TODO TODO FIXME no longer resets the conversion factor, but changes the threshold
+      filter_failed_pixels = params->get<bool>(filter_failed_cine_pixels,filter_failed_pixels);
+      convert_to_8_bit = params->get<bool>(convert_cine_to_8_bit,convert_to_8_bit);
+    }
     DEBUG_MSG("utils::read_image(): filter_failed_pixels: " << filter_failed_pixels);
     DEBUG_MSG("utils::read_image(): convert_to_8_bit: " << convert_to_8_bit);
+    DEBUG_MSG("utils::read_image(): reinit: " << reinit);
     const std::string cine_file = cine_file_name(file_name);
     DEBUG_MSG("utils::read_image(): cine file name: " << cine_file);
     int_t end_index = -1;
@@ -266,21 +272,54 @@ void read_image(const char * file_name,
     bool is_avg = false;
     cine_index(file_name,start_index,end_index,is_avg);
     // get the image dimensions
-    Teuchos::RCP<DICe::cine::Cine_Reader> reader = Image_Reader_Cache::instance().cine_reader(cine_file);
-    bool reinit = false;
-    if(params!=Teuchos::null){
-      reinit = params->get(reinitialize_cine_reader_conversion_factor,false);
-    }
-    reader->initialize_filter(filter_failed_pixels,convert_to_8_bit,0,reinit);
-    width = sub_w==0?reader->width():sub_w;
-    height = sub_h==0?reader->height():sub_h;
+    Teuchos::RCP<hypercine::HyperCine> hc;
+    if(convert_to_8_bit)
+      hc = DICe::utils::HyperCine_Singleton::instance().hypercine(cine_file,hypercine::HyperCine::TO_8_BIT);
+    else
+      hc = DICe::utils::HyperCine_Singleton::instance().hypercine(cine_file);
+    width = sub_w==0?hc->width():sub_w;
+    height = sub_h==0?hc->height():sub_h;
+
     if(intensities.size()==0)
       intensities = Teuchos::ArrayRCP<intensity_t>(width*height,0.0);
+    // TODO FIXME TODO FIXME don't manually copy things like this in the future, but copy the pointer instead
+    // TODO hoping to get rid of the crap below
     if(is_avg){
-      reader->get_average_frame(start_index-reader->first_image_number(),end_index-reader->first_image_number(),
-        sub_offset_x,sub_offset_y,width,height,intensities.getRawPtr(),layout_right);
+      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(subimage_width),std::runtime_error,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(subimage_height),std::runtime_error,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(subimage_offset_x),std::runtime_error,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(subimage_offset_y),std::runtime_error,"");
+      std::vector<uint16_t> avg_data = hc->get_avg_frame(start_index,end_index);
+      for(int_t i=0;i<width*height;++i)
+          intensities[i] = avg_data[i];
     }else{
-      reader->get_frame(sub_offset_x,sub_offset_y,width,height,intensities.getRawPtr(),layout_right,start_index-reader->first_image_number());
+      static uint16_t threshold = hc->max_possible_intensity();
+      if(filter_failed_pixels){
+        if(threshold==hc->max_possible_intensity()||reinit){
+          std::vector<uint16_t> full_data = hc->get_frame(start_index);
+          std::sort(full_data.begin(),full_data.end());
+          const scalar_t outlier = 0.98*full_data[full_data.size()-1];
+          for(size_t i=0;i<full_data.size();++i)
+            if((scalar_t)full_data[full_data.size()-i-1]<outlier){
+              threshold = full_data[full_data.size()-i-1];
+              break;
+            }
+        }
+      }
+      // get pointer to the data in hypercine memory buffer
+      uint16_t * data = hc->data(start_index,sub_offset_x,width,sub_offset_y,height);
+      // TODO this is the copy to remove later
+      for(int_t i=0;i<intensities.size();++i)
+          intensities[i] = data[i];
+      if(filter_failed_pixels){
+        for(int_t i=0;i<intensities.size();++i)
+          intensities[i] = std::min(intensities[i],(intensity_t)threshold);
+      }
+//      if(convert_to_8_bit){
+//        const scalar_t conversion_factor = hc->conversion_factor_to_8_bit();
+//        for(int_t i=0;i<intensities.size();++i)
+//            intensities[i] = static_cast<uint16_t>(intensities[i]*conversion_factor);
+//      }
     }
   }
 #ifdef DICE_ENABLE_NETCDF
@@ -580,26 +619,20 @@ void write_image(const char * file_name,
   }
 }
 
-Teuchos::RCP<DICe::cine::Cine_Reader>
-Image_Reader_Cache::cine_reader(const std::string & id){
-  if(cine_reader_map_.find(id)==cine_reader_map_.end()){
-    Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(id,NULL));
-    cine_reader_map_.insert(std::pair<std::string,Teuchos::RCP<DICe::cine::Cine_Reader> >(id,cine_reader));
-    return cine_reader;
-  }
-  else
-    return cine_reader_map_.find(id)->second;
-}
-
 Teuchos::RCP<hypercine::HyperCine>
-HyperCine_Singleton::hypercine(const std::string & id){
-  if(hypercine_map_.find(id)==hypercine_map_.end()){
-    Teuchos::RCP<hypercine::HyperCine> hypercine = Teuchos::rcp(new hypercine::HyperCine(id.c_str()));
-    hypercine_map_.insert(std::pair<std::string,Teuchos::RCP<hypercine::HyperCine> >(id,hypercine));
+HyperCine_Singleton::hypercine(const std::string & id,
+  hypercine::HyperCine::Bit_Depth_Conversion_Type conversion_type){
+  if(hypercine_map_.find(std::pair<std::string,hypercine::HyperCine::Bit_Depth_Conversion_Type>(id,conversion_type))==hypercine_map_.end()){
+    DEBUG_MSG("HyperCine_Singleton::hypercine(): insering a new HyperCine for file " << id << " conversion type " << conversion_type);
+    Teuchos::RCP<hypercine::HyperCine> hypercine = Teuchos::rcp(new hypercine::HyperCine(id.c_str(),conversion_type));
+    hypercine_map_.insert(std::pair<std::pair<std::string,hypercine::HyperCine::Bit_Depth_Conversion_Type>,Teuchos::RCP<hypercine::HyperCine> >
+    (std::pair<std::string,hypercine::HyperCine::Bit_Depth_Conversion_Type>(id,conversion_type),hypercine));
     return hypercine;
   }
-  else
-    return hypercine_map_.find(id)->second;
+  else{
+    DEBUG_MSG("HyperCine_Singleton::hypercine(): reusing HyperCine for file " << id << " conversion type " << conversion_type);
+    return hypercine_map_.find(std::pair<std::string,hypercine::HyperCine::Bit_Depth_Conversion_Type>(id,conversion_type))->second;
+  }
 }
 
 

@@ -46,7 +46,9 @@
 #include <DICe.h>
 #include <DICe_Parser.h>
 #include <DICe_Image.h>
-#include <DICe_Cine.h>
+#include <DICe_ImageIO.h>
+
+#include <hypercine.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -107,13 +109,13 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader  =  Teuchos::rcp(new DICe::cine::Cine_Reader(fileName,outStream.getRawPtr()));
+  Teuchos::RCP<hypercine::HyperCine> hc = DICe::utils::HyperCine_Singleton::instance().hypercine(fileName);
 
   *outStream << "\nCine read successfully\n" << std::endl;
 
-  const int_t num_images = cine_reader->num_frames();
-  const int_t image_width = cine_reader->width();
-  const int_t image_height = cine_reader->height();
+  const int_t num_images = hc->file_frame_count();
+  const int_t image_width = hc->width();
+  const int_t image_height = hc->height();
 
   *outStream << "Num frames:     " << num_images << std::endl;
   *outStream << "Width:          " << image_width << std::endl;
@@ -121,10 +123,10 @@ int main(int argc, char *argv[]) {
 
   const int_t start_frame = std::stoi(argv[2]);
   const int_t end_frame = std::stoi(argv[3]);
-  assert(start_frame>=cine_reader->first_image_number());
-  assert(start_frame<=cine_reader->first_image_number()+num_images);
+  assert(start_frame>=hc->file_first_frame_id());
+  assert(start_frame<=hc->file_first_frame_id()+num_images);
   assert(end_frame>=start_frame);
-  assert(end_frame<=cine_reader->first_image_number()+num_images);
+  assert(end_frame<=hc->file_first_frame_id()+num_images);
   *outStream << "Start frame:    " << start_frame << std::endl;
   *outStream << "End frame:      " << end_frame << std::endl;
   *outStream << "Output frames:  " << end_frame-start_frame+1 << std::endl;

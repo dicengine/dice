@@ -1,7 +1,6 @@
 SET(DICE_UTILS_SOURCES
   ./DICe_ImageIO.cpp
   ../rawi/DICe_Rawi.cpp
-  ../cine/DICe_Cine.cpp
 )
 IF(DICE_ENABLE_NETCDF)
 SET(DICE_UTILS_SOURCES
@@ -13,7 +12,6 @@ ENDIF()
 SET(DICE_UTILS_HEADERS
   ./DICe_ImageIO.h
   ../rawi/DICe_Rawi.h
-  ../cine/DICe_Cine.h
 )
 
 IF(DICE_ENABLE_NETCDF)
@@ -27,7 +25,6 @@ include_directories(
     .
     ../core
     ../base
-    ../cine
     ../rawi
     ../netcdf
     ${DICE_HEADER_DIRS}

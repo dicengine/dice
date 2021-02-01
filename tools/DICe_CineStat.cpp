@@ -45,7 +45,9 @@
 
 #include <DICe.h>
 #include <DICe_Parser.h>
-#include <DICe_Cine.h>
+#include <DICe_ImageIO.h>
+
+#include <hypercine.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>
@@ -80,13 +82,13 @@ int main(int argc, char *argv[]) {
   }
   std::string fileName = argv[1];
   *outStream << "Cine file name: " << fileName << std::endl;
-  Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader  =  Teuchos::rcp(new DICe::cine::Cine_Reader(fileName,outStream.getRawPtr()));
+  Teuchos::RCP<hypercine::HyperCine> hc = DICe::utils::HyperCine_Singleton::instance().hypercine(fileName,hypercine::HyperCine::TO_8_BIT);
   *outStream << "\nCine read successfully\n" << std::endl;
 
-  const int_t num_images = cine_reader->num_frames();
-  const int_t first_frame = cine_reader->first_image_number();
+  const int_t num_images = hc->file_frame_count();
+  const int_t first_frame = hc->file_first_frame_id();
   const int_t last_frame = first_frame + num_images - 1;
-  const int_t frame_rate = cine_reader->frame_rate();
+  const int_t frame_rate = hc->frame_rate();
 
   *outStream << "Num frames:     " << num_images << std::endl;
   *outStream << "First frame:    " << first_frame << std::endl;

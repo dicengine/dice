@@ -49,7 +49,6 @@
 #include <DICe_FFT.h>
 #include <DICe_Triangulation.h>
 #include <DICe_Simplex.h>
-#include <DICe_Cine.h>
 #if DICE_ENABLE_NETCDF
   #include <DICe_NetCDF.h>
 #endif

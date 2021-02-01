@@ -41,7 +41,6 @@
 
 #include <DICe.h>
 #include <DICe_Image.h>
-#include <DICe_Cine.h>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_oblackholestream.hpp>

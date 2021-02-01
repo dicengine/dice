@@ -40,7 +40,6 @@
 // @HEADER
 
 #include <DICe.h>
-#include <DICe_Cine.h>
 #include <DICe_ImageUtils.h>
 
 #include <Teuchos_RCP.hpp>

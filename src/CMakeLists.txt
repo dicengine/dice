@@ -124,7 +124,6 @@ include_directories (
     ./global
     ./global/triangle
     ./fft
-    ./cine
     ./mesh
     ./mesh/io
     ./netcdf

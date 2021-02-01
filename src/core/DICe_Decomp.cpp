@@ -42,7 +42,6 @@
 #include <DICe_Decomp.h>
 #include <DICe_Parser.h>
 #include <DICe_ParameterUtilities.h>
-#include <DICe_Cine.h>
 #include <DICe_PostProcessor.h>
 #include <DICe_ImageIO.h>
 

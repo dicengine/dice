@@ -44,9 +44,11 @@
 
 #include <DICe_ParameterUtilities.h>
 #include <DICe.h>
-#include <DICe_Cine.h>
+#include <DICe_ImageIO.h>
 #include <DICe_NetCDF.h>
 #include <DICe_FieldEnums.h>
+
+#include <hypercine.h>
 
 #include <Teuchos_oblackholestream.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
@@ -555,10 +557,10 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
     std::string cine_file_name = params->get<std::string>(DICe::cine_file);
     cine_name << params->get<std::string>(DICe::image_folder) << cine_file_name;
     Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
-    Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(cine_name.str(),bhs.getRawPtr()));
+    Teuchos::RCP<hypercine::HyperCine> hc = DICe::utils::HyperCine_Singleton::instance().hypercine(cine_name.str());
     // read the image data for a frame
-    const int_t num_images = cine_reader->num_frames();
-    const int_t first_frame_index = cine_reader->first_image_number();
+    const int_t num_images = hc->file_frame_count();
+    const int_t first_frame_index = hc->file_first_frame_id();
     //TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::cine_ref_index),std::runtime_error,
     //  "Error, the reference index for the cine file has not been specified");
     const int_t cine_ref_index = params->get<int_t>(DICe::cine_ref_index,first_frame_index);
@@ -612,8 +614,6 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
       std::stringstream stereo_cine_name;
       std::string stereo_cine_file_name = params->get<std::string>(DICe::stereo_cine_file);
       stereo_cine_name << params->get<std::string>(DICe::image_folder) << stereo_cine_file_name;
-      Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
-      Teuchos::RCP<DICe::cine::Cine_Reader> stereo_cine_reader = Teuchos::rcp(new DICe::cine::Cine_Reader(stereo_cine_name.str(),bhs.getRawPtr()));
       // strip the .cine part from the end of the cine file:
       std::string stereo_trimmed_cine_name = stereo_cine_name.str();
 	  std::string lower_case_trimmed_cine_ext(stereo_trimmed_cine_name.substr(stereo_trimmed_cine_name.size() - ext.size()));

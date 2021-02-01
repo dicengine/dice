@@ -43,7 +43,6 @@
 #define DICE_IMAGEIO_H
 
 #include <DICe.h>
-#include <DICe_Cine.h>
 
 #include <hypercine.h>
 
@@ -206,33 +205,6 @@ void write_color_overlap_image(const char * file_name,
 DICE_LIB_DLL_EXPORT
 cv::Mat read_image(const char * file_name);
 
-// singleton class to keep track of image readers from high speed video or netcdf files:
-/// \class Image_Reader_Cache
-/// used for file reads and getting image dimensions without having to reload the header every time
-DICE_LIB_DLL_EXPORT
-class Image_Reader_Cache{
-public:
-  /// return an instance of the singleton
-  static Image_Reader_Cache &instance(){
-    static Image_Reader_Cache instance_;
-    return instance_;
-  }
-
-  /// add a cine reader to the map
-  /// \param id the string name of the reader in case multiple headers are loaded (for example in stereo)
-  /// if the reader doesn't exist, it gets created
-  Teuchos::RCP<DICe::cine::Cine_Reader> cine_reader(const std::string & id);
-private:
-  /// constructor
-  Image_Reader_Cache(){};
-  /// copy constructor
-  Image_Reader_Cache(Image_Reader_Cache const&);
-  /// asignment operator
-  void operator=(Image_Reader_Cache const &);
-  /// map of cine readers
-  std::map<std::string,Teuchos::RCP<DICe::cine::Cine_Reader> > cine_reader_map_;
-};
-
 // singleton class to keep track of image readers from cine files:
 /// \class HyperCine_Singleton
 DICE_LIB_DLL_EXPORT
@@ -246,7 +218,8 @@ public:
 
   /// \param id the string name of the reader in case multiple headers are loaded (for example in stereo)
   /// if the reader doesn't exist, it gets created
-  Teuchos::RCP<hypercine::HyperCine> hypercine(const std::string & id);
+  Teuchos::RCP<hypercine::HyperCine> hypercine(const std::string & id,
+    hypercine::HyperCine::Bit_Depth_Conversion_Type conversion_type=hypercine::HyperCine::QUAD_10_TO_12);
 private:
   /// constructor
   HyperCine_Singleton(){};
@@ -255,10 +228,8 @@ private:
   /// asignment operator
   void operator=(HyperCine_Singleton const &);
   /// map of cine readers
-  std::map<std::string,Teuchos::RCP<hypercine::HyperCine> > hypercine_map_;
+  std::map<std::pair<std::string,hypercine::HyperCine::Bit_Depth_Conversion_Type>,Teuchos::RCP<hypercine::HyperCine> > hypercine_map_;
 };
-
-
 
 } // end namespace utils
 } // end namespace DICe
