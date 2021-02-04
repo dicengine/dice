@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
   else
     outStream = Teuchos::rcp(&bhs, false);
   int_t errorFlag  = 0;
-  scalar_t errtol  = 1.0E-2;
+  work_t errtol  = 1.0E-2;
 
   *outStream << "--- Begin test ---" << std::endl;
 
@@ -82,11 +82,11 @@ int main(int argc, char *argv[]) {
   std::string fileDef("./images/TestSubsetConstructionNormalRotDisp.tif");
 
   // exact solution
-  const scalar_t ex_exact = 0.121;
-  const scalar_t ey_exact = 0.121;
-  const scalar_t t_exact = 0.262;
-  const scalar_t u_exact = 9.8;
-  const scalar_t v_exact = -7.62;
+  const work_t ex_exact = 0.121;
+  const work_t ey_exact = 0.121;
+  const work_t t_exact = 0.262;
+  const work_t u_exact = 9.8;
+  const work_t v_exact = -7.62;
 
   *outStream << "testing square subset param combinations" << std::endl;
   const int_t subset_size = 21;
@@ -98,8 +98,8 @@ int main(int argc, char *argv[]) {
   params->set(DICe::enable_normal_strain,true);
   params->set(DICe::enable_shear_strain,true);
   params->set(DICe::robust_solver_tolerance,1.0E-4);
-  Teuchos::ArrayRCP<scalar_t> coords_x(1,30);
-  Teuchos::ArrayRCP<scalar_t> coords_y(1,30);
+  Teuchos::ArrayRCP<work_t> coords_x(1,30);
+  Teuchos::ArrayRCP<work_t> coords_y(1,30);
   Teuchos::RCP<DICe::Schema> schemaSquare = Teuchos::rcp(new DICe::Schema(coords_x,coords_y,subset_size,Teuchos::null,Teuchos::null,params));
   schemaSquare->set_ref_image(fileRef);
   schemaSquare->set_def_image(fileDef);

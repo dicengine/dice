@@ -117,8 +117,8 @@ Importer_Projector::initialize_source_points(const std::string & source_file_nam
 
   // determine if both files have the same points:
   if(source_pts_x_.size()==target_pts_x_.size()){
-    const scalar_t tol = 1.0E-3;
-    scalar_t diff = 0.0;
+    const work_t tol = 1.0E-3;
+    work_t diff = 0.0;
     for(size_t i=0;i<source_pts_x_.size();++i){
       diff += (std::abs(source_pts_x_[i] - target_pts_x_[i]) + std::abs(source_pts_y_[i] - target_pts_y_[i]));
     }
@@ -135,7 +135,7 @@ Importer_Projector::initialize_source_points(const std::string & source_file_nam
   TEUCHOS_TEST_FOR_EXCEPTION(source_pts_y_.size()!=source_pts_x_.size(),std::runtime_error,"");
   // set up the neighbor lists for projection
   if(projection_required_){
-    Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
+    Teuchos::RCP<Point_Cloud_2D<work_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<work_t>());
     point_cloud->pts.resize(source_pts_x_.size());
     for(size_t i=0;i<source_pts_x_.size();++i){
       point_cloud->pts[i].x = source_pts_x_[i];
@@ -146,7 +146,7 @@ Importer_Projector::initialize_source_points(const std::string & source_file_nam
         Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
     kd_tree->buildIndex();
     DEBUG_MSG("Importer_Projector::Importer_Projector(): kd-tree completed");
-    std::vector<std::pair<size_t,scalar_t> > ret_matches;
+    std::vector<std::pair<size_t,work_t> > ret_matches;
     DEBUG_MSG("Importer_Projector::Importer_Projector(): executing neighbor search");
     neighbors_.resize(target_pts_x_.size());
     neighbor_dist_x_.resize(target_pts_x_.size());
@@ -157,8 +157,8 @@ Importer_Projector::initialize_source_points(const std::string & source_file_nam
       neighbor_dist_y_[i].resize(num_neigh_);
     }
     std::vector<size_t> ret_index(num_neigh_);
-    std::vector<scalar_t> out_dist_sqr(num_neigh_);
-    std::vector<scalar_t> query_pt(2,0.0);
+    std::vector<work_t> out_dist_sqr(num_neigh_);
+    std::vector<work_t> query_pt(2,0.0);
     for(size_t i=0;i<target_pts_x_.size();++i){
       query_pt[0] = target_pts_x_[i];
       query_pt[1] = target_pts_y_[i];
@@ -176,8 +176,8 @@ Importer_Projector::initialize_source_points(const std::string & source_file_nam
 void
 Importer_Projector::import_vector_field(const std::string & file_name,
   const std::string & field_name,
-  std::vector<scalar_t> & field_x,
-  std::vector<scalar_t> & field_y,
+  std::vector<work_t> & field_x,
+  std::vector<work_t> & field_y,
   const int_t step){
 
   // read and project (if necessary) the requested field from the source file to the target points
@@ -193,8 +193,8 @@ Importer_Projector::import_vector_field(const std::string & file_name,
     return;
   }
   else{
-    std::vector<scalar_t> source_field_x;
-    std::vector<scalar_t> source_field_y;
+    std::vector<work_t> source_field_x;
+    std::vector<work_t> source_field_y;
     read_vector_field(file_name,field_name,source_field_x,source_field_y,step);
     TEUCHOS_TEST_FOR_EXCEPTION((int_t)source_field_x.size()!=num_source_pts(),std::runtime_error,"");
     TEUCHOS_TEST_FOR_EXCEPTION((int_t)source_field_y.size()!=num_source_pts(),std::runtime_error,"");
@@ -298,8 +298,8 @@ Importer_Projector::import_vector_field(const std::string & file_name,
 void
 Importer_Projector::read_vector_field(const std::string & file_name,
   const std::string & field_name,
-  std::vector<scalar_t> & field_x,
-  std::vector<scalar_t> & field_y,
+  std::vector<work_t> & field_x,
+  std::vector<work_t> & field_y,
   const int_t step){
 
   field_x.clear();
@@ -411,8 +411,8 @@ Importer_Projector::is_valid_vector_source_field(const std::string & file_name,
 
 void
 Importer_Projector::read_coordinates(const std::string & file_name,
-  std::vector<scalar_t> & coords_x,
-  std::vector<scalar_t> & coords_y){
+  std::vector<work_t> & coords_x,
+  std::vector<work_t> & coords_y){
   coords_x.clear();
   coords_y.clear();
 

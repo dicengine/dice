@@ -143,18 +143,18 @@ void get_dot_markers(cv::Mat img,
 /// calculates the image to grid and grid to images coefficients based on the current set of good points
 void calc_trans_coeff(std::vector<cv::KeyPoint> & imgpoints,
   std::vector<cv::KeyPoint> & grdpoints,
-  std::vector<scalar_t> & img_to_grdx,
-  std::vector<scalar_t> & img_to_grdy,
-  std::vector<scalar_t> & grd_to_imgx,
-  std::vector<scalar_t> & grd_to_imgy);
+  std::vector<work_t> & img_to_grdx,
+  std::vector<work_t> & img_to_grdy,
+  std::vector<work_t> & grd_to_imgx,
+  std::vector<work_t> & grd_to_imgy);
 /// filters the possible dots by size, the bounding box and how close they are to the expected grid locations
 void filter_dot_markers(std::vector<cv::KeyPoint> dots,
   std::vector<cv::KeyPoint> & img_points,
   std::vector<cv::KeyPoint> & grd_points,
-  const std::vector<scalar_t> & grd_to_imgx,
-  const std::vector<scalar_t> & grd_to_imgy,
-  const std::vector<scalar_t> & img_to_grdx,
-  const std::vector<scalar_t> & img_to_grdy,
+  const std::vector<work_t> & grd_to_imgx,
+  const std::vector<work_t> & grd_to_imgy,
+  const std::vector<work_t> & img_to_grdx,
+  const std::vector<work_t> & img_to_grdy,
   const int_t num_fiducials_x,
   const int_t num_fiducials_y,
   float dot_tol,
@@ -167,8 +167,8 @@ void create_bounding_box(std::vector<float> & box_x,
   std::vector<float> & box_y,
   const int_t num_fiducials_x,
   const int_t num_fiducials_y,
-  const std::vector<scalar_t> & grd_to_imgx,
-  const std::vector<scalar_t> & grd_to_imgy,
+  const std::vector<work_t> & grd_to_imgx,
+  const std::vector<work_t> & grd_to_imgy,
   const int_t img_w,
   const int_t img_h);
 //convert grid locations to image locations
@@ -176,8 +176,8 @@ void grid_to_image(const float & grid_x,
   const float & grid_y,
   float & img_x,
   float & img_y,
-  const std::vector<scalar_t> & grd_to_imgx,
-  const std::vector<scalar_t> & grd_to_imgy,
+  const std::vector<work_t> & grd_to_imgx,
+  const std::vector<work_t> & grd_to_imgy,
   const int_t img_w,
   const int_t img_h);
 //convert grid locations to image locations
@@ -185,8 +185,8 @@ void image_to_grid(const float & img_x,
   const float & img_y,
   float & grid_x,
   float & grid_y,
-  const std::vector<scalar_t> & img_to_grdx,
-  const std::vector<scalar_t> & img_to_grdy);
+  const std::vector<work_t> & img_to_grdx,
+  const std::vector<work_t> & img_to_grdy);
 /// returns the squared distance between two keypoints
 float dist2(cv::KeyPoint pnt1, cv::KeyPoint pnt2);
 /// returns indicies of three distances sorted by decending magnitude

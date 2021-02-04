@@ -50,9 +50,9 @@ namespace DICe {
 
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
-  Teuchos::ArrayRCP<scalar_t> points_x,
-  Teuchos::ArrayRCP<scalar_t> points_y,
-  const scalar_t & max_size_constraint,
+  Teuchos::ArrayRCP<work_t> points_x,
+  Teuchos::ArrayRCP<work_t> points_y,
+  const work_t & max_size_constraint,
   const std::string & output_file_name,
   const bool enforce_lagrange_bc=true,
   const bool use_regular_grid=false);
@@ -60,7 +60,7 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
   const std::string & roi_file_name,
-  const scalar_t & max_size_constraint,
+  const work_t & max_size_constraint,
   const std::string & output_file_name);
 
 
@@ -71,26 +71,26 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const std::string & mesh_file_n
 
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
-  Teuchos::ArrayRCP<scalar_t> points_x,
-  Teuchos::ArrayRCP<scalar_t> points_y,
-  Teuchos::ArrayRCP<scalar_t> holes_x,
-  Teuchos::ArrayRCP<scalar_t> holes_y,
+  Teuchos::ArrayRCP<work_t> points_x,
+  Teuchos::ArrayRCP<work_t> points_y,
+  Teuchos::ArrayRCP<work_t> holes_x,
+  Teuchos::ArrayRCP<work_t> holes_y,
   Teuchos::ArrayRCP<int_t> dirichlet_boundary_segments_left,
   Teuchos::ArrayRCP<int_t> dirichlet_boundary_segments_right,
   Teuchos::ArrayRCP<int_t> neumann_boundary_segments_left,
   Teuchos::ArrayRCP<int_t> neumann_boundary_segments_right,
-  const scalar_t & max_size_constraint,
+  const work_t & max_size_constraint,
   const std::string & output_file_name,
   const bool enforce_lagrange_bc=false,
   const bool use_regular_grid=false);
 
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
-  const scalar_t & begin_x,
-  const scalar_t & end_x,
-  const scalar_t & begin_y,
-  const scalar_t & end_y,
-  const scalar_t & h,
+  const work_t & begin_x,
+  const work_t & end_x,
+  const work_t & begin_y,
+  const work_t & end_y,
+  const work_t & h,
   std::vector<int_t> & dirichlet_sides,
   std::vector<int_t> & neumann_sides,
   const std::string & output_file_name,

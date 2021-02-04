@@ -97,7 +97,7 @@ NetCDF_Reader::get_image_dimensions(const std::string & file_name,
 void
 NetCDF_Reader::read_netcdf_image(const char * file_name,
   const size_t time_index,
-  intensity_t * intensities,
+  work_t * intensities,
   const int_t subimage_width,
   const int_t subimage_height,
   const int_t offset_x,
@@ -152,7 +152,7 @@ NetCDF_Reader::read_netcdf_image(const char * file_name,
   }
   TEUCHOS_TEST_FOR_EXCEPTION(data_var_index <0, std::runtime_error,"Error, could not find data or Rad variable in NetCDF file " << file_name);
   // initialize storage for the data in the netcdf file (read the whole image)
-  //std::vector<intensity_t> data(img_width*img_height);
+  //std::vector<storage_t> data(img_width*img_height);
   std::vector<size_t> starts(3,0); // not all elements are used (assumes max dimension of 3)
   std::vector<size_t> counts(3,0);
   if(data_type==3){
@@ -175,17 +175,17 @@ NetCDF_Reader::read_netcdf_image(const char * file_name,
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"invalid nc data_type " << data_type);
   }
 
-  if(std::is_same<intensity_t,float>::value){
+  if(std::is_same<work_t,float>::value){
     // cast to avoid compiler error for the get var method that isn't used (it expects a pointer of type float)
     // if this if statement is true, this is a no-op, if not it never gets executed
     float * intens = (float *)intensities;
     nc_get_vara_float(ncid,data_var_index,&starts[0],&counts[0],intens);
-  }else if(std::is_same<intensity_t,double>::value){
+  }else if(std::is_same<work_t,double>::value){
     // cast to avoid compiler error for the get var method that isn't used (it expects a pointer of type double)
     double * intens = (double *)intensities;
     nc_get_vara_double(ncid,data_var_index,&starts[0],&counts[0],intens);
   }else{
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"invalid intensity type (should be float or double)");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"invalid intensity storage type for NetCDF (should be float or double)");
   }
 
   // close the nc_file

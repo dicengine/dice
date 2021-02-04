@@ -292,13 +292,13 @@ public:
   };
 
   /// 2 norm of a matrix
-  scalar_t norm() const{
+  work_t norm() const{
     return norm(*this);
   };
 
   /// largest value
-  scalar_t max() const{
-    scalar_t max = data_[0];
+  work_t max() const{
+    work_t max = data_[0];
     for(size_t i=0;i<rows_*cols_;++i){
       if(data_[i]>max) max = data_[i];
     }
@@ -306,8 +306,8 @@ public:
   };
 
   /// smallest value
-  scalar_t min() const{
-    scalar_t min = data_[0];
+  work_t min() const{
+    work_t min = data_[0];
     for(size_t i=0;i<rows_*cols_;++i){
       if(data_[i]<min) min = data_[i];
     }
@@ -330,9 +330,9 @@ public:
 
   /// compute the inverse of a matrix and return as a new matrix
   // always has to be scalar type because of lapack
-  Matrix<scalar_t,Rows,Cols> inv(){
+  Matrix<work_t,Rows,Cols> inv(){
     TEUCHOS_TEST_FOR_EXCEPTION(rows_!=cols_,std::runtime_error,"matrix must be square");
-    Matrix<scalar_t,Rows,Cols> inverse;
+    Matrix<work_t,Rows,Cols> inverse;
     inverse.copy(*this); // lapack only works on scalar type not integers, copy needed to cast values
     int_t info = 0;
     std::fill(int_work_.begin(), int_work_.end(), 0);
@@ -344,16 +344,16 @@ public:
     return inverse;
   }
 
-  scalar_t condition_number(){
+  work_t condition_number(){
     TEUCHOS_TEST_FOR_EXCEPTION(rows_!=cols_,std::runtime_error,"matrix must be square");
-    Matrix<scalar_t,Rows,Cols> scalar_mat;
+    Matrix<work_t,Rows,Cols> scalar_mat;
     scalar_mat.copy(*this); // lapack only works on scalar type not integers, copy needed to cast values
     int_t info = 0;
     std::fill(int_work_.begin(), int_work_.end(), 0);
     lapack_.GETRF(rows_,rows_,scalar_mat.data(),
       rows_,&int_work_[0],&info);
-    scalar_t rcond = 0.0;
-    scalar_t norm = one_norm(scalar_mat);
+    work_t rcond = 0.0;
+    work_t norm = one_norm(scalar_mat);
     lapack_.GECON('1',rows_,scalar_mat.data(),rows_,norm,&rcond,
       &scalar_work_[0],&int_work_[0],&info);
     return rcond==0.0?0.0:1.0/rcond;
@@ -402,8 +402,8 @@ public:
   };
 
   /// 2 norm of a matrix as a static method
-  static scalar_t norm(Matrix<Type,Rows,Cols> matrix){
-    scalar_t norm = 0.0;
+  static work_t norm(Matrix<Type,Rows,Cols> matrix){
+    work_t norm = 0.0;
     for(size_t i=0;i<matrix.rows()*matrix.cols();++i)
       norm += matrix(i)*matrix(i);
     return std::sqrt(norm);
@@ -418,9 +418,9 @@ private:
   std::array<Type,Rows*Cols> data_{}; // the {} are for zero-initialization
   /// work vectors for lapack calls
   std::array<int_t,Rows*Rows> int_work_{};
-  std::array<scalar_t,(Rows>10)?Rows*Rows:10*Rows> scalar_work_{};
+  std::array<work_t,(Rows>10)?Rows*Rows:10*Rows> scalar_work_{};
   /// member lapack object
-  Teuchos::LAPACK<int_t,scalar_t> lapack_; // lapack requires scalar_t (not int or other)
+  Teuchos::LAPACK<int_t,work_t> lapack_; // lapack requires work_t (not int or other)
 };
 
 /// convenience alias for vectors
@@ -444,14 +444,14 @@ void zero(Vector<Type> & vec){
 
 /// 2 norm of a matrix as a static method
 template <typename Type, size_t Rows, size_t Cols>
-scalar_t norm(Matrix<Type,Rows,Cols> matrix){
+work_t norm(Matrix<Type,Rows,Cols> matrix){
   return Matrix<Type,Rows,Cols>::norm(matrix);
 };
 
 /// function to compute the 1-norm of a matrix (max of the column totals)
 template <typename Type, size_t Rows, size_t Cols>
-scalar_t one_norm(Matrix<Type,Rows,Cols> matrix){
-  scalar_t norm = 0.0;
+work_t one_norm(Matrix<Type,Rows,Cols> matrix){
+  work_t norm = 0.0;
   Vector<Type,Cols> col_totals;
   for(size_t i=0;i<matrix.rows();++i)
     for(size_t j=0;j<matrix.cols();++j)

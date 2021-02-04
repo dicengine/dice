@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint = argc - 1;
   int_t error_flag = 0;
-  scalar_t error_tol = 1.0E-4;
+  work_t error_tol = 1.0E-4;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
   // compare to gold image
   Teuchos::RCP<DICe::Image> cb_image = Teuchos::rcp(new DICe::Image("cb_out.png"));
   Teuchos::RCP<DICe::Image> cb_image_gold = Teuchos::rcp(new DICe::Image("../images/cb_out.png"));
-  scalar_t cb_diff = cb_image->diff(cb_image_gold);
+  work_t cb_diff = cb_image->diff(cb_image_gold);
   *outStream << "checkerboard image diff: " << cb_diff << std::endl;
   if(cb_diff>error_tol){
     *outStream << "error, running the opencv server failed for the checkerboard example" << std::endl;
@@ -211,7 +211,7 @@ int main(int argc, char *argv[]) {
   // compare to gold image
   Teuchos::RCP<DICe::Image> dot_image = Teuchos::rcp(new DICe::Image("dot_out.png"));
   Teuchos::RCP<DICe::Image> dot_image_gold = Teuchos::rcp(new DICe::Image("../images/dot_out.png"));
-  scalar_t dot_diff = dot_image->diff(dot_image_gold);
+  work_t dot_diff = dot_image->diff(dot_image_gold);
   *outStream << "dot marker image diff: " << dot_diff << std::endl;
   if(dot_diff>error_tol){
     *outStream << "error, running the opencv server failed for the dot marker example" << std::endl;

@@ -98,7 +98,7 @@ public:
   Status_Flag execute();
 
   /// post execution tasks
-  void post_execution_tasks(const scalar_t & time_stamp);
+  void post_execution_tasks(const work_t & time_stamp);
 
   /// populate the tangent matrix
   /// \param use_fixed_point true if fixed point iteration is being employed
@@ -106,7 +106,7 @@ public:
 
   /// populate the residual vector
   /// \param use_fixed_point use the fixed point iteration strategy
-  scalar_t compute_residual(const bool use_fixed_point);
+  work_t compute_residual(const bool use_fixed_point);
 
   /// returns the offset to the first lagrange multiplier dof
   int_t mixed_global_offset()const{
@@ -123,12 +123,12 @@ public:
   /// \param max_error_bx output max error in x velocity field
   /// \param max_error_by output max error in y velocity field
   /// \param max_error_lambda output max error in lagrange multiplier (zero if not used)
-  void evaluate_mms_error(scalar_t & error_bx,
-    scalar_t & error_by,
-    scalar_t & error_lambda,
-    scalar_t & max_error_bx,
-    scalar_t & max_error_by,
-    scalar_t & max_error_lambda);
+  void evaluate_mms_error(work_t & error_bx,
+    work_t & error_by,
+    work_t & error_lambda,
+    work_t & max_error_bx,
+    work_t & max_error_by,
+    work_t & max_error_lambda);
 
   /// Returns true if the formulation is mixed
   bool is_mixed_formulation()const{
@@ -137,7 +137,7 @@ public:
   }
 
   /// Returns the mesh size (max area constraint)
-  scalar_t mesh_size()const{
+  work_t mesh_size()const{
     return mesh_size_;
   }
 
@@ -164,26 +164,13 @@ public:
   /// set the reference image and perform the necessary pre-filtering + compute gradients
   void initialize_ref_image();
 
-  /// set the reference image and perform the necessary pre-filtering + compute gradients
-  void set_def_image();
-
-  /// return a pointer to the reference image
-  Teuchos::RCP<Image> ref_img()const{
-    return ref_img_;
-  }
-
-  /// return a pointer to the deformed image
-  Teuchos::RCP<Image> def_img()const{
-    return def_img_;
-  }
-
   /// return a pointer to the grad x image
-  Teuchos::RCP<Image> grad_x()const{
+  Teuchos::RCP<Scalar_Image> grad_x()const{
     return grad_x_img_;
   }
 
   /// return a pointer to the grad y image
-  Teuchos::RCP<Image> grad_y()const{
+  Teuchos::RCP<Scalar_Image> grad_y()const{
     return grad_y_img_;
   }
 
@@ -193,7 +180,7 @@ public:
   }
 
   /// Return the alpha2 regularization parameter
-  scalar_t alpha2()const{
+  work_t alpha2()const{
     return alpha2_;
   }
 
@@ -210,9 +197,9 @@ protected:
   /// pointer to the calling schema
   Schema * schema_;
   /// mesh size constraint (largest size allowed in pixels^2)
-  scalar_t mesh_size_;
+  work_t mesh_size_;
   /// alpha coefficient squared
-  scalar_t alpha2_;
+  work_t alpha2_;
   /// computational mesh
   Teuchos::RCP<DICe::mesh::Mesh> mesh_;
   /// optional pointer to a method of manufactured solutions problem
@@ -222,23 +209,19 @@ protected:
   /// name of the linear output file
   std::string lagrange_output_file_name_;
   /// linear problem
-  Teuchos::RCP< Belos::LinearProblem<mv_scalar_type,vec_type,operator_type> > linear_problem_;
+  Teuchos::RCP< Belos::LinearProblem<mv_work_type,vec_type,operator_type> > linear_problem_;
   /// belos solver
-  Teuchos::RCP< Belos::SolverManager<mv_scalar_type,vec_type,operator_type> > belos_solver_;
+  Teuchos::RCP< Belos::SolverManager<mv_work_type,vec_type,operator_type> > belos_solver_;
   /// boundary condition manager
   Teuchos::RCP<BC_Manager> bc_manager_;
   /// true if the solver, etc been initialized
   bool is_initialized_;
   /// set of active terms in the formulation
   std::set<Global_EQ_Term> eq_terms_;
-  /// reference image (filtered and normalized)
-  Teuchos::RCP<Image> ref_img_;
-  /// deformed image (filtered and normalized)
-  Teuchos::RCP<Image> def_img_;
   /// gradient_x image
-  Teuchos::RCP<Image> grad_x_img_;
+  Teuchos::RCP<Scalar_Image> grad_x_img_;
   /// gradient_y image
-  Teuchos::RCP<Image> grad_y_img_;
+  Teuchos::RCP<Scalar_Image> grad_y_img_;
   /// enum of the formulation to use
   Global_Formulation global_formulation_;
   /// Global solver type
@@ -253,7 +236,7 @@ protected:
   /// use a fixed point iteration technique
   bool use_fixed_point_iterations_;
   /// stabilization parameter set by user
-  scalar_t stabilization_tau_;
+  work_t stabilization_tau_;
 };
 
 }// end global namespace

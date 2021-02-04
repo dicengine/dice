@@ -63,8 +63,8 @@ Decomp::Decomp(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   TEUCHOS_TEST_FOR_EXCEPTION(image_files.size()<=0,std::runtime_error,"");
 
   // set up the positions of all the mesh points or subsets
-  Teuchos::ArrayRCP<scalar_t> subset_centroids_x;
-  Teuchos::ArrayRCP<scalar_t> subset_centroids_y;
+  Teuchos::ArrayRCP<work_t> subset_centroids_x;
+  Teuchos::ArrayRCP<work_t> subset_centroids_y;
   Teuchos::RCP<std::vector<int_t> > neighbor_ids;
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids;
   populate_coordinate_vectors(image_files[0],input_params,correlation_params,
@@ -78,8 +78,8 @@ Decomp::Decomp(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   initialize(subset_centroids_x,subset_centroids_y,neighbor_ids,obstructing_subset_ids,correlation_params);
 }
 
-Decomp::Decomp(Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
-  Teuchos::ArrayRCP<scalar_t> subset_centroids_y,
+Decomp::Decomp(Teuchos::ArrayRCP<work_t> subset_centroids_x,
+  Teuchos::ArrayRCP<work_t> subset_centroids_y,
   Teuchos::RCP<std::vector<int_t> > neighbor_ids,
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids,
   const Teuchos::RCP<Teuchos::ParameterList> & correlation_params):
@@ -94,8 +94,8 @@ Decomp::Decomp(Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
 }
 
 void
-Decomp::initialize(const Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
-  const Teuchos::ArrayRCP<scalar_t> subset_centroids_y,
+Decomp::initialize(const Teuchos::ArrayRCP<work_t> subset_centroids_x,
+  const Teuchos::ArrayRCP<work_t> subset_centroids_y,
   Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
   Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids,
   const Teuchos::RCP<Teuchos::ParameterList> & correlation_params){
@@ -123,13 +123,13 @@ Decomp::initialize(const Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
   // determine the max strain window size:
   // TODO find a way to make sure all strain window sizes are captured here
   //      as it is not, it only checks for NLVC and VSG sizes
-  scalar_t max_strain_window_size = 0.0;
-  scalar_t tmp_strain_window_size = 0.0;
+  work_t max_strain_window_size = 0.0;
+  work_t tmp_strain_window_size = 0.0;
   if(correlation_params!=Teuchos::null){
     if(correlation_params->isParameter(DICe::post_process_vsg_strain)){
       Teuchos::ParameterList vsg_sublist = correlation_params->sublist(DICe::post_process_vsg_strain);
       TEUCHOS_TEST_FOR_EXCEPTION(!vsg_sublist.isParameter(DICe::strain_window_size_in_pixels),std::runtime_error,"");
-      scalar_t tmp_strain_window_size = vsg_sublist.get<int_t>(DICe::strain_window_size_in_pixels);
+      work_t tmp_strain_window_size = vsg_sublist.get<int_t>(DICe::strain_window_size_in_pixels);
       if(tmp_strain_window_size > max_strain_window_size) max_strain_window_size = tmp_strain_window_size;
     }
     if(correlation_params->isParameter(DICe::post_process_nlvc_strain)){
@@ -175,7 +175,7 @@ Decomp::initialize(const Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
       if(max_strain_window_size > 0.0){
         // processor 0 does a neighborhood search and scatters the results to all processors
         TEUCHOS_TEST_FOR_EXCEPTION(subset_centroids_x.size()!=num_global_subsets_||subset_centroids_y.size()!=num_global_subsets_,std::runtime_error,"");
-        Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
+        Teuchos::RCP<Point_Cloud_2D<work_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<work_t>());
         point_cloud->pts.resize(num_global_subsets_);
         for(int_t i=0;i<num_global_subsets_;++i){
           point_cloud->pts[i].x = subset_centroids_x[i];
@@ -185,14 +185,14 @@ Decomp::initialize(const Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
         Teuchos::RCP<kd_tree_2d_t> kd_tree = Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
         kd_tree->buildIndex();
         DEBUG_MSG("Decomp::Decomp(): kd-tree completed");
-        std::vector<std::pair<size_t,scalar_t> > ret_matches;
+        std::vector<std::pair<size_t,work_t> > ret_matches;
         nanoflann::SearchParams params;
         params.sorted = true; // sort by distance in ascending order
-        const scalar_t tiny = 1.0E-5;
-        scalar_t neigh_rad_2 = (scalar_t)max_strain_window_size/2.0;
+        const work_t tiny = 1.0E-5;
+        work_t neigh_rad_2 = (work_t)max_strain_window_size/2.0;
         neigh_rad_2 *= neigh_rad_2;
         neigh_rad_2 += tiny;
-        scalar_t query_pt[2];
+        work_t query_pt[2];
         for(int_t proc=0;proc<comm_->get_size();++proc){
           std::set<int_t> neighbors_to_add;
           // iterate all the ids local to this processor and find all the neighbors
@@ -605,8 +605,8 @@ void
 Decomp::populate_coordinate_vectors(const std::string & image_file_name,
     const Teuchos::RCP<Teuchos::ParameterList> & input_params,
     const Teuchos::RCP<Teuchos::ParameterList> & correlation_params,
-    Teuchos::ArrayRCP<scalar_t> & subset_centroids_x,
-    Teuchos::ArrayRCP<scalar_t> & subset_centroids_y,
+    Teuchos::ArrayRCP<work_t> & subset_centroids_x,
+    Teuchos::ArrayRCP<work_t> & subset_centroids_y,
     Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
     Teuchos::RCP<std::map<int_t,std::vector<int_t> > > & obstructing_subset_ids){
 
@@ -633,7 +633,7 @@ Decomp::populate_coordinate_vectors(const std::string & image_file_name,
   TEUCHOS_TEST_FOR_EXCEPTION(img_w<=0||img_h<=0,std::runtime_error,"invalid image dimensions, image load failure");
 
   // processor 0 creates the list of correlation points and divys them up for checking the SSSIG if necessary...
-  Teuchos::RCP<std::vector<scalar_t> > subset_centroids = Teuchos::rcp(new std::vector<scalar_t>());
+  Teuchos::RCP<std::vector<work_t> > subset_centroids = Teuchos::rcp(new std::vector<work_t>());
   std::vector<int_t> neigh_ids_on_0;
   int_t num_global_subsets_pre_sssig = 0;
 //  if(proc_rank==0){
@@ -690,7 +690,7 @@ Decomp::populate_coordinate_vectors(const std::string & image_file_name,
       }
     }
   }
-  const scalar_t grad_threshold = correlation_params->get<double>(DICe::sssig_threshold,50.0);
+  const work_t grad_threshold = correlation_params->get<double>(DICe::sssig_threshold,50.0);
   if((optimization_method==GRADIENT_BASED || optimization_method==GRADIENT_BASED_THEN_SIMPLEX)&&grad_threshold > 0.0&&subset_size>0){
     sssig_check_done = true;
     // split up the points across processors and check the SSSIG:
@@ -774,7 +774,7 @@ Decomp::populate_coordinate_vectors(const std::string & image_file_name,
       const int_t cy = field_dist_data->local_value(i,1);
       //DEBUG_MSG("[PROC "<<proc_rank <<"] Decomp::populate_coordinate_vectors(): checking ssig for point " << field_dist_data->local_value(i,0) << " " << field_dist_data->local_value(i,1));
       // check the gradient SSSIG threshold
-      scalar_t SSSIG = 0.0;
+      work_t SSSIG = 0.0;
       const int_t left_x = cx - subset_size/2;
       const int_t right_x = left_x + subset_size;
       const int_t top_y = cy - subset_size/2;
@@ -865,14 +865,14 @@ Decomp::populate_coordinate_vectors(const std::string & image_file_name,
 
 DICE_LIB_DLL_EXPORT
 void
-create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_points,
+create_regular_grid_of_correlation_points(std::vector<work_t> & correlation_points,
   std::vector<int_t> & neighbor_ids,
   Teuchos::RCP<Teuchos::ParameterList> params,
   const int_t img_w,
   const int_t img_h,
   Teuchos::RCP<DICe::Subset_File_Info> subset_file_info,
   Teuchos::RCP<DICe::Image> image,
-  const scalar_t & grad_threshold){
+  const work_t & grad_threshold){
   int proc_rank = 0;
 #if DICE_MPI
   int mpi_is_initialized = 0;
@@ -976,8 +976,8 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
       x_coord = subset_size-1 + seed_col*step_size;
       y_coord = subset_size-1 + seed_row*step_size;
     if(valid_correlation_point(x_coord,y_coord,subset_size,img_w,img_h,coords,excluded_coords,image,grad_threshold)){
-      correlation_points.push_back((scalar_t)x_coord);
-      correlation_points.push_back((scalar_t)y_coord);
+      correlation_points.push_back((work_t)x_coord);
+      correlation_points.push_back((work_t)y_coord);
       //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding seed correlation point " << x_coord << " " << y_coord);
       if(seed_was_specified&&this_roi_has_seed){
         seed_subset_id = current_subset_id;
@@ -1006,8 +1006,8 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
       x_coord = subset_size - 1 + col*step_size;
       y_coord = subset_size - 1 + row*step_size;
       if(valid_correlation_point(x_coord,y_coord,subset_size,img_w,img_h,coords,excluded_coords,image,grad_threshold)){
-        correlation_points.push_back((scalar_t)x_coord);
-        correlation_points.push_back((scalar_t)y_coord);
+        correlation_points.push_back((work_t)x_coord);
+        correlation_points.push_back((work_t)y_coord);
         //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding snake right correlation point " << x_coord << " " << y_coord);
         if(current_subset_id==right_start_subset_id)
           neighbor_ids.push_back(seed_subset_id);
@@ -1033,8 +1033,8 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
       x_coord = subset_size - 1 + col*step_size;
       y_coord = subset_size - 1 + row*step_size;
       if(valid_correlation_point(x_coord,y_coord,subset_size,img_w,img_h,coords,excluded_coords,image,grad_threshold)){
-        correlation_points.push_back((scalar_t)x_coord);
-        correlation_points.push_back((scalar_t)y_coord);
+        correlation_points.push_back((work_t)x_coord);
+        correlation_points.push_back((work_t)y_coord);
         //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding snake left correlation point " << x_coord << " " << y_coord);
         if(current_subset_id==left_start_subset_id)
           neighbor_ids.push_back(seed_subset_id);
@@ -1055,8 +1055,8 @@ create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_po
 //      int_t x_coord = subset_size-1;
 //      while(x_coord < img_w - subset_size) {
 //        if(valid_correlation_point(x_coord,y_coord,subset_size,img_w,img_h,coords,excluded_coords)){
-//          correlation_points.push_back((scalar_t)x_coord);
-//          correlation_points.push_back((scalar_t)y_coord);
+//          correlation_points.push_back((work_t)x_coord);
+//          correlation_points.push_back((work_t)y_coord);
 //          //if(proc_rank==0) DEBUG_MSG("ROI " << map_it->first << " adding seed correlation point " << x_coord << " " << y_coord);
 //        }
 //        x_coord+=step_size;
@@ -1077,7 +1077,7 @@ bool valid_correlation_point(const int_t x_coord,
   std::set<std::pair<int_t,int_t> > & coords,
   std::set<std::pair<int_t,int_t> > & excluded_coords,
   Teuchos::RCP<DICe::Image> image,
-  const scalar_t & grad_threshold){
+  const work_t & grad_threshold){
   // need to check if the point is interior to the image by at least one subset_size
   if(x_coord<subset_size-1) return false;
   if(x_coord>img_w-subset_size) return false;
@@ -1106,7 +1106,7 @@ bool valid_correlation_point(const int_t x_coord,
     if(grad_threshold > 0.0){
       TEUCHOS_TEST_FOR_EXCEPTION(!image->has_gradients(),std::runtime_error,
         "Error, testing valid points for SSSIG tol, but image gradients have not been computed");
-      scalar_t SSSIG = 0.0;
+      work_t SSSIG = 0.0;
       for(int_t y=corners_y[0];y<corners_y[2];++y){
         for(int_t x=corners_x[0];x<corners_x[1];++x){
           SSSIG += image->grad_x(x,y)*image->grad_x(x,y) + image->grad_x(x,y)*image->grad_x(x,y);

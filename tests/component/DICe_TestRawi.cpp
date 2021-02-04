@@ -70,19 +70,19 @@ int main(int argc, char *argv[]) {
   *outStream << "creating an image to test" << std::endl;
   const int_t array_w = 50;
   const int_t array_h = 20;
-  Teuchos::ArrayRCP<intensity_t> intensities(array_w*array_h,0.0);
+  Teuchos::ArrayRCP<work_t> intensities(array_w*array_h,0.0);
   // populate the intensities with a sin/cos function
   for(int_t y=0;y<array_h;++y){
     for(int_t x=0;x<array_w;++x){
-      intensities[y*array_w+x] = 255*std::cos(x/(4*DICE_PI))*std::sin(y/(4*DICE_PI));
+      intensities[y*array_w+x] = 255.0*std::cos(x/(4*DICE_PI))*std::sin(y/(4*DICE_PI));
     }
   }
-  Image array_img(array_w,array_h,intensities);
+  Scalar_Image array_img(array_w,array_h,intensities);
   *outStream << "saving the test image to .rawi format" << std::endl;
   array_img.write("ArrayImg.rawi");
 
   *outStream<< "reading the .rawi file just created" << std::endl;
-  Image rawi_img("ArrayImg.rawi");
+  Scalar_Image rawi_img("ArrayImg.rawi");
   *outStream << "image dimensions: " << rawi_img.width() << " x " << rawi_img.height() << std::endl;
   if(rawi_img.width()!=array_w){
     *outStream << "Error, the .rawi image width is wrong" << std::endl;

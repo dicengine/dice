@@ -120,16 +120,16 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Subset> subset;
   const int_t subset_edge_buffer = 10; // must be larger than the deformations above
 
-  std::vector<scalar_t> sizes(num_img_sizes,0.0);
-  std::vector<scalar_t> read_times(num_img_sizes,0.0);
-  std::vector<scalar_t> grad_times(num_img_sizes,0.0);
-  std::vector<scalar_t> filter_times(num_img_sizes,0.0);
-  std::vector<scalar_t> sub_construct_times(num_img_sizes,0.0);
-  std::vector<scalar_t> sub_init_times(num_img_sizes,0.0);
-  std::vector<scalar_t> sub_bilinear_times(num_img_sizes,0.0);
-  std::vector<scalar_t> sub_keys_times(num_img_sizes,0.0);
-  std::vector<scalar_t> mean_times(num_img_sizes,0.0);
-  std::vector<scalar_t> corr_times(num_img_sizes,0.0);
+  std::vector<work_t> sizes(num_img_sizes,0.0);
+  std::vector<work_t> read_times(num_img_sizes,0.0);
+  std::vector<work_t> grad_times(num_img_sizes,0.0);
+  std::vector<work_t> filter_times(num_img_sizes,0.0);
+  std::vector<work_t> sub_construct_times(num_img_sizes,0.0);
+  std::vector<work_t> sub_init_times(num_img_sizes,0.0);
+  std::vector<work_t> sub_bilinear_times(num_img_sizes,0.0);
+  std::vector<work_t> sub_keys_times(num_img_sizes,0.0);
+  std::vector<work_t> mean_times(num_img_sizes,0.0);
+  std::vector<work_t> corr_times(num_img_sizes,0.0);
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
 
   // num timing samples loop

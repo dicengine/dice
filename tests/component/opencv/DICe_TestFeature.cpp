@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
-  scalar_t errorTol = 0.5;
+  work_t errorTol = 0.5;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -70,10 +70,10 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Image> left_img = Teuchos::rcp(new Image("../images/refSpeckled.tif"));
   Teuchos::RCP<Image> right_img = Teuchos::rcp(new Image("../images/shiftSpeckled_160x140y.tif"));
 
-  std::vector<scalar_t> left_x;
-  std::vector<scalar_t> left_y;
-  std::vector<scalar_t> right_x;
-  std::vector<scalar_t> right_y;
+  std::vector<work_t> left_x;
+  std::vector<work_t> left_y;
+  std::vector<work_t> right_x;
+  std::vector<work_t> right_y;
 
   const int_t num_expected_matches = 1800;
   // set up a range of expected matches since the opencv feature matching changes frequently
@@ -91,8 +91,8 @@ int main(int argc, char *argv[]) {
   }
 
   for(int_t i=0;i<num_matches;++i){
-    const scalar_t dist_x = right_x[i] - left_x[i];
-    const scalar_t dist_y = right_y[i] - left_y[i];
+    const work_t dist_x = right_x[i] - left_x[i];
+    const work_t dist_y = right_y[i] - left_y[i];
     if(std::abs(dist_x - 160) > errorTol){
       errorFlag++;
       *outStream << "Matching point error in x left (" << left_x[i] << "," << left_y[i] << ") right (" << right_x[i] << "," << right_y[i] << ") dist " << dist_x <<

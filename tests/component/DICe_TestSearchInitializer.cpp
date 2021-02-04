@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
-  const scalar_t errorTol = 1.0E-4;
+  const work_t errorTol = 1.0E-4;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -78,22 +78,22 @@ int main(int argc, char *argv[]) {
 
   const int_t subset_size = 27;
   const int_t cx = 151,cy=277;
-  const scalar_t u_exact = 138.0;
-  const scalar_t v_exact = -138.0;
+  const work_t u_exact = 138.0;
+  const work_t v_exact = -138.0;
   Teuchos::RCP<DICe::Schema> schema = Teuchos::rcp(new DICe::Schema());
   schema->set_ref_image("./images/InitRef.tif");
   schema->set_def_image("./images/InitDef.tif");
   Teuchos::RCP<DICe::Subset> subset = Teuchos::rcp(new Subset(cx,cy,subset_size,subset_size));
   subset->initialize(schema->ref_img(),REF_INTENSITIES);
-  const scalar_t step_size_xy = 1.0;
-  const scalar_t step_size_theta = 0.5;
-  const scalar_t search_dim_xy = 140;
-  const scalar_t search_dim_theta = 1;
+  const work_t step_size_xy = 1.0;
+  const work_t step_size_theta = 0.5;
+  const work_t search_dim_xy = 140;
+  const work_t search_dim_theta = 1;
   Search_Initializer searcher(schema.getRawPtr(),subset,step_size_xy,search_dim_xy,step_size_xy,search_dim_xy,step_size_theta,search_dim_theta);
   Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory(schema.getRawPtr());
   shape_function->clear();
   searcher.initial_guess(-1,shape_function);
-  scalar_t out_u=0.0,out_v=0.0,out_t=0.0;
+  work_t out_u=0.0,out_v=0.0,out_t=0.0;
   shape_function->map_to_u_v_theta(subset->centroid_x(),subset->centroid_y(),out_u,out_v,out_t);
   if(std::abs(out_u - u_exact) > errorTol || std::abs(out_v - v_exact) > errorTol){
     *outStream << "Error, the initialized value is not correct" << std::endl;

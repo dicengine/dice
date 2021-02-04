@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
-  scalar_t errorTol = 1.0E-2;
+  work_t errorTol = 1.0E-2;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- Begin test ---" << std::endl;
 
-  std::vector<scalar_t> ig_1(8,0.0);
+  std::vector<work_t> ig_1(8,0.0);
   ig_1[0] = 638.913;
   ig_1[1] = 407.295;
   ig_1[2] = 2468.53;
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
   ig_1[5] = 0.0638413;
   ig_1[6] = 0.0;
   ig_1[7] = 0.0;
-  std::vector<scalar_t> ig_2(8,0.0);
+  std::vector<work_t> ig_2(8,0.0);
   ig_2[0] = 628.607;
   ig_2[1] = 394.571;
   ig_2[2] = 2377.11;
@@ -88,64 +88,64 @@ int main(int argc, char *argv[]) {
   ig_2[5] = 0.0619845;
   ig_2[6] = 0.0;
   ig_2[7] = 0.0;
-  std::vector<std::vector<scalar_t> > intrinsic_gold;
+  std::vector<std::vector<work_t> > intrinsic_gold;
   intrinsic_gold.push_back(ig_1);
   intrinsic_gold.push_back(ig_2);
-  std::vector<scalar_t> T_1(4,0.0);
+  std::vector<work_t> T_1(4,0.0);
   T_1[0] = 0.950892;
   T_1[1] = 0.00104338;
   T_1[2] = -0.30952;
   T_1[3] = 130.755;
-  std::vector<scalar_t> T_2(4,0.0);
+  std::vector<work_t> T_2(4,0.0);
   T_2[0] = -0.00145487;
   T_2[1] = 0.999998;
   T_2[2] = -0.00109863;
   T_2[3] = -0.610487;
-  std::vector<scalar_t> T_3(4,0.0);
+  std::vector<work_t> T_3(4,0.0);
   T_3[0] = 0.309519;
   T_3[1] = 0.00149499;
   T_3[2] = 0.950892;
   T_3[3] = 17.1329;
-  std::vector<scalar_t> T_4(4,0.0);
+  std::vector<work_t> T_4(4,0.0);
   T_4[0] = 0;
   T_4[1] = 0;
   T_4[2] = 0;
   T_4[3] = 1;
 
-  std::vector<std::vector<scalar_t> > T_mat_gold;
+  std::vector<std::vector<work_t> > T_mat_gold;
   T_mat_gold.push_back(T_1);
   T_mat_gold.push_back(T_2);
   T_mat_gold.push_back(T_3);
   T_mat_gold.push_back(T_4);
 
-  std::vector<scalar_t> z_1(4,0.0);
+  std::vector<work_t> z_1(4,0.0);
   z_1[0] = 0.987647;
   z_1[1] = 0.000580617;
   z_1[2] = -0.156696;
   z_1[3] = 65.3774;
-  std::vector<scalar_t> z_2(4,0.0);
+  std::vector<work_t> z_2(4,0.0);
   z_2[0] = 0.000684129;
   z_2[1] = -1.0;
   z_2[2] = 0.00060666;
   z_2[3] = -0.305243;
-  std::vector<scalar_t> z_3(4,0.0);
+  std::vector<work_t> z_3(4,0.0);
   z_3[0] = -0.156695;
   z_3[1] = -0.000706366;
   z_3[2] = -0.987647;
   z_3[3] = 8.56645;
-  std::vector<scalar_t> z_4(4,0.0);
+  std::vector<work_t> z_4(4,0.0);
   z_4[0] = 0;
   z_4[1] = 0;
   z_4[2] = 0;
   z_4[3] = 1;
 
-  std::vector<std::vector<scalar_t> > zero_to_world_xml_gold;
+  std::vector<std::vector<work_t> > zero_to_world_xml_gold;
   zero_to_world_xml_gold.push_back(z_1);
   zero_to_world_xml_gold.push_back(z_2);
   zero_to_world_xml_gold.push_back(z_3);
   zero_to_world_xml_gold.push_back(z_4);
 
-  std::vector<std::vector<scalar_t> > zero_to_world_txt_gold =
+  std::vector<std::vector<work_t> > zero_to_world_txt_gold =
     {{1.0,0.0,0.0,0.0},
      {0.0,1.0,0.0,0.0},
      {0.0,0.0,1.0,0.0},
@@ -154,9 +154,9 @@ int main(int argc, char *argv[]) {
   *outStream << "reading calibration parameters from vic3d format" << std::endl;
 
   Teuchos::RCP<Triangulation> triangulation_xml = Teuchos::rcp(new Triangulation("./cal/cal_a.xml"));
-  std::vector<std::vector<scalar_t> > & calibration_intrinsics_xml = *triangulation_xml->cal_intrinsics();
-  const Matrix<scalar_t,4> & calibration_T_mat_xml = * triangulation_xml->cam_0_to_cam_1();
-  const Matrix<scalar_t,4> & zero_to_world_xml = * triangulation_xml->cam_0_to_world();
+  std::vector<std::vector<work_t> > & calibration_intrinsics_xml = *triangulation_xml->cal_intrinsics();
+  const Matrix<work_t,4> & calibration_T_mat_xml = * triangulation_xml->cam_0_to_cam_1();
+  const Matrix<work_t,4> & zero_to_world_xml = * triangulation_xml->cam_0_to_world();
 
   *outStream << "testing intrinsics from vic3d format" << std::endl;
 
@@ -232,9 +232,9 @@ int main(int argc, char *argv[]) {
   *outStream << "reading calibration parameters from text format" << std::endl;
 
   Teuchos::RCP<Triangulation> triangulation_txt = Teuchos::rcp(new Triangulation("./cal/cal_a.txt"));
-  std::vector<std::vector<scalar_t> > & calibration_intrinsics_txt = *triangulation_txt->cal_intrinsics();
-  const Matrix<scalar_t,4> & calibration_T_mat_txt = * triangulation_txt->cam_0_to_cam_1();
-  const Matrix<scalar_t,4> & zero_to_world_txt = * triangulation_txt->cam_0_to_world();
+  std::vector<std::vector<work_t> > & calibration_intrinsics_txt = *triangulation_txt->cal_intrinsics();
+  const Matrix<work_t,4> & calibration_T_mat_txt = * triangulation_txt->cam_0_to_cam_1();
+  const Matrix<work_t,4> & zero_to_world_txt = * triangulation_txt->cam_0_to_world();
 
   *outStream << "testing intrinsics from txt format" << std::endl;
 
@@ -310,7 +310,7 @@ int main(int argc, char *argv[]) {
   *outStream << "testing calibration txt file with custom transform" << std::endl;
 
 //  Teuchos::RCP<Triangulation> tri_custom = Teuchos::rcp(new Triangulation("./cal/cal_a_with_transform.txt"));
-//  std::vector<std::vector<scalar_t> > & custom_zero_to_world = * tri_custom->trans_extrinsics();
+//  std::vector<std::vector<work_t> > & custom_zero_to_world = * tri_custom->trans_extrinsics();
 //  *outStream << "testing camera 0 to world transform from txt format with custom transform" << std::endl;
 //
 //  if(custom_zero_to_world.size()!=4){
@@ -339,14 +339,14 @@ int main(int argc, char *argv[]) {
   *outStream << "testing triangulation of 3d points" << std::endl;
 
   Teuchos::RCP<Triangulation> tri = Teuchos::rcp(new Triangulation("./cal/cal_b.xml"));
-  scalar_t xc_out=0.0,yc_out=0.0,zc_out=0.0;
-  scalar_t xw_out=0.0,yw_out=0.0,zw_out=0.0;
-  scalar_t x_0 = 190; scalar_t y_0 = 187;
-  scalar_t x_1 = 193.8777; scalar_t y_1 = 186.0944;
+  work_t xc_out=0.0,yc_out=0.0,zc_out=0.0;
+  work_t xw_out=0.0,yw_out=0.0,zw_out=0.0;
+  work_t x_0 = 190; work_t y_0 = 187;
+  work_t x_1 = 193.8777; work_t y_1 = 186.0944;
   tri->triangulate(x_0,y_0,x_1,y_1,xc_out,yc_out,zc_out,xw_out,yw_out,zw_out,false);
-  scalar_t global_x_gold = 46.1199;
-  scalar_t global_y_gold = -25.5283;
-  scalar_t global_z_gold = -6543.5;
+  work_t global_x_gold = 46.1199;
+  work_t global_y_gold = -25.5283;
+  work_t global_z_gold = -6543.5;
   if(std::abs(global_x_gold - xw_out) > errorTol){
     errorFlag++;
     *outStream << "Error, triangulation x coord is wrong. Should be " << global_x_gold << " is " << xw_out << std::endl;
@@ -365,7 +365,7 @@ int main(int argc, char *argv[]) {
   *outStream << "testing projective transforms" << std::endl;
 
   Teuchos::RCP<Triangulation> proj_tri = Teuchos::rcp(new Triangulation());
-  Teuchos::RCP<std::vector<scalar_t> > projectives = Teuchos::rcp(new std::vector<scalar_t>(9,0.0));
+  Teuchos::RCP<std::vector<work_t> > projectives = Teuchos::rcp(new std::vector<work_t>(9,0.0));
   (*projectives)[0] = -6.004022e-01;
   (*projectives)[1] = 3.400666e-03;
   (*projectives)[2] = 3.504610e+01;
@@ -376,8 +376,8 @@ int main(int argc, char *argv[]) {
   (*projectives)[7] = 1.053975e-06;
   (*projectives)[8] = -5.482798e-01;
   proj_tri->set_projective_params(projectives);
-  const scalar_t xl0 = 75, yl0 = 380;
-  scalar_t xr0 = 0.0, yr0 = 0.0;
+  const work_t xl0 = 75, yl0 = 380;
+  work_t xr0 = 0.0, yr0 = 0.0;
   proj_tri->project_left_to_right_sensor_coords(xl0,yl0,xr0,yr0);
 
   *outStream << "xl " << xl0 << " yl " << yl0 << " xr " << xr0 << " yr " << yr0 << std::endl;
@@ -389,9 +389,9 @@ int main(int argc, char *argv[]) {
 
   *outStream << "testing projection to a best fit plane" << std::endl;
 
-  const scalar_t a = 1.2389;
-  const scalar_t b = 0.045;
-  const scalar_t d = 206.89;
+  const work_t a = 1.2389;
+  const work_t b = 0.045;
+  const work_t d = 206.89;
 
   const int_t num_data_pts = 10;
   Teuchos::Array<int_t> map_ids(num_data_pts,0);
@@ -424,7 +424,7 @@ int main(int argc, char *argv[]) {
   std::fstream bestFitDataFile("best_fit_plane_out.dat", std::ios_base::in);
   TEUCHOS_TEST_FOR_EXCEPTION(!bestFitDataFile.good(),std::runtime_error,
     "Error, could not open file best_fit_plane_out.dat");
-  std::vector<scalar_t> fit_sol(21,0.0);
+  std::vector<work_t> fit_sol(21,0.0);
   fit_sol[0] = 1.238900e+00;
   fit_sol[1] = 4.500000e-02;
   fit_sol[2] = 2.068900e+02;
@@ -446,7 +446,7 @@ int main(int argc, char *argv[]) {
   fit_sol[18] = -2.825277e-02;
   fit_sol[19] = -6.278393e-01;
   fit_sol[20] = -1.298937e+02;
-  std::vector<scalar_t> fit_comp;
+  std::vector<work_t> fit_comp;
   while(!bestFitDataFile.eof()){
     std::vector<std::string> tokens = tokenize_line(bestFitDataFile);
     if(tokens.size()==0) continue;
@@ -474,8 +474,8 @@ int main(int argc, char *argv[]) {
   *outStream << "testing cal file with R written explicitly instead of Euler angles" << std::endl;
 
   Teuchos::RCP<Triangulation> triangulation_with_R = Teuchos::rcp(new Triangulation("./cal/cal_a_with_R.txt"));
-  std::vector<std::vector<scalar_t> > & calibration_intrinsics_with_R = *triangulation_with_R->cal_intrinsics();
-  const Matrix<scalar_t,4> & calibration_T_mat_with_R = * triangulation_with_R->cam_0_to_cam_1();
+  std::vector<std::vector<work_t> > & calibration_intrinsics_with_R = *triangulation_with_R->cal_intrinsics();
+  const Matrix<work_t,4> & calibration_T_mat_with_R = * triangulation_with_R->cam_0_to_cam_1();
 
   *outStream << "testing intrinsics from txt format with explicit R" << std::endl;
 

@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
   int_t ref_w = -1;
   int_t ref_h = -1;
   Teuchos::RCP<DICe::Subset_File_Info> subset_info = DICe::read_subset_file(subset_file,ref_w,ref_h);
-  Teuchos::RCP<std::vector<scalar_t> > subset_centroids = subset_info->coordinates_vector;
+  Teuchos::RCP<std::vector<work_t> > subset_centroids = subset_info->coordinates_vector;
   const int_t num_roi = subset_centroids->size()/2;
   DEBUG_MSG("Found " << num_roi << " ROIs");
   Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs = subset_info->conformal_area_defs;
@@ -187,16 +187,16 @@ int main(int argc, char *argv[]) {
   // first index is the file
   // second index is the frame for each field
   std::vector<std::vector<int_t> > frames;
-  std::vector<std::vector<scalar_t> > disp_x;
-  std::vector<std::vector<scalar_t> > disp_y;
-  std::vector<std::vector<scalar_t> > rot_z;
-  std::vector<std::vector<scalar_t> > sigma;
+  std::vector<std::vector<work_t> > disp_x;
+  std::vector<std::vector<work_t> > disp_y;
+  std::vector<std::vector<work_t> > rot_z;
+  std::vector<std::vector<work_t> > sigma;
   for(int_t i=0;i<num_roi;++i){
     frames.push_back(std::vector<int_t>());
-    disp_x.push_back(std::vector<scalar_t>());
-    disp_y.push_back(std::vector<scalar_t>());
-    rot_z.push_back(std::vector<scalar_t>());
-    sigma.push_back(std::vector<scalar_t>());
+    disp_x.push_back(std::vector<work_t>());
+    disp_y.push_back(std::vector<work_t>());
+    rot_z.push_back(std::vector<work_t>());
+    sigma.push_back(std::vector<work_t>());
   }
 
   // read the results for each ROI
@@ -284,13 +284,13 @@ int main(int argc, char *argv[]) {
       FONT_HERSHEY_DUPLEX, 0.5, Scalar(255,255,255), 1, cv::LINE_AA);
 
     for(int_t roi=0;roi<num_roi;++roi){
-      const scalar_t u = disp_x[roi][i];
-      const scalar_t v = disp_y[roi][i];
-      const scalar_t sig = sigma[roi][i];
-      const scalar_t cost = std::cos(rot_z[roi][i]);
-      const scalar_t sint = std::sin(rot_z[roi][i]);
-      const scalar_t cx = (*subset_centroids)[roi*2+0];
-      const scalar_t cy = (*subset_centroids)[roi*2+1];
+      const work_t u = disp_x[roi][i];
+      const work_t v = disp_y[roi][i];
+      const work_t sig = sigma[roi][i];
+      const work_t cost = std::cos(rot_z[roi][i]);
+      const work_t sint = std::sin(rot_z[roi][i]);
+      const work_t cx = (*subset_centroids)[roi*2+0];
+      const work_t cy = (*subset_centroids)[roi*2+1];
       Scalar roi_color = sig<0.0?Scalar(0,0,255):Scalar(0,255,255);
       //DEBUG_MSG("centroid subset " << roi << " " << cx << " " << cy);
       TEUCHOS_TEST_FOR_EXCEPTION(conformal_area_defs->find(roi)==conformal_area_defs->end(),std::runtime_error,"");
@@ -301,10 +301,10 @@ int main(int argc, char *argv[]) {
       const int_t num_boundary_vertices = boundary_polygon->num_vertices();
       std::vector<Point> contour;
       for(int_t vert=0;vert<num_boundary_vertices;++vert){
-        const scalar_t dx = (*boundary_polygon->vertex_coordinates_x())[vert] - cx;
-        const scalar_t dy = (*boundary_polygon->vertex_coordinates_y())[vert] - cy;
-        const scalar_t vx = cost*dx - sint*dy + u + cx;
-        const scalar_t vy = sint*dx + cost*dy + v + cy;
+        const work_t dx = (*boundary_polygon->vertex_coordinates_x())[vert] - cx;
+        const work_t dy = (*boundary_polygon->vertex_coordinates_y())[vert] - cy;
+        const work_t vx = cost*dx - sint*dy + u + cx;
+        const work_t vy = sint*dx + cost*dy + v + cy;
         contour.push_back(Point(vx,vy));
       }
       const Point *pts = (const Point*) Mat(contour).data;
@@ -324,10 +324,10 @@ int main(int argc, char *argv[]) {
         const int_t num_ex_vertices = excluded_polygon->num_vertices();
         std::vector<Point> ex_contour;
         for(int_t vert=0;vert<num_ex_vertices;++vert){
-          const scalar_t dx = (*excluded_polygon->vertex_coordinates_x())[vert] - cx;
-          const scalar_t dy = (*excluded_polygon->vertex_coordinates_y())[vert] - cy;
-          const scalar_t vx = cost*dx - sint*dy + u + cx;
-          const scalar_t vy = sint*dx + cost*dy + v + cy;
+          const work_t dx = (*excluded_polygon->vertex_coordinates_x())[vert] - cx;
+          const work_t dy = (*excluded_polygon->vertex_coordinates_y())[vert] - cy;
+          const work_t vx = cost*dx - sint*dy + u + cx;
+          const work_t vy = sint*dx + cost*dy + v + cy;
           ex_contour.push_back(Point(vx,vy));
         }
         const Point *ex_pts = (const Point*) Mat(ex_contour).data;

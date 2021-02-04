@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
-  const scalar_t errorTol = 1.0E-4;
+  const work_t errorTol = 1.0E-4;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -121,9 +121,9 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   *outStream << "testing the values of the triads" << std::endl;
-  std::vector<scalar_t> exact_u(3,0.0);
-  std::vector<scalar_t> exact_v(3,0.0);
-  std::vector<scalar_t> exact_t(3,0.0);
+  std::vector<work_t> exact_u(3,0.0);
+  std::vector<work_t> exact_v(3,0.0);
+  std::vector<work_t> exact_t(3,0.0);
   exact_u[0] = 52;   exact_u[1] = 100.5; exact_u[2] = 456;
   exact_v[0] = 46;   exact_v[1] = 234;   exact_v[2] = 16;
   exact_t[0] = 0.25; exact_t[1] = 456.1; exact_t[2] = 0;
@@ -159,10 +159,10 @@ int main(int argc, char *argv[]) {
     }
   }
   *outStream << "testing the closest point function" << std::endl;
-  const scalar_t up = 10.0;
-  const scalar_t vp = 12.0;
-  const scalar_t tp = 0.01;
-  scalar_t dist = 0.0;
+  const work_t up = 10.0;
+  const work_t vp = 12.0;
+  const work_t tp = 0.01;
+  work_t dist = 0.0;
   size_t id = 0;
   path.closest_triad(up,vp,tp,id,dist);
   if(id!=0){
@@ -179,14 +179,14 @@ int main(int argc, char *argv[]) {
   const int_t subset_size = 27;
   Teuchos::RCP<std::vector<int_t> > neighbor_ids = Teuchos::rcp(new std::vector<int_t>(4,0));
   (*neighbor_ids)[0] = -1; // subsets 1 2 and 3 all have 0 as their seed neighbor, but 0 has -1 because it is the seed
-  Teuchos::ArrayRCP<scalar_t> coords_x(num_subsets,0);
-  Teuchos::ArrayRCP<scalar_t> coords_y(num_subsets,0);
+  Teuchos::ArrayRCP<work_t> coords_x(num_subsets,0);
+  Teuchos::ArrayRCP<work_t> coords_y(num_subsets,0);
   coords_x[0] = 151; coords_y[0] = 277;
   coords_x[1] = 209; coords_y[1] = 269;
   coords_x[2] = 153; coords_y[2] = 328;
   coords_x[3] = 211; coords_y[3] = 336;
-  const scalar_t u_exact = 138.0;
-  const scalar_t v_exact = -138.0;
+  const work_t u_exact = 138.0;
+  const work_t v_exact = -138.0;
   // write a simple path file to be used in the examples below:
   std::ofstream path_file;
   path_file.open("InitializerTest.path");
@@ -244,8 +244,8 @@ int main(int argc, char *argv[]) {
       }
       //schema->print_fields();
       for(int_t i=0;i<schema->local_num_subsets();++i){
-        const scalar_t u = schema->local_field_value(i,SUBSET_DISPLACEMENT_X_FS);
-        const scalar_t v = schema->local_field_value(i,SUBSET_DISPLACEMENT_Y_FS);
+        const work_t u = schema->local_field_value(i,SUBSET_DISPLACEMENT_X_FS);
+        const work_t v = schema->local_field_value(i,SUBSET_DISPLACEMENT_Y_FS);
         *outStream << i << " u: " << u << " v: " << v << std::endl;
         if(std::abs(u-u_exact) > errorTol || std::abs(v-v_exact) > errorTol){
           *outStream << "Error, the displacement values are not correct" << std::endl;

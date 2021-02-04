@@ -127,17 +127,17 @@ const int_t y):
 
   /// \brief Correlation criteria
   /// \param shape_function pointer to the class that holds the deformation parameter values
-  scalar_t gamma( Teuchos::RCP<Local_Shape_Function> shape_function) const;
+  work_t gamma( Teuchos::RCP<Local_Shape_Function> shape_function) const;
 
   /// \brief Uncertainty measure for solution
   /// \param shape_function [out] pointer to the class that holds the deformation parameter values
   /// \param noise_level [out] Returned as the standard deviation estimate of the image noise sigma_g from Sutton et.al.
-  scalar_t sigma( Teuchos::RCP<Local_Shape_Function> shape_function,
-    scalar_t & noise_level) const;
+  work_t sigma( Teuchos::RCP<Local_Shape_Function> shape_function,
+    work_t & noise_level) const;
 
   /// \brief Measure of the slope of the optimization landscape or how deep the minimum well is
   /// \param shape_function pointer to the class that holds the deformation parameter values
-  scalar_t beta( Teuchos::RCP<Local_Shape_Function> shape_function) const;
+  work_t beta( Teuchos::RCP<Local_Shape_Function> shape_function) const;
 
   /// \brief Gradient based optimization algorithm
   /// \param shape_function pointer to the class that holds the deformation parameter values
@@ -151,11 +151,11 @@ const int_t y):
   /// \param override_tol set this value if for this particular subset, the tolerance should be changed
   Status_Flag computeUpdateRobust(Teuchos::RCP<Local_Shape_Function> shape_function,
     int_t & num_iterations,
-    const scalar_t & override_tol = -1.0);
+    const work_t & override_tol = -1.0);
 
   /// \brief Returns the current value of the field specified. These values are stored in the schema
   /// \param spec Field_Spec that defines the requested field
-  const mv_scalar_type & global_field_value(const DICe::field_enums::Field_Spec spec)const{
+  const mv_work_type & global_field_value(const DICe::field_enums::Field_Spec spec)const{
     assert(correlation_point_global_id_>=0);
     return schema_->global_field_value(correlation_point_global_id_,spec);}
 

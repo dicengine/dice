@@ -81,14 +81,14 @@ public:
   /// \param threshold if the initial evaluation of gamma is below this value, the analysis will be skipped
   /// A return value of MAX_ITERATIONS_REACHED means that convergence did not occur in the allowed number of iterations.
   /// A return value of CORRELATION_SUCCESSFUL means that convergence was obtained for the solution stored in the variables vector
-  virtual Status_Flag minimize(Teuchos::RCP<std::vector<scalar_t> > variables,
-    Teuchos::RCP<std::vector<scalar_t> > deltas,
+  virtual Status_Flag minimize(Teuchos::RCP<std::vector<work_t> > variables,
+    Teuchos::RCP<std::vector<work_t> > deltas,
     int_t & num_iterations,
-    const scalar_t & threshold = 1.0E-10);
+    const work_t & threshold = 1.0E-10);
 
   /// \brief the objective function that the simplex method is optimizing
   /// \param variables the current guess at which to evaluate the objective
-  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > variables)=0;
+  virtual work_t objective(Teuchos::RCP<std::vector<work_t> > variables)=0;
 
 protected:
   /// Maximum allowed iterations for convergence
@@ -96,7 +96,7 @@ protected:
   /// Convergence tolerance
   double tolerance_;
   /// Numerically small value
-  scalar_t tiny_;
+  work_t tiny_;
 
 };
 
@@ -118,7 +118,7 @@ public:
 
   /// \brief the objective function that the simplex method is optimizing
   /// \param variables the current guess at which to evaluate the objective
-  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > variables);
+  virtual work_t objective(Teuchos::RCP<std::vector<work_t> > variables);
 
   /// call the minimization routine
   /// \param shape_function pointer to a shape function
@@ -127,7 +127,7 @@ public:
   using Simplex::minimize;
   Status_Flag minimize(Teuchos::RCP<Local_Shape_Function> shape_function,
     int_t & num_iterations,
-    const scalar_t & threshold = 1.0E-10);
+    const work_t & threshold = 1.0E-10);
 
 protected:
   /// Pointer to a DICe::Objective, used to gain access to objective methods like gamma()
@@ -157,7 +157,7 @@ public:
 
   /// \brief the objective function that the simplex method is optimizing
   /// \param variables the current guess at which to evaluate the objective
-  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > variables);
+  virtual work_t objective(Teuchos::RCP<std::vector<work_t> > variables);
 
 protected:
   /// Pointer to the left image
@@ -189,7 +189,7 @@ public:
 
   /// \brief the objective function that the simplex method is optimizing
   /// \param variables the current guess at which to evaluate the objective
-  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > variables);
+  virtual work_t objective(Teuchos::RCP<std::vector<work_t> > variables);
 
 protected:
   /// Pointer to the left image
@@ -228,7 +228,7 @@ public:
 
   /// \brief the objective function that the simplex method is optimizing
   /// \param variables the current guess at which to evaluate the objective
-  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > variables);
+  virtual work_t objective(Teuchos::RCP<std::vector<work_t> > variables);
 
 protected:
   /// Pointer to the left image
@@ -263,7 +263,7 @@ public:
 
   /// \brief the objective function that the simplex method is optimizing
   /// \param variables the current guess at which to evaluate the objective
-  virtual scalar_t objective(Teuchos::RCP<std::vector<scalar_t> > variables);
+  virtual work_t objective(Teuchos::RCP<std::vector<work_t> > variables);
 
 protected:
   /// Pointer to the left image

@@ -211,9 +211,10 @@ void read_image_dimensions(const char * file_name,
   }
 }
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void read_image(const char * file_name,
-  Teuchos::ArrayRCP<intensity_t> & intensities,
+  Teuchos::ArrayRCP<S> & intensities,
   const Teuchos::RCP<Teuchos::ParameterList> & params){
   int_t sub_w=0;
   int_t sub_h=0;
@@ -249,7 +250,7 @@ void read_image(const char * file_name,
     }
     if(intensities.size()==0){
       read_rawi_image_dimensions(file_name,width,height);
-      intensities = Teuchos::ArrayRCP<intensity_t>(width*height,0.0);
+      intensities = Teuchos::ArrayRCP<S>(width*height,0.0);
     }
     read_rawi_image(file_name,intensities.getRawPtr(),layout_right);
   }
@@ -280,8 +281,10 @@ void read_image(const char * file_name,
     width = sub_w==0?hc->width():sub_w;
     height = sub_h==0?hc->height():sub_h;
 
+    // TODO  test type S if it == uint16_t simply move the pointer, otherwise cast each value
+
     if(intensities.size()==0)
-      intensities = Teuchos::ArrayRCP<intensity_t>(width*height,0.0);
+      intensities = Teuchos::ArrayRCP<S>(width*height,0.0);
     // TODO FIXME TODO FIXME don't manually copy things like this in the future, but copy the pointer instead
     // TODO hoping to get rid of the crap below
     if(is_avg){
@@ -298,9 +301,9 @@ void read_image(const char * file_name,
         if(threshold==hc->max_possible_intensity()||reinit){
           std::vector<uint16_t> full_data = hc->get_frame(start_index);
           std::sort(full_data.begin(),full_data.end());
-          const scalar_t outlier = 0.98*full_data[full_data.size()-1];
+          const work_t outlier = 0.98*full_data[full_data.size()-1];
           for(size_t i=0;i<full_data.size();++i)
-            if((scalar_t)full_data[full_data.size()-i-1]<outlier){
+            if((work_t)full_data[full_data.size()-i-1]<outlier){
               threshold = full_data[full_data.size()-i-1];
               break;
             }
@@ -310,13 +313,13 @@ void read_image(const char * file_name,
       uint16_t * data = hc->data(start_index,sub_offset_x,width,sub_offset_y,height);
       // TODO this is the copy to remove later
       for(int_t i=0;i<intensities.size();++i)
-          intensities[i] = data[i];
+          intensities[i] = static_cast<S>(data[i]);
       if(filter_failed_pixels){
         for(int_t i=0;i<intensities.size();++i)
-          intensities[i] = std::min(intensities[i],(intensity_t)threshold);
+          intensities[i] = std::min(intensities[i],static_cast<S>(threshold));
       }
 //      if(convert_to_8_bit){
-//        const scalar_t conversion_factor = hc->conversion_factor_to_8_bit();
+//        const work_t conversion_factor = hc->conversion_factor_to_8_bit();
 //        for(int_t i=0;i<intensities.size();++i)
 //            intensities[i] = static_cast<uint16_t>(intensities[i]*conversion_factor);
 //      }
@@ -336,8 +339,15 @@ void read_image(const char * file_name,
         netcdf_reader.get_image_dimensions(netcdf_file.c_str(),width,height,num_time_steps);
       }
       if(intensities.size()==0)
-        intensities = Teuchos::ArrayRCP<intensity_t>(width*height,0.0);
-      netcdf_reader.read_netcdf_image(netcdf_file.c_str(),index,intensities.getRawPtr(),sub_w,sub_h,sub_offset_x,sub_offset_y,layout_right);
+        intensities = Teuchos::ArrayRCP<S>(width*height,0);
+      if(std::is_same<S,work_t>::value){
+        netcdf_reader.read_netcdf_image(netcdf_file.c_str(),index,intensities.getRawPtr(),sub_w,sub_h,sub_offset_x,sub_offset_y,layout_right);
+      }else{
+        Teuchos::ArrayRCP<work_t> netcdf_intensities(width*height,0);
+        netcdf_reader.read_netcdf_image(netcdf_file.c_str(),index,netcdf_intensities.getRawPtr(),sub_w,sub_h,sub_offset_x,sub_offset_y,layout_right);
+        for(int_t i=0;i<netcdf_intensities.size();++i) // this conversion is needed since netcdf always stores values in float or double
+          intensities[i] = static_cast<S>(netcdf_intensities[i]);
+      }
     }
 #endif
   else{
@@ -349,7 +359,7 @@ void read_image(const char * file_name,
     assert(width+sub_offset_x <= image.cols);
     assert(height+sub_offset_y <= image.rows);
     if(intensities.size()==0)
-      intensities = Teuchos::ArrayRCP<intensity_t>(width*height,0.0);
+      intensities = Teuchos::ArrayRCP<S>(width*height,0.0);
     for (int_t y=sub_offset_y; y<sub_offset_y+height; ++y) {
       uchar* p = image.ptr(y);
       p+=sub_offset_x;
@@ -366,8 +376,9 @@ void read_image(const char * file_name,
   // apply any post processing of the images as requested
   if(params!=Teuchos::null){
     if(params->get<bool>(remove_outlier_pixels,false)){
-      const intensity_t outlier_rep_value = params->get<double>(outlier_replacement_value,-1.0);
-      remove_outliers(width,height,intensities.getRawPtr(),outlier_rep_value);
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"depricated function");
+//      const intensity_t outlier_rep_value = params->get<double>(outlier_replacement_value,-1.0);
+//      remove_outliers(width,height,intensities.getRawPtr(),outlier_rep_value);
     }
     if(params->get<bool>(spread_intensity_histogram,false)){
       spread_histogram(width,height,intensities.getRawPtr());
@@ -384,10 +395,15 @@ void read_image(const char * file_name,
   }
 }
 
+template
+DICE_LIB_DLL_EXPORT
+void read_image(const char *,Teuchos::ArrayRCP<storage_t> &,const Teuchos::RCP<Teuchos::ParameterList> &);
+
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void round_intensities(const int_t width,
   const int_t height,
-  intensity_t * intensities){
+  S * intensities){
   for(int_t y=0;y<height;++y){
     for(int_t x=0;x<width;++x){
       intensities[y*width + x] = std::round(intensities[y*width + x]);
@@ -395,40 +411,44 @@ void round_intensities(const int_t width,
   }
 }
 
-
+template
 DICE_LIB_DLL_EXPORT
-void remove_outliers(const int_t width,
-  const int_t height,
-  intensity_t * intensities,
-  const intensity_t & rep_value){
+void round_intensities(const int_t,const int_t,storage_t *);
 
-  std::vector<intensity_t> sorted_intensities(width*height,0.0);
-  for(int_t i=0;i<width*height;++i)
-    sorted_intensities[i] = intensities[i];
-  std::sort(sorted_intensities.begin(),sorted_intensities.end());
-  const intensity_t outlier_intens = 0.98 * sorted_intensities[width*height-1];
-  intensity_t replacement_intens = 0.0;
-  if(rep_value>=0.0){
-    replacement_intens = rep_value;
-  }else{
-    for(int_t i=0;i<width*height;++i){
-      if(sorted_intensities[width*height-i-1] < outlier_intens){
-        replacement_intens = sorted_intensities[width*height-i-1];
-        break;
-      }
-    }
-  }
-  DEBUG_MSG("utils::remove_outliers(): outlier intensity value: " << outlier_intens << " to be replaced with intensity: " << replacement_intens);
-  for(int_t i=0;i<width*height;++i){
-      if(intensities[i]>=outlier_intens)
-        intensities[i] = replacement_intens;
-  }
-}
+//DICE_LIB_DLL_EXPORT
+//void remove_outliers(const int_t width,
+//  const int_t height,
+//  S * intensities,
+//  const S & rep_value){
+//
+//  std::vector<S> sorted_intensities(width*height,0.0);
+//  for(int_t i=0;i<width*height;++i)
+//    sorted_intensities[i] = intensities[i];
+//  std::sort(sorted_intensities.begin(),sorted_intensities.end());
+//  const S outlier_intens = 0.98 * sorted_intensities[width*height-1];
+//  S replacement_intens = 0.0;
+//  if(rep_value>=0.0){
+//    replacement_intens = rep_value;
+//  }else{
+//    for(int_t i=0;i<width*height;++i){
+//      if(sorted_intensities[width*height-i-1] < outlier_intens){
+//        replacement_intens = sorted_intensities[width*height-i-1];
+//        break;
+//      }
+//    }
+//  }
+//  DEBUG_MSG("utils::remove_outliers(): outlier intensity value: " << outlier_intens << " to be replaced with intensity: " << replacement_intens);
+//  for(int_t i=0;i<width*height;++i){
+//      if(intensities[i]>=outlier_intens)
+//        intensities[i] = replacement_intens;
+//  }
+//}
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void floor_intensities(const int_t width,
   const int_t height,
-  intensity_t * intensities){
+  S * intensities){
   for(int_t y=0;y<height;++y){
     for(int_t x=0;x<width;++x){
       intensities[y*width + x] = std::floor(intensities[y*width + x]);
@@ -436,10 +456,15 @@ void floor_intensities(const int_t width,
   }
 }
 
+template
+DICE_LIB_DLL_EXPORT
+void floor_intensities(const int_t,const int_t,storage_t *);
+
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void undistort_intensities(const int_t width,
   const int_t height,
-  intensity_t * intensities,
+  S * intensities,
   const Teuchos::RCP<Teuchos::ParameterList> & params){
 
   static bool first_run = true;
@@ -453,17 +478,17 @@ void undistort_intensities(const int_t width,
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(undistort_images),std::runtime_error,"");
     Teuchos::ParameterList cal_sublist = params->sublist(undistort_images);
     TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("fx"),std::runtime_error,"");
-    const scalar_t fx = cal_sublist.get<double>("fx");
+    const work_t fx = cal_sublist.get<double>("fx");
     TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("fy"),std::runtime_error,"");
-    const scalar_t fy = cal_sublist.get<double>("fy");
+    const work_t fy = cal_sublist.get<double>("fy");
     TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("cx"),std::runtime_error,"");
-    const scalar_t cx = cal_sublist.get<double>("cx");
+    const work_t cx = cal_sublist.get<double>("cx");
     TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("cy"),std::runtime_error,"");
-    const scalar_t cy = cal_sublist.get<double>("cy");
+    const work_t cy = cal_sublist.get<double>("cy");
     TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("k1"),std::runtime_error,"");
-    const scalar_t k1 = cal_sublist.get<double>("k1");
+    const work_t k1 = cal_sublist.get<double>("k1");
     TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("k2"),std::runtime_error,"");
-    const scalar_t k2 = cal_sublist.get<double>("k2");
+    const work_t k2 = cal_sublist.get<double>("k2");
     intrinsics.at<float>(0,0) = fx;
     intrinsics.at<float>(1,1) = fy;
     intrinsics.at<float>(0,2) = cx;
@@ -491,32 +516,40 @@ void undistort_intensities(const int_t width,
     }
   }
 }
+template
+DICE_LIB_DLL_EXPORT
+void undistort_intensities(const int_t,const int_t,storage_t *,const Teuchos::RCP<Teuchos::ParameterList> &);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void spread_histogram(const int_t width,
   const int_t height,
-  intensity_t * intensities){
-  intensity_t max_intensity = -1.0E10;
-  intensity_t min_intensity = 1.0E10;
+  S * intensities){
+  S max_intensity = std::numeric_limits<S>::min();
+  S min_intensity = std::numeric_limits<S>::max();
   for(int_t i=0; i<width*height; ++i){
     if(intensities[i] > max_intensity) max_intensity = intensities[i];
     if(intensities[i] < min_intensity) min_intensity = intensities[i];
   }
-  intensity_t range = 255.0;
-  if(max_intensity > 255.0 && max_intensity <= 4096.0)
-    range = 4096.0;
+  S range = 255;
+  if(max_intensity > 255 && max_intensity <= 4096)
+    range = 4096;
   else if(max_intensity > 4096)
     range = 65535.0;
   DEBUG_MSG("utils::spread_histogram(): range: " << range);
   DEBUG_MSG("utils::spread_histogram(): max intensity: " << max_intensity);
   DEBUG_MSG("utils::spread_histogram(): min intensity: " << min_intensity);
   if((max_intensity - min_intensity) == 0.0) return;
-  const intensity_t fac = range / (max_intensity - min_intensity);
+  const work_t fac = range / (max_intensity - min_intensity);
   for(int_t y=0;y<height;++y){
     for(int_t x=0;x<width;++x)
-      intensities[y*width + x] = (intensities[y*width + x]-min_intensity)*fac;
+      intensities[y*width + x] = static_cast<S>((intensities[y*width + x]-min_intensity)*fac);
   }
 }
+
+template
+DICE_LIB_DLL_EXPORT
+void spread_histogram(const int_t,const int_t,storage_t *);
 
 DICE_LIB_DLL_EXPORT
 cv::Mat read_image(const char * file_name){
@@ -529,7 +562,7 @@ cv::Mat read_image(const char * file_name){
     int_t height = 0;
     read_image_dimensions(file_name,width,height);
     // read the cine
-    Teuchos::ArrayRCP<intensity_t> intensities(width*height,0.0);
+    Teuchos::ArrayRCP<storage_t> intensities(width*height,0.0);
     read_image(file_name,intensities,params);
     cv::Mat img(height,width,CV_8UC1,cv::Scalar(0));
     for(int_t y=0;y<height;++y){
@@ -542,25 +575,26 @@ cv::Mat read_image(const char * file_name){
     return cv::imread(file_name,cv::IMREAD_GRAYSCALE);
 }
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void write_color_overlap_image(const char * file_name,
   const int_t width,
   const int_t height,
-  intensity_t * bottom_intensities,
-  intensity_t * top_intensities){
+  S * bottom_intensities,
+  S * top_intensities){
 
-  intensity_t bot_max_intensity = -1.0E10;
-  intensity_t bot_min_intensity = 1.0E10;
-  intensity_t top_max_intensity = -1.0E10;
-  intensity_t top_min_intensity = 1.0E10;
+  S bot_max_intensity = std::numeric_limits<S>::min();
+  S bot_min_intensity = std::numeric_limits<S>::max();
+  S top_max_intensity = std::numeric_limits<S>::min();
+  S top_min_intensity = std::numeric_limits<S>::max();
   for(int_t i=0; i<width*height; ++i){
     if(bottom_intensities[i] > bot_max_intensity) bot_max_intensity = bottom_intensities[i];
     if(bottom_intensities[i] < bot_min_intensity) bot_min_intensity = bottom_intensities[i];
     if(top_intensities[i] > top_max_intensity) top_max_intensity = top_intensities[i];
     if(top_intensities[i] < top_min_intensity) top_min_intensity = top_intensities[i];
   }
-  intensity_t bot_fac = 1.0;
-  intensity_t top_fac = 1.0;
+  S bot_fac = 1.0;
+  S top_fac = 1.0;
   if((bot_max_intensity - bot_min_intensity) != 0.0)
     bot_fac = 0.5*255.0 / (bot_max_intensity - bot_min_intensity);
   if((top_max_intensity - top_min_intensity) != 0.0)
@@ -575,13 +609,16 @@ void write_color_overlap_image(const char * file_name,
   }
   cv::imwrite(file_name,out_img);
 }
+template
+DICE_LIB_DLL_EXPORT
+void write_color_overlap_image(const char *,const int_t,const int_t,storage_t *,storage_t *);
 
-
+template<typename S>
 DICE_LIB_DLL_EXPORT
 void write_image(const char * file_name,
   const int_t width,
   const int_t height,
-  intensity_t * intensities,
+  S * intensities,
   const bool is_layout_right){
   // determine the file type based on the file_name
   Image_File_Type file_type = image_file_type(file_name);
@@ -595,10 +632,10 @@ void write_image(const char * file_name,
   }
   else{
     // check the range of the values and scale to 8 bit
-    scalar_t max_value = 0.0;
+    work_t max_value = 0.0;
     for(int_t i=0;i<width*height;++i)
       if(intensities[i]>max_value) max_value = intensities[i];
-    scalar_t conversion_factor = 1.0;
+    work_t conversion_factor = 1.0;
     if(max_value > 255.0){
       conversion_factor = 255.0 / max_value;
     }
@@ -618,6 +655,10 @@ void write_image(const char * file_name,
     cv::imwrite(file_name,out_img);
   }
 }
+
+template
+DICE_LIB_DLL_EXPORT
+void write_image(const char *,const int_t,const int_t,storage_t *,const bool);
 
 Teuchos::RCP<hypercine::HyperCine>
 HyperCine_Singleton::hypercine(const std::string & id,

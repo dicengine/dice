@@ -459,7 +459,7 @@ int_t opencv_epipolar_line(Mat & img,
     DEBUG_MSG("drawing line on image");
     TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(opencv_server_cal_file),std::runtime_error,"");
     Teuchos::RCP<DICe::Camera_System> camera_system = Teuchos::rcp(new DICe::Camera_System(options.get<std::string>(opencv_server_cal_file)));
-    Matrix<scalar_t,3> F = camera_system->fundamental_matrix();
+    Matrix<work_t,3> F = camera_system->fundamental_matrix();
     // TODO move this to a matrix method?
     cv::Mat matF =  cv::Mat(3, 3, CV_32F);
     for(int_t i=0;i<matF.rows;++i){
@@ -472,9 +472,9 @@ int_t opencv_epipolar_line(Mat & img,
     std::vector<Point2f> points;
     points.push_back(kpt.pt);
     cv::computeCorrespondEpilines(points,whichImage,matF,lines);
-    scalar_t a = lines.at<float>(0);
-    scalar_t b = lines.at<float>(1);
-    scalar_t c = lines.at<float>(2);
+    work_t a = lines.at<float>(0);
+    work_t b = lines.at<float>(1);
+    work_t c = lines.at<float>(2);
     TEUCHOS_TEST_FOR_EXCEPTION(b==0.0,std::runtime_error,"");
     TEUCHOS_TEST_FOR_EXCEPTION(a==0.0,std::runtime_error,"");
     Point2f ptX(0.0,-1.0*c/b);
@@ -740,10 +740,10 @@ int_t opencv_dot_targets(Mat & img,
     }
   }
 
-  std::vector<scalar_t> img_to_grdx(6,0.0);
-  std::vector<scalar_t> img_to_grdy(6,0.0);
-  std::vector<scalar_t> grd_to_imgx(6,0.0);
-  std::vector<scalar_t> grd_to_imgy(6,0.0);
+  std::vector<work_t> img_to_grdx(6,0.0);
+  std::vector<work_t> img_to_grdy(6,0.0);
+  std::vector<work_t> grd_to_imgx(6,0.0);
+  std::vector<work_t> grd_to_imgy(6,0.0);
   // from the keypoints calculate the image to grid and grid to image transforms (no keystoning)
   calc_trans_coeff(key_points, marker_grid_locs,img_to_grdx,img_to_grdy,grd_to_imgx,grd_to_imgy);
 
@@ -885,10 +885,10 @@ void get_dot_markers(cv::Mat img,
 //calculate the transformation coefficients
 void calc_trans_coeff(std::vector<cv::KeyPoint> & imgpoints,
   std::vector<cv::KeyPoint> & grdpoints,
-  std::vector<scalar_t> & img_to_grdx,
-  std::vector<scalar_t> & img_to_grdy,
-  std::vector<scalar_t> & grd_to_imgx,
-  std::vector<scalar_t> & grd_to_imgy) {
+  std::vector<work_t> & img_to_grdx,
+  std::vector<work_t> & img_to_grdy,
+  std::vector<work_t> & grd_to_imgx,
+  std::vector<work_t> & grd_to_imgy) {
   TEUCHOS_TEST_FOR_EXCEPTION(grd_to_imgx.size()!=6,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(grd_to_imgy.size()!=6,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(img_to_grdx.size()!=6,std::runtime_error,"");
@@ -1018,10 +1018,10 @@ void calc_trans_coeff(std::vector<cv::KeyPoint> & imgpoints,
 void filter_dot_markers(std::vector<cv::KeyPoint>  dots,
   std::vector<cv::KeyPoint> & img_points,
   std::vector<cv::KeyPoint> & grd_points,
-  const std::vector<scalar_t> & grd_to_imgx,
-  const std::vector<scalar_t> & grd_to_imgy,
-  const std::vector<scalar_t> & img_to_grdx,
-  const std::vector<scalar_t> & img_to_grdy,
+  const std::vector<work_t> & grd_to_imgx,
+  const std::vector<work_t> & grd_to_imgy,
+  const std::vector<work_t> & img_to_grdx,
+  const std::vector<work_t> & img_to_grdy,
   const int_t num_fiducials_x,
   const int_t num_fiducials_y,
   float dot_tol,
@@ -1138,8 +1138,8 @@ void create_bounding_box(std::vector<float> & box_x,
   std::vector<float> & box_y,
   const int_t num_fiducials_x,
   const int_t num_fiducials_y,
-  const std::vector<scalar_t> & grd_to_imgx,
-  const std::vector<scalar_t> & grd_to_imgy,
+  const std::vector<work_t> & grd_to_imgx,
+  const std::vector<work_t> & grd_to_imgy,
   const int_t img_w,
   const int_t img_h) {
   assert(box_x.size()==box_y.size());
@@ -1172,8 +1172,8 @@ void grid_to_image(const float & grid_x,
   const float & grid_y,
   float & img_x,
   float & img_y,
-  const std::vector<scalar_t> & grd_to_imgx,
-  const std::vector<scalar_t> & grd_to_imgy,
+  const std::vector<work_t> & grd_to_imgx,
+  const std::vector<work_t> & grd_to_imgy,
   const int_t img_w,
   const int_t img_h) {
   TEUCHOS_TEST_FOR_EXCEPTION(grd_to_imgx.size()!=6,std::runtime_error,"");
@@ -1191,8 +1191,8 @@ void image_to_grid(const float & img_x,
   const float & img_y,
   float & grid_x,
   float & grid_y,
-  const std::vector<scalar_t> & img_to_grdx,
-  const std::vector<scalar_t> & img_to_grdy) {
+  const std::vector<work_t> & img_to_grdx,
+  const std::vector<work_t> & img_to_grdy) {
   grid_x = img_to_grdx[0] + img_to_grdx[1] * img_x + img_to_grdx[2] * img_y + img_to_grdx[3] * img_x * img_y + img_to_grdx[4] * img_x * img_x + img_to_grdx[5] * img_y * img_y;
   grid_y = img_to_grdy[0] + img_to_grdy[1] * img_x + img_to_grdy[2] * img_y + img_to_grdy[3] * img_x * img_y + img_to_grdy[4] * img_x * img_x + img_to_grdy[5] * img_y * img_y;
 }

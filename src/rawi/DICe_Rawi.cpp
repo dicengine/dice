@@ -71,9 +71,10 @@ void read_rawi_image_dimensions(const char * file_name,
   rawi_file.close();
 }
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void read_rawi_image(const char * file_name,
-  intensity_t * intensities,
+  S * intensities,
   const bool is_layout_right){
 
   std::ifstream rawi_file (file_name, std::ifstream::in | std::ifstream::binary);
@@ -90,29 +91,34 @@ void read_rawi_image(const char * file_name,
   rawi_file.read(reinterpret_cast<char*>(&num_bytes), sizeof(uint32_t));
   // check that the byte size of the intensity values in the file is compatible with the current
   // size used to store intensity_t values
-  if(num_bytes!=sizeof(intensity_t)){
-    std::cerr << "Can't open file because it was saved using a different basic type for intensity_t: " + (std::string)file_name << std::endl;
+  if(num_bytes!=sizeof(S)){
+    std::cerr << "Can't read rawi file because it was saved using a different basic type for the value storage: " + (std::string)file_name << std::endl;
     exit(1);
   }
   // read the image data:
   for (uint32_t y=0; y<h; ++y) {
     if(is_layout_right)
       for (uint32_t x=0; x<w;++x){
-        rawi_file.read(reinterpret_cast<char*>(&intensities[y*w+x]),sizeof(intensity_t));
+        rawi_file.read(reinterpret_cast<char*>(&intensities[y*w+x]),sizeof(S));
       }
     else // otherwise assume layout left
       for (uint32_t x=0; x<w;++x){
-        rawi_file.read(reinterpret_cast<char*>(&intensities[x*h+y]),sizeof(intensity_t));
+        rawi_file.read(reinterpret_cast<char*>(&intensities[x*h+y]),sizeof(S));
       }
   }
   rawi_file.close();
 }
 
+template
+DICE_LIB_DLL_EXPORT
+void read_rawi_image(const char *,storage_t *,const bool);
+
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void write_rawi_image(const char * file_name,
   const int_t width,
   const int_t height,
-  intensity_t * intensities,
+  S * intensities,
   const bool is_layout_right){
   assert(width > 0);
   assert(height > 0);
@@ -120,7 +126,7 @@ void write_rawi_image(const char * file_name,
   // TODO make sure this cast is okay
   uint32_t w = (uint32_t)width;
   uint32_t h = (uint32_t)height;
-  uint32_t num_bytes = sizeof(intensity_t);
+  uint32_t num_bytes = sizeof(S);
   //create a new file:
   std::ofstream rawi_file (file_name, std::ofstream::out | std::ofstream::binary);
   if (!rawi_file.is_open()){
@@ -136,16 +142,19 @@ void write_rawi_image(const char * file_name,
   for (int_t y=0; y<height; ++y) {
     if(is_layout_right){
       for (int_t x=0; x<width;++x){
-        rawi_file.write(reinterpret_cast<char*>(&intensities[y*width + x]),sizeof(intensity_t));
+        rawi_file.write(reinterpret_cast<char*>(&intensities[y*width + x]),sizeof(S));
       }
     }
     else // otherwise assume layout left
       for (int_t x=0; x<width;++x){
-        rawi_file.write(reinterpret_cast<char*>(&intensities[x*height+y]),sizeof(intensity_t));
+        rawi_file.write(reinterpret_cast<char*>(&intensities[x*height+y]),sizeof(S));
       }
   }
   rawi_file.close();
 }
+template
+DICE_LIB_DLL_EXPORT
+void write_rawi_image(const char *,const int_t,const int_t,storage_t *,const bool);
 
 } // end namespace utils
 } // end namespace DICe

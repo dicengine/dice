@@ -243,7 +243,7 @@ Dirichlet_BC::apply(const bool first_iteration){
   for(size_t i=0;i<mesh_->bc_defs()->size();++i){
     const int_t node_set_id = i+1;  // +1 because bc ids are one-based
     if(!(*mesh_->bc_defs())[i].has_value_) continue;
-    const scalar_t value_ = (*mesh_->bc_defs())[i].value_;
+    const work_t value_ = (*mesh_->bc_defs())[i].value_;
     const int_t comp = (*mesh_->bc_defs())[i].comp_;
     DEBUG_MSG("Dirichlet_BC::apply(): applying a Dirichlet bc to node set id " << node_set_id
       << " comp " << comp << " value " << value_);
@@ -301,10 +301,10 @@ Subset_BC::apply(const bool first_iteration){
           residual->global_value(iy) = 0.0;
       }
       else{
-        scalar_t b_x = disp->global_value(ix);
-        scalar_t b_y = disp->global_value(iy);
-        const scalar_t x = coords->global_value(ix);
-        const scalar_t y = coords->global_value(iy);
+        work_t b_x = disp->global_value(ix);
+        work_t b_y = disp->global_value(iy);
+        const work_t x = coords->global_value(ix);
+        const work_t y = coords->global_value(iy);
         // get the closest pixel to x and y
         int_t px = (int_t)x;
         if(x - (int_t)x >= 0.5) px++;
@@ -365,12 +365,12 @@ MMS_BC::apply(const bool first_iteration){
     for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
       int_t ix = i*2+0;
       int_t iy = i*2+1;
-      scalar_t b_x = 0.0;
-      scalar_t b_y = 0.0;
-      const scalar_t x = coords->local_value(ix);
-      const scalar_t y = coords->local_value(iy);
+      work_t b_x = 0.0;
+      work_t b_y = 0.0;
+      const work_t x = coords->local_value(ix);
+      const work_t y = coords->local_value(iy);
       alg_->mms_problem()->velocity(x,y,b_x,b_y);
-      scalar_t phi = 0.0,d_phi_dt=0.0,grad_phi_x=0.0,grad_phi_y=0.0;
+      work_t phi = 0.0,d_phi_dt=0.0,grad_phi_x=0.0,grad_phi_y=0.0;
       alg_->mms_problem()->phi(x,y,phi);
       image_phi->local_value(i) = phi;
       alg_->mms_problem()->phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
@@ -382,9 +382,9 @@ MMS_BC::apply(const bool first_iteration){
     if(is_mixed_){
       Teuchos::RCP<MultiField> exact_lag = alg_->mesh()->get_field(field_enums::EXACT_LAGRANGE_MULTIPLIER_FS);
       for(int_t i=0;i<alg_->mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
-        const scalar_t x = coords->local_value(i*2+0);
-        const scalar_t y = coords->local_value(i*2+1);
-        scalar_t l_out = 0.0;
+        const work_t x = coords->local_value(i*2+0);
+        const work_t y = coords->local_value(i*2+1);
+        work_t l_out = 0.0;
         alg_->mms_problem()->lagrange(x,y,l_out);
         exact_lag->local_value(i) = l_out;
       }
@@ -412,9 +412,9 @@ MMS_BC::apply(const bool first_iteration){
           residual->global_value(iy) = 0.0;
       }
       else{
-        const scalar_t x = coords->global_value(ix);
-        const scalar_t y = coords->global_value(iy);
-        scalar_t b_x = 0.0, b_y = 0.0;
+        const work_t x = coords->global_value(ix);
+        const work_t y = coords->global_value(iy);
+        work_t b_x = 0.0, b_y = 0.0;
         alg_->mms_problem()->velocity(x,y,b_x,b_y);
         if(comp==0||comp==2)
           residual->global_value(ix) = b_x;
@@ -440,9 +440,9 @@ MMS_Lagrange_BC::apply(const bool first_iteration){
 //    for(int_t i=0;i<alg_->l_mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
 //      int_t ix = i*2+0;
 //      int_t iy = i*2+1;
-//      const scalar_t x = coords->local_value(ix);
-//      const scalar_t y = coords->local_value(iy);
-//      scalar_t l_out = 0.0;
+//      const work_t x = coords->local_value(ix);
+//      const work_t y = coords->local_value(iy);
+//      work_t l_out = 0.0;
 //      alg_->mms_problem()->lagrange(x,y,l_out);
 //      exact_lag->local_value(i) = l_out;
 //    }
@@ -459,9 +459,9 @@ MMS_Lagrange_BC::apply(const bool first_iteration){
       residual->global_value(node_gid + mixed_global_offset) = 0.0;
     }
     else{
-      const scalar_t x = coords->global_value(node_gid*2+0);
-      const scalar_t y = coords->global_value(node_gid*2+1);
-      scalar_t l_out = 0.0;
+      const work_t x = coords->global_value(node_gid*2+0);
+      const work_t y = coords->global_value(node_gid*2+1);
+      work_t l_out = 0.0;
       alg_->mms_problem()->lagrange(x,y,l_out);
       residual->global_value(node_gid + mixed_global_offset) = l_out;
     }
@@ -507,12 +507,12 @@ Constant_IC::apply(const bool first_iteration){
 //  /// neighbor ids for dirichlet boundary (used for filtering bcs)
 //  std::map<int_t,std::vector<int_t> > bc_neighbors_;
 //  /// neighbor distances^2 for dirichlet boundary (used for filtering bcs)
-//  std::map<int_t,std::vector<scalar_t> > bc_neighbor_distances_;
+//  std::map<int_t,std::vector<work_t> > bc_neighbor_distances_;
 //    // set up the neighbor list for each boundary node
 //    DEBUG_MSG("Global_Algorithm::pre_execution_tasks(): creating the point cloud");
 //    /// pointer to the point cloud used for the neighbor searching
 //    MultiField & coords = *mesh_->get_field(field_enums::INITIAL_COORDINATES_FS);
-//    Teuchos::RCP<Point_Cloud<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud<scalar_t>());
+//    Teuchos::RCP<Point_Cloud<work_t> > point_cloud = Teuchos::rcp(new Point_Cloud<work_t>());
 //    std::vector<int_t> node_map(num_bc_nodes);
 //    point_cloud->pts.resize(num_bc_nodes);
 //    for(int_t i=0;i<num_bc_nodes;++i){
@@ -529,11 +529,11 @@ Constant_IC::apply(const bool first_iteration){
 //    kd_tree->buildIndex();
 //    DEBUG_MSG("Global_Algorithm::pre_execution_tasks(): setting up neighbors");
 //    const int_t num_neighbors = 5;
-//    scalar_t query_pt[3];
+//    work_t query_pt[3];
 //    for(int_t i=0;i<num_bc_nodes;++i){
 //      std::vector<size_t> ret_index(num_neighbors);
 //      std::vector<int_t> neighbors(num_neighbors);
-//      std::vector<scalar_t> out_dist_sqr(num_neighbors);
+//      std::vector<work_t> out_dist_sqr(num_neighbors);
 //      const int_t node_gid = bc_set->find(boundary_node_set_id)->second[i];
 //      query_pt[0] = point_cloud->pts[i].x;
 //      query_pt[1] = point_cloud->pts[i].y;
@@ -542,7 +542,7 @@ Constant_IC::apply(const bool first_iteration){
 //      for(int_t j=0;j<num_neighbors;++j)
 //        neighbors[j] = node_map[ret_index[j]];
 //      bc_neighbors_.insert(std::pair<int_t,std::vector<int_t> >(node_gid,neighbors));
-//      bc_neighbor_distances_.insert(std::pair<int_t,std::vector<scalar_t> >(node_gid,out_dist_sqr));
+//      bc_neighbor_distances_.insert(std::pair<int_t,std::vector<work_t> >(node_gid,out_dist_sqr));
 //    }
 //    // describe the neighbors of each point:
 //    for(int_t i=0;i<num_bc_nodes;++i){

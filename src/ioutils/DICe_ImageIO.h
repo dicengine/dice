@@ -114,9 +114,10 @@ void read_image_dimensions(const char * file_name,
 /// Read an image into the host memory
 /// \param file_name the name of the file
 /// \param params apply special filters or select sub portions of the image
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void read_image(const char * file_name,
-  Teuchos::ArrayRCP<intensity_t> & intensities,
+  Teuchos::ArrayRCP<S> & intensities,
   const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
 
@@ -124,50 +125,54 @@ void read_image(const char * file_name,
 /// \param width
 /// \param height
 /// \param intensities
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void spread_histogram(const int_t width,
   const int_t height,
-  intensity_t * intensities);
+  S * intensities);
 
 /// Round the image intensity values to the nearest integer value
 /// \param width
 /// \param height
 /// \param intensities
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void round_intensities(const int_t width,
   const int_t height,
-  intensity_t * intensities);
+  S * intensities);
 
-/// Set the intensity value for outlier pixels (the ones with the highest intensity value) to the second highest value
-/// This is helpful in removing failed cine pixels
-/// \param width
-/// \param height
-/// \param intensities
-/// \param value replacement value
-DICE_LIB_DLL_EXPORT
-void remove_outliers(const int_t width,
-  const int_t height,
-  intensity_t * intensities,
-  const intensity_t & rep_value=-1.0);
+///// Set the intensity value for outlier pixels (the ones with the highest intensity value) to the second highest value
+///// This is helpful in removing failed cine pixels
+///// \param width
+///// \param height
+///// \param intensities
+///// \param value replacement value
+//DICE_LIB_DLL_EXPORT
+//void remove_outliers(const int_t width,
+//  const int_t height,
+//  storage_t * intensities,
+//  const storage_t & rep_value=-1.0);
 
 /// Round the image intensity values to the nearest integer value
 /// \param width
 /// \param height
 /// \param intensities
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void floor_intensities(const int_t width,
   const int_t height,
-  intensity_t * intensities);
+  S * intensities);
 
 /// undistort image intensity values to correct for lens distortion
 /// \param width
 /// \param height
 /// \param intensities
 /// \param params
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void undistort_intensities(const int_t width,
   const int_t height,
-  intensity_t * intensities,
+  S * intensities,
   const Teuchos::RCP<Teuchos::ParameterList> & params);
 
 
@@ -179,11 +184,12 @@ void undistort_intensities(const int_t width,
 /// \param height the height of the image
 /// \param intensities assumed to be an array of size width x height
 /// \param is_layout_right [optional] memory layout is LayoutRight (row-major)
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void write_image(const char * file_name,
   const int_t width,
   const int_t height,
-  intensity_t * intensities,
+  S * intensities,
   const bool is_layout_right = true);
 
 
@@ -193,12 +199,13 @@ void write_image(const char * file_name,
 /// \param height the height of the image
 /// \param bottom_intensities assumed to be an array of size width x height
 /// \param top_intensities assumed to be an array of size width x height
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void write_color_overlap_image(const char * file_name,
   const int_t width,
   const int_t height,
-  intensity_t * bottom_intensities,
-  intensity_t * top_intensities);
+  S * bottom_intensities,
+  S * top_intensities);
 
 /// Read an image into the host memory returning an opencv Mat object
 /// \param file_name the name of the file

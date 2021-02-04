@@ -200,17 +200,17 @@ int main(int argc, char *argv[]) {
         options,
         cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 1000, 1e-7));
 
-  Matrix<scalar_t,3> dice_R;
+  Matrix<work_t,3> dice_R;
   for (size_t i=0; i<3; i++) {
     for (size_t j=0; j<3; j++) {
       dice_R(i,j) = Rs[1].at<double>(i,j);
     }
   }
-//  Matrix<scalar_t,3> R_prod = dice_R.transpose()*dice_R;
+//  Matrix<work_t,3> R_prod = dice_R.transpose()*dice_R;
 //  std::cout << " R " << dice_R << " R_prod " << R_prod << " " << dice_R.transpose() <<  std::endl;
-  scalar_t alpha = 0.0;
-  scalar_t beta = 0.0;
-  scalar_t gamma = 0.0;
+  work_t alpha = 0.0;
+  work_t beta = 0.0;
+  work_t gamma = 0.0;
   Camera::Camera_Info::rotation_matrix_to_eulers(dice_R,alpha,beta,gamma);
   std::cout << "orientation of the right camera (GOES 16) to the left (GOES 17) defined by the Euler angles:" << std::endl;
   std::cout << "alpha " << alpha*180.0/DICE_PI << " (deg) beta " << beta*180.0/DICE_PI << " (deg) gamma " << gamma*180.0/DICE_PI << " (deg)" << std::endl;
@@ -243,17 +243,17 @@ int main(int argc, char *argv[]) {
 
   std::cout << "*** RMS mono error: " << rms_mono << std::endl;
 
-  Matrix<scalar_t,3> dice_R_;
+  Matrix<work_t,3> dice_R_;
   for (size_t i=0; i<3; i++) {
     for (size_t j=0; j<3; j++) {
       dice_R_(i,j) = Rs[0].at<double>(i,j);
     }
   }
-//  Matrix<scalar_t,3> R_prod = dice_R.transpose()*dice_R;
+//  Matrix<work_t,3> R_prod = dice_R.transpose()*dice_R;
 //  std::cout << " R " << dice_R << " R_prod " << R_prod << " " << dice_R.transpose() <<  std::endl;
-  scalar_t alpha_ = 0.0;
-  scalar_t beta_ = 0.0;
-  scalar_t gamma_ = 0.0;
+  work_t alpha_ = 0.0;
+  work_t beta_ = 0.0;
+  work_t gamma_ = 0.0;
   Camera::Camera_Info::rotation_matrix_to_eulers(dice_R_,alpha_,beta_,gamma_);
   std::cout << "orientation of the earth coords to left camera (GOES 17) defined by the Euler angles:" << std::endl;
   std::cout << "alpha_ " << alpha_*180.0/DICE_PI << " (deg) beta_ " << beta_*180.0/DICE_PI << " (deg) gamma_ " << gamma_*180.0/DICE_PI << " (deg)" << std::endl;

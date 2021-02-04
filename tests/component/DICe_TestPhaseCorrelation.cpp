@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
   int_t h_2 = ref_pol->height()/2;
 
   // vector with the correct solution for rotations
-  std::vector<scalar_t> exact_rot(12);
+  std::vector<work_t> exact_rot(12);
   exact_rot[0]  =  0.0;
   exact_rot[1]  =  30.0;
   exact_rot[2]  =  60.0;
@@ -114,8 +114,8 @@ int main(int argc, char *argv[]) {
   exact_rot[9]  = -90.0;
   exact_rot[10] = -60.0;
   exact_rot[11] = -30.0;
-  std::vector<scalar_t> exact_ux(12);
-  std::vector<scalar_t> exact_uy(12);
+  std::vector<work_t> exact_ux(12);
+  std::vector<work_t> exact_uy(12);
   exact_ux[0]  =   9; exact_uy[0]  = -12;
   exact_ux[1]  =   2; exact_uy[1]  =  -2;
   exact_ux[2]  =  12; exact_uy[2]  = -10;
@@ -156,13 +156,13 @@ int main(int argc, char *argv[]) {
     //*outStream << "  phase correlating angle" << std::endl;
 
     // phase correlate
-    scalar_t theta = 0.0;
+    work_t theta = 0.0;
     phase_correlate_row(img_pol,ref_pol,h_2,theta,true);
-    //scalar_t theta_orig = theta;
+    //work_t theta_orig = theta;
     theta *= -1.0;
     if (theta > DICE_PI) theta = -DICE_TWOPI + theta;
     if (theta < -DICE_PI) theta = DICE_TWOPI + theta;
-    const scalar_t theta_180 = (theta < 0) ? theta + DICE_PI : theta - DICE_PI;
+    const work_t theta_180 = (theta < 0) ? theta + DICE_PI : theta - DICE_PI;
     //*outStream << "***orig: " << theta_orig <<  " theta: " << theta*180.0/DICE_PI << " theta_180: " << theta_180*180.0/DICE_PI << std::endl;
 
     // transform the image by the computed rotation angle
@@ -180,27 +180,27 @@ int main(int argc, char *argv[]) {
     //rot_ref_180->write(transName180.str());
 
     // phase correlate the rotated images
-    scalar_t u_x0 = 0.0;
-    scalar_t u_y0 = 0.0;
-    const scalar_t test_0 = phase_correlate_x_y(rot_ref_0,img,u_x0,u_y0);
-    scalar_t u_x180 = 0.0;
-    scalar_t u_y180 = 0.0;
-    const scalar_t test_180 = phase_correlate_x_y(rot_ref_180,img,u_x180,u_y180);
-    scalar_t final_theta = theta;
-    scalar_t final_ux = u_x0;
-    scalar_t final_uy = u_y0;
+    work_t u_x0 = 0.0;
+    work_t u_y0 = 0.0;
+    const work_t test_0 = phase_correlate_x_y(rot_ref_0,img,u_x0,u_y0);
+    work_t u_x180 = 0.0;
+    work_t u_y180 = 0.0;
+    const work_t test_180 = phase_correlate_x_y(rot_ref_180,img,u_x180,u_y180);
+    work_t final_theta = theta;
+    work_t final_ux = u_x0;
+    work_t final_uy = u_y0;
     if(test_180>test_0){
       final_theta = theta_180;
       final_ux = u_x180;
       final_uy = u_y180;
     }
     *outStream << "theta: " << final_theta*180.0/DICE_PI << " ux: " << final_ux << " uy: " << final_uy << std::endl;
-    scalar_t angle_tol = 1.0; // 1 degree of error for the angle is accepted
+    work_t angle_tol = 1.0; // 1 degree of error for the angle is accepted
     if(std::abs(final_theta*180/DICE_PI - exact_rot[i]) > angle_tol){
       *outStream << "Error, the angle for phase correlation of image " << i << " is not correct" << std::endl;
       errorFlag++;
     }
-    scalar_t disp_tol = 1.0; // 1 degree of error for the angle is accepted
+    work_t disp_tol = 1.0; // 1 degree of error for the angle is accepted
     if(std::abs(final_ux - exact_ux[i]) > disp_tol){
       *outStream << "Error, the x-displacement for phase correlation of image " << i << " is not correct" << std::endl;
       errorFlag++;

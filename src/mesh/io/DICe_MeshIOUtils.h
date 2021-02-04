@@ -91,8 +91,8 @@ public:
   /// \param step time step requested (must be zero for text input)
   void read_vector_field(const std::string & file_name,
     const std::string & field_name,
-    std::vector<scalar_t> & field_x,
-    std::vector<scalar_t> & field_y,
+    std::vector<work_t> & field_x,
+    std::vector<work_t> & field_y,
     const int_t step=0);
 
   /// read the coordinates from the given file
@@ -100,8 +100,8 @@ public:
   /// \param coords_x [out] the output coords x component
   /// \param coords_y [out] the output coords y component
   void read_coordinates(const std::string & file_name,
-    std::vector<scalar_t> & coords_x,
-    std::vector<scalar_t> & coords_y);
+    std::vector<work_t> & coords_x,
+    std::vector<work_t> & coords_y);
 
   /// import and project (if necessary) a vector field from the source
   /// file
@@ -111,17 +111,17 @@ public:
   /// \param field_y [out] vector of field y values
   void import_vector_field(const std::string & file_name,
     const std::string & field_name,
-    std::vector<scalar_t> & field_x,
-    std::vector<scalar_t> & field_y,
+    std::vector<work_t> & field_x,
+    std::vector<work_t> & field_y,
     const int_t step=0);
 
   /// return a pointer to the target pt locations in x
-  std::vector<scalar_t> * target_pts_x(){
+  std::vector<work_t> * target_pts_x(){
     return & target_pts_x_;
   }
 
   /// return a pointer to the target pt locations in y
-  std::vector<scalar_t> * target_pts_y(){
+  std::vector<work_t> * target_pts_y(){
     return & target_pts_y_;
   }
 
@@ -142,21 +142,21 @@ private:
   void initialize_source_points(const std::string & source_file_name);
 
   /// locations to import the data from
-  std::vector<scalar_t> source_pts_x_;
+  std::vector<work_t> source_pts_x_;
   /// locations to import the data from
-  std::vector<scalar_t> source_pts_y_;
+  std::vector<work_t> source_pts_y_;
   /// locations to project the imported file to
-  std::vector<scalar_t> target_pts_x_;
+  std::vector<work_t> target_pts_x_;
   /// locations to project the imported file to
-  std::vector<scalar_t> target_pts_y_;
+  std::vector<work_t> target_pts_y_;
   /// determines if the target and source points are colinear or not, true if not colinear
   bool projection_required_;
   /// holds the neighbor ids in the source set for each target point
   std::vector<std::vector<int_t> > neighbors_;
   /// holds the neighbor x dist of the source neighbor for each target point
-  std::vector<std::vector<scalar_t> > neighbor_dist_x_;
+  std::vector<std::vector<work_t> > neighbor_dist_x_;
   /// holds the neighbor y dist of the source neighbor for each target point
-  std::vector<std::vector<scalar_t> > neighbor_dist_y_;
+  std::vector<std::vector<work_t> > neighbor_dist_y_;
   /// number of neighbors to use
   int_t num_neigh_;
 

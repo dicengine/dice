@@ -58,10 +58,10 @@ Simplex::Simplex(const Teuchos::RCP<Teuchos::ParameterList> & params):
 }
 
 Status_Flag
-Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > variables,
-  Teuchos::RCP<std::vector<scalar_t> > deltas,
+Simplex::minimize(Teuchos::RCP<std::vector<work_t> > variables,
+  Teuchos::RCP<std::vector<work_t> > deltas,
   int_t & num_iterations,
-  const scalar_t & threshold){
+  const work_t & threshold){
   const int_t num_dofs = variables->size();
   assert(num_dofs>0);
   assert((int_t)deltas->size()==num_dofs);
@@ -76,15 +76,15 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > variables,
 #endif
 
   // allocate temp storage for routine and initialize the simplex vertices
-  std::vector<scalar_t> init_variables(num_dofs,0.0);
+  std::vector<work_t> init_variables(num_dofs,0.0);
   for(int_t i=0;i<num_dofs;++i)
     init_variables[i] = (*variables)[i];
 
   const int_t mpts = num_dofs + 1;
-  scalar_t * gamma_values = new scalar_t[mpts];
-  std::vector< Teuchos::RCP<std::vector<scalar_t> > > points(mpts);
+  work_t * gamma_values = new work_t[mpts];
+  std::vector< Teuchos::RCP<std::vector<work_t> > > points(mpts);
   for(int_t i=0;i<mpts;++i){
-    points[i] = Teuchos::rcp(new std::vector<scalar_t>(num_dofs,0.0));
+    points[i] = Teuchos::rcp(new std::vector<work_t>(num_dofs,0.0));
     // set the points for the initial bounding simplex
     for(int_t j=0;j<num_dofs;++j){
       (*points[i])[j] = (*variables)[j];
@@ -113,15 +113,15 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > variables,
   // work variables
 
   int_t inhi;
-  scalar_t ysave;
+  work_t ysave;
   int_t nfunk = 0;
-  scalar_t * points_column_sums = new scalar_t[num_dofs];
-  scalar_t * ptry = new scalar_t[num_dofs];
+  work_t * points_column_sums = new work_t[num_dofs];
+  work_t * ptry = new work_t[num_dofs];
 
   // sum up the columns of the simplex vertices
 
   for (int_t j = 0; j < num_dofs; j++) {
-    scalar_t sum = 0.0;
+    work_t sum = 0.0;
     for (int_t i = 0; i < mpts; i++) {
       sum += (*points[i])[j];
     }
@@ -129,12 +129,12 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > variables,
   }
 
   // simplex minimization routine
-  scalar_t old_rtol = 0.0;
-  scalar_t gamma_new = 0.0;
-  scalar_t gamma_old = -1.0;
+  work_t old_rtol = 0.0;
+  work_t gamma_new = 0.0;
+  work_t gamma_old = -1.0;
   int_t gamma_repeats = 0;
   const int_t gamma_repeats_allowed = 15;
-  const scalar_t gamma_tol = 1.0E-8;
+  const work_t gamma_tol = 1.0E-8;
   int_t iteration = 0;
   for (iteration=0; iteration < max_iterations_; iteration++) {
     if( iteration >= max_iterations_-1){
@@ -155,8 +155,8 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > variables,
           ihi = i;
         } else if (gamma_values[i] > gamma_values[inhi] && i != ihi) inhi = i;
     }
-    scalar_t rtol = 2.0*std::abs(gamma_values[ihi]-gamma_values[ilo])/(std::abs(gamma_values[ihi]) + std::abs(gamma_values[ilo]) + tiny_);
-    scalar_t rtol_diff = std::abs(rtol - old_rtol);
+    work_t rtol = 2.0*std::abs(gamma_values[ihi]-gamma_values[ilo])/(std::abs(gamma_values[ihi]) + std::abs(gamma_values[ilo]) + tiny_);
+    work_t rtol_diff = std::abs(rtol - old_rtol);
     //DEBUG_MSG("rtol old: " << old_rtol << " rtol " << rtol <<  " rtol diff: " << rtol_diff );
     old_rtol = rtol;
     if(rtol_diff < tiny_){
@@ -171,11 +171,11 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > variables,
       DEBUG_MSG("*** Warning: simplex optimization exiting due to repeating gamma (loss of accuracy may occur)");
     }
     if (rtol < tolerance_ || rtol_diff < tolerance_ || gamma_repeats > gamma_repeats_allowed) {
-      scalar_t dum = gamma_values[0];
+      work_t dum = gamma_values[0];
       gamma_values[0] = gamma_values[ilo];
       gamma_values[ilo] = dum;
       for (int_t i = 0; i < num_dofs; i++) {
-        scalar_t dum2 = (*points[0])[i];
+        work_t dum2 = (*points[0])[i];
         (*points[0])[i] = (*points[ilo])[i];
         (*points[ilo])[i] = dum2;
       }
@@ -183,7 +183,7 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > variables,
     }
     nfunk += 2;
 
-    scalar_t ytry,fac,fac1,fac2;
+    work_t ytry,fac,fac1,fac2;
 
     fac = -1.0;
     fac1 = (1.0 - fac)/num_dofs;
@@ -253,7 +253,7 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > variables,
         nfunk += num_dofs;
 
         for (int_t j = 0; j < num_dofs; j++) {
-          scalar_t sum = 0.0;
+          work_t sum = 0.0;
           for (int_t i = 0; i < mpts; i++)
             sum += (*points[i])[j];
           points_column_sums[j] = sum;
@@ -279,7 +279,7 @@ Simplex::minimize(Teuchos::RCP<std::vector<scalar_t> > variables,
 Status_Flag
 Subset_Simplex::minimize(Teuchos::RCP<Local_Shape_Function> shape_function,
   int_t & num_iterations,
-  const scalar_t & threshold){
+  const work_t & threshold){
   if(shape_function_==Teuchos::null)
     shape_function_=Teuchos::RCP<Local_Shape_Function>(shape_function);
   assert(shape_function_!=Teuchos::null);
@@ -295,8 +295,8 @@ Subset_Simplex::Subset_Simplex(const DICe::Objective * const obj,
   assert(obj_);
 }
 
-scalar_t
-Subset_Simplex::objective(Teuchos::RCP<std::vector<scalar_t> > variables){
+work_t
+Subset_Simplex::objective(Teuchos::RCP<std::vector<work_t> > variables){
   assert(shape_function_->num_params()==(int_t)variables->size());
   return obj_->gamma(shape_function_);
 }
@@ -343,19 +343,19 @@ Homography_Simplex::Homography_Simplex(Teuchos::RCP<Image> left_img,
   right_img_ = right_img;
 }
 
-scalar_t
-Homography_Simplex::objective(Teuchos::RCP<std::vector<scalar_t> > variables){
+work_t
+Homography_Simplex::objective(Teuchos::RCP<std::vector<work_t> > variables){
 
   const int_t w = left_img_->width();
   const int_t h = left_img_->height();
 
   tri_->set_projective_params(variables);
 
-  scalar_t value = 0.0;
-  scalar_t xr = 0.0;
-  scalar_t yr = 0.0;
-  intensity_t left_intens = 0.0;
-  intensity_t right_intens = 0.0;
+  work_t value = 0.0;
+  work_t xr = 0.0;
+  work_t yr = 0.0;
+  work_t left_intens = 0.0;
+  work_t right_intens = 0.0;
   for(int_t j=0.1*h;j<0.9*h;++j){
     for(int_t i=0.1*w;i<0.9*w;++i){
       tri_->project_left_to_right_sensor_coords(i,j,xr,yr);
@@ -378,24 +378,24 @@ Affine_Homography_Simplex::Affine_Homography_Simplex(Teuchos::RCP<Image> left_im
   right_img_ = right_img;
 }
 
-scalar_t
-Affine_Homography_Simplex::objective(Teuchos::RCP<std::vector<scalar_t> > variables){
+work_t
+Affine_Homography_Simplex::objective(Teuchos::RCP<std::vector<work_t> > variables){
 
   const int_t w = left_img_->width();
   const int_t h = left_img_->height();
 
   assert(variables->size()==6);
-  Teuchos::RCP<std::vector<scalar_t> > proj_vars = Teuchos::rcp(new std::vector<scalar_t>(9,0.0));
+  Teuchos::RCP<std::vector<work_t> > proj_vars = Teuchos::rcp(new std::vector<work_t>(9,0.0));
   for(size_t i=0;i<variables->size();++i)
   (*proj_vars)[i] = (*variables)[i];
   (*proj_vars)[8] = 1.0;
 
   tri_->set_projective_params(proj_vars);
-  scalar_t value = 0.0;
-  scalar_t xr = 0.0;
-  scalar_t yr = 0.0;
-  intensity_t left_intens = 0.0;
-  intensity_t right_intens = 0.0;
+  work_t value = 0.0;
+  work_t xr = 0.0;
+  work_t yr = 0.0;
+  work_t left_intens = 0.0;
+  work_t right_intens = 0.0;
   for(int_t j=0.1*h;j<0.9*h;++j){
     for(int_t i=0.1*w;i<0.9*w;++i){
       tri_->project_left_to_right_sensor_coords(i,j,xr,yr);
@@ -425,8 +425,8 @@ Quadratic_Homography_Simplex::Quadratic_Homography_Simplex(Teuchos::RCP<Image> l
   right_img_ = right_img;
 }
 
-scalar_t
-Quadratic_Homography_Simplex::objective(Teuchos::RCP<std::vector<scalar_t> > variables){
+work_t
+Quadratic_Homography_Simplex::objective(Teuchos::RCP<std::vector<work_t> > variables){
   assert(variables->size()==12);
   assert(ulx_<lrx_);
   assert(uly_<lry_);
@@ -435,15 +435,15 @@ Quadratic_Homography_Simplex::objective(Teuchos::RCP<std::vector<scalar_t> > var
   assert(lrx_>=0&&lrx_<left_img_->width());
   assert(lry_>=0&&lry_<left_img_->height());
 
-  scalar_t value = 0.0;
-  scalar_t xr=0.0,yr=0.0,xl=0.0,yl=0.0;
-  intensity_t left_intens = 0.0;
-  intensity_t right_intens = 0.0;
+  work_t value = 0.0;
+  work_t xr=0.0,yr=0.0,xl=0.0,yl=0.0;
+  work_t left_intens = 0.0;
+  work_t right_intens = 0.0;
   for(int_t j=uly_;j<=lry_;++j){
-    yl = (scalar_t)j;
+    yl = (work_t)j;
     for(int_t i=ulx_;i<=lrx_;++i){
       left_intens = (*left_img_)(i,j);
-      xl = (scalar_t)i;
+      xl = (work_t)i;
       // project the point to the right image using a quadratic interpolant
       // TODO move this to a new local shape function...
       xr = (*variables)[0]*xl + (*variables)[1]*yl + (*variables)[2]*xl*yl + (*variables)[3]*xl*xl + (*variables)[4]*yl*yl  + (*variables)[5];
@@ -498,19 +498,19 @@ Warp_Simplex::Warp_Simplex(Teuchos::RCP<Image> left_img,
   right_img_ = right_img;
 }
 
-scalar_t
-Warp_Simplex::objective(Teuchos::RCP<std::vector<scalar_t> > variables){
+work_t
+Warp_Simplex::objective(Teuchos::RCP<std::vector<work_t> > variables){
 
   const int_t w = left_img_->width();
   const int_t h = left_img_->height();
 
   tri_->set_warp_params(variables);
 
-  scalar_t value = 0.0;
-  scalar_t xr = 0.0;
-  scalar_t yr = 0.0;
-  intensity_t left_intens = 0.0;
-  intensity_t right_intens = 0.0;
+  work_t value = 0.0;
+  work_t xr = 0.0;
+  work_t yr = 0.0;
+  work_t left_intens = 0.0;
+  work_t right_intens = 0.0;
   for(int_t j=0.1*h;j<0.9*h;++j){
     for(int_t i=0.1*w;i<0.9*w;++i){
       tri_->project_left_to_right_sensor_coords(i,j,xr,yr);

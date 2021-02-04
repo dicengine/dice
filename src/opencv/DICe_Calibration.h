@@ -126,13 +126,13 @@ public:
   void write_calibration_file(const std::string & filename);
 
   /// \brief perform the calibration and return a camera system object
-  Teuchos::RCP<DICe::Camera_System> calibrate(scalar_t & rms_error){
+  Teuchos::RCP<DICe::Camera_System> calibrate(work_t & rms_error){
     return calibrate("",rms_error);
   }
 
   /// returns the rms error of the calibration and writes an output file
-  scalar_t calibrate(const std::string & output_file){
-    scalar_t rms_error;
+  work_t calibrate(const std::string & output_file){
+    work_t rms_error;
     calibrate(output_file,rms_error);
     return rms_error;
   }
@@ -147,7 +147,7 @@ private:
   /// can be used as a base method for either outputting a camera system file
   /// or returning a camera system object
   Teuchos::RCP<DICe::Camera_System> calibrate(const std::string & output_file,
-    scalar_t & rms_error);
+    work_t & rms_error);
 
   /// set calibration options
   void set_calibration_options(const Teuchos::ParameterList & opencv_options);
@@ -168,7 +168,7 @@ private:
   /// the total number of fiducial markers, intersection, or dots in the x direction on the entire cal target
   int_t num_fiducials_y_;
   /// the spacing in physical units of the target dots or intersections
-  scalar_t target_spacing_;
+  work_t target_spacing_;
   /// location of the origin marker point in the x direction measured by the number points from the left most point (pt 0)
   int_t origin_loc_x_;
   /// location of the origin marker point in the y direction measured by the number points from the bottom most point (pt 0)

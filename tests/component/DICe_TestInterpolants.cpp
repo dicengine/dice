@@ -71,17 +71,17 @@ int main(int argc, char *argv[]) {
   *outStream << "creating an image from an array" << std::endl;
   const int_t array_w = 40;
   const int_t array_h = 30;
-  Teuchos::ArrayRCP<intensity_t> intensities(array_w*array_h,0.0);
+  Teuchos::ArrayRCP<work_t> intensities(array_w*array_h,0.0);
   // populate the intensities with a sin/cos function
-  intensity_t x_val = 0.0, y_val = 0.0;
+  work_t x_val = 0.0, y_val = 0.0;
   for(int_t y=0;y<array_h;++y){
     for(int_t x=0;x<array_w;++x){
-      x_val = 255*((scalar_t)x/(scalar_t)array_w);
-      y_val = 255*((scalar_t)y/(scalar_t)array_h);
+      x_val = 255*((work_t)x/(work_t)array_w);
+      y_val = 255*((work_t)y/(work_t)array_h);
       intensities[y*array_w+x] = x_val*y_val;
     }
   }
-  Teuchos::RCP<Image> array_img = Teuchos::rcp(new Image(array_w,array_h,intensities));
+  Teuchos::RCP<Scalar_Image> array_img = Teuchos::rcp(new Scalar_Image(array_w,array_h,intensities));
   array_img->write("interp_array_img.tif");
 
   const int_t cx = array_w/2;
@@ -91,22 +91,22 @@ int main(int argc, char *argv[]) {
   Subset subset_bi(cx,cy,10,10);
   Subset subset_keys(cx,cy,10,10);
   Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory();
-  const scalar_t u = 0.3589;
-  const scalar_t v = -2.89478;
-  const scalar_t t = 0.262;
+  const work_t u = 0.3589;
+  const work_t v = -2.89478;
+  const work_t t = 0.262;
   shape_function->insert_motion(u,v,t);
   subset_bi.initialize(array_img,DEF_INTENSITIES,shape_function,BILINEAR);
   subset_keys.initialize(array_img,DEF_INTENSITIES,shape_function,KEYS_FOURTH);
 
   *outStream << "testing the intensity values" << std::endl;
-  scalar_t error_bi = 0.0;
-  scalar_t error_keys = 0.0;
-  scalar_t px=0.0,py=0.0;
+  work_t error_bi = 0.0;
+  work_t error_keys = 0.0;
+  work_t px=0.0,py=0.0;
   for(int_t i=0;i<subset_bi.num_pixels();++i){
     shape_function->map(subset_bi.x(i),subset_bi.y(i),cx,cy,px,py);
-    x_val = 255.0*px/(scalar_t)array_w;
-    y_val = 255.0*py/(scalar_t)array_h;
-    const scalar_t exact = x_val*y_val;
+    x_val = 255.0*px/(work_t)array_w;
+    y_val = 255.0*py/(work_t)array_h;
+    const work_t exact = x_val*y_val;
     error_bi += std::abs(subset_bi.def_intensities(i) - exact);
     error_keys += std::abs(subset_keys.def_intensities(i) - exact);
     //std::cout << " x " << subset_bi.x(i) << " y " << subset_bi.y(i) <<

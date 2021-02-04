@@ -47,64 +47,68 @@
 
 namespace DICe {
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void apply_transform(Teuchos::RCP<Image> image_in,
-  Teuchos::RCP<Image> image_out,
+void apply_transform(Teuchos::RCP<Image_<S>> image_in,
+  Teuchos::RCP<Image_<S>> image_out,
   const int_t cx,
   const int_t cy,
   Teuchos::RCP<Local_Shape_Function > shape_function){
-
 
   const int_t width = image_in->width();
   const int_t height = image_in->height();
   TEUCHOS_TEST_FOR_EXCEPTION(width!=image_out->width(),std::runtime_error,"Dimensions must be the same");
   TEUCHOS_TEST_FOR_EXCEPTION(height!=image_out->height(),std::runtime_error,"Dimensions must be the same");
   TEUCHOS_TEST_FOR_EXCEPTION(shape_function==Teuchos::null,std::runtime_error,"");
-  scalar_t u =0.0,v=0.0,t=0.0;
+  work_t u =0.0,v=0.0,t=0.0;
   shape_function->map_to_u_v_theta(cx,cy,u,v,t);
   shape_function->insert_motion(-u,-v);
-  const scalar_t CX = cx + u;
-  const scalar_t CY = cy + v;
-  scalar_t mapped_x=0.0, mapped_y=0.0;
+  const work_t CX = cx + u;
+  const work_t CY = cy + v;
+  work_t mapped_x=0.0, mapped_y=0.0;
   for(int_t y=0;y<height;++y){
     for(int_t x=0;x<width;++x){
       shape_function->map(x,y,CX,CY,mapped_x,mapped_y);
-      image_out->intensities()[y*width+x] = image_in->interpolate_keys_fourth(mapped_x,mapped_y);
+      image_out->intensities()[y*width+x] = static_cast<S>(image_in->interpolate_keys_fourth(mapped_x,mapped_y));
     }// x
   }// y
   shape_function->insert_motion(u,v);
 }
 
-void SinCos_Image_Deformer::compute_deformation(const scalar_t & coord_x,
-  const scalar_t & coord_y,
-  scalar_t & bx,
-  scalar_t & by){
-  const scalar_t beta = period_==0.0 ? 0.0 : DICE_TWOPI*(1.0/period_);
+template
+DICE_LIB_DLL_EXPORT
+void apply_transform(Teuchos::RCP<Image>,Teuchos::RCP<Image>,const int_t,const int_t,Teuchos::RCP<Local_Shape_Function >);
+
+void SinCos_Image_Deformer::compute_deformation(const work_t & coord_x,
+  const work_t & coord_y,
+  work_t & bx,
+  work_t & by){
+  const work_t beta = period_==0.0 ? 0.0 : DICE_TWOPI*(1.0/period_);
   bx = 0.5*amplitude_ + sin(beta*coord_x)*cos(beta*coord_y)*0.5*amplitude_;
   by = 0.5*amplitude_ - cos(beta*coord_x)*sin(beta*coord_y)*0.5*amplitude_;
 }
 
-void SinCos_Image_Deformer::compute_deriv_deformation(const scalar_t & coord_x,
-  const scalar_t & coord_y,
-  scalar_t & bxx,
-  scalar_t & bxy,
-  scalar_t & byx,
-  scalar_t & byy){
+void SinCos_Image_Deformer::compute_deriv_deformation(const work_t & coord_x,
+  const work_t & coord_y,
+  work_t & bxx,
+  work_t & bxy,
+  work_t & byx,
+  work_t & byy){
   bxx = 0.0;
   bxy = 0.0;
   byx = 0.0;
   byy = 0.0;
-  const scalar_t beta = period_==0.0 ? 0.0 : DICE_TWOPI*(1.0/period_);
+  const work_t beta = period_==0.0 ? 0.0 : DICE_TWOPI*(1.0/period_);
   bxx = beta*cos(beta*coord_x)*cos(beta*coord_y)*0.5*amplitude_;
   bxy = -beta*sin(beta*coord_x)*sin(beta*coord_y)*0.5*amplitude_;
   byx = beta*sin(beta*coord_x)*sin(beta*coord_y)*0.5*amplitude_;
   byy = -beta*cos(beta*coord_x)*cos(beta*coord_y)*0.5*amplitude_;
 }
 
-void DICChallenge14_Image_Deformer::compute_deformation(const scalar_t & coord_x,
-  const scalar_t & coord_y,
-  scalar_t & bx,
-  scalar_t & by){
+void DICChallenge14_Image_Deformer::compute_deformation(const work_t & coord_x,
+  const work_t & coord_y,
+  work_t & bx,
+  work_t & by){
   bx = 0.0;
   by = 0.0;
   if(coord_x < 100.0) return;
@@ -112,30 +116,37 @@ void DICChallenge14_Image_Deformer::compute_deformation(const scalar_t & coord_x
   by = 0.0;
 }
 
-void DICChallenge14_Image_Deformer::compute_deriv_deformation(const scalar_t & coord_x,
-  const scalar_t & coord_y,
-  scalar_t & bxx,
-  scalar_t & bxy,
-  scalar_t & byx,
-  scalar_t & byy){
+void DICChallenge14_Image_Deformer::compute_deriv_deformation(const work_t & coord_x,
+  const work_t & coord_y,
+  work_t & bxx,
+  work_t & bxy,
+  work_t & byx,
+  work_t & byy){
   bxx = 0.1*std::cos(coeff_*(coord_x-100.0)*(coord_x-100.0))*2.0*coeff_*(coord_x-100.0);
   bxy = 0.0;
   byx = 0.0;
   byy = 0.0;
 }
 
+// explicit instantiation
+template
+class
+DICE_LIB_DLL_EXPORT
+Image_Deformer<storage_t>;
 
-void Image_Deformer::compute_displacement_error(const scalar_t & coord_x,
-  const scalar_t & coord_y,
-  const scalar_t & sol_x,
-  const scalar_t & sol_y,
-  scalar_t & error_x,
-  scalar_t & error_y,
+template <typename S>
+void
+Image_Deformer<S>::compute_displacement_error(const work_t & coord_x,
+  const work_t & coord_y,
+  const work_t & sol_x,
+  const work_t & sol_y,
+  work_t & error_x,
+  work_t & error_y,
   const bool use_mag,
   const bool relative){
 
-  scalar_t out_x = 0.0;
-  scalar_t out_y = 0.0;
+  work_t out_x = 0.0;
+  work_t out_y = 0.0;
   compute_deformation(coord_x,coord_y,out_x,out_y);
   if(use_mag){
     error_x = (sol_x - out_x)*(sol_x - out_x);
@@ -150,17 +161,21 @@ void Image_Deformer::compute_displacement_error(const scalar_t & coord_x,
   }
 }
 
+template void Image_Deformer<storage_t>::compute_displacement_error(const work_t &,const work_t &,const work_t &,const work_t &,
+  work_t &,work_t &,const bool,const bool);
 
-void Image_Deformer::compute_lagrange_strain(const scalar_t & coord_x,
-  const scalar_t & coord_y,
-  scalar_t & strain_xx,
-  scalar_t & strain_xy,
-  scalar_t & strain_yy){
+template <typename S>
+void
+Image_Deformer<S>::compute_lagrange_strain(const work_t & coord_x,
+  const work_t & coord_y,
+  work_t & strain_xx,
+  work_t & strain_xy,
+  work_t & strain_yy){
 
-  scalar_t out_xx = 0.0;
-  scalar_t out_xy = 0.0;
-  scalar_t out_yx = 0.0;
-  scalar_t out_yy = 0.0;
+  work_t out_xx = 0.0;
+  work_t out_xy = 0.0;
+  work_t out_yx = 0.0;
+  work_t out_yy = 0.0;
   compute_deriv_deformation(coord_x,coord_y,out_xx,out_xy,out_yx,out_yy);
 
   strain_xx = 0.5*(2.0*out_xx + out_xx*out_xx + out_yx*out_yx);
@@ -168,21 +183,24 @@ void Image_Deformer::compute_lagrange_strain(const scalar_t & coord_x,
   strain_yy = 0.5*(2.0*out_yy + out_yy*out_yy + out_xy*out_xy);
 }
 
+template void Image_Deformer<storage_t>::compute_lagrange_strain(const work_t &,const work_t &,work_t &,work_t &,work_t &);
 
-void Image_Deformer::compute_lagrange_strain_error(const scalar_t & coord_x,
-  const scalar_t & coord_y,
-  const scalar_t & sol_xx,
-  const scalar_t & sol_xy,
-  const scalar_t & sol_yy,
-  scalar_t & error_xx,
-  scalar_t & error_xy,
-  scalar_t & error_yy,
+template <typename S>
+void
+Image_Deformer<S>::compute_lagrange_strain_error(const work_t & coord_x,
+  const work_t & coord_y,
+  const work_t & sol_xx,
+  const work_t & sol_xy,
+  const work_t & sol_yy,
+  work_t & error_xx,
+  work_t & error_xy,
+  work_t & error_yy,
   const bool use_mag,
   const bool relative){
 
-  scalar_t strain_xx = 0.0;
-  scalar_t strain_xy = 0.0;
-  scalar_t strain_yy = 0.0;
+  work_t strain_xx = 0.0;
+  work_t strain_xy = 0.0;
+  work_t strain_yy = 0.0;
 
   compute_lagrange_strain(coord_x,coord_y,strain_xx,strain_xy,strain_yy);
 
@@ -202,32 +220,36 @@ void Image_Deformer::compute_lagrange_strain_error(const scalar_t & coord_x,
   }
 }
 
-Teuchos::RCP<Image>
-Image_Deformer::deform_image(Teuchos::RCP<Image> ref_image){
+template void Image_Deformer<storage_t>::compute_lagrange_strain_error(const work_t &,const work_t &,const work_t &,
+  const work_t &,const work_t &,work_t &,work_t &,work_t &,const bool,const bool relative);
+
+template <typename S>
+Teuchos::RCP<Image_<S>>
+Image_Deformer<S>::deform_image(Teuchos::RCP<Image_<S>> ref_image){
   const int_t w = ref_image->width();
   const int_t h = ref_image->height();
   const int_t ox = ref_image->offset_x();
   const int_t oy = ref_image->offset_y();
 //  // Note: uses 5 x 5 point sampling grid to evaluate the deformed intensity
 //  const int_t num_pts = 5;
-//  static scalar_t coeffs[5] = {0.0014,0.1574,0.62825,0.1574,0.0014};
+//  static work_t coeffs[5] = {0.0014,0.1574,0.62825,0.1574,0.0014};
 //  // Note: uses 11 x 11 point sampling grid to evaluate the deformed intensity
-////  static scalar_t coeffs[11] =
+////  static work_t coeffs[11] =
 ////  {0.0001,0.0017,0.0168,0.0870,
 ////    0.2328,0.3231,0.2328,
 ////    0.0870,0.0168,0.0017,0.0001};
 //  Teuchos::ArrayRCP<intensity_t> def_intens(w*h,0.0);
-//  scalar_t bx=0.0,by=0.0;
+//  work_t bx=0.0,by=0.0;
 //  for(int_t j=0;j<h;++j){
 //    for(int_t i=0;i<w;++i){
-//      scalar_t avg_intens = 0.0;
+//      work_t avg_intens = 0.0;
 //      for(int_t oy=0;oy<num_pts;++oy){
-//        const scalar_t sample_y = j - 0.5*(num_pts-1)/num_pts + oy/num_pts;
+//        const work_t sample_y = j - 0.5*(num_pts-1)/num_pts + oy/num_pts;
 //        for(int_t ox=0;ox<num_pts;++ox){
-//          const scalar_t sample_x = i - 0.5*(num_pts-1)/num_pts + ox/num_pts;
-//          const scalar_t weight = coeffs[ox]*coeffs[oy];
+//          const work_t sample_x = i - 0.5*(num_pts-1)/num_pts + ox/num_pts;
+//          const work_t weight = coeffs[ox]*coeffs[oy];
 //          compute_deformation(sample_x,sample_y,bx,by);
-//          scalar_t intens = ref_image->interpolate_keys_fourth(sample_x-bx,sample_y-by);
+//          work_t intens = ref_image->interpolate_keys_fourth(sample_x-bx,sample_y-by);
 //          avg_intens += weight*intens;
 //        } // end super pixel ox
 //      } // end super pixel oy
@@ -238,44 +260,48 @@ Image_Deformer::deform_image(Teuchos::RCP<Image> ref_image){
 
   // Note: uses 5 x 5 point sampling grid to evaluate the deformed intensity
   const int_t num_pts = 5;
-  static scalar_t offsets_x[5] = {0.0,-0.5,0.5,0.5,-0.5};
-  static scalar_t offsets_y[5] = {0.0,-0.5,-0.5,0.5,0.5};
-  Teuchos::ArrayRCP<intensity_t> def_intens(w*h,0.0);
-  scalar_t bx=0.0,by=0.0;
+  static work_t offsets_x[5] = {0.0,-0.5,0.5,0.5,-0.5};
+  static work_t offsets_y[5] = {0.0,-0.5,-0.5,0.5,0.5};
+  Teuchos::ArrayRCP<S> def_intens(w*h,0);
+  work_t bx=0.0,by=0.0;
   for(int_t j=0;j<h;++j){
     for(int_t i=0;i<w;++i){
-      scalar_t avg_intens = 0.0;
+      work_t avg_intens = 0.0;
       for(int_t pt=0;pt<num_pts;++pt){
-        const scalar_t sample_x = i - offsets_x[pt];
-        const scalar_t sample_y = j - offsets_y[pt];
+        const work_t sample_x = i - offsets_x[pt];
+        const work_t sample_y = j - offsets_y[pt];
         compute_deformation(sample_x+ox,sample_y+oy,bx,by);
-        scalar_t intens = ref_image->interpolate_keys_fourth(sample_x-bx,sample_y-by);
+        work_t intens = ref_image->interpolate_keys_fourth(sample_x-bx,sample_y-by);
         avg_intens += intens;
       } // end avg points
-      def_intens[j*w+i] = num_pts==0.0?0.0:avg_intens/num_pts;
+      def_intens[j*w+i] = num_pts==0?0:static_cast<S>(avg_intens/num_pts);
     } // end pixel i
   } // ens pixel j
 
   // no weighted average ...
 //  Teuchos::ArrayRCP<intensity_t> def_intens(w*h,0.0);
-//  scalar_t bx=0.0,by=0.0;
+//  work_t bx=0.0,by=0.0;
 //  for(int_t j=0;j<h;++j){
 //    for(int_t i=0;i<w;++i){
 //      compute_deformation(i,j,bx,by);
-//      scalar_t intens = ref_image->interpolate_keys_fourth(i-bx,j-by);
+//      work_t intens = ref_image->interpolate_keys_fourth(i-bx,j-by);
 //      def_intens[j*w+i] = intens;
 //    } // end pixel i
 //  } // ens pixel j
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::subimage_offset_x,ox);
   imgParams->set(DICe::subimage_offset_y,oy);
-  Teuchos::RCP<Image> def_img = Teuchos::rcp(new Image(w,h,def_intens,imgParams));
+  Teuchos::RCP<Image_<S>> def_img = Teuchos::rcp(new Image_<S>(w,h,def_intens,imgParams));
   return def_img;
 }
 
+template Teuchos::RCP<Image> Image_Deformer<storage_t>::deform_image(Teuchos::RCP<Image>);
+
+
+template <typename S>
 DICE_LIB_DLL_EXPORT
 int_t compute_speckle_stats(const std::string & output_dir,
-  Teuchos::RCP<Image> & image){
+  Teuchos::RCP<Image_<S>> & image){
 
   // estimate the speckle period of the reference image:
   std::stringstream speckle_stats_name;
@@ -283,17 +309,17 @@ int_t compute_speckle_stats(const std::string & output_dir,
   std::FILE * speckleFilePtr = fopen(speckle_stats_name.str().c_str(),"w");
 
   // compute the mean intensity
-  scalar_t mean_intens = image->mean();
+  work_t mean_intens = image->mean();
   mean_intens *= 1.0001; // slighly reduce the mean to include more pixels
   // create a copy of the ref image to manipulate
-  Teuchos::RCP<Image> morf_img = Teuchos::rcp(new Image(image));
+  Teuchos::RCP<Image_<S>> morf_img = Teuchos::rcp(new Image_<S>(image));
   // binary image
-  Teuchos::ArrayRCP<intensity_t> morf_intens = morf_img->intensities();
+  Teuchos::ArrayRCP<S> morf_intens = morf_img->intensities();
   for(int_t i=0;i<image->width()*image->height();++i)
     if(morf_intens[i] <= mean_intens)
-      morf_intens[i] = 0.0;
+      morf_intens[i] = 0;
     else
-      morf_intens[i] = 255.0;
+      morf_intens[i] = 255;
   //morf_img->write("morf_img.tif");
 
   // now iterate the morf_image removing speckles of decreasing size
@@ -311,7 +337,7 @@ int_t compute_speckle_stats(const std::string & output_dir,
 //  Teuchos::RCP<Image> er_morf_img = Teuchos::rcp(new Image(morf_img->width(),morf_img->height(),255.0));
 //  Teuchos::ArrayRCP<intensity_t> er_morf_intens = er_morf_img->intensities();
   int_t num_px = (morf_w-2*max_speckle_detected)*(morf_h-2*max_speckle_detected);
-  scalar_t prev_coverage = 0.0;
+  work_t prev_coverage = 0.0;
   for(int_t speckle_interval = max_speckle_detected; speckle_interval > 0; speckle_interval-=2){
     // clear the dilated image
 //    dil_morf_intens[0] = 0.0;
@@ -328,15 +354,15 @@ int_t compute_speckle_stats(const std::string & output_dir,
         int_t start_px_y = y - speckle_interval/2;
         int_t end_px_x = start_px_x + speckle_interval;
         int_t end_px_y = start_px_y + speckle_interval;
-        scalar_t num_hits = 0.0;
+        work_t num_hits = 0.0;
         for(int_t j=start_px_y; j<end_px_y; ++j){
           for(int_t i=start_px_x; i<end_px_x; ++i){
-            if(morf_intens[j*morf_w+i] == 0.0)
+            if(morf_intens[j*morf_w+i] == 0)
               num_hits++;
           }
         }
         // mark the pixels that are the center of a full fit
-        scalar_t num_structure_px = speckle_interval*speckle_interval;
+        work_t num_structure_px = speckle_interval*speckle_interval;
         if(num_hits == num_structure_px){//(num_hits / num_structure_px > 0.95){
           erosion_flags[y*morf_w+x] = 1;
 //          er_morf_intens[y*morf_w+x] = 0.0;
@@ -362,10 +388,10 @@ int_t compute_speckle_stats(const std::string & output_dir,
       } // end x
     } // end y
     // determine the coverage of the dilation
-    scalar_t dilation_count = 0.0;
+    work_t dilation_count = 0.0;
     for(int_t i=0;i<morf_w*morf_h;++i)
       dilation_count += dilation_flags[i];
-    scalar_t coverage = dilation_count / (scalar_t)num_px;
+    work_t coverage = dilation_count / (work_t)num_px;
     int_t num_speckles = speckle_interval*speckle_interval==0.0?0.0:(coverage - prev_coverage)*num_px/(speckle_interval*speckle_interval);
     if(num_speckles > max_speckle_count){
       max_speckle_count = num_speckles;
@@ -403,31 +429,33 @@ int_t compute_speckle_stats(const std::string & output_dir,
 //      }
 //    }
 //  }
-//  scalar_t denom = std::abs((scalar_t)(max_x - (ref_fft->width()/2))/(scalar_t)ref_fft->width());
+//  work_t denom = std::abs((work_t)(max_x - (ref_fft->width()/2))/(work_t)ref_fft->width());
 //  denom = denom == 0.0 ? -1.0 : denom;
-//  const scalar_t avg_speckle_size_x = 0.5/denom;
-//  denom = std::abs((scalar_t)(max_y - (ref_fft->height()/2))/(scalar_t)ref_fft->height());
+//  const work_t avg_speckle_size_x = 0.5/denom;
+//  denom = std::abs((work_t)(max_y - (ref_fft->height()/2))/(work_t)ref_fft->height());
 //  denom = denom == 0.0 ? -1.0 : denom;
-//  const scalar_t avg_speckle_size_y = 0.5/denom;
+//  const work_t avg_speckle_size_y = 0.5/denom;
 //  DEBUG_MSG("Average speckle size " << avg_speckle_size_x << " (px) in x and " << avg_speckle_size_y << " (px) in y");
-//  const scalar_t avg_speckle_size = avg_speckle_size_x*0.5 + avg_speckle_size_y*0.5;
+//  const work_t avg_speckle_size = avg_speckle_size_x*0.5 + avg_speckle_size_y*0.5;
 
 }
 
-
+template
+DICE_LIB_DLL_EXPORT
+int_t compute_speckle_stats(const std::string &, Teuchos::RCP<Image> &);
 
 DICE_LIB_DLL_EXPORT
-void compute_roll_off_stats(const scalar_t & period,
-  const scalar_t & img_w,
-  const scalar_t & img_h,
+void compute_roll_off_stats(const work_t & period,
+  const work_t & img_w,
+  const work_t & img_h,
   Teuchos::RCP<MultiField> & coords,
   Teuchos::RCP<MultiField> & disp,
   Teuchos::RCP<MultiField> & exact_disp,
   Teuchos::RCP<MultiField> & disp_error,
-  scalar_t & peaks_avg_error_x,
-  scalar_t & peaks_std_dev_error_x,
-  scalar_t & peaks_avg_error_y,
-  scalar_t & peaks_std_dev_error_y){
+  work_t & peaks_avg_error_x,
+  work_t & peaks_std_dev_error_x,
+  work_t & peaks_avg_error_y,
+  work_t & peaks_std_dev_error_y){
 
   // Send the whole field to procesor 0
   MultiField_Comm comm = coords->get_map()->get_comm();
@@ -462,8 +490,8 @@ void compute_roll_off_stats(const scalar_t & period,
 
   std::vector<computed_point> approx_points(num_approx_points);
   for(int_t i=0;i<num_approx_points;++i){
-    const scalar_t x = all_on_zero_coords->local_value(i*2+0);
-    const scalar_t y = all_on_zero_coords->local_value(i*2+1);
+    const work_t x = all_on_zero_coords->local_value(i*2+0);
+    const work_t y = all_on_zero_coords->local_value(i*2+1);
     approx_points[i].x_ = x;
     approx_points[i].y_ = y;
     approx_points[i].bx_ = all_on_zero_disp->local_value(i*2+0);
@@ -474,10 +502,10 @@ void compute_roll_off_stats(const scalar_t & period,
     approx_points[i].error_by_ = all_on_zero_disp_error->local_value(i*2+1);
   }
 
-  scalar_t avg_error_x = 0.0;
-  scalar_t std_dev_x = 0.0;
-  scalar_t avg_error_y = 0.0;
-  scalar_t std_dev_y = 0.0;
+  work_t avg_error_x = 0.0;
+  work_t std_dev_x = 0.0;
+  work_t avg_error_y = 0.0;
+  work_t std_dev_y = 0.0;
   if(p_rank==0){
     // now sort the approximate points to pick out the peaks
     int_t num_peaks = period==0.0?0.0:((int_t)(img_w/period)-2)*((int_t)(img_h/period)-2);
@@ -570,21 +598,22 @@ void compute_roll_off_stats(const scalar_t & period,
   peaks_std_dev_error_y = std_dev_y;
 }
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-Teuchos::RCP<Image> create_synthetic_speckle_image(const int_t w,
+Teuchos::RCP<Image_<S>> create_synthetic_speckle_image(const int_t w,
   const int_t h,
   const int_t offset_x,
   const int_t offset_y,
-  const scalar_t & speckle_size,
+  const work_t & speckle_size,
   const Teuchos::RCP<Teuchos::ParameterList> & params){
 
-  const scalar_t period = speckle_size * 2;
+  const work_t period = speckle_size * 2;
   assert(period > 0.0);
-  const scalar_t freq = period==0.0?0.0:1.0/period;
-  const scalar_t gamma = freq*DICE_TWOPI;
-  const intensity_t mag = 255.0*0.5;
+  const work_t freq = period==0.0?0.0:1.0/period;
+  const work_t gamma = freq*DICE_TWOPI;
+  const work_t mag = 255.0*0.5;
 
-  Teuchos::ArrayRCP<intensity_t> intensities(w*h,0.0);
+  Teuchos::ArrayRCP<S> intensities(w*h,0);
   for(int_t y=0;y<h;++y){
     for(int_t x=0;x<w;++x){
       intensities[y*w+x] = mag + mag*std::cos(gamma*(x+offset_x))*std::cos(gamma*(y+offset_y));
@@ -593,30 +622,39 @@ Teuchos::RCP<Image> create_synthetic_speckle_image(const int_t w,
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::subimage_offset_x,offset_x);
   imgParams->set(DICe::subimage_offset_y,offset_y);
-  Teuchos::RCP<Image> img = Teuchos::rcp(new Image(w,h,intensities,params));
+  Teuchos::RCP<Image_<S>> img = Teuchos::rcp(new Image_<S>(w,h,intensities,params));
   return img;
 }
 
+template
 DICE_LIB_DLL_EXPORT
-void add_noise_to_image(Teuchos::RCP<Image> & image,
-  const scalar_t & noise_percent){
+Teuchos::RCP<Image> create_synthetic_speckle_image(const int_t,const int_t,const int_t,const int_t,
+  const work_t &,const Teuchos::RCP<Teuchos::ParameterList> &);
+
+template <typename S>
+DICE_LIB_DLL_EXPORT
+void add_noise_to_image(Teuchos::RCP<Image_<S>> & image,
+  const work_t & noise_percent){
 
   // convert noise_percent to counts:
   // rip through the image and find the max intensity
-  scalar_t max_intensity = 0.0;
+  S max_intensity = 0;
   for(int_t i=0;i<image->width()*image->height();++i){
     if((*image)(i)>max_intensity)
       max_intensity = (*image)(i);
   }
-  const scalar_t std_dev = noise_percent*0.01*max_intensity;
+  const work_t std_dev = noise_percent*0.01*max_intensity;
   DEBUG_MSG("add_noise_to_image(): max intensity:    " << max_intensity << " counts");
   DEBUG_MSG("add_noise_to_image(): std dev of noise: " << std_dev << " counts");
   std::default_random_engine generator;
-  std::normal_distribution<intensity_t> distribution(0.0,std_dev);
+  std::normal_distribution<work_t> distribution(0.0,std_dev);
   for(int_t i=0;i<image->width()*image->height();++i){
-    image->intensities()[i] += distribution(generator);
+    image->intensities()[i] += static_cast<S>(distribution(generator));
   }
 }
 
+template
+DICE_LIB_DLL_EXPORT
+void add_noise_to_image(Teuchos::RCP<Image> &,const work_t &);
 
 }// End DICe Namespace

@@ -51,9 +51,9 @@ namespace DICe {
 
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
-  Teuchos::ArrayRCP<scalar_t> points_x,
-  Teuchos::ArrayRCP<scalar_t> points_y,
-  const scalar_t & max_size_constraint,
+  Teuchos::ArrayRCP<work_t> points_x,
+  Teuchos::ArrayRCP<work_t> points_y,
+  const work_t & max_size_constraint,
   const std::string & output_file_name,
   const bool enforce_lagrange_bc,
   const bool use_regular_grid){
@@ -81,8 +81,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const std::string & mesh_file_n
   TEUCHOS_TEST_FOR_EXCEPTION(!dataFile.good(), std::runtime_error, "Error, the mesh file does not exist: " << mesh_file_name);
   // read each line of the file
 
-  std::vector<scalar_t> x_coords;
-  std::vector<scalar_t> y_coords;
+  std::vector<work_t> x_coords;
+  std::vector<work_t> y_coords;
   std::vector<int_t> conn;
 
   while (!dataFile.eof())
@@ -117,13 +117,13 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const std::string & mesh_file_n
     int_t node_i = conn[i*3+0]; // 1 based
     int_t node_j = conn[i*3+1]; // 1 based
     int_t node_k = conn[i*3+2]; // 1 based
-    scalar_t x1 = x_coords[node_i-1];
-    scalar_t x2 = x_coords[node_j-1];
-    scalar_t x3 = x_coords[node_k-1];
-    scalar_t y1 = y_coords[node_i-1];
-    scalar_t y2 = y_coords[node_j-1];
-    scalar_t y3 = y_coords[node_k-1];
-    scalar_t det = x1*(y2-y3) - y1*(x2-x3) + (x2*y3 - x3*y2);
+    work_t x1 = x_coords[node_i-1];
+    work_t x2 = x_coords[node_j-1];
+    work_t x3 = x_coords[node_k-1];
+    work_t y1 = y_coords[node_i-1];
+    work_t y2 = y_coords[node_j-1];
+    work_t y3 = y_coords[node_k-1];
+    work_t det = x1*(y2-y3) - y1*(x2-x3) + (x2*y3 - x3*y2);
     TEUCHOS_TEST_FOR_EXCEPTION(det==0.0,std::runtime_error,"Invalid element, 0.0 determinant");
     if(det<0.0){ // swap j and k if the det is negative
       conn[i*3+1] = node_k;
@@ -131,8 +131,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const std::string & mesh_file_n
     }
   }
 
-  Teuchos::ArrayRCP<scalar_t> node_coords_x(&x_coords[0],0,x_coords.size(),false);
-  Teuchos::ArrayRCP<scalar_t> node_coords_y(&y_coords[0],0,y_coords.size(),false);
+  Teuchos::ArrayRCP<work_t> node_coords_x(&x_coords[0],0,x_coords.size(),false);
+  Teuchos::ArrayRCP<work_t> node_coords_y(&y_coords[0],0,y_coords.size(),false);
   Teuchos::ArrayRCP<int_t> connectivity(&conn[0],0,conn.size(),false);
 
   Teuchos::ArrayRCP<int_t> elem_map(num_elem);
@@ -156,13 +156,13 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const std::string & mesh_file_n
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
   const std::string & roi_file_name,
-  const scalar_t & max_size_constraint,
+  const work_t & max_size_constraint,
   const std::string & output_file_name){
 
   TEUCHOS_TEST_FOR_EXCEPTION(elem_type!=DICe::mesh::TRI6&&elem_type!=DICe::mesh::TRI3,std::runtime_error,
     "Error, invalid element type");
-  std::vector<scalar_t> pts_x;
-  std::vector<scalar_t> pts_y;
+  std::vector<work_t> pts_x;
+  std::vector<work_t> pts_y;
   const Teuchos::RCP<Subset_File_Info> subset_file_info = DICe::read_subset_file(roi_file_name);
   Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > roi_defs = subset_file_info->conformal_area_defs;
   DEBUG_MSG("Number of conformal area defs: " << roi_defs->size());
@@ -192,10 +192,10 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
       std::runtime_error,"Error, y0 must = y1 (must be a rectangular shape)");
     TEUCHOS_TEST_FOR_EXCEPTION((*boundary_polygon->vertex_coordinates_y())[2]!=(*boundary_polygon->vertex_coordinates_y())[3],
       std::runtime_error,"Error, y2 must = y3 (must be a rectangular shape)");
-    const scalar_t begin_x = (*boundary_polygon->vertex_coordinates_x())[0]-0.5; // the offsets are so that the mesh edge aligns with a pixel edge
-    const scalar_t end_x = (*boundary_polygon->vertex_coordinates_x())[1]+0.5;
-    const scalar_t begin_y = (*boundary_polygon->vertex_coordinates_y())[0]-0.5;
-    const scalar_t end_y = (*boundary_polygon->vertex_coordinates_y())[3]+0.5;
+    const work_t begin_x = (*boundary_polygon->vertex_coordinates_x())[0]-0.5; // the offsets are so that the mesh edge aligns with a pixel edge
+    const work_t end_x = (*boundary_polygon->vertex_coordinates_x())[1]+0.5;
+    const work_t begin_y = (*boundary_polygon->vertex_coordinates_y())[0]-0.5;
+    const work_t end_y = (*boundary_polygon->vertex_coordinates_y())[3]+0.5;
     std::vector<int_t> dirichlet_sides;
     std::vector<int_t> neumann_sides;
     const int_t num_boundary_segments = subset_file_info->boundary_condition_defs->size();
@@ -246,8 +246,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
     // gather all the excluded regions in the roi
     const int_t num_excluded_shapes = map_it->second.has_excluded_area() ? map_it->second.excluded_area()->size(): 0;
     DEBUG_MSG("Number of excluded shapes: " << num_excluded_shapes);
-    Teuchos::ArrayRCP<scalar_t> holes_x(num_excluded_shapes);
-    Teuchos::ArrayRCP<scalar_t> holes_y(num_excluded_shapes);
+    Teuchos::ArrayRCP<work_t> holes_x(num_excluded_shapes);
+    Teuchos::ArrayRCP<work_t> holes_y(num_excluded_shapes);
     std::vector<int_t> segments_left;
     std::vector<int_t> segments_right;
     std::vector<int_t> num_excluded_vertices(num_excluded_shapes);
@@ -332,8 +332,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
       dirichlet_boundary_segments_right[seg_index] = (*subset_file_info->boundary_condition_defs)[i].right_vertex_id_+1;
       seg_index++;
     }
-    Teuchos::ArrayRCP<scalar_t> points_x(&pts_x[0],0,pts_x.size(),false);
-    Teuchos::ArrayRCP<scalar_t> points_y(&pts_y[0],0,pts_y.size(),false);
+    Teuchos::ArrayRCP<work_t> points_x(&pts_x[0],0,pts_x.size(),false);
+    Teuchos::ArrayRCP<work_t> points_y(&pts_y[0],0,pts_y.size(),false);
     mesh = generate_tri_mesh(elem_type,
       points_x,
       points_y,
@@ -355,15 +355,15 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
 
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
-  Teuchos::ArrayRCP<scalar_t> points_x,
-  Teuchos::ArrayRCP<scalar_t> points_y,
-  Teuchos::ArrayRCP<scalar_t> holes_x,
-  Teuchos::ArrayRCP<scalar_t> holes_y,
+  Teuchos::ArrayRCP<work_t> points_x,
+  Teuchos::ArrayRCP<work_t> points_y,
+  Teuchos::ArrayRCP<work_t> holes_x,
+  Teuchos::ArrayRCP<work_t> holes_y,
   Teuchos::ArrayRCP<int_t> dirichlet_boundary_segments_left,
   Teuchos::ArrayRCP<int_t> dirichlet_boundary_segments_right,
   Teuchos::ArrayRCP<int_t> neumann_boundary_segments_left,
   Teuchos::ArrayRCP<int_t> neumann_boundary_segments_right,
-  const scalar_t & max_size_constraint,
+  const work_t & max_size_constraint,
   const std::string & output_file_name,
   const bool enforce_lagrange_bc,
   const bool use_regular_grid){
@@ -633,8 +633,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
     for(;it!=it_end;++it){
       DEBUG_MSG("node " << *it << " bc id " << -1);
     }
-    Teuchos::ArrayRCP<scalar_t> node_coords_x(out.numberofpoints); // numberofcorners is num nodes per elem
-    Teuchos::ArrayRCP<scalar_t> node_coords_y(out.numberofpoints); // numberofcorners is num nodes per elem
+    Teuchos::ArrayRCP<work_t> node_coords_x(out.numberofpoints); // numberofcorners is num nodes per elem
+    Teuchos::ArrayRCP<work_t> node_coords_y(out.numberofpoints); // numberofcorners is num nodes per elem
     Teuchos::ArrayRCP<int_t> node_map(out.numberofpoints,0);
     for(int_t i=0;i<out.numberofpoints;++i){
       node_coords_x[i] = out.pointlist[i*2+0];
@@ -670,11 +670,11 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_tri_mesh(const DICe::mesh::Base_Element_
 
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri_mesh(const DICe::mesh::Base_Element_Type elem_type,
-  const scalar_t & begin_x,
-  const scalar_t & end_x,
-  const scalar_t & begin_y,
-  const scalar_t & end_y,
-  const scalar_t & h,
+  const work_t & begin_x,
+  const work_t & end_x,
+  const work_t & begin_y,
+  const work_t & end_y,
+  const work_t & h,
   std::vector<int_t> & dirichlet_sides,
   std::vector<int_t> & neumann_sides,
   const std::string & output_file_name,
@@ -682,18 +682,18 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri_mesh(const DICe::mesh::Base_
 
   TEUCHOS_TEST_FOR_EXCEPTION(elem_type!=DICe::mesh::TRI6&&elem_type!=DICe::mesh::TRI3,std::runtime_error,
     "Error, invalid elem type");
-  const scalar_t width = end_x - begin_x;
+  const work_t width = end_x - begin_x;
   TEUCHOS_TEST_FOR_EXCEPTION(width<=0,std::runtime_error,"Error, invalid width");
-  const scalar_t height = end_y - begin_y;
+  const work_t height = end_y - begin_y;
   TEUCHOS_TEST_FOR_EXCEPTION(height<=0,std::runtime_error,"Error, invalid height");
   TEUCHOS_TEST_FOR_EXCEPTION(h>width||h>height,std::runtime_error,"Error, invalid mesh size");
 
-  std::vector<scalar_t> x_ticks;
-  for(scalar_t x=begin_x;x<=end_x;x+=h){
+  std::vector<work_t> x_ticks;
+  for(work_t x=begin_x;x<=end_x;x+=h){
     x_ticks.push_back(x);
   }
-  std::vector<scalar_t> y_ticks;
-  for(scalar_t y=begin_y;y<=end_y;y+=h){
+  std::vector<work_t> y_ticks;
+  for(work_t y=begin_y;y<=end_y;y+=h){
     y_ticks.push_back(y);
   }
 
@@ -711,8 +711,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri_mesh(const DICe::mesh::Base_
   const int_t num_corner_nodes = num_nodes_x * num_nodes_y;
 
   // set up the corner nodes
-  std::vector<scalar_t> x_coords;
-  std::vector<scalar_t> y_coords;
+  std::vector<work_t> x_coords;
+  std::vector<work_t> y_coords;
   for(int_t j=0;j<num_nodes_y;++j){
     for(int_t i=0;i<num_nodes_x;++i){
       x_coords.push_back(x_ticks[i]);
@@ -743,8 +743,8 @@ Teuchos::RCP<DICe::mesh::Mesh> generate_regular_tri_mesh(const DICe::mesh::Base_
 //  for(int_t i=0;i<num_nodes;++i){
 //    std::cout << "node " << i << " x " << x_coords[i] << " y " << y_coords[i] << std::endl;
 //  }
-  Teuchos::ArrayRCP<scalar_t> node_coords_x(&x_coords[0],0,x_coords.size(),false);
-  Teuchos::ArrayRCP<scalar_t> node_coords_y(&y_coords[0],0,y_coords.size(),false);
+  Teuchos::ArrayRCP<work_t> node_coords_x(&x_coords[0],0,x_coords.size(),false);
+  Teuchos::ArrayRCP<work_t> node_coords_y(&y_coords[0],0,y_coords.size(),false);
   const int_t num_col_x = num_nodes_x - 1;
   const int_t num_col_y = num_nodes_y - 1;
   const int_t num_elem = (num_nodes_x-1)*(num_nodes_y-1)*2;

@@ -70,9 +70,9 @@ int main(int argc, char *argv[]) {
   *outStream << "--- Begin test ---" << std::endl;
 
   // define the boundary points
-  Teuchos::ArrayRCP<scalar_t> points_x(4);
-  Teuchos::ArrayRCP<scalar_t> points_y(4);
-  const scalar_t max_size_constraint = 0.1;
+  Teuchos::ArrayRCP<work_t> points_x(4);
+  Teuchos::ArrayRCP<work_t> points_y(4);
+  const work_t max_size_constraint = 0.1;
   points_x[0] = 0.0; points_y[0] = 0.0;
   points_x[1] = 5.0; points_y[1] = 0.0;
   points_x[2] = 5.0; points_y[2] = 10.0;
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
   *outStream << "populating values for phi field" << std::endl;
   //MultiField & phi = *mesh->get_field(field_enums::CVFEM_AD_PHI_FS);
   MultiField & coords = *mesh->get_field(field_enums::INITIAL_COORDINATES_FS);
-  Teuchos::ArrayRCP<const scalar_t> coords_values = coords.get_1d_view();
+  Teuchos::ArrayRCP<const work_t> coords_values = coords.get_1d_view();
   //const int_t spa_dim = mesh->spatial_dimension();
   //for(size_t i=0;i<mesh->num_nodes();++i){
   //  phi.local_value(i) = coords_values[i*spa_dim]*10.0;
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
   DICe::mesh::create_output_exodus_file(mesh,"./");
   DICe::mesh::create_exodus_output_variable_names(mesh);
   *outStream << "writing an output step" << std::endl;
-  scalar_t time = 0.0;
+  work_t time = 0.0;
   DICe::mesh::exodus_output_dump(mesh,1,time);
   *outStream << "closing the exodus output files" << std::endl;
   DICe::mesh::close_exodus_output(mesh);

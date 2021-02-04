@@ -68,8 +68,8 @@ int main(int argc, char *argv[]) {
   Teuchos::oblackholestream bhs; // outputs nothing
   Teuchos::RCP<std::ostream> outStream = Teuchos::rcp(&bhs, false);
   int_t errorFlag  = 0;
-  scalar_t relTol = 1.0E-6;
-  scalar_t floor = 0.0;
+  work_t relTol = 1.0E-6;
+  work_t floor = 0.0;
   bool use_floor = false;
   std::string delimiter = " ,\r";
   bool numerical_values_only = false;
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
       if(!DICe::is_number(tokens[0])) continue;
       // check that the first number is an integer (presumed an id)
       // if ids have been omitted this will fail
-      const scalar_t remainder = strtod(tokens[0].c_str(),NULL) - std::floor(strtod(tokens[0].c_str(),NULL));
+      const work_t remainder = strtod(tokens[0].c_str(),NULL) - std::floor(strtod(tokens[0].c_str(),NULL));
       TEUCHOS_TEST_FOR_EXCEPTION(remainder!=0.0,std::runtime_error,
         "Error, first column in the output file must be the subset or node id "
         "(cannot ommit the id in the output parameters to compare parallel files)");
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
         std::vector<std::string> tokensB = DICe::tokenize_line(dataFileB,delimiter);
         if(tokensB.size()==0) continue;
         if(!DICe::is_number(tokensB[0])) continue;
-        const scalar_t remainder = strtod(tokensB[0].c_str(),NULL) - std::floor(strtod(tokensB[0].c_str(),NULL));
+        const work_t remainder = strtod(tokensB[0].c_str(),NULL) - std::floor(strtod(tokensB[0].c_str(),NULL));
         TEUCHOS_TEST_FOR_EXCEPTION(remainder!=0.0,std::runtime_error,
           "Error, first column in the parallel output file must be the subset or node id "
           "(cannot ommit the id in the output parameters to compare parallel files)");
@@ -209,9 +209,9 @@ int main(int argc, char *argv[]) {
           // number
           if(DICe::is_number(tokensA[i])){
             assert(DICe::is_number(tokensB[i]));
-            scalar_t valA = strtod(tokensA[i].c_str(),NULL);
-            scalar_t valB = strtod(tokensB[i].c_str(),NULL);
-            scalar_t diff = valA == 0.0 ? std::abs((valA - valB)/valA) : std::abs(valA - valB);
+            work_t valA = strtod(tokensA[i].c_str(),NULL);
+            work_t valB = strtod(tokensB[i].c_str(),NULL);
+            work_t diff = valA == 0.0 ? std::abs((valA - valB)/valA) : std::abs(valA - valB);
             const bool tiny = (std::abs(valA) + std::abs(valB) < 1.0E-8);
             const bool below_floor = std::abs(valA) < floor && valA!=0.0;
             if(!below_floor||!use_floor){
@@ -305,9 +305,9 @@ int main(int argc, char *argv[]) {
         // number
         if(DICe::is_number(tokensA[i])){
           assert(DICe::is_number(tokensB[i]));
-          scalar_t valA = strtod(tokensA[i].c_str(),NULL);
-          scalar_t valB = strtod(tokensB[i].c_str(),NULL);
-          scalar_t diff = std::abs((valA - valB)/valA);
+          work_t valA = strtod(tokensA[i].c_str(),NULL);
+          work_t valB = strtod(tokensB[i].c_str(),NULL);
+          work_t diff = std::abs((valA - valB)/valA);
           const bool tiny = (std::abs(valA) + std::abs(valB) < 1.0E-8);
           const bool below_floor = std::abs(valA) < floor;
           if(!below_floor||!use_floor){

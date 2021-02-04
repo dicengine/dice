@@ -1264,12 +1264,12 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                bool has_disp_values = false;
                int_t seed_loc_x = -1;
                int_t seed_loc_y = -1;
-               scalar_t seed_disp_x = 0.0;
-               scalar_t seed_disp_y = 0.0;
-               scalar_t seed_normal_strain_x = 0.0;
-               scalar_t seed_normal_strain_y = 0.0;
-               scalar_t seed_shear_strain = 0.0;
-               scalar_t seed_rotation = 0.0;
+               work_t seed_disp_x = 0.0;
+               work_t seed_disp_y = 0.0;
+               work_t seed_normal_strain_x = 0.0;
+               work_t seed_normal_strain_y = 0.0;
+               work_t seed_shear_strain = 0.0;
+               work_t seed_rotation = 0.0;
                if(proc_rank==0) DEBUG_MSG("Reading seed information");
                while(!dataFile.eof()){
                  std::vector<std::string> seed_tokens = tokenize_line(dataFile);
@@ -1293,7 +1293,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                    seed_disp_y = strtod(seed_tokens[2].c_str(),NULL);
                    if(proc_rank==0) DEBUG_MSG("Seed displacement " << seed_disp_x << " " << seed_disp_y);
                    has_disp_values = true;
-                   info->displacement_map->insert(std::pair<int_t,std::pair<scalar_t,scalar_t> >(num_roi,std::pair<scalar_t,scalar_t>(seed_disp_x,seed_disp_y)));
+                   info->displacement_map->insert(std::pair<int_t,std::pair<work_t,work_t> >(num_roi,std::pair<work_t,work_t>(seed_disp_x,seed_disp_y)));
                  }
                  else if(seed_tokens[0]==parser_normal_strain){
                    TEUCHOS_TEST_FOR_EXCEPTION(seed_tokens.size()<=2,std::runtime_error,
@@ -1303,7 +1303,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                    seed_normal_strain_x = strtod(seed_tokens[1].c_str(),NULL);
                    seed_normal_strain_y = strtod(seed_tokens[2].c_str(),NULL);
                    if(proc_rank==0) DEBUG_MSG("Seed normal strain " << seed_normal_strain_x << " " << seed_normal_strain_y);
-                   info->normal_strain_map->insert(std::pair<int_t,std::pair<scalar_t,scalar_t> >(num_roi,std::pair<scalar_t,scalar_t>(seed_normal_strain_x,seed_normal_strain_y)));
+                   info->normal_strain_map->insert(std::pair<int_t,std::pair<work_t,work_t> >(num_roi,std::pair<work_t,work_t>(seed_normal_strain_x,seed_normal_strain_y)));
                  }
                  else if(seed_tokens[0]==parser_shear_strain){
                    TEUCHOS_TEST_FOR_EXCEPTION(seed_tokens.size()<=1,std::runtime_error,
@@ -1312,7 +1312,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                      std::runtime_error,"");
                    seed_shear_strain = strtod(seed_tokens[1].c_str(),NULL);
                    if(proc_rank==0) DEBUG_MSG("Seed shear strain " << seed_shear_strain);
-                   info->shear_strain_map->insert(std::pair<int_t,scalar_t>(num_roi,seed_shear_strain));
+                   info->shear_strain_map->insert(std::pair<int_t,work_t>(num_roi,seed_shear_strain));
                  }
                  else if(seed_tokens[0]==parser_rotation){
                    TEUCHOS_TEST_FOR_EXCEPTION(seed_tokens.size()<=1,std::runtime_error,
@@ -1321,7 +1321,7 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                      std::runtime_error,"");
                    seed_rotation = strtod(seed_tokens[1].c_str(),NULL);
                    if(proc_rank==0) DEBUG_MSG("Seed rotation " << seed_rotation);
-                   info->rotation_map->insert(std::pair<int_t,scalar_t>(num_roi,seed_rotation));
+                   info->rotation_map->insert(std::pair<int_t,work_t>(num_roi,seed_rotation));
                  }
                  else{
                    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, unrecognized command in seed block " << tokens[0]);
@@ -1346,12 +1346,12 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
        else if(tokens[1]==parser_conformal_subset){
          int_t subset_id = -1;
          bool has_seed = false;
-         scalar_t seed_disp_x = 0.0;
-         scalar_t seed_disp_y = 0.0;
-         scalar_t seed_normal_strain_x = 0.0;
-         scalar_t seed_normal_strain_y = 0.0;
-         scalar_t seed_shear_strain = 0.0;
-         scalar_t seed_rotation = 0.0;
+         work_t seed_disp_x = 0.0;
+         work_t seed_disp_y = 0.0;
+         work_t seed_normal_strain_x = 0.0;
+         work_t seed_normal_strain_y = 0.0;
+         work_t seed_shear_strain = 0.0;
+         work_t seed_rotation = 0.0;
          std::vector<int_t> blocking_ids;
          bool force_simplex = false;
          DICe::multi_shape boundary_multi_shape;
@@ -1571,10 +1571,10 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
            info->force_simplex->insert(subset_id);
          if(has_seed){
            info->seed_subset_ids->insert(std::pair<int_t,int_t>(subset_id,subset_id)); // treating each conformal subset as an roi TODO fix this awkwardness
-           info->displacement_map->insert(std::pair<int_t,std::pair<scalar_t,scalar_t> >(subset_id,std::pair<scalar_t,scalar_t>(seed_disp_x,seed_disp_y)));
-           info->normal_strain_map->insert(std::pair<int_t,std::pair<scalar_t,scalar_t> >(subset_id,std::pair<scalar_t,scalar_t>(seed_normal_strain_x,seed_normal_strain_y)));
-           info->shear_strain_map->insert(std::pair<int_t,scalar_t>(subset_id,seed_shear_strain));
-           info->rotation_map->insert(std::pair<int_t,scalar_t>(subset_id,seed_rotation));
+           info->displacement_map->insert(std::pair<int_t,std::pair<work_t,work_t> >(subset_id,std::pair<work_t,work_t>(seed_disp_x,seed_disp_y)));
+           info->normal_strain_map->insert(std::pair<int_t,std::pair<work_t,work_t> >(subset_id,std::pair<work_t,work_t>(seed_normal_strain_x,seed_normal_strain_y)));
+           info->shear_strain_map->insert(std::pair<int_t,work_t>(subset_id,seed_shear_strain));
+           info->rotation_map->insert(std::pair<int_t,work_t>(subset_id,seed_rotation));
          }
          if(has_path_file)
            info->path_file_names->insert(std::pair<int_t,std::string>(subset_id,path_file_name));
@@ -1639,7 +1639,7 @@ Teuchos::RCP<Circle> read_circle(std::fstream &dataFile){
   if(proc_rank==0) DEBUG_MSG("Reading a circle");
   int_t cx = -1;
   int_t cy = -1;
-  scalar_t radius = -1.0;
+  work_t radius = -1.0;
   while(!dataFile.eof()){
     std::vector<std::string> tokens = tokenize_line(dataFile);
     if(tokens.size()==0) continue; // comment or blank line

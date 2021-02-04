@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
   int_t imgW = 200;
   int_t cx = 100;
   int_t cy = 100;
-  Teuchos::ArrayRCP<scalar_t> ref_intensities(imgW*imgW,0.0);
+  Teuchos::ArrayRCP<work_t> ref_intensities(imgW*imgW,0.0);
   std::vector<int_t> shape_coords_x(4);
   std::vector<int_t> shape_coords_y(4);
   shape_coords_x[0] = 80;
@@ -93,14 +93,14 @@ int main(int argc, char *argv[]) {
   std::set<std::pair<int_t,int_t> >::iterator ref_set_it = ref_owned_pixels.begin();
   for(;ref_set_it!=ref_owned_pixels.end();++ref_set_it){
     //*outStream << ref_set_it->first << " " << ref_set_it->second << std::endl;
-    ref_intensities[ref_set_it->first*imgW + ref_set_it->second] = 255;
+    ref_intensities[ref_set_it->first*imgW + ref_set_it->second] = 255.0;
   }
   *outStream << "creating the reference output image" << std::endl;
-  DICe::Image ref_image(imgW,imgW,ref_intensities);
+  DICe::Scalar_Image ref_image(imgW,imgW,ref_intensities);
   ref_image.write("shape_ref.tif");
   *outStream << "creating a deformation map" << std::endl;
   Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory();
-  const scalar_t u = 25.0, v=-30.0;
+  const work_t u = 25.0, v=-30.0;
   shape_function->insert_motion(u,v);
   std::set<std::pair<int_t,int_t> > def_owned_pixels = poly1->get_owned_pixels(shape_function,cx,cy);
   std::set<std::pair<int_t,int_t> >::iterator def_set_it = def_owned_pixels.begin();
@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
       errorFlag++;
     }
   }
-  Teuchos::ArrayRCP<scalar_t> def_intensities(imgW*imgW,0.0);
+  Teuchos::ArrayRCP<work_t> def_intensities(imgW*imgW,0.0);
   *outStream << "the deformed shape has " << def_owned_pixels.size() << " pixels" << std::endl;
   if(def_owned_pixels.size()!=ref_owned_pixels.size()){
     *outStream << "Error, def owned pixels is not the right size" << std::endl;
@@ -120,16 +120,16 @@ int main(int argc, char *argv[]) {
   }
   for(def_set_it = def_owned_pixels.begin();def_set_it!=def_owned_pixels.end();++def_set_it){
     //*outStream << "DEF: " << def_set_it->first << " " << def_set_it->second << std::endl;
-    def_intensities[def_set_it->first*imgW + def_set_it->second] = 255;
+    def_intensities[def_set_it->first*imgW + def_set_it->second] = 255.0;
   }
   *outStream << "creating deformed output image" << std::endl;
-  DICe::Image def_image(imgW,imgW,def_intensities);
+  DICe::Scalar_Image def_image(imgW,imgW,def_intensities);
   def_image.write("shape_def.tif");
 
   *outStream << "testing deformed shape with larger skin" << std::endl;
-  const scalar_t large_skin_factor = 1.5;
+  const work_t large_skin_factor = 1.5;
   std::set<std::pair<int_t,int_t> > large_skin_owned_pixels = poly1->get_owned_pixels(shape_function,cx,cy,large_skin_factor);
-  Teuchos::ArrayRCP<scalar_t> large_skin_intensities(imgW*imgW,0.0);
+  Teuchos::ArrayRCP<work_t> large_skin_intensities(imgW*imgW,0.0);
   *outStream << "large skin shape has " << large_skin_owned_pixels.size() << " pixels" << std::endl;
   if(large_skin_owned_pixels.size() <= ref_owned_pixels.size()){
     *outStream << "Error, large skin has too few pixels" << std::endl;
@@ -149,13 +149,13 @@ int main(int argc, char *argv[]) {
       errorFlag++;
     }
   }
-  DICe::Image large_skin_image(imgW,imgW,large_skin_intensities);
+  DICe::Scalar_Image large_skin_image(imgW,imgW,large_skin_intensities);
   large_skin_image.write("shape_large_skin.tif");
 
   *outStream << "testing deformed shape with smaller skin" << std::endl;
-  const scalar_t small_skin_factor = 0.75;
+  const work_t small_skin_factor = 0.75;
   std::set<std::pair<int_t,int_t> > small_skin_owned_pixels = poly1->get_owned_pixels(shape_function,cx,cy,small_skin_factor);
-  Teuchos::ArrayRCP<scalar_t> small_skin_intensities(imgW*imgW,0.0);
+  Teuchos::ArrayRCP<work_t> small_skin_intensities(imgW*imgW,0.0);
   *outStream << "the small skin shape has " << small_skin_owned_pixels.size() << " pixels" << std::endl;
   if(small_skin_owned_pixels.size() >= ref_owned_pixels.size()){
     *outStream << "Error, the small skin has too many pixels" << std::endl;
@@ -165,7 +165,7 @@ int main(int argc, char *argv[]) {
   for(;small_skin_set_it!=small_skin_owned_pixels.end();++small_skin_set_it){
     small_skin_intensities[small_skin_set_it->first*imgW + small_skin_set_it->second] = 255;
   }
-  DICe::Image small_skin_image(imgW,imgW,small_skin_intensities);
+  DICe::Scalar_Image small_skin_image(imgW,imgW,small_skin_intensities);
   small_skin_image.write("shape_small_skin.tif");
 
   *outStream << "--- End test ---" << std::endl;

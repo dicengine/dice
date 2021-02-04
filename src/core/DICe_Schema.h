@@ -44,6 +44,7 @@
 
 #include <DICe.h>
 #include <DICe_Image.h>
+#include <DICe_ImageUtils.h>
 #include <DICe_Shape.h>
 #include <DICe_Initializer.h>
 #include <DICe_Parser.h>
@@ -79,10 +80,6 @@ class Post_Processor;
 
 // forward dec for a triangulation
 class Triangulation;
-
-// forward dec of image deformer
-class Image_Deformer;
-
 
 /// container class that holds information about a tracking analysis
 class
@@ -260,8 +257,8 @@ public:
   /// \param conformal_subset_defs Optional definition of conformal subsets
   /// \param neighbor_ids A vector (of length num_pts) that contains the neighbor id to use when initializing the solution by neighbor value
   /// \param params correlation parameters
-  Schema(Teuchos::ArrayRCP<scalar_t> coords_x,
-    Teuchos::ArrayRCP<scalar_t> coords_y,
+  Schema(Teuchos::ArrayRCP<work_t> coords_x,
+    Teuchos::ArrayRCP<work_t> coords_y,
     const int_t subset_size,
     Teuchos::RCP<std::map<int_t,Conformal_Area_Def> > conformal_subset_defs=Teuchos::null,
     Teuchos::RCP<std::vector<int_t> > neighbor_ids=Teuchos::null,
@@ -307,7 +304,7 @@ public:
   /// Replace the deformed image using an intensity array
   void set_def_image(const int_t img_width,
     const int_t img_height,
-    const Teuchos::ArrayRCP<intensity_t> defRCP,
+    const Teuchos::ArrayRCP<storage_t> defRCP,
     const int_t id=0);
 
   /// Replace the deformed image using an image
@@ -323,7 +320,7 @@ public:
   /// Replace the deformed image using an intensity array
   void set_ref_image(const int_t img_width,
     const int_t img_height,
-    const Teuchos::ArrayRCP<intensity_t> refRCP);
+    const Teuchos::ArrayRCP<storage_t> refRCP);
 
   /// Replace the reference image using an image
   void set_ref_image(Teuchos::RCP<Image> img);
@@ -524,7 +521,7 @@ public:
   /// \brief Return the value of the given field at the given global id (must be local to this process)
   /// \param global_id Global ID of the element
   /// \param spec the Field_Spec of the field to get the value for
-  mv_scalar_type & global_field_value(const int_t global_id,
+  mv_work_type & global_field_value(const int_t global_id,
     const DICe::field_enums::Field_Spec spec){
     return local_field_value(subset_local_id(global_id),spec);
   }
@@ -532,7 +529,7 @@ public:
   /// \brief Return the value of the given field at the given local id (must be local to this process)
   /// \param local_id local ID of the subset
   /// \param spec the Field_Spec of the requested field
-  mv_scalar_type & local_field_value(const int_t local_id,
+  mv_work_type & local_field_value(const int_t local_id,
     const DICe::field_enums::Field_Spec spec){
     assert(local_id<local_num_subsets_);
     assert(local_id>=0);
@@ -715,12 +712,12 @@ public:
   /// \param num_iterations the number of iterations
   void record_step(Teuchos::RCP<Objective> obj,
     Teuchos::RCP<Local_Shape_Function> shape_function,
-    const scalar_t & sigma,
-    const scalar_t & match,
-    const scalar_t & gamma,
-    const scalar_t & beta,
-    const scalar_t & noise,
-    const scalar_t & contrast,
+    const work_t & sigma,
+    const work_t & match,
+    const work_t & gamma,
+    const work_t & beta,
+    const work_t & noise,
+    const work_t & contrast,
     const int_t active_pixels,
     const int_t status,
     const int_t num_iterations);
@@ -1018,7 +1015,7 @@ public:
   }
 
   /// returns a pointer to the image deformer used for error estimation
-  Teuchos::RCP<Image_Deformer> image_deformer() const{
+  Teuchos::RCP<Image_Deformer<>> image_deformer() const{
     return image_deformer_;
   }
 
@@ -1264,7 +1261,7 @@ private:
   /// store the total image dims (the image size before decomposition across processors)
   int_t full_ref_img_height_;
   /// store a pointer to the image deformer if this is a error estimation run
-  Teuchos::RCP<Image_Deformer> image_deformer_;
+  Teuchos::RCP<Image_Deformer<>> image_deformer_;
   /// true if the laplacian images should be computed
   bool compute_laplacian_image_;
   /// size of threshold to use for feature matching when thresholding is included

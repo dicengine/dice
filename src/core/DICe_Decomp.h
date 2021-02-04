@@ -78,8 +78,8 @@ public:
   /// \param neighbor_ids neighbor id to use for initialization if USE_NEIGHBOR_VALUES is selected
   /// \param obstructing_subset_ids obstructions listed for each subset if necessary
   /// \param correlation_params pointer to the parameters used for the correlation
-  Decomp(Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
-    Teuchos::ArrayRCP<scalar_t> subset_centroids_y,
+  Decomp(Teuchos::ArrayRCP<work_t> subset_centroids_x,
+    Teuchos::ArrayRCP<work_t> subset_centroids_y,
     Teuchos::RCP<std::vector<int_t> > neighbor_ids,
     Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids,
     const Teuchos::RCP<Teuchos::ParameterList> & correlation_params);
@@ -108,12 +108,12 @@ public:
   }
 
   /// returns a pointer to the trimmed set of overlap x coordinates
-  Teuchos::ArrayRCP<scalar_t> overlap_coords_x()const{
+  Teuchos::ArrayRCP<work_t> overlap_coords_x()const{
     return overlap_coords_x_;
   }
 
   /// returns a pointer to the trimmed set of overlap y coordinates
-  Teuchos::ArrayRCP<scalar_t> overlap_coords_y()const{
+  Teuchos::ArrayRCP<work_t> overlap_coords_y()const{
     return overlap_coords_y_;
   }
 
@@ -144,8 +144,8 @@ private:
   /// \param neighbor_ids the neighbors in global ids to use for initialization of the solution if neighbor values are used
   /// \param obstructing_subset_ids obstructions listed for each subset if necessary
   /// \param correlation_params pointer to the parameters used for the correlation
-  void initialize(const Teuchos::ArrayRCP<scalar_t> subset_centroids_x,
-    const Teuchos::ArrayRCP<scalar_t> subset_centroids_y,
+  void initialize(const Teuchos::ArrayRCP<work_t> subset_centroids_x,
+    const Teuchos::ArrayRCP<work_t> subset_centroids_y,
     Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
     Teuchos::RCP<std::map<int_t,std::vector<int_t> > > obstructing_subset_ids,
     const Teuchos::RCP<Teuchos::ParameterList> & correlation_params);
@@ -162,8 +162,8 @@ private:
   void populate_coordinate_vectors(const std::string & image_file_name,
     const Teuchos::RCP<Teuchos::ParameterList> & input_params,
     const Teuchos::RCP<Teuchos::ParameterList> & correlation_params,
-    Teuchos::ArrayRCP<scalar_t> & subset_centroids_x,
-    Teuchos::ArrayRCP<scalar_t> & subset_centroids_y,
+    Teuchos::ArrayRCP<work_t> & subset_centroids_x,
+    Teuchos::ArrayRCP<work_t> & subset_centroids_y,
     Teuchos::RCP<std::vector<int_t> > & neighbor_ids,
     Teuchos::RCP<std::map<int_t,std::vector<int_t> > > & obstructing_subset_ids);
 
@@ -194,9 +194,9 @@ private:
   /// vector to keep track of the execution order for this processor
   std::vector<int_t> this_proc_gid_order_;
   /// all the local and ghosted point x coordinates for this processor
-  Teuchos::ArrayRCP<scalar_t> overlap_coords_x_;
+  Teuchos::ArrayRCP<work_t> overlap_coords_x_;
   /// all the local and ghosted point y coordinates for this processor
-  Teuchos::ArrayRCP<scalar_t> overlap_coords_y_;
+  Teuchos::ArrayRCP<work_t> overlap_coords_y_;
   /// trimmed list of neighbor ids
   Teuchos::RCP<std::vector<int_t> > neighbor_ids_;
   /// info about ROI's, etc
@@ -214,14 +214,14 @@ private:
 /// \param pointer to an image to use for checking SSSIG
 /// \param grad_threshold subsets with a gradiend SSSIG lower than this will be removed
 DICE_LIB_DLL_EXPORT
-void create_regular_grid_of_correlation_points(std::vector<scalar_t> & correlation_points,
+void create_regular_grid_of_correlation_points(std::vector<work_t> & correlation_points,
   std::vector<int_t> & neighbor_ids,
   Teuchos::RCP<Teuchos::ParameterList> params,
   const int_t img_w,
   const int_t img_h,
   Teuchos::RCP<DICe::Subset_File_Info> subset_file_info=Teuchos::null,
   Teuchos::RCP<DICe::Image> image=Teuchos::null,
-  const scalar_t & grad_threshold=0.0);
+  const work_t & grad_threshold=0.0);
 
 /// \brief Test to see that the point falls with the boundary of a conformal def and not in the excluded area
 /// \param x_coord X coordinate of the point in question
@@ -242,7 +242,7 @@ bool valid_correlation_point(const int_t x_coord,
   std::set<std::pair<int_t,int_t> > & coords,
   std::set<std::pair<int_t,int_t> > & excluded_coords,
   Teuchos::RCP<DICe::Image> image=Teuchos::null,
-  const scalar_t & grad_threshold=0.0);
+  const work_t & grad_threshold=0.0);
 
 
 }// End DICe Namespace

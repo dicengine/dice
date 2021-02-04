@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
   params->print(std::cout);
   // ensure all the necessary parameters are there
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("scale_factor"),std::runtime_error,"");
-  const scalar_t scale_factor = params->get<double>("scale_factor");
+  const work_t scale_factor = params->get<double>("scale_factor");
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("model_origin_in_pixels_x"),std::runtime_error,"");
   const int_t ox = params->get<int_t>("model_origin_in_pixels_x");
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("model_origin_in_pixels_y"),std::runtime_error,"");
@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("exodus_file"),std::runtime_error,"");
   const std::string exo_file = params->get<std::string>("exodus_file");
   //TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("z_value"),std::runtime_error,"");
-  //const scalar_t z_value = params->get<double>("z_value");
+  //const work_t z_value = params->get<double>("z_value");
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("disp_field_name_x"),std::runtime_error,"");
   const std::string disp_field_name_x = params->get<std::string>("disp_field_name_x");
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("disp_field_name_y"),std::runtime_error,"");
@@ -112,23 +112,23 @@ int main(int argc, char *argv[]) {
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("exodus_step"),std::runtime_error,"");
   const int_t exo_step = params->get<int_t>("exodus_step");
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("plot_disp_threshold"),std::runtime_error,"");
-  const scalar_t plot_thresh = params->get<double>("plot_disp_threshold");
+  const work_t plot_thresh = params->get<double>("plot_disp_threshold");
   TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("convert_to_eulerian"),std::runtime_error,"");
   const bool convert_to_eulerian = params->get<bool>("convert_to_eulerian");
 
   // read the exodus file to get the displacement field and coordinates
 
-  std::vector<scalar_t> coords_x;
-  std::vector<scalar_t> coords_y;
-  std::vector<scalar_t> coords_z;
+  std::vector<work_t> coords_x;
+  std::vector<work_t> coords_y;
+  std::vector<work_t> coords_z;
   DICe::mesh::read_exodus_coordinates(exo_file,coords_x,coords_y,coords_z);
   TEUCHOS_TEST_FOR_EXCEPTION(coords_x.size()!=coords_y.size(),std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(coords_x.size()!=coords_z.size(),std::runtime_error,"");
   std::cout << "sucessfully read coordinates of size " << coords_x.size() << std::endl;
-  std::vector<scalar_t> exo_ux = DICe::mesh::read_exodus_field(exo_file,disp_field_name_x,exo_step+1);
+  std::vector<work_t> exo_ux = DICe::mesh::read_exodus_field(exo_file,disp_field_name_x,exo_step+1);
   TEUCHOS_TEST_FOR_EXCEPTION(coords_x.size()!=exo_ux.size(),std::runtime_error,"");
   std::cout << "sucessfully read displacemet field x of size " << exo_ux.size() << std::endl;
-  std::vector<scalar_t> exo_uy = DICe::mesh::read_exodus_field(exo_file,disp_field_name_y,exo_step+1);
+  std::vector<work_t> exo_uy = DICe::mesh::read_exodus_field(exo_file,disp_field_name_y,exo_step+1);
   TEUCHOS_TEST_FOR_EXCEPTION(coords_x.size()!=exo_uy.size(),std::runtime_error,"");
   std::cout << "sucessfully read displacemet field y of size " << exo_uy.size() << std::endl;
   const int_t num_nodes = exo_ux.size();
@@ -137,11 +137,11 @@ int main(int argc, char *argv[]) {
   const int_t img_w = ref_img->width();
   const int_t img_h = ref_img->height();
   const int_t num_px = img_w*img_h;
-  Teuchos::ArrayRCP<intensity_t> def_intens(num_px,0.0);
+  Teuchos::ArrayRCP<work_t> def_intens(num_px,0.0);
 
   // build a kd tree for the displacement values:
   // create neighborhood lists using nanoflann:
-  Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
+  Teuchos::RCP<Point_Cloud_2D<work_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<work_t>());
   point_cloud->pts.resize(num_nodes);
   for(int_t i=0;i<num_nodes;++i){
     point_cloud->pts[i].x = convert_to_eulerian ? coords_x[i] + exo_ux[i]: coords_x[i];
@@ -171,11 +171,11 @@ int main(int argc, char *argv[]) {
 
   // perform a pass to size the neighbor lists
   std::vector<std::vector<int_t> > neighbor_list(num_px);
-  std::vector<std::vector<scalar_t> > neighbor_dist_x(num_px);
-  std::vector<std::vector<scalar_t> > neighbor_dist_y(num_px);
-  scalar_t query_pt[2];
+  std::vector<std::vector<work_t> > neighbor_dist_x(num_px);
+  std::vector<std::vector<work_t> > neighbor_dist_y(num_px);
+  work_t query_pt[2];
   std::vector<size_t> ret_index(num_neigh);
-  std::vector<scalar_t> out_dist_sqr(num_neigh);
+  std::vector<work_t> out_dist_sqr(num_neigh);
   const int_t N = 3;
   int *IPIV = new int[N+1];
   int LWORK = N*N;
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
   double *WORK = new double[LWORK];
   double *GWORK = new double[10*N];
   int *IWORK = new int[LWORK];
-  // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
+  // Note, LAPACK does not allow templating on long int or work_t...must use int and double
   Teuchos::LAPACK<int,double> lapack;
 
   // output a csv file with the image points
@@ -197,13 +197,13 @@ int main(int argc, char *argv[]) {
     for(int_t px=0;px<img_w;++px){
       // compute the model location for this pixel:
       // remove the model offsets and scale the positions
-      scalar_t mx = (px - ox)*scale_factor;
-      scalar_t my = (oy - py)*scale_factor; // y pixel has to be flipped to match the model coordiantes which are y up instead of y down like the image
+      work_t mx = (px - ox)*scale_factor;
+      work_t my = (oy - py)*scale_factor; // y pixel has to be flipped to match the model coordiantes which are y up instead of y down like the image
       query_pt[0] = mx;
       query_pt[1] = my;
       kd_tree->knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
-      scalar_t ls_ux = 0.0;
-      scalar_t ls_uy = 0.0;
+      work_t ls_ux = 0.0;
+      work_t ls_uy = 0.0;
       Teuchos::ArrayRCP<double> u_x(num_neigh,0.0);
       Teuchos::ArrayRCP<double> u_y(num_neigh,0.0);
       Teuchos::ArrayRCP<double> X_t_u_x(N,0.0);
@@ -249,14 +249,14 @@ int main(int argc, char *argv[]) {
       ls_ux = coeffs_x[0];
       ls_uy = coeffs_y[0];
       // convert the displacement back to image coordinates
-      const scalar_t bx = ls_ux / scale_factor;
-      const scalar_t by = ls_uy / scale_factor;
-      scalar_t out_bx = std::abs(ls_ux) < plot_thresh ? ls_ux : 0.0;
-      scalar_t out_by = std::abs(ls_uy) < plot_thresh ? ls_uy : 0.0;
+      const work_t bx = ls_ux / scale_factor;
+      const work_t by = ls_uy / scale_factor;
+      work_t out_bx = std::abs(ls_ux) < plot_thresh ? ls_ux : 0.0;
+      work_t out_by = std::abs(ls_uy) < plot_thresh ? ls_uy : 0.0;
       fprintf(imgFilePtr,"%4.4E,%4.4E,%4.4E,%4.4E,%4.4E\n",mx,my,0.0,out_bx,out_by);
 
       // apply the displacement to the image
-      const intensity_t intens = ref_img->interpolate_keys_fourth(px-bx,py-by);
+      const work_t intens = ref_img->interpolate_keys_fourth(px-bx,py-by);
       def_intens[py*img_w+px] = intens > 0.0 ? intens : 0.0;
     } // end px
   } // end py

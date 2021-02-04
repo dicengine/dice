@@ -55,30 +55,30 @@ using namespace DICe;
 
 // function that takes an image that represents an object in physical space (pixels coords are treated as mm coordinates)
 // and a set of global coordinates and returns a pixel value
-intensity_t get_intensity_from_world_coords(Teuchos::RCP<Image> image,
-  const scalar_t world_x,
-  const scalar_t world_y,
-  const scalar_t world_z){
+work_t get_intensity_from_world_coords(Teuchos::RCP<Scalar_Image> image,
+  const work_t world_x,
+  const work_t world_y,
+  const work_t world_z){
 #if DICE_USE_DOUBLE
   TEUCHOS_TEST_FOR_EXCEPTION(std::abs(world_z)>1.0E-8,std::runtime_error,"world_z " << world_z);
 #endif
-  const scalar_t facet_width = 100.0;
-  const scalar_t factor_x = image->width()-1.0;
-  const scalar_t factor_y = image->height()-1.0;
+  const work_t facet_width = 100.0;
+  const work_t factor_x = image->width()-1.0;
+  const work_t factor_y = image->height()-1.0;
 
-  const scalar_t scaled_x = (world_x + 0.5*facet_width)*factor_x/facet_width;
-  const scalar_t scaled_y = (world_y + 0.5*facet_width)*factor_y/facet_width;
+  const work_t scaled_x = (world_x + 0.5*facet_width)*factor_x/facet_width;
+  const work_t scaled_y = (world_y + 0.5*facet_width)*factor_y/facet_width;
 
   // out of bounds pixels are assigned a value of 0.0
   return image->interpolate_keys_fourth(scaled_x,scaled_y);
 }
 
-void least_squares_inverse_map(const std::vector<scalar_t> & in_x,
-  const std::vector<scalar_t> & in_y,
-  const std::vector<scalar_t> & in_mapped_x,
-  const std::vector<scalar_t> & in_mapped_y,
-  std::vector<scalar_t> & out_unmapped_x,
-  std::vector<scalar_t> & out_unmapped_y,
+void least_squares_inverse_map(const std::vector<work_t> & in_x,
+  const std::vector<work_t> & in_y,
+  const std::vector<work_t> & in_mapped_x,
+  const std::vector<work_t> & in_mapped_y,
+  std::vector<work_t> & out_unmapped_x,
+  std::vector<work_t> & out_unmapped_y,
   std::vector<bool> & is_inside_neighborhood){
 
   const size_t num_pixels = in_x.size();
@@ -90,7 +90,7 @@ void least_squares_inverse_map(const std::vector<scalar_t> & in_x,
   TEUCHOS_TEST_FOR_EXCEPTION(is_inside_neighborhood.size()!=num_pixels,std::runtime_error,"");
 
   // create a point cloud of pixels to use for least squares regression below:
-  Point_Cloud_2D<scalar_t> cloud;
+  Point_Cloud_2D<work_t> cloud;
   cloud.pts.resize(num_pixels);
   const int_t N = 3;
   const int_t num_neigh = 11;
@@ -100,7 +100,7 @@ void least_squares_inverse_map(const std::vector<scalar_t> & in_x,
   double *WORK = new double[LWORK];
   double *GWORK = new double[10*N];
   int *IWORK = new int[LWORK];
-  // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
+  // Note, LAPACK does not allow templating on long int or work_t...must use int and double
   Teuchos::LAPACK<int,double> lapack;
 
   for(size_t i=0;i<num_pixels;++i){
@@ -113,9 +113,9 @@ void least_squares_inverse_map(const std::vector<scalar_t> & in_x,
   std::cout << "kd-tree completed" << std::endl;
 
   std::vector<size_t> ret_index(num_neigh);
-  std::vector<scalar_t> out_dist_sqr(num_neigh);
+  std::vector<work_t> out_dist_sqr(num_neigh);
   for(size_t i=0;i<num_pixels;++i){
-    scalar_t query_pt[2];
+    work_t query_pt[2];
     query_pt[0] = in_x[i];
     query_pt[1] = in_y[i];
     kd_tree.knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
@@ -128,8 +128,8 @@ void least_squares_inverse_map(const std::vector<scalar_t> & in_x,
     Teuchos::ArrayRCP<double> coeffs_y(N,0.0);
     Teuchos::SerialDenseMatrix<int_t,double> X_t(N,num_neigh, true);
     Teuchos::SerialDenseMatrix<int_t,double> X_t_X(N,N,true);
-    scalar_t centroid_x = 0.0;
-    scalar_t centroid_y = 0.0;
+    work_t centroid_x = 0.0;
+    work_t centroid_y = 0.0;
     for(size_t n=0;n<num_neigh;++n){
       const int_t neigh_id = ret_index[n];
       neigh_x[n] = in_x[neigh_id];
@@ -144,14 +144,14 @@ void least_squares_inverse_map(const std::vector<scalar_t> & in_x,
     }
     centroid_x /= num_neigh;
     centroid_y /= num_neigh;
-    scalar_t max_neigh_dist_from_centroid = 0.0;
+    work_t max_neigh_dist_from_centroid = 0.0;
     for(size_t n=0;n<num_neigh;++n){
       const int_t neigh_id = ret_index[n];
-      scalar_t neigh_dist_from_centroid = (cloud.pts[neigh_id].x - centroid_x)*(cloud.pts[neigh_id].x - centroid_x) + (cloud.pts[neigh_id].y - centroid_y)*(cloud.pts[neigh_id].y - centroid_y);
+      work_t neigh_dist_from_centroid = (cloud.pts[neigh_id].x - centroid_x)*(cloud.pts[neigh_id].x - centroid_x) + (cloud.pts[neigh_id].y - centroid_y)*(cloud.pts[neigh_id].y - centroid_y);
       if(neigh_dist_from_centroid > max_neigh_dist_from_centroid)
         max_neigh_dist_from_centroid = neigh_dist_from_centroid;
     }
-    const scalar_t dist_from_centroid = (query_pt[0] - centroid_x)*(query_pt[0] - centroid_x) + (query_pt[1] - centroid_y)*(query_pt[1] - centroid_y);
+    const work_t dist_from_centroid = (query_pt[0] - centroid_x)*(query_pt[0] - centroid_x) + (query_pt[1] - centroid_y)*(query_pt[1] - centroid_y);
     is_inside_neighborhood[i] = dist_from_centroid <= max_neigh_dist_from_centroid;
 
     // set up X^T*X
@@ -189,8 +189,8 @@ void least_squares_inverse_map(const std::vector<scalar_t> & in_x,
   delete [] IPIV;
 }
 
-std::vector<scalar_t> motion(const scalar_t & t){
-  std::vector<scalar_t> rigid_body_params(6,0.0);
+std::vector<work_t> motion(const work_t & t){
+  std::vector<work_t> rigid_body_params(6,0.0);
   rigid_body_params[Rigid_Body_Shape_Function::ANGLE_X] = -5.0 + 0.5*t;
   rigid_body_params[Rigid_Body_Shape_Function::ANGLE_Y] = 2.3 - 0.45*t;
   rigid_body_params[Rigid_Body_Shape_Function::ANGLE_Z] = -23.7 + t;
@@ -208,8 +208,8 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
-  const scalar_t max_diff = 7.0;
-  const scalar_t max_base_diff = 0.1;
+  const work_t max_diff = 7.0;
+  const work_t max_base_diff = 0.1;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -230,16 +230,16 @@ int main(int argc, char *argv[]) {
   const int_t num_pixels = image_w*image_h;
 
   // create the reference image:
-  std::vector<scalar_t> image_x(num_pixels,0.0);
-  std::vector<scalar_t> image_y(num_pixels,0.0);
-  std::vector<scalar_t> mapped_x(num_pixels,0.0);
-  std::vector<scalar_t> mapped_y(num_pixels,0.0);
-  std::vector<scalar_t> unmapped_x(num_pixels,0.0);
-  std::vector<scalar_t> unmapped_y(num_pixels,0.0);
+  std::vector<work_t> image_x(num_pixels,0.0);
+  std::vector<work_t> image_y(num_pixels,0.0);
+  std::vector<work_t> mapped_x(num_pixels,0.0);
+  std::vector<work_t> mapped_y(num_pixels,0.0);
+  std::vector<work_t> unmapped_x(num_pixels,0.0);
+  std::vector<work_t> unmapped_y(num_pixels,0.0);
   std::vector<bool> is_in_neigh(num_pixels,true);
-  std::vector<scalar_t> world_x(num_pixels,0.0);
-  std::vector<scalar_t> world_y(num_pixels,0.0);
-  std::vector<scalar_t> world_z(num_pixels,0.0);
+  std::vector<work_t> world_x(num_pixels,0.0);
+  std::vector<work_t> world_y(num_pixels,0.0);
+  std::vector<work_t> world_z(num_pixels,0.0);
   for(int_t y=0;y<image_h;++y){
     for(int_t x=0;x<image_w;++x){
       image_x[y*image_w+x] = x;
@@ -248,15 +248,15 @@ int main(int argc, char *argv[]) {
   }
 
   // create a base image to represent the plate in it's reference position
-  std::vector<scalar_t> rigid_body_params(6,0.0);
+  std::vector<work_t> rigid_body_params(6,0.0);
   cam->image_to_world(image_x,image_y,rigid_body_params,world_x,world_y,world_z);
-  Teuchos::ArrayRCP<intensity_t> base_intensities(num_pixels,0.0);
+  Teuchos::ArrayRCP<work_t> base_intensities(num_pixels,0.0);
   for(int_t i=0;i<num_pixels;++i){
     base_intensities[i] = get_intensity_from_world_coords(physical_ref,world_x[i],world_y[i],world_z[i]);
   }
-  Teuchos::RCP<Image> base_img = Teuchos::rcp(new Image(image_w,image_h,base_intensities));
+  Teuchos::RCP<Scalar_Image> base_img = Teuchos::rcp(new Scalar_Image(image_w,image_h,base_intensities));
   //base_img->write("proj_shape_base_img.tiff");
-  scalar_t base_diff = base_img->diff(physical_ref);
+  work_t base_diff = base_img->diff(physical_ref);
   base_diff/=num_pixels;
   *outStream << "diff of the base image vs. synthetic base image: " << base_diff << std::endl;
   if(base_diff>max_base_diff){
@@ -270,17 +270,17 @@ int main(int argc, char *argv[]) {
       "alpha" << std::setw (10) << "beta" << std::setw (10) << "gamma" << std::setw (10) <<
       "tx" << std::setw (10) << "ty" << std::setw (10) << "tz" << std::endl;
   for(size_t step=0;step<=max_step;++step){
-    std::vector<scalar_t> rbp = motion((scalar_t)step);
+    std::vector<work_t> rbp = motion((work_t)step);
     for(size_t i=0;i<6;++i)
       (*rbsf->parameters())[i] = rbp[i];
 
     std::stringstream file_name;
     file_name << "./images/rbm_speckle_" << step << ".tif";
     Teuchos::RCP<Image> def_img = Teuchos::rcp(new Image(file_name.str().c_str()));
-    scalar_t avg_diff = 0.0;
+    work_t avg_diff = 0.0;
     for(int_t i=0;i<num_pixels;++i){
-      scalar_t mx = 0.0;
-      scalar_t my = 0.0;
+      work_t mx = 0.0;
+      work_t my = 0.0;
       rbsf->map(image_x[i],image_y[i],-1.0,-1.0,mx,my);
       // skip the outer edges:
       if(image_x[i]<10.0||image_x[i]>image_w-10.0||image_y[i]<10.0||image_y[i]>image_h-10.0)
@@ -288,7 +288,7 @@ int main(int argc, char *argv[]) {
       // skip pixels out of the field of view in the deformed image
       if(def_img->interpolate_keys_fourth(mx,my)<=0.0)
         continue;
-      scalar_t diff = std::abs(physical_ref->intensities()[i] - def_img->interpolate_keys_fourth(mx,my));
+      work_t diff = std::abs(physical_ref->intensities()[i] - def_img->interpolate_keys_fourth(mx,my));
       avg_diff+=diff;
     }
     avg_diff/=num_pixels;
@@ -328,8 +328,8 @@ int main(int argc, char *argv[]) {
 //  schema_params->set(DICe::camera_system_file,"./cal/rigid_body_shape_function.xml");
 //  schema_params->set(DICe::max_solver_iterations_fast,500);
 //  schema_params->set(DICe::optimization_method,SIMPLEX);
-//  Teuchos::ArrayRCP<scalar_t> coords_x(1,255.0);
-//  Teuchos::ArrayRCP<scalar_t> coords_y(1,255.0);
+//  Teuchos::ArrayRCP<work_t> coords_x(1,255.0);
+//  Teuchos::ArrayRCP<work_t> coords_y(1,255.0);
 //  const int_t subset_size = 101;
 //  Teuchos::RCP<DICe::Schema> schema =
 //      Teuchos::rcp(new DICe::Schema(coords_x,coords_y,subset_size,Teuchos::null,Teuchos::null,schema_params));

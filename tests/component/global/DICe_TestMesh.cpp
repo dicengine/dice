@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
   *outStream << "populating values for phi field" << std::endl;
   MultiField & phi = *mesh->get_field(field_enums::FIELD_1_FS);
   MultiField & coords = *mesh->get_field(field_enums::INITIAL_COORDINATES_FS);
-  Teuchos::ArrayRCP<const scalar_t> coords_values = coords.get_1d_view();
+  Teuchos::ArrayRCP<const work_t> coords_values = coords.get_1d_view();
   for(size_t i=0;i<mesh->num_nodes();++i){
     phi.local_value(i) = coords_values[i]*10.0;
   }
@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
   DICe::mesh::create_face_edge_output_variable_names(mesh);
 
   *outStream << "writing an output step" << std::endl;
-  scalar_t time = 0.0;
+  work_t time = 0.0;
   DICe::mesh::exodus_output_dump(mesh,1,time);
   DICe::mesh::exodus_face_edge_output_dump(mesh,1,time);
 

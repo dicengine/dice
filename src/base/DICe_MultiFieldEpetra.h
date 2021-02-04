@@ -68,7 +68,7 @@ namespace DICe {
 
 typedef Epetra_MultiVector vec_type;
 typedef Epetra_Operator operator_type;
-typedef double mv_scalar_type;
+typedef double mv_work_type;
 typedef Epetra_CrsMatrix matrix_type;
 
 
@@ -314,8 +314,8 @@ public:
   /// \brief value accessor
   /// \param global_id the global id of the intended element
   /// \param field_index the index of the field to access
-  /// Warning: Epetra does not have a scalar type, its hard coded as mv_scalar_type
-  mv_scalar_type & global_value(const int_t global_id,
+  /// Warning: Epetra does not have a scalar type, its hard coded as mv_work_type
+  mv_work_type & global_value(const int_t global_id,
     const int_t field_index=0){
     return (*epetra_mv_)[field_index][epetra_mv_->Map().LID(global_id)];
   }
@@ -323,8 +323,8 @@ public:
   /// \brief value accessor
   /// \param local_id the local id of the intended element
   /// \param field_index the index of the field to access
-  /// Warning: Epetra does not have a scalar type, its hard coded as mv_scalar_type
-  mv_scalar_type & local_value(const int_t local_id,
+  /// Warning: Epetra does not have a scalar type, its hard coded as mv_work_type
+  mv_work_type & local_value(const int_t local_id,
     const int_t field_index=0){
     return (*epetra_mv_)[field_index][local_id];
   }
@@ -334,9 +334,9 @@ public:
   /// \param multifield Input multifield
   /// \param beta Multiplier of this Multifield
   /// Result is this = beta*this + alpha*multifield
-  void update(const mv_scalar_type & alpha,
+  void update(const mv_work_type & alpha,
     const MultiField & multifield,
-    const mv_scalar_type & beta){
+    const mv_work_type & beta){
     epetra_mv_->Update(alpha,*multifield.get(),beta);
   }
 
@@ -393,10 +393,10 @@ public:
   }
 
   /// Return an array of values for the multifield (most only contain one vector so the first index is 0)
-  Teuchos::ArrayRCP<const scalar_t> get_1d_view()const{
+  Teuchos::ArrayRCP<const work_t> get_1d_view()const{
     // TODO find a way to avoid this copy. Doing it this way for now
-    // because Epetra only has mv_scalar_type type, not float so we have to copy/cast
-    Teuchos::ArrayRCP<scalar_t> array(epetra_mv_->MyLength());
+    // because Epetra only has mv_work_type type, not float so we have to copy/cast
+    Teuchos::ArrayRCP<work_t> array(epetra_mv_->MyLength());
     for(int_t i=0;i<epetra_mv_->MyLength();++i){
       array[i] = (*epetra_mv_)[0][i];
     }
@@ -405,19 +405,19 @@ public:
 
   ///  Compute the 2 norm of the vector
   /// \param field_index The field of which to take the norm
-  scalar_t norm(const int_t field_index=0){
-    mv_scalar_type norm = 0.0;
+  work_t norm(const int_t field_index=0){
+    mv_work_type norm = 0.0;
     epetra_mv_->Norm2(&norm);
     return norm;
   }
 
   ///  Compute the 2 norm of this vector minus another
   /// \param multifield the field to diff against
-  scalar_t norm(Teuchos::RCP<MultiField> multifield){
+  work_t norm(Teuchos::RCP<MultiField> multifield){
     TEUCHOS_TEST_FOR_EXCEPTION(this->get_map()->get_num_local_elements()!=
         multifield->get_map()->get_num_local_elements(),std::runtime_error,
         "Error, incompatible multifield maps");
-    scalar_t norm = 0.0;
+    work_t norm = 0.0;
     for(int_t i=0;i<get_map()->get_num_local_elements();++i){
       norm += (this->local_value(i)-multifield->local_value(i))*
           (this->local_value(i)-multifield->local_value(i));
@@ -428,7 +428,7 @@ public:
 
   /// set all the values in this field to the given scalar
   /// \param scalar
-  void put_scalar(const mv_scalar_type & scalar){
+  void put_scalar(const mv_work_type & scalar){
     epetra_mv_->PutScalar(scalar);
   }
 
@@ -477,7 +477,7 @@ public:
 
   /// Put scalar value in all matrix entries
   /// \param value The value to insert
-  void put_scalar(const mv_scalar_type & value){
+  void put_scalar(const mv_work_type & value){
     matrix_->PutScalar(value);
   }
 
@@ -487,7 +487,7 @@ public:
   /// \param vals An array of real values to insert
   void insert_global_values(const int_t global_row,
     const Teuchos::ArrayView<const int_t> & cols,
-    const Teuchos::ArrayView<const mv_scalar_type> & vals){
+    const Teuchos::ArrayView<const mv_work_type> & vals){
     matrix_->InsertGlobalValues(global_row,vals.size(),&vals[0],&cols[0]);
   }
 
@@ -497,7 +497,7 @@ public:
   /// \param vals An array of real values to insert
   void replace_local_values(const int_t local_row,
     const Teuchos::ArrayView<const int_t> & cols,
-    const Teuchos::ArrayView<const mv_scalar_type> & vals){
+    const Teuchos::ArrayView<const mv_work_type> & vals){
     matrix_->ReplaceMyValues(local_row,vals.size(),&vals[0],&cols[0]);
   }
 

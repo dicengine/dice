@@ -60,11 +60,11 @@ int main(int argc, char *argv[]) {
   DICe::initialize(argc, argv);
   // only print output if args are given (for testing the output is quiet)
   int_t iprint = argc - 1;
-  scalar_t strong_match = 1.0e-4;
+  work_t strong_match = 1.0e-4;
 #if DICE_USE_DOUBLE
-  scalar_t soft_match = 0.005;
+  work_t soft_match = 0.005;
 #else
-  scalar_t soft_match = 0.5;
+  work_t soft_match = 0.5;
 #endif
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
@@ -79,47 +79,47 @@ int main(int argc, char *argv[]) {
   DICe::Camera::Camera_Info camera_info;
 
   //projection parameter arrays
-  std::vector<scalar_t> proj_params(3, 0.0);
-  std::vector<scalar_t> proj_params2(3, 0.0);
+  std::vector<work_t> proj_params(3, 0.0);
+  std::vector<work_t> proj_params2(3, 0.0);
 
   //image, cam, sensor, world and return arrays
-  std::vector<scalar_t> img_x(1, 0.0);
-  std::vector<scalar_t> img_y(1, 0.0);
-  std::vector<scalar_t> sen_x(1, 0.0);
-  std::vector<scalar_t> sen_y(1, 0.0);
-  std::vector<scalar_t> cam_x(1, 0.0);
-  std::vector<scalar_t> cam_y(1, 0.0);
-  std::vector<scalar_t> cam_z(1, 0.0);
-  std::vector<scalar_t> wld_x(1, 0.0);
-  std::vector<scalar_t> wld_y(1, 0.0);
-  std::vector<scalar_t> wld_z(1, 0.0);
-  std::vector<scalar_t> ret_x(1, 0.0);
-  std::vector<scalar_t> ret_y(1, 0.0);
-  std::vector<scalar_t> ret_z(1, 0.0);
-  std::vector<scalar_t> ret1_x(1, 0.0);
-  std::vector<scalar_t> ret1_y(1, 0.0);
-  std::vector<scalar_t> ret1_z(1, 0.0);
-  std::vector<scalar_t> ret2_x(1, 0.0);
-  std::vector<scalar_t> ret2_y(1, 0.0);
-  std::vector<scalar_t> ret2_z(1, 0.0);
+  std::vector<work_t> img_x(1, 0.0);
+  std::vector<work_t> img_y(1, 0.0);
+  std::vector<work_t> sen_x(1, 0.0);
+  std::vector<work_t> sen_y(1, 0.0);
+  std::vector<work_t> cam_x(1, 0.0);
+  std::vector<work_t> cam_y(1, 0.0);
+  std::vector<work_t> cam_z(1, 0.0);
+  std::vector<work_t> wld_x(1, 0.0);
+  std::vector<work_t> wld_y(1, 0.0);
+  std::vector<work_t> wld_z(1, 0.0);
+  std::vector<work_t> ret_x(1, 0.0);
+  std::vector<work_t> ret_y(1, 0.0);
+  std::vector<work_t> ret_z(1, 0.0);
+  std::vector<work_t> ret1_x(1, 0.0);
+  std::vector<work_t> ret1_y(1, 0.0);
+  std::vector<work_t> ret1_z(1, 0.0);
+  std::vector<work_t> ret2_x(1, 0.0);
+  std::vector<work_t> ret2_y(1, 0.0);
+  std::vector<work_t> ret2_z(1, 0.0);
   //first partials
-  std::vector<std::vector<scalar_t> > d1_dx;
-  std::vector<std::vector<scalar_t> > d1_dy;
-  std::vector<std::vector<scalar_t> > d1_dz;
-  std::vector<std::vector<scalar_t> > d2_dx;
-  std::vector<std::vector<scalar_t> > d2_dy;
-  std::vector<std::vector<scalar_t> > d2_dz;
-  std::vector<std::vector<scalar_t> > dn_dx;
-  std::vector<std::vector<scalar_t> > dn_dy;
-  std::vector<std::vector<scalar_t> > dn_dz;
-  std::vector<std::vector<scalar_t> > der_dels;
-  std::vector<std::vector<scalar_t> > der_aves;
+  std::vector<std::vector<work_t> > d1_dx;
+  std::vector<std::vector<work_t> > d1_dy;
+  std::vector<std::vector<work_t> > d1_dz;
+  std::vector<std::vector<work_t> > d2_dx;
+  std::vector<std::vector<work_t> > d2_dy;
+  std::vector<std::vector<work_t> > d2_dz;
+  std::vector<std::vector<work_t> > dn_dx;
+  std::vector<std::vector<work_t> > dn_dy;
+  std::vector<std::vector<work_t> > dn_dz;
+  std::vector<std::vector<work_t> > der_dels;
+  std::vector<std::vector<work_t> > der_aves;
   // dummy values used for testing set and get methods:
   std::string test_str = "big";
   //int_t test_val = 1024;
   int_t image_height=-1;
   int_t image_width=-1;
-  scalar_t params_delta = 0.001;
+  work_t params_delta = 0.001;
 
   //*********************Test the basic get/set functions************************************************
 
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
   camera_info.tx_ = (rand() % 10000) / 1000.0;
   camera_info.ty_ = (rand() % 10000) / 1000.0;
   camera_info.tz_ = (rand() % 10000) / 1000.0;
-  Matrix<scalar_t,3> gold_rotation;
+  Matrix<work_t,3> gold_rotation;
   for(size_t i=0;i<gold_rotation.rows();++i){
     for(size_t j=0;j<gold_rotation.cols();++j){
       gold_rotation(i,j) = (rand() % 10000) / 1000.0;
@@ -207,7 +207,7 @@ int main(int argc, char *argv[]) {
   //*********************Test rotation matrix creation************************************************
 
   passed = true;
-  Matrix<scalar_t,3> rotate_3x3;
+  Matrix<work_t,3> rotate_3x3;
   for (int_t dataset = 0; dataset < 2; dataset++) {
     if (dataset == 0) {
       //values from the checkerboard calibration test
@@ -325,9 +325,9 @@ int main(int argc, char *argv[]) {
     cv::decomposeProjectionMatrix(opencv_projection, cam, rot, trans, rotx, roty, rotz, euler);
 
     DEBUG_MSG("Euler: " << euler);
-    const scalar_t alpha = euler.at<double>(0);
-    const scalar_t beta = euler.at<double>(1);
-    const scalar_t gamma = euler.at<double>(2);
+    const work_t alpha = euler.at<double>(0);
+    const work_t beta = euler.at<double>(1);
+    const work_t gamma = euler.at<double>(2);
 
     //fill the euler angles
     camera_info.set_rotation_matrix(alpha,beta,gamma);
@@ -362,7 +362,7 @@ int main(int argc, char *argv[]) {
   setup[2] = "Dots 8 parm lens dist";
   setup[3] = "Dots 3 parm lens dist";
 
-  std::vector<scalar_t> intrinsic1(Camera::MAX_CAM_INTRINSIC_PARAM,0);
+  std::vector<work_t> intrinsic1(Camera::MAX_CAM_INTRINSIC_PARAM,0);
   all_passed = all_passed && passed;
   for (int_t m = 0; m < 4; m++) {
     passed = true;
@@ -490,7 +490,7 @@ int main(int argc, char *argv[]) {
     DEBUG_MSG("max distortion movement: " << setup[m] << ":  " << img_x[0] << " " << img_y[0]);
 
     //testing the distortion/inverted distortion routines
-    scalar_t max_deviation = -1;
+    work_t max_deviation = -1;
     //seed the random number generator
     srand((unsigned)time(0));
     //create arrays of 10000 random x,y image points
@@ -579,9 +579,9 @@ int main(int argc, char *argv[]) {
   intrinsic1[Camera::T1] = 0;
   intrinsic1[Camera::T2] = 0;
 
-  scalar_t tx = -8.823158862228E+01;
-  scalar_t ty = 5.771721469879E-01;
-  scalar_t tz = 2.396269011734E+01;
+  work_t tx = -8.823158862228E+01;
+  work_t ty = 5.771721469879E-01;
+  work_t tz = 2.396269011734E+01;
 
   rotate_3x3(0,0) = 8.838522041011E-01;
   rotate_3x3(0,1) = 1.380068199293E-02;
@@ -617,7 +617,7 @@ int main(int argc, char *argv[]) {
   proj_params2[Projection_Shape_Function::PHI] = proj_params[Projection_Shape_Function::PHI];
 
   //testing the distortion/inverted distortion routines
-  scalar_t max_deviation = -1;
+  work_t max_deviation = -1;
 
   //test projection - transformation functions
   srand((unsigned)time(0));

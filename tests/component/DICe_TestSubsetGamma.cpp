@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
-  scalar_t errtol  = 5.0E-2;
+  work_t errtol  = 5.0E-2;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -75,12 +75,12 @@ int main(int argc, char *argv[]) {
   const int_t img_height = 199;
   const int_t num_stripes = 10;
   const int_t stripe_width = 20;//img_width/num_stripes;
-  Teuchos::ArrayRCP<intensity_t> intensities(img_width*img_height,0.0);
+  Teuchos::ArrayRCP<storage_t> intensities(img_width*img_height,0);
   for(int_t y=0;y<img_height;++y){
     for(int_t stripe=0;stripe<=num_stripes/2;++stripe){
       for(int_t x=stripe*(2*stripe_width);x<stripe*(2*stripe_width)+stripe_width;++x){
         if(x>=img_width||x<0)continue;
-        intensities[y*img_width+x] = 255.0;
+        intensities[y*img_width+x] = 255;
       }
     }
   }
@@ -93,12 +93,12 @@ int main(int argc, char *argv[]) {
   // no shift should result in gamma = 0.0 and when the images are opposite gamma should = 4.0
   for(int_t shift=0;shift<11;shift++){
     *outStream << "processing shift: " << shift*2 << "\n";
-    Teuchos::ArrayRCP<intensity_t> intensitiesShift(img_width*img_height,0.0);
+    Teuchos::ArrayRCP<storage_t> intensitiesShift(img_width*img_height,0.0);
     for(int_t y=0;y<img_height;++y){
       for(int_t stripe=0;stripe<=num_stripes/2;++stripe){
         for(int_t x=stripe*(2*stripe_width) - shift*2;x<stripe*(2*stripe_width)+stripe_width - shift*2;++x){
           if(x>=img_width||x<0)continue;
-          intensitiesShift[y*img_width+x] = 255.0;
+          intensitiesShift[y*img_width+x] = 255;
         }
       }
     }
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
     *outStream << "initializing the subset" << std::endl;
     // initialize the reference and defored values for this subset
     subset.initialize(defImg,DEF_INTENSITIES);
-    const scalar_t gamma = subset.gamma();
+    const work_t gamma = subset.gamma();
     *outStream << "gamma value: " << gamma << std::endl;
     if(std::abs(gamma - shift*0.4)>errtol){
       *outStream << "Error,  gamma is not " << shift*0.4 << " value=" << gamma << "\n";

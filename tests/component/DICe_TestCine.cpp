@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
 #else
       name << "./images/" << cine_files[i]<< "_" << frame << ".rawi";
 #endif
-      Image cine_img_exact(name.str().c_str());
+      Scalar_Image cine_img_exact(name.str().c_str());
       //cine_img_exact.write("CINE_IMG_EXACT.png");
       //cine_img->write("CINE_IMG.png");
       bool intensity_value_error = false;
@@ -206,7 +206,7 @@ int main(int argc, char *argv[]) {
 #else
     name << "./images/motion_window_" << i << ".rawi";
 #endif
-    Image cine_img_exact(name.str().c_str());
+    Scalar_Image cine_img_exact(name.str().c_str());
     //cine_img_exact.write("motion_window_12bpp_exact.tif");
     bool intensity_value_error = false;
     for(int_t y=0;y<cine_img_exact.height();++y){
@@ -237,9 +237,9 @@ int main(int argc, char *argv[]) {
   //image_8->write("motion_window_8.tif");
   bool intensity_value_error = false;
 #if DICE_USE_DOUBLE
-    Image img_8_exact("./images/motion_window_d_8.rawi");
+    Scalar_Image img_8_exact("./images/motion_window_d_8.rawi");
 #else
-    Image img_8_exact("./images/motion_window_8.rawi");
+    Scalar_Image img_8_exact("./images/motion_window_8.rawi");
 #endif
   //img_8_exact.write("motion_window_8_exact.tif");
   for(int_t y=0;y<image_8->height();++y){
@@ -268,9 +268,9 @@ int main(int argc, char *argv[]) {
   //image_16->write("motion_window_d_16.rawi");
   intensity_value_error = false;
 #if DICE_USE_DOUBLE
-    Image img_16_exact("./images/motion_window_d_16.rawi");
+    Scalar_Image img_16_exact("./images/motion_window_d_16.rawi");
 #else
-    Image img_16_exact("./images/motion_window_16.rawi");
+    Scalar_Image img_16_exact("./images/motion_window_16.rawi");
 #endif
   for(int_t y=0;y<image_16->height();++y){
     for(int_t x=0;x<image_16->width();++x){
@@ -324,7 +324,7 @@ int main(int argc, char *argv[]) {
 #if DICE_USE_DOUBLE
   Teuchos::RCP<DICe::Image> img_cine_0 = Teuchos::rcp(new Image("./images/phantom_v1610_16bpp_-85.cine",params));
   Teuchos::RCP<DICe::Image> img_cine_0_gold = Teuchos::rcp(new Image("./images/image_cine_-85.rawi"));
-  //const scalar_t diff = img_cine_0->diff(img_cine_0_gold);
+  //const work_t diff = img_cine_0->diff(img_cine_0_gold);
   //*outStream << "diff cine made without manual header creation vs gold: " << diff << std::endl;
   //if(diff > 0.001){
   intensity_value_error = false;

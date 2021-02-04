@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
-  scalar_t errorTol = 1.0E-3;
+  work_t errorTol = 1.0E-3;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -149,8 +149,8 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory();
   shape_function->insert_motion(5.0,10.0);
   square.initialize(image,DEF_INTENSITIES,shape_function,BILINEAR);
-  square.write_tiff("squareSubsetRef.tif",false);
-  square.write_tiff("squareSubsetDef.tif",true);
+  square.write_image("squareSubsetRef.tif",false);
+  square.write_image("squareSubsetDef.tif",true);
   square.write_subset_on_image("squareSubsetMapped.tif",image,shape_function);
   // check simple motion intensity values
   *outStream << "checking the bilinear interpolation" << std::endl;
@@ -165,15 +165,15 @@ int main(int argc, char *argv[]) {
   }
   // initialize the deformed values
 //  *outStream << "constructing a simple deformed subset using an affine deformation vector" << std::endl;
-//  Teuchos::RCP<std::vector<scalar_t> > affine_map = Teuchos::rcp (new std::vector<scalar_t>(DICE_DEFORMATION_SIZE_AFFINE,0.0));
+//  Teuchos::RCP<std::vector<work_t> > affine_map = Teuchos::rcp (new std::vector<work_t>(DICE_DEFORMATION_SIZE_AFFINE,0.0));
 //  (*affine_map)[DOF_A] = 1;
 //  (*affine_map)[DOF_C] = 5;
 //  (*affine_map)[DOF_E] = 1;
 //  (*affine_map)[DOF_F] = 10;
 //  (*affine_map)[DOF_I] = 1;
 //  square.initialize(image,DEF_INTENSITIES,affine_map,BILINEAR);
-//  square.write_tiff("squareAffineSubsetRef.tif",false);
-//  square.write_tiff("squareAffineSubsetDef.tif",true);
+//  square.write_image("squareAffineSubsetRef.tif",false);
+//  square.write_image("squareAffineSubsetDef.tif",true);
 //  square.write_subset_on_image("squareAffineSubsetMapped.tif",image,affine_map);
 //  // check simple motion intensity values
 //  *outStream << "checking the bilinear interpolation" << std::endl;
@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
   *outStream << "checking the keys fourth order interpolant" << std::endl;
   shape_function->insert_motion(15.0,12.0);
   square.initialize(image,DEF_INTENSITIES,shape_function,KEYS_FOURTH);
-  square.write_tiff("squareSubsetDefKeys.tif",true);
+  square.write_image("squareSubsetDefKeys.tif",true);
   bool keys_values_error = false;
   for(int_t i=0;i<square.num_pixels();++i){
     if(std::abs(square.def_intensities(i)-(*image)(square.x(i)+15.0,square.y(i)+12.0))>0.001)
@@ -201,8 +201,8 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   *outStream << "checking the mean value of the reference intensities" << std::endl;
-  scalar_t ref_mean = 0.0;
-  scalar_t ref_sum = 0.0;
+  work_t ref_mean = 0.0;
+  work_t ref_sum = 0.0;
   for(int_t i=0;i<square.num_pixels();++i){
     ref_mean += square.ref_intensities(i);
   }
@@ -211,8 +211,8 @@ int main(int argc, char *argv[]) {
     ref_sum += (square.ref_intensities(i)-ref_mean)*(square.ref_intensities(i)-ref_mean);
   }
   ref_sum = std::sqrt(ref_sum);
-  scalar_t func_ref_sum = 0.0;
-  scalar_t func_ref_mean = square.mean(REF_INTENSITIES,func_ref_sum);
+  work_t func_ref_sum = 0.0;
+  work_t func_ref_mean = square.mean(REF_INTENSITIES,func_ref_sum);
   if(std::abs(func_ref_mean - ref_mean)>errorTol){
     *outStream << "Error, the reference mean is not correct" << std::endl;
     errorFlag++;
@@ -222,8 +222,8 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   *outStream << "checking the mean value of the deformed intensities" << std::endl;
-  scalar_t def_mean = 0.0;
-  scalar_t def_sum = 0.0;
+  work_t def_mean = 0.0;
+  work_t def_sum = 0.0;
   for(int_t i=0;i<square.num_pixels();++i){
     def_mean += square.def_intensities(i);
   }
@@ -232,8 +232,8 @@ int main(int argc, char *argv[]) {
     def_sum += (square.def_intensities(i)-def_mean)*(square.def_intensities(i)-def_mean);
   }
   def_sum = std::sqrt(def_sum);
-  scalar_t func_def_sum = 0.0;
-  scalar_t func_def_mean = square.mean(DEF_INTENSITIES,func_def_sum);
+  work_t func_def_sum = 0.0;
+  work_t func_def_mean = square.mean(DEF_INTENSITIES,func_def_sum);
   if(std::abs(func_def_mean - def_mean)>errorTol){
     *outStream << "Error, the deformed mean is not correct" << std::endl;
     errorFlag++;
@@ -275,7 +275,7 @@ int main(int argc, char *argv[]) {
   int_t ccy = 428;
   Subset conformal_subset(ccx,ccy,subset_def);
   conformal_subset.initialize(image);
-  conformal_subset.write_tiff("conformal.tif");
+  conformal_subset.write_image("conformal.tif");
   // read in the image that was just created and compare to a gold copy:
   Teuchos::RCP<Teuchos::ParameterList> conf_params = rcp(new Teuchos::ParameterList());
   conf_params->set(DICe::spread_intensity_histogram,true);
@@ -311,16 +311,16 @@ int main(int argc, char *argv[]) {
   *outStream << "creating an image from an array" << std::endl;
   const int_t array_w = 30;
   const int_t array_h = 20;
-  Teuchos::ArrayRCP<intensity_t> intensities(array_w*array_h,0.0);
+  Teuchos::ArrayRCP<work_t> intensities(array_w*array_h,0.0);
   // populate the intensities with a sin/cos function
   for(int_t y=0;y<array_h;++y){
     for(int_t x=0;x<array_w;++x){
-      intensities[y*array_w+x] = 255*std::cos(x/(4*DICE_PI))*std::sin(y/(4*DICE_PI));
+      intensities[y*array_w+x] = 255.0*std::cos(x/(4*DICE_PI))*std::sin(y/(4*DICE_PI));
     }
   }
   Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
   params->set(DICe::compute_image_gradients,true);
-  Teuchos::RCP<Image> array_img = Teuchos::rcp(new Image(array_w,array_h,intensities,params));
+  Teuchos::RCP<Scalar_Image> array_img = Teuchos::rcp(new Scalar_Image(array_w,array_h,intensities,params));
   *outStream << "creating a conformal subset" << std::endl;
   std::vector<int_t> shape_3_x(4);
   std::vector<int_t> shape_3_y(4);

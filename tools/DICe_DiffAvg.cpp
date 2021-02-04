@@ -147,30 +147,30 @@ int main(int argc, char *argv[]) {
 
 
   // sort the data according to either x or y:
-  std::map<int_t,std::vector<scalar_t> > sortedMap;
+  std::map<int_t,std::vector<work_t> > sortedMap;
   for(size_t row=0;row<results.size();++row){
-    scalar_t coordReal = strtod(results[row][coord_col].c_str(),NULL);
+    work_t coordReal = strtod(results[row][coord_col].c_str(),NULL);
     int_t coord = static_cast<int_t>(coordReal);
     //int_t coord = strtol(results[row][coord_col].c_str(),NULL,0);
-    scalar_t value = strtod(results[row][data_col].c_str(),NULL);
+    work_t value = strtod(results[row][data_col].c_str(),NULL);
     if(sortedMap.find(coord)==sortedMap.end()){
-      std::vector<scalar_t> tmp_vec;
-      sortedMap.insert(std::pair<int_t,std::vector<scalar_t> >(coord,tmp_vec));
+      std::vector<work_t> tmp_vec;
+      sortedMap.insert(std::pair<int_t,std::vector<work_t> >(coord,tmp_vec));
     }
     sortedMap.find(coord)->second.push_back(value);
   }
   // average the values
   std::vector<int_t> coords;
-  std::vector<scalar_t> avg_values;
-  std::vector<scalar_t> std_dev_values;
-  std::vector<scalar_t> max_values;
-  std::vector<scalar_t> min_values;
-  std::map<int_t,std::vector<scalar_t> > ::iterator map_it = sortedMap.begin();
+  std::vector<work_t> avg_values;
+  std::vector<work_t> std_dev_values;
+  std::vector<work_t> max_values;
+  std::vector<work_t> min_values;
+  std::map<int_t,std::vector<work_t> > ::iterator map_it = sortedMap.begin();
   for(;map_it!=sortedMap.end();++map_it){
     int_t num_values = map_it->second.size();
     assert(num_values!=0);
     int_t coord = map_it->first;
-    scalar_t avg_value = 0.0;
+    work_t avg_value = 0.0;
     for(int_t i=0;i<num_values;++i){
       avg_value += map_it->second[i];
     }
@@ -183,9 +183,9 @@ int main(int argc, char *argv[]) {
   int_t v_index = 0;
   for(;map_it!=sortedMap.end();++map_it){
     int_t num_values = map_it->second.size();
-    scalar_t std_dev = 0.0;
-    scalar_t min_value = map_it->second[0];
-    scalar_t max_value = map_it->second[0];
+    work_t std_dev = 0.0;
+    work_t min_value = map_it->second[0];
+    work_t max_value = map_it->second[0];
     for(int_t i=0;i<num_values;++i){
       if(map_it->second[i] > max_value)
         max_value = map_it->second[i];
@@ -238,27 +238,27 @@ int main(int argc, char *argv[]) {
   command_file.close();
 
   // sort the data according to either x or y:
-  std::map<int_t,scalar_t> commandMap;
+  std::map<int_t,work_t> commandMap;
   for(size_t row=0;row<command.size();++row){
-    scalar_t coordReal = strtod(command[row][command_coord_col].c_str(),NULL);
+    work_t coordReal = strtod(command[row][command_coord_col].c_str(),NULL);
     int_t coord = static_cast<int_t>(coordReal);
     //int_t coord = strtol(command[row][command_coord_col].c_str(),NULL,0);
-    scalar_t value = strtod(command[row][command_data_col].c_str(),NULL);
-    commandMap.insert(std::pair<int_t,scalar_t >(coord,value));
+    work_t value = strtod(command[row][command_data_col].c_str(),NULL);
+    commandMap.insert(std::pair<int_t,work_t >(coord,value));
   }
   *outStream << " The command map has " << commandMap.size() << " entries" << std::endl;
 
   // test the values:
 
-  scalar_t avg_diff = 0.0;
-  std::vector<scalar_t> command_values(coords.size());
-  std::vector<scalar_t> diff_values(coords.size());
+  work_t avg_diff = 0.0;
+  std::vector<work_t> command_values(coords.size());
+  std::vector<work_t> diff_values(coords.size());
   for(size_t i=0;i<avg_values.size();++i){
     if(commandMap.find(coords[i])==commandMap.end()){
       std::cout << " Averaged values for coordinate " << coords[i] << " are in the input, but not in the command file " << std::endl;
       assert(false);
     }
-    scalar_t command_val = commandMap.find(coords[i])->second;
+    work_t command_val = commandMap.find(coords[i])->second;
     diff_values[i] = avg_values[i] - command_val;
     command_values[i] = command_val;
     avg_diff += (avg_values[i] - command_val)*(avg_values[i] - command_val);

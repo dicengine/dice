@@ -79,7 +79,7 @@ public:
   virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function=Teuchos::null,
     const int_t cx=0,
     const int_t cy=0,
-    const scalar_t skin_factor=1.0)const{
+    const work_t skin_factor=1.0)const{
     assert(false && "  DICe ERROR: Base class implementation of this method should not be called.");
     std::set<std::pair<int_t,int_t> > nullSet;
     return nullSet;
@@ -132,7 +132,7 @@ public:
   virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function=Teuchos::null,
     const int_t cx=0,
     const int_t cy=0,
-    const scalar_t skin_factor=1.0)const;
+    const work_t skin_factor=1.0)const;
 
   /// See base class documentation
   virtual void deactivate_pixels(const int_t size,
@@ -200,10 +200,10 @@ private:
 /// \param x2 run of vector 2
 /// \param y2 rise of vector 2
 DICE_LIB_DLL_EXPORT
-scalar_t angle_2d(const scalar_t & x1,
-  const scalar_t & y1,
-  const scalar_t & x2,
-  const scalar_t & y2);
+work_t angle_2d(const work_t & x1,
+  const work_t & y1,
+  const work_t & x2,
+  const work_t & y2);
 
 
 ///
@@ -219,7 +219,7 @@ public:
   /// \param radius Radius of the circle
   Circle(const int_t centroid_x,
     const int_t centroid_y,
-    const scalar_t & radius);
+    const work_t & radius);
 
   virtual ~Circle(){};
 
@@ -227,7 +227,7 @@ public:
   virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function=Teuchos::null,
     const int_t cx=0,
     const int_t cy=0,
-    const scalar_t skin_factor=1.0)const;
+    const work_t skin_factor=1.0)const;
 
   /// See base class documentation
   virtual void deactivate_pixels(const int_t size,
@@ -241,9 +241,9 @@ private:
   /// Center of the circle global y-coordinate
   int_t centroid_y_;
   /// Radius of the circle
-  //scalar_t radius_;
+  //work_t radius_;
   /// Radius of the circle squared
-  scalar_t radius2_;
+  work_t radius2_;
   /// Minimum x global coordinate of the circle
   int_t min_x_;
   /// Maximum x global coordinate of the circle
@@ -277,7 +277,7 @@ public:
   virtual std::set<std::pair<int_t,int_t> > get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function=Teuchos::null,
     const int_t cx=0,
     const int_t cy=0,
-    const scalar_t skin_factor=1.0)const;
+    const work_t skin_factor=1.0)const;
 
   /// See base class documentation
   virtual void deactivate_pixels(const int_t size,

@@ -170,7 +170,7 @@ Calibration::init(const Teuchos::RCP<Teuchos::ParameterList> params){
 
   // read the images that have been turned off if the list exists
   if(input_params_.isParameter(DICe::cal_disable_image_indices_)){
-    Teuchos::Array<scalar_t> array = Teuchos::fromStringToArray<scalar_t>(input_params_.get<std::string>(DICe::cal_disable_image_indices_));
+    Teuchos::Array<work_t> array = Teuchos::fromStringToArray<work_t>(input_params_.get<std::string>(DICe::cal_disable_image_indices_));
     for(int_t i=0;i<array.size();++i){
       TEUCHOS_TEST_FOR_EXCEPTION(array[i]<0||array[i]>=include_set_.size(),std::runtime_error,"");
       include_set_[array[i]] = false;
@@ -197,8 +197,8 @@ Calibration::init(const Teuchos::RCP<Teuchos::ParameterList> params){
           Teuchos::ParameterList row_data = grid_data.sublist(param_title.str());
           TEUCHOS_TEST_FOR_EXCEPTION(!row_data.isParameter("X") || !row_data.isParameter("Y"),std::runtime_error,
             "missing X and Y data for row " << i_row << " image " << image_list_[i_cam][i_image]);
-          Teuchos::Array<scalar_t> tArrayX = Teuchos::fromStringToArray<scalar_t>(row_data.get<std::string>("X"));
-          Teuchos::Array<scalar_t> tArrayY = Teuchos::fromStringToArray<scalar_t>(row_data.get<std::string>("Y"));
+          Teuchos::Array<work_t> tArrayX = Teuchos::fromStringToArray<work_t>(row_data.get<std::string>("X"));
+          Teuchos::Array<work_t> tArrayY = Teuchos::fromStringToArray<work_t>(row_data.get<std::string>("Y"));
           TEUCHOS_TEST_FOR_EXCEPTION(tArrayX.size()!=num_fiducials_x_ || tArrayY.size()!=num_fiducials_x_,std::runtime_error,
             "invalid number of image points for row " << i_row << " image " << image_list_[i_cam][i_image]);
           for (int_t i_x = 0; i_x < num_fiducials_x_; i_x++) {
@@ -263,7 +263,7 @@ Calibration::set_calibration_options(const Teuchos::ParameterList & opencv_optio
 
 Teuchos::RCP<DICe::Camera_System>
 Calibration::calibrate(const std::string & output_file,
-  scalar_t & rms_error){
+  work_t & rms_error){
   DEBUG_MSG("Calibration::calibrate(): begin");
   if(!has_intersection_points_){
     std::cout << "Calibration::calibrate(): extracting the target points because they have not been initialized" << std::endl;
@@ -567,7 +567,7 @@ Calibration::extract_dot_target_points(){
   const int_t orig_thresh_start = input_params_.get<int_t>(opencv_server_threshold_start,20);
   const int_t orig_thresh_end =   input_params_.get<int_t>(opencv_server_threshold_end,250);
   const int_t orig_thresh_step =  input_params_.get<int_t>(opencv_server_threshold_step,5);
-  scalar_t include_image_set_tol = 0.75; //the search must have found at least 75% of the total to be included
+  work_t include_image_set_tol = 0.75; //the search must have found at least 75% of the total to be included
   for (size_t i_image = 0; i_image < num_images(); i_image++){
     //go through each of the camera's images (note only two camera calibration is currently supported)
     for (size_t i_cam = 0; i_cam < num_cams(); i_cam++){

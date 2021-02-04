@@ -73,18 +73,18 @@ class Schema;
 struct def_triad
 {
   /// displacement x
-  scalar_t u_;
+  work_t u_;
   /// displacement y
-  scalar_t v_;
+  work_t v_;
   /// rotation
-  scalar_t t_;
+  work_t t_;
   /// constructor
   /// \param u input value for displacement x
   /// \param v input value for displacement y
   /// \param t input value for rotation
-  def_triad(const scalar_t & u,
-    const scalar_t & v,
-    const scalar_t & t):
+  def_triad(const work_t & u,
+    const work_t & v,
+    const work_t & t):
   u_(u),
   v_(v),
   t_(t){};
@@ -197,11 +197,11 @@ public:
   /// \param t rotation
   /// \param id [out] the return id of the closest triad
   /// \param distance_sqr [out] the euclidean distance to this point
-  void closest_triad(const scalar_t &u,
-    const scalar_t &v,
-    const scalar_t &t,
+  void closest_triad(const work_t &u,
+    const work_t &v,
+    const work_t &t,
     size_t &id,
-    scalar_t & distance_sqr)const;
+    work_t & distance_sqr)const;
 
   /// see base class description
   virtual void pre_execution_tasks(){// do nothing for path_initializer
@@ -218,16 +218,16 @@ public:
   /// \param v previous displacement y
   /// \param t previous theta
   /// in this case only the closest k-neighbors will be searched for the best solution
-  scalar_t initial_guess(Teuchos::RCP<Image> def_image,
+  work_t initial_guess(Teuchos::RCP<Image> def_image,
     Teuchos::RCP<Local_Shape_Function> shape_function,
-    const scalar_t & u,
-    const scalar_t & v,
-    const scalar_t & t);
+    const work_t & u,
+    const work_t & v,
+    const work_t & t);
 
   /// Initializer where the entire set of path triads will be searched for the best solution
   /// \param def_image pointer to the deformed image
   /// \param shape_function [out] the shape function to initialize
-  scalar_t initial_guess(Teuchos::RCP<Image> def_image,
+  work_t initial_guess(Teuchos::RCP<Image> def_image,
     Teuchos::RCP<Local_Shape_Function> shape_function);
 
   /// write the filtered set of points out to an output file
@@ -247,7 +247,7 @@ private:
   /// pointer to the kd-tree used for searching
   Teuchos::RCP<kd_tree_3d_t> kd_tree_;
   /// pointer to the point cloud used for the neighbor searching
-  Teuchos::RCP<Point_Cloud_3D<scalar_t> > point_cloud_;
+  Teuchos::RCP<Point_Cloud_3D<work_t> > point_cloud_;
 };
 
 /// \class DICe::Phase_Correlation_Initializer
@@ -275,9 +275,9 @@ public:
 
 protected:
   /// phase correlation displacement x estimate from previous frame
-  scalar_t phase_cor_u_x_;
+  work_t phase_cor_u_x_;
   /// phase correlation displacement y estimate from previous frame
-  scalar_t phase_cor_u_y_;
+  work_t phase_cor_u_y_;
 };
 
 /// \class DICe::Search_Initializer
@@ -297,12 +297,12 @@ public:
   /// \param search_dim_theta the extents of the search in angle
   Search_Initializer(Schema * schema,
     Teuchos::RCP<Subset> subset,
-    const scalar_t & step_size_u,
-    const scalar_t & search_dim_u,
-    const scalar_t & step_size_v,
-    const scalar_t & search_dim_v,
-    const scalar_t & step_size_theta,
-    const scalar_t & search_dim_theta);
+    const work_t & step_size_u,
+    const work_t & search_dim_u,
+    const work_t & step_size_v,
+    const work_t & search_dim_v,
+    const work_t & step_size_theta,
+    const work_t & search_dim_theta);
 
   /// virtual destructor
   virtual ~Search_Initializer(){};
@@ -318,15 +318,15 @@ protected:
   /// pointer to a specific subset
   Teuchos::RCP<Subset> subset_;
   /// search step size in x and y
-  scalar_t step_size_u_;
-  scalar_t step_size_v_;
+  work_t step_size_u_;
+  work_t step_size_v_;
   /// extent of search in x and y (added and substracted from input to get extents)
-  scalar_t search_dim_u_;
-  scalar_t search_dim_v_;
+  work_t search_dim_u_;
+  work_t search_dim_v_;
   /// search step size in theta
-  scalar_t step_size_theta_;
+  work_t step_size_theta_;
   /// extent of search in theta
-  scalar_t search_dim_theta_;
+  work_t search_dim_theta_;
 };
 
 
@@ -379,11 +379,11 @@ protected:
   /// pointer to the kd-tree used for searching
   Teuchos::RCP<kd_tree_2d_t> kd_tree_;
   /// pointer to the point cloud used for the neighbor searching
-  Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud_;
+  Teuchos::RCP<Point_Cloud_2D<work_t> > point_cloud_;
   /// storage for displacements of feautures
-  std::vector<scalar_t> u_;
+  std::vector<work_t> u_;
   /// storage for displacements of features
-  std::vector<scalar_t> v_;
+  std::vector<work_t> v_;
   /// block size to use for thresholding
   int_t threshold_block_size_;
 };
@@ -436,7 +436,7 @@ protected:
   /// matrix to hold the tranform values
   cv::Mat ecc_transform_;
   /// storage for the rotation angle which should be the same for all points
-  scalar_t theta_;
+  work_t theta_;
 };
 
 
@@ -518,11 +518,11 @@ public:
   /// \param subset_pixels the current pixels occupied by the subset in the deformed configuration
   /// \param existing_points vector of the existing optical flow points
   /// \param allow_close_points enable the point locations to be near each other (usually leads to more error)
-  int_t best_optical_flow_point(scalar_t & best_grad,
+  int_t best_optical_flow_point(work_t & best_grad,
     Teuchos::ArrayRCP<int_t> & def_x,
     Teuchos::ArrayRCP<int_t> & def_y,
-    Teuchos::ArrayRCP<scalar_t> & gx,
-    Teuchos::ArrayRCP<scalar_t> & gy,
+    Teuchos::ArrayRCP<work_t> & gx,
+    Teuchos::ArrayRCP<work_t> & gy,
     std::set<std::pair<int_t,int_t> > & subset_pixels,
     Teuchos::RCP<std::vector<int_t> > existing_points = Teuchos::null,
     const bool allow_close_points = false);
@@ -545,9 +545,9 @@ protected:
   /// pointer to the kd-tree used for searching
   Teuchos::RCP<kd_tree_2d_t> kd_tree_;
   /// pointer to the point cloud used for the neighbor searching
-  Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud_;
+  Teuchos::RCP<Point_Cloud_2D<work_t> > point_cloud_;
   /// Gauss filter coefficients
-  scalar_t window_coeffs_[13][13]; // the optical flow window is 13 pixels wide
+  work_t window_coeffs_[13][13]; // the optical flow window is 13 pixels wide
   /// x coord of reference position for optical flow 1
   int_t ref_pt1_x_;
   /// y coord of reference position for optical flow 1
@@ -557,35 +557,35 @@ protected:
   /// y coord of reference position for optical flow 2
   int_t ref_pt2_y_;
   /// x coord of current position for optical flow 1
-  scalar_t current_pt1_x_;
+  work_t current_pt1_x_;
   /// y coord of current position for optical flow 1
-  scalar_t current_pt1_y_;
+  work_t current_pt1_y_;
   /// x coord of current position for optical flow 2
-  scalar_t current_pt2_x_;
+  work_t current_pt2_x_;
   /// y coord of current position for optical flow 2
-  scalar_t current_pt2_y_;
+  work_t current_pt2_y_;
   /// flag to reset the optical flow positions
   bool reset_locations_;
   /// x comp of vector from optical flow position 1 to the centroid
-  scalar_t delta_1c_x_;
+  work_t delta_1c_x_;
   /// y comp of vector from optical flow position 1 to the centroid
-  scalar_t delta_1c_y_;
+  work_t delta_1c_y_;
   /// x comp of vector from optical flow position 1 to position 2
-  scalar_t delta_12_x_;
+  work_t delta_12_x_;
   /// y comp vector from optical flow position 1 to position 2
-  scalar_t delta_12_y_;
+  work_t delta_12_y_;
   /// magnitude of the vector between positions 1 and 2 in the reference frame
-  scalar_t mag_ref_;
+  work_t mag_ref_;
   /// reference centroid x
-  scalar_t ref_cx_;
+  work_t ref_cx_;
   /// reference centroid y
-  scalar_t ref_cy_;
+  work_t ref_cy_;
   /// initial displacement for this sequence
-  scalar_t initial_u_;
+  work_t initial_u_;
   /// initial displacement for this sequence
-  scalar_t initial_v_;
+  work_t initial_v_;
   /// initial rotation for this sequence
-  scalar_t initial_t_;
+  work_t initial_t_;
   /// pixel ids of the optical flow points
   int_t ids_[2];
 };
@@ -604,7 +604,7 @@ public:
   /// \param schema pointer to the schema that will be calling the motion test utility
   /// \param tol determines the threshold for the image diff to register motion
   Motion_Test_Utility(Schema * schema,
-    const scalar_t & tol);
+    const work_t & tol);
 
   /// virtual destructor
   ~Motion_Test_Utility(){};
@@ -622,7 +622,7 @@ private:
   /// pointer to the schema that created this initializer, used for field access
   Schema * schema_;
   /// image diff tolerance (above this means motion is occurring)
-  scalar_t tol_;
+  work_t tol_;
   /// keep a copy of the result incase another call is
   /// made for this initializer by another subset
   Motion_State motion_state_;

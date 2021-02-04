@@ -56,9 +56,9 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint = argc - 1;
   int_t error_flag = 0;
-  const scalar_t error_tol = 1.0E-5;
-  const scalar_t max_rms = 0.75;
-  const scalar_t max_cal_diff = 5.0; // loose tol due to only using a portion of the total cal image collection to save space
+  const work_t error_tol = 1.0E-5;
+  const work_t max_rms = 0.75;
+  const work_t max_cal_diff = 5.0; // loose tol due to only using a portion of the total cal image collection to save space
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
   try{
     DICe::Calibration cal_checkerboard("../cal/checkerboard_input.xml");
     // create the intersection points and generate a calibrated camera system
-    scalar_t checkerboard_rms = 0.0;
+    work_t checkerboard_rms = 0.0;
     Teuchos::RCP<Camera_System> checkerboard_cam_sys = cal_checkerboard.calibrate(checkerboard_rms);
     // write the calibration parameters to file which includes the interesection points
     cal_checkerboard.write_calibration_file("checkerboard_calibration.xml");
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
     *outStream << "\n--- single camera checkerboard using pre-defined intersection points ---\n" << std::endl;
 
     // calibrate again using the intersection points read from file
-    scalar_t test_checkerboard_rms = 0.0;
+    work_t test_checkerboard_rms = 0.0;
     Teuchos::RCP<Camera_System> test_checkerboard_cam_sys = cal_checkerboard_with_intersections.calibrate(test_checkerboard_rms);
     // now compare the two camera systems that were generated to make sure they are identical:
     if(*checkerboard_cam_sys.get()!=*test_checkerboard_cam_sys.get()){
@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
   try{
     DICe::Calibration cal_stereo_checkerboard("../cal/stereo_checkerboard_input.xml");
     // create the intersection points and generate a calibrated camera system
-    scalar_t stereo_checkerboard_rms = 0.0;
+    work_t stereo_checkerboard_rms = 0.0;
     Teuchos::RCP<Camera_System> stereo_checkerboard_cam_sys = cal_stereo_checkerboard.calibrate(stereo_checkerboard_rms);
     // write the calibration parameters to file which includes the interesection points
     cal_stereo_checkerboard.write_calibration_file("stereo_checkerboard_calibration.xml");
@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
     *outStream << "\n--- stereo checkerboard using pre-defined intersection points ---\n" << std::endl;
 
     // calibrate again using the intersection points read from file
-    scalar_t test_stereo_checkerboard_rms = 0.0;
+    work_t test_stereo_checkerboard_rms = 0.0;
     Teuchos::RCP<Camera_System> test_stereo_checkerboard_cam_sys = cal_stereo_checkerboard_with_intersections.calibrate(test_stereo_checkerboard_rms);
     // now compare the two camera systems that were generated to make sure they are identical:
     if(*stereo_checkerboard_cam_sys.get()!=*test_stereo_checkerboard_cam_sys.get()){
@@ -148,10 +148,10 @@ int main(int argc, char *argv[]) {
   try{
     DICe::Calibration sim_checkerboard_cal("../cal/sim_checkerboard_input.xml");
     // create the intersection points and generate a calibrated camera system
-    scalar_t sim_checkerboard_rms = 0.0;
+    work_t sim_checkerboard_rms = 0.0;
     Teuchos::RCP<Camera_System> sim_checkerboard_cam_sys = sim_checkerboard_cal.calibrate(sim_checkerboard_rms);
     Camera_System sim_checkerboard_gold_cam_sys("../cal/sim_checkerboard_cal_gold.xml");
-    const scalar_t sim_diff = sim_checkerboard_cam_sys->diff(sim_checkerboard_gold_cam_sys);
+    const work_t sim_diff = sim_checkerboard_cam_sys->diff(sim_checkerboard_gold_cam_sys);
     *outStream << "sim checkerboard error norm: " << sim_diff << std::endl;
     if(sim_diff>max_cal_diff){
       *outStream << "error, simulated checkerboard calibration not correct" << std::endl;
@@ -169,14 +169,14 @@ int main(int argc, char *argv[]) {
   try{
     DICe::Calibration cal_stereo_marker_dots("../cal/stereo_marker_dots_input.xml");
     // create the intersection points and generate a calibrated camera system
-    scalar_t stereo_marker_dots_rms = 0.0;
+    work_t stereo_marker_dots_rms = 0.0;
     Teuchos::RCP<Camera_System> stereo_marker_dots_cam_sys = cal_stereo_marker_dots.calibrate(stereo_marker_dots_rms);
     // write the calibration parameters to file which includes the interesection points
     cal_stereo_marker_dots.write_calibration_file("stereo_marker_dots_calibration.xml");
     // create a new calibration object that reads in the parameter file above with the intersection points
     DICe::Calibration cal_stereo_marker_dots_with_intersections("stereo_marker_dots_calibration.xml");
     // calibrate again using the intersection points read from file
-    scalar_t test_stereo_marker_dots_rms = 0.0;
+    work_t test_stereo_marker_dots_rms = 0.0;
     Teuchos::RCP<Camera_System> test_stereo_marker_dots_cam_sys = cal_stereo_marker_dots_with_intersections.calibrate(test_stereo_marker_dots_rms);
     // now compare the two camera systems that were generated to make sure they are identical:
     if(*stereo_marker_dots_cam_sys.get()!=*test_stereo_marker_dots_cam_sys.get()){
@@ -206,11 +206,11 @@ int main(int argc, char *argv[]) {
   try{
     DICe::Calibration sim_dot_cal("../cal/sim_dot_input.xml");
     // create the intersection points and generate a calibrated camera system
-    scalar_t sim_dot_rms = 0.0;
+    work_t sim_dot_rms = 0.0;
     Teuchos::RCP<Camera_System> sim_dot_cam_sys = sim_dot_cal.calibrate(sim_dot_rms);
     //std::cout << *sim_dot_cam_sys.get() << std::endl;
     Camera_System sim_dot_gold_cam_sys("../cal/sim_dot_cal_gold.xml");
-    const scalar_t sim_dot_diff = sim_dot_cam_sys->diff(sim_dot_gold_cam_sys);
+    const work_t sim_dot_diff = sim_dot_cam_sys->diff(sim_dot_gold_cam_sys);
     *outStream << "sim dot error norm: " << sim_dot_diff << std::endl;
     if(sim_dot_diff>max_cal_diff){
       *outStream << "error, simulated dot calibration not correct" << std::endl;
@@ -228,12 +228,12 @@ int main(int argc, char *argv[]) {
   try{
     DICe::Calibration sim_white_dot_cal("../cal/sim_white_dot_input.xml");
     // create the intersection points and generate a calibrated camera system
-    scalar_t sim_white_dot_rms = 0.0;
+    work_t sim_white_dot_rms = 0.0;
     Teuchos::RCP<Camera_System> sim_white_dot_cam_sys = sim_white_dot_cal.calibrate(sim_white_dot_rms);
     sim_white_dot_cam_sys->write_camera_system_file("sim_white_dot_cal.xml");
     std::cout << *sim_white_dot_cam_sys.get() << std::endl;
     Camera_System sim_white_dot_gold_cam_sys("../cal/sim_white_dot_cal_gold.xml"); // same gold file as black on white example
-    const scalar_t sim_white_dot_diff = sim_white_dot_cam_sys->diff(sim_white_dot_gold_cam_sys);
+    const work_t sim_white_dot_diff = sim_white_dot_cam_sys->diff(sim_white_dot_gold_cam_sys);
     *outStream << "sim white dot error norm: " << sim_white_dot_diff << std::endl;
     if(sim_white_dot_diff>max_cal_diff){
       *outStream << "error, simulated white dot calibration not correct" << std::endl;

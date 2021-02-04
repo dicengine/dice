@@ -86,7 +86,7 @@ public:
   /// \param is_layout_right true if the arrays are oriented layout right in memory
   void read_netcdf_image(const char * file_name,
     const size_t time_index,
-    intensity_t * intensities,
+    work_t * intensities,
     const int_t width=0,
     const int_t height=0,
     const int_t offset_x=0,
@@ -102,9 +102,6 @@ public:
     int_t & width,
     int_t & height,
     int_t & num_time_steps);
-
-private:
-
 };
 
 

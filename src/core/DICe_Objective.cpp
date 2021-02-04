@@ -55,7 +55,7 @@ namespace DICe {
 
 using namespace field_enums;
 
-scalar_t
+work_t
 Objective::gamma( Teuchos::RCP<Local_Shape_Function> shape_function) const {
   try{
     subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,shape_function,schema_->interpolation_method());
@@ -63,7 +63,7 @@ Objective::gamma( Teuchos::RCP<Local_Shape_Function> shape_function) const {
   catch (...) {
     return -1.0;
   }
-  scalar_t gamma = subset_->gamma();
+  work_t gamma = subset_->gamma();
   if(schema_->normalize_gamma_with_active_pixels()){
     int_t num_active_pixels = 0;
     for(int_t i=0;i<subset_->num_pixels();++i)
@@ -74,24 +74,24 @@ Objective::gamma( Teuchos::RCP<Local_Shape_Function> shape_function) const {
   return gamma;
 }
 
-scalar_t
+work_t
 Objective::beta(Teuchos::RCP<Local_Shape_Function> shape_function) const {
   // for now return -1 for beta if affine shape functions are used
 
   // for beta we don't want the gamma values normalized by the number of pixels:
   const bool original_normalize_flag = schema_->normalize_gamma_with_active_pixels();
   schema_->set_normalize_gamma_with_active_pixels(false);
-  std::vector<scalar_t> epsilon(3);
+  std::vector<work_t> epsilon(3);
   epsilon[0] = 1.0E-1;
   epsilon[1] = 1.0E-1;
   epsilon[2] = 1.0E-1;
-  std::vector<scalar_t> factor(3);
+  std::vector<work_t> factor(3);
   factor[0] = 1.0E-3;
   factor[1] = 1.0E-3;
   factor[2] = 1.0E-1;
-  scalar_t temp_u=0.0,temp_v=0.0,temp_t=0.0;
-  const scalar_t gamma_0 = gamma(shape_function);
-  std::vector<scalar_t> dir_beta(3,0.0);
+  work_t temp_u=0.0,temp_v=0.0,temp_t=0.0;
+  const work_t gamma_0 = gamma(shape_function);
+  std::vector<work_t> dir_beta(3,0.0);
   Teuchos::RCP<Local_Shape_Function> temp_lsf = shape_function_factory(schema_);
   for(size_t i=0;i<3;++i){
     temp_lsf->clone(shape_function);
@@ -105,7 +105,7 @@ Objective::beta(Teuchos::RCP<Local_Shape_Function> shape_function) const {
       temp_t += epsilon[i];
     }
     temp_lsf->insert_motion(temp_u,temp_v,temp_t);
-    const scalar_t gamma_p = gamma(temp_lsf);
+    const work_t gamma_p = gamma(temp_lsf);
     if(i==0){
       temp_u -= 2*epsilon[i];
     }else if(i==1){
@@ -115,7 +115,7 @@ Objective::beta(Teuchos::RCP<Local_Shape_Function> shape_function) const {
     }
     temp_lsf->insert_motion(temp_u,temp_v,temp_t);
     // mod the def vector -
-    const scalar_t gamma_m = gamma(temp_lsf);
+    const work_t gamma_m = gamma(temp_lsf);
     if(std::abs(gamma_m - gamma_0)<1.0E-10||std::abs(gamma_p - gamma_0)<1.0E-10){
       // abort because the slope is so bad that beta is infinite
       DEBUG_MSG("Objective::beta(): return value -1.0");
@@ -125,12 +125,12 @@ Objective::beta(Teuchos::RCP<Local_Shape_Function> shape_function) const {
       subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,shape_function,schema_->interpolation_method());
       return -1.0;
     }
-    const scalar_t slope_m = std::abs(epsilon[i] / (gamma_m - gamma_0))*factor[i];
-    const scalar_t slope_p = std::abs(epsilon[i] / (gamma_p - gamma_0))*factor[i];
+    const work_t slope_m = std::abs(epsilon[i] / (gamma_m - gamma_0))*factor[i];
+    const work_t slope_p = std::abs(epsilon[i] / (gamma_p - gamma_0))*factor[i];
     dir_beta[i] = (slope_m + slope_p)/2.0;
     //DEBUG_MSG("Simplex method dir_beta " << i << ": " << std::sqrt(dir_beta[i]*dir_beta[i]) << " gamma_p: " << gamma_p << " gamma_m: " << gamma_m);
   }
-  scalar_t mag_dir_beta = 0.0;
+  work_t mag_dir_beta = 0.0;
   for(size_t i=0;i<dir_beta.size();++i){
     if(!schema_->rotation_enabled()&&i==2) continue;
     mag_dir_beta += dir_beta[i]*dir_beta[i];
@@ -146,9 +146,9 @@ Objective::beta(Teuchos::RCP<Local_Shape_Function> shape_function) const {
   return mag_dir_beta;
 }
 
-scalar_t
+work_t
 Objective::sigma( Teuchos::RCP<Local_Shape_Function> shape_function,
-  scalar_t & noise_level) const {
+  work_t & noise_level) const {
   // if the gradients don't exist:
   if(!subset_->has_gradients())
     return 0.0;
@@ -156,16 +156,16 @@ Objective::sigma( Teuchos::RCP<Local_Shape_Function> shape_function,
   // compute the noise std dev. of the image:
   noise_level = subset_->noise_std_dev(schema_->def_img(subset_->sub_image_id()),shape_function);
   // sum up the grads in x and y:
-  scalar_t sum_gx = 0.0;
-  scalar_t sum_gy = 0.0;
+  work_t sum_gx = 0.0;
+  work_t sum_gy = 0.0;
   for(int_t i=0;i<subset_->num_pixels();++i){
     if(!subset_->is_active(i) || subset_->is_deactivated_this_step(i)) continue;
     sum_gx += subset_->grad_x(i)*subset_->grad_x(i);
     sum_gy += subset_->grad_y(i)*subset_->grad_y(i);
   }
-  const scalar_t sum_grad = sum_gx > sum_gy ? sum_gy : sum_gx;
+  const work_t sum_grad = sum_gx > sum_gy ? sum_gy : sum_gx;
   // ensure that sum grad is greater than zero
-  const scalar_t sigma = sum_grad>0.0 ? std::sqrt(2.0*noise_level*noise_level / sum_grad) : -1.0;
+  const work_t sigma = sum_grad>0.0 ? std::sqrt(2.0*noise_level*noise_level / sum_grad) : -1.0;
   DEBUG_MSG("Objective::sigma(): Subset " << correlation_point_global_id_ << " sigma: " << sigma);
   return sigma;
 }
@@ -175,31 +175,31 @@ Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_fun
 
   if(correlation_point_global_id_<0)return;
 
-  scalar_t norm_ut_2 = 0.0;
-  scalar_t norm_uhat_2 = 0.0;
-  scalar_t norm_error_dot_gphi_2 = 0.0;
-  scalar_t norm_error_dot_jgphi_2 = 0.0;
-  scalar_t norm_ut_dot_gphi_2 = 0.0;
-  scalar_t norm_uhat_dot_gphi_2 = 0.0;
+  work_t norm_ut_2 = 0.0;
+  work_t norm_uhat_2 = 0.0;
+  work_t norm_error_dot_gphi_2 = 0.0;
+  work_t norm_error_dot_jgphi_2 = 0.0;
+  work_t norm_ut_dot_gphi_2 = 0.0;
+  work_t norm_uhat_dot_gphi_2 = 0.0;
 
-  scalar_t int_r_total_2 = 0.0;
-  //scalar_t int_r_exact_2 = 0.0;
-  scalar_t int_uhat_dot_g = 0.0;
-  scalar_t int_uhat_dot_jg = 0.0;
+  work_t int_r_total_2 = 0.0;
+  //work_t int_r_exact_2 = 0.0;
+  work_t int_uhat_dot_g = 0.0;
+  work_t int_uhat_dot_jg = 0.0;
 
-  scalar_t sssig = 1.0;
+  work_t sssig = 1.0;
 
-  scalar_t u = 0.0;
-  scalar_t v = 0.0;
-  scalar_t t = 0.0;
-  const scalar_t cx = schema_->global_field_value(correlation_point_global_id_,SUBSET_COORDINATES_X_FS);
-  const scalar_t cy = schema_->global_field_value(correlation_point_global_id_,SUBSET_COORDINATES_Y_FS);
+  work_t u = 0.0;
+  work_t v = 0.0;
+  work_t t = 0.0;
+  const work_t cx = schema_->global_field_value(correlation_point_global_id_,SUBSET_COORDINATES_X_FS);
+  const work_t cy = schema_->global_field_value(correlation_point_global_id_,SUBSET_COORDINATES_Y_FS);
   shape_function->map_to_u_v_theta(cx,cy,u,v,t);
   const bool has_image_deformer = schema_->image_deformer()!=Teuchos::null;
   // put the exact solution into the n minus 1 field in case it didn't get populated by an image deformer
   if(has_image_deformer){
-    scalar_t exact_u = 0.0;
-    scalar_t exact_v = 0.0;
+    work_t exact_u = 0.0;
+    work_t exact_v = 0.0;
     schema_->image_deformer()->compute_deformation(cx,cy,exact_u,exact_v);
     schema_->mesh()->get_field(DICe::field_enums::MODEL_DISPLACEMENT_X_FS)->global_value(correlation_point_global_id_) = exact_u;
     schema_->mesh()->get_field(DICe::field_enums::MODEL_DISPLACEMENT_Y_FS)->global_value(correlation_point_global_id_) = exact_v;
@@ -210,38 +210,38 @@ Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_fun
   }
 
   for(int_t i=0;i<subset_->num_pixels();++i){
-    scalar_t x = subset_->x(i);
-    scalar_t y = subset_->y(i);
+    work_t x = subset_->x(i);
+    work_t y = subset_->y(i);
     const int_t offset_x = schema_->ref_img()->offset_x();
     const int_t offset_y = schema_->ref_img()->offset_y();
-    scalar_t bx = 0.0;
-    scalar_t by = 0.0;
+    work_t bx = 0.0;
+    work_t by = 0.0;
     if(has_image_deformer)
       schema_->image_deformer()->compute_deformation(x,y,bx,by); // x and y should not be offset since they are global pixel coordinates
-    scalar_t gx = subset_->grad_x(i);
-    scalar_t gy = subset_->grad_y(i);
-    //scalar_t lap = schema_->ref_img()->laplacian(x-offset_x,y-offset_y);
+    work_t gx = subset_->grad_x(i);
+    work_t gy = subset_->grad_y(i);
+    //work_t lap = schema_->ref_img()->laplacian(x-offset_x,y-offset_y);
     sssig += gx*gx + gy*gy;
 
-    scalar_t mag_ut_2 = bx*bx + by*by;
-    //scalar_t one_over_mag_ut_2 = mag_ut_2 == 0.0 ? 0.0 : 1.0/mag_ut_2;
+    work_t mag_ut_2 = bx*bx + by*by;
+    //work_t one_over_mag_ut_2 = mag_ut_2 == 0.0 ? 0.0 : 1.0/mag_ut_2;
     norm_ut_2 += mag_ut_2;
-    scalar_t mag_uhat_2 = u*u + v*v;
-    //scalar_t one_over_mag_uhat_2 = mag_uhat_2 == 0.0 ? 0.0 : 1.0/mag_uhat_2;
+    work_t mag_uhat_2 = u*u + v*v;
+    //work_t one_over_mag_uhat_2 = mag_uhat_2 == 0.0 ? 0.0 : 1.0/mag_uhat_2;
     norm_uhat_2 += mag_uhat_2;
     //norm_error_2 += (bx - u)*(bx - u) + (by - v)*(by - v);
-    scalar_t one_over_mag_grad_phi_2 = gx*gx + gy*gy < 1.0E-4 ? 0.0: 1.0 / (gx*gx + gy*gy);
+    work_t one_over_mag_grad_phi_2 = gx*gx + gy*gy < 1.0E-4 ? 0.0: 1.0 / (gx*gx + gy*gy);
     norm_ut_dot_gphi_2 += (bx*gx + by*gy)*(bx*gx + by*gy)*one_over_mag_grad_phi_2;
     //norm_ut_dot_jgphi_2 += (bx*-1.0*gy + by*gx)*(bx*-1.0*gy + by*gx)*one_over_mag_grad_phi_2;
     norm_uhat_dot_gphi_2 += (u*gx + v*gy)*(u*gx + v*gy)*one_over_mag_grad_phi_2;
     norm_error_dot_gphi_2 += ((u-bx)*gx + (v-by)*gy)*((u-bx)*gx + (v-by)*gy)*one_over_mag_grad_phi_2;
     norm_error_dot_jgphi_2 += ((v-by)*gx - (u-bx)*gy)*((v-by)*gx - (u-bx)*gy)*one_over_mag_grad_phi_2;
 
-    scalar_t sub_r = schema_->def_img()->interpolate_keys_fourth(x - offset_x + u,y - offset_y + v) - (*schema_->ref_img())((int_t)(x-offset_x),(int_t)(y-offset_y));
+    work_t sub_r = schema_->def_img()->interpolate_keys_fourth(x - offset_x + u,y - offset_y + v) - (*schema_->ref_img())((int_t)(x-offset_x),(int_t)(y-offset_y));
     //int_r += sig*sig*lap*lap*one_over_mag_grad_phi_2;
-    //scalar_t taylor = (*schema_->def_img())((int_t)(x-offset_x),(int_t)(y-offset_y)) - (*schema_->ref_img())((int_t)(x-offset_x),(int_t)(y-offset_y)) + u*gx + v*gy;
+    //work_t taylor = (*schema_->def_img())((int_t)(x-offset_x),(int_t)(y-offset_y)) - (*schema_->ref_img())((int_t)(x-offset_x),(int_t)(y-offset_y)) + u*gx + v*gy;
     //int_sub_r += sub_r*sub_r*one_over_mag_grad_phi_2;
-    scalar_t sub_r_exact = schema_->def_img()->interpolate_keys_fourth(x-offset_x + bx,y-offset_y + by) - (*schema_->ref_img())((int_t)(x-offset_x),(int_t)(y-offset_y));
+    work_t sub_r_exact = schema_->def_img()->interpolate_keys_fourth(x-offset_x + bx,y-offset_y + by) - (*schema_->ref_img())((int_t)(x-offset_x),(int_t)(y-offset_y));
     //int_r_exact_2 += sub_r_exact*sub_r_exact*one_over_mag_grad_phi_2;
     int_r_total_2 += (sub_r - sub_r_exact)*(sub_r - sub_r_exact)*one_over_mag_grad_phi_2;
     int_uhat_dot_g += (u*gx + v*gy)/std::sqrt(gx*gx + gy*gy);
@@ -251,10 +251,10 @@ Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_fun
 
   // populate the fields:
   // field 1: cos of angle between uhat and grad phi
-  const scalar_t cos_theta_hat = norm_uhat_2 == 0.0 ? 1.0 : std::sqrt(norm_uhat_dot_gphi_2/norm_uhat_2);
+  const work_t cos_theta_hat = norm_uhat_2 == 0.0 ? 1.0 : std::sqrt(norm_uhat_dot_gphi_2/norm_uhat_2);
   schema_->mesh()->get_field(DICe::field_enums::FIELD_1_FS)->global_value(correlation_point_global_id_) = cos_theta_hat;
   // field 2: cos of angle between the true motion and grad phi
-  const scalar_t cos_theta = norm_ut_2 == 0.0 ? 1.0 : std::sqrt(norm_ut_dot_gphi_2/norm_ut_2);
+  const work_t cos_theta = norm_ut_2 == 0.0 ? 1.0 : std::sqrt(norm_ut_dot_gphi_2/norm_ut_2);
   schema_->mesh()->get_field(DICe::field_enums::FIELD_2_FS)->global_value(correlation_point_global_id_) = cos_theta;
   // field 3: the total L2 error magnitude:
   schema_->mesh()->get_field(DICe::field_enums::FIELD_3_FS)->global_value(correlation_point_global_id_) = std::sqrt(norm_error_dot_gphi_2 + norm_error_dot_jgphi_2);
@@ -279,9 +279,9 @@ Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_fun
 Status_Flag
 Objective::computeUpdateRobust(Teuchos::RCP<Local_Shape_Function> shape_function,
   int_t & num_iterations,
-  const scalar_t & override_tol){
+  const work_t & override_tol){
 
-  const scalar_t skip_threshold = override_tol==-1 ? schema_->skip_solve_gamma_threshold() : override_tol;
+  const work_t skip_threshold = override_tol==-1 ? schema_->skip_solve_gamma_threshold() : override_tol;
 
   Status_Flag status_flag;
   Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
@@ -304,7 +304,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
   // TODO catch the case where the initial gamma is good enough (possibly do this at the image level, not subset?):
   int_t N = shape_function->num_params(); // one degree of freedom for each shape function parameter
   assert(N>=2);
-  scalar_t tolerance = schema_->fast_solver_tolerance();
+  work_t tolerance = schema_->fast_solver_tolerance();
   const int_t max_solve_its = schema_->max_solver_iterations_fast();
   int *IPIV = new int[N+1];
   int LWORK = N*N;
@@ -316,19 +316,19 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
   // Initialize storage:
   Teuchos::SerialDenseMatrix<int_t,double> H(N,N, true);
   Teuchos::ArrayRCP<double> q(N,0.0);
-  std::vector<scalar_t> residuals(N,0.0);
-  std::vector<scalar_t> def_old(N,0.0);    // save off the previous value to test for convergence
-  std::vector<scalar_t> def_update(N,0.0); // save off the previous value to test for convergence
+  std::vector<work_t> residuals(N,0.0);
+  std::vector<work_t> def_old(N,0.0);    // save off the previous value to test for convergence
+  std::vector<work_t> def_update(N,0.0); // save off the previous value to test for convergence
 
   // note this creates a pointer to the array so
   // the values are updated each frame if compute_grad_def_images is on
-  Teuchos::ArrayRCP<scalar_t> gradGx = subset_->grad_x_array();
-  Teuchos::ArrayRCP<scalar_t> gradGy = subset_->grad_y_array();
-  const scalar_t cx = subset_->centroid_x();
-  const scalar_t cy = subset_->centroid_y();
-  const scalar_t meanF = subset_->mean(REF_INTENSITIES);
+  Teuchos::ArrayRCP<work_t> gradGx = subset_->grad_x_array();
+  Teuchos::ArrayRCP<work_t> gradGy = subset_->grad_y_array();
+  const work_t cx = subset_->centroid_x();
+  const work_t cy = subset_->centroid_y();
+  const work_t meanF = subset_->mean(REF_INTENSITIES);
 
-  scalar_t old_u=0.0,old_v=0.0,old_t=0.0;
+  work_t old_u=0.0,old_v=0.0,old_t=0.0;
   shape_function->map_to_u_v_theta(cx,cy,old_u,old_v,old_t);
   DEBUG_MSG(std::setw(5) << "Iter" <<
     std::setw(12) << " u"  <<
@@ -355,11 +355,11 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
       return SUBSET_CONSTRUCTION_FAILED;
     }
     // compute the mean value of the subsets:
-    const scalar_t meanG = subset_->mean(DEF_INTENSITIES);
+    const work_t meanG = subset_->mean(DEF_INTENSITIES);
     // the gradients are taken from the def images rather than the ref
     const bool use_ref_grads = schema_->def_img()->has_gradients() ? false : true;
 
-    scalar_t GmF = 0.0;
+    work_t GmF = 0.0;
     for(int_t index=0;index<subset_->num_pixels();++index){
       if(subset_->is_deactivated_this_step(index)||!subset_->is_active(index)) continue;
       GmF = (subset_->def_intensities(index) - meanG) - (subset_->ref_intensities(index) - meanF);
@@ -375,7 +375,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
 
     if(schema_->use_objective_regularization()){ // TODO test for affine shape functions too
       // add the penalty terms
-      const scalar_t alpha = schema_->levenberg_marquardt_regularization_factor();
+      const work_t alpha = schema_->levenberg_marquardt_regularization_factor();
       H(0,0) += alpha;
       H(1,1) += alpha;
     }
@@ -383,11 +383,11 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
     // compute the norm of H prior to taking the inverse:
     // Note: for this to work, the shape functions must always have their displacement degrees of freedom as the
     // first two parameters (assert that N>=2 above)
-    const scalar_t det_h = H(0,0)*H(1,1) - H(1,0)*H(0,1);
-    const scalar_t norm_H = std::sqrt(H(0,0)*H(0,0) + H(0,1)*H(0,1) + H(1,0)*H(1,0) + H(1,1)*H(1,1));
-    scalar_t cond_2x2 = -1.0;
+    const work_t det_h = H(0,0)*H(1,1) - H(1,0)*H(0,1);
+    const work_t norm_H = std::sqrt(H(0,0)*H(0,0) + H(0,1)*H(0,1) + H(1,0)*H(1,0) + H(1,1)*H(1,1));
+    work_t cond_2x2 = -1.0;
     if(det_h !=0.0){
-      const scalar_t norm_Hi = det_h==0.0?0.0:std::sqrt((1.0/(det_h*det_h))*(H(0,0)*H(0,0) + H(0,1)*H(0,1) + H(1,0)*H(1,0) + H(1,1)*H(1,1)));
+      const work_t norm_Hi = det_h==0.0?0.0:std::sqrt((1.0/(det_h*det_h))*(H(0,0)*H(0,0) + H(0,1)*H(0,1) + H(1,0)*H(1,0) + H(1,1)*H(1,1)));
       cond_2x2 = norm_H * norm_Hi;
     }
 
@@ -424,7 +424,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
         def_update[i] += H(i,j)*(-1.0)*q[j];
     shape_function->update(def_update);
 
-    scalar_t guess_u = 0.0,guess_v=0.0,guess_t=0.0;
+    work_t guess_u = 0.0,guess_v=0.0,guess_t=0.0;
     shape_function->map_to_u_v_theta(cx,cy,guess_u,guess_v,guess_t);
     std::ios  state(NULL);
     state.copyfmt(std::cout);

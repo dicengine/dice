@@ -78,8 +78,8 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<DICe::Image> imgRef = Teuchos::rcp( new DICe::Image(refString.c_str()));
   Teuchos::RCP<DICe::Image> imgDef = Teuchos::rcp( new DICe::Image(defString.c_str()));
   *outStream << "image dimensions: w = " << imgRef->width() << " h = " << imgRef->height() << std::endl;
-  Teuchos::ArrayRCP<scalar_t> imgRefArray = imgRef->intensities();
-  Teuchos::ArrayRCP<scalar_t> imgDefArray = imgDef->intensities();
+  Teuchos::ArrayRCP<work_t> imgRefArray = imgRef->intensities();
+  Teuchos::ArrayRCP<work_t> imgDefArray = imgDef->intensities();
   assert(imgRef->width() == imgDef->width());
   assert(imgRef->height() == imgDef->height());
   const int_t img_width = imgRef->width();

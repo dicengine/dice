@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
   else
     outStream = Teuchos::rcp(&bhs, false);
   int_t errorFlag  = 0;
-  scalar_t errtol  = 1.0E-4;
+  work_t errtol  = 1.0E-4;
 
 
   // set up a parameter list to pass to the library call (if null defaults are used)
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
   // initialize the input data:
   // initialize x y u v theta sigma
   // this is a similar ordering to the labView calls to libdice
-  scalar_t * points = new scalar_t[(int_t)num_subsets*DICE_API_STRIDE];
+  work_t * points = new work_t[(int_t)num_subsets*DICE_API_STRIDE];
   for(int_t subsetIt=0;subsetIt<num_subsets;++subsetIt){
     for(int_t i=0;i<DICE_API_STRIDE;++i){
       points[subsetIt*DICE_API_STRIDE+i] = 0.0;
@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
     points[subsetIt*DICE_API_STRIDE + 1] = subset_centroids_y[subsetIt]; //y0
   }
   // solution with default params changed
-  scalar_t * pointsParams = new scalar_t[(int_t)num_subsets*DICE_API_STRIDE];
+  work_t * pointsParams = new work_t[(int_t)num_subsets*DICE_API_STRIDE];
   for(int_t subsetIt=0;subsetIt<num_subsets;++subsetIt){
     for(int_t i=0;i<DICE_API_STRIDE;++i){
       pointsParams[subsetIt*DICE_API_STRIDE+i] = 0.0;
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
   // correlate on the set of five images that shift the image by one pixel each
   std::string ref_name = "./images/defSyntheticSpeckled0.tif";
   Teuchos::RCP<DICe::Image> refImg = Teuchos::rcp( new DICe::Image(ref_name.c_str()));
-  Teuchos::ArrayRCP<intensity_t> ref_img = refImg->intensities();
+  Teuchos::ArrayRCP<storage_t> ref_img = refImg->intensities();
   const int_t ref_w = refImg->width();
   const int_t ref_h = refImg->height();
 
@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
     *outStream << "correlating image " << ref_name << " WITH " << def_names[img] << std::endl;
 
     Teuchos::RCP<DICe::Image> defImg = Teuchos::rcp( new DICe::Image(def_names[img].c_str()));
-    Teuchos::ArrayRCP<intensity_t> def_img = defImg->intensities();
+    Teuchos::ArrayRCP<storage_t> def_img = defImg->intensities();
 
     // call library using default params
     errorFlag = dice_correlate(points, num_subsets, subset_size,

@@ -98,17 +98,17 @@ int main(int argc, char *argv[]) {
 
   *outStream << "creating the image set" << std::endl;
 
-  Teuchos::ArrayRCP<intensity_t> ref_intens(w*h,0.0);
-  Teuchos::ArrayRCP<intensity_t> def_intens(w*h,0.0);
+  Teuchos::ArrayRCP<work_t> ref_intens(w*h,0.0);
+  Teuchos::ArrayRCP<work_t> def_intens(w*h,0.0);
   for(int_t y=0;y<h;++y){
     for(int_t x=0;x<h;++x){
       // compute the velocity for this point
-      scalar_t bx=0.0,by=0.0;
+      work_t bx=0.0,by=0.0;
       prob->velocity(x,y,bx,by);
       //std::cout << " x " << x << " y " << y << " bx " << bx << " by " << by << std::endl;
-      scalar_t dx = x - bx;
-      scalar_t dy = y - by;
-      scalar_t phi_0 = 0.0,phi=0.0;
+      work_t dx = x - bx;
+      work_t dy = y - by;
+      work_t phi_0 = 0.0,phi=0.0;
       prob->phi(x,y,phi_0);
       prob->phi(dx,dy,phi);
       ref_intens[y*w+x] = 0.5 + phi_0*0.5;
@@ -116,9 +116,9 @@ int main(int argc, char *argv[]) {
       //std::cout << " x " << x << " y " << y << " phi0 " << ref_intens[y*w+x] << " phi " << def_intens[y*w+x] << std::endl;
     }
   }
-  Teuchos::RCP<Image> ref = Teuchos::rcp(new Image(w,h,ref_intens));
+  Teuchos::RCP<Scalar_Image> ref = Teuchos::rcp(new Scalar_Image(w,h,ref_intens));
   ref->write("ref_image_terms.tif");
-  Teuchos::RCP<Image> def = Teuchos::rcp(new Image(w,h,def_intens));
+  Teuchos::RCP<Scalar_Image> def = Teuchos::rcp(new Scalar_Image(w,h,def_intens));
   def->write("def_image_terms.tif");
   input_params->set(DICe::reference_image,"ref_image_terms.tif");
   Teuchos::ParameterList def_img_params;
@@ -162,9 +162,9 @@ int main(int argc, char *argv[]) {
   for(int_t i=0;i<schema->global_algorithm()->mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
     const int_t ix = i*2+0;
     const int_t iy = i*2+1;
-    const scalar_t x = coords->local_value(ix);
-    const scalar_t y = coords->local_value(iy);
-    scalar_t bx=0.0,by=0.0;
+    const work_t x = coords->local_value(ix);
+    const work_t y = coords->local_value(iy);
+    work_t bx=0.0,by=0.0;
     prob->velocity(x,y,bx,by);
     exact_sol->local_value(ix) = bx;
     exact_sol->local_value(iy) = by;
@@ -182,17 +182,17 @@ int main(int argc, char *argv[]) {
 
   *outStream << "checking the output" << std::endl;
 
-  scalar_t error_bx = 0.0;
-  scalar_t error_by = 0.0;
+  work_t error_bx = 0.0;
+  work_t error_by = 0.0;
 
   Teuchos::RCP<MultiField> disp = schema->global_algorithm()->mesh()->get_field(field_enums::DISPLACEMENT_FS);
   for(int_t i=0;i<schema->global_algorithm()->mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
     int_t ix = i*2+0;
     int_t iy = i*2+1;
-    const scalar_t b_x = disp->local_value(ix);
-    const scalar_t b_y = disp->local_value(iy);
-    const scalar_t b_exact_x = exact_sol->local_value(ix);
-    const scalar_t b_exact_y = exact_sol->local_value(iy);
+    const work_t b_x = disp->local_value(ix);
+    const work_t b_y = disp->local_value(iy);
+    const work_t b_exact_x = exact_sol->local_value(ix);
+    const work_t b_exact_y = exact_sol->local_value(iy);
     error_bx += (b_exact_x - b_x)*(b_exact_x - b_x);
     error_by += (b_exact_y - b_y)*(b_exact_y - b_y);
   }
@@ -201,7 +201,7 @@ int main(int argc, char *argv[]) {
 
   *outStream << "ERROR_X: " << error_bx << " ERROR_Y: " << error_by << std::endl;
 
-  const scalar_t error_max = 0.1;
+  const work_t error_max = 0.1;
   if(error_bx > error_max || error_by > error_max){
     *outStream << "Error, the solution error is too high" << std::endl;
     errorFlag++;
