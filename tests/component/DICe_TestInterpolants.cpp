@@ -107,6 +107,7 @@ int main(int argc, char *argv[]) {
     x_val = 255.0*px/(work_t)array_w;
     y_val = 255.0*py/(work_t)array_h;
     const work_t exact = x_val*y_val;
+
     error_bi += std::abs(subset_bi.def_intensities(i) - exact);
     error_keys += std::abs(subset_keys.def_intensities(i) - exact);
     //std::cout << " x " << subset_bi.x(i) << " y " << subset_bi.y(i) <<

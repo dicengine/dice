@@ -98,10 +98,10 @@ int main(int argc, char *argv[]) {
 
   *outStream << "creating the image set" << std::endl;
 
-  Teuchos::ArrayRCP<work_t> ref_intens(w*h,0.0);
-  Teuchos::ArrayRCP<work_t> def_intens(w*h,0.0);
+  Teuchos::ArrayRCP<storage_t> ref_intens(w*h,0.0);
+  Teuchos::ArrayRCP<storage_t> def_intens(w*h,0.0);
   for(int_t y=0;y<h;++y){
-    for(int_t x=0;x<h;++x){
+    for(int_t x=0;x<w;++x){
       // compute the velocity for this point
       work_t bx=0.0,by=0.0;
       prob->velocity(x,y,bx,by);
@@ -111,14 +111,14 @@ int main(int argc, char *argv[]) {
       work_t phi_0 = 0.0,phi=0.0;
       prob->phi(x,y,phi_0);
       prob->phi(dx,dy,phi);
-      ref_intens[y*w+x] = 0.5 + phi_0*0.5;
-      def_intens[y*w+x] = 0.5 + phi*0.5;
-      //std::cout << " x " << x << " y " << y << " phi0 " << ref_intens[y*w+x] << " phi " << def_intens[y*w+x] << std::endl;
+      ref_intens[y*w+x] = static_cast<storage_t>(0.5*255.0 + phi_0*0.5*255.0);
+      def_intens[y*w+x] = static_cast<storage_t>(0.5*255.0 + phi*0.5*255.0);
     }
   }
-  Teuchos::RCP<Scalar_Image> ref = Teuchos::rcp(new Scalar_Image(w,h,ref_intens));
+
+  Teuchos::RCP<Image> ref = Teuchos::rcp(new Image(w,h,ref_intens));
   ref->write("ref_image_terms.tif");
-  Teuchos::RCP<Scalar_Image> def = Teuchos::rcp(new Scalar_Image(w,h,def_intens));
+  Teuchos::RCP<Image> def = Teuchos::rcp(new Image(w,h,def_intens));
   def->write("def_image_terms.tif");
   input_params->set(DICe::reference_image,"ref_image_terms.tif");
   Teuchos::ParameterList def_img_params;

@@ -366,12 +366,13 @@ Subset::sssig(){
   return sssig;
 }
 
+template <typename S>
 void
-Subset::initialize(Teuchos::RCP<Image> image,
+Subset::initialize(Teuchos::RCP<Image_<S>> image,
   const Subset_View_Target target,
   Teuchos::RCP<Local_Shape_Function> shape_function,
   const Interpolation_Method interp){
-  DEBUG_MSG("Subset::initialize():  initializing subset from image " << image->file_name());
+  //DEBUG_MSG("Subset::initialize():  initializing subset from image " << image->file_name());
   // coordinates for points x and y are always in global coordinates
   // if the input image is a sub-image i.e. it has offsets, then these need to be taken into account
   const int_t offset_x = image->offset_x();
@@ -390,7 +391,7 @@ Subset::initialize(Teuchos::RCP<Image> image,
 //        std::cout << "invalid y " << y_[i] << " " << offset_y << " " << y_[i]-offset_y << std::endl;
 //        assert(false);
 //      }
-      intensities_[i] = static_cast<work_t>((*image)(x_[i]-offset_x,y_[i]-offset_y));
+      intensities_[i] = (*image)(x_[i]-offset_x,y_[i]-offset_y);
     }
   }
   else{
@@ -452,6 +453,9 @@ Subset::initialize(Teuchos::RCP<Image> image,
     }
   }
 }
+
+template void Subset::initialize(Teuchos::RCP<Image_<work_t>>,const Subset_View_Target,Teuchos::RCP<Local_Shape_Function>,const Interpolation_Method);
+template void Subset::initialize(Teuchos::RCP<Image_<storage_t>>,const Subset_View_Target,Teuchos::RCP<Local_Shape_Function>,const Interpolation_Method);
 
 bool
 Subset::is_obstructed_pixel(const work_t & coord_x,
@@ -528,16 +532,17 @@ Subset::turn_on_previously_obstructed_pixels(){
   }
 }
 
+template <typename S>
 void
 Subset::write_subset_on_image(const std::string & file_name,
-  Teuchos::RCP<Image> image,
+  Teuchos::RCP<Image_<S>> image,
   Teuchos::RCP<Local_Shape_Function> shape_function){
   //create a square image that fits the extents of the subet
   const int_t w = image->width();
   const int_t h = image->height();
   const int_t ox = image->offset_x();
   const int_t oy = image->offset_y();
-  Teuchos::ArrayRCP<storage_t> intensities(w*h,0);
+  Teuchos::ArrayRCP<S> intensities(w*h,0);
   for(int_t m=0;m<h;++m){
     for(int_t n=0;n<w;++n){
       intensities[m*w+n] = (*image)(n,m);
@@ -565,6 +570,9 @@ Subset::write_subset_on_image(const std::string & file_name,
   }
   utils::write_image(file_name.c_str(),w,h,intensities.getRawPtr(),true);
 }
+
+template void Subset::write_subset_on_image(const std::string &,Teuchos::RCP<Image_<work_t>>,Teuchos::RCP<Local_Shape_Function>);
+template void Subset::write_subset_on_image(const std::string &,Teuchos::RCP<Image_<storage_t>>,Teuchos::RCP<Local_Shape_Function>);
 
 void
 Subset::write_image(const std::string & file_name,
@@ -623,8 +631,9 @@ Subset::contrast_std_dev(){
   return std_dev;
 }
 
+template <typename S>
 work_t
-Subset::noise_std_dev(Teuchos::RCP<Image> image,
+Subset::noise_std_dev(Teuchos::RCP<Image_<S>> image,
   Teuchos::RCP<Local_Shape_Function> shape_function){
 
   // create the mask
@@ -670,7 +679,7 @@ Subset::noise_std_dev(Teuchos::RCP<Image> image,
     for(int_t x=min_x; x<max_x;++x){
       // don't convolve the edge pixels
       if(x-ox<1||x-ox>=img_w-1||y-oy<1||y-oy>=img_h-1){
-        variance += std::abs((*image)(x-ox,y-oy));
+        variance += std::sqrt((*image)(x-ox,y-oy)*(*image)(x-ox,y-oy));
       }
       else{
         conv_i = 0.0;
@@ -687,5 +696,9 @@ Subset::noise_std_dev(Teuchos::RCP<Image> image,
   DEBUG_MSG("Subset::noise_std_dev(): return value " << variance);
   return variance;
 }
+
+template work_t Subset::noise_std_dev(Teuchos::RCP<Image_<work_t>>,Teuchos::RCP<Local_Shape_Function>);
+template work_t Subset::noise_std_dev(Teuchos::RCP<Image_<storage_t>>,Teuchos::RCP<Local_Shape_Function>);
+
 
 }// End DICe Namespace

@@ -67,9 +67,10 @@ complex_divide(kiss_fft_cpx * lhs,
 /// \param complex [out] the imaginary part of the FFT
 /// \param inverse 1 if this should be an inverse FFT (back to time domain)
 /// \param hamming_filter true if a hamming filter should be applied to the image
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void
-image_fft(Teuchos::RCP<Image> image,
+image_fft(Teuchos::RCP<Image_<S>> image,
   Teuchos::ArrayRCP<work_t> & real,
   Teuchos::ArrayRCP<work_t> & complex,
   const int_t inverse = 0,

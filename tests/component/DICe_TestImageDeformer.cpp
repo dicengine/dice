@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 
   // create an image deformer class
   const int_t num_steps = 20;
-  Teuchos::RCP<SinCos_Image_Deformer> deformer = Teuchos::rcp(new SinCos_Image_Deformer(num_steps,true));
+  Teuchos::RCP<Image_Deformer> deformer = Teuchos::rcp(new Image_Deformer(num_steps,1.0,Image_Deformer::SIN_COS));
   Teuchos::RCP<Image> def_img = deformer->deform_image(ref_img);
   def_img->write("sincos_def.tif");
 

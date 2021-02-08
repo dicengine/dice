@@ -79,33 +79,33 @@ int main(int argc, char *argv[]) {
   *outStream << "creating an image from an array" << std::endl;
   const int_t array_w = 50;
   const int_t array_h = 40;
-  Teuchos::ArrayRCP<work_t> ref_intensities(array_w*array_h,0.0);
+  Teuchos::ArrayRCP<storage_t> ref_intensities(array_w*array_h,0);
   // populate the intensities with a sin/cos function
   work_t x_val = 0.0, y_val = 0.0;
   for(int_t y=0;y<array_h;++y){
     for(int_t x=0;x<array_w;++x){
       x_val = std::abs(std::cos(((work_t)x/(work_t)array_w)*sin_factor*DICE_PI));
       y_val = std::abs(std::cos(((work_t)y/(work_t)array_h)*sin_factor*DICE_PI));
-      ref_intensities[y*array_w+x] = x_val*y_val*255.0;
+      ref_intensities[y*array_w+x] = static_cast<storage_t>(x_val*y_val*255.0);
     }
   }
-  Teuchos::RCP<Scalar_Image> ref_img = Teuchos::rcp(new Scalar_Image(array_w,array_h,ref_intensities));
+  Teuchos::RCP<Image> ref_img = Teuchos::rcp(new Image(array_w,array_h,ref_intensities));
   //ref_img->write("shift_ref.png");
 
   std::vector<work_t> x_error;
 
   const work_t shift_step = 0.1;
   for(work_t shift = 0.0;shift<=1.0; shift+=shift_step){
-    Teuchos::ArrayRCP<work_t> def_intensities(array_w*array_h,0.0);
+    Teuchos::ArrayRCP<storage_t> def_intensities(array_w*array_h,0.0);
     // populate the intensities with a sin/cos function
     for(int_t y=0;y<array_h;++y){
       for(int_t x=0;x<array_w;++x){
         x_val = std::abs(std::cos((((work_t)x-shift)/(work_t)array_w)*sin_factor*DICE_PI));
         y_val = std::abs(std::cos(((work_t)y/(work_t)array_h)*sin_factor*DICE_PI));
-        def_intensities[y*array_w+x] = x_val*y_val*255.0;
+        def_intensities[y*array_w+x] = static_cast<storage_t>(x_val*y_val*255.0);
       }
     }
-    Teuchos::RCP<Scalar_Image> def_img = Teuchos::rcp(new Scalar_Image(array_w,array_h,def_intensities));
+    Teuchos::RCP<Image> def_img = Teuchos::rcp(new Image(array_w,array_h,def_intensities));
 //    std::stringstream def_name;
 //    def_name << "shift_def_" << shift << ".png";
 //    def_img->write(def_name.str());

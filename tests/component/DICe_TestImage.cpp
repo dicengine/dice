@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
 
   // create an image from file:
   *outStream << "creating an image from a tiff file " << std::endl;
-  Teuchos::RCP<Image> img = Teuchos::rcp(new Image("./images/ImageA.tif"));
+  Teuchos::RCP<Scalar_Image> img = Teuchos::rcp(new Scalar_Image("./images/ImageA.tif"));
   //img->write("outImageA.tif");
   if(img->width()!=2048){
     *outStream << "Error, the image width is not correct" << std::endl;
@@ -94,11 +94,11 @@ int main(int argc, char *argv[]) {
   img->create_mask(area_def,true);
 
   // create an image of the mask
-  Teuchos::ArrayRCP<storage_t> mask_values(img->height()*img->width(),0.0);
+  Teuchos::ArrayRCP<work_t> mask_values(img->height()*img->width(),0.0);
   for(int_t y=0;y<img->height();++y)
     for(int_t x=0;x<img->width();++x)
       mask_values[y*img->width()+x] = img->mask(x,y);
-  Image mask(img->width(),img->height(),mask_values);
+  Scalar_Image mask(img->width(),img->height(),mask_values);
   //mask.write("mask_d.rawi");
   // compare with the saved mask file
 #ifdef DICE_USE_DOUBLE
@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
   imgParams->set(DICe::subimage_height,img->height()/2);
   imgParams->set(DICe::subimage_offset_x,img->width()/2);
   imgParams->set(DICe::subimage_offset_y,img->height()/2);
-  Teuchos::RCP<Image> portion = Teuchos::rcp(new Image(img,imgParams));
+  Teuchos::RCP<Scalar_Image> portion = Teuchos::rcp(new Scalar_Image(img,imgParams));
   //portion->write("portion_d.rawi");
 #ifdef DICE_USE_DOUBLE
   Teuchos::RCP<Scalar_Image> portion_exact = Teuchos::rcp(new Scalar_Image("./images/portion_d.rawi"));
@@ -286,11 +286,11 @@ int main(int argc, char *argv[]) {
   // test 90 and 270 degree rotation
 
   *outStream << "testing 90 and 270 degree rotations" << std::endl;
-  Teuchos::RCP<Image> img_0_deg = Teuchos::rcp(new Image("./images/ImageB.tif"));
-  Teuchos::RCP<Image> img_90_deg = img_0_deg->apply_rotation(NINTY_DEGREES);
+  Teuchos::RCP<Scalar_Image> img_0_deg = Teuchos::rcp(new Scalar_Image("./images/ImageB.tif"));
+  Teuchos::RCP<Scalar_Image> img_90_deg = img_0_deg->apply_rotation(NINTY_DEGREES);
   //img_90_deg->write("img_90_d.rawi");
   //img_90_deg->write("img_90.rawi");
-  Teuchos::RCP<Image> img_270_deg = img_0_deg->apply_rotation(TWO_HUNDRED_SEVENTY_DEGREES);
+  Teuchos::RCP<Scalar_Image> img_270_deg = img_0_deg->apply_rotation(TWO_HUNDRED_SEVENTY_DEGREES);
   //img_270_deg->write("img_270_d.rawi");
   //img_270_deg->write("img_270.rawi");
 #ifdef DICE_USE_DOUBLE
@@ -321,7 +321,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> filter_5_params = rcp(new Teuchos::ParameterList());
   filter_5_params->set(DICe::gauss_filter_images,true);
   filter_5_params->set(DICe::gauss_filter_mask_size,5);
-  Teuchos::RCP<Image> filter_5_img = Teuchos::rcp(new Image("./images/ImageB.tif",filter_5_params));
+  Teuchos::RCP<Scalar_Image> filter_5_img = Teuchos::rcp(new Scalar_Image("./images/ImageB.tif",filter_5_params));
   //filter_5_img->write("outFilter5_d.rawi");
   //filter_5_img.write("outFilter5.rawi");
 #ifdef DICE_USE_DOUBLE
@@ -339,7 +339,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> filter_7_params = rcp(new Teuchos::ParameterList());
   filter_7_params->set(DICe::gauss_filter_images,true);
   filter_7_params->set(DICe::gauss_filter_mask_size,7);
-  Teuchos::RCP<Image> filter_7_img = Teuchos::rcp(new Image("./images/ImageB.tif",filter_7_params));
+  Teuchos::RCP<Scalar_Image> filter_7_img = Teuchos::rcp(new Scalar_Image("./images/ImageB.tif",filter_7_params));
   //filter_7_img->write("outFilter7_d.rawi");
   //filter_7_img.write("outFilter7.rawi");
 #ifdef DICE_USE_DOUBLE
@@ -357,7 +357,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> filter_9_params = rcp(new Teuchos::ParameterList());
   filter_9_params->set(DICe::gauss_filter_images,true);
   filter_9_params->set(DICe::gauss_filter_mask_size,9);
-  Teuchos::RCP<Image> filter_9_img = Teuchos::rcp(new Image("./images/ImageB.tif",filter_9_params));
+  Teuchos::RCP<Scalar_Image> filter_9_img = Teuchos::rcp(new Scalar_Image("./images/ImageB.tif",filter_9_params));
   //filter_9_img->write("outFilter9_d.rawi");
   //filter_9_img.write("outFilter9.rawi");
 #ifdef DICE_USE_DOUBLE
@@ -375,7 +375,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> filter_11_params = rcp(new Teuchos::ParameterList());
   filter_11_params->set(DICe::gauss_filter_images,true);
   filter_11_params->set(DICe::gauss_filter_mask_size,11);
-  Teuchos::RCP<Image> filter_11_img = Teuchos::rcp(new Image("./images/ImageB.tif",filter_11_params));
+  Teuchos::RCP<Scalar_Image> filter_11_img = Teuchos::rcp(new Scalar_Image("./images/ImageB.tif",filter_11_params));
   //filter_11_img->write("outFilter11_d.rawi");
   //filter_11_img.write("outFilter11.rawi");
 #ifdef DICE_USE_DOUBLE
@@ -393,7 +393,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> filter_13_params = rcp(new Teuchos::ParameterList());
   filter_13_params->set(DICe::gauss_filter_images,true);
   filter_13_params->set(DICe::gauss_filter_mask_size,13);
-  Teuchos::RCP<Image> filter_13_img = Teuchos::rcp(new Image("./images/ImageB.tif",filter_13_params));
+  Teuchos::RCP<Scalar_Image> filter_13_img = Teuchos::rcp(new Scalar_Image("./images/ImageB.tif",filter_13_params));
   //filter_13_img->write("outFilter13_d.rawi");
   //filter_13_img.write("outFilter13.rawi");
 #ifdef DICE_USE_DOUBLE
@@ -409,7 +409,7 @@ int main(int argc, char *argv[]) {
 
   // create an image from jpeg file:
   *outStream << "creating an image from a jpeg file " << std::endl;
-  Teuchos::RCP<Image> img_jpg = Teuchos::rcp(new Image("./images/ImageB.jpg"));
+  Teuchos::RCP<Scalar_Image> img_jpg = Teuchos::rcp(new Scalar_Image("./images/ImageB.jpg"));
   //img_jpg->write("JpegImageB_d.rawi");
   //img_jpg->write("JpegImageB.rawi");
   if(img_jpg->width()!=240){
@@ -435,7 +435,7 @@ int main(int argc, char *argv[]) {
   imgParams->set(DICe::subimage_height,30);
   imgParams->set(DICe::subimage_offset_x,10);
   imgParams->set(DICe::subimage_offset_y,15);
-  Teuchos::RCP<Image> img_sub_jpg = Teuchos::rcp(new Image("./images/ImageB.jpg",imgParams));
+  Teuchos::RCP<Scalar_Image> img_sub_jpg = Teuchos::rcp(new Scalar_Image("./images/ImageB.jpg",imgParams));
   //img_sub_jpg->write("JpegImageBSub_d.rawi");
   //img_sub_jpg->write("JpegImageBSub.rawi");
   if(img_sub_jpg->width()!=20){
@@ -458,7 +458,7 @@ int main(int argc, char *argv[]) {
   }
   // create an image from jpeg file:
   *outStream << "creating an image from a png file " << std::endl;
-  Teuchos::RCP<Image> img_png = Teuchos::rcp(new Image("./images/ImageB.png"));
+  Teuchos::RCP<Scalar_Image> img_png = Teuchos::rcp(new Scalar_Image("./images/ImageB.png"));
   //img_png->write("PngImageB_d.rawi");
   //img_png->write("PngImageB.rawi");
   if(img_png->width()!=240){
@@ -480,7 +480,7 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
   *outStream << "creating a sub portion image from a png file " << std::endl;
-  Teuchos::RCP<Image> img_sub_png = Teuchos::rcp(new Image("./images/ImageB.jpg",imgParams));
+  Teuchos::RCP<Scalar_Image> img_sub_png = Teuchos::rcp(new Scalar_Image("./images/ImageB.jpg",imgParams));
   //img_sub_png->write("PngImageBSub_d.rawi");
   //img_sub_png->write("PngImageBSub.rawi");
   if(img_sub_png->width()!=20){

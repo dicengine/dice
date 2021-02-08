@@ -165,7 +165,8 @@ public:
   /// \param target the initialization mode (put the values in the ref or def intensities)
   /// \param shape_function contains the deformation map (optional)
   /// \param interp interpolation method (optional)
-  void initialize(Teuchos::RCP<Image> image,
+  template <typename S>
+  void initialize(Teuchos::RCP<Image_<S>> image,
     const Subset_View_Target target=REF_INTENSITIES,
     Teuchos::RCP<Local_Shape_Function> shape_function=Teuchos::null,
     const Interpolation_Method interp=KEYS_FOURTH);
@@ -180,8 +181,9 @@ public:
   /// \param file_name the name of the tif file to write
   /// \param image pointer to the image to use as the background
   /// \param shape_function contains the deformation map (optional)
+  template <typename S>
   void write_subset_on_image(const std::string & file_name,
-    Teuchos::RCP<Image> image,
+    Teuchos::RCP<Image_<S>> image,
     Teuchos::RCP<Local_Shape_Function> shape_function=Teuchos::null);
 
   /// returns the max intensity value
@@ -255,7 +257,8 @@ public:
   /// The estimate is computed for a rectangular window that encompases the entire subset if the subset is conformal
   /// \param image the image for which to estimate the noise for this subset
   /// \param shape_function contains the deformation map (optional)
-  work_t noise_std_dev(Teuchos::RCP<Image> image,
+  template <typename S>
+  work_t noise_std_dev(Teuchos::RCP<Image_<S>> image,
     Teuchos::RCP<Local_Shape_Function> shape_function);
 
   /// \brief Returns the std deviation of the image intensity values

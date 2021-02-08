@@ -67,16 +67,19 @@ extern "C" {
 
 /// Typedef integer as size type
 typedef int int_t;
+
 #if DICE_USE_DOUBLE
-  /// image intensity type
-  typedef double storage_t;
   /// generic scalar type
   typedef double work_t;
 #else
-  /// Typedef double as real type
+  /// generic scalar type
   typedef float work_t;
-  /// Tyepdef double as pixel intensity type
-  typedef float storage_t;
+#endif
+
+#if DICE_USE_INT_STORAGE
+  typedef unsigned short storage_t;
+#else
+  typedef work_t storage_t;
 #endif
 
 // Forward declaration of ParameterList so the Teuchos headers do not

@@ -114,8 +114,8 @@ int main(int argc, char *argv[]) {
     *outStream << "SHIFT " << shift << std::endl;
     *outStream << "creating the image set" << std::endl;
 
-    Teuchos::ArrayRCP<work_t> ref_intens(w*h,0.0);
-    Teuchos::ArrayRCP<work_t> def_intens(w*h,0.0);
+    Teuchos::ArrayRCP<storage_t> ref_intens(w*h,0);
+    Teuchos::ArrayRCP<storage_t> def_intens(w*h,0);
     for(int_t y=0;y<h;++y){
       for(int_t x=0;x<h;++x){
         work_t dx = x - shift;
@@ -123,15 +123,15 @@ int main(int argc, char *argv[]) {
         work_t phi_0 = 0.0,phi=0.0;
         prob->phi(x,y,phi_0);
         prob->phi(dx,dy,phi);
-        ref_intens[y*w+x] = 0.5 + phi_0*0.5;
-        def_intens[y*w+x] = 0.5 + phi*0.5;
+        ref_intens[y*w+x] = static_cast<storage_t>(0.5*255.0 + phi_0*0.5*255.0);
+        def_intens[y*w+x] = static_cast<storage_t>(0.5*255.0 + phi*0.5*255.0);
       }
     }
-    Teuchos::RCP<Scalar_Image> ref = Teuchos::rcp(new Scalar_Image(w,h,ref_intens));
+    Teuchos::RCP<Image> ref = Teuchos::rcp(new Image(w,h,ref_intens));
     std::stringstream ref_name;
     ref_name << "ref_pixel_shift_" << shift << ".tif";
     ref->write(ref_name.str());
-    Teuchos::RCP<Scalar_Image> def = Teuchos::rcp(new Scalar_Image(w,h,def_intens));
+    Teuchos::RCP<Image> def = Teuchos::rcp(new Image(w,h,def_intens));
     //std::stringstream def_name;
     //def_name << "def_pixel_shift_" << shift << ".tif";
     //def->write(def_name.str());
@@ -223,7 +223,14 @@ int main(int argc, char *argv[]) {
     error_x.push_back(error_bx);
     error_y.push_back(error_by);
 
-    const work_t error_max = 1.0E-4;
+    // When the storage type is integer-based (for example storage_t = uint16_t) the
+    // intensity values for the deformed image get truncated, this leads to errors in the
+    // the evaluation of the motion estimation. To deal with this the tol for int-based
+    // storage types is loosened for these tests
+    work_t error_max = 0.02;
+    if(std::is_same<storage_t,double>::value||std::is_same<storage_t,float>::value)
+      error_max = 1.0E-4;
+
     if(error_bx > error_max || error_by > error_max){
       *outStream << "Error, the solution error is too high" << std::endl;
       errorFlag++;

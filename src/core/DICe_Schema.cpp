@@ -803,13 +803,13 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     const work_t value_x = diceParams->get<work_t>(DICe::exact_solution_constant_value_x,0.0);
     const work_t value_y = diceParams->get<work_t>(DICe::exact_solution_constant_value_y,0.0);
     compute_laplacian_image_ = true;
-    image_deformer_ = Teuchos::rcp(new ConstantValue_Image_Deformer(value_x,value_y));
+    image_deformer_ = Teuchos::rcp(new Image_Deformer(value_x,value_y,Image_Deformer::CONSTANT_VALUE));
   }
   if(diceParams->isParameter(DICe::exact_solution_dic_challenge_14)){
     TEUCHOS_TEST_FOR_EXCEPTION(diceParams->get<bool>(DICe::estimate_resolution_error,false),std::runtime_error,"");
     const work_t value = diceParams->get<work_t>(DICe::exact_solution_dic_challenge_14,0.0);
     compute_laplacian_image_ = true;
-    image_deformer_ = Teuchos::rcp(new DICChallenge14_Image_Deformer(value));
+    image_deformer_ = Teuchos::rcp(new Image_Deformer(value,0.0,Image_Deformer::DIC_CHALLENGE_14));
   }
 }
 
@@ -2473,7 +2473,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
       if(proc_id==0)
         std::cout << "processing resolution error for period " << period << " amplitude " << amplitude << std::endl;
       // create an image deformer class
-      image_deformer_ = Teuchos::rcp(new SinCos_Image_Deformer(period,amplitude));
+      image_deformer_ = Teuchos::rcp(new Image_Deformer(period,amplitude,Image_Deformer::SIN_COS));
       std::stringstream sincos_name;
       Teuchos::RCP<Image> def_img;
       std::stringstream amp_ss;

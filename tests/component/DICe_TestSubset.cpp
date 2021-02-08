@@ -283,9 +283,9 @@ int main(int argc, char *argv[]) {
   Image conf_img("./conformal.tif",conf_params);
   //conf_img.write("conformal.rawi");
 #ifdef DICE_USE_DOUBLE
-  Image conf_img_exact("./images/conformal_d.rawi");
+  Scalar_Image conf_img_exact("./images/conformal_d.rawi");
 #else
-  Image conf_img_exact("./images/conformal.rawi");
+  Scalar_Image conf_img_exact("./images/conformal.rawi");
 #endif
   //conformal_subset.write_subset_on_image("ConformalOnImage.tiff",image);
   // compare the sizes and intensity values
@@ -297,6 +297,7 @@ int main(int argc, char *argv[]) {
   for(int_t y=0;y<conf_img.height();++y){
     for(int_t x=0;x<conf_img.width();++x){
       if(conf_img(x,y) != conf_img_exact(x,y)){
+        std::cout << " conf exaxt " << conf_img_exact(x,y) << " computed " << conf_img(x,y) << std::endl;
         intensity_error = true;
       }
     }
@@ -311,16 +312,16 @@ int main(int argc, char *argv[]) {
   *outStream << "creating an image from an array" << std::endl;
   const int_t array_w = 30;
   const int_t array_h = 20;
-  Teuchos::ArrayRCP<work_t> intensities(array_w*array_h,0.0);
+  Teuchos::ArrayRCP<storage_t> intensities(array_w*array_h,0.0);
   // populate the intensities with a sin/cos function
   for(int_t y=0;y<array_h;++y){
     for(int_t x=0;x<array_w;++x){
-      intensities[y*array_w+x] = 255.0*std::cos(x/(4*DICE_PI))*std::sin(y/(4*DICE_PI));
+      intensities[y*array_w+x] = std::round(255.0*std::cos(x/(4*DICE_PI))*std::sin(y/(4*DICE_PI)));
     }
   }
   Teuchos::RCP<Teuchos::ParameterList> params = rcp(new Teuchos::ParameterList());
   params->set(DICe::compute_image_gradients,true);
-  Teuchos::RCP<Scalar_Image> array_img = Teuchos::rcp(new Scalar_Image(array_w,array_h,intensities,params));
+  Teuchos::RCP<Image> array_img = Teuchos::rcp(new Image(array_w,array_h,intensities,params));
   *outStream << "creating a conformal subset" << std::endl;
   std::vector<int_t> shape_3_x(4);
   std::vector<int_t> shape_3_y(4);

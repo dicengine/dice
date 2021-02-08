@@ -341,7 +341,8 @@ void read_image(const char * file_name,
       if(intensities.size()==0)
         intensities = Teuchos::ArrayRCP<S>(width*height,0);
       if(std::is_same<S,work_t>::value){
-        netcdf_reader.read_netcdf_image(netcdf_file.c_str(),index,intensities.getRawPtr(),sub_w,sub_h,sub_offset_x,sub_offset_y,layout_right);
+        work_t * intens_ptr = reinterpret_cast<work_t*>(intensities.getRawPtr()); // needed to get code to compile if work_t != storage_t (S)
+        netcdf_reader.read_netcdf_image(netcdf_file.c_str(),index,intens_ptr,sub_w,sub_h,sub_offset_x,sub_offset_y,layout_right);
       }else{
         Teuchos::ArrayRCP<work_t> netcdf_intensities(width*height,0);
         netcdf_reader.read_netcdf_image(netcdf_file.c_str(),index,netcdf_intensities.getRawPtr(),sub_w,sub_h,sub_offset_x,sub_offset_y,layout_right);
@@ -398,6 +399,10 @@ void read_image(const char * file_name,
 template
 DICE_LIB_DLL_EXPORT
 void read_image(const char *,Teuchos::ArrayRCP<storage_t> &,const Teuchos::RCP<Teuchos::ParameterList> &);
+template
+DICE_LIB_DLL_EXPORT
+void read_image(const char *,Teuchos::ArrayRCP<work_t> &,const Teuchos::RCP<Teuchos::ParameterList> &);
+
 
 template <typename S>
 DICE_LIB_DLL_EXPORT
@@ -414,6 +419,9 @@ void round_intensities(const int_t width,
 template
 DICE_LIB_DLL_EXPORT
 void round_intensities(const int_t,const int_t,storage_t *);
+template
+DICE_LIB_DLL_EXPORT
+void round_intensities(const int_t,const int_t,work_t *);
 
 //DICE_LIB_DLL_EXPORT
 //void remove_outliers(const int_t width,
@@ -459,6 +467,9 @@ void floor_intensities(const int_t width,
 template
 DICE_LIB_DLL_EXPORT
 void floor_intensities(const int_t,const int_t,storage_t *);
+template
+DICE_LIB_DLL_EXPORT
+void floor_intensities(const int_t,const int_t,work_t *);
 
 template <typename S>
 DICE_LIB_DLL_EXPORT
@@ -519,22 +530,25 @@ void undistort_intensities(const int_t width,
 template
 DICE_LIB_DLL_EXPORT
 void undistort_intensities(const int_t,const int_t,storage_t *,const Teuchos::RCP<Teuchos::ParameterList> &);
+template
+DICE_LIB_DLL_EXPORT
+void undistort_intensities(const int_t,const int_t,work_t *,const Teuchos::RCP<Teuchos::ParameterList> &);
 
 template <typename S>
 DICE_LIB_DLL_EXPORT
 void spread_histogram(const int_t width,
   const int_t height,
   S * intensities){
-  S max_intensity = std::numeric_limits<S>::min();
-  S min_intensity = std::numeric_limits<S>::max();
+  work_t max_intensity = std::numeric_limits<work_t>::min();
+  work_t min_intensity = std::numeric_limits<work_t>::max();
   for(int_t i=0; i<width*height; ++i){
     if(intensities[i] > max_intensity) max_intensity = intensities[i];
     if(intensities[i] < min_intensity) min_intensity = intensities[i];
   }
-  S range = 255;
-  if(max_intensity > 255 && max_intensity <= 4096)
-    range = 4096;
-  else if(max_intensity > 4096)
+  work_t range = 255.0;
+  if(max_intensity > 255.0 && max_intensity <= 4096.0)
+    range = 4096.0;
+  else if(max_intensity > 4096.0)
     range = 65535.0;
   DEBUG_MSG("utils::spread_histogram(): range: " << range);
   DEBUG_MSG("utils::spread_histogram(): max intensity: " << max_intensity);
@@ -550,6 +564,9 @@ void spread_histogram(const int_t width,
 template
 DICE_LIB_DLL_EXPORT
 void spread_histogram(const int_t,const int_t,storage_t *);
+template
+DICE_LIB_DLL_EXPORT
+void spread_histogram(const int_t,const int_t,work_t *);
 
 DICE_LIB_DLL_EXPORT
 cv::Mat read_image(const char * file_name){
@@ -600,7 +617,7 @@ void write_color_overlap_image(const char * file_name,
   if((top_max_intensity - top_min_intensity) != 0.0)
     top_fac = 0.5*255.0 / (top_max_intensity - top_min_intensity);
 
-  cv::Mat out_img(height,width,CV_8UC3,cv::Scalar(0,0,0));
+  cv::Mat out_img(height,width,CV_32FC3,cv::Scalar(0.0f,0.0f,0.0f));
   for (int_t y=0; y<height; ++y) {
       for (int_t x=0; x<width;++x){
         out_img.at<cv::Vec3b>(y,x)[1] = std::floor((bottom_intensities[y*width + x]-bot_min_intensity)*bot_fac);
@@ -612,6 +629,9 @@ void write_color_overlap_image(const char * file_name,
 template
 DICE_LIB_DLL_EXPORT
 void write_color_overlap_image(const char *,const int_t,const int_t,storage_t *,storage_t *);
+template
+DICE_LIB_DLL_EXPORT
+void write_color_overlap_image(const char *,const int_t,const int_t,work_t *,work_t *);
 
 template<typename S>
 DICE_LIB_DLL_EXPORT
@@ -659,6 +679,9 @@ void write_image(const char * file_name,
 template
 DICE_LIB_DLL_EXPORT
 void write_image(const char *,const int_t,const int_t,storage_t *,const bool);
+template
+DICE_LIB_DLL_EXPORT
+void write_image(const char *,const int_t,const int_t,work_t *,const bool);
 
 Teuchos::RCP<hypercine::HyperCine>
 HyperCine_Singleton::hypercine(const std::string & id,
@@ -675,7 +698,6 @@ HyperCine_Singleton::hypercine(const std::string & id,
     return hypercine_map_.find(std::pair<std::string,hypercine::HyperCine::Bit_Depth_Conversion_Type>(id,conversion_type))->second;
   }
 }
-
 
 } // end namespace utils
 } // end namespace DICe

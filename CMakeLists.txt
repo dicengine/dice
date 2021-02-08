@@ -181,9 +181,21 @@ ExternalProject_Add(hypercine
 # base data type:
 if(DICE_USE_DOUBLE)
   ADD_DEFINITIONS(-DDICE_USE_DOUBLE=1)
-  MESSAGE(STATUS "Image intensity and scalar type will be: DOUBLE")
+  MESSAGE(STATUS "Scalar type will be: DOUBLE")
 else()
-  MESSAGE(STATUS "Image intensity and scalar type will be: FLOAT (default)")
+  MESSAGE(STATUS "Scalar type will be: FLOAT (default)")
+endif()
+
+# base data type:
+if(DICE_USE_INT_STORAGE)
+  ADD_DEFINITIONS(-DDICE_USE_INT_STORAGE=1)
+  MESSAGE(STATUS "Image intensity storage type will be: INT")
+else()
+  IF(DICE_USE_DOUBLE)
+    MESSAGE(STATUS "Image intensity storage type will be: DOUBLE")
+  ELSE()
+    MESSAGE(STATUS "Image intensity storage type will be: FLOAT (default)")
+  ENDIF()
 endif()
 
 # MPI check -- defaults to TRUE

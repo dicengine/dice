@@ -3,9 +3,12 @@
 #
 
 SET(EXAMPLES
-   mechanism
    obstruction
    full_field)
+
+IF(NOT DICE_USE_INT_STORAGE)
+  SET(EXAMPLES ${EXAMPLES} mechanism)
+ENDIF()
 
 # very loose tolerances for the examples (these are not regression tests)
 

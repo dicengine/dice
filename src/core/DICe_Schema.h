@@ -1015,7 +1015,7 @@ public:
   }
 
   /// returns a pointer to the image deformer used for error estimation
-  Teuchos::RCP<Image_Deformer<>> image_deformer() const{
+  Teuchos::RCP<Image_Deformer> image_deformer() const{
     return image_deformer_;
   }
 
@@ -1261,7 +1261,7 @@ private:
   /// store the total image dims (the image size before decomposition across processors)
   int_t full_ref_img_height_;
   /// store a pointer to the image deformer if this is a error estimation run
-  Teuchos::RCP<Image_Deformer<>> image_deformer_;
+  Teuchos::RCP<Image_Deformer> image_deformer_;
   /// true if the laplacian images should be computed
   bool compute_laplacian_image_;
   /// size of threshold to use for feature matching when thresholding is included

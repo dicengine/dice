@@ -440,6 +440,9 @@ polar_transform(Teuchos::RCP<Image_<S>> image,
 template
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Image> polar_transform(Teuchos::RCP<Image>,bool);
+template
+DICE_LIB_DLL_EXPORT
+Teuchos::RCP<Scalar_Image> polar_transform(Teuchos::RCP<Scalar_Image>,bool);
 
 template <typename S>
 DICE_LIB_DLL_EXPORT
@@ -551,10 +554,14 @@ image_fft(Teuchos::RCP<Image_<S>> image,
 template
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Image> image_fft(Teuchos::RCP<Image>,const bool,const bool,const work_t,bool,const bool);
+template
+DICE_LIB_DLL_EXPORT
+Teuchos::RCP<Scalar_Image> image_fft(Teuchos::RCP<Scalar_Image>,const bool,const bool,const work_t,bool,const bool);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void
-image_fft(Teuchos::RCP<Image> image,
+image_fft(Teuchos::RCP<Image_<S>> image,
   Teuchos::ArrayRCP<work_t> & real,
   Teuchos::ArrayRCP<work_t> & complex,
   const int_t inverse,
@@ -623,8 +630,14 @@ image_fft(Teuchos::RCP<Image> image,
   free(cfg_ffy);
   delete[] img_row;
   delete[] img_col;
-
 };
+
+template
+DICE_LIB_DLL_EXPORT
+void image_fft(Teuchos::RCP<Image>,Teuchos::ArrayRCP<work_t> &,Teuchos::ArrayRCP<work_t> &,const int_t,const bool);
+template
+DICE_LIB_DLL_EXPORT
+void image_fft(Teuchos::RCP<Scalar_Image>,Teuchos::ArrayRCP<work_t> &,Teuchos::ArrayRCP<work_t> &,const int_t,const bool);
 
 DICE_LIB_DLL_EXPORT
 void

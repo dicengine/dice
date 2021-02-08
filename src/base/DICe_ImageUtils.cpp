@@ -78,17 +78,33 @@ void apply_transform(Teuchos::RCP<Image_<S>> image_in,
 template
 DICE_LIB_DLL_EXPORT
 void apply_transform(Teuchos::RCP<Image>,Teuchos::RCP<Image>,const int_t,const int_t,Teuchos::RCP<Local_Shape_Function >);
+template
+DICE_LIB_DLL_EXPORT
+void apply_transform(Teuchos::RCP<Scalar_Image>,Teuchos::RCP<Scalar_Image>,const int_t,const int_t,Teuchos::RCP<Local_Shape_Function >);
 
-void SinCos_Image_Deformer::compute_deformation(const work_t & coord_x,
+template <typename S>
+DICE_LIB_DLL_EXPORT
+void Image_Deformer_<S>::compute_deformation(const work_t & coord_x,
   const work_t & coord_y,
   work_t & bx,
   work_t & by){
-  const work_t beta = period_==0.0 ? 0.0 : DICE_TWOPI*(1.0/period_);
-  bx = 0.5*amplitude_ + sin(beta*coord_x)*cos(beta*coord_y)*0.5*amplitude_;
-  by = 0.5*amplitude_ - cos(beta*coord_x)*sin(beta*coord_y)*0.5*amplitude_;
+  if(def_type_==SIN_COS){
+    const work_t beta = coeff_a_==0.0 ? 0.0 : DICE_TWOPI*(1.0/coeff_a_);
+    bx = 0.5*coeff_b_ + sin(beta*coord_x)*cos(beta*coord_y)*0.5*coeff_b_;
+    by = 0.5*coeff_b_ - cos(beta*coord_x)*sin(beta*coord_y)*0.5*coeff_b_;
+  }else if(def_type_==DIC_CHALLENGE_14){
+    if(coord_x < 100.0) return;
+    bx = 0.1*std::sin(coeff_a_*(coord_x-100.0)*(coord_x-100.0));
+    by = 0.0;
+  }else if(def_type_==CONSTANT_VALUE){
+    bx = coeff_a_;
+    by = coeff_b_;
+  }
 }
 
-void SinCos_Image_Deformer::compute_deriv_deformation(const work_t & coord_x,
+template <typename S>
+DICE_LIB_DLL_EXPORT
+void Image_Deformer_<S>::compute_deriv_deformation(const work_t & coord_x,
   const work_t & coord_y,
   work_t & bxx,
   work_t & bxy,
@@ -98,45 +114,28 @@ void SinCos_Image_Deformer::compute_deriv_deformation(const work_t & coord_x,
   bxy = 0.0;
   byx = 0.0;
   byy = 0.0;
-  const work_t beta = period_==0.0 ? 0.0 : DICE_TWOPI*(1.0/period_);
-  bxx = beta*cos(beta*coord_x)*cos(beta*coord_y)*0.5*amplitude_;
-  bxy = -beta*sin(beta*coord_x)*sin(beta*coord_y)*0.5*amplitude_;
-  byx = beta*sin(beta*coord_x)*sin(beta*coord_y)*0.5*amplitude_;
-  byy = -beta*cos(beta*coord_x)*cos(beta*coord_y)*0.5*amplitude_;
-}
-
-void DICChallenge14_Image_Deformer::compute_deformation(const work_t & coord_x,
-  const work_t & coord_y,
-  work_t & bx,
-  work_t & by){
-  bx = 0.0;
-  by = 0.0;
-  if(coord_x < 100.0) return;
-  bx = 0.1*std::sin(coeff_*(coord_x-100.0)*(coord_x-100.0));
-  by = 0.0;
-}
-
-void DICChallenge14_Image_Deformer::compute_deriv_deformation(const work_t & coord_x,
-  const work_t & coord_y,
-  work_t & bxx,
-  work_t & bxy,
-  work_t & byx,
-  work_t & byy){
-  bxx = 0.1*std::cos(coeff_*(coord_x-100.0)*(coord_x-100.0))*2.0*coeff_*(coord_x-100.0);
-  bxy = 0.0;
-  byx = 0.0;
-  byy = 0.0;
+  if(def_type_==SIN_COS){
+    const work_t beta = coeff_a_==0.0 ? 0.0 : DICE_TWOPI*(1.0/coeff_a_);
+    bxx = beta*cos(beta*coord_x)*cos(beta*coord_y)*0.5*coeff_b_;
+    bxy = -beta*sin(beta*coord_x)*sin(beta*coord_y)*0.5*coeff_b_;
+    byx = beta*sin(beta*coord_x)*sin(beta*coord_y)*0.5*coeff_b_;
+    byy = -beta*cos(beta*coord_x)*cos(beta*coord_y)*0.5*coeff_b_;
+  }else if(def_type_==DIC_CHALLENGE_14){
+    bxx = 0.1*std::cos(coeff_a_*(coord_x-100.0)*(coord_x-100.0))*2.0*coeff_a_*(coord_x-100.0);
+  }else if(def_type_==CONSTANT_VALUE){
+    // no op
+  }
 }
 
 // explicit instantiation
 template
 class
 DICE_LIB_DLL_EXPORT
-Image_Deformer<storage_t>;
+Image_Deformer_<storage_t>;
 
 template <typename S>
 void
-Image_Deformer<S>::compute_displacement_error(const work_t & coord_x,
+Image_Deformer_<S>::compute_displacement_error(const work_t & coord_x,
   const work_t & coord_y,
   const work_t & sol_x,
   const work_t & sol_y,
@@ -161,12 +160,12 @@ Image_Deformer<S>::compute_displacement_error(const work_t & coord_x,
   }
 }
 
-template void Image_Deformer<storage_t>::compute_displacement_error(const work_t &,const work_t &,const work_t &,const work_t &,
+template void Image_Deformer_<storage_t>::compute_displacement_error(const work_t &,const work_t &,const work_t &,const work_t &,
   work_t &,work_t &,const bool,const bool);
 
 template <typename S>
 void
-Image_Deformer<S>::compute_lagrange_strain(const work_t & coord_x,
+Image_Deformer_<S>::compute_lagrange_strain(const work_t & coord_x,
   const work_t & coord_y,
   work_t & strain_xx,
   work_t & strain_xy,
@@ -183,11 +182,11 @@ Image_Deformer<S>::compute_lagrange_strain(const work_t & coord_x,
   strain_yy = 0.5*(2.0*out_yy + out_yy*out_yy + out_xy*out_xy);
 }
 
-template void Image_Deformer<storage_t>::compute_lagrange_strain(const work_t &,const work_t &,work_t &,work_t &,work_t &);
+template void Image_Deformer_<storage_t>::compute_lagrange_strain(const work_t &,const work_t &,work_t &,work_t &,work_t &);
 
 template <typename S>
 void
-Image_Deformer<S>::compute_lagrange_strain_error(const work_t & coord_x,
+Image_Deformer_<S>::compute_lagrange_strain_error(const work_t & coord_x,
   const work_t & coord_y,
   const work_t & sol_xx,
   const work_t & sol_xy,
@@ -220,12 +219,12 @@ Image_Deformer<S>::compute_lagrange_strain_error(const work_t & coord_x,
   }
 }
 
-template void Image_Deformer<storage_t>::compute_lagrange_strain_error(const work_t &,const work_t &,const work_t &,
+template void Image_Deformer_<storage_t>::compute_lagrange_strain_error(const work_t &,const work_t &,const work_t &,
   const work_t &,const work_t &,work_t &,work_t &,work_t &,const bool,const bool relative);
 
 template <typename S>
 Teuchos::RCP<Image_<S>>
-Image_Deformer<S>::deform_image(Teuchos::RCP<Image_<S>> ref_image){
+Image_Deformer_<S>::deform_image(Teuchos::RCP<Image_<S>> ref_image){
   const int_t w = ref_image->width();
   const int_t h = ref_image->height();
   const int_t ox = ref_image->offset_x();
@@ -295,7 +294,7 @@ Image_Deformer<S>::deform_image(Teuchos::RCP<Image_<S>> ref_image){
   return def_img;
 }
 
-template Teuchos::RCP<Image> Image_Deformer<storage_t>::deform_image(Teuchos::RCP<Image>);
+template Teuchos::RCP<Image> Image_Deformer_<storage_t>::deform_image(Teuchos::RCP<Image>);
 
 
 template <typename S>

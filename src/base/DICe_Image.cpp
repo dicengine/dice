@@ -213,6 +213,7 @@ Image_<S>::Image_(const int_t array_width,
 }
 
 template class Image_<storage_t>;
+template class Image_<work_t>;
 
 template <typename S>
 void
@@ -260,8 +261,8 @@ Image_<S>::post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
       TEUCHOS_TEST_FOR_EXCEPTION(laplacian_.size()!=width_*height_,std::runtime_error,"");
       Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
       imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
-      Teuchos::RCP<Image_> grad_x_img = Teuchos::rcp(new Image_(width_,height_,grad_x_,imgParams));
-      Teuchos::RCP<Image_> grad_y_img = Teuchos::rcp(new Image_(width_,height_,grad_y_,imgParams));
+      Teuchos::RCP<Image_<work_t>> grad_x_img = Teuchos::rcp(new Image_<work_t>(width_,height_,grad_x_,imgParams));
+      Teuchos::RCP<Image_<work_t>> grad_y_img = Teuchos::rcp(new Image_<work_t>(width_,height_,grad_y_,imgParams));
       for(int_t y=0;y<height_;++y){
         for(int_t x=0;x<width_;++x){
           laplacian_[y*width_ + x] = grad_x_img->grad_x(x,y) + grad_y_img->grad_y(x,y);
@@ -278,7 +279,7 @@ Image_<S>::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> 
   grad_x_ = Teuchos::ArrayRCP<work_t>(height_*width_,0.0);
   grad_y_ = Teuchos::ArrayRCP<work_t>(height_*width_,0.0);
   intensities_temp_ = Teuchos::ArrayRCP<S>(height_*width_,0);
-  mask_ = Teuchos::ArrayRCP<S>(height_*width_,0.0);
+  mask_ = Teuchos::ArrayRCP<work_t>(height_*width_,0.0);
   if(params!=Teuchos::null){
     if(params->isParameter(DICe::compute_laplacian_image)){
       if(params->get<bool>(DICe::compute_laplacian_image)==true){
@@ -323,6 +324,7 @@ Image_<S>::update(const char * file_name,
 }
 
 template void Image_<storage_t>::update(const char *,const Teuchos::RCP<Teuchos::ParameterList> &);
+template void Image_<work_t>::update(const char *,const Teuchos::RCP<Teuchos::ParameterList> &);
 
 template <typename S>
 void
@@ -360,6 +362,7 @@ Image_<S>::interpolate_bilinear_all(work_t & intensity_val,
 }
 
 template void Image_<storage_t>::interpolate_bilinear_all(work_t &,work_t &,work_t &,const bool,const work_t &,const work_t &);
+template void Image_<work_t>::interpolate_bilinear_all(work_t &,work_t &,work_t &,const bool,const work_t &,const work_t &);
 
 template <typename S>
 work_t
@@ -377,6 +380,7 @@ Image_<S>::interpolate_bilinear(const work_t & local_x, const work_t & local_y){
 }
 
 template work_t Image_<storage_t>::interpolate_bilinear(const work_t &,const work_t &);
+template work_t Image_<work_t>::interpolate_bilinear(const work_t &,const work_t &);
 
 template <typename S>
 work_t
@@ -394,6 +398,7 @@ Image_<S>::interpolate_grad_x_bilinear(const work_t & local_x, const work_t & lo
 }
 
 template work_t Image_<storage_t>::interpolate_grad_x_bilinear(const work_t &,const work_t &);
+template work_t Image_<work_t>::interpolate_grad_x_bilinear(const work_t &,const work_t &);
 
 template <typename S>
 work_t
@@ -410,6 +415,7 @@ Image_<S>::interpolate_grad_y_bilinear(const work_t & local_x, const work_t & lo
 }
 
 template work_t Image_<storage_t>::interpolate_grad_y_bilinear(const work_t &,const work_t &);
+template work_t Image_<work_t>::interpolate_grad_y_bilinear(const work_t &,const work_t &);
 
 template <typename S>
 void
@@ -559,6 +565,7 @@ Image_<S>::interpolate_bicubic_all(work_t & intensity_val,
 }
 
 template void Image_<storage_t>::interpolate_bicubic_all(work_t &,work_t &,work_t &,const bool,const work_t &,const work_t &);
+template void Image_<work_t>::interpolate_bicubic_all(work_t &,work_t &,work_t &,const bool,const work_t &,const work_t &);
 
 template <typename S>
 work_t
@@ -619,6 +626,7 @@ Image_<S>::interpolate_bicubic(const work_t & local_x, const work_t & local_y){
 }
 
 template work_t Image_<storage_t>::interpolate_bicubic(const work_t &, const work_t &);
+template work_t Image_<work_t>::interpolate_bicubic(const work_t &, const work_t &);
 
 template <typename S>
 work_t
@@ -679,6 +687,7 @@ Image_<S>::interpolate_grad_x_bicubic(const work_t & local_x, const work_t & loc
 }
 
 template work_t Image_<storage_t>::interpolate_grad_x_bicubic(const work_t &, const work_t &);
+template work_t Image_<work_t>::interpolate_grad_x_bicubic(const work_t &, const work_t &);
 
 template <typename S>
 work_t
@@ -739,6 +748,7 @@ Image_<S>::interpolate_grad_y_bicubic(const work_t & local_x, const work_t & loc
 }
 
 template work_t Image_<storage_t>::interpolate_grad_y_bicubic(const work_t &, const work_t &);
+template work_t Image_<work_t>::interpolate_grad_y_bicubic(const work_t &, const work_t &);
 
 template <typename S>
 void
@@ -794,6 +804,7 @@ Image_<S>::interpolate_keys_fourth_all(work_t & intensity_val,
 }
 
 template void Image_<storage_t>::interpolate_keys_fourth_all(work_t &, work_t &, work_t &, const bool, const work_t &, const work_t &);
+template void Image_<work_t>::interpolate_keys_fourth_all(work_t &, work_t &, work_t &, const bool, const work_t &, const work_t &);
 
 template <typename S>
 work_t
@@ -832,6 +843,7 @@ Image_<S>::interpolate_keys_fourth(const work_t & local_x, const work_t & local_
 }
 
 template work_t Image_<storage_t>::interpolate_keys_fourth(const work_t &, const work_t &);
+template work_t Image_<work_t>::interpolate_keys_fourth(const work_t &, const work_t &);
 
 template <typename S>
 work_t
@@ -870,6 +882,7 @@ Image_<S>::interpolate_grad_x_keys_fourth(const work_t & local_x, const work_t &
 }
 
 template work_t Image_<storage_t>::interpolate_grad_x_keys_fourth(const work_t &, const work_t &);
+template work_t Image_<work_t>::interpolate_grad_x_keys_fourth(const work_t &, const work_t &);
 
 template <typename S>
 work_t
@@ -908,6 +921,7 @@ Image_<S>::interpolate_grad_y_keys_fourth(const work_t & local_x, const work_t &
 }
 
 template work_t Image_<storage_t>::interpolate_grad_y_keys_fourth(const work_t &, const work_t &);
+template work_t Image_<work_t>::interpolate_grad_y_keys_fourth(const work_t &, const work_t &);
 
 template <typename S>
 void
@@ -999,6 +1013,7 @@ Image_<S>::apply_mask(const Conformal_Area_Def & area_def,
 }
 
 template void Image_<storage_t>::apply_mask(const Conformal_Area_Def &,const bool);
+template void Image_<work_t>::apply_mask(const Conformal_Area_Def &,const bool);
 
 template <typename S>
 void
@@ -1038,6 +1053,7 @@ Image_<S>::apply_mask(const bool smooth_edges){
 }
 
 template void Image_<storage_t>::apply_mask(const bool);
+template void Image_<work_t>::apply_mask(const bool);
 
 template <typename S>
 void
@@ -1120,6 +1136,9 @@ Image_<S>::apply_transformation(Teuchos::RCP<Local_Shape_Function> shape_functio
 template
 Teuchos::RCP<Image_<storage_t>>
 Image_<storage_t>::apply_transformation(Teuchos::RCP<Local_Shape_Function>,const int_t,const int_t,const bool);
+template
+Teuchos::RCP<Image_<work_t>>
+Image_<work_t>::apply_transformation(Teuchos::RCP<Local_Shape_Function>,const int_t,const int_t,const bool);
 
 template <typename S>
 void
@@ -1221,6 +1240,7 @@ Image_<S>::diff(Teuchos::RCP<Image_> rhs) const{
 }
 
 template work_t Image_<storage_t>::diff(Teuchos::RCP<Image_>)const;
+template work_t Image_<work_t>::diff(Teuchos::RCP<Image_<work_t>>)const;
 
 /// normalize the image intensity values
 template <typename S>
@@ -1269,6 +1289,7 @@ Image_<S>::mean()const{
 }
 
 template work_t Image_<storage_t>::mean()const;
+template work_t Image_<work_t>::mean()const;
 
 template <typename S>
 void
@@ -1282,6 +1303,7 @@ Image_<S>::write(const std::string & file_name){
 }
 
 template void Image_<storage_t>::write(const std::string &);
+template void Image_<work_t>::write(const std::string &);
 
 template <typename S>
 void
@@ -1297,6 +1319,7 @@ Image_<S>::write_overlap_image(const std::string & file_name,
 }
 
 template void Image_<storage_t>::write_overlap_image(const std::string &, Teuchos::RCP<Image_>);
+template void Image_<work_t>::write_overlap_image(const std::string &, Teuchos::RCP<Image_>);
 
 template <typename S>
 void
@@ -1310,6 +1333,7 @@ Image_<S>::write_grad_x(const std::string & file_name){
 }
 
 template void Image_<storage_t>::write_grad_x(const std::string & file_name);
+template void Image_<work_t>::write_grad_x(const std::string & file_name);
 
 template <typename S>
 void
@@ -1323,6 +1347,7 @@ Image_<S>::write_grad_y(const std::string & file_name){
 }
 
 template void Image_<storage_t>::write_grad_y(const std::string & file_name);
+template void Image_<work_t>::write_grad_y(const std::string & file_name);
 
 template <typename S>
 Teuchos::RCP<Image_<S>>
@@ -1364,5 +1389,6 @@ Image_<S>::apply_rotation(const Rotation_Value rotation,
 }
 
 template Teuchos::RCP<Image_<storage_t>> Image_<storage_t>::apply_rotation(const Rotation_Value,const Teuchos::RCP<Teuchos::ParameterList> &);
+template Teuchos::RCP<Image_<work_t>> Image_<work_t>::apply_rotation(const Rotation_Value,const Teuchos::RCP<Teuchos::ParameterList> &);
 
 }// End DICe Namespace

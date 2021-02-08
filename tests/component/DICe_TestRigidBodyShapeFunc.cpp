@@ -55,7 +55,7 @@ using namespace DICe;
 
 // function that takes an image that represents an object in physical space (pixels coords are treated as mm coordinates)
 // and a set of global coordinates and returns a pixel value
-work_t get_intensity_from_world_coords(Teuchos::RCP<Scalar_Image> image,
+work_t get_intensity_from_world_coords(Teuchos::RCP<Image> image,
   const work_t world_x,
   const work_t world_y,
   const work_t world_z){
@@ -250,11 +250,11 @@ int main(int argc, char *argv[]) {
   // create a base image to represent the plate in it's reference position
   std::vector<work_t> rigid_body_params(6,0.0);
   cam->image_to_world(image_x,image_y,rigid_body_params,world_x,world_y,world_z);
-  Teuchos::ArrayRCP<work_t> base_intensities(num_pixels,0.0);
+  Teuchos::ArrayRCP<storage_t> base_intensities(num_pixels,0.0);
   for(int_t i=0;i<num_pixels;++i){
-    base_intensities[i] = get_intensity_from_world_coords(physical_ref,world_x[i],world_y[i],world_z[i]);
+    base_intensities[i] = std::round(get_intensity_from_world_coords(physical_ref,world_x[i],world_y[i],world_z[i]));
   }
-  Teuchos::RCP<Scalar_Image> base_img = Teuchos::rcp(new Scalar_Image(image_w,image_h,base_intensities));
+  Teuchos::RCP<Image> base_img = Teuchos::rcp(new Image(image_w,image_h,base_intensities));
   //base_img->write("proj_shape_base_img.tiff");
   work_t base_diff = base_img->diff(physical_ref);
   base_diff/=num_pixels;

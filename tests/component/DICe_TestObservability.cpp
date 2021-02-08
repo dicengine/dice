@@ -183,8 +183,8 @@ int main(int argc, char *argv[]) {
   work_t param_value = 0.0;
   work_t param_value2 = 0.0;
 
-  Teuchos::ArrayRCP<work_t> dummy_intensities(L*L,0.0);
-  Teuchos::RCP<Scalar_Image> dummy_img = Teuchos::rcp(new Scalar_Image(L,L,dummy_intensities));
+  Teuchos::ArrayRCP<storage_t> dummy_intensities(L*L,0.0);
+  Teuchos::RCP<Image> dummy_img = Teuchos::rcp(new Image(L,L,dummy_intensities));
   Teuchos::RCP<Schema> schema;
   const bool inner_init_required = var_name=="subset_size"||var_name=="step_size"||var_name2=="subset_size"||var_name2=="step_size";
 

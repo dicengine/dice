@@ -177,14 +177,14 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Local_Shape_Function> quad_shape_func_exact = Teuchos::rcp(new Quadratic_Shape_Function());
   Teuchos::RCP<Local_Shape_Function> quad_shape_func = Teuchos::rcp(new Quadratic_Shape_Function());
   assert(quad_shape_func_exact->parameters()->size()==12);
-  //(*quad_shape_func_exact)(0)  = 1.0; // A (should already by 1.0 from constructor)
+  //(*quad_shape_func_exact)(0)  = 1.0; // A (should already be 1.0 from constructor)
   (*quad_shape_func_exact)(1)  = 0.0002; // B
   (*quad_shape_func_exact)(2)  = 0.0003; // C
   (*quad_shape_func_exact)(3)  = 0.0004; // D
   (*quad_shape_func_exact)(4)  = 0.0005; // E
   (*quad_shape_func_exact)(5)  = 1.352; // F
   (*quad_shape_func_exact)(6)  = 0.0006; // G
-  //(*quad_shape_func_exact)(7)  = 1.0; // H (should already by 1.0 from constructor)
+  //(*quad_shape_func_exact)(7)  = 1.0; // H (should already be 1.0 from constructor)
   (*quad_shape_func_exact)(8)  = 0.0007; // I
   (*quad_shape_func_exact)(9)  = 0.0008; // J
   (*quad_shape_func_exact)(10) = 0.0009; // K
@@ -218,17 +218,17 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<DICe::Image> affineRef = Teuchos::rcp(new DICe::Image("./images/refSpeckled.tif"));
   const int_t affine_w = affineRef->width();
   const int_t affine_h = affineRef->height();
-  Teuchos::ArrayRCP<work_t> intensitiesMod(affine_w*affine_h,0.0);
+  Teuchos::ArrayRCP<storage_t> intensitiesMod(affine_w*affine_h,0.0);
   work_t mapped_x=0.0,mapped_y=0.0;
   for(int_t y=0;y<affine_h;++y){
     for(int_t x=0;x<affine_w;++x){
       quad_shape_func_exact->map(x,y,cx,cy,mapped_x,mapped_y);
       if(mapped_x>4.0&&mapped_x<affine_w-4.0&&mapped_y>4.0&&mapped_y<affine_h-4.0){
-        intensitiesMod[y*affine_w+x] = affineRef->interpolate_keys_fourth(mapped_x,mapped_y);
+        intensitiesMod[y*affine_w+x] = static_cast<storage_t>(affineRef->interpolate_keys_fourth(mapped_x,mapped_y));
       }
     } // end x pixel
   } // end y pixel
-  Teuchos::RCP<DICe::Scalar_Image> affineDef = Teuchos::rcp(new DICe::Scalar_Image(affine_w,affine_h,intensitiesMod));
+  Teuchos::RCP<DICe::Image> affineDef = Teuchos::rcp(new DICe::Image(affine_w,affine_h,intensitiesMod));
   affineRef->write("affineDefImage.tiff");
   affineDef->write("affineRefImage.tiff");
   Teuchos::ArrayRCP<work_t> coords_x(1,250);
@@ -274,7 +274,16 @@ int main(int argc, char *argv[]) {
 
   num_iterations = 0;
   obj->computeUpdateRobust(quad_shape_func,num_iterations);
-  bool simplex_converged = quad_shape_func->test_for_convergence(*quad_shape_func_exact->parameters(),1.0E-3);
+
+  // When the storage type is integer-based (for example storage_t = uint16_t) the
+  // intensity values for the deformed image get truncated, this leads to errors in the
+  // the evaluation of the motion estimation. To deal with this the tol for int-based
+  // storage types is loosened for these tests
+  work_t simplex_error_max = 2.0E-3;
+  if(std::is_same<storage_t,double>::value||std::is_same<storage_t,float>::value)
+    simplex_error_max = 1.0E-3;
+
+  bool simplex_converged = quad_shape_func->test_for_convergence(*quad_shape_func_exact->parameters(),simplex_error_max);
   if(!simplex_converged){
     *outStream << "Error, simplex optimized solution is not correct" << std::endl;
     *outStream << "Quad shape function parameter values" << std::endl;

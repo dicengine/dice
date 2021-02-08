@@ -93,15 +93,17 @@ namespace DICe{
 /// basic types
 
 #if DICE_USE_DOUBLE
-  /// image intensity type
-  typedef double storage_t;
   /// generic scalar type
   typedef double work_t;
 #else
-  /// image intensity type
-  typedef float storage_t;
   /// generic scalar type
   typedef float work_t;
+#endif
+
+#if DICE_USE_INT_STORAGE
+  typedef uint16_t storage_t;
+#else
+  typedef work_t storage_t;
 #endif
 
 /// integer type

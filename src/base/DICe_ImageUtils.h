@@ -145,25 +145,41 @@ int_t compute_speckle_stats(const std::string & output_dir,
 template <typename S=storage_t>
 class
 DICE_LIB_DLL_EXPORT
-Image_Deformer{
+Image_Deformer_{
 public:
 
+  /// Bit depth enumeration
+  enum Def_Type{
+    SIN_COS=0,
+    DIC_CHALLENGE_14,
+    CONSTANT_VALUE
+  };
+
   /// constructor
-  Image_Deformer(const work_t & rel_factor_disp,
-    const work_t & rel_factor_strain):
-  rel_factor_disp_(rel_factor_disp),
-  rel_factor_strain_(rel_factor_strain){};
-  virtual ~Image_Deformer(){};
+  Image_Deformer_(const work_t & coeff_a,
+    const work_t & coeff_b,
+    const Def_Type def_type):
+      rel_factor_disp_(1.0),
+      rel_factor_strain_(1.0),
+      coeff_a_(coeff_a),
+      coeff_b_(coeff_b),
+      def_type_(def_type){
+    if(def_type_==SIN_COS){
+      rel_factor_disp_ = coeff_b_/200.0;
+      rel_factor_strain_ = (coeff_a_==0.0?0.0:1.0/coeff_a_)*DICE_TWOPI*coeff_b_/200.0;
+    }
+  };
+  ~Image_Deformer_(){};
 
   /// compute the analytical displacement at the given coordinates
   /// \param coord_x the x-coordinate for the evaluation location
   /// \param coord_y the y-coordinate
   /// \param bx [out] the x displacement
   /// \param by [out] the y displacement
-  virtual void compute_deformation(const work_t & coord_x,
+  void compute_deformation(const work_t & coord_x,
     const work_t & coord_y,
     work_t & bx,
-    work_t & by){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Cannot call this base class method")};
+    work_t & by);
 
   /// compute the analytical derivatives at the given coordinates
   /// \param coord_x the x-coordinate for the evaluation location
@@ -172,12 +188,12 @@ public:
   /// \param bxy [out] the xy deriv
   /// \param byx [out] the yx deriv
   /// \param byy [out] the yy deriv
-  virtual void compute_deriv_deformation(const work_t & coord_x,
+  void compute_deriv_deformation(const work_t & coord_x,
     const work_t & coord_y,
     work_t & bxx,
     work_t & bxy,
     work_t & byx,
-    work_t & byy){TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Cannot call this base class method")};
+    work_t & byy);
 
   /// perform deformation on the image
   /// returns a pointer to the deformed image
@@ -240,197 +256,15 @@ private:
   work_t rel_factor_disp_;
   /// factor to use when computing the relative values of strain error
   work_t rel_factor_strain_;
+  /// first coefficient for def and strain calcs
+  work_t coeff_a_;
+  /// second coefficient for def and strain calcs
+  work_t coeff_b_;
+  /// type of deformation to use
+  Def_Type def_type_;
 };
 
-
-/// \class SinCos_Image_Deformer
-/// \brief a class that deformed an input image according to a sin()*cos() function
-class
-DICE_LIB_DLL_EXPORT
-SinCos_Image_Deformer : public Image_Deformer<work_t>
-{
-public:
-
-  /// constructor
-  /// \param period the period of the motion in pixels
-  /// \param amplitude the amplitude of the motion in pixels
-  SinCos_Image_Deformer(const work_t & period,
-    const work_t & amplitude):
-      Image_Deformer(amplitude/200.0,(period==0.0?0.0:1.0/period)*DICE_TWOPI*amplitude/200.0),
-      period_(period),
-      amplitude_(amplitude){};
-
-  /// parameterless constructor
-  SinCos_Image_Deformer():
-    Image_Deformer(1.0/200.0,(1.0/100.0)*DICE_TWOPI*1.0/200.0),
-    period_(100),
-    amplitude_(1){};
-
-  /// returns the current amplitude
-  work_t amplitude(){
-    return amplitude_;
-  }
-  /// returns the current period
-  work_t period(){
-    return period_;
-  }
-
-  /// compute the analytical displacement at the given coordinates
-  /// \param coord_x the x-coordinate for the evaluation location
-  /// \param coord_y the y-coordinate
-  /// \param bx [out] the x displacement
-  /// \param by [out] the y displacement
-  virtual void compute_deformation(const work_t & coord_x,
-    const work_t & coord_y,
-    work_t & bx,
-    work_t & by);
-
-  /// compute the analytical derivatives at the given coordinates
-  /// \param coord_x the x-coordinate for the evaluation location
-  /// \param coord_y the y-coordinate
-  /// \param bxx [out] the xx deriv
-  /// \param bxy [out] the xy deriv
-  /// \param byx [out] the yx deriv
-  /// \param byy [out] the yy deriv
-  virtual void compute_deriv_deformation(const work_t & coord_x,
-    const work_t & coord_y,
-    work_t & bxx,
-    work_t & bxy,
-    work_t & byx,
-    work_t & byy);
-
-  /// destructor
-  virtual ~SinCos_Image_Deformer(){};
-
-private:
-  /// period of the motion
-  work_t period_;
-  /// amplitude of the motion
-  work_t amplitude_;
-
-};
-
-
-/// \class DICChallenge14_Image_Deformer
-/// \brief a class that deformed an input image according to a sin() function in y
-class
-DICE_LIB_DLL_EXPORT
-DICChallenge14_Image_Deformer : public Image_Deformer<work_t>
-{
-public:
-
-  /// constructor
-  /// \param period the period of the motion in pixels
-  /// \param amplitude the amplitude of the motion in pixels
-  DICChallenge14_Image_Deformer(const work_t & coeff):
-      Image_Deformer(1.0,1.0),
-      coeff_(coeff){};
-
-  /// constructor
-  /// \param period the period of the motion in pixels
-  /// \param amplitude the amplitude of the motion in pixels
-  DICChallenge14_Image_Deformer():
-      Image_Deformer(1.0,1.0),
-      coeff_(3.32E-6){};
-
-  /// compute the analytical displacement at the given coordinates
-  /// \param coord_x the x-coordinate for the evaluation location
-  /// \param coord_y the y-coordinate
-  /// \param bx [out] the x displacement
-  /// \param by [out] the y displacement
-  virtual void compute_deformation(const work_t & coord_x,
-    const work_t & coord_y,
-    work_t & bx,
-    work_t & by);
-
-  /// compute the analytical derivatives at the given coordinates
-  /// \param coord_x the x-coordinate for the evaluation location
-  /// \param coord_y the y-coordinate
-  /// \param bxx [out] the xx deriv
-  /// \param bxy [out] the xy deriv
-  /// \param byx [out] the yx deriv
-  /// \param byy [out] the yy deriv
-  virtual void compute_deriv_deformation(const work_t & coord_x,
-    const work_t & coord_y,
-    work_t & bxx,
-    work_t & bxy,
-    work_t & byx,
-    work_t & byy);
-
-  /// destructor
-  virtual ~DICChallenge14_Image_Deformer(){};
-
-private:
-  // coefficient for the sin curve
-  work_t coeff_;
-};
-
-
-/// \class ConstantValue_Image_Deformer
-/// \brief a class that provides an exact solution that is constant valued
-/// The image deforming
-class
-DICE_LIB_DLL_EXPORT
-ConstantValue_Image_Deformer: public Image_Deformer<work_t>
-{
-public:
-
-  /// constructor
-  /// \param value value of the motion in pixels
-  ConstantValue_Image_Deformer(const work_t & value_x,
-    const work_t & value_y):
-    Image_Deformer(1.0,1.0),
-    value_x_(value_x),
-    value_y_(value_y){};
-
-  /// parameterless constructor
-  ConstantValue_Image_Deformer():
-    Image_Deformer(1.0,1.0),
-    value_x_(0.5),
-    value_y_(0.5){};
-
-  /// compute the analytical displacement at the given coordinates
-  /// \param coord_x the x-coordinate for the evaluation location
-  /// \param coord_y the y-coordinate
-  /// \param bx [out] the x displacement
-  /// \param by [out] the y displacement
-  virtual void compute_deformation(const work_t & coord_x,
-    const work_t & coord_y,
-    work_t & bx,
-    work_t & by){
-    bx = value_x_;
-    by = value_y_;
-  }
-  /// compute the analytical derivatives at the given coordinates
-  /// \param coord_x the x-coordinate for the evaluation location
-  /// \param coord_y the y-coordinate
-  /// \param bxx [out] the xx deriv
-  /// \param bxy [out] the xy deriv
-  /// \param byx [out] the yx deriv
-  /// \param byy [out] the yy deriv
-  virtual void compute_deriv_deformation(const work_t & coord_x,
-    const work_t & coord_y,
-    work_t & bxx,
-    work_t & bxy,
-    work_t & byx,
-    work_t & byy){
-    bxx = 0.0;
-    bxy = 0.0;
-    byx = 0.0;
-    byy = 0.0;
-  }
-
-  /// destructor
-  virtual ~ConstantValue_Image_Deformer(){};
-
-private:
-  /// magnitude of the motion
-  work_t value_x_;
-  work_t value_y_;
-};
-
-
-
+using Image_Deformer = Image_Deformer_<>;
 
 }// End DICe Namespace
 
