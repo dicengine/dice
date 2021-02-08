@@ -324,7 +324,7 @@ int main(int argc, char *argv[]) {
 #if DICE_USE_DOUBLE
   Teuchos::RCP<DICe::Scalar_Image> img_cine_0 = Teuchos::rcp(new Scalar_Image("./images/phantom_v1610_16bpp_-85.cine",params));
   Teuchos::RCP<DICe::Scalar_Image> img_cine_0_gold = Teuchos::rcp(new Scalar_Image("./images/image_cine_-85.rawi"));
-  //const work_t diff = img_cine_0->diff(img_cine_0_gold);
+  //const scalar_t diff = img_cine_0->diff(img_cine_0_gold);
   //*outStream << "diff cine made without manual header creation vs gold: " << diff << std::endl;
   //if(diff > 0.001){
   intensity_value_error = false;

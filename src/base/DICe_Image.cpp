@@ -51,13 +51,13 @@
 
 namespace DICe {
 
-inline work_t keys_f0(const work_t & s){
+inline scalar_t keys_f0(const scalar_t & s){
   return 1.33333333333333*s*s*s - 2.33333333333333*s*s+ 1.0;
 }
-inline work_t keys_f1(const work_t & s){
+inline scalar_t keys_f1(const scalar_t & s){
   return -0.58333333333333*s*s*s + 3.0*s*s - 4.91666666666666*s + 2.5;
 }
-inline work_t keys_f2(const work_t & s){
+inline scalar_t keys_f2(const scalar_t & s){
   return 0.08333333333333*s*s*s - 0.66666666666666*s*s + 1.75*s - 1.5;
 }
 
@@ -129,9 +129,9 @@ Image_<S>::Image_(Teuchos::RCP<Image_> img,
   // initialize the pixel containers
   intensities_ = Teuchos::ArrayRCP<S>(height_*width_,0.0);
   intensities_temp_ = Teuchos::ArrayRCP<S>(height_*width_,0.0);
-  grad_x_ = Teuchos::ArrayRCP<work_t>(height_*width_,0.0);
-  grad_y_ = Teuchos::ArrayRCP<work_t>(height_*width_,0.0);
-  mask_ = Teuchos::ArrayRCP<work_t>(height_*width_,0.0);
+  grad_x_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
+  grad_y_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
+  mask_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   // deep copy values over
   int_t src_y=0, src_x=0;
   for(int_t y=0;y<height_;++y){
@@ -213,7 +213,7 @@ Image_<S>::Image_(const int_t array_width,
 }
 
 template class Image_<storage_t>;
-template class Image_<work_t>;
+template class Image_<scalar_t>;
 
 template <typename S>
 void
@@ -261,8 +261,8 @@ Image_<S>::post_allocation_tasks(const Teuchos::RCP<Teuchos::ParameterList> & pa
       TEUCHOS_TEST_FOR_EXCEPTION(laplacian_.size()!=width_*height_,std::runtime_error,"");
       Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
       imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
-      Teuchos::RCP<Image_<work_t>> grad_x_img = Teuchos::rcp(new Image_<work_t>(width_,height_,grad_x_,imgParams));
-      Teuchos::RCP<Image_<work_t>> grad_y_img = Teuchos::rcp(new Image_<work_t>(width_,height_,grad_y_,imgParams));
+      Teuchos::RCP<Image_<scalar_t>> grad_x_img = Teuchos::rcp(new Image_<scalar_t>(width_,height_,grad_x_,imgParams));
+      Teuchos::RCP<Image_<scalar_t>> grad_y_img = Teuchos::rcp(new Image_<scalar_t>(width_,height_,grad_y_,imgParams));
       for(int_t y=0;y<height_;++y){
         for(int_t x=0;x<width_;++x){
           laplacian_[y*width_ + x] = grad_x_img->grad_x(x,y) + grad_y_img->grad_y(x,y);
@@ -276,14 +276,14 @@ template <typename S>
 void
 Image_<S>::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params){
   DEBUG_MSG("Image::default_contructor_tasks(): allocating image storage");
-  grad_x_ = Teuchos::ArrayRCP<work_t>(height_*width_,0.0);
-  grad_y_ = Teuchos::ArrayRCP<work_t>(height_*width_,0.0);
+  grad_x_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
+  grad_y_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   intensities_temp_ = Teuchos::ArrayRCP<S>(height_*width_,0);
-  mask_ = Teuchos::ArrayRCP<work_t>(height_*width_,0.0);
+  mask_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   if(params!=Teuchos::null){
     if(params->isParameter(DICe::compute_laplacian_image)){
       if(params->get<bool>(DICe::compute_laplacian_image)==true){
-        laplacian_ = Teuchos::ArrayRCP<work_t>(height_*width_,0.0);
+        laplacian_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
       }
     }
   }
@@ -324,13 +324,13 @@ Image_<S>::update(const char * file_name,
 }
 
 template void Image_<storage_t>::update(const char *,const Teuchos::RCP<Teuchos::ParameterList> &);
-template void Image_<work_t>::update(const char *,const Teuchos::RCP<Teuchos::ParameterList> &);
+template void Image_<scalar_t>::update(const char *,const Teuchos::RCP<Teuchos::ParameterList> &);
 
 template <typename S>
 void
-Image_<S>::interpolate_bilinear_all(work_t & intensity_val,
-       work_t & grad_x_val, work_t & grad_y_val, const bool compute_gradient,
-       const work_t & local_x, const work_t & local_y) {
+Image_<S>::interpolate_bilinear_all(scalar_t & intensity_val,
+       scalar_t & grad_x_val, scalar_t & grad_y_val, const bool compute_gradient,
+       const scalar_t & local_x, const scalar_t & local_y) {
   if(local_x<0.0||local_x>=width_-1.5||local_y<0.0||local_y>=height_-1.5) {
     intensity_val = 0.0;
     if (compute_gradient) {
@@ -361,12 +361,12 @@ Image_<S>::interpolate_bilinear_all(work_t & intensity_val,
   }
 }
 
-template void Image_<storage_t>::interpolate_bilinear_all(work_t &,work_t &,work_t &,const bool,const work_t &,const work_t &);
-template void Image_<work_t>::interpolate_bilinear_all(work_t &,work_t &,work_t &,const bool,const work_t &,const work_t &);
+template void Image_<storage_t>::interpolate_bilinear_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &);
+template void Image_<scalar_t>::interpolate_bilinear_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &);
 
 template <typename S>
-work_t
-Image_<S>::interpolate_bilinear(const work_t & local_x, const work_t & local_y){
+scalar_t
+Image_<S>::interpolate_bilinear(const scalar_t & local_x, const scalar_t & local_y){
 
   if(local_x<0.0||local_x>=width_-1.5||local_y<0.0||local_y>=height_-1.5) return 0.0;
   const int_t x1 = (int_t)local_x;
@@ -379,12 +379,12 @@ Image_<S>::interpolate_bilinear(const work_t & local_x, const work_t & local_y){
       +intensities_[y2*width_+x1]*(x2-local_x)*(local_y-y1);
 }
 
-template work_t Image_<storage_t>::interpolate_bilinear(const work_t &,const work_t &);
-template work_t Image_<work_t>::interpolate_bilinear(const work_t &,const work_t &);
+template scalar_t Image_<storage_t>::interpolate_bilinear(const scalar_t &,const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_bilinear(const scalar_t &,const scalar_t &);
 
 template <typename S>
-work_t
-Image_<S>::interpolate_grad_x_bilinear(const work_t & local_x, const work_t & local_y){
+scalar_t
+Image_<S>::interpolate_grad_x_bilinear(const scalar_t & local_x, const scalar_t & local_y){
 
   if(local_x<0.0||local_x>=width_-1.5||local_y<0.0||local_y>=height_-1.5) return 0.0;
   const int_t x1 = (int_t)local_x;
@@ -397,12 +397,12 @@ Image_<S>::interpolate_grad_x_bilinear(const work_t & local_x, const work_t & lo
       +grad_x_[y2*width_+x1]*(x2-local_x)*(local_y-y1);
 }
 
-template work_t Image_<storage_t>::interpolate_grad_x_bilinear(const work_t &,const work_t &);
-template work_t Image_<work_t>::interpolate_grad_x_bilinear(const work_t &,const work_t &);
+template scalar_t Image_<storage_t>::interpolate_grad_x_bilinear(const scalar_t &,const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_grad_x_bilinear(const scalar_t &,const scalar_t &);
 
 template <typename S>
-work_t
-Image_<S>::interpolate_grad_y_bilinear(const work_t & local_x, const work_t & local_y){
+scalar_t
+Image_<S>::interpolate_grad_y_bilinear(const scalar_t & local_x, const scalar_t & local_y){
   if(local_x<0.0||local_x>=width_-1.5||local_y<0.0||local_y>=height_-1.5) return 0.0;
   const int_t x1 = (int_t)local_x;
   const int_t x2 = x1+1;
@@ -414,14 +414,14 @@ Image_<S>::interpolate_grad_y_bilinear(const work_t & local_x, const work_t & lo
       +grad_y_[y2*width_+x1]*(x2-local_x)*(local_y-y1);
 }
 
-template work_t Image_<storage_t>::interpolate_grad_y_bilinear(const work_t &,const work_t &);
-template work_t Image_<work_t>::interpolate_grad_y_bilinear(const work_t &,const work_t &);
+template scalar_t Image_<storage_t>::interpolate_grad_y_bilinear(const scalar_t &,const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_grad_y_bilinear(const scalar_t &,const scalar_t &);
 
 template <typename S>
 void
-Image_<S>::interpolate_bicubic_all(work_t & intensity_val,
-       work_t & grad_x_val, work_t & grad_y_val, const bool compute_gradient,
-       const work_t & local_x, const work_t & local_y) {
+Image_<S>::interpolate_bicubic_all(scalar_t & intensity_val,
+       scalar_t & grad_x_val, scalar_t & grad_y_val, const bool compute_gradient,
+       const scalar_t & local_x, const scalar_t & local_y) {
   if(local_x<1.0||local_x>=width_-2.0||local_y<1.0||local_y>=height_-2.0) {
     intensity_val = this->interpolate_bilinear(local_x,local_y);
     if (compute_gradient) {
@@ -437,29 +437,29 @@ Image_<S>::interpolate_bicubic_all(work_t & intensity_val,
   const int_t y1 = y0+1;
   const int_t y2 = y1+1;
   const int_t ym1 = y0-1;
-  const work_t x = local_x - x0;
-  const work_t y = local_y - y0;
-  const work_t x_2 = x * x;
-  const work_t x_3 = x_2 * x;
-  const work_t y_2 = y * y;
-  const work_t y_3 = y_2 * y;
+  const scalar_t x = local_x - x0;
+  const scalar_t y = local_y - y0;
+  const scalar_t x_2 = x * x;
+  const scalar_t x_3 = x_2 * x;
+  const scalar_t y_2 = y * y;
+  const scalar_t y_3 = y_2 * y;
   // intensity
-  const work_t fm10  = intensities_[y0*width_+xm1];
-  const work_t f00   = intensities_[y0*width_+x0];
-  const work_t f10   = intensities_[y0*width_+x1];
-  const work_t f20   = intensities_[y0*width_+x2];
-  const work_t fm11  = intensities_[y1*width_+xm1];
-  const work_t f01   = intensities_[y1*width_+x0];
-  const work_t f11   = intensities_[y1*width_+x1];
-  const work_t f21   = intensities_[y1*width_+x2];
-  const work_t fm12  = intensities_[y2*width_+xm1];
-  const work_t f02   = intensities_[y2*width_+x0];
-  const work_t f12   = intensities_[y2*width_+x1];
-  const work_t f22   = intensities_[y2*width_+x2];
-  const work_t fm1m1 = intensities_[ym1*width_+xm1];
-  const work_t f0m1  = intensities_[ym1*width_+x0];
-  const work_t f1m1  = intensities_[ym1*width_+x1];
-  const work_t f2m1  = intensities_[ym1*width_+x2];
+  const scalar_t fm10  = intensities_[y0*width_+xm1];
+  const scalar_t f00   = intensities_[y0*width_+x0];
+  const scalar_t f10   = intensities_[y0*width_+x1];
+  const scalar_t f20   = intensities_[y0*width_+x2];
+  const scalar_t fm11  = intensities_[y1*width_+xm1];
+  const scalar_t f01   = intensities_[y1*width_+x0];
+  const scalar_t f11   = intensities_[y1*width_+x1];
+  const scalar_t f21   = intensities_[y1*width_+x2];
+  const scalar_t fm12  = intensities_[y2*width_+xm1];
+  const scalar_t f02   = intensities_[y2*width_+x0];
+  const scalar_t f12   = intensities_[y2*width_+x1];
+  const scalar_t f22   = intensities_[y2*width_+x2];
+  const scalar_t fm1m1 = intensities_[ym1*width_+xm1];
+  const scalar_t f0m1  = intensities_[ym1*width_+x0];
+  const scalar_t f1m1  = intensities_[ym1*width_+x1];
+  const scalar_t f2m1  = intensities_[ym1*width_+x2];
   #ifdef DICE_USE_DOUBLE
     intensity_val = f00 + (-0.5*f0m1 + .5*f01)*y + (f0m1 - 2.5*f00 + 2.0*f01 - .5*f02)*y_2 + (-0.5*f0m1 + 1.5*f00 - 1.5*f01 + .5*f02)*y_3
       + ((-0.5*fm10 + .5*f10) + (0.25*fm1m1 - .25*fm11 - .25*f1m1 + .25*f11)*y + (-0.5*fm1m1 + 1.25*fm10 - fm11 + .25*fm12 +
@@ -485,39 +485,39 @@ Image_<S>::interpolate_bicubic_all(work_t & intensity_val,
 
   if (compute_gradient) {
     // grad_x
-    const work_t gxfm10  = grad_x_[y0*width_+xm1];
-    const work_t gxf00   = grad_x_[y0*width_+x0];
-    const work_t gxf10   = grad_x_[y0*width_+x1];
-    const work_t gxf20   = grad_x_[y0*width_+x2];
-    const work_t gxfm11  = grad_x_[y1*width_+xm1];
-    const work_t gxf01   = grad_x_[y1*width_+x0];
-    const work_t gxf11   = grad_x_[y1*width_+x1];
-    const work_t gxf21   = grad_x_[y1*width_+x2];
-    const work_t gxfm12  = grad_x_[y2*width_+xm1];
-    const work_t gxf02   = grad_x_[y2*width_+x0];
-    const work_t gxf12   = grad_x_[y2*width_+x1];
-    const work_t gxf22   = grad_x_[y2*width_+x2];
-    const work_t gxfm1m1 = grad_x_[ym1*width_+xm1];
-    const work_t gxf0m1  = grad_x_[ym1*width_+x0];
-    const work_t gxf1m1  = grad_x_[ym1*width_+x1];
-    const work_t gxf2m1  = grad_x_[ym1*width_+x2];
+    const scalar_t gxfm10  = grad_x_[y0*width_+xm1];
+    const scalar_t gxf00   = grad_x_[y0*width_+x0];
+    const scalar_t gxf10   = grad_x_[y0*width_+x1];
+    const scalar_t gxf20   = grad_x_[y0*width_+x2];
+    const scalar_t gxfm11  = grad_x_[y1*width_+xm1];
+    const scalar_t gxf01   = grad_x_[y1*width_+x0];
+    const scalar_t gxf11   = grad_x_[y1*width_+x1];
+    const scalar_t gxf21   = grad_x_[y1*width_+x2];
+    const scalar_t gxfm12  = grad_x_[y2*width_+xm1];
+    const scalar_t gxf02   = grad_x_[y2*width_+x0];
+    const scalar_t gxf12   = grad_x_[y2*width_+x1];
+    const scalar_t gxf22   = grad_x_[y2*width_+x2];
+    const scalar_t gxfm1m1 = grad_x_[ym1*width_+xm1];
+    const scalar_t gxf0m1  = grad_x_[ym1*width_+x0];
+    const scalar_t gxf1m1  = grad_x_[ym1*width_+x1];
+    const scalar_t gxf2m1  = grad_x_[ym1*width_+x2];
     // grad_y
-    const work_t gyfm10  = grad_y_[y0*width_+xm1];
-    const work_t gyf00   = grad_y_[y0*width_+x0];
-    const work_t gyf10   = grad_y_[y0*width_+x1];
-    const work_t gyf20   = grad_y_[y0*width_+x2];
-    const work_t gyfm11  = grad_y_[y1*width_+xm1];
-    const work_t gyf01   = grad_y_[y1*width_+x0];
-    const work_t gyf11   = grad_y_[y1*width_+x1];
-    const work_t gyf21   = grad_y_[y1*width_+x2];
-    const work_t gyfm12  = grad_y_[y2*width_+xm1];
-    const work_t gyf02   = grad_y_[y2*width_+x0];
-    const work_t gyf12   = grad_y_[y2*width_+x1];
-    const work_t gyf22   = grad_y_[y2*width_+x2];
-    const work_t gyfm1m1 = grad_y_[ym1*width_+xm1];
-    const work_t gyf0m1  = grad_y_[ym1*width_+x0];
-    const work_t gyf1m1  = grad_y_[ym1*width_+x1];
-    const work_t gyf2m1  = grad_y_[ym1*width_+x2];
+    const scalar_t gyfm10  = grad_y_[y0*width_+xm1];
+    const scalar_t gyf00   = grad_y_[y0*width_+x0];
+    const scalar_t gyf10   = grad_y_[y0*width_+x1];
+    const scalar_t gyf20   = grad_y_[y0*width_+x2];
+    const scalar_t gyfm11  = grad_y_[y1*width_+xm1];
+    const scalar_t gyf01   = grad_y_[y1*width_+x0];
+    const scalar_t gyf11   = grad_y_[y1*width_+x1];
+    const scalar_t gyf21   = grad_y_[y1*width_+x2];
+    const scalar_t gyfm12  = grad_y_[y2*width_+xm1];
+    const scalar_t gyf02   = grad_y_[y2*width_+x0];
+    const scalar_t gyf12   = grad_y_[y2*width_+x1];
+    const scalar_t gyf22   = grad_y_[y2*width_+x2];
+    const scalar_t gyfm1m1 = grad_y_[ym1*width_+xm1];
+    const scalar_t gyf0m1  = grad_y_[ym1*width_+x0];
+    const scalar_t gyf1m1  = grad_y_[ym1*width_+x1];
+    const scalar_t gyf2m1  = grad_y_[ym1*width_+x2];
 
     #ifdef DICE_USE_DOUBLE
       grad_x_val = gxf00 + (-0.5*gxf0m1 + .5*gxf01)*y + (gxf0m1 - 2.5*gxf00 + 2.0*gxf01 - .5*gxf02)*y_2 + (-0.5*gxf0m1 + 1.5*gxf00 - 1.5*gxf01 + .5*gxf02)*y_3
@@ -564,12 +564,12 @@ Image_<S>::interpolate_bicubic_all(work_t & intensity_val,
 
 }
 
-template void Image_<storage_t>::interpolate_bicubic_all(work_t &,work_t &,work_t &,const bool,const work_t &,const work_t &);
-template void Image_<work_t>::interpolate_bicubic_all(work_t &,work_t &,work_t &,const bool,const work_t &,const work_t &);
+template void Image_<storage_t>::interpolate_bicubic_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &);
+template void Image_<scalar_t>::interpolate_bicubic_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &);
 
 template <typename S>
-work_t
-Image_<S>::interpolate_bicubic(const work_t & local_x, const work_t & local_y){
+scalar_t
+Image_<S>::interpolate_bicubic(const scalar_t & local_x, const scalar_t & local_y){
   if(local_x<1.0||local_x>=width_-2.0||local_y<1.0||local_y>=height_-2.0) return this->interpolate_bilinear(local_x,local_y);
 
   const int_t x0  = (int_t)local_x;
@@ -580,28 +580,28 @@ Image_<S>::interpolate_bicubic(const work_t & local_x, const work_t & local_y){
   const int_t y1 = y0+1;
   const int_t y2 = y1+1;
   const int_t ym1 = y0-1;
-  const work_t x = local_x - x0;
-  const work_t y = local_y - y0;
-  const work_t x_2 = x * x;
-  const work_t x_3 = x_2 * x;
-  const work_t y_2 = y * y;
-  const work_t y_3 = y_2 * y;
-  const work_t fm10  = intensities_[y0*width_+xm1];
-  const work_t f00   = intensities_[y0*width_+x0];
-  const work_t f10   = intensities_[y0*width_+x1];
-  const work_t f20   = intensities_[y0*width_+x2];
-  const work_t fm11  = intensities_[y1*width_+xm1];
-  const work_t f01   = intensities_[y1*width_+x0];
-  const work_t f11   = intensities_[y1*width_+x1];
-  const work_t f21   = intensities_[y1*width_+x2];
-  const work_t fm12  = intensities_[y2*width_+xm1];
-  const work_t f02   = intensities_[y2*width_+x0];
-  const work_t f12   = intensities_[y2*width_+x1];
-  const work_t f22   = intensities_[y2*width_+x2];
-  const work_t fm1m1 = intensities_[ym1*width_+xm1];
-  const work_t f0m1  = intensities_[ym1*width_+x0];
-  const work_t f1m1  = intensities_[ym1*width_+x1];
-  const work_t f2m1  = intensities_[ym1*width_+x2];
+  const scalar_t x = local_x - x0;
+  const scalar_t y = local_y - y0;
+  const scalar_t x_2 = x * x;
+  const scalar_t x_3 = x_2 * x;
+  const scalar_t y_2 = y * y;
+  const scalar_t y_3 = y_2 * y;
+  const scalar_t fm10  = intensities_[y0*width_+xm1];
+  const scalar_t f00   = intensities_[y0*width_+x0];
+  const scalar_t f10   = intensities_[y0*width_+x1];
+  const scalar_t f20   = intensities_[y0*width_+x2];
+  const scalar_t fm11  = intensities_[y1*width_+xm1];
+  const scalar_t f01   = intensities_[y1*width_+x0];
+  const scalar_t f11   = intensities_[y1*width_+x1];
+  const scalar_t f21   = intensities_[y1*width_+x2];
+  const scalar_t fm12  = intensities_[y2*width_+xm1];
+  const scalar_t f02   = intensities_[y2*width_+x0];
+  const scalar_t f12   = intensities_[y2*width_+x1];
+  const scalar_t f22   = intensities_[y2*width_+x2];
+  const scalar_t fm1m1 = intensities_[ym1*width_+xm1];
+  const scalar_t f0m1  = intensities_[ym1*width_+x0];
+  const scalar_t f1m1  = intensities_[ym1*width_+x1];
+  const scalar_t f2m1  = intensities_[ym1*width_+x2];
 #ifdef DICE_USE_DOUBLE
   return f00 + (-0.5*f0m1 + .5*f01)*y + (f0m1 - 2.5*f00 + 2*f01 - .5*f02)*y_2 + (-0.5*f0m1 + 1.5*f00 - 1.5*f01 + .5*f02)*y_3
       + ((-0.5*fm10 + .5*f10) + (0.25*fm1m1 - .25*fm11 - .25*f1m1 + .25*f11)*y + (-0.5*fm1m1 + 1.25*fm10 - fm11 + .25*fm12 +
@@ -625,12 +625,12 @@ Image_<S>::interpolate_bicubic(const work_t & local_x, const work_t & local_y){
 #endif
 }
 
-template work_t Image_<storage_t>::interpolate_bicubic(const work_t &, const work_t &);
-template work_t Image_<work_t>::interpolate_bicubic(const work_t &, const work_t &);
+template scalar_t Image_<storage_t>::interpolate_bicubic(const scalar_t &, const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_bicubic(const scalar_t &, const scalar_t &);
 
 template <typename S>
-work_t
-Image_<S>::interpolate_grad_x_bicubic(const work_t & local_x, const work_t & local_y){
+scalar_t
+Image_<S>::interpolate_grad_x_bicubic(const scalar_t & local_x, const scalar_t & local_y){
   if(local_x<1.0||local_x>=width_-2.0||local_y<1.0||local_y>=height_-2.0) return this->interpolate_grad_x_bilinear(local_x,local_y);
 
   const int_t x0  = (int_t)local_x;
@@ -641,28 +641,28 @@ Image_<S>::interpolate_grad_x_bicubic(const work_t & local_x, const work_t & loc
   const int_t y1 = y0+1;
   const int_t y2 = y1+1;
   const int_t ym1 = y0-1;
-  const work_t x = local_x - x0;
-  const work_t y = local_y - y0;
-  const work_t x_2 = x * x;
-  const work_t x_3 = x_2 * x;
-  const work_t y_2 = y * y;
-  const work_t y_3 = y_2 * y;
-  const work_t fm10  = grad_x_[y0*width_+xm1];
-  const work_t f00   = grad_x_[y0*width_+x0];
-  const work_t f10   = grad_x_[y0*width_+x1];
-  const work_t f20   = grad_x_[y0*width_+x2];
-  const work_t fm11  = grad_x_[y1*width_+xm1];
-  const work_t f01   = grad_x_[y1*width_+x0];
-  const work_t f11   = grad_x_[y1*width_+x1];
-  const work_t f21   = grad_x_[y1*width_+x2];
-  const work_t fm12  = grad_x_[y2*width_+xm1];
-  const work_t f02   = grad_x_[y2*width_+x0];
-  const work_t f12   = grad_x_[y2*width_+x1];
-  const work_t f22   = grad_x_[y2*width_+x2];
-  const work_t fm1m1 = grad_x_[ym1*width_+xm1];
-  const work_t f0m1  = grad_x_[ym1*width_+x0];
-  const work_t f1m1  = grad_x_[ym1*width_+x1];
-  const work_t f2m1  = grad_x_[ym1*width_+x2];
+  const scalar_t x = local_x - x0;
+  const scalar_t y = local_y - y0;
+  const scalar_t x_2 = x * x;
+  const scalar_t x_3 = x_2 * x;
+  const scalar_t y_2 = y * y;
+  const scalar_t y_3 = y_2 * y;
+  const scalar_t fm10  = grad_x_[y0*width_+xm1];
+  const scalar_t f00   = grad_x_[y0*width_+x0];
+  const scalar_t f10   = grad_x_[y0*width_+x1];
+  const scalar_t f20   = grad_x_[y0*width_+x2];
+  const scalar_t fm11  = grad_x_[y1*width_+xm1];
+  const scalar_t f01   = grad_x_[y1*width_+x0];
+  const scalar_t f11   = grad_x_[y1*width_+x1];
+  const scalar_t f21   = grad_x_[y1*width_+x2];
+  const scalar_t fm12  = grad_x_[y2*width_+xm1];
+  const scalar_t f02   = grad_x_[y2*width_+x0];
+  const scalar_t f12   = grad_x_[y2*width_+x1];
+  const scalar_t f22   = grad_x_[y2*width_+x2];
+  const scalar_t fm1m1 = grad_x_[ym1*width_+xm1];
+  const scalar_t f0m1  = grad_x_[ym1*width_+x0];
+  const scalar_t f1m1  = grad_x_[ym1*width_+x1];
+  const scalar_t f2m1  = grad_x_[ym1*width_+x2];
 #ifdef DICE_USE_DOUBLE
   return f00 + (-0.5*f0m1 + .5*f01)*y + (f0m1 - 2.5*f00 + 2*f01 - .5*f02)*y_2 + (-0.5*f0m1 + 1.5*f00 - 1.5*f01 + .5*f02)*y_3
       + ((-0.5*fm10 + .5*f10) + (0.25*fm1m1 - .25*fm11 - .25*f1m1 + .25*f11)*y + (-0.5*fm1m1 + 1.25*fm10 - fm11 + .25*fm12 +
@@ -686,12 +686,12 @@ Image_<S>::interpolate_grad_x_bicubic(const work_t & local_x, const work_t & loc
 #endif
 }
 
-template work_t Image_<storage_t>::interpolate_grad_x_bicubic(const work_t &, const work_t &);
-template work_t Image_<work_t>::interpolate_grad_x_bicubic(const work_t &, const work_t &);
+template scalar_t Image_<storage_t>::interpolate_grad_x_bicubic(const scalar_t &, const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_grad_x_bicubic(const scalar_t &, const scalar_t &);
 
 template <typename S>
-work_t
-Image_<S>::interpolate_grad_y_bicubic(const work_t & local_x, const work_t & local_y){
+scalar_t
+Image_<S>::interpolate_grad_y_bicubic(const scalar_t & local_x, const scalar_t & local_y){
   if(local_x<1.0||local_x>=width_-2.0||local_y<1.0||local_y>=height_-2.0) return this->interpolate_grad_y_bilinear(local_x,local_y);
 
   const int_t x0  = (int_t)local_x;
@@ -702,28 +702,28 @@ Image_<S>::interpolate_grad_y_bicubic(const work_t & local_x, const work_t & loc
   const int_t y1 = y0+1;
   const int_t y2 = y1+1;
   const int_t ym1 = y0-1;
-  const work_t x = local_x - x0;
-  const work_t y = local_y - y0;
-  const work_t x_2 = x * x;
-  const work_t x_3 = x_2 * x;
-  const work_t y_2 = y * y;
-  const work_t y_3 = y_2 * y;
-  const work_t fm10  = grad_y_[y0*width_+xm1];
-  const work_t f00   = grad_y_[y0*width_+x0];
-  const work_t f10   = grad_y_[y0*width_+x1];
-  const work_t f20   = grad_y_[y0*width_+x2];
-  const work_t fm11  = grad_y_[y1*width_+xm1];
-  const work_t f01   = grad_y_[y1*width_+x0];
-  const work_t f11   = grad_y_[y1*width_+x1];
-  const work_t f21   = grad_y_[y1*width_+x2];
-  const work_t fm12  = grad_y_[y2*width_+xm1];
-  const work_t f02   = grad_y_[y2*width_+x0];
-  const work_t f12   = grad_y_[y2*width_+x1];
-  const work_t f22   = grad_y_[y2*width_+x2];
-  const work_t fm1m1 = grad_y_[ym1*width_+xm1];
-  const work_t f0m1  = grad_y_[ym1*width_+x0];
-  const work_t f1m1  = grad_y_[ym1*width_+x1];
-  const work_t f2m1  = grad_y_[ym1*width_+x2];
+  const scalar_t x = local_x - x0;
+  const scalar_t y = local_y - y0;
+  const scalar_t x_2 = x * x;
+  const scalar_t x_3 = x_2 * x;
+  const scalar_t y_2 = y * y;
+  const scalar_t y_3 = y_2 * y;
+  const scalar_t fm10  = grad_y_[y0*width_+xm1];
+  const scalar_t f00   = grad_y_[y0*width_+x0];
+  const scalar_t f10   = grad_y_[y0*width_+x1];
+  const scalar_t f20   = grad_y_[y0*width_+x2];
+  const scalar_t fm11  = grad_y_[y1*width_+xm1];
+  const scalar_t f01   = grad_y_[y1*width_+x0];
+  const scalar_t f11   = grad_y_[y1*width_+x1];
+  const scalar_t f21   = grad_y_[y1*width_+x2];
+  const scalar_t fm12  = grad_y_[y2*width_+xm1];
+  const scalar_t f02   = grad_y_[y2*width_+x0];
+  const scalar_t f12   = grad_y_[y2*width_+x1];
+  const scalar_t f22   = grad_y_[y2*width_+x2];
+  const scalar_t fm1m1 = grad_y_[ym1*width_+xm1];
+  const scalar_t f0m1  = grad_y_[ym1*width_+x0];
+  const scalar_t f1m1  = grad_y_[ym1*width_+x1];
+  const scalar_t f2m1  = grad_y_[ym1*width_+x2];
 #ifdef DICE_USE_DOUBLE
   return f00 + (-0.5*f0m1 + .5*f01)*y + (f0m1 - 2.5*f00 + 2*f01 - .5*f02)*y_2 + (-0.5*f0m1 + 1.5*f00 - 1.5*f01 + .5*f02)*y_3
       + ((-0.5*fm10 + .5*f10) + (0.25*fm1m1 - .25*fm11 - .25*f1m1 + .25*f11)*y + (-0.5*fm1m1 + 1.25*fm10 - fm11 + .25*fm12 +
@@ -747,26 +747,26 @@ Image_<S>::interpolate_grad_y_bicubic(const work_t & local_x, const work_t & loc
 #endif
 }
 
-template work_t Image_<storage_t>::interpolate_grad_y_bicubic(const work_t &, const work_t &);
-template work_t Image_<work_t>::interpolate_grad_y_bicubic(const work_t &, const work_t &);
+template scalar_t Image_<storage_t>::interpolate_grad_y_bicubic(const scalar_t &, const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_grad_y_bicubic(const scalar_t &, const scalar_t &);
 
 template <typename S>
 void
-Image_<S>::interpolate_keys_fourth_all(work_t & intensity_val,
-       work_t & grad_x_val, work_t & grad_y_val, const bool compute_gradient,
-       const work_t & local_x, const work_t & local_y) {
+Image_<S>::interpolate_keys_fourth_all(scalar_t & intensity_val,
+       scalar_t & grad_x_val, scalar_t & grad_y_val, const bool compute_gradient,
+       const scalar_t & local_x, const scalar_t & local_y) {
   intensity_val = 0.0;
   if (compute_gradient) {
     grad_x_val = 0.0;
     grad_y_val = 0.0;
   }
-  static std::vector<work_t> coeffs_x(6,0.0);
-  static std::vector<work_t> coeffs_y(6,0.0);
-  static work_t dx = 0.0;
-  static work_t dy = 0.0;
+  static std::vector<scalar_t> coeffs_x(6,0.0);
+  static std::vector<scalar_t> coeffs_y(6,0.0);
+  static scalar_t dx = 0.0;
+  static scalar_t dy = 0.0;
   static int_t ix=0,iy=0;
   //static intensity_t value=0.0;
-  static work_t cc = 0.0;
+  static scalar_t cc = 0.0;
   ix = (int_t)local_x;
   iy = (int_t)local_y;
   if(local_x<=2.5||local_x>=width_-3.5||local_y<=2.5||local_y>=height_-3.5) {
@@ -803,18 +803,18 @@ Image_<S>::interpolate_keys_fourth_all(work_t & intensity_val,
   }
 }
 
-template void Image_<storage_t>::interpolate_keys_fourth_all(work_t &, work_t &, work_t &, const bool, const work_t &, const work_t &);
-template void Image_<work_t>::interpolate_keys_fourth_all(work_t &, work_t &, work_t &, const bool, const work_t &, const work_t &);
+template void Image_<storage_t>::interpolate_keys_fourth_all(scalar_t &, scalar_t &, scalar_t &, const bool, const scalar_t &, const scalar_t &);
+template void Image_<scalar_t>::interpolate_keys_fourth_all(scalar_t &, scalar_t &, scalar_t &, const bool, const scalar_t &, const scalar_t &);
 
 template <typename S>
-work_t
-Image_<S>::interpolate_keys_fourth(const work_t & local_x, const work_t & local_y){
-  static std::vector<work_t> coeffs_x(6,0.0);
-  static std::vector<work_t> coeffs_y(6,0.0);
-  static work_t dx = 0.0;
-  static work_t dy = 0.0;
+scalar_t
+Image_<S>::interpolate_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
+  static std::vector<scalar_t> coeffs_x(6,0.0);
+  static std::vector<scalar_t> coeffs_y(6,0.0);
+  static scalar_t dx = 0.0;
+  static scalar_t dy = 0.0;
   static int_t ix=0,iy=0;
-  static work_t value=0.0;
+  static scalar_t value=0.0;
   ix = (int_t)local_x;
   iy = (int_t)local_y;
   if(local_x<=2.5||local_x>=width_-3.5||local_y<=2.5||local_y>=height_-3.5)
@@ -842,18 +842,18 @@ Image_<S>::interpolate_keys_fourth(const work_t & local_x, const work_t & local_
   return value;
 }
 
-template work_t Image_<storage_t>::interpolate_keys_fourth(const work_t &, const work_t &);
-template work_t Image_<work_t>::interpolate_keys_fourth(const work_t &, const work_t &);
+template scalar_t Image_<storage_t>::interpolate_keys_fourth(const scalar_t &, const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_keys_fourth(const scalar_t &, const scalar_t &);
 
 template <typename S>
-work_t
-Image_<S>::interpolate_grad_x_keys_fourth(const work_t & local_x, const work_t & local_y){
-  static std::vector<work_t> coeffs_x(6,0.0);
-  static std::vector<work_t> coeffs_y(6,0.0);
-  static work_t dx = 0.0;
-  static work_t dy = 0.0;
+scalar_t
+Image_<S>::interpolate_grad_x_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
+  static std::vector<scalar_t> coeffs_x(6,0.0);
+  static std::vector<scalar_t> coeffs_y(6,0.0);
+  static scalar_t dx = 0.0;
+  static scalar_t dy = 0.0;
   static int_t ix=0,iy=0;
-  static work_t value=0.0;
+  static scalar_t value=0.0;
   ix = (int_t)local_x;
   iy = (int_t)local_y;
   if(local_x<=2.5||local_x>=width_-3.5||local_y<=2.5||local_y>=height_-3.5)
@@ -881,18 +881,18 @@ Image_<S>::interpolate_grad_x_keys_fourth(const work_t & local_x, const work_t &
   return value;
 }
 
-template work_t Image_<storage_t>::interpolate_grad_x_keys_fourth(const work_t &, const work_t &);
-template work_t Image_<work_t>::interpolate_grad_x_keys_fourth(const work_t &, const work_t &);
+template scalar_t Image_<storage_t>::interpolate_grad_x_keys_fourth(const scalar_t &, const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_grad_x_keys_fourth(const scalar_t &, const scalar_t &);
 
 template <typename S>
-work_t
-Image_<S>::interpolate_grad_y_keys_fourth(const work_t & local_x, const work_t & local_y){
-  static std::vector<work_t> coeffs_x(6,0.0);
-  static std::vector<work_t> coeffs_y(6,0.0);
-  static work_t dx = 0.0;
-  static work_t dy = 0.0;
+scalar_t
+Image_<S>::interpolate_grad_y_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
+  static std::vector<scalar_t> coeffs_x(6,0.0);
+  static std::vector<scalar_t> coeffs_y(6,0.0);
+  static scalar_t dx = 0.0;
+  static scalar_t dy = 0.0;
   static int_t ix=0,iy=0;
-  static work_t value=0.0;
+  static scalar_t value=0.0;
   ix = (int_t)local_x;
   iy = (int_t)local_y;
   if(local_x<=2.5||local_x>=width_-3.5||local_y<=2.5||local_y>=height_-3.5)
@@ -920,8 +920,8 @@ Image_<S>::interpolate_grad_y_keys_fourth(const work_t & local_x, const work_t &
   return value;
 }
 
-template work_t Image_<storage_t>::interpolate_grad_y_keys_fourth(const work_t &, const work_t &);
-template work_t Image_<work_t>::interpolate_grad_y_keys_fourth(const work_t &, const work_t &);
+template scalar_t Image_<storage_t>::interpolate_grad_y_keys_fourth(const scalar_t &, const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_grad_y_keys_fourth(const scalar_t &, const scalar_t &);
 
 template <typename S>
 void
@@ -942,22 +942,22 @@ template <typename S>
 void
 Image_<S>::smooth_gradients_convolution_5_point(){
 
-  static work_t smooth_coeffs[][5] = {{0.00390625, 0.015625, 0.0234375, 0.015625, 0.00390625},
+  static scalar_t smooth_coeffs[][5] = {{0.00390625, 0.015625, 0.0234375, 0.015625, 0.00390625},
                                         {0.015625,   0.0625,   0.09375,   0.0625,   0.015625},
                                         {0.0234375,  0.09375,  0.140625,  0.09375,  0.0234375},
                                         {0.015625,   0.0625,   0.09375,   0.0625,   0.015625},
                                         {0.00390625, 0.015625, 0.0234375, 0.015625, 0.00390625}};
   static int_t smooth_offsets[] =  {-2, -1, 0, 1, 2};
 
-  Teuchos::ArrayRCP<work_t> grad_x_temp(width_*height_,0.0);
-  Teuchos::ArrayRCP<work_t> grad_y_temp(width_*height_,0.0);
+  Teuchos::ArrayRCP<scalar_t> grad_x_temp(width_*height_,0.0);
+  Teuchos::ArrayRCP<scalar_t> grad_y_temp(width_*height_,0.0);
   for(int_t i=0;i<width_*height_;++i){
     grad_x_temp[i] = grad_x_[i];
     grad_y_temp[i] = grad_y_[i];
   }
   for(int_t y=2;y<height_-2;++y){
     for(int_t x=2;x<width_-2;++x){
-      work_t value_x = 0.0, value_y = 0.0;
+      scalar_t value_x = 0.0, value_y = 0.0;
       for(int_t i=0;i<5;++i){
         for(int_t j=0;j<5;++j){
           value_x += smooth_coeffs[i][j] * grad_x_temp[(y + smooth_offsets[i])*width_ + x + smooth_offsets[j]];
@@ -1013,14 +1013,14 @@ Image_<S>::apply_mask(const Conformal_Area_Def & area_def,
 }
 
 template void Image_<storage_t>::apply_mask(const Conformal_Area_Def &,const bool);
-template void Image_<work_t>::apply_mask(const Conformal_Area_Def &,const bool);
+template void Image_<scalar_t>::apply_mask(const Conformal_Area_Def &,const bool);
 
 template <typename S>
 void
 Image_<S>::apply_mask(const bool smooth_edges){
   if(smooth_edges){
-    static work_t smoothing_coeffs[5][5];
-    std::vector<work_t> coeffs(5,0.0);
+    static scalar_t smoothing_coeffs[5][5];
+    std::vector<scalar_t> coeffs(5,0.0);
     coeffs[0] = 0.0014;coeffs[1] = 0.1574;coeffs[2] = 0.62825;
     coeffs[3] = 0.1574;coeffs[4] = 0.0014;
     for(int_t j=0;j<5;++j){
@@ -1028,13 +1028,13 @@ Image_<S>::apply_mask(const bool smooth_edges){
         smoothing_coeffs[i][j] = coeffs[i]*coeffs[j];
       }
     }
-    Teuchos::ArrayRCP<work_t> mask_tmp(mask_.size(),0.0);
+    Teuchos::ArrayRCP<scalar_t> mask_tmp(mask_.size(),0.0);
     for(int_t i=0;i<mask_tmp.size();++i)
       mask_tmp[i] = mask_[i];
     for(int_t y=0;y<height_;++y){
       for(int_t x=0;x<width_;++x){
         if(x>=2&&x<width_-2&&y>=2&&y<height_-2){ // 2 is half the gauss_mask size
-          work_t value = 0.0;
+          scalar_t value = 0.0;
           for(int_t i=0;i<5;++i){
             for(int_t j=0;j<5;++j){
               // assumes intensity values have already been deep copied into mask_tmp_
@@ -1053,7 +1053,7 @@ Image_<S>::apply_mask(const bool smooth_edges){
 }
 
 template void Image_<storage_t>::apply_mask(const bool);
-template void Image_<work_t>::apply_mask(const bool);
+template void Image_<scalar_t>::apply_mask(const bool);
 
 template <typename S>
 void
@@ -1083,8 +1083,8 @@ Image_<S>::create_mask(const Conformal_Area_Def & area_def,
     mask_[(set_it->first - offset_y_)*width_+set_it->second - offset_x_] = 1.0;
   }
   if(smooth_edges){
-    static work_t smoothing_coeffs[5][5];
-    std::vector<work_t> coeffs(5,0.0);
+    static scalar_t smoothing_coeffs[5][5];
+    std::vector<scalar_t> coeffs(5,0.0);
     coeffs[0] = 0.0014;coeffs[1] = 0.1574;coeffs[2] = 0.62825;
     coeffs[3] = 0.1574;coeffs[4] = 0.0014;
     for(int_t j=0;j<5;++j){
@@ -1092,13 +1092,13 @@ Image_<S>::create_mask(const Conformal_Area_Def & area_def,
         smoothing_coeffs[i][j] = coeffs[i]*coeffs[j];
       }
     }
-    Teuchos::ArrayRCP<work_t> mask_tmp(mask_.size(),0.0);
+    Teuchos::ArrayRCP<scalar_t> mask_tmp(mask_.size(),0.0);
     for(int_t i=0;i<mask_tmp.size();++i)
       mask_tmp[i] = mask_[i];
     for(int_t y=0;y<height_;++y){
       for(int_t x=0;x<width_;++x){
         if(x>=2&&x<width_-2&&y>=2&&y<height_-2){ // 2 is half the gauss_mask size
-          work_t value = 0.0;
+          scalar_t value = 0.0;
           for(int_t i=0;i<5;++i){
             for(int_t j=0;j<5;++j){
               // assumes intensity values have already been deep copied into mask_tmp_
@@ -1137,8 +1137,8 @@ template
 Teuchos::RCP<Image_<storage_t>>
 Image_<storage_t>::apply_transformation(Teuchos::RCP<Local_Shape_Function>,const int_t,const int_t,const bool);
 template
-Teuchos::RCP<Image_<work_t>>
-Image_<work_t>::apply_transformation(Teuchos::RCP<Local_Shape_Function>,const int_t,const int_t,const bool);
+Teuchos::RCP<Image_<scalar_t>>
+Image_<scalar_t>::apply_transformation(Teuchos::RCP<Local_Shape_Function>,const int_t,const int_t,const bool);
 
 template <typename S>
 void
@@ -1150,7 +1150,7 @@ Image_<S>::gauss_filter(const int_t mask_size){
     gauss_filter_half_mask_ = gauss_filter_mask_size_/2+1;
   }
 
-  std::vector<work_t> coeffs(13,0.0);
+  std::vector<scalar_t> coeffs(13,0.0);
 
   // make sure the mask size is appropriate
   if(gauss_filter_mask_size_==5){
@@ -1199,7 +1199,7 @@ Image_<S>::gauss_filter(const int_t mask_size){
   for(int_t y=0;y<height_;++y){
     for(int_t x=0;x<width_;++x){
       if(x>=gauss_filter_half_mask_&&x<width_-gauss_filter_half_mask_&&y>=gauss_filter_half_mask_&&y<height_-gauss_filter_half_mask_){
-        work_t value = 0.0;
+        scalar_t value = 0.0;
         for(int_t i=0;i<gauss_filter_mask_size_;++i){
           for(int_t j=0;j<gauss_filter_mask_size_;++j){
             // assumes intensity values have already been deep copied into intensities_temp_
@@ -1226,12 +1226,12 @@ Image_<S>::is_video_frame()const{
 
 
 template <typename S>
-work_t
+scalar_t
 Image_<S>::diff(Teuchos::RCP<Image_> rhs) const{
   if(rhs->width()!=width_||rhs->height()!=height_)
     return -1.0;
-  work_t diff = 0.0;
-  work_t diff_ = 0.0;
+  scalar_t diff = 0.0;
+  scalar_t diff_ = 0.0;
   for(int_t i=0;i<width_*height_;++i){
     diff_ = (*this)(i) - (*rhs)(i);
     diff += diff_*diff_;
@@ -1239,8 +1239,8 @@ Image_<S>::diff(Teuchos::RCP<Image_> rhs) const{
   return std::sqrt(diff);
 }
 
-template work_t Image_<storage_t>::diff(Teuchos::RCP<Image_>)const;
-template work_t Image_<work_t>::diff(Teuchos::RCP<Image_<work_t>>)const;
+template scalar_t Image_<storage_t>::diff(Teuchos::RCP<Image_>)const;
+template scalar_t Image_<scalar_t>::diff(Teuchos::RCP<Image_<scalar_t>>)const;
 
 /// normalize the image intensity values
 template <typename S>
@@ -1248,7 +1248,7 @@ Teuchos::RCP<Image_<S>>
 Image_<S>::normalize(const Teuchos::RCP<Teuchos::ParameterList> & params){
   Teuchos::ArrayRCP<S> normalized_intens(width_*height_,0);
   // TODO make the normalization more selective (only include the ROI)
-  work_t mean = 0.0;
+  scalar_t mean = 0.0;
   int_t num_pixels = 0;
   const int_t buffer = 10;
   for(int_t y=buffer;y<height_-buffer;++y){
@@ -1263,7 +1263,7 @@ Image_<S>::normalize(const Teuchos::RCP<Teuchos::ParameterList> & params){
   mean/=num_pixels;
   DEBUG_MSG("Image::normalize() mean " << mean << " num pixels in mean " << num_pixels);
 
-  work_t mean_sum = 0.0;
+  scalar_t mean_sum = 0.0;
   for(int_t y=buffer;y<height_-buffer;++y){
     for(int_t x=buffer;x<width_-buffer;++x){
       mean_sum += ((*this)(x,y) - mean)*((*this)(x,y) - mean);
@@ -1280,16 +1280,16 @@ Image_<S>::normalize(const Teuchos::RCP<Teuchos::ParameterList> & params){
 }
 
 template <typename S>
-work_t
+scalar_t
 Image_<S>::mean()const{
-  work_t mean_value = 0.0;
+  scalar_t mean_value = 0.0;
   for(int_t i=0;i<width_*height_;++i)
     mean_value += (*this)(i);
   return mean_value / (width_*height_);
 }
 
-template work_t Image_<storage_t>::mean()const;
-template work_t Image_<work_t>::mean()const;
+template scalar_t Image_<storage_t>::mean()const;
+template scalar_t Image_<scalar_t>::mean()const;
 
 template <typename S>
 void
@@ -1303,7 +1303,7 @@ Image_<S>::write(const std::string & file_name){
 }
 
 template void Image_<storage_t>::write(const std::string &);
-template void Image_<work_t>::write(const std::string &);
+template void Image_<scalar_t>::write(const std::string &);
 
 template <typename S>
 void
@@ -1319,7 +1319,7 @@ Image_<S>::write_overlap_image(const std::string & file_name,
 }
 
 template void Image_<storage_t>::write_overlap_image(const std::string &, Teuchos::RCP<Image_>);
-template void Image_<work_t>::write_overlap_image(const std::string &, Teuchos::RCP<Image_>);
+template void Image_<scalar_t>::write_overlap_image(const std::string &, Teuchos::RCP<Image_>);
 
 template <typename S>
 void
@@ -1333,7 +1333,7 @@ Image_<S>::write_grad_x(const std::string & file_name){
 }
 
 template void Image_<storage_t>::write_grad_x(const std::string & file_name);
-template void Image_<work_t>::write_grad_x(const std::string & file_name);
+template void Image_<scalar_t>::write_grad_x(const std::string & file_name);
 
 template <typename S>
 void
@@ -1347,7 +1347,7 @@ Image_<S>::write_grad_y(const std::string & file_name){
 }
 
 template void Image_<storage_t>::write_grad_y(const std::string & file_name);
-template void Image_<work_t>::write_grad_y(const std::string & file_name);
+template void Image_<scalar_t>::write_grad_y(const std::string & file_name);
 
 template <typename S>
 Teuchos::RCP<Image_<S>>
@@ -1389,6 +1389,6 @@ Image_<S>::apply_rotation(const Rotation_Value rotation,
 }
 
 template Teuchos::RCP<Image_<storage_t>> Image_<storage_t>::apply_rotation(const Rotation_Value,const Teuchos::RCP<Teuchos::ParameterList> &);
-template Teuchos::RCP<Image_<work_t>> Image_<work_t>::apply_rotation(const Rotation_Value,const Teuchos::RCP<Teuchos::ParameterList> &);
+template Teuchos::RCP<Image_<scalar_t>> Image_<scalar_t>::apply_rotation(const Rotation_Value,const Teuchos::RCP<Teuchos::ParameterList> &);
 
 }// End DICe Namespace

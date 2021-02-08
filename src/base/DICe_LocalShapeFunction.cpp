@@ -74,15 +74,15 @@ Local_Shape_Function::save_fields(Schema * schema,
 }
 
 void
-Local_Shape_Function::update(const std::vector<work_t> & update){
+Local_Shape_Function::update(const std::vector<scalar_t> & update){
   assert(update.size()==parameters_.size());
   for(size_t i=0;i<parameters_.size();++i)
     parameters_[i] += update[i];
 }
 
 bool
-Local_Shape_Function::test_for_convergence(const std::vector<work_t> & old_parameters,
-  const work_t & tol){
+Local_Shape_Function::test_for_convergence(const std::vector<scalar_t> & old_parameters,
+  const scalar_t & tol){
   assert(old_parameters.size()==parameters_.size());
   bool converged = true;
   for(int_t i=0;i<num_params_;++i){
@@ -134,8 +134,8 @@ Local_Shape_Function::initialize_parameters_from_fields(Schema * schema,
 Affine_Shape_Function::Affine_Shape_Function(const bool enable_rotation,
   const bool enable_normal_strain,
   const bool enable_shear_strain,
-  const work_t & delta_disp,
-  const work_t & delta_theta){
+  const scalar_t & delta_disp,
+  const scalar_t & delta_theta){
   init(enable_rotation,enable_normal_strain,enable_shear_strain,delta_disp,delta_theta);
 }
 
@@ -145,8 +145,8 @@ Affine_Shape_Function::Affine_Shape_Function(Schema * schema):
   bool rotation_enabled = true;
   bool normal_strain_enabled = true;
   bool shear_strain_enabled = true;
-  work_t delta_disp = 1.0;
-  work_t delta_theta = 0.1;
+  scalar_t delta_disp = 1.0;
+  scalar_t delta_theta = 0.1;
   if(schema){
     rotation_enabled = schema->rotation_enabled();
     normal_strain_enabled = schema->normal_strain_enabled();
@@ -163,8 +163,8 @@ void
 Affine_Shape_Function::init(const bool enable_rotation,
   const bool enable_normal_strain,
   const bool enable_shear_strain,
-  const work_t & delta_disp,
-  const work_t & delta_theta){
+  const scalar_t & delta_disp,
+  const scalar_t & delta_theta){
   spec_map_.insert(std::pair<Field_Spec,size_t>(SUBSET_DISPLACEMENT_X_FS,spec_map_.size()));
   spec_map_.insert(std::pair<Field_Spec,size_t>(SUBSET_DISPLACEMENT_Y_FS,spec_map_.size()));
   if(enable_rotation)
@@ -210,17 +210,17 @@ Affine_Shape_Function::init(const bool enable_rotation,
 }
 
 void
-Affine_Shape_Function::map(const work_t & x,
-  const work_t & y,
-  const work_t & cx,
-  const work_t & cy,
-  work_t & out_x,
-  work_t & out_y){
+Affine_Shape_Function::map(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & cx,
+  const scalar_t & cy,
+  scalar_t & out_x,
+  scalar_t & out_y){
 
-  static work_t dx=0.0,dy=0.0;
-  static work_t Dx=0.0,Dy=0.0;
-  static work_t dispx=0.0,dispy=0.0,theta=0.0,dudx=0.0,dvdy=0.0,gxy=0.0;
-  static work_t cost=0.0,sint=0.0;
+  static scalar_t dx=0.0,dy=0.0;
+  static scalar_t Dx=0.0,Dy=0.0;
+  static scalar_t dispx=0.0,dispy=0.0,theta=0.0,dudx=0.0,dvdy=0.0,gxy=0.0;
+  static scalar_t cost=0.0,sint=0.0;
 
   dispx = parameters_[dx_ind_];
   dispy = parameters_[dy_ind_];
@@ -303,16 +303,16 @@ Affine_Shape_Function::initialize_parameters_from_fields(Schema * schema,
 }
 
 void
-Affine_Shape_Function::add_translation(const work_t & u,
-  const work_t & v){
+Affine_Shape_Function::add_translation(const scalar_t & u,
+  const scalar_t & v){
   (*this)(SUBSET_DISPLACEMENT_X_FS) += u;
   (*this)(SUBSET_DISPLACEMENT_Y_FS) += v;
 }
 
 void
-Affine_Shape_Function::insert_motion(const work_t & u,
-  const work_t & v,
-  const work_t & theta){
+Affine_Shape_Function::insert_motion(const scalar_t & u,
+  const scalar_t & v,
+  const scalar_t & theta){
   (*this)(SUBSET_DISPLACEMENT_X_FS) = u;
   (*this)(SUBSET_DISPLACEMENT_Y_FS) = v;
   if(spec_map_.find(ROTATION_Z_FS)!=spec_map_.end())
@@ -320,18 +320,18 @@ Affine_Shape_Function::insert_motion(const work_t & u,
 }
 
 void
-Affine_Shape_Function::insert_motion(const work_t & u,
-  const work_t & v){
+Affine_Shape_Function::insert_motion(const scalar_t & u,
+  const scalar_t & v){
   (*this)(SUBSET_DISPLACEMENT_X_FS) = u;
   (*this)(SUBSET_DISPLACEMENT_Y_FS) = v;
 }
 
 void
-Affine_Shape_Function::map_to_u_v_theta(const work_t & cx,
-  const work_t & cy,
-  work_t & out_u,
-  work_t & out_v,
-  work_t & out_theta){
+Affine_Shape_Function::map_to_u_v_theta(const scalar_t & cx,
+  const scalar_t & cy,
+  scalar_t & out_u,
+  scalar_t & out_v,
+  scalar_t & out_theta){
   // note cx and cy not used for this shape function
   out_u = parameter(SUBSET_DISPLACEMENT_X_FS);
   out_v = parameter(SUBSET_DISPLACEMENT_Y_FS);
@@ -339,19 +339,19 @@ Affine_Shape_Function::map_to_u_v_theta(const work_t & cx,
 }
 
 void
-Affine_Shape_Function::residuals(const work_t & x,
-  const work_t & y,
-  const work_t & cx,
-  const work_t & cy,
-  const work_t & gx,
-  const work_t & gy,
-  std::vector<work_t> & residuals,
+Affine_Shape_Function::residuals(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & cx,
+  const scalar_t & cy,
+  const scalar_t & gx,
+  const scalar_t & gy,
+  std::vector<scalar_t> & residuals,
   const bool use_ref_grads){
   assert((int_t)residuals.size()==num_params_);
 
-  static work_t dx=0.0,dy=0.0,Dx=0.0,Dy=0.0,delTheta=0.0,delEx=0.0,delEy=0.0,delGxy=0.0;
-  static work_t Gx=0.0,Gy=0.0;
-  static work_t theta=0.0,dudx=0.0,dvdy=0.0,gxy=0.0,cosTheta=0.0,sinTheta=0.0;
+  static scalar_t dx=0.0,dy=0.0,Dx=0.0,Dy=0.0,delTheta=0.0,delEx=0.0,delEy=0.0,delGxy=0.0;
+  static scalar_t Gx=0.0,Gy=0.0;
+  static scalar_t theta=0.0,dudx=0.0,dvdy=0.0,gxy=0.0,cosTheta=0.0,sinTheta=0.0;
   theta = has_rotz_ ? parameters_[rotz_ind_] : 0.0;
   dudx  = has_nsxx_ ? parameters_[nsxx_ind_] : 0.0;
   dvdy  = has_nsyy_ ? parameters_[nsyy_ind_] : 0.0;
@@ -388,8 +388,8 @@ Affine_Shape_Function::residuals(const work_t & x,
 
 
 bool
-Affine_Shape_Function::test_for_convergence(const std::vector<work_t> & old_parameters,
-  const work_t & tol){
+Affine_Shape_Function::test_for_convergence(const std::vector<scalar_t> & old_parameters,
+  const scalar_t & tol){
   // only tests the displacement and rotation fields
   assert(old_parameters.size()==parameters_.size());
   assert(spec_map_.find(SUBSET_DISPLACEMENT_X_FS)!=spec_map_.end());
@@ -464,29 +464,29 @@ Quadratic_Shape_Function::reset_fields(Schema * schema){
 }
 
 void
-Quadratic_Shape_Function::map(const work_t & x,
-  const work_t & y,
-  const work_t & cx,
-  const work_t & cy,
-  work_t & out_x,
-  work_t & out_y){
-  const work_t dx = x - cx;
-  const work_t dy = y - cy;
+Quadratic_Shape_Function::map(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & cx,
+  const scalar_t & cy,
+  scalar_t & out_x,
+  scalar_t & out_y){
+  const scalar_t dx = x - cx;
+  const scalar_t dy = y - cy;
   out_x = parameter(QUAD_A_FS)*dx + parameter(QUAD_B_FS)*dy + parameter(QUAD_C_FS)*dx*dy + parameter(QUAD_D_FS)*dx*dx + parameter(QUAD_E_FS)*dy*dy + parameter(QUAD_F_FS) + cx;
   out_y = parameter(QUAD_G_FS)*dx + parameter(QUAD_H_FS)*dy + parameter(QUAD_I_FS)*dx*dy + parameter(QUAD_J_FS)*dx*dx + parameter(QUAD_K_FS)*dy*dy + parameter(QUAD_L_FS) + cy;
 }
 
 void
-Quadratic_Shape_Function::add_translation(const work_t & u,
-  const work_t & v){
+Quadratic_Shape_Function::add_translation(const scalar_t & u,
+  const scalar_t & v){
   (*this)(QUAD_F_FS) += u;
   (*this)(QUAD_L_FS) += v;
 }
 
 void
-Quadratic_Shape_Function::insert_motion(const work_t & u,
-  const work_t & v,
-  const work_t & theta){
+Quadratic_Shape_Function::insert_motion(const scalar_t & u,
+  const scalar_t & v,
+  const scalar_t & theta){
   // clear the other parameters:
   clear();
   (*this)(QUAD_F_FS) = u;
@@ -498,8 +498,8 @@ Quadratic_Shape_Function::insert_motion(const work_t & u,
 }
 
 void
-Quadratic_Shape_Function::insert_motion(const work_t & u,
-  const work_t & v){
+Quadratic_Shape_Function::insert_motion(const scalar_t & u,
+  const scalar_t & v){
   // clear the other parameters:
   clear();
   (*this)(QUAD_F_FS) = u;
@@ -507,52 +507,52 @@ Quadratic_Shape_Function::insert_motion(const work_t & u,
 }
 
 void
-Quadratic_Shape_Function::map_to_u_v_theta(const work_t & cx,
-  const work_t & cy,
-  work_t & out_u,
-  work_t & out_v,
-  work_t & out_theta){
-  work_t cxp=0.0,cyp=0.0;
+Quadratic_Shape_Function::map_to_u_v_theta(const scalar_t & cx,
+  const scalar_t & cy,
+  scalar_t & out_u,
+  scalar_t & out_v,
+  scalar_t & out_theta){
+  scalar_t cxp=0.0,cyp=0.0;
   // map the centroid
   map(cx,cy,cx,cy,cxp,cyp);
   out_u = cxp - cx;
   out_v = cyp - cy;
   // map a point 5 pixels to the right of the centroid
   // the 5 is arbitrary
-  work_t rxp=0.0,ryp=0.0;
+  scalar_t rxp=0.0,ryp=0.0;
   map(cx+5.0,cy,cx,cy,rxp,ryp);
   // get the angle between two rays...
-  const work_t ax = rxp - cxp;
-  const work_t ay = ryp - cyp;
-  const work_t mag_a = std::sqrt(ax*ax+ay*ay);
-  const work_t bx = 5.0;
-  const work_t by = 0.0;
-  const work_t mag_b = 5.0;
-  const work_t a_dot_b_over_mags = (ax*bx + ay*by)/(mag_a*mag_b);
+  const scalar_t ax = rxp - cxp;
+  const scalar_t ay = ryp - cyp;
+  const scalar_t mag_a = std::sqrt(ax*ax+ay*ay);
+  const scalar_t bx = 5.0;
+  const scalar_t by = 0.0;
+  const scalar_t mag_b = 5.0;
+  const scalar_t a_dot_b_over_mags = (ax*bx + ay*by)/(mag_a*mag_b);
   // if the change in y is negative, have to add pi to account for accute angle measured
   // from the other direction in terms of clockwise
   out_theta = ay < 0.0 ? DICE_TWOPI - std::acos(a_dot_b_over_mags) : std::acos(a_dot_b_over_mags);
 }
 
 void
-Quadratic_Shape_Function::residuals(const work_t & x,
-  const work_t & y,
-  const work_t & cx,
-  const work_t & cy,
-  const work_t & gx,
-  const work_t & gy,
-  std::vector<work_t> & residuals,
+Quadratic_Shape_Function::residuals(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & cx,
+  const scalar_t & cy,
+  const scalar_t & gx,
+  const scalar_t & gy,
+  std::vector<scalar_t> & residuals,
   const bool use_ref_grads){
-  const work_t dx = x - cx;
-  const work_t dy = y - cy;
+  const scalar_t dx = x - cx;
+  const scalar_t dy = y - cy;
   assert((int_t)residuals.size()==num_params_);
-  work_t Gx = gx;
-  work_t Gy = gy;
+  scalar_t Gx = gx;
+  scalar_t Gy = gy;
   if(use_ref_grads){
-    work_t u=0.0,v=0.0,theta=0.0;
+    scalar_t u=0.0,v=0.0,theta=0.0;
     map_to_u_v_theta(cx,cy,u,v,theta);
-    work_t cosTheta = std::cos(theta);
-    work_t sinTheta = std::sin(theta);
+    scalar_t cosTheta = std::cos(theta);
+    scalar_t sinTheta = std::sin(theta);
     Gx = cosTheta*gx - sinTheta*gy;
     Gy = sinTheta*gx + cosTheta*gy;
   }
@@ -576,9 +576,9 @@ Quadratic_Shape_Function::save_fields(Schema * schema,
   Local_Shape_Function::save_fields(schema,subset_gid);
   // since u, v, and theta are not explicitly parameters, need to save them
   // manually here
-  work_t u=0.0,v=0.0,theta=0.0;
-  const work_t cx = schema->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
-  const work_t cy = schema->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
+  scalar_t u=0.0,v=0.0,theta=0.0;
+  const scalar_t cx = schema->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
+  const scalar_t cy = schema->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
   map_to_u_v_theta(cx,cy,u,v,theta);
   schema->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) = u;
   schema->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) = v;
@@ -586,18 +586,18 @@ Quadratic_Shape_Function::save_fields(Schema * schema,
 }
 
 void
-Quadratic_Shape_Function::update_params_for_centroid_change(const work_t & delta_x,
-  const work_t & delta_y){
-  const work_t A = parameter(QUAD_A_FS);
-  const work_t B = parameter(QUAD_B_FS);
-  const work_t C = parameter(QUAD_C_FS);
-  const work_t D = parameter(QUAD_D_FS);
-  const work_t E = parameter(QUAD_E_FS);
-  const work_t G = parameter(QUAD_G_FS);
-  const work_t H = parameter(QUAD_H_FS);
-  const work_t I = parameter(QUAD_I_FS);
-  const work_t J = parameter(QUAD_J_FS);
-  const work_t K = parameter(QUAD_K_FS);
+Quadratic_Shape_Function::update_params_for_centroid_change(const scalar_t & delta_x,
+  const scalar_t & delta_y){
+  const scalar_t A = parameter(QUAD_A_FS);
+  const scalar_t B = parameter(QUAD_B_FS);
+  const scalar_t C = parameter(QUAD_C_FS);
+  const scalar_t D = parameter(QUAD_D_FS);
+  const scalar_t E = parameter(QUAD_E_FS);
+  const scalar_t G = parameter(QUAD_G_FS);
+  const scalar_t H = parameter(QUAD_H_FS);
+  const scalar_t I = parameter(QUAD_I_FS);
+  const scalar_t J = parameter(QUAD_J_FS);
+  const scalar_t K = parameter(QUAD_K_FS);
 
   (*this)(QUAD_A_FS) += C*delta_y + 2.0*D*delta_x;
   (*this)(QUAD_B_FS) += C*delta_x + 2.0*E*delta_y;
@@ -643,17 +643,17 @@ Projection_Shape_Function::reset_fields(Schema * schema) {
 }
 
 void
-Projection_Shape_Function::map(const work_t & x,
-  const work_t & y,
-  const work_t & cx,
-  const work_t & cy,
-  work_t & out_x,
-  work_t & out_y) {
-  const std::vector<work_t> source_x(1,x);
-  const std::vector<work_t> source_y(1,y);
+Projection_Shape_Function::map(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & cx,
+  const scalar_t & cy,
+  scalar_t & out_x,
+  scalar_t & out_y) {
+  const std::vector<scalar_t> source_x(1,x);
+  const std::vector<scalar_t> source_y(1,y);
   // cx and cy are not used
-  std::vector<work_t> target_x(1,0);
-  std::vector<work_t> target_y(1,0);
+  std::vector<scalar_t> target_x(1,0);
+  std::vector<scalar_t> target_y(1,0);
   camera_system_->camera_to_camera_projection(source_cam_id_,target_cam_id_,
     source_x,source_y,target_x,target_y,parameters_);
   out_x = target_x[0];
@@ -661,22 +661,22 @@ Projection_Shape_Function::map(const work_t & x,
 }
 
 void
-Projection_Shape_Function::residuals(const work_t & x,
-  const work_t & y,
-  const work_t & cx,
-  const work_t & cy,
-  const work_t & gx,
-  const work_t & gy,
-  std::vector<work_t> & residuals,
+Projection_Shape_Function::residuals(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & cx,
+  const scalar_t & cy,
+  const scalar_t & gx,
+  const scalar_t & gy,
+  std::vector<scalar_t> & residuals,
   const bool use_ref_grads) {
-  const std::vector<work_t> source_x(1,x);
-  const std::vector<work_t> source_y(1,y);
+  const std::vector<scalar_t> source_x(1,x);
+  const std::vector<scalar_t> source_y(1,y);
   // cx and cy are not used
   // the target x and y are not used, but computed as part of the mapping
-  std::vector<work_t> target_x(1,0);
-  std::vector<work_t> target_y(1,0);
-  std::vector<std::vector<work_t> > dx(num_params_,std::vector<work_t>(1,0));
-  std::vector<std::vector<work_t> > dy(num_params_,std::vector<work_t>(1,0));
+  std::vector<scalar_t> target_x(1,0);
+  std::vector<scalar_t> target_y(1,0);
+  std::vector<std::vector<scalar_t> > dx(num_params_,std::vector<scalar_t>(1,0));
+  std::vector<std::vector<scalar_t> > dy(num_params_,std::vector<scalar_t>(1,0));
   camera_system_->camera_to_camera_projection(source_cam_id_,target_cam_id_,
     source_x,source_y,target_x,target_y,parameters_,dx,dy);
 
@@ -729,17 +729,17 @@ Rigid_Body_Shape_Function::reset_fields(Schema * schema) {
 }
 
 void
-Rigid_Body_Shape_Function::map(const work_t & x,
-  const work_t & y,
-  const work_t & cx,
-  const work_t & cy,
-  work_t & out_x,
-  work_t & out_y) {
-  const std::vector<work_t> source_x(1,x);
-  const std::vector<work_t> source_y(1,y);
+Rigid_Body_Shape_Function::map(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & cx,
+  const scalar_t & cy,
+  scalar_t & out_x,
+  scalar_t & out_y) {
+  const std::vector<scalar_t> source_x(1,x);
+  const std::vector<scalar_t> source_y(1,y);
   // cx and cy are not used (they are included to keep a consistent interfacet to the map method for all shape functions)
-  std::vector<work_t> mapped_x(1,0.0);
-  std::vector<work_t> mapped_y(1,0.0);
+  std::vector<scalar_t> mapped_x(1,0.0);
+  std::vector<scalar_t> mapped_y(1,0.0);
   // project from the image out to the facet (which gives coordinates in terms of camera 0's coordinate system)
   // then convert the camera 0 coordinates to the world coordinates (which correspond to the surface of the calibration plate or specimen surface)
   // then apply a rigid body transformation to get the deformed coordinates, still in terms of the calibration plate's coordinate system
@@ -753,22 +753,22 @@ Rigid_Body_Shape_Function::map(const work_t & x,
 }
 
 void
-Rigid_Body_Shape_Function::residuals(const work_t & x,
-  const work_t & y,
-  const work_t & cx,
-  const work_t & cy,
-  const work_t & gx,
-  const work_t & gy,
-  std::vector<work_t> & residuals,
+Rigid_Body_Shape_Function::residuals(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & cx,
+  const scalar_t & cy,
+  const scalar_t & gx,
+  const scalar_t & gy,
+  std::vector<scalar_t> & residuals,
   const bool use_ref_grads) {
-  const std::vector<work_t> source_x(1,x);
-  const std::vector<work_t> source_y(1,y);
+  const std::vector<scalar_t> source_x(1,x);
+  const std::vector<scalar_t> source_y(1,y);
   // cx and cy are not used
   // mapped x and y are not used either, but returned by the camera_to_camera projection
-  std::vector<work_t> mapped_x(1,0);
-  std::vector<work_t> mapped_y(1,0);
-  std::vector<std::vector<work_t> > dx(num_params_,std::vector<work_t>(1,0));
-  std::vector<std::vector<work_t> > dy(num_params_,std::vector<work_t>(1,0));
+  std::vector<scalar_t> mapped_x(1,0);
+  std::vector<scalar_t> mapped_y(1,0);
+  std::vector<std::vector<scalar_t> > dx(num_params_,std::vector<scalar_t>(1,0));
+  std::vector<std::vector<scalar_t> > dy(num_params_,std::vector<scalar_t>(1,0));
   camera_system_->camera_to_camera_projection(0,0,source_x,source_y,mapped_x,mapped_y,facet_params_,dx,dy,parameters_);
   residuals[spec_map_.find(ROT_TRANS_3D_ANG_X_FS)->second] = gx * dx[ANGLE_X][0] + gy * dy[ANGLE_X][0];
   residuals[spec_map_.find(ROT_TRANS_3D_ANG_Y_FS)->second] = gx * dx[ANGLE_Y][0] + gy * dy[ANGLE_Y][0];
@@ -784,9 +784,9 @@ Rigid_Body_Shape_Function::save_fields(Schema * schema,
   Local_Shape_Function::save_fields(schema,subset_gid);
   // since u, v, and theta are not explicitly parameters, need to save them
   // manually here
-  work_t u=0.0,v=0.0,theta=0.0;
-  const work_t cx = schema->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
-  const work_t cy = schema->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
+  scalar_t u=0.0,v=0.0,theta=0.0;
+  const scalar_t cx = schema->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
+  const scalar_t cy = schema->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
   map_to_u_v_theta(cx,cy,u,v,theta);
   schema->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS) = u;
   schema->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS) = v;
@@ -794,28 +794,28 @@ Rigid_Body_Shape_Function::save_fields(Schema * schema,
 }
 
 void
-Rigid_Body_Shape_Function::map_to_u_v_theta(const work_t & cx,
-  const work_t & cy,
-  work_t & out_u,
-  work_t & out_v,
-  work_t & out_theta){
-  work_t cxp=0.0,cyp=0.0;
+Rigid_Body_Shape_Function::map_to_u_v_theta(const scalar_t & cx,
+  const scalar_t & cy,
+  scalar_t & out_u,
+  scalar_t & out_v,
+  scalar_t & out_theta){
+  scalar_t cxp=0.0,cyp=0.0;
   // map the centroid
   map(cx,cy,cx,cy,cxp,cyp);
   out_u = cxp - cx;
   out_v = cyp - cy;
   // map a point 5 pixels to the right of the centroid
   // the 5 is arbitrary
-  work_t rxp=0.0,ryp=0.0;
+  scalar_t rxp=0.0,ryp=0.0;
   map(cx+5.0,cy,cx,cy,rxp,ryp);
   // get the angle between two rays...
-  const work_t ax = rxp - cxp;
-  const work_t ay = ryp - cyp;
-  const work_t mag_a = std::sqrt(ax*ax+ay*ay);
-  const work_t bx = 5.0;
-  const work_t by = 0.0;
-  const work_t mag_b = 5.0;
-  const work_t a_dot_b_over_mags = (ax*bx + ay*by)/(mag_a*mag_b);
+  const scalar_t ax = rxp - cxp;
+  const scalar_t ay = ryp - cyp;
+  const scalar_t mag_a = std::sqrt(ax*ax+ay*ay);
+  const scalar_t bx = 5.0;
+  const scalar_t by = 0.0;
+  const scalar_t mag_b = 5.0;
+  const scalar_t a_dot_b_over_mags = (ax*bx + ay*by)/(mag_a*mag_b);
   // if the change in y is negative, have to add pi to account for accute angle measured
   // from the other direction in terms of clockwise
   out_theta = ay < 0.0 ? DICE_TWOPI - std::acos(a_dot_b_over_mags) : std::acos(a_dot_b_over_mags);

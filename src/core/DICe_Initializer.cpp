@@ -107,7 +107,7 @@ Path_Initializer::Path_Initializer(Schema * schema,
   // TODO better checking of the input format
   // TODO enable other resolutions for the input files
   // currently the resolution is 0.5 pixels for u and v and 0.01 radians for theta
-  work_t u_tmp=0.0,v_tmp=0.0,t_tmp=0.0;
+  scalar_t u_tmp=0.0,v_tmp=0.0,t_tmp=0.0;
   for(int_t line=0;line<num_lines;++line){
     path_file >> u_tmp >> v_tmp >> t_tmp;
     if(num_lines > 6){ // if the path file is small, don't filter it to the nearest half pixel, etc.
@@ -125,7 +125,7 @@ Path_Initializer::Path_Initializer(Schema * schema,
   if(num_triads_<num_neighbors_) num_neighbors_ = num_triads_;
 
   DEBUG_MSG("creating the point cloud");
-  point_cloud_ = Teuchos::rcp(new Point_Cloud_3D<work_t>());
+  point_cloud_ = Teuchos::rcp(new Point_Cloud_3D<scalar_t>());
   point_cloud_->pts.resize(num_triads_);
   std::set<def_triad>::iterator it = triads_.begin();
   int_t id = 0;
@@ -141,9 +141,9 @@ Path_Initializer::Path_Initializer(Schema * schema,
 
   // now set up the neighbor list for each triad:
   neighbors_ = std::vector<size_t>(num_triads_*num_neighbors_,0);
-  work_t query_pt[3];
+  scalar_t query_pt[3];
   std::vector<size_t> ret_index(num_neighbors_);
-  std::vector<work_t> out_dist_sqr(num_neighbors_);
+  std::vector<scalar_t> out_dist_sqr(num_neighbors_);
   for(size_t id=0;id<num_triads_;++id){
     query_pt[0] = point_cloud_->pts[id].x;
     query_pt[1] = point_cloud_->pts[id].y;
@@ -156,15 +156,15 @@ Path_Initializer::Path_Initializer(Schema * schema,
 }
 
 void
-Path_Initializer::closest_triad(const work_t &u,
-  const work_t &v,
-  const work_t &t,
+Path_Initializer::closest_triad(const scalar_t &u,
+  const scalar_t &v,
+  const scalar_t &t,
   size_t &id,
-  work_t & distance_sqr)const{
+  scalar_t & distance_sqr)const{
 
-  work_t query_pt[3];
+  scalar_t query_pt[3];
   std::vector<size_t> ret_index(num_neighbors_,0.0);
-  std::vector<work_t> out_dist_sqr(num_neighbors_,0.0);
+  std::vector<scalar_t> out_dist_sqr(num_neighbors_,0.0);
   query_pt[0] = u;
   query_pt[1] = v;
   query_pt[2] = t;
@@ -190,41 +190,41 @@ Path_Initializer::initial_guess(const int_t subset_gid,
     initial_guess(schema_->def_img(),shape_function);
   }
   else{
-    const work_t prev_u = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
-    const work_t prev_v = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
-    const work_t prev_t = schema_->global_field_value(subset_gid,ROTATION_Z_FS);
+    const scalar_t prev_u = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+    const scalar_t prev_v = schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
+    const scalar_t prev_t = schema_->global_field_value(subset_gid,ROTATION_Z_FS);
     initial_guess(schema_->def_img(),shape_function,prev_u,prev_v,prev_t);
   }
   return INITIALIZE_SUCCESSFUL;
 }
 
-work_t
+scalar_t
 Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
   Teuchos::RCP<Local_Shape_Function> shape_function,
-  const work_t & u,
-  const work_t & v,
-  const work_t & t){
+  const scalar_t & u,
+  const scalar_t & v,
+  const scalar_t & t){
 
   DEBUG_MSG("Path_Initializer::initial_guess(deformation,u,v,theta) called");
   TEUCHOS_TEST_FOR_EXCEPTION(def_image==Teuchos::null,std::runtime_error,"Error, pointer to deformed image must not be null here.");
   // find the closes triad in the set:
   size_t id = 0;
-  work_t dist = 0.0;
+  scalar_t dist = 0.0;
   // iterate over the closest 6 triads to this one to see which one is best:
   // start with the given guess
   shape_function->insert_motion(u,v,t);
   // TODO what to do with the rest of the deformation entries (zero them)?
   subset_->initialize(def_image,DEF_INTENSITIES,shape_function);
   // assumes that the reference subset has already been initialized
-  work_t gamma = subset_->gamma();
+  scalar_t gamma = subset_->gamma();
   DEBUG_MSG("input u: " << u << " v: " << v << " theta: " << t << " gamma: " << gamma);
   if(gamma<0.0) gamma = 4.0; // catch a failed gamma eval
   closest_triad(u,v,t,id,dist);
   DEBUG_MSG("closest triad id: " << id << " distance squared: " << dist);
-  work_t best_u = u;
-  work_t best_v = v;
-  work_t best_t = t;
-  work_t best_gamma = gamma;
+  scalar_t best_u = u;
+  scalar_t best_v = v;
+  scalar_t best_t = t;
+  scalar_t best_gamma = gamma;
 
   for(size_t neigh = 0;neigh<num_neighbors_;++neigh){
     const size_t neigh_id = neighbor(id,neigh);
@@ -247,18 +247,18 @@ Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
   return best_gamma;
 }
 
-work_t
+scalar_t
 Path_Initializer::initial_guess(Teuchos::RCP<Image> def_image,
   Teuchos::RCP<Local_Shape_Function> shape_function){
 
   DEBUG_MSG("Path_Initializer::initial_guess(deformation) called");
   TEUCHOS_TEST_FOR_EXCEPTION(def_image==Teuchos::null,std::runtime_error,"Error, pointer to deformed image must not be null here.");
 
-  work_t gamma = 0.0;
-  work_t best_u = 0.0;
-  work_t best_v = 0.0;
-  work_t best_t = 0.0;
-  work_t best_gamma = 100.0;
+  scalar_t gamma = 0.0;
+  scalar_t best_u = 0.0;
+  scalar_t best_v = 0.0;
+  scalar_t best_t = 0.0;
+  scalar_t best_gamma = 100.0;
 
   DEBUG_MSG("Path_Initializer::initial_guess(deformation) point cloud has " << point_cloud_->pts.size() << " points");
   // iterate the entire set of triads:
@@ -309,12 +309,12 @@ Phase_Correlation_Initializer::pre_execution_tasks(){
 
 Search_Initializer::Search_Initializer(Schema * schema,
   Teuchos::RCP<Subset> subset,
-  const work_t & step_size_u,
-  const work_t & search_dim_u,
-  const work_t & step_size_v,
-  const work_t & search_dim_v,
-  const work_t & step_size_theta,
-  const work_t & search_dim_theta):
+  const scalar_t & step_size_u,
+  const scalar_t & search_dim_u,
+  const scalar_t & step_size_v,
+  const scalar_t & search_dim_v,
+  const scalar_t & step_size_theta,
+  const scalar_t & search_dim_theta):
 Initializer(schema),
 subset_(subset),
 step_size_u_(step_size_u),
@@ -339,31 +339,31 @@ Search_Initializer::initial_guess(const int_t subset_gid,
   TEUCHOS_TEST_FOR_EXCEPTION(step_size_theta_==0.0,std::runtime_error,"Error, step size theta must not be 0");
 
   // start with the input deformation
-  work_t orig_u = 0.0,orig_v=0.0,orig_t=0.0;
+  scalar_t orig_u = 0.0,orig_v=0.0,orig_t=0.0;
   shape_function->map_to_u_v_theta(subset_->centroid_x(),subset_->centroid_y(),orig_u,orig_v,orig_t);
-  const work_t start_u = step_size_u_ < 0.0 ? orig_u : orig_u - search_dim_u_;
-  const work_t start_v = step_size_v_ < 0.0 ? orig_v : orig_v - search_dim_v_;
-  const work_t start_t = step_size_theta_ < 0.0 ? orig_t : orig_t - search_dim_theta_;
-  const work_t end_u = step_size_u_ < 0.0 ? orig_u : orig_u + search_dim_u_;
-  const work_t end_v = step_size_v_ < 0.0 ? orig_v : orig_v + search_dim_v_;
-  const work_t end_t = step_size_theta_ < 0.0 ? orig_t : orig_t + search_dim_theta_;
+  const scalar_t start_u = step_size_u_ < 0.0 ? orig_u : orig_u - search_dim_u_;
+  const scalar_t start_v = step_size_v_ < 0.0 ? orig_v : orig_v - search_dim_v_;
+  const scalar_t start_t = step_size_theta_ < 0.0 ? orig_t : orig_t - search_dim_theta_;
+  const scalar_t end_u = step_size_u_ < 0.0 ? orig_u : orig_u + search_dim_u_;
+  const scalar_t end_v = step_size_v_ < 0.0 ? orig_v : orig_v + search_dim_v_;
+  const scalar_t end_t = step_size_theta_ < 0.0 ? orig_t : orig_t + search_dim_theta_;
   if(step_size_u_ < 0.0) step_size_u_ = 1.0;
   if(step_size_v_ < 0.0) step_size_v_ = 1.0;
   if(step_size_theta_ < 0.0) step_size_theta_ = 1.0;
-  const work_t gamma_good_enough = 1.0E-4;
-  work_t min_gamma = 100.0;
-  work_t min_u = 0.0;
-  work_t min_v = 0.0;
-  work_t min_theta = 0.0;
+  const scalar_t gamma_good_enough = 1.0E-4;
+  scalar_t min_gamma = 100.0;
+  scalar_t min_u = 0.0;
+  scalar_t min_v = 0.0;
+  scalar_t min_theta = 0.0;
   // search in u, v, and theta
   DEBUG_MSG("Search ranges " << start_u << " to " << end_u << " " << start_v << " to " << end_v << " " << start_t << " to " << end_t);
-  for(work_t trial_v = start_v;trial_v<=end_v;trial_v+=step_size_u_){
-    for(work_t trial_u = start_u;trial_u<=end_u;trial_u+=step_size_v_){
-      for(work_t trial_t = start_t;trial_t<=end_t;trial_t+=step_size_theta_){
+  for(scalar_t trial_v = start_v;trial_v<=end_v;trial_v+=step_size_u_){
+    for(scalar_t trial_u = start_u;trial_u<=end_u;trial_u+=step_size_v_){
+      for(scalar_t trial_t = start_t;trial_t<=end_t;trial_t+=step_size_theta_){
         shape_function->insert_motion(trial_u,trial_v,trial_t);
         subset_->initialize(schema_->def_img(),DEF_INTENSITIES,shape_function);
         // assumes that the reference subset has already been initialized
-        work_t gamma = 100.0;
+        scalar_t gamma = 100.0;
         try{
           gamma = subset_->gamma();
           if(gamma<0.0) gamma = 4.0; // catch a failed gamma eval
@@ -412,7 +412,7 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
   TEUCHOS_TEST_FOR_EXCEPTION(schema_->subset_local_id(sid)<0,std::runtime_error,
     "Error: Only subset ids on this processor can be used for initialization");
 
-  const work_t sigma = schema_->global_field_value(sid,SIGMA_FS);
+  const scalar_t sigma = schema_->global_field_value(sid,SIGMA_FS);
   if(sigma!=-1.0){
     shape_function->initialize_parameters_from_fields(schema_,sid);
     if(sid==subset_gid)
@@ -421,10 +421,10 @@ Field_Value_Initializer::initial_guess(const int_t subset_gid,
       // if using a neighbor's value, the parameters have to be adjusted to account
       // for the change in centroids for the quadratic shape function
       if(schema_->shape_function_type()==DICe::QUADRATIC_SF){
-        work_t cx = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
-        work_t cy = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
-        work_t cx_neigh = schema_->global_field_value(sid,SUBSET_COORDINATES_X_FS);
-        work_t cy_neigh = schema_->global_field_value(sid,SUBSET_COORDINATES_Y_FS);
+        scalar_t cx = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
+        scalar_t cy = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
+        scalar_t cx_neigh = schema_->global_field_value(sid,SUBSET_COORDINATES_X_FS);
+        scalar_t cy_neigh = schema_->global_field_value(sid,SUBSET_COORDINATES_Y_FS);
         shape_function->update_params_for_centroid_change(cx - cx_neigh,cy - cy_neigh);
       }
       return INITIALIZE_USING_NEIGHBOR_VALUE_SUCCESSFUL;
@@ -447,10 +447,10 @@ Feature_Matching_Initializer::pre_execution_tasks(){
   assert(schema_->ref_img()!=Teuchos::null);
   assert(schema_->def_img()!=Teuchos::null);
   // read both images and match features between them
-  std::vector<work_t> left_x;
-  std::vector<work_t> left_y;
-  std::vector<work_t> right_x;
-  std::vector<work_t> right_y;
+  std::vector<scalar_t> left_x;
+  std::vector<scalar_t> left_y;
+  std::vector<scalar_t> right_x;
+  std::vector<scalar_t> right_y;
   Teuchos::RCP<Teuchos::Time> match_time  = Teuchos::TimeMonitor::getNewCounter("match features");
   {
     Teuchos::TimeMonitor match_time_monitor(*match_time);
@@ -473,7 +473,7 @@ Feature_Matching_Initializer::pre_execution_tasks(){
         "In the GUI there is another option for the initialization method that can be used to achieve this.");
   }
   // create a point cloud and find the nearest neighbor:
-  point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<work_t>());
+  point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
   point_cloud_->pts.resize(left_x.size());
   for(size_t i=0;i<left_x.size();++i){
     point_cloud_->pts[i].x = left_x[i];
@@ -507,11 +507,11 @@ Feature_Matching_Initializer::initial_guess(const int_t subset_gid,
   assert(num_neighbors>num_outlier_remove+1);
   // now set up the neighbor list for each triad:
   //std::vector<size_t>(subset_->num_pixels()*num_neighbors_,0);
-  const work_t current_loc_x = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS) + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
-  const work_t current_loc_y = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS) + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
-  work_t query_pt[2];
+  const scalar_t current_loc_x = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS) + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+  const scalar_t current_loc_y = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS) + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
+  scalar_t query_pt[2];
   std::vector<size_t> ret_index(num_neighbors);
-  std::vector<work_t> out_dist_sqr(num_neighbors);
+  std::vector<scalar_t> out_dist_sqr(num_neighbors);
   query_pt[0] = current_loc_x;
   query_pt[1] = current_loc_y;
   kd_tree_->knnSearch(&query_pt[0], num_neighbors, &ret_index[0], &out_dist_sqr[0]);
@@ -521,18 +521,18 @@ Feature_Matching_Initializer::initial_guess(const int_t subset_gid,
   // sometimes show up)
 
   // feature traslation distance is first, second is neighbor id
-  std::vector<std::pair<work_t,int_t> > dist_neighbors;
+  std::vector<std::pair<scalar_t,int_t> > dist_neighbors;
   for(int_t neigh = 0;neigh<num_neighbors;++neigh){
     const int_t feature_id = ret_index[neigh];
     assert(feature_id>=0&&feature_id<(int_t)u_.size());
-    const work_t dist_sq = u_[feature_id]*u_[feature_id]+v_[feature_id]*v_[feature_id];
-    dist_neighbors.push_back(std::pair<work_t,int_t>(dist_sq,feature_id));
+    const scalar_t dist_sq = u_[feature_id]*u_[feature_id]+v_[feature_id]*v_[feature_id];
+    dist_neighbors.push_back(std::pair<scalar_t,int_t>(dist_sq,feature_id));
   }
   std::sort(dist_neighbors.begin(),dist_neighbors.end());
-  work_t avg_u = 0.0;
-  work_t avg_v = 0.0;
-  work_t centroid_x = 0.0;
-  work_t centroid_y = 0.0;
+  scalar_t avg_u = 0.0;
+  scalar_t avg_v = 0.0;
+  scalar_t centroid_x = 0.0;
+  scalar_t centroid_y = 0.0;
   // resize the num_neighbors to only include the trimmed sorted vector
   num_neighbors = num_neighbors-num_outlier_remove;
   for(int_t neigh=0;neigh<num_neighbors;++neigh){
@@ -546,23 +546,23 @@ Feature_Matching_Initializer::initial_guess(const int_t subset_gid,
   avg_v/=num_neighbors;
   centroid_x/=num_neighbors;
   centroid_y/=num_neighbors;
-  const work_t centroid_x_prime = centroid_x + avg_u;
-  const work_t centroid_y_prime = centroid_y + avg_v;
+  const scalar_t centroid_x_prime = centroid_x + avg_u;
+  const scalar_t centroid_y_prime = centroid_y + avg_v;
 
   // work out the average angle
-  work_t avg_theta = 0.0;
+  scalar_t avg_theta = 0.0;
   for(int_t neigh=0;neigh<num_neighbors;++neigh){
     const int_t feature_id = dist_neighbors[neigh].second;
-    const work_t vec_a_x = point_cloud_->pts[feature_id].x - centroid_x;
-    const work_t vec_a_y = point_cloud_->pts[feature_id].y - centroid_y;
-    const work_t vec_b_x = point_cloud_->pts[feature_id].x + u_[feature_id] - centroid_x_prime;
-    const work_t vec_b_y = point_cloud_->pts[feature_id].y + v_[feature_id] - centroid_y_prime;
-    const work_t a_dot_b = vec_a_x*vec_b_x + vec_a_y*vec_b_y;
-    const work_t mag_a = std::sqrt(vec_a_x*vec_a_x + vec_a_y*vec_a_y);
-    const work_t mag_b = std::sqrt(vec_b_x*vec_b_x + vec_b_y*vec_b_y);
-    const work_t cross = vec_a_x*vec_b_y - vec_b_x*vec_a_y;
-    const work_t sign = cross > 0.0 ? 1.0 : -1.0;
-    work_t theta_pt = sign*std::acos(a_dot_b/(mag_a*mag_b)); // negative one added because of the sign convention in DICe
+    const scalar_t vec_a_x = point_cloud_->pts[feature_id].x - centroid_x;
+    const scalar_t vec_a_y = point_cloud_->pts[feature_id].y - centroid_y;
+    const scalar_t vec_b_x = point_cloud_->pts[feature_id].x + u_[feature_id] - centroid_x_prime;
+    const scalar_t vec_b_y = point_cloud_->pts[feature_id].y + v_[feature_id] - centroid_y_prime;
+    const scalar_t a_dot_b = vec_a_x*vec_b_x + vec_a_y*vec_b_y;
+    const scalar_t mag_a = std::sqrt(vec_a_x*vec_a_x + vec_a_y*vec_a_y);
+    const scalar_t mag_b = std::sqrt(vec_b_x*vec_b_x + vec_b_y*vec_b_y);
+    const scalar_t cross = vec_a_x*vec_b_y - vec_b_x*vec_a_y;
+    const scalar_t sign = cross > 0.0 ? 1.0 : -1.0;
+    scalar_t theta_pt = sign*std::acos(a_dot_b/(mag_a*mag_b)); // negative one added because of the sign convention in DICe
     if(std::isnan(theta_pt))theta_pt = 0.0;
     avg_theta+=theta_pt;
   }
@@ -604,7 +604,7 @@ Satellite_Geometry_Initializer::initial_guess(const int_t subset_gid,
   TEUCHOS_TEST_FOR_EXCEPTION(schema_->subset_local_id(sid)<0,std::runtime_error,
     "Error: Only subset ids on this processor can be used for initialization");
 
-  const work_t sigma = schema_->global_field_value(sid,SIGMA_FS);
+  const scalar_t sigma = schema_->global_field_value(sid,SIGMA_FS);
   if(sigma!=-1.0){
     shape_function->initialize_parameters_from_fields(schema_,sid);
     if(sid==subset_gid)
@@ -613,10 +613,10 @@ Satellite_Geometry_Initializer::initial_guess(const int_t subset_gid,
       // if using a neighbor's value, the parameters have to be adjusted to account
       // for the change in centroids for the quadratic shape function
       if(schema_->shape_function_type()==DICe::QUADRATIC_SF){
-        work_t cx = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
-        work_t cy = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
-        work_t cx_neigh = schema_->global_field_value(sid,SUBSET_COORDINATES_X_FS);
-        work_t cy_neigh = schema_->global_field_value(sid,SUBSET_COORDINATES_Y_FS);
+        scalar_t cx = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
+        scalar_t cy = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
+        scalar_t cx_neigh = schema_->global_field_value(sid,SUBSET_COORDINATES_X_FS);
+        scalar_t cy_neigh = schema_->global_field_value(sid,SUBSET_COORDINATES_Y_FS);
         shape_function->update_params_for_centroid_change(cx - cx_neigh,cy - cy_neigh);
       }
       return INITIALIZE_USING_NEIGHBOR_VALUE_SUCCESSFUL;
@@ -646,7 +646,7 @@ Image_Registration_Initializer::pre_execution_tasks(){
   cv::Mat temp = cv::imread(schema_->def_img()->file_name(), cv::ImreadModes::IMREAD_GRAYSCALE);
   cv::Mat target = cv::imread(schema_->prev_img()->file_name(), cv::ImreadModes::IMREAD_GRAYSCALE);
   int_t num_its = 500;
-  work_t term_eps = 1E-8;
+  scalar_t term_eps = 1E-8;
   cv::Mat warp =  cv::Mat::eye(2, 3, CV_32F);
   findTransformECC (temp,target,warp,cv::MOTION_EUCLIDEAN,
     cv::TermCriteria (cv::TermCriteria::COUNT+cv::TermCriteria::EPS,num_its, term_eps));
@@ -667,14 +667,14 @@ Image_Registration_Initializer::initial_guess(const int_t subset_gid,
   Teuchos::RCP<Local_Shape_Function> shape_function){
 
   // For each point, use the coeffcients to figure out the updated point locations
-  work_t x = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS) + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
-  work_t y = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS) + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
+  scalar_t x = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_X_FS) + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+  scalar_t y = schema_->global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS) + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
 
-  work_t xp = ecc_transform_.at<float>(0,0)*x + ecc_transform_.at<float>(0,1)*y + ecc_transform_.at<float>(0,2);
-  work_t yp = ecc_transform_.at<float>(1,0)*x + ecc_transform_.at<float>(1,1)*y + ecc_transform_.at<float>(1,2);
+  scalar_t xp = ecc_transform_.at<float>(0,0)*x + ecc_transform_.at<float>(0,1)*y + ecc_transform_.at<float>(0,2);
+  scalar_t yp = ecc_transform_.at<float>(1,0)*x + ecc_transform_.at<float>(1,1)*y + ecc_transform_.at<float>(1,2);
 
-  work_t u = xp - x; // incremental displacement
-  work_t v = yp - y;
+  scalar_t u = xp - x; // incremental displacement
+  scalar_t v = yp - y;
 
    DEBUG_MSG("Subset " << subset_gid << " image registration initializer increments: u " << u << " v " << v << " theta " << theta_);
    shape_function->insert_motion(u + schema_->global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS),
@@ -727,7 +727,7 @@ Optical_Flow_Initializer::Optical_Flow_Initializer(Schema * schema,
     "Path_Initializer cannot be used with rigid body shape function (only field value init is allowed)");
   DEBUG_MSG("Optical_Flow_Initializer::Optical_Flow_Initializer()");
   DEBUG_MSG("Optical_Flow_Initializer: creating the point cloud");
-  point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<work_t>());
+  point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
   point_cloud_->pts.resize(subset_->num_pixels());
   for(int_t i=0;i<subset_->num_pixels();++i){
     point_cloud_->pts[i].x = subset_->x(i);
@@ -739,9 +739,9 @@ Optical_Flow_Initializer::Optical_Flow_Initializer(Schema * schema,
 
   // now set up the neighbor list for each triad:
   neighbors_ = std::vector<size_t>(subset_->num_pixels()*num_neighbors_,0);
-  work_t query_pt[2];
+  scalar_t query_pt[2];
   std::vector<size_t> ret_index(num_neighbors_);
-  std::vector<work_t> out_dist_sqr(num_neighbors_);
+  std::vector<scalar_t> out_dist_sqr(num_neighbors_);
   for(int_t i=0;i<subset_->num_pixels();++i){
     query_pt[0] = point_cloud_->pts[i].x;
     query_pt[1] = point_cloud_->pts[i].y;
@@ -751,7 +751,7 @@ Optical_Flow_Initializer::Optical_Flow_Initializer(Schema * schema,
     }
   }
   // create the window coefficients
-  std::vector<work_t> coeffs(13,0.0);
+  std::vector<scalar_t> coeffs(13,0.0);
 //  coeffs[0] = 0.000; coeffs[1] = 0.0046; coeffs[2] = 0.03255; coeffs[3] = 0.1455; coeffs[4] = 0.42474; coeffs[5] = 0.80735;
 //  coeffs[6] = 1.0;
 //  coeffs[7] = 0.80735; coeffs[8] = 0.42474; coeffs[9] = 0.1455; coeffs[10] = 0.03255; coeffs[11] = 0.0046; coeffs[12] = 0.000;
@@ -785,11 +785,11 @@ Optical_Flow_Initializer::is_near_deactivated(const int_t pixel_id){
 }
 
 int_t
-Optical_Flow_Initializer::best_optical_flow_point(work_t & best_grad,
+Optical_Flow_Initializer::best_optical_flow_point(scalar_t & best_grad,
   Teuchos::ArrayRCP<int_t> & def_x,
   Teuchos::ArrayRCP<int_t> & def_y,
-  Teuchos::ArrayRCP<work_t> & gx,
-  Teuchos::ArrayRCP<work_t> & gy,
+  Teuchos::ArrayRCP<scalar_t> & gx,
+  Teuchos::ArrayRCP<scalar_t> & gy,
   std::set<std::pair<int_t,int_t> > & subset_pixels,
   Teuchos::RCP<std::vector<int_t> > existing_points,
   const bool allow_close_points){
@@ -799,7 +799,7 @@ Optical_Flow_Initializer::best_optical_flow_point(work_t & best_grad,
   // and highest gradient values
   int_t pt_id = 0;
   best_grad = 0.0;
-  work_t grad_mag = 0.0;
+  scalar_t grad_mag = 0.0;
   for(int_t i=0;i<subset_->num_pixels();++i){
     // make sure the pixel is not near a deactivated region
     if(is_near_deactivated(i)) {
@@ -819,11 +819,11 @@ Optical_Flow_Initializer::best_optical_flow_point(work_t & best_grad,
       // for most subsets, keep the distance between the optical flow points at least 10 pixels away
       // for small subsets make it 2 pixels away
       // the distance is measured in the reference frame
-      const work_t dist_min = (num_active < 100||allow_close_points) ? 4.0 : 100.0;
+      const scalar_t dist_min = (num_active < 100||allow_close_points) ? 4.0 : 100.0;
       for(size_t k=0;k<existing_points->size();++k){
         const int_t loc_x = subset_->x((*existing_points)[k]);
         const int_t loc_y = subset_->y((*existing_points)[k]);
-        const work_t dist_sq = (subset_->x(i)-loc_x)*(subset_->x(i)-loc_x) +
+        const scalar_t dist_sq = (subset_->x(i)-loc_x)*(subset_->x(i)-loc_x) +
             (subset_->y(i)-loc_y)*(subset_->y(i)-loc_y);
         if(dist_sq < dist_min){
           close_to_existing = true;
@@ -882,16 +882,16 @@ Status_Flag
 Optical_Flow_Initializer::set_locations(const int_t subset_gid){
   assert(schema_->prev_img()!=Teuchos::null);
   DEBUG_MSG("Optical_Flow_Initializer::set_locations() called");
-  static work_t grad_coeffs[5] = {-1.0,8.0,0.0,-8.0,1.0};
-  Teuchos::ArrayRCP<work_t> gx(subset_->num_pixels(),0.0);
-  Teuchos::ArrayRCP<work_t> gy(subset_->num_pixels(),0.0);
+  static scalar_t grad_coeffs[5] = {-1.0,8.0,0.0,-8.0,1.0};
+  Teuchos::ArrayRCP<scalar_t> gx(subset_->num_pixels(),0.0);
+  Teuchos::ArrayRCP<scalar_t> gy(subset_->num_pixels(),0.0);
   Teuchos::ArrayRCP<int_t> def_x(subset_->num_pixels(),0);
   Teuchos::ArrayRCP<int_t> def_y(subset_->num_pixels(),0);
 
   Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory(schema_);
   shape_function->initialize_parameters_from_fields(schema_,subset_gid);
   shape_function->map_to_u_v_theta(subset_->centroid_x(),subset_->centroid_y(),initial_u_,initial_v_,initial_t_);
-  work_t mapped_x=0.0,mapped_y=0.0;
+  scalar_t mapped_x=0.0,mapped_y=0.0;
   int_t px=0,py=0;
   const int_t cx = subset_->centroid_x();
   const int_t cy = subset_->centroid_y();
@@ -913,7 +913,7 @@ Optical_Flow_Initializer::set_locations(const int_t subset_gid){
     }
   }
   std::set<std::pair<int_t,int_t> > subset_pixels = subset_->deformed_shapes(shape_function,cx,cy,1.0);
-  work_t best_grad = 0.0;
+  scalar_t best_grad = 0.0;
   ids_[0] = best_optical_flow_point(best_grad,def_x,def_y,gx,gy,subset_pixels);
   if(ids_[0] == -1){
     ref_pt1_x_ = 0; ref_pt1_y_ = 0;
@@ -1014,7 +1014,7 @@ Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
   if(current_pt2_x_ - (int_t)(current_pt2_x_) >= 0.5) pt_def_x[1]++;
   pt_def_y[1] = (int_t)current_pt2_y_;
   if(current_pt2_y_ - (int_t)(current_pt2_y_) >= 0.5) pt_def_y[1]++;
-  static work_t grad_coeffs[5] = {-1.0,8.0,0.0,-8.0,1.0};
+  static scalar_t grad_coeffs[5] = {-1.0,8.0,0.0,-8.0,1.0};
 
   // do the optical flow about these points...
   const int N = 2;
@@ -1029,8 +1029,8 @@ Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
   double *SWORK = new double[QWORK];
   Teuchos::LAPACK<int,double> lapack;
 
-  work_t update_x[2] = {0.0,0.0};
-  work_t update_y[2] = {0.0,0.0};
+  scalar_t update_x[2] = {0.0,0.0};
+  scalar_t update_y[2] = {0.0,0.0};
   for(int_t pt=0;pt<2;++pt){
     // clear the values of H and q
     H(0,0) = 0.0;
@@ -1039,10 +1039,10 @@ Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
     H(1,1) = 0.0;
     q[0] = 0.0;
     q[1] = 0.0;
-    work_t Ix = 0.0;
-    work_t Iy = 0.0;
-    work_t It = 0.0;
-    work_t w_coeff = 0.0;
+    scalar_t Ix = 0.0;
+    scalar_t Iy = 0.0;
+    scalar_t It = 0.0;
+    scalar_t w_coeff = 0.0;
     int_t x=0,y=0;
     // loop over subset pixels in the deformed location
     for(int_t j=0;j<window_size_;++j){
@@ -1094,30 +1094,30 @@ Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
   // work out the trig with the centroid of the subset:
 
   // vector from point 1 to point 2 in the def config
-  const work_t delta_12_x_def = current_pt2_x_ - current_pt1_x_;
-  const work_t delta_12_y_def = current_pt2_y_ - current_pt1_y_;
-  const work_t mag_def  = std::sqrt(delta_12_x_def*delta_12_x_def + delta_12_y_def*delta_12_y_def);
+  const scalar_t delta_12_x_def = current_pt2_x_ - current_pt1_x_;
+  const scalar_t delta_12_y_def = current_pt2_y_ - current_pt1_y_;
+  const scalar_t mag_def  = std::sqrt(delta_12_x_def*delta_12_x_def + delta_12_y_def*delta_12_y_def);
   DEBUG_MSG("Optical_Flow_Initializer()::initial_guess() mag_ref " << mag_ref_ << " mag_def " << mag_def);
 
   // angle between these two vectors:
-  const work_t a_dot_b = delta_12_x_*delta_12_x_def + delta_12_y_*delta_12_y_def;
+  const scalar_t a_dot_b = delta_12_x_*delta_12_x_def + delta_12_y_*delta_12_y_def;
   if(mag_ref_*mag_def==0.0) return INITIALIZE_FAILED; // FIXME use field_values here?
   // TODO check that the mag_ref and mag_def are about the same (should be rigid body motion?)
-  work_t value = mag_ref_*mag_def==0.0?0.0:a_dot_b/(mag_ref_*mag_def);
+  scalar_t value = mag_ref_*mag_def==0.0?0.0:a_dot_b/(mag_ref_*mag_def);
   if (value < -1.0) value = -1.0 ;
   else if (value > 1.0) value = 1.0 ;
-  work_t theta_12 = 1.0*std::acos(value); // DICe measures theta in the other direction
+  scalar_t theta_12 = 1.0*std::acos(value); // DICe measures theta in the other direction
   // need to test theta + and theta - to see which one is right:
   // take the cross poduct, negative cross is negative theta
-  work_t cross_prod = delta_12_x_*delta_12_y_def - (delta_12_x_def*delta_12_y_);
+  scalar_t cross_prod = delta_12_x_*delta_12_y_def - (delta_12_x_def*delta_12_y_);
   if(cross_prod < 0.0) theta_12 = -1.0*theta_12;
 
-  const work_t cos_t = std::cos(theta_12);
-  const work_t sin_t = std::sin(theta_12);
-  const work_t new_cx = cos_t*delta_1c_x_ - sin_t*delta_1c_y_ + current_pt1_x_;
-  const work_t new_cy = sin_t*delta_1c_x_ + cos_t*delta_1c_y_ + current_pt1_y_;
-  const work_t disp_x = new_cx - ref_cx_;
-  const work_t disp_y = new_cy - ref_cy_;
+  const scalar_t cos_t = std::cos(theta_12);
+  const scalar_t sin_t = std::sin(theta_12);
+  const scalar_t new_cx = cos_t*delta_1c_x_ - sin_t*delta_1c_y_ + current_pt1_x_;
+  const scalar_t new_cy = sin_t*delta_1c_x_ + cos_t*delta_1c_y_ + current_pt1_y_;
+  const scalar_t disp_x = new_cx - ref_cx_;
+  const scalar_t disp_y = new_cy - ref_cy_;
   DEBUG_MSG("Optical_Flow_Initializer::initial_guess() computed u " << disp_x << " v " << disp_y << " theta " << theta_12);
   if(std::abs(disp_x)>schema_->prev_img()->width() || std::abs(disp_y)>schema_->prev_img()->height() || std::abs(theta_12) > DICE_TWOPI){
     DEBUG_MSG("Failed initialization due to invalid u, v, or theta.");
@@ -1146,7 +1146,7 @@ Optical_Flow_Initializer::initial_guess(const int_t subset_gid,
 };
 
 Motion_Test_Utility::Motion_Test_Utility(Schema * schema,
-  const work_t & tol):
+  const scalar_t & tol):
   schema_(schema),
   tol_(tol),
   motion_state_(MOTION_NOT_SET)
@@ -1176,7 +1176,7 @@ Motion_Test_Utility::motion_detected(const int_t sub_image_id){
     const int_t h = schema_->def_img(sub_image_id)->height();
     DEBUG_MSG("Motion_Test_Utility::motion_detected(): motion window sub_image_id " << sub_image_id << " width " << w << " height " << h);
     //diff the two images and see if the difference is above the user requested tolerance
-    work_t diff = 0.0;
+    scalar_t diff = 0.0;
     // skip the outer edges since they are not filtered
     for(int_t y=half_mask+1;y<h-(half_mask+1);++y){
       for(int_t x=half_mask+1;x<w-(half_mask+1);++x){

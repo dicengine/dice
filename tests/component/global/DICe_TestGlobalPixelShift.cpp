@@ -106,11 +106,11 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<MMS_Problem> prob = mms_factory.create(mms_params);
 
   // keep track of the errors
-  std::vector<work_t> error_x;
-  std::vector<work_t> error_y;
+  std::vector<scalar_t> error_x;
+  std::vector<scalar_t> error_y;
   std::vector<std::string> files_to_remove;
-//  for(work_t shift = 0.0;shift<=1.0001;shift+=0.05){
-  for(work_t shift = 0.0;shift<=1.0001;shift+=0.05){
+//  for(scalar_t shift = 0.0;shift<=1.0001;shift+=0.05){
+  for(scalar_t shift = 0.0;shift<=1.0001;shift+=0.05){
     *outStream << "SHIFT " << shift << std::endl;
     *outStream << "creating the image set" << std::endl;
 
@@ -118,9 +118,9 @@ int main(int argc, char *argv[]) {
     Teuchos::ArrayRCP<storage_t> def_intens(w*h,0);
     for(int_t y=0;y<h;++y){
       for(int_t x=0;x<h;++x){
-        work_t dx = x - shift;
-        work_t dy = y - shift;
-        work_t phi_0 = 0.0,phi=0.0;
+        scalar_t dx = x - shift;
+        scalar_t dy = y - shift;
+        scalar_t phi_0 = 0.0,phi=0.0;
         prob->phi(x,y,phi_0);
         prob->phi(dx,dy,phi);
         ref_intens[y*w+x] = static_cast<storage_t>(0.5*255.0 + phi_0*0.5*255.0);
@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
     for(int_t i=0;i<schema.global_algorithm()->mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
       const int_t ix = i*2+0;
       const int_t iy = i*2+1;
-      work_t bx=shift,by=shift;
+      scalar_t bx=shift,by=shift;
       exact_sol->local_value(ix) = bx;
       exact_sol->local_value(iy) = by;
     }
@@ -205,15 +205,15 @@ int main(int argc, char *argv[]) {
 
     *outStream << "checking the output" << std::endl;
 
-    work_t error_bx = 0.0;
-    work_t error_by = 0.0;
+    scalar_t error_bx = 0.0;
+    scalar_t error_by = 0.0;
 
     Teuchos::RCP<MultiField> disp = schema.global_algorithm()->mesh()->get_field(field_enums::DISPLACEMENT_FS);
     for(int_t i=0;i<schema.global_algorithm()->mesh()->get_scalar_node_dist_map()->get_num_local_elements();++i){
-      const work_t b_x = disp->local_value(i*2+0);
-      const work_t b_y = disp->local_value(i*2+1);
-      const work_t b_exact_x = exact_sol->local_value(i*2+0);
-      const work_t b_exact_y = exact_sol->local_value(i*2+1);
+      const scalar_t b_x = disp->local_value(i*2+0);
+      const scalar_t b_y = disp->local_value(i*2+1);
+      const scalar_t b_exact_x = exact_sol->local_value(i*2+0);
+      const scalar_t b_exact_y = exact_sol->local_value(i*2+1);
       error_bx += (b_exact_x - b_x)*(b_exact_x - b_x);
       error_by += (b_exact_y - b_y)*(b_exact_y - b_y);
     }
@@ -227,7 +227,7 @@ int main(int argc, char *argv[]) {
     // intensity values for the deformed image get truncated, this leads to errors in the
     // the evaluation of the motion estimation. To deal with this the tol for int-based
     // storage types is loosened for these tests
-    work_t error_max = 0.02;
+    scalar_t error_max = 0.02;
     if(std::is_same<storage_t,double>::value||std::is_same<storage_t,float>::value)
       error_max = 1.0E-4;
 

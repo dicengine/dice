@@ -97,7 +97,7 @@ NetCDF_Reader::get_image_dimensions(const std::string & file_name,
 void
 NetCDF_Reader::read_netcdf_image(const char * file_name,
   const size_t time_index,
-  work_t * intensities,
+  scalar_t * intensities,
   const int_t subimage_width,
   const int_t subimage_height,
   const int_t offset_x,
@@ -175,12 +175,12 @@ NetCDF_Reader::read_netcdf_image(const char * file_name,
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"invalid nc data_type " << data_type);
   }
 
-  if(std::is_same<work_t,float>::value){
+  if(std::is_same<scalar_t,float>::value){
     // cast to avoid compiler error for the get var method that isn't used (it expects a pointer of type float)
     // if this if statement is true, this is a no-op, if not it never gets executed
     float * intens = (float *)intensities;
     nc_get_vara_float(ncid,data_var_index,&starts[0],&counts[0],intens);
-  }else if(std::is_same<work_t,double>::value){
+  }else if(std::is_same<scalar_t,double>::value){
     // cast to avoid compiler error for the get var method that isn't used (it expects a pointer of type double)
     double * intens = (double *)intensities;
     nc_get_vara_double(ncid,data_var_index,&starts[0],&counts[0],intens);

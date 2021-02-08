@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
   DEBUG_MSG("data file name: " << data_file_name);
   const bool other_dim_is_y = std::stoi(argv[2])==1;
   DEBUG_MSG("other dim is y: " << other_dim_is_y);
-  const work_t other_dim = std::stoi(argv[3]);
+  const scalar_t other_dim = std::stoi(argv[3]);
   DEBUG_MSG("other dim: " << other_dim);
 
   // read the text input file:
@@ -111,11 +111,11 @@ int main(int argc, char *argv[]) {
 
   TEUCHOS_TEST_FOR_EXCEPTION(num_cols > 11,std::runtime_error,"Too many columns in the data file (needs to be 11 or less)");
 
-  std::vector<work_t> coords(num_points);
-  work_t min_coord = std::numeric_limits<work_t>::max();
-  work_t max_coord = 0.0;
-  work_t avg_dist = 0.0;
-  std::vector<std::vector<work_t> > values(num_points);
+  std::vector<scalar_t> coords(num_points);
+  scalar_t min_coord = std::numeric_limits<scalar_t>::max();
+  scalar_t max_coord = 0.0;
+  scalar_t avg_dist = 0.0;
+  std::vector<std::vector<scalar_t> > values(num_points);
   for(int_t i=0;i<num_points;++i){
     values[i].resize(num_cols-1);
   }
@@ -160,15 +160,15 @@ int main(int argc, char *argv[]) {
   //    std::cout << std::endl;
   //  }
 
-  const work_t size_constraint = avg_dist*avg_dist;
+  const scalar_t size_constraint = avg_dist*avg_dist;
 
   // create an exodus mesh:
   // determine the number of points in the opposite dimension
   const int_t other_dim_num_pts = int_t(other_dim / avg_dist) + 1;
   const int_t mesh_num_points = other_dim_num_pts * num_points;
   DEBUG_MSG("Mesh has " << mesh_num_points << " points");
-  Teuchos::ArrayRCP<work_t> points_x(mesh_num_points);
-  Teuchos::ArrayRCP<work_t> points_y(mesh_num_points);
+  Teuchos::ArrayRCP<scalar_t> points_x(mesh_num_points);
+  Teuchos::ArrayRCP<scalar_t> points_y(mesh_num_points);
   for(int_t dim_0=0;dim_0<num_points;++dim_0){
     for(int_t dim_1=0;dim_1<other_dim_num_pts;++dim_1){
       if(other_dim_is_y){

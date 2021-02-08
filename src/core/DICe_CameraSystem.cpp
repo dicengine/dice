@@ -148,9 +148,9 @@ Camera_System::read_camera_system_file(const std::string & file) {
           camera_info.tz_ = camParams.get<double>("TZ");
           //DEBUG_MSG("Camera_System::read_camera_system_file(): found extrinsic z translation: " << camera_info.tz_);
         }
-        work_t alpha = 0;
-        work_t beta = 0;
-        work_t gamma = 0;
+        scalar_t alpha = 0;
+        scalar_t beta = 0;
+        scalar_t gamma = 0;
         bool has_eulers = false;
         if (camParams.isParameter("ALPHA")) {
           alpha = camParams.get<double>("ALPHA");
@@ -202,14 +202,14 @@ Camera_System::read_camera_system_file(const std::string & file) {
           //DEBUG_MSG("Camera_System::read_camera_system_file(): found " << rotation_3x3_matrix);
           TEUCHOS_TEST_FOR_EXCEPTION(has_eulers,std::runtime_error,"cannot specify euler angles and rotation matrix");
           Teuchos::ParameterList camRot = camParams.sublist(rotation_3x3_matrix);
-          Teuchos::Array<work_t>  tArray;
+          Teuchos::Array<scalar_t>  tArray;
           for (int_t j = 0; j < 3; j++) {
             std::stringstream row_param;
             row_param << "ROW " << j;
             TEUCHOS_TEST_FOR_EXCEPTION(!camRot.isParameter(row_param.str()),std::runtime_error,
               "cal file missing row " << j << " for camera 3x3 rotation matrix");
             std::string row_text = camRot.get<std::string>(row_param.str());
-            tArray = Teuchos::fromStringToArray<work_t>(row_text);
+            tArray = Teuchos::fromStringToArray<scalar_t>(row_text);
             for (int_t i = 0; i < 3; i++)
               camera_info.rotation_matrix_(j,i) = tArray[i];
           }
@@ -232,8 +232,8 @@ Camera_System::read_camera_system_file(const std::string & file) {
       //DEBUG_MSG("Camera_System::read_camera_system_file(): found " << user_6_param_transform);
       has_6_transform_ = true;
       std::string param_text = sys_params->get<std::string>(user_6_param_transform);
-      Teuchos::Array<work_t>  tArray;
-      tArray = Teuchos::fromStringToArray<work_t>(param_text);
+      Teuchos::Array<scalar_t>  tArray;
+      tArray = Teuchos::fromStringToArray<scalar_t>(param_text);
       assert(tArray.size()==6);
       for (int_t i = 0; i < 6; i++)
         user_6x1_trans_[i] = tArray[i];
@@ -243,12 +243,12 @@ Camera_System::read_camera_system_file(const std::string & file) {
       //DEBUG_MSG("Camera_System::read_camera_system_file(): found " << user_4x4_param_transform);
       has_4x4_transform_ = true;
       Teuchos::ParameterList camRow = sys_params->sublist(user_4x4_param_transform);
-      Teuchos::Array<work_t>  tArray;
+      Teuchos::Array<scalar_t>  tArray;
       for (int_t j = 0; j < 4; j++) {
         std::stringstream row_param;
         row_param << "ROW " << j;
         std::string row_text = camRow.get<std::string>(row_param.str());
-        tArray = Teuchos::fromStringToArray<work_t>(row_text);
+        tArray = Teuchos::fromStringToArray<scalar_t>(row_text);
         assert(tArray.size()==4);
         for (int_t i = 0; i < 4; i++)
           user_4x4_trans_(j,i) = tArray[i];
@@ -259,12 +259,12 @@ Camera_System::read_camera_system_file(const std::string & file) {
 //      DEBUG_MSG("Camera_System::read_camera_system_file(): found " << opencv_3x4_param_transform);
 //      has_opencv_rot_trans_ = true;
 //      Teuchos::ParameterList camRow = sys_params->sublist(opencv_3x4_param_transform);
-//      Teuchos::Array<work_t>  tArray;
+//      Teuchos::Array<scalar_t>  tArray;
 //      for (int_t j = 0; j < 3; j++) {
 //        std::stringstream row_param;
 //        row_param << "ROW " << j;
 //        std::string row_text = camRow.get<std::string>(row_param.str());
-//        tArray = Teuchos::fromStringToArray<work_t>(row_text);
+//        tArray = Teuchos::fromStringToArray<scalar_t>(row_text);
 //        assert(tArray.size()==4);
 //        for (int_t i = 0; i < 4; i++)
 //          opencv_3x4_trans_(j,i) = tArray[i];
@@ -326,9 +326,9 @@ Camera_System::read_camera_system_file(const std::string & file) {
         else if (tokens[0] == "ORIENTATION"){
           assert(tokens.size()>=7);
           // ++ the camera index on this one
-          const work_t alpha = strtod(tokens[1].c_str(), NULL);
-          const work_t beta = strtod(tokens[2].c_str(), NULL);
-          const work_t gamma = strtod(tokens[3].c_str(), NULL);
+          const scalar_t alpha = strtod(tokens[1].c_str(), NULL);
+          const scalar_t beta = strtod(tokens[2].c_str(), NULL);
+          const scalar_t gamma = strtod(tokens[3].c_str(), NULL);
           DEBUG_MSG("VIC3d orientation: alpha " << alpha << " beta " << beta << " gamma " << gamma);
           camera_infos[current_camera].set_rotation_matrix(alpha,beta,gamma);
           camera_infos[current_camera].tx_ = strtod(tokens[4].c_str(), NULL);
@@ -353,9 +353,9 @@ Camera_System::read_camera_system_file(const std::string & file) {
           //Store the extrinsic parameters
           assert(tokens.size()>=18);
           TEUCHOS_TEST_FOR_EXCEPTION(tokens[11] != "ORIENTATION",std::runtime_error,"");
-          const work_t alpha = strtod(tokens[12].c_str(), NULL);
-          const work_t beta = strtod(tokens[13].c_str(), NULL);
-          const work_t gamma = strtod(tokens[14].c_str(), NULL);
+          const scalar_t alpha = strtod(tokens[12].c_str(), NULL);
+          const scalar_t beta = strtod(tokens[13].c_str(), NULL);
+          const scalar_t gamma = strtod(tokens[14].c_str(), NULL);
           camera_infos[current_camera].set_rotation_matrix(alpha,beta,gamma);
           camera_infos[current_camera].tx_ = strtod(tokens[15].c_str(), NULL);
           camera_infos[current_camera].ty_ = strtod(tokens[16].c_str(), NULL);
@@ -416,7 +416,7 @@ Camera_System::read_camera_system_file(const std::string & file) {
       camera_info_0.lens_distortion_model_ = Camera::K1R1_K2R2_K3R3;
       camera_info_1.lens_distortion_model_ = Camera::K1R1_K2R2_K3R3;
       int_t current_line = 0;
-      std::vector<work_t> ext_values(total_num_values - 18,0);
+      std::vector<scalar_t> ext_values(total_num_values - 18,0);
       int_t txt_img_height = -1;
       int_t txt_img_width = -1;
       while (!dataFile.eof())
@@ -450,9 +450,9 @@ Camera_System::read_camera_system_file(const std::string & file) {
       camera_info_1.ty_ = ext_values[ext_values.size()-2];
       camera_info_1.tz_ = ext_values[ext_values.size()-1];
       if(has_eulers){
-        const work_t alpha = ext_values[0];
-        const work_t beta = ext_values[1];
-        const work_t gamma = ext_values[2];
+        const scalar_t alpha = ext_values[0];
+        const scalar_t beta = ext_values[1];
+        const scalar_t gamma = ext_values[2];
         camera_info_1.set_rotation_matrix(alpha,beta,gamma);
       }else{
         assert(ext_values.size()>=12);
@@ -575,7 +575,7 @@ Camera_System::write_camera_system_file(const std::string & file){
     param_val << cameras_[camera_index]->id();
     write_xml_string_param(file, param_title.str(), param_val.str(), false);
 
-    std::vector<work_t> & intrinsics = *cameras_[camera_index]->intrinsics();
+    std::vector<scalar_t> & intrinsics = *cameras_[camera_index]->intrinsics();
     for (int_t j = 0; j < Camera::MAX_CAM_INTRINSIC_PARAM; j++) {
       if (intrinsics[j] != 0) {
         write_xml_high_precision_real_param(file, Camera::to_string(static_cast<Camera::Cam_Intrinsic_Param>(j)), intrinsics[j]);
@@ -614,7 +614,7 @@ Camera_System::write_camera_system_file(const std::string & file){
     }
     write_xml_param_list_close(file, false);
     // output the angles for debugging purposes
-    work_t alpha=0.0,beta=0.0,gamma=0.0;
+    scalar_t alpha=0.0,beta=0.0,gamma=0.0;
     try{
       // put inside a try block in case the rotation matrix is not valid and eulers throws an exception
       cameras_[camera_index]->camera_info()->eulers(alpha,beta,gamma);
@@ -722,23 +722,23 @@ Camera_System::write_camera_system_file(const std::string & file){
   finalize_xml_file(file);
 }
 
-Matrix<work_t,3>
+Matrix<scalar_t,3>
 Camera_System::fundamental_matrix(const size_t source_cam_id,
   const size_t target_cam_id){
   DEBUG_MSG("Camera_System::fundamental_matrix(): source camera id " << source_cam_id << " target camera id " << target_cam_id);
   TEUCHOS_TEST_FOR_EXCEPTION(sys_type_!=OPENCV,std::runtime_error,"this method not implemented yet for this system type (only OPENCV for now) " << to_string(sys_type_));
   TEUCHOS_TEST_FOR_EXCEPTION(source_cam_id<0 || source_cam_id>=num_cameras(),std::runtime_error,"invalid source camera id");
   TEUCHOS_TEST_FOR_EXCEPTION(target_cam_id<0 || target_cam_id>=num_cameras(),std::runtime_error,"invalid target camera id");
-  Matrix<work_t,3> T;
-  Matrix<work_t,3> F;
-  Matrix<work_t,3> f_source;
-  Matrix<work_t,3> f_target;
-  const Matrix<work_t,3> R = *cameras_[target_cam_id]->rotation_matrix();
+  Matrix<scalar_t,3> T;
+  Matrix<scalar_t,3> F;
+  Matrix<scalar_t,3> f_source;
+  Matrix<scalar_t,3> f_target;
+  const Matrix<scalar_t,3> R = *cameras_[target_cam_id]->rotation_matrix();
   // TODO fix the rotation matrix for other camera system types like VIC3d
   // where R is a sum of cam 0 to origin then from origin to cam 1
   // same for tx, ty, tz
-  std::vector<work_t> & source_intrinsics = *cameras_[source_cam_id]->intrinsics();
-  std::vector<work_t> & target_intrinsics = *cameras_[target_cam_id]->intrinsics();
+  std::vector<scalar_t> & source_intrinsics = *cameras_[source_cam_id]->intrinsics();
+  std::vector<scalar_t> & target_intrinsics = *cameras_[target_cam_id]->intrinsics();
   T(0,1) = -1.0*(*cameras_[target_cam_id]).tz();
   T(0,2) = (*cameras_[target_cam_id]).ty();
   T(1,0) = (*cameras_[target_cam_id]).tz();
@@ -770,14 +770,14 @@ void
 Camera_System::camera_to_camera_projection(
   const size_t source_id,
   const size_t target_id,
-  const std::vector<work_t> & img_source_x,
-  const std::vector<work_t> & img_source_y,
-  std::vector<work_t> & img_target_x,
-  std::vector<work_t> & img_target_y,
-  const std::vector<work_t> & facet_params,
-  std::vector<std::vector<work_t> > & img_target_dx,
-  std::vector<std::vector<work_t> > & img_target_dy,
-  const std::vector<work_t> & rigid_body_params) {
+  const std::vector<scalar_t> & img_source_x,
+  const std::vector<scalar_t> & img_source_y,
+  std::vector<scalar_t> & img_target_x,
+  std::vector<scalar_t> & img_target_y,
+  const std::vector<scalar_t> & facet_params,
+  std::vector<std::vector<scalar_t> > & img_target_dx,
+  std::vector<std::vector<scalar_t> > & img_target_dy,
+  const std::vector<scalar_t> & rigid_body_params) {
   TEUCHOS_TEST_FOR_EXCEPTION(facet_params.size()!=3,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(source_id<0||source_id>=num_cameras(),std::runtime_error,"invalid source id");
   TEUCHOS_TEST_FOR_EXCEPTION(target_id<0||target_id>=num_cameras(),std::runtime_error,"invalid target id");
@@ -804,28 +804,28 @@ Camera_System::camera_to_camera_projection(
     TEUCHOS_TEST_FOR_EXCEPTION(rigid_body_params.size()!=6,std::runtime_error,"invalid rigid body parameter vector size");
   }
   // temporary vectors for traversing the projections
-  std::vector<work_t> sensor_x(vec_size,0);
-  std::vector<work_t> sensor_y(vec_size,0);
-  std::vector<work_t> cam_x(vec_size,0);
-  std::vector<work_t> cam_y(vec_size,0);
-  std::vector<work_t> cam_z(vec_size,0);
-  std::vector<work_t> world_x(vec_size,0);
-  std::vector<work_t> world_y(vec_size,0);
-  std::vector<work_t> world_z(vec_size,0);
-  std::vector<work_t> rb_world_x(vec_size,0);
-  std::vector<work_t> rb_world_y(vec_size,0);
-  std::vector<work_t> rb_world_z(vec_size,0);
-  std::vector<std::vector<work_t> > cam_dx, dx;
-  std::vector<std::vector<work_t> > cam_dy, dy;
-  std::vector<std::vector<work_t> > cam_dz, dz;
+  std::vector<scalar_t> sensor_x(vec_size,0);
+  std::vector<scalar_t> sensor_y(vec_size,0);
+  std::vector<scalar_t> cam_x(vec_size,0);
+  std::vector<scalar_t> cam_y(vec_size,0);
+  std::vector<scalar_t> cam_z(vec_size,0);
+  std::vector<scalar_t> world_x(vec_size,0);
+  std::vector<scalar_t> world_y(vec_size,0);
+  std::vector<scalar_t> world_z(vec_size,0);
+  std::vector<scalar_t> rb_world_x(vec_size,0);
+  std::vector<scalar_t> rb_world_y(vec_size,0);
+  std::vector<scalar_t> rb_world_z(vec_size,0);
+  std::vector<std::vector<scalar_t> > cam_dx, dx;
+  std::vector<std::vector<scalar_t> > cam_dy, dy;
+  std::vector<std::vector<scalar_t> > cam_dz, dz;
   if(has_derivatives){
     // these vectors either have 3 or 6 rows depending on if this is a rigid body motion projection or projection shape function based
-    cam_dx = std::vector<std::vector<work_t> >(num_params,std::vector<work_t>(vec_size,0));
-    cam_dy = std::vector<std::vector<work_t> >(num_params,std::vector<work_t>(vec_size,0));
-    cam_dz = std::vector<std::vector<work_t> >(num_params,std::vector<work_t>(vec_size,0));
-    dx = std::vector<std::vector<work_t> >(num_params,std::vector<work_t>(vec_size,0));
-    dy = std::vector<std::vector<work_t> >(num_params,std::vector<work_t>(vec_size,0));
-    dz = std::vector<std::vector<work_t> >(num_params,std::vector<work_t>(vec_size,0));
+    cam_dx = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
+    cam_dy = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
+    cam_dz = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
+    dx = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
+    dy = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
+    dz = std::vector<std::vector<scalar_t> >(num_params,std::vector<scalar_t>(vec_size,0));
   }
 
   // traverse the projections from image to world for the source camera ...
@@ -868,16 +868,16 @@ Camera_System::camera_to_camera_projection(
 }
 
 void
-Camera_System::rot_trans_3D(const std::vector<work_t> & source_x,
-  const std::vector<work_t> & source_y,
-  const std::vector<work_t> & source_z,
-  std::vector<work_t> & target_x,
-  std::vector<work_t> & target_y,
-  std::vector<work_t> & target_z,
-  const std::vector<work_t> & rigid_body_params,
-  std::vector < std::vector<work_t> > & target_dx,
-  std::vector < std::vector<work_t> > & target_dy,
-  std::vector < std::vector<work_t> > & target_dz) {
+Camera_System::rot_trans_3D(const std::vector<scalar_t> & source_x,
+  const std::vector<scalar_t> & source_y,
+  const std::vector<scalar_t> & source_z,
+  std::vector<scalar_t> & target_x,
+  std::vector<scalar_t> & target_y,
+  std::vector<scalar_t> & target_z,
+  const std::vector<scalar_t> & rigid_body_params,
+  std::vector < std::vector<scalar_t> > & target_dx,
+  std::vector < std::vector<scalar_t> > & target_dy,
+  std::vector < std::vector<scalar_t> > & target_dz) {
   TEUCHOS_TEST_FOR_EXCEPTION(rigid_body_params.size()!=6,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(source_x.size()==0,std::runtime_error,"");
   const size_t vec_size = source_x.size();
@@ -901,7 +901,7 @@ Camera_System::rot_trans_3D(const std::vector<work_t> & source_x,
   }
   // this transformation assumes all shape function related partials coming into the function are 0
   // transform the coordinates
-  Matrix<work_t,3> R = Camera::Camera_Info::eulers_to_rotation_matrix(rigid_body_params[0],rigid_body_params[1],rigid_body_params[2]);
+  Matrix<scalar_t,3> R = Camera::Camera_Info::eulers_to_rotation_matrix(rigid_body_params[0],rigid_body_params[1],rigid_body_params[2]);
 
   for (size_t i = 0; i < vec_size; i++) {
     target_x[i] = R(0,0) * source_x[i] + R(0,1) * source_y[i] + R(0,2) * source_z[i] + rigid_body_params[3];
@@ -909,9 +909,9 @@ Camera_System::rot_trans_3D(const std::vector<work_t> & source_x,
     target_z[i] = R(2,0) * source_x[i] + R(1,2) * source_y[i] + R(2,2) * source_z[i] + rigid_body_params[5];
   }
   if(has_derivatives){
-    Matrix<work_t,3,4> R_dx;
-    Matrix<work_t,3,4> R_dy;
-    Matrix<work_t,3,4> R_dz;
+    Matrix<scalar_t,3,4> R_dx;
+    Matrix<scalar_t,3,4> R_dy;
+    Matrix<scalar_t,3,4> R_dz;
     Camera::Camera_Info::eulers_to_rotation_matrix_partials(rigid_body_params[0],rigid_body_params[1],rigid_body_params[2],R_dx,R_dy,R_dz);
     //calculate the partials
     for (size_t j = 0; j < 3; j++) {
@@ -987,19 +987,19 @@ std::ostream & operator<<(std::ostream & os, const Camera_System & camera_system
 
 
 //void
-//Camera_System::rot_trans_3D(const std::vector<work_t> & wld0_x,
-//  const std::vector<work_t> & wld0_y,
-//  const std::vector<work_t> & wld0_z,
-//  std::vector<work_t> & wld1_x,
-//  std::vector<work_t> & wld1_y,
-//  std::vector<work_t> & wld1_z,
-//  const std::vector<work_t> & params,
-//  const std::vector < std::vector<work_t> > & wld0_dx,
-//  const std::vector < std::vector<work_t> > & wld0_dy,
-//  const std::vector < std::vector<work_t> > & wld0_dz,
-//  std::vector < std::vector<work_t> > & wld1_dx,
-//  std::vector < std::vector<work_t> > & wld1_dy,
-//  std::vector < std::vector<work_t> > & wld1_dz) {
+//Camera_System::rot_trans_3D(const std::vector<scalar_t> & wld0_x,
+//  const std::vector<scalar_t> & wld0_y,
+//  const std::vector<scalar_t> & wld0_z,
+//  std::vector<scalar_t> & wld1_x,
+//  std::vector<scalar_t> & wld1_y,
+//  std::vector<scalar_t> & wld1_z,
+//  const std::vector<scalar_t> & params,
+//  const std::vector < std::vector<scalar_t> > & wld0_dx,
+//  const std::vector < std::vector<scalar_t> > & wld0_dy,
+//  const std::vector < std::vector<scalar_t> > & wld0_dz,
+//  std::vector < std::vector<scalar_t> > & wld1_dx,
+//  std::vector < std::vector<scalar_t> > & wld1_dy,
+//  std::vector < std::vector<scalar_t> > & wld1_dz) {
 //  //This transformation assumes non zero incoming partials order is Zp, Theata, Phi, Ang X, Ang Y, Ang Z
 //  //prep the rotation coefficients
 //  initialize_rot_trans_3D(params, true);

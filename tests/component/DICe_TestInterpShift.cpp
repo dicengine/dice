@@ -67,10 +67,10 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- Begin test ---" << std::endl;
 
-  Teuchos::ArrayRCP<work_t> coords_x(1,25.0);
-  Teuchos::ArrayRCP<work_t> coords_y(1,20.0);
+  Teuchos::ArrayRCP<scalar_t> coords_x(1,25.0);
+  Teuchos::ArrayRCP<scalar_t> coords_y(1,20.0);
   const int_t subset_size = 21;
-  const work_t sin_factor = 5.0;
+  const scalar_t sin_factor = 5.0;
   Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
   params->set(DICe::interpolation_method,DICe::KEYS_FOURTH);
   params->set(DICe::optimization_method,DICe::GRADIENT_BASED);
@@ -81,27 +81,27 @@ int main(int argc, char *argv[]) {
   const int_t array_h = 40;
   Teuchos::ArrayRCP<storage_t> ref_intensities(array_w*array_h,0);
   // populate the intensities with a sin/cos function
-  work_t x_val = 0.0, y_val = 0.0;
+  scalar_t x_val = 0.0, y_val = 0.0;
   for(int_t y=0;y<array_h;++y){
     for(int_t x=0;x<array_w;++x){
-      x_val = std::abs(std::cos(((work_t)x/(work_t)array_w)*sin_factor*DICE_PI));
-      y_val = std::abs(std::cos(((work_t)y/(work_t)array_h)*sin_factor*DICE_PI));
+      x_val = std::abs(std::cos(((scalar_t)x/(scalar_t)array_w)*sin_factor*DICE_PI));
+      y_val = std::abs(std::cos(((scalar_t)y/(scalar_t)array_h)*sin_factor*DICE_PI));
       ref_intensities[y*array_w+x] = static_cast<storage_t>(x_val*y_val*255.0);
     }
   }
   Teuchos::RCP<Image> ref_img = Teuchos::rcp(new Image(array_w,array_h,ref_intensities));
   //ref_img->write("shift_ref.png");
 
-  std::vector<work_t> x_error;
+  std::vector<scalar_t> x_error;
 
-  const work_t shift_step = 0.1;
-  for(work_t shift = 0.0;shift<=1.0; shift+=shift_step){
+  const scalar_t shift_step = 0.1;
+  for(scalar_t shift = 0.0;shift<=1.0; shift+=shift_step){
     Teuchos::ArrayRCP<storage_t> def_intensities(array_w*array_h,0.0);
     // populate the intensities with a sin/cos function
     for(int_t y=0;y<array_h;++y){
       for(int_t x=0;x<array_w;++x){
-        x_val = std::abs(std::cos((((work_t)x-shift)/(work_t)array_w)*sin_factor*DICE_PI));
-        y_val = std::abs(std::cos(((work_t)y/(work_t)array_h)*sin_factor*DICE_PI));
+        x_val = std::abs(std::cos((((scalar_t)x-shift)/(scalar_t)array_w)*sin_factor*DICE_PI));
+        y_val = std::abs(std::cos(((scalar_t)y/(scalar_t)array_h)*sin_factor*DICE_PI));
         def_intensities[y*array_w+x] = static_cast<storage_t>(x_val*y_val*255.0);
       }
     }
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
     //schema.print_fields();
   }
 
-  const work_t tol = 0.01;
+  const scalar_t tol = 0.01;
   for (size_t i=0;i<x_error.size();++i){
     *outStream << "step " << i << " error " << x_error[i] << std::endl;
     if(x_error[i]>tol){

@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 
   DICe::Calibration cal(input_file);
   // create the intersection points and generate a calibrated camera system
-  work_t rms = 0.0;
+  scalar_t rms = 0.0;
   Teuchos::RCP<Camera_System> cam_sys = cal.calibrate(rms);
   // write the calibration parameters to file which includes the interesection points
   cam_sys->write_camera_system_file(output_file);

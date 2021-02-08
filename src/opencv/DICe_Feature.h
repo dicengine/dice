@@ -61,10 +61,10 @@ namespace DICe {
 DICE_LIB_DLL_EXPORT
 void match_features(Teuchos::RCP<Image> left_image,
   Teuchos::RCP<Image> right_image,
-  std::vector<work_t> & left_x,
-  std::vector<work_t> & left_y,
-  std::vector<work_t> & right_x,
-  std::vector<work_t> & right_y,
+  std::vector<scalar_t> & left_x,
+  std::vector<scalar_t> & left_y,
+  std::vector<scalar_t> & right_x,
+  std::vector<scalar_t> & right_y,
   const float & feature_tol=0.001f,
   const std::string & result_image_name="",
   const int_t threshold_block_size=-1);

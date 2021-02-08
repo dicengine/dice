@@ -74,10 +74,10 @@ namespace DICe {
 /// return value affine_matrix storage for the affine parameters (must be 3x3)
 DICE_LIB_DLL_EXPORT
 Teuchos::SerialDenseMatrix<int_t,double>
-compute_affine_matrix(const std::vector<work_t> proj_xl,
-  const std::vector<work_t> proj_yl,
-  const std::vector<work_t> proj_xr,
-  const std::vector<work_t> proj_yr);
+compute_affine_matrix(const std::vector<scalar_t> proj_xl,
+  const std::vector<scalar_t> proj_yl,
+  const std::vector<scalar_t> proj_xr,
+  const std::vector<scalar_t> proj_yr);
 
 /// \class DICe::Triangulation
 /// \brief A class for computing the triangulation of 3d points from two correlation and a calibration file
@@ -94,35 +94,35 @@ public:
 
   /// \brief constructor with no args
   Triangulation(){
-    warp_params_ = Teuchos::rcp(new std::vector<work_t>(12,0.0)); /// at max there are 12 parameters that must be set (for the quadratic)
+    warp_params_ = Teuchos::rcp(new std::vector<scalar_t>(12,0.0)); /// at max there are 12 parameters that must be set (for the quadratic)
     (*warp_params_)[1] = 1.0;
     (*warp_params_)[8] = 1.0;
-    projective_params_ = Teuchos::rcp(new std::vector<work_t>(9,0.0));
+    projective_params_ = Teuchos::rcp(new std::vector<scalar_t>(9,0.0));
     (*projective_params_)[0] = 1.0;
     (*projective_params_)[4] = 1.0;
     (*projective_params_)[8] = 1.0;
-    cam_0_to_cam_1_ = Matrix<work_t,4>::identity();
-    cam_0_to_world_ = Matrix<work_t,4>::identity();
+    cam_0_to_cam_1_ = Matrix<scalar_t,4>::identity();
+    cam_0_to_world_ = Matrix<scalar_t,4>::identity();
     cal_intrinsics_.clear();
     for(int_t i=0;i<2;++i) // one vec for each camera
-      cal_intrinsics_.push_back(std::vector<work_t>(Camera::MAX_CAM_INTRINSIC_PARAM,0.0));
+      cal_intrinsics_.push_back(std::vector<scalar_t>(Camera::MAX_CAM_INTRINSIC_PARAM,0.0));
   };
 
   /// Pure virtual destructor
   virtual ~Triangulation(){}
 
   /// returns a pointer to the calibration intrinsics
-  std::vector<std::vector<work_t> > * cal_intrinsics(){
+  std::vector<std::vector<scalar_t> > * cal_intrinsics(){
     return & cal_intrinsics_;
   }
 
   /// returns a pointer to the transform from camera 0 to camera 1
-  const Matrix<work_t,4> * cam_0_to_cam_1() const {
+  const Matrix<scalar_t,4> * cam_0_to_cam_1() const {
     return & cam_0_to_cam_1_;
   }
 
   /// returns a pointer to the camera 0 to world extrinsics
-  const Matrix<work_t,4> * cam_0_to_world() const {
+  const Matrix<scalar_t,4> * cam_0_to_world() const {
     return & cam_0_to_world_;
   }
 
@@ -141,16 +141,16 @@ public:
   /// \param yw_out global y position in world coords
   /// \param zw_out global z position in world coords
   /// \param correct_lens_distortion correct for lens distortion
-  work_t triangulate(const work_t & x0,
-    const work_t & y0,
-    const work_t & x1,
-    const work_t & y1,
-    work_t & xc_out,
-    work_t & yc_out,
-    work_t & zc_out,
-    work_t & xw_out,
-    work_t & yw_out,
-    work_t & zw_out,
+  scalar_t triangulate(const scalar_t & x0,
+    const scalar_t & y0,
+    const scalar_t & x1,
+    const scalar_t & y1,
+    scalar_t & xc_out,
+    scalar_t & yc_out,
+    scalar_t & zc_out,
+    scalar_t & xw_out,
+    scalar_t & yw_out,
+    scalar_t & zw_out,
     const bool correct_lens_distortion = false) const;
 
   /// triangulate the optimal point in 3D (from 2d data with calibration).
@@ -161,15 +161,15 @@ public:
   /// \param xw_out vector of global x positions in world coords
   /// \param yw_out vector of global y positions in world coords
   /// \param zw_out vector of global z positions in world coords
-  void triangulate(const std::vector<work_t> & image_x,
-    const std::vector<work_t> & image_y,
-    std::vector<work_t> & xw_out,
-    std::vector<work_t> & yw_out,
-    std::vector<work_t> & zw_out) const;
+  void triangulate(const std::vector<scalar_t> & image_x,
+    const std::vector<scalar_t> & image_y,
+    std::vector<scalar_t> & xw_out,
+    std::vector<scalar_t> & yw_out,
+    std::vector<scalar_t> & zw_out) const;
 
   /// compute the fundamental matrix and return it as an opencv mat
   cv::Mat fundamental_matrix() const{
-    DICe::Matrix<DICe::work_t,3> F = camera_system_->fundamental_matrix();
+    DICe::Matrix<DICe::scalar_t,3> F = camera_system_->fundamental_matrix();
     cv::Mat matF(3, 3, CV_32F);
     for(int_t i=0;i<matF.rows;++i){
       for(int_t j=0;j<matF.cols;++j){
@@ -183,8 +183,8 @@ public:
   /// \param x_s x sensor coordinate to correct, modified in place
   /// \param y_s y sensor coordinate to correct, modified in place
   /// \param camera_id either 0 or 1
-  void correct_lens_distortion_radial(work_t & x_s,
-    work_t & y_s,
+  void correct_lens_distortion_radial(scalar_t & x_s,
+    scalar_t & y_s,
     const int_t camera_id) const;
 
   /// estimate the projective transform from the left to right image
@@ -206,32 +206,32 @@ public:
   /// \param yl left y sensor coord
   /// \param xr [out] right x sensor coord
   /// \param yr [out] right y sensor coord
-  void project_left_to_right_sensor_coords(const work_t & xl,
-    const work_t & yl,
-    work_t & xr,
-    work_t & yr);
+  void project_left_to_right_sensor_coords(const scalar_t & xl,
+    const scalar_t & yl,
+    scalar_t & xr,
+    scalar_t & yr);
 
   /// set the warp parameter vector of the triangulation
   /// \param params the projective parameters
-  void set_warp_params(Teuchos::RCP<std::vector<work_t> > & params){
+  void set_warp_params(Teuchos::RCP<std::vector<scalar_t> > & params){
     TEUCHOS_TEST_FOR_EXCEPTION(params->size()!=12,std::runtime_error,"Error, params vector is the wrong size");
     warp_params_ = params;
   }
 
   /// return a pointer to the warp parameters
-  Teuchos::RCP<std::vector<work_t> > warp_params()const{
+  Teuchos::RCP<std::vector<scalar_t> > warp_params()const{
     return warp_params_;
   }
 
   /// set the projective parameter vector of the triangulation
   /// \param params the projective parameters
-  void set_projective_params(Teuchos::RCP<std::vector<work_t> > & params){
+  void set_projective_params(Teuchos::RCP<std::vector<scalar_t> > & params){
     TEUCHOS_TEST_FOR_EXCEPTION(params->size()!=9,std::runtime_error,"Error, params vector is the wrong size");
     projective_params_ = params;
   }
 
   /// return a pointer to the projective parameters
-  Teuchos::RCP<std::vector<work_t> > projective_params()const{
+  Teuchos::RCP<std::vector<scalar_t> > projective_params()const{
     return projective_params_;
   }
 
@@ -249,12 +249,12 @@ public:
   /// returns the cosine of the angle between two vectors
   /// \param a vector a, must have three components
   /// \param b vector b, must have three components
-  work_t cosine_of_two_vectors(const std::vector<work_t> & a,
-    const std::vector<work_t> & b);
+  scalar_t cosine_of_two_vectors(const std::vector<scalar_t> & a,
+    const std::vector<scalar_t> & b);
 
   /// set the transform to the identity matrix
   void reset_cam_0_to_world(){
-    cam_0_to_world_ = Matrix<work_t,4>::identity();
+    cam_0_to_world_ = Matrix<scalar_t,4>::identity();
   }
 
 private:
@@ -264,22 +264,22 @@ private:
 
   /// vector camera intrinsics vectors, one for camera 0 and one for camera 1
   /// See Camera::Cam_Intrinsic_Param for the ordering of the parameters in the vector
-  std::vector<std::vector<work_t> > cal_intrinsics_;
+  std::vector<std::vector<scalar_t> > cal_intrinsics_;
 
   /// transformation from camera 0 to camera 1 coordinates
-  Matrix<work_t,4> cam_0_to_cam_1_;
+  Matrix<scalar_t,4> cam_0_to_cam_1_;
 
   /// transformation from camera 0 to world model/physical coordinates
-  Matrix<work_t,4> cam_0_to_world_;
+  Matrix<scalar_t,4> cam_0_to_world_;
 
   // both the warp_params and projective_params are for doing a global warp of the
   // image from one camera to another to help initialize the cross-correlation, they are not
   // associated with the calibration
 
   /// 12 parameters that define a warping (independent from intrinsic and extrinsic parameters)
-  Teuchos::RCP<std::vector<work_t> > warp_params_;
+  Teuchos::RCP<std::vector<scalar_t> > warp_params_;
   /// 8 parameters that define a projective transform (independent from intrinsic and extrinsic parameters)
-  Teuchos::RCP<std::vector<work_t> > projective_params_;
+  Teuchos::RCP<std::vector<scalar_t> > projective_params_;
 
   /// save off a pointer to the camera system for use in the triangulation
   Teuchos::RCP<Camera_System> camera_system_;

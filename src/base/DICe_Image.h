@@ -176,7 +176,7 @@ public:
   }
 
   /// returns the mean value of the image
-  work_t mean()const;
+  scalar_t mean()const;
 
   /// intensity accessors:
   /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
@@ -204,12 +204,12 @@ public:
   }
 
   /// returns a copy of the grad_x values as an array
-  Teuchos::ArrayRCP<work_t> grad_x_array()const{
+  Teuchos::ArrayRCP<scalar_t> grad_x_array()const{
     return grad_x_;
   }
 
   /// returns a copy of the grad_y values as an array
-  Teuchos::ArrayRCP<work_t> grad_y_array()const{
+  Teuchos::ArrayRCP<scalar_t> grad_y_array()const{
     return grad_y_;
   }
 
@@ -218,104 +218,104 @@ public:
   void replace_intensities(Teuchos::ArrayRCP<S> intensities);
 
   /// interpolate intensity and gradients
-  void interpolate_keys_fourth_all(work_t & intensity_val,
-       work_t & grad_x_val, work_t & grad_y_val, const bool compute_gradient,
-       const work_t  & local_x, const work_t  & local_y);
+  void interpolate_keys_fourth_all(scalar_t & intensity_val,
+       scalar_t & grad_x_val, scalar_t & grad_y_val, const bool compute_gradient,
+       const scalar_t  & local_x, const scalar_t  & local_y);
 
   /// interpolant
   /// \param global_x global image coordinate x
   /// \param global_y global image coordinate y
-  work_t  interpolate_keys_fourth_global(const work_t  & global_x,
-    const work_t  & global_y){
+  scalar_t  interpolate_keys_fourth_global(const scalar_t  & global_x,
+    const scalar_t  & global_y){
     return interpolate_keys_fourth(global_x-offset_x_,global_y-offset_y_);
   }
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
-  work_t  interpolate_keys_fourth(const work_t  & local_x,
-    const work_t  & local_y);
+  scalar_t  interpolate_keys_fourth(const scalar_t  & local_x,
+    const scalar_t  & local_y);
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
-  work_t  interpolate_grad_x_keys_fourth(const work_t  & local_x,
-    const work_t  & local_y);
+  scalar_t  interpolate_grad_x_keys_fourth(const scalar_t  & local_x,
+    const scalar_t  & local_y);
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
-  work_t  interpolate_grad_y_keys_fourth(const work_t  & local_x,
-    const work_t  & local_y);
+  scalar_t  interpolate_grad_y_keys_fourth(const scalar_t  & local_x,
+    const scalar_t  & local_y);
 
   /// interpolant
   /// \param global_x global image coordinate x
   /// \param global_y global image coordinate y
-  work_t  interpolate_bilinear_global(const work_t  & global_x,
-    const work_t  & global_y){
+  scalar_t  interpolate_bilinear_global(const scalar_t  & global_x,
+    const scalar_t  & global_y){
     return interpolate_bilinear(global_x-offset_x_,global_y-offset_y_);
   }
 
   /// interpolate intensity and gradients
-  void interpolate_bilinear_all(work_t  & intensity_val,
-       work_t  & grad_x_val, work_t  & grad_y_val, const bool compute_gradient,
-       const work_t  & local_x, const work_t  & local_y);
+  void interpolate_bilinear_all(scalar_t  & intensity_val,
+       scalar_t  & grad_x_val, scalar_t  & grad_y_val, const bool compute_gradient,
+       const scalar_t  & local_x, const scalar_t  & local_y);
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
-  work_t  interpolate_bilinear(const work_t  & local_x,
-    const work_t  & local_y);
+  scalar_t  interpolate_bilinear(const scalar_t  & local_x,
+    const scalar_t  & local_y);
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
-  work_t  interpolate_grad_x_bilinear(const work_t  & local_x,
-    const work_t  & local_y);
+  scalar_t  interpolate_grad_x_bilinear(const scalar_t  & local_x,
+    const scalar_t  & local_y);
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
-  work_t  interpolate_grad_y_bilinear(const work_t  & local_x,
-    const work_t  & local_y);
+  scalar_t  interpolate_grad_y_bilinear(const scalar_t  & local_x,
+    const scalar_t  & local_y);
 
   /// interpolant
   /// \param global_x global image coordinate x
   /// \param global_y global image coordinate y
-  work_t  interpolate_bicubic_global(const work_t  & global_x,
-    const work_t  & global_y){
+  scalar_t  interpolate_bicubic_global(const scalar_t  & global_x,
+    const scalar_t  & global_y){
     return interpolate_bicubic(global_x-offset_x_,global_y-offset_y_);
   }
 
   /// interpolate intensity and gradients
-  void interpolate_bicubic_all(work_t  & intensity_val,
-       work_t  & grad_x_val, work_t  & grad_y_val, const bool compute_gradient,
-       const work_t  & local_x, const work_t  & local_y);
+  void interpolate_bicubic_all(scalar_t  & intensity_val,
+       scalar_t  & grad_x_val, scalar_t  & grad_y_val, const bool compute_gradient,
+       const scalar_t  & local_x, const scalar_t  & local_y);
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
-  work_t  interpolate_bicubic(const work_t  & local_x,
-    const work_t  & local_y);
+  scalar_t  interpolate_bicubic(const scalar_t  & local_x,
+    const scalar_t  & local_y);
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
-  work_t  interpolate_grad_x_bicubic(const work_t  & local_x,
-    const work_t  & local_y);
+  scalar_t  interpolate_grad_x_bicubic(const scalar_t  & local_x,
+    const scalar_t  & local_y);
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
-  work_t  interpolate_grad_y_bicubic(const work_t  & local_x,
-    const work_t  & local_y);
+  scalar_t  interpolate_grad_y_bicubic(const scalar_t  & local_x,
+    const scalar_t  & local_y);
 
   /// gradient accessors:
   /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
   /// y is row, x is column
   /// \param x image coordinate x
   /// \param y image coordinate y
-  const work_t  & grad_x(const int_t x,
+  const scalar_t  & grad_x(const int_t x,
     const int_t y) const{
     return grad_x_[y*width_+x];
   }
@@ -323,7 +323,7 @@ public:
   /// gradient accessor for y
   /// \param x image coordinate x
   /// \param y image coordinate y
-  const work_t  & grad_y(const int_t x,
+  const scalar_t  & grad_y(const int_t x,
     const int_t y) const {
     return grad_y_[y*width_+x];
   }
@@ -333,7 +333,7 @@ public:
   /// y is row, x is column
   /// \param x image coordinate x
   /// \param y image coordinate y
-  const work_t  & laplacian(const int_t x,
+  const scalar_t  & laplacian(const int_t x,
     const int_t y) const{
     return laplacian_[y*width_+x];
   }
@@ -341,7 +341,7 @@ public:
   /// mask value accessor
   /// \param x image coordinate x
   /// \param y image coordinate y
-  const work_t  & mask(const int_t x,
+  const scalar_t  & mask(const int_t x,
     const int_t y) const{
     return mask_[y*width_+x];
   }
@@ -438,7 +438,7 @@ public:
   }
 
   /// returns the difference of two images:
-  work_t  diff(Teuchos::RCP<Image_> rhs)const;
+  scalar_t  diff(Teuchos::RCP<Image_> rhs)const;
 
   /// returns the size of the gauss filter mask
   int_t gauss_filter_mask_size()const{
@@ -471,23 +471,23 @@ private:
   /// device intensity work array
   Teuchos::ArrayRCP<S> intensities_temp_;
   /// mask coefficients
-  Teuchos::ArrayRCP<work_t > mask_;
+  Teuchos::ArrayRCP<scalar_t > mask_;
   /// image gradient x container
-  Teuchos::ArrayRCP<work_t > grad_x_;
+  Teuchos::ArrayRCP<scalar_t > grad_x_;
   /// image gradient y container
-  Teuchos::ArrayRCP<work_t > grad_y_;
+  Teuchos::ArrayRCP<scalar_t > grad_y_;
   /// image gradient y container
-  Teuchos::ArrayRCP<work_t > laplacian_;
+  Teuchos::ArrayRCP<scalar_t > laplacian_;
   /// flag that the gradients have been computed
   bool has_gradients_;
   /// flag that the image has been filtered
   bool has_gauss_filter_;
   /// coeff used in computing gradients
-  work_t  grad_c1_;
+  scalar_t  grad_c1_;
   /// coeff used in computing gradients
-  work_t  grad_c2_;
+  scalar_t  grad_c2_;
   /// Gauss filter coefficients
-  work_t  gauss_filter_coeffs_[13][13]; // 13 is the maximum size for the filter window
+  scalar_t  gauss_filter_coeffs_[13][13]; // 13 is the maximum size for the filter window
   /// Gauss filter mask size
   int_t gauss_filter_mask_size_;
   /// half the gauss filter mask size
@@ -501,7 +501,7 @@ private:
 };
 
 using Image = Image_<>;
-using Scalar_Image = Image_<work_t>;
+using Scalar_Image = Image_<scalar_t>;
 
 }// End DICe Namespace
 

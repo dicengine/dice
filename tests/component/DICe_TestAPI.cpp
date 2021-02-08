@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
   else
     outStream = Teuchos::rcp(&bhs, false);
   int_t errorFlag  = 0;
-  work_t errtol  = 1.0E-4;
+  scalar_t errtol  = 1.0E-4;
 
 
   // set up a parameter list to pass to the library call (if null defaults are used)
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
   // initialize the input data:
   // initialize x y u v theta sigma
   // this is a similar ordering to the labView calls to libdice
-  work_t * points = new work_t[(int_t)num_subsets*DICE_API_STRIDE];
+  scalar_t * points = new scalar_t[(int_t)num_subsets*DICE_API_STRIDE];
   for(int_t subsetIt=0;subsetIt<num_subsets;++subsetIt){
     for(int_t i=0;i<DICE_API_STRIDE;++i){
       points[subsetIt*DICE_API_STRIDE+i] = 0.0;
@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
     points[subsetIt*DICE_API_STRIDE + 1] = subset_centroids_y[subsetIt]; //y0
   }
   // solution with default params changed
-  work_t * pointsParams = new work_t[(int_t)num_subsets*DICE_API_STRIDE];
+  scalar_t * pointsParams = new scalar_t[(int_t)num_subsets*DICE_API_STRIDE];
   for(int_t subsetIt=0;subsetIt<num_subsets;++subsetIt){
     for(int_t i=0;i<DICE_API_STRIDE;++i){
       pointsParams[subsetIt*DICE_API_STRIDE+i] = 0.0;

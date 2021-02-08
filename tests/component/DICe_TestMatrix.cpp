@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t error_flag  = 0;
-  work_t error_tol = 1.0E-3;
+  scalar_t error_tol = 1.0E-3;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
 
   // create an image and take the polar transform:
   *outStream << "testing constructor" << std::endl;
-  Matrix<work_t,3,3> mat;
+  Matrix<scalar_t,3,3> mat;
   *outStream << "testing access operator" << std::endl;
   mat(0,0) = 34.89;
   mat(1,0) = 438.9;
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
   mat(2,2) = 127.99;
   *outStream << mat << std::endl;
   *outStream << "testing condition number" << std::endl;
-  work_t cond_num = mat.condition_number();
+  scalar_t cond_num = mat.condition_number();
   *outStream << "condition number: " << cond_num << std::endl;
   if(std::abs(cond_num - 11.538)>error_tol){
     *outStream << "***error: condition number incorrect " << std::endl;
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
   *outStream << "testing inverse method" << std::endl;
   auto inverse = mat.inv();
   *outStream << inverse << std::endl;
-  Matrix<work_t,3> gold_inv; // testing default template arg
+  Matrix<scalar_t,3> gold_inv; // testing default template arg
   gold_inv(0,0) = 2.53765e-04;
   gold_inv(1,0) = 4.22151e-03;
   gold_inv(2,0) = -1.32036e-03;
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
   gold_inv(0,2) = -1.71032e-03;
   gold_inv(1,2) = -1.37608e-02;
   gold_inv(2,2) = 1.27325e-02;
-  work_t mat_norm = norm(inverse - gold_inv);
+  scalar_t mat_norm = norm(inverse - gold_inv);
   *outStream << "inv error norm: " << mat_norm << std::endl;
   if(mat_norm>error_tol){
     *outStream << "***error: inverse error norm too high" << std::endl;
@@ -153,7 +153,7 @@ int main(int argc, char *argv[]) {
   }
 
   *outStream << "testing transpose for non-square matrix" << std::endl;
-  Vector<work_t> sample_vec(4);
+  Vector<scalar_t> sample_vec(4);
   sample_vec.put_value(23.45);
   *outStream << sample_vec << std::endl;
   auto sample_vec_trans = sample_vec.transpose();
@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
     *outStream << "***error: multiply vector is the wrong size" << std::endl;
     error_flag++;
   }
-  work_t vec_norm = 0.0;
+  scalar_t vec_norm = 0.0;
   for(size_t i=0;i<multiply_gold.size();++i)
     vec_norm += std::abs(multiply_gold[i] - multiply[i]);
   *outStream << "vec multiply error: " << vec_norm << std::endl;
@@ -212,7 +212,7 @@ int main(int argc, char *argv[]) {
   }
 
   *outStream << "testing that calling inv() on non-square throws an exception" << std::endl;
-  Matrix<work_t,4,8> non_square;
+  Matrix<scalar_t,4,8> non_square;
   exception_thrown = false;
   try
   {
@@ -228,8 +228,8 @@ int main(int argc, char *argv[]) {
   }
 
   // test matrix matrix multiply
-  Matrix<work_t,1,4> M = {{1,2,3.5,9.0}};
-  Matrix<work_t,4,1> P = {{1},{2},{3.5},{9}};
+  Matrix<scalar_t,1,4> M = {{1,2,3.5,9.0}};
+  Matrix<scalar_t,4,1> P = {{1},{2},{3.5},{9}};
   auto Q = M*P;
   *outStream << Q << std::endl;
   mat_norm = norm(Q)-98.25;
@@ -239,7 +239,7 @@ int main(int argc, char *argv[]) {
   }
   auto mat_times_mat_inv = mat*inverse;
   *outStream << mat_times_mat_inv << std::endl;
-  auto identity = Matrix<work_t,3>::identity();
+  auto identity = Matrix<scalar_t,3>::identity();
   *outStream << identity << std::endl;
   mat_norm = norm(mat_times_mat_inv - identity);
   *outStream << "matrix times inverse error norm: " << mat_norm << std::endl;
@@ -260,7 +260,7 @@ int main(int argc, char *argv[]) {
   auto runtime_times_fixed = int_mat * runtime_trans.transpose();
   *outStream << runtime_times_fixed << std::endl;
   Matrix<int_t,4,3> fixed_times_runtime_gold = {{30,70,110},{70,174,278},{110,278,446},{150,382,614}};
-  work_t fixed_runtime_norm = norm(fixed_times_runtime_gold - runtime_times_fixed);
+  scalar_t fixed_runtime_norm = norm(fixed_times_runtime_gold - runtime_times_fixed);
   *outStream << "fixed times runtime sized matrices error norm: " << fixed_runtime_norm << std::endl;
   if(std::abs(fixed_runtime_norm)>error_tol){
     *outStream << "***error: multiplying fixed times a runtime sized matrix failed" << std::endl;
@@ -276,7 +276,7 @@ int main(int argc, char *argv[]) {
   auto result_int_add = int_vec + int_vec_rhs;
   Matrix<int_t,4,1> result_int_add_gold = {{1},{14},{3},{14}};
   *outStream << result_int_add << std::endl;
-  work_t int_vec_add_norm = norm(result_int_add_gold - result_int_add);
+  scalar_t int_vec_add_norm = norm(result_int_add_gold - result_int_add);
   *outStream << "int add vector norm: " << int_vec_add_norm << std::endl;
   if(std::abs(int_vec_add_norm)>error_tol){
     *outStream << "***error: int vector add error" << std::endl;
@@ -284,7 +284,7 @@ int main(int argc, char *argv[]) {
   }
 
   *outStream << "testing all zero method" << std::endl;
-  Matrix<work_t,3,6> no_values;
+  Matrix<scalar_t,3,6> no_values;
   if(!no_values.all_values_are_zero()){
     *outStream << "***error: all_values_are_zero() error" << std::endl;
     error_flag++;

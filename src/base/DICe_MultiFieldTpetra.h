@@ -57,21 +57,21 @@ namespace DICe {
 /// Tpetra map type
 typedef Tpetra::Map<int_t,int_t> map_type;
 /// Tpetra multivector type
-typedef Tpetra::MultiVector<work_t,int_t,int_t> vec_type;
+typedef Tpetra::MultiVector<scalar_t,int_t,int_t> vec_type;
 /// Tpetra export type
 typedef Tpetra::Export<int_t,int_t> export_type;
 /// Tpetra import type
 typedef Tpetra::Import<int_t,int_t> import_type;
 /// Tpetra matrix type
-typedef Tpetra::CrsMatrix<work_t,int_t,int_t> matrix_type;
+typedef Tpetra::CrsMatrix<scalar_t,int_t,int_t> matrix_type;
 /// Tpetra operator type
-typedef Tpetra::Operator<work_t,int_t> operator_type;
+typedef Tpetra::Operator<scalar_t,int_t> operator_type;
 /// Tpetra host device type
-typedef typename Tpetra::MultiVector<work_t,int_t,int_t>::dual_view_type::host_mirror_space host_device_type;
+typedef typename Tpetra::MultiVector<scalar_t,int_t,int_t>::dual_view_type::host_mirror_space host_device_type;
 /// Tpetra host view type
-typedef typename Tpetra::MultiVector<work_t,int_t,int_t>::dual_view_type::t_host host_view_type;
+typedef typename Tpetra::MultiVector<scalar_t,int_t,int_t>::dual_view_type::t_host host_view_type;
 /// scalar type
-typedef work_t mv_work_type;
+typedef scalar_t mv_scalar_type;
 
 /// \class DICe::MultiField_Comm
 /// \brief MPI Communicator
@@ -336,7 +336,7 @@ public:
   /// \brief value accessor
   /// \param global_id the global id of the intended element
   /// \param field_index the index of the field to access
-  work_t & global_value(const int_t global_id,
+  scalar_t & global_value(const int_t global_id,
     const int_t field_index=0){
     //return tpetra_mv_->getDualView().h_view(global_id,field_index);
     return tpetra_mv_->getLocalView<host_device_type>()(tpetra_mv_->getMap()->getLocalElement(global_id),field_index);
@@ -345,14 +345,14 @@ public:
   /// \brief value accessor
   /// \param local_id the global id of the intended element
   /// \param field_index the index of the field to access
-  work_t & local_value(const int_t local_id,
+  scalar_t & local_value(const int_t local_id,
     const int_t field_index=0){
     return tpetra_mv_->getLocalView<host_device_type>()(local_id,field_index);
   }
 
   /// \brief put that same value in all elements of this Multivector
   /// \param value The value to populate with
-  void put_scalar(const work_t & value){
+  void put_scalar(const scalar_t & value){
     tpetra_mv_->putScalar(value);
   }
 
@@ -361,9 +361,9 @@ public:
   /// \param multifield Input multifield
   /// \param beta Multiplier of this Multifield
   /// Result is this = beta*this + alpha*multifield
-  void update(const work_t & alpha,
+  void update(const scalar_t & alpha,
     const MultiField & multifield,
-    const work_t & beta){
+    const scalar_t & beta){
     tpetra_mv_->update(alpha,*multifield.get(),beta);
   }
 
@@ -421,17 +421,17 @@ public:
 
   ///  Compute the 2 norm of the vector
   /// \param field_index The field of which to take the norm
-  work_t norm(const int_t field_index=0){
+  scalar_t norm(const int_t field_index=0){
     return tpetra_mv_->getVector(field_index)->norm2();
   }
 
   ///  Compute the 2 norm of this vector minus another
   /// \param multifield the field to diff against
-  work_t norm(Teuchos::RCP<MultiField> multifield){
+  scalar_t norm(Teuchos::RCP<MultiField> multifield){
     TEUCHOS_TEST_FOR_EXCEPTION(this->get_map()->get_num_local_elements()!=
         multifield->get_map()->get_num_local_elements(),std::runtime_error,
         "Error, incompatible multifield maps");
-    work_t norm = 0.0;
+    scalar_t norm = 0.0;
     for(int_t i=0;i<get_map()->get_num_local_elements();++i){
       norm += (this->local_value(i)-multifield->local_value(i))*
           (this->local_value(i)-multifield->local_value(i));
@@ -441,7 +441,7 @@ public:
   }
 
   /// returns a view of the multivector's data
-  Teuchos::ArrayRCP<const work_t> get_1d_view()const{
+  Teuchos::ArrayRCP<const scalar_t> get_1d_view()const{
     return tpetra_mv_->get1dView();
   }
 
@@ -483,7 +483,7 @@ public:
 
   /// Put scalar value in all matrix entries
   /// \param value The value to insert
-  void put_scalar(const work_t & value){
+  void put_scalar(const scalar_t & value){
     matrix_->setAllToScalar(value);
   }
 
@@ -493,7 +493,7 @@ public:
   /// \param vals An array of real values to insert
   void insert_global_values(const int_t global_row,
     const Teuchos::ArrayView<const int_t> & cols,
-    const Teuchos::ArrayView<const work_t> & vals){
+    const Teuchos::ArrayView<const scalar_t> & vals){
     matrix_->insertGlobalValues (global_row,cols,vals);
   }
 
@@ -503,7 +503,7 @@ public:
   /// \param vals An array of real values to insert
   void replace_local_values(const int_t local_row,
     const Teuchos::ArrayView<const int_t> & cols,
-    const Teuchos::ArrayView<const work_t> & vals){
+    const Teuchos::ArrayView<const scalar_t> & vals){
     matrix_->replaceLocalValues (local_row,cols,vals);
   }
 

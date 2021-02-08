@@ -138,9 +138,9 @@ public:
   }
 
   /// diffs all the cameras that make up a camera system
-  work_t diff(const Camera_System & rhs) const{
+  scalar_t diff(const Camera_System & rhs) const{
     TEUCHOS_TEST_FOR_EXCEPTION(rhs.num_cameras()!=num_cameras(),std::runtime_error,"");
-    work_t diff_ = 0.0;
+    scalar_t diff_ = 0.0;
     for(size_t i=0;i<num_cameras();++i)
       diff_ += camera(i)->diff(*(rhs.camera(i).get()));
     return diff_;
@@ -182,7 +182,7 @@ public:
   }
 
   /// calculate the fundamental matrix for a set of cameras
-  Matrix<work_t,3> fundamental_matrix(const size_t source_cam_id=0,
+  Matrix<scalar_t,3> fundamental_matrix(const size_t source_cam_id=0,
     const size_t target_cam_id=1);
 
   /// comparison operator
@@ -216,26 +216,26 @@ public:
   void camera_to_camera_projection(
     const size_t source_id,
     const size_t target_id,
-    const std::vector<work_t> & img_source_x,
-    const std::vector<work_t> & img_source_y,
-    std::vector<work_t> & img_target_x,
-    std::vector<work_t> & img_target_y,
-    const std::vector<work_t> & facet_params,
-    std::vector<std::vector<work_t> > & img_target_dx,
-    std::vector<std::vector<work_t> > & img_target_dy,
-    const std::vector<work_t> & rigid_body_params = std::vector<work_t>());
+    const std::vector<scalar_t> & img_source_x,
+    const std::vector<scalar_t> & img_source_y,
+    std::vector<scalar_t> & img_target_x,
+    std::vector<scalar_t> & img_target_y,
+    const std::vector<scalar_t> & facet_params,
+    std::vector<std::vector<scalar_t> > & img_target_dx,
+    std::vector<std::vector<scalar_t> > & img_target_dy,
+    const std::vector<scalar_t> & rigid_body_params = std::vector<scalar_t>());
 
   /// same as above, only do not compute the partials
   void camera_to_camera_projection(
     const size_t source_id,
     const size_t target_id,
-    const std::vector<work_t> & img_source_x,
-    const std::vector<work_t> & img_source_y,
-    std::vector<work_t> & img_target_x,
-    std::vector<work_t> & img_target_y,
-    const std::vector<work_t> & facet_params,
-    const std::vector<work_t> & rigid_body_params = std::vector<work_t>()){
-    std::vector<std::vector<work_t> > dummy_vec; // dummy vec of size zero to flag no deriv calcs
+    const std::vector<scalar_t> & img_source_x,
+    const std::vector<scalar_t> & img_source_y,
+    std::vector<scalar_t> & img_target_x,
+    std::vector<scalar_t> & img_target_y,
+    const std::vector<scalar_t> & facet_params,
+    const std::vector<scalar_t> & rigid_body_params = std::vector<scalar_t>()){
+    std::vector<std::vector<scalar_t> > dummy_vec; // dummy vec of size zero to flag no deriv calcs
     camera_to_camera_projection(source_id,target_id,
       img_source_x,img_source_y,
       img_target_x,img_target_y,
@@ -253,26 +253,26 @@ public:
   /// \param target_dx array of arrays of the partials in the x world location wrt params
   /// \param target_dy array of arrays of the partials in the y world location wrt params
   /// \param target_dy array of arrays of the partials in the z world location wrt params
-  void rot_trans_3D(const std::vector<work_t> & source_x,
-    const std::vector<work_t> & source_y,
-    const std::vector<work_t> & source_z,
-    std::vector<work_t> & target_x,
-    std::vector<work_t> & target_y,
-    std::vector<work_t> & target_z,
-    const std::vector<work_t> & rigid_body_params,
-    std::vector < std::vector<work_t> > & target_dx,
-    std::vector < std::vector<work_t> > & target_dy,
-    std::vector < std::vector<work_t> > & target_dz);
+  void rot_trans_3D(const std::vector<scalar_t> & source_x,
+    const std::vector<scalar_t> & source_y,
+    const std::vector<scalar_t> & source_z,
+    std::vector<scalar_t> & target_x,
+    std::vector<scalar_t> & target_y,
+    std::vector<scalar_t> & target_z,
+    const std::vector<scalar_t> & rigid_body_params,
+    std::vector < std::vector<scalar_t> > & target_dx,
+    std::vector < std::vector<scalar_t> > & target_dy,
+    std::vector < std::vector<scalar_t> > & target_dz);
 
   /// same as above with no partials
-  void rot_trans_3D(const std::vector<work_t> & source_x,
-    const std::vector<work_t> & source_y,
-    const std::vector<work_t> & source_z,
-    std::vector<work_t> & target_x,
-    std::vector<work_t> & target_y,
-    std::vector<work_t> & target_z,
-    const std::vector<work_t> & rigid_body_params){
-    std::vector < std::vector<work_t> > dummy_vec;
+  void rot_trans_3D(const std::vector<scalar_t> & source_x,
+    const std::vector<scalar_t> & source_y,
+    const std::vector<scalar_t> & source_z,
+    std::vector<scalar_t> & target_x,
+    std::vector<scalar_t> & target_y,
+    std::vector<scalar_t> & target_z,
+    const std::vector<scalar_t> & rigid_body_params){
+    std::vector < std::vector<scalar_t> > dummy_vec;
     rot_trans_3D(source_x,source_y,source_z,
       target_x,target_y,target_z,
       rigid_body_params,dummy_vec,dummy_vec,dummy_vec);
@@ -293,19 +293,19 @@ public:
 //  /// \param wld1_dx array of of arrays the partials in the x world location wrt the other parameters and params
 //  /// \param wld1_dy array of of arrays the partials in the y world location wrt the other parameters and params
 //  /// \param wld1_dy array of of arrays the partials in the z world location wrt the other parameters and params
-//  void rot_trans_3D(const std::vector<work_t> & wld0_x,
-//    const std::vector<work_t> & wld0_y,
-//    const std::vector<work_t> & wld0_z,
-//    std::vector<work_t> & wld1_x,
-//    std::vector<work_t> & wld1_y,
-//    std::vector<work_t> & wld1_z,
-//    const std::vector<work_t> & params,
-//    const std::vector < std::vector<work_t> > & wld0_dx,
-//    const std::vector < std::vector<work_t> > & wld0_dy,
-//    const std::vector < std::vector<work_t> > & wld0_dz,
-//    std::vector < std::vector<work_t> > & wld1_dx,
-//    std::vector < std::vector<work_t> > & wld1_dy,
-//    std::vector < std::vector<work_t> > & wld1_dz);
+//  void rot_trans_3D(const std::vector<scalar_t> & wld0_x,
+//    const std::vector<scalar_t> & wld0_y,
+//    const std::vector<scalar_t> & wld0_z,
+//    std::vector<scalar_t> & wld1_x,
+//    std::vector<scalar_t> & wld1_y,
+//    std::vector<scalar_t> & wld1_z,
+//    const std::vector<scalar_t> & params,
+//    const std::vector < std::vector<scalar_t> > & wld0_dx,
+//    const std::vector < std::vector<scalar_t> > & wld0_dy,
+//    const std::vector < std::vector<scalar_t> > & wld0_dz,
+//    std::vector < std::vector<scalar_t> > & wld1_dx,
+//    std::vector < std::vector<scalar_t> > & wld1_dy,
+//    std::vector < std::vector<scalar_t> > & wld1_dz);
 
 private:
 
@@ -314,13 +314,13 @@ private:
 
   /// these are for compatibility with triangulation and only support 2 camera systems
   /// 12 parameters that define a user supplied transforamation (independent from intrinsic and extrinsic parameters)
-  Matrix<work_t,4> user_4x4_trans_;
+  Matrix<scalar_t,4> user_4x4_trans_;
 
   /// 8 parameters that define a projective transform (independent from intrinsic and extrinsic parameters)
-  std::vector<work_t> user_6x1_trans_;
+  std::vector<scalar_t> user_6x1_trans_;
 
   // 3x4 openCV rotation parameters from stereo calibration
-  //Matrix<work_t,3,4> opencv_3x4_trans_;
+  //Matrix<scalar_t,3,4> opencv_3x4_trans_;
 
   /// defines the camera system type (OPENCV VIC3D...)
   System_Type_3D sys_type_;

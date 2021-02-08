@@ -94,16 +94,16 @@ namespace DICe{
 
 #if DICE_USE_DOUBLE
   /// generic scalar type
-  typedef double work_t;
+  typedef double scalar_t;
 #else
   /// generic scalar type
-  typedef float work_t;
+  typedef float scalar_t;
 #endif
 
 #if DICE_USE_INT_STORAGE
   typedef uint16_t storage_t;
 #else
-  typedef work_t storage_t;
+  typedef scalar_t storage_t;
 #endif
 
 /// integer type

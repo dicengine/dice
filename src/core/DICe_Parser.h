@@ -298,7 +298,7 @@ Motion_Window_Params {
   /// lower right corner y coord
   int_t end_y_;
   /// tolerance for motion detection
-  work_t tol_;
+  scalar_t tol_;
   /// point to another subsets' motion window if multiple subsets share one
   int_t use_subset_id_;
   /// use motion detection
@@ -334,7 +334,7 @@ Boundary_Condition_Def{
   /// true if there is a prescribed value
   bool has_value_;
   /// value to prescribe for a dirichlet bc
-  work_t value_;
+  scalar_t value_;
   /// component 0 = x 1 = y
   int_t comp_;
   /// true if the subset formulation should be used to define the displacement
@@ -354,15 +354,15 @@ Subset_File_Info {
   /// \param info_type optional type argument (assumes SUBSET_INFO)
   Subset_File_Info(const Subset_File_Info_Type info_type=SUBSET_INFO){
     conformal_area_defs = Teuchos::rcp(new std::map<int_t,DICe::Conformal_Area_Def>());
-    coordinates_vector = Teuchos::rcp(new std::vector<work_t>());
+    coordinates_vector = Teuchos::rcp(new std::vector<scalar_t>());
     neighbor_vector = Teuchos::rcp(new std::vector<int_t>());
     id_sets_map = Teuchos::rcp(new std::map<int_t,std::vector<int_t> >());
     force_simplex = Teuchos::rcp(new std::set<int_t>());
     size_map = Teuchos::rcp(new std::map<int_t,std::pair<int_t,int_t> >());
-    displacement_map = Teuchos::rcp(new std::map<int_t,std::pair<work_t,work_t> >());
-    normal_strain_map = Teuchos::rcp(new std::map<int_t,std::pair<work_t,work_t> >());
-    shear_strain_map = Teuchos::rcp(new std::map<int_t,work_t>());
-    rotation_map = Teuchos::rcp(new std::map<int_t,work_t>());
+    displacement_map = Teuchos::rcp(new std::map<int_t,std::pair<scalar_t,scalar_t> >());
+    normal_strain_map = Teuchos::rcp(new std::map<int_t,std::pair<scalar_t,scalar_t> >());
+    shear_strain_map = Teuchos::rcp(new std::map<int_t,scalar_t>());
+    rotation_map = Teuchos::rcp(new std::map<int_t,scalar_t>());
     seed_subset_ids = Teuchos::rcp(new std::map<int_t,int_t>());
     path_file_names = Teuchos::rcp(new std::map<int_t,std::string>());
     optical_flow_flags = Teuchos::rcp(new std::map<int_t,bool>());
@@ -379,7 +379,7 @@ Subset_File_Info {
   /// Pointer to map of conformal subset defs (these are used to define conformal subsets)
   Teuchos::RCP<std::map<int_t,DICe::Conformal_Area_Def> > conformal_area_defs;
   /// Pointer to the vector of subset centroid coordinates
-  Teuchos::RCP<std::vector<work_t> > coordinates_vector;
+  Teuchos::RCP<std::vector<scalar_t> > coordinates_vector;
   /// Pointer to the vector of neighbor ids
   Teuchos::RCP<std::vector<int_t> > neighbor_vector;
   /// Pointer to a map that has vectos of subset ids (used to denote blocking subsets)
@@ -391,13 +391,13 @@ Subset_File_Info {
   /// Pointer to a map of std::pairs of size values
   Teuchos::RCP<std::map<int_t,std::pair<int_t,int_t> > > size_map;
   /// Pointer to a map of initial guesses for displacement, the map index is the subset id
-  Teuchos::RCP<std::map<int_t,std::pair<work_t,work_t> > > displacement_map;
+  Teuchos::RCP<std::map<int_t,std::pair<scalar_t,scalar_t> > > displacement_map;
   /// Pointer to a map of initial guesses for normal strain, the map index is the subset id
-  Teuchos::RCP<std::map<int_t,std::pair<work_t,work_t> > > normal_strain_map;
+  Teuchos::RCP<std::map<int_t,std::pair<scalar_t,scalar_t> > > normal_strain_map;
   /// Pointer to a map of initial guesses for shear strain, the map index is the subset id
-  Teuchos::RCP<std::map<int_t,work_t> > shear_strain_map;
+  Teuchos::RCP<std::map<int_t,scalar_t> > shear_strain_map;
   /// Pointer to a map of initial guesses for rotation, the map index is the subset id
-  Teuchos::RCP<std::map<int_t,work_t> > rotation_map;
+  Teuchos::RCP<std::map<int_t,scalar_t> > rotation_map;
   /// Map that lists the subset ids for each of the seeds (first value is subset_id, second is roi_id)
   Teuchos::RCP<std::map<int_t,int_t> > seed_subset_ids;
   /// Map that lists the names of the path files for each subset
@@ -415,9 +415,9 @@ Subset_File_Info {
   /// true if the mesh should be constructed with a regular grid
   bool use_regular_grid;
   /// value to prescribe for the initial condition
-  work_t ic_value_x;
+  scalar_t ic_value_x;
   /// value to prescribe for the initial condition
-  work_t ic_value_y;
+  scalar_t ic_value_y;
   /// true if all dirichlet bcs should have lagrange multiplier = 0
   bool enforce_lagrange_bc;
 };

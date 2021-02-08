@@ -144,15 +144,15 @@ int main(int argc, char *argv[]) {
     output_field_names.push_back("UNCERTAINTY");
 
   // read the subset coordinates:
-  std::vector<work_t> subset_coords_x = DICe::mesh::read_exodus_field(exo_name,"SUBSET_COORDINATES_X",1);
-  std::vector<work_t> subset_coords_y = DICe::mesh::read_exodus_field(exo_name,"SUBSET_COORDINATES_Y",1);
+  std::vector<scalar_t> subset_coords_x = DICe::mesh::read_exodus_field(exo_name,"SUBSET_COORDINATES_X",1);
+  std::vector<scalar_t> subset_coords_y = DICe::mesh::read_exodus_field(exo_name,"SUBSET_COORDINATES_Y",1);
   const int_t num_nodes = subset_coords_x.size();
   *outStream << "num subset coorindates: " << num_nodes << std::endl;
   // determine the extents of the subset coordinates
-  work_t min_x = img_w;
-  work_t min_y = img_h;
-  work_t max_x = 0.0;
-  work_t max_y = 0.0;
+  scalar_t min_x = img_w;
+  scalar_t min_y = img_h;
+  scalar_t max_x = 0.0;
+  scalar_t max_y = 0.0;
   for(int_t i=0;i<num_nodes;++i){
     if(subset_coords_x[i] < min_x) min_x = subset_coords_x[i];
     if(subset_coords_y[i] < min_y) min_y = subset_coords_y[i];
@@ -164,7 +164,7 @@ int main(int argc, char *argv[]) {
 
   // build a kd tree for the displacement values:
   // create neighborhood lists using nanoflann:
-  Teuchos::RCP<Point_Cloud_2D<work_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<work_t>());
+  Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
   point_cloud->pts.resize(num_nodes);
   for(int_t i=0;i<num_nodes;++i){
     point_cloud->pts[i].x = subset_coords_x[i];
@@ -177,9 +177,9 @@ int main(int argc, char *argv[]) {
   *outStream << "kd-tree completed" << std::endl;
 
   // temp storage
-  work_t query_pt[2];
+  scalar_t query_pt[2];
   std::vector<size_t> ret_index(num_neigh);
-  std::vector<work_t> out_dist_sqr(num_neigh);
+  std::vector<scalar_t> out_dist_sqr(num_neigh);
   const int_t N = 3;
   int *IPIV = new int[N+1];
   int LWORK = N*N;
@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
 
     *outStream << "processing step: " << step << std::endl;
 
-    std::vector<work_t> intensities(img_w*img_h);
+    std::vector<scalar_t> intensities(img_w*img_h);
     netcdf_reader->read_netcdf_image(netcdf_input_name.c_str(),step,&intensities[0]);
     // convert the intensities to floats to save space:
     std::vector<float> intens_float(img_w*img_h);
@@ -208,7 +208,7 @@ int main(int argc, char *argv[]) {
     netcdf_writer->write_float_array("data",step,intens_float);
 
     // get each of the fields from the exodus mesh
-    std::vector<std::vector<work_t> > exo_fields(output_field_names.size()-1);
+    std::vector<std::vector<scalar_t> > exo_fields(output_field_names.size()-1);
     std::vector<std::vector<float> > pixel_fields(output_field_names.size()-1,std::vector<float>(img_w*img_h));
     for(size_t j=0;j<exo_fields.size();++j)
       exo_fields[j] = DICe::mesh::read_exodus_field(exo_name,output_field_names[j+1],step+1);

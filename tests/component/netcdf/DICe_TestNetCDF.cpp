@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
-  work_t errorTol = 0.001;
+  scalar_t errorTol = 0.001;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 
   // read the gold version of this image
   Teuchos::RCP<Scalar_Image> gold_img = Teuchos::rcp(new Scalar_Image("../images/netcdf.rawi"));
-  const work_t diff = img->diff(gold_img);
+  const scalar_t diff = img->diff(gold_img);
   *outStream << "gold diff " << diff << std::endl;
   if(std::abs(diff) > errorTol){
     errorFlag++;
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
   subImg.write("netcdf_sub_image.tif");
   //subImg.write("netcdf_sub_image.rawi");
   Teuchos::RCP<Scalar_Image> gold_sub_img = Teuchos::rcp(new Scalar_Image("../images/netcdf_sub_image.rawi"));
-  const work_t sub_diff = subImg.diff(gold_sub_img);
+  const scalar_t sub_diff = subImg.diff(gold_sub_img);
   //gold_sub_img->write("gold.tif");
   *outStream << "sub gold diff " << sub_diff << std::endl;
   if(std::abs(sub_diff) > errorTol){
@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
 
   Teuchos::RCP<Scalar_Image> test_img = Teuchos::rcp(new Scalar_Image("./test.nc"));
   test_img->write("test_img.tif");
-  const work_t test_diff = test_img->diff(gold_sub_img);
+  const scalar_t test_diff = test_img->diff(gold_sub_img);
   *outStream << "test diff " << test_diff << std::endl;
   if(std::abs(test_diff) > errorTol){
     errorFlag++;

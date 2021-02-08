@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
   // there are 2 columns of data
   // field_name tolerance
   std::vector<std::string> field_names(num_lines);
-  std::vector<work_t> tols(num_lines);
+  std::vector<scalar_t> tols(num_lines);
   *outStream << std::left << std::setw(25) << "Field";
   *outStream << std::left << std::setw(15) << "Tolerance" << std::endl;
   for(int_t line=0;line<num_lines;++line){
@@ -169,10 +169,10 @@ int main(int argc, char *argv[]) {
 
     // iterate all steps in the file
     for(int_t time_step=1;time_step<=num_steps_a;++time_step){
-      std::vector<work_t> a_field = DICe::mesh::read_exodus_field(mesh_a,var_index_a,time_step);
-      std::vector<work_t> b_field = DICe::mesh::read_exodus_field(mesh_b,var_index_b,time_step);
+      std::vector<scalar_t> a_field = DICe::mesh::read_exodus_field(mesh_a,var_index_a,time_step);
+      std::vector<scalar_t> b_field = DICe::mesh::read_exodus_field(mesh_b,var_index_b,time_step);
 
-      work_t error = 0.0;
+      scalar_t error = 0.0;
       for(int_t node=0;node<num_nodes_a;++node){
         error += (a_field[node] - b_field[node])*(a_field[node] - b_field[node]);
       }

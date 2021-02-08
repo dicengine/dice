@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
-  work_t errorTol = 0.1;
+  scalar_t errorTol = 0.1;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
 #else
   Teuchos::RCP<Scalar_Image> polar_baboon_test = Teuchos::rcp(new Scalar_Image("./images/baboon_polar.rawi"));
 #endif
-  const work_t diff_polar = polar_baboon->diff(polar_baboon_test);
+  const scalar_t diff_polar = polar_baboon->diff(polar_baboon_test);
   *outStream << "polar image diff: " << diff_polar << std::endl;
   if(diff_polar > errorTol){
     *outStream << "Error, the polar transform intensity values are not correct" << std::endl;
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
 #else
   Teuchos::RCP<Scalar_Image> baboon_fft_test = Teuchos::rcp(new Scalar_Image("./images/baboon_fft.rawi"));
 #endif
-  const work_t diff_fft = baboon_fft->diff(baboon_fft_test);
+  const scalar_t diff_fft = baboon_fft->diff(baboon_fft_test);
   *outStream << "fft image diff: " << diff_fft << std::endl;
   if(diff_fft > errorTol){
     *outStream << "Error, the fft of the intensity values is not correct" << std::endl;
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
 #else
   Teuchos::RCP<Scalar_Image> baboon_high_exact = Teuchos::rcp(new Scalar_Image("./images/baboon_high.rawi"));
 #endif
-  const work_t high_diff = baboon_high->diff(baboon_high_exact);
+  const scalar_t high_diff = baboon_high->diff(baboon_high_exact);
   if(high_diff > errorTol){
     *outStream << "Error, the values of the high pass fft are not correct" << std::endl;
     errorFlag++;
@@ -133,8 +133,8 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Scalar_Image> baboon_rot_pol = polar_transform(baboon_rot_fft);
   Teuchos::RCP<Scalar_Image> baboon_pol = polar_transform(baboon_fft);
   // fft correlate the two polar fft images:
-  work_t r = 0.0;
-  work_t t = 0.0;
+  scalar_t r = 0.0;
+  scalar_t t = 0.0;
   phase_correlate_x_y(baboon_rot_pol,baboon_pol,t,r,true);
   *outStream << "radius: " << r << " theta: " << t*180/3.141592654 << std::endl;
   if(std::abs(t - 0.5236) > 0.01){
@@ -154,8 +154,8 @@ int main(int argc, char *argv[]) {
  // take the polar transform of the original and rotated images:
   Teuchos::RCP<Scalar_Image> baboon_rot45_pol = polar_transform(baboon_rot45_fft);
   // fft correlate the two polar fft images:
-  work_t r45 = 0.0;
-  work_t t45 = 0.0;
+  scalar_t r45 = 0.0;
+  scalar_t t45 = 0.0;
   phase_correlate_x_y(baboon_rot45_pol,baboon_pol,t45,r45,true);
   *outStream << "radius: " << r45 << " theta: " << t45*180/3.141592654 << std::endl;
   if(std::abs(t45 + 0.7854) > 0.01){

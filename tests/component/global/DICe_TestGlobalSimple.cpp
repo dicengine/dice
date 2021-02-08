@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
   mms_sublist.set(DICe::phi_coeff,10.0);
   std::vector<std::string> mms_problem_name;
   std::vector<Global_Formulation> formulation;
-  std::vector<work_t> alpha;
+  std::vector<scalar_t> alpha;
 
   // HORN SCHNUNCK
   formulation.push_back(HORN_SCHUNCK);
@@ -101,21 +101,21 @@ int main(int argc, char *argv[]) {
   mms_problem_name.push_back("simple_lm_mixed");
   alpha.push_back(1.0);
 
-  const work_t error_max = 1.0E-5;
-  const work_t error_lam_max = 50.0;
+  const scalar_t error_max = 1.0E-5;
+  const scalar_t error_lam_max = 50.0;
   TEUCHOS_TEST_FOR_EXCEPTION(formulation.size()!=mms_problem_name.size()||formulation.size()!=alpha.size(),
     std::runtime_error,"Error missing a parameter");
-  std::vector<work_t> error_x(formulation.size(),-1.0);
-  std::vector<work_t> error_y(formulation.size(),-1.0);
-  std::vector<work_t> error_l(formulation.size(),-1.0);
+  std::vector<scalar_t> error_x(formulation.size(),-1.0);
+  std::vector<scalar_t> error_y(formulation.size(),-1.0);
+  std::vector<scalar_t> error_l(formulation.size(),-1.0);
 
   for(size_t i=0;i<formulation.size();++i){
-    work_t error_bx = 0.0;
-    work_t error_by = 0.0;
-    work_t error_lambda = 0.0;
-    work_t max_error_bx = 0.0;
-    work_t max_error_by = 0.0;
-    work_t max_error_lambda = 0.0;
+    scalar_t error_bx = 0.0;
+    scalar_t error_by = 0.0;
+    scalar_t error_lambda = 0.0;
+    scalar_t max_error_bx = 0.0;
+    scalar_t max_error_by = 0.0;
+    scalar_t max_error_lambda = 0.0;
     *outStream << " TESTING " << to_string(formulation[i]) << " FORMULATION " << std::endl;
     global_params->set(DICe::global_regularization_alpha,alpha[i]);
     global_params->set(DICe::global_stabilization_tau,0.0);

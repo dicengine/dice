@@ -70,16 +70,16 @@ typedef int int_t;
 
 #if DICE_USE_DOUBLE
   /// generic scalar type
-  typedef double work_t;
+  typedef double scalar_t;
 #else
   /// generic scalar type
-  typedef float work_t;
+  typedef float scalar_t;
 #endif
 
 #if DICE_USE_INT_STORAGE
   typedef unsigned short storage_t;
 #else
-  typedef work_t storage_t;
+  typedef scalar_t storage_t;
 #endif
 
 // Forward declaration of ParameterList so the Teuchos headers do not
@@ -124,7 +124,7 @@ namespace Teuchos{
 ///  beta:  Sensitivity of the cost function (lower is better). If beta is high, the correlation criteria cannot judge between nearby solutions,
 ///         they all have the same cost function. -1.0 is recorded for failed correlation
 ///  diagnostic_flags: (see DICe_Types.h for definitions)
-DICE_LIB_DLL_EXPORT const int_t dice_correlate(work_t points[], int_t n_points,
+DICE_LIB_DLL_EXPORT const int_t dice_correlate(scalar_t points[], int_t n_points,
                         int_t subset_size,
                         storage_t ref_img[], int_t ref_w, int_t ref_h,
                         storage_t def_img[], int_t def_w, int_t def_h,
@@ -171,7 +171,7 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate(work_t points[], int_t n_points,
 ///  Note: if the params are changed once this function has been called it will have no effect. The
 ///  correlation parameters are set at the first invokation and will remain the same.
 ///  Note: no checking is done to ensure that the points array is the right size. This is up to the user.
-DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(work_t points[],
+DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
                         storage_t ref_img[], int_t ref_w, int_t ref_h,
                         storage_t def_img[], int_t def_w, int_t def_h,
                         const char* subset_file, const char* param_file=0,

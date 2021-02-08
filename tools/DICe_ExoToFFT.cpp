@@ -86,9 +86,9 @@ int main(int argc, char *argv[]) {
   std::string exo_name = argv[1];
   std::string field_name = argv[2];
   const int_t num_neigh = std::strtol(argv[3],NULL,0);
-  const work_t mm_per_pixel = std::atof(argv[4]);
+  const scalar_t mm_per_pixel = std::atof(argv[4]);
   assert(mm_per_pixel!=0.0);
-  const work_t freq_thresh = std::atof(argv[5]);
+  const scalar_t freq_thresh = std::atof(argv[5]);
   int_t final_step = argc >=7 ? std::strtol(argv[6],NULL,0) : -1;
   bool output_debug_images = argc == 8;
 
@@ -126,9 +126,9 @@ int main(int argc, char *argv[]) {
   DICe::mesh::close_exodus_output(mesh);
 
   // read the coordinates:
-  std::vector<work_t> coords_x;
-  std::vector<work_t> coords_y;
-  std::vector<work_t> coords_z;
+  std::vector<scalar_t> coords_x;
+  std::vector<scalar_t> coords_y;
+  std::vector<scalar_t> coords_z;
   DICe::mesh::read_exodus_coordinates(exo_name,coords_x,coords_y,coords_z);
 
   const int_t num_nodes = coords_x.size();
@@ -140,15 +140,15 @@ int main(int argc, char *argv[]) {
 
   // get stats on the mesh size:
   // assumes a mostly planar geometry
-  work_t min_x = std::numeric_limits<work_t>::max();
-  work_t max_x = std::numeric_limits<work_t>::min();
-  work_t avg_x = 0.0;
-  work_t min_y = std::numeric_limits<work_t>::max();
-  work_t max_y = std::numeric_limits<work_t>::min();
-  work_t avg_y = 0.0;
-  work_t min_z = std::numeric_limits<work_t>::max();
-  work_t max_z = std::numeric_limits<work_t>::min();
-  work_t avg_z = 0.0;
+  scalar_t min_x = std::numeric_limits<scalar_t>::max();
+  scalar_t max_x = std::numeric_limits<scalar_t>::min();
+  scalar_t avg_x = 0.0;
+  scalar_t min_y = std::numeric_limits<scalar_t>::max();
+  scalar_t max_y = std::numeric_limits<scalar_t>::min();
+  scalar_t avg_y = 0.0;
+  scalar_t min_z = std::numeric_limits<scalar_t>::max();
+  scalar_t max_z = std::numeric_limits<scalar_t>::min();
+  scalar_t avg_z = 0.0;
 
   for(int_t i=0;i<num_nodes;++i){
     avg_x += coords_x[i];
@@ -188,9 +188,9 @@ int main(int argc, char *argv[]) {
   std::cout << "avg z: " << avg_z << std::endl;
 
   // iterate the field values to get the stats:
-  work_t min_value = std::numeric_limits<work_t>::max();
-  work_t max_value = std::numeric_limits<work_t>::min();
-  std::vector<work_t> values;
+  scalar_t min_value = std::numeric_limits<scalar_t>::max();
+  scalar_t max_value = std::numeric_limits<scalar_t>::min();
+  std::vector<scalar_t> values;
   if(final_step<0)
     final_step = num_time_steps;
 
@@ -206,9 +206,9 @@ int main(int argc, char *argv[]) {
     }
   }
   // determine the conversion factor from the field values to image intensity counts:
-  const work_t range = max_value - min_value;
+  const scalar_t range = max_value - min_value;
   assert(range!=0.0);
-  const work_t counts_per_unit = 255/range;
+  const scalar_t counts_per_unit = 255/range;
   // value = (unit - min_unit)*counts_per_unit
   std::cout << "field stats on " << field_name << ": " << std::endl;
   std::cout << "min value: " << min_value << std::endl;
@@ -216,7 +216,7 @@ int main(int argc, char *argv[]) {
   std::cout << "counts per unit: " << counts_per_unit << std::endl;
 
   // set up a nearest neighbor tree to get the avg distance
-  Teuchos::RCP<Point_Cloud_3D<work_t> > point_cloud = Teuchos::rcp(new Point_Cloud_3D<work_t>());
+  Teuchos::RCP<Point_Cloud_3D<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud_3D<scalar_t>());
   point_cloud->pts.resize(num_nodes);
   for(int_t i=0;i<num_nodes;++i){
     point_cloud->pts[i].x = coords_x[i];
@@ -230,10 +230,10 @@ int main(int argc, char *argv[]) {
   *outStream << "kd-tree completed" << std::endl;
 
   // compute the average distance between nodes:
-  work_t avg_dist_between_nodes = 0.0;
-  work_t query_pt_pre[3];
+  scalar_t avg_dist_between_nodes = 0.0;
+  scalar_t query_pt_pre[3];
   std::vector<size_t> ret_index_pre(2);
-  std::vector<work_t> out_dist_sqr_pre(2);
+  std::vector<scalar_t> out_dist_sqr_pre(2);
   for(int_t i=0;i<num_nodes;++i){
     query_pt_pre[0] = coords_x[i];
     query_pt_pre[1] = coords_y[i];
@@ -247,15 +247,15 @@ int main(int argc, char *argv[]) {
   // create a regular grid (in this case, an image)
 
   // determine the two longest dimensions
-  const work_t length_x = max_x - min_x;
-  const work_t length_y = max_y - min_y;
-  const work_t length_z = max_z - min_z;
+  const scalar_t length_x = max_x - min_x;
+  const scalar_t length_y = max_y - min_y;
+  const scalar_t length_z = max_z - min_z;
 
-  work_t min_i = 0.0;
-  work_t max_i = 0.0;
-  work_t min_j = 0.0;
-  work_t max_j = 0.0;
-  work_t avg_k = 0.0;
+  scalar_t min_i = 0.0;
+  scalar_t max_i = 0.0;
+  scalar_t min_j = 0.0;
+  scalar_t max_j = 0.0;
+  scalar_t avg_k = 0.0;
 
   if(length_x<=length_y && length_x<=length_z){
     // x is the thickness dim (i is z, j is y)
@@ -280,8 +280,8 @@ int main(int argc, char *argv[]) {
   }
 
   // determine the image size:
-  const work_t length_i = max_i - min_i;
-  const work_t length_j = max_j - min_j;
+  const scalar_t length_i = max_i - min_i;
+  const scalar_t length_j = max_j - min_j;
   const int_t img_w = (int_t)(length_i/mm_per_pixel);
   const int_t img_h = (int_t)(length_j/mm_per_pixel);
   std::cout << "converted image dimensions: " << img_w << " x " << img_h << std::endl;
@@ -294,15 +294,15 @@ int main(int argc, char *argv[]) {
 
   // create an image to store the values for each step
 
-  work_t query_pt[3];
+  scalar_t query_pt[3];
   std::vector<size_t> ret_index(num_neigh);
-  std::vector<work_t> out_dist_sqr(num_neigh);
+  std::vector<scalar_t> out_dist_sqr(num_neigh);
   const int_t N = 3;
   int *IPIV = new int[N+1];
   int LWORK = N*N;
   int INFO = 0;
   double *WORK = new double[LWORK];
-  // Note, LAPACK does not allow templating on long int or work_t...must use int and double
+  // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
   Teuchos::LAPACK<int,double> lapack;
 
   Teuchos::ArrayRCP<double> u(num_neigh,0.0);
@@ -314,7 +314,7 @@ int main(int argc, char *argv[]) {
   // break the image mapping up into two steps
   // the first populates the portions of an image that are near the nodes (excluding gaps)
 
-  std::vector<work_t> projected_values(img_w*img_h,0.0);
+  std::vector<scalar_t> projected_values(img_w*img_h,0.0);
   std::vector<bool> on_part(img_w*img_h,false);
 
   bool all_steps_passed = true;
@@ -331,7 +331,7 @@ int main(int argc, char *argv[]) {
       exit(-1);
     }
     // check for a null field
-    work_t field_sum = 0.0;
+    scalar_t field_sum = 0.0;
     for(size_t i=0;i<values.size();++i)
       field_sum += values[i];
     if(field_sum==0.0){
@@ -348,8 +348,8 @@ int main(int argc, char *argv[]) {
           X_t_u[i] = 0.0;
           coeffs[i] = 0.0;
         }
-        work_t my_x = min_i + px_i*mm_per_pixel;
-        work_t my_y = min_j + (img_h-px_j-1)*mm_per_pixel; // flipped because image coords are from the top down
+        scalar_t my_x = min_i + px_i*mm_per_pixel;
+        scalar_t my_y = min_j + (img_h-px_j-1)*mm_per_pixel; // flipped because image coords are from the top down
         query_pt[0] = my_x;
         query_pt[1] = my_y;
         query_pt[2] = avg_k;
@@ -469,12 +469,12 @@ int main(int argc, char *argv[]) {
     power_y_name << "fft_power_y_" << step << ".txt";
     std::FILE * powerXFilePtr = fopen(power_x_name.str().c_str(),"w");
     std::FILE * powerYFilePtr = fopen(power_y_name.str().c_str(),"w");
-    work_t max_power_x = 0.0;
-    work_t max_freq_x = 0.0;
-    work_t max_power_y = 0.0;
-    work_t max_freq_y = 0.0;
+    scalar_t max_power_x = 0.0;
+    scalar_t max_freq_x = 0.0;
+    scalar_t max_power_y = 0.0;
+    scalar_t max_freq_y = 0.0;
 
-    work_t total_power = 0.0;
+    scalar_t total_power = 0.0;
     for(int_t px_j=buf_img_h/2;px_j<buf_img_h;++px_j){
       for(int_t px_i=buf_img_w/2;px_i<buf_img_w;++px_i){
         total_power += fft_intensities[px_j*buf_img_w+px_i];
@@ -483,8 +483,8 @@ int main(int argc, char *argv[]) {
     if(total_power==0.0) total_power = 1.0;
 
     for(int_t px_j=buf_img_h/2;px_j<buf_img_h;++px_j){
-      work_t power_y = 0.0;
-      work_t freq = 0.5 * (px_j-buf_img_h/2)*2.0/buf_img_h;
+      scalar_t power_y = 0.0;
+      scalar_t freq = 0.5 * (px_j-buf_img_h/2)*2.0/buf_img_h;
       for(int_t px_i=buf_img_w/2;px_i<buf_img_w;++px_i){
         power_y += fft_intensities[px_j*buf_img_w+px_i];
       }
@@ -495,8 +495,8 @@ int main(int argc, char *argv[]) {
       fprintf(powerYFilePtr,"%f,%f\n",freq,power_y/total_power);
     }
     for(int_t px_i=buf_img_w/2;px_i<buf_img_w;++px_i){
-      work_t power_x = 0.0;
-      work_t freq = 0.5 * (px_i-buf_img_w/2)*2.0/buf_img_w;
+      scalar_t power_x = 0.0;
+      scalar_t freq = 0.5 * (px_i-buf_img_w/2)*2.0/buf_img_w;
       for(int_t px_j=buf_img_h/2;px_j<buf_img_h;++px_j){
         power_x += fft_intensities[px_j*buf_img_w+px_i];
       }

@@ -78,7 +78,7 @@ void apply_transform(Teuchos::RCP<Image_<S>> image_in,
 /// struct used to sort solutions by peak values
 struct computed_point
 {
-    work_t x_, y_, bx_, by_, sol_bx_, sol_by_,error_bx_,error_by_;
+    scalar_t x_, y_, bx_, by_, sol_bx_, sol_by_,error_bx_,error_by_;
 };
 
 /// free function to compute the roll off statistics for the peaks in the exact solution
@@ -94,17 +94,17 @@ struct computed_point
 /// \param peaks_avg_error_y [out] computed stat
 /// \param peaks_std_dev_error_y [out] computed stat
 DICE_LIB_DLL_EXPORT
-void compute_roll_off_stats(const work_t & period,
-  const work_t & img_w,
-  const work_t & img_h,
+void compute_roll_off_stats(const scalar_t & period,
+  const scalar_t & img_w,
+  const scalar_t & img_h,
   Teuchos::RCP<MultiField> & coords,
   Teuchos::RCP<MultiField> & disp,
   Teuchos::RCP<MultiField> & exact_disp,
   Teuchos::RCP<MultiField> & disp_error,
-  work_t & peaks_avg_error_x,
-  work_t & peaks_std_dev_error_x,
-  work_t & peaks_avg_error_y,
-  work_t & peaks_std_dev_error_y);
+  scalar_t & peaks_avg_error_x,
+  scalar_t & peaks_std_dev_error_x,
+  scalar_t & peaks_avg_error_y,
+  scalar_t & peaks_std_dev_error_y);
 
 /// free function to create a synthetically speckled image with perfectly smooth and regular speckles of a certain size
 /// \param w width of the image
@@ -119,7 +119,7 @@ Teuchos::RCP<Image_<S>> create_synthetic_speckle_image(const int_t w,
   const int_t h,
   const int_t offset_x,
   const int_t offset_y,
-  const work_t & speckle_size,
+  const scalar_t & speckle_size,
   const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
 /// free function to add noise counts to an image
@@ -128,7 +128,7 @@ Teuchos::RCP<Image_<S>> create_synthetic_speckle_image(const int_t w,
 template <typename S>
 DICE_LIB_DLL_EXPORT
 void add_noise_to_image(Teuchos::RCP<Image_<S>> & image,
-  const work_t & noise_percent);
+  const scalar_t & noise_percent);
 
 /// free function to determine the distribution of speckle sizes
 /// returns the next largest odd integer size (so if the pattern predominant size is 6, the function returns 7)
@@ -156,8 +156,8 @@ public:
   };
 
   /// constructor
-  Image_Deformer_(const work_t & coeff_a,
-    const work_t & coeff_b,
+  Image_Deformer_(const scalar_t & coeff_a,
+    const scalar_t & coeff_b,
     const Def_Type def_type):
       rel_factor_disp_(1.0),
       rel_factor_strain_(1.0),
@@ -176,10 +176,10 @@ public:
   /// \param coord_y the y-coordinate
   /// \param bx [out] the x displacement
   /// \param by [out] the y displacement
-  void compute_deformation(const work_t & coord_x,
-    const work_t & coord_y,
-    work_t & bx,
-    work_t & by);
+  void compute_deformation(const scalar_t & coord_x,
+    const scalar_t & coord_y,
+    scalar_t & bx,
+    scalar_t & by);
 
   /// compute the analytical derivatives at the given coordinates
   /// \param coord_x the x-coordinate for the evaluation location
@@ -188,12 +188,12 @@ public:
   /// \param bxy [out] the xy deriv
   /// \param byx [out] the yx deriv
   /// \param byy [out] the yy deriv
-  void compute_deriv_deformation(const work_t & coord_x,
-    const work_t & coord_y,
-    work_t & bxx,
-    work_t & bxy,
-    work_t & byx,
-    work_t & byy);
+  void compute_deriv_deformation(const scalar_t & coord_x,
+    const scalar_t & coord_y,
+    scalar_t & bxx,
+    scalar_t & bxy,
+    scalar_t & byx,
+    scalar_t & byy);
 
   /// perform deformation on the image
   /// returns a pointer to the deformed image
@@ -209,12 +209,12 @@ public:
   /// \param error_y [out] the y error at the given coords
   /// \param use_mag square the difference if true
   /// \param relative divide by the magnitude of the solution at that point (%)
-  void compute_displacement_error(const work_t & coord_x,
-    const work_t & coord_y,
-    const work_t & sol_x,
-    const work_t & sol_y,
-    work_t & error_x,
-    work_t & error_y,
+  void compute_displacement_error(const scalar_t & coord_x,
+    const scalar_t & coord_y,
+    const scalar_t & sol_x,
+    const scalar_t & sol_y,
+    scalar_t & error_x,
+    scalar_t & error_y,
     const bool use_mag = false,
     const bool relative = true);
 
@@ -229,14 +229,14 @@ public:
   /// \param error_yy [out] the yy error at the given coords
   /// \param use_mag square the difference if true
   /// \param relative divide by the magnitude of the solution at that point (%)
-  void compute_lagrange_strain_error(const work_t & coord_x,
-    const work_t & coord_y,
-    const work_t & sol_xx,
-    const work_t & sol_xy,
-    const work_t & sol_yy,
-    work_t & error_xx,
-    work_t & error_xy,
-    work_t & error_yy,
+  void compute_lagrange_strain_error(const scalar_t & coord_x,
+    const scalar_t & coord_y,
+    const scalar_t & sol_xx,
+    const scalar_t & sol_xy,
+    const scalar_t & sol_yy,
+    scalar_t & error_xx,
+    scalar_t & error_xy,
+    scalar_t & error_yy,
     const bool use_mag = false,
     const bool relative = true);
 
@@ -246,20 +246,20 @@ public:
   /// \param strain_xx [out] the xx strain at the given coords
   /// \param strain_xy [out] the xy strain at the given coords
   /// \param strain_yy [out] the yy strain at the given coords
-  void compute_lagrange_strain(const work_t & coord_x,
-    const work_t & coord_y,
-    work_t & strain_xx,
-    work_t & strain_xy,
-    work_t & strain_yy);
+  void compute_lagrange_strain(const scalar_t & coord_x,
+    const scalar_t & coord_y,
+    scalar_t & strain_xx,
+    scalar_t & strain_xy,
+    scalar_t & strain_yy);
 private:
   /// factor to use when computing the relative values of disp error
-  work_t rel_factor_disp_;
+  scalar_t rel_factor_disp_;
   /// factor to use when computing the relative values of strain error
-  work_t rel_factor_strain_;
+  scalar_t rel_factor_strain_;
   /// first coefficient for def and strain calcs
-  work_t coeff_a_;
+  scalar_t coeff_a_;
   /// second coefficient for def and strain calcs
-  work_t coeff_b_;
+  scalar_t coeff_b_;
   /// type of deformation to use
   Def_Type def_type_;
 };

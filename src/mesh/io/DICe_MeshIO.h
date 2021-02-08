@@ -70,9 +70,9 @@ void read_exodus_coordinates(Teuchos::RCP<Mesh> mesh);
 /// \param coords_z vector that will be populated with the z values
 DICE_LIB_DLL_EXPORT
 void read_exodus_coordinates(const std::string & exo_file,
-  std::vector<work_t> & coords_x,
-  std::vector<work_t> & coords_y,
-  std::vector<work_t> & coords_z);
+  std::vector<scalar_t> & coords_x,
+  std::vector<scalar_t> & coords_y,
+  std::vector<scalar_t> & coords_z);
 
 /// Read the nodal field names of from the mesh
 /// \param mesh The mesh to use for this function
@@ -103,7 +103,7 @@ int_t read_exodus_num_steps(const std::string & file_name);
 /// \param var_index the variable index for the requested field
 /// \param step the step number
 DICE_LIB_DLL_EXPORT
-std::vector<work_t>
+std::vector<scalar_t>
 read_exodus_field(
 Teuchos::RCP<Mesh> mesh,
   const int_t var_index,
@@ -114,7 +114,7 @@ Teuchos::RCP<Mesh> mesh,
 /// \param var_index the variable index for the requested field
 /// \param step the step number
 DICE_LIB_DLL_EXPORT
-std::vector<work_t>
+std::vector<scalar_t>
 read_exodus_field(
   const std::string & file_name,
   const int_t var_index,
@@ -125,7 +125,7 @@ read_exodus_field(
 /// \param field_name string name of the requested field
 /// \param step the step number
 DICE_LIB_DLL_EXPORT
-std::vector<work_t>
+std::vector<scalar_t>
 read_exodus_field(
   const std::string & file_name,
   const std::string & field_name,
@@ -210,7 +210,7 @@ void initialize_control_volumes(Teuchos::RCP<Mesh> mesh);
 /// \param subelement The control volume subelement
 DICE_LIB_DLL_EXPORT
 void tri3_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> cv_node,
   Teuchos::RCP<DICe::mesh::Subelement> subelement);
 
@@ -221,7 +221,7 @@ void tri3_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
 /// \param subelement The control volume subelement
 DICE_LIB_DLL_EXPORT
 void tetra4_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> cv_node,
   Teuchos::RCP<DICe::mesh::Subelement> subelement);
 
@@ -237,15 +237,15 @@ void tetra4_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
 /// \param subtri_edge_centroid Pointer to an array with the centroid of the edge
 DICE_LIB_DLL_EXPORT
 void compute_submesh_obj_from_tri3(
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_I,
-  const work_t * parent_centroid,
-  work_t & edge_length,
-  work_t * normal,
-  work_t * subtri_centroid,
-  work_t * subtri_edge_centroid);
+  const scalar_t * parent_centroid,
+  scalar_t & edge_length,
+  scalar_t * normal,
+  scalar_t * subtri_centroid,
+  scalar_t * subtri_edge_centroid);
 
 /// Compute the submesh object from a tet4 parent element
 /// \param coords_values An array with the coordinates values
@@ -260,16 +260,16 @@ void compute_submesh_obj_from_tri3(
 /// \param subtet_face_centroid [out] Pointer to an array with the centroid of the face
 DICE_LIB_DLL_EXPORT
 void compute_submesh_obj_from_tet4(
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_C,
   Teuchos::RCP<DICe::mesh::Node> node_I,
-  const work_t * parent_centroid,
-  work_t & face_area,
-  work_t * normal,
-  work_t * subtet_centroid,
-  work_t * subtet_face_centroid);
+  const scalar_t * parent_centroid,
+  scalar_t & face_area,
+  scalar_t * normal,
+  scalar_t * subtet_centroid,
+  scalar_t * subtet_face_centroid);
 
 /// Compute the centroid of a triangle
 /// \param coords_values An array with the coordinates values
@@ -279,11 +279,11 @@ void compute_submesh_obj_from_tet4(
 /// \param cntrd [out] Pointer to the array with the centroid coordinates
 DICE_LIB_DLL_EXPORT
 void compute_centroid_of_tri(
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_I,
-  work_t * cntrd);
+  scalar_t * cntrd);
 
 /// Compute the centroid of a tetrahedron
 /// \param coords_values An array with the coordinates values
@@ -294,12 +294,12 @@ void compute_centroid_of_tri(
 /// \param cntrd [out] Pointer to the array with the centroid coordinates
 DICE_LIB_DLL_EXPORT
 void compute_centroid_of_tet(
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_C,
   Teuchos::RCP<DICe::mesh::Node> node_I,
-  work_t * cntrd);
+  scalar_t * cntrd);
 
 /// Compute the area of a triangle
 /// \param coords_values An array with the coordinate values
@@ -307,7 +307,7 @@ void compute_centroid_of_tet(
 /// \param node_B Node B from the diagram for subelements
 /// \param node_C Node C from the diagram for subelements
 DICE_LIB_DLL_EXPORT
-work_t tri3_area(Teuchos::ArrayRCP<const work_t> coords_values,
+scalar_t tri3_area(Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_C);
@@ -320,7 +320,7 @@ work_t tri3_area(Teuchos::ArrayRCP<const work_t> coords_values,
 /// \param node_C Node C from the diagram for subelements
 /// \param node_D Node D from the diagram for subelements
 DICE_LIB_DLL_EXPORT
-work_t tetra4_volume(Teuchos::ArrayRCP<const work_t> coords_values,
+scalar_t tetra4_volume(Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_C,
@@ -337,7 +337,7 @@ void create_cell_size_and_radius(Teuchos::RCP<Mesh> mesh);
 /// \param element Pointer to the particular element
 DICE_LIB_DLL_EXPORT
 void hex8_volume_radius(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   const Teuchos::RCP<DICe::mesh::Element>  element);
 
 /// Compute a specific elemnet type size
@@ -346,7 +346,7 @@ void hex8_volume_radius(Teuchos::RCP<Mesh> mesh,
 /// \param element Pointer to the particular element
 DICE_LIB_DLL_EXPORT
 void tetra4_volume_radius(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   const Teuchos::RCP<DICe::mesh::Element>  element);
 
 /// Compute a specific elemnet type size
@@ -355,7 +355,7 @@ void tetra4_volume_radius(Teuchos::RCP<Mesh> mesh,
 /// \param element Pointer to the particular element
 DICE_LIB_DLL_EXPORT
 void quad4_area_radius(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   const Teuchos::RCP<DICe::mesh::Element> element);
 
 /// Compute a specific elemnet type size
@@ -364,7 +364,7 @@ void quad4_area_radius(Teuchos::RCP<Mesh> mesh,
 /// \param element Pointer to the particular element
 DICE_LIB_DLL_EXPORT
 void tri3_area_radius(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   const Teuchos::RCP<DICe::mesh::Element> element);
 
 /// Compute a specific elemnet type size
@@ -373,7 +373,7 @@ void tri3_area_radius(Teuchos::RCP<Mesh> mesh,
 /// \param element Pointer to the particular element
 DICE_LIB_DLL_EXPORT
 void pyramid5_volume_radius(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   const Teuchos::RCP<DICe::mesh::Element> element);
 
 } //mesh

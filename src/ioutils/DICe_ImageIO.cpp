@@ -301,9 +301,9 @@ void read_image(const char * file_name,
         if(threshold==hc->max_possible_intensity()||reinit){
           std::vector<uint16_t> full_data = hc->get_frame(start_index);
           std::sort(full_data.begin(),full_data.end());
-          const work_t outlier = 0.98*full_data[full_data.size()-1];
+          const scalar_t outlier = 0.98*full_data[full_data.size()-1];
           for(size_t i=0;i<full_data.size();++i)
-            if((work_t)full_data[full_data.size()-i-1]<outlier){
+            if((scalar_t)full_data[full_data.size()-i-1]<outlier){
               threshold = full_data[full_data.size()-i-1];
               break;
             }
@@ -319,7 +319,7 @@ void read_image(const char * file_name,
           intensities[i] = std::min(intensities[i],static_cast<S>(threshold));
       }
 //      if(convert_to_8_bit){
-//        const work_t conversion_factor = hc->conversion_factor_to_8_bit();
+//        const scalar_t conversion_factor = hc->conversion_factor_to_8_bit();
 //        for(int_t i=0;i<intensities.size();++i)
 //            intensities[i] = static_cast<uint16_t>(intensities[i]*conversion_factor);
 //      }
@@ -340,11 +340,11 @@ void read_image(const char * file_name,
       }
       if(intensities.size()==0)
         intensities = Teuchos::ArrayRCP<S>(width*height,0);
-      if(std::is_same<S,work_t>::value){
-        work_t * intens_ptr = reinterpret_cast<work_t*>(intensities.getRawPtr()); // needed to get code to compile if work_t != storage_t (S)
+      if(std::is_same<S,scalar_t>::value){
+        scalar_t * intens_ptr = reinterpret_cast<scalar_t*>(intensities.getRawPtr()); // needed to get code to compile if scalar_t != storage_t (S)
         netcdf_reader.read_netcdf_image(netcdf_file.c_str(),index,intens_ptr,sub_w,sub_h,sub_offset_x,sub_offset_y,layout_right);
       }else{
-        Teuchos::ArrayRCP<work_t> netcdf_intensities(width*height,0);
+        Teuchos::ArrayRCP<scalar_t> netcdf_intensities(width*height,0);
         netcdf_reader.read_netcdf_image(netcdf_file.c_str(),index,netcdf_intensities.getRawPtr(),sub_w,sub_h,sub_offset_x,sub_offset_y,layout_right);
         for(int_t i=0;i<netcdf_intensities.size();++i) // this conversion is needed since netcdf always stores values in float or double
           intensities[i] = static_cast<S>(netcdf_intensities[i]);
@@ -401,7 +401,7 @@ DICE_LIB_DLL_EXPORT
 void read_image(const char *,Teuchos::ArrayRCP<storage_t> &,const Teuchos::RCP<Teuchos::ParameterList> &);
 template
 DICE_LIB_DLL_EXPORT
-void read_image(const char *,Teuchos::ArrayRCP<work_t> &,const Teuchos::RCP<Teuchos::ParameterList> &);
+void read_image(const char *,Teuchos::ArrayRCP<scalar_t> &,const Teuchos::RCP<Teuchos::ParameterList> &);
 
 
 template <typename S>
@@ -421,7 +421,7 @@ DICE_LIB_DLL_EXPORT
 void round_intensities(const int_t,const int_t,storage_t *);
 template
 DICE_LIB_DLL_EXPORT
-void round_intensities(const int_t,const int_t,work_t *);
+void round_intensities(const int_t,const int_t,scalar_t *);
 
 //DICE_LIB_DLL_EXPORT
 //void remove_outliers(const int_t width,
@@ -469,7 +469,7 @@ DICE_LIB_DLL_EXPORT
 void floor_intensities(const int_t,const int_t,storage_t *);
 template
 DICE_LIB_DLL_EXPORT
-void floor_intensities(const int_t,const int_t,work_t *);
+void floor_intensities(const int_t,const int_t,scalar_t *);
 
 template <typename S>
 DICE_LIB_DLL_EXPORT
@@ -489,17 +489,17 @@ void undistort_intensities(const int_t width,
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(undistort_images),std::runtime_error,"");
     Teuchos::ParameterList cal_sublist = params->sublist(undistort_images);
     TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("fx"),std::runtime_error,"");
-    const work_t fx = cal_sublist.get<double>("fx");
+    const scalar_t fx = cal_sublist.get<double>("fx");
     TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("fy"),std::runtime_error,"");
-    const work_t fy = cal_sublist.get<double>("fy");
+    const scalar_t fy = cal_sublist.get<double>("fy");
     TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("cx"),std::runtime_error,"");
-    const work_t cx = cal_sublist.get<double>("cx");
+    const scalar_t cx = cal_sublist.get<double>("cx");
     TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("cy"),std::runtime_error,"");
-    const work_t cy = cal_sublist.get<double>("cy");
+    const scalar_t cy = cal_sublist.get<double>("cy");
     TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("k1"),std::runtime_error,"");
-    const work_t k1 = cal_sublist.get<double>("k1");
+    const scalar_t k1 = cal_sublist.get<double>("k1");
     TEUCHOS_TEST_FOR_EXCEPTION(!cal_sublist.isParameter("k2"),std::runtime_error,"");
-    const work_t k2 = cal_sublist.get<double>("k2");
+    const scalar_t k2 = cal_sublist.get<double>("k2");
     intrinsics.at<float>(0,0) = fx;
     intrinsics.at<float>(1,1) = fy;
     intrinsics.at<float>(0,2) = cx;
@@ -532,20 +532,20 @@ DICE_LIB_DLL_EXPORT
 void undistort_intensities(const int_t,const int_t,storage_t *,const Teuchos::RCP<Teuchos::ParameterList> &);
 template
 DICE_LIB_DLL_EXPORT
-void undistort_intensities(const int_t,const int_t,work_t *,const Teuchos::RCP<Teuchos::ParameterList> &);
+void undistort_intensities(const int_t,const int_t,scalar_t *,const Teuchos::RCP<Teuchos::ParameterList> &);
 
 template <typename S>
 DICE_LIB_DLL_EXPORT
 void spread_histogram(const int_t width,
   const int_t height,
   S * intensities){
-  work_t max_intensity = std::numeric_limits<work_t>::min();
-  work_t min_intensity = std::numeric_limits<work_t>::max();
+  scalar_t max_intensity = std::numeric_limits<scalar_t>::min();
+  scalar_t min_intensity = std::numeric_limits<scalar_t>::max();
   for(int_t i=0; i<width*height; ++i){
     if(intensities[i] > max_intensity) max_intensity = intensities[i];
     if(intensities[i] < min_intensity) min_intensity = intensities[i];
   }
-  work_t range = 255.0;
+  scalar_t range = 255.0;
   if(max_intensity > 255.0 && max_intensity <= 4096.0)
     range = 4096.0;
   else if(max_intensity > 4096.0)
@@ -554,7 +554,7 @@ void spread_histogram(const int_t width,
   DEBUG_MSG("utils::spread_histogram(): max intensity: " << max_intensity);
   DEBUG_MSG("utils::spread_histogram(): min intensity: " << min_intensity);
   if((max_intensity - min_intensity) == 0.0) return;
-  const work_t fac = range / (max_intensity - min_intensity);
+  const scalar_t fac = range / (max_intensity - min_intensity);
   for(int_t y=0;y<height;++y){
     for(int_t x=0;x<width;++x)
       intensities[y*width + x] = static_cast<S>((intensities[y*width + x]-min_intensity)*fac);
@@ -566,7 +566,7 @@ DICE_LIB_DLL_EXPORT
 void spread_histogram(const int_t,const int_t,storage_t *);
 template
 DICE_LIB_DLL_EXPORT
-void spread_histogram(const int_t,const int_t,work_t *);
+void spread_histogram(const int_t,const int_t,scalar_t *);
 
 DICE_LIB_DLL_EXPORT
 cv::Mat read_image(const char * file_name){
@@ -631,7 +631,7 @@ DICE_LIB_DLL_EXPORT
 void write_color_overlap_image(const char *,const int_t,const int_t,storage_t *,storage_t *);
 template
 DICE_LIB_DLL_EXPORT
-void write_color_overlap_image(const char *,const int_t,const int_t,work_t *,work_t *);
+void write_color_overlap_image(const char *,const int_t,const int_t,scalar_t *,scalar_t *);
 
 template<typename S>
 DICE_LIB_DLL_EXPORT
@@ -652,10 +652,10 @@ void write_image(const char * file_name,
   }
   else{
     // check the range of the values and scale to 8 bit
-    work_t max_value = 0.0;
+    scalar_t max_value = 0.0;
     for(int_t i=0;i<width*height;++i)
       if(intensities[i]>max_value) max_value = intensities[i];
-    work_t conversion_factor = 1.0;
+    scalar_t conversion_factor = 1.0;
     if(max_value > 255.0){
       conversion_factor = 255.0 / max_value;
     }
@@ -681,7 +681,7 @@ DICE_LIB_DLL_EXPORT
 void write_image(const char *,const int_t,const int_t,storage_t *,const bool);
 template
 DICE_LIB_DLL_EXPORT
-void write_image(const char *,const int_t,const int_t,work_t *,const bool);
+void write_image(const char *,const int_t,const int_t,scalar_t *,const bool);
 
 Teuchos::RCP<hypercine::HyperCine>
 HyperCine_Singleton::hypercine(const std::string & id,

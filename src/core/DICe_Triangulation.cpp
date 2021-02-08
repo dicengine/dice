@@ -53,10 +53,10 @@ namespace DICe {
 
 DICE_LIB_DLL_EXPORT
 Teuchos::SerialDenseMatrix<int_t,double>
-compute_affine_matrix(const std::vector<work_t> proj_xl,
-  const std::vector<work_t> proj_yl,
-  const std::vector<work_t> proj_xr,
-  const std::vector<work_t> proj_yr){
+compute_affine_matrix(const std::vector<scalar_t> proj_xl,
+  const std::vector<scalar_t> proj_yl,
+  const std::vector<scalar_t> proj_xr,
+  const std::vector<scalar_t> proj_yr){
   DEBUG_MSG("compute_affine_matrix(): begin");
   Teuchos::SerialDenseMatrix<int_t,double> affine_matrix(3,3,true);
   const size_t num_coords = proj_xl.size();
@@ -67,10 +67,10 @@ compute_affine_matrix(const std::vector<work_t> proj_xl,
   // normalize the points by centering on 0,0 and scaling so that the average distance from center is sqrt(2):
   DEBUG_MSG("compute_affine_matrix(): normalizing feature points");
   // compute the centroids
-  work_t cl_x = 0.0;
-  work_t cl_y = 0.0;
-  work_t cr_x = 0.0;
-  work_t cr_y = 0.0;
+  scalar_t cl_x = 0.0;
+  scalar_t cl_y = 0.0;
+  scalar_t cr_x = 0.0;
+  scalar_t cr_y = 0.0;
   for(size_t i=0;i<num_coords;++i){
     cl_x += proj_xl[i];
     cl_y += proj_yl[i];
@@ -83,10 +83,10 @@ compute_affine_matrix(const std::vector<work_t> proj_xl,
   cr_x /= num_coords;
   cr_y /= num_coords;
   // compute the average distances:
-  work_t dl_x = 0.0;
-  work_t dl_y = 0.0;
-  work_t dr_x = 0.0;
-  work_t dr_y = 0.0;
+  scalar_t dl_x = 0.0;
+  scalar_t dl_y = 0.0;
+  scalar_t dr_x = 0.0;
+  scalar_t dr_y = 0.0;
   for(size_t i=0;i<num_coords;++i){
     dl_x += std::abs(proj_xl[i] - cl_x);
     dl_y += std::abs(proj_yl[i] - cl_y);
@@ -102,10 +102,10 @@ compute_affine_matrix(const std::vector<work_t> proj_xl,
   assert(dl_y != 0.0);
   assert(dr_x != 0.0);
   assert(dr_y != 0.0);
-  work_t sl_x = 1.0 / dl_x;
-  work_t sl_y = 1.0 / dl_y;
-  work_t sr_x = 1.0 / dr_x;
-  work_t sr_y = 1.0 / dr_y;
+  scalar_t sl_x = 1.0 / dl_x;
+  scalar_t sl_y = 1.0 / dl_y;
+  scalar_t sr_x = 1.0 / dr_x;
+  scalar_t sr_y = 1.0 / dr_y;
 
   // compute the similarity transform
   Teuchos::SerialDenseMatrix<int_t,double> Tl(3,3,true);
@@ -122,10 +122,10 @@ compute_affine_matrix(const std::vector<work_t> proj_xl,
   Tr(2,2) = 1.0;
 
   // check the centroid of the new points and average distance:
-  std::vector<work_t> mod_xl(num_coords,0.0);
-  std::vector<work_t> mod_yl(num_coords,0.0);
-  std::vector<work_t> mod_xr(num_coords,0.0);
-  std::vector<work_t> mod_yr(num_coords,0.0);
+  std::vector<scalar_t> mod_xl(num_coords,0.0);
+  std::vector<scalar_t> mod_yl(num_coords,0.0);
+  std::vector<scalar_t> mod_xr(num_coords,0.0);
+  std::vector<scalar_t> mod_yr(num_coords,0.0);
 
   for(size_t i=0;i<num_coords;++i){
     mod_xl[i] = Tl(0,0)*proj_xl[i] + Tl(0,1)*proj_yl[i] + Tl(0,2);
@@ -134,10 +134,10 @@ compute_affine_matrix(const std::vector<work_t> proj_xl,
     mod_yr[i] = Tr(1,0)*proj_xr[i] + Tr(1,1)*proj_yr[i] + Tr(1,2);
   }
 
-  work_t mcl_x = 0.0;
-  work_t mcl_y = 0.0;
-  work_t mcr_x = 0.0;
-  work_t mcr_y = 0.0;
+  scalar_t mcl_x = 0.0;
+  scalar_t mcl_y = 0.0;
+  scalar_t mcr_x = 0.0;
+  scalar_t mcr_y = 0.0;
   for(size_t i=0;i<num_coords;++i){
     mcl_x += mod_xl[i];
     mcl_y += mod_yl[i];
@@ -151,10 +151,10 @@ compute_affine_matrix(const std::vector<work_t> proj_xl,
   TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mcl_x)>1.0E-3,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(std::abs(mcl_y)>1.0E-3,std::runtime_error,"");
   // compute the average distances:
-  work_t mdl_x = 0.0;
-  work_t mdl_y = 0.0;
-  work_t mdr_x = 0.0;
-  work_t mdr_y = 0.0;
+  scalar_t mdl_x = 0.0;
+  scalar_t mdl_y = 0.0;
+  scalar_t mdr_x = 0.0;
+  scalar_t mdr_y = 0.0;
   for(size_t i=0;i<num_coords;++i){
     mdl_x += std::abs(mod_xl[i] - mcl_x);
     mdl_y += std::abs(mod_yl[i] - mcl_y);
@@ -175,7 +175,7 @@ compute_affine_matrix(const std::vector<work_t> proj_xl,
   int TIWORK = 9;
   int TINFO = 0;
   double *TWORK = new double[TIWORK];
-  // Note, LAPACK does not allow templating on long int or work_t...must use int and double
+  // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
   Teuchos::LAPACK<int,double> lapack;
   DEBUG_MSG("compute_affine_matrix(): inverting for projection parameters");
 
@@ -187,7 +187,7 @@ compute_affine_matrix(const std::vector<work_t> proj_xl,
   int N = 9;
   Teuchos::SerialDenseMatrix<int_t,double> K(num_coords*2,N,true);
   Teuchos::SerialDenseMatrix<int_t,double> KTK(N,N,true);
-  Teuchos::ArrayRCP<work_t> u(N,0.0);
+  Teuchos::ArrayRCP<scalar_t> u(N,0.0);
   for(size_t i=0;i<num_coords;++i){
     K(i*2+0,0) = -mod_xl[i];
     K(i*2+0,1) = -mod_yl[i];
@@ -336,9 +336,9 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
   const int_t num_local_points = cx->get_map()->get_num_local_elements();
   for(int_t i=0;i<num_local_points;++i){
     if(sigma->local_value(i)<0.0) continue;
-    const work_t x = cx->local_value(i);
-    const work_t y = cy->local_value(i);
-    const work_t z = cz->local_value(i);
+    const scalar_t x = cx->local_value(i);
+    const scalar_t y = cy->local_value(i);
+    const scalar_t z = cz->local_value(i);
     all_entries->local_value(0) += x*x;
     all_entries->local_value(1) += x*y;
     all_entries->local_value(2) += x;
@@ -370,8 +370,8 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
   // compute the plane coefficients on process 0 only, then broadcast
   if(comm.get_rank()==0){
     Teuchos::SerialDenseMatrix<int_t,double> K(3,3,true);
-    std::vector<work_t> F(3,0.0);
-    std::vector<work_t> u(3,0.0);
+    std::vector<scalar_t> F(3,0.0);
+    std::vector<scalar_t> u(3,0.0);
     K(0,0) = all_on_zero_entries->local_value(0);
     K(0,1) = all_on_zero_entries->local_value(1);
     K(0,2) = all_on_zero_entries->local_value(2);
@@ -423,8 +423,8 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
     // read in origin in image left coordinates
     std::vector<int_t> fit_def_x_left(2,0);
     std::vector<int_t> fit_def_y_left(2,0);
-    //std::vector<work_t> fit_def_x_right(2,0.0);
-    //std::vector<work_t> fit_def_y_right(2,0.0);
+    //std::vector<scalar_t> fit_def_x_right(2,0.0);
+    //std::vector<scalar_t> fit_def_y_right(2,0.0);
     std::fstream bestFitDataFile("best_fit_plane.dat", std::ios_base::in);
     TEUCHOS_TEST_FOR_EXCEPTION(!bestFitDataFile.good(),std::runtime_error,
       "Error, could not open file best_fit_plane.dat (required to project output to best fit plane)");
@@ -453,24 +453,24 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
     }
     // determine the corresponding point in the camera 0 coordinates, given the image coordinates of the origin:
     // this is done by using the psi[u,v,1] = [F]*[X,Y,Z] formula with Z = -1(u0*X+u1*Y+u2) to solve for X and Y
-    const work_t cx = cal_intrinsics_[0][Camera::CX];
-    const work_t cy = cal_intrinsics_[0][Camera::CY];
-    const work_t fx = cal_intrinsics_[0][Camera::FX];
-    const work_t fy = cal_intrinsics_[0][Camera::FY];
-    const work_t fs = cal_intrinsics_[0][Camera::FS];
-    work_t U = fit_def_x_left[0];
-    work_t V = fit_def_y_left[0];
-    const work_t c0 = u[0];
-    const work_t c1 = u[1];
-    const work_t c2 = u[2];
-    const work_t XO = -(c2*cy*fs - c2*cx*fy + c2*fy*U - c2*fs*V)/(fx*fy + c0*cy*fs - c0*cx*fy - c1*cy*fx + c0*fy*U - c0*fs*V + c1*fx*V);
-    const work_t YO = (c2*cy*fx - c2*fx*V)/(fx*fy + c0*cy*fs - c0*cx*fy - c1*cy*fx + c0*fy*U - c0*fs*V + c1*fx*V);
-    const work_t ZO = -1.0*(c0*XO + c1*YO + c2);
+    const scalar_t cx = cal_intrinsics_[0][Camera::CX];
+    const scalar_t cy = cal_intrinsics_[0][Camera::CY];
+    const scalar_t fx = cal_intrinsics_[0][Camera::FX];
+    const scalar_t fy = cal_intrinsics_[0][Camera::FY];
+    const scalar_t fs = cal_intrinsics_[0][Camera::FS];
+    scalar_t U = fit_def_x_left[0];
+    scalar_t V = fit_def_y_left[0];
+    const scalar_t c0 = u[0];
+    const scalar_t c1 = u[1];
+    const scalar_t c2 = u[2];
+    const scalar_t XO = -(c2*cy*fs - c2*cx*fy + c2*fy*U - c2*fs*V)/(fx*fy + c0*cy*fs - c0*cx*fy - c1*cy*fx + c0*fy*U - c0*fs*V + c1*fx*V);
+    const scalar_t YO = (c2*cy*fx - c2*fx*V)/(fx*fy + c0*cy*fs - c0*cx*fy - c1*cy*fx + c0*fy*U - c0*fs*V + c1*fx*V);
+    const scalar_t ZO = -1.0*(c0*XO + c1*YO + c2);
     U = fit_def_x_left[1];
     V = fit_def_y_left[1];
-    const work_t XP = -(c2*cy*fs - c2*cx*fy + c2*fy*U - c2*fs*V)/(fx*fy + c0*cy*fs - c0*cx*fy - c1*cy*fx + c0*fy*U - c0*fs*V + c1*fx*V);
-    const work_t YP = (c2*cy*fx - c2*fx*V)/(fx*fy + c0*cy*fs - c0*cx*fy - c1*cy*fx + c0*fy*U - c0*fs*V + c1*fx*V);
-    const work_t ZP = -1.0*(c0*XP + c1*YP + c2);
+    const scalar_t XP = -(c2*cy*fs - c2*cx*fy + c2*fy*U - c2*fs*V)/(fx*fy + c0*cy*fs - c0*cx*fy - c1*cy*fx + c0*fy*U - c0*fs*V + c1*fx*V);
+    const scalar_t YP = (c2*cy*fx - c2*fx*V)/(fx*fy + c0*cy*fs - c0*cx*fy - c1*cy*fx + c0*fy*U - c0*fs*V + c1*fx*V);
+    const scalar_t ZP = -1.0*(c0*XP + c1*YP + c2);
 
     fprintf(filePtr,"# Best fit origin in camera 0 coordinates \n");
     fprintf(filePtr,"%e\n",XO);
@@ -482,18 +482,18 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
     fprintf(filePtr,"%e\n",ZP);
 
     // the world coordinates are obtained from the standard basis vectors e1 = 1 0 0, e2 = 0 1 0, e3 = 0 0 1
-    std::vector<work_t> e1(3,0.0);
+    std::vector<scalar_t> e1(3,0.0);
     e1[0] = 1.0;
-    std::vector<work_t> e2(3,0.0);
+    std::vector<scalar_t> e2(3,0.0);
     e2[1] = 1.0;
-    std::vector<work_t> e3(3,0.0);
+    std::vector<scalar_t> e3(3,0.0);
     e3[2] = 1.0;
 
     // the best fit plane coordinates are determined by the basis vectors g1 g2 g3
-    std::vector<work_t> g1(3,0.0);
-    std::vector<work_t> g2(3,0.0);
+    std::vector<scalar_t> g1(3,0.0);
+    std::vector<scalar_t> g2(3,0.0);
     // g3 is the normal vector on the plane
-    std::vector<work_t> g3(3,0.0);
+    std::vector<scalar_t> g3(3,0.0);
     g3[0] = -u[0];
     g3[1] = -u[1];
     g3[2] = -1.0;
@@ -569,7 +569,7 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
 //    }
 
     // check that the origin actually falls at (0,0,0) in the transformed system
-    //work_t origin_error = 0.0;
+    //scalar_t origin_error = 0.0;
     //for(int_t i=0;i<3;++i)
     //    origin_error += TK(i,0)*XO + TK(i,1)*YO + TK(i,2);
     //TEUCHOS_TEST_FOR_EXCEPTION(std::abs(origin_error) > 0.0, std::runtime_error,
@@ -629,23 +629,23 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
   cam_0_to_world_(3,3) = 1.0;
 }
 
-work_t
-Triangulation::cosine_of_two_vectors(const std::vector<work_t> & a,
-  const std::vector<work_t> & b){
+scalar_t
+Triangulation::cosine_of_two_vectors(const std::vector<scalar_t> & a,
+  const std::vector<scalar_t> & b){
   assert(a.size()==3);
   assert(b.size()==3);
 
-  work_t mag_a = 0.0;
+  scalar_t mag_a = 0.0;
   for(int_t i=0;i<3;++i)
     mag_a += a[i]*a[i];
   mag_a = std::sqrt(mag_a);
   assert(mag_a>0.0);
-  work_t mag_b = 0.0;
+  scalar_t mag_b = 0.0;
   for(int_t i=0;i<3;++i)
     mag_b += b[i]*b[i];
   mag_b = std::sqrt(mag_b);
   assert(mag_b>0.0);
-  work_t result = 0.0;
+  scalar_t result = 0.0;
   for(int_t i=0;i<3;++i)
     result += a[i]*b[i];
   result /= (mag_a*mag_b);
@@ -654,11 +654,11 @@ Triangulation::cosine_of_two_vectors(const std::vector<work_t> & a,
 
 
 void
-Triangulation::triangulate(const std::vector<work_t> & image_x,
-  const std::vector<work_t> & image_y,
-  std::vector<work_t> & world_x,
-  std::vector<work_t> & world_y,
-  std::vector<work_t> & world_z) const {
+Triangulation::triangulate(const std::vector<scalar_t> & image_x,
+  const std::vector<scalar_t> & image_y,
+  std::vector<scalar_t> & world_x,
+  std::vector<scalar_t> & world_y,
+  std::vector<scalar_t> & world_z) const {
 
   TEUCHOS_TEST_FOR_EXCEPTION(camera_system_==Teuchos::null,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(camera_system_->num_cameras()!=1,std::runtime_error,"");
@@ -673,22 +673,22 @@ Triangulation::triangulate(const std::vector<work_t> & image_x,
   camera_system_->camera(0)->image_to_world(image_x,image_y,world_x,world_y,world_z);
 }
 
-work_t Triangulation::triangulate(const work_t & x0,
-  const work_t & y0,
-  const work_t & x1,
-  const work_t & y1,
-  work_t & xc_out,
-  work_t & yc_out,
-  work_t & zc_out,
-  work_t & xw_out,
-  work_t & yw_out,
-  work_t & zw_out,
+scalar_t Triangulation::triangulate(const scalar_t & x0,
+  const scalar_t & y0,
+  const scalar_t & x1,
+  const scalar_t & y1,
+  scalar_t & xc_out,
+  scalar_t & yc_out,
+  scalar_t & zc_out,
+  scalar_t & xw_out,
+  scalar_t & yw_out,
+  scalar_t & zw_out,
   const bool correct_lens_distortion) const{
   DEBUG_MSG("Triangulation::triangulate(): camera 0 sensor coords " << x0 << " " << y0 << " camera 1 sensor coords " << x1 << " " << y1);
-  static work_t xc0 = 0.0;
-  static work_t yc0 = 0.0;
-  static work_t xc1 = 0.0;
-  static work_t yc1 = 0.0;
+  static scalar_t xc0 = 0.0;
+  static scalar_t yc0 = 0.0;
+  static scalar_t xc1 = 0.0;
+  static scalar_t yc1 = 0.0;
   xc0 = x0;
   yc0 = y0;
   xc1 = x1;
@@ -703,11 +703,11 @@ work_t Triangulation::triangulate(const work_t & x0,
   static Teuchos::SerialDenseMatrix<int_t,double> MTM(3,3,true);
   static Teuchos::SerialDenseMatrix<int_t,double> MTMMT(3,4,true);
   static Teuchos::LAPACK<int_t,double> lapack;
-  static std::vector<work_t> r(4,0.0);
-  static std::vector<work_t> XYZc0(4,0.0); // camera 0 coords
-  static std::vector<work_t> XYZ(4,0.0); // world coords
-  static work_t cmx = 0.0;
-  static work_t cmy = 0.0;
+  static std::vector<scalar_t> r(4,0.0);
+  static std::vector<scalar_t> XYZc0(4,0.0); // camera 0 coords
+  static std::vector<scalar_t> XYZ(4,0.0); // world coords
+  static scalar_t cmx = 0.0;
+  static scalar_t cmy = 0.0;
   static std::vector<int> IPIV(4,0.0);
   int * IPIV_ptr = &IPIV[0];
   static int LWORK = 9;
@@ -796,7 +796,7 @@ work_t Triangulation::triangulate(const work_t & x0,
     }
   }
 
-  work_t max_m = std::abs(M(0,0));
+  scalar_t max_m = std::abs(M(0,0));
   if(std::abs(M(1,1)) > max_m) max_m = std::abs(M(1,1));
   if(std::abs(M(2,2)) > max_m) max_m = std::abs(M(2,2));
 
@@ -826,14 +826,14 @@ work_t Triangulation::triangulate(const work_t & x0,
 }
 
 void
-Triangulation::correct_lens_distortion_radial(work_t & x_s,
-  work_t & y_s,
+Triangulation::correct_lens_distortion_radial(scalar_t & x_s,
+  scalar_t & y_s,
   const int_t camera_id) const{
   assert(cal_intrinsics_.size()>0);
-  static work_t rho_tilde = 0.0; // = rho^2
-  static work_t r1 = 0.0;
-  static work_t r2 = 0.0;
-  static work_t factor = 0.0;
+  static scalar_t rho_tilde = 0.0; // = rho^2
+  static scalar_t r1 = 0.0;
+  static scalar_t r2 = 0.0;
+  static scalar_t factor = 0.0;
   r1 = (x_s-cal_intrinsics_[camera_id][Camera::CX])/cal_intrinsics_[camera_id][Camera::CX]; // tested above to see that cx > 0 and cy > 0 when cal parameters loaded
   r2 = (y_s-cal_intrinsics_[camera_id][Camera::CY])/cal_intrinsics_[camera_id][Camera::CY];
   rho_tilde = r1*r1 + r2*r2;
@@ -845,11 +845,11 @@ Triangulation::correct_lens_distortion_radial(work_t & x_s,
 }
 
 //void
-//Triangulation::project_camera_0_to_sensor_1(const work_t & xc,
-//  const work_t & yc,
-//  const work_t & zc,
-//  work_t & xs2_out,
-//  work_t & ys2_out){
+//Triangulation::project_camera_0_to_sensor_1(const scalar_t & xc,
+//  const scalar_t & yc,
+//  const scalar_t & zc,
+//  scalar_t & xs2_out,
+//  scalar_t & ys2_out){
 //
 //  Teuchos::SerialDenseMatrix<int_t,double> F2(3,4,true);
 //  F2(0,0) = cal_intrinsics_[1][2];
@@ -888,11 +888,11 @@ Triangulation::correct_lens_distortion_radial(work_t & x_s,
 ////    }
 ////    std::cout << std::endl;
 ////  }
-//  const work_t psi2 = cal_extrinsics_[2][0]*xc + cal_extrinsics_[2][1]*yc + cal_extrinsics_[2][2]*zc + cal_extrinsics_[2][3];
+//  const scalar_t psi2 = cal_extrinsics_[2][0]*xc + cal_extrinsics_[2][1]*yc + cal_extrinsics_[2][2]*zc + cal_extrinsics_[2][3];
 //  assert(psi2!=0.0);
 //  xs2_out = 1.0/psi2*(F2_T(0,0)*xc + F2_T(0,1)*yc + F2_T(0,2)*zc + F2_T(0,3));
 //  ys2_out = 1.0/psi2*(F2_T(1,0)*xc + F2_T(1,1)*yc + F2_T(1,2)*zc + F2_T(1,3));
-//  work_t z2 = 1.0/psi2*(F2_T(2,0)*xc + F2_T(2,1)*yc + F2_T(2,2)*zc + F2_T(2,3));
+//  scalar_t z2 = 1.0/psi2*(F2_T(2,0)*xc + F2_T(2,1)*yc + F2_T(2,2)*zc + F2_T(2,3));
 //  TEUCHOS_TEST_FOR_EXCEPTION(std::abs(z2-1.0) > 0.1,std::runtime_error,"");
 //}
 
@@ -904,7 +904,7 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
   const bool use_nonlinear_projection,
   const int_t processor_id){
 
-  work_t error = 0.0;
+  scalar_t error = 0.0;
 
   // always estimate the projection without reading in a file even if the last run exists
 
@@ -912,7 +912,7 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
 //  std::fstream proj_params_file("projection_out.dat", std::ios_base::in);
 //  if(proj_params_file.good()){
 //    DEBUG_MSG("Triangulation::estimate_projective_transform(): found file: projection_out.dat, reading parameters from this file");
-//    std::vector<work_t> values;
+//    std::vector<scalar_t> values;
 //    int_t line = 0;
 //    while(!proj_params_file.eof()){
 //      Teuchos::ArrayRCP<std::string> tokens = tokenize_line(proj_params_file);
@@ -942,10 +942,10 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     // To start we least squares fit the projective transform given four corresponding points
     // from the left to right image, or use feature matching. Then we add on top of that the warp to account for distortions
 
-  std::vector<work_t> proj_xl;
-  std::vector<work_t> proj_yl;
-  std::vector<work_t> proj_xr;
-  std::vector<work_t> proj_yr;
+  std::vector<scalar_t> proj_xl;
+  std::vector<scalar_t> proj_yl;
+  std::vector<scalar_t> proj_xr;
+  std::vector<scalar_t> proj_yr;
   int_t num_coords = 0;
   create_directory(".dice");
 
@@ -1033,8 +1033,8 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     const int_t h = left_img->height();
     Teuchos::RCP<Image> img = Teuchos::rcp(new Image(w,h,0));
     Teuchos::ArrayRCP<storage_t> intens = img->intensities();
-    work_t xr = 0.0;
-    work_t yr = 0.0;
+    scalar_t xr = 0.0;
+    scalar_t yr = 0.0;
     for(int_t j=0;j<h;++j){
       for(int_t i=0;i<w;++i){
         project_left_to_right_sensor_coords(i,j,xr,yr);
@@ -1046,8 +1046,8 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
 
   // for each point, plug in the left coords and compute the right
   for(int_t i=0;i<num_coords;++i){
-    work_t comp_right_x = 0.0;
-    work_t comp_right_y = 0.0;
+    scalar_t comp_right_x = 0.0;
+    scalar_t comp_right_y = 0.0;
     project_left_to_right_sensor_coords(proj_xl[i],proj_yl[i],comp_right_x,comp_right_y);
     //DEBUG_MSG("input left x: " << proj_xl[i] << " y: " << proj_yl[i] << " right x: " << proj_xr[i] << " y: " << proj_yr[i] << " computed right x: " << comp_right_x << " y: " << comp_right_y);
     error+=(comp_right_x - proj_xr[i])*(comp_right_x - proj_xr[i]) + (comp_right_y - proj_yr[i])*(comp_right_y - proj_yr[i]);
@@ -1062,7 +1062,7 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
   params->set(DICe::max_iterations,200);
   params->set(DICe::tolerance,0.00001);
   DICe::Homography_Simplex simplex(left_img,right_img,this,params);
-  Teuchos::RCP<std::vector<work_t> > deltas = Teuchos::rcp(new std::vector<work_t>(9,0.0));
+  Teuchos::RCP<std::vector<scalar_t> > deltas = Teuchos::rcp(new std::vector<scalar_t>(9,0.0));
   if(use_nonlinear_projection){
     for(size_t i=0;i<deltas->size();++i){
       (*deltas)[i] = 0.1*(*projective_params_)[i];
@@ -1098,8 +1098,8 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
   Teuchos::RCP<Image> proj_img = Teuchos::rcp(new Image(w,h,0));
   if(output_projected_image){
     Teuchos::ArrayRCP<storage_t> intens = proj_img->intensities();
-    work_t xr = 0.0;
-    work_t yr = 0.0;
+    scalar_t xr = 0.0;
+    scalar_t yr = 0.0;
     for(int_t j=0;j<h;++j){
       for(int_t i=0;i<w;++i){
         project_left_to_right_sensor_coords(i,j,xr,yr);
@@ -1111,10 +1111,10 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
 
   if(use_nonlinear_projection){
     // now that the initial projection is complete, optimize a warp to rectify the projected images:
-    std::vector<work_t> warp_xl;
-    std::vector<work_t> warp_yl;
-    std::vector<work_t> warp_xr;
-    std::vector<work_t> warp_yr;
+    std::vector<scalar_t> warp_xl;
+    std::vector<scalar_t> warp_yl;
+    std::vector<scalar_t> warp_xr;
+    std::vector<scalar_t> warp_yr;
 #ifdef DICE_ENABLE_OPENCV
     DEBUG_MSG("Triangulation::estimate_projective_transform(): begin matching features for warp parameters");
     Teuchos::RCP<Image> projection_opt_img = Teuchos::rcp(new Image(".dice/right_projected_to_left_proj_opt.tif"));
@@ -1136,8 +1136,8 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     int WN = 12;
     Teuchos::SerialDenseMatrix<int_t,double> WK(num_warp_coords*2,WN,true);
     Teuchos::SerialDenseMatrix<int_t,double> WKTK(WN,WN,true);
-    Teuchos::ArrayRCP<work_t> WF(num_warp_coords*2,0.0);
-    Teuchos::ArrayRCP<work_t> WKTu(WN,0.0);
+    Teuchos::ArrayRCP<scalar_t> WF(num_warp_coords*2,0.0);
+    Teuchos::ArrayRCP<scalar_t> WKTu(WN,0.0);
     for(int_t i=0;i<num_warp_coords;++i){
       WK(i*2+0,0) = warp_xl[i];
       WK(i*2+0,1) = warp_yl[i];
@@ -1176,7 +1176,7 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
         WKTu[i] += WK(j,i)*WF[j];
       }
     }
-    std::vector<work_t> warp_param_update(WN,0.0);
+    std::vector<scalar_t> warp_param_update(WN,0.0);
     // compute the coeffs
     for(int_t i=0;i<WN;++i){
       for(int_t j=0;j<WN;++j){
@@ -1208,7 +1208,7 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     warp_params->set(DICe::max_iterations,500);
     warp_params->set(DICe::tolerance,0.00001);
     DICe::Warp_Simplex warp_simplex(left_img,right_img,this,warp_params);
-    Teuchos::RCP<std::vector<work_t> > warp_deltas = Teuchos::rcp(new std::vector<work_t>(12,0.0));
+    Teuchos::RCP<std::vector<scalar_t> > warp_deltas = Teuchos::rcp(new std::vector<scalar_t>(12,0.0));
     (*warp_deltas)[0]  = 1.0;  // shift x
     (*warp_deltas)[1]  = 0.1; // x scale
     (*warp_deltas)[2]  = 0.05; // x shear
@@ -1243,8 +1243,8 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
     Teuchos::ArrayRCP<storage_t> intens = img->intensities();
     Teuchos::RCP<Image> diff_img = Teuchos::rcp(new Image(w,h,0));
     Teuchos::ArrayRCP<storage_t> diff_intens = diff_img->intensities();
-    work_t xr = 0.0;
-    work_t yr = 0.0;
+    scalar_t xr = 0.0;
+    scalar_t yr = 0.0;
     for(int_t j=0;j<h;++j){
       for(int_t i=0;i<w;++i){
         project_left_to_right_sensor_coords(i,j,xr,yr);
@@ -1260,24 +1260,24 @@ Triangulation::estimate_projective_transform(Teuchos::RCP<Image> left_img,
 }
 
 void
-Triangulation::project_left_to_right_sensor_coords(const work_t & xl,
-  const work_t & yl,
-  work_t & xr,
-  work_t & yr){
+Triangulation::project_left_to_right_sensor_coords(const scalar_t & xl,
+  const scalar_t & yl,
+  scalar_t & xr,
+  scalar_t & yr){
 
   // first apply the quadratic warp transform
 
   assert(warp_params_!=Teuchos::null);
   assert(warp_params_->size()==12);
-  std::vector<work_t> & wp = *warp_params_;
-  const work_t xt = wp[0] + wp[1]*xl + wp[2]*yl + wp[3]*xl*yl + wp[4]*xl*xl + wp[5]*yl*yl;
-  const work_t yt = wp[6] + wp[7]*xl + wp[8]*yl + wp[9]*xl*yl + wp[10]*xl*xl + wp[11]*yl*yl;
+  std::vector<scalar_t> & wp = *warp_params_;
+  const scalar_t xt = wp[0] + wp[1]*xl + wp[2]*yl + wp[3]*xl*yl + wp[4]*xl*xl + wp[5]*yl*yl;
+  const scalar_t yt = wp[6] + wp[7]*xl + wp[8]*yl + wp[9]*xl*yl + wp[10]*xl*xl + wp[11]*yl*yl;
 
   // then apply the projective transform
 
   assert(projective_params_!=Teuchos::null);
   assert(projective_params_->size()==9);
-  std::vector<work_t> & pr = *projective_params_;
+  std::vector<scalar_t> & pr = *projective_params_;
   xr = (pr[0]*xt + pr[1]*yt + pr[2])/(pr[6]*xt + pr[7]*yt + pr[8]);
   yr = (pr[3]*xt + pr[4]*yt + pr[5])/(pr[6]*xt + pr[7]*yt + pr[8]);
 }

@@ -125,8 +125,8 @@ int main(int argc, char *argv[]) {
         image = Teuchos::rcp(new Image(name.str().c_str()));//cine.get_frame(i,true,false);
       }
 
-      work_t coord_x = 0.0;
-      work_t coord_y = 0.0;
+      scalar_t coord_x = 0.0;
+      scalar_t coord_y = 0.0;
       {
         Teuchos::TimeMonitor interp_time_monitor(*interp_time);
         for(int_t y=subset_start_y;y<subset_end_y;++y){
@@ -154,8 +154,8 @@ int main(int argc, char *argv[]) {
       }
       //cine.get_frame(i,window_start_x,window_start_y,window_end_x,window_end_y,true,false);
 
-      work_t coord_x = 0.0;
-      work_t coord_y = 0.0;
+      scalar_t coord_x = 0.0;
+      scalar_t coord_y = 0.0;
       {
         Teuchos::TimeMonitor interp_partial_time_monitor(*interp_partial_time);
         for(int_t y=subset_start_y;y<subset_end_y;++y){

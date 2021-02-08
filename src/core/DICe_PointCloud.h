@@ -88,8 +88,8 @@ struct Point_Cloud_2D
 
 /// a kd-tree index:
 typedef KDTreeSingleIndexAdaptor<
-  L2_Simple_Adaptor<DICe::work_t, Point_Cloud_2D<DICe::work_t> > ,
-  Point_Cloud_2D<DICe::work_t>,
+  L2_Simple_Adaptor<DICe::scalar_t, Point_Cloud_2D<DICe::scalar_t> > ,
+  Point_Cloud_2D<DICe::scalar_t>,
   2 /* dim */
   > kd_tree_2d_t;
 
@@ -137,8 +137,8 @@ struct Point_Cloud_3D
 
 /// a kd-tree index:
 typedef KDTreeSingleIndexAdaptor<
-  L2_Simple_Adaptor<DICe::work_t, Point_Cloud_3D<DICe::work_t> > ,
-  Point_Cloud_3D<DICe::work_t>,
+  L2_Simple_Adaptor<DICe::scalar_t, Point_Cloud_3D<DICe::scalar_t> > ,
+  Point_Cloud_3D<DICe::scalar_t>,
   3 /* dim */
   > kd_tree_3d_t;
 

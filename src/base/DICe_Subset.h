@@ -134,12 +134,12 @@ public:
   /// gradient x accessor
   /// \param pixel_index the pixel id
   /// note there is no bounds checking
-  const work_t& grad_x(const int_t pixel_index)const;
+  const scalar_t& grad_x(const int_t pixel_index)const;
 
   /// gradient y accessor
   /// \param pixel_index the pixel id
   /// note there is no bounds checking
-  const work_t& grad_y(const int_t pixel_index)const;
+  const scalar_t& grad_y(const int_t pixel_index)const;
 
   /// returns true if the gradients have been computed
   bool has_gradients()const{
@@ -147,18 +147,18 @@ public:
   }
 
   /// returns a copy of the gradient x values as an array
-  Teuchos::ArrayRCP<work_t> grad_x_array()const;
+  Teuchos::ArrayRCP<scalar_t> grad_x_array()const;
 
   /// returns a copy of the gradient x values as an array
-  Teuchos::ArrayRCP<work_t> grad_y_array()const;
+  Teuchos::ArrayRCP<scalar_t> grad_y_array()const;
 
   /// ref intensities accessor
   /// \param pixel_index the pixel id
-  work_t & ref_intensities(const int_t pixel_index);
+  scalar_t & ref_intensities(const int_t pixel_index);
 
   /// ref intensities accessor
   /// \param pixel_index the pixel id
-  work_t & def_intensities(const int_t pixel_index);
+  scalar_t & def_intensities(const int_t pixel_index);
 
   /// initialization method:
   /// \param image the image to get the intensity values from
@@ -188,33 +188,33 @@ public:
 
   /// returns the max intensity value
   /// \param target either the reference or deformed intensity values
-  work_t max(const Subset_View_Target target=REF_INTENSITIES);
+  scalar_t max(const Subset_View_Target target=REF_INTENSITIES);
 
   /// returns the min intensity value
   /// \param target either the reference or deformed intensity values
-  work_t min(const Subset_View_Target target=REF_INTENSITIES);
+  scalar_t min(const Subset_View_Target target=REF_INTENSITIES);
 
   /// returns the mean intensity value
   /// \param target either the reference or deformed intensity values
-  work_t mean(const Subset_View_Target target);
+  scalar_t mean(const Subset_View_Target target);
 
   /// returns the mean intensity value
   /// \param target either the reference or deformed intensity values
   /// \param sum [output] returns the reduction value of the intensities minus the mean
-  work_t mean(const Subset_View_Target target,
-    work_t & sum);
+  scalar_t mean(const Subset_View_Target target,
+    scalar_t & sum);
 
   /// round the values in the subset to the nearest integer number
   void round(const Subset_View_Target target);
 
   /// returns the ZNSSD gamma correlation value between the reference and deformed subsets
-  work_t gamma();
+  scalar_t gamma();
 
   /// returns the un-normalized difference between the the reference and deformed intensity values
-  work_t diff_ref_def() const;
+  scalar_t diff_ref_def() const;
 
   /// returns the SSSIG value for the reference intensities
-  work_t sssig();
+  scalar_t sssig();
 
   /// reset the is_active bool for each pixel to true;
   void reset_is_active();
@@ -258,11 +258,11 @@ public:
   /// \param image the image for which to estimate the noise for this subset
   /// \param shape_function contains the deformation map (optional)
   template <typename S>
-  work_t noise_std_dev(Teuchos::RCP<Image_<S>> image,
+  scalar_t noise_std_dev(Teuchos::RCP<Image_<S>> image,
     Teuchos::RCP<Local_Shape_Function> shape_function);
 
   /// \brief Returns the std deviation of the image intensity values
-  work_t contrast_std_dev();
+  scalar_t contrast_std_dev();
 
   /// \brief EXPERIMENTAL Check the deformed position of the pixel to see if it falls inside an obstruction, if so, turn it off
   /// \param shape_function contains the deformation map (optional)
@@ -289,8 +289,8 @@ public:
   /// \brief  EXPERIMENTAL Returns true if the given coordinates fall within an obstructed region for this subset
   /// \param coord_x global x-coordinate
   /// \param coord_y global y-coordinate
-  bool is_obstructed_pixel(const work_t & coord_x,
-    const work_t & coord_y)const;
+  bool is_obstructed_pixel(const scalar_t & coord_x,
+    const scalar_t & coord_y)const;
 
   /// \brief EXPERIMENTAL Returns a pointer to the set of pixels currently obstructed by another subset
   std::set<std::pair<int_t,int_t> > * pixels_blocked_by_other_subsets(){
@@ -301,19 +301,19 @@ public:
   std::set<std::pair<int_t,int_t> > deformed_shapes(Teuchos::RCP<Local_Shape_Function> shape_function=Teuchos::null,
     const int_t cx=0,
     const int_t cy=0,
-    const work_t & skin_factor=1.0);
+    const scalar_t & skin_factor=1.0);
 
 private:
   /// number of pixels in the subset
   int_t num_pixels_;
   /// pixel container
-  Teuchos::ArrayRCP<work_t> ref_intensities_;
+  Teuchos::ArrayRCP<scalar_t> ref_intensities_;
   /// pixel container
-  Teuchos::ArrayRCP<work_t> def_intensities_;
+  Teuchos::ArrayRCP<scalar_t> def_intensities_;
   /// container for grad_x
-  Teuchos::ArrayRCP<work_t> grad_x_;
+  Teuchos::ArrayRCP<scalar_t> grad_x_;
   /// container for grad_y
-  Teuchos::ArrayRCP<work_t> grad_y_;
+  Teuchos::ArrayRCP<scalar_t> grad_y_;
   /// pixels can be deactivated by obstructions (persistent)
   Teuchos::ArrayRCP<bool> is_active_;
   /// pixels can be deactivated for this frame only

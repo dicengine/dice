@@ -114,7 +114,7 @@ DICE_LIB_DLL_EXPORT
 void read_rawi_image(const char *,storage_t *,const bool);
 template
 DICE_LIB_DLL_EXPORT
-void read_rawi_image(const char *,work_t *,const bool);
+void read_rawi_image(const char *,scalar_t *,const bool);
 
 template <typename S>
 DICE_LIB_DLL_EXPORT
@@ -161,7 +161,7 @@ void write_rawi_image(const char *,const int_t,const int_t,storage_t *,const boo
 
 template
 DICE_LIB_DLL_EXPORT
-void write_rawi_image(const char *,const int_t,const int_t,work_t *,const bool);
+void write_rawi_image(const char *,const int_t,const int_t,scalar_t *,const bool);
 
 } // end namespace utils
 } // end namespace DICe

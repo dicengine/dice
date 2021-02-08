@@ -56,20 +56,20 @@
 using namespace DICe;
 using namespace DICe::field_enums;
 
-work_t phi(const work_t & x, const work_t & y, const work_t & period, const work_t & L){
+scalar_t phi(const scalar_t & x, const scalar_t & y, const scalar_t & period, const scalar_t & L){
   assert(period!=0.0);
-  const work_t freq = 1.0/period;
-  const work_t gamma = 2.0*freq*DICE_PI;
+  const scalar_t freq = 1.0/period;
+  const scalar_t gamma = 2.0*freq*DICE_PI;
   return 255.0*0.5 + 0.5*255.0*std::cos(gamma*x)*std::cos(gamma*y);
 }
 
-void compute_b(const work_t & x, const work_t & y, const work_t & period, const work_t & amplitude, const work_t & L,
-  work_t & bx, work_t & by){
+void compute_b(const scalar_t & x, const scalar_t & y, const scalar_t & period, const scalar_t & amplitude, const scalar_t & L,
+  scalar_t & bx, scalar_t & by){
   bx = 0.0;
   by = 0.0;
   assert(period!=0.0);
-  const work_t freq = 1.0/period;
-  const work_t gamma = 2.0*freq*DICE_PI;
+  const scalar_t freq = 1.0/period;
+  const scalar_t gamma = 2.0*freq*DICE_PI;
   bx = amplitude*0.5 + 0.5*amplitude*std::sin(gamma*x)*std::cos(gamma*y);
   by = amplitude*0.5 - 0.5*amplitude*std::cos(gamma*x)*std::sin(gamma*y);
 }
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
-  work_t errorTol = 10.0;
+  scalar_t errorTol = 10.0;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -95,16 +95,16 @@ int main(int argc, char *argv[]) {
   TEUCHOS_TEST_FOR_EXCEPTION(argc!=1&&argc!=2&&argc!=7&&argc!=11&&argc!=12,std::runtime_error,"Error, invalid syntax");
 
   std::string var_name = "";
-  work_t start_val = 0.0;
-  work_t end_val = 0.0;
-  work_t step_val = 0.0;
+  scalar_t start_val = 0.0;
+  scalar_t end_val = 0.0;
+  scalar_t step_val = 0.0;
   int_t print_style = 0.0;
   std::string var_name2 = "";
-  work_t start_val2 = 0.0;
-  work_t end_val2 = 0.0;
-  work_t step_val2 = 1.0;
-  work_t noise_mag = 0.0; // counts
-  work_t regularization_mag = 0.0; // counts
+  scalar_t start_val2 = 0.0;
+  scalar_t end_val2 = 0.0;
+  scalar_t step_val2 = 1.0;
+  scalar_t noise_mag = 0.0; // counts
+  scalar_t regularization_mag = 0.0; // counts
 
   // set up default for test case
   if(argc==1||argc==2){
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
   }
 
   std::default_random_engine generator;
-  std::normal_distribution<work_t> distribution(0.0,0.5);
+  std::normal_distribution<scalar_t> distribution(0.0,0.5);
 
   *outStream << "variable name:      " << var_name << std::endl;
   *outStream << "start value:        " << start_val << std::endl;
@@ -177,11 +177,11 @@ int main(int argc, char *argv[]) {
   const int_t L = 500;
   int_t subset_size = 25;
   int_t step_size = 5;
-  work_t phi_period = 10; // pixels for each speckle (includes dark and light patch)
-  work_t b_period = 100; // pixels for each wave in the disp profile
-  work_t b_amp = 1.0;
-  work_t param_value = 0.0;
-  work_t param_value2 = 0.0;
+  scalar_t phi_period = 10; // pixels for each speckle (includes dark and light patch)
+  scalar_t b_period = 100; // pixels for each wave in the disp profile
+  scalar_t b_amp = 1.0;
+  scalar_t param_value = 0.0;
+  scalar_t param_value2 = 0.0;
 
   Teuchos::ArrayRCP<storage_t> dummy_intensities(L*L,0.0);
   Teuchos::RCP<Image> dummy_img = Teuchos::rcp(new Image(L,L,dummy_intensities));
@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
     schema->set_def_image(dummy_img);
   }
 
-  for(work_t val1=start_val;val1<=end_val;val1+=step_val){
+  for(scalar_t val1=start_val;val1<=end_val;val1+=step_val){
     // parse the variables
     if(var_name=="subset_size"){
       TEUCHOS_TEST_FOR_EXCEPTION(val1-(int_t)val1!=0.0,std::runtime_error,"");
@@ -224,7 +224,7 @@ int main(int argc, char *argv[]) {
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
     }
 
-    for(work_t val2=start_val2;val2<=end_val2;val2+=step_val2){
+    for(scalar_t val2=start_val2;val2<=end_val2;val2+=step_val2){
       // parse the variables
       if(var_name2==""){
       }
@@ -265,12 +265,12 @@ int main(int argc, char *argv[]) {
       const int_t fw = (L-2.0*subset_size)/step_size + 1;
       const int_t fh = (L-2.0*subset_size)/step_size + 1;
       assert(step_size!=0.0);
-      const work_t sampling_b = 1.0/step_size;
+      const scalar_t sampling_b = 1.0/step_size;
       assert(b_period!=0.0);
-      const work_t nyquist_b = 2.0/b_period;
+      const scalar_t nyquist_b = 2.0/b_period;
       //*outStream << "Nyquist b: " << nyquist_b << " sampling b: " << sampling_b << " sampling rate must be greater than Nyquist" << std::endl;
       TEUCHOS_TEST_FOR_EXCEPTION(nyquist_b >= sampling_b,std::runtime_error,"Error, sampling for b is below Nyquist freq.");
-      Teuchos::ArrayRCP<work_t> intensities(L*L,0.0);
+      Teuchos::ArrayRCP<scalar_t> intensities(L*L,0.0);
       for(int_t j=0;j<L;++j){
         for(int_t i=0;i<L;++i){
           intensities[j*L+i] = phi(i,j,phi_period,L);
@@ -300,8 +300,8 @@ int main(int argc, char *argv[]) {
       Teuchos::ArrayRCP<double> observed_b(N,0.0);
 
       // loop over the subsets
-      work_t error_norm_x = 0.0;
-      work_t error_norm_y = 0.0;
+      scalar_t error_norm_x = 0.0;
+      scalar_t error_norm_y = 0.0;
       for(int_t sub=0;sub<schema->local_num_subsets();++sub){
         H(0,0) = 0.0;
         H(1,0) = 0.0;
@@ -311,9 +311,9 @@ int main(int argc, char *argv[]) {
         q[1] = 0.0;
         observed_b[0] = 0.0;
         observed_b[1] = 0.0;
-        work_t b_dot_grad_phi = 0.0;
-        work_t bx = 0.0;
-        work_t by = 0.0;
+        scalar_t b_dot_grad_phi = 0.0;
+        scalar_t bx = 0.0;
+        scalar_t by = 0.0;
         const int_t xc = schema->local_field_value(sub,SUBSET_COORDINATES_X_FS);
         const int_t yc = schema->local_field_value(sub,SUBSET_COORDINATES_Y_FS);
         for(int_t j=yc-subset_size/2;j<yc+subset_size/2;++j){
@@ -326,7 +326,7 @@ int main(int argc, char *argv[]) {
             H(1,1) += regularization_mag;
             compute_b(i,j,b_period,b_amp,L,bx,by);
             if(noise_mag > 0.0){
-                work_t pert = distribution(generator);
+                scalar_t pert = distribution(generator);
                 //std::cout << "pert: " << pert << " noise_mag " << noise_mag << std::endl;
                 bx+= pert*noise_mag;
                 by+= pert*noise_mag;
@@ -380,8 +380,8 @@ int main(int argc, char *argv[]) {
       int_t subset_index = 0;
       for(int_t j=0;j<fh;++j){
         for(int_t i=0;i<fw;++i){
-          const work_t x = schema->local_field_value(subset_index,SUBSET_COORDINATES_X_FS);
-          const work_t y = schema->local_field_value(subset_index,SUBSET_COORDINATES_Y_FS);
+          const scalar_t x = schema->local_field_value(subset_index,SUBSET_COORDINATES_X_FS);
+          const scalar_t y = schema->local_field_value(subset_index,SUBSET_COORDINATES_Y_FS);
           approx_points[subset_index].x_ = x;
           approx_points[subset_index].y_ = y;
           approx_points[subset_index].bx_ = bx_computed->local_value(subset_index);
@@ -405,14 +405,14 @@ int main(int argc, char *argv[]) {
         return a.bx_ > b.bx_;
         });
       // compute the average of the top num_peaks error
-      work_t avg_error_x = 0.0;
+      scalar_t avg_error_x = 0.0;
       for(int_t i=0;i<num_peaks;++i){
         //*outStream << "peak: " << i << " command bx: " << approx_points[i].sol_bx_ << " comp bx: " << approx_points[i].bx_ <<  " rel error bx: " << approx_points[i].error_bx_ << "%" <<  std::endl;
         avg_error_x += std::abs(approx_points[i].error_bx_);
       }
       assert(num_peaks!=0);
       avg_error_x /= num_peaks;
-      work_t std_dev_x = 0.0;
+      scalar_t std_dev_x = 0.0;
       for(int_t i=0;i<num_peaks;++i){
         std_dev_x += (approx_points[i].error_bx_-avg_error_x)*(approx_points[i].error_bx_-avg_error_x);
       }
@@ -425,21 +425,21 @@ int main(int argc, char *argv[]) {
         return a.by_ > b.by_;
         });
       // compute the average of the top num_peaks error
-      work_t avg_error_y = 0.0;
+      scalar_t avg_error_y = 0.0;
       for(int_t i=0;i<num_peaks;++i){
         //*outStream << "peak: " << i << " command by: " << approx_points[i].sol_by_ << " rel error by: " << approx_points[i].error_by_ << std::endl;
         avg_error_y += std::abs(approx_points[i].error_by_);
       }
       avg_error_y /= num_peaks;
-      work_t std_dev_y = 0.0;
+      scalar_t std_dev_y = 0.0;
       for(int_t i=0;i<num_peaks;++i){
         std_dev_y += (approx_points[i].error_by_-avg_error_y)*(approx_points[i].error_by_-avg_error_y);
       }
       std_dev_y /= num_peaks;
       std_dev_y = std::sqrt(std_dev_y);
 
-//      work_t min_ex=0.0,max_ex=0.0,avg_ex=0.0,std_dev_x=0.0;
-//      work_t min_ey=0.0,max_ey=0.0,avg_ey=0.0,std_dev_y=0.0;
+//      scalar_t min_ex=0.0,max_ex=0.0,avg_ex=0.0,std_dev_x=0.0;
+//      scalar_t min_ey=0.0,max_ey=0.0,avg_ey=0.0,std_dev_y=0.0;
 //      schema->mesh()->field_stats(DICe::field_enums::FIELD_5_FS,min_ex,max_ex,avg_ex,std_dev_x,0);
 //      schema->mesh()->field_stats(DICe::field_enums::FIELD_6_FS,min_ey,max_ey,avg_ey,std_dev_y,0);
 

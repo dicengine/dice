@@ -366,7 +366,7 @@ Teuchos::RCP<Mesh> read_exodus_mesh(const std::string & serial_input_filename,
     df_ind = new int_t[num_side_sets];
     ss_elem_list = new int_t[elem_list_len];
     ss_side_list = new int_t[elem_list_len];
-    dist_fact = new float[df_list_len];  // has to be float instead of work_t due to exodus function call
+    dist_fact = new float[df_list_len];  // has to be float instead of scalar_t due to exodus function call
 
     error_int = ex_get_concat_side_sets (input_exoid, ids, num_side_per_set, num_df_per_set, elem_ind, df_ind, ss_elem_list, ss_side_list, dist_fact);
     TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_get_concat_side_sets(): Failure");
@@ -479,7 +479,7 @@ read_exodus_num_steps(const std::string & file_name){
 }
 
 DICE_LIB_DLL_EXPORT
-std::vector<work_t>
+std::vector<scalar_t>
 read_exodus_field(const std::string & file_name,
   const std::string & field_name,
   const int_t step){
@@ -496,7 +496,7 @@ read_exodus_field(const std::string & file_name,
 }
 
 DICE_LIB_DLL_EXPORT
-std::vector<work_t>
+std::vector<scalar_t>
 read_exodus_field(Teuchos::RCP<Mesh> mesh,
   const int_t var_index,
   const int_t step){
@@ -504,7 +504,7 @@ read_exodus_field(Teuchos::RCP<Mesh> mesh,
 }
 
 DICE_LIB_DLL_EXPORT
-std::vector<work_t>
+std::vector<scalar_t>
 read_exodus_field(const std::string & file_name,
   const int_t var_index,
   const int_t step){
@@ -533,7 +533,7 @@ read_exodus_field(const std::string & file_name,
   DEBUG_MSG("read_exodus_field(): number of nodes " << num_nodes);
 
   float * ex_result = new float[num_nodes];
-  std::vector<work_t> result(num_nodes,0.0);
+  std::vector<scalar_t> result(num_nodes,0.0);
   ex_get_nodal_var(input_exoid,step,var_index,result.size(),&ex_result[0]);
   for(int_t i=0;i<num_nodes;++i){
     result[i] = ex_result[i];
@@ -586,9 +586,9 @@ read_exodus_field_names(const std::string & file_name){
 
 DICE_LIB_DLL_EXPORT
 void read_exodus_coordinates(const std::string & exo_file,
-  std::vector<work_t> & coords_x,
-  std::vector<work_t> & coords_y,
-  std::vector<work_t> & coords_z){
+  std::vector<scalar_t> & coords_x,
+  std::vector<scalar_t> & coords_y,
+  std::vector<scalar_t> & coords_z){
 
   coords_x.clear();
   coords_y.clear();
@@ -719,7 +719,7 @@ read_exodus_coordinates(Teuchos::RCP<Mesh> mesh){
   {
     const DICe::mesh::connectivity_vector & connectivity = *elem_it->get()->connectivity();
     assert(connectivity.size()!=0);
-    std::vector<work_t> centroid(num_dim);
+    std::vector<scalar_t> centroid(num_dim);
     for(int_t i=0;i<num_dim;++i) centroid[i]=0.0;
     for(size_t node_it=0;node_it<connectivity.size();++node_it)
     {
@@ -1016,7 +1016,7 @@ void create_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   df_ind = new int_t[num_side_sets];
   ss_elem_list = new int_t[elem_list_len];
   ss_side_list = new int_t[elem_list_len];
-  dist_fact = new float[df_list_len];  // has to be float instead of work_t due to exodus function call
+  dist_fact = new float[df_list_len];  // has to be float instead of scalar_t due to exodus function call
 
   for(int_t k=0;k<num_side_sets;++k)
   {
@@ -1082,7 +1082,7 @@ exodus_output_dump(Teuchos::RCP<Mesh> mesh,
     if(field_it->first.get_rank()==field_enums::ELEMENT_RANK)
     {
       MultiField & field = *mesh->get_field(field_it->first);
-      //Teuchos::ArrayRCP<const work_t> field_values = field.vec()->get_1d_view();
+      //Teuchos::ArrayRCP<const scalar_t> field_values = field.vec()->get_1d_view();
       DICe::mesh::block_type_map::iterator block_type_map_end = mesh->get_block_type_map()->end();
       std::string components[3];
       components[0] = (field_it->first.get_field_type()==field_enums::VECTOR_FIELD_TYPE) ? "X" : "";
@@ -1164,7 +1164,7 @@ exodus_face_edge_output_dump(Teuchos::RCP<Mesh> mesh,
     const int_t num_comps = (field_it->first.get_field_type()==field_enums::VECTOR_FIELD_TYPE) ? 3 : 1; // spheres are hard coded to have 3 dims
     const int_t comp_stride = (field_it->first.get_field_type()==field_enums::VECTOR_FIELD_TYPE) ? spa_dim : 1;
     MultiField & field = *mesh->get_field(field_it->first);
-    Teuchos::ArrayRCP<const work_t> field_values = field.get_1d_view();
+    Teuchos::ArrayRCP<const scalar_t> field_values = field.get_1d_view();
     float * values = new float[num_values];
     std::string components[3];
     components[0] = (field_it->first.get_field_type()==field_enums::VECTOR_FIELD_TYPE) ? "X" : "";
@@ -1323,9 +1323,9 @@ create_face_edge_output_exodus_file(Teuchos::RCP<Mesh> mesh,
   float * z = new float[num_elem];
 
   Teuchos::RCP<MultiField > internal_coords = mesh->get_field(field_enums::INTERNAL_FACE_EDGE_COORDINATES_FS);
-  Teuchos::ArrayRCP<const work_t> internal_coords_values = internal_coords->get_1d_view();
+  Teuchos::ArrayRCP<const scalar_t> internal_coords_values = internal_coords->get_1d_view();
   //Teuchos::RCP<MultiField > external_coords = mesh->get_field(field_enums::EXTERNAL_FACE_EDGE_COORDINATES_FS);
-  //Teuchos::ArrayRCP<const work_t> external_coords_values = external_coords->get_1d_view();
+  //Teuchos::ArrayRCP<const scalar_t> external_coords_values = external_coords->get_1d_view();
   int_t * elem_map = new int_t[num_elem];
   int_t * node_map = new int_t[num_elem];
 
@@ -1648,7 +1648,7 @@ initialize_control_volumes(Teuchos::RCP<Mesh> mesh){
 
   Teuchos::RCP<MultiField > coords = mesh->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
 
-  Teuchos::ArrayRCP<const work_t> coords_values = coords->get_1d_view();
+  Teuchos::ArrayRCP<const scalar_t> coords_values = coords->get_1d_view();
 
   // iterate over subelements to create internal cells and faces or edges
   // and the internal cell and face or edge fields:
@@ -1744,25 +1744,25 @@ initialize_control_volumes(Teuchos::RCP<Mesh> mesh){
       subelem->add_deep_relation(boundary_face_edge_2);
 
       // centroid (2 of them):
-      const work_t lx = coords_values[target_node_1->overlap_local_id()*spa_dim+0];
-      const work_t rx = coords_values[target_node_2->overlap_local_id()*spa_dim+0];
-      const work_t ly = coords_values[target_node_1->overlap_local_id()*spa_dim+1];
-      const work_t ry = coords_values[target_node_2->overlap_local_id()*spa_dim+1];
+      const scalar_t lx = coords_values[target_node_1->overlap_local_id()*spa_dim+0];
+      const scalar_t rx = coords_values[target_node_2->overlap_local_id()*spa_dim+0];
+      const scalar_t ly = coords_values[target_node_1->overlap_local_id()*spa_dim+1];
+      const scalar_t ry = coords_values[target_node_2->overlap_local_id()*spa_dim+1];
       //std::cout << " left node " << lx << " " << ly << " right node " << rx << " " << ry << std::endl;
-      const work_t dx = rx - lx;
-      const work_t dy = ly - ry;
-      const work_t lcx =  0.25*dx + lx;
-      const work_t lcy = -0.25*dy + ly;
-      const work_t rcx =  0.75*dx + lx;
-      const work_t rcy = -0.75*dy + ly;
+      const scalar_t dx = rx - lx;
+      const scalar_t dy = ly - ry;
+      const scalar_t lcx =  0.25*dx + lx;
+      const scalar_t lcy = -0.25*dy + ly;
+      const scalar_t rcx =  0.75*dx + lx;
+      const scalar_t rcy = -0.75*dy + ly;
       // length_total (divide by two for each side):
-      const work_t edge_length = std::sqrt(dx*dx + dy*dy);
+      const scalar_t edge_length = std::sqrt(dx*dx + dy*dy);
       assert(edge_length!=0.0);
       //std::cout << " left centroid " << lcx << " " << lcy << " right centroid " << rcx << " " << rcy << " length " << edge_length << std::endl;
       // normal (same for both sides):
       TEUCHOS_TEST_FOR_EXCEPTION(edge_length<=0.0,std::runtime_error,"");
-      const work_t nx = dy/edge_length;
-      const work_t ny = dx/edge_length;
+      const scalar_t nx = dy/edge_length;
+      const scalar_t ny = dx/edge_length;
       //std::cout << " normal " << nx << " " << ny << std::endl;
 
       edge_size.local_value(face_edge_local_id_1) = 0.5*edge_length;
@@ -1802,7 +1802,7 @@ initialize_control_volumes(Teuchos::RCP<Mesh> mesh){
 
   // output relations information
   //const int_t p_rank = mesh->get_comm()->getRank();
-  work_t average_relations_this_proc = 0;
+  scalar_t average_relations_this_proc = 0;
   int_t max_num_relations_this_proc = 0;
   int_t min_num_relations = INT_MAX;
   std::stringstream oss;
@@ -1835,7 +1835,7 @@ initialize_control_volumes(Teuchos::RCP<Mesh> mesh){
   //oss.str("");
   //oss.clear();
 
-  work_t average_node_relations_this_proc = 0;
+  scalar_t average_node_relations_this_proc = 0;
   int_t max_node_num_relations_this_proc = 0;
   int_t min_node_num_relations = INT_MAX;
 
@@ -1879,7 +1879,7 @@ initialize_control_volumes(Teuchos::RCP<Mesh> mesh){
 DICE_LIB_DLL_EXPORT
 void
 tri3_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> cv_node,
   Teuchos::RCP<DICe::mesh::Subelement> subelement)
 {
@@ -1921,13 +1921,13 @@ tri3_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
    //cout << " Target node id " << node_I->global_id() << " neighbor id " << node_A->global_id() << std::endl;
    //cout << " The size of this element is: " << cell_size_values[element->local_id()] << std::endl;
 
-  work_t cntrd[] = {0.0, 0.0};
+  scalar_t cntrd[] = {0.0, 0.0};
   compute_centroid_of_tri(coords_values,node_A,node_B,node_I,&cntrd[0]);
 
-  work_t edge_length;
-  work_t normal[2];
-  work_t subtri_centroid[2];
-  work_t subtri_edge_centroid[2];
+  scalar_t edge_length;
+  scalar_t normal[2];
+  scalar_t subtri_centroid[2];
+  scalar_t subtri_edge_centroid[2];
   compute_submesh_obj_from_tri3(coords_values,node_A,node_B,node_I,
     cntrd,edge_length,normal,subtri_centroid,subtri_edge_centroid);
 
@@ -1961,8 +1961,8 @@ tri3_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
    MultiField & subelement_size = *mesh->get_field(field_enums::INITIAL_SUBELEMENT_SIZE_FS);
 
    edge_size.local_value(face_edge_local_id) = edge_length;
-   const work_t subelem_size = tri3_area(coords_values,node_A,node_B,node_I);
-   const work_t internal_cell_size = subelem_size/3.0;
+   const scalar_t subelem_size = tri3_area(coords_values,node_A,node_B,node_I);
+   const scalar_t internal_cell_size = subelem_size/3.0;
    subelement_size.local_value(subelement->local_id()) = subelem_size;
    cell_size.local_value(cell_local_id) = internal_cell_size;
    for(int_t dim=0;dim<2;++dim)
@@ -1975,35 +1975,35 @@ tri3_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
 
 DICE_LIB_DLL_EXPORT
 void
-compute_submesh_obj_from_tri3(Teuchos::ArrayRCP<const work_t> coords_values,
+compute_submesh_obj_from_tri3(Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_I,
-  const work_t * parent_centroid,
-  work_t & edge_length,
-  work_t * normal,
-  work_t * subtri_centroid,
-  work_t * subtri_edge_centroid)
+  const scalar_t * parent_centroid,
+  scalar_t & edge_length,
+  scalar_t * normal,
+  scalar_t * subtri_centroid,
+  scalar_t * subtri_edge_centroid)
 {
   const int_t stride_A = node_A.get()->overlap_local_id();
-  const work_t Ax = coords_values[stride_A*2+0];
-  const work_t Ay = coords_values[stride_A*2+1];
+  const scalar_t Ax = coords_values[stride_A*2+0];
+  const scalar_t Ay = coords_values[stride_A*2+1];
   const int_t stride_B = node_B.get()->overlap_local_id();
-  const work_t Bx = coords_values[stride_B*2+0];
-  const work_t By = coords_values[stride_B*2+1];
+  const scalar_t Bx = coords_values[stride_B*2+0];
+  const scalar_t By = coords_values[stride_B*2+1];
   const int_t stride_I = node_I.get()->overlap_local_id();
-  const work_t Ix = coords_values[stride_I*2+0];
-  const work_t Iy = coords_values[stride_I*2+1];
+  const scalar_t Ix = coords_values[stride_I*2+0];
+  const scalar_t Iy = coords_values[stride_I*2+1];
 
   // compute the mid points of the lines that connect node_I to A, B, and C
-  const work_t mpIAx = (Ax + Ix) / 2.0;
-  const work_t mpIAy = (Ay + Iy) / 2.0;
+  const scalar_t mpIAx = (Ax + Ix) / 2.0;
+  const scalar_t mpIAy = (Ay + Iy) / 2.0;
 
-  const work_t mpIBx = (Bx + Ix) / 2.0;
-  const work_t mpIBy = (By + Iy) / 2.0;
+  const scalar_t mpIBx = (Bx + Ix) / 2.0;
+  const scalar_t mpIBy = (By + Iy) / 2.0;
 
-  const work_t dx = mpIAx - parent_centroid[0];
-  const work_t dy = parent_centroid[1] - mpIAy;
+  const scalar_t dx = mpIAx - parent_centroid[0];
+  const scalar_t dy = parent_centroid[1] - mpIAy;
 
   edge_length = std::sqrt(dx*dx + dy*dy);
   assert(edge_length!=0.0);
@@ -2020,22 +2020,22 @@ compute_submesh_obj_from_tri3(Teuchos::ArrayRCP<const work_t> coords_values,
 DICE_LIB_DLL_EXPORT
 void
 compute_centroid_of_tri(
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_I,
-  work_t * cntrd)
+  scalar_t * cntrd)
 {
   // get the coords of the nodes:
   const int_t stride_A = node_A.get()->overlap_local_id();
-  const work_t Ax = coords_values[stride_A*2+0];
-  const work_t Ay = coords_values[stride_A*2+1];
+  const scalar_t Ax = coords_values[stride_A*2+0];
+  const scalar_t Ay = coords_values[stride_A*2+1];
   const int_t stride_B = node_B.get()->overlap_local_id();
-  const work_t Bx = coords_values[stride_B*2+0];
-  const work_t By = coords_values[stride_B*2+1];
+  const scalar_t Bx = coords_values[stride_B*2+0];
+  const scalar_t By = coords_values[stride_B*2+1];
   const int_t stride_I = node_I.get()->overlap_local_id();
-  const work_t Ix = coords_values[stride_I*2+0];
-  const work_t Iy = coords_values[stride_I*2+1];
+  const scalar_t Ix = coords_values[stride_I*2+0];
+  const scalar_t Iy = coords_values[stride_I*2+1];
 
   cntrd[0] = (Ax + Bx + Ix)/3.0;
   cntrd[1] = (Ay + By + Iy)/3.0;
@@ -2044,31 +2044,31 @@ compute_centroid_of_tri(
 DICE_LIB_DLL_EXPORT
 void
 compute_centroid_of_tet(
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_C,
   Teuchos::RCP<DICe::mesh::Node> node_I,
-  work_t * cntrd)
+  scalar_t * cntrd)
 {
   // get the coords of the nodes:
   //FIXME: DO WE NEED THE .get() calls on each node?
   const int_t stride_A = node_A.get()->overlap_local_id();
-  const work_t Ax = coords_values[stride_A*3+0];
-  const work_t Ay = coords_values[stride_A*3+1];
-  const work_t Az = coords_values[stride_A*3+2];
+  const scalar_t Ax = coords_values[stride_A*3+0];
+  const scalar_t Ay = coords_values[stride_A*3+1];
+  const scalar_t Az = coords_values[stride_A*3+2];
   const int_t stride_B = node_B.get()->overlap_local_id();
-  const work_t Bx = coords_values[stride_B*3+0];
-  const work_t By = coords_values[stride_B*3+1];
-  const work_t Bz = coords_values[stride_B*3+2];
+  const scalar_t Bx = coords_values[stride_B*3+0];
+  const scalar_t By = coords_values[stride_B*3+1];
+  const scalar_t Bz = coords_values[stride_B*3+2];
   const int_t stride_C = node_C.get()->overlap_local_id();
-  const work_t Cx = coords_values[stride_C*3+0];
-  const work_t Cy = coords_values[stride_C*3+1];
-  const work_t Cz = coords_values[stride_C*3+2];
+  const scalar_t Cx = coords_values[stride_C*3+0];
+  const scalar_t Cy = coords_values[stride_C*3+1];
+  const scalar_t Cz = coords_values[stride_C*3+2];
   const int_t stride_I = node_I.get()->overlap_local_id();
-  const work_t Ix = coords_values[stride_I*3+0];
-  const work_t Iy = coords_values[stride_I*3+1];
-  const work_t Iz = coords_values[stride_I*3+2];
+  const scalar_t Ix = coords_values[stride_I*3+0];
+  const scalar_t Iy = coords_values[stride_I*3+1];
+  const scalar_t Iz = coords_values[stride_I*3+2];
 
   cntrd[0] = (Ax + Bx + Cx + Ix)/4.0;
   cntrd[1] = (Ay + By + Cy + Iy)/4.0;
@@ -2078,7 +2078,7 @@ compute_centroid_of_tet(
 DICE_LIB_DLL_EXPORT
 void
 tetra4_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> cv_node,
   Teuchos::RCP<DICe::mesh::Subelement> subelement)
 {
@@ -2134,15 +2134,15 @@ tetra4_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
     node_B = connectivity[node_index_table[i][1]];
     node_C = connectivity[node_index_table[i][2]];
     //cout << " I: " << node_I->global_id() <<  " A: " << node_A->global_id() << " B: " << node_B->global_id() << " C: " << node_C->global_id() << std::endl;
-    work_t face_area;
-    work_t normal[3];
-    work_t subtet_centroid[3];
-    work_t subtet_face_centroid[3];
+    scalar_t face_area;
+    scalar_t normal[3];
+    scalar_t subtet_centroid[3];
+    scalar_t subtet_face_centroid[3];
 
-    work_t cntrd[] = {0.0, 0.0, 0.0};
+    scalar_t cntrd[] = {0.0, 0.0, 0.0};
     compute_centroid_of_tet(coords_values,node_A,node_B,node_C,node_I,&cntrd[0]);
-    const work_t subelem_size = tetra4_volume(coords_values,node_A,node_B,node_C,node_I);//cell_size_values[element->local_id()]/4.0;
-    const work_t internal_cell_size = subelem_size/4.0;
+    const scalar_t subelem_size = tetra4_volume(coords_values,node_A,node_B,node_C,node_I);//cell_size_values[element->local_id()]/4.0;
+    const scalar_t internal_cell_size = subelem_size/4.0;
     subelement_size.local_value(subelement->local_id()) = subelem_size;
 
     compute_submesh_obj_from_tet4(coords_values,
@@ -2192,62 +2192,62 @@ tetra4_sub_elem_edge_legths_and_normals(Teuchos::RCP<Mesh> mesh,
 DICE_LIB_DLL_EXPORT
 void
 compute_submesh_obj_from_tet4(
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_C,
   Teuchos::RCP<DICe::mesh::Node> node_I,
-  const work_t * parent_centroid,
-  work_t & face_area,
-  work_t * normal,
-  work_t * subtet_centroid,
-  work_t * subtet_face_centroid)
+  const scalar_t * parent_centroid,
+  scalar_t & face_area,
+  scalar_t * normal,
+  scalar_t * subtet_centroid,
+  scalar_t * subtet_face_centroid)
 {
   const int_t stride_A = node_A.get()->overlap_local_id();
-  const work_t Ax = coords_values[stride_A*3+0];
-  const work_t Ay = coords_values[stride_A*3+1];
-  const work_t Az = coords_values[stride_A*3+2];
+  const scalar_t Ax = coords_values[stride_A*3+0];
+  const scalar_t Ay = coords_values[stride_A*3+1];
+  const scalar_t Az = coords_values[stride_A*3+2];
   const int_t stride_B = node_B.get()->overlap_local_id();
-  const work_t Bx = coords_values[stride_B*3+0];
-  const work_t By = coords_values[stride_B*3+1];
-  const work_t Bz = coords_values[stride_B*3+2];
+  const scalar_t Bx = coords_values[stride_B*3+0];
+  const scalar_t By = coords_values[stride_B*3+1];
+  const scalar_t Bz = coords_values[stride_B*3+2];
   const int_t stride_C = node_C.get()->overlap_local_id();
-  const work_t Cx = coords_values[stride_C*3+0];
-  const work_t Cy = coords_values[stride_C*3+1];
-  const work_t Cz = coords_values[stride_C*3+2];
+  const scalar_t Cx = coords_values[stride_C*3+0];
+  const scalar_t Cy = coords_values[stride_C*3+1];
+  const scalar_t Cz = coords_values[stride_C*3+2];
   const int_t stride_I = node_I.get()->overlap_local_id();
-  const work_t Ix = coords_values[stride_I*3+0];
-  const work_t Iy = coords_values[stride_I*3+1];
-  const work_t Iz = coords_values[stride_I*3+2];
+  const scalar_t Ix = coords_values[stride_I*3+0];
+  const scalar_t Iy = coords_values[stride_I*3+1];
+  const scalar_t Iz = coords_values[stride_I*3+2];
 
   // compute the mid points of the lines that connect node_I to A, B, and C
-  const work_t mpIAx = (Ax + Ix) / 2.0;
-  const work_t mpIAy = (Ay + Iy) / 2.0;
-  const work_t mpIAz = (Az + Iz) / 2.0;
+  const scalar_t mpIAx = (Ax + Ix) / 2.0;
+  const scalar_t mpIAy = (Ay + Iy) / 2.0;
+  const scalar_t mpIAz = (Az + Iz) / 2.0;
 
-  const work_t mpIBx = (Bx + Ix) / 2.0;
-  const work_t mpIBy = (By + Iy) / 2.0;
-  const work_t mpIBz = (Bz + Iz) / 2.0;
-  const work_t mpIB[] = {mpIBx, mpIBy, mpIBz};
+  const scalar_t mpIBx = (Bx + Ix) / 2.0;
+  const scalar_t mpIBy = (By + Iy) / 2.0;
+  const scalar_t mpIBz = (Bz + Iz) / 2.0;
+  const scalar_t mpIB[] = {mpIBx, mpIBy, mpIBz};
 
-  const work_t mpICx = (Cx + Ix) / 2.0;
-  const work_t mpICy = (Cy + Iy) / 2.0;
-  const work_t mpICz = (Cz + Iz) / 2.0;
+  const scalar_t mpICx = (Cx + Ix) / 2.0;
+  const scalar_t mpICy = (Cy + Iy) / 2.0;
+  const scalar_t mpICz = (Cz + Iz) / 2.0;
 
   // compute the centroid of each face
-  const work_t cIABx = (Ix+Ax+Bx) / 3.0;
-  const work_t cIABy = (Iy+Ay+By) / 3.0;
-  const work_t cIABz = (Iz+Az+Bz) / 3.0;
-  const work_t cIAB[] = {cIABx, cIABy, cIABz};
+  const scalar_t cIABx = (Ix+Ax+Bx) / 3.0;
+  const scalar_t cIABy = (Iy+Ay+By) / 3.0;
+  const scalar_t cIABz = (Iz+Az+Bz) / 3.0;
+  const scalar_t cIAB[] = {cIABx, cIABy, cIABz};
 
-  const work_t cIACx = (Ix+Ax+Cx) / 3.0;
-  const work_t cIACy = (Iy+Ay+Cy) / 3.0;
-  const work_t cIACz = (Iz+Az+Cz) / 3.0;
+  const scalar_t cIACx = (Ix+Ax+Cx) / 3.0;
+  const scalar_t cIACy = (Iy+Ay+Cy) / 3.0;
+  const scalar_t cIACz = (Iz+Az+Cz) / 3.0;
 
-  const work_t cIBCx = (Ix+Cx+Bx) / 3.0;
-  const work_t cIBCy = (Iy+Cy+By) / 3.0;
-  const work_t cIBCz = (Iz+Cz+Bz) / 3.0;
-  const work_t cIBC[] = {cIBCx, cIBCy, cIBCz};
+  const scalar_t cIBCx = (Ix+Cx+Bx) / 3.0;
+  const scalar_t cIBCy = (Iy+Cy+By) / 3.0;
+  const scalar_t cIBCz = (Iz+Cz+Bz) / 3.0;
+  const scalar_t cIBC[] = {cIBCx, cIBCy, cIBCz};
 
   subtet_centroid[0] = (Ix + mpIAx + cIABx + mpIBx + parent_centroid[0] + cIBCx + cIACx + mpICx)/8.0;
   subtet_centroid[1] = (Iy + mpIAy + cIABy + mpIBy + parent_centroid[1] + cIBCy + cIACy + mpICy)/8.0;
@@ -2258,7 +2258,7 @@ compute_submesh_obj_from_tet4(
   subtet_face_centroid[2] = (cIABz + parent_centroid[2] + cIBCz + mpIBz)/4.0;
 
   // compute the areas of the three four node resulting faces (made up of two three node triangles each)
-  work_t test_normal[] = {0.0, 0.0, 0.0};
+  scalar_t test_normal[] = {0.0, 0.0, 0.0};
   face_area = 0.0;
   face_area += 0.5*cross3d_with_normal(&cIAB[0],&mpIB[0],&parent_centroid[0], &normal[0]);
   face_area += 0.5*cross3d_with_normal(&cIBC[0],&parent_centroid[0],&mpIB[0], &test_normal[0]);
@@ -2272,13 +2272,13 @@ compute_submesh_obj_from_tet4(
 }
 
 DICE_LIB_DLL_EXPORT
-work_t
-tri3_area(Teuchos::ArrayRCP<const work_t> coords_values,
+scalar_t
+tri3_area(Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_C)
 {
-  work_t A[2], B[2], C[2];
+  scalar_t A[2], B[2], C[2];
   A[0] = coords_values[node_A.get()->overlap_local_id()*2+0];
   A[1] = coords_values[node_A.get()->overlap_local_id()*2+1];
   B[0] = coords_values[node_B.get()->overlap_local_id()*2+0];
@@ -2286,19 +2286,19 @@ tri3_area(Teuchos::ArrayRCP<const work_t> coords_values,
   C[0] = coords_values[node_C.get()->overlap_local_id()*2+0];
   C[1] = coords_values[node_C.get()->overlap_local_id()*2+1];
 
-  work_t cross_prod = cross(&A[0],&B[0],&C[0]);
+  scalar_t cross_prod = cross(&A[0],&B[0],&C[0]);
   return 0.5 * std::abs(cross_prod);
 }
 
 DICE_LIB_DLL_EXPORT
-work_t
-tetra4_volume(Teuchos::ArrayRCP<const work_t> coords_values,
+scalar_t
+tetra4_volume(Teuchos::ArrayRCP<const scalar_t> coords_values,
   Teuchos::RCP<DICe::mesh::Node> node_A,
   Teuchos::RCP<DICe::mesh::Node> node_B,
   Teuchos::RCP<DICe::mesh::Node> node_C,
   Teuchos::RCP<DICe::mesh::Node> node_D)
 {
-  work_t a[4*4];
+  scalar_t a[4*4];
   a[0+0*4] = coords_values[node_A.get()->overlap_local_id()*3+0];
   a[0+1*4] = coords_values[node_B.get()->overlap_local_id()*3+1];
   a[0+2*4] = coords_values[node_C.get()->overlap_local_id()*3+2];
@@ -2315,7 +2315,7 @@ tetra4_volume(Teuchos::ArrayRCP<const work_t> coords_values,
   {
     a[3+j*4] = 1.0;
   }
-  const work_t det = determinant_4x4(&a[0]);
+  const scalar_t det = determinant_4x4(&a[0]);
   return std::abs(det) / 6.0;
 }
 
@@ -2329,7 +2329,7 @@ create_cell_size_and_radius(Teuchos::RCP<Mesh> mesh)
   mesh->create_field(field_enums::INITIAL_CELL_RADIUS_FS);
 
   Teuchos::RCP<MultiField > coords = mesh->get_overlap_field(field_enums::INITIAL_COORDINATES_FS);
-  Teuchos::ArrayRCP<const work_t> coords_values = coords->get_1d_view();
+  Teuchos::ArrayRCP<const scalar_t> coords_values = coords->get_1d_view();
   DICe::mesh::element_set::const_iterator elem_it = mesh->get_element_set()->begin();
   DICe::mesh::element_set::const_iterator elem_end = mesh->get_element_set()->end();
   for(;elem_it!=elem_end;++elem_it)
@@ -2361,7 +2361,7 @@ create_cell_size_and_radius(Teuchos::RCP<Mesh> mesh)
 DICE_LIB_DLL_EXPORT
 void
 hex8_volume_radius(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   const Teuchos::RCP<DICe::mesh::Element> element)
 {
   MultiField & cell_size = *mesh->get_field(field_enums::INITIAL_CELL_SIZE_FS);
@@ -2377,11 +2377,11 @@ hex8_volume_radius(Teuchos::RCP<Mesh> mesh,
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
   }
 
-  std::vector<work_t> x(num_nodes);
+  std::vector<scalar_t> x(num_nodes);
   for(int_t i=0;i<num_nodes;++i) x[i]=0.0;
-  std::vector<work_t> y(num_nodes);
+  std::vector<scalar_t> y(num_nodes);
   for(int_t i=0;i<num_nodes;++i) y[i]=0.0;
-  std::vector<work_t> z(num_nodes);
+  std::vector<scalar_t> z(num_nodes);
   for(int_t i=0;i<num_nodes;++i) z[i]=0.0;
 
   //std::stringstream oss;
@@ -2397,40 +2397,40 @@ hex8_volume_radius(Teuchos::RCP<Mesh> mesh,
   }
   //cout << oss.str();
 
-  const work_t Z24 = z[1] - z[3];
-  const work_t Z52 = z[4] - z[1];
-  const work_t Z45 = z[3] - z[4];
-  const work_t G1 = ( y[1]*(z[5]-z[2]-Z45) + y[2]*Z24 + y[3]*(z[2]-z[7]-Z52) + y[4]*(z[7]-z[5]-Z24) + y[5]*Z52 + y[7]*Z45 ) / 12.0;
-  const work_t Z31 = z[2] - z[0];
-  const work_t Z63 = z[5] - z[2];
-  const work_t Z16 = z[0] - z[5];
-  const work_t G2 = ( y[2]*(z[6]-z[3]-Z16) + y[3]*Z31 + y[0]*(z[3]-z[4]-Z63) + y[5]*(z[4]-z[6]-Z31) + y[6]*Z63 + y[4]*Z16 ) / 12.0;
-  const work_t Z42 = z[3] - z[1];
-  const work_t Z74 = z[6] - z[3];
-  const work_t Z27 = z[1] - z[6];
-  const work_t G3 = ( y[3]*(z[7]-z[0]-Z27) + y[0]*Z42 + y[1]*(z[0]-z[5]-Z74) + y[6]*(z[5]-z[7]-Z42) + y[7]*Z74 + y[5]*Z27 ) / 12.0;
-  const work_t Z13 = z[0] - z[2];
-  const work_t Z81 = z[7] - z[0];
-  const work_t Z38 = z[2] - z[7];
-  const work_t  G4 = ( y[0]*(z[4]-z[1]-Z38) + y[1]*Z13 + y[2]*(z[1]-z[6]-Z81) + y[7]*(z[6]-z[4]-Z13) + y[4]*Z81 + y[6]*Z38 ) / 12.0;
-  const work_t Z86 = z[7] - z[5];
-  const work_t Z18 = z[0] - z[7];
-  const work_t Z61 = z[5] - z[0];
-  const work_t G5 = ( y[7]*(z[3]-z[6]-Z61) + y[6]*Z86 + y[5]*(z[6]-z[1]-Z18) + y[0]*(z[1]-z[3]-Z86) + y[3]*Z18 + y[1]*Z61 ) / 12.0;
-  const work_t Z57 = z[4] - z[6];
-  const work_t Z25 = z[1] - z[4];
-  const work_t Z72 = z[6] - z[1];
-  const work_t G6 = ( y[4]*(z[0]-z[7]-Z72) + y[7]*Z57 + y[6]*(z[7]-z[2]-Z25) + y[1]*(z[2]-z[0]-Z57) + y[0]*Z25 + y[2]*Z72 ) / 12.0;
-  const work_t Z68 = z[5] - z[7];
-  const work_t Z36 = z[2] - z[5];
-  const work_t Z83 = z[7] - z[2];
-  const work_t G7 = ( y[5]*(z[1]-z[4]-Z83) + y[4]*Z68 + y[7]*(z[4]-z[3]-Z36) + y[2]*(z[3]-z[1]-Z68) + y[1]*Z36 + y[3]*Z83 ) / 12.0;
-  const work_t Z75 = z[6] - z[4];
-  const work_t Z47 = z[3] - z[6];
-  const work_t Z54 = z[4] - z[3];
-  const work_t G8 = ( y[6]*(z[2]-z[5]-Z54) + y[5]*Z75 + y[4]*(z[5]-z[0]-Z47) + y[3]*(z[0]-z[2]-Z75) + y[2]*Z47 + y[0]*Z54 ) / 12.0;
-  const work_t volume = x[0] * G1 + x[1] * G2 + x[2] * G3 + x[3] * G4 + x[4] * G5 + x[5] * G6 + x[6] * G7 + x[7] * G8;
-  const work_t radius = std::pow(volume,1.0/3.0) * 0.5;
+  const scalar_t Z24 = z[1] - z[3];
+  const scalar_t Z52 = z[4] - z[1];
+  const scalar_t Z45 = z[3] - z[4];
+  const scalar_t G1 = ( y[1]*(z[5]-z[2]-Z45) + y[2]*Z24 + y[3]*(z[2]-z[7]-Z52) + y[4]*(z[7]-z[5]-Z24) + y[5]*Z52 + y[7]*Z45 ) / 12.0;
+  const scalar_t Z31 = z[2] - z[0];
+  const scalar_t Z63 = z[5] - z[2];
+  const scalar_t Z16 = z[0] - z[5];
+  const scalar_t G2 = ( y[2]*(z[6]-z[3]-Z16) + y[3]*Z31 + y[0]*(z[3]-z[4]-Z63) + y[5]*(z[4]-z[6]-Z31) + y[6]*Z63 + y[4]*Z16 ) / 12.0;
+  const scalar_t Z42 = z[3] - z[1];
+  const scalar_t Z74 = z[6] - z[3];
+  const scalar_t Z27 = z[1] - z[6];
+  const scalar_t G3 = ( y[3]*(z[7]-z[0]-Z27) + y[0]*Z42 + y[1]*(z[0]-z[5]-Z74) + y[6]*(z[5]-z[7]-Z42) + y[7]*Z74 + y[5]*Z27 ) / 12.0;
+  const scalar_t Z13 = z[0] - z[2];
+  const scalar_t Z81 = z[7] - z[0];
+  const scalar_t Z38 = z[2] - z[7];
+  const scalar_t  G4 = ( y[0]*(z[4]-z[1]-Z38) + y[1]*Z13 + y[2]*(z[1]-z[6]-Z81) + y[7]*(z[6]-z[4]-Z13) + y[4]*Z81 + y[6]*Z38 ) / 12.0;
+  const scalar_t Z86 = z[7] - z[5];
+  const scalar_t Z18 = z[0] - z[7];
+  const scalar_t Z61 = z[5] - z[0];
+  const scalar_t G5 = ( y[7]*(z[3]-z[6]-Z61) + y[6]*Z86 + y[5]*(z[6]-z[1]-Z18) + y[0]*(z[1]-z[3]-Z86) + y[3]*Z18 + y[1]*Z61 ) / 12.0;
+  const scalar_t Z57 = z[4] - z[6];
+  const scalar_t Z25 = z[1] - z[4];
+  const scalar_t Z72 = z[6] - z[1];
+  const scalar_t G6 = ( y[4]*(z[0]-z[7]-Z72) + y[7]*Z57 + y[6]*(z[7]-z[2]-Z25) + y[1]*(z[2]-z[0]-Z57) + y[0]*Z25 + y[2]*Z72 ) / 12.0;
+  const scalar_t Z68 = z[5] - z[7];
+  const scalar_t Z36 = z[2] - z[5];
+  const scalar_t Z83 = z[7] - z[2];
+  const scalar_t G7 = ( y[5]*(z[1]-z[4]-Z83) + y[4]*Z68 + y[7]*(z[4]-z[3]-Z36) + y[2]*(z[3]-z[1]-Z68) + y[1]*Z36 + y[3]*Z83 ) / 12.0;
+  const scalar_t Z75 = z[6] - z[4];
+  const scalar_t Z47 = z[3] - z[6];
+  const scalar_t Z54 = z[4] - z[3];
+  const scalar_t G8 = ( y[6]*(z[2]-z[5]-Z54) + y[5]*Z75 + y[4]*(z[5]-z[0]-Z47) + y[3]*(z[0]-z[2]-Z75) + y[2]*Z47 + y[0]*Z54 ) / 12.0;
+  const scalar_t volume = x[0] * G1 + x[1] * G2 + x[2] * G3 + x[3] * G4 + x[4] * G5 + x[5] * G6 + x[6] * G7 + x[7] * G8;
+  const scalar_t radius = std::pow(volume,1.0/3.0) * 0.5;
 
   cell_size.local_value(element.get()->local_id()) = volume;
   cell_radius.local_value(element.get()->local_id()) = radius;
@@ -2439,7 +2439,7 @@ hex8_volume_radius(Teuchos::RCP<Mesh> mesh,
 DICE_LIB_DLL_EXPORT
 void
 tetra4_volume_radius(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   const Teuchos::RCP<DICe::mesh::Element> element)
 {
   MultiField & cell_size = *mesh->get_field(field_enums::INITIAL_CELL_SIZE_FS);
@@ -2458,8 +2458,8 @@ tetra4_volume_radius(Teuchos::RCP<Mesh> mesh,
   const Teuchos::RCP<DICe::mesh::Node> node_B = connectivity[1];
   const Teuchos::RCP<DICe::mesh::Node> node_C = connectivity[2];
   const Teuchos::RCP<DICe::mesh::Node> node_D = connectivity[3];
-  const work_t volume = tetra4_volume(coords_values,node_A,node_B,node_C,node_D);
-  work_t radius = std::pow(volume,1.0/3.0) * 0.5;
+  const scalar_t volume = tetra4_volume(coords_values,node_A,node_B,node_C,node_D);
+  scalar_t radius = std::pow(volume,1.0/3.0) * 0.5;
 
   cell_size.local_value(element.get()->local_id()) = volume;
   cell_radius.local_value(element.get()->local_id()) = radius;
@@ -2468,7 +2468,7 @@ tetra4_volume_radius(Teuchos::RCP<Mesh> mesh,
 DICE_LIB_DLL_EXPORT
 void
 pyramid5_volume_radius(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   const Teuchos::RCP<DICe::mesh::Element> element)
 {
   MultiField & cell_size = *mesh->get_field(field_enums::INITIAL_CELL_SIZE_FS);
@@ -2483,7 +2483,7 @@ pyramid5_volume_radius(Teuchos::RCP<Mesh> mesh,
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
   }
 
-  work_t A[3], B[3], C[3], D[3], E[3];
+  scalar_t A[3], B[3], C[3], D[3], E[3];
   Teuchos::RCP<DICe::mesh::Node> node;
 
   node = connectivity[0];
@@ -2513,21 +2513,21 @@ pyramid5_volume_radius(Teuchos::RCP<Mesh> mesh,
   E[2] = coords_values[stride*3+2];
 
   // split into two triangles and sum cross products to get the base area
-  work_t area = 0.0;
-  work_t cross_prod = cross3d(&A[0],&B[0],&D[0]);
+  scalar_t area = 0.0;
+  scalar_t cross_prod = cross3d(&A[0],&B[0],&D[0]);
   area += 0.5 * std::abs(cross_prod);
   cross_prod = cross3d(&C[0],&B[0],&D[0]);
   area += 0.5 * std::abs(cross_prod);
 
 
   // find the shortest distance from the top of the pyramid to the base
-  work_t height = 0.0;
+  scalar_t height = 0.0;
 
   // compute the coefficients of the base plane equation:
-  work_t coeff_a = A[1] * (B[2]-C[2]) + B[1] * (C[2]-A[2]) + C[1] * (A[2]-B[2]);
-  work_t coeff_b = A[2] * (B[0]-C[0]) + B[2] * (C[0]-A[0]) + C[2] * (A[0]-B[0]);
-  work_t coeff_c = A[0] * (B[1]-C[1]) + B[0] * (C[1]-A[1]) + C[0] * (A[1]-B[1]);
-  work_t coeff_d = -A[0] * (B[1]*C[2] - C[1]*B[2])
+  scalar_t coeff_a = A[1] * (B[2]-C[2]) + B[1] * (C[2]-A[2]) + C[1] * (A[2]-B[2]);
+  scalar_t coeff_b = A[2] * (B[0]-C[0]) + B[2] * (C[0]-A[0]) + C[2] * (A[0]-B[0]);
+  scalar_t coeff_c = A[0] * (B[1]-C[1]) + B[0] * (C[1]-A[1]) + C[0] * (A[1]-B[1]);
+  scalar_t coeff_d = -A[0] * (B[1]*C[2] - C[1]*B[2])
                         -B[0] * (C[1]*A[2] - A[1]*C[2])
                         -C[0] * (A[1]*B[2] - B[1]*A[2]);
 
@@ -2535,8 +2535,8 @@ pyramid5_volume_radius(Teuchos::RCP<Mesh> mesh,
   height = std::abs(height);
   //cout << "Element: " << element.global_id() << " area " << area << " coeff_a " << coeff_a << " coeff_b " << coeff_b << " coeff_c " << coeff_c  << " coeff_d " << coeff_d << " hegiht " << height << std::endl;
 
-  work_t volume = 1.0/3.0 * area * height;
-  const work_t radius = std::pow(volume,1.0/3.0) * 0.5;
+  scalar_t volume = 1.0/3.0 * area * height;
+  const scalar_t radius = std::pow(volume,1.0/3.0) * 0.5;
 
   cell_size.local_value(element.get()->local_id()) = volume;
   cell_radius.local_value(element.get()->local_id()) = radius;
@@ -2545,7 +2545,7 @@ pyramid5_volume_radius(Teuchos::RCP<Mesh> mesh,
 DICE_LIB_DLL_EXPORT
 void
 quad4_area_radius(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   const Teuchos::RCP<DICe::mesh::Element> element)
 {
   MultiField & cell_size = *mesh->get_field(field_enums::INITIAL_CELL_SIZE_FS);
@@ -2560,7 +2560,7 @@ quad4_area_radius(Teuchos::RCP<Mesh> mesh,
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
   }
 
-  work_t A[2], B[2], C[2], D[2];
+  scalar_t A[2], B[2], C[2], D[2];
   Teuchos::RCP<DICe::mesh::Node> node;
 
   node = connectivity[0];
@@ -2580,15 +2580,15 @@ quad4_area_radius(Teuchos::RCP<Mesh> mesh,
   D[0] = coords_values[stride*2+0];
   D[1] = coords_values[stride*2+1];
 
-  work_t area = 0.0;
+  scalar_t area = 0.0;
 
   // split into two triangles and sum cross products
-  work_t cross_prod = cross(&A[0],&B[0],&D[0]);
+  scalar_t cross_prod = cross(&A[0],&B[0],&D[0]);
   area += 0.5 * std::abs(cross_prod);
   cross_prod = cross(&C[0],&B[0],&D[0]);
   area += 0.5 * std::abs(cross_prod);
 
-  const work_t radius = std::sqrt(area/3.14159265358979323846264338327950288);
+  const scalar_t radius = std::sqrt(area/3.14159265358979323846264338327950288);
 
   cell_size.local_value(element.get()->local_id()) = area;
   cell_radius.local_value(element.get()->local_id()) = radius;
@@ -2597,7 +2597,7 @@ quad4_area_radius(Teuchos::RCP<Mesh> mesh,
 DICE_LIB_DLL_EXPORT
 void
 tri3_area_radius(Teuchos::RCP<Mesh> mesh,
-  Teuchos::ArrayRCP<const work_t> coords_values,
+  Teuchos::ArrayRCP<const scalar_t> coords_values,
   const Teuchos::RCP<DICe::mesh::Element> element)
 {
   MultiField & cell_size = *mesh->get_field(field_enums::INITIAL_CELL_SIZE_FS);
@@ -2616,8 +2616,8 @@ tri3_area_radius(Teuchos::RCP<Mesh> mesh,
   node_B = connectivity[1];
   node_C = connectivity[2];
 
-  const work_t area = tri3_area(coords_values,node_A,node_B,node_C);
-  const work_t radius = std::sqrt(area/3.14159265358979323846264338327950288);
+  const scalar_t area = tri3_area(coords_values,node_A,node_B,node_C);
+  const scalar_t radius = std::sqrt(area/3.14159265358979323846264338327950288);
 
   cell_size.local_value(element.get()->local_id()) = area;
   cell_radius.local_value(element.get()->local_id()) = radius;

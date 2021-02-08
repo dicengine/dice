@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
-  work_t errtol  = 5.0E-2;
+  scalar_t errtol  = 5.0E-2;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
     *outStream << "initializing the subset" << std::endl;
     // initialize the reference and defored values for this subset
     subset.initialize(defImg,DEF_INTENSITIES);
-    const work_t gamma = subset.gamma();
+    const scalar_t gamma = subset.gamma();
     *outStream << "gamma value: " << gamma << std::endl;
     if(std::abs(gamma - shift*0.4)>errtol){
       *outStream << "Error,  gamma is not " << shift*0.4 << " value=" << gamma << "\n";

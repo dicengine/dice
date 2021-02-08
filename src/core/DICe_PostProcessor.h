@@ -142,7 +142,7 @@ public:
   /// \param neighborhood_radius inclusive radius of a point's neighborhood
   /// if the radius is positive a radius search is used to construct the neighbors
   /// if the radius is negative, the search is k-nearest neighbors with the k being (int)(-1*radius)
-  void initialize_neighborhood(const work_t & neighborhood_radius);
+  void initialize_neighborhood(const scalar_t & neighborhood_radius);
 
   /// Tasks that are done once after initialization, but before execution
   virtual void pre_execution_tasks()=0;
@@ -184,13 +184,13 @@ protected:
   /// The collection of field names specific to this post processor
   std::vector<DICe::field_enums::Field_Spec> field_specs_;
   /// pointer to the point cloud used for the neighbor searching
-  Teuchos::RCP<Point_Cloud_2D<work_t> > point_cloud_;
+  Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud_;
   /// array holding the number of neighbors for each point
   std::vector<std::vector<int_t> > neighbor_list_;
   /// array holding the signed x distances for each neighbor in one long strided array
-  std::vector<std::vector<work_t> > neighbor_dist_x_;
+  std::vector<std::vector<scalar_t> > neighbor_dist_x_;
   /// array holding the signed y distances for each neighbor in one long strided array
-  std::vector<std::vector<work_t> > neighbor_dist_y_;
+  std::vector<std::vector<scalar_t> > neighbor_dist_y_;
   /// true when the neighbor lists have been constructed
   bool neighborhood_initialized_;
   /// holds the field name to be used for coordinates field
@@ -284,10 +284,10 @@ public:
   /// \param dy distance in y,
   /// \param kx [out] returned kernel value in x
   /// \param ky [out] returned kernel value in y
-  void compute_kernel(const work_t & dx,
-    const work_t & dy,
-    work_t & kx,
-    work_t & ky);
+  void compute_kernel(const scalar_t & dx,
+    const scalar_t & dy,
+    scalar_t & kx,
+    scalar_t & ky);
 
   /// Execute the post processor
   virtual void execute();
@@ -438,9 +438,9 @@ private:
   // number of fields in the output
   int_t num_field_entries_;
   // vector of x-coordinates for points
-  std::vector<work_t> pts_x_;
+  std::vector<scalar_t> pts_x_;
   // vector of y-coordinates for points
-  std::vector<work_t> pts_y_;
+  std::vector<scalar_t> pts_y_;
   // vector of the indices that this processor owns
   std::vector<int_t> local_indices_;
   // map with all fields for all points on processor 0

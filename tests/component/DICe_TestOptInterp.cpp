@@ -52,8 +52,8 @@
 
 using namespace DICe;
 
-work_t intens(const work_t & x, const work_t & y){
-  static work_t gamma = 0.2;
+scalar_t intens(const scalar_t & x, const scalar_t & y){
+  static scalar_t gamma = 0.2;
   return (255.0*0.5) + 0.5*255.0*std::sin(gamma*x)*std::cos(gamma*y);
 }
 
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
   *outStream << "creating an image from intensity function" << std::endl;
   const int_t w = 1000;
   const int_t h = 500;
-  Teuchos::ArrayRCP<work_t> intensities(w*h,0.0);
+  Teuchos::ArrayRCP<scalar_t> intensities(w*h,0.0);
   // populate the intensities with a sin/cos function
   for(int_t y=0;y<h;++y){
     for(int_t x=0;x<w;++x){
@@ -93,20 +93,20 @@ int main(int argc, char *argv[]) {
 
   // do tons of interpolations at random points
   std::default_random_engine generator;
-  const work_t mean = 0.0;
-  const work_t std_dev = 0.25;
-  std::normal_distribution<work_t> distribution(mean,std_dev);
-  work_t error = 0.0;
+  const scalar_t mean = 0.0;
+  const scalar_t std_dev = 0.25;
+  std::normal_distribution<scalar_t> distribution(mean,std_dev);
+  scalar_t error = 0.0;
   *outStream << "running bilinear" << std::endl;
   {
     Teuchos::TimeMonitor bilinear_time_monitor(*bilinear_time);
     for(int_t it=0;it<100;++it){
       for(int_t j=10;j<h-10;++j){
         for(int_t i=10;i<h-10;++i){
-          const work_t x = i + distribution(generator);
-          const work_t y = j + distribution(generator);
-          const work_t value = img->interpolate_bilinear(x,y);
-          const work_t exact = intens(x,y);
+          const scalar_t x = i + distribution(generator);
+          const scalar_t y = j + distribution(generator);
+          const scalar_t value = img->interpolate_bilinear(x,y);
+          const scalar_t exact = intens(x,y);
           error += (value - exact)*(value - exact);
         }
       }
@@ -125,10 +125,10 @@ int main(int argc, char *argv[]) {
     for(int_t it=0;it<100;++it){
       for(int_t j=10;j<h-10;++j){
         for(int_t i=10;i<h-10;++i){
-          const work_t x = i + distribution(generator);
-          const work_t y = j + distribution(generator);
-          const work_t value = img->interpolate_bicubic(x,y);
-          const work_t exact = intens(x,y);
+          const scalar_t x = i + distribution(generator);
+          const scalar_t y = j + distribution(generator);
+          const scalar_t value = img->interpolate_bicubic(x,y);
+          const scalar_t exact = intens(x,y);
           error += (value - exact)*(value - exact);
         }
       }
@@ -147,10 +147,10 @@ int main(int argc, char *argv[]) {
     for(int_t it=0;it<100;++it){
       for(int_t j=10;j<h-10;++j){
         for(int_t i=10;i<h-10;++i){
-          const work_t x = i + distribution(generator);
-          const work_t y = j + distribution(generator);
-          const work_t value = img->interpolate_keys_fourth(x,y);
-          const work_t exact = intens(x,y);
+          const scalar_t x = i + distribution(generator);
+          const scalar_t y = j + distribution(generator);
+          const scalar_t value = img->interpolate_keys_fourth(x,y);
+          const scalar_t exact = intens(x,y);
           error += (value - exact)*(value - exact);
         }
       }

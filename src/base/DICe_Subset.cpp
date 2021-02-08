@@ -61,10 +61,10 @@ Subset::Subset(int_t cx,
   assert(x.size()==y.size());
   x_ = x;
   y_ = y;
-  ref_intensities_ = Teuchos::ArrayRCP<work_t>(num_pixels_,0.0);
-  def_intensities_ = Teuchos::ArrayRCP<work_t>(num_pixels_,0.0);
-  grad_x_ = Teuchos::ArrayRCP<work_t>(num_pixels_,0.0);
-  grad_y_ = Teuchos::ArrayRCP<work_t>(num_pixels_,0.0);
+  ref_intensities_ = Teuchos::ArrayRCP<scalar_t>(num_pixels_,0.0);
+  def_intensities_ = Teuchos::ArrayRCP<scalar_t>(num_pixels_,0.0);
+  grad_x_ = Teuchos::ArrayRCP<scalar_t>(num_pixels_,0.0);
+  grad_y_ = Teuchos::ArrayRCP<scalar_t>(num_pixels_,0.0);
   is_active_ = Teuchos::ArrayRCP<bool>(num_pixels_,true);
   is_deactivated_this_step_ = Teuchos::ArrayRCP<bool>(num_pixels_,false);
   reset_is_active();
@@ -98,10 +98,10 @@ Subset::Subset(const int_t cx,
       index++;
     }
   }
-  ref_intensities_ = Teuchos::ArrayRCP<work_t>(num_pixels_,0.0);
-  def_intensities_ = Teuchos::ArrayRCP<work_t>(num_pixels_,0.0);
-  grad_x_ = Teuchos::ArrayRCP<work_t>(num_pixels_,0.0);
-  grad_y_ = Teuchos::ArrayRCP<work_t>(num_pixels_,0.0);
+  ref_intensities_ = Teuchos::ArrayRCP<scalar_t>(num_pixels_,0.0);
+  def_intensities_ = Teuchos::ArrayRCP<scalar_t>(num_pixels_,0.0);
+  grad_x_ = Teuchos::ArrayRCP<scalar_t>(num_pixels_,0.0);
+  grad_y_ = Teuchos::ArrayRCP<scalar_t>(num_pixels_,0.0);
   is_active_ = Teuchos::ArrayRCP<bool>(num_pixels_,true);
   is_deactivated_this_step_ = Teuchos::ArrayRCP<bool>(num_pixels_,false);
   reset_is_active();
@@ -140,10 +140,10 @@ Subset::Subset(const int_t cx,
   std::pair<int_t,int_t> centroid_pair = std::pair<int_t,int_t>(cy_,cx_);
   if(coords.find(centroid_pair)==coords.end())
     std::cout << "*** Warning: centroid " << cx_ << " " << cy_ << " is outside the subset boundary" << std::endl;
-  ref_intensities_ = Teuchos::ArrayRCP<work_t>(num_pixels_,0.0);
-  def_intensities_ = Teuchos::ArrayRCP<work_t>(num_pixels_,0.0);
-  grad_x_ = Teuchos::ArrayRCP<work_t>(num_pixels_,0.0);
-  grad_y_ = Teuchos::ArrayRCP<work_t>(num_pixels_,0.0);
+  ref_intensities_ = Teuchos::ArrayRCP<scalar_t>(num_pixels_,0.0);
+  def_intensities_ = Teuchos::ArrayRCP<scalar_t>(num_pixels_,0.0);
+  grad_x_ = Teuchos::ArrayRCP<scalar_t>(num_pixels_,0.0);
+  grad_y_ = Teuchos::ArrayRCP<scalar_t>(num_pixels_,0.0);
   is_active_ = Teuchos::ArrayRCP<bool>(num_pixels_,true);
   is_deactivated_this_step_ = Teuchos::ArrayRCP<bool>(num_pixels_,false);
   reset_is_active();
@@ -185,22 +185,22 @@ Subset::y(const int_t pixel_index)const{
   return y_[pixel_index];
 }
 
-const work_t&
+const scalar_t&
 Subset::grad_x(const int_t pixel_index)const{
   return grad_x_[pixel_index];
 }
 
-const work_t&
+const scalar_t&
 Subset::grad_y(const int_t pixel_index)const{
   return grad_y_[pixel_index];
 }
 
-work_t&
+scalar_t&
 Subset::ref_intensities(const int_t pixel_index){
   return ref_intensities_[pixel_index];
 }
 
-work_t&
+scalar_t&
 Subset::def_intensities(const int_t pixel_index){
   return def_intensities_[pixel_index];
 }
@@ -229,9 +229,9 @@ Subset::reset_is_deactivated_this_step(){
     is_deactivated_this_step_[i] = false;
 }
 
-work_t
+scalar_t
 Subset::max(const Subset_View_Target target){
-  work_t max = std::numeric_limits<work_t>::min();
+  scalar_t max = std::numeric_limits<scalar_t>::min();
   if(target==REF_INTENSITIES){
     for(int_t i=0;i<num_pixels_;++i){
       if(is_active_[i]&!is_deactivated_this_step_[i])
@@ -248,9 +248,9 @@ Subset::max(const Subset_View_Target target){
   return max;
 }
 
-work_t
+scalar_t
 Subset::min(const Subset_View_Target target){
-  work_t min = std::numeric_limits<work_t>::max();
+  scalar_t min = std::numeric_limits<scalar_t>::max();
   if(target==REF_INTENSITIES){
     for(int_t i=0;i<num_pixels_;++i){
       if(is_active_[i]&!is_deactivated_this_step_[i])
@@ -278,9 +278,9 @@ Subset::round(const Subset_View_Target target){
   }
 }
 
-work_t
+scalar_t
 Subset::mean(const Subset_View_Target target){
-  work_t mean = 0.0;
+  scalar_t mean = 0.0;
   int_t num_active = num_active_pixels();
   if(target==REF_INTENSITIES){
     for(int_t i=0;i<num_pixels_;++i){
@@ -296,10 +296,10 @@ Subset::mean(const Subset_View_Target target){
   return num_active != 0 ? mean/num_active : 0.0;
 }
 
-work_t
+scalar_t
 Subset::mean(const Subset_View_Target target,
-  work_t & sum){
-  work_t mean_ = mean(target);
+  scalar_t & sum){
+  scalar_t mean_ = mean(target);
   sum = 0.0;
   if(target==REF_INTENSITIES){
     for(int_t i=0;i<num_pixels_;++i){
@@ -316,16 +316,16 @@ Subset::mean(const Subset_View_Target target,
   return mean_;
 }
 
-work_t
+scalar_t
 Subset::gamma(){
   // assumes obstructed pixels are already turned off
-  work_t mean_sum_ref = 0.0;
-  const work_t mean_ref = mean(REF_INTENSITIES,mean_sum_ref);
-  work_t mean_sum_def = 0.0;
-  const work_t mean_def = mean(DEF_INTENSITIES,mean_sum_def);
+  scalar_t mean_sum_ref = 0.0;
+  const scalar_t mean_ref = mean(REF_INTENSITIES,mean_sum_ref);
+  scalar_t mean_sum_def = 0.0;
+  const scalar_t mean_def = mean(DEF_INTENSITIES,mean_sum_def);
   if(mean_sum_ref==0.0||mean_sum_def==0.0) return -1.0;
-  work_t gamma = 0.0;
-  work_t value = 0.0;
+  scalar_t gamma = 0.0;
+  scalar_t value = 0.0;
   for(int_t i=0;i<num_pixels_;++i){
     if(is_active_[i]&!is_deactivated_this_step_[i]){
       value = (def_intensities_[i]-mean_def)/mean_sum_def - (ref_intensities_[i]-mean_ref)/mean_sum_ref;
@@ -335,9 +335,9 @@ Subset::gamma(){
   return gamma;
 }
 
-work_t
+scalar_t
 Subset::diff_ref_def() const{
-  work_t diff = 0.0;
+  scalar_t diff = 0.0;
   for(int_t i=0;i<num_pixels_;++i)
     diff += (ref_intensities_[i]-def_intensities_[i])*(ref_intensities_[i]-def_intensities_[i]);
   diff = std::sqrt(diff);
@@ -345,20 +345,20 @@ Subset::diff_ref_def() const{
 }
 
 
-Teuchos::ArrayRCP<work_t>
+Teuchos::ArrayRCP<scalar_t>
 Subset::grad_x_array()const{
   return grad_x_;
 }
 
-Teuchos::ArrayRCP<work_t>
+Teuchos::ArrayRCP<scalar_t>
 Subset::grad_y_array()const{
   return grad_y_;
 }
 
-work_t
+scalar_t
 Subset::sssig(){
   // assumes obstructed pixels are already turned off
-  work_t sssig = 0.0;
+  scalar_t sssig = 0.0;
   for(int_t i=0;i<num_pixels_;++i){
     sssig += grad_x_[i]*grad_x_[i] + grad_y_[i]*grad_y_[i];
   }
@@ -379,7 +379,7 @@ Subset::initialize(Teuchos::RCP<Image_<S>> image,
   const int_t offset_y = image->offset_y();
   const int_t w = image->width();
   const int_t h = image->height();
-  Teuchos::ArrayRCP<work_t> intensities_ = target==REF_INTENSITIES ? ref_intensities_ : def_intensities_;
+  Teuchos::ArrayRCP<scalar_t> intensities_ = target==REF_INTENSITIES ? ref_intensities_ : def_intensities_;
   // assume if the map is null, use the no_map_tag in the parrel for call of the functor
   if(shape_function==Teuchos::null){
     for(int_t i=0;i<num_pixels_;++i){
@@ -398,9 +398,9 @@ Subset::initialize(Teuchos::RCP<Image_<S>> image,
     int_t px,py;
     const bool has_blocks = !pixels_blocked_by_other_subsets_.empty();
     // initialize the work variables
-    work_t mapped_x = 0.0;
-    work_t mapped_y = 0.0;
-    const work_t ox=(work_t)offset_x,oy=(work_t)offset_y;
+    scalar_t mapped_x = 0.0;
+    scalar_t mapped_y = 0.0;
+    const scalar_t ox=(scalar_t)offset_x,oy=(scalar_t)offset_y;
     for(int_t i=0;i<num_pixels_;++i){
       shape_function->map(x_[i],y_[i],cx_,cy_,mapped_x,mapped_y);
       px = ((int_t)(mapped_x + 0.5) == (int_t)(mapped_x)) ? (int_t)(mapped_x) : (int_t)(mapped_x) + 1;
@@ -454,12 +454,12 @@ Subset::initialize(Teuchos::RCP<Image_<S>> image,
   }
 }
 
-template void Subset::initialize(Teuchos::RCP<Image_<work_t>>,const Subset_View_Target,Teuchos::RCP<Local_Shape_Function>,const Interpolation_Method);
+template void Subset::initialize(Teuchos::RCP<Image_<scalar_t>>,const Subset_View_Target,Teuchos::RCP<Local_Shape_Function>,const Interpolation_Method);
 template void Subset::initialize(Teuchos::RCP<Image_<storage_t>>,const Subset_View_Target,Teuchos::RCP<Local_Shape_Function>,const Interpolation_Method);
 
 bool
-Subset::is_obstructed_pixel(const work_t & coord_x,
-  const work_t & coord_y) const {
+Subset::is_obstructed_pixel(const scalar_t & coord_x,
+  const scalar_t & coord_y) const {
   // determine which pixel the coordinates fall in:
   int_t c_x = (int_t)coord_x;
   if(coord_x - (int_t)coord_x >= 0.5) c_x++;
@@ -477,7 +477,7 @@ std::set<std::pair<int_t,int_t> >
 Subset::deformed_shapes(Teuchos::RCP<Local_Shape_Function> shape_function,
   const int_t cx,
   const int_t cy,
-  const work_t & skin_factor){
+  const scalar_t & skin_factor){
   std::set<std::pair<int_t,int_t> > coords;
   if(!is_conformal_) return coords;
   for(size_t i=0;i<conformal_subset_def_.boundary()->size();++i){
@@ -492,7 +492,7 @@ void
 Subset::turn_off_obstructed_pixels(Teuchos::RCP<Local_Shape_Function> shape_function){
   assert(shape_function!=Teuchos::null);
 
-  work_t X=0.0,Y=0.0;
+  scalar_t X=0.0,Y=0.0;
   int_t px=0,py=0;
   const bool has_blocks = !pixels_blocked_by_other_subsets_.empty();
   reset_is_deactivated_this_step();
@@ -548,7 +548,7 @@ Subset::write_subset_on_image(const std::string & file_name,
       intensities[m*w+n] = (*image)(n,m);
     }
   }
-  work_t mapped_x=0.0,mapped_y=0.0;
+  scalar_t mapped_x=0.0,mapped_y=0.0;
   int_t px=0,py=0;
 
   if(shape_function!=Teuchos::null){
@@ -571,7 +571,7 @@ Subset::write_subset_on_image(const std::string & file_name,
   utils::write_image(file_name.c_str(),w,h,intensities.getRawPtr(),true);
 }
 
-template void Subset::write_subset_on_image(const std::string &,Teuchos::RCP<Image_<work_t>>,Teuchos::RCP<Local_Shape_Function>);
+template void Subset::write_subset_on_image(const std::string &,Teuchos::RCP<Image_<scalar_t>>,Teuchos::RCP<Local_Shape_Function>);
 template void Subset::write_subset_on_image(const std::string &,Teuchos::RCP<Image_<storage_t>>,Teuchos::RCP<Local_Shape_Function>);
 
 void
@@ -591,7 +591,7 @@ Subset::write_image(const std::string & file_name,
   //create a square image that fits the extents of the subet
   const int_t w = max_x - min_x + 1;
   const int_t h = max_y - min_y + 1;
-  Teuchos::ArrayRCP<work_t> intensities(w*h,0);
+  Teuchos::ArrayRCP<scalar_t> intensities(w*h,0);
   for(int_t i=0;i<w*h;++i)
     intensities[i] = 0.0;
   for(int_t i=0;i<num_pixels_;++i){
@@ -616,10 +616,10 @@ Subset::num_active_pixels(){
   return num_active;
 }
 
-work_t
+scalar_t
 Subset::contrast_std_dev(){
-  const work_t mean_intensity = mean(DEF_INTENSITIES);
-  work_t std_dev = 0.0;
+  const scalar_t mean_intensity = mean(DEF_INTENSITIES);
+  scalar_t std_dev = 0.0;
   int_t num_active = 0;
   for(int_t i = 0;i<num_pixels();++i){
     if(is_active(i)&&!is_deactivated_this_step(i)){
@@ -632,12 +632,12 @@ Subset::contrast_std_dev(){
 }
 
 template <typename S>
-work_t
+scalar_t
 Subset::noise_std_dev(Teuchos::RCP<Image_<S>> image,
   Teuchos::RCP<Local_Shape_Function> shape_function){
 
   // create the mask
-  static work_t mask[3][3] = {{1, -2, 1},{-2,4,-2},{1,-2,1}};
+  static scalar_t mask[3][3] = {{1, -2, 1},{-2,4,-2},{1,-2,1}};
 
   // determine the extents of the subset:
   int_t min_x = x(0);
@@ -651,9 +651,9 @@ Subset::noise_std_dev(Teuchos::RCP<Image_<S>> image,
     if(y(i) > max_y) max_y = y(i);
   }
 
-  work_t u = 0.0;
-  work_t v = 0.0;
-  work_t t = 0.0;
+  scalar_t u = 0.0;
+  scalar_t v = 0.0;
+  scalar_t t = 0.0;
   shape_function->map_to_u_v_theta(cx_,cy_,u,v,t);
   min_x += u; max_x += u;
   min_y += v; max_y += v;
@@ -672,8 +672,8 @@ Subset::noise_std_dev(Teuchos::RCP<Image_<S>> image,
     return 1.0;
   }
 
-  work_t variance = 0.0;
-  work_t conv_i = 0.0;
+  scalar_t variance = 0.0;
+  scalar_t conv_i = 0.0;
   // convolve and sum the intensities with the mask
   for(int_t y=min_y; y<max_y;++y){
     for(int_t x=min_x; x<max_x;++x){
@@ -697,8 +697,8 @@ Subset::noise_std_dev(Teuchos::RCP<Image_<S>> image,
   return variance;
 }
 
-template work_t Subset::noise_std_dev(Teuchos::RCP<Image_<work_t>>,Teuchos::RCP<Local_Shape_Function>);
-template work_t Subset::noise_std_dev(Teuchos::RCP<Image_<storage_t>>,Teuchos::RCP<Local_Shape_Function>);
+template scalar_t Subset::noise_std_dev(Teuchos::RCP<Image_<scalar_t>>,Teuchos::RCP<Local_Shape_Function>);
+template scalar_t Subset::noise_std_dev(Teuchos::RCP<Image_<storage_t>>,Teuchos::RCP<Local_Shape_Function>);
 
 
 }// End DICe Namespace

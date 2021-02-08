@@ -62,8 +62,8 @@ MMS_Problem
 {
 public:
   /// Constrtuctor
-  MMS_Problem(const work_t & dim_x,
-    const work_t & dim_y):
+  MMS_Problem(const scalar_t & dim_x,
+    const scalar_t & dim_y):
       dim_x_(dim_x),
       dim_y_(dim_y){};
 
@@ -71,12 +71,12 @@ public:
   virtual ~MMS_Problem(){};
 
   /// returns the problem dimension in x
-  work_t dim_x()const{
+  scalar_t dim_x()const{
     return dim_x_;
   }
 
   /// returns the problem dimension in x
-  work_t dim_y()const{
+  scalar_t dim_y()const{
     return dim_y_;
   }
 
@@ -85,28 +85,28 @@ public:
   /// \param y y coordinate at which to evaluate the velocity
   /// \param b_x output x velocity
   /// \param b_y output y velocity
-  virtual void velocity(const work_t & x,
-    const work_t & y,
-    work_t & b_x,
-    work_t & b_y)=0;
+  virtual void velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x,
+    scalar_t & b_y)=0;
 
   /// Evaluation of the lagrange multiplier field
   /// \param x x coordinate at which to evaluate the velocity
   /// \param y y coordinate at which to evaluate the velocity
   /// \param l_out output x lagrange multplier
-  virtual void lagrange(const work_t & x,
-    const work_t & y,
-    work_t & l_out)=0;
+  virtual void lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_out)=0;
 
   /// Evaluation of the lagrangian derivatives
   /// \param x x coordinate at which to evaluate the velocity
   /// \param y y coordinate at which to evaluate the velocity
   /// \param dl_dx output x deriv
   /// \param dl_dy output y deriv
-  virtual void grad_lagrange(const work_t & x,
-    const work_t & y,
-    work_t & l_x,
-    work_t & l_y)=0;
+  virtual void grad_lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_x,
+    scalar_t & l_y)=0;
 
   /// Evaluation of the grad of the velocity
   /// \param x x coordinate at which to evaluate the velocity
@@ -115,30 +115,30 @@ public:
   /// \param b_x_y output y derivative of x velocity
   /// \param b_y_x output x derivative of y velocity
   /// \param b_y_y output y derivative of y velocity
-  virtual void grad_velocity(const work_t & x,
-    const work_t & y,
-    work_t & b_x_x,
-    work_t & b_x_y,
-    work_t & b_y_x,
-    work_t & b_y_y)=0;
+  virtual void grad_velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x_x,
+    scalar_t & b_x_y,
+    scalar_t & b_y_x,
+    scalar_t & b_y_y)=0;
 
   /// Evaluation of the laplacian of the velocity field
   /// \param x x coordinate at which to evaluate the velocity
   /// \param y y coordinate at which to evaluate the velocity
   /// \param lap_b_x output x velocity laplacian
   /// \param lap_b_y output y velocity laplacian
-  virtual void velocity_laplacian(const work_t & x,
-    const work_t & y,
-    work_t & lap_b_x,
-    work_t & lap_b_y)=0;
+  virtual void velocity_laplacian(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & lap_b_x,
+    scalar_t & lap_b_y)=0;
 
   /// Evaluation of the image phi (intensity) field
   /// \param x x coordinate at which to evaluate the intensity
   /// \param y y coordinate at which to evaluate the intensity
   /// \param phi output x velocity laplacian
-  virtual void phi(const work_t & x,
-    const work_t & y,
-    work_t & phi)=0;
+  virtual void phi(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & phi)=0;
 
   /// Evaluation of the image phi derivatives
   /// \param x x coordinate at which to evaluate the derivatives
@@ -146,32 +146,32 @@ public:
   /// \param dphi_dt output time derivative
   /// \param grad_phi_x output x derivative
   /// \param grad_phi_y output y derivative
-  virtual void phi_derivatives(const work_t & x,
-    const work_t & y,
-    work_t & dphi_dt,
-    work_t & grad_phi_x,
-    work_t & grad_phi_y)=0;
+  virtual void phi_derivatives(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & dphi_dt,
+    scalar_t & grad_phi_x,
+    scalar_t & grad_phi_y)=0;
 
   /// Evaluation of the force terms
   /// \param x x coordinate at which to evaluate the derivatives
   /// \param y y coordinate at which to evaluate the derivatives
   /// \param f_x output force x
   /// \param f_y output force y
-  virtual void force(const work_t & x,
-    const work_t & y,
-    const work_t & coeff_1,
+  virtual void force(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & coeff_1,
     std::set<Global_EQ_Term> * eq_terms,
-    work_t & f_x,
-    work_t & f_y)=0;
+    scalar_t & f_x,
+    scalar_t & f_y)=0;
 
 
 protected:
   /// Protect the default constructor
   MMS_Problem(const MMS_Problem&):dim_x_(0),dim_y_(0){};
   /// size of the domain in x
-  const work_t dim_x_;
+  const scalar_t dim_x_;
   /// size of the domain in y
-  const work_t dim_y_;
+  const scalar_t dim_y_;
 };
 
 
@@ -204,12 +204,12 @@ public:
   virtual ~Div_Curl_Modulator(){};
 
   /// See base class definition
-  virtual void velocity(const work_t & x,
-    const work_t & y,
-    work_t & b_x,
-    work_t & b_y){
+  virtual void velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x,
+    scalar_t & b_y){
     assert(dim_x_!=0.0);
-    static work_t beta = b_coeff_*DICE_PI/dim_x_;
+    static scalar_t beta = b_coeff_*DICE_PI/dim_x_;
     // div free part
     b_x = sin(beta*x)*cos(beta*y);
     b_y = -cos(beta*x)*sin(beta*y);
@@ -219,12 +219,12 @@ public:
   }
 
   /// See base class definition
-  virtual void velocity_laplacian(const work_t & x,
-    const work_t & y,
-    work_t & lap_b_x,
-    work_t & lap_b_y){
+  virtual void velocity_laplacian(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & lap_b_x,
+    scalar_t & lap_b_y){
     assert(dim_x_!=0.0);
-    static work_t beta = b_coeff_*DICE_PI/dim_x_;
+    static scalar_t beta = b_coeff_*DICE_PI/dim_x_;
     lap_b_x = -beta*beta*cos(beta*y)*sin(beta*x);
     lap_b_y = beta*beta*cos(beta*x)*sin(beta*y);
     lap_b_x += curl_coeff_*(-beta*beta*(2.0*sin(2.0*beta*(x - dim_x_ + y)) + sin(2.0*beta*x)
@@ -234,14 +234,14 @@ public:
   }
 
   /// See base class definition
-  virtual void grad_velocity(const work_t & x,
-    const work_t & y,
-    work_t & b_x_x,
-    work_t & b_x_y,
-    work_t & b_y_x,
-    work_t & b_y_y){
+  virtual void grad_velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x_x,
+    scalar_t & b_x_y,
+    scalar_t & b_y_x,
+    scalar_t & b_y_y){
     assert(dim_x_!=0.0);
-    static work_t beta = b_coeff_*DICE_PI/dim_x_;
+    static scalar_t beta = b_coeff_*DICE_PI/dim_x_;
     b_x_x = beta*cos(beta*x)*cos(beta*y);
     b_x_y = -beta*sin(beta*x)*sin(beta*y);
     b_y_x = beta*sin(beta*x)*sin(beta*y);
@@ -253,92 +253,92 @@ public:
   }
 
   /// See base class definition
-  virtual void lagrange(const work_t & x,
-    const work_t & y,
-    work_t & l_out){
+  virtual void lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_out){
     assert(dim_x_!=0.0);
-    static work_t beta = b_coeff_*DICE_PI/dim_x_;
+    static scalar_t beta = b_coeff_*DICE_PI/dim_x_;
     l_out = sin(beta*x)*cos(beta*y + 0.5*DICE_PI);
   }
 
   /// See base class definition
-  virtual void grad_lagrange(const work_t & x,
-    const work_t & y,
-    work_t & l_x,
-    work_t & l_y){
+  virtual void grad_lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_x,
+    scalar_t & l_y){
     assert(dim_x_!=0.0);
-    static work_t beta = b_coeff_*DICE_PI/dim_x_;
+    static scalar_t beta = b_coeff_*DICE_PI/dim_x_;
     l_x = beta*cos(beta*x)*cos(beta*y+0.5*DICE_PI);
     l_y = -beta*sin(beta*x)*sin(beta*y+0.5*DICE_PI);
   }
 
   /// See base class definition
-  virtual void phi(const work_t & x,
-    const work_t & y,
-    work_t & phi){
+  virtual void phi(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & phi){
     assert(dim_x_!=0.0);
-    static work_t gamma = phi_coeff_*DICE_PI/dim_x_;
+    static scalar_t gamma = phi_coeff_*DICE_PI/dim_x_;
     phi = sin(gamma*x)*cos(gamma*y+DICE_PI/2.0);
   }
 
   /// See base class definition
-  virtual void phi_derivatives(const work_t & x,
-    const work_t & y,
-    work_t & dphi_dt,
-    work_t & grad_phi_x,
-    work_t & grad_phi_y) {
-    work_t b_x = 0.0;
-    work_t b_y = 0.0;
+  virtual void phi_derivatives(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & dphi_dt,
+    scalar_t & grad_phi_x,
+    scalar_t & grad_phi_y) {
+    scalar_t b_x = 0.0;
+    scalar_t b_y = 0.0;
     velocity(x,y,b_x,b_y);
-    work_t mod_x = x - b_x;
-    work_t mod_y = y - b_y;
-    work_t phi_0 = 0.0;
+    scalar_t mod_x = x - b_x;
+    scalar_t mod_y = y - b_y;
+    scalar_t phi_0 = 0.0;
     phi(x,y,phi_0);
-    work_t phi_cur = 0.0;
+    scalar_t phi_cur = 0.0;
     phi(mod_x,mod_y,phi_cur);
     dphi_dt = phi_cur - phi_0;
     assert(dim_x_!=0.0);
-    static work_t gamma = phi_coeff_*DICE_PI/dim_x_;
+    static scalar_t gamma = phi_coeff_*DICE_PI/dim_x_;
     grad_phi_x = gamma*cos(gamma*x)*cos(DICE_PI/2.0 + gamma*y);
     grad_phi_y = -gamma*sin(gamma*x)*sin(DICE_PI/2.0 + gamma*y);
   }
 
   /// See base class definition
-  virtual void force(const work_t & x,
-    const work_t & y,
-    const work_t & coeff_1,
+  virtual void force(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & coeff_1,
     std::set<Global_EQ_Term> * eq_terms,
-    work_t & f_x,
-    work_t & f_y){
+    scalar_t & f_x,
+    scalar_t & f_y){
 
     f_x = 0.0;
     f_y = 0.0;
-    work_t d_phi_dt = 0.0, grad_phi_x = 0.0, grad_phi_y = 0.0;
+    scalar_t d_phi_dt = 0.0, grad_phi_x = 0.0, grad_phi_y = 0.0;
     phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
     if(eq_terms->find(MMS_IMAGE_TIME_FORCE)!=eq_terms->end()){
       f_x += grad_phi_x*d_phi_dt;
       f_y += grad_phi_y*d_phi_dt;
     }
     if(eq_terms->find(MMS_IMAGE_GRAD_TENSOR)!=eq_terms->end()){
-      work_t b_x=0.0,b_y=0.0;
+      scalar_t b_x=0.0,b_y=0.0;
       velocity(x,y,b_x,b_y);
       f_x += (grad_phi_x*grad_phi_x*b_x + grad_phi_x*grad_phi_y*b_y);
       f_y += (grad_phi_y*grad_phi_x*b_x + grad_phi_y*grad_phi_y*b_y);
     }
     if(eq_terms->find(DIV_SYMMETRIC_STRAIN_REGULARIZATION)!=eq_terms->end()){
-      work_t lap_b_x=0.0,lap_b_y=0.0;
+      scalar_t lap_b_x=0.0,lap_b_y=0.0;
       velocity_laplacian(x,y,lap_b_x,lap_b_y);
       f_x -= coeff_1*lap_b_x;
       f_y -= coeff_1*lap_b_y;
     }
     if(eq_terms->find(TIKHONOV_REGULARIZATION)!=eq_terms->end()){
-      work_t b_x=0.0,b_y=0.0;
+      scalar_t b_x=0.0,b_y=0.0;
       velocity(x,y,b_x,b_y);
       f_x += coeff_1*b_x;
       f_y += coeff_1*b_y;
     }
     if(eq_terms->find(GRAD_LAGRANGE_MULTIPLIER)!=eq_terms->end()){
-      work_t dl_dx=0.0,dl_dy=0.0;
+      scalar_t dl_dx=0.0,dl_dy=0.0;
       grad_lagrange(x,y,dl_dx,dl_dy);
       f_x += dl_dx;
       f_y += dl_dy;
@@ -347,11 +347,11 @@ public:
 
 protected:
   /// coefficient for image intensity values
-  work_t phi_coeff_;
+  scalar_t phi_coeff_;
   /// coefficient for velocity values
-  work_t b_coeff_;
+  scalar_t b_coeff_;
   /// coefficient of the curl free term
-  work_t curl_coeff_;
+  scalar_t curl_coeff_;
 };
 
 /// \class Simple_HS
@@ -371,10 +371,10 @@ public:
   virtual ~Simple_HS(){};
 
   /// See base class definition
-  virtual void velocity(const work_t & x,
-    const work_t & y,
-    work_t & b_x,
-    work_t & b_y){
+  virtual void velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x,
+    scalar_t & b_y){
     assert(dim_x_!=0.0);
     assert(dim_y_!=0.0);
     b_x = -1.0/dim_x_*x;
@@ -382,21 +382,21 @@ public:
   }
 
   /// See base class definition
-  virtual void velocity_laplacian(const work_t & x,
-    const work_t & y,
-    work_t & lap_b_x,
-    work_t & lap_b_y){
+  virtual void velocity_laplacian(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & lap_b_x,
+    scalar_t & lap_b_y){
     lap_b_x = 0.0;
     lap_b_y = 0.0;
   }
 
   /// See base class definition
-  virtual void grad_velocity(const work_t & x,
-    const work_t & y,
-    work_t & b_x_x,
-    work_t & b_x_y,
-    work_t & b_y_x,
-    work_t & b_y_y){
+  virtual void grad_velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x_x,
+    scalar_t & b_x_y,
+    scalar_t & b_y_x,
+    scalar_t & b_y_y){
     assert(dim_x_!=0.0);
     assert(dim_y_!=0.0);
     b_x_x = -1.0/dim_x_;
@@ -406,45 +406,45 @@ public:
   }
 
   /// See base class definition
-  virtual void lagrange(const work_t & x,
-    const work_t & y,
-    work_t & l_out){
+  virtual void lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_out){
     l_out = 1.0;
   }
 
   /// See base class definition
-  virtual void grad_lagrange(const work_t & x,
-    const work_t & y,
-    work_t & l_x,
-    work_t & l_y){
+  virtual void grad_lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_x,
+    scalar_t & l_y){
     l_x = 0.0;
     l_y = 0.0;
   }
 
   /// See base class definition
-  virtual void phi(const work_t & x,
-    const work_t & y,
-    work_t & phi){
+  virtual void phi(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & phi){
     phi = 0.0;
   }
 
   /// See base class definition
-  virtual void phi_derivatives(const work_t & x,
-    const work_t & y,
-    work_t & dphi_dt,
-    work_t & grad_phi_x,
-    work_t & grad_phi_y) {
+  virtual void phi_derivatives(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & dphi_dt,
+    scalar_t & grad_phi_x,
+    scalar_t & grad_phi_y) {
     grad_phi_x = 0.0;
     grad_phi_y = 0.0;
   }
 
   /// See base class definition
-  virtual void force(const work_t & x,
-    const work_t & y,
-    const work_t & coeff_1,
+  virtual void force(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & coeff_1,
     std::set<Global_EQ_Term> * eq_terms,
-    work_t & f_x,
-    work_t & f_y){
+    scalar_t & f_x,
+    scalar_t & f_y){
     f_x = 0.0;
     f_y = 0.0;
   }
@@ -465,7 +465,7 @@ public:
     coeff_(1.0){
     TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter("b_coeff"),std::runtime_error,
       "Error, Simple_LM mms problem requires the parameter b_coeff");
-    const work_t coeff = params->get<double>("b_coeff");
+    const scalar_t coeff = params->get<double>("b_coeff");
     coeff_ = coeff*coeff;
   };
 
@@ -473,10 +473,10 @@ public:
   virtual ~Simple_LM(){};
 
   /// See base class definition
-  virtual void velocity(const work_t & x,
-    const work_t & y,
-    work_t & b_x,
-    work_t & b_y){
+  virtual void velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x,
+    scalar_t & b_y){
     assert(dim_x_!=0.0);
     assert(dim_y_!=0.0);
     b_x = 1.0/dim_x_*x;
@@ -484,21 +484,21 @@ public:
   }
 
   /// See base class definition
-  virtual void velocity_laplacian(const work_t & x,
-    const work_t & y,
-    work_t & lap_b_x,
-    work_t & lap_b_y){
+  virtual void velocity_laplacian(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & lap_b_x,
+    scalar_t & lap_b_y){
     lap_b_x = 0.0;
     lap_b_y = 0.0;
   }
 
   /// See base class definition
-  virtual void grad_velocity(const work_t & x,
-    const work_t & y,
-    work_t & b_x_x,
-    work_t & b_x_y,
-    work_t & b_y_x,
-    work_t & b_y_y){
+  virtual void grad_velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x_x,
+    scalar_t & b_x_y,
+    scalar_t & b_y_x,
+    scalar_t & b_y_y){
     assert(dim_x_!=0.0);
     assert(dim_y_!=0.0);
     b_x_x = 1.0/dim_x_;
@@ -508,19 +508,19 @@ public:
   }
 
   /// See base class definition
-  virtual void lagrange(const work_t & x,
-    const work_t & y,
-    work_t & l_out){
+  virtual void lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_out){
     assert(dim_x_!=0.0);
     assert(dim_y_!=0.0);
     l_out = coeff_*0.5*((-1.0/dim_x_)*x*x + (1.0/dim_y_)*y*y);
   }
 
   /// See base class definition
-  virtual void grad_lagrange(const work_t & x,
-    const work_t & y,
-    work_t & l_x,
-    work_t & l_y){
+  virtual void grad_lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_x,
+    scalar_t & l_y){
     assert(dim_x_!=0.0);
     assert(dim_y_!=0.0);
     l_x = coeff_*(-1.0/dim_x_)*x;
@@ -528,34 +528,34 @@ public:
   }
 
   /// See base class definition
-  virtual void phi(const work_t & x,
-    const work_t & y,
-    work_t & phi){
+  virtual void phi(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & phi){
     phi = 0.0;
   }
 
   /// See base class definition
-  virtual void phi_derivatives(const work_t & x,
-    const work_t & y,
-    work_t & dphi_dt,
-    work_t & grad_phi_x,
-    work_t & grad_phi_y) {
+  virtual void phi_derivatives(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & dphi_dt,
+    scalar_t & grad_phi_x,
+    scalar_t & grad_phi_y) {
     grad_phi_x = 0.0;
     grad_phi_y = 0.0;
   }
 
   /// See base class definition
-  virtual void force(const work_t & x,
-    const work_t & y,
-    const work_t & coeff_1,
+  virtual void force(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & coeff_1,
     std::set<Global_EQ_Term> * eq_terms,
-    work_t & f_x,
-    work_t & f_y){
+    scalar_t & f_x,
+    scalar_t & f_y){
     f_x = 0.0;
     f_y = 0.0;
   }
   /// coefficient for velocity values
-  work_t coeff_;
+  scalar_t coeff_;
 };
 
 /// \class Patch_Test
@@ -585,30 +585,30 @@ public:
   virtual ~Patch_Test(){};
 
   /// See base class definition
-  virtual void velocity(const work_t & x,
-    const work_t & y,
-    work_t & b_x,
-    work_t & b_y){
+  virtual void velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x,
+    scalar_t & b_y){
     b_x = displacement_;
     b_y = displacement_;
   }
 
   /// See base class definition
-  virtual void velocity_laplacian(const work_t & x,
-    const work_t & y,
-    work_t & lap_b_x,
-    work_t & lap_b_y){
+  virtual void velocity_laplacian(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & lap_b_x,
+    scalar_t & lap_b_y){
     lap_b_x = 0.0;
     lap_b_y = 0.0;
   }
 
   /// See base class definition
-  virtual void grad_velocity(const work_t & x,
-    const work_t & y,
-    work_t & b_x_x,
-    work_t & b_x_y,
-    work_t & b_y_x,
-    work_t & b_y_y){
+  virtual void grad_velocity(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & b_x_x,
+    scalar_t & b_x_y,
+    scalar_t & b_y_x,
+    scalar_t & b_y_y){
     b_x_x = 0.0;
     b_x_y = 0.0;
     b_y_x = 0.0;
@@ -616,88 +616,88 @@ public:
   }
 
   /// See base class definition
-  virtual void lagrange(const work_t & x,
-    const work_t & y,
-    work_t & l_out){
+  virtual void lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_out){
     l_out = 0.0;
   }
 
   /// See base class definition
-  virtual void grad_lagrange(const work_t & x,
-    const work_t & y,
-    work_t & l_x,
-    work_t & l_y){
+  virtual void grad_lagrange(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & l_x,
+    scalar_t & l_y){
     l_x = 0.0;
     l_y = 0.0;
   }
 
   /// See base class definition
-  virtual void phi(const work_t & x,
-    const work_t & y,
-    work_t & phi){
+  virtual void phi(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & phi){
     assert(dim_x_!=0.0);
-    static work_t gamma = phi_coeff_*DICE_PI/dim_x_;
+    static scalar_t gamma = phi_coeff_*DICE_PI/dim_x_;
     phi = sin(gamma*x)*cos(gamma*y+DICE_PI/2.0);
   }
 
   /// See base class definition
-  virtual void phi_derivatives(const work_t & x,
-    const work_t & y,
-    work_t & dphi_dt,
-    work_t & grad_phi_x,
-    work_t & grad_phi_y) {
-    work_t b_x = 0.0;
-    work_t b_y = 0.0;
+  virtual void phi_derivatives(const scalar_t & x,
+    const scalar_t & y,
+    scalar_t & dphi_dt,
+    scalar_t & grad_phi_x,
+    scalar_t & grad_phi_y) {
+    scalar_t b_x = 0.0;
+    scalar_t b_y = 0.0;
     velocity(x,y,b_x,b_y);
-    work_t mod_x = x - b_x;
-    work_t mod_y = y - b_y;
-    work_t phi_0 = 0.0;
+    scalar_t mod_x = x - b_x;
+    scalar_t mod_y = y - b_y;
+    scalar_t phi_0 = 0.0;
     phi(x,y,phi_0);
-    work_t phi_cur = 0.0;
+    scalar_t phi_cur = 0.0;
     phi(mod_x,mod_y,phi_cur);
     dphi_dt = phi_cur - phi_0;
     assert(dim_x_!=0.0);
-    static work_t gamma = phi_coeff_*DICE_PI/dim_x_;
+    static scalar_t gamma = phi_coeff_*DICE_PI/dim_x_;
     grad_phi_x = gamma*cos(gamma*x)*cos(DICE_PI/2.0 + gamma*y);
     grad_phi_y = -gamma*sin(gamma*x)*sin(DICE_PI/2.0 + gamma*y);
   }
 
   /// See base class definition
-  virtual void force(const work_t & x,
-    const work_t & y,
-    const work_t & coeff_1,
+  virtual void force(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & coeff_1,
     std::set<Global_EQ_Term> * eq_terms,
-    work_t & f_x,
-    work_t & f_y){
+    scalar_t & f_x,
+    scalar_t & f_y){
 
     f_x = 0.0;
     f_y = 0.0;
-    work_t d_phi_dt = 0.0, grad_phi_x = 0.0, grad_phi_y = 0.0;
+    scalar_t d_phi_dt = 0.0, grad_phi_x = 0.0, grad_phi_y = 0.0;
     phi_derivatives(x,y,d_phi_dt,grad_phi_x,grad_phi_y);
     if(eq_terms->find(MMS_IMAGE_TIME_FORCE)!=eq_terms->end()){
       f_x += grad_phi_x*d_phi_dt;
       f_y += grad_phi_y*d_phi_dt;
     }
     if(eq_terms->find(MMS_IMAGE_GRAD_TENSOR)!=eq_terms->end()){
-      work_t b_x=0.0,b_y=0.0;
+      scalar_t b_x=0.0,b_y=0.0;
       velocity(x,y,b_x,b_y);
       f_x += (grad_phi_x*grad_phi_x*b_x + grad_phi_x*grad_phi_y*b_y);
       f_y += (grad_phi_y*grad_phi_x*b_x + grad_phi_y*grad_phi_y*b_y);
     }
     if(eq_terms->find(DIV_SYMMETRIC_STRAIN_REGULARIZATION)!=eq_terms->end()){
-      work_t lap_b_x=0.0,lap_b_y=0.0;
+      scalar_t lap_b_x=0.0,lap_b_y=0.0;
       velocity_laplacian(x,y,lap_b_x,lap_b_y);
       f_x -= coeff_1*lap_b_x;
       f_y -= coeff_1*lap_b_y;
     }
     if(eq_terms->find(TIKHONOV_REGULARIZATION)!=eq_terms->end()){
-      work_t b_x=0.0,b_y=0.0;
+      scalar_t b_x=0.0,b_y=0.0;
       velocity(x,y,b_x,b_y);
       f_x += coeff_1*b_x;
       f_y += coeff_1*b_y;
     }
     if(eq_terms->find(GRAD_LAGRANGE_MULTIPLIER)!=eq_terms->end()){
-      work_t dl_dx=0.0,dl_dy=0.0;
+      scalar_t dl_dx=0.0,dl_dy=0.0;
       grad_lagrange(x,y,dl_dx,dl_dy);
       f_x += dl_dx;
       f_y += dl_dy;
@@ -706,9 +706,9 @@ public:
 
 protected:
   /// coefficient for image intensity values
-  work_t displacement_;
+  scalar_t displacement_;
   /// coefficient for image intensity values
-  work_t phi_coeff_;
+  scalar_t phi_coeff_;
 };
 
 
@@ -766,12 +766,12 @@ private:
 DICE_LIB_DLL_EXPORT
 void div_symmetric_strain(const int_t spa_dim,
   const int_t num_funcs,
-  const work_t & coeff,
-  const work_t & J,
-  const work_t & gp_weight,
-  const work_t * inv_jac,
-  const work_t * DN,
-  work_t * elem_stiffness);
+  const scalar_t & coeff,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * inv_jac,
+  const scalar_t * DN,
+  scalar_t * elem_stiffness);
 
 /// adds the divergence free constraint stiffness terms
 /// \param spa_dim spatial dimension
@@ -787,14 +787,14 @@ void div_symmetric_strain(const int_t spa_dim,
 DICE_LIB_DLL_EXPORT
 void div_velocity(const int_t spa_dim,
   const int_t num_funcs,
-  const work_t & J,
-  const work_t & gp_weight,
-  const work_t * inv_jac,
-  const work_t * DN,
-  const work_t * N,
-  const work_t & alpha2,
-  const work_t & tau,
-  work_t * elem_div_stiffness);
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * inv_jac,
+  const scalar_t * DN,
+  const scalar_t * N,
+  const scalar_t & alpha2,
+  const scalar_t & tau,
+  scalar_t * elem_div_stiffness);
 
 /// adds the lagrange stabilization stiffness terms
 /// \param spa_dim spatial dimension
@@ -808,12 +808,12 @@ void div_velocity(const int_t spa_dim,
 DICE_LIB_DLL_EXPORT
 void stab_lagrange(const int_t spa_dim,
   const int_t num_funcs,
-  const work_t & J,
-  const work_t & gp_weight,
-  const work_t * inv_jac,
-  const work_t * DN,
-  const work_t & tau,
-  work_t * elem_stab_stiffness);
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * inv_jac,
+  const scalar_t * DN,
+  const scalar_t & tau,
+  scalar_t * elem_stab_stiffness);
 
 /// adds a tikhonov type regularizer to the governing eqs
 /// \param spa_dim spatial dimension
@@ -827,11 +827,11 @@ DICE_LIB_DLL_EXPORT
 void tikhonov_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
-  const work_t & J,
-  const work_t & gp_weight,
-  const work_t * N,
-  const work_t & tau,
-  work_t * elem_stiffness);
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  const scalar_t & tau,
+  scalar_t * elem_stiffness);
 
 /// adds a tikhonov type regularizer to the governing eqs
 /// \param spa_dim spatial dimension
@@ -844,10 +844,10 @@ DICE_LIB_DLL_EXPORT
 void lumped_tikhonov_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
-  const work_t & J,
-  const work_t & gp_weight,
-  const work_t * N,
-  work_t * elem_stiffness);
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_stiffness);
 
 
 /// adds the image gradients term to the stiffness matrx (from manufactured solutions problem)
@@ -864,12 +864,12 @@ DICE_LIB_DLL_EXPORT
 void mms_image_grad_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
-  const work_t & x,
-  const work_t & y,
-  const work_t & J,
-  const work_t & gp_weight,
-  const work_t * N,
-  work_t * elem_stiffness);
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_stiffness);
 
 /// adds the image gradients term to the stiffness matrx (from manufactured solutions problem)
 /// \param alg pointer to the Global_Algorithm
@@ -887,14 +887,14 @@ DICE_LIB_DLL_EXPORT
 void image_grad_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
-  const work_t & x,
-  const work_t & y,
-  const work_t & bx,
-  const work_t & by,
-  const work_t & J,
-  const work_t & gp_weight,
-  const work_t * N,
-  work_t * elem_stiffness);
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & bx,
+  const scalar_t & by,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_stiffness);
 
 /// adds the image gradients term to the force vector (from manufactured solutions problem)
 /// \param mms_problem pointer to the method of manufactured solutions problem
@@ -910,12 +910,12 @@ DICE_LIB_DLL_EXPORT
 void mms_image_time_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
-  const work_t & x,
-  const work_t & y,
-  const work_t & J,
-  const work_t & gp_weight,
-  const work_t * N,
-  work_t * elem_force);
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_force);
 
 /// adds the mms force vector (from manufactured solutions problem)
 /// \param mms_problem pointer to the method of manufactured solutions problem
@@ -932,14 +932,14 @@ DICE_LIB_DLL_EXPORT
 void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
-  const work_t & x,
-  const work_t & y,
-  const work_t & coeff,
-  const work_t & J,
-  const work_t & gp_weight,
-  const work_t * N,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & coeff,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
   std::set<Global_EQ_Term> * eq_terms,
-  work_t * elem_force);
+  scalar_t * elem_force);
 
 /// adds the dphi_dt force vector to the residual
 /// \param alg pointer to the calling Global_Algorithm
@@ -957,14 +957,14 @@ DICE_LIB_DLL_EXPORT
 void image_time_force(Global_Algorithm* alg,
   const int_t spa_dim,
   const int_t num_funcs,
-  const work_t & x,
-  const work_t & y,
-  const work_t & bx,
-  const work_t & by,
-  const work_t & J,
-  const work_t & gp_weight,
-  const work_t * N,
-  work_t * elem_force);
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & bx,
+  const scalar_t & by,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_force);
 
 /// adds the grad_phi tensor grad_phi force vector to the residual
 /// \param alg pointer to the calling Global_Algorithm
@@ -982,14 +982,14 @@ DICE_LIB_DLL_EXPORT
 void image_grad_force(Global_Algorithm* alg,
   const int_t spa_dim,
   const int_t num_funcs,
-  const work_t & x,
-  const work_t & y,
-  const work_t & bx,
-  const work_t & by,
-  const work_t & J,
-  const work_t & gp_weight,
-  const work_t * N,
-  work_t * elem_force);
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & bx,
+  const scalar_t & by,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_force);
 
 /// adds the tikhonov term to the residual
 /// \param alg pointer to the calling Global_Algorithm
@@ -1005,12 +1005,12 @@ DICE_LIB_DLL_EXPORT
 void tikhonov_force(Global_Algorithm* alg,
   const int_t spa_dim,
   const int_t num_funcs,
-  const work_t & bx,
-  const work_t & by,
-  const work_t & J,
-  const work_t & gp_weight,
-  const work_t * N,
-  work_t * elem_force);
+  const scalar_t & bx,
+  const scalar_t & by,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_force);
 
 /// computes the optical flow velocity about a point
 /// \param alg pointer to the global algorithm
@@ -1022,8 +1022,8 @@ DICE_LIB_DLL_EXPORT
 void optical_flow_velocity(Global_Algorithm * alg,
   const int_t & c_x, // closest pixel in x
   const int_t & c_y, // closest pixel in y
-  work_t & b_x,
-  work_t & b_y);
+  scalar_t & b_x,
+  scalar_t & b_y);
 
 /// computes subset velocity about a point
 /// \param alg pointer to the global algorithm
@@ -1037,91 +1037,91 @@ void subset_velocity(Global_Algorithm * alg,
   const int_t & c_x, // closest pixel in x
   const int_t & c_y, // closest pixel in y
   const int_t & subset_size,
-  work_t & b_x,
-  work_t & b_y);
+  scalar_t & b_x,
+  scalar_t & b_y);
 
 DICE_LIB_DLL_EXPORT
-work_t compute_tau_tri3(const Global_Formulation & formulation,
-  const work_t & alpha2,
-  const work_t * natural_coords,
-  const work_t & J,
-  work_t * inv_jac);
+scalar_t compute_tau_tri3(const Global_Formulation & formulation,
+  const scalar_t & alpha2,
+  const scalar_t * natural_coords,
+  const scalar_t & J,
+  scalar_t * inv_jac);
 
 DICE_LIB_DLL_EXPORT
-void calc_jacobian(const work_t * xcap,
-  const work_t * DN,
-  work_t * jacobian,
-  work_t * inv_jacobian,
-  work_t & J,
+void calc_jacobian(const scalar_t * xcap,
+  const scalar_t * DN,
+  scalar_t * jacobian,
+  scalar_t * inv_jacobian,
+  scalar_t & J,
   int_t num_elem_nodes,
   int_t dim );
 
 DICE_LIB_DLL_EXPORT
-void calc_B(const work_t * DN,
-  const work_t * inv_jacobian,
+void calc_B(const scalar_t * DN,
+  const scalar_t * inv_jacobian,
   const int_t num_elem_nodes,
   const int_t dim,
-  work_t * solid_B);
+  scalar_t * solid_B);
 
 DICE_LIB_DLL_EXPORT
-void calc_mms_force_elasticity(const work_t & x,
-  const work_t & y,
-  const work_t & alpha,
-  const work_t & L,
-  const work_t & m,
-  work_t & force_x,
-  work_t & force_y);
+void calc_mms_force_elasticity(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & alpha,
+  const scalar_t & L,
+  const scalar_t & m,
+  scalar_t & force_x,
+  scalar_t & force_y);
 
 DICE_LIB_DLL_EXPORT
-void calc_mms_vel_rich(const work_t & x,
-  const work_t & y,
-  const work_t & L,
-  const work_t & m,
-  work_t & b_x,
-  work_t & b_y);
+void calc_mms_vel_rich(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & L,
+  const scalar_t & m,
+  scalar_t & b_x,
+  scalar_t & b_y);
 
 DICE_LIB_DLL_EXPORT
-void calc_mms_lap_vel_rich(const work_t & x,
-  const work_t & y,
-  const work_t & L,
-  const work_t & m,
-  work_t & lap_b_x,
-  work_t & lap_b_y);
+void calc_mms_lap_vel_rich(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & L,
+  const scalar_t & m,
+  scalar_t & lap_b_x,
+  scalar_t & lap_b_y);
 
 DICE_LIB_DLL_EXPORT
-void calc_mms_phi_rich(const work_t & x,
-  const work_t & y,
-  const work_t & L,
-  const work_t & g,
-  work_t & phi);
+void calc_mms_phi_rich(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & L,
+  const scalar_t & g,
+  scalar_t & phi);
 
 DICE_LIB_DLL_EXPORT
-void calc_mms_phi_terms_rich(const work_t & x,
-  const work_t & y,
-  const work_t & m,
-  const work_t & L,
-  const work_t & g,
-  work_t & d_phi_dt,
-  work_t & grad_phi_x,
-  work_t & grad_phi_y);
+void calc_mms_phi_terms_rich(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & m,
+  const scalar_t & L,
+  const scalar_t & g,
+  scalar_t & d_phi_dt,
+  scalar_t & grad_phi_x,
+  scalar_t & grad_phi_y);
 
 DICE_LIB_DLL_EXPORT
-void calc_mms_bc_simple(const work_t & x,
-  const work_t & y,
-  work_t & b_x,
-  work_t & b_y);
+void calc_mms_bc_simple(const scalar_t & x,
+  const scalar_t & y,
+  scalar_t & b_x,
+  scalar_t & b_y);
 
 DICE_LIB_DLL_EXPORT
-void calc_mms_force_simple(const work_t & alpha,
-  work_t & force_x,
-  work_t & force_y);
+void calc_mms_force_simple(const scalar_t & alpha,
+  scalar_t & force_x,
+  scalar_t & force_y);
 
 DICE_LIB_DLL_EXPORT
-void calc_mms_bc_2(const work_t & x,
-  const work_t & y,
-  const work_t & L,
-  work_t & b_x,
-  work_t & b_y);
+void calc_mms_bc_2(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & L,
+  scalar_t & b_x,
+  scalar_t & b_y);
 
 }// end global namespace
 

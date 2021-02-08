@@ -132,7 +132,7 @@ Post_Processor::set_stereo_field_names(){
 
 
 void
-Post_Processor::initialize_neighborhood(const work_t & neighborhood_radius){
+Post_Processor::initialize_neighborhood(const scalar_t & neighborhood_radius){
   DEBUG_MSG("Post_Processor::initialize_neighborhood(): begin");
 
   // gather an all owned field here
@@ -158,7 +158,7 @@ Post_Processor::initialize_neighborhood(const work_t & neighborhood_radius){
 
   // create neighborhood lists using nanoflann:
   DEBUG_MSG("creating the point cloud using nanoflann");
-  point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<work_t>());
+  point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
   point_cloud_->pts.resize(overlap_num_points_);
   for(int_t i=0;i<overlap_num_points_;++i){
 //    point_cloud_->pts[i].x = coords->local_value(i*spa_dim+0);
@@ -176,12 +176,12 @@ Post_Processor::initialize_neighborhood(const work_t & neighborhood_radius){
   neighbor_dist_x_.resize(local_num_points_);
   neighbor_dist_y_.resize(local_num_points_);
 
-  work_t query_pt[2];
+  scalar_t query_pt[2];
   if(neighborhood_radius < 0){ // k-nearest search
     const int_t num_neigh = (int_t)(-1.0*neighborhood_radius);
     DEBUG_MSG("performing k-nearest neighbors search for " << num_neigh << " neighbors");
     std::vector<size_t> ret_index(num_neigh);
-    std::vector<work_t> out_dist_sqr(num_neigh);
+    std::vector<scalar_t> out_dist_sqr(num_neigh);
     for(int_t i=0;i<local_num_points_;++i){
       // get the gid of the point
       const int_t gid = mesh_->get_scalar_node_dist_map()->get_global_element(i);
@@ -200,11 +200,11 @@ Post_Processor::initialize_neighborhood(const work_t & neighborhood_radius){
       }
     }
   }else{ // radius search
-    std::vector<std::pair<size_t,work_t> > ret_matches;
+    std::vector<std::pair<size_t,scalar_t> > ret_matches;
     nanoflann::SearchParams params;
     params.sorted = true; // sort by distance in ascending order
-    const work_t tiny = 1.0E-5;
-    work_t neigh_rad_2 = neighborhood_radius*neighborhood_radius + tiny;
+    const scalar_t tiny = 1.0E-5;
+    scalar_t neigh_rad_2 = neighborhood_radius*neighborhood_radius + tiny;
     DEBUG_MSG("performing radius neighbor search with rad^2 " << neigh_rad_2);
 
     for(int_t i=0;i<local_num_points_;++i){
@@ -266,7 +266,7 @@ Plotly_Contour_Post_Processor::execute(){
 
   // create neighborhood lists using nanoflann:
   DEBUG_MSG("creating the point cloud using nanoflann");
-  point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<work_t>());
+  point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
   point_cloud_->pts.resize(num_valid_pts);
   int_t current_pt = 0;
   int_t grid_x_begin = std::numeric_limits<int>::max();
@@ -324,16 +324,16 @@ Plotly_Contour_Post_Processor::execute(){
   double *WORK = new double[LWORK];
   double *GWORK = new double[10*N];
   int *IWORK = new int[LWORK];
-  // Note, LAPACK does not allow templating on long int or work_t...must use int and double
+  // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
   Teuchos::LAPACK<int,double> lapack;
-  std::vector<std::pair<size_t,work_t> > ret_matches;
+  std::vector<std::pair<size_t,scalar_t> > ret_matches;
   nanoflann::SearchParams params;
   params.sorted = true; // sort by distance in ascending order
   const double neigh_rad_sq = (grid_step_*2)*(grid_step_*2);
-  work_t query_pt[2];
+  scalar_t query_pt[2];
 
   // initialize value storage vector of vectors
-  std::vector<std::vector<work_t> > values(field_specs.size(),std::vector<work_t>(total_grid_pts,0.0));
+  std::vector<std::vector<scalar_t> > values(field_specs.size(),std::vector<scalar_t>(total_grid_pts,0.0));
   int_t current_grid_pt = 0;
   for(int_t gx = grid_x_begin; gx<=grid_x_end; gx+=grid_step_){
     for(int_t gy = grid_y_begin; gy<=grid_y_end; gy+=grid_step_){
@@ -558,7 +558,7 @@ VSG_Strain_Post_Processor::pre_execution_tasks(){
   DEBUG_MSG("VSG_Strain_Post_Processor pre_execution_tasks() begin");
   set_stereo_field_names();
   // negative window size is used to designate k-nearest neighbor searching so don't divide by 2 in that case
-  const work_t neigh_rad = window_size_<0?(work_t)window_size_:(work_t)window_size_/2.0;
+  const scalar_t neigh_rad = window_size_<0?(scalar_t)window_size_:(scalar_t)window_size_/2.0;
   initialize_neighborhood(neigh_rad);
   TEUCHOS_TEST_FOR_EXCEPTION(!neighborhood_initialized_,std::runtime_error,"Error, neighborhoods should be initialized here.");
   DICe::field_enums::Field_Spec disp_x_spec = mesh_->get_field_spec(disp_x_name_);
@@ -618,7 +618,7 @@ VSG_Strain_Post_Processor::execute(){
   double *WORK = new double[LWORK];
   double *GWORK = new double[10*N];
   int *IWORK = new int[LWORK];
-  // Note, LAPACK does not allow templating on long int or work_t...must use int and double
+  // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
   Teuchos::LAPACK<int,double> lapack;
 
   int_t num_neigh = 0;
@@ -765,9 +765,9 @@ VSG_Strain_Post_Processor::execute(){
         " dvdx " << dvdx << " dvdy " << dvdy);
 
       // compute the Green-Lagrange strain based on the derivatives computed above:
-      const work_t GL_xx = 0.5*(2.0*dudx + dudx*dudx + dvdx*dvdx);
-      const work_t GL_yy = 0.5*(2.0*dvdy + dudy*dudy + dvdy*dvdy);
-      const work_t GL_xy = 0.5*(dudy + dvdx + dudx*dudy + dvdx*dvdy);
+      const scalar_t GL_xx = 0.5*(2.0*dudx + dudx*dudx + dvdx*dvdx);
+      const scalar_t GL_yy = 0.5*(2.0*dvdy + dudy*dudy + dvdy*dvdy);
+      const scalar_t GL_xy = 0.5*(dudy + dvdx + dudx*dudy + dvdx*dvdy);
       vsg_strain_xx_rcp->local_value(subset) = GL_xx;
       vsg_strain_yy_rcp->local_value(subset) = GL_yy;
       vsg_strain_xy_rcp->local_value(subset) = GL_xy;
@@ -820,7 +820,7 @@ NLVC_Strain_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList
 void
 NLVC_Strain_Post_Processor::pre_execution_tasks(){
   DEBUG_MSG("NLVC_Strain_Post_Processor pre_execution_tasks() begin");
-  const work_t neigh_rad = (work_t)horizon_/2.0;
+  const scalar_t neigh_rad = (scalar_t)horizon_/2.0;
   initialize_neighborhood(neigh_rad);
   TEUCHOS_TEST_FOR_EXCEPTION(!neighborhood_initialized_,std::runtime_error,"Error, neighborhoods should be initialized here.");
   DEBUG_MSG("NLVC_Strain_Post_Processor pre_execution_tasks() end");
@@ -840,13 +840,13 @@ NLVC_Strain_Post_Processor::pre_execution_tasks(){
 }
 
 void
-NLVC_Strain_Post_Processor::compute_kernel(const work_t & dx,
-  const work_t & dy,
-  work_t & kx,
-  work_t & ky){
-  static work_t h = (work_t)horizon_*0.5;
-  static work_t s = h / 3.0;
-  const work_t r = std::sqrt(dx*dx+dy*dy);
+NLVC_Strain_Post_Processor::compute_kernel(const scalar_t & dx,
+  const scalar_t & dy,
+  scalar_t & kx,
+  scalar_t & ky){
+  static scalar_t h = (scalar_t)horizon_*0.5;
+  static scalar_t s = h / 3.0;
+  const scalar_t r = std::sqrt(dx*dx+dy*dy);
   kx = s==0.0?0.0:1.0/(2*DICE_PI*s*s)*(-2*dx/(2*s*s))*exp(-(r*r/(2*s*s)));
   ky = s==0.0?0.0:1.0/(2*DICE_PI*s*s)*(-2*dy/(2*s*s))*exp(-(r*r/(2*s*s)));
 }
@@ -892,18 +892,18 @@ NLVC_Strain_Post_Processor::execute(){
   std::vector<bool> neigh_valid;
   for(int_t subset=0;subset<local_num_points_;++subset){
     DEBUG_MSG("Processing subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << ", " << subset + 1 << " of " << local_num_points_);
-    work_t dudx = 0.0;
-    work_t dudy = 0.0;
-    work_t dvdx = 0.0;
-    work_t dvdy = 0.0;
-    work_t ux = 0.0;
-    work_t uy = 0.0;
-    work_t dx = 0.0;
-    work_t dy = 0.0;
-    work_t sum_int_x = 0.0;
-    work_t sum_int_y = 0.0;
-    work_t kx = 0.0;
-    work_t ky = 0.0;
+    scalar_t dudx = 0.0;
+    scalar_t dudy = 0.0;
+    scalar_t dvdx = 0.0;
+    scalar_t dvdy = 0.0;
+    scalar_t ux = 0.0;
+    scalar_t uy = 0.0;
+    scalar_t dx = 0.0;
+    scalar_t dy = 0.0;
+    scalar_t sum_int_x = 0.0;
+    scalar_t sum_int_y = 0.0;
+    scalar_t kx = 0.0;
+    scalar_t ky = 0.0;
     int_t neigh_id = 0;
     const int_t num_neigh = neighbor_dist_x_[subset].size();
     neigh_valid.resize(num_neigh);
@@ -932,9 +932,9 @@ NLVC_Strain_Post_Processor::execute(){
       assert(neighbor_dist_x_[subset].size()>1);
       assert(neighbor_dist_y_[subset].size()>1);
       // neighbor 0 is yourself
-      const work_t nearest_neigh_dist = std::sqrt(neighbor_dist_x_[subset][1]*neighbor_dist_x_[subset][1] +
+      const scalar_t nearest_neigh_dist = std::sqrt(neighbor_dist_x_[subset][1]*neighbor_dist_x_[subset][1] +
         neighbor_dist_y_[subset][1]*neighbor_dist_y_[subset][1]);
-      const work_t patch_area = nearest_neigh_dist*nearest_neigh_dist;
+      const scalar_t patch_area = nearest_neigh_dist*nearest_neigh_dist;
       for(int_t j=0;j<num_neigh;++j){
         if(!neigh_valid[j]) continue;
         neigh_id = neighbor_list_[subset][j];
@@ -964,9 +964,9 @@ NLVC_Strain_Post_Processor::execute(){
         " sum_int_y " << sum_int_y);
 
       // compute the Green-Lagrange strain based on the derivatives computed above:
-      const work_t GL_xx = 0.5*(2.0*dudx + dudx*dudx + dvdx*dvdx);
-      const work_t GL_yy = 0.5*(2.0*dvdy + dudy*dudy + dvdy*dvdy);
-      const work_t GL_xy = 0.5*(dudy + dvdx + dudx*dudy + dvdx*dvdy);
+      const scalar_t GL_xx = 0.5*(2.0*dudx + dudx*dudx + dvdx*dvdx);
+      const scalar_t GL_yy = 0.5*(2.0*dvdy + dudy*dudy + dvdy*dvdy);
+      const scalar_t GL_xy = 0.5*(dudy + dvdx + dudx*dudy + dvdx*dvdy);
       nlvc_strain_xx_rcp->local_value(subset) = GL_xx;
       nlvc_strain_yy_rcp->local_value(subset) = GL_yy;
       nlvc_strain_xy_rcp->local_value(subset) = GL_xy;
@@ -1005,16 +1005,16 @@ Altitude_Post_Processor::execute(){
 //    if(elev_file.good()){
 //      // parse the file to read in the elevations
 //      DEBUG_MSG("Altitude_Post_Processor::execute(): found elevations file: elevation_data.txt");
-//      std::vector<work_t> xs;
-//      std::vector<work_t> ys;
-//      std::vector<work_t> elevs;
+//      std::vector<scalar_t> xs;
+//      std::vector<scalar_t> ys;
+//      std::vector<scalar_t> elevs;
 //      int_t line = 0;
 //      while(!elev_file.eof()){
 //        std::vector<std::string> tokens = tokenize_line(elev_file);
 //        if(tokens.size()==0) continue;
 //        TEUCHOS_TEST_FOR_EXCEPTION(tokens.size()!=5,std::runtime_error,"Error, invalid number of tokens for line " << line <<
 //          " of file elevation_data.txt. Has " << tokens.size() << " tokens, but should have 5");
-//        work_t elev = strtod(tokens[2].c_str(),NULL);
+//        scalar_t elev = strtod(tokens[2].c_str(),NULL);
 //        if(elev < 0.0) elev = 0.0; // prevent negative ground heights
 //        elevs.push_back(elev + radius_of_earth_);
 //        xs.push_back(strtod(tokens[3].c_str(),NULL));
@@ -1026,7 +1026,7 @@ Altitude_Post_Processor::execute(){
 //      // create a point cloud
 //      TEUCHOS_TEST_FOR_EXCEPTION(neighborhood_initialized_,std::runtime_error,"");
 //      DEBUG_MSG("creating the point cloud using nanoflann");
-//      point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<work_t>());
+//      point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
 //      point_cloud_->pts.resize(num_elev_pts);
 //      for(int_t i=0;i<num_elev_pts;++i){
 //        point_cloud_->pts[i].x = xs[i];
@@ -1041,9 +1041,9 @@ Altitude_Post_Processor::execute(){
 //      Teuchos::RCP<MultiField> subset_coords_x = mesh_->get_field(DICe::field_enums::SUBSET_COORDINATES_X_FS);
 //      Teuchos::RCP<MultiField> subset_coords_y = mesh_->get_field(DICe::field_enums::SUBSET_COORDINATES_Y_FS);
 //      const int_t num_neigh = 5;
-//      work_t query_pt[2];
+//      scalar_t query_pt[2];
 //      std::vector<size_t> ret_index(num_neigh);
-//      std::vector<work_t> out_dist_sqr(num_neigh);
+//      std::vector<scalar_t> out_dist_sqr(num_neigh);
 //
 //      const int_t N = 3;
 //      int *IPIV = new int[N+1];
@@ -1052,7 +1052,7 @@ Altitude_Post_Processor::execute(){
 //      double *WORK = new double[LWORK];
 //      double *GWORK = new double[10*N];
 //      int *IWORK = new int[LWORK];
-//      // Note, LAPACK does not allow templating on long int or work_t...must use int and double
+//      // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
 //      Teuchos::LAPACK<int,double> lapack;
 //
 //      for(int_t subset=0;subset<local_num_points_;++subset){
@@ -1126,12 +1126,12 @@ Altitude_Post_Processor::execute(){
   for(int_t subset=0;subset<local_num_points_;++subset){
     DEBUG_MSG("Processing altitude subset gid " << mesh_->get_scalar_node_dist_map()->get_global_element(subset) << ", " << subset + 1 << " of " << local_num_points_);
     // at this point, X Y and Z are in terms of camera 0, convert back to center of the earth coords
-    work_t Xe = Xe_rcp->local_value(subset);
-    work_t Ye = Ye_rcp->local_value(subset);
-    work_t Ze = Ze_rcp->local_value(subset);
-    work_t X = X_rcp->local_value(subset);
-    work_t Y = Y_rcp->local_value(subset);
-    work_t Z = Z_rcp->local_value(subset);
+    scalar_t Xe = Xe_rcp->local_value(subset);
+    scalar_t Ye = Ye_rcp->local_value(subset);
+    scalar_t Ze = Ze_rcp->local_value(subset);
+    scalar_t X = X_rcp->local_value(subset);
+    scalar_t Y = Y_rcp->local_value(subset);
+    scalar_t Z = Z_rcp->local_value(subset);
     // convert X Y Z to raius
     altitude_rcp->local_value(subset) = std::sqrt(X*X + Y*Y + Z*Z);
     //altitude_above_ground_rcp->local_value(subset) = altitude_rcp->local_value(subset) - ground_level_rcp->local_value(subset);
@@ -1165,17 +1165,17 @@ Uncertainty_Post_Processor::execute(){
   Teuchos::RCP<DICe::MultiField> max_m_rcp = mesh_->get_field(DICe::field_enums::STEREO_M_MAX_FS);
   TEUCHOS_TEST_FOR_EXCEPTION(uncertainty_rcp==Teuchos::null || uncertainty_angle_rcp==Teuchos::null, std::runtime_error,"");
   for(int_t subset=0;subset<local_num_points_;++subset){
-    const work_t angle = field1_rcp->local_value(subset);
-    const work_t sig = sigma_rcp->local_value(subset);
+    const scalar_t angle = field1_rcp->local_value(subset);
+    const scalar_t sig = sigma_rcp->local_value(subset);
     uncertainty_angle_rcp->local_value(subset) = field1_rcp->local_value(subset);
     if(sig < 0.0){ // filter failed subsets
       uncertainty_rcp->local_value(subset) = 0.0;
       continue;
     }
     // relying on the max-m field to be zero for 2D and have a non-zero value for stereo
-    work_t max_m  = max_m_rcp->local_value(subset);
+    scalar_t max_m  = max_m_rcp->local_value(subset);
     if(max_m > 0.0){
-      work_t noise_level = noise_rcp->local_value(subset);
+      scalar_t noise_level = noise_rcp->local_value(subset);
       uncertainty_rcp->local_value(subset) = max_m==0.0?0.0:std::sqrt(2.0*noise_level*noise_level/max_m);
     }
     else{
@@ -1258,30 +1258,30 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
       if(is_number(tokens[0]) && is_number(tokens[1]) && is_number(tokens[2]) && is_number(tokens[3])){
         TEUCHOS_TEST_FOR_EXCEPTION(line_defined,std::runtime_error,"Error, only one line can be defined");
         line_defined = true;
-        work_t ax = strtod(tokens[0].c_str(),NULL);
-        work_t ay = strtod(tokens[1].c_str(),NULL);
-        work_t bx = strtod(tokens[2].c_str(),NULL);
-        work_t by = strtod(tokens[3].c_str(),NULL);
+        scalar_t ax = strtod(tokens[0].c_str(),NULL);
+        scalar_t ay = strtod(tokens[1].c_str(),NULL);
+        scalar_t bx = strtod(tokens[2].c_str(),NULL);
+        scalar_t by = strtod(tokens[3].c_str(),NULL);
         DEBUG_MSG("Live_Plot_Post_Processor::pre_execution_tasks(): adding line from " << ax << ","<< ay << " to " << bx << "," << by);
         // add the origin of the line
         pts_x_.push_back(ax);
         pts_y_.push_back(ay);
         //DEBUG_MSG("Live_Plot_Post_Processor::pre_execution_tasks(): adding line point " << pts_x_[pts_x_.size()-1] << " " << pts_y_[pts_y_.size()-1]);
         // unit vector
-        work_t dx = bx - ax;
-        work_t dy = by - ay;
-        work_t mag = std::sqrt(dx*dx+dy*dy);
+        scalar_t dx = bx - ax;
+        scalar_t dy = by - ay;
+        scalar_t mag = std::sqrt(dx*dx+dy*dy);
         TEUCHOS_TEST_FOR_EXCEPTION(mag==0,std::runtime_error,"");
-        work_t nx = mag==0.0?0.0:dx/mag;
-        work_t ny = mag==0.0?0.0:dy/mag;
-        work_t arc_length = 2.0; // pixels
-        work_t px = ax;
-        work_t py = ay;
+        scalar_t nx = mag==0.0?0.0:dx/mag;
+        scalar_t ny = mag==0.0?0.0:dy/mag;
+        scalar_t arc_length = 2.0; // pixels
+        scalar_t px = ax;
+        scalar_t py = ay;
         int_t s = 1;
         while(true){
           px += arc_length*nx;
           py += arc_length*ny;
-          work_t len = ((px-ax)*(px-ax) + (py-ay)*(py-ay));
+          scalar_t len = ((px-ax)*(px-ax) + (py-ay)*(py-ay));
           if(len >= mag*mag) break;
           pts_x_.push_back(px);
           pts_y_.push_back(py);
@@ -1295,7 +1295,7 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
   livePlotDataFile.close();
 
   const int_t num_pts = pts_x_.size();
-  std::vector<work_t> closest_distances_this_proc(num_pts,0.0);
+  std::vector<scalar_t> closest_distances_this_proc(num_pts,0.0);
 
   DEBUG_MSG("Live_Plot_Post_Processor::pre_execution_tasks(): coord x field " << coords_x_name_ << " y " << coords_y_name_);
   // do a nearest neighbor search to see which processor this point is on:
@@ -1333,7 +1333,7 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
 
   // create neighborhood lists using nanoflann:
   DEBUG_MSG("creating the point cloud of local points using nanoflann");
-  Teuchos::RCP<Point_Cloud_2D<work_t> > local_point_cloud = Teuchos::rcp(new Point_Cloud_2D<work_t>());
+  Teuchos::RCP<Point_Cloud_2D<scalar_t> > local_point_cloud = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
   local_point_cloud->pts.resize(local_num_points_);
   for(int_t i=0;i<local_num_points_;++i){
     local_point_cloud->pts[i].x = coords->local_value(i*spa_dim+0);
@@ -1343,11 +1343,11 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
   Teuchos::RCP<kd_tree_2d_t> local_kd_tree = Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *local_point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
   local_kd_tree->buildIndex();
   DEBUG_MSG("local kd-tree completed");
-  work_t query_pt[2];
+  scalar_t query_pt[2];
   const int_t nearest_num_neigh = 1;
   DEBUG_MSG("performing k-nearest neighbors search for to see which procesors own each live point");
   std::vector<size_t> local_ret_index(nearest_num_neigh);
-  std::vector<work_t> local_out_dist_sqr(nearest_num_neigh);
+  std::vector<scalar_t> local_out_dist_sqr(nearest_num_neigh);
   for(int_t i=0;i<num_pts;++i){
     query_pt[0] = pts_x_[i];
     query_pt[1] = pts_y_[i];
@@ -1389,7 +1389,7 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
     std::vector<int_t> owners(num_pts,0);
     for(int_t i=0;i<num_pts;++i){
       int_t owning_proc = 0;
-      work_t min_dist = std::numeric_limits<work_t>::max();
+      scalar_t min_dist = std::numeric_limits<scalar_t>::max();
       for(int_t proc=0;proc<num_procs;++proc){
         if(all_zero_data->local_value(proc*num_pts+i)<=min_dist){
           min_dist = all_zero_data->local_value(proc*num_pts+i);
@@ -1450,7 +1450,7 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
 
   // create neighborhood lists using nanoflann:
   DEBUG_MSG("creating the point cloud of overlap points using nanoflann");
-  Teuchos::RCP<Point_Cloud_2D<work_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<work_t>());
+  Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
   point_cloud->pts.resize(overlap_num_points_);
   for(int_t i=0;i<overlap_num_points_;++i){
     point_cloud->pts[i].x = overlap_coords->local_value(i*spa_dim+0);
@@ -1462,7 +1462,7 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
   DEBUG_MSG("kd-tree completed");
   DEBUG_MSG("performing k-nearest neighbors search");
   std::vector<size_t> ret_index(num_neigh_);
-  std::vector<work_t> out_dist_sqr(num_neigh_);
+  std::vector<scalar_t> out_dist_sqr(num_neigh_);
   for(size_t i=0;i<local_indices_.size();++i){
     query_pt[0] = pts_x_[local_indices_[i]];
     query_pt[1] = pts_y_[local_indices_[i]];
@@ -1524,7 +1524,7 @@ Live_Plot_Post_Processor::execute(){
   int LWORK = N*N;
   int INFO = 0;
   double *WORK = new double[LWORK];
-  // Note, LAPACK does not allow templating on long int or work_t...must use int and double
+  // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
   Teuchos::LAPACK<int,double> lapack;
 
   assert(neighbor_list_.size()==local_indices_.size());
@@ -1665,8 +1665,8 @@ Live_Plot_Post_Processor::execute(){
       }
     }
     fprintf(filePtr,"\n");
-    const work_t px0 = pts_x_[num_individual_pts_];
-    const work_t py0 = pts_y_[num_individual_pts_];
+    const scalar_t px0 = pts_x_[num_individual_pts_];
+    const scalar_t py0 = pts_y_[num_individual_pts_];
     for(size_t pt=num_individual_pts_;pt<pts_x_.size();++pt){
       fprintf(filePtr,"%f,",std::sqrt((pts_x_[pt]-px0)*(pts_x_[pt]-px0)+(pts_y_[pt]-py0)*(pts_y_[pt]-py0)));
       fprintf(filePtr,"%f,%f,",pts_x_[pt],pts_y_[pt]);

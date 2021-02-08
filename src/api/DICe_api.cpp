@@ -48,7 +48,7 @@
 extern "C" {
 #endif
 
-DICE_LIB_DLL_EXPORT const int_t dice_correlate(work_t points[], int_t n_points,
+DICE_LIB_DLL_EXPORT const int_t dice_correlate(scalar_t points[], int_t n_points,
                         int_t subset_size,
                         storage_t ref_img[], int_t ref_w, int_t ref_h,
                         storage_t def_img[], int_t def_w, int_t def_h,
@@ -101,8 +101,8 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate(work_t points[], int_t n_points,
     // initialize the schema
     // since the input data array is of a different size and in a different
     // order, we have to manually plug the values in
-    Teuchos::ArrayRCP<work_t> coords_x(n_points,0.0);
-    Teuchos::ArrayRCP<work_t> coords_y(n_points,0.0);
+    Teuchos::ArrayRCP<scalar_t> coords_x(n_points,0.0);
+    Teuchos::ArrayRCP<scalar_t> coords_y(n_points,0.0);
     for(int_t i=0;i<n_points;++i){
       coords_x[i] = points[i*DICE_API_STRIDE + 0];
       coords_y[i] = points[i*DICE_API_STRIDE + 1];
@@ -152,7 +152,7 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate(work_t points[], int_t n_points,
   return 0;
 }
 
-DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(work_t points[],
+DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(scalar_t points[],
                         storage_t ref_img[], int_t ref_w, int_t ref_h,
                         storage_t def_img[], int_t def_w, int_t def_h,
                         const char* subset_file, const char* param_file,
@@ -212,7 +212,7 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(work_t points[],
     // get the conformal subset defs, blocking subset ids, and coordinates
     // TODO enable seed and sweep in dice_correlate_conformal
     Teuchos::RCP<DICe::Subset_File_Info> subset_info = DICe::read_subset_file(subset_file,ref_w,ref_h);
-    Teuchos::RCP<std::vector<work_t> > subset_centroids = subset_info->coordinates_vector;
+    Teuchos::RCP<std::vector<scalar_t> > subset_centroids = subset_info->coordinates_vector;
     conformal_area_defs = subset_info->conformal_area_defs;
     blocking_subset_ids = subset_info->id_sets_map;
     n_points = subset_info->coordinates_vector->size()/dim; // divide by three because the striding is x, y, neighbor_id
@@ -229,8 +229,8 @@ DICE_LIB_DLL_EXPORT const int_t dice_correlate_conformal(work_t points[],
     // since the input data array is of a different size and in a different
     // order, we have to manually plug the values in
     // Passing -1 as subset size to require that all subsets are defined in the input file
-    Teuchos::ArrayRCP<work_t> coords_x(n_points,0.0);
-    Teuchos::ArrayRCP<work_t> coords_y(n_points,0.0);
+    Teuchos::ArrayRCP<scalar_t> coords_x(n_points,0.0);
+    Teuchos::ArrayRCP<scalar_t> coords_y(n_points,0.0);
     for(int_t i=0;i<n_points;++i){
       coords_x[i] = points[i*DICE_API_STRIDE + 0];
       coords_y[i] = points[i*DICE_API_STRIDE + 1];

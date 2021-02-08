@@ -59,12 +59,12 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
-  work_t max_intens = 260.0;
-  work_t min_intens = -5.0;
+  scalar_t max_intens = 260.0;
+  scalar_t min_intens = -5.0;
 #if DICE_USE_DOUBLE
-  work_t errorTol = 1.0E-3;
+  scalar_t errorTol = 1.0E-3;
 #else
-  work_t errorTol = 200.0; //TODO the images saved need FLOAT versions for comparison when DICE_USE_DOUBLE is off, for now using huge tol to essentially skip this test
+  scalar_t errorTol = 200.0; //TODO the images saved need FLOAT versions for comparison when DICE_USE_DOUBLE is off, for now using huge tol to essentially skip this test
 #endif
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
@@ -93,28 +93,28 @@ int main(int argc, char *argv[]) {
   // create a quadratic shape function
   Teuchos::RCP<Local_Shape_Function> shape_func = Teuchos::rcp(new Quadratic_Shape_Function());
   subset->initialize(image,DEF_INTENSITIES,shape_func);
-  work_t no_map_diff = subset->diff_ref_def();
+  scalar_t no_map_diff = subset->diff_ref_def();
   *outStream << "no map diff: " << no_map_diff << std::endl;
   if(no_map_diff > errorTol){
     *outStream << "Error, no mapping subset incorrect" << std::endl;
     errorFlag++;
   }
 
-  const work_t u = 63.0;
-  const work_t v = -63.0;
+  const scalar_t u = 63.0;
+  const scalar_t v = -63.0;
   shape_func->insert_motion(u,v);
   subset->initialize(image,DEF_INTENSITIES,shape_func);
   subset->update_centroid(130,130);
   Teuchos::RCP<Image> quad_trans_img = Teuchos::rcp(new Image("./images/quadTestSubsetTranslate.tif"));
   subset->initialize(quad_trans_img);
-  work_t trans_diff = subset->diff_ref_def();
+  scalar_t trans_diff = subset->diff_ref_def();
   *outStream << "translate diff: " << trans_diff << std::endl;
   if(trans_diff > errorTol){
     *outStream << "Error, translation incorrect" << std::endl;
     errorFlag++;
   }
 
-  work_t rot = 0.785398;
+  scalar_t rot = 0.785398;
   subset->update_centroid(249,204);
   shape_func->insert_motion(0.0,0.0,rot);
   subset->initialize(image,DEF_INTENSITIES,shape_func,BILINEAR);
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
   subset->update_centroid(130,130);
   Teuchos::RCP<Image> quad_rot_img = Teuchos::rcp(new Image("./images/quadTestSubsetRot.tif"));
   subset->initialize(quad_rot_img);
-  work_t rot_diff = subset->diff_ref_def();
+  scalar_t rot_diff = subset->diff_ref_def();
   *outStream << "rotation diff: " << rot_diff << std::endl;
   if(rot_diff > errorTol){
     *outStream << "Error, rotation incorrect" << std::endl;
@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
 
   // test the map to u,v,theta
   shape_func->insert_motion(u,v,rot);
-  work_t out_u=0.0,out_v=0.0,out_t=0.0;
+  scalar_t out_u=0.0,out_v=0.0,out_t=0.0;
   shape_func->map_to_u_v_theta(cx,cy,out_u,out_v,out_t);
   if(std::abs(out_u - u)>errorTol || std::abs(out_v - v)>errorTol || std::abs(out_t - rot)>errorTol){
     *outStream << "Error, map_to_u_v_theta failed" << std::endl;

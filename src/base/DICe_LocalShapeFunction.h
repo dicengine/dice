@@ -78,7 +78,7 @@ public:
   }
 
   /// access to the parameter values
-  std::vector<work_t> * parameters(){
+  std::vector<scalar_t> * parameters(){
     return &parameters_;
   }
 
@@ -120,32 +120,32 @@ public:
   /// \param cy input centroid coordinate (dummy variable for some shape functions)
   /// \param out_x mapped x coordinate
   /// \param out_y mapped y coordinate
-  virtual void map(const work_t & x,
-    const work_t & y,
-    const work_t & cx,
-    const work_t & cy,
-    work_t & out_x,
-    work_t & out_y)=0;
+  virtual void map(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & out_x,
+    scalar_t & out_y)=0;
 
   /// add the specified translation to the shape function parameter values
   /// \param u displacement in x
   /// \param v displacement in y
-  virtual void add_translation(const work_t & u,
-    const work_t & v)=0;
+  virtual void add_translation(const scalar_t & u,
+    const scalar_t & v)=0;
 
   /// replace the paramaters associated with u,v, and theta
   /// \param u input displacement in x
   /// \param v input displacement in y
   /// \param theta input rotation
-  virtual void insert_motion(const work_t & u,
-    const work_t & v,
-    const work_t & theta)=0;
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v,
+    const scalar_t & theta)=0;
 
   /// replace the paramaters associated with u and v
   /// \param u input displacement in x
   /// \param v input displacement in y
-  virtual void insert_motion(const work_t & u,
-    const work_t & v)=0;
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v)=0;
 
   /// clear the parameters
   virtual void clear();
@@ -156,28 +156,28 @@ public:
   /// \param out_u returns the displacement x value
   /// \param out_v returns the displacement y value
   /// \param out_theta returns the rotation
-  virtual void map_to_u_v_theta(const work_t & cx,
-    const work_t & cy,
-    work_t & out_u,
-    work_t & out_v,
-    work_t & out_theta)=0;
+  virtual void map_to_u_v_theta(const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & out_u,
+    scalar_t & out_v,
+    scalar_t & out_theta)=0;
 
   /// converts the mapping from referencing one centroid to another
   /// \param delta_x change in centroid x location
   /// \param delta_y change in centroid y location
-  virtual void update_params_for_centroid_change(const work_t & delta_x,
-    const work_t & delta_y)=0;
+  virtual void update_params_for_centroid_change(const scalar_t & delta_x,
+    const scalar_t & delta_y)=0;
 
   /// returns a reference to the given field spec location in the parameter vector
   /// \param spec the field spec
-  work_t & operator()(const DICe::field_enums::Field_Spec & spec){
+  scalar_t & operator()(const DICe::field_enums::Field_Spec & spec){
     assert(spec_map_.find(spec)!=spec_map_.end());
     return parameters_[spec_map_.find(spec)->second];
   }
 
   /// returns a reference to the given field spec location in the parameter vector
   /// \param index index of the vector entry
-  work_t & operator()(const size_t index){
+  scalar_t & operator()(const size_t index){
     assert(index<parameters_.size());
     return parameters_[index];
   }
@@ -185,7 +185,7 @@ public:
   /// returns the value the given field spec location in the parameter vector if it exists
   /// or zero if it does not
   /// \param spec the field spec
-  work_t parameter(const DICe::field_enums::Field_Spec & spec)const{
+  scalar_t parameter(const DICe::field_enums::Field_Spec & spec)const{
     if(spec_map_.find(spec)==spec_map_.end()){
       return 0.0;
     }
@@ -202,32 +202,32 @@ public:
   /// \param gy y image gradient
   /// \param residuals [out] the vector to store the residuals in
   /// \param use_ref_grads true if the gradients should be used from the reference image (so they need to be adjusted for the current def map)
-  virtual void residuals(const work_t & x,
-    const work_t & y,
-    const work_t & cx,
-    const work_t & cy,
-    const work_t & gx,
-    const work_t & gy,
-    std::vector<work_t> & residuals,
+  virtual void residuals(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    const scalar_t & gx,
+    const scalar_t & gy,
+    std::vector<scalar_t> & residuals,
     const bool use_ref_grads=false)=0;
 
   /// update the parameter values based on an input vector
   /// \param update reference to the update vector
-  void update(const std::vector<work_t> & update);
+  void update(const std::vector<scalar_t> & update);
 
   /// returns true if the solution is converged
   /// \param old_parameters vector of the previous guess for the parameters
   /// \param tol the solution tolerance
-  virtual bool test_for_convergence(const std::vector<work_t> & old_parameters,
-    const work_t & tol);
+  virtual bool test_for_convergence(const std::vector<scalar_t> & old_parameters,
+    const scalar_t & tol);
 
   // TODO remove this (provided now for convenience)
-  Teuchos::RCP<std::vector<work_t> > rcp(){
+  Teuchos::RCP<std::vector<scalar_t> > rcp(){
     return Teuchos::rcp(&parameters_,false);
   }
 
   /// returns a pointer to the vector of delta values for this shape function
-  Teuchos::RCP<std::vector<work_t> > deltas(){
+  Teuchos::RCP<std::vector<scalar_t> > deltas(){
     return Teuchos::rcp(&deltas_,false);
   }
 
@@ -238,9 +238,9 @@ public:
 
 protected:
   /// a vector that holds the parameters of the shape function
-  std::vector<work_t> parameters_;
+  std::vector<scalar_t> parameters_;
   /// a vector that holds the deltas to use for a simplex method
-  std::vector<work_t> deltas_;
+  std::vector<scalar_t> deltas_;
   /// the total number of degrees of freedom
   int_t num_params_;
   /// stores the associated field with each DOF and the corresponding parameter index
@@ -267,8 +267,8 @@ public:
   Affine_Shape_Function(const bool enable_rotation,
     const bool enable_normal_strain,
     const bool enable_shear_strain,
-    const work_t & delta_disp=1.0,
-    const work_t & delta_theta=0.1);
+    const scalar_t & delta_disp=1.0,
+    const scalar_t & delta_theta=0.1);
 
   /// initializes the affine shape function
   /// \param enable_rotation true if rotation parameter should be included
@@ -279,8 +279,8 @@ public:
   void init(const bool enable_rotation,
     const bool enable_normal_strain,
     const bool enable_shear_strain,
-    const work_t & delta_disp=1.0,
-    const work_t & delta_theta=0.1);
+    const scalar_t & delta_disp=1.0,
+    const scalar_t & delta_theta=0.1);
 
   /// virtual destructor
   virtual ~Affine_Shape_Function(){};
@@ -290,50 +290,50 @@ public:
     const int_t subset_gid);
 
   /// see base class description
-  virtual void map(const work_t & x,
-    const work_t & y,
-    const work_t & cx,
-    const work_t & cy,
-    work_t & out_x,
-    work_t & out_y);
+  virtual void map(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & out_x,
+    scalar_t & out_y);
 
   /// see base class description
-  virtual void add_translation(const work_t & u,
-    const work_t & v);
+  virtual void add_translation(const scalar_t & u,
+    const scalar_t & v);
 
   /// see base class description
-  virtual void map_to_u_v_theta(const work_t & cx,
-    const work_t & cy,
-    work_t & out_u,
-    work_t & out_v,
-    work_t & out_theta);
+  virtual void map_to_u_v_theta(const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & out_u,
+    scalar_t & out_v,
+    scalar_t & out_theta);
 
   /// see base class description
-  virtual void insert_motion(const work_t & u,
-    const work_t & v,
-    const work_t & theta);
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v,
+    const scalar_t & theta);
 
   /// see base class description
-  virtual void insert_motion(const work_t & u,
-    const work_t & v);
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v);
 
   /// see base class description
-  virtual void residuals(const work_t & x,
-    const work_t & y,
-    const work_t & cx,
-    const work_t & cy,
-    const work_t & gx,
-    const work_t & gy,
-    std::vector<work_t> & residuals,
+  virtual void residuals(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    const scalar_t & gx,
+    const scalar_t & gy,
+    std::vector<scalar_t> & residuals,
     const bool use_ref_grads=false);
 
   /// see base class description
-  virtual bool test_for_convergence(const std::vector<work_t> & old_parameters,
-    const work_t & tol);
+  virtual bool test_for_convergence(const std::vector<scalar_t> & old_parameters,
+    const scalar_t & tol);
 
   /// see base class description
-  virtual void update_params_for_centroid_change(const work_t & delta_x,
-    const work_t & delta_y){
+  virtual void update_params_for_centroid_change(const scalar_t & delta_x,
+    const scalar_t & delta_y){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, this method has not been implemented yet for Affine_Shape_Function");
   };
 
@@ -374,41 +374,41 @@ public:
   virtual void reset_fields(Schema * schema);
 
   /// see base class description
-  virtual void map(const work_t & x,
-    const work_t & y,
-    const work_t & cx,
-    const work_t & cy,
-    work_t & out_x,
-    work_t & out_y);
+  virtual void map(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & out_x,
+    scalar_t & out_y);
 
   /// see base class description
-  virtual void add_translation(const work_t & u,
-    const work_t & v);
+  virtual void add_translation(const scalar_t & u,
+    const scalar_t & v);
 
   /// see base class description
-  virtual void map_to_u_v_theta(const work_t & cx,
-    const work_t & cy,
-    work_t & out_u,
-    work_t & out_v,
-    work_t & out_theta);
+  virtual void map_to_u_v_theta(const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & out_u,
+    scalar_t & out_v,
+    scalar_t & out_theta);
 
   /// see base class description
-  virtual void insert_motion(const work_t & u,
-    const work_t & v,
-    const work_t & theta);
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v,
+    const scalar_t & theta);
 
   /// see base class description
-  virtual void insert_motion(const work_t & u,
-    const work_t & v);
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v);
 
   /// see base class description
-  virtual void residuals(const work_t & x,
-    const work_t & y,
-    const work_t & cx,
-    const work_t & cy,
-    const work_t & gx,
-    const work_t & gy,
-    std::vector<work_t> & residuals,
+  virtual void residuals(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    const scalar_t & gx,
+    const scalar_t & gy,
+    std::vector<scalar_t> & residuals,
     const bool use_ref_grads=false);
 
   /// see base class description
@@ -416,8 +416,8 @@ public:
     const int_t subset_gid);
 
   /// see base class description
-  virtual void update_params_for_centroid_change(const work_t & delta_x,
-    const work_t & delta_y);
+  virtual void update_params_for_centroid_change(const scalar_t & delta_x,
+    const scalar_t & delta_y);
 private:
 };
 
@@ -467,21 +467,21 @@ public:
   virtual void reset_fields(Schema * schema);
 
   /// see base class description
-  virtual void map(const work_t & x,
-    const work_t & y,
-    const work_t & cx,
-    const work_t & cy,
-    work_t & out_x,
-    work_t & out_y);
+  virtual void map(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & out_x,
+    scalar_t & out_y);
 
   /// see base class description
-  virtual void residuals(const work_t & x,
-    const work_t & y,
-    const work_t & cx,
-    const work_t & cy,
-    const work_t & gx,
-    const work_t & gy,
-    std::vector<work_t> & residuals,
+  virtual void residuals(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    const scalar_t & gx,
+    const scalar_t & gy,
+    std::vector<scalar_t> & residuals,
     const bool use_ref_grads = false);
 
   /// see base class description
@@ -489,36 +489,36 @@ public:
     const int_t subset_gid);
 
   /// see base class description
-  virtual void add_translation(const work_t & u,
-    const work_t & v){
+  virtual void add_translation(const scalar_t & u,
+    const scalar_t & v){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
   }
 
   /// see base class description
-  virtual void map_to_u_v_theta(const work_t & cx,
-    const work_t & cy,
-    work_t & out_u,
-    work_t & out_v,
-    work_t & out_theta){
+  virtual void map_to_u_v_theta(const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & out_u,
+    scalar_t & out_v,
+    scalar_t & out_theta){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
   }
 
   /// see base class description
-  virtual void insert_motion(const work_t & u,
-    const work_t & v,
-    const work_t & theta){
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v,
+    const scalar_t & theta){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
   }
 
   /// see base class description
-  virtual void insert_motion(const work_t & u,
-    const work_t & v){
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
   }
 
   /// see base class description
-  virtual void update_params_for_centroid_change(const work_t & delta_x,
-    const work_t & delta_y){
+  virtual void update_params_for_centroid_change(const scalar_t & delta_x,
+    const scalar_t & delta_y){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
   }
 
@@ -560,21 +560,21 @@ public:
   virtual void reset_fields(Schema * schema);
 
   /// see base class description
-  virtual void map(const work_t & x,
-    const work_t & y,
-    const work_t & cx,
-    const work_t & cy,
-    work_t & out_x,
-    work_t & out_y);
+  virtual void map(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & out_x,
+    scalar_t & out_y);
 
   /// see base class description
-  virtual void residuals(const work_t & x,
-    const work_t & y,
-    const work_t & cx,
-    const work_t & cy,
-    const work_t & gx,
-    const work_t & gy,
-    std::vector<work_t> & residuals,
+  virtual void residuals(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    const scalar_t & gx,
+    const scalar_t & gy,
+    std::vector<scalar_t> & residuals,
     const bool use_ref_grads = false);
 
   /// see base class description
@@ -582,37 +582,37 @@ public:
     const int_t subset_gid);
 
   /// see base class description
-  virtual void add_translation(const work_t & u,
-    const work_t & v){
+  virtual void add_translation(const scalar_t & u,
+    const scalar_t & v){
     std::cout << "error: add_translation has not been implemented for rigid body shape functions" << std::endl;
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
   }
 
   /// see base class description
-  virtual void map_to_u_v_theta(const work_t & cx,
-    const work_t & cy,
-    work_t & out_u,
-    work_t & out_v,
-    work_t & out_theta);
+  virtual void map_to_u_v_theta(const scalar_t & cx,
+    const scalar_t & cy,
+    scalar_t & out_u,
+    scalar_t & out_v,
+    scalar_t & out_theta);
 
   /// see base class description
-  virtual void insert_motion(const work_t & u,
-    const work_t & v,
-    const work_t & theta){
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v,
+    const scalar_t & theta){
     std::cout << "error: insert_motion has not been implemented for rigid body shape functions" << std::endl;
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
   }
 
   /// see base class description
-  virtual void insert_motion(const work_t & u,
-    const work_t & v){
+  virtual void insert_motion(const scalar_t & u,
+    const scalar_t & v){
     std::cout << "error: insert_motion has not been implemented for rigid body shape functions" << std::endl;
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
   }
 
   /// see base class description
-  virtual void update_params_for_centroid_change(const work_t & delta_x,
-    const work_t & delta_y){
+  virtual void update_params_for_centroid_change(const scalar_t & delta_x,
+    const scalar_t & delta_y){
     // do nothing for this shape function
   }
 
@@ -621,7 +621,7 @@ private:
   Teuchos::RCP<Camera_System> camera_system_;
   // there is no target camera id because for rigid body motion shape function, the source and target camera are the same
   /// projection parameters that connect the sensor coordinates to the camera zero coordinates of a facet in space
-  std::vector<work_t> facet_params_;
+  std::vector<scalar_t> facet_params_;
 };
 
 

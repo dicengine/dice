@@ -72,15 +72,15 @@ int main(int argc, char *argv[]) {
   // create a test image with known std-dev or contrast
   const int_t width(101);
   const int_t height(101);
-  work_t std_dev = 10.0;
-  work_t mean = 128.0;
+  scalar_t std_dev = 10.0;
+  scalar_t mean = 128.0;
   int_t num_levels = 10;
   for(int_t level=0;level <num_levels;++level){
-    Teuchos::ArrayRCP<work_t> intensities(width*height,0);
+    Teuchos::ArrayRCP<scalar_t> intensities(width*height,0);
     std::default_random_engine generator;
-    std::normal_distribution<work_t> distribution(mean,std_dev);
+    std::normal_distribution<scalar_t> distribution(mean,std_dev);
     for(int_t i=0;i<width*height;++i){
-      work_t value = distribution(generator);
+      scalar_t value = distribution(generator);
       intensities[i] = value; // Could have negative values for intensity so need to use Scalar_Image
     }
     Teuchos::RCP<DICe::Scalar_Image> image = Teuchos::rcp(new DICe::Scalar_Image(width,height,intensities));
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<DICe::Subset> subset = Teuchos::rcp(new DICe::Subset(50,50,50,50));
     subset->initialize(image,REF_INTENSITIES);
     subset->initialize(image,DEF_INTENSITIES);
-    work_t contrast = subset->contrast_std_dev();
+    scalar_t contrast = subset->contrast_std_dev();
     *outStream << "input std-dev: " << std_dev << " computed: " << contrast << std::endl;
     if(std::abs(std_dev - contrast) > 2.0){
       *outStream << "Error, contrast value is not correct" << std::endl;

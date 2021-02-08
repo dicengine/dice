@@ -52,10 +52,10 @@ namespace DICe {
 DICE_LIB_DLL_EXPORT
 void match_features(Teuchos::RCP<Image> left_image,
   Teuchos::RCP<Image> right_image,
-  std::vector<work_t> & left_x,
-  std::vector<work_t> & left_y,
-  std::vector<work_t> & right_x,
-  std::vector<work_t> & right_y,
+  std::vector<scalar_t> & left_x,
+  std::vector<scalar_t> & left_y,
+  std::vector<scalar_t> & right_x,
+  std::vector<scalar_t> & right_y,
   const float & feature_tol,
   const std::string & result_image_name,
   const int_t threshold_block_size){
@@ -125,10 +125,10 @@ void match_features(Teuchos::RCP<Image> left_image,
   left_y.resize(inliers1.size(),0.0);
   right_x.resize(inliers1.size(),0.0);
   right_y.resize(inliers1.size(),0.0);
-  const work_t lox = left_image->offset_x();
-  const work_t loy = left_image->offset_y();
-  const work_t rox = right_image->offset_x();
-  const work_t roy = right_image->offset_y();
+  const scalar_t lox = left_image->offset_x();
+  const scalar_t loy = left_image->offset_y();
+  const scalar_t rox = right_image->offset_x();
+  const scalar_t roy = right_image->offset_y();
   for(unsigned i = 0; i < left_x.size(); i++) {
     left_x[i] = inliers1[i].pt.x + lox;
     left_y[i] = inliers1[i].pt.y + loy;
@@ -160,7 +160,7 @@ void opencv_8UC1(Teuchos::RCP<Image_<S>> image, unsigned char * array){
     if(intensities[i] < min_intensity) min_intensity = intensities[i];
   }
   assert(max_intensity >= min_intensity);
-  work_t fac = 1.0;
+  scalar_t fac = 1.0;
   DEBUG_MSG("opencv_8UC1(): max intensity: " << max_intensity << " min intensity: " << min_intensity << " converted max " << (std::floor((max_intensity-min_intensity)*fac)) <<
     " converted min " << (std::floor((min_intensity-min_intensity)*fac)));
   if(max_intensity <= 255 && min_intensity >=0){ // already in 8 bit range, no need to convert

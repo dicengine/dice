@@ -69,11 +69,11 @@ int main(int argc, char *argv[]) {
 
   *outStream << "--- Begin test ---" << std::endl;
 
-  const work_t begin_x = -0.5;
-  const work_t end_x = 3.5;
-  const work_t begin_y = 1.5;
-  const work_t end_y = 5.5;
-  const work_t h = 1.0;
+  const scalar_t begin_x = -0.5;
+  const scalar_t end_x = 3.5;
+  const scalar_t begin_y = 1.5;
+  const scalar_t end_y = 5.5;
+  const scalar_t h = 1.0;
   std::vector<int_t> dirichlet_sides;
   std::vector<int_t> neumann_sides;
   for(int_t i=0;i<4;++i)
@@ -85,30 +85,30 @@ int main(int argc, char *argv[]) {
   DICe::mesh::create_output_exodus_file(mesh,"./");
   DICe::mesh::create_exodus_output_variable_names(mesh);
   *outStream << "writing an output step" << std::endl;
-  work_t time = 0.0;
+  scalar_t time = 0.0;
   DICe::mesh::exodus_output_dump(mesh,1,time);
   *outStream << "closing the exodus output files" << std::endl;
   DICe::mesh::close_exodus_output(mesh);
 
   // test the coordinate locations in the mesh
 
-  const work_t width = end_x - begin_x;
+  const scalar_t width = end_x - begin_x;
   TEUCHOS_TEST_FOR_EXCEPTION(width<=0,std::runtime_error,"Error, invalid width");
-  const work_t height = end_y - begin_y;
+  const scalar_t height = end_y - begin_y;
   TEUCHOS_TEST_FOR_EXCEPTION(height<=0,std::runtime_error,"Error, invalid height");
-  std::vector<work_t> x_ticks;
-  for(work_t x=begin_x;x<=end_x;x+=h){
+  std::vector<scalar_t> x_ticks;
+  for(scalar_t x=begin_x;x<=end_x;x+=h){
     x_ticks.push_back(x);
   }
-  std::vector<work_t> y_ticks;
-  for(work_t y=begin_y;y<=end_y;y+=h){
+  std::vector<scalar_t> y_ticks;
+  for(scalar_t y=begin_y;y<=end_y;y+=h){
     y_ticks.push_back(y);
   }
   const int_t num_nodes_x = x_ticks.size();
   const int_t num_nodes_y = y_ticks.size();
   // set up the corner nodes
-  std::vector<work_t> x_coords;
-  std::vector<work_t> y_coords;
+  std::vector<scalar_t> x_coords;
+  std::vector<scalar_t> y_coords;
   for(int_t j=0;j<num_nodes_y;++j){
     for(int_t i=0;i<num_nodes_x;++i){
       x_coords.push_back(x_ticks[i]);
@@ -143,10 +143,10 @@ int main(int argc, char *argv[]) {
   }
   if(errorFlag==0){
     Teuchos::RCP<MultiField> coords = mesh->get_field(DICe::field_enums::INITIAL_COORDINATES_FS);
-    const work_t tol = 1.0E-5;
+    const scalar_t tol = 1.0E-5;
     for(int_t i=0;i<num_nodes;++i){
-      work_t error_x = std::abs(coords->local_value(i*2+0) - x_coords[i]);
-      work_t error_y = std::abs(coords->local_value(i*2+1) - y_coords[i]);
+      scalar_t error_x = std::abs(coords->local_value(i*2+0) - x_coords[i]);
+      scalar_t error_y = std::abs(coords->local_value(i*2+1) - y_coords[i]);
       if(error_x>tol||error_y>tol){
         *outStream << "Error, coordinates are not correct" << std::endl;
         errorFlag++;

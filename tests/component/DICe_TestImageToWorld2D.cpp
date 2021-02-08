@@ -51,35 +51,35 @@
 
 using namespace DICe;
 
-const work_t period = 20.0;
-const work_t freq = DICE_TWOPI/period;
-const work_t world_def_x = 1.0; // constant displacement in world coordinates
-const work_t world_def_y = -2.0;
+const scalar_t period = 20.0;
+const scalar_t freq = DICE_TWOPI/period;
+const scalar_t world_def_x = 1.0; // constant displacement in world coordinates
+const scalar_t world_def_y = -2.0;
 const int_t image_w = 1920;
 const int_t image_h = 1200;
 
 //  The world object is a plate with a pattern of a two dimensional sign wave with amplitude of 100.0 and period of 10mm
-work_t world_ref_intensity_value(const work_t & world_x,
-  const work_t & world_y,
-  const work_t & world_z){
+scalar_t world_ref_intensity_value(const scalar_t & world_x,
+  const scalar_t & world_y,
+  const scalar_t & world_z){
 
 #if DICE_USE_DOUBLE
-  const work_t zero_ish = 1.0E-8;
+  const scalar_t zero_ish = 1.0E-8;
 #else
-  const work_t zero_ish = 1.0E-4;
+  const scalar_t zero_ish = 1.0E-4;
 #endif
   TEUCHOS_TEST_FOR_EXCEPTION(std::abs(world_z)>zero_ish,std::runtime_error,"");
   return 125.0 + 100.0*std::sin(freq*world_x)*std::sin(freq*world_y);
 }
 
 // in world coordinates the object is moved by the world_def variables above
-work_t world_def_intensity_value(const work_t & world_x,
-  const work_t & world_y,
-  const work_t & world_z){
+scalar_t world_def_intensity_value(const scalar_t & world_x,
+  const scalar_t & world_y,
+  const scalar_t & world_z){
 #if DICE_USE_DOUBLE
-  const work_t zero_ish = 1.0E-8;
+  const scalar_t zero_ish = 1.0E-8;
 #else
-  const work_t zero_ish = 1.0E-4;
+  const scalar_t zero_ish = 1.0E-4;
 #endif
   TEUCHOS_TEST_FOR_EXCEPTION(std::abs(world_z)>zero_ish,std::runtime_error,"");
   return 125.0 + 100.0*std::sin(freq*(world_x-world_def_x))*std::sin(freq*(world_y-world_def_y));
@@ -96,9 +96,9 @@ int main(int argc, char *argv[]) {
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
 #if DICE_USE_DOUBLE
-  work_t tol = 1.0E-3;
+  scalar_t tol = 1.0E-3;
 #else
-  work_t tol = 0.5;
+  scalar_t tol = 0.5;
 #endif
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
@@ -117,25 +117,25 @@ int main(int argc, char *argv[]) {
  //*outStream << std::scientific;
 
   Teuchos::RCP<DICe::Camera> cam_simple = cam_sys_simple.camera(0);
-  std::vector<work_t> facet_params_simple = cam_simple->get_facet_params();
+  std::vector<scalar_t> facet_params_simple = cam_simple->get_facet_params();
 
-  std::vector<work_t> cam_x_utest(1,0.0);
-  std::vector<work_t> cam_y_utest(1,0.0);
-  std::vector<work_t> cam_z_utest(1,0.0);
-  std::vector<work_t> world_x_utest(1,0.0);
-  std::vector<work_t> world_y_utest(1,0.0);
-  std::vector<work_t> world_z_utest(1,0.0);
-  std::vector<work_t> sensor_x_utest(1,0.0);
-  std::vector<work_t> sensor_y_utest(1,0.0);
-  std::vector<work_t> image_x_utest(1,0.0);
-  std::vector<work_t> image_y_utest(1,0.0);
+  std::vector<scalar_t> cam_x_utest(1,0.0);
+  std::vector<scalar_t> cam_y_utest(1,0.0);
+  std::vector<scalar_t> cam_z_utest(1,0.0);
+  std::vector<scalar_t> world_x_utest(1,0.0);
+  std::vector<scalar_t> world_y_utest(1,0.0);
+  std::vector<scalar_t> world_z_utest(1,0.0);
+  std::vector<scalar_t> sensor_x_utest(1,0.0);
+  std::vector<scalar_t> sensor_y_utest(1,0.0);
+  std::vector<scalar_t> image_x_utest(1,0.0);
+  std::vector<scalar_t> image_y_utest(1,0.0);
   image_x_utest[0] = 1060; image_y_utest[0] = 700;
   cam_simple->image_to_sensor(image_x_utest,image_y_utest,sensor_x_utest,sensor_y_utest);
   *outStream << " img_x " << image_x_utest[0] << " img_y " << image_y_utest[0] <<
       " sen_x " << sensor_x_utest[0] << " sen_y " << sensor_y_utest[0] << std::endl;
   // check that sensor x and y are correct
-  const work_t sen_x_gold = 0.015227;
-  const work_t sen_y_gold = 0.015227;
+  const scalar_t sen_x_gold = 0.015227;
+  const scalar_t sen_y_gold = 0.015227;
   if(std::abs(sen_x_gold - sensor_x_utest[0])>tol){
     *outStream << "error, unit test for sensor x position failed, diff: " << std::abs(sen_x_gold - sensor_x_utest[0]) << std::endl;
     errorFlag++;
@@ -147,9 +147,9 @@ int main(int argc, char *argv[]) {
   cam_simple->sensor_to_cam(sensor_x_utest,sensor_y_utest,cam_x_utest,cam_y_utest,cam_z_utest,facet_params_simple);
   *outStream << " img_x " << image_x_utest[0] << " img_y " << image_y_utest[0] <<
       " cam_x " << cam_x_utest[0] << " cam_y " << cam_y_utest[0] << " cam_z " << cam_z_utest[0] << std::endl;
-  const work_t cam_x_gold = 35.792346;
-  const work_t cam_y_gold = 35.792346;
-  const work_t cam_z_gold = 2350.54215;
+  const scalar_t cam_x_gold = 35.792346;
+  const scalar_t cam_y_gold = 35.792346;
+  const scalar_t cam_z_gold = 2350.54215;
   if(std::abs(cam_x_gold - cam_x_utest[0])>tol){
     *outStream << "error, unit test for camera x position failed, diff: " << std::abs(cam_x_gold - cam_x_utest[0]) << std::endl;
     errorFlag++;
@@ -164,9 +164,9 @@ int main(int argc, char *argv[]) {
   }
   cam_simple->cam_to_world(cam_x_utest,cam_y_utest,cam_z_utest,world_x_utest,world_y_utest,world_z_utest);
   *outStream << " img_x " << image_x_utest[0] << " img_y " << image_y_utest[0] << " w_x " << world_x_utest[0] << " w_y " << world_y_utest[0] << " w_z " << world_z_utest[0] << std::endl;
-  const work_t w_x_gold = 35.792346;
-  const work_t w_y_gold = 2050.85451;
-  const work_t w_z_gold = 0.0;
+  const scalar_t w_x_gold = 35.792346;
+  const scalar_t w_y_gold = 2050.85451;
+  const scalar_t w_z_gold = 0.0;
   if(std::abs(w_x_gold - world_x_utest[0])>tol){
     *outStream << "error, unit test for world x position failed, diff: " << std::abs(w_x_gold - world_x_utest[0]) << std::endl;
     errorFlag++;
@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
   *outStream << "testing another simple projection example for one point" << std::endl;
 
   Teuchos::RCP<DICe::Camera> cam_simple2 = cam_sys_simple2.camera(0);
-  std::vector<work_t> facet_params_simple2 = cam_simple2->get_facet_params();
+  std::vector<scalar_t> facet_params_simple2 = cam_simple2->get_facet_params();
   //outStream->precision(8);
   //*outStream << std::scientific;
 
@@ -205,9 +205,9 @@ int main(int argc, char *argv[]) {
   cam_simple2->sensor_to_cam(sensor_x_utest,sensor_y_utest,cam_x_utest,cam_y_utest,cam_z_utest,facet_params_simple2);
   *outStream << " img_x " << image_x_utest[0] << " img_y " << image_y_utest[0] <<
       " cam_x " << cam_x_utest[0] << " cam_y " << cam_y_utest[0] << " cam_z " << cam_z_utest[0] << std::endl;
-  const work_t cam_x_gold2 = 2.4397;
-  const work_t cam_y_gold2 = 2.4397;
-  const work_t cam_z_gold2 = 160.224;
+  const scalar_t cam_x_gold2 = 2.4397;
+  const scalar_t cam_y_gold2 = 2.4397;
+  const scalar_t cam_z_gold2 = 160.224;
   if(std::abs(cam_x_gold2 - cam_x_utest[0])>tol){
     *outStream << "error, unit test for camera x position failed (simple 2), diff: " << std::abs(cam_x_gold2 - cam_x_utest[0]) << std::endl;
     errorFlag++;
@@ -222,9 +222,9 @@ int main(int argc, char *argv[]) {
   }
   cam_simple2->cam_to_world(cam_x_utest,cam_y_utest,cam_z_utest,world_x_utest,world_y_utest,world_z_utest);
   *outStream << " img_x " << image_x_utest[0] << " img_y " << image_y_utest[0] << " w_x " << world_x_utest[0] << " w_y " << world_y_utest[0] << " w_z " << world_z_utest[0] << std::endl;
-  const work_t w_x_gold2 = 2.439786;
-  const work_t w_y_gold2 = -139.796539;
-  const work_t w_z_gold2 = 0.0;
+  const scalar_t w_x_gold2 = 2.439786;
+  const scalar_t w_y_gold2 = -139.796539;
+  const scalar_t w_z_gold2 = 0.0;
   if(std::abs(w_x_gold2 - world_x_utest[0])>tol){
     *outStream << "error, unit test for world x position failed (simple 2), diff: " << std::abs(w_x_gold2 - world_x_utest[0])  << std::endl;
     errorFlag++;
@@ -244,19 +244,19 @@ int main(int argc, char *argv[]) {
   //*outStream << cam_sys << std::endl;
 
   Teuchos::RCP<DICe::Camera> cam = cam_sys.camera(0);
-  std::vector<work_t> facet_params = cam->get_facet_params();
+  std::vector<scalar_t> facet_params = cam->get_facet_params();
 
   // create the reference image:
-  std::vector<work_t> cam_x(image_w*image_h,0.0);
-  std::vector<work_t> cam_y(image_w*image_h,0.0);
-  std::vector<work_t> cam_z(image_w*image_h,0.0);
-  std::vector<work_t> world_x(image_w*image_h,0.0);
-  std::vector<work_t> world_y(image_w*image_h,0.0);
-  std::vector<work_t> world_z(image_w*image_h,0.0);
-  std::vector<work_t> sensor_x(image_w*image_h,0.0);
-  std::vector<work_t> sensor_y(image_w*image_h,0.0);
-  std::vector<work_t> image_x(image_w*image_h,0.0);
-  std::vector<work_t> image_y(image_w*image_h,0.0);
+  std::vector<scalar_t> cam_x(image_w*image_h,0.0);
+  std::vector<scalar_t> cam_y(image_w*image_h,0.0);
+  std::vector<scalar_t> cam_z(image_w*image_h,0.0);
+  std::vector<scalar_t> world_x(image_w*image_h,0.0);
+  std::vector<scalar_t> world_y(image_w*image_h,0.0);
+  std::vector<scalar_t> world_z(image_w*image_h,0.0);
+  std::vector<scalar_t> sensor_x(image_w*image_h,0.0);
+  std::vector<scalar_t> sensor_y(image_w*image_h,0.0);
+  std::vector<scalar_t> image_x(image_w*image_h,0.0);
+  std::vector<scalar_t> image_y(image_w*image_h,0.0);
   for(int_t y=0;y<image_h;++y){
     for(int_t x=0;x<image_w;++x){
       image_x[y*image_w+x] = x;
@@ -270,8 +270,8 @@ int main(int argc, char *argv[]) {
   //for(size_t i=0;i<image_x.size();++i){
   //  std::cout << i << " img_x " << image_x[i] << " img_y " << image_y[i] << " w_x " << world_x[i] << " w_y " << world_y[i] << " w_z " << world_z[i] << std::endl;
   //}
-  Teuchos::ArrayRCP<work_t> def_values(image_h*image_w,0.0);
-  Teuchos::ArrayRCP<work_t> ref_values(image_h*image_w,0.0);
+  Teuchos::ArrayRCP<scalar_t> def_values(image_h*image_w,0.0);
+  Teuchos::ArrayRCP<scalar_t> ref_values(image_h*image_w,0.0);
   for(int_t y=0;y<image_h;++y){
     for(int_t x=0;x<image_w;++x){
       ref_values[y*image_w+x] = world_ref_intensity_value(world_x[y*image_w+x],world_y[y*image_w+x],world_z[y*image_w+x]);
@@ -283,8 +283,8 @@ int main(int argc, char *argv[]) {
   //ref_img.write("ITWreference.tif");
   //def_img.write("ITWdeformed.tif");
 
-  std::vector<work_t> def_image_x(image_w*image_h,0.0);
-  std::vector<work_t> def_image_y(image_w*image_h,0.0);
+  std::vector<scalar_t> def_image_x(image_w*image_h,0.0);
+  std::vector<scalar_t> def_image_y(image_w*image_h,0.0);
   for(int_t y=0;y<image_h;++y){
     for(int_t x=0;x<image_w;++x){
       world_x[y*image_w+x] = world_x[y*image_w+x] + world_def_x;
@@ -295,8 +295,8 @@ int main(int argc, char *argv[]) {
   cam->cam_to_sensor(cam_x,cam_y,cam_z,sensor_x,sensor_y);
   cam->sensor_to_image(sensor_x,sensor_y,def_image_x,def_image_y);
 
-  work_t diff = 0.0;
-  work_t mid_diff = 0.0;
+  scalar_t diff = 0.0;
+  scalar_t mid_diff = 0.0;
   for(int_t y=100;y<image_h-100;++y){
     for(int_t x=100;x<image_w-100;++x){
       mid_diff = std::abs(ref_img.interpolate_keys_fourth(image_x[y*image_w+x],image_y[y*image_w+x]) - def_img.interpolate_keys_fourth(def_image_x[y*image_w+x],def_image_y[y*image_w+x]));

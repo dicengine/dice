@@ -195,8 +195,8 @@ int main(int argc, char *argv[]) {
 
 
     const int_t dummy_subset_size = 25;
-    Teuchos::ArrayRCP<work_t> target_pts_x(importer->num_target_pts(),0.0);
-    Teuchos::ArrayRCP<work_t> target_pts_y(importer->num_target_pts(),0.0);
+    Teuchos::ArrayRCP<scalar_t> target_pts_x(importer->num_target_pts(),0.0);
+    Teuchos::ArrayRCP<scalar_t> target_pts_y(importer->num_target_pts(),0.0);
     for(int_t i=0;i<importer->num_target_pts();++i){
       target_pts_x[i] = (*importer->target_pts_x())[i];
       target_pts_y[i] = (*importer->target_pts_y())[i];
@@ -216,8 +216,8 @@ int main(int argc, char *argv[]) {
       Teuchos::RCP<MultiField> disp_y = schema->mesh()->get_field(DICe::field_enums::SUBSET_DISPLACEMENT_Y_FS);
       TEUCHOS_TEST_FOR_EXCEPTION(disp_x->get_map()->get_num_global_elements()!=importer->num_target_pts(),std::runtime_error,"");
 
-      std::vector<work_t> proj_disp_x(importer->num_target_pts(),0.0);
-      std::vector<work_t> proj_disp_y(importer->num_target_pts(),0.0);
+      std::vector<scalar_t> proj_disp_x(importer->num_target_pts(),0.0);
+      std::vector<scalar_t> proj_disp_y(importer->num_target_pts(),0.0);
 
       if(exodus_format)
         importer->import_vector_field(source_files[0],disp_field_name,proj_disp_x,proj_disp_y,time_step);

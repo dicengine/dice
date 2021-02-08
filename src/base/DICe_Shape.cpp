@@ -84,13 +84,13 @@ Polygon::Polygon(std::vector<int_t> & coords_x,
   max_y_ = max_y;
 }
 
-work_t
-angle_2d(const work_t & x1,
-  const work_t & y1,
-  const work_t & x2,
-  const work_t & y2){
+scalar_t
+angle_2d(const scalar_t & x1,
+  const scalar_t & y1,
+  const scalar_t & x2,
+  const scalar_t & y2){
 
-  work_t dtheta=0,theta1=0,theta2=0;
+  scalar_t dtheta=0,theta1=0,theta2=0;
   theta1 = std::atan2(y1,x1);
   theta2 = std::atan2(y2,x2);
   dtheta = theta2 - theta1;
@@ -108,8 +108,8 @@ Polygon::deactivate_pixels(const int_t size,
   int_t * y_coords) const{
 
   int_t x=0,y=0;
-  work_t dx1=0,dx2=0,dy1=0,dy2=0;
-  work_t angle=0.0;
+  scalar_t dx1=0,dx2=0,dy1=0,dy2=0;
+  scalar_t angle=0.0;
   for(int_t j=0;j<size;++j){
     x = x_coords[j];
     y = y_coords[j];
@@ -136,7 +136,7 @@ std::set<std::pair<int_t,int_t> >
 Polygon::get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function,
   const int_t cx,
   const int_t cy,
-  const work_t skin_factor)const{
+  const scalar_t skin_factor)const{
 
   std::vector<int_t> verts_x = vertex_coordinates_x_;
   std::vector<int_t> verts_y = vertex_coordinates_y_;
@@ -146,7 +146,7 @@ Polygon::get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function,
   int_t max_y = max_y_;
 
   if(shape_function!=Teuchos::null){
-    work_t X=0.0,Y=0.0;
+    scalar_t X=0.0,Y=0.0;
     int_t new_x=0,new_y=0;
     for(size_t i=0;i<vertex_coordinates_x_.size();++i){
       int_t x = vertex_coordinates_x_[i];
@@ -193,8 +193,8 @@ Polygon::get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function,
 
   std::set<std::pair<int_t,int_t> > coordSet;
 
-  work_t dx1=0,dx2=0,dy1=0,dy2=0;
-  work_t angle=0;
+  scalar_t dx1=0,dx2=0,dy1=0,dy2=0;
+  scalar_t angle=0;
   // rip over the points in the extents of the polygon to determine which onese are inside
   for(int_t y=min_y;y<=max_y;++y){
     for(int_t x=min_x;x<=max_x;++x){
@@ -220,7 +220,7 @@ Polygon::get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function,
 
 Circle::Circle(const int_t centroid_x,
   const int_t centroid_y,
-  const work_t & radius):
+  const scalar_t & radius):
   centroid_x_(centroid_x),
   centroid_y_(centroid_y),
   //radius_(radius),
@@ -259,11 +259,11 @@ std::set<std::pair<int_t,int_t> >
 Circle::get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function,
   const int_t cx,
   const int_t cy,
-  const work_t skin_factor)const{
+  const scalar_t skin_factor)const{
   TEUCHOS_TEST_FOR_EXCEPTION(shape_function!=Teuchos::null,std::runtime_error,"Error, circle deformation has not been implemented yet");
   std::set<std::pair<int_t,int_t> > coordSet;
 
-  work_t dx=0,dy=0;
+  scalar_t dx=0,dy=0;
   // rip over the points in the extents of the circle to determine which onese are inside
   for(int_t y=min_y_;y<=max_y_;++y){
     for(int_t x=min_x_;x<=max_x_;++x){
@@ -322,7 +322,7 @@ std::set<std::pair<int_t,int_t> >
 Rectangle::get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function,
   const int_t cx,
   const int_t cy,
-  const work_t skin_factor)const{
+  const scalar_t skin_factor)const{
 
   std::set<std::pair<int_t,int_t> > coordSet;
 
@@ -331,7 +331,7 @@ Rectangle::get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function,
     int_t min_y = 0;
     int_t max_x = 0;
     int_t max_y = 0;
-    work_t X=0.0,Y=0.0;
+    scalar_t X=0.0,Y=0.0;
     int_t new_x=0,new_y=0;
     std::vector<int_t> vertex_coordinates_x(5,0.0);
     std::vector<int_t> vertex_coordinates_y(5,0.0);
@@ -390,8 +390,8 @@ Rectangle::get_owned_pixels(Teuchos::RCP<Local_Shape_Function> shape_function,
       }
     } // vertex_loop
 
-    work_t dx1=0,dx2=0,dy1=0,dy2=0;
-    work_t angle=0;
+    scalar_t dx1=0,dx2=0,dy1=0,dy2=0;
+    scalar_t angle=0;
     // rip over the points in the extents of the polygon to determine which onese are inside
     for(int_t y=min_y;y<=max_y;++y){
       for(int_t x=min_x;x<=max_x;++x){
