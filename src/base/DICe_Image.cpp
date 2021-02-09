@@ -211,8 +211,9 @@ Image_<S>::Image_(const int_t array_width,
   default_constructor_tasks(params);
   post_allocation_tasks(params);
 }
-
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template class Image_<storage_t>;
+#endif
 template class Image_<scalar_t>;
 
 template <typename S>
@@ -322,8 +323,9 @@ Image_<S>::update(const char * file_name,
   }
   post_allocation_tasks(params);
 }
-
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template void Image_<storage_t>::update(const char *,const Teuchos::RCP<Teuchos::ParameterList> &);
+#endif
 template void Image_<scalar_t>::update(const char *,const Teuchos::RCP<Teuchos::ParameterList> &);
 
 template <typename S>
@@ -361,7 +363,9 @@ Image_<S>::interpolate_bilinear_all(scalar_t & intensity_val,
   }
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template void Image_<storage_t>::interpolate_bilinear_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &);
+#endif
 template void Image_<scalar_t>::interpolate_bilinear_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &);
 
 template <typename S>
@@ -379,7 +383,9 @@ Image_<S>::interpolate_bilinear(const scalar_t & local_x, const scalar_t & local
       +intensities_[y2*width_+x1]*(x2-local_x)*(local_y-y1);
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template scalar_t Image_<storage_t>::interpolate_bilinear(const scalar_t &,const scalar_t &);
+#endif
 template scalar_t Image_<scalar_t>::interpolate_bilinear(const scalar_t &,const scalar_t &);
 
 template <typename S>
@@ -397,7 +403,9 @@ Image_<S>::interpolate_grad_x_bilinear(const scalar_t & local_x, const scalar_t 
       +grad_x_[y2*width_+x1]*(x2-local_x)*(local_y-y1);
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template scalar_t Image_<storage_t>::interpolate_grad_x_bilinear(const scalar_t &,const scalar_t &);
+#endif
 template scalar_t Image_<scalar_t>::interpolate_grad_x_bilinear(const scalar_t &,const scalar_t &);
 
 template <typename S>
@@ -414,7 +422,9 @@ Image_<S>::interpolate_grad_y_bilinear(const scalar_t & local_x, const scalar_t 
       +grad_y_[y2*width_+x1]*(x2-local_x)*(local_y-y1);
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template scalar_t Image_<storage_t>::interpolate_grad_y_bilinear(const scalar_t &,const scalar_t &);
+#endif
 template scalar_t Image_<scalar_t>::interpolate_grad_y_bilinear(const scalar_t &,const scalar_t &);
 
 template <typename S>
@@ -564,7 +574,9 @@ Image_<S>::interpolate_bicubic_all(scalar_t & intensity_val,
 
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template void Image_<storage_t>::interpolate_bicubic_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &);
+#endif
 template void Image_<scalar_t>::interpolate_bicubic_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &);
 
 template <typename S>
@@ -625,7 +637,9 @@ Image_<S>::interpolate_bicubic(const scalar_t & local_x, const scalar_t & local_
 #endif
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template scalar_t Image_<storage_t>::interpolate_bicubic(const scalar_t &, const scalar_t &);
+#endif
 template scalar_t Image_<scalar_t>::interpolate_bicubic(const scalar_t &, const scalar_t &);
 
 template <typename S>
@@ -686,7 +700,9 @@ Image_<S>::interpolate_grad_x_bicubic(const scalar_t & local_x, const scalar_t &
 #endif
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template scalar_t Image_<storage_t>::interpolate_grad_x_bicubic(const scalar_t &, const scalar_t &);
+#endif
 template scalar_t Image_<scalar_t>::interpolate_grad_x_bicubic(const scalar_t &, const scalar_t &);
 
 template <typename S>
@@ -747,7 +763,9 @@ Image_<S>::interpolate_grad_y_bicubic(const scalar_t & local_x, const scalar_t &
 #endif
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template scalar_t Image_<storage_t>::interpolate_grad_y_bicubic(const scalar_t &, const scalar_t &);
+#endif
 template scalar_t Image_<scalar_t>::interpolate_grad_y_bicubic(const scalar_t &, const scalar_t &);
 
 template <typename S>
@@ -803,7 +821,9 @@ Image_<S>::interpolate_keys_fourth_all(scalar_t & intensity_val,
   }
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template void Image_<storage_t>::interpolate_keys_fourth_all(scalar_t &, scalar_t &, scalar_t &, const bool, const scalar_t &, const scalar_t &);
+#endif
 template void Image_<scalar_t>::interpolate_keys_fourth_all(scalar_t &, scalar_t &, scalar_t &, const bool, const scalar_t &, const scalar_t &);
 
 template <typename S>
@@ -842,7 +862,9 @@ Image_<S>::interpolate_keys_fourth(const scalar_t & local_x, const scalar_t & lo
   return value;
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template scalar_t Image_<storage_t>::interpolate_keys_fourth(const scalar_t &, const scalar_t &);
+#endif
 template scalar_t Image_<scalar_t>::interpolate_keys_fourth(const scalar_t &, const scalar_t &);
 
 template <typename S>
@@ -881,7 +903,9 @@ Image_<S>::interpolate_grad_x_keys_fourth(const scalar_t & local_x, const scalar
   return value;
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template scalar_t Image_<storage_t>::interpolate_grad_x_keys_fourth(const scalar_t &, const scalar_t &);
+#endif
 template scalar_t Image_<scalar_t>::interpolate_grad_x_keys_fourth(const scalar_t &, const scalar_t &);
 
 template <typename S>
@@ -920,7 +944,9 @@ Image_<S>::interpolate_grad_y_keys_fourth(const scalar_t & local_x, const scalar
   return value;
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template scalar_t Image_<storage_t>::interpolate_grad_y_keys_fourth(const scalar_t &, const scalar_t &);
+#endif
 template scalar_t Image_<scalar_t>::interpolate_grad_y_keys_fourth(const scalar_t &, const scalar_t &);
 
 template <typename S>
@@ -1012,7 +1038,9 @@ Image_<S>::apply_mask(const Conformal_Area_Def & area_def,
     intensities_[i] = static_cast<S>(mask_[i]*intensities_[i]);
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template void Image_<storage_t>::apply_mask(const Conformal_Area_Def &,const bool);
+#endif
 template void Image_<scalar_t>::apply_mask(const Conformal_Area_Def &,const bool);
 
 template <typename S>
@@ -1052,7 +1080,9 @@ Image_<S>::apply_mask(const bool smooth_edges){
     intensities_[i] = static_cast<S>(mask_[i]*intensities_[i]);
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template void Image_<storage_t>::apply_mask(const bool);
+#endif
 template void Image_<scalar_t>::apply_mask(const bool);
 
 template <typename S>
@@ -1133,9 +1163,11 @@ Image_<S>::apply_transformation(Teuchos::RCP<Local_Shape_Function> shape_functio
   }
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template
 Teuchos::RCP<Image_<storage_t>>
 Image_<storage_t>::apply_transformation(Teuchos::RCP<Local_Shape_Function>,const int_t,const int_t,const bool);
+#endif
 template
 Teuchos::RCP<Image_<scalar_t>>
 Image_<scalar_t>::apply_transformation(Teuchos::RCP<Local_Shape_Function>,const int_t,const int_t,const bool);
@@ -1239,7 +1271,9 @@ Image_<S>::diff(Teuchos::RCP<Image_> rhs) const{
   return std::sqrt(diff);
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template scalar_t Image_<storage_t>::diff(Teuchos::RCP<Image_>)const;
+#endif
 template scalar_t Image_<scalar_t>::diff(Teuchos::RCP<Image_<scalar_t>>)const;
 
 /// normalize the image intensity values
@@ -1288,7 +1322,9 @@ Image_<S>::mean()const{
   return mean_value / (width_*height_);
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template scalar_t Image_<storage_t>::mean()const;
+#endif
 template scalar_t Image_<scalar_t>::mean()const;
 
 template <typename S>
@@ -1302,7 +1338,9 @@ Image_<S>::write(const std::string & file_name){
   }
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template void Image_<storage_t>::write(const std::string &);
+#endif
 template void Image_<scalar_t>::write(const std::string &);
 
 template <typename S>
@@ -1318,7 +1356,9 @@ Image_<S>::write_overlap_image(const std::string & file_name,
   }
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template void Image_<storage_t>::write_overlap_image(const std::string &, Teuchos::RCP<Image_>);
+#endif
 template void Image_<scalar_t>::write_overlap_image(const std::string &, Teuchos::RCP<Image_>);
 
 template <typename S>
@@ -1332,7 +1372,9 @@ Image_<S>::write_grad_x(const std::string & file_name){
   }
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template void Image_<storage_t>::write_grad_x(const std::string & file_name);
+#endif
 template void Image_<scalar_t>::write_grad_x(const std::string & file_name);
 
 template <typename S>
@@ -1346,7 +1388,9 @@ Image_<S>::write_grad_y(const std::string & file_name){
   }
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template void Image_<storage_t>::write_grad_y(const std::string & file_name);
+#endif
 template void Image_<scalar_t>::write_grad_y(const std::string & file_name);
 
 template <typename S>
@@ -1388,7 +1432,9 @@ Image_<S>::apply_rotation(const Rotation_Value rotation,
   return result;
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template Teuchos::RCP<Image_<storage_t>> Image_<storage_t>::apply_rotation(const Rotation_Value,const Teuchos::RCP<Teuchos::ParameterList> &);
+#endif
 template Teuchos::RCP<Image_<scalar_t>> Image_<scalar_t>::apply_rotation(const Rotation_Value,const Teuchos::RCP<Teuchos::ParameterList> &);
 
 }// End DICe Namespace

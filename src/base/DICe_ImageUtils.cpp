@@ -75,9 +75,11 @@ void apply_transform(Teuchos::RCP<Image_<S>> image_in,
   shape_function->insert_motion(u,v);
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template
 DICE_LIB_DLL_EXPORT
 void apply_transform(Teuchos::RCP<Image>,Teuchos::RCP<Image>,const int_t,const int_t,Teuchos::RCP<Local_Shape_Function >);
+#endif
 template
 DICE_LIB_DLL_EXPORT
 void apply_transform(Teuchos::RCP<Scalar_Image>,Teuchos::RCP<Scalar_Image>,const int_t,const int_t,Teuchos::RCP<Local_Shape_Function >);

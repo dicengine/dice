@@ -453,9 +453,10 @@ Subset::initialize(Teuchos::RCP<Image_<S>> image,
     }
   }
 }
-
 template void Subset::initialize(Teuchos::RCP<Image_<scalar_t>>,const Subset_View_Target,Teuchos::RCP<Local_Shape_Function>,const Interpolation_Method);
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template void Subset::initialize(Teuchos::RCP<Image_<storage_t>>,const Subset_View_Target,Teuchos::RCP<Local_Shape_Function>,const Interpolation_Method);
+#endif
 
 bool
 Subset::is_obstructed_pixel(const scalar_t & coord_x,
@@ -572,7 +573,9 @@ Subset::write_subset_on_image(const std::string & file_name,
 }
 
 template void Subset::write_subset_on_image(const std::string &,Teuchos::RCP<Image_<scalar_t>>,Teuchos::RCP<Local_Shape_Function>);
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template void Subset::write_subset_on_image(const std::string &,Teuchos::RCP<Image_<storage_t>>,Teuchos::RCP<Local_Shape_Function>);
+#endif
 
 void
 Subset::write_image(const std::string & file_name,
@@ -698,7 +701,8 @@ Subset::noise_std_dev(Teuchos::RCP<Image_<S>> image,
 }
 
 template scalar_t Subset::noise_std_dev(Teuchos::RCP<Image_<scalar_t>>,Teuchos::RCP<Local_Shape_Function>);
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template scalar_t Subset::noise_std_dev(Teuchos::RCP<Image_<storage_t>>,Teuchos::RCP<Local_Shape_Function>);
-
+#endif
 
 }// End DICe Namespace

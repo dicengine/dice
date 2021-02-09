@@ -109,9 +109,11 @@ void read_rawi_image(const char * file_name,
   rawi_file.close();
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template
 DICE_LIB_DLL_EXPORT
 void read_rawi_image(const char *,storage_t *,const bool);
+#endif
 template
 DICE_LIB_DLL_EXPORT
 void read_rawi_image(const char *,scalar_t *,const bool);
@@ -155,10 +157,11 @@ void write_rawi_image(const char * file_name,
   }
   rawi_file.close();
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template
 DICE_LIB_DLL_EXPORT
 void write_rawi_image(const char *,const int_t,const int_t,storage_t *,const bool);
-
+#endif
 template
 DICE_LIB_DLL_EXPORT
 void write_rawi_image(const char *,const int_t,const int_t,scalar_t *,const bool);

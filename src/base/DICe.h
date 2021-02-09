@@ -76,6 +76,8 @@
 // buffer output macros (for interfacing with javascript):
 #define BUFFER_MSG(var,val) do { std::cout << "[--BUFFER_OUT--]: " << var <<  " " << val << std::endl; } while (0)
 
+//#define SAME_TYPES(T1, T2) _Generic((  (T1){0}  ),T2: 1,default: 0)
+
 #define VERSION "v2.0"
 #ifndef GITSHA1
   #define GITSHA1 "not available"
@@ -104,10 +106,12 @@ namespace DICe{
   typedef uint16_t storage_t;
 #else
   typedef scalar_t storage_t;
+  #define STORAGE_SCALAR_SAME_TYPE
 #endif
 
 /// integer type
 typedef int int_t;
+
 
 /// Print the executable information banner
 DICE_LIB_DLL_EXPORT

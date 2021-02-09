@@ -292,14 +292,14 @@ void read_image(const char * file_name,
       TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(subimage_height),std::runtime_error,"");
       TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(subimage_offset_x),std::runtime_error,"");
       TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(subimage_offset_y),std::runtime_error,"");
-      std::vector<uint16_t> avg_data = hc->get_avg_frame(start_index,end_index);
+      std::vector<storage_t> avg_data = hc->get_avg_frame(start_index,end_index);
       for(int_t i=0;i<width*height;++i)
           intensities[i] = avg_data[i];
     }else{
-      static uint16_t threshold = hc->max_possible_intensity();
+      static storage_t threshold = hc->max_possible_intensity();
       if(filter_failed_pixels){
         if(threshold==hc->max_possible_intensity()||reinit){
-          std::vector<uint16_t> full_data = hc->get_frame(start_index);
+          std::vector<storage_t> full_data = hc->get_frame(start_index);
           std::sort(full_data.begin(),full_data.end());
           const scalar_t outlier = 0.98*full_data[full_data.size()-1];
           for(size_t i=0;i<full_data.size();++i)
@@ -310,7 +310,7 @@ void read_image(const char * file_name,
         }
       }
       // get pointer to the data in hypercine memory buffer
-      uint16_t * data = hc->data(start_index,sub_offset_x,width,sub_offset_y,height);
+      storage_t * data = hc->data(start_index,sub_offset_x,width,sub_offset_y,height);
       // TODO this is the copy to remove later
       for(int_t i=0;i<intensities.size();++i)
           intensities[i] = static_cast<S>(data[i]);
@@ -395,10 +395,11 @@ void read_image(const char * file_name,
     }
   }
 }
-
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template
 DICE_LIB_DLL_EXPORT
 void read_image(const char *,Teuchos::ArrayRCP<storage_t> &,const Teuchos::RCP<Teuchos::ParameterList> &);
+#endif
 template
 DICE_LIB_DLL_EXPORT
 void read_image(const char *,Teuchos::ArrayRCP<scalar_t> &,const Teuchos::RCP<Teuchos::ParameterList> &);
@@ -416,9 +417,11 @@ void round_intensities(const int_t width,
   }
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template
 DICE_LIB_DLL_EXPORT
 void round_intensities(const int_t,const int_t,storage_t *);
+#endif
 template
 DICE_LIB_DLL_EXPORT
 void round_intensities(const int_t,const int_t,scalar_t *);
@@ -464,9 +467,11 @@ void floor_intensities(const int_t width,
   }
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template
 DICE_LIB_DLL_EXPORT
 void floor_intensities(const int_t,const int_t,storage_t *);
+#endif
 template
 DICE_LIB_DLL_EXPORT
 void floor_intensities(const int_t,const int_t,scalar_t *);
@@ -527,9 +532,12 @@ void undistort_intensities(const int_t width,
     }
   }
 }
+
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template
 DICE_LIB_DLL_EXPORT
 void undistort_intensities(const int_t,const int_t,storage_t *,const Teuchos::RCP<Teuchos::ParameterList> &);
+#endif
 template
 DICE_LIB_DLL_EXPORT
 void undistort_intensities(const int_t,const int_t,scalar_t *,const Teuchos::RCP<Teuchos::ParameterList> &);
@@ -561,9 +569,11 @@ void spread_histogram(const int_t width,
   }
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template
 DICE_LIB_DLL_EXPORT
 void spread_histogram(const int_t,const int_t,storage_t *);
+#endif
 template
 DICE_LIB_DLL_EXPORT
 void spread_histogram(const int_t,const int_t,scalar_t *);
@@ -626,9 +636,11 @@ void write_color_overlap_image(const char * file_name,
   }
   cv::imwrite(file_name,out_img);
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template
 DICE_LIB_DLL_EXPORT
 void write_color_overlap_image(const char *,const int_t,const int_t,storage_t *,storage_t *);
+#endif
 template
 DICE_LIB_DLL_EXPORT
 void write_color_overlap_image(const char *,const int_t,const int_t,scalar_t *,scalar_t *);
@@ -676,9 +688,11 @@ void write_image(const char * file_name,
   }
 }
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
 template
 DICE_LIB_DLL_EXPORT
 void write_image(const char *,const int_t,const int_t,storage_t *,const bool);
+#endif
 template
 DICE_LIB_DLL_EXPORT
 void write_image(const char *,const int_t,const int_t,scalar_t *,const bool);
