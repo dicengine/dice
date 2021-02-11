@@ -185,9 +185,10 @@ public:
   /// \param y image coordinate y
   const S& operator()(const int_t x, const int_t y) const{
     // TODO remove bounds checking for performance
-    TEUCHOS_TEST_FOR_EXCEPTION(x<0||x>=width_,std::runtime_error,"x = " << x);
-    TEUCHOS_TEST_FOR_EXCEPTION(y<0||y>=height_,std::runtime_error," y = " << y);
-    return intensities_[y*width_+x];
+//    TEUCHOS_TEST_FOR_EXCEPTION(x<0||x>=width_,std::runtime_error,"x = " << x);
+//    TEUCHOS_TEST_FOR_EXCEPTION(y<0||y>=height_,std::runtime_error," y = " << y);
+    if(x<0||y<0||x>=width_||y>=height_) return intensities_[0];
+    else return intensities_[y*width_+x];
   }
 
   /// intensity accessors:

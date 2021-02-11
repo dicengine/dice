@@ -61,6 +61,10 @@ Subset::Subset(int_t cx,
   assert(x.size()==y.size());
   x_ = x;
   y_ = y;
+  for(int_t i=0;i<x_.size();++i){
+    if(x_[i]<0) x_[i]=0;
+    if(y_[i]<0) y_[i]=0;
+  }
   ref_intensities_ = Teuchos::ArrayRCP<scalar_t>(num_pixels_,0.0);
   def_intensities_ = Teuchos::ArrayRCP<scalar_t>(num_pixels_,0.0);
   grad_x_ = Teuchos::ArrayRCP<scalar_t>(num_pixels_,0.0);
@@ -132,8 +136,8 @@ Subset::Subset(const int_t cx,
   // NOTE: the pairs are (y,x) not (x,y) so that the ordering is correct in the set
   std::set<std::pair<int_t,int_t> >::iterator set_it = coords.begin();
   for( ; set_it!=coords.end();++set_it){
-    x_[index] = set_it->second;
-    y_[index] = set_it->first;
+    x_[index] = set_it->second < 0 ? 0 : set_it->second;
+    y_[index] = set_it->first < 0 ? 0: set_it->first;
     index++;
   }
   // warn the user if the centroid is outside the subset
@@ -170,8 +174,8 @@ Subset::update_centroid(const int_t cx, const int_t cy){
   cx_ = cx;
   cy_ = cy;
   for(int_t i=0;i<num_pixels_;++i){
-    x_[i] += delta_x;
-    y_[i] += delta_y;
+    x_[i] += delta_x; if(x_[i]<0) x_[i]=0;
+    y_[i] += delta_y; if(y_[i]<0) y_[i]=0;
   }
 }
 
@@ -383,14 +387,6 @@ Subset::initialize(Teuchos::RCP<Image_<S>> image,
   // assume if the map is null, use the no_map_tag in the parrel for call of the functor
   if(shape_function==Teuchos::null){
     for(int_t i=0;i<num_pixels_;++i){
-//      if(x_[i]-offset_x<0||x_[i]-offset_x>=image->width()){
-//        std::cout << "invalid x " << x_[i] << " " << offset_x << " " << x_[i]-offset_x << std::endl;
-//        assert(false);
-//      }
-//      if(y_[i]-offset_y<0||y_[i]-offset_y>=image->height()){
-//        std::cout << "invalid y " << y_[i] << " " << offset_y << " " << y_[i]-offset_y << std::endl;
-//        assert(false);
-//      }
       intensities_[i] = (*image)(x_[i]-offset_x,y_[i]-offset_y);
     }
   }
