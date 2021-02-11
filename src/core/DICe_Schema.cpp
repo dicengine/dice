@@ -186,6 +186,8 @@ Schema::set_def_image(const std::string & defName){
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
   imgParams->set(DICe::filter_failed_cine_pixels,filter_failed_cine_pixels_);
+  imgParams->set(DICe::convert_cine_to_8_bit,convert_cine_to_8_bit_);
+  imgParams->set(DICe::buffer_persistence_guaranteed,true);
   if(init_params_!=Teuchos::null){
     if(init_params_->isSublist(undistort_images)){
       imgParams->set(undistort_images,init_params_->sublist(undistort_images));
@@ -193,42 +195,67 @@ Schema::set_def_image(const std::string & defName){
   }
   const bool has_motion_window = motion_window_params_->size()>0;
 
-  // if the image is from a cine file, load a large chunk of frames into the memory buffer
-  if((frame_id_-first_frame_id_)%CINE_BUFFER_NUM_FRAMES==0){
-    if(DICe::utils::image_file_type(defName.c_str())==CINE){
-      // check if the window params are already set and just the frame needs to be updated
-      std::string undecorated_cine_file = DICe::utils::cine_file_name(defName.c_str());
-      Teuchos::RCP<hypercine::HyperCine> hc = DICe::utils::HyperCine_Singleton::instance().hypercine(undecorated_cine_file);
-      // get last frame of cine file:
-      const int_t frame_count = frame_id_ + CINE_BUFFER_NUM_FRAMES >= first_frame_id_ + num_frames_ ?
-          first_frame_id_+num_frames_-frame_id_ : CINE_BUFFER_NUM_FRAMES;
-      DEBUG_MSG("Schema::set_def_image(): *** reading cine buffer frames " << frame_id_ << " count " << frame_count);
-      if(hc->hyperframe()->num_windows()==0&&has_motion_window){
-        hypercine::HyperCine::HyperFrame hf(frame_id_,frame_count);
-        for(std::map<int_t,Motion_Window_Params>::iterator it=motion_window_params_->begin();it!=motion_window_params_->end();++it){
-            hf.add_window(it->second.start_x_,
-              it->second.end_x_-it->second.start_x_,
-              it->second.start_y_,
-              it->second.end_y_ - it->second.start_y_);
-        }
-        hc->read_buffer(hf);
-      }else{
-        hc->hyperframe()->update_frames(frame_id_,frame_count);
-        hc->read_buffer();
-      }
-    }
-  }
-
   int_t w = 0, h = 0;
   utils::read_image_dimensions(defName.c_str(),w,h);
   bool force_reallocation = false;
 
-  // query the image dimensions:
+  int_t sub_width = 0, sub_height = 0;
+  int_t offset_x = 0, offset_y = 0;
+  int_t end_x = 0, end_y = 0;
+  if(has_extents_){
+    const int_t buffer = 100; // if the extents are within 100 pixels of the image boundary use the whole image
+    offset_x = def_extents_[0] > buffer && def_extents_[0] < w - buffer ? def_extents_[0] : 0;
+    offset_y = def_extents_[2] > buffer && def_extents_[2] < h - buffer ? def_extents_[2] : 0;
+    end_x = def_extents_[1] > buffer && def_extents_[1] < w - buffer ? def_extents_[1] : w;
+    end_y = def_extents_[3] > buffer && def_extents_[3] < h - buffer ? def_extents_[3] : h;
+    sub_width = end_x - offset_x;
+    sub_height = end_y - offset_y;
+  }
+
+  // if the image is from a cine file, load a large chunk of frames into the memory buffer
+  const int_t num_buffer_frames = !has_extents_ || has_motion_window ? CINE_BUFFER_NUM_FRAMES : 1; // the extents update after each frame so can only put one frame in the buffer
+  if((frame_id_-first_frame_id_)%num_buffer_frames==0){
+    if(DICe::utils::image_file_type(defName.c_str())==CINE){
+      std::string undecorated_cine_file = DICe::utils::cine_file_name(defName.c_str());
+      // test if this is a cross-correlation (if so, don't use a buffer since only one frame is needed)
+      // if it is a cross-correlation setting the def image, the ref and def images will come from different files
+      // hence the check below on the cine file name
+      assert(ref_img_!=Teuchos::null);
+      std::string undecorated_ref_cine_file = DICe::utils::cine_file_name(ref_img_->file_name().c_str());
+      if(undecorated_cine_file==undecorated_ref_cine_file){ // assumes ref image has already been set
+        // check if the window params are already set and just the frame needs to be updated
+        Teuchos::RCP<hypercine::HyperCine> hc = convert_cine_to_8_bit_ ? DICe::utils::HyperCine_Singleton::instance().hypercine(undecorated_cine_file,hypercine::HyperCine::TO_8_BIT):
+          DICe::utils::HyperCine_Singleton::instance().hypercine(undecorated_cine_file);
+        // get last frame of cine file:
+        const int_t frame_count = frame_id_ + num_buffer_frames >= first_frame_id_ + num_frames_ ?
+            first_frame_id_+num_frames_-frame_id_ : num_buffer_frames;
+        DEBUG_MSG("Schema::set_def_image(): *** reading cine buffer, frame id " << frame_id_ << " count " << frame_count);
+        if((hc->hyperframe()->num_windows()==0&&has_motion_window)||has_extents_){
+          hypercine::HyperCine::HyperFrame hf(frame_id_,frame_count);
+          if(has_motion_window){
+            for(std::map<int_t,Motion_Window_Params>::iterator it=motion_window_params_->begin();it!=motion_window_params_->end();++it){
+              hf.add_window(it->second.start_x_,
+                it->second.end_x_-it->second.start_x_,
+                it->second.start_y_,
+                it->second.end_y_ - it->second.start_y_);
+            }
+          }else{
+            hf.add_window(offset_x,sub_width,offset_y,sub_height);
+          }
+          hc->read_buffer(hf);
+        }else{
+          hc->hyperframe()->update_frames(frame_id_,frame_count);
+          hc->read_buffer();
+        }
+      }else{
+        DEBUG_MSG("Schema::set_def_image(): skipping reading cine buffer since the ref and def images come from different cine files (likely cross-correlation)");
+        imgParams->set(DICe::buffer_persistence_guaranteed,false);
+      }
+    }
+  }
+
   for(size_t id=0;id<def_imgs_.size();++id){
     if(has_extents_||has_motion_window){
-      int_t sub_width = 0, sub_height = 0;
-      int_t offset_x = 0, offset_y = 0;
-      int_t end_x = 0, end_y = 0;
       if(has_motion_window){
         bool found_id = false;
         for(std::map<int_t,Motion_Window_Params>::iterator it=motion_window_params_->begin();it!=motion_window_params_->end();++it){
@@ -237,6 +264,8 @@ Schema::set_def_image(const std::string & defName){
             offset_y = it->second.start_y_;
             end_x = it->second.end_x_;
             end_y = it->second.end_y_;
+            sub_width = end_x - offset_x;
+            sub_height = end_y - offset_y;
             found_id = true;
             break;
           }
@@ -245,15 +274,7 @@ Schema::set_def_image(const std::string & defName){
           TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,
             "No motion window found for this sub image id, if motion windows are used, one must be set for each subset");
         }
-      }else{
-        const int_t buffer = 100; // if the extents are within 100 pixels of the image boundary use the whole image
-        offset_x = def_extents_[0] > buffer && def_extents_[0] < w - buffer ? def_extents_[0] : 0;
-        offset_y = def_extents_[2] > buffer && def_extents_[2] < h - buffer ? def_extents_[2] : 0;
-        end_x = def_extents_[1] > buffer && def_extents_[1] < w - buffer ? def_extents_[1] : w;
-        end_y = def_extents_[3] > buffer && def_extents_[3] < h - buffer ? def_extents_[3] : h;
       }
-      sub_width = end_x - offset_x;
-      sub_height = end_y - offset_y;
       imgParams->set(DICe::subimage_width,sub_width);
       imgParams->set(DICe::subimage_height,sub_height);
       imgParams->set(DICe::subimage_offset_x,offset_x);
@@ -335,6 +356,7 @@ Schema::set_ref_image(const std::string & refName){
   imgParams->set(DICe::gradient_method,gradient_method_);
   imgParams->set(DICe::compute_laplacian_image,compute_laplacian_image_);
   imgParams->set(DICe::filter_failed_cine_pixels,filter_failed_cine_pixels_);
+  imgParams->set(DICe::convert_cine_to_8_bit,convert_cine_to_8_bit_);
   if(init_params_!=Teuchos::null){
     if(init_params_->isSublist(undistort_images)){
       imgParams->set(undistort_images,init_params_->sublist(undistort_images));
@@ -594,6 +616,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   sort_txt_output_ = diceParams->get<bool>(DICe::sort_txt_output,false);
   gauss_filter_images_ = diceParams->get<bool>(DICe::gauss_filter_images,false);
   filter_failed_cine_pixels_ = diceParams->get<bool>(DICe::filter_failed_cine_pixels,false);
+  convert_cine_to_8_bit_ = diceParams->get<bool>(DICe::convert_cine_to_8_bit,true);
   gauss_filter_mask_size_ = diceParams->get<int_t>(DICe::gauss_filter_mask_size,7);
   compute_ref_gradients_ = diceParams->get<bool>(DICe::compute_ref_gradients,true);
   compute_def_gradients_ = diceParams->get<bool>(DICe::compute_def_gradients,false);

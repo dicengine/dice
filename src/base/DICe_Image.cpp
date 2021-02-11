@@ -127,8 +127,8 @@ Image_<S>::Image_(Teuchos::RCP<Image_> img,
   const int_t src_height = img->height();
 
   // initialize the pixel containers
-  intensities_ = Teuchos::ArrayRCP<S>(height_*width_,0.0);
-  intensities_temp_ = Teuchos::ArrayRCP<S>(height_*width_,0.0);
+  intensities_ = Teuchos::ArrayRCP<S>(height_*width_,0);
+  intensities_temp_ = Teuchos::ArrayRCP<S>(height_*width_,0);
   grad_x_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   grad_y_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   mask_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);

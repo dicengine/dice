@@ -188,9 +188,7 @@ void read_image_dimensions(const char * file_name,
   else if(file_type==CINE){
     const std::string cine_file = cine_file_name(file_name);
     DEBUG_MSG("read_image_dimensions(): cine file name: " << cine_file);
-    Teuchos::RCP<hypercine::HyperCine> hc;
-    width = DICe::utils::HyperCine_Singleton::instance().hypercine(cine_file)->width();
-    height = DICe::utils::HyperCine_Singleton::instance().hypercine(cine_file)->height();
+    DICe::utils::HyperCine_Singleton::instance().image_dimensions(cine_file,width,height);
     assert(width>0);
     assert(height>0);
   }
@@ -233,6 +231,7 @@ void read_image(const char * file_name,
         params->isParameter(subimage_offset_y);
     layout_right = params->get<bool>(is_layout_right,true);
   }
+  DEBUG_MSG("utils::read_image(): file name: " << file_name);
   DEBUG_MSG("utils::read_image(): sub_w: " << sub_w << " sub_h: " << sub_h << " offset_x: " << sub_offset_x << " offset_y: " << sub_offset_y);
   DEBUG_MSG("utils::read_image(): is_layout_right: " << layout_right);
   int_t width = 0;
@@ -258,10 +257,12 @@ void read_image(const char * file_name,
     bool filter_failed_pixels = true;
     bool convert_to_8_bit = true;
     bool reinit = false;
+    bool buffer_persistence_guaranteed = false;
     if(params!=Teuchos::null){
-      reinit = params->get(reinitialize_cine_reader_conversion_factor,reinit); // TODO TODO TODO FIXME no longer resets the conversion factor, but changes the threshold
+      reinit = params->get(reinitialize_cine_reader_conversion_factor,reinit); // FIXME no longer resets the conversion factor, but changes the threshold
       filter_failed_pixels = params->get<bool>(filter_failed_cine_pixels,filter_failed_pixels);
       convert_to_8_bit = params->get<bool>(convert_cine_to_8_bit,convert_to_8_bit);
+      buffer_persistence_guaranteed = params->get<bool>(DICe::buffer_persistence_guaranteed,buffer_persistence_guaranteed);
     }
     DEBUG_MSG("utils::read_image(): filter_failed_pixels: " << filter_failed_pixels);
     DEBUG_MSG("utils::read_image(): convert_to_8_bit: " << convert_to_8_bit);
@@ -280,18 +281,13 @@ void read_image(const char * file_name,
       hc = DICe::utils::HyperCine_Singleton::instance().hypercine(cine_file);
     width = sub_w==0?hc->width():sub_w;
     height = sub_h==0?hc->height():sub_h;
-
-    // TODO  test type S if it == uint16_t simply move the pointer, otherwise cast each value
-
-    if(intensities.size()==0)
-      intensities = Teuchos::ArrayRCP<S>(width*height,0.0);
-    // TODO FIXME TODO FIXME don't manually copy things like this in the future, but copy the pointer instead
-    // TODO hoping to get rid of the crap below
     if(is_avg){
       TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(subimage_width),std::runtime_error,"");
       TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(subimage_height),std::runtime_error,"");
       TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(subimage_offset_x),std::runtime_error,"");
       TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(subimage_offset_y),std::runtime_error,"");
+      if(intensities.size()==0)
+        intensities = Teuchos::ArrayRCP<S>(width*height,0.0);
       std::vector<storage_t> avg_data = hc->get_avg_frame(start_index,end_index);
       for(int_t i=0;i<width*height;++i)
           intensities[i] = avg_data[i];
@@ -309,21 +305,28 @@ void read_image(const char * file_name,
             }
         }
       }
-      // get pointer to the data in hypercine memory buffer
-      storage_t * data = hc->data(start_index,sub_offset_x,width,sub_offset_y,height);
-      // TODO this is the copy to remove later
-      for(int_t i=0;i<intensities.size();++i)
-          intensities[i] = static_cast<S>(data[i]);
+      if(buffer_persistence_guaranteed){
+        TEUCHOS_TEST_FOR_EXCEPTION(!hc->buffer_has_frame_window(start_index,sub_offset_x,width,sub_offset_y,height),
+          std::runtime_error,"cine frame or window not in buffer, but should be");
+        DEBUG_MSG("utils::read_image(): intensity values obtained via pointer to hypercine memory buffer");
+        intensities = Teuchos::ArrayRCP<S>(hc->data(start_index,sub_offset_x,width,sub_offset_y,height),0,width*height,false);
+      }else{
+        DEBUG_MSG("utils::read_image(): intensity values deep copied from hypercine memory buffer");
+        // manual copy of intensity values required
+        if(intensities.size()==0)
+          intensities = Teuchos::ArrayRCP<S>(width*height,0.0);
+        // get pointer to the data in hypercine memory buffer
+        storage_t * data = hc->data(start_index,sub_offset_x,width,sub_offset_y,height);
+        // values need to be copied here since another call to hypercine read buffer for another image
+        // would replace the existing intensity values that this image points to
+        for(int_t i=0;i<intensities.size();++i)
+          intensities[i] = data[i];
+      }
       if(filter_failed_pixels){
         for(int_t i=0;i<intensities.size();++i)
           intensities[i] = std::min(intensities[i],static_cast<S>(threshold));
       }
-//      if(convert_to_8_bit){
-//        const scalar_t conversion_factor = hc->conversion_factor_to_8_bit();
-//        for(int_t i=0;i<intensities.size();++i)
-//            intensities[i] = static_cast<uint16_t>(intensities[i]*conversion_factor);
-//      }
-    }
+    } // end not is_avg
   }
 #ifdef DICE_ENABLE_NETCDF
   /// check if the file is a netcdf file
@@ -711,6 +714,23 @@ HyperCine_Singleton::hypercine(const std::string & id,
     DEBUG_MSG("HyperCine_Singleton::hypercine(): reusing HyperCine for file " << id << " conversion type " << conversion_type);
     return hypercine_map_.find(std::pair<std::string,hypercine::HyperCine::Bit_Depth_Conversion_Type>(id,conversion_type))->second;
   }
+}
+
+void
+HyperCine_Singleton::image_dimensions(const std::string & id, int_t & width, int_t & height)const{
+  std::map<std::pair<std::string,hypercine::HyperCine::Bit_Depth_Conversion_Type>,Teuchos::RCP<hypercine::HyperCine> >::const_iterator it = hypercine_map_.begin();
+  for(;it!=hypercine_map_.end();++it){
+    if(it->first.first==id){
+      DEBUG_MSG("HyperCine_Singleton::image_dimensions(): using dims from existing hypercine " << id);
+      width = it->second->width();
+      height = it->second->height();
+      return;
+    }
+  }
+  // no matching (by name) hypercine objects found
+  hypercine::HyperCine hc(id.c_str());
+  width = hc.width();
+  height = hc.height();
 }
 
 } // end namespace utils

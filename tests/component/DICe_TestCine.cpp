@@ -131,7 +131,6 @@ int main(int argc, char *argv[]) {
         for(int_t x=0;x<hc->width();++x){
           if(std::abs((*cine_img)(x,y)-cine_img_exact(x,y)) > 1.0){
             *outStream << x << " " << y << " actual " << (*cine_img)(x,y) << " exptected " << cine_img_exact(x,y) << std::endl;
-            assert(false);
             intensity_value_error=true;
           }
         }
@@ -207,7 +206,6 @@ int main(int argc, char *argv[]) {
     name << "./images/motion_window_" << i << ".rawi";
 #endif
     Scalar_Image cine_img_exact(name.str().c_str());
-    //cine_img_exact.write("motion_window_12bpp_exact.tif");
     bool intensity_value_error = false;
     for(int_t y=0;y<cine_img_exact.height();++y){
       for(int_t x=0;x<cine_img_exact.width();++x){

@@ -1187,6 +1187,8 @@ private:
   /// filter the images using a gauss_filter_mask_size_ point gauss filter
   bool filter_failed_cine_pixels_;
   /// filter the images using a gauss_filter_mask_size_ point gauss filter
+  bool convert_cine_to_8_bit_;
+  /// filter the images using a gauss_filter_mask_size_ point gauss filter
   int_t gauss_filter_mask_size_;
   /// Compute the reference image gradients
   bool compute_ref_gradients_;

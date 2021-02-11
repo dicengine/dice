@@ -227,6 +227,14 @@ public:
   /// if the reader doesn't exist, it gets created
   Teuchos::RCP<hypercine::HyperCine> hypercine(const std::string & id,
     hypercine::HyperCine::Bit_Depth_Conversion_Type conversion_type=hypercine::HyperCine::QUAD_10_TO_12);
+
+  /// utility to get the image dimensions from a hypercine object if one exists with the same file name
+  /// if no hypercine objects exist, the utility reads the dimensions without creating a new one
+  /// \param id file name
+  /// \param width the width of the full frame image
+  /// \param heigh the height of the full frame image
+  void image_dimensions(const std::string & id, int_t & width, int_t & height) const;
+
 private:
   /// constructor
   HyperCine_Singleton(){};
