@@ -823,14 +823,14 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
 
   if(diceParams->isParameter(DICe::exact_solution_constant_value_x)||diceParams->isParameter(DICe::exact_solution_constant_value_y)){
     TEUCHOS_TEST_FOR_EXCEPTION(diceParams->get<bool>(DICe::estimate_resolution_error,false),std::runtime_error,"");
-    const scalar_t value_x = diceParams->get<scalar_t>(DICe::exact_solution_constant_value_x,0.0);
-    const scalar_t value_y = diceParams->get<scalar_t>(DICe::exact_solution_constant_value_y,0.0);
+    const scalar_t value_x = diceParams->get<double>(DICe::exact_solution_constant_value_x,0.0);
+    const scalar_t value_y = diceParams->get<double>(DICe::exact_solution_constant_value_y,0.0);
     compute_laplacian_image_ = true;
     image_deformer_ = Teuchos::rcp(new Image_Deformer(value_x,value_y,Image_Deformer::CONSTANT_VALUE));
   }
   if(diceParams->isParameter(DICe::exact_solution_dic_challenge_14)){
     TEUCHOS_TEST_FOR_EXCEPTION(diceParams->get<bool>(DICe::estimate_resolution_error,false),std::runtime_error,"");
-    const scalar_t value = diceParams->get<scalar_t>(DICe::exact_solution_dic_challenge_14,0.0);
+    const scalar_t value = diceParams->get<double>(DICe::exact_solution_dic_challenge_14,0.0);
     compute_laplacian_image_ = true;
     image_deformer_ = Teuchos::rcp(new Image_Deformer(value,0.0,Image_Deformer::DIC_CHALLENGE_14));
   }
@@ -953,7 +953,7 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
     //  "Error, missing required input parameter: mesh_size");
     if(input_params->isParameter(DICe::mesh_size)){
       const scalar_t mesh_size = input_params->get<double>(DICe::mesh_size);
-      init_params_->set(DICe::mesh_size,mesh_size); // pass the mesh size to the stored parameters for this schema (used by global method)
+      init_params_->set(DICe::mesh_size,(double)mesh_size); // pass the mesh size to the stored parameters for this schema (used by global method)
     }
     //TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::subset_file),std::runtime_error,
     //  "Error, missing required input parameter: subset_file");
@@ -2322,15 +2322,15 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
   assert(ref_img_->width()>0);
   assert(ref_img_->height()>0);
   const scalar_t min_dim = ref_img_->width() < ref_img_->height() ? ref_img_->width() : ref_img_->height();
-  const scalar_t min_period = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_min_period,25);
-  const scalar_t max_period = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_max_period,min_dim/3.0);
+  const scalar_t min_period = correlation_params->get<double>(DICe::estimate_resolution_error_min_period,25);
+  const scalar_t max_period = correlation_params->get<double>(DICe::estimate_resolution_error_max_period,min_dim/3.0);
   TEUCHOS_TEST_FOR_EXCEPTION(min_period > max_period,std::runtime_error," min period " << min_period << " max period: " << max_period);
-  const scalar_t period_factor = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_period_factor,0.5);
-  const scalar_t min_amp = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_min_amplitude,0.5);
-  const scalar_t max_amp = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_max_amplitude,4.0);
-  const scalar_t amp_step = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_amplitude_step,0.5);
-  const scalar_t speckle_size = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_speckle_size,-1.0);
-  const scalar_t noise_percent = correlation_params->get<scalar_t>(DICe::estimate_resolution_error_noise_percent,-1.0);
+  const scalar_t period_factor = correlation_params->get<double>(DICe::estimate_resolution_error_period_factor,0.5);
+  const scalar_t min_amp = correlation_params->get<double>(DICe::estimate_resolution_error_min_amplitude,0.5);
+  const scalar_t max_amp = correlation_params->get<double>(DICe::estimate_resolution_error_max_amplitude,4.0);
+  const scalar_t amp_step = correlation_params->get<double>(DICe::estimate_resolution_error_amplitude_step,0.5);
+  const scalar_t speckle_size = correlation_params->get<double>(DICe::estimate_resolution_error_speckle_size,-1.0);
+  const scalar_t noise_percent = correlation_params->get<double>(DICe::estimate_resolution_error_noise_percent,-1.0);
 
   // the full image width and height must be set
   TEUCHOS_TEST_FOR_EXCEPTION(full_ref_img_width_<=0||full_ref_img_height_<=0,std::runtime_error,"");

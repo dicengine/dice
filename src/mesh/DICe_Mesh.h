@@ -1404,7 +1404,7 @@ public:
     return & pixel_ownership_;
   }
   /// Note y and x values are reversed here
-  std::vector<std::set<std::pair<scalar_t,scalar_t> > > * get_integration_point_ownership(){
+  std::vector<std::set<std::pair<precision_t,precision_t> > > * get_integration_point_ownership(){
     return & integration_point_ownership_;
   }
 
@@ -1566,7 +1566,7 @@ private:
   /// Vector of vectors for each element that provide the gauss integration points each element owns.
   /// Note the ownership is unique and complete, multiple elements cannot own the same integration points
   /// and all integration points must be owned
-  std::vector<std::set<std::pair<scalar_t,scalar_t> > > integration_point_ownership_;
+  std::vector<std::set<std::pair<precision_t,precision_t> > > integration_point_ownership_;
   /// storage of the boundary condition definitions
   std::vector<Boundary_Condition_Def> bc_defs_;
   /// value to use for initial condition in x
@@ -1611,38 +1611,38 @@ public:
   /// \param point_coords The coordinates of the point to evaluate the shape functinos
   /// \param coefficient The weighting function value in the Gauss integration
   /// \param shape_function_values The values returned for this particular point
-  virtual void evaluate_shape_functions(const scalar_t * nodal_coords,
-    const scalar_t * point_coords,
-    const scalar_t & coefficient,
-    scalar_t * shape_function_values)=0;
+  virtual void evaluate_shape_functions(const precision_t * nodal_coords,
+    const precision_t * point_coords,
+    const precision_t & coefficient,
+    precision_t * shape_function_values)=0;
 
   /// Evaluation of the shape functions
   /// \param natural_coords The coordinates of the point to evaluate the shape functinos
   /// \param shape_function_values The values returned for this particular point
-  virtual void evaluate_shape_functions(const scalar_t * natural_coords,
-    scalar_t * shape_function_values)=0;
+  virtual void evaluate_shape_functions(const precision_t * natural_coords,
+    precision_t * shape_function_values)=0;
 
   /// Evaluation of the shape function derivatives
   /// \param nodal_coords The coordinates of the nodes
   /// \param coefficient The weighting function value in the Gauss integration
   /// \param shape_function_derivative_values The values returned for this particular point
-  virtual void evaluate_shape_function_derivatives(const scalar_t * nodal_coords,
-    const scalar_t & coefficient,
-    scalar_t * shape_function_derivative_values)=0;
+  virtual void evaluate_shape_function_derivatives(const precision_t * nodal_coords,
+    const precision_t & coefficient,
+    precision_t * shape_function_derivative_values)=0;
 
   /// Evaluation of the shape function derivatives
   /// \param natural_coords the isoparamteric coords of the point
   /// \param shape_function_derivative_values the array that is returned with the shape function derivatives
-  virtual void evaluate_shape_function_derivatives(const scalar_t * natural_coords,
-    scalar_t * shape_function_derivative_values)=0;
+  virtual void evaluate_shape_function_derivatives(const precision_t * natural_coords,
+    precision_t * shape_function_derivative_values)=0;
 
   /// Determine if a given point is inside the element or external
   /// \param point_coords The test point location
   /// \param nodal_coords The corrdinates of the nodes for this element
   /// \param coefficient The weighting function value
-  virtual bool is_in_element(const scalar_t * nodal_coords,
-    const scalar_t * point_coords,
-    const scalar_t & coefficient)=0;
+  virtual bool is_in_element(const precision_t * nodal_coords,
+    const precision_t * point_coords,
+    const precision_t & coefficient)=0;
 
   /// Returns the integration points and weights in the natural coordinates (isoparametric, not physical)
   /// \param order The gauss integration order
@@ -1650,8 +1650,8 @@ public:
   /// \param weights The integration weights for each point
   /// \param num_points the number of integration points
   virtual void get_natural_integration_points(const int_t order,
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
-    Teuchos::ArrayRCP<scalar_t> & weights,
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<precision_t> > & locations,
+    Teuchos::ArrayRCP<precision_t> & weights,
     int_t & num_points)=0;
 
 protected:
@@ -1679,37 +1679,37 @@ public:
   virtual ~CVFEM_Linear_Tri3(){};
 
   /// see base class documentation
-  virtual void evaluate_shape_functions(const scalar_t * nodal_coords,
-    const scalar_t * point_coords,
-    const scalar_t & coefficient,
-    scalar_t * shape_function_values);
+  virtual void evaluate_shape_functions(const precision_t * nodal_coords,
+    const precision_t * point_coords,
+    const precision_t & coefficient,
+    precision_t * shape_function_values);
 
   /// see base class documentation
-  virtual void evaluate_shape_functions(const scalar_t * natural_coords,
-    scalar_t * shape_function_values){
+  virtual void evaluate_shape_functions(const precision_t * natural_coords,
+    precision_t * shape_function_values){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
 
   /// see base class documentation
-  virtual void evaluate_shape_function_derivatives(const scalar_t * nodal_coords,
-    const scalar_t & coefficient,
-    scalar_t * shape_function_derivative_values);
+  virtual void evaluate_shape_function_derivatives(const precision_t * nodal_coords,
+    const precision_t & coefficient,
+    precision_t * shape_function_derivative_values);
 
   /// see base class documentation
-  virtual void evaluate_shape_function_derivatives(const scalar_t * natural_coords,
-    scalar_t * shape_function_derivative_values){
+  virtual void evaluate_shape_function_derivatives(const precision_t * natural_coords,
+    precision_t * shape_function_derivative_values){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
 
   /// See base class documentation
-  virtual bool is_in_element(const scalar_t * nodal_coords,
-    const scalar_t * point_coords,
-    const scalar_t & coefficient);
+  virtual bool is_in_element(const precision_t * nodal_coords,
+    const precision_t * point_coords,
+    const precision_t & coefficient);
 
   /// See base class documentation
   virtual void get_natural_integration_points(const int_t order,
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
-    Teuchos::ArrayRCP<scalar_t> & weights, int_t & num_points);
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<precision_t> > & locations,
+    Teuchos::ArrayRCP<precision_t> & weights, int_t & num_points);
 };
 
 /// \class CVFEM_Linear_Tet4
@@ -1726,37 +1726,37 @@ public:
   virtual ~CVFEM_Linear_Tet4(){};
 
   /// see base class documentation
-  virtual void evaluate_shape_functions(const scalar_t * nodal_coords,
-    const scalar_t * point_coords,
-    const scalar_t & coefficient,
-    scalar_t * shape_function_values);
+  virtual void evaluate_shape_functions(const precision_t * nodal_coords,
+    const precision_t * point_coords,
+    const precision_t & coefficient,
+    precision_t * shape_function_values);
 
   /// see base class documentation
-  virtual void evaluate_shape_functions(const scalar_t * natural_coords,
-    scalar_t * shape_function_values){
+  virtual void evaluate_shape_functions(const precision_t * natural_coords,
+    precision_t * shape_function_values){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
 
   /// see base class documentation
-  virtual void evaluate_shape_function_derivatives(const scalar_t * nodal_coords,
-    const scalar_t & coefficient,
-    scalar_t * shape_function_derivative_values);
+  virtual void evaluate_shape_function_derivatives(const precision_t * nodal_coords,
+    const precision_t & coefficient,
+    precision_t * shape_function_derivative_values);
 
   /// see base class documentation
-  virtual void evaluate_shape_function_derivatives(const scalar_t * natural_coords,
-    scalar_t * shape_function_derivative_values){
+  virtual void evaluate_shape_function_derivatives(const precision_t * natural_coords,
+    precision_t * shape_function_derivative_values){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
 
   /// See base class documentation
-  virtual bool is_in_element(const scalar_t * nodal_coords,
-    const scalar_t * point_coords,
-    const scalar_t & coefficient);
+  virtual bool is_in_element(const precision_t * nodal_coords,
+    const precision_t * point_coords,
+    const precision_t & coefficient);
 
   /// See base class documentation
   virtual void get_natural_integration_points(const int_t order,
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
-    Teuchos::ArrayRCP<scalar_t> & weights,
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<precision_t> > & locations,
+    Teuchos::ArrayRCP<precision_t> & weights,
     int_t & num_points){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
@@ -1776,37 +1776,37 @@ public:
   virtual ~FEM_Linear_Hex8(){};
 
   /// see base class documentation
-  virtual void evaluate_shape_functions(const scalar_t * nodal_coords,
-    const scalar_t * point_coords,
-    const scalar_t & coefficient,
-    scalar_t * shape_function_values){
+  virtual void evaluate_shape_functions(const precision_t * nodal_coords,
+    const precision_t * point_coords,
+    const precision_t & coefficient,
+    precision_t * shape_function_values){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
 
   /// see base class documentation
-  virtual void evaluate_shape_functions(const scalar_t * natural_coords,
-    scalar_t * shape_function_values);
+  virtual void evaluate_shape_functions(const precision_t * natural_coords,
+    precision_t * shape_function_values);
 
   /// see base class documentation
-  virtual void evaluate_shape_function_derivatives(const scalar_t * nodal_coords,
-    const scalar_t & coefficient,
-    scalar_t * shape_function_derivative_values){
+  virtual void evaluate_shape_function_derivatives(const precision_t * nodal_coords,
+    const precision_t & coefficient,
+    precision_t * shape_function_derivative_values){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
 
   /// see base class documentation
-  virtual void evaluate_shape_function_derivatives(const scalar_t * natural_coords,
-    scalar_t * shape_function_derivative_values);
+  virtual void evaluate_shape_function_derivatives(const precision_t * natural_coords,
+    precision_t * shape_function_derivative_values);
 
   /// See base class documentation
-  virtual bool is_in_element(const scalar_t * nodal_coords,
-    const scalar_t * point_coords,
-    const scalar_t & coefficient);
+  virtual bool is_in_element(const precision_t * nodal_coords,
+    const precision_t * point_coords,
+    const precision_t & coefficient);
 
   /// See base class documentation
   virtual void get_natural_integration_points(const int_t order,
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
-    Teuchos::ArrayRCP<scalar_t> & weights,
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<precision_t> > & locations,
+    Teuchos::ArrayRCP<precision_t> & weights,
     int_t & num_points);
 };
 
@@ -1824,36 +1824,36 @@ public:
   virtual ~FEM_Linear_Quad4(){};
 
   /// see base class documentation
-  virtual void evaluate_shape_functions(const scalar_t * nodal_coords,
-    const scalar_t * point_coords, const scalar_t & coefficient,
-    scalar_t * shape_function_values){
+  virtual void evaluate_shape_functions(const precision_t * nodal_coords,
+    const precision_t * point_coords, const precision_t & coefficient,
+    precision_t * shape_function_values){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
 
   /// see base class documentation
-  virtual void evaluate_shape_functions(const scalar_t * natural_coords,
-    scalar_t * shape_function_values);
+  virtual void evaluate_shape_functions(const precision_t * natural_coords,
+    precision_t * shape_function_values);
 
   /// see base class documentation
-  virtual void evaluate_shape_function_derivatives(const scalar_t * nodal_coords,
-    const scalar_t & coefficient,
-    scalar_t * shape_function_derivative_values){
+  virtual void evaluate_shape_function_derivatives(const precision_t * nodal_coords,
+    const precision_t & coefficient,
+    precision_t * shape_function_derivative_values){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
 
   /// see base class documentation
-  virtual void evaluate_shape_function_derivatives(const scalar_t * natural_coords,
-    scalar_t * shape_function_derivative_values);
+  virtual void evaluate_shape_function_derivatives(const precision_t * natural_coords,
+    precision_t * shape_function_derivative_values);
 
   /// See base class documentation
-  virtual bool is_in_element(const scalar_t * nodal_coords,
-    const scalar_t * point_coords,
-    const scalar_t & coefficient);
+  virtual bool is_in_element(const precision_t * nodal_coords,
+    const precision_t * point_coords,
+    const precision_t & coefficient);
 
   /// See base class documentation
   virtual void get_natural_integration_points(const int_t order,
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
-    Teuchos::ArrayRCP<scalar_t> & weights,
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<precision_t> > & locations,
+    Teuchos::ArrayRCP<precision_t> & weights,
     int_t & num_points);
 };
 
@@ -1871,36 +1871,36 @@ public:
   virtual ~FEM_Linear_Tri3(){};
 
   /// see base class documentation
-  virtual void evaluate_shape_functions(const scalar_t * nodal_coords,
-    const scalar_t * point_coords, const scalar_t & coefficient,
-    scalar_t * shape_function_values){
+  virtual void evaluate_shape_functions(const precision_t * nodal_coords,
+    const precision_t * point_coords, const precision_t & coefficient,
+    precision_t * shape_function_values){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
 
   /// see base class documentation
-  virtual void evaluate_shape_functions(const scalar_t * natural_coords,
-    scalar_t * shape_function_values);
+  virtual void evaluate_shape_functions(const precision_t * natural_coords,
+    precision_t * shape_function_values);
 
   /// see base class documentation
-  virtual void evaluate_shape_function_derivatives(const scalar_t * nodal_coords,
-    const scalar_t & coefficient,
-    scalar_t * shape_function_derivative_values){
+  virtual void evaluate_shape_function_derivatives(const precision_t * nodal_coords,
+    const precision_t & coefficient,
+    precision_t * shape_function_derivative_values){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
 
   /// see base class documentation
-  virtual void evaluate_shape_function_derivatives(const scalar_t * natural_coords,
-    scalar_t * shape_function_derivative_values);
+  virtual void evaluate_shape_function_derivatives(const precision_t * natural_coords,
+    precision_t * shape_function_derivative_values);
 
   /// See base class documentation
-  virtual bool is_in_element(const scalar_t * nodal_coords,
-    const scalar_t * point_coords,
-    const scalar_t & coefficient);
+  virtual bool is_in_element(const precision_t * nodal_coords,
+    const precision_t * point_coords,
+    const precision_t & coefficient);
 
   /// See base class documentation
   virtual void get_natural_integration_points(const int_t order,
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
-    Teuchos::ArrayRCP<scalar_t> & weights,
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<precision_t> > & locations,
+    Teuchos::ArrayRCP<precision_t> & weights,
     int_t & num_points);
 };
 
@@ -1919,36 +1919,36 @@ public:
   virtual ~FEM_Quadratic_Tri6(){};
 
   /// see base class documentation
-  virtual void evaluate_shape_functions(const scalar_t * nodal_coords,
-    const scalar_t * point_coords, const scalar_t & coefficient,
-    scalar_t * shape_function_values){
+  virtual void evaluate_shape_functions(const precision_t * nodal_coords,
+    const precision_t * point_coords, const precision_t & coefficient,
+    precision_t * shape_function_values){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
 
   /// see base class documentation
-  virtual void evaluate_shape_functions(const scalar_t * natural_coords,
-    scalar_t * shape_function_values);
+  virtual void evaluate_shape_functions(const precision_t * natural_coords,
+    precision_t * shape_function_values);
 
   /// see base class documentation
-  virtual void evaluate_shape_function_derivatives(const scalar_t * nodal_coords,
-    const scalar_t & coefficient,
-    scalar_t * shape_function_derivative_values){
+  virtual void evaluate_shape_function_derivatives(const precision_t * nodal_coords,
+    const precision_t & coefficient,
+    precision_t * shape_function_derivative_values){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
 
   /// see base class documentation
-  virtual void evaluate_shape_function_derivatives(const scalar_t * natural_coords,
-    scalar_t * shape_function_derivative_values);
+  virtual void evaluate_shape_function_derivatives(const precision_t * natural_coords,
+    precision_t * shape_function_derivative_values);
 
   /// See base class documentation
-  virtual bool is_in_element(const scalar_t * nodal_coords,
-    const scalar_t * point_coords,
-    const scalar_t & coefficient);
+  virtual bool is_in_element(const precision_t * nodal_coords,
+    const precision_t * point_coords,
+    const precision_t & coefficient);
 
   /// See base class documentation
   virtual void get_natural_integration_points(const int_t order,
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
-    Teuchos::ArrayRCP<scalar_t> & weights,
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<precision_t> > & locations,
+    Teuchos::ArrayRCP<precision_t> & weights,
     int_t & num_points);
 };
 
@@ -1966,36 +1966,36 @@ public:
   virtual ~FEM_Barycentric_Tri6(){};
 
   /// see base class documentation
-  virtual void evaluate_shape_functions(const scalar_t * nodal_coords,
-    const scalar_t * point_coords, const scalar_t & coefficient,
-    scalar_t * shape_function_values){
+  virtual void evaluate_shape_functions(const precision_t * nodal_coords,
+    const precision_t * point_coords, const precision_t & coefficient,
+    precision_t * shape_function_values){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
 
   /// see base class documentation
-  virtual void evaluate_shape_functions(const scalar_t * natural_coords,
-    scalar_t * shape_function_values);
+  virtual void evaluate_shape_functions(const precision_t * natural_coords,
+    precision_t * shape_function_values);
 
   /// see base class documentation
-  virtual void evaluate_shape_function_derivatives(const scalar_t * nodal_coords,
-    const scalar_t & coefficient,
-    scalar_t * shape_function_derivative_values){
+  virtual void evaluate_shape_function_derivatives(const precision_t * nodal_coords,
+    const precision_t & coefficient,
+    precision_t * shape_function_derivative_values){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
   }
 
   /// see base class documentation
-  virtual void evaluate_shape_function_derivatives(const scalar_t * natural_coords,
-    scalar_t * shape_function_derivative_values);
+  virtual void evaluate_shape_function_derivatives(const precision_t * natural_coords,
+    precision_t * shape_function_derivative_values);
 
   /// See base class documentation
-  virtual bool is_in_element(const scalar_t * nodal_coords,
-    const scalar_t * point_coords,
-    const scalar_t & coefficient);
+  virtual bool is_in_element(const precision_t * nodal_coords,
+    const precision_t * point_coords,
+    const precision_t & coefficient);
 
   /// See base class documentation
   virtual void get_natural_integration_points(const int_t order,
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
-    Teuchos::ArrayRCP<scalar_t> & weights,
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<precision_t> > & locations,
+    Teuchos::ArrayRCP<precision_t> & weights,
     int_t & num_points);
 };
 
@@ -2062,10 +2062,11 @@ Teuchos::RCP<Mesh> create_tri3_mesh_from_tri6(Teuchos::RCP<Mesh> tri6_mesh,
 /// \param locations array returned with integration point locations
 /// \param weights array returned with the weights associated with each point
 /// \param num_points return value with the total number of integration points
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void tri3d_natural_integration_points(const int_t order,
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
-  Teuchos::ArrayRCP<scalar_t> & weights,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<S> > & locations,
+  Teuchos::ArrayRCP<S> & weights,
   int_t & num_points);
 
 /// gather the natural integration points for a triangle
@@ -2073,10 +2074,11 @@ void tri3d_natural_integration_points(const int_t order,
 /// \param locations array returned with integration point locations
 /// \param weights array returned with the weights associated with each point
 /// \param num_points return value with the total number of integration points
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void tri2d_natural_integration_points(const int_t order,
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
-  Teuchos::ArrayRCP<scalar_t> & weights,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<S> > & locations,
+  Teuchos::ArrayRCP<S> & weights,
   int_t & num_points);
 
 /// gather the natural integration points for a triangle
@@ -2085,40 +2087,44 @@ void tri2d_natural_integration_points(const int_t order,
 /// \param locations array returned with integration point locations
 /// \param weights array returned with the weights associated with each point
 /// \param num_points return value with the total number of integration points
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void tri2d_nonexact_integration_points(const int_t order,
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & locations,
-  Teuchos::ArrayRCP<scalar_t> & weights,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<S> > & locations,
+  Teuchos::ArrayRCP<S> & weights,
   int_t & num_points);
 
 /// compute the cross product of two vectors (ABxAC) and return the area of the parallelogram
 /// \param A vector to point A
 /// \param B vector to point B
 /// \param C vector to point C
+template <typename S>
 DICE_LIB_DLL_EXPORT
-scalar_t cross(const scalar_t * A,
-  const scalar_t * B,
-  const scalar_t * C);
+S cross(const S * A,
+  const S * B,
+  const S * C);
 
 /// compute the cross product of two vectors (ABxAC) in 3d
 /// \param A vector to point A
 /// \param B vector to point B
 /// \param C vector to point C
+template <typename S>
 DICE_LIB_DLL_EXPORT
-scalar_t cross3d(const scalar_t * A,
-  const scalar_t * B,
-  const scalar_t * C);
+S cross3d(const S * A,
+  const S * B,
+  const S * C);
 
 /// compute the cross product of two vectors (ABxAC) and return the area of the parallelogram also output the normal of the two
 /// \param A vector to point A
 /// \param B vector to point B
 /// \param C vector to point C
 /// \param normal [out] the vector normal to ABXAC
+template <typename S>
 DICE_LIB_DLL_EXPORT
-scalar_t cross3d_with_normal(const scalar_t * A,
-  const scalar_t * B,
-  const scalar_t * C,
-  scalar_t * normal);
+S cross3d_with_normal(const S * A,
+  const S * B,
+  const S * C,
+  S * normal);
 
 
 /// compute the cross product of two vectors (ABxAC) and return the area of the parallelogram also output the cross-product of the two
@@ -2126,41 +2132,46 @@ scalar_t cross3d_with_normal(const scalar_t * A,
 /// \param B vector to point B
 /// \param C vector to point C
 /// \param cross_prod [out] the vector ABXAC (not normalized by the mag as the normal would be)
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void cross3d_with_cross_prod(const scalar_t * A,
-  const scalar_t * B,
-  const scalar_t * C,
-  scalar_t * cross_prod);
+void cross3d_with_cross_prod(const S * A,
+  const S * B,
+  const S * C,
+  S * cross_prod);
 
 /// Compute the determinant of a 4 x 4
 /// \param a The coefficients in an array format
+template <typename S>
 DICE_LIB_DLL_EXPORT
-scalar_t determinant_4x4(const scalar_t * a);
+S determinant_4x4(const S * a);
 
 /// Compute the 1d gauss points
 /// \param r the gauss points
 /// \param w the wieghts
 /// \param gauss_order the order of integration
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void gauss_1D(Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & r,
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & w,
+void gauss_1D(Teuchos::ArrayRCP<Teuchos::ArrayRCP<S> > & r,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<S> > & w,
   int_t gauss_order);
 
 /// Compute the 2d gauss points
 /// \param r the gauss points
 /// \param w the wieghts
 /// \param gauss_order the order of integration
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void gauss_2D(Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & r,
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & w,
+void gauss_2D(Teuchos::ArrayRCP<Teuchos::ArrayRCP<S> > & r,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<S> > & w,
   int_t gauss_order);
 
 /// Compute the kronecker product of two matrices
 /// \param A the A matrix
 /// \param B the B matrix
+template <typename S>
 DICE_LIB_DLL_EXPORT
-Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > kronecker( Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & A,
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > & B);
+Teuchos::ArrayRCP<Teuchos::ArrayRCP<S> > kronecker( Teuchos::ArrayRCP<Teuchos::ArrayRCP<S> > & A,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<S> > & B);
 
 /// calculate the element jacobian
 /// \param xcap the nodal coordinates
@@ -2170,12 +2181,13 @@ Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > kronecker( Teuchos::ArrayRCP<Teu
 /// \param J the determinant of the jacobian
 /// \param num_elem_nodes number of nodes per element
 /// \param dim spatial dimension
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_jacobian(const scalar_t * xcap,
-  const scalar_t * DN,
-  scalar_t * jacobian,
-  scalar_t * inv_jacobian,
-  scalar_t & J,
+void calc_jacobian(const S * xcap,
+  const S * DN,
+  S * jacobian,
+  S * inv_jacobian,
+  S & J,
   int_t num_elem_nodes,
   int_t dim );
 
@@ -2185,12 +2197,13 @@ void calc_jacobian(const scalar_t * xcap,
 /// \param num_elem_nodes The number of nodes per element
 /// \param dim spatial dimension
 /// \param solid_B [out] the output B vector
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_B(const scalar_t * DN,
-  const scalar_t * inv_jacobian,
+void calc_B(const S * DN,
+  const S * inv_jacobian,
   int_t num_elem_nodes,
   int_t dim,
-  scalar_t * solid_B);
+  S * solid_B);
 
 } // namespace DICe
 

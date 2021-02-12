@@ -97,6 +97,7 @@ namespace DICe{
 #if DICE_USE_DOUBLE
   /// generic scalar type
   typedef double scalar_t;
+  #define PRECISION_SCALAR_SAME_TYPE
 #else
   /// generic scalar type
   typedef float scalar_t;
@@ -112,6 +113,8 @@ namespace DICe{
 /// integer type
 typedef int int_t;
 
+/// precision type (used mostly in the global code since single precision causes convergence issues)
+typedef double precision_t;
 
 /// Print the executable information banner
 DICE_LIB_DLL_EXPORT

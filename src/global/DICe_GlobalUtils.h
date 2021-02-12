@@ -763,15 +763,16 @@ private:
 /// \param inv_jac inverse jacobian
 /// \param DN derivatives of the shape functions
 /// \param elem_stiffness output the element stiffness contributions
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void div_symmetric_strain(const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & coeff,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * inv_jac,
-  const scalar_t * DN,
-  scalar_t * elem_stiffness);
+  const S & J,
+  const S & gp_weight,
+  const S * inv_jac,
+  const S * DN,
+  S * elem_stiffness);
 
 /// adds the divergence free constraint stiffness terms
 /// \param spa_dim spatial dimension
@@ -784,17 +785,18 @@ void div_symmetric_strain(const int_t spa_dim,
 /// \param alpha2 the regularization parameter
 /// \param tau the stabilization coefficient
 /// \param elem_div_stiffness output the element stiffness contributions
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void div_velocity(const int_t spa_dim,
   const int_t num_funcs,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * inv_jac,
-  const scalar_t * DN,
-  const scalar_t * N,
+  const S & J,
+  const S & gp_weight,
+  const S * inv_jac,
+  const S * DN,
+  const S * N,
   const scalar_t & alpha2,
-  const scalar_t & tau,
-  scalar_t * elem_div_stiffness);
+  const S & tau,
+  S * elem_div_stiffness);
 
 /// adds the lagrange stabilization stiffness terms
 /// \param spa_dim spatial dimension
@@ -805,15 +807,16 @@ void div_velocity(const int_t spa_dim,
 /// \param DN derivatives of the shape functions for tri6 elem
 /// \param tau the stabilization coefficient
 /// \param elem_stab_stiffness output the element stiffness contributions
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void stab_lagrange(const int_t spa_dim,
   const int_t num_funcs,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * inv_jac,
-  const scalar_t * DN,
-  const scalar_t & tau,
-  scalar_t * elem_stab_stiffness);
+  const S & J,
+  const S & gp_weight,
+  const S * inv_jac,
+  const S * DN,
+  const S & tau,
+  S * elem_stab_stiffness);
 
 /// adds a tikhonov type regularizer to the governing eqs
 /// \param spa_dim spatial dimension
@@ -823,15 +826,16 @@ void stab_lagrange(const int_t spa_dim,
 /// \param N shape function vector
 /// \param tau stabilization coefficient
 /// \param elem_stiffness element stiffness
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void tikhonov_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * N,
-  const scalar_t & tau,
-  scalar_t * elem_stiffness);
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  const S & tau,
+  S * elem_stiffness);
 
 /// adds a tikhonov type regularizer to the governing eqs
 /// \param spa_dim spatial dimension
@@ -840,14 +844,15 @@ void tikhonov_tensor(Global_Algorithm * alg,
 /// \param gp_weight gauss point weight
 /// \param N shape function vector
 /// \param elem_stiffness element stiffness
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void lumped_tikhonov_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * N,
-  scalar_t * elem_stiffness);
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  S * elem_stiffness);
 
 
 /// adds the image gradients term to the stiffness matrx (from manufactured solutions problem)
@@ -860,16 +865,17 @@ void lumped_tikhonov_tensor(Global_Algorithm * alg,
 /// \param gp_weight gauss weight
 /// \param N shape functions
 /// \param elem_stiffness output the element stiffness contributions
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void mms_image_grad_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
-  const scalar_t & x,
-  const scalar_t & y,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * N,
-  scalar_t * elem_stiffness);
+  const S & x,
+  const S & y,
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  S * elem_stiffness);
 
 /// adds the image gradients term to the stiffness matrx (from manufactured solutions problem)
 /// \param alg pointer to the Global_Algorithm
@@ -883,18 +889,19 @@ void mms_image_grad_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
 /// \param gp_weight gauss weight
 /// \param N shape functions
 /// \param elem_stiffness output the element stiffness contributions
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void image_grad_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
-  const scalar_t & x,
-  const scalar_t & y,
-  const scalar_t & bx,
-  const scalar_t & by,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * N,
-  scalar_t * elem_stiffness);
+  const S & x,
+  const S & y,
+  const S & bx,
+  const S & by,
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  S * elem_stiffness);
 
 /// adds the image gradients term to the force vector (from manufactured solutions problem)
 /// \param mms_problem pointer to the method of manufactured solutions problem
@@ -906,16 +913,17 @@ void image_grad_tensor(Global_Algorithm * alg,
 /// \param gp_weight gauss weight
 /// \param N shape functions
 /// \param elem_force output the element force contributions
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void mms_image_time_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
-  const scalar_t & x,
-  const scalar_t & y,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * N,
-  scalar_t * elem_force);
+  const S & x,
+  const S & y,
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  S * elem_force);
 
 /// adds the mms force vector (from manufactured solutions problem)
 /// \param mms_problem pointer to the method of manufactured solutions problem
@@ -928,6 +936,7 @@ void mms_image_time_force(Teuchos::RCP<MMS_Problem> mms_problem,
 /// \param gp_weight gauss weight
 /// \param N shape functions
 /// \param elem_force output the element force contributions
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
@@ -935,11 +944,11 @@ void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const scalar_t & x,
   const scalar_t & y,
   const scalar_t & coeff,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * N,
+  const S & J,
+  const S & gp_weight,
+  const S * N,
   std::set<Global_EQ_Term> * eq_terms,
-  scalar_t * elem_force);
+  S * elem_force);
 
 /// adds the dphi_dt force vector to the residual
 /// \param alg pointer to the calling Global_Algorithm
@@ -953,18 +962,19 @@ void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
 /// \param gp_weight gauss weight
 /// \param N shape functions
 /// \param elem_force output the element force contributions
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void image_time_force(Global_Algorithm* alg,
   const int_t spa_dim,
   const int_t num_funcs,
-  const scalar_t & x,
-  const scalar_t & y,
-  const scalar_t & bx,
-  const scalar_t & by,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * N,
-  scalar_t * elem_force);
+  const S & x,
+  const S & y,
+  const S & bx,
+  const S & by,
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  S * elem_force);
 
 /// adds the grad_phi tensor grad_phi force vector to the residual
 /// \param alg pointer to the calling Global_Algorithm
@@ -978,18 +988,19 @@ void image_time_force(Global_Algorithm* alg,
 /// \param gp_weight gauss weight
 /// \param N shape functions
 /// \param elem_force output the element force contributions
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void image_grad_force(Global_Algorithm* alg,
   const int_t spa_dim,
   const int_t num_funcs,
-  const scalar_t & x,
-  const scalar_t & y,
-  const scalar_t & bx,
-  const scalar_t & by,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * N,
-  scalar_t * elem_force);
+  const S & x,
+  const S & y,
+  const S & bx,
+  const S & by,
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  S * elem_force);
 
 /// adds the tikhonov term to the residual
 /// \param alg pointer to the calling Global_Algorithm
@@ -1001,16 +1012,17 @@ void image_grad_force(Global_Algorithm* alg,
 /// \param gp_weight gauss weight
 /// \param N shape functions
 /// \param elem_force output the element force contributions
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void tikhonov_force(Global_Algorithm* alg,
   const int_t spa_dim,
   const int_t num_funcs,
-  const scalar_t & bx,
-  const scalar_t & by,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * N,
-  scalar_t * elem_force);
+  const S & bx,
+  const S & by,
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  S * elem_force);
 
 /// computes the optical flow velocity about a point
 /// \param alg pointer to the global algorithm
@@ -1018,12 +1030,13 @@ void tikhonov_force(Global_Algorithm* alg,
 /// \param c_y closest pixel coord in y
 /// \param b_x output flow velocity in x
 /// \param b_y output flow velocity in y
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void optical_flow_velocity(Global_Algorithm * alg,
   const int_t & c_x, // closest pixel in x
   const int_t & c_y, // closest pixel in y
-  scalar_t & b_x,
-  scalar_t & b_y);
+  S & b_x,
+  S & b_y);
 
 /// computes subset velocity about a point
 /// \param alg pointer to the global algorithm
@@ -1032,96 +1045,108 @@ void optical_flow_velocity(Global_Algorithm * alg,
 /// \param subset_size the size of the subset to use
 /// \param b_x output flow velocity in x
 /// \param b_y output flow velocity in y
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void subset_velocity(Global_Algorithm * alg,
   const int_t & c_x, // closest pixel in x
   const int_t & c_y, // closest pixel in y
   const int_t & subset_size,
-  scalar_t & b_x,
-  scalar_t & b_y);
+  S & b_x,
+  S & b_y);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-scalar_t compute_tau_tri3(const Global_Formulation & formulation,
+S compute_tau_tri3(const Global_Formulation & formulation,
   const scalar_t & alpha2,
-  const scalar_t * natural_coords,
-  const scalar_t & J,
-  scalar_t * inv_jac);
+  const S * natural_coords,
+  const S & J,
+  S * inv_jac);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_jacobian(const scalar_t * xcap,
-  const scalar_t * DN,
-  scalar_t * jacobian,
-  scalar_t * inv_jacobian,
-  scalar_t & J,
+void calc_jacobian(const S * xcap,
+  const S * DN,
+  S * jacobian,
+  S * inv_jacobian,
+  S & J,
   int_t num_elem_nodes,
   int_t dim );
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_B(const scalar_t * DN,
-  const scalar_t * inv_jacobian,
+void calc_B(const S * DN,
+  const S * inv_jacobian,
   const int_t num_elem_nodes,
   const int_t dim,
-  scalar_t * solid_B);
+  S * solid_B);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_mms_force_elasticity(const scalar_t & x,
-  const scalar_t & y,
-  const scalar_t & alpha,
-  const scalar_t & L,
-  const scalar_t & m,
-  scalar_t & force_x,
-  scalar_t & force_y);
+void calc_mms_force_elasticity(const S & x,
+  const S & y,
+  const S & alpha,
+  const S & L,
+  const S & m,
+  S & force_x,
+  S & force_y);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_mms_vel_rich(const scalar_t & x,
-  const scalar_t & y,
-  const scalar_t & L,
-  const scalar_t & m,
-  scalar_t & b_x,
-  scalar_t & b_y);
+void calc_mms_vel_rich(const S & x,
+  const S & y,
+  const S & L,
+  const S & m,
+  S & b_x,
+  S & b_y);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_mms_lap_vel_rich(const scalar_t & x,
-  const scalar_t & y,
-  const scalar_t & L,
-  const scalar_t & m,
-  scalar_t & lap_b_x,
-  scalar_t & lap_b_y);
+void calc_mms_lap_vel_rich(const S & x,
+  const S & y,
+  const S & L,
+  const S & m,
+  S & lap_b_x,
+  S & lap_b_y);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_mms_phi_rich(const scalar_t & x,
-  const scalar_t & y,
-  const scalar_t & L,
-  const scalar_t & g,
-  scalar_t & phi);
+void calc_mms_phi_rich(const S & x,
+  const S & y,
+  const S & L,
+  const S & g,
+  S & phi);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_mms_phi_terms_rich(const scalar_t & x,
-  const scalar_t & y,
-  const scalar_t & m,
-  const scalar_t & L,
-  const scalar_t & g,
-  scalar_t & d_phi_dt,
-  scalar_t & grad_phi_x,
-  scalar_t & grad_phi_y);
+void calc_mms_phi_terms_rich(const S & x,
+  const S & y,
+  const S & m,
+  const S & L,
+  const S & g,
+  S & d_phi_dt,
+  S & grad_phi_x,
+  S & grad_phi_y);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_mms_bc_simple(const scalar_t & x,
-  const scalar_t & y,
-  scalar_t & b_x,
-  scalar_t & b_y);
+void calc_mms_bc_simple(const S & x,
+  const S & y,
+  S & b_x,
+  S & b_y);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_mms_force_simple(const scalar_t & alpha,
-  scalar_t & force_x,
-  scalar_t & force_y);
+void calc_mms_force_simple(const S & alpha,
+  S & force_x,
+  S & force_y);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_mms_bc_2(const scalar_t & x,
-  const scalar_t & y,
-  const scalar_t & L,
-  scalar_t & b_x,
-  scalar_t & b_y);
+void calc_mms_bc_2(const S & x,
+  const S & y,
+  const S & L,
+  S & b_x,
+  S & b_y);
 
 }// end global namespace
 

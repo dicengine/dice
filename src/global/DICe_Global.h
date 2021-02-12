@@ -209,9 +209,9 @@ protected:
   /// name of the linear output file
   std::string lagrange_output_file_name_;
   /// linear problem
-  Teuchos::RCP< Belos::LinearProblem<mv_scalar_type,vec_type,operator_type> > linear_problem_;
+  Teuchos::RCP< Belos::LinearProblem<precision_t,vec_type,operator_type> > linear_problem_;
   /// belos solver
-  Teuchos::RCP< Belos::SolverManager<mv_scalar_type,vec_type,operator_type> > belos_solver_;
+  Teuchos::RCP< Belos::SolverManager<precision_t,vec_type,operator_type> > belos_solver_;
   /// boundary condition manager
   Teuchos::RCP<BC_Manager> bc_manager_;
   /// true if the solver, etc been initialized

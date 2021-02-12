@@ -418,11 +418,12 @@ public:
     std::vector<std::vector<scalar_t> > & image_dy);
 
   /// same as above without derivatives
+  template <typename S>
   void sensor_to_image(
-    const std::vector<scalar_t> & sen_x,
-    const std::vector<scalar_t> & sen_y,
-    std::vector<scalar_t> & image_x,
-    std::vector<scalar_t> & image_y);
+    const std::vector<S> & sen_x,
+    const std::vector<S> & sen_y,
+    std::vector<S> & image_x,
+    std::vector<S> & image_y);
 
   ///converts image coordinates to sensor coordinates (lens distortion^-1, fx,fy,cx,cy)
   /// \param image_x x location after applied lens distortion
@@ -674,8 +675,8 @@ private:
   Camera_Info camera_info_;
 
   // Inverse lense distortion values for each pixel in an image
-  std::vector<scalar_t> inv_lens_dis_x_;
-  std::vector<scalar_t> inv_lens_dis_y_;
+  std::vector<precision_t> inv_lens_dis_x_;
+  std::vector<precision_t> inv_lens_dis_y_;
 
   // transformation coefficients
   Matrix<scalar_t,4> cam_world_trans_;

@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
 
   std::vector<std::string> out_file_name;
   std::vector<Global_Formulation> formulation;
-  std::vector<scalar_t> alpha;
+  std::vector<double> alpha;
 
   // HORN SCHNUNCK
   formulation.push_back(HORN_SCHUNCK);

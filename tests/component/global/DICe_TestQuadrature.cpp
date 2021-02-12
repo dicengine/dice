@@ -69,13 +69,13 @@ int main(int argc, char *argv[]) {
   *outStream << "Testing point locations for inexact rule (pixel aligned)" << std::endl;
 
   const int_t image_integration_order = 1000;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > gp_locs;
-  Teuchos::ArrayRCP<scalar_t> gp_weights;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<precision_t> > gp_locs;
+  Teuchos::ArrayRCP<precision_t> gp_weights;
   int_t num_image_integration_points = -1;
   tri2d_nonexact_integration_points(image_integration_order,
     gp_locs,gp_weights,num_image_integration_points);
 
-  scalar_t sum_w = 0.0;
+  precision_t sum_w = 0.0;
   *outStream << "gp_locs: " << std::endl;
   for(int_t i=0;i<num_image_integration_points;++i){
     //*outStream << "xi: " << gp_locs[i][0] << " eta: " << gp_locs[i][1] <<
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
   }
 
   // check integration of a linear function over a single element
-  scalar_t func_total = 0.0;
+  precision_t func_total = 0.0;
   for(int_t i=0;i<num_image_integration_points;++i){
     func_total += gp_locs[i][1]*gp_weights[i];
   }
@@ -101,12 +101,12 @@ int main(int argc, char *argv[]) {
   for(int_t order=1;order<7;++order){
     *outStream << "testing Gauss order " << order << std::endl;
     const int_t gauss_order = order;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > gauss_locs;
-    Teuchos::ArrayRCP<scalar_t> gauss_weights;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<precision_t> > gauss_locs;
+    Teuchos::ArrayRCP<precision_t> gauss_weights;
     int_t num_gauss_integration_points = -1;
     tri2d_natural_integration_points(gauss_order,
       gauss_locs,gauss_weights,num_gauss_integration_points);
-    scalar_t sum_gw = 0.0;
+    precision_t sum_gw = 0.0;
     for(int_t i=0;i<num_gauss_integration_points;++i){
       sum_gw+=gauss_weights[i];
     }
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
       *outStream << "Error, Gauss weights are not correct, sum: " << sum_gw << " (should be 1.0)" << std::endl;
       errorFlag++;
     }
-    scalar_t func_total = 0.0;
+    precision_t func_total = 0.0;
     for(int_t i=0;i<num_gauss_integration_points;++i){
       func_total += gauss_locs[i][1]*gauss_weights[i];
     }

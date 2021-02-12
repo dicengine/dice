@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
   mms_sublist.set(DICe::phi_coeff,10.0);
   std::vector<std::string> mms_problem_name;
   std::vector<Global_Formulation> formulation;
-  std::vector<scalar_t> alpha;
+  std::vector<double> alpha;
 
   // HORN SCHNUNCK
   formulation.push_back(HORN_SCHUNCK);

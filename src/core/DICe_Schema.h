@@ -521,7 +521,7 @@ public:
   /// \brief Return the value of the given field at the given global id (must be local to this process)
   /// \param global_id Global ID of the element
   /// \param spec the Field_Spec of the field to get the value for
-  mv_scalar_type & global_field_value(const int_t global_id,
+  precision_t & global_field_value(const int_t global_id,
     const DICe::field_enums::Field_Spec spec){
     return local_field_value(subset_local_id(global_id),spec);
   }
@@ -529,7 +529,7 @@ public:
   /// \brief Return the value of the given field at the given local id (must be local to this process)
   /// \param local_id local ID of the subset
   /// \param spec the Field_Spec of the requested field
-  mv_scalar_type & local_field_value(const int_t local_id,
+  precision_t & local_field_value(const int_t local_id,
     const DICe::field_enums::Field_Spec spec){
     assert(local_id<local_num_subsets_);
     assert(local_id>=0);

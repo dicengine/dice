@@ -11,13 +11,13 @@ SET(REGRESSION_TESTS
   conformal_subset_def
   dic_challenge_12
   dic_challenge_12_sorted
-  image_reg_init
 )
 
 IF(DICE_USE_DOUBLE)
   SET(REGRESSION_TESTS
     ${REGRESSION_TESTS}
     bitmap_star
+    image_reg_init
   )
   IF(DICE_ENABLE_NETCDF AND NOT DICE_USE_INT_STORAGE)
     SET(REGRESSION_TESTS
@@ -74,10 +74,15 @@ SET(GLOBAL_REGRESSION_TESTS
   stereo_cine
   stereo_list
   stereo_auto
-  stereo_d_spec
   stereo_satellite
   stereo_dogbone
   )
+IF(DICE_USE_DOUBLE)
+SET(GLOBAL_REGRESSION_TESTS
+ ${GLOBAL_REGRESSION_TESTS}
+ stereo_d_spec
+)
+ENDIF()
 FOREACH ( test ${GLOBAL_REGRESSION_TESTS})
     # Copy over all the test files (input and results)
     FILE(COPY ${test} DESTINATION . )

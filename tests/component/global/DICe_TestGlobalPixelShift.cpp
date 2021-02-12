@@ -229,7 +229,7 @@ int main(int argc, char *argv[]) {
     // storage types is loosened for these tests
     scalar_t error_max = 0.02;
     if(std::is_same<storage_t,double>::value||std::is_same<storage_t,float>::value)
-      error_max = 1.0E-4;
+      error_max = 2.0E-4;
 
     if(error_bx > error_max || error_by > error_max){
       *outStream << "Error, the solution error is too high" << std::endl;

@@ -58,17 +58,18 @@ namespace DICe {
 
 namespace global{
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void div_symmetric_strain(const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & coeff,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * inv_jac,
-  const scalar_t * DN,
-  scalar_t * elem_stiffness){
+  const S & J,
+  const S & gp_weight,
+  const S * inv_jac,
+  const S * DN,
+  S * elem_stiffness){
   const int_t B_dim = 2*spa_dim - 1;
-  std::vector<scalar_t> B(B_dim*num_funcs*spa_dim);
+  std::vector<S> B(B_dim*num_funcs*spa_dim);
 
   // compute the B matrix
   DICe::global::calc_B(DN,inv_jac,num_funcs,spa_dim,&B[0]);
@@ -83,17 +84,36 @@ void div_symmetric_strain(const int_t spa_dim,
     }
   }
 }
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void div_symmetric_strain(const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & coeff,
+  const precision_t & J,
+  const precision_t & gp_weight,
+  const precision_t * inv_jac,
+  const precision_t * DN,
+  precision_t * elem_stiffness);
+#endif
+template DICE_LIB_DLL_EXPORT void div_symmetric_strain(const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & coeff,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * inv_jac,
+  const scalar_t * DN,
+  scalar_t * elem_stiffness);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void mms_image_grad_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
-  const scalar_t & x,
-  const scalar_t & y,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * N,
-  scalar_t * elem_stiffness){
+  const S & x,
+  const S & y,
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  S * elem_stiffness){
   TEUCHOS_TEST_FOR_EXCEPTION(mms_problem==Teuchos::null,std::runtime_error,
     "Error, the pointer to the mms problem must be valid");
   // compute the image stiffness terms
@@ -116,7 +136,28 @@ void mms_image_grad_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
     }
   }
 }
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void mms_image_grad_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const precision_t & x,
+  const precision_t & y,
+  const precision_t & J,
+  const precision_t & gp_weight,
+  const precision_t * N,
+  precision_t * elem_stiffness);
+#endif
+template DICE_LIB_DLL_EXPORT void mms_image_grad_tensor(Teuchos::RCP<MMS_Problem> mms_problem,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_stiffness);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
@@ -124,11 +165,11 @@ void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const scalar_t & x,
   const scalar_t & y,
   const scalar_t & coeff,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * N,
+  const S & J,
+  const S & gp_weight,
+  const S * N,
   std::set<Global_EQ_Term> * eq_terms,
-  scalar_t * elem_force){
+  S * elem_force){
   TEUCHOS_TEST_FOR_EXCEPTION(mms_problem==Teuchos::null,std::runtime_error,
     "Error, the pointer to the mms problem must be valid");
 
@@ -142,17 +183,42 @@ void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
     elem_force[i*spa_dim+1] += fy*N[i]*gp_weight*J;
   }
 }
-
-DICE_LIB_DLL_EXPORT
-void mms_image_time_force(Teuchos::RCP<MMS_Problem> mms_problem,
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & x,
   const scalar_t & y,
+  const scalar_t & coeff,
+  const precision_t & J,
+  const precision_t & gp_weight,
+  const precision_t * N,
+  std::set<Global_EQ_Term> * eq_terms,
+  precision_t * elem_force);
+#endif
+template DICE_LIB_DLL_EXPORT void mms_force(Teuchos::RCP<MMS_Problem> mms_problem,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & coeff,
   const scalar_t & J,
   const scalar_t & gp_weight,
   const scalar_t * N,
-  scalar_t * elem_force){
+  std::set<Global_EQ_Term> * eq_terms,
+  scalar_t * elem_force);
+
+template <typename S>
+DICE_LIB_DLL_EXPORT
+void mms_image_time_force(Teuchos::RCP<MMS_Problem> mms_problem,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const S & x,
+  const S & y,
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  S * elem_force){
   TEUCHOS_TEST_FOR_EXCEPTION(mms_problem==Teuchos::null,std::runtime_error,
     "Error, the pointer to the mms problem must be valid");
   // compute the image force terms
@@ -163,36 +229,68 @@ void mms_image_time_force(Teuchos::RCP<MMS_Problem> mms_problem,
     elem_force[i*spa_dim+1] -= d_phi_dt*grad_phi_y*N[i]*gp_weight*J;
   }
 }
-
-DICE_LIB_DLL_EXPORT
-void image_time_force(Global_Algorithm* alg,
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void mms_image_time_force(Teuchos::RCP<MMS_Problem> mms_problem,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const precision_t & x,
+  const precision_t & y,
+  const precision_t & J,
+  const precision_t & gp_weight,
+  const precision_t * N,
+  precision_t * elem_force);
+#endif
+template DICE_LIB_DLL_EXPORT void mms_image_time_force(Teuchos::RCP<MMS_Problem> mms_problem,
   const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & x,
   const scalar_t & y,
-  const scalar_t & bx,
-  const scalar_t & by,
   const scalar_t & J,
   const scalar_t & gp_weight,
   const scalar_t * N,
-  scalar_t * elem_force){
+  scalar_t * elem_force);
+
+template <typename S>
+DICE_LIB_DLL_EXPORT
+void image_time_force(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const S & x,
+  const S & y,
+  const S & bx,
+  const S & by,
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  S * elem_force){
   TEUCHOS_TEST_FOR_EXCEPTION(alg==NULL,std::runtime_error,
     "Error, the pointer to the algorithm must be valid");
 
   // compute the image force terms
-  const scalar_t phi_0 = alg->schema()->ref_img()->interpolate_bicubic(x-bx,y-by);
-  const scalar_t phi = alg->schema()->def_img()->interpolate_bicubic(x,y);
-  const scalar_t d_phi_dt = phi - phi_0;
-  const scalar_t grad_phi_x = alg->grad_x()->interpolate_bicubic(x-bx,y-by);
-  const scalar_t grad_phi_y = alg->grad_y()->interpolate_bicubic(x-bx,y-by);
+  const S phi_0 = alg->schema()->ref_img()->interpolate_bicubic(x-bx,y-by);
+  const S phi = alg->schema()->def_img()->interpolate_bicubic(x,y);
+  const S d_phi_dt = phi - phi_0;
+  const S grad_phi_x = alg->grad_x()->interpolate_bicubic(x-bx,y-by);
+  const S grad_phi_y = alg->grad_y()->interpolate_bicubic(x-bx,y-by);
   for(int_t i=0;i<num_funcs;++i){
     elem_force[i*spa_dim+0] -= d_phi_dt*grad_phi_x*N[i]*gp_weight*J;
     elem_force[i*spa_dim+1] -= d_phi_dt*grad_phi_y*N[i]*gp_weight*J;
   }
 }
-
-DICE_LIB_DLL_EXPORT
-void image_grad_tensor(Global_Algorithm * alg,
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void image_time_force(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const precision_t & x,
+  const precision_t & y,
+  const precision_t & bx,
+  const precision_t & by,
+  const precision_t & J,
+  const precision_t & gp_weight,
+  const precision_t * N,
+  precision_t * elem_force);
+#endif
+template DICE_LIB_DLL_EXPORT void image_time_force(Global_Algorithm* alg,
   const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & x,
@@ -202,12 +300,26 @@ void image_grad_tensor(Global_Algorithm * alg,
   const scalar_t & J,
   const scalar_t & gp_weight,
   const scalar_t * N,
-  scalar_t * elem_stiffness){
+  scalar_t * elem_force);
+
+template <typename S>
+DICE_LIB_DLL_EXPORT
+void image_grad_tensor(Global_Algorithm * alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const S & x,
+  const S & y,
+  const S & bx,
+  const S & by,
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  S * elem_stiffness){
   TEUCHOS_TEST_FOR_EXCEPTION(alg==NULL,std::runtime_error,
     "Error, the pointer to the algorithm must be valid");
   // compute the image stiffness terms
-  const scalar_t grad_phi_x = alg->grad_x()->interpolate_bicubic(x-bx,y-by);
-  const scalar_t grad_phi_y = alg->grad_y()->interpolate_bicubic(x-bx,y-by);
+  const S grad_phi_x = alg->grad_x()->interpolate_bicubic(x-bx,y-by);
+  const S grad_phi_y = alg->grad_y()->interpolate_bicubic(x-bx,y-by);
 
   // image stiffness terms
   for(int_t i=0;i<num_funcs;++i){
@@ -225,9 +337,20 @@ void image_grad_tensor(Global_Algorithm * alg,
     }
   }
 }
-
-DICE_LIB_DLL_EXPORT
-void image_grad_force(Global_Algorithm* alg,
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void image_grad_tensor(Global_Algorithm * alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const precision_t & x,
+  const precision_t & y,
+  const precision_t & bx,
+  const precision_t & by,
+  const precision_t & J,
+  const precision_t & gp_weight,
+  const precision_t * N,
+  precision_t * elem_stiffness);
+#endif
+template DICE_LIB_DLL_EXPORT void image_grad_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & x,
@@ -237,12 +360,26 @@ void image_grad_force(Global_Algorithm* alg,
   const scalar_t & J,
   const scalar_t & gp_weight,
   const scalar_t * N,
-  scalar_t * elem_force){
+  scalar_t * elem_stiffness);
+
+template <typename S>
+DICE_LIB_DLL_EXPORT
+void image_grad_force(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const S & x,
+  const S & y,
+  const S & bx,
+  const S & by,
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  S * elem_force){
   TEUCHOS_TEST_FOR_EXCEPTION(alg==NULL,std::runtime_error,
     "Error, the pointer to the algorithm must be valid");
 
-  const scalar_t grad_phi_x = alg->grad_x()->interpolate_bicubic(x-bx,y-by);
-  const scalar_t grad_phi_y = alg->grad_y()->interpolate_bicubic(x-bx,y-by);
+  const S grad_phi_x = alg->grad_x()->interpolate_bicubic(x-bx,y-by);
+  const S grad_phi_y = alg->grad_y()->interpolate_bicubic(x-bx,y-by);
 
   // image stiffness terms
   for(int_t i=0;i<num_funcs;++i){
@@ -252,20 +389,45 @@ void image_grad_force(Global_Algorithm* alg,
                -= (grad_phi_y*grad_phi_x*bx + grad_phi_y*grad_phi_y*by)*N[i]*gp_weight*J;
   }
 }
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void image_grad_force(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const precision_t & x,
+  const precision_t & y,
+  const precision_t & bx,
+  const precision_t & by,
+  const precision_t & J,
+  const precision_t & gp_weight,
+  const precision_t * N,
+  precision_t * elem_force);
+#endif
+template DICE_LIB_DLL_EXPORT void image_grad_force(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & bx,
+  const scalar_t & by,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_force);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void tikhonov_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * N,
-  const scalar_t & tau,
-  scalar_t * elem_stiffness){
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  const S & tau,
+  S * elem_stiffness){
   TEUCHOS_TEST_FOR_EXCEPTION(alg==NULL,std::runtime_error,
     "Error, the pointer to the algorithm must be valid");
 
-  const scalar_t alpha2 = alg->alpha2();
+  const S alpha2 = alg->alpha2();
 
   // image stiffness terms
   for(int_t i=0;i<num_funcs;++i){
@@ -279,21 +441,40 @@ void tikhonov_tensor(Global_Algorithm * alg,
     }
   }
 }
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void tikhonov_tensor(Global_Algorithm * alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const precision_t & J,
+  const precision_t & gp_weight,
+  const precision_t * N,
+  const precision_t & tau,
+  precision_t * elem_stiffness);
+#endif
+template DICE_LIB_DLL_EXPORT void tikhonov_tensor(Global_Algorithm * alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  const scalar_t & tau,
+  scalar_t * elem_stiffness);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void tikhonov_force(Global_Algorithm* alg,
   const int_t spa_dim,
   const int_t num_funcs,
-  const scalar_t & bx,
-  const scalar_t & by,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * N,
-  scalar_t * elem_force){
+  const S & bx,
+  const S & by,
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  S * elem_force){
   TEUCHOS_TEST_FOR_EXCEPTION(alg==NULL,std::runtime_error,
     "Error, the pointer to the algorithm must be valid");
 
-  const scalar_t alpha2 = alg->alpha2();
+  const S alpha2 = alg->alpha2();
 
   // compute the image force terms
   for(int_t i=0;i<num_funcs;++i){
@@ -301,19 +482,40 @@ void tikhonov_force(Global_Algorithm* alg,
     elem_force[i*spa_dim+1] -= alpha2*by*N[i]*gp_weight*J;
   }
 }
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void tikhonov_force(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const precision_t & bx,
+  const precision_t & by,
+  const precision_t & J,
+  const precision_t & gp_weight,
+  const precision_t * N,
+  precision_t * elem_force);
+#endif
+template DICE_LIB_DLL_EXPORT void tikhonov_force(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & bx,
+  const scalar_t & by,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_force);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void lumped_tikhonov_tensor(Global_Algorithm * alg,
   const int_t spa_dim,
   const int_t num_funcs,
-  const scalar_t & J,
-  const scalar_t & gp_weight,
-  const scalar_t * N,
-  scalar_t * elem_stiffness){
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  S * elem_stiffness){
   TEUCHOS_TEST_FOR_EXCEPTION(alg==NULL,std::runtime_error,
     "Error, the pointer to the algorithm must be valid");
 
-  const scalar_t alpha2 = alg->alpha2();
+  const S alpha2 = alg->alpha2();
 
   // image stiffness terms
   for(int_t i=0;i<num_funcs;++i){
@@ -327,19 +529,36 @@ void lumped_tikhonov_tensor(Global_Algorithm * alg,
     }
   }
 }
-
-DICE_LIB_DLL_EXPORT
-void div_velocity(const int_t spa_dim,
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void lumped_tikhonov_tensor(Global_Algorithm * alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const precision_t & J,
+  const precision_t & gp_weight,
+  const precision_t * N,
+  precision_t * elem_stiffness);
+#endif
+template DICE_LIB_DLL_EXPORT void lumped_tikhonov_tensor(Global_Algorithm * alg,
+  const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & J,
   const scalar_t & gp_weight,
-  const scalar_t * inv_jac,
-  const scalar_t * DN,
   const scalar_t * N,
+  scalar_t * elem_stiffness);
+
+template <typename S>
+DICE_LIB_DLL_EXPORT
+void div_velocity(const int_t spa_dim,
+  const int_t num_funcs,
+  const S & J,
+  const S & gp_weight,
+  const S * inv_jac,
+  const S * DN,
+  const S * N,
   const scalar_t & alpha2,
-  const scalar_t & tau,
-  scalar_t * elem_div_stiffness){
-  std::vector<scalar_t> vec_invjTDNT(num_funcs*spa_dim);
+  const S & tau,
+  S * elem_div_stiffness){
+  std::vector<S> vec_invjTDNT(num_funcs*spa_dim);
   for(int_t n=0;n<num_funcs;++n){
     vec_invjTDNT[n*spa_dim+0] = inv_jac[0]*DN[n*spa_dim+0] + inv_jac[2]*DN[n*spa_dim+1];
     vec_invjTDNT[n*spa_dim+1] = inv_jac[1]*DN[n*spa_dim+0] + inv_jac[3]*DN[n*spa_dim+1];
@@ -361,17 +580,40 @@ void div_velocity(const int_t spa_dim,
     }
   }
 }
-
-DICE_LIB_DLL_EXPORT
-void stab_lagrange(const int_t spa_dim,
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void div_velocity(const int_t spa_dim,
+  const int_t num_funcs,
+  const precision_t & J,
+  const precision_t & gp_weight,
+  const precision_t * inv_jac,
+  const precision_t * DN,
+  const precision_t * N,
+  const scalar_t & alpha2,
+  const precision_t & tau,
+  precision_t * elem_div_stiffness);
+#endif
+template DICE_LIB_DLL_EXPORT void div_velocity(const int_t spa_dim,
   const int_t num_funcs,
   const scalar_t & J,
   const scalar_t & gp_weight,
   const scalar_t * inv_jac,
   const scalar_t * DN,
+  const scalar_t * N,
+  const scalar_t & alpha2,
   const scalar_t & tau,
-  scalar_t * elem_stab_stiffness){
-  std::vector<scalar_t> invjTDNT(num_funcs*spa_dim);
+  scalar_t * elem_div_stiffness);
+
+template <typename S>
+DICE_LIB_DLL_EXPORT
+void stab_lagrange(const int_t spa_dim,
+  const int_t num_funcs,
+  const S & J,
+  const S & gp_weight,
+  const S * inv_jac,
+  const S * DN,
+  const S & tau,
+  S * elem_stab_stiffness){
+  std::vector<S> invjTDNT(num_funcs*spa_dim);
   for(int_t n=0;n<num_funcs;++n){
     invjTDNT[n*spa_dim+0] = inv_jac[0]*DN[n*spa_dim+0] + inv_jac[2]*DN[n*spa_dim+1];
     invjTDNT[n*spa_dim+1] = inv_jac[1]*DN[n*spa_dim+0] + inv_jac[3]*DN[n*spa_dim+1];
@@ -384,14 +626,33 @@ void stab_lagrange(const int_t spa_dim,
     }
   }
 }
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void stab_lagrange(const int_t spa_dim,
+  const int_t num_funcs,
+  const precision_t & J,
+  const precision_t & gp_weight,
+  const precision_t * inv_jac,
+  const precision_t * DN,
+  const precision_t & tau,
+  precision_t * elem_stab_stiffness);
+#endif
+template DICE_LIB_DLL_EXPORT void stab_lagrange(const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * inv_jac,
+  const scalar_t * DN,
+  const scalar_t & tau,
+  scalar_t * elem_stab_stiffness);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void subset_velocity(Global_Algorithm * alg,
   const int_t & c_x, // closest pixel in x
   const int_t & c_y, // closest pixel in y
   const int_t & subset_size,
-  scalar_t & b_x,
-  scalar_t & b_y){
+  S & b_x,
+  S & b_y){
 
   // create a subset:
   Teuchos::RCP<Subset> subset = Teuchos::rcp(new Subset(c_x,c_y,subset_size,subset_size));
@@ -509,24 +770,39 @@ void subset_velocity(Global_Algorithm * alg,
   b_x = out_u;
   b_y = out_v;
 }
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void subset_velocity(Global_Algorithm * alg,
+  const int_t & c_x, // closest pixel in x
+  const int_t & c_y, // closest pixel in y
+  const int_t & subset_size,
+  precision_t & b_x,
+  precision_t & b_y);
+#endif
+template DICE_LIB_DLL_EXPORT void subset_velocity(Global_Algorithm * alg,
+  const int_t & c_x, // closest pixel in x
+  const int_t & c_y, // closest pixel in y
+  const int_t & subset_size,
+  scalar_t & b_x,
+  scalar_t & b_y);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
 void optical_flow_velocity(Global_Algorithm * alg,
   const int_t & c_x, // closest pixel in x
   const int_t & c_y, // closest pixel in y
-  scalar_t & b_x,
-  scalar_t & b_y){
+  S & b_x,
+  S & b_y){
   TEUCHOS_TEST_FOR_EXCEPTION(alg==NULL,std::runtime_error,
     "Error, the pointer to the algorithm must be valid");
 
   const int_t window_size = 21; // TODO make sure this is greater than the buffer
   const int_t half_window_size = window_size / 2;
-  static scalar_t coeffs[] = {0.0039,0.0111,0.0286,0.0657,0.1353,0.2494,0.4111,0.6065,0.8007,0.9460,1.0000,
+  static S coeffs[] = {0.0039,0.0111,0.0286,0.0657,0.1353,0.2494,0.4111,0.6065,0.8007,0.9460,1.0000,
          0.9460,0.8007,0.6065,0.4111,0.2494,0.1353,0.0657,0.0286,0.0111,0.0039};
   //const int_t window_size = 13; // TODO make sure this is greater than the buffer
   //const int_t half_window_size = window_size / 2;
-  //static scalar_t coeffs[] = {0.51, 0.64,0.84,0.91,0.96,0.99,1.0,0.99,0.96,0.91,0.84,0.64,0.51};
-  static scalar_t window_coeffs[window_size][window_size];
+  //static S coeffs[] = {0.51, 0.64,0.84,0.91,0.96,0.99,1.0,0.99,0.96,0.91,0.84,0.64,0.51};
+  static S window_coeffs[window_size][window_size];
   for(int_t j=0;j<window_size;++j){
     for(int_t i=0;i<window_size;++i){
       window_coeffs[i][j] = coeffs[i]*coeffs[j];
@@ -550,10 +826,10 @@ void optical_flow_velocity(Global_Algorithm * alg,
   H(1,1) = 0.0;
   q[0] = 0.0;
   q[1] = 0.0;
-  scalar_t Ix = 0.0;
-  scalar_t Iy = 0.0;
-  scalar_t It = 0.0;
-  scalar_t w_coeff = 0.0;
+  S Ix = 0.0;
+  S Iy = 0.0;
+  S It = 0.0;
+  S w_coeff = 0.0;
   int_t x=0,y=0;
   // loop over subset pixels in the deformed location
   for(int_t j=0;j<window_size;++j){
@@ -585,31 +861,58 @@ void optical_flow_velocity(Global_Algorithm * alg,
   delete [] IPIV;
   delete [] WORK;
 }
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void optical_flow_velocity(Global_Algorithm * alg,
+  const int_t & c_x, // closest pixel in x
+  const int_t & c_y, // closest pixel in y
+  precision_t & b_x,
+  precision_t & b_y);
+#endif
+template DICE_LIB_DLL_EXPORT void optical_flow_velocity(Global_Algorithm * alg,
+  const int_t & c_x, // closest pixel in x
+  const int_t & c_y, // closest pixel in y
+  scalar_t & b_x,
+  scalar_t & b_y);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-scalar_t compute_tau_tri3(const Global_Formulation & formulation,
+S compute_tau_tri3(const Global_Formulation & formulation,
   const scalar_t & alpha2,
-  const scalar_t * natural_coords,
-  const scalar_t & J,
-  scalar_t * inv_jac){
+  const S * natural_coords,
+  const S & J,
+  S * inv_jac){
 
   assert(alpha2!=0.0);
-  const scalar_t tau_1 = 0.225*0.5*J;
-  const scalar_t tau_2 = 0.14464285714286*0.5*J;
-  const scalar_t tau_3 = (inv_jac[0]*inv_jac[0] + inv_jac[2]*inv_jac[2] + inv_jac[0]*inv_jac[1] +
+  const S tau_1 = 0.225*0.5*J;
+  const S tau_2 = 0.14464285714286*0.5*J;
+  const S tau_3 = (inv_jac[0]*inv_jac[0] + inv_jac[2]*inv_jac[2] + inv_jac[0]*inv_jac[1] +
                           inv_jac[2]*inv_jac[3] + inv_jac[1]*inv_jac[1] + inv_jac[3]*inv_jac[3])*4.05*J;
-  const scalar_t be = 27.0 * natural_coords[0]*natural_coords[1]*(1.0 - natural_coords[0] - natural_coords[1]);
-  const scalar_t tau = formulation==LEHOUCQ_TURNER ? be*tau_1/alpha2*tau_2 : be*tau_1/alpha2*tau_3;
+  const S be = 27.0 * natural_coords[0]*natural_coords[1]*(1.0 - natural_coords[0] - natural_coords[1]);
+  const S tau = formulation==LEHOUCQ_TURNER ? be*tau_1/alpha2*tau_2 : be*tau_1/alpha2*tau_3;
 
   return tau;
 }
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT precision_t compute_tau_tri3(const Global_Formulation & formulation,
+  const scalar_t & alpha2,
+  const precision_t * natural_coords,
+  const precision_t & J,
+  precision_t * inv_jac);
+#endif
+template DICE_LIB_DLL_EXPORT scalar_t compute_tau_tri3(const Global_Formulation & formulation,
+  const scalar_t & alpha2,
+  const scalar_t * natural_coords,
+  const scalar_t & J,
+  scalar_t * inv_jac);
 
+
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_jacobian(const scalar_t * xcap,
-  const scalar_t * DN,
-  scalar_t * jacobian,
-  scalar_t * inv_jacobian,
-  scalar_t & J,
+void calc_jacobian(const S * xcap,
+  const S * DN,
+  S * jacobian,
+  S * inv_jacobian,
+  S & J,
   int_t num_elem_nodes,
   int_t dim ){
 
@@ -654,15 +957,32 @@ void calc_jacobian(const scalar_t * xcap,
   else
     TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"Error, invalid dimension");
 };
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void calc_jacobian(const precision_t * xcap,
+  const precision_t * DN,
+  precision_t * jacobian,
+  precision_t * inv_jacobian,
+  precision_t & J,
+  int_t num_elem_nodes,
+  int_t dim );
+#endif
+template DICE_LIB_DLL_EXPORT void calc_jacobian(const scalar_t * xcap,
+  const scalar_t * DN,
+  scalar_t * jacobian,
+  scalar_t * inv_jacobian,
+  scalar_t & J,
+  int_t num_elem_nodes,
+  int_t dim );
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_B(const scalar_t * DN,
-  const scalar_t * inv_jacobian,
+void calc_B(const S * DN,
+  const S * inv_jacobian,
   const int_t num_elem_nodes,
   const int_t dim,
-  scalar_t * solid_B){
+  S * solid_B){
 
-  std::vector<scalar_t> dN(dim*num_elem_nodes);
+  std::vector<S> dN(dim*num_elem_nodes);
   for(int_t i=0;i<dim*num_elem_nodes;++i)
     dN[i] = 0.0;
 
@@ -711,30 +1031,60 @@ void calc_B(const scalar_t * DN,
 //  }
 
 }
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void calc_B(const precision_t * DN,
+  const precision_t * inv_jacobian,
+  const int_t num_elem_nodes,
+  const int_t dim,
+  precision_t * solid_B);
+#endif
+template DICE_LIB_DLL_EXPORT void calc_B(const scalar_t * DN,
+  const scalar_t * inv_jacobian,
+  const int_t num_elem_nodes,
+  const int_t dim,
+  scalar_t * solid_B);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_mms_force_elasticity(const scalar_t & x,
+void calc_mms_force_elasticity(const S & x,
+  const S & y,
+  const S & alpha,
+  const S & L,
+  const S & m,
+  S & force_x,
+  S & force_y){
+  assert(L!=0.0);
+  const S beta = m*DICE_PI/L;
+  force_x = alpha*beta*beta*cos(beta*y)*sin(beta*x);
+  force_y = -alpha*beta*beta*cos(beta*x)*sin(beta*y);
+}
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void calc_mms_force_elasticity(const precision_t & x,
+  const precision_t & y,
+  const precision_t & alpha,
+  const precision_t & L,
+  const precision_t & m,
+  precision_t & force_x,
+  precision_t & force_y);
+#endif
+template DICE_LIB_DLL_EXPORT void calc_mms_force_elasticity(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & alpha,
   const scalar_t & L,
   const scalar_t & m,
   scalar_t & force_x,
-  scalar_t & force_y){
-  assert(L!=0.0);
-  const scalar_t beta = m*DICE_PI/L;
-  force_x = alpha*beta*beta*cos(beta*y)*sin(beta*x);
-  force_y = -alpha*beta*beta*cos(beta*x)*sin(beta*y);
-}
+  scalar_t & force_y);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_mms_vel_rich(const scalar_t & x,
-  const scalar_t & y,
-  const scalar_t & L,
-  const scalar_t & m,
-  scalar_t & b_x,
-  scalar_t & b_y){
+void calc_mms_vel_rich(const S & x,
+  const S & y,
+  const S & L,
+  const S & m,
+  S & b_x,
+  S & b_y){
   assert(L!=0.0);
-  const scalar_t beta = m*DICE_PI/L;
+  const S beta = m*DICE_PI/L;
   b_x = sin(beta*x)*cos(beta*y);
   b_y = -cos(beta*x)*sin(beta*y);
   //b_x = x;
@@ -743,16 +1093,31 @@ void calc_mms_vel_rich(const scalar_t & x,
   //b_y = x*x - y;
 
 }
-
-DICE_LIB_DLL_EXPORT
-void calc_mms_lap_vel_rich(const scalar_t & x,
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void calc_mms_vel_rich(const precision_t & x,
+  const precision_t & y,
+  const precision_t & L,
+  const precision_t & m,
+  precision_t & b_x,
+  precision_t & b_y);
+#endif
+template DICE_LIB_DLL_EXPORT void calc_mms_vel_rich(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & L,
   const scalar_t & m,
-  scalar_t & lap_b_x,
-  scalar_t & lap_b_y){
+  scalar_t & b_x,
+  scalar_t & b_y);
+
+template <typename S>
+DICE_LIB_DLL_EXPORT
+void calc_mms_lap_vel_rich(const S & x,
+  const S & y,
+  const S & L,
+  const S & m,
+  S & lap_b_x,
+  S & lap_b_y){
   assert(L!=0.0);
-  const scalar_t beta = m*DICE_PI/L;
+  const S beta = m*DICE_PI/L;
   lap_b_x = -beta*beta*cos(beta*y)*sin(beta*x);
   lap_b_y = beta*beta*cos(beta*x)*sin(beta*y);
   //lap_b_x = 0.0;
@@ -760,52 +1125,99 @@ void calc_mms_lap_vel_rich(const scalar_t & x,
   //lap_b_x = 2.0;
   //lap_b_y = 2.0;
 }
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void calc_mms_lap_vel_rich(const precision_t & x,
+  const precision_t & y,
+  const precision_t & L,
+  const precision_t & m,
+  precision_t & lap_b_x,
+  precision_t & lap_b_y);
+#endif
+template DICE_LIB_DLL_EXPORT void calc_mms_lap_vel_rich(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & L,
+  const scalar_t & m,
+  scalar_t & lap_b_x,
+  scalar_t & lap_b_y);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_mms_phi_rich(const scalar_t & x,
+void calc_mms_phi_rich(const S & x,
+  const S & y,
+  const S & L,
+  const S & g,
+  S & phi){
+  assert(L!=0.0);
+  const S gamma = g*DICE_PI/L;
+  phi = sin(gamma*x)*cos(gamma*y+DICE_PI/2.0);
+  //const S gamma = g*DICE_PI/L;
+  //phi = -1.0/gamma*(std::cos(gamma*x)*std::cos(gamma*(x-L)) + std::cos(gamma*y)*std::cos(y-L));
+}
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void calc_mms_phi_rich(const precision_t & x,
+  const precision_t & y,
+  const precision_t & L,
+  const precision_t & g,
+  precision_t & phi);
+#endif
+template DICE_LIB_DLL_EXPORT void calc_mms_phi_rich(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & L,
   const scalar_t & g,
-  scalar_t & phi){
-  assert(L!=0.0);
-  const scalar_t gamma = g*DICE_PI/L;
-  phi = sin(gamma*x)*cos(gamma*y+DICE_PI/2.0);
-  //const scalar_t gamma = g*DICE_PI/L;
-  //phi = -1.0/gamma*(std::cos(gamma*x)*std::cos(gamma*(x-L)) + std::cos(gamma*y)*std::cos(y-L));
-}
+  scalar_t & phi);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_mms_phi_terms_rich(const scalar_t & x,
+void calc_mms_phi_terms_rich(const S & x,
+  const S & y,
+  const S & m,
+  const S & L,
+  const S & g,
+  S & d_phi_dt,
+  S & grad_phi_x,
+  S & grad_phi_y){
+  assert(L!=0.0);
+  S b_x = 0.0;
+  S b_y = 0.0;
+  calc_mms_vel_rich(x,y,L,m,b_x,b_y);
+  S mod_x = x - b_x;
+  S mod_y = y - b_y;
+
+  S phi_0 = 0.0;
+  calc_mms_phi_rich(x,y,L,g,phi_0);
+  S phi = 0.0;
+  calc_mms_phi_rich(mod_x,mod_y,L,g,phi);
+  d_phi_dt = phi - phi_0;
+
+  const S gamma = g*DICE_PI/L;
+  grad_phi_x = gamma*cos(gamma*x)*cos(DICE_PI/2.0 + gamma*y);
+  grad_phi_y = -gamma*sin(gamma*x)*sin(DICE_PI/2.0 + gamma*y);
+}
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void calc_mms_phi_terms_rich(const precision_t & x,
+  const precision_t & y,
+  const precision_t & m,
+  const precision_t & L,
+  const precision_t & g,
+  precision_t & d_phi_dt,
+  precision_t & grad_phi_x,
+  precision_t & grad_phi_y);
+#endif
+template DICE_LIB_DLL_EXPORT void calc_mms_phi_terms_rich(const scalar_t & x,
   const scalar_t & y,
   const scalar_t & m,
   const scalar_t & L,
   const scalar_t & g,
   scalar_t & d_phi_dt,
   scalar_t & grad_phi_x,
-  scalar_t & grad_phi_y){
-  assert(L!=0.0);
-  scalar_t b_x = 0.0;
-  scalar_t b_y = 0.0;
-  calc_mms_vel_rich(x,y,L,m,b_x,b_y);
-  scalar_t mod_x = x - b_x;
-  scalar_t mod_y = y - b_y;
+  scalar_t & grad_phi_y);
 
-  scalar_t phi_0 = 0.0;
-  calc_mms_phi_rich(x,y,L,g,phi_0);
-  scalar_t phi = 0.0;
-  calc_mms_phi_rich(mod_x,mod_y,L,g,phi);
-  d_phi_dt = phi - phi_0;
-
-  const scalar_t gamma = g*DICE_PI/L;
-  grad_phi_x = gamma*cos(gamma*x)*cos(DICE_PI/2.0 + gamma*y);
-  grad_phi_y = -gamma*sin(gamma*x)*sin(DICE_PI/2.0 + gamma*y);
-}
-
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_mms_bc_simple(const scalar_t & x,
-  const scalar_t & y,
-  scalar_t & b_x,
-  scalar_t & b_y){
+void calc_mms_bc_simple(const S & x,
+  const S & y,
+  S & b_x,
+  S & b_y){
   //b_x = x + y;
   //b_y = x - y;
   b_x = x + y*y;
@@ -813,27 +1225,59 @@ void calc_mms_bc_simple(const scalar_t & x,
   //b_x = 0.0001;
   //b_y = 0.0001;
 }
-
-DICE_LIB_DLL_EXPORT
-void calc_mms_bc_2(const scalar_t & x,
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void calc_mms_bc_simple(const precision_t & x,
+  const precision_t & y,
+  precision_t & b_x,
+  precision_t & b_y);
+#endif
+template DICE_LIB_DLL_EXPORT void calc_mms_bc_simple(const scalar_t & x,
   const scalar_t & y,
-  const scalar_t & L,
   scalar_t & b_x,
-  scalar_t & b_y){
+  scalar_t & b_y);
+
+template <typename S>
+DICE_LIB_DLL_EXPORT
+void calc_mms_bc_2(const S & x,
+  const S & y,
+  const S & L,
+  S & b_x,
+  S & b_y){
   assert(L!=0.0);
   b_x = std::cos(x*DICE_PI/L);
   b_y = 0.0;
 }
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void calc_mms_bc_2(const precision_t & x,
+  const precision_t & y,
+  const precision_t & L,
+  precision_t & b_x,
+  precision_t & b_y);
+#endif
+template DICE_LIB_DLL_EXPORT void calc_mms_bc_2(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & L,
+  scalar_t & b_x,
+  scalar_t & b_y);
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
-void calc_mms_force_simple(const scalar_t & alpha,
-  scalar_t & force_x,
-  scalar_t & force_y){
+void calc_mms_force_simple(const S & alpha,
+  S & force_x,
+  S & force_y){
   //force_x = 0.0;
   //force_y = 0.0;
   force_x = -2.0*alpha;
   force_y = -2.0*alpha;
 }
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void calc_mms_force_simple(const precision_t & alpha,
+  precision_t & force_x,
+  precision_t & force_y);
+#endif
+template DICE_LIB_DLL_EXPORT void calc_mms_force_simple(const scalar_t & alpha,
+  scalar_t & force_x,
+  scalar_t & force_y);
 
 }// end global namespace
 

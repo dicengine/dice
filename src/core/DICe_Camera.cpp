@@ -471,15 +471,15 @@ Camera::prep_lens_distortion() {
   //initialize the arrays
   assert(inv_lens_dis_x_.size()==image_size);
   assert(inv_lens_dis_y_.size()==image_size);
-  std::vector<scalar_t> image_x(image_size, 0.0);
-  std::vector<scalar_t> image_y(image_size, 0.0);
-  std::vector<scalar_t> targ_x(image_size, 0.0);
-  std::vector<scalar_t> targ_y(image_size, 0.0);
+  std::vector<precision_t> image_x(image_size, 0.0);
+  std::vector<precision_t> image_y(image_size, 0.0);
+  std::vector<precision_t> targ_x(image_size, 0.0);
+  std::vector<precision_t> targ_y(image_size, 0.0);
 
   for (size_t i = 0; i < image_size; i++) {
     //set the target value for x,y
-    targ_x[i] = (scalar_t)(i % image_width());
-    targ_y[i] = (scalar_t)(i / image_width());
+    targ_x[i] = i % image_width();
+    targ_y[i] = i / image_width();
     //generate the initial guess for the inverted sensor position
     inv_lens_dis_x_[i] = (targ_x[i] - cx) / fx;
     inv_lens_dis_y_[i] = (targ_y[i] - cy) / fy;
@@ -490,11 +490,7 @@ Camera::prep_lens_distortion() {
   DEBUG_MSG(std::setw(6) << std::left << "Iter"<< std::setw(15) << std::left << "x_error" <<
     std::setw(15) << std::left << "y_error");
   //iterate until the inverted point is near the target location
-#if DICE_USE_DOUBLE
   const size_t max_its = 60;
-#else
-  const size_t max_its = 10;
-#endif
   bool failed = false;
 
   for (size_t j = 0; j < max_its; j++) {
@@ -534,8 +530,8 @@ Camera::prep_lens_distortion() {
     std::cout << "Note: this is likely due to the distortion parameters being unreasonable\n" << std::endl;
     for (size_t i = 0; i < image_size; i++) {
       //set the target value for x,y
-      targ_x[i] = (scalar_t)(i % image_width());
-      targ_y[i] = (scalar_t)(i / image_width());
+      targ_x[i] = i % image_width();
+      targ_y[i] = i / image_width();
       //generate the initial guess for the inverted sensor position
       inv_lens_dis_x_[i] = (targ_x[i] - cx) / fx;
       inv_lens_dis_y_[i] = (targ_y[i] - cy) / fy;
@@ -644,12 +640,13 @@ Camera::image_to_sensor(
   }
 }
 
+template <typename S>
 void
 Camera::sensor_to_image(
-  const std::vector<scalar_t> & sen_x,
-  const std::vector<scalar_t> & sen_y,
-  std::vector<scalar_t> & image_x,
-  std::vector<scalar_t> & image_y) {
+  const std::vector<S> & sen_x,
+  const std::vector<S> & sen_y,
+  std::vector<S> & image_x,
+  std::vector<S> & image_y) {
   camera_info_.check_valid();
   //converts sensor locations to image locations by applying lens distortions
   const size_t vec_size = image_x.size();
@@ -677,8 +674,8 @@ Camera::sensor_to_image(
   const scalar_t s4 = (*intrinsics())[S4];
   const scalar_t t1 = (*intrinsics())[T1];
   const scalar_t t2 = (*intrinsics())[T2];
-  scalar_t x_sen, y_sen, rad, dis_coef, rad_sqr;
-  scalar_t x_temp, y_temp;
+  S x_sen, y_sen, rad, dis_coef, rad_sqr;
+  S x_temp, y_temp;
 
   //use the appropriate lens distortion model (only 8 parameter openCV has been tested)
   switch (lens_distortion_model()) {
@@ -737,7 +734,7 @@ Camera::sensor_to_image(
         x_sen = sen_x[i];
         y_sen = sen_y[i];
         rad_sqr = x_sen * x_sen + y_sen * y_sen;
-        rad = sqrt((double)rad_sqr);
+        rad = sqrt((precision_t)rad_sqr);
         assert(rad!=0.0);
         // FIXME neglecting k3 for vic3d since it's usually a high number and makes this method crach
         // FIXME we need to figure out what lens distortion model they are actually using so we can
@@ -850,6 +847,11 @@ Camera::sensor_to_image(
       break;
   }
 }
+
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template void Camera::sensor_to_image(const std::vector<precision_t> &,const std::vector<precision_t> &,std::vector<precision_t> &,std::vector<precision_t> &);
+#endif
+template void Camera::sensor_to_image(const std::vector<scalar_t> &,const std::vector<scalar_t> &,std::vector<scalar_t> &,std::vector<scalar_t> &);
 
 void
 Camera::sensor_to_image(

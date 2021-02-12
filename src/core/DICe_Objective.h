@@ -155,7 +155,7 @@ const int_t y):
 
   /// \brief Returns the current value of the field specified. These values are stored in the schema
   /// \param spec Field_Spec that defines the requested field
-  const mv_scalar_type & global_field_value(const DICe::field_enums::Field_Spec spec)const{
+  const precision_t & global_field_value(const DICe::field_enums::Field_Spec spec)const{
     assert(correlation_point_global_id_>=0);
     return schema_->global_field_value(correlation_point_global_id_,spec);}
 

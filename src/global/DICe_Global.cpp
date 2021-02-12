@@ -349,18 +349,18 @@ Global_Algorithm::pre_execution_tasks(){
   belos_list.set( "Orthogonalization", ortho); // Orthogonalization type
 
   /// linear problem for solve
-  linear_problem_ = Teuchos::rcp(new Belos::LinearProblem<mv_scalar_type,vec_type,operator_type>());
+  linear_problem_ = Teuchos::rcp(new Belos::LinearProblem<precision_t,vec_type,operator_type>());
   /// Belos solver
   if(global_solver_==CG_SOLVER){ // use Gmres for mms problems
-    belos_solver_ = Teuchos::rcp( new Belos::BlockCGSolMgr<mv_scalar_type,vec_type,operator_type>
+    belos_solver_ = Teuchos::rcp( new Belos::BlockCGSolMgr<precision_t,vec_type,operator_type>
     (linear_problem_,Teuchos::rcp(&belos_list,false)));
   }
   else if(global_solver_==GMRES_SOLVER){
-    belos_solver_ = Teuchos::rcp( new Belos::BlockGmresSolMgr<mv_scalar_type,vec_type,operator_type>
+    belos_solver_ = Teuchos::rcp( new Belos::BlockGmresSolMgr<precision_t,vec_type,operator_type>
     (linear_problem_,Teuchos::rcp(&belos_list,false)));
   }
   else if(global_solver_==LSQR_SOLVER){
-    belos_solver_ = Teuchos::rcp( new Belos::LSQRSolMgr<mv_scalar_type,vec_type,operator_type>
+    belos_solver_ = Teuchos::rcp( new Belos::LSQRSolMgr<precision_t,vec_type,operator_type>
     (linear_problem_,Teuchos::rcp(&belos_list,false)));
   }
   else{
@@ -435,7 +435,7 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
   // allocate simple temp arrays for holding values of the local jacobain contributions
   // this will hopefully limit the number of calls to crsmatrix.insertGlobalValues
   std::map<int_t,Teuchos::Array<int_t> > col_id_array_map;
-  std::map<int_t,Teuchos::Array<mv_scalar_type> > values_array_map;
+  std::map<int_t,Teuchos::Array<precision_t> > values_array_map;
   for(int_t i=0;i<tangent_overlap->num_local_rows();++i)
   {
     Teuchos::Array<int_t> id_array;
@@ -443,8 +443,8 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
     const int_t row_gid = is_mixed_formulation() ? mesh_->get_mixed_vector_node_overlap_map()->get_global_element(i) :
         mesh_->get_vector_node_overlap_map()->get_global_element(i);
     col_id_array_map.insert(std::pair<int_t,Teuchos::Array<int_t> >(row_gid,id_array));
-    Teuchos::Array<mv_scalar_type> value_array;
-    values_array_map.insert(std::pair<int_t,Teuchos::Array<mv_scalar_type> >(row_gid,value_array));
+    Teuchos::Array<precision_t> value_array;
+    values_array_map.insert(std::pair<int_t,Teuchos::Array<precision_t> >(row_gid,value_array));
   }
   // establish the shape functions (using P2-P1 element for velocity pressure, or P2 velocity if no constraint):
   DICe::mesh::Shape_Function_Evaluator_Factory shape_func_eval_factory;
@@ -452,34 +452,34 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
       shape_func_eval_factory.create(DICe::mesh::TRI6):
       shape_func_eval_factory.create(DICe::mesh::TRI3);
   const int_t num_funcs = shape_func_evaluator->num_functions();
-  std::vector<scalar_t> N(num_funcs);
-  std::vector<scalar_t> DN(num_funcs*spa_dim);
+  std::vector<precision_t> N(num_funcs);
+  std::vector<precision_t> DN(num_funcs*spa_dim);
   std::vector<int_t> node_ids(num_funcs);
-  std::vector<scalar_t> nodal_coords(num_funcs*spa_dim);
-  std::vector<scalar_t> nodal_disp(num_funcs*spa_dim);
-  std::vector<scalar_t> jac(spa_dim*spa_dim);
-  std::vector<scalar_t> inv_jac(spa_dim*spa_dim);
-  scalar_t J =0.0;
-  std::vector<scalar_t> elem_stiffness(num_funcs*spa_dim*num_funcs*spa_dim);
-  std::vector<scalar_t> elem_div_stiffness(num_funcs*spa_dim*num_funcs);
-  std::vector<scalar_t> elem_stab_stiffness(num_funcs*num_funcs);
+  std::vector<precision_t> nodal_coords(num_funcs*spa_dim);
+  std::vector<precision_t> nodal_disp(num_funcs*spa_dim);
+  std::vector<precision_t> jac(spa_dim*spa_dim);
+  std::vector<precision_t> inv_jac(spa_dim*spa_dim);
+  precision_t J =0.0;
+  std::vector<precision_t> elem_stiffness(num_funcs*spa_dim*num_funcs*spa_dim);
+  std::vector<precision_t> elem_div_stiffness(num_funcs*spa_dim*num_funcs);
+  std::vector<precision_t> elem_stab_stiffness(num_funcs*num_funcs);
 
-  //scalar_t grad_phi[spa_dim];
-  scalar_t x=0.0,y=0.0;
-  scalar_t bx=0.0,by=0.0;
+  //precision_t grad_phi[spa_dim];
+  precision_t x=0.0,y=0.0;
+  precision_t bx=0.0,by=0.0;
 
   // get the natural integration points for this element:
   const int_t integration_order = 6;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > gp_locs;
-  Teuchos::ArrayRCP<scalar_t> gp_weights;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<precision_t> > gp_locs;
+  Teuchos::ArrayRCP<precision_t> gp_weights;
   int_t num_integration_points = -1;
   shape_func_evaluator->get_natural_integration_points(integration_order,gp_locs,gp_weights,num_integration_points);
   const int_t natural_coord_dim = gp_locs[0].size();
-  std::vector<scalar_t> natural_coords(natural_coord_dim);
+  std::vector<precision_t> natural_coords(natural_coord_dim);
 
   const int_t image_integration_order = num_image_integration_points_;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > image_gp_locs;
-  Teuchos::ArrayRCP<scalar_t> image_gp_weights;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<precision_t> > image_gp_locs;
+  Teuchos::ArrayRCP<precision_t> image_gp_weights;
   int_t num_image_integration_points = -1;
   tri2d_nonexact_integration_points(image_integration_order,image_gp_locs,image_gp_weights,num_image_integration_points);
 
@@ -540,7 +540,7 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
       // compute the jacobian for this element:
       DICe::global::calc_jacobian(&nodal_coords[0],&DN[0],&jac[0],&inv_jac[0],J,num_funcs,spa_dim);
 
-      scalar_t tau = 0.0;
+      precision_t tau = 0.0;
       if(is_mixed_formulation()){
         tau = stabilization_tau_ == -1.0 ? compute_tau_tri3(global_formulation_,alpha2_,&natural_coords[0],J,&inv_jac[0]) :
             stabilization_tau_;
@@ -654,7 +654,7 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
           const int_t row = node_ids[i] + mgo;
           const int_t col = node_ids[j] + mgo;
           //std::cout << "row " << row << " col " << col << std::endl;
-          const scalar_t value = elem_stab_stiffness[j*num_funcs + i];
+          const precision_t value = elem_stab_stiffness[j*num_funcs + i];
           const bool is_local_row_node =  mesh_->get_vector_node_dist_map()->is_node_global_elem(row); // using the non-mixed map because the row is a velocity row
           const bool row_is_bc_node = is_local_row_node ?
               bc_manager_->is_row_bc(mesh_->get_vector_node_dist_map()->get_local_element(row)) : false; // same rationalle here
@@ -674,7 +674,7 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
             const int_t row = node_ids[i]*spa_dim + m ;
             const int_t col = node_ids[j] + mgo;
             //std::cout << "row " << row << " col " << col << std::endl;
-            const scalar_t value = elem_div_stiffness[j*num_funcs*spa_dim + i*spa_dim+m];
+            const precision_t value = elem_div_stiffness[j*num_funcs*spa_dim + i*spa_dim+m];
             const bool is_local_row_node =  mesh_->get_vector_node_dist_map()->is_node_global_elem(row); // using the non-mixed map because the row is a velocity row
             const bool row_is_bc_node = is_local_row_node ?
                 bc_manager_->is_row_bc(mesh_->get_vector_node_dist_map()->get_local_element(row)) : false; // same rationalle here
@@ -700,7 +700,7 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
           for(int_t n=0;n<spa_dim;++n){
             const int_t row = node_ids[i]*spa_dim + m;
             const int_t col = node_ids[j]*spa_dim + n;
-            const scalar_t value = elem_stiffness[(i*spa_dim + m)*num_funcs*spa_dim + (j*spa_dim + n)];
+            const precision_t value = elem_stiffness[(i*spa_dim + m)*num_funcs*spa_dim + (j*spa_dim + n)];
             const bool is_local_row_node = mesh_->get_vector_node_dist_map()->is_node_global_elem(row);
             const bool row_is_bc_node = is_local_row_node ?
                 bc_manager_->is_row_bc(mesh_->get_vector_node_dist_map()->get_local_element(row)) : false;
@@ -737,7 +737,7 @@ Global_Algorithm::compute_tangent(const bool use_fixed_point){
   for(;cmap_it!=cmap_end;++cmap_it){
     int_t global_row = cmap_it->first;
     const Teuchos::Array<int_t> ids_array = cmap_it->second;
-    const Teuchos::Array<mv_scalar_type> values_array = values_array_map.find(cmap_it->first)->second;
+    const Teuchos::Array<precision_t> values_array = values_array_map.find(cmap_it->first)->second;
     if(ids_array.empty()) continue;
     // now do the insertGlobalValues calls:
     tangent_overlap->insert_global_values(global_row,ids_array,values_array);
@@ -775,29 +775,29 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
       shape_func_eval_factory.create(DICe::mesh::TRI6) :
       shape_func_eval_factory.create(DICe::mesh::TRI3);
   const int_t num_funcs = shape_func_evaluator->num_functions();
-  std::vector<scalar_t> N(num_funcs);
-  std::vector<scalar_t> DN(num_funcs*spa_dim);
-  std::vector<scalar_t> nodal_coords(num_funcs*spa_dim);
-  std::vector<scalar_t> nodal_disp(num_funcs*spa_dim);
-  std::vector<scalar_t> jac(spa_dim*spa_dim);
-  std::vector<scalar_t> inv_jac(spa_dim*spa_dim);
-  scalar_t J =0.0;
-  std::vector<scalar_t> elem_force(num_funcs*spa_dim);
-  scalar_t x=0.0,y=0.0,bx=0.0,by=0.0;
-  std::vector<scalar_t> elem_stiffness(num_funcs*spa_dim*num_funcs*spa_dim);
+  std::vector<precision_t> N(num_funcs);
+  std::vector<precision_t> DN(num_funcs*spa_dim);
+  std::vector<precision_t> nodal_coords(num_funcs*spa_dim);
+  std::vector<precision_t> nodal_disp(num_funcs*spa_dim);
+  std::vector<precision_t> jac(spa_dim*spa_dim);
+  std::vector<precision_t> inv_jac(spa_dim*spa_dim);
+  precision_t J =0.0;
+  std::vector<precision_t> elem_force(num_funcs*spa_dim);
+  precision_t x=0.0,y=0.0,bx=0.0,by=0.0;
+  std::vector<precision_t> elem_stiffness(num_funcs*spa_dim*num_funcs*spa_dim);
 
   // get the natural integration points for this element:
   const int_t integration_order = 6;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > gp_locs;
-  Teuchos::ArrayRCP<scalar_t> gp_weights;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<precision_t> > gp_locs;
+  Teuchos::ArrayRCP<precision_t> gp_weights;
   int_t num_integration_points = -1;
   shape_func_evaluator->get_natural_integration_points(integration_order,gp_locs,gp_weights,num_integration_points);
   const int_t natural_coord_dim = gp_locs[0].size();
-  std::vector<scalar_t> natural_coords(natural_coord_dim);
+  std::vector<precision_t> natural_coords(natural_coord_dim);
 
   const int_t image_integration_order = num_image_integration_points_;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > image_gp_locs;
-  Teuchos::ArrayRCP<scalar_t> image_gp_weights;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<precision_t> > image_gp_locs;
+  Teuchos::ArrayRCP<precision_t> image_gp_weights;
   int_t num_image_integration_points = -1;
   tri2d_nonexact_integration_points(image_integration_order,image_gp_locs,image_gp_weights,num_image_integration_points);
 //  Teuchos::RCP<MultiField> overlap_residual_ptr = is_mixed_formulation() ? mesh_->get_overlap_field(field_enums::MIXED_RESIDUAL_FS):
@@ -1176,23 +1176,23 @@ Global_Algorithm::compute_strains(){
   Teuchos::RCP<MultiField> overlap_strain_contribs_ptr = mesh_->get_overlap_field(field_enums::STRAIN_CONTRIBS_FS);
   overlap_strain_contribs_ptr->put_scalar(0.0);
   //MultiField & overlap_strain_contribs = *overlap_strain_contribs_ptr;
-  //Teuchos::ArrayRCP<const scalar_t> strain_contribs_values = overlap_strain_contribs.get_1d_view();
+  //Teuchos::ArrayRCP<const precision_t> strain_contribs_values = overlap_strain_contribs.get_1d_view();
   Teuchos::RCP<MultiField> overlap_dudx_ptr = mesh_->get_overlap_field(field_enums::DU_DX_FS);
   overlap_dudx_ptr->put_scalar(0.0);
   //MultiField & overlap_dudx = *overlap_dudx_ptr;
-  //Teuchos::ArrayRCP<const scalar_t> dudx_values = overlap_dudx.get_1d_view();
+  //Teuchos::ArrayRCP<const precision_t> dudx_values = overlap_dudx.get_1d_view();
   Teuchos::RCP<MultiField> overlap_dudy_ptr = mesh_->get_overlap_field(field_enums::DU_DY_FS);
   overlap_dudy_ptr->put_scalar(0.0);
   //MultiField & overlap_dudy = *overlap_dudy_ptr;
-  //Teuchos::ArrayRCP<const scalar_t> dudy_values = overlap_dudy.get_1d_view();
+  //Teuchos::ArrayRCP<const precision_t> dudy_values = overlap_dudy.get_1d_view();
   Teuchos::RCP<MultiField> overlap_dvdx_ptr = mesh_->get_overlap_field(field_enums::DV_DX_FS);
   overlap_dvdx_ptr->put_scalar(0.0);
   //MultiField & overlap_dvdx = *overlap_dvdx_ptr;
-  //Teuchos::ArrayRCP<const scalar_t> dvdx_values = overlap_dvdx.get_1d_view();
+  //Teuchos::ArrayRCP<const precision_t> dvdx_values = overlap_dvdx.get_1d_view();
   Teuchos::RCP<MultiField> overlap_dvdy_ptr = mesh_->get_overlap_field(field_enums::DV_DY_FS);
   overlap_dvdy_ptr->put_scalar(0.0);
   //MultiField & overlap_dvdy = *overlap_dvdy_ptr;
-  //Teuchos::ArrayRCP<const scalar_t> dvdy_values = overlap_dvdy.get_1d_view();
+  //Teuchos::ArrayRCP<const precision_t> dvdy_values = overlap_dvdy.get_1d_view();
 
   const int_t spa_dim = mesh_->spatial_dimension();
   DICe::mesh::Shape_Function_Evaluator_Factory shape_func_eval_factory;
@@ -1200,15 +1200,15 @@ Global_Algorithm::compute_strains(){
       shape_func_eval_factory.create(DICe::mesh::TRI6) : // linear strains
       shape_func_eval_factory.create(DICe::mesh::TRI3); // constant strains
   const int_t num_funcs = shape_func_evaluator->num_functions();
-  std::vector<scalar_t> DN(num_funcs*spa_dim);
-  std::vector<scalar_t> nodal_coords(num_funcs*spa_dim);
-  std::vector<scalar_t> nodal_disp(num_funcs*spa_dim);
-  std::vector<scalar_t> jac(spa_dim*spa_dim);
-  std::vector<scalar_t> inv_jac(spa_dim*spa_dim);
-  scalar_t J =0.0;
-  std::vector<scalar_t> natural_coords(spa_dim);
-  scalar_t node_nat_x[] = {0.0, 1.0, 0.0, 0.5, 0.5, 0.0}; // If the elem is TRI6 the last three are not used
-  scalar_t node_nat_y[] = {0.0, 0.0, 1.0, 0.0, 0.5, 0.5};
+  std::vector<precision_t> DN(num_funcs*spa_dim);
+  std::vector<precision_t> nodal_coords(num_funcs*spa_dim);
+  std::vector<precision_t> nodal_disp(num_funcs*spa_dim);
+  std::vector<precision_t> jac(spa_dim*spa_dim);
+  std::vector<precision_t> inv_jac(spa_dim*spa_dim);
+  precision_t J =0.0;
+  std::vector<precision_t> natural_coords(spa_dim);
+  precision_t node_nat_x[] = {0.0, 1.0, 0.0, 0.5, 0.5, 0.0}; // If the elem is TRI6 the last three are not used
+  precision_t node_nat_y[] = {0.0, 0.0, 1.0, 0.0, 0.5, 0.5};
 
   // element loop
   DICe::mesh::element_set::iterator elem_it = mesh_->get_element_set()->begin();
@@ -1267,7 +1267,7 @@ Global_Algorithm::compute_strains(){
   }
 
   for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
-    const scalar_t count = strain_contribs->local_value(i);
+    const precision_t count = strain_contribs->local_value(i);
     assert(count!=0.0);
     du_dx->local_value(i) /= count;
     du_dy->local_value(i) /= count;
