@@ -107,10 +107,11 @@ image_fft(Teuchos::RCP<Image_<S>> image,
 /// \param u_y [out] displacement y
 /// \param convert_to_r_theta true if the images are polar transforms and
 /// the correlation is for radius and angle of rotation
+template <typename S>
 DICE_LIB_DLL_EXPORT
 scalar_t
-phase_correlate_x_y(Teuchos::RCP<Image> image_a,
-  Teuchos::RCP<Image> image_b,
+phase_correlate_x_y(Teuchos::RCP<Image_<S>> image_a,
+  Teuchos::RCP<Image_<S>> image_b,
   scalar_t & u_x,
   scalar_t & u_y,
   const bool convert_to_r_theta=false);

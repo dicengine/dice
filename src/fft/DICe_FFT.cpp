@@ -121,10 +121,11 @@ complex_abs(scalar_t & result,
   result = std::sqrt(a_r*a_r + a_i*a_i);
 }
 
+template <typename S>
 DICE_LIB_DLL_EXPORT
 scalar_t
-phase_correlate_x_y(Teuchos::RCP<Image> image_a,
-  Teuchos::RCP<Image> image_b,
+phase_correlate_x_y(Teuchos::RCP<Image_<S>> image_a,
+  Teuchos::RCP<Image_<S>> image_b,
   scalar_t & u_x,
   scalar_t & u_y,
   const bool convert_to_r_theta){
@@ -277,6 +278,15 @@ phase_correlate_x_y(Teuchos::RCP<Image> image_a,
 //  out_image.write(name.str());
   return max_real;
 }
+template
+DICE_LIB_DLL_EXPORT
+scalar_t phase_correlate_x_y(Teuchos::RCP<Image>,Teuchos::RCP<Image>,scalar_t &,scalar_t &,const bool);
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template
+DICE_LIB_DLL_EXPORT
+scalar_t phase_correlate_x_y(Teuchos::RCP<Scalar_Image>,Teuchos::RCP<Scalar_Image>,scalar_t &,scalar_t &,const bool);
+#endif
+
 
 DICE_LIB_DLL_EXPORT
 void
@@ -436,7 +446,6 @@ polar_transform(Teuchos::RCP<Image_<S>> image,
   Teuchos::RCP<Image_<S>> out_image = Teuchos::rcp(new Image_<S>(w,h,output));
   return out_image;
 }
-
 template
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Image> polar_transform(Teuchos::RCP<Image>,bool);
@@ -445,6 +454,7 @@ template
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Scalar_Image> polar_transform(Teuchos::RCP<Scalar_Image>,bool);
 #endif
+
 template <typename S>
 DICE_LIB_DLL_EXPORT
 Teuchos::RCP<Image_<S>>
