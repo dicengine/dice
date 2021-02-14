@@ -83,6 +83,7 @@ Image_<S>::Image_(const char * file_name,
   catch(...){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, image file read failure");
   }
+  assert(intensities_.size()>0);
   default_constructor_tasks(params);
   post_allocation_tasks(params);
 }
@@ -104,6 +105,7 @@ Image_<S>::Image_(const int_t width,
   TEUCHOS_TEST_FOR_EXCEPTION(width_<0,std::invalid_argument,"Error, width cannot be negative or zero.");
   TEUCHOS_TEST_FOR_EXCEPTION(height_<0,std::invalid_argument,"Error, height cannot be negative or zero.");
   intensities_ = Teuchos::ArrayRCP<S>(height_*width_,intensity);
+  assert(intensities_.size()>0);
   default_constructor_tasks(Teuchos::null);
   post_allocation_tasks(Teuchos::null);
 }
@@ -179,6 +181,7 @@ Image_<S>::Image_(Teuchos::RCP<Image_> img,
       }
     }
   }
+  assert(intensities_.size()>0);
 }
 
 template <typename S>
@@ -208,6 +211,7 @@ Image_<S>::Image_(const int_t array_width,
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_width),std::runtime_error,"cannot create subimage from intensity array");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_height),std::runtime_error,"cannot create subimage from intensity array");
   }
+  assert(intensities_.size()>0);
   default_constructor_tasks(params);
   post_allocation_tasks(params);
 }
@@ -321,6 +325,7 @@ Image_<S>::update(const char * file_name,
   catch(...){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, image file read failure");
   }
+  assert(intensities_.size()>0);
   post_allocation_tasks(params);
 }
 #ifndef STORAGE_SCALAR_SAME_TYPE
