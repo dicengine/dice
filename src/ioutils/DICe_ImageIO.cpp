@@ -306,10 +306,14 @@ void read_image(const char * file_name,
         }
       }
       if(buffer_persistence_guaranteed){
+        DEBUG_MSG("utils::read_image(): intensity values obtained via pointer to hypercine memory buffer");
         TEUCHOS_TEST_FOR_EXCEPTION(!hc->buffer_has_frame_window(start_index,sub_offset_x,width,sub_offset_y,height),
           std::runtime_error,"cine frame or window not in buffer, but should be");
-        DEBUG_MSG("utils::read_image(): intensity values obtained via pointer to hypercine memory buffer");
+        TEUCHOS_TEST_FOR_EXCEPTION(!(std::is_same<S,storage_t>::value),std::runtime_error,"error: cannot create a Scalar_Image (Image_<scalar_t>) "
+            "from hypercine using buffer presistence unless hypercine is build with scalar_t as storage_t");
+#if STORAGE_SCALAR_SAME_TYPE
         intensities = Teuchos::ArrayRCP<S>(hc->data(start_index,sub_offset_x,width,sub_offset_y,height),0,width*height,false);
+#endif
       }else{
         DEBUG_MSG("utils::read_image(): intensity values deep copied from hypercine memory buffer");
         // manual copy of intensity values required
