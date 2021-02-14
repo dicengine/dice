@@ -57,7 +57,9 @@
 namespace DICe {
 
 // forward declaration
-class Schema;
+template <typename S>
+class Schema_;
+using Schema = Schema_<storage_t>;
 
 /// \class DICe:::Local_Shape_Function
 /// \brief A generic class that provides an abstraction of the local DIC shape function

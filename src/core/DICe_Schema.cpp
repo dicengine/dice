@@ -73,8 +73,8 @@
 namespace DICe {
 
 using namespace field_enums;
-
-Schema::Schema(const std::string & input_file_name,
+template<typename S>
+Schema_<S>::Schema_(const std::string & input_file_name,
   const std::string & params_file_name){
   // create a parameter list from the selected file
   Teuchos::RCP<Teuchos::ParameterList> corr_params = read_correlation_params(params_file_name);
@@ -83,21 +83,36 @@ Schema::Schema(const std::string & input_file_name,
   Teuchos::RCP<Teuchos::ParameterList> input_params = read_input_params(input_file_name);
   initialize(input_params,corr_params);
 }
+//#ifndef STORAGE_SCALAR_SAME_TYPE
+//template void Schema_<scalar_t>::Schema_(const std::string &,const std::string &);
+//#endif
+//template void Schema_<storage_t>::Schema_(const std::string &,const std::string &);
 
-Schema::Schema(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+template<typename S>
+Schema_<S>::Schema_(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   const Teuchos::RCP<Teuchos::ParameterList> & correlation_params){
   default_constructor_tasks(correlation_params);
   initialize(input_params,correlation_params);
 }
+//#ifndef STORAGE_SCALAR_SAME_TYPE
+//template void Schema_<scalar_t>::Schema_(const Teuchos::RCP<Teuchos::ParameterList> &,const Teuchos::RCP<Teuchos::ParameterList> &);
+//#endif
+//template void Schema_<storage_t>::Schema_(const Teuchos::RCP<Teuchos::ParameterList> &,const Teuchos::RCP<Teuchos::ParameterList> &);
 
-Schema::Schema(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+template<typename S>
+Schema_<S>::Schema_(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   const Teuchos::RCP<Teuchos::ParameterList> & correlation_params,
   const Teuchos::RCP<Schema> & schema){
   default_constructor_tasks(correlation_params);
   initialize(input_params,schema);
 }
+//#ifndef STORAGE_SCALAR_SAME_TYPE
+//template void Schema_<scalar_t>::Schema_(const Teuchos::RCP<Teuchos::ParameterList> &,const Teuchos::RCP<Teuchos::ParameterList> &,const Teuchos::RCP<Schema_<scalar_t>> &);
+//#endif
+//template void Schema_<storage_t>::Schema_(const Teuchos::RCP<Teuchos::ParameterList> &,const Teuchos::RCP<Teuchos::ParameterList> &,const Teuchos::RCP<Schema_<storage_t>> &);
 
-Schema::Schema(const int_t roi_width,
+template<typename S>
+Schema_<S>::Schema_(const int_t roi_width,
   const int_t roi_height,
   const int_t step_size_x,
   const int_t step_size_y,
@@ -136,8 +151,13 @@ Schema::Schema(const int_t roi_width,
   initialize(decomp,subset_size);
   assert(global_num_subsets_==num_pts);
 }
+//#ifndef STORAGE_SCALAR_SAME_TYPE
+//template void Schema_<scalar_t>::Schema_(const int_t,const int_t,const int_t,const int_t,const int_t,const Teuchos::RCP<Teuchos::ParameterList> &);
+//#endif
+//template void Schema_<storage_t>::Schema_(const int_t,const int_t,const int_t,const int_t,const int_t,const Teuchos::RCP<Teuchos::ParameterList> &);
 
-Schema::Schema(Teuchos::ArrayRCP<scalar_t> coords_x,
+template<typename S>
+Schema_<S>::Schema_(Teuchos::ArrayRCP<scalar_t> coords_x,
   Teuchos::ArrayRCP<scalar_t> coords_y,
   const int_t subset_size,
   Teuchos::RCP<std::map<int_t,Conformal_Area_Def> > conformal_subset_defs,
@@ -147,18 +167,33 @@ Schema::Schema(Teuchos::ArrayRCP<scalar_t> coords_x,
   Teuchos::RCP<Decomp> decomp = Teuchos::rcp(new Decomp(coords_x,coords_y,neighbor_ids,Teuchos::null,params));
   initialize(decomp,subset_size,conformal_subset_defs);
 }
+//#ifndef STORAGE_SCALAR_SAME_TYPE
+//template void Schema_<scalar_t>::Schema_(Teuchos::ArrayRCP<scalar_t>,Teuchos::ArrayRCP<scalar_t>,const int_t,Teuchos::RCP<std::map<int_t,Conformal_Area_Def> >,Teuchos::RCP<std::vector<int_t> >,const Teuchos::RCP<Teuchos::ParameterList> &);
+//#endif
+//template void Schema_<storage_t>::Schema_(Teuchos::ArrayRCP<scalar_t>,Teuchos::ArrayRCP<scalar_t>,const int_t,Teuchos::RCP<std::map<int_t,Conformal_Area_Def> >,Teuchos::RCP<std::vector<int_t> >,const Teuchos::RCP<Teuchos::ParameterList> &);
 
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template class Schema_<scalar_t>;
+#endif
+template class Schema_<storage_t>;
+
+template<typename S>
 void
-Schema::rotate_def_image(){
+Schema_<S>::rotate_def_image(){
   if(def_image_rotation_!=ZERO_DEGREES){
     for(size_t i=0;i<def_imgs_.size();++i)
       def_imgs_[i] = def_imgs_[i]->apply_rotation(def_image_rotation_);
   }
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::rotate_def_image();
+#endif
+template void Schema_<storage_t>::rotate_def_image();
 
 // Note: this is meant to be called at the beginning of set_def_image, and not really anywhere else
+template<typename S>
 void
-Schema::swap_def_prev_images(){
+Schema_<S>::swap_def_prev_images(){
   DEBUG_MSG("Schema::swap_def_prev_images() called");
   // update the previous image storage points
   assert(def_imgs_.size()==prev_imgs_.size());
@@ -166,17 +201,22 @@ Schema::swap_def_prev_images(){
     if(def_imgs_[i]==Teuchos::null) continue;
     // ensure that the prev img storage is allocated and the right size
     if(prev_imgs_[i]==Teuchos::null||prev_imgs_[i]->width()!=def_imgs_[i]->width()||prev_imgs_[i]->height()!=def_imgs_[i]->height())
-      prev_imgs_[i] = Teuchos::rcp(new DICe::Image(def_imgs_[i]));
+      prev_imgs_[i] = Teuchos::rcp(new DICe::Image_<S>(def_imgs_[i]));
     // swap the reference counted pointers on the image memory storage
-    Teuchos::RCP<Image> hold_rcp = prev_imgs_[i]; // increase the reference count so the memory doesn't get deallocated
+    Teuchos::RCP<Image_<S>> hold_rcp = prev_imgs_[i]; // increase the reference count so the memory doesn't get deallocated
     prev_imgs_[i] = def_imgs_[i];
     def_imgs_[i] = hold_rcp;
     DEBUG_MSG("Schema::swap_def_prev_images() prev and def images " << i << " were swapped");
   }
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::swap_def_prev_images();
+#endif
+template void Schema_<storage_t>::swap_def_prev_images();
 
+template<typename S>
 void
-Schema::set_def_image(const std::string & defName){
+Schema_<S>::set_def_image(const std::string & defName){
   DEBUG_MSG("Schema::set_def_image(): Resetting the deformed image using a file name " << defName);
 //  swap_def_prev_images();
   assert(def_imgs_.size()>0);
@@ -291,7 +331,7 @@ Schema::set_def_image(const std::string & defName){
     }
     // see if the image has already been allocated:
     if(def_imgs_[id]==Teuchos::null||force_reallocation)
-      def_imgs_[id] = Teuchos::rcp( new Image(defName.c_str(),imgParams));
+      def_imgs_[id] = Teuchos::rcp( new Image_<S>(defName.c_str(),imgParams));
     else
       def_imgs_[id]->update(defName.c_str(),imgParams);
     if(def_image_rotation_!=ZERO_DEGREES){
@@ -300,9 +340,14 @@ Schema::set_def_image(const std::string & defName){
     def_imgs_[id]->set_file_name(defName);
   }
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::set_def_image(const std::string &);
+#endif
+template void Schema_<storage_t>::set_def_image(const std::string &);
 
+template<typename S>
 void
-Schema::set_def_image(Teuchos::RCP<Image> img,
+Schema_<S>::set_def_image(Teuchos::RCP<Image_<S>> img,
   const int_t id){
   DEBUG_MSG("Schema::set_def_image() Resetting the deformed image (using an Image object) for sub image id " << id);
 //  swap_def_prev_images();
@@ -322,11 +367,16 @@ Schema::set_def_image(Teuchos::RCP<Image> img,
     def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_,imgParams);
   }
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::set_def_image(Teuchos::RCP<Image_<scalar_t>>,const int_t);
+#endif
+template void Schema_<storage_t>::set_def_image(Teuchos::RCP<Image_<storage_t>>,const int_t);
 
+template<typename S>
 void
-Schema::set_def_image(const int_t img_width,
+Schema_<S>::set_def_image(const int_t img_width,
   const int_t img_height,
-  const Teuchos::ArrayRCP<storage_t> defRCP,
+  const Teuchos::ArrayRCP<S> defRCP,
   const int_t id){
   DEBUG_MSG("Schema::set_def_image() Resetting the deformed image using an ArrayRCP");
 //  swap_def_prev_images();
@@ -340,14 +390,19 @@ Schema::set_def_image(const int_t img_width,
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
   imgParams->set(DICe::filter_failed_cine_pixels,filter_failed_cine_pixels_);
-  def_imgs_[id] = Teuchos::rcp( new Image(img_width,img_height,defRCP,imgParams));
+  def_imgs_[id] = Teuchos::rcp( new Image_<S>(img_width,img_height,defRCP,imgParams));
   if(def_image_rotation_!=ZERO_DEGREES){
     def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_);
   }
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::set_def_image(const int_t,const int_t,const Teuchos::ArrayRCP<scalar_t>,const int_t);
+#endif
+template void Schema_<storage_t>::set_def_image(const int_t,const int_t,const Teuchos::ArrayRCP<storage_t>,const int_t);
 
+template<typename S>
 void
-Schema::set_ref_image(const std::string & refName){
+Schema_<S>::set_ref_image(const std::string & refName){
   DEBUG_MSG("Schema:  Resetting the reference image");
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_); // automatically compute the gradients if the ref image is changed
@@ -376,25 +431,30 @@ Schema::set_ref_image(const std::string & refName){
     imgParams->set(DICe::subimage_offset_x,offset_x);
     imgParams->set(DICe::subimage_offset_y,offset_y);
     DEBUG_MSG("Setting the reference image using extents x: " << offset_x << " to " << end_x << " y: " << offset_y << " to " << end_y);
-    ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
+    ref_img_ = Teuchos::rcp( new Image_<S>(refName.c_str(),imgParams));
   }
   else
-    ref_img_ = Teuchos::rcp( new Image(refName.c_str(),imgParams));
+    ref_img_ = Teuchos::rcp( new Image_<S>(refName.c_str(),imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
   }
   if(prev_imgs_[0]==Teuchos::null){
-    prev_imgs_[0] = Teuchos::rcp( new Image(refName.c_str(),imgParams));
+    prev_imgs_[0] = Teuchos::rcp( new Image_<S>(refName.c_str(),imgParams));
     if(ref_image_rotation_!=ZERO_DEGREES){
       prev_imgs_[0] = prev_imgs_[0]->apply_rotation(ref_image_rotation_,imgParams);
     }
   }// end prev img is null
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::set_ref_image(const std::string &);
+#endif
+template void Schema_<storage_t>::set_ref_image(const std::string &);
 
+template<typename S>
 void
-Schema::set_ref_image(const int_t img_width,
+Schema_<S>::set_ref_image(const int_t img_width,
   const int_t img_height,
-  const Teuchos::ArrayRCP<storage_t> refRCP){
+  const Teuchos::ArrayRCP<S> refRCP){
   DEBUG_MSG("Schema:  Resetting the reference image");
   TEUCHOS_TEST_FOR_EXCEPTION(img_width<=0,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(img_height<=0,std::runtime_error,"");
@@ -404,21 +464,26 @@ Schema::set_ref_image(const int_t img_width,
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
   imgParams->set(DICe::filter_failed_cine_pixels,filter_failed_cine_pixels_);
-  ref_img_ = Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
+  ref_img_ = Teuchos::rcp( new Image_<S>(img_width,img_height,refRCP,imgParams));
   if(ref_image_rotation_!=ZERO_DEGREES){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
   }
   if(prev_imgs_[0]==Teuchos::null){
-    prev_imgs_[0] = Teuchos::rcp(new Image(ref_img_,imgParams));//Teuchos::rcp( new Image(img_width,img_height,refRCP,imgParams));
+    prev_imgs_[0] = Teuchos::rcp(new Image_<S>(ref_img_,imgParams));//Teuchos::rcp( new Image_<S>(img_width,img_height,refRCP,imgParams));
     // dont apply the rotation because the pointer is set to the ref image which has already been rotated
 //    if(ref_image_rotation_!=ZERO_DEGREES){
 //      prev_imgs_[0] = prev_imgs_[0]->apply_rotation(ref_image_rotation_,imgParams);
 //    }
   }
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::set_ref_image(const int_t,const int_t,const Teuchos::ArrayRCP<scalar_t>);
+#endif
+template void Schema_<storage_t>::set_ref_image(const int_t,const int_t,const Teuchos::ArrayRCP<storage_t>);
 
+template<typename S>
 void
-Schema::set_ref_image(Teuchos::RCP<Image> img){
+Schema_<S>::set_ref_image(Teuchos::RCP<Image_<S>> img){
   DEBUG_MSG("Schema::set_ref_image() Resetting the reference image");
   ref_img_ = img;
   if(gauss_filter_images_){
@@ -435,12 +500,17 @@ Schema::set_ref_image(Teuchos::RCP<Image> img){
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
   }
   if(prev_imgs_[0]==Teuchos::null){
-    prev_imgs_[0] = Teuchos::rcp(new DICe::Image(ref_img_));
+    prev_imgs_[0] = Teuchos::rcp(new DICe::Image_<S>(ref_img_));
   }
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::set_ref_image(Teuchos::RCP<Image_<scalar_t>>);
+#endif
+template void Schema_<storage_t>::set_ref_image(Teuchos::RCP<Image_<storage_t>>);
 
+template<typename S>
 void
-Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params){
+Schema_<S>::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params){
   global_num_subsets_ = 0;
   local_num_subsets_ = 0;
   subset_dim_ = -1;
@@ -482,8 +552,9 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   full_ref_img_height_ = -1;
 }
 
+template<typename S>
 void
-Schema::set_params(const std::string & params_file_name){
+Schema_<S>::set_params(const std::string & params_file_name){
   // create a parameter list from the selected file
   Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp( new Teuchos::ParameterList() );
   Teuchos::Ptr<Teuchos::ParameterList> paramsPtr(params.get());
@@ -491,8 +562,9 @@ Schema::set_params(const std::string & params_file_name){
   set_params(params);
 }
 
+template<typename S>
 void
-Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
+Schema_<S>::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
 
   const int_t proc_rank = comm_->get_rank();
 
@@ -826,18 +898,19 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     const scalar_t value_x = diceParams->get<double>(DICe::exact_solution_constant_value_x,0.0);
     const scalar_t value_y = diceParams->get<double>(DICe::exact_solution_constant_value_y,0.0);
     compute_laplacian_image_ = true;
-    image_deformer_ = Teuchos::rcp(new Image_Deformer(value_x,value_y,Image_Deformer::CONSTANT_VALUE));
+    image_deformer_ = Teuchos::rcp(new Image_Deformer_<S>(value_x,value_y,Image_Deformer::CONSTANT_VALUE));
   }
   if(diceParams->isParameter(DICe::exact_solution_dic_challenge_14)){
     TEUCHOS_TEST_FOR_EXCEPTION(diceParams->get<bool>(DICe::estimate_resolution_error,false),std::runtime_error,"");
     const scalar_t value = diceParams->get<double>(DICe::exact_solution_dic_challenge_14,0.0);
     compute_laplacian_image_ = true;
-    image_deformer_ = Teuchos::rcp(new Image_Deformer(value,0.0,Image_Deformer::DIC_CHALLENGE_14));
+    image_deformer_ = Teuchos::rcp(new Image_Deformer_<S>(value,0.0,Image_Deformer::DIC_CHALLENGE_14));
   }
 }
 
+template<typename S>
 void
-Schema::update_extents(const bool use_transformation_augmentation){
+Schema_<S>::update_extents(const bool use_transformation_augmentation){
   // don't use image extents when conformal subsets are used
   if(conformal_subset_defs_!=Teuchos::null){
     if(conformal_subset_defs_->size()>0){
@@ -933,9 +1006,14 @@ Schema::update_extents(const bool use_transformation_augmentation){
   assert(min_x_def<max_x_def);
   assert(min_y_def<max_y_def);
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::update_extents(const bool);
+#endif
+template void Schema_<storage_t>::update_extents(const bool);
 
+template<typename S>
 void
-Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+Schema_<S>::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   const Teuchos::RCP<Teuchos::ParameterList> & correlation_params){
 
   const std::string output_folder = input_params->get<std::string>(DICe::output_folder,"");
@@ -1099,8 +1177,9 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   }
 }
 
+template<typename S>
 void
-Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+Schema_<S>::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   const Teuchos::RCP<Schema> schema){
   const std::string output_folder = input_params->get<std::string>(DICe::output_folder,"");
   init_params_->set(DICe::output_folder,output_folder);
@@ -1203,8 +1282,9 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
 }
 
 
+template<typename S>
 void
-Schema::initialize(Teuchos::RCP<Decomp> decomp,
+Schema_<S>::initialize(Teuchos::RCP<Decomp> decomp,
   const int_t subset_size,
   Teuchos::RCP<std::map<int_t,Conformal_Area_Def> > conformal_subset_defs){
   if(is_initialized_){
@@ -1259,8 +1339,9 @@ Schema::initialize(Teuchos::RCP<Decomp> decomp,
   DEBUG_MSG("[PROC " << mesh_->get_comm()->get_rank() << "] schema initialized");
 }
 
+template<typename S>
 void
-Schema::create_mesh(Teuchos::RCP<Decomp> decomp){
+Schema_<S>::create_mesh(Teuchos::RCP<Decomp> decomp){
 
   const int_t num_overlap_coords = decomp->id_decomp_overlap_map()->get_num_local_elements();
   const int_t num_coords = decomp->id_decomp_map()->get_num_local_elements();
@@ -1313,8 +1394,9 @@ Schema::create_mesh(Teuchos::RCP<Decomp> decomp){
   create_mesh_fields();
 }
 
+template<typename S>
 void
-Schema::create_mesh_fields(){
+Schema_<S>::create_mesh_fields(){
   mesh_->create_field(field_enums::CROSS_CORR_Q_FS);
   mesh_->create_field(field_enums::CROSS_CORR_R_FS);
   mesh_->create_field(field_enums::SUBSET_DISPLACEMENT_X_FS);
@@ -1384,8 +1466,9 @@ Schema::create_mesh_fields(){
   }
 }
 
+template<typename S>
 void
-Schema::post_execution_tasks(){
+Schema_<S>::post_execution_tasks(){
   if(analysis_type_==GLOBAL_DIC){
 #ifdef DICE_ENABLE_GLOBAL
     global_algorithm_->post_execution_tasks(frame_id_);
@@ -1393,20 +1476,25 @@ Schema::post_execution_tasks(){
   }
   swap_def_prev_images();
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::post_execution_tasks();
+#endif
+template void Schema_<storage_t>::post_execution_tasks();
 
+template<typename S>
 void
-Schema::project_right_image_into_left_frame(Teuchos::RCP<Triangulation> tri,
+Schema_<S>::project_right_image_into_left_frame(Teuchos::RCP<Triangulation> tri,
   const bool reference){
   DEBUG_MSG("Schema::exectute_cross_correlation(): projecting the right image onto the left frame of reference");
   const int_t w = ref_img_->width();
   const int_t h = ref_img_->height();
-  Teuchos::RCP<Image> img = reference ? ref_img_ : def_imgs_[0];
+  Teuchos::RCP<Image_<S>> img = reference ? ref_img_ : def_imgs_[0];
   const int_t olx = ref_img_->offset_x();
   const int_t oly = ref_img_->offset_y();
   const int_t orx = reference ? ref_img_->offset_x() : def_imgs_[0]->offset_x();
   const int_t ory = reference ? ref_img_->offset_y() : def_imgs_[0]->offset_y();
-  Teuchos::RCP<Image> proj_img = reference ? Teuchos::rcp(new Image(ref_img_)) : Teuchos::rcp(new Image(def_imgs_[0]));
-  Teuchos::ArrayRCP<storage_t> intens = proj_img->intensities();
+  Teuchos::RCP<Image_<S>> proj_img = reference ? Teuchos::rcp(new Image_<S>(ref_img_)) : Teuchos::rcp(new Image_<S>(def_imgs_[0]));
+  Teuchos::ArrayRCP<S> intens = proj_img->intensities();
   scalar_t xr = 0.0;
   scalar_t yr = 0.0;
   for(int_t j=0;j<h;++j){
@@ -1423,9 +1511,14 @@ Schema::project_right_image_into_left_frame(Teuchos::RCP<Triangulation> tri,
     set_def_image(proj_img);
   }
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::project_right_image_into_left_frame(Teuchos::RCP<Triangulation>,const bool);
+#endif
+template void Schema_<storage_t>::project_right_image_into_left_frame(Teuchos::RCP<Triangulation>,const bool);
 
+template<typename S>
 int_t
-Schema::execute_cross_correlation(){
+Schema_<S>::execute_cross_correlation(){
   if(analysis_type_==GLOBAL_DIC){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, cross-correlation has not been implemented for global DIC");
     return 0;
@@ -1538,9 +1631,14 @@ Schema::execute_cross_correlation(){
 
   return 0;
 };
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template int_t Schema_<scalar_t>::execute_cross_correlation();
+#endif
+template int_t Schema_<storage_t>::execute_cross_correlation();
 
+template<typename S>
 int_t
-Schema::execute_correlation(){
+Schema_<S>::execute_correlation(){
   if(analysis_type_==GLOBAL_DIC){
 #ifdef DICE_ENABLE_GLOBAL
     Status_Flag global_status = CORRELATION_FAILED;
@@ -1695,9 +1793,14 @@ Schema::execute_correlation(){
   update_frame_id();
   return 0;
 };
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template int_t Schema_<scalar_t>::execute_correlation();
+#endif
+template int_t Schema_<storage_t>::execute_correlation();
 
+template<typename S>
 void
-Schema::save_cross_correlation_fields(){
+Schema_<S>::save_cross_correlation_fields(){
   Teuchos::RCP<MultiField> ux = mesh_->get_field(SUBSET_DISPLACEMENT_X_FS);
   Teuchos::RCP<MultiField> uy = mesh_->get_field(SUBSET_DISPLACEMENT_Y_FS);
   Teuchos::RCP<MultiField> cross_q = mesh_->get_field(CROSS_CORR_Q_FS);
@@ -1722,10 +1825,14 @@ Schema::save_cross_correlation_fields(){
   fprintf(filePtr,"# Worst cross-correlation gamma: %e\n",worst_gamma);
   fclose(filePtr);
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::save_cross_correlation_fields();
+#endif
+template void Schema_<storage_t>::save_cross_correlation_fields();
 
-
+template<typename S>
 void
-Schema::execute_post_processors(){
+Schema_<S>::execute_post_processors(){
   // compute post-processed quantities
   for(size_t i=0;i<post_processors_.size();++i){
     post_processors_[i]->update_current_frame_id(frame_id_-frame_skip_); // decrement frame skip since the frame id got updated by execute_correlation
@@ -1733,9 +1840,14 @@ Schema::execute_post_processors(){
   }
   DEBUG_MSG("[PROC " << comm_->get_rank() << "] post processing complete");
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::execute_post_processors();
+#endif
+template void Schema_<storage_t>::execute_post_processors();
 
+template<typename S>
 void
-Schema::prepare_optimization_initializers(){
+Schema_<S>::prepare_optimization_initializers(){
   // method only needs to be called once, return if the pointers are alread addressed
   if(opt_initializers_.size()>0){
     DEBUG_MSG("Repeat call to prepare_optimization_initializers(), calling pre_execution_tasks");
@@ -1832,8 +1944,9 @@ Schema::prepare_optimization_initializers(){
   }
 }
 
+template<typename S>
 bool
-Schema::motion_detected(const int_t subset_gid){
+Schema_<S>::motion_detected(const int_t subset_gid){
   DEBUG_MSG("Schema::motion_detected() called");
   if(motion_window_params_->find(subset_gid)!=motion_window_params_->end()){
     // if there is no motion detection turned on, always return true (that motion is detected)
@@ -1860,8 +1973,9 @@ Schema::motion_detected(const int_t subset_gid){
   }
 }
 
+template<typename S>
 void
-Schema::record_failed_step(const int_t subset_gid,
+Schema_<S>::record_failed_step(const int_t subset_gid,
   const int_t status,
   const int_t num_iterations){
   DEBUG_MSG("Subset " << subset_gid << " record failed step, status: " << status);
@@ -1877,8 +1991,9 @@ Schema::record_failed_step(const int_t subset_gid,
   global_field_value(subset_gid,ITERATIONS_FS) = num_iterations;
 }
 
+template<typename S>
 void
-Schema::record_step(Teuchos::RCP<Objective> obj,
+Schema_<S>::record_step(Teuchos::RCP<Objective> obj,
   Teuchos::RCP<Local_Shape_Function> shape_function,
   const scalar_t & sigma,
   const scalar_t & match,
@@ -1903,8 +2018,9 @@ Schema::record_step(Teuchos::RCP<Objective> obj,
   global_field_value(subset_gid,ITERATIONS_FS) = num_iterations;
 }
 
+template<typename S>
 Status_Flag
-Schema::initial_guess(const int_t subset_gid,
+Schema_<S>::initial_guess(const int_t subset_gid,
   Teuchos::RCP<Local_Shape_Function> shape_function){
   // for non-tracking routines, there is only the zero-th entry in the initializers map
   int_t sid = 0;
@@ -1917,8 +2033,9 @@ Schema::initial_guess(const int_t subset_gid,
   return opt_initializers_.find(sid)->second->initial_guess(subset_gid,shape_function);
 }
 
+template<typename S>
 void
-Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
+Schema_<S>::generic_correlation_routine(Teuchos::RCP<Objective> obj){
 
   const int_t subset_gid = obj->correlation_point_global_id();
   TEUCHOS_TEST_FOR_EXCEPTION(subset_local_id(subset_gid)==-1,std::runtime_error,
@@ -2262,8 +2379,9 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
     write_reference_subset_intensity_image(obj);
 }
 
+template<typename S>
 void
-Schema::write_deformed_subset_intensity_image(Teuchos::RCP<Objective> obj){
+Schema_<S>::write_deformed_subset_intensity_image(Teuchos::RCP<Objective> obj){
   DEBUG_MSG("[PROC " << comm_->get_rank() << "] Attempting to create directory : ./deformed_subset_intensities/");
   std::string dirStr = "./deformed_subset_intensities/";
   create_directory(dirStr);
@@ -2286,9 +2404,14 @@ Schema::write_deformed_subset_intensity_image(Teuchos::RCP<Objective> obj){
   ss << frame_id_ << ".tif";
   obj->subset()->write_image(ss.str(),true);
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::write_deformed_subset_intensity_image(Teuchos::RCP<Objective>);
+#endif
+template void Schema_<storage_t>::write_deformed_subset_intensity_image(Teuchos::RCP<Objective>);
 
+template<typename S>
 void
-Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
+Schema_<S>::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
   DEBUG_MSG("[PROC " << comm_->get_rank() << "] Attempting to create directory : ./evolved_subsets/");
   std::string dirStr = "./evolved_subsets/";
   create_directory(dirStr);
@@ -2311,9 +2434,14 @@ Schema::write_reference_subset_intensity_image(Teuchos::RCP<Objective> obj){
   ss << frame_id_ << ".tif";
   obj->subset()->write_image(ss.str());
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::write_reference_subset_intensity_image(Teuchos::RCP<Objective>);
+#endif
+template void Schema_<storage_t>::write_reference_subset_intensity_image(Teuchos::RCP<Objective>);
 
+template<typename S>
 void
-Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & correlation_params,
+Schema_<S>::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & correlation_params,
   std::string & output_folder,
   std::string & resolution_output_folder,
   std::string & prefix,
@@ -2440,7 +2568,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
     Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
     imgParams->set(DICe::compute_image_gradients,true);
     imgParams->set(DICe::gradient_method,gradient_method_);
-    Teuchos::RCP<Image> speckled_ref = create_synthetic_speckle_image<storage_t>(ref_img_->width(),ref_img_->height(),
+    Teuchos::RCP<Image_<S>> speckled_ref = create_synthetic_speckle_image<S>(ref_img_->width(),ref_img_->height(),
       ref_img_->offset_x(),ref_img_->offset_y(),speckle_size,imgParams);
     set_ref_image(speckled_ref);
   }
@@ -2453,7 +2581,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
     if(proc_id==0){ // other procs don't need to report speckle size
       // have to build full images for this step on process zero
       TEUCHOS_TEST_FOR_EXCEPTION(!ref_img_->has_file_name(),std::runtime_error,"");
-      Teuchos::RCP<Image> full_ref = Teuchos::rcp(new Image(ref_img_->file_name().c_str()));
+      Teuchos::RCP<Image_<S>> full_ref = Teuchos::rcp(new Image_<S>(ref_img_->file_name().c_str()));
       avg_speckle_size = compute_speckle_stats(data_dir_str,full_ref);
     }
   }
@@ -2496,9 +2624,9 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
       if(proc_id==0)
         std::cout << "processing resolution error for period " << period << " amplitude " << amplitude << std::endl;
       // create an image deformer class
-      image_deformer_ = Teuchos::rcp(new Image_Deformer(period,amplitude,Image_Deformer::SIN_COS));
+      image_deformer_ = Teuchos::rcp(new Image_Deformer_<S>(period,amplitude,Image_Deformer::SIN_COS));
       std::stringstream sincos_name;
-      Teuchos::RCP<Image> def_img;
+      Teuchos::RCP<Image_<S>> def_img;
       std::stringstream amp_ss;
       std::stringstream per_ss;
       amp_ss << amplitude;
@@ -2513,7 +2641,7 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
       std::ifstream f(sincos_name.str().c_str());
       //if(f.good()){
       //  DEBUG_MSG("using previously saved image");
-      //  def_img = Teuchos::rcp(new DICe::Image(sincos_name.str().c_str()));
+      //  def_img = Teuchos::rcp(new DICe::Image_<S>(sincos_name.str().c_str()));
       //}else{
         DEBUG_MSG("generating new synthetic image");
         def_img = image_deformer_->deform_image(ref_img());
@@ -2733,9 +2861,14 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
     } // end step loop
   } // end mag loop
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> &,std::string &,std::string &,std::string &,Teuchos::RCP<std::ostream> &);
+#endif
+template void Schema_<storage_t>::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> &,std::string &,std::string &,std::string &,Teuchos::RCP<std::ostream> &);
 
+template<typename S>
 int_t
-Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
+Schema_<S>::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
   const Teuchos::RCP<Teuchos::ParameterList> & input_params){
   DEBUG_MSG("Schema::initialize_cross_correlation(): estimating the projective transform from left to right camera");
 
@@ -2793,8 +2926,8 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
     imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
     const std::string left_image_string = image_files[0];
     const std::string right_image_string = stereo_image_files[0];
-    Teuchos::RCP<DICe::Image> left_image = Teuchos::rcp(new Image(left_image_string.c_str(),imgParams));
-    Teuchos::RCP<DICe::Image> right_image = Teuchos::rcp(new Image(right_image_string.c_str(),imgParams));
+    Teuchos::RCP<DICe::Image_<S>> left_image = Teuchos::rcp(new Image_<S>(left_image_string.c_str(),imgParams));
+    Teuchos::RCP<DICe::Image_<S>> right_image = Teuchos::rcp(new Image_<S>(right_image_string.c_str(),imgParams));
     const int_t success = tri->estimate_projective_transform(left_image,right_image,true,use_nonlinear_projection_,proc_rank);
     TEUCHOS_TEST_FOR_EXCEPTION(success!=0,std::runtime_error,"Error, Schema::initialize_cross_correlation(): estimate_projective_transform failed");
   }
@@ -2872,9 +3005,14 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
   DEBUG_MSG("Schema::initialize_cross_correlation(): projective transform estimation successful");
   return 0;
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template int_t Schema_<scalar_t>::initialize_cross_correlation(Teuchos::RCP<Triangulation>,const Teuchos::RCP<Teuchos::ParameterList> &);
+#endif
+template int_t Schema_<storage_t>::initialize_cross_correlation(Teuchos::RCP<Triangulation>,const Teuchos::RCP<Teuchos::ParameterList> &);
 
+template<typename S>
 int_t
-Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri){
+Schema_<S>::execute_triangulation(Teuchos::RCP<Triangulation> tri){
   Teuchos::RCP<MultiField> disp_x = mesh_->get_field(SUBSET_DISPLACEMENT_X_FS);
   Teuchos::RCP<MultiField> disp_y = mesh_->get_field(SUBSET_DISPLACEMENT_Y_FS);
   // for all the failed points, average the nearest neighbor result so that the plotting
@@ -2914,9 +3052,14 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri){
   }
   return 0;
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template int_t Schema_<scalar_t>::execute_triangulation(Teuchos::RCP<Triangulation>);
+#endif
+template int_t Schema_<storage_t>::execute_triangulation(Teuchos::RCP<Triangulation>);
 
+template<typename S>
 int_t
-Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
+Schema_<S>::execute_triangulation(Teuchos::RCP<Triangulation> tri,
   Teuchos::RCP<Schema> right_schema){
   if(tri==Teuchos::null) return 0;
   if(right_schema==Teuchos::null) return execute_triangulation(tri);
@@ -3087,15 +3230,20 @@ Schema::execute_triangulation(Teuchos::RCP<Triangulation> tri,
   }
   return 0;
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template int_t Schema_<scalar_t>::execute_triangulation(Teuchos::RCP<Triangulation>,Teuchos::RCP<Schema_<scalar_t>>);
+#endif
+template int_t Schema_<storage_t>::execute_triangulation(Teuchos::RCP<Triangulation>,Teuchos::RCP<Schema_<storage_t>>);
 
 // TODO fix this up so that it works with conformal subsets:
+template<typename S>
 void
-Schema::write_control_points_image(const std::string & fileName,
+Schema_<S>::write_control_points_image(const std::string & fileName,
   const bool use_def_image,
   const bool use_one_point){
 
   assert(subset_dim_>0);
-  Teuchos::RCP<Image> img = (use_def_image) ? def_imgs_[0] : ref_img_;
+  Teuchos::RCP<Image_<S>> img = (use_def_image) ? def_imgs_[0] : ref_img_;
 
   const int_t width = img->width();
   const int_t height = img->height();
@@ -3103,7 +3251,7 @@ Schema::write_control_points_image(const std::string & fileName,
   const int_t oy = img->offset_y();
 
   // first, create new intensities based on the old
-  Teuchos::ArrayRCP<storage_t> intensities(width*height,0);
+  Teuchos::ArrayRCP<S> intensities(width*height,0);
   for (int_t i=0;i<width*height;++i)
     intensities[i] = (*img)(i);
 
@@ -3154,14 +3302,19 @@ Schema::write_control_points_image(const std::string & fileName,
     }
   }
   // create a new image based on the info above:
-  Teuchos::RCP<Image> new_img = Teuchos::rcp(new Image(width,height,intensities));
+  Teuchos::RCP<Image_<S>> new_img = Teuchos::rcp(new Image_<S>(width,height,intensities));
 
   // write the image:
   new_img->write(fileName);
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::write_control_points_image(const std::string &,const bool,const bool);
+#endif
+template void Schema_<storage_t>::write_control_points_image(const std::string &,const bool,const bool);
 
+template<typename S>
 void
-Schema::write_output(const std::string & output_folder,
+Schema_<S>::write_output(const std::string & output_folder,
   const std::string & prefix,
   const bool separate_files_per_subset,
   const bool separate_header_file,
@@ -3307,9 +3460,14 @@ Schema::write_output(const std::string & output_folder,
     fclose (filePtr);
   }
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::write_output(const std::string &,const std::string &,const bool,const bool,const bool);
+#endif
+template void Schema_<storage_t>::write_output(const std::string &,const std::string &,const bool,const bool,const bool);
 
+template<typename S>
 void
-Schema::write_stats(const std::string & output_folder,
+Schema_<S>::write_stats(const std::string & output_folder,
   const std::string & prefix){
   if(analysis_type_==GLOBAL_DIC)
     return;
@@ -3323,10 +3481,15 @@ Schema::write_stats(const std::string & output_folder,
   output_spec_->write_stats(infoFilePtr);
   fclose(infoFilePtr);
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::write_stats(const std::string &,const std::string &);
+#endif
+template void Schema_<storage_t>::write_stats(const std::string &,const std::string &);
 
 // NOTE: only prints scalar fields
+template<typename S>
 void
-Schema::print_fields(const std::string & fileName){
+Schema_<S>::print_fields(const std::string & fileName){
 
   if(global_num_subsets_==0){
     std::cout << " Schema has 0 control points." << std::endl;
@@ -3357,9 +3520,14 @@ Schema::print_fields(const std::string & fileName){
     fclose(outFile);
   }
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::print_fields(const std::string &);
+#endif
+template void Schema_<storage_t>::print_fields(const std::string &);
 
+template<typename S>
 void
-Schema::check_for_blocking_subsets(const int_t subset_global_id){
+Schema_<S>::check_for_blocking_subsets(const int_t subset_global_id){
   if(obstructing_subset_ids_==Teuchos::null) return;
   if(obstructing_subset_ids_->find(subset_global_id)==obstructing_subset_ids_->end()) return;
   if(obstructing_subset_ids_->find(subset_global_id)->second.size()==0) return;
@@ -3389,8 +3557,9 @@ Schema::check_for_blocking_subsets(const int_t subset_global_id){
   } // blocking subsets loop
 }
 
+template<typename S>
 void
-Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
+Schema_<S>::write_deformed_subsets_image(const bool use_gamma_as_color){
   DEBUG_MSG("Schema::write_deformed_subset_image(): called");
   if(obj_vec_.empty()) return;
   // if the subset_images folder does not exist, create it
@@ -3422,7 +3591,7 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
   const int_t w = ref_img_->width();
   const int_t h = ref_img_->height();
 
-  Teuchos::ArrayRCP<storage_t> intensities(w*h,0);
+  Teuchos::ArrayRCP<S> intensities(w*h,0);
 
   // construct a copy of the base image to use as layer 0 for the output;
   // read each sub image if motion windows are used
@@ -3492,16 +3661,24 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
 
   } // subset loop
 
-  Teuchos::RCP<Image> layer_0_image = Teuchos::rcp(new Image(w,h,intensities));
+  Teuchos::RCP<Image_<S>> layer_0_image = Teuchos::rcp(new Image_<S>(w,h,intensities));
   layer_0_image->write(ss.str());
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Schema_<scalar_t>::write_deformed_subsets_image(const bool);
+#endif
+template void Schema_<storage_t>::write_deformed_subsets_image(const bool);
 
-
+template<typename S>
 int_t
-Schema::strain_window_size(const int_t post_processor_index)const{
+Schema_<S>::strain_window_size(const int_t post_processor_index)const{
   assert((int_t)post_processors_.size()>post_processor_index);
     return post_processors_[post_processor_index]->strain_window_size();
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template int_t Schema_<scalar_t>::strain_window_size(const int_t)const;
+#endif
+template int_t Schema_<storage_t>::strain_window_size(const int_t)const;
 
 Output_Spec::Output_Spec(Schema * schema,
   const bool omit_row_id,
