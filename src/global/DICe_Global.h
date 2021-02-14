@@ -62,9 +62,7 @@
 namespace DICe {
 
 // forward declaration of a schema
-template <typename S>
-class Schema_;
-using Schema = Schema_<storage_t>;
+class Schema;
 
 namespace global{
 

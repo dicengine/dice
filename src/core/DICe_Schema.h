@@ -194,9 +194,8 @@ private:
 /// data structures as well.
 ///
 /// Several methods are provided that expose the parameters.
-template <typename S=storage_t>
 class DICE_LIB_DLL_EXPORT
-Schema_ {
+Schema {
 
 public:
 
@@ -212,27 +211,27 @@ public:
   typedef Teuchos::RCP<MultiField_Comm> comm_rcp;
 
   /// \brief do nothing constructor
-  Schema_(const Teuchos::RCP<Teuchos::ParameterList> & correlation_params=Teuchos::null){
+  Schema(const Teuchos::RCP<Teuchos::ParameterList> & correlation_params=Teuchos::null){
     default_constructor_tasks(correlation_params);
   };
 
   /// \brief Constructor that takes a parameter list
   /// \param input_params the input parameters contain the image file names and subset size and spacing, etc.
   /// \param correlation_params the correlation parameters determine the dic algorithm options
-  Schema_(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+  Schema(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
     const Teuchos::RCP<Teuchos::ParameterList> & correlation_params);
 
   /// \brief Constructor that takes string name of a parameter list file
   /// \param input_file_name file name of the input.xml file that contains subset locations file names, etc.
   /// \param params_file_name file name of the correlation parameters file
-  Schema_(const std::string & input_file_name,
+  Schema(const std::string & input_file_name,
     const std::string & params_file_name);
 
   /// \brief Constructor that takes a parameter list
   /// \param input_params the input parameters contain the image file names and subset size and spacing, etc.
   /// \param correlation_params the correlation parameters determine the dic algorithm options
   /// \param schema pointer to another schema
-  Schema_(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
+  Schema(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
     const Teuchos::RCP<Teuchos::ParameterList> & correlation_params,
     const Teuchos::RCP<Schema> & schema);
 
@@ -243,7 +242,7 @@ public:
   /// \param step_size_y Spacing of the correlation points in y
   /// \param subset_size int_t of the square subsets in pixels
   /// \param params Correlation parameters
-  Schema_(const int_t roi_width,
+  Schema(const int_t roi_width,
     const int_t roi_height,
     const int_t step_size_x,
     const int_t step_size_y,
@@ -258,14 +257,14 @@ public:
   /// \param conformal_subset_defs Optional definition of conformal subsets
   /// \param neighbor_ids A vector (of length num_pts) that contains the neighbor id to use when initializing the solution by neighbor value
   /// \param params correlation parameters
-  Schema_(Teuchos::ArrayRCP<scalar_t> coords_x,
+  Schema(Teuchos::ArrayRCP<scalar_t> coords_x,
     Teuchos::ArrayRCP<scalar_t> coords_y,
     const int_t subset_size,
     Teuchos::RCP<std::map<int_t,Conformal_Area_Def> > conformal_subset_defs=Teuchos::null,
     Teuchos::RCP<std::vector<int_t> > neighbor_ids=Teuchos::null,
     const Teuchos::RCP<Teuchos::ParameterList> & params=Teuchos::null);
 
-  virtual ~Schema_(){};
+  virtual ~Schema(){};
 
   /// If a schema's parameters are changed, set_params() must be called again
   /// any params that aren't set are reset to the default value (so this method
@@ -305,11 +304,11 @@ public:
   /// Replace the deformed image using an intensity array
   void set_def_image(const int_t img_width,
     const int_t img_height,
-    const Teuchos::ArrayRCP<S> defRCP,
+    const Teuchos::ArrayRCP<storage_t> defRCP,
     const int_t id=0);
 
   /// Replace the deformed image using an image
-  void set_def_image(Teuchos::RCP<Image_<S>> img,
+  void set_def_image(Teuchos::RCP<Image> img,
     const int_t id=0);
 
   /// Rotate the deformed image if requested
@@ -321,10 +320,10 @@ public:
   /// Replace the deformed image using an intensity array
   void set_ref_image(const int_t img_width,
     const int_t img_height,
-    const Teuchos::ArrayRCP<S> refRCP);
+    const Teuchos::ArrayRCP<storage_t> refRCP);
 
   /// Replace the reference image using an image
-  void set_ref_image(Teuchos::RCP<Image_<S>> img);
+  void set_ref_image(Teuchos::RCP<Image> img);
 
   /// Swap the deformed and previous image in memory
   void swap_def_prev_images();
@@ -375,30 +374,30 @@ public:
     return is_initialized_;
   }
 
-  /// Returns a pointer to the reference DICe::Image_<S>
-  Teuchos::RCP<Image_<S>> ref_img()const{
+  /// Returns a pointer to the reference DICe::Image
+  Teuchos::RCP<Image> ref_img()const{
     return ref_img_;
   }
 
-  /// Returns a pointer to the deformed DICe::Image_<S>
-  Teuchos::RCP<Image_<S>> def_img(const int_t index=0)const{
+  /// Returns a pointer to the deformed DICe::Image
+  Teuchos::RCP<Image> def_img(const int_t index=0)const{
     assert(index>=0&&index<(int_t)def_imgs_.size());
     return def_imgs_[index];
   }
 
   /// return a pointer to the def images vector
-  const std::vector<Teuchos::RCP<Image_<S>> > * def_imgs()const{
+  const std::vector<Teuchos::RCP<Image> > * def_imgs()const{
     return &def_imgs_;
   }
 
-  /// Returns a pointer to the preivous DICe::Image_<S>
-  Teuchos::RCP<Image_<S>> prev_img(const int_t index=0)const{
+  /// Returns a pointer to the preivous DICe::Image
+  Teuchos::RCP<Image> prev_img(const int_t index=0)const{
     assert(index>=0&&index<(int_t)prev_imgs_.size());
     return prev_imgs_[index];
   }
 
   /// return a pointer to the def images vector
-  const std::vector<Teuchos::RCP<Image_<S>> > * prev_imgs()const{
+  const std::vector<Teuchos::RCP<Image> > * prev_imgs()const{
     return &prev_imgs_;
   }
 
@@ -1016,11 +1015,11 @@ public:
   }
 
   /// returns a pointer to the image deformer used for error estimation
-  Teuchos::RCP<Image_Deformer_<S>> image_deformer() const{
+  Teuchos::RCP<Image_Deformer> image_deformer() const{
     return image_deformer_;
   }
 
-protected:
+private:
   /// \brief Initializes the data structures for the schema
   /// \param input_params pointer to the initialization parameters
   /// \param correlation_params pointer to the correlation parameters
@@ -1081,13 +1080,13 @@ protected:
   /// Vector of objective classes
   std::vector<Teuchos::RCP<Objective> > obj_vec_;
   /// Pointer to reference image
-  Teuchos::RCP<Image_<S>> ref_img_;
+  Teuchos::RCP<Image> ref_img_;
   /// Pointer to deformed image
   /// vector because there could be multiple sub-images
-  std::vector<Teuchos::RCP<Image_<S>> > def_imgs_;
+  std::vector<Teuchos::RCP<Image> > def_imgs_;
   /// Pointer to previous image
   /// vector because there could be multiple sub-images
-  std::vector<Teuchos::RCP<Image_<S>> > prev_imgs_;
+  std::vector<Teuchos::RCP<Image> > prev_imgs_;
   /// Vector of pointers to the post processing utilities
   std::vector<Teuchos::RCP<Post_Processor> > post_processors_;
   /// True if any post_processors have been activated
@@ -1264,15 +1263,12 @@ protected:
   /// store the total image dims (the image size before decomposition across processors)
   int_t full_ref_img_height_;
   /// store a pointer to the image deformer if this is a error estimation run
-  Teuchos::RCP<Image_Deformer_<S>> image_deformer_;
+  Teuchos::RCP<Image_Deformer> image_deformer_;
   /// true if the laplacian images should be computed
   bool compute_laplacian_image_;
   /// size of threshold to use for feature matching when thresholding is included
   int_t threshold_block_size_;
 };
-
-using Schema = Schema_<>;
-using Scalar_Schema = Schema_<scalar_t>;
 
 /// \class DICe::Output_Spec
 /// \brief A simple class to hold the fields to write to the output files and the order to write them

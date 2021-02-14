@@ -67,10 +67,7 @@
 /// generic DICe classes and functions
 namespace DICe {
 
-// forward declaration of a schema
-template <typename S>
-class Schema_;
-using Schema = Schema_<storage_t>;
+class Schema;
 
 /// Deformation triad to store three parameter values in a set
 struct def_triad
