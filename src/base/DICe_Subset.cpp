@@ -383,11 +383,11 @@ Subset::initialize(Teuchos::RCP<Image_<S>> image,
   const int_t offset_y = image->offset_y();
   const int_t w = image->width();
   const int_t h = image->height();
-  Teuchos::ArrayRCP<scalar_t> intensities_ = target==REF_INTENSITIES ? ref_intensities_ : def_intensities_;
+  Teuchos::ArrayRCP<scalar_t> intensities = target==REF_INTENSITIES ? ref_intensities_ : def_intensities_;
   // assume if the map is null, use the no_map_tag in the parrel for call of the functor
   if(shape_function==Teuchos::null){
     for(int_t i=0;i<num_pixels_;++i){
-      intensities_[i] = (*image)(x_[i]-offset_x,y_[i]-offset_y);
+      intensities[i] = (*image)(x_[i]-offset_x,y_[i]-offset_y);
     }
   }
   else{
@@ -397,6 +397,9 @@ Subset::initialize(Teuchos::RCP<Image_<S>> image,
     scalar_t mapped_x = 0.0;
     scalar_t mapped_y = 0.0;
     const scalar_t ox=(scalar_t)offset_x,oy=(scalar_t)offset_y;
+    const bool has_gradients = image->has_gradients();
+    // function pointer to avoid having to set the interpolation method for each pixel
+    void (Image_<S>::*interp_func)(scalar_t&,scalar_t&,scalar_t&,const bool,const scalar_t&,const scalar_t&) const = image->get_interpolant(interp);
     for(int_t i=0;i<num_pixels_;++i){
       shape_function->map(x_[i],y_[i],cx_,cy_,mapped_x,mapped_y);
       px = ((int_t)(mapped_x + 0.5) == (int_t)(mapped_x)) ? (int_t)(mapped_x) : (int_t)(mapped_x) + 1;
@@ -419,25 +422,10 @@ Subset::initialize(Teuchos::RCP<Image_<S>> image,
       }
       // if the code got here, the pixel is not deactivated
       is_deactivated_this_step(i) = false;
-      if(interp==BILINEAR){
-        image->interpolate_bilinear_all(intensities_[i], grad_x_[i], grad_y_[i],
-               image->has_gradients(), mapped_x-ox, mapped_y-oy);
-      }
-      else if(interp==BICUBIC){
-        image->interpolate_bicubic_all(intensities_[i], grad_x_[i], grad_y_[i],
-               image->has_gradients(), mapped_x-ox, mapped_y-oy);
-      }
-      else if(interp==KEYS_FOURTH){
-        image->interpolate_keys_fourth_all(intensities_[i], grad_x_[i], grad_y_[i],
-               image->has_gradients(), mapped_x-ox, mapped_y-oy);
-      }
-      else{
-        TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,
-          "Error, unknown interpolation method requested");
-      }
+      (*image.*interp_func)(intensities[i], grad_x_[i], grad_y_[i],has_gradients, mapped_x-ox, mapped_y-oy);
     }
   }
-  // now sync up the intensities:
+  // sync up the intensities:
   if(target==REF_INTENSITIES){
     if(image->has_gradients()){
       // copy over the image gradients:

@@ -337,7 +337,7 @@ template <typename S>
 void
 Image_<S>::interpolate_bilinear_all(scalar_t & intensity_val,
        scalar_t & grad_x_val, scalar_t & grad_y_val, const bool compute_gradient,
-       const scalar_t & local_x, const scalar_t & local_y) {
+       const scalar_t & local_x, const scalar_t & local_y) const{
   if(local_x<0.0||local_x>=width_-1.5||local_y<0.0||local_y>=height_-1.5) {
     intensity_val = 0.0;
     if (compute_gradient) {
@@ -369,13 +369,13 @@ Image_<S>::interpolate_bilinear_all(scalar_t & intensity_val,
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template void Image_<storage_t>::interpolate_bilinear_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &);
+template void Image_<storage_t>::interpolate_bilinear_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &) const;
 #endif
-template void Image_<scalar_t>::interpolate_bilinear_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &);
+template void Image_<scalar_t>::interpolate_bilinear_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &) const;
 
 template <typename S>
 scalar_t
-Image_<S>::interpolate_bilinear(const scalar_t & local_x, const scalar_t & local_y){
+Image_<S>::interpolate_bilinear(const scalar_t & local_x, const scalar_t & local_y) const{
 
   if(local_x<0.0||local_x>=width_-1.5||local_y<0.0||local_y>=height_-1.5) return 0.0;
   const int_t x1 = (int_t)local_x;
@@ -389,13 +389,13 @@ Image_<S>::interpolate_bilinear(const scalar_t & local_x, const scalar_t & local
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_bilinear(const scalar_t &,const scalar_t &);
+template scalar_t Image_<storage_t>::interpolate_bilinear(const scalar_t &,const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_bilinear(const scalar_t &,const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_bilinear(const scalar_t &,const scalar_t &) const;
 
 template <typename S>
 scalar_t
-Image_<S>::interpolate_grad_x_bilinear(const scalar_t & local_x, const scalar_t & local_y){
+Image_<S>::interpolate_grad_x_bilinear(const scalar_t & local_x, const scalar_t & local_y) const{
 
   if(local_x<0.0||local_x>=width_-1.5||local_y<0.0||local_y>=height_-1.5) return 0.0;
   const int_t x1 = (int_t)local_x;
@@ -409,13 +409,13 @@ Image_<S>::interpolate_grad_x_bilinear(const scalar_t & local_x, const scalar_t 
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_grad_x_bilinear(const scalar_t &,const scalar_t &);
+template scalar_t Image_<storage_t>::interpolate_grad_x_bilinear(const scalar_t &,const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_grad_x_bilinear(const scalar_t &,const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_grad_x_bilinear(const scalar_t &,const scalar_t &) const;
 
 template <typename S>
 scalar_t
-Image_<S>::interpolate_grad_y_bilinear(const scalar_t & local_x, const scalar_t & local_y){
+Image_<S>::interpolate_grad_y_bilinear(const scalar_t & local_x, const scalar_t & local_y) const{
   if(local_x<0.0||local_x>=width_-1.5||local_y<0.0||local_y>=height_-1.5) return 0.0;
   const int_t x1 = (int_t)local_x;
   const int_t x2 = x1+1;
@@ -428,16 +428,16 @@ Image_<S>::interpolate_grad_y_bilinear(const scalar_t & local_x, const scalar_t 
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_grad_y_bilinear(const scalar_t &,const scalar_t &);
+template scalar_t Image_<storage_t>::interpolate_grad_y_bilinear(const scalar_t &,const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_grad_y_bilinear(const scalar_t &,const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_grad_y_bilinear(const scalar_t &,const scalar_t &) const;
 
 template <typename S>
 void
 Image_<S>::interpolate_bicubic_all(scalar_t & intensity_val,
        scalar_t & grad_x_val, scalar_t & grad_y_val, const bool compute_gradient,
-       const scalar_t & local_x, const scalar_t & local_y) {
-  if(local_x<1.0||local_x>=width_-2.0||local_y<1.0||local_y>=height_-2.0) {
+       const scalar_t & local_x, const scalar_t & local_y) const {
+  if(local_x<1.0||local_x>=width_-2.0||local_y<1.0||local_y>=height_-2.0){
     intensity_val = this->interpolate_bilinear(local_x,local_y);
     if (compute_gradient) {
       grad_x_val = this->interpolate_grad_x_bilinear(local_x,local_y);
@@ -580,13 +580,13 @@ Image_<S>::interpolate_bicubic_all(scalar_t & intensity_val,
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template void Image_<storage_t>::interpolate_bicubic_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &);
+template void Image_<storage_t>::interpolate_bicubic_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &) const;
 #endif
-template void Image_<scalar_t>::interpolate_bicubic_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &);
+template void Image_<scalar_t>::interpolate_bicubic_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &) const;
 
 template <typename S>
 scalar_t
-Image_<S>::interpolate_bicubic(const scalar_t & local_x, const scalar_t & local_y){
+Image_<S>::interpolate_bicubic(const scalar_t & local_x, const scalar_t & local_y) const{
   if(local_x<1.0||local_x>=width_-2.0||local_y<1.0||local_y>=height_-2.0) return this->interpolate_bilinear(local_x,local_y);
 
   const int_t x0  = (int_t)local_x;
@@ -643,13 +643,13 @@ Image_<S>::interpolate_bicubic(const scalar_t & local_x, const scalar_t & local_
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_bicubic(const scalar_t &, const scalar_t &);
+template scalar_t Image_<storage_t>::interpolate_bicubic(const scalar_t &, const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_bicubic(const scalar_t &, const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_bicubic(const scalar_t &, const scalar_t &) const;
 
 template <typename S>
 scalar_t
-Image_<S>::interpolate_grad_x_bicubic(const scalar_t & local_x, const scalar_t & local_y){
+Image_<S>::interpolate_grad_x_bicubic(const scalar_t & local_x, const scalar_t & local_y) const{
   if(local_x<1.0||local_x>=width_-2.0||local_y<1.0||local_y>=height_-2.0) return this->interpolate_grad_x_bilinear(local_x,local_y);
 
   const int_t x0  = (int_t)local_x;
@@ -706,13 +706,13 @@ Image_<S>::interpolate_grad_x_bicubic(const scalar_t & local_x, const scalar_t &
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_grad_x_bicubic(const scalar_t &, const scalar_t &);
+template scalar_t Image_<storage_t>::interpolate_grad_x_bicubic(const scalar_t &, const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_grad_x_bicubic(const scalar_t &, const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_grad_x_bicubic(const scalar_t &, const scalar_t &) const;
 
 template <typename S>
 scalar_t
-Image_<S>::interpolate_grad_y_bicubic(const scalar_t & local_x, const scalar_t & local_y){
+Image_<S>::interpolate_grad_y_bicubic(const scalar_t & local_x, const scalar_t & local_y) const{
   if(local_x<1.0||local_x>=width_-2.0||local_y<1.0||local_y>=height_-2.0) return this->interpolate_grad_y_bilinear(local_x,local_y);
 
   const int_t x0  = (int_t)local_x;
@@ -769,15 +769,15 @@ Image_<S>::interpolate_grad_y_bicubic(const scalar_t & local_x, const scalar_t &
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_grad_y_bicubic(const scalar_t &, const scalar_t &);
+template scalar_t Image_<storage_t>::interpolate_grad_y_bicubic(const scalar_t &, const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_grad_y_bicubic(const scalar_t &, const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_grad_y_bicubic(const scalar_t &, const scalar_t &) const;
 
 template <typename S>
 void
 Image_<S>::interpolate_keys_fourth_all(scalar_t & intensity_val,
        scalar_t & grad_x_val, scalar_t & grad_y_val, const bool compute_gradient,
-       const scalar_t & local_x, const scalar_t & local_y) {
+       const scalar_t & local_x, const scalar_t & local_y) const {
   intensity_val = 0.0;
   if (compute_gradient) {
     grad_x_val = 0.0;
@@ -827,13 +827,13 @@ Image_<S>::interpolate_keys_fourth_all(scalar_t & intensity_val,
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template void Image_<storage_t>::interpolate_keys_fourth_all(scalar_t &, scalar_t &, scalar_t &, const bool, const scalar_t &, const scalar_t &);
+template void Image_<storage_t>::interpolate_keys_fourth_all(scalar_t &, scalar_t &, scalar_t &, const bool, const scalar_t &, const scalar_t &) const;
 #endif
-template void Image_<scalar_t>::interpolate_keys_fourth_all(scalar_t &, scalar_t &, scalar_t &, const bool, const scalar_t &, const scalar_t &);
+template void Image_<scalar_t>::interpolate_keys_fourth_all(scalar_t &, scalar_t &, scalar_t &, const bool, const scalar_t &, const scalar_t &) const;
 
 template <typename S>
 scalar_t
-Image_<S>::interpolate_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
+Image_<S>::interpolate_keys_fourth(const scalar_t & local_x, const scalar_t & local_y) const{
   static std::vector<scalar_t> coeffs_x(6,0.0);
   static std::vector<scalar_t> coeffs_y(6,0.0);
   static scalar_t dx = 0.0;
@@ -868,13 +868,13 @@ Image_<S>::interpolate_keys_fourth(const scalar_t & local_x, const scalar_t & lo
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_keys_fourth(const scalar_t &, const scalar_t &);
+template scalar_t Image_<storage_t>::interpolate_keys_fourth(const scalar_t &, const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_keys_fourth(const scalar_t &, const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_keys_fourth(const scalar_t &, const scalar_t &) const;
 
 template <typename S>
 scalar_t
-Image_<S>::interpolate_grad_x_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
+Image_<S>::interpolate_grad_x_keys_fourth(const scalar_t & local_x, const scalar_t & local_y) const{
   static std::vector<scalar_t> coeffs_x(6,0.0);
   static std::vector<scalar_t> coeffs_y(6,0.0);
   static scalar_t dx = 0.0;
@@ -909,13 +909,13 @@ Image_<S>::interpolate_grad_x_keys_fourth(const scalar_t & local_x, const scalar
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_grad_x_keys_fourth(const scalar_t &, const scalar_t &);
+template scalar_t Image_<storage_t>::interpolate_grad_x_keys_fourth(const scalar_t &, const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_grad_x_keys_fourth(const scalar_t &, const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_grad_x_keys_fourth(const scalar_t &, const scalar_t &) const;
 
 template <typename S>
 scalar_t
-Image_<S>::interpolate_grad_y_keys_fourth(const scalar_t & local_x, const scalar_t & local_y){
+Image_<S>::interpolate_grad_y_keys_fourth(const scalar_t & local_x, const scalar_t & local_y) const{
   static std::vector<scalar_t> coeffs_x(6,0.0);
   static std::vector<scalar_t> coeffs_y(6,0.0);
   static scalar_t dx = 0.0;
@@ -950,9 +950,9 @@ Image_<S>::interpolate_grad_y_keys_fourth(const scalar_t & local_x, const scalar
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_grad_y_keys_fourth(const scalar_t &, const scalar_t &);
+template scalar_t Image_<storage_t>::interpolate_grad_y_keys_fourth(const scalar_t &, const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_grad_y_keys_fourth(const scalar_t &, const scalar_t &);
+template scalar_t Image_<scalar_t>::interpolate_grad_y_keys_fourth(const scalar_t &, const scalar_t &) const;
 
 template <typename S>
 void
@@ -968,6 +968,10 @@ Image_<S>::compute_gradients(){
   }
   has_gradients_ = true;
 }
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template void Image_<storage_t>::compute_gradients();
+#endif
+template void Image_<scalar_t>::compute_gradients();
 
 template <typename S>
 void

@@ -218,16 +218,34 @@ public:
   /// \param intensities the new intensity value array
   void replace_intensities(Teuchos::ArrayRCP<S> intensities);
 
+  /// return function pointer to interpolant based on the interp type
+  typedef void (Image_<S>::*interpolant)(scalar_t&,scalar_t&,scalar_t&,const bool,const scalar_t&,const scalar_t&) const;
+  interpolant get_interpolant(const Interpolation_Method interp){
+    if(interp==BILINEAR){
+      return &Image_<S>::interpolate_bilinear_all;
+    }
+    else if(interp==BICUBIC){
+      return &Image_<S>::interpolate_bicubic_all;
+    }
+    else if(interp==KEYS_FOURTH){
+      return &Image_<S>::interpolate_keys_fourth_all;
+    }
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,
+        "Error, unknown interpolation method requested");
+    }
+  }
+
   /// interpolate intensity and gradients
   void interpolate_keys_fourth_all(scalar_t & intensity_val,
        scalar_t & grad_x_val, scalar_t & grad_y_val, const bool compute_gradient,
-       const scalar_t  & local_x, const scalar_t  & local_y);
+       const scalar_t  & local_x, const scalar_t  & local_y) const;
 
   /// interpolant
   /// \param global_x global image coordinate x
   /// \param global_y global image coordinate y
   scalar_t  interpolate_keys_fourth_global(const scalar_t  & global_x,
-    const scalar_t  & global_y){
+    const scalar_t  & global_y) const{
     return interpolate_keys_fourth(global_x-offset_x_,global_y-offset_y_);
   }
 
@@ -235,81 +253,81 @@ public:
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
   scalar_t  interpolate_keys_fourth(const scalar_t  & local_x,
-    const scalar_t  & local_y);
+    const scalar_t  & local_y) const;
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
   scalar_t  interpolate_grad_x_keys_fourth(const scalar_t  & local_x,
-    const scalar_t  & local_y);
+    const scalar_t  & local_y) const;
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
   scalar_t  interpolate_grad_y_keys_fourth(const scalar_t  & local_x,
-    const scalar_t  & local_y);
+    const scalar_t  & local_y) const;
 
   /// interpolant
   /// \param global_x global image coordinate x
   /// \param global_y global image coordinate y
   scalar_t  interpolate_bilinear_global(const scalar_t  & global_x,
-    const scalar_t  & global_y){
+    const scalar_t  & global_y) const{
     return interpolate_bilinear(global_x-offset_x_,global_y-offset_y_);
   }
 
   /// interpolate intensity and gradients
   void interpolate_bilinear_all(scalar_t  & intensity_val,
        scalar_t  & grad_x_val, scalar_t  & grad_y_val, const bool compute_gradient,
-       const scalar_t  & local_x, const scalar_t  & local_y);
+       const scalar_t  & local_x, const scalar_t  & local_y) const;
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
   scalar_t  interpolate_bilinear(const scalar_t  & local_x,
-    const scalar_t  & local_y);
+    const scalar_t  & local_y) const;
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
   scalar_t  interpolate_grad_x_bilinear(const scalar_t  & local_x,
-    const scalar_t  & local_y);
+    const scalar_t  & local_y) const;
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
   scalar_t  interpolate_grad_y_bilinear(const scalar_t  & local_x,
-    const scalar_t  & local_y);
+    const scalar_t  & local_y) const;
 
   /// interpolant
   /// \param global_x global image coordinate x
   /// \param global_y global image coordinate y
   scalar_t  interpolate_bicubic_global(const scalar_t  & global_x,
-    const scalar_t  & global_y){
+    const scalar_t  & global_y) const{
     return interpolate_bicubic(global_x-offset_x_,global_y-offset_y_);
   }
 
   /// interpolate intensity and gradients
   void interpolate_bicubic_all(scalar_t  & intensity_val,
        scalar_t  & grad_x_val, scalar_t  & grad_y_val, const bool compute_gradient,
-       const scalar_t  & local_x, const scalar_t  & local_y);
+       const scalar_t  & local_x, const scalar_t  & local_y) const;
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
   scalar_t  interpolate_bicubic(const scalar_t  & local_x,
-    const scalar_t  & local_y);
+    const scalar_t  & local_y) const;
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
   scalar_t  interpolate_grad_x_bicubic(const scalar_t  & local_x,
-    const scalar_t  & local_y);
+    const scalar_t  & local_y) const;
 
   /// interpolant
   /// \param local_x local image coordinate x
   /// \param local_y local image coordinate y
   scalar_t  interpolate_grad_y_bicubic(const scalar_t  & local_x,
-    const scalar_t  & local_y);
+    const scalar_t  & local_y) const;
 
   /// gradient accessors:
   /// note the internal arrays are stored as (row,column) so the indices have to be switched from coordinates x,y to y,x
