@@ -490,13 +490,13 @@ private:
   /// device intensity work array
   Teuchos::ArrayRCP<S> intensities_temp_;
   /// mask coefficients
-  Teuchos::ArrayRCP<scalar_t > mask_;
+  Teuchos::ArrayRCP<scalar_t> mask_;
   /// image gradient x container
-  Teuchos::ArrayRCP<scalar_t > grad_x_;
+  Teuchos::ArrayRCP<scalar_t> grad_x_;
   /// image gradient y container
-  Teuchos::ArrayRCP<scalar_t > grad_y_;
+  Teuchos::ArrayRCP<scalar_t> grad_y_;
   /// image gradient y container
-  Teuchos::ArrayRCP<scalar_t > laplacian_;
+  Teuchos::ArrayRCP<scalar_t> laplacian_;
   /// flag that the gradients have been computed
   bool has_gradients_;
   /// flag that the image has been filtered
@@ -505,8 +505,6 @@ private:
   scalar_t  grad_c1_;
   /// coeff used in computing gradients
   scalar_t  grad_c2_;
-  /// Gauss filter coefficients
-  scalar_t  gauss_filter_coeffs_[13][13]; // 13 is the maximum size for the filter window
   /// Gauss filter mask size
   int_t gauss_filter_mask_size_;
   /// half the gauss filter mask size
