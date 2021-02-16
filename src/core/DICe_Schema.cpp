@@ -194,6 +194,7 @@ Schema::set_def_image(const std::string & defName){
     }
   }
   const bool has_motion_window = motion_window_params_->size()>0;
+  DEBUG_MSG("Schema::set_def_image(): has motion window " << has_motion_window);
 
   int_t w = 0, h = 0;
   utils::read_image_dimensions(defName.c_str(),w,h);
@@ -230,7 +231,7 @@ Schema::set_def_image(const std::string & defName){
         const int_t frame_count = frame_id_ + num_buffer_frames >= first_frame_id_ + num_frames_ ?
             first_frame_id_+num_frames_-frame_id_ : num_buffer_frames;
         DEBUG_MSG("Schema::set_def_image(): *** reading cine buffer, frame id " << frame_id_ << " count " << frame_count);
-        if((hc->hyperframe()->num_windows()==0&&has_motion_window)||has_extents_){
+        if((frame_id_-first_frame_id_==0&&has_motion_window)||has_extents_){
           hypercine::HyperCine::HyperFrame hf(frame_id_,frame_count);
           if(has_motion_window){
             for(std::map<int_t,Motion_Window_Params>::iterator it=motion_window_params_->begin();it!=motion_window_params_->end();++it){
