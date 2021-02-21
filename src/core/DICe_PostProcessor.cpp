@@ -250,18 +250,48 @@ Plotly_Contour_Post_Processor::execute(){
   // ensure only in serial for now TODO enable parallel post processor for this
   const int_t num_procs = mesh_->get_comm()->get_size();
   TEUCHOS_TEST_FOR_EXCEPTION(num_procs!=1,std::runtime_error,"Plotly_Contour_Post_Processor only works in serial");
+  const int_t spa_dim = mesh_->spatial_dimension();
 
   // gather the current coordinates of the subsets with sigma>=0 or all valid points
-  Teuchos::RCP<MultiField> coords_x = mesh_->get_field(DICe::field_enums::SUBSET_COORDINATES_X_FS);
-  Teuchos::RCP<MultiField> coords_y = mesh_->get_field(DICe::field_enums::SUBSET_COORDINATES_Y_FS);
-  Teuchos::RCP<MultiField> disp_x = mesh_->get_field(DICe::field_enums::SUBSET_DISPLACEMENT_X_FS);
-  Teuchos::RCP<MultiField> disp_y = mesh_->get_field(DICe::field_enums::SUBSET_DISPLACEMENT_Y_FS);
-  Teuchos::RCP<MultiField> sigma = mesh_->get_field(DICe::field_enums::SIGMA_FS);
+  Teuchos::RCP<MultiField> coords_x;
+  Teuchos::RCP<MultiField> coords_y;
+  Teuchos::RCP<MultiField> disp_x;
+  Teuchos::RCP<MultiField> disp_y;
+  Teuchos::RCP<MultiField> sigma;
+  bool coords_are_subset = true;
+  try{
+    coords_x = mesh_->get_field(DICe::field_enums::SUBSET_COORDINATES_X_FS);
+    coords_y = mesh_->get_field(DICe::field_enums::SUBSET_COORDINATES_Y_FS);
+    disp_x = mesh_->get_field(DICe::field_enums::SUBSET_DISPLACEMENT_X_FS);
+    disp_y = mesh_->get_field(DICe::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+    sigma = mesh_->get_field(DICe::field_enums::SIGMA_FS);
+  }catch(...){ // not subset based, copy two-d vector into one-d arrays
+    coords_are_subset = false;
+    Teuchos::RCP<MultiField_Map> map = mesh_->get_scalar_node_dist_map();
+    Teuchos::RCP<MultiField> coords_vec = mesh_->get_field(DICe::field_enums::INITIAL_COORDINATES_FS);
+    Teuchos::RCP<MultiField> disp_vec = mesh_->get_field(DICe::field_enums::DISPLACEMENT_FS);
+    coords_x = Teuchos::rcp( new MultiField(map,1,true));
+    coords_y = Teuchos::rcp( new MultiField(map,1,true));
+    disp_x = Teuchos::rcp( new MultiField(map,1,true));
+    disp_y = Teuchos::rcp( new MultiField(map,1,true));
+    for(int_t i=0;i<mesh_->get_scalar_node_dist_map()->get_num_local_elements();++i){
+      coords_x->local_value(i) = coords_vec->local_value(i*spa_dim);
+      coords_y->local_value(i) = coords_vec->local_value(i*spa_dim+1);
+      disp_x->local_value(i) = disp_vec->local_value(i*spa_dim);
+      disp_y->local_value(i) = disp_vec->local_value(i*spa_dim+1);
+    }
+  }
 
   // count the number of valid points
   int_t num_valid_pts = 0;
-  for(int_t i=0;i<local_num_points_;++i)
-    if(sigma->local_value(i)>=0.0) num_valid_pts++;
+  if(coords_are_subset){
+    for(int_t i=0;i<local_num_points_;++i)
+      if(sigma->local_value(i)>=0.0)
+        num_valid_pts++;
+  }else{
+    num_valid_pts = local_num_points_;
+  }
+
   std::vector<int_t> local_ids(num_valid_pts,0);
 
   // create neighborhood lists using nanoflann:
@@ -274,7 +304,8 @@ Plotly_Contour_Post_Processor::execute(){
   int_t grid_y_begin = std::numeric_limits<int>::max();
   int_t grid_y_end = std::numeric_limits<int>::min();
   for(int_t i=0;i<local_num_points_;++i){
-    if(sigma->local_value(i)<0.0) continue;
+    if(coords_are_subset)
+      if(sigma->local_value(i)<0.0) continue;
     point_cloud_->pts[current_pt].x = coords_x->local_value(i) + disp_x->local_value(i);
     point_cloud_->pts[current_pt].y = coords_y->local_value(i) + disp_y->local_value(i);
     if(point_cloud_->pts[current_pt].x < grid_x_begin)
@@ -297,25 +328,44 @@ Plotly_Contour_Post_Processor::execute(){
   kd_tree->buildIndex();
   DEBUG_MSG("kd-tree completed");
 
-  std::vector<DICe::field_enums::Field_Spec> field_specs;
-  field_specs.push_back(mesh_->get_field_spec("COORDINATE_X"));
-  field_specs.push_back(mesh_->get_field_spec("COORDINATE_Y"));
-  field_specs.push_back(mesh_->get_field_spec("DISPLACEMENT_X"));
-  field_specs.push_back(mesh_->get_field_spec("DISPLACEMENT_Y"));
-  field_specs.push_back(mesh_->get_field_spec("SIGMA"));
-  field_specs.push_back(mesh_->get_field_spec("GAMMA"));
-  field_specs.push_back(mesh_->get_field_spec("BETA"));
-  field_specs.push_back(mesh_->get_field_spec("UNCERTAINTY"));
-  field_specs.push_back(mesh_->get_field_spec("VSG_STRAIN_XX"));
-  field_specs.push_back(mesh_->get_field_spec("VSG_STRAIN_YY"));
-  field_specs.push_back(mesh_->get_field_spec("VSG_STRAIN_XY"));
-  field_specs.push_back(mesh_->get_field_spec("STATUS_FLAG")); // used to denote points in the grid without enough neighbors
+  std::vector<Teuchos::RCP<MultiField> > fields;
+  std::vector<std::string> field_output_names;
+  fields.push_back(coords_x);
+  field_output_names.push_back("COORDINATE_X");
+  fields.push_back(coords_y);
+  field_output_names.push_back("COORDINATE_Y");
+  fields.push_back(disp_x);
+  field_output_names.push_back("DISPLACEMENT_X");
+  fields.push_back(disp_y);
+  field_output_names.push_back("DISPLACEMENT_Y");
+  if(coords_are_subset){
+    fields.push_back(mesh_->get_field(DICe::field_enums::SIGMA_FS));
+    field_output_names.push_back("SIGMA");
+    fields.push_back(mesh_->get_field(DICe::field_enums::BETA_FS));
+    field_output_names.push_back("BETA");
+    fields.push_back(mesh_->get_field(DICe::field_enums::GAMMA_FS));
+    field_output_names.push_back("GAMMA");
+    fields.push_back(mesh_->get_field(DICe::field_enums::UNCERTAINTY_FS));
+    field_output_names.push_back("UNCERTAINTY");
+    fields.push_back(mesh_->get_field(DICe::field_enums::VSG_STRAIN_XX_FS));
+    field_output_names.push_back("VSG_STRAIN_XX");
+    fields.push_back(mesh_->get_field(DICe::field_enums::VSG_STRAIN_YY_FS));
+    field_output_names.push_back("VSG_STRAIN_YY");
+    fields.push_back(mesh_->get_field(DICe::field_enums::VSG_STRAIN_XY_FS));
+    field_output_names.push_back("VSG_STRAIN_XY");
+    fields.push_back(mesh_->get_field(DICe::field_enums::STATUS_FLAG_FS));
+    field_output_names.push_back("STATUS_FLAG");
+  }else{
+    fields.push_back(mesh_->get_field(DICe::field_enums::GREEN_LAGRANGE_STRAIN_XX_FS));
+    field_output_names.push_back("GREEN_LAGRANGE_STRAIN_XX");
+    fields.push_back(mesh_->get_field(DICe::field_enums::GREEN_LAGRANGE_STRAIN_YY_FS));
+    field_output_names.push_back("GREEN_LAGRANGE_STRAIN_YY");
+    fields.push_back(mesh_->get_field(DICe::field_enums::GREEN_LAGRANGE_STRAIN_XY_FS));
+    field_output_names.push_back("GREEN_LAGRANGE_STRAIN_XY");
+  }
   // when status flag is -1 in the GUI the point gets set to null
 
-  std::vector<Teuchos::RCP<MultiField> > fields(field_specs.size(),Teuchos::null);
-  for(size_t i=0;i<field_specs.size();++i){
-    fields[i] = mesh_->get_field(field_specs[i]);
-  }
+  assert(fields.size()==field_output_names.size());
 
   const int_t N = 3;
   int *IPIV = new int[N+1];
@@ -333,7 +383,7 @@ Plotly_Contour_Post_Processor::execute(){
   scalar_t query_pt[2];
 
   // initialize value storage vector of vectors
-  std::vector<std::vector<scalar_t> > values(field_specs.size(),std::vector<scalar_t>(total_grid_pts,0.0));
+  std::vector<std::vector<scalar_t> > values(fields.size(),std::vector<scalar_t>(total_grid_pts,0.0));
   int_t current_grid_pt = 0;
   for(int_t gx = grid_x_begin; gx<=grid_x_end; gx+=grid_step_){
     for(int_t gy = grid_y_begin; gy<=grid_y_end; gy+=grid_step_){
@@ -344,7 +394,7 @@ Plotly_Contour_Post_Processor::execute(){
       kd_tree->radiusSearch(&query_pt[0],neigh_rad_sq,ret_matches,params);
       const int_t num_neigh = ret_matches.size();
       if(num_neigh<=3){ // not enough points to do least-squares
-        values[field_specs.size()-1][current_grid_pt] = -1.0;
+        values[fields.size()-1][current_grid_pt] = -1.0;
         current_grid_pt++;
         continue;
       }
@@ -385,7 +435,7 @@ Plotly_Contour_Post_Processor::execute(){
       double rcond=0.0; // reciporical condition number
       lapack.GECON('1',X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),anorm,&rcond,GWORK,IWORK,&INFO);
       if(rcond < 1.0E-12) {
-        values[field_specs.size()-1][current_grid_pt] = -1.0;
+        values[fields.size()-1][current_grid_pt] = -1.0;
         current_grid_pt++;
         continue;
       }
@@ -429,9 +479,9 @@ Plotly_Contour_Post_Processor::execute(){
   std::ofstream json_out_file (jsonName.str());
   json_out_file << "{ \"data\": [{\n";
   bool first_value = true;
-  for(size_t i=0;i<field_specs.size();++i){
+  for(size_t i=0;i<fields.size();++i){
     first_value = true;
-    json_out_file << "\"" << field_specs[i].get_name_label() << "\":[";
+    json_out_file << "\"" << field_output_names[i] << "\":[";
     for(int_t j=0;j<total_grid_pts;++j){
       if(!first_value) json_out_file << ",";
       json_out_file << values[i][j];
@@ -453,7 +503,6 @@ Plotly_Contour_Post_Processor::execute(){
 
   DEBUG_MSG("Plotly_Contour_Post_Processor(): writing uninterpolated data to json file");
 
-
   std::stringstream jsonName2;
   jsonName2 << ".dice/.results_2d_";
   jsonName2 << current_frame_id_ << ".json";
@@ -464,13 +513,14 @@ Plotly_Contour_Post_Processor::execute(){
   first_value = true;
   json_out_file2 << "\"text\":[";
   for(int_t j=0;j<local_num_points_;++j){
-    if(sigma->local_value(j)<0.0) continue;
+    if(coords_are_subset)
+      if(sigma->local_value(j)<0.0) continue;
     if(!first_value) json_out_file2 << ",";
     json_out_file2 << "\"";
     json_out_file2 << "subset id: " << mesh_->get_scalar_node_dist_map()->get_global_element(j) << "<br>";
-    for(size_t i=2;i<field_specs.size();++i){
-      json_out_file2 << field_specs[i].get_name_label() << ": " << fields[i]->local_value(j);
-      if(i<field_specs.size()-1) json_out_file2 << "<br>";
+    for(size_t i=2;i<fields.size();++i){
+      json_out_file2 << field_output_names[i] << ": " << fields[i]->local_value(j);
+      if(i<fields.size()-1) json_out_file2 << "<br>";
     }
     json_out_file2 << "\"";
     first_value = false;
@@ -480,7 +530,8 @@ Plotly_Contour_Post_Processor::execute(){
   first_value = true;
   json_out_file2 << "\"x\":[";
   for(int_t j=0;j<local_num_points_;++j){
-    if(sigma->local_value(j)<0.0) continue;
+    if(coords_are_subset)
+      if(sigma->local_value(j)<0.0) continue;
     if(!first_value) json_out_file2 << ",";
     json_out_file2 << fields[0]->local_value(j) + fields[2]->local_value(j);
     first_value = false;
@@ -489,17 +540,19 @@ Plotly_Contour_Post_Processor::execute(){
   first_value = true;
   json_out_file2 << "\"y\":[";
   for(int_t j=0;j<local_num_points_;++j){
-    if(sigma->local_value(j)<0.0) continue;
+    if(coords_are_subset)
+      if(sigma->local_value(j)<0.0) continue;
     if(!first_value) json_out_file2 << ",";
     json_out_file2 << fields[1]->local_value(j) + fields[3]->local_value(j);
     first_value = false;
   }
   json_out_file2 << "],\n";
-  for(size_t i=2;i<field_specs.size();++i){
+  for(size_t i=2;i<fields.size();++i){
     first_value = true;
-    json_out_file2 << "\"" << field_specs[i].get_name_label() << "\":[";
+    json_out_file2 << "\"" << field_output_names[i] << "\":[";
     for(int_t j=0;j<local_num_points_;++j){
-      if(sigma->local_value(j)<0.0) continue;
+      if(coords_are_subset)
+        if(sigma->local_value(j)<0.0) continue;
       if(!first_value) json_out_file2 << ",";
       json_out_file2 << fields[i]->local_value(j);
       first_value = false;

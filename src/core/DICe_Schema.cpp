@@ -526,6 +526,13 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
             paramValid = true;
           }
         }
+        // catch post processor entries
+        for(int_t j=0;j<DICe::num_valid_post_processor_params;++j){
+          if(it->first==valid_post_processor_params[j]){
+            diceParams->setEntry(it->first,it->second); // overwrite the default value with argument param specified values
+            paramValid = true;
+          }
+        }
         if(!paramValid){
           allParamsValid = false;
           if(proc_rank == 0) std::cout << "Error: Invalid parameter: " << it->first << std::endl;
@@ -535,6 +542,9 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
         if(proc_rank == 0) std::cout << "NOTE: valid parameters include: " << std::endl;
         for(int_t j=0;j<DICe::num_valid_global_correlation_params;++j){
           if(proc_rank == 0) std::cout << valid_global_correlation_params[j].name_ << std::endl;
+        }
+        for(int_t j=0;j<DICe::num_valid_post_processor_params;++j){
+          if(proc_rank == 0) std::cout << valid_post_processor_params[j] << std::endl;
         }
       }
       TEUCHOS_TEST_FOR_EXCEPTION(!allParamsValid,std::invalid_argument,"Invalid parameter");
