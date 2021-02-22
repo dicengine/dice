@@ -1,0 +1,60 @@
+# Auto generated subset file from DICe GUI
+begin subset_coordinates
+344 212
+259 405
+266 41
+end subset_coordinates
+begin conformal_subset
+  subset_id 0
+  begin boundary
+    begin polygon
+      begin vertices
+        340 186
+        349 186
+        361 189
+        364 193
+        364 228
+        359 237
+        352 241
+        339 237
+        323 224
+        314 213
+      end vertices
+    end polygon
+  end boundary
+end conformal_subset
+begin conformal_subset
+  subset_id 1
+  begin boundary
+    begin polygon
+      begin vertices
+        254 390
+        270 396
+        268 404
+        268 411
+        261 418
+        258 421
+        253 420
+        249 416
+      end vertices
+    end polygon
+  end boundary
+end conformal_subset
+begin conformal_subset
+  subset_id 2
+  begin boundary
+    begin polygon
+      begin vertices
+        239 25
+        281 23
+        291 26
+        294 33
+        293 47
+        287 56
+        260 64
+        246 56
+        239 46
+      end vertices
+    end polygon
+  end boundary
+end conformal_subset
