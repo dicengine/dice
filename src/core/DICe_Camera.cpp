@@ -849,9 +849,9 @@ Camera::sensor_to_image(
 }
 
 #ifndef PRECISION_SCALAR_SAME_TYPE
-template void Camera::sensor_to_image(const std::vector<precision_t> &,const std::vector<precision_t> &,std::vector<precision_t> &,std::vector<precision_t> &);
+template DICE_LIB_DLL_EXPORT void Camera::sensor_to_image(const std::vector<precision_t> &,const std::vector<precision_t> &,std::vector<precision_t> &,std::vector<precision_t> &);
 #endif
-template void Camera::sensor_to_image(const std::vector<scalar_t> &,const std::vector<scalar_t> &,std::vector<scalar_t> &,std::vector<scalar_t> &);
+template DICE_LIB_DLL_EXPORT void Camera::sensor_to_image(const std::vector<scalar_t> &,const std::vector<scalar_t> &,std::vector<scalar_t> &,std::vector<scalar_t> &);
 
 void
 Camera::sensor_to_image(

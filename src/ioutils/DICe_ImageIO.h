@@ -214,8 +214,8 @@ cv::Mat read_image(const char * file_name);
 
 // singleton class to keep track of image readers from cine files:
 /// \class HyperCine_Singleton
-DICE_LIB_DLL_EXPORT
-class HyperCine_Singleton{
+class DICE_LIB_DLL_EXPORT
+HyperCine_Singleton{
 public:
   /// return an instance of the singleton
   static HyperCine_Singleton &instance(){

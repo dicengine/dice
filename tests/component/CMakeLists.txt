@@ -9,14 +9,6 @@ SET(DICE_COMP_LIBS
   diceapi
 )
 
-if(DICE_ENABLE_NETCDF)
-  SET(DICE_COMP_LIBS
-    ${DICE_COMP_LIBS}
-    diceioutils
-    ${NetCDF_lib}
-  )
-ENDIF()
-
 # glob all the cpp files
 FILE ( GLOB test_cpp_files "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 FOREACH ( test_file ${test_cpp_files})

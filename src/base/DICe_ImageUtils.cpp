@@ -162,7 +162,7 @@ Image_Deformer_<S>::compute_displacement_error(const scalar_t & coord_x,
   }
 }
 
-template void Image_Deformer_<storage_t>::compute_displacement_error(const scalar_t &,const scalar_t &,const scalar_t &,const scalar_t &,
+template DICE_LIB_DLL_EXPORT void Image_Deformer_<storage_t>::compute_displacement_error(const scalar_t &,const scalar_t &,const scalar_t &,const scalar_t &,
   scalar_t &,scalar_t &,const bool,const bool);
 
 template <typename S>
@@ -184,7 +184,7 @@ Image_Deformer_<S>::compute_lagrange_strain(const scalar_t & coord_x,
   strain_yy = 0.5*(2.0*out_yy + out_yy*out_yy + out_xy*out_xy);
 }
 
-template void Image_Deformer_<storage_t>::compute_lagrange_strain(const scalar_t &,const scalar_t &,scalar_t &,scalar_t &,scalar_t &);
+template DICE_LIB_DLL_EXPORT void Image_Deformer_<storage_t>::compute_lagrange_strain(const scalar_t &,const scalar_t &,scalar_t &,scalar_t &,scalar_t &);
 
 template <typename S>
 void
@@ -221,7 +221,7 @@ Image_Deformer_<S>::compute_lagrange_strain_error(const scalar_t & coord_x,
   }
 }
 
-template void Image_Deformer_<storage_t>::compute_lagrange_strain_error(const scalar_t &,const scalar_t &,const scalar_t &,
+template DICE_LIB_DLL_EXPORT void Image_Deformer_<storage_t>::compute_lagrange_strain_error(const scalar_t &,const scalar_t &,const scalar_t &,
   const scalar_t &,const scalar_t &,scalar_t &,scalar_t &,scalar_t &,const bool,const bool relative);
 
 template <typename S>

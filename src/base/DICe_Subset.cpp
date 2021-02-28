@@ -437,9 +437,9 @@ Subset::initialize(Teuchos::RCP<Image_<S>> image,
     }
   }
 }
-template void Subset::initialize(Teuchos::RCP<Image_<scalar_t>>,const Subset_View_Target,Teuchos::RCP<Local_Shape_Function>,const Interpolation_Method);
+template DICE_LIB_DLL_EXPORT void Subset::initialize(Teuchos::RCP<Image_<scalar_t>>,const Subset_View_Target,Teuchos::RCP<Local_Shape_Function>,const Interpolation_Method);
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template void Subset::initialize(Teuchos::RCP<Image_<storage_t>>,const Subset_View_Target,Teuchos::RCP<Local_Shape_Function>,const Interpolation_Method);
+template DICE_LIB_DLL_EXPORT void Subset::initialize(Teuchos::RCP<Image_<storage_t>>,const Subset_View_Target,Teuchos::RCP<Local_Shape_Function>,const Interpolation_Method);
 #endif
 
 bool
@@ -556,9 +556,9 @@ Subset::write_subset_on_image(const std::string & file_name,
   utils::write_image(file_name.c_str(),w,h,intensities.getRawPtr(),true);
 }
 
-template void Subset::write_subset_on_image(const std::string &,Teuchos::RCP<Image_<scalar_t>>,Teuchos::RCP<Local_Shape_Function>);
+template DICE_LIB_DLL_EXPORT void Subset::write_subset_on_image(const std::string &,Teuchos::RCP<Image_<scalar_t>>,Teuchos::RCP<Local_Shape_Function>);
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template void Subset::write_subset_on_image(const std::string &,Teuchos::RCP<Image_<storage_t>>,Teuchos::RCP<Local_Shape_Function>);
+template DICE_LIB_DLL_EXPORT void Subset::write_subset_on_image(const std::string &,Teuchos::RCP<Image_<storage_t>>,Teuchos::RCP<Local_Shape_Function>);
 #endif
 
 void
@@ -684,9 +684,9 @@ Subset::noise_std_dev(Teuchos::RCP<Image_<S>> image,
   return variance;
 }
 
-template scalar_t Subset::noise_std_dev(Teuchos::RCP<Image_<scalar_t>>,Teuchos::RCP<Local_Shape_Function>);
+template DICE_LIB_DLL_EXPORT scalar_t Subset::noise_std_dev(Teuchos::RCP<Image_<scalar_t>>,Teuchos::RCP<Local_Shape_Function>);
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Subset::noise_std_dev(Teuchos::RCP<Image_<storage_t>>,Teuchos::RCP<Local_Shape_Function>);
+template DICE_LIB_DLL_EXPORT scalar_t Subset::noise_std_dev(Teuchos::RCP<Image_<storage_t>>,Teuchos::RCP<Local_Shape_Function>);
 #endif
 
 }// End DICe Namespace

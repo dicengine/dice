@@ -156,6 +156,7 @@ if(DEFINED NetCDF_DIR)
       SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${HDF5_hl_lib})
       ADD_DEFINITIONS(-DDICE_ENABLE_NETCDF=1)
       include_directories(${NetCDF_DIR}/../include)
+      link_directories(${NetCDF_DIR}/../lib)
       IF(WIN32)
         FILE(GLOB NetCDF_DLLS ${NetCDF_DIR}/../bin/*.dll)
         FILE(COPY ${NetCDF_DLLS} DESTINATION ${DICE_OUTPUT_PREFIX}/bin)
@@ -241,7 +242,9 @@ if(WIN32)
   set(libsuffix ".lib")
 endif()
 set(DICE_LIBRARIES ${DICE_LIBRARIES} "${libprefix}hypercine${libsuffix}")
+set(DICE_UTILS_LIBRARIES ${DICE_UTILS_LIBRARIES} "${libprefix}hypercine${libsuffix}")
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)
+link_directories(${CMAKE_INSTALL_PREFIX}/bin)
 
 SET(DICE_HEADER_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}/src/api

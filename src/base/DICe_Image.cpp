@@ -389,9 +389,9 @@ Image_<S>::update(const char * file_name,
   post_allocation_tasks(params);
 }
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template void Image_<storage_t>::update(const char *,const Teuchos::RCP<Teuchos::ParameterList> &);
+template DICE_LIB_DLL_EXPORT void Image_<storage_t>::update(const char *,const Teuchos::RCP<Teuchos::ParameterList> &);
 #endif
-template void Image_<scalar_t>::update(const char *,const Teuchos::RCP<Teuchos::ParameterList> &);
+template DICE_LIB_DLL_EXPORT void Image_<scalar_t>::update(const char *,const Teuchos::RCP<Teuchos::ParameterList> &);
 
 template <typename S>
 void
@@ -429,9 +429,9 @@ Image_<S>::interpolate_bilinear_all(scalar_t & intensity_val,
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template void Image_<storage_t>::interpolate_bilinear_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT void Image_<storage_t>::interpolate_bilinear_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &) const;
 #endif
-template void Image_<scalar_t>::interpolate_bilinear_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT void Image_<scalar_t>::interpolate_bilinear_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &) const;
 
 template <typename S>
 scalar_t
@@ -449,9 +449,9 @@ Image_<S>::interpolate_bilinear(const scalar_t & local_x, const scalar_t & local
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_bilinear(const scalar_t &,const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<storage_t>::interpolate_bilinear(const scalar_t &,const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_bilinear(const scalar_t &,const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<scalar_t>::interpolate_bilinear(const scalar_t &,const scalar_t &) const;
 
 template <typename S>
 scalar_t
@@ -469,9 +469,9 @@ Image_<S>::interpolate_grad_x_bilinear(const scalar_t & local_x, const scalar_t 
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_grad_x_bilinear(const scalar_t &,const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<storage_t>::interpolate_grad_x_bilinear(const scalar_t &,const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_grad_x_bilinear(const scalar_t &,const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<scalar_t>::interpolate_grad_x_bilinear(const scalar_t &,const scalar_t &) const;
 
 template <typename S>
 scalar_t
@@ -488,9 +488,9 @@ Image_<S>::interpolate_grad_y_bilinear(const scalar_t & local_x, const scalar_t 
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_grad_y_bilinear(const scalar_t &,const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<storage_t>::interpolate_grad_y_bilinear(const scalar_t &,const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_grad_y_bilinear(const scalar_t &,const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<scalar_t>::interpolate_grad_y_bilinear(const scalar_t &,const scalar_t &) const;
 
 template <typename S>
 void
@@ -640,9 +640,9 @@ Image_<S>::interpolate_bicubic_all(scalar_t & intensity_val,
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template void Image_<storage_t>::interpolate_bicubic_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT void Image_<storage_t>::interpolate_bicubic_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &) const;
 #endif
-template void Image_<scalar_t>::interpolate_bicubic_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT void Image_<scalar_t>::interpolate_bicubic_all(scalar_t &,scalar_t &,scalar_t &,const bool,const scalar_t &,const scalar_t &) const;
 
 template <typename S>
 scalar_t
@@ -703,9 +703,9 @@ Image_<S>::interpolate_bicubic(const scalar_t & local_x, const scalar_t & local_
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_bicubic(const scalar_t &, const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<storage_t>::interpolate_bicubic(const scalar_t &, const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_bicubic(const scalar_t &, const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<scalar_t>::interpolate_bicubic(const scalar_t &, const scalar_t &) const;
 
 template <typename S>
 scalar_t
@@ -766,9 +766,9 @@ Image_<S>::interpolate_grad_x_bicubic(const scalar_t & local_x, const scalar_t &
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_grad_x_bicubic(const scalar_t &, const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<storage_t>::interpolate_grad_x_bicubic(const scalar_t &, const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_grad_x_bicubic(const scalar_t &, const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<scalar_t>::interpolate_grad_x_bicubic(const scalar_t &, const scalar_t &) const;
 
 template <typename S>
 scalar_t
@@ -829,9 +829,9 @@ Image_<S>::interpolate_grad_y_bicubic(const scalar_t & local_x, const scalar_t &
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_grad_y_bicubic(const scalar_t &, const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<storage_t>::interpolate_grad_y_bicubic(const scalar_t &, const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_grad_y_bicubic(const scalar_t &, const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<scalar_t>::interpolate_grad_y_bicubic(const scalar_t &, const scalar_t &) const;
 
 template <typename S>
 void
@@ -887,9 +887,9 @@ Image_<S>::interpolate_keys_fourth_all(scalar_t & intensity_val,
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template void Image_<storage_t>::interpolate_keys_fourth_all(scalar_t &, scalar_t &, scalar_t &, const bool, const scalar_t &, const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT void Image_<storage_t>::interpolate_keys_fourth_all(scalar_t &, scalar_t &, scalar_t &, const bool, const scalar_t &, const scalar_t &) const;
 #endif
-template void Image_<scalar_t>::interpolate_keys_fourth_all(scalar_t &, scalar_t &, scalar_t &, const bool, const scalar_t &, const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT void Image_<scalar_t>::interpolate_keys_fourth_all(scalar_t &, scalar_t &, scalar_t &, const bool, const scalar_t &, const scalar_t &) const;
 
 template <typename S>
 scalar_t
@@ -928,9 +928,9 @@ Image_<S>::interpolate_keys_fourth(const scalar_t & local_x, const scalar_t & lo
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_keys_fourth(const scalar_t &, const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<storage_t>::interpolate_keys_fourth(const scalar_t &, const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_keys_fourth(const scalar_t &, const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<scalar_t>::interpolate_keys_fourth(const scalar_t &, const scalar_t &) const;
 
 template <typename S>
 scalar_t
@@ -969,9 +969,9 @@ Image_<S>::interpolate_grad_x_keys_fourth(const scalar_t & local_x, const scalar
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_grad_x_keys_fourth(const scalar_t &, const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<storage_t>::interpolate_grad_x_keys_fourth(const scalar_t &, const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_grad_x_keys_fourth(const scalar_t &, const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<scalar_t>::interpolate_grad_x_keys_fourth(const scalar_t &, const scalar_t &) const;
 
 template <typename S>
 scalar_t
@@ -1010,9 +1010,9 @@ Image_<S>::interpolate_grad_y_keys_fourth(const scalar_t & local_x, const scalar
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::interpolate_grad_y_keys_fourth(const scalar_t &, const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<storage_t>::interpolate_grad_y_keys_fourth(const scalar_t &, const scalar_t &) const;
 #endif
-template scalar_t Image_<scalar_t>::interpolate_grad_y_keys_fourth(const scalar_t &, const scalar_t &) const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<scalar_t>::interpolate_grad_y_keys_fourth(const scalar_t &, const scalar_t &) const;
 
 template <typename S>
 void
@@ -1029,9 +1029,9 @@ Image_<S>::compute_gradients(){
   has_gradients_ = true;
 }
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template void Image_<storage_t>::compute_gradients();
+template DICE_LIB_DLL_EXPORT void Image_<storage_t>::compute_gradients();
 #endif
-template void Image_<scalar_t>::compute_gradients();
+template DICE_LIB_DLL_EXPORT void Image_<scalar_t>::compute_gradients();
 
 template <typename S>
 void
@@ -1108,9 +1108,9 @@ Image_<S>::apply_mask(const Conformal_Area_Def & area_def,
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template void Image_<storage_t>::apply_mask(const Conformal_Area_Def &,const bool);
+template DICE_LIB_DLL_EXPORT void Image_<storage_t>::apply_mask(const Conformal_Area_Def &,const bool);
 #endif
-template void Image_<scalar_t>::apply_mask(const Conformal_Area_Def &,const bool);
+template DICE_LIB_DLL_EXPORT void Image_<scalar_t>::apply_mask(const Conformal_Area_Def &,const bool);
 
 template <typename S>
 void
@@ -1150,9 +1150,9 @@ Image_<S>::apply_mask(const bool smooth_edges){
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template void Image_<storage_t>::apply_mask(const bool);
+template DICE_LIB_DLL_EXPORT void Image_<storage_t>::apply_mask(const bool);
 #endif
-template void Image_<scalar_t>::apply_mask(const bool);
+template DICE_LIB_DLL_EXPORT void Image_<scalar_t>::apply_mask(const bool);
 
 template <typename S>
 void
@@ -1317,9 +1317,9 @@ Image_<S>::diff(Teuchos::RCP<Image_> rhs) const{
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::diff(Teuchos::RCP<Image_>)const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<storage_t>::diff(Teuchos::RCP<Image_>)const;
 #endif
-template scalar_t Image_<scalar_t>::diff(Teuchos::RCP<Image_<scalar_t>>)const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<scalar_t>::diff(Teuchos::RCP<Image_<scalar_t>>)const;
 
 /// normalize the image intensity values
 template <typename S>
@@ -1368,9 +1368,9 @@ Image_<S>::mean()const{
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template scalar_t Image_<storage_t>::mean()const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<storage_t>::mean()const;
 #endif
-template scalar_t Image_<scalar_t>::mean()const;
+template DICE_LIB_DLL_EXPORT scalar_t Image_<scalar_t>::mean()const;
 
 template <typename S>
 void
@@ -1384,9 +1384,9 @@ Image_<S>::write(const std::string & file_name){
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template void Image_<storage_t>::write(const std::string &);
+template DICE_LIB_DLL_EXPORT void Image_<storage_t>::write(const std::string &);
 #endif
-template void Image_<scalar_t>::write(const std::string &);
+template DICE_LIB_DLL_EXPORT void Image_<scalar_t>::write(const std::string &);
 
 template <typename S>
 void
@@ -1402,9 +1402,9 @@ Image_<S>::write_overlap_image(const std::string & file_name,
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template void Image_<storage_t>::write_overlap_image(const std::string &, Teuchos::RCP<Image_>);
+template DICE_LIB_DLL_EXPORT void Image_<storage_t>::write_overlap_image(const std::string &, Teuchos::RCP<Image_>);
 #endif
-template void Image_<scalar_t>::write_overlap_image(const std::string &, Teuchos::RCP<Image_>);
+template DICE_LIB_DLL_EXPORT void Image_<scalar_t>::write_overlap_image(const std::string &, Teuchos::RCP<Image_>);
 
 template <typename S>
 void
@@ -1418,9 +1418,9 @@ Image_<S>::write_grad_x(const std::string & file_name){
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template void Image_<storage_t>::write_grad_x(const std::string & file_name);
+template DICE_LIB_DLL_EXPORT void Image_<storage_t>::write_grad_x(const std::string & file_name);
 #endif
-template void Image_<scalar_t>::write_grad_x(const std::string & file_name);
+template DICE_LIB_DLL_EXPORT void Image_<scalar_t>::write_grad_x(const std::string & file_name);
 
 template <typename S>
 void
@@ -1434,9 +1434,9 @@ Image_<S>::write_grad_y(const std::string & file_name){
 }
 
 #ifndef STORAGE_SCALAR_SAME_TYPE
-template void Image_<storage_t>::write_grad_y(const std::string & file_name);
+template DICE_LIB_DLL_EXPORT void Image_<storage_t>::write_grad_y(const std::string & file_name);
 #endif
-template void Image_<scalar_t>::write_grad_y(const std::string & file_name);
+template DICE_LIB_DLL_EXPORT void Image_<scalar_t>::write_grad_y(const std::string & file_name);
 
 template <typename S>
 Teuchos::RCP<Image_<S>>

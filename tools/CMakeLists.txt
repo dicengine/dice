@@ -8,13 +8,6 @@ include_directories (
 SET(DICE_TEST_LIBRARIES
    dicecore
 )
-if(DICE_ENABLE_NETCDF)
-  SET(DICE_TEST_LIBRARIES
-    ${DICE_TEST_LIBRARIES}
-    diceioutils
-    ${NetCDF_lib}
-  )
-ENDIF()
 
 # DICE_LIBRARIES has the Trilinos libs (teuchos, tiff)
 # DICE_TEST_LIBRARIES has dice (Image, Subset, Schema...)

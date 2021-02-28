@@ -2705,9 +2705,9 @@ void tri2d_natural_integration_points(const int_t order,
   }
 }
 #ifndef PRECISION_SCALAR_SAME_TYPE
-template void tri2d_natural_integration_points(const int_t,Teuchos::ArrayRCP<Teuchos::ArrayRCP<precision_t> > &,Teuchos::ArrayRCP<precision_t> &,int_t &);
+template DICE_LIB_DLL_EXPORT void tri2d_natural_integration_points(const int_t,Teuchos::ArrayRCP<Teuchos::ArrayRCP<precision_t> > &,Teuchos::ArrayRCP<precision_t> &,int_t &);
 #endif
-template void tri2d_natural_integration_points(const int_t,Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > &,Teuchos::ArrayRCP<scalar_t> &,int_t &);
+template DICE_LIB_DLL_EXPORT void tri2d_natural_integration_points(const int_t,Teuchos::ArrayRCP<Teuchos::ArrayRCP<scalar_t> > &,Teuchos::ArrayRCP<scalar_t> &,int_t &);
 
 //Compute the cross product AB x AC
 template <typename S>
