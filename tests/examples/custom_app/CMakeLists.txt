@@ -116,42 +116,9 @@ add_executable(main main.cpp)
 # add the dice libraries
 target_link_libraries(main
   dicecore
+  diceioutils
   "${libprefix}hypercine${libsuffix}"
 )
-
-#
-# Define the location of lib tiff, jpeg, and png:
-#
-
-# NOTE: If this example is used as a template, the TIFF_DIR variable should be defined
-# in your do-cmake script with -D TIFF_DIR:STRING="<location>" only if libtiff is not
-# installed in a system path, otherwise it will get picked up by find_package
-#find_library(tiff_lib NAMES libtiff.a tiff PATHS ${TIFF_DIR}/lib)
-#if(NOT tiff_lib)
-#  MESSAGE(FATAL_ERROR "Tiff library is required, but not found")
-#else()
-#  MESSAGE(STATUS "Using tiff library from: ${tiff_lib}")
-#  target_link_libraries(main diceioutils ${tiff_lib})
-#endif()
-target_link_libraries(main diceioutils)
-
-# NOTE: If this example is used as a template, the optional JPEG_DIR variable can be defined
-# in your do-cmake script with -D JPEG_DIR:STRING="<location>" only if libjpeg is not
-# installed in a system path, otherwise it will get picked up by find_package
-#find_library(jpeg_lib NAMES libjpeg.a jpeg PATHS ${JPEG_DIR}/lib)
-#if(jpeg_lib)
-#  MESSAGE(STATUS "Using jpeg library from: ${jpeg_lib}")
-#  target_link_libraries(main ${jpeg_lib})
-#endif()
-
-# NOTE: If this example is used as a template, the optional PNG_DIR variable can be defined
-# in your do-cmake script with -D PNG_DIR:STRING="<location>" only if libjpeg is not
-# installed in a system path, otherwise it will get picked up by find_package
-#find_library(png_lib NAMES libpng.a png PATHS ${PNG_DIR}/lib)
-#if(png_lib)
-#  MESSAGE(STATUS "Using png library from: ${png_lib}")
-#  target_link_libraries(main ${png_lib})
-#endif()
 
 # find OpenCV
 message(STATUS "Looking for OpenCV in dir: ${OpenCV_DIR}")
@@ -178,7 +145,6 @@ IF(DICE_ENABLE_NETCDF)
   MESSAGE(STATUS "Using HDF5 libs: ${HDF5_lib} ${HDF5_hl_lib}")
   target_link_libraries(main ${HDF5_lib} ${HDF5_hl_lib} ${NetCDF_lib})
 ENDIF()
-
 
 IF(DICE_ENABLE_GLOBAL)
   add_definitions(-DDICE_ENABLE_GLOBAL=1)
