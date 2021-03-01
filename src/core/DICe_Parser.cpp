@@ -557,10 +557,9 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
     std::string cine_file_name = params->get<std::string>(DICe::cine_file);
     cine_name << params->get<std::string>(DICe::image_folder) << cine_file_name;
     Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
-    Teuchos::RCP<hypercine::HyperCine> hc = DICe::utils::HyperCine_Singleton::instance().hypercine(cine_name.str());
     // read the image data for a frame
-    const int_t num_images = hc->file_frame_count();
-    const int_t first_frame_index = hc->file_first_frame_id();
+    const int_t num_images = DICe::utils::cine_file_frame_count(cine_name.str());
+    const int_t first_frame_index = DICe::utils::cine_file_first_frame_id(cine_name.str());
     //TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::cine_ref_index),std::runtime_error,
     //  "Error, the reference index for the cine file has not been specified");
     const int_t cine_ref_index = params->get<int_t>(DICe::cine_ref_index,first_frame_index);

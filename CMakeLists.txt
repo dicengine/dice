@@ -244,7 +244,9 @@ endif()
 set(DICE_LIBRARIES ${DICE_LIBRARIES} "${libprefix}hypercine${libsuffix}")
 set(DICE_UTILS_LIBRARIES ${DICE_UTILS_LIBRARIES} "${libprefix}hypercine${libsuffix}")
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)
+if(WIN32)
 link_directories(${CMAKE_INSTALL_PREFIX}/bin)
+endif()
 
 SET(DICE_HEADER_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}/src/api

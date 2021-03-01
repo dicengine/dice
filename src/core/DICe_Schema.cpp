@@ -225,8 +225,8 @@ Schema::set_def_image(const std::string & defName){
       std::string undecorated_ref_cine_file = DICe::utils::cine_file_name(ref_img_->file_name().c_str());
       if(undecorated_cine_file==undecorated_ref_cine_file){ // assumes ref image has already been set
         // check if the window params are already set and just the frame needs to be updated
-        Teuchos::RCP<hypercine::HyperCine> hc = convert_cine_to_8_bit_ ? DICe::utils::HyperCine_Singleton::instance().hypercine(undecorated_cine_file,hypercine::HyperCine::TO_8_BIT):
-          DICe::utils::HyperCine_Singleton::instance().hypercine(undecorated_cine_file);
+        const hypercine::HyperCine::Bit_Depth_Conversion_Type conversion_type = convert_cine_to_8_bit_ ? hypercine::HyperCine::TO_8_BIT :
+            hypercine::HyperCine::QUAD_10_TO_12;
         // get last frame of cine file:
         const int_t frame_count = frame_id_ + num_buffer_frames >= first_frame_id_ + num_frames_ ?
             first_frame_id_+num_frames_-frame_id_ : num_buffer_frames;
@@ -243,10 +243,9 @@ Schema::set_def_image(const std::string & defName){
           }else{
             hf.add_window(offset_x,sub_width,offset_y,sub_height);
           }
-          hc->read_buffer(hf);
+          DICe::utils::cine_file_read_buffer(undecorated_cine_file,conversion_type,hf);
         }else{
-          hc->hyperframe()->update_frames(frame_id_,frame_count);
-          hc->read_buffer();
+          DICe::utils::cine_file_read_buffer(undecorated_cine_file,conversion_type,frame_id_,frame_count);
         }
       }else{
         DEBUG_MSG("Schema::set_def_image(): skipping reading cine buffer since the ref and def images come from different cine files (likely cross-correlation)");

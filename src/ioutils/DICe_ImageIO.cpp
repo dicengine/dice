@@ -736,5 +736,33 @@ HyperCine_Singleton::image_dimensions(const std::string & id, int_t & width, int
   height = hc.height();
 }
 
+DICE_LIB_DLL_EXPORT
+int_t cine_file_frame_count(const std::string & cine_name){
+  return DICe::utils::HyperCine_Singleton::instance().hypercine(cine_name)->file_frame_count();
+};
+
+DICE_LIB_DLL_EXPORT
+int_t cine_file_first_frame_id(const std::string & cine_name){
+  return DICe::utils::HyperCine_Singleton::instance().hypercine(cine_name)->file_first_frame_id();
+};
+
+DICE_LIB_DLL_EXPORT
+void cine_file_read_buffer(const std::string & cine_name,
+  const hypercine::HyperCine::Bit_Depth_Conversion_Type conversion_type,
+  hypercine::HyperCine::HyperFrame & hf){
+  DICe::utils::HyperCine_Singleton::instance().hypercine(cine_name,conversion_type)->read_buffer(hf);
+}
+
+DICE_LIB_DLL_EXPORT
+void cine_file_read_buffer(const std::string & cine_name,
+  const hypercine::HyperCine::Bit_Depth_Conversion_Type conversion_type,
+  const int_t frame,
+  const int_t count){
+  DICe::utils::HyperCine_Singleton::instance().hypercine(cine_name,conversion_type)->hyperframe()->update_frames(frame,count);
+  DICe::utils::HyperCine_Singleton::instance().hypercine(cine_name,conversion_type)->read_buffer();
+}
+
+
+
 } // end namespace utils
 } // end namespace DICe
