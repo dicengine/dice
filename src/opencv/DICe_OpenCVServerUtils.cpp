@@ -701,8 +701,13 @@ int_t opencv_dot_targets(Mat & img,
     min_blob_size = 10;
     get_dot_markers(img_cpy,key_points,i_thresh,invert,options,min_blob_size);
     if(key_points.size() !=3){
-      std::cout << "*** warning: unable to identify three keypoints, other points will not be extracted" << std::endl;
-      keypoints_found = false;
+      // try a larger min blob size
+      min_blob_size = 500;
+      get_dot_markers(img_cpy,key_points,i_thresh,invert,options,min_blob_size);
+      if(key_points.size() != 3){
+        std::cout << "*** warning: unable to identify three keypoints, other points will not be extracted" << std::endl;
+        keypoints_found = false;
+      }
     }
   }
   Point cvpoint;
