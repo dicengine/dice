@@ -214,6 +214,9 @@ cv::Mat read_image(const char * file_name);
 
 // singleton class to keep track of image readers from cine files:
 /// \class HyperCine_Singleton
+/// NOTE: this singleton shouldn't be accessed directly from libraries external to diceioutils,
+/// This is because on Windows, singletons are local to the .dll and calls to the singleton
+/// from another .dll will create another instance of the singleton.
 class DICE_LIB_DLL_EXPORT
 HyperCine_Singleton{
 public:
