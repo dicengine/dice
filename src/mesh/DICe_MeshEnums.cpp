@@ -103,12 +103,10 @@ void create_mesh_string_maps()
 }
 
 DICE_LIB_DLL_EXPORT
-std::string tostring(const Physics_Term & physics_term)
-{
+std::string tostring(const Physics_Term & physics_term){
   create_mesh_string_maps();
   std::map<Physics_Term,std::string>::iterator pos=physics_term_string.find(physics_term);
-    if (pos == physics_term_string.end())
-    {
+    if (physics_term_string.count(physics_term)==0){
       std::stringstream oss;
       oss << "Unknown physics term: " << physics_term << std::endl;
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
@@ -117,12 +115,10 @@ std::string tostring(const Physics_Term & physics_term)
 }
 
 DICE_LIB_DLL_EXPORT
-std::string tostring(const Component & comp)
-{
+std::string tostring(const Component & comp){
   create_mesh_string_maps();
   std::map<Component,std::string>::iterator pos=component_string.find(comp);
-    if (pos == component_string.end())
-    {
+    if (component_string.count(comp)==0){
       std::stringstream oss;
       oss << "Unknown component: " << comp << std::endl;
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
@@ -130,12 +126,10 @@ std::string tostring(const Component & comp)
     return pos->second;
 }
 DICE_LIB_DLL_EXPORT
-std::string tostring(const Base_Element_Type & base_element_type)
-{
+std::string tostring(const Base_Element_Type & base_element_type){
   create_mesh_string_maps();
   std::map<Base_Element_Type,std::string>::iterator pos=base_element_type_string.find(base_element_type);
-    if (pos == base_element_type_string.end())
-    {
+    if (base_element_type_string.count(base_element_type)==0){
       std::stringstream oss;
       oss << "Unknown base element type: " << base_element_type << std::endl;
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
@@ -143,16 +137,14 @@ std::string tostring(const Base_Element_Type & base_element_type)
     return pos->second;
 }
 DICE_LIB_DLL_EXPORT
-int_t toindex(const Component comp)
-{
+int_t toindex(const Component comp){
   if(comp == NO_COMP || comp == X_COMP)
     return 0;
   else if(comp == Y_COMP)
     return 1;
   else if(comp == Z_COMP)
     return 2;
-  else
-  {
+  else{
     std::stringstream oss;
     oss << " toindex(): Unknown component " << tostring(comp) << std::endl;
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
@@ -160,12 +152,10 @@ int_t toindex(const Component comp)
   return -1;
 }
 DICE_LIB_DLL_EXPORT
-Physics_Term string_to_physics_term(const std::string & input_string)
-{
+Physics_Term string_to_physics_term(const std::string & input_string){
   create_mesh_string_maps();
   std::map<std::string,Physics_Term,std::string>::iterator pos=string_physics_term.find(input_string);
-  if (pos == string_physics_term.end())
-  {
+  if (string_physics_term.count(input_string)==0){
     std::stringstream oss;
     oss << "Unknown physics term: " << input_string << std::endl;
     oss << "Valid options are: " << std::endl;
@@ -179,12 +169,10 @@ Physics_Term string_to_physics_term(const std::string & input_string)
 }
 
 DICE_LIB_DLL_EXPORT
-Component string_to_component(const std::string & input_string)
-{
+Component string_to_component(const std::string & input_string){
   create_mesh_string_maps();
   std::map<std::string,Component,std::string>::iterator pos=string_component.find(input_string);
-  if (pos == string_component.end())
-  {
+  if (string_component.count(input_string)==0){
     std::stringstream oss;
     oss << "Unknown component: " << input_string << std::endl;
     oss << "Valid options are: " << std::endl;
@@ -198,8 +186,7 @@ Component string_to_component(const std::string & input_string)
 }
 
 DICE_LIB_DLL_EXPORT
-std::string index_to_component(const int_t index)
-{
+std::string index_to_component(const int_t index){
   if (index==0)
     return "X";
   else if (index==1)
@@ -211,8 +198,7 @@ std::string index_to_component(const int_t index)
 }
 
 DICE_LIB_DLL_EXPORT
-std::string index_to_component_string(const int_t index)
-{
+std::string index_to_component_string(const int_t index){
   if (index==0)
     return "_X";
   else if (index==1)
@@ -224,12 +210,10 @@ std::string index_to_component_string(const int_t index)
 }
 
 DICE_LIB_DLL_EXPORT
-Base_Element_Type string_to_base_element_type(const std::string & input_string)
-{
+Base_Element_Type string_to_base_element_type(const std::string & input_string){
   create_mesh_string_maps();
   std::map<std::string,Base_Element_Type,std::string>::iterator pos=string_base_element_type.find(input_string);
-  if (pos == string_base_element_type.end())
-  {
+  if (string_base_element_type.count(input_string)==0){
     std::stringstream oss;
     oss << "Unknown base element type: " << input_string << std::endl;
     oss << "Valid options are: " << std::endl;

@@ -211,7 +211,7 @@ void create_string_maps()
   field_name_string[field_enums::UNCERTAINTY]                                        = "UNCERTAINTY";
   field_name_string[field_enums::UNCERTAINTY_ANGLE]                                  = "UNCERTAINTY_ANGLE";
   field_name_string[field_enums::STEREO_M_MAX]                                       = "STEREO_M_MAX";
-	field_name_string[field_enums::PROJECTION_Z]																		   = "PROJECTION_Z";
+	field_name_string[field_enums::PROJECTION_Z]                                       = "PROJECTION_Z";
 	field_name_string[field_enums::PROJECTION_PHI]                                     = "PROJECTION_PHI";
 	field_name_string[field_enums::PROJECTION_THETA]                                   = "PROJECTION_THETA";
   field_name_string[field_enums::ROT_TRANS_3D_ANG_X]                                 = "ROT_TRANS_3D_ANG_X";
@@ -220,8 +220,6 @@ void create_string_maps()
   field_name_string[field_enums::ROT_TRANS_3D_TRANS_X]                               = "ROT_TRANS_3D_TRANS_X";
   field_name_string[field_enums::ROT_TRANS_3D_TRANS_Y]                               = "ROT_TRANS_3D_TRANS_Y";
   field_name_string[field_enums::ROT_TRANS_3D_TRANS_Z]                               = "ROT_TRANS_3D_TRANS_Z";
-
-		
 
   for (std::map<field_enums::Field_Type,std::string>::iterator pos = field_type_string.begin(); pos != field_type_string.end(); ++pos){
     string_field_type[pos->second] = pos->first;
@@ -235,53 +233,45 @@ void create_string_maps()
 }
 
 DICE_LIB_DLL_EXPORT
-std::string tostring(const field_enums::Field_Type & field_type)
-{
+std::string tostring(const field_enums::Field_Type & field_type){
   create_string_maps();
   std::map<field_enums::Field_Type,std::string>::iterator pos=field_type_string.find(field_type);
-    if (pos == field_type_string.end())
-    {
-      std::stringstream oss;
-      oss << "Unknown field type: " << field_type << std::endl;
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
-    }
-    return pos->second;
+  if(field_type_string.count(field_type) == 0){
+    std::stringstream oss;
+    oss << "Unknown field type: " << field_type << std::endl;
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
+  }
+  return pos->second;
 }
 DICE_LIB_DLL_EXPORT
-std::string tostring(const field_enums::Field_Name & field_name)
-{
+std::string tostring(const field_enums::Field_Name & field_name){
   create_string_maps();
   std::map<field_enums::Field_Name,std::string>::iterator pos=field_name_string.find(field_name);
-    if (pos == field_name_string.end())
-    {
-      std::stringstream oss;
-      oss << "Unknown field name: " << field_name << std::endl;
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
-    }
-    return pos->second;
+  if(field_name_string.count(field_name)==0){
+    std::stringstream oss;
+    oss << "Unknown field name: " << field_name << std::endl;
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
+  }
+  return pos->second;
 }
 DICE_LIB_DLL_EXPORT
-std::string tostring(const field_enums::Entity_Rank & entity_rank)
-{
+std::string tostring(const field_enums::Entity_Rank & entity_rank){
   create_string_maps();
   std::map<field_enums::Entity_Rank,std::string>::iterator pos=entity_rank_string.find(entity_rank);
-    if (pos == entity_rank_string.end())
-    {
-      std::stringstream oss;
-      oss << "Unknown field type: " << entity_rank << std::endl;
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
-    }
-    return pos->second;
+  if(entity_rank_string.count(entity_rank)==0){
+    std::stringstream oss;
+    oss << "Unknown field type: " << entity_rank << std::endl;
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
+  }
+  return pos->second;
 }
 
 
 DICE_LIB_DLL_EXPORT
-field_enums::Field_Type string_to_field_type(const std::string & input_string)
-{
+field_enums::Field_Type string_to_field_type(const std::string & input_string){
   create_string_maps();
   std::map<std::string,field_enums::Field_Type,std::string>::iterator pos=string_field_type.find(input_string);
-  if (pos == string_field_type.end())
-  {
+  if(string_field_type.count(input_string)==0){
     std::stringstream oss;
     oss << "Unknown field type: " << input_string << std::endl;
     oss << "Valid options are: " << std::endl;
@@ -296,13 +286,11 @@ field_enums::Field_Type string_to_field_type(const std::string & input_string)
 
 DICE_LIB_DLL_EXPORT
 std::list<std::string>
-get_reverse_sorted_field_names()
-{
+get_reverse_sorted_field_names(){
   std::list<std::string> names_list;
   std::map<std::string,field_enums::Field_Name>::iterator string_name_it = string_field_name.begin();
   std::map<std::string,field_enums::Field_Name>::iterator string_name_end = string_field_name.end();
-  for(;string_name_it!=string_name_end;++string_name_it)
-  {
+  for(;string_name_it!=string_name_end;++string_name_it){
     names_list.push_back(string_name_it->first);
   }
   names_list.sort();
@@ -312,24 +300,20 @@ get_reverse_sorted_field_names()
 
 DICE_LIB_DLL_EXPORT
 void
-update_field_names(const field_enums::Field_Name & field_name, const std::string & input_string)
-{
+update_field_names(const field_enums::Field_Name & field_name, const std::string & input_string){
   field_name_string[field_name] = input_string;
   std::map<field_enums::Field_Name,std::string>::iterator pos = field_name_string.find(field_name);
   string_field_name[pos->second] = pos->first;
 }
-int_t num_field_names()
-{
+int_t num_field_names(){
   return string_field_name.size();
 }
 
 DICE_LIB_DLL_EXPORT
-field_enums::Field_Name string_to_field_name(const std::string & input_string)
-{
+field_enums::Field_Name string_to_field_name(const std::string & input_string){
   create_string_maps();
   std::map<std::string,field_enums::Field_Name,std::string >::iterator pos=string_field_name.find(input_string);
-  if (pos == string_field_name.end())
-  {
+  if(string_field_name.count(input_string)==0){
     std::stringstream oss;
     oss << "Unknown field name: " << input_string << std::endl;
     oss << "Valid options are: " << std::endl;
@@ -343,12 +327,10 @@ field_enums::Field_Name string_to_field_name(const std::string & input_string)
 }
 
 DICE_LIB_DLL_EXPORT
-field_enums::Entity_Rank string_to_entity_rank(const std::string & input_string)
-{
+field_enums::Entity_Rank string_to_entity_rank(const std::string & input_string){
   create_string_maps();
   std::map<std::string,field_enums::Entity_Rank,std::string>::iterator pos=string_entity_rank.find(input_string);
-  if (pos == string_entity_rank.end())
-  {
+  if(string_entity_rank.count(input_string)==0){
     std::stringstream oss;
     oss << "Unknown field rank: " << input_string << std::endl;
     oss << "Valid options are: " << std::endl;
@@ -362,12 +344,12 @@ field_enums::Entity_Rank string_to_entity_rank(const std::string & input_string)
 }
 
 field_enums::Field_Spec::Field_Spec():
-    field_type_(NO_SUCH_FS.get_field_type()),
-    name_(NO_SUCH_FS.get_name()),
-    rank_(NO_SUCH_FS.get_rank()),
-    state_(NO_SUCH_FS.get_state()),
-    is_printable_(false),
-    is_dof_(false)
+        field_type_(NO_SUCH_FS.get_field_type()),
+        name_(NO_SUCH_FS.get_name()),
+        rank_(NO_SUCH_FS.get_rank()),
+        state_(NO_SUCH_FS.get_state()),
+        is_printable_(false),
+        is_dof_(false)
 {}
 
 field_enums::Field_Spec::Field_Spec(const field_enums::Field_Type field_type,
@@ -376,12 +358,12 @@ field_enums::Field_Spec::Field_Spec(const field_enums::Field_Type field_type,
   const Field_State field_state,
   const bool is_printable,
   const bool is_dof):
-    field_type_(field_type),
-    name_(label),
-    rank_(rank),
-    state_(field_state),
-    is_printable_(is_printable),
-    is_dof_(is_dof)
+        field_type_(field_type),
+        name_(label),
+        rank_(rank),
+        state_(field_state),
+        is_printable_(is_printable),
+        is_dof_(is_dof)
 {}
 
 bool field_enums::Field_Spec::operator == (const Field_Spec& right) const {
@@ -394,9 +376,9 @@ bool field_enums::Field_Spec::operator != (const Field_Spec& right) const {
 
 std::ostream& field_enums::Field_Spec::print(std::ostream& os) const {
   os << "Field: " << tostring(name_) << " Type: " << tostring(field_type_) << " Rank: " << tostring(rank_)
-     << " State: " << state_
-     << " Is printable: "
-     <<  is_printable_ << " Is dof: " << is_dof_ << std::endl;
+         << " State: " << state_
+         << " Is printable: "
+         <<  is_printable_ << " Is dof: " << is_dof_ << std::endl;
   return os;
 }
 
