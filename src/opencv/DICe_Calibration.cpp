@@ -593,10 +593,6 @@ Calibration::extract_dot_target_points(){
       int_t error_code = opencv_dot_targets(img, input_params_,
         key_points,img_points,grd_points,return_thresh);
 
-      // check to see if the min_blob_size needs to be adjusted, first try 10 (smaller), then try 500 (larger):
-      if(error_code!=0){
-      }
-
       // check if extraction failed
       if(error_code==0){
         input_params_.set(opencv_server_threshold_start,return_thresh); // make all the values the same so the auto thresholding is skipped next time
@@ -612,16 +608,17 @@ Calibration::extract_dot_target_points(){
           input_params_.set(opencv_server_threshold_start,return_thresh);
           input_params_.set(opencv_server_threshold_end,return_thresh);
           input_params_.set(opencv_server_threshold_step,return_thresh);
-        }else{
-          input_params_.set<int_t>(opencv_server_min_blob_size,10);
-          DEBUG_MSG("Calibration::extract_dot_target_points(): resetting the min_blob_size to 10 and trying again.");
-          error_code = opencv_dot_targets(img, input_params_,
-            key_points,img_points,grd_points,return_thresh);
-          if(error_code==0){
-            input_params_.set(opencv_server_threshold_start,return_thresh);
-            input_params_.set(opencv_server_threshold_end,return_thresh);
-            input_params_.set(opencv_server_threshold_step,return_thresh);
-          }
+        }
+      }else if(i_image==0&&error_code==1){
+        // check to see if the min_blob_size needs to be adjusted, first try 10 (smaller)
+        input_params_.set<int_t>(opencv_server_min_blob_size,10);
+        DEBUG_MSG("Calibration::extract_dot_target_points(): resetting the min_blob_size to 10 and trying again.");
+        error_code = opencv_dot_targets(img, input_params_,
+          key_points,img_points,grd_points,return_thresh);
+        if(error_code==0){
+          input_params_.set(opencv_server_threshold_start,return_thresh);
+          input_params_.set(opencv_server_threshold_end,return_thresh);
+          input_params_.set(opencv_server_threshold_step,return_thresh);
         }
       }
 

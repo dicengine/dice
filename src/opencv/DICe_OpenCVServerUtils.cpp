@@ -897,32 +897,51 @@ void get_dot_markers(cv::Mat img,
   bitwise_not(bi_src, not_src);
 
   // detect dots on the appropriately inverted image
-  if (invert) detector->detect(not_src, keypoints);
-  else detector->detect(bi_src, keypoints);
-  DEBUG_MSG("get_dot_markers(): preliminary num keypoints " << keypoints.size());
-  if(keypoints.size()==0) return;
-  // the diameters of the keypoints should be within 30% of each other
-  float avg_diameter = 0.0f;
-  for(size_t i=0;i<keypoints.size();++i){
-    avg_diameter += keypoints[i].size;
-  }
-  avg_diameter /= keypoints.size();
-  DEBUG_MSG("get_dot_markers(): avg keypoint diameter " << avg_diameter);
+  Mat labelImage(img.size(),CV_32S);
+  Mat stats, centroids;
+  int nLabels = 0;
 
-  size_t i = keypoints.size();
-  while (i--) {
-//    DEBUG_MSG("get_dot_markers(): possible keypoint " << i << " diameter " << keypoints[i].size);
-    // remove the keypoint from the vector
-    if(keypoints[i].size<=0.0){
-//      DEBUG_MSG("get_dot_markers(): removing keypoint " << i << " due to keypoint size == 0.0");
-      keypoints.erase(keypoints.begin() + i);
-    }
-    if(std::abs(keypoints[i].size-avg_diameter)/avg_diameter>0.30){
-//      DEBUG_MSG("get_dot_markers(): removing keypoint " << i << " due to keypoint size >30% difference in diameter from avg");
-      keypoints.erase(keypoints.begin() + i);
-    }
+  // detect dots on the appropriately inverted image
+  if (invert){
+    detector->detect(not_src, keypoints);
+    nLabels = connectedComponentsWithStats(bi_src, labelImage, stats, centroids, 8, CV_32S);
+  }else{
+    detector->detect(bi_src, keypoints);
+    nLabels = connectedComponentsWithStats(not_src, labelImage, stats, centroids, 8, CV_32S);
   }
   DEBUG_MSG("get_dot_markers(): num keypoints " << keypoints.size());
+  if(keypoints.size()==0) return;
+
+  if(keypoints.size()==3&&nLabels>=3){
+    float avg_diameter = 0.0f;
+    for(size_t i=0;i<keypoints.size();++i){
+      int x = keypoints[i].pt.x;
+      int y = keypoints[i].pt.y;
+      DEBUG_MSG("Keypoint: " << i << " " << keypoints[i].pt.x << " " << keypoints[i].pt.y << " blob size " << keypoints[i].size);
+      int label = labelImage.at<int>(y,x);
+      DEBUG_MSG("label " << label);
+      int psize = stats.at<int>(label,CC_STAT_AREA);
+      DEBUG_MSG("new size " << psize);
+      keypoints[i].size = psize;
+      DEBUG_MSG("Keypoint: " << i << " updated size " << keypoints[i].size);
+      avg_diameter += keypoints[i].size;
+    }
+    avg_diameter /= keypoints.size();
+    DEBUG_MSG("get_dot_markers(): avg keypoint diameter " << avg_diameter);
+    size_t i = keypoints.size();
+    while (i--) {
+      // remove the keypoint from the vector
+      if(keypoints[i].size<=0.0){
+  //      DEBUG_MSG("get_dot_markers(): removing keypoint " << i << " due to keypoint size == 0.0");
+        keypoints.erase(keypoints.begin() + i);
+      }
+      if(std::abs(keypoints[i].size-avg_diameter)/avg_diameter>0.30){
+  //      DEBUG_MSG("get_dot_markers(): removing keypoint " << i << " due to keypoint size >30% difference in diameter from avg");
+        keypoints.erase(keypoints.begin() + i);
+      }
+    }
+    DEBUG_MSG("get_dot_markers(): num keypoints " << keypoints.size());
+  }
 //  for (size_t i = 0;i<keypoints.size();++i)
 //    DEBUG_MSG("get_dot_markers(): keypoint " << i << " diameter " << keypoints[i].size);
 }
