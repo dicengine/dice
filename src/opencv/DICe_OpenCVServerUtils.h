@@ -78,6 +78,7 @@ const char* const opencv_server_threshold_start = "threshold_start";
 const char* const opencv_server_threshold_end = "threshold_end";
 const char* const opencv_server_threshold_step = "threshold_step";
 const char* const opencv_server_block_size = "block_size";
+const char* const opencv_server_min_blob_size = "min_blob_size";
 const char* const opencv_server_binary_constant = "binary_constant";
 const char* const opencv_server_dot_tol = "dot_tol";
 const char* const opencv_server_use_adaptive_threshold = "use_adaptive_threshold";

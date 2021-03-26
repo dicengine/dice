@@ -567,6 +567,8 @@ Calibration::extract_dot_target_points(){
   const int_t orig_thresh_start = input_params_.get<int_t>(opencv_server_threshold_start,20);
   const int_t orig_thresh_end =   input_params_.get<int_t>(opencv_server_threshold_end,250);
   const int_t orig_thresh_step =  input_params_.get<int_t>(opencv_server_threshold_step,5);
+  if(!input_params_.isParameter(opencv_server_min_blob_size))
+    input_params_.set<int_t>(opencv_server_min_blob_size,100);
   scalar_t include_image_set_tol = 0.75; //the search must have found at least 75% of the total to be included
   for (size_t i_image = 0; i_image < num_images(); i_image++){
     //go through each of the camera's images (note only two camera calibration is currently supported)
@@ -590,13 +592,18 @@ Calibration::extract_dot_target_points(){
       int_t return_thresh = orig_thresh_start;
       int_t error_code = opencv_dot_targets(img, input_params_,
         key_points,img_points,grd_points,return_thresh);
+
+      // check to see if the min_blob_size needs to be adjusted, first try 10 (smaller), then try 500 (larger):
+      if(error_code!=0){
+      }
+
       // check if extraction failed
       if(error_code==0){
-        input_params_.set(opencv_server_threshold_start,return_thresh);
+        input_params_.set(opencv_server_threshold_start,return_thresh); // make all the values the same so the auto thresholding is skipped next time
         input_params_.set(opencv_server_threshold_end,return_thresh);
         input_params_.set(opencv_server_threshold_step,return_thresh);
       }else if(i_image!=0&&error_code==1){
-        input_params_.set(opencv_server_threshold_start,orig_thresh_start);
+        input_params_.set(opencv_server_threshold_start,orig_thresh_start); // reset the thresholds and re-run the auto thresholding routine
         input_params_.set(opencv_server_threshold_end,orig_thresh_end);
         input_params_.set(opencv_server_threshold_step,orig_thresh_step);
         error_code = opencv_dot_targets(img, input_params_,
@@ -605,6 +612,16 @@ Calibration::extract_dot_target_points(){
           input_params_.set(opencv_server_threshold_start,return_thresh);
           input_params_.set(opencv_server_threshold_end,return_thresh);
           input_params_.set(opencv_server_threshold_step,return_thresh);
+        }else{
+          input_params_.set<int_t>(opencv_server_min_blob_size,10);
+          DEBUG_MSG("Calibration::extract_dot_target_points(): resetting the min_blob_size to 10 and trying again.");
+          error_code = opencv_dot_targets(img, input_params_,
+            key_points,img_points,grd_points,return_thresh);
+          if(error_code==0){
+            input_params_.set(opencv_server_threshold_start,return_thresh);
+            input_params_.set(opencv_server_threshold_end,return_thresh);
+            input_params_.set(opencv_server_threshold_step,return_thresh);
+          }
         }
       }
 
