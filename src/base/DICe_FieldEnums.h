@@ -117,6 +117,7 @@ Field_Name
   NORMAL_STRETCH_YY,
   LAGRANGE_MULTIPLIER,
   RESIDUAL,
+  GLOBAL_GRAY_DIFF,
   MIXED_RESIDUAL,
   LHS,
   MIXED_LHS,
@@ -481,6 +482,8 @@ const Field_Spec ROTATION_Z_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ROTAT
 const Field_Spec ROTATION_Z_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::ROTATION_Z,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
 /// field spec
 const Field_Spec RESIDUAL_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::RESIDUAL,field_enums::NODE_RANK,field_enums::STATE_N_PLUS_ONE,true,true);
+/// field spec
+const Field_Spec GLOBAL_GRAY_DIFF_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::GLOBAL_GRAY_DIFF,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,false);
 /// field spec
 const Field_Spec LHS_FS(field_enums::VECTOR_FIELD_TYPE,field_enums::LHS,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec

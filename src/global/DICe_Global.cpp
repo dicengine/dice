@@ -194,6 +194,7 @@ Global_Algorithm::default_constructor_tasks(const Teuchos::RCP<Teuchos::Paramete
       mesh_->create_field(field_enums::ACCUMULATED_DISP_FS);
 
   mesh_->create_field(field_enums::RESIDUAL_FS);
+  mesh_->create_field(field_enums::GLOBAL_GRAY_DIFF_FS);
   mesh_->create_field(field_enums::LHS_FS);
   Teuchos::RCP<MultiField> lhs = mesh_->get_field(field_enums::LHS_FS);
   lhs->put_scalar(0.0);
@@ -768,6 +769,7 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
   else
     residual = mesh_->get_field(field_enums::RESIDUAL_FS);
   residual->put_scalar(0.0);
+  Teuchos::RCP<MultiField> gray_diff = mesh_->get_field(field_enums::GLOBAL_GRAY_DIFF_FS);
 
   // establish the shape functions (using P2-P1 element for velocity pressure, or P2 velocity if no constraint):
   DICe::mesh::Shape_Function_Evaluator_Factory shape_func_eval_factory;
@@ -783,6 +785,7 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
   std::vector<precision_t> inv_jac(spa_dim*spa_dim);
   precision_t J =0.0;
   std::vector<precision_t> elem_force(num_funcs*spa_dim);
+  std::vector<precision_t> elem_gray_diff(num_funcs);
   precision_t x=0.0,y=0.0,bx=0.0,by=0.0;
   std::vector<precision_t> elem_stiffness(num_funcs*spa_dim*num_funcs*spa_dim);
 
@@ -828,6 +831,9 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
     // clear the elem force
     for(int_t i=0;i<num_funcs*spa_dim;++i)
       elem_force[i] = 0.0;
+    // clear the gray level difference
+    for(int_t i=0;i<num_funcs;++i)
+      elem_gray_diff[i] = 0.0;
 
     if(mms_problem_!=Teuchos::null){
       // low-order gauss point loop:
@@ -887,8 +893,8 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
           by += nodal_disp[i*spa_dim+1]*N[i];
         }
       }
-      //std::cout << " x " << x << " y " << y <<  " bx " << bx << " by " << by << std::endl;
-      //std::cout << " physical coords " << x << " " << y << std::endl;
+//      std::cout << " x " << x << " y " << y <<  " bx " << bx << " by " << by << std::endl;
+//      std::cout << " physical coords " << x << " " << y << std::endl;
 
       // compute the jacobian for this element:
       DICe::global::calc_jacobian(&nodal_coords[0],&DN[0],&jac[0],&inv_jac[0],J,num_funcs,spa_dim);
@@ -896,6 +902,9 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
       // d_dt(phi) * grad(phi)
       if(has_term(IMAGE_TIME_FORCE))
         image_time_force(this,spa_dim,num_funcs,x,y,bx,by,J,image_gp_weights[gp],&N[0],&elem_force[0]);
+
+      if(has_term(IMAGE_TIME_FORCE))
+        image_gray_diff(this,spa_dim,num_funcs,x,y,bx,by,J,image_gp_weights[gp],&N[0],&elem_gray_diff[0]);
 
       //if(use_fixed_point)
       //  image_grad_force(this,spa_dim,tri6_num_funcs,x,y,bx,by,J,image_gp_weights[gp],N6,elem_force);
@@ -941,6 +950,7 @@ Global_Algorithm::compute_residual(const bool use_fixed_point){
     // assemble the force terms
     // (note: no force terms for lagrange multiplier...so assembly is the same if mixed or not)
     for(int_t i=0;i<num_funcs;++i){
+      gray_diff->global_value(connectivity[i]->global_id()) += elem_gray_diff[i];
       //int_t nodex_local_id = connectivity[i]->overlap_local_id()*spa_dim;
       //int_t nodey_local_id = nodex_local_id + 1;
       //overlap_residual.local_value(nodex_local_id) += elem_force[i*spa_dim+0];

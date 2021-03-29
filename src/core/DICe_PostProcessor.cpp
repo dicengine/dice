@@ -353,8 +353,6 @@ Plotly_Contour_Post_Processor::execute(){
     field_output_names.push_back("VSG_STRAIN_YY");
     fields.push_back(mesh_->get_field(DICe::field_enums::VSG_STRAIN_XY_FS));
     field_output_names.push_back("VSG_STRAIN_XY");
-    fields.push_back(mesh_->get_field(DICe::field_enums::STATUS_FLAG_FS));
-    field_output_names.push_back("STATUS_FLAG");
   }else{
     fields.push_back(mesh_->get_field(DICe::field_enums::GREEN_LAGRANGE_STRAIN_XX_FS));
     field_output_names.push_back("GREEN_LAGRANGE_STRAIN_XX");
@@ -362,10 +360,13 @@ Plotly_Contour_Post_Processor::execute(){
     field_output_names.push_back("GREEN_LAGRANGE_STRAIN_YY");
     fields.push_back(mesh_->get_field(DICe::field_enums::GREEN_LAGRANGE_STRAIN_XY_FS));
     field_output_names.push_back("GREEN_LAGRANGE_STRAIN_XY");
+    fields.push_back(mesh_->get_field(DICe::field_enums::GLOBAL_GRAY_DIFF_FS));
+    field_output_names.push_back("GLOBAL_GRAY_DIFF");
   }
+  field_output_names.push_back("STATUS_FLAG");
   // when status flag is -1 in the GUI the point gets set to null
 
-  assert(fields.size()==field_output_names.size());
+  assert(fields.size()==field_output_names.size()-1);
 
   const int_t N = 3;
   int *IPIV = new int[N+1];
@@ -383,7 +384,7 @@ Plotly_Contour_Post_Processor::execute(){
   scalar_t query_pt[2];
 
   // initialize value storage vector of vectors
-  std::vector<std::vector<scalar_t> > values(fields.size(),std::vector<scalar_t>(total_grid_pts,0.0));
+  std::vector<std::vector<scalar_t> > values(fields.size()+1,std::vector<scalar_t>(total_grid_pts,0.0)); // the plus one is for a status field
   int_t current_grid_pt = 0;
   for(int_t gx = grid_x_begin; gx<=grid_x_end; gx+=grid_step_){
     for(int_t gy = grid_y_begin; gy<=grid_y_end; gy+=grid_step_){
@@ -394,7 +395,7 @@ Plotly_Contour_Post_Processor::execute(){
       kd_tree->radiusSearch(&query_pt[0],neigh_rad_sq,ret_matches,params);
       const int_t num_neigh = ret_matches.size();
       if(num_neigh<=3){ // not enough points to do least-squares
-        values[fields.size()-1][current_grid_pt] = -1.0;
+        values[fields.size()][current_grid_pt] = -1.0;
         current_grid_pt++;
         continue;
       }
@@ -435,14 +436,14 @@ Plotly_Contour_Post_Processor::execute(){
       double rcond=0.0; // reciporical condition number
       lapack.GECON('1',X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),anorm,&rcond,GWORK,IWORK,&INFO);
       if(rcond < 1.0E-12) {
-        values[fields.size()-1][current_grid_pt] = -1.0;
+        values[fields.size()][current_grid_pt] = -1.0;
         current_grid_pt++;
         continue;
       }
       lapack.GETRI(X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),IPIV,WORK,LWORK,&INFO);
 
       // iterate all the fields in the spec list and compute the least squares fit of each
-      for(size_t i=2;i<fields.size()-1;++i){ // avoid the coordinates fields and the last one which is the status_flag
+      for(size_t i=2;i<fields.size();++i){ // avoid the coordinates fields and the last one which is the status_flag
         Teuchos::ArrayRCP<double> u(num_neigh,0.0);
         for(int_t j=0;j<num_neigh;++j){
           u[j] = fields[i]->local_value(local_ids[ret_matches[j].first]);
@@ -479,7 +480,7 @@ Plotly_Contour_Post_Processor::execute(){
   std::ofstream json_out_file (jsonName.str());
   json_out_file << "{ \"data\": [{\n";
   bool first_value = true;
-  for(size_t i=0;i<fields.size();++i){
+  for(size_t i=0;i<field_output_names.size();++i){
     first_value = true;
     json_out_file << "\"" << field_output_names[i] << "\":[";
     for(int_t j=0;j<total_grid_pts;++j){

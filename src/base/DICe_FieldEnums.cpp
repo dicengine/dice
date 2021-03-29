@@ -129,6 +129,7 @@ void create_string_maps()
   field_name_string[field_enums::NORMAL_STRETCH_YY]                                  = "NORMAL_STRAIN_Y"; // the string is different from the enum because of legacy field names
   field_name_string[field_enums::LAGRANGE_MULTIPLIER]                                = "LAGRANGE_MULTIPLIER";
   field_name_string[field_enums::RESIDUAL]                                           = "RESIDUAL";
+  field_name_string[field_enums::GLOBAL_GRAY_DIFF]                                   = "GLOBAL_GRAY_DIFF";
   field_name_string[field_enums::LHS]                                                = "LHS";
   field_name_string[field_enums::MIXED_RESIDUAL]                                     = "MIXED_RESIDUAL";
   field_name_string[field_enums::MIXED_LHS]                                          = "MIXED_LHS";

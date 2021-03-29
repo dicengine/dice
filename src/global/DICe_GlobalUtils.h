@@ -976,6 +976,33 @@ void image_time_force(Global_Algorithm* alg,
   const S * N,
   S * elem_force);
 
+/// computes the element-wise contributions to the gray level differences across a time step
+/// \param alg pointer to the calling Global_Algorithm
+/// \param spa_dim spatial dimension
+/// \param num_funcs the number of shape functions
+/// \param x x-coordinate of the point
+/// \param y y-coordinate of the point
+/// \param bx x-component of the velocity
+/// \param by y-component of the velocity
+/// \param J determinant of the jacobian
+/// \param gp_weight gauss weight
+/// \param N shape functions
+/// \param elem_force output the element force contributions
+template <typename S>
+DICE_LIB_DLL_EXPORT
+void image_gray_diff(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const S & x,
+  const S & y,
+  const S & bx,
+  const S & by,
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  S * elem_gray_diff);
+
+
 /// adds the grad_phi tensor grad_phi force vector to the residual
 /// \param alg pointer to the calling Global_Algorithm
 /// \param spa_dim spatial dimension

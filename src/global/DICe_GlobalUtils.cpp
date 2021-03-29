@@ -252,6 +252,54 @@ template DICE_LIB_DLL_EXPORT void mms_image_time_force(Teuchos::RCP<MMS_Problem>
 
 template <typename S>
 DICE_LIB_DLL_EXPORT
+void image_gray_diff(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const S & x,
+  const S & y,
+  const S & bx,
+  const S & by,
+  const S & J,
+  const S & gp_weight,
+  const S * N,
+  S * elem_gray_diff){
+  TEUCHOS_TEST_FOR_EXCEPTION(alg==NULL,std::runtime_error,
+    "Error, the pointer to the algorithm must be valid");
+  // compute the image force terms
+  const S phi_0 = alg->schema()->ref_img()->interpolate_bicubic(x-bx,y-by);
+  const S phi = alg->schema()->def_img()->interpolate_bicubic(x,y);
+  const S d_phi_dt = std::abs(phi - phi_0);
+  for(int_t i=0;i<num_funcs;++i){
+    elem_gray_diff[i] += d_phi_dt*N[i]*gp_weight*J;
+  }
+}
+#ifndef PRECISION_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void image_gray_diff(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const precision_t & x,
+  const precision_t & y,
+  const precision_t & bx,
+  const precision_t & by,
+  const precision_t & J,
+  const precision_t & gp_weight,
+  const precision_t * N,
+  precision_t * elem_gray_diff);
+#endif
+template DICE_LIB_DLL_EXPORT void image_gray_diff(Global_Algorithm* alg,
+  const int_t spa_dim,
+  const int_t num_funcs,
+  const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & bx,
+  const scalar_t & by,
+  const scalar_t & J,
+  const scalar_t & gp_weight,
+  const scalar_t * N,
+  scalar_t * elem_gray_diff);
+
+template <typename S>
+DICE_LIB_DLL_EXPORT
 void image_time_force(Global_Algorithm* alg,
   const int_t spa_dim,
   const int_t num_funcs,
