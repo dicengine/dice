@@ -282,10 +282,10 @@ void read_image(const char * file_name,
     width = sub_w==0?hc->width():sub_w;
     height = sub_h==0?hc->height():sub_h;
     if(is_avg){
-      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(subimage_width),std::runtime_error,"");
-      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(subimage_height),std::runtime_error,"");
-      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(subimage_offset_x),std::runtime_error,"");
-      TEUCHOS_TEST_FOR_EXCEPTION(!params->isParameter(subimage_offset_y),std::runtime_error,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_width),std::runtime_error,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_height),std::runtime_error,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_offset_x),std::runtime_error,"");
+      TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_offset_y),std::runtime_error,"");
       if(intensities.size()==0)
         intensities = Teuchos::ArrayRCP<S>(width*height,0.0);
       std::vector<storage_t> avg_data = hc->get_avg_frame(start_index,end_index);
