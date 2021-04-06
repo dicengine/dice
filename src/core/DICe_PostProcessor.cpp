@@ -282,6 +282,25 @@ Plotly_Contour_Post_Processor::execute(){
     }
   }
 
+  // check if model coordinates is a valid field
+  bool has_model_coordinates = false;
+  Teuchos::RCP<MultiField> model_x;
+  Teuchos::RCP<MultiField> model_y;
+  Teuchos::RCP<MultiField> model_z;
+  try{
+    mesh_->get_field(field_enums::MODEL_COORDINATES_X_FS);
+    has_model_coordinates = true;
+  }catch(...){
+    has_model_coordinates = false;
+  }
+  if(has_model_coordinates){
+    model_x = mesh_->get_overlap_field(field_enums::MODEL_COORDINATES_X_FS);
+    model_y = mesh_->get_overlap_field(field_enums::MODEL_COORDINATES_Y_FS);
+    model_z = mesh_->get_overlap_field(field_enums::MODEL_COORDINATES_Z_FS);
+    // also check that the field has values
+    has_model_coordinates = mesh_->get_field(field_enums::MODEL_COORDINATES_X_FS)->norm() > 1.0E-8;
+  }
+
   // count the number of valid points
   int_t num_valid_pts = 0;
   if(coords_are_subset){
@@ -339,6 +358,14 @@ Plotly_Contour_Post_Processor::execute(){
   fields.push_back(disp_y);
   field_output_names.push_back("DISPLACEMENT_Y");
   if(coords_are_subset){
+    if(has_model_coordinates){
+      fields.push_back(mesh_->get_field(DICe::field_enums::MODEL_COORDINATES_X_FS));
+      field_output_names.push_back("MODEL_COORDINATES_X");
+      fields.push_back(mesh_->get_field(DICe::field_enums::MODEL_COORDINATES_Y_FS));
+      field_output_names.push_back("MODEL_COORDINATES_Y");
+      fields.push_back(mesh_->get_field(DICe::field_enums::MODEL_COORDINATES_Z_FS));
+      field_output_names.push_back("MODEL_COORDINATES_Z");
+    }
     fields.push_back(mesh_->get_field(DICe::field_enums::SIGMA_FS));
     field_output_names.push_back("SIGMA");
     fields.push_back(mesh_->get_field(DICe::field_enums::BETA_FS));
