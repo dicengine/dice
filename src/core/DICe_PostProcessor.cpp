@@ -1289,6 +1289,9 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
       has_model_coordinates = true;
   }
   if(has_model_coordinates){
+    field_specs_.push_back(DICe::field_enums::MODEL_COORDINATES_X_FS);
+    field_specs_.push_back(DICe::field_enums::MODEL_COORDINATES_Y_FS);
+    field_specs_.push_back(DICe::field_enums::MODEL_COORDINATES_Z_FS);
     field_specs_.push_back(DICe::field_enums::MODEL_DISPLACEMENT_X_FS);
     field_specs_.push_back(DICe::field_enums::MODEL_DISPLACEMENT_Y_FS);
     field_specs_.push_back(DICe::field_enums::MODEL_DISPLACEMENT_Z_FS);
