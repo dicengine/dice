@@ -148,6 +148,9 @@ Field_Name
   QUAD_J,
   QUAD_K,
   QUAD_L,
+  EPI_A,
+  EPI_B,
+  EPI_C,
   FIELD_1,
   FIELD_2,
   FIELD_3,
@@ -561,6 +564,12 @@ const Field_Spec QUAD_K_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_K,fi
 /// field spec
 const Field_Spec QUAD_L_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::QUAD_L,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
+const Field_Spec EPI_A_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::EPI_A,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec EPI_B_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::EPI_B,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
+const Field_Spec EPI_C_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::EPI_C,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
 const Field_Spec FIELD_1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_1,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec FIELD_2_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::FIELD_2,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
@@ -690,7 +699,7 @@ const Field_Spec ROT_TRANS_3D_TRANS_Y_FS(field_enums::SCALAR_FIELD_TYPE, field_e
 const Field_Spec ROT_TRANS_3D_TRANS_Z_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::ROT_TRANS_3D_TRANS_Z, field_enums::NODE_RANK, field_enums::NO_FIELD_STATE, true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 137;
+const int_t num_fields_defined = 140;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -771,6 +780,9 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     QUAD_J_FS,
     QUAD_K_FS,
     QUAD_L_FS,
+    EPI_A_FS,
+    EPI_B_FS,
+    EPI_C_FS,
     FIELD_1_FS,
     FIELD_2_FS,
     FIELD_3_FS,

@@ -167,6 +167,8 @@ const char* const compute_laplacian_image = "compute_laplacian_image";
 /// String parameter name
 const char* const initialization_method = "initialization_method";
 /// String parameter name
+const char* const cross_initialization_method = "cross_initialization_method";
+/// String parameter name
 const char* const optimization_method = "optimization_method";
 /// String parameter name
 const char* const projection_method = "projection_method";
@@ -469,6 +471,8 @@ enum Initialization_Method {
   USE_FEATURE_MATCHING,
   USE_IMAGE_REGISTRATION,
   USE_SATELLITE_GEOMETRY,
+  USE_SPACE_FILLING_ITERATIONS,
+  USE_PLANAR_PROJECTION,
   INITIALIZATION_METHOD_NOT_APPLICABLE,
   // DON'T ADD ANY BELOW MAX
   MAX_INITIALIZATION_METHOD,
@@ -485,6 +489,8 @@ const static char * initializationMethodStrings[] = {
   "USE_FEATURE_MATCHING",
   "USE_IMAGE_REGISTRATION",
   "USE_SATELLITE_GEOMETRY",
+  "USE_SPACE_FILLING_ITERATIONS",
+  "USE_PLANAR_PROJECTION",
   "INITIALIZATION_METHOD_NOT_APPLICABLE"
 };
 
@@ -987,6 +993,13 @@ const Correlation_Parameter initialization_method_param(initialization_method,
   initializationMethodStrings,
   MAX_INITIALIZATION_METHOD);
 /// Correlation parameter and properties
+const Correlation_Parameter cross_initialization_method_param(cross_initialization_method,
+  STRING_PARAM,
+  true,
+  "Determines how solution values are initialized for each frame",
+  initializationMethodStrings,
+  MAX_INITIALIZATION_METHOD);
+/// Correlation parameter and properties
 const Correlation_Parameter optimization_method_param(optimization_method,
   STRING_PARAM,
   true,
@@ -1260,13 +1273,14 @@ const Correlation_Parameter remove_outlier_pixels_param(remove_outlier_pixels,
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 88;
+const int_t num_valid_correlation_params = 89;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
   interpolation_method_param,
   gradient_method_param,
   initialization_method_param,
+  cross_initialization_method_param,
   optimization_method_param,
   projection_method_param,
   compute_ref_gradients_param,

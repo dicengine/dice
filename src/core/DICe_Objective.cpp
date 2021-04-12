@@ -352,8 +352,12 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
       //#endif
     }
     catch (...) {
+      // clean up storage for lapack:
+      delete [] WORK;
+      delete [] IPIV;
       return SUBSET_CONSTRUCTION_FAILED;
     }
+
     // compute the mean value of the subsets:
     const scalar_t meanG = subset_->mean(DEF_INTENSITIES);
     // the gradients are taken from the def images rather than the ref
@@ -399,10 +403,18 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
       lapack.GETRF(N,N,H.values(),N,IPIV,&INFO);
       if(correlation_point_global_id_>=0)
         schema_->global_field_value(correlation_point_global_id_,CONDITION_NUMBER_FS) = cond_2x2;
-      if(cond_2x2 > 1.0E12) return HESSIAN_SINGULAR;
+      if(cond_2x2 > 1.0E12){
+        // clean up storage for lapack:
+        delete [] WORK;
+        delete [] IPIV;
+        return HESSIAN_SINGULAR;
+      }
     }
     catch(std::exception &e){
       std::cout << e.what() << '\n';
+      // clean up storage for lapack:
+      delete [] WORK;
+      delete [] IPIV;
       return LINEAR_SOLVE_FAILED;
     }
     for(int_t i=0;i<LWORK;++i) WORK[i] = 0.0;
@@ -412,6 +424,9 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
     }
     catch(std::exception &e){
       std::cout << e.what() << '\n';
+      // clean up storage for lapack:
+      delete [] WORK;
+      delete [] IPIV;
       return LINEAR_SOLVE_FAILED;
     }
     // save off last step

@@ -413,6 +413,10 @@ Teuchos::RCP<Teuchos::ParameterList> read_correlation_params(const std::string &
         diceParams->set(DICe::initialization_method,DICe::string_to_initialization_method(
           stringParams->get<std::string>(it->first)));
       }
+      else if(paramName == DICe::cross_initialization_method){
+        diceParams->set(DICe::cross_initialization_method,DICe::string_to_initialization_method(
+          stringParams->get<std::string>(it->first)));
+      }
       else{
         if(proc_rank==0) DEBUG_MSG("Not a string parameter that needs to be translated");
         diceParams->setEntry(it->first,it->second);

@@ -376,7 +376,7 @@ Subset::initialize(Teuchos::RCP<Image_<S>> image,
   const Subset_View_Target target,
   Teuchos::RCP<Local_Shape_Function> shape_function,
   const Interpolation_Method interp){
-  //DEBUG_MSG("Subset::initialize():  initializing subset from image " << image->file_name());
+//  DEBUG_MSG("Subset::initialize():  initializing subset from image " << image->file_name());
   // coordinates for points x and y are always in global coordinates
   // if the input image is a sub-image i.e. it has offsets, then these need to be taken into account
   const int_t offset_x = image->offset_x();
@@ -436,6 +436,7 @@ Subset::initialize(Teuchos::RCP<Image_<S>> image,
       has_gradients_ = true;
     }
   }
+//  DEBUG_MSG("Subset::initialize():  initializing complete");
 }
 template DICE_LIB_DLL_EXPORT void Subset::initialize(Teuchos::RCP<Image_<scalar_t>>,const Subset_View_Target,Teuchos::RCP<Local_Shape_Function>,const Interpolation_Method);
 #ifndef STORAGE_SCALAR_SAME_TYPE
