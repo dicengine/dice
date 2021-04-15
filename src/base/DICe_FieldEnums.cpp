@@ -160,6 +160,7 @@ void create_string_maps()
   field_name_string[field_enums::EPI_A]                                              = "EPI_A";
   field_name_string[field_enums::EPI_B]                                              = "EPI_B";
   field_name_string[field_enums::EPI_C]                                              = "EPI_C";
+  field_name_string[field_enums::CROSS_EPI_ERROR]                                    = "CROSS_EPI_ERROR";
   field_name_string[field_enums::FIELD_1]                                            = "FIELD_1";
   field_name_string[field_enums::FIELD_2]                                            = "FIELD_2";
   field_name_string[field_enums::FIELD_3]                                            = "FIELD_3";

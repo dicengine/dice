@@ -354,13 +354,12 @@ public:
     const Teuchos::RCP<Teuchos::ParameterList> & input_params);
 
   /// correlate point by point branching out by neighbors
-  void space_fill_correlate(const int_t seed_id,
-    const int_t gid,
+  void space_fill_correlate(const int_t seed_gid,
+    const std::vector<int_t> & in_gids,
+    std::vector<int_t> & out_gids,
     const int_t num_neigh,
-    const scalar_t & u,
-    const scalar_t & v,
-//    Teuchos::RCP<Local_Shape_Function> shape_function,
-    Teuchos::RCP<kd_tree_2d_t> kd_tree);
+    Teuchos::RCP<kd_tree_2d_t> kd_tree,
+    const scalar_t & epi_error_tol);
 
   /// Save off the q and r fields once the mapping from left to right image is known
   void save_cross_correlation_fields();

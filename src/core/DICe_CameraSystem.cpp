@@ -726,25 +726,39 @@ Matrix<scalar_t,3>
 Camera_System::fundamental_matrix(const size_t source_cam_id,
   const size_t target_cam_id){
   DEBUG_MSG("Camera_System::fundamental_matrix(): source camera id " << source_cam_id << " target camera id " << target_cam_id);
-  TEUCHOS_TEST_FOR_EXCEPTION(sys_type_!=OPENCV,std::runtime_error,"this method not implemented yet for this system type (only OPENCV for now) " << to_string(sys_type_));
+  //TEUCHOS_TEST_FOR_EXCEPTION(sys_type_!=OPENCV&&sys_type_!=GENERIC_SYSTEM,std::runtime_error,"this method not implemented yet for this system type (only OPENCV for now) " << to_string(sys_type_));
   TEUCHOS_TEST_FOR_EXCEPTION(source_cam_id<0 || source_cam_id>=num_cameras(),std::runtime_error,"invalid source camera id");
   TEUCHOS_TEST_FOR_EXCEPTION(target_cam_id<0 || target_cam_id>=num_cameras(),std::runtime_error,"invalid target camera id");
   Matrix<scalar_t,3> T;
   Matrix<scalar_t,3> F;
   Matrix<scalar_t,3> f_source;
   Matrix<scalar_t,3> f_target;
-  const Matrix<scalar_t,3> R = *cameras_[target_cam_id]->rotation_matrix();
-  // TODO fix the rotation matrix for other camera system types like VIC3d
-  // where R is a sum of cam 0 to origin then from origin to cam 1
-  // same for tx, ty, tz
+  Matrix<scalar_t,3> R = *cameras_[target_cam_id]->rotation_matrix();
   std::vector<scalar_t> & source_intrinsics = *cameras_[source_cam_id]->intrinsics();
   std::vector<scalar_t> & target_intrinsics = *cameras_[target_cam_id]->intrinsics();
-  T(0,1) = -1.0*(*cameras_[target_cam_id]).tz();
-  T(0,2) = (*cameras_[target_cam_id]).ty();
-  T(1,0) = (*cameras_[target_cam_id]).tz();
-  T(1,2) = -1.0*(*cameras_[target_cam_id]).tx();
-  T(2,0) = -1.0*(*cameras_[target_cam_id]).ty();
-  T(2,1) = (*cameras_[target_cam_id]).tx();
+  scalar_t tx = (*cameras_[target_cam_id]).tx();
+  scalar_t ty = (*cameras_[target_cam_id]).ty();
+  scalar_t tz = (*cameras_[target_cam_id]).tz();
+
+  // fix the rotation matrix for other camera system types like VIC3d
+  // where R is a sum of cam 0 to origin then from origin to cam 1
+  // same for tx, ty, tz
+  if(!extrinsics_relative_camera_to_camera_){
+    Matrix<scalar_t,4> cam0_to_cam1 = cameras_[target_cam_id]->transformation_matrix()*cameras_[source_cam_id]->transformation_matrix().inv();
+    for(size_t i=0;i<R.rows();++i)
+      for(size_t j=0;j<R.cols();++j)
+        R(i,j) = cam0_to_cam1(i,j);
+    tx = cam0_to_cam1(0,3);
+    ty = cam0_to_cam1(1,3);
+    tz = cam0_to_cam1(2,3);
+  }
+
+  T(0,1) = -1.0*tz;
+  T(0,2) = ty;
+  T(1,0) = tz;
+  T(1,2) = -1.0*tx;
+  T(2,0) = -1.0*ty;
+  T(2,1) = tx;
   f_source(0,0) = source_intrinsics[Camera::FX];
   f_source(0,2) = source_intrinsics[Camera::CX];
   f_source(1,1) = source_intrinsics[Camera::FY];

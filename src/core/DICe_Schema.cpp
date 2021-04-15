@@ -1376,6 +1376,7 @@ Schema::create_mesh_fields(){
   mesh_->create_field(field_enums::EPI_A_FS);
   mesh_->create_field(field_enums::EPI_B_FS);
   mesh_->create_field(field_enums::EPI_C_FS);
+  mesh_->create_field(field_enums::CROSS_EPI_ERROR_FS);
   mesh_->create_field(field_enums::FIELD_1_FS);
   mesh_->create_field(field_enums::FIELD_2_FS);
   mesh_->create_field(field_enums::FIELD_3_FS);
@@ -1551,6 +1552,20 @@ Schema::execute_cross_correlation(){
     Teuchos::RCP<MultiField> proj_aug_y = mesh_->get_field(PROJECTION_AUG_Y_FS);
     mesh_->get_field(SUBSET_DISPLACEMENT_X_FS)->update(1.0,*proj_aug_x,1.0);
     mesh_->get_field(SUBSET_DISPLACEMENT_Y_FS)->update(1.0,*proj_aug_y,1.0);
+  }
+
+  // find any points that weren't reached by the space filling and turn them off
+  for(int_t i=0;i<local_num_subsets_;++i){
+    float a = local_field_value(i,EPI_A_FS);
+    float b = local_field_value(i,EPI_B_FS);
+    float c = local_field_value(i,EPI_C_FS);
+    float stereo_x = local_field_value(i,SUBSET_COORDINATES_X_FS) + local_field_value(i,SUBSET_DISPLACEMENT_X_FS);
+    float stereo_y = local_field_value(i,SUBSET_COORDINATES_Y_FS) + local_field_value(i,SUBSET_DISPLACEMENT_Y_FS);
+    const float dist = (std::abs(a*stereo_x+b*stereo_y+c)/std::sqrt(a*a+b*b));
+    local_field_value(i,CROSS_EPI_ERROR_FS) = dist;
+//    if(dist>epi_dist_tol){
+//      local_field_value(i,SIGMA_FS) = -1.0;
+//    }
   }
 
   // reset the neighbor ids fiel and initialization method
@@ -2762,60 +2777,82 @@ Schema::estimate_resolution_error(const Teuchos::RCP<Teuchos::ParameterList> & c
 /// correlate point by point branching out by neighbors
 void
 Schema::space_fill_correlate(const int_t seed_gid,
-  const int_t gid,
+  const std::vector<int_t> & in_gids,
+  std::vector<int_t> & out_gids,
   const int_t num_neigh,
-  const scalar_t & u,
-  const scalar_t & v,
-//  Teuchos::RCP<Local_Shape_Function> shape_function,
-  Teuchos::RCP<kd_tree_2d_t> kd_tree){
-  DEBUG_MSG("Schema::space_fill_correlate: seed gid " << seed_gid << " u " << u << " v " << v);
-  // incoming shape function needs to be populated with a successful solution
+  Teuchos::RCP<kd_tree_2d_t> kd_tree,
+  const scalar_t & epi_error_tol){
 
-  // set the seed u and v values for the nearest subsets to each feature matched point and do a cross-correlation for each
-  std::vector<size_t> ret_index(num_neigh);
-  std::vector<scalar_t> out_dist_sqr(num_neigh);
-  scalar_t query_pt[2];
-  query_pt[0] = global_field_value(gid,SUBSET_COORDINATES_X_FS);
-  query_pt[1] = global_field_value(gid,SUBSET_COORDINATES_Y_FS);
-  kd_tree->knnSearch(&query_pt[0],num_neigh,&ret_index[0],&out_dist_sqr[0]);
-  for(int_t i=0;i<num_neigh;++i){
-    const int_t neigh_id = ret_index[i];
-    if(local_field_value(neigh_id,NEIGHBOR_ID_FS)!=0) continue;
-    DEBUG_MSG("Schema::space_fill_correlate: neigh global id " << subset_global_id(neigh_id) <<
-      " cx " << local_field_value(neigh_id,SUBSET_COORDINATES_X_FS) << " cy " << local_field_value(neigh_id,SUBSET_COORDINATES_Y_FS) << " dist " << std::sqrt(out_dist_sqr[i]) <<
-      " neigh id " << local_field_value(neigh_id,NEIGHBOR_ID_FS));
+  TEUCHOS_TEST_FOR_EXCEPTION(in_gids.size()==0,std::runtime_error,"");
+  out_gids.clear();
 
-    local_field_value(neigh_id,FIELD_10_FS) = seed_gid;
-    local_field_value(neigh_id,NEIGHBOR_ID_FS) = -1;
+  for(size_t s=0;s<in_gids.size();++s){
+    const int_t subset_gid = in_gids[s];
+    DEBUG_MSG("Schema::space_fill_correlate: spreading to neighbors of SUBSET " << subset_gid);
+    // get the u and v values for this subset
+    const scalar_t subset_u = global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
+    const scalar_t subset_v = global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
+    // find neighbors of this subset
+    std::vector<size_t> ret_index(num_neigh);
+    std::vector<scalar_t> out_dist_sqr(num_neigh);
+    scalar_t query_pt[2];
+    query_pt[0] = global_field_value(subset_gid,SUBSET_COORDINATES_X_FS);
+    query_pt[1] = global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS);
+    kd_tree->knnSearch(&query_pt[0],num_neigh,&ret_index[0],&out_dist_sqr[0]);
+    for(int_t i=0;i<num_neigh;++i){
+      const int_t neigh_id = ret_index[i];
+      const int_t neigh_gid = subset_global_id(neigh_id);
+      if(local_field_value(neigh_id,NEIGHBOR_ID_FS)!=0) continue;
+      DEBUG_MSG("Schema::space_fill_correlate: neigh global id " << neigh_gid <<
+        " cx " << local_field_value(neigh_id,SUBSET_COORDINATES_X_FS) << " cy " << local_field_value(neigh_id,SUBSET_COORDINATES_Y_FS) <<
+        " dist " << std::sqrt(out_dist_sqr[i]));
+      local_field_value(neigh_id,FIELD_10_FS) = seed_gid;
+      local_field_value(neigh_id,NEIGHBOR_ID_FS) = -1;
 
-    // correlate
-    int_t num_iterations = -1;
-    Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,this_proc_gid_order_[neigh_id]));
-    Teuchos::RCP<Local_Shape_Function> neigh_shape_function = Teuchos::rcp(new Affine_Shape_Function(true,true,true));
-    neigh_shape_function->insert_motion(u,v);
-    Status_Flag corr_status = obj->computeUpdateFast(neigh_shape_function,num_iterations);
+      // correlate
+      int_t num_iterations = -1;
+      Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,this_proc_gid_order_[neigh_id]));
+      Teuchos::RCP<Local_Shape_Function> neigh_shape_function = Teuchos::rcp(new Affine_Shape_Function(true,true,true));
+      neigh_shape_function->insert_motion(subset_u,subset_v);
+      Status_Flag corr_status = obj->computeUpdateFast(neigh_shape_function,num_iterations);
 
-    // check the sigma values and status flag
-    scalar_t noise_std_dev = 0.0;
-    const scalar_t cross_sigma = obj->sigma(neigh_shape_function,noise_std_dev);
-    local_field_value(neigh_id,SIGMA_FS) = cross_sigma;
-    if(cross_sigma<0.0){
-      DEBUG_MSG("Schema::space_fill_correlate(): failed cross init sigma");
-      continue;
+      // check the sigma values and status flag
+      scalar_t noise_std_dev = 0.0;
+      const scalar_t cross_sigma = obj->sigma(neigh_shape_function,noise_std_dev);
+      local_field_value(neigh_id,SIGMA_FS) = cross_sigma;
+      if(cross_sigma<0.0){
+        DEBUG_MSG("Schema::space_fill_correlate(): failed cross init sigma");
+        continue;
+      }
+      // check correlation was successful
+      if(corr_status!=CORRELATION_SUCCESSFUL){
+        local_field_value(neigh_id,SIGMA_FS) = -1.0;
+        DEBUG_MSG("Schema::space_fill_correlate(): failed correlation");
+        continue;
+      }
+      // check epipolar error
+      scalar_t cross_t = 0.0, cross_u = 0.0, cross_v = 0.0;
+      neigh_shape_function->map_to_u_v_theta(local_field_value(neigh_id,SUBSET_COORDINATES_X_FS),
+        local_field_value(neigh_id,SUBSET_COORDINATES_Y_FS),cross_u,cross_v,cross_t);
+      float a = local_field_value(neigh_id,EPI_A_FS);
+      float b = local_field_value(neigh_id,EPI_B_FS);
+      float c = local_field_value(neigh_id,EPI_C_FS);
+      float stereo_x = local_field_value(neigh_id,SUBSET_COORDINATES_X_FS) + cross_u;
+      float stereo_y = local_field_value(neigh_id,SUBSET_COORDINATES_Y_FS) + cross_v;
+      const float dist = (std::abs(a*stereo_x+b*stereo_y+c)/std::sqrt(a*a+b*b));
+      DEBUG_MSG("Schema::initialize_cross_correlation(): epipolar error for neighbor " << i << " gid " << neigh_gid << ": " << dist);
+      if(dist>epi_error_tol){
+        local_field_value(neigh_id,SIGMA_FS) = -1.0;
+        DEBUG_MSG("Schema::space_fill_correlate(): subset " << neigh_gid << " failed epipolar distance threshold, epipolar dist: " << dist);
+        continue;
+      }
+      // assume success at this point, set the field values
+      local_field_value(neigh_id,SUBSET_DISPLACEMENT_X_FS) = cross_u;
+      local_field_value(neigh_id,SUBSET_DISPLACEMENT_Y_FS) = cross_v;
+      local_field_value(neigh_id,NEIGHBOR_ID_FS) = subset_gid;
+
+      out_gids.push_back(neigh_gid);
     }
-    if(corr_status!=CORRELATION_SUCCESSFUL){
-      local_field_value(neigh_id,SIGMA_FS) = -1.0;
-      DEBUG_MSG("Schema::space_fill_correlate(): failed correlation");
-      continue;
-    }
-    // assume success at this point
-    scalar_t cross_t = 0.0, cross_u = 0.0, cross_v = 0.0;
-    neigh_shape_function->map_to_u_v_theta(local_field_value(neigh_id,SUBSET_COORDINATES_X_FS),
-      local_field_value(neigh_id,SUBSET_COORDINATES_Y_FS),cross_u,cross_v,cross_t);
-    local_field_value(neigh_id,SUBSET_DISPLACEMENT_X_FS) = cross_u;
-    local_field_value(neigh_id,SUBSET_DISPLACEMENT_Y_FS) = cross_v;
-    local_field_value(neigh_id,NEIGHBOR_ID_FS) = gid;
-    space_fill_correlate(seed_gid,subset_global_id(neigh_id),num_neigh,cross_u,cross_v,kd_tree);
   }
 }
 
@@ -2886,7 +2923,6 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
     }
     DEBUG_MSG("Schema::initialize_cross_correlation(): matching features complete");
-
     // Weed out any matched features that aren't on the epipolar line
 
     cv::Mat featureLines;
@@ -2913,14 +2949,8 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
         good_right_x.push_back(right_x[i]);
         good_right_y.push_back(right_y[i]);
       }
-//      float epi_y0 = b==0.0?0.0:-1.0*c/b;
-//      float epi_y1 = b==0.0?0.0:(-1.0*c-left_img->width()*a)/b;
-//      cv::Point2f left_line_pt(left_img->width(),epi_y0);
-//      cv::Point2f right_line_pt(epi_img.cols,epi_y1);
-//      cv::line(epi_img,left_line_pt,right_line_pt,cv::Scalar(255,0,0));
     }
     DEBUG_MSG("Schema::initialize_cross_correlation(): num good matches: " << good_left_x.size());
-//    cv::imwrite(".dice/fm_space_filling.png",epi_img);
     if(good_left_x.size()<1){
       std::cout << "Schema::initialize_cross_correlation(): error: feature matching failed (not enough matches)" << std::endl;
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
@@ -2966,17 +2996,15 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       if(local_field_value(local_id,NEIGHBOR_ID_FS) != 0) continue; // seed subset can't be one that already has been correlated
       DEBUG_MSG("Schema::initialize_cross_correlation(): closest subset to fm match point " << good_left_x[i] << " " << good_left_y[i] <<
         " is local subset " << local_id << " at " << local_field_value(local_id,SUBSET_COORDINATES_X_FS) << " " << local_field_value(local_id,SUBSET_COORDINATES_Y_FS) );
+      local_field_value(local_id,NEIGHBOR_ID_FS) = -1; // mark this seed as having been visited
+
       // set the u and v values for this point and correlate it
       const scalar_t u = good_right_x[i] - good_left_x[i];
       const scalar_t v = good_right_y[i] - good_left_y[i];
-//      local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS) = u;
-//      local_field_value(local_id,SUBSET_DISPLACEMENT_Y_FS) = v;
-//      local_field_value(local_id,NEIGHBOR_ID_FS) = -1;
-      DEBUG_MSG("Schema::initialize_cross_correlation(): seed u " << u << " seed v " << v);
+      DEBUG_MSG("Schema::initialize_cross_correlation(): seed SUBSET_ID " << subset_global_id(local_id) << " seed u " << u << " seed v " << v);
 
       // correlate
       int_t num_iterations = -1;
-      DEBUG_MSG("Schema::initialize_cross_correlation(): SUBSET_ID: " << subset_global_id(local_id));
       Teuchos::RCP<Local_Shape_Function> shape_function = Teuchos::rcp(new Affine_Shape_Function(true,true,true));
       Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,this_proc_gid_order_[local_id]));
       shape_function->insert_motion(u,v);
@@ -3006,7 +3034,7 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       float stereo_x = local_field_value(local_id,SUBSET_COORDINATES_X_FS) + cross_u;
       float stereo_y = local_field_value(local_id,SUBSET_COORDINATES_Y_FS) + cross_v;
       const float dist = (std::abs(a*stereo_x+b*stereo_y+c)/std::sqrt(a*a+b*b));
-      DEBUG_MSG("Schema::initialize_cross_correlation(): epipolar error for seed: " << dist);
+      DEBUG_MSG("Schema::initialize_cross_correlation(): epipolar error for seed subset: " << dist);
       if(dist>epi_dist_tol){
         local_field_value(local_id,SIGMA_FS) = -1.0;
         DEBUG_MSG("Schema::initialize_cross_correlation(): failed epipolar distance threshold");
@@ -3017,26 +3045,39 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       local_field_value(local_id,NEIGHBOR_ID_FS) = subset_global_id(local_id); // seeds get themselves as neighbors
       local_field_value(local_id,FIELD_10_FS) = subset_global_id(local_id);
 
-      const int_t num_neigh = 15;
-      space_fill_correlate(subset_global_id(local_id),subset_global_id(local_id),num_neigh,cross_u,cross_v,kd_tree);
+      const int_t num_neigh = 7;
+      const int_t max_iterations = 1000000;
+      int_t it_count = 0;
+      std::vector<int_t> in_gids, out_gids;
+      in_gids.reserve(local_num_subsets_);
+      out_gids.reserve(local_num_subsets_);
+      in_gids.push_back(subset_global_id(local_id));
+      while(in_gids.size()>0){
+        TEUCHOS_TEST_FOR_EXCEPTION(it_count > max_iterations,std::runtime_error,
+          "error: inifinte loop detected in space filling initializer"); // guard against infinite loop
+        space_fill_correlate(subset_global_id(local_id),in_gids,out_gids,num_neigh,kd_tree,epi_dist_tol);
+        in_gids.clear();
+        for(size_t i=0;i<out_gids.size();++i)
+          in_gids.push_back(out_gids[i]);
+        it_count++;
+      }
     }
-    // check the post correlation epipolar distance
-    DEBUG_MSG("Schema::initialize_cross_correlation(): filtering subsets that fail the epipolar tolerance");
+    // find any points that weren't reached by the space filling and turn them off
     for(int_t i=0;i<local_num_subsets_;++i){
-      if(local_field_value(i,SIGMA_FS) < 0.0) continue;
       float a = local_field_value(i,EPI_A_FS);
       float b = local_field_value(i,EPI_B_FS);
       float c = local_field_value(i,EPI_C_FS);
       float stereo_x = local_field_value(i,SUBSET_COORDINATES_X_FS) + local_field_value(i,SUBSET_DISPLACEMENT_X_FS);
       float stereo_y = local_field_value(i,SUBSET_COORDINATES_Y_FS) + local_field_value(i,SUBSET_DISPLACEMENT_Y_FS);
       const float dist = (std::abs(a*stereo_x+b*stereo_y+c)/std::sqrt(a*a+b*b));
-      DEBUG_MSG("Schema::initialize_cross_correlation(): epipolar error for subset " << subset_global_id(i) << ": " << dist);
-
+      local_field_value(i,CROSS_EPI_ERROR_FS) = dist;
+//      DEBUG_MSG("Schema::initialize_cross_correlation(): epipolar error for subset: " << dist);
       if(dist>epi_dist_tol){
         local_field_value(i,SIGMA_FS) = -1.0;
-        DEBUG_MSG("Schema::space_fill_correlate(): subset " << subset_global_id(i) << " failed epipolar distance threshold, epipolar dist: " << dist);
+//        DEBUG_MSG("Schema::initialize_cross_correlation(): failed epipolar distance threshold");
       }
     }
+
     // reset the compute def gradients flag
     compute_def_gradients_ = orig_compute_def_gradients;
     DEBUG_MSG("Schema::initialize_cross_correlation(): space filling iterations successful");
