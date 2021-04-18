@@ -1400,10 +1400,10 @@ const Teuchos::RCP<Subset_File_Info> read_subset_file(const std::string & fileNa
                  "usage: TEST_FOR_MOTION <origin_x> <origin_y> <width> <heigh> [tol], if tol is not set it will be computed automatically based on the first frame");
              for(int_t m=1;m<5;++m){TEUCHOS_TEST_FOR_EXCEPTION(!is_number(block_tokens[m]),std::invalid_argument,
                "Error, these parameters should be numbers here.");}
-             motion_window_params.start_x_ = strtol(block_tokens[1].c_str(),NULL,0);
-             motion_window_params.start_y_ = strtol(block_tokens[2].c_str(),NULL,0);
-             motion_window_params.end_x_ = strtol(block_tokens[3].c_str(),NULL,0);
-             motion_window_params.end_y_ = strtol(block_tokens[4].c_str(),NULL,0);
+             motion_window_params.start_x_ = strtol(block_tokens[1].c_str(),NULL,0) >= 0 ? strtol(block_tokens[1].c_str(),NULL,0) : 0;
+             motion_window_params.start_y_ = strtol(block_tokens[2].c_str(),NULL,0) >= 0 ? strtol(block_tokens[2].c_str(),NULL,0) : 0;
+             motion_window_params.end_x_ = strtol(block_tokens[3].c_str(),NULL,0) < width ? strtol(block_tokens[3].c_str(),NULL,0) : width;
+             motion_window_params.end_y_ = strtol(block_tokens[4].c_str(),NULL,0) < height ? strtol(block_tokens[4].c_str(),NULL,0) : height;
              motion_window_params.sub_image_id_ = num_motion_windows_defined++;
              if(block_tokens.size()>5)
                motion_window_params.tol_ = strtod(block_tokens[5].c_str(),NULL);
