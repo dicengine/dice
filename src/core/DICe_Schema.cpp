@@ -2840,7 +2840,7 @@ Schema::space_fill_correlate(const int_t seed_gid,
       const float stereo_x = local_field_value(neigh_id,SUBSET_COORDINATES_X_FS) + cross_u;
       const float stereo_y = local_field_value(neigh_id,SUBSET_COORDINATES_Y_FS) + cross_v;
       const float dist = (std::abs(a*stereo_x+b*stereo_y+c)/std::sqrt(a*a+b*b));
-      DEBUG_MSG("Schema::initialize_cross_correlation(): epipolar error for neighbor " << i << " gid " << neigh_gid << ": " << dist);
+      DEBUG_MSG("Schema::space_fill_correlate(): epipolar error for neighbor " << i << " gid " << neigh_gid << ": " << dist);
       if(dist>epi_error_tol){
         local_field_value(neigh_id,SIGMA_FS) = -1.0;
         DEBUG_MSG("Schema::space_fill_correlate(): subset " << neigh_gid << " failed epipolar distance threshold, epipolar dist: " << dist);
@@ -2878,7 +2878,7 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
     local_field_value(i,EPI_C_FS) = lines.at<float>(i,2);
   }
   const float feature_epi_dist_tol = 0.5f;
-  const float epi_dist_tol = 0.1f;
+  const float epi_dist_tol = 0.5f;
   DEBUG_MSG("Schema::initialize_cross_correlation(): feature epi dist tol: " << feature_epi_dist_tol);
   DEBUG_MSG("Schema::initialize_cross_correlation(): epi dist tol: " << epi_dist_tol);
   DEBUG_MSG("Schema::initialize_cross_correlation(): done computing subset epipolar coefficients");
@@ -3148,7 +3148,7 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
         Teuchos::RCP<Local_Shape_Function> shape_function = Teuchos::rcp(new Affine_Shape_Function(true,true,true));
         Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(this,this_proc_gid_order_[i]));
         shape_function->insert_motion(u,v);
-        Status_Flag corr_status = obj->computeUpdateRobust(shape_function,num_iterations);
+        Status_Flag corr_status = obj->computeUpdateFast(shape_function,num_iterations);
 
         // check the sigma values and status flag
         scalar_t noise_std_dev = 0.0;
