@@ -297,9 +297,12 @@ Camera_System::read_camera_system_file(const std::string & file) {
         if (tokens.size() == 0) continue;
         if(tokens[0]=="POLYGONMASK"){
           TEUCHOS_TEST_FOR_EXCEPTION(tokens[1]!="WIDTH=",std::runtime_error,"");
-          TEUCHOS_TEST_FOR_EXCEPTION(tokens[3]!="HEIGHT=",std::runtime_error,"");
+          TEUCHOS_TEST_FOR_EXCEPTION(tokens[3]!="HEIGHT="&&tokens[5]!="HEIGHT=",std::runtime_error,"");
           xml_img_width = std::atoi(tokens[2].c_str());
-          xml_img_height = std::atoi(tokens[4].c_str());
+          if(tokens[3]=="HEIGHT=")
+            xml_img_height = std::atoi(tokens[4].c_str());
+          else // account for the possibility of an "lri" tag in the polygon mask section
+            xml_img_height = std::atoi(tokens[6].c_str());
           continue;
         }
 
