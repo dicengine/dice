@@ -66,7 +66,7 @@ namespace DICe{
 DICE_LIB_DLL_EXPORT
 Teuchos::ParameterList parse_filter_string(int argc, char *argv[]){
   DEBUG_MSG("opencv_server::parse_filter_string():");
-  DEBUG_MSG("User specified " << argc << " arguments");
+//  DEBUG_MSG("User specified " << argc << " arguments");
 //  for(int_t i=0;i<argc;++i){
 //    DEBUG_MSG(argv[i]);
 //  }
@@ -146,7 +146,7 @@ Teuchos::ParameterList parse_filter_string(int argc, char *argv[]){
         filters.set(filter_name,filter_params);
       filter_params = Teuchos::ParameterList();
       filter_name = arg;
-      if(filter_name=="none")  // save off an empty parameter list for filter:none
+      if(filter_name=="none"||filter_name=="equalize_hist")  // save off an empty parameter list for filter:none
         filters.set(filter_name,filter_params);
       continue;
     } // end found filter keyword
@@ -308,6 +308,14 @@ int_t opencv_server(int argc, char *argv[]){
       // switch statement on the filters, pass the options as an argument and the opencv image mat
       if(filter==opencv_server_filter_none||filter==opencv_server_filter_background){
         // no op
+      }
+      else if(filter==opencv_server_filter_equalize_hist){
+        cv::equalizeHist(img,img);
+      }
+      else if(filter==opencv_server_filter_brightness){
+        int brightness = options.get<int_t>("brightness",0);
+        DEBUG_MSG("opencv_server(): adjsting brightness using value " << brightness);
+        img.convertTo(img,-1,1,brightness);
       }
       else if(filter==opencv_server_filter_binary_threshold){
         error_code = opencv_binary_threshold(img,options);

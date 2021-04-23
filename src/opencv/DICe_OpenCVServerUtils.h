@@ -68,6 +68,8 @@ const char* const opencv_server_filter_dot_targets = "dot_targets";
 const char* const opencv_server_filter_epipolar_line = "epipolar_line";
 const char* const opencv_server_filter_tracklib = "tracklib";
 const char* const opencv_server_filter_none = "none"; // used to display the original image with no filter
+const char* const opencv_server_filter_brightness = "brightness";
+const char* const opencv_server_filter_equalize_hist = "equalize_hist";
 const char* const opencv_server_filter_background = "background"; // create a background image to subtract from subsequent frames
 
 /// Filter parameters
