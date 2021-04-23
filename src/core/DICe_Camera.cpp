@@ -359,8 +359,7 @@ Camera::initialize() {
 #else
   zero_ish_ = 1.0E-6;
 #endif
-
-  prep_lens_distortion();
+  //prep_lens_distortion();
   prep_transforms();
 }
 
@@ -449,6 +448,7 @@ Camera::prep_transforms() {
 
 void
 Camera::prep_lens_distortion() {
+  if(inv_lens_dis_initialized_) return;
   camera_info_.check_valid();
   DEBUG_MSG("Camera::prep_lens_distortion(): initializing the inverse lense distortion values");
   //pre-run lens distortion function
@@ -537,7 +537,7 @@ Camera::prep_lens_distortion() {
       inv_lens_dis_y_[i] = (targ_y[i] - cy) / fy;
     }
   }
-
+  inv_lens_dis_initialized_ = true;
 }
 
 void
@@ -579,6 +579,7 @@ Camera::image_to_sensor(
   std::vector<scalar_t> & sen_y,
   const bool integer_locs) {
   camera_info_.check_valid();
+  prep_lens_distortion();
 
   const size_t vec_size = image_x.size();
   TEUCHOS_TEST_FOR_EXCEPTION(image_y.size()!=vec_size,std::runtime_error,"");

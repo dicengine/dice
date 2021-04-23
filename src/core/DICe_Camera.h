@@ -279,7 +279,8 @@ public:
 
   /// \brief constructor
   Camera(const Camera_Info & camera_info):
-  camera_info_(camera_info){
+  camera_info_(camera_info),
+  inv_lens_dis_initialized_(false){
     // check for valid camera_info
     camera_info_.check_valid();
     initialize();
@@ -674,11 +675,14 @@ private:
   /// struct that holds all the initialization information
   Camera_Info camera_info_;
 
-  // Inverse lense distortion values for each pixel in an image
+  /// true if the inverse lens distortion coeffs have been initialized
+  bool inv_lens_dis_initialized_;
+
+  /// Inverse lense distortion values for each pixel in an image
   std::vector<precision_t> inv_lens_dis_x_;
   std::vector<precision_t> inv_lens_dis_y_;
 
-  // transformation coefficients
+  /// transformation coefficients
   Matrix<scalar_t,4> cam_world_trans_;
   Matrix<scalar_t,4> world_cam_trans_;
 
