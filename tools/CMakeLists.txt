@@ -80,7 +80,10 @@ install(TARGETS DICe_CrossInit
 add_executable(DICe_Cal           DICe_Cal.cpp)
 target_link_libraries(DICe_Cal    ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
 
-set_target_properties(DICe_CineToTiff DICe_CineStat DICe_Diff DICe_DiffAvg DICe_CrossInit DICe_Cal
+add_executable(DICe_Epiline           DICe_Epiline.cpp)
+target_link_libraries(DICe_Epiline    ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
+
+set_target_properties(DICe_CineToTiff DICe_CineStat DICe_Diff DICe_DiffAvg DICe_CrossInit DICe_Cal DICe_Epiline
   PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
   ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"

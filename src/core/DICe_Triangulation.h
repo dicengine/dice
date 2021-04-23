@@ -116,6 +116,21 @@ public:
     return & cal_intrinsics_;
   }
 
+  /// provides access to image width from a triangulation
+  const int_t image_width(){
+    if(camera_system_==Teuchos::null) return -1;
+    if(camera_system_->num_cameras()<1) return -1;
+    return camera_system_->camera(0)->image_width();
+  }
+
+  /// provides access to image height from a triangulation
+  const int_t image_height(){
+    if(camera_system_==Teuchos::null) return -1;
+    if(camera_system_->num_cameras()<1) return -1;
+    return camera_system_->camera(0)->image_height();
+  }
+
+
   /// returns a pointer to the transform from camera 0 to camera 1
   const Matrix<scalar_t,4> * cam_0_to_cam_1() const {
     return & cam_0_to_cam_1_;
