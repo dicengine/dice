@@ -152,6 +152,12 @@ public:
   /// transformation) This is included for legacy reasons
   bool extrinsics_relative_camera_to_camera()const {return extrinsics_relative_camera_to_camera_;}
 
+  /// returns the average epipolar error from the calibration
+  scalar_t avg_epipolar_error()const{return avg_epipolar_error_;}
+
+  /// sets the average epipolar error from the calibration
+  void set_avg_epipolar_error(const scalar_t & error){avg_epipolar_error_ = error;}
+
   /// \brief returns the number of the first camera with a matching identifier
   /// \param cam_id camera identifying string
   size_t get_camera_num_from_id(std::string & cam_id) const {
@@ -337,6 +343,9 @@ private:
 
   /// cameras are stored in a vector
   std::vector<Teuchos::RCP<DICe::Camera> > cameras_;
+
+  /// average epipolar error from the calibration
+  scalar_t avg_epipolar_error_;
 
 };
 

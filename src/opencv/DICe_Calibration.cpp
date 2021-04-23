@@ -298,6 +298,7 @@ Calibration::calibrate(const std::string & output_file,
   std::vector< Mat > rvecs, tvecs;
 
   double rms = 0.0;
+  double avg_epi_error = 0.0;
   if(num_cams()==1){
     rms = calibrateCamera(object_points_, intersection_points_[0],
       image_size_, cameraMatrix[0], distCoeffs[0],
@@ -366,7 +367,8 @@ Calibration::calibrate(const std::string & output_file,
     }
     epipolar_file.close();
     assert(npoints!=0);
-    std::cout << "Calibration::calibrate(): average epipolar error: " <<  err/npoints << std::endl;
+    avg_epi_error = err/npoints;
+    std::cout << "Calibration::calibrate(): average epipolar error: " <<  avg_epi_error << std::endl;
   }
 
   Teuchos::RCP<DICe::Camera_System> camera_system = Teuchos::rcp(new DICe::Camera_System());
@@ -412,7 +414,7 @@ Calibration::calibrate(const std::string & output_file,
     Teuchos::RCP<DICe::Camera> camera_ptr = Teuchos::rcp(new DICe::Camera(camera_info));
     camera_system->add_camera(camera_ptr);
   }
-
+  camera_system->set_avg_epipolar_error(avg_epi_error);
   camera_system->set_system_type(Camera_System::OPENCV);
   if(!output_file.empty())
     camera_system->write_camera_system_file(output_file);

@@ -57,7 +57,8 @@ Camera_System::Camera_System():
   sys_type_(UNKNOWN_SYSTEM),
   has_6_transform_(false),
   has_4x4_transform_(false),
-  extrinsics_relative_camera_to_camera_(false)
+  extrinsics_relative_camera_to_camera_(false),
+  avg_epipolar_error_(0.0)
 // the 4x4 transform matrix is default initialized to 0 in the constructor
 //  has_opencv_rot_trans_(false)
 {};
@@ -102,6 +103,8 @@ Camera_System::read_camera_system_file(const std::string & file) {
     std::string sys_type_str = sys_params->get<std::string>(system_type_3D);
     //DEBUG_MSG("Camera_System::read_camera_system_file(): " << system_type_3D << " = " << sys_type_str);
     sys_type_ = string_to_system_type_3d(sys_type_str);
+
+    avg_epipolar_error_ = sys_params->get<double>("avg_epipolar_error",0.0);
 
     //cycle through all the cameras to see if they are assigned
     for(size_t i=0;i<max_num_cameras_allowed_;++i){
@@ -519,6 +522,8 @@ Camera_System::write_camera_system_file(const std::string & file){
   write_xml_comment(file, valid_fields.str());
   write_xml_string_param(file, system_type_3D, to_string(sys_type_), false);
   write_xml_bool_param(file,DICe::extrinsics_relative_camera_to_camera,extrinsics_relative_camera_to_camera_);
+
+  write_xml_high_precision_real_param(file, "avg_epipolar_error", avg_epipolar_error_);
 
   // camera intrinsic parameters
   write_xml_comment(file, "camera intrinsic parameters (zero valued parameters don't need to be specified)");

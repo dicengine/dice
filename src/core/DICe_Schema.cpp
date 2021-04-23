@@ -2877,11 +2877,6 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
     local_field_value(i,EPI_B_FS) = lines.at<float>(i,1);
     local_field_value(i,EPI_C_FS) = lines.at<float>(i,2);
   }
-  const float feature_epi_dist_tol = 0.5f;
-  const float epi_dist_tol = 0.5f;
-  DEBUG_MSG("Schema::initialize_cross_correlation(): feature epi dist tol: " << feature_epi_dist_tol);
-  DEBUG_MSG("Schema::initialize_cross_correlation(): epi dist tol: " << epi_dist_tol);
-  DEBUG_MSG("Schema::initialize_cross_correlation(): done computing subset epipolar coefficients");
 
   // if you are processor 0 load the ref and def images and call the estimate routine
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
@@ -2903,6 +2898,15 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
 
   if(cross_initialization_method_==USE_SPACE_FILLING_ITERATIONS){
     DEBUG_MSG("Schema::initialize_cross_correlation(): using feature matching and space filling iterations to initialize");
+    float feature_epi_dist_tol = 0.5f;
+    float epi_dist_tol = 0.5f;
+    if(tri->avg_epipolar_error()!=0.0){
+      feature_epi_dist_tol = 3.0*tri->avg_epipolar_error();
+      epi_dist_tol = 3.0*tri->avg_epipolar_error();
+    }
+    DEBUG_MSG("Schema::initialize_cross_correlation(): feature epi dist tol: " << feature_epi_dist_tol);
+    DEBUG_MSG("Schema::initialize_cross_correlation(): epi dist tol: " << epi_dist_tol);
+    DEBUG_MSG("Schema::initialize_cross_correlation(): done computing subset epipolar coefficients");
     Teuchos::RCP<DICe::Image> left_img = Teuchos::rcp(new Image(left_image_string.c_str(),imgParams));
     Teuchos::RCP<DICe::Image> right_img = Teuchos::rcp(new Image(right_image_string.c_str(),imgParams));
 

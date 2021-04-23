@@ -117,19 +117,21 @@ public:
   }
 
   /// provides access to image width from a triangulation
-  const int_t image_width(){
+  const int_t image_width()const{
     if(camera_system_==Teuchos::null) return -1;
     if(camera_system_->num_cameras()<1) return -1;
     return camera_system_->camera(0)->image_width();
   }
 
   /// provides access to image height from a triangulation
-  const int_t image_height(){
+  const int_t image_height()const{
     if(camera_system_==Teuchos::null) return -1;
     if(camera_system_->num_cameras()<1) return -1;
     return camera_system_->camera(0)->image_height();
   }
 
+  /// provide access to epipolar error in camera calibration
+  const scalar_t avg_epipolar_error()const{return camera_system_->avg_epipolar_error();}
 
   /// returns a pointer to the transform from camera 0 to camera 1
   const Matrix<scalar_t,4> * cam_0_to_cam_1() const {
