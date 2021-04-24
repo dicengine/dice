@@ -2911,6 +2911,11 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
     Teuchos::RCP<DICe::Image> right_img = Teuchos::rcp(new Image(right_image_string.c_str(),imgParams));
 
     // use feature matching to get candidates for seed points
+    // Try several things to get some features to match in the cross correlation:
+    // First do a normal feature matching with low tolerance
+    // Then try with a larger tol
+    // Then try equalizing the histogram and decreasing the tolerance again
+
     DEBUG_MSG("Schema::initialize_cross_correlation(): begin matching features on processor 0");
     float feature_tol = 0.005f;
     std::vector<scalar_t> left_x, right_x, left_y, right_y;
@@ -2921,6 +2926,10 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       DEBUG_MSG("Schema::initialize_cross_correlation(): initial attempt failed with tol = 0.005f, setting to 0.001f and trying again.");
       feature_tol = 0.001f;
       match_features(left_img,right_img,left_x,left_y,right_x,right_y,feature_tol,".dice/fm_space_filling.png");
+      if(left_x.size()<10){
+        DEBUG_MSG("Schema::initialize_cross_correlation(): initial attempt failed with tol = 0.001f, equalizing histogram and trying again.");
+        match_features(left_img,right_img,left_x,left_y,right_x,right_y,feature_tol,".dice/fm_space_filling.png",7);
+      }
     }
     if(left_x.size()<1){
       std::cout << "Schema::initialize_cross_correlation(): error: feature matching failed" << std::endl;
@@ -2955,6 +2964,26 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       }
     }
     DEBUG_MSG("Schema::initialize_cross_correlation(): num good matches: " << good_left_x.size());
+    if(good_left_x.size()<1){ // see if relaxing the tolerance helps
+      feature_epi_dist_tol *= 5.0;
+      epi_dist_tol *= 5.0;
+      DEBUG_MSG("Schema::initialize_cross_correlation(): increasing epipolar tolerances" << good_left_x.size());
+      DEBUG_MSG("Schema::initialize_cross_correlation(): feature epi dist tol: " << feature_epi_dist_tol);
+      DEBUG_MSG("Schema::initialize_cross_correlation(): epi dist tol: " << epi_dist_tol);
+      for(size_t i=0;i<featurePoints.size();++i){
+        const float a = featureLines.at<float>(i,0);
+        const float b = featureLines.at<float>(i,1);
+        const float c = featureLines.at<float>(i,2);
+        const float dist = (std::abs(a*right_x[i]+b*right_y[i]+c)/std::sqrt(a*a+b*b));
+        DEBUG_MSG("fm point " << i << " xl " << left_x[i] << " yl " << left_y[i] << " xr " << right_x[i] << " yr " << right_y[i] << " dist from epiline " << dist);
+        if(dist<feature_epi_dist_tol){
+          good_left_x.push_back(left_x[i]);
+          good_left_y.push_back(left_y[i]);
+          good_right_x.push_back(right_x[i]);
+          good_right_y.push_back(right_y[i]);
+        }
+      }
+    }
     if(good_left_x.size()<1){
       std::cout << "Schema::initialize_cross_correlation(): error: feature matching failed (not enough matches)" << std::endl;
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
