@@ -1,0 +1,5 @@
+# origin is the first set of two numbers
+1253 1048
+
+# point on the y axis is the second set (yaxis denotes that this is the y-axis)
+1245 532 yaxis

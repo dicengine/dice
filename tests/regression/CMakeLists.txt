@@ -8,6 +8,7 @@
 #
 SET(REGRESSION_TESTS
   single_speckled_shift
+  incremental
   conformal_subset_def
   dic_challenge_12
   dic_challenge_12_sorted
@@ -77,6 +78,7 @@ SET(GLOBAL_REGRESSION_TESTS
   stereo_auto
   stereo_satellite
   stereo_dogbone
+  stereo_dogbone_incremental
   )
 IF(DICE_USE_DOUBLE)
 SET(GLOBAL_REGRESSION_TESTS

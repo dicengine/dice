@@ -178,7 +178,7 @@ Schema::swap_def_prev_images(){
 
 void
 Schema::set_def_image(const std::string & defName){
-  DEBUG_MSG("Schema::set_def_image(): Resetting the deformed image using a file name " << defName);
+  DEBUG_MSG("Schema::set_def_image(): setting the deformed image using file name " << defName);
 //  swap_def_prev_images();
   assert(def_imgs_.size()>0);
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
@@ -305,7 +305,7 @@ Schema::set_def_image(const std::string & defName){
 void
 Schema::set_def_image(Teuchos::RCP<Image> img,
   const int_t id){
-  DEBUG_MSG("Schema::set_def_image() Resetting the deformed image (using an Image object) for sub image id " << id);
+  DEBUG_MSG("Schema::set_def_image(): resetting the deformed image (using an Image object) for sub image id " << id);
 //  swap_def_prev_images();
   assert(def_imgs_.size()>0);
   assert(id<(int_t)def_imgs_.size());
@@ -318,7 +318,7 @@ Schema::set_def_image(Teuchos::RCP<Image> img,
   }
   if(def_image_rotation_!=ZERO_DEGREES){
     Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
-    imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
+    imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients
     imgParams->set(DICe::gradient_method,gradient_method_);
     def_imgs_[id] = def_imgs_[id]->apply_rotation(def_image_rotation_,imgParams);
   }
@@ -329,14 +329,14 @@ Schema::set_def_image(const int_t img_width,
   const int_t img_height,
   const Teuchos::ArrayRCP<storage_t> defRCP,
   const int_t id){
-  DEBUG_MSG("Schema::set_def_image() Resetting the deformed image using an ArrayRCP");
+  DEBUG_MSG("Schema::set_def_image(): setting the deformed image using an array of intensity values");
 //  swap_def_prev_images();
   assert(def_imgs_.size()>0);
   assert(id<(int_t)def_imgs_.size());
   TEUCHOS_TEST_FOR_EXCEPTION(img_width<=0,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(img_height<=0,std::runtime_error,"");
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
-  imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_); // automatically compute the gradients if the ref image is changed
+  imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_);
   imgParams->set(DICe::gradient_method,gradient_method_);
   imgParams->set(DICe::gauss_filter_mask_size,gauss_filter_mask_size_);
   imgParams->set(DICe::gradient_method,gradient_method_);
@@ -349,7 +349,7 @@ Schema::set_def_image(const int_t img_width,
 
 void
 Schema::set_ref_image(const std::string & refName){
-  DEBUG_MSG("Schema:  Resetting the reference image");
+  DEBUG_MSG("Schema: setting the reference image to " << refName);
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::compute_image_gradients,compute_ref_gradients_); // automatically compute the gradients if the ref image is changed
   imgParams->set(DICe::gauss_filter_images,gauss_filter_images_);
@@ -396,7 +396,7 @@ void
 Schema::set_ref_image(const int_t img_width,
   const int_t img_height,
   const Teuchos::ArrayRCP<storage_t> refRCP){
-  DEBUG_MSG("Schema:  Resetting the reference image");
+  DEBUG_MSG("Schema: setting the reference image using width, height, and intensity array");
   TEUCHOS_TEST_FOR_EXCEPTION(img_width<=0,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(img_height<=0,std::runtime_error,"");
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
@@ -420,8 +420,12 @@ Schema::set_ref_image(const int_t img_width,
 
 void
 Schema::set_ref_image(Teuchos::RCP<Image> img){
-  DEBUG_MSG("Schema::set_ref_image() Resetting the reference image");
-  ref_img_ = img;
+  if(ref_img_==Teuchos::null)
+    DEBUG_MSG("Schema::set_ref_image() setting the reference image to " << img->file_name());
+  else
+    DEBUG_MSG("Schema::set_ref_image() resetting the reference image from " << ref_img_->file_name() << " to " << img->file_name());
+  ref_img_ = Teuchos::rcp( new Image(img)); // always reallocate the ref image as a deep copy
+  //ref_img_ = img;
   if(gauss_filter_images_){
     if(!ref_img_->has_gauss_filter()) // the filter may have alread been applied to the image
       ref_img_->gauss_filter(gauss_filter_mask_size_);
@@ -431,7 +435,7 @@ Schema::set_ref_image(Teuchos::RCP<Image> img){
   }
   if(ref_image_rotation_!=ZERO_DEGREES){
     Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
-    imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients if the ref image is changed
+    imgParams->set(DICe::compute_image_gradients,true); // automatically compute the gradients for rotations
     imgParams->set(DICe::gradient_method,gradient_method_);
     ref_img_ = ref_img_->apply_rotation(ref_image_rotation_,imgParams);
   }
@@ -636,10 +640,10 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     compute_ref_gradients_ = true;
     compute_def_gradients_ = true;
   }
-  if(use_incremental_formulation_){ // force gradient calcs to be on for incremental
-    compute_ref_gradients_ = true;
-    compute_def_gradients_ = true;
-  }
+//  if(use_incremental_formulation_){ // force gradient calcs to be on for incremental
+//    compute_ref_gradients_ = true;
+//    compute_def_gradients_ = true;
+//  }
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::projection_method),std::runtime_error,"");
   projection_method_ = diceParams->get<Projection_Method>(DICe::projection_method);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::interpolation_method),std::runtime_error,"");
@@ -1630,7 +1634,7 @@ Schema::execute_correlation(){
 #endif
 
   // if the formulation is incremental, clear the displacement fields
-  if(use_incremental_formulation_){
+  if(use_incremental_formulation_&&frame_id_>first_frame_id_){
     mesh_->get_field(SUBSET_DISPLACEMENT_X_FS)->put_scalar(0.0);
     mesh_->get_field(SUBSET_DISPLACEMENT_Y_FS)->put_scalar(0.0);
   }
@@ -1708,6 +1712,9 @@ Schema::execute_correlation(){
       const int_t subset_gid = this_proc_gid_order_[subset_index];
       const int_t subset_lid = subset_local_id(subset_gid);
       check_for_blocking_subsets(subset_gid);
+      if(use_incremental_formulation_&&frame_id_>first_frame_id_){
+        obj_vec_[subset_lid]->subset()->initialize(ref_img_,REF_INTENSITIES);
+      }
       generic_correlation_routine(obj_vec_[subset_lid]);
     }
     if(output_deformed_subset_images_)
@@ -1724,12 +1731,18 @@ Schema::execute_correlation(){
   }
 
   // accumulate the displacements
-  if(use_incremental_formulation_){
+  // for incremental, the displacement field gets zeroed out each frame and
+  // another vector is needed to store the total displacement. Once execute correlation is completed, the
+  // accumulated displacements are temporarily put back in the displacement field for writing the output
+  // before it gets zeroed again for the next frame
+  if(use_incremental_formulation_&&frame_id_>first_frame_id_){
     const int_t spa_dim = mesh_->spatial_dimension();
     Teuchos::RCP<DICe::MultiField> accumulated_disp = mesh_->get_field(ACCUMULATED_DISP_FS);
     for(int_t i=0;i<local_num_subsets_;++i){
       accumulated_disp->local_value(i*spa_dim+0) += local_field_value(i,SUBSET_DISPLACEMENT_X_FS);
       accumulated_disp->local_value(i*spa_dim+1) += local_field_value(i,SUBSET_DISPLACEMENT_Y_FS);
+      local_field_value(i,SUBSET_DISPLACEMENT_X_FS) = accumulated_disp->local_value(i*spa_dim+0);
+      local_field_value(i,SUBSET_DISPLACEMENT_Y_FS) = accumulated_disp->local_value(i*spa_dim+1);
     }
   }
   update_frame_id();

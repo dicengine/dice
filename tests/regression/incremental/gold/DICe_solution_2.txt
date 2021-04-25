@@ -1,0 +1,22 @@
+***
+*** Digital Image Correlation Engine (DICe), (git sha1: v3.0-beta.1-1-gf070dc-dirty) Copyright 2015 National Technology & Engineering Solutions of Sandia, LLC (NTESS)
+***
+*** Reference image: ../../component/images/defSyntheticSpeckled1.tif 
+*** Deformed image: ../../component/images/defSyntheticSpeckled2.tif 
+*** DIC method : local 
+*** Correlation method: ZNSSD
+*** Interpolation method: KEYS_FOURTH
+*** Image gradient method: FINITE_DIFFERENCE
+*** Optimization method: GRADIENT_BASED
+*** Projection method: DISPLACEMENT_BASED
+*** Guess initialization method: USE_FIELD_VALUES
+*** Seed location: N/A
+*** Shape functions: Translation (u,v) Rotation (theta) Normal Strain (ex,ey) Shear Strain (gamma_xy) 
+*** Incremental correlation: true
+*** Subset size: 39
+*** Step size: x -1 y -1 (-1 implies not regular grid)
+*** Strain window: N/A
+*** Coordinates given with (0,0) as upper left corner of image, x positive right, y positive down
+***
+COORDINATE_X,COORDINATE_Y,DISPLACEMENT_X,DISPLACEMENT_Y
+4.2000E+01,4.2000E+01,2.0000E+00,2.0000E+00

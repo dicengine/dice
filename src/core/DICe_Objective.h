@@ -87,17 +87,19 @@ public:
     assert(schema_->is_initialized());
     // create the refSubset as member data
     // check to see if the schema has multishapes:
+    int_t x = static_cast<int_t>(global_field_value(DICe::field_enums::SUBSET_COORDINATES_X_FS));
+    if(schema_->use_incremental_formulation()&&schema_->frame_id()>schema_->first_frame_id())
+      x = static_cast<int_t>(global_field_value(DICe::field_enums::SUBSET_COORDINATES_X_FS) + global_field_value(DICe::field_enums::SUBSET_DISPLACEMENT_X_FS));
+    int_t y = static_cast<int_t>(global_field_value(DICe::field_enums::SUBSET_COORDINATES_Y_FS));
+    if(schema_->use_incremental_formulation()&&schema_->frame_id()>schema_->first_frame_id())
+      y = static_cast<int_t>(global_field_value(DICe::field_enums::SUBSET_COORDINATES_Y_FS) + global_field_value(DICe::field_enums::SUBSET_DISPLACEMENT_Y_FS));
     if((*schema_->conformal_subset_defs()).find(correlation_point_global_id_)!=(*schema_->conformal_subset_defs()).end()){
-      subset_ = Teuchos::rcp(new Subset(static_cast<int_t>(global_field_value(DICe::field_enums::SUBSET_COORDINATES_X_FS)),
-        static_cast<int_t>(global_field_value(DICe::field_enums::SUBSET_COORDINATES_Y_FS)),
-        (*schema_->conformal_subset_defs()).find(correlation_point_global_id_)->second));
+      subset_ = Teuchos::rcp(new Subset(x,y,(*schema_->conformal_subset_defs()).find(correlation_point_global_id_)->second));
     }
     // otherwise build up the subsets from x/y and w/h:
     else{
       assert(schema_->subset_dim()>0);
-      subset_ = Teuchos::rcp(new Subset(static_cast<int_t>(global_field_value(DICe::field_enums::SUBSET_COORDINATES_X_FS)),
-        static_cast<int_t>(global_field_value(DICe::field_enums::SUBSET_COORDINATES_Y_FS)),
-        schema_->subset_dim(),schema_->subset_dim()));
+      subset_ = Teuchos::rcp(new Subset(x,y,schema_->subset_dim(),schema_->subset_dim()));
     }
     assert(schema_->ref_img()!=Teuchos::null);
     subset_->initialize(schema_->ref_img());

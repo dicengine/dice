@@ -362,6 +362,7 @@ void
 Image_<S>::update(const char * file_name,
   const Teuchos::RCP<Teuchos::ParameterList> & params) {
   DEBUG_MSG("Image::update(): update called for image " << file_name);
+  file_name_ = file_name;
   // check the dimensions of the incoming intensities
   if(params!=Teuchos::null){
     if(params->isParameter(subimage_offset_x))

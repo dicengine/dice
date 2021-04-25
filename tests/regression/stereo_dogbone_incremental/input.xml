@@ -1,0 +1,28 @@
+<ParameterList>
+  <Parameter name="correlation_parameters_file" type="string" value="params.xml" />
+<!-- NOTE: the calibration_parameters_file parameter is depricated (used here for legacy testing) -->
+<!--       please use the camera_system_file parameter instead --> 
+  <Parameter name="calibration_parameters_file" type="string" value="../stereo_dogbone/cal.txt" />
+  <Parameter name="subset_size" type="int" value="25" />
+  <Parameter name="step_size" type="int" value="100" />
+  <Parameter name="subset_file" type="string" value="../stereo_dogbone/roi.txt" />
+  <Parameter name="output_folder" type="string" value="./results/" />
+  <Parameter name="image_folder" type="string" value="../stereo_dogbone/images/" />
+  <Parameter name="create_separate_run_info_file" type="bool" value="true" />
+  <Parameter name="reference_image" type="string" value="0Smp62-sys2-0000_0.tif" />
+  <ParameterList name="deformed_images">
+    <Parameter name="0Smp62-sys2-0000_0.tif" type="bool" value="true" />
+    <Parameter name="0Smp62-sys2-0025_0.tif" type="bool" value="true" />
+    <Parameter name="0Smp62-sys2-0050_0.tif" type="bool" value="true" />
+    <Parameter name="0Smp62-sys2-0075_0.tif" type="bool" value="true" />
+    <Parameter name="0Smp62-sys2-0100_0.tif" type="bool" value="true" />
+  </ParameterList>
+  <Parameter name="stereo_reference_image" type="string" value="0Smp62-sys2-0000_1.tif" />
+  <ParameterList name="stereo_deformed_images">
+    <Parameter name="0Smp62-sys2-0000_1.tif" type="bool" value="true" />
+    <Parameter name="0Smp62-sys2-0025_1.tif" type="bool" value="true" />
+    <Parameter name="0Smp62-sys2-0050_1.tif" type="bool" value="true" />
+    <Parameter name="0Smp62-sys2-0075_1.tif" type="bool" value="true" />
+    <Parameter name="0Smp62-sys2-0100_1.tif" type="bool" value="true" />
+  </ParameterList>
+</ParameterList>
