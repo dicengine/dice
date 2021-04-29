@@ -59,6 +59,10 @@ const char * const post_process_nlvc_strain = "post_process_nlvc_strain";
 /// String Parameter name
 const char * const post_process_altitude = "post_process_altitude";
 /// String Parameter name
+const char * const post_process_crack_locator = "post_process_crack_locator";
+/// String Parameter name
+const char * const crack_locator_window_size = "crack_locator_window_size";
+/// String Parameter name
 const char * const post_process_uncertainty = "post_process_uncertainty";
 /// String parameter name
 const char * const strain_window_size_in_pixels = "strain_window_size_in_pixels";
@@ -81,13 +85,14 @@ const char * const plotly_contour_grid_step = "plotly_contour_grid_step";
 
 
 /// Number of post processor options
-const int_t num_valid_post_processor_params = 4;
+const int_t num_valid_post_processor_params = 5;
 /// Set of all the valid post processors
 const char * const valid_post_processor_params[num_valid_post_processor_params] = {
   post_process_vsg_strain,
   post_process_nlvc_strain,
   post_process_plotly_contour,
-  post_process_altitude
+  post_process_altitude,
+  post_process_crack_locator
 };
 
 /// String field name
@@ -165,7 +170,7 @@ public:
   }
 
   /// Execute the post processor
-  virtual void execute()=0;
+  virtual void execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img)=0;
 
   /// Return a pointer to the field spec vector
   std::vector<DICe::field_enums::Field_Spec> * field_specs(){
@@ -238,7 +243,7 @@ public:
   }
 
   /// Execute the post processor
-  virtual void execute();
+  virtual void execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img);
 
   /// See base class documentation
   using Post_Processor::neighborhood_initialized_;
@@ -290,7 +295,7 @@ public:
     scalar_t & ky);
 
   /// Execute the post processor
-  virtual void execute();
+  virtual void execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img);
 
   /// See base class documentation
   using Post_Processor::neighborhood_initialized_;
@@ -331,12 +336,46 @@ public:
   virtual int_t strain_window_size(){return -1.0;}
 
   /// Execute the post processor
-  virtual void execute();
+  virtual void execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img);
 
   /// See base class documentation
   using Post_Processor::field_specs;
 
 };
+
+
+/// \class DICe::Crack_Locator_Post_Processor
+/// \brief A post processor to highlight cracks using an image diff
+class DICE_LIB_DLL_EXPORT
+Crack_Locator_Post_Processor : public Post_Processor {
+
+public:
+
+  /// Default constructor
+  /// \param params Pointer to the set of parameters for this post processor
+  Crack_Locator_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params);
+
+  /// Virtual destructor
+  virtual ~Crack_Locator_Post_Processor(){}
+
+  /// Set the parameters for this post processor
+  virtual void set_params(const Teuchos::RCP<Teuchos::ParameterList> & params);
+
+  /// Collect the neighborhoods of each of the points
+  virtual void pre_execution_tasks(){};
+
+  /// Execute the post processor
+  virtual void execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img);
+
+  /// See base clase docutmentation
+  virtual int_t strain_window_size(){return window_size_;}
+private:
+  /// step to use for the least squares fit
+  int_t window_size_;
+  /// keep a copy of the original reference image the first time execute gets called
+  Teuchos::RCP<Image> ref_img_;
+};
+
 
 /// \class DICe::Plotly_Contour_Post_Processor
 /// \brief A post processor to distill DICe output data to something Plotly could plot
@@ -361,7 +400,7 @@ public:
   virtual void pre_execution_tasks(){};
 
   /// Execute the post processor
-  virtual void execute();
+  virtual void execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img);
 
   /// See base clase docutmentation
   virtual int_t strain_window_size(){return -1.0;}
@@ -395,7 +434,7 @@ public:
   virtual int_t strain_window_size(){return -1.0;}
 
   /// Execute the post processor
-  virtual void execute();
+  virtual void execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img);
 
   /// See base class documentation
   using Post_Processor::field_specs;
@@ -425,7 +464,7 @@ public:
   virtual int_t strain_window_size(){return -1.0;}
 
   /// Execute the post processor
-  virtual void execute();
+  virtual void execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img);
 
   /// See base class documentation
   using Post_Processor::field_specs;

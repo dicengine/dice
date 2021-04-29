@@ -44,6 +44,11 @@
 #include <Teuchos_LAPACK.hpp>
 #include <Teuchos_SerialDenseMatrix.hpp>
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
+
 #include <fstream>
 
 namespace DICe {
@@ -230,6 +235,216 @@ Post_Processor::initialize_neighborhood(const scalar_t & neighborhood_radius){
   DEBUG_MSG("Post_Processor::initialize_neighborhood(): end");
 }
 
+Crack_Locator_Post_Processor::Crack_Locator_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params) :
+  Post_Processor(post_process_crack_locator){
+  window_size_ = 25;
+  ref_img_ = Teuchos::null;
+  // no new fields added since the post processor writes output files instead
+  DEBUG_MSG("Enabling post processor Crack_Locator_Post_Processor with no new associated fields:");
+  set_params(params);
+}
+
+void
+Crack_Locator_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
+  window_size_ = params->get<int_t>(crack_locator_window_size,25);
+  DEBUG_MSG("Crack_Locator_Post_Processor set_params(): using window size " << window_size_);
+}
+
+void
+Crack_Locator_Post_Processor::execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img){
+  DEBUG_MSG("Crack_Locator_Post_Processor execute() begin");
+  assert(ref_img!=Teuchos::null);
+  assert(def_img!=Teuchos::null);
+  if(ref_img_==Teuchos::null) ref_img_ = Teuchos::rcp(new DICe::Image(ref_img)); // deep copy the reference image in case it gets modified or swapped later
+  assert(ref_img_!=Teuchos::null);
+  // get the image width and height:
+  const int_t width = ref_img_->width();
+  const int_t height = ref_img_->height();
+
+  // create opencv mat images, start with 16 bit then equalize the histogram
+  cv::Mat ref = cv::Mat(height,width,CV_32FC1,cv::Scalar(0));
+  cv::Mat def = cv::Mat(height,width,CV_32FC1,cv::Scalar(0));
+  cv::Mat map = cv::Mat(height,width,CV_32FC1,cv::Scalar(0));
+//  for(int_t y=0;y<height;++y){
+//    for(int_t x=0;x<width;++x){
+//      ref.at<float>(y,x) = 0.0f;
+//      def.at<float>(y,x) = 0.0f;
+//      def.at<float>(y,x) = 0.0f;
+//    }
+//  }
+
+
+  // ensure only in serial for now TODO enable parallel post processor for this
+  const int_t num_procs = mesh_->get_comm()->get_size();
+  TEUCHOS_TEST_FOR_EXCEPTION(num_procs!=1,std::runtime_error,"Plotly_Contour_Post_Processor only works in serial");
+
+  // gather the current coordinates of the subsets with sigma>=0 or all valid points
+  Teuchos::RCP<MultiField> coords_x = mesh_->get_field(DICe::field_enums::SUBSET_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> coords_y = mesh_->get_field(DICe::field_enums::SUBSET_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> disp_x   = mesh_->get_field(DICe::field_enums::SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> disp_y   = mesh_->get_field(DICe::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> sigma    = mesh_->get_field(DICe::field_enums::SIGMA_FS);
+
+  // count the number of valid points
+  int_t num_valid_pts = 0;
+  for(int_t i=0;i<local_num_points_;++i)
+    if(sigma->local_value(i)>=0.0)
+      num_valid_pts++;
+  std::vector<int_t> local_ids(num_valid_pts,0);
+
+  // create neighborhood lists using nanoflann:
+  DEBUG_MSG("creating the point cloud using nanoflann");
+  point_cloud_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
+  point_cloud_->pts.resize(num_valid_pts);
+  int_t current_pt = 0;
+  for(int_t i=0;i<local_num_points_;++i){
+    if(sigma->local_value(i)<0.0) continue;
+    point_cloud_->pts[current_pt].x = coords_x->local_value(i) + disp_x->local_value(i);
+    point_cloud_->pts[current_pt].y = coords_y->local_value(i) + disp_y->local_value(i);
+    local_ids[current_pt++] = i;
+  }
+  DEBUG_MSG("building the kd-tree");
+  Teuchos::RCP<kd_tree_2d_t> kd_tree = Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud_.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+  kd_tree->buildIndex();
+  DEBUG_MSG("kd-tree completed");
+
+  const int_t N = 3;
+  int *IPIV = new int[N+1];
+  int LWORK = N*N;
+  int INFO = 0;
+  double *WORK = new double[LWORK];
+  double *GWORK = new double[10*N];
+  int *IWORK = new int[LWORK];
+  // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
+  Teuchos::LAPACK<int,double> lapack;
+  std::vector<std::pair<size_t,scalar_t> > ret_matches;
+  nanoflann::SearchParams params;
+  params.sorted = true; // sort by distance in ascending order
+  const double neigh_rad_sq = window_size_*window_size_;
+  scalar_t query_pt[2];
+  // initialize value storage vector of vectors
+  // iterate each pixel and find the closest displacement using least squares
+  for(int_t y=0;y<height;++y){
+    for(int_t x=0;x<width;++x){
+      query_pt[0] = x;
+      query_pt[1] = y;
+      kd_tree->radiusSearch(&query_pt[0],neigh_rad_sq,ret_matches,params);
+      const int_t num_neigh = ret_matches.size();
+      if(num_neigh<=3) continue;
+      // set up the X_t matrices
+      Teuchos::SerialDenseMatrix<int_t,double> X_t(N,num_neigh, true);
+      Teuchos::SerialDenseMatrix<int_t,double> X_t_X(N,N,true);
+      for(int_t i=0;i<num_neigh;++i){
+        X_t(0,i) = 1.0;
+        X_t(1,i) = point_cloud_->pts[ret_matches[i].first].x - x;//coords_x->local_value(local_ids[ret_matches[i].first]) - x;
+        X_t(2,i) = point_cloud_->pts[ret_matches[i].first].y - y;//coords_y->local_value(local_ids[ret_matches[i].first]) - y;
+      }
+      // set up X^T*X
+      for(int_t k=0;k<N;++k){
+        for(int_t m=0;m<N;++m){
+          for(int_t j=0;j<num_neigh;++j){
+            X_t_X(k,m) += X_t(k,j)*X_t(m,j);
+          }
+        }
+      }
+      // Invert X^T*X
+      // TODO: remove for performance?
+      // compute the 1-norm of H:
+      std::vector<double> colTotals(X_t_X.numCols(),0.0);
+      for(int_t i=0;i<X_t_X.numCols();++i){
+        for(int_t j=0;j<X_t_X.numRows();++j){
+          colTotals[i]+=std::abs(X_t_X(j,i));
+        }
+      }
+      double anorm = 0.0;
+      for(int_t i=0;i<X_t_X.numCols();++i){
+        if(colTotals[i] > anorm) anorm = colTotals[i];
+      }
+      lapack.GETRF(X_t_X.numRows(),X_t_X.numCols(),X_t_X.values(),X_t_X.numRows(),IPIV,&INFO);
+      double rcond=0.0; // reciporical condition number
+      lapack.GECON('1',X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),anorm,&rcond,GWORK,IWORK,&INFO);
+      if(rcond < 1.0E-12) continue;
+      lapack.GETRI(X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),IPIV,WORK,LWORK,&INFO);
+
+      Teuchos::ArrayRCP<double> u(num_neigh,0.0);
+      Teuchos::ArrayRCP<double> v(num_neigh,0.0);
+      for(int_t j=0;j<num_neigh;++j){
+        u[j] = -1.0*disp_x->local_value(local_ids[ret_matches[j].first]);
+        v[j] = -1.0*disp_y->local_value(local_ids[ret_matches[j].first]);
+      }
+      // compute X^T*u
+      Teuchos::ArrayRCP<double> X_t_u(N,0.0);
+      Teuchos::ArrayRCP<double> X_t_v(N,0.0);
+      for(int_t k=0;k<N;++k)
+        for(int_t j=0;j<num_neigh;++j){
+          X_t_u[k] += X_t(k,j)*u[j];
+          X_t_v[k] += X_t(k,j)*v[j];
+        }
+
+      // compute the coeffs
+      Teuchos::ArrayRCP<double> coeffs_u(N,0.0);
+      Teuchos::ArrayRCP<double> coeffs_v(N,0.0);
+      for(int_t k=0;k<N;++k)
+        for(int_t j=0;j<N;++j){
+          coeffs_u[k] += X_t_X(k,j)*X_t_u[j];
+          coeffs_v[k] += X_t_X(k,j)*X_t_v[j];
+        }
+
+      const scalar_t x_loc = x + coeffs_u[0];
+      const scalar_t y_loc = y + coeffs_v[0];
+      if(x_loc>=0&&x_loc<width&&y_loc>=0&&y_loc<height){
+        ref.at<float>(y,x) = (*ref_img_)(x,y);
+        def.at<float>(y,x) = (*def_img)(x,y);
+        map.at<float>(y,x) = ref_img_->interpolate_keys_fourth(x_loc,y_loc);
+      }
+    } // end y loop
+  } // end x loop
+
+  // TODO write the output json file
+  delete [] WORK;
+  delete [] GWORK;
+  delete [] IWORK;
+  delete [] IPIV;
+
+  ref.convertTo(ref,CV_8UC1);
+  def.convertTo(def,CV_8UC1);
+  map.convertTo(map,CV_8UC1);
+  cv::equalizeHist(ref,ref);
+  cv::equalizeHist(def,def);
+  cv::equalizeHist(map,map);
+  std::stringstream filenameR;
+  filenameR << "ref_" << current_frame_id_ << ".png";
+  cv::imwrite(filenameR.str(),ref);
+  std::stringstream filenameD;
+  filenameD << "def_" << current_frame_id_ << ".png";
+  cv::imwrite(filenameD.str(),def);
+  std::stringstream filenameM;
+  filenameM << "map_" << current_frame_id_ << ".png";
+  cv::imwrite(filenameM.str(),map);
+
+  for(int_t y=0;y<height;++y){
+    for(int_t x=0;x<width;++x){
+      if(def.at<uchar>(y,x)<map.at<uchar>(y,x)){
+        def.at<uchar>(y,x) = map.at<uchar>(y,x) - def.at<uchar>(y,x);
+      }else{
+        def.at<uchar>(y,x) = 0.0f;
+      }
+    }
+  }
+//  cv::absdiff(def,map,def);
+  std::stringstream filenameDiff;
+  filenameDiff << "diff_" << current_frame_id_ << ".png";
+  cv::imwrite(filenameDiff.str(),def);
+
+  // set a threshold on how far away the nearest subset can be
+  // do a diff using the displacement value
+  // threshold the diff
+  // output a json file with a heatmap?
+
+
+  DEBUG_MSG("Crack_Locator_Post_Processor execute() end");
+}
+
 Plotly_Contour_Post_Processor::Plotly_Contour_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params) :
   Post_Processor(post_process_plotly_contour){
   // no new fields added since the post processor writes output files instead
@@ -244,7 +459,7 @@ Plotly_Contour_Post_Processor::set_params(const Teuchos::RCP<Teuchos::ParameterL
 }
 
 void
-Plotly_Contour_Post_Processor::execute(){
+Plotly_Contour_Post_Processor::execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img){
   DEBUG_MSG("Plotly_Contour_Post_Processor execute() begin");
 
   // ensure only in serial for now TODO enable parallel post processor for this
@@ -493,7 +708,7 @@ Plotly_Contour_Post_Processor::execute(){
     } // end gy loop
   } // end gx loop
 
-  // TODO write the output json file
+  // write the output json file
   delete [] WORK;
   delete [] GWORK;
   delete [] IWORK;
@@ -658,7 +873,7 @@ VSG_Strain_Post_Processor::pre_execution_tasks(){
 }
 
 void
-VSG_Strain_Post_Processor::execute(){
+VSG_Strain_Post_Processor::execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img){
   DEBUG_MSG("VSG_Strain_Post_Processor execute() begin");
   if(!neighborhood_initialized_) pre_execution_tasks();
 
@@ -934,7 +1149,7 @@ NLVC_Strain_Post_Processor::compute_kernel(const scalar_t & dx,
 
 
 void
-NLVC_Strain_Post_Processor::execute(){
+NLVC_Strain_Post_Processor::execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img){
   DEBUG_MSG("NLVC_Strain_Post_Processor execute() begin");
   if(!neighborhood_initialized_) pre_execution_tasks();
 
@@ -1074,7 +1289,7 @@ Altitude_Post_Processor::Altitude_Post_Processor(const Teuchos::RCP<Teuchos::Par
 }
 
 void
-Altitude_Post_Processor::execute(){
+Altitude_Post_Processor::execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img){
   DEBUG_MSG("Altitude_Post_Processor::execute(): begin");
 
 //  Teuchos::RCP<DICe::MultiField> ground_level_rcp = mesh_->get_field(DICe::field_enums::GROUND_LEVEL_FS);
@@ -1234,7 +1449,7 @@ Uncertainty_Post_Processor::Uncertainty_Post_Processor(const Teuchos::RCP<Teucho
 }
 
 void
-Uncertainty_Post_Processor::execute(){
+Uncertainty_Post_Processor::execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img){
   DEBUG_MSG("Uncertainty_Post_Processor::execute(): begin");
 
   Teuchos::RCP<DICe::MultiField> sigma_rcp = mesh_->get_field(DICe::field_enums::SIGMA_FS);
@@ -1586,7 +1801,7 @@ Live_Plot_Post_Processor::pre_execution_tasks(){
 }
 
 void
-Live_Plot_Post_Processor::execute(){
+Live_Plot_Post_Processor::execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img){
   DEBUG_MSG("Live_Plot_Post_Processor execute() begin");
   if(!neighborhood_initialized_) pre_execution_tasks();
 

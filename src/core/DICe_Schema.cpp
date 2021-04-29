@@ -776,6 +776,15 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     Teuchos::RCP<Plotly_Contour_Post_Processor> pc_ptr = Teuchos::rcp (new Plotly_Contour_Post_Processor(ppParams));
     post_processors_.push_back(pc_ptr);
   }
+  if(diceParams->isParameter(DICe::post_process_crack_locator)){
+    Teuchos::ParameterList sublist = diceParams->sublist(DICe::post_process_crack_locator);
+    Teuchos::RCP<Teuchos::ParameterList> ppParams = Teuchos::rcp( new Teuchos::ParameterList());
+    for(Teuchos::ParameterList::ConstIterator it=sublist.begin();it!=sublist.end();++it){
+      ppParams->setEntry(it->first,it->second);
+    }
+    Teuchos::RCP<Crack_Locator_Post_Processor> pc_ptr = Teuchos::rcp (new Crack_Locator_Post_Processor(ppParams));
+    post_processors_.push_back(pc_ptr);
+  }
   if(diceParams->isParameter(DICe::post_process_nlvc_strain)){
     Teuchos::ParameterList sublist = diceParams->sublist(DICe::post_process_nlvc_strain);
     Teuchos::RCP<Teuchos::ParameterList> ppParams = Teuchos::rcp( new Teuchos::ParameterList());
@@ -1782,7 +1791,7 @@ Schema::execute_post_processors(){
   // compute post-processed quantities
   for(size_t i=0;i<post_processors_.size();++i){
     post_processors_[i]->update_current_frame_id(frame_id_-frame_skip_); // decrement frame skip since the frame id got updated by execute_correlation
-    post_processors_[i]->execute();
+    post_processors_[i]->execute(ref_img_,def_imgs_[0]);
   }
   DEBUG_MSG("[PROC " << comm_->get_rank() << "] post processing complete");
 }

@@ -234,7 +234,7 @@ int main(int argc, char *argv[]) {
 
       // FIXME: assumes post processor is of length 1 and the first entry is the VSG_STRAIN post processor
       if(time_step==0) (*schema->post_processors())[0]->pre_execution_tasks();
-      (*schema->post_processors())[0]->execute();
+      (*schema->post_processors())[0]->execute(ref_img,ref_img);
 
       schema->write_output("./",output_pre,false,true);
 
