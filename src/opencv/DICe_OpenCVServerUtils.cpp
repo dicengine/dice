@@ -329,14 +329,6 @@ int_t opencv_server(int argc, char *argv[]){
       }else if(filter==opencv_server_filter_epipolar_line){
         error_code = opencv_epipolar_line(img,options,file_it==io_files.begin());
       }
-//      else if(filter==opencv_server_filter_tracklib){
-//        DEBUG_MSG("Applying TrackLib filter");
-//#ifdef DICE_ENABLE_TRACKLIB
-//        error_code = TrackLib::tracklib_preview(img,background_img,options);
-//#else
-//        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Filter tracklib is only available when tracklib is available");
-//#endif
-//      }
       else{
         std::cout << "error, unknown filter: " << filter << std::endl;
         error_code = 5;
@@ -437,18 +429,6 @@ int_t opencv_epipolar_line(Mat & img,
   cv::Scalar color = cv::Scalar(255, 0, 255);
   cv::KeyPoint kpt(cv::Point2f(dot_x,dot_y),1.0);
   bool snap_point = false;
-#ifdef DICE_ENABLE_TRACKLIB
-//  // find the nearest keypoint to the clicked point
-//  const float distance_threshold = 250.0; //(squared_distance)
-//  const std::string keypoint_filename = is_left ? yml_file_left.str() : yml_file_right.str();
-//  DEBUG_MSG("keypoint filename: " << keypoint_filename);
-//  cv::KeyPoint snap_kpt = TrackLib::snap_to_keypoint(kpt,keypoint_filename,distance_threshold);
-//  if(snap_kpt.pt.x >0){
-//    DEBUG_MSG("original point: " << kpt.pt.x << " " << kpt.pt.y << " snapped point " << snap_kpt.pt.x << " " << snap_kpt.pt.y);
-//    kpt = snap_kpt;
-//    snap_point = true;
-//  }
-#endif
 
   // if this is the dot image, draw a dot
   if((first_image&&is_left)||((!first_image)&&(!is_left))){
@@ -490,28 +470,6 @@ int_t opencv_epipolar_line(Mat & img,
     if(img.channels() == 1)
       cvtColor(img, img, cv::COLOR_GRAY2RGB);
     cv::line(img,ptX,ptY,Scalar(0,0,255),1);
-
-//#ifdef DICE_ENABLE_TRACKLIB
-//    const std::string stereo_keypoint_filename = is_left ? yml_file_right.str() : yml_file_left.str();
-//    const float stereo_distance_threshold = 1.0;
-//    DEBUG_MSG("stereo keypoint filename: " << stereo_keypoint_filename);
-//    cv::KeyPoint corr_kpt = TrackLib::find_corresponding_keypoint(kpt,stereo_keypoint_filename,lines,stereo_distance_threshold);
-//    if(corr_kpt.pt.x>0){
-//      int radius = std::max((int)corr_kpt.size/2, 15);
-//      cv::circle(img, corr_kpt.pt, radius, color, 2, 8, 0);
-//      cv::circle(img, corr_kpt.pt, 2, color, -1, 8, 0);
-//      // triangulate the keypoints
-//      cv::Point3f pt_3d;
-//      if(is_left){
-//        pt_3d = TrackLib::trangulate_keypoints(kpt,corr_kpt,options.get<std::string>(opencv_server_cal_file));
-//      }else{
-//        pt_3d = TrackLib::trangulate_keypoints(corr_kpt,kpt,options.get<std::string>(opencv_server_cal_file));
-//      }
-//      std::stringstream point_text;
-//      point_text << "pos: (" << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << ") size: " << corr_kpt.size;
-//      cv::putText(img,point_text.str(),cv::Point2f(25,25), FONT_HERSHEY_PLAIN, 1.5, Scalar(0,0,255), 1, CV_AA);
-//    }
-//#endif
   }
   return 0;
 }
