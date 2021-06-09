@@ -2,7 +2,7 @@
 // ************************************************************************
 //
 //               Digital Image Correlation Engine (DICe)
-//                 Copyright 2015 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
+//                 Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
 //
 // Under the terms of Contract DE-NA0003525 with NTESS,
 // the U.S. Government retains certain rights in this software.
@@ -66,7 +66,7 @@ void print_banner(){
   std::cout << "** git: " << GITSHA1 << std::endl;
   std::cout << mpi_message << std::endl;
   std::cout << type_message << std::endl;
-  std::cout << "** Copyright 2015 National Technology & Engineering Solutions of Sandia, LLC (NTESS)" << std::endl;
+  std::cout << "** Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC (NTESS)" << std::endl;
   std::cout << "** Report bugs and feature requests as issues at https://github.com/dicengine/dice" << std::endl << std::endl;
 }
 

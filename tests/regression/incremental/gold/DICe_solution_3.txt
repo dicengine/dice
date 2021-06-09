@@ -1,5 +1,5 @@
 ***
-*** Digital Image Correlation Engine (DICe), (git sha1: v3.0-beta.1-1-gf070dc-dirty) Copyright 2015 National Technology & Engineering Solutions of Sandia, LLC (NTESS)
+*** Digital Image Correlation Engine (DICe), (git sha1: v3.0-beta.1-1-gf070dc-dirty) Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC (NTESS)
 ***
 *** Reference image: ../../component/images/defSyntheticSpeckled2.tif 
 *** Deformed image: ../../component/images/defSyntheticSpeckled3.tif 

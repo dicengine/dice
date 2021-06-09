@@ -1,5 +1,5 @@
 ***
-*** Digital Image Correlation Engine (DICe), (git sha1: v1.0-16-g6c20af-dirty) Copyright 2015 National Technology & Engineering Solutions of Sandia, LLC (NTESS)
+*** Digital Image Correlation Engine (DICe), (git sha1: v1.0-16-g6c20af-dirty) Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC (NTESS)
 ***
 *** Reference image: ./images/oht_cfrp_00.tiff 
 *** Deformed image: ./images/oht_cfrp_01.tiff 

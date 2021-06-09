@@ -2,7 +2,7 @@
 // ************************************************************************
 //
 //               Digital Image Correlation Engine (DICe)
-//                 Copyright 2015 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
+//                 Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
 //
 // Under the terms of Contract DE-NA0003525 with NTESS,
 // the U.S. Government retains certain rights in this software.
@@ -4133,7 +4133,7 @@ Output_Spec::write_info(std::FILE * file,
   TEUCHOS_TEST_FOR_EXCEPTION(schema_->analysis_type()==GLOBAL_DIC,std::runtime_error,
     "Error, write_info is not intended to be used for global DIC");
   fprintf(file,"***\n");
-  fprintf(file,"*** Digital Image Correlation Engine (DICe), (git sha1: %s) Copyright 2015 National Technology & Engineering Solutions of Sandia, LLC (NTESS)\n",GITSHA1);
+  fprintf(file,"*** Digital Image Correlation Engine (DICe), (git sha1: %s) Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC (NTESS)\n",GITSHA1);
   fprintf(file,"***\n");
   fprintf(file,"*** Reference image: %s \n",schema_->ref_img()->file_name().c_str());
   fprintf(file,"*** Deformed image: %s \n",schema_->def_img(0)->file_name().c_str());
