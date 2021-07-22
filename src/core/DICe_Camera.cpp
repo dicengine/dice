@@ -576,8 +576,7 @@ Camera::image_to_sensor(
   const std::vector<scalar_t> & image_x,
   const std::vector<scalar_t> & image_y,
   std::vector<scalar_t> & sen_x,
-  std::vector<scalar_t> & sen_y,
-  const bool integer_locs) {
+  std::vector<scalar_t> & sen_y) {
   camera_info_.check_valid();
   prep_lens_distortion();
 
@@ -585,6 +584,17 @@ Camera::image_to_sensor(
   TEUCHOS_TEST_FOR_EXCEPTION(image_y.size()!=vec_size,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(sen_x.size()!=vec_size,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(sen_y.size()!=vec_size,std::runtime_error,"");
+
+  // check for integer locations
+  scalar_t intpart;
+  bool integer_locs = true;
+  for (size_t i = 0; i < vec_size; i++) {
+    if(std::modf(image_x[i], &intpart) != 0.0 || std::modf(image_y[i], &intpart) != 0.0){ // see if there is a fractional part to the input coordinates
+      integer_locs = false;
+      break;
+    }
+  }
+  DEBUG_MSG("Camera::image_to_sensor(): integer locations is " << integer_locs);
 
   //transformation from distorted image locations to undistorted sensor locations
   int_t index;

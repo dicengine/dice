@@ -543,7 +543,7 @@ int main(int argc, char *argv[]) {
       img_y[i] = rand() % (image_height * 100);
       img_y[i] = img_y[i] / 100.0;
     }
-    test_cam.image_to_sensor(img_x, img_y, sen_x, sen_y, false);
+    test_cam.image_to_sensor(img_x, img_y, sen_x, sen_y);
     test_cam.sensor_to_image(sen_x, sen_y, ret_x, ret_y);
     for (int_t i = 0; i < num_points; i++) {
       if (max_deviation < abs(ret_x[i] - img_x[i])) max_deviation = abs(ret_x[i] - img_x[i]);

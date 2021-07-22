@@ -431,13 +431,11 @@ public:
   /// \param image_y y location after applied lens distortion
   /// \param sen_x projected x sensor location
   /// \param sen_y projected y sensor location
-  /// \param integer_locs if all image points are integers setting this flag avoids interpolation overhead
   void image_to_sensor(
     const std::vector<scalar_t> & image_x,
     const std::vector<scalar_t> & image_y,
     std::vector<scalar_t> & sen_x,
-    std::vector<scalar_t> & sen_y,
-    const bool integer_locs = true);
+    std::vector<scalar_t> & sen_y);
 
   /// helper function to convert image coordinates to world coordinates
   /// \param image_x x location after applied lens distortion
