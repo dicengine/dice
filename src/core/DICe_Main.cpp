@@ -352,9 +352,10 @@ int main(int argc, char *argv[]) {
         }
         // write the output
         const bool no_text_output = input_params->get<bool>(DICe::no_text_output_files,false);
+        const bool write_mat_output = input_params->get<bool>(DICe::write_mat_output_files,false);
         {
           Teuchos::TimeMonitor write_time_monitor(*write_time);
-          schema->write_output(output_folder,file_prefix,separate_output_file_for_each_subset,separate_header_file,no_text_output);
+          schema->write_output(output_folder,file_prefix,separate_output_file_for_each_subset,separate_header_file,no_text_output,write_mat_output);
           schema->post_execution_tasks();
           // print the timing data with or without verbose flag
           if(input_params->get<bool>(DICe::print_stats,false)){

@@ -81,6 +81,16 @@ class Post_Processor;
 // forward dec for a triangulation
 class Triangulation;
 
+/// container used for writing .mat files for matlab
+typedef struct {
+  uint32_t type;
+  uint32_t mrows;
+  uint32_t ncols;
+  uint32_t imagf;
+  uint32_t namelen;
+} Mat_Info;
+
+
 /// container class that holds information about a tracking analysis
 class
 DICE_LIB_DLL_EXPORT
@@ -632,11 +642,19 @@ public:
   /// The default is one file per frame with all subsets listed one per row.
   /// \param separate_header_file place the run information in another file rather than the header of the results
   /// \param no_text_output if true the text output files are not written
+  /// \param write_mat_output true if the .mat file should be written
   void write_output(const std::string & output_folder,
     const std::string & prefix="DICe_solution",
     const bool separate_files_per_subset=false,
     const bool separate_header_file=false,
-    const bool no_text_output=false);
+    const bool no_text_output=false,
+    const bool write_mat_file=false);
+
+  /// \brief Write the solution vector to a .mat file
+  /// \param output_folder Name of the folder for output (the file name is fixed)
+  /// \param prefix Optional string to use as the file prefix
+  void write_mat_output(const std::string & output_folder,
+    const std::string & prefix="DICe_solution");
 
   /// \brief Write the stats for a completed run
   /// \param output_folder Name of the folder for output (the file name is fixed)

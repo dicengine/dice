@@ -3663,11 +3663,71 @@ Schema::write_control_points_image(const std::string & fileName,
 }
 
 void
+Schema::write_mat_output(const std::string & output_folder,
+  const std::string & prefix){
+  if(analysis_type_==GLOBAL_DIC){
+    return; // no subset_coordinates for global (should we address this?)
+  }
+
+  Teuchos::RCP<MultiField> ximg = mesh_->get_field(SUBSET_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> yimg = mesh_->get_field(SUBSET_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> model_x = mesh_->get_field(MODEL_COORDINATES_X_FS);
+  Teuchos::RCP<MultiField> model_y = mesh_->get_field(MODEL_COORDINATES_Y_FS);
+  Teuchos::RCP<MultiField> model_z = mesh_->get_field(MODEL_COORDINATES_Z_FS);
+  Teuchos::RCP<MultiField> model_u = mesh_->get_field(MODEL_DISPLACEMENT_X_FS);
+  Teuchos::RCP<MultiField> model_v = mesh_->get_field(MODEL_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<MultiField> model_w = mesh_->get_field(MODEL_DISPLACEMENT_Z_FS);
+
+  std::stringstream file_name_ss;
+  int frame_id = frame_id_-1; // frame was already updated when results output is called
+  file_name_ss << output_folder << prefix << "_" << frame_id << ".mat";
+
+  char const *pname = "DICe";
+  double *pr;
+  Mat_Info info;
+  int mn;
+  FILE *fp;
+  fp=fopen(file_name_ss.str().c_str(),"wb");
+  if(fp==NULL){
+    std::cout << "Error: could not write .mat file " << file_name_ss.str() << std::endl;
+    return;
+  }
+  else{
+    info.type = 0000;
+    info.mrows = local_num_subsets_;
+    info.ncols = 8;
+    info.imagf = 0;
+    info.namelen = 5;
+    std::vector<double> data(local_num_subsets_*info.ncols,0.0);
+    pr = &data[0];
+
+    // copy the data from the fields into the column format requested by the DIC Challenge Spec
+    for(int_t i=0;i<local_num_subsets_;++i){
+      data[0*local_num_subsets_ + i] = ximg->local_value(i);
+      data[1*local_num_subsets_ + i] = yimg->local_value(i);
+      data[2*local_num_subsets_ + i] = model_x->local_value(i);
+      data[3*local_num_subsets_ + i] = model_y->local_value(i);
+      data[4*local_num_subsets_ + i] = model_z->local_value(i);
+      data[5*local_num_subsets_ + i] = model_u->local_value(i);
+      data[6*local_num_subsets_ + i] = model_v->local_value(i);
+      data[7*local_num_subsets_ + i] = model_w->local_value(i);
+    }
+
+    fwrite(&info,sizeof(Mat_Info),1,fp);
+    mn = info.mrows*info.ncols;
+    fwrite(pname, sizeof(char), info.namelen,fp);
+    fwrite(pr,sizeof(double),mn,fp);
+  }
+  fclose(fp);
+}
+
+void
 Schema::write_output(const std::string & output_folder,
   const std::string & prefix,
   const bool separate_files_per_subset,
   const bool separate_header_file,
-  const bool no_text_output){
+  const bool no_text_output,
+  const bool write_mat_file){
   if(analysis_type_==GLOBAL_DIC){
     return;
   }
@@ -3687,6 +3747,9 @@ Schema::write_output(const std::string & output_folder,
     DICe::mesh::exodus_output_dump(mesh_,(frame_id_-first_frame_id_)/frame_skip_,(frame_id_-first_frame_id_)/frame_skip_);
   }
 #endif
+
+  if(write_mat_file) write_mat_output(output_folder,prefix);
+
 
   if(no_text_output) return;
 

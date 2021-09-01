@@ -108,6 +108,8 @@ const char* const output_stereo_files = "output_stereo_files";
 /// Input parameter
 const char* const no_text_output_files = "no_text_output_files";
 /// Input parameter
+const char* const write_mat_output_files = "write_mat_output_files";
+/// Input parameter
 const char* const correlation_parameters_file = "correlation_parameters_file";
 /// Input parameter
 const char* const calibration_parameters_file = "calibration_parameters_file";
