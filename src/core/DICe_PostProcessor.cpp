@@ -589,19 +589,23 @@ Plotly_Contour_Post_Processor::execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP
     field_output_names.push_back("GAMMA");
     fields.push_back(mesh_->get_field(DICe::field_enums::UNCERTAINTY_FS));
     field_output_names.push_back("UNCERTAINTY");
-    fields.push_back(mesh_->get_field(DICe::field_enums::VSG_STRAIN_XX_FS));
-    field_output_names.push_back("VSG_STRAIN_XX");
-    fields.push_back(mesh_->get_field(DICe::field_enums::VSG_STRAIN_YY_FS));
-    field_output_names.push_back("VSG_STRAIN_YY");
-    fields.push_back(mesh_->get_field(DICe::field_enums::VSG_STRAIN_XY_FS));
-    field_output_names.push_back("VSG_STRAIN_XY");
+    if(mesh_->has_field(DICe::field_enums::VSG_STRAIN_XX)){
+      fields.push_back(mesh_->get_field(DICe::field_enums::VSG_STRAIN_XX_FS));
+      field_output_names.push_back("VSG_STRAIN_XX");
+      fields.push_back(mesh_->get_field(DICe::field_enums::VSG_STRAIN_YY_FS));
+      field_output_names.push_back("VSG_STRAIN_YY");
+      fields.push_back(mesh_->get_field(DICe::field_enums::VSG_STRAIN_XY_FS));
+      field_output_names.push_back("VSG_STRAIN_XY");
+    }
   }else{
-    fields.push_back(mesh_->get_field(DICe::field_enums::GREEN_LAGRANGE_STRAIN_XX_FS));
-    field_output_names.push_back("GREEN_LAGRANGE_STRAIN_XX");
-    fields.push_back(mesh_->get_field(DICe::field_enums::GREEN_LAGRANGE_STRAIN_YY_FS));
-    field_output_names.push_back("GREEN_LAGRANGE_STRAIN_YY");
-    fields.push_back(mesh_->get_field(DICe::field_enums::GREEN_LAGRANGE_STRAIN_XY_FS));
-    field_output_names.push_back("GREEN_LAGRANGE_STRAIN_XY");
+    if(mesh_->has_field(DICe::field_enums::GREEN_LAGRANGE_STRAIN_XX)){
+      fields.push_back(mesh_->get_field(DICe::field_enums::GREEN_LAGRANGE_STRAIN_XX_FS));
+      field_output_names.push_back("GREEN_LAGRANGE_STRAIN_XX");
+      fields.push_back(mesh_->get_field(DICe::field_enums::GREEN_LAGRANGE_STRAIN_YY_FS));
+      field_output_names.push_back("GREEN_LAGRANGE_STRAIN_YY");
+      fields.push_back(mesh_->get_field(DICe::field_enums::GREEN_LAGRANGE_STRAIN_XY_FS));
+      field_output_names.push_back("GREEN_LAGRANGE_STRAIN_XY");
+    }
     fields.push_back(mesh_->get_field(DICe::field_enums::GLOBAL_GRAY_DIFF_FS));
     field_output_names.push_back("GLOBAL_GRAY_DIFF");
   }
