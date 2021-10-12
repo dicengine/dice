@@ -3680,7 +3680,7 @@ Schema::write_mat_output(const std::string & output_folder,
   Teuchos::RCP<MultiField> model_w = mesh_->get_field(MODEL_DISPLACEMENT_Z_FS);
 
   std::stringstream file_name_ss;
-  int_t frame_id = frame_id_-1; // frame was already updated when results output is called
+  int_t frame_id = frame_id_-frame_skip_; // frame was already updated when results output is called
   file_name_ss << output_folder << prefix << "_" << frame_id << ".mat";
 
 
