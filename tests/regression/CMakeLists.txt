@@ -206,7 +206,6 @@ if(DICE_MPI)
     SET(MPI_TESTS
       ${MPI_TESTS}
       stereo_d_spec
-      stereo_dogbone
     )
   ENDIF()
   IF(DICE_USE_DOUBLE)
