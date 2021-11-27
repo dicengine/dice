@@ -158,10 +158,18 @@ Objective::sigma( Teuchos::RCP<Local_Shape_Function> shape_function,
   // sum up the grads in x and y:
   scalar_t sum_gx = 0.0;
   scalar_t sum_gy = 0.0;
+  int_t num_deactivated = 0;
   for(int_t i=0;i<subset_->num_pixels();++i){
-    if(!subset_->is_active(i) || subset_->is_deactivated_this_step(i)) continue;
+    if(!subset_->is_active(i) || subset_->is_deactivated_this_step(i)){
+      num_deactivated++;
+      continue;
+    }
     sum_gx += subset_->grad_x(i)*subset_->grad_x(i);
     sum_gy += subset_->grad_y(i)*subset_->grad_y(i);
+  }
+  if(num_deactivated==subset_->num_pixels()){
+    std::cout << "***WARNING***: subset at [" << subset_->centroid_x() << "," << subset_->centroid_y() << "] has no active pixels. It may have displaced outside "
+        "the portion of the image that is read at initialization." << std::endl;
   }
   const scalar_t sum_grad = sum_gx > sum_gy ? sum_gy : sum_gx;
   // ensure that sum grad is greater than zero
