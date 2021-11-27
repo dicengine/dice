@@ -475,6 +475,7 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   stat_container_ = Teuchos::rcp(new Stat_Container());
   use_incremental_formulation_ = false;
   use_nonlinear_projection_ = false;
+  read_full_images_ = false;
   sort_txt_output_ = false;
   threshold_block_size_ = -1;
   set_params(params);
@@ -628,6 +629,7 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   initial_condition_file_ = diceParams->get<std::string>(DICe::initial_condition_file,"");
   use_incremental_formulation_ = diceParams->get<bool>(DICe::use_incremental_formulation,false);
   use_nonlinear_projection_ = diceParams->get<bool>(DICe::use_nonlinear_projection,false);
+  read_full_images_ = diceParams->get<bool>(DICe::read_full_images,false);
   sort_txt_output_ = diceParams->get<bool>(DICe::sort_txt_output,false);
   gauss_filter_images_ = diceParams->get<bool>(DICe::gauss_filter_images,false);
   filter_failed_cine_pixels_ = diceParams->get<bool>(DICe::filter_failed_cine_pixels,false);
@@ -871,6 +873,10 @@ Schema::update_extents(const bool use_transformation_augmentation){
       has_extents_ = false;
       return;
     }
+  }
+  if(read_full_images_){
+    has_extents_ = false;
+    return;
   }
   TEUCHOS_TEST_FOR_EXCEPTION(motion_window_params_->size()>0,std::runtime_error,"");
   TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"");

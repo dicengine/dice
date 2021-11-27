@@ -1288,6 +1288,8 @@ private:
   bool use_nonlinear_projection_;
   /// true if only certain portions of the images should be loaded (for example in parallel for large images)
   bool has_extents_;
+  /// true if the user wants to read the full image rather than just the portion around the ROI
+  bool read_full_images_;
   /// vector that contains the x and y extents for the reference images (x_start_ref, x_end_ref, y_start_ref, y_end_ref)
   std::vector<int_t> ref_extents_;
   /// vector that contains the x and y extents for the deformed images (x_start_def, x_end_def, y_start_def, y_end_def)
