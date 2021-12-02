@@ -82,7 +82,8 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
   params->set(filter_failed_cine_pixels,false);
   params->set(convert_cine_to_8_bit,true);
-  params->set(DICe::reinitialize_cine_reader_conversion_factor,true);
+  params->set(reinitialize_cine_reader_threshold,true);
+  params->set(use_threshold_for_failed_cine_pixels,true);
 
   // all of these cine files should be dimensions 128 x 256 and have 6 frames each
 
@@ -181,7 +182,8 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
   imgParams->set(DICe::filter_failed_cine_pixels,false);
   imgParams->set(DICe::convert_cine_to_8_bit,false);
-  imgParams->set(DICe::reinitialize_cine_reader_conversion_factor,true);
+  imgParams->set(DICe::reinitialize_cine_reader_threshold,true);
+  imgParams->set(DICe::use_threshold_for_failed_cine_pixels,true);
   imgParams->set(DICe::subimage_width,208-170+1);
   imgParams->set(DICe::subimage_height,42-13+1);
   imgParams->set(DICe::subimage_offset_x,170);

@@ -189,7 +189,9 @@ const char* const outlier_replacement_value = "outlier_replacement_value";
 /// String parameter name
 const char* const convert_cine_to_8_bit = "convert_cine_to_8_bit";
 /// String parameter name
-const char* const reinitialize_cine_reader_conversion_factor = "reinitialize_cine_reader_conversion_factor";
+const char* const reinitialize_cine_reader_threshold = "reinitialize_cine_reader_threshold";
+/// String parameter name
+const char* const use_threshold_for_failed_cine_pixels = "use_threshold_for_failed_cine_pixels";
 /// String parameter name
 const char* const initial_condition_file = "initial_condition_file";
 /// String parameter name

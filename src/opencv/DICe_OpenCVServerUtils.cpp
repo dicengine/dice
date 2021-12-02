@@ -391,7 +391,6 @@ int_t opencv_create_cine_background_image(Teuchos::ParameterList & options){
   Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
   params->set(filter_failed_cine_pixels,true);
   params->set(convert_cine_to_8_bit,true);
-  params->set(DICe::reinitialize_cine_reader_conversion_factor,true);
   // insert the frame number before the extension
   TEUCHOS_TEST_FOR_EXCEPTION(cine_file.find(".cine")==std::string::npos,std::runtime_error,"invalid cine file name");
   size_t found_ext = cine_file.find(".cine");

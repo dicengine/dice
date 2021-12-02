@@ -257,9 +257,11 @@ void read_image(const char * file_name,
     bool filter_failed_pixels = true;
     bool convert_to_8_bit = true;
     bool reinit = false;
+    bool use_threshold = false;
     bool buffer_persistence_guaranteed = false;
     if(params!=Teuchos::null){
-      reinit = params->get(reinitialize_cine_reader_conversion_factor,reinit); // FIXME no longer resets the conversion factor, but changes the threshold
+      reinit = params->get(reinitialize_cine_reader_threshold,reinit);
+      use_threshold = params->get(use_threshold_for_failed_cine_pixels,use_threshold);
       filter_failed_pixels = params->get<bool>(filter_failed_cine_pixels,filter_failed_pixels);
       convert_to_8_bit = params->get<bool>(convert_cine_to_8_bit,convert_to_8_bit);
       buffer_persistence_guaranteed = params->get<bool>(DICe::buffer_persistence_guaranteed,buffer_persistence_guaranteed);
@@ -298,11 +300,15 @@ void read_image(const char * file_name,
           std::vector<storage_t> full_data = hc->get_frame(start_index);
           std::sort(full_data.begin(),full_data.end());
           const scalar_t outlier = 0.98*full_data[full_data.size()-1];
-          for(size_t i=0;i<full_data.size();++i)
-            if((scalar_t)full_data[full_data.size()-i-1]<outlier){
-              threshold = full_data[full_data.size()-i-1];
-              break;
+          threshold = outlier;
+          if(use_threshold){
+            for(size_t i=0;i<full_data.size();++i){
+              if((scalar_t)full_data[full_data.size()-i-1]<outlier){
+                threshold = full_data[full_data.size()-i-1];
+                break;
+              }
             }
+          }
         }
       }
       if(buffer_persistence_guaranteed){
@@ -326,8 +332,26 @@ void read_image(const char * file_name,
           intensities[i] = data[i];
       }
       if(filter_failed_pixels){
-        for(int_t i=0;i<intensities.size();++i)
-          intensities[i] = std::min(intensities[i],static_cast<S>(threshold));
+        if(use_threshold){ // the old way of doing things was to simply replace the failed pixel with a threshold value
+          for(int_t i=0;i<intensities.size();++i)
+            intensities[i] = std::min(intensities[i],static_cast<S>(threshold));
+        }else{
+          // ensure not on the boundary and
+          // take an average of the surrounding pixels
+          int_t px = 0, py = 0;
+          for(int_t i=0;i<intensities.size();++i){
+            if(intensities[i]>threshold){
+              py = i/width;
+              px = i - py*width;
+              if(px>0&&px<width-1&&py>0&&py<height-1){
+                intensities[i] = 0.125*(intensities[i-1]+intensities[i+1]+
+                    intensities[i-width]+intensities[i-width+1]+intensities[i-width-1]+
+                    intensities[i+width]+intensities[i+width+1]+intensities[i+width+1]);
+              }
+            }
+          }
+
+        }
       }
     } // end not is_avg
   }
