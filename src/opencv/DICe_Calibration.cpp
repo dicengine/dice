@@ -571,7 +571,7 @@ Calibration::extract_dot_target_points(){
   const int_t orig_thresh_step =  input_params_.get<int_t>(opencv_server_threshold_step,5);
   if(!input_params_.isParameter(opencv_server_min_blob_size))
     input_params_.set<int_t>(opencv_server_min_blob_size,100);
-  scalar_t include_image_set_tol = 0.75; //the search must have found at least 75% of the total to be included
+  scalar_t include_image_set_tol = 0.7; //the search must have found at least 70% of the total to be included
   for (size_t i_image = 0; i_image < num_images(); i_image++){
     //go through each of the camera's images (note only two camera calibration is currently supported)
     for (size_t i_cam = 0; i_cam < num_cams(); i_cam++){

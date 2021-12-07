@@ -57,6 +57,8 @@
 #include <Teuchos_oblackholestream.hpp>
 #include <Teuchos_ParameterList.hpp>
 
+#include "opencv2/flann/miniflann.hpp"
+
 #include <cassert>
 
 using namespace cv;
@@ -550,10 +552,13 @@ int_t opencv_dot_targets(cv::Mat & img,
   std::vector<cv::KeyPoint> grd_points;
   if(!options.isParameter(opencv_server_min_blob_size))
     options.set<int_t>(opencv_server_min_blob_size,100);
+  Mat img_cpy = img.clone();
   int_t error_code = opencv_dot_targets(img,options,key_points,img_points,grd_points, return_thresh);
   if(error_code!=0){
     DEBUG_MSG("opencv_dot_targets(): resetting the min_blob_size to 10 and trying again.");
     options.set<int_t>(opencv_server_min_blob_size,10);
+    // reset the image in case it got annotated with dots, etc in the last step
+    img = img_cpy.clone();
     error_code = opencv_dot_targets(img,options,key_points,img_points,grd_points, return_thresh);
 //    if(error_code!=0){
 //      DEBUG_MSG("opencv_dot_targets(): resetting the min_blob_size to 500 and trying again.");
@@ -625,18 +630,10 @@ int_t opencv_dot_targets(Mat & img,
   TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(DICe::cal_target_type),std::runtime_error,"");
   Calibration::Target_Type target_type = Calibration::string_to_target_type(options.get<std::string>(DICe::cal_target_type));
   const bool invert = target_type==Calibration::BLACK_ON_WHITE_W_DONUT_DOTS;
-  const double dot_tol = options.get<double>(opencv_server_dot_tol,0.25);
-
-  std::vector<KeyPoint> marker_grid_locs;
-  marker_grid_locs.resize(3);
-  marker_grid_locs[0].pt.x = origin_loc_x;
-  marker_grid_locs[0].pt.y = origin_loc_y;
-  marker_grid_locs[1].pt.x = origin_loc_x + num_fiducials_origin_to_x_marker - 1;
-  marker_grid_locs[1].pt.y = origin_loc_y;
-  marker_grid_locs[2].pt.x = origin_loc_x;
-  marker_grid_locs[2].pt.y = origin_loc_y + num_fiducials_origin_to_y_marker - 1;
+  //const double dot_tol = options.get<double>(opencv_server_dot_tol,0.25);
 
   // find the keypoints in the image
+  options.set<bool>("donut_test",true);
   bool keypoints_found = true;
   //try to find the keypoints at different thresholds
   int_t i_thresh_first = 0;
@@ -666,6 +663,7 @@ int_t opencv_dot_targets(Mat & img,
     } // end marker (donut) dot threshholding loop
     // calculate the average threshold value
     i_thresh = (i_thresh_first + i_thresh_last) / 2;
+    i_thresh -= i_thresh%threshold_step; // truncate to the nearest thresh step to ensure that the final thresh is one that we know produced 3 keypoints
   }
 
   // get the key points at the average threshold value
@@ -674,22 +672,9 @@ int_t opencv_dot_targets(Mat & img,
   // it is possible that this threshold does not have 3 points.
   // chances are that this indicates p thresholding problem to begin with
   if (key_points.size() != 3) {
-    // try again to see if the markers a too small, if so enable smaller blob sizes and try again
-//    min_blob_size = 10;
-//    get_dot_markers(img_cpy,key_points,i_thresh,invert,options,min_blob_size);
-//    if(key_points.size() !=3){
-      std::cout << "*** warning: unable to identify three keypoints, other points will not be extracted" << std::endl;
-      keypoints_found = false;
-//      // try a larger min blob size
-//      min_blob_size = 500;
-//      get_dot_markers(img_cpy,key_points,i_thresh,invert,options,min_blob_size);
-//      if(key_points.size() != 3){
-//        std::cout << "*** warning: unable to identify three keypoints, other points will not be extracted" << std::endl;
-//        keypoints_found = false;
-//      }
-//    }
+    //std::cout << "*** warning: unable to identify three keypoints, resetting the threshold" << std::endl;
+    keypoints_found = false;
   }
-  Point cvpoint;
   if(preview_thresh){
     if(use_adaptive){
       adaptiveThreshold(img,img,255,filter_mode,threshold_mode,block_size,i_thresh);
@@ -702,34 +687,18 @@ int_t opencv_dot_targets(Mat & img,
 
   // now that we have the keypoints try to get the rest of the dots
 
-  // reorder the keypoints into an origin, xaxis, yaxis order
-  reorder_keypoints(key_points);
-
-  // report the results
-  std::cout << "opencv_dot_targets():     using threshold: " << i_thresh << std::endl;
-  return_thresh = i_thresh;
-  DEBUG_MSG("    ordered keypoints: ");
-  for (size_t i = 0; i < key_points.size(); ++i) //save and display the keypoints
-    DEBUG_MSG("      keypoint: " << key_points[i].pt.x << " " << key_points[i].pt.y);
-
   // copy the image into the output image
   cvtColor(img, img, cv::COLOR_GRAY2RGB);
   for (int_t n = 0; n < 3; n++) {
-    cvpoint.x = key_points[n].pt.x;
-    cvpoint.y = key_points[n].pt.y;
     if(img.size().height>800){
-      circle(img, cvpoint, 20, Scalar(0, 255, 255), 4);
+      circle(img, key_points[n].pt, 15, Scalar(0, 255, 255), 4);
     }else{
-      circle(img, cvpoint, 10, Scalar(0, 255, 255), 4);
+      circle(img, key_points[n].pt, 5, Scalar(0, 255, 255), 4);
     }
   }
-
-  std::vector<scalar_t> img_to_grdx(6,0.0);
-  std::vector<scalar_t> img_to_grdy(6,0.0);
-  std::vector<scalar_t> grd_to_imgx(6,0.0);
-  std::vector<scalar_t> grd_to_imgy(6,0.0);
-  // from the keypoints calculate the image to grid and grid to image transforms (no keystoning)
-  calc_trans_coeff(key_points, marker_grid_locs,img_to_grdx,img_to_grdy,grd_to_imgx,grd_to_imgy);
+  // report the results
+  //  std::cout << "opencv_dot_targets():     using threshold: " << i_thresh << std::endl;
+  return_thresh = i_thresh;
 
   // determine a threshold from the gray levels between the keypoints
   int_t xstart, xend, ystart, yend;
@@ -746,59 +715,285 @@ int_t opencv_dot_targets(Mat & img,
     ystart = key_points[1].pt.y;
     yend = key_points[0].pt.y;
   }
-
+  const int_t slope = (yend - ystart)/(xend - xstart);
   maxgray = img_cpy.at<uchar>(ystart, xstart);
   mingray = maxgray;
-  int_t curgray;
   for (int_t ix = xstart; ix <= xend; ix++) {
-    for (int_t iy = ystart; iy <= yend; iy++) {
-      curgray = img_cpy.at<uchar>(iy, ix);
-      if (maxgray < curgray) maxgray = curgray;
-      if (mingray > curgray) mingray = curgray;
-    }
+    const int_t iy = ystart + (ix-xstart)*slope;
+    const int_t curgray = img_cpy.at<uchar>(iy, ix);
+    if (maxgray < curgray) maxgray = curgray;
+    if (mingray > curgray) mingray = curgray;
   }
   i_thresh = (maxgray + mingray) / 2;
   DEBUG_MSG("  min gray value (inside target keypoints): " << mingray << " max gray value: " << maxgray);
   DEBUG_MSG("  getting the rest of the dots using average gray intensity value as threshold");
   DEBUG_MSG("    threshold to get dots: " << i_thresh);
 
+
   // get the rest of the dots
+  options.set<bool>("donut_test",false);
   std::vector<KeyPoint> dots;
   get_dot_markers(img_cpy, dots, i_thresh, !invert,options,min_blob_size);
-  DEBUG_MSG("    prospective grid points found: " << dots.size());
+  const int_t num_dots = dots.size();
+  DEBUG_MSG("    prospective grid points found: " << num_dots);
+  if(num_dots <= 0){
+    std::cout << "opencv_dot_targets(): zero dots found" << std::endl;
+    return 2;
+  }
+  for (int_t n = 0; n < num_dots; n++) {
+    if(img.size().height>800){
+      circle(img, dots[n].pt, 5, Scalar(0, 0, 255), -1);
+    }else{
+      circle(img, dots[n].pt, 5, Scalar(0, 0, 255), -1);
+    }
+  }
+  // TODO filter the dot markers (for example by size)
 
-  // filter dots based on avg size and whether the dots fall in the central box
-  filter_dot_markers(dots, img_points, grd_points, grd_to_imgx, grd_to_imgy, img_to_grdx, img_to_grdy,
-    num_fiducials_x, num_fiducials_y, dot_tol, img, false);
-
-  // initialize the process variables
-  int_t filter_passes = 1;
-  int_t old_dot_num = 3;
-  int_t new_dot_num = img_points.size();
-  int_t max_dots = num_fiducials_x * num_fiducials_x - 3;
-
-  // if the number of dots has not changed
-  while ((old_dot_num != new_dot_num && new_dot_num != max_dots && filter_passes < 20) || filter_passes < 3) {
-    // update the old dot count
-    old_dot_num = new_dot_num;
-    // xsfrom the good points that were found improve the mapping parameters
-    calc_trans_coeff(img_points, grd_points, img_to_grdx, img_to_grdy, grd_to_imgx, grd_to_imgy);
-    // filter dots based on avg size and whether the dots fall in the central box with the new parameters
-    // the transformation now includes keystoning
-    filter_dot_markers(dots, img_points, grd_points, grd_to_imgx, grd_to_imgy, img_to_grdx, img_to_grdy,
-      num_fiducials_x, num_fiducials_y, dot_tol, img, false);
-    filter_passes++;
-    new_dot_num = img_points.size();
+  // reorder the keypoints into an origin, xaxis, yaxis order
+  reorder_keypoints(key_points,dots);
+  DEBUG_MSG("    ordered keypoints: ");
+  for (size_t i = 0; i < key_points.size(); ++i){ //save and display the keypoints
+    DEBUG_MSG("      keypoint: " << key_points[i].pt.x << " " << key_points[i].pt.y);
   }
 
-  // if drawing the images run filter one more time and draw the intersection locations
-  filter_dot_markers(dots, img_points, grd_points, grd_to_imgx, grd_to_imgy, img_to_grdx, img_to_grdy,
-    num_fiducials_x, num_fiducials_y,  dot_tol, img, true);
+  img_points.clear();
+  grd_points.clear();
+
+  // create a point cloud for nearest neighbor searching
+  std::vector<Point2f> cloud2d(num_dots + 3); // add three for the keypoints
+  std::vector<int_t> dot_use_count(num_dots + 3,0); // keep track of how many times a dot is used to ensure no repeats
+  for(int_t i=0;i<num_dots;++i)
+    cloud2d[i] = cv::Point2f(dots[i].pt.x,dots[i].pt.y); // order cloud2d so that i is the same for dots
+  for(int_t i=0;i<3;++i){
+    cloud2d[num_dots + i] = key_points[i].pt;
+    dots.push_back(key_points[i]);
+  }
+
+  flann::KDTreeIndexParams indexParams;
+  flann::Index kdtree(Mat(cloud2d).reshape(1), indexParams);
+  std::vector<float> query(2,0.0f);
+  std::vector<int> indices(1,0);
+  std::vector<float> dists(1,0.0f);
+
+  // create a grid for storing dots linked to the grid location
+
+  const int_t num_grid_points = num_fiducials_x * num_fiducials_y;
+  std::vector<KeyPoint> dot_grid(num_grid_points,cv::KeyPoint(cv::Point2f(-1.0,-1.0),0));
+
+  // compute the preliminary search vectors
+  assert(num_fiducials_origin_to_x_marker>1);
+  assert(num_fiducials_origin_to_y_marker>1);
+  float udx = (key_points[1].pt.x - key_points[0].pt.x)/(num_fiducials_origin_to_x_marker - 1);
+  float udy = (key_points[1].pt.y - key_points[0].pt.y)/(num_fiducials_origin_to_x_marker - 1);
+  const float vdx = (key_points[2].pt.x - key_points[0].pt.x)/(num_fiducials_origin_to_y_marker - 1);
+  const float vdy = (key_points[2].pt.y - key_points[0].pt.y)/(num_fiducials_origin_to_y_marker - 1);
+  const float dist_threshold = (0.25*udx*udx + 0.25*udy*udy);
+//  float dist_threshold = (0.9*udx*0.9*udx + 0.9*udy*0.9*udy);
+
+  // traverse x-axis, prior to and including the origin, points may not be in the F.O.V
+  for(int_t i=0;i<=origin_loc_x;++i){
+    query[0] = (i - origin_loc_x)*udx + key_points[0].pt.x;
+    query[1] = (i - origin_loc_x)*udy + key_points[0].pt.y;
+    kdtree.knnSearch(query, indices, dists, 1);
+    if(query[0]<20.0||query[0]>img.size().width-20.0||dists[0] >= dist_threshold){
+      if(query[0]<20.0||query[0]>img.size().width-20.0){
+        DEBUG_MSG("opencv_dot_targets(): query point (on x-axis) " << query[0] << " " << query[1] << " distance " << dists[0] << " is too close to the boundary so skipping it.");
+      }else{
+        DEBUG_MSG("opencv_dot_targets(): query point (on x-axis) " << query[0] << " " << query[1] << " distance " << dists[0] << " is too far from any dots found so skipping it.");
+      }
+      continue;
+    }
+    DEBUG_MSG("opencv_dot_targets(): query point (on x-axis) " << query[0] << " " << query[1] << " found x-axis dot " << cloud2d[indices[0]] << " distance " << dists[0] << " threshold " << dist_threshold);
+    if(dot_grid[origin_loc_y*num_fiducials_x + i].pt.x>0.0){
+      std::cout << "*** warning: attempting to associate dot with grid point that already has a dot associated with it" << std::endl;
+      std::cout << "             dot at " << dots[indices[0]].pt.x << "  " << dots[indices[0]].pt.y << std::endl;
+      return 2;
+    }
+    dot_grid[origin_loc_y*num_fiducials_x + i] = dots[indices[0]];
+    dot_use_count[indices[0]]++;
+    if(img.size().height>800){
+      circle(img, dots[indices[0]].pt, 20, Scalar(0, 255, 0), 4);
+    }else{
+      circle(img, dots[indices[0]].pt, 10, Scalar(0, 255, 0), 4);
+    }
+  }
+  // traverse from the origin along the x-axis using the the trajector from the last point as an initial guess
+  if(dot_grid[origin_loc_y*num_fiducials_x + origin_loc_x].pt.x<0){
+    DEBUG_MSG("opencv_dot_targets(): ***could not initialize x-axis dots (no dots found at origin or to the left of origin)");
+    return 2;
+  }
+  for(int_t i=origin_loc_x+1;i<num_fiducials_x;++i){
+    if(dot_grid[origin_loc_y*num_fiducials_x + i - 1].pt.x <=0){
+      DEBUG_MSG("opencv_dot_targets(): query point (on x-axis) preivous point failed so skipping this one");
+      break;
+    }
+    if(i==origin_loc_x+1){
+      query[0] = dot_grid[origin_loc_y*num_fiducials_x + origin_loc_x].pt.x + udx;
+      query[1] = dot_grid[origin_loc_y*num_fiducials_x + origin_loc_x].pt.y + udy;
+    }else{
+      query[0] = 2.0*dot_grid[origin_loc_y*num_fiducials_x + i-1].pt.x - dot_grid[origin_loc_y*num_fiducials_x + i-2].pt.x;
+      query[1] = 2.0*dot_grid[origin_loc_y*num_fiducials_x + i-1].pt.y - dot_grid[origin_loc_y*num_fiducials_x + i-2].pt.y;
+    }
+    // traverse the x-axis locating points
+    kdtree.knnSearch(query, indices, dists, 1);
+    if(dists[0] >= dist_threshold){
+      DEBUG_MSG("opencv_dot_targets(): query point (on x-axis) " << query[0] << " " << query[1] << " distance " << dists[0] << " is too far from any dots found so skipping it.");
+      continue;
+    }
+    DEBUG_MSG("opencv_dot_targets(): query point (on x-axis) " << query[0] << " " << query[1] << " found x-axis dot " << cloud2d[indices[0]] << " distance " << dists[0] << " threshold " << dist_threshold);
+    if(dot_grid[origin_loc_y*num_fiducials_x + i].pt.x>0.0){
+      std::cout << "*** warning: attempting to associate dot with grid point that already has a dot associated with it" << std::endl;
+      std::cout << "             dot at " << dots[indices[0]].pt.x << "  " << dots[indices[0]].pt.y << std::endl;
+      return 2;
+    }
+    dot_grid[origin_loc_y*num_fiducials_x + i] = dots[indices[0]];
+    dot_use_count[indices[0]]++;
+    if(img.size().height>800){
+      circle(img, dots[indices[0]].pt, 20, Scalar(0, 255, 0), 4);
+    }else{
+      circle(img, dots[indices[0]].pt, 10, Scalar(0, 255, 0), 4);
+    }
+  }
+  // traverse one level up in y from the x-axis using vdx
+  for(int_t i=0;i<num_fiducials_x;++i){
+    // use the starting point in the previous row and add v
+    if(dot_grid[origin_loc_y*num_fiducials_x + i].pt.x<0){ // ensure the point is valid
+      DEBUG_MSG("opencv_dot_targets(): preivous point failed so skipping this one");
+      continue;
+    }
+    query[0] = dot_grid[origin_loc_y*num_fiducials_x + i].pt.x + vdx;
+    query[1] = dot_grid[origin_loc_y*num_fiducials_x + i].pt.y + vdy;
+    // find the closest dot to this point
+    kdtree.knnSearch(query, indices, dists, 1);
+    DEBUG_MSG("opencv_dot_targets(): query point (one row up from x-axis) " << query[0] << " " << query[1] << " found x-axis dot " << cloud2d[indices[0]] << " distance " << dists[0] << " threshold " << dist_threshold);
+    if(dists[0] < dist_threshold){
+      if(dot_grid[(origin_loc_y+1)*num_fiducials_x + i].pt.x>0.0){
+        std::cout << "*** warning: attempting to associate dot with grid point that already has a dot associated with it" << std::endl;
+        std::cout << "             dot at " << dots[indices[0]].pt.x << "  " << dots[indices[0]].pt.y << std::endl;
+        return 2;
+      }
+      dot_grid[(origin_loc_y+1)*num_fiducials_x + i] = dots[indices[0]];
+      dot_use_count[indices[0]]++;
+      if(img.size().height>800){
+        circle(img, dots[indices[0]].pt, 20, Scalar(255, 0, 0), 4);
+      }else{
+        circle(img, dots[indices[0]].pt, 10, Scalar(255, 0, 0), 4);
+      }
+    }
+    else
+      DEBUG_MSG("opencv_dot_targets(): skipping point due to distance being too large");
+  }
+  // now that there are two rows to work with, use these rows sequentially to predict the next several rows
+  for(int_t j=origin_loc_y+2;j<num_fiducials_y;++j){
+    for(int_t i=0;i<num_fiducials_x;++i){
+      // use the starting point in the previous row and add v
+      if(dot_grid[(j-1)*num_fiducials_x + i].pt.x<0||dot_grid[(j-2)*num_fiducials_x + i].pt.x<0){ // ensure the point is valid
+        DEBUG_MSG("opencv_dot_targets(): preivous point failed so skipping this one");
+        continue;
+      }
+      // compute the localized projection to the next point
+      query[0] = 2.0*dot_grid[(j-1)*num_fiducials_x + i].pt.x - dot_grid[(j-2)*num_fiducials_x + i].pt.x;
+      query[1] = 2.0*dot_grid[(j-1)*num_fiducials_x + i].pt.y - dot_grid[(j-2)*num_fiducials_x + i].pt.y;
+
+      // find the closest dot to this point
+      kdtree.knnSearch(query, indices, dists, 1);
+      DEBUG_MSG("opencv_dot_targets(): query point (above x-axis) " << query[0] << " " << query[1] << " found x-axis dot " << cloud2d[indices[0]] << " distance " << dists[0] << " threshold " << dist_threshold);
+      if(dists[0] < dist_threshold){
+        if(dot_grid[j*num_fiducials_x + i].pt.x>0.0){
+          std::cout << "*** warning: attempting to associate dot with grid point that already has a dot associated with it" << std::endl;
+          std::cout << "             dot at " << dots[indices[0]].pt.x << "  " << dots[indices[0]].pt.y << std::endl;
+          return 2;
+        }
+        dot_grid[j*num_fiducials_x + i] = dots[indices[0]];
+        dot_use_count[indices[0]]++;
+        if(img.size().height>800){
+          circle(img, dots[indices[0]].pt, 20, Scalar(225, 225, 50), 4);
+        }else{
+          circle(img, dots[indices[0]].pt, 10, Scalar(225, 225, 50), 4);
+        }
+      }
+      else
+        DEBUG_MSG("opencv_dot_targets(): skipping point due to distance being too large");
+    }
+  }
+  // traverse down from the x axis
+  for(int_t j=origin_loc_y-1;j>=0;--j){
+    for(int_t i=0;i<num_fiducials_x;++i){
+      // use the starting point in the previous row and add v
+      if(dot_grid[(j+1)*num_fiducials_x + i].pt.x<0||dot_grid[(j+2)*num_fiducials_x + i].pt.x<0){ // ensure the point is valid
+        DEBUG_MSG("opencv_dot_targets(): preivous point failed so skipping this one");
+        continue;
+      }
+      // compute the localized projection to the next point
+      query[0] = 2.0*dot_grid[(j+1)*num_fiducials_x + i].pt.x - dot_grid[(j+2)*num_fiducials_x + i].pt.x;
+      query[1] = 2.0*dot_grid[(j+1)*num_fiducials_x + i].pt.y - dot_grid[(j+2)*num_fiducials_x + i].pt.y;
+      // find the closest dot to this point
+      kdtree.knnSearch(query, indices, dists, 1);
+      DEBUG_MSG("opencv_dot_targets(): query point (below x-axis) " << query[0] << " " << query[1] << " found x-axis dot " << cloud2d[indices[0]] << " distance " << dists[0] << " threshold " << dist_threshold);
+      if(dists[0] < dist_threshold){
+        if(dot_grid[j*num_fiducials_x + i].pt.x>0.0){
+          std::cout << "*** warning: attempting to associate dot with grid point that already has a dot associated with it" << std::endl;
+          std::cout << "             dot at " << dots[indices[0]].pt.x << "  " << dots[indices[0]].pt.y << std::endl;
+          return 2;
+        }
+        dot_grid[j*num_fiducials_x + i] = dots[indices[0]];
+        dot_use_count[indices[0]]++;
+        if(img.size().height>800){
+          circle(img, dots[indices[0]].pt, 20, Scalar(255, 0, 255), 4);
+        }else{
+          circle(img, dots[indices[0]].pt, 10, Scalar(255, 0, 255), 4);
+        }
+      }
+      else
+        DEBUG_MSG("opencv_dot_targets(): skipping point due to distance being too large");
+    }
+  }
+
+//  static int img_counter = 0;
+//  img_counter++;
+//  std::stringstream filename;
+//  filename << "debug_box_" << img_counter << ".png";
+//  cv::imwrite(filename.str(),img);
+
+  // assemble the img_points and grd_points vectors
+  for(int_t j=0;j<num_fiducials_y;++j){
+    for(int_t i=0;i<num_fiducials_x;++i){
+      // don't include the failed points
+      if(dot_grid[j*num_fiducials_x+i].pt.x<0) continue;
+      // don't include the corner key points (marker dots)
+      if((j==origin_loc_y&&i==origin_loc_x)||
+          (j==origin_loc_y&&i==origin_loc_x+num_fiducials_origin_to_x_marker-1)||
+          (j==origin_loc_y+num_fiducials_origin_to_y_marker-1&&i==origin_loc_x)) continue;
+      img_points.push_back(dot_grid[j*num_fiducials_x+i]);
+      grd_points.push_back(cv::KeyPoint(cv::Point2f(i,j),0));
+      std::stringstream dot_text;
+      dot_text << "(" << i << "," << j << ")";
+      if(img.size().height>800){
+        putText(img, dot_text.str(), dot_grid[j*num_fiducials_x+i].pt + Point2f(20.0,20.0),
+          FONT_HERSHEY_COMPLEX_SMALL, 1.5, Scalar(255,0,255), 1, cv::LINE_AA);
+      }else{
+        putText(img, dot_text.str(), dot_grid[j*num_fiducials_x+i].pt + Point2f(20.0,20.0),
+          FONT_HERSHEY_COMPLEX_SMALL, 0.75, Scalar(255,0,255), 1, cv::LINE_AA);
+      }
+    }
+  }
+
+//  static int img_counter = 0;
+//  img_counter++;
+//  std::stringstream filename;
+//  filename << "debug_box_" << img_counter << ".png";
+//  cv::imwrite(filename.str(),img);
 
   // save the information about the found dots
-  std::cout << "opencv_dot_targets():     good dots identified: " << new_dot_num << std::endl;
-  DEBUG_MSG("    filter passes: " << filter_passes);
-  if(new_dot_num < num_fiducials_x*num_fiducials_y*0.75){ // TODO fix this hard coded tolerance
+  for(int_t i=0;i<num_dots+3;++i){
+    if(dot_use_count[i]>1){
+      std::cout << "*** warning: detected dot being associated with multiple grid points, dot extraction failed." << std::endl;
+      std::cout << "             dot at " << dots[i].pt.x << " " << dots[i].pt.y << std::endl;
+      return 2;
+    }
+  }
+  std::cout << "opencv_dot_targets():     good dots identified: " << img_points.size() << std::endl;
+  if(img_points.size() < num_fiducials_x*num_fiducials_y*0.70){ // TODO fix this hard coded tolerance
     std::cout << "*** warning: not enough (non-keypoint) dots found" << std::endl;
     return 2; // not an issue with the thresholding (which would have resulted in error code 1)
   }
@@ -821,6 +1016,7 @@ void get_dot_markers(cv::Mat img,
   DEBUG_MSG("option, use adaptive:      " << use_adaptive);
   int filter_mode = options.get<int_t>(opencv_server_filter_mode,1);
   DEBUG_MSG("option, filter mode:       " << filter_mode);
+  const bool donut_test = options.get<bool>("donut_test",false);
   //  cv::THRESH_BINARY = 0,
   //  cv::THRESH_BINARY_INV = 1,
   //  cv::THRESH_TRUNC = 2,
@@ -838,6 +1034,8 @@ void get_dot_markers(cv::Mat img,
   params.filterByArea = true;
   params.maxArea = 10e4;
   params.minArea = min_size;
+//  params.filterByInertia = true;
+//  params.minInertiaRatio = 0.75;
   cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
 
   // clear the points vector
@@ -875,7 +1073,62 @@ void get_dot_markers(cv::Mat img,
     nLabels = connectedComponentsWithStats(not_src, labelImage, stats, centroids, 8, CV_32S);
   }
   DEBUG_MSG("get_dot_markers(): num keypoints " << keypoints.size());
+  float avg_size = 0.0f;
+  for(size_t i=0;i<keypoints.size();++i){
+    DEBUG_MSG("Keypoint: " << i << " " << keypoints[i].pt.x << " " << keypoints[i].pt.y << " blob size " << keypoints[i].size);
+    avg_size += keypoints[i].size;
+  }
+  if(keypoints.size()>0)
+    avg_size /= keypoints.size();
+
+  // filter out blobs by size if not searching for keypoints
+  if(!donut_test){
+    size_t i = keypoints.size();
+    while(i--){
+      if(std::abs(keypoints[i].size-avg_size)/avg_size > 0.5){
+        DEBUG_MSG("get_dot_markers(): erasing keypoing at " << keypoints[i].pt.x << " " << keypoints[i].pt.y << " due to keypoint size >50% difference in diameter from avg");
+        keypoints.erase(keypoints.begin() + i);
+      }
+    }
+  }
+
+//  cvtColor(not_src, not_src, cv::COLOR_GRAY2RGB);
+//  for(size_t i=0;i<keypoints.size();++i)
+//    circle(not_src, keypoints[i].pt, 20, Scalar(0,0,255), 4);
+//  static int img_counter = 0;
+//  img_counter++;
+//  std::stringstream filename;
+//  filename << "keypoints_" << img_counter << ".png";
+//  cv::imwrite(filename.str(),not_src);
+
   if(keypoints.size()==0) return;
+
+  // test for donut shape of the keypoints by looking at the labels of the connected components
+  // if there are more than 2 connected components then it's probably a donut
+  if(donut_test){
+    const int_t donut_span = 2 * avg_size;
+    DEBUG_MSG("get_dot_markers(): donut span: " << donut_span);
+    size_t i = keypoints.size();
+    while(i--){
+      // check that the end points have the same zone
+      if(labelImage.at<int>(keypoints[i].pt.y,keypoints[i].pt.x - donut_span)!=labelImage.at<int>(keypoints[i].pt.y,keypoints[i].pt.x + donut_span)){
+        DEBUG_MSG("get_dot_markers(): erasing keypoing at " << keypoints[i].pt.x << " " << keypoints[i].pt.y << " because the endpoints of the donut span are not in the same connected component");
+        keypoints.erase(keypoints.begin() + i);
+        continue;
+      }
+      std::set<int_t> zones;
+      for(int_t j=keypoints[i].pt.x - donut_span;j<keypoints[i].pt.x+donut_span;++j){
+        if(j>=0&&j<img.size().width){
+          zones.insert(labelImage.at<int>(keypoints[i].pt.y,j));
+          //std::cout << " keypoint " << i << " has zone " << labelImage.at<int>(keypoints[i].pt.y,j) << " size " << zones.size() << std::endl;
+        }
+      }
+      if(zones.size()!=3){
+        DEBUG_MSG("get_dot_markers(): erasing keypoing at " << keypoints[i].pt.x << " " << keypoints[i].pt.y << " because num zones is " << zones.size() << " not 3");
+        keypoints.erase(keypoints.begin() + i);
+      }
+    }
+  }
 
   if(keypoints.size()==3&&nLabels>=3){
     float avg_diameter = 0.0f;
@@ -897,18 +1150,17 @@ void get_dot_markers(cv::Mat img,
     while (i--) {
       // remove the keypoint from the vector
       if(keypoints[i].size<=0.0){
-  //      DEBUG_MSG("get_dot_markers(): removing keypoint " << i << " due to keypoint size == 0.0");
+        DEBUG_MSG("get_dot_markers(): removing keypoint " << i << " due to keypoint size == 0.0");
         keypoints.erase(keypoints.begin() + i);
+        continue;
       }
-      if(std::abs(keypoints[i].size-avg_diameter)/avg_diameter>0.30){
-  //      DEBUG_MSG("get_dot_markers(): removing keypoint " << i << " due to keypoint size >30% difference in diameter from avg");
+      if(std::abs(keypoints[i].size-avg_diameter)/avg_diameter>2.0){
+        DEBUG_MSG("get_dot_markers(): removing keypoint " << i << " due to keypoint size >200% difference in diameter from avg");
         keypoints.erase(keypoints.begin() + i);
       }
     }
     DEBUG_MSG("get_dot_markers(): num keypoints " << keypoints.size());
   }
-//  for (size_t i = 0;i<keypoints.size();++i)
-//    DEBUG_MSG("get_dot_markers(): keypoint " << i << " diameter " << keypoints[i].size);
 }
 
 //calculate the transformation coefficients
@@ -1235,14 +1487,9 @@ float dist2(KeyPoint pnt1, KeyPoint pnt2) {
 //order three distances returns biggest to smallest
 void order_dist3(std::vector<float> & dist,
   std::vector<int> & dist_order) {
-  dist_order[0] = 0;
-  dist_order[2] = 0;
-  for (int_t i = 1; i < 3; i++) {
-    if (dist[dist_order[0]] < dist[i]) dist_order[0] = i;
-    if (dist[dist_order[2]] > dist[i]) dist_order[2] = i;
-  }
-  if (dist_order[0] == dist_order[2]) assert(false);
-  dist_order[1] = 3 - (dist_order[0] + dist_order[2]);
+  assert(dist_order.size()==dist.size());
+  std::iota(dist_order.begin(),dist_order.end(),0); //Initializing
+  std::sort(dist_order.begin(),dist_order.end(), [&](int i,int j){return dist[i]>dist[j];} );
 }
 
 //is a point contained within the quadrilateral
@@ -1271,40 +1518,82 @@ bool is_in_quadrilateral(const float & x,
   return false;
 }
 
+void reorder_keypoints(std::vector<KeyPoint> & keypoints, const std::vector<KeyPoint> & dots) {
 
-//reorder the keypoints into origin, xaxis, yaxis order
-void reorder_keypoints(std::vector<KeyPoint> & keypoints) {
-  std::vector<float> dist(3, 0.0); //holds the distances between the points
-  std::vector<KeyPoint> temp_points;
-  std::vector<int> dist_order(3, 0); //index order of the distances max to min
-  float cross; //cross product and indicies
-  temp_points.clear();
-  //save the distances between the points (note if dist(1,2) is max point 0 is the origin)
-  dist[0] = dist2(keypoints[1], keypoints[2]);
-  dist[1] = dist2(keypoints[0], keypoints[2]);
-  dist[2] = dist2(keypoints[0], keypoints[1]);
-  //order the distances
-  order_dist3(dist, dist_order);
-
-  //calaulate the cross product to determine the x and y axis
-  int_t io = dist_order[0];
-  int_t i1 = dist_order[1];
-  int_t i2 = dist_order[2];
-
-  //if the cross product is positive i1 was the y axis point because of inverted image coordinates
-  cross = ((keypoints[i1].pt.x - keypoints[io].pt.x) * (keypoints[i2].pt.y - keypoints[io].pt.y)) -
-      ((keypoints[i1].pt.y - keypoints[io].pt.y) * (keypoints[i2].pt.x - keypoints[io].pt.x));
-  if (cross > 0.0) { //i2 is the x axis
-    i2 = dist_order[1];
-    i1 = dist_order[2];
+  // compute the line coefficients for each side
+  assert(keypoints.size()==3);
+  // m = (y1 - y2)/(x1-x2), y = mx + b -> b = y - mx
+  std::vector<float> m(3,0.0f);
+  std::vector<float> b(3,0.0f);
+  std::vector<float> count(3,0.0f); //holds the distances between the points
+  std::vector<int_t> count_order(3,0); //index order of the distances max to min
+  m[0] = (keypoints[1].pt.y - keypoints[2].pt.y)/(keypoints[1].pt.x - keypoints[2].pt.x);
+  b[0] = keypoints[1].pt.y - m[0] * keypoints[1].pt.x;
+  m[1] = (keypoints[0].pt.y - keypoints[2].pt.y)/(keypoints[0].pt.x - keypoints[2].pt.x);
+  b[1] = keypoints[0].pt.y - m[1] * keypoints[0].pt.x;
+  m[2] = (keypoints[0].pt.y - keypoints[1].pt.y)/(keypoints[0].pt.x - keypoints[1].pt.x);
+  b[2] = keypoints[0].pt.y - m[2] * keypoints[0].pt.x;
+  // compute the distances from each img_point to one of those lines
+  const float dist_tol = 5.0;
+  for(size_t i=0;i<3;++i){
+    for(size_t j=0;j<dots.size();++j){
+      const float dist = std::abs(-1.0*m[i]*dots[j].pt.x + dots[j].pt.y - b[i])/std::sqrt(m[i]*m[i]+1);
+      //std::cout << "dot " << dots[j].pt.x << " " << dots[j].pt.y << " dist " << dist << std::endl;
+      if(dist<dist_tol)
+        count[i]+=1.0;
+    }
   }
+  order_dist3(count,count_order);
+//  for(size_t i=0;i<3;++i){
+//    std::cout << " count " << i << " " << count[i] << std::endl;
+//  }
+//  for(size_t i=0;i<3;++i){
+//    std::cout << " count order " << i << " " << count_order[i] << std::endl;
+//  }
+
+  std::set<int_t> side0;
+  side0.insert(1);
+  side0.insert(2);
+  std::set<int_t> side1;
+  side1.insert(0);
+  side1.insert(2);
+  std::set<int_t> side2;
+  side2.insert(0);
+  side2.insert(1);
+
+  std::vector<std::set<int_t> > sides;
+  sides.push_back(side0);
+  sides.push_back(side1);
+  sides.push_back(side2);
+
+  int_t i0 = 0; //common point between set one and two must be the origin
+
+  for (std::set<int_t>::iterator it0 = sides[count_order[0]].begin(); it0 != sides[count_order[0]].end(); ++it0) {
+    for (std::set<int_t>::iterator it1 = sides[count_order[1]].begin(); it1 != sides[count_order[1]].end(); ++it1) {
+      if(*it0==*it1)
+        i0 = *it0;
+    }
+  }
+
+  DEBUG_MSG("reorder_keypoints(): origin is keypoint " << i0);
+
+  // now remove the origin from the other two points to get the x and y axis
+  sides[count_order[0]].erase(i0);
+  sides[count_order[1]].erase(i0);
+  // the leftover points are the end points
+  int_t i1 = *sides[count_order[0]].begin();
+  DEBUG_MSG("reorder_keypoints(): end of x-axis is " << i1);
+  // small side is y-axis
+  int_t i2 = *sides[count_order[1]].begin();
+  DEBUG_MSG("reorder_keypoints(): end of y-axis is " << i2);
+  assert(i1!=i2);
+  assert(i0!=i1);
+  assert(i0!=i2);
   //reorder the points and return
-  temp_points.push_back(keypoints[io]);
-  temp_points.push_back(keypoints[i1]);
-  temp_points.push_back(keypoints[i2]);
-  keypoints[0] = temp_points[0];
-  keypoints[1] = temp_points[1];
-  keypoints[2] = temp_points[2];
+  std::vector<cv::KeyPoint> temp_points = keypoints;
+  keypoints[0] = temp_points[i0];
+  keypoints[1] = temp_points[i1];
+  keypoints[2] = temp_points[i2];
 }
 
 }

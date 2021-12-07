@@ -164,7 +164,7 @@ void filter_dot_markers(std::vector<cv::KeyPoint> dots,
   cv::Mat img,
   bool draw);
 /// reorders the keypoints into origin, x dot, y dot based on the distances between them
-void reorder_keypoints(std::vector<cv::KeyPoint> & keypoints);
+void reorder_keypoints(std::vector<cv::KeyPoint> & keypoints,const std::vector<cv::KeyPoint> & dots);
 /// creates a quadrilateral that describes the allowable area for valid dots
 void create_bounding_box(std::vector<float> & box_x,
   std::vector<float> & box_y,
