@@ -9,6 +9,7 @@
 SET(REGRESSION_TESTS
   single_speckled_shift
   incremental
+  unicode_filename
   conformal_subset_def
   dic_challenge_12
   dic_challenge_12_sorted

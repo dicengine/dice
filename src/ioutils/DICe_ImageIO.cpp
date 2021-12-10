@@ -204,6 +204,26 @@ void read_image_dimensions(const char * file_name,
   else{
     DEBUG_MSG("read_image_dimensions(): (opencv) file name: " << file_name);
     cv::Mat image = cv::imread(file_name, cv::ImreadModes::IMREAD_GRAYSCALE);
+    if (image.empty()) {
+      DEBUG_MSG("utils::read_image(): image is empty, it could have unicode characters in the name so trying to read with a buffer instead");
+      std::ifstream f(file_name,std::iostream::binary);
+      if(!f.good()){
+        std::cout << "utils::read_image_dimensions(): image read failed." << std::endl;
+        height = 0;
+        width = 0;
+        return;
+      }
+      std::filebuf* pbuf = f.rdbuf();
+      size_t size = pbuf->pubseekoff(0, f.end, f.in);
+      pbuf->pubseekpos(0, f.in);
+      std::vector<uchar> buffer(size);
+      pbuf->sgetn((char*)buffer.data(), size);
+      image = cv::imdecode(buffer, cv::IMREAD_GRAYSCALE);
+      if (image.empty()) {
+        std::cout << "utils::read_image_dimensions(): image read failed." << std::endl;
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+      }
+    }
     height = image.rows;
     width = image.cols;
   }
@@ -387,6 +407,25 @@ void read_image(const char * file_name,
     // read the image using opencv:
     cv::Mat image;
     image = cv::imread(file_name, cv::ImreadModes::IMREAD_GRAYSCALE);
+    // make sure the filename didn't have any unicode characters causing problems
+    if (image.empty()) {
+      DEBUG_MSG("utils::read_image(): image is empty, it could have unicode characters in the name so trying to read with a buffer instead");
+      std::ifstream f(file_name,std::iostream::binary);
+      if(!f.good()){
+        std::cout << "utils::read_image(): image read failed." << std::endl;
+      }else{
+        std::filebuf* pbuf = f.rdbuf();
+        size_t size = pbuf->pubseekoff(0, f.end, f.in);
+        pbuf->pubseekpos(0, f.in);
+        std::vector<uchar> buffer(size);
+        pbuf->sgetn((char*)buffer.data(), size);
+        image = cv::imdecode(buffer, cv::IMREAD_GRAYSCALE);
+        if (image.empty()) {
+          std::cout << "utils::read_image(): image read failed." << std::endl;
+          TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+        }
+      }
+    }
     width = sub_w==0?image.cols:sub_w;
     height = sub_h==0?image.rows:sub_h;
     assert(width+sub_offset_x <= image.cols);
@@ -630,8 +669,28 @@ cv::Mat read_image(const char * file_name){
       }
     }
     return img;
-  }else
-    return cv::imread(file_name,cv::IMREAD_GRAYSCALE);
+  }else{
+    cv::Mat image = cv::imread(file_name,cv::IMREAD_GRAYSCALE);
+    if (image.empty()) {
+      DEBUG_MSG("utils::read_image(): image is empty, it could have unicode characters in the name so trying to read with a buffer instead");
+      std::ifstream f(file_name,std::iostream::binary);
+      if(!f.good()){
+        std::cout << "utils::read_image(): image read failed." << std::endl;
+      }else{
+        std::filebuf* pbuf = f.rdbuf();
+        size_t size = pbuf->pubseekoff(0, f.end, f.in);
+        pbuf->pubseekpos(0, f.in);
+        std::vector<uchar> buffer(size);
+        pbuf->sgetn((char*)buffer.data(), size);
+        image = cv::imdecode(buffer, cv::IMREAD_GRAYSCALE);
+        if (image.empty()) {
+          std::cout << "utils::read_image(): image read failed." << std::endl;
+          TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+        }
+      }
+    }
+    return image;
+  }
 }
 
 template <typename S>
