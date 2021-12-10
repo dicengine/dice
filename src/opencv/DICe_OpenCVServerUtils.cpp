@@ -60,6 +60,7 @@
 #include "opencv2/flann/miniflann.hpp"
 
 #include <cassert>
+#include <numeric>
 
 using namespace cv;
 namespace DICe{
