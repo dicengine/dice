@@ -347,6 +347,8 @@ void read_image(const char * file_name,
                 intensities[i] = 0.125*(intensities[i-1]+intensities[i+1]+
                     intensities[i-width]+intensities[i-width+1]+intensities[i-width-1]+
                     intensities[i+width]+intensities[i+width+1]+intensities[i+width+1]);
+              }else if(i>0){
+                intensities[i] = intensities[i-1];
               }
             }
           }
