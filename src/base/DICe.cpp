@@ -62,7 +62,6 @@ void print_banner(){
   type_message = "** Data type: double";
 #endif
   std::cout << std::endl << "** Digital Image Correlation Engine (DICe)" << std::endl;
-  std::cout << "** " << VERSION << std::endl;
   std::cout << "** git: " << GITSHA1 << std::endl;
   std::cout << mpi_message << std::endl;
   std::cout << type_message << std::endl;

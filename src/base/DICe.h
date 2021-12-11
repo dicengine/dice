@@ -78,7 +78,6 @@
 
 //#define SAME_TYPES(T1, T2) _Generic((  (T1){0}  ),T2: 1,default: 0)
 
-#define VERSION "v2.0"
 #ifndef GITSHA1
   #define GITSHA1 "not available"
 #endif
