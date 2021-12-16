@@ -70,6 +70,9 @@ int main(int argc, char *argv[]) {
   //
   // Write the output
   schema.write_output("","custom_app_output");
+  // Update the prev image and do any other tasks meant for after a frame has been processed
+  // If your app is iterating over images, this call should be inside the loop, but at the very end of the loop body
+  schema.post_execution_tasks();
 
   std::cout << "End custom_app example\n";
 
