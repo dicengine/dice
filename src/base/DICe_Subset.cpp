@@ -628,11 +628,12 @@ Subset::noise_std_dev(Teuchos::RCP<Image_<S>> image,
   static scalar_t mask[3][3] = {{1, -2, 1},{-2,4,-2},{1,-2,1}};
 
   // determine the extents of the subset:
-  int_t min_x = x(0);
-  int_t max_x = x(0);
-  int_t min_y = y(0);
-  int_t max_y = y(0);
+  int_t min_x = cx_;
+  int_t max_x = cx_;
+  int_t min_y = cy_;
+  int_t max_y = cy_;
   for(int_t i=0;i<num_pixels();++i){
+    if(is_deactivated_this_step(i)||!is_active(i)) continue;
     if(x(i) < min_x) min_x = x(i);
     if(x(i) > max_x) max_x = x(i);
     if(y(i) < min_y) min_y = y(i);
@@ -646,19 +647,26 @@ Subset::noise_std_dev(Teuchos::RCP<Image_<S>> image,
   min_x += u; max_x += u;
   min_y += v; max_y += v;
 
-  DEBUG_MSG("Subset::noise_std_dev(): Extents of subset " << min_x << " " << max_x << " " << min_y << " " << max_y);
-  const int_t h = max_y - min_y + 1;
-  const int_t w = max_x - min_x + 1;
   const int_t img_h = image->height();
   const int_t img_w = image->width();
   const int_t ox = image->offset_x();
   const int_t oy = image->offset_y();
   DEBUG_MSG("Subset::noise_std_dev(): Extents of image " << ox << " " << ox + img_w << " " << oy << " " << oy + img_h);
+  if(min_x < ox) min_x = ox;
+  if(min_y < oy) min_y = oy;
+  if(max_x >= img_w + ox) min_x = 0;
+  if(max_y >= img_h + oy) min_y = 0;
+  DEBUG_MSG("Subset::noise_std_dev(): Extents of subset " << min_x << " " << max_x << " " << min_y << " " << max_y);
 
-  // ensure that the subset falls inside the image
-  if(max_x >= img_w + ox || min_x < ox || max_y >= img_h + oy || min_y < oy){
-    return 1.0;
-  }
+  int_t h = max_y - min_y + 1;
+  int_t w = max_x - min_x + 1;
+  if(w<3) w = 3;
+  if(h<3) h = 3;
+
+//  // ensure that the subset falls inside the image
+//  if(max_x >= img_w + ox || min_x < ox || max_y >= img_h + oy || min_y < oy){
+//    return 1.0;
+//  }
 
   scalar_t variance = 0.0;
   scalar_t conv_i = 0.0;
