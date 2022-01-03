@@ -1653,6 +1653,9 @@ Schema::execute_correlation(){
     mesh_->get_field(SUBSET_DISPLACEMENT_X_FS)->put_scalar(0.0);
     mesh_->get_field(SUBSET_DISPLACEMENT_Y_FS)->put_scalar(0.0);
   }
+  // reset the sigma field for feature matching initializer
+  if(initialization_method_==USE_FEATURE_MATCHING)
+    mesh_->get_field(SIGMA_FS)->put_scalar(0.0);
 #ifdef DICE_ENABLE_GLOBAL
   if(has_initial_condition_file()&&frame_id_==first_frame_id_){
     TEUCHOS_TEST_FOR_EXCEPTION(initialization_method_!=USE_FIELD_VALUES,std::runtime_error,
@@ -1933,6 +1936,17 @@ Schema::record_failed_step(const int_t subset_gid,
   const int_t status,
   const int_t num_iterations){
   DEBUG_MSG("Subset " << subset_gid << " record failed step, status: " << status);
+  // initialize the subset again to update the displacement fields, etc. in case this subset
+  // gets turned back on in a subsequent frame
+  if(initialization_method_==USE_FEATURE_MATCHING){
+    Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory(this);
+    try{
+      initial_guess(subset_gid,shape_function);
+    }
+    catch (...) { // a non-graceful exception occurred in initialization
+    };
+    shape_function->save_fields(this,subset_gid);
+  }
   global_field_value(subset_gid,SIGMA_FS) = -1.0;
   global_field_value(subset_gid,MATCH_FS) = -1.0;
   global_field_value(subset_gid,GAMMA_FS) = -1.0;
@@ -1996,15 +2010,15 @@ Schema::generic_correlation_routine(Teuchos::RCP<Objective> obj){
 
   // if for some reason the coordinates of this subset are outside the image domain, record a failed step,
   // this may have occurred for a subset in the left image projected to the right that is not in the right image
-  if(subset_dim_ > 0){
+  if(subset_dim_ > 0 && frame_id_==first_frame_id_){
     const scalar_t current_pos_x = global_field_value(subset_gid,SUBSET_COORDINATES_X_FS) + global_field_value(subset_gid,SUBSET_DISPLACEMENT_X_FS);
     const scalar_t current_pos_y = global_field_value(subset_gid,SUBSET_COORDINATES_Y_FS) + global_field_value(subset_gid,SUBSET_DISPLACEMENT_Y_FS);
     if(current_pos_x < def_imgs_[0]->offset_x()+subset_dim_/2 || current_pos_x > def_imgs_[0]->width()+def_imgs_[0]->offset_x() - subset_dim_/2 ||
         current_pos_y < def_imgs_[0]->offset_y()+subset_dim_/2 || current_pos_y > def_imgs_[0]->height()+def_imgs_[0]->offset_y() - subset_dim_/2){
-      DEBUG_MSG("Invalid subset origin (probably from stereo projection of the left subset not being in the right image)" <<
+      std::cout << "***WARNING***: subset origin location out of field of view at initialization" <<
         " current pos " << current_pos_x << " " << current_pos_y << " limits x " << def_imgs_[0]->offset_x()+subset_dim_/2 << " to " <<
         def_imgs_[0]->width()+def_imgs_[0]->offset_x() - subset_dim_/2 << " limits y " << def_imgs_[0]->offset_y()+subset_dim_/2 << " to " <<
-        def_imgs_[0]->height()+def_imgs_[0]->offset_y() - subset_dim_/2);
+        def_imgs_[0]->height()+def_imgs_[0]->offset_y() - subset_dim_/2 << std::endl;
       record_failed_step(subset_gid,static_cast<int_t>(INITIALIZE_FAILED_BY_EXCEPTION),-1);
       return;
     }

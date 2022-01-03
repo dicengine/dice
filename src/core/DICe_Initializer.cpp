@@ -500,8 +500,11 @@ Feature_Matching_Initializer::initial_guess(const int_t subset_gid,
   //output_file_name << "rotations_" << schema_->frame_id() << ".txt";
   //fout.open(output_file_name.str(),std::ofstream::out | std::ofstream::app);
 
-  if(schema_->global_field_value(subset_gid,SIGMA_FS)<0)
-    return INITIALIZE_FAILED;
+  // skip points that are out of the field of view
+//  if(schema_->global_field_value(subset_gid,STATUS_FLAG_FS)==static_cast<int_t>(INITIALIZE_FAILED_BY_EXCEPTION))
+//    return INITIALIZE_FAILED;
+  // reset the sigma field for all points
+//  schema_->global_field_value(subset_gid,SIGMA_FS) = 0.0;
   int_t num_neighbors = 7;
   const int_t num_outlier_remove = 2;
   assert(num_neighbors>num_outlier_remove+1);
