@@ -14,6 +14,7 @@ SET(REGRESSION_TESTS
   dic_challenge_12
   dic_challenge_12_sorted
   simple_tracking
+  reset_lost_subsets
 )
 
 IF(DICE_USE_DOUBLE)

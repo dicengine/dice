@@ -1,0 +1,25 @@
+<ParameterList>
+<Parameter name="interpolation_method" type="string" value="KEYS_FOURTH" />
+<Parameter name="sssig_threshold" type="double" value="150" />
+<Parameter name="optimization_method" type="string" value="GRADIENT_BASED" />
+<Parameter name="initialization_method" type="string" value="USE_FEATURE_MATCHING" />
+<Parameter name="enable_translation" type="bool" value="true" />
+<Parameter name="enable_rotation" type="bool" value="false" />
+<Parameter name="enable_normal_strain" type="bool" value="false" />
+<Parameter name="enable_shear_strain" type="bool" value="false" />
+<ParameterList name="post_process_plotly_contour">
+<Parameter name="plotly_contour_grid_step" type="int" value=" 5" />
+</ParameterList>
+<Parameter name="output_delimiter" type="string" value="," />
+<ParameterList name="output_spec"> 
+<Parameter name="COORDINATE_X" type="bool" value="true" />
+<Parameter name="COORDINATE_Y" type="bool" value="true" />
+<Parameter name="DISPLACEMENT_X" type="bool" value="true" />
+<Parameter name="DISPLACEMENT_Y" type="bool" value="true" />
+<Parameter name="SIGMA" type="bool" value="true" />
+<Parameter name="GAMMA" type="bool" value="true" />
+<Parameter name="BETA" type="bool" value="true" />
+<Parameter name="STATUS_FLAG" type="bool" value="true" />
+<Parameter name="UNCERTAINTY" type="bool" value="true" />
+</ParameterList>
+</ParameterList>
