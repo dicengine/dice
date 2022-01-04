@@ -191,10 +191,8 @@ Image_<S>::Image_(Teuchos::RCP<Image_> img,
 
   // initialize the pixel containers
   intensities_ = Teuchos::ArrayRCP<S>(height_*width_,0);
-  intensities_temp_ = Teuchos::ArrayRCP<S>(height_*width_,0);
   grad_x_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   grad_y_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
-  mask_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   // deep copy values over
   int_t src_y=0, src_x=0;
   for(int_t y=0;y<height_;++y){
@@ -205,13 +203,11 @@ Image_<S>::Image_(Teuchos::RCP<Image_> img,
         intensities_[y*width_+x] = (*img)(src_x,src_y);
         grad_x_[y*width_+x] = img->grad_x(src_x,src_y);
         grad_y_[y*width_+x] = img->grad_y(src_x,src_y);
-        mask_[y*width_+x] = img->mask(src_x,src_y);
       }
       else{
         intensities_[y*width_+x] = 0;
         grad_x_[y*width_+x] = 0.0;
         grad_y_[y*width_+x] = 0.0;
-        mask_[y*width_+x] = 1.0;
       }
     }
   }
@@ -344,8 +340,6 @@ Image_<S>::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> 
   DEBUG_MSG("Image::default_contructor_tasks(): allocating image storage");
   grad_x_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   grad_y_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
-  intensities_temp_ = Teuchos::ArrayRCP<S>(height_*width_,0);
-  mask_ = Teuchos::ArrayRCP<scalar_t>(height_*width_,0.0);
   if(params!=Teuchos::null){
     if(params->isParameter(DICe::compute_laplacian_image)){
       if(params->get<bool>(DICe::compute_laplacian_image)==true){
@@ -1103,64 +1097,9 @@ template <typename S>
 void
 Image_<S>::apply_mask(const Conformal_Area_Def & area_def,
   const bool smooth_edges){
-  // first create the mask:
-  create_mask(area_def,smooth_edges);
-  for(int_t i=0;i<num_pixels();++i)
-    intensities_[i] = static_cast<S>(mask_[i]*intensities_[i]);
-}
-
-#ifndef STORAGE_SCALAR_SAME_TYPE
-template DICE_LIB_DLL_EXPORT void Image_<storage_t>::apply_mask(const Conformal_Area_Def &,const bool);
-#endif
-template DICE_LIB_DLL_EXPORT void Image_<scalar_t>::apply_mask(const Conformal_Area_Def &,const bool);
-
-template <typename S>
-void
-Image_<S>::apply_mask(const bool smooth_edges){
-  if(smooth_edges){
-    static scalar_t smoothing_coeffs[5][5];
-    std::vector<scalar_t> coeffs(5,0.0);
-    coeffs[0] = 0.0014;coeffs[1] = 0.1574;coeffs[2] = 0.62825;
-    coeffs[3] = 0.1574;coeffs[4] = 0.0014;
-    for(int_t j=0;j<5;++j){
-      for(int_t i=0;i<5;++i){
-        smoothing_coeffs[i][j] = coeffs[i]*coeffs[j];
-      }
-    }
-    Teuchos::ArrayRCP<scalar_t> mask_tmp(mask_.size(),0.0);
-    for(int_t i=0;i<mask_tmp.size();++i)
-      mask_tmp[i] = mask_[i];
-    for(int_t y=0;y<height_;++y){
-      for(int_t x=0;x<width_;++x){
-        if(x>=2&&x<width_-2&&y>=2&&y<height_-2){ // 2 is half the gauss_mask size
-          scalar_t value = 0.0;
-          for(int_t i=0;i<5;++i){
-            for(int_t j=0;j<5;++j){
-              // assumes intensity values have already been deep copied into mask_tmp_
-              value += smoothing_coeffs[i][j]*mask_tmp[(y+(j-2))*width_+x+(i-2)];
-            } //j
-          } //i
-          mask_[y*width_+x] = value;
-        }else{
-          mask_[y*width_+x] = mask_tmp[y*width_+x];
-        }
-      } // x
-    } // y
-  } // smooth edges
-  for(int_t i=0;i<num_pixels();++i)
-    intensities_[i] = static_cast<S>(mask_[i]*intensities_[i]);
-}
-
-#ifndef STORAGE_SCALAR_SAME_TYPE
-template DICE_LIB_DLL_EXPORT void Image_<storage_t>::apply_mask(const bool);
-#endif
-template DICE_LIB_DLL_EXPORT void Image_<scalar_t>::apply_mask(const bool);
-
-template <typename S>
-void
-Image_<S>::create_mask(const Conformal_Area_Def & area_def,
-  const bool smooth_edges){
   assert(area_def.has_boundary());
+  // first create the mask:
+  Teuchos::ArrayRCP<scalar_t> mask(height_*width_,0.0);
   std::set<std::pair<int_t,int_t> > coords;
   for(size_t i=0;i<area_def.boundary()->size();++i){
     std::set<std::pair<int_t,int_t> > shapeCoords = (*area_def.boundary())[i]->get_owned_pixels();
@@ -1181,7 +1120,7 @@ Image_<S>::create_mask(const Conformal_Area_Def & area_def,
   // NOTE: the pairs are (y,x) not (x,y) so that the ordering is correct in the set
   std::set<std::pair<int_t,int_t> >::iterator set_it = coords.begin();
   for( ; set_it!=coords.end();++set_it){
-    mask_[(set_it->first - offset_y_)*width_+set_it->second - offset_x_] = 1.0;
+    mask[(set_it->first - offset_y_)*width_+set_it->second - offset_x_] = 1.0;
   }
   if(smooth_edges){
     static scalar_t smoothing_coeffs[5][5];
@@ -1193,9 +1132,9 @@ Image_<S>::create_mask(const Conformal_Area_Def & area_def,
         smoothing_coeffs[i][j] = coeffs[i]*coeffs[j];
       }
     }
-    Teuchos::ArrayRCP<scalar_t> mask_tmp(mask_.size(),0.0);
+    Teuchos::ArrayRCP<scalar_t> mask_tmp(mask.size(),0.0);
     for(int_t i=0;i<mask_tmp.size();++i)
-      mask_tmp[i] = mask_[i];
+      mask_tmp[i] = mask[i];
     for(int_t y=0;y<height_;++y){
       for(int_t x=0;x<width_;++x){
         if(x>=2&&x<width_-2&&y>=2&&y<height_-2){ // 2 is half the gauss_mask size
@@ -1206,14 +1145,21 @@ Image_<S>::create_mask(const Conformal_Area_Def & area_def,
               value += smoothing_coeffs[i][j]*mask_tmp[(y+(j-2))*width_+x+(i-2)];
             } //j
           } //i
-          mask_[y*width_+x] = value;
+          mask[y*width_+x] = value;
         }else{
-          mask_[y*width_+x] = mask_tmp[y*width_+x];
+          mask[y*width_+x] = mask_tmp[y*width_+x];
         }
       } // x
     } // y
   }
+  for(int_t i=0;i<num_pixels();++i)
+    intensities_[i] = static_cast<S>(mask[i]*intensities_[i]);
 }
+
+#ifndef STORAGE_SCALAR_SAME_TYPE
+template DICE_LIB_DLL_EXPORT void Image_<storage_t>::apply_mask(const Conformal_Area_Def &,const bool);
+#endif
+template DICE_LIB_DLL_EXPORT void Image_<scalar_t>::apply_mask(const Conformal_Area_Def &,const bool);
 
 template <typename S>
 Teuchos::RCP<Image_<S>>
@@ -1272,8 +1218,10 @@ Image_<S>::gauss_filter(const int_t mask_size){
     "Error, image too small (" << width_ << " x " << height_ << ") for gauss filtering with mask size " << gauss_filter_mask_size_);
 
   // copy over the old intensities
+  /// device intensity work array
+  Teuchos::ArrayRCP<S> intensities_temp(width_*height_,0);
   for(int_t i=0;i<num_pixels();++i)
-    intensities_temp_[i] = intensities_[i];
+    intensities_temp[i] = intensities_[i];
 
   for(int_t y=0;y<height_;++y){
     for(int_t x=0;x<width_;++x){
@@ -1281,8 +1229,7 @@ Image_<S>::gauss_filter(const int_t mask_size){
         scalar_t value = 0.0;
         for(int_t i=0;i<gauss_filter_mask_size_;++i){
           for(int_t j=0;j<gauss_filter_mask_size_;++j){
-            // assumes intensity values have already been deep copied into intensities_temp_
-            value += coeffs[i*gauss_filter_mask_size_+j]*intensities_temp_[(y+(j-gauss_filter_half_mask_+1))*width_+x+(i-gauss_filter_half_mask_+1)];
+            value += coeffs[i*gauss_filter_mask_size_+j]*intensities_temp[(y+(j-gauss_filter_half_mask_+1))*width_+x+(i-gauss_filter_half_mask_+1)];
           } //j
         } //i
         intensities_[y*width_+x] = static_cast<S>(value);

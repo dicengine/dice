@@ -357,26 +357,6 @@ public:
     return laplacian_[y*width_+x];
   }
 
-  /// mask value accessor
-  /// \param x image coordinate x
-  /// \param y image coordinate y
-  const scalar_t  & mask(const int_t x,
-    const int_t y) const{
-    return mask_[y*width_+x];
-  }
-
-  /// create the image mask field, but don't apply it to the image
-  /// For the area_def, the boundary defines the outer edge of the region for which the
-  /// mask will be set to 1.0. For the excluded region within the boundary, the mask
-  /// will be set to 0.0
-  /// mask values will be 1.0 for excluded regions.
-  /// note: mask coordinates are always global, if the image is a portion of a larger
-  /// image, the offsets will be applied to the coordinates to align the mask
-  /// \param area_def defines the shape of the mask and what is included/excluded
-  /// \param smooth_edges smooths the edges of the mask to avoid high freq. content
-  void create_mask(const Conformal_Area_Def & area_def,
-    const bool smooth_edges=true);
-
   /// creates the image mask and then applies it to the intensity values
   /// For the area_def, the boundary defines the outer edge of the region for which the
   /// mask will be set to 1.0. For the excluded region within the boundary, the mask
@@ -388,11 +368,6 @@ public:
   /// \param smooth_edges smooths the edges of the mask to avoid high freq. content
   void apply_mask(const Conformal_Area_Def & area_def,
     const bool smooth_edges=true);
-
-  /// apply the mask field to the image and sync up the arrays between device and host
-  /// assumes that the mask field is already populated
-  /// \param smooth_edges use Gaussian smoothing along the edges
-  void apply_mask(const bool smooth_edges);
 
   /// apply a transformation to this image to create another image
   /// \param shape_function the deformation mapping parameters u,v,theta,...
@@ -487,10 +462,6 @@ private:
   int_t offset_y_;
   /// pixel container
   Teuchos::ArrayRCP<S> intensities_;
-  /// device intensity work array
-  Teuchos::ArrayRCP<S> intensities_temp_;
-  /// mask coefficients
-  Teuchos::ArrayRCP<scalar_t> mask_;
   /// image gradient x container
   Teuchos::ArrayRCP<scalar_t> grad_x_;
   /// image gradient y container

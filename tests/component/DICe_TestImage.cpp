@@ -81,39 +81,39 @@ int main(int argc, char *argv[]) {
     errorFlag +=1;
   }
 
-  // test the mask values for an image:
-  *outStream << "testing image mask" << std::endl;
-  // create a mask using a simple rectangle
-  Teuchos::RCP<DICe::Rectangle> rect1 = Teuchos::rcp(new DICe::Rectangle(1024,294,401,200));
-  Teuchos::RCP<DICe::Rectangle> rect2 = Teuchos::rcp(new DICe::Rectangle(1024,294,101,50));
-  DICe::multi_shape boundary;
-  boundary.push_back(rect1);
-  DICe::multi_shape excluded;
-  excluded.push_back(rect2);
-  DICe::Conformal_Area_Def area_def(boundary,excluded);
-  img->create_mask(area_def,true);
-
-  // create an image of the mask
-  Teuchos::ArrayRCP<scalar_t> mask_values(img->height()*img->width(),0.0);
-  for(int_t y=0;y<img->height();++y)
-    for(int_t x=0;x<img->width();++x)
-      mask_values[y*img->width()+x] = img->mask(x,y);
-  Scalar_Image mask(img->width(),img->height(),mask_values);
-  //mask.write("mask_d.rawi");
-  // compare with the saved mask file
-#ifdef DICE_USE_DOUBLE
-  Teuchos::RCP<Scalar_Image> mask_exact = Teuchos::rcp(new Scalar_Image("./images/mask_d.rawi"));
-#else
-  Teuchos::RCP<Scalar_Image> mask_exact = Teuchos::rcp(new Scalar_Image("./images/mask.rawi"));
-#endif
-  const scalar_t mask_diff = mask.diff(mask_exact);
-  *outStream << "mask value diff: " << mask_diff << std::endl;
+//  // test the mask values for an image:
+//  *outStream << "testing image mask" << std::endl;
+//  // create a mask using a simple rectangle
+//  Teuchos::RCP<DICe::Rectangle> rect1 = Teuchos::rcp(new DICe::Rectangle(1024,294,401,200));
+//  Teuchos::RCP<DICe::Rectangle> rect2 = Teuchos::rcp(new DICe::Rectangle(1024,294,101,50));
+//  DICe::multi_shape boundary;
+//  boundary.push_back(rect1);
+//  DICe::multi_shape excluded;
+//  excluded.push_back(rect2);
+//  DICe::Conformal_Area_Def area_def(boundary,excluded);
+//  img->create_mask(area_def,true);
+//
+//  // create an image of the mask
+//  Teuchos::ArrayRCP<scalar_t> mask_values(img->height()*img->width(),0.0);
+//  for(int_t y=0;y<img->height();++y)
+//    for(int_t x=0;x<img->width();++x)
+//      mask_values[y*img->width()+x] = img->mask(x,y);
+//  Scalar_Image mask(img->width(),img->height(),mask_values);
+//  //mask.write("mask_d.rawi");
+//  // compare with the saved mask file
+//#ifdef DICE_USE_DOUBLE
+//  Teuchos::RCP<Scalar_Image> mask_exact = Teuchos::rcp(new Scalar_Image("./images/mask_d.rawi"));
+//#else
+//  Teuchos::RCP<Scalar_Image> mask_exact = Teuchos::rcp(new Scalar_Image("./images/mask.rawi"));
+//#endif
+//  const scalar_t mask_diff = mask.diff(mask_exact);
+//  *outStream << "mask value diff: " << mask_diff << std::endl;
   const scalar_t mask_tol = 1.0E-2;
-  if(mask_diff > mask_tol){
-    *outStream << "Error, mask values not correct" << std::endl;
-    errorFlag++;
-  }
-  *outStream << "image mask values have been checked" << std::endl;
+//  if(mask_diff > mask_tol){
+//    *outStream << "Error, mask values not correct" << std::endl;
+//    errorFlag++;
+//  }
+//  *outStream << "image mask values have been checked" << std::endl;
 
   // capture a portion of an image from file
   *outStream << "creating an image from a portion of a tiff file " << std::endl;
