@@ -1228,7 +1228,7 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
 
   TEUCHOS_TEST_FOR_EXCEPTION(mesh_==Teuchos::null,std::runtime_error,"Error: mesh should not be null here");
   local_num_subsets_ = mesh_->get_scalar_node_dist_map()->get_num_local_elements();
-  create_mesh_fields();
+  create_mesh_fields(true);
 
   mesh_->get_field(NEIGHBOR_ID_FS)->update(1.0,*schema->mesh()->get_field(NEIGHBOR_ID_FS),0.0);
 
@@ -1347,25 +1347,13 @@ Schema::create_mesh(Teuchos::RCP<Decomp> decomp){
 }
 
 void
-Schema::create_mesh_fields(){
-  mesh_->create_field(field_enums::CROSS_CORR_Q_FS);
-  mesh_->create_field(field_enums::CROSS_CORR_R_FS);
+Schema::create_mesh_fields(const bool is_stereo){
+  mesh_->create_field(field_enums::SUBSET_COORDINATES_X_FS);
+  mesh_->create_field(field_enums::SUBSET_COORDINATES_Y_FS);
   mesh_->create_field(field_enums::SUBSET_DISPLACEMENT_X_FS);
   mesh_->create_field(field_enums::SUBSET_DISPLACEMENT_X_NM1_FS);
   mesh_->create_field(field_enums::SUBSET_DISPLACEMENT_Y_FS);
   mesh_->create_field(field_enums::SUBSET_DISPLACEMENT_Y_NM1_FS);
-  mesh_->create_field(field_enums::STEREO_SUBSET_DISPLACEMENT_X_FS);
-  mesh_->create_field(field_enums::STEREO_SUBSET_DISPLACEMENT_Y_FS);
-  mesh_->create_field(field_enums::MODEL_DISPLACEMENT_X_FS);
-  mesh_->create_field(field_enums::MODEL_DISPLACEMENT_Y_FS);
-  mesh_->create_field(field_enums::MODEL_DISPLACEMENT_Z_FS);
-  mesh_->create_field(field_enums::SUBSET_COORDINATES_X_FS);
-  mesh_->create_field(field_enums::SUBSET_COORDINATES_Y_FS);
-  mesh_->create_field(field_enums::STEREO_COORDINATES_X_FS);
-  mesh_->create_field(field_enums::STEREO_COORDINATES_Y_FS);
-  mesh_->create_field(field_enums::MODEL_COORDINATES_X_FS);
-  mesh_->create_field(field_enums::MODEL_COORDINATES_Y_FS);
-  mesh_->create_field(field_enums::MODEL_COORDINATES_Z_FS);
   mesh_->create_field(field_enums::ROTATION_Z_FS);
   mesh_->create_field(field_enums::ROTATION_Z_NM1_FS);
   Teuchos::RCP<Local_Shape_Function> shape_function = shape_function_factory(this);
@@ -1390,24 +1378,39 @@ Schema::create_mesh_fields(){
   mesh_->create_field(field_enums::STATUS_FLAG_FS);
   mesh_->create_field(field_enums::NEIGHBOR_ID_FS);
   mesh_->create_field(field_enums::CONDITION_NUMBER_FS);
-  mesh_->create_field(field_enums::PROJECTION_AUG_X_FS);
-  mesh_->create_field(field_enums::PROJECTION_AUG_Y_FS);
-  mesh_->create_field(field_enums::EPI_A_FS);
-  mesh_->create_field(field_enums::EPI_B_FS);
-  mesh_->create_field(field_enums::EPI_C_FS);
-  mesh_->create_field(field_enums::CROSS_EPI_ERROR_FS);
-  mesh_->create_field(field_enums::FIELD_1_FS);
-  mesh_->create_field(field_enums::FIELD_2_FS);
-  mesh_->create_field(field_enums::FIELD_3_FS);
-  mesh_->create_field(field_enums::FIELD_4_FS);
-  mesh_->create_field(field_enums::FIELD_5_FS);
-  mesh_->create_field(field_enums::FIELD_6_FS);
-  mesh_->create_field(field_enums::FIELD_7_FS);
-  mesh_->create_field(field_enums::FIELD_8_FS);
-  mesh_->create_field(field_enums::FIELD_9_FS);
-  mesh_->create_field(field_enums::FIELD_10_FS);
-  mesh_->create_field(field_enums::STEREO_M_MAX_FS);
-
+  if(use_nonlinear_projection_){
+    mesh_->create_field(field_enums::PROJECTION_AUG_X_FS);
+    mesh_->create_field(field_enums::PROJECTION_AUG_Y_FS);
+  }
+  if(!is_stereo){
+    mesh_->create_field(field_enums::CROSS_CORR_Q_FS);
+    mesh_->create_field(field_enums::CROSS_CORR_R_FS);
+    mesh_->create_field(field_enums::STEREO_SUBSET_DISPLACEMENT_X_FS);
+    mesh_->create_field(field_enums::STEREO_SUBSET_DISPLACEMENT_Y_FS);
+    mesh_->create_field(field_enums::MODEL_DISPLACEMENT_X_FS);
+    mesh_->create_field(field_enums::MODEL_DISPLACEMENT_Y_FS);
+    mesh_->create_field(field_enums::MODEL_DISPLACEMENT_Z_FS);
+    mesh_->create_field(field_enums::STEREO_COORDINATES_X_FS);
+    mesh_->create_field(field_enums::STEREO_COORDINATES_Y_FS);
+    mesh_->create_field(field_enums::MODEL_COORDINATES_X_FS);
+    mesh_->create_field(field_enums::MODEL_COORDINATES_Y_FS);
+    mesh_->create_field(field_enums::MODEL_COORDINATES_Z_FS);
+    mesh_->create_field(field_enums::EPI_A_FS);
+    mesh_->create_field(field_enums::EPI_B_FS);
+    mesh_->create_field(field_enums::EPI_C_FS);
+    mesh_->create_field(field_enums::CROSS_EPI_ERROR_FS);
+    mesh_->create_field(field_enums::FIELD_1_FS);
+    mesh_->create_field(field_enums::FIELD_2_FS);
+    mesh_->create_field(field_enums::FIELD_3_FS);
+    mesh_->create_field(field_enums::FIELD_4_FS);
+    mesh_->create_field(field_enums::FIELD_5_FS);
+    mesh_->create_field(field_enums::FIELD_6_FS);
+    mesh_->create_field(field_enums::FIELD_7_FS);
+    mesh_->create_field(field_enums::FIELD_8_FS);
+    mesh_->create_field(field_enums::FIELD_9_FS);
+    mesh_->create_field(field_enums::FIELD_10_FS);
+    mesh_->create_field(field_enums::STEREO_M_MAX_FS);
+  }
   if(use_incremental_formulation_){
     mesh_->create_field(field_enums::ACCUMULATED_DISP_FS);
     mesh_->get_field(field_enums::ACCUMULATED_DISP_FS)->put_scalar(0.0);
@@ -3374,8 +3377,12 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
 
   // only do this if the analysis does not ask for right to left projection
   // otherwise, leave these field uninitialized
-  Teuchos::RCP<MultiField> proj_aug_x = mesh_->get_field(PROJECTION_AUG_X_FS);
-  Teuchos::RCP<MultiField> proj_aug_y = mesh_->get_field(PROJECTION_AUG_Y_FS);
+  Teuchos::RCP<MultiField> proj_aug_x;
+  Teuchos::RCP<MultiField> proj_aug_y;
+  if(use_nonlinear_projection_){
+    proj_aug_x = mesh_->get_field(PROJECTION_AUG_X_FS);
+    proj_aug_y = mesh_->get_field(PROJECTION_AUG_Y_FS);
+  }
   for(int_t i=0;i<local_num_subsets_;++i){
     scalar_t cx = local_field_value(i,SUBSET_COORDINATES_X_FS);
     scalar_t cy = local_field_value(i,SUBSET_COORDINATES_Y_FS);

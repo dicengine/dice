@@ -181,7 +181,9 @@ Objective::sigma( Teuchos::RCP<Local_Shape_Function> shape_function,
 void
 Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_function){
 
-  if(correlation_point_global_id_<0)return;
+  if(correlation_point_global_id_<0) return;
+  // for the stereo schema there are no FIELD_1, FIELD_2, etc created so skip computing uncertainty fields
+  if(!schema_->mesh()->field_exists("FIELD_1")) return;
 
   scalar_t norm_ut_2 = 0.0;
   scalar_t norm_uhat_2 = 0.0;

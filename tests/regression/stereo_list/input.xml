@@ -8,7 +8,7 @@
   <Parameter name="camera_system_file" type="string" value="cal.xml" />
   <Parameter name="correlation_parameters_file" type="string" value="params.xml" />
   <Parameter name="reference_image" type="string" value="img_0000_0.tif" />
-  <Parameter name="output_stereo_files" type="bool" value="true" />
+  <Parameter name="output_stereo_files" type="bool" value="false" />
   <ParameterList name="deformed_images">
     <Parameter name="img_0000_0.tif" type="bool" value="true" />
     <Parameter name="img_0001_0.tif" type="bool" value="true" />

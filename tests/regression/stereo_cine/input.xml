@@ -12,5 +12,5 @@
   <Parameter name="cine_ref_index" type="int" value="0" /> 
   <Parameter name="cine_start_index" type="int" value="0" /> 
   <Parameter name="cine_end_index" type="int" value="5" /> 
-  <Parameter name="output_stereo_files" type="bool" value="true" />
+  <Parameter name="output_stereo_files" type="bool" value="false" />
 </ParameterList>

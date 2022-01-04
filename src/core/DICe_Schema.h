@@ -1089,7 +1089,8 @@ private:
   void create_mesh(Teuchos::RCP<Decomp> decomp);
 
   /// create all of the fields necessary on the mesh
-  void create_mesh_fields();
+  /// \param is_stereo true if this is the stereo schema (lots of fields don't get created for stereo)
+  void create_mesh_fields(const bool is_stereo=false);
 
   /// Pointer to communicator (can be serial)
   comm_rcp comm_;
