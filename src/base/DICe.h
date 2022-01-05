@@ -104,6 +104,8 @@ namespace DICe{
 
 #if DICE_USE_INT_STORAGE
   typedef uint16_t storage_t;
+#elif DICE_USE_FLOAT_STORAGE
+  typedef float storage_t;
 #else
   typedef scalar_t storage_t;
   #define STORAGE_SCALAR_SAME_TYPE

@@ -77,7 +77,9 @@ typedef int int_t;
 #endif
 
 #if DICE_USE_INT_STORAGE
-  typedef unsigned short storage_t;
+  typedef uint16_t storage_t;
+#elif DICE_USE_FLOAT_STORAGE
+  typedef float storage_t;
 #else
   typedef scalar_t storage_t;
 #endif

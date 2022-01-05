@@ -58,13 +58,21 @@ void print_banner(){
   mpi_message = "** MPI: enabled";
 #endif
   std::string type_message = "** Data type: float";
+  std::string storage_type_message = "** Storage type: float";
 #if DICE_USE_DOUBLE
   type_message = "** Data type: double";
+  storage_type_message = "** Storage type: double";
+#endif
+#if DICE_USE_INT_STORAGE
+  storage_type_message = "** Storage type: int";
+#elif DICE_USE_FLOAT_STORAGE
+  storage_type_message = "** Storage type: float";
 #endif
   std::cout << std::endl << "** Digital Image Correlation Engine (DICe)" << std::endl;
   std::cout << "** git: " << GITSHA1 << std::endl;
   std::cout << mpi_message << std::endl;
   std::cout << type_message << std::endl;
+  std::cout << storage_type_message << std::endl;
   std::cout << "** Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC (NTESS)" << std::endl;
   std::cout << "** Report bugs and feature requests as issues at https://github.com/dicengine/dice" << std::endl << std::endl;
 }
