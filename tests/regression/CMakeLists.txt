@@ -9,14 +9,18 @@
 SET(REGRESSION_TESTS
   single_speckled_shift
   incremental
-  unicode_filename
   conformal_subset_def
   dic_challenge_12
   dic_challenge_12_sorted
   simple_tracking
   reset_lost_subsets
 )
-
+IF(NOT UNIX)
+  SET(REGRESSION_TESTS
+    ${REGRESSION_TESTS}
+    unicode_filename
+  )
+ENDIF()
 IF(DICE_USE_DOUBLE)
   SET(REGRESSION_TESTS
     ${REGRESSION_TESTS}
@@ -53,7 +57,7 @@ FOREACH ( test ${REGRESSION_TESTS})
         # get the name of the file without the directory
         GET_FILENAME_COMPONENT ( trim_name ${gold_file} NAME)
         ADD_TEST ( NAME "DIFF_${test}_${trim_name}" 
-            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/DICe_Diff ${gold_file} ${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name} -t 0.05 -v)
+            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../../bin/DICe_Diff ${gold_file} ${CMAKE_CURRENT_BINARY_DIR}/${test}/results/${trim_name} -t 0.05 -f 1.0E-6 -v)
         set_tests_properties("DIFF_${test}_${trim_name}" PROPERTIES PASS_REGULAR_EXPRESSION "TEST PASSED")
         set_property(TEST "DIFF_${test}_${trim_name}" APPEND PROPERTY DEPENDS "RUN_${test}")
     ENDFOREACH ( )
