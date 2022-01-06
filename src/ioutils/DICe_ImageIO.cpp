@@ -41,6 +41,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <fstream>
 #include <ctype.h>
 
 #include <DICe_ImageIO.h>
