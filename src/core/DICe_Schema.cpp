@@ -1558,6 +1558,8 @@ Schema::execute_cross_correlation(){
   for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
     if(local_field_value(subset_index,SIGMA_FS) > 0.0)
       num_successful++;
+    else
+      local_field_value(subset_index,NEIGHBOR_ID_FS) = -2; // set the neigh id to -1 to denote that the cross-correlation failed
   }
   DEBUG_MSG("[PROC " << proc_id << "]: success rate: " << (scalar_t)num_successful/(scalar_t)local_num_subsets_);
   for(int_t subset_index=0;subset_index<local_num_subsets_;++subset_index){
@@ -1657,8 +1659,12 @@ Schema::execute_correlation(){
     mesh_->get_field(SUBSET_DISPLACEMENT_Y_FS)->put_scalar(0.0);
   }
   // reset the sigma field for feature matching initializer
-  if(initialization_method_==USE_FEATURE_MATCHING)
-    mesh_->get_field(SIGMA_FS)->put_scalar(0.0);
+  if(initialization_method_==USE_FEATURE_MATCHING){
+    for(int_t i=0;i<local_num_subsets_;++i){
+      // only turn the point back on if the point didn't fail the cross-correlation sgnified by NEIGH_ID = -2
+      if(local_field_value(i,NEIGHBOR_ID_FS)>-2.0) local_field_value(i,SIGMA_FS) = 0.0;
+    }
+  }
 #ifdef DICE_ENABLE_GLOBAL
   if(has_initial_condition_file()&&frame_id_==first_frame_id_){
     TEUCHOS_TEST_FOR_EXCEPTION(initialization_method_!=USE_FIELD_VALUES,std::runtime_error,
@@ -3280,6 +3286,9 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
 
     // reset the compute def gradients flag
     compute_def_gradients_ = orig_compute_def_gradients;
+    for(int_t i=0;i<local_num_subsets_;++i){
+      if(local_field_value(i,SIGMA_FS) <0.0) local_field_value(i,NEIGHBOR_ID_FS) = -2; // use this as an indicator that this point failed cross correlation
+    }
     DEBUG_MSG("Schema::initialize_cross_correlation(): space filling iterations successful");
     return 0;
   }
