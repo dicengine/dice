@@ -49,6 +49,8 @@
 #include <DICe_Parser.h>
 #include <DICe_Calibration.h>
 #include <DICe_CameraSystem.h>
+#include <DICe_PointCloud.h>
+//#include "opencv2/flann/miniflann.hpp"
 #ifdef DICE_ENABLE_TRACKLIB
 #include <tracklib.h>
 #endif
@@ -57,7 +59,6 @@
 #include <Teuchos_oblackholestream.hpp>
 #include <Teuchos_ParameterList.hpp>
 
-#include "opencv2/flann/miniflann.hpp"
 
 #include <cassert>
 #include <numeric>
@@ -756,25 +757,29 @@ int_t opencv_dot_targets(Mat & img,
   for (size_t i = 0; i < key_points.size(); ++i){ //save and display the keypoints
     DEBUG_MSG("      keypoint: " << key_points[i].pt.x << " " << key_points[i].pt.y);
   }
-
   img_points.clear();
   grd_points.clear();
 
-  // create a point cloud for nearest neighbor searching
-  std::vector<Point2f> cloud2d(num_dots + 3); // add three for the keypoints
+  Teuchos::RCP<Point_Cloud_2D<scalar_t> > point_cloud = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
+  point_cloud->pts.resize(num_dots + 3); // add three for the keypoints
+
   std::vector<int_t> dot_use_count(num_dots + 3,0); // keep track of how many times a dot is used to ensure no repeats
-  for(int_t i=0;i<num_dots;++i)
-    cloud2d[i] = cv::Point2f(dots[i].pt.x,dots[i].pt.y); // order cloud2d so that i is the same for dots
+  for(int_t i=0;i<num_dots;++i){
+    point_cloud->pts[i].x = dots[i].pt.x;
+    point_cloud->pts[i].y = dots[i].pt.y;
+  }
   for(int_t i=0;i<3;++i){
-    cloud2d[num_dots + i] = key_points[i].pt;
+    point_cloud->pts[num_dots + i].x = key_points[i].pt.x;
+    point_cloud->pts[num_dots + i].y = key_points[i].pt.y;
     dots.push_back(key_points[i]);
   }
-
-  flann::KDTreeIndexParams indexParams;
-  flann::Index kdtree(Mat(cloud2d).reshape(1), indexParams);
-  std::vector<float> query(2,0.0f);
-  std::vector<int> indices(1,0);
-  std::vector<float> dists(1,0.0f);
+  std::vector<scalar_t> query(2,0.0);
+  std::vector<size_t> indices(1,0);
+  std::vector<scalar_t> dists(1,0.0);
+  DEBUG_MSG("building the kd-tree");
+  Teuchos::RCP<kd_tree_2d_t> kd_tree = Teuchos::rcp(new kd_tree_2d_t(2 /*dim*/, *point_cloud.get(), nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) ) );
+  kd_tree->buildIndex();
+  DEBUG_MSG("kd-tree completed");
 
   // create a grid for storing dots linked to the grid location
 
@@ -795,7 +800,7 @@ int_t opencv_dot_targets(Mat & img,
   for(int_t i=0;i<=origin_loc_x;++i){
     query[0] = (i - origin_loc_x)*udx + key_points[0].pt.x;
     query[1] = (i - origin_loc_x)*udy + key_points[0].pt.y;
-    kdtree.knnSearch(query, indices, dists, 1);
+    kd_tree->knnSearch(&query[0],1,&indices[0],&dists[0]);
     if(query[0]<20.0||query[0]>img.size().width-20.0||dists[0] >= dist_threshold){
       if(query[0]<20.0||query[0]>img.size().width-20.0){
         DEBUG_MSG("opencv_dot_targets(): query point (on x-axis) " << query[0] << " " << query[1] << " distance " << dists[0] << " is too close to the boundary so skipping it.");
@@ -804,7 +809,7 @@ int_t opencv_dot_targets(Mat & img,
       }
       continue;
     }
-    DEBUG_MSG("opencv_dot_targets(): query point (on x-axis) " << query[0] << " " << query[1] << " found x-axis dot " << cloud2d[indices[0]] << " distance " << dists[0] << " threshold " << dist_threshold);
+    DEBUG_MSG("opencv_dot_targets(): query point (on x-axis) " << query[0] << " " << query[1] << " found x-axis dot (" << point_cloud->pts[indices[0]].x <<"," << point_cloud->pts[indices[0]].y << ") distance " << dists[0] << " threshold " << dist_threshold);
     if(dot_grid[origin_loc_y*num_fiducials_x + i].pt.x>0.0){
       std::cout << "*** warning: attempting to associate dot with grid point that already has a dot associated with it" << std::endl;
       std::cout << "             dot at " << dots[indices[0]].pt.x << "  " << dots[indices[0]].pt.y << std::endl;
@@ -836,12 +841,12 @@ int_t opencv_dot_targets(Mat & img,
       query[1] = 2.0*dot_grid[origin_loc_y*num_fiducials_x + i-1].pt.y - dot_grid[origin_loc_y*num_fiducials_x + i-2].pt.y;
     }
     // traverse the x-axis locating points
-    kdtree.knnSearch(query, indices, dists, 1);
+    kd_tree->knnSearch(&query[0],1,&indices[0],&dists[0]);
     if(dists[0] >= dist_threshold){
       DEBUG_MSG("opencv_dot_targets(): query point (on x-axis) " << query[0] << " " << query[1] << " distance " << dists[0] << " is too far from any dots found so skipping it.");
       continue;
     }
-    DEBUG_MSG("opencv_dot_targets(): query point (on x-axis) " << query[0] << " " << query[1] << " found x-axis dot " << cloud2d[indices[0]] << " distance " << dists[0] << " threshold " << dist_threshold);
+    DEBUG_MSG("opencv_dot_targets(): query point (on x-axis) " << query[0] << " " << query[1] << " found x-axis dot (" << point_cloud->pts[indices[0]].x <<"," << point_cloud->pts[indices[0]].y << ") distance " << dists[0] << " threshold " << dist_threshold);
     if(dot_grid[origin_loc_y*num_fiducials_x + i].pt.x>0.0){
       std::cout << "*** warning: attempting to associate dot with grid point that already has a dot associated with it" << std::endl;
       std::cout << "             dot at " << dots[indices[0]].pt.x << "  " << dots[indices[0]].pt.y << std::endl;
@@ -865,8 +870,8 @@ int_t opencv_dot_targets(Mat & img,
     query[0] = dot_grid[origin_loc_y*num_fiducials_x + i].pt.x + vdx;
     query[1] = dot_grid[origin_loc_y*num_fiducials_x + i].pt.y + vdy;
     // find the closest dot to this point
-    kdtree.knnSearch(query, indices, dists, 1);
-    DEBUG_MSG("opencv_dot_targets(): query point (one row up from x-axis) " << query[0] << " " << query[1] << " found x-axis dot " << cloud2d[indices[0]] << " distance " << dists[0] << " threshold " << dist_threshold);
+    kd_tree->knnSearch(&query[0],1,&indices[0],&dists[0]);
+    DEBUG_MSG("opencv_dot_targets(): query point (one row up from x-axis) " << query[0] << " " << query[1] << " found x-axis dot (" << point_cloud->pts[indices[0]].x <<"," << point_cloud->pts[indices[0]].y << ") distance " << dists[0] << " threshold " << dist_threshold);
     if(dists[0] < dist_threshold){
       if(dot_grid[(origin_loc_y+1)*num_fiducials_x + i].pt.x>0.0){
         std::cout << "*** warning: attempting to associate dot with grid point that already has a dot associated with it" << std::endl;
@@ -897,8 +902,8 @@ int_t opencv_dot_targets(Mat & img,
       query[1] = 2.0*dot_grid[(j-1)*num_fiducials_x + i].pt.y - dot_grid[(j-2)*num_fiducials_x + i].pt.y;
 
       // find the closest dot to this point
-      kdtree.knnSearch(query, indices, dists, 1);
-      DEBUG_MSG("opencv_dot_targets(): query point (above x-axis) " << query[0] << " " << query[1] << " found x-axis dot " << cloud2d[indices[0]] << " distance " << dists[0] << " threshold " << dist_threshold);
+      kd_tree->knnSearch(&query[0],1,&indices[0],&dists[0]);
+      DEBUG_MSG("opencv_dot_targets(): query point (above x-axis) " << query[0] << " " << query[1] << " found x-axis dot (" << point_cloud->pts[indices[0]].x <<"," << point_cloud->pts[indices[0]].y << ") distance " << dists[0] << " threshold " << dist_threshold);
       if(dists[0] < dist_threshold){
         if(dot_grid[j*num_fiducials_x + i].pt.x>0.0){
           std::cout << "*** warning: attempting to associate dot with grid point that already has a dot associated with it" << std::endl;
@@ -917,6 +922,7 @@ int_t opencv_dot_targets(Mat & img,
         DEBUG_MSG("opencv_dot_targets(): skipping point due to distance being too large");
     }
   }
+
   // traverse down from the x axis
   for(int_t j=origin_loc_y-1;j>=0;--j){
     for(int_t i=0;i<num_fiducials_x;++i){
@@ -929,8 +935,8 @@ int_t opencv_dot_targets(Mat & img,
       query[0] = 2.0*dot_grid[(j+1)*num_fiducials_x + i].pt.x - dot_grid[(j+2)*num_fiducials_x + i].pt.x;
       query[1] = 2.0*dot_grid[(j+1)*num_fiducials_x + i].pt.y - dot_grid[(j+2)*num_fiducials_x + i].pt.y;
       // find the closest dot to this point
-      kdtree.knnSearch(query, indices, dists, 1);
-      DEBUG_MSG("opencv_dot_targets(): query point (below x-axis) " << query[0] << " " << query[1] << " found x-axis dot " << cloud2d[indices[0]] << " distance " << dists[0] << " threshold " << dist_threshold);
+      kd_tree->knnSearch(&query[0],1,&indices[0],&dists[0]);
+      DEBUG_MSG("opencv_dot_targets(): query point (below x-axis) " << query[0] << " " << query[1] << " found x-axis dot (" << point_cloud->pts[indices[0]].x <<"," << point_cloud->pts[indices[0]].y << ") distance " << dists[0] << " threshold " << dist_threshold);
       if(dists[0] < dist_threshold){
         if(dot_grid[j*num_fiducials_x + i].pt.x>0.0){
           std::cout << "*** warning: attempting to associate dot with grid point that already has a dot associated with it" << std::endl;
