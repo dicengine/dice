@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
   // only print output if args are given (for testing the output is quiet)
   int_t iprint     = argc - 1;
   int_t errorFlag  = 0;
-  scalar_t errorTol = 0.5;
+  scalar_t errorTol = 1.0;
   Teuchos::RCP<std::ostream> outStream;
   Teuchos::oblackholestream bhs; // outputs nothing
   if (iprint > 0)
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
   *outStream << "number of features matched: " << num_matches << std::endl;
   if(num_matches<num_expected_min||num_matches>num_expected_max){//!=1962){
     errorFlag++;
-    *outStream << "Error wrong number of matching features detected. Should be 1962 and is " << num_matches << std::endl;
+    *outStream << "Error wrong number of matching features detected. Should be between 1350 and 2250 and is " << num_matches << std::endl;
   }
 
   for(int_t i=0;i<num_matches;++i){
